@@ -47,6 +47,26 @@ Follow-ups:
 > **Do enemies carry potions?** (2026-09-28, ticket 0501) "I think I would
 > stick to no potions and only dedicated healers for the enemies in a
 > battle."
+>
+> **Preparations: where do the items you can bring come from?** (2026-10-01,
+> ticket 0408) "the pack shouldn't have potion-specific slots but item
+> slots... and there shouldn't really be suggestions for items for
+> battles... so from the point you are able to buy or obtain consumables
+> (which might be ch2, might be after going to open world setting) then the
+> player has to prepare their own consumables from i.e. shops or battles or
+> collecting or opening chests... and of course they would only bring their
+> own. Maybe green units could spawn with their own consumables not drawn
+> from your pack though. The preparation screen, when it comes, which could
+> be ch2, should also have a basic shop option -- some shops might sell
+> unique items, this shop won't. It will only sell up to the tier of items
+> you have unlocked as a basic. So for the beginning it might be Potion
+> (heal 20) for the mid it might be a consumable to heal 40, etc."
+>
+> **Units left out of a battle keep their gear out of reach?** (2026-10-01,
+> PR #140) "make sure we have trade option for this case otherwise i
+> agree... but if we have 2 archers and only taking one but the other one
+> has the stronger bow, we should be able to trade their equips around in
+> the prep screen but not once inside battle"
 
 Reference (researched for Nick, 2026-09-25): *Fire Emblem: Fortune's Weave*
 has no weapon triangle. Swords deal 1.2x damage on follow-up strikes, spears
@@ -254,10 +274,37 @@ Nick's shape:
   menu is free (does not end the action) (FE rule).
 - Units don't carry consumables; see Battle pack.
 - Loadouts are set before battle (Preparations). **No trading during
-  battle** (*Claude's starting rule*: loadouts are fixed once the battle
-  starts, and consumables are already shared).
+  battle** (Nick, PR #140: trade "in the prep screen but not once inside
+  battle"; loadouts are fixed once the battle starts, and consumables are
+  already shared).
 - Everything not in a loadout is in the party's **stock** (shared,
   unlimited *tunable*).
+
+**On the Preparations screen** (ticket 0408; all *Claude's starting rules*
+unless marked):
+
+- The `Loadouts` tab lists **the whole army** (Nick, PR #140): the units
+  going into this battle, then the ones left out of it (dimmed, marked
+  `Not in this battle`), so gear can be **traded between any of them**.
+  With two archers and only one in the battle, the other's stronger bow
+  can go to the one who fights.
+- Pick a unit, then one of its slots, then an item from the stock: the item
+  goes in the slot and what was there goes back to the stock. A weapon
+  keeps its durability either way. A trade is two such steps: put the
+  benched archer's bow back in the stock, then give it to the other
+  (*Claude's starting rule*: trades go through the stock, there is no
+  unit-to-unit swap).
+- A unit can only be given **gear it can use**: a weapon of a kind its
+  class uses, at a rank it has, and armour of a weight its class wears.
+  Anything else is shown dimmed with the reason (`needs rank D`,
+  `can't use axes`, `can't wear heavy armour`) and can't be taken. (Ticket
+  0408's rule.)
+- The unit goes on wielding the weapon it had in hand. If that weapon was
+  put back, it wields its first usable weapon.
+- The attack speed line shows the speed with the weapon of the highlighted
+  slot in hand, and the change a highlighted stock item would make
+  (`AS 6 → 4 with Steel Sword`), by the formula above. Skill bonuses that
+  only apply in a fight aren't counted.
 
 ### Armour (*tunable*)
 
@@ -284,11 +331,26 @@ Any unit can wear any accessory.
 
 - Before a battle, on the **Preparations** screen, the player picks
   consumables from the stock to bring, up to the battle's **pack cap**.
+  The pack's slots take any consumable. **Nothing is suggested or
+  pre-filled** (Nick, 0408): the pack starts empty and the player brings
+  only what they own, from shops, battles, chests and so on.
 - The cap is **set per battle** in the chapter data (Nick: "scale them to the
   battle"). Chapter 1's cap comes from `chapter-1.md` (0009); default if a
   chapter doesn't say: **6** (*tunable*).
 - A battle without a Preparations screen (e.g. an opening chapter) uses the
-  chapter's default loadouts and default pack.
+  chapter's default loadouts and default pack, given for free. A battle
+  with Preparations has no default pack.
+- **Restarting** such a battle (`Restart Battle`, or `Retry Battle` after a
+  defeat) goes **back to Preparations** (Nick, 0408), with the loadouts and
+  pack as the player left them, so they can change them before trying
+  again (`death-and-difficulty.md`).
+- Preparations can't be left in the story (*Claude's starting rule*: there
+  is nowhere to go back to until the world map); `Fight!` is the way on.
+- **The Preparations shop** (Nick, 0408): the screen also gets a **basic
+  shop**. It sells no unique items, only the basics up to the tier the
+  player has unlocked (early on a Potion; later a stronger healing item,
+  and so on). Which items are basics and what unlocks a tier: ticket 0041;
+  built in ticket 0442.
 - **Using an item** (*Claude's starting rule*, FE Vulnerary): `Item` in the
   action menu → pick a consumable from the pack → target the unit itself or an
   adjacent ally → the item is consumed and **the unit's action ends**.
@@ -426,3 +488,10 @@ Distance 1.
   side quests on the world map (`world-structure.md`) are the likely sources.
 - **Enemies destroying villages, chest keys, thief classes:** later chapters.
 - **Number scale:** all numbers here rescale with ticket 0013.
+- **The Preparations shop's basics and tiers** (Nick, 0408): ticket 0041.
+  Nick's examples there ("Potion (heal 20)", then "a consumable to heal
+  40") aren't the Potion's current 10 HP; the numbers are settled with
+  0041 and 0013.
+- **Green units with their own consumables** (Nick, 0408: "maybe"), not
+  drawn from the player's pack: decide when the first green units that
+  would carry one are designed.

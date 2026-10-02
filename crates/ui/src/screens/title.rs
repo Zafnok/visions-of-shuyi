@@ -311,7 +311,10 @@ mod tests {
         let mut t = TitleScreen::with_quick_battle();
         assert_eq!(t.items, [NEW_GAME, LOAD_GAME, QUICK_BATTLE, CREDITS, QUIT]);
         assert_eq!(outcome(&mut t, &[Confirm]), "Push(mode_select)");
-        assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(battle)");
+        assert_eq!(
+            outcome(&mut t, &[CursorDown, Confirm]),
+            "Push(preparations)"
+        );
         assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(credits)");
         assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Quit");
         assert_eq!(

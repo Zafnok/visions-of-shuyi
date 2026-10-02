@@ -680,8 +680,12 @@ mod tests {
         let mut h = Harness::with_layout(Layout::RightHanded);
         assert_eq!(h.map_scene(), None);
         assert_eq!(h.map_text(), "");
-        // The Quick Battle, inside the game flow.
+        // The Quick Battle, inside the game flow: no map on its
+        // Preparations, then the battle's (Left wraps to `Fight!`).
         h.keys("Down f");
+        assert_eq!(h.screens(), ["title", "preparations"]);
+        assert_eq!(h.map_scene(), None);
+        h.keys("Left f");
         assert_eq!(h.screens(), ["title", "battle"]);
         let scene = h.map_scene().unwrap();
         let battle = h.flow().and_then(FlowScreen::battle).unwrap();
@@ -945,9 +949,10 @@ mod tests {
     fn the_clock_follows_a_switch_of_track_once_the_fade_ends() {
         let mut h = Harness::with_layout(Layout::RightHanded);
         h.wait(0.0).wait(1.0);
-        // Quick Battle plays a track from the skirmish pool.
+        // Quick Battle plays a track from the skirmish pool, from its
+        // Preparations screen on.
         h.keys("Down f");
-        assert_eq!(h.top_screen(), "battle");
+        assert_eq!(h.top_screen(), "preparations");
         assert!(title_at(&h, 1.0 + 4.0 * FRAME_DT), "{:?}", h.music_clock());
         h.wait(1.0);
         let (cue, position) = clock(&h).unwrap();
