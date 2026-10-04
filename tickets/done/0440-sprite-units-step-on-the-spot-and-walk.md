@@ -159,7 +159,8 @@ Done 2026-10-03.
   the walking unit (the player's move, or an AI unit's) is turned the way
   it goes, between two tiles, its legs going.
 - **Timings, in one place:** `crates/ui/src/screens/battle/walk.rs`
-  (250 ms a step on the spot; 200 ms a tile; 100 ms a walking frame). An
+  (250 ms a step on the spot; 200 ms a tile for a sprite; 100 ms a
+  walking frame, whatever the speed). An
   AI walk held with Confirm goes four times as fast, legs and all.
 - **Sprite skins:** a unit's picture is the frame of its facing and step,
   drawn where its offset puts it, with its outline, HP bar and arrow. It
@@ -176,40 +177,40 @@ Done 2026-10-03.
 
 **Deviations**
 
-- **Walking is slower under every skin**: 5 tiles a second instead of 12.
-  The ticket's 200 ms a tile is the game's walking speed, since a skin
-  can't change the timing or the step sounds. Six tests that waited 0.5 s
-  for a four-tile walk now wait longer; nothing they check changed.
+- **Walking speed is the look's** (Nick, 2026-10-04, after the first
+  preview): the glyph skin keeps 12 tiles a second; a sprite skin has its
+  own (5 for now: Nick is choosing between 5, 8, 10 and 12 from a
+  side-by-side animation). `MapSkin::walk_tiles_per_s`; the step sounds
+  go with the tiles, so every skin plays the same sounds in the same
+  order, only sooner or later.
 - The step-on-the-spot cycle starts on the standing frame (standing, a
   foot, standing, the other foot): the same cycle as the ticket's, a
   quarter turn on, so a battle doesn't open mid-step.
 - `MapScene::to_text` shows `facing`, `offset` and `frame` only for a unit
   on its walk. The frame of a unit stepping on the spot isn't in the text:
   it goes by the clock alone, which the text leaves out.
-- One sprite snapshot changed
-  (`quick_battle_with_sprite_units_after_two_actions`): the units that can
-  still act are caught mid-step.
+- Three sprite snapshots changed: units that can still act are caught
+  mid-step, and the 1-pixel outline edge beside a unit standing up and to
+  the side is now cut (below).
 - The walk code is `AiAction` and `Mode::Moving` (the ticket's
   `ActionPlayback` doesn't exist).
-- Acceptance test on shaving: the walker's **picture** is never inside the
-  tile of the unit above, at any step, and its **outline** isn't while any
-  of its tile is under that unit. Standing still on the tile diagonally
-  below, a 1-pixel edge of the outline reaches into that tile, as it does
-  for any unit standing there since 0436; that wasn't changed here.
+- **The clip mask is stricter than 0436 left it** (Nick, 2026-10-04: "it
+  shouldn't have this clip overlap vertical thing"): no sprite pixel, not
+  even an outline's 1-pixel edge, is inside a tile another unit stands on
+  above it, for standing and walking units alike; and a unit below a
+  walker passing over is cut for as long as the walker is on the tile
+  above it. The acceptance test checks every sprite item at every step.
+- On glyph ground, a unit between two tiles doesn't blank the ground's
+  glyphs (Nick, 2026-10-04): the tile it leaves shows its ground at once.
 
-**Claude's starting rules** (for Nick to agree or veto)
+**Claude's starting rule** (for Nick to agree or veto)
 
 - A walking unit that passes over a tile an ally stands on is drawn in
   front of the ally, and isn't cut there (the ticket's rule).
-- A unit standing below a walker that passes above it keeps its head: it
-  isn't cut for that moment (it would flicker).
 
 **Looked at** with the bought sprites (`cargo xtask frame-png`, private
 assets): the unit glides, turns at the corner of its path, faces the
-camera when it arrives; nothing flickers at the end. On the glyph ground
-the tile a walker has just left stays blank until it reaches the next one
-(the glyph terrain is cleared under a unit's tile); that goes with the
-bought terrain (0437).
+camera when it arrives; nothing flickers at the end.
 
 **For Nick:** a short animation of the Quick Battle was sent in the
 session (not committed). Say if the stepping or the walking is too fast,

@@ -16,7 +16,8 @@ over  sprite 17,22 24x24  tilesets/test.png 168,72 24x24 solid=player clip=17,24
 over  sprite 16,22 24x24  tilesets/test.png 168,72 24x24 clip=16,24 24x22
 over  sprite 40,45 24x24  tilesets/test.png 0,72 24x24 solid=#74605b
 over  sprite 40,47 24x24  tilesets/test.png 0,72 24x24 solid=#74605b
-over  sprite 39,46 24x24  tilesets/test.png 0,72 24x24 solid=#74605b
+over  sprite 39,46 24x24  tilesets/test.png 0,72 24x24 solid=#74605b clip=39,48 1x22
+over  sprite 39,46 24x24  tilesets/test.png 0,72 24x24 solid=#74605b clip=40,46 23x24
 over  sprite 41,46 24x24  tilesets/test.png 0,72 24x24 solid=#74605b clip=41,46 23x24
 over  sprite 40,46 24x24  tilesets/test.png 0,72 24x24 dimmed
 over  17,46 4x2  hp_low

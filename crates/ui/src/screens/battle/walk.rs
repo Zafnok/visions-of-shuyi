@@ -5,7 +5,9 @@
 //!
 //! All of it is a look (ADR-0038): the rules, the camera and the sounds go
 //! by the tile a walk is on, which changes at each tile's edge as it always
-//! has. The glyph skin shows only that.
+//! has. The glyph skin shows only that. How fast a walk goes is the look's
+//! too ([`MapSkin::walk_tiles_per_s`](crate::map_view::MapSkin)): glyph
+//! units jump from tile to tile quickly, sprites take the time to walk.
 
 use trpg_core::Pos;
 
@@ -20,11 +22,15 @@ pub const IDLE_STEP_MS: u64 = 250;
 /// frame.
 pub const IDLE_FRAMES: [u8; 4] = [STANDING_FRAME, 2, STANDING_FRAME, 0];
 
-/// How long a walking unit takes to cross a tile, in seconds. *Tunable.*
-pub const WALK_TILE_S: f32 = 0.2;
+/// Walking speed under the glyph skin (and any skin that doesn't say), in
+/// tiles per second. *Tunable.*
+pub const WALK_TILES_PER_S: f32 = 12.0;
 
-/// Walking speed, in tiles per second.
-pub const WALK_TILES_PER_S: f32 = 1.0 / WALK_TILE_S;
+/// How long a walking sprite takes to cross a tile, in seconds. *Tunable.*
+pub const SPRITE_WALK_TILE_S: f32 = 0.2;
+
+/// Walking speed under a sprite skin, in tiles per second.
+pub const SPRITE_WALK_TILES_PER_S: f32 = 1.0 / SPRITE_WALK_TILE_S;
 
 /// How long each frame of a walking unit shows, in seconds. *Tunable.*
 pub const WALK_FRAME_S: f32 = 0.1;
@@ -77,9 +83,10 @@ pub fn facing(from: Pos, to: Pos) -> Facing {
 }
 
 /// The look of a unit that has walked `tiles` tiles along `path` (its
-/// start first), beside the tile [`steps`] puts it on; `None` once it has
-/// arrived (or has nowhere to go): it then stands, facing the camera.
-pub fn gait(path: &[Pos], tiles: f32) -> Option<Gait> {
+/// start first) at `pace` tiles per second, beside the tile [`steps`] puts
+/// it on; `None` once it has arrived (or has nowhere to go): it then
+/// stands, facing the camera.
+pub fn gait(path: &[Pos], tiles: f32, pace: f32) -> Option<Gait> {
     let taken = steps(path.len(), tiles);
     let (from, to) = (*path.get(taken)?, *path.get(taken + 1)?);
     let tiles = if tiles.is_finite() {
@@ -96,12 +103,19 @@ pub fn gait(path: &[Pos], tiles: f32) -> Option<Gait> {
     };
     // Whole frames shown so far: far fewer than f32 holds exactly.
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    let shown = (tiles * (WALK_TILE_S / WALK_FRAME_S)).floor() as usize;
+    let shown = (tiles * frames_per_tile(pace)).floor() as usize;
     Some(Gait {
         facing: facing(from, to),
         frame: WALK_FRAMES[shown % WALK_FRAMES.len()],
         offset: (toward(from.x, to.x), toward(from.y, to.y)),
     })
+}
+
+/// How many walking frames show while a unit crosses a tile at `pace`
+/// tiles per second (none at a pace of zero or one that isn't a number).
+fn frames_per_tile(pace: f32) -> f32 {
+    let per_tile = 1.0 / (pace * WALK_FRAME_S);
+    if per_tile.is_finite() { per_tile } else { 0.0 }
 }
 
 #[cfg(test)]
@@ -113,6 +127,9 @@ mod tests {
     fn p(x: i32, y: i32) -> Pos {
         Pos::new(x, y)
     }
+
+    /// The sprites' pace: 5 tiles a second.
+    const PACE: f32 = SPRITE_WALK_TILES_PER_S;
 
     #[test]
     fn a_unit_steps_on_the_spot_every_quarter_second() {
@@ -143,12 +160,13 @@ mod tests {
 
     #[test]
     fn a_walk_crosses_a_tile_in_200_ms_and_changes_frame_every_100_ms() {
-        assert!((WALK_TILES_PER_S - 5.0).abs() < 1e-6);
-        assert!((WALK_TILE_S - 0.2).abs() < 1e-6);
+        assert!((SPRITE_WALK_TILES_PER_S - 5.0).abs() < 1e-6);
+        assert!((SPRITE_WALK_TILE_S - 0.2).abs() < 1e-6);
+        assert!((WALK_TILES_PER_S - 12.0).abs() < 1e-6);
         assert!((WALK_FRAME_S - 0.1).abs() < 1e-6);
         let path = [p(1, 1), p(2, 1), p(3, 1)];
         // Two frames a tile: a foot, standing; the other foot, standing.
-        let frame = |tiles| gait(&path, tiles).map(|g| g.frame);
+        let frame = |tiles| gait(&path, tiles, PACE).map(|g| g.frame);
         assert_eq!(frame(0.0), Some(0));
         assert_eq!(frame(0.25), Some(0));
         assert_eq!(frame(0.5), Some(1));
@@ -156,16 +174,31 @@ mod tests {
         assert_eq!(frame(1.0), Some(2));
         assert_eq!(frame(1.5), Some(1));
         assert_eq!(frame(2.0), None);
+        // The legs keep their time at any pace: at 10 tiles a second a
+        // frame lasts a whole tile; at 2.5, a quarter of one.
+        let at = |tiles, pace| gait(&path, tiles, pace).map(|g| g.frame);
+        assert_eq!(
+            (at(0.9, 10.0), at(1.0, 10.0), at(1.9, 10.0)),
+            (Some(0), Some(1), Some(1))
+        );
+        assert_eq!(
+            (at(0.2, 2.5), at(0.25, 2.5), at(0.5, 2.5)),
+            (Some(0), Some(1), Some(2))
+        );
+        // A pace that isn't a positive number: the first frame.
+        for bad in [0.0, -3.0, f32::NAN, f32::INFINITY] {
+            assert_eq!(at(1.5, bad), Some(0), "{bad}");
+        }
         let path: Vec<Pos> = (0..6).map(|x| p(x, 0)).collect();
-        assert_eq!(gait(&path, 2.25).map(|g| g.frame), Some(0));
-        assert_eq!(gait(&path, 4.75).map(|g| g.frame), Some(1));
+        assert_eq!(gait(&path, 2.25, PACE).map(|g| g.frame), Some(0));
+        assert_eq!(gait(&path, 4.75, PACE).map(|g| g.frame), Some(1));
     }
 
     #[test]
     fn a_walker_faces_the_way_it_goes_and_glides_to_the_next_tile() {
         // Right, up, left, down.
         let path = [p(1, 1), p(2, 1), p(2, 0), p(1, 0), p(1, 1)];
-        let at = |tiles| gait(&path, tiles).map(|g| (g.facing, g.offset));
+        let at = |tiles| gait(&path, tiles, PACE).map(|g| (g.facing, g.offset));
         assert_eq!(at(0.0), Some((Facing::Right, (0.0, 0.0))));
         assert_eq!(at(0.25), Some((Facing::Right, (0.25, 0.0))));
         assert_eq!(at(0.75), Some((Facing::Right, (0.75, 0.0))));
@@ -176,8 +209,8 @@ mod tests {
         // Arrived, or nowhere to go: it stands.
         assert_eq!(at(4.0), None);
         assert_eq!(at(99.0), None);
-        assert_eq!(gait(&[p(1, 1)], 0.5), None);
-        assert_eq!(gait(&[], 0.5), None);
+        assert_eq!(gait(&[p(1, 1)], 0.5, PACE), None);
+        assert_eq!(gait(&[], 0.5, PACE), None);
         // A bad distance counts as none walked.
         assert_eq!(at(-3.0), at(0.0));
         assert_eq!(at(f32::NAN), at(0.0));
@@ -188,7 +221,7 @@ mod tests {
         assert_eq!(facing(p(0, 0), p(3, -3)), Facing::Right);
         assert_eq!(facing(p(0, 0), p(-3, 3)), Facing::Left);
         assert_eq!(facing(p(0, 0), p(0, 0)), Facing::Down);
-        let far = gait(&[p(0, 0), p(5, -5)], 0.5).unwrap();
+        let far = gait(&[p(0, 0), p(5, -5)], 0.5, PACE).unwrap();
         assert_eq!(far.offset, (0.5, -0.5));
     }
 
@@ -222,7 +255,7 @@ mod tests {
             let taken = steps(path.len(), tiles);
             prop_assert!(taken < path.len());
             let on = path[taken];
-            if let Some(g) = gait(&path, tiles) {
+            if let Some(g) = gait(&path, tiles, PACE) {
                 let next = path[taken + 1];
                 let (dx, dy) = g.offset;
                 prop_assert!((0.0..1.0).contains(&dx.abs().max(dy.abs())), "{:?}", g);
@@ -237,7 +270,7 @@ mod tests {
             }
             // Long enough, and it has arrived.
             let end = f32::from(u8::try_from(path.len()).unwrap_or(u8::MAX));
-            prop_assert_eq!(gait(&path, end), None);
+            prop_assert_eq!(gait(&path, end, PACE), None);
             prop_assert_eq!(path.get(steps(path.len(), end)), path.last());
         }
     }

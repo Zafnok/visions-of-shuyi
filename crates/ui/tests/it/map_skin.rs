@@ -176,7 +176,7 @@ fn lord_walk(skin: &str) -> (Vec<Pos>, Seen) {
 /// Ticket 0440, on the public fixture of unit sheets. Read from the scene
 /// (ADR-0038): the lord is on each tile of its path in turn, turned the
 /// way it goes and partway to the next tile, and ends on the last one
-/// facing the camera. The scene says the same under every skin.
+/// facing the camera. The glyph skin's walk is the same path, quicker.
 #[test]
 fn a_scripted_move_walks_along_its_path_under_the_sprite_skin() {
     let (path, seen) = lord_walk("sprite_units");
@@ -209,7 +209,15 @@ fn a_scripted_move_walks_along_its_path_under_the_sprite_skin() {
     assert!(seen.iter().any(|&(_, _, (_, dy), _)| dy < -0.2));
     assert!(seen.iter().any(|&(.., frame)| frame == 0));
     assert!(seen.iter().any(|&(.., frame)| frame == 2));
-    // The scene is the same whatever paints it.
-    assert_eq!(lord_walk("glyph"), (path.clone(), seen.clone()));
-    assert_eq!(lord_walk("sprite"), (path, seen));
+    // The scene is the same under the other sprite skin.
+    assert_eq!(lord_walk("sprite"), (path.clone(), seen.clone()));
+    // Under the glyph skin the walk is the same path, sooner over: 12
+    // tiles a second, not 5.
+    let (glyph_path, glyph_seen) = lord_walk("glyph");
+    assert_eq!(glyph_path, path);
+    let walking = |seen: &Seen| seen.iter().filter(|s| s.1 != Facing::Down).count();
+    assert_eq!((walking(&seen), walking(&glyph_seen)), (16, 7));
+    let mut glyph_tiles: Vec<Pos> = glyph_seen.iter().map(|s| s.0).collect();
+    glyph_tiles.dedup();
+    assert_eq!(glyph_tiles, path);
 }

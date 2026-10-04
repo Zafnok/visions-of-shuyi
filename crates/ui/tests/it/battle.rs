@@ -451,7 +451,7 @@ fn confirm_on_an_enemy_toggles_its_range() {
 fn the_lord_fights_the_near_brigand_on_turn_one() {
     let mut h = quick_battle();
     // The lord to (6, 4), beside the brigand at (7, 4).
-    h.keys("f Right Right Right Up f").wait(1.0);
+    h.keys("f Right Right Right Up f").wait(0.5);
     // Attack: two swords reach, so the weapon list; the iron sword; the
     // forecast against the brigand.
     h.keys("f f");
@@ -595,7 +595,7 @@ fn a_battle_keeps_the_cue_its_file_names() {
 fn play_into_turn_two(h: &mut Harness) {
     // The lord attacks the brigand in reach, and the combat plays out.
     h.keys("f Right Right Right Up f")
-        .wait(1.0)
+        .wait(0.5)
         .keys("f")
         .wait(0.5);
     h.keys("f").wait(0.5).keys("f").wait(30.0);

@@ -58,7 +58,7 @@ use trpg_core::{
     next_command,
 };
 
-use self::ai_phase::{AiAction, PACING};
+use self::ai_phase::{AiAction, PACING, Pacing};
 use self::banner::{Banner, BannerKind};
 
 use self::attack::{Targeting, aimed_first, aimed_options};
@@ -256,6 +256,9 @@ pub struct BattleScreen {
     /// The unit whose walk was shown since the last command: its move's
     /// steps have been heard.
     walked: Option<UnitId>,
+    /// Walking speed, in tiles per second: the map skin's
+    /// ([`MapSkin::walk_tiles_per_s`]), as of the frame's start.
+    pace: f32,
     /// The player chose `Restart Battle` or `Suspend`: the screen closes,
     /// and the game flow does it.
     leaving: Option<Leaving>,
@@ -308,6 +311,7 @@ impl BattleScreen {
             progress: None,
             cues: CueQueue::default(),
             walked: None,
+            pace: walk::WALK_TILES_PER_S,
             leaving: None,
             player_view: None,
             notes_t: 0.0,
@@ -672,7 +676,11 @@ impl BattleScreen {
         self.camera.origin = from;
         self.cursor.jump(start);
         let then = std::mem::take(&mut self.mode);
-        let action = AiAction::new(unit, before, (from, to), path, then, PACING);
+        let pacing = Pacing {
+            walk_tiles_per_s: self.pace,
+            ..PACING
+        };
+        let action = AiAction::new(unit, before, (from, to), path, then, pacing);
         self.mode = Mode::AiAction(Box::new(action));
     }
 
@@ -789,13 +797,15 @@ impl BattleScreen {
     }
 
     /// Starts a frame of `dt` seconds: keeps the cameras for as many tiles
-    /// as the map skin shows ([`refit`](Self::refit)), and advances the
+    /// as the map skin shows ([`refit`](Self::refit)), takes the skin's
+    /// walking speed for the walks that start this frame, and advances the
     /// cursor's pulse.
     fn begin_frame(&mut self, ctx: &Ctx, dt: f32) {
         let view = ctx.map_skin.view_tiles(MAP_VIEW);
         if view != self.view {
             self.refit(view);
         }
+        self.pace = ctx.map_skin.walk_tiles_per_s();
         self.cursor.tick(dt);
     }
 
@@ -1048,6 +1058,7 @@ impl BattleScreen {
         let before = self.mode.clone();
         let mode = std::mem::take(&mut self.mode);
         let (mode, effect) = mode::step(mode, action, self.cursor.pos, &self.state);
+        let mode = mode.at_pace(self.pace);
         if let Some(sound) = sounds::step_sound(action, &before, &mode, &effect) {
             ctx.audio.menu(sound);
         }
@@ -2093,10 +2104,10 @@ pub(crate) mod testing {
     ///
     /// # Panics
     ///
-    /// If that takes more than 3000 frames (e.g. a level-up page waiting
+    /// If that takes more than 1000 frames (e.g. a level-up page waiting
     /// for Confirm).
     pub fn through_ai_phases(s: &mut super::BattleScreen, c: &mut Ctx, dt: f32) -> usize {
-        for n in 0..3000 {
+        for n in 0..1000 {
             if !s.ai_phase() || s.state().outcome().is_some() {
                 return n;
             }

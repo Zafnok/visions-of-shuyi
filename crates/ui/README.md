@@ -199,7 +199,13 @@ Rules:
   field of `MapScene`, set in `BattleScreen::scene` and painted by every
   skin. Never draw it into the buffer from the battle screen.
 - **How units move is a look** (ticket 0440; timings in
-  `screens/battle/walk.rs`). A unit that can still act steps on the spot
+  `screens/battle/walk.rs`), and so is **how fast a walk is shown**:
+  `MapSkin::walk_tiles_per_s` (12 under the glyph skin, the sprites' own
+  under a sprite skin). The battle screen takes it each frame and gives it
+  to the walk that starts (`Mode::Moving`'s `pace`, an AI action's
+  `Pacing`). It changes how long the player watches, never what happens:
+  the same tiles, the same step sounds in the same order.
+  A unit that can still act steps on the spot
   (`frame`, by the scene's clock); a walking unit's `pos` is the path tile
   it is on, as the rules, the camera and the step sounds have it, and
   `facing`, `frame` and `offset` say how it looks between that tile and

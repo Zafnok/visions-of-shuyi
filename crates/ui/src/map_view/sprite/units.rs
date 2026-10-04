@@ -223,23 +223,34 @@ pub struct Place {
     /// The map row its feet are in.
     pub row: i32,
     /// The parts of the view its picture and outline may be drawn in, left
-    /// to right, side by side: all of the view, but for what lies above
-    /// its feet's row in a column where another unit stands just above.
+    /// to right, side by side: all of the view, but for what the clip
+    /// mask hides ([`place`]).
     pub open: Vec<PxRect>,
     /// Whether another unit stands just above it, in a column it is in.
     pub under: bool,
 }
 
+/// The tile `unit` walks to: the next one of its path while it is between
+/// two tiles, else its own.
+pub fn toward(unit: &UnitView) -> Pos {
+    let step = |part: f32| i32::from(part > 0.0) - i32::from(part < 0.0);
+    let (dx, dy) = unit.offset;
+    Pos::new(unit.pos.x + step(dx), unit.pos.y + step(dy))
+}
+
 /// Where `unit` of `scene` stands on `grid`, or `None` if its tile isn't
 /// drawn.
 ///
-/// A sprite is never drawn over the unit above it: where another unit
-/// stands on the tile above the row `unit`'s feet are in, in a column its
-/// own pixels are in (two, while it glides sideways), nothing of it is
-/// drawn above its feet's row there. The column a picture's edge reaches
-/// past is cut with the nearest of its own. Two tiles don't count: the one
-/// a walking unit is on and the one it walks to (it crosses an ally there,
-/// in front of it); nor does a unit between two tiles itself.
+/// The clip mask (Nick, tickets 0039 and 0436): a sprite and its outline
+/// are never drawn inside a tile another unit stands on above the row its
+/// feet are in. In a column its own pixels are in (two, while it glides
+/// sideways) and in the one on each side (its outline's edge reaches a
+/// pixel into them), nothing of it is drawn above its feet's row where a
+/// unit stands on the tile just above; the side columns are cut with their
+/// neighbour too, so no edge of an outline is left standing alone. A unit
+/// between two tiles stands on both. Two tiles don't count: the one a
+/// walking unit is on and the one it walks to (it crosses an ally there,
+/// in front of it).
 pub fn place(scene: &MapScene, grid: &Grid, unit: &UnitView) -> Option<Place> {
     let home = grid.rect(unit.pos)?;
     let (dx, dy) = offset_px(unit.offset, grid.tile);
@@ -249,33 +260,32 @@ pub fn place(scene: &MapScene, grid: &Grid, unit: &UnitView) -> Option<Place> {
     let left_of = |column: i32| grid.corner.0 + (column - grid.origin.x) * tw;
     let row = grid.origin.y + (tile.y + tile.h - 1 - grid.corner.1).div_euclid(th);
     let row_top = grid.corner.1 + (row - grid.origin.y) * th;
-    // Only a walk upwards goes to a tile above its feet's row.
-    let next = Pos::new(unit.pos.x, unit.pos.y + dy.signum());
+    let next = toward(unit);
     let blocked = |column: i32| {
         let above = Pos::new(column, row - 1);
-        let stands = |u: &UnitView| u.pos == above && !u.between_tiles();
+        let stands = |u: &UnitView| u.pos == above || toward(u) == above;
         above != unit.pos && above != next && scene.units.iter().any(stands)
     };
     let view = grid.bounds();
     let (first, last) = (column(tile.x), column(tile.x + tile.w - 1));
+    let under = (first..=last).any(blocked);
+    // Cut: only what is in the view from its feet's row down.
+    let below = Rect::new(view.x, row_top, view.w, view.h);
     let mut open: Vec<PxRect> = Vec::new();
-    let mut under = false;
-    for column in first..=last {
-        let left = if column == first {
+    for column in first - 1..=last + 1 {
+        let left = if column < first {
             view.x
         } else {
             left_of(column)
         };
-        let right = if column == last {
+        let right = if column > last {
             view.x + view.w
         } else {
             left_of(column + 1)
         };
-        let cut = blocked(column);
-        under |= cut;
+        // A side column goes with its neighbour.
+        let cut = blocked(column) || blocked(column.clamp(first, last));
         let strip = Rect::new(left, view.y, right - left, view.h);
-        // Cut: only what is in the view from its feet's row down.
-        let below = Rect::new(view.x, row_top, view.w, view.h);
         let strip = if cut {
             strip.intersect(&below)
         } else {
@@ -863,15 +873,11 @@ mod tests {
                 for s in &picture {
                     assert_eq!(s.clip.intersect(&above), None, "{at}: {s:?}");
                 }
-                // Its outline: not while any of its tile is under that
-                // unit. (Standing still a tile to the side, a 1-pixel edge
-                // of it reaches in, as it does for any unit standing
-                // there: ticket 0436.)
-                let under = stand.x + stand.w > above.x && stand.x < above.x + above.w;
-                if under {
-                    for s in &own {
-                        assert_eq!(s.clip.intersect(&above), None, "{at}: {s:?}");
-                    }
+                // Nor its outline, even the edge that reaches a pixel
+                // past its tile.
+                assert!(own.len() >= 5, "{at}");
+                for s in &own {
+                    assert_eq!(s.clip.intersect(&above), None, "{at}: {s:?}");
                 }
                 // Whatever is drawn is part of its picture's place, and
                 // all of it is there but what is under the unit above.
@@ -898,9 +904,9 @@ mod tests {
             place.open,
             [Rect::new(16, 16, 16, 32), Rect::new(32, 32, 32, 16)]
         );
-        // Between two columns with nobody above either: one piece, all of
-        // the view.
-        scene.units[0].pos = p(2, 0);
+        // Between two columns with nobody above them or beside those: one
+        // piece, all of the view.
+        scene.units[0].pos = p(2, 1);
         let place = super::place(&scene, &grid, &scene.units[1]).unwrap();
         assert_eq!((place.open, place.under), (vec![grid.bounds()], false));
         // The same wherever the view starts on the map: a view from
@@ -916,15 +922,28 @@ mod tests {
         );
         assert_eq!((place.tile, place.row), (Rect::new(24, 32, 16, 16), 4));
         scene.units[0].pos = p(1, 0);
-        // Once past (and before it): whole, in one piece.
-        for x in [0, 2] {
+        // Once past (and before it): its picture whole, in one piece.
+        // Only the 1-pixel edge of its outline on that unit's side is cut
+        // at its row's top (y = 32), so it has two parts.
+        for (x, edge) in [(0, 33), (2, 48)] {
             scene.units[1] = unit(2, p(x, 1));
             let stand = Rect::new(16 + 16 * x, 32, 16, 16);
             let own = standing_on(&c, &scene, stand);
             let dest = Rect::new(stand.x, 26, 16, 20);
-            assert_eq!(own.len(), 5);
-            assert_eq!((own[4].dest, own[4].clip), (dest, dest));
+            let picture = own.last().unwrap();
+            assert_eq!((picture.dest, picture.clip), (dest, dest));
+            assert_eq!(own.len(), 6, "{own:?}");
+            let cut: Vec<PxRect> = own
+                .iter()
+                .map(|s| s.clip)
+                .filter(|clip| clip.y == 32)
+                .collect();
+            assert_eq!(cut.len(), 1, "{own:?}");
+            assert_eq!((cut[0].w, cut[0].x + cut[0].w), (1, edge), "{own:?}");
         }
+        // With nobody up there, the same unit is five whole sprites.
+        scene.units.remove(0);
+        assert_eq!(standing_on(&c, &scene, Rect::new(48, 32, 16, 16)).len(), 5);
     }
 
     #[test]
@@ -954,28 +973,49 @@ mod tests {
         scene.units[0] = walking(unit(2, p(1, 0)), Facing::Down, 0, (0.0, 0.5));
         let own = standing_on(&c, &scene, Rect::new(32, 24, 16, 16));
         assert_eq!((own.len(), own[4].clip), (5, dest));
-        // A unit standing below a walker passing over isn't cut by it (it
-        // would flicker), nor is its arrow lowered; one standing there
-        // cuts it.
+        // A unit standing below a walker passing over is cut for as long
+        // as the walker is on the tile above it: from the moment it sets
+        // out for that tile until it has left it. Its arrow is lowered
+        // for as long.
         let mut scene = plains(&c);
         let mut below = unit(1, p(1, 1));
         below.effects.bonus = true;
         scene.push_unit(below);
-        scene.push_unit(walking(unit(2, p(1, 0)), Facing::Right, 0, (0.5, 0.0)));
+        scene.push_unit(unit(2, p(0, 0)));
         let stand = Rect::new(32, 32, 16, 16);
-        let whole = Rect::new(32, 26, 16, 20);
-        assert_eq!(standing_on(&c, &scene, stand)[4].clip, whole);
+        let (whole, cut) = (Rect::new(32, 26, 16, 20), Rect::new(32, 32, 16, 14));
+        let picture = |scene: &MapScene| {
+            let all = standing_on(&c, scene, stand);
+            all.iter().find(|s| s.dest == whole).map(|s| s.clip)
+        };
         let mark = |scene: &MapScene| {
             let all = standing_on(&c, scene, stand);
             all.last().map(|s| s.dest)
         };
-        assert_eq!(mark(&scene), Some(Rect::new(42, 29, 7, 7)));
-        scene.units[1].offset = (0.0, 0.0);
-        assert_eq!(
-            standing_on(&c, &scene, stand)[4].clip,
-            Rect::new(32, 32, 16, 14)
-        );
-        assert_eq!(mark(&scene), Some(Rect::new(42, 33, 7, 7)));
+        let (high, low) = (Rect::new(42, 29, 7, 7), Rect::new(42, 33, 7, 7));
+        // Standing a tile away: whole.
+        assert_eq!((picture(&scene), mark(&scene)), (Some(whole), Some(high)));
+        // Setting out for the tile above, on it, and leaving it: cut.
+        let passing = [
+            walking(unit(2, p(0, 0)), Facing::Right, 0, (0.5, 0.0)),
+            unit(2, p(1, 0)),
+            walking(unit(2, p(1, 0)), Facing::Right, 0, (0.5, 0.0)),
+        ];
+        for walker in passing {
+            scene.units[1] = walker;
+            assert_eq!((picture(&scene), mark(&scene)), (Some(cut), Some(low)));
+        }
+        // Gone: whole again.
+        scene.units[1] = unit(2, p(2, 0));
+        assert_eq!((picture(&scene), mark(&scene)), (Some(whole), Some(high)));
+        // The tile a unit walks to: one step the way its offset goes.
+        let to = |offset| toward(&walking(unit(2, p(4, 4)), Facing::Down, 1, offset));
+        assert_eq!(to((0.0, 0.0)), p(4, 4));
+        assert_eq!(to((0.25, 0.0)), p(5, 4));
+        assert_eq!(to((-0.25, 0.0)), p(3, 4));
+        assert_eq!(to((0.0, 0.75)), p(4, 5));
+        assert_eq!(to((0.0, -0.75)), p(4, 3));
+        assert_eq!(to((f32::NAN, 0.0)), p(4, 4));
     }
 
     #[test]
@@ -1002,14 +1042,16 @@ mod tests {
             .collect();
         // Five sprites a unit (the outline's left and right copies are
         // 1 px off): the top row's unit (x = 48), then the bottom row's
-        // in the battle's order (x = 16, x = 32).
-        let pictures: Vec<i32> = order.iter().take(15).map(|(_, x)| *x).collect();
-        let five = |x| [x, x, x - 1, x + 1, x];
-        assert_eq!(pictures, [five(48), five(16), five(32)].concat());
-        assert!(order.iter().take(15).all(|(kind, _)| *kind == "picture"));
+        // in the battle's order (x = 16, x = 32). The last one's right
+        // copy is in two parts: its edge is cut under the unit up there.
+        let pictures: Vec<i32> = order.iter().take(16).map(|(_, x)| *x).collect();
+        let five = |x| vec![x, x, x - 1, x + 1, x];
+        let last = vec![32, 32, 31, 33, 33, 32];
+        assert_eq!(pictures, [five(48), five(16), last].concat());
+        assert!(order.iter().take(16).all(|(kind, _)| *kind == "picture"));
         // Then, unit by unit in the battle's order, its bar and its mark.
         assert_eq!(
-            order[15..],
+            order[16..],
             [("bar", 17), ("mark", 26), ("bar", 49), ("bar", 33)]
         );
     }

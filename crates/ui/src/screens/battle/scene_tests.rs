@@ -8,10 +8,11 @@ use std::rc::Rc;
 use proptest::prelude::*;
 use trpg_core::{BattleMap, Grid, Pos, TerrainId, UnitId};
 
-use super::ai_phase::{AiAction, PACING};
+use super::ai_phase::{AiAction, PACING, Pacing};
 use super::layout::MAP_VIEW;
 use super::mode::Mode;
 use super::testing::{battle, quick_units, skirmish, vaulted};
+use super::walk::SPRITE_WALK_TILES_PER_S;
 use super::{BattleScreen, quick_battle};
 use crate::color::{Rgb, UiColor};
 use crate::console::{CONSOLE_H, CONSOLE_W};
@@ -552,10 +553,60 @@ fn shown(s: &BattleScreen, c: &Ctx, id: UnitId) -> (Pos, Facing, (f32, f32), u8)
     (u.pos, u.facing, u.offset, u.frame)
 }
 
+/// A context whose map skin is the test unit sheets': sprites walk at
+/// their own pace.
+fn sprite_ctx() -> Ctx {
+    let mut c = ctx();
+    c.map_skin = crate::map_view::skin_named(&c.content, "sprite_units").unwrap();
+    c
+}
+
+/// Under the glyph skin a walk is as quick as it always was: 12 tiles a
+/// second, tile by tile in the scene as on screen.
+#[test]
+fn a_glyph_units_walk_keeps_its_pace() {
+    let mut c = ctx();
+    let mut s = quick();
+    let lord = s.state().units()[0].id;
+    step(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::CursorRight; 3]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    let Mode::Moving { pace, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    assert!((pace - 12.0).abs() < 1e-6);
+    // Three tiles: over within 0.26 s.
+    let mut frames = 0;
+    while matches!(s.mode(), Mode::Moving { .. }) {
+        wait(&mut s, &mut c, 0.02);
+        frames += 1;
+        assert!(frames < 100, "the walk never ended");
+    }
+    assert_eq!(frames, 13);
+    assert_eq!(shown(&s, &c, lord).2, (0.0, 0.0));
+    // The same walk under a sprite skin: 5 tiles a second, 0.6 s.
+    let mut c = sprite_ctx();
+    let mut s = quick();
+    step(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::CursorRight; 3]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    let Mode::Moving { pace, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    assert!((pace - 5.0).abs() < 1e-6);
+    let mut frames = 0;
+    while matches!(s.mode(), Mode::Moving { .. }) {
+        wait(&mut s, &mut c, 0.02);
+        frames += 1;
+        assert!(frames < 100, "the walk never ended");
+    }
+    assert!((30..=31).contains(&frames), "{frames}");
+}
+
 /// Ticket 0440: a move that goes right and then up.
 #[test]
 fn a_walking_unit_turns_the_way_it_goes_and_glides_from_tile_to_tile() {
-    let mut c = ctx();
+    let mut c = sprite_ctx();
     let mut s = quick();
     let lord = s.state().units()[0].id;
     let start = s.state().units()[0].pos;
@@ -681,7 +732,11 @@ fn an_ai_units_walk_turns_and_glides_too() {
     let (brigand, from) = (before[4].id, before[4].pos);
     let path = vec![from, p(from.x - 1, from.y), p(from.x - 1, from.y + 1)];
     let pan = (s.camera.origin, s.camera.origin);
-    let action = AiAction::new(brigand, before, pan, path, Mode::default(), PACING);
+    let pacing = Pacing {
+        walk_tiles_per_s: SPRITE_WALK_TILES_PER_S,
+        ..PACING
+    };
+    let action = AiAction::new(brigand, before, pan, path, Mode::default(), pacing);
     let walk_start = action.walk_start();
     s.mode = Mode::AiAction(Box::new(action));
     let tick = |s: &mut BattleScreen, dt: f32, held: bool| {

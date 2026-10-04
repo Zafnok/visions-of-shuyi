@@ -271,14 +271,23 @@ so they aren't in this repository (ADR-0032).
     still apply). When it arrives it faces the camera again.
   Built in ticket 0440. The values (*tunable*, all in
   `crates/ui/src/screens/battle/walk.rs`): a step on the spot every
-  250 ms; a walking unit crosses a tile in 200 ms and changes frame every
-  100 ms. **Walking is that speed under the glyph look too** (it was 12
-  tiles a second; a look can't change the game's timing, and the step
-  sounds go with the tiles), though glyph units still jump from tile to
-  tile. *(Claude's starting rules: a walking unit passing over a tile an
-  ally stands on is drawn in front of the ally; a unit standing below a
-  passing walker keeps its head, uncut, since the walker is gone in a
-  moment.)*
+  250 ms; a walking sprite crosses a tile in 200 ms (5 tiles a second)
+  and changes frame every 100 ms. Nick found 5 tiles a second "a bit
+  slow" in the first preview (2026-10-04) and was sent 5, 8, 10 and 12
+  side by side to pick from; **the sprites' speed is his to pick**.
+  - **The glyph look keeps its own walking speed**, 12 tiles a second
+    (Nick, 2026-10-04: "original glyph version I think should have its
+    original walking speed"). Glyph units jump from tile to tile.
+  - **The clip mask always holds** (Nick, 2026-10-04; decided in 0039 and
+    0436): no sprite or outline is drawn inside a tile another unit
+    stands on above it, walking or standing, not even the 1-pixel edge
+    of an outline beside it. A unit below a walker passing over is cut
+    for as long as the walker is on the tile above it.
+  - On the glyph ground (the retro look with sprite units), a walking
+    unit walks over the ground's glyphs: the tile it leaves shows its
+    ground at once (Nick, 2026-10-04).
+  - *(Claude's starting rule: a walking unit passing over a tile an ally
+    stands on is drawn in front of the ally.)*
 - **The HP bar never overlaps the sprite's feet** (Nick: "make sure the hp
   bar is not overlapping the sprite"). The sprite is drawn higher on its
   tile, so its feet stand **directly on top of** the 2-pixel HP bar (the

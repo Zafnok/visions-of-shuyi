@@ -62,7 +62,7 @@ fn select_picks_on_the_map_and_confirm_keeps_menus_and_the_forecast() {
     // Confirm doesn't pick the tile; Select does.
     h.keys("f");
     assert_eq!(help(&h), "arrows move · g move here · d cancel");
-    h.keys("g").wait(1.0);
+    h.keys("g").wait(0.5);
     assert_eq!(help(&h), "arrows choose · f confirm · d back");
     // Select does nothing in the menu; Confirm picks Attack, then the iron
     // sword, and the forecast opens on Confirm.

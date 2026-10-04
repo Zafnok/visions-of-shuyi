@@ -6,10 +6,11 @@ use super::scene::MapScene;
 use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{GlyphBuffer, PxRect, Rect};
 use crate::screen::Ctx;
+use crate::screens::battle::walk::WALK_TILES_PER_S;
 
 /// Paints battle maps. The tile size is the skin's: screens ask it how many
 /// tiles fit and where a tile is. A skin never changes the game: only the
-/// frame, and how many tiles are on screen.
+/// frame, how many tiles are on screen, and how fast a walk is shown.
 pub trait MapSkin: std::fmt::Debug {
     /// A stable `snake_case` name for the kind of skin, e.g. `"glyph"`.
     fn name(&self) -> &'static str;
@@ -21,6 +22,13 @@ pub trait MapSkin: std::fmt::Debug {
 
     /// How many tiles, across × down, fit in a map area of `area` cells.
     fn view_tiles(&self, area: Rect) -> (i32, i32);
+
+    /// How fast a unit's walk is shown, in tiles per second: how long the
+    /// player watches a move, never what the move does. The glyph skin's
+    /// unless the skin says otherwise.
+    fn walk_tiles_per_s(&self) -> f32 {
+        WALK_TILES_PER_S
+    }
 
     /// Paints `scene` into the cells of `area`. Touches nothing outside it.
     fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer);

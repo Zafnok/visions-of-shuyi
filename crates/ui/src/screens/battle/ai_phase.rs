@@ -31,7 +31,8 @@ pub struct Pacing {
 }
 
 /// The game's pacing (ticket 0502: ~0.25 s pan, 0.2 s highlight; walks as
-/// fast as the player's; ×4 while Confirm is held).
+/// fast as the player's, which the screen sets from the map skin; ×4 while
+/// Confirm is held).
 pub const PACING: Pacing = Pacing {
     pan: 0.25,
     highlight: 0.2,
@@ -170,7 +171,8 @@ impl AiAction {
         if !self.walking() || self.done() {
             return None;
         }
-        walk::gait(&self.path, self.walked_at(self.t))
+        let pace = self.pacing.walk_tiles_per_s;
+        walk::gait(&self.path, self.walked_at(self.t), pace)
     }
 
     /// How many tiles the unit enters in the next [`tick`](Self::tick)

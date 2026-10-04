@@ -251,6 +251,9 @@ pub enum Mode {
         t: f32,
         /// Seconds Confirm has been held without a break.
         held: f32,
+        /// Walking speed, in tiles per second: the map skin's
+        /// ([`WALK_TILES_PER_S`] until the screen sets it).
+        pace: f32,
     },
     /// The unit stands at its path's end; the player picks an action.
     ActionMenu {
@@ -520,7 +523,7 @@ impl Mode {
     /// weapon or a target.
     pub fn drawn_pos(&self, id: UnitId) -> Option<Pos> {
         match self {
-            Mode::Moving { sel, t, .. } if sel.unit == id => Some(walk_pos(sel, *t)),
+            Mode::Moving { sel, t, pace, .. } if sel.unit == id => Some(walk_pos(sel, t * pace)),
             Mode::ActionMenu { sel, .. }
             | Mode::WeaponMenu { sel, .. }
             | Mode::SpellMenu { sel, .. }
@@ -540,13 +543,23 @@ impl Mode {
         }
     }
 
+    /// A walk at `pace` tiles per second (the map skin's); any other mode
+    /// as it is.
+    #[must_use]
+    pub fn at_pace(self, pace: f32) -> Mode {
+        match self {
+            Mode::Moving { sel, t, held, .. } => Mode::Moving { sel, t, held, pace },
+            other => other,
+        }
+    }
+
     /// During a walk (the player's or an AI unit's), the walking unit and
     /// how it looks between two tiles of its path ([`walk::gait`]); `None`
     /// in other modes, and once it has arrived.
     pub fn gait(&self) -> Option<(UnitId, Gait)> {
         match self {
-            Mode::Moving { sel, t, .. } => {
-                Some((sel.unit, walk::gait(&sel.path, t * WALK_TILES_PER_S)?))
+            Mode::Moving { sel, t, pace, .. } => {
+                Some((sel.unit, walk::gait(&sel.path, t * pace, *pace)?))
             }
             Mode::AiAction(a) => Some((a.unit(), a.gait()?)),
             _ => None,
@@ -561,16 +574,16 @@ impl Mode {
         if let Mode::AiAction(a) = self {
             return Some((a.unit(), a.tiles_entered(dt, confirm_held)));
         }
-        let Mode::Moving { sel, t, held } = self else {
+        let Mode::Moving { sel, t, held, pace } = self else {
             return None;
         };
         let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
         let (to, held) = (t + dt, if confirm_held { held + dt } else { 0.0 });
-        let skipped = held >= HOLD_SKIP_S && !walk_done(sel, to);
+        let skipped = held >= HOLD_SKIP_S && !walk_done(sel, to * pace);
         let entered = if skipped {
             0
         } else {
-            walk_steps(sel, to) - walk_steps(sel, *t)
+            walk_steps(sel, to * pace) - walk_steps(sel, t * pace)
         };
         Some((sel.unit, entered))
     }
@@ -598,34 +611,37 @@ impl Mode {
                 Mode::AiAction(action)
             };
         }
-        let Mode::Moving { sel, t, held } = self else {
+        let Mode::Moving { sel, t, held, pace } = self else {
             return self;
         };
         let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
         let (t, held) = (t + dt, if confirm_held { held + dt } else { 0.0 });
-        if held >= HOLD_SKIP_S || walk_done(&sel, t) {
+        if held >= HOLD_SKIP_S || walk_done(&sel, t * pace) {
             walk_ended(sel, state).0
         } else {
-            Mode::Moving { sel, t, held }
+            Mode::Moving { sel, t, held, pace }
         }
     }
 }
 
-/// How many of `sel`'s path steps a walk has taken after `t` seconds (at
-/// most all of them; none for a negative or NaN time).
-fn walk_steps(sel: &Selection, t: f32) -> usize {
-    walk::steps(sel.path.len(), t * WALK_TILES_PER_S)
+/// How many of `sel`'s path steps a walk has taken once it has gone
+/// `tiles` tiles (at most all of them; none for a negative or NaN
+/// distance).
+fn walk_steps(sel: &Selection, tiles: f32) -> usize {
+    walk::steps(sel.path.len(), tiles)
 }
 
-/// Whether the walk along `sel`'s path is over after `t` seconds.
-fn walk_done(sel: &Selection, t: f32) -> bool {
-    walk_steps(sel, t) + 1 >= sel.path.len()
+/// Whether the walk along `sel`'s path is over once it has gone `tiles`
+/// tiles.
+fn walk_done(sel: &Selection, tiles: f32) -> bool {
+    walk_steps(sel, tiles) + 1 >= sel.path.len()
 }
 
-/// The tile a walk along `sel`'s path is on after `t` seconds.
-fn walk_pos(sel: &Selection, t: f32) -> Pos {
+/// The tile a walk along `sel`'s path is on once it has gone `tiles`
+/// tiles.
+fn walk_pos(sel: &Selection, tiles: f32) -> Pos {
     sel.path
-        .get(walk_steps(sel, t))
+        .get(walk_steps(sel, tiles))
         .copied()
         .unwrap_or_else(|| sel.origin())
 }
@@ -771,6 +787,7 @@ pub fn step(mode: Mode, action: Action, cursor: Pos, state: &BattleState) -> (Mo
                         sel,
                         t: 0.0,
                         held: 0.0,
+                        pace: WALK_TILES_PER_S,
                     };
                     (walk, Effect::None)
                 }
@@ -783,6 +800,7 @@ pub fn step(mode: Mode, action: Action, cursor: Pos, state: &BattleState) -> (Mo
                         sel,
                         t: 0.0,
                         held: 0.0,
+                        pace: WALK_TILES_PER_S,
                     };
                     (walk, Effect::None)
                 }
@@ -1659,7 +1677,8 @@ mod tests {
             Mode::Moving {
                 sel,
                 t: 0.0,
-                held: 0.0
+                held: 0.0,
+                pace: WALK_TILES_PER_S,
             }
         );
         // On the unit itself: straight to the menu.
@@ -1691,6 +1710,7 @@ mod tests {
             sel,
             t: 0.0,
             held: 0.0,
+            pace: WALK_TILES_PER_S,
         };
         let lord = UnitId(1);
         assert_eq!(mode.drawn_pos(lord), Some(p(3, 5)));
@@ -1731,6 +1751,7 @@ mod tests {
             sel,
             t: 0.0,
             held: 0.0,
+            pace: WALK_TILES_PER_S,
         };
         let menu = |m: &Mode| matches!(m, Mode::ActionMenu { .. });
         // Held, but not long enough; released; held again long enough.
@@ -1749,6 +1770,7 @@ mod tests {
             sel,
             t: 0.0,
             held: short,
+            pace: WALK_TILES_PER_S,
         };
         assert!(menu(&nearly.clone().tick(short, true, &s)));
         assert!(!menu(&nearly.tick(short, false, &s)));
@@ -1764,6 +1786,7 @@ mod tests {
             sel,
             t: 0.0,
             held: 0.0,
+            pace: WALK_TILES_PER_S,
         };
         walk.tick(1.0, false, s)
     }

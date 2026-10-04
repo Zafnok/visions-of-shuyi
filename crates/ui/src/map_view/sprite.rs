@@ -26,6 +26,7 @@ use super::skin::MapSkin;
 use crate::color::{Rgb, UiColor, to_channel};
 use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect, Sprite};
 use crate::screen::Ctx;
+use crate::screens::battle::walk::SPRITE_WALK_TILES_PER_S;
 
 /// The battle map painted from a tileset.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -132,10 +133,12 @@ impl SpriteSkin {
 }
 
 /// Paints the ground under the units as the glyph skin does: its tiles,
-/// each unit's tile without its terrain glyphs.
+/// each standing unit's tile without its terrain glyphs. A unit between
+/// two tiles walks over the glyphs of both, so the ground it leaves isn't
+/// blank behind it.
 fn paint_glyph_ground(ctx: &Ctx, scene: &MapScene, layout: &glyph::Layout, buf: &mut GlyphBuffer) {
     glyph::draw_tiles(ctx, buf, scene, layout);
-    for unit in &scene.units {
+    for unit in scene.units.iter().filter(|u| !u.between_tiles()) {
         if let Some((x, y)) = glyph::tile_to_cell(unit.pos, layout) {
             glyph::units::clear_glyphs(buf, x, y, unit.fade, unit.highlight);
         }
@@ -154,6 +157,11 @@ impl MapSkin for SpriteSkin {
 
     fn tileset_id(&self) -> Option<&str> {
         Some(&self.tileset.id)
+    }
+
+    /// Slower than the glyph skin's: a sprite is seen to walk.
+    fn walk_tiles_per_s(&self) -> f32 {
+        SPRITE_WALK_TILES_PER_S
     }
 
     /// The area's pixels divided by the tile size, rounded down; with no
@@ -964,6 +972,14 @@ pub(crate) mod tests {
                     assert_eq!(ours, theirs, "({x}, {y})");
                 }
             }
+        }
+        // A unit between two tiles walks over the glyphs: none is cleared,
+        // on the tile it leaves or the one it walks to.
+        let mut walking = scene.clone();
+        walking.units[0].offset = (0.5, 0.0);
+        let walked = paint(&s, &walking);
+        for x in 4..8 {
+            assert_eq!(walked.get(x, 1), ground.get(x, 1), "({x}, 1)");
         }
         // The unit's sprites and bar go between the path's line and its
         // arrowhead; the cursor's marks stay last.
