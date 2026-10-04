@@ -33,7 +33,7 @@ pack text overflows its place.
 
 **Out (do not do):** translating (0719); new layouts for Japanese (if a
 place can't fit, report it; a redesign is its own ticket); furigana;
-vertical text.
+vertical text; Chinese punctuation and its wide quotes (0239).
 
 ## Implementation steps
 

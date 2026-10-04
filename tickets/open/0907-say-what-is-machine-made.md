@@ -6,7 +6,7 @@ milestone: M8 Release
 model: sonnet-5
 effort: medium
 status: todo
-blocked_by: ["0042", "0043"]
+blocked_by: ["0042", "0043", "0045"]
 nick_input: sign-off
 completed:
 ---
@@ -16,7 +16,7 @@ completed:
 ## Context
 
 By Nick's direction (`docs/design/voices-languages-and-script.md`) the
-game may ship AI-generated voices, a machine-translated Japanese option,
+game may ship AI-generated voices, machine-translated Japanese and Chinese options,
 and a script written by Claude, each to be replaced by paid people later.
 Steam requires pre-generated AI content to be described in its content
 survey and shows that text on the store page; Japanese players judge
@@ -28,7 +28,9 @@ themselves when a human replaces something.
 ## Nick input
 
 **Sign-off** on the wording: the credits lines and the store-page
-paragraph are shown to him in the PR description. 0042 (question 3) and
+paragraph are shown to him in the PR description. 0042 (question 3),
+0045 (questions 3 and 7: whether anyone checked the Chinese, and how
+that is credited) and
 0043 (question 6) already fixed the in-game labels; this ticket doesn't
 reopen them.
 
@@ -42,7 +44,7 @@ publishing anything (0901, 0903 do that).
 
 Either order with the features: build each section so it shows only when
 the build has that thing (a voice manifest with `Generated` clips; a
-`Machine` pack). If voices or Japanese haven't landed, their section is
+`Machine` pack). If voices, Japanese or Chinese haven't landed, their section is
 simply absent.
 
 ## Implementation steps
@@ -62,7 +64,7 @@ simply absent.
    generated content" survey question (pre-generated: voices,
    translation, script; no live generation), and the matching short
    paragraph for the itch page, each listing only what the release
-   actually contains. Include the Japanese store text's note that the
+   actually contains. Include the Japanese and Chinese store texts' note that the
    translation is machine-made.
 3. 0901 and 0903 already say to use this file (their *Machine-made
    content* paragraphs). If either is done by now, its page needs the
