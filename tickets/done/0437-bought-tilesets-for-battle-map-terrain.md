@@ -258,8 +258,9 @@ Shores join, the road meets the bridge, the bridge runs across the river,
 woods and mountains clump, the walled room has its floor, rim and door,
 units stand on their tiles. Found by looking: range tints at the glyph
 look's 75% hide most of a tile's picture, and the cursor's thin corner
-marks are hard to see on grass. Both are as they were; Nick was sent the
-tint at 75%, 50% and 35%. Ticket 0444.
+marks are hard to see on grass. Both are as they were. Nick was sent the
+tint at 75%, 50% and 35% and answered on 2026-10-04: "75% looks ok"
+(recorded in `look-and-feel.md`). The cursor is ticket 0444.
 
 **For whoever merges second** (PR #198, ticket 0440, also rewrites
 `tiny_tales.ron` and moves `assets-private.rev`): after merging `main`, run
@@ -268,5 +269,7 @@ and `cargo xtask private-assets --pin` (ADR-0040 §3). The private
 repository's `main` now holds this ticket's file, which has no `walk:
 true`; the importer puts it back once 0440's code is in.
 
-**Gameplay rules decided:** none. **Follow-up tickets:** 0444 (range tints
-and the cursor on picture tiles).
+**Gameplay rules decided:** none. **Follow-up tickets:** 0444 (the cursor
+on picture tiles, if Nick wants it easier to see) and 0445 (the battle
+help bar: the danger-zone hint on the left, auto-end in a column with end
+turn; Nick asked for it on seeing this ticket's frames).
