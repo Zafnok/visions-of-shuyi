@@ -151,3 +151,57 @@ fn holding_confirm_plays_a_fast_fight_four_times_as_fast_not_eight() {
     h.hold("f", seconds / 16.0 + 0.1);
     assert!(!in_combat(&h));
 }
+
+/// An AI action's pan and mark are shortened by the player's speed, and
+/// held they play at ×4 in all, never more; the walk is the skin's.
+#[test]
+fn an_ai_actions_pacing_follows_the_speed_but_holds_at_four_times() {
+    use super::ai_phase::PACING;
+    let near = |a: f32, b: f32| (a - b).abs() < 1e-6;
+    let walk = (6.0, 12.0);
+    let normal = PACING.at_speed(1.0, walk);
+    assert!(near(normal.pan, 0.25) && near(normal.highlight, 0.2));
+    assert!(near(normal.fast, 4.0));
+    assert!(near(normal.walk_tiles_per_s, 6.0) && near(normal.held_walk_tiles_per_s, 12.0));
+    // Twice as fast: half the time, and holding doubles that again (×4).
+    let fast = PACING.at_speed(2.0, walk);
+    assert!(near(fast.pan, 0.125) && near(fast.highlight, 0.1));
+    assert!(near(fast.fast, 2.0));
+    assert!(near(fast.walk_tiles_per_s, 6.0) && near(fast.held_walk_tiles_per_s, 12.0));
+    // Already ×4: holding changes nothing.
+    let both = PACING.at_speed(4.0, (8.0, 12.0));
+    assert!(near(both.pan, 0.0625) && near(both.highlight, 0.05));
+    assert!(near(both.fast, 1.0));
+    assert!(near(both.walk_tiles_per_s, 8.0));
+    // Faster than ×4 (not offered today): holding never slows it down.
+    assert!(near(PACING.at_speed(8.0, walk).fast, 1.0));
+}
+
+/// The battle screen gives each AI action the pacing for the settings as
+/// they are when it starts.
+#[test]
+fn the_enemys_actions_get_the_pacing_of_the_players_speeds() {
+    let first_pan = |change: fn(&mut Settings)| {
+        let mut c = ctx();
+        c.change_settings(change).unwrap();
+        let mut s = BattleScreen::new(quick_battle(&c.content).unwrap());
+        let frame = |s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]| {
+            s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
+        };
+        frame(&mut s, &mut c, &[Action::EndTurn, Action::EndTurn]);
+        frame(&mut s, &mut c, &[Action::Confirm]);
+        let Mode::AiAction(action) = s.mode() else {
+            panic!("{:?}", s.mode());
+        };
+        action.pacing()
+    };
+    let normal = first_pan(|_| {});
+    assert_eq!(normal, super::ai_phase::PACING);
+    let fast = first_pan(|s| s.enemy_phase_speed = EnemyPhaseSpeed::Fast);
+    assert_eq!(fast, super::ai_phase::PACING.at_speed(2.0, (12.0, 48.0)));
+    let both = first_pan(|s| {
+        s.enemy_phase_speed = EnemyPhaseSpeed::Fast;
+        s.anim_speed = AnimSpeed::Fast;
+    });
+    assert_eq!(both, super::ai_phase::PACING.at_speed(4.0, (12.0, 48.0)));
+}

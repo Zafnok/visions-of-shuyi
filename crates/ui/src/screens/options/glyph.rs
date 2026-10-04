@@ -32,7 +32,8 @@ fn volume_text(level: u8, max: u8) -> String {
     let level = level.min(max);
     let per_cell = (max / VOLUME_BAR).max(1);
     let full = usize::from(level / per_cell).min(usize::from(VOLUME_BAR));
-    let half = usize::from(level % per_cell >= per_cell.div_ceil(2) && per_cell > 1);
+    // (A cell worth 1 has no half: its remainder is always 0.)
+    let half = usize::from(level % per_cell >= per_cell.div_ceil(2));
     let empty = usize::from(VOLUME_BAR).saturating_sub(full + half);
     let bar = ["█".repeat(full), "▒".repeat(half), "░".repeat(empty)].concat();
     format!("{bar} {level:>3}")

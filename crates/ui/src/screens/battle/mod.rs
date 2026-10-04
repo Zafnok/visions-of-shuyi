@@ -58,7 +58,7 @@ use trpg_core::{
     next_command,
 };
 
-use self::ai_phase::{AiAction, PACING, Pacing};
+use self::ai_phase::{AiAction, PACING};
 use self::banner::{Banner, BannerKind};
 
 use self::attack::{Targeting, aimed_first, aimed_options};
@@ -721,17 +721,7 @@ impl BattleScreen {
         self.camera.origin = from;
         self.cursor.jump(start);
         let then = std::mem::take(&mut self.mode);
-        // The pan and the mark play at the player's speeds, and with
-        // Confirm held at ×4 instead, not on top (`options.md`). The walk
-        // has its own speeds (`look-and-feel.md`).
-        let speed = self.ai_speed;
-        let pacing = Pacing {
-            pan: PACING.pan / speed,
-            highlight: PACING.highlight / speed,
-            fast: PACING.fast.max(speed) / speed,
-            walk_tiles_per_s: self.pace.0,
-            held_walk_tiles_per_s: self.pace.1,
-        };
+        let pacing = PACING.at_speed(self.ai_speed, self.pace);
         let action = AiAction::new(unit, before, (from, to), path, then, pacing);
         self.mode = Mode::AiAction(Box::new(action));
     }
@@ -1154,7 +1144,7 @@ impl BattleScreen {
     /// `docs/design/controls.md`): their clocks multiply a held frame by
     /// their own ×4, so the frame's time is divided by it first. A walk
     /// and an AI unit's action keep real time: their speeds were set when
-    /// they started (the walk's pace, the action's [`Pacing`]).
+    /// they started (the walk's pace, the action's [`ai_phase::Pacing`]).
     fn animate(&mut self, ctx: &mut Ctx, dt: f32, held: bool) {
         let ai = self.ai_phase();
         let settings = ctx.settings();
