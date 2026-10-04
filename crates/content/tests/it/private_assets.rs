@@ -90,3 +90,31 @@ fn the_bought_tiles_paint_every_look_a_map_can_name() {
         assert!(look.layers.len() >= 10, "look {name}");
     }
 }
+
+/// Every bought file in the build has a credit (ADR-0051), and the credits
+/// screen's list has the bought art's.
+#[test]
+fn every_bought_file_has_a_credit() {
+    use trpg_content::bundle::{PRIVATE_DISPLAY_ROOT, display_path, files_under};
+    use trpg_content::{CreditGroup, credits};
+
+    let mut bought = files_under("");
+    bought.retain(|p| display_path(p).starts_with(PRIVATE_DISPLAY_ROOT));
+    assert!(bought.len() > 10, "{bought:?}");
+    let file = credits::load_file().unwrap_or_default();
+    let uncredited = credits::uncredited(&file, &bought);
+    assert!(
+        uncredited.is_empty(),
+        "no entry of assets/data/credits.ron covers: {uncredited:?}"
+    );
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    let art: Vec<&str> = content
+        .credits
+        .in_group(CreditGroup::Art)
+        .map(|e| e.title.as_str())
+        .collect();
+    assert_eq!(art, ["Tiny Tales"]);
+}

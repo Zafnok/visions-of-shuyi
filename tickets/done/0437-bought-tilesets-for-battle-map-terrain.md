@@ -108,7 +108,11 @@ committed. Tell him plainly where a terrain has no good bought picture
    the mapping names, packs them into one PNG and writes the tileset RON
    into `assets-private/game/tilesets/`. The mapping file (which bought terrain
    stands for which of our terrain ids) is ours and may be committed: it
-   holds names and numbers, no art.
+   holds names and numbers, no art. Add the new files to the `private`
+   list of the bundle's credit in `assets/data/credits.ron`, the tileset
+   packs to its row in `THIRD_PARTY_ASSETS.md` and their artist to the
+   credit's `author` (ADR-0051: `cargo xtask private-assets --pin`
+   refuses bought files without a credit).
 5. **Mapping**, outdoor (`world-map`, Standard): `plain` grass, `road`
    dirt, `forest` the tree masses, `thicket` the darker tree masses,
    `mountain` and `peak` from `Set_F_Mountains`, `water` shallow and `sea`
@@ -191,6 +195,12 @@ committed. Tell him plainly where a terrain has no good bought picture
   the 209 tiles used into `tiny_tales.png` (256×224) and writes
   `tiny_tales.ron`. Pushed to the private repository (`8d62cf5`);
   `assets-private.rev` moved. The opt-in private test checks both looks.
+- **Credit** (ADR-0051, which landed while this was in review): the
+  packed image is in the bundle's credit (`assets/data/credits.ron`,
+  `private`), and its row in `THIRD_PARTY_ASSETS.md` names the *World Map*
+  and *Dungeons* tilesets. Their artist, Rayane Félix, was already in the
+  credit's author line. `private-assets --pin` and the private test's
+  `every_bought_file_has_a_credit` pass.
 - **Public fixture**: `assets/tilesets/test_auto.{png,ron}` from
   `cargo xtask test-tileset`: 16×16 tiles, lines round the water and the
   woods as corner layers, a framed fort, a bridge that turns, an indoor

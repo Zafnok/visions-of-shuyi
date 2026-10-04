@@ -1,8 +1,12 @@
 //! The credits (ticket 0808; `docs/design/audio.md` rule 3): every
 //! third-party work the game uses, for the credits screen. Music and sounds
 //! are credited in the audio manifest ([`crate::audio`]); everything else
-//! (the font, vendored software) in `assets/data/credits.ron`. [`load`]
-//! merges the two into one list, so nothing is typed twice.
+//! (the font, bought art, vendored software) in `assets/data/credits.ron`.
+//! [`load`] merges the two into one list, so nothing is typed twice.
+//!
+//! A bought work (ADR-0032) names the folders of `assets-private/game/` it
+//! covers (ADR-0051). It is shown only in a build that has files there, and
+//! [`uncredited`] finds the bought files no credit covers.
 
 use std::collections::BTreeSet;
 
@@ -17,8 +21,8 @@ use crate::terrain::line_of;
 /// Path of the credits file inside the asset bundle.
 pub const CREDITS_PATH: &str = "data/credits.ron";
 
-/// Licenses an entry of the credits file may have: ADR-0013's code and
-/// font lists.
+/// Licenses an entry of the credits file may have, unless it is a bought
+/// work ([`FileCredit::private`]): ADR-0013's code and font lists.
 pub const LICENSES: [&str; 15] = [
     "MIT",
     "MIT-0",
@@ -45,6 +49,8 @@ pub enum CreditGroup {
     Music,
     /// Sound effects (from the audio manifest's sound cues).
     SoundEffects,
+    /// Pictures: portraits, sprites, tiles.
+    Art,
     /// Fonts.
     Fonts,
     /// Vendored code and data tables.
@@ -53,7 +59,13 @@ pub enum CreditGroup {
 
 impl CreditGroup {
     /// Every group, in display order.
-    pub const ALL: [Self; 4] = [Self::Music, Self::SoundEffects, Self::Fonts, Self::Software];
+    pub const ALL: [Self; 5] = [
+        Self::Music,
+        Self::SoundEffects,
+        Self::Art,
+        Self::Fonts,
+        Self::Software,
+    ];
 
     /// Whether the group's credits come from the audio manifest, so the
     /// credits file may not use it.
@@ -76,11 +88,45 @@ pub struct FileCredit {
     pub author: String,
     /// The page it came from: the link in its `THIRD_PARTY_ASSETS.md` row.
     pub source: String,
-    /// One of [`LICENSES`].
+    /// One of [`LICENSES`]; for a bought work, `Custom (<seller>)`.
     pub license: String,
     /// Kept off the credits screen: plumbing the player never sees.
     #[serde(default)]
     pub hidden: bool,
+    /// For a bought work (ADR-0032): the files of `assets-private/game/`
+    /// it covers, each a path there or the start of one (`units/`). Empty
+    /// for any other work.
+    #[serde(default)]
+    pub private: Vec<String>,
+}
+
+impl FileCredit {
+    /// Whether the credit covers the bought file at `path` (relative to
+    /// `assets-private/game/`).
+    pub fn covers(&self, path: &str) -> bool {
+        self.private.iter().any(|p| path.starts_with(p.as_str()))
+    }
+}
+
+/// The note in the root of `assets-private/game/`: ours, so it needs no
+/// credit.
+const PRIVATE_README: &str = "README.md";
+
+/// Whether `license` is how a bought work's is written: `Custom (<seller>)`.
+fn is_custom(license: &str) -> bool {
+    let seller = license
+        .strip_prefix("Custom (")
+        .and_then(|rest| rest.strip_suffix(')'));
+    seller.is_some_and(|s| !s.trim().is_empty())
+}
+
+/// The bought files among `paths` (relative to `assets-private/game/`)
+/// that no credit of `file` covers. Each needs one before it ships
+/// (ADR-0051).
+pub fn uncredited<'a>(file: &CreditsFile, paths: &[&'a str]) -> Vec<&'a str> {
+    let covered = |path: &str| file.credits.iter().any(|c| c.covers(path));
+    let needs_one = paths.iter().filter(|p| **p != PRIVATE_README);
+    needs_one.copied().filter(|p| !covered(p)).collect()
 }
 
 #[derive(Deserialize)]
@@ -138,11 +184,15 @@ pub fn load_file() -> Result<CreditsFile, Vec<ContentError>> {
     from_source(&display, source)
 }
 
-/// Loads the embedded credits file and merges it with `audio`'s credits.
-/// Without the manifest (it failed to load) the list has no audio credits.
+/// Loads the embedded credits file and merges it with `audio`'s credits
+/// and the bought files this build has. Without the manifest (it failed to
+/// load) the list has no audio credits.
 pub fn load(audio: Option<&AudioManifest>) -> Result<Credits, Vec<ContentError>> {
     let file = load_file()?;
-    Ok(merge(&file, audio.unwrap_or(&AudioManifest::default())))
+    let mut bought = bundle::files_under("");
+    bought.retain(|p| bundle::display_path(p).starts_with(bundle::PRIVATE_DISPLAY_ROOT));
+    let no_audio = AudioManifest::default();
+    Ok(merge(&file, audio.unwrap_or(&no_audio), &bought))
 }
 
 /// Parses and validates credits `source`, attributing errors to `file`.
@@ -180,12 +230,27 @@ pub fn from_source(file: &str, source: &str) -> Result<CreditsFile, Vec<ContentE
         if !c.source.starts_with("https://") && !c.source.starts_with("http://") {
             err("source must be a web link (http:// or https://)".into());
         }
-        if !LICENSES.contains(&c.license.as_str()) {
+        if !c.private.is_empty() {
+            if !is_custom(&c.license) {
+                err(format!(
+                    "license \"{}\": a bought work's is written \"Custom (<seller>)\"",
+                    c.license
+                ));
+            }
+        } else if !LICENSES.contains(&c.license.as_str()) {
             err(format!(
                 "license \"{}\" is not allowed (ADR-0013: {})",
                 c.license,
                 LICENSES.join(", ")
             ));
+        }
+        for path in &c.private {
+            if path.is_empty() || path.starts_with('/') {
+                err(format!(
+                    "private path \"{path}\" must be a path inside {}/",
+                    bundle::PRIVATE_DISPLAY_ROOT
+                ));
+            }
         }
     }
     if errors.is_empty() {
@@ -200,8 +265,10 @@ pub fn from_source(file: &str, source: &str) -> Result<CreditsFile, Vec<ContentE
 /// The credits the screen shows: the third-party works `audio`'s music
 /// cues name, then those its sound cues name (each once, by title; a work
 /// used for both counts as music), then `file`'s entries that aren't
-/// hidden. Our own work ([`audio::OWN`]) isn't listed.
-pub fn merge(file: &CreditsFile, audio: &AudioManifest) -> Credits {
+/// hidden. Our own work ([`audio::OWN`]) isn't listed, and a bought work
+/// only when one of `bought` (the build's files from
+/// `assets-private/game/`) is its: a build without the art doesn't use it.
+pub fn merge(file: &CreditsFile, audio: &AudioManifest, bought: &[&str]) -> Credits {
     let music = audio.music.values().map(|m| &m.credit);
     let sounds = audio.sounds.values().map(|s| &s.credit);
     let mut seen = BTreeSet::new();
@@ -227,7 +294,8 @@ pub fn merge(file: &CreditsFile, audio: &AudioManifest) -> Credits {
         }
         entries[from..].sort_by_key(|e| e.title.to_lowercase());
     }
-    let shown = file.credits.iter().filter(|c| !c.hidden);
+    let in_build = |c: &FileCredit| c.private.is_empty() || bought.iter().any(|p| c.covers(p));
+    let shown = file.credits.iter().filter(|c| !c.hidden && in_build(c));
     entries.extend(shown.map(|c| CreditEntry {
         group: c.group,
         title: c.title.clone(),
@@ -387,21 +455,24 @@ mod tests {
             ["c.ron:2: credit \"font\": SoundEffects credits go in assets/audio/audio.ron"]
         );
         let audio: Vec<bool> = CreditGroup::ALL.iter().map(|g| g.is_audio()).collect();
-        assert_eq!(audio, [true, true, false, false]);
+        assert_eq!(audio, [true, true, false, false, false]);
     }
 
     #[test]
     fn syntax_and_unknown_fields_are_refused() {
         assert_eq!(errors("(credits: [").len(), 1);
         assert_eq!(errors(&FILE.replace("hidden: true", "hide: true")).len(), 1);
-        assert_eq!(errors(&FILE.replace("group: Fonts", "group: Art")).len(), 1);
+        assert_eq!(
+            errors(&FILE.replace("group: Fonts", "group: Pics")).len(),
+            1
+        );
     }
 
     #[test]
     fn merging_groups_sorts_and_drops_what_is_not_shown() {
         use CreditGroup::{Fonts, Music, Software, SoundEffects};
         let file = from_source("c.ron", FILE).unwrap_or_default();
-        let credits = merge(&file, &manifest());
+        let credits = merge(&file, &manifest(), &[]);
         // Music by title whatever its case, each work once; a work used by
         // a track and a sound is music; ours, the unused credit, the
         // unknown id and the hidden entry aren't shown.
@@ -441,11 +512,105 @@ mod tests {
             (id: "f", group: Fonts, title: "Font", author: "a", source: "https://f", license: "MIT"),
         ])"#;
         let file = from_source("c.ron", source).unwrap_or_default();
-        let credits = merge(&file, &AudioManifest::default());
+        let credits = merge(&file, &AudioManifest::default(), &[]);
         assert_eq!(
             shown(&credits),
             [(Fonts, "Font"), (Software, "Zed"), (Software, "Bee")]
         );
+    }
+
+    /// [`FILE`] with a bought pack between the font and the loader.
+    fn with_bought() -> String {
+        let pack = r#"    (id: "pack", group: Art, title: "Pack", author: "Dee",
+     source: "https://example.org/pack", license: "Custom (Dee)",
+     private: ["units/", "tilesets/pack.ron"]),
+    (id: "loader""#;
+        FILE.replace(r#"    (id: "loader""#, pack)
+    }
+
+    #[test]
+    fn a_bought_work_names_its_private_files_and_its_sellers_license() {
+        let file = from_source("c.ron", &with_bought()).unwrap_or_default();
+        assert_eq!(file.credits[1].private, ["units/", "tilesets/pack.ron"]);
+        assert_eq!(file.credits[1].group, CreditGroup::Art);
+        assert!(file.credits[0].private.is_empty());
+        // An open licence isn't a bought work's, and a custom one is only
+        // a bought work's.
+        for bad in [
+            "MIT",
+            "Custom",
+            "Custom ()",
+            "Custom ( )",
+            "Custom (Dee",
+            "(Dee)",
+        ] {
+            assert_eq!(
+                errors(&with_bought().replace("Custom (Dee)", bad)),
+                [format!(
+                    "c.ron:4: credit \"pack\": license \"{bad}\": a bought work's is written \
+                     \"Custom (<seller>)\""
+                )]
+            );
+        }
+        let custom = FILE.replace("\"Zlib\"", "\"Custom (Cy)\"");
+        assert_eq!(errors(&custom).len(), 1);
+        assert!(errors(&custom)[0].contains("is not allowed (ADR-0013: "));
+        for bad in ["", "/units/"] {
+            assert_eq!(
+                errors(&with_bought().replace("\"units/\"", &format!("\"{bad}\""))),
+                [format!(
+                    "c.ron:4: credit \"pack\": private path \"{bad}\" must be a path inside \
+                     assets-private/game/"
+                )]
+            );
+        }
+    }
+
+    #[test]
+    fn a_credit_covers_the_files_under_its_private_paths() {
+        let file = from_source("c.ron", &with_bought()).unwrap_or_default();
+        let pack = &file.credits[1];
+        assert!(pack.covers("units/a.png"));
+        assert!(pack.covers("tilesets/pack.ron"));
+        assert!(!pack.covers("tilesets/other.ron"));
+        assert!(!pack.covers("portraits/units/a.png"));
+        assert!(!file.credits[0].covers("units/a.png"));
+        let paths = [
+            "README.md",
+            "portraits/README.md",
+            "portraits/a.png",
+            "tilesets/pack.ron",
+            "units/a.png",
+        ];
+        assert_eq!(
+            uncredited(&file, &paths),
+            ["portraits/README.md", "portraits/a.png"]
+        );
+        assert_eq!(
+            uncredited(&CreditsFile::default(), &paths),
+            paths[1..].to_vec()
+        );
+        assert!(uncredited(&file, &[]).is_empty());
+    }
+
+    #[test]
+    fn a_bought_work_is_shown_only_in_a_build_that_has_its_files() {
+        use CreditGroup::{Art, Fonts, Software};
+        let file = from_source("c.ron", &with_bought()).unwrap_or_default();
+        let none = AudioManifest::default();
+        let without = [(Fonts, "A Font"), (Software, "Table")];
+        assert_eq!(shown(&merge(&file, &none, &[])), without);
+        assert_eq!(shown(&merge(&file, &none, &["portraits/a.png"])), without);
+        let with = merge(&file, &none, &["portraits/a.png", "units/a.png"]);
+        assert_eq!(
+            shown(&with),
+            [(Art, "Pack"), (Fonts, "A Font"), (Software, "Table")]
+        );
+        assert_eq!(with.entries[0].license, "Custom (Dee)");
+        // Hidden stays hidden, with its files or not.
+        let hidden = with_bought().replace("private: [", "hidden: true, private: [");
+        let file = from_source("c.ron", &hidden).unwrap_or_default();
+        assert_eq!(shown(&merge(&file, &none, &["units/a.png"])), without);
     }
 
     #[test]
@@ -477,6 +642,19 @@ mod tests {
             .map(|e| e.title.as_str())
             .collect();
         assert_eq!(fonts, ["Terminus Font"]);
+        // The bought art is credited in the file, and shown only in a build
+        // that has it: never in a gate (ADR-0040).
+        let file = file.unwrap_or_default();
+        let bought: Vec<&FileCredit> = file
+            .credits
+            .iter()
+            .filter(|c| !c.private.is_empty())
+            .collect();
+        assert_eq!(bought.len(), 1);
+        assert_eq!(bought[0].group, CreditGroup::Art);
+        assert!(bought[0].covers("units/witch.png"));
+        #[cfg(not(feature = "private-assets"))]
+        assert_eq!(credits.in_group(CreditGroup::Art).count(), 0);
         // Without the manifest: the file's entries alone.
         let alone = load(None).unwrap_or_default();
         assert!(!alone.entries.is_empty());
@@ -532,7 +710,8 @@ mod tests {
             no_row.is_empty(),
             "credited but not in THIRD_PARTY_ASSETS.md: {no_row:?}"
         );
-        // Hidden entries are software only: every font is shown.
+        // Hidden entries are software only: every font and picture is
+        // shown.
         for c in file.credits.iter().filter(|c| c.hidden) {
             assert_eq!(c.group, CreditGroup::Software, "{} is hidden", c.id);
         }
