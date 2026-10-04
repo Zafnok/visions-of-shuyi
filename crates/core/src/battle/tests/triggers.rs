@@ -42,8 +42,34 @@ fn trigger(when: TriggerWhen, scene: &str, once: bool) -> Trigger {
     }
 }
 
+/// The event of scene `name`, with nobody named as present (compare
+/// with [`bare`] events).
 fn scene(name: &str) -> Event {
-    Event::SceneTriggered { scene: name.into() }
+    Event::SceneTriggered {
+        scene: name.into(),
+        present: BTreeSet::new(),
+    }
+}
+
+/// `events` with nobody named as present in their scenes: for the tests
+/// of which scenes fire and when.
+fn bare(events: &[Event]) -> Vec<Event> {
+    let bare = |e: &Event| match e {
+        Event::SceneTriggered { scene: name, .. } => scene(name),
+        other => other.clone(),
+    };
+    events.iter().map(bare).collect()
+}
+
+/// Who each scene in `events` names as present, in order.
+fn casts(events: &[Event]) -> Vec<Vec<CharacterId>> {
+    events
+        .iter()
+        .filter_map(|e| match e {
+            Event::SceneTriggered { present, .. } => Some(present.iter().cloned().collect()),
+            _ => None,
+        })
+        .collect()
 }
 
 /// A battle of `units` with `triggers` (in Classic).
@@ -59,7 +85,7 @@ fn scenes(events: &[Event]) -> Vec<&str> {
     events
         .iter()
         .filter_map(|e| match e {
-            Event::SceneTriggered { scene } => Some(scene.as_str()),
+            Event::SceneTriggered { scene, .. } => Some(scene.as_str()),
             _ => None,
         })
         .collect()
@@ -70,6 +96,10 @@ fn combat_start(unit: u32, against: Option<u32>) -> TriggerWhen {
         unit: c(unit),
         against: against.map(c),
     }
+}
+
+fn turn_start(turn: Turn, phase: Phase) -> TriggerWhen {
+    TriggerWhen::TurnStart { turn, phase }
 }
 
 fn talk(a: u32, b: u32) -> TriggerWhen {
@@ -91,12 +121,12 @@ fn a_turn_start_scene_follows_its_phase_start_the_first_one_included() {
         ..setup(cast_named())
     };
     let (mut s, events) = BattleState::new(setup);
-    assert_eq!(events, [started(1, Phase::Player), scene("opening")]);
+    assert_eq!(bare(&events), [started(1, Phase::Player), scene("opening")]);
     assert_eq!(end(&mut s), [started(1, Phase::Enemy)]);
     assert_eq!(end(&mut s), [started(2, Phase::Player)]);
     // Two at once: in list order.
     assert_eq!(
-        end(&mut s),
+        bare(&end(&mut s)),
         [
             started(2, Phase::Enemy),
             scene("enemy_2"),
@@ -134,7 +164,7 @@ fn entering_an_area_fires_after_the_move_that_ends_in_it() {
     // Unit 2 ends in it: the player one, right after the move.
     let events = act(&mut s, 2, p(1, 1), UnitAction::Wait);
     assert_eq!(
-        events[1..],
+        bare(&events)[1..],
         [scene("player_in"), Event::UnitActed { unit: UnitId(2) }]
     );
     end(&mut s);
@@ -194,7 +224,7 @@ fn a_combat_start_scene_plays_before_the_combat_attacked_or_attacking() {
         .iter()
         .position(|e| matches!(e, Event::CombatResolved { .. }))
         .unwrap();
-    assert_eq!(events[at - 1], scene("engage"));
+    assert_eq!(bare(&events)[at - 1], scene("engage"));
     assert_eq!(scenes(&events), ["engage"]);
     // Once per battle: not against unit 2, nor when unit 3 attacks back.
     assert!(scenes(&act(&mut s, 2, p(2, 1), attack(3))).is_empty());
@@ -316,7 +346,7 @@ fn the_half_hp_line_plays_after_the_combat_that_brings_it_to_half() {
         .iter()
         .position(|e| matches!(e, Event::CombatResolved { .. }))
         .unwrap();
-    assert_eq!(events[at + 1], scene("half"));
+    assert_eq!(bare(&events)[at + 1], scene("half"));
     assert_eq!(scenes(&events), ["half"]);
     // Once: 4 → 1 plays nothing; the lord (10 → 4 by now) gets its own.
     end(&mut s);
@@ -368,7 +398,7 @@ fn a_death_quote_plays_just_before_the_fall() {
         .iter()
         .position(|e| *e == Event::UnitFell { unit: UnitId(3) })
         .unwrap();
-    assert_eq!(events[at - 1], scene("last_words"));
+    assert_eq!(bare(&events)[at - 1], scene("last_words"));
     assert_eq!(scenes(&events), ["last_words"]);
     assert!(s.recruited().is_empty());
 }
@@ -381,7 +411,7 @@ fn an_enemy_that_joins_if_defeated_is_recruited_as_it_falls() {
         .iter()
         .position(|e| *e == Event::UnitFell { unit: UnitId(3) })
         .unwrap();
-    assert_eq!(events[at - 1], scene("yields"));
+    assert_eq!(bare(&events)[at - 1], scene("yields"));
     assert_eq!(events[at + 1], Event::UnitRecruited { unit: UnitId(3) });
     let ids: Vec<UnitId> = s.recruited().iter().map(|u| u.id).collect();
     assert_eq!(ids, [UnitId(3)]);
@@ -414,7 +444,7 @@ fn a_fallen_player_unit_plays_its_line_for_the_mode() {
         assert_eq!(tail[1], Event::UnitFell { unit: UnitId(1) });
         assert_eq!(tail[3], ended(Outcome::Defeat));
         match &tail[0] {
-            Event::SceneTriggered { scene } => scene.clone(),
+            Event::SceneTriggered { scene, .. } => scene.clone(),
             other => panic!("{other:?}"),
         }
     };
@@ -467,7 +497,7 @@ fn talk_targets_are_adjacent_units_with_an_unfired_talk_either_way() {
 fn talking_is_free_the_unit_stays_ready_where_it_was() {
     let mut s = talkers();
     let events = s.apply(&talk_cmd(1, p(1, 0), 3)).unwrap();
-    assert_eq!(events, [scene("parley")]);
+    assert_eq!(bare(&events), [scene("parley")]);
     let lord = s.unit(UnitId(1)).unwrap();
     assert_eq!((lord.pos, lord.acted), (p(0, 0), false));
     assert!(s.has_fired(0));
@@ -484,8 +514,14 @@ fn talking_is_free_the_unit_stays_ready_where_it_was() {
 #[test]
 fn a_talk_that_isnt_once_may_repeat() {
     let mut s = talkers();
-    assert_eq!(s.apply(&talk_cmd(2, p(0, 1), 1)).unwrap(), [scene("chat")]);
-    assert_eq!(s.apply(&talk_cmd(1, p(0, 1), 2)).unwrap(), [scene("chat")]);
+    assert_eq!(
+        bare(&s.apply(&talk_cmd(2, p(0, 1), 1)).unwrap()),
+        [scene("chat")]
+    );
+    assert_eq!(
+        bare(&s.apply(&talk_cmd(1, p(0, 1), 2)).unwrap()),
+        [scene("chat")]
+    );
     assert!(!s.has_fired(1));
     assert!(!events_gain_exp(
         &s.apply(&talk_cmd(2, p(0, 1), 1)).unwrap()
@@ -663,4 +699,74 @@ fn a_tile_rect_holds_its_tiles_only() {
     for out in [p(0, 2), p(3, 2), p(1, 1), p(1, 3)] {
         assert!(!r.contains(out), "{out:?}");
     }
+}
+
+// ---- Who is on the map when a scene fires -------------------------------------
+
+/// A scene names the characters on the map at its moment: a unit is still
+/// there for the scene before its combat and for its own last words, and
+/// gone for every scene after its fall. Units without a character aren't
+/// named.
+#[test]
+fn a_scene_names_the_characters_on_the_map_at_its_moment() {
+    let mut units = strong();
+    units[3].character = None;
+    let mut s = triggered(
+        units,
+        vec![
+            trigger(combat_start(3, None), "engage", true),
+            trigger(fell(3, None, false), "last_words", true),
+            trigger(turn_start(1, Phase::Enemy), "after", true),
+        ],
+    );
+    let events = act(&mut s, 1, p(1, 0), attack(3));
+    assert_eq!(scenes(&events), ["engage", "last_words"]);
+    let all = vec![c(1), c(2), c(3)];
+    assert_eq!(casts(&events), [all.clone(), all]);
+    assert!(s.unit(UnitId(3)).is_none(), "it fell");
+    let events = end(&mut s);
+    assert_eq!(scenes(&events), ["after"]);
+    assert_eq!(casts(&events), [vec![c(1), c(2)]]);
+}
+
+/// A talk's scene names them too.
+#[test]
+fn a_talks_scene_names_the_characters_on_the_map() {
+    let mut s = triggered(near(), vec![trigger(talk(1, 2), "chat", true)]);
+    let events = s.apply(&talk_cmd(1, p(0, 1), 2)).unwrap();
+    assert_eq!(casts(&events), [vec![c(1), c(2), c(3), c(4)]]);
+}
+
+/// A reinforcement is there for the scenes after it arrives.
+#[test]
+fn an_arrival_is_named_from_its_arrival_on() {
+    let mut s = start(BattleSetup {
+        reinforcements: vec![Reinforcement {
+            turn: 1,
+            unit: named(unit(9, Faction::Enemy, p(5, 4))),
+        }],
+        triggers: vec![trigger(turn_start(1, Phase::Enemy), "arrived", true)],
+        ..setup(cast_named())
+    });
+    let events = end(&mut s);
+    assert_eq!(casts(&events), [vec![c(1), c(2), c(3), c(4), c(9)]]);
+}
+
+/// The units on the map before a command's events: those that fell in
+/// them are back, those that arrived in them aren't there yet.
+#[test]
+fn the_units_before_a_commands_events() {
+    let mut s = triggered(strong(), vec![]);
+    act(&mut s, 1, p(1, 0), attack(3));
+    let ids = |s: &BattleState, events: &[Event]| -> Vec<u32> {
+        s.on_map_before(events).iter().map(|u| u.0).collect()
+    };
+    assert_eq!(ids(&s, &[]), [1, 2, 4]);
+    let fell = Event::UnitFell { unit: UnitId(3) };
+    assert_eq!(ids(&s, std::slice::from_ref(&fell)), [1, 2, 3, 4]);
+    let arrived = Event::UnitsArrived {
+        units: vec![UnitId(2), UnitId(3)],
+    };
+    // Arrived, then fell, in one command: not there before it.
+    assert_eq!(ids(&s, &[arrived, fell]), [1, 4]);
 }

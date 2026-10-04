@@ -7,7 +7,7 @@
 //! While the lead's replies are up, the text box grows upward to list them
 //! under the line being answered (Nick, 0708: like Stardew Valley).
 
-use trpg_content::{MusicLine, Names, Scene, Side};
+use trpg_content::{MusicLine, Names, Present, Scene, Side};
 use trpg_core::{LEAD_ID, LeadProfile};
 
 use crate::audio::MenuSound;
@@ -78,11 +78,11 @@ impl DialogueScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "dialogue";
 
-    /// `scene` full-screen, with `lead`'s name and pronouns and the names
-    /// from `names`.
-    pub fn new(scene: Scene, lead: LeadProfile, names: Names) -> Self {
+    /// `scene` full-screen, as it plays for those `present` (ADR-0055),
+    /// with `lead`'s name and pronouns and the names from `names`.
+    pub fn new(scene: &Scene, lead: LeadProfile, names: Names, present: &Present) -> Self {
         let mut screen = Self {
-            player: DialoguePlayer::new(scene, lead, names),
+            player: DialoguePlayer::new(scene, lead, names, present),
             overlay: false,
             lines: Vec::new(),
             page: 0,
@@ -96,11 +96,17 @@ impl DialogueScreen {
     }
 
     /// `scene` drawn over the screen below (the battle map).
-    pub fn overlay(scene: Scene, lead: LeadProfile, names: Names) -> Self {
+    pub fn overlay(scene: &Scene, lead: LeadProfile, names: Names, present: &Present) -> Self {
         Self {
             overlay: true,
-            ..Self::new(scene, lead, names)
+            ..Self::new(scene, lead, names, present)
         }
+    }
+
+    /// Whether the scene has anything to say for those present. One that
+    /// hasn't isn't worth showing: its callers go on to what follows it.
+    pub fn has_text(&self) -> bool {
+        self.player.scene().has_text()
     }
 
     /// The scene being played.

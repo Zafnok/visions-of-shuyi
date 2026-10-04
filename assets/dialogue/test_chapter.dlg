@@ -1,6 +1,9 @@
 # PLACEHOLDER scenes of the test chapter (chapters/test.ron, ticket 0801),
 # which New Game plays until Chapter 1 exists (0803). The intro uses the
-# lead's name and pronoun tokens.
+# lead's name and pronoun tokens. The knight can die in the battle in
+# Classic, so in the victory scene their lines are in an @if block (0715),
+# with another line for when they did. Nobody can be gone in the first
+# chapter's intro.
 
 @scene test_intro
 @caption Test Field, morning
@@ -13,6 +16,11 @@ test_knight: Take it before the brigand does.
 
 @scene test_victory
 @left  lead happy
+@if test_knight
 @right test_knight happy
 test_knight: The fort is ours, {lead}. Well done.
+@right clear
+@else
+> The fort is taken. Nobody is left to tell {lead} well done.
+@endif
 @end

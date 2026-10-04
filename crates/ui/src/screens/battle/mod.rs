@@ -49,7 +49,7 @@ pub mod units;
 pub mod walk;
 
 use std::collections::VecDeque;
-use trpg_content::{Content, MapLook, TipTrigger, battle_campaign};
+use trpg_content::{Content, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
@@ -67,7 +67,7 @@ use self::cursor::Cursor;
 use self::event_sounds::CueQueue;
 use self::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
 use self::mode::{Effect, MenuEntry, Mode, Selection};
-use self::playback::{Playback, TIMINGS};
+use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{RewindEffect, RewindScreen};
 use self::tips::TipState;
@@ -205,9 +205,9 @@ pub enum Queued {
     Notes,
     /// A phase or outcome banner.
     Banner(Banner),
-    /// A scene a trigger fired, by id: played as a [`DialogueScreen`]
-    /// overlay.
-    Scene(String),
+    /// A scene a trigger fired: played as a [`DialogueScreen`] overlay,
+    /// for those on the map when it fired.
+    Scene(SceneCue),
 }
 
 /// Why the battle screen closes before the battle is over.
@@ -353,7 +353,7 @@ impl BattleScreen {
             screen.queue.push_back(Queued::Notes);
         }
         screen.queue.extend(events.iter().filter_map(|e| match e {
-            Event::SceneTriggered { scene } => Some(Queued::Scene(scene.clone())),
+            Event::SceneTriggered { .. } => SceneCue::of(e).map(Queued::Scene),
             _ => Banner::for_event(e).map(Queued::Banner),
         }));
         screen
@@ -376,7 +376,7 @@ impl BattleScreen {
             return None;
         }
         match self.queue.front() {
-            Some(Queued::Scene(id)) => Some(id),
+            Some(Queued::Scene(cue)) => Some(&cue.id),
             _ => None,
         }
     }
@@ -710,19 +710,25 @@ impl BattleScreen {
     }
 
     /// The scene to play now, taken from the combat's playback where its
-    /// clock has stopped, or from the front of the queue. A scene missing
-    /// from the content (validation rules it out) is dropped.
-    fn next_scene(&mut self, ctx: &Ctx) -> Option<trpg_content::Scene> {
-        let id = if let Mode::Combat(pb) = &mut self.mode {
+    /// clock has stopped, or from the front of the queue, as the overlay
+    /// that plays it for those on the map when it fired (ADR-0055): a
+    /// character whose unit had fallen by then isn't there. A scene
+    /// missing from the content (validation rules it out) is dropped, and
+    /// so is one with nothing to say for them.
+    fn next_scene(&mut self, ctx: &Ctx) -> Option<DialogueScreen> {
+        let cue = if let Mode::Combat(pb) = &mut self.mode {
             pb.take_scene()?
         } else {
             self.queued_scene()?;
             match self.queue.pop_front() {
-                Some(Queued::Scene(id)) => id,
+                Some(Queued::Scene(cue)) => cue,
                 _ => return None,
             }
         };
-        ctx.content.dialogue.get(&id).cloned()
+        let scene = ctx.content.dialogue.get(&cue.id)?;
+        let (lead, names) = (ctx.lead.clone(), ctx.content.names.clone());
+        let screen = DialogueScreen::overlay(scene, lead, names, &Present::Only(cue.present));
+        screen.has_text().then_some(screen)
     }
 
     /// With auto-end on, ends the player phase once the screen is back to
@@ -888,9 +894,7 @@ impl BattleScreen {
             self.note_level_ups(events);
             let in_playback = playback.is_some();
             self.queue.extend(events.iter().filter_map(|e| match e {
-                Event::SceneTriggered { scene } if !in_playback => {
-                    Some(Queued::Scene(scene.clone()))
-                }
+                Event::SceneTriggered { .. } if !in_playback => SceneCue::of(e).map(Queued::Scene),
                 _ => Banner::for_event(e).map(Queued::Banner),
             }));
             self.popups.extend(events.iter().filter_map(|e| match *e {
@@ -1904,11 +1908,7 @@ impl Screen for BattleScreen {
             }
         }
         if let Some(scene) = self.next_scene(ctx) {
-            return Transition::Push(Box::new(DialogueScreen::overlay(
-                scene,
-                ctx.lead.clone(),
-                ctx.content.names.clone(),
-            )));
+            return Transition::Push(Box::new(scene));
         }
         self.check_auto_end();
         self.drive_ai(ctx);

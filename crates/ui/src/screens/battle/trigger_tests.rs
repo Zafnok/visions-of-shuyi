@@ -456,3 +456,93 @@ fn the_rewind_list_names_a_talk() {
         "Turn 1 · Test Lord talked to Test Rogue"
     );
 }
+
+// ---- Who a scene plays for (0715) ----------------------------------------------
+
+/// One line if the rogue is on the map, another if it isn't; and a scene
+/// with lines only for the rogue.
+const WHO: &str = "\
+@scene who
+@if test_rogue
+> The rogue is watching.
+@else
+> Nobody is watching.
+@endif
+@end
+
+@scene only_the_rogue
+@if test_rogue
+> The rogue again.
+@endif
+@end
+";
+
+/// Acceptance (0715): a trigger's scene plays for the characters on the
+/// map when it fired. Before the combat that fells the rogue it is still
+/// there, though the battle has it fallen already; in every scene after,
+/// it is gone, and a scene with lines only for it isn't played at all.
+#[test]
+fn a_scene_plays_for_those_on_the_map_when_it_fired() {
+    let mut c = ctx();
+    let scenes = trpg_content::dialogue::from_sources(&[("t.dlg", WHO)], None, None, None, None)
+        .unwrap_or_else(|e| panic!("{e:?}"));
+    c.content.dialogue.scenes.extend(scenes.scenes);
+    let trigger = |when, scene: &str| Trigger {
+        when,
+        scene: scene.into(),
+        once: true,
+    };
+    let enemy_phase = TriggerWhen::TurnStart {
+        turn: 1,
+        phase: Phase::Enemy,
+    };
+    let engaged = TriggerWhen::CombatStart {
+        unit: CharacterId("test_lord".into()),
+        against: None,
+    };
+    let setup = BattleSetup {
+        triggers: vec![
+            trigger(engaged, "who"),
+            trigger(enemy_phase.clone(), "only_the_rogue"),
+            trigger(enemy_phase, "who"),
+        ],
+        ..rogue_setup(&c, 1)
+    };
+    let mut s = BattleScreen::new(BattleState::new(setup).0);
+    let text = |scene: Option<DialogueScreen>| {
+        let scene = scene.unwrap_or_else(|| panic!("no scene"));
+        scene.player().current().text.map(String::from)
+    };
+    s.apply(&Command::Act {
+        unit: UnitId(1),
+        dest: Pos::new(3, 5),
+        action: trpg_core::UnitAction::Attack {
+            target: UnitId(7),
+            slot: 0,
+            active: None,
+            art: None,
+        },
+    });
+    assert!(s.state().unit(UnitId(7)).is_none(), "the rogue fell");
+    assert_eq!(
+        text(s.next_scene(&c)).as_deref(),
+        Some("The rogue is watching.")
+    );
+    // The combat and the EXP bar play out.
+    for _ in 0..10 {
+        frame(&mut s, &mut c, &[], 5.0);
+    }
+    assert!(!s.playing() && s.progress().is_none());
+    s.apply(&Command::EndPhase);
+    assert!(s.banner().is_some());
+    s.queue.pop_front();
+    // The scene with lines only for the rogue is taken and dropped.
+    assert_eq!(s.queued_scene(), Some("only_the_rogue"));
+    assert!(s.next_scene(&c).is_none());
+    assert_eq!(s.queued_scene(), Some("who"));
+    assert_eq!(
+        text(s.next_scene(&c)).as_deref(),
+        Some("Nobody is watching.")
+    );
+    assert_eq!(s.queued_scene(), None);
+}

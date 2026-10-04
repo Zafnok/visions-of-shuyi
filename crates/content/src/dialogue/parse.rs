@@ -1,5 +1,6 @@
 //! The `.dlg` parser: lines → scenes. Reports syntax and structure errors
-//! (unknown directives, bad ids, missing `@end`, non-ASCII text); checks
+//! (unknown directives, bad ids, missing `@end`, blocks left open, non-ASCII
+//! text); checks
 //! that need the whole scene or other files are in `check`.
 
 use trpg_core::CharacterId;
@@ -16,34 +17,62 @@ pub struct ParsedScene {
     pub file: String,
     /// 1-based line of its `@scene`.
     pub line: u32,
-    /// 1-based line where each step starts (same order as `scene.steps`).
-    pub step_lines: Vec<u32>,
-    /// Source lines inside each `Step::Choice` of `scene.steps`, in order.
-    pub choice_lines: Vec<ChoiceLines>,
+    /// Where its steps are.
+    pub lines: Lines,
 }
 
-/// Where the parts of one `@choice` block are.
+/// Where the steps of one list of steps (a scene's, a reaction's, one part
+/// of an `@if` block) are in the file.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct ChoiceLines {
-    /// Each option's lines, in order.
-    pub options: Vec<OptionLines>,
+pub struct Lines {
+    /// 1-based line where each step starts, in the order of the steps.
+    pub steps: Vec<u32>,
+    /// The parts of each block among the steps (a `Step::Choice` or a
+    /// `Step::If`), in the order of the blocks: a choice's options; an
+    /// `@if` block's two parts, the steps played with the character there
+    /// and those played without.
+    pub blocks: Vec<Vec<PartLines>>,
 }
 
-/// Where one option of a `@choice` block is.
+/// Where one part of a block is: an option of a `@choice`, or one of the
+/// two parts of an `@if` block.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct OptionLines {
-    /// 1-based line of its `* tone: text`.
+pub struct PartLines {
+    /// 1-based line that starts it: the option's `* tone: text`, the
+    /// `@if`, or the `@else` (the `@if`'s line when it has no `@else`).
     pub line: u32,
-    /// 1-based line where each reaction step starts.
-    pub step_lines: Vec<u32>,
+    /// Where its steps are.
+    pub lines: Lines,
 }
 
-/// A `@choice` block being read.
-struct OpenChoice {
-    /// Line of its `@choice`.
-    line: u32,
-    options: Vec<ChoiceOption>,
-    lines: ChoiceLines,
+/// A block being read.
+enum Open {
+    /// `@choice`, until its `@endchoice`.
+    Choice {
+        /// Line of its `@choice`.
+        line: u32,
+        options: Vec<ChoiceOption>,
+        parts: Vec<PartLines>,
+    },
+    /// `@if`, until its `@endif`.
+    If {
+        /// Line of its `@if`.
+        line: u32,
+        character: CharacterId,
+        then: (Vec<Step>, Lines),
+        /// The line of its `@else` and the steps after it, once read.
+        otherwise: Option<(u32, Vec<Step>, Lines)>,
+    },
+}
+
+impl Open {
+    /// The error for a block still open where its scene or reaction ends.
+    fn unclosed(&self) -> (u32, &'static str) {
+        match self {
+            Open::Choice { line, .. } => (*line, "@choice has no @endchoice"),
+            Open::If { line, .. } => (*line, "@if has no @endif"),
+        }
+    }
 }
 
 /// How far reaction lines are indented under their option.
@@ -57,14 +86,14 @@ pub fn parse_dlg(file: &str, source: &str) -> (Vec<ParsedScene>, Vec<ContentErro
         file,
         scenes: Vec::new(),
         open: None,
-        choice: None,
+        blocks: Vec::new(),
         continuable: false,
         errors: Vec::new(),
     };
     for (i, line) in source.split('\n').enumerate() {
         p.line(u32::try_from(i + 1).unwrap_or(u32::MAX), line);
     }
-    p.close_choice_without_end();
+    p.close_unclosed();
     if let Some(open) = p.open.take() {
         p.no_end(&open);
         p.finish(open);
@@ -107,8 +136,9 @@ struct Parser<'a> {
     scenes: Vec<ParsedScene>,
     /// The scene being read (after `@scene`, before `@end`).
     open: Option<ParsedScene>,
-    /// The `@choice` block being read, inside `open`.
-    choice: Option<OpenChoice>,
+    /// The blocks being read inside `open`, the innermost last. At most one
+    /// is a `@choice`.
+    blocks: Vec<Open>,
     /// Whether the last line was speech or narration, so an indented line
     /// continues it.
     continuable: bool,
@@ -144,7 +174,7 @@ impl Parser<'_> {
             return;
         }
         let indent = line.len() - body.len();
-        if self.choice.is_some() {
+        if self.in_choice() {
             match indent {
                 0 => self.choice_line(n, line, body),
                 1..REACTION_INDENT => self.err(n, "reaction lines are indented by two spaces"),
@@ -197,19 +227,36 @@ impl Parser<'_> {
     /// `@endchoice`, or a line that ends the block early.
     fn choice_line(&mut self, n: u32, line: &str, body: &str) {
         self.continuable = false;
-        if let Some(rest) = body.strip_prefix('*') {
-            self.option(n, line, rest);
-            return;
-        }
         let name = body.split(' ').next().unwrap_or("");
-        match name {
-            "@endchoice" | "@choice" | "@end" | "@scene" => {
-                self.directive(n, line, &body[1..]);
-            }
-            _ => self.err(
+        let option = body.strip_prefix('*');
+        let ends = matches!(name, "@endchoice" | "@choice" | "@end" | "@scene");
+        if option.is_none() && !ends {
+            self.err(
                 n,
                 "inside @choice, a line is an option (\"* tone: text\"), an indented reaction line or @endchoice",
-            ),
+            );
+            return;
+        }
+        // The reaction above is over: an `@if` it opened must be closed.
+        self.close_reaction_ifs();
+        match option {
+            Some(rest) => self.option(n, line, rest),
+            None => self.directive(n, line, &body[1..]),
+        }
+    }
+
+    /// Whether a `@choice` block is open.
+    fn in_choice(&self) -> bool {
+        self.blocks.iter().any(|b| matches!(b, Open::Choice { .. }))
+    }
+
+    /// Reports and closes every `@if` block still open inside the open
+    /// `@choice`: its reaction ends here.
+    fn close_reaction_ifs(&mut self) {
+        while let Some(Open::If { line, .. }) = self.blocks.last() {
+            let line = *line;
+            self.err(line, "@if has no @endif");
+            self.close_block();
         }
     }
 
@@ -228,16 +275,16 @@ impl Parser<'_> {
             self.bad_id(n, tone);
         }
         self.check_chars(n, line, text);
-        if let Some(choice) = self.choice.as_mut() {
-            choice.options.push(ChoiceOption {
+        if let Some(Open::Choice { options, parts, .. }) = self.blocks.last_mut() {
+            options.push(ChoiceOption {
                 tone: tone.into(),
                 text: text.into(),
                 line: LineId::default(),
                 steps: Vec::new(),
             });
-            choice.lines.options.push(OptionLines {
+            parts.push(PartLines {
                 line: n,
-                step_lines: Vec::new(),
+                lines: Lines::default(),
             });
         }
     }
@@ -247,7 +294,7 @@ impl Parser<'_> {
         if !args.is_empty() {
             self.err(n, "@choice takes nothing after it");
         }
-        if self.choice.is_some() {
+        if self.in_choice() {
             self.err(n, "@choice can't be nested inside another @choice");
             return;
         }
@@ -255,10 +302,10 @@ impl Parser<'_> {
             self.err(n, "line is outside a scene; start one with @scene <id>");
             return;
         }
-        self.choice = Some(OpenChoice {
+        self.blocks.push(Open::Choice {
             line: n,
             options: Vec::new(),
-            lines: ChoiceLines::default(),
+            parts: Vec::new(),
         });
     }
 
@@ -267,41 +314,157 @@ impl Parser<'_> {
         if !args.is_empty() {
             self.err(n, "@endchoice takes nothing after it");
         }
-        if self.choice.is_none() {
+        if !self.in_choice() {
             self.err(n, "@endchoice without an open @choice");
             return;
         }
-        self.close_choice();
+        self.close_reaction_ifs();
+        self.close_block();
     }
 
-    /// Adds the open `@choice` block, if any, to the scene.
-    fn close_choice(&mut self) {
-        let (Some(choice), Some(open)) = (self.choice.take(), self.open.as_mut()) else {
+    /// `@if <character>` on line `n`.
+    fn open_if(&mut self, n: u32, args: &str) {
+        let words: Vec<&str> = args.split_whitespace().collect();
+        let character = if let [character] = words[..] {
+            if !is_id(character) {
+                self.bad_id(n, character);
+            }
+            character
+        } else {
+            self.err(n, "@if needs one character id");
+            ""
+        };
+        if self.target().is_none() {
+            self.no_target(n);
+            return;
+        }
+        self.blocks.push(Open::If {
+            line: n,
+            character: CharacterId(character.into()),
+            then: (Vec::new(), Lines::default()),
+            otherwise: None,
+        });
+    }
+
+    /// `@else` on line `n`.
+    fn else_if(&mut self, n: u32, args: &str) {
+        if !args.is_empty() {
+            self.err(n, "@else takes nothing after it");
+        }
+        match self.blocks.last_mut() {
+            Some(Open::If {
+                otherwise: Some((first, ..)),
+                ..
+            }) => {
+                let message = format!("@if already has an @else, on line {first}");
+                self.err(n, message);
+            }
+            Some(Open::If { otherwise, .. }) => {
+                *otherwise = Some((n, Vec::new(), Lines::default()));
+            }
+            _ => self.err(n, "@else without an open @if"),
+        }
+    }
+
+    /// `@endif` on line `n`.
+    fn end_if(&mut self, n: u32, args: &str) {
+        if !args.is_empty() {
+            self.err(n, "@endif takes nothing after it");
+        }
+        if matches!(self.blocks.last(), Some(Open::If { .. })) {
+            self.close_block();
+        } else {
+            self.err(n, "@endif without an open @if");
+        }
+    }
+
+    /// Ends the innermost open block: adds it, as one step, to what it is
+    /// in.
+    fn close_block(&mut self) {
+        let Some(block) = self.blocks.pop() else {
             return;
         };
-        open.scene.steps.push(Step::Choice {
-            options: choice.options,
-        });
-        open.step_lines.push(choice.line);
-        open.choice_lines.push(choice.lines);
-    }
-
-    /// Reports an open `@choice` (its scene or file ends first) and closes
-    /// it.
-    fn close_choice_without_end(&mut self) {
-        if let Some(line) = self.choice.as_ref().map(|c| c.line) {
-            self.err(line, "@choice has no @endchoice");
-            self.close_choice();
+        let (line, step, parts) = match block {
+            Open::Choice {
+                line,
+                options,
+                parts,
+            } => (line, Step::Choice { options }, parts),
+            Open::If {
+                line,
+                character,
+                then,
+                otherwise,
+            } => {
+                let (else_line, otherwise, else_lines) =
+                    otherwise.unwrap_or((line, Vec::new(), Lines::default()));
+                let step = Step::If {
+                    character,
+                    then: then.0,
+                    otherwise,
+                };
+                let part = |line, lines| PartLines { line, lines };
+                (
+                    line,
+                    step,
+                    vec![part(line, then.1), part(else_line, else_lines)],
+                )
+            }
+        };
+        if let Some((steps, lines)) = self.target() {
+            steps.push(step);
+            lines.steps.push(line);
+            lines.blocks.push(parts);
         }
     }
 
-    /// The step an indented line would continue: the last one of the open
-    /// option's reaction, or of the scene.
+    /// Reports every block still open (its scene or file ends first) and
+    /// closes it.
+    fn close_unclosed(&mut self) {
+        while let Some(block) = self.blocks.last() {
+            let (line, message) = block.unclosed();
+            self.err(line, message);
+            self.close_block();
+        }
+    }
+
+    /// Where the next step goes: the part being read of the innermost open
+    /// block (an `@if` block's steps, or its `@else`'s; a `@choice`'s last
+    /// option's reaction), or else the open scene. `None` outside a scene
+    /// and in a `@choice` before its first option.
+    fn target(&mut self) -> Option<(&mut Vec<Step>, &mut Lines)> {
+        match self.blocks.last_mut() {
+            Some(Open::If {
+                otherwise: Some((_, steps, lines)),
+                ..
+            }) => Some((steps, lines)),
+            Some(Open::If { then, .. }) => Some((&mut then.0, &mut then.1)),
+            Some(Open::Choice { options, parts, .. }) => {
+                match (options.last_mut(), parts.last_mut()) {
+                    (Some(option), Some(part)) => Some((&mut option.steps, &mut part.lines)),
+                    _ => None,
+                }
+            }
+            None => self
+                .open
+                .as_mut()
+                .map(|open| (&mut open.scene.steps, &mut open.lines)),
+        }
+    }
+
+    /// Reports that the line `n` has nowhere to go ([`Self::target`]).
+    fn no_target(&mut self, n: u32) {
+        let message = if self.blocks.is_empty() {
+            "line is outside a scene; start one with @scene <id>"
+        } else {
+            "a reaction line needs an option above it: \"* tone: text\""
+        };
+        self.err(n, message);
+    }
+
+    /// The step an indented line would continue: the last one read.
     fn last_step_mut(&mut self) -> Option<&mut Step> {
-        if let Some(choice) = self.choice.as_mut() {
-            return choice.options.last_mut().and_then(|o| o.steps.last_mut());
-        }
-        self.open.as_mut().and_then(|s| s.scene.steps.last_mut())
+        self.target().and_then(|(steps, _)| steps.last_mut())
     }
 
     /// An indented line: more text for the speech or narration above.
@@ -343,12 +506,15 @@ impl Parser<'_> {
             "music" => self.music(n, args),
             "choice" => self.open_choice(n, args),
             "endchoice" => self.end_choice(n, args),
+            "if" => self.open_if(n, args),
+            "else" => self.else_if(n, args),
+            "endif" => self.end_if(n, args),
             _ => self.err(n, format!("unknown directive \"@{name}\"")),
         }
     }
 
     fn scene(&mut self, n: u32, args: &str) {
-        self.close_choice_without_end();
+        self.close_unclosed();
         if let Some(open) = self.open.take() {
             self.no_end(&open);
             self.finish(open);
@@ -366,8 +532,7 @@ impl Parser<'_> {
             },
             file: self.file.into(),
             line: n,
-            step_lines: Vec::new(),
-            choice_lines: Vec::new(),
+            lines: Lines::default(),
         });
     }
 
@@ -375,7 +540,7 @@ impl Parser<'_> {
         if !args.is_empty() {
             self.err(n, "@end takes nothing after it");
         }
-        self.close_choice_without_end();
+        self.close_unclosed();
         match self.open.take() {
             Some(open) => self.finish(open),
             None => self.err(n, "@end without an open @scene"),
@@ -475,28 +640,15 @@ impl Parser<'_> {
         );
     }
 
-    /// Adds `step` (from line `n`) to the open option's reaction, or else
-    /// to the open scene.
+    /// Adds `step` (from line `n`) to where steps go now
+    /// ([`Self::target`]).
     fn push(&mut self, n: u32, step: Step) {
-        if let Some(choice) = self.choice.as_mut() {
-            match (choice.options.last_mut(), choice.lines.options.last_mut()) {
-                (Some(option), Some(lines)) => {
-                    option.steps.push(step);
-                    lines.step_lines.push(n);
-                }
-                _ => self.err(
-                    n,
-                    "a reaction line needs an option above it: \"* tone: text\"",
-                ),
+        match self.target() {
+            Some((steps, lines)) => {
+                steps.push(step);
+                lines.steps.push(n);
             }
-            return;
-        }
-        match self.open.as_mut() {
-            Some(open) => {
-                open.scene.steps.push(step);
-                open.step_lines.push(n);
-            }
-            None => self.err(n, "line is outside a scene; start one with @scene <id>"),
+            None => self.no_target(n),
         }
     }
 

@@ -28,7 +28,9 @@
 # count should not contradict it (chapter-1.md allows 12-14 and the boss).
 #
 # ch01_victory is written for a battle everyone lived through. A companion
-# who died in Classic still speaks in it until 0715 and 0716.
+# who died in Classic still speaks in it until 0716 puts their lines in
+# @if blocks (0715, ADR-0055). The check will demand it as soon as the
+# companions are in the New Game roster (0803).
 
 # ---------------------------------------------------------------------------
 # Before the battle

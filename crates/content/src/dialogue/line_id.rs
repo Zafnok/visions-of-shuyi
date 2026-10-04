@@ -92,7 +92,8 @@ pub(crate) fn line_hash(speaker: &str, text: &str) -> String {
 }
 
 /// Calls `f(speaker, text, id)` for every line of `steps` that shows text,
-/// in script order: a reply, then its reaction, then the next reply.
+/// in script order: a reply, then its reaction, then the next reply; an
+/// `@if` block's lines, then its `@else`'s.
 fn visit_mut(steps: &mut [Step], f: &mut impl FnMut(&str, &str, &mut LineId)) {
     for step in steps {
         match step {
@@ -108,6 +109,12 @@ fn visit_mut(steps: &mut [Step], f: &mut impl FnMut(&str, &str, &mut LineId)) {
                     f(REPLY_SPEAKER, &o.text, &mut o.line);
                     visit_mut(&mut o.steps, f);
                 }
+            }
+            Step::If {
+                then, otherwise, ..
+            } => {
+                visit_mut(then, f);
+                visit_mut(otherwise, f);
             }
             Step::Caption { .. } | Step::Place { .. } | Step::Clear { .. } | Step::Music(_) => {}
         }
@@ -143,6 +150,12 @@ fn collect<'a>(steps: &'a [Step], out: &mut Vec<Line<'a>>) {
                     collect(&o.steps, out);
                 }
             }
+            Step::If {
+                then, otherwise, ..
+            } => {
+                collect(then, out);
+                collect(otherwise, out);
+            }
             Step::Caption { .. } | Step::Place { .. } | Step::Clear { .. } | Step::Music(_) => {}
         }
     }
@@ -150,7 +163,8 @@ fn collect<'a>(steps: &'a [Step], out: &mut Vec<Line<'a>>) {
 
 impl Scene {
     /// Every line that shows text (speech, narration, replies and the lines
-    /// of their reactions), in script order.
+    /// of their reactions), in script order, whoever is there: both parts
+    /// of every `@if` block.
     pub fn lines(&self) -> Vec<Line<'_>> {
         let mut out = Vec::new();
         collect(&self.steps, &mut out);
