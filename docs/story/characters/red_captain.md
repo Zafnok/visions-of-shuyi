@@ -61,18 +61,32 @@ exile, the old man, and the girl with the burned hands" at Harrowby.
 
 ## Portrait brief
 
-- **Silhouette:** big and heavy-set, with a battered iron kettle helm pushed
-  back and a heavy axe haft on the shoulder. Hunched, like a bear.
-- **Hair:** rust-red, going grey, shaggy under the helm. A thick red beard,
-  plaited once.
+Rewritten 2026-10-04 (ticket 0035) to fit the combat picture Nick chose in
+ticket 0040. He had a kettle helm, a mail shirt and a red Company jacket;
+the picture has none of them.
+
+- **Silhouette:** big and brawny, with a cloth headscarf tied over his head
+  and a heavy axe resting on his shoulder. Bare, thick arms. Hunched, like a
+  bear.
+- **Hair:** hidden under the headscarf. A thick, short beard, rust-red going
+  grey.
 - **Face:** 46, broad and scarred across the nose. Tired, bloodshot eyes.
   Heavier shading.
-- **Clothing:** a mismatched red Company jacket under a rusted mail shirt, and
-  a scarf of red cloth tied on the arm (the Company's sign).
-- **Colours:** rust red, iron grey, dirty brown and brick red (the same red
+- **Clothing:** a sleeveless, worn vest that leaves his arms bare, rough
+  trousers and a belt. No armour. The headscarf is red cloth (the Company's
+  sign).
+- **Colours:** rust red, dirty grey, dull blue and brick red (the same red
   as Tamsin's jacket).
 - **Expressions:** `neutral`, `happy` (a nasty grin), `angry`, `sad` (for the
   death quote), `surprised`.
+- **In combat** (decided 2026-10-04, ticket 0040): Shironejiya's *bearded
+  axe bandit* picture (`bandanna05`), at 1.25×. As drawn, his headscarf is
+  pale grey and his beard dark grey; they are recoloured to his red
+  (`look-and-feel.md`: a named character's picture is recoloured to their
+  own colours) *(which parts turn red is Claude's starting rule)*. The
+  picture has no face in our bust style, so his dialogue face comes from the
+  Character Generator (0706): full beard, red hair, and a headscarf added as
+  a small edit if it can be done, since the generator has none.
 
 ## Support partners
 

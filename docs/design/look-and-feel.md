@@ -617,7 +617,9 @@ sprites.
   knight would change his weapon (weapon type is a rule, so the picture must
   match it). The orc, the Dragon Knight and the Magitek dark knight were
   shown and not chosen. **He uses Shironejiya's bearded axe bandit**
-  (ticket 0040, below).
+  (ticket 0040, below), and his written look was rewritten to fit it
+  (ticket 0035, `red_captain.md`): a headscarf and a bare-armed vest, not
+  a kettle helm and mail.
 
 #### Fighters with no Tiny Tales art
 
@@ -768,7 +770,6 @@ black.
   battle images (ticket 0413).
 - Sprite units on the map: the outline alone or with a corner mark
   (0436). The zoom key and button (0439).
-- More bought packs for fighters with no fitting art (tickets 0035, 0040).
 - On the bought tiles (seen in ticket 0437, not decided): the cursor's
   thin corner marks are hard to see on bright ground (ticket 0444); the
   picks in the terrain table above, the burning stand-in first.
