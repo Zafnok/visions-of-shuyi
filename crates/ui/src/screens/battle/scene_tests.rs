@@ -575,6 +575,10 @@ fn a_walking_unit_turns_the_way_it_goes_and_glides_from_tile_to_tile() {
     let mut seen = Vec::new();
     while matches!(s.mode(), Mode::Moving { .. }) {
         seen.push(shown(&s, &c, lord));
+        // Only the walker turns or leaves its tile.
+        for u in s.scene(&c).units.iter().filter(|u| u.id != lord) {
+            assert_eq!((u.facing, u.offset), (Facing::Down, (0.0, 0.0)), "{u:?}");
+        }
         wait(&mut s, &mut c, 0.025);
         assert!(seen.len() < 100, "the walk never ended");
     }

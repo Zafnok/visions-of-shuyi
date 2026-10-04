@@ -249,7 +249,8 @@ pub fn place(scene: &MapScene, grid: &Grid, unit: &UnitView) -> Option<Place> {
     let left_of = |column: i32| grid.corner.0 + (column - grid.origin.x) * tw;
     let row = grid.origin.y + (tile.y + tile.h - 1 - grid.corner.1).div_euclid(th);
     let row_top = grid.corner.1 + (row - grid.origin.y) * th;
-    let next = Pos::new(unit.pos.x + dx.signum(), unit.pos.y + dy.signum());
+    // Only a walk upwards goes to a tile above its feet's row.
+    let next = Pos::new(unit.pos.x, unit.pos.y + dy.signum());
     let blocked = |column: i32| {
         let above = Pos::new(column, row - 1);
         let stands = |u: &UnitView| u.pos == above && !u.between_tiles();
@@ -272,14 +273,22 @@ pub fn place(scene: &MapScene, grid: &Grid, unit: &UnitView) -> Option<Place> {
         };
         let cut = blocked(column);
         under |= cut;
-        let top = if cut { row_top } else { view.y };
-        let strip = Rect::new(left, top, right - left, view.y + view.h - top);
+        let strip = Rect::new(left, view.y, right - left, view.h);
+        // Cut: only what is in the view from its feet's row down.
+        let below = Rect::new(view.x, row_top, view.w, view.h);
+        let strip = if cut {
+            strip.intersect(&below)
+        } else {
+            Some(strip)
+        };
+        let Some(strip) = strip.and_then(|s| s.intersect(&view)) else {
+            continue;
+        };
         match open.last_mut() {
-            Some(before) if (before.y, before.h) == (strip.y, strip.h) => before.w += strip.w,
+            Some(before) if before.y == strip.y => before.w = strip.x + strip.w - before.x,
             _ => open.push(strip),
         }
     }
-    let open = open.iter().filter_map(|s| s.intersect(&view)).collect();
     Some(Place {
         tile,
         row,
@@ -889,6 +898,24 @@ mod tests {
             place.open,
             [Rect::new(16, 16, 16, 32), Rect::new(32, 32, 32, 16)]
         );
+        // Between two columns with nobody above either: one piece, all of
+        // the view.
+        scene.units[0].pos = p(2, 0);
+        let place = super::place(&scene, &grid, &scene.units[1]).unwrap();
+        assert_eq!((place.open, place.under), (vec![grid.bounds()], false));
+        // The same wherever the view starts on the map: a view from
+        // (5, 3), a unit on (6, 3), the walker leaving (5, 4).
+        let mut far = MapScene::new(p(5, 3), (3, 2));
+        far.push_unit(unit(1, p(6, 3)));
+        far.push_unit(walking(unit(2, p(5, 4)), Facing::Right, 0, (0.5, 0.0)));
+        let far_grid = sheets(&c).grid(&far, Rect::new(2, 1, 6, 4));
+        let place = super::place(&far, &far_grid, &far.units[1]).unwrap();
+        assert_eq!(
+            place.open,
+            [Rect::new(16, 16, 16, 32), Rect::new(32, 32, 32, 16)]
+        );
+        assert_eq!((place.tile, place.row), (Rect::new(24, 32, 16, 16), 4));
+        scene.units[0].pos = p(1, 0);
         // Once past (and before it): whole, in one piece.
         for x in [0, 2] {
             scene.units[1] = unit(2, p(x, 1));
