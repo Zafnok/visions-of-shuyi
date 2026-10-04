@@ -78,7 +78,8 @@ critical path).
 
 **Machine-made now, replaceable by people later** (Nick, 2026-10-03,
 [`docs/design/voices-languages-and-script.md`](design/voices-languages-and-script.md):
-AI voices with an off switch, a machine-translated Japanese option, and a
+AI voices with an off switch, machine-translated Japanese and Chinese
+options (Chinese added 2026-10-04), and a
 script a hired writer can take over; **not** a blocker for Chapter 1 or
 Act 1). Shared first step: **0717** every dialogue line gets an id (no
 open dependencies).
@@ -88,6 +89,11 @@ rest of the screens and **0235** data names, tips and dialogue (also needs
 0717); **0236** wide glyphs (after 0042) → **0237** Japanese line
 breaking; **0825** the Options row (after 0805); **0718** the translation
 pipeline → **0719** Chapter 1 and the screens in Japanese (after 0716).
+*Chinese (Simplified)*, on the same engine work: **0045** Nick gives the
+characters for "Shuyi", the Chinese title and font, and says who checks
+it (after 0042) → **0239** a wide font per language and Chinese line
+breaking (after 0236, 0237); **0725** the translation pipeline (after
+0235) → **0726** Chapter 1 and the screens in Chinese (after 0716, 0825).
 *Voices* (ADR-0046): **0043** Nick picks the tool, what is voiced and each
 voice by ear; **0238** playback plumbing (after 0717) → **0720** the
 dialogue screen plays them, **0721** the generation tool, **0826** the
@@ -105,7 +111,7 @@ Design answers unblock most of the rules work. Suggested order:
 3. **0011** look & feel sign-off (after the font ticket 0203 shows real pixels)
 4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** Harl's combat picture (done: Shironejiya's bearded axe bandit) · **0040** more packs for fighters with no fitting art (done) · **0413** how the combat scene looks · **0022** victory sting · **0023** defeat sting · **0024** Game Over music · **0810** how battle rewards are shown
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0029** dialogue backgrounds · **0812** chapter card · **0813** transitions
-   · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear
+   · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
 
 Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
