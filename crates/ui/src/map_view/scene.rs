@@ -616,8 +616,22 @@ mod tests {
         for (i, (dx, dy)) in ring.into_iter().enumerate() {
             assert_eq!(s.rim_index(dx, dy), Some(i), "({dx}, {dy})");
         }
-        // Inside the view, or further out: not in the ring.
-        for (dx, dy) in [(0, 0), (2, 1), (-2, 0), (4, 0), (0, -2), (0, 3), (-2, -1)] {
+        // Inside the view, or further out: not in the ring. Further out
+        // along one of the ring's own rows or columns too.
+        let outside = [
+            (0, 0),
+            (2, 1),
+            (-2, 0),
+            (4, 0),
+            (0, -2),
+            (0, 3),
+            (-2, -1),
+            (4, -1),
+            (4, 2),
+            (-1, 3),
+            (3, -2),
+        ];
+        for (dx, dy) in outside {
             assert_eq!(s.rim_index(dx, dy), None, "({dx}, {dy})");
             assert_eq!(s.terrain_near(dx, dy), None, "({dx}, {dy})");
         }

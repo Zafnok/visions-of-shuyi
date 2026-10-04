@@ -36,7 +36,7 @@ const OUT: char = '.';
 /// bottom-right of a corner point; for a tile's sides its neighbours up,
 /// right, down and left.
 pub fn mix(places: [bool; 4]) -> u8 {
-    places.iter().fold(0, |m, &p| (m << 1) | u8::from(p))
+    places.iter().fold(0, |m, &p| 2 * m + u8::from(p))
 }
 
 /// The mix written as four of `#` (in) and `.` (out), or `None` if `text`
