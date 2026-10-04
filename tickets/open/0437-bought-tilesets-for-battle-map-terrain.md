@@ -108,7 +108,11 @@ committed. Tell him plainly where a terrain has no good bought picture
    the mapping names, packs them into one PNG and writes the tileset RON
    into `assets-private/game/tilesets/`. The mapping file (which bought terrain
    stands for which of our terrain ids) is ours and may be committed: it
-   holds names and numbers, no art.
+   holds names and numbers, no art. Add the new files to the `private`
+   list of the bundle's credit in `assets/data/credits.ron`, the tileset
+   packs to its row in `THIRD_PARTY_ASSETS.md` and their artist to the
+   credit's `author` (ADR-0051: `cargo xtask private-assets --pin`
+   refuses bought files without a credit).
 5. **Mapping**, outdoor (`world-map`, Standard): `plain` grass, `road`
    dirt, `forest` the tree masses, `thicket` the darker tree masses,
    `mountain` and `peak` from `Set_F_Mountains`, `water` shallow and `sea`

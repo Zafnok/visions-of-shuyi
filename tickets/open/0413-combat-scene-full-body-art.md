@@ -151,8 +151,11 @@ combat rules; buying anything.
    0805 isn't done, keep the value in `Ctx` (as `cursor_style` and
    `text_speed` are today, default on) and add a line to 0805 to move it
    into `Settings`.
-6. List each pack in `THIRD_PARTY_ASSETS.md` as ADR-0032 says (marked
-   private) and note the class → image mapping in `look-and-feel.md` or the
+6. Name each pack in the bundle's row in `THIRD_PARTY_ASSETS.md`, add
+   the new files' folder to the `private` list of the bundle's credit in
+   `assets/data/credits.ron` and a new artist to its `author` (ADR-0051:
+   `cargo xtask private-assets --pin` refuses bought files without a
+   credit), and note the class → image mapping in `look-and-feel.md` or the
    class data.
 
 ## Acceptance criteria
