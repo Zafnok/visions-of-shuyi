@@ -153,16 +153,16 @@ fn a_hold_backs_out_a_tap_binds_and_clear_empties() {
 /// only, and a turn played with the new button.
 #[test]
 fn a_rebound_button_plays_a_battle() {
-    // Next ready unit also on the right stick, pushed right.
     let mut h = open(PadKind::Xbox);
     h.pad(TO_CONFIRM).pad("South South RightTrigger East East");
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(slots(&h, Action::Confirm), ["RightTrigger", "-", "-"]);
-    // Quick Battle with the new Confirm, and the same with the keyboard.
-    h.pad("DpadDown RightTrigger RightTrigger");
+    // Quick Battle with the new Confirm (through Preparations: left wraps
+    // to `Fight!`), and the same with the keyboard.
+    h.pad("DpadDown RightTrigger DpadLeft RightTrigger RightTrigger");
     assert_eq!(h.screens(), ["title", "battle"]);
     let mut keys = Harness::with_layout(Layout::RightHanded);
-    keys.keys("Down f f");
+    keys.keys("Down f Left f f");
     assert_eq!(h.cursor_tile(), keys.cursor_tile());
     // Pick the unit under the cursor and move it one tile.
     h.pad("RightTrigger DpadRight RightTrigger");

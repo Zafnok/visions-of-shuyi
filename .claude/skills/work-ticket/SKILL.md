@@ -93,6 +93,14 @@ Set `status: in-progress` in the ticket frontmatter.
   `cargo deny check licenses` must pass. For anything else, add a row to
   `THIRD_PARTY_ASSETS.md` and commit its license text next to it. If unsure,
   don't add it: pick another or write the small piece yourself.
+- **Every third-party asset gets its credit in the same PR** (Nick:
+  "credits should always update when we introduce an asset"): music and
+  sounds in `assets/audio/audio.ron`, anything else in
+  `assets/data/credits.ron`, with the row's source link. **Bought art**
+  (ADR-0051): add the new files' path in `assets-private/game/` to its
+  credit's `private` list, the pack to its row and the artist to the
+  credit's `author`. `cargo xtask private-assets --pin` refuses files
+  without a credit; don't widen an old path just to get past it.
 - A new architectural choice (new dependency with wide impact, new pattern,
   new file format) needs an ADR in the same PR (`write-adr` skill). Adding a
   small, well-known crate for a local need does not.

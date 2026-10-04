@@ -1,4 +1,4 @@
-# ADR-0050: Player controller buttons: one shared set of slots in the saved key bindings (version 2)
+# ADR-0053: Player controller buttons: one shared set of slots in the saved key bindings (version 2)
 
 - **Status:** Accepted
 - **Date:** 2026-10-03

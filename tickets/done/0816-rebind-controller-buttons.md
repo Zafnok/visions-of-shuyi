@@ -126,7 +126,7 @@ screenshots of the built screen in `docs/screenshots/0816-*.png`.
 - `PadBindings` (`crates/ui/src/input/bindings.rs`): the buttons' editing
   model, same shape as `LayoutBindings`; both sit on one private
   `SlotTable<T>`. No button is reserved; both sticks' directions bind.
-- Saved config **version 2** with a `pad` entry (ADR-0050). Version 1
+- Saved config **version 2** with a `pad` entry (ADR-0053). Version 1
   files load with their keys and the default buttons. Repair on load as
   for keys; warnings about buttons start `controller:`.
 - `Ctx::pad_bindings` / `set_pad_bindings`; the buttons apply in both
@@ -152,7 +152,7 @@ screenshots of the built screen in `docs/screenshots/0816-*.png`.
 - After a capture, cursor moves are now held back only if a cursor key or
   button really is still down (before: always until the next frame with
   none down). Needed because a button binds when it is let go.
-- The ADR is 0050 (0049 is taken by two open PRs).
+- The ADR is 0053 (0050 and 0052 were taken by open PRs).
 
 **Claude's starting rules** (Nick can veto; also in `controls.md`):
 - The screen opens on the side you pressed last (buttons after a button,

@@ -490,6 +490,17 @@ fn a_repaired_layout_equal_to_the_defaults_has_no_entry() {
 
 // --- Controller buttons (ticket 0816) ---------------------------------------
 
+#[test]
+fn find_names_the_slot_a_chord_is_in() {
+    let mut b = right();
+    assert_eq!(b.find(chord("f")), Some((Confirm, 0)));
+    assert_eq!(b.find(chord("g")), None);
+    assert_eq!(b.bind(Info, 2, chord("g")), Ok(None));
+    assert_eq!(b.find(chord("g")), Some((Info, 2)));
+    b.clear(Info, 2);
+    assert_eq!(b.find(chord("g")), None);
+}
+
 fn pad() -> PadBindings {
     PadBindings::defaults(&def())
 }

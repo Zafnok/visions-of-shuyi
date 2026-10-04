@@ -14,7 +14,7 @@ or lies after a rebind, and the two layouts already use different keys.
 Background: [ADR-0015](../../../docs/adr/0015-input-actions-and-keymap-layouts.md)
 (actions, layouts), [ADR-0031](../../../docs/adr/0031-player-key-bindings.md)
 (player bindings, slots, fixed keys, saved config), and
-[ADR-0050](../../../docs/adr/0050-player-controller-buttons.md) (the
+[ADR-0053](../../../docs/adr/0053-player-controller-buttons.md) (the
 player's controller buttons in the same saved config).
 
 ## The pipeline (only these places know about keys)
@@ -73,7 +73,7 @@ ui/src/input/pad.rs      PadKind::button_name: the only table of button names
 `crates/app/src/pads.rs` and `crates/app/src/pads/` (`check-keys` enforces
 it). In code and data buttons are named by position (`South`, not "A").
 Players rebind them on the Key bindings screen's controller side (ticket
-0816, ADR-0050): `PadBindings`, edited like `LayoutBindings` and handed
+0816, ADR-0053): `PadBindings`, edited like `LayoutBindings` and handed
 back with `ctx.set_pad_bindings(…)`; **no button is fixed or reserved**,
 so nothing may assume a button keeps its default action, and a screen
 that must work with only a controller can't rely on a "safe" button

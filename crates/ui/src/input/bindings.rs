@@ -1,5 +1,5 @@
 //! The player's key and button bindings (tickets 0217 and 0816, ADR-0031,
-//! ADR-0050): every rebindable action has [`SLOTS`] key slots and [`SLOTS`]
+//! ADR-0053): every rebindable action has [`SLOTS`] key slots and [`SLOTS`]
 //! controller-button slots. Each layout keeps its own keys
 //! ([`LayoutBindings`]); the buttons are one setup shared by both layouts
 //! ([`PadBindings`]); the lot is saved as [`PlayerKeys`]. Rules from

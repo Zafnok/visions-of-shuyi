@@ -9,7 +9,9 @@
 //! until the between-battle menus exist. "Map skin" switches how battle
 //! maps look between the glyph skin and the test tileset (ticket 0433);
 //! the choice isn't saved. The scene camera pans and zooms the test map
-//! as a backdrop behind a window (ticket 0228, ADR-0048).
+//! as a backdrop behind a window (ticket 0228, ADR-0048). "Voice test"
+//! says the test scene's lines that have a voice clip, one per press
+//! (ticket 0238), until the dialogue screen plays voices (0720).
 
 mod portrait_viewer;
 mod scene_camera;
@@ -24,7 +26,7 @@ use crate::color::{Palette, UiColor};
 use crate::console::{CONSOLE_H, CONSOLE_W};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
-use crate::map_view::{default_skin, skin_named};
+use crate::map_view::{MapSkin, TEST_TILESET, next_skin};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::screens::{
     ChangeKind, ClassChangeScreen, DialogueScreen, KeyBindingsScreen, centre_x, print_centred,
@@ -46,7 +48,7 @@ pub const SCREENS: [&str; 6] = [
 
 /// The debug tools, in menu order, before "Map skin" ([`MAP_SKIN_TOOL`]),
 /// whose label names the skin in use.
-const TOOLS: [&str; 9] = [
+const TOOLS: [&str; 10] = [
     "Glyph sampler",
     "Portraits",
     "Play test scene",
@@ -55,6 +57,7 @@ const TOOLS: [&str; 9] = [
     "Sprite test",
     "Class change: promote",
     "Class change: reclass",
+    "Voice test",
     "Scene camera",
 ];
 /// Index of "Key bindings" in [`TOOLS`].
@@ -66,7 +69,9 @@ const PROMOTE_TOOL: usize = 6;
 /// Index of "Class change: reclass" in [`TOOLS`].
 const RECLASS_TOOL: usize = 7;
 /// Index of "Scene camera" in [`TOOLS`].
-const SCENE_CAMERA_TOOL: usize = 8;
+const SCENE_CAMERA_TOOL: usize = 9;
+/// Index of "Voice test" in [`TOOLS`].
+const VOICE_TEST_TOOL: usize = 8;
 /// Index of "Map skin" in the menu: after [`TOOLS`].
 const MAP_SKIN_TOOL: usize = TOOLS.len();
 /// The scene the "Play test scene" tools play.
@@ -78,6 +83,8 @@ const MENU_TITLE_ROW: i32 = 9;
 #[derive(Debug, Clone)]
 pub struct DebugMenuScreen {
     menu: Menu,
+    /// How many lines "Voice test" has said.
+    voices_said: usize,
 }
 
 impl DebugMenuScreen {
@@ -88,36 +95,52 @@ impl DebugMenuScreen {
     pub fn new(ctx: &Ctx) -> Self {
         Self {
             menu: tools_menu(ctx),
+            voices_said: 0,
         }
+    }
+
+    /// "Voice test": says the next line of the test scene that has a voice
+    /// clip, starting over after the last. Each time round it first tells
+    /// `app` the lines that are coming, as a scene would.
+    fn say_next_voice(&mut self, ctx: &mut Ctx) {
+        let Some(scene) = ctx.content.dialogue.get(TEST_SCENE) else {
+            return;
+        };
+        let lines: Vec<_> = scene.lines().iter().map(|l| l.id.clone()).collect();
+        let voiced: Vec<_> = lines.into_iter().filter(|l| ctx.has_voice(l)).collect();
+        if voiced.is_empty() {
+            return;
+        }
+        let next = self.voices_said % voiced.len();
+        if next == 0 {
+            ctx.preload_voices(&voiced);
+        }
+        ctx.play_voice(&voiced[next]);
+        self.voices_said += 1;
     }
 }
 
 /// The menu of tools, "Map skin" naming the skin `ctx` uses.
 fn tools_menu(ctx: &Ctx) -> Menu {
-    let skin = format!("Map skin: {}", skin_label(ctx.map_skin.name()));
+    let skin = format!("Map skin: {}", skin_label(ctx.map_skin.as_ref()));
     let items = TOOLS.iter().map(|&t| MenuItem::new(t));
     Menu::new(items.chain([MenuItem::new(skin)]).collect())
 }
 
-/// How the "Map skin" item names the skin called `name`.
-fn skin_label(name: &str) -> &str {
-    match name {
-        "sprite" => "test tileset",
-        other => other,
+/// How the "Map skin" item names `skin`: its tileset's id ("test
+/// tileset" for the test one), or its own name.
+fn skin_label(skin: &dyn MapSkin) -> &str {
+    match skin.tileset_id() {
+        Some(TEST_TILESET) => "test tileset",
+        Some(id) => id,
+        None => skin.name(),
     }
 }
 
-/// Swaps `ctx`'s map skin: the glyph skin for the test tileset's sprite
-/// skin (if the content has it), anything else for the glyph skin.
+/// Swaps `ctx`'s map skin for the next in the round: the glyph skin, each
+/// tileset the content has, then the glyph skin again.
 fn switch_skin(ctx: &mut Ctx) {
-    let next = if ctx.map_skin.name() == "glyph" {
-        skin_named(&ctx.content, "sprite")
-    } else {
-        Some(default_skin())
-    };
-    if let Some(skin) = next {
-        ctx.map_skin = skin;
-    }
+    ctx.map_skin = next_skin(&ctx.content, ctx.map_skin.as_ref());
 }
 
 impl Screen for DebugMenuScreen {
@@ -148,6 +171,7 @@ impl Screen for DebugMenuScreen {
                     switch_skin(ctx);
                     self.menu = tools_menu(ctx).focused(MAP_SKIN_TOOL);
                 }
+                Some(MenuEvent::Chosen(VOICE_TEST_TOOL)) => self.say_next_voice(ctx),
                 Some(MenuEvent::Chosen(tool @ (PROMOTE_TOOL | RECLASS_TOOL))) => {
                     let kind = if tool == PROMOTE_TOOL {
                         ChangeKind::Promote
@@ -504,6 +528,8 @@ mod tests {
             outcome(&mut menu, &[CursorDown, Confirm]),
             "Push(class_change)"
         );
+        // "Voice test" stays on the menu.
+        assert_eq!(outcome(&mut menu, &[CursorDown, Confirm]), "None");
         assert_eq!(
             outcome(&mut menu, &[CursorDown, Confirm]),
             "Push(scene_camera)"
@@ -536,6 +562,45 @@ mod tests {
         assert_eq!(TOOLS[PROMOTE_TOOL], "Class change: promote");
         assert_eq!(TOOLS[RECLASS_TOOL], "Class change: reclass");
         assert_eq!(TOOLS[SCENE_CAMERA_TOOL], "Scene camera");
+        assert_eq!(TOOLS[VOICE_TEST_TOOL], "Voice test");
+    }
+
+    /// Ticket 0238: "Voice test" says the test scene's voiced lines in
+    /// turn, announcing them each time round.
+    #[test]
+    fn voice_test_says_the_voiced_lines_of_the_test_scene_in_turn() {
+        use crate::audio::AudioRequest;
+        use trpg_content::Variant;
+        let mut ctx = crate::screen::tests::ctx();
+        let (manifest, lines) = crate::screen::tests::test_voices(&ctx, &[0, 2]);
+        let mut menu = DebugMenuScreen::new(&ctx);
+        let choose = |ctx: &mut Ctx, menu: &mut DebugMenuScreen| {
+            menu.menu = tools_menu(ctx).focused(VOICE_TEST_TOOL);
+            let frame = FrameInput::new(vec![Action::Confirm], 0.0, vec![]);
+            assert!(matches!(menu.update(ctx, &frame), Transition::None));
+            let voice = |r: &AudioRequest| !matches!(r, AudioRequest::PlaySound { .. });
+            ctx.audio
+                .take()
+                .into_iter()
+                .filter(voice)
+                .collect::<Vec<_>>()
+        };
+        // No voices: only the menu's own sound.
+        assert_eq!(choose(&mut ctx, &mut menu), []);
+        ctx.set_voice_manifest(&manifest);
+        let play = |i: usize| AudioRequest::PlayVoice {
+            line: lines[i].clone(),
+            variant: Variant::None,
+        };
+        let preload = AudioRequest::PreloadVoices {
+            lines: lines.iter().map(|l| (l.clone(), Variant::None)).collect(),
+        };
+        assert_eq!(choose(&mut ctx, &mut menu), [preload.clone(), play(0)]);
+        assert_eq!(choose(&mut ctx, &mut menu), [play(1)]);
+        assert_eq!(choose(&mut ctx, &mut menu), [preload, play(0)]);
+        // Without the test scene it does nothing.
+        ctx.content.dialogue.scenes.clear();
+        assert_eq!(choose(&mut ctx, &mut menu), []);
     }
 
     #[test]
@@ -564,24 +629,27 @@ mod tests {
         assert!(matches!(stay, Transition::None));
         assert_eq!(ctx.map_skin.name(), "sprite");
         assert_eq!(label(&menu), "Map skin: test tileset");
-        // Still on it: again, and back to glyphs.
+        // Still on it: again for the unit sheets on glyph terrain, and
+        // again for glyphs.
         assert_eq!(menu.menu.focus(), MAP_SKIN_TOOL);
+        menu.update(&mut ctx, &frame(&[Confirm]));
+        assert_eq!(ctx.map_skin.name(), "sprite_units");
+        assert_eq!(label(&menu), "Map skin: test_units");
         menu.update(&mut ctx, &frame(&[Confirm]));
         assert_eq!(ctx.map_skin.name(), "glyph");
         assert_eq!(label(&menu), "Map skin: glyph");
         // A menu opened later names the skin in use.
         menu.update(&mut ctx, &frame(&[Confirm]));
         assert_eq!(label(&DebugMenuScreen::new(&ctx)), "Map skin: test tileset");
-        // Without the test tileset, the glyph skin stays.
-        menu.update(&mut ctx, &frame(&[Confirm]));
+        // Without any tileset, the glyph skin stays.
         ctx.content.tilesets.clear();
+        menu.update(&mut ctx, &frame(&[Confirm]));
+        assert_eq!(ctx.map_skin.name(), "glyph");
         menu.update(&mut ctx, &frame(&[Confirm]));
         assert_eq!(ctx.map_skin.name(), "glyph");
         assert_eq!(label(&menu), "Map skin: glyph");
         let down = menu.update(&mut ctx, &frame(&[CursorDown]));
         assert!(matches!(down, Transition::None));
-        assert_eq!(skin_label("glyph"), "glyph");
-        assert_eq!(skin_label("sprite"), "test tileset");
     }
 
     #[test]
