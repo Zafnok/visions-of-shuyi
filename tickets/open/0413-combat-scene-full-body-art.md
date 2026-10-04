@@ -89,10 +89,34 @@ work with some additional in-battle overlays or pop up messages".
   `assets-private/library/tiny-tales/characters/` (`heroes/<Name>/
   battler.png`, `battler-classes/<pack>/<Name>/battler.png`).
 
+**Changed 2026-10-04 (ticket 0040).** Nick chose art for the fighters
+Tiny Tales has no picture for; the table is in `look-and-feel.md`,
+*Fighters with no Tiny Tales art*. It replaces the stand-ins named above
+and settles Harl (0035 is answered there):
+
+- **Brigand, Raider and Harl** use Shironejiya's human bandits (free;
+  Harl is the bearded axe bandit) instead of the orc. **Mounted classes**
+  use Pixel Flag's Paladin (¥500, **not bought yet**: ask Nick to buy it
+  when this ticket needs the file) instead of an on-foot lance fighter.
+  Crane, the Brawler and Dace use Shironejiya pictures too; Aske is the
+  Archer hero and Maud (the keeper, a Cleric) the Church Cleric.
+- **Sizes are no longer whole numbers only.** Nick picked 1.25× for the
+  Shironejiya pictures and 1.5× for the Paladin so they stand as tall as a
+  Tiny Tales hero, and noticed that Tiny Tales' own class pictures are
+  smaller than its heroes. So each picture carries its own size next to
+  its facing in the sidecar (step 2), and "how big the fighters are" below
+  is asked per source, not as one scale.
+- **These files are not Tiny Tales':** bring them in with their own
+  credit and licence text (0829 refuses bought files with no credit).
+  Shironejiya's terms need its site name, address and a no-reuse line in
+  a text shipped with the game. Its pictures are 64×64 PNGs facing left.
+  Crane's spectacles are a 21-pixel edit to make at import (the pixels are
+  in 0040's Completion notes).
+
 ## Nick input
 
 **Decision** (use `ask-nick`, with rendered mockups made from the bought
-sprites). Ask only what 0021 didn't settle and the packs allow:
+sprites). Ask only what 0021 and 0040 didn't settle and the packs allow:
 
 - where the scene is shown: the box over the map or the full screen, with
   the facing fixed, and what tells the player the numbers in the
@@ -104,7 +128,6 @@ sprites). Ask only what 0021 didn't settle and the packs allow:
   crit looks (show them as a short GIF or a strip of frames);
 - per-class art vs per-character where both exist (the heroes have their
   own still image; generic classes share one);
-- which still image stands in for the Rider;
 - how the recolours look for named characters (show two or three);
 - on/off setting (0805 already has `combat_animations`).
 

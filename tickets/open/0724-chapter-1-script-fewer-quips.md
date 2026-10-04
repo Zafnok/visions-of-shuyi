@@ -61,7 +61,7 @@ any, are folded into the rewrite.
   that:
   - `ch01_intro` and `ch01_prebattle` are played straight: people who have
     just learned that armed men are coming for them talk like it. Warmth
-    (Hollis's care for the lead, Piers's kindness) stays; one-liners,
+    (Hollis's care for the lead, Maud's kindness) stays; one-liners,
     running gags and comic bits go, or move to the wry reply choice.
   - Battle scenes (`ch01_first_turn`, the boss scenes, death and retreat
     lines) carry no jokes. A dry or bitter line that is in character

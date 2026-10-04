@@ -97,7 +97,7 @@ heretic: What? What's everyone looking at? They're hands. And don't you
   stare, heir. It's you at the top of that paper, not me.
 > {N:retainer.first} has not said a word. He turns, and walks back toward
   the house.
-> Something drops out of the chapel yew: a thin boy, a long bow, two
+> Something drops out of the chapel yew: a thin girl, a long bow, two
   rabbits.
 @left  poacher neutral
 @right sergeant happy
@@ -156,7 +156,7 @@ retainer: Stay close, kid. The first real one's always ugly.
 # Harl's first fight. A scene written for him and one character replaces
 # the general one (docs/design/battle-scenes-and-recruitment.md). The
 # general one meets Hollis and Rue, who are on his paper, and Aske and
-# Piers, who aren't.
+# Maud, who aren't.
 
 @scene ch01_boss_engage
 @right red_captain neutral

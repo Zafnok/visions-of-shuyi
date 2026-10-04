@@ -14,7 +14,7 @@ Id: `vowmaster` · [Name registry](../names.md)
 
 The keeper who decides which vows the Vigil teaches and which it buries. He
 built the Candles: children sworn to fire because the war was being lost, and
-because the crown paid the Vigil for every one. He ordained Piers. He found
+because the crown paid the Vigil for every one. He ordained Maud. He found
 the Door Vow in the Vigil's oldest archive, where it was sealed away, and
 brought it to a grieving king. When a report from Harrowby described a gifted
 girl with burned hands, he recognised a surviving Candle, and ordered every
@@ -45,7 +45,7 @@ witness of the night at the mill silenced.
 
 - **Start:** a respected elder of the Vigil, quietly steering a king.
 - **End:** defeated at the Door in Act 3, still certain. The contrast to the
-  king and the prince, who let go, and to Piers, who keeps faith without
+  king and the prince, who let go, and to Maud, who keeps faith without
   obedience.
 
 ## Relationships
@@ -54,7 +54,7 @@ witness of the night at the mill silenced.
 | ---- | --- | --- |
 | The king (`king`) | Patient, useful | Grief is a lever |
 | Dace (`rival`) | Handler | Knows Dace's past; uses it |
-| Piers (`keeper`) | Fond disappointment | His student, "a gentle keeper, which is to say a useless one" |
+| Maud (`keeper`) | Fond disappointment | Crane's student, "a gentle keeper, which is to say a useless one" |
 | Rue (`heretic`) | Property | "One of mine. Misfiled, and returned damaged." |
 
 ## Voice notes
@@ -67,7 +67,7 @@ witness of the night at the mill silenced.
 
 **Sample lines**
 
-- "Death is a door, Keeper Piers. You have spent your life sweeping the step.
+- "Death is a door, Keeper Maud. You have spent your life sweeping the step.
   I intend to open it."
 - "Nothing in my collection was wasted, Keeper. Every one of them is
   catalogued. I could tell you where each one is shelved."
@@ -77,7 +77,7 @@ witness of the night at the mill silenced.
 ## Portrait brief
 
 - **Silhouette:** thin and slightly stooped, with a tall stiff Vigil hood
-  **up**. It's the same hood as Piers's, worn formally, making a narrow
+  **up**. It's the same hood as Maud's, worn formally, making a narrow
   spire shape.
 - **Hair:** white and thin, hidden under the hood. Clean-shaven.
 - **Face:** 67, long and pale, with half-moon spectacles and a mild, attentive
