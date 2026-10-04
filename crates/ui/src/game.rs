@@ -61,6 +61,9 @@ pub struct FrameOutput<'a> {
     pub audio: &'a [AudioRequest],
     /// What to do to the music this frame (ADR-0026).
     pub music: &'a [MusicCommand],
+    /// How loud voice clips play, 0–1 ([`Ctx::voice_volume`]). `app`
+    /// applies it to the voice that is playing too.
+    pub voice_volume: f32,
 }
 
 /// Owns the screens, input state, shared context and the console buffer.
@@ -92,9 +95,9 @@ impl Game {
             ctx.use_layout(layout);
         }
         let title = if ctx.debug_tools {
-            TitleScreen::with_quick_battle()
+            TitleScreen::with_quick_battle(&ctx)
         } else {
-            TitleScreen::new()
+            TitleScreen::new(&ctx)
         };
         // `Continue` and `Load Game` for the saves there are.
         let title = title.refreshed(&ctx);
@@ -163,6 +166,7 @@ impl Game {
             quit: self.quit,
             audio: &self.audio_out,
             music: &self.music_out,
+            voice_volume: self.ctx.voice_gain(),
         }
     }
 
@@ -186,7 +190,8 @@ impl Game {
         self.sync_keymap();
         let mut pressed = Vec::new();
         let mut text = Vec::new();
-        let mut pad = false;
+        let mut buttons_down = Vec::new();
+        let mut buttons_up = Vec::new();
         for &event in events {
             // Any key or any controller button ends the title's wait
             // (`docs/design/title-screen.md`).
@@ -206,9 +211,12 @@ impl Game {
                 RawInputEvent::Text(_) => {}
                 RawInputEvent::PadDown(button, kind) => {
                     self.input.pad_down(button, kind);
-                    pad = true;
+                    buttons_down.push(button);
                 }
-                RawInputEvent::PadUp(button) => self.input.pad_up(button),
+                RawInputEvent::PadUp(button) => {
+                    self.input.pad_up(button);
+                    buttons_up.push(button);
+                }
             }
         }
         if dt.is_finite() {
@@ -227,11 +235,11 @@ impl Game {
                 .top_name()
                 .is_some_and(|n| debug::SCREENS.contains(&n));
         if opens_debug_menu {
-            self.stack.push(Box::new(DebugMenuScreen::new()));
+            self.stack.push(Box::new(DebugMenuScreen::new(&self.ctx)));
         } else {
             let input = FrameInput::new(actions, dt, held)
                 .with_typing(pressed, text)
-                .with_pad(pad);
+                .with_buttons(buttons_down, buttons_up);
             self.quit = self.stack.update(&mut self.ctx, &input);
             self.sync_keymap();
         }
@@ -315,7 +323,10 @@ fn is_known(manifest: &trpg_content::AudioManifest, request: &AudioRequest) -> b
     match request {
         AudioRequest::PlaySound { cue, .. } => manifest.sounds.contains_key(cue),
         AudioRequest::PlayMusic { cue } => manifest.music.contains_key(cue),
-        AudioRequest::StopMusic => true,
+        AudioRequest::StopMusic
+        | AudioRequest::PlayVoice { .. }
+        | AudioRequest::StopVoice
+        | AudioRequest::PreloadVoices { .. } => true,
     }
 }
 
@@ -692,7 +703,7 @@ mod tests {
         assert_eq!(names(release), ["title", "credits"]);
         let mut debug = ctx();
         debug.debug_tools = true;
-        assert_eq!(names(debug), ["title", "battle"]);
+        assert_eq!(names(debug), ["title", "preparations"]);
     }
 
     /// Records what the screen saw.
@@ -744,6 +755,36 @@ mod tests {
             seen[0].pressed_chords(),
             [Chord::plain(Key::Delete), shifted]
         );
+    }
+
+    #[test]
+    fn screens_see_the_buttons_that_went_down_and_up() {
+        let seen = std::rc::Rc::default();
+        let mut game = Game::new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
+        // Bound or not, in order.
+        let down = |b| RawInputEvent::PadDown(b, PadKind::Xbox);
+        let events = [down(Button::RightStickUp), down(Button::South)];
+        game.frame(&events, 0.0);
+        let ups = [
+            RawInputEvent::PadUp(Button::South),
+            RawInputEvent::PadUp(Button::RightStickUp),
+        ];
+        game.frame(&ups, 0.0);
+        game.frame(&[], 0.0);
+        let seen = seen.borrow();
+        assert_eq!(
+            seen[0].pressed_buttons(),
+            [Button::RightStickUp, Button::South]
+        );
+        assert!(seen[0].released_buttons().is_empty());
+        assert!(seen[0].pad_pressed());
+        assert!(seen[1].pressed_buttons().is_empty());
+        assert_eq!(
+            seen[1].released_buttons(),
+            [Button::South, Button::RightStickUp]
+        );
+        assert!(!seen[1].pad_pressed());
+        assert!(seen[2].pressed_buttons().is_empty() && seen[2].released_buttons().is_empty());
     }
 
     #[test]
@@ -979,7 +1020,7 @@ mod tests {
         units[1].hp = 1;
         let rout = Objective::Rout { turn_limit: None };
         let battle = battle_with(&c, quick.map().clone(), units, rout);
-        let mut stack = ScreenStack::new(Box::new(TitleScreen::with_quick_battle()));
+        let mut stack = ScreenStack::new(Box::new(TitleScreen::with_quick_battle(&c)));
         stack.push(Box::new(BattleScreen::new(battle)));
         let mut game = Game::with_stack(c, stack);
         let mut music = Vec::new();

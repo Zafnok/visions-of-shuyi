@@ -17,6 +17,10 @@
 //! quote before the fall). In the Enemy and Other phases the AI acts
 //! ([`ai_phase`], 0502): each action is shown one at a time, and the player
 //! can only speed it up or skip fights.
+//!
+//! The map itself isn't drawn here (ADR-0038): the screen says what is on it
+//! ([`BattleScreen::scene`]) and the map skin paints that. Panels, menus,
+//! boxes and the help bar are this screen's own cells.
 
 pub mod ai_phase;
 pub mod art_list;
@@ -42,39 +46,41 @@ pub mod skills;
 mod sounds;
 pub mod tips;
 pub mod units;
+pub mod walk;
 
 use std::collections::VecDeque;
-use trpg_content::{Content, TipTrigger, battle_campaign};
+use trpg_content::{Content, MapLook, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
-    BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode,
+    BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
     LeadGender, LeadProfile, Phase, Pos, StatValue, TileSet, Unit, UnitId, danger_zone,
     next_command,
 };
 
-use self::ai_phase::{AiAction, PACING};
+use self::ai_phase::{AiAction, PACING, Pacing};
 use self::banner::{Banner, BannerKind};
 
-use self::attack::Targeting;
-use self::camera::{Camera, tile_to_cell};
-use self::cursor::{Cursor, draw_cursor};
+use self::attack::{Targeting, aimed_first, aimed_options};
+use self::camera::Camera;
+use self::cursor::Cursor;
 use self::event_sounds::CueQueue;
-use self::layout::{
-    HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL, TILE_W_CELLS, VIEW_TILES_H, VIEW_TILES_W,
-};
+use self::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
 use self::mode::{Effect, MenuEntry, Mode, Selection};
-use self::path::path_overlays;
 use self::playback::{Playback, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{RewindEffect, RewindScreen};
 use self::tips::TipState;
+use self::walk::Gait;
 use super::dialogue::DialogueScreen;
 use super::draw_debug_hint;
 use crate::audio::{CURSOR_MOVE, MenuSound};
-use crate::color::{Palette, Rgb, UiColor};
+#[cfg(test)]
+use crate::color::Rgb;
+use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
+use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::tips::{draw_tip, fill_placeholders};
 use crate::widgets::help::{HelpKeys, SEPARATOR, cursor_keys_name, help_line, key_name};
@@ -88,6 +94,8 @@ pub const QUICK_BATTLE: &str = "quick";
 /// (a caster among them, unit 8) against generic enemies (rout), one
 /// brigand close enough to fight on turn 1, a Frost Elemental holding its
 /// tile, and a trigger of each kind about a rogue who arrives on turn 2.
+/// Its pack holds [`QUICK_PACK_POTIONS`] Potions from its stock, as if
+/// packed on the Preparations screen the title's Quick Battle opens first.
 /// Fails with a message if the content lacks it.
 pub fn quick_battle(content: &Content) -> Result<BattleState, String> {
     let def = content
@@ -96,12 +104,17 @@ pub fn quick_battle(content: &Content) -> Result<BattleState, String> {
         .ok_or_else(|| format!("no battle \"{QUICK_BATTLE}\""))?;
     let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
     let campaign = battle_campaign(content, def, GameMode::Classic, lead);
-    Ok(BattleState::new(campaign.battle_setup(def, &content.tables())).0)
+    let mut setup = campaign.battle_setup(def, &content.tables());
+    for _ in 0..QUICK_PACK_POTIONS {
+        setup
+            .pack_from_stock(&ItemId::new("potion"))
+            .map_err(|e| format!("packing a potion: {e}"))?;
+    }
+    Ok(BattleState::new(setup).0)
 }
 
-/// How far range overlays tint a tile's background toward their colour
-/// (`look-and-feel.md`: about 75%). *Tunable.*
-pub const OVERLAY_BLEND: f32 = 0.75;
+/// Potions in the pack of [`quick_battle`].
+pub const QUICK_PACK_POTIONS: usize = 3;
 
 /// How long the `Auto-end: ON/OFF` message stays, in seconds. *Tunable.*
 pub const TOAST_S: f32 = 1.5;
@@ -120,23 +133,52 @@ pub struct TerrainFlash {
 }
 
 impl TerrainFlash {
-    /// How far the tile's background is tinted towards its glyph colour
-    /// now: [`OVERLAY_BLEND`] at the change, fading to none.
+    /// How strong the flash is now: `1` at the change, fading to none.
     pub fn strength(&self) -> f32 {
-        OVERLAY_BLEND * (1.0 - self.t / TERRAIN_FLASH_S).clamp(0.0, 1.0)
+        (1.0 - self.t / TERRAIN_FLASH_S).clamp(0.0, 1.0)
     }
 }
 
-/// A `+10` shown over a unit that was healed, for
-/// [`Timings::heal_popup`](playback::Timings::heal_popup) seconds.
+/// What a [`HealPopup`] tells of.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PopupKind {
+    /// HP restored: `+10`, in `hp_high`.
+    Heal,
+    /// HP lost to a fire burning out under the unit: `-5`, in `hp_low`.
+    Burn,
+}
+
+/// A `+10` shown over a unit that was healed, or a `-5` over one a fire
+/// burnt, for [`Timings::heal_popup`](playback::Timings::heal_popup)
+/// seconds (a burn's start once no banner is on screen).
 #[derive(Debug, Clone, PartialEq)]
 pub struct HealPopup {
     /// The tile it floats over.
     pub pos: Pos,
-    /// HP restored.
+    /// HP restored or lost.
     pub amount: StatValue,
+    /// Whether the HP was restored or lost.
+    pub kind: PopupKind,
     /// Seconds it has been up.
     pub t: f32,
+}
+
+impl HealPopup {
+    /// What it reads: `+10` for a heal, `-5` for a burn.
+    pub fn text(&self) -> String {
+        match self.kind {
+            PopupKind::Heal => format!("+{}", self.amount),
+            PopupKind::Burn => format!("-{}", self.amount),
+        }
+    }
+
+    /// Its colour: `hp_high` for a heal, `hp_low` for a burn.
+    pub fn color(&self) -> UiColor {
+        match self.kind {
+            PopupKind::Heal => UiColor::HpHigh,
+            PopupKind::Burn => UiColor::HpLow,
+        }
+    }
 }
 
 /// The tiles units hostile to the player could attack this turn
@@ -190,6 +232,9 @@ pub struct BattleScreen {
     state: BattleState,
     history: BattleHistory,
     camera: Camera,
+    /// The viewport's size in tiles, across and down, that the camera is
+    /// kept for: the map skin's, taken at the start of every frame.
+    view: (i32, i32),
     cursor: Cursor,
     mode: Mode,
     /// The danger zone, while shown (recomputed after every command).
@@ -222,6 +267,10 @@ pub struct BattleScreen {
     /// The unit whose walk was shown since the last command: its move's
     /// steps have been heard.
     walked: Option<UnitId>,
+    /// Walking speed, in tiles per second, and an AI unit's while Confirm
+    /// is held: the map skin's ([`MapSkin::walk_tiles_per_s`],
+    /// [`MapSkin::held_walk_tiles_per_s`]), as of the frame's start.
+    pace: (f32, f32),
     /// The player chose `Restart Battle` or `Suspend`: the screen closes,
     /// and the game flow does it.
     leaving: Option<Leaving>,
@@ -231,6 +280,10 @@ pub struct BattleScreen {
     /// Seconds the battle notes have been up (0411): the units they are
     /// about blink.
     notes_t: f32,
+    /// How the map looks, as its file says (ADR-0052). The game flow gives
+    /// it ([`with_look`](Self::with_look)); a battle made any other way
+    /// has the look of a map that names none.
+    look: MapLook,
 }
 
 impl BattleScreen {
@@ -240,7 +293,8 @@ impl BattleScreen {
     /// A screen showing `state` (a battle just started: its history, and
     /// every rewind charge, start here), with the cursor on the first player lord
     /// (else the first player unit, else the map's centre) and the camera
-    /// centred on it.
+    /// centred on it, in a view as big as the default map skin shows (the
+    /// first frame fits it to the skin in use).
     pub fn new(state: BattleState) -> Self {
         let tiles = &state.map().tiles;
         let (w, h) = (tiles.width(), tiles.height());
@@ -252,8 +306,11 @@ impl BattleScreen {
             .find(|u| u.is_lord)
             .or_else(|| units.iter().find(player))
             .map_or_else(|| Pos::new(i32::from(w) / 2, i32::from(h) / 2), |u| u.pos);
+        // Refitted on the first frame if the game's skin shows another.
+        let view = GlyphSkin.view_tiles(MAP_VIEW);
         Self {
-            camera: Camera::centred_on(start, w, h),
+            camera: Camera::centred_on(start, w, h, view),
+            view,
             cursor: Cursor::new(start),
             mode: Mode::after_command(&state),
             history: BattleHistory::new(state.clone()),
@@ -270,10 +327,19 @@ impl BattleScreen {
             progress: None,
             cues: CueQueue::default(),
             walked: None,
+            pace: (walk::WALK_TILES_PER_S, walk::HELD_WALK_TILES_PER_S),
             leaving: None,
             player_view: None,
             notes_t: 0.0,
+            look: MapLook::default(),
         }
+    }
+
+    /// This screen with its map looking as `look` says.
+    #[must_use]
+    pub fn with_look(mut self, look: MapLook) -> Self {
+        self.look = look;
+        self
     }
 
     /// [`BattleScreen::new`] for a battle just started with `events`: its
@@ -436,16 +502,17 @@ impl BattleScreen {
     }
 
     /// The top row of a box `h` rows tall listing the battle notes: off
-    /// the rows of the units they are about ([`notes::box_top`]).
-    fn notes_top(&self, h: i32) -> i32 {
+    /// the rows of the units they are about ([`notes::box_top`]), where the
+    /// map skin has their tiles of `scene`.
+    fn notes_top(&self, ctx: &Ctx, scene: &MapScene, h: i32) -> i32 {
         let noted = self.state.battle_notes();
         let rows: Vec<i32> = self
             .state
             .units()
             .iter()
             .filter(|u| notes::is_noted(noted, u.id))
-            .filter_map(|u| tile_to_cell(self.drawn_pos(u), &self.camera))
-            .map(|(_, y)| y)
+            .filter_map(|u| ctx.map_skin.tile_cells(scene, MAP_VIEW, self.drawn_pos(u)))
+            .map(|cells| cells.y)
             .collect();
         notes::box_top(h, &rows)
     }
@@ -633,7 +700,12 @@ impl BattleScreen {
         self.camera.origin = from;
         self.cursor.jump(start);
         let then = std::mem::take(&mut self.mode);
-        let action = AiAction::new(unit, before, (from, to), path, then, PACING);
+        let pacing = Pacing {
+            walk_tiles_per_s: self.pace.0,
+            held_walk_tiles_per_s: self.pace.1,
+            ..PACING
+        };
+        let action = AiAction::new(unit, before, (from, to), path, then, pacing);
         self.mode = Mode::AiAction(Box::new(action));
     }
 
@@ -734,8 +806,52 @@ impl BattleScreen {
     /// viewport's edges.
     pub fn follow(&mut self, target: Pos) {
         let tiles = &self.state.map().tiles;
-        self.camera
-            .follow(target, tiles.width(), tiles.height(), Camera::MARGIN);
+        let (w, h) = (tiles.width(), tiles.height());
+        self.camera.follow(target, w, h, self.view, Camera::MARGIN);
+    }
+
+    /// The camera for a viewport of `view` tiles: the screen's own, or, if
+    /// that was kept for another size (the map skin changed), one centred on
+    /// the cursor.
+    fn camera_in(&self, view: (i32, i32)) -> Camera {
+        if view == self.view {
+            return self.camera;
+        }
+        let tiles = &self.state.map().tiles;
+        Camera::centred_on(self.cursor.pos, tiles.width(), tiles.height(), view)
+    }
+
+    /// Starts a frame of `dt` seconds: keeps the cameras for as many tiles
+    /// as the map skin shows ([`refit`](Self::refit)), takes the skin's
+    /// walking speed for the walks that start this frame, and advances the
+    /// cursor's pulse.
+    fn begin_frame(&mut self, ctx: &Ctx, dt: f32) {
+        let view = ctx.map_skin.view_tiles(MAP_VIEW);
+        if view != self.view {
+            self.refit(view);
+        }
+        let skin = &ctx.map_skin;
+        self.pace = (skin.walk_tiles_per_s(), skin.held_walk_tiles_per_s());
+        self.cursor.tick(dt);
+    }
+
+    /// The map skin changed (a debug tool) and the viewport now shows
+    /// `view` tiles: the camera centres on the cursor, the camera kept for
+    /// the player's next phase centres on the cursor kept with it, and an
+    /// AI action's pan is worked out again, taking as long as before.
+    fn refit(&mut self, view: (i32, i32)) {
+        let tiles = &self.state.map().tiles;
+        let (w, h) = (tiles.width(), tiles.height());
+        self.camera = self.camera_in(view);
+        self.view = view;
+        if let Some((pos, camera)) = &mut self.player_view {
+            *camera = Camera::centred_on(*pos, w, h, view);
+        }
+        if let Mode::AiAction(a) = &mut self.mode {
+            let mut to = self.camera;
+            to.follow(a.start(), w, h, view, Camera::MARGIN);
+            a.repan((self.camera.origin, to.origin));
+        }
     }
 
     /// The unit drawn under the cursor, if any.
@@ -783,9 +899,16 @@ impl BattleScreen {
                     Some(HealPopup {
                         pos,
                         amount,
+                        kind: PopupKind::Heal,
                         t: 0.0,
                     })
                 }
+                Event::BurnDamage { pos, amount, .. } if amount > 0 => Some(HealPopup {
+                    pos,
+                    amount,
+                    kind: PopupKind::Burn,
+                    t: 0.0,
+                }),
                 _ => None,
             }));
             self.flashes.extend(events.iter().filter_map(|e| match *e {
@@ -961,6 +1084,7 @@ impl BattleScreen {
         let before = self.mode.clone();
         let mode = std::mem::take(&mut self.mode);
         let (mode, effect) = mode::step(mode, action, self.cursor.pos, &self.state);
+        let mode = mode.at_pace(self.pace.0);
         if let Some(sound) = sounds::step_sound(action, &before, &mode, &effect) {
             ctx.audio.menu(sound);
         }
@@ -1095,7 +1219,15 @@ impl BattleScreen {
                     .and_then(|t| self.state.unit(t))
                     .is_some_and(|u| u.pos == self.cursor.pos);
                 if aimed {
-                    help_line(&[moves, select("attack"), cancel("cancel")])
+                    // The forecast opens with a weapon or a spell (0430).
+                    let options = sel.target.map_or_else(Vec::new, |t| {
+                        aimed_options(&self.state, sel.unit, sel.dest(), t)
+                    });
+                    let verb = match aimed_first(&self.state, sel.unit, &options) {
+                        Some(Equipped::Spell(_)) => "cast",
+                        _ => "attack",
+                    };
+                    help_line(&[moves, select(verb), cancel("cancel")])
                 } else if self.cursor.pos == sel.dest() && sel.reach.is_stoppable(sel.dest()) {
                     help_line(&[moves, select("move here"), cancel("cancel")])
                 } else {
@@ -1160,10 +1292,22 @@ impl BattleScreen {
         };
         let confirm = (Some(key_name(km, Action::Confirm)), verb);
         let cancel = (Some(key_name(km, Action::Cancel)), "back");
+        let pair = |a, b| Some(format!("{}/{}", key_name(km, a), key_name(km, b)));
+        if t.can_swap() {
+            // Left and right swap the weapon or spell of a forecast opened
+            // by pointing (0430); the unit keys then change the target.
+            let mut entries = vec![
+                (pair(Action::CursorLeft, Action::CursorRight), "swap"),
+                (pair(Action::PrevUnit, Action::NextUnit), "target"),
+            ];
+            if t.has_list() {
+                entries.push((pair(Action::CursorUp, Action::CursorDown), "art"));
+            }
+            return help_line(&[entries, vec![confirm, cancel]].concat());
+        }
         if !t.has_list() {
             return help_line(&[(Some(cursor_keys_name(km)), "next target"), confirm, cancel]);
         }
-        let pair = |a, b| Some(format!("{}/{}", key_name(km, a), key_name(km, b)));
         help_line(&[
             (pair(Action::CursorLeft, Action::CursorRight), "target"),
             (pair(Action::CursorUp, Action::CursorDown), "art"),
@@ -1213,82 +1357,71 @@ impl BattleScreen {
         ])
     }
 
-    /// Draws terrain `id` on the tile at cell `(x, y)`: its two glyphs in
-    /// its colours.
-    fn draw_tile(ctx: &Ctx, buf: &mut GlyphBuffer, id: trpg_core::TerrainId, (x, y): (i32, i32)) {
-        let Some(t) = ctx.content.terrain.display.get(id) else {
-            return;
-        };
-        let fg = named(&ctx.palette, &t.fg, UiColor::Text);
-        let bg = named(&ctx.palette, &t.bg, UiColor::Black);
-        for (i, glyph) in (0..).zip(t.glyphs) {
-            buf.set(x + i, y, Cell::new(glyph, fg, bg));
+    /// What is on the visible map (ADR-0038), for the map skin to paint and
+    /// for tests to read: the terrain, the tiles flashing after their
+    /// terrain changed, the ranges the mode shows, the units as drawn, the
+    /// cursor and a selected unit's path. On the rewind screen: the map as
+    /// it was just before the highlighted action (as it is now with nothing
+    /// listed), with no flashes, ranges, cursor or path.
+    pub fn scene(&self, ctx: &Ctx) -> MapScene {
+        let size = ctx.map_skin.view_tiles(MAP_VIEW);
+        let origin = self.camera_in(size).origin;
+        // Whole milliseconds of a clock that only goes forward.
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let clock_ms = (ctx.clock_s.max(0.0) * 1000.0) as u64;
+        if let Some(r) = &self.rewind {
+            let shown = r.focused().map_or(&self.state, |e| &e.before);
+            let mut scene = terrain_scene(shown, origin, size);
+            scene.clock_ms = clock_ms;
+            scene.look.clone_from(&self.look);
+            for unit in shown.units() {
+                scene.push_unit(UnitView::of(unit));
+            }
+            animate(&mut scene, None);
+            return scene;
         }
-    }
-
-    /// Tints the tiles whose terrain just changed towards their glyph
-    /// colour, fading out ([`TerrainFlash::strength`]).
-    fn draw_flashes(&self, buf: &mut GlyphBuffer) {
+        let mut scene = terrain_scene(&self.state, origin, size);
+        scene.clock_ms = clock_ms;
+        scene.look.clone_from(&self.look);
         for flash in &self.flashes {
-            let Some((x, y)) = tile_to_cell(flash.pos, &self.camera) else {
-                continue;
-            };
-            let Some(fg) = buf.get(x, y).map(|c| c.fg) else {
-                continue;
-            };
-            buf.blend_bg(Rect::new(x, y, TILE_W_CELLS, 1), fg, flash.strength());
-        }
-    }
-
-    /// Draws the terrain of every viewport tile; tiles off the map are left
-    /// as they are (blank).
-    fn draw_terrain(&self, ctx: &Ctx, buf: &mut GlyphBuffer, state: &BattleState) {
-        let o = self.camera.origin;
-        for dy in 0..VIEW_TILES_H {
-            for dx in 0..VIEW_TILES_W {
-                let pos = Pos::new(o.x + dx, o.y + dy);
-                let Some(&id) = state.map().tiles.get(pos) else {
-                    continue;
-                };
-                if let Some(cell) = tile_to_cell(pos, &self.camera) {
-                    Self::draw_tile(ctx, buf, id, cell);
-                }
+            if let Some(tile) = scene.tile_mut(flash.pos) {
+                tile.flashes.push(flash.strength());
             }
         }
+        self.add_ranges(&mut scene);
+        self.add_units(&mut scene);
+        animate(&mut scene, self.mode.gait());
+        scene.cursor = self.cursor_view(ctx).filter(|c| scene.contains(c.pos));
+        if let Mode::Selected(sel) = &self.mode {
+            scene.path.clone_from(&sel.path);
+        }
+        scene
     }
 
-    /// Tints the danger zone, if shown (`danger_zone`), then the tiles of
-    /// the mode's ranges over it: a selected unit's move (`move_range`) and
-    /// attack (`attack_range`) ranges, a shown threat area, or where a unit
-    /// may move after its attack. While a spell's target is picked (0410):
-    /// the enemies it can hit in `attack_range` or the allies it can heal
-    /// in `heal_range`, and each tile it can change drawn as the terrain it
-    /// would become (Nick: units and terrain must look different).
-    fn draw_ranges(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let tint = |buf: &mut GlyphBuffer, tiles: Vec<Pos>, color| {
-            let color = ctx.palette.get(color);
-            for pos in tiles {
-                if let Some((x, y)) = tile_to_cell(pos, &self.camera) {
-                    buf.blend_bg(Rect::new(x, y, TILE_W_CELLS, 1), color, OVERLAY_BLEND);
-                }
-            }
-        };
-        let all = |set: &TileSet| set.iter().collect();
+    /// Lays the danger zone on `scene`, if shown, then the mode's ranges
+    /// over it: a selected unit's move and attack ranges, a shown threat
+    /// area, where a unit may move after its attack, or the targets being
+    /// chosen from. While a spell's target is picked (0410): the enemies it
+    /// can hit as an attack range or the allies it can heal as a heal
+    /// range, and each tile it can change marked with the terrain it would
+    /// become (Nick: units and terrain must look different).
+    fn add_ranges(&self, scene: &mut MapScene) {
+        let all = |set: &TileSet| -> Vec<Pos> { set.iter().collect() };
         if let Some(zone) = &self.danger {
-            tint(buf, all(zone), UiColor::DangerZone);
+            scene.tint(all(zone), RangeKind::Danger);
         }
         match &self.mode {
             Mode::Selected(sel) => {
-                tint(buf, all(&sel.moves), UiColor::MoveRange);
-                tint(buf, all(&sel.attack), UiColor::AttackRange);
+                scene.tint(all(&sel.moves), RangeKind::Move);
+                scene.tint(all(&sel.attack), RangeKind::Attack);
             }
             Mode::Idle {
                 threat: Some(threat),
-            } => tint(buf, all(&threat.area), UiColor::AttackRange),
-            Mode::MoveAfter { tiles, .. } => tint(buf, tiles.clone(), UiColor::MoveRange),
+            } => scene.tint(all(&threat.area), RangeKind::Attack),
+            Mode::MoveAfter { tiles, .. } => scene.tint(tiles.clone(), RangeKind::Move),
             Mode::Targeting(t) => {
                 let at = t.targets.iter().filter_map(|&id| self.state.unit(id));
-                tint(buf, at.map(|u| u.pos).collect(), UiColor::AttackRange);
+                scene.tint(at.map(|u| u.pos), RangeKind::Attack);
             }
             Mode::CastTarget(t) => {
                 let units = t.targets().iter().filter_map(|target| match target {
@@ -1300,62 +1433,57 @@ impl BattleScreen {
                     .spells()
                     .get(t.spell())
                     .is_some_and(trpg_core::SpellDef::is_attack);
-                let color = if attack {
-                    UiColor::AttackRange
+                let kind = if attack {
+                    RangeKind::Attack
                 } else {
-                    UiColor::HealRange
+                    RangeKind::Heal
                 };
-                tint(buf, units.collect(), color);
+                scene.tint(units, kind);
                 for (pos, becomes) in t.tile_changes(&self.state) {
-                    if let Some(cell) = tile_to_cell(pos, &self.camera) {
-                        Self::draw_tile(ctx, buf, becomes, cell);
+                    if let Some(tile) = scene.tile_mut(pos) {
+                        tile.becomes = Some(becomes);
                     }
                 }
             }
             Mode::SkillTarget(t) => {
                 let at = t.targets().iter().filter_map(|&id| self.state.unit(id));
-                tint(buf, at.map(|u| u.pos).collect(), UiColor::AttackRange);
+                scene.tint(at.map(|u| u.pos), RangeKind::Attack);
             }
             Mode::ItemTarget(t) => {
                 let at = t.targets().iter().filter_map(|&id| self.state.unit(id));
                 let dest = t.sel.dest();
-                let tiles = at
-                    .map(|u| if u.id == t.sel.unit { dest } else { u.pos })
-                    .collect();
-                tint(buf, tiles, UiColor::HealRange);
+                let tiles = at.map(|u| if u.id == t.sel.unit { dest } else { u.pos });
+                scene.tint(tiles, RangeKind::Heal);
             }
             _ => {}
         }
     }
 
-    /// Draws the units; while the battle notes are up, those they are
-    /// about blink (their tile's colours swapped).
-    fn draw_units(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
+    /// Adds the units to `scene`, each where it is drawn; during a combat's
+    /// playback or an AI action, as [`shown_units`](Self::shown_units) has
+    /// them. While the battle notes are up, the units they are about blink:
+    /// they are highlighted in the on half of the blink.
+    fn add_units(&self, scene: &mut MapScene) {
         if !self.playing() {
             let blink = self.notes_shown() && notes::blink_on(self.notes_t);
             for unit in self.state.units() {
-                if let Some((x, y)) = tile_to_cell(self.drawn_pos(unit), &self.camera) {
-                    units::draw_unit(buf, &ctx.palette, unit, x, y);
-                    if blink && notes::is_noted(self.state.battle_notes(), unit.id) {
-                        units::invert_tile(buf, x, y);
-                    }
-                }
+                let noted = blink && notes::is_noted(self.state.battle_notes(), unit.id);
+                let view = UnitView::of(unit).at(self.drawn_pos(unit));
+                scene.push_unit(view.highlighted(noted));
             }
             return;
         }
         for (unit, fade) in self.shown_units() {
-            if let Some((x, y)) = tile_to_cell(unit.pos, &self.camera) {
-                units::draw_fading_unit(buf, &ctx.palette, &unit, x, y, fade);
-            }
+            scene.push_unit(UnitView::of(&unit).fading(fade));
         }
     }
 
-    /// Draws the cursor for the mode (in the player's cursor style): on the
-    /// tile while browsing or on a selected unit; with a unit selected and
-    /// the cursor away from it, the path and its arrowhead, with no cursor
-    /// on the arrowhead's tile; none during a walk or in the menu. During an
-    /// AI action, on its unit until it walks.
-    fn draw_cursor_and_path(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
+    /// The cursor as the mode shows it (in the player's cursor style): on
+    /// its tile while browsing or on a selected unit; none on the tile the
+    /// path's arrowhead points at (a unit selected and the cursor away from
+    /// it), during a walk or in a menu. During an AI action, on its unit
+    /// until it walks.
+    fn cursor_view(&self, ctx: &Ctx) -> Option<CursorView> {
         let pos = self.cursor.pos;
         match &self.mode {
             Mode::Moving { .. }
@@ -1371,18 +1499,11 @@ impl BattleScreen {
             | Mode::EndTurnPrompt { .. }
             | Mode::RestartPrompt
             | Mode::SuspendPrompt
-            | Mode::Info { .. } => return,
-            Mode::AiAction(a) if !a.shows_cursor() => return,
-            Mode::Selected(sel) => {
-                let color = ctx.palette.get(UiColor::Path);
-                for overlay in path_overlays(&sel.path, self.camera, color) {
-                    buf.add_overlay(overlay);
-                }
-                if pos == sel.dest() && pos != sel.origin() {
-                    return;
-                }
-            }
-            Mode::Idle { .. }
+            | Mode::Info { .. } => return None,
+            Mode::AiAction(a) if !a.shows_cursor() => return None,
+            Mode::Selected(sel) if pos == sel.dest() && pos != sel.origin() => return None,
+            Mode::Selected(_)
+            | Mode::Idle { .. }
             | Mode::MoveAfter { .. }
             | Mode::Targeting(_)
             | Mode::CastTarget(_)
@@ -1392,18 +1513,22 @@ impl BattleScreen {
             | Mode::AiAction(_)
             | Mode::MapMenu { .. } => {}
         }
-        if let Some((x, y)) = tile_to_cell(pos, &self.camera) {
-            draw_cursor(buf, &ctx.palette, &self.cursor, ctx.cursor_style, x, y);
-        }
+        Some(CursorView {
+            pos,
+            brightness: self.cursor.brightness(),
+            style: ctx.cursor_style,
+        })
     }
 
     /// Draws the action menu or the weapon list beside its unit, or the
-    /// map menu beside the cursor, if open.
-    fn draw_menu(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
+    /// map menu beside the cursor, if open: beside where the map skin has
+    /// that tile of `scene`.
+    fn draw_menu(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
+        let cells = |tile| ctx.map_skin.tile_cells(scene, MAP_VIEW, tile);
         if let Some(t) = self.forecast() {
             // The arts list, beside the forecast panel (0414).
             if t.has_list() {
-                let unit_y = tile_to_cell(t.sel.dest(), &self.camera).map_or(0, |(_, y)| y);
+                let unit_y = cells(t.sel.dest()).map_or(0, |r| r.y);
                 let weapon = (t.sel.unit, &t.with);
                 art_list::draw_list(buf, &ctx.palette, &self.state, weapon, &t.list, unit_y);
             }
@@ -1419,8 +1544,8 @@ impl BattleScreen {
             Mode::MapMenu { menu, .. } => (self.cursor.pos, menu),
             _ => return,
         };
-        if let Some(cell) = tile_to_cell(tile, &self.camera) {
-            let (x, y) = menu_origin(cell, menu.size());
+        if let Some(tile) = cells(tile) {
+            let (x, y) = menu_origin(tile, menu.size());
             menu.draw(&ctx.palette, buf, x, y);
             if matches!(self.mode, Mode::ItemMenu { .. }) {
                 // The pack's size in the top border.
@@ -1434,11 +1559,16 @@ impl BattleScreen {
         }
     }
 
-    /// Ages the heal numbers, the terrain flashes and the message by `dt`
-    /// seconds, dropping those whose time is up.
+    /// Ages the heal and burn numbers, the terrain flashes and the message
+    /// by `dt` seconds, dropping those whose time is up. A burn number
+    /// waits while a banner is on screen: the fire burns out as the phase
+    /// banner comes up, which would cover it for longer than it lasts.
     fn tick_popups(&mut self, dt: f32) {
+        let banner = self.banner().is_some();
         for p in &mut self.popups {
-            p.t += dt;
+            if !(banner && p.kind == PopupKind::Burn) {
+                p.t += dt;
+            }
         }
         self.popups.retain(|p| p.t < TIMINGS.heal_popup);
         for f in &mut self.flashes {
@@ -1453,23 +1583,24 @@ impl BattleScreen {
         }
     }
 
-    /// Draws the heal numbers floating up over the units they healed.
-    fn draw_popups(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let fg = ctx.palette.get(UiColor::HpHigh);
+    /// Draws the heal and burn numbers floating up over the units they
+    /// tell of: over where the map skin has their tiles of `scene`.
+    fn draw_popups(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
         for p in &self.popups {
-            let Some((x, y)) = tile_to_cell(p.pos, &self.camera) else {
+            let fg = ctx.palette.get(p.color());
+            let Some(tile) = ctx.map_skin.tile_cells(scene, MAP_VIEW, p.pos) else {
                 continue;
             };
-            let y = (y - 1).max(MAP_VIEW.y);
+            let y = (tile.y - 1).max(MAP_VIEW.y);
             let bg = ctx.palette.get(UiColor::Black);
-            buf.print(x, y, &format!("+{}", p.amount), fg, bg);
+            buf.print(tile.x, y, &p.text(), fg, bg);
         }
     }
 
     /// Draws the boxes over the map: the unit list, the objective (with
     /// the battle notes under it), the end-turn question, the info screen,
     /// the battle notes at the start, and the banner on screen.
-    fn draw_dialogs(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
+    fn draw_dialogs(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
         let p = &ctx.palette;
         match &self.mode {
             Mode::UnitList { menu, .. } => map_menu::draw_centred_menu(buf, p, menu),
@@ -1485,7 +1616,8 @@ impl BattleScreen {
                     lines.extend(noted.into_iter().map(|l| (l, UiColor::Text)));
                 }
                 let (_, h) = map_menu::dialog_size("Objective", &lines);
-                map_menu::draw_dialog_at(buf, p, "Objective", &lines, self.notes_top(h));
+                let top = self.notes_top(ctx, scene, h);
+                map_menu::draw_dialog_at(buf, p, "Objective", &lines, top);
             }
             Mode::EndTurnPrompt { ready } => {
                 let km = ctx.help_keys();
@@ -1531,7 +1663,8 @@ impl BattleScreen {
                 .map(|l| (l, UiColor::Text))
                 .collect();
             let (_, h) = map_menu::dialog_size(notes::NOTES_TITLE, &lines);
-            map_menu::draw_dialog_at(buf, p, notes::NOTES_TITLE, &lines, self.notes_top(h));
+            let top = self.notes_top(ctx, scene, h);
+            map_menu::draw_dialog_at(buf, p, notes::NOTES_TITLE, &lines, top);
         }
         if let Some(banner) = self.banner() {
             banner.draw(buf, p, map_menu::shown_limit(&self.state));
@@ -1540,17 +1673,9 @@ impl BattleScreen {
 }
 
 impl BattleScreen {
-    /// Draws the rewind screen: the map as it was just before the
-    /// highlighted action (as it is now with nothing listed), the list in
-    /// the side panel and the help line.
+    /// Draws the rewind screen over its map ([`scene`](Self::scene)): the
+    /// list in the side panel and the help line.
     fn draw_rewind(&self, ctx: &Ctx, buf: &mut GlyphBuffer, r: &RewindScreen) {
-        let shown = r.focused().map_or(&self.state, |e| &e.before);
-        self.draw_terrain(ctx, buf, shown);
-        for unit in shown.units() {
-            if let Some((x, y)) = tile_to_cell(unit.pos, &self.camera) {
-                units::draw_unit(buf, &ctx.palette, unit, x, y);
-            }
-        }
         r.draw(&ctx.palette, buf);
         let black = ctx.palette.get(UiColor::Black);
         let dim = ctx.palette.get(UiColor::TextDim);
@@ -1610,19 +1735,50 @@ impl BattleScreen {
     }
 }
 
-/// Where a menu of `(w, h)` cells goes beside the tile whose left cell is
-/// `(x, y)`: one cell right of the tile (clear of the cursor's marks), or
+/// Where a menu of `(w, h)` cells goes beside the tile covering the cells
+/// `tile`: one cell right of the tile (clear of the cursor's marks), or
 /// left of it if it would run past the map view; its first item level with
-/// the tile, moved to fit the view.
-fn menu_origin((x, y): (i32, i32), (w, h): (i32, i32)) -> (i32, i32) {
-    let right = x + TILE_W_CELLS + 1;
+/// the tile's top row, moved to fit the view.
+fn menu_origin(tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
+    let right = tile.x + tile.w + 1;
     let mx = if right + w <= MAP_VIEW.x + MAP_VIEW.w {
         right
     } else {
-        (x - 1 - w).max(MAP_VIEW.x)
+        (tile.x - 1 - w).max(MAP_VIEW.x)
     };
-    let my = (y - 1).min(MAP_VIEW.y + MAP_VIEW.h - h).max(MAP_VIEW.y);
+    let my = (tile.y - 1)
+        .min(MAP_VIEW.y + MAP_VIEW.h - h)
+        .max(MAP_VIEW.y);
     (mx, my)
+}
+
+/// Sets the units of `scene` moving (ticket 0440): the unit of `gait`
+/// turned the way it walks, between two tiles, its legs going; every other
+/// unit that can still act and isn't falling stepping on the spot, all
+/// together, by the scene's clock. A unit that has acted stands still.
+fn animate(scene: &mut MapScene, gait: Option<(UnitId, Gait)>) {
+    let idle = walk::idle_frame(scene.clock_ms);
+    for unit in &mut scene.units {
+        match gait {
+            Some((id, gait)) if id == unit.id => {
+                unit.facing = gait.facing;
+                unit.frame = gait.frame;
+                unit.offset = gait.offset;
+            }
+            _ if !unit.acted && unit.fade <= 0.0 => unit.frame = idle,
+            _ => {}
+        }
+    }
+}
+
+/// A view of `size` tiles from `origin` showing `state`'s terrain (and
+/// the terrain one tile outside the view, for a skin to join pictures to)
+/// and nothing else.
+fn terrain_scene(state: &BattleState, origin: Pos, size: (i32, i32)) -> MapScene {
+    let mut scene = MapScene::new(origin, size);
+    let tiles = &state.map().tiles;
+    scene.set_terrain(|pos| tiles.get(pos).copied());
+    scene
 }
 
 /// The help line on the rewind screen `r`.
@@ -1647,21 +1803,13 @@ const fn on_off(on: bool) -> &'static str {
     if on { "ON" } else { "OFF" }
 }
 
-/// The palette colour called `name`, or `fallback` (content validation
-/// makes sure terrain colours exist, so this only guards against a bug).
-fn named(palette: &Palette, name: &str, fallback: UiColor) -> Rgb {
-    palette
-        .lookup(name)
-        .unwrap_or_else(|| palette.get(fallback))
-}
-
 impl Screen for BattleScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        self.cursor.tick(input.dt);
+        self.begin_frame(ctx, input.dt);
         let dt = if input.dt.is_finite() {
             input.dt.max(0.0)
         } else {
@@ -1771,17 +1919,14 @@ impl Screen for BattleScreen {
         let c = |u| ctx.palette.get(u);
         let black = c(UiColor::Black);
         buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
+        let scene = self.scene(ctx);
+        ctx.map_skin.paint(ctx, &scene, MAP_VIEW, buf);
         if let Some(r) = &self.rewind {
             self.draw_rewind(ctx, buf, r);
             return;
         }
-        self.draw_terrain(ctx, buf, &self.state);
-        self.draw_flashes(buf);
-        self.draw_ranges(ctx, buf);
-        self.draw_units(ctx, buf);
-        self.draw_cursor_and_path(ctx, buf);
-        self.draw_menu(ctx, buf);
-        self.draw_popups(ctx, buf);
+        self.draw_menu(ctx, buf, &scene);
+        self.draw_popups(ctx, buf, &scene);
         if let Mode::Combat(pb) = &self.mode {
             playback::draw_box(buf, &ctx.palette, pb);
         }
@@ -1789,7 +1934,7 @@ impl Screen for BattleScreen {
             progress::draw(buf, &ctx.palette, &ctx.content.portraits, p);
         }
         self.draw_panel(ctx, buf);
-        self.draw_dialogs(ctx, buf);
+        self.draw_dialogs(ctx, buf, &scene);
         if let Some(tip) = self
             .shown_tip()
             .and_then(|t| ctx.content.tips.for_trigger(t))
@@ -1814,6 +1959,10 @@ impl Screen for BattleScreen {
         buf.print(1, HELP_ROW, &self.help(ctx), c(UiColor::TextDim), black);
         draw_debug_hint(ctx, buf, HELP_ROW);
     }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
+    }
 }
 
 /// Helpers for this module's tests and its submodules'.
@@ -1826,7 +1975,15 @@ pub(crate) mod testing {
         StatValue, Stock, Unit, UnitAction, UnitId,
     };
 
+    use super::layout::MAP_VIEW;
     use crate::screen::Ctx;
+
+    /// The console cell of the left glyph of `tile` on `s`'s map, if it is
+    /// in view.
+    pub fn tile_cell(s: &super::BattleScreen, c: &Ctx, tile: Pos) -> Option<(i32, i32)> {
+        let cells = c.map_skin.tile_cells(&s.scene(c), MAP_VIEW, tile)?;
+        Some((cells.x, cells.y))
+    }
 
     /// A battle on `map` with `units` and `objective`, using the game's
     /// tables, without rewind charges.
@@ -2005,6 +2162,9 @@ mod progress_tests;
 mod rewind_tests;
 
 #[cfg(test)]
+mod scene_tests;
+
+#[cfg(test)]
 mod skill_tests;
 
 #[cfg(test)]
@@ -2029,13 +2189,13 @@ mod notes_tests;
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::glyph_buffer::Layer;
     use trpg_core::{BattleMap, Grid, Objective, Phase, TerrainId, Unit};
 
     use super::testing::{battle, vaulted, wait};
     use super::*;
-    use crate::console::{CELL_H_PX, CELL_W_PX, CONSOLE_H, CONSOLE_W};
+    use crate::console::{CONSOLE_H, CONSOLE_W};
     use crate::harness::Harness;
+    use crate::map_view::CursorStyle;
     use crate::screen::tests::ctx;
 
     fn quick() -> BattleScreen {
@@ -2283,19 +2443,11 @@ mod tests {
         let mut s = quick();
         s.update(&mut c, &FrameInput::new(vec![], 0.5, vec![]));
         assert!((s.cursor().brightness() - cursor::BLINK_MIN).abs() < 1e-6);
-        let dim = render(&s, &c);
-        let bright = render(&quick(), &c);
-        let cursor = c.palette.get(UiColor::Cursor);
-        // The lord's tile at (3, 5) starts at cell (26, 16).
-        let colours = |b: &GlyphBuffer| {
-            b.overlays()
-                .iter()
-                .filter(|o| o.color == cursor || o.color == cursor.scale(0.5))
-                .map(|o| o.color)
-                .collect::<Vec<_>>()
-        };
-        assert_eq!(colours(&bright), [cursor; 8]);
-        assert_eq!(colours(&dim), [cursor.scale(0.5); 8]);
+        // The map shows it on the lord at (3, 5), dimmed; a fresh battle's
+        // at full brightness.
+        let shown = |s: &BattleScreen| s.scene(&c).cursor.map(|v| (v.pos, v.brightness));
+        assert_eq!(shown(&s), Some((Pos::new(3, 5), cursor::BLINK_MIN)));
+        assert_eq!(shown(&quick()), Some((Pos::new(3, 5), 1.0)));
     }
 
     #[test]
@@ -2369,21 +2521,12 @@ mod tests {
         Harness::with_screen(Box::new(BattleScreen::new(battle(&c, map, units))))
     }
 
-    /// The console cell of the left glyph of the tile under the cursor,
-    /// found from its top-right corner mark: the only 1 × 3 px overlays are
-    /// the corner marks' vertical arms, and the right ones are in the tile's
-    /// last pixel column.
-    fn cursor_cell(buf: &GlyphBuffer) -> (i32, i32) {
-        let (cw, ch) = (i32::from(CELL_W_PX), i32::from(CELL_H_PX));
-        let arms = buf
-            .overlays()
-            .into_iter()
-            .map(|o| o.rect)
-            .filter(|r| (r.w, r.h) == (1, 3));
-        let r = arms
-            .max_by_key(|r| (r.x, -r.y))
-            .expect("no cursor on screen");
-        ((r.x + 1) / cw - layout::TILE_W_CELLS, r.y / ch)
+    /// Where the cursor is in the map view, as tiles right of and below
+    /// its top-left tile.
+    fn cursor_in_view(h: &Harness) -> (i32, i32) {
+        let scene = h.map_scene().expect("no battle");
+        let pos = scene.cursor_tile().expect("no cursor on the map");
+        scene.offset(pos).expect("the cursor is in the view")
     }
 
     /// Holding a cursor key ticks once per tile moved, and not at the
@@ -2401,7 +2544,7 @@ mod tests {
         // per tile back, none once at the edge.
         h.clear_audio().hold("Left", 6.0);
         assert_eq!(ticks(&h), right + 3);
-        assert_eq!(cursor_cell(h.game().buffer()).0, 0, "at the left edge");
+        assert_eq!(cursor_in_view(&h).0, 0, "at the left edge");
         h.clear_audio().keys("Left Up Up Up Up Up Up");
         assert_eq!(ticks(&h), 5, "only the five steps up to y = 0");
         // Next unit jumps: one tick.
@@ -2413,11 +2556,11 @@ mod tests {
     fn harness_keys_move_the_cursor() {
         let mut h = big_battle_harness();
         // The lord at (3, 5), camera at the top-left.
-        assert_eq!(cursor_cell(h.game().buffer()), (6, 5));
+        assert_eq!(cursor_in_view(&h), (3, 5));
         h.keys("Right Right Right");
-        assert_eq!(cursor_cell(h.game().buffer()), (12, 5));
+        assert_eq!(cursor_in_view(&h), (6, 5));
         h.keys("Down Left");
-        assert_eq!(cursor_cell(h.game().buffer()), (10, 6));
+        assert_eq!(cursor_in_view(&h), (5, 6));
     }
 
     #[test]
@@ -2430,18 +2573,20 @@ mod tests {
         h.hold("Right", 1.2);
         // 1 press + repeats at 300 ms, then every 55 ms: 18 tiles, to x = 21.
         assert_eq!(moves(1200), 18);
-        assert_eq!(cursor_cell(h.game().buffer()), (2 * (3 + 18), 5));
+        assert_eq!(cursor_in_view(&h), (3 + 18, 5));
         h.hold("Right", 1.2);
         // x = 39: the camera keeps it 3 tiles from the right edge.
         let x = 3 + 2 * moves(1200);
-        let origin = x - (layout::VIEW_TILES_W - 1 - Camera::MARGIN);
-        assert_eq!(cursor_cell(h.game().buffer()), (2 * (x - origin), 5));
+        let view_w = h.map_scene().unwrap().size.0;
+        assert_eq!(view_w, 35);
+        let origin = x - (view_w - 1 - Camera::MARGIN);
+        assert_eq!(cursor_in_view(&h), (x - origin, 5));
         // Far right, then back: the cursor stops at the edge and the
         // camera shows the map's last columns, then scrolls back.
         h.hold("Right", 3.0).hold("Down", 3.0);
-        assert_eq!(cursor_cell(h.game().buffer()), (68, 29));
+        assert_eq!(cursor_in_view(&h), (34, 29));
         h.hold("Left", 4.0).hold("Up", 3.0);
-        assert_eq!(cursor_cell(h.game().buffer()), (0, 0));
+        assert_eq!(cursor_in_view(&h), (0, 0));
     }
 
     /// The text of row `y` of the side panel, inside its border, trimmed.
@@ -2575,10 +2720,6 @@ mod tests {
             cell(19),
             Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black))
         );
-        assert_eq!(
-            named(p, "no_such_colour", UiColor::Cursor),
-            p.get(UiColor::Cursor)
-        );
     }
 
     /// A 64 × 40 map of stripes, a unit in the bottom-right corner and the
@@ -2595,6 +2736,7 @@ mod tests {
         let mut units = quick_battle(&c.content).unwrap().units().to_vec();
         // The camera starts on the lord at (3, 5), top-left.
         units[5].pos = Pos::new(63, 39);
+        let cornered = units[5].id;
         units[3].pos = Pos::new(30, 12);
         units[4].pos = Pos::new(28, 9); // Above the viewport: not drawn.
         let map = BattleMap::new("Stripes", Grid::from_cells(64, 40, cells).unwrap());
@@ -2603,10 +2745,13 @@ mod tests {
         s.cursor.jump(Pos::new(63, 39));
         s.follow(Pos::new(63, 39));
         assert_eq!(s.camera().origin, Pos::new(29, 10));
-        let buf = render(&s, &c);
         // The corner unit sits in the viewport's last tile.
-        assert_eq!(buf.get(68, 29).unwrap().glyph, 'R');
-        assert_snapshot!(buf.to_snapshot(&c.palette));
+        let scene = s.scene(&c);
+        let corner = Pos::new(63, 39);
+        assert_eq!(scene.size, (35, 30));
+        assert_eq!(scene.offset(corner), Some((34, 29)));
+        assert_eq!(scene.unit_at(corner).map(|u| u.id), Some(cornered));
+        assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
     }
 
     /// One frame of `dt` seconds with `actions`, Confirm held if `held`.
@@ -2716,30 +2861,25 @@ mod tests {
         let mut c = ctx();
         let mut s = quick();
         let plain = render(&s, &c);
+        assert!(s.scene(&c).tints_at(Pos::new(6, 5)).is_empty());
         step(&mut s, &mut c, &[Action::Confirm]);
         let buf = render(&s, &c);
-        let p = &c.palette;
-        // The cursor stays on the lord, as corner marks: 8 arms.
-        assert_eq!(cursor_marks(&buf, &c), 8);
-        assert_eq!(cursor_cell(&buf), (26, 16));
-        // (6, 5), reachable, is tinted `move_range`.
-        let tinted = |cell: (i32, i32), color| {
-            let was = plain.get(cell.0, cell.1).unwrap().bg;
-            buf.get(cell.0, cell.1).unwrap().bg == was.lerp(p.get(color), OVERLAY_BLEND)
-        };
-        assert!(tinted((32, 16), UiColor::MoveRange));
-        assert!(tinted((33, 16), UiColor::MoveRange));
+        let scene = s.scene(&c);
+        // The cursor stays on the lord, as corner marks.
+        let cursor = scene.cursor.unwrap();
+        let lord = Pos::new(3, 5);
+        assert_eq!((cursor.pos, cursor.style), (lord, CursorStyle::Corners));
+        // (6, 5), reachable, is in the move range.
+        assert_eq!(scene.tints_at(Pos::new(6, 5)), [RangeKind::Move]);
         let Mode::Selected(sel) = s.mode() else {
             panic!()
         };
         let attack = sel.attack.iter().next().unwrap();
-        let (ax, ay) = tile_to_cell(attack, &s.camera()).unwrap();
-        assert!(tinted((ax, ay), UiColor::AttackRange));
+        assert_eq!(scene.tints_at(attack), [RangeKind::Attack]);
         assert_eq!(buf.get(SIDE_PANEL.x, 0).unwrap().glyph, '╔');
         assert_eq!(plain.get(SIDE_PANEL.x, 0).unwrap().glyph, '┌');
-        // No path yet.
-        let path = p.get(UiColor::Path);
-        assert!(!buf.overlays().iter().any(|o| o.color == path));
+        // No path yet: only the lord's own tile.
+        assert_eq!(scene.path, [lord]);
     }
 
     #[test]
@@ -2751,16 +2891,17 @@ mod tests {
             &mut c,
             &[Action::Confirm, Action::CursorRight, Action::CursorRight],
         );
-        let buf = render(&s, &c);
-        let path = c.palette.get(UiColor::Path);
-        let lines = buf.overlays().into_iter().filter(|o| o.color == path);
-        assert_eq!(lines.clone().filter(|o| o.layer == Layer::Under).count(), 2);
-        assert_eq!(lines.filter(|o| o.layer == Layer::Over).count(), 6);
-        // (5, 5) is a fort, drawn `╦╦` from cell 30: no cursor marks
-        // around it, and the lord keeps its letters.
-        assert_eq!(cursor_marks(&buf, &c), 0);
-        let glyphs: String = (25..34).map(|x| buf.get(x, 16).unwrap().glyph).collect();
-        assert_eq!(glyphs, "·Lo..╦╦..");
+        // The path from the lord ends on the fort at (5, 5) (each skin
+        // draws its end its own way: the glyph skin an arrowhead): no
+        // cursor there, and the lord still on its tile.
+        let scene = s.scene(&c);
+        let (lord, fort) = (Pos::new(3, 5), Pos::new(5, 5));
+        assert_eq!(scene.path, [lord, Pos::new(4, 5), fort]);
+        assert_eq!(scene.cursor, None);
+        assert_eq!(scene.unit_at(lord).map(|u| u.label.as_str()), Some("Lo"));
+        assert_eq!(scene.unit_at(fort), None);
+        let fort_id = c.content.terrain.display.id_of("fort");
+        assert_eq!(scene.terrain_at(fort), fort_id);
         // On to the map's right edge, past the lord's reach (Mov 5): the
         // path, through the fort (cost 2), stops at (7, 5), and the cursor
         // shows its corner marks.
@@ -2770,15 +2911,7 @@ mod tests {
             panic!("{:?}", s.mode());
         };
         assert_eq!(sel.dest(), Pos::new(7, 5));
-        let buf = render(&s, &c);
-        assert_eq!(cursor_marks(&buf, &c), 8);
-        assert_eq!(cursor_cell(&buf), (46, 16));
-    }
-
-    /// How many overlays are in the cursor's full-brightness colour.
-    fn cursor_marks(buf: &GlyphBuffer, c: &Ctx) -> usize {
-        let cursor = c.palette.get(UiColor::Cursor);
-        buf.overlays().iter().filter(|o| o.color == cursor).count()
+        assert_eq!(s.scene(&c).cursor_tile(), Some(Pos::new(13, 5)));
     }
 
     #[test]
@@ -2791,8 +2924,11 @@ mod tests {
                 .map(|x| buf.get(x, y).unwrap().glyph)
                 .collect()
         };
-        // The lord at (5, 5), cells 30..32; its old tile shows its terrain.
-        assert_eq!(row(16, 26, 6), "....Lo");
+        // The lord at (5, 5); its old tile is empty.
+        let scene = s.scene(&c);
+        let lord = scene.unit_at(Pos::new(5, 5));
+        assert_eq!(lord.map(|u| u.label.as_str()), Some("Lo"));
+        assert_eq!(scene.unit_at(Pos::new(3, 5)), None);
         // The menu one cell right of the tile: `Attack` and `Item` (dim),
         // `Skill`, `Equip`, `Wait`.
         assert_eq!(row(16, 33, 10), "│ Attack │");
@@ -2808,20 +2944,27 @@ mod tests {
             p.get(UiColor::PanelBorderFocus)
         );
         // No cursor, no ranges, the panel shows the lord.
-        assert_eq!(buf.get(29, 16).unwrap().glyph, '.');
+        assert_eq!(scene.cursor, None);
+        assert!(scene.tiles.iter().all(|t| t.tints.is_empty()));
         assert_eq!(panel_row(&buf, 5), "Test Lord");
     }
 
     #[test]
     fn menus_go_right_of_the_tile_unless_they_would_leave_the_view() {
+        // A glyph tile: two cells wide, one high.
+        let beside = |(x, y), size| menu_origin(Rect::new(x, y, 2, 1), size);
         // The first item (under the top border) level with the tile.
-        assert_eq!(menu_origin((10, 4), (10, 4)), (13, 3));
+        assert_eq!(beside((10, 4), (10, 4)), (13, 3));
         // Too far right: left of the tile.
-        assert_eq!(menu_origin((60, 4), (10, 4)), (49, 3));
-        assert_eq!(menu_origin((57, 4), (10, 4)), (60, 3));
+        assert_eq!(beside((60, 4), (10, 4)), (49, 3));
+        assert_eq!(beside((57, 4), (10, 4)), (60, 3));
         // Too low or high: moved to fit; never off the left edge.
-        assert_eq!(menu_origin((10, 29), (10, 4)), (13, 26));
-        assert_eq!(menu_origin((2, 0), (70, 4)), (0, 0));
+        assert_eq!(beside((10, 29), (10, 4)), (13, 26));
+        assert_eq!(beside((2, 0), (70, 4)), (0, 0));
+        // A bigger tile (another skin's): right of all of it, level with
+        // its top row.
+        assert_eq!(menu_origin(Rect::new(10, 4, 4, 2), (10, 4)), (15, 3));
+        assert_eq!(menu_origin(Rect::new(58, 4, 4, 2), (10, 4)), (47, 3));
     }
 
     #[test]
@@ -2847,21 +2990,17 @@ mod tests {
     fn an_enemys_threat_area_is_tinted_until_hidden() {
         let mut c = ctx();
         let mut s = quick();
-        s.cursor.jump(Pos::new(8, 2));
-        let plain = render(&s, &c);
+        let brigand = Pos::new(8, 2);
+        s.cursor.jump(brigand);
+        assert!(s.scene(&c).tints_at(brigand).is_empty());
         step(&mut s, &mut c, &[Action::Confirm]);
-        let shown = render(&s, &c);
-        // The brigand's tile (cells 36..38, row 13) and one it can reach.
-        let red = c.palette.get(UiColor::AttackRange);
-        for (x, y) in [(36, 13), (37, 13), (36, 18)] {
-            let was = plain.get(x, y).unwrap().bg;
-            assert_eq!(shown.get(x, y).unwrap().bg, was.lerp(red, OVERLAY_BLEND));
+        // The brigand's tile and one it can reach.
+        let shown = s.scene(&c);
+        for pos in [brigand, Pos::new(8, 7)] {
+            assert_eq!(shown.tints_at(pos), [RangeKind::Attack], "{pos:?}");
         }
         step(&mut s, &mut c, &[Action::Confirm]);
-        assert_eq!(
-            render(&s, &c).get(36, 13).unwrap().bg,
-            plain.get(36, 13).unwrap().bg
-        );
+        assert!(s.scene(&c).tints_at(brigand).is_empty());
     }
 
     #[test]
@@ -2874,12 +3013,9 @@ mod tests {
             panic!("{:?}", s.mode());
         };
         assert_eq!(*unit, UnitId(3));
-        // Its tiles are tinted `move_range`.
-        let buf = render(&s, &c);
-        let (x, y) = tile_to_cell(tiles[0], &s.camera()).unwrap();
-        let was = render(&quick(), &c).get(x, y).unwrap().bg;
-        let blue = c.palette.get(UiColor::MoveRange);
-        assert_eq!(buf.get(x, y).unwrap().bg, was.lerp(blue, OVERLAY_BLEND));
+        // Its tiles are in a move range.
+        assert_eq!(s.scene(&c).tints_at(tiles[0]), [RangeKind::Move]);
+        assert!(quick().scene(&c).tints_at(tiles[0]).is_empty());
         s.cursor.jump(Pos::new(8, 4));
         assert_eq!(s.help(&c), "arrows move · f stay");
         s.cursor.jump(tiles[0]);

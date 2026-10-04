@@ -1,0 +1,345 @@
+---
+source: crates/ui/tests/it/map_skin.rs
+expression: h.snapshot()
+---
+                                                                      ╔════════════════════════════╗
+                                                                      ║ Plain                      ║
+                                                                      ║ DEF +0  AVO +0             ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║ Test Lord                  ║
+                                                                      ║ Exile  Lv 1                ║
+                                                                      ║ HP 19/19   ██████████      ║
+                                                                      ║ Player                     ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ╚════════════════════════════╝
+                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+ arrows move · f move here · d cancel                                                      F2 debug 
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabceeeeeeeeeccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhha
+ahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhha
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:text_highlight bg:panel_bg
+e = fg:player bg:panel_bg
+f = fg:hp_high bg:panel_bg
+g = fg:text_dim bg:panel_bg
+h = fg:text_dim bg:black
+--- overlays ---
+under sprite 160,176 16x16  tilesets/test_auto.png 144,0 16x16
+under sprite 176,176 16x16  tilesets/test_auto.png 144,0 16x16
+under sprite 192,176 16x16  tilesets/test_auto.png 144,0 16x16
+under sprite 208,176 16x16  tilesets/test_auto.png 128,0 16x16
+under sprite 224,176 16x16  tilesets/test_auto.png 128,0 16x16
+under sprite 240,176 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 256,176 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 272,176 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 288,176 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 304,176 16x16  tilesets/test_auto.png 80,0 16x16
+under sprite 320,176 16x16  tilesets/test_auto.png 80,0 16x16
+under sprite 336,176 16x16  tilesets/test_auto.png 96,0 16x16
+under sprite 352,176 16x16  tilesets/test_auto.png 96,0 16x16
+under sprite 368,176 16x16  tilesets/test_auto.png 112,0 16x16
+under sprite 160,192 16x16  tilesets/test_auto.png 144,0 16x16
+under sprite 176,192 16x16  tilesets/test_auto.png 144,0 16x16
+under sprite 192,192 16x16  tilesets/test_auto.png 128,0 16x16
+under sprite 208,192 16x16  tilesets/test_auto.png 128,0 16x16
+under sprite 224,192 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 240,192 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 256,192 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 272,192 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 288,192 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 304,192 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 320,192 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 336,192 16x16  tilesets/test_auto.png 96,0 16x16
+under sprite 352,192 16x16  tilesets/test_auto.png 96,0 16x16
+under sprite 368,192 16x16  tilesets/test_auto.png 96,0 16x16
+under sprite 160,208 16x16  tilesets/test_auto.png 144,0 16x16
+under sprite 176,208 16x16  tilesets/test_auto.png 128,0 16x16
+under sprite 192,208 16x16  tilesets/test_auto.png 128,0 16x16
+under sprite 208,208 16x16  tilesets/test_auto.png 32,0 16x16
+under sprite 224,208 16x16  tilesets/test_auto.png 32,0 16x16
+under sprite 240,208 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 256,208 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 272,208 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 288,208 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 304,208 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 320,208 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 336,208 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 352,208 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 368,208 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 160,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 176,224 16x16  tilesets/test_auto.png 128,0 16x16
+under sprite 192,224 16x16  tilesets/test_auto.png 128,0 16x16
+under sprite 208,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 224,224 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 240,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 256,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 272,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 288,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 304,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 320,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 336,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 352,224 16x16  tilesets/test_auto.png 160,0 16x16
+under sprite 368,224 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 160,240 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 176,240 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 192,240 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 208,240 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 224,240 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 240,240 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 256,240 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 272,240 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 288,240 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 304,240 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 320,240 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 336,240 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 352,240 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 368,240 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 160,256 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 176,256 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 192,256 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 208,256 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 224,256 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 240,256 16x16  tilesets/test_auto.png 160,0 16x16
+under sprite 256,256 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 272,256 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 288,256 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 304,256 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 320,256 16x16  tilesets/test_auto.png 48,0 16x16
+under sprite 336,256 16x16  tilesets/test_auto.png 160,0 16x16
+under sprite 352,256 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 368,256 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 160,272 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 176,272 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 192,272 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 208,272 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 224,272 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 240,272 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 256,272 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 272,272 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 288,272 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 304,272 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 320,272 16x16  tilesets/test_auto.png 48,0 16x16
+under sprite 336,272 16x16  tilesets/test_auto.png 48,0 16x16
+under sprite 352,272 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 368,272 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 160,288 16x16  tilesets/test_auto.png 64,0 16x16
+under sprite 176,288 16x16  tilesets/test_auto.png 80,0 16x16
+under sprite 192,288 16x16  tilesets/test_auto.png 16,0 16x16
+under sprite 208,288 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 224,288 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 240,288 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 256,288 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 272,288 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 288,288 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 304,288 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 320,288 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 336,288 16x16  tilesets/test_auto.png 176,0 16x16
+under sprite 352,288 16x16  tilesets/test_auto.png 240,0 16x16
+under sprite 368,288 16x16  tilesets/test_auto.png 0,0 16x16
+under sprite 232,168 16x16  tilesets/test_auto.png 160,16 16x16 clip=232,176 8x8
+under sprite 232,168 16x16  tilesets/test_auto.png 160,16 16x16 clip=240,176 8x8
+under sprite 216,184 16x16  tilesets/test_auto.png 224,16 16x16
+under sprite 232,184 16x16  tilesets/test_auto.png 128,16 16x16
+under sprite 216,200 16x16  tilesets/test_auto.png 176,16 16x16
+under sprite 232,200 16x16  tilesets/test_auto.png 32,16 16x16
+under sprite 152,216 16x16  tilesets/test_auto.png 192,16 16x16 clip=160,216 8x8
+under sprite 152,216 16x16  tilesets/test_auto.png 192,16 16x16 clip=160,224 8x8
+under sprite 168,216 16x16  tilesets/test_auto.png 208,16 16x16
+under sprite 200,216 16x16  tilesets/test_auto.png 224,16 16x16
+under sprite 216,216 16x16  tilesets/test_auto.png 192,16 16x16
+under sprite 232,216 16x16  tilesets/test_auto.png 128,16 16x16
+under sprite 168,232 16x16  tilesets/test_auto.png 64,16 16x16
+under sprite 184,232 16x16  tilesets/test_auto.png 192,16 16x16
+under sprite 200,232 16x16  tilesets/test_auto.png 128,16 16x16
+under sprite 264,168 16x16  tilesets/test_auto.png 80,32 16x16 clip=264,176 8x8
+under sprite 264,168 16x16  tilesets/test_auto.png 80,32 16x16 clip=272,176 8x8
+under sprite 328,168 16x16  tilesets/test_auto.png 160,32 16x16 clip=328,176 8x8
+under sprite 328,168 16x16  tilesets/test_auto.png 160,32 16x16 clip=336,176 8x8
+under sprite 264,184 16x16  tilesets/test_auto.png 64,32 16x16
+under sprite 280,184 16x16  tilesets/test_auto.png 192,32 16x16
+under sprite 296,184 16x16  tilesets/test_auto.png 208,32 16x16
+under sprite 328,184 16x16  tilesets/test_auto.png 160,32 16x16
+under sprite 296,200 16x16  tilesets/test_auto.png 64,32 16x16
+under sprite 312,200 16x16  tilesets/test_auto.png 208,32 16x16
+under sprite 328,200 16x16  tilesets/test_auto.png 176,32 16x16
+under sprite 344,200 16x16  tilesets/test_auto.png 32,32 16x16
+under sprite 312,216 16x16  tilesets/test_auto.png 64,32 16x16
+under sprite 328,216 16x16  tilesets/test_auto.png 192,32 16x16
+under sprite 344,216 16x16  tilesets/test_auto.png 128,32 16x16
+under sprite 168,248 16x16  tilesets/test_auto.png 16,32 16x16
+under sprite 184,248 16x16  tilesets/test_auto.png 32,32 16x16
+under sprite 152,264 16x16  tilesets/test_auto.png 48,32 16x16 clip=160,264 8x8
+under sprite 152,264 16x16  tilesets/test_auto.png 48,32 16x16 clip=160,272 8x8
+under sprite 168,264 16x16  tilesets/test_auto.png 112,32 16x16
+under sprite 184,264 16x16  tilesets/test_auto.png 160,32 16x16
+under sprite 184,280 16x16  tilesets/test_auto.png 160,32 16x16
+under sprite 184,296 16x16  tilesets/test_auto.png 160,32 16x16 clip=184,296 8x8
+under sprite 184,296 16x16  tilesets/test_auto.png 160,32 16x16 clip=192,296 8x8
+under sprite 352,224 16x16  tilesets/test_auto.png 0,64 16x16
+under sprite 240,256 16x16  tilesets/test_auto.png 0,64 16x16
+under sprite 336,256 16x16  tilesets/test_auto.png 0,64 16x16
+under sprite 208,208 16x16  tilesets/test_auto.png 16,64 16x16
+under sprite 224,208 16x16  tilesets/test_auto.png 16,64 16x16
+under sprite 224,176 16x16  tilesets/test_auto.png 128,0 16x16 opacity=191 solid=attack_range
+under sprite 208,192 16x16  tilesets/test_auto.png 128,0 16x16 opacity=191 solid=attack_range
+under sprite 224,192 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 240,192 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=attack_range
+under sprite 160,208 16x16  tilesets/test_auto.png 144,0 16x16 opacity=191 solid=attack_range
+under sprite 192,208 16x16  tilesets/test_auto.png 128,0 16x16 opacity=191 solid=attack_range
+under sprite 208,208 16x16  tilesets/test_auto.png 32,0 16x16 opacity=191 solid=move_range
+under sprite 224,208 16x16  tilesets/test_auto.png 32,0 16x16 opacity=191 solid=move_range
+under sprite 240,208 16x16  tilesets/test_auto.png 16,0 16x16 opacity=191 solid=move_range
+under sprite 256,208 16x16  tilesets/test_auto.png 16,0 16x16 opacity=191 solid=attack_range
+under sprite 160,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 176,224 16x16  tilesets/test_auto.png 128,0 16x16 opacity=191 solid=attack_range
+under sprite 192,224 16x16  tilesets/test_auto.png 128,0 16x16 opacity=191 solid=attack_range
+under sprite 208,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 224,224 16x16  tilesets/test_auto.png 16,0 16x16 opacity=191 solid=move_range
+under sprite 240,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 256,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 272,224 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=attack_range
+under sprite 160,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 176,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 192,240 16x16  tilesets/test_auto.png 16,0 16x16 opacity=191 solid=move_range
+under sprite 208,240 16x16  tilesets/test_auto.png 16,0 16x16 opacity=191 solid=move_range
+under sprite 224,240 16x16  tilesets/test_auto.png 16,0 16x16 opacity=191 solid=move_range
+under sprite 240,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 256,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 272,240 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=attack_range
+under sprite 160,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 176,256 16x16  tilesets/test_auto.png 64,0 16x16 opacity=191 solid=move_range
+under sprite 192,256 16x16  tilesets/test_auto.png 16,0 16x16 opacity=191 solid=move_range
+under sprite 208,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 224,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 240,256 16x16  tilesets/test_auto.png 160,0 16x16 opacity=191 solid=move_range
+under sprite 256,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 272,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 288,256 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=attack_range
+under sprite 160,272 16x16  tilesets/test_auto.png 64,0 16x16 opacity=191 solid=attack_range
+under sprite 176,272 16x16  tilesets/test_auto.png 64,0 16x16 opacity=191 solid=move_range
+under sprite 192,272 16x16  tilesets/test_auto.png 16,0 16x16 opacity=191 solid=move_range
+under sprite 208,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 224,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 240,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 256,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 272,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 288,272 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=attack_range
+under sprite 176,288 16x16  tilesets/test_auto.png 80,0 16x16 opacity=191 solid=attack_range
+under sprite 192,288 16x16  tilesets/test_auto.png 16,0 16x16 opacity=191 solid=move_range
+under sprite 208,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 224,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 240,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 256,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=move_range
+under sprite 272,288 16x16  tilesets/test_auto.png 0,0 16x16 opacity=191 solid=attack_range
+over  sprite 272,185 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
+over  sprite 272,187 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
+over  sprite 271,186 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
+over  sprite 273,186 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
+over  sprite 272,186 16x20  tilesets/test_units/raider.png 16,0 16x20
+over  sprite 288,201 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
+over  sprite 288,203 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
+over  sprite 287,202 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy clip=287,208 1x14
+over  sprite 287,202 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy clip=288,202 15x20
+over  sprite 289,202 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
+over  sprite 288,202 16x20  tilesets/test_units/brigand.png 16,0 16x20
+over  sprite 192,233 16x20  tilesets/test_units/archer.png 16,0 16x20 solid=player
+over  sprite 192,235 16x20  tilesets/test_units/archer.png 16,0 16x20 solid=player
+over  sprite 191,234 16x20  tilesets/test_units/archer.png 16,0 16x20 solid=player
+over  sprite 193,234 16x20  tilesets/test_units/archer.png 16,0 16x20 solid=player
+over  sprite 192,234 16x20  tilesets/test_units/archer.png 16,0 16x20
+over  sprite 272,233 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
+over  sprite 272,235 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
+over  sprite 271,234 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
+over  sprite 273,234 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
+over  sprite 272,234 16x20  tilesets/test_units/brigand.png 16,0 16x20
+over  sprite 208,249 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player
+over  sprite 208,251 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player
+over  sprite 207,250 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player clip=207,256 1x14
+over  sprite 207,250 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player clip=208,250 15x20
+over  sprite 209,250 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player
+over  sprite 208,250 16x20  tilesets/test_units/exile.png 16,0 16x20
+over  sprite 224,265 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=player
+over  sprite 224,267 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=player
+over  sprite 223,266 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=player clip=223,272 1x14
+over  sprite 223,266 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=player clip=224,266 15x20
+over  sprite 225,266 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=player
+over  sprite 224,266 16x20  tilesets/test_units/guard.png 16,0 16x20
+over  sprite 208,265 16x20  tilesets/test_units/mage.png 16,0 16x20 solid=player clip=208,272 16x13
+over  sprite 208,267 16x20  tilesets/test_units/mage.png 16,0 16x20 solid=player clip=208,272 16x15
+over  sprite 207,266 16x20  tilesets/test_units/mage.png 16,0 16x20 solid=player clip=207,272 16x14
+over  sprite 209,266 16x20  tilesets/test_units/mage.png 16,0 16x20 solid=player clip=209,272 16x14
+over  sprite 208,266 16x20  tilesets/test_units/mage.png 16,0 16x20 clip=208,272 16x14
+over  sprite 288,281 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20 solid=enemy
+over  sprite 288,283 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20 solid=enemy
+over  sprite 287,282 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20 solid=enemy
+over  sprite 289,282 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20 solid=enemy
+over  sprite 288,282 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20
+over  209,270 14x2  hp_high
+over  225,286 14x2  hp_high
+over  193,254 14x2  hp_high
+over  289,222 14x2  hp_high
+over  273,254 14x2  hp_high
+over  273,206 14x2  hp_high
+over  289,302 14x2  hp_high
+over  209,286 14x2  hp_high
+over  208,256 3x1  #e8d59b
+over  208,256 1x3  #e8d59b
+over  221,256 3x1  #e8d59b
+over  223,256 1x3  #e8d59b
+over  208,271 3x1  #e8d59b
+over  208,269 1x3  #e8d59b
+over  221,271 3x1  #e8d59b
+over  223,269 1x3  #e8d59b

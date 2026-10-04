@@ -507,6 +507,7 @@ fn holding_confirm_mid_walk_skips_the_steps_but_not_the_last_one() {
         sel: sel.clone(),
         t,
         held,
+        pace: WALK_TILES_PER_S,
     };
     let row = |n| (0..n).map(|x| Pos::new(x, 2)).collect::<Vec<_>>();
     // Five tiles to go: held just past the limit skips them all.

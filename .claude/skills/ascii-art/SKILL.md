@@ -34,8 +34,9 @@ ADR-0032). Claude **never draws** a portrait, a face or a battle image.
 - **Characters no bought face fits:** Mega Tiles' Character Generator (if
   bought and its licence allows it), then small edits (0706). Anything else
   goes to Nick.
-- **Bought files never go in this repo** (0110). Mockups made from store
-  previews stay in the scratchpad.
+- **Bought files never go in this repo** (ADR-0040): they are in the
+  git-ignored `assets-private/` (`cargo xtask private-assets --library`).
+  Mockups made from them or from store previews stay in the scratchpad.
 - Required expressions stay `neutral`, `happy`, `angry`, `sad`,
   `surprised`, mapped from the pack's 8 per character.
 - **No mini-portraits.** Portraits appear only in conversations (Nick dropped
@@ -43,8 +44,14 @@ ADR-0032). Claude **never draws** a portrait, a face or a battle image.
 - After any edit, render it in the dialogue screen and **look at it**.
   Don't commit art you haven't seen rendered.
 
-The old 32×32 text portraits (`assets/portraits/*.portrait`) are
-placeholders only, until 0711 and 0706 replace them.
+A portrait is a sidecar (`assets/portraits/<id>.ron`) naming PNG files,
+drawn as one sprite at the largest whole scale that fits the 256×256 px
+frame (ADR-0043, `assets/portraits/README.md`). Bought busts come in with
+`cargo xtask portrait-import <hero-folder> <id> [--shift-x N]`, which cuts
+each 80×80 bust to 64×64 into `assets-private/game/portraits/`; use
+`--shift-x` when a head sits off-centre. The 32×32 PNGs in
+`assets/portraits/` are public placeholders only: never edit them into
+"real" art.
 
 ## Map terrain
 
@@ -62,10 +69,15 @@ doesn't change these files.
 
 ## Mockups for Nick
 
-Nick judges **rendered images**, not ASCII in chat. Render mockups with the
-game's real font atlas at in-game size (a throwaway tool outside the repo is
-fine: `trpg-content` gives the atlas and `trpg-ui` gives `GlyphBuffer`; blit
-cells to a PNG at 2×). Look at every render yourself before sending it, and fix
+Nick judges **rendered images**, not ASCII in chat. Render mockups with
+`cargo xtask frame-png <out.png> [--keys "…"] [--scale 2]` (ticket 0232;
+`--help` lists the steps): it starts the game in the Harness, presses the
+scripted keys and writes the frame exactly as `app` draws it, sprites
+included. Don't write a throwaway renderer. For a screen that doesn't exist
+yet, build its `GlyphBuffer` in a scratch test in `crates/xtask` and render
+it with `frame_png::Painter` (don't commit the scratch test). Built with
+`--features private-assets` the picture shows bought art: show it to Nick,
+never commit it (ADR-0040). Look at every render yourself before sending it, and fix
 overlaps, cut-off text and invented details (no stats or rules that aren't in
 `docs/design/`). Offer genuinely different options, then iterate on his
 comments. He often asks for more options or a combination.

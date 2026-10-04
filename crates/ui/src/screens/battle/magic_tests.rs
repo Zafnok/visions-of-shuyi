@@ -6,10 +6,11 @@
 
 use insta::assert_snapshot;
 use trpg_core::{
-    Affinity, BattleState, CastTarget, ClassId, Command, Element, Equipped, Objective, Phase, Pos,
-    SkillId, SpellId, StatValue, UnitAction, UnitId,
+    Affinity, BattleSetup, BattleState, CastTarget, ClassId, Command, Element, Equipped, Objective,
+    Phase, Pos, Reinforcement, SkillId, SpellId, StatValue, UnitAction, UnitId,
 };
 
+use super::attack::{Targeting, aimed_options, attack_tile, can_hit};
 use super::forecast::{AFFINITY_ROW, LEFT_X, NAME_ROW, STRIKE_ROW};
 use super::items::{can_equip, equip_choices, equip_menu};
 use super::magic::{
@@ -17,9 +18,10 @@ use super::magic::{
     spell_label, spell_menu, target_pos,
 };
 use super::mode::{Effect, MenuEntry, Mode, Selection, menu_entries, open_menu};
+use super::playback::TIMINGS;
 use super::sounds::step_sound;
-use super::testing::{battle_with, quick_units, through_ai_phases};
-use super::{BattleScreen, HealPopup, OVERLAY_BLEND, TERRAIN_FLASH_S, TerrainFlash, quick_battle};
+use super::testing::{battle_with, quick_units, setup, through_ai_phases, tile_cell};
+use super::{BattleScreen, HealPopup, PopupKind, TERRAIN_FLASH_S, TerrainFlash, quick_battle};
 use crate::FrameInput;
 use crate::audio::MenuSound;
 use crate::color::{Rgb, UiColor};
@@ -27,6 +29,7 @@ use crate::console::{CONSOLE_H, CONSOLE_W};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::harness::Harness;
 use crate::input::Action;
+use crate::map_view::{MapScene, RangeKind};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 
@@ -97,17 +100,17 @@ fn shows(buf: &GlyphBuffer, s: &str) -> bool {
     (0..i32::from(CONSOLE_H)).any(|y| text(buf, 0, y, i32::from(CONSOLE_W)).contains(s))
 }
 
-/// The left cell of tile `(x, y)` (`test_small` is centred: the tile starts
-/// at cell `(2 × (x + 10), y + 11)`).
-fn cell(x: i32, y: i32) -> (i32, i32) {
-    (2 * (x + 10), y + 11)
+/// The terrain the map shows on `(x, y)`: what a spell being aimed would
+/// turn it into, else its own.
+fn looks(c: &Ctx, scene: &MapScene, x: i32, y: i32) -> String {
+    let tile = scene.tile(p(x, y)).unwrap();
+    let id = tile.becomes.or(tile.terrain).unwrap();
+    c.content.terrain.display.get(id).unwrap().id.clone()
 }
 
-/// The glyphs and colours of the tile at `(x, y)`.
-fn tile(buf: &GlyphBuffer, x: i32, y: i32) -> (String, Rgb, Rgb) {
-    let (cx, cy) = cell(x, y);
-    let at = buf.get(cx, cy).unwrap();
-    (text(buf, cx, cy, 2), at.fg, at.bg)
+/// How strongly tile `(x, y)` flashes on the map, one entry per change.
+fn flashes(scene: &MapScene, x: i32, y: i32) -> Vec<f32> {
+    scene.tile(p(x, y)).unwrap().flashes.clone()
 }
 
 /// The mage of `state` selected where it stands, its action menu open.
@@ -390,15 +393,15 @@ fn fire_on_the_elemental_shows_the_forecast_and_casts() {
     assert!(shows(&buf, "Overcast"));
     // Both enemies are tinted as attack targets; the forests show what
     // they would become.
-    let attack = c.palette.get(UiColor::AttackRange);
-    let plain = render(&BattleScreen::new(s.state().clone()), &c);
+    let scene = s.scene(&c);
+    let plain = BattleScreen::new(s.state().clone()).scene(&c);
     for (x, y) in [(1, 4), (2, 4)] {
-        let before = tile(&plain, x, y).2;
-        assert_eq!(tile(&buf, x, y).2, before.lerp(attack, OVERLAY_BLEND));
+        assert!(plain.tints_at(p(x, y)).is_empty());
+        assert_eq!(scene.tints_at(p(x, y)), [RangeKind::Attack]);
     }
     for (x, y) in [(1, 5), (0, 6)] {
-        assert_eq!(tile(&plain, x, y).0, "♣♣");
-        assert_eq!(tile(&buf, x, y).0, "**");
+        assert_eq!(looks(&c, &plain, x, y), "forest");
+        assert_eq!(looks(&c, &scene, x, y), "burning");
     }
     // Up and down move through the list, not the targets.
     step(&mut s, &mut c, &[Action::CursorDown]);
@@ -564,11 +567,10 @@ fn a_tile_shows_what_it_becomes_and_is_picked_on_the_map() {
     // The side panel is the hover panel again, on the tile.
     assert!(shows(&buf, "Forest"));
     assert!(!shows(&buf, " Forecast "));
-    // The tiles it can burn are drawn burning, in the fire colours.
-    let fire = c.palette.lookup("fire").unwrap();
-    let fire_bg = c.palette.lookup("fire_bg").unwrap();
-    assert_eq!(tile(&buf, 1, 5), ("**".to_owned(), fire, fire_bg));
-    assert_eq!(tile(&buf, 0, 6).0, "**");
+    // The tiles it can burn are shown burning.
+    let scene = s.scene(&c);
+    assert_eq!(looks(&c, &scene, 1, 5), "burning");
+    assert_eq!(looks(&c, &scene, 0, 6), "burning");
     let changes = targeting(&s).tile_changes(s.state());
     let burning = c.content.terrain.display.id_of("burning").unwrap();
     assert_eq!(changes, [(p(1, 5), burning), (p(0, 6), burning)]);
@@ -588,9 +590,9 @@ fn frost_names_the_ice_and_heal_changes_no_tile() {
         targeting(&s).tile_changes(s.state()),
         [(p(0, 2), ice), (p(1, 3), ice)]
     );
-    let buf = render(&s, &c);
-    assert_eq!(tile(&buf, 0, 2).0, "▒▒");
-    assert_eq!(tile(&buf, 1, 3).0, "▒▒");
+    let scene = s.scene(&c);
+    assert_eq!(looks(&c, &scene, 0, 2), "ice");
+    assert_eq!(looks(&c, &scene, 1, 3), "ice");
     let mut s = s;
     step(&mut s, &mut c, &[Action::CursorRight]);
     assert_eq!(preview(&s).as_deref(), Some("Water → Ice"));
@@ -617,8 +619,7 @@ fn casting_fire_on_a_forest_sets_it_burning_with_a_flash() {
     let mage = s.state().unit(MAGE).unwrap();
     assert!(mage.acted);
     assert_eq!(mage.loadout.equipped, Some(Equipped::Spell(sid("fire"))));
-    // The tile flashes: its background tinted towards its glyph colour,
-    // fading out over the flash time.
+    // The tile flashes, fading out over the flash time.
     assert_eq!(
         s.flashes(),
         [TerrainFlash {
@@ -626,29 +627,29 @@ fn casting_fire_on_a_forest_sets_it_burning_with_a_flash() {
             t: 0.0
         }]
     );
-    let fire = c.palette.lookup("fire").unwrap();
-    let fire_bg = c.palette.lookup("fire_bg").unwrap();
-    let buf = render(&s, &c);
-    let lit = fire_bg.lerp(fire, OVERLAY_BLEND);
-    assert_eq!(tile(&buf, 1, 5), ("**".to_owned(), fire, lit));
+    let scene = s.scene(&c);
+    assert_eq!(looks(&c, &scene, 1, 5), "burning");
+    assert_eq!(flashes(&scene, 1, 5), [1.0]);
     // The other forest is a forest again.
-    assert_eq!(tile(&buf, 0, 6).0, "♣♣");
+    assert_eq!(looks(&c, &scene, 0, 6), "forest");
+    assert!(flashes(&scene, 0, 6).is_empty());
     wait(&mut s, &mut c, TERRAIN_FLASH_S / 2.0);
-    let half = fire_bg.lerp(fire, OVERLAY_BLEND / 2.0);
-    assert_eq!(tile(&render(&s, &c), 1, 5).2, half);
+    let [half] = flashes(&s.scene(&c), 1, 5)[..] else {
+        panic!("{:?}", s.flashes());
+    };
+    assert!((half - 0.5).abs() < 1e-6, "{half}");
     wait(&mut s, &mut c, TERRAIN_FLASH_S / 2.0);
     assert!(s.flashes().is_empty());
-    assert_eq!(
-        tile(&render(&s, &c), 1, 5),
-        ("**".to_owned(), fire, fire_bg)
-    );
+    let scene = s.scene(&c);
+    assert_eq!(looks(&c, &scene, 1, 5), "burning");
+    assert!(flashes(&scene, 1, 5).is_empty());
 }
 
 #[test]
-fn a_flash_fades_from_the_overlay_blend_to_nothing() {
+fn a_flash_fades_from_full_strength_to_nothing() {
     let at = |t| TerrainFlash { pos: p(0, 0), t }.strength();
-    assert!((at(0.0) - OVERLAY_BLEND).abs() < 1e-6);
-    assert!((at(TERRAIN_FLASH_S / 4.0) - OVERLAY_BLEND * 0.75).abs() < 1e-6);
+    assert!((at(0.0) - 1.0).abs() < 1e-6);
+    assert!((at(TERRAIN_FLASH_S / 4.0) - 0.75).abs() < 1e-6);
     assert!(at(TERRAIN_FLASH_S).abs() < 1e-6);
     assert!(at(TERRAIN_FLASH_S * 3.0).abs() < 1e-6);
     assert!((TERRAIN_FLASH_S - 0.4).abs() < f32::EPSILON);
@@ -705,11 +706,11 @@ fn burning_burnt_and_ice_tiles_snapshot() {
         ["burnt", "ice", "burning"]
     );
     let s = BattleScreen::new(state);
-    let buf = render(&s, &c);
-    assert_eq!(tile(&buf, 1, 5).0, ",,");
-    assert_eq!(tile(&buf, 1, 3).0, "▒▒");
-    assert_eq!(tile(&buf, 0, 6).0, "**");
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    let scene = s.scene(&c);
+    assert_eq!(looks(&c, &scene, 1, 5), "burnt");
+    assert_eq!(looks(&c, &scene, 1, 3), "ice");
+    assert_eq!(looks(&c, &scene, 0, 6), "burning");
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
 #[test]
@@ -733,6 +734,102 @@ fn a_fire_burning_out_flashes_too() {
     assert_eq!(flashing, [p(1, 5)]);
 }
 
+/// The field with a brigand (unit 99, `hp` HP) due on turn 1 on the forest
+/// at (1, 5), which the mage set burning that turn: the battle just before
+/// the enemy's phase ends, when the fire burns out under it.
+fn burning_arrival(c: &Ctx, hp: StatValue) -> BattleState {
+    let (map, mut units) = quick_units(c);
+    units[7].pos = p(0, 4);
+    let mut late = units[3].clone();
+    late.id = UnitId(99);
+    late.pos = p(1, 5);
+    late.hp = hp;
+    let (mut state, _) = BattleState::new(BattleSetup {
+        reinforcements: vec![Reinforcement {
+            turn: 1,
+            unit: late,
+        }],
+        ..setup(c, map, units, Objective::Rout { turn_limit: None })
+    });
+    let burn = Command::Act {
+        unit: MAGE,
+        dest: p(0, 4),
+        action: cast(&sid("fire"), on_tile(1, 5)),
+    };
+    state.apply(&burn).unwrap();
+    // It arrives on the fire anyway.
+    state.apply(&Command::EndPhase).unwrap();
+    assert_eq!(state.phase(), Phase::Enemy);
+    assert_eq!(state.unit(UnitId(99)).unwrap().pos, p(1, 5));
+    state
+}
+
+#[test]
+fn a_fire_burning_out_under_a_unit_shows_the_damage() {
+    let mut c = ctx();
+    let mut s = BattleScreen::new(burning_arrival(&c, 12));
+    assert!(s.popups().is_empty());
+    // Nobody acts: the fire burns out as the player's phase starts.
+    s.apply(&Command::EndPhase);
+    assert_eq!(s.state().phase(), Phase::Player);
+    assert_eq!(terrain(&c, s.state(), 1, 5), "burnt");
+    assert_eq!(s.state().unit(UnitId(99)).unwrap().hp, 7);
+    let [popup] = s.popups() else {
+        panic!("{:?}", s.popups());
+    };
+    assert_eq!((popup.pos, popup.amount), (p(1, 5), 5));
+    assert_eq!((popup.kind, popup.t), (PopupKind::Burn, 0.0));
+    assert_eq!(popup.text(), "-5");
+    assert_eq!(popup.color(), UiColor::HpLow);
+    // It waits while the phase banner is up (which covers it here).
+    assert!(s.banner().is_some());
+    wait(&mut s, &mut c, TIMINGS.heal_popup);
+    assert!(s.banner().is_some());
+    let waiting = HealPopup {
+        pos: p(1, 5),
+        amount: 5,
+        kind: PopupKind::Burn,
+        t: 0.0,
+    };
+    assert_eq!(s.popups(), [waiting]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(s.banner().is_none());
+    // A `-5` in the low-HP colour, over the unit.
+    let (x, y) = tile_cell(&s, &c, p(1, 5)).expect("in view");
+    let buf = render(&s, &c);
+    assert_eq!(text(&buf, x, y - 1, 2), "-5");
+    assert_eq!(buf.get(x, y - 1).unwrap().fg, c.palette.get(UiColor::HpLow));
+    // It goes after the same time as a heal's.
+    wait(&mut s, &mut c, TIMINGS.heal_popup / 2.0);
+    assert_eq!(s.popups().len(), 1, "still up after half its time");
+    wait(&mut s, &mut c, TIMINGS.heal_popup / 2.0);
+    assert!(s.popups().is_empty(), "gone once its time is up");
+    assert_ne!(text(&render(&s, &c), x, y - 1, 2), "-5");
+}
+
+#[test]
+fn a_fire_that_burns_nothing_off_shows_no_popup() {
+    // At 1 HP the fire takes nothing (never below 1).
+    let c = ctx();
+    let mut s = BattleScreen::new(burning_arrival(&c, 1));
+    s.apply(&Command::EndPhase);
+    assert_eq!(terrain(&c, s.state(), 1, 5), "burnt");
+    assert_eq!(s.state().unit(UnitId(99)).unwrap().hp, 1);
+    assert!(s.popups().is_empty());
+}
+
+#[test]
+fn a_heal_popup_reads_plus_in_the_high_hp_colour() {
+    let heal = HealPopup {
+        pos: p(0, 0),
+        amount: 10,
+        kind: PopupKind::Heal,
+        t: 0.0,
+    };
+    assert_eq!(heal.text(), "+10");
+    assert_eq!(heal.color(), UiColor::HpHigh);
+}
+
 // ---- Healing ---------------------------------------------------------------------
 
 #[test]
@@ -751,12 +848,9 @@ fn heal_previews_the_hp_and_restores_it_with_a_popup() {
     let buf = render(&s, &c);
     assert_eq!(text(&buf, 1, 30, 40), "Heal on Test Knight: HP 2 → 18");
     // The ally is tinted as a heal target.
-    let plain = render(&BattleScreen::new(s.state().clone()), &c);
-    let heal = c.palette.get(UiColor::HealRange);
-    assert_eq!(
-        tile(&buf, 0, 5).2,
-        tile(&plain, 0, 5).2.lerp(heal, OVERLAY_BLEND)
-    );
+    let plain = BattleScreen::new(s.state().clone()).scene(&c);
+    assert!(plain.tints_at(p(0, 5)).is_empty());
+    assert_eq!(s.scene(&c).tints_at(p(0, 5)), [RangeKind::Heal]);
     step(&mut s, &mut c, &[Action::Confirm]);
     let state = s.state();
     assert_eq!(state.unit(UnitId(2)).unwrap().hp, 18);
@@ -768,6 +862,7 @@ fn heal_previews_the_hp_and_restores_it_with_a_popup() {
         [HealPopup {
             pos: p(0, 5),
             amount: 16,
+            kind: PopupKind::Heal,
             t: 0.0
         }]
     );
@@ -996,10 +1091,10 @@ fn the_info_screen_marks_the_equipped_spell_and_lists_affinities() {
 
 // ---- Harness: the whole flow with the default keys --------------------------------
 
-/// The glyphs of tile `(x, y)` on the harness's screen.
+/// The terrain the harness's battle map shows on `(x, y)`.
 fn shown_tile(h: &Harness, x: i32, y: i32) -> String {
-    let (cx, cy) = cell(x, y);
-    text(h.game().buffer(), cx, cy, 2)
+    let c = h.game().ctx();
+    looks(c, &h.map_scene().unwrap(), x, y)
 }
 
 #[test]
@@ -1013,22 +1108,22 @@ fn harness_fire_on_a_forest_burns_it_and_it_is_burnt_next_turn() {
     // Fire; the forest at (1, 6) is its one target.
     h.keys("Up Up f f");
     assert!(shows(h.game().buffer(), "Forest → Burning (1 round)"));
-    assert_eq!(shown_tile(&h, 1, 6), "**");
+    assert_eq!(shown_tile(&h, 1, 6), "burning");
     h.keys("f");
     // (The EXP bar of the cast plays out.)
     h.wait(3.0);
-    assert_eq!(shown_tile(&h, 1, 6), "**");
-    assert_eq!(shown_tile(&h, 0, 6), "♣♣");
+    assert_eq!(shown_tile(&h, 1, 6), "burning");
+    assert_eq!(shown_tile(&h, 0, 6), "forest");
     // End the turn (three units are still ready); the enemy plays.
     h.keys("Space f");
     let mut waited = 0;
-    while shown_tile(&h, 1, 6) != ",," {
+    while shown_tile(&h, 1, 6) != "burnt" {
         h.wait(0.5);
         waited += 1;
         assert!(waited < 400, "the fire never burnt out");
     }
     // Burnt for good: the other forest is untouched.
-    assert_eq!(shown_tile(&h, 0, 6), "♣♣");
+    assert_eq!(shown_tile(&h, 0, 6), "forest");
 }
 
 #[test]
@@ -1056,4 +1151,313 @@ fn harness_heal_on_the_ally_beside_raises_its_hp_and_spends_a_use() {
     assert!(shows(info, "Test Mage"));
     assert!(shows(info, "7/8"));
     assert!(shows(info, "10/10"));
+}
+
+/// The map scene (ADR-0038) while a spell's target is picked: the units it
+/// can hit are an attack range (the ones it can heal, a heal range), each
+/// tile it can change is marked with what it would become, and a tile
+/// whose terrain changed flashes.
+#[test]
+fn the_scene_marks_a_spells_targets_its_tile_changes_and_the_flash() {
+    let mut c = ctx();
+    let state = field(&c, 18);
+    // The spell list: no cursor.
+    assert_eq!(spell_list(&mut c, state.clone()).scene(&c).cursor, None);
+    // The units a spell can be cast on, row by row.
+    let units = |s: &BattleScreen| {
+        let targets = targeting(s).targets().iter();
+        let mut at: Vec<Pos> = targets
+            .filter_map(|t| match t {
+                CastTarget::Unit(id) => s.state().unit(*id).map(|u| u.pos),
+                CastTarget::Tile(_) => None,
+            })
+            .collect();
+        at.sort_by_key(|p| (p.y, p.x));
+        at
+    };
+    let changing = |scene: &crate::map_view::MapScene| {
+        let tiles = scene.tiles.iter();
+        tiles.filter(|t| t.becomes.is_some()).count()
+    };
+    // Fire: the elemental and the brigand, and the two forests burning.
+    let mut s = casting(&mut c, state.clone(), 0);
+    let scene = s.scene(&c);
+    assert_eq!(units(&s), [p(1, 4), p(2, 4)]);
+    assert_eq!(scene.tinted(RangeKind::Attack), units(&s));
+    assert!(scene.tinted(RangeKind::Heal).is_empty());
+    let burning = c.content.terrain.display.id_of("burning");
+    assert!(burning.is_some());
+    assert_eq!(scene.tile(p(1, 5)).unwrap().becomes, burning);
+    assert_eq!(scene.tile(p(0, 6)).unwrap().becomes, burning);
+    assert_eq!(changing(&scene), 2);
+    assert!(scene.tiles.iter().all(|t| t.flashes.is_empty()));
+    let on = target_pos(s.state(), targeting(&s).target());
+    assert_eq!(scene.cursor.map(|c| Some(c.pos)), Some(on));
+    // Heal: the hurt knight, and no tile.
+    let heal = casting(&mut c, state, 2);
+    let scene = heal.scene(&c);
+    assert_eq!(units(&heal), [p(0, 5)]);
+    assert_eq!(scene.tinted(RangeKind::Heal), units(&heal));
+    assert!(scene.tinted(RangeKind::Attack).is_empty());
+    assert_eq!(changing(&scene), 0);
+    // Fire cast on the forest at (1, 5): it burns, and flashes for a while.
+    step(&mut s, &mut c, &[Action::NextUnit, Action::NextUnit]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    let flashing = |s: &BattleScreen, c: &Ctx| {
+        let scene = s.scene(c);
+        let lit = scene.tiles.iter().filter(|t| !t.flashes.is_empty());
+        assert!(lit.count() <= 1);
+        assert_eq!(changing(&scene), 0);
+        let tile = scene.tile(p(1, 5)).unwrap().clone();
+        assert_eq!(tile.terrain, burning);
+        tile.flashes
+    };
+    let strengths = flashing(&s, &c);
+    assert_eq!(strengths.len(), 1);
+    assert!((strengths[0] - 1.0).abs() < 1e-6, "{strengths:?}");
+    wait(&mut s, &mut c, TERRAIN_FLASH_S / 2.0);
+    let strengths = flashing(&s, &c);
+    assert_eq!(strengths.len(), 1);
+    assert!((strengths[0] - 0.5).abs() < 1e-6, "{strengths:?}");
+    wait(&mut s, &mut c, TERRAIN_FLASH_S / 2.0);
+    assert!(flashing(&s, &c).is_empty());
+}
+
+// ---- Pointing at an enemy to cast at it (0430) ------------------------------------
+
+fn spell(id: &str) -> Equipped {
+    Equipped::Spell(sid(id))
+}
+
+#[test]
+fn a_spell_reaches_an_enemy_pointed_at_in_range_with_a_use_left() {
+    let c = ctx();
+    let s = quick_battle(&c.content).unwrap();
+    let sel = Selection::new(&s, MAGE).unwrap();
+    let elemental = s.unit(ELEMENTAL).unwrap().pos;
+    // The mage has no weapon: Fire and Frost, from two tiles away (the
+    // cheapest walk), never three.
+    let tile = attack_tile(&s, &sel, ELEMENTAL).unwrap();
+    assert_eq!(Pos::manhattan(tile, elemental), 2);
+    assert_eq!(
+        aimed_options(&s, MAGE, tile, ELEMENTAL),
+        [spell("fire"), spell("frost")]
+    );
+    assert!(can_hit(&s, MAGE, tile, ELEMENTAL));
+    for from in sel.reach.stoppable().iter() {
+        let near = (1..=2).contains(&Pos::manhattan(from, elemental));
+        assert_eq!(can_hit(&s, MAGE, from, ELEMENTAL), near, "{from:?}");
+    }
+    // The raider across the map is out of every spell's range.
+    assert_eq!(attack_tile(&s, &sel, UnitId(6)), None);
+    // A heal isn't an attack: the hurt knight beside the mage is no target.
+    let f = field(&c, 18);
+    assert_eq!(
+        cast_targets(
+            &f,
+            MAGE,
+            p(0, 4),
+            c.content.spells.get(&sid("heal")).unwrap()
+        ),
+        [on_unit(2)]
+    );
+    assert!(!can_hit(&f, MAGE, p(0, 4), UnitId(2)));
+    // Fire with no use left: only Frost. Frost neither: nothing to point
+    // with.
+    let mut c = ctx();
+    let mut no_uses = |id: &str| {
+        c.content.spells.spells.get_mut(&sid(id)).unwrap().uses = 0;
+        quick_battle(&c.content).unwrap()
+    };
+    let spent = no_uses("fire");
+    assert_eq!(uses(&spent, "fire"), 0);
+    assert_eq!(
+        aimed_options(&spent, MAGE, tile, ELEMENTAL),
+        [spell("frost")]
+    );
+    assert_eq!(attack_tile(&spent, &sel, ELEMENTAL), Some(tile));
+    let spent = no_uses("frost");
+    assert!(!can_hit(&spent, MAGE, tile, ELEMENTAL));
+    assert_eq!(attack_tile(&spent, &sel, ELEMENTAL), None);
+}
+
+/// [`field`] with the lord's iron sword in the mage's first slot, and
+/// `equipped` equipped.
+fn armed(c: &Ctx, equipped: Equipped) -> BattleState {
+    let f = field(c, 0);
+    let mut units = f.units().to_vec();
+    units[7].loadout.weapons[0] = units[0].loadout.weapons[0].clone();
+    units[7]
+        .weapon_ranks
+        .insert(trpg_core::WeaponKind::Sword, trpg_core::WeaponRank::E);
+    units[7].loadout.equipped = Some(equipped);
+    battle_with(
+        c,
+        f.map().clone(),
+        units,
+        Objective::Rout { turn_limit: None },
+    )
+}
+
+/// The forecast of the mage of `state`, where it stands, pointed at
+/// `target`.
+fn pointed(state: &BattleState, target: UnitId) -> Targeting {
+    let mut sel = Selection::new(state, MAGE).unwrap();
+    sel.target = Some(target);
+    Targeting::aimed(state, sel).unwrap()
+}
+
+#[test]
+fn the_pointed_forecast_opens_with_what_is_equipped_and_swaps_through_sword_and_spells() {
+    let c = ctx();
+    // The elemental beside the mage, the brigand two tiles away.
+    let s = armed(&c, spell("frost"));
+    let mut t = pointed(&s, ELEMENTAL);
+    let all = [Equipped::Weapon(0), spell("fire"), spell("frost")];
+    assert_eq!(t.options, all);
+    assert!(t.can_swap());
+    assert_eq!((&t.with, t.target()), (&spell("frost"), ELEMENTAL));
+    assert_eq!(t.targets, [ELEMENTAL, UnitId(4)]);
+    // Forward wraps to the sword, which reaches only the elemental.
+    t.swap(true, &s);
+    assert_eq!((&t.with, &t.targets), (&all[0], &vec![ELEMENTAL]));
+    assert_eq!(t.options, all);
+    let cmd = |action| Command::Act {
+        unit: MAGE,
+        dest: p(0, 4),
+        action,
+    };
+    let stab = UnitAction::Attack {
+        target: ELEMENTAL,
+        slot: 0,
+        active: None,
+        art: None,
+    };
+    assert_eq!(t.command(), cmd(stab));
+    assert_eq!(
+        Ok(&t.preview),
+        s.preview_attack(MAGE, p(0, 4), &t.technique().action(ELEMENTAL, &all[0]))
+            .as_ref()
+    );
+    t.swap(true, &s);
+    assert_eq!(t.with, all[1]);
+    assert_eq!(t.command(), cmd(cast(&sid("fire"), on_unit(7))));
+    // On the brigand, a swap keeps it while the spell reaches it...
+    t.cycle(true, &s);
+    assert_eq!(t.target(), UnitId(4));
+    t.swap(true, &s);
+    assert_eq!((&t.with, t.target()), (&all[2], UnitId(4)));
+    assert_eq!(t.targets, [UnitId(4), ELEMENTAL]);
+    // ...and goes back to the enemy pointed at when the sword doesn't.
+    t.swap(true, &s);
+    assert_eq!((&t.with, t.target()), (&all[0], ELEMENTAL));
+    // The keys: right swaps forward (Frost, then round to the sword), left
+    // back.
+    let key = |t: &Targeting, action| {
+        let mode = Mode::Targeting(Box::new(t.clone()));
+        match super::mode::step(mode, action, p(1, 4), &s) {
+            (Mode::Targeting(t), Effect::Cursor(at)) => (t.with.clone(), at),
+            other => panic!("{other:?}"),
+        }
+    };
+    let on_fire = pointed(&s, ELEMENTAL);
+    let on_fire = {
+        let mut t = on_fire;
+        t.swap(false, &s);
+        t
+    };
+    assert_eq!(on_fire.with, all[1]);
+    assert_eq!(
+        key(&on_fire, Action::CursorRight),
+        (all[2].clone(), p(1, 4))
+    );
+    assert_eq!(key(&on_fire, Action::CursorLeft), (all[0].clone(), p(1, 4)));
+    // Backward from the sword wraps to Frost.
+    t.swap(false, &s);
+    assert_eq!(t.with, all[2]);
+    t.swap(false, &s);
+    assert_eq!(t.with, all[1]);
+    // The sword equipped: it opens with the sword. Pointed at the brigand,
+    // which the equipped sword doesn't reach: the first that does, Fire.
+    let s = armed(&c, Equipped::Weapon(0));
+    assert_eq!(pointed(&s, ELEMENTAL).with, all[0]);
+    let far = pointed(&s, UnitId(4));
+    assert_eq!((&far.with, far.target()), (&all[1], UnitId(4)));
+    assert_eq!(far.options, all[1..]);
+    // With the spells out of uses only the sword reaches: nothing to swap.
+    let mut c = ctx();
+    for id in ["fire", "frost"] {
+        c.content.spells.spells.get_mut(&sid(id)).unwrap().uses = 0;
+    }
+    let dry = armed(&c, Equipped::Weapon(0));
+    let only = pointed(&dry, ELEMENTAL);
+    assert_eq!(only.options, all[..1]);
+    assert!(!only.can_swap());
+    // Nothing aimed at, or nothing that reaches: no forecast.
+    let sel = Selection::new(&s, MAGE).unwrap();
+    assert_eq!(Targeting::aimed(&s, sel.clone()), None);
+    let mut sel = sel;
+    sel.target = Some(UnitId(6));
+    assert_eq!(Targeting::aimed(&s, sel), None);
+    // A forecast opened from a menu has nothing to swap, and stays put.
+    let enemies = vec![ELEMENTAL];
+    let sel = Selection::new(&s, MAGE).unwrap();
+    let mut plain = Targeting::with(&s, sel, all[1].clone(), enemies, None).unwrap();
+    assert!(!plain.can_swap());
+    let before = plain.clone();
+    plain.swap(true, &s);
+    assert_eq!(plain, before);
+}
+
+#[test]
+fn harness_pointing_at_the_elemental_walks_there_and_opens_fires_forecast() {
+    let c = ctx();
+    let quick = quick_battle(&c.content).unwrap();
+    let elemental = quick.unit(ELEMENTAL).unwrap().pos;
+    let mut h = Harness::with_screen(Box::new(BattleScreen::new(quick.clone())));
+    // Select the mage and move the cursor round onto the elemental, over
+    // tiles from which no spell reaches it: the path jumps to the nearest
+    // one from which one does.
+    h.keys("Down f Up Right Right Right Right Right Right Down Down Left");
+    assert_eq!(h.cursor_tile(), Some(elemental));
+    let path = h.path();
+    let end = *path.last().unwrap();
+    assert_eq!(Pos::manhattan(end, elemental), 2);
+    let help = |h: &Harness| {
+        let buf = h.game().buffer();
+        text(buf, 0, super::layout::HELP_ROW, 90).trim().to_owned()
+    };
+    assert_eq!(help(&h), "arrows move · f cast · d cancel");
+    // Confirm walks there and opens the forecast of Fire, the equipped
+    // spell, on it.
+    h.keys("f").wait(0.5);
+    let with = |h: &Harness| match h.battle().unwrap().mode() {
+        Mode::Targeting(t) => (t.with.clone(), t.target(), t.sel.dest()),
+        m => panic!("{m:?}"),
+    };
+    assert_eq!(with(&h), (spell("fire"), ELEMENTAL, end));
+    assert_eq!(h.cursor_tile(), Some(elemental));
+    assert_eq!(
+        help(&h),
+        "Left/Right swap · a/s target · Up/Down art · f cast · d back"
+    );
+    // Right and left swap to Frost and back.
+    h.keys("Right");
+    assert_eq!(with(&h).0, spell("frost"));
+    h.keys("Right");
+    assert_eq!(with(&h).0, spell("fire"));
+    h.keys("Left");
+    assert_eq!(with(&h).0, spell("frost"));
+    // Cancel: the action menu on Magic, then the selection; nothing cast.
+    h.keys("d");
+    let Mode::ActionMenu { menu, entries, .. } = h.battle().unwrap().mode() else {
+        panic!("{:?}", h.battle().unwrap().mode());
+    };
+    assert_eq!(entries[menu.focus()], MenuEntry::Magic);
+    h.keys("d");
+    let Mode::Selected(sel) = h.battle().unwrap().mode() else {
+        panic!("{:?}", h.battle().unwrap().mode());
+    };
+    assert_eq!((sel.target, sel.dest()), (None, end));
+    assert_eq!(h.battle().unwrap().state(), &quick);
 }

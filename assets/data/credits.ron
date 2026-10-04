@@ -8,10 +8,30 @@
 // entry off the credits screen: use it only for software plumbing the
 // player never sees or hears. Hidden works are still listed in
 // THIRD_PARTY_ASSETS.md and ship with their license texts.
+//
+// Bought art (ADR-0032, ADR-0051) has `private: [...]`: the files of
+// assets-private/game/ the credit covers, each a path there or the start
+// of one. Its license is "Custom (<seller>)". The entry shows only in a
+// build that has those files. Every bought file needs one: `cargo xtask
+// private-assets --pin` refuses a file no entry covers, so a ticket that
+// puts new bought files in the game adds their path here (and their
+// artist to `author`) in the same PR. Keep the paths narrow, so new art
+// can't slip in under an old entry.
 (
     credits: [
         (id: "terminus", group: Fonts, title: "Terminus Font", author: "Dimitar Toshkov Zhekov",
          source: "https://terminus-font.sourceforge.net/", license: "OFL-1.1"),
+
+        // The bought Tiny Tales bundle (THIRD_PARTY_ASSETS.md): the map
+        // sprites (0436), the two test portraits (0711) and the terrain
+        // tiles (0437; the tilesets' artist is Rayane Félix).
+        (id: "tiny_tales", group: Art, title: "Tiny Tales",
+         author: "Megatiles (artists: Rayane Félix, Lunatic Red, Kodots Games Studio)",
+         source: "https://megatiles.itch.io/", license: "Custom (Megatiles)",
+         private: [
+            "portraits/test_knight", "portraits/test_lord",
+            "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "units/",
+         ]),
 
         // The web build's JavaScript loaders (web/README.md).
         (id: "mq_js_bundle", group: Software, title: "macroquad JS/WASM loader", author: "not-fl3",

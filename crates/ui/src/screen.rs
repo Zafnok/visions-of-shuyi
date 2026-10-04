@@ -8,26 +8,32 @@
 //! so overlays (menus, dialogs) show the screen below them.
 
 use std::any::Any;
-use std::fmt;
+use std::fmt::{self, Display};
+use std::rc::Rc;
 
-use trpg_content::{Content, ContentErrors};
+use trpg_content::lang::TEST;
+use trpg_content::voice::{self, SOURCE_LANG};
+use trpg_content::{Content, ContentErrors, LangCode, LineId, Playable};
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{LeadGender, LeadProfile};
 
 use crate::audio::{AudioQueue, MusicClock, pick_from_pool};
 use crate::color::Palette;
 use crate::glyph_buffer::GlyphBuffer;
-use crate::input::{Action, Chord, Device, Keymap, Layout, LayoutBindings, PlayerKeys};
-use crate::screens::battle::cursor::CursorStyle;
+use crate::input::{
+    Action, Button, Chord, Device, Keymap, Layout, LayoutBindings, PadBindings, PlayerKeys,
+};
+use crate::map_view::{CursorStyle, MapSkin};
 use crate::storage::{MemoryStorage, Storage, StorageError};
+use crate::tips::fill_text;
 use crate::widgets::help::HelpKeys;
 
 /// [`Storage`] key under which the chosen [`Layout`] is saved (its name,
 /// e.g. `LeftHanded`, which is also valid RON for the enum).
 pub const LAYOUT_KEY: &str = "layout";
 
-/// [`Storage`] key under which the player's key bindings are saved
-/// ([`PlayerKeys::to_ron`], ADR-0031).
+/// [`Storage`] key under which the player's key and controller-button
+/// bindings are saved ([`PlayerKeys::to_ron`], ADR-0031, ADR-0053).
 pub const KEYBINDINGS_KEY: &str = "keybindings";
 
 /// Whether this build offers debug tools: debug builds, and release builds
@@ -108,6 +114,10 @@ pub struct FrameInput {
     text: Vec<char>,
     /// Whether a controller button went down this frame.
     pad: bool,
+    /// The controller buttons that went down this frame, in order.
+    buttons_down: Vec<Button>,
+    /// The controller buttons that went up this frame, in order.
+    buttons_up: Vec<Button>,
 }
 
 impl FrameInput {
@@ -121,7 +131,34 @@ impl FrameInput {
             pressed: Vec::new(),
             text: Vec::new(),
             pad: false,
+            buttons_down: Vec::new(),
+            buttons_up: Vec::new(),
         }
+    }
+
+    /// The same input with the controller buttons that went `down` and
+    /// `up` this frame (and so [`pad_pressed`](Self::pad_pressed) if any
+    /// went down).
+    #[must_use]
+    pub fn with_buttons(mut self, down: Vec<Button>, up: Vec<Button>) -> Self {
+        self.pad = !down.is_empty();
+        self.buttons_down = down;
+        self.buttons_up = up;
+        self
+    }
+
+    /// The controller buttons that went down this frame (bound or not; by
+    /// binding position, stick directions included), for the Key bindings
+    /// screen, which captures the button for a slot. Anything else reacts
+    /// to [`actions`](Self::actions).
+    pub fn pressed_buttons(&self) -> &[Button] {
+        &self.buttons_down
+    }
+
+    /// The controller buttons that went up this frame, as
+    /// [`pressed_buttons`](Self::pressed_buttons).
+    pub fn released_buttons(&self) -> &[Button] {
+        &self.buttons_up
     }
 
     /// The same input with whether a controller button went down this
@@ -191,7 +228,8 @@ pub struct Ctx {
     pub device: Device,
     /// The layout in use; `None` until the player has picked one.
     layout: Option<Layout>,
-    /// The player's key bindings for every layout, loaded from `storage`.
+    /// The player's key bindings for every layout and their controller
+    /// buttons, loaded from `storage`.
     player_keys: PlayerKeys,
     /// Problems found while loading saved data, for `app` to log.
     warnings: Vec<String>,
@@ -208,6 +246,9 @@ pub struct Ctx {
     /// an accessibility style). Lives here until the Options menu (0805)
     /// moves it into the saved settings.
     pub cursor_style: CursorStyle,
+    /// How battle maps look (ADR-0038): the glyph skin, unless a debug tool
+    /// swaps in another. Screens build a `MapScene` and this paints it.
+    pub map_skin: Rc<dyn MapSkin>,
     /// Whether battles show their one-time tips (0406). Off here, so
     /// screen tests aren't interrupted by them; `app` turns it on, and the
     /// Options menu (0805) will let the player switch it.
@@ -226,6 +267,15 @@ pub struct Ctx {
     /// `Harness`) reports it each frame through
     /// [`Game::set_music_playing`](crate::Game::set_music_playing).
     pub music_clock: Option<MusicClock>,
+    /// Whether voice clips play (ADR-0046). Lives here, like
+    /// [`voice_volume`](Self::voice_volume), until the Options menu (0826)
+    /// moves both into the saved settings.
+    pub voices_on: bool,
+    /// How loud voice clips play, 0 to [`MAX_VOICE_VOLUME`].
+    pub voice_volume: u8,
+    /// The voice clips that may be played: none until `app` hands over a
+    /// manifest ([`Ctx::set_voice_manifest`]).
+    voices: Playable,
     /// Seeds random music picks (e.g. a track from a pool), kept apart
     /// from core's simulation RNG (ADR-0019). A fixed
     /// [`DEFAULT_MUSIC_SEED`] here, so tests are repeatable; `app` sets it
@@ -248,6 +298,10 @@ pub struct Ctx {
     /// `app` sets [`KeyPrompt::Waiting`] for the web build, and `Game`
     /// moves it on to [`KeyPrompt::Pressed`] at the first key press.
     pub key_prompt: KeyPrompt,
+    /// The language screen text is shown in (ADR-0045): English until the
+    /// player picks another (0825). The test pack counts only with
+    /// [`debug_tools`](Self::debug_tools) on; anywhere else it is English.
+    pub lang: LangCode,
 }
 
 /// The web build's "press any key" title prompt ([`Ctx::key_prompt`]):
@@ -263,6 +317,11 @@ pub enum KeyPrompt {
     Pressed,
 }
 
+/// The loudest [`Ctx::voice_volume`].
+pub const MAX_VOICE_VOLUME: u8 = 10;
+/// [`Ctx::voice_volume`] until the player changes it (*tunable*).
+pub const DEFAULT_VOICE_VOLUME: u8 = 8;
+
 /// [`Ctx::music_seed`] until `app` sets it.
 pub const DEFAULT_MUSIC_SEED: u64 = 0;
 
@@ -273,6 +332,7 @@ impl Ctx {
     pub fn new(content: Content) -> Result<Self, LoadError> {
         let palette = Palette::new(&content.palette).map_err(LoadError::Palette)?;
         let keymap = Keymap::layout_picker(&content.keymap);
+        let map_skin = crate::map_view::default_skin(&content);
         Ok(Self {
             content,
             palette,
@@ -284,16 +344,46 @@ impl Ctx {
             storage: Box::new(MemoryStorage::new()),
             debug_tools: DEBUG_TOOLS,
             cursor_style: CursorStyle::default(),
+            map_skin,
             tips_enabled: false,
             text_speed: DEFAULT_TEXT_SPEED,
             audio: AudioQueue::default(),
             music_clock: None,
+            voices_on: true,
+            voice_volume: DEFAULT_VOICE_VOLUME,
+            voices: Playable::default(),
             music_seed: DEFAULT_MUSIC_SEED,
             music_picks: 0,
             lead: LeadProfile::new(DEFAULT_NAME, LeadGender::Male),
             clock_s: 0.0,
             key_prompt: KeyPrompt::Off,
+            lang: LangCode::english(),
         })
+    }
+
+    /// The screen text for `key` (`title.new_game`) in the player's
+    /// language, as written in `assets/lang/`, placeholders and all: the
+    /// pack's text if it has one made from today's English, else English.
+    ///
+    /// A key English lacks is a bug in the screen: it panics in debug
+    /// builds, and shows as the key itself in release builds.
+    pub fn text<'a>(&'a self, key: &'a str) -> &'a str {
+        let lang = &self.content.lang;
+        debug_assert!(
+            lang.has(key),
+            "text key not in assets/lang/en/ui.ron: {key:?}"
+        );
+        if self.lang.as_str() == TEST && !self.debug_tools {
+            return lang.text(&LangCode::english(), key);
+        }
+        lang.text(&self.lang, key)
+    }
+
+    /// [`text`](Self::text) with its placeholders filled in: each `{name}`
+    /// that `args` names by its value, and each `{Action}` (and `{Cursor}`)
+    /// by the key the player has for it ([`help_keys`](Self::help_keys)).
+    pub fn text_with(&self, key: &str, args: &[(&str, &dyn Display)]) -> String {
+        fill_text(self.text(key), self.help_keys(), args)
     }
 
     /// The context for the content embedded in the binary.
@@ -312,6 +402,77 @@ impl Ctx {
         pick_from_pool(&self.content.audio, pool, seed).map(str::to_owned)
     }
 
+    /// Takes the text of the voice manifest `app` read
+    /// (`voice/<lang>/voice.ron`, ADR-0046), validates it against the
+    /// dialogue and keeps the clips that may be played: those that still
+    /// say what their line says with today's names. An invalid manifest
+    /// leaves no voices and a warning ([`take_warnings`]).
+    ///
+    /// [`take_warnings`]: Self::take_warnings
+    pub fn set_voice_manifest(&mut self, source: &str) {
+        let file = format!(
+            "{}/{SOURCE_LANG}/{}",
+            voice::VOICE_DIR,
+            voice::MANIFEST_FILE
+        );
+        let content = &self.content;
+        self.voices = match voice::from_source(&file, source, &content.dialogue) {
+            Ok(manifest) => manifest.playable(&content.dialogue, &content.names),
+            Err(errors) => {
+                let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
+                self.warnings
+                    .push(format!("no voices: {}", errors.join("; ")));
+                Playable::default()
+            }
+        };
+    }
+
+    /// Whether `line` has a voice clip that would play now: voices are on
+    /// and the line has a clip that isn't stale.
+    pub fn has_voice(&self, line: &LineId) -> bool {
+        self.voices_on && self.voices.variant_for(line, self.lead.gender).is_some()
+    }
+
+    /// Says `line`: plays its voice clip (the one for the lead's gender,
+    /// where the words differ), stopping the voice that is playing. Does
+    /// nothing when voices are off or the line has no clip that may be
+    /// played.
+    pub fn play_voice(&mut self, line: &LineId) {
+        if !self.voices_on {
+            return;
+        }
+        if let Some(variant) = self.voices.variant_for(line, self.lead.gender) {
+            self.audio.play_voice(line, variant);
+        }
+    }
+
+    /// Stops the voice that is playing, if any.
+    pub fn stop_voice(&mut self) {
+        self.audio.stop_voice();
+    }
+
+    /// Tells `app` the lines a scene is about to say, in script order, so
+    /// it loads their clips a few ahead. Lines without a playable clip are
+    /// left out; nothing is sent when voices are off or none has one.
+    pub fn preload_voices(&mut self, lines: &[LineId]) {
+        if !self.voices_on {
+            return;
+        }
+        let gender = self.lead.gender;
+        let clips: Vec<_> = lines
+            .iter()
+            .filter_map(|line| Some((line.clone(), self.voices.variant_for(line, gender)?)))
+            .collect();
+        if !clips.is_empty() {
+            self.audio.preload_voices(clips);
+        }
+    }
+
+    /// [`voice_volume`](Self::voice_volume) as a 0–1 factor.
+    pub fn voice_gain(&self) -> f32 {
+        f32::from(self.voice_volume.min(MAX_VOICE_VOLUME)) / f32::from(MAX_VOICE_VOLUME)
+    }
+
     /// What help text names keys from: the active bindings on the device
     /// the player pressed last.
     pub fn help_keys(&self) -> HelpKeys<'_> {
@@ -326,8 +487,18 @@ impl Ctx {
     /// Switches to `layout`'s bindings (the player's own for that layout,
     /// else its defaults) for this session, without saving the choice.
     pub fn use_layout(&mut self, layout: Layout) {
-        self.keymap = self.keymap_for(layout);
         self.layout = Some(layout);
+        self.refresh_keymap();
+    }
+
+    /// Rebuilds [`keymap`](Self::keymap) from the layout in use (the
+    /// layout picker's keys while there is none) and the player's
+    /// bindings.
+    fn refresh_keymap(&mut self) {
+        self.keymap = match self.layout {
+            Some(layout) => self.keymap_for(layout),
+            None => self.player_keys.layout_picker_keymap(&self.content.keymap),
+        };
     }
 
     /// The keymap `layout` would have: the player's bindings for it, else
@@ -364,6 +535,25 @@ impl Ctx {
             .write(KEYBINDINGS_KEY, &self.player_keys.to_ron())
     }
 
+    /// The player's controller buttons (the defaults until they change
+    /// them), for the Key bindings screen (0816) to edit and hand back to
+    /// [`set_pad_bindings`](Self::set_pad_bindings). The same in both
+    /// layouts.
+    pub fn pad_bindings(&self) -> PadBindings {
+        self.player_keys.pad_bindings(&self.content.keymap)
+    }
+
+    /// Replaces the controller buttons and saves them under
+    /// [`KEYBINDINGS_KEY`]. They work from the next press, whatever the
+    /// layout (and before one is chosen). The change applies even if
+    /// saving fails (it is then lost on quit).
+    pub fn set_pad_bindings(&mut self, bindings: PadBindings) -> Result<(), StorageError> {
+        self.player_keys.set_pad(&self.content.keymap, bindings);
+        self.refresh_keymap();
+        self.storage
+            .write(KEYBINDINGS_KEY, &self.player_keys.to_ron())
+    }
+
     /// Loads the player's key bindings from `storage` (repairing what it
     /// must, with a warning per fix) and re-applies the layout in use.
     fn load_player_keys(&mut self) {
@@ -381,9 +571,7 @@ impl Ctx {
                 .into_iter()
                 .map(|w| format!("{KEYBINDINGS_KEY}: {w}")),
         );
-        if let Some(layout) = self.layout {
-            self.use_layout(layout);
-        }
+        self.refresh_keymap();
     }
 
     /// Takes the warnings gathered while loading saved data (e.g. repaired
@@ -548,7 +736,180 @@ pub(crate) mod tests {
 
     use super::*;
     use crate::glyph_buffer::Cell;
-    use crate::{Rgb, UiColor};
+    use crate::{AudioRequest, Rgb, UiColor};
+    use trpg_content::Variant;
+
+    /// A voice manifest with a clip for each of the test scene's lines
+    /// numbered `picks` (in script order), and those lines' ids.
+    pub(crate) fn test_voices(ctx: &Ctx, picks: &[usize]) -> (String, Vec<LineId>) {
+        let lines = ctx.content.dialogue.scenes[crate::debug::TEST_SCENE].lines();
+        let picked: Vec<_> = picks.iter().map(|&i| lines[i]).collect();
+        let clip = |line: &trpg_content::dialogue::Line| {
+            format!(
+                "(line: \"{}\", spoken: \"{}\", voice: \"v\", \
+                 made_by: Recorded(actor: \"a\")),\n",
+                line.id, line.text
+            )
+        };
+        let clips: String = picked.iter().map(clip).collect();
+        let ids = picked.iter().map(|line| line.id.clone()).collect();
+        (format!("(clips: [\n{clips}])"), ids)
+    }
+
+    fn play(line: &LineId, variant: Variant) -> AudioRequest {
+        AudioRequest::PlayVoice {
+            line: line.clone(),
+            variant,
+        }
+    }
+
+    /// Acceptance (0238): a line with a clip is asked for; one without,
+    /// or with voices off, is not.
+    #[test]
+    fn play_voice_asks_only_for_lines_with_a_playable_clip() {
+        let mut c = ctx();
+        let (manifest, lines) = test_voices(&c, &[0, 1]);
+        let all = c.content.dialogue.scenes[crate::debug::TEST_SCENE].lines();
+        let unvoiced = all[2].id.clone();
+        // No manifest yet: nothing has a voice.
+        c.play_voice(&lines[0]);
+        assert!(!c.has_voice(&lines[0]));
+        assert!(c.audio.pending().is_empty());
+        c.set_voice_manifest(&manifest);
+        assert!(c.take_warnings().is_empty());
+        assert!(c.has_voice(&lines[0]));
+        assert!(!c.has_voice(&unvoiced));
+        c.play_voice(&lines[0]);
+        c.play_voice(&unvoiced);
+        c.play_voice(&LineId::new("test_00000000"));
+        c.play_voice(&lines[1]);
+        assert_eq!(
+            c.audio.take(),
+            [
+                play(&lines[0], Variant::None),
+                play(&lines[1], Variant::None)
+            ]
+        );
+        c.voices_on = false;
+        assert!(!c.has_voice(&lines[0]));
+        c.play_voice(&lines[0]);
+        c.preload_voices(&lines);
+        assert!(c.audio.pending().is_empty());
+        // Stopping is always passed on: a voice may still be playing.
+        c.stop_voice();
+        assert_eq!(c.audio.take(), [AudioRequest::StopVoice]);
+    }
+
+    /// The first narration line of the test scene, as a manifest clip
+    /// that says `spoken`.
+    fn narration_clip(c: &Ctx, spoken: &str) -> (String, LineId) {
+        let (manifest, lines) = test_voices(c, &[0]);
+        let text = c.content.dialogue.scenes[crate::debug::TEST_SCENE].lines()[0].text;
+        (manifest.replace(text, spoken), lines[0].clone())
+    }
+
+    #[test]
+    fn a_stale_clip_is_never_asked_for() {
+        let mut c = ctx();
+        let (manifest, line) = narration_clip(&c, "Words the line no longer says.");
+        c.set_voice_manifest(&manifest);
+        assert!(c.take_warnings().is_empty(), "stale is not invalid");
+        assert!(!c.has_voice(&line));
+        c.play_voice(&line);
+        c.preload_voices(std::slice::from_ref(&line));
+        assert!(c.audio.pending().is_empty());
+    }
+
+    #[test]
+    fn an_invalid_voice_manifest_is_a_warning_and_no_voices() {
+        let mut c = ctx();
+        let (good, lines) = test_voices(&c, &[0]);
+        c.set_voice_manifest(&good);
+        assert!(c.has_voice(&lines[0]));
+        let bad = good.replace(lines[0].as_str(), "test_00000000");
+        c.set_voice_manifest(&bad);
+        assert_eq!(
+            c.take_warnings(),
+            ["no voices: voice/en/voice.ron:2: no dialogue line has the id \"test_00000000\""]
+        );
+        assert!(!c.has_voice(&lines[0]), "the earlier manifest is gone");
+        c.set_voice_manifest("not ron");
+        let warnings = c.take_warnings();
+        assert_eq!(warnings.len(), 1);
+        assert!(
+            warnings[0].starts_with("no voices: voice/en/voice.ron:1"),
+            "{warnings:?}"
+        );
+    }
+
+    #[test]
+    fn preload_lists_the_playable_clips_in_order() {
+        let mut c = ctx();
+        let (manifest, lines) = test_voices(&c, &[3, 1]);
+        c.set_voice_manifest(&manifest);
+        let all: Vec<LineId> = c.content.dialogue.scenes[crate::debug::TEST_SCENE]
+            .lines()
+            .iter()
+            .map(|l| l.id.clone())
+            .collect();
+        c.preload_voices(&all);
+        // Script order, not manifest order; unvoiced lines left out.
+        let expected = vec![
+            (lines[1].clone(), Variant::None),
+            (lines[0].clone(), Variant::None),
+        ];
+        assert_eq!(
+            c.audio.take(),
+            [AudioRequest::PreloadVoices { lines: expected }]
+        );
+        c.preload_voices(&all[..1]);
+        c.preload_voices(&[]);
+        assert!(c.audio.pending().is_empty(), "nothing playable: no request");
+    }
+
+    /// A line whose words change with the lead's gender plays the clip
+    /// for the lead the player made.
+    #[test]
+    fn a_gendered_line_plays_the_clip_for_the_leads_gender() {
+        let mut c = ctx();
+        let script = "@scene g\n> {They} left {their} sword.\n@end\n";
+        let table =
+            trpg_content::dialogue::from_sources(&[("g.dlg", script)], None, None, None, None);
+        c.content.dialogue = table.unwrap();
+        let line = c.content.dialogue.scenes["g"].lines()[0].id.clone();
+        let clip = |variant: &str, spoken: &str| {
+            format!(
+                "(line: \"{line}\", variant: {variant}, spoken: \"{spoken}\", voice: \"v\", \
+                 made_by: Recorded(actor: \"a\")),"
+            )
+        };
+        let manifest = format!(
+            "(clips: [{}{}])",
+            clip("M", "He left his sword."),
+            clip("F", "She left her sword.")
+        );
+        c.set_voice_manifest(&manifest);
+        assert_eq!(c.take_warnings(), [] as [&str; 0]);
+        c.play_voice(&line);
+        c.lead.gender = LeadGender::Female;
+        c.play_voice(&line);
+        assert_eq!(
+            c.audio.take(),
+            [play(&line, Variant::M), play(&line, Variant::F)]
+        );
+    }
+
+    #[test]
+    fn the_voice_volume_is_a_factor_of_ten_steps() {
+        let mut c = ctx();
+        assert!(c.voices_on);
+        assert_eq!(c.voice_volume, DEFAULT_VOICE_VOLUME);
+        assert!((c.voice_gain() - 0.8).abs() < f32::EPSILON);
+        for (volume, gain) in [(0, 0.0), (5, 0.5), (10, 1.0), (200, 1.0)] {
+            c.voice_volume = volume;
+            assert!((c.voice_gain() - gain).abs() < f32::EPSILON, "{volume}");
+        }
+    }
 
     /// The context for the embedded content, with the right-handed layout
     /// already chosen.
@@ -748,6 +1109,21 @@ pub(crate) mod tests {
         assert_eq!(i.actions, [Action::Confirm]);
         assert!((i.dt - 0.5).abs() < f32::EPSILON);
         assert!(i.pressed_chords().is_empty());
+        assert!(i.pressed_buttons().is_empty() && i.released_buttons().is_empty());
+        assert!(!i.pad_pressed());
+    }
+
+    #[test]
+    fn frame_input_carries_the_buttons_that_went_down_and_up() {
+        use crate::input::Button::{East, South, West};
+        let i = FrameInput::new(vec![], 0.0, vec![]).with_buttons(vec![South, West], vec![East]);
+        assert_eq!(i.pressed_buttons(), [South, West]);
+        assert_eq!(i.released_buttons(), [East]);
+        assert!(i.pad_pressed());
+        // A release alone isn't a press.
+        let i = FrameInput::new(vec![], 0.0, vec![]).with_buttons(vec![], vec![East]);
+        assert!(!i.pad_pressed());
+        assert_eq!(i.released_buttons(), [East]);
     }
 
     #[test]
@@ -777,6 +1153,51 @@ pub(crate) mod tests {
         );
         assert_eq!(c.layout(), Some(Layout::RightHanded));
         assert_eq!(c.palette.get(UiColor::Black), Rgb::new(0, 0, 0));
+    }
+
+    #[test]
+    fn text_comes_from_the_language_in_use() {
+        let mut c = ctx();
+        assert_eq!(c.lang, LangCode::english());
+        assert_eq!(c.text("title.new_game"), "New Game");
+        c.lang = LangCode::new(TEST).unwrap();
+        assert_eq!(c.text("title.new_game"), "NEW GAME");
+        // Stale and missing entries are English.
+        assert_eq!(c.text("title.subtitle"), "an ASCII tactics game");
+        assert_eq!(c.text("title.credits"), "Credits");
+        // The test pack is only for builds with debug tools.
+        c.debug_tools = false;
+        assert_eq!(c.text("title.new_game"), "New Game");
+        // A language with no pack is English.
+        c.lang = LangCode::new("zz").unwrap();
+        assert_eq!(c.text("title.new_game"), "New Game");
+    }
+
+    #[test]
+    fn text_with_fills_values_and_key_names() {
+        let mut c = ctx();
+        assert_eq!(
+            c.text_with("title.help", &[]),
+            "arrows move · f select · d back"
+        );
+        c.lang = LangCode::new(TEST).unwrap();
+        assert_eq!(
+            c.text_with("title.help", &[]),
+            "arrows MOVE · f SELECT · d BACK"
+        );
+        // A value named like a placeholder in the text fills it.
+        assert_eq!(
+            c.text_with("title.help", &[("Cursor", &7)]),
+            "7 MOVE · f SELECT · d BACK"
+        );
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "text key not in assets/lang/en/ui.ron: \"title.nope\"")]
+    fn an_unknown_text_key_panics_in_debug_builds() {
+        let c = ctx();
+        let _ = c.text("title.nope");
     }
 
     #[test]
@@ -903,6 +1324,63 @@ pub(crate) mod tests {
                 .with_default_pad(&c.content.keymap)
         );
         assert_eq!(c.keymap_for(Layout::RightHanded), before);
+    }
+
+    /// Unit info also on the right trigger.
+    fn info_on_right_trigger(c: &Ctx) -> PadBindings {
+        let mut b = c.pad_bindings();
+        assert!(b.bind(Action::Info, 1, Button::RightTrigger).is_ok());
+        b
+    }
+
+    #[test]
+    fn set_pad_bindings_saves_and_applies_in_every_layout_and_before_one_is_chosen() {
+        let mut c = ctx();
+        assert_eq!(c.pad_bindings(), PadBindings::defaults(&c.content.keymap));
+        let b = info_on_right_trigger(&c);
+        assert_eq!(c.set_pad_bindings(b.clone()), Ok(()));
+        assert_eq!(c.pad_bindings(), b);
+        assert_eq!(
+            c.keymap.pad_action(Button::RightTrigger),
+            Some(Action::Info)
+        );
+        let saved = c.storage.read(KEYBINDINGS_KEY).unwrap().unwrap();
+        assert_eq!(saved, c.player_keys().to_ron());
+        // The keys are the layout's own; the other layout has the buttons too.
+        assert_eq!(c.keymap, c.keymap_for(Layout::RightHanded));
+        assert_eq!(
+            c.keymap.chords_for(Action::Info),
+            Keymap::for_layout(&c.content.keymap, Layout::RightHanded).chords_for(Action::Info)
+        );
+        c.use_layout(Layout::LeftHanded);
+        assert_eq!(
+            c.keymap.pad_action(Button::RightTrigger),
+            Some(Action::Info)
+        );
+        // Before a layout is chosen: the layout picker's keys, these buttons.
+        let mut none = Ctx::embedded().unwrap();
+        assert_eq!(none.set_pad_bindings(b.clone()), Ok(()));
+        assert_eq!(none.layout(), None);
+        assert_eq!(
+            none.keymap,
+            Keymap::layout_picker(&none.content.keymap).with_pad(b.pairs())
+        );
+        // They load with the storage, with or without a layout.
+        let storage = std::mem::replace(&mut none.storage, Box::new(MemoryStorage::new()));
+        let again = Ctx::embedded().unwrap().with_storage(storage);
+        assert_eq!(again.pad_bindings(), b);
+        assert_eq!(
+            again.keymap.pad_action(Button::RightTrigger),
+            Some(Action::Info)
+        );
+        // A failed save still applies them.
+        let mut failing = ctx().with_storage(Box::new(Failing));
+        assert!(failing.set_pad_bindings(b.clone()).is_err());
+        assert_eq!(failing.pad_bindings(), b);
+        assert_eq!(
+            failing.keymap.pad_action(Button::RightTrigger),
+            Some(Action::Info)
+        );
     }
 
     #[test]

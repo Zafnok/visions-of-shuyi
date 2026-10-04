@@ -3,7 +3,8 @@
 Decided: 2026-09-25
 Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 0021; bought tiles and sprites on the battle map: 0038; walking sprites,
-effect marks, the glyph look as an option, busts in dialogue: 0039)
+effect marks, the glyph look as an option, busts in dialogue: 0039; which
+bought tiles each terrain is: 0437)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -183,6 +184,9 @@ Names, stats, weapons and the sample face in the screenshots are placeholders.
 - Move/attack/heal/danger overlays blend their colour over the terrain
   background at about **75%** *(tunable)*, so the ground stays visible
   underneath. Nick liked the move and attack range colours as shown.
+  **The same 75% on the bought tiles** (decided 2026-10-04, ticket 0437:
+  Nick was shown a selected unit's ranges over the picture tiles at 75%,
+  50% and 35%: "75% looks ok").
 - **Colour themes (later):** the player may pick among four palettes, **C Rich
   & painterly, D Earthy painterly (default), E War-table parchment (light), G
   Moonlit**. That's a separate ticket (0806). Their mockup values are recorded
@@ -222,13 +226,75 @@ so they aren't in this repository (ADR-0032).
   later").
 - **A sprite unit's side** (decided 2026-10-02): a **1-pixel outline in
   its side's colour** (player blue, enemy red, ally green, neutral yellow)
-  around the sprite, as in renders B, C, C2 and C3. **Perhaps also a
-  small corner mark** in the same colour on its tile ("A, and potentially
-  A with C"): ticket 0436 renders the outline alone and with the corner
-  mark, and Nick picks.
+  around the sprite, as in renders B, C, C2 and C3. **The outline alone,
+  no corner mark** (decided 2026-10-03, ticket 0436: Nick was shown the
+  game's own frames with the outline alone and with a 3×3 corner mark in
+  the tile's top-left, and picked "Outline alone").
 - **An acted sprite unit** is drawn grey and darker, as in the renders;
   its outline dims with it. A change of brightness, not of hue, like the
-  glyph look's rule.
+  glyph look's rule. Each pixel goes 75% of the way to its own grey and is
+  then three quarters as bright (*tunable*). The renders used 0.6 as
+  bright; seeing it in the game on the dark glyph ground, Nick chose
+  "Lighten a bit now" (2026-10-03, ticket 0436).
+- **Which sprite each unit is** (ticket 0436; Claude's starting picks from
+  the spike, *for Nick to change*: say which and they are swapped in
+  `cargo xtask map-sprite-import`'s table). All are Tiny Tales map
+  sprites:
+
+  | Unit | Sprite |
+  | ---- | ------ |
+  | The lead | Heroes: Fighter (male) or Fighter (female), by the gender picked |
+  | Exile (the placeholder lord's class) | Heroes: Fighter (male) |
+  | Mage | Heroes: Witch |
+  | Archer (ours and the enemy's) | Heroes: Archer |
+  | Guard | *Faith and Evil*: Church Knight |
+  | Cleric | *Faith and Evil*: Church Cleric |
+  | Rider | Human Knights: Knight M1, **on foot**: nothing mounted exists in the bundle (ticket 0040 looks for mounted art) |
+  | Brigand | Human NPC Advanced: Warrior M1 |
+  | Raider | Human NPC Advanced: Fighter M1 |
+  | Fire Elemental, Frost Elemental | *Elemental Forces*: Fire Elemental, Ice Elemental |
+  | Any other class | Human NPC Advanced: Adventurer M1 |
+
+  A sprite hangs off a class or a named character, not a side: the
+  outline says whose a unit is. So an enemy Archer looks like ours (the
+  spike gave enemy archers a Rogue sprite; that needs a sprite per side,
+  which the tileset file doesn't have).
+- **Which bought tiles each terrain is** (ticket 0437). The sets are
+  Nick's decision of 2026-10-02; the picks within them are Claude's
+  starting picks, *for Nick to change*: say which and they are swapped in
+  `assets-src/tilesets/tiny_tales.ron`. A map outdoors is the World Map
+  set in its Standard colours:
+
+  | Terrain | Drawn as |
+  | ------- | -------- |
+  | Plain | The green grass ("Grass") |
+  | Road | The tan ground ("Terrains"), with its own edge against the grass |
+  | Forest | The small green trees, as a mass (Trees 1) |
+  | Thicket | The dark grey-blue pines, as a mass (Trees 6) |
+  | Mountain | The brown mountains ("Grasslands Mountain") |
+  | Peak | The grey-purple mountains ("Ruin Mountains") |
+  | Water | Shallow water, with the set's shore: sand, a wet band and foam |
+  | Sea | Deep water; next to land it has a strip of shallows |
+  | Bridge | The wooden bridge, turned to cross the water |
+  | Fort | The grey stone tower: the only stronghold in the set that is one tile big |
+  | Ice | The snow ground ("Snow"), laid on the water |
+  | Burnt | Bare grey trees (Trees 3) on dark ground ("Grounds") |
+  | Burning | **A stand-in.** Nothing in the bundle burns: the forest's trees, recoloured in our `fire` colour (each pixel as bright as it was) |
+  | Floor, Wall, Door | The Dungeons 1 "Fortress" set: blue-grey slabs, tan brick, a wooden door |
+
+  A map **indoors** (its file says so: `look: (tiles: "indoor")`) is the
+  Fortress set: slabs for the floor, brick for the walls, the door, and
+  water as a dark pool with a stone rim. Terrains that set lacks (grass,
+  trees, mountains) keep their outdoor pictures.
+- **Tiles are joined from the terrain alone** (ticket 0437, ADR-0052): a
+  shore, a road's edge and the outline of a wood are worked out from which
+  tiles are which, and end exactly where their tiles end, so what is seen
+  is what the rules count. (The trees overhang their tile by a few
+  pixels, as the art is drawn.)
+- **What the bought-art maps don't have** (each its own ticket if Nick
+  wants it): the bundle's castles, towns and houses bigger than one tile;
+  moving water and waterfalls (one still frame is used); hand-placed
+  decoration (rocks in the sea, single trees).
 - **The Chapter 1 playtest waits for the bought-art map** (decided
   2026-10-02): units (0436) and terrain (0437) are in before Nick plays,
   and so is the walking below (0440; Nick, ticket 0039: "B").
@@ -243,7 +309,30 @@ so they aren't in this repository (ADR-0032).
     its legs going, and **turns to face the way it walks** (about a fifth
     of a second per tile in the mockup, *tunable*; the speed settings
     still apply). When it arrives it faces the camera again.
-  Built in ticket 0440, after 0436; until then sprites stand still.
+  Built in ticket 0440. The values (*tunable*, all in
+  `crates/ui/src/screens/battle/walk.rs`): a step on the spot every
+  250 ms; a walking sprite changes frame every 100 ms.
+  - **How fast a sprite walks** (Nick, 2026-10-04, after seeing 5, 8, 10
+    and 12 tiles a second side by side; 5 was "still too slow"):
+    **6** tiles a second normally; **8** with the fast setting in
+    Options (ticket 0805); **12** while the speed-up button is held.
+    The two don't stack: "it's just 12 max". *(Claude's reading: the
+    speed-up button is holding Confirm, which speeds up the enemy's
+    phase, `controls.md`; holding Confirm during your own unit's walk
+    still skips it, as before.)*
+  - **The glyph look keeps its own walking speed**, 12 tiles a second
+    (Nick, 2026-10-04: "original glyph version I think should have its
+    original walking speed"). Glyph units jump from tile to tile.
+  - **The clip mask always holds** (Nick, 2026-10-04; decided in 0039 and
+    0436): no sprite or outline is drawn inside a tile another unit
+    stands on above it, walking or standing, not even the 1-pixel edge
+    of an outline beside it. A unit below a walker passing over is cut
+    for as long as the walker is on the tile above it.
+  - On the glyph ground (the retro look with sprite units), a walking
+    unit walks over the ground's glyphs: the tile it leaves shows its
+    ground at once (Nick, 2026-10-04).
+  - *(Claude's starting rule: a walking unit passing over a tile an ally
+    stands on is drawn in front of the ally.)*
 - **The HP bar never overlaps the sprite's feet** (Nick: "make sure the hp
   bar is not overlapping the sprite"). The sprite is drawn higher on its
   tile, so its feet stand **directly on top of** the 2-pixel HP bar (the
@@ -283,7 +372,13 @@ so they aren't in this repository (ADR-0032).
     saw them stacked and as a turning swirl too: "B looks best".
   - **When another unit stands in the tile above**, the mark sits 4 pixels
     lower, inside its own tile, so it doesn't touch that unit
-    *(Claude's starting rule, shown in mockup M)*.
+    *(Claude's starting rule, shown in mockup M)*. The same on the top row
+    of the map view, where the arrow would otherwise be cut by the view's
+    edge *(Claude's starting rule, ticket 0436)*.
+  - **Which arrow**: an effect that lowers any of the unit's numbers is a
+    penalty; any other is a bonus *(Claude's starting rule, ticket 0436:
+    the rules don't label effects, and none today both raises and
+    lowers)*.
   - *(Claude's starting rule: marks on an acted unit keep moving, dimmed,
     as in mockup K4.)*
   - The game has no poison or other lasting ailment today. If one is
@@ -405,9 +500,9 @@ sprites.
   sprite packs, five 16-pixel tilesets (World Map, Overworld, Dungeons 1
   and 2, Tower), *Battlebacks Vol.1* (24 battle backgrounds), and some
   packs we don't use (a sci-fi set, a sci-fi UI kit, three 48-pixel
-  terrain and tree packs in another style). The files are on Nick's
-  machine, outside this repository (ADR-0032; the private repository is
-  ticket 0110). The purchase record is in `THIRD_PARTY_ASSETS.md`.
+  terrain and tree packs in another style). The files are in the
+  private assets repository, never in this one (ADR-0032, ADR-0040).
+  The purchase record is in `THIRD_PARTY_ASSETS.md`.
 - **What the real files are** (checked 2026-10-02; earlier notes came
   from store previews): a face is 48×48 pixels and a **bust is 80×80**,
   and **both come in the same 8 expressions** (neutral, smile, stern,
@@ -672,3 +767,11 @@ black.
 - Sprite units on the map: the outline alone or with a corner mark
   (0436). The zoom key and button (0439).
 - More bought packs for fighters with no fitting art (tickets 0035, 0040).
+- On the bought tiles (seen in ticket 0437, not decided): the cursor's
+  thin corner marks are hard to see on bright ground (ticket 0444); the
+  picks in the terrain table above, the burning stand-in first.
+- The battle screen's bottom two rows: the danger-zone hint on the left
+  and the auto-end hint in a column with `end turn` (Nick, 2026-10-04);
+  where a message goes, and what auto-end lines up with when the key help
+  has no `end turn`, are for him to pick from rendered options (ticket
+  0445).

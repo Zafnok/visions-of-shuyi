@@ -6,6 +6,7 @@ fn option(tone: &str, text: &str, steps: Vec<Step>) -> ChoiceOption {
     ChoiceOption {
         tone: tone.into(),
         text: text.into(),
+        line: LineId::default(),
         steps,
     }
 }
@@ -26,7 +27,7 @@ fn parses_choice_blocks() {
     let (parsed, errs) = parse_dlg("t.dlg", &src);
     assert_eq!(errs, []);
     assert_eq!(
-        parsed[0].scene.steps[2..],
+        bare(&parsed[0].scene.steps)[2..],
         [
             Step::Choice {
                 options: vec![
@@ -316,8 +317,8 @@ fn the_lead_speaks_in_short_lines() {
 
 #[test]
 fn the_leads_expressions_come_from_both_portraits() {
-    let palette = crate::palette::PaletteDef::load().unwrap_or_default();
-    let mut portraits = crate::portrait::load_all(&palette).unwrap_or_default();
+    let images = crate::ImageTable::load().unwrap_or_default();
+    let mut portraits = crate::portrait::load_all(&images).unwrap_or_default();
     assert!(portraits.contains_key("lead_m") && portraits.contains_key("lead_f"));
     let src = scene("@right clear\n@right lead neutral\nlead[sad]: Hm.");
     assert_eq!(errors_with(&src, &portraits), Vec::<String>::new());

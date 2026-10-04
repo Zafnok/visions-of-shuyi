@@ -35,13 +35,19 @@ only if a claim ever happens (`audio.md`).
 
 **Title intro cinematic** (Nick, 2026-10-01: a cinematic on the title as
 long as the title song, looping with it, ending on the logo): **0036**
-decide how it fits the menu, the storyboard and how zoom looks (after
-**0811** title art) → **0228** pan and zoom over a glyph scene → **0817**
+decided 2026-10-03 (`design/title-screen.md`, *Intro cinematic*: one
+press to the menu, the cinematic after 15 idle seconds, a press skips to
+the logo; "Trailer cuts" storyboard; whole-step zoom; it did not wait for
+**0811** title art, the logo shot shows whatever 0811 makes) →
+**0228** pan and zoom over a glyph scene → **0817**
 cinematic file format and player (also needs **0227**, the music clock,
 which has no open dependencies and can start any time) → **0818** character and conversation shots and
-**0819** the title plays it in time with the music → **0820** the real
-shots (after Chapter 1's map, faces and script) → **1010** the overworld
-shot (after the world map, 1007). Not on the Chapter 1 critical path.
+**0819** the title plays it in time with the music, and **0827** shots
+where units march and fight → **0820** the real shots (after Chapter 1's
+map, faces and script) → **1010** the overworld shot (after the world map,
+1007; Nick places it). **0041** picks the skip sound (any time). **0724**
+rewrites the Chapter 1 script with fewer quips (after the playtest, 0804); the cinematic shows that
+script's opening lines, whatever they are. Not on the Chapter 1 critical path.
 
 **Replaceable graphics** (Nick, 2026-10-01: swapping the map's glyphs for
 sprites from image files must be a small job; ADR-0038): **0231** pictures
@@ -59,7 +65,8 @@ the whole Mega Tiles bundle and chose its tiles and map sprites for the
 battle map, with per-map lighting and a zoom key): after **0433** and
 **0110**, **0436** units as the bought map sprites (→ **0440** they step
 on the spot and walk along their path) → **0437** terrain from
-the bought tilesets (auto-tiling) → **0438** per-map lighting; **0439** the
+the bought tilesets (auto-tiling; done 2026-10-03, ADR-0052) → **0438**
+per-map lighting; **0439** the
 1× / 2× zoom toggle (after 0433; Nick picks its key when it is built).
 Nick wants the bought-art map in his Chapter 1 playtest, so **0432, 0433,
 0436, 0437 and 0440 are on the critical path** (0438 and 0439 are not).
@@ -69,6 +76,26 @@ effect (0436), dialogue shows the busts at 4× (0711), and players may
 pick the glyph look in Options (**0824**, after 0436 and 0805; not on the
 critical path).
 
+**Machine-made now, replaceable by people later** (Nick, 2026-10-03,
+[`docs/design/voices-languages-and-script.md`](design/voices-languages-and-script.md):
+AI voices with an off switch, a machine-translated Japanese option, and a
+script a hired writer can take over; **not** a blocker for Chapter 1 or
+Act 1). Shared first step: **0717** every dialogue line gets an id (no
+open dependencies).
+*Japanese* (ADR-0045): **0042** Nick picks the font and how a language is
+chosen → **0233** screen text by key (no open dependencies) → **0234** the
+rest of the screens and **0235** data names, tips and dialogue (also needs
+0717); **0236** wide glyphs (after 0042) → **0237** Japanese line
+breaking; **0825** the Options row (after 0805); **0718** the translation
+pipeline → **0719** Chapter 1 and the screens in Japanese (after 0716).
+*Voices* (ADR-0046): **0043** Nick picks the tool, what is voiced and each
+voice by ear; **0238** playback plumbing (after 0717) → **0720** the
+dialogue screen plays them, **0721** the generation tool, **0826** the
+Options rows (after 0805) → **0722** Chapter 1's voices.
+*Script:* **0723** a scriptwriter's kit (after 0715).
+*Disclosure:* **0907** credits and store text say what is machine-made
+(0901 and 0903 use it).
+
 ## Nick's queue (answer these first; any order within a row)
 
 Design answers unblock most of the rules work. Suggested order:
@@ -76,15 +103,16 @@ Design answers unblock most of the rules work. Suggested order:
 1. **0001** stats & combat · **0002** turn structure · **0003** weapons & items · **0004** magic · **0006** death & difficulty · **0007** setting, tone & story beats
 2. **0005** level ups & classes (after 0001) · **0008** world structure · **0009** Chapter 1 scope (after 0007) · **0014** Combat Arts (after 0003) · **0016** the lord's unique class line (after 0005, 0009)
 3. **0011** look & feel sign-off (after the font ticket 0203 shows real pixels)
-4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0110** make the private assets repo (the packs were bought 2026-10-02) · **0035** Harl's combat picture · **0040** more packs for fighters with no fitting art (Claude searches, Nick buys) · **0436** outline alone or with a corner mark (a sign-off) · **0413** how the combat scene looks · **0022** victory sting · **0023** defeat sting · **0024** Game Over music · **0810** how battle rewards are shown
-5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art, then **0036** the title's intro cinematic) · **0025**–**0028** world map / capital / camp / shop music · **0029** dialogue backgrounds · **0812** chapter card · **0813** transitions
-6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles
+4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** Harl's combat picture · **0040** more packs for fighters with no fitting art (Claude searches, Nick buys) · **0413** how the combat scene looks · **0022** victory sting · **0023** defeat sting · **0024** Game Over music · **0810** how battle rewards are shown
+5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0029** dialogue backgrounds · **0812** chapter card · **0813** transitions
+   · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear
+6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
 
 Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
 preparations, 0409 shops, 0410 spells, 0411 battle notes, 0502 enemy
 phase, 0602 level up, 0701 story gates, 0704 dialogue, 0706 portraits, 0707
 script, 0804 playtest). Setup steps (accounts/secrets): 0103, 0104, 0106,
-0108, 0901, later 0903.
+0108, 0116, 0901, later 0903.
 
 ## Chapter 1 critical path
 
@@ -96,7 +124,8 @@ files), and 0803 now waits for 0710 and 0807 (it sets Chapter 1's music).
 0231 (pictures as sprite items, ADR-0038) was added to row 1: 0711 draws
 the bought faces with it.
 Nick also put the combat scene (0413), Harl's picture (0035) and 0316
-(non-attack skills cost uses per battle) in front of the playtest.
+(non-attack skills cost uses per battle) in front of the playtest, and
+0822 (Game Over offers Rewind while charges are left; "yes", PR #140).
 2026-10-02: 0714 (dialogue speakers who aren't units) was added to row 1
 and the script (0707) moved to row 2 behind it; without it the script
 couldn't pass its check until 0803, which waits for the script.
@@ -112,18 +141,18 @@ bought unit sprites (0436, which also needs 0110) and the bought terrain
 same day: Nick said the playtest waits for it.
 
 ```
- 1  0022 0023 0024 0035 0110 0231 0316 0410 0432 0435 0710 0714 0715 0801
+ 1  0022 0023 0024 0035 0231 0316 0410 0432 0435 0710 0714 0715 0801 0822
  2  0433 0711 0716 0802 0807 0810
  3  0413 0436 0706 0809
  4  0437 0440 0803
  5  0804  ◄── Nick plays Chapter 1
 ```
 
-Two row-1 tickets are Nick's: **0110** needs him to make the private
-assets repo (he bought the packs on 2026-10-02; 0711, 0413, 0706 and so
-0803 wait on it), and **0035** is Harl's picture (0413 and 0706 wait on
-it; since 2026-10-02 Claude searches for candidate packs and Nick decides,
-together with 0040's other gaps).
+One row-1 ticket is Nick's: **0035** is Harl's picture (0413 and 0706
+wait on it; since 2026-10-02 Claude searches for candidate packs and Nick
+decides, together with 0040's other gaps). The private assets repo is
+done (0110 and 0116, 2026-10-02, ADR-0040): Nick uploaded it and added its
+build key, so 0711 and 0436 no longer wait on it.
 
 **0435** (found by 0411) adds the `PLAYER PHASE` banner missing at the
 start of a battle, which `turn-structure.md` asks for.

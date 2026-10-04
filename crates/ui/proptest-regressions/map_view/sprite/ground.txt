@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 4fe497c2a2e1a504f3d9cf3b638cb6c7a53f149329e07e77127e296ccf0cd7c3 # shrinks to scene = MapScene { origin: Pos { x: 0, y: 0 }, size: (1, 7), tiles: [TileView { terrain: None, flashes: [], tints: [], becomes: None }, TileView { terrain: None, flashes: [], tints: [], becomes: None }, TileView { terrain: None, flashes: [], tints: [], becomes: None }, TileView { terrain: None, flashes: [], tints: [], becomes: None }, TileView { terrain: None, flashes: [], tints: [], becomes: None }, TileView { terrain: None, flashes: [], tints: [], becomes: None }, TileView { terrain: Some(TerrainId(0)), flashes: [], tints: [], becomes: None }], rim: [], look: MapLook { tiles: "outdoor" }, units: [], cursor: None, path: [], clock_ms: 0 }, area = Rect { x: 0, y: 16, w: 3, h: 19 }, tile = (8, 42)

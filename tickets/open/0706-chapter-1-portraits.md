@@ -75,10 +75,10 @@ only some of the faces, small, so recheck everything on the real files.
 
 ## Checked on the bought files (2026-10-02, ticket 0038)
 
-Nick bought the whole Mega Tiles bundle. The files are sorted on his
-machine in `D:\tactical-rpg\Tiny Tales Bundle Assets\`; open `index.html`
-there to see each character's faces, battle picture and map sprite
-together. This replaces the preview-based notes above where they differ.
+Nick bought the whole Mega Tiles bundle. The files are sorted in the
+private assets repository (ADR-0040), in
+`assets-private/library/tiny-tales/`; open `index.html` there to see each
+character's faces, battle picture and map sprite together. This replaces the preview-based notes above where they differ.
 
 - **Expressions**, the same 8 for every hero and for every face the
   generator makes: `neutral`, `smile`, `stern`, `sad`, `surprise`,
@@ -143,6 +143,12 @@ a missing `surprised` made from a neutral face, a spectacle rim). Not new
 hairstyles, removing beards, or new clothes: that's redrawing, and Nick
 doesn't want Claude's art.
 
+**Added 2026-10-03 (ticket 0036):** the title cinematic shows the lead's
+face. With a save it uses that save's lead; with no save it needs a
+default look (`docs/design/title-screen.md`, *Intro cinematic*, *Open
+sub-questions*). When assigning the lead's two faces, record there which
+one is the default for the cinematic and tell Nick in the PR.
+
 ## Nick input
 
 **Sign-off:** for each Chapter 1 speaker, Claude proposes two or three
@@ -169,11 +175,15 @@ only the edits it allows).
 3. Render the candidates in the dialogue screen (a rendered PNG, as in 0704)
    and send them to Nick. Record his picks.
 4. Import each pick with `cargo xtask portrait-import` (0711) into
-   `assets-private/portraits/`. Map `neutral`, `happy`, `angry`, `sad` and
+   `assets-private/game/portraits/`. Map `neutral`, `happy`, `angry`, `sad` and
    `surprised` to the closest pack expressions, and note the mapping in the
    character sheet.
 5. Update `docs/story/characters/*.md` with which pack and face each
-   character uses. List each pack in `THIRD_PARTY_ASSETS.md` (marked private).
+   character uses. Name each pack in the bundle's row in
+   `THIRD_PARTY_ASSETS.md`, and add each new portrait folder to the
+   `private` list of the bundle's credit in `assets/data/credits.ron`
+   (and a new artist to its `author`): `cargo xtask private-assets --pin`
+   refuses bought files without a credit (ADR-0051).
 
 ## Acceptance criteria
 

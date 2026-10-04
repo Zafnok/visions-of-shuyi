@@ -1,11 +1,14 @@
 //! Tests of the dialogue screen: reveal timing, paging, skipping and the
-//! layout. Scripted runs and snapshots are in `crates/ui/tests/dialogue.rs`.
+//! layout. Scripted runs and snapshots are in `crates/ui/tests/it/dialogue.rs`.
 
 use trpg_content::Step;
 use trpg_core::CharacterId;
 
 use super::*;
 use crate::audio::AudioRequest;
+use crate::console::{CELL_H_PX, CELL_W_PX};
+use crate::glyph_buffer::Sprite;
+use crate::portrait::dim_opacity;
 use crate::screen::tests::ctx;
 
 /// One frame of `dt` seconds with `actions`, Confirm held if `held`.
@@ -23,6 +26,7 @@ fn say(speaker: &str, text: &str) -> Step {
         speaker: CharacterId(speaker.into()),
         expression: None,
         text: text.into(),
+        line: trpg_content::LineId::default(),
     }
 }
 
@@ -184,7 +188,10 @@ fn text_filling_whole_pages_has_no_empty_page_after() {
 fn two_lines_of_narration_start_at_the_top() {
     let c = ctx();
     let text = format!("{} {}", "a".repeat(60), "b".repeat(60));
-    let mut s = full(scene(vec![Step::Narrate { text }]));
+    let mut s = full(scene(vec![Step::Narrate {
+        text,
+        line: trpg_content::LineId::default(),
+    }]));
     s.shown = 120.0;
     let buf = draw(&s, &c);
     assert!(row(&buf, TEXT_Y).contains(&"a".repeat(60)));
@@ -250,32 +257,33 @@ fn speaker_frame_is_double_and_bright() {
     assert!(row(&buf, TEXT_BOX.y).starts_with("┌── Test Knight ─"));
 }
 
+/// The sprite of the portrait in the frame at column `x`.
+fn portrait_sprite(buf: &GlyphBuffer, x: i32) -> Option<Sprite> {
+    let left = (x + 1) * i32::from(CELL_W_PX);
+    let inside = |s: &Sprite| (left..left + 256).contains(&s.dest.x);
+    buf.sprites().into_iter().find(inside)
+}
+
 #[test]
-fn portraits_are_dimmed_and_mirrored_like_the_renderer() {
+fn the_speaker_is_bright_and_the_listener_dimmed_and_mirrored() {
     let c = ctx();
     let s = full(two_speakers("Hi."));
     let buf = draw(&s, &c);
-    let bg = c.palette.get(UiColor::PanelBg);
-    let mut expected = GlyphBuffer::new(34, 18, Cell::new(' ', bg, bg));
-    let knight = &c.content.portraits["test_knight"];
-    draw_portrait(
-        &mut expected,
-        &c.palette,
-        (1, 1),
-        knight,
-        "neutral",
-        LISTENER_DIM,
-        true,
-    );
-    for y in 1..17 {
-        for x in 1..33 {
-            assert_eq!(
-                buf.get(RIGHT_X + x, FRAME_Y + y),
-                expected.get(x, y),
-                "({x}, {y})"
-            );
-        }
-    }
+    assert_eq!(buf.sprites().len(), 2);
+    // The placeholders are 32×32: 8× fills the 256×256 px inside the frame.
+    let top = (FRAME_Y + 1) * i32::from(CELL_H_PX);
+    let listener = portrait_sprite(&buf, RIGHT_X).unwrap();
+    assert_eq!(listener.image.path(), "portraits/test_knight/neutral.png");
+    assert_eq!(listener.dest, Rect::new((RIGHT_X + 1) * 8, top, 256, 256));
+    assert_eq!(listener.clip, listener.dest);
+    assert!(listener.flip_x);
+    assert_eq!(listener.opacity, dim_opacity(LISTENER_DIM));
+    assert!(listener.opacity < 255);
+    let speaker = portrait_sprite(&buf, LEFT_X).unwrap();
+    assert_eq!(speaker.image.path(), "portraits/test_lord/neutral.png");
+    assert_eq!(speaker.dest, Rect::new((LEFT_X + 1) * 8, top, 256, 256));
+    assert!(!speaker.flip_x);
+    assert_eq!(speaker.opacity, 255);
 }
 
 #[test]
@@ -286,6 +294,7 @@ fn narration_dims_both_and_centres_the_text() {
         place(Side::Right, "test_knight"),
         Step::Narrate {
             text: "Rain.".into(),
+            line: trpg_content::LineId::default(),
         },
     ]));
     let mut s = s;
@@ -420,6 +429,7 @@ fn reply(text: &str, reaction: &str) -> trpg_content::ChoiceOption {
     trpg_content::ChoiceOption {
         tone: "t".into(),
         text: text.into(),
+        line: trpg_content::LineId::default(),
         steps: vec![say("test_knight", reaction)],
     }
 }
@@ -573,6 +583,7 @@ fn a_last_reply_with_nothing_after_ends_the_scene() {
             trpg_content::ChoiceOption {
                 tone: "t".into(),
                 text: "Bye.".into(),
+                line: trpg_content::LineId::default(),
                 steps: vec![],
             },
             reply("Stay.", "Ok."),
@@ -601,27 +612,9 @@ fn the_lead_shows_the_players_name_and_gendered_portrait() {
         let buf = draw(&s, &c);
         assert!(row(&buf, PLATE_Y).contains("Isolde"));
         assert!(row(&buf, TEXT_BOX.y).starts_with("┌── Isolde ─"));
-        let bg = c.palette.get(UiColor::PanelBg);
-        let mut expected = GlyphBuffer::new(34, 18, Cell::new(' ', bg, bg));
-        let portrait = &c.content.portraits[art];
-        draw_portrait(
-            &mut expected,
-            &c.palette,
-            (1, 1),
-            portrait,
-            "neutral",
-            0.0,
-            false,
-        );
-        for y in 1..17 {
-            for x in 1..33 {
-                assert_eq!(
-                    buf.get(LEFT_X + x, FRAME_Y + y),
-                    expected.get(x, y),
-                    "{art} ({x}, {y})"
-                );
-            }
-        }
+        let sprite = portrait_sprite(&buf, LEFT_X).unwrap();
+        assert_eq!(sprite.image.path(), format!("portraits/{art}/neutral.png"));
+        assert_eq!((sprite.opacity, sprite.flip_x), (255, false));
     }
 }
 
@@ -663,7 +656,10 @@ fn music(cue: &str) -> Step {
 }
 
 fn narrate(text: &str) -> Step {
-    Step::Narrate { text: text.into() }
+    Step::Narrate {
+        text: text.into(),
+        line: trpg_content::LineId::default(),
+    }
 }
 
 /// The music requests made since the last call.
@@ -743,6 +739,7 @@ fn music_around_a_choice() {
     let reply = |text: &str, steps| trpg_content::ChoiceOption {
         tone: "wry".into(),
         text: text.into(),
+        line: trpg_content::LineId::default(),
         steps,
     };
     let mut s = full(scene(vec![

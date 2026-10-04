@@ -1,13 +1,18 @@
-//! `cargo xtask web [--release] [--debug-tools]`: builds `trpg-app` for
+//! `cargo xtask web [--release] [--debug-tools] [--private-assets]`: builds
+//! `trpg-app` for
 //! `wasm32-unknown-unknown` and packages the resulting binary with the web
 //! shell (`web/index.html`), the vendored JS loaders (`web/mq_js_bundle.js`,
 //! and `web/sapp_jsutils.js` + `web/quad-storage.js` for `localStorage`,
 //! ticket 0207) and our own controller plugin (`web/gamepad.js`, ticket
 //! 0219) into `dist/web/` (ticket 0206). `--debug-tools` turns on the
 //! app's `debug-tools` feature (Quick Battle, glyph sampler) for the Pages
-//! build (ADR-0023); shipped builds never pass it. The game's music tracks
+//! build (ADR-0023); shipped builds never pass it. `--private-assets` turns
+//! on its `private-assets` feature, which embeds the bought art in
+//! `assets-private/game/` (ADR-0040). The game's music tracks
 //! (`music/*.ogg`, not embedded: ADR-0026) are copied to `dist/web/music/`,
-//! which exists even when there are none.
+//! which exists even when there are none. The voice clips (`voice/`, not
+//! embedded either: ADR-0046) are copied to `dist/web/voice/` when there
+//! is such a folder.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -28,6 +33,9 @@ const SHELL_FILES: &[&str] = &[
 /// The music folder, at the repo root and in `dist/web/` (ADR-0026).
 const MUSIC_DIR: &str = "music";
 
+/// The voice folder, at the repo root and in `dist/web/` (ADR-0046).
+const VOICE_DIR: &str = "voice";
+
 /// Parsed `cargo xtask web` arguments.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Options {
@@ -35,19 +43,23 @@ pub struct Options {
     pub release: bool,
     /// Whether to turn on the `debug-tools` feature (ADR-0023).
     pub debug_tools: bool,
+    /// Whether to turn on the `private-assets` feature (ADR-0040).
+    pub private_assets: bool,
 }
 
-/// Parses the arguments after `web`: `--release` and `--debug-tools`, each
-/// at most once, in any order.
+/// Parses the arguments after `web`: `--release`, `--debug-tools` and
+/// `--private-assets`, each at most once, in any order.
 pub fn parse_args(args: &[String]) -> Result<Options, String> {
     let mut options = Options {
         release: false,
         debug_tools: false,
+        private_assets: false,
     };
     for arg in args {
         let flag = match arg.as_str() {
             "--release" => &mut options.release,
             "--debug-tools" => &mut options.debug_tools,
+            "--private-assets" => &mut options.private_assets,
             _ => return Err(USAGE.to_string()),
         };
         if *flag {
@@ -59,7 +71,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
 }
 
 /// Usage line for bad arguments.
-const USAGE: &str = "usage: cargo xtask web [--release] [--debug-tools]";
+const USAGE: &str = "usage: cargo xtask web [--release] [--debug-tools] [--private-assets]";
 
 /// The `cargo` arguments that build the wasm binary for `options`.
 fn cargo_args(options: Options) -> Vec<&'static str> {
@@ -75,6 +87,9 @@ fn cargo_args(options: Options) -> Vec<&'static str> {
     }
     if options.debug_tools {
         args.extend(["--features", "debug-tools"]);
+    }
+    if options.private_assets {
+        args.extend(["--features", "private-assets"]);
     }
     args
 }
@@ -136,6 +151,7 @@ fn package(opt: &impl WasmOpt, repo_root: &Path, options: Options) -> Result<Str
     }
 
     copy_music(&repo_root.join(MUSIC_DIR), &dist.join(MUSIC_DIR))?;
+    copy_voice(&repo_root.join(VOICE_DIR), &dist.join(VOICE_DIR))?;
 
     if options.release {
         run_wasm_opt(opt, &wasm_dst);
@@ -167,6 +183,46 @@ fn copy_music(src: &Path, dst: &Path) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// Replaces `dst` with a copy of the voice folder `src`: its manifests
+/// (`.ron`) and clips (`.ogg`), in the same folders, so the web build
+/// fetches them from `voice/`. With no `src` there is no `dst` either: a
+/// build without voices.
+fn copy_voice(src: &Path, dst: &Path) -> Result<(), String> {
+    if dst.exists() {
+        fs::remove_dir_all(dst).map_err(|e| format!("clear {}: {e}", dst.display()))?;
+    }
+    if !src.is_dir() {
+        return Ok(());
+    }
+    let shipped = |path: &Path| {
+        path.extension()
+            .is_some_and(|ext| ext == "ogg" || ext == "ron")
+    };
+    copy_tree(src, dst, &shipped).map(|_| ())
+}
+
+/// Copies the files under `src` that `keep` accepts to the same places
+/// under `dst` (made if missing), folders included. Returns how many files
+/// were copied.
+pub fn copy_tree(src: &Path, dst: &Path, keep: &dyn Fn(&Path) -> bool) -> Result<usize, String> {
+    fs::create_dir_all(dst).map_err(|e| format!("create {}: {e}", dst.display()))?;
+    let entries = fs::read_dir(src).map_err(|e| format!("read {}: {e}", src.display()))?;
+    let mut copied = 0;
+    for entry in entries {
+        let path = entry
+            .map_err(|e| format!("read {}: {e}", src.display()))?
+            .path();
+        let to = dst.join(path.file_name().unwrap_or_default());
+        if path.is_dir() {
+            copied += copy_tree(&path, &to, keep)?;
+        } else if keep(&path) {
+            fs::copy(&path, &to).map_err(|e| format!("copy {}: {e}", path.display()))?;
+            copied += 1;
+        }
+    }
+    Ok(copied)
 }
 
 /// Runs `wasm-opt -Oz` on a wasm binary, abstracted so tests can substitute a
@@ -272,7 +328,8 @@ mod tests {
             parse_args(&[]),
             Ok(Options {
                 release: false,
-                debug_tools: false
+                debug_tools: false,
+                private_assets: false,
             })
         );
     }
@@ -284,7 +341,8 @@ mod tests {
             parse_args(&args),
             Ok(Options {
                 release: true,
-                debug_tools: false
+                debug_tools: false,
+                private_assets: false,
             })
         );
     }
@@ -301,6 +359,7 @@ mod tests {
         let both = Options {
             release: true,
             debug_tools: true,
+            private_assets: false,
         };
         assert_eq!(args(&["--release", "--debug-tools"]), Ok(both));
         assert_eq!(args(&["--debug-tools", "--release"]), Ok(both));
@@ -308,7 +367,8 @@ mod tests {
             args(&["--debug-tools"]),
             Ok(Options {
                 release: false,
-                debug_tools: true
+                debug_tools: true,
+                private_assets: false,
             })
         );
         assert_eq!(args(&["--release", "--release"]), Err(USAGE.to_string()));
@@ -319,7 +379,33 @@ mod tests {
     }
 
     #[test]
-    fn cargo_args_add_release_and_the_debug_tools_feature() {
+    fn parse_args_takes_private_assets_with_the_other_flags() {
+        let args = |a: &[&str]| parse_args(&a.iter().map(ToString::to_string).collect::<Vec<_>>());
+        let all = Options {
+            release: true,
+            debug_tools: true,
+            private_assets: true,
+        };
+        assert_eq!(
+            args(&["--private-assets", "--release", "--debug-tools"]),
+            Ok(all)
+        );
+        assert_eq!(
+            args(&["--private-assets"]),
+            Ok(Options {
+                release: false,
+                debug_tools: false,
+                private_assets: true,
+            })
+        );
+        assert_eq!(
+            args(&["--private-assets", "--private-assets"]),
+            Err(USAGE.to_string())
+        );
+    }
+
+    #[test]
+    fn cargo_args_add_release_and_the_features() {
         let base = [
             "build",
             "-p",
@@ -327,19 +413,30 @@ mod tests {
             "--target",
             "wasm32-unknown-unknown",
         ];
-        let opts = |release, debug_tools| Options {
+        let opts = |release, debug_tools, private_assets| Options {
             release,
             debug_tools,
+            private_assets,
         };
-        assert_eq!(cargo_args(opts(false, false)), base);
-        assert_eq!(cargo_args(opts(true, false))[5..], ["--release"]);
+        assert_eq!(cargo_args(opts(false, false, false)), base);
+        assert_eq!(cargo_args(opts(true, false, false))[5..], ["--release"]);
         assert_eq!(
-            cargo_args(opts(false, true))[5..],
+            cargo_args(opts(false, true, false))[5..],
             ["--features", "debug-tools"]
         );
         assert_eq!(
-            cargo_args(opts(true, true))[5..],
-            ["--release", "--features", "debug-tools"]
+            cargo_args(opts(false, false, true))[5..],
+            ["--features", "private-assets"]
+        );
+        assert_eq!(
+            cargo_args(opts(true, true, true))[5..],
+            [
+                "--release",
+                "--features",
+                "debug-tools",
+                "--features",
+                "private-assets"
+            ]
         );
     }
 
@@ -357,6 +454,7 @@ mod tests {
             Options {
                 release: false,
                 debug_tools: false,
+                private_assets: false,
             },
         );
         assert_eq!(
@@ -373,6 +471,7 @@ mod tests {
             Options {
                 release: true,
                 debug_tools: false,
+                private_assets: false,
             },
         );
         assert_eq!(
@@ -395,6 +494,7 @@ mod tests {
             Options {
                 release: false,
                 debug_tools: false,
+                private_assets: false,
             },
             b"wasm-bytes",
         );
@@ -407,6 +507,7 @@ mod tests {
             Options {
                 release: false,
                 debug_tools: false,
+                private_assets: false,
             },
         )
         .unwrap();
@@ -444,6 +545,7 @@ mod tests {
         let debug = Options {
             release: false,
             debug_tools: false,
+            private_assets: false,
         };
         write_wasm(&root, debug, b"w");
         let opt = FakeWasmOpt(|_: &Path, _: &Path| Ok(false));
@@ -468,6 +570,68 @@ mod tests {
         fs::remove_dir_all(&root).unwrap();
     }
 
+    /// Ticket 0238: the voice folder goes along whole, manifests and
+    /// clips only; without one the package has none.
+    #[test]
+    fn package_copies_the_voice_folder_if_there_is_one() {
+        let root = fixture("package-voice");
+        let debug = Options {
+            release: false,
+            debug_tools: false,
+            private_assets: false,
+        };
+        write_wasm(&root, debug, b"w");
+        let opt = FakeWasmOpt(|_: &Path, _: &Path| Ok(false));
+        let voice = root.join("dist/web/voice");
+        // A stale copy from an earlier build goes when the source is gone.
+        fs::create_dir_all(voice.join("en")).unwrap();
+        fs::write(voice.join("en/stale.ogg"), "old").unwrap();
+        package(&opt, &root, debug).unwrap();
+        assert!(!voice.exists());
+        fs::create_dir_all(root.join("voice/en/scene")).unwrap();
+        fs::write(root.join("voice/en/voice.ron"), "manifest").unwrap();
+        fs::write(root.join("voice/en/cast.ron"), "cast").unwrap();
+        fs::write(root.join("voice/en/scene/line.ogg"), "clip").unwrap();
+        fs::write(root.join("voice/en/scene/line.m.ogg"), "clip m").unwrap();
+        fs::write(root.join("voice/en/scene/take.wav"), "source").unwrap();
+        fs::write(root.join("voice/notes.md"), "doc").unwrap();
+        fs::write(root.join("voice/ogg"), "no extension").unwrap();
+        package(&opt, &root, debug).unwrap();
+        let read = |path: &str| fs::read_to_string(voice.join(path)).ok();
+        assert_eq!(read("en/voice.ron").as_deref(), Some("manifest"));
+        assert_eq!(read("en/cast.ron").as_deref(), Some("cast"));
+        assert_eq!(read("en/scene/line.ogg").as_deref(), Some("clip"));
+        assert_eq!(read("en/scene/line.m.ogg").as_deref(), Some("clip m"));
+        assert_eq!(read("en/scene/take.wav"), None);
+        assert_eq!(read("notes.md"), None);
+        assert_eq!(read("ogg"), None);
+        // A file named `voice` is not a voice folder.
+        fs::remove_dir_all(root.join("voice")).unwrap();
+        fs::write(root.join("voice"), "a file").unwrap();
+        package(&opt, &root, debug).unwrap();
+        assert!(!voice.exists());
+        fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn copy_tree_counts_the_files_it_copies_and_reports_a_missing_source() {
+        let root = fixture("copy-tree");
+        fs::create_dir_all(root.join("src/a/b")).unwrap();
+        fs::write(root.join("src/one.ogg"), "1").unwrap();
+        fs::write(root.join("src/a/two.ogg"), "2").unwrap();
+        fs::write(root.join("src/a/b/three.txt"), "3").unwrap();
+        let ogg = |path: &Path| path.extension().is_some_and(|ext| ext == "ogg");
+        assert_eq!(copy_tree(&root.join("src"), &root.join("dst"), &ogg), Ok(2));
+        assert!(root.join("dst/a/two.ogg").is_file());
+        assert!(root.join("dst/a/b").is_dir());
+        assert!(!root.join("dst/a/b/three.txt").exists());
+        let all = copy_tree(&root.join("src"), &root.join("all"), &|_| true);
+        assert_eq!(all, Ok(3));
+        let error = copy_tree(&root.join("nowhere"), &root.join("dst2"), &ogg).unwrap_err();
+        assert!(error.starts_with("read "), "{error}");
+        fs::remove_dir_all(&root).unwrap();
+    }
+
     #[test]
     fn package_runs_wasm_opt_on_release_and_uses_its_output() {
         let root = fixture("package-release-ok");
@@ -476,6 +640,7 @@ mod tests {
             Options {
                 release: true,
                 debug_tools: false,
+                private_assets: false,
             },
             b"unoptimized-bytes",
         );
@@ -489,6 +654,7 @@ mod tests {
             Options {
                 release: true,
                 debug_tools: false,
+                private_assets: false,
             },
         )
         .unwrap();
@@ -508,6 +674,7 @@ mod tests {
             Options {
                 release: true,
                 debug_tools: false,
+                private_assets: false,
             },
             b"unoptimized",
         );
@@ -518,6 +685,7 @@ mod tests {
             Options {
                 release: true,
                 debug_tools: false,
+                private_assets: false,
             },
         )
         .unwrap();
@@ -537,6 +705,7 @@ mod tests {
             Options {
                 release: true,
                 debug_tools: false,
+                private_assets: false,
             },
             b"unoptimized",
         );
@@ -547,6 +716,7 @@ mod tests {
             Options {
                 release: true,
                 debug_tools: false,
+                private_assets: false,
             },
         )
         .unwrap();
@@ -568,6 +738,7 @@ mod tests {
             Options {
                 release: false,
                 debug_tools: false,
+                private_assets: false,
             },
         )
         .unwrap_err();
@@ -586,6 +757,7 @@ mod tests {
             Options {
                 release: false,
                 debug_tools: false,
+                private_assets: false,
             },
         )
         .unwrap_err();

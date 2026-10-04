@@ -1,0 +1,80 @@
+---
+source: crates/ui/tests/it/class_change.rs
+expression: h.snapshot()
+---
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+     ╔══════════════════════════════════════════════════════════╗                                   
+     ║ ┌────────────────────────────────┐                       ║                                   
+     ║ │                                │  PROMOTED!            ║                                   
+     ║ │                                │                       ║                                   
+     ║ │                                │  Test Knight          ║                                   
+     ║ │                                │  Guard → Iron Rider   ║                                   
+     ║ │                                │                       ║                                   
+     ║ │                                │  HP   28 → 35  +7     ║                                   
+     ║ │                                │  Str  11 → 14  +3     ║                                   
+     ║ │                                │  Mag   0              ║                                   
+     ║ │                                │  Dex   7 → 9   +2     ║                                   
+     ║ │                                │  Spd   5 → 9   +4     ║                                   
+     ║ │                                │  Def  49 → 50  +1     ║                                   
+     ║ │                                │  Res   0 → 2   +2     ║                                   
+     ║ │                                │                       ║                                   
+     ║ │                                │                       ║                                   
+     ║ │                                │                       ║                                   
+     ║ │                                │                       ║                                   
+     ║ └────────────────────────────────┘                       ║                                   
+     ╚══════════════════════════════════════════════════════════╝                                   
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+ f continue                                                                                         
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcddddddddddddddddddddddddddddddddddcccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcceeeeeeeeeccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdccfffffffffffccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccceecccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccceecccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdccgggggggccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccceecccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccceecccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccceecccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccceecccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcdccccccccccccccccccccccccccccccccdcccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabcddddddddddddddddddddddddddddddddddcccccccccccccccccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+ahhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border_focus bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:panel_border bg:panel_bg
+e = fg:text_highlight bg:panel_bg
+f = fg:player bg:panel_bg
+g = fg:text_dim bg:panel_bg
+h = fg:text_dim bg:black
+--- overlays ---
+under sprite 64,112 256x256  portraits/test_knight/happy.png 0,0 32x32

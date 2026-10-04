@@ -19,9 +19,8 @@ use crate::screen::tests::ctx;
 /// Where the lord attacks from.
 const DEST: Pos = Pos::new(7, 2);
 
-/// The brigand's tile's left cell (`test_small` is centred: tile `(x, y)`
-/// starts at cell `(2 × (x + 10), y + 11)`).
-const BRIGAND_CELL: (i32, i32) = (36, 13);
+/// The brigand's tile.
+const BRIGAND_AT: Pos = Pos::new(8, 2);
 
 /// The skirmish in the harness.
 fn harness(brigand_hp: StatValue) -> Harness {
@@ -260,8 +259,9 @@ fn after_the_playback_the_defenders_hp_is_the_battles() {
     );
     let hp = format!("HP {}/{}", brigand.hp, brigand.stats.hp);
     assert!(panel(&h, 7).starts_with(&hp), "{}", panel(&h, 7));
-    // The lord has acted: dimmed at (7, 2).
-    assert_eq!(text(&h, 34, 13, 2), "Lo");
+    // The lord has acted, at (7, 2).
+    let lord = h.unit_at(DEST).expect("the lord");
+    assert_eq!((lord.label.as_str(), lord.acted), ("Lo", true));
     assert_eq!(message(&h), "");
 }
 
@@ -278,9 +278,11 @@ fn a_kill_fades_the_unit_out_with_a_message_and_removes_it() {
         .expect("a fall");
     let mut h = lord_on_brigand(3);
     h.keys("f");
-    // Just before the fall: the brigand at 0 HP, still drawn.
+    // Just before the fall: the brigand at 0 HP, still standing.
     h.wait(fall.start - 0.05 - confirm_frames());
-    assert_eq!(text(&h, BRIGAND_CELL.0, BRIGAND_CELL.1, 2), "Br");
+    let brigand = h.unit_at(BRIGAND_AT).expect("the brigand");
+    assert_eq!((brigand.label.as_str(), brigand.hp.0), ("Br", 0));
+    assert!(brigand.fade.abs() < f32::EPSILON, "{}", brigand.fade);
     assert_eq!(message(&h), "");
     // During it: the message.
     h.wait(0.3);
@@ -289,9 +291,9 @@ fn a_kill_fades_the_unit_out_with_a_message_and_removes_it() {
     h.wait(fall.len);
     assert_eq!(help(&h), "d skip · hold f fast");
     assert_eq!(panel(&h, 5), "");
-    // Afterwards: the terrain where it stood, nobody in the panel.
+    // Afterwards: nobody where it stood, nor in the panel.
     h.wait(pb.total());
-    assert_eq!(text(&h, BRIGAND_CELL.0, BRIGAND_CELL.1, 2), "..");
+    assert_eq!(h.unit_at(BRIGAND_AT), None);
     assert_eq!(panel(&h, 5), "");
     assert_eq!(message(&h), "");
     assert_eq!(
@@ -347,17 +349,20 @@ fn pointing_at_an_enemy_walks_there_and_opens_its_forecast() {
     // Select the lord, steer to (7, 2), point at the raider above it.
     h.keys("f Right Up");
     assert_eq!(help(&h), "arrows move · f attack · d cancel");
-    // Confirm walks, then the weapon list, then the forecast on the raider.
+    // Confirm walks, then the forecast on the raider with the equipped
+    // sword; left and right swap to the other sword (0430).
     h.keys("f").wait(0.5);
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
-    h.keys("f");
     assert_eq!(
         help(&h),
-        "Left/Right target · Up/Down art · f attack · d back"
+        "Left/Right swap · a/s target · Up/Down art · f attack · d back"
     );
     assert_eq!(panel(&h, 2), "Test Lord     Raider");
-    // Cancel goes back through the list and the menu to the path, the
-    // cursor on the lord's tile.
-    h.keys("d d d");
+    assert_eq!(panel(&h, 3), "Iron Sword    Steel Axe");
+    h.keys("Right");
+    assert_eq!(panel(&h, 3), "Steel Sword   Steel Axe");
+    assert_eq!(panel(&h, 2), "Test Lord     Raider");
+    // Cancel goes back through the menu to the path, the cursor on the
+    // lord's tile.
+    h.keys("d d");
     assert_eq!(help(&h), "arrows move · f move here · d cancel");
 }

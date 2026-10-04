@@ -75,6 +75,14 @@ Set `status: in-progress` in the ticket frontmatter.
   happened reads the scene or the state, not cells or colours.
 - Write the tests the ticket lists (ADR-0007): unit + property for `core`,
   snapshot + scripted integration for screens.
+- A test that checks what happened reads the scene or the state. Only a
+  test of a look reads cells, colours or items, and it lives with the
+  skin (`crates/ui/src/map_view/glyph*`). Harness shortcuts:
+  `cursor_tile()`, `unit_at(pos)`, `tints_at(pos)`, `path()`
+  (`crates/ui/README.md`).
+- New integration tests go in the crate's `tests/it/` as a module listed in
+  `main.rs`; never add a file directly under `tests/` (each one is a
+  separate ~100 MB test program; an `xtask` test fails on a second one).
 - **Scope creep rule:** if you notice something else worth doing (a bug,
   refactor, missing feature), do NOT do it. Create a new ticket with the
   `write-ticket` skill and mention it in the PR description.
@@ -85,6 +93,14 @@ Set `status: in-progress` in the ticket frontmatter.
   `cargo deny check licenses` must pass. For anything else, add a row to
   `THIRD_PARTY_ASSETS.md` and commit its license text next to it. If unsure,
   don't add it: pick another or write the small piece yourself.
+- **Every third-party asset gets its credit in the same PR** (Nick:
+  "credits should always update when we introduce an asset"): music and
+  sounds in `assets/audio/audio.ron`, anything else in
+  `assets/data/credits.ron`, with the row's source link. **Bought art**
+  (ADR-0051): add the new files' path in `assets-private/game/` to its
+  credit's `private` list, the pack to its row and the artist to the
+  credit's `author`. `cargo xtask private-assets --pin` refuses files
+  without a credit; don't widen an old path just to get past it.
 - A new architectural choice (new dependency with wide impact, new pattern,
   new file format) needs an ADR in the same PR (`write-adr` skill). Adding a
   small, well-known crate for a local need does not.
@@ -119,6 +135,11 @@ cannot be met, say so in the Completion notes and in the PR; don't hide it.
 - Wait for CI. If a check fails, fix it on the same branch. Never disable a
   gate, lower a threshold, or add `#[mutants::skip]`/`#[allow]` just to pass —
   if a gate is genuinely wrong, write a ticket about it and explain in the PR.
+- A PR can merge when its checks are green and GitHub reports no conflict; it
+  need not contain the latest `main` (ADR-0042). Merge `main` into the branch
+  (`git fetch origin && git merge origin/main`, or the ccd_host
+  `sync_with_base_branch` tool in an app worktree) only for a conflict or when
+  the PR needs something that landed on `main`.
 
 ## Don'ts
 
