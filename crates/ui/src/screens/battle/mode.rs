@@ -50,11 +50,11 @@ use super::playback::Playback;
 use super::skills::{
     SkillChoice, SkillTargeting, can_use_skill, has_skill_menu, skill_choices, skill_menu,
 };
+use super::walk::{self, Gait};
 use crate::input::{Action, Keymap};
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 
-/// Walking speed, in tiles per second. *Tunable.*
-pub const WALK_TILES_PER_S: f32 = 12.0;
+pub use super::walk::WALK_TILES_PER_S;
 
 /// How long Confirm must be held during a walk to skip to its end, in
 /// seconds (so the tap that started the walk doesn't skip it). *Tunable.*
@@ -541,6 +541,19 @@ impl Mode {
     }
 
     /// During a walk (the player's or an AI unit's), the walking unit and
+    /// how it looks between two tiles of its path ([`walk::gait`]); `None`
+    /// in other modes, and once it has arrived.
+    pub fn gait(&self) -> Option<(UnitId, Gait)> {
+        match self {
+            Mode::Moving { sel, t, .. } => {
+                Some((sel.unit, walk::gait(&sel.path, t * WALK_TILES_PER_S)?))
+            }
+            Mode::AiAction(a) => Some((a.unit(), a.gait()?)),
+            _ => None,
+        }
+    }
+
+    /// During a walk (the player's or an AI unit's), the walking unit and
     /// how many tiles it enters in the next [`tick`](Self::tick) with the
     /// same arguments (none if the hold skips the rest of the player's
     /// walk); `None` in other modes.
@@ -601,11 +614,7 @@ impl Mode {
 /// How many of `sel`'s path steps a walk has taken after `t` seconds (at
 /// most all of them; none for a negative or NaN time).
 fn walk_steps(sel: &Selection, t: f32) -> usize {
-    let walked = t * WALK_TILES_PER_S;
-    let steps = sel.path.len().saturating_sub(1);
-    (1..=u16::try_from(steps).unwrap_or(u16::MAX))
-        .take_while(|&k| f32::from(k) <= walked)
-        .count()
+    walk::steps(sel.path.len(), t * WALK_TILES_PER_S)
 }
 
 /// Whether the walk along `sel`'s path is over after `t` seconds.

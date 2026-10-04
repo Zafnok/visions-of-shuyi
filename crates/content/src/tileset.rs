@@ -8,7 +8,7 @@
 //! Only looks hang off the game's ids here: nothing in a tileset changes a
 //! rule.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 use serde::de::{self, MapAccess, SeqAccess, Visitor};
@@ -36,6 +36,12 @@ pub const SIDE_PX: std::ops::RangeInclusive<u32> = 8..=64;
 /// The ids the lead's picture may go by in a tileset's `characters`, by
 /// gender: the lead's portrait ids (`trpg_core::lead`).
 pub const LEAD_PICTURES: [&str; 2] = [PORTRAIT_MALE, PORTRAIT_FEMALE];
+
+/// The frames across (walking: one foot forward, standing, the other foot
+/// forward) and down (facing down, left, right, up) a **walking sheet**:
+/// an image of a unit's own with a frame for each, as the bought map
+/// sprites have.
+pub const WALK_FRAMES: (u32, u32) = (3, 4);
 
 /// A rectangle of an image, in image pixels.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -88,6 +94,10 @@ pub struct Tileset {
     pub classes: BTreeMap<ClassId, Picture>,
     /// The picture of any unit with neither.
     pub fallback: Picture,
+    /// The images that are walking sheets ([`WALK_FRAMES`] frames of the
+    /// picture's size from the image's top-left): a unit whose picture is
+    /// in one turns and moves its legs. Any other picture only glides.
+    pub walking: BTreeSet<ImageId>,
 }
 
 impl Tileset {
@@ -116,6 +126,17 @@ impl Tileset {
             .or_else(|| self.classes.get(class))
             .copied()
             .unwrap_or(self.fallback)
+    }
+
+    /// The frame of `picture`'s walking sheet in walking column `column`
+    /// and facing row `row`, or `None` if its image isn't a walking sheet
+    /// (or has no such frame).
+    pub fn walk_frame(&self, picture: Picture, column: u32, row: u32) -> Option<Picture> {
+        let known = column < WALK_FRAMES.0 && row < WALK_FRAMES.1;
+        (known && self.walking.contains(&picture.image)).then(|| Picture {
+            image: picture.image,
+            rect: grid_rect((column, row), (picture.rect.w, picture.rect.h), (0, 0)),
+        })
     }
 }
 
@@ -156,7 +177,8 @@ enum UnitEntry {
     /// `(column, row)` in the tileset's own image, from `units_origin_px`.
     Grid((u32, u32)),
     /// `(image: "…", frame: (column, row))`: a frame of an image file of
-    /// its own, counted from its top-left.
+    /// its own, counted from its top-left; with `walk: true`, the image is
+    /// a walking sheet.
     File(FrameFile),
 }
 
@@ -166,6 +188,8 @@ enum UnitEntry {
 struct FrameFile {
     image: String,
     frame: (u32, u32),
+    #[serde(default)]
+    walk: bool,
 }
 
 impl<'de> Deserialize<'de> for UnitEntry {
@@ -251,6 +275,7 @@ struct Checker<'a> {
     def: &'a TilesetFile,
     images: &'a ImageTable,
     sheet: Option<ImageId>,
+    walking: BTreeSet<ImageId>,
     problems: Vec<String>,
 }
 
@@ -269,6 +294,32 @@ impl Checker<'_> {
         }
     }
 
+    /// Notes that `image` is a walking sheet, reporting it (named `what`)
+    /// if it is too small for [`WALK_FRAMES`] frames of `unit_px`.
+    fn walk_sheet(&mut self, what: &str, image: ImageId) {
+        let (w, h) = self.def.unit_px;
+        let (across, down) = WALK_FRAMES;
+        let (sw, sh) = (w.saturating_mul(across), h.saturating_mul(down));
+        let frames = ImageRect {
+            x: 0,
+            y: 0,
+            w: sw,
+            h: sh,
+        };
+        match self.images.info(image) {
+            Some(info) if !inside(frames, info) => {
+                let (iw, ih) = (info.width, info.height);
+                self.problems.push(format!(
+                    "{what}: `walk` needs {across} × {down} frames of {w}×{h} px ({sw}×{sh} px), \
+                     and the image is {iw}×{ih} px"
+                ));
+            }
+            _ => {
+                self.walking.insert(image);
+            }
+        }
+    }
+
     /// The picture `entry` names, checked; `what` names it in problems.
     /// `None` if its image is missing.
     fn picture(&mut self, what: &str, entry: &UnitEntry) -> Option<Picture> {
@@ -283,13 +334,16 @@ impl Checker<'_> {
                 let rect = grid_rect(*at, self.def.unit_px, self.def.units_origin_px);
                 (self.sheet?, rect)
             }
-            UnitEntry::File(FrameFile { image, frame }) => {
+            UnitEntry::File(FrameFile { image, frame, walk }) => {
                 let Some(id) = self.images.id(image) else {
                     self.problems.push(format!(
                         "{what}: image \"{image}\" is not a PNG in the asset bundle"
                     ));
                     return None;
                 };
+                if *walk {
+                    self.walk_sheet(what, id);
+                }
                 (id, grid_rect(*frame, self.def.unit_px, (0, 0)))
             }
         };
@@ -311,6 +365,7 @@ pub fn parse_tileset(
         def: &def,
         images: refs.images,
         sheet: def.image.as_deref().and_then(|path| refs.images.id(path)),
+        walking: BTreeSet::new(),
         problems: own_problems(&def, stem),
     };
     if let (Some(path), None) = (&def.image, check.sheet) {
@@ -355,6 +410,7 @@ pub fn parse_tileset(
     }
     let fallback = check.picture("fallback", &def.units.fallback);
     let sheet = check.sheet;
+    let walking = check.walking;
     let mut problems = check.problems;
     problems.extend(unknown);
     if let Some(terrain) = &def.terrain {
@@ -380,6 +436,7 @@ pub fn parse_tileset(
             characters,
             classes,
             fallback,
+            walking,
         }),
         _ => Err(problems
             .into_iter()
@@ -711,6 +768,11 @@ mod tests {
         };
         assert_eq!(guard.rect, standing);
         assert_eq!(units.fallback.rect, standing);
+        // Every sheet is a walking sheet; the test tileset's one image of
+        // single pictures isn't.
+        assert_eq!(units.walking.len(), units.classes.len() + 1);
+        assert!(units.walking.contains(&guard.image));
+        assert!(test.walking.is_empty());
         assert_eq!(
             f.content.images.info(guard.image),
             Some(ImageInfo {
@@ -775,6 +837,50 @@ mod tests {
         };
         assert_eq!(t.classes[&brigand], Picture { image: sheet, rect });
         assert_eq!(t.fallback.rect.h, 24);
+    }
+
+    #[test]
+    fn a_walking_sheet_has_a_frame_for_each_facing_and_step() {
+        let f = Fixture::new();
+        let units = "(characters: {}, \
+                     classes: { \"brigand\": (image: \"units/a.png\", frame: (1, 0), walk: true) }, \
+                     fallback: (image: \"tilesets/t.png\", frame: (0, 0)))";
+        let t = f.parse(&sheets_file(&f, units)).unwrap();
+        let sheet = f.images.id("units/a.png").unwrap();
+        assert_eq!(t.walking.iter().collect::<Vec<_>>(), [&sheet]);
+        let brigand = t.classes[&ClassId("brigand".into())];
+        let at = |x, y| {
+            Some(Picture {
+                image: sheet,
+                rect: ImageRect { x, y, w: 16, h: 20 },
+            })
+        };
+        // Columns: the walking frames; rows: facing down, left, right, up.
+        assert_eq!(t.walk_frame(brigand, 0, 0), at(0, 0));
+        assert_eq!(t.walk_frame(brigand, 1, 0), at(16, 0));
+        assert_eq!(t.walk_frame(brigand, 2, 1), at(32, 20));
+        assert_eq!(t.walk_frame(brigand, 0, 2), at(0, 40));
+        assert_eq!(t.walk_frame(brigand, 2, 3), at(32, 60));
+        // No such frame, or a picture that isn't in a walking sheet.
+        assert_eq!(t.walk_frame(brigand, 3, 0), None);
+        assert_eq!(t.walk_frame(brigand, 0, 4), None);
+        assert_eq!(t.walk_frame(t.fallback, 1, 0), None);
+        assert_eq!(WALK_FRAMES, (3, 4));
+        // Left out, or false: a single picture.
+        let units = "(characters: {}, \
+                     classes: { \"brigand\": (image: \"units/a.png\", frame: (1, 0), walk: false) }, \
+                     fallback: (image: \"units/a.png\", frame: (1, 0)))";
+        assert!(f.parse(&sheets_file(&f, units)).unwrap().walking.is_empty());
+        // An image too small for the frames: 64 × 64 px, 80 px needed down.
+        let units = "(characters: {}, classes: {}, \
+                     fallback: (image: \"tilesets/t.png\", frame: (0, 0), walk: true))";
+        assert_eq!(
+            f.errors(&sheets_file(&f, units)),
+            [
+                "fallback: `walk` needs 3 × 4 frames of 16×20 px (48×80 px), and the image is \
+                 64×64 px"
+            ]
+        );
     }
 
     #[test]

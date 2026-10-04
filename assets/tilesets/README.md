@@ -40,10 +40,19 @@ A unit **picture** is written one of two ways, and a file may mix them:
 - `(column, row)`: a cell of the tileset's own `image`, in `unit_px` steps
   from `units_origin_px`;
 - `(image: "units/fighter_male.png", frame: (1, 0))`: a frame of an image
-  file of its own, in `unit_px` steps from that image's top-left. The
-  bought map sprites are like this: one 48×80 sheet per character or
-  class, 3 columns (walking frames) × 4 rows (facing down, left, right,
-  up) of 16×20 frames; the standing, front-facing frame is `(1, 0)`.
+  file of its own, in `unit_px` steps from that image's top-left.
+
+**A walking sheet.** Add `walk: true` to a picture with an image of its
+own, `(image: "units/fighter_male.png", frame: (1, 0), walk: true)`, to
+say the image has the **3 × 4 layout**: 3 columns (walking frames: one
+foot forward, standing, the other foot forward) × 4 rows (facing down,
+left, right, up) of `unit_px` frames from its top-left. The bought map
+sprites are like this: one 48×80 sheet per character or class, of 16×20
+frames. Such a unit steps on the spot while it can still act, and turns
+and moves its legs as it walks (ticket 0440); `frame` stays the standing,
+front-facing frame, `(1, 0)`. A picture without `walk` (and every
+`(column, row)` picture) is always drawn as it is: the unit only glides
+from tile to tile.
 
 **A tileset with no terrain tiles** leaves out `image`, `tile_px` and
 `terrain` (keep `image` if a unit picture is a `(column, row)`). The
@@ -55,9 +64,9 @@ on the glyph skin's 16×16 tiles, and only the units are pictures:
     id: "test_units",
     unit_px: (16, 20),
     units: (
-        characters: { "lead_f": (image: "units/fighter_female.png", frame: (1, 0)) },
-        classes: { "guard": (image: "tilesets/test_units/guard.png", frame: (1, 0)) },
-        fallback: (image: "tilesets/test_units/fallback.png", frame: (1, 0)),
+        characters: { "lead_f": (image: "units/fighter_female.png", frame: (1, 0), walk: true) },
+        classes: { "guard": (image: "tilesets/test_units/guard.png", frame: (1, 0), walk: true) },
+        fallback: (image: "tilesets/test_units/fallback.png", frame: (1, 0), walk: true),
     ),
 )
 ```
@@ -85,6 +94,8 @@ its name:
   own image; every rectangle (each terrain tile, each unit picture, the
   fallback) must lie inside its image;
 - each side of `tile_px` and `unit_px` must be 8 to 64 px;
+- an image with `walk: true` must be big enough for 3 × 4 frames of
+  `unit_px`;
 - `terrain` needs `tile_px` and `image`; `tile_px` without `terrain` is an
   error; a `(column, row)` picture needs `image`;
 - with `terrain`, **every terrain in `terrain.ron` must have a tile**
@@ -96,7 +107,7 @@ its name:
 | File | What |
 | ---- | ---- |
 | `test.ron`, `test.png` | The **test tileset**: 24 × 24 tiles, so nothing can quietly assume the glyph skin's 16 × 16. Each terrain's tile is its `bg` colour with its two glyphs in its `fg` colour; each class's picture is a grey disc with the first two letters of its name in white, by class id; then a `??` fallback. Not art: generated from our own data and the font atlas |
-| `test_units.ron`, `test_units/*.png` | The **test unit sheets**: no terrain tiles, and one 48×80 sheet per class of the Quick Battle (and a `??` fallback), shaped like the bought map sprites: 3 × 4 frames of 16 × 20, each a grey figure with the class's first two letters, a band across its head by facing and its feet by walking frame. Not art: generated the same way |
+| `test_units.ron`, `test_units/*.png` | The **test unit sheets**: no terrain tiles, and one 48×80 sheet per class of the Quick Battle (and a `??` fallback), shaped like the bought map sprites: 3 × 4 frames of 16 × 20, each a grey figure with the class's first two letters, a band across its head by facing and its feet by walking frame. Every entry has `walk: true`. Not art: generated the same way |
 
 These files are **generated**; never edit them by hand. After changing the
 terrain, the classes, the palette or the font, regenerate them:

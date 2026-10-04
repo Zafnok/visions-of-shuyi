@@ -170,7 +170,9 @@ The battle map is not drawn by the battle screen (ADR-0038). Each frame:
    danger, move, attack, heal, and what a spell being aimed would turn
    them into), the units
    on them (where each is drawn, HP, acted, under a bonus or a penalty, how
-   far it has faded, whether it is picked out by a battle note), the cursor
+   far it has faded, whether it is picked out by a battle note; which way
+   it faces, its walking frame and how far it is towards the next tile of
+   its walk), the cursor
    (if shown), the selected unit's path, and the animation clock. Plain
    data: no colours, glyphs, cells or pixels.
 2. `ctx.map_skin.paint(ctx, &scene, MAP_VIEW, buf)` paints it. The
@@ -196,6 +198,14 @@ Rules:
 - **A new thing on the map** (a village, a spell's flash on a tile) is a new
   field of `MapScene`, set in `BattleScreen::scene` and painted by every
   skin. Never draw it into the buffer from the battle screen.
+- **How units move is a look** (ticket 0440; timings in
+  `screens/battle/walk.rs`). A unit that can still act steps on the spot
+  (`frame`, by the scene's clock); a walking unit's `pos` is the path tile
+  it is on, as the rules, the camera and the step sounds have it, and
+  `facing`, `frame` and `offset` say how it looks between that tile and
+  the next. The sprite skins paint them (a unit whose tileset picture has
+  `walk: true`; any other only glides); the glyph skin reads none of them:
+  its initials jump from tile to tile.
 - **A skin never changes the game**: only the frame and how many tiles are
   on screen. It must paint nothing outside the area it is given.
 - **Tests of what happened read the scene** (or the `BattleState`), not

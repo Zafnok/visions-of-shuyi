@@ -517,14 +517,14 @@ fn holding_confirm_mid_walk_skips_the_steps_but_not_the_last_one() {
     );
     // Held, not yet long enough: the tile reached this frame sounds.
     assert_eq!(
-        walk(&sel, 0.0, 0.0).tiles_entered(0.1, true),
+        walk(&sel, 0.15, 0.0).tiles_entered(0.1, true),
         Some((UnitId(1), 1))
     );
     // The hold would skip, but the walk ends this frame anyway: its last
     // tile sounds.
     sel.path = row(2);
     assert_eq!(
-        walk(&sel, 0.05, 0.15).tiles_entered(0.1, true),
+        walk(&sel, 0.15, 0.15).tiles_entered(0.1, true),
         Some((UnitId(1), 1))
     );
     assert_eq!(Mode::default().tiles_entered(0.1, false), None);

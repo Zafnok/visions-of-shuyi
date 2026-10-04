@@ -327,7 +327,7 @@ pub(crate) mod tests {
     use super::*;
     use crate::glyph_buffer::{Cell, Item};
     use crate::map_view::glyph::tests::any_scene;
-    use crate::map_view::scene::{RangeKind, UnitEffects, UnitView};
+    use crate::map_view::scene::{Facing, RangeKind, STANDING_FRAME, UnitEffects, UnitView};
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
 
@@ -366,6 +366,18 @@ pub(crate) mod tests {
         SpriteSkin::new(tileset)
     }
 
+    /// `skin` with the brigand's picture in a walking sheet: the test unit
+    /// sheets' (the test tileset's own pictures don't walk).
+    fn with_walking_brigand(c: &Ctx, skin: &SpriteSkin) -> SpriteSkin {
+        let sheets = &c.content.tilesets["test_units"];
+        let brigand = ClassId("brigand".into());
+        let picture = sheets.classes[&brigand];
+        let mut tileset = skin.tileset.clone();
+        tileset.classes.insert(brigand, picture);
+        tileset.walking.insert(picture.image);
+        SpriteSkin::new(tileset)
+    }
+
     /// A buffer the size of the console, every cell `fill()`.
     pub(crate) fn blank() -> GlyphBuffer {
         GlyphBuffer::new(100, 32, fill())
@@ -388,6 +400,9 @@ pub(crate) mod tests {
             effects: UnitEffects::default(),
             fade: 0.0,
             highlight: false,
+            facing: Facing::Down,
+            frame: STANDING_FRAME,
+            offset: (0.0, 0.0),
         }
     }
 
@@ -783,6 +798,9 @@ pub(crate) mod tests {
                 },
             fade: _,
             highlight: _,
+            facing: _,
+            frame: _,
+            offset: _,
         } = &scene.units[0];
         let CursorView {
             pos: _,
@@ -831,6 +849,9 @@ pub(crate) mod tests {
             feature("penalty", &unit(|u| u.effects.penalty = true)),
             feature("fade", &unit(|u| u.fade = 0.25)),
             feature("highlight", &unit(|u| u.highlight = true)),
+            feature("facing", &unit(|u| u.facing = Facing::Left)),
+            feature("frame", &unit(|u| u.frame = 0)),
+            feature("offset", &unit(|u| u.offset = (-0.5, 0.0))),
             feature("path", &|s| s.path = vec![p(0, 0), p(1, 0)]),
         ];
         // The clock moves the marks: an arrow rests, then is bounced.
@@ -880,9 +901,10 @@ pub(crate) mod tests {
     #[test]
     fn every_scene_feature_is_painted() {
         let c = ctx();
-        for s in [with_lord(&skin(&c)), with_lord(&sheets(&c))] {
+        let own = with_walking_brigand(&c, &with_lord(&skin(&c)));
+        for s in [own, with_lord(&sheets(&c))] {
             let features = features(&c);
-            assert_eq!(features.len(), 15 + 4 + 6);
+            assert_eq!(features.len(), 18 + 4 + 6);
             for f in features {
                 assert_ne!(f.without, f.with, "{}: no change", f.name);
                 let (without, with) = (painted(&c, &s, &f.without), painted(&c, &s, &f.with));

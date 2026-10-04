@@ -20,7 +20,10 @@ use std::rc::Rc;
 use trpg_content::Content;
 
 pub use glyph::GlyphSkin;
-pub use scene::{CursorStyle, CursorView, MapScene, RangeKind, TileView, UnitEffects, UnitView};
+pub use scene::{
+    CursorStyle, CursorView, Facing, MapScene, RangeKind, STANDING_FRAME, TileView, UnitEffects,
+    UnitView,
+};
 pub use skin::MapSkin;
 pub use sprite::SpriteSkin;
 

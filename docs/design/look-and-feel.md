@@ -269,7 +269,16 @@ so they aren't in this repository (ADR-0032).
     its legs going, and **turns to face the way it walks** (about a fifth
     of a second per tile in the mockup, *tunable*; the speed settings
     still apply). When it arrives it faces the camera again.
-  Built in ticket 0440, after 0436; until then sprites stand still.
+  Built in ticket 0440. The values (*tunable*, all in
+  `crates/ui/src/screens/battle/walk.rs`): a step on the spot every
+  250 ms; a walking unit crosses a tile in 200 ms and changes frame every
+  100 ms. **Walking is that speed under the glyph look too** (it was 12
+  tiles a second; a look can't change the game's timing, and the step
+  sounds go with the tiles), though glyph units still jump from tile to
+  tile. *(Claude's starting rules: a walking unit passing over a tile an
+  ally stands on is drawn in front of the ally; a unit standing below a
+  passing walker keeps its head, uncut, since the walker is gone in a
+  moment.)*
 - **The HP bar never overlaps the sprite's feet** (Nick: "make sure the hp
   bar is not overlapping the sprite"). The sprite is drawn higher on its
   tile, so its feet stand **directly on top of** the 2-pixel HP bar (the

@@ -1430,7 +1430,7 @@ fn harness_pointing_at_the_elemental_walks_there_and_opens_fires_forecast() {
     assert_eq!(help(&h), "arrows move · f cast · d cancel");
     // Confirm walks there and opens the forecast of Fire, the equipped
     // spell, on it.
-    h.keys("f").wait(0.5);
+    h.keys("f").wait(2.0);
     let with = |h: &Harness| match h.battle().unwrap().mode() {
         Mode::Targeting(t) => (t.with.clone(), t.target(), t.sel.dest()),
         m => panic!("{m:?}"),

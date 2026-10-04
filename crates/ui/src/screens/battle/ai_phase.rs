@@ -12,7 +12,8 @@
 
 use trpg_core::{Pos, Unit, UnitId};
 
-use super::mode::{Mode, WALK_TILES_PER_S};
+use super::mode::Mode;
+use super::walk::{self, Gait, WALK_TILES_PER_S};
 
 /// How long each part of an AI action takes. *Tunable.*
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -149,11 +150,27 @@ impl AiAction {
 
     /// How many path steps the unit has taken at time `t`.
     fn steps_at(&self, t: f32) -> usize {
-        let walked = (t - self.walk_start()) * self.pacing.walk_tiles_per_s;
-        let steps = self.path.len().saturating_sub(1);
-        (1..=u16::try_from(steps).unwrap_or(u16::MAX))
-            .take_while(|&k| f32::from(k) <= walked)
-            .count()
+        // Once played out, all of them, whatever rounding leaves of the
+        // last tile.
+        if t >= self.total() {
+            return self.path.len().saturating_sub(1);
+        }
+        walk::steps(self.path.len(), self.walked_at(t))
+    }
+
+    /// How many tiles the unit has walked at time `t` (negative before
+    /// the walk starts).
+    fn walked_at(&self, t: f32) -> f32 {
+        (t - self.walk_start()) * self.pacing.walk_tiles_per_s
+    }
+
+    /// How the unit looks between two tiles of its walk ([`walk::gait`]);
+    /// `None` before it walks and once it has arrived.
+    pub fn gait(&self) -> Option<Gait> {
+        if !self.walking() || self.done() {
+            return None;
+        }
+        walk::gait(&self.path, self.walked_at(self.t))
     }
 
     /// How many tiles the unit enters in the next [`tick`](Self::tick)

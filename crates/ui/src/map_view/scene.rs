@@ -82,6 +82,35 @@ pub struct UnitEffects {
     pub penalty: bool,
 }
 
+/// Which way a unit is turned. A look only: never a rule (ADR-0038).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum Facing {
+    /// Towards the camera: every unit that isn't walking.
+    #[default]
+    Down,
+    /// To the left.
+    Left,
+    /// To the right.
+    Right,
+    /// Away from the camera.
+    Up,
+}
+
+impl Facing {
+    /// Its name in [`MapScene::to_text`].
+    const fn name(self) -> &'static str {
+        match self {
+            Facing::Down => "down",
+            Facing::Left => "left",
+            Facing::Right => "right",
+            Facing::Up => "up",
+        }
+    }
+}
+
+/// The walking frame of a unit standing with its feet together.
+pub const STANDING_FRAME: u8 = 1;
+
 /// A unit as shown on the map.
 #[derive(Debug, Clone, PartialEq)]
 pub struct UnitView {
@@ -108,6 +137,16 @@ pub struct UnitView {
     /// Whether it is picked out right now: a battle note on screen is
     /// about it (0411). It blinks, so this goes on and off.
     pub highlight: bool,
+    /// Which way it is turned: the way it walks, else towards the camera.
+    pub facing: Facing,
+    /// Its walking frame: `0` one foot forward, `1` standing
+    /// ([`STANDING_FRAME`]), `2` the other foot forward. It changes as the
+    /// unit steps on the spot (one that can still act) or walks.
+    pub frame: u8,
+    /// How far it is from [`pos`](Self::pos) towards the next tile of its
+    /// walk, in tiles across and down, each in `-1.0..=1.0`; `(0, 0)` when
+    /// it isn't walking.
+    pub offset: (f32, f32),
 }
 
 impl UnitView {
@@ -128,7 +167,15 @@ impl UnitView {
             },
             fade: 0.0,
             highlight: false,
+            facing: Facing::Down,
+            frame: STANDING_FRAME,
+            offset: (0.0, 0.0),
         }
+    }
+
+    /// Whether it is between two tiles of a walk.
+    pub fn between_tiles(&self) -> bool {
+        self.offset != (0.0, 0.0)
     }
 
     /// Whether it is under any timed effect.
@@ -337,8 +384,12 @@ impl MapScene {
     /// terrain changed, and `>` is followed by the terrain a spell being
     /// aimed would turn it into. A unit of a named character has it in
     /// brackets after its class, `bonus` or `penalty` (or both) if it is
-    /// under a timed effect, and `highlight` if it is picked out. The
-    /// cursor's number is its brightness.
+    /// under a timed effect, and `highlight` if it is picked out. A unit
+    /// on its walk also has the way it faces (`facing=right`; none when it
+    /// faces the camera), how far it is towards the next tile
+    /// (`offset=(0.50,0.00)`) and its walking frame (`frame=0`). The frame
+    /// of a unit stepping on the spot isn't shown: it goes by the clock
+    /// alone. The cursor's number is its brightness.
     pub fn to_text(&self, content: &Content) -> String {
         let mut out = String::new();
         let Pos { x, y } = self.origin;
@@ -444,6 +495,16 @@ fn unit_text(u: &UnitView) -> String {
     if u.highlight {
         text.push_str(" highlight");
     }
+    let walking = u.facing != Facing::Down || u.between_tiles();
+    if u.facing != Facing::Down {
+        let _ = write!(text, " facing={}", u.facing.name());
+    }
+    if u.between_tiles() {
+        let _ = write!(text, " offset=({:.2},{:.2})", u.offset.0, u.offset.1);
+    }
+    if walking && u.frame != STANDING_FRAME {
+        let _ = write!(text, " frame={}", u.frame);
+    }
     text
 }
 
@@ -469,7 +530,49 @@ mod tests {
             effects: UnitEffects::default(),
             fade: 0.0,
             highlight: false,
+            facing: Facing::Down,
+            frame: STANDING_FRAME,
+            offset: (0.0, 0.0),
         }
+    }
+
+    #[test]
+    fn a_walking_unit_has_its_facing_offset_and_frame_in_the_text() {
+        let line = |u: &UnitView| unit_text(u);
+        let still = brigand(4, p(0, 2));
+        assert_eq!(line(&still), "#4 Br enemy brigand (0,2) hp 20/30");
+        assert!(!still.between_tiles());
+        // Stepping on the spot: the frame isn't shown.
+        let mut stepping = still.clone();
+        stepping.frame = 0;
+        assert_eq!(line(&stepping), line(&still));
+        let mut walker = still.clone();
+        walker.facing = Facing::Right;
+        walker.offset = (0.5, 0.0);
+        walker.frame = 2;
+        assert!(walker.between_tiles());
+        assert_eq!(
+            line(&walker),
+            "#4 Br enemy brigand (0,2) hp 20/30 facing=right offset=(0.50,0.00) frame=2"
+        );
+        // Walking down: it faces the camera, so only the offset shows it.
+        walker.facing = Facing::Down;
+        walker.offset = (0.0, 0.25);
+        walker.frame = STANDING_FRAME;
+        assert_eq!(
+            line(&walker),
+            "#4 Br enemy brigand (0,2) hp 20/30 offset=(0.00,0.25)"
+        );
+        assert!(walker.between_tiles());
+        // On a tile of its walk, turned.
+        walker.offset = (0.0, 0.0);
+        for (facing, name) in [(Facing::Left, "left"), (Facing::Up, "up")] {
+            walker.facing = facing;
+            walker.frame = 0;
+            let expect = format!("#4 Br enemy brigand (0,2) hp 20/30 facing={name} frame=0");
+            assert_eq!(line(&walker), expect);
+        }
+        assert_eq!((Facing::default(), STANDING_FRAME), (Facing::Down, 1));
     }
 
     #[test]
@@ -584,6 +687,7 @@ mod tests {
         assert!(v.character.is_some());
         assert_eq!(v.hp, (lord.hp, lord.stats.hp));
         assert!(!v.acted && !v.has_effect() && !v.highlight);
+        assert_eq!((v.facing, v.frame, v.offset), (Facing::Down, 1, (0.0, 0.0)));
         assert!(!v.effects.bonus && !v.effects.penalty);
         assert!(v.fade.abs() < f32::EPSILON);
         let mut hurt = lord.clone();

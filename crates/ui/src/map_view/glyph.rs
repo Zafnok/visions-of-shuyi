@@ -196,7 +196,9 @@ pub(crate) mod tests {
     use trpg_core::{ClassId, Faction, UnitId};
 
     use super::*;
-    use crate::map_view::scene::{CursorStyle, CursorView, TileView, UnitEffects, UnitView};
+    use crate::map_view::scene::{
+        CursorStyle, CursorView, Facing, STANDING_FRAME, TileView, UnitEffects, UnitView,
+    };
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
 
@@ -320,6 +322,34 @@ pub(crate) mod tests {
             effects: UnitEffects::default(),
             fade: 0.0,
             highlight: false,
+            facing: Facing::Down,
+            frame: STANDING_FRAME,
+            offset: (0.0, 0.0),
+        }
+    }
+
+    /// The glyph skin's look doesn't turn, step or glide (ticket 0440): a
+    /// unit's facing, walking frame and offset change nothing it paints.
+    #[test]
+    fn a_units_facing_frame_and_offset_change_nothing() {
+        let c = ctx();
+        let mut scene = MapScene::new(Pos::new(0, 0), (3, 2));
+        scene.push_unit(brigand(Pos::new(1, 1)));
+        let paint = |scene: &MapScene| {
+            let mut buf = blank();
+            GlyphSkin.paint(&c, scene, Rect::new(2, 1, 6, 4), &mut buf);
+            buf
+        };
+        let still = paint(&scene);
+        assert_ne!(still, blank());
+        for facing in [Facing::Left, Facing::Right, Facing::Up] {
+            for frame in [0, 2] {
+                let mut walking = scene.clone();
+                walking.units[0].facing = facing;
+                walking.units[0].frame = frame;
+                walking.units[0].offset = (0.5, -0.5);
+                assert_eq!(paint(&walking), still, "{facing:?} {frame}");
+            }
         }
     }
 
@@ -489,6 +519,14 @@ pub(crate) mod tests {
             hp in -5..40i32,
             flags in 0u8..16,
             fade in -0.5f32..1.5,
+            facing in prop::sample::select(vec![
+                Facing::Down,
+                Facing::Left,
+                Facing::Right,
+                Facing::Up,
+            ]),
+            frame in 0u8..5,
+            offset in prop::option::of((-1.5f32..1.5, -1.5f32..1.5)),
         ) -> UnitView {
             UnitView {
                 label,
@@ -500,6 +538,9 @@ pub(crate) mod tests {
                 highlight: flags & 4 != 0,
                 hp: (hp, 30),
                 fade,
+                facing,
+                frame,
+                offset: offset.unwrap_or_default(),
                 ..brigand(pos)
             }
         }

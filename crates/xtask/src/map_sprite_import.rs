@@ -146,7 +146,7 @@ fn bundle_path(name: &str) -> String {
 pub fn tileset(sprites: &[MapSprite]) -> String {
     let entry = |s: &MapSprite| {
         let (path, (column, row)) = (bundle_path(s.name), STANDING);
-        format!("(image: \"{path}\", frame: ({column}, {row}))")
+        format!("(image: \"{path}\", frame: ({column}, {row}), walk: true)")
     };
     let table = |pick: fn(For) -> Option<&'static str>| {
         let mut rows = String::new();
@@ -282,11 +282,11 @@ mod tests {
              // the table in crates/xtask/src/map_sprite_import.rs and run it again.\n\
              (\n    id: \"tiny_tales\",\n    unit_px: (16, 20),\n    units: (\n        \
              characters: {\n            \
-             \"lead_f\": (image: \"units/b.png\", frame: (1, 0)),\n        },\n        \
+             \"lead_f\": (image: \"units/b.png\", frame: (1, 0), walk: true),\n        },\n        \
              classes: {\n            \
-             \"exile\": (image: \"units/a.png\", frame: (1, 0)),\n            \
-             \"mage\": (image: \"units/b.png\", frame: (1, 0)),\n        },\n        \
-             fallback: (image: \"units/a.png\", frame: (1, 0)),\n    ),\n)\n"
+             \"exile\": (image: \"units/a.png\", frame: (1, 0), walk: true),\n            \
+             \"mage\": (image: \"units/b.png\", frame: (1, 0), walk: true),\n        },\n        \
+             fallback: (image: \"units/a.png\", frame: (1, 0), walk: true),\n    ),\n)\n"
         );
     }
 

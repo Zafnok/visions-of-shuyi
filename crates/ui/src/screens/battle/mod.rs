@@ -46,6 +46,7 @@ pub mod skills;
 mod sounds;
 pub mod tips;
 pub mod units;
+pub mod walk;
 
 use std::collections::VecDeque;
 use trpg_content::{Content, TipTrigger, battle_campaign};
@@ -70,6 +71,7 @@ use self::playback::{Playback, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{RewindEffect, RewindScreen};
 use self::tips::TipState;
+use self::walk::Gait;
 use super::dialogue::DialogueScreen;
 use super::draw_debug_hint;
 use crate::audio::{CURSOR_MOVE, MenuSound};
@@ -1337,6 +1339,7 @@ impl BattleScreen {
             for unit in shown.units() {
                 scene.push_unit(UnitView::of(unit));
             }
+            animate(&mut scene, None);
             return scene;
         }
         let mut scene = terrain_scene(&self.state, origin, size);
@@ -1348,6 +1351,7 @@ impl BattleScreen {
         }
         self.add_ranges(&mut scene);
         self.add_units(&mut scene);
+        animate(&mut scene, self.mode.gait());
         scene.cursor = self.cursor_view(ctx).filter(|c| scene.contains(c.pos));
         if let Mode::Selected(sel) = &self.mode {
             scene.path.clone_from(&sel.path);
@@ -1707,6 +1711,25 @@ fn menu_origin(tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
         .min(MAP_VIEW.y + MAP_VIEW.h - h)
         .max(MAP_VIEW.y);
     (mx, my)
+}
+
+/// Sets the units of `scene` moving (ticket 0440): the unit of `gait`
+/// turned the way it walks, between two tiles, its legs going; every other
+/// unit that can still act and isn't falling stepping on the spot, all
+/// together, by the scene's clock. A unit that has acted stands still.
+fn animate(scene: &mut MapScene, gait: Option<(UnitId, Gait)>) {
+    let idle = walk::idle_frame(scene.clock_ms);
+    for unit in &mut scene.units {
+        match gait {
+            Some((id, gait)) if id == unit.id => {
+                unit.facing = gait.facing;
+                unit.frame = gait.frame;
+                unit.offset = gait.offset;
+            }
+            _ if !unit.acted && unit.fade <= 0.0 => unit.frame = idle,
+            _ => {}
+        }
+    }
 }
 
 /// A view of `size` tiles from `origin` showing `state`'s terrain and
@@ -2070,10 +2093,10 @@ pub(crate) mod testing {
     ///
     /// # Panics
     ///
-    /// If that takes more than 1000 frames (e.g. a level-up page waiting
+    /// If that takes more than 3000 frames (e.g. a level-up page waiting
     /// for Confirm).
     pub fn through_ai_phases(s: &mut super::BattleScreen, c: &mut Ctx, dt: f32) -> usize {
-        for n in 0..1000 {
+        for n in 0..3000 {
             if !s.ai_phase() || s.state().outcome().is_some() {
                 return n;
             }

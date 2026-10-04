@@ -17,7 +17,7 @@ use crate::color::{Rgb, UiColor};
 use crate::console::{CONSOLE_H, CONSOLE_W};
 use crate::glyph_buffer::{Cell, GlyphBuffer, PxRect, Rect};
 use crate::input::Action;
-use crate::map_view::{CursorStyle, GlyphSkin, MapScene, MapSkin, RangeKind};
+use crate::map_view::{CursorStyle, Facing, GlyphSkin, MapScene, MapSkin, RangeKind};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, FrameInput, Screen};
 
@@ -542,4 +542,175 @@ proptest! {
             }
         }
     }
+}
+
+/// What the scene shows of unit `id`: its tile, its facing, its offset and
+/// its walking frame.
+fn shown(s: &BattleScreen, c: &Ctx, id: UnitId) -> (Pos, Facing, (f32, f32), u8) {
+    let scene = s.scene(c);
+    let u = scene.unit(id).unwrap();
+    (u.pos, u.facing, u.offset, u.frame)
+}
+
+/// Ticket 0440: a move that goes right and then up.
+#[test]
+fn a_walking_unit_turns_the_way_it_goes_and_glides_from_tile_to_tile() {
+    let mut c = ctx();
+    let mut s = quick();
+    let lord = s.state().units()[0].id;
+    let start = s.state().units()[0].pos;
+    step(&mut s, &mut c, &[Action::Confirm]);
+    for action in [Action::CursorRight, Action::CursorRight, Action::CursorUp] {
+        step(&mut s, &mut c, &[action]);
+    }
+    let path = s.scene(&c).path.clone();
+    let turn = p(start.x + 2, start.y);
+    let end = p(start.x + 2, start.y - 1);
+    assert_eq!(path, [start, p(start.x + 1, start.y), turn, end]);
+    // Selected, not yet walking: it faces the camera on its own tile.
+    assert_eq!(shown(&s, &c, lord), (start, Facing::Down, (0.0, 0.0), 1));
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Moving { .. }), "{:?}", s.mode());
+    // The walk, in frames of 25 ms: a tile every 200 ms.
+    let mut seen = Vec::new();
+    while matches!(s.mode(), Mode::Moving { .. }) {
+        seen.push(shown(&s, &c, lord));
+        wait(&mut s, &mut c, 0.025);
+        assert!(seen.len() < 100, "the walk never ended");
+    }
+    // It was on each tile of the path but the last in turn, facing right
+    // and then up.
+    let mut tiles: Vec<(Pos, Facing)> = seen.iter().map(|&(pos, f, ..)| (pos, f)).collect();
+    tiles.dedup();
+    assert_eq!(
+        tiles,
+        [
+            (start, Facing::Right),
+            (p(start.x + 1, start.y), Facing::Right),
+            (turn, Facing::Up),
+        ]
+    );
+    // On each step its offset went from 0 towards 1: right (+x), then up
+    // (−y), never across both.
+    for step in seen.chunk_by(|a, b| a.0 == b.0) {
+        assert!(step.len() >= 7, "{step:?}");
+        let facing = step[0].1;
+        let along = |&(_, _, (dx, dy), _): &(Pos, Facing, (f32, f32), u8)| {
+            if facing == Facing::Right {
+                assert!(dy == 0.0, "{step:?}");
+                dx
+            } else {
+                assert!(dx == 0.0, "{step:?}");
+                -dy
+            }
+        };
+        assert!(along(&step[0]) < 0.13, "{step:?}");
+        for pair in step.windows(2) {
+            assert!(along(&pair[0]) < along(&pair[1]), "{step:?}");
+        }
+        let last = along(&step[step.len() - 1]);
+        assert!((0.8..1.0).contains(&last), "{step:?}");
+    }
+    // Its legs went: a frame every 100 ms, two a tile.
+    let mut frames: Vec<u8> = seen.iter().map(|&(.., frame)| frame).collect();
+    frames.dedup();
+    assert_eq!(frames, [0, 1, 2, 1, 0, 1]);
+    // Arrived: on the path's last tile, facing the camera, no offset.
+    assert!(
+        matches!(s.mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        s.mode()
+    );
+    assert_eq!(shown(&s, &c, lord), (end, Facing::Down, (0.0, 0.0), 1));
+    // Nobody else turned or left its tile.
+    let scene = s.scene(&c);
+    for u in scene.units.iter().filter(|u| u.id != lord) {
+        assert_eq!((u.facing, u.offset), (Facing::Down, (0.0, 0.0)), "{u:?}");
+    }
+}
+
+/// Ticket 0440: a unit that can still act steps on the spot; one that has
+/// acted, or is falling, stands still.
+#[test]
+fn a_unit_that_can_act_steps_on_the_spot_and_an_acted_one_stands_still() {
+    let mut c = ctx();
+    let s = quick();
+    let frames = |c: &Ctx| -> Vec<u8> { s.scene(c).units.iter().map(|u| u.frame).collect() };
+    let count = s.scene(&c).units.len();
+    assert!(count > 4);
+    // Everyone steps together: standing, a foot, standing, the other foot,
+    // a frame every 250 ms.
+    for (ms, frame) in [(0, 1), (249, 1), (250, 2), (500, 1), (750, 0), (1000, 1)] {
+        c.clock_s = f64::from(ms) / 1000.0;
+        assert_eq!(frames(&c), vec![frame; count], "at {ms} ms");
+    }
+    // One that has acted, and one falling, keep the standing frame.
+    let mut scene = s.scene(&c);
+    scene.clock_ms = 750;
+    for u in &mut scene.units {
+        u.frame = 1;
+    }
+    scene.units[0].acted = true;
+    scene.units[1].fade = 0.25;
+    super::animate(&mut scene, None);
+    let frames: Vec<u8> = scene.units.iter().map(|u| u.frame).collect();
+    let mut expect = vec![0; count];
+    expect[0] = 1;
+    expect[1] = 1;
+    assert_eq!(frames, expect);
+    assert!(scene.units.iter().all(|u| !u.between_tiles()));
+    // The rewind screen's map steps too.
+    let mut s = quick();
+    c.clock_s = 0.25;
+    step(&mut s, &mut c, &[Action::Rewind]);
+    assert!(s.rewind().is_some());
+    assert!(s.scene(&c).units.iter().all(|u| u.frame == 2));
+}
+
+/// Ticket 0440: an AI unit's walk looks the same, after its pan and its
+/// highlight.
+#[test]
+fn an_ai_units_walk_turns_and_glides_too() {
+    let c = ctx();
+    let mut s = quick();
+    let before = s.state.units().to_vec();
+    let (brigand, from) = (before[4].id, before[4].pos);
+    let path = vec![from, p(from.x - 1, from.y), p(from.x - 1, from.y + 1)];
+    let pan = (s.camera.origin, s.camera.origin);
+    let action = AiAction::new(brigand, before, pan, path, Mode::default(), PACING);
+    let walk_start = action.walk_start();
+    s.mode = Mode::AiAction(Box::new(action));
+    let tick = |s: &mut BattleScreen, dt: f32, held: bool| {
+        if let Mode::AiAction(a) = &mut s.mode {
+            a.tick(dt, held);
+        }
+    };
+    // Marked by the cursor: still on its tile, facing the camera.
+    assert_eq!(shown(&s, &c, brigand), (from, Facing::Down, (0.0, 0.0), 1));
+    // Half a tile left.
+    tick(&mut s, walk_start + 0.1, false);
+    let (pos, facing, offset, frame) = shown(&s, &c, brigand);
+    assert_eq!((pos, facing, frame), (from, Facing::Left, 1));
+    assert!(
+        (offset.0 + 0.5).abs() < 1e-3 && offset.1 == 0.0,
+        "{offset:?}"
+    );
+    // A quarter of a tile down, on the path's second tile.
+    tick(&mut s, 0.15, false);
+    let (pos, facing, offset, frame) = shown(&s, &c, brigand);
+    let second = p(from.x - 1, from.y);
+    assert_eq!((pos, facing, frame), (second, Facing::Down, 2));
+    assert!(
+        offset.0 == 0.0 && (offset.1 - 0.25).abs() < 1e-3,
+        "{offset:?}"
+    );
+    // Confirm held: four times as fast, legs and all.
+    tick(&mut s, 0.025, true);
+    let (_, _, offset, frame) = shown(&s, &c, brigand);
+    assert!((offset.1 - 0.75).abs() < 1e-3, "{offset:?}");
+    assert_eq!(frame, 1);
+    // Arrived.
+    tick(&mut s, 5.0, false);
+    let end = p(from.x - 1, from.y + 1);
+    assert_eq!(shown(&s, &c, brigand), (end, Facing::Down, (0.0, 0.0), 1));
 }

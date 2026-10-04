@@ -1,5 +1,6 @@
 ---
 source: crates/ui/tests/it/map_skin.rs
+assertion_line: 148
 expression: h.snapshot()
 ---
                                                                       ┌────────────────────────────┐
@@ -87,46 +88,46 @@ p = fg:floor bg:floor_bg
 q = fg:wood bg:stone_bg
 r = fg:text_dim bg:black
 --- overlays ---
-over  sprite 272,185 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
-over  sprite 272,187 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
-over  sprite 271,186 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
-over  sprite 273,186 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enemy
-over  sprite 272,186 16x20  tilesets/test_units/raider.png 16,0 16x20
-over  sprite 288,201 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
-over  sprite 288,203 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
-over  sprite 287,202 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
-over  sprite 289,202 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
-over  sprite 288,202 16x20  tilesets/test_units/brigand.png 16,0 16x20
+over  sprite 272,185 16x20  tilesets/test_units/raider.png 0,0 16x20 solid=enemy
+over  sprite 272,187 16x20  tilesets/test_units/raider.png 0,0 16x20 solid=enemy
+over  sprite 271,186 16x20  tilesets/test_units/raider.png 0,0 16x20 solid=enemy
+over  sprite 273,186 16x20  tilesets/test_units/raider.png 0,0 16x20 solid=enemy
+over  sprite 272,186 16x20  tilesets/test_units/raider.png 0,0 16x20
+over  sprite 288,201 16x20  tilesets/test_units/brigand.png 0,0 16x20 solid=enemy
+over  sprite 288,203 16x20  tilesets/test_units/brigand.png 0,0 16x20 solid=enemy
+over  sprite 287,202 16x20  tilesets/test_units/brigand.png 0,0 16x20 solid=enemy
+over  sprite 289,202 16x20  tilesets/test_units/brigand.png 0,0 16x20 solid=enemy
+over  sprite 288,202 16x20  tilesets/test_units/brigand.png 0,0 16x20
 over  sprite 240,233 16x20  tilesets/test_units/archer.png 16,0 16x20 solid=#737b85
 over  sprite 240,235 16x20  tilesets/test_units/archer.png 16,0 16x20 solid=#737b85
 over  sprite 239,234 16x20  tilesets/test_units/archer.png 16,0 16x20 solid=#737b85
 over  sprite 241,234 16x20  tilesets/test_units/archer.png 16,0 16x20 solid=#737b85
 over  sprite 240,234 16x20  tilesets/test_units/archer.png 16,0 16x20 dimmed
-over  sprite 272,233 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
-over  sprite 272,235 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
-over  sprite 271,234 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
-over  sprite 273,234 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
-over  sprite 272,234 16x20  tilesets/test_units/brigand.png 16,0 16x20
-over  sprite 208,249 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player
-over  sprite 208,251 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player
-over  sprite 207,250 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player
-over  sprite 209,250 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=player
-over  sprite 208,250 16x20  tilesets/test_units/exile.png 16,0 16x20
+over  sprite 272,233 16x20  tilesets/test_units/brigand.png 0,0 16x20 solid=enemy
+over  sprite 272,235 16x20  tilesets/test_units/brigand.png 0,0 16x20 solid=enemy
+over  sprite 271,234 16x20  tilesets/test_units/brigand.png 0,0 16x20 solid=enemy
+over  sprite 273,234 16x20  tilesets/test_units/brigand.png 0,0 16x20 solid=enemy
+over  sprite 272,234 16x20  tilesets/test_units/brigand.png 0,0 16x20
+over  sprite 208,249 16x20  tilesets/test_units/exile.png 0,0 16x20 solid=player
+over  sprite 208,251 16x20  tilesets/test_units/exile.png 0,0 16x20 solid=player
+over  sprite 207,250 16x20  tilesets/test_units/exile.png 0,0 16x20 solid=player
+over  sprite 209,250 16x20  tilesets/test_units/exile.png 0,0 16x20 solid=player
+over  sprite 208,250 16x20  tilesets/test_units/exile.png 0,0 16x20
 over  sprite 224,265 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85
 over  sprite 224,267 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85
 over  sprite 223,266 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85
 over  sprite 225,266 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85
 over  sprite 224,266 16x20  tilesets/test_units/guard.png 16,0 16x20 dimmed
-over  sprite 208,265 16x20  tilesets/test_units/mage.png 16,0 16x20 solid=player clip=208,272 16x13
-over  sprite 208,267 16x20  tilesets/test_units/mage.png 16,0 16x20 solid=player clip=208,272 16x15
-over  sprite 207,266 16x20  tilesets/test_units/mage.png 16,0 16x20 solid=player clip=207,272 16x14
-over  sprite 209,266 16x20  tilesets/test_units/mage.png 16,0 16x20 solid=player clip=209,272 16x14
-over  sprite 208,266 16x20  tilesets/test_units/mage.png 16,0 16x20 clip=208,272 16x14
-over  sprite 288,281 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20 solid=enemy
-over  sprite 288,283 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20 solid=enemy
-over  sprite 287,282 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20 solid=enemy
-over  sprite 289,282 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20 solid=enemy
-over  sprite 288,282 16x20  tilesets/test_units/frost_elemental.png 16,0 16x20
+over  sprite 208,265 16x20  tilesets/test_units/mage.png 0,0 16x20 solid=player clip=208,272 16x13
+over  sprite 208,267 16x20  tilesets/test_units/mage.png 0,0 16x20 solid=player clip=208,272 16x15
+over  sprite 207,266 16x20  tilesets/test_units/mage.png 0,0 16x20 solid=player clip=207,272 16x14
+over  sprite 209,266 16x20  tilesets/test_units/mage.png 0,0 16x20 solid=player clip=209,272 16x14
+over  sprite 208,266 16x20  tilesets/test_units/mage.png 0,0 16x20 clip=208,272 16x14
+over  sprite 288,281 16x20  tilesets/test_units/frost_elemental.png 0,0 16x20 solid=enemy
+over  sprite 288,283 16x20  tilesets/test_units/frost_elemental.png 0,0 16x20 solid=enemy
+over  sprite 287,282 16x20  tilesets/test_units/frost_elemental.png 0,0 16x20 solid=enemy
+over  sprite 289,282 16x20  tilesets/test_units/frost_elemental.png 0,0 16x20 solid=enemy
+over  sprite 288,282 16x20  tilesets/test_units/frost_elemental.png 0,0 16x20
 over  209,270 14x2  hp_high
 over  225,286 14x2  hp_high
 over  sprite 234,269 7x7  images/effect_marks.png 0,0 7x7 dimmed
