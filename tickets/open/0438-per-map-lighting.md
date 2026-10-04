@@ -35,6 +35,23 @@ touched.
 header. A sprite item has no tint yet (ADR-0038 section 2; 0413 and 0436
 add other sprite effects).
 
+**From 0437 (2026-10-03, ADR-0052):**
+
+- The whole `MapLook` (`trpg_content::map`) is already in the scene:
+  `MapScene::look`. Add `light` to `MapLook` and it reaches the skin; the
+  game flow gives the battle screen its map's look
+  (`BattleScreen::with_look`), which is where a battle file's `light`
+  override goes.
+- The ground is painted in `crates/ui/src/map_view/sprite/ground.rs`:
+  each tile's own picture, then the look's layers (pictures between
+  tiles, and on tiles), all from the tileset's one image. Shade those.
+  The tints painted after them (ranges, flashes, the cursor's glow) are
+  sprites of that image too, in one colour (`Paint::Solid`): don't shade
+  them.
+- The importer is `cargo xtask tileset-import`
+  (`crates/xtask/src/tileset_import.rs`); it already recolours tiles
+  (`tint`), for the burning forest.
+
 ## Nick input
 
 **Sign-off:** one map rendered in each light, side by side, with bought
