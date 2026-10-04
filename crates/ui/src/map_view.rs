@@ -8,6 +8,7 @@
 //! the scene and painted by every skin; it is never drawn straight into the
 //! buffer by a screen.
 
+pub mod corners;
 pub mod glyph;
 pub mod grid;
 pub mod path;
@@ -89,6 +90,9 @@ mod tests {
         let units = Some(("sprite_units", "test_units".to_owned()));
         assert_eq!(tileset("sprite_units"), units);
         assert_eq!(tileset("test_units"), units);
+        // The tileset with layers and looks paints the whole map too.
+        let auto = Some(("sprite", "test_auto".to_owned()));
+        assert_eq!(tileset("test_auto"), auto);
         assert!(skin_named(&content, "ascii").is_none());
         let mut bare = content;
         bare.tilesets.clear();
@@ -118,12 +122,14 @@ mod tests {
         let mut content = trpg_content::load_embedded().unwrap();
         let mut skin: Rc<dyn MapSkin> = Rc::new(GlyphSkin);
         let mut round = Vec::new();
-        for _ in 0..4 {
+        for _ in 0..5 {
             skin = next_skin(&content, skin.as_ref());
             round.push(skin.tileset_id().map(str::to_owned));
         }
         let id = |s: &str| Some(s.to_owned());
-        assert_eq!(round, [id("test"), id("test_units"), None, id("test")]);
+        let tilesets = [id("test"), id("test_auto"), id("test_units")];
+        assert_eq!(round[..3], tilesets);
+        assert_eq!(round[3..], [None, id("test")]);
         // A skin whose tileset is gone: back to glyphs.
         content.tilesets.clear();
         assert_eq!(next_skin(&content, skin.as_ref()).name(), "glyph");
