@@ -538,7 +538,7 @@ fn same_seed_and_commands_give_identical_events() {
     let scenes: Vec<&str> = a
         .iter()
         .filter_map(|e| match e {
-            Event::SceneTriggered { scene } => Some(scene.as_str()),
+            Event::SceneTriggered { scene, .. } => Some(scene.as_str()),
             _ => None,
         })
         .collect();

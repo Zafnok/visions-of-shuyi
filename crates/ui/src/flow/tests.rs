@@ -180,3 +180,118 @@ fn a_level_up_from_the_rewind_bonus_shows_the_level_up_screen() {
     h.keys("d");
     assert_eq!(h.top_screen(), "dialogue");
 }
+
+/// The test chapter in `mode`, won after the knight fell in its battle:
+/// the first text of its victory scene, and whether the knight is still in
+/// the army then.
+fn victory_line_after_the_knight_fell(mode: GameMode) -> (Option<String>, bool) {
+    let knight = trpg_core::CharacterId("test_knight".into());
+    let mut c = ctx();
+    // The brigand (unit 3) stands next to the knight and never misses.
+    let battle = c.content.battles.get_mut("test");
+    let brigand = &mut battle.unwrap_or_else(|| panic!("no test battle")).enemies[0];
+    brigand.pos = Pos::new(4, 6);
+    for kind in [StatKind::Hp, StatKind::Str, StatKind::Dex, StatKind::Def] {
+        brigand.stats.set(kind, 60);
+    }
+    brigand.hp = 60;
+    let lead = LeadProfile::new("Mara", LeadGender::Female);
+    let mut campaign = trpg_content::new_campaign(&c.content, mode, lead);
+    assert_eq!(campaign.roster[1].character.as_ref(), Some(&knight));
+    campaign.roster[1].stats.hp = 1;
+    let mut flow = FlowScreen::new_game();
+    flow.begin(&mut c, campaign);
+    let mut h = Harness::from_game(Game::new(c, Box::new(flow)));
+    // Skip the intro, close the battle notes and turn 1's banner.
+    h.keys("d f f f");
+    assert_eq!(h.top_screen(), "battle");
+    let act = |h: &mut Harness, unit, dest, action| {
+        let battle = h.flow_mut().and_then(FlowScreen::battle_mut);
+        let battle = battle.unwrap_or_else(|| panic!("no battle"));
+        battle.send(&Command::Act { unit, dest, action });
+    };
+    // The knight strikes the brigand and falls to its counter.
+    let attack = UnitAction::Attack {
+        target: UnitId(3),
+        slot: 0,
+        active: None,
+        art: None,
+    };
+    act(&mut h, UnitId(2), Pos::new(3, 6), attack);
+    let battle = h.flow().and_then(FlowScreen::battle);
+    let fallen = battle.map(|b| b.state().fallen().len());
+    assert_eq!(fallen, Some(1), "the knight fell");
+    h.wait(30.0);
+    // The lead seizes the fort.
+    act(&mut h, UnitId(1), Pos::new(5, 5), UnitAction::Seize);
+    for _ in 0..10 {
+        if h.top_screen() == "dialogue" {
+            break;
+        }
+        h.keys("f");
+    }
+    assert_eq!(h.top_screen(), "dialogue");
+    let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
+    let Stage::Scene(scene) = flow.stage() else {
+        panic!("no scene");
+    };
+    assert_eq!(scene.player().scene_id(), "test_victory");
+    let text = scene.player().current().text.map(String::from);
+    let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
+    (text, campaign.member(&knight).is_some())
+}
+
+/// Acceptance (0715): a companion who died in the battle (Classic) has
+/// left the army by the victory scene, which plays the lines for when
+/// they are gone; one who retreated (Casual) is still in it, and speaks.
+#[test]
+fn the_victory_scene_plays_for_the_army_as_the_battle_left_it() {
+    let (text, in_army) = victory_line_after_the_knight_fell(GameMode::Classic);
+    assert!(!in_army);
+    assert_eq!(
+        text.as_deref(),
+        Some("The fort is taken. Nobody is left to tell Mara well done.")
+    );
+    let (text, in_army) = victory_line_after_the_knight_fell(GameMode::Casual);
+    assert!(in_army);
+    assert_eq!(text.as_deref(), Some("The fort is ours, Mara. Well done."));
+}
+
+/// A scene with nothing to say for the army as it is isn't played: the
+/// flow goes on to the next one, or to what follows them.
+#[test]
+fn a_scene_with_nothing_to_say_for_the_army_is_passed_over() {
+    let mut c = ctx();
+    let src = "@scene only_knight\n@if test_knight\n> The knight nods.\n@endif\n@end\n";
+    let scenes = trpg_content::dialogue::from_sources(&[("t.dlg", src)], None, None, None, None)
+        .unwrap_or_else(|e| panic!("{e:?}"));
+    c.content.dialogue.scenes.extend(scenes.scenes);
+    let lead = LeadProfile::new("Mara", LeadGender::Female);
+    let start = |c: &mut Ctx, with_knight: bool, scenes: &[&str]| {
+        let mut campaign = trpg_content::new_campaign(&c.content, GameMode::Classic, lead.clone());
+        if !with_knight {
+            campaign.roster.truncate(1);
+        }
+        let mut flow = FlowScreen::new_game();
+        flow.adopt(c, campaign);
+        flow.scenes = scenes.iter().map(|s| (*s).to_owned()).collect();
+        flow.then = Then::NextChapter;
+        flow.next_scene(c);
+        flow
+    };
+    let playing = |flow: &FlowScreen| match flow.stage() {
+        Stage::Scene(scene) => Some(scene.player().scene_id().to_owned()),
+        _ => None,
+    };
+    // With the knight: played.
+    let flow = start(&mut c, true, &["only_knight", "test_victory"]);
+    assert_eq!(playing(&flow).as_deref(), Some("only_knight"));
+    assert_eq!(flow.scenes.len(), 1);
+    // Without: the next scene plays instead.
+    let flow = start(&mut c, false, &["only_knight", "test_victory"]);
+    assert_eq!(playing(&flow).as_deref(), Some("test_victory"));
+    assert!(flow.scenes.is_empty());
+    // With no scene left: what follows them.
+    let flow = start(&mut c, false, &["only_knight"]);
+    assert!(matches!(flow.stage(), Stage::SavePrompt(_)));
+}

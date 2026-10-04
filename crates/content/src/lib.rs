@@ -47,7 +47,7 @@ pub use battle::BattleRefs;
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
 pub use credits::{CreditEntry, CreditGroup, Credits};
-pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Scene, Side, Step};
+pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Present, Scene, Side, Step};
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
 pub use image::{ImageId, ImageInfo, ImageTable};
@@ -182,23 +182,31 @@ pub fn load_embedded() -> Result<Content, ContentErrors> {
         Err(_) => Ok(BTreeMap::new()),
     };
     let audio = audio::load();
-    let dialogue = dialogue::load(
+    let scripts = dialogue::load_scripts(
         characters.as_ref().ok(),
         portraits.as_ref().ok(),
         names.as_ref().ok(),
         audio.as_ref().ok(),
     );
+    let scenes = scripts.as_ref().ok().map(|s| &s.table);
     let (battles, chapters, new_game) = load_story(
         maps.as_ref().ok(),
         terrain.as_ref().ok(),
         classes.as_ref().ok(),
         items.as_ref().ok(),
         characters.as_ref().ok(),
-        dialogue.as_ref().ok(),
+        scenes,
         audio.as_ref().ok(),
     );
     let credits = credits::load(audio.as_ref().ok());
-    let supports = support::load(characters.as_ref().ok(), dialogue.as_ref().ok());
+    let supports = support::load(characters.as_ref().ok(), scenes);
+    let dialogue = check_presence(
+        scripts,
+        battles.as_ref().ok(),
+        chapters.as_ref().ok(),
+        new_game.as_ref().ok(),
+        supports.as_ref().ok(),
+    );
     let tilesets = load_tilesets(
         images.as_ref().ok(),
         terrain.as_ref().ok(),
@@ -234,6 +242,36 @@ pub fn load_embedded() -> Result<Content, ContentErrors> {
             lang: lang::load(),
         },
     )
+}
+
+/// Adds the presence checks ([`dialogue::check_presence`]: nobody who may
+/// be gone is shown outside an `@if` block for them, ADR-0055) to the
+/// dialogue's result. Skipped when the dialogue, the battles, the
+/// chapters, the New Game file or the supports failed to load.
+fn check_presence(
+    scripts: Result<dialogue::Scripts, Vec<ContentError>>,
+    battles: Option<&BTreeMap<String, BattleDef>>,
+    chapters: Option<&BTreeMap<String, ChapterDef>>,
+    new_game: Option<&NewGameDef>,
+    supports: Option<&SupportTable>,
+) -> Result<DialogueTable, Vec<ContentError>> {
+    let scripts = scripts?;
+    let (Some(battles), Some(chapters), Some(new_game), Some(supports)) =
+        (battles, chapters, new_game, supports)
+    else {
+        return Ok(scripts.table);
+    };
+    let cast = dialogue::Cast::new(new_game, battles, chapters, supports);
+    let errors: Vec<ContentError> = scripts
+        .parsed
+        .iter()
+        .flat_map(|scene| dialogue::check_presence(scene, &cast))
+        .collect();
+    if errors.is_empty() {
+        Ok(scripts.table)
+    } else {
+        Err(errors)
+    }
 }
 
 /// Adds the seal checks ([`item::check_seals`]: a seal for every tier a
@@ -943,6 +981,70 @@ mod tests {
             check_skill_references(failed.clone(), classes.as_ref()),
             failed
         );
+    }
+
+    /// The embedded scripts pass the presence check (ADR-0055); with the
+    /// test lord in the starting roster too, his lines outside `@if`
+    /// blocks are errors.
+    #[test]
+    fn presence_checks_join_the_dialogue_errors() {
+        let scripts = || {
+            dialogue::load_scripts(
+                ok_characters().ok().as_ref(),
+                ok_portraits().ok().as_ref(),
+                names::load().ok().as_ref(),
+                audio::load().ok().as_ref(),
+            )
+        };
+        let (battles, chapters, new_game) = ok_story();
+        let (battles, chapters, supports) = (battles.ok(), chapters.ok(), ok_supports().ok());
+        let check = |new_game: Option<&NewGameDef>| {
+            check_presence(
+                scripts(),
+                battles.as_ref(),
+                chapters.as_ref(),
+                new_game,
+                supports.as_ref(),
+            )
+        };
+        let mut new_game = new_game.unwrap_or_default();
+        assert_eq!(check(Some(&new_game)), scripts().map(|s| s.table));
+        assert!(scripts().is_ok());
+        new_game
+            .roster
+            .push(trpg_core::CharacterId("test_lord".into()));
+        let errors = check(Some(&new_game)).err().unwrap_or_default();
+        let first = errors.first().map(ToString::to_string);
+        assert_eq!(
+            first.as_deref(),
+            Some(
+                "assets/dialogue/test.dlg:10: \"test_lord\" may have fallen or left the army by \
+                 now; put their lines inside \"@if test_lord\" ... \"@endif\" \
+                 (assets/dialogue/README.md, \"Who is still there\")"
+            )
+        );
+        // His support conversations and the scenes of his own triggers
+        // can't play without him.
+        let files: std::collections::BTreeSet<&str> =
+            errors.iter().map(|e| e.file.as_str()).collect();
+        assert_eq!(
+            files.into_iter().collect::<Vec<_>>(),
+            [
+                "assets/dialogue/test.dlg",
+                "assets/dialogue/test_triggers.dlg"
+            ]
+        );
+        // Skipped when another file failed, or the dialogue did.
+        assert_eq!(check(None), scripts().map(|s| s.table));
+        let failed = Err(vec![ContentError::new("d", "bad")]);
+        let checked = check_presence(
+            failed,
+            battles.as_ref(),
+            chapters.as_ref(),
+            Some(&new_game),
+            supports.as_ref(),
+        );
+        assert_eq!(checked, Err(vec![ContentError::new("d", "bad")]));
     }
 
     #[test]

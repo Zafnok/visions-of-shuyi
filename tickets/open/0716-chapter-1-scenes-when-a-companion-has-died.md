@@ -66,6 +66,32 @@ without them, as text. Nick comments if a beat reads wrong.
   "Budget").
 - New reply choices.
 
+## What 0715 built (read first)
+
+The block is `@if <character>` … `@else` … `@endif`
+(`assets/dialogue/README.md`, "Who is still there"; ADR-0055). What
+matters for this ticket:
+
+- Blocks nest and may stand in a reply's reaction; a `@choice` may stand
+  in a block.
+- Both parts of a block must leave the same characters on screen and the
+  same caption: a companion who enters in a block leaves in it.
+- The scenes of a trigger can count on the characters the trigger names
+  (a death quote on the one dying, the boss scenes on the boss). The
+  first chapter's intro scenes, and its battle's turn-1 scene
+  (`ch01_first_turn`), can count on the whole starting party: no blocks
+  there.
+- A scene with nothing left to say for those there isn't played.
+- **The check only bites for characters in the New Game roster**, and the
+  companions join it in 0803 (now blocked by this ticket). Until then
+  `ch01.dlg` passes whatever it does. So this ticket adds a test
+  (`crates/content/src/dialogue/tests/presence.rs`) that runs
+  `check_presence` on the scenes of `ch01.dlg` with a `Cast` written by
+  hand from the script's header: the five companions in `may_be_absent`;
+  `certain` for each trigger scene as its trigger names (and all five for
+  `ch01_intro`, `ch01_prebattle` and `ch01_first_turn`). It expects no
+  errors. 0803 deletes it once the battle and chapter files say the same.
+
 ## Implementation steps
 
 1. Reread the canon (the skill's canon order), `ch01.dlg` and the sheets of
@@ -106,7 +132,9 @@ without them, as text. Nick comments if a beat reads wrong.
 ## Tests required
 
 - Integration: the all-assets test (the script validates).
-- No new code tests: 0715 tests the mechanism.
+- The one test described under "What 0715 built": `ch01.dlg` passes the
+  presence check with its five companions able to be gone. No other new
+  code tests: 0715 tests the mechanism.
 
 ## Completion notes
 

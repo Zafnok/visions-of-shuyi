@@ -2,11 +2,14 @@
 //! and narration. The format is documented in `assets/dialogue/README.md`
 //! (ADR-0005). [`parse_dlg`] turns a file into scenes, [`check_scene`] and
 //! [`check_duplicates`] validate them, and [`print_scene`] writes a scene
-//! back out. Every line that shows text has a [`LineId`] (ADR-0045).
+//! back out. Every line that shows text has a [`LineId`] (ADR-0045). Lines
+//! in an `@if` block play only while a character is there ([`Present`],
+//! ADR-0055); [`check_presence`] keeps those who may be gone inside one.
 
 mod check;
 mod line_id;
 mod parse;
+mod presence;
 
 use std::collections::BTreeMap;
 
@@ -14,8 +17,9 @@ use trpg_core::CharacterId;
 
 pub use check::{check_duplicates, check_scene};
 pub use line_id::{Line, LineId, NARRATION_SPEAKER, REPLY_SPEAKER};
-pub use parse::{ChoiceLines, OptionLines, ParsedScene, parse_dlg};
+pub use parse::{Lines, ParsedScene, PartLines, parse_dlg};
 pub(crate) use parse::{char_problem, is_id};
+pub use presence::{Cast, Present, check_presence};
 
 use crate::audio::AudioManifest;
 use crate::bundle;
@@ -124,6 +128,17 @@ pub enum Step {
     /// `@music <cue>` or `@music stop`: the music changes when playback
     /// reaches this line, and stays so after the scene.
     Music(MusicLine),
+    /// `@if <character>` … `@else` … `@endif`: steps that play only if the
+    /// character is there when the scene plays ([`Present`]), and the
+    /// steps that play instead if they aren't (ADR-0055).
+    If {
+        /// Who must be there.
+        character: CharacterId,
+        /// The steps played if they are.
+        then: Vec<Step>,
+        /// The steps played if they aren't (none without an `@else`).
+        otherwise: Vec<Step>,
+    },
 }
 
 /// What a `@music` line asks for.
@@ -170,7 +185,20 @@ impl Step {
             | Step::Place { .. }
             | Step::Clear { .. }
             | Step::Choice { .. }
-            | Step::Music(_) => None,
+            | Step::Music(_)
+            | Step::If { .. } => None,
+        }
+    }
+
+    /// Whether the step is, or has inside it, a speech or narration line.
+    pub fn has_text(&self) -> bool {
+        let any = |steps: &[Step]| steps.iter().any(Step::has_text);
+        match self {
+            Step::Choice { options } => options.iter().any(|o| any(&o.steps)),
+            Step::If {
+                then, otherwise, ..
+            } => any(then) || any(otherwise),
+            _ => self.text().is_some(),
         }
     }
 }
@@ -198,6 +226,17 @@ impl DialogueTable {
     }
 }
 
+/// Every scene of every dialogue file, with where each was written: what
+/// the checks that need the battles and the roster ([`check_presence`])
+/// run on once those are loaded.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct Scripts {
+    /// The scenes, by id.
+    pub table: DialogueTable,
+    /// The scenes as written, in file order.
+    pub parsed: Vec<ParsedScene>,
+}
+
 /// Loads and validates every `*.dlg` file in the bundle. Character ids are
 /// checked against `characters`, expressions against the characters'
 /// `portraits`, name tokens and names written out against `names`, and
@@ -209,6 +248,16 @@ pub fn load(
     names: Option<&Names>,
     audio: Option<&AudioManifest>,
 ) -> Result<DialogueTable, Vec<ContentError>> {
+    load_scripts(characters, portraits, names, audio).map(|s| s.table)
+}
+
+/// [`load`], keeping where each scene was written.
+pub fn load_scripts(
+    characters: Option<&CharacterTable>,
+    portraits: Option<&PortraitTable>,
+    names: Option<&Names>,
+    audio: Option<&AudioManifest>,
+) -> Result<Scripts, Vec<ContentError>> {
     let files: Vec<(String, Option<&str>)> = bundle::files_in(DIALOGUE_DIR)
         .into_iter()
         .filter(|path| path.ends_with(DIALOGUE_EXTENSION))
@@ -225,7 +274,7 @@ fn load_files(
     portraits: Option<&PortraitTable>,
     names: Option<&Names>,
     audio: Option<&AudioManifest>,
-) -> Result<DialogueTable, Vec<ContentError>> {
+) -> Result<Scripts, Vec<ContentError>> {
     let mut sources = Vec::new();
     let mut errors = Vec::new();
     for (file, source) in files {
@@ -234,8 +283,8 @@ fn load_files(
             None => errors.push(ContentError::new(file, "file is not valid UTF-8")),
         }
     }
-    match from_sources(&sources, characters, portraits, names, audio) {
-        Ok(table) if errors.is_empty() => Ok(table),
+    match scripts_from_sources(&sources, characters, portraits, names, audio) {
+        Ok(scripts) if errors.is_empty() => Ok(scripts),
         Ok(_) => Err(errors),
         Err(e) => {
             errors.extend(e);
@@ -245,7 +294,9 @@ fn load_files(
 }
 
 /// Parses and validates dialogue files given as `(file name, source)`
-/// pairs. Reports every problem, ordered by file and line.
+/// pairs. Reports every problem, ordered by file and line. Who may be gone
+/// when a scene plays isn't checked here: [`check_presence`] needs the
+/// battles and the roster.
 pub fn from_sources<F: AsRef<str>>(
     files: &[(F, &str)],
     characters: Option<&CharacterTable>,
@@ -253,6 +304,17 @@ pub fn from_sources<F: AsRef<str>>(
     names: Option<&Names>,
     audio: Option<&AudioManifest>,
 ) -> Result<DialogueTable, Vec<ContentError>> {
+    scripts_from_sources(files, characters, portraits, names, audio).map(|s| s.table)
+}
+
+/// [`from_sources`], keeping where each scene was written.
+pub fn scripts_from_sources<F: AsRef<str>>(
+    files: &[(F, &str)],
+    characters: Option<&CharacterTable>,
+    portraits: Option<&PortraitTable>,
+    names: Option<&Names>,
+    audio: Option<&AudioManifest>,
+) -> Result<Scripts, Vec<ContentError>> {
     let mut scenes = Vec::new();
     let mut errors = Vec::new();
     for (file, source) in files {
@@ -265,11 +327,16 @@ pub fn from_sources<F: AsRef<str>>(
     }
     errors.extend(check_duplicates(&scenes));
     if errors.is_empty() {
-        let scenes = scenes
-            .into_iter()
-            .map(|p| (p.scene.id.clone(), p.scene))
-            .collect();
-        Ok(DialogueTable { scenes })
+        let table = DialogueTable {
+            scenes: scenes
+                .iter()
+                .map(|p| (p.scene.id.clone(), p.scene.clone()))
+                .collect(),
+        };
+        Ok(Scripts {
+            table,
+            parsed: scenes,
+        })
     } else {
         errors.sort_by(|a, b| (&a.file, a.line).cmp(&(&b.file, b.line)));
         Err(errors)
@@ -277,8 +344,9 @@ pub fn from_sources<F: AsRef<str>>(
 }
 
 /// Writes `scene` in `.dlg` format (one line per step, reactions indented
-/// under their option), ending with `@end` and a newline. Parsing the
-/// result gives `scene` back.
+/// under their option, an `@if` block's lines as far in as its `@if`),
+/// ending with `@end` and a newline. Parsing the result gives `scene`
+/// back.
 pub fn print_scene(scene: &Scene) -> String {
     let mut out = format!("@scene {}\n", scene.id);
     for step in &scene.steps {
@@ -323,6 +391,26 @@ fn print_step(out: &mut String, step: &Step, indent: &str) {
                 }
             }
             "@endchoice".to_owned()
+        }
+        Step::If {
+            character,
+            then,
+            otherwise,
+        } => {
+            for part in [indent, "@if ", &character.0, "\n"] {
+                out.push_str(part);
+            }
+            for s in then {
+                print_step(out, s, indent);
+            }
+            if !otherwise.is_empty() {
+                out.push_str(indent);
+                out.push_str("@else\n");
+            }
+            for s in otherwise {
+                print_step(out, s, indent);
+            }
+            "@endif".to_owned()
         }
     };
     out.push_str(indent);
