@@ -5,10 +5,10 @@ type: design-decision
 milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
-status: in-progress
+status: done
 blocked_by: ["0038"]
 nick_input: decision
-completed:
+completed: 2026-10-04
 ---
 
 # 0040 — Decide: more bought packs for fighters with no fitting art
@@ -159,14 +159,19 @@ with these corrections:
   preview settles it) and the Heroic series (16-pixel cartoon units).
 
 The mockups (store previews beside Tiny Tales art, never committed) are
-`N-0040-*.png` in `spike-renders/` in the bought-art folder on Nick's
-machine: one combat sheet per gap, the mounted candidates on the battle
-map, and a Time Fantasy face beside a Tiny Tales bust.
+`N-0040-*.png` in `assets-private/library/tiny-tales/spike-renders/` on
+Nick's machine (the bought art moved there on 2026-10-02, ADR-0040; they
+are loose files, not committed to the private repository): `gap*` is
+round 1, `r2-*` to `r6-*` the later rounds.
 
-## Nick's answers so far (2026-10-02 and 2026-10-03)
+**The keeper was renamed on 2026-10-04**: where this ticket says *Maud*
+in text written before that day (the gap table, the search results), the
+character was then a man called Piers.
 
-Working notes, kept here so a later session can pick up; the final
-record goes in `look-and-feel.md` when every gap is answered.
+## Nick's answers, round by round (2026-10-02 to 2026-10-04)
+
+The working notes of the decision. The record to build from is
+`look-and-feel.md`, *Fighters with no Tiny Tales art*.
 
 - **Round 1 shortlist (the table above): rejected whole.** "I hate all of
   them... these all look like shit." Don't show those packs again.
@@ -215,9 +220,28 @@ record goes in `look-and-feel.md` when every gap is answered.
 - **SRPG Studio's bundled art and edits of it are locked** to SRPG Studio
   by its terms (<http://srpgstudio.com/guide/rules.html>); owning the tool
   doesn't change that.
-- Searches run: three rounds (itch.io twice, Unity Asset Store, GameDev
-  Market, CraftPix, OpenGameArt, BOOTH, DLsite, SRPG Studio material, the
-  RPG Maker stores, AI-made packs); a fourth is running on 2026-10-03.
+- Searches run: four rounds (itch.io three times, Unity Asset Store,
+  GameDev Market, CraftPix, OpenGameArt, BOOTH, DLsite, Nico Commons, SRPG
+  Studio material, the RPG Maker stores, the Japanese free-material sites,
+  tactics-engine kits, Fire Emblem fan art, stock sites, Mega Tiles' own
+  plans, AI-made packs).
+- **Round 4 found Shironejiya** (白螺子屋, <http://hi79.web.fc2.com/>;
+  free, hand-made, side-on, chibi with dark outlines; paid games, any
+  tool and edits allowed). Nick took it for every fighter on foot: "yes,
+  1.25x though, and we can replace if we get japanweb answer". Riders:
+  "use pixel flag until we get answer from japanweb".
+- **The last four characters** (2026-10-04): the keeper becomes a woman
+  and uses the Tiny Tales Church Cleric ("Piers reads as a man's name so I
+  would like the name changed otherwise we can use the tiny tales art");
+  Crane is S7, the old hooded man ("S7 is ok, and you can make the edit
+  yourself and show me"); the Brawler is the fist fighter and the bald
+  monk is kept for a promoted class ("I like both assets... maybe we can
+  use one for a promoted class or something... but the baldness is a bit
+  weird"); Dace is the dark knight ("this samurai is clearly female she
+  has boobs... so I think we need to use the dark knight which is ok").
+- **Mega Tiles** has announced nothing mounted and no human axe fighter;
+  it takes suggestions in its Character Generator thread on itch.io
+  (<https://itch.io/t/4086314/>), slowly.
 
 ## Nick input
 
@@ -263,12 +287,15 @@ licences (ADR-0013, ADR-0032); art that is AI output with no human touch.
 
 ## Acceptance criteria
 
-- [ ] Every gap has Nick's answer recorded: a pack, a stand-in, or a
+- [x] Every gap has Nick's answer recorded: a pack, a stand-in, or a
       rewritten look.
-- [ ] Each chosen pack's licence text, price and date are recorded before
+- [x] Each chosen pack's licence text, price and date are recorded before
       Nick buys.
-- [ ] 0035, 0413, 0436 and 0706 match the answers.
-- [ ] `cargo xtask ticket-lint` and `typos` pass.
+- [x] 0035, 0413 and 0706 match the answers. (0436 was finished and merged
+      while this ticket ran; it draws map sprites from the Tiny Tales
+      bundle and needs nothing from here until a rider's sprite is
+      imported.)
+- [x] `cargo xtask ticket-lint` and `typos` pass.
 
 ## Tests required
 
@@ -276,5 +303,61 @@ licences (ADR-0013, ADR-0032); art that is AI output with no human touch.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done (2026-10-04).** Four search rounds and six rounds of mockups with
+Nick. Every gap has an answer in `docs/design/look-and-feel.md`,
+*Fighters with no Tiny Tales art*:
+
+| Gap | Answer |
+| --- | ------ |
+| 1. Mounted fighters | Pixel Flag's Paladin at 1.5× in combat (¥500, not bought yet); MattWalkden's free riders on the map |
+| 2. Human axe fighter | Shironejiya: the bearded axe bandit is Harl; the headscarf bandits and the armoured axe fighter are the Brigands and Raiders; all at 1.25× |
+| 3. Archer | Aske rewritten as a girl who is the Archer hero |
+| 4. Clerics | The keeper rewritten as a woman, Maud, who is the Church Cleric; Crane is Shironejiya's old hooded man with a spectacle rim added |
+| 5. Fist fighter | Shironejiya's fist fighter; its bald monk kept for a promoted class |
+| 6. Rival in black | Shironejiya's dark knight; his face comes from the generator |
+
+**Deviations from the plan.**
+
+- The ticket's own shortlist was rejected whole, so the search was redone
+  three more times and widened beyond stores to free-material sites and
+  to art that needs its artist's permission.
+- Nothing was bought, so no purchase record was added to
+  `THIRD_PARTY_ASSETS.md`. The sources' terms, prices and the dates they
+  were read are in `look-and-feel.md`; each gets its row (and its credit,
+  0829) when its files are imported by 0413.
+- No dialogue-screen mockups of faces: none of the chosen art has faces in
+  our bust style, so those characters get generator faces (0706).
+- Two characters were rewritten to fit art, which the ticket allowed for
+  looks but which went further here: **Aske is now a girl** and **the
+  keeper is now a woman called Maud** (was Piers). Nick asked for both.
+  The story files, `assets/data/names.ron`, one line of `ch01.dlg`
+  ("a thin girl") and the open tickets that name them are updated.
+- 0035 is answered here; it stays open only to bring Harl's character
+  sheet into line with his picture.
+
+**Crane's spectacles**, the one edit made: on `m_s_mage_old_m01.png`
+(64×64), rim colour (58, 44, 30) at (18,22) (19,23) (20,23) (21,23)
+(22,22) (23,22) (24,22) (25,23) (26,23) (27,23) (28,23) (29,22) (30,21)
+(31,21), and lens colour (196, 222, 236) at (19,22) (20,22) (21,22)
+(25,22) (26,22) (27,22) (28,22). Nick saw it and raised no objection.
+
+**Claude's starting rules** (Nick can veto):
+
+- The keeper's new name is **Maud**, and her age is 27 (the Church Cleric
+  looks younger than 34). Both are one-line changes.
+- Aske's pointed ears and Dace's armour are not explained in the story.
+- Shironejiya's rule that "tools called generative AI" may not be used is
+  read as being about feeding its art to image generators, which we don't
+  do, not about the game's code. Its contact form can confirm.
+
+**JAPANweb said no** (Nick, 2026-10-04: "apparently the reason he said
+SRPG Studio only is because he modified the SRPG Studio assets... so we
+really can't use them"). His set is built on SRPG Studio's bundled art,
+which that tool's terms lock to it, so the picks above are final and the
+lines in the round-by-round notes that wait on his answer are closed.
+
+**Follow-up tickets:** none.
+
+**For Nick:** Pixel Flag's set (¥500,
+<https://booth.pm/ja/items/7851483>) is the one purchase; it is needed
+when the combat scene (0413) draws a rider.

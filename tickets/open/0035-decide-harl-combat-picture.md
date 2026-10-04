@@ -70,6 +70,16 @@ more itch bundles to fill in with a similar style for rest of cast".
 still decides each purchase. Take Harl's candidates from 0040's shortlist
 (*human axe fighter*), render them as below, and record Nick's pick here.
 
+**Answered 2026-10-04 in ticket 0040.** Nick saw Harl's candidates there
+with the other gaps and picked **Shironejiya's bearded axe bandit**
+(`bandanna05`, free, at 1.25×; `look-and-feel.md`, *Fighters with no Tiny
+Tales art*): a big bearded man in a headscarf shouldering a heavy axe. He
+keeps his axe, so he stays a Brigand and 0803 is unaffected. **What is left for this ticket:** bring `red_captain.md`'s
+portrait brief into line with the picture (a headscarf and a bare-armed
+vest, not a kettle helm, mail and a red jacket), then archive it. His face
+is still a Character Generator face (0706): the picture has none in our
+bust style.
+
 ## Nick input
 
 **Decision.** Claude brings candidate packs (0040's shortlist), and Nick

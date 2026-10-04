@@ -654,15 +654,16 @@ like shit". What the search was held to after that:
 | Brawler | The **fist fighter** (`martial03`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Dace | The **dark knight** (`darkknight`): black horned armour, closed helm, red cape | 1.25× | a Tiny Tales human | Shironejiya |
 
-- **These are the answers until JAPANweb replies.** The art Nick likes
-  best is JAPANweb's *SRPG Studio ICON オリジナル版* (riders, pegasus,
-  griffon and wyvern riders, fighters and a monk, side-on, with map
-  sprites): "would prefer if we can use japanweb". Its terms forbid use
-  outside SRPG Studio, so Nick emailed the artist on 2026-10-03 asking for
-  permission. If he agrees, his riders replace the Paladin and his
-  fighters may replace Shironejiya's ("we can replace if we get japanweb
-  answer"); ticket 0041. If he refuses or doesn't answer, the table
-  stands.
+- **JAPANweb's art can't be used.** The art Nick liked best was
+  JAPANweb's *SRPG Studio ICON オリジナル版* (riders, pegasus, griffon and
+  wyvern riders, fighters and a monk, side-on, with map sprites): "would
+  prefer if we can use japanweb". Its terms forbid use outside SRPG
+  Studio, so Nick emailed the artist on 2026-10-03. He answered by
+  2026-10-04; Nick: "apparently the reason he said SRPG Studio only is
+  because he modified the SRPG Studio assets... so we really can't use
+  them". SRPG Studio's own terms lock its bundled art, and every edit of
+  it, to games made with SRPG Studio, so his permission would not be
+  enough. The table above is therefore the answer, not a stand-in.
 - **Aske and the keeper were rewritten to fit the art** (Nick: "I don't
   have a major attachment to any story beats... whatever is lowest lift in
   your POV that makes sense"). Aske is a Brennish girl of 17 drawn as the
@@ -711,7 +712,8 @@ like shit". What the search was held to after that:
 - **Not usable, so nobody rechecks:** SRPG Studio's bundled art and every
   edit of it (its terms allow it only in games made with SRPG Studio);
   RPG Maker stock-character lookalikes; Fire Emblem fan sprites (reworks
-  of Nintendo's art, no commercial grant); JAPANweb's other sets (fan art
+  of Nintendo's art, no commercial grant); JAPANweb's sets (built on SRPG
+  Studio's art, as he told Nick; the others are fan art
   of licensed series, or barred from money-making use).
 - **Seen and not chosen:** the *SRPG Maker Asset Pack* on Steam
   (<https://store.steampowered.com/app/2819000/>, $17.99; 1998 graphics

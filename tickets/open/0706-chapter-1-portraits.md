@@ -100,13 +100,13 @@ character's faces, battle picture and map sprite together. This replaces the pre
 | --------- | ----------------- |
 | `lead_m`, `lead_f` | Male and Female Fighter: good. He wears a blue coat with steel shoulder plates; she wears pink and carries a curved sabre, so their costumes don't match each other |
 | `poacher` Aske | **The Archer hero, as she is** (decided 2026-10-02, ticket 0040): Nick likes the art, so Aske was rewritten as a girl of 17 with the Archer's look (long blonde hair, a leaf in her hair, brown cloak, green tunic). Face, combat picture and map sprite all come from the Archer. Her ears are drawn pointed; she is human and the story never mentions them |
-| `rival` Dace | Samurai: dark blue hair in a ponytail, red coat, a long katana; reads as young and slight. Partial. The Magitek *Human Noble* still picture (dark hair, blue coat, sword) fits his look better but has no face |
+| `rival` Dace | **Not the Samurai** (decided 2026-10-04, ticket 0040; Nick: "this samurai is clearly female"). In combat he is Shironejiya's dark knight, whose closed helm hides his face, so his dialogue face is a generator face of the man in his portrait brief (dark swept-back hair, black, Veyne blue) and need not match the armour |
 | `heretic` Rue | Witch: silver-blue hair, a big blue hat, a staff and an orb. As decided |
 | `retainer` Hollis | Still picture: *Faith and Evil* Church Knight (full helm, spear, tower shield): good for a Guard. Face: generator (soldier outfit, grey hair, full moustache); no coif |
 | `keeper` Maud | **The Church Cleric** (decided 2026-10-04, ticket 0040): the keeper was a man called Piers; Nick chose the hooded, green-haired Church Cleric, so she was rewritten as a woman and renamed Maud. Still picture and map sprite from *Faith and Evil*; that pack has no faces, so her face is a generator face made to match (green hair; no hood exists in the generator) |
-| `sergeant` Tamsin | **Nothing mounted exists in all 37 products.** On foot, the *Magitek Dynasty* Dynasty Soldier (red and white, spear, red hair) is closest. Face: generator |
-| `vowmaster` Crane | Still picture: Church Archmage (old, mitre, white beard) or *Gods and Gallants* "Dark Sovereign Okuul" (a tall pointed hood, a scythe). Face: generator can't do the hood or spectacles |
-| `red_captain` Harl | No human axe fighter except the Amazon Warrior hero (a woman). Ticket 0035 |
+| `sergeant` Tamsin | In combat, Pixel Flag's Paladin (a helmeted lancer on a white horse; ticket 0040), so her picture shows no face. Face: generator |
+| `vowmaster` Crane | In combat, Shironejiya's old hooded man with a staff, with a spectacle rim added (ticket 0040). Face: the generator can't do the hood or spectacles; make an old bearded face and add the spectacle rim as a small edit |
+| `red_captain` Harl | In combat, Shironejiya's bearded axe bandit in a headscarf (ticket 0040). Face: generator (full beard, red hair); Shironejiya's own bandit faces are in an older, plainer style than our busts |
 | `soldier` (generic) | Faces only from the generator; map sprites and still pictures for bandits, soldiers and church wardens exist |
 
 - **Later cast, found while looking:** the Heroes 2 **Amazon Warrior**
@@ -118,10 +118,11 @@ character's faces, battle picture and map sprite together. This replaces the pre
   think the generator can work"): ticket 0040. A character who fights
   takes their face from the same pack as their combat picture where that
   pack has faces; a character who never fights may use a generator face.
-  **Either order works with 0040:** if 0040 is done, use the packs Nick
-  bought. If it isn't, give Maud, Tamsin and Hollis generator
-  faces now (Aske uses the Archer hero), tell Nick in the sign-off which ones are stand-ins, and add a
-  line to 0040 to swap them when a pack is bought.
+  **0040 is done (2026-10-04):** none of the art Nick chose there has
+  faces in our bust style, so Maud, Tamsin, Hollis, Harl, Dace and Crane
+  all get generator faces; Aske uses the Archer hero's. The combat
+  pictures are listed in `look-and-feel.md`, *Fighters with no Tiny Tales
+  art*.
 
 **Gaps** (Nick, 0021: "probably A or D"): first the Character Generator EX
 once Nick has bought it (its licence was checked in 0021: commercial use is
