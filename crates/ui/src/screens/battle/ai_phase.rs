@@ -147,12 +147,10 @@ impl AiAction {
         // Held: the pan and the highlight play `fast` times faster; the
         // walk goes at its held speed, whatever is left of the frame.
         let start = self.walk_start();
-        let before = (start - self.t).max(0.0) / self.pacing.fast;
-        if dt < before {
-            return self.t + dt * self.pacing.fast;
-        }
+        let before = ((start - self.t).max(0.0) / self.pacing.fast).min(dt);
+        let rest = dt - before;
         let walk = self.pacing.held_walk_tiles_per_s / self.pacing.walk_tiles_per_s;
-        (self.t.max(start) + (dt - before) * walk).min(self.total())
+        (self.t + before * self.pacing.fast + rest * walk).min(self.total())
     }
 
     /// Advances the clock by `dt` seconds (`confirm_held`: Confirm is down
