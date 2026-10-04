@@ -22,7 +22,7 @@ A gifted girl from a Thornmarch charcoal-burners' family, taken twice:
 At 16 she burned at the Ashfields with the other Candles and deserted in the
 smoke. There she swore a fire vow of her own, which makes her a heretic. Her
 hands are scarred from that day. This autumn she took shelter with Keeper
-Piers at Harrowby as his "cook" (she can't cook).
+Maud at Harrowby as her "cook" (she can't cook).
 
 ## Want, need, flaw, secret
 
@@ -41,7 +41,7 @@ Piers at Harrowby as his "cook" (she can't cook).
   She keeps both to herself because she thinks the lead, Dace's old friend,
   was in on it.
 - **Pressure:** she's a heretic and a deserter. Every keeper and Hound would
-  take her back, and Piers's report told them where she was.
+  take her back, and Maud's report told them where she was.
 
 ## Arc
 
@@ -53,9 +53,9 @@ Piers at Harrowby as his "cook" (she can't cook).
 | Where | What changes |
 | ----- | ------------ |
 | Ch1 | Recognises the Veyne seal on Harl's orders; it was on the cart's passes. Tells the lead, coldly, that she's seen it before, and suspects the lead's family. |
-| Ch3 | Tells the lead what Dace did at the mill, and hears Piers confess the report. Both relationships crack before they can heal. |
+| Ch3 | Tells the lead what Dace did at the mill, and hears Maud confess the report. Both relationships crack before they can heal. |
 | Ch3 | (Also) the register shows she was a Candle, and Aske hears it. |
-| Ch6 | At the Ashfields, tells Hollis that Wren was alive after the fire. Aske learns she stood on the fire line that burned his brother's company. |
+| Ch6 | At the Ashfields, tells Hollis that Wren was alive after the fire. Aske learns Rue stood on the fire line that burned her brother's company. |
 | Ch7 | Side quest "The Other Cart" (a Candle who escaped with her). |
 | Acts 2–3 | Swears her vow anew; finds the children. |
 
@@ -66,8 +66,8 @@ Piers at Harrowby as his "cook" (she can't cook).
 | The lead | Hostile | Dace's friend. She wants to know what they knew |
 | Hollis (`retainer`) | Wary | Dace's father. Later, the person she owes the truth about Wren |
 | Tamsin (`sergeant`) | Friendship | The first person Rue lets tease her |
-| Aske (`poacher`) | Strangers; his hatred from Ch3, understanding by Act 3 | Candles burned his brother |
-| Piers (`keeper`) | Guilt → reconciliation | He sheltered her and reported her |
+| Aske (`poacher`) | Strangers; Aske's hatred from Ch3, understanding by Act 3 | Candles burned Aske's brother |
+| Maud (`keeper`) | Guilt → reconciliation | Maud sheltered her and reported her |
 | Wren (`sister`) | A friend from the Candles' barracks | The girl she couldn't take with her |
 
 ## Voice notes
@@ -76,8 +76,8 @@ Piers at Harrowby as his "cook" (she can't cook).
   gods irreverently ("Vael's teeth"). Talks about food constantly; she was
   hungry for years.
 - Precise and cold when she talks about the Candles; no jokes there, ever.
-- Calls the lead "heir" (sarcastic) until she trusts them. Calls Piers "Keeper"
-  with a sneer, then "Piers" by the end.
+- Calls the lead "heir" (sarcastic) until she trusts them. Calls Maud "Keeper"
+  with a sneer, then "Maud" by the end.
 - **Won't say:** "please". She'll say "give it here" instead.
 
 **Sample lines**
@@ -121,4 +121,4 @@ Numbers are set by 0005 or a balance ticket (`magic.md`).
 | Hollis (`retainer`) | Trust / family-like | Telling a father about his children. |
 | Tamsin (`sergeant`) | Friendship | Bad manners and good company. |
 | Aske (`poacher`) | Rivalry → understanding | The Ashfields from both ends of the fire. |
-| Piers (`keeper`) | Conflict → reconciliation | The report, and what a keeper owes a heretic. |
+| Maud (`keeper`) | Conflict → reconciliation | The report, and what a keeper owes a heretic. |

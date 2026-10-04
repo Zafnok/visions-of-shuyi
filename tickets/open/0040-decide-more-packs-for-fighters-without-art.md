@@ -5,7 +5,7 @@ type: design-decision
 milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
-status: todo
+status: in-progress
 blocked_by: ["0038"]
 nick_input: decision
 completed:
@@ -38,7 +38,7 @@ F = face):
 | 1. Mounted fighters | Rider (Tamsin, Chapter 1), Lancer, Outrider, Iron Rider and their tier-3 classes; later a flying mount (Flier) | P, M | An on-foot lance fighter (`look-and-feel.md`) |
 | 2. Human axe fighter | Harl (Chapter 1 boss, ticket 0035), Brigand and Raider enemies | P (F for Harl) | The orc axe fighter; human `Warrior_M*` map sprites exist |
 | 3. Male archer | Aske (Chapter 1) | P, F | The Archer hero, who is plainly a female elf |
-| 4. Hooded male cleric; old hooded priest with spectacles | Piers (Chapter 1); Crane (enemy caster, Chapter 7) | P, F | Church Cleric / Church Archmage; the generator has no hoods or glasses |
+| 4. Hooded male cleric; old hooded priest with spectacles | Maud (Chapter 1); Crane (enemy caster, Chapter 7) | P, F | Church Cleric / Church Archmage; the generator has no hoods or glasses |
 | 5. Fist fighter | Brawler (Gil Parrow, Chapter 4) | P | None; the generator has a brawler outfit for face and map sprite |
 | 6. A rival swordsman in black | Dace (Chapter 1 tease, Chapter 4) | P, F | The Samurai hero (partial) |
 
@@ -120,6 +120,104 @@ GandalfHardcore's mounted knight); **keep the stand-in**; or **rewrite the
 character to fit art we own** (for example Aske as the elf archer the
 picture shows). The mockups must show the double-size and rougher-style
 candidates next to a Tiny Tales hero so Nick can judge the clash himself.
+
+## Recheck and mockups (2026-10-02, step 1 and 2)
+
+Every shortlisted itch.io page was opened again and its previews cut out
+for the mockups. Prices and licence texts are as in the table above,
+with these corrections:
+
+- **Sizes, measured on the previews.** The small sprites are smaller than
+  the first search said: Dreamir's bandits are 21–22 wide and 26–28 tall
+  (on a 64×64 canvas), Sagak's archers and fighter 21–24 by 33–36, Zerie's
+  characters 18–24 by 20–23 (the mounted Lancer 29×40 with his lance),
+  the Time Fantasy rider 29×38. Our Tiny Tales fighters are 45–60 tall.
+  Fat Cat's battlers are 50–61 by 58–62: the same size as ours.
+  GandalfHardcore's knight is 78×103.
+- **Fat Cat's page is pay-what-you-want**: the free download holds only
+  the Halberdier and the Valkyrie under the non-commercial licence; the
+  ten-fighter *Premium* pack with the commercial licence is $4.99.
+- **GandalfHardcore's licence** also forbids "Using them for AI training
+  or NFT projects" and "Incorporating them into 'game development tools'
+  or printed materials". Neither touches a game. Its one portrait is a
+  closed helmet, so it gives Tamsin no face. $5.19 (35% off $7.99).
+- **Zerie's licence** forbids AI training and NFT use too; credit is
+  "appreciated but not required". The pack also has an **Armored Axeman**
+  (gap 2) and a **Priest** in a mitre (gap 4).
+- **Found on the sellers' other pages:** Sagak's *8-Bit Heroes Pack 1*
+  ($29, ten characters) has a brown-haired fighter with an axe and a round
+  shield (gap 2); *8-Bit Heroes 2: Archer2* ($3) is a second male archer
+  in a blue feathered hat; Sagak's *Priest* ($3) is a nun, so no use for
+  Maud. *Time Fantasy Faces* is $8 at
+  <https://finalbossblues.itch.io/tf-faces> and *Sprites 1* $15 at
+  <https://finalbossblues.itch.io/tf-rpg-charactersprites-1>.
+- **Time Fantasy Mini Sprites** has a horses sheet with no riders on it.
+- **AI:** no page says AI was used, and none fills in itch.io's AI
+  disclosure field. The art reads as hand-made pixel art (three sellers
+  ship their Aseprite files).
+- **Not mocked up:** Aekashics' bandits (painted, not pixel art: the
+  preview settles it) and the Heroic series (16-pixel cartoon units).
+
+The mockups (store previews beside Tiny Tales art, never committed) are
+`N-0040-*.png` in `spike-renders/` in the bought-art folder on Nick's
+machine: one combat sheet per gap, the mounted candidates on the battle
+map, and a Time Fantasy face beside a Tiny Tales bust.
+
+## Nick's answers so far (2026-10-02 and 2026-10-03)
+
+Working notes, kept here so a later session can pick up; the final
+record goes in `look-and-feel.md` when every gap is answered.
+
+- **Round 1 shortlist (the table above): rejected whole.** "I hate all of
+  them... these all look like shit." Don't show those packs again.
+- **Gap 3, Aske: done.** "I like the archer character from tiny tales so
+  if it's not integral to the plot that this Aske person needs to be
+  human male then rewrite as female elf." Nothing in the plot needs a
+  boy, and the world has no elves, so Aske is now a human girl of 17 drawn
+  as the Archer hero; her pointed ears are never mentioned (Nick: "whatever
+  is lowest lift in your POV that makes sense"). Sheet, story files, the
+  Chapter 1 script line and tickets 0706 and 0716 are updated.
+- **What a battle picture must be** (Nick, round 2): the two fighters
+  **face each other**, so a picture drawn facing the camera is out
+  ("I need them to be facing each other ideally"). Sizes between 1× and
+  2× are fine ("maybe 1.5x or 1.25x").
+- **Map sprites for riders:** MattWalkden's *Fantasy Battle Pack*
+  (<https://mattwalkden.itch.io/fantasy-battle-pack>, pay what you want,
+  "Royalty free commercial and personal license", "No generative AI was
+  used"): "as long as they are animated same as rest of our units
+  MattWalkden looks good". Its page lists idle, move, attack and death in
+  4 directions. Read the licence file in the download for edits before
+  use. Foot fighters need no bought walker: the bundle has 300+ human map
+  sprites.
+- **Pixel Flag's 64-figure set** (BOOTH, ¥500,
+  <https://booth.pm/ja/items/7851483>; commercial use and edits allowed,
+  no resale, no credit needed, "AI生成不使用"): Nick likes only the
+  **Paladin**, at **1.5×**; "rest kinda meh". Its foot figures face the
+  camera.
+- **JAPANweb's *SRPG Studio ICON オリジナル版*** is the look Nick likes
+  best ("japanweb looks quite good", "would prefer if we can use
+  japanweb"). Its terms (archived 2021-10-28; the live file is gone) say
+  「SRPG Studio以外の作品への使用は許可しません」 and allow paid doujin
+  games, edits, credit required. **Nick emailed him on 2026-10-03 asking
+  for permission**; nothing is decided until he answers. The art is close
+  to Fire Emblem's own sprites: look at the files before shipping any.
+- **AI-assisted packs:** "not a huge fan of them unless we use them
+  sparingly like for bosses or rare enemies". From cogabushi's side-view
+  set (itch.io $28.80 / BOOTH ¥4,100; AI-generated then retouched;
+  commercial use and edits allowed) he "doesn't mind much" **C3** (the
+  red-armoured captain with a battle-axe) as Harl and **C5** (the
+  crescent-axe fighter) as a normal brigand, as the fallback if JAPANweb
+  says no.
+- **Holder's free animated battlers** (any engine, credit; only his own
+  designs, not the ones modelled on RPG Maker's): the axe fighter is "ok
+  but not for harl or brigands", only for a party member it happens to
+  fit.
+- **SRPG Studio's bundled art and edits of it are locked** to SRPG Studio
+  by its terms (<http://srpgstudio.com/guide/rules.html>); owning the tool
+  doesn't change that.
+- Searches run: three rounds (itch.io twice, Unity Asset Store, GameDev
+  Market, CraftPix, OpenGameArt, BOOTH, DLsite, SRPG Studio material, the
+  RPG Maker stores, AI-made packs); a fourth is running on 2026-10-03.
 
 ## Nick input
 

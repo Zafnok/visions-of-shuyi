@@ -448,15 +448,15 @@ sprites.
 - **Expressions:** the five the dialogue needs (`neutral`, `happy`, `angry`,
   `sad`, `surprised`) are mapped to the closest of the 8 per character
   (0706). A missing one may be made by a small edit.
-- **Characters who fight and have no fitting bought art**: Nick wants
-  more bought packs in a similar style (2026-10-02: "help me locate some
-  more itch bundles to fill in with a similar style for rest of cast").
-  Claude searches and checks each pack's licence and price; Nick decides
-  each purchase (ticket 0040; Harl is ticket 0035). **Characters who never
-  fight** may get a face from the Character Generator ("if these are
-  non-battle units, I think the generator can work").
+- **Characters who fight and have no fitting bought art**: Nick wanted
+  more packs in a similar style (2026-10-02: "help me locate some more
+  itch bundles to fill in with a similar style for rest of cast"). What he
+  chose is in *Fighters with no Tiny Tales art* below (ticket 0040).
+  **Characters who never fight** may get a face from the Character
+  Generator ("if these are non-battle units, I think the generator can
+  work").
 - **Characters no bought face fits** (in Chapter 1 likely Hollis, Harl,
-  Piers and Crane): first Mega Tiles' **Character Generator EX** (bought
+  Maud and Crane): first Mega Tiles' **Character Generator EX** (bought
   with the bundle; version 1.2), a Windows program that makes new
   characters in the same style: a face with 8 expressions, a small animated
   battle sprite and a map sprite. Its licence (the same text as the packs)
@@ -497,14 +497,14 @@ sprites.
   size), and found both "a little off". His worry about the full-screen one
   is that it "won't be able to convey all the info", though "maybe it can
   work with some additional in-battle overlays or pop up messages".
-- **Classes with no hero art use a still image as a stand-in in Chapter 1**:
-  - **Cleric:** the church cleric (*Faith and Evil*).
+- **Classes with no hero art use a still image** (updated 2026-10-04,
+  ticket 0040; the full list is in *Fighters with no Tiny Tales art*
+  below):
+  - **Cleric:** the church cleric (*Faith and Evil*); she is also Maud's
+    picture.
   - **Guard:** the church knight (*Faith and Evil*).
-  - **Brigand:** the orc axe fighter (*Monstrous Uprising*). Chapter 1's
-    bandits stay human in the story *(Claude's starting rule: Nick accepted
-    the stand-in without choosing between it and making the bandits orcs)*.
-  - **Rider:** no pack has anything mounted; an on-foot lance fighter
-    stands in until real art exists (no commissions).
+  - **Brigand:** Shironejiya's human bandits (it was the orc axe fighter).
+  - **Rider:** Pixel Flag's Paladin (it was an on-foot lance fighter).
   0413 picks the exact images. None of these have faces; they're generic
   enemies or get a face from the Character Generator.
 - **Named characters use their class's picture, recoloured to their own
@@ -520,9 +520,109 @@ sprites.
 - **Harl** (Chapter 1 boss) has no fitting picture in the Mega Tiles
   catalogue: the axe fighters are orcs, beasts or a minotaur, and a human
   knight would change his weapon (weapon type is a rule, so the picture must
-  match it). Nick is shopping around for candidates (ticket 0035). The
-  orc, the Dragon Knight and the Magitek dark knight were shown and not
-  chosen.
+  match it). The orc, the Dragon Knight and the Magitek dark knight were
+  shown and not chosen. **He uses Shironejiya's bearded axe bandit**
+  (ticket 0040, below).
+
+#### Fighters with no Tiny Tales art
+
+Decided 2026-10-02 to 2026-10-04, ticket 0040, on mockups of each
+candidate beside the lead in a combat scene. Four search rounds covered
+itch.io, the Unity Asset Store, GameDev Market, CraftPix, OpenGameArt,
+BOOTH, DLsite, Nico Commons, SRPG Studio and RPG Maker material, the
+long-running Japanese free-material sites, stock sites and AI-made packs.
+Nick's words on the first shortlist: "I hate all of them... these all look
+like shit". What the search was held to after that:
+
+- **A battle picture is drawn side-on, so the two fighters face each
+  other** ("I need them to be facing each other ideally"). A picture that
+  faces the camera is out.
+- **Sizes between 1× and 2× are allowed** ("maybe 1.5x or 1.25x"), so a
+  picture from another artist can stand as tall as a Tiny Tales hero.
+  Tiny Tales' own class pictures are drawn smaller than its heroes (the
+  Church Cleric is 42 pixels tall, the lead 62; Nick: "the scale is
+  slightly different than the hero character"), so they may be enlarged
+  the same way. 0413 sets each picture's size on the real screen.
+- **AI-assisted art only sparingly**: "not a huge fan of them unless we
+  use them sparingly like for bosses or rare enemies". None is used today.
+
+**Who uses what:**
+
+| Fighter | Combat picture | Size | Map sprite | Source |
+| ------- | -------------- | ---- | ---------- | ------ |
+| Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders | Pixel Flag; MattWalkden |
+| Harl | The **bearded axe bandit** (`bandanna05`) | 1.25× | a Tiny Tales human | Shironejiya |
+| Brigand, Raider and other human bandits | The **headscarf bandits** (`bandanna01`–`04`) and the **armoured axe fighter** (`fighter04`) | 1.25× | a Tiny Tales human | Shironejiya |
+| Aske | The **Archer** hero, as she is | 1× | the Archer's | Tiny Tales (owned) |
+| Maud (the keeper; Cleric) | The **Church Cleric** | 0413 | the Church Cleric's | Tiny Tales (owned) |
+| Crane | The **old hooded man with a staff** (`mage_old_m01`), with a spectacle rim added by Claude (a 21-pixel edit) | 1.25× | a Tiny Tales human | Shironejiya |
+| Brawler | The **fist fighter** (`martial03`) | 1.25× | a Tiny Tales human | Shironejiya |
+| Dace | The **dark knight** (`darkknight`): black horned armour, closed helm, red cape | 1.25× | a Tiny Tales human | Shironejiya |
+
+- **These are the answers until JAPANweb replies.** The art Nick likes
+  best is JAPANweb's *SRPG Studio ICON オリジナル版* (riders, pegasus,
+  griffon and wyvern riders, fighters and a monk, side-on, with map
+  sprites): "would prefer if we can use japanweb". Its terms forbid use
+  outside SRPG Studio, so Nick emailed the artist on 2026-10-03 asking for
+  permission. If he agrees, his riders replace the Paladin and his
+  fighters may replace Shironejiya's ("we can replace if we get japanweb
+  answer"); ticket 0041. If he refuses or doesn't answer, the table
+  stands.
+- **Aske and the keeper were rewritten to fit the art** (Nick: "I don't
+  have a major attachment to any story beats... whatever is lowest lift in
+  your POV that makes sense"). Aske is a Brennish girl of 17 drawn as the
+  Archer; her pointed ears are never mentioned (the world has no elves).
+  The keeper, a man called Piers, is a woman called **Maud** drawn as the
+  Church Cleric ("Piers reads as a man's name so I would like the name
+  changed") *(the name Maud is Claude's; it can be changed in
+  `names.ron`)*.
+- **Dace is not the Samurai hero**: "this samurai is clearly female".
+  The dark knight's helm hides his face, so his dialogue face comes from
+  the Character Generator and need not match (an exception to *face and
+  combat picture should match*).
+- **Shironejiya's bald monk** (`martial01`) is kept for one of the
+  Brawler's promoted classes ("I like both assets... maybe we can use one
+  for a promoted class"); which one is that class's ticket's call.
+- **Holder's axe fighter** (free animated battlers) is "ok but not for
+  harl or brigands": only for a party member it happens to fit. Use only
+  Holder's own designs, not the ones modelled on RPG Maker's characters.
+- **Fallback already judged**, if art is needed for a boss or a rare
+  enemy and nothing above fits: from cogabushi's AI-assisted side-view set
+  Nick "doesn't mind much" the red-armoured captain with a battle-axe and
+  the crescent-axe fighter.
+- **The sources and their terms** (read on 2026-10-03 and 2026-10-04;
+  each gets a row in `THIRD_PARTY_ASSETS.md` when its files come in):
+  - **Shironejiya (白螺子屋)**, <http://hi79.web.fc2.com/>, free,
+    hand-made. 「シェアウェア等への商用利用可」「使用するゲーム作成ツール
+    は特に制限無し」「素材の加工、修正可」: paid games, any tool and edits
+    are allowed. The game must carry a text with the site's name, its
+    address and "the materials in this game may not be reused"; the
+    credits screen and a bundled text file do that. No redistribution.
+    Adult games may not use it commercially. The terms also say 「生成AIと
+    呼ばれるツールの使用は不可です」 (tools called generative AI may not be
+    used), which in context is about feeding the art to image generators:
+    we never do that.
+  - **Pixel Flag (ぴくせるふらっぐ商店)**, *ドット絵TRPGのコマ「クラスと
+    モブ」全64種*, <https://booth.pm/ja/items/7851483>, ¥500. Commercial
+    use and edits allowed, no resale or redistribution, no credit needed,
+    "AI生成不使用の手打ちドット100％". Nick likes only its Paladin. **Not
+    bought yet.**
+  - **MattWalkden**, *Fantasy Battle Pack*,
+    <https://mattwalkden.itch.io/fantasy-battle-pack>, pay what you want.
+    "Royalty free commercial and personal license"; "No generative AI was
+    used". Idle, move, attack and death in 4 directions ("as long as they
+    are animated same as rest of our units MattWalkden looks good"). Read
+    the licence file in the download for edits before the first use.
+- **Not usable, so nobody rechecks:** SRPG Studio's bundled art and every
+  edit of it (its terms allow it only in games made with SRPG Studio);
+  RPG Maker stock-character lookalikes; Fire Emblem fan sprites (reworks
+  of Nintendo's art, no commercial grant); JAPANweb's other sets (fan art
+  of licensed series, or barred from money-making use).
+- **Seen and not chosen:** the *SRPG Maker Asset Pack* on Steam
+  (<https://store.steampowered.com/app/2819000/>, $17.99; 1998 graphics
+  with mounted knights, dragon riders, map units and faces; "Makerシリーズ
+  以外でも利用可・商用利用可"), in a 1990s semi-realistic style. Nick has
+  the link; nothing is decided about it.
 
 ### Screen layout
 

@@ -18,8 +18,8 @@ completed:
 The Chapter 1 script (0707, `assets/dialogue/ch01.dlg`) is written for a
 battle everyone lived through. In Classic a companion who falls is dead
 (`docs/design/death-and-difficulty.md`), and today they still talk in the
-victory scene: Tamsin closes Harl's eyes, Rue recognises the seal, Piers
-says they can't stay, Aske asks for his arrows, Hollis looks at the wax.
+victory scene: Tamsin closes Harl's eyes, Rue recognises the seal, Maud
+says they can't stay, Aske asks for her arrows, Hollis looks at the wax.
 0715 gives scripts a way to mark lines by who is still in the army. This
 ticket uses it in Chapter 1, following the `story-writing` skill.
 
@@ -46,7 +46,7 @@ without them, as text. Nick comments if a beat reads wrong.
   answer when they are dead (Hollis, Tamsin and Aske answer today).
 - In-battle scenes that speak to or about another companion who may have
   fallen first: `ch01_first_turn` (none can have), `ch01_death_keeper` and
-  `ch01_retreat_keeper` (Piers speaks to Rue), `ch01_death_heretic` (Rue
+  `ch01_retreat_keeper` (Maud speaks to Rue), `ch01_death_heretic` (Rue
   names "the Keeper"), `ch01_boss_engage_sergeant` (only Tamsin; fine).
   Check each and fix the ones that read wrong.
 - `ch01_prebattle` and `ch01_intro` need nothing: nobody can be dead yet.
@@ -75,12 +75,12 @@ without them, as text. Nick comments if a beat reads wrong.
    - **Tamsin dead:** nobody jokes over Harl. Hollis finds the orders.
      Her "as far as there's pay" is gone; someone notices her horse, or her
      ledger. The ledger went to the lead in her death quote.
-   - **Rue dead:** no seal line. Piers's "others will come" loses its
+   - **Rue dead:** no seal line. Maud's "others will come" loses its
      reason (they came for her too); he can still say the order named
      three and two are standing.
-   - **Piers dead:** who explains that the seal goes with the title?
+   - **Maud dead:** who explains that the seal goes with the title?
      Hollis won't. Tamsin can ("I thought they took it off you").
-   - **Aske dead:** his arrows line goes; the blunt reply needs another
+   - **Aske dead:** her arrows line goes; the blunt reply needs another
      answer.
    - **Hollis dead:** the hardest one. "Everyone looks at Hollis" becomes
      nobody being left to look at. The spade line goes; someone else

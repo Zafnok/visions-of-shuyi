@@ -449,7 +449,7 @@ equips Force on their turn, the mage counters with Force (and spends a use).
 - **Class spell lists, magic class tree with ≥3 tiers, EXP for heals and tile
   casts:** 0005.
 - **Personal signature spells:** named by 0701 (in `docs/story/characters/`:
-  Piers, Rue, and Crane as an enemy), with numbers set by 0005 or a balance
+  Maud, Rue, and Crane as an enemy), with numbers set by 0005 or a balance
   ticket.
 - **Elemental enemies in Chapter 1, and a terrain-magic moment on the Chapter
   1 map:** neither in Chapter 1 (0009, `chapter-1.md`).

@@ -16,7 +16,7 @@ Id: `sister` · [Name registry](../names.md)
 Hollis's daughter and Dace's little sister. She is gifted, and Dace kept her
 name off Vosse's lists until Vosse found out and took her anyway. Dace
 killed Vosse to get her out of that cart. A year later, while Dace was at
-war, Keeper Piers tested her at Harrowby, as the law required, and the Vigil
+war, Keeper Maud tested her at Harrowby, as the law required, and the Vigil
 took her to be a Candle. She was on the Ashfields. Her family was told she
 burned there. She didn't: Rue saw keepers lead her away alive after the fire.
 
@@ -51,7 +51,7 @@ burned there. She didn't: Rue saw keepers lead her away alive after the fire.
 | Hollis (`retainer`) | Her father, who couldn't stop the Vigil taking her |
 | Rue (`heretic`) | A friend from the Candles' barracks |
 | The lead | Family friend; taught her to skip stones |
-| Piers (`keeper`) | Tested her, and cried after |
+| Maud (`keeper`) | Tested her, and cried after |
 
 ## Voice notes (for when she appears)
 

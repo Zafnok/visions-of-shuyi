@@ -19,7 +19,7 @@ fix an error; add a new one.
   every death paid under the Door Vow, through Wren as bearer, makes him more
   real. Provoking a war with Brennmark is planned but hasn't started (Chapter
   2 starts it).
-- Piers's autumn report reached Ossary. Crane recognised Rue and ordered the
+- Maud's autumn report reached Ossary. Crane recognised Rue and ordered the
   witnesses of the night at the mill silenced. Dace received the order, hired
   the Red Company under his Veyne seal, and sent the lead a warning letter by
   pedlar.
@@ -33,9 +33,9 @@ fix an error; add a new one.
 | Dace pointed out gifted children to Vosse for a year (under Vosse's threat, for Vosse's silver), and stamped the cart's passes with the Veyne seal | Dace; Rue (saw him at the cart, and saw the seal on the passes); Hollis (suspects: he found and burned the purse, the list and a stamped pass) | the lead, everyone else |
 | Dace is gifted, and has never sworn a vow | Dace (Vosse knew; Vosse is dead) | everyone |
 | The lead and Hollis reached the mill minutes after the killing; Hollis carried Wren home | the lead, Hollis, Dace | — |
-| Wren was taken as a Candle; "lost at the Ashfields" | Hollis, the lead, Piers (the official story); Dace (told she died) | — |
-| Wren walked out of the Ashfields fire alive | Rue; Crane; the king | Hollis, Dace, the lead, Piers |
-| Piers reported Rue to the Vigil this autumn | Piers | Rue, everyone else |
+| Wren was taken as a Candle; "lost at the Ashfields" | Hollis, the lead, Maud (the official story); Dace (told she died) | — |
+| Wren walked out of the Ashfields fire alive | Rue; Crane; the king | Hollis, Dace, the lead, Maud |
+| Maud reported Rue to the Vigil this autumn | Maud | Rue, everyone else |
 | Aurel came back from the Ashfields Unfinished and lives hidden in the palace (midpoint twist) | the king, Crane, Wren, a few of Crane's keepers | everyone else, Dace included |
 | Wren is in the palace, the bearer Aurel is finished through (later twist) | Wren, the king, Crane | everyone else; Rue knows only that Wren walked out alive |
 | Crane secretly swore the Candles to the Door Vow before the Ashfields | Crane | everyone else, the king included |
@@ -43,7 +43,7 @@ fix an error; add a new one.
 | The Door and the Door Vow exist | the king, Crane, some of Crane's keepers | Dace (he knows only "the king will bring Wren back"); the party knows nothing |
 | Tamsin was at the Coldwell farm burning | Tamsin, Harl | everyone else |
 | Aske sells news to Brennish raiders | Aske | everyone else |
-| Rue was a Candle and burned at the Ashfields | Rue; Piers (guesses she's gifted and scarred, not that she was a Candle) | everyone else |
+| Rue was a Candle and burned at the Ashfields | Rue; Maud (guesses she's gifted and scarred, not that she was a Candle) | everyone else |
 
 ### Relationships at the start
 
@@ -52,25 +52,25 @@ fix an error; add a new one.
 | The lead ↔ Hollis | Family in all but name. Four years in two rooms. |
 | The lead ↔ Dace | The lead: loyal, four years out of date. Dace: love, guilt and resentment. No contact for four years until the letter. |
 | Hollis ↔ Dace | Estranged, silent. Hollis suspects; Dace avoids him. |
-| Hollis ↔ Piers | Civil, cold (Piers tested Wren). |
-| The lead ↔ Piers | Warm; the Wren question has never been spoken. |
+| Hollis ↔ Maud | Civil, cold (Maud tested Wren). |
+| The lead ↔ Maud | Warm; the Wren question has never been spoken. |
 | The lead ↔ Tamsin | Easy friendship; "Your Former Grace". |
-| The lead ↔ Aske | Wary: he sells them game and calls them "noble". |
+| The lead ↔ Aske | Wary: she sells them game and calls them "noble". |
 | The lead ↔ Rue | Barely spoken. She knows exactly who the lead is, avoids them, and is hostile when she can't. |
 | Hollis ↔ Tamsin | Two old soldiers, good company. |
-| Hollis ↔ Aske | Hollis has started drilling him on the green; Aske pretends to hate it. |
+| Hollis ↔ Aske | Hollis has started drilling her on the green; Aske pretends to hate it. |
 | Hollis ↔ Rue | Barely met; Rue avoids him too (Dace's father). |
-| Tamsin ↔ Aske | Needling. She rode the Ashfields road; he's Brennish. |
+| Tamsin ↔ Aske | Needling. Tamsin rode the Ashfields road; Aske is Brennish. |
 | Tamsin ↔ Rue | Friendly: they've shared a jug at the mill. |
-| Tamsin ↔ Piers | Friendly: dice (he loses). |
-| Aske ↔ Piers | Friendly: Piers has begun teaching him letters. |
+| Tamsin ↔ Maud | Friendly: dice (Maud loses). |
+| Aske ↔ Maud | Friendly: Maud has begun teaching her letters. |
 | Aske ↔ Rue | Strangers. Neither knows the other's Ashfields story. |
-| Piers ↔ Rue | He sheltered her; she half-trusts him. She doesn't know about the report. |
+| Maud ↔ Rue | Maud sheltered her; Rue half-trusts her. Rue doesn't know about the report. |
 | Tamsin ↔ Harl | She walked out on him after Coldwell last winter. He tried to hire her back last night. |
 
 ### Status
 
-- Everyone is alive. The lead, Hollis, Tamsin, Aske, Piers and Rue are in
+- Everyone is alive. The lead, Hollis, Tamsin, Aske, Maud and Rue are in
   Harrowby. Dace is at Veyne Hall. The king is at Varenhall. Crane is at
   Ossary. Wren and Aurel are in the king's private rooms at Varenhall (secret
   until Act 2).
@@ -115,8 +115,8 @@ is 0716's to add.
 | The kill order named the lead, Hollis and Rue, and bore the Veyne seal, which only the lord of Veyne (Dace) may use | all six | why; that the order came from Crane |
 | Harl's last words: "the new lord of Veyne pays in good silver" | whoever was near; treat it as known to all six | — |
 | Rue saw the Veyne seal four years ago "on a cart, at night, with children in it" | all six heard her say it | what the cart was, that she was in it, that Dace was there (she explained nothing; Chapter 3) |
-| Rue is gifted and swears fire | all six: she said she "can light the oven without a match" and fought with fire | that she was a Candle (Chapter 3); only Piers had guessed she was gifted before today |
-| Piers's report brought the killers | Piers (he understood at "the girl with the burned hands") | everyone else. He gave himself away twice in front of them ("I only asked them to...", and later "Somebody was told that Rue is in Harrowby") and nobody asked |
+| Rue is gifted and swears fire | all six: she said she "can light the oven without a match" and fought with fire | that she was a Candle (Chapter 3); only Maud had guessed she was gifted before today |
+| Maud's report brought the killers | Maud (she understood at "the girl with the burned hands") | everyone else. She gave herself away twice in front of them ("I only asked them to...", and later "Somebody was told that Rue is in Harrowby") and nobody asked |
 | Dace's masters believe the three are dead | the player | the party; Crane will learn otherwise (when is later chapters' call) |
 | Dace answers to "the Master of Vows" | the player | the party has not heard the title |
 | The Red Company burned "the farm" for a lord's coin, and Tamsin left over it | Tamsin, Harl (dead). Said aloud only if Tamsin fought Harl (`ch01_boss_engage_sergeant`), and nobody else is shown hearing it | the party: Coldwell is still hers to tell |
@@ -134,21 +134,21 @@ Aske's spying).
 | Hollis ↔ Dace | Hollis has his son's letter and has seen his son's seal on a kill order. He hasn't said his son's name once ("the boy", "him", "his own father"). |
 | Tamsin ↔ Harl | Over. She joked over him, nobody laughed, and she closed his eyes: "Just a job." |
 | The lead ↔ Tamsin | She rides along "as far as there's pay. ...Further, probably." She guessed the seal's owner aloud when nobody else would: "Dace Marr, hero of the war. The Captain's boy." |
-| The lead ↔ Aske | He came "once, for the deer", then stayed: "You owe me eleven arrows, noble." Still "noble". |
-| Piers ↔ Rue | He knows what his letter did and hasn't told her. He tried to hide her in the chapel cellar; she fought instead. |
+| The lead ↔ Aske | She came "once, for the deer", then stayed: "You owe me eleven arrows, noble." Still "noble". |
+| Maud ↔ Rue | Maud knows what her letter did and hasn't told Rue. She tried to hide Rue in the chapel cellar; Rue fought instead. |
 | The party | It exists. Nobody has called it anything. |
 
 ### Status
 
 - Harl Coster is dead and the Red Company with him.
-- The lead, Hollis, Tamsin, Aske, Piers and Rue are on the road north out
+- The lead, Hollis, Tamsin, Aske, Maud and Rue are on the road north out
   of the Thornmarch at dusk, heading for Veyne Hall by Kell's Ford (Chapter
   2). Dace is at Veyne Hall.
 - The lead's exile terms: the lead bears arms, and is on the road out of
   the Thornmarch (the crossing itself is Kell's Ford, Chapter 2). No scene
   has the lead claim the Veyne name or wear the crest; others call them
   "Veyne", as they always have.
-- Piers has left his chapel without leave. He is not yet an apostate in
+- Maud has left her chapel without leave. She is not yet an apostate in
   the Vigil's eyes; Chapter 3 does that.
 - The lead's three replies (the letter, the plan, leaving) are not
   recorded: tones never change what happened.
