@@ -195,14 +195,7 @@ impl FlowScreen {
             setup,
             bench: campaign.bench(&def),
         };
-        history.restore_tables(
-            tables.terrain,
-            tables.classes,
-            tables.items,
-            tables.spells,
-            tables.skills,
-            tables.arts,
-        );
+        history.restore_tables(&tables);
         // If deleting fails the battle still continues.
         let _ = ctx.storage.delete(SUSPEND_KEY);
         // The battle's music again (a pool picks afresh).
