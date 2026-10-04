@@ -57,6 +57,7 @@ pub fn heading(group: CreditGroup) -> &'static str {
     match group {
         CreditGroup::Music => "Music",
         CreditGroup::SoundEffects => "Sound effects",
+        CreditGroup::Art => "Art",
         CreditGroup::Fonts => "Fonts",
         CreditGroup::Software => "Software",
     }
@@ -412,7 +413,10 @@ mod tests {
     #[test]
     fn every_group_has_its_heading() {
         let headings: Vec<&str> = CreditGroup::ALL.iter().map(|&g| heading(g)).collect();
-        assert_eq!(headings, ["Music", "Sound effects", "Fonts", "Software"]);
+        assert_eq!(
+            headings,
+            ["Music", "Sound effects", "Art", "Fonts", "Software"]
+        );
     }
 
     #[test]
@@ -786,5 +790,6 @@ mod tests {
         assert!(texts(&s).contains(&"Sound effects"));
         assert!(texts(&s).contains(&"Fonts"));
         assert!(!texts(&s).contains(&"Software"), "hidden for now");
+        assert!(!texts(&s).contains(&"Art"), "no bought art in a gate");
     }
 }
