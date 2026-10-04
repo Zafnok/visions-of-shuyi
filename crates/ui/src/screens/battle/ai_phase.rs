@@ -12,7 +12,8 @@
 
 use trpg_core::{Pos, Unit, UnitId};
 
-use super::mode::{Mode, WALK_TILES_PER_S};
+use super::mode::Mode;
+use super::walk::{self, Gait, HELD_WALK_TILES_PER_S, WALK_TILES_PER_S};
 
 /// How long each part of an AI action takes. *Tunable.*
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -24,17 +25,21 @@ pub struct Pacing {
     pub highlight: f32,
     /// Walking speed, in tiles per second.
     pub walk_tiles_per_s: f32,
+    /// Walking speed while Confirm is held, in tiles per second.
+    pub held_walk_tiles_per_s: f32,
     /// Speed-up while Confirm is held (the combat playback's is
     /// [`Timings::fast`](super::playback::Timings::fast)).
     pub fast: f32,
 }
 
 /// The game's pacing (ticket 0502: ~0.25 s pan, 0.2 s highlight; walks as
-/// fast as the player's; ×4 while Confirm is held).
+/// fast as the player's, which the screen sets from the map skin; ×4 while
+/// Confirm is held).
 pub const PACING: Pacing = Pacing {
     pan: 0.25,
     highlight: 0.2,
     walk_tiles_per_s: WALK_TILES_PER_S,
+    held_walk_tiles_per_s: HELD_WALK_TILES_PER_S,
     fast: 4.0,
 };
 
@@ -136,24 +141,50 @@ impl AiAction {
     /// The time [`tick`](Self::tick) would advance the clock to.
     fn advanced(&self, dt: f32, confirm_held: bool) -> f32 {
         let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
-        let speed = if confirm_held { self.pacing.fast } else { 1.0 };
-        (self.t + dt * speed).min(self.total())
+        if !confirm_held {
+            return (self.t + dt).min(self.total());
+        }
+        // Held: the pan and the highlight play `fast` times faster; the
+        // walk goes at its held speed, whatever is left of the frame.
+        let start = self.walk_start();
+        let before = ((start - self.t).max(0.0) / self.pacing.fast).min(dt);
+        let rest = dt - before;
+        let walk = self.pacing.held_walk_tiles_per_s / self.pacing.walk_tiles_per_s;
+        (self.t + before * self.pacing.fast + rest * walk).min(self.total())
     }
 
     /// Advances the clock by `dt` seconds (`confirm_held`: Confirm is down
-    /// this frame): [`Pacing::fast`] times faster while held. A bad `dt`
-    /// counts as 0.
+    /// this frame): while held, the pan and the highlight play
+    /// [`Pacing::fast`] times faster and the unit walks at
+    /// [`Pacing::held_walk_tiles_per_s`]. A bad `dt` counts as 0.
     pub fn tick(&mut self, dt: f32, confirm_held: bool) {
         self.t = self.advanced(dt, confirm_held);
     }
 
     /// How many path steps the unit has taken at time `t`.
     fn steps_at(&self, t: f32) -> usize {
-        let walked = (t - self.walk_start()) * self.pacing.walk_tiles_per_s;
-        let steps = self.path.len().saturating_sub(1);
-        (1..=u16::try_from(steps).unwrap_or(u16::MAX))
-            .take_while(|&k| f32::from(k) <= walked)
-            .count()
+        // Once played out, all of them, whatever rounding leaves of the
+        // last tile.
+        if t >= self.total() {
+            return self.path.len().saturating_sub(1);
+        }
+        walk::steps(self.path.len(), self.walked_at(t))
+    }
+
+    /// How many tiles the unit has walked at time `t` (negative before
+    /// the walk starts).
+    fn walked_at(&self, t: f32) -> f32 {
+        (t - self.walk_start()) * self.pacing.walk_tiles_per_s
+    }
+
+    /// How the unit looks between two tiles of its walk ([`walk::gait`]);
+    /// `None` before it walks and once it has arrived.
+    pub fn gait(&self) -> Option<Gait> {
+        if !self.walking() || self.done() {
+            return None;
+        }
+        let pace = self.pacing.walk_tiles_per_s;
+        walk::gait(&self.path, self.walked_at(self.t), pace)
     }
 
     /// How many tiles the unit enters in the next [`tick`](Self::tick)
@@ -308,6 +339,52 @@ mod tests {
         fast.tick(f32::NAN, true);
         fast.tick(-1.0, false);
         assert!((slow.time() - fast.time()).abs() < 1e-6);
+    }
+
+    #[test]
+    fn a_held_walk_goes_at_its_own_speed_however_fast_the_rest_plays() {
+        // A sprite's pacing: 6 tiles a second, 12 held; the pan and the
+        // highlight still four times as fast.
+        let pacing = Pacing {
+            walk_tiles_per_s: 6.0,
+            held_walk_tiles_per_s: 12.0,
+            ..PACING
+        };
+        let before = vec![unit(4, Pos::new(1, 1))];
+        let pan = (Pos::new(0, 0), Pos::new(3, 0));
+        let new = || {
+            AiAction::new(
+                UnitId(4),
+                before.clone(),
+                pan,
+                line(6),
+                Mode::default(),
+                pacing,
+            )
+        };
+        let start = new().walk_start();
+        // Before the walk: ×4.
+        let mut a = new();
+        a.tick(0.05, true);
+        assert!((a.time() - 0.2).abs() < 1e-6);
+        // One frame over the walk's start: the rest of it at ×2.
+        a.tick(start / 4.0, true);
+        assert!(
+            (a.time() - (start + 0.05 * 2.0)).abs() < 1e-5,
+            "{}",
+            a.time()
+        );
+        // In the walk: 12 tiles a second. Three tiles in a quarter second.
+        let mut a = new();
+        a.tick(start, false);
+        assert_eq!(a.tiles_entered(0.25, true), 3);
+        assert_eq!(a.tiles_entered(0.25, false), 1);
+        a.tick(0.25, true);
+        assert_eq!(a.walker_pos(), Pos::new(4, 1));
+        assert!((a.time() - (start + 0.5)).abs() < 1e-5);
+        // Never past the end.
+        a.tick(9.0, true);
+        assert!(a.done() && (a.time() - a.total()).abs() < 1e-6);
     }
 
     #[test]

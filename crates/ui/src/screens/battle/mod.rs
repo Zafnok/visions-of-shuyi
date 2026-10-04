@@ -46,6 +46,7 @@ pub mod skills;
 mod sounds;
 pub mod tips;
 pub mod units;
+pub mod walk;
 
 use std::collections::VecDeque;
 use trpg_content::{Content, MapLook, TipTrigger, battle_campaign};
@@ -57,7 +58,7 @@ use trpg_core::{
     next_command,
 };
 
-use self::ai_phase::{AiAction, PACING};
+use self::ai_phase::{AiAction, PACING, Pacing};
 use self::banner::{Banner, BannerKind};
 
 use self::attack::{Targeting, aimed_first, aimed_options};
@@ -70,6 +71,7 @@ use self::playback::{Playback, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{RewindEffect, RewindScreen};
 use self::tips::TipState;
+use self::walk::Gait;
 use super::dialogue::DialogueScreen;
 use super::draw_debug_hint;
 use crate::audio::{CURSOR_MOVE, MenuSound};
@@ -265,6 +267,10 @@ pub struct BattleScreen {
     /// The unit whose walk was shown since the last command: its move's
     /// steps have been heard.
     walked: Option<UnitId>,
+    /// Walking speed, in tiles per second, and an AI unit's while Confirm
+    /// is held: the map skin's ([`MapSkin::walk_tiles_per_s`],
+    /// [`MapSkin::held_walk_tiles_per_s`]), as of the frame's start.
+    pace: (f32, f32),
     /// The player chose `Restart Battle` or `Suspend`: the screen closes,
     /// and the game flow does it.
     leaving: Option<Leaving>,
@@ -321,6 +327,7 @@ impl BattleScreen {
             progress: None,
             cues: CueQueue::default(),
             walked: None,
+            pace: (walk::WALK_TILES_PER_S, walk::HELD_WALK_TILES_PER_S),
             leaving: None,
             player_view: None,
             notes_t: 0.0,
@@ -693,7 +700,12 @@ impl BattleScreen {
         self.camera.origin = from;
         self.cursor.jump(start);
         let then = std::mem::take(&mut self.mode);
-        let action = AiAction::new(unit, before, (from, to), path, then, PACING);
+        let pacing = Pacing {
+            walk_tiles_per_s: self.pace.0,
+            held_walk_tiles_per_s: self.pace.1,
+            ..PACING
+        };
+        let action = AiAction::new(unit, before, (from, to), path, then, pacing);
         self.mode = Mode::AiAction(Box::new(action));
     }
 
@@ -810,13 +822,16 @@ impl BattleScreen {
     }
 
     /// Starts a frame of `dt` seconds: keeps the cameras for as many tiles
-    /// as the map skin shows ([`refit`](Self::refit)), and advances the
+    /// as the map skin shows ([`refit`](Self::refit)), takes the skin's
+    /// walking speed for the walks that start this frame, and advances the
     /// cursor's pulse.
     fn begin_frame(&mut self, ctx: &Ctx, dt: f32) {
         let view = ctx.map_skin.view_tiles(MAP_VIEW);
         if view != self.view {
             self.refit(view);
         }
+        let skin = &ctx.map_skin;
+        self.pace = (skin.walk_tiles_per_s(), skin.held_walk_tiles_per_s());
         self.cursor.tick(dt);
     }
 
@@ -1069,6 +1084,7 @@ impl BattleScreen {
         let before = self.mode.clone();
         let mode = std::mem::take(&mut self.mode);
         let (mode, effect) = mode::step(mode, action, self.cursor.pos, &self.state);
+        let mode = mode.at_pace(self.pace.0);
         if let Some(sound) = sounds::step_sound(action, &before, &mode, &effect) {
             ctx.audio.menu(sound);
         }
@@ -1361,6 +1377,7 @@ impl BattleScreen {
             for unit in shown.units() {
                 scene.push_unit(UnitView::of(unit));
             }
+            animate(&mut scene, None);
             return scene;
         }
         let mut scene = terrain_scene(&self.state, origin, size);
@@ -1373,6 +1390,7 @@ impl BattleScreen {
         }
         self.add_ranges(&mut scene);
         self.add_units(&mut scene);
+        animate(&mut scene, self.mode.gait());
         scene.cursor = self.cursor_view(ctx).filter(|c| scene.contains(c.pos));
         if let Mode::Selected(sel) = &self.mode {
             scene.path.clone_from(&sel.path);
@@ -1732,6 +1750,25 @@ fn menu_origin(tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
         .min(MAP_VIEW.y + MAP_VIEW.h - h)
         .max(MAP_VIEW.y);
     (mx, my)
+}
+
+/// Sets the units of `scene` moving (ticket 0440): the unit of `gait`
+/// turned the way it walks, between two tiles, its legs going; every other
+/// unit that can still act and isn't falling stepping on the spot, all
+/// together, by the scene's clock. A unit that has acted stands still.
+fn animate(scene: &mut MapScene, gait: Option<(UnitId, Gait)>) {
+    let idle = walk::idle_frame(scene.clock_ms);
+    for unit in &mut scene.units {
+        match gait {
+            Some((id, gait)) if id == unit.id => {
+                unit.facing = gait.facing;
+                unit.frame = gait.frame;
+                unit.offset = gait.offset;
+            }
+            _ if !unit.acted && unit.fade <= 0.0 => unit.frame = idle,
+            _ => {}
+        }
+    }
 }
 
 /// A view of `size` tiles from `origin` showing `state`'s terrain (and

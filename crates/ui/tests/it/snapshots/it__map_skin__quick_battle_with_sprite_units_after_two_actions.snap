@@ -94,7 +94,8 @@ over  sprite 273,186 16x20  tilesets/test_units/raider.png 16,0 16x20 solid=enem
 over  sprite 272,186 16x20  tilesets/test_units/raider.png 16,0 16x20
 over  sprite 288,201 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
 over  sprite 288,203 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
-over  sprite 287,202 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
+over  sprite 287,202 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy clip=287,208 1x14
+over  sprite 287,202 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy clip=288,202 15x20
 over  sprite 289,202 16x20  tilesets/test_units/brigand.png 16,0 16x20 solid=enemy
 over  sprite 288,202 16x20  tilesets/test_units/brigand.png 16,0 16x20
 over  sprite 240,233 16x20  tilesets/test_units/archer.png 16,0 16x20 solid=#737b85
@@ -114,7 +115,8 @@ over  sprite 209,250 16x20  tilesets/test_units/exile.png 16,0 16x20 solid=playe
 over  sprite 208,250 16x20  tilesets/test_units/exile.png 16,0 16x20
 over  sprite 224,265 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85
 over  sprite 224,267 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85
-over  sprite 223,266 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85
+over  sprite 223,266 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85 clip=223,272 1x14
+over  sprite 223,266 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85 clip=224,266 15x20
 over  sprite 225,266 16x20  tilesets/test_units/guard.png 16,0 16x20 solid=#737b85
 over  sprite 224,266 16x20  tilesets/test_units/guard.png 16,0 16x20 dimmed
 over  sprite 208,265 16x20  tilesets/test_units/mage.png 16,0 16x20 solid=player clip=208,272 16x13

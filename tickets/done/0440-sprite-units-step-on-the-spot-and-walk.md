@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0436"]
 nick_input: sign-off
-completed:
+completed: 2026-10-03
 ---
 
 # 0440 — Sprite units step on the spot and walk along their path
@@ -120,23 +120,23 @@ doesn't block the PR.
 
 ## Acceptance criteria
 
-- [ ] Scene test: after a move that goes right and then up, the walking
+- [x] Scene test: after a move that goes right and then up, the walking
       unit's `facing` was `Right` and then `Up`, its `offset` went from 0
       toward 1 on each step, and it ends with `Down`, `frame: 1`,
       `offset: (0, 0)`.
-- [ ] Scene test: a unit that can act changes `frame` over time; a unit
+- [x] Scene test: a unit that can act changes `frame` over time; a unit
       that has acted keeps `frame: 1`.
-- [ ] 0433's `the_skin_never_changes_the_game` and
+- [x] 0433's `the_skin_never_changes_the_game` and
       `every_scene_feature_is_painted` cover the three new fields under
       both sprite skins.
-- [ ] Test: a unit walking along the row below another unit has no
+- [x] Test: a unit walking along the row below another unit has no
       sprite pixel inside that unit's tile at any step (checked on the
       sprite items' `dest` and `clip`), and is whole again once past.
-- [ ] Every glyph-skin snapshot is unchanged.
-- [ ] `git status` shows no bought file; the PR has no picture made from
+- [x] Every glyph-skin snapshot is unchanged.
+- [x] `git status` shows no bought file; the PR has no picture made from
       one.
-- [ ] Nick was sent the recording or frames.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Nick was sent the recording or frames.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -151,5 +151,72 @@ doesn't block the PR.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done 2026-10-03.
+
+- **Scene:** `UnitView` has `facing`, `frame` and `offset`
+  (`map_view/scene.rs`). `BattleScreen::scene` sets them: every unit that
+  can still act and isn't falling steps on the spot by the scene's clock;
+  the walking unit (the player's move, or an AI unit's) is turned the way
+  it goes, between two tiles, its legs going.
+- **Timings, in one place:** `crates/ui/src/screens/battle/walk.rs`
+  (250 ms a step on the spot; 6 tiles a second for a sprite; 100 ms a
+  walking frame, whatever the speed). An
+  AI walk held with Confirm goes four times as fast, legs and all.
+- **Sprite skins:** a unit's picture is the frame of its facing and step,
+  drawn where its offset puts it, with its outline, HP bar and arrow. It
+  is cut where it passes under a unit standing above it (two sprite items
+  while half under).
+- **Tileset format:** a unit picture with an image of its own says
+  `walk: true` when the image has the 3 × 4 layout
+  (`assets/tilesets/README.md`). The test unit sheets and the bought
+  `tiny_tales` tileset have it (the private repository is pushed and
+  `assets-private.rev` pinned); the 24 px test tileset doesn't, and only
+  glides.
+- **Glyph skin:** reads none of the three fields (a test checks it). No
+  glyph snapshot changed.
+
+**Deviations**
+
+- **Walking speed is the look's** (Nick, 2026-10-04, after the first
+  preview and a side-by-side of 5, 8, 10 and 12): the glyph skin keeps 12
+  tiles a second; a sprite walks **6**, and **12** while Confirm is held
+  in the enemy's phase (not four times as fast: 12 is the most). The
+  Options setting that makes it 8 is written into ticket 0805, which
+  builds Options. `MapSkin::walk_tiles_per_s`; the step sounds
+  go with the tiles, so every skin plays the same sounds in the same
+  order, only sooner or later.
+- The step-on-the-spot cycle starts on the standing frame (standing, a
+  foot, standing, the other foot): the same cycle as the ticket's, a
+  quarter turn on, so a battle doesn't open mid-step.
+- `MapScene::to_text` shows `facing`, `offset` and `frame` only for a unit
+  on its walk. The frame of a unit stepping on the spot isn't in the text:
+  it goes by the clock alone, which the text leaves out.
+- Three sprite snapshots changed: units that can still act are caught
+  mid-step, and the 1-pixel outline edge beside a unit standing up and to
+  the side is now cut (below).
+- The walk code is `AiAction` and `Mode::Moving` (the ticket's
+  `ActionPlayback` doesn't exist).
+- **The clip mask is stricter than 0436 left it** (Nick, 2026-10-04: "it
+  shouldn't have this clip overlap vertical thing"): no sprite pixel, not
+  even an outline's 1-pixel edge, is inside a tile another unit stands on
+  above it, for standing and walking units alike; and a unit below a
+  walker passing over is cut for as long as the walker is on the tile
+  above it. The acceptance test checks every sprite item at every step.
+- On glyph ground, a unit between two tiles doesn't blank the ground's
+  glyphs (Nick, 2026-10-04): the tile it leaves shows its ground at once.
+
+**Claude's starting rule** (for Nick to agree or veto)
+
+- A walking unit that passes over a tile an ally stands on is drawn in
+  front of the ally, and isn't cut there (the ticket's rule).
+
+**Looked at** with the bought sprites (`cargo xtask frame-png`, private
+assets): the unit glides, turns at the corner of its path, faces the
+camera when it arrives; nothing flickers at the end.
+
+**For Nick:** a short animation of the Quick Battle was sent in the
+session (not committed). Say if the stepping or the walking is too fast,
+too slow, or the map too busy: each is one number.
+
+No follow-up tickets; ticket 0805 (Options) gained the fast walking
+speed and now waits for this one.

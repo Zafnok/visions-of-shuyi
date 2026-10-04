@@ -491,7 +491,7 @@ mod tests {
             "                ]),\n            ],\n        ),\n    },\n    unit_px: (16, 20),\n"
         ));
         assert!(text.contains(
-            "            \"guard\": (image: \"tilesets/test_units/guard.png\", frame: (1, 0)),\n"
+            "            \"guard\": (image: \"tilesets/test_units/guard.png\", frame: (1, 0), walk: true),\n"
         ));
         assert!(text.ends_with("    ),\n)\n"));
         // Every terrain has its tile, in both looks.
