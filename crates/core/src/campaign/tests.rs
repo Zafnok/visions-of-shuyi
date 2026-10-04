@@ -48,7 +48,6 @@ fn support_table() -> SupportTable {
     let def = |a: &str, b: &str| PairDef {
         pair: pair(a, b),
         thresholds: None,
-        starting_points: 0,
         conversations: ByRank {
             c: format!("{a}_{b}_c"),
             b: format!("{a}_{b}_b"),
@@ -529,8 +528,9 @@ fn the_bench_is_the_roster_without_a_slot() {
 // ---- Supports ----------------------------------------------------------------
 
 /// The battle won with the lord and `ann` side by side: `ann` steps next
-/// to the lord, who fights beside her twice (3 points each) and they end
-/// one player phase adjacent (1 point): 7 points for the pair.
+/// to the lord, who fights beside her twice (3 points each), and they are
+/// adjacent when the first player phase ends and when the second one wins
+/// the battle (1 point each): 8 points for the pair.
 fn won_together(campaign: &Campaign, def: &BattleDef) -> BattleState {
     let (mut s, _) = BattleState::new(campaign.battle_setup(def, &tables()));
     act(&mut s, 2, p(0, 1), UnitAction::Wait);
@@ -552,7 +552,7 @@ fn support_points_carry_from_battle_to_battle() {
     let mut game = campaign(GameMode::Casual);
     assert_eq!(game.supports, SupportBook::default());
     game.supports
-        .gain(&pair("lord", "ann"), 5, &support_table());
+        .gain(&pair("lord", "ann"), 3, &support_table());
     let def = def();
     // The battle starts with the campaign's supports and its table.
     let (start, _) = BattleState::new(game.battle_setup(&def, &tables()));
@@ -560,7 +560,7 @@ fn support_points_carry_from_battle_to_battle() {
     assert_eq!(start.support_table(), &support_table());
     let s = won_together(&game, &def);
     game.apply_result(&def, &s, 0).unwrap();
-    assert_eq!(support_points(&game, "lord", "ann"), 12);
+    assert_eq!(support_points(&game, "lord", "ann"), 11);
     // Every battle counts, a skirmish after the story battle too.
     let s = won_together(&game, &def);
     game.apply_result(&def, &s, 0).unwrap();
@@ -614,7 +614,7 @@ fn a_pair_gains_one_rank_per_camp_visit_however_many_battles_it_fights() {
     // Then the next battle's points count again.
     let s = won_together(&game, &def);
     game.apply_result(&def, &s, 0).unwrap();
-    assert_eq!(support_points(&game, "lord", "ann"), 27);
+    assert_eq!(support_points(&game, "lord", "ann"), 28);
 }
 
 #[test]

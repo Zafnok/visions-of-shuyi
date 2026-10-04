@@ -81,7 +81,6 @@ fn table() -> Arc<SupportTable> {
     let def = |a: &str, b: &str| PairDef {
         pair: pair(a, b),
         thresholds: None,
-        starting_points: 0,
         conversations: ByRank {
             c: "c".into(),
             b: "b".into(),
@@ -204,6 +203,51 @@ fn ending_the_player_phase_adjacent_gives_the_pair_a_point() {
     assert_eq!(points(&s, "ann", "cal"), 0);
     assert_eq!(points(&s, "ann", "eve"), 0);
     assert_eq!(s.supports().state(&pair("ann", "dan"), &table()), None);
+}
+
+#[test]
+fn winning_the_battle_in_the_player_phase_ends_it_too() {
+    // Ann fells the last enemy with Ben next to her: the fight's points,
+    // then the point for ending the phase adjacent, then the battle ends.
+    let mut s = battle(vec![armed(ann(p(0, 0)), 10), ben(p(0, 1)), foe(3, p(1, 0))]);
+    let events = act(&mut s, 1, p(0, 0), attack(3));
+    assert_eq!(
+        events[events.len() - 4..],
+        [
+            grew(1, 2, 4),
+            Event::UnitActed { unit: UnitId(1) },
+            grew(1, 2, 1),
+            ended(Outcome::Victory),
+        ]
+    );
+    assert_eq!(points(&s, "ann", "ben"), 5);
+}
+
+#[test]
+fn a_win_in_the_enemy_phase_or_a_defeat_gives_no_adjacency_point() {
+    // Enemy 3 attacks Ben and falls to his counter, Ann next to him: the
+    // player phase had already ended (1 point), so only the fight counts.
+    let mut s = battle(vec![ann(p(0, 0)), armed(ben(p(0, 1)), 10), foe(3, p(2, 1))]);
+    assert_eq!(support(&end(&mut s)), [grew(1, 2, 1)]);
+    let events = act(&mut s, 3, p(1, 1), attack(2));
+    assert_eq!(events.last(), Some(&ended(Outcome::Victory)));
+    assert_eq!(support(&events), [grew(2, 1, 4)]);
+    // The lord (unit 9) falls to a counter in the player phase, Ben and
+    // Cal's partner Ann side by side: a defeat gives nothing.
+    let ann = Unit {
+        is_lord: false,
+        ..ann(p(0, 0))
+    };
+    let mut s = battle(vec![
+        ann,
+        ben(p(0, 1)),
+        wounded(lord(9, p(3, 3)), 3),
+        foe(3, p(4, 3)),
+    ]);
+    let events = act(&mut s, 9, p(3, 3), attack(3));
+    assert_eq!(events.last(), Some(&ended(Outcome::Defeat)));
+    assert_eq!(support(&events), []);
+    assert_eq!(points(&s, "ann", "ben"), 0);
 }
 
 #[test]

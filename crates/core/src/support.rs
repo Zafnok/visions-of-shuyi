@@ -15,11 +15,11 @@
 //!   override them) **unlocks** its conversation; the rank is **gained when
 //!   the conversation is viewed** ([`SupportState::view`]), at camp.
 //! - **Points stop at an unlocked, unviewed threshold**: extra points are
-//!   lost, so a pair gains at most one rank per camp visit. At rank A a
-//!   pair gains nothing more.
-//! - **Starting points** (a pair's data) count like earned ones: a pair
-//!   that starts at or past its C threshold starts with C unlocked, held at
-//!   that threshold.
+//!   lost, so a pair gains at most one rank per camp visit.
+//! - **At rank A a pair keeps gaining points**, with nothing to stop at
+//!   (Nick: so that saves are ready if ranks past A are ever added).
+//! - **Every pair starts at 0 points** (Nick). A pair whose own C
+//!   threshold is 0 starts with C unlocked.
 //! - **Battle bonus** ([`SupportRules::best_bonus`]): Hit and Avoid of the
 //!   **single best-ranked** partner in range. Bonuses never combine, so
 //!   the most a unit ever gets is the A bonus.
@@ -211,8 +211,6 @@ pub struct PairDef {
     pub pair: SupportPair,
     /// Its own thresholds, instead of the rules'.
     pub thresholds: Option<Thresholds>,
-    /// The points it starts the game with.
-    pub starting_points: u32,
     /// The dialogue scene of each rank's conversation.
     pub conversations: ByRank<String>,
 }
@@ -263,10 +261,11 @@ pub struct SupportState {
 }
 
 impl SupportState {
-    /// A pair starting with `points`, under `thresholds`.
-    pub fn start(points: u32, thresholds: &Thresholds) -> Self {
+    /// A pair at its start, under `thresholds`: no points (and C unlocked
+    /// if C needs none).
+    pub fn start(thresholds: &Thresholds) -> Self {
         let mut state = Self::default();
-        state.gain(points, thresholds);
+        state.gain(0, thresholds);
         state
     }
 
@@ -299,14 +298,19 @@ impl SupportState {
     }
 
     /// Adds up to `amount` points, stopping at the next rank's threshold
-    /// (which unlocks its conversation). Returns the points gained: 0 for
-    /// an ended support, at rank A, or while a conversation waits.
+    /// (which unlocks its conversation); at rank A there is none, and
+    /// every point counts. Returns the points gained: 0 for an ended
+    /// support, or while a conversation waits.
     pub fn gain(&mut self, amount: u32, thresholds: &Thresholds) -> u32 {
-        let Some(next) = SupportRank::after(self.rank).filter(|_| !self.ended) else {
+        if self.ended {
             return 0;
+        }
+        let before = self.points;
+        let Some(next) = SupportRank::after(self.rank) else {
+            self.points = before.saturating_add(amount);
+            return self.points - before;
         };
         let cap = *thresholds.get(next);
-        let before = self.points;
         // Never down: a threshold lowered by a data change takes no points.
         self.points = before.saturating_add(amount).min(cap).max(before);
         if self.points >= cap {
@@ -376,7 +380,7 @@ impl SupportBook {
     /// `table` doesn't list the pair.
     pub fn state(&self, pair: &SupportPair, table: &SupportTable) -> Option<SupportState> {
         let def = table.get(pair)?;
-        let start = || SupportState::start(def.starting_points, &table.thresholds(def));
+        let start = || SupportState::start(&table.thresholds(def));
         Some(self.pairs.get(pair).copied().unwrap_or_else(start))
     }
 

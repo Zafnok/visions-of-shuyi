@@ -20,7 +20,6 @@ fn def(a: &str, b: &str) -> PairDef {
     PairDef {
         pair: pair(a, b),
         thresholds: None,
-        starting_points: 0,
         conversations: ByRank {
             c: format!("{a}_{b}_c"),
             b: format!("{a}_{b}_b"),
@@ -30,7 +29,7 @@ fn def(a: &str, b: &str) -> PairDef {
 }
 
 /// `ann`–`ben` with the rules' thresholds; `ann`–`cal` lifelong friends
-/// (C at 0); `ben`–`cal` a slow burn starting with 30 points.
+/// (C at 0); `ben`–`cal` a slow burn (C at 40).
 fn table() -> SupportTable {
     let friends = PairDef {
         thresholds: Some(ByRank {
@@ -46,10 +45,16 @@ fn table() -> SupportTable {
             b: 120,
             a: 300,
         }),
-        starting_points: 30,
         ..def("ben", "cal")
     };
     SupportTable::new(RULES, [def("ann", "ben"), friends, slow])
+}
+
+/// A pair that has gained `points` since its start, under `thresholds`.
+fn started(points: u32, thresholds: &Thresholds) -> SupportState {
+    let mut state = SupportState::start(thresholds);
+    state.gain(points, thresholds);
+    state
 }
 
 /// What a state holds: points, rank, unlocked rank, ended.
@@ -194,7 +199,7 @@ proptest! {
 
 #[test]
 fn points_add_up_to_a_threshold_which_unlocks_the_conversation() {
-    let mut s = SupportState::start(0, &T);
+    let mut s = SupportState::start(&T);
     assert_eq!(parts(s), (0, None, None, false));
     assert_eq!(s.gain(3, &T), 3);
     assert_eq!(s.gain(16, &T), 16);
@@ -207,7 +212,7 @@ fn points_add_up_to_a_threshold_which_unlocks_the_conversation() {
 
 #[test]
 fn points_stop_at_an_unviewed_threshold() {
-    let mut s = SupportState::start(18, &T);
+    let mut s = started(18, &T);
     // Extra points are lost.
     assert_eq!(s.gain(5, &T), 2);
     assert_eq!(parts(s), (20, None, Some(C), false));
@@ -225,35 +230,55 @@ fn points_stop_at_an_unviewed_threshold() {
     assert_eq!(s.gain(u32::MAX, &T), 100);
     assert_eq!(parts(s), (180, Some(B), Some(A), false));
     assert_eq!(s.view(), Some(A));
-    // At A nothing more is gained.
-    assert_eq!(s.gain(5, &T), 0);
     assert_eq!(parts(s), (180, Some(A), None, false));
     assert_eq!(s.seen().collect::<Vec<_>>(), [C, B, A]);
 }
 
 #[test]
-fn starting_points_count_like_earned_ones() {
-    assert_eq!(parts(SupportState::start(7, &T)), (7, None, None, false));
-    // Starting past C: C is unlocked, and the points wait at its threshold.
-    assert_eq!(
-        parts(SupportState::start(500, &T)),
-        (20, None, Some(C), false)
-    );
-    // Lifelong friends: C needs no points.
+fn at_rank_a_a_pair_keeps_gaining_points() {
+    let mut s = started(500, &T);
+    for _ in 0..3 {
+        s.view();
+        s.gain(500, &T);
+    }
+    assert_eq!(parts(s), (680, Some(A), None, false));
+    // Nothing to stop at, and nothing more to unlock.
+    assert_eq!(s.gain(5, &T), 5);
+    assert_eq!(parts(s), (685, Some(A), None, false));
+    assert_eq!(s.view(), None);
+    // The count never wraps round.
+    assert_eq!(s.gain(u32::MAX, &T), u32::MAX - 685);
+    assert_eq!(s.points(), u32::MAX);
+    assert_eq!(s.gain(1, &T), 0);
+    // But not once the support has ended.
+    let mut over = started(500, &T);
+    for _ in 0..3 {
+        over.view();
+        over.gain(500, &T);
+    }
+    over.end();
+    assert_eq!(over.gain(5, &T), 0);
+    assert_eq!(over.points(), 680);
+}
+
+#[test]
+fn every_pair_starts_at_no_points() {
+    assert_eq!(parts(SupportState::start(&T)), (0, None, None, false));
+    // Lifelong friends: C needs no points, so it is unlocked at once.
     let friends = ByRank {
         c: 0,
         b: 50,
         a: 100,
     };
     assert_eq!(
-        parts(SupportState::start(0, &friends)),
+        parts(SupportState::start(&friends)),
         (0, None, Some(C), false)
     );
 }
 
 #[test]
 fn a_threshold_lowered_by_a_data_change_takes_no_points() {
-    let mut s = SupportState::start(15, &T);
+    let mut s = started(15, &T);
     let lower = ByRank {
         c: 10,
         b: 80,
@@ -265,7 +290,7 @@ fn a_threshold_lowered_by_a_data_change_takes_no_points() {
 
 #[test]
 fn an_ended_support_gains_nothing_and_loses_its_unviewed_conversation() {
-    let mut s = SupportState::start(20, &T);
+    let mut s = started(20, &T);
     s.view();
     s.gain(60, &T);
     assert_eq!(parts(s), (80, Some(C), Some(B), false));
@@ -274,7 +299,7 @@ fn an_ended_support_gains_nothing_and_loses_its_unviewed_conversation() {
     assert_eq!(parts(s), (80, Some(C), None, true));
     assert_eq!(s.seen().collect::<Vec<_>>(), [C]);
     assert_eq!(s.view(), None);
-    let mut early = SupportState::start(3, &T);
+    let mut early = started(3, &T);
     early.end();
     assert_eq!(early.gain(5, &T), 0);
     assert_eq!(parts(early), (3, None, None, true));
@@ -301,7 +326,7 @@ proptest! {
     ) {
         let t = ByRank { c, b: c + b, a: c + b + a };
         prop_assert!(t.is_increasing());
-        let mut s = SupportState::start(start, &t);
+        let mut s = started(start, &t);
         let mut views = 0;
         for op in std::iter::once(Op::Gain(0)).chain(ops) {
             let before = s;
@@ -319,9 +344,10 @@ proptest! {
                     prop_assert_eq!(s.points(), before.points());
                 }
             }
-            // Never past the next rank's threshold, or A's at rank A.
-            let cap = *t.get(SupportRank::after(s.rank()).unwrap_or(A));
-            prop_assert!(s.points() <= cap, "{s:?}");
+            // Never past the next rank's threshold (none at rank A).
+            if let Some(next) = SupportRank::after(s.rank()) {
+                prop_assert!(s.points() <= *t.get(next), "{s:?}");
+            }
             // A waiting conversation is the next rank's, at its threshold.
             if let Some(rank) = s.unlocked() {
                 prop_assert_eq!(Some(rank), SupportRank::after(s.rank()));
@@ -362,7 +388,7 @@ fn nobody_has_a_support_with_themselves() {
     assert_eq!(table.pairs().count(), 1);
     // A pair listed twice keeps its last entry.
     let later = PairDef {
-        starting_points: 9,
+        thresholds: Some(ByRank { c: 1, b: 2, a: 3 }),
         ..def("ben", "ann")
     };
     let table = SupportTable::new(RULES, [def("ann", "ben"), later.clone()]);
@@ -376,12 +402,13 @@ fn a_pair_starts_from_its_data_and_uses_its_own_thresholds() {
     let state = |book: &SupportBook, a, b| book.state(&pair(a, b), &table).map(parts);
     assert_eq!(state(&book, "ann", "ben"), Some((0, None, None, false)));
     assert_eq!(state(&book, "ann", "cal"), Some((0, None, Some(C), false)));
-    assert_eq!(state(&book, "ben", "cal"), Some((30, None, None, false)));
+    assert_eq!(state(&book, "ben", "cal"), Some((0, None, None, false)));
     // Nobody has a rank before a conversation was viewed.
     assert_eq!(book.rank(&pair("ann", "cal")), None);
     assert_eq!(book.unlocked(&table), [(pair("ann", "cal"), C)]);
     // The slow burn needs 40 for C, not 20.
-    assert_eq!(book.gain(&pair("cal", "ben"), 25, &table), 10);
+    assert_eq!(book.gain(&pair("cal", "ben"), 25, &table), 25);
+    assert_eq!(book.gain(&pair("cal", "ben"), 25, &table), 15);
     assert_eq!(state(&book, "ben", "cal"), Some((40, None, Some(C), false)));
     assert_eq!(book.gain(&pair("ann", "ben"), 25, &table), 20);
     assert_eq!(
@@ -444,7 +471,7 @@ fn a_dead_characters_supports_end() {
     // started with and never touched.
     assert_eq!(state(&book, "ann", "ben"), Some((80, Some(C), None, true)));
     assert_eq!(state(&book, "ann", "cal"), Some((0, None, None, true)));
-    assert_eq!(state(&book, "ben", "cal"), Some((30, None, None, false)));
+    assert_eq!(state(&book, "ben", "cal"), Some((0, None, None, false)));
     assert_eq!(book.unlocked(&table), []);
     assert_eq!(book.gain(&pair("ann", "ben"), 5, &table), 0);
     assert_eq!(

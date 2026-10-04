@@ -153,12 +153,16 @@ Nick can veto any of them)
 3. **One attack pays a pair once.** Example: a boss's Line Pierce strikes
    Ann and then Ben behind her; both were attacked side by side, and the
    pair still gets +3, not +6.
-4. **The "adjacent at the end of the player phase" point needs the phase
-   to end.** If the last enemy falls during your phase, the battle ends at
-   once and that turn gives no adjacency point.
-5. **A pair that starts with more points than C needs starts with C
-   unlocked**, its points waiting at C's threshold like any other pair.
-6. **At rank A a pair gains no more points.**
+
+**Nick's answers on three more** (2026-10-04, recorded in `supports.md`)
+
+4. **Winning the battle during your phase still gives the "adjacent at the
+   end of the player phase" point.** (I had it give none.)
+5. **Every pair starts at 0 points.** The data's optional starting points
+   are removed. (A pair's own thresholds stay, as `supports.md` has them: a
+   pair whose C needs 0 points starts with C unlocked.)
+6. **At rank A a pair keeps gaining points**, uncapped and saved, so ranks
+   past A could be added after launch. They change nothing for now.
 
 **Follow-ups**
 

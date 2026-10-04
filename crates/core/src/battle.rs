@@ -301,8 +301,10 @@
 //!   characters are a listed pair gain support points
 //!   ([`Event::SupportPoints`], with the points really gained: none while a
 //!   conversation waits to be viewed, so no event then):
-//!   - when the **player phase ends** ([`Command::EndPhase`]) with the two
-//!     adjacent (before the next phase starts; each pair once);
+//!   - when the **player phase ends** with the two adjacent, each pair
+//!     once: on [`Command::EndPhase`] (before the next phase starts), or
+//!     when an action in the player phase wins the battle (Nick; right
+//!     after its [`Event::UnitActed`], before the EXP pool's shares);
 //!   - after an **attack**, once the fallen are gone and unit EXP is given:
 //!     for each unit that fought and still stands (the attacker, the
 //!     target, then a Line Pierce's victim), each partner adjacent to it
@@ -2604,6 +2606,10 @@ impl BattleState {
             }
         }
         if let Some(outcome) = outcome {
+            // A win in the player phase ends it too (Nick).
+            if outcome == Outcome::Victory && self.phase == Phase::Player {
+                self.support_adjacent(events);
+            }
             self.finish(outcome, events);
         }
     }

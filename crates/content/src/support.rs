@@ -39,8 +39,6 @@ struct RawPair {
     b: String,
     #[serde(default)]
     thresholds: Option<Thresholds>,
-    #[serde(default)]
-    starting_points: u32,
     conversations: ByRank<String>,
 }
 
@@ -112,7 +110,6 @@ pub fn from_source(
         pairs.push(PairDef {
             pair,
             thresholds: p.thresholds,
-            starting_points: p.starting_points,
             conversations: p.conversations,
         });
     }
@@ -200,18 +197,16 @@ mod tests {
         let mage = "(
             a: \"test_mage\", b: \"test_lord\",
             thresholds: Some((c: 0, b: 50, a: 100)),
-            starting_points: 4,
             conversations: (c: \"test\", b: \"test_fort\", a: \"test_talk\"),
         )";
         let table = checked(&file(&[&knight, mage])).unwrap();
         assert_eq!(table.rules, SupportRules::STARTING);
         assert_eq!(table.pairs().count(), 2);
         let def = table.get(&pair("test_knight", "test_lord")).unwrap();
-        assert_eq!((def.thresholds, def.starting_points), (None, 0));
+        assert_eq!(def.thresholds, None);
         assert_eq!(table.thresholds(def), SupportRules::STARTING.thresholds);
         // Either way round is the same pair.
         let def = table.get(&pair("test_lord", "test_mage")).unwrap();
-        assert_eq!(def.starting_points, 4);
         assert_eq!(
             table.thresholds(def),
             ByRank {

@@ -32,6 +32,15 @@ Source: ticket 0010
 > be more open ended and there will be a lot of small skirmishes so keep this
 > in mind with your claims"
 
+> **Review of the rules as built** (2026-10-04, ticket 1002). On a battle
+> won during the player phase giving no "adjacent at the end of the phase"
+> point: "we can have it still give the bonus". On a pair starting with
+> points: "I don't think this should ever be the case? like, all starting
+> vals should be 0". On a pair at rank A gaining nothing more: "they can
+> keep gaining, just in case we port S / SS / SSS support ranks or marriage
+> or something post-launch. This would be much later but at least the save
+> files should support this."
+
 Options he was shown: A = FE GBA / Path of Radiance supports, B = Three Houses
 hub activities, C = Triangle Strategy / Unicorn Overlord camp events, D = main
 script only.
@@ -92,6 +101,12 @@ shape (C early, A "should really take a long time"); the numbers are
   rank per camp visit**, however many battles it fights in between.
 - **Unlimited A-ranks** (Nick): a unit can reach A with every partner that it
   has a support with.
+- **At rank A a pair keeps gaining points** (Nick). They do nothing for now:
+  A is the highest rank and the bonus stays the A bonus. The count is kept in
+  the save so that ranks past A could be added after launch without losing
+  what pairs have earned. Whether such ranks ever exist is not decided here
+  (see *Not in this system*).
+- **Every pair starts at 0 points** (Nick).
 - A pair may give a thresholds override in data (e.g. a lifelong-friends pair
   that starts at C, or a slow-burn rivalry needing more points). Default is
   the table above.
@@ -103,7 +118,7 @@ A pair gains points only when **both units are deployed and on the map**
 
 | Event | Points |
 | ----- | ------ |
-| At the end of the player phase, the two units are **adjacent** (4 directions, like attack range 1) | +1 |
+| At the end of the player phase, the two units are **adjacent** (4 directions, like attack range 1). Winning the battle during the player phase counts as its end (Nick) | +1 |
 | A unit **fights** (attacks or is attacked, any range) while its partner is adjacent to it | +3 |
 | A unit **heals** its partner with a spell or skill (e.g. Heal, Sanctuary) | +3 |
 | A unit **buffs** its partner with a skill (e.g. War Cry) | +3 |
