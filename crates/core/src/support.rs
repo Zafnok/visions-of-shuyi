@@ -18,8 +18,8 @@
 //!   lost, so a pair gains at most one rank per camp visit.
 //! - **At rank A a pair keeps gaining points**, with nothing to stop at
 //!   (Nick: so that saves are ready if ranks past A are ever added).
-//! - **Every pair starts at 0 points** (Nick). A pair whose own C
-//!   threshold is 0 starts with C unlocked.
+//! - **Every pair starts at 0 points with every rank locked** (Nick): no
+//!   threshold is 0 ([`Thresholds::is_increasing`]).
 //! - **Battle bonus** ([`SupportRules::best_bonus`]): Hit and Avoid of the
 //!   **single best-ranked** partner in range. Bonuses never combine, so
 //!   the most a unit ever gets is the A bonus.
@@ -92,9 +92,10 @@ impl<T> ByRank<T> {
 pub type Thresholds = ByRank<u32>;
 
 impl Thresholds {
-    /// Whether each rank needs more points than the one before.
+    /// Whether C needs at least 1 point (so that every pair starts with
+    /// every rank locked) and each rank more than the one before.
     pub fn is_increasing(&self) -> bool {
-        self.c < self.b && self.b < self.a
+        0 < self.c && self.c < self.b && self.b < self.a
     }
 }
 
@@ -261,14 +262,6 @@ pub struct SupportState {
 }
 
 impl SupportState {
-    /// A pair at its start, under `thresholds`: no points (and C unlocked
-    /// if C needs none).
-    pub fn start(thresholds: &Thresholds) -> Self {
-        let mut state = Self::default();
-        state.gain(0, thresholds);
-        state
-    }
-
     /// Its points so far.
     pub fn points(&self) -> u32 {
         self.points
@@ -368,8 +361,8 @@ pub struct SupportViewed {
 }
 
 /// Every pair's support so far: saved with the campaign, and with a battle
-/// while it runs. A listed pair without an entry is at its
-/// [starting state](SupportBook::state).
+/// while it runs. A listed pair without an entry is at its start: no
+/// points, every rank locked.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct SupportBook {
     pairs: BTreeMap<SupportPair, SupportState>,
@@ -379,9 +372,8 @@ impl SupportBook {
     /// The pair's support: as recorded, or its starting state; `None` if
     /// `table` doesn't list the pair.
     pub fn state(&self, pair: &SupportPair, table: &SupportTable) -> Option<SupportState> {
-        let def = table.get(pair)?;
-        let start = || SupportState::start(&table.thresholds(def));
-        Some(self.pairs.get(pair).copied().unwrap_or_else(start))
+        table.get(pair)?;
+        Some(self.pairs.get(pair).copied().unwrap_or_default())
     }
 
     /// The rank the pair has gained, if any.

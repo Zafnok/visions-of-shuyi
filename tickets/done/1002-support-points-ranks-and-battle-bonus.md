@@ -158,9 +158,10 @@ Nick can veto any of them)
 
 4. **Winning the battle during your phase still gives the "adjacent at the
    end of the player phase" point.** (I had it give none.)
-5. **Every pair starts at 0 points.** The data's optional starting points
-   are removed. (A pair's own thresholds stay, as `supports.md` has them: a
-   pair whose C needs 0 points starts with C unlocked.)
+5. **Every pair starts at 0 points with every rank locked.** The data's
+   optional starting points are removed, and a threshold of 0 is refused
+   (`supports.md` used to allow a pair that starts at C; Nick: that was
+   wrong). A pair may still have its own thresholds, above 0.
 6. **At rank A a pair keeps gaining points**, uncapped and saved, so ranks
    past A could be added after launch. They change nothing for now.
 

@@ -2,8 +2,8 @@
 //! and every pair of characters that has a support, from
 //! `docs/design/supports.md`. The rules are in `trpg_core::support`.
 //!
-//! Loading checks that thresholds rise from C to B to A (the rules' and
-//! each pair's own), that a higher rank's bonus is never smaller, that
+//! Loading checks that thresholds are above 0 and rise from C to B to A
+//! (the rules' and each pair's own), that a higher rank's bonus is never smaller, that
 //! both characters of a pair exist and differ, that no pair is listed
 //! twice (either way round), and that each rank's conversation is a
 //! dialogue scene.
@@ -123,7 +123,7 @@ pub fn from_source(
 /// The message for thresholds that don't rise.
 fn rising(t: &Thresholds) -> String {
     format!(
-        "thresholds must rise from C to B to A (got {}, {}, {})",
+        "thresholds must be above 0 and rise from C to B to A (got {}, {}, {})",
         t.c, t.b, t.a
     )
 }
@@ -196,7 +196,7 @@ mod tests {
         let knight = format!("(a: \"test_lord\", b: \"test_knight\", {TALKS})");
         let mage = "(
             a: \"test_mage\", b: \"test_lord\",
-            thresholds: Some((c: 0, b: 50, a: 100)),
+            thresholds: Some((c: 10, b: 50, a: 100)),
             conversations: (c: \"test\", b: \"test_fort\", a: \"test_talk\"),
         )";
         let table = checked(&file(&[&knight, mage])).unwrap();
@@ -210,7 +210,7 @@ mod tests {
         assert_eq!(
             table.thresholds(def),
             ByRank {
-                c: 0,
+                c: 10,
                 b: 50,
                 a: 100
             }
@@ -283,7 +283,20 @@ mod tests {
         assert_eq!(
             checked(&flat),
             Err(vec![
-                "s.ron: thresholds must rise from C to B to A (got 20, 20, 180)".to_owned()
+                "s.ron: thresholds must be above 0 and rise from C to B to A (got 20, 20, 180)"
+                    .to_owned()
+            ])
+        );
+        // No pair starts with C unlocked: C needs at least 1 point.
+        let free = format!(
+            "(a: \"test_lord\", b: \"test_knight\", thresholds: Some((c: 0, b: 9, a: 10)), {TALKS})"
+        );
+        assert_eq!(
+            checked(&file(&[&free])),
+            Err(vec![
+                "s.ron:9: pair \"test_lord\" and \"test_knight\": thresholds must be above \
+                 0 and rise from C to B to A (got 0, 9, 10)"
+                    .to_owned()
             ])
         );
         let own = format!(
@@ -292,8 +305,8 @@ mod tests {
         assert_eq!(
             checked(&file(&[&own])),
             Err(vec![
-                "s.ron:9: pair \"test_lord\" and \"test_knight\": thresholds must rise from C \
-                 to B to A (got 5, 9, 9)"
+                "s.ron:9: pair \"test_lord\" and \"test_knight\": thresholds must be above \
+                 0 and rise from C to B to A (got 5, 9, 9)"
                     .to_owned()
             ])
         );

@@ -39,7 +39,9 @@ Source: ticket 0010
 > vals should be 0". On a pair at rank A gaining nothing more: "they can
 > keep gaining, just in case we port S / SS / SSS support ranks or marriage
 > or something post-launch. This would be much later but at least the save
-> files should support this."
+> files should support this." And on an earlier line of this doc that let
+> a "lifelong-friends pair" start at C: "supports.md is wrong, all support
+> ranks should be locked at beginning. no starting at C".
 
 Options he was shown: A = FE GBA / Path of Radiance supports, B = Three Houses
 hub activities, C = Triangle Strategy / Unicorn Overlord camp events, D = main
@@ -106,10 +108,11 @@ shape (C early, A "should really take a long time"); the numbers are
   the save so that ranks past A could be added after launch without losing
   what pairs have earned. Whether such ranks ever exist is not decided here
   (see *Not in this system*).
-- **Every pair starts at 0 points** (Nick).
-- A pair may give a thresholds override in data (e.g. a lifelong-friends pair
-  that starts at C, or a slow-burn rivalry needing more points). Default is
-  the table above.
+- **Every pair starts at 0 points with every rank locked** (Nick: "all
+  support ranks should be locked at beginning. no starting at C").
+- A pair may give a thresholds override in data (e.g. a slow-burn rivalry
+  needing more points, or close friends needing fewer). C always needs at
+  least 1 point. Default is the table above.
 
 ### Gaining points (all *tunable*)
 

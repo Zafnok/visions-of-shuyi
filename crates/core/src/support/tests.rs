@@ -28,12 +28,12 @@ fn def(a: &str, b: &str) -> PairDef {
     }
 }
 
-/// `ann`–`ben` with the rules' thresholds; `ann`–`cal` lifelong friends
-/// (C at 0); `ben`–`cal` a slow burn (C at 40).
+/// `ann`–`ben` with the rules' thresholds; `ann`–`cal` fast friends
+/// (C at 10); `ben`–`cal` a slow burn (C at 40).
 fn table() -> SupportTable {
     let friends = PairDef {
         thresholds: Some(ByRank {
-            c: 0,
+            c: 10,
             b: 50,
             a: 100,
         }),
@@ -52,7 +52,7 @@ fn table() -> SupportTable {
 
 /// A pair that has gained `points` since its start, under `thresholds`.
 fn started(points: u32, thresholds: &Thresholds) -> SupportState {
-    let mut state = SupportState::start(thresholds);
+    let mut state = SupportState::default();
     state.gain(points, thresholds);
     state
 }
@@ -112,7 +112,15 @@ fn the_starting_rules_are_the_designs() {
 #[test]
 fn thresholds_must_rise_with_each_rank() {
     assert!(T.is_increasing());
-    for (c, b, a) in [(20, 20, 180), (20, 80, 80), (80, 20, 180), (20, 180, 80)] {
+    assert!(ByRank { c: 1, b: 2, a: 3 }.is_increasing());
+    // A threshold of 0 would unlock C before the pair did anything.
+    for (c, b, a) in [
+        (0, 80, 180),
+        (20, 20, 180),
+        (20, 80, 80),
+        (80, 20, 180),
+        (20, 180, 80),
+    ] {
         assert!(!ByRank { c, b, a }.is_increasing(), "{c} {b} {a}");
     }
 }
@@ -199,7 +207,7 @@ proptest! {
 
 #[test]
 fn points_add_up_to_a_threshold_which_unlocks_the_conversation() {
-    let mut s = SupportState::start(&T);
+    let mut s = SupportState::default();
     assert_eq!(parts(s), (0, None, None, false));
     assert_eq!(s.gain(3, &T), 3);
     assert_eq!(s.gain(16, &T), 16);
@@ -262,18 +270,14 @@ fn at_rank_a_a_pair_keeps_gaining_points() {
 }
 
 #[test]
-fn every_pair_starts_at_no_points() {
-    assert_eq!(parts(SupportState::start(&T)), (0, None, None, false));
-    // Lifelong friends: C needs no points, so it is unlocked at once.
-    let friends = ByRank {
-        c: 0,
-        b: 50,
-        a: 100,
-    };
-    assert_eq!(
-        parts(SupportState::start(&friends)),
-        (0, None, Some(C), false)
-    );
+fn every_pair_starts_at_no_points_with_every_rank_locked() {
+    let table = table();
+    let book = SupportBook::default();
+    for def in table.pairs() {
+        let state = book.state(&def.pair, &table).map(parts);
+        assert_eq!(state, Some((0, None, None, false)), "{:?}", def.pair);
+    }
+    assert_eq!(book.unlocked(&table), []);
 }
 
 #[test]
@@ -318,7 +322,7 @@ fn any_op() -> impl Strategy<Value = Op> {
 proptest! {
     #[test]
     fn points_never_pass_the_next_unviewed_threshold(
-        c in 0u32..30,
+        c in 1u32..30,
         b in 1u32..60,
         a in 1u32..120,
         start in 0u32..200,
@@ -401,9 +405,11 @@ fn a_pair_starts_from_its_data_and_uses_its_own_thresholds() {
     let mut book = SupportBook::default();
     let state = |book: &SupportBook, a, b| book.state(&pair(a, b), &table).map(parts);
     assert_eq!(state(&book, "ann", "ben"), Some((0, None, None, false)));
-    assert_eq!(state(&book, "ann", "cal"), Some((0, None, Some(C), false)));
+    assert_eq!(state(&book, "ann", "cal"), Some((0, None, None, false)));
     assert_eq!(state(&book, "ben", "cal"), Some((0, None, None, false)));
-    // Nobody has a rank before a conversation was viewed.
+    // The fast friends need 10 for C: unlocked, but no rank before the
+    // conversation is viewed.
+    assert_eq!(book.gain(&pair("ann", "cal"), 25, &table), 10);
     assert_eq!(book.rank(&pair("ann", "cal")), None);
     assert_eq!(book.unlocked(&table), [(pair("ann", "cal"), C)]);
     // The slow burn needs 40 for C, not 20.
@@ -450,11 +456,6 @@ fn viewing_a_conversation_raises_the_rank_and_names_its_scene() {
         (A, "ann_ben_a")
     );
     assert_eq!(book.rank(&p), Some(A));
-    // A pair that starts unlocked can be viewed at once.
-    assert_eq!(
-        book.view(&pair("ann", "cal"), &table).map(|v| v.rank),
-        Ok(C)
-    );
     assert_eq!(book.unlocked(&table), []);
 }
 
@@ -465,12 +466,12 @@ fn a_dead_characters_supports_end() {
     book.gain(&pair("ann", "ben"), 20, &table);
     book.view(&pair("ann", "ben"), &table).unwrap();
     book.gain(&pair("ann", "ben"), 60, &table);
+    book.gain(&pair("ann", "cal"), 10, &table);
     book.end_for(&c("ann"), &table);
     let state = |book: &SupportBook, a, b| book.state(&pair(a, b), &table).map(parts);
-    // Viewed ranks stay; unviewed conversations go, even one a pair
-    // started with and never touched.
+    // Viewed ranks stay; unviewed conversations go.
     assert_eq!(state(&book, "ann", "ben"), Some((80, Some(C), None, true)));
-    assert_eq!(state(&book, "ann", "cal"), Some((0, None, None, true)));
+    assert_eq!(state(&book, "ann", "cal"), Some((10, None, None, true)));
     assert_eq!(state(&book, "ben", "cal"), Some((0, None, None, false)));
     assert_eq!(book.unlocked(&table), []);
     assert_eq!(book.gain(&pair("ann", "ben"), 5, &table), 0);
