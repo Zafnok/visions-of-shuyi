@@ -116,14 +116,12 @@ fn pixel_size(buf: &GlyphBuffer) -> (u32, u32) {
 /// rectangles, to see them scale), painted by `ctx`'s map skin into a
 /// buffer just big enough. `None` without the map.
 fn map_picture(ctx: &Ctx) -> Option<GlyphBuffer> {
-    let tiles = &ctx.content.maps.get(MAP)?.map.tiles;
+    let map = ctx.content.maps.get(MAP)?;
+    let tiles = &map.map.tiles;
     let size = (i32::from(tiles.width()), i32::from(tiles.height()));
     let mut scene = MapScene::new(Pos::new(0, 0), size);
-    for pos in (0..size.1).flat_map(|y| (0..size.0).map(move |x| Pos::new(x, y))) {
-        if let Some(tile) = scene.tile_mut(pos) {
-            tile.terrain = tiles.get(pos).copied();
-        }
-    }
+    scene.set_terrain(|pos| tiles.get(pos).copied());
+    scene.look.clone_from(&map.look);
     scene.path = [(2, 3), (3, 3), (4, 3), (4, 4), (5, 4)]
         .map(|(x, y)| Pos::new(x, y))
         .to_vec();

@@ -5,7 +5,7 @@
 
 use std::fmt::Write as _;
 
-use trpg_content::Content;
+use trpg_content::{Content, MapLook};
 use trpg_core::skill::TimedMods;
 use trpg_core::{CharacterId, ClassId, Faction, Pos, StatValue, TerrainId, Unit, UnitId};
 
@@ -19,6 +19,15 @@ pub struct MapScene {
     pub size: (i32, i32),
     /// The visible tiles, row by row: `size.0 × size.1` of them.
     pub tiles: Vec<TileView>,
+    /// The terrain of the ring of tiles just outside the view (the row
+    /// above it, then the two ends of each of its rows, then the row
+    /// below), for a skin whose picture of a tile depends on its
+    /// neighbours. `None` = off the map, or not given. Read it with
+    /// [`terrain_near`](Self::terrain_near).
+    pub rim: Vec<Option<TerrainId>>,
+    /// How the map looks, as far as its file says: which set of pictures
+    /// a skin that has pictures paints its terrain with.
+    pub look: MapLook,
     /// The units on visible tiles, in the battle's order.
     pub units: Vec<UnitView>,
     /// The cursor, if it is shown and on a visible tile.
@@ -212,6 +221,8 @@ impl MapScene {
             origin,
             size,
             tiles: vec![TileView::default(); count],
+            rim: vec![None; rim_len(size)],
+            look: MapLook::default(),
             units: Vec::new(),
             cursor: None,
             path: Vec::new(),
@@ -259,6 +270,54 @@ impl MapScene {
         let (dx, dy) = self.offset(pos)?;
         let index = self.index(dx, dy)?;
         self.tiles.get_mut(index)
+    }
+
+    /// Index in [`rim`](Self::rim) of the tile `dx` right of and `dy` below
+    /// the origin, if it is in the ring just outside the view.
+    fn rim_index(&self, dx: i32, dy: i32) -> Option<usize> {
+        let (w, h) = self.size;
+        if !(-1..=w).contains(&dx) || !(-1..=h).contains(&dy) {
+            return None;
+        }
+        let across = w + 2;
+        let index = if dy == -1 {
+            dx + 1
+        } else if dy == h {
+            across + 2 * h + dx + 1
+        } else if dx == -1 {
+            across + 2 * dy
+        } else if dx == w {
+            across + 2 * dy + 1
+        } else {
+            return None;
+        };
+        usize::try_from(index).ok()
+    }
+
+    /// The terrain of the tile `dx` right of and `dy` below the origin: a
+    /// tile of the view, or of the ring just outside it. `None` off the
+    /// map, further out, or where the ring wasn't given.
+    pub fn terrain_near(&self, dx: i32, dy: i32) -> Option<TerrainId> {
+        match self.tile_at(dx, dy) {
+            Some(tile) => tile.terrain,
+            None => self.rim.get(self.rim_index(dx, dy)?).copied().flatten(),
+        }
+    }
+
+    /// Sets the terrain of every tile of the view, and of the ring just
+    /// outside it, to what `terrain` gives for its map position.
+    pub fn set_terrain(&mut self, terrain: impl Fn(Pos) -> Option<TerrainId>) {
+        let (w, h) = self.size;
+        let origin = self.origin;
+        for (dx, dy) in (-1..=h).flat_map(|dy| (-1..=w).map(move |dx| (dx, dy))) {
+            let id = terrain(Pos::new(origin.x + dx, origin.y + dy));
+            let tile = self.index(dx, dy).and_then(|i| self.tiles.get_mut(i));
+            if let Some(tile) = tile {
+                tile.terrain = id;
+            } else if let Some(slot) = self.rim_index(dx, dy).and_then(|i| self.rim.get_mut(i)) {
+                *slot = id;
+            }
+        }
     }
 
     /// Lays the range `kind` on each of `tiles` that is visible.
@@ -318,7 +377,10 @@ impl MapScene {
     }
 
     /// The scene as text, for tests and bug reports. The same scene always
-    /// gives the same text. The clock isn't in it: nothing happens by it.
+    /// gives the same text. The clock isn't in it (nothing happens by it),
+    /// nor the ring of terrain round the view (it is the map's, one tile
+    /// further out). A look other than a map's usual one ends the first
+    /// line: `look indoor`.
     ///
     /// ```text
     /// origin (-10,-11) size 35x30
@@ -344,7 +406,11 @@ impl MapScene {
         let Pos { x, y } = self.origin;
         let (w, h) = self.size;
         // Writing to a `String` can't fail.
-        let _ = writeln!(out, "origin ({x},{y}) size {w}x{h}");
+        let _ = write!(out, "origin ({x},{y}) size {w}x{h}");
+        if !self.look.is_default() {
+            let _ = write!(out, " look {}", self.look.tiles);
+        }
+        out.push('\n');
         for dy in 0..h {
             let row = self.row_text(content, dy);
             let _ = writeln!(out, "{:>4}: {row}", i64::from(y) + i64::from(dy));
@@ -391,6 +457,12 @@ impl MapScene {
             .collect();
         words.join(" ")
     }
+}
+
+/// How many tiles the ring just outside a view of `size` tiles has.
+fn rim_len(size: (i32, i32)) -> usize {
+    let count = |tiles: i32| usize::try_from(tiles).unwrap_or(0);
+    2 * (count(size.0) + 2) + 2 * count(size.1)
 }
 
 /// A tile in [`MapScene::to_text`]: its terrain's string id (`-` off the
@@ -480,6 +552,9 @@ mod tests {
         assert_eq!(s.tiles[0].terrain, None);
         assert!(s.units.is_empty() && s.path.is_empty() && s.cursor.is_none());
         assert_eq!(s.clock_ms, 0);
+        // The ring round a 4 × 2 view: 6 above, 6 below, 2 at each side.
+        assert_eq!(s.rim, vec![None; 16]);
+        assert_eq!(s.look, MapLook::default());
         // A negative size is an empty view.
         let none = MapScene::new(p(0, 0), (-3, 5));
         assert_eq!((none.size, none.tiles.len()), ((0, 5), 0));
@@ -514,6 +589,74 @@ mod tests {
         s.tiles.truncate(5);
         assert_eq!(s.tile(p(-2, 4)).and_then(|t| t.terrain), Some(TerrainId(4)));
         assert_eq!(s.tile(p(-1, 4)), None);
+    }
+
+    #[test]
+    fn the_ring_round_the_view_holds_the_terrain_one_tile_out() {
+        let mut s = MapScene::new(p(5, -2), (3, 2));
+        assert_eq!((rim_len((3, 2)), rim_len((0, 0))), (14, 4));
+        assert_eq!((rim_len((-3, 2)), rim_len((3, -2))), (8, 10));
+        // Row above, the ends of each row, row below: each place once.
+        let ring = [
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (2, -1),
+            (3, -1),
+            (-1, 0),
+            (3, 0),
+            (-1, 1),
+            (3, 1),
+            (-1, 2),
+            (0, 2),
+            (1, 2),
+            (2, 2),
+            (3, 2),
+        ];
+        for (i, (dx, dy)) in ring.into_iter().enumerate() {
+            assert_eq!(s.rim_index(dx, dy), Some(i), "({dx}, {dy})");
+        }
+        // Inside the view, or further out: not in the ring.
+        for (dx, dy) in [(0, 0), (2, 1), (-2, 0), (4, 0), (0, -2), (0, 3), (-2, -1)] {
+            assert_eq!(s.rim_index(dx, dy), None, "({dx}, {dy})");
+            assert_eq!(s.terrain_near(dx, dy), None, "({dx}, {dy})");
+        }
+        // The terrain of each map position: its column and row in one id.
+        let id = |pos: Pos| u16::try_from(10 * pos.x + pos.y + 2).ok().map(TerrainId);
+        s.set_terrain(|pos| id(pos).filter(|_| pos != p(6, -1) && pos != p(8, 0)));
+        assert_eq!(s.terrain_at(p(5, -2)), Some(TerrainId(50)));
+        assert_eq!(s.terrain_at(p(7, -1)), Some(TerrainId(71)));
+        // Off the map, in the view and in the ring.
+        assert_eq!(s.terrain_at(p(6, -1)), None);
+        assert_eq!(s.terrain_near(1, 1), None);
+        assert_eq!(s.terrain_near(3, 2), None);
+        for (dx, dy) in ring {
+            let pos = p(5 + dx, -2 + dy);
+            let expect = id(pos).filter(|_| pos != p(8, 0));
+            assert_eq!(s.terrain_near(dx, dy), expect, "({dx}, {dy})");
+        }
+        assert_eq!(s.terrain_near(0, 0), Some(TerrainId(50)));
+        assert_eq!(s.terrain_near(2, 1), Some(TerrainId(71)));
+        assert_eq!(s.terrain_near(-1, -1), Some(TerrainId(39)));
+        assert_eq!(s.terrain_near(3, 1), Some(TerrainId(81)));
+        // A ring short of tiles (not built by `new`) has none there.
+        s.rim.truncate(3);
+        assert_eq!(s.terrain_near(1, -1), Some(TerrainId(59)));
+        assert_eq!(s.terrain_near(2, -1), None);
+        s.set_terrain(|_| Some(TerrainId(1)));
+        assert_eq!(s.rim, vec![Some(TerrainId(1)); 3]);
+    }
+
+    #[test]
+    fn the_text_names_a_look_other_than_the_usual_one() {
+        let c = ctx();
+        let mut s = MapScene::new(p(0, -1), (2, 1));
+        let text = s.to_text(&c.content);
+        assert!(text.starts_with("origin (0,-1) size 2x1\n"), "{text}");
+        s.look.tiles = "indoor".to_owned();
+        let text = s.to_text(&c.content);
+        let first = "origin (0,-1) size 2x1 look indoor\n";
+        assert!(text.starts_with(first), "{text}");
     }
 
     #[test]

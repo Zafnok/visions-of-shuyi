@@ -48,7 +48,7 @@ pub mod tips;
 pub mod units;
 
 use std::collections::VecDeque;
-use trpg_content::{Content, TipTrigger, battle_campaign};
+use trpg_content::{Content, MapLook, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
@@ -263,6 +263,10 @@ pub struct BattleScreen {
     /// Seconds the battle notes have been up (0411): the units they are
     /// about blink.
     notes_t: f32,
+    /// How the map looks, as its file says (ADR-0052). The game flow gives
+    /// it ([`with_look`](Self::with_look)); a battle made any other way
+    /// has the look of a map that names none.
+    look: MapLook,
 }
 
 impl BattleScreen {
@@ -309,7 +313,15 @@ impl BattleScreen {
             leaving: None,
             player_view: None,
             notes_t: 0.0,
+            look: MapLook::default(),
         }
+    }
+
+    /// This screen with its map looking as `look` says.
+    #[must_use]
+    pub fn with_look(mut self, look: MapLook) -> Self {
+        self.look = look;
+        self
     }
 
     /// [`BattleScreen::new`] for a battle just started with `events`: its
@@ -1334,6 +1346,7 @@ impl BattleScreen {
             let shown = r.focused().map_or(&self.state, |e| &e.before);
             let mut scene = terrain_scene(shown, origin, size);
             scene.clock_ms = clock_ms;
+            scene.look.clone_from(&self.look);
             for unit in shown.units() {
                 scene.push_unit(UnitView::of(unit));
             }
@@ -1341,6 +1354,7 @@ impl BattleScreen {
         }
         let mut scene = terrain_scene(&self.state, origin, size);
         scene.clock_ms = clock_ms;
+        scene.look.clone_from(&self.look);
         for flash in &self.flashes {
             if let Some(tile) = scene.tile_mut(flash.pos) {
                 tile.flashes.push(flash.strength());
@@ -1709,18 +1723,13 @@ fn menu_origin(tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
     (mx, my)
 }
 
-/// A view of `size` tiles from `origin` showing `state`'s terrain and
-/// nothing else.
+/// A view of `size` tiles from `origin` showing `state`'s terrain (and
+/// the terrain one tile outside the view, for a skin to join pictures to)
+/// and nothing else.
 fn terrain_scene(state: &BattleState, origin: Pos, size: (i32, i32)) -> MapScene {
     let mut scene = MapScene::new(origin, size);
     let tiles = &state.map().tiles;
-    let (w, h) = scene.size;
-    for (dx, dy) in (0..h).flat_map(|dy| (0..w).map(move |dx| (dx, dy))) {
-        let pos = Pos::new(origin.x + dx, origin.y + dy);
-        if let Some(tile) = scene.tile_mut(pos) {
-            tile.terrain = tiles.get(pos).copied();
-        }
-    }
+    scene.set_terrain(|pos| tiles.get(pos).copied());
     scene
 }
 

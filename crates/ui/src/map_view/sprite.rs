@@ -1,29 +1,31 @@
-//! The sprite skin (ADR-0038, ADR-0049): the battle map painted from a
-//! tileset (`assets/tilesets/<id>.ron`, `trpg_content::tileset`).
+//! The sprite skin (ADR-0038, ADR-0049, ADR-0052): the battle map painted
+//! from a tileset (`assets/tilesets/<id>.ron`, `trpg_content::tileset`).
 //!
 //! - A tileset **with terrain tiles** paints the whole map: a tile is the
 //!   tileset's `tile_px`, a size known only here, behind
-//!   [`SpriteSkin::tile_size`]. The cursor's corner marks sit just inside
-//!   its tile, and a unit a battle note picks out stands on a light square
-//!   (both Claude's placeholders until ticket 0437).
+//!   [`SpriteSkin::tile_size`]. The ground is each tile's own picture and
+//!   the tileset's layers over them, in the look the map asks for (see
+//!   `ground`). The cursor's corner marks sit just inside its tile, and a
+//!   unit a battle note picks out stands on a light square (both Claude's
+//!   placeholders: nothing has decided them).
 //! - A tileset **without** them paints only the units: terrain, ranges,
 //!   the path and the cursor are the glyph skin's, on its tiles, and each
 //!   unit's tile loses its terrain glyphs under the picture.
 //!
 //! Units look the same either way: see [`units`].
 
+mod ground;
 pub mod units;
 
-use trpg_content::{ImageRect, Picture, Tileset};
+use trpg_content::{ImageRect, Picture, TerrainTiles, Tileset};
 use trpg_core::Pos;
 
-use super::glyph::cursor::GLOW_MAX;
-use super::glyph::{self, GlyphSkin, OVERLAY_BLEND, named, range_color};
+use super::glyph::{self, GlyphSkin};
 use super::grid::{Grid, px_rect};
 use super::path;
-use super::scene::{CursorStyle, CursorView, MapScene, TileView};
+use super::scene::{CursorStyle, MapScene};
 use super::skin::MapSkin;
-use crate::color::{Rgb, UiColor, to_channel};
+use crate::color::UiColor;
 use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect, Sprite};
 use crate::screen::Ctx;
 
@@ -76,33 +78,17 @@ impl SpriteSkin {
         }
     }
 
-    /// Paints every tile of `scene` in `grid`: its terrain, tinted by its
-    /// flashes, its ranges and the cursor's glow, in that order; then what
-    /// a spell would turn it into, over it all.
-    fn paint_tiles(&self, ctx: &Ctx, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
-        let black = ctx.palette.get(UiColor::Black);
-        for dy in 0..grid.tiles.1 {
-            for dx in 0..grid.tiles.0 {
-                let Some(tile) = scene.tile_at(dx, dy) else {
-                    continue;
-                };
-                let pos = Pos::new(scene.origin.x + dx, scene.origin.y + dy);
-                let rect = grid.rect_at(dx, dy);
-                let tints = tints(ctx, tile, scene.cursor.filter(|c| c.pos == pos));
-                let picture = tile.terrain.and_then(|id| self.tileset.tile(id));
-                paint_tinted(buf, rect, picture, &tints, black);
-                if let Some(picture) = tile.becomes.and_then(|id| self.tileset.tile(id)) {
-                    buf.add_sprite(tile_sprite(picture, rect));
-                }
-            }
-        }
-    }
-
-    /// Paints the ground under the units with the tileset's own tiles:
-    /// the tiles, then a light square under each unit a battle note picks
-    /// out.
-    fn paint_own_ground(&self, ctx: &Ctx, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
-        self.paint_tiles(ctx, scene, grid, buf);
+    /// Paints the ground under the units with the tileset's own tiles
+    /// (`terrain`): the tiles, their layers and what tints them, then a
+    /// light square under each unit a battle note picks out.
+    fn paint_own_ground(
+        ctx: &Ctx,
+        terrain: &TerrainTiles,
+        scene: &MapScene,
+        grid: &Grid,
+        buf: &mut GlyphBuffer,
+    ) {
+        ground::paint(ctx, terrain, scene, grid, buf);
         let light = ctx.palette.get(UiColor::Text);
         for unit in scene.units.iter().filter(|u| u.highlight) {
             if let Some(tile) = grid.rect(unit.pos) {
@@ -112,7 +98,7 @@ impl SpriteSkin {
     }
 
     /// The cursor's corner marks just inside its tile (the glow style
-    /// tints the tile instead, in [`paint_tiles`](Self::paint_tiles)).
+    /// tints the tile instead, with the ground).
     fn paint_own_cursor(ctx: &Ctx, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
         if let Some(c) = &scene.cursor
             && let Some(tile) = grid.rect(c.pos)
@@ -174,10 +160,9 @@ impl MapSkin for SpriteSkin {
         let grid = self.grid(scene, area);
         let layout = glyph::Layout::new(scene, area);
         let own = self.tileset.terrain.is_some();
-        if own {
-            self.paint_own_ground(ctx, scene, &grid, buf);
-        } else {
-            paint_glyph_ground(ctx, scene, &layout, buf);
+        match &self.tileset.terrain {
+            Some(terrain) => Self::paint_own_ground(ctx, terrain, scene, &grid, buf),
+            None => paint_glyph_ground(ctx, scene, &layout, buf),
         }
         let color = ctx.palette.get(UiColor::Path);
         let (line, arrowhead): (Vec<Overlay>, Vec<Overlay>) =
@@ -219,83 +204,6 @@ fn tile_sprite(picture: Picture, dest: PxRect) -> Sprite {
     Sprite::new(picture.image, src_rect(picture.rect), dest, Layer::Under)
 }
 
-/// What tints `tile`, in order, as colours and strengths: its flashes
-/// (towards its terrain's glyph colour, as on the glyph skin), its ranges,
-/// then the glow of `cursor` (if it is on the tile and glows).
-fn tints(ctx: &Ctx, tile: &TileView, cursor: Option<CursorView>) -> Vec<(Rgb, f32)> {
-    let display = &ctx.content.terrain.display;
-    let fg = tile
-        .terrain
-        .and_then(|id| display.get(id))
-        .map(|t| named(&ctx.palette, &t.fg, UiColor::Text));
-    let mut out: Vec<(Rgb, f32)> = match fg {
-        Some(fg) => tile
-            .flashes
-            .iter()
-            .map(|&s| (fg, OVERLAY_BLEND * s))
-            .collect(),
-        None => Vec::new(),
-    };
-    for &kind in &tile.tints {
-        out.push((ctx.palette.get(range_color(kind)), OVERLAY_BLEND));
-    }
-    if let Some(c) = cursor.filter(|c| c.style == CursorStyle::TileGlow) {
-        out.push((ctx.palette.get(UiColor::Cursor), GLOW_MAX * c.brightness));
-    }
-    out
-}
-
-/// Tinting a picture by each of `tints` in turn (as `Rgb::lerp` towards
-/// the colour by the strength, the glyph skin's `blend_bg`) leaves
-/// `kept × picture + added`: returns `kept` and `added`.
-fn mix(tints: &[(Rgb, f32)]) -> (f32, [f32; 3]) {
-    let mut kept = 1.0;
-    let mut added = [0.0; 3];
-    for &(color, t) in tints {
-        let t = if t.is_nan() { 0.0 } else { t.clamp(0.0, 1.0) };
-        kept *= 1.0 - t;
-        for (a, c) in added.iter_mut().zip([color.r, color.g, color.b]) {
-            *a = *a * (1.0 - t) + f32::from(c) * t;
-        }
-    }
-    (kept, added)
-}
-
-/// Paints a tile on the pixels `rect`, tinted by `tints`: its `picture` at
-/// reduced opacity over a rectangle of the colours it is tinted towards,
-/// so it reads as tinted; with no picture (off the map), the tints over
-/// `base`.
-fn paint_tinted(
-    buf: &mut GlyphBuffer,
-    rect: PxRect,
-    picture: Option<Picture>,
-    tints: &[(Rgb, f32)],
-    base: Rgb,
-) {
-    let (kept, added) = mix(tints);
-    let rgb = |[r, g, b]: [f32; 3]| Rgb::new(to_channel(r), to_channel(g), to_channel(b));
-    match picture {
-        Some(picture) => {
-            if kept < 1.0 {
-                let under = added.map(|a| a / (1.0 - kept));
-                buf.add_overlay(Overlay::new(rect, rgb(under), Layer::Under));
-            }
-            let mut sprite = tile_sprite(picture, rect);
-            sprite.opacity = to_channel(255.0 * kept);
-            buf.add_sprite(sprite);
-        }
-        None if !tints.is_empty() => {
-            let base = [base.r, base.g, base.b];
-            let mut color = added;
-            for (c, b) in color.iter_mut().zip(base) {
-                *c += kept * f32::from(b);
-            }
-            buf.add_overlay(Overlay::new(rect, rgb(color), Layer::Under));
-        }
-        None => {}
-    }
-}
-
 /// The eight 1 px arms, each `arm` px long, of corner marks just inside
 /// the corners of the pixels `tile`. None for an `arm` of 0.
 fn corner_arms(tile: PxRect, arm: i32) -> Vec<Rect> {
@@ -325,9 +233,11 @@ pub(crate) mod tests {
     use trpg_core::{CharacterId, ClassId, Faction, TerrainId, UnitId};
 
     use super::*;
-    use crate::glyph_buffer::{Cell, Item};
+    use crate::color::{Rgb, to_channel};
+    use crate::glyph_buffer::{Cell, Item, Paint};
+    use crate::map_view::glyph::cursor::GLOW_MAX;
     use crate::map_view::glyph::tests::any_scene;
-    use crate::map_view::scene::{RangeKind, UnitEffects, UnitView};
+    use crate::map_view::scene::{CursorView, RangeKind, TileView, UnitEffects, UnitView};
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
 
@@ -505,120 +415,6 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn tints_mix_as_the_glyph_skin_blends() {
-        let red = Rgb::new(200, 0, 0);
-        let blue = Rgb::new(0, 0, 255);
-        assert_eq!(mix(&[]), (1.0, [0.0; 3]));
-        let (kept, added) = mix(&[(red, 0.75)]);
-        assert!((kept - 0.25).abs() < 1e-6);
-        assert!((added[0] - 150.0).abs() < 1e-4 && added[1].abs() < 1e-6);
-        // Bad strengths: none (NaN) or clamped.
-        assert_eq!(mix(&[(red, f32::NAN)]), (1.0, [0.0; 3]));
-        assert_eq!(mix(&[(red, -1.0)]), (1.0, [0.0; 3]));
-        assert_eq!(mix(&[(red, 2.0)]), mix(&[(red, 1.0)]));
-        // Whatever the tile's colour, `kept × tile + added` is the tile
-        // lerped towards each tint in turn.
-        let tints = [(red, 0.75), (blue, 0.75), (Rgb::new(9, 200, 9), 0.3)];
-        let (kept, added) = mix(&tints);
-        for tile in [
-            Rgb::new(0, 0, 0),
-            Rgb::new(255, 255, 255),
-            Rgb::new(30, 140, 60),
-        ] {
-            let glyph = tints.iter().fold(tile, |bg, &(c, t)| bg.lerp(c, t));
-            let channels = [tile.r, tile.g, tile.b].into_iter().zip(added);
-            let ours: Vec<f32> = channels.map(|(v, a)| kept * f32::from(v) + a).collect();
-            for (o, g) in ours.iter().zip([glyph.r, glyph.g, glyph.b]) {
-                assert!(
-                    (o - f32::from(g)).abs() <= 1.5,
-                    "{tile:?}: {ours:?} vs {glyph:?}"
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn a_tinted_tile_is_its_sprite_faded_over_the_tint() {
-        let c = ctx();
-        let s = skin(&c);
-        let pal = &c.palette;
-        let mut scene = plains(&c);
-        scene.tint([p(0, 0)], RangeKind::Move);
-        scene.tint([p(1, 0)], RangeKind::Danger);
-        scene.tint([p(1, 0)], RangeKind::Attack);
-        let buf = painted(&c, &s, &scene);
-        // A rectangle of the range's colour, then the tile at a quarter.
-        let under = rect_at(&buf, 0);
-        assert_eq!(under.rect, Rect::new(16, 24, 24, 24));
-        let move_range = pal.get(UiColor::MoveRange);
-        assert_eq!((under.color, under.layer), (move_range, Layer::Under));
-        let tile = sprite_at(&buf, 1);
-        assert_eq!((tile.dest, tile.opacity), (under.rect, 64));
-        // Two ranges: their mix under a sixteenth of the tile.
-        let both = rect_at(&buf, 2);
-        let (danger, attack) = (pal.get(UiColor::DangerZone), pal.get(UiColor::AttackRange));
-        assert_eq!(both.color, danger.lerp(attack, 0.8));
-        assert_eq!(sprite_at(&buf, 3).opacity, 16);
-        // Off the map, a range tints the black under it.
-        let mut scene = plains(&c);
-        scene.tiles[0].terrain = None;
-        scene.tint([p(0, 0)], RangeKind::Heal);
-        let off = rect_at(&painted(&c, &s, &scene), 0);
-        let black = pal.get(UiColor::Black);
-        let heal = pal.get(UiColor::HealRange);
-        assert_eq!(off.color, black.lerp(heal, OVERLAY_BLEND));
-        // Whatever is under it: here a colour that isn't black.
-        let base = Rgb::new(200, 100, 40);
-        let red = Rgb::new(250, 0, 0);
-        let rect = Rect::new(8, 16, 24, 24);
-        let mut buf = blank();
-        paint_tinted(&mut buf, rect, None, &[(red, 0.5)], base);
-        let over = rect_at(&buf, 0);
-        assert_eq!((over.rect, over.color), (rect, Rgb::new(225, 50, 20)));
-        assert_eq!(over.color, base.lerp(red, 0.5));
-        // No tints, no picture: nothing.
-        paint_tinted(&mut buf, rect, None, &[], base);
-        assert_eq!(buf.items().len(), 1);
-    }
-
-    #[test]
-    fn flashes_tint_towards_the_terrain_colour_and_becoming_covers_it_all() {
-        let c = ctx();
-        let s = skin(&c);
-        let pal = &c.palette;
-        let display = &c.content.terrain.display;
-        let plain = display.get(display.id_of("plain").unwrap()).unwrap();
-        let fg = pal.lookup(&plain.fg).unwrap();
-        let mut scene = plains(&c);
-        scene.tiles[0].flashes = vec![1.0];
-        scene.tint([p(0, 0)], RangeKind::Attack);
-        scene.tiles[0].becomes = display.id_of("forest");
-        // Off the map, a flash has no colour to go towards: nothing.
-        scene.tiles[3].terrain = None;
-        scene.tiles[3].flashes = vec![1.0];
-        // What the tileset lacks becomes nothing.
-        scene.tiles[4].becomes = Some(TerrainId(999));
-        let buf = painted(&c, &s, &scene);
-        let under = rect_at(&buf, 0);
-        let attack = pal.get(UiColor::AttackRange);
-        let (kept, added) = mix(&[(fg, OVERLAY_BLEND), (attack, OVERLAY_BLEND)]);
-        let expect = added.map(|a| to_channel(a / (1.0 - kept)));
-        assert_eq!([under.color.r, under.color.g, under.color.b], expect);
-        assert_ne!(under.color, attack);
-        // Then the tile, then the forest it would become, solid, over it.
-        let forest = s
-            .tileset
-            .tile(display.id_of("forest").unwrap())
-            .unwrap()
-            .rect;
-        let becomes = sprite_at(&buf, 2);
-        assert_eq!((becomes.src, becomes.opacity), (src_rect(forest), 255));
-        assert_eq!(becomes.dest, under.rect);
-        // Then (1, 0), the forest, and (1, 1): (0, 1) is off the map.
-        assert_eq!(buf.items().len(), 3 + 2);
-    }
-
-    #[test]
     fn the_cursor_marks_the_corners_inside_its_tile_or_glows() {
         let c = ctx();
         let s = skin(&c);
@@ -658,15 +454,17 @@ pub(crate) mod tests {
         let large = painted_with(CursorStyle::LargeCorners, 0.5);
         assert_eq!(large.overlays()[2].rect, r(60, 48, 4, 1));
         assert_eq!(large.overlays()[0].color, cursor.scale(0.5));
-        // The glow: the tile faded over the cursor colour, no marks.
+        // The glow: the tile's own shape in the cursor colour over it,
+        // as strong as the glow; no marks.
         let glow = painted_with(CursorStyle::TileGlow, 1.0);
-        let under = rect_at(&glow, 3);
-        assert_eq!((under.rect, under.color), (r(40, 48, 24, 24), cursor));
-        let opacity = to_channel(255.0 * (1.0 - GLOW_MAX));
-        assert_eq!(sprite_at(&glow, 4).opacity, opacity);
+        let over = sprite_at(&glow, 4);
+        assert_eq!(over.dest, r(40, 48, 24, 24));
+        assert_eq!(over.src, sprite_at(&glow, 3).src);
+        let look = (over.paint, over.opacity);
+        assert_eq!(look, (Paint::Solid(cursor), to_channel(255.0 * GLOW_MAX)));
         assert_eq!(glow.items().len(), 4 + 1);
         let dim = painted_with(CursorStyle::TileGlow, 0.5);
-        let opacity = to_channel(255.0 * (1.0 - GLOW_MAX * 0.5));
+        let opacity = to_channel(255.0 * GLOW_MAX * 0.5);
         assert_eq!(sprite_at(&dim, 4).opacity, opacity);
         assert!(corner_arms(r(0, 0, 8, 8), 0).is_empty());
         // A cursor off the view: nothing.
@@ -756,6 +554,11 @@ pub(crate) mod tests {
             origin: _, // where the tiles are: every feature moves with it
             size: _,   // how many tiles: likewise
             tiles: _,
+            // Painted only by a tileset with layers, and one with other
+            // looks: `the_ring_and_the_look_are_painted_by_a_tileset_
+            // that_has_layers_and_looks`.
+            rim: _,
+            look: _,
             units: _,
             cursor: _,
             path: _,
@@ -891,6 +694,31 @@ pub(crate) mod tests {
         }
     }
 
+    /// The ring of terrain round the view and the map's look change the
+    /// frame of a tileset that has layers and another look (and of no
+    /// other: a tileset without them has nothing to paint them with).
+    #[test]
+    fn the_ring_and_the_look_are_painted_by_a_tileset_that_has_layers_and_looks() {
+        let c = ctx();
+        let water = c.content.terrain.display.id_of("water");
+        let s = ground::tests::with_indoor(&ground::tests::layered(&c));
+        let base = plains(&c);
+        let mut ring = base.clone();
+        // Left of the view's first tile.
+        ring.rim[5] = water;
+        let mut indoor = base.clone();
+        indoor.look.tiles = "indoor".to_owned();
+        for (name, with) in [("rim", &ring), ("look", &indoor)] {
+            assert_ne!(base, *with, "{name}: no change");
+            let (without, with) = (painted(&c, &s, &base), painted(&c, &s, with));
+            assert_ne!(without, with, "{name}: not painted");
+        }
+        for plain in [skin(&c), sheets(&c)] {
+            assert_eq!(painted(&c, &plain, &base), painted(&c, &plain, &ring));
+            assert_eq!(painted(&c, &plain, &base), painted(&c, &plain, &indoor));
+        }
+    }
+
     #[test]
     fn a_tileset_without_terrain_paints_units_on_the_glyph_skins_ground() {
         let c = ctx();
@@ -1009,7 +837,7 @@ pub(crate) mod tests {
     }
 
     prop_compose! {
-        fn any_area()(area in (-6..104i32, -4..34i32, -2..110i32, -2..40i32)) -> Rect {
+        pub(crate) fn any_area()(area in (-6..104i32, -4..34i32, -2..110i32, -2..40i32)) -> Rect {
             Rect::new(area.0, area.1, area.2, area.3)
         }
     }

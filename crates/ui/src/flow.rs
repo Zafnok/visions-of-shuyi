@@ -185,8 +185,10 @@ impl FlowScreen {
         let mut flow = Self::new_game();
         flow.adopt(ctx, campaign);
         flow.chapter = Some(chapter);
+        let look = ctx.content.map_look(&def.map);
         flow.fight = Some(Fight { def, setup });
-        flow.stage = Stage::Battle(Box::new(BattleScreen::resume(*history)));
+        let battle = BattleScreen::resume(*history).with_look(look);
+        flow.stage = Stage::Battle(Box::new(battle));
         Ok(flow)
     }
 
@@ -358,7 +360,9 @@ impl FlowScreen {
         };
         play_battle_music(ctx, &fight.def);
         let (state, events) = BattleState::new(fight.setup.clone());
-        self.stage = Stage::Battle(Box::new(BattleScreen::start(state, &events)));
+        let look = ctx.content.map_look(&fight.def.map);
+        let battle = BattleScreen::start(state, &events).with_look(look);
+        self.stage = Stage::Battle(Box::new(battle));
     }
 
     /// "To be continued", in silence.

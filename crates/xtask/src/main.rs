@@ -16,10 +16,13 @@ mod playtest;
 mod portrait_import;
 mod private_assets;
 mod sfx;
+mod test_auto;
 mod test_card;
 mod test_tileset;
 mod test_units;
 mod tickets;
+mod tileset_import;
+mod tileset_ron;
 mod web;
 
 use std::env;
@@ -41,6 +44,7 @@ test-card                          write the sprite test image, assets/images/te
 test-tileset                       write the sprite map skins' test tilesets, assets/tilesets/test*\n  \
 effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
+tileset-import [--list]            pack the bought terrain tiles and write the game's tileset there\n  \
 playtest <battle-id> [options]     a bot plays a battle many times and reports (playtest --help)\n  \
 private-assets [--library | --pin] fetch the bought art into assets-private/ (ADR-0040)\n  \
 portrait-import <busts> <id>       cut bought busts into portraits (portrait-import --help)\n  \
@@ -68,6 +72,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("test-tileset") => test_tileset(&args.collect::<Vec<_>>()),
         Some("effect-marks") => effect_marks(&args.collect::<Vec<_>>()),
         Some("map-sprite-import") => map_sprite_import(&args.collect::<Vec<_>>()),
+        Some("tileset-import") => tileset_import(&args.collect::<Vec<_>>()),
         Some("playtest") => playtest(&args.collect::<Vec<_>>()),
         Some("private-assets") => private_assets(&args.collect::<Vec<_>>()),
         Some("portrait-import") => portrait_import(&args.collect::<Vec<_>>()),
@@ -265,7 +270,8 @@ fn test_tileset(args: &[String]) -> u8 {
         return 2;
     }
     let root = repo_root();
-    let written = test_tileset::run(&root).and_then(|tiles| Ok([tiles, test_units::run(&root)?]));
+    let written = test_tileset::run(&root)
+        .and_then(|tiles| Ok([tiles, test_units::run(&root)?, test_auto::run(&root)?]));
     match written {
         Ok(summaries) => {
             println!("{}", summaries.join("\n"));
@@ -307,6 +313,34 @@ fn map_sprite_import_in(root: &Path, args: &[String]) -> u8 {
         _ => {
             eprintln!("{USAGE}");
             2
+        }
+    }
+}
+
+fn tileset_import(args: &[String]) -> u8 {
+    tileset_import_in(&repo_root(), args)
+}
+
+/// `tileset-import` with the repo at `root`.
+fn tileset_import_in(root: &Path, args: &[String]) -> u8 {
+    use tileset_import::{USAGE, list, read_mapping, run};
+    let done = match args {
+        [] => run(root, &map_sprite_import::SPRITES).map(|summary| format!("{summary}\n")),
+        [flag] if flag == "--list" => read_mapping(root).map(|mapping| list(&mapping)),
+        [flag] if flag == "--help" => Ok(format!("{USAGE}\n")),
+        _ => {
+            eprintln!("{USAGE}");
+            return 2;
+        }
+    };
+    match done {
+        Ok(text) => {
+            print!("{text}");
+            0
+        }
+        Err(e) => {
+            eprintln!("tileset-import: {e}");
+            1
         }
     }
 }
@@ -835,6 +869,24 @@ mod tests {
     fn test_card_rejects_args() {
         assert_eq!(test_card(&args(&["--bogus"])), 2);
         assert_eq!(dispatch(args(&["test-card", "x"]).into_iter()), 2);
+    }
+
+    #[test]
+    fn tileset_import_help_list_and_bad_args() {
+        assert_eq!(tileset_import(&args(&["--help"])), 0);
+        // The committed mapping file is read and listed.
+        assert_eq!(tileset_import(&args(&["--list"])), 0);
+        assert_eq!(tileset_import(&args(&["--bogus"])), 2);
+        // Without the checkout of the bought art (or the mapping file):
+        // an error, and nothing written.
+        let bare = std::env::temp_dir().join(format!("xtask-ti-bare-{}", std::process::id()));
+        assert_eq!(tileset_import_in(&bare, &[]), 1);
+        assert_eq!(tileset_import_in(&bare, &args(&["--list"])), 1);
+        assert!(!bare.exists());
+        assert_eq!(
+            dispatch(args(&["tileset-import", "--list", "x"]).into_iter()),
+            2
+        );
     }
 
     #[test]

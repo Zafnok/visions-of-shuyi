@@ -36,7 +36,8 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use trpg_core::{
-    AiWeights, ArtTable, BattleDef, ClassTable, GameTables, ItemTable, SkillTable, SpellTable,
+    AiWeights, ArtTable, BattleDef, BattleMap, ClassTable, GameTables, ItemTable, SkillTable,
+    SpellTable,
 };
 
 pub use audio::{AudioManifest, Credit, CreditRef, MusicCue, SoundCue};
@@ -53,12 +54,12 @@ pub use keymap::{
     StickDef,
 };
 pub use lang::{Lang, LangCode, LangInfo, LangPack, LangStatus, MadeBy};
-pub use map::{MapDef, MapLegend};
+pub use map::{MapDef, MapLegend, MapLook};
 pub use names::Names;
 pub use palette::PaletteDef;
 pub use portrait::Portrait;
 pub use terrain::{TerrainDef, TerrainDisplay, TerrainDisplayTable};
-pub use tileset::{ImageRect, Picture, TerrainTiles, Tileset};
+pub use tileset::{CornerLayer, ImageRect, Layer, Look, Picture, TerrainTiles, TileLayer, Tileset};
 pub use tip::{Tip, TipTable, TipTrigger};
 pub use trigger::check_triggers;
 
@@ -116,6 +117,14 @@ pub struct Content {
 }
 
 impl Content {
+    /// How `map` looks: the look of the map file it is, compared whole (a
+    /// battle's map as its file has it, before anything changed its
+    /// terrain); the look of a map that names none if it is no file's.
+    pub fn map_look(&self, map: &BattleMap) -> MapLook {
+        let file = self.maps.values().find(|def| def.map == *map);
+        file.map(|def| def.look.clone()).unwrap_or_default()
+    }
+
     /// The tables battles read, shared.
     pub fn tables(&self) -> GameTables {
         GameTables {
@@ -481,6 +490,26 @@ mod tests {
 
     fn ok_terrain() -> Result<TerrainDef, Vec<ContentError>> {
         TerrainDef::load(PaletteDef::load().ok().as_ref())
+    }
+
+    #[test]
+    fn a_maps_look_is_its_files_until_its_terrain_changes() {
+        let mut content = load_embedded().unwrap();
+        let map = content.maps["test_small"].map.clone();
+        // The test map names no look.
+        assert_eq!(content.map_look(&map), MapLook::default());
+        let indoor = MapLook {
+            tiles: "indoor".to_owned(),
+        };
+        if let Some(def) = content.maps.get_mut("test_small") {
+            def.look = indoor.clone();
+        }
+        assert_eq!(content.map_look(&map), indoor);
+        // A map that is no file's (here: another name) has the look of a
+        // map that names none.
+        let mut other = map;
+        other.name = "Elsewhere".to_owned();
+        assert_eq!(content.map_look(&other), MapLook::default());
     }
 
     fn ok_maps() -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {

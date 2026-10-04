@@ -42,8 +42,8 @@ fn bought_portraits_are_cut_busts_or_faces() {
 }
 
 /// The bought map sprites (`cargo xtask map-sprite-import`, ADR-0049): the
-/// game's tileset is there, paints only units (terrain is ticket 0437's),
-/// and each of its pictures is the standing frame of a 48×80 sheet.
+/// game's tileset is there, and each of its unit pictures is the standing
+/// frame of a 48×80 sheet.
 #[test]
 fn the_bought_map_sprites_are_standing_frames_of_whole_sheets() {
     let content = match trpg_content::load_embedded() {
@@ -51,7 +51,6 @@ fn the_bought_map_sprites_are_standing_frames_of_whole_sheets() {
         Err(errors) => panic!("{errors}"),
     };
     let tileset = &content.tilesets["tiny_tales"];
-    assert!(tileset.terrain.is_none());
     let pictures = tileset.classes.values().chain(tileset.characters.values());
     for picture in pictures.chain([&tileset.fallback]) {
         let path = picture.image.path();
@@ -64,4 +63,30 @@ fn the_bought_map_sprites_are_standing_frames_of_whole_sheets() {
         assert_eq!((rect.x, rect.y, rect.w, rect.h), (16, 0, 16, 20), "{path}");
     }
     assert!(tileset.classes.len() >= 10);
+}
+
+/// The bought terrain tiles (`cargo xtask tileset-import`, ADR-0052): the
+/// game's tileset paints the ground with 16×16 tiles of its packed image,
+/// in layers, and has every look a map can name: its own (a map outdoors)
+/// and each other one by name.
+#[test]
+fn the_bought_tiles_paint_every_look_a_map_can_name() {
+    use trpg_content::map::{DEFAULT_TILES, TILE_LOOKS};
+
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    let tileset = &content.tilesets["tiny_tales"];
+    let terrain = tileset.terrain.as_ref().expect("no terrain tiles");
+    assert_eq!(terrain.tile_px, (16, 16));
+    assert_eq!(terrain.image.path(), "tilesets/tiny_tales.png");
+    let terrains = content.terrain.display.terrains.len();
+    for name in TILE_LOOKS {
+        let look = tileset.look(name).expect("no look");
+        let named = terrain.looks.contains_key(name);
+        assert_eq!(named, name != DEFAULT_TILES, "look {name}");
+        assert_eq!(look.tiles.len(), terrains, "look {name}");
+        assert!(look.layers.len() >= 10, "look {name}");
+    }
 }

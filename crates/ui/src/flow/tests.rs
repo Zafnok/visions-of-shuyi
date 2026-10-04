@@ -23,6 +23,35 @@ fn playtime_carries_on_from_the_campaigns() {
     assert_eq!(flow.campaign().map(|c| c.playtime_s), Some(102));
 }
 
+/// The flow gives a battle the look its map's file names (ADR-0052): when
+/// it starts it, when it restarts it, and when a suspended battle is
+/// continued.
+#[test]
+fn a_battle_has_the_look_its_maps_file_names() {
+    let look = |flow: &FlowScreen, c: &Ctx| flow.battle().map(|b| b.scene(c).look.tiles);
+    // The Quick Battle's map names none: a map outdoors.
+    let mut c = ctx();
+    let flow = FlowScreen::quick_battle(&mut c).unwrap();
+    assert_eq!(look(&flow, &c).as_deref(), Some("outdoor"));
+    // With one: started.
+    let mut c = ctx();
+    let map = c.content.maps.get_mut("test_small").unwrap();
+    map.look.tiles = "indoor".to_owned();
+    let mut flow = FlowScreen::quick_battle(&mut c).unwrap();
+    assert_eq!(look(&flow, &c).as_deref(), Some("indoor"));
+    // Restarted.
+    flow.restart(&mut c);
+    assert_eq!(look(&flow, &c).as_deref(), Some("indoor"));
+    // Suspended, then continued.
+    let stage = std::mem::replace(&mut flow.stage, Stage::ToBeContinued(ToBeContinuedScreen));
+    let Stage::Battle(battle) = stage else {
+        panic!("no battle");
+    };
+    assert!(flow.suspend(&mut c, battle));
+    let continued = FlowScreen::resume(&mut c).unwrap();
+    assert_eq!(look(&continued, &c).as_deref(), Some("indoor"));
+}
+
 /// Whether some row of the screen contains `text`.
 fn shows(h: &Harness, text: &str) -> bool {
     let buf = h.game().buffer();

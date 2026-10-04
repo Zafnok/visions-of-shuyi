@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5
 effort: xhigh
-status: todo
+status: done
 blocked_by: ["0433", "0110", "0436"]
 nick_input: sign-off
-completed:
+completed: 2026-10-03
 ---
 
 # 0437 — Battle-map terrain from the bought tilesets
@@ -139,18 +139,24 @@ committed. Tell him plainly where a terrain has no good bought picture
 
 ## Acceptance criteria
 
-- [ ] The corner rule: for every pair of neighbouring tiles in a random
-      grid, the corners they share are equal (property test).
-- [ ] Every terrain id in `terrain.ron` gets a tile from both mappings;
-      the validator's "terrain has no tile" error still fires for a
-      tileset that lacks one.
-- [ ] A clone without `assets-private/` builds, runs with the glyph skin
+- [x] The corner rule: for every pair of neighbouring tiles in a random
+      grid, the corners they share are equal (property test:
+      `neighbouring_corner_points_share_their_tiles`; see *Deviations* for
+      what a "corner" became).
+- [x] Every terrain id in `terrain.ron` gets a tile from both mappings
+      (the importer refuses a mapping that lacks one; the opt-in private
+      test checks both looks); the validator's "terrain has no tile" error
+      still fires for a tileset that lacks one, in every look.
+- [x] A clone without `assets-private/` builds, runs with the glyph skin
       and passes every gate; glyph snapshots unchanged.
-- [ ] Snapshot of the Quick Battle under the auto-tiled public fixture.
-- [ ] `the_skin_never_changes_the_game` (0433) passes under the new skin.
-- [ ] No bought file and no picture made from one is in the PR.
-- [ ] Nick was sent the rendered maps and the list of stand-ins.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Snapshot of the Quick Battle under the auto-tiled public fixture
+      (`quick_battle_with_layers_between_tiles`).
+- [x] `the_skin_never_changes_the_game` (0433) passes under the new skin
+      (`test_auto` joined its loop).
+- [x] No bought file and no picture made from one is in the PR.
+- [x] Nick was sent the rendered maps and the list of stand-ins
+      (2026-10-03, with this ticket's PR).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -164,5 +170,103 @@ committed. Tell him plainly where a terrain has no good bought picture
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** ADR-0052 (0050 and 0051 are taken by open PRs).
+
+- **How terrain is painted** (`crates/ui/src/map_view/sprite/ground.rs`):
+  each tile's own picture, then the tileset's **layers**, then tints.
+  A *corner layer* draws one picture centred on every point where four
+  tiles meet, chosen by which of the four are in the layer; a *tile
+  layer* puts a picture on a tile, which may turn by its four neighbours
+  (the bridge). `crates/ui/src/map_view/corners.rs` is the pure rule.
+- **Format** (`crates/content/src/tileset/look.rs`,
+  `assets/tilesets/README.md`): `terrain` stays every terrain's own tile;
+  new `layers` and `looks`. All problems are reported at once, with the
+  look and the layer's number.
+- **Map look**: `look: (tiles: "indoor")` in a `.map` header (`MapLook`,
+  beside the core map). The game flow gives it to the battle screen
+  (start, restart, continue); the scene carries it and the terrain one
+  tile outside the view (`MapScene::look`, `rim`).
+- **Importer**: `cargo xtask tileset-import [--list]` reads the mapping
+  `assets-src/tilesets/tiny_tales.ron` and the bought `.tsx` files, packs
+  the 209 tiles used into `tiny_tales.png` (256×224) and writes
+  `tiny_tales.ron`. Pushed to the private repository (`8d62cf5`);
+  `assets-private.rev` moved. The opt-in private test checks both looks.
+- **Public fixture**: `assets/tilesets/test_auto.{png,ron}` from
+  `cargo xtask test-tileset`: 16×16 tiles, lines round the water and the
+  woods as corner layers, a framed fort, a bridge that turns, an indoor
+  look. The debug menu's *Map skin* goes round it.
+- **Default skin**: nothing to change (ADR-0049 §6): `tiny_tales` now has
+  terrain, so a build with the private assets paints the whole map.
+
+**Deviations.**
+
+- **The corner rule.** The ticket's rule (each tile one picture, its
+  corners resolved by priority) puts every join in the middle of a tile
+  with this art: a river looked two tiles wide and a one-tile road in a
+  forest vanished. Pictures are drawn *between* tiles instead, so a
+  terrain's pictures end where its tiles end. A "corner" of a picture is
+  a whole tile, so neighbouring pictures agree by construction; the
+  property test checks it. No priority order is needed: the layers' order
+  is the order they are painted in.
+- **The format** is layers (which terrains, and a picture per mix of
+  corners), not a list of corner patterns per terrain: the bought tiles
+  are overlays to stack, and the artist's own `.tsx` tables are per layer.
+- **The importer** takes no arguments (fixed paths, like
+  `map-sprite-import`) and reads the `.tsx` files with a small tag reader
+  of its own: no XML crate. `map-sprite-import` now only copies the unit
+  sheets; `tileset-import` writes the one tileset file.
+- **Tints** (ranges, flashes, the cursor's glow) are drawn *over* the
+  pictures as the tile's own shape in one colour, not under a faded tile:
+  a stack of see-through layers can't be faded one by one. Same colours
+  and strengths as before.
+- A tile a spell would change shows what it would become with its
+  neighbours' pictures joined to it; only the cursor's glow tints it (as
+  on the glyph skin).
+- Not checked in a window or the browser: no `app` code changed, and the
+  browser pane wouldn't take input reliably with a debug build (a frame
+  took 100 ms). `frame-png` is the software copy of `app`'s renderer.
+  **Look at the Pages build**: the map, and a range (a tint is a sprite
+  drawn in one colour, which `app` makes from a recoloured copy of the
+  tileset's texture).
+
+**Claude's starting picks (looks, for Nick to veto; none is a gameplay
+rule).** The table is in `look-and-feel.md`.
+
+- Which bought tile each terrain is, inside the sets Nick chose: brown
+  mountains, grey-purple peaks, small green trees for forest, dark
+  grey-blue pines for thicket, bare grey trees on dark ground for burnt,
+  the tan ground for roads, the snow ground for ice, the grey stone tower
+  for a fort (the bundle's castles are bigger than a tile).
+- **Burning is a stand-in**: the forest's trees recoloured in our `fire`
+  colour, each pixel as bright as it was (a plain blend toward the colour
+  came out muddy). The bundle's own orange autumn trees, or a picture made
+  from the dungeon sets' braziers, are the alternatives.
+- The sea next to land has a strip of shallow water before the shore.
+- Indoors, water is a dark pool with a stone rim; terrains the Fortress
+  set lacks keep their outdoor pictures.
+- Trees overhang their tile by about four pixels, as the art is drawn.
+
+**What the maps lack** (out of scope here; a ticket each if Nick wants
+them): pictures bigger than a tile (castles, towns, houses), moving water
+and waterfalls, hand-placed decoration.
+
+**Seen** (`frame-png` with `--features private-assets`, 1× map at window
+scale 2): the Quick Battle at its start and with the lord selected; a
+copy of the test map with ice, burning and burnt tiles; an indoor map
+(both made by editing `test_small.map` for the render, not committed).
+Shores join, the road meets the bridge, the bridge runs across the river,
+woods and mountains clump, the walled room has its floor, rim and door,
+units stand on their tiles. Found by looking: range tints at the glyph
+look's 75% hide most of a tile's picture, and the cursor's thin corner
+marks are hard to see on grass. Both are as they were; Nick was sent the
+tint at 75%, 50% and 35%. Ticket 0444.
+
+**For whoever merges second** (PR #198, ticket 0440, also rewrites
+`tiny_tales.ron` and moves `assets-private.rev`): after merging `main`, run
+`cargo xtask tileset-import` again, commit and push in `assets-private/`,
+and `cargo xtask private-assets --pin` (ADR-0040 §3). The private
+repository's `main` now holds this ticket's file, which has no `walk:
+true`; the importer puts it back once 0440's code is in.
+
+**Gameplay rules decided:** none. **Follow-up tickets:** 0444 (range tints
+and the cursor on picture tiles).
