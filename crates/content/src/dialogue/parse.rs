@@ -253,10 +253,11 @@ impl Parser<'_> {
     /// Reports and closes every `@if` block still open inside the open
     /// `@choice`: its reaction ends here.
     fn close_reaction_ifs(&mut self) {
-        while let Some(Open::If { line, .. }) = self.blocks.last() {
-            let line = *line;
-            self.err(line, "@if has no @endif");
-            self.close_block();
+        let is_if = |block: &mut Open| matches!(block, Open::If { .. });
+        while let Some(block) = self.blocks.pop_if(is_if) {
+            let (line, message) = block.unclosed();
+            self.err(line, message);
+            self.add_block(block);
         }
     }
 
@@ -319,7 +320,9 @@ impl Parser<'_> {
             return;
         }
         self.close_reaction_ifs();
-        self.close_block();
+        if let Some(choice) = self.blocks.pop() {
+            self.add_block(choice);
+        }
     }
 
     /// `@if <character>` on line `n`.
@@ -371,19 +374,15 @@ impl Parser<'_> {
         if !args.is_empty() {
             self.err(n, "@endif takes nothing after it");
         }
-        if matches!(self.blocks.last(), Some(Open::If { .. })) {
-            self.close_block();
-        } else {
-            self.err(n, "@endif without an open @if");
+        match self.blocks.pop_if(|block| matches!(block, Open::If { .. })) {
+            Some(block) => self.add_block(block),
+            None => self.err(n, "@endif without an open @if"),
         }
     }
 
-    /// Ends the innermost open block: adds it, as one step, to what it is
-    /// in.
-    fn close_block(&mut self) {
-        let Some(block) = self.blocks.pop() else {
-            return;
-        };
+    /// Adds `block`, just closed (taken off the open blocks), as one step
+    /// to what it was in.
+    fn add_block(&mut self, block: Open) {
         let (line, step, parts) = match block {
             Open::Choice {
                 line,
@@ -421,10 +420,10 @@ impl Parser<'_> {
     /// Reports every block still open (its scene or file ends first) and
     /// closes it.
     fn close_unclosed(&mut self) {
-        while let Some(block) = self.blocks.last() {
+        while let Some(block) = self.blocks.pop() {
             let (line, message) = block.unclosed();
             self.err(line, message);
-            self.close_block();
+            self.add_block(block);
         }
     }
 
