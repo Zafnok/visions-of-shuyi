@@ -603,6 +603,51 @@ fn a_glyph_units_walk_keeps_its_pace() {
     assert!((25..=26).contains(&frames), "{frames}");
 }
 
+/// The screen takes both walking speeds from the map skin each frame, and
+/// an AI unit's action gets them: a sprite's 6 tiles a second, 12 with
+/// Confirm held; a glyph unit's 12, and 48 held.
+#[test]
+fn the_walking_speeds_are_the_map_skins() {
+    let speeds = |c: &Ctx| {
+        let skin = &c.map_skin;
+        (skin.walk_tiles_per_s(), skin.held_walk_tiles_per_s())
+    };
+    let near = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6;
+    assert!(near(speeds(&ctx()), (12.0, 48.0)), "{:?}", speeds(&ctx()));
+    let c = sprite_ctx();
+    assert!(near(speeds(&c), (6.0, 12.0)), "{:?}", speeds(&c));
+    let own = crate::map_view::skin_named(&c.content, "sprite").unwrap();
+    let own = (own.walk_tiles_per_s(), own.held_walk_tiles_per_s());
+    assert!(near(own, (6.0, 12.0)), "{own:?}");
+    let mut s = quick();
+    assert!(near(s.pace, (12.0, 48.0)), "{:?}", s.pace);
+    s.begin_frame(&c, 0.0);
+    assert!(near(s.pace, (6.0, 12.0)), "{:?}", s.pace);
+    // The enemy's first action under the sprite skin: its walk, with
+    // Confirm held, is twice as fast as without, not four times.
+    let mut c = sprite_ctx();
+    s.apply(&trpg_core::Command::EndPhase);
+    for _ in 0..200 {
+        if matches!(s.mode(), Mode::AiAction(_)) {
+            break;
+        }
+        s.update(
+            &mut c,
+            &FrameInput::new(vec![Action::Confirm], 0.05, vec![]),
+        );
+    }
+    let Mode::AiAction(a) = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    let mut plain = a.clone();
+    plain.tick(a.walk_start(), false);
+    let mut held = plain.clone();
+    plain.tick(0.1, false);
+    held.tick(0.05, true);
+    assert!((plain.time() - held.time()).abs() < 1e-5);
+    assert!(plain.time() > a.walk_start());
+}
+
 /// Ticket 0440: a move that goes right and then up.
 #[test]
 fn a_walking_unit_turns_the_way_it_goes_and_glides_from_tile_to_tile() {
