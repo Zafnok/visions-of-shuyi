@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
 status: done
-blocked_by: ["0405", "0207", "0801", "0208", "0212", "0815"]
+blocked_by: ["0405", "0207", "0801", "0208", "0212", "0815", "0440"]
 nick_input: none
 completed: 2026-10-03
 ---
@@ -77,7 +77,7 @@ screen reachable from title and map menu, a "Key bindings" row that opens 0815's
 
 **Done.**
 
-- `Settings` (`crates/ui/src/settings.rs`, ADR-0053): text speed, animation
+- `Settings` (`crates/ui/src/settings.rs`, ADR-0050): text speed, animation
   speed, combat animations, enemy phase speed, auto-end, fullscreen, cursor
   style, music and sound volume, and the layout picked. Saved as one RON
   record under the `Storage` key `settings` on every change; loaded with
@@ -109,7 +109,7 @@ screen reachable from title and map menu, a "Key bindings" row that opens 0815's
   (the `keyboard-input` skill).
 - Fullscreen goes out in `FrameOutput` as the wanted state every frame, not
   as a one-off request: `app` then needs no separate path for the saved
-  value at start-up (ADR-0053).
+  value at start-up (ADR-0050).
 - The game mode: the Options screen sits on the stack above the game flow,
   which owns the campaign, so it switches the mode through
   `Ctx::campaign_mode`; the flow calls `Campaign::downgrade_mode()` on its
@@ -134,15 +134,27 @@ in `docs/design/options.md` and `death-and-difficulty.md`):
   Preparations, which is also where Restart Battle goes back to. The
   Preparations screen got an `Options` tab for it.
 
+**The step ticket 0440 added to this one** (sprite walking speed with
+`anim_speed: Fast`, merged into `main` while this PR was open) is done:
+`MapSkin::fast_walk_tiles_per_s` (the sprite skin's is
+`walk::SPRITE_FAST_WALK_TILES_PER_S`, 8), taken in `begin_frame`. Walks
+and AI actions are no longer sped up by scaling time, so the held walk
+stays the skin's and nothing stacks.
+
 **Claude's starting rules** (Nick may veto any of them):
 
 1. **Text speed.** Normal is what it was. Slow is half as fast, Fast is
    twice as fast, Instant shows a whole text box at once.
-2. **Animation speed: Fast** plays walks, fights and the EXP bar twice as
-   fast.
+2. **Animation speed: Fast** plays fights and the EXP bar twice as fast.
+   Walking follows Nick's own rule from ticket 0440: a sprite unit walks
+   8 tiles a second instead of 6, and the glyph look's walk doesn't
+   change.
 3. **Enemy phase speed: Fast** plays the enemy's and the other side's turn
-   twice as fast. With Animation speed also Fast, four times; holding
-   Confirm then changes nothing (it is already ×4).
+   twice as fast (the camera moving to each unit, the mark on it, its
+   fights), but not its walks: those keep their own speeds, so a sprite
+   never walks faster than 12 tiles a second. With Animation speed also
+   Fast, four times; holding Confirm then changes nothing (it is already
+   ×4).
 4. **Combat animations: Off** skips every fight the way the Cancel key
    skips one: no fight box, the HP just changes; the EXP bar and level-up
    pages still show.

@@ -9,16 +9,17 @@ use proptest::prelude::*;
 use trpg_content::MapLook;
 use trpg_core::{BattleMap, Grid, Pos, TerrainId, UnitId};
 
-use super::ai_phase::{AiAction, PACING};
+use super::ai_phase::{AiAction, PACING, Pacing};
 use super::layout::MAP_VIEW;
 use super::mode::Mode;
 use super::testing::{battle, quick_units, skirmish, vaulted};
+use super::walk::{SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S};
 use super::{BattleScreen, quick_battle};
 use crate::color::{Rgb, UiColor};
 use crate::console::{CONSOLE_H, CONSOLE_W};
 use crate::glyph_buffer::{Cell, GlyphBuffer, PxRect, Rect};
 use crate::input::Action;
-use crate::map_view::{CursorStyle, GlyphSkin, MapScene, MapSkin, RangeKind};
+use crate::map_view::{CursorStyle, Facing, GlyphSkin, MapScene, MapSkin, RangeKind};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, FrameInput, Screen};
 
@@ -598,4 +599,295 @@ proptest! {
             }
         }
     }
+}
+
+/// What the scene shows of unit `id`: its tile, its facing, its offset and
+/// its walking frame.
+fn shown(s: &BattleScreen, c: &Ctx, id: UnitId) -> (Pos, Facing, (f32, f32), u8) {
+    let scene = s.scene(c);
+    let u = scene.unit(id).unwrap();
+    (u.pos, u.facing, u.offset, u.frame)
+}
+
+/// A context whose map skin is the test unit sheets': sprites walk at
+/// their own pace.
+fn sprite_ctx() -> Ctx {
+    let mut c = ctx();
+    c.map_skin = crate::map_view::skin_named(&c.content, "sprite_units").unwrap();
+    c
+}
+
+/// Under the glyph skin a walk is as quick as it always was: 12 tiles a
+/// second, tile by tile in the scene as on screen.
+#[test]
+fn a_glyph_units_walk_keeps_its_pace() {
+    let mut c = ctx();
+    let mut s = quick();
+    let lord = s.state().units()[0].id;
+    step(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::CursorRight; 3]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    let Mode::Moving { pace, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    assert!((pace - 12.0).abs() < 1e-6);
+    // Three tiles: over within 0.26 s.
+    let mut frames = 0;
+    while matches!(s.mode(), Mode::Moving { .. }) {
+        wait(&mut s, &mut c, 0.02);
+        frames += 1;
+        assert!(frames < 100, "the walk never ended");
+    }
+    assert_eq!(frames, 13);
+    assert_eq!(shown(&s, &c, lord).2, (0.0, 0.0));
+    // The same walk under a sprite skin: 6 tiles a second, 0.5 s.
+    let mut c = sprite_ctx();
+    let mut s = quick();
+    step(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::CursorRight; 3]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    let Mode::Moving { pace, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    assert!((pace - 6.0).abs() < 1e-6);
+    let mut frames = 0;
+    while matches!(s.mode(), Mode::Moving { .. }) {
+        wait(&mut s, &mut c, 0.02);
+        frames += 1;
+        assert!(frames < 100, "the walk never ended");
+    }
+    assert!((25..=26).contains(&frames), "{frames}");
+}
+
+/// The screen takes both walking speeds from the map skin each frame, and
+/// an AI unit's action gets them: a sprite's 6 tiles a second, 12 with
+/// Confirm held; a glyph unit's 12, and 48 held.
+#[test]
+fn the_walking_speeds_are_the_map_skins() {
+    let speeds = |c: &Ctx| {
+        let skin = &c.map_skin;
+        (skin.walk_tiles_per_s(), skin.held_walk_tiles_per_s())
+    };
+    let near = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6;
+    assert!(near(speeds(&ctx()), (12.0, 48.0)), "{:?}", speeds(&ctx()));
+    let c = sprite_ctx();
+    assert!(near(speeds(&c), (6.0, 12.0)), "{:?}", speeds(&c));
+    let own = crate::map_view::skin_named(&c.content, "sprite").unwrap();
+    let own = (own.walk_tiles_per_s(), own.held_walk_tiles_per_s());
+    assert!(near(own, (6.0, 12.0)), "{own:?}");
+    let mut s = quick();
+    assert!(near(s.pace, (12.0, 48.0)), "{:?}", s.pace);
+    s.begin_frame(&c, 0.0);
+    assert!(near(s.pace, (6.0, 12.0)), "{:?}", s.pace);
+    // Fast animations (0805; Nick, 2026-10-04): a sprite walks 8 tiles a
+    // second, still 12 at most with Confirm held; the glyph look's walk
+    // doesn't change.
+    let fast = |mut c: Ctx| {
+        let set = c.change_settings(|s| s.anim_speed = crate::settings::AnimSpeed::Fast);
+        set.unwrap();
+        c
+    };
+    let c = fast(sprite_ctx());
+    s.begin_frame(&c, 0.0);
+    assert!(near(s.pace, (8.0, 12.0)), "{:?}", s.pace);
+    s.begin_frame(&fast(ctx()), 0.0);
+    assert!(near(s.pace, (12.0, 48.0)), "{:?}", s.pace);
+    let c = sprite_ctx();
+    s.begin_frame(&c, 0.0);
+    // The enemy's first action under the sprite skin: its walk, with
+    // Confirm held, is twice as fast as without, not four times.
+    let mut c = sprite_ctx();
+    s.apply(&trpg_core::Command::EndPhase);
+    for _ in 0..200 {
+        if matches!(s.mode(), Mode::AiAction(_)) {
+            break;
+        }
+        s.update(
+            &mut c,
+            &FrameInput::new(vec![Action::Confirm], 0.05, vec![]),
+        );
+    }
+    let Mode::AiAction(a) = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    let mut plain = a.clone();
+    plain.tick(a.walk_start(), false);
+    let mut held = plain.clone();
+    plain.tick(0.1, false);
+    held.tick(0.05, true);
+    assert!((plain.time() - held.time()).abs() < 1e-5);
+    assert!(plain.time() > a.walk_start());
+}
+
+/// Ticket 0440: a move that goes right and then up.
+#[test]
+fn a_walking_unit_turns_the_way_it_goes_and_glides_from_tile_to_tile() {
+    let mut c = sprite_ctx();
+    let mut s = quick();
+    let lord = s.state().units()[0].id;
+    let start = s.state().units()[0].pos;
+    step(&mut s, &mut c, &[Action::Confirm]);
+    for action in [Action::CursorRight, Action::CursorRight, Action::CursorUp] {
+        step(&mut s, &mut c, &[action]);
+    }
+    let path = s.scene(&c).path.clone();
+    let turn = p(start.x + 2, start.y);
+    let end = p(start.x + 2, start.y - 1);
+    assert_eq!(path, [start, p(start.x + 1, start.y), turn, end]);
+    // Selected, not yet walking: it faces the camera on its own tile.
+    assert_eq!(shown(&s, &c, lord), (start, Facing::Down, (0.0, 0.0), 1));
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Moving { .. }), "{:?}", s.mode());
+    // The walk, in frames of 25 ms: a tile every 167 ms.
+    let mut seen = Vec::new();
+    while matches!(s.mode(), Mode::Moving { .. }) {
+        seen.push(shown(&s, &c, lord));
+        // Only the walker turns or leaves its tile.
+        for u in s.scene(&c).units.iter().filter(|u| u.id != lord) {
+            assert_eq!((u.facing, u.offset), (Facing::Down, (0.0, 0.0)), "{u:?}");
+        }
+        wait(&mut s, &mut c, 0.025);
+        assert!(seen.len() < 100, "the walk never ended");
+    }
+    // It was on each tile of the path but the last in turn, facing right
+    // and then up.
+    let mut tiles: Vec<(Pos, Facing)> = seen.iter().map(|&(pos, f, ..)| (pos, f)).collect();
+    tiles.dedup();
+    assert_eq!(
+        tiles,
+        [
+            (start, Facing::Right),
+            (p(start.x + 1, start.y), Facing::Right),
+            (turn, Facing::Up),
+        ]
+    );
+    // On each step its offset went from 0 towards 1: right (+x), then up
+    // (−y), never across both.
+    for step in seen.chunk_by(|a, b| a.0 == b.0) {
+        assert!(step.len() >= 6, "{step:?}");
+        let facing = step[0].1;
+        let along = |&(_, _, (dx, dy), _): &(Pos, Facing, (f32, f32), u8)| {
+            if facing == Facing::Right {
+                assert!(dy == 0.0, "{step:?}");
+                dx
+            } else {
+                assert!(dx == 0.0, "{step:?}");
+                -dy
+            }
+        };
+        assert!(along(&step[0]) < 0.16, "{step:?}");
+        for pair in step.windows(2) {
+            assert!(along(&pair[0]) < along(&pair[1]), "{step:?}");
+        }
+        let last = along(&step[step.len() - 1]);
+        assert!((0.8..1.0).contains(&last), "{step:?}");
+    }
+    // Its legs went: a frame every 100 ms of the half second.
+    let mut frames: Vec<u8> = seen.iter().map(|&(.., frame)| frame).collect();
+    frames.dedup();
+    assert_eq!(frames, [0, 1, 2, 1, 0]);
+    // Arrived: on the path's last tile, facing the camera, no offset.
+    assert!(
+        matches!(s.mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        s.mode()
+    );
+    assert_eq!(shown(&s, &c, lord), (end, Facing::Down, (0.0, 0.0), 1));
+    // Nobody else turned or left its tile.
+    let scene = s.scene(&c);
+    for u in scene.units.iter().filter(|u| u.id != lord) {
+        assert_eq!((u.facing, u.offset), (Facing::Down, (0.0, 0.0)), "{u:?}");
+    }
+}
+
+/// Ticket 0440: a unit that can still act steps on the spot; one that has
+/// acted, or is falling, stands still.
+#[test]
+fn a_unit_that_can_act_steps_on_the_spot_and_an_acted_one_stands_still() {
+    let mut c = ctx();
+    let s = quick();
+    let frames = |c: &Ctx| -> Vec<u8> { s.scene(c).units.iter().map(|u| u.frame).collect() };
+    let count = s.scene(&c).units.len();
+    assert!(count > 4);
+    // Everyone steps together: standing, a foot, standing, the other foot,
+    // a frame every 250 ms.
+    for (ms, frame) in [(0, 1), (249, 1), (250, 2), (500, 1), (750, 0), (1000, 1)] {
+        c.clock_s = f64::from(ms) / 1000.0;
+        assert_eq!(frames(&c), vec![frame; count], "at {ms} ms");
+    }
+    // One that has acted, and one falling, keep the standing frame.
+    let mut scene = s.scene(&c);
+    scene.clock_ms = 750;
+    for u in &mut scene.units {
+        u.frame = 1;
+    }
+    scene.units[0].acted = true;
+    scene.units[1].fade = 0.25;
+    super::animate(&mut scene, None);
+    let frames: Vec<u8> = scene.units.iter().map(|u| u.frame).collect();
+    let mut expect = vec![0; count];
+    expect[0] = 1;
+    expect[1] = 1;
+    assert_eq!(frames, expect);
+    assert!(scene.units.iter().all(|u| !u.between_tiles()));
+    // The rewind screen's map steps too.
+    let mut s = quick();
+    c.clock_s = 0.25;
+    step(&mut s, &mut c, &[Action::Rewind]);
+    assert!(s.rewind().is_some());
+    assert!(s.scene(&c).units.iter().all(|u| u.frame == 2));
+}
+
+/// Ticket 0440: an AI unit's walk looks the same, after its pan and its
+/// highlight.
+#[test]
+fn an_ai_units_walk_turns_and_glides_too() {
+    let c = ctx();
+    let mut s = quick();
+    let before = s.state.units().to_vec();
+    let (brigand, from) = (before[4].id, before[4].pos);
+    let path = vec![from, p(from.x - 1, from.y), p(from.x - 1, from.y + 1)];
+    let pan = (s.camera.origin, s.camera.origin);
+    let pacing = Pacing {
+        walk_tiles_per_s: SPRITE_WALK_TILES_PER_S,
+        held_walk_tiles_per_s: SPRITE_HELD_WALK_TILES_PER_S,
+        ..PACING
+    };
+    let action = AiAction::new(brigand, before, pan, path, Mode::default(), pacing);
+    let walk_start = action.walk_start();
+    s.mode = Mode::AiAction(Box::new(action));
+    let tick = |s: &mut BattleScreen, dt: f32, held: bool| {
+        if let Mode::AiAction(a) = &mut s.mode {
+            a.tick(dt, held);
+        }
+    };
+    // Marked by the cursor: still on its tile, facing the camera.
+    assert_eq!(shown(&s, &c, brigand), (from, Facing::Down, (0.0, 0.0), 1));
+    // Half a tile left: a twelfth of a second at 6 tiles a second.
+    tick(&mut s, walk_start + 1.0 / 12.0, false);
+    let (pos, facing, offset, frame) = shown(&s, &c, brigand);
+    assert_eq!((pos, facing, frame), (from, Facing::Left, 0));
+    assert!(
+        (offset.0 + 0.5).abs() < 1e-3 && offset.1 == 0.0,
+        "{offset:?}"
+    );
+    // A quarter of a tile down, on the path's second tile.
+    tick(&mut s, 0.125, false);
+    let (pos, facing, offset, frame) = shown(&s, &c, brigand);
+    let second = p(from.x - 1, from.y);
+    assert_eq!((pos, facing, frame), (second, Facing::Down, 2));
+    assert!(
+        offset.0 == 0.0 && (offset.1 - 0.25).abs() < 1e-3,
+        "{offset:?}"
+    );
+    // Confirm held: 12 tiles a second, twice as fast, legs and all. Half
+    // a tile in a 24th of a second.
+    tick(&mut s, 1.0 / 24.0, true);
+    let (_, _, offset, frame) = shown(&s, &c, brigand);
+    assert!((offset.1 - 0.75).abs() < 1e-3, "{offset:?}");
+    assert_eq!(frame, 2);
+    // Arrived.
+    tick(&mut s, 5.0, false);
+    let end = p(from.x - 1, from.y + 1);
+    assert_eq!(shown(&s, &c, brigand), (end, Facing::Down, (0.0, 0.0), 1));
 }

@@ -34,9 +34,16 @@ Nick's.
 
 ### Speeds
 
-- **Animation speed: Fast** plays walks, fights and the EXP bar ×2
-  (*tunable*). **Enemy phase speed: Fast** plays the enemy's and the other
-  side's turn ×2 (*tunable*); with both Fast, ×4.
+- **Animation speed: Fast** plays fights and the EXP bar ×2 (*tunable*).
+  **Enemy phase speed: Fast** plays the enemy's and the other side's turn
+  ×2 (*tunable*): the camera moving to each unit, the mark on it, and its
+  fights; with both Fast, ×4.
+- **Walking has its own speeds** (`look-and-feel.md`, *How fast a sprite
+  walks*, Nick, 2026-10-04): a sprite unit walks 6 tiles a second, **8
+  with Animation speed: Fast**, and 12 while Confirm is held in the
+  enemy's turn, never more. The glyph look's walk stays at 12 whatever
+  the settings. Enemy phase speed doesn't change a walk (*Claude's
+  reading* of "it's just 12 max").
 - **Holding Confirm plays at ×4, not on top.** With Fast animations a
   fight plays ×2, and holding Confirm makes it ×4, not ×8. If the settings
   already play ×4 (an enemy turn with both set to Fast), holding Confirm

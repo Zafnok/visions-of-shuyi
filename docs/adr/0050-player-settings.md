@@ -1,4 +1,4 @@
-# ADR-0053: Player settings: one saved RON record, read through `Ctx`
+# ADR-0050: Player settings: one saved RON record, read through `Ctx`
 
 - **Status:** Accepted
 - **Date:** 2026-10-03
@@ -51,13 +51,17 @@ the window fullscreen or scale what it plays.
   on the first frame of a launch with no separate start-up path. The test
   `Harness` records them (`h.fullscreen()`, `h.volumes()`).
 - **Animation speeds scale the frame time** the battle screen hands its
-  walk, fight playback, AI action and EXP bar clocks
-  (`Settings::battle_speed`). Holding Confirm plays at ×4 instead of that
-  speed, not on top of it (`docs/design/options.md`): the clocks keep
-  their own ×4 for a held frame, so the battle screen divides a held
-  frame's time by 4 first (`Settings::battle_speed_held`). Banners,
-  toasts and the cursor's pulse keep real time. `core` is untouched: the
-  battle is the same at any speed (a test checks it).
+  fight playback and EXP bar clocks (`Settings::battle_speed`). Holding
+  Confirm plays at ×4 instead of that speed, not on top of it
+  (`docs/design/options.md`): the clocks keep their own ×4 for a held
+  frame, so the battle screen divides a held frame's time by 4 first
+  (`Settings::battle_speed_held`). **Walks are not scaled:** a walk has a
+  pace in tiles per second from the map skin (`MapSkin::walk_tiles_per_s`,
+  `fast_walk_tiles_per_s` with Fast animations, `held_walk_tiles_per_s`),
+  and an AI unit's action gets its `Pacing` (pan and mark shortened by the
+  speed) when it starts. Banners, toasts and the cursor's pulse keep real
+  time. `core` is untouched: the battle is the same at any speed (a test
+  checks it).
 - **The campaign's mode is not a setting** (it is part of the save,
   `death-and-difficulty.md`). The Options screen shows and switches it
   through `Ctx::campaign_mode`, which the game flow (ADR-0035) keeps in

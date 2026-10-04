@@ -614,9 +614,9 @@ fn the_tileset_file_is_one_the_game_reads() {
          tile_px: (16, 16),\n    terrain: {\n        \"plain\": (0, 0),\n"
     ));
     assert!(text.contains("    looks: {\n        \"indoor\": (\n"));
-    assert!(
-        text.ends_with("        fallback: (image: \"units/a.png\", frame: (1, 0)),\n    ),\n)\n")
-    );
+    assert!(text.ends_with(
+        "        fallback: (image: \"units/a.png\", frame: (1, 0), walk: true),\n    ),\n)\n"
+    ));
     // The game's loader takes it, with the packed image and the unit's
     // sheet in the bundle.
     let (width, height, rgba) = &imported.image;

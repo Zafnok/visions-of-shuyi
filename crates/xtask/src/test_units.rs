@@ -109,7 +109,7 @@ pub fn sheet(src: &Sources, letters: [char; 2]) -> (u32, u32, Vec<u8>) {
 pub fn units(sheets: &[(String, [char; 2])]) -> String {
     let entry = |name: &str| {
         let (path, (column, row)) = (sheet_path(name), STANDING);
-        format!("(image: \"{path}\", frame: ({column}, {row}))")
+        format!("(image: \"{path}\", frame: ({column}, {row}), walk: true)")
     };
     // Writing to a `String` can't fail.
     let mut out = String::new();
@@ -253,10 +253,10 @@ mod tests {
         let text = ron(&sheets(&sources()));
         assert!(text.contains("    id: \"test_units\",\n    unit_px: (16, 20),\n"));
         assert!(text.contains(
-            "            \"guard\": (image: \"tilesets/test_units/guard.png\", frame: (1, 0)),\n"
+            "            \"guard\": (image: \"tilesets/test_units/guard.png\", frame: (1, 0), walk: true),\n"
         ));
         assert!(text.ends_with(
-            "        fallback: (image: \"tilesets/test_units/fallback.png\", frame: (1, 0)),\n    ),\n)\n"
+            "        fallback: (image: \"tilesets/test_units/fallback.png\", frame: (1, 0), walk: true),\n    ),\n)\n"
         ));
         assert!(!text.contains("\"fallback\":"));
         assert!(!text.contains("terrain") && !text.contains("tile_px"));

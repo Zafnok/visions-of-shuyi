@@ -1,0 +1,78 @@
+---
+source: crates/ui/tests/it/rebind_buttons.rs
+expression: h.snapshot()
+---
+                                                                                                    
+  ┌─ Key bindings ───────────────────────────────────────────────────────────────────────────────┐  
+  │   Keyboard · Right-handed    Controller                                                      │  
+  │                                                                                              │  
+  │                           Button 1          Button 2          Button 3                       │  
+  │ Must have a button                                                                           │  
+  │   Cursor up               ↑                 L-stick ↑         ·                              │  
+  │   Cursor down             ↓                 L-stick ↓         ·                              │  
+  │   Cursor left             ←                 L-stick ←         ·                              │  
+  │   Cursor right            →                 L-stick →         ·                              │  
+  │   Confirm                 ✕                 ·                 ·                              │  
+  │   Cancel                  ◯                 ·                 ·                              │  
+  │   End turn                Options           ·                 ·                              │  
+  │                                                                                              │  
+  │ Optional                                                                                     │  
+  │   Select                  ·                 ·                 ·                 ! not mapped │  
+  │   Confirm end turn        ·                 ·                 ·                 ! not mapped │  
+  │   Previous ready unit     L1                ·                 ·                              │  
+  │   Next ready unit         R1                ·                 ·                              │  
+  │   Unit info               △                                   ·                              │  
+  │   Danger zone             □                ╔══════════╗       ·                              │  
+  │   Auto-end on/off         Create           ║ Change   ║       ·                              │  
+  │   Rewind                  L2               ║ Clear    ║       ·                              │  
+  │   Map menu                ·                ╚══════════╝       ·                 ! not mapped │  
+  │                                                                                              │  
+  │   Restore defaults                                                                           │  
+  │                                                                                              │  
+  └──────────────────────────────────────────────────────────────────────────────────────────────┘  
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                               D-pad/L-stick move · ✕ select · ◯ back                               
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aabbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
+aabdddeeeeeeeeeeeeeeeeeeeeeeeddddccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddeeeeeeeeddddddddddeeeeeeeeddddddddddeeeeeeeedddddddddddddddddddddddbaa
+aabdffffffffffffffffffdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdffffffffdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddedddddddddddddddddedddddddddddddddddedddddddddddddddddeeeeeeeeeeeedbaa
+aabdddddddddddddddddddddddddddedddddddddddddddddedddddddddddddddddedddddddddddddddddeeeeeeeeeeeedbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabdddcccccccccddddddddddddddddddddddddddddddddggggggggggggggggdddeddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddffffffffffffdddddddeddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddfggggggggggfdddddddeddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddfddddddddddfdddddddeddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddeddddddddddddddddffffffffffffdddddddedddddddddddddddddeeeeeeeeeeeedbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border bg:panel_bg
+c = fg:text_highlight bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:text_dim bg:panel_bg
+f = fg:panel_border_focus bg:panel_bg
+g = fg:panel_bg bg:panel_border_focus
+h = fg:text_dim bg:black

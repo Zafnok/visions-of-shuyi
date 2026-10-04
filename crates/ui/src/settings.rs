@@ -78,7 +78,8 @@ impl TextSpeed {
     }
 }
 
-/// How fast battle animations play: walks, a fight's playback, the EXP bar.
+/// How fast battle animations play: a fight's playback and the EXP bar,
+/// and under a sprite skin a unit's walk (`docs/design/options.md`).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum AnimSpeed {
     /// The speed the game always had.

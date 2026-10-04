@@ -12,7 +12,7 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks), the `GlyphSkin` and the `SpriteSkin` (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins) and `path` (the path arrow for any tile size). See *Map view* below |
 | `input` | `Action`s, `Layout`, `Keymap`, `InputState` (key repeat) |
 | `screen` | `Screen` trait, `Transition`, `FrameInput`, `Ctx` (shared resources, active layout, the player's settings), `ScreenStack` |
-| `settings` | `Settings`: every player preference (speeds, combat animations, auto-end, fullscreen, cursor, volumes, the layout picked), saved as one RON record (ADR-0053). Read with `ctx.settings()`, changed with `ctx.change_settings(…)`, which saves |
+| `settings` | `Settings`: every player preference (speeds, combat animations, auto-end, fullscreen, cursor, volumes, the layout picked), saved as one RON record (ADR-0050). Read with `ctx.settings()`, changed with `ctx.change_settings(…)`, which saves |
 | `game` | `Game`: owns the stack, input state, `Ctx`, buffer and music state; `frame(events, dt)` |
 | `audio` | `AudioRequest`, the `AudioQueue` screens push to (`ctx.audio`), `MusicState` (which track plays, fades) and its `MusicCommand`s (ADR-0026), `MusicClock` (how far into its track the music is, ADR-0037). Voice clips (ADR-0046) are asked for through `ctx.play_voice(&line_id)`, `ctx.stop_voice()` and `ctx.preload_voices(&line_ids)` |
 | `widgets` | `Menu` (vertical list in a box), `help` (help text that names keys, or controller buttons when a pad was pressed last) |
@@ -139,7 +139,9 @@ buf.fill_rect(text_box, Cell::new(' ', text, panel_bg));   // a solid box
 2. `Game` feeds them to `InputState`, which turns them into this frame's
    `Action`s (presses, then repeats of the held cursor key or button). The
    raw key presses also go into `FrameInput::pressed_chords()`, which text
-   boxes and the Key bindings screen read (to capture a key for a slot).
+   boxes and the Key bindings screen read (to capture a key for a slot;
+   `pressed_buttons` / `released_buttons` are the same for a controller
+   button, ADR-0053).
 3. Only the **top** screen's `update(ctx, input)` runs. It returns a
    `Transition`: `None`, `Push(screen)`, `Pop`, `Replace(screen)` or `Quit`.
    Popping the last screen also quits.
@@ -174,7 +176,9 @@ The battle map is not drawn by the battle screen (ADR-0038). Each frame:
    the map's file names (`look`, which the game flow gives the screen),
    the units
    on them (where each is drawn, HP, acted, under a bonus or a penalty, how
-   far it has faded, whether it is picked out by a battle note), the cursor
+   far it has faded, whether it is picked out by a battle note; which way
+   it faces, its walking frame and how far it is towards the next tile of
+   its walk), the cursor
    (if shown), the selected unit's path, and the animation clock. Plain
    data: no colours, glyphs, cells or pixels.
 2. `ctx.map_skin.paint(ctx, &scene, MAP_VIEW, buf)` paints it. The
@@ -206,6 +210,21 @@ Rules:
 - **A new thing on the map** (a village, a spell's flash on a tile) is a new
   field of `MapScene`, set in `BattleScreen::scene` and painted by every
   skin. Never draw it into the buffer from the battle screen.
+- **How units move is a look** (ticket 0440; timings in
+  `screens/battle/walk.rs`), and so is **how fast a walk is shown**:
+  `MapSkin::walk_tiles_per_s` (12 under the glyph skin, 6 under a sprite
+  skin) and `held_walk_tiles_per_s` (an AI unit's with Confirm held: 48
+  and 12). The battle screen takes it each frame and gives it
+  to the walk that starts (`Mode::Moving`'s `pace`, an AI action's
+  `Pacing`). It changes how long the player watches, never what happens:
+  the same tiles, the same step sounds in the same order.
+  A unit that can still act steps on the spot
+  (`frame`, by the scene's clock); a walking unit's `pos` is the path tile
+  it is on, as the rules, the camera and the step sounds have it, and
+  `facing`, `frame` and `offset` say how it looks between that tile and
+  the next. The sprite skins paint them (a unit whose tileset picture has
+  `walk: true`; any other only glides); the glyph skin reads none of them:
+  its initials jump from tile to tile.
 - **A skin never changes the game**: only the frame and how many tiles are
   on screen. It must paint nothing outside the area it is given.
 - **Tests of what happened read the scene** (or the `BattleState`), not

@@ -28,6 +28,9 @@ use super::skin::MapSkin;
 use crate::color::UiColor;
 use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect, Sprite};
 use crate::screen::Ctx;
+use crate::screens::battle::walk::{
+    SPRITE_FAST_WALK_TILES_PER_S, SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S,
+};
 
 /// The battle map painted from a tileset.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -118,10 +121,12 @@ impl SpriteSkin {
 }
 
 /// Paints the ground under the units as the glyph skin does: its tiles,
-/// each unit's tile without its terrain glyphs.
+/// each standing unit's tile without its terrain glyphs. A unit between
+/// two tiles walks over the glyphs of both, so the ground it leaves isn't
+/// blank behind it.
 fn paint_glyph_ground(ctx: &Ctx, scene: &MapScene, layout: &glyph::Layout, buf: &mut GlyphBuffer) {
     glyph::draw_tiles(ctx, buf, scene, layout);
-    for unit in &scene.units {
+    for unit in scene.units.iter().filter(|u| !u.between_tiles()) {
         if let Some((x, y)) = glyph::tile_to_cell(unit.pos, layout) {
             glyph::units::clear_glyphs(buf, x, y, unit.fade, unit.highlight);
         }
@@ -140,6 +145,21 @@ impl MapSkin for SpriteSkin {
 
     fn tileset_id(&self) -> Option<&str> {
         Some(&self.tileset.id)
+    }
+
+    /// Slower than the glyph skin's: a sprite is seen to walk.
+    fn walk_tiles_per_s(&self) -> f32 {
+        SPRITE_WALK_TILES_PER_S
+    }
+
+    /// A little quicker with Fast animations.
+    fn fast_walk_tiles_per_s(&self) -> f32 {
+        SPRITE_FAST_WALK_TILES_PER_S
+    }
+
+    /// The fastest a sprite walks.
+    fn held_walk_tiles_per_s(&self) -> f32 {
+        SPRITE_HELD_WALK_TILES_PER_S
     }
 
     /// The area's pixels divided by the tile size, rounded down; with no
@@ -237,7 +257,9 @@ pub(crate) mod tests {
     use crate::glyph_buffer::{Cell, Item, Paint};
     use crate::map_view::glyph::cursor::GLOW_MAX;
     use crate::map_view::glyph::tests::any_scene;
-    use crate::map_view::scene::{CursorView, RangeKind, TileView, UnitEffects, UnitView};
+    use crate::map_view::scene::{
+        CursorView, Facing, RangeKind, STANDING_FRAME, TileView, UnitEffects, UnitView,
+    };
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
 
@@ -276,6 +298,18 @@ pub(crate) mod tests {
         SpriteSkin::new(tileset)
     }
 
+    /// `skin` with the brigand's picture in a walking sheet: the test unit
+    /// sheets' (the test tileset's own pictures don't walk).
+    fn with_walking_brigand(c: &Ctx, skin: &SpriteSkin) -> SpriteSkin {
+        let sheets = &c.content.tilesets["test_units"];
+        let brigand = ClassId("brigand".into());
+        let picture = sheets.classes[&brigand];
+        let mut tileset = skin.tileset.clone();
+        tileset.classes.insert(brigand, picture);
+        tileset.walking.insert(picture.image);
+        SpriteSkin::new(tileset)
+    }
+
     /// A buffer the size of the console, every cell `fill()`.
     pub(crate) fn blank() -> GlyphBuffer {
         GlyphBuffer::new(100, 32, fill())
@@ -298,6 +332,9 @@ pub(crate) mod tests {
             effects: UnitEffects::default(),
             fade: 0.0,
             highlight: false,
+            facing: Facing::Down,
+            frame: STANDING_FRAME,
+            offset: (0.0, 0.0),
         }
     }
 
@@ -586,6 +623,9 @@ pub(crate) mod tests {
                 },
             fade: _,
             highlight: _,
+            facing: _,
+            frame: _,
+            offset: _,
         } = &scene.units[0];
         let CursorView {
             pos: _,
@@ -634,6 +674,9 @@ pub(crate) mod tests {
             feature("penalty", &unit(|u| u.effects.penalty = true)),
             feature("fade", &unit(|u| u.fade = 0.25)),
             feature("highlight", &unit(|u| u.highlight = true)),
+            feature("facing", &unit(|u| u.facing = Facing::Left)),
+            feature("frame", &unit(|u| u.frame = 0)),
+            feature("offset", &unit(|u| u.offset = (-0.5, 0.0))),
             feature("path", &|s| s.path = vec![p(0, 0), p(1, 0)]),
         ];
         // The clock moves the marks: an arrow rests, then is bounced.
@@ -683,9 +726,10 @@ pub(crate) mod tests {
     #[test]
     fn every_scene_feature_is_painted() {
         let c = ctx();
-        for s in [with_lord(&skin(&c)), with_lord(&sheets(&c))] {
+        let own = with_walking_brigand(&c, &with_lord(&skin(&c)));
+        for s in [own, with_lord(&sheets(&c))] {
             let features = features(&c);
-            assert_eq!(features.len(), 15 + 4 + 6);
+            assert_eq!(features.len(), 18 + 4 + 6);
             for f in features {
                 assert_ne!(f.without, f.with, "{}: no change", f.name);
                 let (without, with) = (painted(&c, &s, &f.without), painted(&c, &s, &f.with));
@@ -770,6 +814,14 @@ pub(crate) mod tests {
                     assert_eq!(ours, theirs, "({x}, {y})");
                 }
             }
+        }
+        // A unit between two tiles walks over the glyphs: none is cleared,
+        // on the tile it leaves or the one it walks to.
+        let mut walking = scene.clone();
+        walking.units[0].offset = (0.5, 0.0);
+        let walked = paint(&s, &walking);
+        for x in 4..8 {
+            assert_eq!(walked.get(x, 1), ground.get(x, 1), "({x}, 1)");
         }
         // The unit's sprites and bar go between the path's line and its
         // arrowhead; the cursor's marks stay last.

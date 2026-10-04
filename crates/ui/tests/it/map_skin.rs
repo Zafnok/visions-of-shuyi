@@ -6,7 +6,7 @@ use trpg_core::{BattleState, Pos};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
-use trpg_ui::map_view::RangeKind;
+use trpg_ui::map_view::{Facing, RangeKind};
 
 /// What one step of a script left: the cursor's tile, the screens, and the
 /// battle (if one is on the stack).
@@ -29,7 +29,7 @@ const SCRIPT: [Step; 16] = [
     ("Down f Left f", 0.0),
     ("f", 0.0),
     ("f Right Right Right Up", 0.0),
-    ("f", 0.5),
+    ("f", 1.0),
     ("f", 0.5),
     ("f", 0.5),
     ("f", 30.0),
@@ -172,4 +172,77 @@ fn quick_battle_with_sprite_units_after_two_actions() {
     );
     assert!(brigand.hp.0 < brigand.hp.1, "{brigand:?}");
     assert_snapshot!(h.snapshot());
+}
+
+/// What a walk showed of its unit, frame by frame: its tile, its facing,
+/// its offset and its walking frame.
+type Seen = Vec<(Pos, Facing, (f32, f32), u8)>;
+
+/// In the Quick Battle under the skin `skin`, the lord walks three tiles
+/// right and one up: its path, and what the scene shows of it every 50 ms
+/// for a second from the Confirm that starts the walk.
+fn lord_walk(skin: &str) -> (Vec<Pos>, Seen) {
+    let mut h = Harness::with_layout(Layout::RightHanded);
+    h.with_map_skin(skin);
+    h.keys("Down f Left f f f Right Right Right Up");
+    let path = h.path();
+    let lord = h.battle().map(|b| b.state().units()[0].id);
+    h.keys("f");
+    let mut seen = Vec::new();
+    for _ in 0..20 {
+        let scene = h.map_scene();
+        let unit = scene.as_ref().zip(lord).and_then(|(s, id)| s.unit(id));
+        seen.extend(unit.map(|u| (u.pos, u.facing, u.offset, u.frame)));
+        h.wait(0.05);
+    }
+    (path, seen)
+}
+
+/// Ticket 0440, on the public fixture of unit sheets. Read from the scene
+/// (ADR-0038): the lord is on each tile of its path in turn, turned the
+/// way it goes and partway to the next tile, and ends on the last one
+/// facing the camera. The glyph skin's walk is the same path, quicker.
+#[test]
+fn a_scripted_move_walks_along_its_path_under_the_sprite_skin() {
+    let (path, seen) = lord_walk("sprite_units");
+    assert_eq!(seen.len(), 20);
+    let at = |x, y| Pos::new(x, y);
+    assert_eq!(path, [at(3, 5), at(4, 5), at(5, 5), at(6, 5), at(6, 4)]);
+    let mut tiles: Vec<(Pos, Facing)> = seen.iter().map(|&(pos, f, ..)| (pos, f)).collect();
+    tiles.dedup();
+    assert_eq!(
+        tiles,
+        [
+            (at(3, 5), Facing::Right),
+            (at(4, 5), Facing::Right),
+            (at(5, 5), Facing::Right),
+            (at(6, 5), Facing::Up),
+            (at(6, 4), Facing::Down),
+        ]
+    );
+    for &(pos, facing, (dx, dy), frame) in &seen {
+        assert!(frame <= 2, "{seen:?}");
+        match facing {
+            Facing::Right => assert!((0.0..1.0).contains(&dx) && dy == 0.0, "{seen:?}"),
+            Facing::Up => assert!(dx == 0.0 && dy <= 0.0 && dy > -1.0, "{seen:?}"),
+            // Arrived: no offset.
+            _ => assert_eq!((pos, dx, dy), (at(6, 4), 0.0, 0.0), "{seen:?}"),
+        }
+    }
+    // It was seen between tiles, and with each foot forward.
+    assert!(seen.iter().any(|&(_, _, (dx, _), _)| dx > 0.2));
+    assert!(seen.iter().any(|&(_, _, (_, dy), _)| dy < -0.2));
+    assert!(seen.iter().any(|&(.., frame)| frame == 0));
+    assert!(seen.iter().any(|&(.., frame)| frame == 2));
+    // The scene is the same under the other sprite skin.
+    assert_eq!(lord_walk("sprite"), (path.clone(), seen.clone()));
+    // Under the glyph skin the walk is the same path, sooner over: 12
+    // tiles a second, not 6.
+    let (glyph_path, glyph_seen) = lord_walk("glyph");
+    assert_eq!(glyph_path, path);
+    let walking = |seen: &Seen| seen.iter().filter(|s| s.1 != Facing::Down).count();
+    assert_eq!((walking(&seen), walking(&glyph_seen)), (13, 7));
+    let mut glyph_tiles: Vec<Pos> = glyph_seen.iter().map(|s| s.0).collect();
+    glyph_tiles.dedup();
+    assert_eq!(glyph_tiles, path);
 }

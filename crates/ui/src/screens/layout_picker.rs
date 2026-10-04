@@ -138,9 +138,13 @@ impl LayoutPickerScreen {
         Self::help_with(ctx, false)
     }
 
-    /// [`help`](Self::help), with the Cancel key to go `back` when the
-    /// picker can be backed out of (`cancellable`).
+    /// [`help`](Self::help); when the picker can be backed out of
+    /// (`cancellable`, from Options), the line that also names the Cancel
+    /// key.
     fn help_with(ctx: &Ctx, cancellable: bool) -> String {
+        if cancellable {
+            return ctx.text_with("layout_picker.help_change", &[]);
+        }
         let km = ctx.help_keys();
         let choose = Some(format!(
             "{} {}",
@@ -150,7 +154,6 @@ impl LayoutPickerScreen {
         help_line(&[
             (choose, "choose"),
             (Some(all_key_names(km, Action::Confirm)), "pick"),
-            (cancellable.then(|| key_name(km, Action::Cancel)), "back"),
         ])
     }
 

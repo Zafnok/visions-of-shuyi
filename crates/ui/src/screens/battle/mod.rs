@@ -46,6 +46,7 @@ pub mod skills;
 mod sounds;
 pub mod tips;
 pub mod units;
+pub mod walk;
 
 use std::collections::VecDeque;
 use trpg_content::{Content, MapLook, TipTrigger, battle_campaign};
@@ -57,7 +58,7 @@ use trpg_core::{
     next_command,
 };
 
-use self::ai_phase::{AiAction, PACING};
+use self::ai_phase::{AiAction, PACING, Pacing};
 use self::banner::{Banner, BannerKind};
 
 use self::attack::{Targeting, aimed_first, aimed_options};
@@ -70,6 +71,7 @@ use self::playback::{Playback, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{RewindEffect, RewindScreen};
 use self::tips::TipState;
+use self::walk::Gait;
 use super::OptionsScreen;
 use super::dialogue::DialogueScreen;
 use super::draw_debug_hint;
@@ -81,7 +83,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::settings::HELD_SPEED;
+use crate::settings::{AnimSpeed, HELD_SPEED};
 use crate::tips::{draw_tip, fill_placeholders};
 use crate::widgets::help::{HelpKeys, SEPARATOR, cursor_keys_name, help_line, key_name};
 
@@ -274,6 +276,17 @@ pub struct BattleScreen {
     /// The unit whose walk was shown since the last command: its move's
     /// steps have been heard.
     walked: Option<UnitId>,
+    /// Walking speed, in tiles per second, and an AI unit's while Confirm
+    /// is held: the map skin's ([`MapSkin::walk_tiles_per_s`], or
+    /// [`MapSkin::fast_walk_tiles_per_s`] with Fast animations, and
+    /// [`MapSkin::held_walk_tiles_per_s`]), as of the frame's start.
+    pace: (f32, f32),
+    /// How much faster the rest of an AI unit's action plays (the camera's
+    /// pan, the mark on the unit): the player's speeds for the AI's phases
+    /// ([`Settings::battle_speed`]), as of the frame's start.
+    ///
+    /// [`Settings::battle_speed`]: crate::settings::Settings::battle_speed
+    ai_speed: f32,
     /// The player chose `Restart Battle` or `Suspend`: the screen closes,
     /// and the game flow does it.
     leaving: Option<Leaving>,
@@ -331,6 +344,8 @@ impl BattleScreen {
             progress: None,
             cues: CueQueue::default(),
             walked: None,
+            pace: (walk::WALK_TILES_PER_S, walk::HELD_WALK_TILES_PER_S),
+            ai_speed: 1.0,
             leaving: None,
             player_view: None,
             notes_t: 0.0,
@@ -706,7 +721,18 @@ impl BattleScreen {
         self.camera.origin = from;
         self.cursor.jump(start);
         let then = std::mem::take(&mut self.mode);
-        let action = AiAction::new(unit, before, (from, to), path, then, PACING);
+        // The pan and the mark play at the player's speeds, and with
+        // Confirm held at ×4 instead, not on top (`options.md`). The walk
+        // has its own speeds (`look-and-feel.md`).
+        let speed = self.ai_speed;
+        let pacing = Pacing {
+            pan: PACING.pan / speed,
+            highlight: PACING.highlight / speed,
+            fast: PACING.fast.max(speed) / speed,
+            walk_tiles_per_s: self.pace.0,
+            held_walk_tiles_per_s: self.pace.1,
+        };
+        let action = AiAction::new(unit, before, (from, to), path, then, pacing);
         self.mode = Mode::AiAction(Box::new(action));
     }
 
@@ -825,7 +851,8 @@ impl BattleScreen {
     /// Starts a frame of `dt` seconds: keeps the cameras for as many tiles
     /// as the map skin shows ([`refit`](Self::refit)), takes the player's
     /// settings as they are now (the Options screen may have changed
-    /// them), and advances the cursor's pulse.
+    /// them) and the walking speed for the walks that start this frame,
+    /// and advances the cursor's pulse.
     fn begin_frame(&mut self, ctx: &Ctx, dt: f32) {
         self.auto_end = ctx.settings().auto_end_turn;
         self.show_fights = ctx.settings().combat_animations;
@@ -833,6 +860,13 @@ impl BattleScreen {
         if view != self.view {
             self.refit(view);
         }
+        let (skin, settings) = (&ctx.map_skin, ctx.settings());
+        let walk = match settings.anim_speed {
+            AnimSpeed::Normal => skin.walk_tiles_per_s(),
+            AnimSpeed::Fast => skin.fast_walk_tiles_per_s(),
+        };
+        self.pace = (walk, skin.held_walk_tiles_per_s());
+        self.ai_speed = settings.battle_speed(true);
         self.cursor.tick(dt);
     }
 
@@ -1091,6 +1125,7 @@ impl BattleScreen {
         let before = self.mode.clone();
         let mode = std::mem::take(&mut self.mode);
         let (mode, effect) = mode::step(mode, action, self.cursor.pos, &self.state);
+        let mode = mode.at_pace(self.pace.0);
         if let Some(sound) = sounds::step_sound(action, &before, &mode, &effect) {
             ctx.audio.menu(sound);
         }
@@ -1113,21 +1148,23 @@ impl BattleScreen {
     }
 
     /// Plays the frame's sounds and advances what is animated by `dt`
-    /// seconds at the player's speeds (0805; `held`: Confirm is down): a
-    /// walk, a fight's playback, an AI action, the EXP bar. Holding
-    /// Confirm plays them at [`HELD_SPEED`] instead of the settings' speed,
-    /// not on top of it (Nick, `docs/design/controls.md`): the clocks
-    /// multiply a held frame by their own ×4, so the frame's time is
-    /// divided by it first. A walk has no held speed-up (the hold skips
-    /// it).
+    /// seconds (`held`: Confirm is down). A fight's playback and the EXP
+    /// bar play at the player's speeds (0805); holding Confirm plays them
+    /// at [`HELD_SPEED`] instead, not on top (Nick,
+    /// `docs/design/controls.md`): their clocks multiply a held frame by
+    /// their own ×4, so the frame's time is divided by it first. A walk
+    /// and an AI unit's action keep real time: their speeds were set when
+    /// they started (the walk's pace, the action's [`Pacing`]).
     fn animate(&mut self, ctx: &mut Ctx, dt: f32, held: bool) {
         let ai = self.ai_phase();
         let settings = ctx.settings();
-        let dt = if held && !matches!(self.mode, Mode::Moving { .. }) {
+        let scaled = if held {
             dt * settings.battle_speed_held(ai, true) / HELD_SPEED
         } else {
             dt * settings.battle_speed(ai)
         };
+        let own_pace = matches!(self.mode, Mode::Moving { .. } | Mode::AiAction(_));
+        let dt = if own_pace { dt } else { scaled };
         self.play_sounds(ctx, dt, held);
         let mode = std::mem::take(&mut self.mode);
         self.mode = mode.tick(dt, held, &self.state);
@@ -1141,7 +1178,7 @@ impl BattleScreen {
             self.cursor.jump(at);
             self.follow(at);
         }
-        self.tick_progress(dt, held);
+        self.tick_progress(scaled, held);
     }
 
     /// Moves the cursor one tile for a cursor key; the camera and a
@@ -1417,6 +1454,7 @@ impl BattleScreen {
             for unit in shown.units() {
                 scene.push_unit(UnitView::of(unit));
             }
+            animate(&mut scene, None);
             return scene;
         }
         let mut scene = terrain_scene(&self.state, origin, size);
@@ -1429,6 +1467,7 @@ impl BattleScreen {
         }
         self.add_ranges(&mut scene);
         self.add_units(&mut scene);
+        animate(&mut scene, self.mode.gait());
         scene.cursor = self.cursor_view(ctx).filter(|c| scene.contains(c.pos));
         if let Mode::Selected(sel) = &self.mode {
             scene.path.clone_from(&sel.path);
@@ -1788,6 +1827,25 @@ fn menu_origin(tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
         .min(MAP_VIEW.y + MAP_VIEW.h - h)
         .max(MAP_VIEW.y);
     (mx, my)
+}
+
+/// Sets the units of `scene` moving (ticket 0440): the unit of `gait`
+/// turned the way it walks, between two tiles, its legs going; every other
+/// unit that can still act and isn't falling stepping on the spot, all
+/// together, by the scene's clock. A unit that has acted stands still.
+fn animate(scene: &mut MapScene, gait: Option<(UnitId, Gait)>) {
+    let idle = walk::idle_frame(scene.clock_ms);
+    for unit in &mut scene.units {
+        match gait {
+            Some((id, gait)) if id == unit.id => {
+                unit.facing = gait.facing;
+                unit.frame = gait.frame;
+                unit.offset = gait.offset;
+            }
+            _ if !unit.acted && unit.fade <= 0.0 => unit.frame = idle,
+            _ => {}
+        }
+    }
 }
 
 /// A view of `size` tiles from `origin` showing `state`'s terrain (and
