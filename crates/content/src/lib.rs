@@ -26,6 +26,7 @@ pub mod portrait;
 pub mod ron_loader;
 pub mod skill;
 pub mod spell;
+pub mod support;
 pub mod terrain;
 pub mod tileset;
 pub mod tip;
@@ -38,7 +39,7 @@ use std::sync::Arc;
 
 use trpg_core::{
     AiWeights, ArtTable, BattleDef, BattleMap, ClassTable, GameTables, ItemTable, SkillTable,
-    SpellTable,
+    SpellTable, SupportTable,
 };
 
 pub use audio::{AudioManifest, Credit, CreditRef, MusicCue, SoundCue};
@@ -46,7 +47,7 @@ pub use battle::BattleRefs;
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
 pub use credits::{CreditEntry, CreditGroup, Credits};
-pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Scene, Side, Step};
+pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Present, Scene, Side, Step};
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
 pub use image::{ImageId, ImageInfo, ImageTable};
@@ -114,6 +115,8 @@ pub struct Content {
     pub chapters: BTreeMap<String, ChapterDef>,
     /// How a new game starts.
     pub new_game: NewGameDef,
+    /// Support rules and pairs (ticket 1002).
+    pub supports: SupportTable,
     /// English screen text and the language packs (ADR-0045).
     pub lang: Lang,
 }
@@ -136,6 +139,7 @@ impl Content {
             spells: Arc::new(self.spells.clone()),
             skills: Arc::new(self.skills.clone()),
             arts: Arc::new(self.arts.clone()),
+            supports: Arc::new(self.supports.clone()),
         }
     }
 }
@@ -178,22 +182,31 @@ pub fn load_embedded() -> Result<Content, ContentErrors> {
         Err(_) => Ok(BTreeMap::new()),
     };
     let audio = audio::load();
-    let dialogue = dialogue::load(
+    let scripts = dialogue::load_scripts(
         characters.as_ref().ok(),
         portraits.as_ref().ok(),
         names.as_ref().ok(),
         audio.as_ref().ok(),
     );
+    let scenes = scripts.as_ref().ok().map(|s| &s.table);
     let (battles, chapters, new_game) = load_story(
         maps.as_ref().ok(),
         terrain.as_ref().ok(),
         classes.as_ref().ok(),
         items.as_ref().ok(),
         characters.as_ref().ok(),
-        dialogue.as_ref().ok(),
+        scenes,
         audio.as_ref().ok(),
     );
     let credits = credits::load(audio.as_ref().ok());
+    let supports = support::load(characters.as_ref().ok(), scenes);
+    let dialogue = check_presence(
+        scripts,
+        battles.as_ref().ok(),
+        chapters.as_ref().ok(),
+        new_game.as_ref().ok(),
+        supports.as_ref().ok(),
+    );
     let tilesets = load_tilesets(
         images.as_ref().ok(),
         terrain.as_ref().ok(),
@@ -225,9 +238,40 @@ pub fn load_embedded() -> Result<Content, ContentErrors> {
             battles,
             chapters,
             new_game,
+            supports,
             lang: lang::load(),
         },
     )
+}
+
+/// Adds the presence checks ([`dialogue::check_presence`]: nobody who may
+/// be gone is shown outside an `@if` block for them, ADR-0055) to the
+/// dialogue's result. Skipped when the dialogue, the battles, the
+/// chapters, the New Game file or the supports failed to load.
+fn check_presence(
+    scripts: Result<dialogue::Scripts, Vec<ContentError>>,
+    battles: Option<&BTreeMap<String, BattleDef>>,
+    chapters: Option<&BTreeMap<String, ChapterDef>>,
+    new_game: Option<&NewGameDef>,
+    supports: Option<&SupportTable>,
+) -> Result<DialogueTable, Vec<ContentError>> {
+    let scripts = scripts?;
+    let (Some(battles), Some(chapters), Some(new_game), Some(supports)) =
+        (battles, chapters, new_game, supports)
+    else {
+        return Ok(scripts.table);
+    };
+    let cast = dialogue::Cast::new(new_game, battles, chapters, supports);
+    let errors: Vec<ContentError> = scripts
+        .parsed
+        .iter()
+        .flat_map(|scene| dialogue::check_presence(scene, &cast))
+        .collect();
+    if errors.is_empty() {
+        Ok(scripts.table)
+    } else {
+        Err(errors)
+    }
 }
 
 /// Adds the seal checks ([`item::check_seals`]: a seal for every tier a
@@ -430,6 +474,7 @@ struct Loaded {
     battles: Result<BTreeMap<String, BattleDef>, Vec<ContentError>>,
     chapters: Result<BTreeMap<String, ChapterDef>, Vec<ContentError>>,
     new_game: Result<NewGameDef, Vec<ContentError>>,
+    supports: Result<SupportTable, Vec<ContentError>>,
     lang: Result<Lang, Vec<ContentError>>,
 }
 
@@ -477,6 +522,7 @@ fn assemble(
         battles: take(units.battles, &mut errors),
         chapters: take(units.chapters, &mut errors),
         new_game: take(units.new_game, &mut errors),
+        supports: take(units.supports, &mut errors),
         lang: take(units.lang, &mut errors),
     };
     if errors.is_empty() {
@@ -568,6 +614,10 @@ mod tests {
         credits::load(audio::load().ok().as_ref())
     }
 
+    fn ok_supports() -> Result<SupportTable, Vec<ContentError>> {
+        support::load(ok_characters().ok().as_ref(), ok_dialogue().ok().as_ref())
+    }
+
     fn ok_tilesets() -> Result<BTreeMap<String, Tileset>, Vec<ContentError>> {
         load_tilesets(
             ImageTable::load().ok().as_ref(),
@@ -598,6 +648,7 @@ mod tests {
             battles,
             chapters,
             new_game,
+            supports: ok_supports(),
             lang: lang::load(),
         }
     }
@@ -681,6 +732,10 @@ mod tests {
             ok_tilesets().ok().as_ref()
         );
         assert_eq!(
+            content.as_ref().map(|c| &c.supports),
+            ok_supports().ok().as_ref()
+        );
+        assert_eq!(
             content.as_ref().map(|c| &c.lang),
             lang::load().ok().as_ref()
         );
@@ -696,9 +751,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 24] = [
+    const NAMES: [&str; 25] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "l",
+        "j", "z", "b", "h", "g", "q", "l",
     ];
 
     #[test]
@@ -730,6 +785,7 @@ mod tests {
                     battles: Err(e("b")),
                     chapters: Err(e("h")),
                     new_game: Err(e("g")),
+                    supports: Err(e("q")),
                     lang: Err(e("l")),
                 },
             ),
@@ -781,7 +837,8 @@ mod tests {
                     battles: if i == 20 { Err(e("b")) } else { ok_story().0 },
                     chapters: if i == 21 { Err(e("h")) } else { ok_story().1 },
                     new_game: if i == 22 { Err(e("g")) } else { ok_story().2 },
-                    lang: if i == 23 { Err(e("l")) } else { lang::load() },
+                    supports: if i == 23 { Err(e("q")) } else { ok_supports() },
+                    lang: if i == 24 { Err(e("l")) } else { lang::load() },
                 },
             )
         };
@@ -926,6 +983,70 @@ mod tests {
         );
     }
 
+    /// The embedded scripts pass the presence check (ADR-0055); with the
+    /// test lord in the starting roster too, his lines outside `@if`
+    /// blocks are errors.
+    #[test]
+    fn presence_checks_join_the_dialogue_errors() {
+        let scripts = || {
+            dialogue::load_scripts(
+                ok_characters().ok().as_ref(),
+                ok_portraits().ok().as_ref(),
+                names::load().ok().as_ref(),
+                audio::load().ok().as_ref(),
+            )
+        };
+        let (battles, chapters, new_game) = ok_story();
+        let (battles, chapters, supports) = (battles.ok(), chapters.ok(), ok_supports().ok());
+        let check = |new_game: Option<&NewGameDef>| {
+            check_presence(
+                scripts(),
+                battles.as_ref(),
+                chapters.as_ref(),
+                new_game,
+                supports.as_ref(),
+            )
+        };
+        let mut new_game = new_game.unwrap_or_default();
+        assert_eq!(check(Some(&new_game)), scripts().map(|s| s.table));
+        assert!(scripts().is_ok());
+        new_game
+            .roster
+            .push(trpg_core::CharacterId("test_lord".into()));
+        let errors = check(Some(&new_game)).err().unwrap_or_default();
+        let first = errors.first().map(ToString::to_string);
+        assert_eq!(
+            first.as_deref(),
+            Some(
+                "assets/dialogue/test.dlg:10: \"test_lord\" may have fallen or left the army by \
+                 now; put their lines inside \"@if test_lord\" ... \"@endif\" \
+                 (assets/dialogue/README.md, \"Who is still there\")"
+            )
+        );
+        // His support conversations and the scenes of his own triggers
+        // can't play without him.
+        let files: std::collections::BTreeSet<&str> =
+            errors.iter().map(|e| e.file.as_str()).collect();
+        assert_eq!(
+            files.into_iter().collect::<Vec<_>>(),
+            [
+                "assets/dialogue/test.dlg",
+                "assets/dialogue/test_triggers.dlg"
+            ]
+        );
+        // Skipped when another file failed, or the dialogue did.
+        assert_eq!(check(None), scripts().map(|s| s.table));
+        let failed = Err(vec![ContentError::new("d", "bad")]);
+        let checked = check_presence(
+            failed,
+            battles.as_ref(),
+            chapters.as_ref(),
+            Some(&new_game),
+            supports.as_ref(),
+        );
+        assert_eq!(checked, Err(vec![ContentError::new("d", "bad")]));
+    }
+
     #[test]
     fn seal_checks_join_the_item_errors() {
         let classes = ok_classes().ok();
@@ -1005,6 +1126,15 @@ mod tests {
         assert_eq!(
             content.as_ref().map(|c| &c.dialogue),
             ok_dialogue().ok().as_ref()
+        );
+        assert_eq!(
+            content.as_ref().map(|c| &c.supports),
+            ok_supports().ok().as_ref()
+        );
+        // The battles' tables hold the supports.
+        assert_eq!(
+            content.as_ref().map(|c| c.tables().supports),
+            ok_supports().ok().map(Arc::new)
         );
     }
 }

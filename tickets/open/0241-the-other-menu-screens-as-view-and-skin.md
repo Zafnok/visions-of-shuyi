@@ -1,17 +1,17 @@
 ---
-id: "0240"
+id: "0241"
 title: "The other full-screen menus: say what they show as a view, painted by a skin"
 type: feature
 milestone: M1 Engine
 model: sonnet-5
 effort: high
 status: todo
-blocked_by: ["0239"]
+blocked_by: ["0240"]
 nick_input: none
 completed:
 ---
 
-# 0240 — The other full-screen menus as view + skin
+# 0241 — The other full-screen menus as view + skin
 
 ## Context
 
@@ -20,7 +20,7 @@ screen has (ticket 0805, Nick 2026-10-04: a bought UI pack must be able to
 replace the look "without affecting logic").
 [ADR-0054](../../docs/adr/0054-screens-say-what-they-show-as-a-view-a-skin-paints-it.md)
 is the pattern; `crates/ui/src/screens/options.rs` with `options/view.rs`
-and `options/glyph.rs` is the worked example, and 0239 did the title, Key
+and `options/glyph.rs` is the worked example, and 0240 did the title, Key
 bindings, the layout picker and the `Menu` widget (`MenuView`,
 `widgets/menu/glyph.rs`).
 
@@ -39,9 +39,9 @@ None. Nothing the player sees changes.
 **Out (do not do):**
 - Any change to what a screen shows, its text, keys or layout.
 - A second skin or a way to choose skins.
-- The battle screen and the dialogue screen (0241).
+- The battle screen and the dialogue screen (0242).
 - Text literals to the language file (0234). *Either order works*, as in
-  0239: the view always holds finished strings.
+  0240: the view always holds finished strings.
 - Pictures stay pictures: where a screen places a portrait or another
   sprite (lead select, results' level-up page, class change), the view
   names *what* (the portrait's id, its expression, dimmed or not) and the
@@ -51,7 +51,7 @@ If this is over ~600 changed lines besides tests (it likely is: these
 files are about 4,500 lines), split it: do `mode_select`, `game_over`,
 `save`, `results` and `credits` here, and write a ticket of this same
 pattern for `lead_select`, `class_change` and `preparations`, blocked by
-this one, and make 0241 blocked by it too.
+this one, and make 0242 blocked by it too.
 
 ## Implementation steps
 
@@ -67,20 +67,20 @@ this one, and make 0241 blocked by it too.
    not a dim colour; a stat that went up is `change: Some(+2)`.
 3. Screens using `widgets::Menu` put its `MenuView` in their view and
    call `widgets::menu::glyph::paint` from their skin. When no caller of
-   `Menu::draw` is left outside the battle screen, leave it for 0241 to
+   `Menu::draw` is left outside the battle screen, leave it for 0242 to
    remove.
 4. Each screen opts into `Screen::as_any`. The game flow hosts most of
    these (`FlowScreen`, `Stage`): add `FlowScreen` accessors where a test
    needs the hosted screen (as `battle()` and `preparations()` already
    are).
-5. Tests: as 0239 step 6. Behaviour tests read the view; look tests move
+5. Tests: as 0240 step 6. Behaviour tests read the view; look tests move
    to the skin's test module; no assertion is dropped.
 
 ## Acceptance criteria
 
 - [ ] None of the logic modules listed imports `UiColor`, `Rect`,
       `BoxStyle` or `Cell`; each `draw` is one call to its skin (extend
-      0239's grep test to these files).
+      0240's grep test to these files).
 - [ ] No snapshot file changes.
 - [ ] Each view has a unit test of its content on the first frame and in
       each state the screen has (a question open, a message, a second

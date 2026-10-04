@@ -49,7 +49,7 @@ not**. The player supplies them through reply tones.
   the floor).
 - Dace, meanwhile, is a war hero, captain of the king's Hounds, and holds the
   Veyne lands and title. He hasn't written in four years.
-- Wren, Hollis's daughter, was tested by the local keeper (Piers) and taken
+- Wren, Hollis's daughter, was tested by the local keeper (Maud) and taken
   by the Vigil three years ago. The family was told she died at the
   Ashfields. The lead and Hollis were there when she was taken, and couldn't
   stop it.
@@ -87,9 +87,9 @@ Each option is at most 60 characters (0708).
 
 | Tone | What it sounds like | How the cast tends to react |
 | ---- | ------------------- | --------------------------- |
-| **Earnest** | Says what they feel, plainly and kindly. | Piers and Aske soften; Tamsin teases; Hollis is gruffly proud. |
+| **Earnest** | Says what they feel, plainly and kindly. | Maud and Aske soften; Tamsin teases; Hollis is gruffly proud. |
 | **Wry** | Deflects with dry humour; noble irony. | Tamsin and Rue light up; Hollis sighs; Aske doesn't get it. |
-| **Blunt** | Short, hard and practical. | Aske and Hollis approve; Piers winces; Rue pushes back. |
+| **Blunt** | Short, hard and practical. | Aske and Hollis approve; Maud winces; Rue pushes back. |
 
 **Sample choice (Chapter 1, after reading Dace's letter):**
 
@@ -114,8 +114,8 @@ in 0707.)
 | Dace (`rival`) | Four years of silence | Raised together; the last thing the lead did for Dace was give up everything |
 | Hollis (`retainer`) | Family in all but name | He followed the lead into exile and raised them after Lord Veyne died |
 | Tamsin (`sergeant`) | Easy, joking friendship | She guards Harrowby for bread and ale and calls the lead "Your Former Grace" |
-| Aske (`poacher`) | Wary | He hates Ardevali nobles, and the lead is one, title or no |
-| Piers (`keeper`) | Warm, with one splinter | He tested Wren and sent her name to the Vigil |
+| Aske (`poacher`) | Wary | She hates Ardevali nobles, and the lead is one, title or no |
+| Maud (`keeper`) | Warm, with one splinter | She tested Wren and sent her name to the Vigil |
 | Rue (`heretic`) | Hostile at first | She saw Dace at the mill and thinks the lead was in on it |
 
 ## Voice notes
@@ -152,6 +152,6 @@ reply choice per conversation (`supports.md`).
 | ------- | ---- | --------------- |
 | Hollis (`retainer`) | Family / mentorship | Four years of exile in two rooms. What Hollis never says about Dace. Starts at C, because they're already close (a threshold override). His A must be reachable before the end of Act 1. |
 | Tamsin (`sergeant`) | Friendship | She keeps a ledger of what the crown owes her; the lead's name is in it. What is loyalty worth if nobody pays for it? |
-| Aske (`poacher`) | Rivalry → friendship | A Brennish boy and an Ardevali noble. He wants to hate the lead properly and keeps failing. |
-| Piers (`keeper`) | Friendship | He tested Wren. The lead has never said whether they forgive him. |
+| Aske (`poacher`) | Rivalry → friendship | A Brennish girl and an Ardevali noble. She wants to hate the lead properly and keeps failing. |
+| Maud (`keeper`) | Friendship | She tested Wren. The lead has never said whether they forgive her. |
 | Rue (`heretic`) | Rivalry → trust | She was sure the lead was Dace's accomplice. Earning her trust is slow on purpose. |

@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-04
 ---
 
 # 0715 — Dialogue lines that depend on who is still in the army
@@ -120,18 +120,18 @@ None. What a scene says when someone is dead is story writing (0716).
 
 ## Acceptance criteria
 
-- [ ] A scene with an `@if` block plays the first branch when the character
+- [x] A scene with an `@if` block plays the first branch when the character
       is in the roster and the other (or nothing) when they aren't (test on
       `DialoguePlayer`).
-- [ ] In a Classic campaign where a companion died in the battle, the
+- [x] In a Classic campaign where a companion died in the battle, the
       chapter's victory scene plays the absent branch; in Casual, after a
       retreat, the present branch (harness or flow test).
-- [ ] A trigger scene in a battle plays the absent branch for a character
+- [x] A trigger scene in a battle plays the absent branch for a character
       whose unit has already fallen (test).
-- [ ] Each error in steps 3 and 4 has a test of its message and line.
-- [ ] `print_scene` round-trips a scene with blocks.
-- [ ] ADR written and listed in `docs/adr/README.md`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Each error in steps 3 and 4 has a test of its message and line.
+- [x] `print_scene` round-trips a scene with blocks.
+- [x] ADR written and listed in `docs/adr/README.md`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -145,5 +145,75 @@ None. What a scene says when someone is dead is story writing (0716).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** ADR-0055 records all of it.
+
+- **Format:** `@if <character>` … `@else` … `@endif` (`Step::If`). Blocks
+  nest, stand in a reply's reaction, and may hold a `@choice`. A block's
+  lines are written as far in as its `@if`. `@if` takes exactly one
+  character id, which leaves `@if flag:<id>` and the like free for later.
+- **Parser:** a stack of open blocks replaces the single open choice;
+  `ParsedScene::lines` is now a tree (`Lines`/`PartLines`) instead of
+  `step_lines` + `choice_lines`.
+- **Checks:** in `check_scene`, the block's character can speak and both
+  parts leave the same screen and caption. In the new `check_presence`
+  (`dialogue/presence.rs`), run by `load_embedded` once the battles,
+  chapters, New Game file and supports are loaded: anyone the army can
+  lose appears only in a block for them; nobody appears in the `@else` of
+  their own block; a block that can only go one way is an error.
+- **Player:** `DialoguePlayer::new` takes a `Present` and plays
+  `Scene::resolved(&present)`, the scene with every block replaced by the
+  part that holds. Skipping, music and voice preloading need no changes
+  and can't disagree with what was played. (There is no text log or
+  going back yet.)
+- **Callers:** the flow passes the campaign's roster; the battle screen
+  passes who was on the map when the trigger fired; the debug viewer
+  passes `Present::Everyone`.
+- `assets/dialogue/README.md` has the new section "Who is still there".
+
+**Deviations from the plan**
+
+- **`core` changed** (not in the steps): `Event::SceneTriggered` now
+  carries `present`, the characters on the map at that moment. The battle
+  screen holds the state *after* the whole command, so "the units on the
+  map" read there is wrong for a scene played before the combat that
+  kills someone: they would already be gone in the scene that comes
+  before their death. Only the battle knows the moment.
+- **The fall-scene exception is general.** The check takes, from each
+  trigger, the characters it names (not only `UnitFell`'s unit: also the
+  fighters of `CombatStart`, `HalfHp`'s unit, both of `Talk`, who enters
+  an area) and treats them as there in that scene. A support
+  conversation can count on its pair.
+- **Before anyone can have fallen**, the check lets a scene count on the
+  starting roster: the first chapter's intro scenes, and its battle's
+  scenes at the start of turn 1's player phase. Without this 0716 would
+  have to wrap `ch01_intro`, `ch01_prebattle` and `ch01_first_turn` in
+  blocks that can never be false.
+- **No per-file switch and no list of scenes to convert.** `ch01.dlg`
+  passes because its companions aren't in the New Game roster yet. So
+  that the rule can't bite by surprise: 0803 (which adds them) is now
+  blocked by 0716, and 0716 has a section saying what 0715 built and
+  asks for one test that runs the check on `ch01.dlg` with the five
+  companions able to be gone.
+- The placeholder scripts were converted: the knight's lines in `test`
+  (the debug viewer's scene) and `test_victory` are in blocks;
+  `test_victory` has a line for when the knight died.
+- The property test "a random present-set never shows an absent
+  character" is in `content` (on `Scene::resolved`, with generated
+  scenes) and in `ui` (on `DialoguePlayer`, over every embedded scene).
+
+**Rules a player would notice** (*Claude's starting rules*, for Nick to
+agree or veto):
+
+1. In a scene **during a battle**, "there" means **on the map right
+   then**. A companion you left out of the battle counts as not there,
+   and an enemy counts as there. (The ticket set this; noted because it
+   is what a player sees.)
+2. Someone who is **about to fall** is still there in the line said just
+   before that fight, and for their own last words. They are gone from
+   every scene after.
+3. A scene in which **every line belongs to people who are gone is not
+   shown at all**: no empty box, and the music change it would have made
+   doesn't happen either. A writer who wants something said anyway
+   writes an `@else`.
+
+**Follow-ups:** none created. 0716 and 0803 were edited as above.

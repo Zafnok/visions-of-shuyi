@@ -32,8 +32,8 @@ the night at the mill, and has never said a word about it.
   the one who said otherwise.
 - **At the mill:** he got there with the lead minutes after the killing, and
   carried Wren home.
-- **Pressure:** his daughter Wren was tested by Piers and taken by the Vigil
-  three years ago, and "died at the Ashfields". He has never forgiven Piers,
+- **Pressure:** his daughter Wren was tested by Maud and taken by the Vigil
+  three years ago, and "died at the Ashfields". He has never forgiven Maud,
   and never forgiven himself for letting her go.
 
 ## Arc (start → end: Act 1 only; he dies in Chapter 8)
@@ -62,15 +62,15 @@ the night at the mill, and has never said a word about it.
 | The lead | Family in all but name | He owes them his son's life, and they owe him four years of company |
 | Dace (`rival`) | His son | Loves him, suspects him, and can't say either aloud |
 | Wren (`sister`) | His daughter | Lost to the Vigil; he believes she's dead |
-| Piers (`keeper`) | Cold | Piers tested Wren. Hollis is civil, never warm, until Chapter 3 |
+| Maud (`keeper`) | Cold | Maud tested Wren. Hollis is civil, never warm, until Chapter 3 |
 | Tamsin (`sergeant`) | Two old soldiers | They swap war lies and actually like each other |
-| Aske (`poacher`) | Teacher | He sees a boy who needs a sergeant, not a pity |
+| Aske (`poacher`) | Teacher | He sees a recruit who needs a sergeant, not a pity |
 | Rue (`heretic`) | Wary | She saw his son at the mill. He's afraid of what she knows |
 
 ## Voice notes
 
 - Short, flat sentences. Soldier's grammar ("Aye." "Not today." "Eat
-  something."). Never swears in front of Piers, and constantly in front of
+  something."). Never swears in front of Maud, and constantly in front of
   Tamsin.
 - Calls the lead "Veyne", or "kid" when he's worried, and very rarely by
   first name, when it matters. Never a gendered word ("lad", "lass"): the
@@ -108,6 +108,6 @@ the night at the mill, and has never said a word about it.
 | ------- | ---- | --------------- |
 | The lead | Family / mentorship | See the lead's sheet. Starts at C (override). |
 | Tamsin (`sergeant`) | Friendship | Two old soldiers compare what the war owed them and what it took. |
-| Aske (`poacher`) | Mentorship | He teaches the Brennish boy to hold a line, and learns what the Ashfields looked like from the other side. |
-| Piers (`keeper`) | Conflict → forgiveness | The man who tested Wren. By A, Hollis forgives him before he forgives himself. |
+| Aske (`poacher`) | Mentorship | He teaches the Brennish girl to hold a line, and learns what the Ashfields looked like from the other side. |
+| Maud (`keeper`) | Conflict → forgiveness | The keeper who tested Wren. By A, Hollis forgives her before she forgives herself. |
 | Rue (`heretic`) | Wary → trust | She knew what his son did. He asks her to tell him everything, and listens. |

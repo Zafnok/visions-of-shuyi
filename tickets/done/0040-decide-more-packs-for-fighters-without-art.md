@@ -5,10 +5,10 @@ type: design-decision
 milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0038"]
 nick_input: decision
-completed:
+completed: 2026-10-04
 ---
 
 # 0040 — Decide: more bought packs for fighters with no fitting art
@@ -38,7 +38,7 @@ F = face):
 | 1. Mounted fighters | Rider (Tamsin, Chapter 1), Lancer, Outrider, Iron Rider and their tier-3 classes; later a flying mount (Flier) | P, M | An on-foot lance fighter (`look-and-feel.md`) |
 | 2. Human axe fighter | Harl (Chapter 1 boss, ticket 0035), Brigand and Raider enemies | P (F for Harl) | The orc axe fighter; human `Warrior_M*` map sprites exist |
 | 3. Male archer | Aske (Chapter 1) | P, F | The Archer hero, who is plainly a female elf |
-| 4. Hooded male cleric; old hooded priest with spectacles | Piers (Chapter 1); Crane (enemy caster, Chapter 7) | P, F | Church Cleric / Church Archmage; the generator has no hoods or glasses |
+| 4. Hooded male cleric; old hooded priest with spectacles | Maud (Chapter 1); Crane (enemy caster, Chapter 7) | P, F | Church Cleric / Church Archmage; the generator has no hoods or glasses |
 | 5. Fist fighter | Brawler (Gil Parrow, Chapter 4) | P | None; the generator has a brawler outfit for face and map sprite |
 | 6. A rival swordsman in black | Dace (Chapter 1 tease, Chapter 4) | P, F | The Samurai hero (partial) |
 
@@ -121,6 +121,128 @@ character to fit art we own** (for example Aske as the elf archer the
 picture shows). The mockups must show the double-size and rougher-style
 candidates next to a Tiny Tales hero so Nick can judge the clash himself.
 
+## Recheck and mockups (2026-10-02, step 1 and 2)
+
+Every shortlisted itch.io page was opened again and its previews cut out
+for the mockups. Prices and licence texts are as in the table above,
+with these corrections:
+
+- **Sizes, measured on the previews.** The small sprites are smaller than
+  the first search said: Dreamir's bandits are 21–22 wide and 26–28 tall
+  (on a 64×64 canvas), Sagak's archers and fighter 21–24 by 33–36, Zerie's
+  characters 18–24 by 20–23 (the mounted Lancer 29×40 with his lance),
+  the Time Fantasy rider 29×38. Our Tiny Tales fighters are 45–60 tall.
+  Fat Cat's battlers are 50–61 by 58–62: the same size as ours.
+  GandalfHardcore's knight is 78×103.
+- **Fat Cat's page is pay-what-you-want**: the free download holds only
+  the Halberdier and the Valkyrie under the non-commercial licence; the
+  ten-fighter *Premium* pack with the commercial licence is $4.99.
+- **GandalfHardcore's licence** also forbids "Using them for AI training
+  or NFT projects" and "Incorporating them into 'game development tools'
+  or printed materials". Neither touches a game. Its one portrait is a
+  closed helmet, so it gives Tamsin no face. $5.19 (35% off $7.99).
+- **Zerie's licence** forbids AI training and NFT use too; credit is
+  "appreciated but not required". The pack also has an **Armored Axeman**
+  (gap 2) and a **Priest** in a mitre (gap 4).
+- **Found on the sellers' other pages:** Sagak's *8-Bit Heroes Pack 1*
+  ($29, ten characters) has a brown-haired fighter with an axe and a round
+  shield (gap 2); *8-Bit Heroes 2: Archer2* ($3) is a second male archer
+  in a blue feathered hat; Sagak's *Priest* ($3) is a nun, so no use for
+  Maud. *Time Fantasy Faces* is $8 at
+  <https://finalbossblues.itch.io/tf-faces> and *Sprites 1* $15 at
+  <https://finalbossblues.itch.io/tf-rpg-charactersprites-1>.
+- **Time Fantasy Mini Sprites** has a horses sheet with no riders on it.
+- **AI:** no page says AI was used, and none fills in itch.io's AI
+  disclosure field. The art reads as hand-made pixel art (three sellers
+  ship their Aseprite files).
+- **Not mocked up:** Aekashics' bandits (painted, not pixel art: the
+  preview settles it) and the Heroic series (16-pixel cartoon units).
+
+The mockups (store previews beside Tiny Tales art, never committed) are
+`N-0040-*.png` in `assets-private/library/tiny-tales/spike-renders/` on
+Nick's machine (the bought art moved there on 2026-10-02, ADR-0040; they
+are loose files, not committed to the private repository): `gap*` is
+round 1, `r2-*` to `r6-*` the later rounds.
+
+**The keeper was renamed on 2026-10-04**: where this ticket says *Maud*
+in text written before that day (the gap table, the search results), the
+character was then a man called Piers.
+
+## Nick's answers, round by round (2026-10-02 to 2026-10-04)
+
+The working notes of the decision. The record to build from is
+`look-and-feel.md`, *Fighters with no Tiny Tales art*.
+
+- **Round 1 shortlist (the table above): rejected whole.** "I hate all of
+  them... these all look like shit." Don't show those packs again.
+- **Gap 3, Aske: done.** "I like the archer character from tiny tales so
+  if it's not integral to the plot that this Aske person needs to be
+  human male then rewrite as female elf." Nothing in the plot needs a
+  boy, and the world has no elves, so Aske is now a human girl of 17 drawn
+  as the Archer hero; her pointed ears are never mentioned (Nick: "whatever
+  is lowest lift in your POV that makes sense"). Sheet, story files, the
+  Chapter 1 script line and tickets 0706 and 0716 are updated.
+- **What a battle picture must be** (Nick, round 2): the two fighters
+  **face each other**, so a picture drawn facing the camera is out
+  ("I need them to be facing each other ideally"). Sizes between 1× and
+  2× are fine ("maybe 1.5x or 1.25x").
+- **Map sprites for riders:** MattWalkden's *Fantasy Battle Pack*
+  (<https://mattwalkden.itch.io/fantasy-battle-pack>, pay what you want,
+  "Royalty free commercial and personal license", "No generative AI was
+  used"): "as long as they are animated same as rest of our units
+  MattWalkden looks good". Its page lists idle, move, attack and death in
+  4 directions. Read the licence file in the download for edits before
+  use. Foot fighters need no bought walker: the bundle has 300+ human map
+  sprites.
+- **Pixel Flag's 64-figure set** (BOOTH, ¥500,
+  <https://booth.pm/ja/items/7851483>; commercial use and edits allowed,
+  no resale, no credit needed, "AI生成不使用"): Nick likes only the
+  **Paladin**, at **1.5×**; "rest kinda meh". Its foot figures face the
+  camera.
+- **JAPANweb's *SRPG Studio ICON オリジナル版*** is the look Nick likes
+  best ("japanweb looks quite good", "would prefer if we can use
+  japanweb"). Its terms (archived 2021-10-28; the live file is gone) say
+  「SRPG Studio以外の作品への使用は許可しません」 and allow paid doujin
+  games, edits, credit required. **Nick emailed him on 2026-10-03 asking
+  for permission**; nothing is decided until he answers. The art is close
+  to Fire Emblem's own sprites: look at the files before shipping any.
+- **AI-assisted packs:** "not a huge fan of them unless we use them
+  sparingly like for bosses or rare enemies". From cogabushi's side-view
+  set (itch.io $28.80 / BOOTH ¥4,100; AI-generated then retouched;
+  commercial use and edits allowed) he "doesn't mind much" **C3** (the
+  red-armoured captain with a battle-axe) as Harl and **C5** (the
+  crescent-axe fighter) as a normal brigand, as the fallback if JAPANweb
+  says no.
+- **Holder's free animated battlers** (any engine, credit; only his own
+  designs, not the ones modelled on RPG Maker's): the axe fighter is "ok
+  but not for harl or brigands", only for a party member it happens to
+  fit.
+- **SRPG Studio's bundled art and edits of it are locked** to SRPG Studio
+  by its terms (<http://srpgstudio.com/guide/rules.html>); owning the tool
+  doesn't change that.
+- Searches run: four rounds (itch.io three times, Unity Asset Store,
+  GameDev Market, CraftPix, OpenGameArt, BOOTH, DLsite, Nico Commons, SRPG
+  Studio material, the RPG Maker stores, the Japanese free-material sites,
+  tactics-engine kits, Fire Emblem fan art, stock sites, Mega Tiles' own
+  plans, AI-made packs).
+- **Round 4 found Shironejiya** (白螺子屋, <http://hi79.web.fc2.com/>;
+  free, hand-made, side-on, chibi with dark outlines; paid games, any
+  tool and edits allowed). Nick took it for every fighter on foot: "yes,
+  1.25x though, and we can replace if we get japanweb answer". Riders:
+  "use pixel flag until we get answer from japanweb".
+- **The last four characters** (2026-10-04): the keeper becomes a woman
+  and uses the Tiny Tales Church Cleric ("Piers reads as a man's name so I
+  would like the name changed otherwise we can use the tiny tales art");
+  Crane is S7, the old hooded man ("S7 is ok, and you can make the edit
+  yourself and show me"); the Brawler is the fist fighter and the bald
+  monk is kept for a promoted class ("I like both assets... maybe we can
+  use one for a promoted class or something... but the baldness is a bit
+  weird"); Dace is the dark knight ("this samurai is clearly female she
+  has boobs... so I think we need to use the dark knight which is ok").
+- **Mega Tiles** has announced nothing mounted and no human axe fighter;
+  it takes suggestions in its Character Generator thread on itch.io
+  (<https://itch.io/t/4086314/>), slowly.
+
 ## Nick input
 
 **Decision** (`ask-nick`). For each gap, show Nick the shortlisted packs
@@ -165,12 +287,15 @@ licences (ADR-0013, ADR-0032); art that is AI output with no human touch.
 
 ## Acceptance criteria
 
-- [ ] Every gap has Nick's answer recorded: a pack, a stand-in, or a
+- [x] Every gap has Nick's answer recorded: a pack, a stand-in, or a
       rewritten look.
-- [ ] Each chosen pack's licence text, price and date are recorded before
+- [x] Each chosen pack's licence text, price and date are recorded before
       Nick buys.
-- [ ] 0035, 0413, 0436 and 0706 match the answers.
-- [ ] `cargo xtask ticket-lint` and `typos` pass.
+- [x] 0035, 0413 and 0706 match the answers. (0436 was finished and merged
+      while this ticket ran; it draws map sprites from the Tiny Tales
+      bundle and needs nothing from here until a rider's sprite is
+      imported.)
+- [x] `cargo xtask ticket-lint` and `typos` pass.
 
 ## Tests required
 
@@ -178,5 +303,61 @@ licences (ADR-0013, ADR-0032); art that is AI output with no human touch.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done (2026-10-04).** Four search rounds and six rounds of mockups with
+Nick. Every gap has an answer in `docs/design/look-and-feel.md`,
+*Fighters with no Tiny Tales art*:
+
+| Gap | Answer |
+| --- | ------ |
+| 1. Mounted fighters | Pixel Flag's Paladin at 1.5× in combat (¥500, not bought yet); MattWalkden's free riders on the map |
+| 2. Human axe fighter | Shironejiya: the bearded axe bandit is Harl; the headscarf bandits and the armoured axe fighter are the Brigands and Raiders; all at 1.25× |
+| 3. Archer | Aske rewritten as a girl who is the Archer hero |
+| 4. Clerics | The keeper rewritten as a woman, Maud, who is the Church Cleric; Crane is Shironejiya's old hooded man with a spectacle rim added |
+| 5. Fist fighter | Shironejiya's fist fighter; its bald monk kept for a promoted class |
+| 6. Rival in black | Shironejiya's dark knight; his face comes from the generator |
+
+**Deviations from the plan.**
+
+- The ticket's own shortlist was rejected whole, so the search was redone
+  three more times and widened beyond stores to free-material sites and
+  to art that needs its artist's permission.
+- Nothing was bought, so no purchase record was added to
+  `THIRD_PARTY_ASSETS.md`. The sources' terms, prices and the dates they
+  were read are in `look-and-feel.md`; each gets its row (and its credit,
+  0829) when its files are imported by 0413.
+- No dialogue-screen mockups of faces: none of the chosen art has faces in
+  our bust style, so those characters get generator faces (0706).
+- Two characters were rewritten to fit art, which the ticket allowed for
+  looks but which went further here: **Aske is now a girl** and **the
+  keeper is now a woman called Maud** (was Piers). Nick asked for both.
+  The story files, `assets/data/names.ron`, one line of `ch01.dlg`
+  ("a thin girl") and the open tickets that name them are updated.
+- 0035 is answered here; it stays open only to bring Harl's character
+  sheet into line with his picture.
+
+**Crane's spectacles**, the one edit made: on `m_s_mage_old_m01.png`
+(64×64), rim colour (58, 44, 30) at (18,22) (19,23) (20,23) (21,23)
+(22,22) (23,22) (24,22) (25,23) (26,23) (27,23) (28,23) (29,22) (30,21)
+(31,21), and lens colour (196, 222, 236) at (19,22) (20,22) (21,22)
+(25,22) (26,22) (27,22) (28,22). Nick saw it and raised no objection.
+
+**Claude's starting rules** (Nick can veto):
+
+- The keeper's new name is **Maud**, and her age is 27 (the Church Cleric
+  looks younger than 34). Both are one-line changes.
+- Aske's pointed ears and Dace's armour are not explained in the story.
+- Shironejiya's rule that "tools called generative AI" may not be used is
+  read as being about feeding its art to image generators, which we don't
+  do, not about the game's code. Its contact form can confirm.
+
+**JAPANweb said no** (Nick, 2026-10-04: "apparently the reason he said
+SRPG Studio only is because he modified the SRPG Studio assets... so we
+really can't use them"). His set is built on SRPG Studio's bundled art,
+which that tool's terms lock to it, so the picks above are final and the
+lines in the round-by-round notes that wait on his answer are closed.
+
+**Follow-up tickets:** none.
+
+**For Nick:** Pixel Flag's set (¥500,
+<https://booth.pm/ja/items/7851483>) is the one purchase; it is needed
+when the combat scene (0413) draws a rider.

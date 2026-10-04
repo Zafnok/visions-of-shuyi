@@ -5,10 +5,10 @@ type: design-decision
 milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-04
 ---
 
 # 0035 — Decide Harl's combat picture (Chapter 1 boss)
@@ -70,6 +70,16 @@ more itch bundles to fill in with a similar style for rest of cast".
 still decides each purchase. Take Harl's candidates from 0040's shortlist
 (*human axe fighter*), render them as below, and record Nick's pick here.
 
+**Answered 2026-10-04 in ticket 0040.** Nick saw Harl's candidates there
+with the other gaps and picked **Shironejiya's bearded axe bandit**
+(`bandanna05`, free, at 1.25×; `look-and-feel.md`, *Fighters with no Tiny
+Tales art*): a big bearded man in a headscarf shouldering a heavy axe. He
+keeps his axe, so he stays a Brigand and 0803 is unaffected. **What is left for this ticket:** bring `red_captain.md`'s
+portrait brief into line with the picture (a headscarf and a bare-armed
+vest, not a kettle helm, mail and a red jacket), then archive it. His face
+is still a Character Generator face (0706): the picture has none in our
+bust style.
+
 ## Nick input
 
 **Decision.** Claude brings candidate packs (0040's shortlist), and Nick
@@ -110,13 +120,35 @@ implementing the combat scene (0413).
 
 ## Acceptance criteria
 
-- [ ] Nick saw a rendered mockup of every candidate and picked one (or
+- [x] Nick saw a rendered mockup of every candidate and picked one (or
       chose to keep a stand-in).
-- [ ] `look-and-feel.md` names Harl's picture and its source.
-- [ ] `cargo xtask ticket-lint` and `typos` pass.
+- [x] `look-and-feel.md` names Harl's picture and its source.
+- [x] `cargo xtask ticket-lint` and `typos` pass.
 
 ## Tests required
 
 - None (docs only).
 
 ## Completion notes
+
+- **The pick was made in ticket 0040** (2026-10-04), where Nick saw
+  Harl's candidates in combat mockups beside the lead, with the other
+  gaps: Shironejiya's bearded axe bandit (`bandanna05`), free, at 1.25×.
+  `look-and-feel.md` (*Combat screen* and *Fighters with no Tiny Tales
+  art*) names the picture, its source and its terms. No new mockups were
+  made here.
+- **He keeps his axe**, so he stays a Brigand; 0803 is unaffected.
+- **`red_captain.md`'s portrait brief was rewritten to the picture**: a
+  headscarf, a bare-armed vest and trousers, no helm, mail or jacket. The
+  Company's red sign moved from a scarf on his arm to the headscarf.
+- **Deviation:** one word of the Chapter 1 victory scene changed
+  (`ch01.dlg`: Tamsin takes the orders "from inside his vest", it said
+  "jacket"), so the script agrees with the picture.
+- 0706's note and the roadmap were brought up to date (0035 no longer
+  blocks 0413 and 0706).
+- **Claude's starting rule (Nick may veto):** as drawn, Harl's headscarf
+  is pale grey and his beard dark grey. The brief says both are
+  recoloured red (a red headscarf, a rust-red beard going grey), by the
+  existing rule that a named character's picture takes their own colours;
+  he is "Red" Harl of the Red Company. 0413 and 0706 do the recolour.
+- Follow-up tickets: none.

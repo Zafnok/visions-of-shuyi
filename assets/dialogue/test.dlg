@@ -1,12 +1,14 @@
 # PLACEHOLDER test scene for the dialogue player and screen (0702, 0704),
-# with a reply choice and lead tokens (0708). Uses the placeholder
-# characters from data/characters.ron; the real Chapter 1 script (0707)
-# goes in its own files.
+# with a reply choice and lead tokens (0708) and an @if block (0715: the
+# knight is in the placeholder New Game roster, so the army can lose
+# them). Uses the placeholder characters from data/characters.ron; the
+# real Chapter 1 script (0707) goes in its own files.
 
 @scene test
 @caption Village of Heth, dusk
 > The rain had not stopped for three days.
 @left  test_lord neutral
+@if test_knight
 @right test_knight angry
 test_knight: You're late.
 test_lord[happy]: Better late than... well.
@@ -14,6 +16,7 @@ test_knight: Than never. Say it.
   I've heard it from you often enough.
 @right clear
 > The knight stamps off into the rain.
+@endif
 @right test_archer surprised
 test_archer: Was that about me?
 test_lord[sad]: It's always about you.

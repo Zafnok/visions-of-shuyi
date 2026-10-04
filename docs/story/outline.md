@@ -68,8 +68,8 @@ confirms with Nick.*
   river with a bridge and a road, a forest lane, and Harl on the fort at the
   top right. Rout.
 - **Arcs advanced:** Hollis (his son's hand, then his son's seal), Tamsin
-  (kills her old captain), Piers (his report brought them), Rue (the seal).
-- **Recruits:** the Chapter 1 six: the lead, Hollis, Tamsin, Aske, Piers and
+  (kills her old captain), Maud (her report brought them), Rue (the seal).
+- **Recruits:** the Chapter 1 six: the lead, Hollis, Tamsin, Aske, Maud and
   Rue.
 - Beat sheet: [`chapters/ch01.md`](chapters/ch01.md).
 
@@ -88,29 +88,29 @@ confirms with Nick.*
   (villages), the garrison's watchtower across the water, and a Hound
   lieutenant as boss. Objective: defeat the boss (the chapter ticket
   decides).
-- **Arcs advanced:** Aske (his hatred loses its target), Piers (healing
+- **Arcs advanced:** Aske (her hatred loses its target), Maud (healing
   strangers under fire), the lead and Dace (Dace's Hounds did this).
 - **Recruit:** **Joss Pellam** (Swordsman), a young Hound who won't kill
   villagers. Talk-recruit with the lead or Aske.
 
 ### Chapter 3: Greywater (linear)
 
-- **Goal:** find out why the Vigil wanted Rue. Piers knows that every gifted
+- **Goal:** find out why the Vigil wanted Rue. Maud knows that every gifted
   child's name, and where they were sent, is written in the register at
   Greywater Abbey.
 - **Conflict:** the abbey is on a lake island. Its prior is burning records
-  under Hound guard, and taking the register makes Piers an apostate.
+  under Hound guard, and taking the register makes Maud an apostate.
 - **Turn:** the register holds:
   - Rue's name, twice: once for Vosse's cart, once as a Candle;
   - Wren's name: "Ashfields: lost";
   - Vosse's pay-book: "D. Marr, informer: eleven children".
 
   Rue tells the lead what she saw at the mill, and realises the lead didn't
-  know. Piers confesses to Rue that his report brought Harl. Hollis says
+  know. Maud confesses to Rue that her report brought Harl. Hollis says
   nothing, which Rue notices.
 - **Map idea:** a causeway to an island abbey, with wardens and Hounds on the
   walls. The scriptorium is the Seize point. The reliquary has chests.
-- **Arcs advanced:** Piers (breaks with the Vigil), Rue (tells), Hollis (his
+- **Arcs advanced:** Maud (breaks with the Vigil), Rue (tells), Hollis (his
   silence starts to show), the lead and Dace (the truth, on paper).
 - **Recruits:** none.
 - **After this chapter the Act 1 world map opens.**
@@ -147,8 +147,8 @@ confirms with Nick.*
   a Hound willing to testify.
 - **Conflict:** the Saltmere League is neutral and for sale. A magistrate sells
   the envoy's safe house to the Hounds. Aske's secret comes out: the Brennish
-  smuggler he sold march news to also sells to Ragna's people, which is how
-  she knows his name. The raiders who bought it are real, hungry hill bands;
+  smuggler Aske sold march news to also sells to Ragna's people, which is how
+  Ragna knows her name. The raiders who bought it are real, hungry hill bands;
   the Hounds' false flags hide behind them.
 - **Turn:** the envoy gets Joss's testimony, but the League expels everyone
   involved. Ragna: both armies are massing at the Ashfields. "If you want to
@@ -162,7 +162,7 @@ confirms with Nick.*
 - **Town:** Saltmere (the biggest shop in Act 1).
 - **Side quests:**
   - *Letters Home*, Aske's. Unlocked after the story battle, with Aske
-    recruited and alive. A refugee boat carrying his letters and silver home
+    recruited and alive. A refugee boat carrying her letters and silver home
     has been seized by League privateers.
   - *The Captain's Oath*, Hollis's. Unlocked after Chapter 4's story battle,
     with Hollis alive. His wife's grave near Veyne Hall, and his goodbye to
@@ -171,7 +171,7 @@ confirms with Nick.*
 - **Main-story scene:** the night before the story battle, Hollis tells the
   lead everything: the purse, the list, the stamped pass, and why he burned
   them.
-- **Arcs advanced:** Aske (his secret), Hollis (confession), the lead and
+- **Arcs advanced:** Aske (her secret), Hollis (confession), the lead and
   Hollis (mending).
 - **Recruit:** **Hedda Ravn** (Raider), Ragna's Brennish bodyguard, loaned to
   the lead "to make sure you get there".
@@ -200,8 +200,8 @@ confirms with Nick.*
   - *Brennish Outriders*: optional.
 - **Town:** Cairnford (border town).
 - **Side quests:** none new (Act 1's side quests stay open).
-- **Arcs advanced:** Rue and Aske (the register told him she was a Candle;
-  here he learns she stood on the fire line that burned his brother's
+- **Arcs advanced:** Rue and Aske (the register told Aske that Rue was a Candle;
+  here she learns Rue stood on the fire line that burned her brother's
   company), Hollis (Wren lives), the king's secret (for the player).
 - **Recruit:** **Oriel Mast** (Sorcerer, tier 2): a tired, guilty man who
   never wants to burn anything again, and has to.
@@ -209,10 +209,10 @@ confirms with Nick.*
 ### Chapter 7: Ossary
 
 - **Goal:** find the surviving Candles, and Wren, in the Vigil's holy city.
-- **Conflict:** the city is full of pilgrims and wardens, and Piers's old
+- **Conflict:** the city is full of pilgrims and wardens, and Maud's old
   master is there.
 - **Turn:** the Candles' dormitory under the city is empty. **Crane** is
-  waiting. He calls death "a door", and tells Piers his report was
+  waiting. He calls death "a door", and tells Maud her report was
   "admirably thorough". The party learns that the Door was opened once before,
   in the East, and that the Jade Reach sealed it. Only the East knows how to
   shut it. Crane escapes.
@@ -225,9 +225,9 @@ confirms with Nick.*
 - **Side quests:**
   - *The Other Cart*, Rue's. Unlocked after Chapter 6's story battle, with Rue
     alive. A Candle who escaped with her runs a hideout for runaways.
-  - *Unwritten*, Piers's. Unlocked once Ossary is reached, with Piers alive.
-    He brings the register's names back to their families.
-- **Arcs advanced:** Piers (faces Crane), Rue (the children), Dace (seen
+  - *Unwritten*, Maud's. Unlocked once Ossary is reached, with Maud alive.
+    She brings the register's names back to their families.
+- **Arcs advanced:** Maud (faces Crane), Rue (the children), Dace (seen
   briefly, shaken by Crane).
 - **Recruit:** none (or the runaway Candle from *The Other Cart*, decided by
   that side quest's ticket).
@@ -274,7 +274,7 @@ on his dying father's word. He begins to doubt what he serves. **The midpoint tw
 the Jade Reach's word for those who come back through the Door, the
 **Unfinished**, tells the party what the war is for, and Dace, called home to
 Varenhall, meets the prince who came back. Rue swears her fire vow anew; Aske,
-Tamsin, Piers and Oriel find what they're fighting for. Act 2 ends with the
+Tamsin, Maud and Oriel find what they're fighting for. Act 2 ends with the
 lead learning how the Door can be shut, and at what price, and with **the
 second twist**: Wren is the bearer the prince is being finished through.
 The party sails home with eastern allies.
@@ -284,7 +284,7 @@ The party sails home with eastern allies.
 Home is at war: Ardeval and Brennmark bleeding on a new map, with Harrowby
 burned and Candles on every front, each death feeding the Door. The lead
 rallies the people Act 1 met: Tamsin brings the Unpaid companies, Aske and
-Ragna bring Brennmark, Piers brings the keepers who refuse the Door, and the
+Ragna bring Brennmark, Maud brings the keepers who refuse the Door, and the
 East sends its allies. Dace, broken by his father's death, by seeing what
 "coming back" means, and by learning his sister is being emptied to finish the
 prince, confesses publicly to the night at the mill and the year before it,
@@ -411,7 +411,7 @@ woven in. Nick picked the second.
 | Hollis | son's hand and seal | | silence shows | secret out | confession (main story; grave in side quest) | Wren lives | | **dies** |
 | Tamsin | kills Harl | | | ledger (side quest) | | | | |
 | Aske | | false flag | Rue was a Candle | | spying out; letters (side quest) | Rue's fire line burned Tor | | |
-| Piers | his report | healing strangers | confesses, breaks with Vigil | | | | faces Crane; Unwritten (side quest) | |
+| Maud | her report | healing strangers | confesses, breaks with Vigil | | | | faces Crane; Unwritten (side quest) | |
 | Rue | the seal | | tells the truth about Dace | | | tells Hollis about Wren | The Other Cart (side quest) | |
 | Dace | letter and seal (offstage) | his Hounds | on paper | face to face | | | shaken | loses his father |
 

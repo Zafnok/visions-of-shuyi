@@ -111,7 +111,7 @@ exist; almost nobody has been to either.
 | Faction | What it wants | Face |
 | ------- | ------------- | ---- |
 | **The Crown of Ardeval** | Officially, a strong realm and revenge for "Brennish raids". In truth, a war, because the king wants his son back. | King Emeric; Dace and his Hounds enforce it |
-| **The Vigil** | To control who is gifted and which vows are sworn. Most keepers truly believe they protect the world from the dead gods' leftovers. A faction around Crane serves the king's Door. | Keeper Absalom Crane (villain), Keeper Piers (party) |
+| **The Vigil** | To control who is gifted and which vows are sworn. Most keepers truly believe they protect the world from the dead gods' leftovers. A faction around Crane serves the king's Door. | Keeper Absalom Crane (villain), Keeper Maud (party) |
 | **Brennmark** | Most Brennish want never to burn again. Hardliners want the Ashfields answered in kind. Its envoy wants proof that Ardeval's "raids" are staged. | Envoy Ragna Holt; Aske as a refugee |
 | **The Unpaid** | Their back pay and the land grants they were promised. Until then, a brigand's coin will do. Not one army, but dozens of bitter companies. | Red Harl (Ch1 boss); Tamsin, who left |
 | **The Saltmere League** | Trade and neutrality: sell to both sides, lose to neither. Its ships are the only way east. | Saltmere's magistrates (Act 1 chapter 5) |
@@ -135,7 +135,7 @@ Tone B (`setting-and-tone.md`): dark with warmth and humour, like FE Path of
 Radiance, Triangle Strategy, Yakuza and Persona.
 
 - **The humour is in-character**, never the narration winking at the player:
-  Tamsin's swagger, Piers's nerves, Rue's bad manners, Aske's deadpan and
+  Tamsin's swagger, Maud's nerves, Rue's bad manners, Aske's deadpan and
   Hollis's dry grumbling. Banter between battles, gallows jokes in them. Later
   recruits can be broader oddballs (Yakuza side-story energy), agreed at gate 1.
 - **OK to joke about:** hunger, pay, bad food, the weather, each other,

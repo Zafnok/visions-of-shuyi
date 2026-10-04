@@ -20,6 +20,8 @@ pub use portrait_viewer::PortraitViewerScreen;
 pub use scene_camera::SceneCameraScreen;
 pub use sprite_test::SpriteTestScreen;
 
+use trpg_content::Present;
+
 use crate::audio::MenuSound;
 use crate::color::{Palette, UiColor};
 use crate::console::{CONSOLE_H, CONSOLE_W};
@@ -182,18 +184,15 @@ impl Screen for DebugMenuScreen {
                     };
                     // The overlay replaces this menu so it plays over the
                     // screen the menu was opened from (e.g. the battle map).
+                    // The viewer plays a scene with everyone there (ADR-0055).
+                    let (lead, names) = (ctx.lead.clone(), ctx.content.names.clone());
+                    let everyone = &Present::Everyone;
                     return if tool == 2 {
-                        Transition::Push(Box::new(DialogueScreen::new(
-                            scene,
-                            ctx.lead.clone(),
-                            ctx.content.names.clone(),
-                        )))
+                        let screen = DialogueScreen::new(&scene, lead, names, everyone);
+                        Transition::Push(Box::new(screen))
                     } else {
-                        Transition::Replace(Box::new(DialogueScreen::overlay(
-                            scene,
-                            ctx.lead.clone(),
-                            ctx.content.names.clone(),
-                        )))
+                        let screen = DialogueScreen::overlay(&scene, lead, names, everyone);
+                        Transition::Replace(Box::new(screen))
                     };
                 }
                 None => {}

@@ -31,7 +31,8 @@ None (the font is 0042's answer).
 validation; `GlyphBuffer` printing; the renderer; `frame-png`; text width.
 
 **Out (do not do):** line breaking and length limits (0237); translating
-(0719); changing any Latin glyph. If 0042 chose a font that ships only as
+(0719); a second wide font for Chinese and its own shapes for shared
+characters (0239); changing any Latin glyph. If 0042 chose a font that ships only as
 TTF, converting it to BDF at 16 px is part of this ticket (a one-off,
 documented in `assets/fonts/README.md`; the BDF is what is committed).
 

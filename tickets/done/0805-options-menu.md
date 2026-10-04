@@ -182,7 +182,7 @@ stays the skin's and nothing stacks.
     screen, with the rows in the ticket's order. No mockups were shown;
     say so if you want to pick from some.
 
-**Follow-up tickets.** 0239, 0240 and 0241 (Nick asked for them: the
+**Follow-up tickets.** 0240, 0241 and 0242 (Nick asked for them: the
 title, Key bindings and the layout picker; the other menus; the battle
 screen's panels and the dialogue screen get the same view + skin split).
 0120 (a test of the bought-art fetch fails now and

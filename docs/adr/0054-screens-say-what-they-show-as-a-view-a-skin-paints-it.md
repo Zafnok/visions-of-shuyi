@@ -2,7 +2,7 @@
 
 - **Status:** Accepted; extends ADR-0038
 - **Date:** 2026-10-04
-- **Related tickets:** 0805, 0239, 0240, 0241
+- **Related tickets:** 0805, 0240, 0241, 0242
 
 ## Context
 
@@ -52,8 +52,8 @@ skin needs; the logic fills it and the glyph skin ignores it.
 
 The Options screen (0805) is the first, and the worked example:
 `screens/options.rs`, `options/view.rs`, `options/glyph.rs`. The other
-screens follow in tickets 0239 (title, key bindings, layout picker), 0240
-(the other full-screen menus) and 0241 (the battle screen's panels and the
+screens follow in tickets 0240 (title, key bindings, layout picker), 0241
+(the other full-screen menus) and 0242 (the battle screen's panels and the
 dialogue screen).
 
 ## Consequences
@@ -63,11 +63,11 @@ dialogue screen).
 - Behaviour tests stop breaking when a label moves a cell.
 - One more type per screen, built every frame. The views are a few dozen
   short strings: nothing to measure.
-- Until 0239–0241 are done the screens are mixed: new screens follow this
+- Until 0240–0242 are done the screens are mixed: new screens follow this
   ADR; old ones are converted by those tickets, not piecemeal.
 - Shared widgets (`widgets::Menu`) both hold state (the focus) and draw.
   Their state stays; their drawing becomes a skin function the screens'
-  skins call (0239 does `Menu`).
+  skins call (0240 does `Menu`).
 
 ## Alternatives considered
 

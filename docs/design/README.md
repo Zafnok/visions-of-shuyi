@@ -23,7 +23,8 @@ here.
 | The lord's unique class line | [`progression.md`](progression.md) (*The lord's line*) | 0016 | ✅ decided 2026-09-25 |
 | Supports & relationships | [`supports.md`](supports.md) | 0010 | ✅ decided 2026-09-25 |
 | Look & feel | [`look-and-feel.md`](look-and-feel.md) | 0011, 0404 (forecast), 0021 (bought art), 0038 (bought tiles and sprites on the battle map), 0039 (sprite units and dialogue busts) | ✅ decided 2026-09-25 (forecast 2026-09-27; bought portraits and battle art 2026-09-30; art bought, and the battle map drawn with it, per-map lighting and a zoom key 2026-10-02; walking sprites, effect arrows, the glyph look as an option and busts at 4× in dialogue 2026-10-02) |
-| Sprite units: more packs; the zoom key (the outline alone, no corner mark: decided 2026-10-03, 0436) | `look-and-feel.md`, `controls.md` | 0040, 0035, 0439 | ⏳ open |
+| Fighters with no Tiny Tales art | [`look-and-feel.md`](look-and-feel.md) (*Fighters with no Tiny Tales art*) | 0040, 0035 (Harl) | ✅ decided 2026-10-04 (Shironejiya for foot fighters, Pixel Flag's Paladin for riders) |
+| Sprite units: the zoom key (the outline alone, no corner mark: decided 2026-10-03, 0436) | `look-and-feel.md`, `controls.md` | 0035, 0439 | ⏳ open |
 | Music & sound effects | [`audio.md`](audio.md) | 0020 | ✅ decided 2026-09-28 (banter track, plain-spell crit, fliers and later places still open) |
 | Title | [`title.md`](title.md) | 0012 | ✅ decided 2026-09-29 (*Visions of Shuyi*) |
 | Title screen: "Press any key or button" | [`title-screen.md`](title-screen.md) | 0034, 0032 | ✅ decided 2026-09-30 (every build, keys and buttons, since 0032) |
@@ -33,7 +34,7 @@ here.
 | The Options screen: speeds, volumes, asking first | [`options.md`](options.md) | 0805 | ✅ decided 2026-10-04 |
 | Battle scenes, talking & recruitment | [`battle-scenes-and-recruitment.md`](battle-scenes-and-recruitment.md) | 0705 | ✅ decided 2026-09-29 (quest recruitment later) |
 | Playtest bots: player types, targets, autobalancing | [`playtest-bots.md`](playtest-bots.md) | 0033 | ✅ decided 2026-09-30 |
-| AI voices, a Japanese option, a hired writer later | [`voices-languages-and-script.md`](voices-languages-and-script.md) | 0042 (Japanese), 0043 (voices) | ⏳ direction set 2026-10-03; details open |
+| AI voices, Japanese and Chinese options, a hired writer later | [`voices-languages-and-script.md`](voices-languages-and-script.md) | 0042 (Japanese), 0043 (voices), 0045 (Chinese) | ⏳ direction set 2026-10-03 (Chinese added 2026-10-04); details open |
 | Number scale & strike thresholds | [`stats-and-combat.md`](stats-and-combat.md) | 0013 | ⏳ after playtest 0804 |
 
 Each file starts with `Decided: YYYY-MM-DD`, `Source: ticket NNNN`, and Nick's

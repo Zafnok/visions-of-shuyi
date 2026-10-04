@@ -24,7 +24,7 @@ Nick's answers in 0036 (2026-10-03, `docs/design/title-screen.md`, *Intro
 cinematic*):
 
 - **Six bought faces slide past with their names**: the lead, Hollis,
-  Tamsin, Aske, Piers, Rue.
+  Tamsin, Aske, Maud, Rue.
 - **Snippets play in the game's dialogue screen**, and they are the
   **opening lines of real Chapter 1 scenes**, read from the same script
   file the game plays (`assets/dialogue/ch01.dlg`). No separate cinematic

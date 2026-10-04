@@ -51,8 +51,8 @@ friends. The ledger is her joke, her grudge and her grief, all in one book.
 | The lead | Friendly mockery | Calls them "Your Former Grace"; secretly admires that they gave up a title |
 | Harl (`red_captain`) | Her old captain | He taught her to ride and fight; she watched him rot |
 | Hollis (`retainer`) | Comrades | Two old soldiers who swap war lies |
-| Aske (`poacher`) | Rivalry | She fought Brennish on the Ashfields road; he's Brennish and says so |
-| Piers (`keeper`) | Corrupting influence | Teaches him dice, and he teaches her to write the ledger properly |
+| Aske (`poacher`) | Rivalry | She fought Brennish on the Ashfields road; Aske is Brennish and says so |
+| Maud (`keeper`) | Corrupting influence | Tamsin teaches her dice, and Maud teaches Tamsin to write the ledger properly |
 | Rue (`heretic`) | Partners in trouble | Two people with bad manners and no permission |
 
 ## Voice notes
@@ -97,5 +97,5 @@ friends. The ledger is her joke, her grudge and her grief, all in one book.
 | The lead | Friendship | Loyalty nobody pays for, and why the lead's name is in her ledger. |
 | Hollis (`retainer`) | Friendship | What the war owed them both. She tells him about Coldwell before she tells anyone. |
 | Aske (`poacher`) | Rivalry → friendship | They fought on opposite sides of the same road, and slowly compare the bills. |
-| Piers (`keeper`) | Friendship (comic) | Dice, bookkeeping and whether a keeper can lie at cards. He can't. |
+| Maud (`keeper`) | Friendship (comic) | Dice, bookkeeping and whether a keeper can lie at cards. She can't. |
 | Rue (`heretic`) | Friendship | Two troublemakers; Tamsin is the first person Rue lets make fun of her. |

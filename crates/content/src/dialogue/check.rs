@@ -1,7 +1,7 @@
 //! Checks on parsed scenes: who is on screen, known characters and
 //! expressions, text length, lead and name tokens, names written out, lead
-//! lines, reply choices, music cues, line ids that clash, and scene ids
-//! unique across files.
+//! lines, reply choices, `@if` blocks, music cues, line ids that clash,
+//! and scene ids unique across files.
 
 use std::collections::BTreeMap;
 
@@ -9,7 +9,7 @@ use trpg_core::CharacterId;
 use trpg_core::lead::{self, LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE, Part};
 
 use super::line_id::line_hash;
-use super::parse::{ChoiceLines, ParsedScene};
+use super::parse::{Lines, ParsedScene, PartLines};
 use super::{
     ChoiceOption, MAX_LEAD_LINE_LEN, MAX_OPTION_LEN, MAX_REACTION_TEXTS, MAX_TEXT_LEN, MusicLine,
     NARRATION_SPEAKER, REPLY_SPEAKER, STANDARD_EXPRESSIONS, Side, Step,
@@ -44,18 +44,8 @@ pub fn check_scene(
         errors: Vec::new(),
     };
     let mut state = State::default();
-    let mut choices = parsed.choice_lines.iter();
-    for (step, &line) in parsed.scene.steps.iter().zip(&parsed.step_lines) {
-        match step {
-            Step::Choice { options } => {
-                if let Some(lines) = choices.next() {
-                    c.choice(line, options, lines, &mut state);
-                }
-            }
-            _ => c.step(step, line, &mut state),
-        }
-    }
-    if !parsed.scene.steps.iter().any(has_text) {
+    c.steps(&parsed.scene.steps, &parsed.lines, &mut state);
+    if !parsed.scene.steps.iter().any(Step::has_text) {
         c.err(
             parsed.line,
             format!("scene \"{}\" has no speech or narration", parsed.scene.id),
@@ -64,12 +54,16 @@ pub fn check_scene(
     c.errors
 }
 
-/// Whether `step` is, or contains, a speech or narration line.
-fn has_text(step: &Step) -> bool {
-    match step {
-        Step::Choice { options } => options.iter().any(|o| o.steps.iter().any(has_text)),
-        _ => step.text().is_some(),
-    }
+/// The most speech and narration lines `steps` can play: an `@if` block
+/// counts as its longer part.
+fn texts(steps: &[Step]) -> usize {
+    let count = |step: &Step| match step {
+        Step::If {
+            then, otherwise, ..
+        } => texts(then).max(texts(otherwise)),
+        _ => usize::from(step.text().is_some()),
+    };
+    steps.iter().map(count).sum()
 }
 
 /// What the replay knows at a point of the scene.
@@ -129,7 +123,76 @@ impl<'a> Checker<'a> {
         }
     }
 
-    /// Checks one step (not a choice) on `line` and applies it to `state`.
+    /// Checks `steps`, written at `lines`, applying them to `state`.
+    fn steps<'s>(&mut self, steps: &'s [Step], lines: &Lines, state: &mut State<'s>) {
+        let mut blocks = lines.blocks.iter();
+        for (step, &line) in steps.iter().zip(&lines.steps) {
+            match step {
+                Step::Choice { options } => {
+                    if let Some(parts) = blocks.next() {
+                        self.choice(line, options, parts, state);
+                    }
+                }
+                Step::If {
+                    character,
+                    then,
+                    otherwise,
+                } => {
+                    if let Some(parts) = blocks.next() {
+                        self.branch(line, character, [then, otherwise], parts, state);
+                    }
+                }
+                _ => self.step(step, line, state),
+            }
+        }
+    }
+
+    /// Checks an `@if` block on `line` and applies it to `state`: its
+    /// character can speak, and its two parts leave the screen and the
+    /// caption the same.
+    fn branch<'s>(
+        &mut self,
+        line: u32,
+        character: &CharacterId,
+        branches: [&'s [Step]; 2],
+        parts: &[PartLines],
+        state: &mut State<'s>,
+    ) {
+        if !self.known(character) {
+            self.err(line, format!("unknown character \"{}\"", character.0));
+        }
+        let mut after = [*state; 2];
+        for ((steps, part), after) in branches.into_iter().zip(parts).zip(&mut after) {
+            self.steps(steps, &part.lines, after);
+        }
+        let [with, without] = after;
+        // Reported where the part without them starts, if it is written.
+        let at = parts.get(1).map_or(line, |p| p.line);
+        if with.screen != without.screen {
+            self.err(
+                at,
+                format!(
+                    "with \"{}\" here {}; without, {}; an @if block must leave the same \
+                     characters on screen either way",
+                    character.0,
+                    describe(with.screen),
+                    describe(without.screen)
+                ),
+            );
+        } else if with.caption != without.caption {
+            self.err(
+                at,
+                format!(
+                    "this @if block leaves a different caption with \"{}\" here and without; \
+                     it must leave the same caption either way",
+                    character.0
+                ),
+            );
+        }
+        *state = with;
+    }
+
+    /// Checks one step (not a block) on `line` and applies it to `state`.
     fn step<'s>(&mut self, step: &'s Step, line: u32, state: &mut State<'s>) {
         if let Some(text) = step.text() {
             self.tokens(line, text);
@@ -214,7 +277,7 @@ impl<'a> Checker<'a> {
                 }
             }
             Step::Narrate { text, .. } => self.line_id(line, NARRATION_SPEAKER, text),
-            Step::Choice { .. } | Step::Music(MusicLine::Stop) => {}
+            Step::Choice { .. } | Step::If { .. } | Step::Music(MusicLine::Stop) => {}
         }
     }
 
@@ -224,7 +287,7 @@ impl<'a> Checker<'a> {
         &mut self,
         line: u32,
         options: &'s [ChoiceOption],
-        lines: &ChoiceLines,
+        parts: &[PartLines],
         state: &mut State<'s>,
     ) {
         let n = options.len();
@@ -232,8 +295,8 @@ impl<'a> Checker<'a> {
             self.err(line, format!("@choice has {n} options; it needs 2 or 3"));
         }
         let mut first: Option<State<'s>> = None;
-        for (option, option_lines) in options.iter().zip(&lines.options) {
-            let at = option_lines.line;
+        for (option, part) in options.iter().zip(parts) {
+            let at = part.line;
             self.line_id(at, REPLY_SPEAKER, &option.text);
             self.tokens(at, &option.text);
             self.literal_names(at, &option.text);
@@ -246,7 +309,7 @@ impl<'a> Checker<'a> {
                     ),
                 );
             }
-            let texts = option.steps.iter().filter(|s| s.text().is_some()).count();
+            let texts = texts(&option.steps);
             if texts > MAX_REACTION_TEXTS {
                 self.err(
                     at,
@@ -257,9 +320,7 @@ impl<'a> Checker<'a> {
                 );
             }
             let mut after = *state;
-            for (step, &l) in option.steps.iter().zip(&option_lines.step_lines) {
-                self.step(step, l, &mut after);
-            }
+            self.steps(&option.steps, &part.lines, &mut after);
             match first {
                 None => first = Some(after),
                 Some(f) if f.screen != after.screen => self.err(

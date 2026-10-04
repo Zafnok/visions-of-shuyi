@@ -28,7 +28,9 @@
 # count should not contradict it (chapter-1.md allows 12-14 and the boss).
 #
 # ch01_victory is written for a battle everyone lived through. A companion
-# who died in Classic still speaks in it until 0715 and 0716.
+# who died in Classic still speaks in it until 0716 puts their lines in
+# @if blocks (0715, ADR-0055). The check will demand it as soon as the
+# companions are in the New Game roster (0803).
 
 # ---------------------------------------------------------------------------
 # Before the battle
@@ -97,7 +99,7 @@ heretic: What? What's everyone looking at? They're hands. And don't you
   stare, heir. It's you at the top of that paper, not me.
 > {N:retainer.first} has not said a word. He turns, and walks back toward
   the house.
-> Something drops out of the chapel yew: a thin boy, a long bow, two
+> Something drops out of the chapel yew: a thin girl, a long bow, two
   rabbits.
 @left  poacher neutral
 @right sergeant happy
@@ -156,7 +158,7 @@ retainer: Stay close, kid. The first real one's always ugly.
 # Harl's first fight. A scene written for him and one character replaces
 # the general one (docs/design/battle-scenes-and-recruitment.md). The
 # general one meets Hollis and Rue, who are on his paper, and Aske and
-# Piers, who aren't.
+# Maud, who aren't.
 
 @scene ch01_boss_engage
 @right red_captain neutral
@@ -299,7 +301,7 @@ heretic: Don't you dare lose while I'm not looking, heir.
 sergeant: Pay-day at last, {n:red_captain.first}. I'll mark the ledger: paid
   in full.
 > Nobody laughs. She doesn't either. She crouches, closes his eyes with two
-  fingers, and takes a folded paper from inside his jacket.
+  fingers, and takes a folded paper from inside his vest.
 sergeant[sad]: ...Just a job. That's all it was.
 > His orders: three hundred crowns a head for the exile, the old man and
   the girl. The seal is blue wax. The crest in it is the one {lead} cut from

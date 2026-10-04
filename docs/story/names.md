@@ -17,7 +17,7 @@ any time.**
   `ledger.md`) use the display names so they stay readable. To rename: change
   the name in this file, then replace the old name across `docs/story/` in the
   same commit. Every name below is unique, so a whole-word find-and-replace is
-  safe (check `Rue`, `Wren`, `Crane`, `Rook`, `Holt`, `Mast` and `Piers`, which
+  safe (check `Rue`, `Wren`, `Crane`, `Rook`, `Holt` and `Mast`, which
   are also ordinary English words, by eye).
 - **A name's short forms are separate rows** (the "Short forms" table below:
   first names, surnames, family names, a god's name and title on their own), because
@@ -38,8 +38,8 @@ any time.**
 | `lead` | *(player's choice)*, default **Ellery** · family name **Veyne** | The lead. First name chosen by the player; the family name is fixed text (most people just say "Veyne") |
 | `retainer` | Hollis Marr | Old captain of House Veyne's guard; Dace's and Wren's father |
 | `sergeant` | Tamsin Rook | Cavalry sergeant of the Unpaid |
-| `poacher` | Aske | Brennish refugee archer |
-| `keeper` | Piers | The Vigil's keeper of Harrowby |
+| `poacher` | Aske | Brennish refugee archer (a girl of 17) |
+| `keeper` | Maud | The Vigil's keeper of Harrowby |
 | `heretic` | Rue | Self-vowed fire mage, former Candle |
 | `rival` | Dace Marr | The lead's best friend; the king's Hound |
 | `king` | Emeric | King of Ardeval; the antagonist |

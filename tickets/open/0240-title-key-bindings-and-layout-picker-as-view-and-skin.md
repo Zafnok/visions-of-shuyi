@@ -1,5 +1,5 @@
 ---
-id: "0239"
+id: "0240"
 title: "Title, Key bindings and layout picker: say what they show as a view, painted by a skin"
 type: feature
 milestone: M1 Engine
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 0239 — Title, Key bindings and layout picker as view + skin
+# 0240 — Title, Key bindings and layout picker as view + skin
 
 ## Context
 
@@ -29,7 +29,7 @@ is the worked example: read `crates/ui/src/screens/options.rs`,
 `options/view.rs` and `options/glyph.rs` first.
 
 This ticket does the three screens the player meets first and the shared
-`Menu` widget they use. 0240 does the other full-screen menus, 0241 the
+`Menu` widget they use. 0241 does the other full-screen menus, 0242 the
 battle screen's panels and the dialogue screen.
 
 ## Nick input
@@ -52,7 +52,7 @@ byte-for-byte the same.
 - Any change to what a screen shows, its text, its keys or its layout.
 - A second skin, a skin trait or a way to choose skins (ADR-0054: not
   until a second skin exists).
-- Other screens (0240, 0241).
+- Other screens (0241, 0242).
 - Moving text literals into the language file: that is 0234. *Either
   order works:* if 0234 is done, the view's strings come from
   `ctx.text(…)` as it left them; if not, the literals move into the logic
@@ -69,7 +69,7 @@ byte-for-byte the same.
    Vec<MenuItemView { label, suffix, enabled, focused }>`), and move
    `Menu::draw` and `Menu::size` into `crates/ui/src/widgets/menu/glyph.rs`
    as `paint(palette, &MenuView, buf, x, y)` and `size(&MenuView)`. Keep
-   `Menu::draw` as a thin call to it until 0240 and 0241 have converted
+   `Menu::draw` as a thin call to it until 0241 and 0242 have converted
    every caller; say so in its doc comment.
 2. Title: `title/view.rs` with `TitleView { title, subtitle, prompt:
    Option<String> (the "press any key" state), menu: Option<MenuView>,

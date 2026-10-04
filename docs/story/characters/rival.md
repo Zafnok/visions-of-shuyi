@@ -120,6 +120,12 @@ Id: `rival` · [Name registry](../names.md)
   coat, on purpose).
 - **Expressions:** `neutral`, `happy` (the charming smile), `angry`, `sad`,
   `surprised`, plus `cold` (no smile, eyes flat).
+- **In combat** (decided 2026-10-04, ticket 0040): he fights in full black
+  armour with a horned, closed helm and a red cape, Shironejiya's *dark
+  knight* picture. The Tiny Tales Samurai was dropped: she is plainly a
+  woman. The helm hides his face in battle, so his dialogue face (bare-headed,
+  as above) comes from the Character Generator (0706) and need not match the
+  armour.
 
 ## Support partners
 

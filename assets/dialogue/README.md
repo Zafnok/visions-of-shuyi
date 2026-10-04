@@ -55,6 +55,7 @@ Every line is one of these. Directives start at the very first column.
 | `> <text>` | Narration: a text box with no speaker. |
 | `  <text>` (indented) | Continues the speech or narration line above; the two are joined with one space. |
 | `@choice` … `@endchoice` | The lead's reply choice: see below. |
+| `@if <character>` … `@else` … `@endif` | Lines that play only if the character is still there, and the lines that play instead: see "Who is still there". |
 
 Each speech or narration line is **one text box** on screen (the screen
 splits a long one into pages). Directives (`@caption`, `@left`, `@right`,
@@ -81,6 +82,8 @@ The validator reports every broken rule, with the file and line:
 - **Plain ASCII text.** Use `'` and `"`, not curly quotes; `...` not `…`;
   `--` not `—`; `-` not `–`. The error message names the ASCII form.
 - Every scene has at least one speech or narration line.
+- **Nobody who may be gone is shown** outside an `@if` block for them: see
+  "Who is still there".
 - **Music**: `@music` names exactly one music cue from
   `assets/audio/audio.ron` (not a sound, not a music pool), or `stop`.
 
@@ -259,6 +262,121 @@ their own (`docs/story/names.md`, "Short forms"), used like any other:
 - **Lengths** count every name token as the **longest** name in
   `names.ron`, whichever name it is, so renaming anything can't push a line
   over its limit.
+
+## Who is still there: `@if` blocks
+
+In Classic a companion who falls is dead and leaves the army
+(`docs/design/death-and-difficulty.md`). A scene played after that must
+not have them speak. Lines in an `@if` block play only if the named
+character is **there** when the scene plays (ADR-0055):
+
+```
+@scene ch01_after
+@left lead neutral
+@if sergeant
+@right sergeant happy
+sergeant: Pay-day at last.
+@right clear
+@else
+> Nobody speaks for a while.
+@endif
+> The fort is quiet.
+@end
+```
+
+| Line | Meaning |
+| ---- | ------- |
+| `@if <character>` | Starts a block. The lines below play only if the character is there. |
+| `@else` | Optional. The lines below it play only if the character is **not** there. |
+| `@endif` | Ends the block. The scene goes on for everyone. |
+
+A block's lines are written as far in as its `@if`: not indented in a
+scene, two spaces in a reply's reaction. (An indented line still continues
+the line above it.)
+
+**Who is there:**
+
+- In a chapter's scenes (before and after its battle): everyone **in the
+  army**. A companion who died in Classic is not; one who retreated in
+  Casual is; someone recruited in the battle is, from its victory scenes
+  on.
+- In a battle's scenes (its triggers): everyone whose **unit is on the
+  map** at that moment, friend or enemy. A companion left out of the
+  battle is not there. A unit that is about to fall is still there for the
+  scene before that fight and for its own last words.
+- In the debug scene viewer: everyone.
+
+Blocks nest, so a line between two companions sits in a block for each. A
+block may stand in a reply's reaction, and a `@choice` may stand in a
+block:
+
+```
+@scene ch01_road
+@left lead neutral
+@if keeper
+@right keeper neutral
+@if heretic
+keeper: {n:heretic}, stay close to me.
+@else
+keeper: She would have hated this road.
+@endif
+@right clear
+@endif
+> The road goes on.
+@choice
+* earnest: We keep going.
+  @if sergeant
+  @right sergeant happy
+  sergeant: That's the spirit.
+  @right clear
+  @else
+  > Nobody answers.
+  @endif
+* blunt: Move.
+  > They move.
+@endchoice
+lead: Onward.
+@end
+```
+
+### Rules for `@if` blocks
+
+- **Anyone the army can lose appears only inside an `@if` block for
+  them**: `@left`/`@right` with them, and their lines. The army can lose
+  everyone in the starting roster (`assets/data/new_game.ron`) but the
+  lead, and everyone a battle recruits. The error says who and where.
+- **Scenes that can't play without someone need no block for them.** The
+  validator knows from where the scene is played:
+  - a battle trigger's scene: the characters the trigger names (a death
+    quote is said by the one dying; a boss's lines by the boss; a talk by
+    its two);
+  - a support conversation: its two;
+  - before anyone can have fallen: the first chapter's scenes before its
+    battle, and that battle's scenes at the start of turn 1, can count on
+    everyone the game starts with.
+- **Nobody appears in the `@else` of their own block.**
+- **An `@if` that can only go one way is an error**: for the lead, for
+  someone the scene can't play without, or inside a block (or its
+  `@else`) for the same character.
+- **Both ways leave the same screen**: the same characters on the same
+  sides, and the same caption, as replies must. Someone who enters in a
+  block leaves in it (`@right clear` before `@endif`), or the `@else` puts
+  the same character there.
+- A block opened in a reaction closes in that reaction. A `@choice` can't
+  stand in a block that is itself in a reaction (that is a choice in a
+  choice).
+- A reaction's limit of 4 lines counts a block as its longer part.
+- `@if` takes one character id; any character or speaker of
+  `characters.ron`.
+- **A scene with nothing left to say isn't played.** If every line of a
+  scene is in blocks for people who are gone, the game skips the scene
+  (its `@music` too). Give it an `@else` if something should still be
+  said.
+- **The validator doesn't read the words.** A line that mentions someone
+  who may be dead, or narration that has them do something, is yours to
+  put in their block.
+- Both parts of every block get line ids, translations and voice clips.
+  `cargo xtask lines` lists them all.
 
 ## Line ids
 

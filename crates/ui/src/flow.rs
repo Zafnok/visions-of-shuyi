@@ -50,7 +50,7 @@
 use std::any::Any;
 use std::collections::VecDeque;
 
-use trpg_content::{ChapterDef, MapLook, Scene, battle_campaign, new_campaign};
+use trpg_content::{ChapterDef, MapLook, Present, Scene, battle_campaign, new_campaign};
 use trpg_core::{
     BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, Outcome, Preparations,
     SaveFile, SavePoint,
@@ -195,14 +195,7 @@ impl FlowScreen {
             setup,
             bench: campaign.bench(&def),
         };
-        history.restore_tables(
-            tables.terrain,
-            tables.classes,
-            tables.items,
-            tables.spells,
-            tables.skills,
-            tables.arts,
-        );
+        history.restore_tables(&tables);
         // If deleting fails the battle still continues.
         let _ = ctx.storage.delete(SUSPEND_KEY);
         // The battle's music again (a pool picks afresh).
@@ -347,11 +340,13 @@ impl FlowScreen {
 
     /// Plays the next scene waiting, or goes on to what follows them.
     /// Scenes missing from the content (validation rules it out) are
-    /// skipped.
+    /// skipped, and so is one with nothing to say for the army as it is
+    /// (every line of it was someone's who is gone, ADR-0055).
     fn next_scene(&mut self, ctx: &mut Ctx) {
         while let Some(id) = self.scenes.pop_front() {
-            if let Some(scene) = ctx.content.dialogue.get(&id) {
-                self.play(scene.clone(), ctx);
+            if let Some(scene) = ctx.content.dialogue.get(&id)
+                && self.play(scene, ctx)
+            {
                 return;
             }
         }
@@ -362,13 +357,25 @@ impl FlowScreen {
         }
     }
 
-    fn play(&mut self, scene: Scene, ctx: &Ctx) {
+    /// Plays `scene` for the army as it is: the characters in the
+    /// campaign's roster are there (ADR-0055), so a companion who died in
+    /// Classic isn't, and one who retreated in Casual is. Returns `false`,
+    /// playing nothing, if the scene has nothing to say for them.
+    fn play(&mut self, scene: &Scene, ctx: &Ctx) -> bool {
         let lead = self
             .campaign
             .as_ref()
             .map_or_else(|| ctx.lead.clone(), |c| c.lead.clone());
+        let present = self.campaign.as_ref().map_or(Present::Everyone, |c| {
+            Present::only(c.roster.iter().filter_map(|u| u.character.clone()))
+        });
         let names = ctx.content.names.clone();
-        self.stage = Stage::Scene(Box::new(DialogueScreen::new(scene, lead, names)));
+        let screen = DialogueScreen::new(scene, lead, names, &present);
+        let plays = screen.has_text();
+        if plays {
+            self.stage = Stage::Scene(Box::new(screen));
+        }
+        plays
     }
 
     /// Starts the chapter's battle with the campaign's army.

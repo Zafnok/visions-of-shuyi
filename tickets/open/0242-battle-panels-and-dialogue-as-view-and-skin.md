@@ -1,17 +1,17 @@
 ---
-id: "0241"
+id: "0242"
 title: "The battle screen's panels and the dialogue screen: say what they show as a view, painted by a skin"
 type: feature
 milestone: M1 Engine
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0240"]
+blocked_by: ["0241"]
 nick_input: none
 completed:
 ---
 
-# 0241 — Battle panels and the dialogue screen as view + skin
+# 0242 — Battle panels and the dialogue screen as view + skin
 
 ## Context
 
@@ -19,7 +19,7 @@ Last of three tickets that give every screen the split the Options screen
 has (ticket 0805, Nick 2026-10-04: a bought UI pack must be able to
 replace the look "without affecting logic").
 [ADR-0054](../../docs/adr/0054-screens-say-what-they-show-as-a-view-a-skin-paints-it.md)
-is the pattern; Options is the worked example; 0239 and 0240 did the
+is the pattern; Options is the worked example; 0240 and 0241 did the
 menus.
 
 The battle *map* is already a skin (ADR-0038: `MapScene`, `MapSkin`). What
@@ -92,7 +92,7 @@ before, unless (a) turns out small enough to take (b) with it.
 
 - [ ] `battle/mod.rs`, `battle/mode.rs` and `dialogue.rs` don't import
       `UiColor`, `Rect`, `BoxStyle` or `Cell`; each `draw` is one call to
-      its skin (extend 0239's grep test).
+      its skin (extend 0240's grep test).
 - [ ] No snapshot file changes.
 - [ ] The view has unit tests for each thing in scope appearing and
       disappearing (a menu opens, a banner expires, the forecast for a

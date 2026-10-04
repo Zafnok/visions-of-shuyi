@@ -20,7 +20,7 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | `screens` | Game screens: `TitleScreen`, `ModeSelectScreen`, `LeadSelectScreen` (with the name grid), `PreparationsScreen` (loadouts and the pack before a battle, 0408; its Options tab is where a Classic campaign can switch to Casual), `GameOverScreen`, `ToBeContinuedScreen`, `ResultsScreen` (a won battle's gold, rewind bonus and EXP bars, then its level-up pages, 0810), `LayoutPickerScreen` (first launch, and from Options to switch layout), `OptionsScreen` (0805: from the title, the map menu and Preparations), `KeyBindingsScreen` (rebinding, 0815; opened from Options), `CreditsScreen` (0808), `DialogueScreen` (full-screen or over the map), `ClassChangeScreen` (`screens/class_change`: promotion and reclass between battles, 0603), `BattleScreen` (`screens/battle`: its `mode` state machine, `attack` targeting, `forecast` panel and combat `playback`, which runs as a mode of the battle screen, ADR-0025) |
 | `portrait` | `draw_portrait`: a portrait's PNG as one sprite item at the largest whole scale that fits the 32×16-cell frame, dimmed and/or mirrored (ADR-0043); `fit_whole_scale` for any picture in any frame |
 | `debug` | Debug menu (F2 in debug builds): glyph sampler, portrait viewer, test scene (full-screen or overlay), sprite test, class change on a test unit (promote, reclass), scene camera (the test map as a backdrop: pan, zoom 1× to 4×), Map skin (the glyph skin, then every tileset in turn; not saved) |
-| `dialogue` | `DialoguePlayer`: plays a dialogue `Scene` one text box at a time and gives the `View` (portraits, speaker, text, caption) to draw |
+| `dialogue` | `DialoguePlayer`: plays a dialogue `Scene` one text box at a time, as it is for those `Present` when it starts (ADR-0055), and gives the `View` (portraits, speaker, text, caption) to draw |
 | `harness` | Headless test driver (tests, or the `harness` feature) |
 
 ## What a frame holds
@@ -341,7 +341,7 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      positions, box characters and colours). `draw` is one call to the
      skin. Tests of what happened read the view or the state; only the
      skin's tests and snapshots read cells. `screens/options.rs` is the
-     example. The older screens still draw in `draw`; tickets 0239–0241
+     example. The older screens still draw in `draw`; tickets 0240–0242
      convert them, so don't copy them.
    - Text the player reads is never a string literal (ADR-0045). Put it
      in `assets/lang/en/ui.ron` under a `screen.thing` key and ask for it

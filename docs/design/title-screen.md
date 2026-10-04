@@ -221,7 +221,7 @@ loop, about 17 seconds.
   the Chapter 1 battle (`ch01_intro`, `ch01_prebattle`), and never past a
   reply choice.
 - **Six faces slide past with their names:** the lead, Hollis, Tamsin,
-  Aske, Piers, Rue (the bought faces, 0706; names from the names table).
+  Aske, Maud, Rue (the bought faces, 0706; names from the names table).
 - **The lead follows the most recent save:** the name and face the player
   chose there. With no save, the default lead.
 - **Units march and fight** in the loud part of the song (ticket 0827).
@@ -239,7 +239,7 @@ Chapter 1 map by 0820; the mockup's fight was made up.
 | ----- | --------- | -------- | ---- |
 | 0:00 | The Chapter 1 battlefield, the party standing at its starting places, nobody moving. On launch the menu covers this shot (rule 3); it is seen from the first loop on. | Slow pan across the party | 3× |
 | 0:15 | Dialogue screen: the opening lines of `ch01_intro`, as the script has them. | None; the text types out | Dialogue screen |
-| 0:31 | Six faces in frames, each with its name under it, one after another: the lead, Hollis, Tamsin, Aske, Piers, Rue. | Faces cross from right to left | Faces at dialogue size |
+| 0:31 | Six faces in frames, each with its name under it, one after another: the lead, Hollis, Tamsin, Aske, Maud, Rue. | Faces cross from right to left | Faces at dialogue size |
 | 0:50 | Dialogue screen: the opening lines of `ch01_prebattle`, as the script has them. | None; the text types out | Dialogue screen |
 | 1:08 | Party units march from their starting places toward the enemy; an enemy comes to meet them. | Pan that follows the march; units walk | 3× |
 | 1:25 | Close-up: a party unit and an enemy trade blows; the enemy falls. | Still camera; units strike | 4× |
