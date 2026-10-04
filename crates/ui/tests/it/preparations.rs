@@ -158,7 +158,7 @@ fn rebound_keys_and_a_controller_work() {
     );
     h.pad("DpadRight South South DpadRight East");
     // After a button press the help names the controller's buttons.
-    assert!(shows(&h, "D-pad/stick choose · "), "{}", h.snapshot());
+    assert!(shows(&h, "D-pad/L-stick choose · "), "{}", h.snapshot());
     assert!(!shows(&h, "wasd choose"));
     let prep = h.flow().and_then(|f| f.preparations());
     let prep = prep.unwrap_or_else(|| panic!("no preparations"));

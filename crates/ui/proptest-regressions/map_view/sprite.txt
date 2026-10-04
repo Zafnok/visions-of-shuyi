@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 975acc7b4a10e785b34b8420193e441a4a34b257523d3b0476a409ff55995cd3 # shrinks to area = Rect { x: 0, y: 0, w: 0, h: 0 }, tile = (8, 8), origin = (0, 0)
+cc 9227ba62acfdbef613655fd90900088619860c4f2d509b9a5dc290dd9577af87 # shrinks to scene = MapScene { origin: Pos { x: 0, y: 0 }, size: (0, 0), tiles: [], units: [], cursor: None, path: [], clock_ms: 0 }, area = Rect { x: 0, y: 0, w: 0, h: 0 }, tile = (8, 8)
+cc 33c6c0761d0111077ffeb78bad4bb8429f24ffa91334ac0e6d6cadda8accb6d3 # shrinks to scene = MapScene { origin: Pos { x: 0, y: 0 }, size: (0, 0), tiles: [], units: [], cursor: None, path: [], clock_ms: 0 }, area = Rect { x: 0, y: 0, w: 0, h: 0 }
