@@ -12,7 +12,7 @@ use super::ai_phase::{AiAction, PACING, Pacing};
 use super::layout::MAP_VIEW;
 use super::mode::Mode;
 use super::testing::{battle, quick_units, skirmish, vaulted};
-use super::walk::SPRITE_WALK_TILES_PER_S;
+use super::walk::{SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S};
 use super::{BattleScreen, quick_battle};
 use crate::color::{Rgb, UiColor};
 use crate::console::{CONSOLE_H, CONSOLE_W};
@@ -584,7 +584,7 @@ fn a_glyph_units_walk_keeps_its_pace() {
     }
     assert_eq!(frames, 13);
     assert_eq!(shown(&s, &c, lord).2, (0.0, 0.0));
-    // The same walk under a sprite skin: 5 tiles a second, 0.6 s.
+    // The same walk under a sprite skin: 6 tiles a second, 0.5 s.
     let mut c = sprite_ctx();
     let mut s = quick();
     step(&mut s, &mut c, &[Action::Confirm]);
@@ -593,14 +593,14 @@ fn a_glyph_units_walk_keeps_its_pace() {
     let Mode::Moving { pace, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    assert!((pace - 5.0).abs() < 1e-6);
+    assert!((pace - 6.0).abs() < 1e-6);
     let mut frames = 0;
     while matches!(s.mode(), Mode::Moving { .. }) {
         wait(&mut s, &mut c, 0.02);
         frames += 1;
         assert!(frames < 100, "the walk never ended");
     }
-    assert!((30..=31).contains(&frames), "{frames}");
+    assert!((25..=26).contains(&frames), "{frames}");
 }
 
 /// Ticket 0440: a move that goes right and then up.
@@ -622,7 +622,7 @@ fn a_walking_unit_turns_the_way_it_goes_and_glides_from_tile_to_tile() {
     assert_eq!(shown(&s, &c, lord), (start, Facing::Down, (0.0, 0.0), 1));
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Moving { .. }), "{:?}", s.mode());
-    // The walk, in frames of 25 ms: a tile every 200 ms.
+    // The walk, in frames of 25 ms: a tile every 167 ms.
     let mut seen = Vec::new();
     while matches!(s.mode(), Mode::Moving { .. }) {
         seen.push(shown(&s, &c, lord));
@@ -648,7 +648,7 @@ fn a_walking_unit_turns_the_way_it_goes_and_glides_from_tile_to_tile() {
     // On each step its offset went from 0 towards 1: right (+x), then up
     // (−y), never across both.
     for step in seen.chunk_by(|a, b| a.0 == b.0) {
-        assert!(step.len() >= 7, "{step:?}");
+        assert!(step.len() >= 6, "{step:?}");
         let facing = step[0].1;
         let along = |&(_, _, (dx, dy), _): &(Pos, Facing, (f32, f32), u8)| {
             if facing == Facing::Right {
@@ -659,17 +659,17 @@ fn a_walking_unit_turns_the_way_it_goes_and_glides_from_tile_to_tile() {
                 -dy
             }
         };
-        assert!(along(&step[0]) < 0.13, "{step:?}");
+        assert!(along(&step[0]) < 0.16, "{step:?}");
         for pair in step.windows(2) {
             assert!(along(&pair[0]) < along(&pair[1]), "{step:?}");
         }
         let last = along(&step[step.len() - 1]);
         assert!((0.8..1.0).contains(&last), "{step:?}");
     }
-    // Its legs went: a frame every 100 ms, two a tile.
+    // Its legs went: a frame every 100 ms of the half second.
     let mut frames: Vec<u8> = seen.iter().map(|&(.., frame)| frame).collect();
     frames.dedup();
-    assert_eq!(frames, [0, 1, 2, 1, 0, 1]);
+    assert_eq!(frames, [0, 1, 2, 1, 0]);
     // Arrived: on the path's last tile, facing the camera, no offset.
     assert!(
         matches!(s.mode(), Mode::ActionMenu { .. }),
@@ -734,6 +734,7 @@ fn an_ai_units_walk_turns_and_glides_too() {
     let pan = (s.camera.origin, s.camera.origin);
     let pacing = Pacing {
         walk_tiles_per_s: SPRITE_WALK_TILES_PER_S,
+        held_walk_tiles_per_s: SPRITE_HELD_WALK_TILES_PER_S,
         ..PACING
     };
     let action = AiAction::new(brigand, before, pan, path, Mode::default(), pacing);
@@ -746,16 +747,16 @@ fn an_ai_units_walk_turns_and_glides_too() {
     };
     // Marked by the cursor: still on its tile, facing the camera.
     assert_eq!(shown(&s, &c, brigand), (from, Facing::Down, (0.0, 0.0), 1));
-    // Half a tile left.
-    tick(&mut s, walk_start + 0.1, false);
+    // Half a tile left: a twelfth of a second at 6 tiles a second.
+    tick(&mut s, walk_start + 1.0 / 12.0, false);
     let (pos, facing, offset, frame) = shown(&s, &c, brigand);
-    assert_eq!((pos, facing, frame), (from, Facing::Left, 1));
+    assert_eq!((pos, facing, frame), (from, Facing::Left, 0));
     assert!(
         (offset.0 + 0.5).abs() < 1e-3 && offset.1 == 0.0,
         "{offset:?}"
     );
     // A quarter of a tile down, on the path's second tile.
-    tick(&mut s, 0.15, false);
+    tick(&mut s, 0.125, false);
     let (pos, facing, offset, frame) = shown(&s, &c, brigand);
     let second = p(from.x - 1, from.y);
     assert_eq!((pos, facing, frame), (second, Facing::Down, 2));
@@ -763,11 +764,12 @@ fn an_ai_units_walk_turns_and_glides_too() {
         offset.0 == 0.0 && (offset.1 - 0.25).abs() < 1e-3,
         "{offset:?}"
     );
-    // Confirm held: four times as fast, legs and all.
-    tick(&mut s, 0.025, true);
+    // Confirm held: 12 tiles a second, twice as fast, legs and all. Half
+    // a tile in a 24th of a second.
+    tick(&mut s, 1.0 / 24.0, true);
     let (_, _, offset, frame) = shown(&s, &c, brigand);
     assert!((offset.1 - 0.75).abs() < 1e-3, "{offset:?}");
-    assert_eq!(frame, 1);
+    assert_eq!(frame, 2);
     // Arrived.
     tick(&mut s, 5.0, false);
     let end = p(from.x - 1, from.y + 1);

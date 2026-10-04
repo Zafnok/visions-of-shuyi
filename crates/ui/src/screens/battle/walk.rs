@@ -26,11 +26,18 @@ pub const IDLE_FRAMES: [u8; 4] = [STANDING_FRAME, 2, STANDING_FRAME, 0];
 /// tiles per second. *Tunable.*
 pub const WALK_TILES_PER_S: f32 = 12.0;
 
-/// How long a walking sprite takes to cross a tile, in seconds. *Tunable.*
-pub const SPRITE_WALK_TILE_S: f32 = 0.2;
+/// An AI unit's walking speed under the glyph skin while Confirm is held,
+/// in tiles per second: four times as fast, as the rest of its action.
+pub const HELD_WALK_TILES_PER_S: f32 = 4.0 * WALK_TILES_PER_S;
 
-/// Walking speed under a sprite skin, in tiles per second.
-pub const SPRITE_WALK_TILES_PER_S: f32 = 1.0 / SPRITE_WALK_TILE_S;
+/// Walking speed under a sprite skin, in tiles per second (Nick,
+/// 2026-10-04: 5 was too slow). *Tunable.*
+pub const SPRITE_WALK_TILES_PER_S: f32 = 6.0;
+
+/// An AI unit's walking speed under a sprite skin while Confirm is held,
+/// in tiles per second: the fastest a sprite ever walks (Nick, 2026-10-04:
+/// "it's just 12 max").
+pub const SPRITE_HELD_WALK_TILES_PER_S: f32 = 12.0;
 
 /// How long each frame of a walking unit shows, in seconds. *Tunable.*
 pub const WALK_FRAME_S: f32 = 0.1;
@@ -128,8 +135,8 @@ mod tests {
         Pos::new(x, y)
     }
 
-    /// The sprites' pace: 5 tiles a second.
-    const PACE: f32 = SPRITE_WALK_TILES_PER_S;
+    /// A pace of 5 tiles a second: two walking frames a tile.
+    const PACE: f32 = 5.0;
 
     #[test]
     fn a_unit_steps_on_the_spot_every_quarter_second() {
@@ -159,10 +166,13 @@ mod tests {
     }
 
     #[test]
-    fn a_walk_crosses_a_tile_in_200_ms_and_changes_frame_every_100_ms() {
-        assert!((SPRITE_WALK_TILES_PER_S - 5.0).abs() < 1e-6);
-        assert!((SPRITE_WALK_TILE_S - 0.2).abs() < 1e-6);
+    fn a_walk_changes_frame_every_100_ms_at_any_pace() {
+        // The speeds: a sprite 6 tiles a second, 12 at the most; a glyph
+        // unit 12, and four times that with Confirm held.
+        assert!((SPRITE_WALK_TILES_PER_S - 6.0).abs() < 1e-6);
+        assert!((SPRITE_HELD_WALK_TILES_PER_S - 12.0).abs() < 1e-6);
         assert!((WALK_TILES_PER_S - 12.0).abs() < 1e-6);
+        assert!((HELD_WALK_TILES_PER_S - 48.0).abs() < 1e-6);
         assert!((WALK_FRAME_S - 0.1).abs() < 1e-6);
         let path = [p(1, 1), p(2, 1), p(3, 1)];
         // Two frames a tile: a foot, standing; the other foot, standing.

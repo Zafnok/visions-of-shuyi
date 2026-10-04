@@ -212,11 +212,11 @@ fn a_scripted_move_walks_along_its_path_under_the_sprite_skin() {
     // The scene is the same under the other sprite skin.
     assert_eq!(lord_walk("sprite"), (path.clone(), seen.clone()));
     // Under the glyph skin the walk is the same path, sooner over: 12
-    // tiles a second, not 5.
+    // tiles a second, not 6.
     let (glyph_path, glyph_seen) = lord_walk("glyph");
     assert_eq!(glyph_path, path);
     let walking = |seen: &Seen| seen.iter().filter(|s| s.1 != Facing::Down).count();
-    assert_eq!((walking(&seen), walking(&glyph_seen)), (16, 7));
+    assert_eq!((walking(&seen), walking(&glyph_seen)), (13, 7));
     let mut glyph_tiles: Vec<Pos> = glyph_seen.iter().map(|s| s.0).collect();
     glyph_tiles.dedup();
     assert_eq!(glyph_tiles, path);

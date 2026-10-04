@@ -6,7 +6,7 @@ use super::scene::MapScene;
 use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{GlyphBuffer, PxRect, Rect};
 use crate::screen::Ctx;
-use crate::screens::battle::walk::WALK_TILES_PER_S;
+use crate::screens::battle::walk::{HELD_WALK_TILES_PER_S, WALK_TILES_PER_S};
 
 /// Paints battle maps. The tile size is the skin's: screens ask it how many
 /// tiles fit and where a tile is. A skin never changes the game: only the
@@ -28,6 +28,12 @@ pub trait MapSkin: std::fmt::Debug {
     /// unless the skin says otherwise.
     fn walk_tiles_per_s(&self) -> f32 {
         WALK_TILES_PER_S
+    }
+
+    /// How fast an AI unit's walk is shown while the player holds Confirm
+    /// to speed its phase up, in tiles per second.
+    fn held_walk_tiles_per_s(&self) -> f32 {
+        HELD_WALK_TILES_PER_S
     }
 
     /// Paints `scene` into the cells of `area`. Touches nothing outside it.

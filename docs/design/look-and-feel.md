@@ -271,10 +271,15 @@ so they aren't in this repository (ADR-0032).
     still apply). When it arrives it faces the camera again.
   Built in ticket 0440. The values (*tunable*, all in
   `crates/ui/src/screens/battle/walk.rs`): a step on the spot every
-  250 ms; a walking sprite crosses a tile in 200 ms (5 tiles a second)
-  and changes frame every 100 ms. Nick found 5 tiles a second "a bit
-  slow" in the first preview (2026-10-04) and was sent 5, 8, 10 and 12
-  side by side to pick from; **the sprites' speed is his to pick**.
+  250 ms; a walking sprite changes frame every 100 ms.
+  - **How fast a sprite walks** (Nick, 2026-10-04, after seeing 5, 8, 10
+    and 12 tiles a second side by side; 5 was "still too slow"):
+    **6** tiles a second normally; **8** with the fast setting in
+    Options (ticket 0805); **12** while the speed-up button is held.
+    The two don't stack: "it's just 12 max". *(Claude's reading: the
+    speed-up button is holding Confirm, which speeds up the enemy's
+    phase, `controls.md`; holding Confirm during your own unit's walk
+    still skips it, as before.)*
   - **The glyph look keeps its own walking speed**, 12 tiles a second
     (Nick, 2026-10-04: "original glyph version I think should have its
     original walking speed"). Glyph units jump from tile to tile.

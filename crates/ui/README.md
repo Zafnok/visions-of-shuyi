@@ -200,8 +200,9 @@ Rules:
   skin. Never draw it into the buffer from the battle screen.
 - **How units move is a look** (ticket 0440; timings in
   `screens/battle/walk.rs`), and so is **how fast a walk is shown**:
-  `MapSkin::walk_tiles_per_s` (12 under the glyph skin, the sprites' own
-  under a sprite skin). The battle screen takes it each frame and gives it
+  `MapSkin::walk_tiles_per_s` (12 under the glyph skin, 6 under a sprite
+  skin) and `held_walk_tiles_per_s` (an AI unit's with Confirm held: 48
+  and 12). The battle screen takes it each frame and gives it
   to the walk that starts (`Mode::Moving`'s `pace`, an AI action's
   `Pacing`). It changes how long the player watches, never what happens:
   the same tiles, the same step sounds in the same order.

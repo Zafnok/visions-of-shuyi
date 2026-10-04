@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
 status: todo
-blocked_by: ["0405", "0207", "0801", "0208", "0212", "0815"]
+blocked_by: ["0405", "0207", "0801", "0208", "0212", "0815", "0440"]
 nick_input: none
 completed:
 ---
@@ -39,6 +39,19 @@ screen reachable from title and map menu, a "Key bindings" row that opens 0815's
    Defaults match current behaviour. Loaded at startup into `Ctx`; saved on change.
 2. Wire each setting into its consumer (0704 typewriter, 0404 playback, 0502
    pacing, `app` fullscreen via a `FrameOutput` request flag).
+   **Sprite walking speed** (Nick, 2026-10-04, ticket 0440;
+   `docs/design/look-and-feel.md`, *Sprites step on the spot and walk*):
+   with `anim_speed: Fast`, a sprite unit walks **8** tiles a second
+   instead of 6. Holding Confirm in the enemy's phase still makes it
+   **12**, and the two don't stack: 12 is the most. The glyph look's walk
+   (12) doesn't change. The hook: the battle screen takes the skin's
+   speeds each frame (`BattleScreen::pace`, set in `begin_frame` from
+   `MapSkin::walk_tiles_per_s` / `held_walk_tiles_per_s`); under a sprite
+   skin the setting raises the first to
+   `walk::SPRITE_FAST_WALK_TILES_PER_S` (add it, 8.0) and never the
+   second. *(Claude's reading: "fast in options" is this ticket's
+   animation-speed setting; if Nick wants a row of its own for walking,
+   he says so.)*
 3. **Options screen:** list of settings; Left/Right changes value; a "Layout" row switches right/left-handed at any time, as often as the
    player likes (`docs/design/controls.md`): `f` on it opens the same
    `LayoutPickerScreen` as first launch (0208), with the current layout

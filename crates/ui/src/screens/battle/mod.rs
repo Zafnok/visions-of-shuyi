@@ -256,9 +256,10 @@ pub struct BattleScreen {
     /// The unit whose walk was shown since the last command: its move's
     /// steps have been heard.
     walked: Option<UnitId>,
-    /// Walking speed, in tiles per second: the map skin's
-    /// ([`MapSkin::walk_tiles_per_s`]), as of the frame's start.
-    pace: f32,
+    /// Walking speed, in tiles per second, and an AI unit's while Confirm
+    /// is held: the map skin's ([`MapSkin::walk_tiles_per_s`],
+    /// [`MapSkin::held_walk_tiles_per_s`]), as of the frame's start.
+    pace: (f32, f32),
     /// The player chose `Restart Battle` or `Suspend`: the screen closes,
     /// and the game flow does it.
     leaving: Option<Leaving>,
@@ -311,7 +312,7 @@ impl BattleScreen {
             progress: None,
             cues: CueQueue::default(),
             walked: None,
-            pace: walk::WALK_TILES_PER_S,
+            pace: (walk::WALK_TILES_PER_S, walk::HELD_WALK_TILES_PER_S),
             leaving: None,
             player_view: None,
             notes_t: 0.0,
@@ -677,7 +678,8 @@ impl BattleScreen {
         self.cursor.jump(start);
         let then = std::mem::take(&mut self.mode);
         let pacing = Pacing {
-            walk_tiles_per_s: self.pace,
+            walk_tiles_per_s: self.pace.0,
+            held_walk_tiles_per_s: self.pace.1,
             ..PACING
         };
         let action = AiAction::new(unit, before, (from, to), path, then, pacing);
@@ -805,7 +807,8 @@ impl BattleScreen {
         if view != self.view {
             self.refit(view);
         }
-        self.pace = ctx.map_skin.walk_tiles_per_s();
+        let skin = &ctx.map_skin;
+        self.pace = (skin.walk_tiles_per_s(), skin.held_walk_tiles_per_s());
         self.cursor.tick(dt);
     }
 
@@ -1058,7 +1061,7 @@ impl BattleScreen {
         let before = self.mode.clone();
         let mode = std::mem::take(&mut self.mode);
         let (mode, effect) = mode::step(mode, action, self.cursor.pos, &self.state);
-        let mode = mode.at_pace(self.pace);
+        let mode = mode.at_pace(self.pace.0);
         if let Some(sound) = sounds::step_sound(action, &before, &mode, &effect) {
             ctx.audio.menu(sound);
         }

@@ -159,7 +159,7 @@ Done 2026-10-03.
   the walking unit (the player's move, or an AI unit's) is turned the way
   it goes, between two tiles, its legs going.
 - **Timings, in one place:** `crates/ui/src/screens/battle/walk.rs`
-  (250 ms a step on the spot; 200 ms a tile for a sprite; 100 ms a
+  (250 ms a step on the spot; 6 tiles a second for a sprite; 100 ms a
   walking frame, whatever the speed). An
   AI walk held with Confirm goes four times as fast, legs and all.
 - **Sprite skins:** a unit's picture is the frame of its facing and step,
@@ -178,9 +178,11 @@ Done 2026-10-03.
 **Deviations**
 
 - **Walking speed is the look's** (Nick, 2026-10-04, after the first
-  preview): the glyph skin keeps 12 tiles a second; a sprite skin has its
-  own (5 for now: Nick is choosing between 5, 8, 10 and 12 from a
-  side-by-side animation). `MapSkin::walk_tiles_per_s`; the step sounds
+  preview and a side-by-side of 5, 8, 10 and 12): the glyph skin keeps 12
+  tiles a second; a sprite walks **6**, and **12** while Confirm is held
+  in the enemy's phase (not four times as fast: 12 is the most). The
+  Options setting that makes it 8 is written into ticket 0805, which
+  builds Options. `MapSkin::walk_tiles_per_s`; the step sounds
   go with the tiles, so every skin plays the same sounds in the same
   order, only sooner or later.
 - The step-on-the-spot cycle starts on the standing frame (standing, a
@@ -216,4 +218,5 @@ camera when it arrives; nothing flickers at the end.
 session (not committed). Say if the stepping or the walking is too fast,
 too slow, or the map too busy: each is one number.
 
-No follow-up tickets.
+No follow-up tickets; ticket 0805 (Options) gained the fast walking
+speed and now waits for this one.
