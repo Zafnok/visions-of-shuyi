@@ -38,9 +38,10 @@ fn options() -> Harness {
 }
 
 /// From Options back at the title (still on its Options item), the Quick
-/// Battle with its `PLAYER PHASE` banner closed.
+/// Battle (its Preparations: Left wraps to `Fight!`) with its `PLAYER
+/// PHASE` banner closed.
 fn into_quick_battle(h: &mut Harness) {
-    h.keys("d Up f f");
+    h.keys("d Up f Left f f");
     assert_eq!(h.screens(), ["title", "battle"]);
 }
 
@@ -48,7 +49,7 @@ fn into_quick_battle(h: &mut Harness) {
 /// Options).
 fn options_in_battle() -> Harness {
     let mut h = title();
-    h.keys("Down f f d Down Down f");
+    h.keys("Down f Left f f d Down Down f");
     assert_eq!(h.screens(), ["title", "battle", "options"]);
     h
 }
@@ -221,7 +222,7 @@ fn the_cursor_row_changes_the_battle_cursor() {
     h.keys("d d");
     assert_eq!(style(&h), Some(CursorStyle::TileGlow));
     let mut h = relaunch(h);
-    h.keys("Down f f");
+    h.keys("Down f Left f f");
     assert_eq!(style(&h), Some(CursorStyle::TileGlow));
 }
 
@@ -356,9 +357,11 @@ fn classic_switches_to_casual_with_a_confirm_and_never_back() {
     // Back in the battle, the campaign is Casual.
     h.keys("d");
     assert_eq!(mode(&h), Some(GameMode::Casual));
-    // The map menu is still open on Options: Restart Battle is two down,
-    // and the battle starts again in Casual.
+    // The map menu is still open on Options: Restart Battle is two down.
+    // It goes back to Preparations, and the battle starts again in Casual.
     h.keys("Down Down f f");
+    assert_eq!(h.screens(), ["title", "preparations"]);
+    h.keys("Left f");
     assert_eq!(h.screens(), ["title", "battle"]);
     let battle = h.battle().map(|b| b.state().mode());
     assert_eq!(battle, Some(GameMode::Casual));

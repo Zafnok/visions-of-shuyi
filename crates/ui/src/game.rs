@@ -70,6 +70,9 @@ pub struct FrameOutput<'a> {
     /// Whether the game should fill the screen (the Fullscreen setting);
     /// `app` switches when this changes.
     pub fullscreen: bool,
+    /// How loud voice clips play, 0–1 ([`Ctx::voice_volume`]). `app`
+    /// applies it to the voice that is playing too.
+    pub voice_volume: f32,
 }
 
 /// Owns the screens, input state, shared context and the console buffer.
@@ -175,6 +178,7 @@ impl Game {
             music_volume: self.ctx.settings().music_factor(),
             sound_volume: self.ctx.settings().sound_factor(),
             fullscreen: self.ctx.settings().fullscreen,
+            voice_volume: self.ctx.voice_gain(),
         }
     }
 
@@ -327,7 +331,10 @@ fn is_known(manifest: &trpg_content::AudioManifest, request: &AudioRequest) -> b
     match request {
         AudioRequest::PlaySound { cue, .. } => manifest.sounds.contains_key(cue),
         AudioRequest::PlayMusic { cue } => manifest.music.contains_key(cue),
-        AudioRequest::StopMusic => true,
+        AudioRequest::StopMusic
+        | AudioRequest::PlayVoice { .. }
+        | AudioRequest::StopVoice
+        | AudioRequest::PreloadVoices { .. } => true,
     }
 }
 
@@ -704,7 +711,7 @@ mod tests {
         assert_eq!(names(release), ["title", "options"]);
         let mut debug = ctx();
         debug.debug_tools = true;
-        assert_eq!(names(debug), ["title", "battle"]);
+        assert_eq!(names(debug), ["title", "preparations"]);
     }
 
     /// Records what the screen saw.

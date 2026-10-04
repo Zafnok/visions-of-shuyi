@@ -43,6 +43,13 @@ async fn main() {
         }
         Err(e) => return show_content_errors(&e.to_string()).await,
     };
+    // Voices (ADR-0046): none, and nothing said, without the folder.
+    let voice_dir = audio::voice::platform_voice_dir();
+    match audio::voice::read_manifest(&voice_dir).await {
+        Ok(Some(manifest)) => ctx.set_voice_manifest(&manifest),
+        Ok(None) => {}
+        Err(e) => warn!("no voices: {}", e),
+    }
     // E.g. saved key bindings that had to be repaired (ADR-0031).
     for warning in ctx.take_warnings() {
         warn!("{}", warning);
@@ -62,6 +69,7 @@ async fn main() {
         ctx.content.audio.clone(),
         trpg_content::bundle::bytes,
         audio::platform_music_dir(),
+        voice_dir,
         miniquad::date::now().to_bits(),
     )
     .await;
@@ -84,6 +92,7 @@ async fn main() {
                 set_fullscreen(fullscreen);
             }
             audio.set_volumes(&mut speaker, out.music_volume, out.sound_volume);
+            audio.set_voice_volume(&mut speaker, out.voice_volume);
             audio.play(&mut speaker, out.audio, out.music, now);
             for warning in audio.take_warnings() {
                 warn!("audio: {}", warning);

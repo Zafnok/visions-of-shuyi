@@ -23,18 +23,30 @@ credits screen shows them all, except entries marked `hidden: true`
 (`every_third_party_asset_has_a_credit`) fails when a row has no credit or
 a credit has no row.
 
+**Bought art is credited by file** (ADR-0051). Its credit in
+`credits.ron` lists, under `private`, the files of `assets-private/game/`
+it covers. `cargo xtask private-assets --pin` refuses a file there that no
+credit covers, and so does the private test the Pages build runs
+(`every_bought_file_has_a_credit`). So a ticket that puts new bought files
+in the game (0706, 0413, 0437) can't finish without touching the credit:
+it adds the files' path to `private`, their pack to the row below, and
+their artist to the credit's `author`. The credit shows in a build that
+has the files, and not in one without them.
+
 ## Bought art (private): purchase record
 
-Bought art that isn't in a build yet is recorded here as a list. A pack
-gets a row in the table below, and a credit, in the ticket that first puts
-it in the game (0706, 0413, 0436, 0437).
+What was bought is recorded here as a list. What of it is in the game has
+a row in the table below, and a credit: **one row and one credit for a
+bundle bought as one**, naming each of its packs the game uses. A pack
+from another seller gets its own row and credit.
 
-**A bought pack's row** in *Shipped items* is filled in like this (ADR-0032
+**A bought row** in *Shipped items* is filled in like this (ADR-0032
 §5, ADR-0040):
 
-- *Item*: the pack's name and what of it is in the game, then **(private)**.
-- *Source URL*: the pack's store page.
-- *Version*: the version in the download's name, and the date bought.
+- *Item*: the bundle's name, each pack of it in the game and what is
+  used, then **(private)**.
+- *Source URL*: the seller's store page.
+- *Version*: the version in each download's name, and the date bought.
 - *License*: `Custom (<seller>)`, the licence text quoted in full from the
   store page or the pack's licence file, and whether the art is AI-assisted.
 - *License file*: the path of the licence text **inside the private
@@ -83,6 +95,7 @@ it in the game (0706, 0413, 0436, 0437).
 | ---- | ---------- | ------- | ------- | ------------ | -------- | --------------- |
 | Terminus Font (`ter-u16n`, 8×16), converted to `assets/fonts/atlas.png` | https://terminus-font.sourceforge.net/ | 4.49.1 | OFL-1.1 | [`assets/fonts/Terminus-LICENSE.txt`](assets/fonts/Terminus-LICENSE.txt) | The game's only font (every glyph on screen); source BDF in `assets-src/fonts/`, unmodified. The atlas adds four glyphs of our own (`✕ ◯ □ △`, `assets-src/fonts/pad-shapes.bdf`, ticket 0220), which the OFL permits for a modified version not named after the font | 0203 |
 | Terminus Font glyphs, stamped into `assets/tilesets/test.png` and `assets/tilesets/test_units/*.png` by `cargo xtask test-tileset` | https://terminus-font.sourceforge.net/ | 4.49.1 (from the font atlas) | OFL-1.1 | [`assets/fonts/Terminus-LICENSE.txt`](assets/fonts/Terminus-LICENSE.txt) | The sprite map skins' generated test tilesets (debug menu only): each terrain's two glyphs on its tile, each class's first two letters on its picture or its unit sheet. The rest of each image is our own data (terrain and palette colours, a drawn figure) | 0433, 0436 |
+| Tiny Tales, from Mega Tiles' "2025 Bundle Sale": the map sprites of *Heroes: A New Beginning* (fighters, witch, archer), *Faith and Evil NPC* (church knight, church cleric), *Elemental NPC* (fire and ice elemental), *Human NPC Knights* (knight) and *Human NPC Advanced* (warrior, fighter, adventurer); two portraits of *Heroes: A New Beginning* (samurai, male fighter) **(private)** | https://megatiles.itch.io/ | *Heroes: A New Beginning* 2.0, the four NPC packs 1.0; bought 2026-10-02 | Custom (Megatiles): "You cannot claim ownership of the assets (copyright/IP). Assets can be used both in free and commercial games. Assets can be modified freely to fit the needs of your game. Redistribution and reselling of the asset files or derivatives as is without permission is strictly forbidden." Not AI-assisted | private: `library/tiny-tales/licences/<pack>__License.txt`, one per pack, the same text in each | Units on the battle map (`assets-private/game/units/`, named by `tilesets/tiny_tales.ron`); the test portraits of the debug dialogue (`assets-private/game/portraits/test_lord`, `test_knight`). Credited as Megatiles, with the artists the packs name: Rayane Félix, Lunatic Red, Kodots Games Studio | 0711, 0436 (credited by 0829) |
 | `web/mq_js_bundle.js` (macroquad's JS/WASM loader) | https://github.com/not-fl3/macroquad/blob/5e9b5ca912ac65962c05c0da842a4a70eaae34b9/js/mq_js_bundle.js | 0.4.16 (commit `5e9b5ca9`; no matching git tag, see `web/README.md`) | MIT | [`web/mq_js_bundle-LICENSE-MIT.txt`](web/mq_js_bundle-LICENSE-MIT.txt) | Loads and runs the WASM binary in the browser build | 0206 |
 | `web/quad-storage.js` (miniquad `localStorage` JS plugin) | https://github.com/optozorax/quad-storage/blob/3760b953aec17d65cc4ca8edfa39c38e7337ec3a/js/quad-storage.js | 0.1.3 (commit `3760b953`, with a local `version` patch, see `web/README.md`) | MIT | [`web/quad-storage-LICENSE-MIT.txt`](web/quad-storage-LICENSE-MIT.txt) | Backs `trpg_ui::storage::Storage` on web | 0207 |
 | `web/sapp_jsutils.js` (JS↔Rust marshalling `quad-storage.js` needs) | https://github.com/not-fl3/sapp-jsutils, shipped inside the `sapp-jsutils` crate's `js/sapp_jsutils.js` | 0.1.7 | MIT (no upstream `LICENSE` file; standard MIT text reconstructed from the crate's declared license, see `web/README.md`) | [`web/sapp_jsutils-LICENSE-MIT.txt`](web/sapp_jsutils-LICENSE-MIT.txt) | Backs `trpg_ui::storage::Storage` on web | 0207 |

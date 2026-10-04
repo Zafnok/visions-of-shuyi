@@ -326,7 +326,10 @@ mod tests {
             [NewGame, LoadGame, QuickBattle, Options, Credits, Quit]
         );
         assert_eq!(outcome(&mut t, &[Confirm]), "Push(mode_select)");
-        assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(battle)");
+        assert_eq!(
+            outcome(&mut t, &[CursorDown, Confirm]),
+            "Push(preparations)"
+        );
         assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(options)");
         assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(credits)");
         assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Quit");
