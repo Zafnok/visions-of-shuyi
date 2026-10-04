@@ -1,4 +1,4 @@
-# ADR-0050: Player settings: one saved RON record, read through `Ctx`
+# ADR-0053: Player settings: one saved RON record, read through `Ctx`
 
 - **Status:** Accepted
 - **Date:** 2026-10-03

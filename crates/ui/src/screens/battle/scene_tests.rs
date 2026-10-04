@@ -6,6 +6,7 @@
 use std::rc::Rc;
 
 use proptest::prelude::*;
+use trpg_content::MapLook;
 use trpg_core::{BattleMap, Grid, Pos, TerrainId, UnitId};
 
 use super::ai_phase::{AiAction, PACING};
@@ -385,6 +386,60 @@ fn big_battle(c: &Ctx) -> BattleScreen {
     units[2].pos = p(35, 20);
     let map = BattleMap::new("Big", Grid::filled(64, 40, TerrainId(0)));
     BattleScreen::new(battle(c, map, units))
+}
+
+/// The scene holds what a skin with pictures joins tiles by: the terrain
+/// of the ring of tiles just outside the view, and the look the map's file
+/// names (which the game flow gives the screen), on the rewind screen too.
+#[test]
+fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
+    let mut c = ctx();
+    // The Quick Battle's map is smaller than the view: nothing round it.
+    let s = quick();
+    let scene = s.scene(&c);
+    assert_eq!(scene.look, MapLook::default());
+    assert_eq!(scene.rim.len(), 2 * 37 + 2 * 30);
+    assert!(scene.rim.iter().all(Option::is_none));
+    // A map bigger than the view, with a column of forest just left of
+    // it and a row of water just below: the ring has them.
+    c.map_skin = Rc::new(Narrow);
+    let (_, mut units) = quick_units(&c);
+    units[0].pos = p(30, 20);
+    let (forest, water) = (TerrainId(4), TerrainId(8));
+    let cells = (0..40).flat_map(|y| (0..64).map(move |x| (x, y)));
+    let terrain = |(x, y)| match (x, y) {
+        (24, _) => forest,
+        (_, 24) => water,
+        _ => TerrainId(0),
+    };
+    let tiles = Grid::from_cells(64, 40, cells.map(terrain).collect()).unwrap();
+    let indoor = MapLook {
+        tiles: "indoor".to_owned(),
+    };
+    let map = BattleMap::new("Big", tiles);
+    let mut s = BattleScreen::new(battle(&c, map, units)).with_look(indoor.clone());
+    let scene = s.scene(&c);
+    assert_eq!((scene.origin, scene.size), (p(25, 16), (10, 8)));
+    assert_eq!(scene.look, indoor);
+    assert_eq!(scene.terrain_near(0, 0), Some(TerrainId(0)));
+    for dy in -1..=8 {
+        assert_eq!(scene.terrain_near(-1, dy), Some(forest), "row {dy}");
+    }
+    for dx in 0..=10 {
+        assert_eq!(scene.terrain_near(dx, 8), Some(water), "column {dx}");
+        assert_eq!(
+            scene.terrain_near(dx, -1),
+            Some(TerrainId(0)),
+            "column {dx}"
+        );
+    }
+    // The rewind screen's map: the same terrain round it, the same look.
+    step(&mut s, &mut c, &[Action::Rewind]);
+    assert!(s.rewind().is_some());
+    let rewinding = s.scene(&c);
+    assert_eq!(rewinding.look, indoor);
+    assert_eq!(rewinding.rim, scene.rim);
+    assert_eq!(rewinding.terrain_near(-1, 3), Some(forest));
 }
 
 #[test]

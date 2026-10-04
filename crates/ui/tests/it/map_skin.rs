@@ -6,6 +6,7 @@ use trpg_core::{BattleState, Pos};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::map_view::RangeKind;
 
 /// What one step of a script left: the cursor's tile, the screens, and the
 /// battle (if one is on the stack).
@@ -66,8 +67,8 @@ fn play(skin: &str) -> (Vec<After>, Vec<AudioRequest>) {
 }
 
 /// One long scripted Quick Battle, played under the glyph skin, under the
-/// sprite skin and under the mixed skin (sprite units on glyph terrain),
-/// ends the same way: the same battle, the cursor on the same tile and the
+/// sprite skins (plain tiles, and the tileset with layers and looks) and
+/// under the mixed skin (sprite units on glyph terrain), ends the same way: the same battle, the cursor on the same tile and the
 /// same screens after every step, the same sounds.
 #[test]
 fn the_skin_never_changes_the_game() {
@@ -85,8 +86,9 @@ fn the_skin_never_changes_the_game() {
         .iter()
         .filter(|r| matches!(r, AudioRequest::PlaySound { .. }));
     assert!(sounds.count() > 10);
-    // Step by step, the same.
-    for skin in ["sprite", "sprite_units"] {
+    // Step by step, the same: under plain tiles, under tiles with layers
+    // between them, and under unit sprites on glyph terrain.
+    for skin in ["sprite", "test_auto", "sprite_units"] {
         let (sprite, sprite_audio) = play(skin);
         for (g, s) in glyph.iter().zip(&sprite) {
             assert_eq!(g, s, "after {:?} under {skin}", g.step);
@@ -94,6 +96,30 @@ fn the_skin_never_changes_the_game() {
         assert_eq!(glyph.len(), sprite.len(), "{skin}");
         assert_eq!(glyph_audio, sprite_audio, "{skin}");
     }
+}
+
+/// The Quick Battle with the lord selected, under the public tileset with
+/// layers (16 × 16 tiles, as the bought art's, so the view is the glyph
+/// skin's): every tile its own picture; the lines round the water and
+/// round the woods as pictures between tiles, cut at the map's edge; the
+/// fort's frame and the bridge's rails on their tiles; the lord's ranges
+/// as each tile's own shape in the range's colour; and the units as
+/// sprites.
+#[test]
+fn quick_battle_with_layers_between_tiles() {
+    let mut h = Harness::with_layout(Layout::RightHanded);
+    h.with_map_skin("test_auto");
+    // Past Preparations (Fight!) and the battle's notes; then the lord.
+    h.keys("Down f Left f f f");
+    assert_eq!(h.screens(), ["title", "battle"]);
+    let mut glyphs = Harness::with_layout(Layout::RightHanded);
+    glyphs.keys("Down f Left f f f");
+    // What is shown is what the glyph skin shows.
+    assert_eq!(h.map_text(), glyphs.map_text());
+    let scene = h.map_scene().unwrap();
+    assert!(!scene.tinted(RangeKind::Move).is_empty());
+    assert_eq!(scene.look.tiles, "outdoor");
+    assert_snapshot!(h.snapshot());
 }
 
 /// The Quick Battle at its start under the mixed skin, on the public

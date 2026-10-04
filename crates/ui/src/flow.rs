@@ -50,7 +50,7 @@
 use std::any::Any;
 use std::collections::VecDeque;
 
-use trpg_content::{ChapterDef, Scene, battle_campaign, new_campaign};
+use trpg_content::{ChapterDef, MapLook, Scene, battle_campaign, new_campaign};
 use trpg_core::{
     BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, Outcome, Preparations,
     SaveFile, SavePoint,
@@ -124,6 +124,8 @@ struct Fight {
     def: BattleDef,
     /// The battle's setup, and the army's units left out of it.
     prep: Preparations,
+    /// How the battle's map looks, as its file says (ADR-0052).
+    look: MapLook,
 }
 
 /// The game flow: one chapter after another. See the module docs.
@@ -208,8 +210,10 @@ impl FlowScreen {
         let mut flow = Self::new_game();
         flow.adopt(ctx, campaign);
         flow.chapter = Some(chapter);
-        flow.fight = Some(Fight { def, prep });
-        flow.stage = Stage::Battle(Box::new(BattleScreen::resume(*history)));
+        let look = ctx.content.map_look(&def.map);
+        let battle = BattleScreen::resume(*history).with_look(look.clone());
+        flow.fight = Some(Fight { def, prep, look });
+        flow.stage = Stage::Battle(Box::new(battle));
         Ok(flow)
     }
 
@@ -384,6 +388,7 @@ impl FlowScreen {
         self.fight = Some(Fight {
             def: def.clone(),
             prep,
+            look: ctx.content.map_look(&def.map),
         });
         self.restart(ctx);
     }
@@ -410,7 +415,8 @@ impl FlowScreen {
             return;
         };
         let (state, events) = BattleState::new(fight.prep.setup.clone());
-        self.stage = Stage::Battle(Box::new(BattleScreen::start(state, &events)));
+        let battle = BattleScreen::start(state, &events).with_look(fight.look.clone());
+        self.stage = Stage::Battle(Box::new(battle));
     }
 
     /// Preparations closed: the battle with what the player set up, or
