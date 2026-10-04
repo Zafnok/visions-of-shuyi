@@ -28,9 +28,11 @@ drawn at 4×** (Nick, ticket 0039; `look-and-feel.md`, *Dialogue
 portraits*), so wherever this ticket says "face", import the bust with
 that expression.
 
-**Waits for 0035** (added 2026-10-01): Harl's face must match his combat
-picture, and 0035 picks that picture (and may change his class, which 0803
-needs to know). Take Harl's face from 0035's answer.
+**Waited for 0035** (added 2026-10-01; done 2026-10-04): Harl's face must
+match his combat picture. He is Shironejiya's bearded axe bandit and stays
+a Brigand. Make his face from the portrait brief in `red_captain.md`,
+which 0035 rewrote to fit the picture (a red headscarf and a bare-armed
+vest, no helm or mail).
 
 ## First mapping (from the store previews, 2026-09-30)
 
