@@ -14,11 +14,14 @@
 //! clones `assets-private/` if it isn't there (only `game/`, and without the
 //! history's files), fetches, and puts it at that commit. `--library` also
 //! brings `library/`. `--pin` writes the commit `assets-private/` is at into
-//! `assets-private.rev`, after checking that it is pushed.
+//! `assets-private.rev`, after checking that it is pushed and that every
+//! file in `game/` has a credit (ADR-0051).
 
 use std::fs;
 use std::path::Path;
 use std::process::Command;
+
+use trpg_content::{bundle, credits};
 
 /// Usage line for bad arguments.
 pub const USAGE: &str = "usage: cargo xtask private-assets [--library | --pin]";
@@ -155,9 +158,43 @@ fn fetch(repo_root: &Path, url: &str, library: bool) -> Result<String, String> {
     Ok(format!("{CHECKOUT}/ is at {pin} ({holds})"))
 }
 
+/// The paths (`/`-separated, relative to `dir`, each after `prefix`) of
+/// every file in `dir` and the folders below it.
+fn files_below(dir: &Path, prefix: &str, paths: &mut Vec<String>) -> Result<(), String> {
+    let entries = fs::read_dir(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+    for entry in entries.flatten() {
+        let path = format!("{prefix}{}", entry.file_name().to_string_lossy());
+        if entry.path().is_dir() {
+            files_below(&entry.path(), &format!("{path}/"), paths)?;
+        } else {
+            paths.push(path);
+        }
+    }
+    Ok(())
+}
+
+/// The files of `assets-private/game/` that no entry of this repository's
+/// credits file covers (ADR-0051), sorted.
+fn uncredited(repo_root: &Path) -> Result<Vec<String>, String> {
+    let credits_file = bundle::display_path(credits::CREDITS_PATH);
+    let source = fs::read_to_string(repo_root.join(&credits_file))
+        .map_err(|e| format!("{credits_file}: {e}"))?;
+    let file = credits::from_source(&credits_file, &source).map_err(|errors| {
+        let lines: Vec<String> = errors.iter().map(ToString::to_string).collect();
+        lines.join("\n")
+    })?;
+    let mut files = Vec::new();
+    files_below(&repo_root.join(CHECKOUT).join(GAME_DIR), "", &mut files)?;
+    files.sort_unstable();
+    let paths: Vec<&str> = files.iter().map(String::as_str).collect();
+    let uncredited = credits::uncredited(&file, &paths);
+    Ok(uncredited.into_iter().map(str::to_owned).collect())
+}
+
 /// Writes the commit `assets-private/` is at into the pin file. Refuses when
-/// there are uncommitted changes, or when the commit isn't on the private
-/// repository's `main` yet: the builds that ship fetch the pin from there.
+/// there are uncommitted changes, when a file in `game/` has no credit, or
+/// when the commit isn't on the private repository's `main` yet: the builds
+/// that ship fetch the pin from there.
 fn pin(repo_root: &Path, url: &str) -> Result<String, String> {
     let checkout = repo_root.join(CHECKOUT);
     if !checkout.join(".git").exists() {
@@ -170,6 +207,16 @@ fn pin(repo_root: &Path, url: &str) -> Result<String, String> {
         return Err(format!(
             "{CHECKOUT}/ has changes that aren't committed:\n{changes}\n\
              commit and push them, then run this again"
+        ));
+    }
+    let uncredited = uncredited(repo_root)?;
+    if !uncredited.is_empty() {
+        return Err(format!(
+            "these files in {CHECKOUT}/{GAME_DIR}/ have no credit:\n  {}\n\
+             add their path to an entry's `private` list in {} (a new pack also needs \
+             a row in THIRD_PARTY_ASSETS.md), then run this again",
+            uncredited.join("\n  "),
+            bundle::display_path(credits::CREDITS_PATH)
         ));
     }
     git(&checkout, &["fetch", "--quiet", "origin"]).map_err(|e| no_access(url, &e))?;
@@ -273,6 +320,19 @@ mod tests {
         /// A path inside the checkout, `public/assets-private/`.
         fn checkout(&self, path: &str) -> PathBuf {
             self.public().join(CHECKOUT).join(path)
+        }
+
+        /// Writes this repository's credits file: one bought work that
+        /// covers `private` (RON strings, e.g. `"portraits/"`).
+        fn set_credits(&self, private: &str) {
+            let dir = self.public().join("assets/data");
+            fs::create_dir_all(&dir).unwrap();
+            let credits = format!(
+                "(credits: [(id: \"pack\", group: Art, title: \"Pack\", author: \"Dee\", \
+                 source: \"https://example.org\", license: \"Custom (Dee)\", \
+                 private: [{private}])])"
+            );
+            fs::write(dir.join("credits.ron"), credits).unwrap();
         }
 
         fn set_pin(&self, commit: &str) {
@@ -520,6 +580,7 @@ mod tests {
         scratch.clone_whole();
         let checkout = scratch.checkout("");
         scratch.set_pin(&scratch.one);
+        scratch.set_credits("\"portraits/\"");
 
         // A new file that isn't committed.
         fs::write(scratch.checkout("game/portraits/b.portrait"), "new").unwrap();
@@ -571,5 +632,57 @@ mod tests {
         fs::remove_dir_all(scratch.root.join("remote.git")).unwrap();
         assert!(scratch.pin().unwrap_err().starts_with("can't read "));
         assert_eq!(read_pin(&scratch.public()), Ok(scratch.one.clone()));
+    }
+
+    #[test]
+    fn pin_refuses_a_bought_file_without_a_credit() {
+        let scratch = Scratch::new("pin-credit");
+        scratch.clone_whole();
+        let checkout = scratch.checkout("");
+        scratch.set_pin(&scratch.one);
+        for (path, text) in [
+            ("game/README.md", "ours"),
+            ("game/units/deep/b.png", "b"),
+            ("game/units/a.png", "a"),
+        ] {
+            fs::create_dir_all(scratch.checkout(path).parent().unwrap()).unwrap();
+            fs::write(scratch.checkout(path), text).unwrap();
+        }
+        let new = commit(&checkout, "units");
+        g(&checkout, &["push", "--quiet", "origin", "HEAD:main"]);
+
+        // No credits file in this repository.
+        let error = scratch.pin().unwrap_err();
+        assert!(error.starts_with("assets/data/credits.ron: "), "{error}");
+
+        // A credits file that doesn't load.
+        scratch.set_credits("\"/units/\"");
+        assert_eq!(
+            scratch.pin(),
+            Err(
+                "assets/data/credits.ron:1: credit \"pack\": private path \"/units/\" must \
+                 be a path inside assets-private/game/"
+                    .into()
+            )
+        );
+
+        // The credit covers the portrait only: the units are named, in
+        // order, and the folder's own note isn't.
+        scratch.set_credits("\"portraits/\"");
+        assert_eq!(
+            scratch.pin(),
+            Err(
+                "these files in assets-private/game/ have no credit:\n  units/a.png\n  \
+                 units/deep/b.png\nadd their path to an entry's `private` list in \
+                 assets/data/credits.ron (a new pack also needs a row in \
+                 THIRD_PARTY_ASSETS.md), then run this again"
+                    .into()
+            )
+        );
+        assert_eq!(read_pin(&scratch.public()), Ok(scratch.one.clone()));
+
+        scratch.set_credits("\"portraits/\", \"units/\"");
+        assert!(scratch.pin().is_ok());
+        assert_eq!(read_pin(&scratch.public()), Ok(new));
     }
 }
