@@ -9,7 +9,7 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | ------ | ---- |
 | `glyph_buffer`, `color`, `snapshot`, `console` | The 100×32 `GlyphBuffer` virtual console (cells, plus rectangles and sprites placed in pixels, and a backdrop behind see-through cells; see *What a frame holds*), palette colours, the text snapshot format |
 | `cinema` | `view`: where a backdrop's window starts to look at a point at a zoom, stopping at the scene's edges (ADR-0048) |
-| `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks), the `GlyphSkin` and the `SpriteSkin` (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049), and what skins share: `Grid` (where tiles go in pixels) and `path` (the path arrow for any tile size). See *Map view* below |
+| `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks), the `GlyphSkin` and the `SpriteSkin` (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins) and `path` (the path arrow for any tile size). See *Map view* below |
 | `input` | `Action`s, `Layout`, `Keymap`, `InputState` (key repeat) |
 | `screen` | `Screen` trait, `Transition`, `FrameInput`, `Ctx` (shared resources, active layout), `ScreenStack` |
 | `game` | `Game`: owns the stack, input state, `Ctx`, buffer and music state; `frame(events, dt)` |
@@ -170,7 +170,10 @@ The battle map is not drawn by the battle screen (ADR-0038). Each frame:
 1. `BattleScreen::scene(ctx)` builds a `MapScene`: the visible tiles (their
    terrain, whether it just changed and flashes, the ranges on them:
    danger, move, attack, heal, and what a spell being aimed would turn
-   them into), the units
+   them into), the terrain of the ring of tiles just outside the view
+   (`rim`, read with `terrain_near`; `set_terrain` fills both), the look
+   the map's file names (`look`, which the game flow gives the screen),
+   the units
    on them (where each is drawn, HP, acted, under a bonus or a penalty, how
    far it has faded, whether it is picked out by a battle note), the cursor
    (if shown), the selected unit's path, and the animation clock. Plain
@@ -180,11 +183,17 @@ The battle map is not drawn by the battle screen (ADR-0038). Each frame:
    (`map_view/sprite`) paints from a tileset (`assets/tilesets/`): the
    whole map if the tileset has terrain tiles, else only the units, over
    the glyph skin's terrain (`sprite/units.rs` paints units either way).
+   Its own ground (`sprite/ground.rs`) is each tile's own picture, then
+   the tileset's layers in the look the scene names: pictures centred on
+   the points where four tiles meet, chosen by which of the four are in
+   the layer (`corners.rs`, ADR-0052), and pictures on tiles; then each
+   tinted tile's own shape in the tint's colour, over it all.
    The game starts with the skin of the tileset `tiny_tales` when the
    content has it (the bought art, ADR-0040, ADR-0049), else with the
    glyph skin; the debug menu's *Map skin* goes round the glyph skin and
-   every tileset (the generated `test`, 24 px tiles, and `test_units`,
-   unit sheets on glyph terrain).
+   every tileset (the generated `test`, 24 px tiles; `test_auto`, 16 px
+   tiles with layers and an indoor look, shaped like the bought one; and
+   `test_units`, unit sheets on glyph terrain).
 3. Menus and heal numbers go beside a tile by asking the skin where it is
    (`tile_px` / `tile_cells`).
 
@@ -205,7 +214,8 @@ Rules:
   `h.map_text()` and the helpers below in Harness tests. Only tests of a
   skin's look read the buffer (see *Writing a Harness test*).
   `h.with_map_skin("sprite")` runs any Harness script under the sprite
-  skin (`"sprite_units"`: sprite units on glyph terrain);
+  skin (`"sprite_units"`: sprite units on glyph terrain; `"test_auto"`,
+  or any tileset's id: that tileset);
   `crates/ui/tests/it/map_skin.rs` plays one under each and checks nothing
   in the game changes.
 
@@ -240,6 +250,12 @@ Rules:
    without and with it), and `every_scene_feature_is_painted` checks the
    frames differ.
 
+A new **terrain** needs no code: give it a tile in every tileset's
+`terrain` table (content validation names the ones that lack it), put it
+in the layers it belongs to (`assets/tilesets/README.md`), and for the
+bought art add it to the mapping `assets-src/tilesets/tiny_tales.ron` and
+run `cargo xtask tileset-import`.
+
 `MapScene::to_text(&content)` is the scene as text, for snapshots and bug
 reports:
 
@@ -252,6 +268,7 @@ cursor (3,5) corners 1.00
 path (3,5) (4,5)
 ```
 
+The first line ends with ` look indoor` for a map that names that look.
 One line per row of tiles (`-` = off the map, `+` then a letter per range:
 `d` danger, `m` move, `a` attack, `h` heal; `!` = flashing after its
 terrain changed; `>` then the terrain a spell would turn it into; `*n` =

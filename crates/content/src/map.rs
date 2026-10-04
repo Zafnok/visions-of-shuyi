@@ -1,6 +1,9 @@
 //! Battle map files (`assets/maps/*.map`): a RON header, a `---` line, then
 //! one character per tile. The format is documented in
 //! `assets/maps/README.md`.
+//!
+//! A header may also say how the map looks ([`MapLook`]). That is kept
+//! beside the map the rules see, never in it (ADR-0038).
 
 use std::collections::BTreeMap;
 
@@ -23,6 +26,43 @@ pub const MAP_EXTENSION: &str = ".map";
 pub const SEPARATOR: &str = "---";
 /// Largest allowed width and height, in tiles.
 pub const MAX_MAP_SIZE: usize = 64;
+/// The sets of terrain pictures a map may ask for in its header's `look`
+/// (ADR-0052). A tileset names its pictures for each; one that lacks a
+/// look paints the map with its own.
+pub const TILE_LOOKS: [&str; 2] = ["outdoor", "indoor"];
+/// The look of a map that names none.
+pub const DEFAULT_TILES: &str = TILE_LOOKS[0];
+
+/// How a map looks, as far as its file says: which pictures a skin that
+/// has pictures paints its terrain with. A skin without them (the glyph
+/// skin) ignores it. Look data only: the rules never see it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct MapLook {
+    /// Which set of terrain pictures: one of [`TILE_LOOKS`].
+    #[serde(default = "default_tiles")]
+    pub tiles: String,
+}
+
+fn default_tiles() -> String {
+    DEFAULT_TILES.to_owned()
+}
+
+impl Default for MapLook {
+    fn default() -> Self {
+        Self {
+            tiles: default_tiles(),
+        }
+    }
+}
+
+impl MapLook {
+    /// Whether it is the look of a map that names none: not written when
+    /// a map is printed.
+    pub fn is_default(&self) -> bool {
+        *self == Self::default()
+    }
+}
 
 /// A map's legend: tile character → terrain string id, plus the resolved
 /// [`TerrainId`]s.
@@ -61,6 +101,8 @@ pub struct MapDef {
     pub map: BattleMap,
     /// The legend from the file (for printing it back).
     pub legend: MapLegend,
+    /// How the map looks.
+    pub look: MapLook,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -70,6 +112,8 @@ struct Header {
     legend: BTreeMap<char, String>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     features: BTreeMap<(i32, i32), FeatureDef>,
+    #[serde(default, skip_serializing_if = "MapLook::is_default")]
+    look: MapLook,
 }
 
 /// A tile feature as written in a map header.
@@ -193,6 +237,18 @@ pub fn parse_map(
         }
     }
 
+    let tiles_look = header.look.tiles.as_str();
+    if !TILE_LOOKS.contains(&tiles_look) {
+        let known: Vec<String> = TILE_LOOKS.iter().map(|l| format!("\"{l}\"")).collect();
+        let message = format!(
+            "look: tiles \"{tiles_look}\" is not a look; the looks are {}",
+            known.join(", ")
+        );
+        let (line, col) =
+            position_of(&lines[..sep], &format!("\"{tiles_look}\"")).unwrap_or((1, 1));
+        errors.push(ContentError::new(file, message).at(line, Some(col)));
+    }
+
     let tiles = parse_rows(
         file,
         &lines[sep + 1..],
@@ -226,6 +282,7 @@ pub fn parse_map(
                 names: header.legend,
                 terrains,
             },
+            look: header.look,
         }),
         _ => Err(errors),
     }
@@ -313,9 +370,10 @@ fn parse_rows(
     Grid::from_cells(w, h, cells)
 }
 
-/// Prints `map` in `.map` format using `legend`. `None` if a tile's terrain
-/// has no character in the legend.
-pub fn print_map(map: &BattleMap, legend: &MapLegend) -> Option<String> {
+/// Prints `map` in `.map` format using `legend`, with `look` if it isn't
+/// the look of a map that names none. `None` if a tile's terrain has no
+/// character in the legend.
+pub fn print_map(map: &BattleMap, legend: &MapLegend, look: &MapLook) -> Option<String> {
     let header = Header {
         name: map.name.clone(),
         legend: legend.names.clone(),
@@ -324,6 +382,7 @@ pub fn print_map(map: &BattleMap, legend: &MapLegend) -> Option<String> {
             .iter()
             .map(|(p, f)| ((p.x, p.y), FeatureDef::from_core(f)))
             .collect(),
+        look: look.clone(),
     };
     let mut out = ron::to_string(&header).ok()?;
     out.push('\n');
@@ -387,14 +446,16 @@ pub fn check_features(
 /// quoted character if found, else the terrain id string, else the start.
 pub(crate) fn legend_position(header: &[&str], c: char, id: &str) -> (u32, u32) {
     let needles = [format!("'{c}'"), format!("\"{id}\"")];
-    for needle in &needles {
-        for (i, line) in header.iter().enumerate() {
-            if let Some(byte) = line.find(needle.as_str()) {
-                return (line_number(i), column_number(line[..byte].chars().count()));
-            }
-        }
-    }
-    (1, 1)
+    let found = needles.iter().find_map(|n| position_of(header, n));
+    found.unwrap_or((1, 1))
+}
+
+/// 1-based line and column of the first `needle` in the header lines.
+fn position_of(header: &[&str], needle: &str) -> Option<(u32, u32)> {
+    header.iter().enumerate().find_map(|(i, line)| {
+        let byte = line.find(needle)?;
+        Some((line_number(i), column_number(line[..byte].chars().count())))
+    })
 }
 
 /// 1-based line number of 0-based line index `i`.
@@ -570,7 +631,9 @@ mod tests {
     fn print_round_trips_and_escapes_name() {
         let src = format!("{HEADER}.T~\n~T.\n").replace("\"Test\"", "\"Say \\\"hi\\\"\"");
         let def = parse(&src).ok();
-        let printed = def.as_ref().and_then(|d| print_map(&d.map, &d.legend));
+        let printed = def
+            .as_ref()
+            .and_then(|d| print_map(&d.map, &d.legend, &d.look));
         let again = printed.as_deref().and_then(|p| parse(p).ok());
         assert!(def.is_some());
         assert_eq!(again, def);
@@ -579,12 +642,118 @@ mod tests {
     }
 
     #[test]
+    fn a_map_names_its_look_or_is_outdoor() {
+        // No `look`: outdoor, and printing it writes none.
+        let plain = parse(&format!(
+            "{HEADER}.T
+"
+        ))
+        .unwrap();
+        assert_eq!(plain.look, MapLook::default());
+        assert_eq!(plain.look.tiles, "outdoor");
+        assert!(plain.look.is_default());
+        let printed = print_map(&plain.map, &plain.legend, &plain.look).unwrap();
+        assert!(!printed.contains("look"), "{printed}");
+        // Named: kept beside the map, and printed back.
+        let header = HEADER.replace(
+            ",
+)",
+            ",
+  look: (tiles: \"indoor\"),
+)",
+        );
+        let indoor = parse(&format!(
+            "{header}.T
+"
+        ))
+        .unwrap();
+        assert_eq!(indoor.look.tiles, "indoor");
+        assert!(!indoor.look.is_default());
+        assert_eq!(indoor.map, plain.map);
+        let printed = print_map(&indoor.map, &indoor.legend, &indoor.look).unwrap();
+        assert!(printed.contains("look:(tiles:\"indoor\")"), "{printed}");
+        assert_eq!(parse(&printed).unwrap(), indoor);
+        // `look: ()` is the default look too.
+        let empty = HEADER.replace(
+            ",
+)",
+            ",
+  look: (),
+)",
+        );
+        assert_eq!(
+            parse(&format!(
+                "{empty}.T
+"
+            ))
+            .unwrap()
+            .look,
+            plain.look
+        );
+    }
+
+    #[test]
+    fn an_unknown_look_is_reported_where_it_is_written() {
+        let header = HEADER.replace(
+            ",
+)",
+            ",
+  look: (tiles: \"cave\"),
+)",
+        );
+        assert_eq!(
+            errors(&format!(
+                "{header}.T
+"
+            )),
+            [
+                "m.map:4:17: look: tiles \"cave\" is not a look; the looks are \"outdoor\", \"indoor\""
+            ]
+        );
+        // With the map's other problems, not instead of them.
+        assert_eq!(
+            errors(&format!(
+                "{header}.x
+"
+            ))
+            .len(),
+            2
+        );
+        // A field a look doesn't have is a syntax error.
+        let header = HEADER.replace(
+            ",
+)",
+            ",
+  look: (tile: \"indoor\"),
+)",
+        );
+        let errs = parse(&format!(
+            "{header}.T
+"
+        ))
+        .unwrap_err();
+        assert_eq!(errs.len(), 1);
+        assert!(errs[0].line.is_some());
+    }
+
+    #[test]
+    fn positions_are_found_in_the_header() {
+        let header = ["(", "  name: \"é x\",", "  x: \"x\",", ")"];
+        assert_eq!(position_of(&header, "\"x\""), Some((3, 6)));
+        // Columns count characters, not bytes.
+        assert_eq!(position_of(&header, " x\""), Some((2, 11)));
+        assert_eq!(position_of(&header, "nowhere"), None);
+        assert_eq!(position_of(&[], "x"), None);
+    }
+
+    #[test]
     fn print_needs_every_terrain_in_legend() {
         let legend = MapLegend::resolve(BTreeMap::from([('.', "plain".to_owned())]), &display())
             .unwrap_or_default();
         let tiles = Grid::from_cells(2, 1, vec![TerrainId(0), TerrainId(3)]);
         let map = tiles.map(|tiles| BattleMap::new("m", tiles));
-        assert_eq!(map.and_then(|m| print_map(&m, &legend)), None);
+        let look = MapLook::default();
+        assert_eq!(map.and_then(|m| print_map(&m, &legend, &look)), None);
     }
 
     #[test]
@@ -735,7 +904,9 @@ mod tests {
     #[test]
     fn features_round_trip() {
         let def = parse(FEATURES).ok();
-        let printed = def.as_ref().and_then(|d| print_map(&d.map, &d.legend));
+        let printed = def
+            .as_ref()
+            .and_then(|d| print_map(&d.map, &d.legend, &d.look));
         assert!(
             printed
                 .as_deref()
@@ -839,11 +1010,13 @@ mod tests {
 
     proptest! {
         #[test]
-        fn parse_print_round_trip((map, legend) in arb_map()) {
-            let printed = print_map(&map, &legend);
+        fn parse_print_round_trip((map, legend) in arb_map(), look in 0..TILE_LOOKS.len()) {
+            let look = MapLook { tiles: TILE_LOOKS[look].to_owned() };
+            let printed = print_map(&map, &legend, &look);
             prop_assert!(printed.is_some());
             let parsed = parse(&printed.unwrap_or_default());
             prop_assert_eq!(parsed.as_ref().map(|d| &d.map), Ok(&map));
+            prop_assert_eq!(parsed.as_ref().map(|d| &d.look), Ok(&look));
             prop_assert_eq!(parsed.map(|d| d.legend), Ok(legend));
         }
     }

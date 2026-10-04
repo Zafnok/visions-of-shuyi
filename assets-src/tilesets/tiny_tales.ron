@@ -1,0 +1,160 @@
+// Which bought Tiny Tales tiles the battle map's terrain is drawn with
+// (ticket 0437, ADR-0052; `docs/design/look-and-feel.md` has it in words).
+// Read by `cargo xtask tileset-import`, which packs these tiles into
+// assets-private/game/tilesets/tiny_tales.png and writes tiny_tales.ron.
+// Names and numbers only: the art itself is never in this repository.
+//
+// A tile is ("<sheet>", <id>): a sheet is a Tiled file of the bought
+// tilesets (assets-private/library/tiny-tales/tilesets/<sheet>.tsx), an id
+// counts its 16×16 tiles row by row from 0. A `Corners` layer names a
+// Tiled "terrain" of a sheet instead: the sheet's own table gives the tile
+// for each mix of corners.
+(
+    // Each of our terrains' own tile, painted first, unless a look below
+    // has another. What stands on grass has the grass; water under a
+    // bridge is water.
+    terrain: {
+        "plain": ("world-map/Set_A_Standard_Fields2", 89),
+        "forest": ("world-map/Set_A_Standard_Fields2", 89),
+        "thicket": ("world-map/Set_A_Standard_Fields2", 89),
+        "mountain": ("world-map/Set_A_Standard_Fields2", 89),
+        "peak": ("world-map/Set_A_Standard_Fields2", 89),
+        "fort": ("world-map/Set_A_Standard_Fields2", 89),
+        "burning": ("world-map/Set_A_Standard_Fields2", 89),
+        "burnt": ("world-map/Set_A_Standard_Fields2", 89),
+        "road": ("world-map/Set_A_Standard_Fields1", 41),
+        "water": ("world-map/Set_A_Standard_Coast", 25),
+        "bridge": ("world-map/Set_A_Standard_Coast", 25),
+        "sea": ("world-map/Set_A_Standard_Coast", 218),
+        "ice": ("world-map/Set_A_Standard_Fields1", 233),
+        "floor": ("dungeons-1/Set_A_Fortress1", 161),
+        "wall": ("dungeons-1/Set_E_Fortress1", 22),
+        "door": ("dungeons-1/Set_E_Fortress1", 22),
+    },
+    // `full: false` leaves out the tile of all four corners: the layer's
+    // terrains have it as their own tile already.
+    layers: {
+        // The deep sea's edge against shallow water.
+        "deep": Corners(
+            of: ["sea"],
+            sheet: "world-map/Set_A_Standard_Coast", terrain: "Deep Water", full: false,
+        ),
+        // The shore: sand, then the wet band and the foam in the water's
+        // tile. Drawn over the deep sea, so a beach has shallows.
+        "coast": Corners(
+            of: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "burning",
+                 "burnt", "floor", "wall", "door"],
+            sheet: "world-map/Set_A_Standard_Coast", terrain: "Coast1", full: false,
+        ),
+        // The grass's edge, over the shore's sand and against walls.
+        "grass": Corners(
+            of: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "burning",
+                 "burnt"],
+            sheet: "world-map/Set_A_Standard_Fields2", terrain: "Grass2", full: false,
+        ),
+        "ice": Corners(
+            of: ["ice"],
+            sheet: "world-map/Set_A_Standard_Fields1", terrain: "Snow 2", full: false,
+        ),
+        "road": Corners(
+            of: ["road"],
+            sheet: "world-map/Set_A_Standard_Fields1", terrain: "Terrains2", full: false,
+        ),
+        // The floor's slabs end in a rim of the wall's bricks.
+        "floor": Corners(
+            of: ["floor"],
+            sheet: "dungeons-1/Set_A_Fortress1", terrain: "Floor2", full: false,
+        ),
+        // Burnt ground under the bare trees.
+        "ash": Corners(
+            of: ["burnt"],
+            sheet: "world-map/Set_A_Standard_Fields1", terrain: "Grounds2",
+        ),
+        "forest": Corners(
+            of: ["forest"],
+            sheet: "world-map/Set_H_Trees1", terrain: "Trees",
+        ),
+        "thicket": Corners(
+            of: ["thicket"],
+            sheet: "world-map/Set_H_Trees6", terrain: "Trees2",
+        ),
+        "burnt": Corners(
+            of: ["burnt"],
+            sheet: "world-map/Set_H_Trees3", terrain: "Trees2",
+        ),
+        // Nothing in the bundle burns: the forest's trees recoloured in
+        // the palette's fire colour.
+        "burning": Corners(
+            of: ["burning"],
+            sheet: "world-map/Set_H_Trees1", terrain: "Trees", tint: "fire",
+        ),
+        // The sheet has two tiles for some mixes; the second is the one
+        // whose edge ends where the tile does.
+        "mountain": Corners(
+            of: ["mountain"],
+            sheet: "world-map/Set_F_Mountains", terrain: "Grasslands Mountain", pick: 1,
+        ),
+        "peak": Corners(
+            of: ["peak"],
+            sheet: "world-map/Set_F_Mountains", terrain: "Ruin Mountains", pick: 1,
+        ),
+        // A bridge runs left to right, unless the water is to its left
+        // and its right: then it runs up and down.
+        "bridge": Tiles(
+            of: ["bridge"],
+            tile: ("world-map/Set_B_World", 169),
+            beside: ["water", "sea", "ice"],
+            sides: {
+                ".#.#": ("world-map/Set_B_World", 168),
+                "##.#": ("world-map/Set_B_World", 168),
+                ".###": ("world-map/Set_B_World", 168),
+                "####": ("world-map/Set_B_World", 168),
+            },
+        ),
+        "fort": Tiles(of: ["fort"], tile: ("world-map/Set_C_Icons", 214)),
+        "door": Tiles(of: ["door"], tile: ("dungeons-1/Set_A_Fortress1", 27)),
+        // Indoors the floor runs under the pools, and a pool has a stone
+        // rim on the sides where it ends (up, right, down, left).
+        "indoor_floor": Corners(
+            of: ["floor", "water", "sea", "bridge", "ice"],
+            sheet: "dungeons-1/Set_A_Fortress1", terrain: "Floor2", full: false,
+        ),
+        "pool": Tiles(
+            of: ["water", "sea", "bridge"],
+            tile: ("dungeons-1/Set_A_Fortress1", 65),
+            beside: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "burning",
+                     "burnt", "floor", "wall", "door"],
+            sides: {
+                "#...": ("dungeons-1/Set_A_Fortress1", 49),
+                ".#..": ("dungeons-1/Set_A_Fortress1", 66),
+                "..#.": ("dungeons-1/Set_A_Fortress1", 81),
+                "...#": ("dungeons-1/Set_A_Fortress1", 64),
+                "#..#": ("dungeons-1/Set_A_Fortress1", 48),
+                "##..": ("dungeons-1/Set_A_Fortress1", 50),
+                "..##": ("dungeons-1/Set_A_Fortress1", 80),
+                ".##.": ("dungeons-1/Set_A_Fortress1", 82),
+            },
+        ),
+    },
+    looks: {
+        // A map outdoors (and any map that names no look): the World Map
+        // set in its Standard colours. Walls, floors and doors are the
+        // Dungeons set's.
+        "outdoor": (
+            layers: ["deep", "coast", "grass", "ice", "road", "floor", "ash", "forest",
+                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "door"],
+        ),
+        // A map indoors: the Dungeons set (Fortress). Water is a pool in
+        // the floor; the terrains the set lacks keep their outdoor
+        // pictures.
+        "indoor": (
+            terrain: {
+                "water": ("dungeons-1/Set_A_Fortress1", 65),
+                "sea": ("dungeons-1/Set_A_Fortress1", 65),
+                "bridge": ("dungeons-1/Set_A_Fortress1", 65),
+            },
+            layers: ["indoor_floor", "pool", "grass", "ice", "road", "ash", "forest",
+                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "door"],
+        ),
+    },
+)

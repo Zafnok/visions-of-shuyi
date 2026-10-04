@@ -95,7 +95,11 @@ the test tileset from the debug menu if the bought-art skin isn't in yet).
    records never see it.
 5. **Help**: name the action in the map menu's or help bar's key list via
    `ctx.help_keys()` (rule 2), only when the current skin can zoom. Check
-   `the_longest_help_bar_fits_on_every_pad` still passes.
+   `the_longest_help_bar_fits_on_every_pad` still passes. If the hint
+   goes on the toggles line (with the danger zone and auto-end): ticket
+   0445 decides where that line's hints sit. Either order works: if 0445
+   is done, place the zoom hint by its rule; if not, put it where the
+   line is today and 0445 moves it.
 6. Render Quick Battle on the test tileset at both zooms with
    `cargo xtask frame-png` (0232 if done) and **look at them**: nothing
    cut at the view's edge, a menu opened beside a unit still sits beside
