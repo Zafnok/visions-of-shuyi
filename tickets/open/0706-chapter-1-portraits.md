@@ -179,7 +179,11 @@ only the edits it allows).
    `surprised` to the closest pack expressions, and note the mapping in the
    character sheet.
 5. Update `docs/story/characters/*.md` with which pack and face each
-   character uses. List each pack in `THIRD_PARTY_ASSETS.md` (marked private).
+   character uses. Name each pack in the bundle's row in
+   `THIRD_PARTY_ASSETS.md`, and add each new portrait folder to the
+   `private` list of the bundle's credit in `assets/data/credits.ron`
+   (and a new artist to its `author`): `cargo xtask private-assets --pin`
+   refuses bought files without a credit (ADR-0051).
 
 ## Acceptance criteria
 
