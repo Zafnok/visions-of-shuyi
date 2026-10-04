@@ -20,13 +20,18 @@ pub const SETTINGS_KEY: &str = "settings";
 pub const SETTINGS_VERSION: u32 = 1;
 
 /// The loudest volume setting; 0 is silent.
-pub const MAX_VOLUME: u8 = 10;
+pub const MAX_VOLUME: u8 = 100;
 
 /// The volume settings' default. *Tunable.*
-pub const DEFAULT_VOLUME: u8 = 8;
+pub const DEFAULT_VOLUME: u8 = 80;
 
 /// How much faster animations play at [`AnimSpeed::Fast`]. *Tunable.*
 pub const FAST_ANIM: f32 = 2.0;
+
+/// How fast a battle's animations play while Confirm is held
+/// (`docs/design/controls.md`): instead of the settings' speed, not on top
+/// of it.
+pub const HELD_SPEED: f32 = 4.0;
 
 /// How much faster the Enemy and Other phases play at
 /// [`EnemyPhaseSpeed::Fast`], on top of the animation speed. *Tunable.*
@@ -260,6 +265,14 @@ impl Settings {
         self.anim_speed.factor() * phase
     }
 
+    /// [`battle_speed`](Self::battle_speed) while Confirm is held
+    /// (`held`): [`HELD_SPEED`] instead, never slower than the settings
+    /// already play.
+    pub fn battle_speed_held(&self, ai_phase: bool, held: bool) -> f32 {
+        let speed = self.battle_speed(ai_phase);
+        if held { speed.max(HELD_SPEED) } else { speed }
+    }
+
     fn file(&self) -> SettingsFile {
         SettingsFile {
             version: SETTINGS_VERSION,
@@ -322,7 +335,7 @@ mod tests {
             fullscreen: true,
             cursor_style: CursorStyle::TileGlow,
             music_volume: 0,
-            sound_volume: 10,
+            sound_volume: 100,
             layout: Some(Layout::LeftHanded),
         }
     }
@@ -335,7 +348,7 @@ mod tests {
         assert!((s.battle_speed(true) - 1.0).abs() < f32::EPSILON);
         assert!(s.combat_animations && !s.auto_end_turn && !s.fullscreen);
         assert_eq!(s.cursor_style, CursorStyle::Corners);
-        assert_eq!((s.music_volume, s.sound_volume), (8, 8));
+        assert_eq!((s.music_volume, s.sound_volume), (80, 80));
         assert_eq!(s.layout(), None);
     }
 
@@ -372,9 +385,9 @@ mod tests {
     #[test]
     fn odd_values_are_repaired() {
         let text =
-            "Settings(version: 1, music_volume: 200, sound_volume: 11, layout: Some(\"Vim\"))";
+            "Settings(version: 1, music_volume: 200, sound_volume: 101, layout: Some(\"Vim\"))";
         let s = Settings::from_ron(text).unwrap();
-        assert_eq!((s.music_volume, s.sound_volume), (10, 10));
+        assert_eq!((s.music_volume, s.sound_volume), (100, 100));
         assert_eq!(s.layout(), None);
     }
 
@@ -384,8 +397,11 @@ mod tests {
         assert!((s.music_factor() - 0.8).abs() < 1e-6);
         assert!((s.sound_factor() - 0.8).abs() < 1e-6);
         s.music_volume = 0;
-        s.sound_volume = 10;
+        s.sound_volume = 100;
         assert!(s.music_factor().abs() < f32::EPSILON);
+        s.music_volume = 37;
+        assert!((s.music_factor() - 0.37).abs() < 1e-6);
+        s.music_volume = 0;
         assert!((s.sound_factor() - 1.0).abs() < f32::EPSILON);
         // Out of range (set in code) is still at most full volume.
         s.sound_volume = 200;
@@ -405,6 +421,22 @@ mod tests {
         assert!((s.battle_speed(true) - 4.0).abs() < f32::EPSILON);
         s.anim_speed = AnimSpeed::Normal;
         assert!((s.battle_speed(true) - 2.0).abs() < f32::EPSILON);
+    }
+
+    /// Nick: holding Confirm turns the ×2 into ×4, not ×8.
+    #[test]
+    fn holding_confirm_is_four_times_whatever_the_speeds() {
+        let close = |a: f32, b: f32| (a - b).abs() < f32::EPSILON;
+        let mut s = Settings::default();
+        assert!(close(s.battle_speed_held(false, false), 1.0));
+        assert!(close(s.battle_speed_held(false, true), 4.0));
+        s.anim_speed = AnimSpeed::Fast;
+        assert!(close(s.battle_speed_held(false, false), 2.0));
+        assert!(close(s.battle_speed_held(false, true), 4.0));
+        s.enemy_phase_speed = EnemyPhaseSpeed::Fast;
+        assert!(close(s.battle_speed_held(true, false), 4.0));
+        assert!(close(s.battle_speed_held(true, true), 4.0));
+        assert!(close(s.battle_speed_held(false, true), 4.0));
     }
 
     #[test]

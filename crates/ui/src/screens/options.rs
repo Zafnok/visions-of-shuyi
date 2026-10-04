@@ -1,13 +1,16 @@
-//! The Options screen (ticket 0805), opened from the title and the map
-//! menu: the player's [`Settings`] one per row, changed with the cursor's
-//! left and right keys and saved at once; `Layout` opens the layout picker
+//! The Options screen (ticket 0805), opened from the title, the map menu
+//! and Preparations: the player's [`Settings`] one per row, changed with
+//! the cursor's left and right keys and saved at once. A volume goes from 0
+//! to 100: left and right move its slider, Confirm opens a box to type the
+//! exact number ([`NumberBox`]). `Layout` opens the layout picker
 //! ([`LayoutPickerScreen::change`]) and `Key bindings` the
 //! [`KeyBindingsScreen`]; with a campaign loaded, `Game mode` shows its
-//! mode and switches Classic to Casual after a confirm, never back
-//! (`docs/design/death-and-difficulty.md`); `Reset tips` shows every
-//! one-time tip again; `Restore defaults` puts every setting back, after a
-//! confirm (custom keys are reset on the Key bindings screen, and the
-//! layout stays).
+//! mode, and at Preparations switches Classic to Casual, never back and
+//! never in the middle of a battle (`docs/design/death-and-difficulty.md`);
+//! `Reset tips` shows every one-time tip again; `Restore defaults` puts
+//! every setting back (custom keys are reset on the Key bindings screen,
+//! and the layout stays). Whatever does something big asks first
+//! (`docs/design/options.md`).
 
 use trpg_core::GameMode;
 
@@ -15,9 +18,9 @@ use super::{KeyBindingsScreen, LayoutPickerScreen, layout_picker, print_centred}
 use crate::audio::MenuSound;
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
-use crate::input::Action;
+use crate::input::{Action, TextKey, text_key, text_keys_help};
 use crate::map_view::CursorStyle;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Transition};
 use crate::settings::{AnimSpeed, EnemyPhaseSpeed, MAX_VOLUME, Settings, TextSpeed};
 use crate::tips::reset_tips;
 
@@ -31,6 +34,16 @@ pub const RESTORED_MESSAGE: &str = "options.message.restored";
 pub const CASUAL_MESSAGE: &str = "options.message.casual";
 /// Text key of the message if something couldn't be saved.
 pub const NOT_SAVED_MESSAGE: &str = "options.message.not_saved";
+/// Text key of the message when the mode can't be switched here.
+pub const MODE_AT_PREP_MESSAGE: &str = "options.message.mode_at_prep";
+
+/// How far the cursor's left and right keys move a volume's slider.
+/// *Tunable.*
+pub const VOLUME_STEP: u8 = 5;
+/// Cells in a volume's bar.
+const VOLUME_BAR: u8 = 10;
+/// The most digits the volume box takes.
+const MAX_DIGITS: usize = 3;
 
 /// The panel, in cells.
 const PANEL: Rect = Rect::new(20, 3, 60, 20);
@@ -163,11 +176,16 @@ const fn on_off_key(on: bool) -> &'static str {
     }
 }
 
-/// A volume as a bar of [`MAX_VOLUME`] cells and its number.
+/// A volume as a bar of [`VOLUME_BAR`] cells (a half-filled cell for the
+/// odd five) and its number.
 fn volume_text(volume: u8) -> String {
-    let full = usize::from(volume.min(MAX_VOLUME));
-    let empty = usize::from(MAX_VOLUME) - full;
-    format!("{}{} {volume:>2}", "█".repeat(full), "░".repeat(empty))
+    let volume = volume.min(MAX_VOLUME);
+    let per_cell = MAX_VOLUME / VOLUME_BAR;
+    let full = usize::from(volume / per_cell);
+    let half = usize::from(volume % per_cell >= per_cell / 2);
+    let empty = usize::from(VOLUME_BAR) - full - half;
+    let bar = ["█".repeat(full), "▒".repeat(half), "░".repeat(empty)].concat();
+    format!("{bar} {volume:>3}")
 }
 
 /// `all`'s value one step after (`forward`) or before `current`, stopping
@@ -185,13 +203,42 @@ fn stepped<T: Copy + PartialEq>(all: &[T], current: T, forward: bool, wrap: bool
     all.get(to).copied().unwrap_or(current)
 }
 
-/// A volume one step up or down, within 0 to [`MAX_VOLUME`] (`wrap`: past
-/// the loudest comes silence).
-fn stepped_volume(volume: u8, forward: bool, wrap: bool) -> u8 {
-    match (forward, wrap) {
-        (true, true) if volume >= MAX_VOLUME => 0,
-        (true, _) => volume.saturating_add(1).min(MAX_VOLUME),
-        (false, _) => volume.saturating_sub(1),
+/// A volume one slider step ([`VOLUME_STEP`]) up or down, within 0 to
+/// [`MAX_VOLUME`].
+fn stepped_volume(volume: u8, forward: bool) -> u8 {
+    if forward {
+        volume.saturating_add(VOLUME_STEP).min(MAX_VOLUME)
+    } else {
+        volume.saturating_sub(VOLUME_STEP)
+    }
+}
+
+/// The box that takes a volume's exact number. From the keyboard the
+/// digits are typed (the game's keys do nothing meanwhile; the text box's
+/// fixed keys finish, delete and cancel). Opened with a controller button
+/// it holds the volume, and the cursor steps it by one.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NumberBox {
+    /// What is typed so far (on a controller, the number as stepped).
+    digits: String,
+    /// Whether a controller opened it.
+    pad: bool,
+}
+
+impl NumberBox {
+    /// The number in the box, at most [`MAX_VOLUME`]; `None` while empty.
+    pub fn value(&self) -> Option<u8> {
+        let typed: u32 = self.digits.parse().ok()?;
+        Some(u8::try_from(typed.min(u32::from(MAX_VOLUME))).unwrap_or(MAX_VOLUME))
+    }
+
+    /// What the row shows while the box is open.
+    fn text(&self) -> String {
+        if self.pad {
+            self.digits.clone()
+        } else {
+            format!("{}_", self.digits)
+        }
     }
 }
 
@@ -201,6 +248,8 @@ fn stepped_volume(volume: u8, forward: bool, wrap: bool) -> u8 {
 pub enum Question {
     /// Classic → Casual.
     SwitchToCasual,
+    /// Every one-time tip shown again.
+    ResetTips,
     /// Every setting back to its default.
     RestoreDefaults,
 }
@@ -210,6 +259,7 @@ impl Question {
     pub const fn key(self) -> &'static str {
         match self {
             Question::SwitchToCasual => "options.question.casual",
+            Question::ResetTips => "options.question.reset_tips",
             Question::RestoreDefaults => "options.question.restore",
         }
     }
@@ -222,6 +272,8 @@ pub struct OptionsScreen {
     row: Row,
     /// The question open, if any.
     asking: Option<Question>,
+    /// The volume box, while it is open on the focused volume row.
+    typing: Option<NumberBox>,
     /// The text key of the message under the panel, if any.
     message: Option<&'static str>,
 }
@@ -235,6 +287,7 @@ impl OptionsScreen {
         Self {
             row: Row::TextSpeed,
             asking: None,
+            typing: None,
             message: None,
         }
     }
@@ -258,9 +311,20 @@ impl OptionsScreen {
         self.asking
     }
 
+    /// The volume box, while it is open.
+    pub fn typing(&self) -> Option<&NumberBox> {
+        self.typing.as_ref()
+    }
+
     /// The text key of the message under the panel, if any.
     pub fn message(&self) -> Option<&str> {
         self.message
+    }
+
+    /// Whether Confirm on `Game mode` would ask to switch to Casual: a
+    /// Classic campaign, at Preparations.
+    fn can_switch_mode(ctx: &Ctx) -> bool {
+        ctx.campaign_mode == Some(GameMode::Classic) && ctx.mode_switch == ModeSwitch::Open
     }
 
     /// What `row` shows as its value: the setting, the layout in use, the
@@ -298,12 +362,17 @@ impl OptionsScreen {
     }
 
     /// Steps the focused setting one value on (`forward`) or back; `wrap`
-    /// goes round at the ends. Saves it and plays the move sound if it
-    /// changed (at the new volume, for the sound volume).
+    /// goes round at the ends.
     fn change(&mut self, ctx: &mut Ctx, forward: bool, wrap: bool) {
         let row = self.row;
+        self.set(ctx, |s| step_setting(s, row, forward, wrap));
+    }
+
+    /// Lets `change` edit the settings; if it changed anything, saves them
+    /// and plays the move sound (at the new volume, for the sound volume).
+    fn set(&mut self, ctx: &mut Ctx, change: impl FnOnce(&mut Settings)) {
         let before = ctx.settings().clone();
-        let saved = ctx.change_settings(|s| step_setting(s, row, forward, wrap));
+        let saved = ctx.change_settings(change);
         if *ctx.settings() == before {
             return;
         }
@@ -311,10 +380,95 @@ impl OptionsScreen {
         ctx.audio.menu(MenuSound::Move);
     }
 
-    /// Confirm on the focused row.
-    fn confirm(&mut self, ctx: &mut Ctx) -> Transition {
+    /// The focused volume row's setting.
+    fn volume(&self, ctx: &Ctx) -> u8 {
+        match self.row {
+            Row::MusicVolume => ctx.settings().music_volume,
+            _ => ctx.settings().sound_volume,
+        }
+    }
+
+    /// Opens the volume box on the focused volume row: empty, to type in;
+    /// or, opened with a controller button (`pad`), holding the volume.
+    fn open_box(&mut self, ctx: &mut Ctx, pad: bool) {
+        let digits = if pad {
+            self.volume(ctx).to_string()
+        } else {
+            String::new()
+        };
+        self.typing = Some(NumberBox { digits, pad });
+        ctx.audio.menu(MenuSound::Select);
+    }
+
+    /// Closes the volume box. `keep`: its number becomes the volume (an
+    /// empty box keeps the volume as it was).
+    fn close_box(&mut self, ctx: &mut Ctx, keep: bool) {
+        let value = self.typing.take().and_then(|b| b.value()).filter(|_| keep);
+        let Some(value) = value else {
+            ctx.audio.menu(MenuSound::Cancel);
+            return;
+        };
+        let row = self.row;
+        ctx.audio.menu(MenuSound::Select);
+        self.set(ctx, |s| match row {
+            Row::MusicVolume => s.music_volume = value,
+            _ => s.sound_volume = value,
+        });
+    }
+
+    /// One frame of the volume box.
+    fn type_number(&mut self, ctx: &mut Ctx, input: &FrameInput) {
+        if self.typing.as_ref().is_some_and(|b| b.pad) {
+            for &action in &input.actions {
+                let up = match action {
+                    Action::CursorUp | Action::CursorRight => true,
+                    Action::CursorDown | Action::CursorLeft => false,
+                    Action::Confirm => return self.close_box(ctx, true),
+                    Action::Cancel => return self.close_box(ctx, false),
+                    _ => continue,
+                };
+                let Some(b) = &mut self.typing else { return };
+                let now = b.value().unwrap_or(0);
+                let to = if up {
+                    now.saturating_add(1).min(MAX_VOLUME)
+                } else {
+                    now.saturating_sub(1)
+                };
+                if to != now {
+                    b.digits = to.to_string();
+                    ctx.audio.menu(MenuSound::Move);
+                }
+            }
+            return;
+        }
+        for &c in input.text() {
+            let Some(b) = &mut self.typing else { return };
+            if c.is_ascii_digit() && b.digits.len() < MAX_DIGITS {
+                b.digits.push(c);
+            } else {
+                ctx.audio.menu(MenuSound::Denied);
+            }
+        }
+        for &chord in input.pressed_chords() {
+            match text_key(chord) {
+                Some(TextKey::Done) => return self.close_box(ctx, true),
+                Some(TextKey::Cancel) => return self.close_box(ctx, false),
+                Some(TextKey::Delete) => {
+                    let Some(b) = &mut self.typing else { return };
+                    if b.digits.pop().is_some() {
+                        ctx.audio.menu(MenuSound::Cancel);
+                    }
+                }
+                None => {}
+            }
+        }
+    }
+
+    /// Confirm on the focused row (`pad`: with a controller button).
+    fn confirm(&mut self, ctx: &mut Ctx, pad: bool) -> Transition {
         self.message = None;
         match self.row {
+            Row::MusicVolume | Row::SoundVolume => self.open_box(ctx, pad),
             Row::Layout => {
                 ctx.audio.menu(MenuSound::Select);
                 return Transition::Push(Box::new(LayoutPickerScreen::change(ctx)));
@@ -323,19 +477,20 @@ impl OptionsScreen {
                 ctx.audio.menu(MenuSound::Select);
                 return Transition::Push(Box::new(KeyBindingsScreen::new(ctx)));
             }
-            Row::GameMode if ctx.campaign_mode == Some(GameMode::Classic) => {
+            Row::GameMode if Self::can_switch_mode(ctx) => {
                 self.asking = Some(Question::SwitchToCasual);
                 ctx.audio.menu(MenuSound::Select);
             }
-            // Casual never goes back to Classic.
-            Row::GameMode => ctx.audio.menu(MenuSound::Denied),
+            // Casual never goes back to Classic, and Classic only switches
+            // at Preparations: the row says so.
+            Row::GameMode => {
+                if ctx.campaign_mode == Some(GameMode::Classic) {
+                    self.message = Some(MODE_AT_PREP_MESSAGE);
+                }
+                ctx.audio.menu(MenuSound::Denied);
+            }
             Row::ResetTips => {
-                let reset = reset_tips(&mut *ctx.storage);
-                self.message = Some(if reset.is_ok() {
-                    TIPS_RESET_MESSAGE
-                } else {
-                    NOT_SAVED_MESSAGE
-                });
+                self.asking = Some(Question::ResetTips);
                 ctx.audio.menu(MenuSound::Select);
             }
             Row::RestoreDefaults => {
@@ -357,6 +512,13 @@ impl OptionsScreen {
                     Question::SwitchToCasual => {
                         ctx.switch_to_casual();
                         CASUAL_MESSAGE
+                    }
+                    Question::ResetTips => {
+                        if reset_tips(&mut *ctx.storage).is_ok() {
+                            TIPS_RESET_MESSAGE
+                        } else {
+                            NOT_SAVED_MESSAGE
+                        }
                     }
                     Question::RestoreDefaults => {
                         let saved = ctx.change_settings(|s| *s = s.restored());
@@ -384,7 +546,8 @@ impl OptionsScreen {
         }
         match self.row {
             Row::Layout | Row::KeyBindings => "options.help.open",
-            Row::GameMode if ctx.campaign_mode == Some(GameMode::Classic) => "options.help.switch",
+            Row::MusicVolume | Row::SoundVolume => "options.help.volume",
+            Row::GameMode if Self::can_switch_mode(ctx) => "options.help.switch",
             Row::GameMode => "options.help.none",
             Row::ResetTips => "options.help.reset",
             Row::RestoreDefaults => "options.help.restore",
@@ -395,7 +558,12 @@ impl OptionsScreen {
     /// The bottom help line, naming the keys of the active keymap (or
     /// their buttons, on a controller).
     pub fn help(&self, ctx: &Ctx) -> String {
-        ctx.text_with(self.help_key(ctx), &[])
+        match &self.typing {
+            // Typing: the text box's own keys.
+            Some(b) if !b.pad => text_keys_help(),
+            Some(_) => ctx.text_with("options.help.number_pad", &[]),
+            None => ctx.text_with(self.help_key(ctx), &[]),
+        }
     }
 
     /// Draws `question` in a double-bordered box in the middle of the
@@ -437,8 +605,8 @@ fn step_setting(s: &mut Settings, row: Row, forward: bool, wrap: bool) {
         Row::AutoEnd => s.auto_end_turn = stepped(&[false, true], s.auto_end_turn, forward, wrap),
         Row::Fullscreen => s.fullscreen = stepped(&[false, true], s.fullscreen, forward, wrap),
         Row::Cursor => s.cursor_style = stepped(&CURSOR_STYLES, s.cursor_style, forward, wrap),
-        Row::MusicVolume => s.music_volume = stepped_volume(s.music_volume, forward, wrap),
-        Row::SoundVolume => s.sound_volume = stepped_volume(s.sound_volume, forward, wrap),
+        Row::MusicVolume => s.music_volume = stepped_volume(s.music_volume, forward),
+        Row::SoundVolume => s.sound_volume = stepped_volume(s.sound_volume, forward),
         Row::Layout | Row::KeyBindings | Row::GameMode | Row::ResetTips | Row::RestoreDefaults => {}
     }
 }
@@ -455,6 +623,11 @@ impl Screen for OptionsScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        if self.typing.is_some() {
+            // The game's keys do nothing while the box is open.
+            self.type_number(ctx, input);
+            return Transition::None;
+        }
         for &action in &input.actions {
             if let Some(question) = self.asking {
                 // The answer ends this frame's keys.
@@ -469,12 +642,13 @@ impl Screen for OptionsScreen {
                 Action::CursorLeft => self.change(ctx, false, false),
                 Action::CursorRight => self.change(ctx, true, false),
                 Action::Confirm => {
-                    let transition = self.confirm(ctx);
+                    let transition = self.confirm(ctx, input.pad_pressed());
                     if !matches!(transition, Transition::None) {
                         return transition;
                     }
-                    if self.asking.is_some() {
-                        // The key that asked isn't the answer.
+                    if self.asking.is_some() || self.typing.is_some() {
+                        // The key that asked isn't the answer, and the
+                        // key that opened the box types nothing.
                         break;
                     }
                 }
@@ -510,6 +684,13 @@ impl Screen for OptionsScreen {
                 buf.print(LABEL_X - 1, y, &format!(" {label} "), bg, bar);
             } else {
                 buf.print(LABEL_X, y, label, text, bg);
+            }
+            if let Some(typing) = self.typing.as_ref().filter(|_| focused) {
+                // The box, where the value was.
+                let shown = format!(" {:<w$} ", typing.text(), w = MAX_DIGITS + 1);
+                buf.print(VALUE_X - 1, y, &shown, bg, bar);
+                y += 1;
+                continue;
             }
             let value = Self::value(ctx, row);
             let value_fg = if focused {

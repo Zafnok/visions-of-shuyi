@@ -211,6 +211,10 @@ pub struct Ctx {
     /// date, and takes a change to Casual here
     /// ([`switch_to_casual`](Self::switch_to_casual)) into its campaign.
     pub campaign_mode: Option<GameMode>,
+    /// Whether the campaign's mode may be switched now: only at
+    /// Preparations, before a battle (`death-and-difficulty.md`). The game
+    /// flow keeps it up to date.
+    pub mode_switch: ModeSwitch,
     /// Whether debug tools are offered: the debug menu key and the title
     /// screen's Quick Battle. On in debug builds and with the `debug-tools`
     /// feature (the Pages build, ADR-0023); the test harness turns it on
@@ -270,6 +274,17 @@ pub struct Ctx {
     pub lang: LangCode,
 }
 
+/// Whether the Options screen may switch the campaign's mode
+/// ([`Ctx::mode_switch`]).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum ModeSwitch {
+    /// Not now: no campaign, or a battle is under way.
+    #[default]
+    Closed,
+    /// At Preparations, before a battle.
+    Open,
+}
+
 /// The web build's "press any key" title prompt ([`Ctx::key_prompt`]):
 /// browsers block sound until the player presses a key.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -310,6 +325,7 @@ impl Ctx {
             storage: Box::new(MemoryStorage::new()),
             settings: Settings::default(),
             campaign_mode: None,
+            mode_switch: ModeSwitch::Closed,
             debug_tools: DEBUG_TOOLS,
             map_skin,
             tips_enabled: false,
@@ -591,11 +607,14 @@ impl Ctx {
         self.settings.layout = self.saved_layout();
     }
 
-    /// The Options screen's switch to Casual: one way, and only from a
-    /// Classic campaign (`docs/design/death-and-difficulty.md`). Returns
-    /// whether the mode changed.
+    /// The Options screen's switch to Casual: one way, only from a Classic
+    /// campaign and only while the switch is open
+    /// ([`mode_switch`](Self::mode_switch);
+    /// `docs/design/death-and-difficulty.md`). Returns whether the mode
+    /// changed.
     pub fn switch_to_casual(&mut self) -> bool {
-        let classic = self.campaign_mode == Some(GameMode::Classic);
+        let classic =
+            self.campaign_mode == Some(GameMode::Classic) && self.mode_switch == ModeSwitch::Open;
         if classic {
             self.campaign_mode = Some(GameMode::Casual);
         }
@@ -1293,6 +1312,10 @@ pub(crate) mod tests {
         assert!(!c.switch_to_casual());
         assert_eq!(c.campaign_mode, None);
         c.campaign_mode = Some(GameMode::Classic);
+        // Not in the middle of a battle: only at Preparations.
+        assert!(!c.switch_to_casual());
+        assert_eq!(c.campaign_mode, Some(GameMode::Classic));
+        c.mode_switch = ModeSwitch::Open;
         assert!(c.switch_to_casual());
         assert_eq!(c.campaign_mode, Some(GameMode::Casual));
         assert!(!c.switch_to_casual());

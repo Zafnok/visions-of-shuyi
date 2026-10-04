@@ -33,7 +33,7 @@ use trpg_core::{
 
 use super::battle::info::bonus_text;
 use super::battle::items::effect_text;
-use super::print_centred;
+use super::{OptionsScreen, print_centred};
 use crate::audio::MenuSound;
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
@@ -74,19 +74,23 @@ pub enum Tab {
     Loadouts,
     /// The shared consumables.
     Pack,
+    /// Opens the Options screen (0805): the one place a Classic campaign
+    /// can switch to Casual (`death-and-difficulty.md`).
+    Options,
     /// Starts the battle.
     Fight,
 }
 
 impl Tab {
     /// Every tab, left to right.
-    pub const ALL: [Tab; 3] = [Tab::Loadouts, Tab::Pack, Tab::Fight];
+    pub const ALL: [Tab; 4] = [Tab::Loadouts, Tab::Pack, Tab::Options, Tab::Fight];
 
     /// The text key of the tab's name.
     pub const fn key(self) -> &'static str {
         match self {
             Tab::Loadouts => "prep.tab.loadouts",
             Tab::Pack => "prep.tab.pack",
+            Tab::Options => "prep.tab.options",
             Tab::Fight => "prep.tab.fight",
         }
     }
@@ -210,6 +214,8 @@ pub struct PreparationsScreen {
     message: Option<String>,
     /// Whether [`LEAVE_QUESTION`] is open.
     leaving: bool,
+    /// The `Options` tab was opened: the frame opens the Options screen.
+    open_options: bool,
     outcome: Option<PrepOutcome>,
 }
 
@@ -232,6 +238,7 @@ impl PreparationsScreen {
             pack: 0,
             message: None,
             leaving: false,
+            open_options: false,
             outcome: None,
         }
     }
@@ -239,6 +246,12 @@ impl PreparationsScreen {
     /// The battle as prepared so far.
     pub fn setup(&self) -> &BattleSetup {
         &self.prep.setup
+    }
+
+    /// The campaign switched to Casual (on the Options screen opened from
+    /// here): the battle being prepared starts in Casual.
+    pub fn switch_to_casual(&mut self) {
+        self.prep.setup.mode = trpg_core::GameMode::Casual;
     }
 
     /// The battle and the units left out of it, as prepared so far.
@@ -581,6 +594,11 @@ impl PreparationsScreen {
             Tab::Loadouts => (!self.units().is_empty()).then_some(Focus::Units),
             Tab::Pack if !self.spare().is_empty() => Some(Focus::Spare),
             Tab::Pack => (!self.packed().is_empty()).then_some(Focus::Pack),
+            Tab::Options => {
+                ctx.audio.menu(MenuSound::Select);
+                self.open_options = true;
+                return false;
+            }
             Tab::Fight => {
                 ctx.audio.menu(MenuSound::Select);
                 self.outcome = Some(PrepOutcome::Fight);
@@ -718,7 +736,9 @@ impl PreparationsScreen {
                 ctx.audio.menu(MenuSound::Move);
             }
             (Focus::Tabs, Confirm) => return self.open_tab(ctx),
-            (Focus::Tabs, CursorDown) if self.tab != Tab::Fight => return self.open_tab(ctx),
+            (Focus::Tabs, CursorDown) if !matches!(self.tab, Tab::Fight | Tab::Options) => {
+                return self.open_tab(ctx);
+            }
             (Focus::Tabs, Cancel) if self.can_leave => {
                 self.leaving = true;
                 ctx.audio.menu(MenuSound::Select);
@@ -940,6 +960,9 @@ impl Screen for PreparationsScreen {
             if self.handle(action, ctx) {
                 return Transition::Pop;
             }
+            if std::mem::take(&mut self.open_options) {
+                return Transition::Push(Box::new(OptionsScreen::new()));
+            }
         }
         Transition::None
     }
@@ -952,6 +975,7 @@ impl Screen for PreparationsScreen {
         match self.tab {
             Tab::Loadouts => self.draw_loadouts(ctx, buf),
             Tab::Pack => self.draw_pack(ctx, buf),
+            Tab::Options => {}
             Tab::Fight => {
                 let units = self.prep.setup.player_units().count();
                 let pack = self.pack_header(ctx);

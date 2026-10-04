@@ -7,20 +7,20 @@ expression: h.snapshot()
                                                                                                     
                     ┌─ Options ────────────────────────────────────────────────┐                    
                     │                                                          │                    
-                    │   Text speed                Fast                         │                    
-                    │   Animation speed           Fast                         │                    
+                    │   Text speed                Normal                       │                    
+                    │   Animation speed           Normal                       │                    
                     │   Combat animations         On                           │                    
                     │   Enemy phase speed         Normal                       │                    
                     │   Auto-end turn             Off                          │                    
                     │   Fullscreen                Off                          │                    
                     │   Cursor                    Corners                      │                    
-                    │   Music volume              ███████▒░░  75               │                    
-                    │   Sound ╔══════════════════════════════════════╗         │                    
-                    │         ║                                      ║         │                    
-                    │   Layout║ Restore every option to its default? ║         │                    
-                    │   Key bi║ f yes / d no                         ║         │                    
-                    │         ║                                      ║         │                    
-                    │   Reset ╚══════════════════════════════════════╝         │                    
+                    │   Music volume              7_                           │                    
+                    │   Sound volume              ████████░░  80               │                    
+                    │                                                          │                    
+                    │   Layout                    Right-handed                 │                    
+                    │   Key bindings                                           │                    
+                    │                                                          │                    
+                    │   Reset tips                                             │                    
                     │   Restore defaults                                       │                    
                     │                                                          │                    
                     │                                                          │                    
@@ -33,7 +33,7 @@ expression: h.snapshot()
                                                                                                     
                                                                                                     
                                                                                                     
-                                            f yes · d no                                            
+                           Enter done · Backspace delete · Escape cancel                            
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -47,14 +47,14 @@ aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddeeeeeeeeeeeeeeddddddddddddeeeeeeddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabdddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabdddddddddeddddddddddddddddddddddddddddddddddddddedddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabdddddddddeddddddddddddddddddddddddddddddddddddddedddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabdddddddddedffffffffffffdddddddddddddddddddddddddedddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabdddddddddeddddddddddddddddddddddddddddddddddddddedddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabdddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddbaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaabddggggggggggggggggggddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaa
@@ -66,13 +66,11 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaafffffffffffffffffffffffffffffffffffffffffffffaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
 c = fg:text_highlight bg:panel_bg
 d = fg:text bg:panel_bg
-e = fg:panel_border_focus bg:panel_bg
-f = fg:text_dim bg:panel_bg
-g = fg:panel_bg bg:panel_border_focus
-h = fg:text_dim bg:black
+e = fg:panel_bg bg:panel_border_focus
+f = fg:text_dim bg:black

@@ -1,7 +1,7 @@
 //! Scripted tests of the Options screen through the real game (ticket
 //! 0805): opened from the title and from the map menu; every setting
 //! changes what the game does and is saved; the layout switches from it;
-//! a Classic campaign switches to Casual, one way.
+//! a Classic campaign switches to Casual, one way, at Preparations only.
 //!
 //! Rows, top to bottom: Text speed, Animation speed, Combat animations,
 //! Enemy phase speed, Auto-end turn, Fullscreen, Cursor, Music volume,
@@ -51,6 +51,15 @@ fn options_in_battle() -> Harness {
     let mut h = title();
     h.keys("Down f Left f f d Down Down f");
     assert_eq!(h.screens(), ["title", "battle", "options"]);
+    h
+}
+
+/// The Quick Battle's Preparations, then Options from its tabs (Loadouts,
+/// Pack, Options).
+fn options_at_preparations() -> Harness {
+    let mut h = title();
+    h.keys("Down f Right Right f");
+    assert_eq!(h.screens(), ["title", "preparations", "options"]);
     h
 }
 
@@ -227,24 +236,45 @@ fn the_cursor_row_changes_the_battle_cursor() {
 }
 
 /// Acceptance: the volumes change what `app` is told to play at, 0
-/// silences, and they persist across a restart.
+/// silences, and they persist across a restart. Nick: 0 to 100, a slider
+/// and a box for the exact number.
 #[test]
 fn volumes_reach_the_mixer_and_persist() {
     let close = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6;
     let mut h = options();
-    // The defaults: 8 of 10 each.
+    // The defaults: 80 of 100 each.
     assert!(close(h.volumes(), (0.8, 0.8)), "{:?}", h.volumes());
+    // The slider: five at a time.
     h.keys(TO_MUSIC).keys("Left Left Left");
-    assert!(close(h.volumes(), (0.5, 0.8)), "{:?}", h.volumes());
-    // Past 0 it stays silent.
-    h.keys("Left Left Left Left Left Left Left");
+    assert!(close(h.volumes(), (0.65, 0.8)), "{:?}", h.volumes());
+    assert!(shows(&h, "██████▒░░░  65"), "{}", h.snapshot());
+    // The box: Confirm, the number, Enter.
+    h.keys("f");
+    assert!(shows(&h, "Enter done · Backspace delete · Escape cancel"));
+    h.type_text("7");
+    assert!(shows(&h, " 7_ "), "{}", h.snapshot());
+    assert_snapshot!(h.snapshot());
+    // The game's keys do nothing while it is open; nothing changes yet.
+    h.keys("Down d");
+    assert_eq!(h.screens(), ["title", "options"]);
+    assert!(close(h.volumes(), (0.65, 0.8)), "{:?}", h.volumes());
+    h.keys("Enter");
+    assert!(close(h.volumes(), (0.07, 0.8)), "{:?}", h.volumes());
+    assert_eq!(settings(&h).music_volume, 7);
+    // 0 is silent, by the box or by the slider (which stops there).
+    h.keys("f").type_text("0").keys("Enter");
     assert!(close(h.volumes(), (0.0, 0.8)), "{:?}", h.volumes());
+    h.keys("Left");
     assert_eq!(settings(&h).music_volume, 0);
+    // Escape leaves the volume as it was.
+    h.keys("f").type_text("55").keys("Escape");
+    assert_eq!(settings(&h).music_volume, 0);
+    assert_eq!(h.screens(), ["title", "options"]);
     // The sound volume, up to its loudest and no further.
-    h.keys("Down Right Right Right");
+    h.keys("Down Right Right Right Right Right");
     assert!(close(h.volumes(), (0.0, 1.0)), "{:?}", h.volumes());
-    assert_eq!(settings(&h).sound_volume, 10);
-    // Each step that changed it ticks (at the new volume); the third
+    assert_eq!(settings(&h).sound_volume, 100);
+    // Each step that changed it ticks (at the new volume); the second
     // Right changed nothing.
     h.clear_audio().keys("Left Right Right");
     assert_eq!(h.sounds(), ["menu_move", "menu_move"]);
@@ -327,16 +357,31 @@ fn switching_layout_loads_that_layouts_own_keys() {
     assert_eq!(h.screens(), ["title", "options", "layout_picker"]);
 }
 
-/// Acceptance: Classic switches to Casual after a confirm, for the
-/// campaign and for the battle when it is restarted; Casual never offers
-/// Classic.
+/// Acceptance: Classic switches to Casual after a confirm; Casual never
+/// offers Classic. Nick: not in the middle of a battle, but at
+/// Preparations, which is also where Restart Battle goes back to.
 #[test]
-fn classic_switches_to_casual_with_a_confirm_and_never_back() {
+fn classic_switches_to_casual_at_preparations_and_never_back() {
     let mut h = options_in_battle();
     assert_eq!(mode(&h), Some(GameMode::Classic));
     // Game mode is three rows up from the first (past Restore defaults
-    // and Reset tips).
+    // and Reset tips). In the battle it only shows the mode.
     h.keys("Up Up Up");
+    assert!(shows(&h, "Classic") && !shows(&h, "switch to Casual"));
+    h.keys("f");
+    assert!(!shows(&h, "Switch to Casual?"));
+    assert!(shows(
+        &h,
+        "The game mode can be changed at Preparations, before a battle"
+    ));
+    h.keys("d");
+    assert_eq!(mode(&h), Some(GameMode::Classic));
+    // The map menu is still open on Options: Restart Battle is two down,
+    // and goes back to Preparations. Its Options tab is two to the right.
+    h.keys("Down Down f f");
+    assert_eq!(h.screens(), ["title", "preparations"]);
+    h.keys("Right Right f Up Up Up");
+    assert_eq!(h.screens(), ["title", "preparations", "options"]);
     assert!(shows(&h, "f switch to Casual"));
     h.keys("f");
     assert!(shows(&h, "Switch to Casual? This can't be undone."));
@@ -344,7 +389,7 @@ fn classic_switches_to_casual_with_a_confirm_and_never_back() {
     assert_snapshot!(h.snapshot());
     // No: still Classic, still in Options.
     h.keys("d");
-    assert_eq!(h.screens(), ["title", "battle", "options"]);
+    assert_eq!(h.screens(), ["title", "preparations", "options"]);
     assert!(shows(&h, "Classic"));
     // Yes.
     h.keys("f f");
@@ -354,23 +399,31 @@ fn classic_switches_to_casual_with_a_confirm_and_never_back() {
     assert!(!shows(&h, "switch to Casual"));
     h.keys("f");
     assert!(!shows(&h, "Switch to Casual?"));
-    // Back in the battle, the campaign is Casual.
+    // Back at Preparations the campaign is Casual, and so is the battle
+    // once `Fight!` (the next tab) starts it.
     h.keys("d");
     assert_eq!(mode(&h), Some(GameMode::Casual));
-    // The map menu is still open on Options: Restart Battle is two down.
-    // It goes back to Preparations, and the battle starts again in Casual.
-    h.keys("Down Down f f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
-    h.keys("Left f");
+    h.keys("Right f");
     assert_eq!(h.screens(), ["title", "battle"]);
     let battle = h.battle().map(|b| b.state().mode());
     assert_eq!(battle, Some(GameMode::Casual));
-    // Options again: Casual, with nothing to switch to.
-    h.keys("f d Down Down f Up Up Up");
+    // Options in the battle: Casual, and no message about Preparations.
+    h.keys("f d Down Down f Up Up Up f");
     assert_eq!(h.screens(), ["title", "battle", "options"]);
-    assert!(shows(&h, "Casual") && !shows(&h, "switch to Casual"));
-    h.keys("f");
+    assert!(shows(&h, "Casual") && !shows(&h, "Preparations"));
     assert_eq!(mode(&h), Some(GameMode::Casual));
+}
+
+/// The switch made at a fresh battle's Preparations reaches that battle.
+#[test]
+fn a_switch_at_the_first_preparations_starts_the_battle_in_casual() {
+    let mut h = options_at_preparations();
+    assert!(shows(&h, "Game mode") && shows(&h, "Classic"));
+    h.keys("Up Up Up f f d Right f");
+    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(mode(&h), Some(GameMode::Casual));
+    let battle = h.battle().map(|b| b.state().mode());
+    assert_eq!(battle, Some(GameMode::Casual));
 }
 
 /// A campaign started in Casual never offers Classic, and the title's
@@ -404,6 +457,17 @@ fn reset_tips_forgets_the_tips_seen() {
     // Reset tips is two rows up from the first.
     h.keys("Down Down f Up Up");
     assert!(shows(&h, "f reset"));
+    // Nick: it asks first.
+    h.keys("f");
+    assert!(shows(&h, "Show every tip again?"));
+    assert!(
+        h.game()
+            .ctx()
+            .storage
+            .read(TIPS_SEEN_KEY)
+            .unwrap()
+            .is_some()
+    );
     h.keys("f");
     assert!(shows(&h, "Tips will show again"));
     assert_eq!(h.game().ctx().storage.read(TIPS_SEEN_KEY), Ok(None));
@@ -420,7 +484,8 @@ fn restore_defaults_asks_first_and_keeps_the_layout_and_the_keys() {
         ctx.set_layout_bindings(Layout::RightHanded, keys.clone()),
         Ok(())
     );
-    h.keys("Right Down Right").keys(TO_CURSOR).keys("f");
+    // Text speed, animation speed and (six rows on) the music volume.
+    h.keys("Right Down Right").keys(TO_CURSOR).keys("Left");
     let changed = settings(&h);
     assert_ne!(
         changed,
@@ -494,7 +559,7 @@ fn the_help_line_fits_on_every_pad() {
         PadKind::Nintendo,
         PadKind::default(),
     ] {
-        let mut h = options_in_battle();
+        let mut h = options_at_preparations();
         h.use_pad(kind);
         // Onto Game mode, whose hint is the longest.
         h.pad("DpadUp DpadUp DpadUp");

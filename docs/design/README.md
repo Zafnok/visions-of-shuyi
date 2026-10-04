@@ -30,6 +30,7 @@ here.
 | Title screen: intro cinematic | [`title-screen.md`](title-screen.md) (*Intro cinematic*) | 0036 | ✅ decided 2026-10-03 (an off switch in Options: later; skip sound 0041; overworld shot 1010) |
 | Terrain: movement costs & bonuses | [`terrain.md`](terrain.md) | 0301 | ✅ decided 2026-09-26 (capturing & healing tiles deferred) |
 | Controls, key layouts & controller | [`controls.md`](controls.md) | 0015, 0030, 0032 | ✅ decided 2026-09-25 (rebinding keys 0030, 2026-09-29; controller 0032, 2026-09-30) |
+| The Options screen: speeds, volumes, asking first | [`options.md`](options.md) | 0805 | ✅ decided 2026-10-04 |
 | Battle scenes, talking & recruitment | [`battle-scenes-and-recruitment.md`](battle-scenes-and-recruitment.md) | 0705 | ✅ decided 2026-09-29 (quest recruitment later) |
 | Playtest bots: player types, targets, autobalancing | [`playtest-bots.md`](playtest-bots.md) | 0033 | ✅ decided 2026-09-30 |
 | AI voices, a Japanese option, a hired writer later | [`voices-languages-and-script.md`](voices-languages-and-script.md) | 0042 (Japanese), 0043 (voices) | ⏳ direction set 2026-10-03; details open |

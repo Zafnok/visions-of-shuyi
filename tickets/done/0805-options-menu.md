@@ -113,44 +113,61 @@ screen reachable from title and map menu, a "Key bindings" row that opens 0815's
 - The game mode: the Options screen sits on the stack above the game flow,
   which owns the campaign, so it switches the mode through
   `Ctx::campaign_mode`; the flow calls `Campaign::downgrade_mode()` on its
-  next frame and sets the battle's setup to Casual for a restart.
+  next frame and sets the battle being prepared to Casual.
 - The ticket says both "defaults match current behaviour" and "volume
-  default 8 of 10". They can't both hold: with 8 as a multiplier of 0.8,
-  the game now plays a fifth quieter than before, and 10 is the old
-  loudness.
+  default 8 of 10" (now 80 of 100). They can't both hold: at 80 the game
+  plays a fifth quieter than before, and 100 is the old loudness.
 - Tests had to change where a menu gained a live row: scripted key presses
   in the title, map menu, credits, save, flow, class change, controller
   and key-bindings tests moved by one row.
+
+**Nick's changes after seeing the first version** (2026-10-04, recorded
+in `docs/design/options.md` and `death-and-difficulty.md`):
+
+- Holding Confirm plays a fight ×4 instead of the Fast setting's ×2, not
+  ×8 on top of it.
+- A volume goes from 0 to 100: a slider (left/right), and a box to type
+  the exact number (Confirm).
+- Reset tips asks first; anything that does something somewhat big asks
+  first.
+- Classic → Casual is not allowed in the middle of a battle: only at
+  Preparations, which is also where Restart Battle goes back to. The
+  Preparations screen got an `Options` tab for it.
 
 **Claude's starting rules** (Nick may veto any of them):
 
 1. **Text speed.** Normal is what it was. Slow is half as fast, Fast is
    twice as fast, Instant shows a whole text box at once.
 2. **Animation speed: Fast** plays walks, fights and the EXP bar twice as
-   fast. Holding Confirm still speeds a fight up four times on top of it.
+   fast.
 3. **Enemy phase speed: Fast** plays the enemy's and the other side's turn
-   twice as fast. With Animation speed also Fast, four times.
+   twice as fast. With Animation speed also Fast, four times; holding
+   Confirm then changes nothing (it is already ×4).
 4. **Combat animations: Off** skips every fight the way the Cancel key
    skips one: no fight box, the HP just changes; the EXP bar and level-up
    pages still show.
-5. **Volumes** go from 0 (silent) to 10 in steps of one, starting at 8.
-   Changing one plays the menu tick, so the new sound volume is heard.
-6. **Restore defaults asks yes/no first.** It puts every row back except
-   the layout; custom keys are left alone (they have their own Restore
-   defaults).
-7. **Reset tips** doesn't ask: it says "Tips will show again".
-8. **Confirm on a value row** steps to the next value and goes round at the
-   end; Left/Right stop at the ends.
-9. **Switching to Casual in the middle of a battle:** a unit that falls
-   later in that battle does come back for the next one. But in that one
-   battle it still says its Classic death quote instead of its retreat
-   line, until the battle is restarted. Ticket 0828 fixes that.
-10. **The screen's look** is a plain panel in the style of the Key bindings
+5. **Volumes** start at 80 of 100, so the game is a fifth quieter than
+   before; 100 is the old loudness. The slider moves 5 at a time.
+   Changing a volume plays the menu tick, so the new sound volume is heard.
+6. **The volume box on a controller** (no number keys): it shows the
+   volume and the cursor moves it 1 at a time; Confirm keeps it, Cancel
+   doesn't.
+7. **Restore defaults** puts every row back except the layout; custom keys
+   are left alone (they have their own Restore defaults).
+8. **Confirm on a speed, on/off or cursor row** steps to the next value and
+   goes round at the end; Left/Right stop at the ends.
+9. **The `Options` tab on Preparations** sits between `Pack` and `Fight!`.
+10. **A battle without Preparations** (the test chapter's) has nowhere to
+    switch to Casual: the row says "can be changed at Preparations", and
+    Restart Battle there goes straight back into the battle.
+11. **The screen's look** is a plain panel in the style of the Key bindings
     screen, with the rows in the ticket's order. No mockups were shown;
     say so if you want to pick from some.
 
-**Follow-up tickets.** 0828 (a switch to Casual reaches the battle under
-way).
+**Follow-up tickets.** 0120 (a test of the bought-art fetch fails now and
+then on macOS; seen on this PR, not caused by it). 0828 was filed and then
+withdrawn in this PR: with the switch only at Preparations, a battle always
+starts in the mode it will end in.
 
 **For Nick when playing.** Title → Options, and in a battle: map menu →
 Options. Try Fullscreen, the two volumes with music playing, Text speed in

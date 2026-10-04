@@ -29,7 +29,7 @@ the window fullscreen or scale what it plays.
   with a default and bumps nothing. Text that can't be read, or of another
   version, gives the defaults and a warning for `app` to log (as the key
   bindings do, ADR-0031). Out-of-range values are repaired on load (a
-  volume over 10, an unknown layout name).
+  volume over 100, an unknown layout name).
 - **`Ctx` owns the settings.** `Ctx::with_storage` loads them;
   `ctx.settings()` reads them; `ctx.change_settings(|s| …)` edits them and
   **saves at once** if anything changed. A change applies even when saving
@@ -52,13 +52,18 @@ the window fullscreen or scale what it plays.
   `Harness` records them (`h.fullscreen()`, `h.volumes()`).
 - **Animation speeds scale the frame time** the battle screen hands its
   walk, fight playback, AI action and EXP bar clocks
-  (`Settings::battle_speed`), on top of the hold-Confirm speed-up. Banners,
+  (`Settings::battle_speed`). Holding Confirm plays at ×4 instead of that
+  speed, not on top of it (`docs/design/options.md`): the clocks keep
+  their own ×4 for a held frame, so the battle screen divides a held
+  frame's time by 4 first (`Settings::battle_speed_held`). Banners,
   toasts and the cursor's pulse keep real time. `core` is untouched: the
   battle is the same at any speed (a test checks it).
 - **The campaign's mode is not a setting** (it is part of the save,
   `death-and-difficulty.md`). The Options screen shows and switches it
   through `Ctx::campaign_mode`, which the game flow (ADR-0035) keeps in
-  step with its `Campaign`.
+  step with its `Campaign`. The flow also says when the switch is open
+  (`Ctx::mode_switch`: only while its Preparations screen is up), and puts
+  a switch into the battle being prepared.
 
 ## Consequences
 

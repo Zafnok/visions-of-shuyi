@@ -1,6 +1,6 @@
 use super::*;
 use crate::audio::AudioRequest;
-use crate::input::Layout;
+use crate::input::{Chord, Key, Layout};
 use crate::screen::tests::ctx;
 use crate::settings::SETTINGS_KEY;
 use crate::storage::{Storage, StorageError};
@@ -95,11 +95,133 @@ fn confirm_steps_a_setting_and_goes_round() {
             CursorStyle::Corners
         ]
     );
+}
+
+/// One frame of typing: the characters `text`, then the keys `keys`.
+fn type_in(s: &mut OptionsScreen, c: &mut Ctx, text: &str, keys: &[Key]) {
+    let chords = keys.iter().map(|&k| Chord::plain(k)).collect();
+    let input = FrameInput::new(vec![], 0.0, vec![]).with_typing(chords, text.chars().collect());
+    s.update(c, &input);
+}
+
+/// Nick: a volume is 0 to 100, with a slider.
+#[test]
+fn left_and_right_move_a_volumes_slider_five_at_a_time() {
+    use Action::{CursorLeft, CursorRight};
+    let mut c = ctx();
+    let mut s = on(Row::MusicVolume);
+    assert_eq!(s.help(&c), "arrows move · f type a number · d back");
+    press(&mut s, &mut c, &[CursorLeft]);
+    assert_eq!(c.settings().music_volume, 75);
+    assert_eq!(saved(&c).music_volume, 75);
+    press(&mut s, &mut c, &[CursorRight; 6]);
+    assert_eq!(c.settings().music_volume, 100);
+    // Five steps changed it; the sixth did nothing.
+    assert_eq!(sounds(&mut c).len(), 6);
+    c.change_settings(|s| s.music_volume = 3).unwrap();
+    press(&mut s, &mut c, &[CursorLeft]);
+    assert_eq!(c.settings().music_volume, 0);
+    press(&mut s, &mut c, &[CursorLeft]);
+    assert_eq!(c.settings().music_volume, 0);
+    assert_eq!(c.settings().sound_volume, 80);
+}
+
+/// Nick: and an input box for the exact number.
+#[test]
+fn confirm_on_a_volume_opens_a_box_to_type_the_number() {
+    let mut c = ctx();
     let mut s = on(Row::SoundVolume);
-    press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
-    assert_eq!(c.settings().sound_volume, 10);
+    // The key that opens the box types nothing, nor do the keys after it.
+    press(&mut s, &mut c, &[Action::Confirm, Action::CursorDown]);
+    assert_eq!(s.typing().map(NumberBox::value), Some(None));
+    assert_eq!(s.focus(), Row::SoundVolume);
+    assert_eq!(sounds(&mut c), ["menu_select"]);
+    assert_eq!(s.help(&c), "Enter done · Backspace delete · Escape cancel");
+    assert!(
+        drawn_row(&s, &c, 13).contains(" _ "),
+        "{}",
+        drawn_row(&s, &c, 13)
+    );
+    // The game's keys do nothing while it is open.
+    press(&mut s, &mut c, &[Action::CursorDown, Action::Cancel]);
+    assert!(s.typing().is_some());
+    // Digits only, three at most.
+    type_in(&mut s, &mut c, "3x7", &[]);
+    assert_eq!(s.typing().and_then(NumberBox::value), Some(37));
+    assert_eq!(sounds(&mut c), ["menu_cancel"], "the x is refused");
+    assert!(drawn_row(&s, &c, 13).contains(" 37_ "));
+    type_in(&mut s, &mut c, "55", &[]);
+    assert_eq!(s.typing().map(NumberBox::text), Some("375_".to_owned()));
+    // Backspace deletes; nothing changes until Enter.
+    type_in(&mut s, &mut c, "", &[Key::Backspace, Key::Backspace]);
+    assert_eq!(s.typing().and_then(NumberBox::value), Some(3));
+    assert_eq!(c.settings().sound_volume, 80);
+    type_in(&mut s, &mut c, "7", &[Key::Enter]);
+    assert!(s.typing().is_none());
+    assert_eq!(c.settings().sound_volume, 37);
+    assert_eq!(saved(&c).sound_volume, 37);
+    assert_eq!(c.settings().music_volume, 80);
+    // More than 100 is 100.
     press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(c.settings().sound_volume, 0);
+    type_in(&mut s, &mut c, "250", &[Key::Enter]);
+    assert_eq!(c.settings().sound_volume, 100);
+    // Escape, or Enter on an empty box, leaves the volume alone.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    type_in(&mut s, &mut c, "12", &[Key::Escape]);
+    assert!(s.typing().is_none());
+    press(&mut s, &mut c, &[Action::Confirm]);
+    type_in(&mut s, &mut c, "", &[Key::Enter]);
+    assert!(s.typing().is_none());
+    press(&mut s, &mut c, &[Action::Confirm]);
+    type_in(&mut s, &mut c, "", &[Key::Backspace, Key::Enter]);
+    assert_eq!(c.settings().sound_volume, 100);
+    // The music row's box sets the music.
+    let mut s = on(Row::MusicVolume);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    type_in(&mut s, &mut c, "0", &[Key::Enter]);
+    assert_eq!(c.settings().music_volume, 0);
+    assert_eq!(c.settings().sound_volume, 100);
+}
+
+/// On a controller there is nothing to type with: the box holds the
+/// volume and the cursor steps it by one.
+#[test]
+fn the_volume_box_steps_by_one_on_a_controller() {
+    let pad = |actions: &[Action]| FrameInput::new(actions.to_vec(), 0.0, vec![]).with_pad(true);
+    let mut c = ctx();
+    let mut s = on(Row::MusicVolume);
+    s.update(&mut c, &pad(&[Action::Confirm]));
+    assert_eq!(s.typing().and_then(NumberBox::value), Some(80));
+    assert_eq!(s.help(&c), "arrows change · f done · d cancel");
+    assert!(drawn_row(&s, &c, 12).contains(" 80 "));
+    sounds(&mut c);
+    let steps = [Action::CursorUp, Action::CursorRight, Action::CursorUp];
+    s.update(&mut c, &pad(&steps));
+    assert_eq!(s.typing().and_then(NumberBox::value), Some(83));
+    assert_eq!(sounds(&mut c).len(), 3);
+    s.update(&mut c, &pad(&[Action::CursorDown, Action::Info]));
+    assert_eq!(s.typing().and_then(NumberBox::value), Some(82));
+    // Not until Confirm.
+    assert_eq!(c.settings().music_volume, 80);
+    s.update(&mut c, &pad(&[Action::Confirm, Action::CursorDown]));
+    assert!(s.typing().is_none());
+    assert_eq!(c.settings().music_volume, 82);
+    assert_eq!(s.focus(), Row::MusicVolume);
+    // Cancel keeps the old volume; the ends hold.
+    s.update(&mut c, &pad(&[Action::Confirm]));
+    s.update(&mut c, &pad(&[Action::CursorLeft, Action::Cancel]));
+    assert_eq!(c.settings().music_volume, 82);
+    c.change_settings(|s| s.music_volume = 100).unwrap();
+    s.update(&mut c, &pad(&[Action::Confirm]));
+    sounds(&mut c);
+    s.update(&mut c, &pad(&[Action::CursorUp]));
+    assert_eq!(s.typing().and_then(NumberBox::value), Some(100));
+    assert!(sounds(&mut c).is_empty());
+    c.change_settings(|s| s.music_volume = 0).unwrap();
+    s.update(&mut c, &pad(&[Action::Cancel]));
+    s.update(&mut c, &pad(&[Action::Confirm]));
+    s.update(&mut c, &pad(&[Action::CursorDown, Action::Confirm]));
+    assert_eq!(c.settings().music_volume, 0);
 }
 
 #[test]
@@ -151,8 +273,8 @@ fn rows_show_their_values() {
             "Off",
             "Off",
             "Corners",
-            "████████░░  8",
-            "████████░░  8",
+            "████████░░  80",
+            "████████░░  80",
             "Right-handed",
             "",
             "",
@@ -163,15 +285,21 @@ fn rows_show_their_values() {
     c.change_settings(|s| {
         s.cursor_style = CursorStyle::LargeCorners;
         s.music_volume = 0;
-        s.sound_volume = 10;
+        s.sound_volume = 100;
         s.auto_end_turn = true;
     })
     .unwrap();
     c.campaign_mode = Some(GameMode::Classic);
     c.use_layout(Layout::LeftHanded);
     assert_eq!(value(&c, Row::Cursor), "Large corners");
-    assert_eq!(value(&c, Row::MusicVolume), "░░░░░░░░░░  0");
-    assert_eq!(value(&c, Row::SoundVolume), "██████████ 10");
+    assert_eq!(value(&c, Row::MusicVolume), "░░░░░░░░░░   0");
+    assert_eq!(value(&c, Row::SoundVolume), "██████████ 100");
+    // A half cell for the odd five; under it rounds down.
+    assert_eq!(volume_text(85), "████████▒░  85");
+    assert_eq!(volume_text(84), "████████░░  84");
+    assert_eq!(volume_text(5), "▒░░░░░░░░░   5");
+    assert_eq!(volume_text(99), "█████████▒  99");
+    assert_eq!(volume_text(200), "██████████ 100");
     assert_eq!(value(&c, Row::AutoEnd), "On");
     assert_eq!(value(&c, Row::GameMode), "Classic");
     assert_eq!(value(&c, Row::Layout), "Left-handed");
@@ -214,6 +342,7 @@ fn cancel_closes_the_screen() {
 fn classic_switches_to_casual_after_a_confirm_and_never_back() {
     let mut c = ctx();
     c.campaign_mode = Some(GameMode::Classic);
+    c.mode_switch = ModeSwitch::Open;
     let mut s = on(Row::GameMode);
     assert_eq!(s.help(&c), "arrows move · f switch to Casual · d back");
     press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
@@ -243,6 +372,26 @@ fn classic_switches_to_casual_after_a_confirm_and_never_back() {
     assert_eq!(sounds(&mut c), ["menu_cancel"]);
 }
 
+/// Nick: not in the middle of a battle, only at Preparations.
+#[test]
+fn classic_cant_switch_where_the_switch_is_closed() {
+    let mut c = ctx();
+    c.campaign_mode = Some(GameMode::Classic);
+    let mut s = on(Row::GameMode);
+    assert_eq!(s.help(&c), "arrows move · d back");
+    press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
+    assert_eq!(s.asking(), None);
+    assert_eq!(c.campaign_mode, Some(GameMode::Classic));
+    assert_eq!(s.message(), Some(MODE_AT_PREP_MESSAGE));
+    assert_eq!(sounds(&mut c), ["menu_cancel", "menu_cancel"]);
+    // A Casual campaign gets no such message: there is nothing to switch.
+    c.campaign_mode = Some(GameMode::Casual);
+    c.mode_switch = ModeSwitch::Open;
+    let mut s = on(Row::GameMode);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!((s.asking(), s.message()), (None, None));
+}
+
 #[test]
 fn reset_tips_forgets_the_tips_seen() {
     let mut c = ctx();
@@ -251,6 +400,14 @@ fn reset_tips_forgets_the_tips_seen() {
     assert!(TipsSeen::load(&*c.storage).contains("first_move"));
     let mut s = on(Row::ResetTips);
     assert_eq!(s.help(&c), "arrows move · f reset · d back");
+    // Nick: it asks first.
+    press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
+    assert_eq!(s.asking(), Some(Question::ResetTips));
+    assert!(TipsSeen::load(&*c.storage).contains("first_move"));
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!((s.asking(), s.message()), (None, None));
+    assert!(TipsSeen::load(&*c.storage).contains("first_move"));
+    press(&mut s, &mut c, &[Action::Confirm]);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(c.storage.read(TIPS_SEEN_KEY), Ok(None));
     assert_eq!(s.message(), Some(TIPS_RESET_MESSAGE));
@@ -313,6 +470,12 @@ fn a_failed_save_still_changes_the_setting_and_says_so() {
     assert_eq!(s.message(), Some(NOT_SAVED_MESSAGE));
     let mut s = on(Row::ResetTips);
     press(&mut s, &mut c, &[Action::Confirm]);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.message(), Some(NOT_SAVED_MESSAGE));
+    let mut s = on(Row::SoundVolume);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    type_in(&mut s, &mut c, "9", &[Key::Enter]);
+    assert_eq!(c.settings().sound_volume, 9);
     assert_eq!(s.message(), Some(NOT_SAVED_MESSAGE));
     let mut s = on(Row::RestoreDefaults);
     press(&mut s, &mut c, &[Action::Confirm]);
@@ -344,12 +507,12 @@ fn stepping_helpers_stop_or_wrap() {
     assert_eq!(stepped(&all, 1, false, true), 3);
     assert_eq!(stepped(&all, 2, true, false), 3);
     assert_eq!(stepped(&all, 2, false, false), 1);
-    assert_eq!(stepped_volume(10, true, false), 10);
-    assert_eq!(stepped_volume(10, true, true), 0);
-    assert_eq!(stepped_volume(9, true, true), 10);
-    assert_eq!(stepped_volume(0, false, false), 0);
-    assert_eq!(stepped_volume(0, false, true), 0);
-    assert_eq!(stepped_volume(5, false, false), 4);
+    assert_eq!(stepped_volume(100, true), 100);
+    assert_eq!(stepped_volume(97, true), 100);
+    assert_eq!(stepped_volume(50, true), 55);
+    assert_eq!(stepped_volume(50, false), 45);
+    assert_eq!(stepped_volume(3, false), 0);
+    assert_eq!(stepped_volume(0, false), 0);
 }
 
 /// Row `y` of the screen as drawn, trimmed.
@@ -367,6 +530,7 @@ fn drawn_row(s: &OptionsScreen, c: &Ctx, y: i32) -> String {
 fn the_message_is_drawn_under_the_panel() {
     let mut c = ctx();
     let mut s = on(Row::ResetTips);
+    press(&mut s, &mut c, &[Action::Confirm]);
     press(&mut s, &mut c, &[Action::Confirm]);
     let bottom = PANEL.y + PANEL.h - 1;
     assert!(drawn_row(&s, &c, bottom).starts_with('└'));

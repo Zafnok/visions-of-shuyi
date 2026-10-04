@@ -109,6 +109,27 @@
         source: "{Confirm} yes · {Cancel} no",
         text: "{Confirm} YES · {Cancel} NO",
     ),
+    (
+        key: "options.message.mode_at_prep",
+        source: "The game mode can be changed at Preparations, before a battle",
+        text: "THE GAME MODE CAN BE CHANGED AT PREPARATIONS, BEFORE A BATTLE",
+    ),
+    (
+        key: "options.question.reset_tips",
+        source: "Show every tip again?",
+        text: "SHOW EVERY TIP AGAIN?",
+    ),
+    (
+        key: "options.help.volume",
+        source: "{Cursor} move · {Confirm} type a number · {Cancel} back",
+        text: "{Cursor} MOVE · {Confirm} TYPE A NUMBER · {Cancel} BACK",
+    ),
+    (
+        key: "options.help.number_pad",
+        source: "{Cursor} change · {Confirm} done · {Cancel} cancel",
+        text: "{Cursor} CHANGE · {Confirm} DONE · {Cancel} CANCEL",
+    ),
+    (key: "prep.tab.options", source: "Options", text: "OPTIONS"),
     // The Preparations screen.
     (key: "prep.heading", source: "Preparations", text: "PREPARATIONS"),
     (key: "prep.tab.loadouts", source: "Loadouts", text: "LOADOUTS"),

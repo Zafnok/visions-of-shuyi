@@ -14,8 +14,8 @@ expression: h.snapshot()
                     │   Auto-end turn             Off                          │                    
                     │   Fullscreen                Off                          │                    
                     │   Cursor                    Corners                      │                    
-                    │   Music volume              ████████░░  8                │                    
-                    │   Sound volume              ████████░░  8                │                    
+                    │   Music volume              ████████░░  80               │                    
+                    │   Sound volume              ████████░░  80               │                    
                     │                                                          │                    
                     │   Layout                    Right-handed                 │                    
                     │   Key bindings                                           │                    

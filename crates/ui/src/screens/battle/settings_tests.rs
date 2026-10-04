@@ -129,3 +129,25 @@ fn a_setting_changed_mid_battle_holds_from_the_next_frame() {
     assert!(s.auto_end());
     assert!(s.status(&c).ends_with("auto-end: ON"));
 }
+
+/// Nick: holding Confirm doesn't speed up on top of Fast animations; it
+/// turns their ×2 into ×4.
+#[test]
+fn holding_confirm_plays_a_fast_fight_four_times_as_fast_not_eight() {
+    let normal = frames_of_fight(&mut fight(|_| {}));
+    #[expect(clippy::cast_precision_loss, reason = "a few hundred frames")]
+    let seconds = normal as f32 * FRAME_DT;
+    // Between an eighth and a quarter of the fight: still playing at ×4.
+    let mut h = fight(|s| s.anim_speed = AnimSpeed::Fast);
+    h.hold("f", seconds * 3.0 / 16.0);
+    assert!(in_combat(&h), "played faster than ×4");
+    // A little over a quarter in all: over.
+    h.hold("f", seconds / 16.0 + 0.1);
+    assert!(!in_combat(&h), "played slower than ×4");
+    // The same as holding it at Normal.
+    let mut h = fight(|_| {});
+    h.hold("f", seconds * 3.0 / 16.0);
+    assert!(in_combat(&h));
+    h.hold("f", seconds / 16.0 + 0.1);
+    assert!(!in_combat(&h));
+}

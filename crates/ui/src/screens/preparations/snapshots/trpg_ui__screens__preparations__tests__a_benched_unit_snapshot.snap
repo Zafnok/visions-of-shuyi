@@ -3,7 +3,7 @@ source: crates/ui/src/screens/preparations/tests.rs
 expression: h.snapshot()
 ---
                                                                                                     
-  Preparations                 Loadouts      Pack      Fight!                                       
+  Preparations                 Loadouts      Pack      Options      Fight!                          
                                                                                                     
 ┌─ Units ──────┐┌─ Test Scout · Archer ────────────┐┌─ Stock: weapons ─────────────────────────────┐
 │ Test Lord    ││ Weapon     Steel Bow       25/25 ││ (put back in stock)                          │

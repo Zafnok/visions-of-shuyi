@@ -81,6 +81,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::settings::HELD_SPEED;
 use crate::tips::{draw_tip, fill_placeholders};
 use crate::widgets::help::{HelpKeys, SEPARATOR, cursor_keys_name, help_line, key_name};
 
@@ -1113,9 +1114,20 @@ impl BattleScreen {
 
     /// Plays the frame's sounds and advances what is animated by `dt`
     /// seconds at the player's speeds (0805; `held`: Confirm is down): a
-    /// walk, a fight's playback, an AI action, the EXP bar.
+    /// walk, a fight's playback, an AI action, the EXP bar. Holding
+    /// Confirm plays them at [`HELD_SPEED`] instead of the settings' speed,
+    /// not on top of it (Nick, `docs/design/controls.md`): the clocks
+    /// multiply a held frame by their own ×4, so the frame's time is
+    /// divided by it first. A walk has no held speed-up (the hold skips
+    /// it).
     fn animate(&mut self, ctx: &mut Ctx, dt: f32, held: bool) {
-        let dt = dt * ctx.settings().battle_speed(self.ai_phase());
+        let ai = self.ai_phase();
+        let settings = ctx.settings();
+        let dt = if held && !matches!(self.mode, Mode::Moving { .. }) {
+            dt * settings.battle_speed_held(ai, true) / HELD_SPEED
+        } else {
+            dt * settings.battle_speed(ai)
+        };
         self.play_sounds(ctx, dt, held);
         let mode = std::mem::take(&mut self.mode);
         self.mode = mode.tick(dt, held, &self.state);
