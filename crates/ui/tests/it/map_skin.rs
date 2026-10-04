@@ -159,7 +159,7 @@ type Seen = Vec<(Pos, Facing, (f32, f32), u8)>;
 fn lord_walk(skin: &str) -> (Vec<Pos>, Seen) {
     let mut h = Harness::with_layout(Layout::RightHanded);
     h.with_map_skin(skin);
-    h.keys("Down f f f Right Right Right Up");
+    h.keys("Down f Left f f f Right Right Right Up");
     let path = h.path();
     let lord = h.battle().map(|b| b.state().units()[0].id);
     h.keys("f");
