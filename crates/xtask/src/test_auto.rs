@@ -412,6 +412,41 @@ mod tests {
         assert_eq!(px(&rgba, w, 32 + 7, 64), [0; 4]);
     }
 
+    /// One terrain more than a row holds: its tile starts a second row,
+    /// and the layers and the single pictures move a row down.
+    #[test]
+    fn a_seventeenth_terrain_starts_a_second_row() {
+        let mut src = sources();
+        let mut extra = src.terrain[0].clone();
+        extra.0 = "extra".to_owned();
+        // A background no terrain has.
+        extra.3 = [1, 2, 3];
+        src.terrain.push(extra);
+        assert_eq!(src.terrain.len(), 17);
+        assert_eq!(terrain_rows(&src), 2);
+        assert_eq!((layer_row(&src, 0), singles_row(&src)), (2, 5));
+        let (w, h, rgba) = image(&src).unwrap();
+        assert_eq!((w, h), (256, 96));
+        // Its tile is the first of the second row; the first row is still
+        // the first sixteen, and the rest of the second row is clear.
+        assert_eq!(px(&rgba, w, 0, 16), [1, 2, 3, 255]);
+        let (_, _, _, bg) = &src.terrain[0];
+        assert_eq!(px(&rgba, w, 0, 0), [bg[0], bg[1], bg[2], 255]);
+        assert_eq!(px(&rgba, w, 3 * 16 + 4, 16 + 8), [0; 4]);
+        // The water's line: a row lower than with sixteen terrains.
+        let water = line_color(&src, "water").unwrap();
+        assert_eq!(px(&rgba, w, 3 * 16 + 4, 32 + 8), water);
+        // The file says the same.
+        let text = ron(&src, &test_units::sheets(&src));
+        assert!(text.contains("        \"extra\": (0, 1),\n"), "{text}");
+        assert!(text.contains("            (corners: \"...#\", at: (1, 2)),\n"));
+        assert!(text.contains("        Tiles(of: [\"fort\"], at: (0, 5)),\n"));
+        // No terrain at all: no row of tiles.
+        src.terrain.clear();
+        assert_eq!(terrain_rows(&src), 0);
+        assert_eq!(layer_row(&src, 0), 0);
+    }
+
     #[test]
     fn a_terrain_the_data_lacks_is_named() {
         let mut src = sources();
