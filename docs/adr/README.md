@@ -61,6 +61,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0051](0051-a-bought-works-credit-names-its-private-files.md) | A bought work's credit names the private files it covers, and a bought file without a credit is refused | Accepted; extends ADR-0032 and ADR-0040 |
 | [0052](0052-terrain-pictures-between-tiles-in-layers.md) | Terrain is painted in layers of pictures drawn between tiles, chosen from the terrain grid; a map file names its look | Accepted (0437); extends ADR-0038 and ADR-0049 |
 | [0053](0053-player-controller-buttons.md) | Player controller buttons: one shared set of slots in the saved key bindings (version 2) | Accepted; amends ADR-0031 and ADR-0034 |
+| [0054](0054-screens-say-what-they-show-as-a-view-a-skin-paints-it.md) | A screen says what it shows as a view; a skin paints it | Accepted; extends ADR-0038 |
 
 Numbers 0044 and 0050 are taken by PRs open on 2026-10-04.
 

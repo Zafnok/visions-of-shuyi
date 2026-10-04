@@ -333,6 +333,16 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      `cursor_keys_name`, `help_line`) with `ctx.help_keys()`: each layout
      binds actions to different keys, and after a controller press the same
      calls name that pad's buttons instead (ADR-0036).
+   - **The look is a skin** (ADR-0054). A screen has three parts: its
+     logic (`screens/<name>.rs`: state, keys, and `view(&self, ctx)`), its
+     view (`<name>/view.rs`: plain data saying what is shown, with values
+     as meanings: a volume is a level, not a row of blocks) and its skin
+     (`<name>/glyph.rs`: `paint(ctx, &view, buf)`, the only place with
+     positions, box characters and colours). `draw` is one call to the
+     skin. Tests of what happened read the view or the state; only the
+     skin's tests and snapshots read cells. `screens/options.rs` is the
+     example. The older screens still draw in `draw`; tickets 0239–0241
+     convert them, so don't copy them.
    - Text the player reads is never a string literal (ADR-0045). Put it
      in `assets/lang/en/ui.ron` under a `screen.thing` key and ask for it
      with `ctx.text("title.new_game")`, or `ctx.text_with("results.turns",

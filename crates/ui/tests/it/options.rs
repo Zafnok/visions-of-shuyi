@@ -8,12 +8,17 @@
 //! Sound volume, Layout, Key bindings, (Game mode, with a campaign), Reset
 //! tips, Restore defaults. `key_bindings_screen.rs` opens the Key bindings
 //! row.
+//!
+//! What a row shows is read from the screen's view (`OptionsScreen::view`:
+//! plain data), not from the glyphs a skin painted; the snapshots pin the
+//! glyph look.
 
 use insta::assert_snapshot;
 use trpg_core::GameMode;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord, Layout};
 use trpg_ui::map_view::CursorStyle;
+use trpg_ui::screens::options::{OptionsScreen, Row, ValueView};
 use trpg_ui::settings::{AnimSpeed, EnemyPhaseSpeed, Settings, TextSpeed};
 use trpg_ui::tips::TIPS_SEEN_KEY;
 
@@ -61,6 +66,24 @@ fn options_at_preparations() -> Harness {
     h.keys("Down f Right Right f");
     assert_eq!(h.screens(), ["title", "preparations", "options"]);
     h
+}
+
+/// What `row` of the Options screen on the stack shows beside its name.
+fn value(h: &Harness, row: Row) -> ValueView {
+    let screen = h.game().screen::<OptionsScreen>();
+    let view = screen
+        .unwrap_or_else(|| panic!("no options screen"))
+        .view(h.game().ctx());
+    let shown = view.row(row).map(|r| r.value.clone());
+    shown.unwrap_or_else(|| panic!("no {row:?} row"))
+}
+
+/// A value in words that left and right change.
+fn setting(text: &str) -> ValueView {
+    ValueView::Text {
+        text: text.to_owned(),
+        adjustable: true,
+    }
 }
 
 fn settings(h: &Harness) -> Settings {
@@ -195,8 +218,7 @@ fn auto_end_is_one_setting_in_options_and_in_battle() {
     assert!(!settings(&h).auto_end_turn);
     // Options over the battle shows it off, and turns it on again.
     h.keys("d Down Down f").keys(TO_AUTO_END);
-    let row = format!("{:<24}◄ Off ►", "Auto-end turn");
-    assert!(shows(&h, &row), "{}", h.snapshot());
+    assert_eq!(value(&h, Row::AutoEnd), setting("Off"));
     h.keys("f d d");
     assert!(shows(&h, "auto-end: ON"));
     let h = relaunch(h);
@@ -247,12 +269,20 @@ fn volumes_reach_the_mixer_and_persist() {
     // The slider: five at a time.
     h.keys(TO_MUSIC).keys("Left Left Left");
     assert!(close(h.volumes(), (0.65, 0.8)), "{:?}", h.volumes());
-    assert!(shows(&h, "██████▒░░░  65"), "{}", h.snapshot());
+    let slider = ValueView::Volume {
+        level: 65,
+        max: 100,
+    };
+    assert_eq!(value(&h, Row::MusicVolume), slider);
     // The box: Confirm, the number, Enter.
     h.keys("f");
     assert!(shows(&h, "Enter done · Backspace delete · Escape cancel"));
     h.type_text("7");
-    assert!(shows(&h, " 7_ "), "{}", h.snapshot());
+    let typed = ValueView::NumberBox {
+        digits: "7".to_owned(),
+        typing: true,
+    };
+    assert_eq!(value(&h, Row::MusicVolume), typed);
     assert_snapshot!(h.snapshot());
     // The game's keys do nothing while it is open; nothing changes yet.
     h.keys("Down d");

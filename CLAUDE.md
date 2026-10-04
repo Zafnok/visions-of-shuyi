@@ -43,6 +43,9 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
    shown on the battle map goes in the map scene and is painted by the map
    skins, not drawn straight into the buffer. Tests of what happened read
    the scene or the state; only tests of a look read cells and colours.
+   Screens follow the same split (ADR-0054): a screen's logic builds a
+   view (plain data) and a skin paints it, as `screens/options.rs` does;
+   a new screen never decides its look in `draw`.
 
 ## Map of the repo
 

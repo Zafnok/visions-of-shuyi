@@ -11,13 +11,25 @@
 //! every setting back (custom keys are reset on the Key bindings screen,
 //! and the layout stays). Whatever does something big asks first
 //! (`docs/design/options.md`).
+//!
+//! **The look is a skin.** This module decides what the screen shows and
+//! does, and says it as plain data: an [`OptionsView`]
+//! ([`OptionsScreen::view`]). [`glyph::paint`] draws that view as glyphs.
+//! Nothing here knows a cell, a colour or a position, so another look (a
+//! bought UI pack) is another painter of the same view. Tests of what
+//! happened read the view or the settings; only [`glyph`]'s tests read
+//! cells.
+
+pub mod glyph;
+pub mod view;
+
+pub use view::{OptionsView, QuestionView, RowView, ValueView};
 
 use trpg_core::GameMode;
 
-use super::{KeyBindingsScreen, LayoutPickerScreen, layout_picker, print_centred};
+use super::{KeyBindingsScreen, LayoutPickerScreen, layout_picker};
 use crate::audio::MenuSound;
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, TextKey, text_key, text_keys_help};
 use crate::map_view::CursorStyle;
 use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Transition};
@@ -40,22 +52,8 @@ pub const MODE_AT_PREP_MESSAGE: &str = "options.message.mode_at_prep";
 /// How far the cursor's left and right keys move a volume's slider.
 /// *Tunable.*
 pub const VOLUME_STEP: u8 = 5;
-/// Cells in a volume's bar.
-const VOLUME_BAR: u8 = 10;
 /// The most digits the volume box takes.
 const MAX_DIGITS: usize = 3;
-
-/// The panel, in cells.
-const PANEL: Rect = Rect::new(20, 3, 60, 20);
-/// Column of the row labels.
-const LABEL_X: i32 = PANEL.x + 4;
-/// Column of the row values.
-const VALUE_X: i32 = PANEL.x + 30;
-/// Row of the message under the panel.
-const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
-/// Height of a question's box: its two lines, a blank row above and below,
-/// and the border.
-const QUESTION_H: i32 = 6;
 
 /// One row of the screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -176,18 +174,6 @@ const fn on_off_key(on: bool) -> &'static str {
     }
 }
 
-/// A volume as a bar of [`VOLUME_BAR`] cells (a half-filled cell for the
-/// odd five) and its number.
-fn volume_text(volume: u8) -> String {
-    let volume = volume.min(MAX_VOLUME);
-    let per_cell = MAX_VOLUME / VOLUME_BAR;
-    let full = usize::from(volume / per_cell);
-    let half = usize::from(volume % per_cell >= per_cell / 2);
-    let empty = usize::from(VOLUME_BAR) - full - half;
-    let bar = ["█".repeat(full), "▒".repeat(half), "░".repeat(empty)].concat();
-    format!("{bar} {volume:>3}")
-}
-
 /// `all`'s value one step after (`forward`) or before `current`, stopping
 /// at the ends (`wrap`: going round instead).
 fn stepped<T: Copy + PartialEq>(all: &[T], current: T, forward: bool, wrap: bool) -> T {
@@ -232,13 +218,9 @@ impl NumberBox {
         Some(u8::try_from(typed.min(u32::from(MAX_VOLUME))).unwrap_or(MAX_VOLUME))
     }
 
-    /// What the row shows while the box is open.
-    fn text(&self) -> String {
-        if self.pad {
-            self.digits.clone()
-        } else {
-            format!("{}_", self.digits)
-        }
+    /// The digits in the box.
+    pub fn digits(&self) -> &str {
+        &self.digits
     }
 }
 
@@ -327,10 +309,21 @@ impl OptionsScreen {
         ctx.campaign_mode == Some(GameMode::Classic) && ctx.mode_switch == ModeSwitch::Open
     }
 
-    /// What `row` shows as its value: the setting, the layout in use, the
-    /// campaign's mode; nothing for the rows that only do something.
-    pub fn value(ctx: &Ctx, row: Row) -> String {
+    /// What `row` shows beside its name: the setting, the layout in use,
+    /// the campaign's mode; nothing for the rows that only do something.
+    /// (The volume box, while open, is the screen's:
+    /// [`view`](Self::view).)
+    pub fn value(ctx: &Ctx, row: Row) -> ValueView {
         let s = ctx.settings();
+        let adjustable = row.is_setting();
+        let words = |text: &str| ValueView::Text {
+            text: text.to_owned(),
+            adjustable,
+        };
+        let volume = |level| ValueView::Volume {
+            level,
+            max: MAX_VOLUME,
+        };
         let key = match row {
             Row::TextSpeed => s.text_speed.key(),
             Row::AnimSpeed => s.anim_speed.key(),
@@ -339,19 +332,52 @@ impl OptionsScreen {
             Row::AutoEnd => on_off_key(s.auto_end_turn),
             Row::Fullscreen => on_off_key(s.fullscreen),
             Row::Cursor => cursor_key(s.cursor_style),
-            Row::MusicVolume => return volume_text(s.music_volume),
-            Row::SoundVolume => return volume_text(s.sound_volume),
+            Row::MusicVolume => return volume(s.music_volume),
+            Row::SoundVolume => return volume(s.sound_volume),
             Row::Layout => {
-                let layout = ctx.layout().map(layout_picker::label);
-                return layout.unwrap_or_default().to_owned();
+                return words(ctx.layout().map(layout_picker::label).unwrap_or_default());
             }
             Row::GameMode => match ctx.campaign_mode {
                 Some(mode) => mode_key(mode),
-                None => return String::new(),
+                None => return ValueView::None,
             },
-            Row::KeyBindings | Row::ResetTips | Row::RestoreDefaults => return String::new(),
+            Row::KeyBindings | Row::ResetTips | Row::RestoreDefaults => return ValueView::None,
         };
-        ctx.text(key).to_owned()
+        words(ctx.text(key))
+    }
+
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint`]): every row with its name and value, the row in
+    /// focus, the volume box if it is open, the message, the question and
+    /// the help line, all in the player's language and naming their keys.
+    pub fn view(&self, ctx: &Ctx) -> OptionsView {
+        let rows = Self::rows(ctx).into_iter().map(|row| {
+            let focused = row == self.row;
+            let value = match self.typing.as_ref().filter(|_| focused) {
+                Some(typing) => ValueView::NumberBox {
+                    digits: typing.digits.clone(),
+                    typing: !typing.pad,
+                },
+                None => Self::value(ctx, row),
+            };
+            RowView {
+                row,
+                label: ctx.text(row.key()).to_owned(),
+                value,
+                focused,
+                starts_group: row.starts_group(),
+            }
+        });
+        OptionsView {
+            title: ctx.text(TITLE).to_owned(),
+            rows: rows.collect(),
+            message: self.message.map(|key| ctx.text(key).to_owned()),
+            question: self.asking.map(|question| QuestionView {
+                text: ctx.text(question.key()).to_owned(),
+                answers: ctx.text_with("options.question.answers", &[]),
+            }),
+            help: self.help(ctx),
+        }
     }
 
     /// Moves the focus one row up or down, wrapping.
@@ -565,28 +591,6 @@ impl OptionsScreen {
             None => ctx.text_with(self.help_key(ctx), &[]),
         }
     }
-
-    /// Draws `question` in a double-bordered box in the middle of the
-    /// screen, with its answers' keys under it (the look of the Key
-    /// bindings screen's question).
-    fn draw_question(ctx: &Ctx, buf: &mut GlyphBuffer, question: Question) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let answers = ctx.text_with("options.question.answers", &[]);
-        let text = ctx.text(question.key());
-        let widest = text.chars().count().max(answers.chars().count());
-        let w = i32::try_from(widest).unwrap_or(0) + 4;
-        let rect = Rect::new(
-            (i32::from(buf.width()) - w) / 2,
-            (i32::from(buf.height()) - QUESTION_H) / 2,
-            w,
-            QUESTION_H,
-        );
-        buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-        buf.print(rect.x + 2, rect.y + 2, text, c(UiColor::Text), bg);
-        buf.print(rect.x + 2, rect.y + 3, &answers, c(UiColor::TextDim), bg);
-    }
 }
 
 /// Steps the setting `row` shows; other rows have none.
@@ -663,59 +667,11 @@ impl Screen for OptionsScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let (black, bg) = (c(UiColor::Black), c(UiColor::PanelBg));
-        let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
-        let bar = c(UiColor::PanelBorderFocus);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
-        buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-        buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-        let title = format!(" {} ", ctx.text(TITLE));
-        buf.print(PANEL.x + 2, PANEL.y, &title, c(UiColor::TextHighlight), bg);
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
 
-        let mut y = PANEL.y + 2;
-        for row in Self::rows(ctx) {
-            if row.starts_group() {
-                y += 1;
-            }
-            let focused = row == self.row;
-            let label = ctx.text(row.key());
-            if focused {
-                buf.print(LABEL_X - 1, y, &format!(" {label} "), bg, bar);
-            } else {
-                buf.print(LABEL_X, y, label, text, bg);
-            }
-            if let Some(typing) = self.typing.as_ref().filter(|_| focused) {
-                // The box, where the value was.
-                let shown = format!(" {:<w$} ", typing.text(), w = MAX_DIGITS + 1);
-                buf.print(VALUE_X - 1, y, &shown, bg, bar);
-                y += 1;
-                continue;
-            }
-            let value = Self::value(ctx, row);
-            let value_fg = if focused {
-                c(UiColor::TextHighlight)
-            } else {
-                text
-            };
-            buf.print(VALUE_X, y, &value, value_fg, bg);
-            if focused && row.is_setting() {
-                buf.print(VALUE_X - 2, y, "◄", dim, bg);
-                let after = VALUE_X + i32::try_from(value.chars().count()).unwrap_or(0) + 1;
-                buf.print(after, y, "►", dim, bg);
-            }
-            y += 1;
-        }
-
-        if let Some(message) = self.message {
-            let message = ctx.text(message);
-            print_centred(buf, MESSAGE_ROW, message, c(UiColor::TextHighlight), black);
-        }
-        if let Some(question) = self.asking {
-            Self::draw_question(ctx, buf, question);
-        }
-        let bottom = i32::from(buf.height()) - 1;
-        print_centred(buf, bottom, &self.help(ctx), dim, black);
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 

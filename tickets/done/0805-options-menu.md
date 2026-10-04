@@ -134,6 +134,12 @@ in `docs/design/options.md` and `death-and-difficulty.md`):
   Preparations, which is also where Restart Battle goes back to. The
   Preparations screen got an `Options` tab for it.
 
+- The Options screen's look is a skin (Nick, 2026-10-04: so a bought pack
+  can replace "the lo-fi retro look" later "without affecting logic").
+  The screen says what it shows as plain data (`OptionsScreen::view`,
+  `options/view.rs`) and `options/glyph.rs` paints it; ADR-0054 makes
+  this the rule for screens. The look didn't change: no snapshot did.
+
 **The step ticket 0440 added to this one** (sprite walking speed with
 `anim_speed: Fast`, merged into `main` while this PR was open) is done:
 `MapSkin::fast_walk_tiles_per_s` (the sprite skin's is
@@ -176,7 +182,10 @@ stays the skin's and nothing stacks.
     screen, with the rows in the ticket's order. No mockups were shown;
     say so if you want to pick from some.
 
-**Follow-up tickets.** 0120 (a test of the bought-art fetch fails now and
+**Follow-up tickets.** 0239, 0240 and 0241 (Nick asked for them: the
+title, Key bindings and the layout picker; the other menus; the battle
+screen's panels and the dialogue screen get the same view + skin split).
+0120 (a test of the bought-art fetch fails now and
 then on macOS; seen on this PR, not caused by it). 0828 was filed and then
 withdrawn in this PR: with the switch only at Preparations, a battle always
 starts in the mode it will end in.

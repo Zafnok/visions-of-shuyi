@@ -24,6 +24,21 @@ fn sounds(c: &mut Ctx) -> Vec<String> {
     c.audio.take().into_iter().filter_map(cue).collect()
 }
 
+/// What the focused row shows beside its name.
+fn focused_value(s: &OptionsScreen, c: &Ctx) -> ValueView {
+    let view = s.view(c);
+    view.focused().map(|r| r.value.clone()).unwrap()
+}
+
+/// The volume box as the view shows it: its digits, and whether it is
+/// typed in.
+fn boxed(digits: &str, typing: bool) -> ValueView {
+    ValueView::NumberBox {
+        digits: digits.to_owned(),
+        typing,
+    }
+}
+
 fn saved(c: &Ctx) -> Settings {
     let text = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
     Settings::from_ron(&text).unwrap()
@@ -137,11 +152,7 @@ fn confirm_on_a_volume_opens_a_box_to_type_the_number() {
     assert_eq!(s.focus(), Row::SoundVolume);
     assert_eq!(sounds(&mut c), ["menu_select"]);
     assert_eq!(s.help(&c), "Enter done · Backspace delete · Escape cancel");
-    assert!(
-        drawn_row(&s, &c, 13).contains(" _ "),
-        "{}",
-        drawn_row(&s, &c, 13)
-    );
+    assert_eq!(focused_value(&s, &c), boxed("", true));
     // The game's keys do nothing while it is open.
     press(&mut s, &mut c, &[Action::CursorDown, Action::Cancel]);
     assert!(s.typing().is_some());
@@ -149,9 +160,18 @@ fn confirm_on_a_volume_opens_a_box_to_type_the_number() {
     type_in(&mut s, &mut c, "3x7", &[]);
     assert_eq!(s.typing().and_then(NumberBox::value), Some(37));
     assert_eq!(sounds(&mut c), ["menu_cancel"], "the x is refused");
-    assert!(drawn_row(&s, &c, 13).contains(" 37_ "));
+    assert_eq!(focused_value(&s, &c), boxed("37", true));
+    // The other rows show their values as ever.
+    let music = s.view(&c).row(Row::MusicVolume).map(|r| r.value.clone());
+    assert_eq!(
+        music,
+        Some(ValueView::Volume {
+            level: 80,
+            max: 100
+        })
+    );
     type_in(&mut s, &mut c, "55", &[]);
-    assert_eq!(s.typing().map(NumberBox::text), Some("375_".to_owned()));
+    assert_eq!(s.typing().map(NumberBox::digits), Some("375"));
     // Backspace deletes; nothing changes until Enter.
     type_in(&mut s, &mut c, "", &[Key::Backspace, Key::Backspace]);
     assert_eq!(s.typing().and_then(NumberBox::value), Some(3));
@@ -193,7 +213,7 @@ fn the_volume_box_steps_by_one_on_a_controller() {
     s.update(&mut c, &pad(&[Action::Confirm]));
     assert_eq!(s.typing().and_then(NumberBox::value), Some(80));
     assert_eq!(s.help(&c), "arrows change · f done · d cancel");
-    assert!(drawn_row(&s, &c, 12).contains(" 80 "));
+    assert_eq!(focused_value(&s, &c), boxed("80", false));
     sounds(&mut c);
     let steps = [Action::CursorUp, Action::CursorRight, Action::CursorUp];
     s.update(&mut c, &pad(&steps));
@@ -261,20 +281,29 @@ fn every_setting_row_changes_its_own_setting() {
 #[test]
 fn rows_show_their_values() {
     let mut c = ctx();
-    let value = |c: &Ctx, row| OptionsScreen::value(c, row);
+    // What each row shows, as the view says it: the words, or `<level>`
+    // for a volume, and `*` if left and right change it.
+    let value = |c: &Ctx, row| match OptionsScreen::value(c, row) {
+        ValueView::None => String::new(),
+        ValueView::Text { text, adjustable } => {
+            format!("{text}{}", if adjustable { "*" } else { "" })
+        }
+        ValueView::Volume { level, max } => format!("<{level}/{max}>"),
+        ValueView::NumberBox { .. } => "box".to_owned(),
+    };
     let shown: Vec<String> = Row::ALL.iter().map(|&r| value(&c, r)).collect();
     assert_eq!(
         shown,
         [
-            "Normal",
-            "Normal",
-            "On",
-            "Normal",
-            "Off",
-            "Off",
-            "Corners",
-            "████████░░  80",
-            "████████░░  80",
+            "Normal*",
+            "Normal*",
+            "On*",
+            "Normal*",
+            "Off*",
+            "Off*",
+            "Corners*",
+            "<80/100>",
+            "<80/100>",
             "Right-handed",
             "",
             "",
@@ -291,21 +320,100 @@ fn rows_show_their_values() {
     .unwrap();
     c.campaign_mode = Some(GameMode::Classic);
     c.use_layout(Layout::LeftHanded);
-    assert_eq!(value(&c, Row::Cursor), "Large corners");
-    assert_eq!(value(&c, Row::MusicVolume), "░░░░░░░░░░   0");
-    assert_eq!(value(&c, Row::SoundVolume), "██████████ 100");
-    // A half cell for the odd five; under it rounds down.
-    assert_eq!(volume_text(85), "████████▒░  85");
-    assert_eq!(volume_text(84), "████████░░  84");
-    assert_eq!(volume_text(5), "▒░░░░░░░░░   5");
-    assert_eq!(volume_text(99), "█████████▒  99");
-    assert_eq!(volume_text(200), "██████████ 100");
-    assert_eq!(value(&c, Row::AutoEnd), "On");
+    assert_eq!(value(&c, Row::Cursor), "Large corners*");
+    assert_eq!(value(&c, Row::MusicVolume), "<0/100>");
+    assert_eq!(value(&c, Row::SoundVolume), "<100/100>");
+    assert_eq!(value(&c, Row::AutoEnd), "On*");
     assert_eq!(value(&c, Row::GameMode), "Classic");
     assert_eq!(value(&c, Row::Layout), "Left-handed");
     assert_eq!(c.text(cursor_key(CursorStyle::TileGlow)), "Tile glow");
     c.campaign_mode = Some(GameMode::Casual);
     assert_eq!(value(&c, Row::GameMode), "Casual");
+}
+
+/// The view is the whole screen as data: what a skin paints.
+#[test]
+fn the_view_says_what_the_screen_shows() {
+    let mut c = ctx();
+    let s = on(Row::Layout);
+    let view = s.view(&c);
+    assert_eq!(view.title, "Options");
+    assert_eq!(view.help, s.help(&c));
+    assert_eq!((view.message.clone(), view.question.clone()), (None, None));
+    let rows: Vec<Row> = view.rows.iter().map(|r| r.row).collect();
+    assert_eq!(rows, OptionsScreen::rows(&c));
+    let labels: Vec<&str> = view.rows.iter().map(|r| r.label.as_str()).collect();
+    assert_eq!(labels[0], "Text speed");
+    assert_eq!(labels[rows.len() - 1], "Restore defaults");
+    // One row in focus; the groups start at Layout and Reset tips.
+    let focused: Vec<Row> = view
+        .rows
+        .iter()
+        .filter(|r| r.focused)
+        .map(|r| r.row)
+        .collect();
+    assert_eq!(focused, [Row::Layout]);
+    assert_eq!(view.focused().map(|r| r.row), Some(Row::Layout));
+    let groups: Vec<Row> = view
+        .rows
+        .iter()
+        .filter(|r| r.starts_group)
+        .map(|r| r.row)
+        .collect();
+    assert_eq!(groups, [Row::Layout, Row::ResetTips]);
+    for row in &view.rows {
+        assert_eq!(
+            row.value,
+            OptionsScreen::value(&c, row.row),
+            "{:?}",
+            row.row
+        );
+    }
+    assert_eq!(view.row(Row::GameMode), None);
+    assert_eq!(
+        view.row(Row::Layout).and_then(|r| r.value.text()),
+        Some("Right-handed")
+    );
+    assert_eq!(
+        view.row(Row::MusicVolume).and_then(|r| r.value.text()),
+        None
+    );
+    // A question and a message, in the player's words and keys.
+    let mut s = on(Row::ResetTips);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    let question = s.view(&c).question;
+    assert_eq!(
+        question,
+        Some(QuestionView {
+            text: "Show every tip again?".to_owned(),
+            answers: "f yes / d no".to_owned(),
+        })
+    );
+    press(&mut s, &mut c, &[Action::Confirm]);
+    let view = s.view(&c);
+    assert_eq!(view.question, None);
+    assert_eq!(view.message.as_deref(), Some("Tips will show again"));
+    // With a campaign, its mode is a row.
+    c.campaign_mode = Some(GameMode::Classic);
+    let mode = s.view(&c).row(Row::GameMode).map(|r| r.value.clone());
+    assert_eq!(mode.as_ref().and_then(ValueView::text), Some("Classic"));
+}
+
+/// Drawing is the glyph skin painting the view, nothing more.
+#[test]
+fn draw_paints_the_view_with_the_glyph_skin() {
+    use crate::console::{CONSOLE_H, CONSOLE_W};
+    let mut c = ctx();
+    let mut s = on(Row::SoundVolume);
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    let bg = c.palette.get(crate::color::UiColor::Black);
+    let blank = crate::glyph_buffer::Cell::new(' ', bg, bg);
+    let mut drawn = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    s.draw(&c, &mut drawn);
+    let mut painted = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    glyph::paint(&c, &s.view(&c), &mut painted);
+    assert_eq!(drawn, painted);
+    assert!(s.as_any().is_some());
 }
 
 #[test]
@@ -513,28 +621,4 @@ fn stepping_helpers_stop_or_wrap() {
     assert_eq!(stepped_volume(50, false), 45);
     assert_eq!(stepped_volume(3, false), 0);
     assert_eq!(stepped_volume(0, false), 0);
-}
-
-/// Row `y` of the screen as drawn, trimmed.
-fn drawn_row(s: &OptionsScreen, c: &Ctx, y: i32) -> String {
-    use crate::console::{CONSOLE_H, CONSOLE_W};
-    let black = c.palette.get(UiColor::Black);
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new(' ', black, black));
-    s.draw(c, &mut buf);
-    let glyphs = (0..i32::from(CONSOLE_W)).map(|x| buf.get(x, y).map_or(' ', |c| c.glyph));
-    glyphs.collect::<String>().trim().to_owned()
-}
-
-/// The message sits one blank row under the panel's bottom border.
-#[test]
-fn the_message_is_drawn_under_the_panel() {
-    let mut c = ctx();
-    let mut s = on(Row::ResetTips);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    let bottom = PANEL.y + PANEL.h - 1;
-    assert!(drawn_row(&s, &c, bottom).starts_with('└'));
-    assert_eq!(drawn_row(&s, &c, bottom + 1), "");
-    assert_eq!(drawn_row(&s, &c, bottom + 2), "Tips will show again");
-    assert_eq!(drawn_row(&s, &c, bottom + 3), "");
 }
