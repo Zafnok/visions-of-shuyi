@@ -629,9 +629,12 @@ mod tests {
         assert!(matches!(stay, Transition::None));
         assert_eq!(ctx.map_skin.name(), "sprite");
         assert_eq!(label(&menu), "Map skin: test tileset");
-        // Still on it: again for the unit sheets on glyph terrain, and
-        // again for glyphs.
+        // Still on it: again for the tileset with layers, again for the
+        // unit sheets on glyph terrain, and again for glyphs.
         assert_eq!(menu.menu.focus(), MAP_SKIN_TOOL);
+        menu.update(&mut ctx, &frame(&[Confirm]));
+        assert_eq!(ctx.map_skin.name(), "sprite");
+        assert_eq!(label(&menu), "Map skin: test_auto");
         menu.update(&mut ctx, &frame(&[Confirm]));
         assert_eq!(ctx.map_skin.name(), "sprite_units");
         assert_eq!(label(&menu), "Map skin: test_units");

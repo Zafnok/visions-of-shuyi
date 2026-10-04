@@ -565,12 +565,16 @@ pub(crate) mod tests {
             origin in any_pos(),
             size in (-2..45i32, -2..40i32),
             tiles in prop::collection::vec(any_tile(), 0..200),
+            rim in prop::collection::vec(prop::option::of(0u16..24), 0..180),
+            look in prop::sample::select(vec!["outdoor", "indoor", "cave"]),
             units in prop::collection::vec(any_unit(), 0..8),
             cursor in prop::option::of(any_cursor()),
             path in prop::collection::vec(any_pos(), 0..6),
             clock_ms in 0u64..5000,
         ) -> MapScene {
-            MapScene { origin, size, tiles, units, cursor, path, clock_ms }
+            let rim = rim.into_iter().map(|id| id.map(TerrainId)).collect();
+            let look = trpg_content::MapLook { tiles: look.to_owned() };
+            MapScene { origin, size, tiles, rim, look, units, cursor, path, clock_ms }
         }
     }
 

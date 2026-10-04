@@ -1,7 +1,9 @@
 //! `cargo xtask map-sprite-import`: copies the bought map sprites the game
-//! uses into `assets-private/game/units/` under stable names and writes the
-//! tileset that names them, `assets-private/game/tilesets/tiny_tales.ron`
-//! (ticket 0436, ADR-0049).
+//! uses into `assets-private/game/units/` under stable names (ticket 0436,
+//! ADR-0049). The tileset that names them,
+//! `assets-private/game/tilesets/tiny_tales.ron`, is written by
+//! `cargo xtask tileset-import` (ADR-0052), with [`units`]: run it after
+//! this.
 //!
 //! A bought map sprite is one 48×80 sheet per character or class: 3
 //! columns (walking frames) × 4 rows (facing down, left, right, up) of
@@ -21,11 +23,11 @@ use trpg_content::image::png_size;
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask map-sprite-import [--list]\n\n\
 Copies each bought map sprite the game uses from\n\
-assets-private/library/tiny-tales/characters/ to assets-private/game/units/<name>.png\n\
-and writes assets-private/game/tilesets/tiny_tales.ron, which names them.\n\
+assets-private/library/tiny-tales/characters/ to assets-private/game/units/<name>.png.\n\
 --list  print which sprite each class and character gets, and copy nothing\n\n\
-Run `cargo xtask private-assets --library` first. Afterwards commit and push in\n\
-assets-private/, then run `cargo xtask private-assets --pin`.";
+Run `cargo xtask private-assets --library` first. Afterwards run\n\
+`cargo xtask tileset-import`, which writes the tileset that names them; commit and\n\
+push in assets-private/; then run `cargo xtask private-assets --pin`.";
 
 /// The sorted bought characters, relative to the repo root.
 pub const LIBRARY_DIR: &str = "assets-private/library/tiny-tales/characters";
@@ -141,9 +143,9 @@ fn bundle_path(name: &str) -> String {
     format!("units/{name}.png")
 }
 
-/// The tileset file naming `sprites`: no terrain tiles (the glyph skin
-/// paints the ground until ticket 0437), each unit its standing frame.
-pub fn tileset(sprites: &[MapSprite]) -> String {
+/// The `unit_px` and `units` fields of the tileset file naming `sprites`,
+/// each unit its standing frame (`tileset-import` writes the file).
+pub fn units(sprites: &[MapSprite]) -> String {
     let entry = |s: &MapSprite| {
         let (path, (column, row)) = (bundle_path(s.name), STANDING);
         format!("(image: \"{path}\", frame: ({column}, {row}), walk: true)")
@@ -169,11 +171,9 @@ pub fn tileset(sprites: &[MapSprite]) -> String {
     let fallback = sprites.iter().find(|s| s.who == For::Fallback);
     let fallback = fallback.map(entry).unwrap_or_default();
     format!(
-        "// Written by `cargo xtask map-sprite-import` (ticket 0436). Do not edit: change\n\
-         // the table in crates/xtask/src/map_sprite_import.rs and run it again.\n\
-         (\n    id: \"{TILESET_ID}\",\n    unit_px: ({}, {}),\n    units: (\n        \
+        "    unit_px: ({}, {}),\n    units: (\n        \
          characters: {{\n{characters}        }},\n        classes: {{\n{classes}        }},\n        \
-         fallback: {fallback},\n    ),\n)\n",
+         fallback: {fallback},\n    ),\n",
         FRAME.0, FRAME.1
     )
 }
@@ -193,8 +193,7 @@ pub fn list(sprites: &[MapSprite]) -> String {
 }
 
 /// Runs the command under repo root `root`: copies every sprite of
-/// `sprites` and writes the tileset. Every source is checked before any
-/// file is written.
+/// `sprites`. Every source is checked before any file is written.
 pub fn run(root: &Path, sprites: &[MapSprite]) -> Result<String, String> {
     let library = root.join(LIBRARY_DIR);
     if !library.is_dir() || !root.join(GAME_DIR).is_dir() {
@@ -232,10 +231,9 @@ pub fn run(root: &Path, sprites: &[MapSprite]) -> Result<String, String> {
     for (name, bytes) in &files {
         write(game.join(bundle_path(name)), bytes)?;
     }
-    let tileset_path = format!("tilesets/{TILESET_ID}.ron");
-    write(game.join(&tileset_path), tileset(sprites).as_bytes())?;
     Ok(format!(
-        "map-sprite-import: wrote {} sprites to {GAME_DIR}/units/ and {GAME_DIR}/{tileset_path}",
+        "map-sprite-import: wrote {} sprites to {GAME_DIR}/units/; now run \
+         `cargo xtask tileset-import`, which writes the tileset that names them",
         files.len()
     ))
 }
@@ -275,19 +273,18 @@ mod tests {
     }
 
     #[test]
-    fn the_tileset_names_each_units_standing_frame() {
+    fn the_units_table_names_each_units_standing_frame() {
         assert_eq!(
-            tileset(&TWO),
-            "// Written by `cargo xtask map-sprite-import` (ticket 0436). Do not edit: change\n\
-             // the table in crates/xtask/src/map_sprite_import.rs and run it again.\n\
-             (\n    id: \"tiny_tales\",\n    unit_px: (16, 20),\n    units: (\n        \
+            units(&TWO),
+            "    unit_px: (16, 20),\n    units: (\n        \
              characters: {\n            \
              \"lead_f\": (image: \"units/b.png\", frame: (1, 0), walk: true),\n        },\n        \
              classes: {\n            \
              \"exile\": (image: \"units/a.png\", frame: (1, 0), walk: true),\n            \
              \"mage\": (image: \"units/b.png\", frame: (1, 0), walk: true),\n        },\n        \
-             fallback: (image: \"units/a.png\", frame: (1, 0), walk: true),\n    ),\n)\n"
+             fallback: (image: \"units/a.png\", frame: (1, 0), walk: true),\n    ),\n"
         );
+        assert_eq!(TILESET_ID, "tiny_tales");
     }
 
     #[test]
@@ -334,19 +331,19 @@ mod tests {
     }
 
     #[test]
-    fn run_copies_each_sprite_once_and_writes_the_tileset() {
+    fn run_copies_each_sprite_once_and_leaves_the_tileset_to_its_importer() {
         let root = root("map-sprite-import");
         let summary = run(&root, &TWO).unwrap();
         assert_eq!(
             summary,
-            "map-sprite-import: wrote 2 sprites to assets-private/game/units/ and \
-             assets-private/game/tilesets/tiny_tales.ron"
+            "map-sprite-import: wrote 2 sprites to assets-private/game/units/; now run \
+             `cargo xtask tileset-import`, which writes the tileset that names them"
         );
         let game = root.join(GAME_DIR);
         let read = |path: &str| fs::read(game.join(path)).unwrap();
         assert_eq!(read("units/a.png").last(), Some(&1));
         assert_eq!(read("units/b.png").last(), Some(&2));
-        assert_eq!(read("tilesets/tiny_tales.ron"), tileset(&TWO).into_bytes());
+        assert!(!game.join("tilesets").exists());
         fs::remove_dir_all(&root).unwrap();
     }
 

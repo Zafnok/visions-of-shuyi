@@ -19,7 +19,8 @@ validated by the all-assets test (ADR-0005). The file stem is the map's id
 1. **Header**: a RON struct with
    - `name`: the map's display name;
    - `legend`: tile character → terrain id from `assets/data/terrain.ron`;
-   - `features` (optional): tile `(x, y)` → a shop or a chest (below).
+   - `features` (optional): tile `(x, y)` → a shop or a chest (below);
+   - `look` (optional): how the map is drawn (below).
    RON `//` comments are allowed.
 2. **Separator**: a line that is exactly `---`.
 3. **Tiles**: one character per tile, one line per row, top row first. Every
@@ -45,6 +46,20 @@ features: {
 - **Villages** are not supported yet: Nick deferred every building tile
   except `fort` (`docs/design/terrain.md`).
 
+### Look
+
+```
+look: (tiles: "indoor"),
+```
+
+`tiles` names the set of pictures a skin that has pictures paints the
+terrain with: `"outdoor"` (the default: leave `look` out) or `"indoor"`
+(a fortress, a cave, a hall). It changes only the look: the terrain ids,
+and so the rules, are the same, and the glyph look ignores it. A tileset
+says what each look is (`assets/tilesets/README.md`); one that lacks a look
+paints the map with its own. The loader keeps it beside the map the rules
+see (`MapDef::look`), never in it (ADR-0038, ADR-0052).
+
 One character per tile is the *file* format only: on screen each tile is two
 glyphs wide, taken from the terrain's `glyphs` in `terrain.ron` (ADR-0012).
 
@@ -60,6 +75,7 @@ Each is reported with `file:line:column`, and all are reported at once:
 - a map wider or taller than 64 tiles;
 - a feature outside the map, on a tile no movement type can enter, a shop
   with an empty list (or a blacksmith with a list), a chest with 0 gold;
-- an unknown item id, or a shop listing an item its kind doesn't sell.
+- an unknown item id, or a shop listing an item its kind doesn't sell;
+- a `look` whose `tiles` isn't `"outdoor"` or `"indoor"`.
 
 Unused legend entries are allowed.

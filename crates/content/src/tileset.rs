@@ -1,12 +1,15 @@
-//! Tilesets (ADR-0038, ADR-0049): what a sprite map skin paints the battle
-//! map with. `assets/tilesets/<id>.ron` names a tile for every terrain in
-//! one image (or no terrain at all: the glyph skin then paints it) and a
-//! picture for units by character and by class, each from the tileset's
-//! image or from an image file of its own (format in
+//! Tilesets (ADR-0038, ADR-0049, ADR-0052): what a sprite map skin paints
+//! the battle map with. `assets/tilesets/<id>.ron` names a tile for every
+//! terrain in one image and the layers painted over them, for each look a
+//! map may ask for (or no terrain at all: the glyph skin then paints it),
+//! and a picture for units by character and by class, each from the
+//! tileset's image or from an image file of its own (format in
 //! `assets/tilesets/README.md`).
 //!
 //! Only looks hang off the game's ids here: nothing in a tileset changes a
 //! rule.
+
+mod look;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -22,6 +25,8 @@ use crate::error::ContentError;
 use crate::image::{ImageId, ImageInfo, ImageTable};
 use crate::ron_loader::parse_ron;
 use crate::terrain::TerrainDisplayTable;
+
+pub use look::{CornerLayer, Layer, Look, MIXES, TileLayer, mix, mix_name, parse_mix};
 
 /// The directory of tileset files inside the bundle.
 pub const TILESETS_DIR: &str = "tilesets";
@@ -74,9 +79,12 @@ pub struct TerrainTiles {
     /// A map tile's size, across × down, in pixels: in the image, and on
     /// screen.
     pub tile_px: (u32, u32),
-    /// Each terrain's tile, in [`image`](Self::image). Every terrain has
-    /// one.
-    pub tiles: BTreeMap<TerrainId, ImageRect>,
+    /// The tileset's own look: what a map is painted as unless
+    /// [`looks`](Self::looks) has the look it names.
+    pub look: Look,
+    /// Its other looks, by the name a map file gives
+    /// ([`crate::map::TILE_LOOKS`]).
+    pub looks: BTreeMap<String, Look>,
 }
 
 /// A validated tileset.
@@ -101,14 +109,21 @@ pub struct Tileset {
 }
 
 impl Tileset {
-    /// The tile of terrain `id`, if the tileset has one.
+    /// The tile of terrain `id` in the tileset's own look, if it has one.
     pub fn tile(&self, id: TerrainId) -> Option<Picture> {
         let terrain = self.terrain.as_ref()?;
-        let rect = terrain.tiles.get(&id).copied()?;
+        let rect = terrain.look.tiles.get(&id).copied()?;
         Some(Picture {
             image: terrain.image,
             rect,
         })
+    }
+
+    /// The look a map naming `name` is painted as: that look if the
+    /// tileset has it, else its own. `None` without terrain tiles.
+    pub fn look(&self, name: &str) -> Option<&Look> {
+        let terrain = self.terrain.as_ref()?;
+        Some(terrain.looks.get(name).unwrap_or(&terrain.look))
     }
 
     /// The picture of a unit of `class`, the named `character` if any: the
@@ -151,6 +166,10 @@ struct TilesetFile {
     tile_px: Option<(u32, u32)>,
     #[serde(default, deserialize_with = "written")]
     terrain: Option<BTreeMap<String, (u32, u32)>>,
+    #[serde(default)]
+    layers: Vec<look::LayerFile>,
+    #[serde(default)]
+    looks: BTreeMap<String, look::LookFile>,
     unit_px: (u32, u32),
     units: UnitsFile,
     #[serde(default)]
@@ -373,19 +392,22 @@ pub fn parse_tileset(
         check.problems.push(problem);
     }
     let mut unknown = Vec::new();
-    let mut tiles = BTreeMap::new();
     let tile_px = def.tile_px.unwrap_or_default();
-    for (name, &at) in def.terrain.iter().flatten() {
-        let rect = grid_rect(at, tile_px, (0, 0));
-        if let Some(sheet) = check.sheet {
-            check.inside(&format!("terrain \"{name}\""), sheet, rect);
-        }
-        match refs.terrain.id_of(name) {
-            Some(id) => {
-                tiles.insert(id, rect);
-            }
-            None => unknown.push(format!("terrain \"{name}\" is not in terrain.ron")),
-        }
+    let mut looking = |name, terrain, layers| {
+        let mut looking = look::Looking {
+            check: &mut check,
+            unknown: &mut unknown,
+            refs,
+            tile_px,
+            name,
+        };
+        looking.look(terrain, layers)
+    };
+    let own = def.terrain.as_ref().map(|t| looking(None, t, &def.layers));
+    let mut looks = BTreeMap::new();
+    for (name, file) in &def.looks {
+        let look = looking(Some(name.as_str()), &file.terrain, &file.layers);
+        looks.insert(name.clone(), look);
     }
     let mut classes = BTreeMap::new();
     for (name, entry) in &def.units.classes {
@@ -414,21 +436,17 @@ pub fn parse_tileset(
     let mut problems = check.problems;
     problems.extend(unknown);
     if let Some(terrain) = &def.terrain {
-        for t in &refs.terrain.terrains {
-            if !terrain.contains_key(&t.id) {
-                problems.push(format!("terrain \"{}\" has no tile", t.id));
-            }
-        }
+        problems.extend(look::missing(None, terrain, refs));
     }
-    let terrain = def
-        .terrain
-        .as_ref()
-        .zip(sheet)
-        .map(|(_, image)| TerrainTiles {
-            image,
-            tile_px,
-            tiles,
-        });
+    for (name, file) in &def.looks {
+        problems.extend(look::missing(Some(name), &file.terrain, refs));
+    }
+    let terrain = own.zip(sheet).map(|(look, image)| TerrainTiles {
+        image,
+        tile_px,
+        look,
+        looks,
+    });
     match fallback {
         Some(fallback) if problems.is_empty() => Ok(Tileset {
             id: def.id,
@@ -478,6 +496,15 @@ fn own_problems(def: &TilesetFile, stem: &str) -> Vec<String> {
     if def.terrain.is_some() && def.image.is_none() {
         problems.push("terrain needs `image`, the image its tiles are in".to_owned());
     }
+    if def.terrain.is_none() {
+        if !def.layers.is_empty() {
+            problems.push("layers need `terrain`: they are painted over its tiles".to_owned());
+        }
+        if !def.looks.is_empty() {
+            problems.push("looks need `terrain`, the tileset's own look".to_owned());
+        }
+    }
+    problems.extend(def.looks.keys().filter_map(|name| look::name_problem(name)));
     problems
 }
 
@@ -502,6 +529,7 @@ fn inside(rect: ImageRect, info: ImageInfo) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeSet;
     use std::fmt::Write as _;
 
     use super::*;
@@ -570,6 +598,8 @@ mod tests {
             ("image", "\"tilesets/t.png\"".to_owned()),
             ("tile_px", "(16, 16)".to_owned()),
             ("terrain", terrain),
+            ("layers", String::new()),
+            ("looks", String::new()),
             ("unit_px", "(16, 24)".to_owned()),
             (
                 "units",
@@ -603,7 +633,8 @@ mod tests {
         let terrain = t.terrain.as_ref().unwrap();
         assert_eq!(t.id, "t");
         assert_eq!((terrain.image, terrain.tile_px), (image, (16, 16)));
-        assert_eq!(terrain.tiles.len(), display.terrains.len());
+        assert_eq!(terrain.look.tiles.len(), display.terrains.len());
+        assert!(terrain.look.layers.is_empty() && terrain.looks.is_empty());
         let plain = display.id_of("plain").unwrap();
         let tile = ImageRect {
             x: 0,
@@ -746,7 +777,8 @@ mod tests {
     fn the_embedded_test_tileset_loads() {
         let f = Fixture::new();
         let tilesets = &f.content.tilesets;
-        assert_eq!(tilesets.keys().collect::<Vec<_>>(), ["test", "test_units"]);
+        let ids: Vec<_> = tilesets.keys().collect();
+        assert_eq!(ids, ["test", "test_auto", "test_units"]);
         let test = &tilesets["test"];
         let terrain = test.terrain.as_ref().unwrap();
         assert_eq!(terrain.tile_px, (24, 24));
@@ -780,6 +812,37 @@ mod tests {
                 height: 80
             })
         );
+        // The fixture with layers and looks: 16 × 16 tiles, a shore and
+        // the woods' edge between tiles, a fort and a bridge on theirs,
+        // an indoor look with the floor's edge, and the unit sheets.
+        let auto = &tilesets["test_auto"];
+        let terrain = auto.terrain.as_ref().unwrap();
+        assert_eq!(terrain.tile_px, (16, 16));
+        assert_eq!(terrain.image.path(), "tilesets/test_auto.png");
+        let kinds = |look: &Look| -> Vec<&str> {
+            let kind = |layer: &Layer| match layer {
+                Layer::Corners(_) => "corners",
+                Layer::Tiles(_) => "tiles",
+            };
+            look.layers.iter().map(kind).collect()
+        };
+        assert_eq!(
+            kinds(&terrain.look),
+            ["corners", "corners", "tiles", "tiles"]
+        );
+        let Layer::Corners(shore) = &terrain.look.layers[0] else {
+            panic!("{:?}", terrain.look.layers[0]);
+        };
+        // Every mix but none and all.
+        let pictures = shore.tiles.iter().filter(|t| t.is_some()).count();
+        assert_eq!(
+            (pictures, shore.tiles[0], shore.tiles[15]),
+            (14, None, None)
+        );
+        assert_eq!(terrain.looks.keys().collect::<Vec<_>>(), ["indoor"]);
+        assert_eq!(kinds(&terrain.looks["indoor"]), ["corners"]);
+        assert_eq!(auto.look("indoor"), terrain.looks.get("indoor"));
+        assert_eq!(auto.classes[&ClassId("guard".into())], guard);
     }
 
     /// A tileset of unit sheets only: no image, no terrain, no tile size.
@@ -940,6 +1003,175 @@ mod tests {
         assert_eq!(
             f.errors(&file(&f, &[("image", ""), ("units", &all)])),
             ["terrain needs `image`, the image its tiles are in"]
+        );
+    }
+
+    /// Layers of every kind: a shore between tiles, and a bridge that
+    /// turns to cross the water.
+    const LAYERS: &str = r#####"[
+        Corners(of: ["water", "sea"], tiles: [
+            (corners: "#...", at: (1, 0)),
+            (corners: ".###", at: (2, 0)),
+            (corners: "####", at: (3, 0)),
+        ]),
+        Tiles(of: ["fort"], at: (0, 1)),
+        Tiles(of: ["bridge"], at: (1, 1), beside: ["water", "sea"],
+              sides: [(sides: ".#.#", at: (2, 1)), (sides: "####", at: (3, 1))]),
+    ]"#####;
+
+    #[test]
+    fn a_tileset_reads_its_layers_and_its_other_looks() {
+        let f = Fixture::new();
+        let indoor = format!(
+            r#"{{ "indoor": (terrain: {{ {} }}, layers: [Tiles(of: ["door"], at: (3, 3))]) }}"#,
+            f.terrain("").replace("(0, 0)", "(1, 2)")
+        );
+        let source = file(&f, &[("layers", LAYERS), ("looks", &indoor)]);
+        let t = f.parse(&source).unwrap();
+        let id = |name| f.content.terrain.display.id_of(name).unwrap();
+        let at = |column: u32, row: u32| ImageRect {
+            x: 16 * column,
+            y: 16 * row,
+            w: 16,
+            h: 16,
+        };
+        let terrain = t.terrain.as_ref().unwrap();
+        let own = &terrain.look;
+        assert_eq!(own.tiles[&id("plain")], at(0, 0));
+        assert_eq!(own.layers.len(), 3);
+        let Layer::Corners(shore) = &own.layers[0] else {
+            panic!("{:?}", own.layers[0]);
+        };
+        assert_eq!(shore.of, BTreeSet::from([id("water"), id("sea")]));
+        let mut tiles = [None; MIXES];
+        tiles[8] = Some(at(1, 0));
+        tiles[7] = Some(at(2, 0));
+        tiles[15] = Some(at(3, 0));
+        assert_eq!(shore.tiles, tiles);
+        let Layer::Tiles(fort) = &own.layers[1] else {
+            panic!("{:?}", own.layers[1]);
+        };
+        assert_eq!(fort.of, BTreeSet::from([id("fort")]));
+        assert_eq!(fort.tile, at(0, 1));
+        assert!(fort.beside.is_empty());
+        assert_eq!(fort.sides, [None; MIXES]);
+        let Layer::Tiles(bridge) = &own.layers[2] else {
+            panic!("{:?}", own.layers[2]);
+        };
+        assert_eq!(bridge.beside, shore.of);
+        assert_eq!(bridge.picture(5), at(2, 1));
+        assert_eq!(bridge.picture(15), at(3, 1));
+        assert_eq!(bridge.picture(10), at(1, 1));
+        // The other look: its own tiles and layers.
+        assert_eq!(terrain.looks.keys().collect::<Vec<_>>(), ["indoor"]);
+        let indoor = &terrain.looks["indoor"];
+        assert_eq!(indoor.tiles[&id("plain")], at(1, 2));
+        assert_eq!(indoor.tiles.len(), own.tiles.len());
+        assert_eq!(indoor.layers.len(), 1);
+        // A map's look is the one it names, else the tileset's own.
+        assert_eq!(t.look("indoor"), Some(indoor));
+        assert_eq!(t.look("outdoor"), Some(own));
+        assert_eq!(t.look("cave"), Some(own));
+        assert_eq!(t.tile(id("plain")).map(|p| p.rect), Some(at(0, 0)));
+        // No terrain tiles: no look at all.
+        let bare = file(&f, &[("tile_px", ""), ("terrain", "")]);
+        assert_eq!(f.parse(&bare).unwrap().look("outdoor"), None);
+    }
+
+    #[test]
+    fn a_layer_names_real_terrain_and_real_mixes_inside_the_image() {
+        let f = Fixture::new();
+        let layers = r###"[
+            Corners(of: [], tiles: [(corners: "##..", at: (0, 0))]),
+            Corners(of: ["lava"], tiles: []),
+            Corners(of: ["water"], tiles: [
+                (corners: "##.", at: (0, 0)),
+                (corners: "....", at: (0, 0)),
+                (corners: "#..#", at: (4, 0)),
+                (corners: "##..", at: (0, 0)),
+                (corners: "##..", at: (1, 0)),
+            ]),
+            Tiles(of: ["fort"], at: (0, 4), beside: ["moat"],
+                  sides: [(sides: "#x#.", at: (0, 0)), (sides: "....", at: (4, 4)),
+                          (sides: "....", at: (0, 0))]),
+        ]"###;
+        assert_eq!(
+            f.errors(&file(&f, &[("layers", layers)])),
+            [
+                "layer 1: `of` names no terrain",
+                "layer 2: it has no pictures",
+                "layer 3: corners \"##.\" must be four of `#` (in) and `.` (out)",
+                "layer 3, corners \"#..#\": its 16×16 px at (64, 0) lies outside the 64×64 px image",
+                "layer 3: corners \"##..\" is listed twice",
+                "layer 3: corners \"....\" has no corner in the layer, so there is nothing to draw",
+                "layer 4: its 16×16 px at (0, 64) lies outside the 64×64 px image",
+                "layer 4: sides \"#x#.\" must be four of `#` (in) and `.` (out)",
+                "layer 4, sides \"....\": its 16×16 px at (64, 64) lies outside the 64×64 px image",
+                "layer 4: sides \"....\" is listed twice",
+                "layer 2: terrain \"lava\" is not in terrain.ron",
+                "layer 4: terrain \"moat\" is not in terrain.ron",
+            ]
+        );
+        // A layer is one of the two kinds, with only its own fields.
+        for bad in [
+            r#"[Sides(of: ["fort"], at: (0, 0))]"#,
+            r#"[Tiles(of: ["fort"], at: (0, 0), tiles: [])]"#,
+            r###"[Corners(of: ["fort"], tiles: [(corners: "##..", at: (0, 0), flip: true)])]"###,
+            r###"[Tiles(of: ["fort"], at: (0, 0), sides: [(corners: "##..", at: (0, 0))])]"###,
+        ] {
+            let errors = f.parse(&file(&f, &[("layers", bad)])).unwrap_err();
+            assert_eq!(errors.len(), 1, "{bad}");
+            assert!(errors[0].line.is_some(), "{bad}: {errors:?}");
+        }
+    }
+
+    #[test]
+    fn every_look_has_a_tile_for_every_terrain_and_a_name_a_map_can_give() {
+        let f = Fixture::new();
+        let terrain = f
+            .terrain("\"lava\": (0, 0)")
+            .replace("\"forest\": (0, 0), ", "")
+            .replace("\"plain\": (0, 0)", "\"plain\": (0, 4)");
+        let looks = format!(
+            r#"{{ "indoor": (terrain: {{ {terrain} }}, layers: [Tiles(of: ["moat"], at: (4, 0))]) }}"#
+        );
+        assert_eq!(
+            f.errors(&file(&f, &[("looks", &looks)])),
+            [
+                "look \"indoor\": terrain \"plain\": its 16×16 px at (0, 64) lies outside the 64×64 px image",
+                "look \"indoor\": layer 1: its 16×16 px at (64, 0) lies outside the 64×64 px image",
+                "look \"indoor\": terrain \"lava\" is not in terrain.ron",
+                "look \"indoor\": layer 1: terrain \"moat\" is not in terrain.ron",
+                "look \"indoor\": terrain \"forest\" has no tile",
+            ]
+        );
+        let all = format!("(terrain: {{ {} }})", f.terrain(""));
+        let looks = format!(r#"{{ "outdoor": {all}, "cave": {all} }}"#);
+        assert_eq!(
+            f.errors(&file(&f, &[("looks", &looks)])),
+            [
+                "look \"cave\" is not a look a map can name (\"outdoor\", \"indoor\")",
+                "look \"outdoor\" is the tileset's own `terrain` and `layers`: write it there",
+            ]
+        );
+        // Layers and looks are painted with the terrain tiles: none
+        // without them.
+        let frame = "(image: \"units/a.png\", frame: (1, 0))";
+        let units = format!("(characters: {{}}, classes: {{}}, fallback: {frame})");
+        let looks = format!(r#"{{ "indoor": {all} }}"#);
+        let fields = [
+            ("tile_px", ""),
+            ("terrain", ""),
+            ("units", units.as_str()),
+            ("layers", r#"[Tiles(of: ["fort"], at: (0, 0))]"#),
+            ("looks", looks.as_str()),
+        ];
+        assert_eq!(
+            f.errors(&file(&f, &fields)),
+            [
+                "layers need `terrain`: they are painted over its tiles",
+                "looks need `terrain`, the tileset's own look",
+            ]
         );
     }
 

@@ -2,12 +2,12 @@
 source: crates/ui/src/map_view/sprite.rs
 expression: items
 ---
-under 16,24 24x24  move_range
-under sprite 16,24 24x24  tilesets/test.png 0,0 24x24 opacity=64
-under 40,24 24x24  forest
-under sprite 40,24 24x24  tilesets/test.png 96,0 24x24 opacity=159
+under sprite 16,24 24x24  tilesets/test.png 0,0 24x24
+under sprite 40,24 24x24  tilesets/test.png 96,0 24x24
 under sprite 16,48 24x24  tilesets/test.png 0,0 24x24
 under sprite 40,48 24x24  tilesets/test.png 0,0 24x24
+under sprite 16,24 24x24  tilesets/test.png 0,0 24x24 opacity=191 solid=move_range
+under sprite 40,24 24x24  tilesets/test.png 96,0 24x24 opacity=96 solid=forest
 under 27,48 3x14  path
 over  sprite 16,21 24x24  tilesets/test.png 168,72 24x24 solid=player clip=16,24 24x21
 over  sprite 16,23 24x24  tilesets/test.png 168,72 24x24 solid=player clip=16,24 24x23
