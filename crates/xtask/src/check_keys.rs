@@ -45,8 +45,13 @@ const KEY_DIRS: [&str; 2] = ["crates/ui/src/input/", "crates/app/src/pads/"];
 const PLATFORM_FILE: &str = "crates/app/src/keys.rs";
 /// Files only compiled for tests (`#[cfg(any(test, feature = "harness"))]`).
 const TEST_SUPPORT_FILES: [&str; 1] = ["crates/ui/src/harness.rs"];
-/// Files whose [`MARKER`] comments are honoured.
-const PICTURE_FILES: [&str; 1] = ["crates/ui/src/screens/layout_picker.rs"];
+/// Files whose [`MARKER`] comments are honoured: the layout picker, which
+/// says which keys the keyboard has and what each does, and its skin, which
+/// says where each sits (ADR-0054).
+const PICTURE_FILES: [&str; 2] = [
+    "crates/ui/src/screens/layout_picker.rs",
+    "crates/ui/src/screens/layout_picker/glyph.rs",
+];
 
 /// Key and controller-button types: only the key pipeline names them.
 const KEY_TYPES: [&str; 3] = ["Key::", "Chord::", "Button::"];
@@ -756,14 +761,15 @@ const ROW: [Key; 2] = [
 const UP: Key = Key::Up; // check-keys: keyboard picture
 const DOWN: Key = Key::Down;
 ";
-        let picture = "crates/ui/src/screens/layout_picker.rs";
-        let errs = rust(picture, src);
-        assert_eq!(errs.len(), 1, "{errs:?}");
-        assert!(
-            errs[0].starts_with(&format!("{picture}:7: ")),
-            "{}",
-            errs[0]
-        );
+        for picture in PICTURE_FILES {
+            let errs = rust(picture, src);
+            assert_eq!(errs.len(), 1, "{picture}: {errs:?}");
+            assert!(
+                errs[0].starts_with(&format!("{picture}:7: ")),
+                "{}",
+                errs[0]
+            );
+        }
         // Elsewhere the marker is itself an error and allows nothing.
         let errs = rust(SCREEN, src);
         let markers = errs

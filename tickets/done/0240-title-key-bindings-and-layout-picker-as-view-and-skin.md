@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: sonnet-5
 effort: high
-status: todo
+status: done
 blocked_by: ["0805"]
 nick_input: none
-completed:
+completed: 2026-10-04
 ---
 
 # 0240 — Title, Key bindings and layout picker as view + skin
@@ -108,19 +108,19 @@ byte-for-byte the same.
 
 ## Acceptance criteria
 
-- [ ] `title.rs`, `key_bindings.rs` and `layout_picker.rs` (the logic
+- [x] `title.rs`, `key_bindings.rs` and `layout_picker.rs` (the logic
       modules) don't import `UiColor`, `Rect`, `BoxStyle` or `Cell`, and
       their `draw` is one call to their skin's `paint` (a test greps the
       three files for those names, like `check-keys` does for keys).
-- [ ] No snapshot file changes (`git diff --stat -- '*.snap'` is empty).
-- [ ] Each of the three views has a unit test that checks its content for
+- [x] No snapshot file changes (`git diff --stat -- '*.snap'` is empty).
+- [x] Each of the three views has a unit test that checks its content for
       at least: the first frame, a moved focus, and each overlay the
       screen has (the title's notice and prompt; Key bindings' capture,
       question, blocked-leave message and both sides; the picker opened
       from Options).
-- [ ] `cargo xtask check-keys` and `check-text` pass; the `check-text`
+- [x] `cargo xtask check-keys` and `check-text` pass; the `check-text`
       limit isn't raised.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -132,5 +132,64 @@ byte-for-byte the same.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** Nothing the player sees changed: the 211 integration tests and
+their snapshots pass with no `.snap` file touched (`git diff --stat --
+'*.snap'` is empty).
+
+- `widgets::Menu`: `Menu::view()` gives a `MenuView` (`MenuItemView { label,
+  suffix, enabled, focused }`); the drawing moved to `widgets/menu/glyph.rs`
+  (`paint`, `size`). `Menu::draw` and `Menu::size` stay as thin calls to it,
+  said so in their doc comments, until 0241 and 0242 have converted their
+  callers.
+- Title (`screens/title.rs`, `title/view.rs`, `title/glyph.rs`): `TitleView`
+  with the title, subtitle, prompt, menu, notice, help and debug hint; the
+  row constants live in the skin. The debug hint's right-aligned painting is
+  now `screens::paint_debug_hint` (the battle's `draw_debug_hint` calls the
+  same code).
+- Key bindings (`key_bindings/view.rs`, `key_bindings/glyph.rs`):
+  `KeyBindingsView` with the switch, column headings, groups of rows (label,
+  fixed keys, slots as `Empty` / `Bound` / `Capturing`, focused slot,
+  unmapped, blocks leaving, lost its key), the Restore defaults row, message,
+  question, choices and help. Both sides, the capture and the choices are
+  the same view. `PANEL`, `SLOT_W` and the rest are the skin's, which also
+  works out the console row of each group and action (`place`).
+- Layout picker (`layout_picker/view.rs`, `layout_picker/glyph.rs`):
+  `LayoutPickerView` with each layout's name, focus, legend (`LegendRow`,
+  with the movement line flagged) and its keyboard: `KeyCapView { key, role:
+  Movement | Bound | Unbound }`. The view lists **every** key of the
+  keyboard (`Key::ALL`) with its role; the skin picks the keys its picture
+  has and where they sit (`TOP_ROW`, `HOME_ROW`, arrows, space bar).
+- Each of the three opts into `Screen::as_any`. Their `draw` is one call to
+  `glyph::paint`, and a test (`title/tests.rs`) greps the three logic files
+  for `UiColor`, `Rect`, `BoxStyle` and `Cell` and for that call.
+- `cargo xtask check-keys`: the keyboard-picture marker is now also honoured
+  in `layout_picker/glyph.rs` (`PICTURE_FILES`, its test, and the
+  `keyboard-input` skill's note). `check-text` still counts 220 (limit
+  unchanged).
+- Tests: the logic modules' tests that read cells now read views
+  (`title/tests.rs`, `layout_picker/tests.rs`, `key_bindings/tests.rs`, and
+  the Harness tests `title.rs`, `layout_picker.rs`, `key_bindings_screen.rs`
+  and `rebind_buttons.rs` through `h.game().screen::<…>()`). Tests of the
+  look moved to the skins (`title/glyph.rs`, `layout_picker/glyph.rs`,
+  `key_bindings/glyph/tests.rs`, `widgets/menu/glyph.rs`). The old
+  assertions are restated, not dropped. `Menu`'s own snapshot test stays
+  where it is, so its snapshot file keeps its name.
+- `crates/ui/README.md` (*How to add a screen*) now describes the three
+  parts, `Menu`, and points at Options.
+
+**Deviations from the plan.**
+
+- `TitleView.help` is an `Option`: the "press any key" state shows no help
+  line, and the skin must not decide that.
+- `MenuItemView.suffix` holds a `UiColor` beside its text, because the
+  screens that give a suffix (the battle's skills and arts lists) still
+  choose it and aren't mine to change; 0242 can make it a meaning.
+- `GroupView.required` and `KeyBindingsView.not_mapped` (the note's words)
+  were added to the view; the ticket's list didn't name them.
+- The Options and Key bindings skins each paint their yes/no question the
+  same way; a shared question box could serve both (and the battle's
+  end-turn question): worth doing when 0241 converts the other menus.
+
+**Game rules decided.** None; nothing a player sees or does changed.
+
+**For Nick.** Nothing to play-test: snapshots are byte-for-byte the same.

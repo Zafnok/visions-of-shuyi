@@ -30,7 +30,7 @@ pub use results::ResultsScreen;
 pub use save::{SavePromptScreen, SlotPickerScreen};
 pub use title::TitleScreen;
 
-use crate::color::{Rgb, UiColor};
+use crate::color::{Palette, Rgb, UiColor};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::Ctx;
@@ -61,15 +61,25 @@ pub(crate) fn debug_hint(ctx: &Ctx) -> Option<String> {
 /// Prints the [`debug_hint`] right-aligned on row `y`, one cell in from the
 /// edge, unless those cells or the one before them already hold text.
 pub(crate) fn draw_debug_hint(ctx: &Ctx, buf: &mut GlyphBuffer, y: i32) {
-    let Some(hint) = debug_hint(ctx) else {
-        return;
-    };
+    if let Some(hint) = debug_hint(ctx) {
+        paint_debug_hint(&ctx.palette, &hint, buf, y);
+    }
+}
+
+/// [`draw_debug_hint`] for a hint a screen's view already holds (the skins
+/// of the screens converted to views call this).
+pub(crate) fn paint_debug_hint(palette: &Palette, hint: &str, buf: &mut GlyphBuffer, y: i32) {
     let len = i32::try_from(hint.chars().count()).unwrap_or(i32::MAX);
     let x = i32::from(buf.width()) - 1 - len;
     let free = (x - 1..x + len).all(|cx| buf.get(cx, y).is_some_and(|c| c.glyph == ' '));
     if free {
-        let dim = ctx.palette.get(UiColor::TextDim);
-        buf.print(x, y, &hint, dim, ctx.palette.get(UiColor::Black));
+        buf.print(
+            x,
+            y,
+            hint,
+            palette.get(UiColor::TextDim),
+            palette.get(UiColor::Black),
+        );
     }
 }
 

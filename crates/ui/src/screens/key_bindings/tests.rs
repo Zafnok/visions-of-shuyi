@@ -1,7 +1,6 @@
 use super::*;
 use crate::audio::AudioRequest;
-use crate::console::{CONSOLE_H, CONSOLE_W};
-use crate::input::Key;
+use crate::console::CONSOLE_W;
 use crate::screen::tests::ctx;
 
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp, Info};
@@ -77,29 +76,21 @@ fn cue(sound: MenuSound) -> String {
     sounds(&mut c).remove(0)
 }
 
-fn drawn(s: &KeyBindingsScreen, c: &Ctx) -> GlyphBuffer {
-    let stale = Cell::new(
-        'x',
-        c.palette.get(UiColor::Enemy),
-        c.palette.get(UiColor::Enemy),
-    );
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
-    s.draw(c, &mut buf);
-    buf
+/// `action`'s row of `view`.
+fn row_of(view: &KeyBindingsView, action: Action) -> &RowView {
+    view.row(action)
+        .unwrap_or_else(|| panic!("no row for {action:?}"))
 }
 
-fn row_text(buf: &GlyphBuffer, y: i32) -> String {
-    (0..i32::from(buf.width()))
-        .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
-        .collect()
-}
-
-/// The console row showing `label`'s action.
-fn row_of(buf: &GlyphBuffer, label: &str) -> String {
-    (0..i32::from(buf.height()))
-        .map(|y| row_text(buf, y))
-        .find(|row| row.contains(&format!(" {label}  ")))
-        .unwrap_or_else(|| panic!("no row for {label}"))
+/// What `action`'s slots show, as text: the key or button, `-` for an empty
+/// slot, `…` for the one waiting.
+fn shown(view: &KeyBindingsView, action: Action) -> Vec<String> {
+    let slot = |s: &SlotView| match s {
+        SlotView::Empty => "-".to_owned(),
+        SlotView::Bound(name) => name.clone(),
+        SlotView::Capturing(prompt) => format!("…{prompt}"),
+    };
+    row_of(view, action).slots.iter().map(slot).collect()
 }
 
 #[test]
@@ -137,9 +128,30 @@ fn starts_on_the_first_slot_of_the_layout_in_use() {
     assert!(!s.is_capturing());
     assert_eq!(s.message(), None);
     assert_eq!(s.side(), Side::Keyboard);
-    let buf = drawn(&s, &c);
-    assert!(row_text(&buf, 1).contains("─ Key bindings ─"));
-    assert!(row_text(&buf, 2).contains("  Keyboard · Left-handed    Controller  "));
+    let view = s.view(&c);
+    assert_eq!(view.title, "Key bindings");
+    assert_eq!(view.switch.keyboard, "Keyboard · Left-handed");
+    assert_eq!(view.switch.controller, "Controller");
+    assert_eq!(view.switch.shown, Side::Keyboard);
+    assert!(!view.switch.focused);
+    assert_eq!(view.columns, ["Key 1", "Key 2", "Key 3"]);
+    let headings: Vec<_> = view.groups.iter().map(|g| g.heading.as_str()).collect();
+    assert_eq!(headings, ["Must have a key", "Optional"]);
+    assert_eq!(
+        view.groups.iter().map(|g| g.rows.len()).collect::<Vec<_>>(),
+        [7, 9]
+    );
+    assert_eq!(view.restore.label, "Restore defaults");
+    assert!(!view.restore.focused);
+    assert_eq!(
+        (&view.message, &view.question, &view.choices),
+        (&None, &None, &None)
+    );
+    // The cursor is on the first slot of the first action, and only there.
+    let focused: Vec<_> = view.rows().map(|r| (r.action, r.focus)).collect();
+    assert_eq!(focused[0], (CursorUp, Some(0)));
+    assert!(focused[1..].iter().all(|&(_, f)| f.is_none()));
+    assert_eq!(view.focused().map(|r| r.action), Some(CursorUp));
     // Before a layout is chosen (debug menu over the picker): right-handed.
     let none = Ctx::embedded().unwrap();
     let s = KeyBindingsScreen::new(&none);
@@ -336,8 +348,7 @@ fn a_reserved_key_is_refused_and_capture_goes_on() {
     assert_eq!(s.message(), Some("That key can't be used"));
     assert_eq!(s.bindings(), &before);
     assert_eq!(sounds(&mut c), [cue(MenuSound::Denied)]);
-    let buf = drawn(&s, &c);
-    assert!(row_text(&buf, MESSAGE_ROW).contains(RESERVED_MESSAGE));
+    assert_eq!(s.view(&c).message.as_deref(), Some(RESERVED_MESSAGE));
     // The next key binds and clears the message.
     s.update(&mut c, &press("g"));
     assert!(!s.is_capturing());
@@ -361,42 +372,34 @@ fn a_key_used_elsewhere_moves_and_its_old_row_is_highlighted_briefly() {
     );
     assert!(s.bindings().is_unmapped(Info));
     assert_eq!(s.moved, Some((Info, MOVED_FLASH_SECS)));
-    let label_fg = |s: &KeyBindingsScreen, c: &Ctx| {
-        let buf = drawn(s, c);
-        let y = (0..i32::from(CONSOLE_H))
-            .find(|&y| row_text(&buf, y).contains(" Unit info  "))
-            .unwrap();
-        buf.get(LABEL_X, y).unwrap().fg
-    };
-    assert_eq!(label_fg(&s, &c), c.palette.get(UiColor::White));
-    let buf = drawn(&s, &c);
-    assert!(row_of(&buf, "Unit info").contains(NOT_MAPPED));
-    assert!(!row_of(&buf, "Confirm").contains(NOT_MAPPED));
+    let lost = |s: &KeyBindingsScreen, c: &Ctx, action| row_of(&s.view(c), action).lost_key;
+    assert!(lost(&s, &c, Info));
+    assert!(!lost(&s, &c, Confirm));
+    let view = s.view(&c);
+    assert!(row_of(&view, Info).unmapped);
+    assert!(!row_of(&view, Info).blocks_leaving, "an optional action");
+    assert!(!row_of(&view, Confirm).unmapped);
     // The highlight lasts MOVED_FLASH_SECS.
     s.update(
         &mut c,
         &FrameInput::new(vec![], MOVED_FLASH_SECS - 0.5, vec![]),
     );
-    assert_eq!(label_fg(&s, &c), c.palette.get(UiColor::White));
+    assert!(lost(&s, &c, Info));
     s.update(&mut c, &FrameInput::new(vec![], 0.5, vec![]));
     assert_eq!(s.moved, None);
-    assert_eq!(label_fg(&s, &c), c.palette.get(UiColor::Text));
+    assert!(!lost(&s, &c, Info));
     // A NaN frame time ends it rather than leaving it on for good.
     bind(&mut s, &mut c, Confirm, 2, "w");
     assert!(s.moved.is_some());
     s.update(&mut c, &FrameInput::new(vec![], f32::NAN, vec![]));
     assert_eq!(s.moved, None);
-    // Its own row, when focused, keeps the focus colour.
+    // Its own row, when focused, is the focused one (a skin shows the
+    // cursor over the highlight).
     bind(&mut s, &mut c, Info, 0, "s");
     focus_on(&mut s, &mut c, Action::NextUnit, 0);
-    let buf = drawn(&s, &c);
-    let y = (0..i32::from(CONSOLE_H))
-        .find(|&y| row_text(&buf, y).contains(" Next ready unit  "))
-        .unwrap();
-    assert_eq!(
-        buf.get(LABEL_X, y).unwrap().fg,
-        c.palette.get(UiColor::TextHighlight)
-    );
+    let view = s.view(&c);
+    assert!(row_of(&view, Action::NextUnit).focused());
+    assert_eq!(view.focused().map(|r| r.action), Some(Action::NextUnit));
 }
 
 #[test]
@@ -498,11 +501,18 @@ fn leaving_is_blocked_while_a_required_action_has_no_key() {
     assert_eq!(s.message(), Some("Give Cursor down a key first"));
     assert_eq!(sounds(&mut c), [cue(MenuSound::Denied)]);
     assert!(!c.player_keys().is_custom(Layout::RightHanded));
-    let buf = drawn(&s, &c);
-    let warn = c.palette.get(UiColor::HpLow);
-    let message = row_text(&buf, MESSAGE_ROW);
-    let x = i32::try_from(message.find("Give").unwrap()).unwrap();
-    assert_eq!(buf.get(x, MESSAGE_ROW).unwrap().fg, warn);
+    assert_eq!(
+        s.view(&c).message.as_deref(),
+        Some("Give Cursor down a key first")
+    );
+    // The two required actions with nothing in them say so.
+    let blocking: Vec<_> = s
+        .view(&c)
+        .rows()
+        .filter(|r| r.blocks_leaving)
+        .map(|r| r.action)
+        .collect();
+    assert_eq!(blocking, [CursorDown, Cancel]);
     // Moving on clears the message; the next try names what is left.
     bind(&mut s, &mut c, CursorDown, 0, "j");
     assert_eq!(s.message(), None);
@@ -583,16 +593,9 @@ fn the_restore_question_can_be_backed_out_of() {
     assert!(s.is_asking_restore());
     assert_eq!(s.focus(), None);
     assert!(sounds(&mut c).is_empty());
-    let buf = drawn(&s, &c);
-    let asked = (0..i32::from(CONSOLE_H))
-        .map(|y| row_text(&buf, y))
-        .collect::<Vec<_>>();
-    assert!(
-        asked
-            .iter()
-            .any(|r| r.contains("║ Restore the default keys for Right-handed? ║"))
-    );
-    assert!(asked.iter().any(|r| r.contains("║ f yes / d no ")));
+    let question = s.view(&c).question.unwrap();
+    assert_eq!(question.text, "Restore the default keys for Right-handed?");
+    assert_eq!(question.answers, "f yes / d no");
     // Cancel closes the question, not the screen, and changes nothing;
     // what follows it that frame is dropped.
     let t = s.update(&mut c, &act(&[Cancel, Confirm, Cancel]));
@@ -601,8 +604,7 @@ fn the_restore_question_can_be_backed_out_of() {
     assert_eq!(s.bindings(), &custom);
     assert_eq!(sounds(&mut c), [cue(MenuSound::Cancel)]);
     assert_eq!(s.help(&c), "arrows move · f restore · d back");
-    let buf = drawn(&s, &c);
-    assert!(!(0..i32::from(CONSOLE_H)).any(|y| row_text(&buf, y).contains('║')));
+    assert_eq!(s.view(&c).question, None);
     // The left-handed question names its layout and keys.
     let left = ctx().with_layout(Layout::LeftHanded);
     let mut s = KeyBindingsScreen::new(&left);
@@ -612,6 +614,9 @@ fn the_restore_question_can_be_backed_out_of() {
         "Restore the default keys for Left-handed?"
     );
     assert_eq!(s.help(&c), "j yes · k no");
+    let question = s.view(&left).question.unwrap();
+    assert_eq!(question.text, "Restore the default keys for Left-handed?");
+    assert_eq!(question.answers, "j yes / k no");
 }
 
 #[test]
@@ -667,60 +672,51 @@ fn help_names_the_keys_the_screen_was_opened_with() {
 }
 
 #[test]
-fn draws_slots_fixed_keys_and_not_mapped_notes() {
+fn the_view_lists_slots_fixed_keys_and_not_mapped_notes() {
     let mut c = ctx();
     let mut s = screen(&c);
-    let buf = drawn(&s, &c);
-    let stale = c.palette.get(UiColor::Enemy);
-    let left = (0..i32::from(CONSOLE_H))
-        .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
-        .filter(|&(x, y)| buf.get(x, y).is_some_and(|c| c.bg == stale))
-        .count();
-    assert_eq!(left, 0, "an opaque screen covers the whole buffer");
-    assert!(row_text(&buf, 4).contains("Key 1"));
-    assert!(row_text(&buf, 4).contains("Key 3"));
-    assert!(row_text(&buf, 5).contains(REQUIRED_HEADING));
-    assert!(row_of(&buf, "Cancel").contains(" Cancel  + Escape "));
-    assert!(row_of(&buf, "End turn").contains(" Space "));
-    assert!(row_of(&buf, "Auto-end on/off").contains(" Shift+Space "));
-    // Optional and unmapped: dim. Required and unmapped: the warning colour.
-    let note_fg = |buf: &GlyphBuffer, label: &str| {
-        let y = (0..i32::from(CONSOLE_H))
-            .find(|&y| row_text(buf, y).contains(&format!(" {label}  ")))
-            .unwrap();
-        let x = i32::try_from(row_text(buf, y).find(NOT_MAPPED).unwrap()).unwrap();
-        buf.get(x, y).unwrap().fg
+    let view = s.view(&c);
+    assert_eq!(shown(&view, CursorUp), ["Up", "-", "-"]);
+    assert_eq!(shown(&view, Confirm), ["f", "-", "-"]);
+    assert_eq!(row_of(&view, Cancel).fixed, ["Escape"]);
+    assert_eq!(shown(&view, Action::EndTurn)[0], "Space");
+    assert_eq!(shown(&view, Action::ToggleAutoEnd)[0], "Shift+Space");
+    assert!(row_of(&view, Action::EndTurn).fixed.is_empty());
+    assert!(row_of(&view, Confirm).fixed.is_empty());
+    assert_eq!(view.not_mapped, NOT_MAPPED);
+    // Optional and unmapped: a note that doesn't block leaving. Required and
+    // unmapped: one that does.
+    let flags = |view: &KeyBindingsView, a| {
+        let r = row_of(view, a);
+        (r.unmapped, r.blocks_leaving)
     };
-    assert_eq!(note_fg(&buf, "Select"), c.palette.get(UiColor::TextDim));
+    assert_eq!(flags(&view, Action::Select), (true, false));
+    assert_eq!(flags(&view, Confirm), (false, false));
     focus_on(&mut s, &mut c, Confirm, 0);
     s.update(&mut c, &press("Delete"));
-    let buf = drawn(&s, &c);
-    assert_eq!(note_fg(&buf, "Confirm"), c.palette.get(UiColor::HpLow));
-    // The focused slot is a bar; while capturing it shows the prompt.
-    let bar = c.palette.get(UiColor::PanelBorderFocus);
-    let y = (0..i32::from(CONSOLE_H))
-        .find(|&y| row_text(&buf, y).contains(" Confirm  "))
-        .unwrap();
-    assert_eq!(buf.get(slot_x(0), y).unwrap().bg, bar);
-    assert_eq!(buf.get(slot_x(0) + 15, y).unwrap().bg, bar);
-    assert_ne!(buf.get(slot_x(0) + 16, y).unwrap().bg, bar);
-    assert_ne!(buf.get(slot_x(1), y).unwrap().bg, bar);
+    let view = s.view(&c);
+    assert_eq!(flags(&view, Confirm), (true, true));
+    assert_eq!(shown(&view, Confirm), ["-", "-", "-"]);
+    // The focused slot is the one the cursor is on; while capturing it
+    // holds the prompt.
+    assert_eq!(row_of(&view, Confirm).focus, Some(0));
+    assert_eq!(view.rows().filter(|r| r.focused()).count(), 1);
     s.update(&mut c, &act(&[CursorRight, Confirm]));
-    let buf = drawn(&s, &c);
-    assert!(row_text(&buf, y).contains(CAPTURE_PROMPT));
-    assert_eq!(buf.get(slot_x(1), y).unwrap().bg, bar);
-    assert_ne!(buf.get(slot_x(0), y).unwrap().bg, bar);
+    let view = s.view(&c);
+    assert_eq!(row_of(&view, Confirm).focus, Some(1));
+    assert_eq!(shown(&view, Confirm)[1], format!("…{CAPTURE_PROMPT}"));
+    assert_eq!(shown(&view, Confirm)[0], "-");
 }
 
 #[test]
-fn every_chord_name_fits_a_slot() {
-    for &key in Key::ALL {
-        let name = Chord::shifted(key).to_string();
-        assert!(name.chars().count() <= SLOT_W, "{name}");
-    }
-    assert!(slot_x(SLOTS) + 1 + i32::try_from(NOT_MAPPED.len()).unwrap() < PANEL.x + PANEL.w);
-    assert_eq!(slot_x(0), SLOTS_X);
-    assert_eq!(slot_x(2), SLOTS_X + 2 * SLOT_PITCH);
+fn the_groups_are_the_required_actions_then_the_optional_ones() {
+    let c = ctx();
+    let view = screen(&c).view(&c);
+    assert!(view.groups[0].required && !view.groups[1].required);
+    assert!(view.groups[0].rows.iter().all(|r| r.action.is_required()));
+    assert!(view.groups[1].rows.iter().all(|r| !r.action.is_required()));
+    let listed: Vec<_> = view.rows().map(|r| (r.action, r.label.as_str())).collect();
+    assert_eq!(listed, ROWS);
 }
 
 // --- The controller side (ticket 0816) --------------------------------------
@@ -819,54 +815,37 @@ fn the_switch_row_shows_the_keyboard_or_the_controller() {
 }
 
 #[test]
-fn the_controller_side_draws_buttons_as_the_pad_names_them() {
+fn the_controller_side_shows_buttons_as_the_pad_names_them() {
     let mut c = pad_ctx();
     let mut s = KeyBindingsScreen::new(&c);
-    let buf = drawn(&s, &c);
-    assert!(row_text(&buf, 4).contains("Button 1"));
-    assert!(row_text(&buf, 4).contains("Button 3"));
-    assert!(!row_text(&buf, 4).contains("Key 1"));
-    assert!(row_text(&buf, 5).contains("Must have a button"));
-    assert!(row_text(&buf, 14).contains("Optional"));
-    assert!(row_of(&buf, "Cursor up").contains(" ↑                 L-stick ↑         · "));
-    assert!(row_of(&buf, "Confirm").contains(" A  "));
-    assert!(!row_of(&buf, "Cancel").contains('+'), "no fixed button");
-    assert!(row_of(&buf, "End turn").contains(" Start "));
-    assert!(row_of(&buf, "Select").contains(NOT_MAPPED));
-    assert!(!row_of(&buf, "Rewind").contains(NOT_MAPPED));
-    // The shown side is highlighted in the switch row, the other dim.
-    // The column `word` starts at in the switch row.
-    let col = |buf: &GlyphBuffer, word: &str| {
-        let row = row_text(buf, 2);
-        let cells = row[..row.find(word).unwrap()].chars().count();
-        i32::try_from(cells).unwrap()
-    };
-    let fg = |buf: &GlyphBuffer, word: &str| buf.get(col(buf, word), 2).unwrap().fg;
-    assert_eq!(
-        fg(&buf, "Controller"),
-        c.palette.get(UiColor::TextHighlight)
-    );
-    assert_eq!(fg(&buf, "Keyboard"), c.palette.get(UiColor::TextDim));
+    let view = s.view(&c);
+    assert_eq!(view.columns, ["Button 1", "Button 2", "Button 3"]);
+    let headings: Vec<_> = view.groups.iter().map(|g| g.heading.as_str()).collect();
+    assert_eq!(headings, ["Must have a button", "Optional"]);
+    assert_eq!(shown(&view, CursorUp), ["↑", "L-stick ↑", "-"]);
+    assert_eq!(shown(&view, Confirm)[0], "A");
+    assert!(row_of(&view, Cancel).fixed.is_empty(), "no fixed button");
+    assert_eq!(shown(&view, Action::EndTurn)[0], "Start");
+    assert!(row_of(&view, Action::Select).unmapped);
+    assert!(!row_of(&view, Action::Rewind).unmapped);
+    // The shown side is the controller.
+    assert_eq!(view.switch.shown, Side::Controller);
     // A Sony pad's names; on the keyboard, an Xbox pad's.
     c.device = Device::Pad(PadKind::PlayStation);
-    assert!(row_of(&drawn(&s, &c), "End turn").contains(" Options "));
+    assert_eq!(shown(&s.view(&c), Action::EndTurn)[0], "Options");
     c.device = Device::Keyboard;
-    assert!(row_of(&drawn(&s, &c), "End turn").contains(" Start "));
-    // On the switch, the shown side is a bar.
+    assert_eq!(shown(&s.view(&c), Action::EndTurn)[0], "Start");
+    // On the switch, it is the focus.
     s.update(&mut c, &act(&[CursorUp]));
-    let buf = drawn(&s, &c);
-    let bar = c.palette.get(UiColor::PanelBorderFocus);
-    let x = col(&buf, "Controller");
-    assert_eq!(buf.get(x - 1, 2).unwrap().bg, bar);
-    assert_eq!(buf.get(x + 10, 2).unwrap().bg, bar);
-    assert_ne!(buf.get(x + 11, 2).unwrap().bg, bar);
-    assert_ne!(buf.get(x - 2, 2).unwrap().bg, bar);
+    let view = s.view(&c);
+    assert!(view.switch.focused);
+    assert_eq!(view.focused(), None);
     s.update(&mut c, &act(&[CursorLeft]));
-    let buf = drawn(&s, &c);
-    assert_eq!(buf.get(LABEL_X - 1, 2).unwrap().bg, bar);
-    assert_ne!(buf.get(x, 2).unwrap().bg, bar);
-    assert!(row_text(&buf, 4).contains("Key 1"));
-    assert!(row_of(&buf, "Cancel").contains(" Cancel  + Escape "));
+    let view = s.view(&c);
+    assert_eq!(view.switch.shown, Side::Keyboard);
+    assert!(view.switch.focused);
+    assert_eq!(view.columns[0], "Key 1");
+    assert_eq!(row_of(&view, Cancel).fixed, ["Escape"]);
 }
 
 #[test]
@@ -879,8 +858,8 @@ fn with_the_keyboard_confirm_captures_a_button_let_go() {
     s.update(&mut c, &act(&[Confirm]));
     assert!(s.is_capturing());
     assert_eq!(s.choice(), None);
-    let y = row_y(11);
-    assert!(row_text(&drawn(&s, &c), y).contains(CAPTURE_BUTTON_PROMPT));
+    let waiting = shown(&s.view(&c), Info);
+    assert_eq!(waiting[1], format!("…{CAPTURE_BUTTON_PROMPT}"));
     sounds(&mut c);
     // Going down doesn't bind; nor does a key.
     s.update(&mut c, &buttons(&[Button::RightTrigger], &[], 0.0));
@@ -910,8 +889,8 @@ fn a_button_taken_from_another_action_moves_and_that_row_lights_up() {
     assert_eq!(pad_names(&s, Confirm), ["-", "-", "-"]);
     assert_eq!(s.moved, Some((Confirm, MOVED_FLASH_SECS)));
     assert_eq!(s.message(), None);
-    let buf = drawn(&s, &c);
-    assert!(row_of(&buf, "Confirm").contains(NOT_MAPPED));
+    assert!(row_of(&s.view(&c), Confirm).unmapped);
+    assert!(row_of(&s.view(&c), Confirm).lost_key);
     // Its own button again: nothing moves.
     change(&mut s, &mut c, Info, 0);
     tap(&mut s, &mut c, Button::South);
@@ -1079,41 +1058,25 @@ fn on_a_controller_confirm_offers_change_or_clear() {
 }
 
 #[test]
-fn the_choices_are_drawn_under_the_slot_or_over_it_on_the_last_rows() {
+fn the_view_offers_the_choices_for_the_slot_with_the_cursor() {
     let mut c = pad_ctx();
     let mut s = KeyBindingsScreen::new(&c);
+    assert_eq!(s.view(&c).choices, None);
     focus_on(&mut s, &mut c, Info, 1);
     s.update(&mut c, &act(&[Confirm]));
-    let buf = drawn(&s, &c);
-    let (x, y) = (slot_x(1), row_y(11));
-    assert_eq!(buf.get(x, y + 1).unwrap().glyph, '╔');
-    assert_eq!(buf.get(x + CHOICE_W - 1, y + CHOICE_H).unwrap().glyph, '╝');
-    assert!(row_text(&buf, y + 2).contains("║ Change   ║"));
-    assert!(row_text(&buf, y + 3).contains("║ Clear    ║"));
-    let bar = c.palette.get(UiColor::PanelBorderFocus);
-    assert_eq!(buf.get(x + 1, y + 2).unwrap().bg, bar);
-    assert_eq!(buf.get(x + CHOICE_W - 2, y + 2).unwrap().bg, bar);
-    assert_ne!(buf.get(x + 1, y + 3).unwrap().bg, bar);
+    let view = s.view(&c);
+    let choices = view.choices.clone().unwrap();
+    assert_eq!(choices.lines, ["Change", "Clear"]);
+    assert_eq!((choices.focused, choices.slot), (0, 1));
+    assert_eq!(
+        view.focused().map(|r| (r.action, r.focus)),
+        Some((Info, Some(1)))
+    );
     s.update(&mut c, &act(&[CursorDown]));
-    let buf = drawn(&s, &c);
-    assert_eq!(buf.get(x + 1, y + 3).unwrap().bg, bar);
-    assert_ne!(buf.get(x + 1, y + 2).unwrap().bg, bar);
-    assert!(row_text(&buf, y + 2).contains("║ Change   ║"));
-    // Only under the last row it doesn't fit.
-    for (row, over) in [(13, false), (14, false), (15, true)] {
-        let mut s = KeyBindingsScreen::new(&c);
-        focus_on(&mut s, &mut c, ROWS[row].0, 0);
-        s.update(&mut c, &act(&[Confirm]));
-        let buf = drawn(&s, &c);
-        let y = row_y(row);
-        let top = if over { y - CHOICE_H } else { y + 1 };
-        assert_eq!(buf.get(slot_x(0), top).unwrap().glyph, '╔', "row {row}");
-        let bottom = top + CHOICE_H - 1;
-        assert_eq!(buf.get(slot_x(0), bottom).unwrap().glyph, '╚', "row {row}");
-        assert!(bottom < PANEL.y + PANEL.h - 1, "inside the panel");
-        // The slot itself stays visible.
-        assert_eq!(buf.get(slot_x(0), y).unwrap().bg, bar);
-    }
+    assert_eq!(s.view(&c).choices.unwrap().focused, 1);
+    // Cancel closes them.
+    s.update(&mut c, &act(&[Cancel]));
+    assert_eq!(s.view(&c).choices, None);
 }
 
 #[test]
@@ -1123,7 +1086,7 @@ fn on_a_controller_the_keyboard_side_still_takes_only_keys() {
     s.update(&mut c, &act(&[CursorUp, CursorLeft]));
     assert_eq!(s.side(), Side::Keyboard);
     change(&mut s, &mut c, Info, 1);
-    assert!(row_text(&drawn(&s, &c), row_y(11)).contains(CAPTURE_PROMPT));
+    assert_eq!(shown(&s.view(&c), Info)[1], format!("…{CAPTURE_PROMPT}"));
     // A button let go isn't a key: still waiting.
     tap(&mut s, &mut c, Button::West);
     assert!(s.is_capturing());
@@ -1277,7 +1240,9 @@ fn restore_defaults_on_the_controller_side_resets_only_the_buttons() {
     s.update(&mut c, &act(&[Confirm]));
     assert!(s.is_asking_restore());
     assert_eq!(s.restore_question(&c), "Restore the default buttons?");
-    assert!(row_text(&drawn(&s, &c), 15).contains("Restore the default buttons?"));
+    let question = s.view(&c).question.unwrap();
+    assert_eq!(question.text, "Restore the default buttons?");
+    assert_eq!(question.answers, "A yes / B no");
     s.update(&mut c, &act(&[Confirm]));
     assert_eq!(s.pad_bindings(), &PadBindings::defaults(&c.content.keymap));
     assert_eq!(s.bindings(), &keys);
@@ -1353,26 +1318,5 @@ fn help_follows_the_side_and_the_device() {
         for line in lines {
             assert!(line.chars().count() <= usize::from(CONSOLE_W), "{line}");
         }
-    }
-}
-
-#[test]
-fn every_button_name_fits_a_slot() {
-    let kinds = [
-        PadKind::Xbox,
-        PadKind::PlayStation,
-        PadKind::PlayStation4,
-        PadKind::Nintendo,
-        PadKind::Generic,
-    ];
-    for kind in kinds {
-        for &button in Button::ALL {
-            let name = kind.button_name(button);
-            assert!(name.chars().count() <= SLOT_W, "{name}");
-        }
-    }
-    assert!(CAPTURE_BUTTON_PROMPT.chars().count() <= SLOT_W);
-    for choice in CHOICES.map(|key| ctx().text(key).to_owned()) {
-        assert!(i32::try_from(choice.chars().count()).unwrap() <= CHOICE_W - 4);
     }
 }

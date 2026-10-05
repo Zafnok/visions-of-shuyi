@@ -1,8 +1,17 @@
 //! A vertical list menu: title menu now, action and map menus later.
+//!
+//! The menu holds its items and its focus. What it shows is
+//! [`Menu::view`], plain data, and [`glyph::paint`] draws that view as
+//! glyphs (ADR-0054): the screens' own skins call it for their menu.
+
+pub mod glyph;
+pub mod view;
+
+pub use view::{MenuItemView, MenuView};
 
 use crate::audio::{AudioQueue, MenuSound};
 use crate::color::{Palette, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 
 /// One menu entry.
@@ -40,17 +49,6 @@ impl MenuItem {
             enabled: false,
             suffix: None,
         }
-    }
-}
-
-impl MenuItem {
-    /// Cells the label and suffix take.
-    fn width(&self) -> usize {
-        let suffix = self
-            .suffix
-            .as_ref()
-            .map_or(0, |(t, _)| t.chars().count() + 1);
-        self.label.chars().count() + suffix
     }
 }
 
@@ -177,47 +175,32 @@ impl Menu {
         }
     }
 
-    /// Box size in cells: the widest label plus a space and a border on each
-    /// side, by one row per item plus the border.
-    pub fn size(&self) -> (i32, i32) {
-        let widest = self.items.iter().map(MenuItem::width).max().unwrap_or(0);
-        let w = i32::try_from(widest).unwrap_or(i32::MAX).saturating_add(4);
-        let h = i32::try_from(self.items.len())
-            .unwrap_or(i32::MAX)
-            .saturating_add(2);
-        (w, h)
+    /// What the menu shows: every item, and which one has the focus.
+    pub fn view(&self) -> MenuView {
+        let items = self.items.iter().enumerate().map(|(i, item)| MenuItemView {
+            label: item.label.clone(),
+            suffix: item.suffix.clone(),
+            enabled: item.enabled,
+            focused: i == self.focus,
+        });
+        MenuView {
+            items: items.collect(),
+        }
     }
 
-    /// Draws the menu with its top-left corner at `(x, y)`: a `panel_bg`
-    /// box with a `panel_border` single line, items in `text`, disabled ones
-    /// in `text_dim`, and the focused one as a bar of `panel_bg` text on
-    /// `panel_border_focus`.
+    /// Box size in cells ([`glyph::size`] of the [`view`](Self::view)).
+    /// Kept for the screens that haven't moved to a view and a skin yet
+    /// (ADR-0054; tickets 0241 and 0242 convert them, then this goes).
+    pub fn size(&self) -> (i32, i32) {
+        glyph::size(&self.view())
+    }
+
+    /// Draws the menu with its top-left corner at `(x, y)`
+    /// ([`glyph::paint`] of the [`view`](Self::view)). Kept for the screens
+    /// that haven't moved to a view and a skin yet (ADR-0054; tickets 0241
+    /// and 0242 convert them, then this goes).
     pub fn draw(&self, palette: &Palette, buf: &mut GlyphBuffer, x: i32, y: i32) {
-        let color = |u| palette.get(u);
-        let bg = color(UiColor::PanelBg);
-        let (w, h) = self.size();
-        let rect = Rect::new(x, y, w, h);
-        buf.fill_rect(rect, Cell::new(' ', color(UiColor::Text), bg));
-        buf.draw_box(rect, BoxStyle::Single, color(UiColor::PanelBorder), bg);
-        for (row, (i, item)) in (y + 1..).zip(self.items.iter().enumerate()) {
-            let (fg, row_bg) = match (i == self.focus, item.enabled) {
-                (_, false) => (color(UiColor::TextDim), bg),
-                (true, true) => (bg, color(UiColor::PanelBorderFocus)),
-                (false, true) => (color(UiColor::Text), bg),
-            };
-            buf.fill_rect(Rect::new(x + 1, row, w - 2, 1), Cell::new(' ', fg, row_bg));
-            buf.print(x + 2, row, &item.label, fg, row_bg);
-            if let Some((text, suffix_color)) = &item.suffix {
-                let at = x + 3 + i32::try_from(item.label.chars().count()).unwrap_or(0);
-                // On the focus bar the colour would vanish: keep the bar's.
-                let fg = if i == self.focus && item.enabled {
-                    fg
-                } else {
-                    color(*suffix_color)
-                };
-                buf.print(at, row, text, fg, row_bg);
-            }
-        }
+        glyph::paint(palette, &self.view(), buf, x, y);
     }
 }
 
@@ -228,6 +211,7 @@ mod tests {
 
     use super::*;
     use crate::color::tests::game_palette;
+    use crate::glyph_buffer::Cell;
     use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorUp, Info};
 
     fn menu(enabled: &[bool]) -> Menu {
@@ -402,6 +386,52 @@ mod tests {
         let m = Menu::new(vec![MenuItem::new("a"), MenuItem::disabled("bcd")]);
         assert_eq!(m.items()[1].label, "bcd");
         assert_eq!(m.size(), (7, 4));
+    }
+
+    #[test]
+    fn the_view_lists_the_items_and_the_focus() {
+        let mut m = Menu::new(vec![
+            MenuItem::new("Move"),
+            MenuItem::disabled("Attack").with_suffix(" (no foe)", UiColor::HpLow),
+            MenuItem::new("Wait"),
+        ]);
+        let view = m.view();
+        let shown: Vec<_> = view
+            .items
+            .iter()
+            .map(|i| (i.label.as_str(), i.enabled, i.focused))
+            .collect();
+        assert_eq!(
+            shown,
+            [
+                ("Move", true, true),
+                ("Attack", false, false),
+                ("Wait", true, false)
+            ]
+        );
+        assert_eq!(
+            view.items[1].suffix,
+            Some((" (no foe)".to_owned(), UiColor::HpLow))
+        );
+        assert_eq!(view.items[0].suffix, None);
+        assert_eq!(view.focused().map(|i| i.label.as_str()), Some("Move"));
+        // The focus follows the menu, and an empty menu has none.
+        m.handle(CursorDown);
+        assert_eq!(m.view().focused().map(|i| i.label.as_str()), Some("Wait"));
+        assert_eq!(Menu::new(vec![]).view().focused(), None);
+    }
+
+    #[test]
+    fn size_and_draw_are_the_skins() {
+        let m = Menu::new(vec![MenuItem::new("a"), MenuItem::disabled("bcd")]);
+        assert_eq!(m.size(), glyph::size(&m.view()));
+        let p = game_palette();
+        let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
+        let mut drawn = GlyphBuffer::new(12, 8, blank);
+        let mut painted = drawn.clone();
+        m.draw(&p, &mut drawn, 2, 1);
+        glyph::paint(&p, &m.view(), &mut painted, 2, 1);
+        assert_eq!(drawn.to_snapshot(&p), painted.to_snapshot(&p));
     }
 
     fn render(m: &Menu) -> String {

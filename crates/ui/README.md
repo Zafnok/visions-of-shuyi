@@ -339,10 +339,16 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      as meanings: a volume is a level, not a row of blocks) and its skin
      (`<name>/glyph.rs`: `paint(ctx, &view, buf)`, the only place with
      positions, box characters and colours). `draw` is one call to the
-     skin. Tests of what happened read the view or the state; only the
-     skin's tests and snapshots read cells. `screens/options.rs` is the
-     example. The older screens still draw in `draw`; tickets 0240–0242
-     convert them, so don't copy them.
+     skin. The logic module doesn't import `UiColor`, `Rect`, `BoxStyle`
+     or `Cell` (a test greps the converted ones). Tests of what happened
+     read the view or the state (`h.game().screen::<Name>()` and its
+     `view`: the screen opts into `Screen::as_any`); only the skin's tests
+     and snapshots read cells. A screen with a `widgets::Menu` puts
+     `menu.view()` in its own view, and its skin paints it with
+     `widgets::menu::glyph::paint`. `screens/options.rs` is the example;
+     the title, Key bindings and layout picker (0240) follow it. The other
+     screens still draw in `draw` until tickets 0241 and 0242 convert them,
+     so don't copy them.
    - Text the player reads is never a string literal (ADR-0045). Put it
      in `assets/lang/en/ui.ron` under a `screen.thing` key and ask for it
      with `ctx.text("title.new_game")`, or `ctx.text_with("results.turns",
