@@ -19,6 +19,7 @@ mod preparations;
 mod rebind_buttons;
 mod save;
 mod scene_camera;
+mod scene_preview;
 mod split_keys;
 mod sprite_test;
 mod title;

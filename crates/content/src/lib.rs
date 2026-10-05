@@ -149,6 +149,19 @@ impl Content {
 /// depend on another file (terrain colours, map legends) are skipped when that
 /// file failed, so one broken file doesn't flood the report.
 pub fn load_embedded() -> Result<Content, ContentErrors> {
+    load::<&str>(None)
+}
+
+/// [`load_embedded`] with `scripts`, `(file name, source)` pairs, as the
+/// dialogue files instead of the bundle's: every check a script goes
+/// through, on scripts as they are on disk (`cargo xtask check-script`).
+pub fn load_with_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> Result<Content, ContentErrors> {
+    load(Some(scripts))
+}
+
+/// Loads and validates everything; the dialogue files are `scripts`, or
+/// the bundle's when `None`.
+fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, ContentErrors> {
     let palette = PaletteDef::load();
     let terrain = TerrainDef::load(palette.as_ref().ok());
     let maps = match &terrain {
@@ -182,12 +195,12 @@ pub fn load_embedded() -> Result<Content, ContentErrors> {
         Err(_) => Ok(BTreeMap::new()),
     };
     let audio = audio::load();
-    let scripts = dialogue::load_scripts(
-        characters.as_ref().ok(),
-        portraits.as_ref().ok(),
-        names.as_ref().ok(),
-        audio.as_ref().ok(),
-    );
+    let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
+    let (known, cues) = (names.as_ref().ok(), audio.as_ref().ok());
+    let scripts = match scripts {
+        Some(files) => dialogue::scripts_from_sources(files, cast, faces, known, cues),
+        None => dialogue::load_scripts(cast, faces, known, cues),
+    };
     let scenes = scripts.as_ref().ok().map(|s| &s.table);
     let (battles, chapters, new_game) = load_story(
         maps.as_ref().ok(),
@@ -981,6 +994,46 @@ mod tests {
             check_skill_references(failed.clone(), classes.as_ref()),
             failed
         );
+    }
+
+    /// Given the bundle's own dialogue files, [`load_with_scripts`] loads
+    /// what [`load_embedded`] does; given others, their scenes and their
+    /// problems are the game's.
+    #[test]
+    fn scripts_given_replace_the_bundles() {
+        let paths = bundle::files_in(dialogue::DIALOGUE_DIR);
+        let files: Vec<(String, &str)> = paths
+            .into_iter()
+            .filter(|p| p.ends_with(dialogue::DIALOGUE_EXTENSION))
+            .map(|p| (bundle::display_path(p), bundle::file(p).unwrap_or_default()))
+            .collect();
+        assert!(files.len() > 1);
+        let embedded = load_embedded().unwrap();
+        let same = load_with_scripts(&files).unwrap();
+        assert_eq!(same.dialogue, embedded.dialogue);
+        assert_eq!(same.battles, embedded.battles);
+        // A scene more.
+        let mut more = files.clone();
+        more.push(("draft.dlg".to_owned(), "@scene draft\n> Hello.\n@end\n"));
+        let with_draft = load_with_scripts(&more).unwrap();
+        assert!(with_draft.dialogue.get("draft").is_some());
+        assert_eq!(
+            with_draft.dialogue.scenes.len(),
+            embedded.dialogue.scenes.len() + 1
+        );
+        // A broken script is reported under the name given.
+        more.push(("bad.dlg".to_owned(), "@scene bad\n@end\n"));
+        let errors = load_with_scripts(&more).unwrap_err();
+        assert_eq!(
+            errors.0,
+            [
+                ContentError::new("bad.dlg", "scene \"bad\" has no speech or narration")
+                    .at(1, None)
+            ]
+        );
+        // Without the game's scripts, what plays their scenes fails.
+        let errors = load_with_scripts(&more[files.len()..=files.len()]).unwrap_err();
+        assert!(errors.0.iter().any(|e| e.file.starts_with("assets/")));
     }
 
     /// The embedded scripts pass the presence check (ADR-0055); with the

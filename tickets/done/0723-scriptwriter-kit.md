@@ -5,10 +5,10 @@ type: infra
 milestone: M6 Story & dialogue
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0715", "0717"]
 nick_input: none
-completed:
+completed: 2026-10-04
 ---
 
 # 0723 — A scriptwriter's kit: guide, script checker and scene preview for someone who doesn't program
@@ -80,10 +80,10 @@ ASCII quotes, 200-character lines), list it in the notes for Nick.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask check-script` on the repository's scripts reports 0 problems; on a file with a curly quote and a typed-out name it reports both with line numbers and fixes (tests).
-- [ ] `--scene ch01_intro` opens that scene (Harness test of the start-up path; manual check noted).
-- [ ] The guide's every example passes `check-script` (a test extracts and checks the fenced examples).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo xtask check-script` on the repository's scripts reports 0 problems; on a file with a curly quote and a typed-out name it reports both with line numbers and fixes (tests).
+- [x] `--scene ch01_intro` opens that scene (Harness test of the start-up path; manual check noted).
+- [x] The guide's every example passes `check-script` (a test extracts and checks the fenced examples).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -92,3 +92,62 @@ ASCII quotes, 200-character lines), list it in the notes for Nick.
 
 ## Completion notes
 
+Done 2026-10-04.
+
+- **Guide:** `docs/story/writers-guide.md`. Eight example scenes, each a
+  ` ```dlg ` block; an `xtask` test runs the checker on them.
+- **Checker:** `cargo xtask check-script [file]` reads the scripts from
+  disk and prints `file:line: message` and a count; exit code 0 when
+  clean, 1 with problems. With a file it lists that file's problems only;
+  the file may be a draft outside `assets/dialogue/` or a Markdown file
+  (its ` ```dlg ` blocks are checked, with the Markdown file's line
+  numbers).
+- **Preview:** `cargo run -p trpg-app -- --scene <id> [--lead f]`. There
+  was no scene viewer in `crates/ui/src/debug` (only "Play test scene"),
+  so this adds `ScenePreviewScreen`: when the scene ends it names the keys
+  (from the keymap) that play it again and quit. An unknown scene id shows
+  the list of scene ids. Manual check: both commands start without error
+  on Nick's machine; the screens themselves are covered by Harness tests
+  (`crates/ui/tests/it/scene_preview.rs`), I did not look at the window.
+- **Hand-over page:** `docs/story/README.md`, "For a human writer".
+
+Deviations:
+
+- The checker runs the whole content load with the on-disk scripts in
+  place of the embedded ones (`trpg_content::load_with_scripts`, built on
+  `scripts_from_sources`, the sibling of `from_sources`), not
+  `from_sources` alone: that way it also runs the "who is still there"
+  checks (0715) and catches a chapter or battle that names a scene the
+  writer renamed. No new rules; every message is the validator's own,
+  which already carried the fixes (the ASCII form, the name token).
+- `--lead` also takes `male` / `female`. The error text says so instead of
+  naming the letters, because `check-keys` reads a lone letter in text as
+  a hard-coded key.
+- `DialogueScreen` now opts in to `Screen::as_any`, so tests can find the
+  scene that is playing.
+- The scene preview plays with everyone there (every `@if`, no `@else`),
+  as the reference already said the debug viewer does. Watching the
+  `@else` lines needs playing the game; no ticket written, since nobody
+  has asked.
+- No ticket for a standalone checker (step 5: only when a writer is
+  hired).
+
+For Nick: validator rules a human writer may find wrong. None was
+changed; they are listed for you to decide if a writer is hired:
+
+1. **Typewriter punctuation only**: no curly quotes, no real dash or
+   ellipsis character. Word processors produce these by themselves. The
+   reason is the font.
+2. **200 characters per text box**, 60 per reply, 40 per line the lead
+   speaks outside a reply choice.
+3. **At most 3 replies** in a choice and **4 text boxes** in a reaction.
+4. **Capitalised ordinary words that are also names** (Mother, Hand, Pyre,
+   Wren, Crane, Rook, Holt, Mast) are always taken as the name, so a
+   sentence can't start with them.
+5. **Pronoun tokens read oddly**: the script says `{They} knows`, because
+   the token becomes he or she.
+6. **A new character or name needs data first** (an id in
+   `characters.ron` / `names.ron`), so a writer can't introduce even a
+   nameless villager without asking.
+
+No gameplay rule was decided in this ticket.

@@ -2,10 +2,13 @@
 //! and controller-button events and the frame time and blits the buffer it
 //! returns; the test `Harness` drives it the same way without a window.
 
+use trpg_core::lead::DEFAULT_NAME;
+use trpg_core::{LeadGender, LeadProfile};
+
 use crate::audio::{AudioRequest, MusicClock, MusicCommand, MusicState};
 use crate::color::UiColor;
 use crate::console::{CONSOLE_H, CONSOLE_W};
-use crate::debug::{self, DebugMenuScreen};
+use crate::debug::{self, DebugMenuScreen, ScenePreviewScreen};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::{Action, Button, Chord, InputState, Key, PadId, PadKind, PadState, Pads};
 use crate::screen::{Ctx, FrameInput, KeyPrompt, Screen, ScreenStack};
@@ -115,6 +118,45 @@ impl Game {
             stack.push(Box::new(LayoutPickerScreen::new()));
         }
         Self::with_stack(ctx, stack)
+    }
+
+    /// A game opened straight on the dialogue scene `scene`, for whoever
+    /// writes scripts (ticket 0723): it plays with everyone there and the
+    /// default lead of `gender`; when it ends, the [`ScenePreviewScreen`]
+    /// plays it again or quits. The saved layout is used; if none is saved
+    /// the layout picker opens first, as in [`start`](Self::start).
+    ///
+    /// # Errors
+    ///
+    /// If there is no such scene: the error lists the scenes there are.
+    pub fn start_on_scene(mut ctx: Ctx, scene: &str, gender: LeadGender) -> Result<Self, String> {
+        let Some(found) = ctx.content.dialogue.get(scene).cloned() else {
+            let ids: Vec<&str> = ctx
+                .content
+                .dialogue
+                .scenes
+                .keys()
+                .map(String::as_str)
+                .collect();
+            return Err(format!(
+                "no scene \"{scene}\" in assets/dialogue/; the scenes are: {}",
+                ids.join(", ")
+            ));
+        };
+        if ctx.layout().is_none()
+            && let Some(layout) = ctx.saved_layout()
+        {
+            ctx.use_layout(layout);
+        }
+        ctx.lead = LeadProfile::new(DEFAULT_NAME, gender);
+        let preview = ScenePreviewScreen::new(found);
+        let playing = preview.play(&ctx);
+        let mut stack = ScreenStack::new(Box::new(preview));
+        stack.push(Box::new(playing));
+        if ctx.layout().is_none() {
+            stack.push(Box::new(LayoutPickerScreen::new()));
+        }
+        Ok(Self::with_stack(ctx, stack))
     }
 
     fn with_stack(ctx: Ctx, stack: ScreenStack) -> Self {
