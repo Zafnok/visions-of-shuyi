@@ -43,8 +43,8 @@ Key and button names are the Harness's test-script names (Chord::parse,
 Button::parse), as in crates/ui/tests: input to a test script, not game
 code, so the never-hard-code-a-key rule doesn't apply to them.
 
-With the private-assets feature the picture shows the bought art: never
-commit it (ADR-0040).";
+With the private-assets feature the picture shows the bought art: commit
+it only as a screenshot of the game (CLAUDE.md, Bought art).";
 
 /// Largest `--scale`.
 const MAX_SCALE: u32 = 8;
@@ -188,7 +188,7 @@ fn summary(shown: &str, frame: &Image, private_assets: bool) -> String {
     if private_assets {
         out.push_str(
             "
-warning: built with private-assets: the picture shows bought art;              never commit it (ADR-0040)",
+warning: built with private-assets: the picture shows bought art;              commit it only as a screenshot of the game (CLAUDE.md, Bought art)",
         );
     }
     out

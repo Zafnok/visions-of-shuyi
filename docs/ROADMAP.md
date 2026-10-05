@@ -149,12 +149,13 @@ bought unit sprites (0436, which also needs 0110) and the bought terrain
 same day: Nick said the playtest waits for it.
 
 ```
- 1  0022 0023 0024 0231 0316 0410 0432 0435 0710 0714 0715 0801 0822
- 2  0433 0711 0716 0802 0807 0810
- 3  0413 0436 0706 0809
- 4  0437 0440 0803
- 5  0804  ◄── Nick plays Chapter 1
+ 1  0022 0023 0024 0413 0706 0822
+ 2  0803 0809
+ 3  0804  ◄── Nick plays Chapter 1
 ```
+
+The table was brought up to date on 2026-10-04 (ticket 0121): every other
+ticket named above is done.
 
 **0035** (Harl's picture) left row 1 on 2026-10-04: Nick chose it in 0040
 (Shironejiya's bearded axe bandit), so 0413 and 0706 no longer wait on it.
