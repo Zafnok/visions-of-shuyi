@@ -143,9 +143,7 @@ fn check_text(args: &[String]) -> u8 {
     }
     let (hits, mut errors) = check_text::run(&repo_root());
     print!("{}", check_text::report(&hits, check_text::MAX_LITERALS));
-    let (names, name_errors) = check_text::run_names(&repo_root());
-    errors.extend(name_errors);
-    eprint!("{}", check_text::report_names(&names));
+    errors.extend(check_text::run_names(&repo_root()));
     for error in &errors {
         eprintln!("check-text: {error}");
     }
@@ -154,7 +152,7 @@ fn check_text(args: &[String]) -> u8 {
             if let Some(note) = note {
                 println!("{note}");
             }
-            u8::from(!errors.is_empty() || !names.is_empty())
+            u8::from(!errors.is_empty())
         }
         Err(e) => {
             eprintln!("{e}");

@@ -228,7 +228,6 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         classes.as_ref().ok(),
         characters.as_ref().ok(),
     );
-    let story_loaded = maps.is_ok() && characters.is_ok() && audio.is_ok();
     let mut units = Loaded {
         classes,
         items,
@@ -251,11 +250,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         supports,
         lang: Ok(Lang::default()),
     };
-    // The story files load empty, without an error, when a file they
-    // depend on failed: their text is then no base to check a pack on.
-    let data = story_loaded
-        .then(|| data_text(&units, terrain.as_ref().ok()))
-        .flatten();
+    let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
     units.lang = lang::load(data);
     assemble(
         palette,
@@ -269,8 +264,17 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
 
 /// The English a language pack's data and dialogue text is checked
 /// against ([`lang::DataText`]); `None` if a file it is read from failed
-/// to load.
-fn data_text(units: &Loaded, terrain: Option<&TerrainDef>) -> Option<lang::DataText> {
+/// to load. The story files load empty, without an error, when a file
+/// they depend on failed (the maps, the characters, the audio): their
+/// text is then no base to check a pack on either.
+fn data_text(
+    units: &Loaded,
+    terrain: Option<&TerrainDef>,
+    maps: Option<&BTreeMap<String, MapDef>>,
+) -> Option<lang::DataText> {
+    maps?;
+    units.characters.as_ref().ok()?;
+    units.audio.as_ref().ok()?;
     Some(lang::DataText::from_tables(&lang::Tables {
         classes: units.classes.as_ref().ok()?,
         items: units.items.as_ref().ok()?,
@@ -920,6 +924,36 @@ mod tests {
             characters.as_ref(),
         );
         assert!(loaded.is_ok_and(|t| t.contains_key("test")));
+    }
+
+    /// A pack's data and dialogue text is checked only when every file
+    /// its English comes from loaded, the ones the story files need too.
+    #[test]
+    fn the_english_of_the_data_needs_every_file_it_comes_from() {
+        fn failed<T>() -> Result<T, Vec<ContentError>> {
+            Err(vec![ContentError::new("f", "broken")])
+        }
+        let terrain = ok_terrain().ok();
+        let maps = ok_maps().ok();
+        let text = |units: &Loaded| data_text(units, terrain.as_ref(), maps.as_ref());
+        let all = text(&ok_units()).expect("everything loaded");
+        assert_eq!(
+            all.data.get("names.lead").map(String::as_str),
+            Some("Ellery")
+        );
+        assert!(all.lines.contains_key("test_5da5d147"));
+        let mut units = ok_units();
+        units.characters = failed();
+        assert_eq!(text(&units), None);
+        let mut units = ok_units();
+        units.audio = failed();
+        assert_eq!(text(&units), None);
+        let mut units = ok_units();
+        units.tips = failed();
+        assert_eq!(text(&units), None);
+        let units = ok_units();
+        assert_eq!(data_text(&units, terrain.as_ref(), None), None);
+        assert_eq!(data_text(&units, None, maps.as_ref()), None);
     }
 
     #[test]
