@@ -113,6 +113,8 @@ Design answers unblock most of the rules work. Suggested order:
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0029** dialogue backgrounds · **0812** chapter card · **0813** transitions
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
+7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046)
+8. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
 
 Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
 preparations, 0409 shops, 0410 spells, 0411 battle notes, 0502 enemy
@@ -194,3 +196,12 @@ early so every later PR is checked by them.
   (after 1007, 1008). Targets: `docs/design/playtest-bots.md`; how to run
   them and read the report: [`docs/playtesting.md`](playtesting.md). Not on
   the Chapter 1 critical path; 0504 can start any time.
+- Replayability (Nick, 2026-10-04/05, `docs/design/replayability.md`):
+  fixed stars on story battles and fixed skirmishes, with Replay and a
+  "Move on?" question after a win (0046); Visions, an opt-in pick of three
+  on random skirmishes (0047); their rewards (0048); an Ironman mode (0049);
+  a roguelike run mode on the title menu (0050); a randomizer (0051);
+  replays, the veteran's ghost and sharing a battle (0052). Multiplayer
+  after the single-player launch (0053). Modding and dev tools (a mod
+  folder, a map editor, a small scripting language, the bots as a balance
+  tester): Nick said yes; Claude's technical tickets, not yet written.

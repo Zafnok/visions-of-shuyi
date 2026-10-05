@@ -35,6 +35,7 @@ here.
 | Playtest bots: player types, targets, autobalancing | [`playtest-bots.md`](playtest-bots.md) | 0033 | ✅ decided 2026-09-30 |
 | AI voices, Japanese and Chinese options, a hired writer later | [`voices-languages-and-script.md`](voices-languages-and-script.md) | 0042 (Japanese), 0043 (voices), 0045 (Chinese) | ⏳ direction set 2026-10-03 (Chinese added 2026-10-04); details open |
 | Number scale & strike thresholds | [`stats-and-combat.md`](stats-and-combat.md) | 0013 | ⏳ after playtest 0804 |
+| Replayability: stars and Replay, Visions, rewards, Ironman, a run mode, a randomizer, replays and sharing, multiplayer, modding | [`replayability.md`](replayability.md) | 0046–0053 | ⏳ direction set 2026-10-05; details after playtest 0804 (multiplayer after launch) |
 
 Each file starts with `Decided: YYYY-MM-DD`, `Source: ticket NNNN`, and Nick's
 words verbatim, followed by the derived rules (numbers marked *tunable* where
