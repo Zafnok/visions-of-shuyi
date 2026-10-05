@@ -87,9 +87,11 @@ pub fn label(layout: Layout) -> &'static str {
     }
 }
 
-/// Shows both layouts and saves the one picked. On first launch it can't
-/// be cancelled: the game needs a layout. Pops itself once a layout is
-/// picked.
+/// Shows both layouts and saves the one picked. Asked for by a key press
+/// while no layout is chosen, it can't be cancelled with a key (the
+/// keyboard needs a layout), but any controller button closes it without
+/// choosing: that player is on the controller. Pops itself once a layout
+/// is picked.
 #[derive(Debug, Clone)]
 pub struct LayoutPickerScreen {
     menu: Menu,
@@ -99,6 +101,9 @@ pub struct LayoutPickerScreen {
 }
 
 impl LayoutPickerScreen {
+    /// Its [`Screen::name`].
+    pub const NAME: &'static str = "layout_picker";
+
     /// The picker with the first layout (right-handed) focused.
     pub fn new() -> Self {
         Self {
@@ -270,10 +275,14 @@ impl Default for LayoutPickerScreen {
 
 impl Screen for LayoutPickerScreen {
     fn name(&self) -> &'static str {
-        "layout_picker"
+        Self::NAME
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        // Bound or not; the button does nothing else.
+        if !self.cancellable && input.pad_pressed() {
+            return Transition::Pop;
+        }
         for &action in &input.actions {
             match self.menu.handle_with_sound(action, &mut ctx.audio) {
                 Some(MenuEvent::Chosen(i)) => {
@@ -360,6 +369,27 @@ mod tests {
         assert_eq!(format!("{t:?}"), "None");
         assert_eq!(c.layout(), None);
         assert_eq!(p.focused(), Layout::RightHanded);
+    }
+
+    /// Ticket 0226: any controller button closes the asked-for picker
+    /// without choosing; opened from Options, the pad steers it.
+    #[test]
+    fn a_pad_press_closes_only_the_asked_for_picker() {
+        use crate::input::Button;
+        let pad = input(&[Action::CursorDown, Action::Confirm])
+            .with_buttons(vec![Button::DpadDown, Button::South], vec![]);
+        let mut c = first_launch_ctx();
+        let mut p = LayoutPickerScreen::new();
+        assert_eq!(format!("{:?}", p.update(&mut c, &pad)), "Pop");
+        assert_eq!(c.layout(), None);
+        assert_eq!(p.focused(), Layout::RightHanded);
+        // A release alone isn't a press.
+        let up = input(&[]).with_buttons(vec![], vec![Button::South]);
+        assert_eq!(format!("{:?}", p.update(&mut c, &up)), "None");
+        let mut c = ctx();
+        let mut p = LayoutPickerScreen::change(&c);
+        assert_eq!(format!("{:?}", p.update(&mut c, &pad)), "Pop");
+        assert_eq!(c.layout(), Some(Layout::LeftHanded));
     }
 
     #[test]

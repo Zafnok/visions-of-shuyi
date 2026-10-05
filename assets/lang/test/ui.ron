@@ -4,7 +4,7 @@
 [
     (key: "title.title", source: "Visions of Shuyi", text: "VISIONS OF SHUYI"),
     (key: "title.subtitle", source: "an ASCII strategy game", text: "AN ASCII STRATEGY GAME"),
-    (key: "title.press_any_key", source: "Press any key", text: "PRESS ANY KEY"),
+    (key: "title.press_any_key", source: "Press any key or button", text: "PRESS ANY KEY OR BUTTON"),
     (key: "title.continue", source: "Continue", text: "CONTINUE"),
     (key: "title.new_game", source: "New Game", text: "NEW GAME"),
     (key: "title.load_game", source: "Load Game", text: "LOAD GAME"),

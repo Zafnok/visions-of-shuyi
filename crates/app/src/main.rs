@@ -42,9 +42,7 @@ async fn main() {
         Ok(mut ctx) => {
             ctx.tips_enabled = true;
             ctx.music_seed = miniquad::date::now().to_bits();
-            if cfg!(target_arch = "wasm32") {
-                ctx.key_prompt = KeyPrompt::Waiting;
-            }
+            ctx.key_prompt = KeyPrompt::Waiting;
             ctx.with_storage(storage::platform())
         }
         Err(e) => return show_errors(&e.to_string()).await,
