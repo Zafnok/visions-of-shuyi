@@ -88,9 +88,41 @@ Changes to the rules above:
                 Visions of Shuyi
              an ASCII tactics game
 
-
-          [keyboard]  Press any key or button  [pad]
+┌─┬─┬─┬─┬─┐                                 ╭─────────╮
+├─┴┬┴─┴┬┴─┤     Press any key or button     │ ┼ ╭─╮ ◯ │
+└──┴───┴──┘                                 ╰───╯ ╰───╯
 ```
+
+### The pictures (ticket 0226)
+
+Nick picked from three rendered title screens (A: three tiny keycaps and a
+one-line pad on the text's own line; B: a key grid and a small pad outline,
+3 rows tall; C: a boxed keyboard and a pad with grips, 4 rows tall),
+2026-10-04:
+
+> "B: three rows"
+
+- **Keyboard on the left, controller on the right**, each 3 rows tall and
+  11 cells wide, drawn with the font's line glyphs; the words sit on the
+  middle row. No key or button is named in either picture.
+- Screenshot of the built screen:
+  [`0226-press-any-key-or-button.png`](../screenshots/0226-press-any-key-or-button.png).
+
+*Claude's starting rules (ticket 0226; Nick can veto):*
+
+- The pictures are in the dim text colour, like the line, and don't
+  blink or move.
+- They keep the same gap (5 cells) from the words in every language.
+- **First launch, a key at the prompt:** "Pick your layout" opens over the
+  title, and the title's menu and music start once it closes. Example: Mia
+  presses `F` on a fresh install; she sees "Pick your layout", picks
+  right-handed, and then the menu appears and the music starts.
+- **Web sound after a controller press:** browsers only unlock sound on a
+  key press, click or touch, not on a controller button. So a player who
+  starts with a button sees the menu at once but hears nothing until their
+  first key press or click; the music then starts from its beginning.
+  (Built so by 0224's page script; not checked on a real controller in
+  Chrome and Firefox: Nick's sign-off does that.)
 
 ## Intro cinematic
 

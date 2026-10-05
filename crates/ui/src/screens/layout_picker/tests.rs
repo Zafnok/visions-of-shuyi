@@ -51,6 +51,27 @@ fn cancel_and_other_actions_do_nothing() {
     assert_eq!(p.focused(), Layout::RightHanded);
 }
 
+/// Ticket 0226: any controller button closes the asked-for picker
+/// without choosing; opened from Options, the pad steers it.
+#[test]
+fn a_pad_press_closes_only_the_asked_for_picker() {
+    use crate::input::Button;
+    let pad = input(&[Action::CursorDown, Action::Confirm])
+        .with_buttons(vec![Button::DpadDown, Button::South], vec![]);
+    let mut c = first_launch_ctx();
+    let mut p = LayoutPickerScreen::new();
+    assert_eq!(format!("{:?}", p.update(&mut c, &pad)), "Pop");
+    assert_eq!(c.layout(), None);
+    assert_eq!(p.focused(), Layout::RightHanded);
+    // A release alone isn't a press.
+    let up = input(&[]).with_buttons(vec![], vec![Button::South]);
+    assert_eq!(format!("{:?}", p.update(&mut c, &up)), "None");
+    let mut c = ctx();
+    let mut p = LayoutPickerScreen::change(&c);
+    assert_eq!(format!("{:?}", p.update(&mut c, &pad)), "Pop");
+    assert_eq!(c.layout(), Some(Layout::LeftHanded));
+}
+
 #[test]
 fn help_names_the_picker_keys() {
     assert_eq!(

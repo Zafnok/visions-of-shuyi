@@ -4,7 +4,7 @@
 //!
 //! What the screen says is read from its view (`TitleScreen::view`: plain
 //! data), not from the glyphs a skin painted; the snapshots pin the glyph
-//! look.
+//! look, pictures included.
 
 use insta::assert_snapshot;
 use trpg_content::lang::TEST;
@@ -12,8 +12,8 @@ use trpg_content::{FontAtlasDef, LangCode};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
-use trpg_ui::screens::TitleScreen;
 use trpg_ui::screens::title::TitleView;
+use trpg_ui::screens::{LayoutPickerScreen, TitleScreen};
 
 /// A launch after the right-handed layout was picked.
 fn title() -> Harness {
@@ -35,6 +35,13 @@ fn menu(h: &Harness) -> (Vec<String>, Option<String>) {
     (labels, menu.focused().map(|i| i.label.clone()))
 }
 
+/// The layout the picker on the stack has the cursor on.
+fn picker_focus(h: &Harness) -> Option<Layout> {
+    let screen = h.game().screen::<LayoutPickerScreen>();
+    let screen = screen.unwrap_or_else(|| panic!("no layout picker"));
+    screen.view(h.game().ctx()).focused().map(|l| l.layout)
+}
+
 #[test]
 fn title_renders() {
     let h = title();
@@ -51,10 +58,8 @@ fn title_renders() {
     ];
     assert_eq!(labels, want);
     assert_eq!(focused.as_deref(), Some("New Game"));
-    assert_eq!(
-        view(&h).help.as_deref(),
-        Some("arrows move · f select · d back")
-    );
+    let help = view(&h).help;
+    assert_eq!(help.as_deref(), Some("arrows move · f select · d back"));
     assert_snapshot!(h.snapshot());
 }
 
@@ -218,35 +223,54 @@ fn debug_tool_sounds() {
     assert_eq!(h.sounds(), ["menu_cancel"]);
 }
 
-/// The web build's launch (ticket 0224, `docs/design/title-screen.md`).
-fn web_title() -> Harness {
-    Harness::on_web_with_layout(Layout::RightHanded)
+/// The game's launch on every build, a layout picked before (tickets 0224
+/// and 0226, `docs/design/title-screen.md`).
+fn waiting_title() -> Harness {
+    Harness::at_prompt_with_layout(Layout::RightHanded)
 }
 
 #[test]
-fn web_title_waits_for_a_key() {
-    let mut h = web_title();
+fn the_title_waits_for_a_key_or_button() {
+    let mut h = waiting_title();
     h.wait(0.5);
     let shown = view(&h);
-    assert_eq!(shown.prompt.as_deref(), Some("Press any key"));
+    assert_eq!(shown.prompt.as_deref(), Some("Press any key or button"));
     assert!(shown.menu.is_none() && shown.help.is_none());
-    assert_snapshot!(h.snapshot());
+    let snap = h.snapshot();
+    assert!(snap.contains("├─┴┬┴─┴┬┴─┤     Press any key or button     │ ┼ ╭─╮ ◯ │"));
+    assert_snapshot!(snap);
     assert!(music(&h).is_empty());
+    // Every glyph of the pictures is in the font.
+    let font = FontAtlasDef::load().unwrap_or_default();
+    let glyphs = snap.split("\n--- colours ---").next().unwrap_or("");
+    for g in glyphs.chars().filter(|&c| c != '\n') {
+        assert!(font.glyph_rect(g).is_some(), "{g:?} missing from the font");
+    }
+}
+
+/// The pictures keep their gap whatever the line's length (another
+/// language).
+#[test]
+fn the_pictures_sit_beside_the_line_in_the_test_language() {
+    let mut h = waiting_title();
+    h.ctx_mut().lang = LangCode::new(TEST).unwrap();
+    h.wait(0.1);
+    let snap = h.snapshot();
+    assert!(snap.contains("├─┴┬┴─┴┬┴─┤     PRESS ANY KEY OR BUTTON     │ ┼ ╭─╮ ◯ │"));
 }
 
 #[test]
 fn any_key_shows_the_menu_and_starts_the_music() {
-    let mut h = web_title();
+    let mut h = waiting_title();
     // `q` is bound to nothing: it still counts.
     h.keys("q");
     assert_eq!(music(&h), ["title"]);
-    assert_eq!(view(&h), view(&title()));
     assert_eq!(h.snapshot(), title().snapshot());
 }
 
 #[test]
 fn the_key_that_ends_the_wait_does_nothing_else() {
-    let mut h = web_title();
+    let mut h = waiting_title();
     // `f` selects, but here it only ends the wait: New Game stays focused
     // and nothing opens, and no menu sound plays.
     h.keys("f");
@@ -258,8 +282,8 @@ fn the_key_that_ends_the_wait_does_nothing_else() {
 }
 
 #[test]
-fn back_on_the_web_title_shows_the_menu_not_the_prompt() {
-    let mut h = web_title();
+fn back_on_the_title_shows_the_menu_not_the_prompt() {
+    let mut h = waiting_title();
     h.keys("f f d");
     assert_eq!(h.top_screen(), "title");
     assert_eq!(h.snapshot(), title().snapshot());
@@ -273,18 +297,115 @@ fn back_on_the_web_title_shows_the_menu_not_the_prompt() {
     assert_eq!(starts.count(), 1, "{:?}", h.music_commands());
 }
 
+/// Whether the title is showing its prompt.
+fn prompt_shows(h: &Harness) -> bool {
+    view(h).prompt.is_some()
+}
+
+/// First launch (`docs/design/controls.md`, *Pick your layout with a
+/// controller*, rule 1): the prompt comes first, and a key there opens
+/// "Pick your layout"; that key does nothing else.
 #[test]
-fn picking_a_layout_first_skips_the_prompt() {
-    // First launch on the web: the layout picker takes the first keys, so
-    // the title shows its menu (and music) straight away after it.
-    let mut h = Harness::on_web();
-    assert_eq!(h.game().ctx().key_prompt, trpg_ui::KeyPrompt::Waiting);
-    h.keys("Down f");
-    assert_eq!(h.top_screen(), "title");
-    h.wait(0.1);
-    assert_eq!(view(&h).prompt, None);
-    assert!(view(&h).menu.is_some());
+fn first_launch_a_key_at_the_prompt_opens_the_layout_picker() {
+    let mut h = Harness::at_prompt();
+    assert_eq!(h.screens(), ["title"]);
+    assert!(prompt_shows(&h));
+    // `s` moves the picker's highlight and `f` picks: here they only open it.
+    for key in ["s", "f", "q"] {
+        let mut h = Harness::at_prompt();
+        h.keys(key);
+        assert_eq!(h.screens(), ["title", "layout_picker"], "{key}");
+        assert_eq!(h.game().ctx().layout(), None, "{key}");
+        assert_eq!(picker_focus(&h), Some(Layout::RightHanded), "{key}");
+        assert!(music(&h).is_empty());
+    }
+    // Picked: the title's menu and music, no prompt again.
+    h.keys("f Down f").wait(0.1);
+    assert_eq!(h.screens(), ["title"]);
+    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+    assert!(!prompt_shows(&h));
     assert_eq!(music(&h), ["title"]);
+    let h = Harness::with_storage(h.into_storage());
+    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+}
+
+/// Rule 1: a controller button at the prompt goes to the menu; no picker.
+#[test]
+fn first_launch_a_button_at_the_prompt_skips_the_layout_picker() {
+    let mut h = Harness::at_prompt();
+    h.pad("South").wait(0.1);
+    assert_eq!(h.screens(), ["title"]);
+    assert!(!prompt_shows(&h));
+    assert_eq!(music(&h), ["title"]);
+    assert_eq!(h.game().ctx().layout(), None);
+    // The controller plays on: New Game.
+    h.pad("South");
+    assert_eq!(h.screens(), ["title", "mode_select"]);
+}
+
+/// Rule 2: a button while the picker is open closes it without choosing.
+#[test]
+fn a_button_closes_the_layout_picker_without_choosing() {
+    let mut h = Harness::at_prompt();
+    h.keys("f");
+    assert_eq!(h.top_screen(), "layout_picker");
+    // The bottom button would confirm: here it only closes the picker.
+    h.pad("South").wait(0.1);
+    assert_eq!(h.screens(), ["title"]);
+    assert!(!prompt_shows(&h));
+    assert_eq!(h.game().ctx().layout(), None);
+    assert!(h.sounds().is_empty(), "{:?}", h.sounds());
+    let h = Harness::with_storage(h.into_storage());
+    assert_eq!(h.game().ctx().layout(), None, "no layout was saved");
+}
+
+/// Rules 3 and 4: with no layout picked, a key after playing on the
+/// controller opens the picker straight away, over a battle too, and does
+/// nothing else; once a layout is picked it never opens again.
+#[test]
+fn a_key_mid_battle_opens_the_layout_picker_until_one_is_picked() {
+    let mut h = Harness::at_prompt();
+    // The prompt, then Quick Battle, `Fight!` and the phase banner.
+    h.pad("South DpadDown South DpadLeft South South");
+    assert_eq!(h.screens(), ["title", "battle"]);
+    h.pad("DpadRight");
+    let cursor = h.cursor_tile();
+    // `Down` is a picker key, so it is bound already: it must not move
+    // the battle's cursor.
+    h.keys("Down");
+    assert_eq!(h.screens(), ["title", "battle", "layout_picker"]);
+    assert_eq!(picker_focus(&h), Some(Layout::RightHanded));
+    // Back to the controller: the picker closes and the battle goes on.
+    h.pad("DpadRight");
+    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.cursor_tile(), cursor);
+    h.pad("DpadLeft DpadRight");
+    assert_eq!(h.cursor_tile(), cursor);
+    // The next key asks again; this time a layout is picked.
+    h.keys("Down");
+    assert_eq!(h.top_screen(), "layout_picker");
+    h.keys("f");
+    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
+    assert_eq!(h.cursor_tile(), cursor);
+    // Keys act now, and switching back and forth never opens it again.
+    h.keys("Down");
+    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_ne!(h.cursor_tile(), cursor);
+    h.pad("DpadUp").keys("Down").pad("DpadUp").keys("q");
+    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.cursor_tile(), cursor);
+}
+
+/// `app` starts every build with the prompt up (the native `Ctx` too).
+#[test]
+fn a_later_launch_shows_the_prompt_then_the_menu() {
+    let mut h = waiting_title();
+    assert_eq!(h.game().ctx().key_prompt, trpg_ui::KeyPrompt::Waiting);
+    assert!(prompt_shows(&h));
+    h.keys("q");
+    assert_eq!(h.screens(), ["title"], "a layout is picked: no picker");
+    assert!(!prompt_shows(&h));
 }
 
 /// Screen text comes from the language in use (ticket 0233): the test pack
@@ -306,23 +427,21 @@ fn the_title_in_the_test_language() {
         Some("arrows MOVE · f SELECT · d BACK")
     );
     let (labels, _) = menu(&h);
-    assert_eq!(
-        labels,
-        [
-            "NEW GAME",
-            "LOAD GAME",
-            "QUICK BATTLE",
-            "OPTIONS",
-            "Credits",
-            "QUIT"
-        ]
-    );
+    let want = [
+        "NEW GAME",
+        "LOAD GAME",
+        "QUICK BATTLE",
+        "OPTIONS",
+        "Credits",
+        "QUIT",
+    ];
+    assert_eq!(labels, want);
 }
 
 #[test]
-fn the_web_prompt_in_the_test_language() {
-    let mut h = web_title();
+fn the_prompt_in_the_test_language() {
+    let mut h = waiting_title();
     h.ctx_mut().lang = LangCode::new(TEST).unwrap();
     h.wait(0.1);
-    assert_eq!(view(&h).prompt.as_deref(), Some("PRESS ANY KEY"));
+    assert_eq!(view(&h).prompt.as_deref(), Some("PRESS ANY KEY OR BUTTON"));
 }

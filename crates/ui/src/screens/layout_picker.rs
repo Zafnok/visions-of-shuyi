@@ -32,9 +32,11 @@ pub fn label(layout: Layout) -> &'static str {
     }
 }
 
-/// Shows both layouts and saves the one picked. On first launch it can't
-/// be cancelled: the game needs a layout. Pops itself once a layout is
-/// picked.
+/// Shows both layouts and saves the one picked. Asked for by a key press
+/// while no layout is chosen, it can't be cancelled with a key (the
+/// keyboard needs a layout), but any controller button closes it without
+/// choosing: that player is on the controller. Pops itself once a layout
+/// is picked.
 #[derive(Debug, Clone)]
 pub struct LayoutPickerScreen {
     menu: Menu,
@@ -44,6 +46,9 @@ pub struct LayoutPickerScreen {
 }
 
 impl LayoutPickerScreen {
+    /// Its [`Screen::name`].
+    pub const NAME: &'static str = "layout_picker";
+
     /// The picker with the first layout (right-handed) focused.
     pub fn new() -> Self {
         Self {
@@ -181,10 +186,14 @@ impl Default for LayoutPickerScreen {
 
 impl Screen for LayoutPickerScreen {
     fn name(&self) -> &'static str {
-        "layout_picker"
+        Self::NAME
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        // Bound or not; the button does nothing else.
+        if !self.cancellable && input.pad_pressed() {
+            return Transition::Pop;
+        }
         for &action in &input.actions {
             match self.menu.handle_with_sound(action, &mut ctx.audio) {
                 Some(MenuEvent::Chosen(i)) => {

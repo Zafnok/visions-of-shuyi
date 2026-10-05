@@ -507,7 +507,7 @@ fn the_prompt_stands_in_for_the_menu_until_a_key_is_pressed() {
     c.key_prompt = KeyPrompt::Waiting;
     let mut t = TitleScreen::new(&c);
     let view = t.view(&c);
-    assert_eq!(view.prompt.as_deref(), Some("Press any key"));
+    assert_eq!(view.prompt.as_deref(), Some("Press any key or button"));
     assert_eq!(
         (&view.menu, &view.help, &view.notice),
         (&None, &None, &None)
@@ -526,7 +526,7 @@ fn the_prompt_stands_in_for_the_menu_until_a_key_is_pressed() {
     c.lang = trpg_content::LangCode::new("test").unwrap();
     assert_eq!(
         TitleScreen::new(&c).view(&c).prompt.as_deref(),
-        Some("PRESS ANY KEY")
+        Some("PRESS ANY KEY OR BUTTON")
     );
 }
 

@@ -6,6 +6,11 @@ They are loaded by `trpg_content::dialogue` and validated by the all-assets
 test (ADR-0005), so a broken script fails CI with `file:line: message`.
 The dialogue screen (ticket 0704) plays them one text box at a time.
 
+`cargo xtask check-script [file]` runs the same checks on the scripts
+alone, and `cargo run -p trpg-app -- --scene <id>` opens the game on one
+scene. A gentler introduction for a writer new to the repository:
+`docs/story/writers-guide.md`.
+
 ## A full example
 
 ```

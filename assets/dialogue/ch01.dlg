@@ -27,10 +27,13 @@
 # and ch01_victory. Aske counts "twelve men, no, fourteen": the map's enemy
 # count should not contradict it (chapter-1.md allows 12-14 and the boss).
 #
-# ch01_victory is written for a battle everyone lived through. A companion
-# who died in Classic still speaks in it until 0716 puts their lines in
-# @if blocks (0715, ADR-0055). The check will demand it as soon as the
-# companions are in the New Game roster (0803).
+# A companion who fell in Classic is gone (0716; @if blocks, 0715,
+# ADR-0055). ch01_victory plays without any of the five, and without all
+# of them: the order's seal, that only the new lord may use it, and the
+# road to the hall reach the player on every path. Read it with one
+# companion gone, and with only the lead left, before changing it.
+# docs/story/ledger.md ("If a companion died in Chapter 1") records what
+# each death leaves unsaid.
 
 # ---------------------------------------------------------------------------
 # Before the battle
@@ -215,7 +218,9 @@ red_captain: Your own crest on the order, and everything. Must be nice...
 
 # The companions: a death quote in Classic, a retreat line in Casual
 # (docs/design/death-and-difficulty.md). They can fire in any order, so
-# none of them speaks to another companion by name.
+# none of them speaks to another companion, and what one says of another
+# (the keeper's "the one it hurt", the cook's stew) holds whether or not
+# that one has already fallen.
 
 @scene ch01_death_retainer
 @left retainer sad
@@ -279,7 +284,7 @@ keeper[sad]: I must withdraw. {N:god.mother.name} keep you. Also, please,
 heretic: {N:god.pyre.name}'s teeth. Typical. First time in years I ate
   every day.
 heretic[sad]: Don't stare, heir. The Keeper's stew was all right. It wasn't.
-  I'd have told him it was.
+  I'd have told her it was.
 @end
 
 @scene ch01_retreat_heretic
@@ -294,45 +299,161 @@ heretic: Don't you dare lose while I'm not looking, heir.
 
 @scene ch01_victory
 @caption The toll-fort, noon
-> Behind them, one barn smokes at the edge of {n:place.harrowby}. Only the
-  one.
-@left  lead neutral
+> Across the river, one barn smokes at the edge of {n:place.harrowby}. Only
+  the one.
+@left lead neutral
+
+# Over the body. Without the sergeant, the Captain finds the orders;
+# without him too, the lead does.
+@if sergeant
 @right sergeant neutral
 sergeant: Pay-day at last, {n:red_captain.first}. I'll mark the ledger: paid
   in full.
 > Nobody laughs. She doesn't either. She crouches, closes his eyes with two
   fingers, and takes a folded paper from inside his vest.
 sergeant[sad]: ...Just a job. That's all it was.
+@right clear
+@else
+> {N:red_captain} lies where he fell. {N:sergeant.first}'s ledger is in
+  {lead}'s coat now, and nobody is left to mark him paid.
+@if retainer
+@right retainer sad
+> {N:retainer.first} gets down beside the body, one knee at a time, and
+  takes a folded paper from inside the vest.
+retainer: The sergeant would have had a word for him. I haven't.
+@right clear
+@else
+> {lead} kneels, and takes a folded paper from inside the dead man's vest.
+@endif
+@endif
 > His orders: three hundred crowns a head for the exile, the old man and
   the girl. The seal is blue wax. The crest in it is the one {lead} cut from
   {their} own coat four years ago.
-sergeant[neutral]: He wasn't lying, then. That's your crest, Your Former
-  Grace. I thought they took it off you with the house.
+
+# Whose seal it is now. The keeper knows the law; without her the sergeant
+# works it out; without both, nobody says it.
+@if sergeant
+@right sergeant neutral
+sergeant: He wasn't lying, then. That's your crest, Your Former Grace. I
+  thought they took it off you with the house.
+@right clear
+@endif
+@if keeper
 @left keeper sad
+@if retainer
+@if sergeant
+@right sergeant neutral
 keeper: They did. The seal goes with the title. Nobody may use it but the
   lord of {n:family.veyne}, and the lord of {n:family.veyne}, these three
   years... Captain, I am sorry.
+@right clear
+@else
+keeper: The seal goes with the title, and the title was taken. Nobody may
+  use it but the lord of {n:family.veyne}, and for three years that has
+  been... Captain, I am sorry.
+@endif
+@else
+keeper: The seal goes with the title, and the title was taken. Nobody may
+  use it but the lord of {n:family.veyne}, and for three years that has
+  been... Oh, {n:god.mother.name} keep the Captain.
+@endif
+@left lead neutral
+@else
+@if sergeant
+@right sergeant sad
+sergeant: They did. A seal goes where the title goes. One man in the kingdom
+  may press that into wax now, and it isn't you.
+@right clear
+@else
+> The seal went with the title. For three years, one man alone has had the
+  right to press it into wax.
+@endif
+@endif
+
+# The name. The sergeant says it; without her, nobody does.
+@if retainer
+@if sergeant
 > Everyone looks at {n:retainer.first}. {N:retainer.first} looks at the wax,
   and says nothing at all.
+@right sergeant neutral
 sergeant: {N:rival}, hero of the war. The Captain's boy. Somebody say
   something. I'm no good in a quiet.
+@right clear
+@else
+> {N:rival}, lord of {n:family.veyne}, hero of the war. Nobody says the
+  name. {N:retainer.first} looks at the wax, and says nothing at all.
+@endif
+@else
+@if sergeant
+@right sergeant sad
+sergeant: {N:rival}, hero of the war. The Captain's boy. And the Captain
+  went down this morning without having to see it. Somebody say something.
+  I'm no good in a quiet.
+@right clear
+@else
+> {N:rival}, lord of {n:family.veyne}, hero of the war:
+  {n:retainer.first}'s son. {N:retainer.first} died this morning without
+  having to see it.
+@endif
+@endif
+
+# The cart is hers alone to tell: without her it is not said (ledger).
+@if heretic
 @right heretic neutral
+@if sergeant
 heretic: I'll say something. I've seen that seal before, heir. On a cart. At
   night. With children in it.
-@left lead neutral
+@else
+heretic: I've seen that seal before, heir. On a cart. At night. With
+  children in it.
+@endif
 lead: Where?
 heretic[angry]: You tell me. Four years ago it was your family's to stamp.
+@right clear
+@endif
+@if keeper
 @left keeper sad
+@if heretic
+@right heretic angry
 keeper: Please. Not here. Somebody was told that {n:heretic} is in
   {n:place.harrowby}, and only {n:faction.vigil} hunts a girl for her hands.
   They will send others.
+@right clear
+@else
+keeper: {N:heretic} slept by my stove all autumn, and somebody was told so.
+  I... somebody was told. They will hear that it is not finished here, and
+  they will send others.
+@endif
+@left lead neutral
+@endif
+
+# Who comes along.
+@if poacher
 @left poacher neutral
+@if keeper
 poacher: Then I come also. You owe me eleven arrows, noble.
-heretic[neutral]: I'm not following you, heir. I'm walking behind you. Where
-  I can see your hands.
+@else
+poacher: Someone paid for these men. He will pay for more. I come with
+  you. You owe me eleven arrows, noble.
+@endif
+@left lead neutral
+@endif
+@if heretic
+@right heretic neutral
+heretic: I'm not following you, heir. I'm walking behind you. Where I can
+  see your hands.
+@right clear
+@endif
+@if sergeant
 @right sergeant happy
 sergeant: And I'll ride along as far as there's pay. ...Further, probably.
-@left  lead neutral
+@right clear
+@endif
+
+# The Captain asks; the lead answers. He stays on screen while the choice
+# is open, so the choice is written once with him and once without. With
+# him, he names the day's dead before he buries anyone.
+@if retainer
 @right retainer sad
 retainer: The boy's at {n:place.veyne_hall}, kid. One step off the march to
   ask him and you're an outlaw, for good. Say the word anyway.
@@ -340,20 +461,99 @@ retainer: The boy's at {n:place.veyne_hall}, kid. One step off the march to
 * earnest: He'll tell me why. I have to believe that.
   retainer: Aye. I'd like to believe it too.
 * wry: I've always wanted to be an outlaw.
+  @if sergeant
   @right sergeant happy
   sergeant: It's soldiering with worse food and better company. You'll take
     to it.
   @right retainer sad
+  @else
+  retainer: That one was for the sergeant. She'd have had an answer.
+  @endif
 * blunt: {N:place.veyne_hall}. We leave now.
+  @if poacher
   @right poacher neutral
   poacher: Good. This fort smells of them.
   @right retainer sad
+  @else
+  retainer: Aye. That's the word.
+  @endif
 @endchoice
+@if sergeant
+@else
+retainer[sad]: The sergeant goes in the chapel yard, in the red jacket.
+  Somebody see to her horse. It's still waiting on her.
+@endif
+@if keeper
+@else
+retainer[sad]: The keeper goes by her own chapel wall. There's nobody left
+  who has the words, so I'll dig it deep. It's what I've got.
+@endif
+@if heretic
+@else
+retainer[sad]: The girl goes in the yard with her hands wrapped. She was on
+  that paper next to me, and I never once asked her why.
+@endif
+@if poacher
+@else
+retainer[sad]: {N:poacher} faces north. She'd want that. Her silver's yours
+  to send, kid. Every coin of it.
+@endif
 retainer[neutral]: Go and pack. I'll find a spade. I've buried better men
   than {n:red_captain}. I'll dig this one's hole myself. It's the least I
   can do for him.
-> By dusk they are on the road out of {n:place.harrowby}. Past the boundary
-  stone, every step {lead} takes is against the king's law.
+@right clear
+@else
+> {N:rival.first} is at {n:place.veyne_hall}. One step off the march to ask
+  him why, and {lead} is an outlaw for good. {N:retainer.first} would have
+  said so. Then he would have said: go.
+@choice
+* earnest: He'll tell me why. I have to believe that.
+  > Nobody answers. {N:retainer.first} would have.
+* wry: I've always wanted to be an outlaw.
+  @if sergeant
+  @right sergeant sad
+  sergeant: It's soldiering with worse food. The company was better
+    yesterday.
+  @right clear
+  @else
+  > It would have got a laugh, yesterday.
+  @endif
+* blunt: {N:place.veyne_hall}. We leave now.
+  @if poacher
+  @right poacher neutral
+  poacher: Yes. Now. This fort smells of them.
+  @right clear
+  @else
+  > Nobody argues.
+  @endif
+@endchoice
+> {lead} digs {n:retainer.first}'s grave {themself}, and takes the letter
+  from inside his coat. {They} does not burn it either. Nobody digs a hole
+  for {n:red_captain}.
+@if sergeant
+@else
+> {N:sergeant.first} is buried in her one red jacket. Her horse stands
+  saddled at the gate all afternoon, waiting to be told where it is going.
+@endif
+@if keeper
+@else
+> {N:keeper} lies by her own chapel wall. Nobody says the words over her, or
+  over any of them: she was the one who knew them.
+@endif
+@if heretic
+@else
+> {N:heretic} goes into the ground with her hands wrapped, under the only
+  name anyone here knew her by. Whatever she knew about any of this, she
+  kept.
+@endif
+@if poacher
+@else
+> {N:poacher}'s grave faces north. The silver from her left boot is in
+  {lead}'s pack. It has a long way to go.
+@endif
+@endif
+> By dusk {lead} is on the road out of {n:place.harrowby}. Past the boundary
+  stone, every step {they} takes is against the king's law.
 @end
 
 @scene ch01_tbc

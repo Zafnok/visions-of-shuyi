@@ -17,6 +17,15 @@ const SUBTITLE_ROW: i32 = 11;
 /// Top row of the menu box (and of the prompt).
 const MENU_ROW: i32 = 14;
 
+/// The pictures beside the "press any key or button" line, as rows of
+/// glyphs: a keyboard on its left and a controller on its right, so it is
+/// obvious either works (`docs/design/title-screen.md`; Nick's pick,
+/// ticket 0226). The middle row is the line's own.
+const KEYBOARD_PICTURE: [&str; 3] = ["┌─┬─┬─┬─┬─┐", "├─┴┬┴─┴┬┴─┤", "└──┴───┴──┘"];
+const PAD_PICTURE: [&str; 3] = ["╭─────────╮", "│ ┼ ╭─╮ ◯ │", "╰───╯ ╰───╯"];
+/// Blank cells between the line and each picture.
+const PICTURE_GAP: i32 = 5;
+
 /// Paints `view` over the whole of `buf`.
 pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
@@ -38,7 +47,16 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
     );
     let bottom = i32::from(buf.height()) - 1;
     if let Some(prompt) = &view.prompt {
-        print_centred(buf, MENU_ROW, prompt, c(UiColor::TextDim), black);
+        let dim = c(UiColor::TextDim);
+        print_centred(buf, MENU_ROW, prompt, dim, black);
+        let len = prompt.chars().count();
+        let left = centre_x(buf, len);
+        let right = left + i32::try_from(len).unwrap_or(0) + PICTURE_GAP;
+        for (y, (keys, pad)) in (MENU_ROW - 1..).zip(KEYBOARD_PICTURE.iter().zip(PAD_PICTURE)) {
+            let w = i32::try_from(keys.chars().count()).unwrap_or(0);
+            buf.print(left - PICTURE_GAP - w, y, keys, dim, black);
+            buf.print(right, y, pad, dim, black);
+        }
     }
     if let Some(menu) = &view.menu {
         let (w, h) = menu_glyph::size(menu);
@@ -152,14 +170,40 @@ mod tests {
         v.help = None;
         v.prompt = Some("Press any key".to_owned());
         let buf = painted(&c, &v);
-        assert_eq!(centred(&buf, MENU_ROW), "Press any key");
-        assert!(!(0..i32::from(CONSOLE_H)).any(|y| text(&buf, y).contains('┌')));
+        assert!(text(&buf, MENU_ROW).contains(" Press any key "));
+        assert!(!(0..i32::from(CONSOLE_H)).any(|y| text(&buf, y).contains("New Game")));
         assert_eq!(centred(&buf, i32::from(CONSOLE_H) - 1), "");
         let x = text(&buf, MENU_ROW).find("Press").unwrap();
         assert_eq!(
             buf.get(i32::try_from(x).unwrap(), MENU_ROW).unwrap().fg,
             c.palette.get(UiColor::TextDim)
         );
+    }
+
+    /// A keyboard on the line's left and a controller on its right, each
+    /// the same gap from it whatever the line's length.
+    #[test]
+    fn the_prompt_has_a_keyboard_and_a_controller_beside_it() {
+        let c = ctx();
+        for prompt in ["Press any key or button", "PRESS ANY KEY OR BUTTON NOW"] {
+            let mut v = view();
+            v.menu = None;
+            v.help = None;
+            v.prompt = Some(prompt.to_owned());
+            let buf = painted(&c, &v);
+            assert_eq!(
+                text(&buf, MENU_ROW).trim(),
+                format!("├─┴┬┴─┴┬┴─┤     {prompt}     │ ┼ ╭─╮ ◯ │")
+            );
+            assert_eq!(
+                text(&buf, MENU_ROW - 1).trim(),
+                "┌─┬─┬─┬─┬─┐".to_owned() + &" ".repeat(prompt.chars().count() + 10) + "╭─────────╮"
+            );
+            assert_eq!(
+                text(&buf, MENU_ROW + 1).trim(),
+                "└──┴───┴──┘".to_owned() + &" ".repeat(prompt.chars().count() + 10) + "╰───╯ ╰───╯"
+            );
+        }
     }
 
     /// The notice sits one blank row under the menu's box, in the warning

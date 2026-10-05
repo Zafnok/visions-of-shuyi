@@ -10,14 +10,18 @@
 //! the choice isn't saved. The scene camera pans and zooms the test map
 //! as a backdrop behind a window (ticket 0228, ADR-0048). "Voice test"
 //! says the test scene's lines that have a voice clip, one per press
-//! (ticket 0238), until the dialogue screen plays voices (0720).
+//! (ticket 0238), until the dialogue screen plays voices (0720). The scene
+//! preview isn't in the menu: `app` opens the game on it for `--scene`
+//! (ticket 0723).
 
 mod portrait_viewer;
 mod scene_camera;
+mod scene_preview;
 mod sprite_test;
 
 pub use portrait_viewer::PortraitViewerScreen;
 pub use scene_camera::SceneCameraScreen;
+pub use scene_preview::{ScenePreviewScreen, ScenePreviewView};
 pub use sprite_test::SpriteTestScreen;
 
 use trpg_content::Present;

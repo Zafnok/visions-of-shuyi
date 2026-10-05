@@ -220,6 +220,10 @@ impl Screen for DialogueScreen {
     fn is_overlay(&self) -> bool {
         self.overlay
     }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
+    }
 }
 
 impl DialogueScreen {

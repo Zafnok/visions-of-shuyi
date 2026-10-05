@@ -413,6 +413,21 @@ Example: Mia presses `A` on her pad at the title, so no layout screen. Two
 battles later she presses `F` and "Pick your layout" opens over the map.
 She picks right-handed, and it never shows again.
 
+*Claude's starting rules (ticket 0226; Nick can veto):*
+
+- **Until a layout is picked, no key does anything but open "Pick your
+  layout"**, even one that would otherwise work. Example: Mia closed the
+  layout screen with her pad; an hour later she presses `Space`, and the
+  layout screen opens again instead of ending her turn.
+- **The button that closes "Pick your layout" does nothing else**, and
+  nudging a stick counts as a button. Example: Mia presses `A` while the
+  layout screen is over a battle: it closes, and no unit is selected.
+- **A controller player can still pick a layout on purpose** from Options:
+  opened there, the screen is steered with the pad as before and a button
+  doesn't close it.
+- **Typing with no layout picked** (the lead's name) is a key press like
+  any other: the layout screen opens first.
+
 ### Rebinding buttons (Q6)
 
 Same rules as *Rebinding keys* above, on the same Key bindings screen:
@@ -528,15 +543,16 @@ Controllers work on every build: the default buttons above, D-pad and left
 stick, the Switch-style swap, several pads, plugging in and unplugging while
 playing. Help bars and tips named keys until ticket 0220 (done, below);
 rebinding buttons is ticket 0816 (done); the `Press any key or button` prompt and when "Pick
-your layout" shows are ticket 0226.
+your layout" shows are ticket 0226 (done: *Pick your layout with a
+controller* above, and `title-screen.md`).
 
 - A pad counts as **Switch-style** when it says Nintendo made it. Other
   makers' Switch-shaped pads (8BitDo, PowerA…) count as ordinary pads:
   bottom confirms. Some browsers don't say who made a pad at all (Safari;
   Chrome for Xbox-type pads), and then it's an ordinary pad too.
 - *Claude's starting rule (Nick can veto):* on the web build a controller
-  button already dismisses `Press any key` (the line itself still says
-  "key" until 0226), so a controller player isn't stuck on the title.
+  button already dismisses `Press any key` (the line said only "key"
+  until 0226), so a controller player isn't stuck on the title.
 
 ### Notes from building it (ticket 0220)
 

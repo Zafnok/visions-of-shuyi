@@ -79,8 +79,8 @@ pub struct TitleScreen {
     /// (whose battles play their own music) clears it and the next update
     /// asks again.
     music_on: bool,
-    /// Whether the "press any key" prompt ([`Ctx::key_prompt`]) is over.
-    /// It shows once per launch.
+    /// Whether the "press any key or button" prompt ([`Ctx::key_prompt`])
+    /// is over. It shows once per launch.
     prompt_done: bool,
 }
 
@@ -175,8 +175,8 @@ impl TitleScreen {
         Transition::Push(screen)
     }
 
-    /// Whether the title is still showing "press any key" instead of its
-    /// menu.
+    /// Whether the title is still showing "press any key or button"
+    /// instead of its menu.
     fn waiting(&self, ctx: &Ctx) -> bool {
         ctx.key_prompt != KeyPrompt::Off && !self.prompt_done
     }
@@ -212,8 +212,9 @@ impl Screen for TitleScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if self.waiting(ctx) {
-            // A key pressed on another screen first (the layout picker)
-            // counts too. The key that ends the wait does nothing else.
+            // The key or button that ends the wait does nothing else (a
+            // key with no layout chosen yet opens the layout picker over
+            // the title first: `Game::step`).
             if ctx.key_prompt == KeyPrompt::Pressed {
                 self.prompt_done = true;
                 ctx.audio.play_music(TITLE_MUSIC);
