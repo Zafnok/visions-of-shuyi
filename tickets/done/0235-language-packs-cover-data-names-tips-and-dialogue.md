@@ -144,7 +144,7 @@ dialogue line, reply and caption. `assets/lang/README.md` lists every key.
 map labels, the credits, text still written as literals in `ui` (0234),
 and voice clips, which stay in the language of their manifest.
 
-**Follow-up ticket:** 0243 (`lang-status` leaves out test-only text and
+**Follow-up ticket:** 0244 (`lang-status` leaves out test-only text and
 can be narrowed to one `.dlg` file; 0719 now waits for it).
 
 **For Nick:** nothing to decide and nothing changes in English. No

@@ -7,17 +7,14 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{cursor_keys_name, help_line, key_name};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
-/// Game Over's heading.
-pub const GAME_OVER: &str = "GAME OVER";
-/// Game Over's items.
-const RETRY: &str = "Retry Battle";
-/// Back to the title.
-const TITLE: &str = "Title";
-/// The last chapter's closing words.
-pub const TO_BE_CONTINUED: &str = "To be continued...";
+/// The key of Game Over's heading in the language files ([`Ctx::text`]).
+pub const GAME_OVER: &str = "game_over.heading";
+/// The keys of Game Over's items: retry, then back to the title.
+const ITEMS: [&str; 2] = ["game_over.retry", "game_over.title"];
+/// The key of the last chapter's closing words.
+pub const TO_BE_CONTINUED: &str = "to_be_continued.heading";
 
 /// Row of the headings.
 const HEADING_ROW: i32 = 10;
@@ -61,9 +58,10 @@ impl GameOverScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "game_over";
 
-    /// The screen with `Retry Battle` focused.
-    pub fn new() -> Self {
-        let items = [RETRY, TITLE].map(MenuItem::new).to_vec();
+    /// The screen with `Retry Battle` focused, labelled in `ctx`'s
+    /// language.
+    pub fn new(ctx: &Ctx) -> Self {
+        let items = ITEMS.map(|key| MenuItem::new(ctx.text(key))).to_vec();
         Self {
             menu: Menu::new(items).without_cancel(),
             chosen: None,
@@ -77,17 +75,7 @@ impl GameOverScreen {
 
     /// The bottom help line.
     pub fn help(ctx: &Ctx) -> String {
-        let km = ctx.help_keys();
-        help_line(&[
-            (Some(cursor_keys_name(km)), "choose"),
-            (Some(key_name(km, Action::Confirm)), "select"),
-        ])
-    }
-}
-
-impl Default for GameOverScreen {
-    fn default() -> Self {
-        Self::new()
+        ctx.text_with("game_over.help", &[])
     }
 }
 
@@ -118,7 +106,7 @@ impl Screen for GameOverScreen {
         print_centred(
             buf,
             HEADING_ROW,
-            GAME_OVER,
+            ctx.text(GAME_OVER),
             c(UiColor::TextHighlight),
             black,
         );
@@ -139,7 +127,7 @@ impl ToBeContinuedScreen {
 
     /// The bottom help line.
     pub fn help(ctx: &Ctx) -> String {
-        help_line(&[(Some(key_name(ctx.help_keys(), Action::Confirm)), "title")])
+        ctx.text_with("to_be_continued.help", &[])
     }
 }
 
@@ -163,7 +151,7 @@ impl Screen for ToBeContinuedScreen {
         print_centred(
             buf,
             HEADING_ROW,
-            TO_BE_CONTINUED,
+            ctx.text(TO_BE_CONTINUED),
             c(UiColor::TextHighlight),
             black,
         );
@@ -186,14 +174,14 @@ mod tests {
 
     #[test]
     fn game_over_offers_retry_and_title() {
-        let mut s = GameOverScreen::new();
+        let mut s = GameOverScreen::new(&ctx());
         assert_eq!(s.name(), "game_over");
         // Nothing to back out of.
         assert_eq!(update(&mut s, &[Action::Cancel]), "None");
         assert_eq!(s.result(), None);
         assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
         assert_eq!(s.result(), Some(GameOverChoice::Retry));
-        let mut s = GameOverScreen::default();
+        let mut s = GameOverScreen::new(&ctx());
         assert_eq!(
             update(&mut s, &[Action::CursorDown, Action::Confirm]),
             "Pop"
@@ -214,7 +202,7 @@ mod tests {
 
     #[test]
     fn game_over_snapshot() {
-        let h = Harness::with_screen(Box::new(GameOverScreen::new()));
+        let h = Harness::with_screen(Box::new(GameOverScreen::new(&ctx())));
         assert_snapshot!(h.snapshot());
     }
 

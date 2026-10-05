@@ -16,7 +16,7 @@ fn playtime_carries_on_from_the_campaigns() {
     let lead = LeadProfile::new("Mara", LeadGender::Female);
     let mut campaign = trpg_content::new_campaign(&c.content, GameMode::Casual, lead.clone());
     campaign.playtime_s = 100;
-    let mut flow = FlowScreen::new_game();
+    let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
     assert_eq!(c.lead, lead);
     c.clock_s = 12.5;
@@ -52,7 +52,7 @@ fn retry_goes_back_to_preparations_as_they_were_left() {
     let pack = |f: &FlowScreen| f.battle().map(|b| b.state().pack().items.clone());
     assert_eq!(pack(&flow).as_deref(), Some(&elixir[..]));
     // A defeat's Game Over, then Retry.
-    flow.stage = Stage::GameOver(GameOverScreen::new());
+    flow.stage = Stage::GameOver(GameOverScreen::new(&c));
     update(&mut flow, &mut c, &[Confirm]);
     assert_eq!(flow.name(), "preparations");
     let prep = flow.preparations().unwrap_or_else(|| panic!("no prep"));
@@ -71,7 +71,7 @@ fn a_battle_without_preparations_starts_at_once() {
     let lead = LeadProfile::new("Mara", LeadGender::Female);
     let mut campaign = trpg_content::new_campaign(&c.content, GameMode::Casual, lead);
     campaign.chapter = "test".into();
-    let mut flow = FlowScreen::new_game();
+    let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
     // Skip the intro scene: Cancel, then Confirm.
     update(&mut flow, &mut c, &[Cancel]);
@@ -141,7 +141,7 @@ fn a_level_up_from_the_rewind_bonus_shows_the_level_up_screen() {
     // Three unused charges (21 EXP) level her.
     campaign.roster[0].exp = 85;
     let before = campaign.roster[0].clone();
-    let mut flow = FlowScreen::new_game();
+    let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
     let mut h = Harness::from_game(Game::new(c, Box::new(flow)));
     // Skip the intro, close the battle notes and turn 1's banner; the lead
@@ -204,7 +204,7 @@ fn victory_line_after_the_knight_fell(mode: GameMode) -> (Option<String>, bool) 
     let mut campaign = trpg_content::new_campaign(&c.content, mode, lead);
     assert_eq!(campaign.roster[1].character.as_ref(), Some(&knight));
     campaign.roster[1].stats.hp = 1;
-    let mut flow = FlowScreen::new_game();
+    let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
     let mut h = Harness::from_game(Game::new(c, Box::new(flow)));
     // Skip the intro, close the battle notes and turn 1's banner.
@@ -277,7 +277,7 @@ fn a_scene_with_nothing_to_say_for_the_army_is_passed_over() {
         if !with_knight {
             campaign.roster.truncate(1);
         }
-        let mut flow = FlowScreen::new_game();
+        let mut flow = FlowScreen::new_game(c);
         flow.adopt(c, campaign);
         flow.scenes = scenes.iter().map(|s| (*s).to_owned()).collect();
         flow.then = Then::NextChapter;

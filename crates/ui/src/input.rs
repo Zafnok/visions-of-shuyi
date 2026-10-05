@@ -39,13 +39,13 @@ const CAPTURE_ABORT: Chord = Chord::plain(Key::Escape);
 /// The chord that empties the highlighted slot on the Key bindings screen.
 const CLEAR_SLOT: Chord = Chord::plain(Key::Delete);
 
-/// What a slot on the Key bindings screen shows while it waits for a key
-/// (`docs/design/controls.md`, *Rebinding keys*).
-pub const CAPTURE_PROMPT: &str = "Press a key…";
+/// The text key of what a slot on the Key bindings screen shows while it
+/// waits for a key (`docs/design/controls.md`, *Rebinding keys*).
+pub const CAPTURE_PROMPT: &str = "key_bindings.press_a_key";
 
-/// What a slot shows while it waits for a controller button
-/// (`docs/design/controls.md`, *Rebinding buttons*).
-pub const CAPTURE_BUTTON_PROMPT: &str = "Press a button…";
+/// The text key of what a slot shows while it waits for a controller
+/// button (`docs/design/controls.md`, *Rebinding buttons*).
+pub const CAPTURE_BUTTON_PROMPT: &str = "key_bindings.press_a_button";
 
 /// Whether `chord` backs out of the Key bindings screen's "Press a key…"
 /// (`docs/design/controls.md`, *Rebinding keys*). The screen asks this
@@ -92,14 +92,15 @@ pub fn text_key(chord: Chord) -> Option<TextKey> {
 }
 
 /// The help line of a text box: `Enter done · Backspace delete · Escape
-/// cancel`. Lives here because it names keys (only this module may).
-pub fn text_keys_help() -> String {
+/// cancel`, in `ctx`'s language. Lives here because it names keys (only
+/// this module may).
+pub fn text_keys_help(ctx: &crate::screen::Ctx) -> String {
     let name = |key| Chord::plain(key).to_string();
-    crate::widgets::help::help_line(&[
-        (Some(name(Key::Enter)), "done"),
-        (Some(name(Key::Backspace)), "delete"),
-        (Some(name(Key::Escape)), "cancel"),
-    ])
+    let (done, delete, cancel) = (name(Key::Enter), name(Key::Backspace), name(Key::Escape));
+    ctx.text_with(
+        "text_box.help",
+        &[("done", &done), ("delete", &delete), ("cancel", &cancel)],
+    )
 }
 
 /// At most this many repeats are emitted by one [`InputState::update`], so a

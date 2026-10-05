@@ -740,7 +740,9 @@ mod tests {
         );
         h.keys("Up f");
         assert!(h.quit_requested());
-        let mut h = Harness::with_screen(Box::new(crate::screens::ModeSelectScreen::new()));
+        let mut h = Harness::with_screen(Box::new(crate::screens::ModeSelectScreen::new(
+            &crate::screen::tests::ctx(),
+        )));
 
         h.keys("d");
         assert_eq!(h.top_screen(), "");

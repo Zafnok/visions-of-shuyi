@@ -88,7 +88,7 @@ fn shows(buf: &GlyphBuffer, text: &str) -> bool {
 #[test]
 fn the_prompt_asks_yes_or_no() {
     let mut c = ctx();
-    let mut s = SavePromptScreen::new();
+    let mut s = SavePromptScreen::new(&c);
     assert_eq!(s.name(), "save_prompt");
     assert!(!s.is_overlay());
     // Nothing to back out of.
@@ -96,7 +96,7 @@ fn the_prompt_asks_yes_or_no() {
     assert_eq!(s.result(), None);
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
     assert_eq!(s.result(), Some(true));
-    let mut s = SavePromptScreen::default();
+    let mut s = SavePromptScreen::new(&c);
     let no = [Action::CursorDown, Action::Confirm, Action::CursorUp];
     assert_eq!(press(&mut s, &mut c, &no), "Pop");
     assert_eq!(s.result(), Some(false));
@@ -105,7 +105,7 @@ fn the_prompt_asks_yes_or_no() {
 
 #[test]
 fn save_prompt_snapshot() {
-    let h = Harness::with_screen(Box::new(SavePromptScreen::new()));
+    let h = Harness::with_screen(Box::new(SavePromptScreen::new(&ctx())));
     assert_snapshot!(h.snapshot());
 }
 
@@ -241,9 +241,15 @@ fn a_slot_row_shows_chapter_mode_army_and_playtime() {
     let s = SlotPickerScreen::load(&c);
     let buf = render(&s, &c);
     let army = c.content.new_game.roster.len();
-    let title = save::next_chapter_title(&c.content, Words::ENGLISH, &campaign(&c, "Mara", 0));
+    let (title, _) = save::next_chapter_title(&c.content, Words::ENGLISH, &campaign(&c, "Mara", 0));
     let second = row(&buf, FIRST_ROW + 1);
-    for part in ["02", title.as_str(), "Classic", &army_text(army), "1:02:05"] {
+    for part in [
+        "02",
+        title.as_str(),
+        "Classic",
+        &army_text(&c, army),
+        "1:02:05",
+    ] {
         assert!(second.contains(part), "{part:?} not in {second:?}");
     }
     let fourth = row(&buf, FIRST_ROW + 3);
@@ -251,14 +257,15 @@ fn a_slot_row_shows_chapter_mode_army_and_playtime() {
         assert!(fourth.contains(part), "{part:?} not in {fourth:?}");
     }
     assert!(!fourth.contains("1 units"));
-    assert!(row(&buf, FIRST_ROW).contains(EMPTY_SLOT));
+    assert!(row(&buf, FIRST_ROW).contains("Empty"));
     assert!(row(&buf, FIRST_ROW + 4).contains("This save can't be read"));
     assert!(row(&buf, FIRST_ROW + 5).contains("incompatible version"));
-    assert!(shows(&buf, LOAD_TITLE));
-    assert!(!shows(&buf, &format!(" {SAVE_TITLE} ")));
-    assert_eq!(army_text(0), "0 units");
-    assert_eq!(mode_name(GameMode::Classic), "Classic");
-    assert_eq!(mode_name(GameMode::Casual), "Casual");
+    assert!(shows(&buf, " Load Game "));
+    assert!(!shows(&buf, " Save "));
+    assert_eq!(army_text(&c, 0), "0 units");
+    assert_eq!(army_text(&c, 1), "1 unit");
+    assert_eq!(mode_name(&c, GameMode::Classic), "Classic");
+    assert_eq!(mode_name(&c, GameMode::Casual), "Casual");
 }
 
 #[test]
@@ -266,7 +273,7 @@ fn saving_into_an_empty_slot_writes_it_at_once() {
     let mut c = saves();
     let game = campaign(&c, "Mara", 77);
     let mut s = SlotPickerScreen::save(&c, game.clone());
-    assert!(shows(&render(&s, &c), &format!(" {SAVE_TITLE} ")));
+    assert!(shows(&render(&s, &c), " Save "));
     assert_eq!(s.help(&c), "arrows choose · f save here · d back");
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
     assert_eq!(sounds(&mut c), ["menu_select"]);
@@ -286,7 +293,7 @@ fn saving_over_a_slot_asks_first() {
     let twice = [Action::Confirm, Action::Confirm];
     assert_eq!(press(&mut s, &mut c, &twice), "None");
     assert!(s.is_asking());
-    assert_eq!(s.overwrite_question(), "Overwrite slot 02?");
+    assert_eq!(s.overwrite_question(&c), "Overwrite slot 02?");
     assert_eq!(s.help(&c), "f yes · d no");
     let buf = render(&s, &c);
     assert!(shows(&buf, "Overwrite slot 02?"));

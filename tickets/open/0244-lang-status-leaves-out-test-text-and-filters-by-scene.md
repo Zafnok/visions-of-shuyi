@@ -1,5 +1,5 @@
 ---
-id: "0243"
+id: "0244"
 title: "lang-status leaves out test text and can be narrowed to a file"
 type: feature
 milestone: M1 Engine
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 0243 — lang-status leaves out test text and can be narrowed to a file
+# 0244 — lang-status leaves out test text and can be narrowed to a file
 
 ## Context
 
