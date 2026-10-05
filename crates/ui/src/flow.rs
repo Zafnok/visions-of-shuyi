@@ -369,8 +369,7 @@ impl FlowScreen {
         let present = self.campaign.as_ref().map_or(Present::Everyone, |c| {
             Present::only(c.roster.iter().filter_map(|u| u.character.clone()))
         });
-        let names = ctx.content.names.clone();
-        let screen = DialogueScreen::new(scene, lead, names, &present);
+        let screen = DialogueScreen::told(ctx, scene, lead, &present);
         let plays = screen.has_text();
         if plays {
             self.stage = Stage::Scene(Box::new(screen));
@@ -499,7 +498,8 @@ impl FlowScreen {
             let unused = battle.history().charges_left();
             self.rewards = campaign.apply_result(&fight.def, state, unused).ok();
             let charges = fight.prep.setup.rewind_charges;
-            let screen = |r| ResultsScreen::new(r, state, charges, campaign.gold);
+            let told = (state, ctx.words());
+            let screen = |r| ResultsScreen::new(r, told, charges, campaign.gold);
             results = self.rewards.as_ref().map(screen);
         }
         self.scenes = self

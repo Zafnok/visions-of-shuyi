@@ -17,6 +17,7 @@ use super::info::stat_name;
 use super::mode::Selection;
 use crate::color::UiColor;
 use crate::widgets::menu::{Menu, MenuItem};
+use crate::words::Words;
 
 /// A skill's cost as text: `3 dur` (weapon durability), `+1 use` (one more
 /// use of the spell) or, for a non-attack active, its uses left this battle
@@ -198,11 +199,9 @@ pub fn skill_cost(skill: &SkillDef) -> Option<SkillCost> {
 }
 
 /// The name of skill `id` (its id if the table lacks it).
-pub fn skill_name(state: &BattleState, id: &SkillId) -> String {
-    state
-        .skills()
-        .get(id)
-        .map_or_else(|| id.0.clone(), |s| s.name.clone())
+pub fn skill_name(state: &BattleState, words: Words<'_>, id: &SkillId) -> String {
+    let skill = state.skills().get(id);
+    skill.map_or(id.0.as_str(), |s| words.skill(s)).to_owned()
 }
 
 /// When a timed effect ends, e.g. `until Player phase`.
@@ -340,10 +339,15 @@ fn menu_line(
 /// The `Skill` menu: each skill with its uses left this battle,
 /// `Brace     3/3`. Unusable lines are dimmed, with the reason after one
 /// that can't be paid for (`no uses left`).
-pub fn skill_menu(state: &BattleState, unit: UnitId, choices: &[SkillChoice]) -> Menu {
+pub fn skill_menu(
+    state: &BattleState,
+    words: Words<'_>,
+    unit: UnitId,
+    choices: &[SkillChoice],
+) -> Menu {
     let name_w = choices
         .iter()
-        .map(|c| skill_name(state, &c.skill).chars().count())
+        .map(|c| skill_name(state, words, &c.skill).chars().count())
         .max()
         .unwrap_or(0);
     let weapon = equipped_durability(state, unit);
@@ -351,7 +355,7 @@ pub fn skill_menu(state: &BattleState, unit: UnitId, choices: &[SkillChoice]) ->
         .iter()
         .map(|c| {
             let text = menu_line(
-                &skill_name(state, &c.skill),
+                &skill_name(state, words, &c.skill),
                 name_w,
                 state.skills().get(&c.skill).and_then(skill_cost),
                 uses_left(state, unit, &c.skill),
@@ -441,11 +445,11 @@ impl SkillTargeting {
     }
 
     /// The preview line, e.g. `Shove on Brigand (8 → 7 uses)`.
-    pub fn preview(&self, state: &BattleState) -> String {
-        let name = skill_name(state, self.skill());
+    pub fn preview(&self, state: &BattleState, words: Words<'_>) -> String {
+        let name = skill_name(state, words, self.skill());
         let who = state
             .unit(self.target())
-            .map_or(String::new(), |u| format!(" on {}", u.name));
+            .map_or(String::new(), |u| format!(" on {}", words.unit(u)));
         let cost = cost_change(state, self.sel.unit, self.skill());
         format!("{name}{who}{cost}")
     }

@@ -8,6 +8,7 @@ use super::layout::SIDE_PANEL;
 use super::units::{faction_color, hp_fill};
 use crate::color::{Palette, Rgb, UiColor};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
+use crate::words::Words;
 
 /// Length of the panel's HP bar, in cells.
 pub const HP_BAR_CELLS: i32 = 10;
@@ -54,7 +55,7 @@ fn line(buf: &mut GlyphBuffer, y: i32, text: &str, fg: Rgb) {
 pub fn draw_hover(
     buf: &mut GlyphBuffer,
     palette: &Palette,
-    state: &BattleState,
+    (state, words): (&BattleState, Words<'_>),
     pos: Pos,
     unit: Option<&Unit>,
 ) {
@@ -65,7 +66,12 @@ pub fn draw_hover(
         .get(pos)
         .and_then(|&id| state.terrain().get(id))
     {
-        line(buf, TERRAIN_ROW, &t.name, c(UiColor::TextHighlight));
+        line(
+            buf,
+            TERRAIN_ROW,
+            words.terrain(t),
+            c(UiColor::TextHighlight),
+        );
         let bonuses = format!("DEF {}  AVO {}", signed(t.defense), signed(t.avoid));
         line(buf, TERRAIN_ROW + 1, &bonuses, c(UiColor::Text));
         if t.heal_percent > 0 {
@@ -74,20 +80,22 @@ pub fn draw_hover(
         }
     }
     if let Some(unit) = unit {
-        draw_unit(buf, palette, state, unit);
+        draw_unit(buf, palette, (state, words), unit);
     }
 }
 
 /// The unit block: name (faction colour), class and level, HP with a bar,
 /// faction.
-fn draw_unit(buf: &mut GlyphBuffer, palette: &Palette, state: &BattleState, unit: &Unit) {
+fn draw_unit(
+    buf: &mut GlyphBuffer,
+    palette: &Palette,
+    (state, words): (&BattleState, Words<'_>),
+    unit: &Unit,
+) {
     let c = |u| palette.get(u);
     let y = UNIT_ROW;
-    line(buf, y, &unit.name, c(faction_color(unit.faction)));
-    let class = state
-        .classes()
-        .get(&unit.class)
-        .map_or(unit.class.0.as_str(), |d| d.name.as_str());
+    line(buf, y, words.unit(unit), c(faction_color(unit.faction)));
+    let class = words.class_of(&unit.class, state.classes());
     let class_line = format!("{class}  Lv {}", unit.level);
     line(buf, y + 1, &class_line, c(UiColor::Text));
     let hp = format!("HP {}/{}", unit.hp, unit.stats.hp);

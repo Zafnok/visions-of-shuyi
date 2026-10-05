@@ -13,6 +13,7 @@ use super::testing::{quick_units, setup, through_ai_phases};
 use super::*;
 use crate::harness::Harness;
 use crate::screen::tests::ctx;
+use crate::words::Words;
 
 /// The Quick Battle's rogue: an enemy the lord can talk to, which joins if
 /// defeated.
@@ -452,7 +453,7 @@ fn the_rewind_list_names_a_talk() {
     });
     let replayed = s.history().replay();
     assert_eq!(
-        rewind::describe(&replayed[0]),
+        rewind::describe(&replayed[0], Words::ENGLISH),
         "Turn 1 · Test Lord talked to Test Rogue"
     );
 }

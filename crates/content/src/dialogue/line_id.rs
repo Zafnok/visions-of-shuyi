@@ -36,24 +36,26 @@ impl LineId {
     /// repeat number (`ch1_gate_1a2b3c4d_2` → `ch1_gate`). An id that
     /// doesn't end like a line id is returned whole.
     pub fn scene_id(&self) -> &str {
-        /// `id` without a `_<8 hex>` ending, if it has one.
-        fn strip_hash(id: &str) -> Option<(&str, &str)> {
-            id.rsplit_once('_')
-                .filter(|(_, tail)| tail.len() == 8 && tail.bytes().all(|b| b.is_ascii_hexdigit()))
-        }
-        if let Some((scene, _)) = strip_hash(&self.0) {
-            return scene;
-        }
-        // A repeat: `<scene>_<hash>_<n>`.
-        let repeat = self
-            .0
-            .rsplit_once('_')
-            .filter(|(_, n)| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()));
-        match repeat.and_then(|(rest, _)| strip_hash(rest)) {
-            Some((scene, _)) => scene,
-            None => &self.0,
-        }
+        scene_of(&self.0).unwrap_or(&self.0)
     }
+}
+
+/// The id of the scene the line with id `id` is in, or `None` if `id`
+/// doesn't end like a line id (`_<8 hex>`, then `_<n>` on a repeat).
+pub(crate) fn scene_of(id: &str) -> Option<&str> {
+    /// `id` without a `_<8 hex>` ending, if it has one.
+    fn strip_hash(id: &str) -> Option<&str> {
+        id.rsplit_once('_')
+            .filter(|(_, tail)| tail.len() == 8 && tail.bytes().all(|b| b.is_ascii_hexdigit()))
+            .map(|(scene, _)| scene)
+    }
+    // A repeat: `<scene>_<hash>_<n>`.
+    let repeat = || {
+        id.rsplit_once('_')
+            .filter(|(_, n)| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+            .and_then(|(rest, _)| strip_hash(rest))
+    };
+    strip_hash(id).or_else(repeat)
 }
 
 impl fmt::Display for LineId {
@@ -89,6 +91,16 @@ pub(super) fn fnv1a64(bytes: &[u8]) -> u64 {
 pub(crate) fn line_hash(speaker: &str, text: &str) -> String {
     let hash = fnv1a64(format!("{speaker}\n{text}").as_bytes());
     format!("{:08x}", hash & 0xffff_ffff)
+}
+
+/// What stands for the speaker in a caption's hash.
+const CAPTION_SPEAKER: &str = "@caption";
+
+/// The key a language pack translates the caption `text` of scene `scene`
+/// by (ADR-0045 §2): `caption.<scene id>_<8 hex>`, hashed like a line id.
+/// The same caption twice in a scene has one key.
+pub fn caption_key(scene: &str, text: &str) -> String {
+    format!("caption.{scene}_{}", line_hash(CAPTION_SPEAKER, text))
 }
 
 /// Calls `f(speaker, text, id)` for every line of `steps` that shows text,

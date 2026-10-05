@@ -9,10 +9,11 @@ use trpg_core::{
 };
 
 use super::art_list::{ArtChoice, Technique, art_choices, art_menu, durability_text};
-use super::mode::Selection;
+use super::mode::{IN_PLAY, Selection};
 use crate::color::UiColor;
 use crate::input::Action;
 use crate::widgets::menu::{Menu, MenuItem};
+use crate::words::Words;
 
 /// The weapon attack with the weapon in `slot` on `target`: no art, no
 /// active.
@@ -162,11 +163,17 @@ pub fn weapon_choices(state: &BattleState, sel: &Selection) -> Vec<WeaponChoice>
 
 /// The weapon list's line for `slot`: name and stats, e.g.
 /// `Iron Sword   Mt 5  Hit 90  Crit 0  Rng 1`, names padded to `name_w`.
-pub fn weapon_label(state: &BattleState, unit: UnitId, slot: usize, name_w: usize) -> String {
-    let Some(def) = state
+pub fn weapon_label(
+    state: &BattleState,
+    words: Words<'_>,
+    unit: UnitId,
+    slot: usize,
+    name_w: usize,
+) -> String {
+    let Some((id, def)) = state
         .unit(unit)
         .and_then(|u| u.loadout.weapon(slot))
-        .and_then(|w| state.items().weapon(&w.def))
+        .and_then(|w| Some((&w.def, state.items().weapon(&w.def)?)))
     else {
         return String::new();
     };
@@ -177,56 +184,70 @@ pub fn weapon_label(state: &BattleState, unit: UnitId, slot: usize, name_w: usiz
     };
     format!(
         "{:<name_w$}  Mt {:>2}  Hit {:>3}  Crit {:>2}  Rng {range}",
-        def.name, def.might, def.hit, def.crit
+        words.item(id, state.items()),
+        def.might,
+        def.hit,
+        def.crit
     )
 }
 
 /// The weapon in `unit`'s `slot`: its name, durability left and max.
 pub fn weapon_durability(
     state: &BattleState,
+    words: Words<'_>,
     unit: UnitId,
     slot: usize,
 ) -> Option<(String, u32, u32)> {
     let copy = state.unit(unit)?.loadout.weapon(slot)?;
     let def = state.items().weapon(&copy.def)?;
-    Some((def.name.clone(), copy.durability_left, def.durability))
+    let name = words.item(&copy.def, state.items()).to_owned();
+    Some((name, copy.durability_left, def.durability))
 }
 
 /// Spell `spell` of `unit`: its name, uses left and uses per battle.
 pub fn spell_uses(
     state: &BattleState,
+    words: Words<'_>,
     unit: UnitId,
     spell: &SpellId,
 ) -> Option<(String, u32, u32)> {
     let def = state.spells().get(spell)?;
     let left = state.unit(unit)?.spells.uses_left(spell);
-    Some((def.name.clone(), u32::from(left), u32::from(def.uses)))
+    Some((
+        words.spell(def).to_owned(),
+        u32::from(left),
+        u32::from(def.uses),
+    ))
 }
 
 /// The name of the weapon in `unit`'s `slot` (empty if none).
-pub fn weapon_name(state: &BattleState, unit: UnitId, slot: usize) -> String {
+pub fn weapon_name(state: &BattleState, words: Words<'_>, unit: UnitId, slot: usize) -> String {
     state
         .unit(unit)
         .and_then(|u| u.loadout.weapon(slot))
-        .and_then(|w| state.items().weapon(&w.def))
-        .map(|d| d.name.clone())
+        .map(|w| words.item(&w.def, state.items()).to_owned())
         .unwrap_or_default()
 }
 
 /// The weapon list: one line per choice with the weapon's durability after
 /// it (`20/20`, `broken` at 0), focused on the equipped weapon if it is one
 /// of them.
-pub fn weapon_menu(state: &BattleState, sel: &Selection, choices: &[WeaponChoice]) -> Menu {
+pub fn weapon_menu(
+    state: &BattleState,
+    words: Words<'_>,
+    sel: &Selection,
+    choices: &[WeaponChoice],
+) -> Menu {
     let name_w = choices
         .iter()
-        .map(|c| weapon_name(state, sel.unit, c.slot).chars().count())
+        .map(|c| weapon_name(state, words, sel.unit, c.slot).chars().count())
         .max()
         .unwrap_or(0);
     let items = choices
         .iter()
         .map(|c| {
-            let item = MenuItem::new(weapon_label(state, sel.unit, c.slot, name_w));
-            match weapon_durability(state, sel.unit, c.slot) {
+            let item = MenuItem::new(weapon_label(state, words, sel.unit, c.slot, name_w));
+            match weapon_durability(state, words, sel.unit, c.slot) {
                 Some((_, left, max)) => {
                     let color = if left == 0 {
                         UiColor::HpLow
@@ -355,7 +376,7 @@ impl Targeting {
     ) -> Option<Self> {
         let first = *targets.first()?;
         let choices = art_choices(state, sel.unit, sel.dest(), &with, first);
-        let list = art_menu(state, &choices, 0);
+        let list = art_menu(state, IN_PLAY, &choices, 0);
         let technique = choices
             .get(list.focus())
             .map(|c| c.technique.clone())
@@ -374,6 +395,12 @@ impl Targeting {
             weapons,
             options: vec![],
         })
+    }
+
+    /// Writes the arts list in `words`, for the screen to paint
+    /// ([`Mode::told`](super::mode::Mode::told)).
+    pub fn tell(&mut self, state: &BattleState, words: Words<'_>) {
+        self.list = art_menu(state, words, &self.choices, self.list.focus());
     }
 
     /// The target under the cursor.
@@ -437,9 +464,9 @@ impl Targeting {
             .iter()
             .position(|c| c.technique == kept)
             .unwrap_or(0);
-        self.list = art_menu(state, &self.choices, at);
+        self.list = art_menu(state, IN_PLAY, &self.choices, at);
         if !self.refresh(state) {
-            self.list = art_menu(state, &self.choices, 0);
+            self.list = art_menu(state, IN_PLAY, &self.choices, 0);
             self.refresh(state);
         }
     }
@@ -528,7 +555,7 @@ mod tests {
         let slots: Vec<usize> = choices.iter().map(|w| w.slot).collect();
         assert_eq!(slots, [0, 1]);
         assert!(choices.iter().all(|w| w.targets == [UnitId(6), UnitId(4)]));
-        let menu = weapon_menu(&s, &sel, &choices);
+        let menu = weapon_menu(&s, Words::ENGLISH, &sel, &choices);
         let labels: Vec<&str> = menu.items().iter().map(|i| i.label.as_str()).collect();
         assert_eq!(
             labels,
@@ -547,12 +574,12 @@ mod tests {
             units,
             Objective::Rout { turn_limit: None },
         );
-        assert_eq!(weapon_menu(&s2, &sel, &choices).focus(), 1);
+        assert_eq!(weapon_menu(&s2, Words::ENGLISH, &sel, &choices).focus(), 1);
         // Nobody in reach: no choices.
         assert!(weapon_choices(&s, &at(&s, p(6, 3))).is_empty());
         // An empty slot has no name or line.
-        assert_eq!(weapon_name(&s, UnitId(1), 2), "");
-        assert_eq!(weapon_label(&s, UnitId(1), 2, 4), "");
+        assert_eq!(weapon_name(&s, Words::ENGLISH, UnitId(1), 2), "");
+        assert_eq!(weapon_label(&s, Words::ENGLISH, UnitId(1), 2, 4), "");
     }
 
     #[test]

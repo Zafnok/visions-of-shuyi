@@ -185,13 +185,13 @@ impl Screen for DebugMenuScreen {
                     // The overlay replaces this menu so it plays over the
                     // screen the menu was opened from (e.g. the battle map).
                     // The viewer plays a scene with everyone there (ADR-0055).
-                    let (lead, names) = (ctx.lead.clone(), ctx.content.names.clone());
+                    let lead = ctx.lead.clone();
                     let everyone = &Present::Everyone;
                     return if tool == 2 {
-                        let screen = DialogueScreen::new(&scene, lead, names, everyone);
+                        let screen = DialogueScreen::told(ctx, &scene, lead, everyone);
                         Transition::Push(Box::new(screen))
                     } else {
-                        let screen = DialogueScreen::overlay(&scene, lead, names, everyone);
+                        let screen = DialogueScreen::told_overlay(ctx, &scene, lead, everyone);
                         Transition::Replace(Box::new(screen))
                     };
                 }

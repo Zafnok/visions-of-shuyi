@@ -355,3 +355,28 @@ proptest! {
         prop_assert_eq!(retokenise(&out, count), text);
     }
 }
+
+/// `{N:…}` capitalises a name that starts with a Latin letter, accented
+/// or not, and leaves any other as it is (ticket 0235: a pack's names).
+#[test]
+fn only_a_latin_first_letter_is_capitalised() {
+    let names = table(&[
+        ("plain", "the King"),
+        ("accent", "étoile du nord"),
+        ("kana", "おうさま"),
+        ("greek", "βασιλιάς"),
+        ("digit", "7th legion"),
+    ]);
+    let shown = |token: &str| names.substitute(token).into_owned();
+    assert_eq!(shown("{N:plain}"), "The King");
+    assert_eq!(shown("{n:plain}"), "the King");
+    assert_eq!(shown("{N:accent}"), "Étoile du nord");
+    assert_eq!(shown("{N:kana}"), "おうさま");
+    assert_eq!(shown("{N:greek}"), "βασιλιάς");
+    assert_eq!(shown("{N:digit}"), "7th legion");
+    assert!(is_latin_letter('a') && is_latin_letter('Z') && is_latin_letter('ß'));
+    assert!(is_latin_letter('À') && is_latin_letter('ɏ'));
+    assert!(!is_latin_letter('×') && !is_latin_letter('÷'));
+    assert!(!is_latin_letter('1') && !is_latin_letter('ɐ') && !is_latin_letter('¿'));
+    assert_eq!(capitalise(""), "");
+}

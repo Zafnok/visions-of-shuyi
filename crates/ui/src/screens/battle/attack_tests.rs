@@ -15,6 +15,7 @@ use super::progress::PROGRESS_TIMINGS;
 use super::testing::skirmish;
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
+use crate::words::Words;
 
 /// Where the lord attacks from.
 const DEST: Pos = Pos::new(7, 2);
@@ -94,7 +95,14 @@ fn expected(brigand_hp: StatValue) -> (BattleState, BattleState, Vec<Event>) {
 /// The playback the screen builds for [`expected`].
 fn expected_playback(brigand_hp: StatValue) -> Playback {
     let (before, after, events) = expected(brigand_hp);
-    Playback::new(&events, before.units(), after.fallen(), TIMINGS).expect("a combat")
+    Playback::new(
+        Words::ENGLISH,
+        &events,
+        before.units(),
+        after.fallen(),
+        TIMINGS,
+    )
+    .expect("a combat")
 }
 
 /// Seconds the EXP bar is up after a combat.

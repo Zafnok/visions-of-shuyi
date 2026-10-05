@@ -12,6 +12,7 @@ mod dialogue;
 mod flow;
 mod key_bindings;
 mod key_bindings_screen;
+mod language;
 mod layout_picker;
 mod map_skin;
 mod options;

@@ -162,24 +162,63 @@ fn a_slot_shows_the_chapter_it_goes_on_with() {
     let title = c.content.chapters["test"].title.clone();
     // No chapter after it yet.
     assert_eq!(
-        next_chapter_title(&c.content, &game),
+        next_chapter_title(&c.content, Words::ENGLISH, &game),
         format!("{title} (cleared)")
     );
     // The chapter after it.
     c.content.chapters.get_mut("test").unwrap().next = Some("quick".into());
     let next = c.content.chapters["quick"].title.clone();
     assert_ne!(next, title);
-    assert_eq!(next_chapter_title(&c.content, &game), next);
+    assert_eq!(next_chapter_title(&c.content, Words::ENGLISH, &game), next);
     // A next chapter the game doesn't have: as if there were none.
     c.content.chapters.get_mut("test").unwrap().next = Some("gone".into());
     assert_eq!(
-        next_chapter_title(&c.content, &game),
+        next_chapter_title(&c.content, Words::ENGLISH, &game),
         format!("{title} (cleared)")
     );
     // A cleared chapter the game no longer has: its id.
     let mut lost = game;
     lost.chapter = "old_ch".into();
-    assert_eq!(next_chapter_title(&c.content, &lost), "old_ch");
+    assert_eq!(
+        next_chapter_title(&c.content, Words::ENGLISH, &lost),
+        "old_ch"
+    );
+}
+
+/// A slot's chapter title is in the player's language (ticket 0235).
+#[test]
+fn a_slots_chapter_is_titled_in_the_players_language() {
+    let mut c = ctx();
+    let game = campaign(&c);
+    c.lang = trpg_content::LangCode::new(trpg_content::lang::TEST).unwrap();
+    assert_eq!(
+        next_chapter_title(&c.content, c.words(), &game),
+        "TEST CHAPTER (cleared)"
+    );
+    // The chapter after it is one the test pack doesn't title.
+    c.content.chapters.get_mut("quick").unwrap().next = Some("test".into());
+    let mut quick = game.clone();
+    quick.chapter = "quick".into();
+    assert_eq!(
+        next_chapter_title(&c.content, c.words(), &quick),
+        "TEST CHAPTER"
+    );
+    quick.chapter = "test".into();
+    c.content.chapters.get_mut("test").unwrap().next = Some("quick".into());
+    assert_eq!(
+        next_chapter_title(&c.content, c.words(), &quick),
+        "Quick Battle"
+    );
+    // A slot read from storage is titled the same way.
+    let mut storage = MemoryStorage::new();
+    let save = SaveFile::chapter_cleared(game);
+    write(&mut storage, &slot_key(1), &save).unwrap();
+    let Slot::Saved(summary) = slot(&storage, &c.content, c.words(), 1) else {
+        panic!("no save in slot 1");
+    };
+    assert_eq!(summary.chapter, "Quick Battle");
+    let all = slots(&storage, &c.content, c.words());
+    assert_eq!(all[0], Slot::Saved(summary));
 }
 
 #[test]
@@ -195,13 +234,16 @@ fn slots_are_empty_saved_or_unreadable() {
     // A battle save is never written to a slot.
     write(&mut storage, &slot_key(5), &suspended(&c)).unwrap();
 
-    let all = slots(&storage, &c.content);
+    let all = slots(&storage, &c.content, Words::ENGLISH);
     assert_eq!(all.len(), SLOTS);
     assert_eq!(all[0], Slot::Empty);
     let Slot::Saved(summary) = &all[1] else {
         panic!("{:?}", all[1]);
     };
-    assert_eq!(summary.chapter, next_chapter_title(&c.content, &game));
+    assert_eq!(
+        summary.chapter,
+        next_chapter_title(&c.content, Words::ENGLISH, &game)
+    );
     assert_eq!(summary.mode, GameMode::Casual);
     assert_eq!(summary.roster, game.roster.len());
     assert!(summary.roster > 0);
@@ -211,7 +253,7 @@ fn slots_are_empty_saved_or_unreadable() {
     assert_eq!(all[3], Slot::Unreadable(SaveError::Incompatible));
     assert_eq!(all[4], Slot::Unreadable(SaveError::Corrupt));
     assert!(all[5..].iter().all(|s| *s == Slot::Empty));
-    assert_eq!(slot(&storage, &c.content, 2), all[1]);
+    assert_eq!(slot(&storage, &c.content, Words::ENGLISH, 2), all[1]);
 }
 
 #[test]

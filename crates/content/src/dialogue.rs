@@ -16,7 +16,9 @@ use std::collections::BTreeMap;
 use trpg_core::CharacterId;
 
 pub use check::{check_duplicates, check_scene};
-pub use line_id::{Line, LineId, NARRATION_SPEAKER, REPLY_SPEAKER};
+pub(crate) use check::{longest_width, token_problems};
+pub(crate) use line_id::scene_of;
+pub use line_id::{Line, LineId, NARRATION_SPEAKER, REPLY_SPEAKER, caption_key};
 pub use parse::{Lines, ParsedScene, PartLines, parse_dlg};
 pub(crate) use parse::{char_problem, is_id};
 pub use presence::{Cast, Present, check_presence};

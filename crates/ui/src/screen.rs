@@ -28,6 +28,7 @@ use crate::settings::{SETTINGS_KEY, Settings};
 use crate::storage::{MemoryStorage, Storage, StorageError};
 use crate::tips::fill_text;
 use crate::widgets::help::HelpKeys;
+use crate::words::{Language, Words};
 
 /// [`Storage`] key under which the chosen [`Layout`] was saved (its name,
 /// e.g. `LeftHanded`) before the settings held it (ticket 0805). Still
@@ -389,10 +390,7 @@ impl Ctx {
             lang.has(key),
             "text key not in assets/lang/en/ui.ron: {key:?}"
         );
-        if self.lang.as_str() == TEST && !self.debug_tools {
-            return lang.text(&LangCode::english(), key);
-        }
-        lang.text(&self.lang, key)
+        lang.text(self.effective_lang(), key)
     }
 
     /// [`text`](Self::text) with its placeholders filled in: each `{name}`
@@ -400,6 +398,30 @@ impl Ctx {
     /// by the key the player has for it ([`help_keys`](Self::help_keys)).
     pub fn text_with(&self, key: &str, args: &[(&str, &dyn Display)]) -> String {
         fill_text(self.text(key), self.help_keys(), args)
+    }
+
+    /// The data's text (names, tips, titles, dialogue) in the player's
+    /// language: what a screen shows any of it through. Like
+    /// [`text`](Self::text), the test pack counts only with
+    /// [`debug_tools`](Self::debug_tools) on.
+    pub fn words(&self) -> Words<'_> {
+        Words::new(&self.content.lang, self.effective_lang())
+    }
+
+    /// [`words`](Self::words), to keep: for a screen that names things
+    /// where it has no context.
+    pub fn language(&self) -> Language {
+        Language::new(&self.content.lang, self.effective_lang())
+    }
+
+    /// The language text is shown in: [`lang`](Self::lang), but English
+    /// for the test pack without [`debug_tools`](Self::debug_tools).
+    pub fn effective_lang(&self) -> &LangCode {
+        static ENGLISH: std::sync::LazyLock<LangCode> = std::sync::LazyLock::new(LangCode::english);
+        if self.lang.as_str() == TEST && !self.debug_tools {
+            return &ENGLISH;
+        }
+        &self.lang
     }
 
     /// The context for the content embedded in the binary.

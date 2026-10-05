@@ -35,8 +35,9 @@ const USAGE: &str = "usage: cargo xtask <command>\n\n\
 available commands:\n  \
 ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n  \
 check-keys                         fail on keys hard-coded in game code or text\n  \
-check-text                         count screen text still written as literals in crates/ui\n  \
-lang-status <code>                 list a language pack's missing and stale keys\n  \
+check-text                         count screen text still written as literals in crates/ui,\n  \
+                                   and fail on a screen that reads a data name itself\n  \
+lang-status <code>                 list a language pack's missing, stale and orphaned text\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
 font-atlas <font.bdf>... <out-dir> build the font atlas from BDF fonts\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
@@ -138,8 +139,11 @@ fn check_text(args: &[String]) -> u8 {
         eprintln!("usage: cargo xtask check-text");
         return 2;
     }
-    let (hits, errors) = check_text::run(&repo_root());
+    let (hits, mut errors) = check_text::run(&repo_root());
     print!("{}", check_text::report(&hits, check_text::MAX_LITERALS));
+    let (names, name_errors) = check_text::run_names(&repo_root());
+    errors.extend(name_errors);
+    eprint!("{}", check_text::report_names(&names));
     for error in &errors {
         eprintln!("check-text: {error}");
     }
@@ -148,7 +152,7 @@ fn check_text(args: &[String]) -> u8 {
             if let Some(note) = note {
                 println!("{note}");
             }
-            u8::from(!errors.is_empty())
+            u8::from(!errors.is_empty() || !names.is_empty())
         }
         Err(e) => {
             eprintln!("{e}");

@@ -14,6 +14,7 @@ use super::info::range_text;
 use super::mode::Selection;
 use crate::color::UiColor;
 use crate::widgets::menu::{Menu, MenuItem};
+use crate::words::Words;
 
 /// One line of the pack list: every copy of one consumable.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -101,14 +102,14 @@ pub fn effect_text(effect: ConsumableEffect) -> String {
     }
 }
 
+/// The name of item `id` (its id if the table lacks it).
+fn item_name(state: &BattleState, words: Words<'_>, id: &ItemId) -> String {
+    words.item(id, state.items()).to_owned()
+}
+
 /// The pack list: `Potion ×3  Restore 10 HP` per group.
-pub fn pack_menu(state: &BattleState, groups: &[PackGroup]) -> Menu {
-    let name = |g: &PackGroup| {
-        state
-            .items()
-            .consumable(&g.item)
-            .map_or_else(|| g.item.0.clone(), |c| c.name.clone())
-    };
+pub fn pack_menu(state: &BattleState, words: Words<'_>, groups: &[PackGroup]) -> Menu {
+    let name = |g: &PackGroup| item_name(state, words, &g.item);
     let name_w = groups.iter().map(|g| name(g).chars().count()).max();
     let items = groups
         .iter()
@@ -206,20 +207,17 @@ impl ItemTargeting {
     }
 
     /// The preview line, e.g. `Potion on Rex: HP 12 → 22`.
-    pub fn preview(&self, state: &BattleState) -> String {
+    pub fn preview(&self, state: &BattleState, words: Words<'_>) -> String {
         let item = &self.used().item;
-        let name = state
-            .items()
-            .consumable(item)
-            .map_or(item.0.as_str(), |c| c.name.as_str());
+        let name = item_name(state, words, item);
         let Some(target) = state.unit(self.target()) else {
-            return name.to_owned();
+            return name;
         };
         let effect = state.items().consumable(item).map(|c| c.effect);
         let gain = effect.map_or(0, |e| heal_amount(e, target.hp, target.stats.hp));
         format!(
             "{name} on {}: HP {} → {}",
-            target.name,
+            words.unit(target),
             target.hp,
             target.hp + gain
         )
@@ -265,11 +263,11 @@ pub fn can_equip(choices: &[EquipChoice]) -> bool {
 }
 
 /// The name of what a line equips (empty if the unit lacks it).
-fn equip_name(state: &BattleState, unit: UnitId, what: &Equipped) -> String {
+fn equip_name(state: &BattleState, words: Words<'_>, unit: UnitId, what: &Equipped) -> String {
     match what {
-        Equipped::Weapon(slot) => weapon_name(state, unit, *slot),
+        Equipped::Weapon(slot) => weapon_name(state, words, unit, *slot),
         Equipped::Spell(spell) => {
-            spell_uses(state, unit, spell).map_or_else(String::new, |(name, ..)| name)
+            spell_uses(state, words, unit, spell).map_or_else(String::new, |(name, ..)| name)
         }
     }
 }
@@ -277,7 +275,12 @@ fn equip_name(state: &BattleState, unit: UnitId, what: &Equipped) -> String {
 /// The line of a weapon or spell: a marker if equipped, its name and stats
 /// and durability (a spell's uses), e.g. `* Iron Sword  Mt 5 Hit 90 Crit 0
 /// Wt 2 Rng1 20/20`.
-fn equip_label(state: &BattleState, unit: UnitId, what: &Equipped, name_w: usize) -> String {
+fn equip_label(
+    (state, words): (&BattleState, Words<'_>),
+    unit: UnitId,
+    what: &Equipped,
+    name_w: usize,
+) -> String {
     let Some(u) = state.unit(unit) else {
         return String::new();
     };
@@ -286,12 +289,13 @@ fn equip_label(state: &BattleState, unit: UnitId, what: &Equipped, name_w: usize
         Equipped::Weapon(slot) => u.loadout.weapon(*slot).and_then(|copy| {
             let def = state.items().weapon(&copy.def)?;
             let left = (copy.durability_left, def.durability);
-            Some((def.name.clone(), state.items().weapon_stats(copy)?, left))
+            let name = words.item(&copy.def, state.items()).to_owned();
+            Some((name, state.items().weapon_stats(copy)?, left))
         }),
         Equipped::Spell(spell) => state.spells().get(spell).and_then(|def| {
             let left = u32::from(u.spells.uses_left(spell));
             Some((
-                def.name.clone(),
+                words.spell(def).to_owned(),
                 def.weapon_stats()?,
                 (left, u32::from(def.uses)),
             ))
@@ -318,10 +322,15 @@ fn equip_label(state: &BattleState, unit: UnitId, what: &Equipped, name_w: usize
 /// The equip list: one line per weapon or attack spell, the equipped one
 /// marked and focused, unusable ones dimmed, broken weapons tagged in the
 /// warning colour.
-pub fn equip_menu(state: &BattleState, unit: UnitId, choices: &[EquipChoice]) -> Menu {
+pub fn equip_menu(
+    state: &BattleState,
+    words: Words<'_>,
+    unit: UnitId,
+    choices: &[EquipChoice],
+) -> Menu {
     let name_w = choices
         .iter()
-        .map(|c| equip_name(state, unit, &c.what).chars().count())
+        .map(|c| equip_name(state, words, unit, &c.what).chars().count())
         .max()
         .unwrap_or(0);
     let broken = |what: &Equipped| match what {
@@ -334,7 +343,7 @@ pub fn equip_menu(state: &BattleState, unit: UnitId, choices: &[EquipChoice]) ->
     let items = choices
         .iter()
         .map(|c| {
-            let label = equip_label(state, unit, &c.what, name_w);
+            let label = equip_label((state, words), unit, &c.what, name_w);
             let item = if c.usable {
                 MenuItem::new(label)
             } else {

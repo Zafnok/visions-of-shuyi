@@ -13,6 +13,7 @@ use trpg_content::Content;
 use trpg_core::{Campaign, GameMode, SaveFile, SaveHeader, SavePoint};
 
 use crate::storage::{Storage, StorageError};
+use crate::words::Words;
 
 /// How many save slots there are (`death-and-difficulty.md`).
 pub const SLOTS: usize = 30;
@@ -120,7 +121,7 @@ pub struct SlotSummary {
 /// The title a chapter save of `campaign` shows: the chapter it goes on
 /// with (the one after the chapter it cleared); `<title> (cleared)` when no
 /// chapter follows yet; the chapter's id if the content no longer has it.
-pub fn next_chapter_title(content: &Content, campaign: &Campaign) -> String {
+pub fn next_chapter_title(content: &Content, words: Words<'_>, campaign: &Campaign) -> String {
     let Some(cleared) = content.chapters.get(&campaign.chapter) else {
         return campaign.chapter.clone();
     };
@@ -129,19 +130,19 @@ pub fn next_chapter_title(content: &Content, campaign: &Campaign) -> String {
         .as_ref()
         .and_then(|id| content.chapters.get(id));
     match next {
-        Some(next) => next.title.clone(),
-        None => format!("{} (cleared)", cleared.title),
+        Some(next) => words.chapter_title(next).to_owned(),
+        None => format!("{} (cleared)", words.chapter_title(cleared)),
     }
 }
 
 /// What save slot `slot` holds. A slot holding a battle save (never
 /// written there) is unreadable.
-pub fn slot(storage: &dyn Storage, content: &Content, slot: usize) -> Slot {
+pub fn slot(storage: &dyn Storage, content: &Content, words: Words<'_>, slot: usize) -> Slot {
     match read(storage, &slot_key(slot)) {
         Ok(None) => Slot::Empty,
         Ok(Some(save)) if save.point == SavePoint::ChapterCleared => {
             Slot::Saved(Box::new(SlotSummary {
-                chapter: next_chapter_title(content, &save.campaign),
+                chapter: next_chapter_title(content, words, &save.campaign),
                 mode: save.campaign.mode,
                 roster: save.campaign.roster.len(),
                 playtime_s: save.campaign.playtime_s,
@@ -154,8 +155,10 @@ pub fn slot(storage: &dyn Storage, content: &Content, slot: usize) -> Slot {
 }
 
 /// Every save slot, slot 1 first.
-pub fn slots(storage: &dyn Storage, content: &Content) -> Vec<Slot> {
-    (1..=SLOTS).map(|n| slot(storage, content, n)).collect()
+pub fn slots(storage: &dyn Storage, content: &Content, words: Words<'_>) -> Vec<Slot> {
+    (1..=SLOTS)
+        .map(|n| slot(storage, content, words, n))
+        .collect()
 }
 
 /// `seconds` as `h:mm:ss`.

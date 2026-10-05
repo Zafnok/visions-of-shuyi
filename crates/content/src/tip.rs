@@ -9,6 +9,7 @@ use serde::Deserialize;
 use crate::bundle;
 use crate::error::ContentError;
 use crate::keymap::Action;
+use crate::lang::text_width;
 use crate::ron_loader::parse_ron;
 
 /// Path of the tips file inside the asset bundle.
@@ -123,7 +124,7 @@ pub fn from_source(file: &str, source: &str) -> Result<TipTable, Vec<ContentErro
         if !triggers.insert(tip.trigger) {
             err(format!("{:?} already has a tip", tip.trigger));
         }
-        if tip.title.is_empty() || tip.title.chars().count() > MAX_TITLE_CHARS {
+        if tip.title.is_empty() || text_width(&tip.title) > MAX_TITLE_CHARS {
             err(format!(
                 "the title must be 1 to {MAX_TITLE_CHARS} characters"
             ));
@@ -133,7 +134,7 @@ pub fn from_source(file: &str, source: &str) -> Result<TipTable, Vec<ContentErro
             err(format!("the text must have 1 to {MAX_TEXT_LINES} lines"));
         }
         for line in lines {
-            if line.chars().count() > MAX_LINE_CHARS {
+            if text_width(line) > MAX_LINE_CHARS {
                 err(format!(
                     "a text line is over {MAX_LINE_CHARS} characters: {line:?}"
                 ));

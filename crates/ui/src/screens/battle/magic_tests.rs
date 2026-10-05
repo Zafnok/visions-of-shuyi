@@ -32,6 +32,7 @@ use crate::input::Action;
 use crate::map_view::{MapScene, RangeKind};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
+use crate::words::Words;
 
 /// The Quick Battle's mage.
 const MAGE: UnitId = UnitId(8);
@@ -237,7 +238,7 @@ fn the_list_has_every_learned_spell_dimmed_without_a_target() {
     assert_eq!(ids, ["fire", "frost", "heal"]);
     assert_eq!(choices[0].targets.len(), 4);
     assert!(choices[2].targets.is_empty(), "nobody is hurt");
-    let menu = spell_menu(&s, MAGE, &choices);
+    let menu = spell_menu(&s, Words::ENGLISH, MAGE, &choices);
     let lines: Vec<(&str, bool)> = menu
         .items()
         .iter()
@@ -261,16 +262,19 @@ fn the_list_has_every_learned_spell_dimmed_without_a_target() {
     // (A battle's start refills every spell.)
     assert_eq!(uses(&s2, "fire"), 10);
     let choices2 = spell_choices(&s2, MAGE, p(0, 4));
-    assert_eq!(spell_menu(&s2, MAGE, &choices2).focus(), 1);
+    assert_eq!(spell_menu(&s2, Words::ENGLISH, MAGE, &choices2).focus(), 1);
     // The equipped spell with nothing to be cast on: the first that has.
     let far = spell_choices(&s2, MAGE, p(0, 3));
     assert_eq!(far[1].targets.len(), 6);
     let mut none = far.clone();
     none[1].targets.clear();
-    assert_eq!(spell_menu(&s2, MAGE, &none).focus(), 0);
+    assert_eq!(spell_menu(&s2, Words::ENGLISH, MAGE, &none).focus(), 0);
     // Uses are the unit's, name padded to `name_w`.
     let heal = c.content.spells.get(&sid("heal")).unwrap();
-    assert_eq!(spell_label(heal, 3, 6), "Heal     3/8   HP+10 Rng1");
+    assert_eq!(
+        spell_label(heal, &heal.name, 3, 6),
+        "Heal     3/8   HP+10 Rng1"
+    );
     // Who has the menu, and when it is enabled.
     assert!(knows_spells(&s, MAGE));
     assert!(!knows_spells(&s, UnitId(1)));
@@ -557,7 +561,7 @@ fn a_tile_shows_what_it_becomes_and_is_picked_on_the_map() {
     let mut s = casting(&mut c, state, 0);
     step(&mut s, &mut c, &[Action::NextUnit, Action::NextUnit]);
     assert_eq!(targeting(&s).target(), on_tile(1, 5));
-    let line = targeting(&s).preview(s.state());
+    let line = targeting(&s).preview(s.state(), Words::ENGLISH);
     assert_eq!(line.as_deref(), Some("Forest → Burning (1 round)"));
     assert_eq!(s.help(&c), "arrows next target · f cast · d back");
     // A pick on the map: the Select key's, once it has a key.
@@ -583,7 +587,7 @@ fn frost_names_the_ice_and_heal_changes_no_tile() {
     let state = field(&c, 18);
     let s = casting(&mut c, state.clone(), 1);
     assert_eq!(targeting(&s).target(), on_tile(0, 2));
-    let preview = |s: &BattleScreen| targeting(s).preview(s.state());
+    let preview = |s: &BattleScreen| targeting(s).preview(s.state(), Words::ENGLISH);
     assert_eq!(preview(&s).as_deref(), Some("Sea → Ice"));
     let ice = c.content.terrain.display.id_of("ice").unwrap();
     assert_eq!(
@@ -841,7 +845,7 @@ fn heal_previews_the_hp_and_restores_it_with_a_popup() {
     assert_eq!(s.cursor().pos, p(0, 5));
     assert!(targeting(&s).forecast().is_none());
     // Heal 10 + Mag 6 (`magic.md`): 2 → 18.
-    let line = targeting(&s).preview(s.state());
+    let line = targeting(&s).preview(s.state(), Words::ENGLISH);
     assert_eq!(line.as_deref(), Some("Heal on Test Knight: HP 2 → 18"));
     assert_eq!(s.help(&c), "arrows next target · f cast · d back");
     assert!(s.mode().picks_on_map());
@@ -869,7 +873,7 @@ fn heal_previews_the_hp_and_restores_it_with_a_popup() {
     // Capped at what is missing.
     let state = field(&c, 3);
     let capped = casting(&mut c, state, 2);
-    let line = targeting(&capped).preview(capped.state());
+    let line = targeting(&capped).preview(capped.state(), Words::ENGLISH);
     assert_eq!(line.as_deref(), Some("Heal on Test Knight: HP 17 → 20"));
 }
 
@@ -913,7 +917,7 @@ fn the_menus_sound_like_the_others() {
     let sel = Selection::new(&s, MAGE).unwrap();
     let action_menu = open_menu(sel.clone(), &s);
     let choices = spell_choices(&s, MAGE, p(0, 4));
-    let menu = spell_menu(&s, MAGE, &choices);
+    let menu = spell_menu(&s, Words::ENGLISH, MAGE, &choices);
     let list = Mode::SpellMenu {
         sel: sel.clone(),
         menu: menu.clone(),
@@ -955,7 +959,7 @@ fn the_equip_menu_lists_attack_spells_after_the_weapons() {
         ]
     );
     assert!(can_equip(&choices));
-    let menu = equip_menu(&state, MAGE, &choices);
+    let menu = equip_menu(&state, Words::ENGLISH, MAGE, &choices);
     let lines: Vec<&str> = menu.items().iter().map(|i| i.label.as_str()).collect();
     assert_eq!(
         lines,
@@ -979,7 +983,7 @@ fn the_equip_menu_lists_attack_spells_after_the_weapons() {
     assert_eq!(entries[menu.focus()], MenuEntry::Equip);
     // Now Frost is marked and focused.
     let again = equip_choices(s.state(), MAGE);
-    let menu = equip_menu(s.state(), MAGE, &again);
+    let menu = equip_menu(s.state(), Words::ENGLISH, MAGE, &again);
     assert_eq!(menu.focus(), 1);
     assert!(menu.items()[1].label.starts_with("* Frost"));
     assert!(menu.items()[0].label.starts_with("  Fire"));
@@ -1006,7 +1010,7 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
             Equipped::Spell(sid("frost"))
         ]
     );
-    let menu = equip_menu(&state, MAGE, &choices);
+    let menu = equip_menu(&state, Words::ENGLISH, MAGE, &choices);
     let lines: Vec<&str> = menu.items().iter().map(|i| i.label.as_str()).collect();
     // Names are padded to the longest, the sword's; Fire is still what it
     // has equipped, so the list opens there.
@@ -1020,7 +1024,7 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
     );
     assert_eq!(menu.focus(), 1);
     // A unit that isn't there has no lines to show.
-    let ghost = equip_menu(&state, UnitId(99), &choices);
+    let ghost = equip_menu(&state, Words::ENGLISH, UnitId(99), &choices);
     assert!(ghost.items().iter().all(|i| i.label.is_empty()));
     assert!(equip_choices(&state, UnitId(99)).is_empty());
     // Fire with a single use, spent on the forest: dimmed in both lists,
@@ -1041,7 +1045,7 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
     let usable: Vec<bool> = choices.iter().map(|c| c.usable).collect();
     assert_eq!(usable, [false, true]);
     assert!(!can_equip(&choices));
-    let menu = equip_menu(&state, MAGE, &choices);
+    let menu = equip_menu(&state, Words::ENGLISH, MAGE, &choices);
     assert_eq!(
         menu.items()[0].label,
         "* Fire   Mt 5 Hit 90 Crit 0 Wt 0 Rng1-2  0/1"
@@ -1049,7 +1053,7 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
     assert!(!menu.items()[0].enabled);
     let spells = spell_choices(&state, MAGE, p(0, 4));
     assert!(spells[0].targets.is_empty());
-    let list = spell_menu(&state, MAGE, &spells);
+    let list = spell_menu(&state, Words::ENGLISH, MAGE, &spells);
     assert_eq!(list.items()[0].label, "Fire    0/1   Mt5 Hit90 Rng1-2");
     assert!(!list.items()[0].enabled);
     assert_eq!(list.focus(), 1, "the equipped spell can't be cast");
@@ -1460,4 +1464,81 @@ fn harness_pointing_at_the_elemental_walks_there_and_opens_fires_forecast() {
     };
     assert_eq!((sel.target, sel.dest()), (None, end));
     assert_eq!(h.battle().unwrap().state(), &quick);
+}
+
+/// The spell list and the forecast's list of spell actives are painted in
+/// the player's language (ticket 0235); the mode itself is played in
+/// English.
+#[test]
+fn the_spell_lists_are_told_in_the_players_language() {
+    use crate::words::testing::{shout, shouting};
+
+    let mut c = ctx();
+    let (lang, code) = (shouting(&c.content), shout());
+    let words = Words::new(&lang, &code);
+    let labels = |menu: &crate::widgets::menu::Menu| -> Vec<String> {
+        menu.items().iter().map(|i| i.label.clone()).collect()
+    };
+    let state = field(&c, 0);
+    let mut s = spell_list(&mut c, state);
+    step(&mut s, &mut c, &[Action::CursorDown]);
+    let Mode::SpellMenu { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    let told = s.mode().told(s.state(), words).into_owned();
+    let Mode::SpellMenu { menu: theirs, .. } = &told else {
+        panic!("{told:?}");
+    };
+    assert!(labels(menu)[0].starts_with("Fire "), "{:?}", labels(menu));
+    assert!(
+        labels(theirs)[0].starts_with("FIRE "),
+        "{:?}",
+        labels(theirs)
+    );
+    assert!(labels(theirs)[1].starts_with("FROST "));
+    assert_eq!(theirs.focus(), menu.focus());
+    assert_eq!(theirs.focus(), 1);
+    assert!(matches!(
+        s.mode().told(s.state(), Words::ENGLISH),
+        std::borrow::Cow::Borrowed(_)
+    ));
+    // Fire on the elemental: the forecast's list has the Mage's Overcast.
+    let state = field(&c, 0);
+    let mut s = casting(&mut c, state, 0);
+    step(&mut s, &mut c, &[Action::CursorDown]);
+    let ours = targeting(&s).forecast().expect("a forecast");
+    assert!(labels(&ours.list).join("\n").contains("Overcast"));
+    let told = s.mode().told(s.state(), words).into_owned();
+    let Mode::CastTarget(t) = &told else {
+        panic!("{told:?}");
+    };
+    let theirs = t.forecast().expect("a forecast");
+    let shown = labels(&theirs.list).join("\n");
+    assert!(shown.contains("OVERCAST"), "{shown}");
+    assert!(!shown.contains("Overcast"), "{shown}");
+    assert_eq!(theirs.list.focus(), ours.list.focus());
+    assert_eq!(theirs.list.focus(), 1);
+    // What is cast is the same.
+    assert_eq!(t.command(), targeting(&s).command());
+    // On a tile there is no forecast, and nothing to tell.
+    let state = field(&c, 0);
+    let mut s = casting(&mut c, state, 0);
+    step(&mut s, &mut c, &[Action::NextUnit]);
+    if targeting(&s).forecast().is_none() {
+        let told = s.mode().told(s.state(), words).into_owned();
+        assert_eq!(&told, s.mode());
+    }
+    // The forecast names the fighters and the spell in the language.
+    let state = field(&c, 0);
+    let s = casting(&mut c, state, 0);
+    c.lang = crate::words::testing::shout();
+    let english = render(&s, &c);
+    assert!(shows(&english, "Fire"));
+    let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let t = targeting(&s).forecast().expect("a forecast");
+    super::forecast::draw_forecast(&mut buf, &c.palette, (s.state(), words), t);
+    assert!(shows(&buf, "FIRE"));
+    assert!(shows(&buf, "TEST MAGE"));
+    assert!(!shows(&buf, "Test Mage"));
 }

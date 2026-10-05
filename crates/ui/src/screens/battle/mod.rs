@@ -86,6 +86,7 @@ use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::settings::{AnimSpeed, HELD_SPEED};
 use crate::tips::{draw_tip, fill_placeholders};
 use crate::widgets::help::{HelpKeys, SEPARATOR, cursor_keys_name, help_line, key_name};
+use crate::words::Language;
 
 /// Battle id of the debug Quick Battle (`assets/battles/quick.ron`).
 pub const QUICK_BATTLE: &str = "quick";
@@ -300,6 +301,19 @@ pub struct BattleScreen {
     /// it ([`with_look`](Self::with_look)); a battle made any other way
     /// has the look of a map that names none.
     look: MapLook,
+    /// The language of the last frame: what a command applied between
+    /// frames names things in (a combat's fighters, a level up's skills).
+    /// English until the first frame.
+    language: Language,
+}
+
+/// The attack forecast `mode` shows, if any.
+fn forecast_of(mode: &Mode) -> Option<&Targeting> {
+    match mode {
+        Mode::Targeting(t) => Some(t),
+        Mode::CastTarget(t) => t.forecast(),
+        _ => None,
+    }
 }
 
 impl BattleScreen {
@@ -350,6 +364,7 @@ impl BattleScreen {
             player_view: None,
             notes_t: 0.0,
             look: MapLook::default(),
+            language: Language::default(),
         }
     }
 
@@ -743,8 +758,8 @@ impl BattleScreen {
             }
         };
         let scene = ctx.content.dialogue.get(&cue.id)?;
-        let (lead, names) = (ctx.lead.clone(), ctx.content.names.clone());
-        let screen = DialogueScreen::overlay(scene, lead, names, &Present::Only(cue.present));
+        let present = Present::Only(cue.present);
+        let screen = DialogueScreen::told_overlay(ctx, scene, ctx.lead.clone(), &present);
         screen.has_text().then_some(screen)
     }
 
@@ -850,6 +865,9 @@ impl BattleScreen {
     /// them) and the walking speed for the walks that start this frame,
     /// and advances the cursor's pulse.
     fn begin_frame(&mut self, ctx: &Ctx, dt: f32) {
+        if !self.language.is(&ctx.content.lang, ctx.effective_lang()) {
+            self.language = ctx.language();
+        }
         self.auto_end = ctx.settings().auto_end_turn;
         self.show_fights = ctx.settings().combat_animations;
         let view = ctx.map_skin.view_tiles(MAP_VIEW);
@@ -911,9 +929,10 @@ impl BattleScreen {
         let walked = self.walked.take();
         // Refused: the battle is unchanged and the player browses again.
         let events = self.state.apply(cmd).ok();
-        let playback = events
-            .as_ref()
-            .and_then(|events| Playback::new(events, &before, self.state.fallen(), TIMINGS));
+        let playback = events.as_ref().and_then(|events| {
+            let words = self.language.words();
+            Playback::new(words, events, &before, self.state.fallen(), TIMINGS)
+        });
         if let Some(events) = &events {
             self.history.push(cmd.clone());
             self.note_level_ups(events);
@@ -949,7 +968,8 @@ impl BattleScreen {
             }
             // Checked (phase, units ready) once back to browsing.
             self.end_armed = true;
-            self.progress = Progress::new(events, &before, &self.state, PROGRESS_TIMINGS);
+            let told = (&self.state, self.language.words());
+            self.progress = Progress::new(events, &before, told, PROGRESS_TIMINGS);
             if was_player && self.ai_phase() {
                 self.player_view = Some((self.cursor.pos, self.camera));
             } else if !was_player
@@ -962,7 +982,8 @@ impl BattleScreen {
         }
         let played = events.clone();
         let playback = events.and_then(|events| {
-            let banner = art_list::playback_banner(&self.state, &events, &before);
+            let words = self.language.words();
+            let banner = art_list::playback_banner(&self.state, words, &events, &before);
             let playback = playback.map(|p| p.with_banner(banner));
             let cues = event_sounds::event_cues(&events, walked, playback.is_some(), &self.state);
             self.cues.extend(cues);
@@ -1596,16 +1617,19 @@ impl BattleScreen {
     /// that tile of `scene`.
     fn draw_menu(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
         let cells = |tile| ctx.map_skin.tile_cells(scene, MAP_VIEW, tile);
-        if let Some(t) = self.forecast() {
+        let words = ctx.words();
+        let mode = self.mode.told(&self.state, words);
+        if let Some(t) = forecast_of(&mode) {
             // The arts list, beside the forecast panel (0414).
             if t.has_list() {
                 let unit_y = cells(t.sel.dest()).map_or(0, |r| r.y);
                 let weapon = (t.sel.unit, &t.with);
-                art_list::draw_list(buf, &ctx.palette, &self.state, weapon, &t.list, unit_y);
+                let told = (&self.state, words);
+                art_list::draw_list(buf, &ctx.palette, told, weapon, &t.list, unit_y);
             }
             return;
         }
-        let (tile, menu) = match &self.mode {
+        let (tile, menu) = match &*mode {
             Mode::ActionMenu { sel, menu, .. }
             | Mode::WeaponMenu { sel, menu, .. }
             | Mode::SpellMenu { sel, menu, .. }
@@ -1673,14 +1697,15 @@ impl BattleScreen {
     /// the battle notes at the start, and the banner on screen.
     fn draw_dialogs(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
         let p = &ctx.palette;
-        match &self.mode {
+        let words = ctx.words();
+        match &*self.mode.told(&self.state, words) {
             Mode::UnitList { menu, .. } => map_menu::draw_centred_menu(buf, p, menu),
             Mode::Objective => {
                 let mut lines = vec![
-                    (map_menu::objective_text(&self.state), UiColor::Text),
+                    (map_menu::objective_text(&self.state, words), UiColor::Text),
                     (map_menu::turn_text(&self.state), UiColor::Text),
                 ];
-                let noted = notes::note_lines(self.state.battle_notes());
+                let noted = notes::note_lines(self.state.battle_notes(), words);
                 if !noted.is_empty() {
                     lines.push((String::new(), UiColor::Text));
                     lines.push((notes::NOTES_HEADING.to_owned(), UiColor::TextDim));
@@ -1723,13 +1748,13 @@ impl BattleScreen {
             }
             Mode::Info { unit } => {
                 if let Some(u) = self.state.unit(*unit) {
-                    info::draw_info(buf, p, &self.state, u);
+                    info::draw_info(buf, p, (&self.state, words), u);
                 }
             }
             _ => {}
         }
         if self.notes_open() {
-            let lines: Vec<_> = notes::note_lines(self.state.battle_notes())
+            let lines: Vec<_> = notes::note_lines(self.state.battle_notes(), words)
                 .into_iter()
                 .map(|l| (l, UiColor::Text))
                 .collect();
@@ -1757,21 +1782,18 @@ impl BattleScreen {
     /// The attack forecast on screen: while an attack's target is picked,
     /// or a spell's with the cursor on an enemy.
     fn forecast(&self) -> Option<&Targeting> {
-        match &self.mode {
-            Mode::Targeting(t) => Some(t),
-            Mode::CastTarget(t) => t.forecast(),
-            _ => None,
-        }
+        forecast_of(&self.mode)
     }
 
     /// The line over the help bar: a combat's message, the preview of the
     /// skill, item or spell being aimed, or the toast.
     fn message(&self) -> Option<(String, UiColor)> {
+        let words = self.language.words();
         let preview = match &self.mode {
-            Mode::Combat(pb) => pb.message(),
-            Mode::SkillTarget(t) => Some(t.preview(&self.state)),
-            Mode::ItemTarget(t) => Some(t.preview(&self.state)),
-            Mode::CastTarget(t) => t.preview(&self.state),
+            Mode::Combat(pb) => pb.message(words),
+            Mode::SkillTarget(t) => Some(t.preview(&self.state, words)),
+            Mode::ItemTarget(t) => Some(t.preview(&self.state, words)),
+            Mode::CastTarget(t) => t.preview(&self.state, words),
             _ => None,
         };
         let toast = || Some((self.toast()?.to_owned(), UiColor::TextHighlight));
@@ -1783,7 +1805,7 @@ impl BattleScreen {
     fn draw_panel(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
         let c = |u| ctx.palette.get(u);
         if let Some(t) = self.forecast() {
-            forecast::draw_forecast(buf, &ctx.palette, &self.state, t);
+            forecast::draw_forecast(buf, &ctx.palette, (&self.state, ctx.words()), t);
             return;
         }
         let panel_bg = c(UiColor::PanelBg);
@@ -1796,12 +1818,14 @@ impl BattleScreen {
         };
         buf.draw_box(SIDE_PANEL, style, c(UiColor::PanelBorder), panel_bg);
         let pos = self.cursor.pos;
+        let told = (&self.state, ctx.words());
         if self.playing() {
             let shown = self.shown_units();
             let hovered = shown.iter().find(|(u, f)| u.pos == pos && *f < 1.0);
-            panel::draw_hover(buf, &ctx.palette, &self.state, pos, hovered.map(|(u, _)| u));
+            let hovered = hovered.map(|(u, _)| u);
+            panel::draw_hover(buf, &ctx.palette, told, pos, hovered);
         } else {
-            panel::draw_hover(buf, &ctx.palette, &self.state, pos, self.hovered());
+            panel::draw_hover(buf, &ctx.palette, told, pos, self.hovered());
         }
     }
 }
@@ -1921,7 +1945,7 @@ impl Screen for BattleScreen {
                 _ if self.rewind.is_some() => self.rewind_step(ctx, action),
                 Action::Rewind if self.can_open_rewind() => {
                     let charges = self.state.rewind_charges();
-                    self.rewind = Some(RewindScreen::new(&self.history, charges));
+                    self.rewind = Some(RewindScreen::new(&self.history, charges, ctx.words()));
                     ctx.audio.menu(MenuSound::Select);
                 }
                 Action::DangerZone if self.mode.cursor_free() => self.toggle_danger(),
@@ -1997,9 +2021,10 @@ impl Screen for BattleScreen {
             .shown_tip()
             .and_then(|t| ctx.content.tips.for_trigger(t))
         {
-            let text = fill_placeholders(&tip.text, ctx.help_keys());
+            let words = ctx.words();
+            let text = fill_placeholders(words.tip_text(tip), ctx.help_keys());
             let close = help_line(&[(Some(key_name(ctx.help_keys(), Action::Confirm)), "close")]);
-            draw_tip(buf, &ctx.palette, &tip.title, &text, &close);
+            draw_tip(buf, &ctx.palette, words.tip_title(tip), &text, &close);
         }
         buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));
         let status = self.status(ctx);

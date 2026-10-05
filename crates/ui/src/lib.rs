@@ -24,6 +24,7 @@ pub mod snapshot;
 pub mod storage;
 pub mod tips;
 pub mod widgets;
+pub mod words;
 
 pub use audio::{AudioQueue, AudioRequest, MusicClock, MusicCommand, MusicState};
 pub use color::{Palette, Rgb, UiColor};
@@ -35,3 +36,4 @@ pub use screen::{Ctx, FrameInput, KeyPrompt, LoadError, Screen, ScreenStack, Tra
 pub use settings::Settings;
 pub use storage::{MemoryStorage, Storage, StorageError};
 pub use trpg_content::ImageId;
+pub use words::{Language, Words};

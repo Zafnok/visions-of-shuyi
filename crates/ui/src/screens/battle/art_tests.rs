@@ -23,6 +23,7 @@ use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
+use crate::words::Words;
 
 fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)
@@ -124,7 +125,7 @@ fn archer_on_brigand(c: &mut Ctx, state: BattleState) -> BattleScreen {
 /// Moves the list down until the line named `name` is chosen.
 fn choose(s: &mut BattleScreen, c: &mut Ctx, name: &str) {
     for _ in 0..8 {
-        if targeting(s).technique().name(s.state()) == name {
+        if targeting(s).technique().name(s.state(), Words::ENGLISH) == name {
             return;
         }
         step(s, c, &[Action::CursorDown]);
@@ -323,7 +324,7 @@ fn the_list_hides_and_up_down_pick_targets_without_one() {
         unreachable!()
     };
     t.choices.truncate(1);
-    t.list = super::art_list::art_menu(&s.state, &t.choices, 0);
+    t.list = super::art_list::art_menu(&s.state, Words::ENGLISH, &t.choices, 0);
     assert!(!s.help(&c).contains("art"), "{}", s.help(&c));
     assert!(!screen_text(&render(&s, &c)).contains("Iron Sword 20/20"));
     step(&mut s, &mut c, &[Action::CursorDown]);
@@ -429,9 +430,12 @@ fn a_boss_or_green_units_art_names_the_playback_and_the_players_doesnt() {
         durability_after: 16,
     };
     let units = state.units().to_vec();
-    assert_eq!(playback_banner(&state, &[used(UnitId(1))], &units), None);
     assert_eq!(
-        playback_banner(&state, &[used(UnitId(4))], &units).as_deref(),
+        playback_banner(&state, Words::ENGLISH, &[used(UnitId(1))], &units),
+        None
+    );
+    assert_eq!(
+        playback_banner(&state, Words::ENGLISH, &[used(UnitId(4))], &units).as_deref(),
         Some("Guard Break")
     );
     let mut green = units.clone();
@@ -441,14 +445,17 @@ fn a_boss_or_green_units_art_names_the_playback_and_the_players_doesnt() {
         skill: SkillId::new("keen_edge"),
     };
     assert_eq!(
-        playback_banner(&state, &[skill], &green).as_deref(),
+        playback_banner(&state, Words::ENGLISH, &[skill], &green).as_deref(),
         Some("Keen Edge")
     );
     let own = Event::SkillUsed {
         unit: UnitId(1),
         skill: SkillId::new("keen_edge"),
     };
-    assert_eq!(playback_banner(&state, &[own], &units), None);
+    assert_eq!(
+        playback_banner(&state, Words::ENGLISH, &[own], &units),
+        None
+    );
     // Drawn in the box's top border.
     let mut after = state.clone();
     let events = after
@@ -458,9 +465,15 @@ fn a_boss_or_green_units_art_names_the_playback_and_the_players_doesnt() {
             action: Technique::Attack.action(UnitId(4), &Equipped::Weapon(0)),
         })
         .unwrap();
-    let pb = Playback::new(&events, state.units(), after.fallen(), TIMINGS)
-        .unwrap()
-        .with_banner(Some("Guard Break".to_owned()));
+    let pb = Playback::new(
+        Words::ENGLISH,
+        &events,
+        state.units(),
+        after.fallen(),
+        TIMINGS,
+    )
+    .unwrap()
+    .with_banner(Some("Guard Break".to_owned()));
     let mut buf = GlyphBuffer::new(
         CONSOLE_W,
         CONSOLE_H,
@@ -518,7 +531,10 @@ fn close_shot_reaches_an_adjacent_enemy_that_a_plain_shot_cant() {
         Technique::Art(ArtId::new("close_shot"))
     );
     step(&mut s, &mut c, &[Action::CursorDown]);
-    assert_eq!(targeting(&s).technique().name(s.state()), "Close Shot");
+    assert_eq!(
+        targeting(&s).technique().name(s.state(), Words::ENGLISH),
+        "Close Shot"
+    );
     // Back to the brigand two tiles up: Close Shot still works there, so
     // it stays chosen, and the forecast says what it costs.
     step(&mut s, &mut c, &[Action::CursorLeft]);
@@ -548,7 +564,10 @@ fn long_shot_reaches_a_target_just_beyond_the_bows_range() {
     assert_eq!(shown[0].2.as_deref(), Some("out of range"));
     let names: Vec<&str> = shown.iter().map(|l| l.0.as_str()).collect();
     assert_eq!(names, ["Attack", "Long Shot"]);
-    assert_eq!(targeting(&s).technique().name(s.state()), "Long Shot");
+    assert_eq!(
+        targeting(&s).technique().name(s.state(), Words::ENGLISH),
+        "Long Shot"
+    );
     let before = durability(s.state(), UnitId(3));
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(durability(s.state(), UnitId(3)) < before);

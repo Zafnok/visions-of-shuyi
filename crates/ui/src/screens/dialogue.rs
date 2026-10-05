@@ -95,6 +95,23 @@ impl DialogueScreen {
         screen
     }
 
+    /// [`new`](Self::new) in the player's language ([`Ctx::words`]): the
+    /// lines, replies and captions its pack translates, with the names of
+    /// the story as the pack has them.
+    pub fn told(ctx: &Ctx, scene: &Scene, lead: LeadProfile, present: &Present) -> Self {
+        let words = ctx.words();
+        let names = words.names(&ctx.content.names);
+        Self::new(&words.scene(scene, lead.gender), lead, names, present)
+    }
+
+    /// [`told`](Self::told), drawn over the screen below (the battle map).
+    pub fn told_overlay(ctx: &Ctx, scene: &Scene, lead: LeadProfile, present: &Present) -> Self {
+        Self {
+            overlay: true,
+            ..Self::told(ctx, scene, lead, present)
+        }
+    }
+
     /// `scene` drawn over the screen below (the battle map).
     pub fn overlay(scene: &Scene, lead: LeadProfile, names: Names, present: &Present) -> Self {
         Self {
@@ -331,10 +348,11 @@ impl DialogueScreen {
 /// lead, else their entry in the names table (their id if they have none).
 fn display_name<'a>(ctx: &'a Ctx, lead: &'a LeadProfile, portrait: Portrait<'a>) -> &'a str {
     if portrait.character.0 == LEAD_ID {
+        // check-text: not a data name (the player's own)
         return &lead.name;
     }
-    let id = portrait.character.0.as_str();
-    ctx.content.names.get(id).unwrap_or(id)
+    ctx.words()
+        .name(&ctx.content.names, portrait.character.0.as_str())
 }
 
 /// One side's frame, portrait (the lead's by gender) and name plate.

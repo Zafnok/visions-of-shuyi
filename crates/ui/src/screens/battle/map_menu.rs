@@ -13,6 +13,7 @@ use super::layout::MAP_VIEW;
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::widgets::menu::{Menu, MenuItem};
+use crate::words::Words;
 
 /// One entry of the map menu.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -98,7 +99,7 @@ pub fn ready_players(state: &BattleState) -> usize {
 
 /// The `Units` list: every player unit, as `name  HP hp/max  ready` (or
 /// `acted`), in the battle's unit order, and their ids.
-pub fn unit_list(state: &BattleState) -> (Menu, Vec<UnitId>) {
+pub fn unit_list(state: &BattleState, words: Words<'_>) -> (Menu, Vec<UnitId>) {
     let players: Vec<_> = state
         .units()
         .iter()
@@ -106,7 +107,7 @@ pub fn unit_list(state: &BattleState) -> (Menu, Vec<UnitId>) {
         .collect();
     let name_w = players
         .iter()
-        .map(|u| u.name.chars().count())
+        .map(|u| words.unit(u).chars().count())
         .max()
         .unwrap_or(0);
     let items = players
@@ -114,7 +115,7 @@ pub fn unit_list(state: &BattleState) -> (Menu, Vec<UnitId>) {
         .map(|u| {
             let status = if u.acted { "acted" } else { "ready" };
             let hp = format!("{}/{}", u.hp, u.stats.hp);
-            MenuItem::new(format!("{:name_w$}  HP {hp:>5}  {status}", u.name))
+            MenuItem::new(format!("{:name_w$}  HP {hp:>5}  {status}", words.unit(u)))
         })
         .collect();
     (Menu::new(items), players.iter().map(|u| u.id).collect())
@@ -122,14 +123,14 @@ pub fn unit_list(state: &BattleState) -> (Menu, Vec<UnitId>) {
 
 /// What the objective asks, e.g. `Rout the enemy` or `Seize the Fort`.
 /// *Claude's starting wording* until maps carry their own text.
-pub fn objective_text(state: &BattleState) -> String {
+pub fn objective_text(state: &BattleState, words: Words<'_>) -> String {
     match state.objective() {
         Objective::Rout { .. } => "Rout the enemy".to_owned(),
         Objective::DefeatUnit { unit, .. } => {
             let name = state
                 .unit(unit)
                 .or_else(|| state.fallen().iter().find(|u| u.id == unit))
-                .map_or("the boss", |u| u.name.as_str());
+                .map_or("the boss", |u| words.unit(u));
             format!("Defeat {name}")
         }
         Objective::Seize { pos, .. } => {
@@ -138,7 +139,7 @@ pub fn objective_text(state: &BattleState) -> String {
                 .tiles
                 .get(pos)
                 .and_then(|&id| state.terrain().get(id))
-                .map_or("objective", |t| t.name.as_str());
+                .map_or("objective", |t| words.terrain(t));
             format!("Seize the {place}")
         }
         Objective::Survive { turns } => format!("Survive {turns} turns"),
@@ -319,7 +320,7 @@ mod tests {
         let mut s = quick_battle(&ctx().content).unwrap();
         wait(&mut s, 2);
         assert_eq!(ready_players(&s), 3);
-        let (menu, ids) = unit_list(&s);
+        let (menu, ids) = unit_list(&s, Words::ENGLISH);
         assert_eq!(ids, [UnitId(1), UnitId(2), UnitId(3), UnitId(8)]);
         let rows: Vec<&str> = menu.items().iter().map(|i| i.label.as_str()).collect();
         assert_eq!(
@@ -337,7 +338,7 @@ mod tests {
     fn objective_and_turn_texts() {
         let c = ctx();
         let q = quick_battle(&c.content).unwrap();
-        assert_eq!(objective_text(&q), "Rout the enemy");
+        assert_eq!(objective_text(&q, Words::ENGLISH), "Rout the enemy");
         assert_eq!(turn_text(&q), "Turn 1");
         let with = |o| battle_with(&c, q.map().clone(), q.units().to_vec(), o);
         let s = with(Objective::Rout {
@@ -348,12 +349,12 @@ mod tests {
             unit: UnitId(6),
             turn_limit: None,
         });
-        assert_eq!(objective_text(&s), "Defeat Raider");
+        assert_eq!(objective_text(&s, Words::ENGLISH), "Defeat Raider");
         let s = with(Objective::DefeatUnit {
             unit: UnitId(99),
             turn_limit: None,
         });
-        assert_eq!(objective_text(&s), "Defeat the boss");
+        assert_eq!(objective_text(&s, Words::ENGLISH), "Defeat the boss");
         // A boss that has fallen keeps its name.
         let mut s = battle_with(
             &c,
@@ -380,14 +381,14 @@ mod tests {
         })
         .unwrap();
         assert!(s.unit(UnitId(4)).is_none());
-        assert_eq!(objective_text(&s), "Defeat Brigand");
+        assert_eq!(objective_text(&s, Words::ENGLISH), "Defeat Brigand");
         let s = with(Objective::Seize {
             pos: Pos::new(5, 5),
             by_lord: true,
             turn_limit: Some(3),
         });
         assert_eq!(
-            (objective_text(&s), turn_text(&s)),
+            (objective_text(&s, Words::ENGLISH), turn_text(&s)),
             ("Seize the Fort".into(), "Turn 1/3".into())
         );
         let s = with(Objective::Seize {
@@ -395,10 +396,10 @@ mod tests {
             by_lord: true,
             turn_limit: None,
         });
-        assert_eq!(objective_text(&s), "Seize the objective");
+        assert_eq!(objective_text(&s, Words::ENGLISH), "Seize the objective");
         let s = with(Objective::Survive { turns: 5 });
         assert_eq!(
-            (objective_text(&s), turn_text(&s)),
+            (objective_text(&s, Words::ENGLISH), turn_text(&s)),
             ("Survive 5 turns".into(), "Turn 1/5".into())
         );
     }

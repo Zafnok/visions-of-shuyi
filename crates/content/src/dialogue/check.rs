@@ -17,6 +17,7 @@ use super::{
 use crate::audio::AudioManifest;
 use crate::character::CharacterTable;
 use crate::error::ContentError;
+use crate::lang::text_width;
 use crate::names::{Names, is_name_id, name_token};
 use crate::portrait::{Portrait, PortraitTable};
 
@@ -83,6 +84,58 @@ struct Checker<'a> {
     /// line, speaker and text.
     hashes: BTreeMap<String, (u32, String, String)>,
     errors: Vec<ContentError>,
+}
+
+/// Cells `text` can take once every token is filled in, at most
+/// ([`text_width`]): lead tokens at their longest ([`lead::longest`]) and
+/// every name token as `longest_name` (the longest name in the table, so a
+/// rename can't push the line over its limit). Unknown tokens, and name
+/// tokens without a table, count as written.
+pub(crate) fn longest_width(text: &str, longest_name: Option<usize>) -> usize {
+    lead::split_tokens(text)
+        .map(|part| match part {
+            Part::Text(t) | Part::Unclosed(t) => text_width(t),
+            Part::Token(t) => match (name_token(t), longest_name) {
+                (Some(_), Some(longest)) => longest,
+                _ => lead::longest(t).unwrap_or(text_width(t) + 2),
+            },
+        })
+        .sum()
+}
+
+/// What is wrong with name token `{token}`, if anything: its id must be in
+/// the names table, and not the lead's (the player names the lead).
+fn name_token_problem(token: &str, names: Option<&Names>) -> Option<String> {
+    let id = name_token(token).map_or("", |t| t.id);
+    if id == LEAD_ID {
+        Some(format!(
+            "{{{token}}} is only the lead's default name; write {{lead}} for the name the player chose"
+        ))
+    } else if !is_name_id(id) || names.is_some_and(|n| n.get(id).is_none()) {
+        Some(format!(
+            "unknown name id \"{id}\" in {{{token}}}; name ids are listed in assets/data/names.ron"
+        ))
+    } else {
+        None
+    }
+}
+
+/// What is wrong with the `{...}` of `text`, in order: each must be a lead
+/// token or a name token with an id in `names` (any valid id without a
+/// table), and every `{` must close. The rule for English and for every
+/// language pack's dialogue text (ADR-0045).
+pub(crate) fn token_problems(text: &str, names: Option<&Names>) -> Vec<String> {
+    lead::split_tokens(text)
+        .filter_map(|part| match part {
+            Part::Token(t) if name_token(t).is_some() => name_token_problem(t, names),
+            Part::Token(t) if !lead::is_token(t) => Some(format!(
+                "unknown token \"{{{t}}}\"; use {{lead}}, {{they}}, {{them}}, {{their}}, \
+                 {{theirs}}, {{themself}} (capitalised: {{They}}...) or a name, {{n:<id>}}"
+            )),
+            Part::Unclosed(_) => Some("\"{\" has no closing \"}\"".to_owned()),
+            Part::Text(_) | Part::Token(_) => None,
+        })
+        .collect()
 }
 
 fn slot(side: Side) -> usize {
@@ -346,20 +399,9 @@ impl<'a> Checker<'a> {
         }
     }
 
-    /// Characters `text` can take once every token is filled in, at most:
-    /// lead tokens at their longest ([`lead::longest`]) and every name token
-    /// as the longest name in the table, so a rename can't push the line
-    /// over its limit. Unknown tokens count as written.
+    /// [`longest_width`] of `text`, with the names of the table.
     fn len(&self, text: &str) -> usize {
-        lead::split_tokens(text)
-            .map(|part| match part {
-                Part::Text(t) | Part::Unclosed(t) => t.chars().count(),
-                Part::Token(t) => match (name_token(t), self.names) {
-                    (Some(_), Some(names)) => names.longest(),
-                    _ => lead::longest(t).unwrap_or(t.chars().count() + 2),
-                },
-            })
-            .sum()
+        longest_width(text, self.names.map(Names::longest))
     }
 
     /// Reports a display name from the names table written out in `text`
@@ -384,45 +426,11 @@ impl<'a> Checker<'a> {
         self.err(line, message);
     }
 
-    /// Checks name token `{token}`: its id must be in the names table, and
-    /// not the lead's (the player names the lead).
-    fn name_token(&mut self, line: u32, token: &str) {
-        let id = name_token(token).map_or("", |t| t.id);
-        if id == LEAD_ID {
-            self.err(
-                line,
-                format!(
-                    "{{{token}}} is only the lead's default name; write {{lead}} for the name the player chose"
-                ),
-            );
-        } else if !is_name_id(id) || self.names.is_some_and(|n| n.get(id).is_none()) {
-            self.err(
-                line,
-                format!(
-                    "unknown name id \"{id}\" in {{{token}}}; name ids are listed in assets/data/names.ron"
-                ),
-            );
-        }
-    }
-
     /// Reports every `{...}` in `text` that isn't a lead token or a name
-    /// token with a known id.
+    /// token with a known id ([`token_problems`]).
     fn tokens(&mut self, line: u32, text: &str) {
-        for part in lead::split_tokens(text) {
-            match part {
-                Part::Token(t) if name_token(t).is_some() => self.name_token(line, t),
-                Part::Token(t) if !lead::is_token(t) => self.err(
-                    line,
-                    format!(
-                        "unknown token \"{{{t}}}\"; use {{lead}}, {{they}}, {{them}}, {{their}}, \
-                         {{theirs}}, {{themself}} (capitalised: {{They}}...) or a name, {{n:<id>}}"
-                    ),
-                ),
-                Part::Unclosed(_) => {
-                    self.err(line, "\"{\" has no closing \"}\"".to_owned());
-                }
-                Part::Text(_) | Part::Token(_) => {}
-            }
+        for message in token_problems(text, self.names) {
+            self.err(line, message);
         }
     }
 

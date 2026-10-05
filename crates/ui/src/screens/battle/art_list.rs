@@ -19,6 +19,7 @@ use super::skills::{skill_cost, skill_name, timed_text};
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::widgets::menu::{Menu, MenuItem};
+use crate::words::Words;
 
 /// What an attack is made with: the plain weapon, a Combat Art or a combat
 /// active (one at most, `combat-arts.md`).
@@ -58,21 +59,19 @@ impl Technique {
     }
 
     /// Its name as the list and the forecast show it.
-    pub fn name(&self, state: &BattleState) -> String {
+    pub fn name(&self, state: &BattleState, words: Words<'_>) -> String {
         match self {
             Technique::Attack => "Attack".to_owned(),
-            Technique::Art(id) => art_name(state, id),
-            Technique::Active(id) => skill_name(state, id),
+            Technique::Art(id) => art_name(state, words, id),
+            Technique::Active(id) => skill_name(state, words, id),
         }
     }
 }
 
 /// The name of art `id` (its id if the table lacks it).
-pub fn art_name(state: &BattleState, id: &ArtId) -> String {
-    state
-        .arts()
-        .get(id)
-        .map_or_else(|| id.0.clone(), |a| a.name.clone())
+pub fn art_name(state: &BattleState, words: Words<'_>, id: &ArtId) -> String {
+    let art = state.arts().get(id);
+    art.map_or(id.0.as_str(), |a| words.art(a)).to_owned()
 }
 
 /// One line of the list.
@@ -190,11 +189,16 @@ const NAME_W: usize = 14;
 /// The list as a menu: `Guard Break     −4 dur  D`, a dimmed line with its
 /// reason after it, focused on `focus` (or the first line that can be
 /// chosen).
-pub fn art_menu(state: &BattleState, choices: &[ArtChoice], focus: usize) -> Menu {
+pub fn art_menu(
+    state: &BattleState,
+    words: Words<'_>,
+    choices: &[ArtChoice],
+    focus: usize,
+) -> Menu {
     let items = choices
         .iter()
         .map(|c| {
-            let name = c.technique.name(state);
+            let name = c.technique.name(state, words);
             let cost = cost_label(state, &c.technique);
             let source = source_label(state, &c.technique);
             let label = format!("{name:<NAME_W$}  {cost:>6}  {source:<6}");
@@ -237,7 +241,7 @@ pub fn list_origin(unit_y: i32, (w, h): (i32, i32)) -> (i32, i32) {
 pub fn draw_list(
     buf: &mut GlyphBuffer,
     palette: &Palette,
-    state: &BattleState,
+    (state, words): (&BattleState, Words<'_>),
     (unit, with): (UnitId, &Equipped),
     menu: &Menu,
     unit_y: i32,
@@ -245,8 +249,8 @@ pub fn draw_list(
     let (x, y) = list_origin(unit_y, menu.size());
     menu.draw(palette, buf, x, y);
     let header = match with {
-        Equipped::Weapon(slot) => weapon_durability(state, unit, *slot),
-        Equipped::Spell(spell) => spell_uses(state, unit, spell),
+        Equipped::Weapon(slot) => weapon_durability(state, words, unit, *slot),
+        Equipped::Spell(spell) => spell_uses(state, words, unit, spell),
     };
     let Some((name, left, max)) = header else {
         return;
@@ -273,15 +277,22 @@ pub fn draw_list(
 /// (`combat-arts.md`: "the forecast and playback show its name"), for the
 /// playback's banner. `before` holds the units as they were before. The
 /// player chose its own, so its units get none.
-pub fn playback_banner(state: &BattleState, events: &[Event], before: &[Unit]) -> Option<String> {
+pub fn playback_banner(
+    state: &BattleState,
+    words: Words<'_>,
+    events: &[Event],
+    before: &[Unit],
+) -> Option<String> {
     let not_player = |id: &UnitId| {
         before
             .iter()
             .any(|u| u.id == *id && u.faction != Faction::Player)
     };
     events.iter().find_map(|e| match e {
-        Event::ArtUsed { unit, art, .. } if not_player(unit) => Some(art_name(state, art)),
-        Event::SkillUsed { unit, skill } if not_player(unit) => Some(skill_name(state, skill)),
+        Event::ArtUsed { unit, art, .. } if not_player(unit) => Some(art_name(state, words, art)),
+        Event::SkillUsed { unit, skill } if not_player(unit) => {
+            Some(skill_name(state, words, skill))
+        }
         _ => None,
     })
 }

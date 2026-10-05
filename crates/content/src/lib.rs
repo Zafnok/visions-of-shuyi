@@ -55,7 +55,9 @@ pub use keymap::{
     Action, Bindings, Button, Chord, Key, KeymapDef, Layout, LayoutKeys, PadKeys, RepeatDef, SLOTS,
     StickDef,
 };
-pub use lang::{Lang, LangCode, LangInfo, LangPack, LangStatus, MadeBy};
+pub use lang::{
+    Lang, LangCode, LangInfo, LangPack, LangStatus, LineEntry, LineText, MadeBy, Orphan,
+};
 pub use map::{MapDef, MapLegend, MapLook};
 pub use names::Names;
 pub use palette::PaletteDef;
@@ -118,7 +120,7 @@ pub struct Content {
     /// Support rules and pairs (ticket 1002).
     pub supports: SupportTable,
     /// English screen text and the language packs (ADR-0045).
-    pub lang: Lang,
+    pub lang: Arc<Lang>,
 }
 
 impl Content {
@@ -213,35 +215,62 @@ pub fn load_embedded() -> Result<Content, ContentErrors> {
         classes.as_ref().ok(),
         characters.as_ref().ok(),
     );
+    let story_loaded = maps.is_ok() && characters.is_ok() && audio.is_ok();
+    let mut units = Loaded {
+        classes,
+        items,
+        spells,
+        skills,
+        arts,
+        names,
+        characters,
+        portraits,
+        dialogue,
+        ai: ai::load(),
+        tips: tip::load(),
+        audio,
+        credits,
+        images,
+        tilesets,
+        battles,
+        chapters,
+        new_game,
+        supports,
+        lang: Ok(Lang::default()),
+    };
+    // The story files load empty, without an error, when a file they
+    // depend on failed: their text is then no base to check a pack on.
+    let data = story_loaded
+        .then(|| data_text(&units, terrain.as_ref().ok()))
+        .flatten();
+    units.lang = lang::load(data);
     assemble(
         palette,
         KeymapDef::load(),
         FontAtlasDef::load(),
         terrain,
         maps,
-        Loaded {
-            classes,
-            items,
-            spells,
-            skills,
-            arts,
-            names,
-            characters,
-            portraits,
-            dialogue,
-            ai: ai::load(),
-            tips: tip::load(),
-            audio,
-            credits,
-            images,
-            tilesets,
-            battles,
-            chapters,
-            new_game,
-            supports,
-            lang: lang::load(),
-        },
+        units,
     )
+}
+
+/// The English a language pack's data and dialogue text is checked
+/// against ([`lang::DataText`]); `None` if a file it is read from failed
+/// to load.
+fn data_text(units: &Loaded, terrain: Option<&TerrainDef>) -> Option<lang::DataText> {
+    Some(lang::DataText::from_tables(&lang::Tables {
+        classes: units.classes.as_ref().ok()?,
+        items: units.items.as_ref().ok()?,
+        spells: units.spells.as_ref().ok()?,
+        skills: units.skills.as_ref().ok()?,
+        arts: units.arts.as_ref().ok()?,
+        terrain: terrain?,
+        names: units.names.as_ref().ok()?,
+        tips: units.tips.as_ref().ok()?,
+        chapters: units.chapters.as_ref().ok()?,
+        battles: units.battles.as_ref().ok()?,
+        dialogue: units.dialogue.as_ref().ok()?,
+    }))
 }
 
 /// Adds the presence checks ([`dialogue::check_presence`]: nobody who may
@@ -523,7 +552,7 @@ fn assemble(
         chapters: take(units.chapters, &mut errors),
         new_game: take(units.new_game, &mut errors),
         supports: take(units.supports, &mut errors),
-        lang: take(units.lang, &mut errors),
+        lang: Arc::new(take(units.lang, &mut errors)),
     };
     if errors.is_empty() {
         Ok(content)
@@ -649,7 +678,7 @@ mod tests {
             chapters,
             new_game,
             supports: ok_supports(),
-            lang: lang::load(),
+            lang: lang::load(None),
         }
     }
 
@@ -736,8 +765,8 @@ mod tests {
             ok_supports().ok().as_ref()
         );
         assert_eq!(
-            content.as_ref().map(|c| &c.lang),
-            lang::load().ok().as_ref()
+            content.as_ref().map(|c| &*c.lang),
+            lang::load(None).ok().as_ref()
         );
         assert!(
             content.as_ref().is_some_and(
@@ -838,7 +867,11 @@ mod tests {
                     chapters: if i == 21 { Err(e("h")) } else { ok_story().1 },
                     new_game: if i == 22 { Err(e("g")) } else { ok_story().2 },
                     supports: if i == 23 { Err(e("q")) } else { ok_supports() },
-                    lang: if i == 24 { Err(e("l")) } else { lang::load() },
+                    lang: if i == 24 {
+                        Err(e("l"))
+                    } else {
+                        lang::load(None)
+                    },
                 },
             )
         };
