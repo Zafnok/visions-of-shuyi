@@ -11,14 +11,15 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | `cinema` | `view`: where a backdrop's window starts to look at a point at a zoom, stopping at the scene's edges (ADR-0048) |
 | `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks), the `GlyphSkin` and the `SpriteSkin` (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins) and `path` (the path arrow for any tile size). See *Map view* below |
 | `input` | `Action`s, `Layout`, `Keymap`, `InputState` (key repeat) |
-| `screen` | `Screen` trait, `Transition`, `FrameInput`, `Ctx` (shared resources, active layout), `ScreenStack` |
+| `screen` | `Screen` trait, `Transition`, `FrameInput`, `Ctx` (shared resources, active layout, the player's settings), `ScreenStack` |
+| `settings` | `Settings`: every player preference (speeds, combat animations, auto-end, fullscreen, cursor, volumes, the layout picked), saved as one RON record (ADR-0050). Read with `ctx.settings()`, changed with `ctx.change_settings(…)`, which saves |
 | `game` | `Game`: owns the stack, input state, `Ctx`, buffer and music state; `frame(events, dt)` |
 | `audio` | `AudioRequest`, the `AudioQueue` screens push to (`ctx.audio`), `MusicState` (which track plays, fades) and its `MusicCommand`s (ADR-0026), `MusicClock` (how far into its track the music is, ADR-0037). Voice clips (ADR-0046) are asked for through `ctx.play_voice(&line_id)`, `ctx.stop_voice()` and `ctx.preload_voices(&line_ids)` |
 | `widgets` | `Menu` (vertical list in a box), `help` (help text that names keys, or controller buttons when a pad was pressed last) |
 | `flow` | `FlowScreen`: the game flow (ADR-0035). One screen on the stack that owns the `Campaign` and hosts the flow's screens itself: mode, lead, a chapter's scenes, Preparations, its battle, the results of a won battle, Game Over, "To be continued" |
-| `screens` | Game screens: `TitleScreen`, `ModeSelectScreen`, `LeadSelectScreen` (with the name grid), `PreparationsScreen` (loadouts and the pack before a battle, 0408), `GameOverScreen`, `ToBeContinuedScreen`, `ResultsScreen` (a won battle's gold, rewind bonus and EXP bars, then its level-up pages, 0810), `LayoutPickerScreen`, `KeyBindingsScreen` (rebinding, 0815), `CreditsScreen` (0808), `DialogueScreen` (full-screen or over the map), `ClassChangeScreen` (`screens/class_change`: promotion and reclass between battles, 0603), `BattleScreen` (`screens/battle`: its `mode` state machine, `attack` targeting, `forecast` panel and combat `playback`, which runs as a mode of the battle screen, ADR-0025) |
+| `screens` | Game screens: `TitleScreen`, `ModeSelectScreen`, `LeadSelectScreen` (with the name grid), `PreparationsScreen` (loadouts and the pack before a battle, 0408; its Options tab is where a Classic campaign can switch to Casual), `GameOverScreen`, `ToBeContinuedScreen`, `ResultsScreen` (a won battle's gold, rewind bonus and EXP bars, then its level-up pages, 0810), `LayoutPickerScreen` (first launch, and from Options to switch layout), `OptionsScreen` (0805: from the title, the map menu and Preparations), `KeyBindingsScreen` (rebinding, 0815; opened from Options), `CreditsScreen` (0808), `DialogueScreen` (full-screen or over the map), `ClassChangeScreen` (`screens/class_change`: promotion and reclass between battles, 0603), `BattleScreen` (`screens/battle`: its `mode` state machine, `attack` targeting, `forecast` panel and combat `playback`, which runs as a mode of the battle screen, ADR-0025) |
 | `portrait` | `draw_portrait`: a portrait's PNG as one sprite item at the largest whole scale that fits the 32×16-cell frame, dimmed and/or mirrored (ADR-0043); `fit_whole_scale` for any picture in any frame |
-| `debug` | Debug menu (F2 in debug builds): glyph sampler, portrait viewer, test scene (full-screen or overlay), Key bindings (until Options, 0805, opens it), sprite test, class change on a test unit (promote, reclass), scene camera (the test map as a backdrop: pan, zoom 1× to 4×), Map skin (the glyph skin, then every tileset in turn; not saved) |
+| `debug` | Debug menu (F2 in debug builds): glyph sampler, portrait viewer, test scene (full-screen or overlay), sprite test, class change on a test unit (promote, reclass), scene camera (the test map as a backdrop: pan, zoom 1× to 4×), Map skin (the glyph skin, then every tileset in turn; not saved) |
 | `dialogue` | `DialoguePlayer`: plays a dialogue `Scene` one text box at a time, as it is for those `Present` when it starts (ADR-0055), and gives the `View` (portraits, speaker, text, caption) to draw |
 | `harness` | Headless test driver (tests, or the `harness` feature) |
 
@@ -332,6 +333,16 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      `cursor_keys_name`, `help_line`) with `ctx.help_keys()`: each layout
      binds actions to different keys, and after a controller press the same
      calls name that pad's buttons instead (ADR-0036).
+   - **The look is a skin** (ADR-0054). A screen has three parts: its
+     logic (`screens/<name>.rs`: state, keys, and `view(&self, ctx)`), its
+     view (`<name>/view.rs`: plain data saying what is shown, with values
+     as meanings: a volume is a level, not a row of blocks) and its skin
+     (`<name>/glyph.rs`: `paint(ctx, &view, buf)`, the only place with
+     positions, box characters and colours). `draw` is one call to the
+     skin. Tests of what happened read the view or the state; only the
+     skin's tests and snapshots read cells. `screens/options.rs` is the
+     example. The older screens still draw in `draw`; tickets 0240–0242
+     convert them, so don't copy them.
    - Text the player reads is never a string literal (ADR-0045). Put it
      in `assets/lang/en/ui.ron` under a `screen.thing` key and ask for it
      with `ctx.text("title.new_game")`, or `ctx.text_with("results.turns",

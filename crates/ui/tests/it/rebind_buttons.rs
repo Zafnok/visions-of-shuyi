@@ -1,7 +1,7 @@
 //! Scripted tests of rebinding controller buttons through the real game
 //! (ticket 0816, `docs/design/controls.md` *Rebinding buttons*): the Key
-//! bindings screen's controller side, used with a controller only once it
-//! is open (the debug menu's key opens it until the Options menu, 0805).
+//! bindings screen's controller side, opened from the Options screen's
+//! "Key bindings" row (0805) and used with a controller only.
 //!
 //! Rows, top to bottom: the keyboard / controller switch, Cursor up, down,
 //! left, right, Confirm, Cancel, End turn, Select, Confirm end turn,
@@ -20,8 +20,8 @@ const TO_INFO: &str = "DpadDown DpadDown DpadDown DpadDown DpadDown DpadDown Dpa
 /// From Unit info back up to Confirm.
 const INFO_TO_CONFIRM: &str = "DpadUp DpadUp DpadUp DpadUp DpadUp DpadUp DpadUp";
 
-/// The Key bindings screen, opened from the debug menu with a pad of
-/// `kind`: on its controller side.
+/// The Key bindings screen, opened from Options with a pad of `kind`: on
+/// its controller side.
 fn open(kind: PadKind) -> Harness {
     let mut h = Harness::with_layout(Layout::RightHanded);
     h.use_pad(kind);
@@ -29,14 +29,22 @@ fn open(kind: PadKind) -> Harness {
     h
 }
 
-/// Opens the screen from the title with the default cursor buttons and the
-/// button now on Confirm.
+/// Opens the screen from the title (on New Game) with the default cursor
+/// buttons and the button now on Confirm: Options is two rows down (past
+/// Quick Battle), and Key bindings three rows up from the Options screen's
+/// first (round past Restore defaults and Reset tips).
 fn reopen(h: &mut Harness) {
+    h.pad("DpadDown DpadDown");
+    reopen_from_options(h);
+}
+
+/// [`reopen`] from the title still on its Options item (the screen was
+/// closed back to it).
+fn reopen_from_options(h: &mut Harness) {
     let confirm = h.game().ctx().keymap.primary_button(Action::Confirm);
     let confirm = confirm.map(Button::name).unwrap_or_default();
-    h.keys("F2");
-    h.pad(&format!("DpadDown DpadDown DpadDown DpadDown {confirm}"));
-    assert_eq!(h.screens(), ["title", "debug_menu", "key_bindings"]);
+    h.pad(&format!("{confirm} DpadUp DpadUp DpadUp {confirm}"));
+    assert_eq!(h.screens(), ["title", "options", "key_bindings"]);
 }
 
 fn buttons(h: &Harness) -> PadBindings {
@@ -110,15 +118,16 @@ fn a_button_moved_off_confirm_blocks_leaving_until_it_has_one_again() {
     assert!(row(&h, "Confirm").contains(" RT "));
     assert_eq!(line(&h, 29), "");
     h.pad("East");
-    assert_eq!(h.screens(), ["title", "debug_menu"]);
+    assert_eq!(h.screens(), ["title", "options"]);
     assert_eq!(slots(&h, Action::Confirm), ["RightTrigger", "-", "-"]);
     assert_eq!(slots(&h, Action::Info), ["South", "-", "-"]);
     // In the game the new buttons count: the old Confirm button is Unit
     // info now, and the right trigger confirms.
     h.pad("East South");
     assert_eq!(h.screens(), ["title"]);
+    // (The title is still on Options.)
     h.pad("RightTrigger");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "options"]);
 }
 
 /// Acceptance: holding a button during `Press a button…` backs out with
@@ -157,9 +166,10 @@ fn a_rebound_button_plays_a_battle() {
     h.pad(TO_CONFIRM).pad("South South RightTrigger East East");
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(slots(&h, Action::Confirm), ["RightTrigger", "-", "-"]);
-    // Quick Battle with the new Confirm (through Preparations: left wraps
-    // to `Fight!`), and the same with the keyboard.
-    h.pad("DpadDown RightTrigger DpadLeft RightTrigger RightTrigger");
+    // Quick Battle (one up from Options) with the new Confirm (through
+    // Preparations: left wraps to `Fight!`), and the same with the
+    // keyboard.
+    h.pad("DpadUp RightTrigger DpadLeft RightTrigger RightTrigger");
     assert_eq!(h.screens(), ["title", "battle"]);
     let mut keys = Harness::with_layout(Layout::RightHanded);
     keys.keys("Down f Left f f");
@@ -218,7 +228,7 @@ fn switching_layout_leaves_the_buttons_unchanged() {
     }
     // The screen shows the same buttons under the other layout.
     assert_eq!(h.ctx_mut().choose_layout(Layout::LeftHanded), Ok(()));
-    reopen(&mut h);
+    reopen_from_options(&mut h);
     assert!(h.snapshot().contains("Keyboard · Left-handed"));
     assert!(row(&h, "Unit info").contains(" Y                 RT "));
 }
@@ -271,7 +281,7 @@ fn a_version_1_config_keeps_its_keys_and_gets_the_default_buttons() {
 #[test]
 fn the_keyboard_can_edit_the_buttons_from_the_switch_row() {
     let mut h = Harness::with_layout(Layout::RightHanded);
-    h.keys("F2 Down Down Down Down f");
+    h.keys("Down Down f Up Up Up f");
     assert!(h.snapshot().contains("Key 1"));
     h.keys("Up Right");
     assert!(h.snapshot().contains("Button 1"));

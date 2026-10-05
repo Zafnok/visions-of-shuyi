@@ -87,6 +87,10 @@ Confirm tap skipped and holding it sped up):
 
 - **Cancel** (`D` / `K`, or `Esc`) skips the rest of a fight's playback.
 - **Holding Confirm** plays it ×4 *(tunable)*. A Confirm tap does nothing.
+- With the Options screen's **Fast** animations (×2, ticket 0805), holding
+  Confirm still plays ×4: it replaces the ×2, it doesn't multiply it
+  (Nick, 2026-10-04: "holding confirm should not speed up on top, but just
+  change the 2x to a 4x"; `options.md`).
 
 ### End turn: double-tap Space
 

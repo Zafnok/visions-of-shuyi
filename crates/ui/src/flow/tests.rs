@@ -40,7 +40,12 @@ fn retry_goes_back_to_preparations_as_they_were_left() {
     assert!(flow.battle().is_none());
     // Pack an Elixir, then Fight!.
     update(&mut flow, &mut c, &[CursorRight, Confirm, Confirm]);
-    update(&mut flow, &mut c, &[Cancel, CursorRight, Confirm]);
+    // Past the Options tab.
+    update(
+        &mut flow,
+        &mut c,
+        &[Cancel, CursorRight, CursorRight, Confirm],
+    );
     assert_eq!(flow.name(), "battle");
     assert!(flow.preparations().is_none());
     let elixir = [trpg_core::ItemId::new("elixir")];

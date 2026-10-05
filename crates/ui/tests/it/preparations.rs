@@ -62,7 +62,7 @@ fn the_battle_starts_with_the_loadout_and_pack_set_up() {
     h.keys(SET_UP);
     assert!(shows(&h, "Pack 2/6"), "{}", h.snapshot());
     // From the Pack tab, Right is `Fight!`.
-    h.keys("Right f");
+    h.keys("Right Right f");
     assert_eq!(h.screens(), ["title", "battle"]);
     let state = battle(&h);
     assert_eq!(
@@ -91,7 +91,7 @@ fn the_cap_and_unusable_items_hold() {
     h.keys("d d d Right f f f f f f f f f");
     assert!(shows(&h, "Pack 6/6"), "{}", h.snapshot());
     assert!(shows(&h, "The pack is full (6/6)."));
-    h.keys("d Right f");
+    h.keys("d Right Right f");
     let state = battle(&h);
     assert_eq!(lord_weapons(&state), ["iron_sword", "steel_sword"]);
     assert_eq!(state.pack().items.len(), 6);
@@ -104,11 +104,11 @@ fn the_cap_and_unusable_items_hold() {
 fn restart_battle_goes_back_to_preparations_as_they_were_left() {
     let mut h = preparations();
     h.keys(SET_UP);
-    h.keys("Right f");
+    h.keys("Right Right f");
     let start = battle(&h);
     // The `PLAYER PHASE` banner closes; the lord waits where he stands, then the map menu's Restart Battle
     // (after Units, Objective and Suspend) and its confirm.
-    h.keys("f f f f d Down Down Down f");
+    h.keys("f f f f d Down Down Down Down f");
     assert!(
         shows(&h, "Restart the battle from turn 1?"),
         "{}",
@@ -121,7 +121,7 @@ fn restart_battle_goes_back_to_preparations_as_they_were_left() {
     assert_eq!(prep.packed(), [(potion(), 2)]);
     assert_eq!(prep.setup().stock.weapons.len(), 2);
     // One more Potion this time.
-    h.keys("Right f Down f d Right f");
+    h.keys("Right f Down f d Right Right f");
     assert_eq!(h.screens(), ["title", "battle"]);
     let again = battle(&h);
     assert_eq!(again.pack().items, [potion(), potion(), potion()]);
@@ -163,7 +163,8 @@ fn rebound_keys_and_a_controller_work() {
     let prep = h.flow().and_then(|f| f.preparations());
     let prep = prep.unwrap_or_else(|| panic!("no preparations"));
     assert_eq!(prep.packed(), [(ItemId::new("elixir"), 1)]);
-    h.keys("d j");
+    // Past the Options tab to `Fight!`.
+    h.keys("d d j");
     assert_eq!(h.screens(), ["title", "battle"]);
 }
 
@@ -206,7 +207,7 @@ fn the_benched_scouts_bow_goes_to_the_archer() {
     assert_eq!(scout(&h).loadout.weapon_count(), 0);
     // Past the banner, Restart Battle: Preparations again, the trade as it
     // was left.
-    h.keys("f f f f d Down Down Down f f");
+    h.keys("f f f f d Down Down Down Down f f");
     assert_eq!(h.screens(), ["title", "preparations"]);
     let prep = h.flow().and_then(|f| f.preparations());
     let prep = prep.unwrap_or_else(|| panic!("no preparations")).prep();
@@ -222,9 +223,9 @@ fn a_continued_battle_keeps_its_preparations() {
     let mut h = preparations();
     h.keys(SET_UP);
     // Fight!, the banner, then the map menu's Suspend and its confirm.
-    h.keys("Right f f");
+    h.keys("Right Right f f");
     let start = battle(&h);
-    h.keys("d Down Down f f");
+    h.keys("d Down Down Down f f");
     assert_eq!(h.screens(), ["title"]);
     // The next launch: Continue is on top of the title menu.
     let mut h = Harness::with_storage(h.into_storage());
@@ -233,7 +234,7 @@ fn a_continued_battle_keeps_its_preparations() {
     assert_eq!(battle(&h), start);
     assert_eq!(battle(&h).pack().items, [potion(), potion()]);
     // Restart Battle: Preparations, with the sword and the Potions.
-    h.keys("d Down Down Down f f");
+    h.keys("d Down Down Down Down f f");
     assert_eq!(h.screens(), ["title", "preparations"]);
     let prep = h.flow().and_then(|f| f.preparations());
     let prep = prep.unwrap_or_else(|| panic!("no preparations")).prep();

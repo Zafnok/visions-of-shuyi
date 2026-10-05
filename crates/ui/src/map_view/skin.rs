@@ -30,6 +30,13 @@ pub trait MapSkin: std::fmt::Debug {
         WALK_TILES_PER_S
     }
 
+    /// [`walk_tiles_per_s`](Self::walk_tiles_per_s) with the Options
+    /// screen's Fast animations (0805). The same unless the skin says
+    /// otherwise: the glyph skin's walk doesn't change.
+    fn fast_walk_tiles_per_s(&self) -> f32 {
+        self.walk_tiles_per_s()
+    }
+
     /// How fast an AI unit's walk is shown while the player holds Confirm
     /// to speed its phase up, in tiles per second.
     fn held_walk_tiles_per_s(&self) -> f32 {

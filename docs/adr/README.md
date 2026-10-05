@@ -57,9 +57,11 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0047](0047-pr-mutation-gate-in-shards-with-nextest.md) | The PR mutation gate runs in shards, with nextest as its test runner | Accepted |
 | [0048](0048-backdrop-a-second-glyph-picture-panned-and-zoomed.md) | A backdrop: a second glyph picture behind the console, panned by the pixel and zoomed in whole steps | Accepted |
 | [0049](0049-unit-sprites-from-their-own-files-and-the-game-picks-its-map-skin.md) | Unit sprites come from their own image files, a tileset may leave terrain to the glyph skin, and the game picks its map skin from what it has | Accepted; extends ADR-0038; the tileset file's writer changed by ADR-0052 |
+| [0050](0050-player-settings.md) | Player settings: one saved RON record, read through `Ctx` | Accepted |
 | [0051](0051-a-bought-works-credit-names-its-private-files.md) | A bought work's credit names the private files it covers, and a bought file without a credit is refused | Accepted; extends ADR-0032 and ADR-0040 |
 | [0052](0052-terrain-pictures-between-tiles-in-layers.md) | Terrain is painted in layers of pictures drawn between tiles, chosen from the terrain grid; a map file names its look | Accepted (0437); extends ADR-0038 and ADR-0049 |
 | [0053](0053-player-controller-buttons.md) | Player controller buttons: one shared set of slots in the saved key bindings (version 2) | Accepted; amends ADR-0031 and ADR-0034 |
+| [0054](0054-screens-say-what-they-show-as-a-view-a-skin-paints-it.md) | A screen says what it shows as a view; a skin paints it | Accepted; extends ADR-0038 |
 | [0055](0055-dialogue-lines-for-who-is-there.md) | Dialogue lines for who is there: `@if` blocks, resolved when the scene starts, and a check that nobody who may be gone is shown | Accepted (0715); extends ADR-0005 and ADR-0011 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.

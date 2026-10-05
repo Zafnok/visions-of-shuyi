@@ -3,7 +3,7 @@ source: crates/ui/src/screens/preparations/tests.rs
 expression: h.snapshot()
 ---
                                                                                                     
-  Preparations                 Loadouts      Pack      Fight!                                       
+  Preparations                 Loadouts      Pack      Options      Fight!                          
                                                                                                     
 ┌─ Units ──────┐┌─ Test Lord · Exile ──────────────┐┌─ Stock: weapons ─────────────────────────────┐
 │ Test Lord    ││ Weapon     Iron Sword      20/20 ││ Steel Spear     can't use spears             │

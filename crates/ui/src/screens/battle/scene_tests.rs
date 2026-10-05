@@ -120,7 +120,8 @@ fn browsing_shows_the_terrain_the_units_and_the_cursor() {
 #[test]
 fn the_cursor_has_the_players_style_and_its_pulse() {
     let mut c = ctx();
-    c.cursor_style = CursorStyle::TileGlow;
+    c.change_settings(|s| s.cursor_style = CursorStyle::TileGlow)
+        .unwrap();
     let mut s = quick();
     wait(&mut s, &mut c, 0.5);
     let cursor = s.scene(&c).cursor.unwrap();
@@ -678,6 +679,21 @@ fn the_walking_speeds_are_the_map_skins() {
     assert!(near(s.pace, (12.0, 48.0)), "{:?}", s.pace);
     s.begin_frame(&c, 0.0);
     assert!(near(s.pace, (6.0, 12.0)), "{:?}", s.pace);
+    // Fast animations (0805; Nick, 2026-10-04): a sprite walks 8 tiles a
+    // second, still 12 at most with Confirm held; the glyph look's walk
+    // doesn't change.
+    let fast = |mut c: Ctx| {
+        let set = c.change_settings(|s| s.anim_speed = crate::settings::AnimSpeed::Fast);
+        set.unwrap();
+        c
+    };
+    let c = fast(sprite_ctx());
+    s.begin_frame(&c, 0.0);
+    assert!(near(s.pace, (8.0, 12.0)), "{:?}", s.pace);
+    s.begin_frame(&fast(ctx()), 0.0);
+    assert!(near(s.pace, (12.0, 48.0)), "{:?}", s.pace);
+    let c = sprite_ctx();
+    s.begin_frame(&c, 0.0);
     // The enemy's first action under the sprite skin: its walk, with
     // Confirm held, is twice as fast as without, not four times.
     let mut c = sprite_ctx();

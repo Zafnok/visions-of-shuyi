@@ -58,7 +58,7 @@ use trpg_core::{
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::save::{self, SUSPEND_KEY, SaveError};
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Transition};
 use crate::screens::game_over::{GameOverChoice, GameOverScreen, ToBeContinuedScreen};
 use crate::screens::lead_select::LeadSelectScreen;
 use crate::screens::mode_select::ModeSelectScreen;
@@ -302,6 +302,7 @@ impl FlowScreen {
     /// and its playtime counts on from what it had.
     fn adopt(&mut self, ctx: &mut Ctx, campaign: Campaign) {
         ctx.lead = campaign.lead.clone();
+        ctx.campaign_mode = Some(campaign.mode);
         #[expect(clippy::cast_precision_loss, reason = "exact below 2^53 s")]
         let played = campaign.playtime_s as f64;
         self.started_at = ctx.clock_s - played;
@@ -574,6 +575,32 @@ impl FlowScreen {
         false
     }
 
+    /// Keeps the campaign's mode and [`Ctx::campaign_mode`] in step, and
+    /// opens the switch to Casual only at Preparations
+    /// ([`Ctx::mode_switch`]): a switch made on the Options screen
+    /// there (0805) goes into the campaign and into the battle being
+    /// prepared, so it starts (and restarts) in Casual.
+    fn sync_mode(&mut self, ctx: &mut Ctx) {
+        let Some(campaign) = &mut self.campaign else {
+            ctx.campaign_mode = None;
+            ctx.mode_switch = ModeSwitch::Closed;
+            return;
+        };
+        if ctx.campaign_mode == Some(GameMode::Casual) && campaign.downgrade_mode() {
+            if let Some(fight) = &mut self.fight {
+                fight.prep.setup.mode = GameMode::Casual;
+            }
+            if let Stage::Preparations(screen) = &mut self.stage {
+                screen.switch_to_casual();
+            }
+        }
+        ctx.campaign_mode = Some(campaign.mode);
+        ctx.mode_switch = match self.stage {
+            Stage::Preparations(_) => ModeSwitch::Open,
+            _ => ModeSwitch::Closed,
+        };
+    }
+
     /// Brings the campaign's playtime up to date.
     fn count_playtime(&mut self, ctx: &Ctx) {
         if let Some(campaign) = &mut self.campaign {
@@ -599,14 +626,19 @@ impl Screen for FlowScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         self.count_playtime(ctx);
+        self.sync_mode(ctx);
         match self.screen_mut().update(ctx, input) {
             Transition::Pop => {
                 if self.advance(ctx) {
+                    // Back to the title: no campaign.
+                    ctx.campaign_mode = None;
+                    ctx.mode_switch = ModeSwitch::Closed;
                     return Transition::Pop;
                 }
                 Transition::None
             }
-            // The flow's screens only push overlays (a battle's scenes).
+            // The flow's screens only push screens over themselves (a
+            // battle's scenes, the map menu's and Preparations' Options).
             other => other,
         }
     }

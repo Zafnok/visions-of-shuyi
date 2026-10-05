@@ -95,7 +95,7 @@ fn opens_on_the_loadouts_tab_with_an_empty_pack() {
     );
     assert_eq!(
         Tab::ALL.map(|t| c.text(t.key())),
-        ["Loadouts", "Pack", "Fight!"]
+        ["Loadouts", "Pack", "Options", "Fight!"]
     );
 }
 
@@ -105,6 +105,18 @@ fn left_and_right_pick_a_tab_and_fight_starts_the_battle() {
     let mut s = screen(&c);
     assert_eq!(sounds(&mut s, &mut c, &[CursorRight]), ["menu_move"]);
     assert_eq!(s.tab(), Tab::Pack);
+    // Options (0805): Down doesn't open it; Confirm opens the Options
+    // screen over this one, once.
+    update(&mut s, &mut c, &[CursorRight]);
+    assert_eq!(s.tab(), Tab::Options);
+    assert_eq!(update(&mut s, &mut c, &[CursorDown, CursorUp]), "None");
+    assert_eq!(
+        update(&mut s, &mut c, &[Confirm, CursorRight]),
+        "Push(options)"
+    );
+    assert_eq!((s.tab(), s.focus()), (Tab::Options, Focus::Tabs));
+    assert_eq!(update(&mut s, &mut c, &[]), "None");
+    assert_eq!(s.outcome(), None);
     update(&mut s, &mut c, &[CursorRight]);
     assert_eq!(s.tab(), Tab::Fight);
     // Down opens a tab, but never starts the battle.
@@ -413,6 +425,8 @@ fn help_names_the_players_keys() {
     update(&mut s, &mut c, &[Confirm, CursorRight]);
     assert_eq!(s.help(&c), "arrows choose · f put back · d back");
     update(&mut s, &mut c, &[Cancel, CursorRight]);
+    assert_eq!(s.help(&c), "arrows choose · f open · d leave");
+    update(&mut s, &mut c, &[CursorRight]);
     assert_eq!(s.help(&c), "arrows choose · f start the battle · d leave");
     update(&mut s, &mut c, &[Cancel]);
     assert_eq!(s.help(&c), "f yes / d no");

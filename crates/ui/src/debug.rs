@@ -2,8 +2,7 @@
 //! shows every font glyph and palette colour, for judging the look (ticket
 //! 0011); the portrait viewer shows every portrait (ticket 0703); the test
 //! scene plays `assets/dialogue/test.dlg` full-screen or over the screen the
-//! menu was opened from (ticket 0704). "Key bindings" opens the Key bindings
-//! screen (ticket 0815) until the Options menu (0805) does. The sprite test
+//! menu was opened from (ticket 0704). The sprite test
 //! draws the test card as sprite items (ticket 0231). The class-choice
 //! screen opens on a test unit, to promote or reclass it (ticket 0603),
 //! until the between-battle menus exist. "Map skin" switches how battle
@@ -50,30 +49,27 @@ pub const SCREENS: [&str; 6] = [
 
 /// The debug tools, in menu order, before "Map skin" ([`MAP_SKIN_TOOL`]),
 /// whose label names the skin in use.
-const TOOLS: [&str; 10] = [
+const TOOLS: [&str; 9] = [
     "Glyph sampler",
     "Portraits",
     "Play test scene",
     "Play test scene (overlay)",
-    "Key bindings",
     "Sprite test",
     "Class change: promote",
     "Class change: reclass",
     "Voice test",
     "Scene camera",
 ];
-/// Index of "Key bindings" in [`TOOLS`].
-const KEY_BINDINGS_TOOL: usize = 4;
 /// Index of "Sprite test" in [`TOOLS`].
-const SPRITE_TEST_TOOL: usize = 5;
+const SPRITE_TEST_TOOL: usize = 4;
 /// Index of "Class change: promote" in [`TOOLS`].
-const PROMOTE_TOOL: usize = 6;
+const PROMOTE_TOOL: usize = 5;
 /// Index of "Class change: reclass" in [`TOOLS`].
-const RECLASS_TOOL: usize = 7;
+const RECLASS_TOOL: usize = 6;
 /// Index of "Scene camera" in [`TOOLS`].
-const SCENE_CAMERA_TOOL: usize = 9;
+const SCENE_CAMERA_TOOL: usize = 8;
 /// Index of "Voice test" in [`TOOLS`].
-const VOICE_TEST_TOOL: usize = 8;
+const VOICE_TEST_TOOL: usize = 7;
 /// Index of "Map skin" in the menu: after [`TOOLS`].
 const MAP_SKIN_TOOL: usize = TOOLS.len();
 /// The scene the "Play test scene" tools play.
@@ -159,9 +155,6 @@ impl Screen for DebugMenuScreen {
                 }
                 Some(MenuEvent::Chosen(1)) => {
                     return Transition::Push(Box::new(PortraitViewerScreen::new()));
-                }
-                Some(MenuEvent::Chosen(KEY_BINDINGS_TOOL)) => {
-                    return Transition::Push(Box::new(KeyBindingsScreen::new(ctx)));
                 }
                 Some(MenuEvent::Chosen(SPRITE_TEST_TOOL)) => {
                     return Transition::Push(Box::new(SpriteTestScreen));
@@ -513,10 +506,6 @@ mod tests {
         );
         assert_eq!(
             outcome(&mut menu, &[CursorDown, Confirm]),
-            "Push(key_bindings)"
-        );
-        assert_eq!(
-            outcome(&mut menu, &[CursorDown, Confirm]),
             "Push(sprite_test)"
         );
         assert_eq!(
@@ -556,7 +545,6 @@ mod tests {
                 "scene_camera"
             ]
         );
-        assert_eq!(TOOLS[KEY_BINDINGS_TOOL], "Key bindings");
         assert_eq!(TOOLS[SPRITE_TEST_TOOL], "Sprite test");
         assert_eq!(TOOLS[PROMOTE_TOOL], "Class change: promote");
         assert_eq!(TOOLS[RECLASS_TOOL], "Class change: reclass");
