@@ -230,11 +230,11 @@ impl Screen for TitleScreen {
                     Ok(flow) => return self.open(Box::new(flow)),
                     // The save stays; the title says why it can't go on.
                     Err(e) => {
-                        self.notice = Some(e.to_string());
+                        self.notice = Some(e.text(ctx));
                         ctx.audio.menu(MenuSound::Denied);
                     }
                 },
-                Some(Item::NewGame) => return self.open(Box::new(FlowScreen::new_game())),
+                Some(Item::NewGame) => return self.open(Box::new(FlowScreen::new_game(ctx))),
                 Some(Item::LoadGame) => return self.open(Box::new(FlowScreen::load_game(ctx))),
                 // The test data always builds (tested); should it ever
                 // not, the item does nothing.
@@ -672,10 +672,10 @@ mod tests {
         let screens: [&dyn Screen; 8] = [
             &TitleScreen::new(&ctx()),
             &TitleScreen::with_quick_battle(&ctx()),
-            &crate::screens::ModeSelectScreen::new(),
+            &crate::screens::ModeSelectScreen::new(&c),
             &crate::screens::LeadSelectScreen::new(),
             &naming,
-            &crate::screens::GameOverScreen::new(),
+            &crate::screens::GameOverScreen::new(&c),
             &crate::screens::ToBeContinuedScreen,
             &CreditsScreen::new(&c),
         ];

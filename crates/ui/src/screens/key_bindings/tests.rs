@@ -115,8 +115,8 @@ fn rows_list_every_rebindable_action_once_required_first() {
         .collect();
     rebindable.sort();
     assert_eq!(listed, rebindable);
-    assert_eq!(label(Action::Info), "Unit info");
-    assert_eq!(label(Action::Debug), "Debug");
+    assert_eq!(label(&ctx(), Action::Info), "Unit info");
+    assert_eq!(label(&ctx(), Action::Debug), "Debug");
     assert_eq!(
         blocked_message(&ctx(), Side::Keyboard, Cancel),
         "Give Cancel a key first"
@@ -337,7 +337,7 @@ fn a_reserved_key_is_refused_and_capture_goes_on() {
     assert_eq!(s.bindings(), &before);
     assert_eq!(sounds(&mut c), [cue(MenuSound::Denied)]);
     let buf = drawn(&s, &c);
-    assert!(row_text(&buf, MESSAGE_ROW).contains(RESERVED_MESSAGE));
+    assert!(row_text(&buf, MESSAGE_ROW).contains("That key can't be used"));
     // The next key binds and clears the message.
     s.update(&mut c, &press("g"));
     assert!(!s.is_capturing());
@@ -679,7 +679,7 @@ fn draws_slots_fixed_keys_and_not_mapped_notes() {
     assert_eq!(left, 0, "an opaque screen covers the whole buffer");
     assert!(row_text(&buf, 4).contains("Key 1"));
     assert!(row_text(&buf, 4).contains("Key 3"));
-    assert!(row_text(&buf, 5).contains(REQUIRED_HEADING));
+    assert!(row_text(&buf, 5).contains("Must have a key"));
     assert!(row_of(&buf, "Cancel").contains(" Cancel  + Escape "));
     assert!(row_of(&buf, "End turn").contains(" Space "));
     assert!(row_of(&buf, "Auto-end on/off").contains(" Shift+Space "));
@@ -707,7 +707,7 @@ fn draws_slots_fixed_keys_and_not_mapped_notes() {
     assert_ne!(buf.get(slot_x(1), y).unwrap().bg, bar);
     s.update(&mut c, &act(&[CursorRight, Confirm]));
     let buf = drawn(&s, &c);
-    assert!(row_text(&buf, y).contains(CAPTURE_PROMPT));
+    assert!(row_text(&buf, y).contains("Press a key…"));
     assert_eq!(buf.get(slot_x(1), y).unwrap().bg, bar);
     assert_ne!(buf.get(slot_x(0), y).unwrap().bg, bar);
 }
@@ -880,7 +880,7 @@ fn with_the_keyboard_confirm_captures_a_button_let_go() {
     assert!(s.is_capturing());
     assert_eq!(s.choice(), None);
     let y = row_y(11);
-    assert!(row_text(&drawn(&s, &c), y).contains(CAPTURE_BUTTON_PROMPT));
+    assert!(row_text(&drawn(&s, &c), y).contains("Press a button…"));
     sounds(&mut c);
     // Going down doesn't bind; nor does a key.
     s.update(&mut c, &buttons(&[Button::RightTrigger], &[], 0.0));
@@ -1123,7 +1123,7 @@ fn on_a_controller_the_keyboard_side_still_takes_only_keys() {
     s.update(&mut c, &act(&[CursorUp, CursorLeft]));
     assert_eq!(s.side(), Side::Keyboard);
     change(&mut s, &mut c, Info, 1);
-    assert!(row_text(&drawn(&s, &c), row_y(11)).contains(CAPTURE_PROMPT));
+    assert!(row_text(&drawn(&s, &c), row_y(11)).contains("Press a key…"));
     // A button let go isn't a key: still waiting.
     tap(&mut s, &mut c, Button::West);
     assert!(s.is_capturing());
@@ -1371,7 +1371,8 @@ fn every_button_name_fits_a_slot() {
             assert!(name.chars().count() <= SLOT_W, "{name}");
         }
     }
-    assert!(CAPTURE_BUTTON_PROMPT.chars().count() <= SLOT_W);
+    assert!(ctx().text(CAPTURE_BUTTON_PROMPT).chars().count() <= SLOT_W);
+    assert!(ctx().text(CAPTURE_PROMPT).chars().count() <= SLOT_W);
     for choice in CHOICES.map(|key| ctx().text(key).to_owned()) {
         assert!(i32::try_from(choice.chars().count()).unwrap() <= CHOICE_W - 4);
     }

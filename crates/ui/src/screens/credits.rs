@@ -18,11 +18,12 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{SEPARATOR, cursor_keys_name, help_line, key_name};
+use crate::widgets::help::SEPARATOR;
 use crate::widgets::wrap::word_wrap;
 
-/// Screen title, on the panel's border.
-pub const TITLE: &str = "Credits";
+/// The key of the screen's title, on the panel's border, in the language
+/// files ([`Ctx::text`]).
+pub const TITLE: &str = "credits.title";
 
 /// The panel, in cells.
 const PANEL: Rect = Rect::new(2, 1, 96, 29);
@@ -52,14 +53,14 @@ pub const ROW_SECS: f32 = 0.5;
 /// bottom before it starts again from the top (*tunable*).
 pub const REST_SECS: f32 = 2.0;
 
-/// The heading a group's credits go under.
+/// The key of the heading a group's credits go under.
 pub fn heading(group: CreditGroup) -> &'static str {
     match group {
-        CreditGroup::Music => "Music",
-        CreditGroup::SoundEffects => "Sound effects",
-        CreditGroup::Art => "Art",
-        CreditGroup::Fonts => "Fonts",
-        CreditGroup::Software => "Software",
+        CreditGroup::Music => "credits.group.music",
+        CreditGroup::SoundEffects => "credits.group.sound_effects",
+        CreditGroup::Art => "credits.group.art",
+        CreditGroup::Fonts => "credits.group.fonts",
+        CreditGroup::Software => "credits.group.software",
     }
 }
 
@@ -93,8 +94,9 @@ impl Row {
 /// The whole list as rows of text, wrapped to the panel: each group that
 /// has credits under its [`heading`], then a blank row, then its entries
 /// (`"Title" by Author`, then `License · link`) with a blank row after
-/// each. No blank row at the end.
-fn rows(credits: &Credits) -> Vec<(Row, String)> {
+/// each. No blank row at the end. In `ctx`'s language.
+fn rows(ctx: &Ctx) -> Vec<(Row, String)> {
+    let credits: &Credits = &ctx.content.credits;
     let mut rows = Vec::new();
     let mut add = |kind: Row, text: &str| {
         if text.is_empty() {
@@ -109,10 +111,14 @@ fn rows(credits: &Credits) -> Vec<(Row, String)> {
         if entries.peek().is_none() {
             continue;
         }
-        add(Row::Heading, heading(group));
+        add(Row::Heading, ctx.text(heading(group)));
         add(Row::Heading, "");
         for e in entries {
-            add(Row::Entry, &format!("\"{}\" by {}", e.title, e.author));
+            let by = ctx.text_with(
+                "credits.entry",
+                &[("title", &e.title), ("author", &e.author)],
+            );
+            add(Row::Entry, &by);
             add(
                 Row::Detail,
                 &format!("{}{SEPARATOR}{}", e.license, e.source),
@@ -149,7 +155,7 @@ impl CreditsScreen {
     /// The screen showing the top of `ctx`'s credits, about to roll.
     pub fn new(ctx: &Ctx) -> Self {
         Self {
-            rows: rows(&ctx.content.credits),
+            rows: rows(ctx),
             top: 0,
             rolling: true,
             wait: REST_SECS,
@@ -238,13 +244,12 @@ impl CreditsScreen {
     /// `pause` while the list rolls and `auto-scroll` while it doesn't,
     /// the Cancel key `back`, named from the active keymap.
     pub fn help(&self, ctx: &Ctx) -> String {
-        let km = ctx.help_keys();
-        let confirm = if self.rolling { "pause" } else { "auto-scroll" };
-        help_line(&[
-            (Some(cursor_keys_name(km)), "scroll"),
-            (Some(key_name(km, Action::Confirm)), confirm),
-            (Some(key_name(km, Action::Cancel)), "back"),
-        ])
+        let key = if self.rolling {
+            "credits.help.rolling"
+        } else {
+            "credits.help.stopped"
+        };
+        ctx.text_with(key, &[])
     }
 }
 
@@ -286,7 +291,7 @@ impl Screen for CreditsScreen {
         buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
         buf.fill_rect(PANEL, Cell::new(' ', text, bg));
         buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-        let title = format!(" {TITLE} ");
+        let title = format!(" {} ", ctx.text(TITLE));
         buf.print(HEADING_X, PANEL.y, &title, c(UiColor::TextHighlight), bg);
 
         let on_screen = self.rows.iter().skip(self.top).take(LIST_H);
@@ -412,7 +417,11 @@ mod tests {
 
     #[test]
     fn every_group_has_its_heading() {
-        let headings: Vec<&str> = CreditGroup::ALL.iter().map(|&g| heading(g)).collect();
+        let c = ctx();
+        let headings: Vec<&str> = CreditGroup::ALL
+            .iter()
+            .map(|&g| c.text(heading(g)))
+            .collect();
         assert_eq!(
             headings,
             ["Music", "Sound effects", "Art", "Fonts", "Software"]

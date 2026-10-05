@@ -147,10 +147,10 @@ pub struct FlowScreen {
 }
 
 impl FlowScreen {
-    /// `New Game`: the mode screen first.
-    pub fn new_game() -> Self {
+    /// `New Game`: the mode screen first, in `ctx`'s language.
+    pub fn new_game(ctx: &Ctx) -> Self {
         Self {
-            stage: Stage::Mode(ModeSelectScreen::new()),
+            stage: Stage::Mode(ModeSelectScreen::new(ctx)),
             campaign: None,
             chapter: None,
             fight: None,
@@ -165,7 +165,7 @@ impl FlowScreen {
     /// `Load Game`: the slot picker first. Going back from it ends the
     /// flow.
     pub fn load_game(ctx: &Ctx) -> Self {
-        let mut flow = Self::new_game();
+        let mut flow = Self::new_game(ctx);
         flow.stage = Stage::Slots(Box::new(SlotPickerScreen::load(ctx)));
         flow
     }
@@ -200,7 +200,7 @@ impl FlowScreen {
         let _ = ctx.storage.delete(SUSPEND_KEY);
         // The battle's music again (a pool picks afresh).
         play_battle_music(ctx, &def);
-        let mut flow = Self::new_game();
+        let mut flow = Self::new_game(ctx);
         flow.adopt(ctx, campaign);
         flow.chapter = Some(chapter);
         let look = ctx.content.map_look(&def.map);
@@ -217,7 +217,7 @@ impl FlowScreen {
         let def = ctx.content.battles.get(&chapter.battle)?;
         let mut campaign = battle_campaign(&ctx.content, def, GameMode::Classic, ctx.lead.clone());
         QUICK_CHAPTER.clone_into(&mut campaign.chapter);
-        let mut flow = Self::new_game();
+        let mut flow = Self::new_game(ctx);
         flow.can_leave = true;
         flow.begin(ctx, campaign);
         Some(flow)
@@ -353,7 +353,7 @@ impl FlowScreen {
         match self.then {
             Then::Battle => self.start_battle(ctx),
             // The chapter is over: the save prompt, then the next one.
-            Then::NextChapter => self.stage = Stage::SavePrompt(SavePromptScreen::new()),
+            Then::NextChapter => self.stage = Stage::SavePrompt(SavePromptScreen::new(ctx)),
         }
     }
 
@@ -464,7 +464,7 @@ impl FlowScreen {
             self.won(ctx, &battle);
         } else {
             ctx.audio.stop_music();
-            self.stage = Stage::GameOver(GameOverScreen::new());
+            self.stage = Stage::GameOver(GameOverScreen::new(ctx));
         }
         false
     }
@@ -483,7 +483,7 @@ impl FlowScreen {
         match written {
             Ok(()) => true,
             Err(e) => {
-                battle.suspend_failed(e.to_string());
+                battle.suspend_failed(e.text(ctx));
                 self.stage = Stage::Battle(battle);
                 false
             }
@@ -543,7 +543,7 @@ impl FlowScreen {
                     let campaign = new_campaign(&ctx.content, mode, lead.clone());
                     self.begin(ctx, campaign);
                 }
-                None => self.stage = Stage::Mode(ModeSelectScreen::new()),
+                None => self.stage = Stage::Mode(ModeSelectScreen::new(ctx)),
             },
             Stage::Scene(_) | Stage::Results(_) => self.next_scene(ctx),
             Stage::Preparations(p) => return self.prepared(&p),
@@ -566,7 +566,7 @@ impl FlowScreen {
                     Some(SlotOutcome::Loaded(_, file)) => self.begin_loaded(ctx, file.campaign),
                     // Back from saving: the question again. Back from
                     // loading: the title.
-                    None if saving => self.stage = Stage::SavePrompt(SavePromptScreen::new()),
+                    None if saving => self.stage = Stage::SavePrompt(SavePromptScreen::new(ctx)),
                     None => return true,
                 }
             }

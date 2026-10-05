@@ -18,7 +18,7 @@ use crate::input::Action;
 use crate::portrait::draw_portrait;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::screens::print_centred;
-use crate::widgets::help::{SEPARATOR, help_line, key_name};
+use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use crate::widgets::word_wrap;
 
@@ -437,12 +437,9 @@ impl DialogueScreen {
         }
 
         if self.asking_skip {
-            let yes_no = help_line(&[
-                (Some(key_name(km, Action::Confirm)), "yes"),
-                (Some(key_name(km, Action::Cancel)), "no"),
-            ])
-            .replace(SEPARATOR, " / ");
-            buf.print(TEXT_X, TEXT_Y, "Skip scene?", c(UiColor::Text), bg);
+            let yes_no = ctx.text_with("dialogue.skip_answers", &[]);
+            let question = ctx.text("dialogue.skip_question");
+            buf.print(TEXT_X, TEXT_Y, question, c(UiColor::Text), bg);
             buf.print(TEXT_X, TEXT_Y + 1, &yes_no, c(UiColor::TextDim), bg);
             return;
         }

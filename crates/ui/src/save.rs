@@ -12,6 +12,7 @@ use std::fmt;
 use trpg_content::Content;
 use trpg_core::{Campaign, GameMode, SaveFile, SaveHeader, SavePoint};
 
+use crate::screen::Ctx;
 use crate::storage::{Storage, StorageError};
 
 /// How many save slots there are (`death-and-difficulty.md`).
@@ -50,6 +51,19 @@ impl fmt::Display for SaveError {
 }
 
 impl std::error::Error for SaveError {}
+
+impl SaveError {
+    /// What the player is told, in `ctx`'s language (the `Display` text is
+    /// for the log).
+    pub fn text(&self, ctx: &Ctx) -> String {
+        match self {
+            Self::Incompatible => ctx.text("save.error.incompatible").to_owned(),
+            Self::Corrupt => ctx.text("save.error.corrupt").to_owned(),
+            Self::Missing => ctx.text("save.error.missing").to_owned(),
+            Self::Storage(e) => ctx.text_with("save.error.storage", &[("error", e)]),
+        }
+    }
+}
 
 /// `save` as text.
 pub fn encode(save: &SaveFile) -> Result<String, SaveError> {
@@ -104,9 +118,11 @@ pub enum Slot {
 /// A chapter save's line in the slot picker.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SlotSummary {
-    /// The title of the chapter the save goes on with
-    /// ([`next_chapter_title`]).
+    /// The title of the chapter the save goes on with, or of the one it
+    /// cleared if none follows yet ([`next_chapter_title`]).
     pub chapter: String,
+    /// Whether [`chapter`](Self::chapter) is the chapter cleared.
+    pub cleared: bool,
     /// Classic or Casual.
     pub mode: GameMode,
     /// How many characters are in the army.
@@ -117,20 +133,33 @@ pub struct SlotSummary {
     pub save: SaveFile,
 }
 
-/// The title a chapter save of `campaign` shows: the chapter it goes on
-/// with (the one after the chapter it cleared); `<title> (cleared)` when no
-/// chapter follows yet; the chapter's id if the content no longer has it.
-pub fn next_chapter_title(content: &Content, campaign: &Campaign) -> String {
+impl SlotSummary {
+    /// The title the slot shows: the chapter the save goes on with, or
+    /// `<title> (cleared)` when no chapter follows yet.
+    pub fn title(&self, ctx: &Ctx) -> String {
+        if self.cleared {
+            ctx.text_with("save.cleared", &[("chapter", &self.chapter)])
+        } else {
+            self.chapter.clone()
+        }
+    }
+}
+
+/// The chapter a chapter save of `campaign` is named after: the title of
+/// the one it goes on with (the one after the chapter it cleared); the
+/// cleared chapter's, and `true`, when no chapter follows yet; the
+/// chapter's id if the content no longer has it.
+pub fn next_chapter_title(content: &Content, campaign: &Campaign) -> (String, bool) {
     let Some(cleared) = content.chapters.get(&campaign.chapter) else {
-        return campaign.chapter.clone();
+        return (campaign.chapter.clone(), false);
     };
     let next = cleared
         .next
         .as_ref()
         .and_then(|id| content.chapters.get(id));
     match next {
-        Some(next) => next.title.clone(),
-        None => format!("{} (cleared)", cleared.title),
+        Some(next) => (next.title.clone(), false),
+        None => (cleared.title.clone(), true),
     }
 }
 
@@ -140,8 +169,10 @@ pub fn slot(storage: &dyn Storage, content: &Content, slot: usize) -> Slot {
     match read(storage, &slot_key(slot)) {
         Ok(None) => Slot::Empty,
         Ok(Some(save)) if save.point == SavePoint::ChapterCleared => {
+            let (chapter, cleared) = next_chapter_title(content, &save.campaign);
             Slot::Saved(Box::new(SlotSummary {
-                chapter: next_chapter_title(content, &save.campaign),
+                chapter,
+                cleared,
                 mode: save.campaign.mode,
                 roster: save.campaign.roster.len(),
                 playtime_s: save.campaign.playtime_s,

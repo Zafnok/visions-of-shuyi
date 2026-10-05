@@ -161,25 +161,22 @@ fn a_slot_shows_the_chapter_it_goes_on_with() {
     assert_eq!(game.chapter, "test");
     let title = c.content.chapters["test"].title.clone();
     // No chapter after it yet.
-    assert_eq!(
-        next_chapter_title(&c.content, &game),
-        format!("{title} (cleared)")
-    );
+    assert_eq!(next_chapter_title(&c.content, &game), (title.clone(), true));
     // The chapter after it.
     c.content.chapters.get_mut("test").unwrap().next = Some("quick".into());
     let next = c.content.chapters["quick"].title.clone();
     assert_ne!(next, title);
-    assert_eq!(next_chapter_title(&c.content, &game), next);
+    assert_eq!(next_chapter_title(&c.content, &game), (next, false));
     // A next chapter the game doesn't have: as if there were none.
     c.content.chapters.get_mut("test").unwrap().next = Some("gone".into());
-    assert_eq!(
-        next_chapter_title(&c.content, &game),
-        format!("{title} (cleared)")
-    );
+    assert_eq!(next_chapter_title(&c.content, &game), (title.clone(), true));
     // A cleared chapter the game no longer has: its id.
     let mut lost = game;
     lost.chapter = "old_ch".into();
-    assert_eq!(next_chapter_title(&c.content, &lost), "old_ch");
+    assert_eq!(
+        next_chapter_title(&c.content, &lost),
+        ("old_ch".to_owned(), false)
+    );
 }
 
 #[test]
@@ -201,7 +198,16 @@ fn slots_are_empty_saved_or_unreadable() {
     let Slot::Saved(summary) = &all[1] else {
         panic!("{:?}", all[1]);
     };
-    assert_eq!(summary.chapter, next_chapter_title(&c.content, &game));
+    assert_eq!(
+        (summary.chapter.clone(), summary.cleared),
+        next_chapter_title(&c.content, &game)
+    );
+    // No chapter follows the test chapter: the slot says it is cleared.
+    assert!(summary.cleared);
+    assert_eq!(summary.title(&c), format!("{} (cleared)", summary.chapter));
+    let mut next = (**summary).clone();
+    next.cleared = false;
+    assert_eq!(next.title(&c), summary.chapter);
     assert_eq!(summary.mode, GameMode::Casual);
     assert_eq!(summary.roster, game.roster.len());
     assert!(summary.roster > 0);

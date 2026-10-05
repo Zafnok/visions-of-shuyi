@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: fable-5.1
 effort: high
 status: todo
-blocked_by: ["0234", "0239", "0716", "0725", "0825"]
+blocked_by: ["0234", "0239", "0243", "0716", "0725", "0825"]
 nick_input: none
 completed:
 ---

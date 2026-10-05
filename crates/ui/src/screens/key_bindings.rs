@@ -33,30 +33,33 @@ use crate::input::{
     is_capture_abort, is_clear_slot,
 };
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{
-    HelpKeys, NOT_MAPPED, SEPARATOR, cursor_keys_name, help_line, key_name,
-};
+use crate::tips::fill_text;
+use crate::widgets::help::{HelpKeys, NOT_MAPPED, SEPARATOR};
 
-/// Every rebindable action with its player-facing label, in the order the
+/// Every rebindable action with the text key of its player-facing label
+/// (`Unit info`), in the order the
 /// screen lists them (Nick's pick, ticket 0815): the required actions, then
 /// the optional ones, as in `controls.md`'s *Required and optional* table.
 pub const ROWS: [(Action, &str); 16] = [
-    (Action::CursorUp, "Cursor up"),
-    (Action::CursorDown, "Cursor down"),
-    (Action::CursorLeft, "Cursor left"),
-    (Action::CursorRight, "Cursor right"),
-    (Action::Confirm, "Confirm"),
-    (Action::Cancel, "Cancel"),
-    (Action::EndTurn, "End turn"),
-    (Action::Select, "Select"),
-    (Action::ConfirmEndTurn, "Confirm end turn"),
-    (Action::PrevUnit, "Previous ready unit"),
-    (Action::NextUnit, "Next ready unit"),
-    (Action::Info, "Unit info"),
-    (Action::DangerZone, "Danger zone"),
-    (Action::ToggleAutoEnd, "Auto-end on/off"),
-    (Action::Rewind, "Rewind"),
-    (Action::Menu, "Map menu"),
+    (Action::CursorUp, "key_bindings.action.cursor_up"),
+    (Action::CursorDown, "key_bindings.action.cursor_down"),
+    (Action::CursorLeft, "key_bindings.action.cursor_left"),
+    (Action::CursorRight, "key_bindings.action.cursor_right"),
+    (Action::Confirm, "key_bindings.action.confirm"),
+    (Action::Cancel, "key_bindings.action.cancel"),
+    (Action::EndTurn, "key_bindings.action.end_turn"),
+    (Action::Select, "key_bindings.action.select"),
+    (
+        Action::ConfirmEndTurn,
+        "key_bindings.action.confirm_end_turn",
+    ),
+    (Action::PrevUnit, "key_bindings.action.prev_unit"),
+    (Action::NextUnit, "key_bindings.action.next_unit"),
+    (Action::Info, "key_bindings.action.info"),
+    (Action::DangerZone, "key_bindings.action.danger_zone"),
+    (Action::ToggleAutoEnd, "key_bindings.action.toggle_auto_end"),
+    (Action::Rewind, "key_bindings.action.rewind"),
+    (Action::Menu, "key_bindings.action.menu"),
 ];
 
 /// Which bindings the screen shows and edits.
@@ -69,7 +72,7 @@ pub enum Side {
 }
 
 impl Side {
-    /// What a slot on this side shows while it waits.
+    /// The text key of what a slot on this side shows while it waits.
     fn prompt(self) -> &'static str {
         match self {
             Self::Keyboard => CAPTURE_PROMPT,
@@ -78,32 +81,34 @@ impl Side {
     }
 }
 
-/// Screen title.
-pub const TITLE: &str = "Key bindings";
+/// Text key of the screen's title.
+pub const TITLE: &str = "key_bindings.title";
 /// Text key of the switch row's name for the keyboard side, which the
 /// layout's name follows.
 pub const KEYBOARD_SIDE: &str = "key_bindings.keyboard";
 /// Text key of the switch row's name for the controller side.
 pub const CONTROLLER_SIDE: &str = "key_bindings.controller";
-/// Heading over the required actions, on the keyboard side.
-pub const REQUIRED_HEADING: &str = "Must have a key";
+/// Text key of the heading over the required actions, on the keyboard
+/// side.
+pub const REQUIRED_HEADING: &str = "key_bindings.must_have_key";
 /// Text key of the heading over the required actions, on the controller
 /// side.
 pub const REQUIRED_BUTTON_HEADING: &str = "key_bindings.must_have_button";
 /// Text key of the heading over the optional actions.
 pub const OPTIONAL_HEADING: &str = "key_bindings.optional";
-/// The row under the actions that puts the shown side's defaults back.
-pub const RESTORE_DEFAULTS: &str = "Restore defaults";
-/// Help text while a slot waits for a key.
-pub const CAPTURE_HELP: &str = "Press the key to put here";
+/// Text key of the row under the actions that puts the shown side's
+/// defaults back.
+pub const RESTORE_DEFAULTS: &str = "key_bindings.restore_defaults";
+/// Text key of the help while a slot waits for a key.
+pub const CAPTURE_HELP: &str = "key_bindings.capture_help";
 /// Text key of the help for backing out of a capture with only a
 /// controller.
 pub const HOLD_TO_CANCEL: &str = "key_bindings.hold_to_cancel";
 /// Text keys of what Confirm on a slot offers when the controller was used
 /// last: put another key or button in it, or empty it.
 pub const CHOICES: [&str; 2] = ["key_bindings.change", "key_bindings.clear"];
-/// Shown when the key pressed for a slot is reserved.
-pub const RESERVED_MESSAGE: &str = "That key can't be used";
+/// Text key of what shows when the key pressed for a slot is reserved.
+pub const RESERVED_MESSAGE: &str = "key_bindings.reserved";
 /// How long the row that just lost its key to another slot stays
 /// highlighted, in seconds (*tunable*).
 pub const MOVED_FLASH_SECS: f32 = 1.5;
@@ -155,23 +160,22 @@ const CURSOR_ACTIONS: [Action; 4] = [
     Action::CursorRight,
 ];
 
-/// The player-facing name of `action` ([`ROWS`]); its keymap name for an
-/// action not on the screen (Debug).
-pub fn label(action: Action) -> &'static str {
+/// The player-facing name of `action` ([`ROWS`]) in `ctx`'s language; its
+/// keymap name for an action not on the screen (Debug).
+pub fn label(ctx: &Ctx, action: Action) -> &str {
     ROWS.iter()
         .find(|&&(a, _)| a == action)
-        .map_or(action.name(), |&(_, label)| label)
+        .map_or(action.name(), |&(_, key)| ctx.text(key))
 }
 
 /// The blocked-leave message for `action` on `side` (`Give Cancel a key
 /// first`, `Give Cancel a button first`).
 pub fn blocked_message(ctx: &Ctx, side: Side, action: Action) -> String {
-    match side {
-        Side::Keyboard => format!("Give {} a key first", label(action)),
-        Side::Controller => {
-            ctx.text_with("key_bindings.blocked_button", &[("action", &label(action))])
-        }
-    }
+    let key = match side {
+        Side::Keyboard => "key_bindings.blocked_key",
+        Side::Controller => "key_bindings.blocked_button",
+    };
+    ctx.text_with(key, &[("action", &label(ctx, action))])
 }
 
 /// Left edge of slot `i`'s highlight bar.
@@ -313,10 +317,10 @@ impl KeyBindingsScreen {
     /// The question asked before restoring the shown side's defaults.
     pub fn restore_question(&self, ctx: &Ctx) -> String {
         match self.side {
-            Side::Keyboard => format!(
-                "Restore the default keys for {}?",
-                layout_picker::label(self.layout)
-            ),
+            Side::Keyboard => {
+                let layout = layout_picker::label(ctx, self.layout);
+                ctx.text_with("key_bindings.restore_keys", &[("layout", &layout)])
+            }
             Side::Controller => ctx.text("key_bindings.restore_buttons").to_owned(),
         }
     }
@@ -557,7 +561,7 @@ impl KeyBindingsScreen {
             return false;
         }
         let Ok(from) = self.bindings.bind(action, slot, chord) else {
-            self.message = Some(RESERVED_MESSAGE.to_owned());
+            self.message = Some(ctx.text(RESERVED_MESSAGE).to_owned());
             ctx.audio.menu(MenuSound::Denied);
             return false;
         };
@@ -641,13 +645,16 @@ impl KeyBindingsScreen {
         let km = HelpKeys::new(&self.opened_with, ctx.device);
         let on_pad = matches!(ctx.device, Device::Pad(_));
         if self.capturing {
-            let what = match self.side {
+            let what = ctx.text(match self.side {
                 Side::Keyboard => CAPTURE_HELP,
                 Side::Controller => CAPTURE_BUTTON_PROMPT,
-            };
+            });
             let hold = on_pad || self.side == Side::Controller;
             let hold = hold.then(|| ctx.text(HOLD_TO_CANCEL));
-            let back = (!on_pad).then(|| help_line(&[(Some(capture_abort_key_name()), "back")]));
+            let back = (!on_pad).then(|| {
+                let key = capture_abort_key_name();
+                ctx.text_with("key_bindings.help_capture_back", &[("key", &key)])
+            });
             let hints = [Some(what), hold, back.as_deref()];
             return hints
                 .into_iter()
@@ -655,10 +662,8 @@ impl KeyBindingsScreen {
                 .collect::<Vec<_>>()
                 .join(SEPARATOR);
         }
-        let confirm = || Some(key_name(km, Action::Confirm));
-        let cancel = || Some(key_name(km, Action::Cancel));
         if self.asking_restore {
-            return help_line(&[(confirm(), "yes"), (cancel(), "no")]);
+            return fill_text(ctx.text("key_bindings.help_restore"), km, &[]);
         }
         if self.choice.is_some() {
             return ctx.text_with("key_bindings.help_choice", &[]);
@@ -670,12 +675,12 @@ impl KeyBindingsScreen {
         if on_slot && on_pad {
             return ctx.text_with("key_bindings.help_slot_pad", &[]);
         }
-        help_line(&[
-            (Some(cursor_keys_name(km)), "move"),
-            (confirm(), if on_slot { "bind" } else { "restore" }),
-            (on_slot.then(clear_slot_key_name), "clear"),
-            (cancel(), "back"),
-        ])
+        if on_slot {
+            let clear = clear_slot_key_name();
+            let text = ctx.text("key_bindings.help_slot");
+            return fill_text(text, km, &[("clear", &clear)]);
+        }
+        fill_text(ctx.text("key_bindings.help_restore_row"), km, &[])
     }
 
     /// Draws the restore question in a double-bordered box in the middle
@@ -686,11 +691,7 @@ impl KeyBindingsScreen {
         let bg = c(UiColor::PanelBg);
         let km = HelpKeys::new(&self.opened_with, ctx.device);
         let question = self.restore_question(ctx);
-        let answers = format!(
-            "{} yes / {} no",
-            key_name(km, Action::Confirm),
-            key_name(km, Action::Cancel)
-        );
+        let answers = fill_text(ctx.text("key_bindings.restore_answers"), km, &[]);
         let widest = question.chars().count().max(answers.chars().count());
         let w = i32::try_from(widest).unwrap_or(0) + 4;
         let rect = Rect::new(
@@ -740,7 +741,7 @@ impl KeyBindingsScreen {
         let keyboard = format!(
             "{}{SEPARATOR}{}",
             ctx.text(KEYBOARD_SIDE),
-            layout_picker::label(self.layout)
+            layout_picker::label(ctx, self.layout)
         );
         let mut x = LABEL_X;
         for (side, name) in [
@@ -765,6 +766,7 @@ impl KeyBindingsScreen {
         let Some(&(action, label)) = ROWS.get(i) else {
             return;
         };
+        let label = ctx.text(label);
         let y = row_y(i);
         let focused = self.row == i;
         let label_fg = if focused {
@@ -791,7 +793,7 @@ impl KeyBindingsScreen {
             let filled = name.as_deref();
             if focused && self.slot == j {
                 let shown = if self.capturing {
-                    self.side.prompt()
+                    ctx.text(self.side.prompt())
                 } else {
                     filled.unwrap_or("")
                 };
@@ -883,13 +885,13 @@ impl Screen for KeyBindingsScreen {
         buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
         buf.fill_rect(PANEL, Cell::new(' ', text, bg));
         buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-        let title = format!(" {TITLE} ");
+        let title = format!(" {} ", ctx.text(TITLE));
         buf.print(HEADING_X, PANEL.y, &title, c(UiColor::TextHighlight), bg);
         self.draw_switch(ctx, buf);
 
         for j in 0..SLOTS {
             let heading = match self.side {
-                Side::Keyboard => format!("Key {}", j + 1),
+                Side::Keyboard => ctx.text_with("key_bindings.key_column", &[("n", &(j + 1))]),
                 Side::Controller => ctx.text_with("key_bindings.button_column", &[("n", &(j + 1))]),
             };
             buf.print(slot_x(j) + 1, COLUMNS_Y, &heading, dim, bg);
@@ -899,7 +901,7 @@ impl Screen for KeyBindingsScreen {
             let required = action.is_required();
             if group != Some(required) {
                 let heading = match (required, self.side) {
-                    (true, Side::Keyboard) => REQUIRED_HEADING,
+                    (true, Side::Keyboard) => ctx.text(REQUIRED_HEADING),
                     (true, Side::Controller) => ctx.text(REQUIRED_BUTTON_HEADING),
                     (false, _) => ctx.text(OPTIONAL_HEADING),
                 };
@@ -909,10 +911,11 @@ impl Screen for KeyBindingsScreen {
             self.draw_row(ctx, buf, i);
         }
         let y = row_y(ROWS.len()) + 1;
+        let restore = ctx.text(RESTORE_DEFAULTS);
         if self.row == RESTORE_ROW {
-            buf.print(LABEL_X - 1, y, &format!(" {RESTORE_DEFAULTS} "), bg, bar);
+            buf.print(LABEL_X - 1, y, &format!(" {restore} "), bg, bar);
         } else {
-            buf.print(LABEL_X, y, RESTORE_DEFAULTS, text, bg);
+            buf.print(LABEL_X, y, restore, text, bg);
         }
 
         if let Some(message) = &self.message {
