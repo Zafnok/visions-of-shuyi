@@ -1,6 +1,10 @@
 //! Scripted tests of the title screen through the real game (ADR-0007
 //! layer 4), with the right-handed layout already picked
 //! (`docs/design/controls.md`): arrows move, `f` selects, `d` backs out.
+//!
+//! What the screen says is read from its view (`TitleScreen::view`: plain
+//! data), not from the glyphs a skin painted; the snapshots pin the glyph
+//! look, pictures included.
 
 use insta::assert_snapshot;
 use trpg_content::lang::TEST;
@@ -8,16 +12,54 @@ use trpg_content::{FontAtlasDef, LangCode};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::screens::title::TitleView;
+use trpg_ui::screens::{LayoutPickerScreen, TitleScreen};
 
 /// A launch after the right-handed layout was picked.
 fn title() -> Harness {
     Harness::with_layout(Layout::RightHanded)
 }
 
+/// The title screen on the stack, as it shows itself now.
+fn view(h: &Harness) -> TitleView {
+    let screen = h.game().screen::<TitleScreen>();
+    screen
+        .unwrap_or_else(|| panic!("no title screen"))
+        .view(h.game().ctx())
+}
+
+/// The labels of the title's menu, and the focused one.
+fn menu(h: &Harness) -> (Vec<String>, Option<String>) {
+    let menu = view(h).menu.unwrap_or_else(|| panic!("no menu"));
+    let labels = menu.items.iter().map(|i| i.label.clone()).collect();
+    (labels, menu.focused().map(|i| i.label.clone()))
+}
+
+/// The layout the picker on the stack has the cursor on.
+fn picker_focus(h: &Harness) -> Option<Layout> {
+    let screen = h.game().screen::<LayoutPickerScreen>();
+    let screen = screen.unwrap_or_else(|| panic!("no layout picker"));
+    screen.view(h.game().ctx()).focused().map(|l| l.layout)
+}
+
 #[test]
 fn title_renders() {
     let h = title();
     assert_eq!(h.top_screen(), "title");
+    let (labels, focused) = menu(&h);
+    // The harness has debug tools on, so Quick Battle is there.
+    let want = [
+        "New Game",
+        "Load Game",
+        "Quick Battle",
+        "Options",
+        "Credits",
+        "Quit",
+    ];
+    assert_eq!(labels, want);
+    assert_eq!(focused.as_deref(), Some("New Game"));
+    let help = view(&h).help;
+    assert_eq!(help.as_deref(), Some("arrows move · f select · d back"));
     assert_snapshot!(h.snapshot());
 }
 
@@ -191,6 +233,9 @@ fn waiting_title() -> Harness {
 fn the_title_waits_for_a_key_or_button() {
     let mut h = waiting_title();
     h.wait(0.5);
+    let shown = view(&h);
+    assert_eq!(shown.prompt.as_deref(), Some("Press any key or button"));
+    assert!(shown.menu.is_none() && shown.help.is_none());
     let snap = h.snapshot();
     assert!(snap.contains("├─┴┬┴─┴┬┴─┤     Press any key or button     │ ┼ ╭─╮ ◯ │"));
     assert_snapshot!(snap);
@@ -254,8 +299,7 @@ fn back_on_the_title_shows_the_menu_not_the_prompt() {
 
 /// Whether the title is showing its prompt.
 fn prompt_shows(h: &Harness) -> bool {
-    let prompt = h.game().ctx().text("title.press_any_key");
-    h.snapshot().contains(prompt)
+    view(h).prompt.is_some()
 }
 
 /// First launch (`docs/design/controls.md`, *Pick your layout with a
@@ -272,7 +316,7 @@ fn first_launch_a_key_at_the_prompt_opens_the_layout_picker() {
         h.keys(key);
         assert_eq!(h.screens(), ["title", "layout_picker"], "{key}");
         assert_eq!(h.game().ctx().layout(), None, "{key}");
-        assert!(h.snapshot().contains("► Right-handed"), "{key}");
+        assert_eq!(picker_focus(&h), Some(Layout::RightHanded), "{key}");
         assert!(music(&h).is_empty());
     }
     // Picked: the title's menu and music, no prompt again.
@@ -330,7 +374,7 @@ fn a_key_mid_battle_opens_the_layout_picker_until_one_is_picked() {
     // the battle's cursor.
     h.keys("Down");
     assert_eq!(h.screens(), ["title", "battle", "layout_picker"]);
-    assert!(h.snapshot().contains("► Right-handed"));
+    assert_eq!(picker_focus(&h), Some(Layout::RightHanded));
     // Back to the controller: the picker closes and the battle goes on.
     h.pad("DpadRight");
     assert_eq!(h.screens(), ["title", "battle"]);
@@ -373,24 +417,25 @@ fn the_title_in_the_test_language() {
     h.ctx_mut().lang = LangCode::new(TEST).unwrap();
     // The title labels its menu again when it is back on top.
     h.keys("f d");
-    let snap = h.snapshot();
-    assert_snapshot!(snap);
-    for text in [
-        "VISIONS OF SHUYI",
+    assert_snapshot!(h.snapshot());
+    let shown = view(&h);
+    assert_eq!(shown.title, "VISIONS OF SHUYI");
+    // Stale and missing: English.
+    assert_eq!(shown.subtitle, "an ASCII tactics game");
+    assert_eq!(
+        shown.help.as_deref(),
+        Some("arrows MOVE · f SELECT · d BACK")
+    );
+    let (labels, _) = menu(&h);
+    let want = [
         "NEW GAME",
         "LOAD GAME",
         "QUICK BATTLE",
-        "QUIT",
-        "arrows MOVE · f SELECT · d BACK",
-        // Stale and missing: English.
-        "an ASCII tactics game",
+        "OPTIONS",
         "Credits",
-    ] {
-        assert!(snap.contains(text), "{text}");
-    }
-    for text in ["New Game", "AN ASCII", "CREDITS", "Visions"] {
-        assert!(!snap.contains(text), "{text}");
-    }
+        "QUIT",
+    ];
+    assert_eq!(labels, want);
 }
 
 #[test]
@@ -398,5 +443,5 @@ fn the_prompt_in_the_test_language() {
     let mut h = waiting_title();
     h.ctx_mut().lang = LangCode::new(TEST).unwrap();
     h.wait(0.1);
-    assert!(h.snapshot().contains("PRESS ANY KEY OR BUTTON"));
+    assert_eq!(view(&h).prompt.as_deref(), Some("PRESS ANY KEY OR BUTTON"));
 }

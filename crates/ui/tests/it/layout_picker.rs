@@ -1,11 +1,31 @@
 //! Scripted tests of the first-launch layout picker through the real game
 //! (ADR-0007 layer 4, `docs/design/controls.md`). When it opens is tested
 //! with the title's prompt (`title.rs`).
+//!
+//! What the screens say is read from their views (`LayoutPickerScreen::view`
+//! and the title's: plain data), not from the glyphs a skin painted; the
+//! snapshots pin the glyph look.
 
 use insta::assert_snapshot;
 use trpg_content::FontAtlasDef;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::screens::{LayoutPickerScreen, TitleScreen};
+
+/// The layout the picker on the stack has the cursor on, and its help.
+fn focus_and_help(h: &Harness) -> (Option<Layout>, String) {
+    let screen = h.game().screen::<LayoutPickerScreen>();
+    let screen = screen.unwrap_or_else(|| panic!("no layout picker"));
+    let view = screen.view(h.game().ctx());
+    (view.focused().map(|l| l.layout), view.help)
+}
+
+/// The title's help line.
+fn title_help(h: &Harness) -> Option<String> {
+    let screen = h.game().screen::<TitleScreen>();
+    let screen = screen.unwrap_or_else(|| panic!("no title screen"));
+    screen.view(h.game().ctx()).help
+}
 
 /// A first launch with the picker open: no layout is chosen, so the first
 /// key (any key) opened it.
@@ -19,6 +39,9 @@ fn picker() -> Harness {
 fn first_launch_shows_the_picker() {
     let h = picker();
     assert_eq!(h.screens(), ["title", "layout_picker"]);
+    let (focused, help) = focus_and_help(&h);
+    assert_eq!(focused, Some(Layout::RightHanded));
+    assert_eq!(help, "w/Up s/Down choose · f/j/Enter/Space pick");
     assert_snapshot!(h.snapshot());
 }
 
@@ -27,6 +50,7 @@ fn left_handed_focused() {
     let mut h = picker();
     h.keys("Down");
     assert_eq!(h.top_screen(), "layout_picker");
+    assert_eq!(focus_and_help(&h).0, Some(Layout::LeftHanded));
     assert_snapshot!(h.snapshot());
 }
 
@@ -89,7 +113,10 @@ fn left_handed_wasd_moves_and_j_confirms() {
     assert!(h.snapshot().contains("wasd choose · j select · k back"));
     h.keys("k");
     assert_eq!(h.top_screen(), "title");
-    assert!(h.snapshot().contains("wasd move · j select · k back"));
+    assert_eq!(
+        title_help(&h).as_deref(),
+        Some("wasd move · j select · k back")
+    );
     // Right-handed keys do nothing now.
     h.keys("f Down");
     assert_eq!(h.top_screen(), "title");

@@ -22,11 +22,24 @@
 //! asked of `input` ([`is_capture_abort`], [`is_clear_slot`]), and a
 //! button's name of [`PadKind::button_name`], never named here (the
 //! `keyboard-input` skill).
+//!
+//! **The look is a skin** (ADR-0054). This module decides what the screen
+//! shows and does, and says it as plain data: a [`KeyBindingsView`]
+//! ([`KeyBindingsScreen::view`]). [`glyph::paint`] draws that view as
+//! glyphs. Tests of what happened read the view; only [`glyph`]'s tests
+//! read cells.
 
-use super::{layout_picker, print_centred};
+pub mod glyph;
+pub mod view;
+
+pub use view::{
+    ChoicesView, GroupView, KeyBindingsView, QuestionView, RestoreView, RowView, SlotView,
+    SwitchView,
+};
+
+use super::layout_picker;
 use crate::audio::MenuSound;
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{
     Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Device, Keymap, Layout,
     LayoutBindings, PadBindings, PadKind, SLOTS, capture_abort_key_name, clear_slot_key_name,
@@ -37,9 +50,9 @@ use crate::tips::fill_text;
 use crate::widgets::help::{HelpKeys, NOT_MAPPED, SEPARATOR};
 
 /// Every rebindable action with the text key of its player-facing label
-/// (`Unit info`), in the order the
-/// screen lists them (Nick's pick, ticket 0815): the required actions, then
-/// the optional ones, as in `controls.md`'s *Required and optional* table.
+/// (`Unit info`), in the order the screen lists them (Nick's pick, ticket
+/// 0815): the required actions, then the optional ones, as in
+/// `controls.md`'s *Required and optional* table.
 pub const ROWS: [(Action, &str); 16] = [
     (Action::CursorUp, "key_bindings.action.cursor_up"),
     (Action::CursorDown, "key_bindings.action.cursor_down"),
@@ -116,35 +129,6 @@ pub const MOVED_FLASH_SECS: f32 = 1.5;
 /// seconds (*tunable*). Let go sooner, it goes in the slot.
 pub const HOLD_TO_CANCEL_SECS: f32 = 1.0;
 
-/// The panel, in cells.
-const PANEL: Rect = Rect::new(2, 1, 96, 27);
-/// Column of the action labels.
-const LABEL_X: i32 = PANEL.x + 4;
-/// Column of the title and the group headings, two cells left of the
-/// labels.
-const HEADING_X: i32 = LABEL_X - 2;
-/// Row of the keyboard / controller switch.
-const SWITCH_Y: i32 = PANEL.y + 1;
-/// Row of the slot columns' headings; the required actions' heading is on
-/// the next row.
-const COLUMNS_Y: i32 = PANEL.y + 3;
-/// Column of the first slot's highlight bar; its text starts one cell in.
-const SLOTS_X: i32 = LABEL_X + 23;
-/// Cells a slot's key name may take (the longest chord name fits).
-const SLOT_W: usize = 15;
-/// Columns from one slot to the next.
-const SLOT_PITCH: i32 = 18;
-/// What an empty slot shows.
-const EMPTY_SLOT: &str = "·";
-/// Height of the restore question's box: its two lines, a blank row above
-/// and below, and the border.
-const QUESTION_H: i32 = 6;
-/// The box of the [`CHOICES`], in cells: a line each and the border.
-const CHOICE_W: i32 = 12;
-const CHOICE_H: i32 = 4;
-/// Row of the message under the panel.
-const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
-
 /// [`KeyBindingsScreen::row`] on Restore defaults, the row after the
 /// actions.
 const RESTORE_ROW: usize = ROWS.len();
@@ -176,20 +160,6 @@ pub fn blocked_message(ctx: &Ctx, side: Side, action: Action) -> String {
         Side::Controller => "key_bindings.blocked_button",
     };
     ctx.text_with(key, &[("action", &label(ctx, action))])
-}
-
-/// Left edge of slot `i`'s highlight bar.
-fn slot_x(i: usize) -> i32 {
-    SLOTS_X + i32::try_from(i).unwrap_or(0) * SLOT_PITCH
-}
-
-/// Console row of row `i` of [`ROWS`]: under the columns' and the required
-/// actions' headings, with a blank row and the optional actions' heading
-/// before the first optional one.
-fn row_y(i: usize) -> i32 {
-    let required = ROWS.iter().filter(|(a, _)| a.is_required()).count();
-    let gap = if i >= required { 2 } else { 0 };
-    COLUMNS_Y + 2 + i32::try_from(i).unwrap_or(0) + gap
 }
 
 /// The Key bindings screen for one layout and the controller. Cancel saves
@@ -683,135 +653,103 @@ impl KeyBindingsScreen {
         fill_text(ctx.text("key_bindings.help_restore_row"), km, &[])
     }
 
-    /// Draws the restore question in a double-bordered box in the middle
-    /// of the screen, with its answers' keys under it (the look of the
-    /// battle's end-turn question).
-    fn draw_restore_question(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint`]): the switch, the slot columns, every action with
+    /// what its slots hold, the restore row, the message, the question or
+    /// the choices open, and the help line, all in the player's language
+    /// and naming their keys.
+    pub fn view(&self, ctx: &Ctx) -> KeyBindingsView {
+        let columns = (0..SLOTS).map(|j| match self.side {
+            Side::Keyboard => ctx.text_with("key_bindings.key_column", &[("n", &(j + 1))]),
+            Side::Controller => ctx.text_with("key_bindings.button_column", &[("n", &(j + 1))]),
+        });
+        let mut groups: Vec<GroupView> = Vec::new();
+        for (i, &(action, _)) in ROWS.iter().enumerate() {
+            let required = action.is_required();
+            if groups.last().is_none_or(|g| g.required != required) {
+                groups.push(GroupView {
+                    heading: self.group_heading(ctx, required),
+                    required,
+                    rows: Vec::new(),
+                });
+            }
+            if let Some(group) = groups.last_mut() {
+                group.rows.push(self.row_view(ctx, i));
+            }
+        }
         let km = HelpKeys::new(&self.opened_with, ctx.device);
-        let question = self.restore_question(ctx);
-        let answers = fill_text(ctx.text("key_bindings.restore_answers"), km, &[]);
-        let widest = question.chars().count().max(answers.chars().count());
-        let w = i32::try_from(widest).unwrap_or(0) + 4;
-        let rect = Rect::new(
-            (i32::from(buf.width()) - w) / 2,
-            (i32::from(buf.height()) - QUESTION_H) / 2,
-            w,
-            QUESTION_H,
-        );
-        buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-        buf.print(rect.x + 2, rect.y + 2, &question, c(UiColor::Text), bg);
-        buf.print(rect.x + 2, rect.y + 3, &answers, c(UiColor::TextDim), bg);
-    }
-
-    /// Draws the [`CHOICES`] in a double-bordered box under the focused
-    /// slot (over it on the last rows, where it wouldn't fit), the focused
-    /// line as a bar.
-    fn draw_choices(&self, ctx: &Ctx, buf: &mut GlyphBuffer, line: usize) {
-        let c = |u| ctx.palette.get(u);
-        let (bg, bar) = (c(UiColor::PanelBg), c(UiColor::PanelBorderFocus));
-        let slot_y = row_y(self.row);
-        let below = slot_y + 1;
-        let y = if below + CHOICE_H < PANEL.y + PANEL.h {
-            below
-        } else {
-            slot_y - CHOICE_H
-        };
-        let rect = Rect::new(slot_x(self.slot), y, CHOICE_W, CHOICE_H);
-        buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(rect, BoxStyle::Double, bar, bg);
-        let inner = usize::try_from(CHOICE_W - 3).unwrap_or(0);
-        for (i, choice) in (0..).zip(CHOICES.map(|key| ctx.text(key))) {
-            let (x, y) = (rect.x + 1, rect.y + 1 + i);
-            if usize::try_from(i).is_ok_and(|i| i == line) {
-                buf.print(x, y, &format!(" {choice:<inner$}"), bg, bar);
-            } else {
-                buf.print(x + 1, y, choice, c(UiColor::Text), bg);
-            }
+        KeyBindingsView {
+            title: ctx.text(TITLE).to_owned(),
+            switch: SwitchView {
+                keyboard: format!(
+                    "{}{SEPARATOR}{}",
+                    ctx.text(KEYBOARD_SIDE),
+                    layout_picker::label(ctx, self.layout)
+                ),
+                controller: ctx.text(CONTROLLER_SIDE).to_owned(),
+                shown: self.side,
+                focused: self.is_on_switch(),
+            },
+            columns: columns.collect(),
+            groups,
+            restore: RestoreView {
+                label: ctx.text(RESTORE_DEFAULTS).to_owned(),
+                focused: self.row == RESTORE_ROW,
+            },
+            not_mapped: NOT_MAPPED.to_owned(),
+            message: self.message.clone(),
+            question: self.asking_restore.then(|| QuestionView {
+                text: self.restore_question(ctx),
+                answers: fill_text(ctx.text("key_bindings.restore_answers"), km, &[]),
+            }),
+            choices: self.choice.map(|focused| ChoicesView {
+                lines: CHOICES.map(|key| ctx.text(key).to_owned()).to_vec(),
+                focused,
+                slot: self.slot,
+            }),
+            help: self.help(ctx),
         }
     }
 
-    /// Draws the keyboard / controller switch: the shown side highlighted
-    /// (as a bar while the focus is on the switch), the other dim.
-    fn draw_switch(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let (bg, bar) = (c(UiColor::PanelBg), c(UiColor::PanelBorderFocus));
-        let keyboard = format!(
-            "{}{SEPARATOR}{}",
-            ctx.text(KEYBOARD_SIDE),
-            layout_picker::label(ctx, self.layout)
-        );
-        let mut x = LABEL_X;
-        for (side, name) in [
-            (Side::Keyboard, keyboard.as_str()),
-            (Side::Controller, ctx.text(CONTROLLER_SIDE)),
-        ] {
-            if side != self.side {
-                buf.print(x, SWITCH_Y, name, c(UiColor::TextDim), bg);
-            } else if self.is_on_switch() {
-                buf.print(x - 1, SWITCH_Y, &format!(" {name} "), bg, bar);
-            } else {
-                buf.print(x, SWITCH_Y, name, c(UiColor::TextHighlight), bg);
-            }
-            x += i32::try_from(name.chars().count()).unwrap_or(0) + 4;
+    /// The heading over the required (or the optional) actions.
+    fn group_heading(&self, ctx: &Ctx, required: bool) -> String {
+        match (required, self.side) {
+            (true, Side::Keyboard) => ctx.text(REQUIRED_HEADING).to_owned(),
+            (true, Side::Controller) => ctx.text(REQUIRED_BUTTON_HEADING).to_owned(),
+            (false, _) => ctx.text(OPTIONAL_HEADING).to_owned(),
         }
     }
 
-    /// Draws row `i` of [`ROWS`].
-    fn draw_row(&self, ctx: &Ctx, buf: &mut GlyphBuffer, i: usize) {
-        let c = |u| ctx.palette.get(u);
-        let (bg, text, dim) = (c(UiColor::PanelBg), c(UiColor::Text), c(UiColor::TextDim));
-        let Some(&(action, label)) = ROWS.get(i) else {
-            return;
-        };
+    /// Row `i` of [`ROWS`], as the screen shows it.
+    fn row_view(&self, ctx: &Ctx, i: usize) -> RowView {
+        let (action, label) = ROWS[i];
         let label = ctx.text(label);
-        let y = row_y(i);
         let focused = self.row == i;
-        let label_fg = if focused {
-            c(UiColor::TextHighlight)
-        } else if self.moved.is_some_and(|(lost, _)| lost == action) {
-            c(UiColor::White)
-        } else {
-            text
-        };
-        let label_w = buf.print(LABEL_X, y, label, label_fg, bg);
-        let fixed: Vec<String> = match self.side {
+        let fixed = match self.side {
             Side::Keyboard => Keymap::fixed_chords_for(action)
                 .iter()
                 .map(ToString::to_string)
                 .collect(),
             Side::Controller => Vec::new(),
         };
-        if !fixed.is_empty() {
-            let x = LABEL_X + i32::from(label_w) + 2;
-            buf.print(x, y, &format!("+ {}", fixed.join("/")), dim, bg);
-        }
-        for (j, name) in self.slot_names(ctx, action).iter().enumerate() {
-            let x = slot_x(j);
-            let filled = name.as_deref();
-            if focused && self.slot == j {
-                let shown = if self.capturing {
-                    ctx.text(self.side.prompt())
-                } else {
-                    filled.unwrap_or("")
-                };
-                let bar = format!(" {shown:<SLOT_W$}");
-                buf.print(x, y, &bar, bg, c(UiColor::PanelBorderFocus));
-            } else if let Some(name) = filled {
-                buf.print(x + 1, y, name, text, bg);
-            } else {
-                buf.print(x + 1, y, EMPTY_SLOT, dim, bg);
+        let slots = self.slot_names(ctx, action).into_iter().enumerate();
+        let slots = slots.map(|(j, name)| match name {
+            _ if focused && self.slot == j && self.capturing => {
+                SlotView::Capturing(ctx.text(self.side.prompt()).to_owned())
             }
-        }
-        if self.is_unmapped(action) {
-            let fg = if action.is_required() {
-                c(UiColor::HpLow)
-            } else {
-                dim
-            };
-            buf.print(slot_x(SLOTS) + 1, y, NOT_MAPPED, fg, bg);
+            Some(name) => SlotView::Bound(name),
+            None => SlotView::Empty,
+        });
+        let unmapped = self.is_unmapped(action);
+        RowView {
+            action,
+            label: label.to_owned(),
+            fixed,
+            slots: slots.collect(),
+            focus: focused.then_some(self.slot),
+            unmapped,
+            blocks_leaving: unmapped && action.is_required(),
+            lost_key: self.moved.is_some_and(|(lost, _)| lost == action),
         }
     }
 }
@@ -878,57 +816,11 @@ impl Screen for KeyBindingsScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let (black, bg) = (c(UiColor::Black), c(UiColor::PanelBg));
-        let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
-        let bar = c(UiColor::PanelBorderFocus);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
-        buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-        buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-        let title = format!(" {} ", ctx.text(TITLE));
-        buf.print(HEADING_X, PANEL.y, &title, c(UiColor::TextHighlight), bg);
-        self.draw_switch(ctx, buf);
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
 
-        for j in 0..SLOTS {
-            let heading = match self.side {
-                Side::Keyboard => ctx.text_with("key_bindings.key_column", &[("n", &(j + 1))]),
-                Side::Controller => ctx.text_with("key_bindings.button_column", &[("n", &(j + 1))]),
-            };
-            buf.print(slot_x(j) + 1, COLUMNS_Y, &heading, dim, bg);
-        }
-        let mut group = None;
-        for (i, &(action, _)) in ROWS.iter().enumerate() {
-            let required = action.is_required();
-            if group != Some(required) {
-                let heading = match (required, self.side) {
-                    (true, Side::Keyboard) => ctx.text(REQUIRED_HEADING),
-                    (true, Side::Controller) => ctx.text(REQUIRED_BUTTON_HEADING),
-                    (false, _) => ctx.text(OPTIONAL_HEADING),
-                };
-                buf.print(HEADING_X, row_y(i) - 1, heading, bar, bg);
-                group = Some(required);
-            }
-            self.draw_row(ctx, buf, i);
-        }
-        let y = row_y(ROWS.len()) + 1;
-        let restore = ctx.text(RESTORE_DEFAULTS);
-        if self.row == RESTORE_ROW {
-            buf.print(LABEL_X - 1, y, &format!(" {restore} "), bg, bar);
-        } else {
-            buf.print(LABEL_X, y, restore, text, bg);
-        }
-
-        if let Some(message) = &self.message {
-            print_centred(buf, MESSAGE_ROW, message, c(UiColor::HpLow), black);
-        }
-        if self.asking_restore {
-            self.draw_restore_question(ctx, buf);
-        }
-        if let Some(line) = self.choice {
-            self.draw_choices(ctx, buf, line);
-        }
-        let bottom = i32::from(buf.height()) - 1;
-        print_centred(buf, bottom, &self.help(ctx), dim, black);
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 

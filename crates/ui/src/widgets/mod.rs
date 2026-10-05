@@ -4,5 +4,5 @@ pub mod help;
 pub mod menu;
 pub mod wrap;
 
-pub use menu::{Menu, MenuEvent, MenuItem};
+pub use menu::{Menu, MenuEvent, MenuItem, MenuItemView, MenuView};
 pub use wrap::word_wrap;
