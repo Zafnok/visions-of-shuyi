@@ -1,9 +1,14 @@
 //! Languages (ADR-0045 §1–2): English screen text by key
 //! (`assets/lang/en/ui.ron`), and the packs that overlay it
-//! (`assets/lang/<code>/`). A pack entry carries the English it was made
-//! from; when that is no longer today's English the entry is **stale**, and
-//! a key with no entry is **missing**. Both show in English and fail
-//! nothing.
+//! (`assets/lang/<code>/`): their screen text (`ui.ron`), the data's
+//! names, tips, titles and notes (`data.ron`) and the dialogue's lines
+//! and captions (`dialogue/*.ron`). `assets/lang/README.md` lists every
+//! key. A pack entry carries the English it was made from; when that is
+//! no longer today's English the entry is **stale**, and a key with no
+//! entry is **missing**. Both show in English and fail nothing.
+
+mod data;
+mod lines;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -13,8 +18,12 @@ use serde::de::{Deserializer, MapAccess, Visitor};
 
 use crate::bundle;
 use crate::error::ContentError;
+use crate::names::Names;
 use crate::ron_loader::parse_ron;
 use crate::tip::placeholders;
+
+pub use data::{DataText, LineKind, SourceLine, Tables};
+pub use lines::{LineEntry, LineText, Orphan};
 
 /// Directory of the languages inside the asset bundle.
 pub const LANG_DIR: &str = "lang";
@@ -31,6 +40,26 @@ const UI_FILE: &str = "ui.ron";
 
 /// File name of a pack's description.
 const INFO_FILE: &str = "lang.ron";
+
+/// File name of a pack's data text: names, tips, titles and notes.
+const DATA_FILE: &str = "data.ron";
+
+/// Directory of a pack's dialogue text, one file per `.dlg` file.
+const DIALOGUE_DIR: &str = "dialogue/";
+
+/// Extension of a pack's dialogue files.
+const DIALOGUE_EXTENSION: &str = ".ron";
+
+/// The directory's own description (`assets/lang/README.md`): no
+/// language's file.
+const README: &str = "README.md";
+
+/// How many cells of the screen `text` takes: one per character today.
+/// Every length limit on text is counted with this (ADR-0045 §4), so that
+/// ticket 0236 can make it know the glyphs that are two cells wide.
+pub fn text_width(text: &str) -> usize {
+    text.chars().count()
+}
 
 /// Longest [`LangCode`], in characters.
 const MAX_CODE_CHARS: usize = 8;
@@ -110,47 +139,82 @@ pub struct LangPack {
     pub info: LangInfo,
     /// Its screen text, by key.
     ui: BTreeMap<String, Entry>,
+    /// Its data text (names, tips, titles, notes), by key.
+    data: BTreeMap<String, Entry>,
+    /// Its dialogue lines and captions, by line id or caption key.
+    lines: BTreeMap<String, LineEntry>,
 }
 
 impl LangPack {
-    /// The pack's screen-text entry for `key`, if it has one.
+    /// The pack's screen-text or data-text entry for `key`, if it has one.
     pub fn entry(&self, key: &str) -> Option<&Entry> {
-        self.ui.get(key)
+        self.ui.get(key).or_else(|| self.data.get(key))
     }
 }
 
-/// What a pack lacks ([`Lang::status`]), each list in key order.
+/// What a pack lacks ([`Lang::status`]): each list has the screen text's
+/// keys, then the data's, then the dialogue's, each in key order.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct LangStatus {
     /// Keys the pack has no entry for.
     pub missing: Vec<String>,
     /// Keys whose entry was made from English that has since changed.
     pub stale: Vec<String>,
+    /// Dialogue entries whose line English no longer has (it was reworded
+    /// or cut), each with the line it most likely became.
+    pub orphans: Vec<Orphan>,
 }
 
-/// English's screen text and every pack.
+/// English's text and every pack.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Lang {
     /// English screen text, by key.
     english: BTreeMap<String, String>,
+    /// English data and dialogue text, by key.
+    source: DataText,
     /// The other languages, by code.
     packs: BTreeMap<LangCode, LangPack>,
 }
 
 impl Lang {
-    /// English with `packs` over it.
+    /// English screen text with `packs` over it, and no data or dialogue.
     pub fn new(english: BTreeMap<String, String>, packs: BTreeMap<LangCode, LangPack>) -> Self {
-        Self { english, packs }
+        Self::with_data(english, DataText::default(), packs)
     }
 
-    /// Whether English has `key`.
+    /// English screen text and `source` (the data's and the dialogue's
+    /// English), with `packs` over them.
+    pub fn with_data(
+        english: BTreeMap<String, String>,
+        source: DataText,
+        packs: BTreeMap<LangCode, LangPack>,
+    ) -> Self {
+        Self {
+            english,
+            source,
+            packs,
+        }
+    }
+
+    /// The English of the data and the dialogue, by key.
+    pub fn source(&self) -> &DataText {
+        &self.source
+    }
+
+    /// Whether English's screen text has `key`.
     pub fn has(&self, key: &str) -> bool {
         self.english.contains_key(key)
     }
 
-    /// Today's English for `key`, if there is such a key.
+    /// Today's English for `key`, if there is such a key: a screen text's,
+    /// a data text's, or a dialogue line's or caption's.
     pub fn english(&self, key: &str) -> Option<&str> {
-        self.english.get(key).map(String::as_str)
+        let line = || self.source.lines.get(key).map(|line| &line.text);
+        self.english
+            .get(key)
+            .or_else(|| self.source.data.get(key))
+            .or_else(line)
+            .map(String::as_str)
     }
 
     /// The pack for `code`; `None` for English or an unknown code.
@@ -185,13 +249,21 @@ impl Lang {
         }
         let pack = self.packs.get(code)?;
         let mut status = LangStatus::default();
+        let mut check = |key: &String, english: &String, source: Option<&String>| match source {
+            None => status.missing.push(key.clone()),
+            Some(source) if source != english => status.stale.push(key.clone()),
+            Some(_) => {}
+        };
         for (key, english) in &self.english {
-            match pack.ui.get(key) {
-                None => status.missing.push(key.clone()),
-                Some(entry) if entry.source != *english => status.stale.push(key.clone()),
-                Some(_) => {}
-            }
+            check(key, english, pack.ui.get(key).map(|e| &e.source));
         }
+        for (key, english) in &self.source.data {
+            check(key, english, pack.data.get(key).map(|e| &e.source));
+        }
+        for (key, line) in &self.source.lines {
+            check(key, &line.text, pack.lines.get(key).map(|e| &e.source));
+        }
+        status.orphans = pack.orphans(&self.source);
         Some(status)
     }
 }
@@ -264,51 +336,131 @@ pub fn english_from_source(
     }
 }
 
-/// Parses and validates a pack: its `lang.ron` (`info_source`, errors
-/// attributed to `info_file`) and its `ui.ron` (`ui_source`, `ui_file`),
-/// checked against `english`. Reports every problem found.
+/// A file of a pack: the name it is reported under, and its text.
+pub type Source<'a> = (&'a str, &'a str);
+
+/// The files of one pack.
+#[derive(Debug, Clone, Default)]
+pub struct PackSources<'a> {
+    /// Its `lang.ron`.
+    pub info: Source<'a>,
+    /// Its `ui.ron`.
+    pub ui: Source<'a>,
+    /// Its `data.ron`, if it has one.
+    pub data: Option<Source<'a>>,
+    /// Its `dialogue/*.ron` files.
+    pub dialogue: Vec<Source<'a>>,
+}
+
+/// Parses the entries of the pack file `file` (`source`) and checks each
+/// against `english` (key to today's English), adding every problem to
+/// `errors`. `no_key` is what an entry English has no key for is told.
 ///
 /// An entry's key must be one of English's and be there once. Its text
 /// must have the same placeholders as its `source`: the English it was
 /// made from, not today's, so that changing English can make an entry
 /// stale but never an error.
-pub fn pack_from_sources(
-    (info_file, info_source): (&str, &str),
-    (ui_file, ui_source): (&str, &str),
+fn entries(
+    (file, source): Source<'_>,
     english: &BTreeMap<String, String>,
-) -> Result<LangPack, Vec<ContentError>> {
-    let mut errors = Vec::new();
-    let info = parse_ron::<LangInfo>(info_file, info_source)
-        .map_err(|e| errors.push(e))
-        .ok();
-    if info.as_ref().is_some_and(|i| i.name.trim().is_empty()) {
-        errors.push(ContentError::new(info_file, "the name must not be empty"));
-    }
-    let entries = parse_ron::<Vec<Entry>>(ui_file, ui_source)
+    no_key: &str,
+    errors: &mut Vec<ContentError>,
+) -> BTreeMap<String, Entry> {
+    let entries = parse_ron::<Vec<Entry>>(file, source)
         .map_err(|e| errors.push(e))
         .unwrap_or_default();
-    let mut ui = BTreeMap::new();
+    let mut by_key = BTreeMap::new();
     for entry in entries {
         let mut err = |message: &str| {
             errors.push(ContentError::new(
-                ui_file,
+                file,
                 format!("\"{}\": {message}", entry.key),
             ));
         };
         if !english.contains_key(&entry.key) {
-            err("no such key in English");
+            err(no_key);
         }
-        if ui.contains_key(&entry.key) {
+        if by_key.contains_key(&entry.key) {
             err("the key is used twice");
         }
         let names = |text| placeholders(text).into_iter().collect::<BTreeSet<_>>();
         if names(&entry.text) != names(&entry.source) {
             err("the text and its source must have the same placeholders");
         }
-        ui.insert(entry.key.clone(), entry);
+        if let Some(problem) = data::text_problem(&entry.key, &entry.text) {
+            err(&problem);
+        }
+        by_key.insert(entry.key.clone(), entry);
+    }
+    by_key
+}
+
+/// Parses and validates a pack with screen text only: its `lang.ron`
+/// (`info`) and its `ui.ron` (`ui`), checked against `english`. See
+/// [`pack_from_files`].
+pub fn pack_from_sources(
+    info: Source<'_>,
+    ui: Source<'_>,
+    english: &BTreeMap<String, String>,
+) -> Result<LangPack, Vec<ContentError>> {
+    let sources = PackSources {
+        info,
+        ui,
+        ..PackSources::default()
+    };
+    pack_from_files(&sources, english, None)
+}
+
+/// Parses and validates the pack made of `sources`, its screen text
+/// checked against `english` and its data and dialogue text against
+/// `data` (left out without it: the data files failed to load). Reports
+/// every problem found.
+///
+/// A `ui.ron` or `data.ron` entry's key must be one of English's and be
+/// there once, and its text must have the same placeholders as its
+/// `source`; a name or a tip also keeps to the rules of the English ones.
+/// A dialogue entry is checked as [`LineEntry`] says: one whose line
+/// English no longer has is an orphan, not an error.
+pub fn pack_from_files(
+    sources: &PackSources<'_>,
+    english: &BTreeMap<String, String>,
+    data: Option<&DataText>,
+) -> Result<LangPack, Vec<ContentError>> {
+    let mut errors = Vec::new();
+    let (info_file, info_source) = sources.info;
+    let info = parse_ron::<LangInfo>(info_file, info_source)
+        .map_err(|e| errors.push(e))
+        .ok();
+    if info.as_ref().is_some_and(|i| i.name.trim().is_empty()) {
+        errors.push(ContentError::new(info_file, "the name must not be empty"));
+    }
+    let ui = entries(sources.ui, english, "no such key in English", &mut errors);
+    let mut pack_data = BTreeMap::new();
+    let mut pack_lines = BTreeMap::new();
+    if let Some(data) = data {
+        if let Some(file) = sources.data {
+            pack_data = entries(file, &data.data, "no such key in the data", &mut errors);
+        }
+        // The pack's names: what a name token in its lines is filled from.
+        let name = |(id, english): (&String, &String)| {
+            let entry = pack_data.get(&format!("names.{id}"));
+            let name = entry.filter(|e| e.source == *english);
+            (id.clone(), name.map_or(english, |e| &e.text).clone())
+        };
+        let names = Names {
+            names: data.names.names.iter().map(name).collect(),
+        };
+        for &file in &sources.dialogue {
+            lines::add_lines(file, data, &names, &mut pack_lines, &mut errors);
+        }
     }
     match info {
-        Some(info) if errors.is_empty() => Ok(LangPack { info, ui }),
+        Some(info) if errors.is_empty() => Ok(LangPack {
+            info,
+            ui,
+            data: pack_data,
+            lines: pack_lines,
+        }),
         _ => Err(errors),
     }
 }
@@ -323,7 +475,9 @@ pub struct LangFile<'a> {
 }
 
 /// Loads and validates English and every pack in the embedded bundle.
-pub fn load() -> Result<Lang, Vec<ContentError>> {
+/// The packs' data and dialogue text is checked against `data`, and left
+/// out without it.
+pub fn load(data: Option<DataText>) -> Result<Lang, Vec<ContentError>> {
     let prefix = format!("{LANG_DIR}/");
     let paths = bundle::files_under(LANG_DIR);
     let files: Vec<LangFile<'_>> = paths
@@ -332,24 +486,37 @@ pub fn load() -> Result<Lang, Vec<ContentError>> {
             path: path.strip_prefix(&prefix).unwrap_or(path),
             source: bundle::file(path),
         })
+        .filter(|file| file.path != README)
         .collect();
-    from_files(&files, |path| {
+    from_files(&files, data, |path| {
         bundle::display_path(&format!("{LANG_DIR}/{path}"))
     })
 }
 
+/// Whether `name` (a path inside a pack's directory) is one of a pack's
+/// dialogue files: `dialogue/<file>.ron`.
+fn is_dialogue_file(name: &str) -> bool {
+    name.strip_prefix(DIALOGUE_DIR)
+        .and_then(|file| file.strip_suffix(DIALOGUE_EXTENSION))
+        .is_some_and(|stem| !stem.is_empty() && !stem.contains('/'))
+}
+
 /// Validates the languages made of `files`: English's `en/ui.ron`, and a
 /// pack for every other directory, which needs its `lang.ron` and
-/// `ui.ron`. Any other file is an error. `display` gives the name a path
-/// is reported under. Reports every problem found; with English broken
-/// the packs are not checked (each entry would be an unknown key).
+/// `ui.ron` and may have a `data.ron` and `dialogue/<file>.ron` files
+/// (checked against `data`; left out without it). Any other file is an
+/// error. `display` gives the name a path is reported under. Reports
+/// every problem found; with English broken the packs are not checked
+/// (each entry would be an unknown key).
 pub fn from_files(
     files: &[LangFile<'_>],
+    data: Option<DataText>,
     display: impl Fn(&str) -> String,
 ) -> Result<Lang, Vec<ContentError>> {
     let mut errors = Vec::new();
+    let find = |path: &str| files.iter().find(|f| f.path == path);
     let read = |path: &str, errors: &mut Vec<ContentError>| {
-        let source = files.iter().find(|f| f.path == path).and_then(|f| f.source);
+        let source = find(path).and_then(|f| f.source);
         if source.is_none() {
             errors.push(ContentError::new(
                 display(path),
@@ -364,7 +531,7 @@ pub fn from_files(
             Some((ENGLISH, name)) => name == UI_FILE,
             Some((dir, name)) => {
                 dirs.insert(dir);
-                name == UI_FILE || name == INFO_FILE
+                [UI_FILE, INFO_FILE, DATA_FILE].contains(&name) || is_dialogue_file(name)
             }
             None => false,
         };
@@ -397,14 +564,30 @@ pub fn from_files(
         };
         let info_path = format!("{dir}/{INFO_FILE}");
         let ui_path = format!("{dir}/{UI_FILE}");
+        let data_path = format!("{dir}/{DATA_FILE}");
         let info = read(&info_path, &mut errors);
         let ui = read(&ui_path, &mut errors);
+        // The optional files: only read (and reported, if not text) when
+        // the pack has them.
+        let data_source = find(&data_path).and_then(|_| read(&data_path, &mut errors));
+        let dialogue_dir = format!("{dir}/{DIALOGUE_DIR}");
+        let dialogue: Vec<(String, &str)> = files
+            .iter()
+            .filter(|f| f.path.starts_with(&dialogue_dir))
+            .filter_map(|f| Some((display(f.path), read(f.path, &mut errors)?)))
+            .collect();
         let (Some(info), Some(ui), Some(english)) = (info, ui, &english) else {
             continue;
         };
-        let info = (display(&info_path), info);
-        let ui = (display(&ui_path), ui);
-        match pack_from_sources((&info.0, info.1), (&ui.0, ui.1), english) {
+        let (info_name, ui_name, data_name) =
+            (display(&info_path), display(&ui_path), display(&data_path));
+        let sources = PackSources {
+            info: (&info_name, info),
+            ui: (&ui_name, ui),
+            data: data_source.map(|source| (data_name.as_str(), source)),
+            dialogue: dialogue.iter().map(|(n, s)| (n.as_str(), *s)).collect(),
+        };
+        match pack_from_files(&sources, english, data.as_ref()) {
             Ok(pack) => {
                 packs.insert(code, pack);
             }
@@ -412,7 +595,9 @@ pub fn from_files(
         }
     }
     match english {
-        Some(english) if errors.is_empty() => Ok(Lang::new(english, packs)),
+        Some(english) if errors.is_empty() => {
+            Ok(Lang::with_data(english, data.unwrap_or_default(), packs))
+        }
         _ => Err(errors),
     }
 }
@@ -630,7 +815,7 @@ mod tests {
                 source: Some(source),
             })
             .collect();
-        from_files(&files, |path| format!("lang/{path}"))
+        from_files(&files, None, |path| format!("lang/{path}"))
             .map_err(|errors| errors.iter().map(ToString::to_string).collect())
     }
 
@@ -674,7 +859,7 @@ mod tests {
             path: "en/ui.ron",
             source: None,
         }];
-        let errors = from_files(&binary, str::to_owned).unwrap_err();
+        let errors = from_files(&binary, None, str::to_owned).unwrap_err();
         assert_eq!(errors.len(), 1);
         assert_eq!(errors[0].file, "en/ui.ron");
     }
@@ -689,15 +874,25 @@ mod tests {
                 ("notes.txt", ""),
                 ("xx/lang.ron", INFO),
                 ("xx/ui.ron", UI),
+                // A pack may have these two kinds of file...
                 ("xx/data.ron", "[]"),
                 ("xx/dialogue/ch01.ron", "[]"),
+                // ...but English can't, and a pack has no others.
+                ("en/data.ron", "[]"),
+                ("xx/dialogue/ch01.dlg", ""),
+                ("xx/dialogue/.ron", "[]"),
+                ("xx/dialogue/a/b.ron", "[]"),
+                ("xx/notes/ch01.ron", "[]"),
             ])
             .unwrap_err(),
             [
                 format!("lang/en/lang.ron: {stray}"),
                 format!("lang/notes.txt: {stray}"),
-                format!("lang/xx/data.ron: {stray}"),
-                format!("lang/xx/dialogue/ch01.ron: {stray}"),
+                format!("lang/en/data.ron: {stray}"),
+                format!("lang/xx/dialogue/ch01.dlg: {stray}"),
+                format!("lang/xx/dialogue/.ron: {stray}"),
+                format!("lang/xx/dialogue/a/b.ron: {stray}"),
+                format!("lang/xx/notes/ch01.ron: {stray}"),
             ]
         );
     }
@@ -748,7 +943,7 @@ mod tests {
 
     #[test]
     fn the_embedded_languages_load() {
-        let lang = load().unwrap();
+        let lang = load(None).unwrap();
         assert_eq!(lang.english("title.new_game"), Some("New Game"));
         let test = code(TEST);
         assert_eq!(lang.codes().collect::<Vec<_>>(), [&test]);
@@ -757,5 +952,16 @@ mod tests {
         let status = lang.status(&test).unwrap();
         assert_eq!(status.missing, ["title.credits"]);
         assert_eq!(status.stale, ["title.subtitle"]);
+        assert_eq!(status.orphans, []);
+    }
+
+    #[test]
+    fn width_counts_characters() {
+        assert_eq!(text_width(""), 0);
+        assert_eq!(text_width("abc"), 3);
+        assert_eq!(text_width("né!"), 3);
     }
 }
+
+#[cfg(test)]
+mod data_tests;

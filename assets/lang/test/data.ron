@@ -1,0 +1,31 @@
+// The test pack's data text (ticket 0235): a few names, a tip, a chapter
+// title and a battle note, each the English in capitals. Everything else
+// in the data is missing here, so it shows in English.
+// Kept on purpose: `items.iron_axe.name` is stale (its `source` is not
+// today's English), so the axe shows in English too.
+[
+    (key: "items.iron_sword.name", source: "Iron Sword", text: "IRON SWORD"),
+    (key: "items.potion.name", source: "Potion", text: "POTION"),
+    (key: "items.iron_axe.name", source: "Old Axe", text: "OLD AXE"),
+    (key: "classes.guard.name", source: "Guard", text: "GUARD"),
+    // A generic unit is named after its class: the brigands are BRIGAND.
+    (key: "classes.brigand.name", source: "Brigand", text: "BRIGAND"),
+    (key: "spells.fire.name", source: "Fire", text: "FIRE"),
+    (key: "skills.keen_edge.name", source: "Keen Edge", text: "KEEN EDGE"),
+    (key: "arts.guard_break.name", source: "Guard Break", text: "GUARD BREAK"),
+    (key: "terrain.forest.name", source: "Forest", text: "FOREST"),
+    (key: "names.test_knight", source: "Test Knight", text: "TEST KNIGHT"),
+    (key: "names.test_archer", source: "Test Archer", text: "TEST ARCHER"),
+    (key: "tips.battle_start.title", source: "Your move", text: "YOUR MOVE"),
+    (
+        key: "tips.battle_start.text",
+        source: "Steer the cursor with {Cursor}. Press {Select} on one of\nyour units to select it. {NextUnit} jumps to the next unit\nthat can still act; {Info} shows a unit's details.",
+        text: "STEER THE CURSOR WITH {Cursor}. PRESS {Select} ON ONE OF\nYOUR UNITS TO SELECT IT. {NextUnit} JUMPS TO THE NEXT UNIT\nTHAT CAN STILL ACT; {Info} SHOWS A UNIT'S DETAILS.",
+    ),
+    (key: "chapters.test.title", source: "Test Chapter", text: "TEST CHAPTER"),
+    (
+        key: "battles.test.note_2",
+        source: "Seize the fort within 3 turns: send your lead straight there.",
+        text: "SEIZE THE FORT WITHIN 3 TURNS: SEND YOUR LEAD STRAIGHT THERE.",
+    ),
+]

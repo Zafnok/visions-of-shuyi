@@ -8,6 +8,7 @@ use crate::harness::Harness;
 use crate::save::{SLOTS, SaveError, read};
 use crate::screen::tests::ctx;
 use crate::storage::{Storage, StorageError};
+use crate::words::Words;
 
 fn campaign(c: &Ctx, name: &str, playtime_s: u64) -> Campaign {
     let lead = LeadProfile::new(name, LeadGender::Female);
@@ -240,7 +241,7 @@ fn a_slot_row_shows_chapter_mode_army_and_playtime() {
     let s = SlotPickerScreen::load(&c);
     let buf = render(&s, &c);
     let army = c.content.new_game.roster.len();
-    let (title, _) = save::next_chapter_title(&c.content, &campaign(&c, "Mara", 0));
+    let (title, _) = save::next_chapter_title(&c.content, Words::ENGLISH, &campaign(&c, "Mara", 0));
     let second = row(&buf, FIRST_ROW + 1);
     for part in [
         "02",

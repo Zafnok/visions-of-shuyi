@@ -29,6 +29,8 @@
 //! Transitions are pure ([`step`], [`Mode::tick`]); the screen owns the
 //! cursor and applies the [`Effect`]s.
 
+use std::borrow::Cow;
+
 use trpg_core::{
     BattleState, Command, Equipped, Faction, Phase, Pos, Reach, TileSet, UnitAction, UnitId,
     attack_tiles, path_cost, reachable, threat_area,
@@ -53,6 +55,7 @@ use super::skills::{
 use super::walk::{self, Gait};
 use crate::input::{Action, Keymap};
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
+use crate::words::Words;
 
 pub use super::walk::WALK_TILES_PER_S;
 
@@ -378,6 +381,48 @@ pub enum Mode {
         /// The unit shown.
         unit: UnitId,
     },
+}
+
+/// The language the mode's own lists are built in. Playing only needs a
+/// list's focus and which of its lines can be picked, so it never depends
+/// on the player's language; the screen paints the lists in that
+/// ([`Mode::told`]).
+pub(super) const IN_PLAY: Words<'static> = Words::ENGLISH;
+
+impl Mode {
+    /// The mode as the screen paints it: its lists of weapons, arts,
+    /// spells, skills, items and units written in `words`, each focused
+    /// where it is. In English that is the mode itself.
+    pub fn told(&self, state: &BattleState, words: Words<'_>) -> Cow<'_, Mode> {
+        if words.is_english() {
+            return Cow::Borrowed(self);
+        }
+        let mut mode = self.clone();
+        match &mut mode {
+            Mode::WeaponMenu { sel, menu, weapons } => {
+                *menu = weapon_menu(state, words, sel, weapons).focused(menu.focus());
+            }
+            Mode::SpellMenu { sel, menu, choices } => {
+                *menu = spell_menu(state, words, sel.unit, choices).focused(menu.focus());
+            }
+            Mode::SkillMenu { sel, menu, choices } => {
+                *menu = skill_menu(state, words, sel.unit, choices).focused(menu.focus());
+            }
+            Mode::ItemMenu { menu, groups, .. } => {
+                *menu = pack_menu(state, words, groups).focused(menu.focus());
+            }
+            Mode::EquipMenu { sel, menu, choices } => {
+                *menu = equip_menu(state, words, sel.unit, choices).focused(menu.focus());
+            }
+            Mode::UnitList { menu, .. } => {
+                *menu = unit_list(state, words).0.focused(menu.focus());
+            }
+            Mode::Targeting(t) => t.tell(state, words),
+            Mode::CastTarget(t) => t.tell(state, words),
+            _ => {}
+        }
+        Cow::Owned(mode)
+    }
 }
 
 impl Default for Mode {
@@ -997,7 +1042,7 @@ fn step_map_menu(
     match menu.handle(action) {
         Some(MenuEvent::Chosen(i)) => match entries.get(i) {
             Some(MapEntry::Units) => {
-                let (menu, units) = unit_list(state);
+                let (menu, units) = unit_list(state, IN_PLAY);
                 (Mode::UnitList { menu, units }, Effect::None)
             }
             Some(MapEntry::Objective) => (Mode::Objective, Effect::None),
@@ -1067,7 +1112,7 @@ fn choose_attack(
             target_with(state, sel, &only, None)
         }
         _ => {
-            let menu = weapon_menu(state, &sel, &weapons);
+            let menu = weapon_menu(state, IN_PLAY, &sel, &weapons);
             (Mode::WeaponMenu { sel, menu, weapons }, Effect::None)
         }
     }
@@ -1099,7 +1144,7 @@ fn open_spells(sel: Selection, state: &BattleState) -> (Mode, Effect) {
     if !can_cast(&choices) {
         return (back_to_entry(sel, state, MenuEntry::Magic), Effect::None);
     }
-    let menu = spell_menu(state, sel.unit, &choices);
+    let menu = spell_menu(state, IN_PLAY, sel.unit, &choices);
     (Mode::SpellMenu { sel, menu, choices }, Effect::None)
 }
 
@@ -1238,7 +1283,7 @@ fn open_skills(sel: Selection, state: &BattleState) -> (Mode, Effect) {
     if !can_use_skill(&choices) {
         return (back_to_entry(sel, state, MenuEntry::Skill), Effect::None);
     }
-    let menu = skill_menu(state, sel.unit, &choices);
+    let menu = skill_menu(state, IN_PLAY, sel.unit, &choices);
     (Mode::SkillMenu { sel, menu, choices }, Effect::None)
 }
 
@@ -1318,7 +1363,7 @@ fn open_pack(sel: Selection, state: &BattleState) -> (Mode, Effect) {
     if !can_use_item(&groups) {
         return (back_to_entry(sel, state, MenuEntry::Item), Effect::None);
     }
-    let menu = pack_menu(state, &groups);
+    let menu = pack_menu(state, IN_PLAY, &groups);
     (Mode::ItemMenu { sel, menu, groups }, Effect::None)
 }
 
@@ -1328,7 +1373,7 @@ fn open_equip(sel: Selection, state: &BattleState) -> (Mode, Effect) {
     if !can_equip(&choices) {
         return (back_to_entry(sel, state, MenuEntry::Equip), Effect::None);
     }
-    let menu = equip_menu(state, sel.unit, &choices);
+    let menu = equip_menu(state, IN_PLAY, sel.unit, &choices);
     (Mode::EquipMenu { sel, menu, choices }, Effect::None)
 }
 
@@ -2172,7 +2217,14 @@ mod tests {
             },
         };
         let events = after.apply(&cmd).unwrap();
-        let playback = Playback::new(&events, before.units(), after.fallen(), TIMINGS).unwrap();
+        let playback = Playback::new(
+            Words::ENGLISH,
+            &events,
+            before.units(),
+            after.fallen(),
+            TIMINGS,
+        )
+        .unwrap();
         let total = playback.total();
         let combat = Mode::Combat(Box::new(playback));
         assert!(!combat.cursor_free());
@@ -2360,5 +2412,92 @@ mod tests {
             (&t.with, &t.targets),
             (&Equipped::Weapon(1), &vec![UnitId(4), UnitId(6)])
         );
+    }
+
+    /// The labels of `menu`'s lines.
+    fn labels(menu: &Menu) -> Vec<String> {
+        menu.items().iter().map(|i| i.label.clone()).collect()
+    }
+
+    /// The list `mode` shows.
+    fn list(mode: &Mode) -> &Menu {
+        match mode {
+            Mode::WeaponMenu { menu, .. }
+            | Mode::SkillMenu { menu, .. }
+            | Mode::EquipMenu { menu, .. }
+            | Mode::UnitList { menu, .. } => menu,
+            Mode::Targeting(t) => &t.list,
+            _ => panic!("{mode:?}"),
+        }
+    }
+
+    /// The screen paints the mode's lists in the player's language
+    /// (ticket 0235); what is played stays as it is.
+    #[test]
+    fn a_mode_is_told_in_the_players_language_with_its_focus_kept() {
+        use crate::words::testing::{shout, shouting};
+
+        let c = ctx();
+        let s = skirmish(&c, 20);
+        let (lang, code) = (shouting(&c.content), shout());
+        let words = Words::new(&lang, &code);
+        let Mode::ActionMenu { sel, weapons, .. } = skirmish_menu(&s) else {
+            panic!("no action menu");
+        };
+        let weapon_list = Mode::WeaponMenu {
+            menu: weapon_menu(&s, IN_PLAY, &sel, &weapons),
+            sel: sel.clone(),
+            weapons: weapons.clone(),
+        };
+        let (units, ids) = unit_list(&s, IN_PLAY);
+        let targeting = Targeting::new(&s, sel.clone(), &weapons[0], None).unwrap();
+        let skills = skill_choices(&s, &sel);
+        // Each list, with a name it shows in English.
+        let lists = [
+            (weapon_list, "Steel Sword"),
+            (
+                // No ally is near enough to inspire: the list, unopened.
+                Mode::SkillMenu {
+                    menu: skill_menu(&s, IN_PLAY, sel.unit, &skills),
+                    sel: sel.clone(),
+                    choices: skills,
+                },
+                "Inspire",
+            ),
+            (open_equip(sel.clone(), &s).0, "Iron Sword"),
+            (
+                Mode::UnitList {
+                    menu: units,
+                    units: ids,
+                },
+                "Test Knight",
+            ),
+            (Mode::Targeting(Box::new(targeting)), "Flowing Cut"),
+        ];
+        for (mode, name) in lists {
+            // Move the focus off where a list opens, if it can move.
+            let (mode, _) = step(mode, Action::CursorDown, p(7, 2), &s);
+            let has = |mode: &Mode, name: &str| labels(list(mode)).join("\n").contains(name);
+            assert!(has(&mode, name), "{name}: {:?}", labels(list(&mode)));
+            // English is the mode itself.
+            assert!(matches!(mode.told(&s, Words::ENGLISH), Cow::Borrowed(_)));
+            assert!(matches!(mode.told(&s, IN_PLAY), Cow::Borrowed(_)));
+            let told = mode.told(&s, words).into_owned();
+            assert!(has(&told, &name.to_uppercase()), "{name}");
+            assert!(!has(&told, name), "{name}");
+            let (ours, theirs) = (list(&mode), list(&told));
+            assert_eq!(theirs.focus(), ours.focus(), "{name}");
+            assert_eq!(theirs.items().len(), ours.items().len(), "{name}");
+            let enabled =
+                |menu: &Menu| -> Vec<bool> { menu.items().iter().map(|i| i.enabled).collect() };
+            assert_eq!(enabled(theirs), enabled(ours), "{name}");
+            // Only the words differ: playing on from either is the same.
+            assert_eq!(std::mem::discriminant(&told), std::mem::discriminant(&mode));
+            assert_eq!(told.selection(), mode.selection());
+        }
+        // A mode without a list is told as it is.
+        for mode in [Mode::default(), Mode::Objective, skirmish_menu(&s)] {
+            assert_eq!(mode.told(&s, words).into_owned(), mode);
+        }
     }
 }

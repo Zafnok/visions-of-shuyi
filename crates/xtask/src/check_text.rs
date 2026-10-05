@@ -20,6 +20,13 @@
 //! A literal the rules get wrong is let through with a
 //! `// check-text: not player text` comment on its line or the line above
 //! its item.
+//!
+//! It also fails on a screen that reads a `name` field itself (ticket
+//! 0235): the data's names are English, and a screen shows one through
+//! `ctx.words()` (`crates/ui/src/words.rs`), which gives it in the
+//! player's language. Reading `.name` (not calling `.name()`) on anything
+//! but `self` counts; a view's own field is let through with a
+//! `// check-text: not a data name` comment.
 
 use std::cmp::Ordering;
 use std::fmt::Write as _;
@@ -41,6 +48,16 @@ pub const MARKER: &str = "check-text: not player text";
 /// What every failure says to do about it.
 pub const HINT: &str =
     "put the text in assets/lang/en/ui.ron and ask for it with `ctx.text(\"screen.thing\")`";
+
+/// The comment that lets a `.name` read on its line (or the item below
+/// it) through.
+pub const NAME_MARKER: &str = "check-text: not a data name";
+
+/// What a `.name` read is told to do about it.
+pub const NAME_HINT: &str = "show the name through `ctx.words()` (crates/ui/src/words.rs), or mark a      view's own field with `// check-text: not a data name`";
+
+/// Where the names are read on purpose: the helpers every screen uses.
+const WORDS_FILE: &str = "crates/ui/src/words.rs";
 
 /// The Rust source tree scanned.
 const DIR: &str = "crates/ui/src";
@@ -76,6 +93,72 @@ pub fn run(repo_root: &Path) -> (Vec<Hit>, Vec<String>) {
         }
     }
     (hits, errors)
+}
+
+/// Scans `repo_root` and returns what is wrong, one line each: every
+/// `.name` field read found ([`scan_names`]), by file then line, and every
+/// file that couldn't be read. Empty when the screens read none.
+pub fn run_names(repo_root: &Path) -> Vec<String> {
+    let mut errors = Vec::new();
+    let mut found = Vec::new();
+    for file in files_under(&repo_root.join(DIR), &mut errors) {
+        let rel = relative(repo_root, &file);
+        if !has_ext(&file, "rs") || is_skipped(&rel) || rel == WORDS_FILE {
+            continue;
+        }
+        match fs::read_to_string(&file) {
+            Ok(source) => found.extend(scan_names(&rel, &source).iter().map(name_error)),
+            Err(e) => errors.push(format!("{rel}: cannot read: {e}")),
+        }
+    }
+    found.extend(errors);
+    found
+}
+
+/// What the `.name` read `hit` is told.
+fn name_error(hit: &Hit) -> String {
+    format!(
+        "{}:{}: `{}` is read here — {NAME_HINT}",
+        hit.file, hit.line, hit.text
+    )
+}
+
+/// The `.name` field reads of one Rust file (`rel` is its repo-relative
+/// path, for the report): `.name` not followed by `(`, on anything but
+/// `self`, outside tests and lines let through by [`NAME_MARKER`]. A hit's
+/// text is what was read (`unit.name`).
+pub fn scan_names(rel: &str, source: &str) -> Vec<Hit> {
+    const FIELD: &str = ".name";
+    let lines = lex(source);
+    let exempt = exempt_lines(&lines, Some(NAME_MARKER));
+    let mut hits = Vec::new();
+    for (i, line) in lines.iter().enumerate() {
+        if exempt.get(i).copied().unwrap_or(false) {
+            continue;
+        }
+        for (at, _) in line.code.match_indices(FIELD) {
+            let after = line.code[at + FIELD.len()..].chars().next();
+            if after.is_some_and(|c| is_ident(c) || c == '(') {
+                continue;
+            }
+            let before = &line.code[..at];
+            let start = before
+                .char_indices()
+                .rev()
+                .take_while(|&(_, c)| is_ident(c))
+                .last()
+                .map_or(at, |(start, _)| start);
+            let receiver = &before[start..];
+            if receiver != "self" {
+                hits.push(Hit {
+                    file: rel.to_owned(),
+                    line: i + 1,
+                    text: format!("{receiver}{FIELD}"),
+                });
+            }
+        }
+    }
+    hits
 }
 
 /// Whether the file `rel` is left out: tests and the debug screens.
@@ -248,6 +331,87 @@ mod tests {
     use super::*;
 
     const SCREEN: &str = "crates/ui/src/screens/foo.rs";
+
+    /// The `.name` reads found in `source`, as `line: text`.
+    fn names(source: &str) -> Vec<String> {
+        scan_names(SCREEN, source)
+            .iter()
+            .map(|h| format!("{}: {}", h.line, h.text))
+            .collect()
+    }
+
+    #[test]
+    fn a_name_field_read_is_found_and_a_call_is_not() {
+        let source = "fn draw(&self, unit: &Unit, class: &ClassDef) {
+    print(&unit.name);
+    let n = (class.name.len(), state.unit(id).name.clone());
+    let fine = (screen.name(), self.name.len(), unit.names, unit.name_w, \"x.name\");
+    let label = def.name; // check-text: not a data name
+    // check-text: not a data name
+    let row = Row {
+        text: page.name.clone(),
+    };
+    print(table.items[0].name)
+}
+
+#[cfg(test)]
+mod tests {
+    fn t() { unit.name = String::new(); }
+}
+";
+        assert_eq!(
+            names(source),
+            ["2: unit.name", "3: class.name", "3: .name", "10: .name"]
+        );
+        let hits = scan_names(SCREEN, source);
+        assert_eq!((hits[0].file.as_str(), hits[0].line), (SCREEN, 2));
+    }
+
+    #[test]
+    fn a_name_read_is_told_where_it_is_and_what_to_do() {
+        let hits = scan_names(SCREEN, "fn f() { a.name }\n");
+        assert_eq!(
+            name_error(&hits[0]),
+            format!("{SCREEN}:1: `a.name` is read here — {NAME_HINT}")
+        );
+    }
+
+    #[test]
+    fn the_real_screens_read_no_name_field() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        assert_eq!(run_names(&root), Vec::<String>::new());
+    }
+
+    #[test]
+    fn name_reads_are_looked_for_in_screens_but_not_tests_debug_or_the_helpers() {
+        let root = std::env::temp_dir().join(format!("xtask-check-names-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let src = root.join("crates/ui/src");
+        fs::create_dir_all(src.join("screens")).unwrap();
+        fs::create_dir_all(src.join("debug")).unwrap();
+        let read = "fn f(u: &Unit) -> &str { &u.name }\n";
+        for file in [
+            "screens/foo.rs",
+            "screens/tests.rs",
+            "debug.rs",
+            "debug/menu.rs",
+            "harness.rs",
+            "words.rs",
+            "screens/notes.txt",
+        ] {
+            fs::write(src.join(file), read).unwrap();
+        }
+        let found = run_names(&root);
+        let _ = fs::remove_dir_all(&root);
+        assert_eq!(
+            found,
+            [format!(
+                "crates/ui/src/screens/foo.rs:1: `u.name` is read here — {NAME_HINT}"
+            )]
+        );
+        // A missing tree is reported, not passed over.
+        assert_eq!(run_names(&root).len(), 1);
+    }
 
     /// The literals found in `source`, as `line: text`.
     fn found(source: &str) -> Vec<String> {

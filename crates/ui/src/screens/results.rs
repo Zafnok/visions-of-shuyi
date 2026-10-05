@@ -22,6 +22,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::words::Words;
 
 /// The key of the screen's heading, on the panel's border, in the
 /// language files ([`Ctx::text`]).
@@ -105,16 +106,18 @@ impl ResultsScreen {
 
     /// The results `rewards` of the won battle `state`, which began with
     /// `charges` rewind charges; `gold` is the party's gold now.
-    pub fn new(rewards: &BattleRewards, state: &BattleState, charges: u8, gold: Gold) -> Self {
-        let class = |u: &trpg_core::Unit| {
-            let def = state.classes().get(&u.class);
-            def.map_or_else(|| u.class.0.clone(), |c| c.name.clone())
-        };
+    pub fn new(
+        rewards: &BattleRewards,
+        (state, words): (&BattleState, Words<'_>),
+        charges: u8,
+        gold: Gold,
+    ) -> Self {
+        let class = |u: &trpg_core::Unit| words.class_of(&u.class, state.classes()).to_owned();
         // No unused charge, no bonus: no bars to show.
         let deployed = rewards.deployed.iter().filter(|_| rewards.bonus_exp > 0);
         let rows = deployed
             .map(|u| Row {
-                name: u.name.clone(),
+                name: words.unit(u).to_owned(),
                 class: class(u),
                 level: u.level,
                 exp: u.exp,
@@ -122,7 +125,7 @@ impl ResultsScreen {
             })
             .collect();
         let timings = PROGRESS_TIMINGS;
-        let pages = Progress::new(&rewards.events, &rewards.deployed, state, timings)
+        let pages = Progress::new(&rewards.events, &rewards.deployed, (state, words), timings)
             .and_then(Progress::without_exp_bars);
         Self {
             clear_gold: rewards.clear_gold,
@@ -266,6 +269,7 @@ impl ResultsScreen {
             let y = UNIT_ROW + dy;
             let shown = self.exp_shown(row);
             let levels = shown / EXP_PER_LEVEL;
+            // check-text: not a data name (the view's own)
             let name: String = row.name.chars().take(NAME_W).collect();
             let class: String = row.class.chars().take(CLASS_W).collect();
             buf.print(X, y, &name, c(UiColor::Player), bg);

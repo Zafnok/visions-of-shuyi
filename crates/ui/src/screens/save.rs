@@ -168,14 +168,14 @@ impl SlotPickerScreen {
     /// the first empty slot (Nick, PR #141), so that Confirm never
     /// overwrites a save by reflex; the first slot if none is empty.
     pub fn save(ctx: &Ctx, campaign: Campaign) -> Self {
-        let slots = save::slots(ctx.storage.as_ref(), &ctx.content);
+        let slots = save::slots(ctx.storage.as_ref(), &ctx.content, ctx.words());
         let empty = slots.iter().position(|s| *s == Slot::Empty);
         Self::new(Purpose::Save(Box::new(campaign)), slots, empty)
     }
 
     /// The picker for loading, focused on the first slot with a save.
     pub fn load(ctx: &Ctx) -> Self {
-        let slots = save::slots(ctx.storage.as_ref(), &ctx.content);
+        let slots = save::slots(ctx.storage.as_ref(), &ctx.content, ctx.words());
         let saved = slots.iter().position(|s| matches!(s, Slot::Saved(_)));
         Self::new(Purpose::Load, slots, saved)
     }

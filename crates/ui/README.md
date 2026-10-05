@@ -362,6 +362,19 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      builds. Look text up when drawing, or again whenever the screen is
      shown, so it follows `ctx.lang`. `cargo xtask check-text` counts the
      literals left and fails on a new one.
+   - Text that comes from the data (a unit's, class's, item's, spell's,
+     skill's, art's or terrain's name, a tip, a chapter title, a battle
+     note, a dialogue line) is English in the data and in `core`. Never
+     show a `name` field yourself: ask `ctx.words()` (`words.rs`), e.g.
+     `words.unit(unit)`, `words.item(&id, items)`, `words.class(def)`,
+     which gives it in the player's language. `Words` is `Copy`: pass it
+     to whatever builds the text. A screen that names things where it has
+     no `Ctx` keeps `ctx.language()` (the battle screen does, for a
+     command applied between frames). `check-text` fails on a `.name`
+     field read; a view's own `name` field is let through with a
+     `// check-text: not a data name` comment. A scene is played with
+     `DialogueScreen::told`. In a test, `words::testing::shouting` makes
+     a language with every name in capitals.
    - Never compute game rules here; send `core` commands and animate events.
    - Shared state that several screens need goes in `Ctx` (a plain struct).
    - Sounds and music: `ctx.audio.play_sound("menu_move")`,

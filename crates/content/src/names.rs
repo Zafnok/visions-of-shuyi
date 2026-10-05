@@ -13,6 +13,7 @@ use trpg_core::lead::{self, Part};
 use crate::bundle;
 use crate::dialogue::char_problem;
 use crate::error::ContentError;
+use crate::lang::text_width;
 use crate::ron_loader::parse_ron;
 use crate::terrain::line_of;
 
@@ -61,13 +62,13 @@ impl Names {
         self.names.get(id).map(String::as_str)
     }
 
-    /// Characters in the longest display name (0 for an empty table): what
+    /// Cells of the longest display name (0 for an empty table): what
     /// every name token counts as when measuring text, so a rename can't
     /// push a line past its limit.
     pub fn longest(&self) -> usize {
         self.names
             .values()
-            .map(|n| n.chars().count())
+            .map(|n| text_width(n))
             .max()
             .unwrap_or(0)
     }
@@ -161,12 +162,20 @@ fn contains_word(text: &str, word: &str) -> bool {
     })
 }
 
-/// `name` with its first letter capitalised.
+/// Whether `c` is a letter of the Latin script: ASCII, Latin-1 or Latin
+/// Extended-A/B.
+fn is_latin_letter(c: char) -> bool {
+    c.is_ascii_alphabetic() || (('\u{c0}'..='\u{24f}').contains(&c) && c.is_alphabetic())
+}
+
+/// `name` with its first letter capitalised, if it starts with a Latin
+/// letter; as it is otherwise (a name in a script without capitals).
 fn capitalise(name: &str) -> String {
     let mut chars = name.chars();
-    chars.next().map_or_else(String::new, |first| {
-        first.to_ascii_uppercase().to_string() + chars.as_str()
-    })
+    match chars.next() {
+        Some(first) if is_latin_letter(first) => first.to_uppercase().chain(chars).collect(),
+        _ => name.to_owned(),
+    }
 }
 
 /// Loads and validates the embedded names table.

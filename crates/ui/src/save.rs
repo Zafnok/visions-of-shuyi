@@ -14,6 +14,7 @@ use trpg_core::{Campaign, GameMode, SaveFile, SaveHeader, SavePoint};
 
 use crate::screen::Ctx;
 use crate::storage::{Storage, StorageError};
+use crate::words::Words;
 
 /// How many save slots there are (`death-and-difficulty.md`).
 pub const SLOTS: usize = 30;
@@ -145,11 +146,16 @@ impl SlotSummary {
     }
 }
 
-/// The chapter a chapter save of `campaign` is named after: the title of
-/// the one it goes on with (the one after the chapter it cleared); the
-/// cleared chapter's, and `true`, when no chapter follows yet; the
-/// chapter's id if the content no longer has it.
-pub fn next_chapter_title(content: &Content, campaign: &Campaign) -> (String, bool) {
+/// The chapter a chapter save of `campaign` is named after, in the
+/// language of `words`: the title of the one it goes on with (the one
+/// after the chapter it cleared); the cleared chapter's, and `true`, when
+/// no chapter follows yet; the chapter's id if the content no longer has
+/// it.
+pub fn next_chapter_title(
+    content: &Content,
+    words: Words<'_>,
+    campaign: &Campaign,
+) -> (String, bool) {
     let Some(cleared) = content.chapters.get(&campaign.chapter) else {
         return (campaign.chapter.clone(), false);
     };
@@ -158,18 +164,18 @@ pub fn next_chapter_title(content: &Content, campaign: &Campaign) -> (String, bo
         .as_ref()
         .and_then(|id| content.chapters.get(id));
     match next {
-        Some(next) => (next.title.clone(), false),
-        None => (cleared.title.clone(), true),
+        Some(next) => (words.chapter_title(next).to_owned(), false),
+        None => (words.chapter_title(cleared).to_owned(), true),
     }
 }
 
 /// What save slot `slot` holds. A slot holding a battle save (never
 /// written there) is unreadable.
-pub fn slot(storage: &dyn Storage, content: &Content, slot: usize) -> Slot {
+pub fn slot(storage: &dyn Storage, content: &Content, words: Words<'_>, slot: usize) -> Slot {
     match read(storage, &slot_key(slot)) {
         Ok(None) => Slot::Empty,
         Ok(Some(save)) if save.point == SavePoint::ChapterCleared => {
-            let (chapter, cleared) = next_chapter_title(content, &save.campaign);
+            let (chapter, cleared) = next_chapter_title(content, words, &save.campaign);
             Slot::Saved(Box::new(SlotSummary {
                 chapter,
                 cleared,
@@ -185,8 +191,10 @@ pub fn slot(storage: &dyn Storage, content: &Content, slot: usize) -> Slot {
 }
 
 /// Every save slot, slot 1 first.
-pub fn slots(storage: &dyn Storage, content: &Content) -> Vec<Slot> {
-    (1..=SLOTS).map(|n| slot(storage, content, n)).collect()
+pub fn slots(storage: &dyn Storage, content: &Content, words: Words<'_>) -> Vec<Slot> {
+    (1..=SLOTS)
+        .map(|n| slot(storage, content, words, n))
+        .collect()
 }
 
 /// `seconds` as `h:mm:ss`.

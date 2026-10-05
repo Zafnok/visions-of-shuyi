@@ -39,6 +39,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::words::Words;
 
 /// Text key of the question Cancel asks on the tabs, when leaving is
 /// allowed. Like all the screen's text it is in `assets/lang/en/ui.ron`
@@ -311,16 +312,13 @@ impl PreparationsScreen {
     }
 
     /// The name of item `id`.
-    fn item_name(&self, id: &ItemId) -> String {
-        self.setup()
-            .items
-            .get(id)
-            .map_or_else(|| id.0.clone(), |d| d.name().to_owned())
+    fn item_name(&self, words: Words<'_>, id: &ItemId) -> String {
+        words.item(id, &self.setup().items).to_owned()
     }
 
     /// What `slot` of `unit` holds: its name and, for a weapon, its
     /// durability (`20/25`).
-    fn held(&self, unit: &Unit, slot: GearSlot) -> Option<(String, String)> {
+    fn held(&self, words: Words<'_>, unit: &Unit, slot: GearSlot) -> Option<(String, String)> {
         match slot {
             GearSlot::Weapon(s) => {
                 let copy = unit.loadout.weapon(s)?;
@@ -330,17 +328,17 @@ impl PreparationsScreen {
                     .weapon(&copy.def)
                     .map_or(0, |w| w.durability);
                 Some((
-                    self.item_name(&copy.def),
+                    self.item_name(words, &copy.def),
                     format!("{:>2}/{max}", copy.durability_left),
                 ))
             }
             GearSlot::Armour => {
                 let id = unit.loadout.armour.as_ref()?;
-                Some((self.item_name(id), String::new()))
+                Some((self.item_name(words, id), String::new()))
             }
             GearSlot::Accessory => {
                 let id = unit.loadout.accessory.as_ref()?;
-                Some((self.item_name(id), String::new()))
+                Some((self.item_name(words, id), String::new()))
             }
         }
     }
@@ -354,7 +352,7 @@ impl PreparationsScreen {
         };
         let items = &self.prep.setup.items;
         let mut rows = Vec::new();
-        if self.held(unit, slot).is_some() {
+        if self.held(ctx.words(), unit, slot).is_some() {
             rows.push(StockRow {
                 from: Source::PutBack,
                 text: ctx.text(PUT_BACK).to_owned(),
@@ -390,7 +388,7 @@ impl PreparationsScreen {
                     rows.push(row(
                         StockItem::Weapon(i),
                         &copy.def,
-                        def.name.clone(),
+                        ctx.words().item(&copy.def, items).to_owned(),
                         detail,
                     ));
                 }
@@ -404,7 +402,7 @@ impl PreparationsScreen {
                         (GearSlot::Accessory, Some(ItemDef::Accessory(a))) => bonus_text(&a.bonus),
                         _ => continue,
                     };
-                    let name = self.item_name(id);
+                    let name = self.item_name(ctx.words(), id);
                     rows.push(row(
                         StockItem::Item(id.clone()),
                         id,
@@ -439,7 +437,8 @@ impl PreparationsScreen {
                     GearSlot::Armour => unit.loadout.armour.as_ref(),
                     GearSlot::Accessory => unit.loadout.accessory.as_ref(),
                 };
-                let (Some(id), Some((name, wear))) = (id, self.held(unit, theirs)) else {
+                let held = self.held(ctx.words(), unit, theirs);
+                let (Some(id), Some((name, wear))) = (id, held) else {
                     continue;
                 };
                 // Only what this unit could take: the stock's dimmed rows
@@ -457,7 +456,7 @@ impl PreparationsScreen {
                 if mine == Some(id) {
                     continue;
                 }
-                let from = ctx.text_with("prep.from", &[("unit", &unit.name)]);
+                let from = ctx.text_with("prep.from", &[("unit", &ctx.words().unit(unit))]);
                 let detail = if wear.is_empty() {
                     from
                 } else {
@@ -528,6 +527,7 @@ impl PreparationsScreen {
     /// The name of the weapon `unit` attacks with from `slot` (`None`: its
     /// equipped weapon or spell); `no weapon` without one.
     fn in_hand(ctx: &Ctx, setup: &BattleSetup, unit: &Unit, slot: Option<usize>) -> String {
+        let words = ctx.words();
         let equipped = slot
             .map(Equipped::Weapon)
             .or_else(|| unit.loadout.equipped.clone());
@@ -535,9 +535,12 @@ impl PreparationsScreen {
             Some(Equipped::Weapon(s)) => unit
                 .loadout
                 .weapon(s)
-                .and_then(|w| setup.items.weapon(&w.def))
-                .map(|w| w.name.clone()),
-            Some(Equipped::Spell(spell)) => setup.spells.get(&spell).map(|s| s.name.clone()),
+                .filter(|w| setup.items.weapon(&w.def).is_some())
+                .map(|w| words.item(&w.def, &setup.items).to_owned()),
+            Some(Equipped::Spell(spell)) => {
+                let spell = setup.spells.get(&spell);
+                spell.map(|s| words.spell(s).to_owned())
+            }
             None => None,
         };
         name.unwrap_or_else(|| ctx.text("prep.no_weapon").to_owned())
@@ -647,7 +650,8 @@ impl PreparationsScreen {
         ctx.audio.menu(MenuSound::Denied);
         if let (Some(why), Some(unit)) = (row.unusable, self.unit()) {
             let reason = reason_text(ctx, why);
-            let args: [(&str, &dyn Display); 2] = [("unit", &unit.name), ("reason", &reason)];
+            let name = ctx.words().unit(unit);
+            let args: [(&str, &dyn Display); 2] = [("unit", &name), ("reason", &reason)];
             self.message = Some(ctx.text_with("prep.cant", &args));
         }
     }
@@ -865,7 +869,10 @@ impl PreparationsScreen {
         let units: Vec<(String, bool)> = self
             .units()
             .iter()
-            .map(|(who, u)| (u.name.clone(), matches!(who, PrepUnit::Deployed(_))))
+            .map(|(who, u)| {
+                let name = ctx.words().unit(u).to_owned();
+                (name, matches!(who, PrepUnit::Deployed(_)))
+            })
             .collect();
         let on_units = self.focus == Focus::Units;
         Self::draw_box(ctx, buf, UNITS_BOX, ctx.text("prep.units"), on_units);
@@ -874,9 +881,9 @@ impl PreparationsScreen {
         let Some(unit) = self.unit() else {
             return;
         };
-        let class = self.prep.setup.classes.get(&unit.class);
-        let class = class.map_or(unit.class.0.as_str(), |c| c.name.as_str());
-        let title = format!("{} · {class}", unit.name);
+        let words = ctx.words();
+        let class = words.class_of(&unit.class, &self.prep.setup.classes);
+        let title = format!("{} · {class}", words.unit(unit));
         let on_slots = self.focus == Focus::Slots;
         Self::draw_box(ctx, buf, SLOTS_BOX, &title, on_slots);
         let slots = self.slots();
@@ -889,7 +896,7 @@ impl PreparationsScreen {
                     GearSlot::Accessory => "prep.slot.accessory",
                 });
                 let (name, wear) = self
-                    .held(unit, slot)
+                    .held(ctx.words(), unit, slot)
                     .unwrap_or_else(|| (EMPTY.to_owned(), String::new()));
                 (format!("{label:<9}  {name:<15} {wear}"), true)
             })
@@ -922,10 +929,10 @@ impl PreparationsScreen {
     }
 
     /// One consumable row: `Potion ×4  Restore 10 HP`.
-    fn consumable_row(&self, id: &ItemId, count: usize) -> (String, bool) {
+    fn consumable_row(&self, words: Words<'_>, id: &ItemId, count: usize) -> (String, bool) {
         let effect = self.prep.setup.items.consumable(id).map(|c| c.effect);
         let effect = effect.map(effect_text).unwrap_or_default();
-        let name = self.item_name(id);
+        let name = self.item_name(words, id);
         (format!("{name:<15} ×{count:<2}  {effect}"), true)
     }
 
@@ -936,7 +943,10 @@ impl PreparationsScreen {
         let rows: Vec<(String, bool)> = self
             .spare()
             .iter()
-            .map(|(id, n)| self.consumable_row(id, usize::try_from(*n).unwrap_or(usize::MAX)))
+            .map(|(id, n)| {
+                let n = usize::try_from(*n).unwrap_or(usize::MAX);
+                self.consumable_row(ctx.words(), id, n)
+            })
             .collect();
         Self::draw_list(ctx, buf, SPARE_BOX, &rows, self.spare, (on_spare, false));
         let on_pack = self.focus == Focus::Pack;
@@ -944,7 +954,7 @@ impl PreparationsScreen {
         let rows: Vec<(String, bool)> = self
             .packed()
             .iter()
-            .map(|(id, n)| self.consumable_row(id, *n))
+            .map(|(id, n)| self.consumable_row(ctx.words(), id, *n))
             .collect();
         Self::draw_list(ctx, buf, PACK_BOX, &rows, self.pack, (on_pack, false));
     }

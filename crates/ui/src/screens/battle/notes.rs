@@ -9,6 +9,7 @@ use trpg_core::{BattleNote, UnitId};
 use super::layout::MAP_VIEW;
 use super::map_menu::centred_top;
 use crate::widgets::wrap::word_wrap;
+use crate::words::Words;
 
 /// The title of the notes box.
 pub const NOTES_TITLE: &str = "BATTLE NOTES";
@@ -29,12 +30,12 @@ pub const BLINK_S: f32 = 0.4;
 
 /// The lines of `notes`: each starts with [`MARKER`] and wraps to
 /// [`NOTE_WIDTH`], its further lines indented under its text.
-pub fn note_lines(notes: &[BattleNote]) -> Vec<String> {
+pub fn note_lines(notes: &[BattleNote], words: Words<'_>) -> Vec<String> {
     let indent = MARKER.chars().count();
     notes
         .iter()
         .flat_map(|note| {
-            let lines = word_wrap(&note.text, NOTE_WIDTH - indent);
+            let lines = word_wrap(words.battle_note(note), NOTE_WIDTH - indent);
             lines.into_iter().enumerate().map(move |(i, line)| {
                 if i == 0 {
                     format!("{MARKER}{line}")
@@ -94,19 +95,22 @@ mod tests {
             ),
         ];
         assert_eq!(
-            note_lines(&notes),
+            note_lines(&notes, Words::ENGLISH),
             [
                 "• Frost Elemental: weak to Fire, absorbs Ice.",
                 "• Burn the forest to cut off the ambush before",
                 "  the riders reach the bridge.",
             ]
         );
-        assert_eq!(note_lines(&[]), Vec::<String>::new());
+        assert_eq!(note_lines(&[], Words::ENGLISH), Vec::<String>::new());
         // A line as wide as it may be isn't wrapped.
         let full = "x".repeat(NOTE_WIDTH - 2);
-        assert_eq!(note_lines(&[note(&full, &[])]), [format!("• {full}")]);
+        assert_eq!(
+            note_lines(&[note(&full, &[])], Words::ENGLISH),
+            [format!("• {full}")]
+        );
         let over = format!("{full} y");
-        assert_eq!(note_lines(&[note(&over, &[])]).len(), 2);
+        assert_eq!(note_lines(&[note(&over, &[])], Words::ENGLISH).len(), 2);
     }
 
     #[test]
@@ -153,7 +157,7 @@ mod tests {
     fn every_battles_notes_fit_the_map_view() {
         let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
         for (id, battle) in &content.battles {
-            let lines = note_lines(&battle.battle_notes);
+            let lines = note_lines(&battle.battle_notes, Words::ENGLISH);
             let rows = i32::try_from(lines.len()).unwrap_or(i32::MAX);
             assert!(rows + 4 + 4 <= MAP_VIEW.h, "{id}: {rows} lines");
             assert!(
