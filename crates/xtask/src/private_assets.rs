@@ -289,6 +289,12 @@ mod tests {
         "commit.gpgsign=false",
     ];
 
+    /// Settings that keep git's own housekeeping out of a scratch
+    /// repository. A commit or a push starts it in the background, and its
+    /// repack then moves files under `objects/` while the next command
+    /// copies them (ticket 0120: seen on a Mac runner with git 2.55).
+    const NO_UPKEEP: [&str; 2] = ["gc.auto=0", "maintenance.auto=false"];
+
     /// `git <args>` in `dir`, which must work.
     fn g(dir: &Path, args: &[&str]) -> String {
         git(dir, args).unwrap_or_else(|e| panic!("git {args:?}: {e}"))
@@ -327,6 +333,10 @@ mod tests {
             }
             fs::create_dir_all(root.join("public")).unwrap();
             g(&root, &["init", "--quiet", "--initial-branch=main", "src"]);
+            for setting in NO_UPKEEP {
+                let (key, value) = setting.split_once('=').unwrap();
+                g(&src, &["config", key, value]);
+            }
             fs::write(src.join("README.md"), "private").unwrap();
             fs::write(src.join("game/portraits/a.portrait"), "one").unwrap();
             fs::write(src.join("library/tiny-tales/face.png"), "face").unwrap();
@@ -337,7 +347,15 @@ mod tests {
             fs::write(src.join("voice/en/voice.ron"), "manifest").unwrap();
             fs::write(src.join("voice/en/scene/line.ogg"), "clip").unwrap();
             let two = commit(&src, "two");
-            g(&root, &["clone", "--quiet", "--bare", "src", "remote.git"]);
+            // `--no-local`: over git's own protocol, as from a real remote,
+            // not by copying the files under `src/.git/objects`.
+            let [gc, maintenance] = NO_UPKEEP;
+            let bare = ["clone", "--quiet", "--bare", "--no-local"];
+            let quiet = ["--config", gc, "--config", maintenance];
+            g(
+                &root,
+                &[&bare[..], &quiet[..], &["src", "remote.git"]].concat(),
+            );
             Self { root, one, two }
         }
 
