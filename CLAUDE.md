@@ -76,8 +76,11 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 - Use `cargo install --locked <tool>` (cargo-binstall fails to build here).
 - `cargo xtask clean-merged-targets [--dry-run]` deletes the `target/` build
   folder of every worktree whose PR has merged (10+ GB each).
-- **Bought art** (ADR-0040) is never in this repository, and nothing made
-  from it (a mockup, a screenshot) is ever committed here.
+- **Bought art** (ADR-0040): the files are never in this repository, and
+  neither is a picture that hands the art out (a sheet, a cut-out sprite, a
+  mockup pasted together from the files). A screenshot of the running game
+  that shows the art may be committed (Nick, 2026-10-05: the README and the
+  store pages need them; "we just don't distribute the raw files").
   `cargo xtask private-assets` checks the private repository out into
   `assets-private/` (only `game/`; add `--library` for the bought packs in
   `assets-private/library/`). Gates never read it. To see it in a build:

@@ -13,7 +13,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Zafnok_tactical-rpg&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Zafnok_tactical-rpg)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Zafnok_tactical-rpg&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Zafnok_tactical-rpg)
 
-<img src="docs/img/battle-forecast.png" alt="A small battle map drawn in coloured glyphs: a river, forest, mountains and a fort. The lord stands next to a brigand; the forecast panel shows hit, crit and damage for both sides, and a menu offers a plain attack or the Combat Arts Flowing Cut and Guard Break." width="100%">
+<img src="docs/img/battle-forecast.png" alt="A small battle map in pixel art: a river, forest, mountains and a fort. The lord stands next to a brigand; the forecast panel shows hit, crit and damage for both sides, and a menu offers a plain attack or the Combat Arts Flowing Cut and Guard Break." width="100%">
 
 </div>
 
@@ -50,19 +50,18 @@ Every key and button can be rebound.
 <td align="center"><sub>Spells</sub></td>
 </tr>
 <tr>
-<td width="50%"><img src="docs/img/dialogue.png" alt="A dialogue scene: two pixel-art portraits face each other above a text box." width="100%"></td>
-<td width="50%"><img src="docs/img/preparations.png" alt="The Preparations screen: the army's units, one unit's weapons, armour and accessory, and the weapons in stock." width="100%"></td>
+<td width="50%"><img src="docs/img/dialogue.png" alt="A dialogue scene: two portraits face each other above a text box." width="100%"></td>
+<td width="50%"><img src="docs/img/battle-glyphs.png" alt="The same battle and forecast as the picture at the top, with the map drawn in coloured glyphs: two letters for each unit." width="100%"></td>
 </tr>
 <tr>
 <td align="center"><sub>Dialogue scenes</sub></td>
-<td align="center"><sub>Preparations: loadouts and the shared pack</sub></td>
+<td align="center"><sub>The glyph look: the same battle as the top picture</sub></td>
 </tr>
 </table>
 
-<sub>These pictures show the glyph look with test units and placeholder
-portraits. The pixel art was bought and is not part of this repository, so
-it is only shown in the game itself:
-[the browser build](https://zafnok.github.io/visions-of-shuyi/) uses it.</sub>
+<sub>The pictures show test units on a test map. The lead's face is still
+a placeholder: the cast's portraits are next. The pixel art was bought and
+its files are not part of this repository.</sub>
 
 ## What you can play today
 
@@ -96,10 +95,16 @@ buttons, a credits screen, and music and sound throughout.
 
 <table>
 <tr>
+<td width="50%"><img src="docs/img/preparations.png" alt="The Preparations screen: the army's units, one unit's weapons, armour and accessory, and the weapons in stock." width="100%"></td>
 <td width="50%"><img src="docs/img/key-bindings.png" alt="The key bindings screen: each action with up to three keys, a tab for the keyboard layout and one for the controller." width="100%"></td>
-<td width="50%" valign="top">
+</tr>
+<tr>
+<td align="center"><sub>Preparations: loadouts and the shared pack</sub></td>
+<td align="center"><sub>Rebinding keys and controller buttons</sub></td>
+</tr>
+</table>
 
-**Not in yet**
+**Not in yet:**
 
 - The real Chapter 1: its map, its cast with their portraits, and its
   script in the game. The script is written; today's build plays a test
@@ -108,13 +113,9 @@ buttons, a credits screen, and music and sound throughout.
 - Victory, defeat and Game Over music.
 - Shops and villages on the map.
 
-</td>
-</tr>
-</table>
-
 ### Progress
 
-*As of 2026-10-04. Work is tracked as tickets in [`tickets/`](tickets/README.md);
+*As of 2026-10-05. Work is tracked as tickets in [`tickets/`](tickets/README.md);
 the numbers below count finished tickets out of all tickets written so far.*
 
 | Area | Progress | Done |

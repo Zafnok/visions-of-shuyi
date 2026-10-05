@@ -324,7 +324,10 @@ fn the_summary_warns_about_bought_art() {
         "frame-png: title → a.png (2×1)
 warning: "
     ));
-    assert!(warned.contains("never commit it"), "{warned}");
+    assert!(
+        warned.contains("only as a screenshot of the game"),
+        "{warned}"
+    );
 }
 
 #[test]
