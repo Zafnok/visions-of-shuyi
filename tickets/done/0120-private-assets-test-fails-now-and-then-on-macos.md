@@ -5,10 +5,10 @@ type: bug
 milestone: M0 Foundation
 model: sonnet-5
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-04
 ---
 
 # 0120 — The private-assets fetch test fails now and then on macOS
@@ -66,10 +66,10 @@ None.
 
 ## Acceptance criteria
 
-- [ ] The test passes 50 times in a row on `macos-latest` (a temporary
+- [x] The test passes 50 times in a row on `macos-latest` (a temporary
       loop in CI; removed before merge).
-- [ ] No test in `private_assets` is skipped, retried or ignored.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No test in `private_assets` is skipped, retried or ignored.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -79,5 +79,37 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Cause, confirmed on a Mac runner.** A temporary CI job looped the
+`private_assets` tests 150 times on `macos-latest` with `GIT_TRACE` on.
+Before the fix, 1 run in 150 failed, this time with `fatal: hardlink
+different from source at 'remote.git/objects/info/packs_…'`. The trace
+shows the runner's git (2.55, Homebrew) starting `git maintenance run
+--auto --quiet --detach` after each commit, and that running `git repack
+-d -l --cruft … --write-midx` in the background (7 times in one test run)
+while the local `git clone --bare` copied the files under
+`src/.git/objects`. The ticket's guess was right.
+
+**Fix** (test module of `crates/xtask/src/private_assets.rs` only):
+
+- `Scratch::new` writes `gc.auto=0` and `maintenance.auto=false` into the
+  scratch `src` repository, and gives the same two settings to the bare
+  clone with `--config`, so they are stored in `remote.git` too.
+- The bare clone is made with `--no-local`, so it goes through git's pack
+  protocol instead of copying files.
+
+With the fix the same loop gave 0 failures in 150 runs, and the trace has
+no `repack` at all. The loop job was removed before merge.
+
+**Deviation from step 2.** The settings are stored in the two scratch
+repositories instead of passed as `-c` on every scratch command. Git does
+not hand `-c` settings to the other side of a local push or clone, so
+`-c` on the test's `git push` would not stop upkeep in `remote.git`;
+settings stored in the repository cover every command run there.
+
+**Left alone (out of scope).** The checkout that the command itself makes
+in the tests (`public/assets-private/`) still gets git's normal upkeep,
+as a real checkout does. Nothing copies files out of it, and the trace
+shows no repack there.
+
+No follow-up tickets. Nothing changes in the game or in what
+`cargo xtask private-assets` does. No gameplay rules were decided.
