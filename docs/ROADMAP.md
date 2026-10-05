@@ -113,7 +113,7 @@ Design answers unblock most of the rules work. Suggested order:
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0029** dialogue backgrounds · **0812** chapter card · **0813** transitions
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
-7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046)
+7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
 
 Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
@@ -204,4 +204,10 @@ early so every later PR is checked by them.
   replays, the veteran's ghost and sharing a battle (0052). Multiplayer
   after the single-player launch (0053). Modding and dev tools (a mod
   folder, a map editor, a small scripting language, the bots as a balance
-  tester): Nick said yes; Claude's technical tickets, not yet written.
+  tester): Nick said yes. 0054 the mod policy (Nick) → 1011 ADR on how
+  mods work → 1012 mod layers in the asset bundle → 1013 data entries
+  merged by id and 1014 the mods folder → 1015 Mods screen and modded
+  saves, 1016 `vos-modkit check`/`new` → 1017 scripting runtime → 1018
+  scripted events and objectives; 1019 → 1020 the map editor; 1021
+  `vos-modkit playtest` (after 0506); 1022 mod campaigns; 1023 guide and
+  example mod; 1024 Steam Workshop (after 0903).

@@ -183,9 +183,20 @@ playtest (0804); multiplayer waits for the single-player launch.
   DSL or something for easy modding support"; on Claude's outline of a mod
   folder, an in-game map editor, a small scripting language, the bots as a
   balance tester for modders, and a mod policy: "I agree with everything
-  here"). How it's built is technical: Claude's tickets and ADRs, no
-  decision ticket. Whether mods may use the game's own art is a licensing
-  question and stays Nick's call (ADR-0013, `LICENSE`).
+  here"). How it's built is technical: Claude's tickets and ADRs
+  (1011–1024). What mods are **allowed** to do (story changes, the game's
+  own art, modded saves, Workshop, the web build, the licence) is Nick's
+  call: ticket **0054** (`LICENSE` is his alone, ADR-0013).
+- The technical plan, in order: 1011 an ADR on how mods work → 1012 the
+  asset bundle takes mod layers → 1013 mods add and replace data entries
+  by id → 1014 the mods folder and load order → 1015 the Mods screen and
+  saves that remember their mods → 1016 `vos-modkit check` / `new` →
+  1017 a deterministic, sandboxed scripting runtime and scripted skill
+  effects → 1018 scripted battle events and objectives → 1019 and 1020 an
+  in-game map editor (terrain, then units, objectives and play) → 1021
+  `vos-modkit playtest`, the bots' balance report for modders → 1022 mod
+  campaigns → 1023 a modding guide and an example mod → 1024 Steam
+  Workshop.
 
 ## Not taken
 
@@ -209,3 +220,4 @@ playtest (0804); multiplayer waits for the single-player launch.
 | The randomizer | 0051 |
 | Replays, the veteran's ghost, sharing a battle | 0052 |
 | Multiplayer: modes, armies, fairness, servers | 0053 |
+| The mod policy: what mods may change, modded saves, Workshop, the licence | 0054 |
