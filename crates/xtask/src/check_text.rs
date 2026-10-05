@@ -2,7 +2,7 @@
 //! as string literals in `crates/ui/src`, instead of asked for by key with
 //! `ctx.text("screen.thing")` from `assets/lang/en/ui.ron` (ticket 0233,
 //! ADR-0045). It fails when the count is above [`MAX_LITERALS`], so no new
-//! literal slips in while ticket 0234 moves the old ones out.
+//! literal slips in while tickets 0234 and 0243 move the old ones out.
 //!
 //! Like `check-keys` it is a line-based scanner, not a parser, built on
 //! the same lexer. A string literal counts when it holds a word (letters
@@ -30,10 +30,10 @@ use crate::check_keys::{
     Line, exempt_lines, files_under, has_ext, is_ident, is_test_file, lex, mark_item, relative,
 };
 
-/// The most literals allowed: the count when the title screen had been
-/// converted (ticket 0233). Lower it whenever the count goes down; ticket
-/// 0234 brings it to zero.
-pub const MAX_LITERALS: usize = 220;
+/// The most literals allowed: the count when every screen but the battle
+/// and the class change had been converted (ticket 0234). Lower it
+/// whenever the count goes down; ticket 0243 brings it to zero.
+pub const MAX_LITERALS: usize = 123;
 
 /// The comment that lets the next item (or its own line) through.
 pub const MARKER: &str = "check-text: not player text";

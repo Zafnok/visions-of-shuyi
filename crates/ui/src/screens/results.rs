@@ -23,16 +23,17 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 
-/// The screen's heading, on the panel's border.
-pub const HEADING: &str = "VICTORY";
-/// The gold line.
-pub const GOLD_LABEL: &str = "Gold for clearing the map";
-/// The rewind charges line.
-pub const REWINDS_LABEL: &str = "Rewinds unused";
-/// The bonus line.
-pub const BONUS_LABEL: &str = "Bonus EXP for each unit";
-/// Marks a unit the bonus levelled.
-pub const LEVEL_UP: &str = "LEVEL UP";
+/// The key of the screen's heading, on the panel's border, in the
+/// language files ([`Ctx::text`]).
+pub const HEADING: &str = "results.heading";
+/// The key of the gold line.
+pub const GOLD_LABEL: &str = "results.gold";
+/// The key of the rewind charges line.
+pub const REWINDS_LABEL: &str = "results.rewinds";
+/// The key of the bonus line.
+pub const BONUS_LABEL: &str = "results.bonus";
+/// The key of the mark on a unit the bonus levelled.
+pub const LEVEL_UP: &str = "results.level_up";
 
 /// Seconds before the bars start to fill. *Tunable.*
 pub const INTRO_S: f32 = 0.5;
@@ -234,20 +235,24 @@ impl ResultsScreen {
         );
         buf.fill_rect(PANEL, Cell::new(' ', text, bg));
         buf.draw_box(PANEL, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-        buf.print(PANEL.x + 2, PANEL.y, &format!(" {HEADING} "), hi, bg);
+        let heading = format!(" {} ", ctx.text(HEADING));
+        buf.print(PANEL.x + 2, PANEL.y, &heading, hi, bg);
         if self.clear_gold > 0 {
-            buf.print(X, GOLD_ROW, GOLD_LABEL, text, bg);
+            buf.print(X, GOLD_ROW, ctx.text(GOLD_LABEL), text, bg);
             let n = buf.print(VALUE_X, GOLD_ROW, &format!("+{}", self.clear_gold), hi, bg);
-            let now = format!("(now {})", self.gold);
+            let now = ctx.text_with("results.gold_now", &[("gold", &self.gold)]);
             buf.print(VALUE_X + i32::from(n) + 1, GOLD_ROW, &now, dim, bg);
         }
-        buf.print(X, REWINDS_ROW, REWINDS_LABEL, text, bg);
-        let left = format!("{} of {}", self.unused, self.charges);
+        buf.print(X, REWINDS_ROW, ctx.text(REWINDS_LABEL), text, bg);
+        let left = ctx.text_with(
+            "results.rewinds_left",
+            &[("unused", &self.unused), ("charges", &self.charges)],
+        );
         buf.print(VALUE_X, REWINDS_ROW, &left, hi, bg);
         if self.rows.is_empty() {
             return;
         }
-        buf.print(X, REWINDS_ROW + 1, BONUS_LABEL, text, bg);
+        buf.print(X, REWINDS_ROW + 1, ctx.text(BONUS_LABEL), text, bg);
         let bonus = format!("+{}", self.bonus);
         buf.print(VALUE_X, REWINDS_ROW + 1, &bonus, hi, bg);
         for x in X..PANEL.x + PANEL.w - 4 {
@@ -265,9 +270,10 @@ impl ResultsScreen {
             let class: String = row.class.chars().take(CLASS_W).collect();
             buf.print(X, y, &name, c(UiColor::Player), bg);
             buf.print(X + COLS[0], y, &class, dim, bg);
-            let lv = format!("Lv {}", row.level.saturating_add(levels));
+            let level = row.level.saturating_add(levels);
+            let lv = ctx.text_with("results.level", &[("level", &level)]);
             buf.print(X + COLS[1], y, &lv, text, bg);
-            buf.print(X + COLS[2], y, "EXP", dim, bg);
+            buf.print(X + COLS[2], y, ctx.text("results.exp"), dim, bg);
             let (filled, number) = exp_line(shown);
             for i in 0..EXP_BAR_CELLS {
                 let (glyph, fg) = if i < filled {
@@ -279,7 +285,7 @@ impl ResultsScreen {
             }
             buf.print(X + COLS[4], y, &format!("{number:>2}"), text, bg);
             if levels > 0 {
-                buf.print(X + COLS[5], y, LEVEL_UP, hi, bg);
+                buf.print(X + COLS[5], y, ctx.text(LEVEL_UP), hi, bg);
             }
         }
     }

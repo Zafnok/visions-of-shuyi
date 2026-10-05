@@ -90,7 +90,7 @@ the glyph look). After the build he looks at it on Pages.
   and added a hint to the toggles line, place it by the rule Nick picks
   here and say so in the notes; if not, add a line to 0439 naming this
   ticket's rule.
-- Moving the hints' text into the language file (0234): **either order
+- Moving the hints' text into the language file (0243): **either order
   works.** Use whatever `status` uses for its words when this is built.
 - Saving the auto-end setting (0805).
 

@@ -235,6 +235,7 @@ const RIGHT_STICK: StickButtons = [
 
 /// A pad's three sets of direction buttons, each with the name help text
 /// gives the whole set.
+// check-text: not player text
 const DIRECTION_SETS: [(&str, StickButtons); 3] = [
     ("D-pad", DPAD),
     ("L-stick", LEFT_STICK),

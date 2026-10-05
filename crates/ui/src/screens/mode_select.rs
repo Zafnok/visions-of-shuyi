@@ -7,25 +7,23 @@ use trpg_core::GameMode;
 use super::print_centred;
 use crate::color::UiColor;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
-use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{cursor_keys_name, help_line, key_name};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
-/// The heading.
-pub const HEADING: &str = "Choose a game mode";
+/// The key of the heading in the language files ([`Ctx::text`]).
+pub const HEADING: &str = "mode_select.heading";
 
-/// Each mode, its name and the line explaining it.
+/// Each mode, the key of its name and of the line explaining it.
 pub const MODES: [(GameMode, &str, &str); 2] = [
     (
         GameMode::Classic,
-        "Classic",
-        "Classic: a unit that falls in battle dies and is gone for good.",
+        "mode_select.classic",
+        "mode_select.classic_line",
     ),
     (
         GameMode::Casual,
-        "Casual",
-        "Casual: a unit that falls retreats, and is back for the next battle.",
+        "mode_select.casual",
+        "mode_select.casual_line",
     ),
 ];
 
@@ -48,9 +46,11 @@ impl ModeSelectScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "mode_select";
 
-    /// The screen with Classic focused.
-    pub fn new() -> Self {
-        let items = MODES.iter().map(|&(_, name, _)| MenuItem::new(name));
+    /// The screen with Classic focused, labelled in `ctx`'s language.
+    pub fn new(ctx: &Ctx) -> Self {
+        let items = MODES
+            .iter()
+            .map(|&(_, name, _)| MenuItem::new(ctx.text(name)));
         Self {
             menu: Menu::new(items.collect()),
             chosen: None,
@@ -70,18 +70,7 @@ impl ModeSelectScreen {
 
     /// The bottom help line.
     pub fn help(ctx: &Ctx) -> String {
-        let km = ctx.help_keys();
-        help_line(&[
-            (Some(cursor_keys_name(km)), "choose"),
-            (Some(key_name(km, Action::Confirm)), "select"),
-            (Some(key_name(km, Action::Cancel)), "back"),
-        ])
-    }
-}
-
-impl Default for ModeSelectScreen {
-    fn default() -> Self {
-        Self::new()
+        ctx.text_with("mode_select.help", &[])
     }
 }
 
@@ -108,7 +97,8 @@ impl Screen for ModeSelectScreen {
         let c = |u| ctx.palette.get(u);
         let black = c(UiColor::Black);
         buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        print_centred(buf, HEADING_ROW, HEADING, c(UiColor::TextHighlight), black);
+        let heading = ctx.text(HEADING);
+        print_centred(buf, HEADING_ROW, heading, c(UiColor::TextHighlight), black);
         let (w, _) = self.menu.size();
         self.menu.draw(
             &ctx.palette,
@@ -122,7 +112,7 @@ impl Screen for ModeSelectScreen {
             } else {
                 UiColor::TextDim
             };
-            print_centred(buf, y, line, c(fg), black);
+            print_centred(buf, y, ctx.text(line), c(fg), black);
         }
         let bottom = i32::from(buf.height()) - 1;
         print_centred(buf, bottom, &Self::help(ctx), c(UiColor::TextDim), black);
@@ -135,6 +125,7 @@ mod tests {
 
     use super::*;
     use crate::harness::Harness;
+    use crate::input::Action;
     use crate::screen::tests::ctx;
 
     fn update(s: &mut ModeSelectScreen, actions: &[Action]) -> String {
@@ -144,13 +135,13 @@ mod tests {
 
     #[test]
     fn confirm_picks_the_focused_mode() {
-        let mut s = ModeSelectScreen::new();
+        let mut s = ModeSelectScreen::new(&ctx());
         assert_eq!(s.name(), "mode_select");
         assert_eq!(update(&mut s, &[Action::CursorDown]), "None");
         assert_eq!(s.result(), None);
         assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
         assert_eq!(s.result(), Some(GameMode::Casual));
-        let mut s = ModeSelectScreen::default();
+        let mut s = ModeSelectScreen::new(&ctx());
         assert_eq!(
             update(&mut s, &[Action::Confirm, Action::CursorDown]),
             "Pop"
@@ -160,7 +151,7 @@ mod tests {
 
     #[test]
     fn cancel_goes_back_without_a_mode() {
-        let mut s = ModeSelectScreen::new();
+        let mut s = ModeSelectScreen::new(&ctx());
         assert_eq!(update(&mut s, &[Action::Cancel]), "Pop");
         assert_eq!(s.result(), None);
     }
@@ -169,7 +160,7 @@ mod tests {
     /// focused one brighter.
     #[test]
     fn mode_select_snapshot() {
-        let mut h = Harness::with_screen(Box::new(ModeSelectScreen::new()));
+        let mut h = Harness::with_screen(Box::new(ModeSelectScreen::new(&ctx())));
         h.keys("Down");
         assert_snapshot!(h.snapshot());
     }

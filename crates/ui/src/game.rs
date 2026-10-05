@@ -790,7 +790,10 @@ mod tests {
 
     #[test]
     fn popping_the_last_screen_quits() {
-        let mut game = Game::new(ctx(), Box::new(crate::screens::ModeSelectScreen::new()));
+        let mut game = Game::new(
+            ctx(),
+            Box::new(crate::screens::ModeSelectScreen::new(&ctx())),
+        );
 
         assert!(tap(&mut game, Key::D));
         assert_eq!(game.top_screen(), None);
