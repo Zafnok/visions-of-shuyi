@@ -134,6 +134,37 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # TEMPORARY (ticket 0120): loop the private-assets tests on a Mac runner.
+  flake-loop:
+    name: flake-loop
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: git --version && git config --list --show-origin
+      - run: cargo test -p xtask --locked --no-run
+      - name: Loop
+        run: |
+          fails=0
+          for i in $(seq 1 150); do
+            : > "$RUNNER_TEMP/trace.txt"
+            if ! GIT_TRACE="$RUNNER_TEMP/trace.txt" cargo test -p xtask --locked private_assets > "$RUNNER_TEMP/out.txt" 2>&1; then
+              fails=$((fails+1))
+              echo "::group::run $i failed"
+              cat "$RUNNER_TEMP/out.txt"
+              echo "---- trace ----"
+              cat "$RUNNER_TEMP/trace.txt"
+              echo "::endgroup::"
+            fi
+          done
+          echo "---- trace of the last run: maintenance and gc lines ----"
+          grep -E "maintenance|gc" "$RUNNER_TEMP/trace.txt" | head -40 || true
+          echo "failures: $fails of 150"
+          test "$fails" -eq 0
+
   # Ticket hygiene is cheap and tickets are docs, so this always runs (never
   # gated on `needs.changes`; ADR-0014) rather than being skipped on
   # docs-only PRs, which is exactly the case it needs to check.

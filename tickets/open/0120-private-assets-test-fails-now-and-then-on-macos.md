@@ -5,7 +5,7 @@ type: bug
 milestone: M0 Foundation
 model: sonnet-5
 effort: low
-status: todo
+status: in-progress
 blocked_by: []
 nick_input: none
 completed:
