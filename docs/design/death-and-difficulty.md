@@ -233,6 +233,11 @@ next.
 may be added later, with a new decision ticket; a downgrade then works like
 Classic → Casual (one way only).
 
+**Ironman** (Nick, 2026-10-05): a third mode at New Game beside Classic and
+Casual, which hides everything that undoes a result, rewind included. The
+details (what a defeat does, saving, switching mode) are open: ticket 0049,
+[`replayability.md`](replayability.md).
+
 ## Saving
 
 FE style: chapter saves plus a one-time suspend.
