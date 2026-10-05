@@ -157,8 +157,10 @@ buf.fill_rect(text_box, Cell::new(' ', text, panel_bg));   // a solid box
    do nothing.
 
 `Game::start` loads the saved layout from `ctx.storage` (key `layout`); on
-first launch there is none, so it opens the layout picker over the title.
-Until a layout is picked, `Keymap::layout_picker` is active (`Up`/`w`,
+first launch there is none, and the first key pressed (at the title's prompt
+or anywhere later) opens the layout picker over whatever is showing and does
+nothing else; a controller button closes it again without choosing (ticket
+0226). Until a layout is picked, `Keymap::layout_picker` is active (`Up`/`w`,
 `Down`/`s`, and `f`/`j`/`Enter`/`Space` to pick), so either hand works.
 
 In debug builds `Game` handles the `Debug` action (F2) itself and pushes the
@@ -447,8 +449,10 @@ fn select_opens_new_game() {
   the frames. `music_load_delay(2.0)` makes tracks take 2 s to load (the
   clock starts that much later); `without_music()` makes none ever sound
   (missing files). Call them before the frames that start the music.
-- `Harness::new()` is a first launch (empty storage: the layout picker is on
-  top). `Harness::with_layout(layout)` is a later launch with that layout
+- `Harness::new()` is a first launch (empty storage: no layout, so the first
+  key opens the layout picker). `Harness::at_prompt()` and
+  `at_prompt_with_layout(layout)` start as `app` does, the title waiting for
+  a key or button. `Harness::with_layout(layout)` is a later launch with that layout
   saved. `into_storage()` + `Harness::with_storage(..)` restart with the same
   storage. Saves live in it too (`trpg_ui::save`: keys `slot_01`…`slot_30`
   and `suspend`; `crates/ui/tests/it/save.rs`).
@@ -468,7 +472,7 @@ cargo xtask frame-png target/battle.png --keys "Down f Left f" --wait 1.5
 ```
 
 Steps (`--keys`, `--pad`, `--wait`) run in the order given, from a later
-launch with `--layout right|left` (`--web`: as the web build starts).
+launch with `--layout right|left` (`--prompt`: as the game starts, the title waiting for a key or button).
 `--scale` defaults to 2; `--help` has the rest. It is for looking, never a
 test: tests read the scene, the state or the snapshot.
 - Debug screens are always on in the Harness, so `F2` works in any build.

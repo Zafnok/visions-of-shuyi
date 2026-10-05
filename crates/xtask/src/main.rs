@@ -4,6 +4,7 @@
 #![allow(clippy::print_stdout)]
 
 mod check_keys;
+mod check_script;
 mod check_text;
 mod clean_targets;
 mod effect_marks;
@@ -80,6 +81,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("private-assets") => private_assets(&args.collect::<Vec<_>>()),
         Some("portrait-import") => portrait_import(&args.collect::<Vec<_>>()),
         Some("lines") => lines(&args.collect::<Vec<_>>()),
+        Some("check-script") => check_script(&args.collect::<Vec<_>>()),
         Some("voice-test-clips") => voice_test_clips(&args.collect::<Vec<_>>()),
         Some(command) => {
             eprintln!("unknown command: {command}");
@@ -545,6 +547,33 @@ fn lines(args: &[String]) -> u8 {
     }
 }
 
+fn check_script(args: &[String]) -> u8 {
+    if args.iter().any(|a| a == "--help") {
+        println!("{}", check_script::USAGE);
+        return 0;
+    }
+    let file = match args {
+        [] => None,
+        [file] => Some(Path::new(file)),
+        _ => {
+            eprintln!("{}", check_script::USAGE);
+            return 2;
+        }
+    };
+    match check_script::scripts(&repo_root(), file) {
+        Ok((scripts, only)) => {
+            let problems = check_script::problems(&scripts);
+            let only = only.as_deref();
+            print!("{}", check_script::report(&problems, only, scripts.len()));
+            u8::from(!check_script::clean(&problems, only))
+        }
+        Err(e) => {
+            eprintln!("check-script: {e}");
+            2
+        }
+    }
+}
+
 /// `xtask` always runs via `cargo xtask`, so `CARGO_MANIFEST_DIR` (this
 /// crate's directory, `<repo>/crates/xtask`) locates the repo root.
 #[allow(clippy::expect_used)] // CARGO_MANIFEST_DIR is baked in at compile time; the two
@@ -750,6 +779,27 @@ mod tests {
         assert_eq!(frame_png(&args(&[&out_arg, "--scale", "1"])), 0);
         assert!(out.is_file());
         std::fs::remove_file(&out).unwrap();
+    }
+
+    #[test]
+    fn check_script_exits_zero_on_the_repository_scripts() {
+        assert_eq!(dispatch(args(&["check-script"]).into_iter()), 0);
+        assert_eq!(check_script(&args(&["--help"])), 0);
+        assert_eq!(check_script(&args(&["a.dlg", "b.dlg"])), 2);
+        assert_eq!(check_script(&args(&["no_such_script.dlg"])), 2);
+        // A file with problems: a Markdown file whose example is no scene.
+        let draft = std::env::temp_dir().join(format!("{}_check_script.md", std::process::id()));
+        std::fs::write(
+            &draft,
+            "```dlg
+> Outside a scene.
+```
+",
+        )
+        .unwrap();
+        let code = check_script(&args(&[&draft.to_string_lossy()]));
+        std::fs::remove_file(&draft).unwrap();
+        assert_eq!(code, 1);
     }
 
     #[test]

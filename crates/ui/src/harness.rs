@@ -99,8 +99,8 @@ impl Player {
 }
 
 impl Harness {
-    /// A first launch: the embedded content and empty storage, so the
-    /// layout picker is open over the title screen.
+    /// A first launch: the embedded content and empty storage, so no
+    /// layout is chosen and the first key opens the layout picker.
     ///
     /// # Panics
     ///
@@ -121,20 +121,20 @@ impl Harness {
         Self::with_storage(Box::new(storage))
     }
 
-    /// Like [`new`](Self::new), as the web build launches: the title
-    /// waits for a key press ([`Ctx::key_prompt`]).
-    pub fn on_web() -> Self {
-        Self::new().web()
+    /// Like [`new`](Self::new), as `app` launches the game: the title
+    /// waits for a key or button press ([`Ctx::key_prompt`]).
+    pub fn at_prompt() -> Self {
+        Self::new().waiting()
     }
 
-    /// Like [`with_layout`](Self::with_layout), as the web build launches
-    /// ([`on_web`](Self::on_web)).
-    pub fn on_web_with_layout(layout: Layout) -> Self {
-        Self::with_layout(layout).web()
+    /// Like [`with_layout`](Self::with_layout), as `app` launches the game
+    /// ([`at_prompt`](Self::at_prompt)).
+    pub fn at_prompt_with_layout(layout: Layout) -> Self {
+        Self::with_layout(layout).waiting()
     }
 
     /// Sets [`KeyPrompt::Waiting`] and redraws.
-    fn web(mut self) -> Self {
+    fn waiting(mut self) -> Self {
         self.game.ctx_mut().key_prompt = KeyPrompt::Waiting;
         self.game.redraw();
         self
@@ -714,7 +714,8 @@ mod tests {
     #[test]
     fn new_is_a_first_launch_and_with_layout_a_later_one() {
         let h = Harness::default();
-        assert_eq!(h.screens(), ["title", "layout_picker"]);
+        assert_eq!(h.screens(), ["title"]);
+        assert_eq!(h.game().ctx().layout(), None);
         let h = Harness::with_layout(Layout::LeftHanded);
         assert_eq!(h.screens(), ["title"]);
         assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
@@ -723,7 +724,7 @@ mod tests {
     #[test]
     fn storage_carries_over_between_runs() {
         let mut h = Harness::new();
-        h.keys("Enter");
+        h.keys("q Enter");
         let h = Harness::with_storage(h.into_storage());
         assert_eq!(h.screens(), ["title"]);
         assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
@@ -1052,11 +1053,11 @@ mod tests {
         assert!(h.music_commands().contains(&command("title", start)));
     }
 
-    /// The web title asks for its music at the first key press
+    /// The waiting title asks for its music at the first key press
     /// (`docs/design/title-screen.md`), so its clock starts there.
     #[test]
-    fn on_the_web_the_clock_starts_at_the_first_key_press() {
-        let mut h = Harness::on_web_with_layout(Layout::RightHanded);
+    fn at_the_prompt_the_clock_starts_at_the_first_key_press() {
+        let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
         h.wait(1.0);
         assert_eq!(h.music_clock(), None);
         // The press starts the music; the release is one frame later.

@@ -300,8 +300,8 @@ pub struct Ctx {
     pub clock_s: f64,
     /// Whether the title waits for a key press before showing its menu
     /// and playing its music (`docs/design/title-screen.md`). Off here;
-    /// `app` sets [`KeyPrompt::Waiting`] for the web build, and `Game`
-    /// moves it on to [`KeyPrompt::Pressed`] at the first key press.
+    /// `app` sets [`KeyPrompt::Waiting`] on every build, and `Game` moves
+    /// it on to [`KeyPrompt::Pressed`] at the first key or button press.
     pub key_prompt: KeyPrompt,
     /// The language screen text is shown in (ADR-0045): English until the
     /// player picks another (0825). The test pack counts only with
@@ -320,16 +320,16 @@ pub enum ModeSwitch {
     Open,
 }
 
-/// The web build's "press any key" title prompt ([`Ctx::key_prompt`]):
-/// browsers block sound until the player presses a key.
+/// The title's "press any key or button" prompt ([`Ctx::key_prompt`]), on
+/// every build: browsers block sound until the player presses a key.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum KeyPrompt {
-    /// No prompt (native builds).
+    /// No prompt (tests that start at the menu).
     #[default]
     Off,
-    /// No key pressed yet: the title shows the prompt.
+    /// Nothing pressed yet: the title shows the prompt.
     Waiting,
-    /// A key has been pressed (on any screen).
+    /// A key or a controller button has been pressed (on any screen).
     Pressed,
 }
 

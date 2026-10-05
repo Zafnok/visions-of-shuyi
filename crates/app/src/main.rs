@@ -1,5 +1,6 @@
 //! Window, main loop and platform glue. See ADR-0004.
 
+mod args;
 mod audio;
 mod keys;
 mod pads;
@@ -10,6 +11,7 @@ use macroquad::prelude::*;
 use trpg_content::font::ATLAS_PNG_PATH;
 use trpg_ui::{Ctx, Game, KeyPrompt, UiColor};
 
+use crate::args::Startup;
 use crate::audio::Audio;
 use crate::audio::device::Macroquad;
 use crate::pads::PadInput;
@@ -32,16 +34,18 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    let startup = match args::startup() {
+        Ok(startup) => startup,
+        Err(e) => return show_errors(&e).await,
+    };
     let mut ctx = match Ctx::embedded() {
         Ok(mut ctx) => {
             ctx.tips_enabled = true;
             ctx.music_seed = miniquad::date::now().to_bits();
-            if cfg!(target_arch = "wasm32") {
-                ctx.key_prompt = KeyPrompt::Waiting;
-            }
+            ctx.key_prompt = KeyPrompt::Waiting;
             ctx.with_storage(storage::platform())
         }
-        Err(e) => return show_content_errors(&e.to_string()).await,
+        Err(e) => return show_errors(&e.to_string()).await,
     };
     // Voices (ADR-0046): none, and nothing said, without the folder.
     let voice_dir = audio::voice::platform_voice_dir();
@@ -61,7 +65,7 @@ async fn main() {
     let images = &ctx.content.images;
     let mut renderer = match Renderer::new(ctx.content.font.clone(), png, black, images) {
         Ok(renderer) => renderer,
-        Err(e) => return show_content_errors(&e).await,
+        Err(e) => return show_errors(&e).await,
     };
     let mut speaker = Macroquad::default();
     let mut audio = Audio::load(
@@ -74,7 +78,14 @@ async fn main() {
     )
     .await;
     let mut pads = PadInput::new(ctx.content.keymap.stick);
-    let mut game = Game::start(ctx);
+    let mut game = match startup {
+        Startup::Title => Game::start(ctx),
+        // A writer's preview of one scene (ticket 0723).
+        Startup::Scene { id, gender } => match Game::start_on_scene(ctx, &id, gender) {
+            Ok(game) => game,
+            Err(e) => return show_errors(&e).await,
+        },
+    };
     let mut running = true;
     // The window starts windowed; the Fullscreen option switches it.
     let mut fullscreen = false;
@@ -115,11 +126,15 @@ async fn main() {
     }
 }
 
-/// Shows asset errors instead of the game (with macroquad's built-in font,
-/// since ours may be what failed). Only reachable if a broken asset slipped
-/// past the content tests.
-async fn show_content_errors(text: &str) {
+/// The most characters of an error shown on one line.
+const ERROR_WIDTH: usize = 150;
+
+/// Shows errors instead of the game (with macroquad's built-in font, since
+/// ours may be what failed): asset errors, only reachable if a broken asset
+/// slipped past the content tests, or a wrong command line.
+async fn show_errors(text: &str) {
     error!("{}", text);
+    let text = args::wrap(text, ERROR_WIDTH);
     loop {
         clear_background(BLACK);
         let mut y = 40.0;

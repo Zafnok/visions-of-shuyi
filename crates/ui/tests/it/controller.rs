@@ -210,30 +210,27 @@ fn keys_and_buttons_work_side_by_side() {
     assert!(!shows(&mixed, "d back"));
 }
 
+/// A first launch never shows a controller player the layout picker
+/// (ticket 0226; the picker's own flows are in `title.rs`).
 #[test]
-fn the_first_launch_picker_works_with_a_pad() {
+fn a_first_launch_plays_with_a_pad_and_no_layout() {
     let mut h = Harness::new();
-    assert_eq!(h.screens(), ["title", "layout_picker"]);
-    // Cancel doesn't leave it, as with the keys.
-    h.pad("East");
-    assert_eq!(h.top_screen(), "layout_picker");
-    h.pad("DpadDown South");
-    assert_eq!(h.screens(), ["title"]);
-    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
-    // The pad goes on working with the layout it picked.
-    h.pad("South");
+    h.pad("East South");
     assert_eq!(h.screens(), ["title", "mode_select"]);
+    h.pad("East");
+    assert_eq!(h.screens(), ["title"]);
+    assert_eq!(h.game().ctx().layout(), None);
 }
 
-/// On the web build the title waits for a first press (ticket 0224): any
+/// The title waits for a first press (tickets 0224, 0226): any
 /// controller button counts, and does nothing else.
 #[test]
-fn a_button_ends_the_web_titles_wait() {
-    let mut h = Harness::on_web_with_layout(Layout::RightHanded);
+fn a_button_ends_the_titles_wait() {
+    let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
     // The right trigger is bound to nothing: it still counts.
     h.pad("RightTrigger");
     assert_eq!(h.snapshot(), title().snapshot());
-    let mut h = Harness::on_web_with_layout(Layout::RightHanded);
+    let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
     h.pad("South");
     assert_eq!(h.screens(), ["title"]);
     assert!(h.sounds().is_empty());

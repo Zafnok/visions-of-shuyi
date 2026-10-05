@@ -431,6 +431,13 @@ impl InputState {
         self.press(Input::Key(chord.key), action, Device::Keyboard);
     }
 
+    /// A key went down that `Game` kept for itself (it opened the layout
+    /// picker): the keyboard is the [`device`](Self::device) pressed last,
+    /// and nothing else happens.
+    pub(crate) fn keyboard_used(&mut self) {
+        self.device = Device::Keyboard;
+    }
+
     /// A key went up. Stops its repeat, if it was the repeating one.
     pub fn key_up(&mut self, key: Key) {
         self.release(Input::Key(key));
