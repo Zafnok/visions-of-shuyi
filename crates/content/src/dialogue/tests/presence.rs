@@ -652,6 +652,52 @@ fn readme_if_examples_are_valid() {
     }
 }
 
+/// `ch01.dlg` never shows a companion who may have fallen (0716). The
+/// check only bites for characters in the New Game roster, and the five
+/// companions join it in 0803; until then this runs it with the cast the
+/// script's header describes. 0803 deletes this test once the battle and
+/// chapter files say the same.
+#[test]
+fn chapter_1_never_shows_a_companion_who_may_have_fallen() {
+    const COMPANIONS: [&str; 5] = ["retainer", "sergeant", "poacher", "keeper", "heretic"];
+    let source = bundle::file("dialogue/ch01.dlg").unwrap_or_default();
+    let scripts = scripts_from_sources(
+        &[("ch01.dlg", source)],
+        Some(&characters()),
+        None,
+        Some(&names()),
+        None,
+    );
+    let scripts = scripts.unwrap_or_else(|e| panic!("{e:?}"));
+    // Who each scene can't play without, as its trigger will name them.
+    let certain = |scene: &str| match scene {
+        // Before anyone can have fallen.
+        "ch01_intro" | "ch01_prebattle" | "ch01_first_turn" => ids(&COMPANIONS),
+        "ch01_boss_engage_sergeant" => ids(&["sergeant"]),
+        // A death quote or a retreat line is said by the one who falls.
+        _ => {
+            let fallen = ["ch01_death_", "ch01_retreat_"]
+                .iter()
+                .find_map(|prefix| scene.strip_prefix(prefix));
+            fallen.map(|who| ids(&[who])).unwrap_or_default()
+        }
+    };
+    let scenes = scripts.parsed.iter().map(|p| p.scene.id.clone());
+    let cast = Cast {
+        may_be_absent: ids(&COMPANIONS),
+        certain: scenes.map(|s| (s.clone(), certain(&s))).collect(),
+    };
+    assert_eq!(cast.certain["ch01_victory"], ids(&[]));
+    assert_eq!(cast.certain["ch01_death_keeper"], ids(&["keeper"]));
+    let errors: Vec<String> = scripts
+        .parsed
+        .iter()
+        .flat_map(|p| check_presence(p, &cast))
+        .map(|e| e.to_string())
+        .collect();
+    assert_eq!(errors, Vec::<String>::new());
+}
+
 // --- The cast -------------------------------------------------------------------
 
 fn embedded() -> crate::Content {

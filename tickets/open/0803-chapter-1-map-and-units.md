@@ -89,6 +89,12 @@ don't make it obvious.
    Casual retreat line next to each companion's Classic death quote. Aske
    counts "twelve men, no, fourteen" in `ch01_prebattle` and the lead may
    answer "Only fourteen?": pick an enemy count that fits.
+   Once the companions are in the New Game roster the all-assets test
+   checks who may be gone in each scene from these triggers (0715). Then
+   delete `chapter_1_never_shows_a_companion_who_may_have_fallen`
+   (`crates/content/src/dialogue/tests/presence.rs`, added by 0716): it
+   runs the same check on a cast written by hand, and its `certain` map
+   says which trigger each scene expects.
 5. New Game → `ch01`.
 6. **Winning replay test** `crates/ui/tests/it/ch01_winnable.rs` plus a `mod` line in
    `tests/it/main.rs` (or core): a
