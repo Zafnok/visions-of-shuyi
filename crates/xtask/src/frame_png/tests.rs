@@ -212,7 +212,7 @@ fn a_bad_atlas_image_is_an_error() {
 fn parses_steps_in_order_and_options() {
     let parsed = parse_args(&args(&[
         "out.png", "--keys", "F2 Up", "--wait", "0.5", "--pad", "South", "--keys", "f", "--layout",
-        "left", "--scale", "3", "--web",
+        "left", "--scale", "3", "--prompt",
     ]))
     .unwrap();
     assert_eq!(
@@ -227,14 +227,14 @@ fn parses_steps_in_order_and_options() {
             ],
             layout: Layout::LeftHanded,
             scale: 3,
-            web: true,
+            prompt: true,
         }
     );
     let zero = parse_args(&args(&["a.png", "--wait", "0", "--scale", "8"])).unwrap();
     assert_eq!((zero.steps, zero.scale), (vec![Step::Wait(0.0)], 8));
     let plain = parse_args(&args(&["a.png"])).unwrap();
     assert_eq!(
-        (plain.layout, plain.scale, plain.web),
+        (plain.layout, plain.scale, plain.prompt),
         (Layout::RightHanded, 2, false)
     );
     assert!(plain.steps.is_empty());
@@ -296,15 +296,15 @@ fn keys_reach_the_quick_battle_map() {
 }
 
 #[test]
-fn the_web_start_draws_another_title() {
-    let dir = temp_dir("web");
+fn the_prompt_start_draws_another_title() {
+    let dir = temp_dir("prompt");
     let render = |extra: &[&str]| {
         let mut all = vec!["t.png", "--scale", "1"];
         all.extend_from_slice(extra);
         run(&dir, &parse_args(&args(&all)).unwrap()).unwrap();
         fs::read(dir.join("t.png")).unwrap()
     };
-    assert_ne!(render(&["--web"]), render(&[]));
+    assert_ne!(render(&["--prompt"]), render(&[]));
     fs::remove_dir_all(&dir).unwrap();
 }
 

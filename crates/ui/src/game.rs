@@ -96,7 +96,7 @@ impl Game {
 
     /// A game starting at the title screen. If no layout is in use yet, the
     /// saved one (the settings') is loaded from `ctx.storage`; if none is
-    /// saved (first launch), the layout picker opens on top of the title.
+    /// saved (first launch), the first key press opens the layout picker.
     pub fn start(mut ctx: Ctx) -> Self {
         if ctx.layout().is_none()
             && let Some(layout) = ctx.saved_layout()
@@ -110,11 +110,7 @@ impl Game {
         };
         // `Continue` and `Load Game` for the saves there are.
         let title = title.refreshed(&ctx);
-        let mut stack = ScreenStack::new(Box::new(title));
-        if ctx.layout().is_none() {
-            stack.push(Box::new(LayoutPickerScreen::new()));
-        }
-        Self::with_stack(ctx, stack)
+        Self::with_stack(ctx, ScreenStack::new(Box::new(title)))
     }
 
     fn with_stack(ctx: Ctx, stack: ScreenStack) -> Self {
@@ -204,6 +200,13 @@ impl Game {
         let mut text = Vec::new();
         let mut buttons_down = Vec::new();
         let mut buttons_up = Vec::new();
+        // Until a layout is chosen no key acts: the first one opens "Pick
+        // your layout" over whatever is showing and does nothing else; the
+        // picker then takes the keys (`docs/design/controls.md`, *Pick
+        // your layout with a controller*).
+        let asks_layout = self.ctx.layout().is_none()
+            && !self.stack.names().contains(&LayoutPickerScreen::NAME)
+            && events.iter().any(|e| matches!(e, RawInputEvent::Down(_)));
         for &event in events {
             // Any key or any controller button ends the title's wait
             // (`docs/design/title-screen.md`).
@@ -212,6 +215,7 @@ impl Game {
                 self.ctx.key_prompt = KeyPrompt::Pressed;
             }
             match event {
+                RawInputEvent::Down(_) if asks_layout => self.input.keyboard_used(),
                 RawInputEvent::Down(chord) => {
                     self.input.key_down(chord);
                     pressed.push(chord);
@@ -246,6 +250,9 @@ impl Game {
                 .stack
                 .top_name()
                 .is_some_and(|n| debug::SCREENS.contains(&n));
+        if asks_layout {
+            self.stack.push(Box::new(LayoutPickerScreen::new()));
+        }
         if opens_debug_menu {
             self.stack.push(Box::new(DebugMenuScreen::new(&self.ctx)));
         } else {
@@ -379,11 +386,80 @@ mod tests {
         Ctx::embedded().unwrap()
     }
 
+    /// Ticket 0226: until a layout is chosen, the first key (bound or
+    /// not) opens the picker and does nothing else; the next keys are the
+    /// picker's.
     #[test]
-    fn first_launch_opens_the_picker_over_the_title() {
-        let game = Game::start(first_launch());
+    fn with_no_layout_the_first_key_opens_the_picker() {
+        let mut game = Game::start(first_launch());
+        assert_eq!(game.screens(), ["title"]);
+        assert_eq!(game.ctx().layout(), None);
+        // Releases and text alone don't.
+        game.frame(&[RawInputEvent::Up(Key::F), RawInputEvent::Text('f')], 0.0);
+        assert_eq!(game.screens(), ["title"]);
+        // `s` would move the picker down and `f` pick: neither acts.
+        game.frame(&[down(Key::S), down(Key::F)], 0.0);
         assert_eq!(game.screens(), ["title", "layout_picker"]);
         assert_eq!(game.ctx().layout(), None);
+        assert!(!game.input.is_held(Action::Confirm));
+        game.frame(&[RawInputEvent::Up(Key::S), RawInputEvent::Up(Key::F)], 0.0);
+        // Open already: keys reach it, and no second picker opens. (Had
+        // the first `s` moved the highlight, this one would wrap it back.)
+        tap(&mut game, Key::S);
+        assert_eq!(game.screens(), ["title", "layout_picker"]);
+        tap(&mut game, Key::F);
+        assert_eq!(game.screens(), ["title"]);
+        assert_eq!(game.ctx().layout(), Some(Layout::LeftHanded));
+        // Chosen: keys act again and the picker stays away.
+        tap(&mut game, Key::J);
+        assert_eq!(game.screens(), ["title", "mode_select"]);
+    }
+
+    /// The key that opens the picker makes the keyboard the device in
+    /// use, so the picker names keys.
+    #[test]
+    fn the_key_that_opens_the_picker_counts_as_the_keyboard() {
+        use crate::input::Device;
+        let mut game = Game::start(first_launch());
+        pad_tap(&mut game, Button::DpadDown);
+        assert_eq!(game.ctx().device, Device::Pad(PadKind::Xbox));
+        game.frame(&[down(Key::Q)], 0.0);
+        assert_eq!(game.screens(), ["title", "layout_picker"]);
+        assert_eq!(game.ctx().device, Device::Keyboard);
+    }
+
+    /// A controller button closes the asked-for picker without choosing,
+    /// bound or not, and does nothing else; the next key asks again.
+    #[test]
+    fn a_pad_button_closes_the_picker_without_choosing() {
+        for button in [Button::South, Button::DpadDown, Button::RightTrigger] {
+            let mut game = Game::start(first_launch());
+            tap(&mut game, Key::Q);
+            assert_eq!(game.screens(), ["title", "layout_picker"]);
+            pad_tap(&mut game, button);
+            assert_eq!(game.screens(), ["title"], "{button:?}");
+            assert_eq!(game.ctx().layout(), None);
+            assert_eq!(game.ctx().saved_layout(), None);
+            tap(&mut game, Key::Q);
+            assert_eq!(game.screens(), ["title", "layout_picker"]);
+        }
+    }
+
+    /// With no layout a controller plays as usual, and the picker opens
+    /// over whatever screen the first key finds.
+    #[test]
+    fn the_picker_opens_over_any_screen() {
+        let mut game = Game::start(first_launch());
+        pad_tap(&mut game, Button::South);
+        assert_eq!(game.screens(), ["title", "mode_select"]);
+        tap(&mut game, Key::D);
+        assert_eq!(game.screens(), ["title", "mode_select", "layout_picker"]);
+        tap(&mut game, Key::F);
+        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.ctx().layout(), Some(Layout::RightHanded));
+        assert_eq!(game.input.keymap(), &game.ctx().keymap);
+        tap(&mut game, Key::D);
+        assert_eq!(game.screens(), ["title"]);
     }
 
     #[test]
@@ -408,6 +484,7 @@ mod tests {
     #[test]
     fn picking_a_layout_switches_the_input_keys() {
         let mut game = Game::start(first_launch());
+        tap(&mut game, Key::Q);
         // Picker keys: `s` moves down, `j` picks.
         tap(&mut game, Key::S);
         tap(&mut game, Key::J);
@@ -425,20 +502,44 @@ mod tests {
         assert_eq!(ctx.saved_layout(), Some(Layout::LeftHanded));
     }
 
-    /// Ticket 0224: the first key press ends the web title's wait; releases
-    /// don't, and native builds never wait.
+    /// Ticket 0224: the first key press ends the title's wait; releases
+    /// don't, and a game started without the prompt never waits.
     #[test]
     fn a_key_press_moves_the_key_prompt_on() {
         let mut game = Game::start(ctx());
         game.frame(&[down(Key::Q)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Off);
-        let mut web = ctx();
-        web.key_prompt = KeyPrompt::Waiting;
-        let mut game = Game::start(web);
+        let mut game = Game::start(waiting(ctx()));
         game.frame(&[RawInputEvent::Up(Key::Q)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Waiting);
         game.frame(&[down(Key::Q)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
+        assert_eq!(game.screens(), ["title"]);
+    }
+
+    /// `c` as `app` starts it: the title waits for a key or a button.
+    fn waiting(mut c: Ctx) -> Ctx {
+        c.key_prompt = KeyPrompt::Waiting;
+        c
+    }
+
+    /// Ticket 0226, first launch: a key at the prompt opens the picker
+    /// (and ends the wait); a button goes to the menu without it.
+    #[test]
+    fn the_first_press_at_the_prompt_decides_about_the_picker() {
+        let mut game = Game::start(waiting(first_launch()));
+        assert_eq!(game.screens(), ["title"]);
+        tap(&mut game, Key::F);
+        assert_eq!(game.screens(), ["title", "layout_picker"]);
+        assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
+        assert_eq!(game.ctx().layout(), None);
+        let mut game = Game::start(waiting(first_launch()));
+        pad_tap(&mut game, Button::South);
+        assert_eq!(game.screens(), ["title"]);
+        assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
+        // The menu now: the same button chooses New Game.
+        pad_tap(&mut game, Button::South);
+        assert_eq!(game.screens(), ["title", "mode_select"]);
     }
 
     fn pad_tap(game: &mut Game, button: Button) -> bool {
@@ -541,9 +642,10 @@ mod tests {
         assert_eq!(game.ctx().device, Device::Pad(PadKind::Nintendo));
         // Picking a layout (new bindings) doesn't forget it.
         let mut game = Game::start(first_launch());
-        pad_tap(&mut game, Button::South);
-        assert_eq!(game.screens(), ["title"]);
+        pad_tap(&mut game, Button::DpadDown);
+        game.ctx_mut().choose_layout(Layout::LeftHanded).unwrap();
         game.frame(&[], 0.0);
+        assert_eq!(game.input.keymap(), &game.ctx().keymap);
         assert_eq!(game.ctx().device, Device::Pad(PadKind::Xbox));
     }
 
@@ -560,29 +662,11 @@ mod tests {
         assert!(!seen[1].is_held(Action::Confirm));
     }
 
-    /// The first-launch layout picker works with a pad (its D-pad and
-    /// Confirm), and the pad keeps working with the layout it picked.
-    #[test]
-    fn the_first_launch_picker_works_with_a_pad() {
-        let mut game = Game::start(first_launch());
-        pad_tap(&mut game, Button::DpadDown);
-        pad_tap(&mut game, Button::South);
-        assert_eq!(game.screens(), ["title"]);
-        assert_eq!(game.ctx().layout(), Some(Layout::LeftHanded));
-        assert_eq!(game.input.keymap(), &game.ctx().keymap);
-        pad_tap(&mut game, Button::South);
-        assert_eq!(game.screens(), ["title", "mode_select"]);
-        pad_tap(&mut game, Button::East);
-        assert_eq!(game.screens(), ["title"]);
-    }
-
     /// Any controller button ends the title's wait too, bound or not;
     /// releases don't.
     #[test]
     fn a_pad_button_moves_the_key_prompt_on() {
-        let mut web = ctx();
-        web.key_prompt = KeyPrompt::Waiting;
-        let mut game = Game::start(web);
+        let mut game = Game::start(waiting(ctx()));
         game.frame(&[RawInputEvent::PadUp(Button::RightTrigger)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Waiting);
         game.frame(
@@ -590,7 +674,7 @@ mod tests {
             0.0,
         );
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
-        // Native builds never wait.
+        // Started without the prompt, it never waits.
         let mut game = Game::start(ctx());
         game.frame(&[RawInputEvent::PadDown(Button::South, PadKind::Xbox)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Off);
@@ -615,6 +699,7 @@ mod tests {
     #[test]
     fn escape_is_ignored_by_the_first_launch_picker() {
         let mut game = Game::start(first_launch());
+        tap(&mut game, Key::Q);
         assert_eq!(
             game.input.keymap().action(Chord::plain(Key::Escape)),
             Some(Action::Cancel)

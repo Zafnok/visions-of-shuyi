@@ -21,6 +21,15 @@ const SUBTITLE_ROW: i32 = 11;
 /// Top row of the menu box.
 const MENU_ROW: i32 = 14;
 
+/// The pictures beside the "press any key or button" line, as rows of
+/// glyphs: a keyboard on its left and a controller on its right, so it is
+/// obvious either works (`docs/design/title-screen.md`; Nick's pick,
+/// ticket 0226). The middle row is the line's own.
+const KEYBOARD_PICTURE: [&str; 3] = ["┌─┬─┬─┬─┬─┐", "├─┴┬┴─┴┬┴─┤", "└──┴───┴──┘"];
+const PAD_PICTURE: [&str; 3] = ["╭─────────╮", "│ ┼ ╭─╮ ◯ │", "╰───╯ ╰───╯"];
+/// Blank cells between the line and each picture.
+const PICTURE_GAP: i32 = 5;
+
 /// The title screen's music cue (`audio.md`).
 pub const TITLE_MUSIC: &str = "title";
 
@@ -86,7 +95,8 @@ pub struct TitleScreen {
     /// (whose battles play their own music) clears it and the next update
     /// asks again.
     music_on: bool,
-    /// Whether the "press any key" prompt ([`Ctx::key_prompt`]) is over.
+    /// Whether the "press any key or button" prompt ([`Ctx::key_prompt`])
+    /// is over.
     /// It shows once per launch.
     prompt_done: bool,
 }
@@ -182,8 +192,8 @@ impl TitleScreen {
         Transition::Push(screen)
     }
 
-    /// Whether the title is still showing "press any key" instead of its
-    /// menu.
+    /// Whether the title is still showing "press any key or button"
+    /// instead of its menu.
     fn waiting(&self, ctx: &Ctx) -> bool {
         ctx.key_prompt != KeyPrompt::Off && !self.prompt_done
     }
@@ -202,8 +212,9 @@ impl Screen for TitleScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if self.waiting(ctx) {
-            // A key pressed on another screen first (the layout picker)
-            // counts too. The key that ends the wait does nothing else.
+            // The key or button that ends the wait does nothing else (a
+            // key with no layout chosen yet opens the layout picker over
+            // the title first: `Game::step`).
             if ctx.key_prompt == KeyPrompt::Pressed {
                 self.prompt_done = true;
                 ctx.audio.play_music(TITLE_MUSIC);
@@ -264,8 +275,17 @@ impl Screen for TitleScreen {
         print_centred(buf, SUBTITLE_ROW, subtitle, c(UiColor::TextDim), black);
         let bottom = i32::from(buf.height()) - 1;
         if self.waiting(ctx) {
+            let dim = c(UiColor::TextDim);
             let prompt = ctx.text("title.press_any_key");
-            print_centred(buf, MENU_ROW, prompt, c(UiColor::TextDim), black);
+            print_centred(buf, MENU_ROW, prompt, dim, black);
+            let len = prompt.chars().count();
+            let left = centre_x(buf, len);
+            let right = left + i32::try_from(len).unwrap_or(0) + PICTURE_GAP;
+            for (y, (keys, pad)) in (MENU_ROW - 1..).zip(KEYBOARD_PICTURE.iter().zip(PAD_PICTURE)) {
+                let w = i32::try_from(keys.chars().count()).unwrap_or(0);
+                buf.print(left - PICTURE_GAP - w, y, keys, dim, black);
+                buf.print(right, y, pad, dim, black);
+            }
             draw_debug_hint(ctx, buf, bottom);
             return;
         }

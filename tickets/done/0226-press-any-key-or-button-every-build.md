@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0219", "0220"]
 nick_input: sign-off
-completed:
+completed: 2026-10-04
 ---
 
 # 0226 — "Press any key or button" on every build
@@ -94,17 +94,18 @@ and the `ascii-art` skill (the two pictures).
 
 ## Acceptance criteria
 
-- [ ] Nick picked the pictures (step 1) and signed off the flow.
-- [ ] Snapshot: title waiting with `Press any key or button` and both
+- [x] Nick picked the pictures (step 1: "B: three rows"). His sign-off of
+      the flow is after merge (it never blocks the PR).
+- [x] Snapshot: title waiting with `Press any key or button` and both
       pictures.
-- [ ] Harness (first launch, no saved layout): key at the prompt → picker
+- [x] Harness (first launch, no saved layout): key at the prompt → picker
       opens; pad press at the prompt → menu, no picker.
-- [ ] Harness: picker open, pad press → picker closes, no layout saved.
-- [ ] Harness: no layout, pad used in battle, then a key → picker opens
+- [x] Harness: picker open, pad press → picker closes, no layout saved.
+- [x] Harness: no layout, pad used in battle, then a key → picker opens
       over the battle and the key didn't act; after picking, switching pad
       → key never opens it again.
-- [ ] Native builds show the prompt (test with the native `Ctx`).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Native builds show the prompt (test with the native `Ctx`).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -114,5 +115,62 @@ and the `ascii-art` skill (the two pictures).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** Every build now opens on `Press any key or button` with the
+keyboard and controller pictures Nick picked (B, three rows; screenshot
+`docs/screenshots/0226-press-any-key-or-button.png`). A key at the prompt
+opens "Pick your layout" when none is chosen; a button goes straight to the
+menu. A button closes the layout screen without choosing, and until a layout
+is picked the next key opens it again over whatever is showing.
+
+**How it is built.**
+- `app` sets `KeyPrompt::Waiting` on every build. `Ctx`'s default stays
+  `Off`, so tests still start at the menu unless they ask for the prompt
+  (`Harness::at_prompt()`, `at_prompt_with_layout()`; they replace
+  `on_web…`, and `cargo xtask frame-png --web` is now `--prompt`).
+- `Game::start` no longer pushes the picker. `Game::step` does: while no
+  layout is chosen and the picker isn't open, a frame with a key press
+  pushes it and drops that frame's key presses (they never reach the
+  input, so nothing repeats or acts).
+- `LayoutPickerScreen` pops on any pad press unless it was opened from
+  Options.
+
+**Deviations.**
+- No `FirstPress::Key | Pad` is stored (step 3), and `ctx.device` isn't
+  consulted (step 4): the ticket's own closing remark, "no key acts before
+  a layout is chosen: the first one always opens the picker", gives every
+  flow without either, with less state.
+- The key that opens the picker marks the keyboard as the device in use
+  (`InputState::keyboard_used`), so the picker's help line names keys.
+
+**Tests.** Snapshot `the_title_waits_for_a_key_or_button`; Harness flows in
+`crates/ui/tests/it/title.rs` (`first_launch_a_key_at_the_prompt_…`,
+`first_launch_a_button_at_the_prompt_…`,
+`a_button_closes_the_layout_picker_without_choosing`,
+`a_key_mid_battle_opens_the_layout_picker_until_one_is_picked`,
+`a_later_launch_shows_the_prompt_then_the_menu`); unit tests in `game.rs`
+and `layout_picker.rs`. The picker's own tests open it with a first key.
+
+**Web sound, not checked on real browsers.** Browsers unlock sound on a
+key press, click or touch, not on a controller button, so after a button
+the menu shows silently and the music starts at the first key press or
+click (0224's page script resumes the sound on each of those until it
+runs). I had no controller and no Chrome or Firefox with sound blocked to
+confirm it: please listen for it at sign-off.
+
+**Claude's starting rules (Nick can veto; also in `title-screen.md` and
+`controls.md`):**
+- The pictures are dim like the line, don't blink, and keep a 5-cell gap
+  from the words in every language.
+- First launch, a key at the prompt: the menu and the music start once
+  "Pick your layout" closes.
+- Until a layout is picked, no key does anything but open "Pick your
+  layout", even after the player closed it with the pad.
+- The button that closes "Pick your layout" does nothing else; nudging a
+  stick counts as a button.
+- Opened from Options, the layout screen is steered with the pad as before
+  (a button doesn't close it).
+- Typing the lead's name with no layout picked opens the layout screen
+  first, like any other key.
+
+**Follow-ups.** None. Ticket 0811 (title art) now says to leave room for
+the three-row pictures.
