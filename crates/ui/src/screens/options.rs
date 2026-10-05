@@ -335,7 +335,11 @@ impl OptionsScreen {
             Row::MusicVolume => return volume(s.music_volume),
             Row::SoundVolume => return volume(s.sound_volume),
             Row::Layout => {
-                return words(ctx.layout().map(layout_picker::label).unwrap_or_default());
+                return words(
+                    ctx.layout()
+                        .map(|l| layout_picker::label(ctx, l))
+                        .unwrap_or_default(),
+                );
             }
             Row::GameMode => match ctx.campaign_mode {
                 Some(mode) => mode_key(mode),
@@ -586,7 +590,7 @@ impl OptionsScreen {
     pub fn help(&self, ctx: &Ctx) -> String {
         match &self.typing {
             // Typing: the text box's own keys.
-            Some(b) if !b.pad => text_keys_help(),
+            Some(b) if !b.pad => text_keys_help(ctx),
             Some(_) => ctx.text_with("options.help.number_pad", &[]),
             None => ctx.text_with(self.help_key(ctx), &[]),
         }

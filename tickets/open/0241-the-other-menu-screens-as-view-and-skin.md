@@ -40,7 +40,7 @@ None. Nothing the player sees changes.
 - Any change to what a screen shows, its text, keys or layout.
 - A second skin or a way to choose skins.
 - The battle screen and the dialogue screen (0242).
-- Text literals to the language file (0234). *Either order works*, as in
+- Text literals to the language file (0234; class change's: 0243). *Either order works*, as in
   0240: the view always holds finished strings.
 - Pictures stay pictures: where a screen places a portrait or another
   sprite (lead select, results' level-up page, class change), the view

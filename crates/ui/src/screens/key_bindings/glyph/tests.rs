@@ -19,7 +19,7 @@ fn row_mut(view: &mut KeyBindingsView, action: Action) -> &mut RowView {
 fn view(side: Side) -> KeyBindingsView {
     let row = |&(action, label): &(Action, &str)| RowView {
         action,
-        label: label.to_owned(),
+        label: ctx().text(label).to_owned(),
         fixed: Vec::new(),
         slots: (0..SLOTS)
             .map(|j| {
@@ -214,9 +214,9 @@ fn the_focused_slot_is_a_bar_and_while_capturing_it_shows_the_prompt() {
     // is an empty bar.
     let confirm = row_mut(&mut v, Action::Confirm);
     confirm.focus = Some(1);
-    confirm.slots[1] = SlotView::Capturing(CAPTURE_PROMPT.to_owned());
+    confirm.slots[1] = SlotView::Capturing("Press a key…".to_owned());
     let buf = painted(&c, &v);
-    assert!(text(&buf, y).contains(CAPTURE_PROMPT));
+    assert!(text(&buf, y).contains("Press a key…"));
     assert_eq!(buf.get(slot_x(1), y).unwrap().bg, bar);
     assert_ne!(buf.get(slot_x(0), y).unwrap().bg, bar);
     let confirm = row_mut(&mut v, Action::Confirm);
@@ -437,7 +437,8 @@ fn every_button_name_fits_a_slot() {
             assert!(name.chars().count() <= SLOT_W, "{name}");
         }
     }
-    assert!(CAPTURE_BUTTON_PROMPT.chars().count() <= SLOT_W);
+    assert!(ctx().text(CAPTURE_BUTTON_PROMPT).chars().count() <= SLOT_W);
+    assert!(ctx().text(CAPTURE_PROMPT).chars().count() <= SLOT_W);
     for choice in CHOICES.map(|key| ctx().text(key).to_owned()) {
         assert!(i32::try_from(choice.chars().count()).unwrap() <= CHOICE_W - 4);
     }

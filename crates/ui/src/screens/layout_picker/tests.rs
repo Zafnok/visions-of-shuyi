@@ -84,9 +84,10 @@ fn help_names_the_picker_keys() {
 
 #[test]
 fn legend_comes_from_each_layout() {
-    let def = &first_launch_ctx().content.keymap;
+    let c = first_launch_ctx();
+    let def = &c.content.keymap;
     let legend = |l| {
-        LayoutPickerScreen::legend(&Keymap::for_layout(def, l))
+        LayoutPickerScreen::legend(&c, &Keymap::for_layout(def, l))
             .into_iter()
             .map(|row| format!("{} {}", row.keys, row.what))
             .collect::<Vec<_>>()
@@ -121,10 +122,10 @@ fn legend_comes_from_each_layout() {
             "u rewind",
         ]
     );
-    let unbound = LayoutPickerScreen::legend(&Keymap::for_layout(
-        &trpg_content::KeymapDef::default(),
-        Layout::LeftHanded,
-    ));
+    let unbound = LayoutPickerScreen::legend(
+        &c,
+        &Keymap::for_layout(&trpg_content::KeymapDef::default(), Layout::LeftHanded),
+    );
     assert_eq!(unbound.len(), 10);
     assert!(unbound.iter().all(|r| r.keys == NOT_MAPPED), "{unbound:?}");
 }
@@ -140,16 +141,18 @@ fn key_roles() {
 
 #[test]
 fn only_the_cursor_keys_are_movement_in_the_legend() {
-    let km = Keymap::for_layout(&first_launch_ctx().content.keymap, Layout::RightHanded);
-    let legend = LayoutPickerScreen::legend(&km);
+    let c = first_launch_ctx();
+    let km = Keymap::for_layout(&c.content.keymap, Layout::RightHanded);
+    let legend = LayoutPickerScreen::legend(&c, &km);
     assert!(legend[0].movement);
     assert_eq!(legend.iter().filter(|r| r.movement).count(), 1);
 }
 
 #[test]
 fn labels() {
-    assert_eq!(label(Layout::RightHanded), "Right-handed");
-    assert_eq!(label(Layout::LeftHanded), "Left-handed");
+    let c = ctx();
+    assert_eq!(label(&c, Layout::RightHanded), "Right-handed");
+    assert_eq!(label(&c, Layout::LeftHanded), "Left-handed");
 }
 
 /// The view of the picker as it opens on first launch: both layouts in

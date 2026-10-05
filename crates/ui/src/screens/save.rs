@@ -16,17 +16,17 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::save::{self, Slot, playtime_text, slot_key};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{SEPARATOR, cursor_keys_name, help_line, key_name};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
-/// The question after a chapter's victory.
-pub const SAVE_QUESTION: &str = "Save your progress?";
-/// The slot picker's title when saving.
-pub const SAVE_TITLE: &str = "Save";
-/// The slot picker's title when loading.
-pub const LOAD_TITLE: &str = "Load Game";
-/// What an empty slot shows.
-pub const EMPTY_SLOT: &str = "Empty";
+/// The key of the question after a chapter's victory in the language
+/// files ([`Ctx::text`]).
+pub const SAVE_QUESTION: &str = "save_prompt.question";
+/// The key of the slot picker's title when saving.
+pub const SAVE_TITLE: &str = "save.title.save";
+/// The key of the slot picker's title when loading.
+pub const LOAD_TITLE: &str = "save.title.load";
+/// The key of what an empty slot shows.
+pub const EMPTY_SLOT: &str = "save.empty";
 
 /// Row of the question.
 const QUESTION_ROW: i32 = 10;
@@ -70,9 +70,11 @@ impl SavePromptScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "save_prompt";
 
-    /// The question with `Yes` focused.
-    pub fn new() -> Self {
-        let items = ["Yes", "No"].map(MenuItem::new).to_vec();
+    /// The question with `Yes` focused, labelled in `ctx`'s language.
+    pub fn new(ctx: &Ctx) -> Self {
+        let items = ["save_prompt.yes", "save_prompt.no"]
+            .map(|key| MenuItem::new(ctx.text(key)))
+            .to_vec();
         Self {
             menu: Menu::new(items).without_cancel(),
             chosen: None,
@@ -86,17 +88,7 @@ impl SavePromptScreen {
 
     /// The bottom help line.
     pub fn help(ctx: &Ctx) -> String {
-        let km = ctx.help_keys();
-        help_line(&[
-            (Some(cursor_keys_name(km)), "choose"),
-            (Some(key_name(km, Action::Confirm)), "select"),
-        ])
-    }
-}
-
-impl Default for SavePromptScreen {
-    fn default() -> Self {
-        Self::new()
+        ctx.text_with("save_prompt.help", &[])
     }
 }
 
@@ -121,7 +113,7 @@ impl Screen for SavePromptScreen {
         let black = c(UiColor::Black);
         buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
         let highlight = c(UiColor::TextHighlight);
-        print_centred(buf, QUESTION_ROW, SAVE_QUESTION, highlight, black);
+        print_centred(buf, QUESTION_ROW, ctx.text(SAVE_QUESTION), highlight, black);
         let (w, _) = self.menu.size();
         let x = (i32::from(buf.width()) - w) / 2;
         self.menu.draw(&ctx.palette, buf, x, MENU_ROW);
@@ -252,8 +244,9 @@ impl SlotPickerScreen {
     }
 
     /// The overwrite question for the focused slot.
-    pub fn overwrite_question(&self) -> String {
-        format!("Overwrite slot {:02}?", self.focused_slot())
+    pub fn overwrite_question(&self, ctx: &Ctx) -> String {
+        let slot = format!("{:02}", self.focused_slot());
+        ctx.text_with("save.overwrite_question", &[("slot", &slot)])
     }
 
     /// Keeps the focused slot among those shown.
@@ -295,7 +288,7 @@ impl SlotPickerScreen {
                 true
             }
             Err(e) => {
-                self.message = Some(e.to_string());
+                self.message = Some(e.text(ctx));
                 ctx.audio.menu(MenuSound::Denied);
                 false
             }
@@ -321,7 +314,7 @@ impl SlotPickerScreen {
                 true
             }
             Some(Slot::Unreadable(e)) => {
-                self.message = Some(e.to_string());
+                self.message = Some(e.text(ctx));
                 ctx.audio.menu(MenuSound::Denied);
                 false
             }
@@ -351,22 +344,17 @@ impl SlotPickerScreen {
 
     /// The bottom help line.
     pub fn help(&self, ctx: &Ctx) -> String {
-        let km = ctx.help_keys();
-        let confirm = |label| (Some(key_name(km, Action::Confirm)), label);
-        let cancel = |label| (Some(key_name(km, Action::Cancel)), label);
-        if self.asking {
-            return help_line(&[confirm("yes"), cancel("no")]);
-        }
-        let choose = (Some(cursor_keys_name(km)), "choose");
         // A slot with something in it says so before it is chosen.
-        let pick = confirm(if self.would_overwrite() {
-            "overwrite"
+        let key = if self.asking {
+            "save.help.asking"
+        } else if self.would_overwrite() {
+            "save.help.overwrite"
         } else if self.is_saving() {
-            "save here"
+            "save.help.save_here"
         } else {
-            "load"
-        });
-        help_line(&[choose, pick, cancel("back")])
+            "save.help.load"
+        };
+        ctx.text_with(key, &[])
     }
 
     /// Draws slot `index` on console row `y`.
@@ -393,19 +381,19 @@ impl SlotPickerScreen {
         buf.print(SLOT_X, y, &format!("{:02}", index + 1), text, bg);
         match self.slots.get(index) {
             Some(Slot::Saved(saved)) => {
-                let title: String = saved.chapter.chars().take(CHAPTER_W).collect();
+                let title: String = saved.title(ctx).chars().take(CHAPTER_W).collect();
                 buf.print(CHAPTER_X, y, &title, text, bg);
-                buf.print(MODE_X, y, mode_name(saved.mode), text, bg);
-                buf.print(ARMY_X, y, &army_text(saved.roster), text, bg);
+                buf.print(MODE_X, y, mode_name(ctx, saved.mode), text, bg);
+                buf.print(ARMY_X, y, &army_text(ctx, saved.roster), text, bg);
                 let time = playtime_text(saved.playtime_s);
                 let width = i32::try_from(time.chars().count()).unwrap_or(0);
                 buf.print(TIME_END_X - width, y, &time, text, bg);
             }
             Some(Slot::Unreadable(e)) => {
-                buf.print(CHAPTER_X, y, &e.to_string(), bad, bg);
+                buf.print(CHAPTER_X, y, &e.text(ctx), bad, bg);
             }
             Some(Slot::Empty) | None => {
-                buf.print(CHAPTER_X, y, EMPTY_SLOT, dim, bg);
+                buf.print(CHAPTER_X, y, ctx.text(EMPTY_SLOT), dim, bg);
             }
         }
     }
@@ -415,8 +403,8 @@ impl SlotPickerScreen {
     fn draw_question(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
         let c = |u| ctx.palette.get(u);
         let bg = c(UiColor::PanelBg);
-        let question = self.overwrite_question();
-        let answers = self.help(ctx).replace(SEPARATOR, " / ");
+        let question = self.overwrite_question(ctx);
+        let answers = ctx.text_with("save.overwrite_answers", &[]);
         let widest = question.chars().count().max(answers.chars().count());
         let w = i32::try_from(widest).unwrap_or(0) + 4;
         let rect = Rect::new(
@@ -432,18 +420,22 @@ impl SlotPickerScreen {
     }
 }
 
-/// A game mode's name.
-pub fn mode_name(mode: GameMode) -> &'static str {
-    match mode {
-        GameMode::Classic => "Classic",
-        GameMode::Casual => "Casual",
-    }
+/// A game mode's name, in `ctx`'s language.
+pub fn mode_name(ctx: &Ctx, mode: GameMode) -> &str {
+    ctx.text(match mode {
+        GameMode::Classic => "save.mode.classic",
+        GameMode::Casual => "save.mode.casual",
+    })
 }
 
 /// An army of `n` as text: `1 unit`, `3 units`.
-pub fn army_text(n: usize) -> String {
-    let units = if n == 1 { "unit" } else { "units" };
-    format!("{n} {units}")
+pub fn army_text(ctx: &Ctx, n: usize) -> String {
+    let key = if n == 1 {
+        "save.army.one"
+    } else {
+        "save.army.many"
+    };
+    ctx.text_with(key, &[("count", &n)])
 }
 
 impl Screen for SlotPickerScreen {
@@ -491,28 +483,31 @@ impl Screen for SlotPickerScreen {
         buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
         buf.fill_rect(PANEL, Cell::new(' ', text, bg));
         buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-        let title = if self.is_saving() {
+        let title = ctx.text(if self.is_saving() {
             SAVE_TITLE
         } else {
             LOAD_TITLE
-        };
+        });
         let highlight = c(UiColor::TextHighlight);
         // In the top border, its text over the slot numbers.
         buf.print(SLOT_X - 1, PANEL.y, &format!(" {title} "), highlight, bg);
 
-        buf.print(SLOT_X, HEADING_ROW, "Slot", dim, bg);
-        buf.print(CHAPTER_X, HEADING_ROW, "Chapter", dim, bg);
-        buf.print(MODE_X, HEADING_ROW, "Mode", dim, bg);
-        buf.print(ARMY_X, HEADING_ROW, "Army", dim, bg);
-        buf.print(TIME_END_X - 4, HEADING_ROW, "Time", dim, bg);
+        buf.print(SLOT_X, HEADING_ROW, ctx.text("save.column.slot"), dim, bg);
+        let chapter = ctx.text("save.column.chapter");
+        buf.print(CHAPTER_X, HEADING_ROW, chapter, dim, bg);
+        buf.print(MODE_X, HEADING_ROW, ctx.text("save.column.mode"), dim, bg);
+        buf.print(ARMY_X, HEADING_ROW, ctx.text("save.column.army"), dim, bg);
+        let time = ctx.text("save.column.time");
+        let time_w = i32::try_from(time.chars().count()).unwrap_or(0);
+        buf.print(TIME_END_X - time_w, HEADING_ROW, time, dim, bg);
         let shown = self.top..(self.top + VISIBLE).min(self.slots.len());
         // Which slots are on screen, in the bottom border.
-        let range = format!(
-            " {}-{} of {} ",
-            shown.start + 1,
-            shown.end,
-            self.slots.len()
+        let (first, count) = (shown.start + 1, self.slots.len());
+        let range = ctx.text_with(
+            "save.range",
+            &[("first", &first), ("last", &shown.end), ("count", &count)],
         );
+        let range = format!(" {range} ");
         let range_w = i32::try_from(range.chars().count()).unwrap_or(0);
         let range_x = PANEL.x + PANEL.w - 2 - range_w;
         buf.print(range_x, PANEL.y + PANEL.h - 1, &range, dim, bg);

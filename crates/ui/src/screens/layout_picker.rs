@@ -18,18 +18,21 @@ pub use view::{KeyCapView, KeyRole, LayoutPickerView, LayoutView, LegendRow};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Chord, Key, Keymap, Layout};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{HelpKeys, all_key_names, cursor_keys_name, help_line, key_name};
+use crate::widgets::help::{HelpKeys, all_key_names, cursor_keys_name, key_name};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
-/// Title text.
-pub const TITLE: &str = "Pick your layout";
+/// The key of the title in the language files ([`Ctx::text`]).
+pub const TITLE: &str = "layout_picker.title";
+/// The key of the legend's word for the cursor keys: the line that is
+/// flagged as movement.
+const LEGEND_MOVE: &str = "layout_picker.legend.move";
 
-/// The name shown for a layout.
-pub fn label(layout: Layout) -> &'static str {
-    match layout {
-        Layout::RightHanded => "Right-handed",
-        Layout::LeftHanded => "Left-handed",
-    }
+/// The name shown for a layout, in `ctx`'s language.
+pub fn label(ctx: &Ctx, layout: Layout) -> &str {
+    ctx.text(match layout {
+        Layout::RightHanded => "layout_picker.right_handed",
+        Layout::LeftHanded => "layout_picker.left_handed",
+    })
 }
 
 /// Shows both layouts and saves the one picked. Asked for by a key press
@@ -68,8 +71,10 @@ impl LayoutPickerScreen {
         }
     }
 
+    /// One line per layout. The menu only keeps the focus: it is never
+    /// drawn, so its lines have no text.
     fn menu() -> Menu {
-        let items = Layout::ALL.iter().map(|&l| MenuItem::new(label(l)));
+        let items = Layout::ALL.iter().map(|_| MenuItem::new(String::new()));
         Menu::new(items.collect())
     }
 
@@ -96,38 +101,57 @@ impl LayoutPickerScreen {
             return ctx.text_with("layout_picker.help_change", &[]);
         }
         let km = ctx.help_keys();
-        let choose = Some(format!(
-            "{} {}",
-            all_key_names(km, Action::CursorUp),
-            all_key_names(km, Action::CursorDown)
-        ));
-        help_line(&[
-            (choose, "choose"),
-            (Some(all_key_names(km, Action::Confirm)), "pick"),
-        ])
+        let up = all_key_names(km, Action::CursorUp);
+        let down = all_key_names(km, Action::CursorDown);
+        let confirm = all_key_names(km, Action::Confirm);
+        ctx.text_with(
+            "layout_picker.help_first",
+            &[("up", &up), ("down", &down), ("confirm", &confirm)],
+        )
     }
 
-    /// The legend for `km`: the keys and what they do; an action with no
-    /// key shows `! not mapped`. Always its keyboard keys: the screen is
-    /// about the keyboard's layouts.
-    pub fn legend(km: &Keymap) -> Vec<LegendRow> {
+    /// The legend for `km`, in `ctx`'s language: the keys and what they
+    /// do; an action with no key shows `! not mapped`. Always its keyboard
+    /// keys: the screen is about the keyboard's layouts.
+    pub fn legend(ctx: &Ctx, km: &Keymap) -> Vec<LegendRow> {
         let km = HelpKeys::keyboard(km);
-        let row = |keys: String, what: &str, movement: bool| LegendRow {
+        let row = |keys: String, what: &str| LegendRow {
             keys,
-            what: what.to_owned(),
-            movement,
+            what: ctx.text(what).to_owned(),
+            movement: what == LEGEND_MOVE,
         };
         vec![
-            row(cursor_keys_name(km), "move", true),
-            row(all_key_names(km, Action::Confirm), "select", false),
-            row(all_key_names(km, Action::Cancel), "back", false),
-            row(key_name(km, Action::PrevUnit), "prev unit", false),
-            row(key_name(km, Action::NextUnit), "next unit", false),
-            row(key_name(km, Action::Info), "unit info", false),
-            row(key_name(km, Action::DangerZone), "danger zone", false),
-            row(key_name(km, Action::EndTurn), "end turn", false),
-            row(key_name(km, Action::ToggleAutoEnd), "auto-end", false),
-            row(key_name(km, Action::Rewind), "rewind", false),
+            row(cursor_keys_name(km), LEGEND_MOVE),
+            row(
+                all_key_names(km, Action::Confirm),
+                "layout_picker.legend.select",
+            ),
+            row(
+                all_key_names(km, Action::Cancel),
+                "layout_picker.legend.back",
+            ),
+            row(
+                key_name(km, Action::PrevUnit),
+                "layout_picker.legend.prev_unit",
+            ),
+            row(
+                key_name(km, Action::NextUnit),
+                "layout_picker.legend.next_unit",
+            ),
+            row(key_name(km, Action::Info), "layout_picker.legend.unit_info"),
+            row(
+                key_name(km, Action::DangerZone),
+                "layout_picker.legend.danger_zone",
+            ),
+            row(
+                key_name(km, Action::EndTurn),
+                "layout_picker.legend.end_turn",
+            ),
+            row(
+                key_name(km, Action::ToggleAutoEnd),
+                "layout_picker.legend.auto_end",
+            ),
+            row(key_name(km, Action::Rewind), "layout_picker.legend.rewind"),
         ]
     }
 
@@ -140,14 +164,14 @@ impl LayoutPickerScreen {
             let km = ctx.keymap_for(layout);
             LayoutView {
                 layout,
-                name: label(layout).to_owned(),
+                name: label(ctx, layout).to_owned(),
                 focused: layout == focused,
-                legend: Self::legend(&km),
+                legend: Self::legend(ctx, &km),
                 keys: key_caps(&km),
             }
         });
         LayoutPickerView {
-            title: TITLE.to_owned(),
+            title: ctx.text(TITLE).to_owned(),
             layouts: layouts.collect(),
             help: Self::help_with(ctx, self.cancellable),
         }

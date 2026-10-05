@@ -85,7 +85,7 @@ Act 1). Shared first step: **0717** every dialogue line gets an id (no
 open dependencies).
 *Japanese* (ADR-0045): **0042** Nick picks the font and how a language is
 chosen → **0233** screen text by key (no open dependencies) → **0234** the
-rest of the screens and **0235** data names, tips and dialogue (also needs
+rest of the screens (the battle and class change screens: **0243**) and **0235** data names, tips and dialogue (also needs
 0717); **0236** wide glyphs (after 0042) → **0237** Japanese line
 breaking; **0825** the Options row (after 0805); **0718** the translation
 pipeline → **0719** Chapter 1 and the screens in Japanese (after 0716).

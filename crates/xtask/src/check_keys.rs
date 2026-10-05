@@ -230,11 +230,20 @@ const PRESS_VERBS: [&str; 4] = ["press", "hit", "tap", "hold"];
 
 /// Why prose `text` names a key, if it does: only an instruction to press
 /// one ("press f", "hold Shift", "hit Space."), a `Shift+` chord, `WASD`, or
-/// a bracketed letter (`[F]`). Bare key words are allowed.
+/// a bracketed letter (`[F]`). Bare key words are allowed, and so is the
+/// article in "Press a key…" and "hold a button".
 fn prose_names_key(text: &str) -> Option<String> {
     let words: Vec<&str> = text.split_whitespace().collect();
-    for pair in words.windows(2) {
+    for (i, pair) in words.windows(2).enumerate() {
         let [verb, key] = pair else { continue };
+        let next = words.get(i + 2).copied().unwrap_or_default();
+        let next = next.trim_matches(|c: char| !c.is_alphanumeric());
+        let noun = ["key", "button"]
+            .iter()
+            .any(|n| n.eq_ignore_ascii_case(next));
+        if *key == "a" && noun {
+            continue;
+        }
         let key = key.trim_end_matches(|c: char| c.is_ascii_punctuation() && c != '+');
         let is_key = key.len() == 1 && key.bytes().all(|b| b.is_ascii_alphabetic())
             || KEY_WORDS.iter().any(|w| w.eq_ignore_ascii_case(key))
@@ -838,6 +847,23 @@ let d = is_key_down_fast(x);
             "{}",
             errs[0]
         );
+
+        // "a key" and "a button" are not the `a` key; `a` alone is, and so
+        // is the A button.
+        for ok in ["Press a key…", "Hold a button.", "PRESS a KEY…"] {
+            assert_eq!(scan_ron("x.ron", &format!("[\"{ok}\"]")), [""; 0], "{ok}");
+        }
+        for bad in [
+            "Press a",
+            "press a to attack",
+            "Press a.",
+            "Press A button",
+            "Press a keyhole",
+            "Press b key",
+        ] {
+            let errs = scan_ron("x.ron", &format!("[\"{bad}\"]"));
+            assert_eq!(errs.len(), 1, "{bad}: {errs:?}");
+        }
 
         let dlg =
             "# press f is a comment\n@scene s\nlord: Press Space to end your turn.\nlord: Fine.\n";

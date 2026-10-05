@@ -389,10 +389,10 @@ fn screens_cover_the_whole_buffer() {
     let screens: [&dyn Screen; 8] = [
         &TitleScreen::new(&ctx()),
         &TitleScreen::with_quick_battle(&ctx()),
-        &crate::screens::ModeSelectScreen::new(),
+        &crate::screens::ModeSelectScreen::new(&c),
         &crate::screens::LeadSelectScreen::new(),
         &naming,
-        &crate::screens::GameOverScreen::new(),
+        &crate::screens::GameOverScreen::new(&c),
         &crate::screens::ToBeContinuedScreen,
         &CreditsScreen::new(&c),
     ];

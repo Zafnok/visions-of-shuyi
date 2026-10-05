@@ -106,8 +106,8 @@ fn rows_list_every_rebindable_action_once_required_first() {
         .collect();
     rebindable.sort();
     assert_eq!(listed, rebindable);
-    assert_eq!(label(Action::Info), "Unit info");
-    assert_eq!(label(Action::Debug), "Debug");
+    assert_eq!(label(&ctx(), Action::Info), "Unit info");
+    assert_eq!(label(&ctx(), Action::Debug), "Debug");
     assert_eq!(
         blocked_message(&ctx(), Side::Keyboard, Cancel),
         "Give Cancel a key first"
@@ -348,7 +348,10 @@ fn a_reserved_key_is_refused_and_capture_goes_on() {
     assert_eq!(s.message(), Some("That key can't be used"));
     assert_eq!(s.bindings(), &before);
     assert_eq!(sounds(&mut c), [cue(MenuSound::Denied)]);
-    assert_eq!(s.view(&c).message.as_deref(), Some(RESERVED_MESSAGE));
+    assert_eq!(
+        s.view(&c).message.as_deref(),
+        Some("That key can't be used")
+    );
     // The next key binds and clears the message.
     s.update(&mut c, &press("g"));
     assert!(!s.is_capturing());
@@ -704,7 +707,7 @@ fn the_view_lists_slots_fixed_keys_and_not_mapped_notes() {
     s.update(&mut c, &act(&[CursorRight, Confirm]));
     let view = s.view(&c);
     assert_eq!(row_of(&view, Confirm).focus, Some(1));
-    assert_eq!(shown(&view, Confirm)[1], format!("…{CAPTURE_PROMPT}"));
+    assert_eq!(shown(&view, Confirm)[1], "…Press a key…");
     assert_eq!(shown(&view, Confirm)[0], "-");
 }
 
@@ -716,7 +719,8 @@ fn the_groups_are_the_required_actions_then_the_optional_ones() {
     assert!(view.groups[0].rows.iter().all(|r| r.action.is_required()));
     assert!(view.groups[1].rows.iter().all(|r| !r.action.is_required()));
     let listed: Vec<_> = view.rows().map(|r| (r.action, r.label.as_str())).collect();
-    assert_eq!(listed, ROWS);
+    let want: Vec<_> = ROWS.iter().map(|&(a, key)| (a, c.text(key))).collect();
+    assert_eq!(listed, want);
 }
 
 // --- The controller side (ticket 0816) --------------------------------------
@@ -859,7 +863,7 @@ fn with_the_keyboard_confirm_captures_a_button_let_go() {
     assert!(s.is_capturing());
     assert_eq!(s.choice(), None);
     let waiting = shown(&s.view(&c), Info);
-    assert_eq!(waiting[1], format!("…{CAPTURE_BUTTON_PROMPT}"));
+    assert_eq!(waiting[1], "…Press a button…");
     sounds(&mut c);
     // Going down doesn't bind; nor does a key.
     s.update(&mut c, &buttons(&[Button::RightTrigger], &[], 0.0));
@@ -1086,7 +1090,7 @@ fn on_a_controller_the_keyboard_side_still_takes_only_keys() {
     s.update(&mut c, &act(&[CursorUp, CursorLeft]));
     assert_eq!(s.side(), Side::Keyboard);
     change(&mut s, &mut c, Info, 1);
-    assert_eq!(shown(&s.view(&c), Info)[1], format!("…{CAPTURE_PROMPT}"));
+    assert_eq!(shown(&s.view(&c), Info)[1], "…Press a key…");
     // A button let go isn't a key: still waiting.
     tap(&mut s, &mut c, Button::West);
     assert!(s.is_capturing());
