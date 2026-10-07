@@ -174,7 +174,8 @@ early so every later PR is checked by them.
 - World map (0008 chose FE Sacred Stones-style, after the linear opening
   chapters): 1007 nodes/travel/towns/save/camp, 1008 fixed and random skirmishes.
 - Supports (FE GBA-style, earned in battle) and camp events: 1002, 1003.
-  Parked far-future ideas: hub activities (1004), pair abilities (1005).
+  Parked far-future ideas: hub activities (1004), pair abilities (1005),
+  a Playdate port (1025, after 0903).
 - Controller support on every build (web, Windows, Linux, macOS; needed for
   Steam Deck): 0032 decide buttons → 0219 input → 0220 button names in help
   bars → 0816 rebinding (after 0815). Not on the Chapter 1 critical path;
