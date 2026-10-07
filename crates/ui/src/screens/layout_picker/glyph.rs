@@ -117,12 +117,14 @@ fn paint_panel(ctx: &Ctx, buf: &mut GlyphBuffer, layout: &LayoutView, x: i32, y:
         (
             BoxStyle::Double,
             c(UiColor::PanelBorderFocus),
+            // check-text: not a data name (the view's own)
             format!(" ► {} ", layout.name),
         )
     } else {
         (
             BoxStyle::Single,
             c(UiColor::PanelBorder),
+            // check-text: not a data name (the view's own)
             format!(" {} ", layout.name),
         )
     };
