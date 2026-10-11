@@ -95,8 +95,8 @@ Claude never draws character art.
    look from the save's campaign the way the dialogue screen does.
    `Talk` resolves the lead's name and pronoun tokens with it and both shots draw that look's portrait.
    With no save: the names table's default name, and the default look
-   that 0706 records (until 0706 says, `lead_m`'s portrait id, as the
-   dialogue screen falls back today). The debug tool passes `None`.
+   that 0706 recorded: `lead_m` (as the dialogue screen falls back
+   today). The debug tool passes `None`.
 4. Add one of each to `test.ron` using the test portraits and the `test`
    scene, and update the 0817 snapshots.
 
