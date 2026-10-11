@@ -7,6 +7,7 @@ use crate::audio::AudioRequest;
 use crate::harness::Harness;
 use crate::save::{SLOTS, SaveError, read};
 use crate::screen::tests::ctx;
+use crate::screens::save::SlotEntryView;
 use crate::storage::{Storage, StorageError};
 use crate::words::Words;
 
@@ -59,30 +60,29 @@ fn sounds(c: &mut Ctx) -> Vec<String> {
         .collect()
 }
 
-fn render(s: &dyn Screen, c: &Ctx) -> GlyphBuffer {
-    use crate::console::{CONSOLE_H, CONSOLE_W};
-    let stale = Cell::new(
-        'x',
-        c.palette.get(UiColor::Enemy),
-        c.palette.get(UiColor::Enemy),
-    );
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
-    s.draw(c, &mut buf);
-    let left = (0..i32::from(CONSOLE_H))
-        .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
-        .filter(|&(x, y)| buf.get(x, y) == Some(&stale))
-        .count();
-    assert_eq!(left, 0, "{} left stale cells", s.name());
-    buf
+/// The slots the picker shows, as `(number, focused)`.
+fn numbers(s: &SlotPickerScreen, c: &Ctx) -> Vec<(usize, bool)> {
+    s.view(c)
+        .slots
+        .iter()
+        .map(|v| (v.number, v.focused))
+        .collect()
 }
 
-fn row(buf: &GlyphBuffer, y: i32) -> String {
-    let cells = (0..i32::from(buf.width())).map(|x| buf.get(x, y).map_or(' ', |c| c.glyph));
-    cells.collect::<String>().trim_end().to_owned()
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn the_prompt_can_be_found_by_its_type() {
+    let s = SavePromptScreen::new(&ctx());
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<SavePromptScreen>().is_some());
 }
 
-fn shows(buf: &GlyphBuffer, text: &str) -> bool {
-    (0..i32::from(buf.height())).any(|y| row(buf, y).contains(text))
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn the_picker_can_be_found_by_its_type() {
+    let s = SlotPickerScreen::load(&ctx());
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<SlotPickerScreen>().is_some());
 }
 
 #[test]
@@ -101,6 +101,20 @@ fn the_prompt_asks_yes_or_no() {
     assert_eq!(press(&mut s, &mut c, &no), "Pop");
     assert_eq!(s.result(), Some(false));
     assert_eq!(SavePromptScreen::help(&c), "arrows choose · f select");
+}
+
+#[test]
+fn the_prompt_view_asks_with_yes_focused() {
+    let c = ctx();
+    let mut s = SavePromptScreen::new(&c);
+    let view = s.view(&c);
+    assert_eq!(view.question, c.text(SAVE_QUESTION));
+    let labels: Vec<_> = view.menu.items.iter().map(|i| i.label.as_str()).collect();
+    assert_eq!(labels, ["Yes", "No"]);
+    assert_eq!(view.menu.focused().unwrap().label, "Yes");
+    assert_eq!(view.help, SavePromptScreen::help(&c));
+    press(&mut s, &mut ctx(), &[Action::CursorDown]);
+    assert_eq!(s.view(&c).menu.focused().unwrap().label, "No");
 }
 
 #[test]
@@ -128,7 +142,7 @@ fn saving_opens_on_the_first_empty_slot() {
     }
     let s = SlotPickerScreen::save(&c, game.clone());
     assert_eq!(s.focused_slot(), 25);
-    assert!(shows(&render(&s, &c), " 6-25 of 30 "));
+    assert_eq!(s.view(&c).range, "6-25 of 30");
     // Every slot full: the first, which says it will be overwritten.
     for slot in 1..=SLOTS {
         fill(&mut c, slot, game.clone());
@@ -159,7 +173,7 @@ fn a_full_slot_says_it_will_be_overwritten() {
     press(&mut s, &mut c, &[Action::CursorDown]);
     assert!(s.would_overwrite());
     assert_eq!(s.help(&c), "arrows choose · f overwrite · d back");
-    assert!(shows(&render(&s, &c), "f overwrite"));
+    assert_eq!(s.view(&c).help, s.help(&c));
     // Slot 3 is empty; slot 5 can't be read, and would be replaced too.
     press(&mut s, &mut c, &[Action::CursorDown]);
     assert!(!s.would_overwrite());
@@ -176,35 +190,31 @@ fn a_full_slot_says_it_will_be_overwritten() {
 fn the_focus_wraps_and_the_list_scrolls_with_it() {
     let mut c = saves();
     let mut s = SlotPickerScreen::load(&c).at(1);
-    let buf = render(&s, &c);
-    assert!(
-        row(&buf, FIRST_ROW).contains("01"),
-        "{}",
-        row(&buf, FIRST_ROW)
-    );
-    assert!(shows(&buf, " 1-20 of 30 "));
+    let shown = numbers(&s, &c);
+    assert_eq!(shown.len(), 20);
+    assert_eq!(shown[0], (1, true));
+    assert_eq!(s.view(&c).range, "1-20 of 30");
     // Up from the first slot: the last, scrolled into view on the last row.
     assert_eq!(press(&mut s, &mut c, &[Action::CursorUp]), "None");
     assert_eq!(s.focused_slot(), SLOTS);
     assert_eq!(sounds(&mut c), ["menu_move"]);
-    let buf = render(&s, &c);
-    assert!(shows(&buf, " 11-30 of 30 "));
-    assert!(row(&buf, FIRST_ROW).contains("11"));
-    assert!(row(&buf, FIRST_ROW + 19).contains("30"));
+    let shown = numbers(&s, &c);
+    assert_eq!(s.view(&c).range, "11-30 of 30");
+    assert_eq!(shown.first(), Some(&(11, false)));
+    assert_eq!(shown.last(), Some(&(30, true)));
     // Down wraps to the first again.
     press(&mut s, &mut c, &[Action::CursorDown]);
     assert_eq!(s.focused_slot(), 1);
-    assert!(shows(&render(&s, &c), " 1-20 of 30 "));
+    assert_eq!(s.view(&c).range, "1-20 of 30");
     // Down to slot 21: one row scrolled, the slot on the last row.
     let down = [Action::CursorDown; 20];
     press(&mut s, &mut c, &down);
     assert_eq!(s.focused_slot(), 21);
-    let buf = render(&s, &c);
-    assert!(shows(&buf, " 2-21 of 30 "));
-    assert!(row(&buf, FIRST_ROW + 19).contains("21"));
+    assert_eq!(s.view(&c).range, "2-21 of 30");
+    assert_eq!(numbers(&s, &c).last(), Some(&(21, true)));
     // Back up inside the window: no scrolling.
     press(&mut s, &mut c, &[Action::CursorUp]);
-    assert!(shows(&render(&s, &c), " 2-21 of 30 "));
+    assert_eq!(s.view(&c).range, "2-21 of 30");
     // Other keys do nothing, silently.
     sounds(&mut c);
     assert_eq!(
@@ -239,33 +249,84 @@ fn moving_needs_two_slots() {
 fn a_slot_row_shows_chapter_mode_army_and_playtime() {
     let c = saves();
     let s = SlotPickerScreen::load(&c);
-    let buf = render(&s, &c);
+    let view = s.view(&c);
     let army = c.content.new_game.roster.len();
     let (title, _) = save::next_chapter_title(&c.content, Words::ENGLISH, &campaign(&c, "Mara", 0));
-    let second = row(&buf, FIRST_ROW + 1);
-    for part in [
-        "02",
-        title.as_str(),
-        "Classic",
-        &army_text(&c, army),
-        "1:02:05",
-    ] {
-        assert!(second.contains(part), "{part:?} not in {second:?}");
-    }
-    let fourth = row(&buf, FIRST_ROW + 3);
-    for part in ["04", "Casual", "1 unit", "0:00:59"] {
-        assert!(fourth.contains(part), "{part:?} not in {fourth:?}");
-    }
-    assert!(!fourth.contains("1 units"));
-    assert!(row(&buf, FIRST_ROW).contains("Empty"));
-    assert!(row(&buf, FIRST_ROW + 4).contains("This save can't be read"));
-    assert!(row(&buf, FIRST_ROW + 5).contains("incompatible version"));
-    assert!(shows(&buf, " Load Game "));
-    assert!(!shows(&buf, " Save "));
+    let entry = |slot: usize| &view.slots[slot - 1].entry;
+    let SlotEntryView::Saved {
+        chapter,
+        mode,
+        mode_name: shown_name,
+        army: army_shown,
+        playtime,
+    } = entry(2)
+    else {
+        panic!("slot 2 holds a save");
+    };
+    assert!(chapter.contains(&title), "{chapter:?} lacks {title:?}");
+    assert_eq!(
+        (*mode, shown_name.as_str(), army_shown, playtime.as_str()),
+        (
+            GameMode::Classic,
+            "Classic",
+            &army_text(&c, army),
+            "1:02:05"
+        )
+    );
+    let SlotEntryView::Saved {
+        mode,
+        army,
+        playtime,
+        ..
+    } = entry(4)
+    else {
+        panic!("slot 4 holds a save");
+    };
+    assert_eq!(
+        (*mode, army.as_str(), playtime.as_str()),
+        (GameMode::Casual, "1 unit", "0:00:59")
+    );
+    assert_eq!(entry(1), &SlotEntryView::Empty("Empty".to_owned()));
+    let SlotEntryView::Unreadable(why) = entry(5) else {
+        panic!("slot 5 can't be read");
+    };
+    assert_eq!(why, "This save can't be read");
+    let SlotEntryView::Unreadable(why) = entry(6) else {
+        panic!("slot 6 is another version's");
+    };
+    assert!(why.contains("incompatible version"), "{why}");
+    assert_eq!(view.title, "Load Game");
     assert_eq!(army_text(&c, 0), "0 units");
     assert_eq!(army_text(&c, 1), "1 unit");
     assert_eq!(mode_name(&c, GameMode::Classic), "Classic");
     assert_eq!(mode_name(&c, GameMode::Casual), "Casual");
+}
+
+/// The picker names its columns and shows a window of 20 slots with the
+/// focused one marked.
+#[test]
+fn the_view_names_the_columns_and_marks_the_focused_slot() {
+    let c = saves();
+    let view = SlotPickerScreen::load(&c).view(&c);
+    let columns = &view.columns;
+    assert_eq!(
+        [
+            &columns.slot,
+            &columns.chapter,
+            &columns.mode,
+            &columns.army,
+            &columns.time
+        ]
+        .map(String::as_str),
+        ["Slot", "Chapter", "Mode", "Army", "Time"]
+    );
+    assert_eq!(view.slots.len(), VISIBLE);
+    let focused: Vec<_> = view.slots.iter().filter(|v| v.focused).collect();
+    assert_eq!(focused.len(), 1);
+    assert_eq!(focused[0].number, 2);
+    assert_eq!(view.message, None);
+    assert_eq!(view.question, None);
+    assert_eq!(view.help, "arrows choose · f load · d back");
 }
 
 #[test]
@@ -273,7 +334,7 @@ fn saving_into_an_empty_slot_writes_it_at_once() {
     let mut c = saves();
     let game = campaign(&c, "Mara", 77);
     let mut s = SlotPickerScreen::save(&c, game.clone());
-    assert!(shows(&render(&s, &c), " Save "));
+    assert_eq!(s.view(&c).title, "Save");
     assert_eq!(s.help(&c), "arrows choose · f save here · d back");
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
     assert_eq!(sounds(&mut c), ["menu_select"]);
@@ -295,9 +356,9 @@ fn saving_over_a_slot_asks_first() {
     assert!(s.is_asking());
     assert_eq!(s.overwrite_question(&c), "Overwrite slot 02?");
     assert_eq!(s.help(&c), "f yes · d no");
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "Overwrite slot 02?"));
-    assert!(shows(&buf, "f yes / d no"));
+    let question = s.view(&c).question.unwrap();
+    assert_eq!(question.question, "Overwrite slot 02?");
+    assert_eq!(question.answers, "f yes / d no");
     assert_eq!(read(c.storage.as_ref(), &slot_key(2)).unwrap(), before);
     // The cursor keys do nothing while it asks; Cancel backs out.
     sounds(&mut c);
@@ -306,7 +367,7 @@ fn saving_over_a_slot_asks_first() {
     assert_eq!(sounds(&mut c), ["menu_cancel"]);
     assert!(!s.is_asking());
     assert_eq!(s.focused_slot(), 2);
-    assert!(!shows(&render(&s, &c), "Overwrite slot"));
+    assert_eq!(s.view(&c).question, None);
     assert_eq!(read(c.storage.as_ref(), &slot_key(2)).unwrap(), before);
     assert_eq!(s.result(), None);
     // Asked again and confirmed: written.
@@ -340,8 +401,7 @@ fn loading_takes_only_a_slot_that_can_be_read() {
         assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
         assert_eq!(sounds(&mut c), [DENIED]);
         assert_eq!(s.message(), Some(error.to_string().as_str()));
-        // Under the panel.
-        assert_eq!(row(&render(&s, &c), 28).trim(), error.to_string());
+        assert_eq!(s.view(&c).message, Some(error.to_string()));
         assert_eq!(s.result(), None);
         // Moving on clears the message.
         press(&mut s, &mut c, &[Action::CursorUp]);
@@ -403,7 +463,10 @@ fn a_failed_save_says_so_and_stays_open() {
     assert_eq!(sounds(&mut c), [DENIED]);
     assert_eq!(s.message(), Some("Save storage error: disk full"));
     assert_eq!(s.result(), None);
-    assert!(shows(&render(&s, &c), "Save storage error: disk full"));
+    assert_eq!(
+        s.view(&c).message.as_deref(),
+        Some("Save storage error: disk full")
+    );
 }
 
 /// The slots with two saves, an unreadable one and another version's; the

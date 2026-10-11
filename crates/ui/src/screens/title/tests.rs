@@ -539,14 +539,25 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("title.rs", include_str!("../title.rs")),
         ("key_bindings.rs", include_str!("../key_bindings.rs")),
         ("layout_picker.rs", include_str!("../layout_picker.rs")),
+        ("mode_select.rs", include_str!("../mode_select.rs")),
+        ("game_over.rs", include_str!("../game_over.rs")),
+        ("save.rs", include_str!("../save.rs")),
+        ("results.rs", include_str!("../results.rs")),
+        ("credits.rs", include_str!("../credits.rs")),
     ];
     for (file, source) in sources {
         for name in ["UiColor", "Rect", "BoxStyle", "Cell"] {
             assert!(!names_word(source, name), "{file} names `{name}`");
         }
-        // Their `draw` is one call to the skin.
+        // Their `draw` is one call to the skin (a file with two screens,
+        // one for each; the save screens' skin has a painter for each).
+        let draws = source.matches("fn draw(").count();
+        let paints = source
+            .lines()
+            .filter(|l| l.contains("glyph::paint") && l.contains("(ctx, &self.view(ctx), buf);"))
+            .count();
         assert!(
-            source.contains("glyph::paint(ctx, &self.view(ctx), buf);"),
+            draws > 0 && paints == draws,
             "{file}'s draw doesn't paint its view"
         );
     }

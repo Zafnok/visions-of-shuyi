@@ -1,10 +1,17 @@
 //! The screens after a battle's end (ticket 0801): Game Over after a
 //! defeat (`Retry Battle` / `Title`, `docs/design/death-and-difficulty.md`) and
 //! "To be continued" after the last chapter there is.
+//!
+//! **The look is a skin** (ADR-0054): this module decides what the screens
+//! show and do, and says it as a [`GameOverView`] and a
+//! [`ToBeContinuedView`]; [`glyph`] paints them.
 
-use super::print_centred;
-use crate::color::UiColor;
-use crate::glyph_buffer::{Cell, GlyphBuffer};
+pub mod glyph;
+pub mod view;
+
+pub use view::{GameOverView, ToBeContinuedView};
+
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
@@ -16,11 +23,6 @@ const ITEMS: [&str; 2] = ["game_over.retry", "game_over.title"];
 /// The key of the last chapter's closing words.
 pub const TO_BE_CONTINUED: &str = "to_be_continued.heading";
 
-/// Row of the headings.
-const HEADING_ROW: i32 = 10;
-/// Top row of Game Over's menu.
-const MENU_ROW: i32 = 13;
-
 /// What the player picked on Game Over.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameOverChoice {
@@ -28,22 +30,6 @@ pub enum GameOverChoice {
     Retry,
     /// Back to the title screen.
     Title,
-}
-
-/// Fills `buf` with blank cells.
-fn clear(ctx: &Ctx, buf: &mut GlyphBuffer) {
-    let c = |u| ctx.palette.get(u);
-    buf.fill_rect(
-        buf.bounds(),
-        Cell::new(' ', c(UiColor::Text), c(UiColor::Black)),
-    );
-}
-
-/// Prints `help` on the bottom row.
-fn draw_help(ctx: &Ctx, buf: &mut GlyphBuffer, help: &str) {
-    let c = |u| ctx.palette.get(u);
-    let bottom = i32::from(buf.height()) - 1;
-    print_centred(buf, bottom, help, c(UiColor::TextDim), c(UiColor::Black));
 }
 
 /// `GAME OVER` and a `Retry Battle` / `Title` menu. Pops once one is chosen
@@ -77,6 +63,16 @@ impl GameOverScreen {
     pub fn help(ctx: &Ctx) -> String {
         ctx.text_with("game_over.help", &[])
     }
+
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint`]): the heading, the menu and the help line.
+    pub fn view(&self, ctx: &Ctx) -> GameOverView {
+        GameOverView {
+            heading: ctx.text(GAME_OVER).to_owned(),
+            menu: self.menu.view(),
+            help: Self::help(ctx),
+        }
+    }
 }
 
 impl Screen for GameOverScreen {
@@ -100,20 +96,11 @@ impl Screen for GameOverScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        clear(ctx, buf);
-        let black = c(UiColor::Black);
-        print_centred(
-            buf,
-            HEADING_ROW,
-            ctx.text(GAME_OVER),
-            c(UiColor::TextHighlight),
-            black,
-        );
-        let (w, _) = self.menu.size();
-        let x = (i32::from(buf.width()) - w) / 2;
-        self.menu.draw(&ctx.palette, buf, x, MENU_ROW);
-        draw_help(ctx, buf, &Self::help(ctx));
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 
@@ -128,6 +115,16 @@ impl ToBeContinuedScreen {
     /// The bottom help line.
     pub fn help(ctx: &Ctx) -> String {
         ctx.text_with("to_be_continued.help", &[])
+    }
+
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint_to_be_continued`]): the closing words and the help
+    /// line.
+    pub fn view(&self, ctx: &Ctx) -> ToBeContinuedView {
+        ToBeContinuedView {
+            heading: ctx.text(TO_BE_CONTINUED).to_owned(),
+            help: Self::help(ctx),
+        }
     }
 }
 
@@ -145,70 +142,13 @@ impl Screen for ToBeContinuedScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        clear(ctx, buf);
-        let black = c(UiColor::Black);
-        print_centred(
-            buf,
-            HEADING_ROW,
-            ctx.text(TO_BE_CONTINUED),
-            c(UiColor::TextHighlight),
-            black,
-        );
-        draw_help(ctx, buf, &Self::help(ctx));
+        glyph::paint_to_be_continued(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use insta::assert_snapshot;
-
-    use super::*;
-    use crate::harness::Harness;
-    use crate::screen::tests::ctx;
-
-    fn update(s: &mut dyn Screen, actions: &[Action]) -> String {
-        let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
-        format!("{:?}", s.update(&mut ctx(), &input))
-    }
-
-    #[test]
-    fn game_over_offers_retry_and_title() {
-        let mut s = GameOverScreen::new(&ctx());
-        assert_eq!(s.name(), "game_over");
-        // Nothing to back out of.
-        assert_eq!(update(&mut s, &[Action::Cancel]), "None");
-        assert_eq!(s.result(), None);
-        assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
-        assert_eq!(s.result(), Some(GameOverChoice::Retry));
-        let mut s = GameOverScreen::new(&ctx());
-        assert_eq!(
-            update(&mut s, &[Action::CursorDown, Action::Confirm]),
-            "Pop"
-        );
-        assert_eq!(s.result(), Some(GameOverChoice::Title));
-    }
-
-    #[test]
-    fn to_be_continued_waits_for_confirm() {
-        let mut s = ToBeContinuedScreen;
-        assert_eq!(s.name(), "to_be_continued");
-        assert_eq!(
-            update(&mut s, &[Action::Cancel, Action::CursorDown]),
-            "None"
-        );
-        assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
-    }
-
-    #[test]
-    fn game_over_snapshot() {
-        let h = Harness::with_screen(Box::new(GameOverScreen::new(&ctx())));
-        assert_snapshot!(h.snapshot());
-    }
-
-    #[test]
-    fn to_be_continued_snapshot() {
-        let h = Harness::with_screen(Box::new(ToBeContinuedScreen));
-        assert_snapshot!(h.snapshot());
-    }
-}
+mod tests;
