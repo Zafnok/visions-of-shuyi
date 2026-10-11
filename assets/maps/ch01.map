@@ -1,0 +1,36 @@
+(
+    // Chapter 1 (ticket 0803, docs/design/chapter-1.md): Harrowby at the
+    // bottom left, the river with three crossings (the footbridge in the
+    // west, the road bridge, the toll bridge in the east), and the ruined
+    // toll-fort at the top right, its keep the fort tile at (20, 2).
+    name: "Harrowby Ford",
+    legend: {
+        '.': "plain",
+        ':': "road",
+        'T': "forest",
+        '^': "mountain",
+        'A': "peak",
+        '~': "water",
+        '#': "wall",
+        '_': "floor",
+        'F': "fort",
+        '=': "bridge",
+    },
+)
+---
+TTTT....TTT.......^^AAAA
+TTTT...TTTT.......#####A
+.TTTTTTTT....::::::_F_#^
+..TTTTT......:....#___#^
+...T.......:::....##:##.
+...:.......:..TT....:...
+~~~=~~~~~~~=~~~~~...:.TT
+...:.......:....~~~~=~~~
+...:.......:...TT...:...
+.TT:.......:..TTTT..:...
+.TT::......:...TT...:.^^
+....:::::::::::::::::.^^
+..F.:................^^^
+....:..^^...........TT..
+.......^^^..........TTT.
+........^...........TT..

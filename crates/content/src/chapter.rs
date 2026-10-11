@@ -63,6 +63,23 @@ pub struct NewGameDef {
     pub stock: Vec<ItemId>,
 }
 
+impl NewGameDef {
+    /// The New Game the tests of the game flow play instead of the story:
+    /// the small test chapter (`chapters/test.ron`) with the lead and the
+    /// test knight. The game itself starts as `data/new_game.ron` says.
+    pub fn test_chapter() -> Self {
+        Self {
+            first_chapter: "test".into(),
+            roster: vec![
+                CharacterId(LEAD_ID.into()),
+                CharacterId("test_knight".into()),
+            ],
+            gold: 0,
+            stock: Vec::new(),
+        }
+    }
+}
+
 /// The New Game file as written.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]

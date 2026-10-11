@@ -1,6 +1,6 @@
-// PLACEHOLDER: the test chapter's battle (chapters/test.ron), which New
-// Game plays until Chapter 1 exists (ticket 0803), and which the flow's
-// tests use. The lead seizes the fort next to them within 3 turns; one
+// TEST FILE: the test chapter's battle (chapters/test.ron), which the
+// tests of the game flow play instead of the story
+// (NewGameDef::test_chapter). The lead seizes the fort next to them within 3 turns; one
 // brigand stands in the way. Its two battle notes (ticket 0411) are
 // placeholders too: one about the brigand, one about no unit.
 (

@@ -1,10 +1,9 @@
-// How a new game starts (ticket 0801; format in chapters/README.md).
-// PLACEHOLDER until Chapter 1 (ticket 0803): the test chapter, with the
-// lead and the test knight. Chapter 1 starts with 0 gold and an empty stock
+// How a new game starts (ticket 0801; format in chapters/README.md):
+// Chapter 1 with its six, 0 gold and an empty stock
 // (docs/design/chapter-1.md).
 (
-    first_chapter: "test",
-    roster: ["lead", "test_knight"],
+    first_chapter: "ch01",
+    roster: ["lead", "retainer", "sergeant", "poacher", "keeper", "heretic"],
     gold: 0,
     stock: [],
 )

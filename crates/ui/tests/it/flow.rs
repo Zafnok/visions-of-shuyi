@@ -628,6 +628,7 @@ fn the_next_chapter_follows_a_victory() {
     let mut ctx = trpg_ui::Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_layout(Layout::RightHanded);
+    ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
     if let Some(test) = ctx.content.chapters.get_mut("test") {
         test.next = Some("quick".into());
     }

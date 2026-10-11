@@ -6,9 +6,10 @@ Id: `red_captain` · [Name registry](../names.md)
 
 - **Role:** the **Chapter 1 boss** (named, with a portrait, `chapter-1.md`).
   Captain of the Red Company, one of the Unpaid. He dies in Chapter 1.
-- **Class:** **Brigand** (enemy-only; axes). Stats and loadout are set by 0803.
-  He's the only enemy in Chapter 1 who uses an active skill
-  (`progression.md`: only bosses do).
+- **Class:** **Brigand** (enemy-only; axes). Level 5, with a Steel Axe
+  and an Iron Axe (0803, *tunable*). He's the only enemy in Chapter 1 who
+  uses Combat Arts (`combat-arts.md`: only bosses do); the Brigand class has
+  no active skill.
 - **Age:** 46.
 
 ## At a glance

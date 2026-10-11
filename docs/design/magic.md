@@ -393,6 +393,26 @@ Which classes learn which spell, and at what level, is ticket 0005.
 Whether each one appears in Chapter 1 depends on the roster (0009 and 0803).
 Personal signature spells are added when the cast is written (0701).
 
+### Personal signature spells (*tunable*)
+
+Asked in ticket 0803 (2026-10-11) whether Rue and Maud have theirs in
+Chapter 1, Nick left the first pick to Claude: "idk how powerful they are
+like should they be spaced out or are they planned to be upgradeable or
+something that's a game balance lever so I'll leave the first pick to you
+and I can tell you if they're OP or something and need to be left to
+later". So both are **known from the start**, as their sheets say, with
+*Claude's starting numbers*, for Nick to judge in the playtest (0804):
+
+| Spell | Whose | Kind | Element | Mt / Heal | Hit | Crit | Rng | Uses | Tile cast |
+| ----- | ----- | ---- | ------- | --------- | --- | ---- | --- | ---- | --------- |
+| Cinder Oath | Rue | Attack | Fire | 9 | 80 | 0 | 1 | 3 | forest → burning |
+| Vigil Light | Maud | Heal | None | 6 | — | — | 1–2 | 5 | — |
+
+Cinder Oath hits nearly twice as hard as Fire, but only the next tile, less
+surely and 3 times a battle. Vigil Light heals a little over half of Heal,
+from 2 tiles away. Whether signature spells grow stronger later isn't
+decided.
+
 ## Worked examples
 
 All other formulas come from `stats-and-combat.md`. Nobody wears armour, and
@@ -453,8 +473,9 @@ equips Force on their turn, the mage counters with Force (and spends a use).
 - **Class spell lists, magic class tree with ≥3 tiers, EXP for heals and tile
   casts:** 0005.
 - **Personal signature spells:** named by 0701 (in `docs/story/characters/`:
-  Maud, Rue, and Crane as an enemy), with numbers set by 0005 or a balance
-  ticket.
+  Maud, Rue, and Crane as an enemy). Rue's Cinder Oath and Maud's Vigil
+  Light have starting numbers (0803, above); Rue's Kept Promise and Crane's
+  are still to be set. Whether they can be upgraded is open (Nick, 0803).
 - **Elemental enemies in Chapter 1, and a terrain-magic moment on the Chapter
   1 map:** neither in Chapter 1 (0009, `chapter-1.md`).
 - **Push spells, more elements, more terrain interactions, spell Combat

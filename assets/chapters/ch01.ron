@@ -1,0 +1,10 @@
+// Chapter 1: The Letter (ticket 0803). Beat sheet:
+// docs/story/chapters/ch01.md; script: dialogue/ch01.dlg.
+(
+    id: "ch01",
+    title: "Chapter 1: The Letter",
+    intro_scenes: ["ch01_intro", "ch01_prebattle"],
+    battle: "ch01",
+    victory_scenes: ["ch01_victory", "ch01_tbc"],
+    next: None,
+)

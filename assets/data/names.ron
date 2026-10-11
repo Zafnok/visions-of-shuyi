@@ -134,8 +134,8 @@
     "word.mother": "mor",
     "word.home": "hus",
 
-    // PLACEHOLDER test characters (characters.ron), until the real cast
-    // replaces them (0803).
+    // Test characters (characters.ron): the tests and the debug Quick
+    // Battle.
     "test_lord": "Test Lord",
     "test_knight": "Test Knight",
     "test_archer": "Test Archer",

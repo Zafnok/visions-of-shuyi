@@ -652,56 +652,14 @@ fn readme_if_examples_are_valid() {
     }
 }
 
-/// `ch01.dlg` never shows a companion who may have fallen (0716). The
-/// check only bites for characters in the New Game roster, and the five
-/// companions join it in 0803; until then this runs it with the cast the
-/// script's header describes. 0803 deletes this test once the battle and
-/// chapter files say the same.
-#[test]
-fn chapter_1_never_shows_a_companion_who_may_have_fallen() {
-    const COMPANIONS: [&str; 5] = ["retainer", "sergeant", "poacher", "keeper", "heretic"];
-    let source = bundle::file("dialogue/ch01.dlg").unwrap_or_default();
-    let scripts = scripts_from_sources(
-        &[("ch01.dlg", source)],
-        Some(&characters()),
-        None,
-        Some(&names()),
-        None,
-    );
-    let scripts = scripts.unwrap_or_else(|e| panic!("{e:?}"));
-    // Who each scene can't play without, as its trigger will name them.
-    let certain = |scene: &str| match scene {
-        // Before anyone can have fallen.
-        "ch01_intro" | "ch01_prebattle" | "ch01_first_turn" => ids(&COMPANIONS),
-        "ch01_boss_engage_sergeant" => ids(&["sergeant"]),
-        // A death quote or a retreat line is said by the one who falls.
-        _ => {
-            let fallen = ["ch01_death_", "ch01_retreat_"]
-                .iter()
-                .find_map(|prefix| scene.strip_prefix(prefix));
-            fallen.map(|who| ids(&[who])).unwrap_or_default()
-        }
-    };
-    let scenes = scripts.parsed.iter().map(|p| p.scene.id.clone());
-    let cast = Cast {
-        may_be_absent: ids(&COMPANIONS),
-        certain: scenes.map(|s| (s.clone(), certain(&s))).collect(),
-    };
-    assert_eq!(cast.certain["ch01_victory"], ids(&[]));
-    assert_eq!(cast.certain["ch01_death_keeper"], ids(&["keeper"]));
-    let errors: Vec<String> = scripts
-        .parsed
-        .iter()
-        .flat_map(|p| check_presence(p, &cast))
-        .map(|e| e.to_string())
-        .collect();
-    assert_eq!(errors, Vec::<String>::new());
-}
-
 // --- The cast -------------------------------------------------------------------
 
+/// The embedded content, with the New Game of the tests: the test chapter,
+/// the lead and the test knight.
 fn embedded() -> crate::Content {
-    crate::load_embedded().unwrap_or_else(|e| panic!("{e}"))
+    let mut content = crate::load_embedded().unwrap_or_else(|e| panic!("{e}"));
+    content.new_game = crate::NewGameDef::test_chapter();
+    content
 }
 
 fn cast_of(content: &crate::Content) -> Cast {
@@ -713,7 +671,44 @@ fn cast_of(content: &crate::Content) -> Cast {
     )
 }
 
-/// The placeholder game: the army can lose the knight (in the New Game
+/// Chapter 1 as it ships (0803): the army can lose any of the five
+/// companions, so `ch01.dlg` shows them only where its triggers make them
+/// certain (the all-assets test runs the check).
+#[test]
+fn chapter_1s_cast_is_the_new_game_roster_and_its_triggers() {
+    const COMPANIONS: [&str; 5] = ["retainer", "sergeant", "poacher", "keeper", "heretic"];
+    let content = crate::load_embedded().unwrap_or_else(|e| panic!("{e}"));
+    let cast = cast_of(&content);
+    for companion in COMPANIONS {
+        assert!(cast.may_be_absent.contains(&id(companion)), "{companion}");
+    }
+    assert!(!cast.may_be_absent.contains(&id("lead")));
+    assert!(!cast.may_be_absent.contains(&id("red_captain")));
+    let certain = |scene: &str| cast.certain.get(scene).cloned();
+    // Before anyone can have fallen: all six.
+    let mut all = ids(&COMPANIONS);
+    all.insert(id("lead"));
+    for scene in ["ch01_intro", "ch01_prebattle", "ch01_first_turn"] {
+        assert_eq!(certain(scene), Some(all.clone()), "{scene}");
+    }
+    assert_eq!(
+        certain("ch01_boss_engage_sergeant"),
+        Some(ids(&["red_captain", "sergeant"]))
+    );
+    assert_eq!(certain("ch01_boss_engage"), Some(ids(&["red_captain"])));
+    // A death quote and a retreat line are said by the one who falls.
+    for companion in COMPANIONS {
+        for kind in ["death", "retreat"] {
+            let scene = format!("ch01_{kind}_{companion}");
+            assert_eq!(certain(&scene), Some(ids(&[companion])), "{scene}");
+        }
+    }
+    // After the battle, nobody but the lead is certain.
+    assert_eq!(certain("ch01_victory"), Some(ids(&[])));
+    assert_eq!(certain("ch01_tbc"), Some(ids(&[])));
+}
+
+/// The test game: the army can lose the knight (in the New Game
 /// roster) and the rogue (joins if defeated), not the lead.
 #[test]
 fn the_cast_comes_from_the_roster_the_battles_the_chapters_and_the_supports() {
