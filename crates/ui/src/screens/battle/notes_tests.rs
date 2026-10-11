@@ -72,7 +72,7 @@ fn the_notes_open_only_for_a_battle_just_started_that_has_some() {
     assert!(quick.battle_notes().is_empty());
     let s = BattleScreen::start(quick, &[]);
     assert!(!s.notes_open());
-    assert!(!shows(&s, &c, NOTES_TITLE));
+    assert!(!shows(&s, &c, c.text(NOTES_TITLE)));
 }
 
 #[test]
@@ -90,7 +90,7 @@ fn a_battle_decided_at_its_start_skips_the_notes() {
     let outcome = state.outcome().map(BannerKind::Outcome);
     let mut s = BattleScreen::start(state, &events);
     assert!(!s.notes_open());
-    assert!(!shows(&s, &c, NOTES_TITLE));
+    assert!(!shows(&s, &c, c.text(NOTES_TITLE)));
     // Its banners show, in the order of its start events: the outcome's
     // is the last, and Confirm on it leaves.
     let mut c = c;
@@ -139,7 +139,7 @@ fn the_player_phase_banner_follows_the_notes() {
 fn only_confirm_closes_the_notes() {
     let mut c = ctx();
     let mut s = started(&c);
-    assert!(shows(&s, &c, NOTES_TITLE));
+    assert!(shows(&s, &c, c.text(NOTES_TITLE)));
     assert_eq!(s.help(&c), "f close");
     let cursor = s.cursor().pos;
     for action in [
@@ -164,7 +164,7 @@ fn only_confirm_closes_the_notes() {
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
     assert!(!s.notes_open());
     assert_eq!(s.mode(), &Mode::default());
-    assert!(!shows(&s, &c, NOTES_TITLE));
+    assert!(!shows(&s, &c, c.text(NOTES_TITLE)));
     assert_ne!(s.help(&c), "f close");
     assert!(turn_one_banner(&s));
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
@@ -252,7 +252,7 @@ fn the_noted_unit_blinks_while_the_notes_are_up() {
         0.0,
     );
     assert_eq!(s.mode(), &Mode::Objective);
-    assert!(shows(&s, &c, notes::NOTES_HEADING));
+    assert!(shows(&s, &c, c.text(notes::NOTES_HEADING)));
     assert!(picked_out(&s, &c, BRIGAND));
     frame(&mut s, &mut c, &[], BLINK_S);
     assert!(!picked_out(&s, &c, BRIGAND));

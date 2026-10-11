@@ -35,7 +35,7 @@ pub struct GlyphSkin;
 
 impl MapSkin for GlyphSkin {
     fn name(&self) -> &'static str {
-        "glyph"
+        "glyph" // check-text: not player text (the skin's id)
     }
 
     fn view_tiles(&self, area: Rect) -> (i32, i32) {

@@ -49,6 +49,7 @@ pub mod units;
 pub mod walk;
 
 use std::collections::VecDeque;
+use std::fmt::Display;
 use trpg_content::{Content, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
@@ -85,7 +86,7 @@ use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, UnitV
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::settings::{AnimSpeed, HELD_SPEED};
 use crate::tips::{draw_tip, fill_placeholders};
-use crate::widgets::help::{HelpKeys, SEPARATOR, cursor_keys_name, help_line, key_name};
+use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::Language;
 
 /// Battle id of the debug Quick Battle (`assets/battles/quick.ron`).
@@ -104,6 +105,7 @@ pub fn quick_battle(content: &Content) -> Result<BattleState, String> {
     let def = content
         .battles
         .get(QUICK_BATTLE)
+        // check-text: not player text (a developer's error)
         .ok_or_else(|| format!("no battle \"{QUICK_BATTLE}\""))?;
     let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
     let campaign = battle_campaign(content, def, GameMode::Classic, lead);
@@ -111,6 +113,7 @@ pub fn quick_battle(content: &Content) -> Result<BattleState, String> {
     for _ in 0..QUICK_PACK_POTIONS {
         setup
             .pack_from_stock(&ItemId::new("potion"))
+            // check-text: not player text (a developer's error)
             .map_err(|e| format!("packing a potion: {e}"))?;
     }
     Ok(BattleState::new(setup).0)
@@ -569,8 +572,12 @@ impl BattleScreen {
         let on = self.auto_end;
         // If saving fails it still holds for this session.
         let _ = ctx.change_settings(|s| s.auto_end_turn = on);
-        let text = format!("Auto-end: {}", on_off(self.auto_end));
-        self.toast = Some((text, TOAST_S));
+        let text = ctx.text(if on {
+            "battle.toast.auto_end_on"
+        } else {
+            "battle.toast.auto_end_off"
+        });
+        self.toast = Some((text.to_owned(), TOAST_S));
     }
 
     /// A player unit's level-up in `events` fires [`TipTrigger::FirstLevelUp`].
@@ -1250,61 +1257,50 @@ impl BattleScreen {
 
     /// The help line of a tip, the battle notes, EXP or level-up page, or
     /// banner on screen.
-    fn overlay_help(&self, km: HelpKeys<'_>) -> Option<String> {
-        let confirm = |label| (Some(key_name(km, Action::Confirm)), label);
+    fn overlay_help(&self, ctx: &Ctx) -> Option<String> {
         if self.shown_tip().is_some() || self.notes_open() {
-            return Some(help_line(&[confirm("close")]));
+            return Some(ctx.text_with("battle.help.close", &[]));
         }
         if let Some(p) = self.progress() {
-            return Some(progress::help(p, km));
+            return Some(progress::help(ctx, p));
         }
-        let label = match self.banner()?.kind {
-            BannerKind::Outcome(_) => "continue",
-            BannerKind::Phase { .. } => "skip",
+        let key = match self.banner()?.kind {
+            BannerKind::Outcome(_) => "battle.help.continue",
+            BannerKind::Phase { .. } => "battle.help.skip",
         };
-        Some(help_line(&[confirm(label)]))
+        Some(ctx.text_with(key, &[]))
     }
 
     /// The help line for the mode and what is under the cursor, e.g. `f
     /// select · e info · s next unit · r rewind · d back` over a ready unit while
     /// browsing. Key names come from the keymap.
     pub fn help(&self, ctx: &Ctx) -> String {
-        let km = ctx.help_keys();
-        let keys = Some(cursor_keys_name(km));
-        let confirm = |label| (Some(key_name(km, Action::Confirm)), label);
-        let select = |label| (Some(key_name(km, km.select_action())), label);
-        let cancel = |label| (Some(key_name(km, Action::Cancel)), label);
         if let Some(r) = &self.rewind {
             return rewind_help(r, ctx);
         }
-        let info = (Some(key_name(km, Action::Info)), "info");
-        let next = (Some(key_name(km, Action::NextUnit)), "next unit");
-        let moves = (keys.clone(), "move");
-        if let Some(line) = self.overlay_help(km) {
+        if let Some(line) = self.overlay_help(ctx) {
             return line;
         }
-        match &self.mode {
+        let key = match &self.mode {
             Mode::Idle { threat } => {
-                let back = cancel(if threat.is_some() {
-                    "hide range"
+                let back = if threat.is_some() {
+                    "battle.hint.hide_range"
                 } else {
-                    "menu"
-                });
-                self.help_idle(ctx, info, back)
+                    "battle.hint.menu"
+                };
+                return self.help_idle(ctx, back);
             }
-            Mode::Objective => help_line(&[cancel("back")]),
-            Mode::RestartPrompt => help_line(&[confirm("restart"), cancel("back")]),
-            Mode::SuspendPrompt => help_line(&[confirm("suspend"), cancel("back")]),
-
+            Mode::Objective => "battle.help.objective",
+            Mode::RestartPrompt => "battle.help.restart",
+            Mode::SuspendPrompt => "battle.help.suspend",
             Mode::EndTurnPrompt { .. } => {
+                let km = ctx.help_keys();
                 let [accept, also] = km.end_turn_accept_actions();
-                let yes = |a| (Some(key_name(km, a)), "yes");
-                help_line(&[yes(accept), yes(also), cancel("no")])
+                let (accept, also) = (key_name(km, accept), key_name(km, also));
+                let keys = [("accept", &accept as &dyn Display), ("also", &also)];
+                return ctx.text_with("battle.help.end_turn", &keys);
             }
-            Mode::Info { .. } => {
-                let prev = (Some(key_name(km, Action::PrevUnit)), "previous");
-                help_line(&[next, prev, cancel("close")])
-            }
+            Mode::Info { .. } => "battle.help.info",
             Mode::Selected(sel) => {
                 let aimed = sel
                     .target
@@ -1315,62 +1311,46 @@ impl BattleScreen {
                     let options = sel.target.map_or_else(Vec::new, |t| {
                         aimed_options(&self.state, sel.unit, sel.dest(), t)
                     });
-                    let verb = match aimed_first(&self.state, sel.unit, &options) {
-                        Some(Equipped::Spell(_)) => "cast",
-                        _ => "attack",
-                    };
-                    help_line(&[moves, select(verb), cancel("cancel")])
+                    match aimed_first(&self.state, sel.unit, &options) {
+                        Some(Equipped::Spell(_)) => "battle.help.aim_cast",
+                        _ => "battle.help.aim_attack",
+                    }
                 } else if self.cursor.pos == sel.dest() && sel.reach.is_stoppable(sel.dest()) {
-                    help_line(&[moves, select("move here"), cancel("cancel")])
+                    "battle.help.move_here"
                 } else {
-                    help_line(&[moves, cancel("cancel")])
+                    "battle.help.selected"
                 }
             }
-            Mode::Moving { .. } => help_line(&[confirm("skip")]),
+            Mode::Moving { .. } => "battle.help.skip",
             Mode::ActionMenu { .. }
             | Mode::WeaponMenu { .. }
             | Mode::SkillMenu { .. }
             | Mode::ItemMenu { .. }
             | Mode::MapMenu { .. }
-            | Mode::UnitList { .. } => {
-                help_line(&[(keys, "choose"), confirm("confirm"), cancel("back")])
-            }
-            Mode::SpellMenu { .. } => {
-                help_line(&[(keys, "choose"), confirm("cast"), cancel("back")])
-            }
+            | Mode::UnitList { .. } => "battle.help.menu",
+            Mode::SpellMenu { .. } => "battle.help.spells",
             Mode::CastTarget(t) => match t.forecast() {
-                Some(forecast) => Self::help_targeting(ctx, forecast),
-                None => help_line(&[(keys, "next target"), select("cast"), cancel("back")]),
+                Some(forecast) => return Self::help_targeting(ctx, forecast),
+                None => "battle.help.cast_target",
             },
-            Mode::EquipMenu { .. } => {
-                help_line(&[(keys, "choose"), confirm("equip"), cancel("back")])
-            }
-            Mode::ItemTarget(_) | Mode::SkillTarget(_) => {
-                help_line(&[(keys, "next target"), select("use"), cancel("back")])
-            }
-            Mode::TalkTarget { .. } => {
-                help_line(&[(keys, "next target"), select("talk"), cancel("back")])
-            }
-            Mode::Targeting(t) => Self::help_targeting(ctx, t),
-            Mode::Combat(_) => {
-                let hold = Some(format!("hold {}", key_name(km, Action::Confirm)));
-                help_line(&[cancel("skip"), (hold, "fast")])
-            }
-            Mode::AiAction(_) => {
-                let hold = Some(format!("hold {}", key_name(km, Action::Confirm)));
-                help_line(&[(hold, "fast")])
-            }
+            Mode::EquipMenu { .. } => "battle.help.equip",
+            Mode::ItemTarget(_) | Mode::SkillTarget(_) => "battle.help.use_target",
+            Mode::TalkTarget { .. } => "battle.help.talk_target",
+            Mode::Targeting(t) => return Self::help_targeting(ctx, t),
+            Mode::Combat(_) => "battle.help.combat",
+            Mode::AiAction(_) => "battle.help.ai",
             Mode::MoveAfter { unit, tiles } => {
                 let here = self.state.unit(*unit).map(|u| u.pos);
                 if here == Some(self.cursor.pos) {
-                    help_line(&[moves, select("stay")])
+                    "battle.help.stay"
                 } else if tiles.contains(&self.cursor.pos) {
-                    help_line(&[moves, select("move here")])
+                    "battle.help.move_after"
                 } else {
-                    help_line(&[moves])
+                    "battle.help.move_only"
                 }
             }
-        }
+        };
+        ctx.text_with(key, &[])
     }
 
     /// The help line while picking an attack's target: left/right pick the
@@ -1378,75 +1358,81 @@ impl BattleScreen {
     /// Confirm reads `cast` for a spell.
     fn help_targeting(ctx: &Ctx, t: &Targeting) -> String {
         let km = ctx.help_keys();
-        let verb = match t.with {
-            Equipped::Weapon(_) => "attack",
-            Equipped::Spell(_) => "cast",
+        let plain = |key| ctx.text_with(key, &[]);
+        // A hint for two keys that are not one action: `←/→ swap`.
+        let pair = |key, a, b| {
+            let keys = format!("{}/{}", key_name(km, a), key_name(km, b));
+            ctx.text_with(key, &[("keys", &keys)])
         };
-        let confirm = (Some(key_name(km, Action::Confirm)), verb);
-        let cancel = (Some(key_name(km, Action::Cancel)), "back");
-        let pair = |a, b| Some(format!("{}/{}", key_name(km, a), key_name(km, b)));
-        if t.can_swap() {
+        let (left, right) = (Action::CursorLeft, Action::CursorRight);
+        let art = || pair("battle.hint.art", Action::CursorUp, Action::CursorDown);
+        let mut hints = if t.can_swap() {
             // Left and right swap the weapon or spell of a forecast opened
             // by pointing (0430); the unit keys then change the target.
-            let mut entries = vec![
-                (pair(Action::CursorLeft, Action::CursorRight), "swap"),
-                (pair(Action::PrevUnit, Action::NextUnit), "target"),
+            let units = (Action::PrevUnit, Action::NextUnit);
+            let mut hints = vec![
+                pair("battle.hint.swap", left, right),
+                pair("battle.hint.target", units.0, units.1),
             ];
-            if t.has_list() {
-                entries.push((pair(Action::CursorUp, Action::CursorDown), "art"));
-            }
-            return help_line(&[entries, vec![confirm, cancel]].concat());
-        }
-        if !t.has_list() {
-            return help_line(&[(Some(cursor_keys_name(km)), "next target"), confirm, cancel]);
-        }
-        help_line(&[
-            (pair(Action::CursorLeft, Action::CursorRight), "target"),
-            (pair(Action::CursorUp, Action::CursorDown), "art"),
-            confirm,
-            cancel,
-        ])
+            hints.extend(t.has_list().then(art));
+            hints
+        } else if t.has_list() {
+            vec![pair("battle.hint.target", left, right), art()]
+        } else {
+            vec![plain("battle.hint.next_target")]
+        };
+        hints.push(plain(match t.with {
+            Equipped::Weapon(_) => "battle.hint.attack",
+            Equipped::Spell(_) => "battle.hint.cast",
+        }));
+        hints.push(plain("battle.hint.back"));
+        hints.join(SEPARATOR)
     }
 
-    /// The help line while browsing, over what is under the cursor.
-    fn help_idle(
-        &self,
-        ctx: &Ctx,
-        info: (Option<String>, &str),
-        back: (Option<String>, &str),
-    ) -> String {
-        let km = ctx.help_keys();
-        let select = |label| (Some(key_name(km, km.select_action())), label);
-        let next = (Some(key_name(km, Action::NextUnit)), "next unit");
-        let moves = (Some(cursor_keys_name(km)), "move");
-        let end = (Some(key_name(km, Action::EndTurn)), "end turn");
-        let rewind = (
-            self.can_open_rewind().then(|| key_name(km, Action::Rewind)),
-            "rewind",
-        );
-        match self.hovered() {
+    /// The help line while browsing, over what is under the cursor; `back`
+    /// is the hint of the Cancel key.
+    fn help_idle(&self, ctx: &Ctx, back: &str) -> String {
+        let (moves, info) = (Some("battle.hint.move"), Some("battle.hint.info"));
+        let (next, end) = (Some("battle.hint.next_unit"), Some("battle.hint.end_turn"));
+        let rewind = self.can_open_rewind().then_some("battle.hint.rewind");
+        let back = Some(back);
+        let hints = match self.hovered() {
             Some(u) if self.is_ready(u) && u.faction == Faction::Player => {
-                help_line(&[select("select"), info, next, rewind, back, end])
+                let select = Some("battle.hint.select");
+                [None, select, info, next, rewind, back, end]
             }
             Some(u) if u.faction != Faction::Player => {
-                help_line(&[moves, select("range"), info, next, rewind, back, end])
+                let range = Some("battle.hint.range");
+                [moves, range, info, next, rewind, back, end]
             }
-            Some(_) => help_line(&[moves, info, next, rewind, back, end]),
-            None => help_line(&[moves, select("menu"), next, rewind, back, end]),
-        }
+            Some(_) => [moves, None, info, next, rewind, back, end],
+            None => {
+                let menu = Some("battle.hint.open_menu");
+                [moves, menu, None, next, rewind, back, end]
+            }
+        };
+        let hints = hints.into_iter().flatten();
+        let hints: Vec<String> = hints.map(|key| ctx.text_with(key, &[])).collect();
+        hints.join(SEPARATOR)
     }
 
     /// The toggles' state for the message row: the Danger zone key and
     /// `danger zone: OFF`, then the Auto-end key and `auto-end: ON`, each
     /// key named from the active keymap.
     pub fn status(&self, ctx: &Ctx) -> String {
-        let km = ctx.help_keys();
-        let danger = format!("danger zone: {}", on_off(self.danger.is_some()));
-        let auto = format!("auto-end: {}", on_off(self.auto_end));
-        help_line(&[
-            (Some(key_name(km, Action::DangerZone)), &danger),
-            (Some(key_name(km, Action::ToggleAutoEnd)), &auto),
-        ])
+        let danger = if self.danger.is_some() {
+            "battle.status.danger_on"
+        } else {
+            "battle.status.danger_off"
+        };
+        let auto = if self.auto_end {
+            "battle.status.auto_end_on"
+        } else {
+            "battle.status.auto_end_off"
+        };
+        [danger, auto]
+            .map(|key| ctx.text_with(key, &[]))
+            .join(SEPARATOR)
     }
 
     /// What is on the visible map (ADR-0038), for the map skin to paint and
@@ -1644,7 +1630,7 @@ impl BattleScreen {
             menu.draw(&ctx.palette, buf, x, y);
             if matches!(self.mode, Mode::ItemMenu { .. }) {
                 // The pack's size in the top border.
-                let header = format!(" {} ", items::pack_header(&self.state));
+                let header = format!(" {} ", items::pack_header(&self.state, words));
                 let (fg, bg) = (
                     ctx.palette.get(UiColor::TextHighlight),
                     ctx.palette.get(UiColor::PanelBg),
@@ -1703,43 +1689,35 @@ impl BattleScreen {
             Mode::Objective => {
                 let mut lines = vec![
                     (map_menu::objective_text(&self.state, words), UiColor::Text),
-                    (map_menu::turn_text(&self.state), UiColor::Text),
+                    (map_menu::turn_text(&self.state, words), UiColor::Text),
                 ];
                 let noted = notes::note_lines(self.state.battle_notes(), words);
                 if !noted.is_empty() {
                     lines.push((String::new(), UiColor::Text));
-                    lines.push((notes::NOTES_HEADING.to_owned(), UiColor::TextDim));
+                    let heading = ctx.text(notes::NOTES_HEADING).to_owned();
+                    lines.push((heading, UiColor::TextDim));
                     lines.extend(noted.into_iter().map(|l| (l, UiColor::Text)));
                 }
-                let (_, h) = map_menu::dialog_size("Objective", &lines);
+                let title = ctx.text("battle.objective.title");
+                let (_, h) = map_menu::dialog_size(title, &lines);
                 let top = self.notes_top(ctx, scene, h);
-                map_menu::draw_dialog_at(buf, p, "Objective", &lines, top);
+                map_menu::draw_dialog_at(buf, p, title, &lines, top);
             }
             Mode::EndTurnPrompt { ready } => {
-                let km = ctx.help_keys();
-                let yes_no = help_line(&[
-                    (Some(key_name(km, Action::Confirm)), "yes"),
-                    (Some(key_name(km, Action::Cancel)), "no"),
-                ])
-                .replace(SEPARATOR, " / ");
+                let yes_no = ctx.text_with("battle.yes_no", &[]);
                 let lines = [
-                    (map_menu::end_turn_question(*ready), UiColor::Text),
+                    (map_menu::end_turn_question(words, *ready), UiColor::Text),
                     (yes_no, UiColor::TextDim),
                 ];
                 map_menu::draw_dialog(buf, p, "", &lines);
             }
             Mode::RestartPrompt | Mode::SuspendPrompt => {
-                let km = ctx.help_keys();
-                let yes_no = help_line(&[
-                    (Some(key_name(km, Action::Confirm)), "yes"),
-                    (Some(key_name(km, Action::Cancel)), "no"),
-                ])
-                .replace(SEPARATOR, " / ");
-                let question = if matches!(self.mode, Mode::SuspendPrompt) {
-                    map_menu::SUSPEND_QUESTION
+                let yes_no = ctx.text_with("battle.yes_no", &[]);
+                let question = ctx.text(if matches!(self.mode, Mode::SuspendPrompt) {
+                    "battle.suspend_question"
                 } else {
-                    map_menu::RESTART_QUESTION
-                };
+                    "battle.restart_question"
+                });
                 let lines = [
                     (question.to_owned(), UiColor::Text),
                     (yes_no, UiColor::TextDim),
@@ -1758,12 +1736,13 @@ impl BattleScreen {
                 .into_iter()
                 .map(|l| (l, UiColor::Text))
                 .collect();
-            let (_, h) = map_menu::dialog_size(notes::NOTES_TITLE, &lines);
+            let title = ctx.text(notes::NOTES_TITLE);
+            let (_, h) = map_menu::dialog_size(title, &lines);
             let top = self.notes_top(ctx, scene, h);
-            map_menu::draw_dialog_at(buf, p, notes::NOTES_TITLE, &lines, top);
+            map_menu::draw_dialog_at(buf, p, title, &lines, top);
         }
         if let Some(banner) = self.banner() {
-            banner.draw(buf, p, map_menu::shown_limit(&self.state));
+            banner.draw(buf, p, words, map_menu::shown_limit(&self.state));
         }
     }
 }
@@ -1772,7 +1751,7 @@ impl BattleScreen {
     /// Draws the rewind screen over its map ([`scene`](Self::scene)): the
     /// list in the side panel and the help line.
     fn draw_rewind(&self, ctx: &Ctx, buf: &mut GlyphBuffer, r: &RewindScreen) {
-        r.draw(&ctx.palette, buf);
+        r.draw(&ctx.palette, ctx.words(), buf);
         let black = ctx.palette.get(UiColor::Black);
         let dim = ctx.palette.get(UiColor::TextDim);
         buf.print(1, HELP_ROW, &self.help(ctx), dim, black);
@@ -1878,24 +1857,16 @@ fn terrain_scene(state: &BattleState, origin: Pos, size: (i32, i32)) -> MapScene
 
 /// The help line on the rewind screen `r`.
 fn rewind_help(r: &RewindScreen, ctx: &Ctx) -> String {
-    let km = ctx.help_keys();
-    let keys = Some(cursor_keys_name(km));
-    let confirm = |label| (Some(key_name(km, Action::Confirm)), label);
-    let cancel = |label| (Some(key_name(km, Action::Cancel)), label);
-    if r.is_confirming() {
-        help_line(&[confirm("rewind"), cancel("back")])
+    let key = if r.is_confirming() {
+        "battle.rewind.help.confirm"
     } else if r.can_rewind() {
-        help_line(&[(keys, "choose"), confirm("rewind here"), cancel("close")])
+        "battle.rewind.help.pick"
     } else if r.entries().is_empty() {
-        help_line(&[cancel("close")])
+        "battle.rewind.help.empty"
     } else {
-        help_line(&[(keys, "choose"), cancel("close")])
-    }
-}
-
-/// `ON` or `OFF`.
-const fn on_off(on: bool) -> &'static str {
-    if on { "ON" } else { "OFF" }
+        "battle.rewind.help.browse"
+    };
+    ctx.text_with(key, &[])
 }
 
 impl Screen for BattleScreen {
@@ -2010,10 +1981,11 @@ impl Screen for BattleScreen {
         self.draw_menu(ctx, buf, &scene);
         self.draw_popups(ctx, buf, &scene);
         if let Mode::Combat(pb) = &self.mode {
-            playback::draw_box(buf, &ctx.palette, pb);
+            playback::draw_box(buf, &ctx.palette, ctx.words(), pb);
         }
         if let Some(p) = self.progress() {
-            progress::draw(buf, &ctx.palette, &ctx.content.portraits, p);
+            let look = (&ctx.palette, ctx.words());
+            progress::draw(buf, look, &ctx.content.portraits, p);
         }
         self.draw_panel(ctx, buf);
         self.draw_dialogs(ctx, buf, &scene);
@@ -2023,7 +1995,7 @@ impl Screen for BattleScreen {
         {
             let words = ctx.words();
             let text = fill_placeholders(words.tip_text(tip), ctx.help_keys());
-            let close = help_line(&[(Some(key_name(ctx.help_keys(), Action::Confirm)), "close")]);
+            let close = ctx.text_with("battle.help.close", &[]);
             draw_tip(buf, &ctx.palette, words.tip_title(tip), &text, &close);
         }
         buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));

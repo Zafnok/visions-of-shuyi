@@ -115,6 +115,7 @@ macro_rules! ui_colors {
     };
 }
 
+// check-text: not player text (the colours' names in the palette file)
 ui_colors! {
     Black => "black",
     White => "white",

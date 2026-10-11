@@ -686,7 +686,7 @@ fn the_view_lists_slots_fixed_keys_and_not_mapped_notes() {
     assert_eq!(shown(&view, Action::ToggleAutoEnd)[0], "Shift+Space");
     assert!(row_of(&view, Action::EndTurn).fixed.is_empty());
     assert!(row_of(&view, Confirm).fixed.is_empty());
-    assert_eq!(view.not_mapped, NOT_MAPPED);
+    assert_eq!(view.not_mapped, crate::widgets::help::NOT_MAPPED);
     // Optional and unmapped: a note that doesn't block leaving. Required and
     // unmapped: one that does.
     let flags = |view: &KeyBindingsView, a| {

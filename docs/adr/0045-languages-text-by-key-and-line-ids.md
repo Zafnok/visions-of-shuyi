@@ -1,8 +1,8 @@
 # ADR-0045: Languages: text by key, dialogue lines by id, wide glyphs in two cells
 
-- **Status:** Accepted (§1–2 built by tickets 0233 and 0235, §3 by ticket 0717; the details each settled are marked *0233*, *0235* and *As built (ticket 0717)*)
+- **Status:** Accepted (§1–2 built by tickets 0233 and 0235, §3 by ticket 0717; the details each settled are marked *0233*, *0235*, *0243* and *As built (ticket 0717)*)
 - **Date:** 2026-10-03
-- **Related tickets:** 0042, 0233, 0234, 0235, 0236, 0237, 0717, 0718, 0719, 0723, 0825, 0907
+- **Related tickets:** 0042, 0233, 0234, 0235, 0236, 0237, 0243, 0717, 0718, 0719, 0723, 0825, 0907
 - **Amends:** ADR-0016 (the atlas gains 16×16 glyphs from a second font) and
   ADR-0011 (a translation step after the script). Nothing in either is
   superseded.
@@ -102,6 +102,15 @@ a `name` field itself. A unit is named by who it is: a named character by
 battle's own menus are built in English, since playing only needs their
 focus and which lines can be picked; the screen paints them in the
 player's language (`Mode::told`).
+
+*0243:* the battle's and the class change screen's text is in `ui.ron`
+too, and `check-text` allows no literal. Text built where there is no
+`Ctx` is asked of `Words` (`words.text(key)`, `words.text_with(key,
+values)`), which has English from the bundle's `en/ui.ron`
+(`lang::english_ui`) when no pack is in use. The action menu and the map
+menu are built in English like the other lists and painted by
+`Mode::told`. The words inside a key's name (`! not mapped`, `arrows`) are
+`keys.*` and travel with `HelpKeys`.
 
 ### 3. Dialogue line ids
 

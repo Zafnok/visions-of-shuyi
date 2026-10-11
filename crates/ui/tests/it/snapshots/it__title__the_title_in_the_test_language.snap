@@ -1,6 +1,6 @@
 ---
 source: crates/ui/tests/it/title.rs
-expression: snap
+expression: h.snapshot()
 ---
                                                                                                     
                                                                                                     
@@ -33,7 +33,7 @@ expression: snap
                                                                                                     
                                                                                                     
                                                                                                     
-                                  arrows MOVE · f SELECT · d BACK                          F2 debug 
+                                  ARROWS MOVE · f SELECT · d BACK                          F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

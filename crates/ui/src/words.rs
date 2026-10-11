@@ -5,6 +5,7 @@
 //! ([`Ctx::words`](crate::Ctx::words)), never by reading a `name` field
 //! itself (`cargo xtask check-text` fails on one).
 
+use std::fmt::Display;
 use std::sync::Arc;
 
 use trpg_content::{ChapterDef, Lang, LangCode, Names, Scene, Tip};
@@ -67,6 +68,29 @@ impl<'a> Words<'a> {
     /// Whether this is English: the data's own text.
     pub fn is_english(self) -> bool {
         self.pack.is_none()
+    }
+
+    /// The screen text for `key` (`battle.menu.attack`) in this language,
+    /// as [`Ctx::text`](crate::Ctx::text) gives it: for text built where
+    /// there is no [`Ctx`](crate::Ctx). A key English lacks panics in
+    /// debug builds, and shows as the key itself in release builds.
+    pub fn text(self, key: &'a str) -> &'a str {
+        let english = trpg_content::lang::english_ui().get(key);
+        debug_assert!(
+            english.is_some(),
+            "text key not in assets/lang/en/ui.ron: {key:?}"
+        );
+        match self.pack {
+            Some((lang, code)) => lang.text(code, key),
+            None => english.map_or(key, String::as_str),
+        }
+    }
+
+    /// [`text`](Self::text) with each `{name}` that `args` names replaced
+    /// by its value. It names no key: text with `{Confirm}` in it is
+    /// asked of [`Ctx::text_with`](crate::Ctx::text_with).
+    pub fn text_with(self, key: &str, args: &[(&str, &dyn Display)]) -> String {
+        crate::tips::fill_values(self.text(key), args)
     }
 
     /// The name of `class`.
@@ -241,7 +265,8 @@ pub(crate) mod testing {
         };
         let pack = pack_from_files(&sources, &BTreeMap::new(), Some(&source));
         let pack = pack.unwrap_or_else(|errors| panic!("{errors:?}"));
-        Lang::with_data(BTreeMap::new(), source, [(shout(), pack)].into())
+        let english = trpg_content::lang::english_ui().clone();
+        Lang::with_data(english, source, [(shout(), pack)].into())
     }
 }
 
@@ -257,6 +282,43 @@ mod tests {
 
     fn test() -> LangCode {
         LangCode::new(TEST).unwrap()
+    }
+
+    /// Ticket 0243: screen text where there is no `Ctx`.
+    #[test]
+    fn screen_text_is_asked_by_key_in_either_language() {
+        let c = ctx();
+        let code = test();
+        let words = Words::new(&c.content.lang, &code);
+        assert_eq!(Words::ENGLISH.text("battle.menu.attack"), "Attack");
+        assert_eq!(words.text("battle.menu.attack"), "ATTACK");
+        // What the pack lacks is English.
+        assert_eq!(words.text("title.credits"), "Credits");
+        let values: [(&str, &dyn Display); 2] = [("turn", &2), ("limit", &8)];
+        assert_eq!(
+            Words::ENGLISH.text_with("battle.turn_of", &values),
+            "Turn 2/8"
+        );
+        assert_eq!(words.text_with("battle.turn_of", &values), "TURN 2/8");
+        // It names no key: that is `Ctx::text_with`'s.
+        assert_eq!(
+            Words::ENGLISH.text_with("battle.help.close", &[]),
+            "{Confirm} close"
+        );
+        // English is the text the content was loaded with.
+        let english = trpg_content::lang::english_ui();
+        assert!(english.len() > 100);
+        for (key, text) in english {
+            assert_eq!(Words::ENGLISH.text(key), text, "{key}");
+            assert_eq!(c.text(key), text, "{key}");
+        }
+    }
+
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic(expected = "text key not in assets/lang/en/ui.ron: \"battle.nope\"")]
+    fn an_unknown_text_key_panics_in_debug_builds() {
+        let _ = Words::ENGLISH.text("battle.nope");
     }
 
     #[test]

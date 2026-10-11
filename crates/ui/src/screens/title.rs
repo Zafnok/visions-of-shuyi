@@ -207,7 +207,7 @@ impl TitleScreen {
 
 impl Screen for TitleScreen {
     fn name(&self) -> &'static str {
-        "title"
+        "title" // check-text: not player text (the screen's name)
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {

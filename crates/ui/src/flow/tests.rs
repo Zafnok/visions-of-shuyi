@@ -179,7 +179,12 @@ fn a_level_up_from_the_rewind_bonus_shows_the_level_up_screen() {
     // The page's numbers are the roster's.
     for kind in StatKind::GROWABLE {
         let was = before.stats.get(kind);
-        let row = stat_row(kind, was, after.stats.get(kind) - was);
+        let row = stat_row(
+            crate::Words::ENGLISH,
+            kind,
+            was,
+            after.stats.get(kind) - was,
+        );
         assert!(shows(&h, &row), "{row}: {}", h.snapshot());
     }
     h.keys("d");

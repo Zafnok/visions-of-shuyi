@@ -184,25 +184,46 @@ fn long_text_is_cut_inside_the_column() {
 
 #[test]
 fn text_rows() {
-    assert_eq!(stat_line(StatKind::Str, 9, 12, 50), "Str   9 → 12  +3");
-    assert_eq!(stat_line(StatKind::Mag, 1, 1, 50), "Mag   1");
-    assert_eq!(stat_line(StatKind::Def, 48, 50, 50), "Def  48 → 50  +2 MAX");
+    assert_eq!(
+        stat_line(Words::ENGLISH, StatKind::Str, 9, 12, 50),
+        "Str   9 → 12  +3"
+    );
+    assert_eq!(
+        stat_line(Words::ENGLISH, StatKind::Mag, 1, 1, 50),
+        "Mag   1"
+    );
+    assert_eq!(
+        stat_line(Words::ENGLISH, StatKind::Def, 48, 50, 50),
+        "Def  48 → 50  +2 MAX"
+    );
     // Already at the ceiling, or past it.
-    assert_eq!(stat_line(StatKind::Res, 50, 50, 50), "Res  50 MAX");
-    assert_eq!(stat_line(StatKind::Hp, 81, 81, 80), "HP   81 MAX");
-    assert_eq!(stat_line(StatKind::Hp, 70, 79, 80), "HP   70 → 79  +9");
-    assert_eq!(mov_line(5, 5), "Mov   5");
-    assert_eq!(mov_line(4, 6), "Mov   4 → 6");
+    assert_eq!(
+        stat_line(Words::ENGLISH, StatKind::Res, 50, 50, 50),
+        "Res  50 MAX"
+    );
+    assert_eq!(
+        stat_line(Words::ENGLISH, StatKind::Hp, 81, 81, 80),
+        "HP   81 MAX"
+    );
+    assert_eq!(
+        stat_line(Words::ENGLISH, StatKind::Hp, 70, 79, 80),
+        "HP   70 → 79  +9"
+    );
+    assert_eq!(mov_line(Words::ENGLISH, 5, 5), "Mov   5");
+    assert_eq!(mov_line(Words::ENGLISH, 4, 6), "Mov   4 → 6");
     let c = ctx();
     let mut unit = demo(&c, ChangeKind::Promote).unit().clone();
     unit.weapon_ranks.insert(WeaponKind::Spear, WeaponRank::A);
     let class = |id: &str| c.content.classes.get(&ClassId(id.into())).unwrap();
     // A rank at or above the start rank stays.
     assert_eq!(
-        weapon_lines(&unit, class("iron_rider")),
+        weapon_lines(Words::ENGLISH, &unit, class("iron_rider")),
         ["Spear    A", "Axe      E → D", "Sword    E → D"]
     );
-    assert_eq!(weapon_lines(&unit, class("archmage")), Vec::<String>::new());
+    assert_eq!(
+        weapon_lines(Words::ENGLISH, &unit, class("archmage")),
+        Vec::<String>::new()
+    );
 }
 
 #[test]

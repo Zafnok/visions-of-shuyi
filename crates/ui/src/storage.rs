@@ -36,6 +36,7 @@ pub enum StorageError {
     Backend(String),
 }
 
+// check-text: not player text (for the log)
 impl fmt::Display for StorageError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -149,6 +150,7 @@ pub fn conformance_suite(storage: &mut dyn Storage) {
     // Deleting an absent key is not an error.
     expect_ok(storage.delete("save-slot-1"));
 
+    // check-text: not player text (storage keys)
     for bad in ["", "UPPER", "has space", "has/slash", &"x".repeat(65)] {
         assert!(
             matches!(storage.read(bad), Err(StorageError::InvalidKey(_))),

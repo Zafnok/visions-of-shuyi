@@ -143,8 +143,11 @@ fn the_info_screen_in_the_test_language() {
     assert!(shows(&h, "Test Lord"));
     assert!(shows(&h, "IRON SWORD"));
     assert!(!shows(&h, "Iron Sword"));
-    // Weapons the pack lacks stay English.
-    assert!(shows(&h, "Weapon ranks"));
+    // The screen's own words are the pack's too (ticket 0243).
+    assert!(shows(&h, "WEAPON RANKS"));
+    assert!(!shows(&h, "Weapon ranks"));
+    // A weapon the pack lacks stays English.
+    assert!(shows(&h, "Leather Vest"));
 }
 
 #[test]
@@ -225,8 +228,9 @@ fn a_tip_in_the_test_language() {
     h.with_tips().keys("Down f Left f f");
     assert_snapshot!(h.snapshot());
     assert!(shows(&h, "YOUR MOVE"));
-    // Key names are still the player's.
-    assert!(shows(&h, "STEER THE CURSOR WITH arrows. PRESS f ON ONE OF"));
+    // Key names are still the player's; the word for the arrow keys is
+    // the pack's (ticket 0243).
+    assert!(shows(&h, "STEER THE CURSOR WITH ARROWS. PRESS f ON ONE OF"));
     assert!(!shows(&h, "Your move"));
 }
 
@@ -299,7 +303,7 @@ fn a_fight_names_everything_in_the_test_language() {
     h.keys("d f");
     // The rewind list.
     h.keys("r");
-    assert!(shows(&h, "attacked BRIGAND"));
+    assert!(shows(&h, "ATTACKED BRIGAND"));
     assert!(!shows(&h, "Brigand"));
 }
 

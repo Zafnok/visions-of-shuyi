@@ -487,6 +487,7 @@ impl PlayerKeys {
     /// - a layout left with a required action unmapped goes back to its
     ///   defaults;
     /// - the buttons are repaired by the same rules as one layout's keys.
+    // check-text: not player text (warnings for the log)
     pub fn from_ron(text: &str, def: &KeymapDef) -> (Self, Vec<String>) {
         let mut warnings = Vec::new();
         let version = match ron::from_str::<VersionOnly>(text) {

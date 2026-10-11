@@ -32,14 +32,16 @@ use trpg_core::{
     reclass_targets,
 };
 
-use super::battle::info::stat_name;
+use super::battle::info::{class_level, stat_name, tag_names};
 use super::battle::progress::{self, PROGRESS_TIMINGS, Progress, ProgressTables};
+use super::battle::skills::kind_name;
 use crate::audio::MenuSound;
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{SEPARATOR, help_line, key_name};
+use crate::widgets::help::{SEPARATOR, key_name};
+use crate::words::Words;
 
 /// Columns shown at once.
 pub const COLUMNS: usize = 4;
@@ -68,8 +70,8 @@ const UNIT_ROW: i32 = 2;
 /// Row of the `← more` / `more →` marks.
 const MORE_ROW: i32 = 3;
 
-/// The mark after a stat at its hard ceiling.
-pub const MAX_MARK: &str = "MAX";
+/// The key of the mark after a stat at its hard ceiling (`MAX`).
+pub const MAX_MARK: &str = "class_change.max";
 
 /// What kind of class change the screen makes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -84,8 +86,8 @@ impl ChangeKind {
     /// The screen's title.
     const fn title(self) -> &'static str {
         match self {
-            ChangeKind::Promote => "Promotion",
-            ChangeKind::Reclass => "Class change",
+            ChangeKind::Promote => "class_change.title.promote",
+            ChangeKind::Reclass => "class_change.title.reclass",
         }
     }
 
@@ -159,22 +161,23 @@ fn change(
 /// The text of stat `kind`'s row: `Str   9 → 12  +3` if it grows, else
 /// `Mag   1`; with [`MAX_MARK`] after a stat that ends at its `ceiling`.
 pub fn stat_line(
+    words: Words<'_>,
     kind: StatKind,
     before: StatValue,
     after: StatValue,
     ceiling: StatValue,
 ) -> String {
-    let row = progress::stat_row(kind, before, after - before);
+    let row = progress::stat_row(words, kind, before, after - before);
     if after >= ceiling {
-        format!("{row} {MAX_MARK}")
+        format!("{row} {}", words.text(MAX_MARK))
     } else {
         row
     }
 }
 
 /// The Mov row: `Mov  4 → 6` if it changes, else `Mov  5`.
-pub fn mov_line(before: StatValue, after: StatValue) -> String {
-    let name = stat_name(StatKind::Mov);
+pub fn mov_line(words: Words<'_>, before: StatValue, after: StatValue) -> String {
+    let name = stat_name(words, StatKind::Mov);
     if before == after {
         format!("{name:<4}{before:>3}")
     } else {
@@ -185,14 +188,14 @@ pub fn mov_line(before: StatValue, after: StatValue) -> String {
 /// The weapon rows of `class` for `unit`: each kind the class wields with
 /// the unit's rank now and on entering the class, `Spear    D → C`, or
 /// just the rank if it stays.
-pub fn weapon_lines(unit: &Unit, class: &ClassDef) -> Vec<String> {
+pub fn weapon_lines(words: Words<'_>, unit: &Unit, class: &ClassDef) -> Vec<String> {
     class
         .weapons
         .iter()
         .map(|w| {
             let now = unit.rank(w.kind);
             let then = now.max(w.start);
-            let kind = format!("{:?}", w.kind);
+            let kind = kind_name(words, w.kind);
             if now == then {
                 format!("{kind:<9}{now:?}")
             } else {
@@ -420,8 +423,8 @@ impl ClassChangeScreen {
                 _ => None,
             })
             .unwrap_or_else(|| match kind {
-                SealKind::Tier(tier) => format!("tier {tier} seal"),
-                SealKind::Reclass => "reclass seal".to_owned(),
+                SealKind::Tier(tier) => ctx.text_with("class_change.seal.tier", &[("tier", &tier)]),
+                SealKind::Reclass => ctx.text("class_change.seal.reclass").to_owned(),
             });
         (name, held)
     }
@@ -429,8 +432,13 @@ impl ClassChangeScreen {
     /// Why the change into `class` is refused, in the player's words.
     fn reason(&self, ctx: &Ctx, class: &ClassDef, error: &ClassChangeError) -> String {
         match error {
-            ClassChangeError::NoSeal(_) => format!("No {}", self.seal_of(ctx, class).0),
-            ClassChangeError::NotMastered(_) => "Class not mastered".to_owned(),
+            ClassChangeError::NoSeal(_) => {
+                let seal = self.seal_of(ctx, class).0;
+                ctx.text_with("class_change.reason.no_seal", &[("seal", &seal)])
+            }
+            ClassChangeError::NotMastered(_) => {
+                ctx.text("class_change.reason.not_mastered").to_owned()
+            }
             other => other.to_string(),
         }
     }
@@ -439,19 +447,19 @@ impl ClassChangeScreen {
     fn question(&self, ctx: &Ctx, class: &ClassDef) -> [String; 2] {
         let words = ctx.words();
         let (unit, class_name) = (words.unit(&self.unit), words.class(class));
-        let ask = match self.kind {
-            ChangeKind::Promote => format!("Promote {unit} to {class_name}?"),
-            ChangeKind::Reclass => format!("Change {unit} to {class_name}?"),
+        let key = match self.kind {
+            ChangeKind::Promote => "class_change.question.promote",
+            ChangeKind::Reclass => "class_change.question.reclass",
         };
+        let ask = ctx.text_with(key, &[("unit", &unit), ("class", &class_name)]);
         let (seal, held) = self.seal_of(ctx, class);
-        [ask, format!("Uses 1 {seal} ({held} in stock).")]
+        let cost = ctx.text_with("class_change.cost", &[("seal", &seal), ("held", &held)]);
+        [ask, cost]
     }
 
     /// The help line for the stage.
     pub fn help(&self, ctx: &Ctx) -> String {
         let km = ctx.help_keys();
-        let confirm = |label| (Some(key_name(km, Action::Confirm)), label);
-        let cancel = |label| (Some(key_name(km, Action::Cancel)), label);
         match &self.stage {
             Stage::Choosing => {
                 let pick = format!(
@@ -459,13 +467,16 @@ impl ClassChangeScreen {
                     key_name(km, Action::CursorLeft),
                     key_name(km, Action::CursorRight)
                 );
-                let many = (self.options.len() > 1).then_some(pick);
+                let many = (self.options.len() > 1)
+                    .then(|| ctx.text_with("class_change.hint.class", &[("keys", &pick)]));
                 let can = self.focused().is_some_and(|o| o.after.is_ok());
-                let choose = (can.then(|| key_name(km, Action::Confirm)), "choose");
-                help_line(&[(many, "class"), choose, cancel("back")])
+                let choose = can.then(|| ctx.text_with("class_change.hint.choose", &[]));
+                let back = Some(ctx.text_with("class_change.hint.back", &[]));
+                let hints: Vec<String> = [many, choose, back].into_iter().flatten().collect();
+                hints.join(SEPARATOR)
             }
-            Stage::Confirming => help_line(&[confirm("yes"), cancel("no")]),
-            Stage::Result(p) => progress::help(p, km),
+            Stage::Confirming => ctx.text_with("class_change.help.confirming", &[]),
+            Stage::Result(p) => progress::help(ctx, p),
             Stage::Done => String::new(),
         }
     }
@@ -479,7 +490,7 @@ impl ClassChangeScreen {
         buf.print(
             COLUMNS_X,
             TITLE_ROW,
-            self.kind.title(),
+            ctx.text(self.kind.title()),
             c(UiColor::TextHighlight),
             black,
         );
@@ -491,7 +502,7 @@ impl ClassChangeScreen {
             black,
         );
         let class = ctx.words().class_of(&self.unit.class, classes);
-        let line = format!("{class}  Lv {}", self.unit.level);
+        let line = class_level(ctx.words(), class, self.unit.level);
         buf.print(
             COLUMNS_X + i32::from(n) + 2,
             UNIT_ROW,
@@ -519,7 +530,7 @@ impl ClassChangeScreen {
         let c = |u| ctx.palette.get(u);
         let black = c(UiColor::Black);
         if self.options.is_empty() {
-            let none = "No class to change to.";
+            let none = ctx.text("class_change.none");
             buf.print(COLUMNS_X, COLUMNS_Y + 1, none, c(UiColor::TextDim), black);
             return;
         }
@@ -530,10 +541,11 @@ impl ClassChangeScreen {
         }
         let dim = c(UiColor::TextDim);
         if self.first > 0 {
-            buf.print(COLUMNS_X, MORE_ROW, "← more", dim, black);
+            let more = ctx.text("class_change.more_left");
+            buf.print(COLUMNS_X, MORE_ROW, more, dim, black);
         }
         if self.first + COLUMNS < self.options.len() {
-            let text = "more →";
+            let text = ctx.text("class_change.more_right");
             let w = i32::try_from(text.chars().count()).unwrap_or(0);
             let right = COLUMNS_X + COLUMN_W * i32::try_from(COLUMNS).unwrap_or(0);
             buf.print(right - w, MORE_ROW, text, dim, black);
@@ -576,11 +588,14 @@ impl ClassChangeScreen {
             UiColor::Text
         };
         pen(buf, 1, ctx.words().class(class), title);
-        let tier = format!("Tier {}", class.tier);
+        let words = ctx.words();
+        let tier = ctx.text_with("class_change.tier", &[("tier", &class.tier)]);
         let record = match (self.kind, self.unit.class_records.get(&class.id)) {
             (ChangeKind::Promote, _) => String::new(),
-            (ChangeKind::Reclass, Some(r)) => format!("CL {}", r.class_level),
-            (ChangeKind::Reclass, None) => "new".to_owned(),
+            (ChangeKind::Reclass, Some(r)) => {
+                ctx.text_with("class_change.class_level", &[("level", &r.class_level)])
+            }
+            (ChangeKind::Reclass, None) => ctx.text("class_change.new").to_owned(),
         };
         pen(buf, 2, &format!("{tier:<9}{record}"), UiColor::TextDim);
         let movement = content
@@ -589,27 +604,29 @@ impl ClassChangeScreen {
             .movement_types
             .get(usize::from(class.movement_type.0))
             .map_or("", String::as_str);
-        let mov = mov_line(self.unit.stats.mov, class.move_points);
+        let mov = mov_line(words, self.unit.stats.mov, class.move_points);
         pen(buf, 4, &format!("{mov:<12}{movement}"), UiColor::Text);
-        let tags: Vec<&str> = [
-            (class.tags.mounted, "Mounted"),
-            (class.tags.flying, "Flying"),
-            (class.tags.armored, "Armored"),
-        ]
-        .iter()
-        .filter(|(on, _)| *on)
-        .map(|&(_, name)| name)
-        .collect();
+        let tags = tag_names(words, class.tags);
         pen(buf, 5, &tags.join(" "), UiColor::Text);
-        pen(buf, 7, "Weapons", UiColor::TextHighlight);
-        let weapons = weapon_lines(&self.unit, class);
+        pen(
+            buf,
+            7,
+            ctx.text("class_change.weapons"),
+            UiColor::TextHighlight,
+        );
+        let weapons = weapon_lines(words, &self.unit, class);
         if weapons.is_empty() {
             pen(buf, 8, "--", UiColor::TextDim);
         }
         for (row, line) in (8..11).zip(&weapons) {
             pen(buf, row, line, UiColor::Text);
         }
-        pen(buf, 12, "Active", UiColor::TextHighlight);
+        pen(
+            buf,
+            12,
+            ctx.text("class_change.active"),
+            UiColor::TextHighlight,
+        );
         let active = class.active.as_ref().map(|id| {
             let skill = content.skills.get(id);
             skill
@@ -637,7 +654,8 @@ impl ClassChangeScreen {
         for (row, kind) in (15..).zip(StatKind::GROWABLE) {
             let (before, then) = (self.unit.stats.get(kind), after.stats.get(kind));
             let ceiling = content.classes.hard_ceilings.get(kind);
-            let line = stat_line(kind, before, then, ceiling);
+            let words = ctx.words();
+            let line = stat_line(words, kind, before, then, ceiling);
             let color = if then > before {
                 UiColor::Text
             } else {
@@ -646,9 +664,10 @@ impl ClassChangeScreen {
             let (tx, ty) = (x + 2, COLUMNS_Y + row);
             buf.print(tx, ty, &line, c(shade(color)), bg);
             // The gain and the `MAX` mark in the highlight colour.
-            let plain = progress::stat_row(kind, before, 0).chars().count();
+            let plain = progress::stat_row(words, kind, before, 0).chars().count();
             let tail: String = line.chars().skip(plain).collect();
-            if let Some(at) = tail.find(['+', 'M']) {
+            let mark = || tail.find(words.text(MAX_MARK));
+            if let Some(at) = tail.find('+').or_else(mark) {
                 let skipped = plain + tail[..at].chars().count();
                 let col = i32::try_from(skipped).unwrap_or(0);
                 let hi = c(shade(UiColor::TextHighlight));
@@ -675,12 +694,7 @@ impl ClassChangeScreen {
         };
         let c = |u| ctx.palette.get(u);
         let bg = c(UiColor::PanelBg);
-        let km = ctx.help_keys();
-        let yes_no = help_line(&[
-            (Some(key_name(km, Action::Confirm)), "yes"),
-            (Some(key_name(km, Action::Cancel)), "no"),
-        ])
-        .replace(SEPARATOR, " / ");
+        let yes_no = ctx.text_with("class_change.yes_no", &[]);
         let [ask, cost] = self.question(ctx, class);
         let lines = [
             (ask, UiColor::Text),
@@ -762,7 +776,8 @@ impl Screen for ClassChangeScreen {
             }
             // The pages name the unit and its classes themselves.
             Stage::Result(pages) => {
-                progress::draw(buf, &ctx.palette, &ctx.content.portraits, pages);
+                let look = (&ctx.palette, ctx.words());
+                progress::draw(buf, look, &ctx.content.portraits, pages);
             }
             Stage::Done => {}
         }

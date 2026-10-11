@@ -12,6 +12,7 @@ mod lines;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+use std::sync::LazyLock;
 
 use serde::Deserialize;
 use serde::de::{Deserializer, MapAccess, Visitor};
@@ -334,6 +335,19 @@ pub fn english_from_source(
     } else {
         Err(errors)
     }
+}
+
+/// English's screen text in the embedded bundle, by key: what
+/// [`load`] gives every [`Lang`], for code that names things in English
+/// with no [`Lang`] at hand. Empty if the file is broken (loading the
+/// content reports that).
+pub fn english_ui() -> &'static BTreeMap<String, String> {
+    static ENGLISH_UI: LazyLock<BTreeMap<String, String>> = LazyLock::new(|| {
+        let path = format!("{LANG_DIR}/{ENGLISH}/{UI_FILE}");
+        let english = bundle::file(&path).map(|source| english_from_source(&path, source));
+        english.and_then(Result::ok).unwrap_or_default()
+    });
+    &ENGLISH_UI
 }
 
 /// A file of a pack: the name it is reported under, and its text.
@@ -939,6 +953,23 @@ mod tests {
         .unwrap_err();
         assert_eq!(errors.len(), 1, "{errors:?}");
         assert!(errors[0].starts_with("lang/en/ui.ron: \"Bad Key\""));
+    }
+
+    /// Ticket 0243: English for code with no `Lang` at hand is the text
+    /// every `Lang` is loaded with.
+    #[test]
+    fn the_bundles_english_is_what_the_languages_load() {
+        let english = english_ui();
+        assert_eq!(
+            english.get("title.new_game").map(String::as_str),
+            Some("New Game")
+        );
+        assert!(english.len() > 100, "{}", english.len());
+        let lang = load(None).unwrap();
+        for (key, text) in english {
+            assert_eq!(lang.english(key), Some(text.as_str()), "{key}");
+        }
+        assert!(std::ptr::eq(english, english_ui()));
     }
 
     #[test]

@@ -61,7 +61,7 @@ impl Technique {
     /// Its name as the list and the forecast show it.
     pub fn name(&self, state: &BattleState, words: Words<'_>) -> String {
         match self {
-            Technique::Attack => "Attack".to_owned(),
+            Technique::Attack => words.text("battle.art.attack").to_owned(),
             Technique::Art(id) => art_name(state, words, id),
             Technique::Active(id) => skill_name(state, words, id),
         }
@@ -85,12 +85,16 @@ pub struct ArtChoice {
 }
 
 /// Why a cost can't be paid, as the list shows it.
-pub fn reason_text(error: &CostError) -> String {
+pub fn reason_text(words: Words<'_>, error: &CostError) -> String {
     match error {
-        CostError::WeaponBroken => "broken".to_owned(),
-        CostError::NotEnoughUses { left } => format!("{left} uses left"),
-        CostError::NoUsesLeft => "no uses left".to_owned(),
-        CostError::NoWeapon | CostError::WrongSource => "can't pay".to_owned(),
+        CostError::WeaponBroken => words.text("battle.reason.broken").to_owned(),
+        CostError::NotEnoughUses { left } => {
+            words.text_with("battle.reason.uses_left", &[("left", left)])
+        }
+        CostError::NoUsesLeft => words.text("battle.reason.no_uses_left").to_owned(),
+        CostError::NoWeapon | CostError::WrongSource => {
+            words.text("battle.reason.cant_pay").to_owned()
+        }
     }
 }
 
@@ -99,6 +103,7 @@ pub fn reason_text(error: &CostError) -> String {
 /// this attack).
 fn choice(
     state: &BattleState,
+    words: Words<'_>,
     unit: UnitId,
     dest: Pos,
     action: &UnitAction,
@@ -107,7 +112,7 @@ fn choice(
     let reason = match state.preview_attack(unit, dest, action) {
         Ok(_) => None,
         Err(CommandError::CannotPayArt { error, .. } | CommandError::CannotPay { error, .. }) => {
-            Some(reason_text(&error))
+            Some(reason_text(words, &error))
         }
         Err(_) => return None,
     };
@@ -121,6 +126,7 @@ fn choice(
 /// target only an art or active reaches (Close Shot, Long Shot: 0426).
 pub fn art_choices(
     state: &BattleState,
+    words: Words<'_>,
     unit: UnitId,
     dest: Pos,
     with: &Equipped,
@@ -129,12 +135,12 @@ pub fn art_choices(
     let plain = Technique::Attack.action(target, with);
     let reason = match state.preview_attack(unit, dest, &plain) {
         Ok(_) => None,
-        Err(CommandError::OutOfRange { .. }) => Some("out of range".to_owned()),
-        Err(_) => Some("can't attack".to_owned()),
+        Err(CommandError::OutOfRange { .. }) => Some("battle.reason.out_of_range"),
+        Err(_) => Some("battle.reason.cant_attack"),
     };
     let mut out = vec![ArtChoice {
         technique: Technique::Attack,
-        reason,
+        reason: reason.map(|key| words.text(key).to_owned()),
     }];
     let Some(u) = state.unit(unit) else {
         return out;
@@ -143,43 +149,45 @@ pub fn art_choices(
         let arts = u.arts_for(slot, state.classes(), state.items(), state.arts());
         for art in arts {
             let t = Technique::Art(art.id.clone());
-            out.extend(choice(state, unit, dest, &t.action(target, with), t));
+            out.extend(choice(state, words, unit, dest, &t.action(target, with), t));
         }
     }
     let actives = u.usable_skills(state.classes(), state.skills());
     for skill in actives.into_iter().filter(|s| s.is_combat()) {
         let t = Technique::Active(skill.id.clone());
-        out.extend(choice(state, unit, dest, &t.action(target, with), t));
+        out.extend(choice(state, words, unit, dest, &t.action(target, with), t));
     }
     out
 }
 
 /// What a line costs: `−4 dur` or `+1 use` (empty for `Attack`). A cost in
 /// the skill's own uses reads `−1 use`, though no combat active has one.
-pub fn cost_label(state: &BattleState, technique: &Technique) -> String {
+pub fn cost_label(state: &BattleState, words: Words<'_>, technique: &Technique) -> String {
     let cost = match technique {
         Technique::Attack => None,
         Technique::Art(id) => state.arts().get(id).map(ArtDef::skill_cost),
         Technique::Active(id) => state.skills().get(id).and_then(skill_cost),
     };
     match cost {
-        Some(SkillCost::Durability(n)) => format!("−{n} dur"),
-        Some(SkillCost::ExtraSpellUse) => "+1 use".to_owned(),
-        Some(SkillCost::Uses(_)) => "−1 use".to_owned(),
+        Some(SkillCost::Durability(n)) => {
+            words.text_with("battle.art.cost.durability", &[("n", &n)])
+        }
+        Some(SkillCost::ExtraSpellUse) => words.text("battle.art.cost.spell_use").to_owned(),
+        Some(SkillCost::Uses(_)) => words.text("battle.art.cost.use").to_owned(),
         None => String::new(),
     }
 }
 
 /// Where a line comes from: the art's rank (`E`, `D`), `weapon` for a
 /// weapon's own art, `active` for a class active (empty for `Attack`).
-pub fn source_label(state: &BattleState, technique: &Technique) -> String {
+pub fn source_label(state: &BattleState, words: Words<'_>, technique: &Technique) -> String {
     match technique {
         Technique::Attack => String::new(),
         Technique::Art(id) => match state.arts().get(id).and_then(|a| a.rank) {
             Some(rank) => format!("{rank:?}"),
-            None => "weapon".to_owned(),
+            None => words.text("battle.art.source.weapon").to_owned(),
         },
-        Technique::Active(_) => "active".to_owned(),
+        Technique::Active(_) => words.text("battle.art.source.active").to_owned(),
     }
 }
 
@@ -199,8 +207,8 @@ pub fn art_menu(
         .iter()
         .map(|c| {
             let name = c.technique.name(state, words);
-            let cost = cost_label(state, &c.technique);
-            let source = source_label(state, &c.technique);
+            let cost = cost_label(state, words, &c.technique);
+            let source = source_label(state, words, &c.technique);
             let label = format!("{name:<NAME_W$}  {cost:>6}  {source:<6}");
             match &c.reason {
                 None => MenuItem::new(label),
@@ -214,9 +222,9 @@ pub fn art_menu(
 }
 
 /// A weapon's durability as its lines show it: `20/20`, or `broken` at 0.
-pub fn durability_text(left: u32, max: u32) -> String {
+pub fn durability_text(words: Words<'_>, left: u32, max: u32) -> String {
     if left == 0 {
-        "broken".to_owned()
+        words.text("battle.weapon.broken").to_owned()
     } else {
         format!("{left}/{max}")
     }
@@ -269,7 +277,7 @@ pub fn draw_list(
     } else {
         UiColor::Text
     };
-    let dur = format!("{} ", durability_text(left, max));
+    let dur = format!("{} ", durability_text(words, left, max));
     buf.print(at + i32::from(n), y, &dur, palette.get(color), bg);
 }
 
@@ -299,19 +307,23 @@ pub fn playback_banner(
 
 /// One of the art's non-number effects as text: `no counter`, `pierces`,
 /// `pins: Mov −3`, `slows: Spd −3`, `stance: +20 avo`.
-pub fn note_text(note: &ArtNote) -> String {
+pub fn note_text(words: Words<'_>, note: &ArtNote) -> String {
     match note {
-        ArtNote::NoCounter => "no counter".to_owned(),
-        ArtNote::Pierces => "pierces".to_owned(),
+        ArtNote::NoCounter => words.text("battle.art.note.no_counter").to_owned(),
+        ArtNote::Pierces => words.text("battle.art.note.pierces").to_owned(),
         ArtNote::Debuff(d) => {
-            let verb = match d.stat {
-                StatKind::Mov => "pins",
-                StatKind::Spd => "slows",
-                _ => "lowers",
+            let key = match d.stat {
+                StatKind::Mov => "battle.art.note.pins",
+                StatKind::Spd => "battle.art.note.slows",
+                _ => "battle.art.note.lowers",
             };
-            format!("{verb}: {} −{}", stat_name(d.stat), d.amount)
+            let stat = stat_name(words, d.stat);
+            words.text_with(key, &[("stat", &stat), ("amount", &d.amount)])
         }
-        ArtNote::Stance(mods) => format!("stance: {}", timed_text(mods)),
+        ArtNote::Stance(mods) => words.text_with(
+            "battle.art.note.stance",
+            &[("mods", &timed_text(words, mods))],
+        ),
     }
 }
 
@@ -323,35 +335,56 @@ mod tests {
 
     #[test]
     fn reasons_say_what_is_missing() {
-        assert_eq!(reason_text(&CostError::WeaponBroken), "broken");
         assert_eq!(
-            reason_text(&CostError::NotEnoughUses { left: 1 }),
+            reason_text(Words::ENGLISH, &CostError::WeaponBroken),
+            "broken"
+        );
+        assert_eq!(
+            reason_text(Words::ENGLISH, &CostError::NotEnoughUses { left: 1 }),
             "1 uses left"
         );
-        assert_eq!(reason_text(&CostError::NoUsesLeft), "no uses left");
-        assert_eq!(reason_text(&CostError::NoWeapon), "can't pay");
-        assert_eq!(reason_text(&CostError::WrongSource), "can't pay");
+        assert_eq!(
+            reason_text(Words::ENGLISH, &CostError::NoUsesLeft),
+            "no uses left"
+        );
+        assert_eq!(
+            reason_text(Words::ENGLISH, &CostError::NoWeapon),
+            "can't pay"
+        );
+        assert_eq!(
+            reason_text(Words::ENGLISH, &CostError::WrongSource),
+            "can't pay"
+        );
     }
 
     #[test]
     fn notes_read_as_the_design_writes_them() {
-        assert_eq!(note_text(&ArtNote::NoCounter), "no counter");
-        assert_eq!(note_text(&ArtNote::Pierces), "pierces");
+        assert_eq!(note_text(Words::ENGLISH, &ArtNote::NoCounter), "no counter");
+        assert_eq!(note_text(Words::ENGLISH, &ArtNote::Pierces), "pierces");
         let pin = Debuff {
             stat: StatKind::Mov,
             amount: 3,
         };
-        assert_eq!(note_text(&ArtNote::Debuff(pin)), "pins: Mov −3");
+        assert_eq!(
+            note_text(Words::ENGLISH, &ArtNote::Debuff(pin)),
+            "pins: Mov −3"
+        );
         let slow = Debuff {
             stat: StatKind::Spd,
             ..pin
         };
-        assert_eq!(note_text(&ArtNote::Debuff(slow)), "slows: Spd −3");
+        assert_eq!(
+            note_text(Words::ENGLISH, &ArtNote::Debuff(slow)),
+            "slows: Spd −3"
+        );
         let other = Debuff {
             stat: StatKind::Def,
             ..pin
         };
-        assert_eq!(note_text(&ArtNote::Debuff(other)), "lowers: Def −3");
+        assert_eq!(
+            note_text(Words::ENGLISH, &ArtNote::Debuff(other)),
+            "lowers: Def −3"
+        );
         let stance = TimedMods {
             stats: vec![],
             combat: CombatMods {
@@ -359,7 +392,10 @@ mod tests {
                 ..CombatMods::default()
             },
         };
-        assert_eq!(note_text(&ArtNote::Stance(stance)), "stance: +20 avo");
+        assert_eq!(
+            note_text(Words::ENGLISH, &ArtNote::Stance(stance)),
+            "stance: +20 avo"
+        );
     }
 
     #[test]
@@ -368,10 +404,15 @@ mod tests {
         let (map, units) = crate::screens::battle::testing::quick_units(&c);
         let rout = trpg_core::Objective::Rout { turn_limit: None };
         let state = crate::screens::battle::testing::battle_with(&c, map, units, rout);
-        let active = |id: &str| cost_label(&state, &Technique::Active(SkillId::new(id)));
-        assert_eq!(cost_label(&state, &Technique::Attack), "");
+        let active =
+            |id: &str| cost_label(&state, Words::ENGLISH, &Technique::Active(SkillId::new(id)));
+        assert_eq!(cost_label(&state, Words::ENGLISH, &Technique::Attack), "");
         assert_eq!(
-            cost_label(&state, &Technique::Art(ArtId::new("guard_break"))),
+            cost_label(
+                &state,
+                Words::ENGLISH,
+                &Technique::Art(ArtId::new("guard_break"))
+            ),
             "−4 dur"
         );
         assert_eq!(active("keen_edge"), "−3 dur");
@@ -383,9 +424,9 @@ mod tests {
 
     #[test]
     fn durability_reads_left_of_max_or_broken() {
-        assert_eq!(durability_text(20, 20), "20/20");
-        assert_eq!(durability_text(3, 20), "3/20");
-        assert_eq!(durability_text(0, 20), "broken");
+        assert_eq!(durability_text(Words::ENGLISH, 20, 20), "20/20");
+        assert_eq!(durability_text(Words::ENGLISH, 3, 20), "3/20");
+        assert_eq!(durability_text(Words::ENGLISH, 0, 20), "broken");
     }
 
     #[test]

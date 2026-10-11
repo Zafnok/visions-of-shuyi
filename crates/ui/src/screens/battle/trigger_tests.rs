@@ -164,7 +164,7 @@ fn talk_is_offered_next_to_someone_to_talk_to_and_picks_a_target() {
         ]
     );
     assert_eq!(menu.focus(), 0, "Attack stays the default");
-    assert_eq!(MenuEntry::Talk.label(), "Talk");
+    assert_eq!(MenuEntry::Talk.label(Words::ENGLISH), "Talk");
     // Talk: the rogue, the cursor on it.
     let (mode, effect) = step(lord_menu(&s), Action::CursorDown, Pos::new(3, 5), &s);
     let (mode, effect2) = step(mode, Action::Confirm, Pos::new(3, 5), &s);

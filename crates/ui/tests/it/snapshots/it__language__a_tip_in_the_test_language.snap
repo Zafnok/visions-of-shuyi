@@ -5,12 +5,12 @@ expression: h.snapshot()
                                                                       ┌────────────────────────────┐
         ╔═ YOUR MOVE ═══════════════════════════════════════╗         │ Plain                      │
         ║                                                   ║         │ DEF +0  AVO +0             │
-        ║ STEER THE CURSOR WITH arrows. PRESS f ON ONE OF   ║         │                            │
+        ║ STEER THE CURSOR WITH ARROWS. PRESS f ON ONE OF   ║         │                            │
         ║ YOUR UNITS TO SELECT IT. s JUMPS TO THE NEXT UNIT ║         │                            │
         ║ THAT CAN STILL ACT; e SHOWS A UNIT'S DETAILS.     ║         │ Test Lord                  │
-        ║                                                   ║         │ Exile  Lv 1                │
-        ║ f close                                           ║         │ HP 19/19   ██████████      │
-        ╚═══════════════════════════════════════════════════╝         │ Player                     │
+        ║                                                   ║         │ Exile  LV 1                │
+        ║ f CLOSE                                           ║         │ HP 19/19   ██████████      │
+        ╚═══════════════════════════════════════════════════╝         │ PLAYER                     │
                                                                       │                            │
                                                                       │                            │
                     ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │                            │
@@ -32,8 +32,8 @@ expression: h.snapshot()
                                                                       │                            │
                                                                       │                            │
                                                                       └────────────────────────────┘
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
- f close                                                                                   F2 debug 
+                                                     w DANGER ZONE: OFF · Shift+Space AUTO-END: OFF 
+ f CLOSE                                                                                   F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaabbcccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabdcccccddddddddddddddddddddddb

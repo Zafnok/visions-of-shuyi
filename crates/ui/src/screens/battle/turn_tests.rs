@@ -343,6 +343,30 @@ fn the_map_menu_opens_from_cancel_an_empty_tile_or_the_menu_key() {
     }
 }
 
+/// Ticket 0243: the battle's own text follows the player's language.
+#[test]
+fn the_battle_is_drawn_in_the_players_language() {
+    let mut c = ctx();
+    let mut s = quick();
+    s.cursor.jump(Pos::new(3, 5));
+    press(&mut s, &mut c, &[Action::Cancel]);
+    let english = render(&s, &c);
+    assert!(shows(&english, "End Turn"));
+    assert!(!shows(&english, "END TURN"));
+    let before = s.mode().clone();
+    c.lang = trpg_content::LangCode::new(trpg_content::lang::TEST).unwrap();
+    let shouted = render(&s, &c);
+    assert!(shows(&shouted, "UNITS"));
+    assert!(shows(&shouted, "END TURN"));
+    assert!(!shows(&shouted, "End Turn"));
+    assert!(shows(&shouted, "RESTART BATTLE"));
+    assert_eq!(s.help(&c), "ARROWS CHOOSE · f CONFIRM · d BACK");
+    assert!(shows(&shouted, "ARROWS CHOOSE"));
+    assert!(shows(&shouted, "DANGER ZONE: OFF"));
+    // Drawing changes nothing that is played.
+    assert_eq!(s.mode(), &before);
+}
+
 #[test]
 fn units_jumps_the_cursor_to_the_chosen_unit() {
     let mut c = ctx();

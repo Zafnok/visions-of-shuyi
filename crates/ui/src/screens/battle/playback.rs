@@ -26,9 +26,10 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use trpg_core::{CharacterId, Event, Faction, Side, StatValue, Strike, Unit, UnitId};
+use trpg_core::{CharacterId, Event, Faction, Side, StatKind, StatValue, Strike, Unit, UnitId};
 
 use super::event_sounds::{Attack, cast_sound, sound_for_strike};
+use super::info::stat_name;
 use super::layout::MAP_VIEW;
 use super::units::{faction_color, hp_fill};
 use crate::color::{Palette, UiColor};
@@ -536,7 +537,7 @@ impl Playback {
         };
         self.falls
             .get(fall)
-            .map(|u| format!("{} has fallen.", words.unit(u)))
+            .map(|u| words.text_with("battle.playback.fallen", &[("name", &words.unit(u))]))
     }
 
     /// The step of `beat`, if the timeline has one.
@@ -599,13 +600,14 @@ fn timeline(bouts: &[Bout], falls: usize, anchors: &[Anchor], t: &Timings) -> Ve
 
 /// What the box shows for strike `strike`: `HIT -7`, `MISS`, `CRITICAL!
 /// -21`, or `+9` for an Absorb heal.
-pub fn result_text(strike: &Strike) -> String {
-    match (strike.hit, strike.crit, strike.healed) {
-        (false, _, _) => "MISS".to_owned(),
-        (true, _, true) => format!("HEAL +{}", strike.damage),
-        (true, true, false) => format!("CRITICAL! -{}", strike.damage),
-        (true, false, false) => format!("HIT -{}", strike.damage),
-    }
+pub fn result_text(words: Words<'_>, strike: &Strike) -> String {
+    let key = match (strike.hit, strike.crit, strike.healed) {
+        (false, _, _) => "battle.playback.miss",
+        (true, _, true) => "battle.playback.heal",
+        (true, true, false) => "battle.playback.critical",
+        (true, false, false) => "battle.playback.hit",
+    };
+    words.text_with(key, &[("n", &strike.damage)])
 }
 
 /// The playback box's size, in cells.
@@ -628,7 +630,7 @@ pub const BOX_COLUMNS: [i32; 2] = [BOX.x + 2, BOX.x + 2 + BOX_W / 2];
 /// Draws the playback box: both combatants' names (the striker's
 /// flashing before its strike), HP and HP bars, and the current strike's
 /// result under its target.
-pub fn draw_box(buf: &mut GlyphBuffer, palette: &Palette, pb: &Playback) {
+pub fn draw_box(buf: &mut GlyphBuffer, palette: &Palette, words: Words<'_>, pb: &Playback) {
     let (Some(bout), Some((step, local))) = (pb.bout(), pb.now()) else {
         return;
     };
@@ -672,7 +674,8 @@ pub fn draw_box(buf: &mut GlyphBuffer, palette: &Palette, pb: &Playback) {
         // check-text: not a data name (the view's own)
         buf.print(x, BOX.y + 1, &f.name, fg, name_bg);
         let hp = pb.hp(f.unit).unwrap_or(f.start);
-        buf.print(x, BOX.y + 2, &format!("HP {hp:>2}"), c(UiColor::Text), bg);
+        let hp_text = format!("{} {hp:>2}", stat_name(words, StatKind::Hp));
+        buf.print(x, BOX.y + 2, &hp_text, c(UiColor::Text), bg);
         let (filled, bar) = hp_fill(hp, f.max, BOX_BAR_CELLS);
         for i in 0..BOX_BAR_CELLS {
             let (glyph, fg) = if i < filled {
@@ -684,7 +687,13 @@ pub fn draw_box(buf: &mut GlyphBuffer, palette: &Palette, pb: &Playback) {
         }
         // The result shows under the strike's target.
         if let Some(s) = result.filter(|s| s.by != side) {
-            buf.print(x, BOX.y + 3, &result_text(s), c(UiColor::TextHighlight), bg);
+            buf.print(
+                x,
+                BOX.y + 3,
+                &result_text(words, s),
+                c(UiColor::TextHighlight),
+                bg,
+            );
         }
     }
 }
@@ -1045,10 +1054,19 @@ mod tests {
             healed,
             ..strike(Side::Attacker, hit, crit, 7, 3)
         };
-        assert_eq!(result_text(&s(true, false, false)), "HIT -7");
-        assert_eq!(result_text(&s(false, false, false)), "MISS");
-        assert_eq!(result_text(&s(true, true, false)), "CRITICAL! -7");
-        assert_eq!(result_text(&s(true, false, true)), "HEAL +7");
+        assert_eq!(
+            result_text(Words::ENGLISH, &s(true, false, false)),
+            "HIT -7"
+        );
+        assert_eq!(result_text(Words::ENGLISH, &s(false, false, false)), "MISS");
+        assert_eq!(
+            result_text(Words::ENGLISH, &s(true, true, false)),
+            "CRITICAL! -7"
+        );
+        assert_eq!(
+            result_text(Words::ENGLISH, &s(true, false, true)),
+            "HEAL +7"
+        );
     }
 
     #[test]
@@ -1091,7 +1109,7 @@ mod tests {
             pb.tick(t, false);
             let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
             let mut buf = GlyphBuffer::new(100, 32, blank);
-            draw_box(&mut buf, p, &pb);
+            draw_box(&mut buf, p, Words::ENGLISH, &pb);
             buf
         };
         let (lx, rx) = (BOX_COLUMNS[0], BOX_COLUMNS[1]);

@@ -99,8 +99,12 @@ Nintendo's `A` on the right). You get this for free by following rule 2:
   device** (an action can have a key and no button).
 - Never pass a bare keymap to them (it doesn't compile) and never branch
   on `ctx.device` in a screen to pick a name yourself.
-- `HelpKeys::keyboard(&keymap)` only where the text is about the keyboard
-  whatever the player holds: the layout picker's key list, the debug hint.
+- `ctx.help_keys()` also carries the two words a key's name can be
+  (`! not mapped`, `arrows`) in the player's language. So for other
+  bindings or the keyboard's keys, start from it:
+  `ctx.help_keys().of(&keymap)`, `ctx.help_keys().on_keyboard()`.
+  `HelpKeys::new` and `HelpKeys::keyboard` give the English words: tests
+  and the debug hint only.
 - A button's name comes only from `PadKind::button_name` (D-pad directions
   are `↑ ↓ ← →`; the cursor is `D-pad/L-stick` via `cursor_keys_name`). A new
   name needs its glyphs in the font: `assets/fonts/README.md`, *Our own
@@ -136,8 +140,8 @@ Nintendo's `A` on the right). You get this for free by following rule 2:
 3. **Expect any key, or none.** Game code can't assume which key an action
    has, that two actions have different keys in both layouts, or (for
    optional actions) that it has a key at all. Text for an
-   action with no key shows `NOT_MAPPED` (`! not mapped`), which the help
-   helpers do for you.
+   action with no key shows `! not mapped` (`keys.not_mapped` of the
+   language file), which the help helpers do for you.
 4. **Default keys are Nick's.** They live only in `assets/data/keymap.ron`
    and must match the table in `docs/design/controls.md`; a test pins it.
    Changing a default is a design change: ask with the `ask-nick` skill,

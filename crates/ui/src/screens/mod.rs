@@ -55,6 +55,7 @@ pub(crate) fn debug_hint(ctx: &Ctx) -> Option<String> {
     let bound = ctx.keymap.primary(Action::Debug).is_some();
     // The debug key is keyboard-only, so it is named on a controller too.
     let keys = HelpKeys::keyboard(&ctx.keymap);
+    // check-text: not player text (debug tools are English only)
     (ctx.debug_tools && bound).then(|| format!("{} debug", key_name(keys, Action::Debug)))
 }
 

@@ -272,7 +272,7 @@ fn the_list_has_every_learned_spell_dimmed_without_a_target() {
     // Uses are the unit's, name padded to `name_w`.
     let heal = c.content.spells.get(&sid("heal")).unwrap();
     assert_eq!(
-        spell_label(heal, &heal.name, 3, 6),
+        spell_label(Words::ENGLISH, heal, &heal.name, 3, 6),
         "Heal     3/8   HP+10 Rng1"
     );
     // Who has the menu, and when it is enabled.
@@ -314,7 +314,7 @@ fn magic_is_listed_for_casters_and_is_the_default_only_against_an_enemy() {
             MenuEntry::Wait
         ]
     );
-    assert_eq!(MenuEntry::Magic.label(), "Magic");
+    assert_eq!(MenuEntry::Magic.label(Words::ENGLISH), "Magic");
     assert_eq!(magic(&s), (true, MenuEntry::Magic));
     assert!(reaches_an_enemy(&s, &spell_choices(&s, MAGE, p(0, 4))));
     // The Quick Battle's start: only a forest to burn, so Magic is enabled

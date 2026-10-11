@@ -11,11 +11,11 @@ use super::map_menu::centred_top;
 use crate::widgets::wrap::word_wrap;
 use crate::words::Words;
 
-/// The title of the notes box.
-pub const NOTES_TITLE: &str = "BATTLE NOTES";
+/// The key of the notes box's title (`BATTLE NOTES`).
+pub const NOTES_TITLE: &str = "battle.notes.title";
 
-/// The heading over the notes on the `Objective` page.
-pub const NOTES_HEADING: &str = "Battle notes";
+/// The key of the heading over the notes on the `Objective` page.
+pub const NOTES_HEADING: &str = "battle.notes.heading";
 
 /// The widest a line of a note is, in cells, its marker included.
 pub const NOTE_WIDTH: usize = 48;

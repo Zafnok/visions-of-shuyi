@@ -35,9 +35,8 @@ use super::layout::MAP_VIEW;
 use super::playback::BOX;
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
-use crate::input::Action;
 use crate::portrait::draw_portrait;
-use crate::widgets::help::{HelpKeys, help_line, key_name};
+use crate::screen::Ctx;
 use crate::words::Words;
 
 /// How long each page's parts take, in seconds. *Tunable.*
@@ -540,20 +539,21 @@ impl Progress {
 
 /// The help line of an EXP bar, level-up or class page: skip and fast while
 /// it plays, then continue.
-pub fn help(p: &Progress, km: HelpKeys<'_>) -> String {
-    playing_help(p.page_played(), km)
+pub fn help(ctx: &Ctx, p: &Progress) -> String {
+    playing_help(ctx, p.page_played())
 }
 
 /// The help line of something that plays by itself (an EXP bar, the
 /// results): skip and fast until it has `played`, then continue.
-pub(crate) fn playing_help(played: bool, km: HelpKeys<'_>) -> String {
-    let confirm = key_name(km, Action::Confirm);
-    if played {
-        help_line(&[(Some(confirm), "continue")])
-    } else {
-        let hold = Some(format!("hold {confirm}"));
-        help_line(&[(Some(confirm), "skip"), (hold, "fast")])
-    }
+pub(crate) fn playing_help(ctx: &Ctx, played: bool) -> String {
+    ctx.text_with(
+        if played {
+            "battle.help.continue"
+        } else {
+            "battle.help.playing"
+        },
+        &[],
+    )
 }
 
 /// The EXP box: where the combat playback's box was.
@@ -588,6 +588,7 @@ pub const LEVEL_BANNER_ROW: i32 = LEVEL_PANEL.y + 2;
 pub const STAT_ROW: i32 = LEVEL_PANEL.y + 7;
 
 /// The expression shown on a level up, else the portrait's first.
+// check-text: not player text (expression ids)
 const LEVEL_UP_EXPRESSIONS: [&str; 2] = ["happy", "neutral"];
 
 /// The EXP bar at `exp` (counted from any level: shown modulo
@@ -602,8 +603,8 @@ pub fn exp_line(exp: u32) -> (i32, u32) {
 
 /// The text of stat `kind`'s row: `Str   6 → 7  +1` if it grew, else
 /// `Def   5`.
-pub fn stat_row(kind: StatKind, before: StatValue, gain: StatValue) -> String {
-    let name = stat_name(kind);
+pub fn stat_row(words: Words<'_>, kind: StatKind, before: StatValue, gain: StatValue) -> String {
+    let name = stat_name(words, kind);
     if gain > 0 {
         format!("{name:<4}{before:>3} → {:<3} +{gain}", before + gain)
     } else {
@@ -612,9 +613,12 @@ pub fn stat_row(kind: StatKind, before: StatValue, gain: StatValue) -> String {
 }
 
 /// The class line: `Exile  CL 3 → 4`, or just the class's name.
-pub fn class_line(page: &ClassPage) -> String {
+pub fn class_line(words: Words<'_>, page: &ClassPage) -> String {
     match page.class_levels {
-        Some((from, to)) => format!("{}  CL {from} → {to}", page.class),
+        Some((from, to)) => words.text_with(
+            "battle.progress.class_levels",
+            &[("class", &page.class), ("from", &from), ("to", &to)],
+        ),
         None => page.class.clone(),
     }
 }
@@ -622,27 +626,33 @@ pub fn class_line(page: &ClassPage) -> String {
 /// Draws the page on screen.
 pub fn draw(
     buf: &mut GlyphBuffer,
-    palette: &Palette,
+    (palette, words): (&Palette, Words<'_>),
     portraits: &BTreeMap<String, Portrait>,
     progress: &Progress,
 ) {
+    let look = (palette, words);
     match progress.page() {
-        Some(Page::Exp(p)) => draw_exp(buf, palette, p, progress.exp_shown().unwrap_or(p.from)),
+        Some(Page::Exp(p)) => draw_exp(buf, look, p, progress.exp_shown().unwrap_or(p.from)),
         Some(Page::LevelUp(p)) => {
             let portrait = p.character.as_ref().and_then(|c| portraits.get(c));
-            draw_level_up(buf, palette, p, portrait, progress.stats_shown());
+            draw_level_up(buf, look, p, portrait, progress.stats_shown());
         }
         Some(Page::Promotion(p)) => {
             let portrait = p.character.as_ref().and_then(|c| portraits.get(c));
-            draw_promotion(buf, palette, p, portrait, progress.stats_shown());
+            draw_promotion(buf, look, p, portrait, progress.stats_shown());
         }
-        Some(Page::Class(p)) => draw_class(buf, palette, p),
+        Some(Page::Class(p)) => draw_class(buf, look, p),
         None => {}
     }
 }
 
 /// The EXP box: `Test Lord   EXP ████████░░░░ 80`.
-fn draw_exp(buf: &mut GlyphBuffer, palette: &Palette, page: &ExpPage, exp: u32) {
+fn draw_exp(
+    buf: &mut GlyphBuffer,
+    (palette, words): (&Palette, Words<'_>),
+    page: &ExpPage,
+    exp: u32,
+) {
     let c = |u| palette.get(u);
     let bg = c(UiColor::PanelBg);
     buf.fill_rect(EXP_BOX, Cell::new(' ', c(UiColor::Text), bg));
@@ -653,7 +663,7 @@ fn draw_exp(buf: &mut GlyphBuffer, palette: &Palette, page: &ExpPage, exp: u32) 
     let name: String = page.name.chars().take(NAME_W).collect();
     buf.print(x, y, &name, c(UiColor::Player), bg);
     let bar_x = x + NAME_COL;
-    buf.print(bar_x, y, "EXP", c(UiColor::TextDim), bg);
+    buf.print(bar_x, y, words.text("battle.exp"), c(UiColor::TextDim), bg);
     let (filled, shown) = exp_line(exp);
     for i in 0..EXP_BAR_CELLS {
         let (glyph, fg) = if i < filled {
@@ -671,20 +681,23 @@ fn draw_exp(buf: &mut GlyphBuffer, palette: &Palette, page: &ExpPage, exp: u32) 
 /// name, `Lv 4 → 5`, and the first `shown` stat rows.
 fn draw_level_up(
     buf: &mut GlyphBuffer,
-    palette: &Palette,
+    (palette, words): (&Palette, Words<'_>),
     page: &LevelUpPage,
     portrait: Option<&Portrait>,
     shown: usize,
 ) {
     let text = GainText {
-        banner: "LEVEL UP!",
+        banner: words.text("battle.progress.level_up"),
         // check-text: not a data name (the view's own)
         name: &page.name,
-        line: format!("Lv {} → {}", page.level.saturating_sub(1), page.level),
+        line: words.text_with(
+            "battle.progress.levels",
+            &[("from", &page.level.saturating_sub(1)), ("to", &page.level)],
+        ),
     };
     draw_gains(
         buf,
-        palette,
+        (palette, words),
         &text,
         (&page.before, &page.gains),
         portrait,
@@ -692,27 +705,24 @@ fn draw_level_up(
     );
 }
 
-/// The banner of a promotion's page.
-pub const PROMOTED_BANNER: &str = "PROMOTED!";
-
 /// The level-up panel for a promotion: `PROMOTED!`, the name,
 /// `Guard → Iron Rider`, and the first `shown` stat rows with the bonus.
 fn draw_promotion(
     buf: &mut GlyphBuffer,
-    palette: &Palette,
+    (palette, words): (&Palette, Words<'_>),
     page: &PromotionPage,
     portrait: Option<&Portrait>,
     shown: usize,
 ) {
     let text = GainText {
-        banner: PROMOTED_BANNER,
+        banner: words.text("battle.progress.promoted"),
         // check-text: not a data name (the view's own)
         name: &page.name,
         line: format!("{} → {}", page.from, page.to),
     };
     draw_gains(
         buf,
-        palette,
+        (palette, words),
         &text,
         (&page.before, &page.gains),
         portrait,
@@ -737,7 +747,7 @@ const LEVEL_TEXT_W: usize = 20;
 /// first `shown` rows of the stats `before` with their `gains`.
 fn draw_gains(
     buf: &mut GlyphBuffer,
-    palette: &Palette,
+    (palette, words): (&Palette, Words<'_>),
     text: &GainText<'_>,
     (before, gains): (&[StatValue; 7], &StatGains),
     portrait: Option<&Portrait>,
@@ -771,7 +781,7 @@ fn draw_gains(
         })
     });
     if !drawn {
-        let label = "portrait";
+        let label = words.text("battle.portrait");
         let w = i32::try_from(label.len()).unwrap_or(0);
         let x = PORTRAIT_FRAME.x + (PORTRAIT_FRAME.w - w) / 2;
         let y = PORTRAIT_FRAME.y + PORTRAIT_FRAME.h / 2;
@@ -803,7 +813,7 @@ fn draw_gains(
     );
     for (i, kind) in StatKind::GROWABLE.iter().enumerate().take(shown) {
         let gain = gains.0[i];
-        let row = stat_row(*kind, before[i], gain);
+        let row = stat_row(words, *kind, before[i], gain);
         let y = STAT_ROW + i32::try_from(i).unwrap_or(0);
         if gain > 0 {
             let n = buf.print(x, y, &row, c(UiColor::Text), bg);
@@ -819,7 +829,7 @@ fn draw_gains(
 
 /// The class box: the name and `Exile  CL 3 → 4`, then `CLASS MASTERED!`,
 /// a `Learned: <name>` line each, and a `To stock: <item>` line each.
-fn draw_class(buf: &mut GlyphBuffer, palette: &Palette, page: &ClassPage) {
+fn draw_class(buf: &mut GlyphBuffer, (palette, words): (&Palette, Words<'_>), page: &ClassPage) {
     let c = |u| palette.get(u);
     let bg = c(UiColor::PanelBg);
     let mastery = i32::from(page.mastered);
@@ -833,14 +843,22 @@ fn draw_class(buf: &mut GlyphBuffer, palette: &Palette, page: &ClassPage) {
     // check-text: not a data name (the view's own)
     let name: String = page.name.chars().take(NAME_W).collect();
     buf.print(x, y, &name, c(UiColor::Player), bg);
-    let line: String = class_line(page).chars().take(CLASS_W).collect();
+    let line: String = class_line(words, page).chars().take(CLASS_W).collect();
     buf.print(x + NAME_COL, y, &line, c(UiColor::Text), bg);
     if page.mastered {
         y += 1;
-        buf.print(x, y, "CLASS MASTERED!", c(UiColor::TextHighlight), bg);
+        let mastered = words.text("battle.progress.mastered");
+        buf.print(x, y, mastered, c(UiColor::TextHighlight), bg);
     }
-    let learned = page.learned.iter().map(|s| format!("Learned: {s}"));
-    let stowed = page.stowed.iter().map(|s| format!("To stock: {s}"));
+    let line = |key, name: &String| words.text_with(key, &[("name", name)]);
+    let learned = page
+        .learned
+        .iter()
+        .map(|s| line("battle.progress.learned", s));
+    let stowed = page
+        .stowed
+        .iter()
+        .map(|s| line("battle.progress.stowed", s));
     for line in learned.chain(stowed) {
         y += 1;
         let line: String = line.chars().take(38).collect();
@@ -930,7 +948,7 @@ mod tests {
         let Page::Class(cl) = &pages[2] else {
             panic!("{pages:?}")
         };
-        assert_eq!(class_line(cl), "Exile  CL 9 → 10");
+        assert_eq!(class_line(Words::ENGLISH, cl), "Exile  CL 9 → 10");
         assert!(cl.mastered);
         // Mastery alone is worth stopping for.
         let mastery = Page::Class(ClassPage {
@@ -1015,7 +1033,10 @@ mod tests {
             panic!()
         };
         // A spell learned on its own: the class's name, no level.
-        assert_eq!((class_line(cl), cl.mastered), ("Exile".to_owned(), false));
+        assert_eq!(
+            (class_line(Words::ENGLISH, cl), cl.mastered),
+            ("Exile".to_owned(), false)
+        );
         assert_eq!(cl.learned, ["Fire"]);
         // So is something learned.
         assert!(pb.pages()[3].waits());
@@ -1129,7 +1150,7 @@ mod tests {
         let p = &c.palette;
         let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
         let mut buf = GlyphBuffer::new(100, 32, blank);
-        draw_level_up(&mut buf, p, &page, None, 7);
+        draw_level_up(&mut buf, (p, Words::ENGLISH), &page, None, 7);
         // Centred in the frame at (7, 6), 34 × 18.
         let label: String = (20..28).map(|x| buf.get(x, 15).unwrap().glyph).collect();
         assert_eq!(label, "portrait");
@@ -1179,7 +1200,7 @@ mod tests {
         let Page::Class(cl) = &pb.pages()[1] else {
             panic!("{:?}", pb.pages())
         };
-        assert_eq!(class_line(cl), "Blade Heir");
+        assert_eq!(class_line(Words::ENGLISH, cl), "Blade Heir");
         assert_eq!((cl.mastered, cl.changed), (false, false));
         assert_eq!(
             (&cl.learned, &cl.stowed),
@@ -1204,7 +1225,7 @@ mod tests {
         let Page::Promotion(page) = &pb.pages()[0] else {
             panic!()
         };
-        draw_promotion(&mut buf, p, page, None, 7);
+        draw_promotion(&mut buf, (p, Words::ENGLISH), page, None, 7);
         let row = |buf: &GlyphBuffer, y: i32| {
             (LEVEL_TEXT_X..LEVEL_PANEL.x + LEVEL_PANEL.w - 1)
                 .map(|x| buf.get(x, y).unwrap().glyph)
@@ -1212,7 +1233,7 @@ mod tests {
                 .trim_end()
                 .to_owned()
         };
-        assert_eq!(row(&buf, LEVEL_BANNER_ROW), PROMOTED_BANNER);
+        assert_eq!(row(&buf, LEVEL_BANNER_ROW), "PROMOTED!");
         assert_eq!(row(&buf, LEVEL_BANNER_ROW + 2), "Test Lord");
         assert_eq!(row(&buf, LEVEL_BANNER_ROW + 3), "Exile → Blade Heir");
         assert_eq!(row(&buf, STAT_ROW), "HP   19 → 25  +6");
@@ -1226,7 +1247,7 @@ mod tests {
             before: page.before,
             gains: page.gains,
         };
-        draw_level_up(&mut buf, p, &level_up, None, 1);
+        draw_level_up(&mut buf, (p, Words::ENGLISH), &level_up, None, 1);
         assert_eq!(row(&buf, LEVEL_BANNER_ROW), "LEVEL UP!");
         assert_eq!(row(&buf, LEVEL_BANNER_ROW + 2), "A name longer than t");
         assert_eq!(row(&buf, LEVEL_BANNER_ROW + 3), "Lv 4 → 5");
@@ -1248,7 +1269,7 @@ mod tests {
         let [Page::Class(cl)] = pb.pages() else {
             panic!("{:?}", pb.pages())
         };
-        assert_eq!(class_line(cl), "Exile → gone");
+        assert_eq!(class_line(Words::ENGLISH, cl), "Exile → gone");
         assert!(cl.changed && cl.learned.is_empty() && cl.stowed.is_empty());
         assert!(pb.pages()[0].waits());
         assert!(pb.pages()[0].len(&T).abs() < f32::EPSILON);
@@ -1260,7 +1281,10 @@ mod tests {
         let [Page::Class(cl)] = pb.pages() else {
             panic!("{:?}", pb.pages())
         };
-        assert_eq!((class_line(cl), cl.changed), ("Exile".to_owned(), false));
+        assert_eq!(
+            (class_line(Words::ENGLISH, cl), cl.changed),
+            ("Exile".to_owned(), false)
+        );
         assert_eq!(cl.stowed, ["Leather Vest"]);
         assert!(pb.pages()[0].waits());
         // Its lines are drawn under the name's.
@@ -1272,7 +1296,7 @@ mod tests {
             learned: vec!["Fire".into()],
             ..cl.clone()
         };
-        draw_class(&mut buf, p, &page);
+        draw_class(&mut buf, (p, Words::ENGLISH), &page);
         let row = |y: i32| {
             (BOX.x + 2..BOX.x + BOX.w - 1)
                 .map(|x| buf.get(x, y).unwrap().glyph)
@@ -1299,15 +1323,21 @@ mod tests {
     fn the_help_line_follows_the_page() {
         let c = ctx();
         let mut pb = progress();
-        assert_eq!(help(&pb, c.help_keys()), "f skip · hold f fast");
+        assert_eq!(help(&c, &pb), "f skip · hold f fast");
         pb.confirm();
-        assert_eq!(help(&pb, c.help_keys()), "f continue");
+        assert_eq!(help(&c, &pb), "f continue");
     }
 
     #[test]
     fn stat_rows_show_the_gain_or_just_the_value() {
-        assert_eq!(stat_row(StatKind::Str, 6, 1), "Str   6 → 7   +1");
-        assert_eq!(stat_row(StatKind::Hp, 19, 2), "HP   19 → 21  +2");
-        assert_eq!(stat_row(StatKind::Def, 5, 0), "Def   5");
+        assert_eq!(
+            stat_row(Words::ENGLISH, StatKind::Str, 6, 1),
+            "Str   6 → 7   +1"
+        );
+        assert_eq!(
+            stat_row(Words::ENGLISH, StatKind::Hp, 19, 2),
+            "HP   19 → 21  +2"
+        );
+        assert_eq!(stat_row(Words::ENGLISH, StatKind::Def, 5, 0), "Def   5");
     }
 }

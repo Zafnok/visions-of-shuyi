@@ -360,8 +360,15 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      key for a whole sentence rather than pieces joined in code: word
      order differs by language. A key the file lacks panics in debug
      builds. Look text up when drawing, or again whenever the screen is
-     shown, so it follows `ctx.lang`. `cargo xtask check-text` counts the
-     literals left and fails on a new one.
+     shown, so it follows `ctx.lang`. Where text is built with no `Ctx`
+     (a line of a list, a label), ask `ctx.words()`:
+     `words.text("battle.menu.attack")`, `words.text_with(key, &[…])`
+     (which names no key: a help line is `ctx.text_with`'s). A function
+     that returns text takes `Words`, and its tests compare the words the
+     player sees, never the key. `cargo xtask check-text` fails on any
+     literal that reads like text (a capital or a space, a `format!` with
+     a word, a lowercase label in a `let` or a `match` arm); an id it
+     takes for one gets `// check-text: not player text (why)`.
    - Text that comes from the data (a unit's, class's, item's, spell's,
      skill's, art's or terrain's name, a tip, a chapter title, a battle
      note, a dialogue line) is English in the data and in `core`. Never

@@ -8,6 +8,8 @@
 //! draws the battle screen's map with another state and hands the chosen
 //! point back, which a pushed screen can't.
 
+use std::fmt::Display;
+
 use trpg_core::{
     BattleHistory, BattleState, Command, Event, Phase, Replayed, Side, UnitAction, UnitId,
 };
@@ -133,7 +135,7 @@ impl RewindScreen {
 
     /// Draws the panel: title, charges, the list (scrolled to keep the
     /// highlighted entry in view) and the prompt.
-    pub fn draw(&self, palette: &Palette, buf: &mut GlyphBuffer) {
+    pub fn draw(&self, palette: &Palette, words: Words<'_>, buf: &mut GlyphBuffer) {
         let c = |u| palette.get(u);
         let bg = c(UiColor::PanelBg);
         buf.fill_rect(SIDE_PANEL, Cell::new(' ', c(UiColor::Text), bg));
@@ -141,23 +143,27 @@ impl RewindScreen {
         let print = |buf: &mut GlyphBuffer, y, text: &str, fg, bg| {
             buf.print(TEXT_X, y, text, fg, bg);
         };
-        print(buf, TITLE_ROW, "Rewind", c(UiColor::TextHighlight), bg);
+        let title = words.text("battle.rewind.title");
+        print(buf, TITLE_ROW, title, c(UiColor::TextHighlight), bg);
         let charges = if self.charges_left == 0 {
-            ("No charges left".to_owned(), c(UiColor::HpLow))
+            let none = words.text("battle.rewind.no_charges").to_owned();
+            (none, c(UiColor::HpLow))
         } else {
-            let s = if self.charges == 1 { "" } else { "s" };
-            let text = format!("{} of {} charge{s} left", self.charges_left, self.charges);
-            (text, c(UiColor::Text))
+            let key = if self.charges == 1 {
+                "battle.rewind.charges.one"
+            } else {
+                "battle.rewind.charges.many"
+            };
+            let counts = [
+                ("left", &self.charges_left as &dyn Display),
+                ("charges", &self.charges),
+            ];
+            (words.text_with(key, &counts), c(UiColor::Text))
         };
         print(buf, CHARGES_ROW, &charges.0, charges.1, bg);
         if self.entries.is_empty() {
-            print(
-                buf,
-                LIST_ROW,
-                "Nothing to rewind yet",
-                c(UiColor::TextDim),
-                bg,
-            );
+            let nothing = words.text("battle.rewind.nothing");
+            print(buf, LIST_ROW, nothing, c(UiColor::TextDim), bg);
             return;
         }
         let blocks: Vec<Vec<String>> = self.entries.iter().map(|e| wrap(&e.line)).collect();
@@ -183,8 +189,12 @@ impl RewindScreen {
             }
         }
         if self.confirming {
-            let s = if self.charges_left == 1 { "" } else { "s" };
-            let ask = format!("Use 1 of {} charge{s}?", self.charges_left);
+            let key = if self.charges_left == 1 {
+                "battle.rewind.use.one"
+            } else {
+                "battle.rewind.use.many"
+            };
+            let ask = words.text_with(key, &[("left", &self.charges_left)]);
             print(buf, PROMPT_ROW, &ask, c(UiColor::TextHighlight), bg);
         }
     }
@@ -229,7 +239,7 @@ fn name<'a>(state: &'a BattleState, words: Words<'a>, id: UnitId) -> &'a str {
 
 /// How a combat went for the attacker: `hit, 7 dmg`, `2 hits, 14 dmg` or
 /// `missed`, plus `defeated` if the defender fell.
-fn combat_summary(events: &[Event]) -> Option<String> {
+fn combat_summary(words: Words<'_>, events: &[Event]) -> Option<String> {
     let (outcome, defender_hp) = events.iter().find_map(|e| match e {
         Event::CombatResolved { outcome, .. } => Some((outcome, outcome.defender_hp)),
         _ => None,
@@ -240,15 +250,16 @@ fn combat_summary(events: &[Event]) -> Option<String> {
         .filter(|s| s.by == Side::Attacker && s.hit && !s.healed)
         .collect();
     let dmg: i32 = hits.iter().map(|s| s.damage).sum();
-    let mut text = match hits.len() {
-        0 => "missed".to_owned(),
-        1 => format!("hit, {dmg} dmg"),
-        n => format!("{n} hits, {dmg} dmg"),
+    let text = match hits.len() {
+        0 => words.text("battle.rewind.missed").to_owned(),
+        1 => words.text_with("battle.rewind.hit", &[("dmg", &dmg)]),
+        n => words.text_with("battle.rewind.hits", &[("n", &n), ("dmg", &dmg)]),
     };
-    if defender_hp == 0 {
-        text.push_str(", defeated");
-    }
-    Some(text)
+    Some(if defender_hp == 0 {
+        words.text_with("battle.rewind.defeated", &[("result", &text)])
+    } else {
+        text
+    })
 }
 
 /// A readable line for a past command, e.g. `Turn 2 · Ana attacked Brigand
@@ -256,15 +267,25 @@ fn combat_summary(events: &[Event]) -> Option<String> {
 pub fn describe(r: &Replayed, words: Words<'_>) -> String {
     let s = &r.before;
     let name = |s, id| name(s, words, id);
+    let did = |key, who: &str| words.text_with(key, &[("who", &who)]);
+    let did_to = |key, who: &str, what: &str, target: &str| {
+        words.text_with(key, &[("who", &who), ("what", &what), ("target", &target)])
+    };
     let what = match &r.command {
         Command::Act { unit, action, .. } => {
             let who = name(s, *unit);
-            let combat = combat_summary(&r.events).map(|c| format!(" ({c})"));
-            let combat = combat.as_deref().unwrap_or("");
+            // A fight's result after what started it: `… (hit, 7 dmg)`.
+            let fought = |what: String| match combat_summary(words, &r.events) {
+                Some(result) => words.text_with(
+                    "battle.rewind.with_result",
+                    &[("what", &what), ("result", &result)],
+                ),
+                None => what,
+            };
             match action {
-                UnitAction::Wait => format!("{who} waited"),
+                UnitAction::Wait => did("battle.rewind.waited", who),
                 UnitAction::Attack { target, .. } => {
-                    format!("{who} attacked {}{combat}", name(s, *target))
+                    fought(did_to("battle.rewind.attacked", who, "", name(s, *target)))
                 }
                 UnitAction::UseItem { pack_index, target } => {
                     let item = s
@@ -272,55 +293,68 @@ pub fn describe(r: &Replayed, words: Words<'_>) -> String {
                         .items
                         .get(*pack_index)
                         .filter(|id| s.items().get(id).is_some())
-                        .map_or("an item", |id| words.item(id, s.items()));
+                        .map_or(words.text("battle.rewind.an_item"), |id| {
+                            words.item(id, s.items())
+                        });
                     if target == unit {
-                        format!("{who} used {item}")
+                        did_to("battle.rewind.used", who, item, "")
                     } else {
-                        format!("{who} used {item} on {}", name(s, *target))
+                        did_to("battle.rewind.used_on", who, item, name(s, *target))
                     }
                 }
-                UnitAction::Seize => format!("{who} seized the objective"),
-                UnitAction::Shop { .. } => format!("{who} visited a shop"),
-                UnitAction::Open => format!("{who} opened a chest"),
+                UnitAction::Seize => did("battle.rewind.seized", who),
+                UnitAction::Shop { .. } => did("battle.rewind.shopped", who),
+                UnitAction::Open => did("battle.rewind.opened", who),
                 UnitAction::Cast { spell, target, .. } => {
-                    let spell = s.spells().get(spell).map_or("a spell", |d| words.spell(d));
+                    let spell = s
+                        .spells()
+                        .get(spell)
+                        .map_or(words.text("battle.rewind.a_spell"), |d| words.spell(d));
                     match target {
                         trpg_core::CastTarget::Unit(t) => {
-                            format!("{who} cast {spell} on {}{combat}", name(s, *t))
+                            fought(did_to("battle.rewind.cast_on", who, spell, name(s, *t)))
                         }
-                        trpg_core::CastTarget::Tile(_) => format!("{who} cast {spell}"),
+                        trpg_core::CastTarget::Tile(_) => {
+                            did_to("battle.rewind.cast", who, spell, "")
+                        }
                     }
                 }
                 UnitAction::UseSkill { skill, .. } => {
-                    let skill = s.skills().get(skill).map_or("a skill", |d| words.skill(d));
-                    format!("{who} used {skill}")
+                    let skill = s
+                        .skills()
+                        .get(skill)
+                        .map_or(words.text("battle.rewind.a_skill"), |d| words.skill(d));
+                    did_to("battle.rewind.used", who, skill, "")
                 }
             }
         }
-        Command::Equip { unit, .. } => format!("{} changed weapons", name(s, *unit)),
+        Command::Equip { unit, .. } => did("battle.rewind.equipped", name(s, *unit)),
         Command::MoveAfter { unit, to } => {
             let who = name(s, *unit);
             if to.is_some() {
-                format!("{who} moved after attacking")
+                did("battle.rewind.moved_after", who)
             } else {
-                format!("{who} stayed after attacking")
+                did("battle.rewind.stayed_after", who)
             }
         }
         Command::Talk { unit, target, .. } => {
-            format!("{} talked to {}", name(s, *unit), name(s, *target))
+            did_to("battle.rewind.talked", name(s, *unit), "", name(s, *target))
         }
-        Command::EndPhase => format!("{} phase ended", phase_name(s.phase())),
+        Command::EndPhase => words.text(phase_ended(s.phase())).to_owned(),
     };
-    format!("Turn {} · {what}", s.turn())
+    words.text_with(
+        "battle.rewind.line",
+        &[("turn", &s.turn()), ("what", &what)],
+    )
 }
 
-/// The name players see for `phase`.
-const fn phase_name(phase: Phase) -> &'static str {
+/// The key of the line for the end of `phase` (`Player phase ended`).
+const fn phase_ended(phase: Phase) -> &'static str {
     match phase {
-        Phase::Player => "Player",
-        Phase::Enemy => "Enemy",
+        Phase::Player => "battle.rewind.phase_ended.player",
+        Phase::Enemy => "battle.rewind.phase_ended.enemy",
         // Ally and neutral units (FE calls it the ally phase).
-        Phase::Other => "Ally",
+        Phase::Other => "battle.rewind.phase_ended.other",
     }
 }
 
@@ -400,7 +434,7 @@ mod tests {
         let c = ctx();
         let black = c.palette.get(UiColor::Black);
         let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new(' ', black, black));
-        r.draw(&c.palette, &mut buf);
+        r.draw(&c.palette, Words::ENGLISH, &mut buf);
         move |y| {
             (TEXT_X..SIDE_PANEL.x + SIDE_PANEL.w - 1)
                 .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
@@ -465,8 +499,9 @@ mod tests {
 
     #[test]
     fn phase_names() {
-        assert_eq!(phase_name(Phase::Player), "Player");
-        assert_eq!(phase_name(Phase::Enemy), "Enemy");
-        assert_eq!(phase_name(Phase::Other), "Ally");
+        let ended = |phase| Words::ENGLISH.text(phase_ended(phase));
+        assert_eq!(ended(Phase::Player), "Player phase ended");
+        assert_eq!(ended(Phase::Enemy), "Enemy phase ended");
+        assert_eq!(ended(Phase::Other), "Ally phase ended");
     }
 }
