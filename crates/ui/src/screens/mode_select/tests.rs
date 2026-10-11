@@ -10,6 +10,14 @@ fn update(s: &mut ModeSelectScreen, actions: &[Action]) -> String {
     format!("{:?}", s.update(&mut ctx(), &input))
 }
 
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn it_can_be_found_by_its_type() {
+    let s = ModeSelectScreen::new(&ctx());
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<ModeSelectScreen>().is_some());
+}
+
 #[test]
 fn confirm_picks_the_focused_mode() {
     let mut s = ModeSelectScreen::new(&ctx());

@@ -74,6 +74,14 @@ fn shown(s: &ResultsScreen) -> Vec<u32> {
     s.rows().iter().map(|r| s.exp_shown(r)).collect()
 }
 
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn it_can_be_found_by_its_type() {
+    let s = screen();
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<ResultsScreen>().is_some());
+}
+
 #[test]
 fn rows_are_the_deployed_units_before_the_bonus() {
     let s = screen();

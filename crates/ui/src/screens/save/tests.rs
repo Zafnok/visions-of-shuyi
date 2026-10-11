@@ -69,6 +69,22 @@ fn numbers(s: &SlotPickerScreen, c: &Ctx) -> Vec<(usize, bool)> {
         .collect()
 }
 
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn the_prompt_can_be_found_by_its_type() {
+    let s = SavePromptScreen::new(&ctx());
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<SavePromptScreen>().is_some());
+}
+
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn the_picker_can_be_found_by_its_type() {
+    let s = SlotPickerScreen::load(&ctx());
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<SlotPickerScreen>().is_some());
+}
+
 #[test]
 fn the_prompt_asks_yes_or_no() {
     let mut c = ctx();

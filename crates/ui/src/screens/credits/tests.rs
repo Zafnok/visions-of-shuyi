@@ -40,6 +40,14 @@ fn sounds_of(s: &mut CreditsScreen, c: &mut Ctx, actions: &[Action]) -> Vec<Stri
         .collect()
 }
 
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn it_can_be_found_by_its_type() {
+    let s = CreditsScreen::new(&ctx());
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<CreditsScreen>().is_some());
+}
+
 #[test]
 fn rows_group_the_entries_under_headings() {
     use CreditRowKind::{Detail, Entry, Heading};

@@ -9,6 +9,22 @@ fn update(s: &mut dyn Screen, actions: &[Action]) -> String {
     format!("{:?}", s.update(&mut ctx(), &input))
 }
 
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn game_over_can_be_found_by_its_type() {
+    let s = GameOverScreen::new(&ctx());
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<GameOverScreen>().is_some());
+}
+
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn to_be_continued_can_be_found_by_its_type() {
+    let s = ToBeContinuedScreen;
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<ToBeContinuedScreen>().is_some());
+}
+
 #[test]
 fn game_over_offers_retry_and_title() {
     let mut s = GameOverScreen::new(&ctx());
