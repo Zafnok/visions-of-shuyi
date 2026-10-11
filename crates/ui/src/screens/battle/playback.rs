@@ -24,15 +24,16 @@
 //! [`Playback::sounds`] hands out the ones a frame reaches; a skip plays
 //! none of those left.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
-use trpg_core::{Event, Faction, Side, StatValue, Strike, Unit, UnitId};
+use trpg_core::{CharacterId, Event, Faction, Side, StatValue, Strike, Unit, UnitId};
 
 use super::event_sounds::{Attack, cast_sound, sound_for_strike};
 use super::layout::MAP_VIEW;
 use super::units::{faction_color, hp_fill};
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::words::Words;
 
 /// How long each part of the playback takes, in seconds. *Tunable.*
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -155,6 +156,29 @@ pub struct Step {
     pub len: f32,
 }
 
+/// A scene a trigger fired ([`Event::SceneTriggered`]): which, and who was
+/// on the map at that moment (the scene plays for them, ADR-0055).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SceneCue {
+    /// The scene's id.
+    pub id: String,
+    /// The characters whose units were on the map, on any side.
+    pub present: BTreeSet<CharacterId>,
+}
+
+impl SceneCue {
+    /// The scene `event` fires, if it fires one.
+    pub fn of(event: &Event) -> Option<Self> {
+        match event {
+            Event::SceneTriggered { scene, present } => Some(Self {
+                id: scene.clone(),
+                present: present.clone(),
+            }),
+            _ => None,
+        }
+    }
+}
+
 /// A combat playback: the combats and falls of one command's events, a
 /// timeline and a clock.
 #[derive(Debug, Clone, PartialEq)]
@@ -163,8 +187,8 @@ pub struct Playback {
     /// Units that fell, as they were when they fell (for drawing their
     /// fade), in [`Event::UnitFell`] order.
     falls: Vec<Unit>,
-    /// Triggered scenes' ids, in timeline order.
-    scenes: Vec<String>,
+    /// Triggered scenes, in timeline order.
+    scenes: Vec<SceneCue>,
     /// How many scenes have been taken.
     played: usize,
     /// Cancel was pressed: the clock jumps to the next scene or the end.
@@ -196,6 +220,7 @@ impl Playback {
     /// combatants' names and starting HP); `fallen` is the battle's fallen
     /// units after it (to draw those that fall here).
     pub fn new(
+        words: Words<'_>,
         events: &[Event],
         before: &[Unit],
         fallen: &[Unit],
@@ -207,7 +232,7 @@ impl Playback {
             let unit = before.iter().find(|u| u.id == id)?;
             Some(Fighter {
                 unit: id,
-                name: unit.name.clone(),
+                name: words.unit(unit).to_owned(),
                 faction: unit.faction,
                 start: hp.get(&id).copied().unwrap_or(unit.hp),
                 max: unit.stats.hp,
@@ -215,19 +240,21 @@ impl Playback {
         };
         let mut bouts = Vec::new();
         let mut falls = Vec::new();
-        // Scene ids and what each plays before (the outro until the
-        // combat or fall after it comes).
-        let mut scenes: Vec<(String, Anchor)> = Vec::new();
+        // Scenes and what each plays before (the outro until the combat or
+        // fall after it comes).
+        let mut scenes: Vec<(SceneCue, Anchor)> = Vec::new();
         let mut placed = 0;
-        let mut place = |scenes: &mut Vec<(String, Anchor)>, at| {
+        let mut place = |scenes: &mut Vec<(SceneCue, Anchor)>, at| {
             for s in &mut scenes[placed..] {
                 s.1 = at;
             }
             placed = scenes.len();
         };
         for event in events {
+            if let Some(cue) = SceneCue::of(event) {
+                scenes.push((cue, Anchor::End));
+            }
             match event {
-                Event::SceneTriggered { scene } => scenes.push((scene.clone(), Anchor::End)),
                 Event::CombatResolved {
                     attacker,
                     defender,
@@ -368,8 +395,8 @@ impl Playback {
     }
 
     /// The triggered scenes' ids, in order.
-    pub fn scenes(&self) -> &[String] {
-        &self.scenes
+    pub fn scenes(&self) -> Vec<&str> {
+        self.scenes.iter().map(|s| s.id.as_str()).collect()
     }
 
     /// Whether it has played to the end, every scene taken.
@@ -386,16 +413,16 @@ impl Playback {
 
     /// The scene the clock has reached, if not taken yet, for the battle
     /// screen to play; the playback goes on after it.
-    pub fn take_scene(&mut self) -> Option<String> {
+    pub fn take_scene(&mut self) -> Option<SceneCue> {
         if self.played >= self.scenes.len() || self.t < self.limit() {
             return None;
         }
-        let id = self.scenes[self.played].clone();
+        let cue = self.scenes[self.played].clone();
         self.played += 1;
         if self.skipping {
             self.t = self.limit();
         }
-        Some(id)
+        Some(cue)
     }
 
     /// The step playing now and the seconds into it (the last step once
@@ -500,7 +527,7 @@ impl Playback {
 
     /// The message line: `<Name> has fallen.` from the start of a fall
     /// until the next one (or the end).
-    pub fn message(&self) -> Option<String> {
+    pub fn message(&self, words: Words<'_>) -> Option<String> {
         let (step, _) = self.now()?;
         let fall = match step.beat {
             Beat::Fall { fall } => fall,
@@ -509,7 +536,7 @@ impl Playback {
         };
         self.falls
             .get(fall)
-            .map(|u| format!("{} has fallen.", u.name))
+            .map(|u| format!("{} has fallen.", words.unit(u)))
     }
 
     /// The step of `beat`, if the timeline has one.
@@ -642,6 +669,7 @@ pub fn draw_box(buf: &mut GlyphBuffer, palette: &Palette, pb: &Playback) {
         } else {
             (color, bg)
         };
+        // check-text: not a data name (the view's own)
         buf.print(x, BOX.y + 1, &f.name, fg, name_bg);
         let hp = pb.hp(f.unit).unwrap_or(f.start);
         buf.print(x, BOX.y + 2, &format!("HP {hp:>2}"), c(UiColor::Text), bg);
@@ -735,7 +763,7 @@ mod tests {
 
     fn playback() -> Playback {
         let (events, before, fallen) = kill();
-        Playback::new(&events, &before, &fallen, TIMINGS).unwrap()
+        Playback::new(Words::ENGLISH, &events, &before, &fallen, TIMINGS).unwrap()
     }
 
     const T: Timings = TIMINGS;
@@ -744,7 +772,10 @@ mod tests {
     fn no_combat_no_playback() {
         let before = units();
         let wait = [Event::UnitActed { unit: UnitId(1) }];
-        assert_eq!(Playback::new(&wait, &before, &[], TIMINGS), None);
+        assert_eq!(
+            Playback::new(Words::ENGLISH, &wait, &before, &[], TIMINGS),
+            None
+        );
     }
 
     #[test]
@@ -794,8 +825,22 @@ mod tests {
         assert!((pb.total() - total).abs() < 1e-5);
     }
 
+    /// The event of scene `id`, with character `id` on the map.
     fn scene(id: &str) -> Event {
-        Event::SceneTriggered { scene: id.into() }
+        Event::SceneTriggered {
+            scene: id.into(),
+            present: [CharacterId(id.into())].into(),
+        }
+    }
+
+    /// The scene taken now, and who it names as on the map.
+    fn taken(pb: &mut Playback) -> Option<(String, Vec<String>)> {
+        let cue = pb.take_scene()?;
+        Some((cue.id, cue.present.into_iter().map(|c| c.0).collect()))
+    }
+
+    fn cue(id: &str) -> (String, Vec<String>) {
+        (id.to_owned(), vec![id.to_owned()])
     }
 
     /// [`kill`] with a scene before the combat and one before the fall.
@@ -803,7 +848,7 @@ mod tests {
         let (mut events, before, fallen) = kill();
         events.insert(2, scene("last_words"));
         events.insert(1, scene("engage"));
-        Playback::new(&events, &before, &fallen, TIMINGS).unwrap()
+        Playback::new(Words::ENGLISH, &events, &before, &fallen, TIMINGS).unwrap()
     }
 
     #[test]
@@ -833,7 +878,7 @@ mod tests {
         // A scene after the last fall goes before the outro.
         let (mut events, before, fallen) = kill();
         events.push(scene("after"));
-        let pb = Playback::new(&events, &before, &fallen, TIMINGS).unwrap();
+        let pb = Playback::new(Words::ENGLISH, &events, &before, &fallen, TIMINGS).unwrap();
         let beats: Vec<Beat> = pb.steps().iter().map(|s| s.beat).collect();
         assert_eq!(
             beats[beats.len() - 2..],
@@ -848,7 +893,7 @@ mod tests {
         pb.tick(1.0, true);
         assert!(pb.time().abs() < f32::EPSILON);
         assert!(!pb.done());
-        assert_eq!(pb.take_scene().as_deref(), Some("engage"));
+        assert_eq!(taken(&mut pb), Some(cue("engage")));
         assert_eq!(pb.take_scene(), None, "the next one isn't reached yet");
         // Then up to the death quote: the unit is still fully drawn.
         pb.tick(100.0, false);
@@ -856,7 +901,7 @@ mod tests {
         assert!((pb.time() - fall.start).abs() < 1e-6);
         assert_eq!(pb.fade(UnitId(4)), Some(0.0));
         assert!(!pb.done());
-        assert_eq!(pb.take_scene().as_deref(), Some("last_words"));
+        assert_eq!(taken(&mut pb), Some(cue("last_words")));
         assert_eq!(pb.take_scene(), None);
         // Then the fade and the end.
         pb.tick(100.0, false);
@@ -869,12 +914,12 @@ mod tests {
         let mut pb = with_scenes();
         pb.tick(0.1, false);
         pb.skip();
-        assert_eq!(pb.take_scene().as_deref(), Some("engage"));
+        assert_eq!(taken(&mut pb), Some(cue("engage")));
         // Still skipping: straight on to the next scene.
         let fall = pb.step(Beat::Fall { fall: 0 }).unwrap();
         assert!((pb.time() - fall.start).abs() < 1e-6);
         assert!(!pb.done());
-        assert_eq!(pb.take_scene().as_deref(), Some("last_words"));
+        assert_eq!(taken(&mut pb), Some(cue("last_words")));
         assert!(pb.done());
         assert!((pb.time() - pb.total()).abs() < 1e-6);
     }
@@ -887,7 +932,7 @@ mod tests {
         };
         // One crit for all 20 HP: 20 / 30 s.
         outcome.strikes = vec![strike(Side::Attacker, true, true, 60, 0)];
-        let pb = Playback::new(&events, &before, &fallen, TIMINGS).unwrap();
+        let pb = Playback::new(Words::ENGLISH, &events, &before, &fallen, TIMINGS).unwrap();
         assert!((pb.steps()[2].len - 20.0 / T.drain_hp_per_s).abs() < 1e-6);
     }
 
@@ -950,17 +995,23 @@ mod tests {
         };
         let before = at(fall.start - 0.01);
         assert_eq!(
-            (before.fade(UnitId(4)), before.message()),
+            (before.fade(UnitId(4)), before.message(Words::ENGLISH)),
             (Some(0.0), None)
         );
         assert_eq!(before.hp(UnitId(4)), Some(0));
         let mid = at(fall.start + fall.len / 2.0);
         assert!((mid.fade(UnitId(4)).unwrap() - 0.5).abs() < 1e-4);
-        assert_eq!(mid.message().as_deref(), Some("Brigand has fallen."));
+        assert_eq!(
+            mid.message(Words::ENGLISH).as_deref(),
+            Some("Brigand has fallen.")
+        );
         let end = at(pb.total() - 0.01);
         assert_eq!(end.now().unwrap().0.beat, Beat::Outro);
         assert_eq!(end.fade(UnitId(4)), Some(1.0));
-        assert_eq!(end.message().as_deref(), Some("Brigand has fallen."));
+        assert_eq!(
+            end.message(Words::ENGLISH).as_deref(),
+            Some("Brigand has fallen.")
+        );
         assert!(!end.done());
         assert_eq!(end.bout().map(|b| b.defender.unit), Some(UnitId(4)));
         let done = at(pb.total() + 5.0);
@@ -1023,12 +1074,12 @@ mod tests {
         };
         events.insert(2, second);
         events.retain(|e| !matches!(e, Event::UnitFell { .. }));
-        let mut pb = Playback::new(&events, &before, &fallen, TIMINGS).unwrap();
+        let mut pb = Playback::new(Words::ENGLISH, &events, &before, &fallen, TIMINGS).unwrap();
         assert_eq!(pb.bouts()[1].defender.start, 12);
         assert!(pb.falls().is_empty());
         pb.tick(pb.total(), false);
         assert_eq!(pb.hp(UnitId(4)), Some(3));
-        assert_eq!(pb.message(), None);
+        assert_eq!(pb.message(Words::ENGLISH), None);
     }
 
     #[test]

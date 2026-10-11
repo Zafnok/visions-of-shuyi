@@ -265,7 +265,11 @@
 //!   and plays only the first time if `once` (fired-once state is part of
 //!   the battle, so saves, rewinds and replays keep it). The battle inserts
 //!   an [`Event::SceneTriggered`] at the moment, in trigger-list order when
-//!   several fire together:
+//!   several fire together. The event names the characters whose units are
+//!   on the map at that moment (any side), so a script can leave out the
+//!   lines of someone who has fallen; a unit about to fall is still there
+//!   for the scenes before its [`Event::UnitFell`], and one that arrives
+//!   later in the same command isn't there yet:
 //!   - **Turn start**: right after that phase's [`Event::PhaseStarted`]
 //!     (the battle's first phase included).
 //!   - **Entering an area**: right after an [`Event::UnitMoved`] (an `Act`'s
@@ -375,7 +379,7 @@ use crate::spell::{EffectDuration, SpellDef, SpellId, SpellKind, SpellTable, Ter
 use crate::stats::StatValue;
 use crate::support::{SupportBook, SupportTable};
 use crate::terrain::{TerrainId, TerrainTable};
-use crate::unit::{Faction, Level, Role, Unit, UnitId};
+use crate::unit::{CharacterId, Faction, Level, Role, Unit, UnitId};
 use crate::weapon::{WeaponKind, WeaponRank};
 
 use self::triggers::FiredSet;
@@ -1047,6 +1051,10 @@ pub enum Event {
     SceneTriggered {
         /// The scene's id.
         scene: String,
+        /// The characters whose units are on the map at this moment, on
+        /// any side; a unit falling at this moment still counts. A scene
+        /// may have lines only for those here.
+        present: BTreeSet<CharacterId>,
     },
     /// A fallen unit was recruited ("joins you if defeated"): it joins the
     /// army after a won battle ([`BattleState::recruited`]).

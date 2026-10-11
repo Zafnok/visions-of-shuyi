@@ -78,16 +78,22 @@ critical path).
 
 **Machine-made now, replaceable by people later** (Nick, 2026-10-03,
 [`docs/design/voices-languages-and-script.md`](design/voices-languages-and-script.md):
-AI voices with an off switch, a machine-translated Japanese option, and a
+AI voices with an off switch, machine-translated Japanese and Chinese
+options (Chinese added 2026-10-04), and a
 script a hired writer can take over; **not** a blocker for Chapter 1 or
 Act 1). Shared first step: **0717** every dialogue line gets an id (no
 open dependencies).
 *Japanese* (ADR-0045): **0042** Nick picks the font and how a language is
 chosen → **0233** screen text by key (no open dependencies) → **0234** the
-rest of the screens and **0235** data names, tips and dialogue (also needs
+rest of the screens (the battle and class change screens: **0243**) and **0235** data names, tips and dialogue (also needs
 0717); **0236** wide glyphs (after 0042) → **0237** Japanese line
 breaking; **0825** the Options row (after 0805); **0718** the translation
 pipeline → **0719** Chapter 1 and the screens in Japanese (after 0716).
+*Chinese (Simplified)*, on the same engine work: **0045** Nick gives the
+characters for "Shuyi", the Chinese title and font, and says who checks
+it (after 0042) → **0239** a wide font per language and Chinese line
+breaking (after 0236, 0237); **0725** the translation pipeline (after
+0235) → **0726** Chapter 1 and the screens in Chinese (after 0716, 0825).
 *Voices* (ADR-0046): **0043** Nick picks the tool, what is voiced and each
 voice by ear; **0238** playback plumbing (after 0717) → **0720** the
 dialogue screen plays them, **0721** the generation tool, **0826** the
@@ -105,8 +111,10 @@ Design answers unblock most of the rules work. Suggested order:
 3. **0011** look & feel sign-off (after the font ticket 0203 shows real pixels)
 4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** Harl's combat picture (done: Shironejiya's bearded axe bandit) · **0040** more packs for fighters with no fitting art (done) · **0413** how the combat scene looks · **0022** victory sting · **0023** defeat sting · **0024** Game Over music · **0810** how battle rewards are shown
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0029** dialogue backgrounds · **0812** chapter card · **0813** transitions
-   · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear
+   · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
+7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
+8. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
 
 Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
 preparations, 0409 shops, 0410 spells, 0411 battle notes, 0502 enemy
@@ -141,12 +149,13 @@ bought unit sprites (0436, which also needs 0110) and the bought terrain
 same day: Nick said the playtest waits for it.
 
 ```
- 1  0022 0023 0024 0231 0316 0410 0432 0435 0710 0714 0715 0801 0822
- 2  0433 0711 0716 0802 0807 0810
- 3  0413 0436 0706 0809
- 4  0437 0440 0803
- 5  0804  ◄── Nick plays Chapter 1
+ 1  0022 0023 0024 0413 0706 0822
+ 2  0803 0809
+ 3  0804  ◄── Nick plays Chapter 1
 ```
+
+The table was brought up to date on 2026-10-04 (ticket 0121): every other
+ticket named above is done.
 
 **0035** (Harl's picture) left row 1 on 2026-10-04: Nick chose it in 0040
 (Shironejiya's bearded axe bandit), so 0413 and 0706 no longer wait on it.
@@ -165,7 +174,8 @@ early so every later PR is checked by them.
 - World map (0008 chose FE Sacred Stones-style, after the linear opening
   chapters): 1007 nodes/travel/towns/save/camp, 1008 fixed and random skirmishes.
 - Supports (FE GBA-style, earned in battle) and camp events: 1002, 1003.
-  Parked far-future ideas: hub activities (1004), pair abilities (1005).
+  Parked far-future ideas: hub activities (1004), pair abilities (1005),
+  a Playdate port (1025, after 0903).
 - Controller support on every build (web, Windows, Linux, macOS; needed for
   Steam Deck): 0032 decide buttons → 0219 input → 0220 button names in help
   bars → 0816 rebinding (after 0815). Not on the Chapter 1 critical path;
@@ -188,3 +198,18 @@ early so every later PR is checked by them.
   (after 1007, 1008). Targets: `docs/design/playtest-bots.md`; how to run
   them and read the report: [`docs/playtesting.md`](playtesting.md). Not on
   the Chapter 1 critical path; 0504 can start any time.
+- Replayability (Nick, 2026-10-04/05, `docs/design/replayability.md`):
+  fixed stars on story battles and fixed skirmishes, with Replay and a
+  "Move on?" question after a win (0046); Visions, an opt-in pick of three
+  on random skirmishes (0047); their rewards (0048); an Ironman mode (0049);
+  a roguelike run mode on the title menu (0050); a randomizer (0051);
+  replays, the veteran's ghost and sharing a battle (0052). Multiplayer
+  after the single-player launch (0053). Modding and dev tools (a mod
+  folder, a map editor, a small scripting language, the bots as a balance
+  tester): Nick said yes. 0054 the mod policy (Nick) → 1011 ADR on how
+  mods work → 1012 mod layers in the asset bundle → 1013 data entries
+  merged by id and 1014 the mods folder → 1015 Mods screen and modded
+  saves, 1016 `vos-modkit check`/`new` → 1017 scripting runtime → 1018
+  scripted events and objectives; 1019 → 1020 the map editor; 1021
+  `vos-modkit playtest` (after 0506); 1022 mod campaigns; 1023 guide and
+  example mod; 1024 Steam Workshop (after 0903).

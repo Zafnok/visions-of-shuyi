@@ -25,5 +25,6 @@ serde_json = "1"
 serde_norway = "0.9.42"
 
 [features]
-# `frame-png` renders the bought art (ADR-0040): never commit its output.
+# `frame-png` renders the bought art (ADR-0040): commit its output only as a
+# screenshot of the game (`CLAUDE.md`, *Bought art*).
 private-assets = ["trpg-content/private-assets"]

@@ -4,7 +4,7 @@
 //! (0708).
 
 use insta::assert_snapshot;
-use trpg_content::{ChoiceOption, MusicLine, Scene, Side, Step};
+use trpg_content::{ChoiceOption, MusicLine, Present, Scene, Side, Step};
 use trpg_core::{CharacterId, LeadGender, LeadProfile};
 use trpg_ui::audio::{AudioRequest, MusicCommand};
 use trpg_ui::harness::Harness;
@@ -263,11 +263,12 @@ fn two_reply_choice_snapshot() {
     };
     let lead = LeadProfile::new("Isolde", LeadGender::Female);
     let mut h = Harness::with_screen(Box::new(DialogueScreen::new(
-        scene,
+        &scene,
         lead,
         trpg_content::load_embedded()
             .map(|c| c.names)
             .unwrap_or_default(),
+        &Present::Everyone,
     )));
     h.keys("f f f f");
     assert!(row(&h, 23).contains("Isolde, will you lead the charge?"));
@@ -300,9 +301,10 @@ fn music_scene() -> Harness {
     assert!(content.is_ok());
     let names = content.map(|c| c.names).unwrap_or_default();
     Harness::with_screen(Box::new(DialogueScreen::new(
-        scene,
+        &scene,
         LeadProfile::new("Ellery", LeadGender::Male),
         names,
+        &Present::Everyone,
     )))
 }
 

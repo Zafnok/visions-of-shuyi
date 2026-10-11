@@ -68,9 +68,10 @@ music (0807) starts at once or after a short fade in.
 - The window title (`crates/app/src/main.rs`, `window_title`) and the web
   page `<title>` use the name from 0012.
 - Record the choice in `look-and-feel.md`.
-- The layout must leave room for the web build's `Press any key` line
-  where the menu goes (ticket 0034, `docs/design/title-screen.md`); show
-  it in the mockups too.
+- The layout must leave room for the `Press any key or button` line and
+  its keyboard and controller pictures (3 rows, where the menu goes;
+  tickets 0034 and 0226, `docs/design/title-screen.md`); show them in the
+  mockups too.
 - Show one mockup of the art alone (no menu, no prompt): the cinematic's
   logo shot draws it that way for a moment while the menu fades in or out
   (0036). Keep the drawing in one function that 0817 can call.

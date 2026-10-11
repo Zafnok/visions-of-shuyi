@@ -2,8 +2,7 @@
 //! shows every font glyph and palette colour, for judging the look (ticket
 //! 0011); the portrait viewer shows every portrait (ticket 0703); the test
 //! scene plays `assets/dialogue/test.dlg` full-screen or over the screen the
-//! menu was opened from (ticket 0704). "Key bindings" opens the Key bindings
-//! screen (ticket 0815) until the Options menu (0805) does. The sprite test
+//! menu was opened from (ticket 0704). The sprite test
 //! draws the test card as sprite items (ticket 0231). The class-choice
 //! screen opens on a test unit, to promote or reclass it (ticket 0603),
 //! until the between-battle menus exist. "Map skin" switches how battle
@@ -11,15 +10,21 @@
 //! the choice isn't saved. The scene camera pans and zooms the test map
 //! as a backdrop behind a window (ticket 0228, ADR-0048). "Voice test"
 //! says the test scene's lines that have a voice clip, one per press
-//! (ticket 0238), until the dialogue screen plays voices (0720).
+//! (ticket 0238), until the dialogue screen plays voices (0720). The scene
+//! preview isn't in the menu: `app` opens the game on it for `--scene`
+//! (ticket 0723).
 
 mod portrait_viewer;
 mod scene_camera;
+mod scene_preview;
 mod sprite_test;
 
 pub use portrait_viewer::PortraitViewerScreen;
 pub use scene_camera::SceneCameraScreen;
+pub use scene_preview::{ScenePreviewScreen, ScenePreviewView};
 pub use sprite_test::SpriteTestScreen;
+
+use trpg_content::Present;
 
 use crate::audio::MenuSound;
 use crate::color::{Palette, UiColor};
@@ -48,30 +53,27 @@ pub const SCREENS: [&str; 6] = [
 
 /// The debug tools, in menu order, before "Map skin" ([`MAP_SKIN_TOOL`]),
 /// whose label names the skin in use.
-const TOOLS: [&str; 10] = [
+const TOOLS: [&str; 9] = [
     "Glyph sampler",
     "Portraits",
     "Play test scene",
     "Play test scene (overlay)",
-    "Key bindings",
     "Sprite test",
     "Class change: promote",
     "Class change: reclass",
     "Voice test",
     "Scene camera",
 ];
-/// Index of "Key bindings" in [`TOOLS`].
-const KEY_BINDINGS_TOOL: usize = 4;
 /// Index of "Sprite test" in [`TOOLS`].
-const SPRITE_TEST_TOOL: usize = 5;
+const SPRITE_TEST_TOOL: usize = 4;
 /// Index of "Class change: promote" in [`TOOLS`].
-const PROMOTE_TOOL: usize = 6;
+const PROMOTE_TOOL: usize = 5;
 /// Index of "Class change: reclass" in [`TOOLS`].
-const RECLASS_TOOL: usize = 7;
+const RECLASS_TOOL: usize = 6;
 /// Index of "Scene camera" in [`TOOLS`].
-const SCENE_CAMERA_TOOL: usize = 9;
+const SCENE_CAMERA_TOOL: usize = 8;
 /// Index of "Voice test" in [`TOOLS`].
-const VOICE_TEST_TOOL: usize = 8;
+const VOICE_TEST_TOOL: usize = 7;
 /// Index of "Map skin" in the menu: after [`TOOLS`].
 const MAP_SKIN_TOOL: usize = TOOLS.len();
 /// The scene the "Play test scene" tools play.
@@ -158,9 +160,6 @@ impl Screen for DebugMenuScreen {
                 Some(MenuEvent::Chosen(1)) => {
                     return Transition::Push(Box::new(PortraitViewerScreen::new()));
                 }
-                Some(MenuEvent::Chosen(KEY_BINDINGS_TOOL)) => {
-                    return Transition::Push(Box::new(KeyBindingsScreen::new(ctx)));
-                }
                 Some(MenuEvent::Chosen(SPRITE_TEST_TOOL)) => {
                     return Transition::Push(Box::new(SpriteTestScreen));
                 }
@@ -189,18 +188,15 @@ impl Screen for DebugMenuScreen {
                     };
                     // The overlay replaces this menu so it plays over the
                     // screen the menu was opened from (e.g. the battle map).
+                    // The viewer plays a scene with everyone there (ADR-0055).
+                    let lead = ctx.lead.clone();
+                    let everyone = &Present::Everyone;
                     return if tool == 2 {
-                        Transition::Push(Box::new(DialogueScreen::new(
-                            scene,
-                            ctx.lead.clone(),
-                            ctx.content.names.clone(),
-                        )))
+                        let screen = DialogueScreen::told(ctx, &scene, lead, everyone);
+                        Transition::Push(Box::new(screen))
                     } else {
-                        Transition::Replace(Box::new(DialogueScreen::overlay(
-                            scene,
-                            ctx.lead.clone(),
-                            ctx.content.names.clone(),
-                        )))
+                        let screen = DialogueScreen::told_overlay(ctx, &scene, lead, everyone);
+                        Transition::Replace(Box::new(screen))
                     };
                 }
                 None => {}
@@ -514,10 +510,6 @@ mod tests {
         );
         assert_eq!(
             outcome(&mut menu, &[CursorDown, Confirm]),
-            "Push(key_bindings)"
-        );
-        assert_eq!(
-            outcome(&mut menu, &[CursorDown, Confirm]),
             "Push(sprite_test)"
         );
         assert_eq!(
@@ -557,7 +549,6 @@ mod tests {
                 "scene_camera"
             ]
         );
-        assert_eq!(TOOLS[KEY_BINDINGS_TOOL], "Key bindings");
         assert_eq!(TOOLS[SPRITE_TEST_TOOL], "Sprite test");
         assert_eq!(TOOLS[PROMOTE_TOOL], "Class change: promote");
         assert_eq!(TOOLS[RECLASS_TOOL], "Class change: reclass");

@@ -18,3 +18,26 @@ real arcs → outline → per-chapter beat sheets → scripts in `assets/dialogu
 
 Scripts themselves live in `assets/dialogue/*.dlg` (format: ticket 0702).
 Written so far: Chapter 1, `ch01.dlg` (0707).
+
+## For a human writer
+
+If Nick hires a scriptwriter (`docs/design/voices-languages-and-script.md`),
+this is what to read, in order:
+
+1. [`writers-guide.md`](writers-guide.md): how scripts are written, checked
+   (`cargo xtask check-script`) and watched (`--scene <id>`), what is fixed,
+   and what a rewrite costs. Start here.
+2. [`beats.md`](beats.md): Nick's beats. Canon.
+3. [`bible.md`](bible.md): the world, its factions, themes and tone.
+4. [`characters/`](characters/): one sheet per character; the voice notes
+   are what dialogue is written from.
+5. [`outline.md`](outline.md): the acts and chapters, and the twists.
+6. [`chapters/chNN.md`](chapters/): the beat sheet of the chapter being
+   written.
+7. [`ledger.md`](ledger.md): what each character knows and has done as of
+   each chapter.
+8. [`names.md`](names.md): the id of every name, to look up while writing.
+
+**The ledger must be updated after a rewrite** that changes who knows or
+did what: add to (or correct) the section for that chapter, so the next
+chapter isn't written from a wrong picture.

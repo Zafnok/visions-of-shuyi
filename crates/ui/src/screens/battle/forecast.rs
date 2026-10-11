@@ -22,6 +22,7 @@ use super::units::{faction_color, hp_fill};
 use crate::color::{Palette, Rgb, UiColor};
 use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, Rect};
+use crate::words::Words;
 
 /// The panel's title, on its top border.
 pub const TITLE: &str = " Forecast ";
@@ -115,13 +116,16 @@ enum Left {
 
 /// What `unit` fights with when it uses `with` (a weapon's slot or a
 /// spell; nothing for `None`): its name and what is left of it.
-fn arms(state: &BattleState, unit: &Unit, with: Option<&Equipped>) -> (String, Option<Left>) {
+fn arms(
+    (state, words): (&BattleState, Words<'_>),
+    unit: &Unit,
+    with: Option<&Equipped>,
+) -> (String, Option<Left>) {
     let found = match with {
-        Some(Equipped::Weapon(slot)) => weapon_durability(state, unit.id, *slot)
+        Some(Equipped::Weapon(slot)) => weapon_durability(state, words, unit.id, *slot)
             .map(|(name, left, max)| (name, Left::Durability(left, max))),
-        Some(Equipped::Spell(id)) => {
-            spell_uses(state, unit.id, id).map(|(name, left, max)| (name, Left::Uses(left, max)))
-        }
+        Some(Equipped::Spell(id)) => spell_uses(state, words, unit.id, id)
+            .map(|(name, left, max)| (name, Left::Uses(left, max))),
         None => None,
     };
     found.map_or((String::new(), None), |(name, left)| (name, Some(left)))
@@ -139,7 +143,12 @@ pub fn affinity_text(n: &SideForecast) -> Option<String> {
 }
 
 /// Draws the forecast of `t` into the side panel.
-pub fn draw_forecast(buf: &mut GlyphBuffer, palette: &Palette, state: &BattleState, t: &Targeting) {
+pub fn draw_forecast(
+    buf: &mut GlyphBuffer,
+    palette: &Palette,
+    (state, words): (&BattleState, Words<'_>),
+    t: &Targeting,
+) {
     let c = |u| palette.get(u);
     let bg = c(UiColor::PanelBg);
     buf.fill_rect(SIDE_PANEL, Cell::new(' ', c(UiColor::Text), bg));
@@ -158,12 +167,13 @@ pub fn draw_forecast(buf: &mut GlyphBuffer, palette: &Palette, state: &BattleSta
         return;
     };
     let p = &t.preview;
-    let (weapon, left) = arms(state, attacker, Some(&t.with));
-    let (counter, counter_left) = arms(state, target, target.loadout.equipped.as_ref());
+    let (weapon, left) = arms((state, words), attacker, Some(&t.with));
+    let (counter, counter_left) = arms((state, words), target, target.loadout.equipped.as_ref());
     let sides = [
         Column {
             x: LEFT_X,
             unit: attacker,
+            name: words.unit(attacker),
             weapon,
             left,
             numbers: Some(p.forecast.attacker),
@@ -172,6 +182,7 @@ pub fn draw_forecast(buf: &mut GlyphBuffer, palette: &Palette, state: &BattleSta
         Column {
             x: RIGHT_X,
             unit: target,
+            name: words.unit(target),
             weapon: counter,
             left: counter_left,
             numbers: p.forecast.defender,
@@ -181,7 +192,7 @@ pub fn draw_forecast(buf: &mut GlyphBuffer, palette: &Palette, state: &BattleSta
     for side in &sides {
         draw_side(buf, palette, side);
     }
-    draw_skill(buf, palette, state, t);
+    draw_skill(buf, palette, (state, words), t);
     let total_row = draw_strikes(buf, palette, p);
     draw_notes(buf, palette, p, total_row + 2);
 }
@@ -206,11 +217,16 @@ fn draw_notes(buf: &mut GlyphBuffer, palette: &Palette, p: &AttackPreview, row: 
 
 /// The chosen art's or combat active's line: its name and the weapon's
 /// durability before and after (`Guard Break (20 → 16)`).
-fn draw_skill(buf: &mut GlyphBuffer, palette: &Palette, state: &BattleState, t: &Targeting) {
+fn draw_skill(
+    buf: &mut GlyphBuffer,
+    palette: &Palette,
+    (state, words): (&BattleState, Words<'_>),
+    t: &Targeting,
+) {
     let p = &t.preview;
     let name = match (&p.art, &p.active) {
-        (Some(art), _) => art_name(state, art),
-        (None, Some(skill)) => skill_name(state, skill),
+        (Some(art), _) => art_name(state, words, art),
+        (None, Some(skill)) => skill_name(state, words, skill),
         (None, None) => return,
     };
     let cost = p
@@ -233,6 +249,8 @@ struct Column<'a> {
     x: i32,
     /// The unit.
     unit: &'a Unit,
+    /// Its name.
+    name: &'a str,
     /// What it fights with.
     weapon: String,
     /// What is left of it.
@@ -253,7 +271,8 @@ fn draw_side(buf: &mut GlyphBuffer, palette: &Palette, side: &Column<'_>) {
         buf,
         x,
         NAME_ROW,
-        &unit.name,
+        // check-text: not a data name (the view's own)
+        side.name,
         c(faction_color(unit.faction)),
         COLUMN_W,
     );
@@ -411,7 +430,7 @@ mod tests {
         let c = ctx();
         let blank = Cell::new(' ', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
         let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
-        draw_forecast(&mut buf, &c.palette, state, t);
+        draw_forecast(&mut buf, &c.palette, (state, Words::ENGLISH), t);
         buf
     }
 
@@ -526,23 +545,37 @@ mod tests {
         let c = ctx();
         let state = skirmish(&c, 20);
         let brigand = &state.units()[3];
-        assert_eq!(arms(&state, brigand, None), (String::new(), None));
+        assert_eq!(
+            arms((&state, Words::ENGLISH), brigand, None),
+            (String::new(), None)
+        );
         // A spell it doesn't know has no uses left; a weapon has its
         // durability.
         let fire = Equipped::Spell(trpg_core::SpellId::new("fire"));
         assert_eq!(
-            arms(&state, brigand, Some(&fire)),
+            arms((&state, Words::ENGLISH), brigand, Some(&fire)),
             ("Fire".to_owned(), Some(Left::Uses(0, 10)))
         );
         assert_eq!(
-            arms(&state, brigand, brigand.loadout.equipped.as_ref()),
+            arms(
+                (&state, Words::ENGLISH),
+                brigand,
+                brigand.loadout.equipped.as_ref()
+            ),
             ("Iron Axe".to_owned(), Some(Left::Durability(20, 20)))
         );
         // An empty slot, or a spell missing from the table: nothing.
         let none = (String::new(), None);
-        assert_eq!(arms(&state, brigand, Some(&Equipped::Weapon(2))), none);
+        assert_eq!(
+            arms(
+                (&state, Words::ENGLISH),
+                brigand,
+                Some(&Equipped::Weapon(2))
+            ),
+            none
+        );
         let lost = Equipped::Spell(trpg_core::SpellId::new("nope"));
-        assert_eq!(arms(&state, brigand, Some(&lost)), none);
+        assert_eq!(arms((&state, Words::ENGLISH), brigand, Some(&lost)), none);
     }
 
     #[test]
@@ -590,6 +623,7 @@ mod tests {
             let column = Column {
                 x: LEFT_X,
                 unit: &state.units()[0],
+                name: "Mage",
                 weapon: "Fire".to_owned(),
                 left,
                 numbers: Some(t.preview.forecast.attacker),

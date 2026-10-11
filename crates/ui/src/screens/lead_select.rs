@@ -24,20 +24,21 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::{Action, TextKey, text_key, text_keys_help};
 use crate::portrait::draw_portrait;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{cursor_keys_name, help_line, key_name};
 
-/// The heading.
-pub const HEADING: &str = "Choose your lead";
-/// The button that starts the game.
-pub const START: &str = "Start";
-/// Label of the name row.
-const NAME_LABEL: &str = "Name";
-/// The name grid's cell that types a space.
-pub const SPACE: &str = "Blank";
-/// Deletes the last letter.
-pub const DELETE: &str = "Delete";
-/// Closes the name grid.
-pub const DONE: &str = "Done";
+/// The key of the heading in the language files ([`Ctx::text`]).
+pub const HEADING: &str = "lead_select.heading";
+/// The key of the button that starts the game.
+pub const START: &str = "lead_select.start";
+/// The key of the name row's label.
+const NAME_LABEL: &str = "lead_select.name";
+/// The key of the name grid's cell that types a space.
+pub const SPACE: &str = "lead_select.grid.blank";
+/// The key of the cell that deletes the last letter.
+pub const DELETE: &str = "lead_select.grid.delete";
+/// The key of the cell that closes the name grid.
+pub const DONE: &str = "lead_select.grid.done";
+/// The key of the title of the typing box and of the name grid.
+const FIRST_NAME: &str = "lead_select.first_name";
 
 /// Row of the heading.
 const HEADING_ROW: i32 = 1;
@@ -57,8 +58,8 @@ const START_ROW: i32 = 27;
 const GRID_BOX: Rect = Rect::new(27, 8, 46, 14);
 /// The typing box.
 const TYPE_BOX: Rect = Rect::new(27, 10, 46, 7);
-/// The typing box's hint.
-pub const TYPE_HINT: &str = "Type a name on your keyboard.";
+/// The key of the typing box's hint.
+pub const TYPE_HINT: &str = "lead_select.type_hint";
 
 /// Adds `c` to `name` if the name rules allow it (see the module docs).
 fn add_char(name: &mut String, c: char) -> bool {
@@ -140,6 +141,7 @@ impl NameBox {
 }
 
 /// The letters of the name grid, one row each.
+// check-text: not player text
 const LETTER_ROWS: [&str; 4] = [
     "ABCDEFGHIJKLM",
     "NOPQRSTUVWXYZ",
@@ -161,14 +163,15 @@ pub enum GridCell {
 }
 
 impl GridCell {
-    /// Text shown for the cell.
-    pub fn label(self) -> String {
-        match self {
-            GridCell::Char(c) => c.to_string(),
-            GridCell::Space => SPACE.to_owned(),
-            GridCell::Delete => DELETE.to_owned(),
-            GridCell::Done => DONE.to_owned(),
-        }
+    /// Text shown for the cell, in `ctx`'s language.
+    pub fn label(self, ctx: &Ctx) -> String {
+        let key = match self {
+            GridCell::Char(c) => return c.to_string(),
+            GridCell::Space => SPACE,
+            GridCell::Delete => DELETE,
+            GridCell::Done => DONE,
+        };
+        ctx.text(key).to_owned()
     }
 }
 
@@ -377,22 +380,16 @@ impl LeadSelectScreen {
 
     /// The bottom help line.
     pub fn help(&self, ctx: &Ctx) -> String {
-        let km = ctx.help_keys();
-        let keys = Some(cursor_keys_name(km));
-        let confirm = |label| (Some(key_name(km, Action::Confirm)), label);
-        let cancel = |label| (Some(key_name(km, Action::Cancel)), label);
         if self.typing.is_some() {
-            return text_keys_help();
+            return text_keys_help(ctx);
         }
-        if self.entry.is_some() {
-            return help_line(&[(keys, "choose"), confirm("type"), cancel("delete")]);
-        }
-        let label = match self.row {
-            Row::Gender => "next",
-            Row::Name => "change name",
-            Row::Start => "start",
+        let key = match (&self.entry, self.row) {
+            (Some(_), _) => "lead_select.help.grid",
+            (None, Row::Gender) => "lead_select.help.gender",
+            (None, Row::Name) => "lead_select.help.name",
+            (None, Row::Start) => "lead_select.help.start",
         };
-        help_line(&[(keys, "choose"), confirm(label), cancel("back")])
+        ctx.text_with(key, &[])
     }
 
     /// Moves the focus one row down (`down`) or up, wrapping.
@@ -461,12 +458,13 @@ impl LeadSelectScreen {
         let profile = LeadProfile::new(self.name.clone(), gender);
         if let Some(art) = ctx.content.portraits.get(profile.portrait_id()) {
             let dim = if chosen { 0.0 } else { 0.45 };
+            // check-text: not player text
             draw_portrait(buf, (x + 1, FRAME_Y + 1), art, "neutral", dim, false);
         }
-        let label = match gender {
-            LeadGender::Male => "Male",
-            LeadGender::Female => "Female",
-        };
+        let label = ctx.text(match gender {
+            LeadGender::Male => "lead_select.male",
+            LeadGender::Female => "lead_select.female",
+        });
         let fg = if chosen {
             UiColor::TextHighlight
         } else {
@@ -489,14 +487,15 @@ impl LeadSelectScreen {
             }
         };
         let first = self.first_name();
-        let full = format!("{NAME_LABEL}   {first} {FAMILY_NAME}");
+        let label = ctx.text(NAME_LABEL);
+        let full = format!("{label}   {first} {FAMILY_NAME}");
         let x = (i32::from(buf.width()) - i32::try_from(full.chars().count()).unwrap_or(0)) / 2;
-        buf.print(x, NAME_ROW, NAME_LABEL, c(UiColor::TextDim), black);
-        let name_x = x + i32::try_from(NAME_LABEL.len() + 3).unwrap_or(0);
+        buf.print(x, NAME_ROW, label, c(UiColor::TextDim), black);
+        let name_x = x + i32::try_from(label.chars().count() + 3).unwrap_or(0);
         buf.print(name_x, NAME_ROW, first, c(lit(Row::Name)), black);
         let family_x = name_x + i32::try_from(first.chars().count() + 1).unwrap_or(0);
         buf.print(family_x, NAME_ROW, FAMILY_NAME, c(UiColor::TextDim), black);
-        let start = format!("[ {START} ]");
+        let start = format!("[ {} ]", ctx.text(START));
         print_centred(buf, START_ROW, &start, c(lit(Row::Start)), black);
     }
 
@@ -506,11 +505,11 @@ impl LeadSelectScreen {
         let bg = c(UiColor::PanelBg);
         buf.fill_rect(TYPE_BOX, Cell::new(' ', c(UiColor::Text), bg));
         buf.draw_box(TYPE_BOX, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-        let title = " First name ";
+        let title = format!(" {} ", ctx.text(FIRST_NAME));
         buf.print(
             TYPE_BOX.x + 2,
             TYPE_BOX.y,
-            title,
+            &title,
             c(UiColor::TextHighlight),
             bg,
         );
@@ -527,7 +526,8 @@ impl LeadSelectScreen {
             bg,
         );
         let hint_fg = c(UiColor::TextDim);
-        buf.print(centred(TYPE_HINT), TYPE_BOX.y + 4, TYPE_HINT, hint_fg, bg);
+        let hint = ctx.text(TYPE_HINT);
+        buf.print(centred(hint), TYPE_BOX.y + 4, hint, hint_fg, bg);
     }
 
     /// The name grid's box: the name so far with a cursor, then the grid,
@@ -540,7 +540,7 @@ impl LeadSelectScreen {
         buf.print(
             GRID_BOX.x + 2,
             GRID_BOX.y,
-            " First name ",
+            &format!(" {} ", ctx.text(FIRST_NAME)),
             c(UiColor::TextHighlight),
             bg,
         );
@@ -550,7 +550,7 @@ impl LeadSelectScreen {
         buf.print(name_x, GRID_BOX.y + 2, &shown, c(UiColor::Text), bg);
         for (r, row) in grid().iter().enumerate() {
             let y = GRID_BOX.y + 4 + i32::try_from(r * 2).unwrap_or(0);
-            let labels: Vec<String> = row.iter().map(|g| g.label()).collect();
+            let labels: Vec<String> = row.iter().map(|g| g.label(ctx)).collect();
             // Each cell is its label with a space either side.
             let widths: Vec<i32> = labels
                 .iter()
@@ -615,7 +615,8 @@ impl Screen for LeadSelectScreen {
         let c = |u| ctx.palette.get(u);
         let black = c(UiColor::Black);
         buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        print_centred(buf, HEADING_ROW, HEADING, c(UiColor::TextHighlight), black);
+        let heading = ctx.text(HEADING);
+        print_centred(buf, HEADING_ROW, heading, c(UiColor::TextHighlight), black);
         for (gender, x) in LeadGender::ALL.into_iter().zip(FRAME_X) {
             self.draw_gender(ctx, buf, gender, x);
         }

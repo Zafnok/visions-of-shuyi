@@ -368,7 +368,7 @@ fn grid_cells() {
     assert!(rows[..4].iter().all(|r| r.len() == 13));
     assert_eq!(rows[1][12], GridCell::Char('Z'));
     assert_eq!(rows[3][0], GridCell::Char('n'));
-    let labels: Vec<String> = rows[4].iter().map(|g| g.label()).collect();
+    let labels: Vec<String> = rows[4].iter().map(|g| g.label(&ctx())).collect();
     assert_eq!(labels, ["-", "'", "Blank", "Delete", "Done"]);
 }
 

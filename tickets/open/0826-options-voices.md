@@ -49,7 +49,7 @@ language setting (a new ticket if 0043 chose Japanese voices).
    found, don't ask and hide nothing: the rows stay, they just have
    nothing to play.
 4. All text through `ctx.text` if 0233 has landed; otherwise literals,
-   and add a line to 0234's list.
+   and add a line to 0243's list.
 
 ## Acceptance criteria
 

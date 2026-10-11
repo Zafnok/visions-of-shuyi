@@ -33,7 +33,7 @@ pack text overflows its place.
 
 **Out (do not do):** translating (0719); new layouts for Japanese (if a
 place can't fit, report it; a redesign is its own ticket); furigana;
-vertical text.
+vertical text; Chinese punctuation and its wide quotes (0239).
 
 ## Implementation steps
 
@@ -56,7 +56,7 @@ vertical text.
    `ui.ron` key that is drawn in a fixed-width place, whether the pack's
    text fits. Give such keys a width in `en/ui.ron` (an optional
    `max_cells` per key, set from the layout); the tool compares.
-6. Fix any layout 0234 noted as sized for one English word, where the fix
+6. Fix any layout 0234 or 0243 noted as sized for one English word, where the fix
    is measuring instead of a constant.
 
 ## Acceptance criteria

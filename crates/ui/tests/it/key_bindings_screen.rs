@@ -1,15 +1,21 @@
 //! Scripted tests of the Key bindings screen through the real game (ticket
-//! 0815, `docs/design/controls.md` *Rebinding keys*), opened from the debug
-//! menu until the Options menu (0805) exists.
+//! 0815, `docs/design/controls.md` *Rebinding keys*), opened from the
+//! Options screen's "Key bindings" row (0805).
 //!
 //! Rows, top to bottom: Cursor up, down, left, right, Confirm, Cancel, End
 //! turn, Select, Confirm end turn, Previous / Next ready unit, Unit info, …,
 //! Restore defaults, the keyboard / controller switch (one `Up` from the
 //! first row). The controller side is tested in `rebind_buttons.rs`.
+//!
+//! What a row holds is read from the screen's view
+//! (`KeyBindingsScreen::view`: plain data), not from the glyphs a skin
+//! painted; the snapshots pin the glyph look.
 
 use insta::assert_snapshot;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, Chord, Layout, LayoutBindings};
+use trpg_ui::screens::key_bindings::{KeyBindingsScreen, KeyBindingsView, SlotView};
+use trpg_ui::screens::options::OptionsScreen;
 
 /// From the first row down to Confirm, and to Unit info.
 const TO_CONFIRM: &str = "Down Down Down Down";
@@ -26,13 +32,25 @@ fn open(layout: Layout) -> Harness {
     h
 }
 
-/// Opens the screen from the title, with `h`'s current keys.
+/// Opens the screen from the title, with `h`'s current keys: Options is
+/// two rows under New Game (past Quick Battle), and Key bindings three
+/// rows up from the Options screen's first (round past Restore defaults
+/// and Reset tips).
 fn reopen(h: &mut Harness) {
     let km = h.game().ctx().keymap.clone();
     let key = |a| km.primary(a).map(|c| c.to_string()).unwrap_or_default();
-    let (down, confirm) = (key(Action::CursorDown), key(Action::Confirm));
-    h.keys(&format!("F2 {down} {down} {down} {down} {confirm}"));
-    assert_eq!(h.screens(), ["title", "debug_menu", "key_bindings"]);
+    let (up, down) = (key(Action::CursorUp), key(Action::CursorDown));
+    let confirm = key(Action::Confirm);
+    h.keys(&format!("{down} {down} {confirm} {up} {up} {up} {confirm}"));
+    assert_eq!(h.screens(), ["title", "options", "key_bindings"]);
+}
+
+/// Opens the screen again from the title, which is still on Options after
+/// the screen was closed back to it.
+fn reopen_from_options(h: &mut Harness) {
+    assert_eq!(h.screens(), ["title"]);
+    h.keys("f Up Up Up f");
+    assert_eq!(h.screens(), ["title", "options", "key_bindings"]);
 }
 
 fn bindings(h: &Harness, layout: Layout) -> LayoutBindings {
@@ -43,20 +61,47 @@ fn defaults(h: &Harness, layout: Layout) -> LayoutBindings {
     LayoutBindings::defaults(&h.game().ctx().content.keymap, layout)
 }
 
-/// The glyph row of the snapshot that shows `label`'s action.
-fn row(h: &Harness, label: &str) -> String {
-    let snap = h.snapshot();
-    snap.lines()
-        .take_while(|l| !l.starts_with("---"))
-        .find(|l| l.contains(&format!(" {label}  ")))
-        .unwrap_or_else(|| panic!("no row for {label}"))
-        .to_owned()
+/// The Key bindings screen on the stack, as it shows itself now.
+fn view(h: &Harness) -> KeyBindingsView {
+    let screen = h.game().screen::<KeyBindingsScreen>();
+    screen
+        .unwrap_or_else(|| panic!("no key bindings screen"))
+        .view(h.game().ctx())
 }
 
-/// The message row under the panel.
+/// What `action`'s slots show: the key's name, `-` for an empty slot, and
+/// the prompt for the one waiting for a key.
+fn slots(h: &Harness, action: Action) -> Vec<String> {
+    let view = view(h);
+    let row = view.row(action);
+    let row = row.unwrap_or_else(|| panic!("no row for {action:?}"));
+    let text = |slot: &SlotView| match slot {
+        SlotView::Empty => "-".to_owned(),
+        SlotView::Bound(name) | SlotView::Capturing(name) => name.clone(),
+    };
+    row.slots.iter().map(text).collect()
+}
+
+/// Whether one of `action`'s slots shows `text`.
+fn shows(h: &Harness, action: Action, text: &str) -> bool {
+    slots(h, action).iter().any(|s| s == text)
+}
+
+/// Whether `action` has nothing in any slot (the screen says `! not
+/// mapped`).
+fn unmapped(h: &Harness, action: Action) -> bool {
+    view(h).row(action).is_some_and(|r| r.unmapped)
+}
+
+/// The message under the panel; empty if none.
 fn message(h: &Harness) -> String {
-    let snap = h.snapshot();
-    snap.lines().nth(29).unwrap_or("").trim().to_owned()
+    view(h).message.unwrap_or_default()
+}
+
+/// The question the Options screen is asking, if any.
+fn options_question(h: &Harness) -> Option<String> {
+    let screen = h.game().screen::<OptionsScreen>()?;
+    screen.view(h.game().ctx()).question.map(|q| q.text)
 }
 
 #[test]
@@ -68,19 +113,16 @@ fn the_list_snapshot() {
 #[test]
 fn the_left_handed_list_shows_that_layouts_keys() {
     let h = open(Layout::LeftHanded);
-    assert!(
-        h.snapshot()
-            .contains("  Keyboard · Left-handed    Controller  ")
-    );
-    assert!(row(&h, "Confirm").contains(" j "));
-    assert!(row(&h, "Cursor up").contains(" w "));
+    assert_eq!(view(&h).switch.keyboard, "Keyboard · Left-handed");
+    assert!(shows(&h, Action::Confirm, "j"));
+    assert!(shows(&h, Action::CursorUp, "w"));
 }
 
 #[test]
 fn the_capture_prompt_snapshot() {
     let mut h = open(Layout::RightHanded);
     h.keys(TO_CONFIRM).keys("Right f");
-    assert!(row(&h, "Confirm").contains("Press a key…"));
+    assert_eq!(slots(&h, Action::Confirm), ["f", "Press a key…", "-"]);
     assert_snapshot!(h.snapshot());
 }
 
@@ -89,21 +131,20 @@ fn the_capture_prompt_snapshot() {
 fn a_key_bound_twice_moves_and_the_loser_shows_not_mapped() {
     let mut h = open(Layout::RightHanded);
     h.keys(TO_CONFIRM).keys("Right f e");
-    assert!(row(&h, "Unit info").contains("! not mapped"));
-    assert!(row(&h, "Confirm").contains(" f "));
-    assert!(row(&h, "Confirm").contains(" e "));
+    assert!(unmapped(&h, Action::Info));
+    assert_eq!(slots(&h, Action::Confirm), ["f", "e", "-"]);
     assert_snapshot!(h.snapshot());
     // Nothing changes in the game until the screen closes.
     assert_eq!(h.game().ctx().keymap.action(chord("e")), Some(Action::Info));
     h.keys("d");
-    assert_eq!(h.screens(), ["title", "debug_menu"]);
+    assert_eq!(h.screens(), ["title", "options"]);
     h.keys("d");
     let keymap = &h.game().ctx().keymap;
     assert_eq!(keymap.action(chord("e")), Some(Action::Confirm));
     assert_eq!(keymap.primary(Action::Info), None);
-    // `e` confirms at the title.
+    // `e` confirms at the title (still on Options).
     h.keys("e");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "options"]);
 }
 
 /// Acceptance: with Confirm's only key moved away, Cancel doesn't leave.
@@ -112,7 +153,7 @@ fn leaving_is_blocked_until_confirm_has_a_key_again() {
     let mut h = open(Layout::RightHanded);
     // Unit info takes `f`, Confirm's only key.
     h.keys(TO_INFO).keys("f f");
-    assert!(row(&h, "Confirm").contains("! not mapped"));
+    assert!(unmapped(&h, Action::Confirm));
     h.keys("d");
     assert_eq!(h.top_screen(), "key_bindings");
     assert_eq!(message(&h), "Give Confirm a key first");
@@ -123,13 +164,13 @@ fn leaving_is_blocked_until_confirm_has_a_key_again() {
     // `f` still confirms here (the keys the screen was opened with): give
     // Confirm `g`, and leaving works.
     h.keys("Up Up Up Up Up Up Up f g");
-    assert!(row(&h, "Confirm").contains(" g "));
+    assert!(shows(&h, Action::Confirm, "g"));
     assert_eq!(message(&h), "");
     h.keys("d");
-    assert_eq!(h.screens(), ["title", "debug_menu"]);
+    assert_eq!(h.screens(), ["title", "options"]);
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "debug_menu"], "f is Unit info now");
-    // The debug menu is still on "Key bindings": `g` confirms it.
+    assert_eq!(h.screens(), ["title", "options"], "f is Unit info now");
+    // Options is still on "Key bindings": `g` confirms it.
     h.keys("g");
     assert_eq!(h.top_screen(), "key_bindings");
 }
@@ -141,19 +182,19 @@ fn escape_backs_out_of_capture_and_delete_empties_a_slot() {
     let mut h = open(Layout::RightHanded);
     let before = h.snapshot();
     h.keys(TO_CONFIRM).keys("f");
-    assert!(row(&h, "Confirm").contains("Press a key…"));
+    assert!(shows(&h, Action::Confirm, "Press a key…"));
     h.keys("Delete");
-    assert!(row(&h, "Confirm").contains("Press a key…"));
+    assert!(shows(&h, Action::Confirm, "Press a key…"));
     h.keys("Escape");
     assert_eq!(h.top_screen(), "key_bindings");
-    assert!(row(&h, "Confirm").contains(" f "));
+    assert_eq!(slots(&h, Action::Confirm), ["f", "-", "-"]);
     h.keys("Up Up Up Up");
     assert_eq!(h.snapshot(), before);
     // Delete on a slot.
     h.keys(TO_INFO);
-    assert!(row(&h, "Unit info").contains(" e "));
+    assert!(shows(&h, Action::Info, "e"));
     h.keys("Delete");
-    assert!(row(&h, "Unit info").contains("! not mapped"));
+    assert!(unmapped(&h, Action::Info));
     h.keys("d d");
     assert_eq!(h.game().ctx().keymap.primary(Action::Info), None);
     assert_eq!(h.game().ctx().keymap.action(chord("Delete")), None);
@@ -170,7 +211,7 @@ fn the_debug_key_is_refused_while_capturing() {
     assert_eq!(h.top_screen(), "key_bindings");
     if trpg_ui::screen::DEBUG_TOOLS {
         assert_eq!(message(&h), "That key can't be used");
-        assert!(row(&h, "Cursor up").contains("Press a key…"));
+        assert!(shows(&h, Action::CursorUp, "Press a key…"));
     }
 }
 
@@ -182,8 +223,14 @@ fn navigation_survives_moving_every_cursor_key_away() {
     // Unit info takes Up, Down and Left; Rewind (three rows on) takes Right.
     h.keys(TO_INFO).keys("f Up Right f Down Right f Left");
     h.keys("Down Down Down f Right");
-    for cursor in ["Cursor up", "Cursor down", "Cursor left", "Cursor right"] {
-        assert!(row(&h, cursor).contains("! not mapped"), "{cursor}");
+    let cursors = [
+        Action::CursorUp,
+        Action::CursorDown,
+        Action::CursorLeft,
+        Action::CursorRight,
+    ];
+    for cursor in cursors {
+        assert!(unmapped(&h, cursor), "{cursor:?}");
     }
     h.keys("d");
     assert_eq!(message(&h), "Give Cursor up a key first");
@@ -192,17 +239,20 @@ fn navigation_survives_moving_every_cursor_key_away() {
     h.keys("Up Up Up Up Up Up Up Up Up Up Up Up Up Up");
     h.keys("f i Down f k Down f j Down f l");
     h.keys("d");
-    assert_eq!(h.screens(), ["title", "debug_menu"]);
+    assert_eq!(h.screens(), ["title", "options"]);
     let keymap = &h.game().ctx().keymap;
     assert_eq!(keymap.primary(Action::CursorUp), Some(chord("i")));
     assert_eq!(keymap.primary(Action::CursorRight), Some(chord("l")));
     assert_eq!(keymap.action(chord("Up")), Some(Action::Info));
-    // In the game the new keys steer: `k` is Cursor down in the debug menu
-    // (from "Key bindings", past the sprite test, the two class change
-    // tools, the voice test, the scene camera and the map skin after it,
-    // round to the first), and the arrows no longer move there.
-    h.keys("Down k k k k k k k f");
-    assert_eq!(h.top_screen(), "glyph_sampler");
+    // In the game the new keys steer: `k` is Cursor down on the Options
+    // screen (from "Key bindings" past Reset tips to Restore defaults,
+    // which asks first), and the arrows no longer move there.
+    h.keys("Down k k f");
+    assert_eq!(h.top_screen(), "options");
+    assert_eq!(
+        options_question(&h).as_deref(),
+        Some("Restore every option to its default?")
+    );
 }
 
 /// Acceptance: edits persist across a restart, per layout.
@@ -226,7 +276,7 @@ fn edits_survive_a_restart_and_stay_with_their_layout() {
     h.keys("d");
     // The screen shows the saved keys when opened again.
     reopen(&mut h);
-    assert!(row(&h, "Confirm").contains(" g "));
+    assert!(shows(&h, Action::Confirm, "g"));
 }
 
 /// Acceptance: Restore defaults resets only the layout in use.
@@ -246,21 +296,23 @@ fn restore_defaults_leaves_the_other_layout_alone() {
         bindings(&h, Layout::RightHanded),
         defaults(&h, Layout::RightHanded)
     );
-    reopen(&mut h);
+    reopen_from_options(&mut h);
     // Two Ups from the first row (past the keyboard / controller switch)
     // is Restore defaults. It asks first, and Cancel there answers no
     // without leaving the screen.
     h.keys("Up Up f");
-    assert!(
-        h.snapshot()
-            .contains("Restore the default keys for Right-handed?")
+    let question = view(&h).question.map(|q| q.text);
+    assert_eq!(
+        question.as_deref(),
+        Some("Restore the default keys for Right-handed?")
     );
     assert_snapshot!(h.snapshot());
     h.keys("d");
     assert_eq!(h.top_screen(), "key_bindings");
-    assert!(row(&h, "Confirm").contains(" g "));
+    assert_eq!(view(&h).question, None);
+    assert!(shows(&h, Action::Confirm, "g"));
     h.keys("f f");
-    assert!(!row(&h, "Confirm").contains(" g "));
+    assert!(!shows(&h, Action::Confirm, "g"));
     h.keys("d d");
     assert_eq!(
         bindings(&h, Layout::RightHanded),

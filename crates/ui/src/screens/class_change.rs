@@ -364,6 +364,7 @@ impl ClassChangeScreen {
                     skills: &content.skills,
                     spells: &content.spells,
                     items: &content.items,
+                    words: ctx.words(),
                 };
                 Progress::with_tables(&events, &[before], &names, PROGRESS_TIMINGS)
                     .map_or(Stage::Done, Stage::Result)
@@ -410,11 +411,12 @@ impl ClassChangeScreen {
             .filter(|(id, _)| items.seal(id).is_some_and(|s| s.kind == kind))
             .map(|(_, n)| n)
             .sum();
+        let words = ctx.words();
         let name = items
             .items
-            .values()
-            .find_map(|d| match d {
-                ItemDef::Seal(s) if s.kind == kind => Some(s.name.clone()),
+            .iter()
+            .find_map(|(id, d)| match d {
+                ItemDef::Seal(s) if s.kind == kind => Some(words.item(id, items).to_owned()),
                 _ => None,
             })
             .unwrap_or_else(|| match kind {
@@ -435,11 +437,11 @@ impl ClassChangeScreen {
 
     /// The question asked before the change, and what it costs.
     fn question(&self, ctx: &Ctx, class: &ClassDef) -> [String; 2] {
+        let words = ctx.words();
+        let (unit, class_name) = (words.unit(&self.unit), words.class(class));
         let ask = match self.kind {
-            ChangeKind::Promote => format!("Promote {} to {}?", self.unit.name, class.name),
-            ChangeKind::Reclass => {
-                format!("Change {} to {}?", self.unit.name, class.name)
-            }
+            ChangeKind::Promote => format!("Promote {unit} to {class_name}?"),
+            ChangeKind::Reclass => format!("Change {unit} to {class_name}?"),
         };
         let (seal, held) = self.seal_of(ctx, class);
         [ask, format!("Uses 1 {seal} ({held} in stock).")]
@@ -484,13 +486,11 @@ impl ClassChangeScreen {
         let n = buf.print(
             COLUMNS_X,
             UNIT_ROW,
-            &self.unit.name,
+            ctx.words().unit(&self.unit),
             c(UiColor::Player),
             black,
         );
-        let class = classes
-            .get(&self.unit.class)
-            .map_or(self.unit.class.0.as_str(), |c| c.name.as_str());
+        let class = ctx.words().class_of(&self.unit.class, classes);
         let line = format!("{class}  Lv {}", self.unit.level);
         buf.print(
             COLUMNS_X + i32::from(n) + 2,
@@ -575,7 +575,7 @@ impl ClassChangeScreen {
         } else {
             UiColor::Text
         };
-        pen(buf, 1, &class.name, title);
+        pen(buf, 1, ctx.words().class(class), title);
         let tier = format!("Tier {}", class.tier);
         let record = match (self.kind, self.unit.class_records.get(&class.id)) {
             (ChangeKind::Promote, _) => String::new(),
@@ -611,10 +611,10 @@ impl ClassChangeScreen {
         }
         pen(buf, 12, "Active", UiColor::TextHighlight);
         let active = class.active.as_ref().map(|id| {
-            content
-                .skills
-                .get(id)
-                .map_or_else(|| id.0.clone(), |s| s.name.clone())
+            let skill = content.skills.get(id);
+            skill
+                .map_or(id.0.as_str(), |s| ctx.words().skill(s))
+                .to_owned()
         });
         match active {
             Some(name) => pen(buf, 13, &name, UiColor::Text),

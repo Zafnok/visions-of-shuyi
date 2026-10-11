@@ -5,7 +5,7 @@
 
 use std::borrow::Cow;
 
-use trpg_content::{ChoiceOption, MusicLine, Names, Scene, Side, Step};
+use trpg_content::{ChoiceOption, MusicLine, Names, Present, Scene, Side, Step};
 use trpg_core::{CharacterId, LeadProfile};
 
 /// A character standing on one side of the screen.
@@ -93,9 +93,13 @@ struct Reaction {
 /// between. At a reply choice it waits for [`choose`](Self::choose), plays
 /// that reply's reaction, then rejoins the scene after the choice. The
 /// `@music` lines passed on the way are kept for [`take_music`](Self::take_music).
+/// It plays the scene as it is for those present when it starts
+/// (ADR-0055): the lines of an `@if` block whose character isn't there are
+/// no part of it, read or skipped.
 /// Pure: no drawing, no clock, no sound.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DialoguePlayer {
+    /// The scene for those present: it has no `@if` blocks.
     scene: Scene,
     /// Fills in the lead's name and pronouns.
     lead: LeadProfile,
@@ -117,11 +121,12 @@ pub struct DialoguePlayer {
 }
 
 impl DialoguePlayer {
-    /// Starts `scene`, at its first text box, with `lead`'s name and
-    /// pronouns and the names from `names` in its text.
-    pub fn new(scene: Scene, lead: LeadProfile, names: Names) -> Self {
+    /// Starts `scene` as it plays for those `present`, at its first text
+    /// box, with `lead`'s name and pronouns and the names from `names` in
+    /// its text. A scene with nothing to say for them is finished at once.
+    pub fn new(scene: &Scene, lead: LeadProfile, names: Names, present: &Present) -> Self {
         let mut player = Self {
-            scene,
+            scene: scene.resolved(present),
             lead,
             names,
             next: 0,
@@ -154,6 +159,12 @@ impl DialoguePlayer {
     /// The id of the scene being played.
     pub fn scene_id(&self) -> &str {
         &self.scene.id
+    }
+
+    /// The scene being played: the one it was started with, as it is for
+    /// those present.
+    pub fn scene(&self) -> &Scene {
+        &self.scene
     }
 
     /// The step at `at`.
@@ -346,7 +357,8 @@ impl DialoguePlayer {
                 }
             }
             Step::Music(music) => self.music = Some(music.clone()),
-            Step::Narrate { .. } | Step::Choice { .. } => {}
+            // The scene was resolved for those present: it has no blocks.
+            Step::Narrate { .. } | Step::Choice { .. } | Step::If { .. } => {}
         }
         if step.text().is_some() {
             self.showing = Showing::Text(at);

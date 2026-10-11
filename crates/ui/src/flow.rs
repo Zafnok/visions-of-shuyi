@@ -50,7 +50,7 @@
 use std::any::Any;
 use std::collections::VecDeque;
 
-use trpg_content::{ChapterDef, MapLook, Scene, battle_campaign, new_campaign};
+use trpg_content::{ChapterDef, MapLook, Present, Scene, battle_campaign, new_campaign};
 use trpg_core::{
     BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, Outcome, Preparations,
     SaveFile, SavePoint,
@@ -58,7 +58,7 @@ use trpg_core::{
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::save::{self, SUSPEND_KEY, SaveError};
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Transition};
 use crate::screens::game_over::{GameOverChoice, GameOverScreen, ToBeContinuedScreen};
 use crate::screens::lead_select::LeadSelectScreen;
 use crate::screens::mode_select::ModeSelectScreen;
@@ -147,10 +147,10 @@ pub struct FlowScreen {
 }
 
 impl FlowScreen {
-    /// `New Game`: the mode screen first.
-    pub fn new_game() -> Self {
+    /// `New Game`: the mode screen first, in `ctx`'s language.
+    pub fn new_game(ctx: &Ctx) -> Self {
         Self {
-            stage: Stage::Mode(ModeSelectScreen::new()),
+            stage: Stage::Mode(ModeSelectScreen::new(ctx)),
             campaign: None,
             chapter: None,
             fight: None,
@@ -165,7 +165,7 @@ impl FlowScreen {
     /// `Load Game`: the slot picker first. Going back from it ends the
     /// flow.
     pub fn load_game(ctx: &Ctx) -> Self {
-        let mut flow = Self::new_game();
+        let mut flow = Self::new_game(ctx);
         flow.stage = Stage::Slots(Box::new(SlotPickerScreen::load(ctx)));
         flow
     }
@@ -200,7 +200,7 @@ impl FlowScreen {
         let _ = ctx.storage.delete(SUSPEND_KEY);
         // The battle's music again (a pool picks afresh).
         play_battle_music(ctx, &def);
-        let mut flow = Self::new_game();
+        let mut flow = Self::new_game(ctx);
         flow.adopt(ctx, campaign);
         flow.chapter = Some(chapter);
         let look = ctx.content.map_look(&def.map);
@@ -217,7 +217,7 @@ impl FlowScreen {
         let def = ctx.content.battles.get(&chapter.battle)?;
         let mut campaign = battle_campaign(&ctx.content, def, GameMode::Classic, ctx.lead.clone());
         QUICK_CHAPTER.clone_into(&mut campaign.chapter);
-        let mut flow = Self::new_game();
+        let mut flow = Self::new_game(ctx);
         flow.can_leave = true;
         flow.begin(ctx, campaign);
         Some(flow)
@@ -302,6 +302,7 @@ impl FlowScreen {
     /// and its playtime counts on from what it had.
     fn adopt(&mut self, ctx: &mut Ctx, campaign: Campaign) {
         ctx.lead = campaign.lead.clone();
+        ctx.campaign_mode = Some(campaign.mode);
         #[expect(clippy::cast_precision_loss, reason = "exact below 2^53 s")]
         let played = campaign.playtime_s as f64;
         self.started_at = ctx.clock_s - played;
@@ -339,28 +340,41 @@ impl FlowScreen {
 
     /// Plays the next scene waiting, or goes on to what follows them.
     /// Scenes missing from the content (validation rules it out) are
-    /// skipped.
+    /// skipped, and so is one with nothing to say for the army as it is
+    /// (every line of it was someone's who is gone, ADR-0055).
     fn next_scene(&mut self, ctx: &mut Ctx) {
         while let Some(id) = self.scenes.pop_front() {
-            if let Some(scene) = ctx.content.dialogue.get(&id) {
-                self.play(scene.clone(), ctx);
+            if let Some(scene) = ctx.content.dialogue.get(&id)
+                && self.play(scene, ctx)
+            {
                 return;
             }
         }
         match self.then {
             Then::Battle => self.start_battle(ctx),
             // The chapter is over: the save prompt, then the next one.
-            Then::NextChapter => self.stage = Stage::SavePrompt(SavePromptScreen::new()),
+            Then::NextChapter => self.stage = Stage::SavePrompt(SavePromptScreen::new(ctx)),
         }
     }
 
-    fn play(&mut self, scene: Scene, ctx: &Ctx) {
+    /// Plays `scene` for the army as it is: the characters in the
+    /// campaign's roster are there (ADR-0055), so a companion who died in
+    /// Classic isn't, and one who retreated in Casual is. Returns `false`,
+    /// playing nothing, if the scene has nothing to say for them.
+    fn play(&mut self, scene: &Scene, ctx: &Ctx) -> bool {
         let lead = self
             .campaign
             .as_ref()
             .map_or_else(|| ctx.lead.clone(), |c| c.lead.clone());
-        let names = ctx.content.names.clone();
-        self.stage = Stage::Scene(Box::new(DialogueScreen::new(scene, lead, names)));
+        let present = self.campaign.as_ref().map_or(Present::Everyone, |c| {
+            Present::only(c.roster.iter().filter_map(|u| u.character.clone()))
+        });
+        let screen = DialogueScreen::told(ctx, scene, lead, &present);
+        let plays = screen.has_text();
+        if plays {
+            self.stage = Stage::Scene(Box::new(screen));
+        }
+        plays
     }
 
     /// Starts the chapter's battle with the campaign's army.
@@ -449,7 +463,7 @@ impl FlowScreen {
             self.won(ctx, &battle);
         } else {
             ctx.audio.stop_music();
-            self.stage = Stage::GameOver(GameOverScreen::new());
+            self.stage = Stage::GameOver(GameOverScreen::new(ctx));
         }
         false
     }
@@ -468,7 +482,7 @@ impl FlowScreen {
         match written {
             Ok(()) => true,
             Err(e) => {
-                battle.suspend_failed(e.to_string());
+                battle.suspend_failed(e.text(ctx));
                 self.stage = Stage::Battle(battle);
                 false
             }
@@ -484,7 +498,8 @@ impl FlowScreen {
             let unused = battle.history().charges_left();
             self.rewards = campaign.apply_result(&fight.def, state, unused).ok();
             let charges = fight.prep.setup.rewind_charges;
-            let screen = |r| ResultsScreen::new(r, state, charges, campaign.gold);
+            let told = (state, ctx.words());
+            let screen = |r| ResultsScreen::new(r, told, charges, campaign.gold);
             results = self.rewards.as_ref().map(screen);
         }
         self.scenes = self
@@ -528,7 +543,7 @@ impl FlowScreen {
                     let campaign = new_campaign(&ctx.content, mode, lead.clone());
                     self.begin(ctx, campaign);
                 }
-                None => self.stage = Stage::Mode(ModeSelectScreen::new()),
+                None => self.stage = Stage::Mode(ModeSelectScreen::new(ctx)),
             },
             Stage::Scene(_) | Stage::Results(_) => self.next_scene(ctx),
             Stage::Preparations(p) => return self.prepared(&p),
@@ -551,13 +566,39 @@ impl FlowScreen {
                     Some(SlotOutcome::Loaded(_, file)) => self.begin_loaded(ctx, file.campaign),
                     // Back from saving: the question again. Back from
                     // loading: the title.
-                    None if saving => self.stage = Stage::SavePrompt(SavePromptScreen::new()),
+                    None if saving => self.stage = Stage::SavePrompt(SavePromptScreen::new(ctx)),
                     None => return true,
                 }
             }
             Stage::ToBeContinued(_) => return true,
         }
         false
+    }
+
+    /// Keeps the campaign's mode and [`Ctx::campaign_mode`] in step, and
+    /// opens the switch to Casual only at Preparations
+    /// ([`Ctx::mode_switch`]): a switch made on the Options screen
+    /// there (0805) goes into the campaign and into the battle being
+    /// prepared, so it starts (and restarts) in Casual.
+    fn sync_mode(&mut self, ctx: &mut Ctx) {
+        let Some(campaign) = &mut self.campaign else {
+            ctx.campaign_mode = None;
+            ctx.mode_switch = ModeSwitch::Closed;
+            return;
+        };
+        if ctx.campaign_mode == Some(GameMode::Casual) && campaign.downgrade_mode() {
+            if let Some(fight) = &mut self.fight {
+                fight.prep.setup.mode = GameMode::Casual;
+            }
+            if let Stage::Preparations(screen) = &mut self.stage {
+                screen.switch_to_casual();
+            }
+        }
+        ctx.campaign_mode = Some(campaign.mode);
+        ctx.mode_switch = match self.stage {
+            Stage::Preparations(_) => ModeSwitch::Open,
+            _ => ModeSwitch::Closed,
+        };
     }
 
     /// Brings the campaign's playtime up to date.
@@ -585,14 +626,19 @@ impl Screen for FlowScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         self.count_playtime(ctx);
+        self.sync_mode(ctx);
         match self.screen_mut().update(ctx, input) {
             Transition::Pop => {
                 if self.advance(ctx) {
+                    // Back to the title: no campaign.
+                    ctx.campaign_mode = None;
+                    ctx.mode_switch = ModeSwitch::Closed;
                     return Transition::Pop;
                 }
                 Transition::None
             }
-            // The flow's screens only push overlays (a battle's scenes).
+            // The flow's screens only push screens over themselves (a
+            // battle's scenes, the map menu's and Preparations' Options).
             other => other,
         }
     }

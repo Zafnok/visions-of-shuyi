@@ -229,7 +229,8 @@ impl BattleState {
     /// Carries out a validated talk with trigger `index`: its scene.
     pub(super) fn talk(&mut self, index: usize, events: &mut Vec<Event>) {
         if let Some(trigger) = self.triggers.get(index).cloned() {
-            self.fire(index, &trigger, events);
+            let on_map = self.units.iter().map(|u| u.id).collect();
+            self.fire(index, &trigger, &on_map, events);
         }
     }
 
@@ -254,14 +255,45 @@ impl BattleState {
         trigger.once && self.fired.contains(&index)
     }
 
-    /// Records trigger `index` as fired (if once) and emits its scene.
-    fn fire(&mut self, index: usize, trigger: &Trigger, events: &mut Vec<Event>) {
+    /// Records trigger `index` as fired (if once) and emits its scene,
+    /// with the characters of the units `on_map` at that moment.
+    fn fire(
+        &mut self,
+        index: usize,
+        trigger: &Trigger,
+        on_map: &BTreeSet<UnitId>,
+        events: &mut Vec<Event>,
+    ) {
         if trigger.once {
             self.fired.insert(index);
         }
+        let present = on_map
+            .iter()
+            .filter_map(|&id| self.character_of(id))
+            .collect();
         events.push(Event::SceneTriggered {
             scene: trigger.scene.clone(),
+            present,
         });
+    }
+
+    /// The units on the map before `events` (one command's) happened:
+    /// those on it now and those that fell, less those that arrived.
+    pub(super) fn on_map_before(&self, events: &[Event]) -> BTreeSet<UnitId> {
+        let mut on_map: BTreeSet<UnitId> = self.units.iter().map(|u| u.id).collect();
+        for event in events {
+            if let Event::UnitFell { unit } = event {
+                on_map.insert(*unit);
+            }
+        }
+        for event in events {
+            if let Event::UnitsArrived { units } = event {
+                for unit in units {
+                    on_map.remove(unit);
+                }
+            }
+        }
+        on_map
     }
 
     /// Inserts the scenes the triggers fire into `events` (one command's,
@@ -275,6 +307,8 @@ impl BattleState {
         if self.triggers.is_empty() {
             return events;
         }
+        // Who is on the map as the events go by, for the scenes' casts.
+        let mut on_map = self.on_map_before(&events);
         let mut out = Vec::with_capacity(events.len());
         for event in events {
             match &event {
@@ -286,15 +320,16 @@ impl BattleState {
                 } => {
                     let (a, d) = (*attacker, *defender);
                     let left = [(a, outcome.attacker_hp), (d, outcome.defender_hp)];
-                    self.combat_scene(a, d, &mut out);
+                    self.combat_scene(a, d, &on_map, &mut out);
                     out.push(event);
                     for (id, hp) in left {
-                        self.half_hp_scenes(id, hp, &mut out);
+                        self.half_hp_scenes(id, hp, &on_map, &mut out);
                     }
                 }
                 Event::UnitFell { unit } => {
                     let unit = *unit;
-                    let recruit = self.fall_scenes(unit, &mut out);
+                    let recruit = self.fall_scenes(unit, &on_map, &mut out);
+                    on_map.remove(&unit);
                     out.push(event);
                     if recruit && let Some(u) = self.any_unit(unit).cloned() {
                         self.recruited.push(u);
@@ -304,14 +339,18 @@ impl BattleState {
                 Event::PhaseStarted { turn, phase } => {
                     let (turn, phase) = (*turn, *phase);
                     out.push(event);
-                    self.fire_matching(&mut out, |when| {
+                    self.fire_matching(&on_map, &mut out, |when| {
                         *when == TriggerWhen::TurnStart { turn, phase }
                     });
                 }
                 Event::UnitMoved { unit, path } => {
                     let (unit, end) = (*unit, path.last().copied());
                     out.push(event);
-                    self.area_scenes(unit, end, &mut out);
+                    self.area_scenes(unit, end, &on_map, &mut out);
+                }
+                Event::UnitsArrived { units } => {
+                    on_map.extend(units.iter().copied());
+                    out.push(event);
                 }
                 _ => out.push(event),
             }
@@ -323,6 +362,7 @@ impl BattleState {
     /// holds. Returns whether one of them recruits.
     fn fire_matching(
         &mut self,
+        on_map: &BTreeSet<UnitId>,
         events: &mut Vec<Event>,
         test: impl Fn(&TriggerWhen) -> bool,
     ) -> bool {
@@ -330,7 +370,7 @@ impl BattleState {
         for i in 0..self.triggers.len() {
             let trigger = self.triggers[i].clone();
             if test(&trigger.when) && !self.spent(i, &trigger) {
-                self.fire(i, &trigger, events);
+                self.fire(i, &trigger, on_map, events);
                 recruits |= matches!(trigger.when, TriggerWhen::UnitFell { recruit: true, .. });
             }
         }
@@ -343,12 +383,17 @@ impl BattleState {
     }
 
     /// The scenes of unit `id` falling. Returns whether one recruits it.
-    fn fall_scenes(&mut self, id: UnitId, events: &mut Vec<Event>) -> bool {
+    fn fall_scenes(
+        &mut self,
+        id: UnitId,
+        on_map: &BTreeSet<UnitId>,
+        events: &mut Vec<Event>,
+    ) -> bool {
         let Some(character) = self.character_of(id) else {
             return false;
         };
         let mode = self.mode;
-        self.fire_matching(events, |when| {
+        self.fire_matching(on_map, events, |when| {
             matches!(when, TriggerWhen::UnitFell { unit, mode: m, .. }
                 if *unit == character && m.is_none_or(|m| m == mode))
         })
@@ -356,7 +401,13 @@ impl BattleState {
 
     /// The scenes of unit `id` left with `hp` HP by a combat: its
     /// [`TriggerWhen::HalfHp`]s, if it stands at half its max HP or less.
-    fn half_hp_scenes(&mut self, id: UnitId, hp: StatValue, events: &mut Vec<Event>) {
+    fn half_hp_scenes(
+        &mut self,
+        id: UnitId,
+        hp: StatValue,
+        on_map: &BTreeSet<UnitId>,
+        events: &mut Vec<Event>,
+    ) {
         let Some(unit) = self.any_unit(id) else {
             return;
         };
@@ -365,17 +416,24 @@ impl BattleState {
             return;
         };
         self.fire_matching(
+            on_map,
             events,
             |when| matches!(when, TriggerWhen::HalfHp { unit } if *unit == character),
         );
     }
 
     /// The scenes of unit `id` ending a move on `end`.
-    fn area_scenes(&mut self, id: UnitId, end: Option<Pos>, events: &mut Vec<Event>) {
+    fn area_scenes(
+        &mut self,
+        id: UnitId,
+        end: Option<Pos>,
+        on_map: &BTreeSet<UnitId>,
+        events: &mut Vec<Event>,
+    ) {
         let (Some(end), Some(unit)) = (end, self.any_unit(id).cloned()) else {
             return;
         };
-        self.fire_matching(events, |when| {
+        self.fire_matching(on_map, events, |when| {
             matches!(when, TriggerWhen::UnitEntersArea { who, area }
                 if area.contains(end) && who.matches(&unit))
         });
@@ -386,7 +444,13 @@ impl BattleState {
     /// ([`TriggerWhen::CombatStart`] with `against`, either way round), the
     /// first of those not played; else the first not played of either
     /// fighter's scenes against anyone.
-    fn combat_scene(&mut self, a: UnitId, b: UnitId, events: &mut Vec<Event>) {
+    fn combat_scene(
+        &mut self,
+        a: UnitId,
+        b: UnitId,
+        on_map: &BTreeSet<UnitId>,
+        events: &mut Vec<Event>,
+    ) {
         let (ca, cb) = (self.character_of(a), self.character_of(b));
         let fighter = |c: &CharacterId| Some(c) == ca.as_ref() || Some(c) == cb.as_ref();
         let pair_of = |when: &TriggerWhen| match when {
@@ -411,7 +475,7 @@ impl BattleState {
             .find(|&i| fits(&self.triggers[i].when) && !self.spent(i, &self.triggers[i]));
         if let Some(i) = first {
             let trigger = self.triggers[i].clone();
-            self.fire(i, &trigger, events);
+            self.fire(i, &trigger, on_map, events);
         }
     }
 }

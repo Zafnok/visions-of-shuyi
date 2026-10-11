@@ -17,6 +17,7 @@ use crate::input::Action;
 use crate::map_view::RangeKind;
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
+use crate::words::Words;
 
 fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)
@@ -214,10 +215,10 @@ fn the_preview_line_shows_hp_before_and_after_capped_at_max() {
         let groups = pack_groups(&state, UnitId(1), p(3, 5));
         (sel, groups)
     };
-    let menu = super::items::pack_menu(&state, &groups);
+    let menu = super::items::pack_menu(&state, Words::ENGLISH, &groups);
     let mut t = ItemTargeting::new(sel.clone(), menu.clone(), groups.clone(), 0).unwrap();
     // The potion on the lord, 4 down: only 4 restored.
-    let line = t.preview(&state);
+    let line = t.preview(&state, Words::ENGLISH);
     assert_eq!(
         line,
         format!(
@@ -227,7 +228,7 @@ fn the_preview_line_shows_hp_before_and_after_capped_at_max() {
     );
     t.cycle(true);
     assert_eq!(
-        t.preview(&state),
+        t.preview(&state, Words::ENGLISH),
         format!(
             "Potion on {}: HP {} → {}",
             knight.name,
@@ -237,7 +238,11 @@ fn the_preview_line_shows_hp_before_and_after_capped_at_max() {
     );
     // The elixir restores all.
     let elixir = ItemTargeting::new(sel, menu, groups, 1).unwrap();
-    assert!(elixir.preview(&state).starts_with("Elixir on "));
+    assert!(
+        elixir
+            .preview(&state, Words::ENGLISH)
+            .starts_with("Elixir on ")
+    );
 }
 
 #[test]
@@ -430,7 +435,7 @@ fn cycling_back_wraps_over_three_targets() {
     let s = battle_packed(&c, map, units, rout, 0, pack);
     let sel = super::mode::Selection::new(&s, UnitId(1)).unwrap();
     let groups = pack_groups(&s, UnitId(1), p(3, 5));
-    let menu = super::items::pack_menu(&s, &groups);
+    let menu = super::items::pack_menu(&s, Words::ENGLISH, &groups);
     let mut t = ItemTargeting::new(sel, menu, groups, 0).unwrap();
     // Row order: the lord (3, 5), the knight (4, 5), the archer (3, 6).
     assert_eq!(t.targets(), [UnitId(1), UnitId(2), UnitId(3)]);
@@ -565,4 +570,61 @@ fn the_scene_marks_who_an_item_can_target() {
     assert_eq!(scene.tinted(RangeKind::Heal), [p(3, 4)]);
     assert_eq!(scene.unit(UnitId(1)).map(|u| u.pos), Some(p(3, 4)));
     assert_eq!(scene.cursor.map(|c| c.pos), Some(p(3, 4)));
+}
+
+/// The pack list is painted in the player's language (ticket 0235), and
+/// so is the line that previews an item's use.
+#[test]
+fn the_pack_list_and_the_preview_are_told_in_the_players_language() {
+    use crate::words::testing::{shout, shouting};
+
+    let mut c = ctx();
+    let (lang, code) = (shouting(&c.content), shout());
+    let words = Words::new(&lang, &code);
+    let state = hurt_pair(&c, 4, 15, &["potion", "elixir"]);
+    let mut s = lord_menu(&mut c, state);
+    for _ in 0..8 {
+        let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+            break;
+        };
+        let on_item = entries.get(menu.focus()) == Some(&MenuEntry::Item);
+        let action = if on_item {
+            Action::Confirm
+        } else {
+            Action::CursorDown
+        };
+        step(&mut s, &mut c, &[action]);
+    }
+    step(&mut s, &mut c, &[Action::CursorDown]);
+    let Mode::ItemMenu { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    let labels = |menu: &crate::widgets::menu::Menu| -> Vec<String> {
+        menu.items().iter().map(|i| i.label.clone()).collect()
+    };
+    assert!(labels(menu)[0].starts_with("Potion"), "{:?}", labels(menu));
+    let told = s.mode().told(s.state(), words).into_owned();
+    let Mode::ItemMenu { menu: theirs, .. } = &told else {
+        panic!("{told:?}");
+    };
+    assert!(
+        labels(theirs)[0].starts_with("POTION"),
+        "{:?}",
+        labels(theirs)
+    );
+    assert!(labels(theirs)[1].starts_with("ELIXIR"));
+    assert_eq!((theirs.focus(), menu.focus()), (1, 1));
+    // Using it: the preview names the item and who it is used on.
+    step(&mut s, &mut c, &[Action::CursorUp, Action::Confirm]);
+    let Mode::ItemTarget(t) = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    assert_eq!(
+        t.preview(s.state(), Words::ENGLISH),
+        "Potion on Test Lord: HP 15 → 19"
+    );
+    assert_eq!(
+        t.preview(s.state(), words),
+        "POTION on TEST LORD: HP 15 → 19"
+    );
 }

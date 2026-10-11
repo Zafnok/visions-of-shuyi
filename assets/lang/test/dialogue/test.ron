@@ -1,0 +1,42 @@
+// The test pack's lines for the scene `test` of assets/dialogue/test.dlg
+// (ticket 0235): each the English in capitals. `cargo xtask lines test`
+// lists the scene's line ids. The lines not here show in English.
+[
+    (key: "caption.test_18a7341c", source: "Village of Heth, dusk", text: "VILLAGE OF HETH, DUSK"),
+    (
+        key: "test_5da5d147",
+        source: "The rain had not stopped for three days.",
+        text: "THE RAIN HAD NOT STOPPED FOR THREE DAYS.",
+    ),
+    (key: "test_21833604", source: "You're late.", text: "YOU'RE LATE."),
+    // A translation may name someone English doesn't: the token is filled
+    // with the pack's name (data.ron), TEST KNIGHT.
+    (
+        key: "test_01439969",
+        source: "Was that about me?",
+        text: "WAS THAT ABOUT ME, {n:test_knight}?",
+    ),
+    (
+        key: "test_855189a1",
+        source: "{lead}! You came back for us.",
+        text: "{lead}! YOU CAME BACK FOR US.",
+    ),
+    // A reply.
+    (
+        key: "test_ee965a73",
+        source: "I said I would. I keep my word.",
+        text: "I SAID I WOULD. I KEEP MY WORD.",
+    ),
+    // One text per gender of the lead, for a language where the lead's
+    // gender changes more than a pronoun.
+    (
+        key: "test_4ea176cf",
+        source: "{lead} tightens {their} grip on the sword. {They} won't lose anyone today.",
+        text_m: "{lead} TIGHTENS HIS GRIP ON THE SWORD. HE WON'T LOSE ANYONE TODAY.",
+        text_f: "{lead} TIGHTENS HER GRIP ON THE SWORD. SHE WON'T LOSE ANYONE TODAY.",
+    ),
+    // Kept on purpose: an orphan. English no longer has this line (it was
+    // reworded to "It's always about you."), so `lang-status` pairs it
+    // with that one.
+    (key: "test_00000000", source: "It is always about you.", text: "IT IS ALWAYS ABOUT YOU."),
+]

@@ -1,6 +1,6 @@
 # ADR-0045: Languages: text by key, dialogue lines by id, wide glyphs in two cells
 
-- **Status:** Accepted (§1–2 built by ticket 0233, §3 by ticket 0717; the details each settled are marked *0233* and *As built (ticket 0717)*)
+- **Status:** Accepted (§1–2 built by tickets 0233 and 0235, §3 by ticket 0717; the details each settled are marked *0233*, *0235* and *As built (ticket 0717)*)
 - **Date:** 2026-10-03
 - **Related tickets:** 0042, 0233, 0234, 0235, 0236, 0237, 0717, 0718, 0719, 0723, 0825, 0907
 - **Amends:** ADR-0016 (the atlas gains 16×16 glyphs from a second font) and
@@ -56,6 +56,20 @@ make an entry stale, never fail a gate. Until 0235 adds `data.ron` and
 stale and one missing entry kept on purpose); it is in the bundle but
 only counts where debug tools are on, and is never offered to players.
 
+*0235:* `data.ron` and `dialogue/<file>.ron` are optional; a pack's
+dialogue files may be split any way (a key is used once in the pack).
+`assets/lang/README.md` lists every key. A `data.ron` entry follows the
+`ui.ron` rules (an unknown key is an error). A dialogue entry does not:
+rewording an English line gives it a new id, so its old entry is an
+**orphan**, shown nowhere and failing nothing, which `lang-status` pairs
+with the untranslated line of its scene whose English is nearest. A
+dialogue entry has `text`, or `text_m` and `text_f` (one per gender of the
+lead). Its text follows the token rule of English scripts and the length
+limits of text boxes and replies, counted in cells by one function
+(`lang::text_width`, one cell per character until §4 is built); it need
+not use the tokens of its `source`. `Content.lang` is shared (`Arc`), so
+a screen can keep its language between frames.
+
 ### 2. Keys
 
 | Text | Key | English lives in |
@@ -75,6 +89,19 @@ text still written as literals in `crates/ui/src` and fails on a new one. A key 
 English file lacks panics in debug builds, like an unknown audio cue
 (ADR-0026), so a typo fails a test. Only `ui` and `content` know about
 languages; `core` holds no player-facing text.
+
+*0235:* a battle note's key is `battles.<id>.note_<n>`, a chapter title's
+`chapters.<id>.title`, a caption's `caption.<scene>_<8 hex>` (hashed like
+a line id). `core` still carries English names (a unit's, a class's, an
+item's) as data, and saves keep them; it never decides what is shown.
+Screens show every data text through `ctx.words()` (`trpg_ui::Words`),
+which is handed today's English and gives the pack's text only when its
+entry was made from exactly that; `check-text` fails on a screen reading
+a `name` field itself. A unit is named by who it is: a named character by
+`names.<id>`, a generic unit by its class, the lead by the player. The
+battle's own menus are built in English, since playing only needs their
+focus and which lines can be picked; the screen paints them in the
+player's language (`Mode::told`).
 
 ### 3. Dialogue line ids
 

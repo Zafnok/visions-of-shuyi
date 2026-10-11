@@ -37,14 +37,14 @@ steps (each may repeat):
 options:
   --layout right|left  the key layout picked before (default right)
   --scale N            whole-number scale, 1 to 8 (default 2)
-  --web                start as the web build does (the title waits for a key)
+  --prompt             start as the game does (the title waits for a key or button)
 
 Key and button names are the Harness's test-script names (Chord::parse,
 Button::parse), as in crates/ui/tests: input to a test script, not game
 code, so the never-hard-code-a-key rule doesn't apply to them.
 
-With the private-assets feature the picture shows the bought art: never
-commit it (ADR-0040).";
+With the private-assets feature the picture shows the bought art: commit
+it only as a screenshot of the game (CLAUDE.md, Bought art).";
 
 /// Largest `--scale`.
 const MAX_SCALE: u32 = 8;
@@ -74,8 +74,8 @@ pub struct Options {
     pub layout: Layout,
     /// Pixels per console pixel.
     pub scale: u32,
-    /// Start as the web build does.
-    pub web: bool,
+    /// Start as the game does: the title waits for a key or button.
+    pub prompt: bool,
 }
 
 /// Parses `frame-png`'s arguments, checking key and button names up front
@@ -87,7 +87,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
         steps: Vec::new(),
         layout: Layout::RightHanded,
         scale: 2,
-        web: false,
+        prompt: false,
     };
     let mut iter = args.iter();
     while let Some(arg) = iter.next() {
@@ -137,7 +137,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
                         format!("--scale: a whole number 1 to {MAX_SCALE}, not {text}")
                     })?;
             }
-            "--web" => options.web = true,
+            "--prompt" => options.prompt = true,
             flag if flag.starts_with("--") => return Err(format!("unknown option: {flag}")),
             path if out.is_none() => out = Some(PathBuf::from(path)),
             extra => return Err(format!("one output path only, not also {extra}")),
@@ -150,8 +150,8 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
 /// Runs the command: plays the steps in a Harness, writes the frame under
 /// `root` (if `out` is relative) and returns what to print.
 pub fn run(root: &Path, options: &Options) -> Result<String, String> {
-    let mut h = if options.web {
-        Harness::on_web_with_layout(options.layout)
+    let mut h = if options.prompt {
+        Harness::at_prompt_with_layout(options.layout)
     } else {
         Harness::with_layout(options.layout)
     };
@@ -188,7 +188,7 @@ fn summary(shown: &str, frame: &Image, private_assets: bool) -> String {
     if private_assets {
         out.push_str(
             "
-warning: built with private-assets: the picture shows bought art;              never commit it (ADR-0040)",
+warning: built with private-assets: the picture shows bought art;              commit it only as a screenshot of the game (CLAUDE.md, Bought art)",
         );
     }
     out

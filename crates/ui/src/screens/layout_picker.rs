@@ -1,111 +1,81 @@
 //! The first-launch "Pick your layout" screen (`docs/design/controls.md`):
 //! one panel per [`Layout`] with a small keyboard diagram and a legend, both
-//! read from that layout's bindings.
+//! read from that layout's bindings. The Options screen opens it again to
+//! switch layout ([`LayoutPickerScreen::change`]).
+//!
+//! **The look is a skin** (ADR-0054). This module decides what the screen
+//! shows and does, and says it as plain data: a [`LayoutPickerView`]
+//! ([`LayoutPickerScreen::view`]), with each layout's legend and what each
+//! key of its keyboard does. [`glyph::paint`] draws that view as glyphs and
+//! decides where the keys sit. Tests of what happened read the view; only
+//! [`glyph`]'s tests read cells.
 
-use super::print_centred;
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+pub mod glyph;
+pub mod view;
+
+pub use view::{KeyCapView, KeyRole, LayoutPickerView, LayoutView, LegendRow};
+
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Chord, Key, Keymap, Layout};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{HelpKeys, all_key_names, cursor_keys_name, help_line, key_name};
+use crate::widgets::help::{HelpKeys, all_key_names, cursor_keys_name, key_name};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
-/// Title text.
-pub const TITLE: &str = "Pick your layout";
+/// The key of the title in the language files ([`Ctx::text`]).
+pub const TITLE: &str = "layout_picker.title";
+/// The key of the legend's word for the cursor keys: the line that is
+/// flagged as movement.
+const LEGEND_MOVE: &str = "layout_picker.legend.move";
 
-/// Row of the title.
-const TITLE_ROW: i32 = 1;
-/// Top row of the first panel.
-const FIRST_PANEL_ROW: i32 = 3;
-/// Panel size in cells, border included.
-const PANEL_W: i32 = 76;
-const PANEL_H: i32 = 13;
-/// Blank rows between panels.
-const PANEL_GAP: i32 = 1;
-
-/// Offsets inside a panel: the keyboard's left edge, its three rows, and
-/// the legend's column and first row.
-const KEYS_X: i32 = 3;
-const TOP_ROW_Y: i32 = 4;
-const HOME_ROW_Y: i32 = 5;
-const SPACE_ROW_Y: i32 = 7;
-const LEGEND_X: i32 = 50;
-const LEGEND_Y: i32 = 2;
-/// Width of the key column in the legend.
-const LEGEND_KEY_W: usize = 12;
-
-/// Width of one key cap, `[w]`.
-const CAP_W: i32 = 3;
-/// The two letter rows drawn, left to right as on a QWERTY keyboard. Which
-/// keys light up comes from the keymap ([`key_role`]), not from here.
-// check-keys: keyboard picture
-const TOP_ROW: [Key; 10] = [
-    Key::Q,
-    Key::W,
-    Key::E,
-    Key::R,
-    Key::T,
-    Key::Y,
-    Key::U,
-    Key::I,
-    Key::O,
-    Key::P,
-];
-// check-keys: keyboard picture
-const HOME_ROW: [Key; 10] = [
-    Key::A,
-    Key::S,
-    Key::D,
-    Key::F,
-    Key::G,
-    Key::H,
-    Key::J,
-    Key::K,
-    Key::L,
-    Key::Semicolon,
-];
-/// The arrow-key cluster's caps: the top one, then the bottom row.
-// check-keys: keyboard picture
-const UP_CAP: (Key, &str) = (Key::Up, "↑");
-// check-keys: keyboard picture
-const LOWER_ARROW_CAPS: [(Key, &str); 3] = [(Key::Left, "←"), (Key::Down, "↓"), (Key::Right, "→")];
-/// The space bar's key.
-// check-keys: keyboard picture
-const SPACE_BAR: Key = Key::Space;
-/// Left edge of the arrow-key cluster, right of the letter rows.
-const ARROWS_X: i32 = KEYS_X + 10 * CAP_W + 4;
-/// The space bar: left edge (under `d`) and width.
-const SPACE_X: i32 = KEYS_X + 1 + 2 * CAP_W;
-const SPACE_W: usize = 19;
-
-/// The name shown for a layout.
-pub fn label(layout: Layout) -> &'static str {
-    match layout {
-        Layout::RightHanded => "Right-handed",
-        Layout::LeftHanded => "Left-handed",
-    }
+/// The name shown for a layout, in `ctx`'s language.
+pub fn label(ctx: &Ctx, layout: Layout) -> &str {
+    ctx.text(match layout {
+        Layout::RightHanded => "layout_picker.right_handed",
+        Layout::LeftHanded => "layout_picker.left_handed",
+    })
 }
 
-/// Shows both layouts and saves the one picked. It can't be cancelled: the
-/// game needs a layout. Pops itself once a layout is picked.
+/// Shows both layouts and saves the one picked. Asked for by a key press
+/// while no layout is chosen, it can't be cancelled with a key (the
+/// keyboard needs a layout), but any controller button closes it without
+/// choosing: that player is on the controller. Pops itself once a layout
+/// is picked.
 #[derive(Debug, Clone)]
 pub struct LayoutPickerScreen {
     menu: Menu,
+    /// Whether Cancel backs out without changing anything (opened from
+    /// Options).
+    cancellable: bool,
 }
 
 impl LayoutPickerScreen {
+    /// Its [`Screen::name`].
+    pub const NAME: &'static str = "layout_picker";
+
     /// The picker with the first layout (right-handed) focused.
     pub fn new() -> Self {
         Self {
-            menu: Menu::new(
-                Layout::ALL
-                    .iter()
-                    .map(|&l| MenuItem::new(label(l)))
-                    .collect(),
-            )
             // A layout must be picked.
-            .without_cancel(),
+            menu: Self::menu().without_cancel(),
+            cancellable: false,
         }
+    }
+
+    /// The picker as Options opens it, to switch layout: the layout in use
+    /// focused, and Cancel backs out without changing anything.
+    pub fn change(ctx: &Ctx) -> Self {
+        let current = Layout::ALL.iter().position(|&l| Some(l) == ctx.layout());
+        Self {
+            menu: Self::menu().focused(current.unwrap_or(0)),
+            cancellable: true,
+        }
+    }
+
+    /// One line per layout. The menu only keeps the focus: it is never
+    /// drawn, so its lines have no text.
+    fn menu() -> Menu {
+        let items = Layout::ALL.iter().map(|_| MenuItem::new(String::new()));
+        Menu::new(items.collect())
     }
 
     /// The focused layout.
@@ -120,121 +90,116 @@ impl LayoutPickerScreen {
     /// Confirm key, from the active keymap (before any layout is chosen,
     /// the layout picker's own keys).
     pub fn help(ctx: &Ctx) -> String {
-        let km = ctx.help_keys();
-        let choose = Some(format!(
-            "{} {}",
-            all_key_names(km, Action::CursorUp),
-            all_key_names(km, Action::CursorDown)
-        ));
-        help_line(&[
-            (choose, "choose"),
-            (Some(all_key_names(km, Action::Confirm)), "pick"),
-        ])
+        Self::help_with(ctx, false)
     }
 
-    /// The legend for `km`: `(keys, what they do)`; an action with no key
-    /// shows `! not mapped`. Always its keyboard keys: the screen is about
-    /// the keyboard's layouts.
-    pub fn legend(km: &Keymap) -> Vec<(String, &'static str)> {
+    /// [`help`](Self::help); when the picker can be backed out of
+    /// (`cancellable`, from Options), the line that also names the Cancel
+    /// key.
+    fn help_with(ctx: &Ctx, cancellable: bool) -> String {
+        if cancellable {
+            return ctx.text_with("layout_picker.help_change", &[]);
+        }
+        let km = ctx.help_keys();
+        let up = all_key_names(km, Action::CursorUp);
+        let down = all_key_names(km, Action::CursorDown);
+        let confirm = all_key_names(km, Action::Confirm);
+        ctx.text_with(
+            "layout_picker.help_first",
+            &[("up", &up), ("down", &down), ("confirm", &confirm)],
+        )
+    }
+
+    /// The legend for `km`, in `ctx`'s language: the keys and what they
+    /// do; an action with no key shows `! not mapped`. Always its keyboard
+    /// keys: the screen is about the keyboard's layouts.
+    pub fn legend(ctx: &Ctx, km: &Keymap) -> Vec<LegendRow> {
         let km = HelpKeys::keyboard(km);
+        let row = |keys: String, what: &str| LegendRow {
+            keys,
+            what: ctx.text(what).to_owned(),
+            movement: what == LEGEND_MOVE,
+        };
         vec![
-            (cursor_keys_name(km), "move"),
-            (all_key_names(km, Action::Confirm), "select"),
-            (all_key_names(km, Action::Cancel), "back"),
-            (key_name(km, Action::PrevUnit), "prev unit"),
-            (key_name(km, Action::NextUnit), "next unit"),
-            (key_name(km, Action::Info), "unit info"),
-            (key_name(km, Action::DangerZone), "danger zone"),
-            (key_name(km, Action::EndTurn), "end turn"),
-            (key_name(km, Action::ToggleAutoEnd), "auto-end"),
-            (key_name(km, Action::Rewind), "rewind"),
+            row(cursor_keys_name(km), LEGEND_MOVE),
+            row(
+                all_key_names(km, Action::Confirm),
+                "layout_picker.legend.select",
+            ),
+            row(
+                all_key_names(km, Action::Cancel),
+                "layout_picker.legend.back",
+            ),
+            row(
+                key_name(km, Action::PrevUnit),
+                "layout_picker.legend.prev_unit",
+            ),
+            row(
+                key_name(km, Action::NextUnit),
+                "layout_picker.legend.next_unit",
+            ),
+            row(key_name(km, Action::Info), "layout_picker.legend.unit_info"),
+            row(
+                key_name(km, Action::DangerZone),
+                "layout_picker.legend.danger_zone",
+            ),
+            row(
+                key_name(km, Action::EndTurn),
+                "layout_picker.legend.end_turn",
+            ),
+            row(
+                key_name(km, Action::ToggleAutoEnd),
+                "layout_picker.legend.auto_end",
+            ),
+            row(key_name(km, Action::Rewind), "layout_picker.legend.rewind"),
         ]
     }
 
-    /// Draws `layout`'s panel with its top-left corner at `(x, y)`.
-    fn draw_panel(ctx: &Ctx, buf: &mut GlyphBuffer, layout: Layout, focused: bool, x: i32, y: i32) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let rect = Rect::new(x, y, PANEL_W, PANEL_H);
-        buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-        let (style, border, title) = if focused {
-            (
-                BoxStyle::Double,
-                c(UiColor::PanelBorderFocus),
-                format!(" ► {} ", label(layout)),
-            )
-        } else {
-            (
-                BoxStyle::Single,
-                c(UiColor::PanelBorder),
-                format!(" {} ", label(layout)),
-            )
-        };
-        buf.draw_box(rect, style, border, bg);
-        let title_fg = if focused {
-            c(UiColor::TextHighlight)
-        } else {
-            c(UiColor::Text)
-        };
-        buf.print(x + 2, y, &title, title_fg, bg);
-
-        let km = ctx.keymap_for(layout);
-        let cap_fg = |key| c(key_role(&km, key));
-        let dim = c(UiColor::TextDim);
-        let mut cap = |cx: i32, cy: i32, key: Key, glyph: &str| {
-            buf.print(cx, cy, "[", dim, bg);
-            buf.print(cx + 1, cy, glyph, cap_fg(key), bg);
-            buf.print(cx + 2, cy, "]", dim, bg);
-        };
-        for (col, key) in (0..).zip(TOP_ROW) {
-            cap(x + KEYS_X + col * CAP_W, y + TOP_ROW_Y, key, key.name());
-        }
-        for (col, key) in (0..).zip(HOME_ROW) {
-            cap(
-                x + KEYS_X + 1 + col * CAP_W,
-                y + HOME_ROW_Y,
-                key,
-                key.name(),
-            );
-        }
-        let (up, up_glyph) = UP_CAP;
-        cap(x + ARROWS_X + CAP_W, y + TOP_ROW_Y, up, up_glyph);
-        for (col, (key, glyph)) in (0..).zip(LOWER_ARROW_CAPS) {
-            cap(x + ARROWS_X + col * CAP_W, y + HOME_ROW_Y, key, glyph);
-        }
-        let space = format!("[{:^w$}]", SPACE_BAR.name(), w = SPACE_W - 2);
-        buf.print(x + SPACE_X, y + SPACE_ROW_Y, &space, dim, bg);
-        let name_x = x + SPACE_X + (i32::try_from(SPACE_W).unwrap_or(0) - 5) / 2;
-        buf.print(
-            name_x,
-            y + SPACE_ROW_Y,
-            SPACE_BAR.name(),
-            cap_fg(SPACE_BAR),
-            bg,
-        );
-
-        for (row, (keys, what)) in (y + LEGEND_Y..).zip(Self::legend(&km)) {
-            let fg = if what == "move" {
-                c(UiColor::Player)
-            } else {
-                c(UiColor::TextHighlight)
-            };
-            buf.print(x + LEGEND_X, row, &keys, fg, bg);
-            let what_x = x + LEGEND_X + i32::try_from(LEGEND_KEY_W).unwrap_or(0);
-            buf.print(what_x, row, what, c(UiColor::Text), bg);
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint`]): each layout with its legend and what every key
+    /// of its keyboard does, the one in focus, and the help line.
+    pub fn view(&self, ctx: &Ctx) -> LayoutPickerView {
+        let focused = self.focused();
+        let layouts = Layout::ALL.iter().map(|&layout| {
+            let km = ctx.keymap_for(layout);
+            LayoutView {
+                layout,
+                name: label(ctx, layout).to_owned(),
+                focused: layout == focused,
+                legend: Self::legend(ctx, &km),
+                keys: key_caps(&km),
+            }
+        });
+        LayoutPickerView {
+            title: ctx.text(TITLE).to_owned(),
+            layouts: layouts.collect(),
+            help: Self::help_with(ctx, self.cancellable),
         }
     }
 }
 
-/// The colour a key cap's label gets in `km`: movement keys `player`,
-/// other bound keys `text_highlight`, unbound keys `text_dim`.
+/// What `key` does in `km`: moves the cursor (a key that repeats), does
+/// something else, or nothing.
 // check-keys: keyboard picture
-fn key_role(km: &Keymap, key: Key) -> UiColor {
+fn key_role(km: &Keymap, key: Key) -> KeyRole {
     match km.action(Chord::plain(key)) {
-        Some(action) if action.is_repeatable() => UiColor::Player,
-        Some(_) => UiColor::TextHighlight,
-        None => UiColor::TextDim,
+        Some(action) if action.is_repeatable() => KeyRole::Movement,
+        Some(_) => KeyRole::Bound,
+        None => KeyRole::Unbound,
     }
+}
+
+/// Every key of the keyboard with its role in `km`; a skin draws the ones
+/// its picture has.
+// check-keys: keyboard picture
+fn key_caps(km: &Keymap) -> Vec<KeyCapView> {
+    Key::ALL
+        .iter()
+        .map(|&key| KeyCapView {
+            key,
+            role: key_role(km, key),
+        })
+        .collect()
 }
 
 impl Default for LayoutPickerScreen {
@@ -245,180 +210,38 @@ impl Default for LayoutPickerScreen {
 
 impl Screen for LayoutPickerScreen {
     fn name(&self) -> &'static str {
-        "layout_picker"
+        Self::NAME
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        // Bound or not; the button does nothing else.
+        if !self.cancellable && input.pad_pressed() {
+            return Transition::Pop;
+        }
         for &action in &input.actions {
-            if let Some(MenuEvent::Chosen(i)) = self.menu.handle_with_sound(action, &mut ctx.audio)
-            {
-                let layout = Layout::ALL.get(i).copied().unwrap_or(Layout::RightHanded);
-                // If saving fails the layout is still used this session;
-                // the player is just asked again next launch.
-                let _ = ctx.choose_layout(layout);
-                return Transition::Pop;
+            match self.menu.handle_with_sound(action, &mut ctx.audio) {
+                Some(MenuEvent::Chosen(i)) => {
+                    let layout = Layout::ALL.get(i).copied().unwrap_or(Layout::RightHanded);
+                    // If saving fails the layout is still used this
+                    // session; the player is just asked again next launch.
+                    let _ = ctx.choose_layout(layout);
+                    return Transition::Pop;
+                }
+                Some(MenuEvent::Cancelled) => return Transition::Pop,
+                None => {}
             }
         }
         Transition::None
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        print_centred(buf, TITLE_ROW, TITLE, c(UiColor::TextHighlight), black);
-        let x = (i32::from(buf.width()) - PANEL_W) / 2;
-        for (i, layout) in (0..).zip(Layout::ALL) {
-            let y = FIRST_PANEL_ROW + i * (PANEL_H + PANEL_GAP);
-            Self::draw_panel(ctx, buf, layout, layout == self.focused(), x, y);
-        }
-        let bottom = i32::from(buf.height()) - 1;
-        print_centred(buf, bottom, &Self::help(ctx), c(UiColor::TextDim), black);
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
-    use crate::screen::tests::ctx;
-    use crate::widgets::help::NOT_MAPPED;
-
-    fn input(actions: &[Action]) -> FrameInput {
-        FrameInput::new(actions.to_vec(), 0.0, vec![])
-    }
-
-    fn first_launch_ctx() -> Ctx {
-        Ctx::embedded().unwrap()
-    }
-
-    #[test]
-    fn down_and_confirm_pick_left_handed_and_save_it() {
-        let mut c = first_launch_ctx();
-        let mut p = LayoutPickerScreen::new();
-        assert_eq!(p.name(), "layout_picker");
-        assert_eq!(p.focused(), Layout::RightHanded);
-        let t = p.update(&mut c, &input(&[Action::CursorDown]));
-        assert_eq!(format!("{t:?}"), "None");
-        assert_eq!(p.focused(), Layout::LeftHanded);
-        assert_eq!(c.layout(), None);
-        let t = p.update(&mut c, &input(&[Action::Confirm]));
-        assert_eq!(format!("{t:?}"), "Pop");
-        assert_eq!(c.layout(), Some(Layout::LeftHanded));
-        assert_eq!(c.saved_layout(), Some(Layout::LeftHanded));
-    }
-
-    #[test]
-    fn confirm_picks_the_focused_layout() {
-        let mut c = first_launch_ctx();
-        let mut p = LayoutPickerScreen::new();
-        let t = p.update(
-            &mut c,
-            &input(&[Action::CursorUp, Action::CursorUp, Action::Confirm]),
-        );
-        assert_eq!(format!("{t:?}"), "Pop");
-        assert_eq!(c.saved_layout(), Some(Layout::RightHanded));
-    }
-
-    #[test]
-    fn cancel_and_other_actions_do_nothing() {
-        let mut c = first_launch_ctx();
-        let mut p = LayoutPickerScreen::default();
-        let t = p.update(
-            &mut c,
-            &input(&[Action::Cancel, Action::Info, Action::CursorLeft]),
-        );
-        assert_eq!(format!("{t:?}"), "None");
-        assert_eq!(c.layout(), None);
-        assert_eq!(p.focused(), Layout::RightHanded);
-    }
-
-    #[test]
-    fn help_names_the_picker_keys() {
-        assert_eq!(
-            LayoutPickerScreen::help(&first_launch_ctx()),
-            "w/Up s/Down choose · f/j/Enter/Space pick"
-        );
-        // Later (from Options) it names the chosen layout's keys.
-        assert_eq!(LayoutPickerScreen::help(&ctx()), "Up Down choose · f pick");
-    }
-
-    #[test]
-    fn legend_comes_from_each_layout() {
-        let def = &first_launch_ctx().content.keymap;
-        let legend = |l| {
-            LayoutPickerScreen::legend(&Keymap::for_layout(def, l))
-                .into_iter()
-                .map(|(k, w)| format!("{k} {w}"))
-                .collect::<Vec<_>>()
-        };
-        assert_eq!(
-            legend(Layout::RightHanded),
-            [
-                "arrows move",
-                "f select",
-                "d/Escape back",
-                "a prev unit",
-                "s next unit",
-                "e unit info",
-                "w danger zone",
-                "Space end turn",
-                "Shift+Space auto-end",
-                "r rewind",
-            ]
-        );
-        assert_eq!(
-            legend(Layout::LeftHanded),
-            [
-                "wasd move",
-                "j select",
-                "k/Escape back",
-                "; prev unit",
-                "l next unit",
-                "i unit info",
-                "o danger zone",
-                "Space end turn",
-                "Shift+Space auto-end",
-                "u rewind",
-            ]
-        );
-        let unbound = LayoutPickerScreen::legend(&Keymap::for_layout(
-            &trpg_content::KeymapDef::default(),
-            Layout::LeftHanded,
-        ));
-        assert_eq!(unbound.len(), 10);
-        assert!(unbound.iter().all(|(k, _)| k == NOT_MAPPED), "{unbound:?}");
-    }
-
-    #[test]
-    fn key_roles() {
-        let def = &first_launch_ctx().content.keymap;
-        let left = Keymap::for_layout(def, Layout::LeftHanded);
-        assert_eq!(key_role(&left, Key::W), UiColor::Player);
-        assert_eq!(key_role(&left, Key::J), UiColor::TextHighlight);
-        assert_eq!(key_role(&left, Key::Up), UiColor::TextDim);
-    }
-
-    #[test]
-    fn labels() {
-        assert_eq!(label(Layout::RightHanded), "Right-handed");
-        assert_eq!(label(Layout::LeftHanded), "Left-handed");
-    }
-
-    #[test]
-    fn covers_the_whole_buffer() {
-        let c = first_launch_ctx();
-        let stale = Cell::new(
-            'x',
-            c.palette.get(UiColor::Enemy),
-            c.palette.get(UiColor::Enemy),
-        );
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
-        LayoutPickerScreen::new().draw(&c, &mut buf);
-        let left = (0..i32::from(CONSOLE_H))
-            .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
-            .filter(|&(x, y)| buf.get(x, y) == Some(&stale))
-            .count();
-        assert_eq!(left, 0);
-    }
-}
+mod tests;

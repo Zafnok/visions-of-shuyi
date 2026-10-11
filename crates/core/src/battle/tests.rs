@@ -3170,7 +3170,7 @@ proptest! {
 fn scenes_placed(events: &[Event]) -> Result<Vec<usize>, TestCaseError> {
     let mut out = Vec::new();
     for (i, e) in events.iter().enumerate() {
-        let Event::SceneTriggered { scene } = e else {
+        let Event::SceneTriggered { scene, .. } = e else {
             continue;
         };
         out.push(scene[1..].parse().unwrap());

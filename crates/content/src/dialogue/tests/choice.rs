@@ -49,21 +49,17 @@ fn parses_choice_blocks() {
             say("test_lord", None, "Good."),
         ]
     );
-    assert_eq!(parsed[0].step_lines, [2, 3, 4, 11]);
+    assert_eq!(parsed[0].lines.steps, [2, 3, 4, 11]);
+    let part = |line, steps: &[u32]| PartLines {
+        line,
+        lines: Lines {
+            steps: steps.to_vec(),
+            blocks: vec![],
+        },
+    };
     assert_eq!(
-        parsed[0].choice_lines,
-        [ChoiceLines {
-            options: vec![
-                OptionLines {
-                    line: 5,
-                    step_lines: vec![6]
-                },
-                OptionLines {
-                    line: 7,
-                    step_lines: vec![8, 9]
-                },
-            ]
-        }]
+        parsed[0].lines.blocks,
+        [vec![part(5, &[6]), part(7, &[8, 9])]]
     );
     assert_eq!(errors(&src), Vec::<String>::new());
 }

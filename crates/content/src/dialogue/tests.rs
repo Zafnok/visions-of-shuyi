@@ -44,6 +44,12 @@ fn bare(steps: &[Step]) -> Vec<Step> {
                     o.steps = bare(&o.steps);
                 }
             }
+            Step::If {
+                then, otherwise, ..
+            } => {
+                *then = bare(then);
+                *otherwise = bare(otherwise);
+            }
             _ => {}
         }
     }
@@ -137,7 +143,7 @@ fn records_the_line_of_every_step() {
     let (parsed, _) = parse_dlg("t.dlg", "\n@scene a\n\n> one\n  more\nx: two\n@end\n");
     assert_eq!(parsed.len(), 1);
     assert_eq!(parsed[0].line, 2);
-    assert_eq!(parsed[0].step_lines, [4, 6]);
+    assert_eq!(parsed[0].lines.steps, [4, 6]);
     assert_eq!(parsed[0].file, "t.dlg");
 }
 
@@ -561,13 +567,16 @@ fn files_that_are_not_utf8() {
         load_files(&files, None, None, None, None)
             .map_err(|e| e.iter().map(ToString::to_string).collect::<Vec<_>>())
     };
-    assert_eq!(load(&[("a.dlg", Some(ok))]).map(|t| t.scenes.len()), Ok(1));
     assert_eq!(
-        load(&[("a.dlg", Some(ok)), ("x.dlg", None)]).map(|t| t.scenes.len()),
+        load(&[("a.dlg", Some(ok))]).map(|t| (t.table.scenes.len(), t.parsed.len())),
+        Ok((1, 1))
+    );
+    assert_eq!(
+        load(&[("a.dlg", Some(ok)), ("x.dlg", None)]).map(|t| t.table.scenes.len()),
         Err(vec!["x.dlg: file is not valid UTF-8".to_owned()])
     );
     assert_eq!(
-        load(&[("x.dlg", None), ("b.dlg", Some(bad))]).map(|t| t.scenes.len()),
+        load(&[("x.dlg", None), ("b.dlg", Some(bad))]).map(|t| t.table.scenes.len()),
         Err(vec![
             "x.dlg: file is not valid UTF-8".to_owned(),
             "b.dlg:1: scene \"b\" has no speech or narration".to_owned(),
@@ -578,6 +587,7 @@ fn files_that_are_not_utf8() {
 mod choice;
 mod line_ids;
 mod names;
+mod presence;
 
 // --- Embedded files ---------------------------------------------------------
 
@@ -589,24 +599,35 @@ fn embedded_test_scene_loads() {
         .ok()
         .and_then(|t| t.get("test").map(|s| bare(&s.steps)));
     assert_eq!(
-        steps.as_ref().map(|s| s[..4].to_vec()),
+        steps.as_ref().map(|s| s[..3].to_vec()),
         Some(vec![
             Step::Caption {
                 text: "Village of Heth, dusk".into()
             },
             narrate("The rain had not stopped for three days."),
             place(Side::Left, "test_lord", "neutral"),
-            place(Side::Right, "test_knight", "angry"),
         ])
     );
+    // The knight's lines are in an `@if` block: the army can lose them.
+    let Some(Step::If {
+        character,
+        then,
+        otherwise,
+    }) = steps.and_then(|s| s.get(3).cloned())
+    else {
+        panic!("no @if block");
+    };
+    assert_eq!(character, id("test_knight"));
+    assert_eq!(then[0], place(Side::Right, "test_knight", "angry"));
     assert_eq!(
-        steps.and_then(|s| s.get(6).cloned()),
-        Some(say(
+        then[3],
+        say(
             "test_knight",
             None,
             "Than never. Say it. I've heard it from you often enough."
-        ))
+        )
     );
+    assert_eq!(otherwise, []);
 }
 
 /// The full example in `assets/dialogue/README.md` parses and passes every
@@ -706,8 +727,8 @@ fn music_lines_parse_anywhere_in_a_scene() {
             music("talk_calm"),
         ]
     );
-    assert_eq!(parsed[0].step_lines, [2, 3, 4, 5, 11]);
-    assert_eq!(parsed[0].choice_lines[0].options[0].step_lines, [7, 8]);
+    assert_eq!(parsed[0].lines.steps, [2, 3, 4, 5, 11]);
+    assert_eq!(parsed[0].lines.blocks[0][0].lines.steps, [7, 8]);
     assert_eq!(errors_with_audio(src), [] as [&str; 0]);
 }
 
@@ -859,12 +880,25 @@ fn arb_simple_step() -> impl Strategy<Value = Step> {
     ]
 }
 
-/// Any step, choices (of simple steps) included.
+/// `leaf` steps, and `@if` blocks of them, nested up to three deep.
+fn arb_with_ifs(leaf: impl Strategy<Value = Step> + 'static) -> impl Strategy<Value = Step> {
+    leaf.prop_recursive(3, 16, 3, |inner| {
+        let steps = || proptest::collection::vec(inner.clone(), 0..3);
+        (arb_id(), steps(), steps()).prop_map(|(c, then, otherwise)| Step::If {
+            character: CharacterId(c),
+            then,
+            otherwise,
+        })
+    })
+}
+
+/// Any step: choices (whose reactions have `@if` blocks) and `@if` blocks
+/// (with choices in them) included.
 fn arb_step() -> impl Strategy<Value = Step> {
     let option = (
         arb_id(),
         arb_text(),
-        proptest::collection::vec(arb_simple_step(), 0..4),
+        proptest::collection::vec(arb_with_ifs(arb_simple_step()), 0..4),
     )
         .prop_map(|(tone, text, steps)| ChoiceOption {
             tone,
@@ -872,10 +906,10 @@ fn arb_step() -> impl Strategy<Value = Step> {
             line: LineId::default(),
             steps,
         });
-    prop_oneof![
+    arb_with_ifs(prop_oneof![
         4 => arb_simple_step(),
         1 => proptest::collection::vec(option, 0..4).prop_map(|options| Step::Choice { options }),
-    ]
+    ])
 }
 
 fn arb_scene() -> impl Strategy<Value = Scene> {

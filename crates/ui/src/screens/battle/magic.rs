@@ -17,6 +17,7 @@ use super::attack::Targeting;
 use super::info::range_text;
 use super::mode::Selection;
 use crate::widgets::menu::{Menu, MenuItem};
+use crate::words::Words;
 
 /// One line of the spell list.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -120,14 +121,13 @@ pub fn reaches_an_enemy(state: &BattleState, choices: &[SpellChoice]) -> bool {
 
 /// A spell's line: name, uses left of its uses per battle, and its numbers,
 /// e.g. `Fire    6/10  Mt5 Hit90 Rng1-2` or `Heal    8/8   HP+10 Rng1`.
-pub fn spell_label(def: &SpellDef, left: u8, name_w: usize) -> String {
+pub fn spell_label(def: &SpellDef, name: &str, left: u8, name_w: usize) -> String {
     let numbers = match &def.kind {
         SpellKind::Attack { might, hit, .. } => format!("Mt{might} Hit{hit}"),
         SpellKind::Heal { heal_power } => format!("HP+{heal_power}"),
     };
     format!(
-        "{:<name_w$}  {left:>2}/{:<2}  {numbers} Rng{}",
-        def.name,
+        "{name:<name_w$}  {left:>2}/{:<2}  {numbers} Rng{}",
         def.uses,
         range_text(def.min_range, def.max_range)
     )
@@ -136,18 +136,23 @@ pub fn spell_label(def: &SpellDef, left: u8, name_w: usize) -> String {
 /// The spell list: one line per choice, dimmed when it has nothing to be
 /// cast on (always so at 0 uses), focused on the equipped spell if it can
 /// be cast.
-pub fn spell_menu(state: &BattleState, unit: UnitId, choices: &[SpellChoice]) -> Menu {
+pub fn spell_menu(
+    state: &BattleState,
+    words: Words<'_>,
+    unit: UnitId,
+    choices: &[SpellChoice],
+) -> Menu {
     let defs = || {
         choices
             .iter()
             .filter_map(|c| Some((c, state.spells().get(&c.spell)?)))
     };
-    let name_w = defs().map(|(_, d)| d.name.chars().count()).max();
+    let name_w = defs().map(|(_, d)| words.spell(d).chars().count()).max();
     let caster = state.unit(unit);
     let items = defs()
         .map(|(c, def)| {
             let left = caster.map_or(0, |u| u.spells.uses_left(&c.spell));
-            let label = spell_label(def, left, name_w.unwrap_or(0));
+            let label = spell_label(def, words.spell(def), left, name_w.unwrap_or(0));
             if c.targets.is_empty() {
                 MenuItem::disabled(label)
             } else {
@@ -239,6 +244,14 @@ impl CastTargeting {
         &self.used().targets
     }
 
+    /// Writes the forecast's list of spell actives in `words`, for the
+    /// screen to paint ([`Mode::told`](super::mode::Mode::told)).
+    pub fn tell(&mut self, state: &BattleState, words: Words<'_>) {
+        if let Some(attack) = &mut self.attack {
+            attack.tell(state, words);
+        }
+    }
+
     /// The attack forecast, while the cursor is on a unit an attack spell
     /// hits.
     pub fn forecast(&self) -> Option<&Targeting> {
@@ -304,7 +317,7 @@ impl CastTargeting {
     /// The preview line of a heal (`Heal on Rex: HP 10 → 25`) or a tile
     /// cast (`Forest → Burning (1 round)`, `Sea → Ice`); none on an enemy,
     /// which has the forecast.
-    pub fn preview(&self, state: &BattleState) -> Option<String> {
+    pub fn preview(&self, state: &BattleState, words: Words<'_>) -> Option<String> {
         let def = state.spells().get(self.spell())?;
         match self.target() {
             CastTarget::Unit(id) => {
@@ -313,15 +326,15 @@ impl CastTargeting {
                 let gain = state.preview_heal(self.sel.unit, self.sel.dest(), &action)?;
                 Some(format!(
                     "{} on {}: HP {} → {}",
-                    def.name,
-                    target.name,
+                    words.spell(def),
+                    words.unit(target),
                     target.hp,
                     target.hp + gain
                 ))
             }
             CastTarget::Tile(pos) => {
                 let effect = def.terrain_effect.as_ref()?;
-                let name = |id| state.terrain().get(id).map(|t| t.name.as_str());
+                let name = |id| state.terrain().get(id).map(|t| words.terrain(t));
                 let from = name(*state.map().tiles.get(pos)?)?;
                 let to = name(effect.to)?;
                 let lasts = match effect.lasts {

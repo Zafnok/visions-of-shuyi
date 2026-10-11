@@ -23,7 +23,7 @@ loaded by `trpg_content::chapter` and validated by the all-assets test
 | `title` | The chapter's title (for the title card, 0812, and the save slots: a save shows the title of the chapter it goes on with). |
 | `intro_scenes` | Scene ids (`assets/dialogue/`) played in order before the battle. Default: none. |
 | `battle` | The battle's id (`assets/battles/`). |
-| `victory_scenes` | Scenes played in order after a victory. Default: none. |
+| `victory_scenes` | Scenes played in order after a victory. Default: none. They play for the army as the battle left it: a companion who died in Classic is gone, and their lines must be in `@if` blocks (`assets/dialogue/README.md`, "Who is still there"). |
 | `next` | The next chapter's id, or `None`: the game shows "To be continued" and returns to the title. |
 
 A chapter is one battle for now; chapters with several battles come with

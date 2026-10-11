@@ -17,6 +17,7 @@ use super::panel::{TEXT_W, TEXT_X};
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
+use crate::words::Words;
 
 /// Row of the title.
 pub const TITLE_ROW: i32 = SIDE_PANEL.y + 1;
@@ -67,13 +68,13 @@ pub struct RewindScreen {
 
 impl RewindScreen {
     /// The screen for `history`, focused on the newest action.
-    pub fn new(history: &BattleHistory, charges: u8) -> Self {
+    pub fn new(history: &BattleHistory, charges: u8, words: Words<'_>) -> Self {
         let mut entries: Vec<Entry> = history
             .replay()
             .into_iter()
             .enumerate()
             .map(|(point, r)| Entry {
-                line: describe(&r),
+                line: describe(&r, words),
                 point,
                 before: r.before,
             })
@@ -222,8 +223,8 @@ fn first_shown(blocks: &[Vec<String>], focus: usize, rows: i32) -> usize {
 
 /// A unit's name in `state`, or `?` (never shown: a command only names
 /// units on the map just before it).
-fn name(state: &BattleState, id: UnitId) -> &str {
-    state.unit(id).map_or("?", |u| u.name.as_str())
+fn name<'a>(state: &'a BattleState, words: Words<'a>, id: UnitId) -> &'a str {
+    state.unit(id).map_or("?", |u| words.unit(u))
 }
 
 /// How a combat went for the attacker: `hit, 7 dmg`, `2 hits, 14 dmg` or
@@ -252,8 +253,9 @@ fn combat_summary(events: &[Event]) -> Option<String> {
 
 /// A readable line for a past command, e.g. `Turn 2 · Ana attacked Brigand
 /// (hit, 7 dmg)`.
-pub fn describe(r: &Replayed) -> String {
+pub fn describe(r: &Replayed, words: Words<'_>) -> String {
     let s = &r.before;
+    let name = |s, id| name(s, words, id);
     let what = match &r.command {
         Command::Act { unit, action, .. } => {
             let who = name(s, *unit);
@@ -269,8 +271,8 @@ pub fn describe(r: &Replayed) -> String {
                         .pack()
                         .items
                         .get(*pack_index)
-                        .and_then(|id| s.items().get(id))
-                        .map_or("an item", |d| d.name());
+                        .filter(|id| s.items().get(id).is_some())
+                        .map_or("an item", |id| words.item(id, s.items()));
                     if target == unit {
                         format!("{who} used {item}")
                     } else {
@@ -281,7 +283,7 @@ pub fn describe(r: &Replayed) -> String {
                 UnitAction::Shop { .. } => format!("{who} visited a shop"),
                 UnitAction::Open => format!("{who} opened a chest"),
                 UnitAction::Cast { spell, target, .. } => {
-                    let spell = s.spells().get(spell).map_or("a spell", |d| &d.name);
+                    let spell = s.spells().get(spell).map_or("a spell", |d| words.spell(d));
                     match target {
                         trpg_core::CastTarget::Unit(t) => {
                             format!("{who} cast {spell} on {}{combat}", name(s, *t))
@@ -290,7 +292,7 @@ pub fn describe(r: &Replayed) -> String {
                     }
                 }
                 UnitAction::UseSkill { skill, .. } => {
-                    let skill = s.skills().get(skill).map_or("a skill", |d| &d.name);
+                    let skill = s.skills().get(skill).map_or("a skill", |d| words.skill(d));
                     format!("{who} used {skill}")
                 }
             }
@@ -451,9 +453,12 @@ mod tests {
             },
             events: vec![],
         };
-        assert_eq!(describe(&used(1)), "Turn 1 · Test Lord used an item");
         assert_eq!(
-            describe(&used(2)),
+            describe(&used(1), Words::ENGLISH),
+            "Turn 1 · Test Lord used an item"
+        );
+        assert_eq!(
+            describe(&used(2), Words::ENGLISH),
             "Turn 1 · Test Lord used an item on Test Knight"
         );
     }

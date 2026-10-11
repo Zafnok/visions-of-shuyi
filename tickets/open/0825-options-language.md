@@ -32,8 +32,13 @@ and ask through `ask-nick`.
 **In:** `Settings::language`; an Options row; the first-launch behaviour
 0042 chose; the machine-translation label 0042 chose.
 
-**Out (do not do):** the translation (0719); a kana name-entry screen (its
+**Out (do not do):** the translations (0719, 0726); a kana name-entry screen (its
 own ticket if 0042 asks for one); store page text (0907).
+
+Either order with 0045 (Chinese): the row lists whatever packs exist and
+labels them by `made_by`, so a Chinese pack needs nothing more here. If
+0045 chose a different label for a checked translation, 0045 writes the
+ticket for it.
 
 ## Implementation steps
 

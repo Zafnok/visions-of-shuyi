@@ -49,7 +49,7 @@ pub mod units;
 pub mod walk;
 
 use std::collections::VecDeque;
-use trpg_content::{Content, MapLook, TipTrigger, battle_campaign};
+use trpg_content::{Content, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
@@ -58,7 +58,7 @@ use trpg_core::{
     next_command,
 };
 
-use self::ai_phase::{AiAction, PACING, Pacing};
+use self::ai_phase::{AiAction, PACING};
 use self::banner::{Banner, BannerKind};
 
 use self::attack::{Targeting, aimed_first, aimed_options};
@@ -67,11 +67,12 @@ use self::cursor::Cursor;
 use self::event_sounds::CueQueue;
 use self::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
 use self::mode::{Effect, MenuEntry, Mode, Selection};
-use self::playback::{Playback, TIMINGS};
+use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{RewindEffect, RewindScreen};
 use self::tips::TipState;
 use self::walk::Gait;
+use super::OptionsScreen;
 use super::dialogue::DialogueScreen;
 use super::draw_debug_hint;
 use crate::audio::{CURSOR_MOVE, MenuSound};
@@ -82,8 +83,10 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::settings::{AnimSpeed, HELD_SPEED};
 use crate::tips::{draw_tip, fill_placeholders};
 use crate::widgets::help::{HelpKeys, SEPARATOR, cursor_keys_name, help_line, key_name};
+use crate::words::Language;
 
 /// Battle id of the debug Quick Battle (`assets/battles/quick.ron`).
 pub const QUICK_BATTLE: &str = "quick";
@@ -205,9 +208,9 @@ pub enum Queued {
     Notes,
     /// A phase or outcome banner.
     Banner(Banner),
-    /// A scene a trigger fired, by id: played as a [`DialogueScreen`]
-    /// overlay.
-    Scene(String),
+    /// A scene a trigger fired: played as a [`DialogueScreen`] overlay,
+    /// for those on the map when it fired.
+    Scene(SceneCue),
 }
 
 /// Why the battle screen closes before the battle is over.
@@ -240,9 +243,16 @@ pub struct BattleScreen {
     /// The danger zone, while shown (recomputed after every command).
     danger: Option<TileSet>,
     /// Auto-end: end the player phase when its last unit has acted. Off by
-    /// default (`docs/design/turn-structure.md`, ticket 0420). Kept
-    /// here until the Options menu (0805) saves it.
+    /// default (`docs/design/turn-structure.md`, ticket 0420). The
+    /// player's setting ([`Settings::auto_end_turn`]), read at the start
+    /// of every frame.
+    ///
+    /// [`Settings::auto_end_turn`]: crate::settings::Settings::auto_end_turn
     auto_end: bool,
+    /// Whether a fight's playback is shown, or skipped as the Cancel key
+    /// skips one: the player's Combat animations setting, read at the
+    /// start of every frame.
+    show_fights: bool,
     /// A command was applied: auto-end is checked once the screen is back
     /// to browsing.
     end_armed: bool,
@@ -268,9 +278,16 @@ pub struct BattleScreen {
     /// steps have been heard.
     walked: Option<UnitId>,
     /// Walking speed, in tiles per second, and an AI unit's while Confirm
-    /// is held: the map skin's ([`MapSkin::walk_tiles_per_s`],
+    /// is held: the map skin's ([`MapSkin::walk_tiles_per_s`], or
+    /// [`MapSkin::fast_walk_tiles_per_s`] with Fast animations, and
     /// [`MapSkin::held_walk_tiles_per_s`]), as of the frame's start.
     pace: (f32, f32),
+    /// How much faster the rest of an AI unit's action plays (the camera's
+    /// pan, the mark on the unit): the player's speeds for the AI's phases
+    /// ([`Settings::battle_speed`]), as of the frame's start.
+    ///
+    /// [`Settings::battle_speed`]: crate::settings::Settings::battle_speed
+    ai_speed: f32,
     /// The player chose `Restart Battle` or `Suspend`: the screen closes,
     /// and the game flow does it.
     leaving: Option<Leaving>,
@@ -284,6 +301,19 @@ pub struct BattleScreen {
     /// it ([`with_look`](Self::with_look)); a battle made any other way
     /// has the look of a map that names none.
     look: MapLook,
+    /// The language of the last frame: what a command applied between
+    /// frames names things in (a combat's fighters, a level up's skills).
+    /// English until the first frame.
+    language: Language,
+}
+
+/// The attack forecast `mode` shows, if any.
+fn forecast_of(mode: &Mode) -> Option<&Targeting> {
+    match mode {
+        Mode::Targeting(t) => Some(t),
+        Mode::CastTarget(t) => t.forecast(),
+        _ => None,
+    }
 }
 
 impl BattleScreen {
@@ -318,6 +348,7 @@ impl BattleScreen {
             state,
             danger: None,
             auto_end: false,
+            show_fights: true,
             end_armed: false,
             toast: None,
             queue: VecDeque::new(),
@@ -328,10 +359,12 @@ impl BattleScreen {
             cues: CueQueue::default(),
             walked: None,
             pace: (walk::WALK_TILES_PER_S, walk::HELD_WALK_TILES_PER_S),
+            ai_speed: 1.0,
             leaving: None,
             player_view: None,
             notes_t: 0.0,
             look: MapLook::default(),
+            language: Language::default(),
         }
     }
 
@@ -353,7 +386,7 @@ impl BattleScreen {
             screen.queue.push_back(Queued::Notes);
         }
         screen.queue.extend(events.iter().filter_map(|e| match e {
-            Event::SceneTriggered { scene } => Some(Queued::Scene(scene.clone())),
+            Event::SceneTriggered { .. } => SceneCue::of(e).map(Queued::Scene),
             _ => Banner::for_event(e).map(Queued::Banner),
         }));
         screen
@@ -376,7 +409,7 @@ impl BattleScreen {
             return None;
         }
         match self.queue.front() {
-            Some(Queued::Scene(id)) => Some(id),
+            Some(Queued::Scene(cue)) => Some(&cue.id),
             _ => None,
         }
     }
@@ -530,9 +563,12 @@ impl BattleScreen {
         };
     }
 
-    /// Flips auto-end and says so.
-    fn toggle_auto_end(&mut self) {
+    /// Flips auto-end, saves it with the other options and says so.
+    fn toggle_auto_end(&mut self, ctx: &mut Ctx) {
         self.auto_end = !self.auto_end;
+        let on = self.auto_end;
+        // If saving fails it still holds for this session.
+        let _ = ctx.change_settings(|s| s.auto_end_turn = on);
         let text = format!("Auto-end: {}", on_off(self.auto_end));
         self.toast = Some((text, TOAST_S));
     }
@@ -700,29 +736,31 @@ impl BattleScreen {
         self.camera.origin = from;
         self.cursor.jump(start);
         let then = std::mem::take(&mut self.mode);
-        let pacing = Pacing {
-            walk_tiles_per_s: self.pace.0,
-            held_walk_tiles_per_s: self.pace.1,
-            ..PACING
-        };
+        let pacing = PACING.at_speed(self.ai_speed, self.pace);
         let action = AiAction::new(unit, before, (from, to), path, then, pacing);
         self.mode = Mode::AiAction(Box::new(action));
     }
 
     /// The scene to play now, taken from the combat's playback where its
-    /// clock has stopped, or from the front of the queue. A scene missing
-    /// from the content (validation rules it out) is dropped.
-    fn next_scene(&mut self, ctx: &Ctx) -> Option<trpg_content::Scene> {
-        let id = if let Mode::Combat(pb) = &mut self.mode {
+    /// clock has stopped, or from the front of the queue, as the overlay
+    /// that plays it for those on the map when it fired (ADR-0055): a
+    /// character whose unit had fallen by then isn't there. A scene
+    /// missing from the content (validation rules it out) is dropped, and
+    /// so is one with nothing to say for them.
+    fn next_scene(&mut self, ctx: &Ctx) -> Option<DialogueScreen> {
+        let cue = if let Mode::Combat(pb) = &mut self.mode {
             pb.take_scene()?
         } else {
             self.queued_scene()?;
             match self.queue.pop_front() {
-                Some(Queued::Scene(id)) => id,
+                Some(Queued::Scene(cue)) => cue,
                 _ => return None,
             }
         };
-        ctx.content.dialogue.get(&id).cloned()
+        let scene = ctx.content.dialogue.get(&cue.id)?;
+        let present = Present::Only(cue.present);
+        let screen = DialogueScreen::told_overlay(ctx, scene, ctx.lead.clone(), &present);
+        screen.has_text().then_some(screen)
     }
 
     /// With auto-end on, ends the player phase once the screen is back to
@@ -822,16 +860,27 @@ impl BattleScreen {
     }
 
     /// Starts a frame of `dt` seconds: keeps the cameras for as many tiles
-    /// as the map skin shows ([`refit`](Self::refit)), takes the skin's
-    /// walking speed for the walks that start this frame, and advances the
-    /// cursor's pulse.
+    /// as the map skin shows ([`refit`](Self::refit)), takes the player's
+    /// settings as they are now (the Options screen may have changed
+    /// them) and the walking speed for the walks that start this frame,
+    /// and advances the cursor's pulse.
     fn begin_frame(&mut self, ctx: &Ctx, dt: f32) {
+        if !self.language.is(&ctx.content.lang, ctx.effective_lang()) {
+            self.language = ctx.language();
+        }
+        self.auto_end = ctx.settings().auto_end_turn;
+        self.show_fights = ctx.settings().combat_animations;
         let view = ctx.map_skin.view_tiles(MAP_VIEW);
         if view != self.view {
             self.refit(view);
         }
-        let skin = &ctx.map_skin;
-        self.pace = (skin.walk_tiles_per_s(), skin.held_walk_tiles_per_s());
+        let (skin, settings) = (&ctx.map_skin, ctx.settings());
+        let walk = match settings.anim_speed {
+            AnimSpeed::Normal => skin.walk_tiles_per_s(),
+            AnimSpeed::Fast => skin.fast_walk_tiles_per_s(),
+        };
+        self.pace = (walk, skin.held_walk_tiles_per_s());
+        self.ai_speed = settings.battle_speed(true);
         self.cursor.tick(dt);
     }
 
@@ -880,17 +929,16 @@ impl BattleScreen {
         let walked = self.walked.take();
         // Refused: the battle is unchanged and the player browses again.
         let events = self.state.apply(cmd).ok();
-        let playback = events
-            .as_ref()
-            .and_then(|events| Playback::new(events, &before, self.state.fallen(), TIMINGS));
+        let playback = events.as_ref().and_then(|events| {
+            let words = self.language.words();
+            Playback::new(words, events, &before, self.state.fallen(), TIMINGS)
+        });
         if let Some(events) = &events {
             self.history.push(cmd.clone());
             self.note_level_ups(events);
             let in_playback = playback.is_some();
             self.queue.extend(events.iter().filter_map(|e| match e {
-                Event::SceneTriggered { scene } if !in_playback => {
-                    Some(Queued::Scene(scene.clone()))
-                }
+                Event::SceneTriggered { .. } if !in_playback => SceneCue::of(e).map(Queued::Scene),
                 _ => Banner::for_event(e).map(Queued::Banner),
             }));
             self.popups.extend(events.iter().filter_map(|e| match *e {
@@ -920,7 +968,8 @@ impl BattleScreen {
             }
             // Checked (phase, units ready) once back to browsing.
             self.end_armed = true;
-            self.progress = Progress::new(events, &before, &self.state, PROGRESS_TIMINGS);
+            let told = (&self.state, self.language.words());
+            self.progress = Progress::new(events, &before, told, PROGRESS_TIMINGS);
             if was_player && self.ai_phase() {
                 self.player_view = Some((self.cursor.pos, self.camera));
             } else if !was_player
@@ -933,7 +982,8 @@ impl BattleScreen {
         }
         let played = events.clone();
         let playback = events.and_then(|events| {
-            let banner = art_list::playback_banner(&self.state, &events, &before);
+            let words = self.language.words();
+            let banner = art_list::playback_banner(&self.state, words, &events, &before);
             let playback = playback.map(|p| p.with_banner(banner));
             let cues = event_sounds::event_cues(&events, walked, playback.is_some(), &self.state);
             self.cues.extend(cues);
@@ -941,22 +991,27 @@ impl BattleScreen {
             playback.map(|p| p.with_sounds(&attacks, event_sounds::heals(&events)))
         });
         self.mode = match playback {
-            Some(p) => Mode::Combat(Box::new(p)),
+            Some(mut p) => {
+                if !self.show_fights {
+                    // Combat animations are off.
+                    p.skip();
+                }
+                Mode::Combat(Box::new(p))
+            }
             None => Mode::after_command(&self.state),
         };
         played
     }
 
     /// Plays this frame's sounds (0424): the combat playback's and the
-    /// walk's that the coming tick reaches, and the queued events' that
-    /// are due.
-    fn play_sounds(&mut self, ctx: &mut Ctx, input: &FrameInput) {
-        let held = input.is_held(Action::Confirm);
+    /// walk's that the coming tick of `dt` seconds reaches (`held`:
+    /// Confirm is down), and the queued events' that are due.
+    fn play_sounds(&mut self, ctx: &mut Ctx, dt: f32, held: bool) {
         let mut due = match &self.mode {
-            Mode::Combat(playback) => playback.sounds(input.dt, held),
+            Mode::Combat(playback) => playback.sounds(dt, held),
             _ => Vec::new(),
         };
-        if let Some((id, tiles)) = self.mode.tiles_entered(input.dt, held) {
+        if let Some((id, tiles)) = self.mode.tiles_entered(dt, held) {
             self.walked = Some(id);
             let step = self
                 .state
@@ -964,7 +1019,7 @@ impl BattleScreen {
                 .and_then(|u| event_sounds::unit_step_sound(&self.state, u));
             due.extend(step.into_iter().cycle().take(tiles));
         }
-        due.extend(self.cues.tick(input.dt));
+        due.extend(self.cues.tick(dt));
         for cue in due {
             ctx.audio.play_sound(cue);
         }
@@ -1076,10 +1131,11 @@ impl BattleScreen {
 
     /// Gives `action` to the mode ([`mode::step`], after [`Mode::route`]
     /// applies the optional split keys), plays its menu sound and carries
-    /// out its effect.
-    fn step_mode(&mut self, ctx: &mut Ctx, action: Action) {
+    /// out its effect. Returns whether the map menu's `Options` was chosen:
+    /// the frame then opens the Options screen.
+    fn step_mode(&mut self, ctx: &mut Ctx, action: Action) -> bool {
         let Some(action) = self.mode.route(action, &ctx.keymap) else {
-            return;
+            return false;
         };
         let before = self.mode.clone();
         let mode = std::mem::take(&mut self.mode);
@@ -1101,7 +1157,43 @@ impl BattleScreen {
             }
             Effect::Restart => self.leaving = Some(Leaving::Restart),
             Effect::Suspend => self.leaving = Some(Leaving::Suspend),
+            Effect::Options => return true,
         }
+        false
+    }
+
+    /// Plays the frame's sounds and advances what is animated by `dt`
+    /// seconds (`held`: Confirm is down). A fight's playback and the EXP
+    /// bar play at the player's speeds (0805); holding Confirm plays them
+    /// at [`HELD_SPEED`] instead, not on top (Nick,
+    /// `docs/design/controls.md`): their clocks multiply a held frame by
+    /// their own ×4, so the frame's time is divided by it first. A walk
+    /// and an AI unit's action keep real time: their speeds were set when
+    /// they started (the walk's pace, the action's [`ai_phase::Pacing`]).
+    fn animate(&mut self, ctx: &mut Ctx, dt: f32, held: bool) {
+        let ai = self.ai_phase();
+        let settings = ctx.settings();
+        let scaled = if held {
+            dt * settings.battle_speed_held(ai, true) / HELD_SPEED
+        } else {
+            dt * settings.battle_speed(ai)
+        };
+        let own_pace = matches!(self.mode, Mode::Moving { .. } | Mode::AiAction(_));
+        let dt = if own_pace { dt } else { scaled };
+        self.play_sounds(ctx, dt, held);
+        let mode = std::mem::take(&mut self.mode);
+        self.mode = mode.tick(dt, held, &self.state);
+        self.follow_ai_action();
+        // A walk aimed at an enemy (0428) ends in its forecast: the cursor
+        // goes onto the target.
+        if let Mode::Targeting(t) = &self.mode
+            && let Some(at) = self.state.unit(t.target()).map(|u| u.pos)
+            && self.cursor.pos != at
+        {
+            self.cursor.jump(at);
+            self.follow(at);
+        }
+        self.tick_progress(scaled, held);
     }
 
     /// Moves the cursor one tile for a cursor key; the camera and a
@@ -1516,7 +1608,7 @@ impl BattleScreen {
         Some(CursorView {
             pos,
             brightness: self.cursor.brightness(),
-            style: ctx.cursor_style,
+            style: ctx.settings().cursor_style,
         })
     }
 
@@ -1525,16 +1617,19 @@ impl BattleScreen {
     /// that tile of `scene`.
     fn draw_menu(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
         let cells = |tile| ctx.map_skin.tile_cells(scene, MAP_VIEW, tile);
-        if let Some(t) = self.forecast() {
+        let words = ctx.words();
+        let mode = self.mode.told(&self.state, words);
+        if let Some(t) = forecast_of(&mode) {
             // The arts list, beside the forecast panel (0414).
             if t.has_list() {
                 let unit_y = cells(t.sel.dest()).map_or(0, |r| r.y);
                 let weapon = (t.sel.unit, &t.with);
-                art_list::draw_list(buf, &ctx.palette, &self.state, weapon, &t.list, unit_y);
+                let told = (&self.state, words);
+                art_list::draw_list(buf, &ctx.palette, told, weapon, &t.list, unit_y);
             }
             return;
         }
-        let (tile, menu) = match &self.mode {
+        let (tile, menu) = match &*mode {
             Mode::ActionMenu { sel, menu, .. }
             | Mode::WeaponMenu { sel, menu, .. }
             | Mode::SpellMenu { sel, menu, .. }
@@ -1602,14 +1697,15 @@ impl BattleScreen {
     /// the battle notes at the start, and the banner on screen.
     fn draw_dialogs(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
         let p = &ctx.palette;
-        match &self.mode {
+        let words = ctx.words();
+        match &*self.mode.told(&self.state, words) {
             Mode::UnitList { menu, .. } => map_menu::draw_centred_menu(buf, p, menu),
             Mode::Objective => {
                 let mut lines = vec![
-                    (map_menu::objective_text(&self.state), UiColor::Text),
+                    (map_menu::objective_text(&self.state, words), UiColor::Text),
                     (map_menu::turn_text(&self.state), UiColor::Text),
                 ];
-                let noted = notes::note_lines(self.state.battle_notes());
+                let noted = notes::note_lines(self.state.battle_notes(), words);
                 if !noted.is_empty() {
                     lines.push((String::new(), UiColor::Text));
                     lines.push((notes::NOTES_HEADING.to_owned(), UiColor::TextDim));
@@ -1652,13 +1748,13 @@ impl BattleScreen {
             }
             Mode::Info { unit } => {
                 if let Some(u) = self.state.unit(*unit) {
-                    info::draw_info(buf, p, &self.state, u);
+                    info::draw_info(buf, p, (&self.state, words), u);
                 }
             }
             _ => {}
         }
         if self.notes_open() {
-            let lines: Vec<_> = notes::note_lines(self.state.battle_notes())
+            let lines: Vec<_> = notes::note_lines(self.state.battle_notes(), words)
                 .into_iter()
                 .map(|l| (l, UiColor::Text))
                 .collect();
@@ -1686,21 +1782,18 @@ impl BattleScreen {
     /// The attack forecast on screen: while an attack's target is picked,
     /// or a spell's with the cursor on an enemy.
     fn forecast(&self) -> Option<&Targeting> {
-        match &self.mode {
-            Mode::Targeting(t) => Some(t),
-            Mode::CastTarget(t) => t.forecast(),
-            _ => None,
-        }
+        forecast_of(&self.mode)
     }
 
     /// The line over the help bar: a combat's message, the preview of the
     /// skill, item or spell being aimed, or the toast.
     fn message(&self) -> Option<(String, UiColor)> {
+        let words = self.language.words();
         let preview = match &self.mode {
-            Mode::Combat(pb) => pb.message(),
-            Mode::SkillTarget(t) => Some(t.preview(&self.state)),
-            Mode::ItemTarget(t) => Some(t.preview(&self.state)),
-            Mode::CastTarget(t) => t.preview(&self.state),
+            Mode::Combat(pb) => pb.message(words),
+            Mode::SkillTarget(t) => Some(t.preview(&self.state, words)),
+            Mode::ItemTarget(t) => Some(t.preview(&self.state, words)),
+            Mode::CastTarget(t) => t.preview(&self.state, words),
             _ => None,
         };
         let toast = || Some((self.toast()?.to_owned(), UiColor::TextHighlight));
@@ -1712,7 +1805,7 @@ impl BattleScreen {
     fn draw_panel(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
         let c = |u| ctx.palette.get(u);
         if let Some(t) = self.forecast() {
-            forecast::draw_forecast(buf, &ctx.palette, &self.state, t);
+            forecast::draw_forecast(buf, &ctx.palette, (&self.state, ctx.words()), t);
             return;
         }
         let panel_bg = c(UiColor::PanelBg);
@@ -1725,12 +1818,14 @@ impl BattleScreen {
         };
         buf.draw_box(SIDE_PANEL, style, c(UiColor::PanelBorder), panel_bg);
         let pos = self.cursor.pos;
+        let told = (&self.state, ctx.words());
         if self.playing() {
             let shown = self.shown_units();
             let hovered = shown.iter().find(|(u, f)| u.pos == pos && *f < 1.0);
-            panel::draw_hover(buf, &ctx.palette, &self.state, pos, hovered.map(|(u, _)| u));
+            let hovered = hovered.map(|(u, _)| u);
+            panel::draw_hover(buf, &ctx.palette, told, pos, hovered);
         } else {
-            panel::draw_hover(buf, &ctx.palette, &self.state, pos, self.hovered());
+            panel::draw_hover(buf, &ctx.palette, told, pos, self.hovered());
         }
     }
 }
@@ -1828,7 +1923,7 @@ impl Screen for BattleScreen {
                 continue;
             }
             if action == Action::ToggleAutoEnd {
-                self.toggle_auto_end();
+                self.toggle_auto_end(ctx);
                 continue;
             }
             if self.progress_key(action) {
@@ -1850,7 +1945,7 @@ impl Screen for BattleScreen {
                 _ if self.rewind.is_some() => self.rewind_step(ctx, action),
                 Action::Rewind if self.can_open_rewind() => {
                     let charges = self.state.rewind_charges();
-                    self.rewind = Some(RewindScreen::new(&self.history, charges));
+                    self.rewind = Some(RewindScreen::new(&self.history, charges, ctx.words()));
                     ctx.audio.menu(MenuSound::Select);
                 }
                 Action::DangerZone if self.mode.cursor_free() => self.toggle_danger(),
@@ -1871,7 +1966,11 @@ impl Screen for BattleScreen {
                         ctx.audio.play_sound(CURSOR_MOVE);
                     }
                 }
-                _ => self.step_mode(ctx, action),
+                // The map menu's Options: over the battle.
+                _ if self.step_mode(ctx, action) => {
+                    return Transition::Push(Box::new(OptionsScreen::new()));
+                }
+                _ => {}
             }
             if self.leaving.is_some() {
                 return Transition::Pop;
@@ -1879,20 +1978,7 @@ impl Screen for BattleScreen {
         }
 
         self.tick_notes(dt);
-        self.play_sounds(ctx, input);
-        let mode = std::mem::take(&mut self.mode);
-        self.mode = mode.tick(input.dt, input.is_held(Action::Confirm), &self.state);
-        self.follow_ai_action();
-        // A walk aimed at an enemy (0428) ends in its forecast: the cursor
-        // goes onto the target.
-        if let Mode::Targeting(t) = &self.mode
-            && let Some(at) = self.state.unit(t.target()).map(|u| u.pos)
-            && self.cursor.pos != at
-        {
-            self.cursor.jump(at);
-            self.follow(at);
-        }
-        self.tick_progress(dt, input.is_held(Action::Confirm));
+        self.animate(ctx, dt, input.is_held(Action::Confirm));
         let waiting = self.shown_tip().is_some() || self.playing();
         if let Some(Queued::Banner(banner)) = self.queue.front_mut()
             && !waiting
@@ -1904,11 +1990,7 @@ impl Screen for BattleScreen {
             }
         }
         if let Some(scene) = self.next_scene(ctx) {
-            return Transition::Push(Box::new(DialogueScreen::overlay(
-                scene,
-                ctx.lead.clone(),
-                ctx.content.names.clone(),
-            )));
+            return Transition::Push(Box::new(scene));
         }
         self.check_auto_end();
         self.drive_ai(ctx);
@@ -1939,9 +2021,10 @@ impl Screen for BattleScreen {
             .shown_tip()
             .and_then(|t| ctx.content.tips.for_trigger(t))
         {
-            let text = fill_placeholders(&tip.text, ctx.help_keys());
+            let words = ctx.words();
+            let text = fill_placeholders(words.tip_text(tip), ctx.help_keys());
             let close = help_line(&[(Some(key_name(ctx.help_keys(), Action::Confirm)), "close")]);
-            draw_tip(buf, &ctx.palette, &tip.title, &text, &close);
+            draw_tip(buf, &ctx.palette, words.tip_title(tip), &text, &close);
         }
         buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));
         let status = self.status(ctx);
@@ -2165,6 +2248,8 @@ mod rewind_tests;
 
 #[cfg(test)]
 mod scene_tests;
+#[cfg(test)]
+mod settings_tests;
 
 #[cfg(test)]
 mod skill_tests;

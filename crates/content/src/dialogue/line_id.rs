@@ -36,24 +36,26 @@ impl LineId {
     /// repeat number (`ch1_gate_1a2b3c4d_2` → `ch1_gate`). An id that
     /// doesn't end like a line id is returned whole.
     pub fn scene_id(&self) -> &str {
-        /// `id` without a `_<8 hex>` ending, if it has one.
-        fn strip_hash(id: &str) -> Option<(&str, &str)> {
-            id.rsplit_once('_')
-                .filter(|(_, tail)| tail.len() == 8 && tail.bytes().all(|b| b.is_ascii_hexdigit()))
-        }
-        if let Some((scene, _)) = strip_hash(&self.0) {
-            return scene;
-        }
-        // A repeat: `<scene>_<hash>_<n>`.
-        let repeat = self
-            .0
-            .rsplit_once('_')
-            .filter(|(_, n)| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()));
-        match repeat.and_then(|(rest, _)| strip_hash(rest)) {
-            Some((scene, _)) => scene,
-            None => &self.0,
-        }
+        scene_of(&self.0).unwrap_or(&self.0)
     }
+}
+
+/// The id of the scene the line with id `id` is in, or `None` if `id`
+/// doesn't end like a line id (`_<8 hex>`, then `_<n>` on a repeat).
+pub(crate) fn scene_of(id: &str) -> Option<&str> {
+    /// `id` without a `_<8 hex>` ending, if it has one.
+    fn strip_hash(id: &str) -> Option<&str> {
+        id.rsplit_once('_')
+            .filter(|(_, tail)| tail.len() == 8 && tail.bytes().all(|b| b.is_ascii_hexdigit()))
+            .map(|(scene, _)| scene)
+    }
+    // A repeat: `<scene>_<hash>_<n>`.
+    let repeat = || {
+        id.rsplit_once('_')
+            .filter(|(_, n)| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+            .and_then(|(rest, _)| strip_hash(rest))
+    };
+    strip_hash(id).or_else(repeat)
 }
 
 impl fmt::Display for LineId {
@@ -91,8 +93,19 @@ pub(crate) fn line_hash(speaker: &str, text: &str) -> String {
     format!("{:08x}", hash & 0xffff_ffff)
 }
 
+/// What stands for the speaker in a caption's hash.
+const CAPTION_SPEAKER: &str = "@caption";
+
+/// The key a language pack translates the caption `text` of scene `scene`
+/// by (ADR-0045 §2): `caption.<scene id>_<8 hex>`, hashed like a line id.
+/// The same caption twice in a scene has one key.
+pub fn caption_key(scene: &str, text: &str) -> String {
+    format!("caption.{scene}_{}", line_hash(CAPTION_SPEAKER, text))
+}
+
 /// Calls `f(speaker, text, id)` for every line of `steps` that shows text,
-/// in script order: a reply, then its reaction, then the next reply.
+/// in script order: a reply, then its reaction, then the next reply; an
+/// `@if` block's lines, then its `@else`'s.
 fn visit_mut(steps: &mut [Step], f: &mut impl FnMut(&str, &str, &mut LineId)) {
     for step in steps {
         match step {
@@ -108,6 +121,12 @@ fn visit_mut(steps: &mut [Step], f: &mut impl FnMut(&str, &str, &mut LineId)) {
                     f(REPLY_SPEAKER, &o.text, &mut o.line);
                     visit_mut(&mut o.steps, f);
                 }
+            }
+            Step::If {
+                then, otherwise, ..
+            } => {
+                visit_mut(then, f);
+                visit_mut(otherwise, f);
             }
             Step::Caption { .. } | Step::Place { .. } | Step::Clear { .. } | Step::Music(_) => {}
         }
@@ -143,6 +162,12 @@ fn collect<'a>(steps: &'a [Step], out: &mut Vec<Line<'a>>) {
                     collect(&o.steps, out);
                 }
             }
+            Step::If {
+                then, otherwise, ..
+            } => {
+                collect(then, out);
+                collect(otherwise, out);
+            }
             Step::Caption { .. } | Step::Place { .. } | Step::Clear { .. } | Step::Music(_) => {}
         }
     }
@@ -150,7 +175,8 @@ fn collect<'a>(steps: &'a [Step], out: &mut Vec<Line<'a>>) {
 
 impl Scene {
     /// Every line that shows text (speech, narration, replies and the lines
-    /// of their reactions), in script order.
+    /// of their reactions), in script order, whoever is there: both parts
+    /// of every `@if` block.
     pub fn lines(&self) -> Vec<Line<'_>> {
         let mut out = Vec::new();
         collect(&self.steps, &mut out);

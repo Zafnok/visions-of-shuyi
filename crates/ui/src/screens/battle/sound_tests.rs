@@ -16,6 +16,7 @@ use super::testing::{battle_packed, battle_with, skirmish};
 use crate::audio::AudioRequest;
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
+use crate::words::Words;
 
 /// The battle-event sound cues of `requests`, in order: the menu and
 /// cursor sounds (0425, tested there) left out.
@@ -87,7 +88,7 @@ fn scripted(strikes: Vec<Strike>, attacks: [Option<Attack>; 2]) -> (Harness, Pla
             defender_hp: 13,
         },
     }];
-    let playback = Playback::new(&events, &before, &[], TIMINGS)
+    let playback = Playback::new(Words::ENGLISH, &events, &before, &[], TIMINGS)
         .expect("a combat")
         .with_sounds(&[attacks], false);
     let mut screen = BattleScreen::new(state);
@@ -402,7 +403,7 @@ fn a_heal_in_a_combat_command_plays_as_the_outro_starts() {
             defender_hp: 13,
         },
     }];
-    let playback = Playback::new(&events, &before, &[], TIMINGS)
+    let playback = Playback::new(Words::ENGLISH, &events, &before, &[], TIMINGS)
         .unwrap()
         .with_sounds(&[[SWORD, AXE]], true);
     let outro = playback.steps().last().unwrap();

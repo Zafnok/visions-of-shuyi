@@ -27,9 +27,15 @@ fn names() -> Names {
     }
 }
 
-/// Plays `scene` with [`lead`].
-fn play(scene: Scene) -> DialoguePlayer {
-    DialoguePlayer::new(scene, lead(), names())
+/// Plays `scene` with [`lead`] and everyone there.
+fn play(scene: &Scene) -> DialoguePlayer {
+    DialoguePlayer::new(scene, lead(), names(), &Present::Everyone)
+}
+
+/// Plays `scene` with [`lead`] and only `there`.
+fn play_with(scene: &Scene, there: &[&str]) -> DialoguePlayer {
+    let present = Present::only(there.iter().map(|c| id(c)));
+    DialoguePlayer::new(scene, lead(), names(), &present)
 }
 
 /// More text boxes than any scene in these tests has.
@@ -128,7 +134,7 @@ fn narrates(left: Option<(String, String)>, right: Option<(String, String)>, tex
 
 #[test]
 fn walks_the_test_scene() {
-    let mut player = play(test_scene());
+    let mut player = play(&test_scene());
     assert_eq!(player.scene_id(), "test");
     let views = walk(&mut player, 0);
     let lord = |e| Some(portrait("test_lord", e));
@@ -212,7 +218,7 @@ fn walks_the_test_scene() {
 /// from the rejoin on.
 #[test]
 fn every_reply_rejoins_the_same_way() {
-    let mut player = play(test_scene());
+    let mut player = play(&test_scene());
     player.skip_to_choice();
     assert!(player.is_choosing());
     let reactions = [
@@ -243,7 +249,7 @@ fn every_reply_rejoins_the_same_way() {
 
 #[test]
 fn advancing_a_finished_scene_does_nothing() {
-    let mut player = play(Scene {
+    let mut player = play(&Scene {
         id: "s".into(),
         steps: vec![Step::Narrate {
             text: "x".into(),
@@ -260,7 +266,7 @@ fn advancing_a_finished_scene_does_nothing() {
 
 #[test]
 fn a_scene_without_text_starts_finished() {
-    let player = play(Scene {
+    let player = play(&Scene {
         id: "s".into(),
         steps: vec![
             Step::Caption { text: "c".into() },
@@ -302,7 +308,7 @@ fn expression_changes_and_offscreen_speakers() {
         character: id(who),
         expression: "neutral".into(),
     };
-    let mut player = play(Scene {
+    let mut player = play(&Scene {
         id: "s".into(),
         steps: vec![
             place(Side::Left, "a"),
@@ -347,7 +353,7 @@ fn narration(text: &str) -> Step {
 
 #[test]
 fn a_choice_waits_for_a_reply() {
-    let mut player = play(Scene {
+    let mut player = play(&Scene {
         id: "s".into(),
         steps: vec![
             Step::Choice {
@@ -386,7 +392,7 @@ fn a_choice_waits_for_a_reply() {
 
 #[test]
 fn a_choice_without_replies_is_passed_over() {
-    let player = play(Scene {
+    let player = play(&Scene {
         id: "s".into(),
         steps: vec![Step::Choice { options: vec![] }, narration("after")],
     });
@@ -402,7 +408,7 @@ fn the_reaction_leaves_the_portraits_as_they_are() {
         character: id(who),
         expression: expression.into(),
     };
-    let mut player = play(Scene {
+    let mut player = play(&Scene {
         id: "s".into(),
         steps: vec![
             place(Side::Left, "a", "sad"),
@@ -449,7 +455,7 @@ fn cue(cue: &str) -> MusicLine {
 /// box after it, not before, and once.
 #[test]
 fn music_is_asked_for_when_its_line_is_reached() {
-    let mut player = play(Scene {
+    let mut player = play(&Scene {
         id: "m".into(),
         steps: vec![
             music("village"),
@@ -490,7 +496,7 @@ fn only_the_last_music_line_passed_counts() {
         music("scene_sad"),
         narration("Three."),
     ];
-    let mut player = play(Scene {
+    let mut player = play(&Scene {
         id: "m".into(),
         steps: steps.clone(),
     });
@@ -499,14 +505,14 @@ fn only_the_last_music_line_passed_counts() {
     assert!(player.is_finished());
     assert_eq!(player.take_music(), Some(cue("scene_sad")));
     // Not taking the first one doesn't change what a skip leaves.
-    let mut player = play(Scene {
+    let mut player = play(&Scene {
         id: "m".into(),
         steps,
     });
     player.skip_to_choice();
     assert_eq!(player.take_music(), Some(cue("scene_sad")));
     // A scene without @music asks for nothing.
-    let mut player = play(test_scene());
+    let mut player = play(&test_scene());
     player.skip_to_choice();
     assert_eq!(player.take_music(), None);
 }
@@ -527,14 +533,14 @@ fn music_in_a_reaction_plays_only_for_that_reply() {
             narration("After."),
         ],
     };
-    let mut player = play(scene.clone());
+    let mut player = play(&scene);
     player.advance();
     assert!(player.is_choosing());
     assert_eq!(player.take_music(), None);
     player.choose(0);
     assert_eq!(player.current().text.as_deref(), Some("Oh."));
     assert_eq!(player.take_music(), Some(cue("scene_sad")));
-    let mut player = play(scene);
+    let mut player = play(&scene);
     player.advance();
     player.choose(1);
     player.skip_to_choice();
@@ -545,7 +551,7 @@ fn music_in_a_reaction_plays_only_for_that_reply() {
 /// Skipping stops at each choice, and at the end.
 #[test]
 fn skipping_stops_at_choices() {
-    let mut player = play(test_scene());
+    let mut player = play(&test_scene());
     player.skip_to_choice();
     assert!(player.is_choosing());
     assert_eq!(
@@ -571,9 +577,10 @@ fn tokens_follow_the_lead() {
         ],
     };
     let player = DialoguePlayer::new(
-        scene.clone(),
+        &scene,
         LeadProfile::new("Isolde", trpg_core::LeadGender::Female),
         names(),
+        &Present::Everyone,
     );
     let v = player.current();
     assert_eq!(v.caption.as_deref(), Some("Isolde's camp"));
@@ -602,7 +609,7 @@ fn name_tokens_are_filled_in() {
             Step::Choice { options },
         ],
     };
-    let mut player = DialoguePlayer::new(scene.clone(), lead(), names());
+    let mut player = DialoguePlayer::new(&scene, lead(), names(), &Present::Everyone);
     let v = player.current();
     assert_eq!(v.caption.as_deref(), Some("the Thornmarch"));
     assert_eq!(
@@ -620,7 +627,7 @@ fn name_tokens_are_filled_in() {
     // A rename reaches every use; the scene keeps its tokens.
     let mut renamed = names();
     renamed.names.insert("king".into(), "Osric".into());
-    let player = DialoguePlayer::new(scene.clone(), lead(), renamed);
+    let player = DialoguePlayer::new(&scene, lead(), renamed, &Present::Everyone);
     assert_eq!(
         player.current().text.as_deref(),
         Some("Osric rode out, and Osric rode home. He waited.")
@@ -713,7 +720,7 @@ proptest! {
     ) {
         let expected = expected_texts(&steps, &picks);
         let choices = steps.iter().filter(|s| matches!(s, Step::Choice { .. })).count();
-        let mut player = play(Scene { id: "s".into(), steps });
+        let mut player = play(&Scene { id: "s".into(), steps });
         let mut picked = picks.iter().cycle();
         let mut seen = Vec::new();
         let mut asked = 0;
@@ -744,14 +751,14 @@ proptest! {
     #[test]
     fn reading_and_skipping_leave_the_same_music(steps in proptest::collection::vec(arb_step(), 0..20)) {
         let scene = Scene { id: "p".into(), steps: steps.clone() };
-        let mut read = play(scene.clone());
+        let mut read = play(&scene);
         let mut heard = read.take_music();
         for _ in 0..=steps.len() {
             read.advance();
             heard = read.take_music().or(heard);
         }
         prop_assert!(read.is_finished());
-        let mut skipped = play(scene);
+        let mut skipped = play(&scene);
         skipped.skip_to_choice();
         prop_assert!(skipped.is_finished());
         prop_assert_eq!(&heard, &last_music(&steps));
@@ -764,7 +771,7 @@ proptest! {
             .iter()
             .filter_map(|s| s.text().map(|t| (t.to_owned(), matches!(s, Step::Narrate { .. }))))
             .collect();
-        let mut player = play(Scene { id: "s".into(), steps });
+        let mut player = play(&Scene { id: "s".into(), steps });
         let mut seen = Vec::new();
         for _ in 0..MAX_BOXES {
             if player.is_finished() {
@@ -778,5 +785,242 @@ proptest! {
         prop_assert!(player.is_finished());
         prop_assert_eq!(player.current().text, None);
         prop_assert_eq!(seen, expected);
+    }
+}
+
+// ---- Who is there (0715) -------------------------------------------------------
+
+/// The scenes of `src`, unchecked.
+fn parsed(src: &str) -> Vec<Scene> {
+    let (parsed, errors) = trpg_content::dialogue::parse_dlg("t.dlg", src);
+    assert_eq!(errors, []);
+    parsed.into_iter().map(|p| p.scene).collect()
+}
+
+/// The texts of a walk: each text box once, and each choice's replies.
+fn texts(player: &mut DialoguePlayer, pick: usize) -> Vec<String> {
+    let mut out = Vec::new();
+    for view in walk(player, pick) {
+        match (view.choices, view.text) {
+            (Some(choices), _) => out.push(choices.join(" / ")),
+            (None, Some(text)) => out.push(text),
+            (None, None) => {}
+        }
+    }
+    out
+}
+
+/// A scene with a block for the knight (with an `@else`), one for the
+/// archer in a reply's reaction, and a choice inside a block.
+const BLOCKS: &str = "\
+@scene s
+@left test_lord neutral
+> Dawn.
+@if test_knight
+@right test_knight angry
+@music talk_calm
+test_knight: You're late.
+@right clear
+@else
+@music scene_sad
+> Nobody waits at the gate.
+@endif
+@choice
+* earnest: Sorry.
+  @if test_archer
+  @right test_archer happy
+  test_archer: Forgiven.
+  @right clear
+  @else
+  > Nobody answers.
+  @endif
+* blunt: Move.
+@endchoice
+@if test_archer
+> She has a question.
+@choice
+* earnest: Yes.
+* blunt: No.
+@endchoice
+@endif
+test_lord: On we go.
+@end
+";
+
+/// Acceptance (0715): a scene with an `@if` block plays its first part
+/// when the character is there and the other (or nothing) when they
+/// aren't; in reactions and around choices too.
+#[test]
+fn a_block_plays_the_part_for_who_is_there() {
+    let scene = &parsed(BLOCKS)[0];
+    let walk = |there: &[&str], pick| texts(&mut play_with(scene, there), pick);
+    assert_eq!(
+        walk(&["test_knight", "test_archer"], 0),
+        [
+            "Dawn.",
+            "You're late.",
+            "Sorry. / Move.",
+            "Forgiven.",
+            "She has a question.",
+            "Yes. / No.",
+            "On we go."
+        ]
+    );
+    assert_eq!(
+        walk(&["test_knight"], 0),
+        [
+            "Dawn.",
+            "You're late.",
+            "Sorry. / Move.",
+            "Nobody answers.",
+            "On we go."
+        ]
+    );
+    assert_eq!(
+        walk(&["test_archer"], 1),
+        [
+            "Dawn.",
+            "Nobody waits at the gate.",
+            "Sorry. / Move.",
+            "She has a question.",
+            "Yes. / No.",
+            "On we go."
+        ]
+    );
+    assert_eq!(
+        walk(&[], 1),
+        [
+            "Dawn.",
+            "Nobody waits at the gate.",
+            "Sorry. / Move.",
+            "On we go."
+        ]
+    );
+    // Everyone: as with both there.
+    let everyone = texts(&mut play(scene), 0);
+    assert_eq!(everyone, walk(&["test_knight", "test_archer"], 0));
+}
+
+/// Someone who isn't there is never put on screen, and the steps around
+/// their lines (portraits, music) aren't applied either.
+#[test]
+fn the_part_not_played_leaves_no_trace() {
+    let scene = &parsed(BLOCKS)[0];
+    let mut player = play_with(scene, &["test_archer"]);
+    assert_eq!(player.scene().id, "s");
+    assert_eq!(player.take_music(), None);
+    let mut seen = Vec::new();
+    for _ in 0..MAX_BOXES {
+        if player.is_finished() {
+            break;
+        }
+        let view = shown(player.current());
+        seen.extend([view.left, view.right].into_iter().flatten().map(|p| p.0));
+        if player.is_choosing() {
+            player.choose(0);
+        } else {
+            player.advance();
+        }
+    }
+    seen.sort();
+    seen.dedup();
+    assert_eq!(seen, ["test_archer", "test_lord"]);
+    // Only the music of the part played was asked for.
+    let mut player = play_with(scene, &[]);
+    player.advance();
+    assert_eq!(player.take_music(), Some(cue("scene_sad")));
+    let mut player = play_with(scene, &["test_knight"]);
+    player.advance();
+    assert_eq!(player.take_music(), Some(cue("talk_calm")));
+}
+
+/// Skipping agrees with reading: it stops at the choices of the parts
+/// played, and asks for their music only.
+#[test]
+fn skipping_follows_the_parts_played() {
+    let scene = &parsed(BLOCKS)[0];
+    let mut player = play_with(scene, &["test_archer"]);
+    player.skip_to_choice();
+    assert_eq!(player.take_music(), Some(cue("scene_sad")));
+    let replies = |p: &DialoguePlayer| shown(p.current()).choices.map(|c| c.join(" / "));
+    assert_eq!(replies(&player).as_deref(), Some("Sorry. / Move."));
+    player.choose(1);
+    player.skip_to_choice();
+    assert_eq!(replies(&player).as_deref(), Some("Yes. / No."));
+    player.choose(0);
+    player.skip_to_choice();
+    assert!(player.is_finished());
+    // Without the archer there is no second choice to stop at.
+    let mut player = play_with(scene, &[]);
+    player.skip_to_choice();
+    player.choose(0);
+    assert_eq!(
+        shown(player.current()).text.as_deref(),
+        Some("Nobody answers.")
+    );
+    player.skip_to_choice();
+    assert!(player.is_finished());
+    assert_eq!(player.take_music(), Some(cue("scene_sad")));
+}
+
+/// A scene whose every line is someone's who isn't there starts finished.
+#[test]
+fn a_scene_with_nothing_to_say_for_those_there_starts_finished() {
+    let src = "@scene s\n@left test_lord neutral\n@if test_knight\n> Hello.\n@endif\n@end\n";
+    let scene = &parsed(src)[0];
+    let player = play_with(scene, &[]);
+    assert!(player.is_finished());
+    assert!(!player.scene().has_text());
+    assert_eq!(player.current().text, None);
+    let player = play_with(scene, &["test_knight"]);
+    assert!(!player.is_finished());
+    assert!(player.scene().has_text());
+}
+
+proptest! {
+    /// Every scene of the game, played for any army: nobody the army can
+    /// lose is on screen unless they are there, whichever replies are
+    /// picked. (Those a scene can't play without are always there.)
+    #[test]
+    fn no_embedded_scene_shows_someone_who_is_gone(
+        there in proptest::collection::vec(any::<bool>(), 8),
+        pick in 0usize..3,
+    ) {
+        use trpg_content::dialogue::Cast;
+        let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
+        let cast = Cast::new(
+            &content.new_game,
+            &content.battles,
+            &content.chapters,
+            &content.supports,
+        );
+        prop_assert!(!cast.may_be_absent.is_empty());
+        let army = cast.may_be_absent.iter().zip(&there).filter(|(_, t)| **t);
+        let army: Vec<CharacterId> = army.map(|(c, _)| c.clone()).collect();
+        for scene in content.dialogue.scenes.values() {
+            let certain = cast.certain.get(&scene.id).cloned().unwrap_or_default();
+            let present = Present::only(army.iter().cloned().chain(certain));
+            let mut player = DialoguePlayer::new(scene, lead(), names(), &present);
+            for _ in 0..MAX_BOXES {
+                if player.is_finished() {
+                    break;
+                }
+                let view = player.current();
+                for portrait in [view.left, view.right].into_iter().flatten() {
+                    let who = portrait.character;
+                    prop_assert!(
+                        present.has(who) || !cast.may_be_absent.contains(who),
+                        "{} shows {} without them there", scene.id, who.0
+                    );
+                }
+                let replies = view.choices.as_ref().map_or(1, Vec::len);
+                if player.is_choosing() {
+                    player.choose(pick % replies);
+                } else {
+                    player.advance();
+                }
+            }
+            prop_assert!(player.is_finished());
+        }
     }
 }

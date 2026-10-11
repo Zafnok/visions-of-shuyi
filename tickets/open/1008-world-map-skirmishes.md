@@ -69,6 +69,8 @@ and (2) the random fights feel like useful training without being grindy.
 - Real Act 1 skirmish maps and enemy lists (content tickets after 0701).
 - FFT-style random encounters while travelling (Nick didn't pick them).
 - The grinding tower (deferred).
+- Visions on random skirmishes and stars on fixed ones (decided in 0046 and
+  0047; their own implementation tickets build them on top of this one).
 - Retuning support thresholds (a tuning ticket after the playtest).
 
 ## Implementation steps

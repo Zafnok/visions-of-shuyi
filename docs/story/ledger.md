@@ -81,7 +81,8 @@ fix an error; add a new one.
 
 Written by 0707 from `assets/dialogue/ch01.dlg`. It describes a battle
 everyone lived through. What changes when a companion died in it (Classic)
-is 0716's to add.
+is in "If a companion died in Chapter 1", at the end of this section
+(0716).
 
 ### What happened
 
@@ -152,3 +153,107 @@ Aske's spying).
   the Vigil's eyes; Chapter 3 does that.
 - The lead's three replies (the letter, the plan, leaving) are not
   recorded: tones never change what happened.
+
+### If a companion died in Chapter 1 (Classic)
+
+Written by 0716. Everything above describes a battle all six lived
+through. In Classic a companion who fell in it is dead, and `ch01_victory`
+plays without them. A companion who **retreated** (Casual) is alive and
+was there: nothing below applies to them.
+
+**True on every path**, whoever died: the lead read Harl's order and saw
+the Veyne seal on it; the lead knows that only the lord of Veyne, Dace,
+may use that seal; the lead left Harrowby at dusk for Veyne Hall, an
+outlaw past the boundary stone. Everyone alive left with the lead.
+
+**The dead.** If Hollis lived, he buried them, and Harl after them. If
+Hollis died, the lead buried them and nobody buried Harl. The graves are
+at Harrowby's chapel.
+
+**What Dace knows:** his report says the Red Company is dead and the exile
+is not (`ch01_tbc`). It doesn't say who else died. Whether and when Dace
+learns that his order killed someone (his own father, if Hollis fell) is
+for later chapters.
+
+What each death changes. Several can hold at once.
+
+#### Hollis died
+
+- His last words were to the lead: "if you ever see the boy again, tell
+  him... No. Leave it. He knows."
+- He never saw his son's seal on the order. Tamsin (if alive) said so:
+  he "went down this morning without having to see it".
+- **The lead has Dace's letter.** The lead took it from Hollis's coat at
+  the grave and didn't burn it either. The lead dug that grave alone.
+- Nobody asked the lead to go. The lead chose Veyne Hall unprompted.
+- **His secret died with him:** the purse, the list and the stamped pass
+  he burned. Nobody in the party suspects Dace of anything before the
+  order. Only Rue (if alive) and Dace know what Dace did for Vosse.
+- He never learns that Wren is alive. His Chapter 4 to Chapter 8 beats
+  can't play (his sheet, "Classic permadeath"): the lead learns about Dace
+  from the Greywater register, Rue and Dace himself; Dace hears about Wren
+  from someone else, or nobody.
+- The second sword from under the floor: not said where it is.
+
+#### Tamsin died
+
+- **The lead has her ledger** (she asked for it as she died): 4,212
+  crowns, "don't let them off a single one".
+- She never joked over Harl, never closed his eyes, never said "just a
+  job". Hollis (if alive) found the order and said she would have had a
+  word for Harl; otherwise the lead found it.
+- Nobody said Dace's name aloud over the seal. The party knows whose seal
+  it is all the same.
+- **Coldwell is known to nobody alive**: she and Harl were the only ones.
+  If she fought Harl, the lines about "the farm" were said and nobody
+  followed them up.
+- Her horse stood saddled at the fort (or, in Hollis's words, was still
+  waiting on her). Who took it isn't said.
+- The party has nobody from the Unpaid. Her side quest and the Act 3
+  rally need another way in.
+
+#### Maud died
+
+- Her last words: "I did a thing this autumn, and I am sorry for it. I
+  had hoped to say so myself, to the one it hurt." Nobody knew what she
+  meant.
+- **The report is known to nobody alive in the party.** Rue never learns
+  who told the Vigil where she was, unless a record says so (the Greywater
+  register is Chapter 3's to decide). Maud's Chapter 3 confession can't
+  happen.
+- She never said the seal goes with the title: Tamsin worked it out
+  aloud, or nobody said it. She never said the Vigil would send others:
+  Aske (if alive) said that whoever paid for these men will pay for more.
+- Nobody said rites over any of the dead: she was the only one who knew
+  them. The party has no keeper and no healer.
+- Hollis (if alive) dug her grave by the chapel wall, "deep", and said
+  that was what he had instead of the words. He never forgave her aloud.
+
+#### Rue died
+
+- **"I've seen that seal before" was never said.** Nobody in the party
+  knows the Veyne seal was on a cart of children, that Rue was in that
+  cart, or that Dace was beside it. Nobody suspects the lead's family.
+- **Nobody in the party knows Wren walked out of the Ashfields alive.**
+  Only Crane and the king do. Hollis has nobody to hear it from
+  (Chapter 6), and his Chapter 8 last words depend on it.
+- What Dace did at the mill must reach the lead another way (the
+  Greywater register, Dace himself): Chapter 3's to decide.
+- She was still "the girl with the burned hands" on the order. The party
+  knows she was gifted (she said so on the green) and nothing more; she was
+  buried under the one name they had for her.
+- Maud (if alive) knows her report got Rue killed, and nearly said so:
+  "somebody was told so. I... somebody was told." She can never confess
+  it to Rue. Whether she tells anyone is later chapters' call.
+- Hollis (if alive), at her grave: "She was on that paper next to me, and
+  I never once asked her why."
+
+#### Aske died
+
+- **The lead has her silver** (from her left boot; she asked as she
+  died) and owes it to her mother in Brennmark.
+- She never said she was coming, and never asked for her eleven arrows.
+- Her selling news to Brennish raiders is known to nobody.
+- The party has nobody Brennish: nobody to see through the false flag at
+  Kell's Ford by the boots (Chapter 2).
+- She was buried facing north.

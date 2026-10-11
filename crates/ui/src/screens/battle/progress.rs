@@ -38,6 +38,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::portrait::draw_portrait;
 use crate::widgets::help::{HelpKeys, help_line, key_name};
+use crate::words::Words;
 
 /// How long each page's parts take, in seconds. *Tunable.*
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -197,24 +198,28 @@ pub struct ProgressTables<'a> {
     pub spells: &'a SpellTable,
     /// Items.
     pub items: &'a ItemTable,
+    /// The language the names are shown in.
+    pub words: Words<'a>,
 }
 
 impl<'a> ProgressTables<'a> {
     /// The tables of the battle `state`.
-    pub fn of(state: &'a BattleState) -> Self {
+    pub fn of(state: &'a BattleState, words: Words<'a>) -> Self {
         Self {
             classes: state.classes(),
             skills: state.skills(),
             spells: state.spells(),
             items: state.items(),
+            words,
         }
     }
 
     /// The name of class `id` (its id if it is missing).
     fn class_name(&self, id: &ClassId) -> String {
-        self.classes
-            .get(id)
-            .map_or_else(|| id.0.clone(), |c| c.name.clone())
+        let class = self.classes.get(id);
+        class
+            .map_or(id.0.as_str(), |c| self.words.class(c))
+            .to_owned()
     }
 }
 
@@ -256,11 +261,13 @@ impl Gathered {
                 self.mastered = true;
             }
             Event::SkillLearned { skill, .. } => {
-                let name = tables.skills.get(skill).map(|s| s.name.clone());
+                let skill = tables.skills.get(skill);
+                let name = skill.map(|s| tables.words.skill(s).to_owned());
                 self.learned.extend(name);
             }
             Event::SpellLearned { spell, .. } => {
-                let name = tables.spells.get(spell).map(|s| s.name.clone());
+                let spell = tables.spells.get(spell);
+                let name = spell.map(|s| tables.words.spell(s).to_owned());
                 self.learned.extend(name);
             }
             Event::Promoted {
@@ -274,7 +281,8 @@ impl Gathered {
                 self.reclassed = Some((tables.class_name(from), tables.class_name(to)));
             }
             Event::ItemStowed { item, .. } => {
-                let name = tables.items.get(item).map(|i| i.name().to_owned());
+                let known = tables.items.get(item).is_some();
+                let name = known.then(|| tables.words.item(item, tables.items).to_owned());
                 self.stowed.extend(name);
             }
             _ => {}
@@ -286,7 +294,7 @@ impl Gathered {
     /// promotion's bonus, and its class progress.
     fn pages(self, unit: &Unit, tables: &ProgressTables<'_>) -> Vec<Page> {
         let mut pages = Vec::new();
-        let (id, name) = (unit.id, unit.name.clone());
+        let (id, name) = (unit.id, tables.words.unit(unit).to_owned());
         if let Some(gained) = self.exp {
             pages.push(Page::Exp(ExpPage {
                 unit: id,
@@ -376,10 +384,11 @@ impl Progress {
     pub fn new(
         events: &[Event],
         before: &[Unit],
-        state: &BattleState,
+        (state, words): (&BattleState, Words<'_>),
         timings: ProgressTimings,
     ) -> Option<Self> {
-        Self::with_tables(events, before, &ProgressTables::of(state), timings)
+        let tables = ProgressTables::of(state, words);
+        Self::with_tables(events, before, &tables, timings)
     }
 
     /// [`Progress::new`] with the content `tables` instead of a battle's:
@@ -640,6 +649,7 @@ fn draw_exp(buf: &mut GlyphBuffer, palette: &Palette, page: &ExpPage, exp: u32) 
     buf.draw_box(EXP_BOX, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
     let y = EXP_BOX.y + 1;
     let x = EXP_BOX.x + 2;
+    // check-text: not a data name (the view's own)
     let name: String = page.name.chars().take(NAME_W).collect();
     buf.print(x, y, &name, c(UiColor::Player), bg);
     let bar_x = x + NAME_COL;
@@ -668,6 +678,7 @@ fn draw_level_up(
 ) {
     let text = GainText {
         banner: "LEVEL UP!",
+        // check-text: not a data name (the view's own)
         name: &page.name,
         line: format!("Lv {} → {}", page.level.saturating_sub(1), page.level),
     };
@@ -695,6 +706,7 @@ fn draw_promotion(
 ) {
     let text = GainText {
         banner: PROMOTED_BANNER,
+        // check-text: not a data name (the view's own)
         name: &page.name,
         line: format!("{} → {}", page.from, page.to),
     };
@@ -751,6 +763,7 @@ fn draw_gains(
             .iter()
             .copied()
             .find(|e| art.expression(e).is_some())
+            // check-text: not a data name (an expression's)
             .or_else(|| art.expressions.first().map(|e| e.name.as_str()));
         expr.is_some_and(|expr| {
             let at = (PORTRAIT_FRAME.x + 1, PORTRAIT_FRAME.y + 1);
@@ -776,6 +789,7 @@ fn draw_gains(
     buf.print(
         x,
         LEVEL_BANNER_ROW + 2,
+        // check-text: not a data name (the view's own)
         &cut(text.name),
         c(UiColor::Player),
         bg,
@@ -816,6 +830,7 @@ fn draw_class(buf: &mut GlyphBuffer, palette: &Palette, page: &ClassPage) {
     buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
     let x = rect.x + 2;
     let mut y = rect.y + 1;
+    // check-text: not a data name (the view's own)
     let name: String = page.name.chars().take(NAME_W).collect();
     buf.print(x, y, &name, c(UiColor::Player), bg);
     let line: String = class_line(page).chars().take(CLASS_W).collect();
@@ -890,7 +905,7 @@ mod tests {
         let s = state();
         let mut before = s.units().to_vec();
         before[0].exp = 90;
-        Progress::new(&events(), &before, &s, T).unwrap()
+        Progress::new(&events(), &before, (&s, Words::ENGLISH), T).unwrap()
     }
 
     #[test]
@@ -939,7 +954,7 @@ mod tests {
             unit: UnitId(1),
             amount: 10,
         }];
-        let pb = Progress::new(&exp, s.units(), &s, T).unwrap();
+        let pb = Progress::new(&exp, s.units(), (&s, Words::ENGLISH), T).unwrap();
         assert_eq!(pb.without_exp_bars(), None);
     }
 
@@ -947,12 +962,15 @@ mod tests {
     fn nothing_gained_no_pages_and_other_factions_are_ignored() {
         let s = state();
         let before = s.units().to_vec();
-        assert_eq!(Progress::new(&[], &before, &s, T), None);
+        assert_eq!(Progress::new(&[], &before, (&s, Words::ENGLISH), T), None);
         let brigand = [Event::ExpGained {
             unit: UnitId(4),
             amount: 10,
         }];
-        assert_eq!(Progress::new(&brigand, &before, &s, T), None);
+        assert_eq!(
+            Progress::new(&brigand, &before, (&s, Words::ENGLISH), T),
+            None
+        );
     }
 
     #[test]
@@ -984,7 +1002,7 @@ mod tests {
                 spell: SpellId::new("fire"),
             },
         ];
-        let pb = Progress::new(&events, &before, &s, T).unwrap();
+        let pb = Progress::new(&events, &before, (&s, Words::ENGLISH), T).unwrap();
         let Page::Exp(exp) = &pb.pages()[0] else {
             panic!()
         };
@@ -1082,14 +1100,14 @@ mod tests {
             class: ClassId("exile".into()),
             class_level: 4,
         }];
-        let mut pb = Progress::new(&events, &before, &s, T).unwrap();
+        let mut pb = Progress::new(&events, &before, (&s, Words::ENGLISH), T).unwrap();
         assert!(!pb.pages()[0].waits());
         pb.tick(T.class_hold / 2.0, false);
         assert!(!pb.done(), "it stays up a moment");
         pb.tick(T.class_hold / 2.0 + 0.01, false);
         assert!(pb.done());
         // Bad frame times count as nothing.
-        let mut pb = Progress::new(&events, &before, &s, T).unwrap();
+        let mut pb = Progress::new(&events, &before, (&s, Words::ENGLISH), T).unwrap();
         pb.tick(f32::NAN, false);
         pb.tick(-1.0, false);
         assert!(pb.time().abs() < f32::EPSILON);
@@ -1144,7 +1162,7 @@ mod tests {
     fn a_promotion_shows_its_bonus_like_a_level_up_then_what_came_with_it() {
         let s = state();
         let before = s.units().to_vec();
-        let tables = ProgressTables::of(&s);
+        let tables = ProgressTables::of(&s, Words::ENGLISH);
         let mut pb = Progress::with_tables(&promotion_events(), &before, &tables, T).unwrap();
         assert_eq!(
             pb.pages()[0],
@@ -1226,7 +1244,7 @@ mod tests {
             from: ClassId("exile".into()),
             to: ClassId("gone".into()),
         }];
-        let pb = Progress::new(&reclassed, &before, &s, T).unwrap();
+        let pb = Progress::new(&reclassed, &before, (&s, Words::ENGLISH), T).unwrap();
         let [Page::Class(cl)] = pb.pages() else {
             panic!("{:?}", pb.pages())
         };
@@ -1238,7 +1256,7 @@ mod tests {
             unit: lord,
             item: trpg_core::ItemId::new("leather_vest"),
         }];
-        let pb = Progress::new(&stowed, &before, &s, T).unwrap();
+        let pb = Progress::new(&stowed, &before, (&s, Words::ENGLISH), T).unwrap();
         let [Page::Class(cl)] = pb.pages() else {
             panic!("{:?}", pb.pages())
         };
@@ -1271,7 +1289,10 @@ mod tests {
             unit: lord,
             item: trpg_core::ItemId::new("ghost"),
         }];
-        assert_eq!(Progress::new(&ghost, &before, &s, T), None);
+        assert_eq!(
+            Progress::new(&ghost, &before, (&s, Words::ENGLISH), T),
+            None
+        );
     }
 
     #[test]

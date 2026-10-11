@@ -8,12 +8,14 @@
 use trpg_core::skill::effect_bonuses;
 use trpg_core::{BattleState, EffectSource, StatKind, Stats, TimedEffect, Unit, WEAPON_SLOTS};
 
+use super::art_list::art_name;
 use super::art_list::durability_text;
 use super::layout::MAP_VIEW;
 use super::skills::{cost_text, effect_text, skill_cost, skill_name, timed_text, until_text};
 use super::units::{faction_color, hp_fill};
 use crate::color::{Palette, Rgb, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::words::Words;
 
 /// The whole screen above the help bar.
 pub const INFO: Rect = Rect::new(0, 0, 100, MAP_VIEW.h);
@@ -110,7 +112,12 @@ impl Pen<'_> {
 }
 
 /// Draws the info screen for `unit` of `state`.
-pub fn draw_info(buf: &mut GlyphBuffer, palette: &Palette, state: &BattleState, unit: &Unit) {
+pub fn draw_info(
+    buf: &mut GlyphBuffer,
+    palette: &Palette,
+    (state, words): (&BattleState, Words<'_>),
+    unit: &Unit,
+) {
     let bg = palette.get(UiColor::PanelBg);
     buf.fill_rect(INFO, Cell::new(' ', palette.get(UiColor::Text), bg));
     buf.draw_box(
@@ -135,8 +142,8 @@ pub fn draw_info(buf: &mut GlyphBuffer, palette: &Palette, state: &BattleState, 
         UiColor::TextDim,
     );
     draw_left(&mut pen, state, unit);
-    draw_middle(&mut pen, state, unit);
-    draw_right(&mut pen, state, unit);
+    draw_middle(&mut pen, state, words, unit);
+    draw_right(&mut pen, state, words, unit);
 }
 
 /// Under the portrait: Mov and movement type, class tags, weapon ranks,
@@ -195,11 +202,10 @@ fn draw_left(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
 
 /// Name, class and level, EXP, HP with a bar, stats, skills. Max HP is
 /// shown on the HP line, so the stat list leaves HP out.
-fn draw_middle(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
-    let class = state.classes().get(&unit.class);
+fn draw_middle(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
     let x = MID_X;
-    pen.cut(x, 1, &unit.name, 25, faction_color(unit.faction));
-    let class_name = class.map_or(unit.class.0.as_str(), |c| c.name.as_str());
+    pen.cut(x, 1, words.unit(unit), 25, faction_color(unit.faction));
+    let class_name = words.class_of(&unit.class, state.classes());
     pen.cut(
         x,
         2,
@@ -248,13 +254,13 @@ fn draw_middle(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
         };
         pen.text(x + 4, y, &value, color);
     }
-    draw_effects(pen, state, unit);
-    draw_skills(pen, state, unit);
+    draw_effects(pen, state, words, unit);
+    draw_skills(pen, state, words, unit);
 }
 
 /// The unit's timed effects right of the stats: name, what it changes, and
 /// until when it lasts (0412).
-fn draw_effects(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
+fn draw_effects(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
     if unit.effects.is_empty() {
         return;
     }
@@ -264,7 +270,7 @@ fn draw_effects(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
         pen.cut(
             EFFECT_X,
             y,
-            &effect_name(state, effect),
+            &effect_name(state, words, effect),
             EFFECT_W,
             UiColor::Effect,
         );
@@ -287,20 +293,17 @@ fn draw_effects(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
 }
 
 /// What gave a timed effect: a skill's or an art's id, as a name.
-fn effect_name(state: &BattleState, effect: &TimedEffect) -> String {
+fn effect_name(state: &BattleState, words: Words<'_>, effect: &TimedEffect) -> String {
     match &effect.source {
-        EffectSource::Skill(id) => skill_name(state, id),
-        EffectSource::Art(id) => state
-            .arts()
-            .get(id)
-            .map_or_else(|| id.0.clone(), |a| a.name.clone()),
+        EffectSource::Skill(id) => skill_name(state, words, id),
+        EffectSource::Art(id) => art_name(state, words, id),
     }
 }
 
 /// The skills block: `P` (passive, always on) or `A` (active) markers, the
 /// rank, the cost of an active (for a non-attack active its uses left this
 /// battle, `2/3`), and each effect in a line under it.
-fn draw_skills(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
+fn draw_skills(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
     let x = MID_X;
     pen.text(x, 15, "Skills", UiColor::TextHighlight);
     let skills = unit.usable_skills(state.classes(), state.skills());
@@ -316,7 +319,7 @@ fn draw_skills(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
             UiColor::TextHighlight,
         );
         let name_w = if cost.is_some() { 16 } else { 23 };
-        pen.cut(x + 2, y, &skill.name, name_w, UiColor::Text);
+        pen.cut(x + 2, y, words.skill(skill), name_w, UiColor::Text);
         if let Some(cost) = cost {
             let text = cost_text(cost, unit.skill_uses.uses_left(&skill.id));
             let w = i32::try_from(text.len()).unwrap_or(0);
@@ -328,7 +331,7 @@ fn draw_skills(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
 
 /// The three weapon slots (the equipped one marked `E`, durability `20/20`
 /// or `broken`), armour, accessory, then the spells ([`draw_spells`]).
-fn draw_right(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
+fn draw_right(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
     let x = RIGHT_X;
     let items = state.items();
     let loadout = &unit.loadout;
@@ -351,7 +354,7 @@ fn draw_right(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
                     UiColor::Text
                 };
                 pen.text(x, y, mark, UiColor::TextHighlight);
-                pen.cut(x + 2, y, &def.name, 28, color);
+                pen.cut(x + 2, y, words.item(&inst.def, items), 28, color);
                 let dur = if inst.is_broken() {
                     durability_text(0, def.durability)
                 } else {
@@ -383,16 +386,16 @@ fn draw_right(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
             loadout
                 .armour
                 .as_ref()
-                .and_then(|id| items.armour(id))
-                .map(|a| (a.name.as_str(), bonus_text(&a.bonus))),
+                .and_then(|id| Some((id, items.armour(id)?)))
+                .map(|(id, a)| (words.item(id, items), bonus_text(&a.bonus))),
         ),
         (
             "Accessory",
             loadout
                 .accessory
                 .as_ref()
-                .and_then(|id| items.accessory(id))
-                .map(|a| (a.name.as_str(), bonus_text(&a.bonus))),
+                .and_then(|id| Some((id, items.accessory(id)?)))
+                .map(|(id, a)| (words.item(id, items), bonus_text(&a.bonus))),
         ),
     ];
     for (title, piece) in gear {
@@ -408,12 +411,12 @@ fn draw_right(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
         }
         y += 4;
     }
-    draw_spells(pen, state, unit, y);
+    draw_spells(pen, (state, words), unit, y);
 }
 
 /// The spells block from row `y`: each learned spell with its uses left,
 /// the equipped one marked `E`.
-fn draw_spells(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit, y: i32) {
+fn draw_spells(pen: &mut Pen<'_>, (state, words): (&BattleState, Words<'_>), unit: &Unit, y: i32) {
     let x = RIGHT_X;
     pen.text(x, y, "Spells", UiColor::TextHighlight);
     let spells: Vec<_> = unit
@@ -429,7 +432,7 @@ fn draw_spells(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit, y: i32) {
         if unit.loadout.equipped_spell() == Some(&spell.id) {
             pen.text(x, row, "E", UiColor::TextHighlight);
         }
-        pen.cut(x + 2, row, &spell.name, 28, UiColor::Text);
+        pen.cut(x + 2, row, words.spell(spell), 28, UiColor::Text);
         let text = format!("{uses}/{}", spell.uses);
         let w = i32::try_from(text.len()).unwrap_or(0);
         pen.text(

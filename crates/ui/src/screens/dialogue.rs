@@ -7,7 +7,7 @@
 //! While the lead's replies are up, the text box grows upward to list them
 //! under the line being answered (Nick, 0708: like Stardew Valley).
 
-use trpg_content::{MusicLine, Names, Scene, Side};
+use trpg_content::{MusicLine, Names, Present, Scene, Side};
 use trpg_core::{LEAD_ID, LeadProfile};
 
 use crate::audio::MenuSound;
@@ -18,7 +18,7 @@ use crate::input::Action;
 use crate::portrait::draw_portrait;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::screens::print_centred;
-use crate::widgets::help::{SEPARATOR, help_line, key_name};
+use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use crate::widgets::word_wrap;
 
@@ -78,11 +78,11 @@ impl DialogueScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "dialogue";
 
-    /// `scene` full-screen, with `lead`'s name and pronouns and the names
-    /// from `names`.
-    pub fn new(scene: Scene, lead: LeadProfile, names: Names) -> Self {
+    /// `scene` full-screen, as it plays for those `present` (ADR-0055),
+    /// with `lead`'s name and pronouns and the names from `names`.
+    pub fn new(scene: &Scene, lead: LeadProfile, names: Names, present: &Present) -> Self {
         let mut screen = Self {
-            player: DialoguePlayer::new(scene, lead, names),
+            player: DialoguePlayer::new(scene, lead, names, present),
             overlay: false,
             lines: Vec::new(),
             page: 0,
@@ -95,12 +95,35 @@ impl DialogueScreen {
         screen
     }
 
-    /// `scene` drawn over the screen below (the battle map).
-    pub fn overlay(scene: Scene, lead: LeadProfile, names: Names) -> Self {
+    /// [`new`](Self::new) in the player's language ([`Ctx::words`]): the
+    /// lines, replies and captions its pack translates, with the names of
+    /// the story as the pack has them.
+    pub fn told(ctx: &Ctx, scene: &Scene, lead: LeadProfile, present: &Present) -> Self {
+        let words = ctx.words();
+        let names = words.names(&ctx.content.names);
+        Self::new(&words.scene(scene, lead.gender), lead, names, present)
+    }
+
+    /// [`told`](Self::told), drawn over the screen below (the battle map).
+    pub fn told_overlay(ctx: &Ctx, scene: &Scene, lead: LeadProfile, present: &Present) -> Self {
         Self {
             overlay: true,
-            ..Self::new(scene, lead, names)
+            ..Self::told(ctx, scene, lead, present)
         }
+    }
+
+    /// `scene` drawn over the screen below (the battle map).
+    pub fn overlay(scene: &Scene, lead: LeadProfile, names: Names, present: &Present) -> Self {
+        Self {
+            overlay: true,
+            ..Self::new(scene, lead, names, present)
+        }
+    }
+
+    /// Whether the scene has anything to say for those present. One that
+    /// hasn't isn't worth showing: its callers go on to what follows it.
+    pub fn has_text(&self) -> bool {
+        self.player.scene().has_text()
     }
 
     /// The scene being played.
@@ -214,6 +237,10 @@ impl Screen for DialogueScreen {
     fn is_overlay(&self) -> bool {
         self.overlay
     }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
+    }
 }
 
 impl DialogueScreen {
@@ -276,7 +303,11 @@ impl DialogueScreen {
                     1.0
                 };
                 let len = page_len(self.page_lines());
-                self.shown = (self.shown + input.dt * ctx.text_speed * fast).min(len);
+                self.shown = match ctx.settings().text_speed.chars_per_s() {
+                    Some(speed) => (self.shown + input.dt * speed * fast).min(len),
+                    // Instant: the whole page at once.
+                    None => len,
+                };
             }
         }
         Transition::None
@@ -321,10 +352,11 @@ impl DialogueScreen {
 /// lead, else their entry in the names table (their id if they have none).
 fn display_name<'a>(ctx: &'a Ctx, lead: &'a LeadProfile, portrait: Portrait<'a>) -> &'a str {
     if portrait.character.0 == LEAD_ID {
+        // check-text: not a data name (the player's own)
         return &lead.name;
     }
-    let id = portrait.character.0.as_str();
-    ctx.content.names.get(id).unwrap_or(id)
+    ctx.words()
+        .name(&ctx.content.names, portrait.character.0.as_str())
 }
 
 /// One side's frame, portrait (the lead's by gender) and name plate.
@@ -427,12 +459,9 @@ impl DialogueScreen {
         }
 
         if self.asking_skip {
-            let yes_no = help_line(&[
-                (Some(key_name(km, Action::Confirm)), "yes"),
-                (Some(key_name(km, Action::Cancel)), "no"),
-            ])
-            .replace(SEPARATOR, " / ");
-            buf.print(TEXT_X, TEXT_Y, "Skip scene?", c(UiColor::Text), bg);
+            let yes_no = ctx.text_with("dialogue.skip_answers", &[]);
+            let question = ctx.text("dialogue.skip_question");
+            buf.print(TEXT_X, TEXT_Y, question, c(UiColor::Text), bg);
             buf.print(TEXT_X, TEXT_Y + 1, &yes_no, c(UiColor::TextDim), bg);
             return;
         }

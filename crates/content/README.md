@@ -18,7 +18,11 @@ embedded in the binary (ADR-0005). No filesystem I/O, no macroquad.
 - `dialogue` — `.dlg` dialogue scripts in `assets/dialogue/` (format in that
   folder's `README.md`): `parse_dlg`, `check_scene`, `print_scene`, `load` →
   `DialogueTable` of `Scene`s (steps: `Caption`, `Place`, `Clear`, `Say`,
-  `Narrate`).
+  `Narrate`, `Choice`, `Music`, `If`). An `@if` block's lines play only
+  for a character who is there (ADR-0055): `Present`, `Scene::resolved`,
+  and `check_presence` with its `Cast` (who the army can lose, who a scene
+  can't play without), which `load_embedded` runs once the battles, the
+  chapters, the New Game file and the supports are loaded.
 - `lang` — languages (ADR-0045): English screen text by key from
   `assets/lang/en/ui.ron`, and each pack `assets/lang/<code>/{lang.ron,
   ui.ron}` laid over it → `Lang` (`text(code, key)`, `status(code)`: the

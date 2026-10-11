@@ -28,7 +28,9 @@ use super::skin::MapSkin;
 use crate::color::UiColor;
 use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect, Sprite};
 use crate::screen::Ctx;
-use crate::screens::battle::walk::{SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S};
+use crate::screens::battle::walk::{
+    SPRITE_FAST_WALK_TILES_PER_S, SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S,
+};
 
 /// The battle map painted from a tileset.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -148,6 +150,11 @@ impl MapSkin for SpriteSkin {
     /// Slower than the glyph skin's: a sprite is seen to walk.
     fn walk_tiles_per_s(&self) -> f32 {
         SPRITE_WALK_TILES_PER_S
+    }
+
+    /// A little quicker with Fast animations.
+    fn fast_walk_tiles_per_s(&self) -> f32 {
+        SPRITE_FAST_WALK_TILES_PER_S
     }
 
     /// The fastest a sprite walks.

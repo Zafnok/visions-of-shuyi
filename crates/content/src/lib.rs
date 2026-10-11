@@ -47,7 +47,7 @@ pub use battle::BattleRefs;
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
 pub use credits::{CreditEntry, CreditGroup, Credits};
-pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Scene, Side, Step};
+pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Present, Scene, Side, Step};
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
 pub use image::{ImageId, ImageInfo, ImageTable};
@@ -55,7 +55,9 @@ pub use keymap::{
     Action, Bindings, Button, Chord, Key, KeymapDef, Layout, LayoutKeys, PadKeys, RepeatDef, SLOTS,
     StickDef,
 };
-pub use lang::{Lang, LangCode, LangInfo, LangPack, LangStatus, MadeBy};
+pub use lang::{
+    Lang, LangCode, LangInfo, LangPack, LangStatus, LineEntry, LineText, MadeBy, Orphan,
+};
 pub use map::{MapDef, MapLegend, MapLook};
 pub use names::Names;
 pub use palette::PaletteDef;
@@ -118,7 +120,7 @@ pub struct Content {
     /// Support rules and pairs (ticket 1002).
     pub supports: SupportTable,
     /// English screen text and the language packs (ADR-0045).
-    pub lang: Lang,
+    pub lang: Arc<Lang>,
 }
 
 impl Content {
@@ -149,6 +151,19 @@ impl Content {
 /// depend on another file (terrain colours, map legends) are skipped when that
 /// file failed, so one broken file doesn't flood the report.
 pub fn load_embedded() -> Result<Content, ContentErrors> {
+    load::<&str>(None)
+}
+
+/// [`load_embedded`] with `scripts`, `(file name, source)` pairs, as the
+/// dialogue files instead of the bundle's: every check a script goes
+/// through, on scripts as they are on disk (`cargo xtask check-script`).
+pub fn load_with_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> Result<Content, ContentErrors> {
+    load(Some(scripts))
+}
+
+/// Loads and validates everything; the dialogue files are `scripts`, or
+/// the bundle's when `None`.
+fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, ContentErrors> {
     let palette = PaletteDef::load();
     let terrain = TerrainDef::load(palette.as_ref().ok());
     let maps = match &terrain {
@@ -182,58 +197,127 @@ pub fn load_embedded() -> Result<Content, ContentErrors> {
         Err(_) => Ok(BTreeMap::new()),
     };
     let audio = audio::load();
-    let dialogue = dialogue::load(
-        characters.as_ref().ok(),
-        portraits.as_ref().ok(),
-        names.as_ref().ok(),
-        audio.as_ref().ok(),
-    );
+    let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
+    let (known, cues) = (names.as_ref().ok(), audio.as_ref().ok());
+    let scripts = match scripts {
+        Some(files) => dialogue::scripts_from_sources(files, cast, faces, known, cues),
+        None => dialogue::load_scripts(cast, faces, known, cues),
+    };
+    let scenes = scripts.as_ref().ok().map(|s| &s.table);
     let (battles, chapters, new_game) = load_story(
         maps.as_ref().ok(),
         terrain.as_ref().ok(),
         classes.as_ref().ok(),
         items.as_ref().ok(),
         characters.as_ref().ok(),
-        dialogue.as_ref().ok(),
+        scenes,
         audio.as_ref().ok(),
     );
     let credits = credits::load(audio.as_ref().ok());
-    let supports = support::load(characters.as_ref().ok(), dialogue.as_ref().ok());
+    let supports = support::load(characters.as_ref().ok(), scenes);
+    let dialogue = check_presence(
+        scripts,
+        battles.as_ref().ok(),
+        chapters.as_ref().ok(),
+        new_game.as_ref().ok(),
+        supports.as_ref().ok(),
+    );
     let tilesets = load_tilesets(
         images.as_ref().ok(),
         terrain.as_ref().ok(),
         classes.as_ref().ok(),
         characters.as_ref().ok(),
     );
+    let mut units = Loaded {
+        classes,
+        items,
+        spells,
+        skills,
+        arts,
+        names,
+        characters,
+        portraits,
+        dialogue,
+        ai: ai::load(),
+        tips: tip::load(),
+        audio,
+        credits,
+        images,
+        tilesets,
+        battles,
+        chapters,
+        new_game,
+        supports,
+        lang: Ok(Lang::default()),
+    };
+    let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
+    units.lang = lang::load(data);
     assemble(
         palette,
         KeymapDef::load(),
         FontAtlasDef::load(),
         terrain,
         maps,
-        Loaded {
-            classes,
-            items,
-            spells,
-            skills,
-            arts,
-            names,
-            characters,
-            portraits,
-            dialogue,
-            ai: ai::load(),
-            tips: tip::load(),
-            audio,
-            credits,
-            images,
-            tilesets,
-            battles,
-            chapters,
-            new_game,
-            supports,
-            lang: lang::load(),
-        },
+        units,
     )
+}
+
+/// The English a language pack's data and dialogue text is checked
+/// against ([`lang::DataText`]); `None` if a file it is read from failed
+/// to load. The story files load empty, without an error, when a file
+/// they depend on failed (the maps, the characters, the audio): their
+/// text is then no base to check a pack on either.
+fn data_text(
+    units: &Loaded,
+    terrain: Option<&TerrainDef>,
+    maps: Option<&BTreeMap<String, MapDef>>,
+) -> Option<lang::DataText> {
+    maps?;
+    units.characters.as_ref().ok()?;
+    units.audio.as_ref().ok()?;
+    Some(lang::DataText::from_tables(&lang::Tables {
+        classes: units.classes.as_ref().ok()?,
+        items: units.items.as_ref().ok()?,
+        spells: units.spells.as_ref().ok()?,
+        skills: units.skills.as_ref().ok()?,
+        arts: units.arts.as_ref().ok()?,
+        terrain: terrain?,
+        names: units.names.as_ref().ok()?,
+        tips: units.tips.as_ref().ok()?,
+        chapters: units.chapters.as_ref().ok()?,
+        battles: units.battles.as_ref().ok()?,
+        dialogue: units.dialogue.as_ref().ok()?,
+    }))
+}
+
+/// Adds the presence checks ([`dialogue::check_presence`]: nobody who may
+/// be gone is shown outside an `@if` block for them, ADR-0055) to the
+/// dialogue's result. Skipped when the dialogue, the battles, the
+/// chapters, the New Game file or the supports failed to load.
+fn check_presence(
+    scripts: Result<dialogue::Scripts, Vec<ContentError>>,
+    battles: Option<&BTreeMap<String, BattleDef>>,
+    chapters: Option<&BTreeMap<String, ChapterDef>>,
+    new_game: Option<&NewGameDef>,
+    supports: Option<&SupportTable>,
+) -> Result<DialogueTable, Vec<ContentError>> {
+    let scripts = scripts?;
+    let (Some(battles), Some(chapters), Some(new_game), Some(supports)) =
+        (battles, chapters, new_game, supports)
+    else {
+        return Ok(scripts.table);
+    };
+    let cast = dialogue::Cast::new(new_game, battles, chapters, supports);
+    let errors: Vec<ContentError> = scripts
+        .parsed
+        .iter()
+        .flat_map(|scene| dialogue::check_presence(scene, &cast))
+        .collect();
+    if errors.is_empty() {
+        Ok(scripts.table)
+    } else {
+        Err(errors)
+    }
 }
 
 /// Adds the seal checks ([`item::check_seals`]: a seal for every tier a
@@ -485,7 +569,7 @@ fn assemble(
         chapters: take(units.chapters, &mut errors),
         new_game: take(units.new_game, &mut errors),
         supports: take(units.supports, &mut errors),
-        lang: take(units.lang, &mut errors),
+        lang: Arc::new(take(units.lang, &mut errors)),
     };
     if errors.is_empty() {
         Ok(content)
@@ -611,7 +695,7 @@ mod tests {
             chapters,
             new_game,
             supports: ok_supports(),
-            lang: lang::load(),
+            lang: lang::load(None),
         }
     }
 
@@ -698,8 +782,8 @@ mod tests {
             ok_supports().ok().as_ref()
         );
         assert_eq!(
-            content.as_ref().map(|c| &c.lang),
-            lang::load().ok().as_ref()
+            content.as_ref().map(|c| &*c.lang),
+            lang::load(None).ok().as_ref()
         );
         assert!(
             content.as_ref().is_some_and(
@@ -800,7 +884,11 @@ mod tests {
                     chapters: if i == 21 { Err(e("h")) } else { ok_story().1 },
                     new_game: if i == 22 { Err(e("g")) } else { ok_story().2 },
                     supports: if i == 23 { Err(e("q")) } else { ok_supports() },
-                    lang: if i == 24 { Err(e("l")) } else { lang::load() },
+                    lang: if i == 24 {
+                        Err(e("l"))
+                    } else {
+                        lang::load(None)
+                    },
                 },
             )
         };
@@ -836,6 +924,36 @@ mod tests {
             characters.as_ref(),
         );
         assert!(loaded.is_ok_and(|t| t.contains_key("test")));
+    }
+
+    /// A pack's data and dialogue text is checked only when every file
+    /// its English comes from loaded, the ones the story files need too.
+    #[test]
+    fn the_english_of_the_data_needs_every_file_it_comes_from() {
+        fn failed<T>() -> Result<T, Vec<ContentError>> {
+            Err(vec![ContentError::new("f", "broken")])
+        }
+        let terrain = ok_terrain().ok();
+        let maps = ok_maps().ok();
+        let text = |units: &Loaded| data_text(units, terrain.as_ref(), maps.as_ref());
+        let all = text(&ok_units()).expect("everything loaded");
+        assert_eq!(
+            all.data.get("names.lead").map(String::as_str),
+            Some("Ellery")
+        );
+        assert!(all.lines.contains_key("test_5da5d147"));
+        let mut units = ok_units();
+        units.characters = failed();
+        assert_eq!(text(&units), None);
+        let mut units = ok_units();
+        units.audio = failed();
+        assert_eq!(text(&units), None);
+        let mut units = ok_units();
+        units.tips = failed();
+        assert_eq!(text(&units), None);
+        let units = ok_units();
+        assert_eq!(data_text(&units, terrain.as_ref(), None), None);
+        assert_eq!(data_text(&units, None, maps.as_ref()), None);
     }
 
     #[test]
@@ -943,6 +1061,110 @@ mod tests {
             check_skill_references(failed.clone(), classes.as_ref()),
             failed
         );
+    }
+
+    /// Given the bundle's own dialogue files, [`load_with_scripts`] loads
+    /// what [`load_embedded`] does; given others, their scenes and their
+    /// problems are the game's.
+    #[test]
+    fn scripts_given_replace_the_bundles() {
+        let paths = bundle::files_in(dialogue::DIALOGUE_DIR);
+        let files: Vec<(String, &str)> = paths
+            .into_iter()
+            .filter(|p| p.ends_with(dialogue::DIALOGUE_EXTENSION))
+            .map(|p| (bundle::display_path(p), bundle::file(p).unwrap_or_default()))
+            .collect();
+        assert!(files.len() > 1);
+        let embedded = load_embedded().unwrap();
+        let same = load_with_scripts(&files).unwrap();
+        assert_eq!(same.dialogue, embedded.dialogue);
+        assert_eq!(same.battles, embedded.battles);
+        // A scene more.
+        let mut more = files.clone();
+        more.push(("draft.dlg".to_owned(), "@scene draft\n> Hello.\n@end\n"));
+        let with_draft = load_with_scripts(&more).unwrap();
+        assert!(with_draft.dialogue.get("draft").is_some());
+        assert_eq!(
+            with_draft.dialogue.scenes.len(),
+            embedded.dialogue.scenes.len() + 1
+        );
+        // A broken script is reported under the name given.
+        more.push(("bad.dlg".to_owned(), "@scene bad\n@end\n"));
+        let errors = load_with_scripts(&more).unwrap_err();
+        assert_eq!(
+            errors.0,
+            [
+                ContentError::new("bad.dlg", "scene \"bad\" has no speech or narration")
+                    .at(1, None)
+            ]
+        );
+        // Without the game's scripts, what plays their scenes fails.
+        let errors = load_with_scripts(&more[files.len()..=files.len()]).unwrap_err();
+        assert!(errors.0.iter().any(|e| e.file.starts_with("assets/")));
+    }
+
+    /// The embedded scripts pass the presence check (ADR-0055); with the
+    /// test lord in the starting roster too, his lines outside `@if`
+    /// blocks are errors.
+    #[test]
+    fn presence_checks_join_the_dialogue_errors() {
+        let scripts = || {
+            dialogue::load_scripts(
+                ok_characters().ok().as_ref(),
+                ok_portraits().ok().as_ref(),
+                names::load().ok().as_ref(),
+                audio::load().ok().as_ref(),
+            )
+        };
+        let (battles, chapters, new_game) = ok_story();
+        let (battles, chapters, supports) = (battles.ok(), chapters.ok(), ok_supports().ok());
+        let check = |new_game: Option<&NewGameDef>| {
+            check_presence(
+                scripts(),
+                battles.as_ref(),
+                chapters.as_ref(),
+                new_game,
+                supports.as_ref(),
+            )
+        };
+        let mut new_game = new_game.unwrap_or_default();
+        assert_eq!(check(Some(&new_game)), scripts().map(|s| s.table));
+        assert!(scripts().is_ok());
+        new_game
+            .roster
+            .push(trpg_core::CharacterId("test_lord".into()));
+        let errors = check(Some(&new_game)).err().unwrap_or_default();
+        let first = errors.first().map(ToString::to_string);
+        assert_eq!(
+            first.as_deref(),
+            Some(
+                "assets/dialogue/test.dlg:10: \"test_lord\" may have fallen or left the army by \
+                 now; put their lines inside \"@if test_lord\" ... \"@endif\" \
+                 (assets/dialogue/README.md, \"Who is still there\")"
+            )
+        );
+        // His support conversations and the scenes of his own triggers
+        // can't play without him.
+        let files: std::collections::BTreeSet<&str> =
+            errors.iter().map(|e| e.file.as_str()).collect();
+        assert_eq!(
+            files.into_iter().collect::<Vec<_>>(),
+            [
+                "assets/dialogue/test.dlg",
+                "assets/dialogue/test_triggers.dlg"
+            ]
+        );
+        // Skipped when another file failed, or the dialogue did.
+        assert_eq!(check(None), scripts().map(|s| s.table));
+        let failed = Err(vec![ContentError::new("d", "bad")]);
+        let checked = check_presence(
+            failed,
+            battles.as_ref(),
+            chapters.as_ref(),
+            Some(&new_game),
+            supports.as_ref(),
+        );
+        assert_eq!(checked, Err(vec![ContentError::new("d", "bad")]));
     }
 
     #[test]

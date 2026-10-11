@@ -11,15 +11,16 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | `cinema` | `view`: where a backdrop's window starts to look at a point at a zoom, stopping at the scene's edges (ADR-0048) |
 | `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks), the `GlyphSkin` and the `SpriteSkin` (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins) and `path` (the path arrow for any tile size). See *Map view* below |
 | `input` | `Action`s, `Layout`, `Keymap`, `InputState` (key repeat) |
-| `screen` | `Screen` trait, `Transition`, `FrameInput`, `Ctx` (shared resources, active layout), `ScreenStack` |
+| `screen` | `Screen` trait, `Transition`, `FrameInput`, `Ctx` (shared resources, active layout, the player's settings), `ScreenStack` |
+| `settings` | `Settings`: every player preference (speeds, combat animations, auto-end, fullscreen, cursor, volumes, the layout picked), saved as one RON record (ADR-0050). Read with `ctx.settings()`, changed with `ctx.change_settings(…)`, which saves |
 | `game` | `Game`: owns the stack, input state, `Ctx`, buffer and music state; `frame(events, dt)` |
 | `audio` | `AudioRequest`, the `AudioQueue` screens push to (`ctx.audio`), `MusicState` (which track plays, fades) and its `MusicCommand`s (ADR-0026), `MusicClock` (how far into its track the music is, ADR-0037). Voice clips (ADR-0046) are asked for through `ctx.play_voice(&line_id)`, `ctx.stop_voice()` and `ctx.preload_voices(&line_ids)` |
 | `widgets` | `Menu` (vertical list in a box), `help` (help text that names keys, or controller buttons when a pad was pressed last) |
 | `flow` | `FlowScreen`: the game flow (ADR-0035). One screen on the stack that owns the `Campaign` and hosts the flow's screens itself: mode, lead, a chapter's scenes, Preparations, its battle, the results of a won battle, Game Over, "To be continued" |
-| `screens` | Game screens: `TitleScreen`, `ModeSelectScreen`, `LeadSelectScreen` (with the name grid), `PreparationsScreen` (loadouts and the pack before a battle, 0408), `GameOverScreen`, `ToBeContinuedScreen`, `ResultsScreen` (a won battle's gold, rewind bonus and EXP bars, then its level-up pages, 0810), `LayoutPickerScreen`, `KeyBindingsScreen` (rebinding, 0815), `CreditsScreen` (0808), `DialogueScreen` (full-screen or over the map), `ClassChangeScreen` (`screens/class_change`: promotion and reclass between battles, 0603), `BattleScreen` (`screens/battle`: its `mode` state machine, `attack` targeting, `forecast` panel and combat `playback`, which runs as a mode of the battle screen, ADR-0025) |
+| `screens` | Game screens: `TitleScreen`, `ModeSelectScreen`, `LeadSelectScreen` (with the name grid), `PreparationsScreen` (loadouts and the pack before a battle, 0408; its Options tab is where a Classic campaign can switch to Casual), `GameOverScreen`, `ToBeContinuedScreen`, `ResultsScreen` (a won battle's gold, rewind bonus and EXP bars, then its level-up pages, 0810), `LayoutPickerScreen` (first launch, and from Options to switch layout), `OptionsScreen` (0805: from the title, the map menu and Preparations), `KeyBindingsScreen` (rebinding, 0815; opened from Options), `CreditsScreen` (0808), `DialogueScreen` (full-screen or over the map), `ClassChangeScreen` (`screens/class_change`: promotion and reclass between battles, 0603), `BattleScreen` (`screens/battle`: its `mode` state machine, `attack` targeting, `forecast` panel and combat `playback`, which runs as a mode of the battle screen, ADR-0025) |
 | `portrait` | `draw_portrait`: a portrait's PNG as one sprite item at the largest whole scale that fits the 32×16-cell frame, dimmed and/or mirrored (ADR-0043); `fit_whole_scale` for any picture in any frame |
-| `debug` | Debug menu (F2 in debug builds): glyph sampler, portrait viewer, test scene (full-screen or overlay), Key bindings (until Options, 0805, opens it), sprite test, class change on a test unit (promote, reclass), scene camera (the test map as a backdrop: pan, zoom 1× to 4×), Map skin (the glyph skin, then every tileset in turn; not saved) |
-| `dialogue` | `DialoguePlayer`: plays a dialogue `Scene` one text box at a time and gives the `View` (portraits, speaker, text, caption) to draw |
+| `debug` | Debug menu (F2 in debug builds): glyph sampler, portrait viewer, test scene (full-screen or overlay), sprite test, class change on a test unit (promote, reclass), scene camera (the test map as a backdrop: pan, zoom 1× to 4×), Map skin (the glyph skin, then every tileset in turn; not saved) |
+| `dialogue` | `DialoguePlayer`: plays a dialogue `Scene` one text box at a time, as it is for those `Present` when it starts (ADR-0055), and gives the `View` (portraits, speaker, text, caption) to draw |
 | `harness` | Headless test driver (tests, or the `harness` feature) |
 
 ## What a frame holds
@@ -156,8 +157,10 @@ buf.fill_rect(text_box, Cell::new(' ', text, panel_bg));   // a solid box
    do nothing.
 
 `Game::start` loads the saved layout from `ctx.storage` (key `layout`); on
-first launch there is none, so it opens the layout picker over the title.
-Until a layout is picked, `Keymap::layout_picker` is active (`Up`/`w`,
+first launch there is none, and the first key pressed (at the title's prompt
+or anywhere later) opens the layout picker over whatever is showing and does
+nothing else; a controller button closes it again without choosing (ticket
+0226). Until a layout is picked, `Keymap::layout_picker` is active (`Up`/`w`,
 `Down`/`s`, and `f`/`j`/`Enter`/`Space` to pick), so either hand works.
 
 In debug builds `Game` handles the `Debug` action (F2) itself and pushes the
@@ -332,6 +335,22 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      `cursor_keys_name`, `help_line`) with `ctx.help_keys()`: each layout
      binds actions to different keys, and after a controller press the same
      calls name that pad's buttons instead (ADR-0036).
+   - **The look is a skin** (ADR-0054). A screen has three parts: its
+     logic (`screens/<name>.rs`: state, keys, and `view(&self, ctx)`), its
+     view (`<name>/view.rs`: plain data saying what is shown, with values
+     as meanings: a volume is a level, not a row of blocks) and its skin
+     (`<name>/glyph.rs`: `paint(ctx, &view, buf)`, the only place with
+     positions, box characters and colours). `draw` is one call to the
+     skin. The logic module doesn't import `UiColor`, `Rect`, `BoxStyle`
+     or `Cell` (a test greps the converted ones). Tests of what happened
+     read the view or the state (`h.game().screen::<Name>()` and its
+     `view`: the screen opts into `Screen::as_any`); only the skin's tests
+     and snapshots read cells. A screen with a `widgets::Menu` puts
+     `menu.view()` in its own view, and its skin paints it with
+     `widgets::menu::glyph::paint`. `screens/options.rs` is the example;
+     the title, Key bindings and layout picker (0240) follow it. The other
+     screens still draw in `draw` until tickets 0241 and 0242 convert them,
+     so don't copy them.
    - Text the player reads is never a string literal (ADR-0045). Put it
      in `assets/lang/en/ui.ron` under a `screen.thing` key and ask for it
      with `ctx.text("title.new_game")`, or `ctx.text_with("results.turns",
@@ -343,6 +362,19 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      builds. Look text up when drawing, or again whenever the screen is
      shown, so it follows `ctx.lang`. `cargo xtask check-text` counts the
      literals left and fails on a new one.
+   - Text that comes from the data (a unit's, class's, item's, spell's,
+     skill's, art's or terrain's name, a tip, a chapter title, a battle
+     note, a dialogue line) is English in the data and in `core`. Never
+     show a `name` field yourself: ask `ctx.words()` (`words.rs`), e.g.
+     `words.unit(unit)`, `words.item(&id, items)`, `words.class(def)`,
+     which gives it in the player's language. `Words` is `Copy`: pass it
+     to whatever builds the text. A screen that names things where it has
+     no `Ctx` keeps `ctx.language()` (the battle screen does, for a
+     command applied between frames). `check-text` fails on a `.name`
+     field read; a view's own `name` field is let through with a
+     `// check-text: not a data name` comment. A scene is played with
+     `DialogueScreen::told`. In a test, `words::testing::shouting` makes
+     a language with every name in capitals.
    - Never compute game rules here; send `core` commands and animate events.
    - Shared state that several screens need goes in `Ctx` (a plain struct).
    - Sounds and music: `ctx.audio.play_sound("menu_move")`,
@@ -423,8 +455,10 @@ fn select_opens_new_game() {
   the frames. `music_load_delay(2.0)` makes tracks take 2 s to load (the
   clock starts that much later); `without_music()` makes none ever sound
   (missing files). Call them before the frames that start the music.
-- `Harness::new()` is a first launch (empty storage: the layout picker is on
-  top). `Harness::with_layout(layout)` is a later launch with that layout
+- `Harness::new()` is a first launch (empty storage: no layout, so the first
+  key opens the layout picker). `Harness::at_prompt()` and
+  `at_prompt_with_layout(layout)` start as `app` does, the title waiting for
+  a key or button. `Harness::with_layout(layout)` is a later launch with that layout
   saved. `into_storage()` + `Harness::with_storage(..)` restart with the same
   storage. Saves live in it too (`trpg_ui::save`: keys `slot_01`…`slot_30`
   and `suspend`; `crates/ui/tests/it/save.rs`).
@@ -444,7 +478,7 @@ cargo xtask frame-png target/battle.png --keys "Down f Left f" --wait 1.5
 ```
 
 Steps (`--keys`, `--pad`, `--wait`) run in the order given, from a later
-launch with `--layout right|left` (`--web`: as the web build starts).
+launch with `--layout right|left` (`--prompt`: as the game starts, the title waiting for a key or button).
 `--scale` defaults to 2; `--help` has the rest. It is for looking, never a
 test: tests read the scene, the state or the snapshot.
 - Debug screens are always on in the Harness, so `F2` works in any build.

@@ -21,8 +21,9 @@ use crate::flow::FlowScreen;
 use crate::game::{Game, RawInputEvent};
 use crate::input::{Button, Chord, Device, Layout, PadKind};
 use crate::map_view::{MapScene, RangeKind, UnitView, skin_named};
-use crate::screen::{Ctx, KeyPrompt, LAYOUT_KEY, Screen};
+use crate::screen::{Ctx, KeyPrompt, Screen};
 use crate::screens::BattleScreen;
+use crate::settings::{SETTINGS_KEY, Settings};
 use crate::storage::{MemoryStorage, Storage};
 use trpg_core::Pos;
 
@@ -44,6 +45,9 @@ pub struct Harness {
     player: Player,
     /// The kind of controller [`pad`](Self::pad) presses buttons on.
     pad_kind: PadKind,
+    /// What the last frame told `app`: the music and sound volumes and
+    /// whether to fill the screen.
+    mixer: (f32, f32, bool),
 }
 
 /// The Harness's stand-in for `app`'s music player (ADR-0037): which track
@@ -95,8 +99,8 @@ impl Player {
 }
 
 impl Harness {
-    /// A first launch: the embedded content and empty storage, so the
-    /// layout picker is open over the title screen.
+    /// A first launch: the embedded content and empty storage, so no
+    /// layout is chosen and the first key opens the layout picker.
     ///
     /// # Panics
     ///
@@ -110,26 +114,27 @@ impl Harness {
     /// with that layout's keys.
     pub fn with_layout(layout: Layout) -> Self {
         let mut storage = MemoryStorage::new();
-        if let Err(e) = storage.write(LAYOUT_KEY, layout.name()) {
+        let settings = Settings::default().with_layout(layout);
+        if let Err(e) = storage.write(SETTINGS_KEY, &settings.to_ron()) {
             panic!("saving the layout: {e}");
         }
         Self::with_storage(Box::new(storage))
     }
 
-    /// Like [`new`](Self::new), as the web build launches: the title
-    /// waits for a key press ([`Ctx::key_prompt`]).
-    pub fn on_web() -> Self {
-        Self::new().web()
+    /// Like [`new`](Self::new), as `app` launches the game: the title
+    /// waits for a key or button press ([`Ctx::key_prompt`]).
+    pub fn at_prompt() -> Self {
+        Self::new().waiting()
     }
 
-    /// Like [`with_layout`](Self::with_layout), as the web build launches
-    /// ([`on_web`](Self::on_web)).
-    pub fn on_web_with_layout(layout: Layout) -> Self {
-        Self::with_layout(layout).web()
+    /// Like [`with_layout`](Self::with_layout), as `app` launches the game
+    /// ([`at_prompt`](Self::at_prompt)).
+    pub fn at_prompt_with_layout(layout: Layout) -> Self {
+        Self::with_layout(layout).waiting()
     }
 
     /// Sets [`KeyPrompt::Waiting`] and redraws.
-    fn web(mut self) -> Self {
+    fn waiting(mut self) -> Self {
         self.game.ctx_mut().key_prompt = KeyPrompt::Waiting;
         self.game.redraw();
         self
@@ -157,6 +162,8 @@ impl Harness {
             music: Vec::new(),
             player: Player::default(),
             pad_kind: PadKind::default(),
+            // Nothing told yet: as `app` starts.
+            mixer: (1.0, 1.0, false),
         }
     }
 
@@ -308,6 +315,7 @@ impl Harness {
         self.player.advance(dt);
         self.game.set_music_playing(self.player.playing());
         let out = self.game.frame(events, dt);
+        self.mixer = (out.music_volume, out.sound_volume, out.fullscreen);
         self.audio.push(out.audio.to_vec());
         self.music.extend_from_slice(out.music);
         for command in out.music {
@@ -349,6 +357,17 @@ impl Harness {
     /// frames, press and release; this is the release).
     pub fn last_frame_audio(&self) -> &[AudioRequest] {
         self.audio.last().map_or(&[], Vec::as_slice)
+    }
+
+    /// The volumes the last frame told `app` to play at, 0–1: the music's
+    /// and the sounds' ([`FrameOutput`](crate::FrameOutput)).
+    pub fn volumes(&self) -> (f32, f32) {
+        (self.mixer.0, self.mixer.1)
+    }
+
+    /// Whether the last frame told `app` to fill the screen.
+    pub fn fullscreen(&self) -> bool {
+        self.mixer.2
     }
 
     /// Every music command of the run so far, in order.
@@ -695,7 +714,8 @@ mod tests {
     #[test]
     fn new_is_a_first_launch_and_with_layout_a_later_one() {
         let h = Harness::default();
-        assert_eq!(h.screens(), ["title", "layout_picker"]);
+        assert_eq!(h.screens(), ["title"]);
+        assert_eq!(h.game().ctx().layout(), None);
         let h = Harness::with_layout(Layout::LeftHanded);
         assert_eq!(h.screens(), ["title"]);
         assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
@@ -704,7 +724,7 @@ mod tests {
     #[test]
     fn storage_carries_over_between_runs() {
         let mut h = Harness::new();
-        h.keys("Enter");
+        h.keys("q Enter");
         let h = Harness::with_storage(h.into_storage());
         assert_eq!(h.screens(), ["title"]);
         assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
@@ -720,7 +740,9 @@ mod tests {
         );
         h.keys("Up f");
         assert!(h.quit_requested());
-        let mut h = Harness::with_screen(Box::new(crate::screens::ModeSelectScreen::new()));
+        let mut h = Harness::with_screen(Box::new(crate::screens::ModeSelectScreen::new(
+            &crate::screen::tests::ctx(),
+        )));
 
         h.keys("d");
         assert_eq!(h.top_screen(), "");
@@ -1033,11 +1055,11 @@ mod tests {
         assert!(h.music_commands().contains(&command("title", start)));
     }
 
-    /// The web title asks for its music at the first key press
+    /// The waiting title asks for its music at the first key press
     /// (`docs/design/title-screen.md`), so its clock starts there.
     #[test]
-    fn on_the_web_the_clock_starts_at_the_first_key_press() {
-        let mut h = Harness::on_web_with_layout(Layout::RightHanded);
+    fn at_the_prompt_the_clock_starts_at_the_first_key_press() {
+        let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
         h.wait(1.0);
         assert_eq!(h.music_clock(), None);
         // The press starts the music; the release is one frame later.

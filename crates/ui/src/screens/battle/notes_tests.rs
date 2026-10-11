@@ -180,6 +180,7 @@ fn a_turn_one_scene_plays_after_the_notes_and_the_banner() {
     let (state, mut events) = test_battle(&c);
     events.push(Event::SceneTriggered {
         scene: "test_intro".into(),
+        present: [trpg_core::CharacterId("test_knight".into())].into(),
     });
     let mut s = BattleScreen::start(state, &events);
     let mut c = c;

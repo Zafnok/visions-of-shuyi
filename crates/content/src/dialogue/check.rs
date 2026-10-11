@@ -1,7 +1,7 @@
 //! Checks on parsed scenes: who is on screen, known characters and
 //! expressions, text length, lead and name tokens, names written out, lead
-//! lines, reply choices, music cues, line ids that clash, and scene ids
-//! unique across files.
+//! lines, reply choices, `@if` blocks, music cues, line ids that clash,
+//! and scene ids unique across files.
 
 use std::collections::BTreeMap;
 
@@ -9,7 +9,7 @@ use trpg_core::CharacterId;
 use trpg_core::lead::{self, LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE, Part};
 
 use super::line_id::line_hash;
-use super::parse::{ChoiceLines, ParsedScene};
+use super::parse::{Lines, ParsedScene, PartLines};
 use super::{
     ChoiceOption, MAX_LEAD_LINE_LEN, MAX_OPTION_LEN, MAX_REACTION_TEXTS, MAX_TEXT_LEN, MusicLine,
     NARRATION_SPEAKER, REPLY_SPEAKER, STANDARD_EXPRESSIONS, Side, Step,
@@ -17,6 +17,7 @@ use super::{
 use crate::audio::AudioManifest;
 use crate::character::CharacterTable;
 use crate::error::ContentError;
+use crate::lang::text_width;
 use crate::names::{Names, is_name_id, name_token};
 use crate::portrait::{Portrait, PortraitTable};
 
@@ -44,18 +45,8 @@ pub fn check_scene(
         errors: Vec::new(),
     };
     let mut state = State::default();
-    let mut choices = parsed.choice_lines.iter();
-    for (step, &line) in parsed.scene.steps.iter().zip(&parsed.step_lines) {
-        match step {
-            Step::Choice { options } => {
-                if let Some(lines) = choices.next() {
-                    c.choice(line, options, lines, &mut state);
-                }
-            }
-            _ => c.step(step, line, &mut state),
-        }
-    }
-    if !parsed.scene.steps.iter().any(has_text) {
+    c.steps(&parsed.scene.steps, &parsed.lines, &mut state);
+    if !parsed.scene.steps.iter().any(Step::has_text) {
         c.err(
             parsed.line,
             format!("scene \"{}\" has no speech or narration", parsed.scene.id),
@@ -64,12 +55,16 @@ pub fn check_scene(
     c.errors
 }
 
-/// Whether `step` is, or contains, a speech or narration line.
-fn has_text(step: &Step) -> bool {
-    match step {
-        Step::Choice { options } => options.iter().any(|o| o.steps.iter().any(has_text)),
-        _ => step.text().is_some(),
-    }
+/// The most speech and narration lines `steps` can play: an `@if` block
+/// counts as its longer part.
+fn texts(steps: &[Step]) -> usize {
+    let count = |step: &Step| match step {
+        Step::If {
+            then, otherwise, ..
+        } => texts(then).max(texts(otherwise)),
+        _ => usize::from(step.text().is_some()),
+    };
+    steps.iter().map(count).sum()
 }
 
 /// What the replay knows at a point of the scene.
@@ -89,6 +84,58 @@ struct Checker<'a> {
     /// line, speaker and text.
     hashes: BTreeMap<String, (u32, String, String)>,
     errors: Vec<ContentError>,
+}
+
+/// Cells `text` can take once every token is filled in, at most
+/// ([`text_width`]): lead tokens at their longest ([`lead::longest`]) and
+/// every name token as `longest_name` (the longest name in the table, so a
+/// rename can't push the line over its limit). Unknown tokens, and name
+/// tokens without a table, count as written.
+pub(crate) fn longest_width(text: &str, longest_name: Option<usize>) -> usize {
+    lead::split_tokens(text)
+        .map(|part| match part {
+            Part::Text(t) | Part::Unclosed(t) => text_width(t),
+            Part::Token(t) => match (name_token(t), longest_name) {
+                (Some(_), Some(longest)) => longest,
+                _ => lead::longest(t).unwrap_or(text_width(t) + 2),
+            },
+        })
+        .sum()
+}
+
+/// What is wrong with name token `{token}`, if anything: its id must be in
+/// the names table, and not the lead's (the player names the lead).
+fn name_token_problem(token: &str, names: Option<&Names>) -> Option<String> {
+    let id = name_token(token).map_or("", |t| t.id);
+    if id == LEAD_ID {
+        Some(format!(
+            "{{{token}}} is only the lead's default name; write {{lead}} for the name the player chose"
+        ))
+    } else if !is_name_id(id) || names.is_some_and(|n| n.get(id).is_none()) {
+        Some(format!(
+            "unknown name id \"{id}\" in {{{token}}}; name ids are listed in assets/data/names.ron"
+        ))
+    } else {
+        None
+    }
+}
+
+/// What is wrong with the `{...}` of `text`, in order: each must be a lead
+/// token or a name token with an id in `names` (any valid id without a
+/// table), and every `{` must close. The rule for English and for every
+/// language pack's dialogue text (ADR-0045).
+pub(crate) fn token_problems(text: &str, names: Option<&Names>) -> Vec<String> {
+    lead::split_tokens(text)
+        .filter_map(|part| match part {
+            Part::Token(t) if name_token(t).is_some() => name_token_problem(t, names),
+            Part::Token(t) if !lead::is_token(t) => Some(format!(
+                "unknown token \"{{{t}}}\"; use {{lead}}, {{they}}, {{them}}, {{their}}, \
+                 {{theirs}}, {{themself}} (capitalised: {{They}}...) or a name, {{n:<id>}}"
+            )),
+            Part::Unclosed(_) => Some("\"{\" has no closing \"}\"".to_owned()),
+            Part::Text(_) | Part::Token(_) => None,
+        })
+        .collect()
 }
 
 fn slot(side: Side) -> usize {
@@ -129,7 +176,76 @@ impl<'a> Checker<'a> {
         }
     }
 
-    /// Checks one step (not a choice) on `line` and applies it to `state`.
+    /// Checks `steps`, written at `lines`, applying them to `state`.
+    fn steps<'s>(&mut self, steps: &'s [Step], lines: &Lines, state: &mut State<'s>) {
+        let mut blocks = lines.blocks.iter();
+        for (step, &line) in steps.iter().zip(&lines.steps) {
+            match step {
+                Step::Choice { options } => {
+                    if let Some(parts) = blocks.next() {
+                        self.choice(line, options, parts, state);
+                    }
+                }
+                Step::If {
+                    character,
+                    then,
+                    otherwise,
+                } => {
+                    if let Some(parts) = blocks.next() {
+                        self.branch(line, character, [then, otherwise], parts, state);
+                    }
+                }
+                _ => self.step(step, line, state),
+            }
+        }
+    }
+
+    /// Checks an `@if` block on `line` and applies it to `state`: its
+    /// character can speak, and its two parts leave the screen and the
+    /// caption the same.
+    fn branch<'s>(
+        &mut self,
+        line: u32,
+        character: &CharacterId,
+        branches: [&'s [Step]; 2],
+        parts: &[PartLines],
+        state: &mut State<'s>,
+    ) {
+        if !self.known(character) {
+            self.err(line, format!("unknown character \"{}\"", character.0));
+        }
+        let mut after = [*state; 2];
+        for ((steps, part), after) in branches.into_iter().zip(parts).zip(&mut after) {
+            self.steps(steps, &part.lines, after);
+        }
+        let [with, without] = after;
+        // Reported where the part without them starts, if it is written.
+        let at = parts.get(1).map_or(line, |p| p.line);
+        if with.screen != without.screen {
+            self.err(
+                at,
+                format!(
+                    "with \"{}\" here {}; without, {}; an @if block must leave the same \
+                     characters on screen either way",
+                    character.0,
+                    describe(with.screen),
+                    describe(without.screen)
+                ),
+            );
+        } else if with.caption != without.caption {
+            self.err(
+                at,
+                format!(
+                    "this @if block leaves a different caption with \"{}\" here and without; \
+                     it must leave the same caption either way",
+                    character.0
+                ),
+            );
+        }
+        *state = with;
+    }
+
+    /// Checks one step (not a block) on `line` and applies it to `state`.
     fn step<'s>(&mut self, step: &'s Step, line: u32, state: &mut State<'s>) {
         if let Some(text) = step.text() {
             self.tokens(line, text);
@@ -214,7 +330,7 @@ impl<'a> Checker<'a> {
                 }
             }
             Step::Narrate { text, .. } => self.line_id(line, NARRATION_SPEAKER, text),
-            Step::Choice { .. } | Step::Music(MusicLine::Stop) => {}
+            Step::Choice { .. } | Step::If { .. } | Step::Music(MusicLine::Stop) => {}
         }
     }
 
@@ -224,7 +340,7 @@ impl<'a> Checker<'a> {
         &mut self,
         line: u32,
         options: &'s [ChoiceOption],
-        lines: &ChoiceLines,
+        parts: &[PartLines],
         state: &mut State<'s>,
     ) {
         let n = options.len();
@@ -232,8 +348,8 @@ impl<'a> Checker<'a> {
             self.err(line, format!("@choice has {n} options; it needs 2 or 3"));
         }
         let mut first: Option<State<'s>> = None;
-        for (option, option_lines) in options.iter().zip(&lines.options) {
-            let at = option_lines.line;
+        for (option, part) in options.iter().zip(parts) {
+            let at = part.line;
             self.line_id(at, REPLY_SPEAKER, &option.text);
             self.tokens(at, &option.text);
             self.literal_names(at, &option.text);
@@ -246,7 +362,7 @@ impl<'a> Checker<'a> {
                     ),
                 );
             }
-            let texts = option.steps.iter().filter(|s| s.text().is_some()).count();
+            let texts = texts(&option.steps);
             if texts > MAX_REACTION_TEXTS {
                 self.err(
                     at,
@@ -257,9 +373,7 @@ impl<'a> Checker<'a> {
                 );
             }
             let mut after = *state;
-            for (step, &l) in option.steps.iter().zip(&option_lines.step_lines) {
-                self.step(step, l, &mut after);
-            }
+            self.steps(&option.steps, &part.lines, &mut after);
             match first {
                 None => first = Some(after),
                 Some(f) if f.screen != after.screen => self.err(
@@ -285,20 +399,9 @@ impl<'a> Checker<'a> {
         }
     }
 
-    /// Characters `text` can take once every token is filled in, at most:
-    /// lead tokens at their longest ([`lead::longest`]) and every name token
-    /// as the longest name in the table, so a rename can't push the line
-    /// over its limit. Unknown tokens count as written.
+    /// [`longest_width`] of `text`, with the names of the table.
     fn len(&self, text: &str) -> usize {
-        lead::split_tokens(text)
-            .map(|part| match part {
-                Part::Text(t) | Part::Unclosed(t) => t.chars().count(),
-                Part::Token(t) => match (name_token(t), self.names) {
-                    (Some(_), Some(names)) => names.longest(),
-                    _ => lead::longest(t).unwrap_or(t.chars().count() + 2),
-                },
-            })
-            .sum()
+        longest_width(text, self.names.map(Names::longest))
     }
 
     /// Reports a display name from the names table written out in `text`
@@ -323,45 +426,11 @@ impl<'a> Checker<'a> {
         self.err(line, message);
     }
 
-    /// Checks name token `{token}`: its id must be in the names table, and
-    /// not the lead's (the player names the lead).
-    fn name_token(&mut self, line: u32, token: &str) {
-        let id = name_token(token).map_or("", |t| t.id);
-        if id == LEAD_ID {
-            self.err(
-                line,
-                format!(
-                    "{{{token}}} is only the lead's default name; write {{lead}} for the name the player chose"
-                ),
-            );
-        } else if !is_name_id(id) || self.names.is_some_and(|n| n.get(id).is_none()) {
-            self.err(
-                line,
-                format!(
-                    "unknown name id \"{id}\" in {{{token}}}; name ids are listed in assets/data/names.ron"
-                ),
-            );
-        }
-    }
-
     /// Reports every `{...}` in `text` that isn't a lead token or a name
-    /// token with a known id.
+    /// token with a known id ([`token_problems`]).
     fn tokens(&mut self, line: u32, text: &str) {
-        for part in lead::split_tokens(text) {
-            match part {
-                Part::Token(t) if name_token(t).is_some() => self.name_token(line, t),
-                Part::Token(t) if !lead::is_token(t) => self.err(
-                    line,
-                    format!(
-                        "unknown token \"{{{t}}}\"; use {{lead}}, {{they}}, {{them}}, {{their}}, \
-                         {{theirs}}, {{themself}} (capitalised: {{They}}...) or a name, {{n:<id>}}"
-                    ),
-                ),
-                Part::Unclosed(_) => {
-                    self.err(line, "\"{\" has no closing \"}\"".to_owned());
-                }
-                Part::Text(_) | Part::Token(_) => {}
-            }
+        for message in token_problems(text, self.names) {
+            self.err(line, message);
         }
     }
 

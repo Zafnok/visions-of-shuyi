@@ -115,9 +115,16 @@ A unit falls when its HP reaches 0.
 - Within a battle both modes behave the same: the fallen unit leaves the map,
   can't act, can't be targeted and doesn't block tiles. The difference only
   matters when the campaign applies the battle result.
-- **Mode changes:** Classic → Casual is allowed at any time (options menu);
-  Casual → Classic never. If harder difficulties are added later, the same
-  one-way rule applies (e.g. Hard → Normal only).
+- **Mode changes:** Classic → Casual only; Casual → Classic never. If
+  harder difficulties are added later, the same one-way rule applies (e.g.
+  Hard → Normal only). The switch is made in Options, **at the
+  Preparations screen before a battle, never in the middle of one**
+  (changed 2026-10-04, ticket 0805; it was "at any time"). Nick: "you
+  should not be able to switch to casual mid battle I think... but you can
+  at the prep screen which is before battle and the return point if you
+  select restart battle". So to switch during a battle, restart it: that
+  goes back to Preparations. In a battle the Options screen shows the mode
+  and says where it can be changed.
 - The mode is stored in the campaign, so it's part of every save.
 - Enemy, ally and neutral units that fall are always removed; the mode only
   affects the player's own units.
@@ -225,6 +232,11 @@ next.
 **One difficulty, tuned well.** There is no difficulty picker. Hard or Merciless
 may be added later, with a new decision ticket; a downgrade then works like
 Classic → Casual (one way only).
+
+**Ironman** (Nick, 2026-10-05): a third mode at New Game beside Classic and
+Casual, which hides everything that undoes a result, rewind included. The
+details (what a defeat does, saving, switching mode) are open: ticket 0049,
+[`replayability.md`](replayability.md).
 
 ## Saving
 

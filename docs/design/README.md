@@ -27,14 +27,16 @@ here.
 | Sprite units: the zoom key (the outline alone, no corner mark: decided 2026-10-03, 0436) | `look-and-feel.md`, `controls.md` | 0035, 0439 | ⏳ open |
 | Music & sound effects | [`audio.md`](audio.md) | 0020 | ✅ decided 2026-09-28 (banter track, plain-spell crit, fliers and later places still open) |
 | Title | [`title.md`](title.md) | 0012 | ✅ decided 2026-09-29 (*Visions of Shuyi*) |
-| Title screen: "Press any key or button" | [`title-screen.md`](title-screen.md) | 0034, 0032 | ✅ decided 2026-09-30 (every build, keys and buttons, since 0032) |
+| Title screen: "Press any key or button" | [`title-screen.md`](title-screen.md) | 0034, 0032, 0226 | ✅ decided 2026-09-30 (every build, keys and buttons, since 0032; the keyboard and controller pictures 2026-10-04) |
 | Title screen: intro cinematic | [`title-screen.md`](title-screen.md) (*Intro cinematic*) | 0036 | ✅ decided 2026-10-03 (an off switch in Options: later; skip sound 0041; overworld shot 1010) |
 | Terrain: movement costs & bonuses | [`terrain.md`](terrain.md) | 0301 | ✅ decided 2026-09-26 (capturing & healing tiles deferred) |
 | Controls, key layouts & controller | [`controls.md`](controls.md) | 0015, 0030, 0032 | ✅ decided 2026-09-25 (rebinding keys 0030, 2026-09-29; controller 0032, 2026-09-30) |
+| The Options screen: speeds, volumes, asking first | [`options.md`](options.md) | 0805 | ✅ decided 2026-10-04 |
 | Battle scenes, talking & recruitment | [`battle-scenes-and-recruitment.md`](battle-scenes-and-recruitment.md) | 0705 | ✅ decided 2026-09-29 (quest recruitment later) |
 | Playtest bots: player types, targets, autobalancing | [`playtest-bots.md`](playtest-bots.md) | 0033 | ✅ decided 2026-09-30 |
-| AI voices, a Japanese option, a hired writer later | [`voices-languages-and-script.md`](voices-languages-and-script.md) | 0042 (Japanese), 0043 (voices) | ⏳ direction set 2026-10-03; details open |
+| AI voices, Japanese and Chinese options, a hired writer later | [`voices-languages-and-script.md`](voices-languages-and-script.md) | 0042 (Japanese), 0043 (voices), 0045 (Chinese) | ⏳ direction set 2026-10-03 (Chinese added 2026-10-04); details open |
 | Number scale & strike thresholds | [`stats-and-combat.md`](stats-and-combat.md) | 0013 | ⏳ after playtest 0804 |
+| Replayability: stars and Replay, Visions, rewards, Ironman, a run mode, a randomizer, replays and sharing, multiplayer, modding | [`replayability.md`](replayability.md) | 0046–0054 | ⏳ direction set 2026-10-05; details after playtest 0804 (multiplayer after launch) |
 
 Each file starts with `Decided: YYYY-MM-DD`, `Source: ticket NNNN`, and Nick's
 words verbatim, followed by the derived rules (numbers marked *tunable* where

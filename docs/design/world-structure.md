@@ -120,6 +120,10 @@ The exact glyphs and colours are a look-and-feel choice made in the UI ticket
 - Rewards: EXP from fighting, plus sometimes a little gold or a common item
   (*tunable*). Never unique items. Those come from story battles, fixed
   skirmishes and side quests.
+- **Visions** (Nick, 2026-10-05, [`replayability.md`](replayability.md)):
+  random skirmishes offer an opt-in pick of three cards (a drawback for an
+  extra reward) or skip; story battles and fixed skirmishes have stars
+  instead. Details: 0047, rewards 0048.
 
 **Fixed skirmishes** (*starting values, tunable*): each act's map has a few
 (about **1–3 per chapter**). They're authored like story battles (map,

@@ -43,6 +43,25 @@ pub const PACING: Pacing = Pacing {
     fast: 4.0,
 };
 
+impl Pacing {
+    /// This pacing at the player's `speed` for the AI's phases (0805),
+    /// walking at `walk` tiles per second (and its held speed): the pan
+    /// and the mark take `speed` times less, and with Confirm held they
+    /// play at this pacing's [`fast`](Self::fast) instead of `speed`, not
+    /// on top of it (`docs/design/options.md`). The walk has its own
+    /// speeds (`docs/design/look-and-feel.md`).
+    #[must_use]
+    pub fn at_speed(self, speed: f32, walk: (f32, f32)) -> Pacing {
+        Pacing {
+            pan: self.pan / speed,
+            highlight: self.highlight / speed,
+            fast: self.fast.max(speed) / speed,
+            walk_tiles_per_s: walk.0,
+            held_walk_tiles_per_s: walk.1,
+        }
+    }
+}
+
 /// One AI action being shown, before its combat (if any) plays.
 #[derive(Debug, Clone, PartialEq)]
 pub struct AiAction {
@@ -97,6 +116,11 @@ impl AiAction {
             then,
             pacing,
         }
+    }
+
+    /// How long its parts take.
+    pub fn pacing(&self) -> Pacing {
+        self.pacing
     }
 
     /// The unit acting.

@@ -81,7 +81,8 @@ existing character. No commissioning anyone (Nick's rule).
    7. **Text and voice together.** Options: text types out as now and the
       clip plays over it; advancing cuts the clip (most games); an
       auto-advance mode when the clip ends (a later ticket if wanted).
-   8. **Japanese.** English voices under Japanese text; Japanese voices
+   8. **Japanese and Chinese** (0045 added Chinese; ask per language).
+      English voices under Japanese text; Japanese voices
       too (double the work, and nobody here can check them); no voices in
       Japanese.
    9. **The cast.** Per Chapter 1 speaking character, two or three voice

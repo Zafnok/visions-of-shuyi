@@ -3,7 +3,7 @@ source: crates/ui/src/screens/preparations/tests.rs
 expression: h.snapshot()
 ---
                                                                                                     
-  Preparations                 Loadouts      Pack      Fight!                                       
+  Preparations                 Loadouts      Pack      Options      Fight!                          
                                                                                                     
         ┌─ Stock ──────────────────────────────┐    ┌─ Pack 6/6 ───────────────────────────┐        
         │ Elixir          ×1   Restore all HP  │    │ Elixir          ×1   Restore all HP  │        

@@ -52,7 +52,7 @@ fn rewards(s: &BattleState) -> BattleRewards {
 
 fn screen() -> ResultsScreen {
     let s = state();
-    ResultsScreen::new(&rewards(&s), &s, 3, 1500)
+    ResultsScreen::new(&rewards(&s), (&s, Words::ENGLISH), 3, 1500)
 }
 
 /// One frame of `dt` seconds with `actions` pressed and `held` held.
@@ -189,7 +189,7 @@ fn a_press_on_full_bars_shows_the_level_up_which_waits_for_its_own() {
         assert!(!press(&mut s, key));
         assert!(s.paging());
         let buf = drawn(&s);
-        assert!(!shows(&buf, GOLD_LABEL));
+        assert!(!shows(&buf, "Gold for clearing the map"));
         // The page, moved from the map view to the middle of the screen.
         let x = LEVEL_TEXT_X + 15;
         let banner: String = (x..x + 9)
@@ -228,7 +228,7 @@ fn without_a_level_up_the_press_on_full_bars_closes() {
     let mut r = rewards(&s0);
     r.events.remove(1);
     r.deployed[0].exp = 20;
-    let mut s = ResultsScreen::new(&r, &s0, 3, 1500);
+    let mut s = ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 1500);
     assert_eq!(s.pages(), None);
     assert!(!press(&mut s, Action::Confirm));
     assert_eq!(shown(&s), [41, 31, 0]);
@@ -243,15 +243,15 @@ fn every_charge_used_shows_no_exp_line_and_closes_on_one_press() {
         deployed: deployed(&s0),
         ..BattleRewards::default()
     };
-    let mut s = ResultsScreen::new(&r, &s0, 3, 500);
+    let mut s = ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 500);
     assert!(s.rows().is_empty());
     assert!(s.filled());
     let buf = drawn(&s);
     assert_eq!(
         row_text(&buf, GOLD_ROW),
-        format!("║   {GOLD_LABEL}                   +500 (now 500)         ║")
+        "║   Gold for clearing the map                   +500 (now 500)         ║"
     );
-    assert!(!shows(&buf, BONUS_LABEL));
+    assert!(!shows(&buf, "Bonus EXP for each unit"));
     assert!(!shows(&buf, "EXP"));
     assert!(!shows(&buf, "─"));
     assert!(shows(&buf, "f continue"));
@@ -263,13 +263,13 @@ fn a_battle_without_clear_gold_shows_no_gold_line() {
     let s0 = state();
     let mut r = rewards(&s0);
     r.clear_gold = 0;
-    let buf = drawn(&ResultsScreen::new(&r, &s0, 3, 40));
-    assert!(!shows(&buf, GOLD_LABEL));
+    let buf = drawn(&ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 40));
+    assert!(!shows(&buf, "Gold for clearing the map"));
     assert!(!shows(&buf, "now"));
     assert!(shows(&buf, "3 of 3"));
     assert!(shows(
         &buf,
-        &format!("{BONUS_LABEL}                     +21")
+        "Bonus EXP for each unit                     +21"
     ));
     // The rule under the lines, with the panel's margin on both sides.
     let rule = format!("║   {}   ║", "─".repeat(64));
@@ -281,7 +281,7 @@ fn rows_show_the_level_reached_and_mark_the_level_up() {
     let mut s = screen();
     let lord = |s: &ResultsScreen| row_text(&drawn(s), UNIT_ROW);
     assert!(lord(&s).contains("Test Lord     Exile    Lv 1  EXP ██████████████████░░ 90"));
-    assert!(!lord(&s).contains(LEVEL_UP));
+    assert!(!lord(&s).contains("LEVEL UP"));
     assert!(shows(&drawn(&s), "f skip · hold f fast"));
     wait(&mut s, INTRO_S + FILL_S * 0.5);
     // 100 EXP exactly: the level is reached.
@@ -299,7 +299,7 @@ fn rows_show_the_level_reached_and_mark_the_level_up() {
         row_text(&buf, UNIT_ROW + 2)
             .contains("Test Knight   Guard    Lv 1  EXP ██████░░░░░░░░░░░░░░ 31")
     );
-    assert!(!row_text(&buf, UNIT_ROW + 2).contains(LEVEL_UP));
+    assert!(!row_text(&buf, UNIT_ROW + 2).contains("LEVEL UP"));
     assert!(
         row_text(&buf, UNIT_ROW + 4)
             .contains("Test Archer   Archer   Lv 1  EXP ░░░░░░░░░░░░░░░░░░░░  0")
@@ -315,7 +315,7 @@ fn a_big_army_drops_the_blank_rows() {
         let mut r = rewards(&s0);
         r.events.clear();
         r.deployed = vec![unit.clone(); n];
-        drawn(&ResultsScreen::new(&r, &s0, 3, 0))
+        drawn(&ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 0))
     };
     // Seven fit with blank rows between them; eight don't.
     let buf = army(7);
@@ -336,7 +336,7 @@ fn long_names_are_cut_to_their_columns() {
     let s0 = state();
     let mut r = rewards(&s0);
     r.deployed[0].name = "Bartholomew the Bold".into();
-    let buf = drawn(&ResultsScreen::new(&r, &s0, 3, 0));
+    let buf = drawn(&ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 0));
     assert!(row_text(&buf, UNIT_ROW).contains("Bartholomew t Exile    Lv 1"));
 }
 

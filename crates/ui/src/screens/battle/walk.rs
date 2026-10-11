@@ -34,6 +34,11 @@ pub const HELD_WALK_TILES_PER_S: f32 = 4.0 * WALK_TILES_PER_S;
 /// 2026-10-04: 5 was too slow). *Tunable.*
 pub const SPRITE_WALK_TILES_PER_S: f32 = 6.0;
 
+/// Walking speed under a sprite skin with the Options screen's Fast
+/// animations (Nick, 2026-10-04, `docs/design/look-and-feel.md`), in tiles
+/// per second. *Tunable.*
+pub const SPRITE_FAST_WALK_TILES_PER_S: f32 = 8.0;
+
 /// An AI unit's walking speed under a sprite skin while Confirm is held,
 /// in tiles per second: the fastest a sprite ever walks (Nick, 2026-10-04:
 /// "it's just 12 max").
