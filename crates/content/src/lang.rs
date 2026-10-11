@@ -955,6 +955,23 @@ mod tests {
         assert!(errors[0].starts_with("lang/en/ui.ron: \"Bad Key\""));
     }
 
+    /// Ticket 0243: English for code with no `Lang` at hand is the text
+    /// every `Lang` is loaded with.
+    #[test]
+    fn the_bundles_english_is_what_the_languages_load() {
+        let english = english_ui();
+        assert_eq!(
+            english.get("title.new_game").map(String::as_str),
+            Some("New Game")
+        );
+        assert!(english.len() > 100, "{}", english.len());
+        let lang = load(None).unwrap();
+        for (key, text) in english {
+            assert_eq!(lang.english(key), Some(text.as_str()), "{key}");
+        }
+        assert!(std::ptr::eq(english, english_ui()));
+    }
+
     #[test]
     fn the_embedded_languages_load() {
         let lang = load(None).unwrap();
