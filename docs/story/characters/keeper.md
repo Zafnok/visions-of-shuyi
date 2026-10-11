@@ -96,6 +96,14 @@ Nick chose the art and asked for a name that doesn't read as a man's.
 - **Expressions:** `neutral`, `happy`, `angry` (rare: a frown more than a
   scowl), `sad`, `surprised`, plus `flustered` (wide eyes, mouth open
   mid-word).
+- **Dialogue face** (ticket 0706; Nick picked it from three and made it in
+  the Character Generator, 2026-10-11): green side-swept hair to the jaw,
+  green eyes, and a cream hooded top with the hood down over a grey collar
+  with a clasp. The generator has no raised hood, so in dialogue her hood
+  is down and cream, not brown as in her combat picture. Expressions (the
+  generator's name in brackets): `neutral`, `happy` (smile), `angry`
+  (stern), `sad`, `surprised` (surprise), `flustered` (surprise). Spare:
+  `happy`, `smug`, `thinking`.
 
 ## Signature spells
 

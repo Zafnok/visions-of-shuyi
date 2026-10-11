@@ -92,8 +92,9 @@ liked the Archer art and nothing in the plot needs a boy.
 - **Clothing:** a short brown cloak over a green tunic with pale trim, grey
   leggings and laced boots.
 - **Colours:** straw blond, moss green, brown and violet.
-- **Expressions:** `neutral`, `happy` (a rare, surprised smile), `angry`,
-  `sad`, `surprised`.
+- **Expressions** (the pack's name in brackets; ticket 0706): `neutral`,
+  `happy` (smile: a rare, surprised smile), `angry` (stern), `sad`,
+  `surprised` (surprise). Spare: `thinking`, `sly`, `unique`.
 
 ## Support partners
 

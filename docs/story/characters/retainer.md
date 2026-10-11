@@ -101,6 +101,14 @@ the night at the mill, and has never said a word about it.
 - **Colours:** steel grey, faded Veyne blue, rust brown and a white moustache.
 - **Expressions:** `neutral`, `happy` (a rare, crooked smile), `angry`, `sad`,
   `surprised`, plus `weary` (eyes half shut, for his confessions).
+- **Dialogue face** (ticket 0706; Nick picked it from three and made it in
+  the Character Generator, 2026-10-04): a large man, bald on top with a
+  swept grey tuft behind, a close grey beard and moustache, steel shoulder
+  plates and a Veyne-blue mail collar. The generator has no coif, no
+  wrinkles and no broken nose: his age shows in the hair and beard only.
+  Expressions (the generator's name in brackets): `neutral`, `happy`
+  (smile), `angry` (stern), `sad`, `surprised` (surprise), `weary`
+  (thinking). Spare: `happy` with shut eyes is the file `happy`; `smug`.
 
 ## Support partners
 

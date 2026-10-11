@@ -54,6 +54,15 @@ fn options(source: &Path, character: &str, shift_x: i32) -> Options {
         source: source.to_path_buf(),
         character: character.to_owned(),
         shift_x,
+        generator: false,
+    }
+}
+
+/// [`options`] for a sheet the Character Generator exported.
+fn generator_options(source: &Path, character: &str, shift_x: i32) -> Options {
+    Options {
+        generator: true,
+        ..options(source, character, shift_x)
     }
 }
 
@@ -69,6 +78,18 @@ fn parse_args_reads_the_source_the_id_and_the_shift() {
             Ok(options(Path::new("sheet.png"), "k2", shift))
         );
     }
+    let generated = Ok(generator_options(Path::new("sheet.png"), "k2", 3));
+    for flags in [
+        ["--generator", "--shift-x", "3"],
+        ["--shift-x", "3", "--generator"],
+    ] {
+        let items = [["sheet.png", "k2"].as_slice(), flags.as_slice()].concat();
+        assert_eq!(parse_args(&args(&items)), generated);
+    }
+    assert_eq!(
+        parse_args(&args(&["sheet.png", "k2", "--generator"])),
+        Ok(generator_options(Path::new("sheet.png"), "k2", 0))
+    );
 }
 
 #[test]
@@ -80,6 +101,11 @@ fn parse_args_rejects_what_it_cannot_use() {
     assert_eq!(err(&["busts", "k", "--shift-x"]), usage);
     assert_eq!(err(&["busts", "k", "--bogus", "1"]), usage);
     assert_eq!(err(&["busts", "k", "--shift-x", "1", "2"]), usage);
+    assert_eq!(
+        err(&["busts", "k", "--shift-x", "1", "--shift-x", "2"]),
+        usage
+    );
+    assert_eq!(err(&["busts", "k", "--generator", "--generator"]), usage);
     for id in ["", "Knight", "a b", "a/b", "a.b", "é"] {
         assert_eq!(
             err(&["busts", id]),
@@ -172,9 +198,12 @@ fn sheet(side: u32) -> Picture {
 #[test]
 fn a_sheet_is_split_into_its_eight_expressions_row_by_row() {
     for side in [80, 48] {
-        let cells = split_sheet("s.png", &sheet(side)).unwrap();
+        let cells = split_sheet("s.png", &sheet(side), &SHEET_EXPRESSIONS).unwrap();
         let names: Vec<&str> = cells.iter().map(|(name, _)| name.as_str()).collect();
         assert_eq!(names, SHEET_EXPRESSIONS);
+        let generated = split_sheet("s.png", &sheet(side), &GENERATOR_SHEET_EXPRESSIONS).unwrap();
+        let names: Vec<&str> = generated.iter().map(|(name, _)| name.as_str()).collect();
+        assert_eq!(names, GENERATOR_SHEET_EXPRESSIONS);
         for (n, (_, cell)) in cells.iter().enumerate() {
             let n = u8::try_from(n).unwrap();
             let last = u8::try_from(side - 1).unwrap();
@@ -184,11 +213,11 @@ fn a_sheet_is_split_into_its_eight_expressions_row_by_row() {
         }
     }
     assert_eq!(
-        split_sheet("s.png", &made_up(576, 288, 0)),
+        split_sheet("s.png", &made_up(576, 288, 0), &SHEET_EXPRESSIONS),
         Err("s.png is 576×288 px; a bust sheet is 320×160 and a face sheet 192×96".to_owned())
     );
-    assert!(split_sheet("s.png", &made_up(320, 96, 0)).is_err());
-    assert!(split_sheet("s.png", &made_up(192, 160, 0)).is_err());
+    assert!(split_sheet("s.png", &made_up(320, 96, 0), &SHEET_EXPRESSIONS).is_err());
+    assert!(split_sheet("s.png", &made_up(192, 160, 0), &SHEET_EXPRESSIONS).is_err());
 }
 
 #[test]
@@ -363,6 +392,13 @@ fn run_cuts_a_bust_sheet_and_keeps_faces_whole() {
     assert_eq!((face.width, face.height), (48, 48));
     assert_eq!(pixel(&face, 0, 0), [0, 0, 3, 255]);
     assert_eq!(pixel(&face, 47, 47), [47, 47, 3, 255]);
+    // A generator sheet: the same cells under the generator's names.
+    run(&root, &generator_options(&bust_sheet, "g", 0)).unwrap();
+    for (n, expression) in GENERATOR_SHEET_EXPRESSIONS.iter().enumerate() {
+        let cut = read_picture(&out.join(format!("g/{expression}.png"))).unwrap();
+        assert_eq!(pixel(&cut, 0, 0), [8, 16, u8::try_from(n).unwrap(), 255]);
+    }
+    assert!(!out.join("g/sly.png").exists());
     fs::remove_dir_all(&root).unwrap();
 }
 

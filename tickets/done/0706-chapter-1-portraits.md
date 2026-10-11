@@ -5,10 +5,10 @@ type: content
 milestone: M6 Story & dialogue
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0701", "0703", "0011", "0021", "0035", "0110", "0711"]
 nick_input: sign-off
-completed:
+completed: 2026-10-11
 ---
 
 # 0706 — Chapter 1 cast portraits
@@ -190,11 +190,85 @@ only the edits it allows).
 
 ## Acceptance criteria
 
-- [ ] Every Chapter 1 speaker has a validated portrait with all required
+- [x] Every Chapter 1 speaker has a validated portrait with all required
       expressions.
-- [ ] Characters are distinguishable in a greyscale screenshot.
-- [ ] Nick approved each pick.
-- [ ] All gates in the `run-gates` skill pass.
+- [ ] Characters are distinguishable in a greyscale screenshot. **Partly:**
+      nine of the eleven are. The `messenger` and the `soldier` have the
+      same hair and differ only by the soldier's scar, stubble and hood;
+      they never share a scene. Tamsin and Maud have similar hair shapes
+      but a dark and a light top.
+- [x] Nick approved each pick.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Completion notes
+
+**Speakers** (from `ch01.md` and `ch01.dlg`): the lead (two portraits),
+Hollis, Tamsin, Aske, Maud, Rue, Harl, Dace, the Vigil `messenger`, and the
+shared `soldier`. Crane doesn't appear in Chapter 1 (the messenger speaks
+for him), so he gets no face here.
+
+**What was done**
+
+- **Four heroes' busts**, imported with `cargo xtask portrait-import`:
+  `lead_m` (Male Fighter), `lead_f` (Female Fighter), `poacher` (Archer),
+  `heretic` (Witch). Edit: the female lead's top recoloured from pink to
+  the male lead's blue in all 8 expressions (98 pixels each; Nick: "for
+  lead yes recolor").
+- **Seven Character Generator faces.** Nick picked each from three mockups
+  (Hollis A, Tamsin B, Maud C, Harl C, Dace A, messenger A, soldier B) and
+  made and exported them himself in the generator; I cut them. The exports
+  (bust sheet, map sprite, animated battler) are kept in the private
+  repository, `library/tiny-tales/characters/generated/<id>/`.
+- **`portrait-import --generator`** (new): a generator sheet has its eight
+  expressions in another order, with other names, than a hero's sheet
+  (`neutral`, `happy`, `sad`, `smile`, `smug`, `stern`, `surprise`,
+  `thinking`; checked against the generator's expression parts).
+- Each character sheet says which face it is and which bought expression
+  each dialogue expression shows. Credits, `THIRD_PARTY_ASSETS.md` and
+  `assets/portraits/README.md` updated; the private repository is pinned
+  at the commit with the portraits.
+- **The title cinematic's default lead** with no save: `lead_m` (Nick:
+  "just use male, or randomly pick, either is ok"), recorded in
+  `docs/design/title-screen.md`.
+
+**Written looks rewritten to fit the art** (Nick allowed this; veto any):
+
+- **The lead:** the two no longer share a costume or dark chestnut hair.
+  He: ash-brown hair, blue coat with steel shoulder plates. She: wine-red
+  ringlets, blue top, round shoulder plates. The eyebrow scar and the
+  cut-off crest stay in the story but aren't drawn.
+- **Rue:** the Witch as drawn (silver-blue hair, big blue hat, red scarf).
+  Gone from her look: chopped black hair, the stolen greatcoat, the burn
+  mark on her jaw. Her burned hands stay in the story.
+- **Harl:** brown hair and beard, not rust-red (Nick: "there isn't a good
+  red brown color in the generator for the hair").
+- Hollis, Tamsin, Maud, Harl and Dace each got a *Dialogue face* note
+  saying where the generator face differs from the brief (no coif, cap,
+  raised hood, headscarf, wrinkles, sash; Dace has no ears drawn).
+
+**Deviations**
+
+- Step 3 asked for candidates rendered in the dialogue screen. The hero
+  faces were shown at dialogue size in a mockup sheet; the generator
+  candidates were mockups assembled from the generator's part images by a
+  script (colours approximate), because the faces didn't exist yet. The
+  final eleven were checked in the game's portrait viewer.
+- The generator couldn't be driven from the session, and its EULA forbids
+  taking it apart, so Nick ran it. Only its real exports are shipped; the
+  script-assembled mockups are not.
+- Harl's headscarf was not added to his face: drawing one is more than the
+  small edits allowed.
+- The 0021 rule "face and combat picture match" holds for the four heroes
+  only; the generator faces don't match the Shironejiya, Pixel Flag or
+  Church Cleric combat pictures in outfit (as 0040 expected).
+
+**For Nick when playing:** Maud's hood is down and cream in dialogue but
+up and brown in combat; Harl has a headscarf in combat and none in
+dialogue; Hollis and Harl look younger than 56 and 46. The messenger and
+the soldier look alike in greyscale (same hair); a different hairstyle on
+the messenger would fix it if it bothers you.
+
+**Gameplay rules decided by Claude:** none.
+
+**Follow-up tickets:** none.
 

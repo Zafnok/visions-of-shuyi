@@ -543,6 +543,23 @@ sprites.
 - **Expressions:** the five the dialogue needs (`neutral`, `happy`, `angry`,
   `sad`, `surprised`) are mapped to the closest of the 8 per character
   (0706). A missing one may be made by a small edit.
+- **The Chapter 1 cast's faces** (decided 2026-10-04 and 2026-10-11,
+  ticket 0706; each character's sheet in `docs/story/characters/` has the
+  face and its expressions):
+  - **Bought heroes:** the lead is the Male and the Female Fighter, Aske
+    the Archer, Rue the Witch. The female lead's top is recoloured from
+    pink to his coat's blue (Nick: "for lead yes recolor").
+  - **Generator faces**, picked by Nick from three mockups each ("for
+    Hollis A, for Tamsin B, for Maud C, for Dace A, for messenger A, for
+    soldier B", "for harl I actually like c") and made by him in the
+    Character Generator: Hollis, Tamsin, Maud, Harl, Dace, the Vigil
+    `messenger` and the one `soldier` face of unnamed enemies. Harl's hair
+    and beard are brown ("there isn't a good red brown color in the
+    generator for the hair"); Dace has no ears drawn ("he didn't look good
+    w/ ears").
+  - **What the generator couldn't do:** hoods, headscarves, caps, wrinkles.
+    So Maud's hood is down, Harl has no headscarf in dialogue, and Hollis
+    and Harl look younger than they are.
 - **Characters who fight and have no fitting bought art**: Nick wanted
   more packs in a similar style (2026-10-02: "help me locate some more
   itch bundles to fill in with a similar style for rest of cast"). What he
