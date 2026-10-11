@@ -90,19 +90,25 @@ Maud at Harrowby as her "cook" (she can't cook).
 
 ## Portrait brief
 
-- **Silhouette:** small, sharp and hunched, with a too-big soldier's coat
-  (stolen) and the collar turned up to the ears, and a sword hilt at the hip.
-- **Hair:** black, chopped short and uneven with a knife, sticking out.
-- **Face:** 19, thin and angular, with dark eyes that squint at everyone. A
-  faint pale burn mark climbs from her jaw to her ear on the right side. Light
-  shading.
-- **Hands (if in frame):** wrapped in stained linen to the knuckles.
-- **Clothing:** an oversized dark red-brown Ardevali greatcoat with the badges
-  torn off, and a grey scarf.
-- **Colours:** rust red-brown, charcoal black, grey, and ember orange for any
+Rewritten 2026-10-04 (ticket 0706) to fit the bought art, as Nick decided
+in 0021 ("we can rewrite Rue's physical description as needed once we buy
+the art"): Rue uses the Tiny Tales **Witch** hero (*Heroes: A New
+Beginning*) for face, combat picture and map sprite. She was written with
+chopped black hair and a stolen Ardevali greatcoat.
+
+- **Silhouette:** small and sharp under a wide, battered blue witch's hat
+  with a bent point, a gold band and a red feather.
+- **Hair:** pale silver-blue, cut at the jaw, falling over one eye.
+- **Face:** 19, thin, with green eyes that squint at everyone. The burn
+  mark on her jaw is no longer part of her look; her burned hands are in
+  the story but out of frame.
+- **Clothing:** a dull red scarf wound high at the neck over a dark
+  sleeveless top. She carries a staff and an orb in combat.
+- **Colours:** deep blue, silver-blue, dull red, and ember orange for any
   fire.
-- **Expressions:** `neutral`, `happy` (a sharp grin), `angry`, `sad`,
-  `surprised`, plus `sneer`.
+- **Expressions** (the pack's name in brackets): `neutral`, `happy`
+  (smile: a wink), `angry` (stern), `sad`, `surprised` (surprise), plus
+  `sneer` (sly). Spare: `thinking`, `unique`.
 
 ## Signature spells
 

@@ -16,13 +16,15 @@ use std::path::{Path, PathBuf};
 use crate::font_atlas::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
-pub const USAGE: &str = "usage: cargo xtask portrait-import <bust-folder-or-sheet> <character-id> [--shift-x <pixels>]\n\n\
+pub const USAGE: &str = "usage: cargo xtask portrait-import <bust-folder-or-sheet> <character-id> [--shift-x <pixels>] [--generator]\n\n\
 <bust-folder-or-sheet>  a folder of single bust files (bust_<expression>.png, 80×80 each),\n                        \
 or one bust sheet (320×160: 4×2 busts). A folder without bust_ files\n                        \
 gives its face_ files, or else all its PNGs; 48×48 faces and a\n                        \
 192×96 face sheet are written as they are\n\
 <character-id>          lower-case letters, digits and _ (the portrait's file name)\n\
---shift-x <pixels>      move the cut sideways, -8 to 8 (default 0: the middle 64 columns)\n\n\
+--shift-x <pixels>      move the cut sideways, -8 to 8 (default 0: the middle 64 columns)\n\
+--generator             the sheet is one the Character Generator EX exported: its eight\n                        \
+expressions are in another order than a bought hero's sheet\n\n\
 Writes assets-private/game/portraits/<character-id>/<expression>.png (64×64) and, if it\n\
 isn't there yet, the sidecar assets-private/game/portraits/<character-id>.ron to fill in.\n\
 Run `cargo xtask private-assets --library` first.";
@@ -46,6 +48,12 @@ pub const SHEET: (u32, u32) = (4, 2);
 pub const SHEET_EXPRESSIONS: [&str; 8] = [
     "neutral", "smile", "sad", "sly", "thinking", "stern", "surprise", "unique",
 ];
+/// The expressions of a sheet the Character Generator EX exports, row by
+/// row (checked on an exported sheet against the generator's own
+/// expression parts, 2026-10-04, ticket 0706).
+pub const GENERATOR_SHEET_EXPRESSIONS: [&str; 8] = [
+    "neutral", "happy", "sad", "smile", "smug", "stern", "surprise", "thinking",
+];
 /// The private assets' portraits directory, relative to the repo root.
 pub const OUT_DIR: &str = "assets-private/game/portraits";
 /// The expressions a sidecar must map (`trpg_content::portrait`), each with
@@ -67,15 +75,26 @@ pub struct Options {
     pub character: String,
     /// How far the cut is moved to the right, in pixels.
     pub shift_x: i32,
+    /// Whether a sheet is in the Character Generator's order
+    /// ([`GENERATOR_SHEET_EXPRESSIONS`]) rather than a bought hero's.
+    pub generator: bool,
 }
 
 /// Parses the command's arguments.
 pub fn parse_args(args: &[String]) -> Result<Options, String> {
-    let (source, character, shift) = match args {
-        [source, character] => (source, character, None),
-        [source, character, flag, shift] if flag == "--shift-x" => (source, character, Some(shift)),
-        _ => return Err("expected <bust-folder-or-sheet> <character-id>".to_owned()),
+    let usage = || "expected <bust-folder-or-sheet> <character-id>".to_owned();
+    let [source, character, flags @ ..] = args else {
+        return Err(usage());
     };
+    let (mut shift, mut generator) = (None, false);
+    let mut flags = flags.iter();
+    while let Some(flag) = flags.next() {
+        match flag.as_str() {
+            "--shift-x" if shift.is_none() => shift = Some(flags.next().ok_or_else(usage)?),
+            "--generator" if !generator => generator = true,
+            _ => return Err(usage()),
+        }
+    }
     let valid = |c: char| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_';
     if character.is_empty() || !character.chars().all(valid) {
         return Err(format!(
@@ -96,6 +115,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
         source: PathBuf::from(source),
         character: character.clone(),
         shift_x,
+        generator,
     })
 }
 
@@ -146,8 +166,13 @@ pub fn portrait_image(name: &str, picture: &Picture, shift_x: i32) -> Result<Pic
 }
 
 /// The eight pictures of sheet `picture` (named `name` in errors) with
-/// their expressions, or an error if it isn't a bust or a face sheet.
-pub fn split_sheet(name: &str, picture: &Picture) -> Result<Vec<(String, Picture)>, String> {
+/// their expressions, `expressions` row by row, or an error if it isn't a
+/// bust or a face sheet.
+pub fn split_sheet(
+    name: &str,
+    picture: &Picture,
+    expressions: &[&str; 8],
+) -> Result<Vec<(String, Picture)>, String> {
     let (cols, rows) = SHEET;
     let side = [BUST, FACE]
         .into_iter()
@@ -162,7 +187,7 @@ pub fn split_sheet(name: &str, picture: &Picture) -> Result<Vec<(String, Picture
             FACE * rows
         ))?;
     let cells = (0..rows).flat_map(|row| (0..cols).map(move |col| (col, row)));
-    Ok(SHEET_EXPRESSIONS
+    Ok(expressions
         .iter()
         .zip(cells)
         .map(|(expression, (col, row))| {
@@ -207,11 +232,17 @@ fn expression_of(stem: &str) -> &str {
 }
 
 /// The pictures to import from `source` (a folder or a sheet), with their
-/// expressions: a folder's in file-name order, a sheet's row by row.
-fn read_source(source: &Path) -> Result<Vec<(String, Picture)>, String> {
+/// expressions: a folder's in file-name order, a sheet's row by row (in
+/// the Character Generator's order if `generator`).
+fn read_source(source: &Path, generator: bool) -> Result<Vec<(String, Picture)>, String> {
     let shown = source.display();
     if source.is_file() {
-        return split_sheet(&shown.to_string(), &read_picture(source)?);
+        let expressions = if generator {
+            &GENERATOR_SHEET_EXPRESSIONS
+        } else {
+            &SHEET_EXPRESSIONS
+        };
+        return split_sheet(&shown.to_string(), &read_picture(source)?, expressions);
     }
     let entries = fs::read_dir(source).map_err(|e| format!("reading {shown}: {e}"))?;
     let mut stems = Vec::new();
@@ -278,6 +309,7 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
         source,
         character,
         shift_x,
+        generator,
     } = options;
     if !root.join(OUT_DIR).parent().is_some_and(Path::is_dir) {
         return Err(
@@ -285,7 +317,7 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
                 .to_owned(),
         );
     }
-    let pictures = read_source(source)?;
+    let pictures = read_source(source, *generator)?;
     // Every picture is checked before any file is written.
     let mut images = Vec::new();
     for (expression, picture) in &pictures {

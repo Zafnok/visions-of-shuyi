@@ -12,7 +12,14 @@ gender the player picked.
 not real characters. `lead_m` and `lead_f` are placeholder recolours of
 `test_lord`. The real portraits are bought art (ADR-0032): they are not in
 this repository but in `assets-private/game/portraits/` (ADR-0040), where a
-file replaces the one at the same path here. Ticket 0706 picks them.
+file replaces the one at the same path here. Ticket 0706 picked the
+Chapter 1 cast's: the two leads, `poacher` and `heretic` are bought heroes'
+busts; `retainer`, `sergeant`, `keeper`, `red_captain`, `rival`,
+`messenger` and `soldier` (the one face of every unnamed enemy) were made
+with the bundle's Character Generator. Without the private assets those
+seven and `poacher` and `heretic` have no portrait, and dialogue shows an
+empty frame for them. Which bought expression each name shows is in the
+character's sheet (`docs/story/characters/`).
 
 ## Format
 
@@ -66,6 +73,14 @@ This cuts each 80×80 bust to its middle 64 columns and bottom 64 rows
 (`--shift-x <pixels>`, −8 to 8, moves the cut sideways), writes the 64×64
 files to `assets-private/game/portraits/<id>/`, and writes a sidecar there
 if there is none. Then push the private repository and pin it (ADR-0040).
+
+A face made with the **Character Generator EX**: build it in the program
+(with "Crop Face" off), export, and import its
+`Output_FaceSet/FaceSet_<n>.png` with `--generator`. That sheet's eight
+expressions are in another order and have other names than a hero's:
+`neutral`, `happy` (eyes shut), `sad`, `smile`, `smug`, `stern`,
+`surprise`, `thinking`. Keep the export in
+`assets-private/library/tiny-tales/characters/generated/<id>/`.
 `cargo xtask portrait-import --help` says what else it takes.
 
 ## Rules checked by the loader

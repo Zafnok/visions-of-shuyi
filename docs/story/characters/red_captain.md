@@ -68,8 +68,10 @@ the picture has none of them.
 - **Silhouette:** big and brawny, with a cloth headscarf tied over his head
   and a heavy axe resting on his shoulder. Bare, thick arms. Hunched, like a
   bear.
-- **Hair:** hidden under the headscarf. A thick, short beard, rust-red going
-  grey.
+- **Hair:** hidden under the headscarf in combat; cropped and brown in his
+  dialogue face. A thick, short brown beard (it was rust-red going grey;
+  Nick, 2026-10-11, ticket 0706: "there isn't a good red brown color in the
+  generator for the hair").
 - **Face:** 46, broad and scarred across the nose. Tired, bloodshot eyes.
   Heavier shading.
 - **Clothing:** a sleeveless, worn vest that leaves his arms bare, rough
@@ -85,8 +87,15 @@ the picture has none of them.
   (`look-and-feel.md`: a named character's picture is recoloured to their
   own colours) *(which parts turn red is Claude's starting rule)*. The
   picture has no face in our bust style, so his dialogue face comes from the
-  Character Generator (0706): full beard, red hair, and a headscarf added as
-  a small edit if it can be done, since the generator has none.
+  Character Generator.
+- **Dialogue face** (ticket 0706; Nick picked it from three and made it in
+  the Character Generator, 2026-10-11): a large man with cropped brown
+  hair, a brown jaw beard, a scar down through one eye (not across the
+  nose), bare shoulders with leather straps and a red chest piece. No
+  headscarf: the generator has none, and drawing one on is more than a
+  small edit. Expressions (the generator's name in brackets): `neutral`,
+  `happy` (smug: the nasty grin), `angry` (stern), `sad`, `surprised`
+  (surprise). Spare: `happy`, `smile`, `thinking`.
 
 ## Support partners
 

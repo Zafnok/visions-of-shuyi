@@ -125,23 +125,31 @@ choices, 0708): "Let's move." "Hollis. Now." "I'm listening." No opinions,
 jokes or cruelty the player didn't pick. Other characters carry scenes, and
 the lead's presence is shown by how others speak *to* them.
 
-## Portrait brief (`lead_m` and `lead_f`: same age, costume and colours)
+## Portrait brief (`lead_m` and `lead_f`)
 
-- **Silhouette:** shoulder-length hair tied back loosely (both versions), a
-  high-collared, travel-worn noble coat, and a sword grip over the left
-  shoulder. It reads as "a noble who's been living rough".
-- **Hair:** dark chestnut. `lead_m`: short beard shadow, a few loose strands.
-  `lead_f`: the same tie, with a longer fringe on the left.
-- **Face:** 21, lean, tired eyes, one small pale scar through the right
-  eyebrow (from Hollis's wooden sword, a running joke). Light shading, since
-  the lead is young.
-- **Clothing:** a faded Veyne-blue coat with the house crest **cut off** the
-  chest, leaving a clean patch of brighter blue where it was. Underneath, a
-  plain undyed shirt and a leather baldric.
-- **Colours:** faded royal blue (coat), brighter blue (crest patch), undyed
-  linen, brown leather, and a steel-grey sword grip.
-- **Expressions:** `neutral`, `happy`, `angry`, `sad`, `surprised`, plus
-  `determined` (jaw set, brows level, for choice-point close-ups).
+Rewritten 2026-10-04 (ticket 0706) to fit the bought art: the lead uses the
+Tiny Tales **Male Fighter** ("Hero of Prophecy") and **Female Fighter**
+("Child of Destiny") heroes (*Heroes: A New Beginning*) for face, combat
+picture and map sprite. They were written with the same costume and dark
+chestnut hair; the two heroes differ, and Nick kept both as drawn except
+for her top.
+
+- **`lead_m`:** tousled ash-brown hair, blue eyes. A high-collared
+  Veyne-blue coat with gold trim and steel shoulder plates.
+- **`lead_f`:** wine-red hair in a high tail of ringlets with a teal
+  feather, green eyes. Round steel shoulder plates, a gold collar with a
+  blue stone, and a top **recoloured from pink to his coat's blue** (Nick,
+  2026-10-04: "yes recolor"), so Veyne blue holds for both.
+- **Face:** 21. The small scar through the right eyebrow (from Hollis's
+  wooden sword, a running joke) is in the story but not drawn.
+- **The cut-off crest** on the coat is likewise told, not drawn.
+- **Colours:** Veyne blue, steel grey and gold.
+- **Expressions** (the pack's name in brackets): `neutral`, `happy`
+  (smile), `angry` (stern), `sad`, `surprised` (surprise), plus
+  `determined` (stern, for choice-point close-ups). Spare: `thinking`,
+  `sly`, `unique` (eyes shut).
+- **With no save**, the title cinematic shows `lead_m` (Nick, 2026-10-04:
+  "just use male, or randomly pick, either is ok").
 
 ## Support partners
 

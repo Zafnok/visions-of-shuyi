@@ -5,7 +5,7 @@ type: content
 milestone: M6 Story & dialogue
 model: opus-5.5
 effort: medium
-status: todo
+status: in-progress
 blocked_by: ["0701", "0703", "0011", "0021", "0035", "0110", "0711"]
 nick_input: sign-off
 completed:

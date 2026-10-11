@@ -223,7 +223,8 @@ loop, about 17 seconds.
 - **Six faces slide past with their names:** the lead, Hollis, Tamsin,
   Aske, Maud, Rue (the bought faces, 0706; names from the names table).
 - **The lead follows the most recent save:** the name and face the player
-  chose there. With no save, the default lead.
+  chose there. With no save, the male lead, `lead_m` (Nick, 2026-10-04,
+  ticket 0706: "just use male, or randomly pick, either is ok").
 - **Units march and fight** in the loud part of the song (ticket 0827).
 - **No overworld shot for now.** Ticket 1010 adds it once the world map
   (1007) exists, asks Nick where it goes, and updates this storyboard.
@@ -281,5 +282,3 @@ Chapter 1 map by 0820; the mockup's fight was made up.
   cinematic on the title (0820's sign-off).
 - **Which sword-clash sound** plays on a skip: ticket 0041.
 - **Where the overworld shot goes** and what it replaces: ticket 1010.
-- **The lead's default face** when there is no save (the lead has two
-  looks): 0706 picks which one the cinematic shows and tells Nick.

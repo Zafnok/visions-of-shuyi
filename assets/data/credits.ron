@@ -23,12 +23,18 @@
          source: "https://terminus-font.sourceforge.net/", license: "OFL-1.1"),
 
         // The bought Tiny Tales bundle (THIRD_PARTY_ASSETS.md): the map
-        // sprites (0436), the two test portraits (0711) and the terrain
-        // tiles (0437; the tilesets' artist is Rayane Félix).
+        // sprites (0436), the two test portraits (0711), the terrain tiles
+        // (0437; the tilesets' artist is Rayane Félix) and the Chapter 1
+        // cast's portraits (0706: four heroes' busts, and seven faces made
+        // with the bundle's Character Generator EX, whose parts are Rayane
+        // Félix's).
         (id: "tiny_tales", group: Art, title: "Tiny Tales",
          author: "Megatiles (artists: Rayane Félix, Lunatic Red, Kodots Games Studio)",
          source: "https://megatiles.itch.io/", license: "Custom (Megatiles)",
          private: [
+            "portraits/heretic", "portraits/keeper", "portraits/lead_f", "portraits/lead_m",
+            "portraits/messenger", "portraits/poacher", "portraits/red_captain",
+            "portraits/retainer", "portraits/rival", "portraits/sergeant", "portraits/soldier",
             "portraits/test_knight", "portraits/test_lord",
             "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "units/",
          ]),

@@ -126,6 +126,15 @@ Id: `rival` · [Name registry](../names.md)
   woman. The helm hides his face in battle, so his dialogue face (bare-headed,
   as above) comes from the Character Generator (0706) and need not match the
   armour.
+- **Dialogue face** (ticket 0706; Nick picked it from three and made it in
+  the Character Generator, 2026-10-11): dark brown hair swept back with one
+  loose lock, bright blue eyes, black armour over a pale mail collar, and a
+  tall Veyne-blue collar piece at one shoulder. No ears are drawn (Nick:
+  "he didn't look good w/ ears"). The blue is a collar, not a sash, and
+  the scar at his mouth and the crest are told, not drawn. Expressions
+  (the generator's name in brackets): `neutral`, `happy` (smile: the
+  charming one), `angry` (stern), `sad`, `surprised` (surprise), `cold`
+  (stern). Spare: `happy`, `smug`, `thinking`.
 
 ## Support partners
 

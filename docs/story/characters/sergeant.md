@@ -89,6 +89,14 @@ friends. The ledger is her joke, her grudge and her grief, all in one book.
 - **Colours:** faded brick red, brass, auburn and dark brown leather.
 - **Expressions:** `neutral`, `happy` (a big grin), `angry`, `sad`,
   `surprised`, plus `smug` (one eyebrow up, half smile).
+- **Dialogue face** (ticket 0706; Nick picked it from three and made it in
+  the Character Generator, 2026-10-11): a muscular young woman with
+  swept-back auburn-brown hair, brown eyes, a red sash over a brown mail
+  collar and one steel shoulder plate. The generator has no riding cap, cape,
+  freckles or chipped tooth. Expressions (the generator's name in
+  brackets): `neutral`, `happy` (happy: eyes shut, grinning), `angry`
+  (stern), `sad`, `surprised` (surprise), `smug` (smug). Spare: `smile`,
+  `thinking`.
 
 ## Support partners
 
