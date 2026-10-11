@@ -32,8 +32,22 @@ fn embedded_chapters_and_new_game_load() {
     assert_eq!(test.victory_scenes, ["test_victory"]);
     assert_eq!(test.next, None);
     assert!(c.chapters["quick"].intro_scenes.is_empty());
-    assert_eq!(c.new_game.first_chapter, "test");
-    assert!(c.new_game.roster.iter().any(|r| r.0 == LEAD_ID));
+    // New Game starts Chapter 1 with its six (chapter-1.md).
+    let ch01 = &c.chapters["ch01"];
+    assert_eq!(ch01.battle, "ch01");
+    assert_eq!(ch01.intro_scenes, ["ch01_intro", "ch01_prebattle"]);
+    assert_eq!(ch01.victory_scenes, ["ch01_victory", "ch01_tbc"]);
+    assert_eq!(ch01.next, None);
+    assert_eq!(c.new_game.first_chapter, "ch01");
+    assert_eq!(c.new_game.roster.len(), 6);
+    assert_eq!(c.new_game.roster[0].0, LEAD_ID);
+    assert_eq!((c.new_game.gold, c.new_game.stock.len()), (0, 0));
+    // The tests' New Game is the test chapter.
+    let test = NewGameDef::test_chapter();
+    assert_eq!(test.first_chapter, "test");
+    let roster: Vec<&str> = test.roster.iter().map(|r| r.0.as_str()).collect();
+    assert_eq!(roster, [LEAD_ID, "test_knight"]);
+    assert_eq!((test.gold, test.stock.len()), (0, 0));
 }
 
 #[test]
@@ -126,13 +140,16 @@ fn a_new_campaign_starts_as_the_new_game_file_says() {
     let game = new_campaign(&c, GameMode::Casual, lead.clone());
     assert_eq!(game.mode, GameMode::Casual);
     assert_eq!(game.lead, lead);
-    assert_eq!(game.chapter, "test");
+    assert_eq!(game.chapter, "ch01");
     assert_eq!(game.gold, 30);
     assert_eq!(game.stock.count(&ItemId::new("potion")), 1);
     assert_eq!(game.stock.weapons.len(), 1);
     assert_eq!(game.stock.weapons[0].def, ItemId::new("iron_sword"));
     let names: Vec<_> = game.roster.iter().map(|u| u.name.as_str()).collect();
-    assert_eq!(names, ["Mara", "Test Knight"]);
+    assert_eq!(
+        names,
+        ["Mara", "Hollis Marr", "Tamsin Rook", "Aske", "Maud", "Rue"]
+    );
     assert!(game.roster.iter().all(|u| u.faction == Faction::Player));
     // Unknown characters are skipped.
     assert_eq!(roster_units(&c, &[CharacterId("x".into())]), []);

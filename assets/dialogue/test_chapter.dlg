@@ -1,5 +1,5 @@
-# PLACEHOLDER scenes of the test chapter (chapters/test.ron, ticket 0801),
-# which New Game plays until Chapter 1 exists (0803). The intro uses the
+# TEST FILE: the scenes of the test chapter (chapters/test.ron, ticket
+# 0801), which the tests of the game flow play. The intro uses the
 # lead's name and pronoun tokens. The knight can die in the battle in
 # Classic, so in the victory scene their lines are in an @if block (0715),
 # with another line for when they did. Nobody can be gone in the first

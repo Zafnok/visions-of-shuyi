@@ -1,0 +1,66 @@
+// A winning playthrough of Chapter 1 (ticket 0803): the player's commands,
+// phase by phase. Played back by ch01_winnable.rs, which says how to record
+// a new one. Units 1-6: the lead, Hollis, Tamsin, Aske, Maud, Rue.
+[
+    // Turn 1
+    Act(unit:(2),dest:(x:4,y:10),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(6),dest:(x:2,y:11),action:Cast(spell:("fire"),target:Tile((x:2,y:9)),active:None)),
+    Act(unit:(1),dest:(x:1,y:12),action:UseSkill(skill:("inspire"),target:None)),
+    Act(unit:(3),dest:(x:10,y:11),action:Attack(target:(7),slot:0,active:None,art:Some(("unhorse")))),
+    Act(unit:(5),dest:(x:7,y:11),action:Wait),
+    Act(unit:(4),dest:(x:3,y:8),action:Wait),
+    EndPhase,
+    // Turn 2
+    Act(unit:(6),dest:(x:2,y:7),action:Cast(spell:("cinder_oath"),target:Unit((11)),active:Some(("overcast")))),
+    Act(unit:(3),dest:(x:16,y:11),action:UseItem(pack_index:0,target:(3))),
+    Act(unit:(5),dest:(x:5,y:14),action:UseItem(pack_index:1,target:(5))),
+    Act(unit:(2),dest:(x:6,y:9),action:Attack(target:(9),slot:1,active:None,art:Some(("unhorse")))),
+    Act(unit:(4),dest:(x:5,y:9),action:Attack(target:(9),slot:0,active:None,art:None)),
+    Act(unit:(1),dest:(x:3,y:9),action:Wait),
+    EndPhase,
+    // Turn 3
+    Act(unit:(3),dest:(x:19,y:9),action:UseItem(pack_index:0,target:(3))),
+    Act(unit:(2),dest:(x:8,y:7),action:Wait),
+    Act(unit:(6),dest:(x:3,y:4),action:Cast(spell:("fire"),target:Tile((x:2,y:3)),active:None)),
+    Act(unit:(4),dest:(x:9,y:8),action:Wait),
+    Act(unit:(1),dest:(x:2,y:5),action:UseSkill(skill:("inspire"),target:None)),
+    Act(unit:(5),dest:(x:5,y:9),action:Wait),
+    EndPhase,
+    // Turn 4
+    Act(unit:(3),dest:(x:15,y:11),action:Wait),
+    Act(unit:(4),dest:(x:7,y:7),action:Attack(target:(12),slot:0,active:None,art:None)),
+    Act(unit:(2),dest:(x:8,y:7),action:Attack(target:(12),slot:0,active:None,art:Some(("unhorse")))),
+    Act(unit:(1),dest:(x:7,y:5),action:Wait),
+    Act(unit:(6),dest:(x:8,y:4),action:Wait),
+    Act(unit:(5),dest:(x:5,y:7),action:Cast(spell:("vigil_light"),target:Unit((4)),active:None)),
+    EndPhase,
+    // Turn 5
+    Act(unit:(1),dest:(x:10,y:5),action:Attack(target:(13),slot:1,active:None,art:None)),
+    Act(unit:(3),dest:(x:12,y:14),action:Wait),
+    Act(unit:(4),dest:(x:9,y:7),action:Attack(target:(13),slot:0,active:None,art:None)),
+    Act(unit:(6),dest:(x:12,y:3),action:Wait),
+    Act(unit:(2),dest:(x:11,y:6),action:Wait),
+    Act(unit:(5),dest:(x:10,y:7),action:Wait),
+    EndPhase,
+    // Turn 6
+    Act(unit:(4),dest:(x:11,y:5),action:Attack(target:(15),slot:0,active:None,art:None)),
+    Act(unit:(6),dest:(x:17,y:3),action:Cast(spell:("fire"),target:Unit((18)),active:None)),
+    Act(unit:(1),dest:(x:10,y:3),action:Attack(target:(15),slot:0,active:None,art:None)),
+    Act(unit:(2),dest:(x:14,y:7),action:Wait),
+    Act(unit:(5),dest:(x:11,y:3),action:Cast(spell:("heal"),target:Unit((1)),active:None)),
+    Act(unit:(3),dest:(x:16,y:11),action:Wait),
+    EndPhase,
+    // Turn 7
+    Act(unit:(3),dest:(x:16,y:10),action:Wait),
+    Act(unit:(2),dest:(x:14,y:9),action:UseSkill(skill:("brace"),target:None)),
+    Act(unit:(6),dest:(x:17,y:2),action:Cast(spell:("fire"),target:Unit((19)),active:Some(("overcast")))),
+    Act(unit:(5),dest:(x:15,y:2),action:Cast(spell:("vigil_light"),target:Unit((6)),active:None)),
+    Act(unit:(1),dest:(x:14,y:2),action:Wait),
+    Act(unit:(4),dest:(x:13,y:2),action:Wait),
+    EndPhase,
+    // Turn 8
+    Act(unit:(3),dest:(x:17,y:9),action:Attack(target:(16),slot:0,active:Some(("lance_rush")),art:None)),
+    Act(unit:(6),dest:(x:18,y:2),action:Cast(spell:("fire"),target:Unit((20)),active:Some(("overcast")))),
+    Act(unit:(1),dest:(x:19,y:2),action:Attack(target:(20),slot:1,active:None,art:Some(("guard_break")))),
+    // Some(Victory) on turn 8; lost: []
+]

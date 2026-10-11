@@ -150,11 +150,13 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
 /// Runs the command: plays the steps in a Harness, writes the frame under
 /// `root` (if `out` is relative) and returns what to print.
 pub fn run(root: &Path, options: &Options) -> Result<String, String> {
-    let mut h = if options.prompt {
+    let h = if options.prompt {
         Harness::at_prompt_with_layout(options.layout)
     } else {
         Harness::with_layout(options.layout)
     };
+    // The game as players get it: New Game starts the story.
+    let mut h = h.with_shipped_story();
     for step in &options.steps {
         match step {
             Step::Keys(script) => h.keys(script),

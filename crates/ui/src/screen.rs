@@ -1019,6 +1019,8 @@ pub(crate) mod tests {
     pub(crate) fn ctx() -> Ctx {
         let mut ctx = Ctx::embedded().unwrap().with_layout(Layout::RightHanded);
         ctx.debug_tools = true;
+        // New Game plays the small test chapter, as in the harness.
+        ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
         ctx
     }
 

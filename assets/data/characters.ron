@@ -1,6 +1,8 @@
-// PLACEHOLDER until 0701: test characters and generic enemy templates, so the
-// rules can be built and tested before the real cast exists. The story
-// tickets (07xx) replace this whole file. Loaded by trpg_content::character.
+// The Chapter 1 cast (ticket 0803; sheets in docs/story/characters/) and the
+// Red Company's generic soldiers, then the test characters and templates
+// the tests and the debug Quick Battle use (ids starting `test_`: never in
+// the story). Every stat, level and loadout is a *tunable* starting value,
+// judged in the Chapter 1 playtest (0804). Loaded by trpg_content::character.
 //
 // characters: named characters.
 //   id: also the character's name id: the display name is its entry in
@@ -29,15 +31,72 @@
     characters: [
         // The lead (ticket 0708): the player picks the gender and first
         // name at New Game, so dialogue shows the chosen name and the
-        // portrait lead_m or lead_f. Stats are a copy of test_lord's.
+        // portrait lead_m or lead_f. The Exile's own base, with a point
+        // of the talent stat.
         (
             id: "lead", class: "exile", level: 1, is_lord: true,
             map_label: Some("El"),
-            talent: Spd,
-            base: (19, 6, 1, 7, 7, 4, 3),
+            talent: Str,
+            base: (19, 7, 1, 7, 7, 4, 3),
             weapon_ranks: [(Sword, D)],
             loadout: (weapons: ["iron_sword", "steel_sword"], armour: Some("leather_vest")),
         ),
+        // Hollis Marr: twenty years a guard captain, so two levels up on
+        // the others.
+        (
+            id: "retainer", class: "guard", level: 3,
+            talent: Hp,
+            base: (24, 8, 0, 5, 3, 10, 1),
+            weapon_ranks: [(Spear, D)],
+            loadout: (weapons: ["iron_spear", "steel_spear"], armour: Some("chain_mail")),
+        ),
+        // Tamsin Rook: a cavalry sergeant of the Red Company until last
+        // winter.
+        (
+            id: "sergeant", class: "rider", level: 2,
+            talent: Spd,
+            base: (21, 7, 0, 6, 7, 5, 1),
+            weapon_ranks: [(Sword, E), (Spear, D)],
+            loadout: (weapons: ["iron_spear", "iron_sword"], armour: Some("leather_vest")),
+        ),
+        // Aske.
+        (
+            id: "poacher", class: "archer", level: 1,
+            talent: Dex,
+            base: (17, 5, 0, 8, 6, 3, 1),
+            weapon_ranks: [(Bow, D)],
+            loadout: (weapons: ["iron_bow"], armour: Some("leather_vest")),
+        ),
+        // Maud: Heal from the class, and her own vow, Vigil Light
+        // (keeper.md).
+        (
+            id: "keeper", class: "cleric", level: 1,
+            talent: Res,
+            base: (17, 1, 6, 4, 5, 1, 8),
+            weapon_ranks: [(Gauntlet, E)],
+            personal_spells: [(1, "vigil_light")],
+            loadout: (weapons: ["iron_gauntlets"], armour: Some("leather_vest")),
+        ),
+        // Rue: Fire from the class, and the vow she swore at the
+        // Ashfields, Cinder Oath (heretic.md). No sword: she fights with
+        // her vows.
+        (
+            id: "heretic", class: "mage", level: 1,
+            talent: Mag,
+            base: (16, 1, 7, 5, 6, 1, 5),
+            weapon_ranks: [],
+            personal_spells: [(1, "cinder_oath")],
+            loadout: (armour: Some("leather_vest")),
+        ),
+        // Red Harl Coster, the Chapter 1 boss (red_captain.md).
+        (
+            id: "red_captain", class: "brigand", level: 5,
+            talent: Str,
+            base: (30, 10, 0, 6, 6, 6, 1),
+            weapon_ranks: [(Axe, D)],
+            loadout: (weapons: ["steel_axe", "iron_axe"], armour: Some("leather_vest")),
+        ),
+        // --- Test characters: the tests and the debug Quick Battle. ---
         (
             id: "test_lord", class: "exile", level: 1, is_lord: true,
             map_label: Some("Lo"),
@@ -96,6 +155,16 @@
         ),
     ],
     generics: [
+        // The Red Company (Chapter 1's enemies).
+        (id: "red_brigand", class: "brigand", level: 1, loadout: (weapons: ["iron_axe"])),
+        (id: "red_raider", class: "raider", level: 1, loadout: (weapons: ["iron_axe"])),
+        (id: "red_archer", class: "archer", level: 1, loadout: (weapons: ["iron_bow"])),
+        (id: "red_rider", class: "rider", level: 1, loadout: (weapons: ["iron_spear"])),
+        (
+            id: "red_guard", class: "guard", level: 1,
+            loadout: (weapons: ["iron_spear"], armour: Some("chain_mail")),
+        ),
+        // --- Test templates. ---
         (id: "test_brigand", class: "brigand", level: 1, loadout: (weapons: ["iron_axe"])),
         // The debug Quick Battle's elemental (Nick, ticket 0410).
         (id: "test_frost_elemental", class: "frost_elemental", level: 1),
@@ -105,11 +174,8 @@
         ),
     ],
     // speakers: ids that may speak in dialogue (.dlg) but aren't units
-    // (yet). Each needs a name in names.ron. 0803 moves the Chapter 1
-    // party and the boss up into `characters` with real stats. The
-    // messenger (ticket 0707) only ever speaks.
-    speakers: [
-        "retainer", "sergeant", "poacher", "keeper", "heretic",
-        "red_captain", "rival", "vowmaster", "messenger",
-    ],
+    // (yet). Each needs a name in names.ron. The rival and the Master of
+    // Vows don't fight in Chapter 1; the messenger (ticket 0707) only
+    // ever speaks.
+    speakers: ["rival", "vowmaster", "messenger"],
 )

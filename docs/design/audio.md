@@ -74,6 +74,20 @@ Which story battle uses which `battle_*` cue, and which scene switches to
 which mood, is story content. Each battle file and scene script names its
 cue.
 
+### Chapter 1's cues (ticket 0803, 2026-10-11)
+
+| Moment | Cue | Decided |
+| ------ | --- | ------- |
+| The letter (`ch01_intro`) | `village_home` | *Claude's pick* |
+| The Red Company (`ch01_prebattle`) | `dungeon_tense` | *Claude's pick* |
+| The battle | `battle_bright` | Nick ("A") |
+| After the fight (`ch01_victory`) | `scene_sad` | *Claude's pick* |
+| Veyne Hall (`ch01_tbc`) | `talk_antagonist` | *Claude's pick* |
+
+On the four scene picks Nick said "I'll have to feel them out": they are in
+the build for him to hear in the playtest (0804), not approved. The battle's
+own story scenes (Harl's lines, the death quotes) don't change the music.
+
 ## Sound effects
 
 | Cue | When it plays | Sound | Author | Source | License |

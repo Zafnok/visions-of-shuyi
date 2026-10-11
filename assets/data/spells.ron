@@ -44,5 +44,23 @@
             id: "mend", name: "Mend", kind: Heal(heal_power: 20),
             element: None, range: (1, 1), uses: 4,
         ),
+        // Personal signature spells (magic.md; named in the characters'
+        // sheets). Numbers are Claude's starting values (ticket 0803):
+        // Nick judges them in the playtest (0804).
+        //
+        // Rue's: a close, hard fire strike with few uses. It burns a forest
+        // tile like any fire vow.
+        (
+            id: "cinder_oath", name: "Cinder Oath", kind: Attack(might: 9, hit: 80, crit: 0),
+            element: Fire, range: (1, 1), uses: 3, terrain_effect: Some((
+                from: ["forest"], to: "burning",
+                lasts: UntilCastersNextPhase(then: "burnt", damage: 5),
+            )),
+        ),
+        // Maud's: a weaker heal that reaches 2 tiles.
+        (
+            id: "vigil_light", name: "Vigil Light", kind: Heal(heal_power: 6),
+            element: None, range: (1, 2), uses: 5,
+        ),
     ],
 )

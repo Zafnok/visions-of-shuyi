@@ -979,7 +979,7 @@ mod tests {
         let (battles, chapters, new_game) = ok_story();
         assert!(battles.is_ok_and(|b| b.contains_key("test")));
         assert!(chapters.is_ok_and(|c| c.contains_key("test")));
-        assert!(new_game.is_ok_and(|n| n.first_chapter == "test"));
+        assert!(new_game.is_ok_and(|n| n.first_chapter == "ch01"));
     }
 
     #[test]
