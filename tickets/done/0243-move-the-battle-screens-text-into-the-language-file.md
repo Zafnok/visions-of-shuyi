@@ -64,7 +64,7 @@ None. Nothing a player sees changes.
 - Names and descriptions from data files, tips, dialogue (0235).
 - Rewording anything; layout changes. A layout that only fits the English
   word's length: leave it and add a line to 0237's notes.
-- Turning screens into a view and a skin (0240, 0241, 0242). *Either
+- Turning screens into a view and a skin (0240, 0241, 0242, 0245). *Either
   order works:* if one of those has converted a file, its text lookups
   are in the logic that builds the view; if not, they are where the
   screen draws.

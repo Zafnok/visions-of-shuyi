@@ -305,10 +305,37 @@ mod tests {
         }
     }
 
-    /// Every starter spell, exactly as in `magic.md`'s table.
+    /// Every starter spell and personal signature spell, exactly as in
+    /// `magic.md`'s tables.
     #[test]
     fn spells_match_the_design() {
+        let burns_forest = TerrainEffect {
+            from: vec![tid("forest")],
+            to: tid("burning"),
+            lasts: EffectDuration::UntilCastersNextPhase {
+                then: tid("burnt"),
+                damage: 5,
+            },
+        };
+        // Rue's reaches only the next tile; Maud's reaches 2.
+        let cinder_oath = SpellDef {
+            max_range: 1,
+            ..attack(
+                "cinder_oath",
+                "Cinder Oath",
+                Element::Fire,
+                [9, 80, 0],
+                3,
+                Some(burns_forest),
+            )
+        };
+        let vigil_light = SpellDef {
+            max_range: 2,
+            ..heal("vigil_light", "Vigil Light", 6, 5)
+        };
         let design = [
+            cinder_oath,
+            vigil_light,
             attack(
                 "fire",
                 "Fire",

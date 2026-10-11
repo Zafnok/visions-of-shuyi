@@ -107,6 +107,54 @@ is decided in [`world-structure.md`](world-structure.md) (0008): chapters 1–2
   `:` road, `♣` forest, `^` mountain, `≈` river. This sketch isn't a spec.
   0803 designs the real map (counts in the sketch are illustrative).
 
+### As built (ticket 0803, 2026-10-11; all *tunable*, judged in 0804)
+
+The map, `assets/maps/ch01.map` ("Harrowby Ford", 24×16). Digits are the
+party (`1` the lead, `2` Hollis, `3` Tamsin, `4` Aske, `5` Maud, `6` Rue);
+`b` Brigand, `r` Raider, `a` Archer, `c` Rider, `g` Guard, `H` Harl:
+
+```
+♣♣♣♣....♣♣♣.......^^▲▲▲▲
+♣♣♣♣...♣♣♣♣.......#####▲
+.♣♣♣♣♣♣♣♣....:::::: H #^
+..♣♣♣♣♣......:..c.#r a#^
+...♣.b.....:::....##:##.
+...:.......r..a♣b...b...
+≈≈≈=≈≈≈≈≈≈≈=≈≈≈≈≈...g.♣♣
+...:.......:....≈≈≈≈=≈≈≈
+...:.......:...♣♣...:...
+.♣♣:.......:a.♣♣♣♣..r...
+.♣♣::.....b:...♣♣...:.^^
+....:23:::::::::b::::.^^
+..╦51................^^^
+...46..^^...........♣♣..
+.......^^^..........♣♣♣.
+........^...........♣♣..
+```
+
+- **Three ways over the river:** the footbridge in the west, the road
+  bridge in the middle, the toll bridge in the east, which leads straight
+  to the fort's south gate. Foot units can also wade (it takes a turn).
+- **The toll-fort** is a walled ruin with two ways in (the road from the
+  west, the gate in the south). Harl stands on its fort tile and never
+  leaves it.
+- **14 Red Company: 13 soldiers and Harl**, so Aske's "fourteen" is right:
+  5 Brigands, 3 Raiders, 3 Archers, 1 Rider, 1 Guard, all level 1 except
+  the three in and before the fort (level 2), and Harl (Brigand, level 5,
+  Steel Axe and Iron Axe). No flier.
+- **Who comes at you** (*Claude's starting rule*): only three come for the
+  village at once (two Brigands and an Archer, one Brigand a turn behind
+  the others). Everyone else holds a place (a bridge, the fort road, the
+  fort) and attacks whoever comes within reach. The ticket's plan was
+  "mostly aggressive"; with that, the mindless bot won about 1 try in 10.
+- **The party:** the lead, Aske, Maud and Rue are level 1, Tamsin level 2,
+  Hollis level 3 (a guard captain of twenty years). Everyone has iron
+  weapons; the lead also carries a Steel Sword and Hollis a Steel Spear.
+  Rue has no sword: she fights with her vows (Fire and Cinder Oath,
+  `magic.md`). Maud has Iron Gauntlets, Heal and Vigil Light.
+- **Difficulty sim** (the mindless baseline bot on the player's side, 200
+  seeds, Classic): see ticket 0803's completion notes for the numbers.
+
 ### Teaching
 
 - **Contextual hints**: the help bar plus one-time tips when something new

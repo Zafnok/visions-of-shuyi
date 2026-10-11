@@ -1078,7 +1078,13 @@ mod tests {
         assert_eq!(
             ids,
             [
+                "heretic",
+                "keeper",
                 "lead",
+                "poacher",
+                "red_captain",
+                "retainer",
+                "sergeant",
                 "test_archer",
                 "test_knight",
                 "test_lord",
@@ -1087,7 +1093,7 @@ mod tests {
                 "test_scout"
             ]
         );
-        assert_eq!(t.generics.len(), 3);
+        assert_eq!(t.generics.len(), 8);
         let lords: Vec<&str> = t
             .characters
             .values()

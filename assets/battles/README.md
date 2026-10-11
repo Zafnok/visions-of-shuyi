@@ -96,5 +96,6 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
   more than 5 notes; a note unit that is neither an `id` nor a character in
   the battle, or that is listed twice.
 
-The test files `test.ron` (the test chapter's battle) and `quick.ron` (the
-debug Quick Battle) are placeholders until Chapter 1 (0803).
+`ch01.ron` is Chapter 1's battle. `test.ron` (the test chapter's battle)
+and `quick.ron` (the debug Quick Battle) are test files, never part of the
+story.

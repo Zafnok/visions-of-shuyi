@@ -1,0 +1,79 @@
+// Chapter 1's battle (ticket 0803; rules in docs/design/chapter-1.md):
+// rout the Red Company. No Preparations, a pack of 3 Potions, 1000 gold
+// for the win. Every number here is *tunable* and judged in the playtest
+// (0804); the difficulty sim that set the levels is
+// crates/bots/tests/ch01_difficulty.rs.
+//
+// Aske counts "fourteen" (dialogue/ch01.dlg): 13 soldiers and Harl.
+(
+    id: "ch01",
+    map: "ch01",
+    // Harrowby, at the bottom left.
+    player_slots: [
+        (character: "lead", pos: (4, 12)),
+        (character: "retainer", pos: (5, 11)),
+        (character: "sergeant", pos: (6, 11)),
+        (character: "poacher", pos: (3, 13)),
+        (character: "keeper", pos: (3, 12)),
+        (character: "heretic", pos: (4, 13)),
+    ],
+    enemies: [
+        // South of the river: they come for the village at once.
+        (template: "red_brigand", pos: (10, 10)),
+        (template: "red_brigand", pos: (16, 11)),
+        (template: "red_archer", pos: (12, 9)),
+        // The road to the toll bridge, held.
+        (template: "red_raider", pos: (20, 9), ai: Guard),
+        // The footbridge's north end.
+        (template: "red_brigand", pos: (5, 4), ai: Guard),
+        // The road bridge's north end.
+        (template: "red_raider", pos: (11, 5), ai: Guard),
+        (template: "red_archer", pos: (14, 5), ai: Guard),
+        (template: "red_brigand", pos: (16, 5), ai: Guard),
+        // A rider on the fort road: spears are what hurt horses.
+        (template: "red_rider", pos: (16, 3), ai: Guard),
+        // The toll bridge's north end: armour in the way (magic's job).
+        (template: "red_guard", pos: (20, 6), ai: Guard),
+        // The toll-fort.
+        (template: "red_brigand", level: Some(2), pos: (20, 5), ai: Guard),
+        (template: "red_raider", level: Some(2), pos: (19, 3), ai: Guard),
+        (template: "red_archer", level: Some(2), pos: (21, 3), ai: Guard),
+        (character: "red_captain", pos: (20, 2), ai: Stationary, boss: true),
+    ],
+    preparations: false,
+    pack_cap: 3,
+    default_pack: ["potion", "potion", "potion"],
+    clear_gold: 1000,
+    objective: Rout(),
+    // Scene ids and what each is written for: the top of dialogue/ch01.dlg.
+    triggers: [
+        (when: TurnStart(turn: 1, phase: Player), scene: "ch01_first_turn", once: true),
+        (
+            when: CombatStart(unit: "red_captain", against: Some("lead")),
+            scene: "ch01_boss_engage_lead",
+            once: true,
+        ),
+        (
+            when: CombatStart(unit: "red_captain", against: Some("sergeant")),
+            scene: "ch01_boss_engage_sergeant",
+            once: true,
+        ),
+        (when: CombatStart(unit: "red_captain"), scene: "ch01_boss_engage", once: true),
+        (when: HalfHp(unit: "red_captain"), scene: "ch01_boss_half", once: true),
+        (when: UnitFell(unit: "red_captain"), scene: "ch01_death_red_captain", once: true),
+        (when: UnitFell(unit: "lead"), scene: "ch01_death_lead", once: true),
+        (when: UnitFell(unit: "retainer", mode: Some(Classic)), scene: "ch01_death_retainer", once: true),
+        (when: UnitFell(unit: "retainer", mode: Some(Casual)), scene: "ch01_retreat_retainer", once: true),
+        (when: UnitFell(unit: "sergeant", mode: Some(Classic)), scene: "ch01_death_sergeant", once: true),
+        (when: UnitFell(unit: "sergeant", mode: Some(Casual)), scene: "ch01_retreat_sergeant", once: true),
+        (when: UnitFell(unit: "poacher", mode: Some(Classic)), scene: "ch01_death_poacher", once: true),
+        (when: UnitFell(unit: "poacher", mode: Some(Casual)), scene: "ch01_retreat_poacher", once: true),
+        (when: UnitFell(unit: "keeper", mode: Some(Classic)), scene: "ch01_death_keeper", once: true),
+        (when: UnitFell(unit: "keeper", mode: Some(Casual)), scene: "ch01_retreat_keeper", once: true),
+        (when: UnitFell(unit: "heretic", mode: Some(Classic)), scene: "ch01_death_heretic", once: true),
+        (when: UnitFell(unit: "heretic", mode: Some(Casual)), scene: "ch01_retreat_heretic", once: true),
+    ],
+    difficulty: Normal,
+    music: Cue("battle_bright"),
+    seed: 803,
+)

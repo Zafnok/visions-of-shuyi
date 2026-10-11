@@ -80,7 +80,14 @@ difficulty, story, looks, controls.
    clarifying question per unclear item.
 4. Ask Nick whether the unused-rewind-charge EXP bonus (7% of a level per
    charge, `death-and-difficulty.md`) felt right, and record any change.
-5. Put a summary in Completion notes: feedback verbatim + ticket numbers created.
+5. Ask Nick about what 0803 left for him to judge by playing (its
+   completion notes list every starting rule): whether Rue's Cinder Oath
+   and Maud's Vigil Light are too strong to have from the start
+   (`magic.md`, "Personal signature spells"); the four scene music picks
+   he wanted to "feel out" (`audio.md`, "Chapter 1's cues"); and whether
+   it feels right that most of the Red Company waits at the bridges and
+   the fort instead of charging.
+6. Put a summary in Completion notes: feedback verbatim + ticket numbers created.
 
 ## Acceptance criteria
 

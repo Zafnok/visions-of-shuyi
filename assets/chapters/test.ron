@@ -1,5 +1,6 @@
-// PLACEHOLDER: a tiny chapter for the game flow and its tests (ticket
-// 0801). New Game starts here until Chapter 1 exists (ticket 0803).
+// TEST FILE: a tiny chapter for the tests of the game flow (ticket 0801),
+// whose New Game starts here (NewGameDef::test_chapter). The game's New
+// Game starts Chapter 1 (data/new_game.ron).
 (
     id: "test",
     title: "Test Chapter",

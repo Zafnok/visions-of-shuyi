@@ -6,13 +6,22 @@
 //! Both pop when they are done and say what happened through `result`; the
 //! game flow hosts them ([`crate::flow`]). The slot picker is made to be
 //! opened from other menus too (the world map's `Save`, 1007).
+//!
+//! **The look is a skin** (ADR-0054): this module decides what the screens
+//! show and do, and says it as a [`SavePromptView`] and a
+//! [`SlotPickerView`]; [`glyph`] paints them.
+
+pub mod glyph;
+pub mod view;
+
+pub use view::{
+    OverwriteView, SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView,
+};
 
 use trpg_core::{Campaign, GameMode, SaveFile};
 
-use super::print_centred;
 use crate::audio::MenuSound;
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::save::{self, Slot, playtime_text, slot_key};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
@@ -28,35 +37,8 @@ pub const LOAD_TITLE: &str = "save.title.load";
 /// The key of what an empty slot shows.
 pub const EMPTY_SLOT: &str = "save.empty";
 
-/// Row of the question.
-const QUESTION_ROW: i32 = 10;
-/// Top row of the question's menu.
-const MENU_ROW: i32 = 13;
-
-/// The slot picker's panel, in cells.
-const PANEL: Rect = Rect::new(2, 1, 96, 26);
-/// Row of the column headings.
-const HEADING_ROW: i32 = PANEL.y + 2;
-/// Row of the first slot shown.
-const FIRST_ROW: i32 = PANEL.y + 4;
 /// Slots shown at once.
 const VISIBLE: usize = 20;
-/// Column of the slot numbers.
-const SLOT_X: i32 = PANEL.x + 3;
-/// Column of the chapter titles.
-const CHAPTER_X: i32 = SLOT_X + 6;
-/// Cells a chapter title may take.
-const CHAPTER_W: usize = 48;
-/// Column of the game modes.
-const MODE_X: i32 = CHAPTER_X + 50;
-/// Column of the army sizes.
-const ARMY_X: i32 = MODE_X + 10;
-/// Column where the playtimes end (they are right-aligned).
-const TIME_END_X: i32 = PANEL.x + PANEL.w - 3;
-/// Row of the message under the panel.
-const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
-/// Height of the overwrite question's box.
-const OVERWRITE_H: i32 = 6;
 
 /// "Save your progress?" with `Yes` / `No`. Pops once one is chosen
 /// ([`result`](Self::result)); there is nothing to back out of.
@@ -90,6 +72,17 @@ impl SavePromptScreen {
     pub fn help(ctx: &Ctx) -> String {
         ctx.text_with("save_prompt.help", &[])
     }
+
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint_prompt`]): the question, `Yes` and `No`, and the
+    /// help line.
+    pub fn view(&self, ctx: &Ctx) -> SavePromptView {
+        SavePromptView {
+            question: ctx.text(SAVE_QUESTION).to_owned(),
+            menu: self.menu.view(),
+            help: Self::help(ctx),
+        }
+    }
 }
 
 impl Screen for SavePromptScreen {
@@ -109,16 +102,11 @@ impl Screen for SavePromptScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        let highlight = c(UiColor::TextHighlight);
-        print_centred(buf, QUESTION_ROW, ctx.text(SAVE_QUESTION), highlight, black);
-        let (w, _) = self.menu.size();
-        let x = (i32::from(buf.width()) - w) / 2;
-        self.menu.draw(&ctx.palette, buf, x, MENU_ROW);
-        let bottom = i32::from(buf.height()) - 1;
-        print_centred(buf, bottom, &Self::help(ctx), c(UiColor::TextDim), black);
+        glyph::paint_prompt(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 
@@ -357,66 +345,63 @@ impl SlotPickerScreen {
         ctx.text_with(key, &[])
     }
 
-    /// Draws slot `index` on console row `y`.
-    fn draw_slot(&self, ctx: &Ctx, buf: &mut GlyphBuffer, index: usize, y: i32) {
-        let color = |u| ctx.palette.get(u);
-        let panel = color(UiColor::PanelBg);
-        let focused = index == self.focus;
-        let (bg, text, dim, bad) = if focused {
-            let bar = color(UiColor::PanelBorderFocus);
-            buf.fill_rect(
-                Rect::new(PANEL.x + 1, y, PANEL.w - 2, 1),
-                Cell::new(' ', panel, bar),
-            );
-            // On the focus bar every colour is the bar's text colour.
-            (bar, panel, panel, panel)
-        } else {
-            (
-                panel,
-                color(UiColor::Text),
-                color(UiColor::TextDim),
-                color(UiColor::HpLow),
-            )
-        };
-        buf.print(SLOT_X, y, &format!("{:02}", index + 1), text, bg);
-        match self.slots.get(index) {
-            Some(Slot::Saved(saved)) => {
-                let title: String = saved.title(ctx).chars().take(CHAPTER_W).collect();
-                buf.print(CHAPTER_X, y, &title, text, bg);
-                buf.print(MODE_X, y, mode_name(ctx, saved.mode), text, bg);
-                buf.print(ARMY_X, y, &army_text(ctx, saved.roster), text, bg);
-                let time = playtime_text(saved.playtime_s);
-                let width = i32::try_from(time.chars().count()).unwrap_or(0);
-                buf.print(TIME_END_X - width, y, &time, text, bg);
-            }
-            Some(Slot::Unreadable(e)) => {
-                buf.print(CHAPTER_X, y, &e.text(ctx), bad, bg);
-            }
-            Some(Slot::Empty) | None => {
-                buf.print(CHAPTER_X, y, ctx.text(EMPTY_SLOT), dim, bg);
-            }
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint_slots`]): the slots in view with what each holds,
+    /// the message, the overwrite question if it is open, and the help
+    /// line.
+    pub fn view(&self, ctx: &Ctx) -> SlotPickerView {
+        let shown = self.top..(self.top + VISIBLE).min(self.slots.len());
+        // Which slots are on screen.
+        let (first, count) = (shown.start + 1, self.slots.len());
+        let range = ctx.text_with(
+            "save.range",
+            &[("first", &first), ("last", &shown.end), ("count", &count)],
+        );
+        let slots = shown.map(|i| self.slot_view(ctx, i)).collect();
+        SlotPickerView {
+            title: ctx
+                .text(if self.is_saving() {
+                    SAVE_TITLE
+                } else {
+                    LOAD_TITLE
+                })
+                .to_owned(),
+            columns: SlotColumnsView {
+                slot: ctx.text("save.column.slot").to_owned(),
+                chapter: ctx.text("save.column.chapter").to_owned(),
+                mode: ctx.text("save.column.mode").to_owned(),
+                army: ctx.text("save.column.army").to_owned(),
+                time: ctx.text("save.column.time").to_owned(),
+            },
+            slots,
+            range,
+            message: self.message.clone(),
+            question: self.asking.then(|| OverwriteView {
+                question: self.overwrite_question(ctx),
+                answers: ctx.text_with("save.overwrite_answers", &[]),
+            }),
+            help: self.help(ctx),
         }
     }
 
-    /// Draws the overwrite question in a double-bordered box in the middle
-    /// of the screen, with its answers' keys under it.
-    fn draw_question(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let question = self.overwrite_question(ctx);
-        let answers = ctx.text_with("save.overwrite_answers", &[]);
-        let widest = question.chars().count().max(answers.chars().count());
-        let w = i32::try_from(widest).unwrap_or(0) + 4;
-        let rect = Rect::new(
-            (i32::from(buf.width()) - w) / 2,
-            (i32::from(buf.height()) - OVERWRITE_H) / 2,
-            w,
-            OVERWRITE_H,
-        );
-        buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-        buf.print(rect.x + 2, rect.y + 2, &question, c(UiColor::Text), bg);
-        buf.print(rect.x + 2, rect.y + 3, &answers, c(UiColor::TextDim), bg);
+    /// Slot `index` as the view shows it.
+    fn slot_view(&self, ctx: &Ctx, index: usize) -> SlotView {
+        let entry = match self.slots.get(index) {
+            Some(Slot::Saved(saved)) => SlotEntryView::Saved {
+                chapter: saved.title(ctx),
+                mode: saved.mode,
+                mode_name: mode_name(ctx, saved.mode).to_owned(),
+                army: army_text(ctx, saved.roster),
+                playtime: playtime_text(saved.playtime_s),
+            },
+            Some(Slot::Unreadable(e)) => SlotEntryView::Unreadable(e.text(ctx)),
+            Some(Slot::Empty) | None => SlotEntryView::Empty(ctx.text(EMPTY_SLOT).to_owned()),
+        };
+        SlotView {
+            number: index + 1,
+            focused: index == self.focus,
+            entry,
+        }
     }
 }
 
@@ -477,52 +462,11 @@ impl Screen for SlotPickerScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let (black, bg) = (c(UiColor::Black), c(UiColor::PanelBg));
-        let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
-        buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
-        buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-        buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-        let title = ctx.text(if self.is_saving() {
-            SAVE_TITLE
-        } else {
-            LOAD_TITLE
-        });
-        let highlight = c(UiColor::TextHighlight);
-        // In the top border, its text over the slot numbers.
-        buf.print(SLOT_X - 1, PANEL.y, &format!(" {title} "), highlight, bg);
+        glyph::paint_slots(ctx, &self.view(ctx), buf);
+    }
 
-        buf.print(SLOT_X, HEADING_ROW, ctx.text("save.column.slot"), dim, bg);
-        let chapter = ctx.text("save.column.chapter");
-        buf.print(CHAPTER_X, HEADING_ROW, chapter, dim, bg);
-        buf.print(MODE_X, HEADING_ROW, ctx.text("save.column.mode"), dim, bg);
-        buf.print(ARMY_X, HEADING_ROW, ctx.text("save.column.army"), dim, bg);
-        let time = ctx.text("save.column.time");
-        let time_w = i32::try_from(time.chars().count()).unwrap_or(0);
-        buf.print(TIME_END_X - time_w, HEADING_ROW, time, dim, bg);
-        let shown = self.top..(self.top + VISIBLE).min(self.slots.len());
-        // Which slots are on screen, in the bottom border.
-        let (first, count) = (shown.start + 1, self.slots.len());
-        let range = ctx.text_with(
-            "save.range",
-            &[("first", &first), ("last", &shown.end), ("count", &count)],
-        );
-        let range = format!(" {range} ");
-        let range_w = i32::try_from(range.chars().count()).unwrap_or(0);
-        let range_x = PANEL.x + PANEL.w - 2 - range_w;
-        buf.print(range_x, PANEL.y + PANEL.h - 1, &range, dim, bg);
-        for (y, i) in (FIRST_ROW..).zip(shown) {
-            self.draw_slot(ctx, buf, i, y);
-        }
-
-        if let Some(message) = &self.message {
-            print_centred(buf, MESSAGE_ROW, message, c(UiColor::HpLow), black);
-        }
-        if self.asking {
-            self.draw_question(ctx, buf);
-        }
-        let bottom = i32::from(buf.height()) - 1;
-        print_centred(buf, bottom, &self.help(ctx), dim, black);
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 

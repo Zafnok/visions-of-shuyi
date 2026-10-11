@@ -1,7 +1,7 @@
 # Chapter 1: The Letter (ticket 0707).
 # Beat sheet: docs/story/chapters/ch01.md. Continuity: docs/story/ledger.md.
 #
-# Scene ids, for 0803 to wire into chapters/ch01.ron and battles/ch01.ron:
+# Scene ids, as chapters/ch01.ron and battles/ch01.ron wire them (0803):
 #
 #   Before the battle (intro_scenes, in this order)
 #     ch01_intro                 the opening caption, then the letter
@@ -40,6 +40,7 @@
 # ---------------------------------------------------------------------------
 
 @scene ch01_intro
+@music village_home
 > Three years after {n:event.ash_peace}.
 > The war is won. The soldiers who won it were never paid.
 > In {n:place.thornmarch}, a long way from any court, an exile chops wood.
@@ -83,6 +84,7 @@ retainer[neutral]: That's the sergeant. She doesn't ride like that for good
 
 @scene ch01_prebattle
 @caption The green, {n:place.harrowby}
+@music dungeon_tense
 @left  retainer neutral
 @right sergeant angry
 sergeant: Captain! Your Former Grace! {N:red_captain.nickname} and his whole
@@ -299,6 +301,7 @@ heretic: Don't you dare lose while I'm not looking, heir.
 
 @scene ch01_victory
 @caption The toll-fort, noon
+@music scene_sad
 > Across the river, one barn smokes at the edge of {n:place.harrowby}. Only
   the one.
 @left lead neutral
@@ -558,6 +561,7 @@ retainer[neutral]: Go and pack. I'll find a spade. I've buried better men
 
 @scene ch01_tbc
 @caption {N:place.veyne_hall}
+@music talk_antagonist
 > Night. The old lord's study. The banner of {n:house.veyne} hangs where it
   always hung, over a man who was not born under it.
 @left  rival neutral

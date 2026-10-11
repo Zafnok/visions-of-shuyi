@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: sonnet-5
 effort: high
-status: todo
+status: done
 blocked_by: ["0240"]
 nick_input: none
-completed:
+completed: 2026-10-11
 ---
 
 # 0241 — The other full-screen menus as view + skin
@@ -78,16 +78,20 @@ this one, and make 0242 blocked by it too.
 
 ## Acceptance criteria
 
-- [ ] None of the logic modules listed imports `UiColor`, `Rect`,
+- [x] None of the logic modules listed imports `UiColor`, `Rect`,
       `BoxStyle` or `Cell`; each `draw` is one call to its skin (extend
-      0240's grep test to these files).
-- [ ] No snapshot file changes.
-- [ ] Each view has a unit test of its content on the first frame and in
+      0240's grep test to these files). *For the five screens done here;
+      `lead_select`, `class_change` and `preparations` are 0245 (the split
+      the scope asked for).*
+- [x] No snapshot file changes. *Contents unchanged; the five snapshots of
+      `mode_select` and `game_over` moved with their tests into the new
+      folders (`git mv`).*
+- [x] Each view has a unit test of its content on the first frame and in
       each state the screen has (a question open, a message, a second
-      page, the letter grid, a full pack, …).
-- [ ] `cargo xtask check-keys` and `check-text` pass; the `check-text`
+      page, the letter grid, a full pack, …). *For the five screens.*
+- [x] `cargo xtask check-keys` and `check-text` pass; the `check-text`
       limit isn't raised.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -98,5 +102,27 @@ this one, and make 0242 blocked by it too.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done for `mode_select`, `game_over` (Game Over and "To be continued"),
+`save` (the prompt and the slot picker), `results` and `credits`. Each is
+now `<name>.rs` (logic, `view()`, one-call `draw`, `as_any`),
+`<name>/view.rs` and `<name>/glyph.rs` (with `glyph/tests.rs` for the
+bigger skins); the grep test in `screens/title/tests.rs` covers them.
+Nothing the player sees changed: no snapshot's content moved.
+
+- **Split, as the scope said:** `lead_select`, `class_change` and
+  `preparations` are ticket 0245 (blocked by this one); 0242 is now blocked
+  by 0245 too, and its and 0243's text names it.
+- Values are meanings: the results EXP bar is `{ exp, exp_max }`, a slot is
+  `Empty` / `Saved` / `Unreadable`, the save range is the finished text
+  (`6-25 of 30`) and the skin adds the spaces around it.
+- Scrolling stays in the logic: the slot picker's window of 20 slots and
+  the credits' wrapped rows (with the width of each kind, pinned to the
+  panel by a skin test) are screen capacities, not looks.
+- The results' level-up page is the battle screen's `Progress` (drawn by
+  `progress::draw`, which 0242 converts), so `ResultsBody::LevelUp` holds a
+  clone of it for now.
+- The `Menu::draw` callers left outside the battle screen are the three
+  screens of 0245; 0242 removes it.
+- Snapshots of `mode_select` and `game_over` moved into the screens'
+  folders (insta looks beside the test file); content identical.
+- No game-design rules decided. Nothing for Nick to check.

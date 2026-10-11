@@ -28,6 +28,7 @@ fn launch(storage: Box<dyn Storage>, chained: bool) -> Harness {
     let mut ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_storage(storage);
+    ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
     if chained && let Some(test) = ctx.content.chapters.get_mut("test") {
         test.next = Some("quick".into());
     }

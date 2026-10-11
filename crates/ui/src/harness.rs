@@ -35,6 +35,11 @@ pub const FRAME_DT: f32 = 1.0 / 60.0;
 pub const MAX_FRAMES: u32 = 2_000;
 
 /// Drives a [`Game`] with simulated key presses and time.
+///
+/// Its New Game starts the small test chapter
+/// ([`NewGameDef::test_chapter`](trpg_content::NewGameDef::test_chapter)),
+/// so tests of the game flow don't depend on the story's content;
+/// [`Harness::with_shipped_story`] starts the story.
 pub struct Harness {
     game: Game,
     /// Every frame's audio requests, oldest first.
@@ -119,6 +124,18 @@ impl Harness {
             panic!("saving the layout: {e}");
         }
         Self::with_storage(Box::new(storage))
+    }
+
+    /// Makes New Game start the story as the game ships it
+    /// (`data/new_game.ron`), not the test chapter (see [`Harness`]'s
+    /// docs).
+    #[must_use]
+    pub fn with_shipped_story(mut self) -> Self {
+        match trpg_content::load_embedded() {
+            Ok(content) => self.ctx_mut().content.new_game = content.new_game,
+            Err(e) => panic!("embedded content failed to load: {e}"),
+        }
+        self
     }
 
     /// Like [`new`](Self::new), as `app` launches the game: the title
@@ -521,6 +538,8 @@ fn embedded_ctx() -> Ctx {
     match Ctx::embedded() {
         Ok(mut ctx) => {
             ctx.debug_tools = true;
+            // New Game plays the small test chapter, not the story.
+            ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
             ctx
         }
         Err(e) => panic!("embedded content failed to load: {e}"),
