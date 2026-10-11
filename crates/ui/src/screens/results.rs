@@ -9,17 +9,21 @@
 //! Confirm fills them [`ProgressTimings::fast`] times as fast; once they are
 //! full a press goes on. Each level-up page still waits for its own press
 //! (Nick), as after a combat.
+//!
+//! **The look is a skin** (ADR-0054): this module decides what the screen
+//! shows and does, and says it as a [`ResultsView`]
+//! ([`ResultsScreen::view`]); [`glyph::paint`] draws that view.
+
+pub mod glyph;
+pub mod view;
+
+pub use view::{BonusView, GoldView, ResultsBody, ResultsView, RewindsView, TallyView, UnitView};
 
 use trpg_core::progression::EXP_PER_LEVEL;
 use trpg_core::{BattleRewards, BattleState, Gold, Level};
 
-use super::battle::layout::MAP_VIEW;
-use super::battle::progress::{
-    self, EXP_BAR_CELLS, PROGRESS_TIMINGS, Progress, ProgressTimings, exp_line, playing_help,
-};
-use super::{centre_x, print_centred};
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use super::battle::progress::{PROGRESS_TIMINGS, Progress, ProgressTimings, playing_help};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::words::Words;
@@ -40,28 +44,6 @@ pub const LEVEL_UP: &str = "results.level_up";
 pub const INTRO_S: f32 = 0.5;
 /// Seconds the bars take to fill. *Tunable.*
 pub const FILL_S: f32 = 1.0;
-
-/// The panel.
-pub const PANEL: Rect = Rect::new(14, 3, 72, 24);
-/// Column of the labels and the unit names.
-const X: i32 = PANEL.x + 4;
-/// Column of the numbers on the gold, rewinds and bonus lines.
-const VALUE_X: i32 = X + 44;
-/// Row of the gold line.
-const GOLD_ROW: i32 = PANEL.y + 2;
-/// Row of the rewinds line; the bonus line is the next one.
-const REWINDS_ROW: i32 = PANEL.y + 4;
-/// Row of the rule between the lines and the units.
-const RULE_ROW: i32 = PANEL.y + 7;
-/// Row of the first unit.
-pub const UNIT_ROW: i32 = PANEL.y + 9;
-/// Unit rows the panel has room for.
-const UNIT_ROWS: i32 = PANEL.y + PANEL.h - 1 - UNIT_ROW;
-/// Columns of a unit row, from [`X`]: class, level, `EXP`, bar, number, mark.
-const COLS: [i32; 6] = [14, 23, 29, 33, 54, 58];
-/// Widest name and class shown.
-const NAME_W: usize = 13;
-const CLASS_W: usize = 8;
 
 /// One deployed unit's row.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -227,70 +209,58 @@ impl ResultsScreen {
         playing_help(played, ctx.help_keys())
     }
 
-    /// The gold, rewinds and bonus lines and the units' bars.
-    fn draw_tally(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let (text, dim, hi) = (
-            c(UiColor::Text),
-            c(UiColor::TextDim),
-            c(UiColor::TextHighlight),
-        );
-        buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-        buf.draw_box(PANEL, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-        let heading = format!(" {} ", ctx.text(HEADING));
-        buf.print(PANEL.x + 2, PANEL.y, &heading, hi, bg);
-        if self.clear_gold > 0 {
-            buf.print(X, GOLD_ROW, ctx.text(GOLD_LABEL), text, bg);
-            let n = buf.print(VALUE_X, GOLD_ROW, &format!("+{}", self.clear_gold), hi, bg);
-            let now = ctx.text_with("results.gold_now", &[("gold", &self.gold)]);
-            buf.print(VALUE_X + i32::from(n) + 1, GOLD_ROW, &now, dim, bg);
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint`]): the tally, or the level-up page once the bars
+    /// are done with, and the help line.
+    pub fn view(&self, ctx: &Ctx) -> ResultsView {
+        let body = match &self.pages {
+            Some(pages) if self.paging => ResultsBody::LevelUp(Box::new(pages.clone())),
+            _ => ResultsBody::Tally(self.tally(ctx)),
+        };
+        ResultsView {
+            body,
+            help: self.help(ctx),
         }
-        buf.print(X, REWINDS_ROW, ctx.text(REWINDS_LABEL), text, bg);
+    }
+
+    /// The gold, rewinds and bonus lines and the units' bars.
+    fn tally(&self, ctx: &Ctx) -> TallyView {
+        let gold = (self.clear_gold > 0).then(|| GoldView {
+            label: ctx.text(GOLD_LABEL).to_owned(),
+            gained: self.clear_gold,
+            now: ctx.text_with("results.gold_now", &[("gold", &self.gold)]),
+        });
         let left = ctx.text_with(
             "results.rewinds_left",
             &[("unused", &self.unused), ("charges", &self.charges)],
         );
-        buf.print(VALUE_X, REWINDS_ROW, &left, hi, bg);
-        if self.rows.is_empty() {
-            return;
-        }
-        buf.print(X, REWINDS_ROW + 1, ctx.text(BONUS_LABEL), text, bg);
-        let bonus = format!("+{}", self.bonus);
-        buf.print(VALUE_X, REWINDS_ROW + 1, &bonus, hi, bg);
-        for x in X..PANEL.x + PANEL.w - 4 {
-            buf.set(x, RULE_ROW, Cell::new('─', c(UiColor::PanelBorder), bg));
-        }
-        // A blank row between units while they all fit that way.
-        let spaced = (0..UNIT_ROWS).step_by(2).len();
-        let step = if self.rows.len() <= spaced { 2 } else { 1 };
-        let rows = (0..UNIT_ROWS).step_by(step).zip(&self.rows);
-        for (dy, row) in rows {
-            let y = UNIT_ROW + dy;
+        let units = self.rows.iter().map(|row| {
             let shown = self.exp_shown(row);
             let levels = shown / EXP_PER_LEVEL;
-            // check-text: not a data name (the view's own)
-            let name: String = row.name.chars().take(NAME_W).collect();
-            let class: String = row.class.chars().take(CLASS_W).collect();
-            buf.print(X, y, &name, c(UiColor::Player), bg);
-            buf.print(X + COLS[0], y, &class, dim, bg);
             let level = row.level.saturating_add(levels);
-            let lv = ctx.text_with("results.level", &[("level", &level)]);
-            buf.print(X + COLS[1], y, &lv, text, bg);
-            buf.print(X + COLS[2], y, ctx.text("results.exp"), dim, bg);
-            let (filled, number) = exp_line(shown);
-            for i in 0..EXP_BAR_CELLS {
-                let (glyph, fg) = if i < filled {
-                    ('█', c(UiColor::ExpBar))
-                } else {
-                    ('░', dim)
-                };
-                buf.set(X + COLS[3] + i, y, Cell::new(glyph, fg, bg));
+            UnitView {
+                // check-text: not a data name (the view's own)
+                name: row.name.clone(),
+                class: row.class.clone(),
+                level: ctx.text_with("results.level", &[("level", &level)]),
+                exp_label: ctx.text("results.exp").to_owned(),
+                exp: shown % EXP_PER_LEVEL,
+                exp_max: EXP_PER_LEVEL,
+                level_up: (levels > 0).then(|| ctx.text(LEVEL_UP).to_owned()),
             }
-            buf.print(X + COLS[4], y, &format!("{number:>2}"), text, bg);
-            if levels > 0 {
-                buf.print(X + COLS[5], y, ctx.text(LEVEL_UP), hi, bg);
-            }
+        });
+        TallyView {
+            heading: ctx.text(HEADING).to_owned(),
+            gold,
+            rewinds: RewindsView {
+                label: ctx.text(REWINDS_LABEL).to_owned(),
+                left,
+            },
+            bonus: (!self.rows.is_empty()).then(|| BonusView {
+                label: ctx.text(BONUS_LABEL).to_owned(),
+                exp: self.bonus,
+            }),
+            units: units.collect(),
         }
     }
 }
@@ -327,24 +297,11 @@ impl Screen for ResultsScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
-        buf.fill_rect(buf.bounds(), blank);
-        match &self.pages {
-            Some(pages) if self.paging => {
-                // The pages are laid out on the battle's map view: drawn
-                // there, then moved to the middle of the screen.
-                let (w, h) = (MAP_VIEW.x + MAP_VIEW.w, MAP_VIEW.y + MAP_VIEW.h);
-                let size = |v: i32| u16::try_from(v).unwrap_or(0);
-                let mut page = GlyphBuffer::new(size(w), size(h), blank);
-                progress::draw(&mut page, &ctx.palette, &ctx.content.portraits, pages);
-                buf.blit(&page, centre_x(buf, usize::from(page.width())), 0);
-            }
-            _ => self.draw_tally(ctx, buf),
-        }
-        let bottom = i32::from(buf.height()) - 1;
-        let (dim, bg) = (c(UiColor::TextDim), c(UiColor::Black));
-        print_centred(buf, bottom, &self.help(ctx), dim, bg);
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 

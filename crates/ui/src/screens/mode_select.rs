@@ -1,12 +1,19 @@
 //! The game mode screen, right after `New Game` (ticket 0801,
 //! `docs/design/death-and-difficulty.md`): Classic or Casual, one line
 //! explaining each.
+//!
+//! **The look is a skin** (ADR-0054): this module decides what the screen
+//! shows and does, and says it as a [`ModeSelectView`]
+//! ([`ModeSelectScreen::view`]); [`glyph::paint`] draws that view.
+
+pub mod glyph;
+pub mod view;
+
+pub use view::{ModeLineView, ModeSelectView};
 
 use trpg_core::GameMode;
 
-use super::print_centred;
-use crate::color::UiColor;
-use crate::glyph_buffer::{Cell, GlyphBuffer};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
@@ -26,13 +33,6 @@ pub const MODES: [(GameMode, &str, &str); 2] = [
         "mode_select.casual_line",
     ),
 ];
-
-/// Row of the heading.
-const HEADING_ROW: i32 = 8;
-/// Top row of the menu box.
-const MENU_ROW: i32 = 11;
-/// Row of the first explanation line.
-const TEXT_ROW: i32 = 17;
 
 /// Classic or Casual: Confirm picks the focused mode, Cancel goes back.
 /// Pops either way; [`result`](Self::result) says which.
@@ -72,6 +72,26 @@ impl ModeSelectScreen {
     pub fn help(ctx: &Ctx) -> String {
         ctx.text_with("mode_select.help", &[])
     }
+
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint`]): the heading, the menu, the line explaining each
+    /// mode (the focused mode's is the one to read) and the help line.
+    pub fn view(&self, ctx: &Ctx) -> ModeSelectView {
+        let focus = self.menu.focus();
+        ModeSelectView {
+            heading: ctx.text(HEADING).to_owned(),
+            menu: self.menu.view(),
+            lines: MODES
+                .iter()
+                .enumerate()
+                .map(|(i, &(_, _, line))| ModeLineView {
+                    text: ctx.text(line).to_owned(),
+                    focused: i == focus,
+                })
+                .collect(),
+            help: Self::help(ctx),
+        }
+    }
 }
 
 impl Screen for ModeSelectScreen {
@@ -94,74 +114,13 @@ impl Screen for ModeSelectScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        let heading = ctx.text(HEADING);
-        print_centred(buf, HEADING_ROW, heading, c(UiColor::TextHighlight), black);
-        let (w, _) = self.menu.size();
-        self.menu.draw(
-            &ctx.palette,
-            buf,
-            (i32::from(buf.width()) - w) / 2,
-            MENU_ROW,
-        );
-        for (i, (y, &(_, _, line))) in (TEXT_ROW..).step_by(2).zip(&MODES).enumerate() {
-            let fg = if i == self.menu.focus() {
-                UiColor::Text
-            } else {
-                UiColor::TextDim
-            };
-            print_centred(buf, y, ctx.text(line), c(fg), black);
-        }
-        let bottom = i32::from(buf.height()) - 1;
-        print_centred(buf, bottom, &Self::help(ctx), c(UiColor::TextDim), black);
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use insta::assert_snapshot;
-
-    use super::*;
-    use crate::harness::Harness;
-    use crate::input::Action;
-    use crate::screen::tests::ctx;
-
-    fn update(s: &mut ModeSelectScreen, actions: &[Action]) -> String {
-        let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
-        format!("{:?}", s.update(&mut ctx(), &input))
-    }
-
-    #[test]
-    fn confirm_picks_the_focused_mode() {
-        let mut s = ModeSelectScreen::new(&ctx());
-        assert_eq!(s.name(), "mode_select");
-        assert_eq!(update(&mut s, &[Action::CursorDown]), "None");
-        assert_eq!(s.result(), None);
-        assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
-        assert_eq!(s.result(), Some(GameMode::Casual));
-        let mut s = ModeSelectScreen::new(&ctx());
-        assert_eq!(
-            update(&mut s, &[Action::Confirm, Action::CursorDown]),
-            "Pop"
-        );
-        assert_eq!(s.result(), Some(GameMode::Classic));
-    }
-
-    #[test]
-    fn cancel_goes_back_without_a_mode() {
-        let mut s = ModeSelectScreen::new(&ctx());
-        assert_eq!(update(&mut s, &[Action::Cancel]), "Pop");
-        assert_eq!(s.result(), None);
-    }
-
-    /// The heading, the two modes (Casual focused) and both lines, the
-    /// focused one brighter.
-    #[test]
-    fn mode_select_snapshot() {
-        let mut h = Harness::with_screen(Box::new(ModeSelectScreen::new(&ctx())));
-        h.keys("Down");
-        assert_snapshot!(h.snapshot());
-    }
-}
+mod tests;

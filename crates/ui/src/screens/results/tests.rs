@@ -8,16 +8,16 @@ use trpg_core::{BattleState, Event, Faction, StatGains, Unit, UnitId};
 use super::*;
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
-use crate::screens::battle::progress::{LEVEL_BANNER_ROW, LEVEL_TEXT_X, Page};
+use crate::screens::battle::progress::Page;
 use crate::screens::battle::quick_battle;
 
-fn state() -> BattleState {
+pub(super) fn state() -> BattleState {
     quick_battle(&ctx().content).unwrap()
 }
 
 /// The Quick Battle's first three units: the lord with 90 EXP, the knight with
 /// 10 and the archer.
-fn deployed(s: &BattleState) -> Vec<Unit> {
+pub(super) fn deployed(s: &BattleState) -> Vec<Unit> {
     let players = s.units().iter().filter(|u| u.faction == Faction::Player);
     let mut units: Vec<Unit> = players.take(3).cloned().collect();
     units[0].exp = 90;
@@ -27,7 +27,7 @@ fn deployed(s: &BattleState) -> Vec<Unit> {
 
 /// 500 gold and 3 unused charges: the lord levels up, the knight gains,
 /// the archer gets nothing.
-fn rewards(s: &BattleState) -> BattleRewards {
+pub(super) fn rewards(s: &BattleState) -> BattleRewards {
     let exp = |id, amount| Event::ExpGained {
         unit: UnitId(id),
         amount,
@@ -50,46 +50,23 @@ fn rewards(s: &BattleState) -> BattleRewards {
     }
 }
 
-fn screen() -> ResultsScreen {
+pub(super) fn screen() -> ResultsScreen {
     let s = state();
     ResultsScreen::new(&rewards(&s), (&s, Words::ENGLISH), 3, 1500)
 }
 
 /// One frame of `dt` seconds with `actions` pressed and `held` held.
-fn frame(s: &mut ResultsScreen, actions: &[Action], held: &[Action], dt: f32) -> bool {
+pub(super) fn frame(s: &mut ResultsScreen, actions: &[Action], held: &[Action], dt: f32) -> bool {
     let input = FrameInput::new(actions.to_vec(), dt, held.to_vec());
     matches!(s.update(&mut ctx(), &input), Transition::Pop)
 }
 
-fn press(s: &mut ResultsScreen, action: Action) -> bool {
+pub(super) fn press(s: &mut ResultsScreen, action: Action) -> bool {
     frame(s, &[action], &[], 0.0)
 }
 
-fn wait(s: &mut ResultsScreen, dt: f32) -> bool {
+pub(super) fn wait(s: &mut ResultsScreen, dt: f32) -> bool {
     frame(s, &[], &[], dt)
-}
-
-fn drawn(s: &ResultsScreen) -> GlyphBuffer {
-    let c = ctx();
-    let blank = Cell::new(
-        '?',
-        c.palette.get(UiColor::Text),
-        c.palette.get(UiColor::Text),
-    );
-    let mut buf = GlyphBuffer::new(100, 32, blank);
-    s.draw(&c, &mut buf);
-    buf
-}
-
-fn row_text(buf: &GlyphBuffer, y: i32) -> String {
-    let row: String = (0..100)
-        .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
-        .collect();
-    row.trim().to_owned()
-}
-
-fn shows(buf: &GlyphBuffer, text: &str) -> bool {
-    (0..32).any(|y| row_text(buf, y).contains(text))
 }
 
 /// The EXP each row shows.
@@ -182,30 +159,29 @@ fn holding_confirm_fills_faster_and_a_press_fills_at_once() {
 #[test]
 fn a_press_on_full_bars_shows_the_level_up_which_waits_for_its_own() {
     for key in [Action::Confirm, Action::Cancel] {
+        let c = ctx();
         let mut s = screen();
         // Fill, then go on.
         assert!(!press(&mut s, key));
         assert!(!s.paging());
+        assert!(matches!(s.view(&c).body, ResultsBody::Tally(_)));
         assert!(!press(&mut s, key));
         assert!(s.paging());
-        let buf = drawn(&s);
-        assert!(!shows(&buf, "Gold for clearing the map"));
-        // The page, moved from the map view to the middle of the screen.
-        let x = LEVEL_TEXT_X + 15;
-        let banner: String = (x..x + 9)
-            .map(|x| buf.get(x, LEVEL_BANNER_ROW).unwrap().glyph)
-            .collect();
-        assert_eq!(banner, "LEVEL UP!");
-        assert!(shows(&buf, "Test Lord"));
-        assert!(shows(&buf, "Lv 1 → 2"));
-        assert!(!shows(&buf, "Str   6 → 7   +1"));
+        // The page of the unit the bonus levelled; no stat is revealed yet.
+        let ResultsBody::LevelUp(page) = s.view(&c).body else {
+            panic!("the level-up page is up");
+        };
+        assert!(matches!(page.page(), Some(Page::LevelUp(p)) if p.unit == UnitId(1)));
+        assert_eq!(page.stats_shown(), 0);
         // The help is the page's: it is still revealing its stats.
-        assert!(shows(&buf, "f skip · hold f fast"));
-        assert!(!shows(&buf, "f continue"));
+        assert_eq!(s.view(&c).help, "f skip · hold f fast");
         // It reveals its stats and then waits, however long.
         assert!(!wait(&mut s, 30.0));
-        assert!(shows(&drawn(&s), "Str   6 → 7   +1"));
-        assert!(shows(&drawn(&s), "f continue"));
+        let ResultsBody::LevelUp(page) = s.view(&c).body else {
+            panic!("the level-up page is up");
+        };
+        assert_eq!(page.stats_shown(), 7);
+        assert_eq!(s.view(&c).help, "f continue");
         assert!(!press(&mut s, Action::CursorDown));
         assert!(press(&mut s, key), "{key:?} closes the last page");
     }
@@ -213,12 +189,17 @@ fn a_press_on_full_bars_shows_the_level_up_which_waits_for_its_own() {
 
 #[test]
 fn a_press_mid_reveal_shows_every_stat_before_closing() {
+    let c = ctx();
     let mut s = screen();
     press(&mut s, Action::Confirm);
     press(&mut s, Action::Confirm);
-    assert!(!shows(&drawn(&s), "Spd"));
+    let stats = |s: &ResultsScreen| match s.view(&c).body {
+        ResultsBody::LevelUp(page) => page.stats_shown(),
+        ResultsBody::Tally(_) => panic!("the level-up page is up"),
+    };
+    assert!(stats(&s) < 7);
     assert!(!press(&mut s, Action::Cancel));
-    assert!(shows(&drawn(&s), "Spd   7 → 9   +2"));
+    assert_eq!(stats(&s), 7);
     assert!(press(&mut s, Action::Cancel));
 }
 
@@ -235,6 +216,15 @@ fn without_a_level_up_the_press_on_full_bars_closes() {
     assert!(press(&mut s, Action::Confirm));
 }
 
+/// The tally of the view, which the screen shows until the bars are
+/// done with.
+fn tally(s: &ResultsScreen) -> TallyView {
+    match s.view(&ctx()).body {
+        ResultsBody::Tally(tally) => tally,
+        ResultsBody::LevelUp(_) => panic!("the tally is up"),
+    }
+}
+
 #[test]
 fn every_charge_used_shows_no_exp_line_and_closes_on_one_press() {
     let s0 = state();
@@ -246,15 +236,15 @@ fn every_charge_used_shows_no_exp_line_and_closes_on_one_press() {
     let mut s = ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 500);
     assert!(s.rows().is_empty());
     assert!(s.filled());
-    let buf = drawn(&s);
+    let t = tally(&s);
+    let gold = t.gold.unwrap();
     assert_eq!(
-        row_text(&buf, GOLD_ROW),
-        "║   Gold for clearing the map                   +500 (now 500)         ║"
+        (gold.label.as_str(), gold.gained, gold.now.as_str()),
+        ("Gold for clearing the map", 500, "(now 500)")
     );
-    assert!(!shows(&buf, "Bonus EXP for each unit"));
-    assert!(!shows(&buf, "EXP"));
-    assert!(!shows(&buf, "─"));
-    assert!(shows(&buf, "f continue"));
+    assert_eq!(t.bonus, None);
+    assert!(t.units.is_empty());
+    assert_eq!(s.view(&ctx()).help, "f continue");
     assert!(press(&mut s, Action::Confirm));
 }
 
@@ -263,81 +253,79 @@ fn a_battle_without_clear_gold_shows_no_gold_line() {
     let s0 = state();
     let mut r = rewards(&s0);
     r.clear_gold = 0;
-    let buf = drawn(&ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 40));
-    assert!(!shows(&buf, "Gold for clearing the map"));
-    assert!(!shows(&buf, "now"));
-    assert!(shows(&buf, "3 of 3"));
-    assert!(shows(
-        &buf,
-        "Bonus EXP for each unit                     +21"
-    ));
-    // The rule under the lines, with the panel's margin on both sides.
-    let rule = format!("║   {}   ║", "─".repeat(64));
-    assert_eq!(row_text(&buf, PANEL.y + 7), rule);
+    let t = tally(&ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 40));
+    assert_eq!(t.gold, None);
+    assert_eq!(t.rewinds.left, "3 of 3");
+    let bonus = t.bonus.unwrap();
+    assert_eq!(
+        (bonus.label.as_str(), bonus.exp),
+        ("Bonus EXP for each unit", 21)
+    );
+}
+
+#[test]
+fn the_tally_has_its_heading_and_every_line() {
+    let t = tally(&screen());
+    assert_eq!(t.heading, ctx().text(HEADING));
+    let gold = t.gold.unwrap();
+    assert_eq!(
+        (gold.label.as_str(), gold.gained, gold.now.as_str()),
+        ("Gold for clearing the map", 500, "(now 1500)")
+    );
+    assert_eq!(t.rewinds.label, ctx().text(REWINDS_LABEL));
+    assert_eq!(t.rewinds.left, "3 of 3");
+    assert_eq!(t.bonus.unwrap().exp, 21);
+    assert_eq!(t.units.len(), 3);
 }
 
 #[test]
 fn rows_show_the_level_reached_and_mark_the_level_up() {
     let mut s = screen();
-    let lord = |s: &ResultsScreen| row_text(&drawn(s), UNIT_ROW);
-    assert!(lord(&s).contains("Test Lord     Exile    Lv 1  EXP ██████████████████░░ 90"));
-    assert!(!lord(&s).contains("LEVEL UP"));
-    assert!(shows(&drawn(&s), "f skip · hold f fast"));
+    let lord = |s: &ResultsScreen| tally(s).units.remove(0);
+    let first = lord(&s);
+    assert_eq!(
+        (
+            first.name.as_str(),
+            first.class.as_str(),
+            first.level.as_str()
+        ),
+        ("Test Lord", "Exile", "Lv 1")
+    );
+    assert_eq!(
+        (first.exp_label.as_str(), first.exp, first.exp_max),
+        ("EXP", 90, 100)
+    );
+    assert_eq!(first.level_up, None);
+    assert_eq!(s.view(&ctx()).help, "f skip · hold f fast");
     wait(&mut s, INTRO_S + FILL_S * 0.5);
     // 100 EXP exactly: the level is reached.
     assert_eq!(shown(&s)[0], 100);
-    assert!(lord(&s).contains("Lv 2  EXP ░░░░░░░░░░░░░░░░░░░░  0  LEVEL UP"));
+    let reached = lord(&s);
+    assert_eq!((reached.level.as_str(), reached.exp), ("Lv 2", 0));
+    assert_eq!(reached.level_up.as_deref(), Some("LEVEL UP"));
     press(&mut s, Action::Confirm);
-    let buf = drawn(&s);
-    assert!(lord(&s).contains("Lv 2  EXP ██░░░░░░░░░░░░░░░░░░ 11  LEVEL UP"));
-    // A blank row between units; the unit at the cap keeps its bar.
-    assert_eq!(
-        row_text(&buf, UNIT_ROW + 1),
-        "║".to_owned() + &" ".repeat(70) + "║"
-    );
-    assert!(
-        row_text(&buf, UNIT_ROW + 2)
-            .contains("Test Knight   Guard    Lv 1  EXP ██████░░░░░░░░░░░░░░ 31")
-    );
-    assert!(!row_text(&buf, UNIT_ROW + 2).contains("LEVEL UP"));
-    assert!(
-        row_text(&buf, UNIT_ROW + 4)
-            .contains("Test Archer   Archer   Lv 1  EXP ░░░░░░░░░░░░░░░░░░░░  0")
-    );
-    assert!(shows(&buf, "f continue"));
+    let units = tally(&s).units;
+    let lord = &units[0];
+    assert_eq!((lord.level.as_str(), lord.exp), ("Lv 2", 11));
+    assert!(lord.level_up.is_some());
+    // The unit at the cap keeps its bar; none of the others levelled.
+    assert_eq!((units[1].level.as_str(), units[1].exp), ("Lv 1", 31));
+    assert_eq!((units[2].level.as_str(), units[2].exp), ("Lv 1", 0));
+    assert!(units[1].level_up.is_none() && units[2].level_up.is_none());
+    assert_eq!(s.view(&ctx()).help, "f continue");
 }
 
 #[test]
-fn a_big_army_drops_the_blank_rows() {
+fn every_deployed_unit_gets_a_row() {
     let s0 = state();
     let unit = deployed(&s0).remove(1);
-    let army = |n: usize| {
+    for n in [7, 8, 40] {
         let mut r = rewards(&s0);
         r.events.clear();
         r.deployed = vec![unit.clone(); n];
-        drawn(&ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 0))
-    };
-    // Seven fit with blank rows between them; eight don't.
-    let buf = army(7);
-    assert!(!row_text(&buf, UNIT_ROW + 1).contains("Test Knight"));
-    assert!(row_text(&buf, UNIT_ROW + 12).contains("Test Knight"));
-    let buf = army(8);
-    assert!(row_text(&buf, UNIT_ROW + 1).contains("Test Knight"));
-    assert!(row_text(&buf, UNIT_ROW + 7).contains("Test Knight"));
-    assert!(!row_text(&buf, UNIT_ROW + 8).contains("Test Knight"));
-    // Never over the panel's border.
-    let buf = army(40);
-    assert!(row_text(&buf, PANEL.y + PANEL.h - 2).contains("Test Knight"));
-    assert!(row_text(&buf, PANEL.y + PANEL.h - 1).starts_with('╚'));
-}
-
-#[test]
-fn long_names_are_cut_to_their_columns() {
-    let s0 = state();
-    let mut r = rewards(&s0);
-    r.deployed[0].name = "Bartholomew the Bold".into();
-    let buf = drawn(&ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 0));
-    assert!(row_text(&buf, UNIT_ROW).contains("Bartholomew t Exile    Lv 1"));
+        let s = ResultsScreen::new(&r, (&s0, Words::ENGLISH), 3, 0);
+        assert_eq!(tally(&s).units.len(), n);
+    }
 }
 
 #[test]
