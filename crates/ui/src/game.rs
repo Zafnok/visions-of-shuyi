@@ -134,6 +134,7 @@ impl Game {
                 .keys()
                 .map(String::as_str)
                 .collect();
+            // check-text: not player text (a developer's error)
             return Err(format!(
                 "no scene \"{scene}\" in assets/dialogue/; the scenes are: {}",
                 ids.join(", ")

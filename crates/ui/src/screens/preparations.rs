@@ -379,9 +379,19 @@ impl PreparationsScreen {
                     } else {
                         format!("{}-{}", def.min_range, def.max_range)
                     };
-                    let stats = format!(
-                        "Mt{:>2} Hit{:>3} Wt{:>2} Rng{range}",
-                        def.might, def.hit, def.weight
+                    let (might, hit, weight) = (
+                        format!("{:>2}", def.might),
+                        format!("{:>3}", def.hit),
+                        format!("{:>2}", def.weight),
+                    );
+                    let stats = ctx.text_with(
+                        "prep.weapon_detail",
+                        &[
+                            ("might", &might),
+                            ("hit", &hit),
+                            ("weight", &weight),
+                            ("range", &range),
+                        ],
                     );
                     let detail =
                         format!("{stats:<21} {:>2}/{}", copy.durability_left, def.durability);
@@ -397,9 +407,13 @@ impl PreparationsScreen {
                 for (id, count) in &self.prep.setup.stock.items {
                     let detail = match (slot, items.get(id)) {
                         (GearSlot::Armour, Some(ItemDef::Armour(a))) => {
-                            format!("{}  Wt {}", bonus_text(&a.bonus), a.weight)
+                            let bonus = bonus_text(ctx.words(), &a.bonus);
+                            let detail = [("bonus", &bonus as &dyn Display), ("weight", &a.weight)];
+                            ctx.text_with("prep.armour_detail", &detail)
                         }
-                        (GearSlot::Accessory, Some(ItemDef::Accessory(a))) => bonus_text(&a.bonus),
+                        (GearSlot::Accessory, Some(ItemDef::Accessory(a))) => {
+                            bonus_text(ctx.words(), &a.bonus)
+                        }
                         _ => continue,
                     };
                     let name = self.item_name(ctx.words(), id);
@@ -931,7 +945,7 @@ impl PreparationsScreen {
     /// One consumable row: `Potion ×4  Restore 10 HP`.
     fn consumable_row(&self, words: Words<'_>, id: &ItemId, count: usize) -> (String, bool) {
         let effect = self.prep.setup.items.consumable(id).map(|c| c.effect);
-        let effect = effect.map(effect_text).unwrap_or_default();
+        let effect = effect.map(|e| effect_text(words, e)).unwrap_or_default();
         let name = self.item_name(words, id);
         (format!("{name:<15} ×{count:<2}  {effect}"), true)
     }

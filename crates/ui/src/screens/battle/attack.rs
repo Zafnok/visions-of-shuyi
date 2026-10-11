@@ -66,7 +66,7 @@ pub fn reachable_with(
 /// Whether `unit` can attack `target` from `from` with `with`, plainly or
 /// with a line of the arts list.
 fn hits(state: &BattleState, unit: UnitId, from: Pos, with: &Equipped, target: UnitId) -> bool {
-    art_choices(state, unit, from, with, target)
+    art_choices(state, IN_PLAY, unit, from, with, target)
         .iter()
         .any(|c| c.reason.is_none())
 }
@@ -182,12 +182,21 @@ pub fn weapon_label(
     } else {
         format!("{}-{}", def.min_range, def.max_range)
     };
-    format!(
-        "{:<name_w$}  Mt {:>2}  Hit {:>3}  Crit {:>2}  Rng {range}",
-        words.item(id, state.items()),
-        def.might,
-        def.hit,
-        def.crit
+    let name = format!("{:<name_w$}", words.item(id, state.items()));
+    let (might, hit, crit) = (
+        format!("{:>2}", def.might),
+        format!("{:>3}", def.hit),
+        format!("{:>2}", def.crit),
+    );
+    words.text_with(
+        "battle.weapon.line",
+        &[
+            ("name", &name),
+            ("might", &might),
+            ("hit", &hit),
+            ("crit", &crit),
+            ("range", &range),
+        ],
     )
 }
 
@@ -254,7 +263,7 @@ pub fn weapon_menu(
                     } else {
                         UiColor::TextDim
                     };
-                    item.with_suffix(format!(" {}", durability_text(left, max)), color)
+                    item.with_suffix(format!(" {}", durability_text(words, left, max)), color)
                 }
                 None => item,
             }
@@ -375,7 +384,7 @@ impl Targeting {
         weapons: Option<(Menu, Vec<WeaponChoice>)>,
     ) -> Option<Self> {
         let first = *targets.first()?;
-        let choices = art_choices(state, sel.unit, sel.dest(), &with, first);
+        let choices = art_choices(state, IN_PLAY, sel.unit, sel.dest(), &with, first);
         let list = art_menu(state, IN_PLAY, &choices, 0);
         let technique = choices
             .get(list.focus())
@@ -400,6 +409,8 @@ impl Targeting {
     /// Writes the arts list in `words`, for the screen to paint
     /// ([`Mode::told`](super::mode::Mode::told)).
     pub fn tell(&mut self, state: &BattleState, words: Words<'_>) {
+        let (unit, dest) = (self.sel.unit, self.sel.dest());
+        self.choices = art_choices(state, words, unit, dest, &self.with, self.target());
         self.list = art_menu(state, words, &self.choices, self.list.focus());
     }
 
@@ -454,6 +465,7 @@ impl Targeting {
         let kept = self.technique();
         self.choices = art_choices(
             state,
+            IN_PLAY,
             self.sel.unit,
             self.sel.dest(),
             &self.with,

@@ -165,25 +165,25 @@ pub enum MenuEntry {
 
 impl MenuEntry {
     /// The text shown.
-    pub const fn label(self) -> &'static str {
-        match self {
-            MenuEntry::Attack => "Attack",
-            MenuEntry::Magic => "Magic",
-            MenuEntry::Seize => "Seize",
-            MenuEntry::Talk => "Talk",
-            MenuEntry::Skill => "Skill",
-            MenuEntry::Item => "Item",
-            MenuEntry::Equip => "Equip",
-            MenuEntry::Wait => "Wait",
-        }
+    pub fn label(self, words: Words<'_>) -> &str {
+        words.text(match self {
+            MenuEntry::Attack => "battle.menu.attack",
+            MenuEntry::Magic => "battle.menu.magic",
+            MenuEntry::Seize => "battle.menu.seize",
+            MenuEntry::Talk => "battle.menu.talk",
+            MenuEntry::Skill => "battle.menu.skill",
+            MenuEntry::Item => "battle.menu.item",
+            MenuEntry::Equip => "battle.menu.equip",
+            MenuEntry::Wait => "battle.menu.wait",
+        })
     }
 
     /// The menu item, disabled if not `enabled`.
-    fn item(self, enabled: bool) -> MenuItem {
+    fn item(self, words: Words<'_>, enabled: bool) -> MenuItem {
         if enabled {
-            MenuItem::new(self.label())
+            MenuItem::new(self.label(words))
         } else {
-            MenuItem::disabled(self.label())
+            MenuItem::disabled(self.label(words))
         }
     }
 
@@ -195,7 +195,7 @@ impl MenuEntry {
         match self {
             MenuEntry::Attack => !weapons.is_empty(),
             MenuEntry::Magic => can_cast(&spell_choices(state, sel.unit, sel.dest())),
-            MenuEntry::Skill => can_use_skill(&skill_choices(state, sel)),
+            MenuEntry::Skill => can_use_skill(&skill_choices(state, IN_PLAY, sel)),
             MenuEntry::Item => can_use_item(&pack_groups(state, sel.unit, sel.dest())),
             MenuEntry::Equip => can_equip(&equip_choices(state, sel.unit)),
             MenuEntry::Seize | MenuEntry::Talk | MenuEntry::Wait => true,
@@ -399,6 +399,16 @@ impl Mode {
         }
         let mut mode = self.clone();
         match &mut mode {
+            Mode::ActionMenu { menu, entries, .. } => {
+                let lines = entries.iter().zip(menu.items());
+                let items = lines.map(|(e, item)| e.item(words, item.enabled));
+                *menu = Menu::new(items.collect()).focused(menu.focus());
+            }
+            Mode::MapMenu { menu, entries } => {
+                let lines = entries.iter().zip(menu.items());
+                let items = lines.map(|(e, item)| e.item(words, item.enabled));
+                *menu = Menu::new(items.collect()).focused(menu.focus());
+            }
             Mode::WeaponMenu { sel, menu, weapons } => {
                 *menu = weapon_menu(state, words, sel, weapons).focused(menu.focus());
             }
@@ -406,6 +416,7 @@ impl Mode {
                 *menu = spell_menu(state, words, sel.unit, choices).focused(menu.focus());
             }
             Mode::SkillMenu { sel, menu, choices } => {
+                *choices = skill_choices(state, words, sel);
                 *menu = skill_menu(state, words, sel.unit, choices).focused(menu.focus());
             }
             Mode::ItemMenu { menu, groups, .. } => {
@@ -729,7 +740,7 @@ pub(super) fn open_menu(sel: Selection, state: &BattleState) -> Mode {
     let weapons = weapon_choices(state, &sel);
     let items: Vec<MenuItem> = entries
         .iter()
-        .map(|e| e.item(e.enabled(&sel, &weapons, state)))
+        .map(|e| e.item(IN_PLAY, e.enabled(&sel, &weapons, state)))
         .collect();
     // It opens on the first of Attack, Magic and Seize that is enabled
     // (Magic only when a spell reaches an enemy: a forest to burn or an ally
@@ -964,7 +975,7 @@ fn step_around(mode: Mode, action: Action, state: &BattleState) -> (Mode, Effect
 
 /// The map menu, focused on `focus`.
 fn open_map_menu(state: &BattleState, focus: MapEntry) -> Mode {
-    let (menu, entries) = map_menu(state, focus);
+    let (menu, entries) = map_menu(state, IN_PLAY, focus);
     Mode::MapMenu { menu, entries }
 }
 
@@ -1279,7 +1290,7 @@ fn step_talk_target(
 /// `Skill` chosen: the list of non-combat actives (the action menu again if
 /// none can be used, which the enabled entry rules out).
 fn open_skills(sel: Selection, state: &BattleState) -> (Mode, Effect) {
-    let choices = skill_choices(state, &sel);
+    let choices = skill_choices(state, IN_PLAY, &sel);
     if !can_use_skill(&choices) {
         return (back_to_entry(sel, state, MenuEntry::Skill), Effect::None);
     }
@@ -1947,7 +1958,7 @@ mod tests {
         let s = with_objective(seize(false));
         assert_eq!(menu_entries(&knight, &s), all);
         assert_eq!(
-            all.map(MenuEntry::label),
+            all.map(|entry| entry.label(Words::ENGLISH)),
             ["Attack", "Seize", "Skill", "Item", "Equip", "Wait"]
         );
     }
@@ -2431,6 +2442,44 @@ mod tests {
         }
     }
 
+    /// Ticket 0243: the action menu and the map menu are painted in the
+    /// player's language too, with their focus and dimmed lines kept.
+    #[test]
+    fn the_action_and_map_menus_are_told_in_the_players_language() {
+        let c = ctx();
+        let s = skirmish(&c, 20);
+        let code = trpg_content::LangCode::new(trpg_content::lang::TEST).unwrap();
+        let words = Words::new(&c.content.lang, &code);
+        let menu_of = |mode: &Mode| match mode {
+            Mode::ActionMenu { menu, .. } | Mode::MapMenu { menu, .. } => menu.clone(),
+            _ => panic!("{mode:?}"),
+        };
+        let enabled =
+            |menu: &Menu| -> Vec<bool> { menu.items().iter().map(|i| i.enabled).collect() };
+        // In the enemy's phase `End Turn` is dimmed.
+        let mut theirs = s.clone();
+        theirs.apply(&Command::EndPhase).unwrap();
+        let end_turn = open_map_menu(&s, MapEntry::EndTurn);
+        let dimmed = open_map_menu(&theirs, MapEntry::Units);
+        assert_ne!(enabled(&menu_of(&end_turn)), enabled(&menu_of(&dimmed)));
+        let menus = [
+            (skirmish_menu(&s), &s, "Attack", "ATTACK"),
+            (end_turn, &s, "End Turn", "END TURN"),
+            (dimmed, &theirs, "Units", "UNITS"),
+        ];
+        for (mode, state, english, shouted) in menus {
+            let (ours, told) = (menu_of(&mode), mode.told(state, words).into_owned());
+            let theirs = menu_of(&told);
+            assert!(labels(&ours).iter().any(|l| l == english), "{english}");
+            assert!(labels(&theirs).iter().any(|l| l == shouted), "{shouted}");
+            assert!(!labels(&theirs).iter().any(|l| l == english), "{english}");
+            assert_eq!(theirs.focus(), ours.focus(), "{english}");
+            assert_eq!(enabled(&theirs), enabled(&ours), "{english}");
+            assert_eq!(told.selection(), mode.selection());
+            assert!(matches!(mode.told(state, IN_PLAY), Cow::Borrowed(_)));
+        }
+    }
+
     /// The screen paints the mode's lists in the player's language
     /// (ticket 0235); what is played stays as it is.
     #[test]
@@ -2451,7 +2500,7 @@ mod tests {
         };
         let (units, ids) = unit_list(&s, IN_PLAY);
         let targeting = Targeting::new(&s, sel.clone(), &weapons[0], None).unwrap();
-        let skills = skill_choices(&s, &sel);
+        let skills = skill_choices(&s, Words::ENGLISH, &sel);
         // Each list, with a name it shows in English.
         let lists = [
             (weapon_list, "Steel Sword"),

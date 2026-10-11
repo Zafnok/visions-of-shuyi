@@ -10,11 +10,12 @@
 
 use trpg_core::{
     Affinity, ArtNote, AttackPreview, BattleState, Equipped, PlannedStrike, Side, SideForecast,
-    StatValue, Unit,
+    StatKind, StatValue, Unit,
 };
 
 use super::art_list::{art_name, note_text};
 use super::attack::{Targeting, spell_uses, weapon_durability};
+use super::info::stat_name;
 use super::layout::SIDE_PANEL;
 use super::panel::TEXT_X;
 use super::skills::skill_name;
@@ -23,9 +24,6 @@ use crate::color::{Palette, Rgb, UiColor};
 use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, Rect};
 use crate::words::Words;
-
-/// The panel's title, on its top border.
-pub const TITLE: &str = " Forecast ";
 
 /// Left column (the attacker).
 pub const LEFT_X: i32 = TEXT_X;
@@ -68,6 +66,7 @@ pub const HP_BAR_CELLS: i32 = 5;
 pub const NUMBER_X: i32 = SIDE_PANEL.x + 14;
 
 /// The kill mark: a skull, one cell wide, `X` = a pixel of the mark.
+// check-text: not player text (a picture)
 pub const SKULL: [&str; 9] = [
     "..XXXX..", ".XXXXXX.", "XXXXXXXX", "X..XX..X", "X..XX..X", "XXX..XXX", ".XXXXXX.", ".X.XX.X.",
     "..XXXX..",
@@ -134,11 +133,11 @@ fn arms(
 /// The marker for the target's affinity to a side's attack: `(resist)`, or
 /// `heals 9` for Absorb (`n.damage` is then the HP a hit heals). Weak has
 /// none of its own: its strikes carry the effective `!`.
-pub fn affinity_text(n: &SideForecast) -> Option<String> {
+pub fn affinity_text(words: Words<'_>, n: &SideForecast) -> Option<String> {
     match n.affinity? {
         Affinity::Weak => None,
-        Affinity::Resist => Some("(resist)".to_owned()),
-        Affinity::Absorb => Some(format!("heals {}", n.damage)),
+        Affinity::Resist => Some(words.text("battle.forecast.resist").to_owned()),
+        Affinity::Absorb => Some(words.text_with("battle.forecast.heals", &[("n", &n.damage)])),
     }
 }
 
@@ -153,15 +152,16 @@ pub fn draw_forecast(
     let bg = c(UiColor::PanelBg);
     buf.fill_rect(SIDE_PANEL, Cell::new(' ', c(UiColor::Text), bg));
     buf.draw_box(SIDE_PANEL, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-    let title_w = i32::try_from(TITLE.chars().count()).unwrap_or(0);
+    let title = format!(" {} ", words.text("battle.forecast.title"));
+    let title_w = i32::try_from(title.chars().count()).unwrap_or(0);
     let title_x = SIDE_PANEL.x + (SIDE_PANEL.w - title_w) / 2;
     put(
         buf,
         title_x,
         SIDE_PANEL.y,
-        TITLE,
+        &title,
         c(UiColor::TextHighlight),
-        TITLE.len(),
+        title.len(),
     );
     let (Some(attacker), Some(target)) = (state.unit(t.sel.unit), state.unit(t.target())) else {
         return;
@@ -190,17 +190,23 @@ pub fn draw_forecast(
         },
     ];
     for side in &sides {
-        draw_side(buf, palette, side);
+        draw_side(buf, palette, words, side);
     }
     draw_skill(buf, palette, (state, words), t);
-    let total_row = draw_strikes(buf, palette, p);
-    draw_notes(buf, palette, p, total_row + 2);
+    let total_row = draw_strikes(buf, palette, words, p);
+    draw_notes(buf, palette, words, p, total_row + 2);
 }
 
 /// The art's effects that aren't numbers, one per row from `row`
 /// (`pierces`, `pins: Mov −3`…). `no counter` already shows in the
 /// target's column, so it isn't repeated.
-fn draw_notes(buf: &mut GlyphBuffer, palette: &Palette, p: &AttackPreview, row: i32) {
+fn draw_notes(
+    buf: &mut GlyphBuffer,
+    palette: &Palette,
+    words: Words<'_>,
+    p: &AttackPreview,
+    row: i32,
+) {
     let notes = p.notes.iter().filter(|n| **n != ArtNote::NoCounter);
     let bottom = SIDE_PANEL.y + SIDE_PANEL.h - 1;
     for (y, note) in (row..bottom).zip(notes) {
@@ -208,7 +214,7 @@ fn draw_notes(buf: &mut GlyphBuffer, palette: &Palette, p: &AttackPreview, row: 
             buf,
             LEFT_X,
             y,
-            &note_text(note),
+            &note_text(words, note),
             palette.get(UiColor::Effect),
             SKILL_W,
         );
@@ -263,7 +269,7 @@ struct Column<'a> {
 
 /// One side's block: name, weapon or spell, its durability or uses
 /// (`20/20`, or `(broken)`), HP with its bar, hit, crit, affinity marker.
-fn draw_side(buf: &mut GlyphBuffer, palette: &Palette, side: &Column<'_>) {
+fn draw_side(buf: &mut GlyphBuffer, palette: &Palette, words: Words<'_>, side: &Column<'_>) {
     let c = |u| palette.get(u);
     let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
     let (x, unit, numbers) = (side.x, side.unit, side.numbers);
@@ -280,20 +286,28 @@ fn draw_side(buf: &mut GlyphBuffer, palette: &Palette, side: &Column<'_>) {
     let broken =
         numbers.is_some_and(|n| n.broken) || matches!(side.left, Some(Left::Durability(0, _)));
     if broken {
-        put(buf, x, BROKEN_ROW, "(broken)", c(UiColor::HpLow), COLUMN_W);
+        let broken = words.text("battle.forecast.broken");
+        put(buf, x, BROKEN_ROW, broken, c(UiColor::HpLow), COLUMN_W);
     } else if let Some(Left::Durability(left, max) | Left::Uses(left, max)) = side.left {
         put(buf, x, BROKEN_ROW, &format!("{left}/{max}"), dim, COLUMN_W);
     }
-    if let Some(marker) = numbers.as_ref().and_then(affinity_text) {
+    if let Some(marker) = numbers.as_ref().and_then(|n| affinity_text(words, n)) {
         let highlight = c(UiColor::TextHighlight);
         put(buf, x, AFFINITY_ROW, &marker, highlight, COLUMN_W);
     }
     let hp_after = side.hp_after;
-    put(buf, x, HP_ROW, "HP", dim, 2);
+    put(buf, x, HP_ROW, stat_name(words, StatKind::Hp), dim, 2);
     put(buf, x + 3, HP_ROW, &format!("{:>2}", unit.hp), text, 3);
     draw_bar(buf, palette, x + 6, unit.hp, hp_after, unit.stats.hp);
     let shown = |v: Option<u8>| v.map_or_else(|| "--".to_owned(), |v| v.to_string());
-    put(buf, x, HP_ROW + 1, "Hit", dim, 3);
+    put(
+        buf,
+        x,
+        HP_ROW + 1,
+        words.text("battle.forecast.hit"),
+        dim,
+        3,
+    );
     put(
         buf,
         x + 5,
@@ -302,7 +316,14 @@ fn draw_side(buf: &mut GlyphBuffer, palette: &Palette, side: &Column<'_>) {
         text,
         3,
     );
-    put(buf, x, HP_ROW + 2, "Crit", dim, 4);
+    put(
+        buf,
+        x,
+        HP_ROW + 2,
+        words.text("battle.forecast.crit"),
+        dim,
+        4,
+    );
     put(
         buf,
         x + 5,
@@ -344,7 +365,12 @@ fn draw_bar(
 /// right (`← 9 dmg`), `!` after an effective strike's `dmg`, a skull on
 /// the kill and strikes after it dimmed; then each side's total. Returns
 /// the totals' row.
-fn draw_strikes(buf: &mut GlyphBuffer, palette: &Palette, p: &AttackPreview) -> i32 {
+fn draw_strikes(
+    buf: &mut GlyphBuffer,
+    palette: &Palette,
+    words: Words<'_>,
+    p: &AttackPreview,
+) -> i32 {
     let c = |u| palette.get(u);
     let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
     let rule = c(UiColor::PanelBorder);
@@ -364,7 +390,7 @@ fn draw_strikes(buf: &mut GlyphBuffer, palette: &Palette, p: &AttackPreview) -> 
             Side::Attacker => (LEFT_X, LEFT_X + 9, "→"),
             Side::Defender => (RIGHT_X + 2, RIGHT_X, "←"),
         };
-        put(buf, dmg_x, y, &strike_text(s), fg, 7);
+        put(buf, dmg_x, y, &strike_text(words, s), fg, 7);
         put(buf, arrow_x, y, arrow, dim, 1);
         if effective {
             put(buf, dmg_x + 6, y, "!", c(UiColor::TextHighlight), 1);
@@ -376,12 +402,14 @@ fn draw_strikes(buf: &mut GlyphBuffer, palette: &Palette, p: &AttackPreview) -> 
         }
     }
     if p.forecast.defender.is_none() {
-        put(buf, RIGHT_X + 2, STRIKE_ROW, "no counter", dim, 11);
+        let none = words.text("battle.forecast.no_counter");
+        put(buf, RIGHT_X + 2, STRIKE_ROW, none, dim, 11);
     }
     let rows = i32::try_from(strikes.len()).unwrap_or(0);
     let total_row = STRIKE_ROW + rows + 1;
     put(buf, LEFT_X, total_row - 1, &line, rule, rule_w);
-    put(buf, NUMBER_X - 2, total_row, "Total", dim, 5);
+    let label = words.text("battle.forecast.total");
+    put(buf, NUMBER_X - 2, total_row, label, dim, 5);
     let total = |by: Side| {
         let mine = strikes.iter().filter(|s| s.by == by);
         let dmg: StatValue = mine.clone().map(|s| s.damage).sum();
@@ -395,11 +423,12 @@ fn draw_strikes(buf: &mut GlyphBuffer, palette: &Palette, p: &AttackPreview) -> 
 }
 
 /// A strike's damage as listed: `8 dmg`, or `+9 hp` for an Absorb heal.
-pub fn strike_text(s: &PlannedStrike) -> String {
+pub fn strike_text(words: Words<'_>, s: &PlannedStrike) -> String {
     if s.healed {
-        format!("+{:>1} hp", s.damage)
+        words.text_with("battle.forecast.strike_heal", &[("n", &s.damage)])
     } else {
-        format!("{:>2} dmg", s.damage)
+        let n = format!("{:>2}", s.damage);
+        words.text_with("battle.forecast.strike", &[("n", &n)])
     }
 }
 
@@ -467,9 +496,15 @@ mod tests {
             target_hp_after: 4,
             after_a_fall: false,
         };
-        assert_eq!(strike_text(&s), " 8 dmg");
-        assert_eq!(strike_text(&PlannedStrike { damage: 12, ..s }), "12 dmg");
-        assert_eq!(strike_text(&PlannedStrike { healed: true, ..s }), "+8 hp");
+        assert_eq!(strike_text(Words::ENGLISH, &s), " 8 dmg");
+        assert_eq!(
+            strike_text(Words::ENGLISH, &PlannedStrike { damage: 12, ..s }),
+            "12 dmg"
+        );
+        assert_eq!(
+            strike_text(Words::ENGLISH, &PlannedStrike { healed: true, ..s }),
+            "+8 hp"
+        );
     }
 
     #[test]
@@ -521,7 +556,7 @@ mod tests {
         assert_eq!(bar(LEFT_X), "█████");
         assert_eq!(bar(RIGHT_X), "▒░░░░");
         // The title sits in the top border.
-        assert!(text(&buf, SIDE_PANEL.x, SIDE_PANEL.y, 30).contains(TITLE));
+        assert!(text(&buf, SIDE_PANEL.x, SIDE_PANEL.y, 30).contains(" Forecast "));
     }
 
     #[test]
@@ -533,7 +568,7 @@ mod tests {
         let blank = Cell::new(' ', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
         let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
         let border = SIDE_PANEL.y + SIDE_PANEL.h - 1;
-        draw_notes(&mut buf, &c.palette, &p, border - 1);
+        draw_notes(&mut buf, &c.palette, Words::ENGLISH, &p, border - 1);
         // `no counter` isn't repeated; one row is left for the two notes.
         assert_eq!(text(&buf, LEFT_X, border - 1, 7), "pierces");
         assert_eq!(text(&buf, LEFT_X, border, 7), "       ");
@@ -584,19 +619,19 @@ mod tests {
         let state = skirmish(&c, 20);
         let mut t = targeting(&state);
         let plain = t.preview.forecast.attacker;
-        assert_eq!(affinity_text(&plain), None);
+        assert_eq!(affinity_text(Words::ENGLISH, &plain), None);
         let with = |affinity| SideForecast {
             affinity: Some(affinity),
             damage: 9,
             ..plain
         };
-        assert_eq!(affinity_text(&with(Affinity::Weak)), None);
+        assert_eq!(affinity_text(Words::ENGLISH, &with(Affinity::Weak)), None);
         assert_eq!(
-            affinity_text(&with(Affinity::Resist)).as_deref(),
+            affinity_text(Words::ENGLISH, &with(Affinity::Resist)).as_deref(),
             Some("(resist)")
         );
         assert_eq!(
-            affinity_text(&with(Affinity::Absorb)).as_deref(),
+            affinity_text(Words::ENGLISH, &with(Affinity::Absorb)).as_deref(),
             Some("heals 9")
         );
         // Drawn under the striker's crit, in the highlight colour; nothing
@@ -629,7 +664,7 @@ mod tests {
                 numbers: Some(t.preview.forecast.attacker),
                 hp_after: 5,
             };
-            draw_side(&mut buf, &c.palette, &column);
+            draw_side(&mut buf, &c.palette, Words::ENGLISH, &column);
             text(&buf, LEFT_X, BROKEN_ROW, 8)
         };
         assert_eq!(side(Some(Left::Uses(6, 10))), "6/10    ");

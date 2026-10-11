@@ -301,6 +301,7 @@ impl Settings {
     /// version, gives `Err` with why (the caller then uses the defaults);
     /// a missing field takes its default, an unknown layout counts as none
     /// picked and a volume over [`MAX_VOLUME`] is brought down to it.
+    // check-text: not player text (warnings for the log)
     pub fn from_ron(text: &str) -> Result<Self, String> {
         let file: SettingsFile = ron::from_str(text).map_err(|e| format!("unreadable: {e}"))?;
         if file.version != SETTINGS_VERSION {

@@ -8,6 +8,7 @@ use trpg_core::{Event, Outcome, Phase, Turn};
 use super::layout::MAP_VIEW;
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::words::Words;
 
 /// How long a phase banner stays up unless Confirm closes it, in seconds.
 /// *Tunable.*
@@ -60,25 +61,30 @@ impl Banner {
     }
 
     /// The big line and its colour.
-    pub fn title(&self) -> (&'static str, UiColor) {
-        match self.kind {
+    pub fn title<'a>(&self, words: Words<'a>) -> (&'a str, UiColor) {
+        let (key, color) = match self.kind {
             BannerKind::Phase { phase, .. } => match phase {
-                Phase::Player => ("PLAYER PHASE", UiColor::Player),
-                Phase::Enemy => ("ENEMY PHASE", UiColor::Enemy),
-                Phase::Other => ("OTHER PHASE", UiColor::Ally),
+                Phase::Player => ("battle.banner.player_phase", UiColor::Player),
+                Phase::Enemy => ("battle.banner.enemy_phase", UiColor::Enemy),
+                Phase::Other => ("battle.banner.other_phase", UiColor::Ally),
             },
-            BannerKind::Outcome(Outcome::Victory) => ("VICTORY", UiColor::TextHighlight),
-            BannerKind::Outcome(Outcome::Defeat) => ("DEFEAT", UiColor::HpLow),
-        }
+            BannerKind::Outcome(Outcome::Victory) => {
+                ("battle.banner.victory", UiColor::TextHighlight)
+            }
+            BannerKind::Outcome(Outcome::Defeat) => ("battle.banner.defeat", UiColor::HpLow),
+        };
+        (words.text(key), color)
     }
 
     /// The line beneath: the turn for a phase (`Turn 2`, or `Turn 2/8`
     /// with a limit), nothing for an outcome.
-    pub fn subtitle(&self, limit: Option<Turn>) -> String {
+    pub fn subtitle(&self, words: Words<'_>, limit: Option<Turn>) -> String {
         match self.kind {
             BannerKind::Phase { turn, .. } => match limit {
-                Some(limit) => format!("Turn {turn}/{limit}"),
-                None => format!("Turn {turn}"),
+                Some(limit) => {
+                    words.text_with("battle.turn_of", &[("turn", &turn), ("limit", &limit)])
+                }
+                None => words.text_with("battle.turn", &[("turn", &turn)]),
             },
             BannerKind::Outcome(_) => String::new(),
         }
@@ -86,7 +92,13 @@ impl Banner {
 
     /// Draws the banner centred on the map view; `limit` is the map's turn
     /// limit, if any.
-    pub fn draw(&self, buf: &mut GlyphBuffer, palette: &Palette, limit: Option<Turn>) {
+    pub fn draw(
+        &self,
+        buf: &mut GlyphBuffer,
+        palette: &Palette,
+        words: Words<'_>,
+        limit: Option<Turn>,
+    ) {
         let c = |u| palette.get(u);
         let bg = c(UiColor::PanelBg);
         let rect = Rect::new(
@@ -95,7 +107,7 @@ impl Banner {
             BANNER_W,
             BANNER_H,
         );
-        let (title, color) = self.title();
+        let (title, color) = self.title(words);
         buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
         buf.draw_box(rect, BoxStyle::Double, c(color), bg);
         let centred = |text: &str| {
@@ -103,7 +115,7 @@ impl Banner {
             rect.x + (rect.w - w) / 2
         };
         buf.print(centred(title), rect.y + 2, title, c(color), bg);
-        let sub = self.subtitle(limit);
+        let sub = self.subtitle(words, limit);
         buf.print(centred(&sub), rect.y + 3, &sub, c(UiColor::Text), bg);
     }
 }
@@ -145,7 +157,8 @@ mod tests {
 
     #[test]
     fn titles_colours_and_turns() {
-        let titles = [Phase::Player, Phase::Enemy, Phase::Other].map(|p| phase(p, 1).title());
+        let titles =
+            [Phase::Player, Phase::Enemy, Phase::Other].map(|p| phase(p, 1).title(Words::ENGLISH));
         assert_eq!(
             titles,
             [
@@ -154,14 +167,23 @@ mod tests {
                 ("OTHER PHASE", UiColor::Ally),
             ]
         );
-        assert_eq!(phase(Phase::Player, 3).subtitle(None), "Turn 3");
-        assert_eq!(phase(Phase::Player, 3).subtitle(Some(8)), "Turn 3/8");
+        assert_eq!(
+            phase(Phase::Player, 3).subtitle(Words::ENGLISH, None),
+            "Turn 3"
+        );
+        assert_eq!(
+            phase(Phase::Player, 3).subtitle(Words::ENGLISH, Some(8)),
+            "Turn 3/8"
+        );
         let won = Banner {
             kind: BannerKind::Outcome(Outcome::Victory),
             t: 0.0,
         };
-        assert_eq!(won.title(), ("VICTORY", UiColor::TextHighlight));
-        assert_eq!(won.subtitle(Some(8)), "");
+        assert_eq!(
+            won.title(Words::ENGLISH),
+            ("VICTORY", UiColor::TextHighlight)
+        );
+        assert_eq!(won.subtitle(Words::ENGLISH, Some(8)), "");
     }
 
     #[test]
@@ -176,6 +198,6 @@ mod tests {
             t: 100.0,
         };
         assert!(!lost.expired());
-        assert_eq!(lost.title(), ("DEFEAT", UiColor::HpLow));
+        assert_eq!(lost.title(Words::ENGLISH), ("DEFEAT", UiColor::HpLow));
     }
 }

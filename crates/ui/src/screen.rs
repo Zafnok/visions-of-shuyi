@@ -88,6 +88,7 @@ pub enum Transition {
     Quit,
 }
 
+// check-text: not player text (debug output)
 impl fmt::Debug for Transition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -458,6 +459,7 @@ impl Ctx {
             Ok(manifest) => manifest.playable(&content.dialogue, &content.names),
             Err(errors) => {
                 let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
+                // check-text: not player text (a warning for the log)
                 self.warnings
                     .push(format!("no voices: {}", errors.join("; ")));
                 Playable::default()
@@ -512,9 +514,12 @@ impl Ctx {
     }
 
     /// What help text names keys from: the active bindings on the device
-    /// the player pressed last.
+    /// the player pressed last, and the words of a key's name in the
+    /// player's language.
     pub fn help_keys(&self) -> HelpKeys<'_> {
-        HelpKeys::new(&self.keymap, self.device)
+        let not_mapped = self.text("keys.not_mapped");
+        let arrows = self.text(crate::input::ARROWS_TEXT);
+        HelpKeys::new(&self.keymap, self.device).worded(not_mapped, arrows)
     }
 
     /// The layout in use, or `None` if the player hasn't picked one yet.
@@ -600,6 +605,7 @@ impl Ctx {
             Ok(None) => (PlayerKeys::default(), Vec::new()),
             Err(e) => (
                 PlayerKeys::default(),
+                // check-text: not player text (a warning for the log)
                 vec![format!("can't be read, using the default keys: {e}")],
             ),
         };
@@ -680,9 +686,11 @@ impl Ctx {
         let loaded = match self.storage.read(SETTINGS_KEY) {
             Ok(Some(text)) => Settings::from_ron(&text),
             Ok(None) => Ok(Settings::default()),
+            // check-text: not player text (a warning for the log)
             Err(e) => Err(format!("can't be read: {e}")),
         };
         self.settings = loaded.unwrap_or_else(|why| {
+            // check-text: not player text (a warning for the log)
             self.warnings
                 .push(format!("{SETTINGS_KEY}: {why}, using the defaults"));
             Settings::default()
@@ -725,6 +733,7 @@ pub enum LoadError {
     Palette(Vec<&'static str>),
 }
 
+// check-text: not player text (a start-up error, before any language is loaded)
 impl fmt::Display for LoadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -1275,6 +1284,28 @@ pub(crate) mod tests {
         assert_eq!(c.text("title.new_game"), "New Game");
     }
 
+    /// Ticket 0243: `! not mapped` and `arrows` come from the language.
+    #[test]
+    fn help_keys_name_keys_with_the_languages_words() {
+        let mut c = ctx();
+        assert_eq!(c.help_keys().not_mapped(), "! not mapped");
+        assert_eq!(c.help_keys().device(), c.device);
+        let cursor_keys_name = crate::widgets::help::cursor_keys_name;
+        assert_eq!(cursor_keys_name(c.help_keys()), "arrows");
+        c.lang = LangCode::new(TEST).unwrap();
+        assert_eq!(c.help_keys().not_mapped(), "! NOT MAPPED");
+        assert_eq!(cursor_keys_name(c.help_keys()), "ARROWS");
+        c.keymap = Keymap::new([], trpg_content::RepeatDef::default());
+        let name = crate::widgets::help::key_name(c.help_keys(), Action::Confirm);
+        assert_eq!(name, "! NOT MAPPED");
+        assert_eq!(
+            c.text_with("title.help", &[])
+                .matches("! NOT MAPPED")
+                .count(),
+            3
+        );
+    }
+
     #[test]
     fn text_with_fills_values_and_key_names() {
         let mut c = ctx();
@@ -1285,7 +1316,7 @@ pub(crate) mod tests {
         c.lang = LangCode::new(TEST).unwrap();
         assert_eq!(
             c.text_with("title.help", &[]),
-            "arrows MOVE · f SELECT · d BACK"
+            "ARROWS MOVE · f SELECT · d BACK"
         );
         // A value named like a placeholder in the text fills it.
         assert_eq!(

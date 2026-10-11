@@ -12,6 +12,7 @@ mod lines;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
+use std::sync::LazyLock;
 
 use serde::Deserialize;
 use serde::de::{Deserializer, MapAccess, Visitor};
@@ -334,6 +335,19 @@ pub fn english_from_source(
     } else {
         Err(errors)
     }
+}
+
+/// English's screen text in the embedded bundle, by key: what
+/// [`load`] gives every [`Lang`], for code that names things in English
+/// with no [`Lang`] at hand. Empty if the file is broken (loading the
+/// content reports that).
+pub fn english_ui() -> &'static BTreeMap<String, String> {
+    static ENGLISH_UI: LazyLock<BTreeMap<String, String>> = LazyLock::new(|| {
+        let path = format!("{LANG_DIR}/{ENGLISH}/{UI_FILE}");
+        let english = bundle::file(&path).map(|source| english_from_source(&path, source));
+        english.and_then(Result::ok).unwrap_or_default()
+    });
+    &ENGLISH_UI
 }
 
 /// A file of a pack: the name it is reported under, and its text.

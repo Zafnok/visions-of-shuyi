@@ -77,6 +77,31 @@ pub fn fill_placeholders(text: &str, keys: HelpKeys<'_>) -> String {
 /// its value first (`("count", &3)` fills `{count}`). What is filled in is
 /// not looked at again, so a value may hold braces.
 pub fn fill_text(text: &str, keys: HelpKeys<'_>, args: &[(&str, &dyn Display)]) -> String {
+    fill_by(text, args, |name| {
+        if name == CURSOR_PLACEHOLDER {
+            Some(cursor_keys_name(keys))
+        } else if name == Action::Select.name() {
+            Some(key_name(keys, keys.select_action()))
+        } else {
+            Action::from_name(name).map(|action| key_name(keys, action))
+        }
+    })
+}
+
+/// `text` with each `{name}` that `args` names replaced by its value, and
+/// no key named: for text built where there are no keys to name (a line
+/// of a list, a label). Anything else in braces is left alone.
+pub fn fill_values(text: &str, args: &[(&str, &dyn Display)]) -> String {
+    fill_by(text, args, |_| None)
+}
+
+/// `text` with each `{name}` replaced by its value in `args`, else by
+/// what `key` gives for it, else left as written.
+fn fill_by(
+    text: &str,
+    args: &[(&str, &dyn Display)],
+    key: impl Fn(&str) -> Option<String>,
+) -> String {
     let mut out = String::with_capacity(text.len());
     let mut rest = text;
     while let Some((before, after)) = rest.split_once('{') {
@@ -89,12 +114,8 @@ pub fn fill_text(text: &str, keys: HelpKeys<'_>, args: &[(&str, &dyn Display)]) 
         };
         if let Some((_, value)) = args.iter().find(|(arg, _)| *arg == name) {
             out.push_str(&value.to_string());
-        } else if name == CURSOR_PLACEHOLDER {
-            out.push_str(&cursor_keys_name(keys));
-        } else if name == Action::Select.name() {
-            out.push_str(&key_name(keys, keys.select_action()));
-        } else if let Some(action) = Action::from_name(name) {
-            out.push_str(&key_name(keys, action));
+        } else if let Some(key) = key(name) {
+            out.push_str(&key);
         } else {
             out.push('{');
             out.push_str(name);
@@ -143,6 +164,16 @@ pub fn draw_tip(buf: &mut GlyphBuffer, palette: &Palette, title: &str, body: &st
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn values_are_filled_and_keys_left_as_written() {
+        let filled = fill_values(
+            "{Confirm} {n} of {max} {nope} {",
+            &[("n", &3), ("max", &"{n}")],
+        );
+        assert_eq!(filled, "{Confirm} 3 of {n} {nope} {");
+        assert_eq!(fill_values("plain", &[]), "plain");
+    }
+
     use trpg_content::{Chord, RepeatDef};
 
     use super::*;

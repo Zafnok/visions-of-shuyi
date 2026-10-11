@@ -6,12 +6,17 @@
 //! class's elemental affinities (`Fire  Weak`, ticket 0410).
 
 use trpg_core::skill::effect_bonuses;
-use trpg_core::{BattleState, EffectSource, StatKind, Stats, TimedEffect, Unit, WEAPON_SLOTS};
+use trpg_core::{
+    Affinity, BattleState, EffectSource, Element, StatKind, Stats, TimedEffect, Unit, UnitTags,
+    WEAPON_SLOTS,
+};
 
 use super::art_list::art_name;
 use super::art_list::durability_text;
 use super::layout::MAP_VIEW;
-use super::skills::{cost_text, effect_text, skill_cost, skill_name, timed_text, until_text};
+use super::skills::{
+    cost_text, effect_text, kind_name, skill_cost, skill_name, timed_text, until_text,
+};
 use super::units::{faction_color, hp_fill};
 use crate::color::{Palette, Rgb, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
@@ -58,27 +63,66 @@ const SPELL_ROWS: usize = 10;
 const HP_BAR_CELLS: i32 = 10;
 
 /// The stat's short name, as the design docs write it.
-pub const fn stat_name(kind: StatKind) -> &'static str {
-    match kind {
-        StatKind::Hp => "HP",
-        StatKind::Str => "Str",
-        StatKind::Mag => "Mag",
-        StatKind::Dex => "Dex",
-        StatKind::Spd => "Spd",
-        StatKind::Def => "Def",
-        StatKind::Res => "Res",
-        StatKind::Mov => "Mov",
-    }
+pub fn stat_name(words: Words<'_>, kind: StatKind) -> &str {
+    words.text(match kind {
+        StatKind::Hp => "stat.hp",
+        StatKind::Str => "stat.str",
+        StatKind::Mag => "stat.mag",
+        StatKind::Dex => "stat.dex",
+        StatKind::Spd => "stat.spd",
+        StatKind::Def => "stat.def",
+        StatKind::Res => "stat.res",
+        StatKind::Mov => "stat.mov",
+    })
+}
+
+/// The class tags that are on, by name: `Mounted Flying`.
+pub fn tag_names(words: Words<'_>, tags: UnitTags) -> Vec<&str> {
+    [
+        (tags.mounted, "class.tag.mounted"),
+        (tags.flying, "class.tag.flying"),
+        (tags.armored, "class.tag.armored"),
+    ]
+    .iter()
+    .filter(|(on, _)| *on)
+    .map(|&(_, key)| words.text(key))
+    .collect()
+}
+
+/// The name of an element (`Fire`).
+fn element_name(words: Words<'_>, element: Element) -> &str {
+    words.text(match element {
+        Element::Fire => "battle.element.fire",
+        Element::Ice => "battle.element.ice",
+        Element::None => "battle.element.none",
+    })
+}
+
+/// What a class makes of an element (`Weak`).
+fn affinity_name(words: Words<'_>, affinity: Affinity) -> &str {
+    words.text(match affinity {
+        Affinity::Weak => "battle.affinity.weak",
+        Affinity::Resist => "battle.affinity.resist",
+        Affinity::Absorb => "battle.affinity.absorb",
+    })
 }
 
 /// A gear bonus as text: its non-zero stats, `Def +2  Res +1`.
-pub fn bonus_text(bonus: &Stats) -> String {
+pub fn bonus_text(words: Words<'_>, bonus: &Stats) -> String {
     StatKind::ALL
         .iter()
         .filter(|&&k| bonus.get(k) != 0)
-        .map(|&k| format!("{} +{}", stat_name(k), bonus.get(k)))
+        .map(|&k| format!("{} +{}", stat_name(words, k), bonus.get(k)))
         .collect::<Vec<_>>()
         .join("  ")
+}
+
+/// A class and a level on one line: `Knight  Lv 3`.
+pub fn class_level(words: Words<'_>, class: &str, level: impl std::fmt::Display) -> String {
+    words.text_with(
+        "battle.class_level",
+        &[("class", &class), ("level", &level)],
+    )
 }
 
 /// A range as text: `1` or `1-2`.
@@ -133,7 +177,7 @@ pub fn draw_info(
         bg,
     );
     let mut pen = Pen { buf, palette, bg };
-    let label = "portrait";
+    let label = words.text("battle.portrait");
     let w = i32::try_from(label.len()).unwrap_or(0);
     pen.text(
         PORTRAIT.x + (PORTRAIT.w - w) / 2,
@@ -141,17 +185,18 @@ pub fn draw_info(
         label,
         UiColor::TextDim,
     );
-    draw_left(&mut pen, state, unit);
+    draw_left(&mut pen, state, words, unit);
     draw_middle(&mut pen, state, words, unit);
     draw_right(&mut pen, state, words, unit);
 }
 
 /// Under the portrait: Mov and movement type, class tags, weapon ranks,
 /// and the class's affinities if it has any.
-fn draw_left(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
+fn draw_left(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
     let class = state.classes().get(&unit.class);
     let mut y = PORTRAIT.y + PORTRAIT.h + 1;
-    let x = pen.text(LEFT_X, y, "Mov ", UiColor::TextDim);
+    let label = format!("{} ", stat_name(words, StatKind::Mov));
+    let x = pen.text(LEFT_X, y, &label, UiColor::TextDim);
     let x = pen.text(x, y, &unit.move_points().to_string(), UiColor::Text);
     if let Some(name) = class.and_then(|c| {
         state
@@ -163,23 +208,16 @@ fn draw_left(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
     }
     y += 1;
     let tags = class.map(|c| c.tags).unwrap_or_default();
-    let names: Vec<&str> = [
-        (tags.mounted, "Mounted"),
-        (tags.flying, "Flying"),
-        (tags.armored, "Armored"),
-    ]
-    .iter()
-    .filter(|(on, _)| *on)
-    .map(|&(_, name)| name)
-    .collect();
+    let names = tag_names(words, tags);
     if !names.is_empty() {
         pen.text(LEFT_X, y, &names.join(" "), UiColor::Text);
     }
     y += 2;
-    pen.text(LEFT_X, y, "Weapon ranks", UiColor::TextHighlight);
+    let title = words.text("battle.info.weapon_ranks");
+    pen.text(LEFT_X, y, title, UiColor::TextHighlight);
     for (kind, rank) in &unit.weapon_ranks {
         y += 1;
-        let x = pen.text(LEFT_X, y, &format!("{kind:?}"), UiColor::Text);
+        let x = pen.text(LEFT_X, y, kind_name(words, *kind), UiColor::Text);
         pen.text(x.max(LEFT_X + 10), y, &format!("{rank:?}"), UiColor::Text);
     }
     let affinities = class.map(|c| c.affinities.as_slice()).unwrap_or_default();
@@ -187,16 +225,13 @@ fn draw_left(pen: &mut Pen<'_>, state: &BattleState, unit: &Unit) {
         return;
     }
     y += 2;
-    pen.text(LEFT_X, y, "Affinities", UiColor::TextHighlight);
-    for (element, affinity) in affinities {
+    let title = words.text("battle.info.affinities");
+    pen.text(LEFT_X, y, title, UiColor::TextHighlight);
+    for &(element, affinity) in affinities {
         y += 1;
-        let x = pen.text(LEFT_X, y, &format!("{element:?}"), UiColor::Text);
-        pen.text(
-            x.max(LEFT_X + 10),
-            y,
-            &format!("{affinity:?}"),
-            UiColor::Text,
-        );
+        let x = pen.text(LEFT_X, y, element_name(words, element), UiColor::Text);
+        let name = affinity_name(words, affinity);
+        pen.text(x.max(LEFT_X + 10), y, name, UiColor::Text);
     }
 }
 
@@ -206,22 +241,19 @@ fn draw_middle(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &
     let x = MID_X;
     pen.cut(x, 1, words.unit(unit), 25, faction_color(unit.faction));
     let class_name = words.class_of(&unit.class, state.classes());
-    pen.cut(
-        x,
-        2,
-        &format!("{class_name}  Lv {}", unit.level),
-        25,
-        UiColor::Text,
-    );
+    let class_line = class_level(words, class_name, unit.level);
+    pen.cut(x, 2, &class_line, 25, UiColor::Text);
     let at_cap = unit.level >= state.classes().level_cap;
     let exp = if at_cap {
         "--".to_owned()
     } else {
         unit.exp.to_string()
     };
-    let ex = pen.text(x, 3, "EXP ", UiColor::TextDim);
+    let label = format!("{} ", words.text("battle.exp"));
+    let ex = pen.text(x, 3, &label, UiColor::TextDim);
     pen.text(ex, 3, &exp, UiColor::Text);
-    let hx = pen.text(x, 4, "HP ", UiColor::TextDim);
+    let label = format!("{} ", stat_name(words, StatKind::Hp));
+    let hx = pen.text(x, 4, &label, UiColor::TextDim);
     pen.text(
         hx,
         4,
@@ -237,7 +269,12 @@ fn draw_middle(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &
         };
         pen.text(x + 11 + i, 4, &glyph.to_string(), fg);
     }
-    pen.text(x, 6, "Stats", UiColor::TextHighlight);
+    pen.text(
+        x,
+        6,
+        words.text("battle.info.stats"),
+        UiColor::TextHighlight,
+    );
     let listed = StatKind::GROWABLE
         .into_iter()
         .filter(|&k| k != StatKind::Hp);
@@ -245,7 +282,7 @@ fn draw_middle(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &
     // colour.
     let shown = effect_bonuses(&unit.effects).apply(unit.stats);
     for (y, kind) in (7..).zip(listed) {
-        pen.text(x, y, stat_name(kind), UiColor::Text);
+        pen.text(x, y, stat_name(words, kind), UiColor::Text);
         let value = format!("{:>3}", shown.get(kind));
         let color = if shown.get(kind) == unit.stats.get(kind) {
             UiColor::Text
@@ -264,7 +301,8 @@ fn draw_effects(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: 
     if unit.effects.is_empty() {
         return;
     }
-    pen.text(EFFECT_X, 6, "Effects", UiColor::TextHighlight);
+    let title = words.text("battle.info.effects");
+    pen.text(EFFECT_X, 6, title, UiColor::TextHighlight);
     let mut y = 7;
     for effect in unit.effects.iter().take(EFFECT_MAX) {
         pen.cut(
@@ -277,14 +315,14 @@ fn draw_effects(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: 
         pen.cut(
             EFFECT_X,
             y + 1,
-            &timed_text(&effect.mods),
+            &timed_text(words, &effect.mods),
             EFFECT_W,
             UiColor::Text,
         );
         pen.cut(
             EFFECT_X,
             y + 2,
-            &until_text(effect),
+            until_text(words, effect),
             EFFECT_W,
             UiColor::TextDim,
         );
@@ -305,27 +343,38 @@ fn effect_name(state: &BattleState, words: Words<'_>, effect: &TimedEffect) -> S
 /// battle, `2/3`), and each effect in a line under it.
 fn draw_skills(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
     let x = MID_X;
-    pen.text(x, 15, "Skills", UiColor::TextHighlight);
+    pen.text(
+        x,
+        15,
+        words.text("battle.info.skills"),
+        UiColor::TextHighlight,
+    );
     let skills = unit.usable_skills(state.classes(), state.skills());
     if skills.is_empty() {
         pen.text(x, 16, "--", UiColor::TextDim);
     }
     for (y, skill) in (16..).step_by(2).zip(skills.into_iter().take(SKILL_MAX)) {
         let cost = skill_cost(skill);
-        pen.text(
-            x,
-            y,
-            if cost.is_some() { "A" } else { "P" },
-            UiColor::TextHighlight,
-        );
+        let mark = words.text(if cost.is_some() {
+            "battle.info.mark.active"
+        } else {
+            "battle.info.mark.passive"
+        });
+        pen.text(x, y, mark, UiColor::TextHighlight);
         let name_w = if cost.is_some() { 16 } else { 23 };
         pen.cut(x + 2, y, words.skill(skill), name_w, UiColor::Text);
         if let Some(cost) = cost {
-            let text = cost_text(cost, unit.skill_uses.uses_left(&skill.id));
+            let text = cost_text(words, cost, unit.skill_uses.uses_left(&skill.id));
             let w = i32::try_from(text.len()).unwrap_or(0);
             pen.text(x + 25 - w, y, &text, UiColor::TextDim);
         }
-        pen.cut(x + 2, y + 1, &effect_text(skill), 23, UiColor::TextDim);
+        pen.cut(
+            x + 2,
+            y + 1,
+            &effect_text(words, skill),
+            23,
+            UiColor::TextDim,
+        );
     }
 }
 
@@ -335,7 +384,12 @@ fn draw_right(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &U
     let x = RIGHT_X;
     let items = state.items();
     let loadout = &unit.loadout;
-    pen.text(x, 1, "Weapons", UiColor::TextHighlight);
+    pen.text(
+        x,
+        1,
+        words.text("battle.info.weapons"),
+        UiColor::TextHighlight,
+    );
     let mut y = 2;
     for slot in 0..WEAPON_SLOTS {
         let weapon = loadout
@@ -344,10 +398,11 @@ fn draw_right(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &U
         match weapon {
             Some((inst, def)) => {
                 let mark = if loadout.equipped_slot() == Some(slot) {
-                    "E "
+                    words.text("battle.info.mark.equipped")
                 } else {
-                    "  "
+                    " "
                 };
+                let mark = &format!("{mark} ");
                 let color = if inst.is_broken() {
                     UiColor::HpLow
                 } else {
@@ -356,20 +411,22 @@ fn draw_right(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &U
                 pen.text(x, y, mark, UiColor::TextHighlight);
                 pen.cut(x + 2, y, words.item(&inst.def, items), 28, color);
                 let dur = if inst.is_broken() {
-                    durability_text(0, def.durability)
+                    durability_text(words, 0, def.durability)
                 } else {
                     format!("{:>2}/{}", inst.durability_left, def.durability)
                 };
                 let dw = i32::try_from(dur.len()).unwrap_or(0);
                 let right = x + i32::try_from(RIGHT_W).unwrap_or(0);
                 pen.text(right - dw, y, &dur, color);
-                let numbers = format!(
-                    "Mt {}  Hit {}  Crit {}  Rng {}  Wt {}",
-                    def.might,
-                    def.hit,
-                    def.crit,
-                    range_text(def.min_range, def.max_range),
-                    def.weight
+                let numbers = words.text_with(
+                    "battle.info.weapon_numbers",
+                    &[
+                        ("might", &def.might),
+                        ("hit", &def.hit),
+                        ("crit", &def.crit),
+                        ("range", &range_text(def.min_range, def.max_range)),
+                        ("weight", &def.weight),
+                    ],
                 );
                 pen.cut(x + 2, y + 1, &numbers, ITEM_W, UiColor::TextDim);
             }
@@ -382,24 +439,24 @@ fn draw_right(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &U
     y += 1;
     let gear = [
         (
-            "Armour",
+            "battle.info.armour",
             loadout
                 .armour
                 .as_ref()
                 .and_then(|id| Some((id, items.armour(id)?)))
-                .map(|(id, a)| (words.item(id, items), bonus_text(&a.bonus))),
+                .map(|(id, a)| (words.item(id, items), bonus_text(words, &a.bonus))),
         ),
         (
-            "Accessory",
+            "battle.info.accessory",
             loadout
                 .accessory
                 .as_ref()
                 .and_then(|id| Some((id, items.accessory(id)?)))
-                .map(|(id, a)| (words.item(id, items), bonus_text(&a.bonus))),
+                .map(|(id, a)| (words.item(id, items), bonus_text(words, &a.bonus))),
         ),
     ];
     for (title, piece) in gear {
-        pen.text(x, y, title, UiColor::TextHighlight);
+        pen.text(x, y, words.text(title), UiColor::TextHighlight);
         match piece {
             Some((name, bonus)) => {
                 pen.cut(x + 2, y + 1, name, ITEM_W, UiColor::Text);
@@ -418,7 +475,12 @@ fn draw_right(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &U
 /// the equipped one marked `E`.
 fn draw_spells(pen: &mut Pen<'_>, (state, words): (&BattleState, Words<'_>), unit: &Unit, y: i32) {
     let x = RIGHT_X;
-    pen.text(x, y, "Spells", UiColor::TextHighlight);
+    pen.text(
+        x,
+        y,
+        words.text("battle.info.spells"),
+        UiColor::TextHighlight,
+    );
     let spells: Vec<_> = unit
         .learned
         .iter()
@@ -430,7 +492,8 @@ fn draw_spells(pen: &mut Pen<'_>, (state, words): (&BattleState, Words<'_>), uni
     for (row, spell) in (y + 1..).zip(spells.into_iter().take(SPELL_ROWS)) {
         let uses = unit.spells.uses_left(&spell.id);
         if unit.loadout.equipped_spell() == Some(&spell.id) {
-            pen.text(x, row, "E", UiColor::TextHighlight);
+            let mark = words.text("battle.info.mark.equipped");
+            pen.text(x, row, mark, UiColor::TextHighlight);
         }
         pen.cut(x + 2, row, words.spell(spell), 28, UiColor::Text);
         let text = format!("{uses}/{}", spell.uses);
@@ -449,16 +512,42 @@ mod tests {
     use super::*;
 
     #[test]
+    fn tags_elements_and_affinities_are_named() {
+        let w = Words::ENGLISH;
+        let all = UnitTags {
+            mounted: true,
+            flying: true,
+            armored: true,
+        };
+        assert_eq!(tag_names(w, all), ["Mounted", "Flying", "Armored"]);
+        assert_eq!(tag_names(w, UnitTags::default()), Vec::<&str>::new());
+        let flier = UnitTags {
+            flying: true,
+            ..UnitTags::default()
+        };
+        assert_eq!(tag_names(w, flier), ["Flying"]);
+        assert_eq!(
+            [Element::Fire, Element::Ice, Element::None].map(|e| element_name(w, e)),
+            ["Fire", "Ice", "None"]
+        );
+        assert_eq!(
+            [Affinity::Weak, Affinity::Resist, Affinity::Absorb].map(|a| affinity_name(w, a)),
+            ["Weak", "Resist", "Absorb"]
+        );
+        assert_eq!(class_level(w, "Knight", 3), "Knight  Lv 3");
+    }
+
+    #[test]
     fn stat_names_bonuses_and_ranges() {
         assert_eq!(
-            StatKind::ALL.map(stat_name),
+            StatKind::ALL.map(|kind| stat_name(Words::ENGLISH, kind)),
             ["HP", "Str", "Mag", "Dex", "Spd", "Def", "Res", "Mov"]
         );
         let mut bonus = Stats::default();
-        assert_eq!(bonus_text(&bonus), "");
+        assert_eq!(bonus_text(Words::ENGLISH, &bonus), "");
         bonus.def = 2;
         bonus.res = 1;
-        assert_eq!(bonus_text(&bonus), "Def +2  Res +1");
+        assert_eq!(bonus_text(Words::ENGLISH, &bonus), "Def +2  Res +1");
         assert_eq!(
             (range_text(1, 1), range_text(1, 2)),
             ("1".into(), "1-2".into())

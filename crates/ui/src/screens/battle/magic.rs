@@ -15,6 +15,7 @@ use trpg_core::{
 
 use super::attack::Targeting;
 use super::info::range_text;
+use super::items::heal_preview;
 use super::mode::Selection;
 use crate::widgets::menu::{Menu, MenuItem};
 use crate::words::Words;
@@ -121,15 +122,30 @@ pub fn reaches_an_enemy(state: &BattleState, choices: &[SpellChoice]) -> bool {
 
 /// A spell's line: name, uses left of its uses per battle, and its numbers,
 /// e.g. `Fire    6/10  Mt5 Hit90 Rng1-2` or `Heal    8/8   HP+10 Rng1`.
-pub fn spell_label(def: &SpellDef, name: &str, left: u8, name_w: usize) -> String {
+pub fn spell_label(
+    words: Words<'_>,
+    def: &SpellDef,
+    name: &str,
+    left: u8,
+    name_w: usize,
+) -> String {
     let numbers = match &def.kind {
-        SpellKind::Attack { might, hit, .. } => format!("Mt{might} Hit{hit}"),
-        SpellKind::Heal { heal_power } => format!("HP+{heal_power}"),
+        SpellKind::Attack { might, hit, .. } => {
+            words.text_with("battle.spell.attack", &[("might", might), ("hit", hit)])
+        }
+        SpellKind::Heal { heal_power } => {
+            words.text_with("battle.spell.heal", &[("power", heal_power)])
+        }
     };
-    format!(
-        "{name:<name_w$}  {left:>2}/{:<2}  {numbers} Rng{}",
-        def.uses,
-        range_text(def.min_range, def.max_range)
+    words.text_with(
+        "battle.spell.line",
+        &[
+            ("name", &format!("{name:<name_w$}")),
+            ("left", &format!("{left:>2}")),
+            ("uses", &format!("{:<2}", def.uses)),
+            ("numbers", &numbers),
+            ("range", &range_text(def.min_range, def.max_range)),
+        ],
     )
 }
 
@@ -152,7 +168,7 @@ pub fn spell_menu(
     let items = defs()
         .map(|(c, def)| {
             let left = caster.map_or(0, |u| u.spells.uses_left(&c.spell));
-            let label = spell_label(def, words.spell(def), left, name_w.unwrap_or(0));
+            let label = spell_label(words, def, words.spell(def), left, name_w.unwrap_or(0));
             if c.targets.is_empty() {
                 MenuItem::disabled(label)
             } else {
@@ -324,24 +340,20 @@ impl CastTargeting {
                 let target = state.unit(id)?;
                 let action = cast(self.spell(), self.target());
                 let gain = state.preview_heal(self.sel.unit, self.sel.dest(), &action)?;
-                Some(format!(
-                    "{} on {}: HP {} → {}",
-                    words.spell(def),
-                    words.unit(target),
-                    target.hp,
-                    target.hp + gain
-                ))
+                Some(heal_preview(words, words.spell(def), target, gain))
             }
             CastTarget::Tile(pos) => {
                 let effect = def.terrain_effect.as_ref()?;
                 let name = |id| state.terrain().get(id).map(|t| words.terrain(t));
                 let from = name(*state.map().tiles.get(pos)?)?;
                 let to = name(effect.to)?;
-                let lasts = match effect.lasts {
-                    EffectDuration::Permanent => "",
-                    EffectDuration::UntilCastersNextPhase { .. } => " (1 round)",
-                };
-                Some(format!("{from} → {to}{lasts}"))
+                let change = format!("{from} → {to}");
+                Some(match effect.lasts {
+                    EffectDuration::Permanent => change,
+                    EffectDuration::UntilCastersNextPhase { .. } => {
+                        words.text_with("battle.spell.one_round", &[("change", &change)])
+                    }
+                })
             }
         }
     }

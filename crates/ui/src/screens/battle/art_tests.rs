@@ -479,7 +479,7 @@ fn a_boss_or_green_units_art_names_the_playback_and_the_players_doesnt() {
         CONSOLE_H,
         Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0)),
     );
-    draw_box(&mut buf, &c.palette, &pb);
+    draw_box(&mut buf, &c.palette, Words::ENGLISH, &pb);
     let top = text(&buf, BOX.x, BOX.y, BOX.w);
     assert!(top.contains(" Guard Break "), "{top}");
     // Centred: " Guard Break " is 13 cells, (44 - 13) / 2 = 15 in.

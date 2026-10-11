@@ -18,7 +18,7 @@ pub use view::{KeyCapView, KeyRole, LayoutPickerView, LayoutView, LegendRow};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Chord, Key, Keymap, Layout};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::widgets::help::{HelpKeys, all_key_names, cursor_keys_name, key_name};
+use crate::widgets::help::{all_key_names, cursor_keys_name, key_name};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// The key of the title in the language files ([`Ctx::text`]).
@@ -114,7 +114,7 @@ impl LayoutPickerScreen {
     /// do; an action with no key shows `! not mapped`. Always its keyboard
     /// keys: the screen is about the keyboard's layouts.
     pub fn legend(ctx: &Ctx, km: &Keymap) -> Vec<LegendRow> {
-        let km = HelpKeys::keyboard(km);
+        let km = ctx.help_keys().of(km).on_keyboard();
         let row = |keys: String, what: &str| LegendRow {
             keys,
             what: ctx.text(what).to_owned(),

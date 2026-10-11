@@ -138,6 +138,7 @@ impl MapSkin for SpriteSkin {
     /// when only the units.
     fn name(&self) -> &'static str {
         match self.tileset.terrain {
+            // check-text: not player text (the skin's id)
             Some(_) => "sprite",
             None => "sprite_units",
         }

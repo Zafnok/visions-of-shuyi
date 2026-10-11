@@ -424,7 +424,7 @@ fn the_title_in_the_test_language() {
     assert_eq!(shown.subtitle, "an ASCII tactics game");
     assert_eq!(
         shown.help.as_deref(),
-        Some("arrows MOVE · f SELECT · d BACK")
+        Some("ARROWS MOVE · f SELECT · d BACK")
     );
     let (labels, _) = menu(&h);
     let want = [

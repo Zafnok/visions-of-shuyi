@@ -40,6 +40,7 @@ pub enum SaveError {
     Storage(StorageError),
 }
 
+// check-text: not player text (for the log; the screens show `save.error.*`)
 impl fmt::Display for SaveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

@@ -5,8 +5,8 @@
 //! what to offer, so the player is never shown a use that heals nothing.
 
 use trpg_core::{
-    BattleState, Command, ConsumableEffect, Equipped, ItemId, Pos, SpellDef, StatValue, UnitAction,
-    UnitId, WEAPON_SLOTS,
+    BattleState, Command, ConsumableEffect, Equipped, ItemId, Pos, SpellDef, StatValue, Unit,
+    UnitAction, UnitId, WEAPON_SLOTS,
 };
 
 use super::attack::{spell_uses, weapon_name};
@@ -90,15 +90,16 @@ pub fn can_use_item(groups: &[PackGroup]) -> bool {
 }
 
 /// `Pack 4/6`: how many items the pack holds of how many it could bring.
-pub fn pack_header(state: &BattleState) -> String {
-    format!("Pack {}/{}", state.pack().items.len(), state.pack().cap)
+pub fn pack_header(state: &BattleState, words: Words<'_>) -> String {
+    let (packed, cap) = (state.pack().items.len(), state.pack().cap);
+    words.text_with("battle.pack.header", &[("packed", &packed), ("cap", &cap)])
 }
 
 /// What a consumable does, in a few words.
-pub fn effect_text(effect: ConsumableEffect) -> String {
+pub fn effect_text(words: Words<'_>, effect: ConsumableEffect) -> String {
     match effect {
-        ConsumableEffect::Heal(n) => format!("Restore {n} HP"),
-        ConsumableEffect::HealFull => "Restore all HP".to_owned(),
+        ConsumableEffect::Heal(n) => words.text_with("battle.item.heal", &[("n", &n)]),
+        ConsumableEffect::HealFull => words.text("battle.item.heal_full").to_owned(),
     }
 }
 
@@ -117,7 +118,7 @@ pub fn pack_menu(state: &BattleState, words: Words<'_>, groups: &[PackGroup]) ->
             let effect = state
                 .items()
                 .consumable(&g.item)
-                .map(|c| effect_text(c.effect))
+                .map(|c| effect_text(words, c.effect))
                 .unwrap_or_default();
             let text = format!(
                 "{:<w$} ×{}  {effect}",
@@ -215,13 +216,22 @@ impl ItemTargeting {
         };
         let effect = state.items().consumable(item).map(|c| c.effect);
         let gain = effect.map_or(0, |e| heal_amount(e, target.hp, target.stats.hp));
-        format!(
-            "{name} on {}: HP {} → {}",
-            words.unit(target),
-            target.hp,
-            target.hp + gain
-        )
+        heal_preview(words, &name, target, gain)
     }
+}
+
+/// The preview line of healing `target` by `gain` with `what` (an item's
+/// or a spell's name): `Potion on Rex: HP 12 → 22`.
+pub fn heal_preview(words: Words<'_>, what: &str, target: &Unit, gain: StatValue) -> String {
+    words.text_with(
+        "battle.heal_preview",
+        &[
+            ("what", &what),
+            ("unit", &words.unit(target)),
+            ("hp", &target.hp),
+            ("then", &(target.hp + gain)),
+        ],
+    )
 }
 
 /// A line of the equip list: a weapon slot or an attack spell.
@@ -309,13 +319,25 @@ fn equip_label(
     } else {
         ' '
     };
-    format!(
-        "{marker} {name:<name_w$}  Mt{:>2} Hit{:>3} Crit{:>2} Wt{:>2} Rng{} {left:>2}/{max}",
-        numbers.might,
-        numbers.hit,
-        numbers.crit,
-        numbers.weight,
-        range_text(numbers.min_range, numbers.max_range)
+    let name = format!("{marker} {name:<name_w$}");
+    let (might, hit, crit, weight) = (
+        format!("{:>2}", numbers.might),
+        format!("{:>3}", numbers.hit),
+        format!("{:>2}", numbers.crit),
+        format!("{:>2}", numbers.weight),
+    );
+    words.text_with(
+        "battle.equip.line",
+        &[
+            ("name", &name),
+            ("might", &might),
+            ("hit", &hit),
+            ("crit", &crit),
+            ("weight", &weight),
+            ("range", &range_text(numbers.min_range, numbers.max_range)),
+            ("left", &format!("{left:>2}")),
+            ("max", &max),
+        ],
     )
 }
 
@@ -350,7 +372,7 @@ pub fn equip_menu(
                 MenuItem::disabled(label)
             };
             if broken(&c.what) {
-                item.with_suffix("(broken)", UiColor::HpLow)
+                item.with_suffix(words.text("battle.equip.broken"), UiColor::HpLow)
             } else {
                 item
             }

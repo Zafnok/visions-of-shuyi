@@ -224,7 +224,7 @@ impl ResultsScreen {
             Some(pages) if self.paging => pages.page_played(),
             _ => self.filled(),
         };
-        playing_help(played, ctx.help_keys())
+        playing_help(ctx, played)
     }
 
     /// The gold, rewinds and bonus lines and the units' bars.
@@ -337,7 +337,8 @@ impl Screen for ResultsScreen {
                 let (w, h) = (MAP_VIEW.x + MAP_VIEW.w, MAP_VIEW.y + MAP_VIEW.h);
                 let size = |v: i32| u16::try_from(v).unwrap_or(0);
                 let mut page = GlyphBuffer::new(size(w), size(h), blank);
-                progress::draw(&mut page, &ctx.palette, &ctx.content.portraits, pages);
+                let look = (&ctx.palette, ctx.words());
+                progress::draw(&mut page, look, &ctx.content.portraits, pages);
                 buf.blit(&page, centre_x(buf, usize::from(page.width())), 0);
             }
             _ => self.draw_tally(ctx, buf),

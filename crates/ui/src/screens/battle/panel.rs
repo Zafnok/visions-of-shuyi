@@ -2,8 +2,9 @@
 //! the terrain under the cursor, then the unit on it, if any. Stats only, no
 //! portrait (Nick, ticket 0011).
 
-use trpg_core::{BattleState, Faction, Pos, Unit};
+use trpg_core::{BattleState, Faction, Pos, StatKind, Unit};
 
+use super::info::{class_level, stat_name};
 use super::layout::SIDE_PANEL;
 use super::units::{faction_color, hp_fill};
 use crate::color::{Palette, Rgb, UiColor};
@@ -29,13 +30,13 @@ pub const UNIT_ROW: i32 = SIDE_PANEL.y + 5;
 pub const HP_BAR_X: i32 = TEXT_X + 11;
 
 /// The name players see for `faction`.
-pub const fn faction_name(faction: Faction) -> &'static str {
-    match faction {
-        Faction::Player => "Player",
-        Faction::Enemy => "Enemy",
-        Faction::Ally => "Ally",
-        Faction::Neutral => "Neutral",
-    }
+pub fn faction_name(words: Words<'_>, faction: Faction) -> &str {
+    words.text(match faction {
+        Faction::Player => "battle.faction.player",
+        Faction::Enemy => "battle.faction.enemy",
+        Faction::Ally => "battle.faction.ally",
+        Faction::Neutral => "battle.faction.neutral",
+    })
 }
 
 /// `+n` / `-n`, as bonuses are shown.
@@ -72,10 +73,13 @@ pub fn draw_hover(
             words.terrain(t),
             c(UiColor::TextHighlight),
         );
-        let bonuses = format!("DEF {}  AVO {}", signed(t.defense), signed(t.avoid));
+        let bonuses = words.text_with(
+            "battle.panel.terrain",
+            &[("defense", &signed(t.defense)), ("avoid", &signed(t.avoid))],
+        );
         line(buf, TERRAIN_ROW + 1, &bonuses, c(UiColor::Text));
         if t.heal_percent > 0 {
-            let heal = format!("Heals {}% HP", t.heal_percent);
+            let heal = words.text_with("battle.panel.heals", &[("percent", &t.heal_percent)]);
             line(buf, TERRAIN_ROW + 2, &heal, c(UiColor::Text));
         }
     }
@@ -96,9 +100,10 @@ fn draw_unit(
     let y = UNIT_ROW;
     line(buf, y, words.unit(unit), c(faction_color(unit.faction)));
     let class = words.class_of(&unit.class, state.classes());
-    let class_line = format!("{class}  Lv {}", unit.level);
+    let class_line = class_level(words, class, unit.level);
     line(buf, y + 1, &class_line, c(UiColor::Text));
-    let hp = format!("HP {}/{}", unit.hp, unit.stats.hp);
+    let hp_name = stat_name(words, StatKind::Hp);
+    let hp = format!("{hp_name} {}/{}", unit.hp, unit.stats.hp);
     line(buf, y + 2, &hp, c(UiColor::Text));
     let (filled, color) = hp_fill(unit.hp, unit.stats.hp, HP_BAR_CELLS);
     for i in 0..HP_BAR_CELLS {
@@ -110,7 +115,7 @@ fn draw_unit(
         let bg = c(UiColor::PanelBg);
         buf.set(HP_BAR_X + i, y + 2, Cell::new(glyph, fg, bg));
     }
-    let faction = faction_name(unit.faction);
+    let faction = faction_name(words, unit.faction);
     line(buf, y + 3, faction, c(UiColor::TextDim));
 }
 
@@ -127,7 +132,7 @@ mod tests {
                 Faction::Ally,
                 Faction::Neutral
             ]
-            .map(faction_name),
+            .map(|faction| faction_name(Words::ENGLISH, faction)),
             ["Player", "Enemy", "Ally", "Neutral"]
         );
         assert_eq!(

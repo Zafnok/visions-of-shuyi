@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-11
 ---
 
 # 0243 — Move the battle screen's and the class change screen's text into the language file
@@ -114,11 +114,11 @@ None. Nothing a player sees changes.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask check-text` reports 0 and its limit is 0.
-- [ ] `check-text` has a test for each new kind of literal it counts.
-- [ ] No snapshot changes.
-- [ ] `cargo xtask lang-status test` still works.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo xtask check-text` reports 0 and its limit is 0.
+- [x] `check-text` has a test for each new kind of literal it counts.
+- [x] No snapshot changes in English. Three snapshots *in the test language* changed, as they must: the battle's words are now the pack's (see the notes).
+- [x] `cargo xtask lang-status test` still works.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -127,5 +127,72 @@ None. Nothing a player sees changes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** Every word the battle screen and the class change screen show
+is now in `assets/lang/en/ui.ron` (about 290 new keys: `battle.*`,
+`class_change.*`, `stat.*`, `class.tag.*`, `keys.*`). Nothing a player
+sees in English changed: every English snapshot is byte for byte the same.
+
+How it was built:
+
+- **Text with no `Ctx`.** Most of the battle's text is made by functions
+  that only had `Words` (a list's lines, a forecast's notes, the rewind
+  log). `Words` gained `text(key)` and `text_with(key, values)`, so those
+  functions take `Words` and their tests still compare the English the
+  player reads. With no pack in use `Words` reads English from the
+  bundle's own `en/ui.ron` (`trpg_content::lang::english_ui`).
+- **Menus.** The action menu and the map menu are built in English while
+  playing, like the other lists, and `Mode::told` paints them in the
+  player's language. The reasons after a dimmed line (`out of range`,
+  `no uses left`) are retold the same way.
+- **Help bar.** One key per fixed line (`battle.help.*`), one key per hint
+  where hints come and go (`battle.hint.*`), as the ticket asked.
+- **Key-name words.** `! not mapped` and `arrows` are `keys.not_mapped`
+  and `keys.arrows`; `Ctx::help_keys()` hands them to `HelpKeys`.
+  `HelpKeys::new` keeps the English words for tests.
+- **`check-text`** now also counts: any literal with a capital or a space
+  wherever it stands (so a `format!` kept in a variable or returned), and
+  a lowercase word that is the value of a `let`, a `match` arm or an `if`,
+  or sits in a tuple or an array. Assertions, panics, `expect` and
+  attributes are never counted. Its limit is 0. About 25 places it took
+  for text that aren't (log warnings, the scene's text form for tests,
+  palette names, controller button names) carry
+  `// check-text: not player text (why)`.
+
+Deviations:
+
+- **Three test-language snapshots changed** (`the_title_in_the_test_language`,
+  `a_tip_in_the_test_language`, `the_info_screen_in_the_test_language`).
+  The test pack must hold every key but one (a test checks it), so it got
+  the new keys in capitals, and those three pictures show them. Three
+  older assertions that said "this stays English" were turned round.
+- Two literals outside the ticket's files were moved too, because the
+  stricter `check-text` found them: the weapon and armour lines of the
+  Preparations stock (`prep.weapon_detail`, `prep.armour_detail`).
+- Functions take `Words`, not `&Ctx` or a key (step 5 offered those two):
+  it was already there in most of them.
+
+Still English whatever the language, on purpose or out of scope:
+
+- Movement type names (`foot`) on the info and class change screens: they
+  come from the terrain data and have no language key (0235's kind of
+  text). Not ticketed: say if it should be.
+- Weapon rank letters (`E`, `D`…), the debug hint (`F2 debug`), a storage
+  error's own words inside `Save {error}`, and the three class change
+  refusals that can't happen from the screen (`core`'s own error text).
+
+Layouts sized for the English words, left as they are, for 0237:
+
+- The forecast: `HP` (2 cells), `Hit` (3), `Crit` (4), `Total` (5),
+  `no counter` (11), a strike's `8 dmg` (7), and the two columns' width.
+- The info screen: stat names in a 4-cell column, the `E`/`A`/`P` marks in
+  one cell, the HP bar at a fixed column after `HP 999/999`, every line
+  cut to its column.
+- List lines whose numbers are glued to their labels (`Mt 5  Hit 90`,
+  `Mt5 Hit90 Rng1`): the name is padded, the rest is as long as its words.
+- The help bar and the toggles' line share one row.
+- The class change screen: a 20-cell column, `Tier 2` padded to 9, and the
+  highlight of a gained stat is found by its `+`.
+- Labels are centred by their length in bytes in two places (`portrait`).
+
+No follow-up tickets. Nothing for Nick to decide: no rule or wording was
+invented.

@@ -39,6 +39,16 @@ const CAPTURE_ABORT: Chord = Chord::plain(Key::Escape);
 /// The chord that empties the highlighted slot on the Key bindings screen.
 const CLEAR_SLOT: Chord = Chord::plain(Key::Delete);
 
+/// The English name of the four arrow keys together: what
+/// [`HelpKeys::new`](crate::widgets::help::HelpKeys::new) starts with, and
+/// what tests compare with. The game shows [`ARROWS_TEXT`] of the
+/// language file. Lives here because it names keys (only this module may).
+// check-text: not player text (the default of `HelpKeys::new`; `Ctx::help_keys` gives the language's)
+pub const ARROWS: &str = "arrows";
+
+/// The text key of [`ARROWS`] in the player's language.
+pub const ARROWS_TEXT: &str = "keys.arrows";
+
 /// The text key of what a slot on the Key bindings screen shows while it
 /// waits for a key (`docs/design/controls.md`, *Rebinding keys*).
 pub const CAPTURE_PROMPT: &str = "key_bindings.press_a_key";
@@ -238,12 +248,13 @@ impl Keymap {
             .collect()
     }
 
-    /// What moves the cursor, for help text: `arrows` when the four cursor
+    /// What moves the cursor, for help text: `arrows` (the language's word
+    /// for them) when the four cursor
     /// actions' [`primary`](Self::primary) chords are the plain arrow keys,
     /// otherwise those chords in up-left-down-right order (`wasd`). `None`
     /// if any cursor action is unbound. Lives here, not in `widgets::help`,
     /// because it names keys (only this module may).
-    pub fn cursor_keys_name(&self) -> Option<String> {
+    pub fn cursor_keys_name(&self, arrows_name: &str) -> Option<String> {
         let order = [
             (Action::CursorUp, Key::Up),
             (Action::CursorLeft, Key::Left),
@@ -259,7 +270,7 @@ impl Keymap {
             .zip(order)
             .all(|(chord, (_, arrow))| *chord == Chord::plain(arrow));
         Some(if arrows {
-            "arrows".to_owned()
+            arrows_name.to_owned()
         } else {
             chords.iter().map(ToString::to_string).collect()
         })

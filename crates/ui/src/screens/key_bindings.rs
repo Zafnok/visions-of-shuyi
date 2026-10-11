@@ -47,7 +47,7 @@ use crate::input::{
 };
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::tips::fill_text;
-use crate::widgets::help::{HelpKeys, NOT_MAPPED, SEPARATOR};
+use crate::widgets::help::SEPARATOR;
 
 /// Every rebindable action with the text key of its player-facing label
 /// (`Unit info`), in the order the screen lists them (Nick's pick, ticket
@@ -612,7 +612,7 @@ impl KeyBindingsScreen {
     /// (or their buttons, on a controller): the same as `ctx`'s until the
     /// screen closes.
     pub fn help(&self, ctx: &Ctx) -> String {
-        let km = HelpKeys::new(&self.opened_with, ctx.device);
+        let km = ctx.help_keys().of(&self.opened_with);
         let on_pad = matches!(ctx.device, Device::Pad(_));
         if self.capturing {
             let what = ctx.text(match self.side {
@@ -677,7 +677,7 @@ impl KeyBindingsScreen {
                 group.rows.push(self.row_view(ctx, i));
             }
         }
-        let km = HelpKeys::new(&self.opened_with, ctx.device);
+        let km = ctx.help_keys().of(&self.opened_with);
         KeyBindingsView {
             title: ctx.text(TITLE).to_owned(),
             switch: SwitchView {
@@ -696,7 +696,7 @@ impl KeyBindingsScreen {
                 label: ctx.text(RESTORE_DEFAULTS).to_owned(),
                 focused: self.row == RESTORE_ROW,
             },
-            not_mapped: NOT_MAPPED.to_owned(),
+            not_mapped: ctx.help_keys().not_mapped().to_owned(),
             message: self.message.clone(),
             question: self.asking_restore.then(|| QuestionView {
                 text: self.restore_question(ctx),

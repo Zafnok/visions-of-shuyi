@@ -453,6 +453,7 @@ impl MapScene {
     /// (`offset=(0.50,0.00)`) and its walking frame (`frame=0`). The frame
     /// of a unit stepping on the spot isn't shown: it goes by the clock
     /// alone. The cursor's number is its brightness.
+    // check-text: not player text (the scene as text, for tests)
     pub fn to_text(&self, content: &Content) -> String {
         let mut out = String::new();
         let Pos { x, y } = self.origin;
@@ -541,6 +542,7 @@ fn tile_text(content: &Content, tile: &TileView) -> String {
 }
 
 /// A unit's line in [`MapScene::to_text`].
+// check-text: not player text (the scene as text, for tests)
 fn unit_text(u: &UnitView) -> String {
     let faction = match u.faction {
         Faction::Player => "player",

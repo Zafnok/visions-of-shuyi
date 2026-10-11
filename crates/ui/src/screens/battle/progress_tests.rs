@@ -130,7 +130,12 @@ fn a_level_up_fills_the_bar_then_shows_the_events_numbers() {
     h.wait(2.0);
     let lord = &state.units()[0];
     for (i, kind) in StatKind::GROWABLE.iter().enumerate() {
-        let row = stat_row(*kind, lord.stats.get(*kind), gains.1.0[i]);
+        let row = stat_row(
+            crate::Words::ENGLISH,
+            *kind,
+            lord.stats.get(*kind),
+            gains.1.0[i],
+        );
         let w = i32::try_from(row.chars().count()).unwrap_or(0);
         let y = STAT_ROW + i32::try_from(i).unwrap_or(0);
         assert_eq!(text(&h, LEVEL_TEXT_X, y, w), row);

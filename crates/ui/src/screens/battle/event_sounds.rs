@@ -173,7 +173,7 @@ pub fn event_cues(
         }
     }
     if !combat && heals(events) {
-        cues.push((0.0, "heal"));
+        cues.push((0.0, "heal")); // check-text: not player text (a cue id)
     }
     cues
 }

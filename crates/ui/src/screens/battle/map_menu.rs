@@ -7,6 +7,8 @@
 //! and the end-turn prompt
 //! (`docs/design/turn-structure.md`).
 
+use std::fmt::Display;
+
 use trpg_core::{BattleState, Faction, Objective, Phase, Turn, UnitId};
 
 use super::layout::MAP_VIEW;
@@ -46,14 +48,23 @@ impl MapEntry {
     ];
 
     /// The text shown.
-    pub const fn label(self) -> &'static str {
-        match self {
-            MapEntry::Units => "Units",
-            MapEntry::Objective => "Objective",
-            MapEntry::Options => "Options",
-            MapEntry::Suspend => "Suspend",
-            MapEntry::Restart => "Restart Battle",
-            MapEntry::EndTurn => "End Turn",
+    pub fn label(self, words: Words<'_>) -> &str {
+        words.text(match self {
+            MapEntry::Units => "battle.map_menu.units",
+            MapEntry::Objective => "battle.map_menu.objective",
+            MapEntry::Options => "battle.map_menu.options",
+            MapEntry::Suspend => "battle.map_menu.suspend",
+            MapEntry::Restart => "battle.map_menu.restart",
+            MapEntry::EndTurn => "battle.map_menu.end_turn",
+        })
+    }
+
+    /// The menu item, disabled if not `enabled`.
+    pub fn item(self, words: Words<'_>, enabled: bool) -> MenuItem {
+        if enabled {
+            MenuItem::new(self.label(words))
+        } else {
+            MenuItem::disabled(self.label(words))
         }
     }
 
@@ -71,17 +82,11 @@ impl MapEntry {
 
 /// The map menu for `state`, focused on `focus` (if enabled), and what
 /// each item is.
-pub fn map_menu(state: &BattleState, focus: MapEntry) -> (Menu, Vec<MapEntry>) {
+pub fn map_menu(state: &BattleState, words: Words<'_>, focus: MapEntry) -> (Menu, Vec<MapEntry>) {
     let entries = MapEntry::ALL.to_vec();
     let items = entries
         .iter()
-        .map(|&e| {
-            if e.enabled(state) {
-                MenuItem::new(e.label())
-            } else {
-                MenuItem::disabled(e.label())
-            }
-        })
+        .map(|&e| e.item(words, e.enabled(state)))
         .collect();
     let index = entries.iter().position(|&e| e == focus).unwrap_or(0);
     (Menu::new(items).focused(index), entries)
@@ -113,9 +118,19 @@ pub fn unit_list(state: &BattleState, words: Words<'_>) -> (Menu, Vec<UnitId>) {
     let items = players
         .iter()
         .map(|u| {
-            let status = if u.acted { "acted" } else { "ready" };
-            let hp = format!("{}/{}", u.hp, u.stats.hp);
-            MenuItem::new(format!("{:name_w$}  HP {hp:>5}  {status}", words.unit(u)))
+            let status = words.text(if u.acted {
+                "battle.units.acted"
+            } else {
+                "battle.units.ready"
+            });
+            let name = format!("{:name_w$}", words.unit(u));
+            let hp = format!("{:>5}", format!("{}/{}", u.hp, u.stats.hp));
+            let line = [
+                ("name", &name as &dyn Display),
+                ("hp", &hp),
+                ("status", &status),
+            ];
+            MenuItem::new(words.text_with("battle.units.line", &line))
         })
         .collect();
     (Menu::new(items), players.iter().map(|u| u.id).collect())
@@ -125,33 +140,42 @@ pub fn unit_list(state: &BattleState, words: Words<'_>) -> (Menu, Vec<UnitId>) {
 /// *Claude's starting wording* until maps carry their own text.
 pub fn objective_text(state: &BattleState, words: Words<'_>) -> String {
     match state.objective() {
-        Objective::Rout { .. } => "Rout the enemy".to_owned(),
+        Objective::Rout { .. } => words.text("battle.objective.rout").to_owned(),
         Objective::DefeatUnit { unit, .. } => {
-            let name = state
+            let boss = state
                 .unit(unit)
-                .or_else(|| state.fallen().iter().find(|u| u.id == unit))
-                .map_or("the boss", |u| words.unit(u));
-            format!("Defeat {name}")
+                .or_else(|| state.fallen().iter().find(|u| u.id == unit));
+            match boss {
+                Some(u) => words.text_with("battle.objective.defeat", &[("name", &words.unit(u))]),
+                None => words.text("battle.objective.defeat_boss").to_owned(),
+            }
         }
         Objective::Seize { pos, .. } => {
             let place = state
                 .map()
                 .tiles
                 .get(pos)
-                .and_then(|&id| state.terrain().get(id))
-                .map_or("objective", |t| words.terrain(t));
-            format!("Seize the {place}")
+                .and_then(|&id| state.terrain().get(id));
+            match place {
+                Some(t) => {
+                    words.text_with("battle.objective.seize", &[("place", &words.terrain(t))])
+                }
+                None => words.text("battle.objective.seize_objective").to_owned(),
+            }
         }
-        Objective::Survive { turns } => format!("Survive {turns} turns"),
+        Objective::Survive { turns } => {
+            words.text_with("battle.objective.survive", &[("turns", &turns)])
+        }
     }
 }
 
 /// The turn, with the map's limit if it has one: `Turn 3` or `Turn 3/8`
 /// (for Survive, the turn that wins).
-pub fn turn_text(state: &BattleState) -> String {
+pub fn turn_text(state: &BattleState, words: Words<'_>) -> String {
+    let turn = state.turn();
     match shown_limit(state) {
-        Some(limit) => format!("Turn {}/{limit}", state.turn()),
-        None => format!("Turn {}", state.turn()),
+        Some(limit) => words.text_with("battle.turn_of", &[("turn", &turn), ("limit", &limit)]),
+        None => words.text_with("battle.turn", &[("turn", &turn)]),
     }
 }
 
@@ -164,16 +188,14 @@ pub fn shown_limit(state: &BattleState) -> Option<Turn> {
     }
 }
 
-/// The restart question.
-pub const RESTART_QUESTION: &str = "Restart the battle from turn 1?";
-
-/// The suspend question.
-pub const SUSPEND_QUESTION: &str = "Suspend the battle and return to the title?";
-
 /// The end-turn question for `ready` units still ready.
-pub fn end_turn_question(ready: usize) -> String {
-    let units = if ready == 1 { "unit" } else { "units" };
-    format!("End turn with {ready} {units} ready?")
+pub fn end_turn_question(words: Words<'_>, ready: usize) -> String {
+    let key = if ready == 1 {
+        "battle.end_turn_question.one"
+    } else {
+        "battle.end_turn_question.many"
+    };
+    words.text_with(key, &[("ready", &ready)])
 }
 
 /// The size (width, height) of the [`draw_dialog`] box of `lines` under
@@ -264,7 +286,7 @@ mod tests {
     #[test]
     fn end_turn_needs_the_player_phase() {
         let mut s = quick_battle(&ctx().content).unwrap();
-        let (menu, entries) = map_menu(&s, MapEntry::Units);
+        let (menu, entries) = map_menu(&s, Words::ENGLISH, MapEntry::Units);
         assert_eq!(entries, MapEntry::ALL);
         assert_eq!(
             labels(&menu),
@@ -278,16 +300,16 @@ mod tests {
             ]
         );
         assert_eq!(menu.focus(), 0);
-        assert_eq!(map_menu(&s, MapEntry::Restart).0.focus(), 4);
-        assert_eq!(map_menu(&s, MapEntry::EndTurn).0.focus(), 5);
-        assert_eq!(map_menu(&s, MapEntry::Options).0.focus(), 2);
-        assert_eq!(map_menu(&s, MapEntry::Suspend).0.focus(), 3);
+        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::Restart).0.focus(), 4);
+        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::EndTurn).0.focus(), 5);
+        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::Options).0.focus(), 2);
+        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::Suspend).0.focus(), 3);
         // In the enemy phase, End Turn is disabled.
         s.apply(&trpg_core::Command::EndPhase).unwrap();
         assert_eq!(s.phase(), Phase::Enemy);
         assert!(!MapEntry::EndTurn.enabled(&s));
         // A disabled entry can't take the focus.
-        assert_eq!(map_menu(&s, MapEntry::EndTurn).0.focus(), 0);
+        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::EndTurn).0.focus(), 0);
         assert!(MapEntry::Options.enabled(&s));
         // Nobody acted, but it isn't the player's phase: none ready.
         assert_eq!(ready_players(&s), 0);
@@ -339,12 +361,12 @@ mod tests {
         let c = ctx();
         let q = quick_battle(&c.content).unwrap();
         assert_eq!(objective_text(&q, Words::ENGLISH), "Rout the enemy");
-        assert_eq!(turn_text(&q), "Turn 1");
+        assert_eq!(turn_text(&q, Words::ENGLISH), "Turn 1");
         let with = |o| battle_with(&c, q.map().clone(), q.units().to_vec(), o);
         let s = with(Objective::Rout {
             turn_limit: Some(8),
         });
-        assert_eq!(turn_text(&s), "Turn 1/8");
+        assert_eq!(turn_text(&s, Words::ENGLISH), "Turn 1/8");
         let s = with(Objective::DefeatUnit {
             unit: UnitId(6),
             turn_limit: None,
@@ -388,7 +410,10 @@ mod tests {
             turn_limit: Some(3),
         });
         assert_eq!(
-            (objective_text(&s, Words::ENGLISH), turn_text(&s)),
+            (
+                objective_text(&s, Words::ENGLISH),
+                turn_text(&s, Words::ENGLISH)
+            ),
             ("Seize the Fort".into(), "Turn 1/3".into())
         );
         let s = with(Objective::Seize {
@@ -399,14 +424,23 @@ mod tests {
         assert_eq!(objective_text(&s, Words::ENGLISH), "Seize the objective");
         let s = with(Objective::Survive { turns: 5 });
         assert_eq!(
-            (objective_text(&s, Words::ENGLISH), turn_text(&s)),
+            (
+                objective_text(&s, Words::ENGLISH),
+                turn_text(&s, Words::ENGLISH)
+            ),
             ("Survive 5 turns".into(), "Turn 1/5".into())
         );
     }
 
     #[test]
     fn the_question_counts_units() {
-        assert_eq!(end_turn_question(1), "End turn with 1 unit ready?");
-        assert_eq!(end_turn_question(3), "End turn with 3 units ready?");
+        assert_eq!(
+            end_turn_question(Words::ENGLISH, 1),
+            "End turn with 1 unit ready?"
+        );
+        assert_eq!(
+            end_turn_question(Words::ENGLISH, 3),
+            "End turn with 3 units ready?"
+        );
     }
 }

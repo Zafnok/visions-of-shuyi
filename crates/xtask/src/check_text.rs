@@ -1,25 +1,32 @@
 //! `cargo xtask check-text`: counts the player-facing text still written
 //! as string literals in `crates/ui/src`, instead of asked for by key with
 //! `ctx.text("screen.thing")` from `assets/lang/en/ui.ron` (ticket 0233,
-//! ADR-0045). It fails when the count is above [`MAX_LITERALS`], so no new
-//! literal slips in while tickets 0234 and 0243 move the old ones out.
+//! ADR-0045). It fails when the count is above [`MAX_LITERALS`], which is
+//! zero since ticket 0243: every screen asks for its text by key.
 //!
 //! Like `check-keys` it is a line-based scanner, not a parser, built on
 //! the same lexer. A string literal counts when it holds a word (letters
-//! outside `{…}` placeholders) and is either
+//! outside `{…}` placeholders) and is
 //!
 //! - an argument of a call that puts text on the screen (`print…`,
 //!   `draw…`, `MenuItem::new`, `MenuItem::disabled`, `with_suffix`,
 //!   `help_line`), directly or inside a `format!` there; or
-//! - the value of a `&str` constant (or an array of them) that looks like
-//!   prose: it has a capital letter or a space. Cue names, storage keys
-//!   and screen names (`"menu_move"`) don't.
+//! - prose, wherever it stands: it has a capital letter or a space
+//!   (`format!("Turn {n}")` kept in a variable, `"out of range".to_owned()`,
+//!   a `&str` constant). Cue names, storage keys and screen names
+//!   (`"menu_move"`) don't; or
+//! - one lowercase word (`"acted"`, `"info"`) that is the value of a
+//!   `let`, a `match` arm or an `if`, or stands in a tuple or an array: a
+//!   label. As a constant, a call's own argument (`Some("heal")`), a
+//!   pattern (`"foot" =>`) or a value's name (`("count", &n)`) it is an id.
 //!
 //! The arguments of `text(…)` and `text_with(…)` are keys and value names,
-//! never text. Tests, the test harness and the debug screens are skipped.
+//! never text; those of an assertion, a panic or `expect` are never shown,
+//! and neither is an attribute's (`#[error("…")]`). Tests, the test
+//! harness, the snapshots' text form and the debug screens are skipped.
 //! A literal the rules get wrong is let through with a
-//! `// check-text: not player text` comment on its line or the line above
-//! its item.
+//! `// check-text: not player text` comment, with the reason, on its line
+//! or the line above its item.
 //!
 //! It also fails on a screen that reads a `name` field itself (ticket
 //! 0235): the data's names are English, and a screen shows one through
@@ -37,10 +44,9 @@ use crate::check_keys::{
     Line, exempt_lines, files_under, has_ext, is_ident, is_test_file, lex, mark_item, relative,
 };
 
-/// The most literals allowed: the count when every screen but the battle
-/// and the class change had been converted (ticket 0234). Lower it
-/// whenever the count goes down; ticket 0243 brings it to zero.
-pub const MAX_LITERALS: usize = 123;
+/// The most literals allowed: none. Tickets 0233, 0234 and 0243 moved
+/// every screen's text into the language file.
+pub const MAX_LITERALS: usize = 0;
 
 /// The comment that lets the next item (or its own line) through.
 pub const MARKER: &str = "check-text: not player text";
@@ -161,9 +167,13 @@ pub fn scan_names(rel: &str, source: &str) -> Vec<Hit> {
     hits
 }
 
-/// Whether the file `rel` is left out: tests and the debug screens.
+/// A frame written as text for the snapshot tests: never on screen.
+const SNAPSHOT_FILE: &str = "crates/ui/src/snapshot.rs";
+
+/// Whether the file `rel` is left out: tests, the debug screens and the
+/// snapshots' text form.
 fn is_skipped(rel: &str) -> bool {
-    is_test_file(rel) || rel == DEBUG_FILE || rel.starts_with(DEBUG_DIR)
+    is_test_file(rel) || rel == DEBUG_FILE || rel.starts_with(DEBUG_DIR) || rel == SNAPSHOT_FILE
 }
 
 /// What an open bracket belongs to.
@@ -173,16 +183,47 @@ enum Bracket {
     Sink,
     /// `text(…)` or `text_with(…)`: keys and value names.
     Key,
-    /// Anything else.
+    /// A call whose text no player reads: an assertion, a panic, a log.
+    Quiet,
+    /// Any other call or macro (`format!(…)`, `Some(…)`).
+    Call,
+    /// Anything else: a tuple, an array, a block.
     Other,
 }
+
+impl Bracket {
+    /// Whether it says what the literals inside it are, however deep.
+    fn decides(self) -> bool {
+        matches!(self, Bracket::Sink | Bracket::Key | Bracket::Quiet)
+    }
+}
+
+/// The calls and macros whose text no player reads, by name; anything
+/// starting with `assert` or `debug_assert` is one too.
+const QUIET: [&str; 14] = [
+    "panic",
+    "unreachable",
+    "unimplemented",
+    "todo",
+    "expect",
+    "expect_err",
+    "println",
+    "eprintln",
+    "dbg",
+    // Attributes: `#[allow(…, reason = "…")]`.
+    "allow",
+    "warn",
+    "deny",
+    "cfg",
+    "cfg_attr",
+];
 
 /// What the call `path(` is (`path` as written: `MenuItem::new`, `print`).
 fn bracket_of(path: &str) -> Bracket {
     let name = path.rsplit("::").next().unwrap_or(path);
     if name == "text" || name == "text_with" {
         Bracket::Key
-    } else if name.starts_with("print")
+    } else if name.starts_with("print") && name != "println"
         || name.starts_with("draw")
         || name == "help_line"
         || name == "with_suffix"
@@ -190,8 +231,15 @@ fn bracket_of(path: &str) -> Bracket {
         || path.ends_with("MenuItem::disabled")
     {
         Bracket::Sink
-    } else {
+    } else if QUIET.contains(&name)
+        || name.starts_with("assert")
+        || name.starts_with("debug_assert")
+    {
+        Bracket::Quiet
+    } else if name.is_empty() {
         Bracket::Other
+    } else {
+        Bracket::Call
     }
 }
 
@@ -215,6 +263,25 @@ fn is_prose(text: &str) -> bool {
     text.chars().any(|c| c.is_uppercase() || c == ' ')
 }
 
+/// Whether `text` is one plain lowercase word (`acted`, `info`): a label
+/// as likely as an id, told apart by where it stands.
+fn is_bare_word(text: &str) -> bool {
+    !text.is_empty() && text.chars().all(char::is_lowercase)
+}
+
+/// Whether the literal that opens at byte `open` of `code` names
+/// something rather than says it, by what follows it: a pattern
+/// (`"foot" => …`, `"a" | "b"`), or the name of a value in a list made
+/// for `text_with` (`("count", &n)`).
+fn is_name(code: &str, open: usize) -> bool {
+    let rest = code.get(open + 1..).unwrap_or("");
+    let after = rest.find('"').and_then(|close| rest.get(close + 1..));
+    after.is_some_and(|after| {
+        let after = after.trim_start();
+        after.starts_with("=>") || after.starts_with('|') || after.starts_with(", &")
+    })
+}
+
 /// For each line, whether it is part of a `const` or `static` item of
 /// `&str`s.
 fn const_lines(lines: &[Line]) -> Vec<bool> {
@@ -235,6 +302,30 @@ fn const_lines(lines: &[Line]) -> Vec<bool> {
     inside
 }
 
+/// Whether the literal `text` counts where it stands: `open` are the
+/// brackets around it (innermost last), `in_const` whether it is in a
+/// `&str` constant, `name` whether it is a pattern or a value's name
+/// ([`is_name`]).
+fn counts(text: &str, open: &[Bracket], in_const: bool, name: bool) -> bool {
+    if !has_word(text) {
+        return false;
+    }
+    // The innermost call that says what its arguments are.
+    match open.iter().rev().find(|b| b.decides()) {
+        Some(Bracket::Sink) => return true,
+        Some(_) => return false,
+        None => {}
+    }
+    if is_prose(text) {
+        return true;
+    }
+    // One lowercase word is an id as a constant, a call's argument, a
+    // pattern or a value's name (`Some("heal")`, `"foot" =>`), and a
+    // label anywhere else: a `let`, a `match` arm, a tuple.
+    let argument = open.last() == Some(&Bracket::Call);
+    is_bare_word(text) && !in_const && !argument && !name
+}
+
 /// Scans one Rust file (`rel` is its repo-relative path, for the report).
 pub fn scan(rel: &str, source: &str) -> Vec<Hit> {
     let lines = lex(source);
@@ -246,9 +337,11 @@ pub fn scan(rel: &str, source: &str) -> Vec<Hit> {
     for (i, line) in lines.iter().enumerate() {
         let skipped = exempt.get(i).copied().unwrap_or(false);
         let in_const = consts.get(i).copied().unwrap_or(false);
+        // An attribute's text is for a tool: `#[error("…")]`, `#[serde(…)]`.
+        let skipped = skipped || line.code.trim_start().starts_with("#[");
         let mut strings = line.strings.iter();
         let mut path = String::new();
-        for c in line.code.chars() {
+        for (at, c) in line.code.char_indices() {
             if c == '"' {
                 in_string = !in_string;
                 path.clear();
@@ -258,14 +351,8 @@ pub fn scan(rel: &str, source: &str) -> Vec<Hit> {
                 let Some(text) = strings.next() else {
                     continue;
                 };
-                // The innermost call that says what its arguments are.
-                let call = open.iter().rev().find(|&&b| b != Bracket::Other);
-                let shown = match call {
-                    Some(Bracket::Sink) => true,
-                    Some(_) => false,
-                    None => in_const && is_prose(text),
-                };
-                if shown && !skipped && has_word(text) {
+                let name = is_name(&line.code, at);
+                if !skipped && counts(text, &open, in_const, name) {
                     hits.push(Hit {
                         file: rel.to_owned(),
                         line: i + 1,
@@ -282,9 +369,10 @@ pub fn scan(rel: &str, source: &str) -> Vec<Hit> {
                 }
                 _ => {}
             }
+            // A macro's `!` stays part of its name's place: `format!(`.
             if is_ident(c) || c == ':' {
                 path.push(c);
-            } else {
+            } else if c != '!' {
                 path.clear();
             }
         }
@@ -460,9 +548,9 @@ fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
 fn draw(&self, buf: &mut GlyphBuffer) {
     buf.print(xs[0], rows[1], \"After an index\", fg, bg);
     draw_rows(buf, |b| { b.height() }, \"After a block\");
-    let label = [other(\"Not shown\")];
+    let label = [other(\"not_shown\")];
     if wide { buf.print(0, 0, \"In a block\", fg, bg); }
-    let after = other(\"Not shown either\");
+    let after = other(\"nor_this\");
 }
 ";
         assert_eq!(
@@ -479,14 +567,170 @@ fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
     buf.print(1, 2, &ctx.text_with(\"battle.turn\", &[(\"count\", &n)]), fg, bg);
     let label = ctx.text(\"title.quit\");
     ctx.audio.play_sound(\"menu_move\");
-    let s = format!(\"saved as {name}\");
+    let s = format!(\"{a}/{b} {c:>3}\");
     buf.print(1, 2, &format!(\"{}/{}\", a, b), fg, bg);
     buf.print(1, 2, \" · \", fg, bg);
     buf.print(1, 2, \"\", fg, bg);
-    let x = other(\"Words here\");
+    let x = ctx.text_with(\"save.slot\", &[(\"slot\", &format!(\"No {n}\"))]);
 }
 ";
         assert_eq!(found(source), Vec::<String>::new());
+    }
+
+    /// Ticket 0243: text made first and printed later.
+    #[test]
+    fn a_format_kept_or_returned_counts() {
+        let source = "\
+fn turn_text(turn: u32, limit: Option<u32>) -> String {
+    match limit {
+        Some(limit) => format!(\"Turn {turn}/{limit}\"),
+        None => format!(\"Turn {turn}\"),
+    }
+}
+fn draw(&self, buf: &mut GlyphBuffer) {
+    let ask = format!(\"End turn with {ready} units ready?\");
+    let hold = Some(format!(\"hold {}\", key));
+    let cost = format!(\"{n} dur\");
+    lines.push((format!(\"{who} waited\"), color));
+}
+";
+        assert_eq!(
+            found(source),
+            [
+                "3: Turn {turn}/{limit}",
+                "4: Turn {turn}",
+                "8: End turn with {ready} units ready?",
+                "9: hold {}",
+                "10: {n} dur",
+                "11: {who} waited",
+            ]
+        );
+    }
+
+    /// Ticket 0243: prose counts wherever it stands.
+    #[test]
+    fn prose_outside_a_call_counts() {
+        let source = "\
+fn reason(error: &Error) -> String {
+    match error {
+        Error::Range => \"out of range\".to_owned(),
+        Error::Broken => String::from(\"Weapon broken\"),
+    }
+}
+fn label(self) -> &'static str {
+    if self.mounted { \"Mounted\" } else { \"On foot\" }
+}
+";
+        assert_eq!(
+            found(source),
+            [
+                "3: out of range",
+                "4: Weapon broken",
+                "8: Mounted",
+                "8: On foot"
+            ]
+        );
+    }
+
+    /// Ticket 0243: a help bar's labels kept in a variable, and `match`
+    /// arms and `if`s that give a word.
+    #[test]
+    fn a_lowercase_word_is_a_label_unless_it_is_an_argument_a_pattern_or_a_name() {
+        let source = "\
+fn help(&self, km: HelpKeys) -> String {
+    let info = (Some(key), \"info\");
+    let label = \"attack\";
+    let status = if unit.acted { \"acted\" } else { \"ready\" };
+    let verb = match stat {
+        StatKind::Mov => \"pins\",
+        _ => \"lowers\",
+    };
+    let flags = [(mods.double, \"double\"), (mods.single, \"single\")];
+    help_line(&[info])
+}
+fn ids(&self, movement: &str) -> Option<&'static str> {
+    let cue = Some(\"heal\");
+    let id = ItemId::new(\"potion\");
+    let step = match movement {
+        \"foot\" => \"step_foot\",
+        \"horse\" | \"wyvern\" => \"step_mounted\",
+        _ => return None,
+    };
+    let values = [(\"count\", &n as &dyn Display), (\"name\", &name)];
+    let line = ctx.text_with(\"battle.line\", &values);
+    cue
+}
+const SCREEN: &str = \"battle\";
+";
+        assert_eq!(
+            found(source),
+            [
+                "2: info",
+                "3: attack",
+                "4: acted",
+                "4: ready",
+                "6: pins",
+                "7: lowers",
+                "9: double",
+                "9: single",
+            ]
+        );
+    }
+
+    #[test]
+    fn asserts_panics_and_attributes_are_never_shown() {
+        let source = "\
+#[derive(thiserror::Error)]
+pub enum BindError {
+    #[error(\"{0} is a fixed key\")]
+    Reserved(Chord),
+}
+#[serde(rename = \"PlayerKeys\")]
+struct File;
+fn f(x: Option<u8>) -> u8 {
+    assert!(x.is_some(), \"No value here\");
+    debug_assert_eq!(a, b, \"They differ\");
+    let y = x.expect(\"There is one\");
+    if y > 9 { panic!(\"Too big: {y}\"); }
+    if y > 8 { unreachable!(\"Never eight\"); }
+    eprintln!(\"Loaded {y}\");
+    #[allow(clippy::x, reason = \"A reason\")]
+    let z = format!(\"Shown {y}\");
+    y
+}
+";
+        assert_eq!(found(source), ["16: Shown {y}"]);
+    }
+
+    #[test]
+    fn what_follows_a_literal_tells_a_name() {
+        for code in [
+            "    \"foot\" => 1,",
+            "    \"a\" | \"b\" => 2,",
+            "[(\"count\", &n)]",
+            "(\"count\" , &n)",
+        ] {
+            let open = code.find('"').unwrap();
+            assert!(is_name(code, open), "{code}");
+        }
+        for code in [
+            "(key, \"info\")",
+            "(\"info\", key)",
+            "let a = \"x\";",
+            "f(\"x\")",
+            "\"never closed",
+            "\"last\"",
+        ] {
+            let open = code.find('"').unwrap();
+            assert!(!is_name(code, open), "{code}");
+        }
+        // The second literal of a line is looked at from its own quote.
+        let code = "(\"count\", &n, \"word\")";
+        assert!(!is_name(code, code.rfind("\"word").unwrap()));
+        assert!(is_bare_word("acted"));
+        for text in ["", "Acted", "two words", "menu_move", "a1", "x.y"] {
+            assert!(!is_bare_word(text), "{text}");
+        }
     }
 
     #[test]
@@ -511,7 +755,8 @@ let local = \"Not A Const\";
                 "1: Visions of Shuyi",
                 "2: Quit",
                 "3: no saves yet",
-                "5: New Game"
+                "5: New Game",
+                "12: Not A Const",
             ]
         );
     }
@@ -587,9 +832,35 @@ mod tests {
         for key in ["text", "text_with", "Ctx::text"] {
             assert!(bracket_of(key) == Bracket::Key, "{key}");
         }
-        for other in ["", "new", "Menu::new", "format", "context", "reprint"] {
-            assert!(bracket_of(other) == Bracket::Other, "{other}");
+        for quiet in [
+            "panic",
+            "unreachable",
+            "todo",
+            "unimplemented",
+            "expect",
+            "expect_err",
+            "println",
+            "eprintln",
+            "dbg",
+            "allow",
+            "warn",
+            "deny",
+            "cfg",
+            "cfg_attr",
+            "assert",
+            "assert_eq",
+            "debug_assert",
+            "debug_assert_ne",
+            "std::panic",
+        ] {
+            assert!(bracket_of(quiet) == Bracket::Quiet, "{quiet}");
         }
+        for call in ["new", "Menu::new", "format", "context", "reprint", "Some"] {
+            assert!(bracket_of(call) == Bracket::Call, "{call}");
+        }
+        assert!(bracket_of("") == Bracket::Other);
+        assert!(Bracket::Sink.decides() && Bracket::Key.decides() && Bracket::Quiet.decides());
+        assert!(!Bracket::Call.decides() && !Bracket::Other.decides());
     }
 
     #[test]
@@ -643,6 +914,7 @@ mod tests {
             "debug.rs",
             "debug/menu.rs",
             "harness.rs",
+            "snapshot.rs",
             "screens/notes.txt",
         ] {
             fs::write(src.join(file), literal).unwrap();
@@ -669,11 +941,8 @@ mod tests {
     fn the_real_repo_is_within_the_allowed_count() {
         let (hits, errors) = run(repo_root());
         assert_eq!(errors, Vec::<String>::new());
-        assert!(
-            hits.len() <= MAX_LITERALS,
-            "{}",
-            report(&hits, MAX_LITERALS)
-        );
+        assert_eq!(hits.len(), MAX_LITERALS, "{}", report(&hits, MAX_LITERALS));
+        assert_eq!(MAX_LITERALS, 0);
     }
 
     /// Ticket 0233: the title screen is the first one converted.

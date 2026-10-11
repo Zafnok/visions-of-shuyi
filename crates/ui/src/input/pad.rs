@@ -79,6 +79,7 @@ impl PadKind {
     /// screen*): Xbox letters (also on generic pads), Sony's shapes,
     /// or Nintendo's letters (a PS4 pad says `Share` where later Sony pads
     /// say `Create`). The only place buttons get their names.
+    // check-text: not player text (a button's name is what is printed on the pad)
     pub fn button_name(self, button: Button) -> &'static str {
         let [xbox, playstation, nintendo] = names(button);
         match self {
@@ -102,6 +103,7 @@ const TRIANGLE: &str = "\u{25b3}";
 /// (see [`PadKind::position`]), so it is its `A`. Directions and stick
 /// presses are named the same on every pad, except Sony's `L3` /
 /// `R3`.
+// check-text: not player text (a button's name is what is printed on the pad)
 fn names(button: Button) -> [&'static str; 3] {
     match button {
         Button::South => ["A", CROSS, "A"],

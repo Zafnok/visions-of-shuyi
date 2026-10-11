@@ -3,24 +3,24 @@ source: crates/ui/tests/it/language.rs
 expression: h.snapshot()
 ---
 ╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
-║ ┌──────────────────────┐   Test Lord                  Weapons                                    ║
-║ │                      │   Exile  Lv 1                E IRON SWORD                         20/20 ║
-║ │                      │   EXP 0                        Mt 5  Hit 90  Crit 0  Rng 1  Wt 2        ║
+║ ┌──────────────────────┐   Test Lord                  WEAPONS                                    ║
+║ │                      │   Exile  LV 1                E IRON SWORD                         20/20 ║
+║ │                      │   EXP 0                        MT 5  HIT 90  CRIT 0  RNG 1  WT 2        ║
 ║ │                      │   HP 19/19   ██████████        Steel Sword                        25/25 ║
-║ │                      │                                Mt 8  Hit 75  Crit 0  Rng 1  Wt 4        ║
-║ │                      │   Stats                        --                                       ║
-║ │       portrait       │   Str   6                                                               ║
-║ │                      │   Mag   1                                                               ║
-║ │                      │   Dex   7                    Armour                                     ║
-║ │                      │   Spd   7                      Leather Vest                             ║
-║ │                      │   Def   4                      Def +1                                   ║
-║ └──────────────────────┘   Res   3                                                               ║
-║                                                       Accessory                                  ║
-║  Mov 5  foot                                            --                                       ║
-║                            Skills                                                                ║
+║ │                      │                                MT 8  HIT 75  CRIT 0  RNG 1  WT 4        ║
+║ │                      │   STATS                        --                                       ║
+║ │       PORTRAIT       │   STR   6                                                               ║
+║ │                      │   MAG   1                                                               ║
+║ │                      │   DEX   7                    ARMOUR                                     ║
+║ │                      │   SPD   7                      Leather Vest                             ║
+║ │                      │   DEF   4                      DEF +1                                   ║
+║ └──────────────────────┘   RES   3                                                               ║
+║                                                       ACCESSORY                                  ║
+║  MOV 5  foot                                            --                                       ║
+║                            SKILLS                                                                ║
 ║                            A Inspire             2/2                                             ║
-║  Weapon ranks                ally r2: +10 hit +10 av  Spells                                     ║
-║  Sword     D                                            --                                       ║
+║  WEAPON RANKS                ALLY R2: +10 HIT +10 AV  SPELLS                                     ║
+║  SWORD     D                                            --                                       ║
 ║                                                                                                  ║
 ║                                                                                                  ║
 ║                                                                                                  ║
@@ -32,8 +32,8 @@ expression: h.snapshot()
 ║                                                                                                  ║
 ║                                                                                                  ║
 ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
-                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
- s next unit · a previous · d close                                                        F2 debug 
+                                                     w DANGER ZONE: OFF · Shift+Space AUTO-END: OFF 
+ s NEXT UNIT · a PREVIOUS · d CLOSE                                                        F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 abccccccccccccccccccccccccbbbdddddddddbbbbbbbbbbbbbbbbbbeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
