@@ -25,7 +25,11 @@ The first of these that exists:
 3. `default.ron`, which must exist.
 
 So a named character with no picture of their own looks like their class,
-and a class with no picture yet shows the default figure.
+and a class with no picture yet shows the default figure. A class's bought
+picture is the one the enemy's soldiers show (the Red Company's guard is
+the Church Knight in red); a named character who shares it gets a row of
+their own in the importer's table, recoloured (Hollis: the same knight in
+blue).
 
 ## Format
 
@@ -69,7 +73,8 @@ fighters, by the terrain the defender stands on:
 ```
 
 Every backdrop is a 336×248 PNG in `assets/battlebacks/`; the scene shows
-280×192 of it at double size. The loader checks that each image is there
+its whole width and 192 rows of it at double size, and its two edges again,
+mirrored, to fill the screen's width. The loader checks that each image is there
 and that size, and that each terrain id exists. The files there are
 placeholders too: the bought ones replace them by name, so the two share
 this file.

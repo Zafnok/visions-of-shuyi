@@ -24,6 +24,14 @@ published build has AI-generated voices or a machine-translated language
 0907 is done, use its `docs/release/store-disclosure.md`; if not, leave a
 line in 0907 to add the paragraph to the page.
 
+**Added 2026-10-11 (ticket 0413).** Shironejiya's terms (the bandits'
+combat pictures, `THIRD_PARTY_ASSETS.md`) ask for a text shipped with the
+game that has the site's name (白螺子屋), its address
+(http://hi79.web.fc2.com/) and the line that the materials in the game may
+not be reused. The credits screen has it in Latin letters (the font has no
+kanji); the text file bundled with a release must carry it too, with the
+name in kanji.
+
 ## Nick input
 
 **Setup (≈10 minutes):**

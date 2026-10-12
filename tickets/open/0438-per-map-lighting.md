@@ -52,6 +52,14 @@ add other sprite effects).
   (`crates/xtask/src/tileset_import.rs`); it already recolours tiles
   (`tint`), for the burning forest.
 
+**Added 2026-10-11 (ticket 0413).** The combat stage's backdrops
+(ADR-0056, `assets/battlebacks/battlebacks.ron`) are the bundle's **day**
+pictures only. The bundle has each one at dusk and at night too. When a
+map has a light, the stage should show that light's picture: give the
+backdrops' file a picture per light (and `cargo xtask battler-import`'s
+`BACKDROPS` the dusk and night files), and pass the map's light to
+`stage::view` next to the ground.
+
 ## Nick input
 
 **Sign-off:** one map rendered in each light, side by side, with bought

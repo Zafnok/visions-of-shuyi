@@ -18,9 +18,9 @@
   wide), different facings (Tiny Tales looks right, Shironejiya left), and
   Nick sized each source so the fighters stand equally tall (1×, 1.25×,
   1.5×). Shironejiya's are drawn on a flat background colour.
-- In ticket 0413 Nick chose where the scene goes: **the map pane becomes
-  the stage** at double size, with a bought backdrop, the numbers in a
-  plate per fighter and the result over the target's head.
+- In ticket 0413 Nick chose where the scene goes: **a stage over the map
+  and the side panel** at double size, with a bought backdrop, the numbers
+  in a plate per fighter and the result over the target's head.
 - 0404's playback already lays every strike on a timeline of beats
   (intro, the striker's name flashing, the result while HP drains, a gap,
   the falls, the outro), times the sounds on it, and is what "hold Confirm
@@ -71,9 +71,18 @@ privately; without them those fighters show their class.
 
 `cargo xtask battler-import` writes the private files from a table in
 `crates/xtask/src/battler_import.rs` (who gets which bought file, its
-facing, its scale): it copies the image, makes the flat background of a
-"keyed" picture clear, and writes the sidecar. Nothing is edited by hand
-in `assets-private/game/battlers/`.
+facing, its scale, its recolours): it copies the image, makes the flat
+background of a "keyed" picture clear, recolours it, and writes the
+sidecar. Nothing is edited by hand in `assets-private/game/battlers/`.
+
+A **recolour** is a list of `Tint`s: pixels in a range of hues, saturated
+enough (and optionally from a row down, to tell clothes from hair of the
+same colour), get a new hue with their saturation and brightness scaled,
+so the shading stays. Two fighters who share a bought picture are two rows
+of the table with different tints (Hollis and the Red Company's guard).
+Since a unit's picture is found by character, then class, **a class's
+picture is the one the enemy's unnamed soldiers show**, and a named
+character who shares it has their own row.
 
 ### 3. The stage is a view of the playback; a skin paints it
 
@@ -81,9 +90,13 @@ in `assets-private/game/battlers/`.
 frame (ADR-0054): the backdrop, the two `FighterView`s (name, faction, HP
 as shown now, numbers, picture, `Pose`), who stands on the left, whether
 they fight hand to hand, the result text and its target, and whether the
-stage flashes. `stage/glyph.rs` paints it over the map view: the backdrop
-and each picture as **one sprite item**, mirrored with `flip_x` to face
-its opponent, the plates and labels as cells. Tests of what a fight shows
+stage flashes. `stage/glyph.rs` paints it over the map view and the side
+panel, after both: each picture as **one sprite item**, mirrored with
+`flip_x` to face its opponent, the plates and labels as cells. The
+backdrop at double size is 672 of the 800 pixels wide, so its two edge
+strips are drawn again beside it, mirrored (three sprite items): a
+mirrored edge continues the picture without a seam and every backdrop
+pixel stays 2×2. Tests of what a fight shows
 read the view; only the skin's tests read sprites and cells.
 
 With combat animations off (`Settings::combat_animations`) there is no
@@ -100,8 +113,8 @@ speed-up and skip need no change. The timings are constants in `ui`, not
 per-image data.
 
 No new sprite feature was needed: a hit is `Paint::Solid(white)`, a fall
-is `opacity`, and the critical's white flash is the backdrop drawn again
-as a solid white shape at part opacity.
+is `opacity`, and the critical's white flash is the backdrop's sprites
+drawn again as solid white shapes at part opacity.
 
 ## Consequences
 
@@ -110,11 +123,13 @@ as a solid white shape at part opacity.
 - Fractional scales (1.25×, then doubled) are drawn with nearest-pixel
   sampling, so some picture pixels are 2 screen pixels and some 3. Nick
   chose those sizes on mockups drawn the same way.
-- The stage hides the map while a fight plays. A dialogue scene triggered
+- The stage hides the map and the side panel while a fight plays. A dialogue scene triggered
   inside a combat (a boss's line, last words) now plays over the stage.
-- Named characters without their own art look like their class until a
-  recoloured picture is imported for them (the importer has no recolour
-  step yet).
+- Named characters without their own art look like their class (so like
+  the enemy's soldiers) until a row with their recolour is added to the
+  importer's table.
+- A player's unnamed unit of a class would show the enemy's colours. None
+  exists; when one does, the lookup needs the unit's side.
 - A picture taller than the ground line allows (138 px at double size)
   would be cut at the scene's top; the loader's 240×144 limit is looser
   than that so the big *Gods and Gallants* pictures can be tried later.
@@ -136,3 +151,7 @@ as a solid white shape at part opacity.
   silhouette reads as a hit flash, as in the games Nick named.
 - **The box over the map, art at its own size.** Shown to Nick; he chose
   the stage (the run-up has room, the art reads at double size).
+- **Stretching the backdrop to the full width (2.38×), or black bars.**
+  Uneven pixels beside 2× fighters, or a stage that looks unfinished.
+- **Recolours as hand-edited files in the private repository.** Not
+  reproducible when a pack is updated, and nothing says what was changed.

@@ -1998,18 +1998,20 @@ impl Screen for BattleScreen {
         }
         self.draw_menu(ctx, buf, &scene);
         self.draw_popups(ctx, buf, &scene);
-        if let Mode::Combat(pb) = &self.mode {
-            match self.stage_view(ctx) {
-                Some(view) => stage::glyph::paint(ctx, &view, buf),
-                // Combat animations are off: the plain box.
-                None => playback::draw_box(buf, &ctx.palette, ctx.words(), pb),
-            }
+        let stage = self.stage_view(ctx);
+        if let (Mode::Combat(pb), None) = (&self.mode, &stage) {
+            // Combat animations are off: the plain box.
+            playback::draw_box(buf, &ctx.palette, ctx.words(), pb);
         }
         if let Some(p) = self.progress() {
             let look = (&ctx.palette, ctx.words());
             progress::draw(buf, look, &ctx.content.portraits, p);
         }
         self.draw_panel(ctx, buf);
+        if let Some(view) = &stage {
+            // Over the map and the side panel, which the plates replace.
+            stage::glyph::paint(ctx, view, buf);
+        }
         self.draw_dialogs(ctx, buf, &scene);
         if let Some(tip) = self
             .shown_tip()

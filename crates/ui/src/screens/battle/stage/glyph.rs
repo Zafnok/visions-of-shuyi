@@ -1,6 +1,7 @@
 //! The combat stage's look (ADR-0054, ADR-0056): the backdrop and the two
-//! pictures as sprite items at double size where the map was, a plate per
-//! fighter under them, the strike's result over its target.
+//! pictures as sprite items at double size over the map and the side
+//! panel, a plate per fighter under them, the strike's result over its
+//! target.
 
 use trpg_content::Battler;
 use trpg_content::battler::Facing;
@@ -14,24 +15,36 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Paint, PxRect, Rec
 use crate::portrait::dim_opacity;
 use crate::screen::Ctx;
 use crate::screens::battle::info::stat_name;
-use crate::screens::battle::layout::MAP_VIEW;
+use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
 use crate::screens::battle::units::{faction_color, hp_fill};
 
 /// Console pixels per picture pixel.
 pub const ZOOM: u32 = 2;
-/// Rows of the pictures' part of the stage, from the top of the map view.
+/// The whole stage, in cells: the map view and the side panel, which says
+/// nothing during a fight that the plates don't.
+pub const STAGE: Rect = Rect::new(
+    MAP_VIEW.x,
+    MAP_VIEW.y,
+    MAP_VIEW.w + SIDE_PANEL.w,
+    MAP_VIEW.h,
+);
+/// Rows of the pictures' part of the stage, from its top.
 pub const SCENE_ROWS: i32 = 24;
 /// The pictures' part of the stage, in cells.
-pub const SCENE: Rect = Rect::new(MAP_VIEW.x, MAP_VIEW.y, MAP_VIEW.w, SCENE_ROWS);
-/// The part of a backdrop that is shown, in its own pixels: at [`ZOOM`]
-/// it fills [`SCENE`].
-pub const BACKDROP_SRC: PxRect = PxRect::new(28, 40, 280, 192);
+pub const SCENE: Rect = Rect::new(STAGE.x, STAGE.y, STAGE.w, SCENE_ROWS);
+/// The part of a backdrop that is shown, in its own pixels: its whole
+/// width. At [`ZOOM`] it is as tall as [`SCENE`] and [`EDGE_PX`] narrower
+/// on each side.
+pub const BACKDROP_SRC: PxRect = PxRect::new(0, 40, 336, 192);
+/// The strip of the backdrop that is drawn again, mirrored, beside each of
+/// its edges to fill the scene's width, in backdrop pixels.
+pub const EDGE_PX: i32 = 32;
 /// Where the fighters' feet are, in console pixels down from the scene's
 /// top.
 pub const FEET_Y: i32 = 276;
 /// The middle of the left and the right fighter, in console pixels from
 /// the scene's left edge.
-pub const MIDDLES: [i32; 2] = [152, 408];
+pub const MIDDLES: [i32; 2] = [250, 550];
 /// How far a striker's picture overlaps its target's when it arrives.
 pub const OVERLAP_PX: i32 = 24;
 /// How far a striker steps forward when it doesn't fight hand to hand.
@@ -47,7 +60,7 @@ pub const SINK_PX: f32 = 12.0;
 /// How solid the white over the stage is at a critical.
 pub const VEIL_OPACITY: u8 = 150;
 /// A plate's size in cells.
-pub const PLATE: (i32, i32) = (MAP_VIEW.w / 2, MAP_VIEW.h - SCENE_ROWS);
+pub const PLATE: (i32, i32) = (STAGE.w / 2, STAGE.h - SCENE_ROWS);
 /// Cells of a plate's HP bar.
 pub const BAR_CELLS: i32 = 20;
 
@@ -63,6 +76,31 @@ fn scene_px() -> PxRect {
         SCENE.w * CELL_W_PX,
         SCENE.h * CELL_H_PX,
     )
+}
+
+/// The backdrop `image` across the scene: its window in the middle, and
+/// the strip at each of its edges again, mirrored, outside it (a mirrored
+/// edge continues the picture without a seam).
+pub fn backdrop_sprites(image: trpg_content::ImageId) -> [Sprite; 3] {
+    let (scene, src) = (scene_px(), BACKDROP_SRC);
+    let zoom = int(ZOOM);
+    let edge = EDGE_PX * zoom;
+    let middle = PxRect::new(scene.x + edge, scene.y, src.w * zoom, scene.h);
+    let strip = |src_x: i32, dest_x: i32| {
+        let mut s = Sprite::new(
+            image,
+            PxRect::new(src_x, src.y, EDGE_PX, src.h),
+            PxRect::new(dest_x, scene.y, edge, scene.h),
+            Layer::Under,
+        );
+        s.flip_x = true;
+        s
+    };
+    [
+        Sprite::new(image, src, middle, Layer::Under),
+        strip(src.x, scene.x),
+        strip(src.x + src.w - EDGE_PX, middle.x + middle.w),
+    ]
 }
 
 /// A whole number of pixels for `v` (a bad number counts as 0).
@@ -167,7 +205,7 @@ fn plate(ctx: &Ctx, buf: &mut GlyphBuffer, slot: i32, fighter: &FighterView) {
     let (bg, dim) = (c(UiColor::PanelBg), c(UiColor::TextDim));
     let color = c(faction_color(fighter.faction));
     let rect = Rect::new(
-        MAP_VIEW.x + slot * PLATE.0,
+        STAGE.x + slot * PLATE.0,
         SCENE.y + SCENE.h,
         PLATE.0,
         PLATE.1,
@@ -222,14 +260,16 @@ fn plate(ctx: &Ctx, buf: &mut GlyphBuffer, slot: i32, fighter: &FighterView) {
     buf.print(x, y + 3, &cut(&numbers), dim, bg);
 }
 
-/// Paints `view` where the map was.
+/// Paints `view` over the map and the side panel.
 pub fn paint(ctx: &Ctx, view: &StageView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let (bg, white) = (c(UiColor::PanelBg), c(UiColor::White));
-    buf.fill_rect(MAP_VIEW, Cell::new(' ', c(UiColor::Text), bg));
+    buf.fill_rect(STAGE, Cell::new(' ', c(UiColor::Text), bg));
     let scene = scene_px();
     if let Some(backdrop) = view.backdrop {
-        buf.add_sprite(Sprite::new(backdrop, BACKDROP_SRC, scene, Layer::Under));
+        for sprite in backdrop_sprites(backdrop) {
+            buf.add_sprite(sprite);
+        }
     }
     // The striker last: in front of its target when they meet.
     let behind = view.striker.map_or(0, |s| 1 - s);
@@ -239,10 +279,11 @@ pub fn paint(ctx: &Ctx, view: &StageView, buf: &mut GlyphBuffer) {
         }
     }
     if let Some(backdrop) = view.backdrop.filter(|_| view.veil) {
-        let mut veil =
-            Sprite::new(backdrop, BACKDROP_SRC, scene, Layer::Under).painted(Paint::Solid(white));
-        veil.opacity = VEIL_OPACITY;
-        buf.add_sprite(veil);
+        for sprite in backdrop_sprites(backdrop) {
+            let mut veil = sprite.painted(Paint::Solid(white));
+            veil.opacity = VEIL_OPACITY;
+            buf.add_sprite(veil);
+        }
     }
     let highlight = c(UiColor::TextHighlight);
     if let Some(name) = &view.banner {

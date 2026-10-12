@@ -603,7 +603,8 @@ sprites.
   player's fighter stood on the left and the enemy on the right; the enemy
   was drawn as bought and so faced away, which Nick called the main thing
   wrong with them.
-- **The map pane becomes the stage** (decided 2026-10-11, ticket 0413).
+- **The fight fills the screen above the help bar** (decided 2026-10-11,
+  ticket 0413).
   Nick first saw two mockups (0038), one in the box over the map and one
   filling the screen, and found both "a little off"; his worry about the
   big one was that it "won't be able to convey all the info", though
@@ -611,10 +612,18 @@ sprites.
   messages". In 0413 he saw four layouts with the facing fixed: the box
   with and without a background, and the map pane as a stage with and
   without one. "1A or 1B not the 2 option but torn between A and B", then,
-  after seeing both with the run-up and Harl: **"1B"**. So:
-  - While a fight plays, the map area shows the two fighters at **double
-    size** in front of a bought **backdrop**; the side panel and the help
-    bar stay. There is always a backdrop.
+  after seeing both with the run-up and Harl: **"1B"**. Seeing it run in
+  the game, he dropped the side panel too: "the side panel is somewhat
+  useless in the fight scene... it has the same information... we can
+  just stretch the whole fight scene over" it. So:
+  - While a fight plays, the map **and the side panel** make way for the
+    two fighters at **double size** in front of a bought **backdrop**;
+    the help bar stays. There is always a backdrop. (The backdrop is
+    narrower than the screen at that size: its two edges are drawn again,
+    mirrored, to fill the width.) Nick allowed keeping the side panel for
+    the glyph look; the stage is drawn the same whichever map look is on,
+    so it never shows it *(Claude's reading; say if the glyph look should
+    get the old box back)*.
   - **A plate per fighter** under the picture: name, HP with a bar, and
     its damage, hit and crit for this fight (or "no counter"). The name
     lights up when that fighter is about to strike.
@@ -669,6 +678,23 @@ sprites.
   where most named units share their class's battle animation in their own
   palette). Characters with their own hero art use it for both face and
   combat picture.
+- **Who is recoloured in Chapter 1** (decided 2026-10-11, ticket 0413, on
+  renders of each pair; Nick: "1A", "2A", "3A"):
+  - **The Guard:** the Church Knight's gold trim, tabard and shield are
+    **red for the Red Company's guard** and **faded Veyne blue for
+    Hollis** (both recoloured, so neither is the bought white and gold).
+  - **The Archer:** **Aske is the Archer hero as bought**; the **Red
+    Company's archers** are the same picture with dark hair and red in
+    their clothes, so they aren't her twins.
+  - **The female lead's** top is blue, as in her portrait (0706).
+  - A **class's picture is what the enemy's soldiers of that class look
+    like**; a named character of the player's who shares it gets their own
+    recolour *(Claude's rule for how the files are set up; in Chapter 1
+    the only soldiers without a name are the Red Company's)*.
+- **Sizes** (decided 2026-10-11, ticket 0413): the **Church Cleric (Maud)
+  and the Church Wizard (the Mage class) are drawn at 1.25×**, like
+  Shironejiya's pictures, so they stand as tall as a hero; the Church
+  Knight is already that tall and stays at 1×. The heroes are 1×.
 - **Face and combat picture should match** (Nick prefers visual
   consistency). Where a character's written look doesn't fit the art we
   can buy, the written look is rewritten to fit the art after purchase
@@ -715,7 +741,7 @@ like shit". What the search was held to after that:
 | Raider | The **armoured axe fighter**, red (`fighter04_a`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
 | Other human bandits (none in Chapter 1; they must not fight with axes) | The **headscarf bandits** (`bandanna01`–`04`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Aske | The **Archer** hero, as she is | 1× | the Archer's | Tiny Tales (owned) |
-| Maud (the keeper; Cleric) | The **Church Cleric** | 0413 | the Church Cleric's | Tiny Tales (owned) |
+| Maud (the keeper; Cleric) | The **Church Cleric** | 1.25× (0413) | the Church Cleric's | Tiny Tales (owned) |
 | Crane | The **old hooded man with a staff** (`mage_old_m01`), with a spectacle rim added by Claude (a 21-pixel edit) | 1.25× | a Tiny Tales human | Shironejiya |
 | Brawler | The **fist fighter** (`martial03`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Dace | The **dark knight** (`darkknight`): black horned armour, closed helm, red cape | 1.25× | a Tiny Tales human | Shironejiya |
@@ -829,13 +855,11 @@ black.
 
 - Selection arrows `►Al◄` next to another unit: whole-glyph arrows would hide
   one of its letters (the 0416 bracket problem). Ask Nick before 0403 draws them.
-- Combat screen (ticket 0413 decided where it is shown, the backdrop and
-  the motions): the size of the Tiny Tales class pictures next to the
-  heroes; the recolours of named characters who share their class's
-  picture (Hollis against a Red Company Guard); what the Red Company's
-  archers look like (today the Archer hero, who is Aske); which backdrop
-  each terrain gets; the riders, who show a plain figure until Pixel
-  Flag's Paladin is bought.
+- Combat screen (ticket 0413 decided where it is shown, the backdrop, the
+  motions, the sizes and the Chapter 1 recolours): which backdrop each
+  terrain gets (today mountains or fields, Claude's starting rule); the
+  riders, who show a plain figure until Pixel Flag's Paladin is bought
+  (ticket 0446).
 - Sprite units on the map: the outline alone or with a corner mark
   (0436). The zoom key and button (0439).
 - On the bought tiles (seen in ticket 0437, not decided): the cursor's
