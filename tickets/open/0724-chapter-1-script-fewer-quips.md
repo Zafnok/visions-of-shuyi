@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: fable-5.1
 effort: high
 status: todo
-blocked_by: ["0707", "0804"]
+blocked_by: ["0707"]
 nick_input: sign-off
 completed:
 ---
@@ -90,6 +90,11 @@ It waits until after his Chapter 1 playtest (0804). Asked whether it
 should land before (2026-10-03): "nah it can wait til after". So this
 ticket is blocked by 0804, and his playtest notes on the script's tone, if
 any, are folded into the rewrite.
+
+**Changed 2026-10-12:** round 1 of the playtest is played and its notes
+are above. Nick parked 0804 until the feedback is built, this ticket
+included, so the order turned round: **0804 now waits for this ticket**,
+and this one no longer waits for 0804.
 
 ## Scope
 

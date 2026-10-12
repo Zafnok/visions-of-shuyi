@@ -46,8 +46,22 @@ which has no open dependencies and can start any time) → **0818** character an
 where units march and fight → **0820** the real shots (after Chapter 1's
 map, faces and script) → **1010** the overworld shot (after the world map,
 1007; Nick places it). **0041** picks the skip sound (any time). **0724**
-rewrites the Chapter 1 script with fewer quips (after the playtest, 0804); the cinematic shows that
-script's opening lines, whatever they are. Not on the Chapter 1 critical path.
+rewrites the Chapter 1 script with fewer quips; the cinematic shows that
+script's opening lines, whatever they are. On the Chapter 1 critical path
+since 2026-10-12 (see *Playtest round 2* below).
+
+**Playtest round 2** (Nick, 2026-10-12, after playing `v0.1.0`: the
+feedback "impacts my first impression more than I thought"; 0804 is parked
+until it is built). 0804 now also waits for: **0727** a Confirm tap no
+longer fast-forwards the next page of dialogue · **0724** the script
+rewrite (American English, lines that read plainly) · **0447** the
+player's blue outline easier to see · **0444** the cursor easier to see ·
+**0055** → **0448** which enemies can attack the tile you are moving to ·
+**0442** Combat Arts in their own menu · **0439** the 1× / 2× zoom (and
+which one the game starts at) · the title's logo and cinematic (**0012** →
+**0811** → **0819** → **0820**, with **0817**, **0818**, **0827**) ·
+**0830** the Game Over animation with the logo (after 0811). All of these
+are on the critical path now.
 
 **Replaceable graphics** (Nick, 2026-10-01: swapping the map's glyphs for
 sprites from image files must be a small job; ADR-0038): **0231** pictures
@@ -69,7 +83,8 @@ the bought tilesets (auto-tiling; done 2026-10-03, ADR-0052) → **0438**
 per-map lighting; **0439** the
 1× / 2× zoom toggle (after 0433; Nick picks its key when it is built).
 Nick wants the bought-art map in his Chapter 1 playtest, so **0432, 0433,
-0436, 0437 and 0440 are on the critical path** (0438 and 0439 are not).
+0436, 0437 and 0440 are on the critical path** (0438 is not; 0439 is since
+2026-10-12, for playtest round 2).
 **0039** (done 2026-10-02) settled the rest: sprites step and walk (0440,
 which the playtest waits for), an up or down arrow marks a unit under an
 effect (0436), dialogue shows the busts at 4× (0711), and players may
