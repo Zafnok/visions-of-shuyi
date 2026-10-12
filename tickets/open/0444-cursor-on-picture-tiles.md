@@ -31,9 +31,17 @@ Code: `crates/ui/src/map_view/sprite.rs` (`paint_own_cursor`,
 `corner_arms`); the glow style tints the tile in
 `crates/ui/src/map_view/sprite/ground.rs` (`tints`).
 
+**Nick has now said it (Chapter 1 playtest, ticket 0804, 2026-10-12):**
+"the cursor is also a bit hard to see, I think there's an open ticket for
+this." So the first question below is answered: **he wants it easier to
+see.** Go straight to rendering options. He also found the player's blue
+outline hard to see (ticket 0447); the two can be shown to him in the same
+frames, but each is its own ticket and PR.
+
 ## Nick input
 
-**Sign-off, with a question first.** Ask Nick whether the cursor is easy
+**Sign-off, with a question first** (answered 2026-10-12, see above: skip
+to the options). Ask Nick whether the cursor is easy
 enough to see on the bought tiles (he will have played the Quick Battle on
 Pages after 0437 merged).
 

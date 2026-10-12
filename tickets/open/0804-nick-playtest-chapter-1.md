@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0803", "0802", "0602", "0307", "0406", "0107", "0108", "0414", "0417", "0424", "0425", "0710", "0807", "0814", "0215", "0809", "0810", "0413", "0035", "0316", "0231", "0435", "0714", "0715", "0716", "0436", "0437", "0440", "0116", "0822"]
+blocked_by: ["0803", "0802", "0602", "0307", "0406", "0107", "0108", "0414", "0417", "0424", "0425", "0710", "0807", "0814", "0215", "0809", "0810", "0413", "0035", "0316", "0231", "0435", "0714", "0715", "0716", "0436", "0437", "0440", "0116", "0822", "0727", "0724", "0447", "0444", "0055", "0448", "0442", "0439", "0811", "0819", "0820", "0830"]
 nick_input: sign-off
 completed:
 ---
@@ -60,6 +60,21 @@ answered "A" (yes). They bring 0432 and 0433 (the map skin) with them.
 Per-map lighting (0438) and the zoom toggle (0439) were not part of the
 question and don't block the playtest.
 
+**Round 1 played 2026-10-12; round 2 waits for its feedback** (Nick,
+2026-10-12): "I think we can conclude this round of ch1 playtesting, and
+park this ticket until the feedback I gave is resolved bc it impacts my
+first impression more than I thought, so let's say we will revisit round 2
+once these new blockers are done and add all these as blockers now". Added
+to `blocked_by`: 0727, 0724, 0447, 0444, 0055, 0448, 0442, 0439, 0811,
+0819, 0820 and 0830 (the table in the Completion notes says which remark
+each answers). The title tickets bring their own chain with them: 0012
+(the game's title), 0817, 0818 and 0827.
+
+**Round 2 starts at step 2**, with a new build: bump the version, cut
+`v0.2.0` the same way, and send the message again. `v0.1.0` exists and is
+not cut again. Steps 4 and 5 were not asked in round 1; ask them in
+round 2.
+
 ## Nick input
 
 **Sign-off:** play Chapter 1 (≈15–25 min) and report anything: bugs, feel,
@@ -96,4 +111,30 @@ difficulty, story, looks, controls.
 - [ ] `v0.1.0` release exists.
 
 ## Completion notes
+
+**Round 1 done, parked until its feedback is built** (see Context).
+`v0.1.0` was tagged on `main` at `f106381` (2026-10-12;
+`Cargo.toml` already said 0.1.0, so no bump) and
+[released](https://github.com/Zafnok/visions-of-shuyi/releases/tag/v0.1.0)
+with Windows, Linux, macOS and web packages.
+
+### Feedback, first batch (Nick, 2026-10-12, verbatim) and where it went
+
+| Nick said | Ticket |
+| --------- | ------ |
+| "the hold F to speed up text is too eager, I press F to advance to next dialogue and already half the next text is displayed bc it interprets a tap as a hold too quickly" | **0727** (new, bug) |
+| "Hollis and Veyne first dialogue is too weird... idk what this means 'that eyebrow's had one scar off me already' wtf? sounds weird as hell" | **0724** (open; his words added) |
+| "'A bit proud' also sounds weird unless you enhance it like 'mumbles' or \*mumbles\* or something" | **0724** |
+| "'pedlar' is that supposed to be 'peddler'? wtf is this olde english or something?" | **0724** (spell it "peddler") |
+| "Aske saying 'twelve men. no. fourteen. bad archers' also doesn't sit right with me. bad archers...? so why would they not be counted?" | **0724** |
+| "the blue outline is hard to see for friendlies, the red is very clear." | **0447** (new, options shown to Nick first) |
+| "the cursor is also a bit hard to see, I think there's an open ticket for this." | **0444** (open; its question to Nick is now answered) |
+| "when moving or proposing to move into an enemy's attack range, it should illuminate or draw slim arrows from enemy to the tile or unit you're moving to. Newer fire emblem games do this. So you don't need to rely on danger zone as much." | **0055** (new, decides the details) then **0448** (new, builds it) |
+| "is there an open ticket for making combat arts/skills etc into a different menu? cuz rn it's not... u select weapon and it has attack in same menu as the skills" | **0442** (open, unchanged) |
+| "I think we can scale the battle map bigger. tile size / overworld unit size. rn it's quite small idk if the original assets are this small or we shrunk them to glyph size but we can make the 2D size bigger" | **0439** (open, the 1× / 2× zoom; now also asks which zoom the game starts at) |
+| "game over and title screen should both have a nice animation w our logo (I think there are open tickets for this)" | Title: **0811**, **0819**, **0820** (open). Game Over: **0830** (new) |
+
+Still to ask, in round 2: steps 4 and 5 (the rewind EXP
+bonus, the two signature spells, the four scene music picks, enemies
+waiting at the bridges and the fort).
 
