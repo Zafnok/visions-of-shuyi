@@ -44,8 +44,12 @@
 //! music, asked for once each time the battle starts (also on `Retry` and
 //! `Restart Battle`, where a pool picks again); it already plays on the
 //! battle's Preparations screen. The battle screen asks for
-//! none, so the track stays through both phases, combat and rewinds, and
-//! on into the victory scenes. Game Over and "To be continued" stop it.
+//! none until the battle ends, so the track stays through both phases,
+//! combat and rewinds. At the outcome's banner the battle screen asks for
+//! the victory sting, or for `defeat` (0809), which plays on through Game
+//! Over: that screen asks for nothing. `Rewind` there keeps `defeat` until
+//! a point is picked; then the battle's track (the same one) starts again.
+//! "To be continued" stops the music.
 
 use std::any::Any;
 use std::collections::VecDeque;
@@ -69,15 +73,16 @@ use crate::screens::{BattleScreen, DialogueScreen, ResultsScreen};
 /// Asks for battle `def`'s music: its cue, or a track picked from its
 /// pool. The pick is the UI's, not the battle's RNG (ADR-0019): a rewind or
 /// a replay never changes the track. An empty pool leaves the music as it
-/// is.
-fn play_battle_music(ctx: &mut Ctx, def: &BattleDef) {
+/// is. Returns the cue asked for.
+fn play_battle_music(ctx: &mut Ctx, def: &BattleDef) -> Option<String> {
     let cue = match &def.music {
         BattleMusic::Cue(cue) => Some(cue.clone()),
         BattleMusic::Pool(pool) => ctx.pick_music(pool),
     };
-    if let Some(cue) = cue {
-        ctx.audio.play_music(&cue);
+    if let Some(cue) = &cue {
+        ctx.audio.play_music(cue);
     }
+    cue
 }
 
 /// The chapter the debug Quick Battle plays (`assets/chapters/quick.ron`).
@@ -144,6 +149,8 @@ pub struct FlowScreen {
     started_at: f64,
     /// Whether Preparations may be left (the Quick Battle: to the title).
     can_leave: bool,
+    /// The battle's music cue, as asked for when it last started.
+    music: Option<String>,
 }
 
 impl FlowScreen {
@@ -159,6 +166,7 @@ impl FlowScreen {
             rewards: None,
             started_at: 0.0,
             can_leave: false,
+            music: None,
         }
     }
 
@@ -199,8 +207,9 @@ impl FlowScreen {
         // If deleting fails the battle still continues.
         let _ = ctx.storage.delete(SUSPEND_KEY);
         // The battle's music again (a pool picks afresh).
-        play_battle_music(ctx, &def);
+        let music = play_battle_music(ctx, &def);
         let mut flow = Self::new_game(ctx);
+        flow.music = music;
         flow.adopt(ctx, campaign);
         flow.chapter = Some(chapter);
         let look = ctx.content.map_look(&def.map);
@@ -406,7 +415,7 @@ impl FlowScreen {
         let Some(fight) = &self.fight else {
             return;
         };
-        play_battle_music(ctx, &fight.def);
+        self.music = play_battle_music(ctx, &fight.def);
         if fight.def.preparations {
             let screen = PreparationsScreen::new(fight.prep.clone(), self.can_leave);
             self.stage = Stage::Preparations(Box::new(screen));
@@ -449,8 +458,9 @@ impl FlowScreen {
     }
 
     /// The battle screen closed: a restart, a suspend, or its outcome.
-    /// Game Over is silent (0809 gives it its own music). Returns `true`
-    /// when the flow is over (suspended: back to the title).
+    /// Game Over asks for no music: `defeat`, on since the banner, plays
+    /// on (0809). Returns `true` when the flow is over (suspended: back to
+    /// the title).
     fn battle_over(&mut self, ctx: &mut Ctx, battle: Box<BattleScreen>) -> bool {
         if battle.restart_requested() {
             self.restart(ctx);
@@ -462,7 +472,6 @@ impl FlowScreen {
         if battle.state().outcome() == Some(Outcome::Victory) {
             self.won(ctx, &battle);
         } else {
-            ctx.audio.stop_music();
             let can_rewind = battle.history().charges_left() > 0;
             self.stage = Stage::GameOver(GameOverScreen::new(ctx, can_rewind), battle);
         }
@@ -551,9 +560,6 @@ impl FlowScreen {
             Stage::Battle(b) => return self.battle_over(ctx, b),
             Stage::GameOver(s, mut battle) => match s.result() {
                 Some(GameOverChoice::Rewind) => {
-                    if let Some(fight) = &self.fight {
-                        play_battle_music(ctx, &fight.def);
-                    }
                     battle.rewind_from_defeat(ctx);
                     self.stage = Stage::Battle(battle);
                 }
@@ -635,7 +641,14 @@ impl Screen for FlowScreen {
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         self.count_playtime(ctx);
         self.sync_mode(ctx);
-        match self.screen_mut().update(ctx, input) {
+        let transition = self.screen_mut().update(ctx, input);
+        // A rewind out of a defeat: the battle's own track again.
+        if let (Stage::Battle(battle), Some(cue)) = (&mut self.stage, &self.music)
+            && battle.take_music_back()
+        {
+            ctx.audio.play_music(cue);
+        }
+        match transition {
             Transition::Pop => {
                 if self.advance(ctx) {
                     // Back to the title: no campaign.

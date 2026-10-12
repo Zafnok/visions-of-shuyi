@@ -683,6 +683,26 @@ mod tests {
         }
     }
 
+    /// Ticket 0809: the `victory` pool is the 13 Win Jingle versions, each
+    /// played once, and two seeds can pick two of them. `defeat` loops.
+    #[test]
+    fn the_victory_pool_is_thirteen_stings_and_seeds_pick_different_ones() {
+        let m = manifest();
+        let pool = &m.pools["victory"];
+        assert_eq!(pool.len(), 13);
+        for cue in pool {
+            let track = &m.music[cue];
+            assert!(track.file.starts_with("win_jingle_"), "{cue}");
+            assert!(!track.looped, "{cue}");
+        }
+        let picks: std::collections::BTreeSet<&str> = (0..8)
+            .filter_map(|seed| pick_from_pool(&m, "victory", seed))
+            .collect();
+        assert!(picks.len() > 1, "{picks:?}");
+        assert!(picks.iter().all(|p| pool.iter().any(|c| c == p)));
+        assert!(m.music["defeat"].looped);
+    }
+
     /// The published splitmix64 outputs for state 0 (the first two steps).
     #[test]
     fn splitmix64_matches_the_reference() {

@@ -72,10 +72,10 @@ a player. **Version** is the file to import when the page has several.
 | `victory` pool | A battle is won: plays **once** while the `VICTORY` banner is shown, one version picked at random each time (0022) | Win Jingle, 13 of its 17 versions (`.wav` files in `winjingle.zip`; list below) | Fupi | [OGA](https://opengameart.org/content/win-jingle) | CC0 |
 | `victory_grand` | **Reserved** for a ceremony, or the win after an act boss "or some other big moment"; plays once (0022) | Victory Fanfare Short (`Heavy_ConceptB.wav`, about 12 s) | cynicmusic | [OGA](https://opengameart.org/content/victory-fanfare-short) | CC0 |
 | `ceremony_intro` | **Reserved** for the start of "a royal crowning or some other regal ceremony"; only if the story has one; plays once (0022) | Victory Music Cue (13.3 s; the original `.wav` needs a freesound login, the public HQ preview does not) | Joshua Empyre | [freesound 404025](https://freesound.org/s/404025/) | CC-BY 4.0 |
-| `defeat` | A battle is lost: starts when the `DEFEAT` banner is shown and **carries on through the Game Over screen** (0023) | The Fallen (RPG Orchestral Essentials), the whole piece (`The Fallen MP3.mp3` in `The Fallen MP3.zip`, 77 s) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/content/the-fallen-rpg-orchestral-essentials-defeated-music) | CC-BY 3.0 |
+| `defeat` | A battle is lost: starts when the `DEFEAT` banner is shown and **carries on through the Game Over screen** without starting again (0023). It **loops, with a pause of 10–15 s between rounds** (0024, 0809) | The Fallen (RPG Orchestral Essentials), the whole piece (`The Fallen MP3.mp3` in `The Fallen MP3_0.zip`, 77 s) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/content/the-fallen-rpg-orchestral-essentials-defeated-music) | CC-BY 3.0 |
 | `scene_loss` | **Reserved** for "a story beat of a scripted loss of someone"; only if the story has one (0023) | Bittersweet (`bittersweet.mp3`, 34 s; it opens with 1.7 s of silence) | Emma_MA | [OGA](https://opengameart.org/content/bittersweet) | CC0 |
 
-The `victory` pool's 13 versions are the same 5.7 s tune on different
+The `victory` pool's 13 versions are the same 3.8 s tune on different
 instruments: Bandoneon, Brass, Doot, Fantasia, Fretless, Grand Piano, Jazz
 Guitar, Muted Guitar, Nylon, Pizzicato, Steel Drums, Strings, Vibraphone.
 Nick heard all 17 on the 0022 listening page
@@ -85,11 +85,12 @@ Chapter 1 has no act boss and no ceremony.
 
 There is no separate defeat sting (0023, like Fire Emblem on the GBA): one
 piece, `defeat`, starts at the banner and keeps playing on the Game Over
-screen. The Game Over screen does not start a track of its own. What happens
-when the 77 s run out while that screen is still open (loop, or silence) is
-ticket 0024's question. Nick heard seven candidates on the 0023 listening
-page (https://claude.ai/artifact/SGaFmZLLWeHwJojM9ded1J). No story moment
-uses `scene_loss` yet.
+screen. The Game Over screen does not start a track of its own, and going
+from the banner to that screen does not start the piece again. When the 77 s
+run out while the screen is still open, the piece **loops**, after a pause of
+10–15 s (0024, answered while building 0809). Nick heard seven candidates on
+the 0023 listening page (https://claude.ai/artifact/SGaFmZLLWeHwJojM9ded1J).
+No story moment uses `scene_loss` yet.
 
 Which story battle uses which `battle_*` cue, and which scene switches to
 which mood, is story content. Each battle file and scene script names its
@@ -154,6 +155,17 @@ sign-off: "it should sound like a heal").
   0222). The map cursor tick is still 60 % of the menu move sound, so 24 %.
 - The menu select/confirm and cancel sounds play at 15 %: at 40 % Nick
   still found them "much too high" next to the rest (ticket 0223).
+- The pause between two rounds of `defeat` is 13.8 s: the piece's own quiet
+  ending (1.8 s) and 12 s of silence added to the file. Nick asked for
+  10–15 s (ticket 0809).
+- After the victory sting ends, nothing plays until the next scene's music
+  or the next screen's (ticket 0809). The sting isn't cut short when the
+  banner closes; the battle's track doesn't come back.
+- `Rewind` on the Game Over screen (0822): `defeat` keeps playing while the
+  player looks through the rewind points. Once a point is picked, the
+  battle's track starts again from its beginning (the same track, also in a
+  skirmish). `Retry Battle` starts the battle's music as a new battle does
+  (a skirmish picks again).
 
 ## Open sub-questions (not needed for Chapter 1; Nick: "we have enough sounds for ch1 atp")
 
@@ -169,8 +181,6 @@ sign-off: "it should sound like a heal").
 - **Places and moments without a cue yet:** capital city, world map, camp,
   shops. Nick hasn't been asked about these (tickets 0025–0028). Level up
   is Nick's own work.
-- **Game Over, after `defeat` ends:** the piece is 77 s. Whether it loops
-  or the screen falls silent is not decided (ticket 0024).
 - **Content ID** (decided 2026-10-01, ticket 0904): **no check before
   release.** The plan was to test the chosen tracks against YouTube's
   copyright system (cynicmusic and Alexandr Zhelanov sell or stream their
@@ -386,3 +396,11 @@ the banner through the Game Over screen:
 (E: The Fallen by Jonathan Shaw. G: Bittersweet by Emma_MA. Recorded as:
 no separate sting; `defeat` is the whole of E, from the banner on. G is
 kept as `scene_loss`.)
+
+**The Game Over music** (ticket 0024, asked while building 0809,
+2026-10-12). The question: when The Fallen ends and the Game Over screen is
+still open, loop it or play it once and stay silent. Nick picked "Loop it",
+then added:
+
+> ensure the loop has a 10-15s pause between loops for defeat/game over, and
+> transition b/w defeat and game over should not reset music playhead

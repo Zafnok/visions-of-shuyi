@@ -473,19 +473,41 @@ fn music(h: &Harness) -> Vec<String> {
         .collect()
 }
 
-/// The `n`-th random music pick of a run from the `skirmish` pool (the
-/// test battle's `Pool("skirmish")`), with the harness's music seed.
-fn skirmish_pick(h: &mut Harness, n: u64) -> String {
+/// The `n`-th random music pick of a run, from `pool`, with the harness's
+/// music seed.
+fn pool_pick(h: &mut Harness, pool: &str, n: u64) -> String {
     let ctx = h.ctx_mut();
-    pick_from_pool(&ctx.content.audio, "skirmish", ctx.music_seed ^ n)
-        .unwrap_or_else(|| panic!("no skirmish pool"))
+    pick_from_pool(&ctx.content.audio, pool, ctx.music_seed ^ n)
+        .unwrap_or_else(|| panic!("no {pool} pool"))
         .to_owned()
 }
 
+/// The `n`-th random music pick of a run from the `skirmish` pool (the
+/// test battle's `Pool("skirmish")`).
+fn skirmish_pick(h: &mut Harness, n: u64) -> String {
+    pool_pick(h, "skirmish", n)
+}
+
+/// Presses Confirm until the banner `text` shows; no music is asked for
+/// on the way.
+fn confirm_until_banner(h: &mut Harness, text: &str) {
+    let before = music(h);
+    for _ in 0..20 {
+        if shows(h, text) {
+            return;
+        }
+        assert_eq!(music(h), before);
+        h.keys("f");
+    }
+    panic!("no {text} banner: {}", h.snapshot());
+}
+
 /// Ticket 0807: a story battle's cue starts with the battle (the intro
-/// scene still has the title's music), stays through turns, a rewind and
-/// the victory scene and the save prompt, and stops at "To be continued";
-/// then the title's.
+/// scene still has the title's music) and stays through turns and a
+/// rewind. Ticket 0809: the `VICTORY` banner asks for one sting of the
+/// `victory` pool, once; nothing else is asked for through the results,
+/// the victory scene and the save prompt. "To be continued" stops the
+/// music; then the title's.
 #[test]
 fn the_battles_music_plays_from_its_start_to_the_end_of_the_chapter() {
     let mut h = title();
@@ -516,31 +538,43 @@ fn the_battles_music_plays_from_its_start_to_the_end_of_the_chapter() {
     h.wait(1.0);
     assert_eq!(battle(&h).turn(), 2);
     seize(&mut h);
-    // Past the phase and VICTORY banners.
+    // Past the phase banner: the sting comes with the VICTORY banner.
+    confirm_until_banner(&mut h, "VICTORY");
+    let sting = pool_pick(&mut h, "victory", 0);
+    assert_eq!(music(&h), ["title", "battle_easy", sting.as_str()]);
+    h.wait(2.0);
     confirm_until(&mut h, "dialogue");
     assert_eq!(h.screens(), ["title", "dialogue"]);
-    assert_eq!(music(&h), ["title", "battle_easy"]);
+    assert_eq!(music(&h), ["title", "battle_easy", sting.as_str()]);
     skip_scene(&mut h);
     decline_save(&mut h);
     assert_eq!(h.screens(), ["title", "to_be_continued"]);
-    assert_eq!(music(&h), ["title", "battle_easy", "-"]);
+    assert_eq!(music(&h), ["title", "battle_easy", sting.as_str(), "-"]);
     h.keys("f").wait(0.1);
     assert_eq!(h.screens(), ["title"]);
-    assert_eq!(music(&h), ["title", "battle_easy", "-", "title"]);
+    assert_eq!(
+        music(&h),
+        ["title", "battle_easy", sting.as_str(), "-", "title"]
+    );
 }
 
-/// Ticket 0807: Game Over stops the music; `Retry Battle` starts the
-/// battle's music again, a pool picking afresh; `Title` brings the title's.
+/// Ticket 0809: the `DEFEAT` banner asks for `defeat`, once, and the Game
+/// Over screen asks for nothing, so it plays on (0023). Ticket 0807:
+/// `Retry Battle` starts the battle's music again, a pool picking afresh;
+/// `Title` brings the title's.
 #[test]
-fn game_over_is_silent_and_retry_plays_the_battles_music_again() {
+fn defeat_plays_through_game_over_and_retry_plays_the_battles_music_again() {
     let mut h = to_battle();
     let first = skirmish_pick(&mut h, 0);
     assert_eq!(music(&h), ["title", first.as_str()]);
     for _ in 0..6 {
         send(&mut h, &Command::EndPhase);
     }
+    confirm_until_banner(&mut h, "DEFEAT");
+    assert_eq!(music(&h), ["title", first.as_str(), "defeat"]);
     confirm_until(&mut h, "game_over");
-    assert_eq!(music(&h), ["title", first.as_str(), "-"]);
+    h.wait(2.0);
+    assert_eq!(music(&h), ["title", first.as_str(), "defeat"]);
     h.clear_audio();
     h.keys("Down f");
     assert_eq!(h.screens(), ["title", "battle"]);
@@ -551,7 +585,10 @@ fn game_over_is_silent_and_retry_plays_the_battles_music_again() {
     confirm_until(&mut h, "game_over");
     h.keys("Down Down f").wait(0.1);
     assert_eq!(h.screens(), ["title"]);
-    assert_eq!(music(&h), [skirmish_pick(&mut h, 1).as_str(), "-", "title"]);
+    assert_eq!(
+        music(&h),
+        [skirmish_pick(&mut h, 1).as_str(), "defeat", "title"]
+    );
 }
 
 /// Ticket 0807: `Restart Battle` asks for the battle's music again without

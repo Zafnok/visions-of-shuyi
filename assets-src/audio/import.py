@@ -69,6 +69,9 @@ DOWNLOADS = [
     ("FantasyChoir24bit.zip", OGA + "FantasyChoir24bit.zip", "d2312b968a0b2dca4be7f0414a358b1da3d7fad979514625ba745caf698f520e"),
     ("Battle Themes.zip", OGA + "Battle%20Themes.zip", "8bbbaa8f5f34b157651745e6ef0c1e8c4e8689566f8e7710647174f1563bd714"),
     ("battle_theme_2.wav", OGA + "battle_theme_2.wav", "7cb99c435b24305cc5ca41e18acb64dba3e4a8182a95921f7f97dfa7f1f8f93d"),
+    # Ticket 0809: the victory pool (0022) and the defeat piece (0023).
+    ("winjingle.zip", OGA + "winjingle.zip", "fef26adc010e7e7d6f2ab586f400188831152530f8f3adcd179f26435d69ce6b"),
+    ("The Fallen MP3_0.zip", OGA + "The%20Fallen%20MP3_0.zip", "4804ec96b9442aee01b58f2355ae5d14cf1a85db8f0c130938657df12f5e9a9a"),
     # Free Music Archive's download button needs a login; this is the
     # public file its player streams (320 kbps MP3).
     ("hesitation_orchestral.mp3",
@@ -121,6 +124,18 @@ MUSIC = [
     ("zhelanov_battle_theme_3.ogg", "Battle Themes.zip", "Battle Theme 3.mp3"),
     ("zhelanov_battle_theme_5.ogg", "Battle Themes.zip", "Battle Theme 5.mp3"),
     ("rpg_battle_theme.ogg", "battle_theme_2.wav", None),
+    ("the_fallen.ogg", "The Fallen MP3_0.zip", "The Fallen MP3.mp3"),
+] + [
+    # The victory pool: 13 of the Win Jingle's 17 versions (Nick cut Saw,
+    # Square, Banjo and Harpsichord; audio.md).
+    (f"win_jingle_{name}.ogg", "winjingle.zip", f"Win{member}.wav")
+    for name, member in [
+        ("bandoneon", "Bandoneon"), ("brass", "Brass"), ("doot", "Doot"),
+        ("fantasia", "Fantasia"), ("fretless", "Fretless"), ("grand_piano", "GrandPiano"),
+        ("jazz_guitar", "JazzGuitar"), ("muted_guitar", "MutedGuitar"), ("nylon", "Nylon"),
+        ("pizzicato", "Pizzicato"), ("steel_drums", "SteelDrums"), ("strings", "Strings"),
+        ("vibraphone", "Vibraphone"),
+    ]
 ]
 
 # Extra ffmpeg filters for a music track, applied before loudness matching.
@@ -129,6 +144,10 @@ MUSIC_CUTS = {
     # (ticket 0221): the title screen seemed silent. Keep the fade, drop the
     # silence; a 50 ms fade-in avoids a click at the cut.
     "new_sunrise_v1.ogg": "atrim=start=3.0,asetpts=PTS-STARTPTS,afade=t=in:d=0.05",
+    # The defeat piece loops on the Game Over screen with a pause between
+    # rounds (Nick, 0809: "a 10-15s pause between loops"): 12 s of silence
+    # (TUNABLE) after the piece, in the file, so the loop carries it.
+    "the_fallen.ogg": "apad=pad_dur=12",
 }
 
 # (game file in assets/audio/sfx/, original, extra ffmpeg filters before

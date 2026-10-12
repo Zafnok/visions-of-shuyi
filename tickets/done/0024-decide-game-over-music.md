@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-12
 ---
 
 # 0024 — Decide: the Game Over music
@@ -90,11 +90,11 @@ picks one, or asks for another round.
 
 ## Acceptance criteria
 
-- [ ] `audio.md` records loop or once for `defeat` on the Game Over screen
+- [x] `audio.md` records loop or once for `defeat` on the Game Over screen
       (or a `game_over` row, if Nick asked for a separate track).
-- [ ] The moment is gone from audio.md's *Open sub-questions*.
-- [ ] Nick's words are quoted in audio.md's appendix.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The moment is gone from audio.md's *Open sub-questions*.
+- [x] Nick's words are quoted in audio.md's appendix.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -102,4 +102,11 @@ picks one, or asks for another round.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Answered while building 0809 (2026-10-12), and archived by its PR.**
+0023 had left one question: when The Fallen ends and the Game Over screen
+is still open, loop or silence. No listening page was needed. Nick picked
+"Loop it", then added: "ensure the loop has a 10-15s pause between loops
+for defeat/game over, and transition b/w defeat and game over should not
+reset music playhead". Recorded in `audio.md` (the `defeat` row, the
+paragraph under the table, *Starting values* and the appendix); the open
+sub-question is removed. There is no `game_over` cue. 0809 built it.
