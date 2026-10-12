@@ -92,6 +92,20 @@ Confirm tap skipped and holding it sped up):
   (Nick, 2026-10-04: "holding confirm should not speed up on top, but just
   change the 2x to a 4x"; `options.md`).
 
+### Dialogue: a tap turns the page, a hold speeds up
+
+Nick, playing Chapter 1 (2026-10-12, ticket 0727):
+
+> "the hold F to speed up text is too eager, I press F to advance to next
+> dialogue and already half the next text is displayed bc it interprets a
+> tap as a hold too quickly"
+
+- Holding Confirm speeds the text up only once it has been held for
+  **0.3 s on that page** *(Claude's starting rule, tunable)*. Example:
+  Nick taps `F` to turn the page; the next line starts at the normal
+  speed. He keeps `F` down through three pages; each one starts at the
+  normal speed and goes fast a moment later.
+
 ### End turn: double-tap Space
 
 - `Space` opens the end-turn prompt (`End turn with N units ready?`).

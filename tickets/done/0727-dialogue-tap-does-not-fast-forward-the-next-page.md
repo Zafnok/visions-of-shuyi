@@ -5,10 +5,10 @@ type: bug
 milestone: M6 Story & dialogue
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: sign-off
-completed:
+completed: 2026-10-12
 ---
 
 # 0727 — A Confirm tap doesn't fast-forward the next page
@@ -64,13 +64,13 @@ enough to start.
 
 ## Acceptance criteria
 
-- [ ] Test: Confirm pressed on a shown page and held for 0.1 s more: the
+- [x] Test: Confirm pressed on a shown page and held for 0.1 s more: the
       next page has revealed exactly what it would with no key held.
-- [ ] Test: Confirm held for longer than the delay: the page reveals at
+- [x] Test: Confirm held for longer than the delay: the page reveals at
       `FAST_FORWARD` from then on (`holding_confirm_fast_forwards` still
       passes, adjusted for the delay).
-- [ ] Test: the delay starts again on each new page.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Test: the delay starts again on each new page.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -79,5 +79,25 @@ enough to start.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `DialogueScreen` counts how long an advance key (Confirm or End turn)
+  has been held on the page (`held_s`), from zero at each new page and
+  whenever the key is let go. The text goes at `FAST_FORWARD` only past
+  `FAST_FORWARD_DELAY` (0.3 s); a frame that crosses the delay is fast only
+  for the part past it, so the result doesn't depend on the frame rate.
+- A press while the page is revealing still shows it all at once.
+- Tests: `screens/dialogue/tests.rs` (tap, hold, delay per page, letting
+  go) and `tests/it/dialogue.rs` (`a_tap_does_not_fast_forward`; the two
+  hold tests now hold for 0.4 s on a long line).
+- The `mid_reveal_snapshot` picture changed: it used to show the bug (the
+  tap that turned the page had eaten five extra letters).
+- Rule recorded in `docs/design/controls.md`, *Dialogue: a tap turns the
+  page, a hold speeds up*.
+- No deviations, no follow-up tickets. The fight playback's hold was not
+  touched or tested here.
+
+**Claude's starting rule** (Nick can veto): holding Confirm speeds the text
+up only after 0.3 s on that page. Keep it held through several pages and
+each page starts at the normal speed, then goes fast a moment later.
+
+**For Nick (sign-off):** tap through the Chapter 1 opening. A tap should no
+longer eat text. Then hold the key: does the speed-up start soon enough?
