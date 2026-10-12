@@ -43,6 +43,38 @@ The title cinematic plays the opening lines of `ch01_intro` and
 `ch01_prebattle` straight from this file (`title-screen.md`, *Intro
 cinematic*), so what this ticket writes is also what the title shows.
 
+**From Nick's playtest (ticket 0804, 2026-10-12).** He met the same lines
+in the game and they still don't work; his words say why, so use them:
+
+> "Hollis and Veyne first dialogue is too weird... idk what this means
+> 'that eyebrow's had one scar off me already' wtf? sounds weird as hell"
+>
+> "'A bit proud' also sounds weird unless you enhance it like 'mumbles' or
+> \*mumbles\* or something"
+>
+> "'pedlar' is that supposed to be 'peddler'? wtf is this olde english or
+> something?"
+>
+> "Aske saying 'twelve men. no. fourteen. bad archers' also doesn't sit
+> right with me. bad archers...? so why would they not be counted?"
+
+What to take from it:
+
+- **A line must be understood on first reading.** The scar line hides what
+  happened (Hollis once cut Veyne's eyebrow) behind a turn of phrase; the
+  count line leaves out its own logic (Aske missed two because they were
+  hidden, not because they shoot badly). If such a line survives the
+  rewrite at all, it says plainly what it means.
+- **An aside needs to read as one.** If a line is muttered, the script
+  says so in the way `.dlg` allows (check the format for a stage
+  direction or an expression; if it has none, don't write lines that need
+  one, and don't invent `*mumbles*` markup without a ticket for it).
+- **Spelling: "peddler", not "pedlar".** Also in
+  `docs/story/chapters/ch01.md` and `docs/story/ledger.md`. *(Claude's
+  reading, not Nick's words: he wants plain modern American spelling and
+  no words that look archaic. Ask him once in the PR whether that holds
+  for the whole script; until he answers, apply it.)*
+
 ## Nick input
 
 **Sign-off:** the PR lists, scene by scene, the lines that changed (old

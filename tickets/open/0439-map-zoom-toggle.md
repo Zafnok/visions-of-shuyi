@@ -28,7 +28,25 @@ ADR-0038: "Tile size belongs to the skin. The camera and viewport ask the
 skin how many tiles fit." 0432 and 0433 build that; this ticket makes the
 sprite skin's tile size switchable while a battle is running.
 
+**From Nick's playtest (ticket 0804, 2026-10-12):**
+
+> "I think we can scale the battle map bigger. tile size / overworld unit
+> size. rn it's quite small idk if the original assets are this small or
+> we shrunk them to glyph size but we can make the 2D size bigger"
+
+The art is not shrunk: the bought tiles and unit sprites are 16 pixels and
+the map shows them at their own size (1×). 2× is this ticket. What his
+note adds is a question nothing has decided: **which zoom a new player
+starts at.** Ask it with the others below, with both frames of Chapter 1's
+first turn side by side. *(Claude's suggestion to put to him, not a
+decision: start at 2×, since 1× is what he found too small.)* Tell him
+what 2× costs: Chapter 1's map is 24×16 and 2× shows about 17×14 of it, so
+the map scrolls.
+
 ## Nick input
+
+**Also asked at the start (added 2026-10-12):** the zoom a new player
+starts at, 1× or 2×. Record it in `look-and-feel.md`, *Zoom*.
 
 **Decision, asked at the start of this ticket** (`ask-nick`, before any
 code): the default key in both layouts, the controller button, and
