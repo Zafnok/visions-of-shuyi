@@ -77,6 +77,16 @@ impl<'a> HelpKeys<'a> {
     pub fn device(self) -> Device {
         self.device
     }
+
+    /// [`Keymap::select_action`] for this device.
+    pub fn select_action(&self) -> Action {
+        self.keymap.select_action(self.device)
+    }
+
+    /// [`Keymap::end_turn_accept_actions`] for this device.
+    pub fn end_turn_accept_actions(&self) -> [Action; 2] {
+        self.keymap.end_turn_accept_actions(self.device)
+    }
 }
 
 impl Deref for HelpKeys<'_> {

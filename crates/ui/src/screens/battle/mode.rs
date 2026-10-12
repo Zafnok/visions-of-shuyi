@@ -55,7 +55,7 @@ use super::skills::{
     SkillChoice, SkillTargeting, can_use_skill, has_skill_menu, skill_choices, skill_menu,
 };
 use super::walk::{self, Gait};
-use crate::input::{Action, Keymap};
+use crate::input::{Action, Device, Keymap};
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use crate::words::Words;
 
@@ -541,9 +541,9 @@ impl Mode {
     /// [`Keymap::select_action`] picks (and Confirm does nothing once Select
     /// has a key), and in the prompt [`Keymap::end_turn_accept_actions`]
     /// accept (and End turn does nothing once Confirm end turn has a key).
-    pub fn route(&self, action: Action, keymap: &Keymap) -> Option<Action> {
+    pub fn route(&self, action: Action, keymap: &Keymap, device: Device) -> Option<Action> {
         if self.picks_on_map() {
-            if action == keymap.select_action() {
+            if action == keymap.select_action(device) {
                 return Some(Action::Confirm);
             }
             if action == Action::Confirm {
@@ -551,7 +551,7 @@ impl Mode {
             }
         }
         if matches!(self, Mode::EndTurnPrompt { .. }) {
-            if keymap.end_turn_accept_actions().contains(&action) {
+            if keymap.end_turn_accept_actions(device).contains(&action) {
                 return Some(Action::Confirm);
             }
             if action == Action::EndTurn {
@@ -1618,17 +1618,17 @@ mod tests {
         ];
         for mode in &map {
             assert!(mode.picks_on_map());
-            assert_eq!(mode.route(Confirm, &plain), Some(Confirm));
-            assert_eq!(mode.route(Confirm, &split), None);
-            assert_eq!(mode.route(Select, &split), Some(Confirm));
-            assert_eq!(mode.route(Cancel, &split), Some(Cancel));
-            assert_eq!(mode.route(EndTurn, &split), Some(EndTurn));
+            assert_eq!(mode.route(Confirm, &plain, Device::Keyboard), Some(Confirm));
+            assert_eq!(mode.route(Confirm, &split, Device::Keyboard), None);
+            assert_eq!(mode.route(Select, &split, Device::Keyboard), Some(Confirm));
+            assert_eq!(mode.route(Cancel, &split, Device::Keyboard), Some(Cancel));
+            assert_eq!(mode.route(EndTurn, &split, Device::Keyboard), Some(EndTurn));
         }
         // Menus keep Confirm; Select does nothing there.
         let menu = Mode::Objective;
         assert!(!menu.picks_on_map());
-        assert_eq!(menu.route(Confirm, &split), Some(Confirm));
-        assert_eq!(menu.route(Select, &split), Some(Select));
+        assert_eq!(menu.route(Confirm, &split, Device::Keyboard), Some(Confirm));
+        assert_eq!(menu.route(Select, &split, Device::Keyboard), Some(Select));
         let (menu, _) = step(
             menu,
             Select,
@@ -1638,12 +1638,29 @@ mod tests {
         assert_eq!(menu, Mode::Objective);
         // The end-turn prompt.
         let prompt = Mode::EndTurnPrompt { ready: 2 };
-        assert_eq!(prompt.route(EndTurn, &plain), Some(Confirm));
-        assert_eq!(prompt.route(Confirm, &plain), Some(Confirm));
-        assert_eq!(prompt.route(EndTurn, &split), None);
-        assert_eq!(prompt.route(ConfirmEndTurn, &split), Some(Confirm));
-        assert_eq!(prompt.route(Confirm, &split), Some(Confirm));
-        assert_eq!(prompt.route(Cancel, &split), Some(Cancel));
+        assert_eq!(
+            prompt.route(EndTurn, &plain, Device::Keyboard),
+            Some(Confirm)
+        );
+        assert_eq!(
+            prompt.route(Confirm, &plain, Device::Keyboard),
+            Some(Confirm)
+        );
+        assert_eq!(prompt.route(EndTurn, &split, Device::Keyboard), None);
+        assert_eq!(
+            prompt.route(ConfirmEndTurn, &split, Device::Keyboard),
+            Some(Confirm)
+        );
+        assert_eq!(
+            prompt.route(Confirm, &split, Device::Keyboard),
+            Some(Confirm)
+        );
+        assert_eq!(prompt.route(Cancel, &split, Device::Keyboard), Some(Cancel));
+        // A pad has no button for Select or Confirm end turn: its Confirm
+        // still picks and accepts (0230).
+        let pad = Device::Pad(crate::input::PadKind::Xbox);
+        assert_eq!(Mode::default().route(Confirm, &split, pad), Some(Confirm));
+        assert_eq!(prompt.route(EndTurn, &split, pad), Some(Confirm));
     }
 
     /// The Quick Battle: lord 1 at (3, 5), knight 2 at (4, 6), archer 3 at
