@@ -204,6 +204,13 @@ exactly as before:
   End turn again accepts it (today's double-tap Space). Once it has a key,
   End turn pressed again no longer accepts; the new key does. Confirm still
   accepts and Cancel still backs out, as before.
+- **The split is per device** (*Claude's starting rule (Nick to veto at
+  sign-off of 0230)*): a key for Select or Confirm end turn changes only
+  what the keyboard's Confirm and End turn do. A controller's Confirm keeps
+  picking on the map, and Start pressed twice keeps accepting the end-turn
+  prompt, until that action has a *button* (ticket 0816). Example: Mia
+  binds Select to `g`. On the keyboard `g` picks units and `f` only accepts
+  menus; on her pad `A` still does both.
 
 **Help bar and tips** show the player's current keys. An action with no key
 shows as `! not mapped` there too.

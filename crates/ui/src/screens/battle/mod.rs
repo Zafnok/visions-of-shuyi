@@ -1239,7 +1239,9 @@ impl BattleScreen {
     /// out its effect. Returns whether the map menu's `Options` was chosen:
     /// the frame then opens the Options screen.
     fn step_mode(&mut self, ctx: &mut Ctx, action: Action) -> bool {
-        let Some(action) = self.mode.route(action, &ctx.keymap) else {
+        // One device per frame: a key and a button pressed in the same frame
+        // are both routed by the device pressed last (ADR-0036).
+        let Some(action) = self.mode.route(action, &ctx.keymap, ctx.device) else {
             return false;
         };
         let before = self.mode.clone();

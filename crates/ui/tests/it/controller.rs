@@ -351,10 +351,25 @@ fn a_tip_names_the_buttons_of_the_pad_in_use() {
     assert!(shows(&h, "f close"));
 }
 
-/// An action with no button shows `! not mapped` on a pad: here Select,
-/// given a key of its own, so Confirm no longer picks on the map.
+/// An action with no button shows `! not mapped` on a pad: here Rewind,
+/// whose button is cleared while its key stays.
 #[test]
 fn an_action_with_no_button_shows_not_mapped_on_a_pad() {
+    let mut h = quick_battle();
+    let mut buttons = h.game().ctx().pad_bindings();
+    buttons.clear(Action::Rewind, 0);
+    h.ctx_mut().set_pad_bindings(buttons).unwrap();
+    h.keys("Right Left");
+    assert!(shows(&h, "r rewind"));
+    h.pad("DpadRight DpadLeft");
+    assert!(shows(&h, "! not mapped rewind"));
+    assert!(!shows(&h, "LT rewind"));
+}
+
+/// Giving Select a key splits the keyboard's Confirm only: the pad has no
+/// Select button, so its Confirm still picks (0230).
+#[test]
+fn a_key_for_select_leaves_the_pads_confirm_picking() {
     let mut h = quick_battle();
     let mut keys = h.game().ctx().layout_bindings(Layout::RightHanded);
     let g = Chord::parse("g").unwrap();
@@ -362,11 +377,40 @@ fn an_action_with_no_button_shows_not_mapped_on_a_pad() {
     h.ctx_mut()
         .set_layout_bindings(Layout::RightHanded, keys)
         .unwrap();
+    // The keyboard's Confirm no longer picks the lord under the cursor.
     h.keys("Right Left");
-    assert!(shows(&h, "g select"));
-    h.pad("DpadRight DpadLeft");
-    assert!(shows(&h, "! not mapped select"));
-    assert!(!shows(&h, "A select"));
+    let before = help_rows(&h);
+    h.keys("f");
+    assert_eq!(help_rows(&h), before);
+    // The pad's Confirm does, and its help bar never says "not mapped".
+    h.pad("South");
+    assert!(shows(&h, "A move here"), "the pad's Confirm picks");
+    assert!(!shows(&h, "! not mapped"));
+    h.pad("East");
+    assert!(shows(&h, "A select"));
+    // The key picks too.
+    h.keys("g");
+    assert!(shows(&h, "g move here"), "the key picks");
+}
+
+/// Giving Confirm end turn a key leaves Start pressed twice ending the turn
+/// on a pad; End turn pressed twice on the keyboard no longer does (0230).
+#[test]
+fn a_key_for_confirm_end_turn_leaves_start_twice_ending_the_turn() {
+    let mut h = quick_battle();
+    let mut keys = h.game().ctx().layout_bindings(Layout::RightHanded);
+    let enter = Chord::parse("Enter").unwrap();
+    assert_eq!(keys.bind(Action::ConfirmEndTurn, 0, enter), Ok(None));
+    h.ctx_mut()
+        .set_layout_bindings(Layout::RightHanded, keys)
+        .unwrap();
+    h.keys("Space Space");
+    assert!(!shows(&h, "ENEMY PHASE"));
+    h.keys("d");
+    h.pad("Start");
+    assert!(shows(&h, "Start yes"));
+    h.pad("Start");
+    assert!(shows(&h, "ENEMY PHASE"), "{}", h.snapshot());
 }
 
 /// The longest battle help bar (an enemy's range shown, the cursor on an

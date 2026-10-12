@@ -13,7 +13,7 @@
 
 use insta::assert_snapshot;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{Action, Chord, Layout, LayoutBindings};
+use trpg_ui::input::{Action, Chord, Device, Layout, LayoutBindings};
 use trpg_ui::screens::key_bindings::{KeyBindingsScreen, KeyBindingsView, SlotView};
 use trpg_ui::screens::options::OptionsScreen;
 
@@ -335,10 +335,10 @@ fn the_optional_split_keys_can_be_given_keys() {
     // Select is 7 rows down, Confirm end turn the next.
     h.keys("Down Down Down Down Down Down Down f g Down f Enter d d");
     let keymap = &h.game().ctx().keymap;
-    assert_eq!(keymap.select_action(), Action::Select);
+    assert_eq!(keymap.select_action(Device::Keyboard), Action::Select);
     assert_eq!(keymap.action(chord("g")), Some(Action::Select));
     assert_eq!(
-        keymap.end_turn_accept_actions(),
+        keymap.end_turn_accept_actions(Device::Keyboard),
         [Action::ConfirmEndTurn, Action::Confirm]
     );
 }
