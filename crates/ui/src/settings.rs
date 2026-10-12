@@ -143,6 +143,33 @@ impl EnemyPhaseSpeed {
     }
 }
 
+/// How the battle map looks (ticket 0824, ADR-0038): the bought pictures,
+/// or the glyphs the public repository shows. Terrain and units switch
+/// together.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MapLook {
+    /// The bought tiles and unit sprites (a build without them has only
+    /// glyphs).
+    #[default]
+    Pictures,
+    /// Letters for units, symbols for terrain.
+    Glyphs,
+}
+
+impl MapLook {
+    /// Every look, the default first.
+    pub const ALL: [Self; 2] = [Self::Pictures, Self::Glyphs];
+
+    /// The key of the name the Options screen shows
+    /// ([`Ctx::text`](crate::screen::Ctx::text)).
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::Pictures => "options.map_look.pictures",
+            Self::Glyphs => "options.map_look.glyphs",
+        }
+    }
+}
+
 /// Everything the Options screen sets. The defaults are how the game
 /// behaved before it had options.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -164,6 +191,8 @@ pub struct Settings {
     pub fullscreen: bool,
     /// How the battle cursor is drawn (`docs/design/look-and-feel.md`).
     pub cursor_style: CursorStyle,
+    /// How the battle map looks (shown only when pictures exist).
+    pub map_look: MapLook,
     /// Music volume, 0 (silent) to [`MAX_VOLUME`].
     pub music_volume: u8,
     /// Sound volume, 0 (silent) to [`MAX_VOLUME`].
@@ -184,6 +213,7 @@ impl Default for Settings {
             auto_end_turn: false,
             fullscreen: false,
             cursor_style: CursorStyle::default(),
+            map_look: MapLook::default(),
             music_volume: DEFAULT_VOLUME,
             sound_volume: DEFAULT_VOLUME,
             layout: None,
@@ -206,6 +236,7 @@ struct SettingsFile {
     /// [`Layout::name`].
     layout: Option<String>,
     cursor_style: CursorStyle,
+    map_look: MapLook,
     music_volume: u8,
     sound_volume: u8,
 }
@@ -285,6 +316,7 @@ impl Settings {
             fullscreen: self.fullscreen,
             layout: self.layout.map(|l| l.name().to_owned()),
             cursor_style: self.cursor_style,
+            map_look: self.map_look,
             music_volume: self.music_volume,
             sound_volume: self.sound_volume,
         }
@@ -316,6 +348,7 @@ impl Settings {
             auto_end_turn: file.auto_end_turn,
             fullscreen: file.fullscreen,
             cursor_style: file.cursor_style,
+            map_look: file.map_look,
             music_volume: file.music_volume.min(MAX_VOLUME),
             sound_volume: file.sound_volume.min(MAX_VOLUME),
             layout: file.layout.as_deref().and_then(Layout::from_name),
@@ -336,6 +369,7 @@ mod tests {
             auto_end_turn: true,
             fullscreen: true,
             cursor_style: CursorStyle::TileGlow,
+            map_look: MapLook::Glyphs,
             music_volume: 0,
             sound_volume: 100,
             layout: Some(Layout::LeftHanded),
@@ -350,6 +384,7 @@ mod tests {
         assert!((s.battle_speed(true) - 1.0).abs() < f32::EPSILON);
         assert!(s.combat_animations && !s.auto_end_turn && !s.fullscreen);
         assert_eq!(s.cursor_style, CursorStyle::Corners);
+        assert_eq!(s.map_look, MapLook::Pictures);
         assert_eq!((s.music_volume, s.sound_volume), (80, 80));
         assert_eq!(s.layout(), None);
     }

@@ -31,9 +31,9 @@ use super::{KeyBindingsScreen, LayoutPickerScreen, layout_picker};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, TextKey, text_key, text_keys_help};
-use crate::map_view::CursorStyle;
+use crate::map_view::{CursorStyle, has_pictures};
 use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Transition};
-use crate::settings::{AnimSpeed, EnemyPhaseSpeed, MAX_VOLUME, Settings, TextSpeed};
+use crate::settings::{AnimSpeed, EnemyPhaseSpeed, MAX_VOLUME, MapLook, Settings, TextSpeed};
 use crate::tips::reset_tips;
 
 /// Text key ([`Ctx::text`]) of the screen title.
@@ -72,6 +72,8 @@ pub enum Row {
     Fullscreen,
     /// [`Settings::cursor_style`].
     Cursor,
+    /// [`Settings::map_look`] (only when the game has pictures).
+    MapLook,
     /// [`Settings::music_volume`].
     MusicVolume,
     /// [`Settings::sound_volume`].
@@ -90,7 +92,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 14] = [
+    pub const ALL: [Row; 15] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -98,6 +100,7 @@ impl Row {
         Row::AutoEnd,
         Row::Fullscreen,
         Row::Cursor,
+        Row::MapLook,
         Row::MusicVolume,
         Row::SoundVolume,
         Row::Layout,
@@ -117,6 +120,7 @@ impl Row {
             Row::AutoEnd => "options.row.auto_end",
             Row::Fullscreen => "options.row.fullscreen",
             Row::Cursor => "options.row.cursor",
+            Row::MapLook => "options.row.map_look",
             Row::MusicVolume => "options.row.music_volume",
             Row::SoundVolume => "options.row.sound_volume",
             Row::Layout => "options.row.layout",
@@ -274,12 +278,15 @@ impl OptionsScreen {
         }
     }
 
-    /// The rows shown: every one, `Game mode` only with a campaign loaded.
+    /// The rows shown: every one, `Game mode` only with a campaign loaded
+    /// and `Map look` only when the game has pictures.
     pub fn rows(ctx: &Ctx) -> Vec<Row> {
         let campaign = ctx.campaign_mode.is_some();
+        let pictures = has_pictures(&ctx.content);
         Row::ALL
             .into_iter()
             .filter(|&r| r != Row::GameMode || campaign)
+            .filter(|&r| r != Row::MapLook || pictures)
             .collect()
     }
 
@@ -332,6 +339,7 @@ impl OptionsScreen {
             Row::AutoEnd => on_off_key(s.auto_end_turn),
             Row::Fullscreen => on_off_key(s.fullscreen),
             Row::Cursor => cursor_key(s.cursor_style),
+            Row::MapLook => s.map_look.key(),
             Row::MusicVolume => return volume(s.music_volume),
             Row::SoundVolume => return volume(s.sound_volume),
             Row::Layout => {
@@ -613,6 +621,7 @@ fn step_setting(s: &mut Settings, row: Row, forward: bool, wrap: bool) {
         Row::AutoEnd => s.auto_end_turn = stepped(&[false, true], s.auto_end_turn, forward, wrap),
         Row::Fullscreen => s.fullscreen = stepped(&[false, true], s.fullscreen, forward, wrap),
         Row::Cursor => s.cursor_style = stepped(&CURSOR_STYLES, s.cursor_style, forward, wrap),
+        Row::MapLook => s.map_look = stepped(&MapLook::ALL, s.map_look, forward, wrap),
         Row::MusicVolume => s.music_volume = stepped_volume(s.music_volume, forward),
         Row::SoundVolume => s.sound_volume = stepped_volume(s.sound_volume, forward),
         Row::Layout | Row::KeyBindings | Row::GameMode | Row::ResetTips | Row::RestoreDefaults => {}

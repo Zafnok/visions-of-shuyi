@@ -20,6 +20,8 @@ use std::rc::Rc;
 
 use trpg_content::Content;
 
+use crate::settings::MapLook;
+
 pub use glyph::GlyphSkin;
 pub use scene::{
     CursorStyle, CursorView, Facing, MapScene, RangeKind, STANDING_FRAME, TileView, UnitEffects,
@@ -45,6 +47,23 @@ pub const TEST_UNITS_TILESET: &str = "test_units";
 /// [`GAME_TILESET`] if `content` has it, else the [`GlyphSkin`].
 pub fn default_skin(content: &Content) -> Rc<dyn MapSkin> {
     skin_named(content, GAME_TILESET).unwrap_or_else(|| Rc::new(GlyphSkin))
+}
+
+/// The skin for the player's map look (ticket 0824): with
+/// [`MapLook::Pictures`] and the [`GAME_TILESET`] in `content`, its picture
+/// skin ([`default_skin`]); otherwise the [`GlyphSkin`], whatever the
+/// look.
+pub fn skin_for_look(look: MapLook, content: &Content) -> Rc<dyn MapSkin> {
+    match look {
+        MapLook::Pictures => default_skin(content),
+        MapLook::Glyphs => Rc::new(GlyphSkin),
+    }
+}
+
+/// Whether `content` has pictures to paint the map with, so that the map
+/// look is a choice ([`GAME_TILESET`] present).
+pub fn has_pictures(content: &Content) -> bool {
+    content.tilesets.contains_key(GAME_TILESET)
 }
 
 /// The skin called `name`: `"glyph"`; `"sprite"` and `"sprite_units"`,
@@ -102,6 +121,22 @@ mod tests {
         assert!(skin_named(&bare, "sprite").is_none());
         assert!(skin_named(&bare, "sprite_units").is_none());
         assert!(skin_named(&bare, "glyph").is_some());
+    }
+
+    #[test]
+    fn the_map_look_picks_the_skin() {
+        let mut content = trpg_content::load_embedded().unwrap();
+        let name = |look, content: &Content| skin_for_look(look, content).name();
+        // Without the bought art, every look is glyphs.
+        assert!(!has_pictures(&content));
+        assert_eq!(name(MapLook::Pictures, &content), "glyph");
+        assert_eq!(name(MapLook::Glyphs, &content), "glyph");
+        let mut tileset = content.tilesets[TEST_UNITS_TILESET].clone();
+        tileset.id = GAME_TILESET.to_owned();
+        content.tilesets.insert(GAME_TILESET.to_owned(), tileset);
+        assert!(has_pictures(&content));
+        assert_eq!(name(MapLook::Pictures, &content), "sprite_units");
+        assert_eq!(name(MapLook::Glyphs, &content), "glyph");
     }
 
     #[test]
