@@ -98,8 +98,8 @@ pub enum Stage {
     Battle(Box<BattleScreen>),
     /// What a won battle gave (0810).
     Results(Box<ResultsScreen>),
-    /// After a defeat.
-    GameOver(GameOverScreen),
+    /// After a defeat, with the lost battle kept for `Rewind` (0822).
+    GameOver(GameOverScreen, Box<BattleScreen>),
     /// "Save your progress?", after a chapter's victory scenes.
     SavePrompt(SavePromptScreen),
     /// The slot picker: saving after a victory, or loading from the title.
@@ -276,7 +276,7 @@ impl FlowScreen {
             Stage::Preparations(s) => s.as_ref(),
             Stage::Battle(s) => s.as_ref(),
             Stage::Results(s) => s.as_ref(),
-            Stage::GameOver(s) => s,
+            Stage::GameOver(s, _) => s,
             Stage::SavePrompt(s) => s,
             Stage::Slots(s) => s.as_ref(),
             Stage::ToBeContinued(s) => s,
@@ -291,7 +291,7 @@ impl FlowScreen {
             Stage::Preparations(s) => s.as_mut(),
             Stage::Battle(s) => s.as_mut(),
             Stage::Results(s) => s.as_mut(),
-            Stage::GameOver(s) => s,
+            Stage::GameOver(s, _) => s,
             Stage::SavePrompt(s) => s,
             Stage::Slots(s) => s.as_mut(),
             Stage::ToBeContinued(s) => s,
@@ -463,7 +463,8 @@ impl FlowScreen {
             self.won(ctx, &battle);
         } else {
             ctx.audio.stop_music();
-            self.stage = Stage::GameOver(GameOverScreen::new(ctx));
+            let can_rewind = battle.history().charges_left() > 0;
+            self.stage = Stage::GameOver(GameOverScreen::new(ctx, can_rewind), battle);
         }
         false
     }
@@ -548,7 +549,14 @@ impl FlowScreen {
             Stage::Scene(_) | Stage::Results(_) => self.next_scene(ctx),
             Stage::Preparations(p) => return self.prepared(&p),
             Stage::Battle(b) => return self.battle_over(ctx, b),
-            Stage::GameOver(s) => match s.result() {
+            Stage::GameOver(s, mut battle) => match s.result() {
+                Some(GameOverChoice::Rewind) => {
+                    if let Some(fight) = &self.fight {
+                        play_battle_music(ctx, &fight.def);
+                    }
+                    battle.rewind_from_defeat(ctx);
+                    self.stage = Stage::Battle(battle);
+                }
                 Some(GameOverChoice::Retry) => self.restart(ctx),
                 _ => return true,
             },

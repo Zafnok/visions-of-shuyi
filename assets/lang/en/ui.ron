@@ -114,6 +114,7 @@
 
     // Game Over, and "To be continued" after the last chapter there is.
     "game_over.heading": "GAME OVER",
+    "game_over.rewind": "Rewind",
     "game_over.retry": "Retry Battle",
     "game_over.title": "Title",
     "game_over.help": "{Cursor} choose · {Confirm} select",

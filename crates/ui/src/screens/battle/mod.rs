@@ -226,6 +226,16 @@ enum Leaving {
     Suspend,
 }
 
+/// Where the rewind screen was opened from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RewindFrom {
+    /// The player's Rewind key, mid-battle.
+    Browsing,
+    /// Game Over's `Rewind`, on a lost battle: closing the screen without
+    /// rewinding pops the battle screen again.
+    Defeat,
+}
+
 /// The battle screen: the player browses the map with the cursor, selects
 /// and moves units ([`Mode`]), opens the map menu, ends the turn; phase and
 /// outcome banners show as the battle goes on, and the outcome's closes the
@@ -265,6 +275,8 @@ pub struct BattleScreen {
     /// events, the first on screen (after a combat's playback).
     queue: VecDeque<Queued>,
     rewind: Option<RewindScreen>,
+    /// Where the rewind screen was opened from (0822).
+    rewind_from: RewindFrom,
     /// One-time tips waiting to show (0406).
     tips: TipState,
     /// Heal numbers floating over units.
@@ -348,6 +360,7 @@ impl BattleScreen {
             mode: Mode::after_command(&state),
             history: BattleHistory::new(state.clone()),
             rewind: None,
+            rewind_from: RewindFrom::Browsing,
             state,
             danger: None,
             auto_end: false,
@@ -662,7 +675,7 @@ impl BattleScreen {
     /// Whether the AI is playing its phase (Enemy or Other): the player
     /// can only speed it up or skip its fights.
     pub fn ai_phase(&self) -> bool {
-        self.state.phase() != Phase::Player
+        self.state.phase() != Phase::Player && self.state.outcome().is_none()
     }
 
     /// In an AI phase, once nothing else is on screen (banner, scene, tip,
@@ -1094,6 +1107,19 @@ impl BattleScreen {
         matches!(self.mode, Mode::Idle { .. })
             && self.state.phase() == Phase::Player
             && self.state.outcome().is_none()
+    }
+
+    /// Opens the rewind screen on a battle that was lost (0822), clearing
+    /// what the defeat left pending. Rewinding plays on from the point
+    /// picked; closing the screen pops this one again.
+    pub fn rewind_from_defeat(&mut self, ctx: &Ctx) {
+        self.queue.clear();
+        self.progress = None;
+        self.mode = Mode::default();
+        self.end_armed = false;
+        self.rewind_from = RewindFrom::Defeat;
+        let charges = self.state.rewind_charges();
+        self.rewind = Some(RewindScreen::new(&self.history, charges, ctx.words()));
     }
 
     /// Handles one action on the open rewind screen.
@@ -1945,6 +1971,12 @@ impl Screen for BattleScreen {
             }
             if self.leaving.is_some() {
                 return Transition::Pop;
+            }
+            if self.rewind_from == RewindFrom::Defeat && self.rewind.is_none() {
+                if self.state.outcome().is_some() {
+                    return Transition::Pop;
+                }
+                self.rewind_from = RewindFrom::Browsing;
             }
         }
 

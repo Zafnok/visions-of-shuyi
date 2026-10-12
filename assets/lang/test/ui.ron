@@ -440,6 +440,7 @@
         text: "{Cursor} CHOOSE · {Confirm} LOAD · {Cancel} BACK",
     ),
     (key: "game_over.heading", source: "GAME OVER", text: "GAME OVER"),
+    (key: "game_over.rewind", source: "Rewind", text: "REWIND"),
     (key: "game_over.retry", source: "Retry Battle", text: "RETRY BATTLE"),
     (key: "game_over.title", source: "Title", text: "TITLE"),
     (

@@ -251,7 +251,7 @@ fn continue_works_in_the_next_launch() {
         h.keys("f");
     }
     assert_eq!(h.top_screen(), "game_over");
-    h.keys("Down f");
+    h.keys("Down Down f");
     assert_eq!(h.screens(), ["title"]);
     assert!(!shows(&h, "Continue"));
 }
