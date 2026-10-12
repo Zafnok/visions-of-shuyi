@@ -95,6 +95,8 @@ fn the_stage_covers_the_map_and_the_side_panel_and_the_backdrop_fits() {
     assert_eq!(STAGE, Rect::new(0, 0, 100, 30));
     assert_eq!(SCENE, Rect::new(0, 0, 100, 24));
     assert_eq!(scene_px(), PxRect::new(0, 0, 800, 384));
+    // A cell is 8×16 console pixels.
+    assert_eq!(cells_px(Rect::new(3, 5, 7, 2)), PxRect::new(24, 80, 56, 32));
     assert_eq!(PLATE, (50, 6));
     assert_eq!(SCENE.h + PLATE.1, STAGE.h);
     assert_eq!(PLATE.0 * 2, STAGE.w);

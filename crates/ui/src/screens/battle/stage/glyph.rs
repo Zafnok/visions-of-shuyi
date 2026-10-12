@@ -68,14 +68,19 @@ pub const BAR_CELLS: i32 = 20;
 const CELL_W_PX: i32 = console::CELL_W_PX as i32;
 const CELL_H_PX: i32 = console::CELL_H_PX as i32;
 
+/// The cells `cells` in console pixels.
+fn cells_px(cells: Rect) -> PxRect {
+    PxRect::new(
+        cells.x * CELL_W_PX,
+        cells.y * CELL_H_PX,
+        cells.w * CELL_W_PX,
+        cells.h * CELL_H_PX,
+    )
+}
+
 /// The scene in console pixels.
 fn scene_px() -> PxRect {
-    PxRect::new(
-        SCENE.x * CELL_W_PX,
-        SCENE.y * CELL_H_PX,
-        SCENE.w * CELL_W_PX,
-        SCENE.h * CELL_H_PX,
-    )
+    cells_px(SCENE)
 }
 
 /// The backdrop `image` across the scene: its window in the middle, and

@@ -287,18 +287,16 @@ pub fn to_rgb(hue: f32, sat: f32, val: f32) -> [u8; 3] {
     let chroma = val * sat;
     let sixth = hue.rem_euclid(360.0) / 60.0;
     let second = chroma * (1.0 - (sixth.rem_euclid(2.0) - 1.0).abs());
-    let (r, g, b) = if sixth < 1.0 {
-        (chroma, second, 0.0)
-    } else if sixth < 2.0 {
-        (second, chroma, 0.0)
-    } else if sixth < 3.0 {
-        (0.0, chroma, second)
-    } else if sixth < 4.0 {
-        (0.0, second, chroma)
-    } else if sixth < 5.0 {
-        (second, 0.0, chroma)
-    } else {
-        (chroma, 0.0, second)
+    // Which sixth of the wheel: 0 (red to yellow) to 5 (magenta to red).
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 0.0..6.0
+    let sector = sixth as u8;
+    let (r, g, b) = match sector {
+        0 => (chroma, second, 0.0),
+        1 => (second, chroma, 0.0),
+        2 => (0.0, chroma, second),
+        3 => (0.0, second, chroma),
+        4 => (second, 0.0, chroma),
+        _ => (chroma, 0.0, second),
     };
     let low = val - chroma;
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 0..=255
