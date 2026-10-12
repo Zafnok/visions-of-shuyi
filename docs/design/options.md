@@ -54,6 +54,16 @@ Nick's.
   one; the EXP bar and level-up pages still show (*Claude's starting
   rule*).
 
+### Map zoom
+
+- **Map zoom: 1× / 2×** (ticket 0439; `look-and-feel.md`, *Zoom*): how big
+  the battle map's pictures are drawn. It starts at **2×** (Nick,
+  2026-10-12). The Zoom map key in battle (`controls.md`, *Zoom map*)
+  changes the same setting, so the row always shows what the map is at.
+- The row is under `Map look`, and shows only when the game has pictures
+  to zoom (*Claude's starting rule*). `Restore defaults` puts it back to
+  2×.
+
 ### Volumes
 
 - Music and sound volume each go from **0 (silent) to 100**, starting at 80

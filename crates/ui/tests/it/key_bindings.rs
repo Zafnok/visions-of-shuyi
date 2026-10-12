@@ -83,7 +83,7 @@ fn shift_escape_can_be_bound_and_plain_escape_still_cancels() {
 #[test]
 fn the_layout_picker_has_escape_as_cancel() {
     let mut h = Harness::new();
-    h.keys("q");
+    h.keys("z");
     assert_eq!(h.top_screen(), "layout_picker");
     assert_eq!(
         h.game().ctx().keymap.action(chord("Escape")),

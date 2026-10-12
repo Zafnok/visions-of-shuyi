@@ -25,10 +25,10 @@ expression: h.snapshot()
   │   Danger zone             X                 ·                 ·                              │  
   │   Auto-end on/off         Back              ·                 ·                              │  
   │   Rewind                  LT                ·                 ·                              │  
+  │   Zoom map                RT                ·                 ·                              │  
   │   Map menu                ·                 ·                 ·                 ! not mapped │  
   │                                                                                              │  
   │   Restore defaults                                                                           │  
-  │                                                                                              │  
   └──────────────────────────────────────────────────────────────────────────────────────────────┘  
                                                                                                     
                                                                                                     
@@ -58,8 +58,8 @@ aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddd
 aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
 aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
 aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
 aabdddddddddddddddddddddddddddedddddddddddddddddedddddddddddddddddedddddddddddddddddeeeeeeeeeeeedbaa
-aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa

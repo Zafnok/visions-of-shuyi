@@ -142,7 +142,7 @@ fn skin_label(skin: &dyn MapSkin) -> &str {
 /// Swaps `ctx`'s map skin for the next in the round: the glyph skin, each
 /// tileset the content has, then the glyph skin again.
 fn switch_skin(ctx: &mut Ctx) {
-    ctx.map_skin = next_skin(&ctx.content, ctx.map_skin.as_ref());
+    ctx.set_map_skin(next_skin(&ctx.content, ctx.map_skin.as_ref()));
 }
 
 impl Screen for DebugMenuScreen {

@@ -139,7 +139,7 @@ fn starts_on_the_first_slot_of_the_layout_in_use() {
     assert_eq!(headings, ["Must have a key", "Optional"]);
     assert_eq!(
         view.groups.iter().map(|g| g.rows.len()).collect::<Vec<_>>(),
-        [7, 9]
+        [7, 10]
     );
     assert_eq!(view.restore.label, "Restore defaults");
     assert!(!view.restore.focused);
@@ -866,16 +866,16 @@ fn with_the_keyboard_confirm_captures_a_button_let_go() {
     assert_eq!(waiting[1], "…Press a button…");
     sounds(&mut c);
     // Going down doesn't bind; nor does a key.
-    s.update(&mut c, &buttons(&[Button::RightTrigger], &[], 0.0));
+    s.update(&mut c, &buttons(&[Button::RightStickPress], &[], 0.0));
     s.update(&mut c, &press("g"));
     assert!(s.is_capturing());
     assert_eq!(pad_names(&s, Info), ["North", "-", "-"]);
     assert_eq!(s.bindings(), &screen(&c).bindings);
     assert!(sounds(&mut c).is_empty());
     // Letting go does.
-    s.update(&mut c, &buttons(&[], &[Button::RightTrigger], 0.0));
+    s.update(&mut c, &buttons(&[], &[Button::RightStickPress], 0.0));
     assert!(!s.is_capturing());
-    assert_eq!(pad_names(&s, Info), ["North", "RightTrigger", "-"]);
+    assert_eq!(pad_names(&s, Info), ["North", "RightStickPress", "-"]);
     assert_eq!((s.moved, s.held), (None, None));
     assert_eq!(sounds(&mut c), [cue(MenuSound::Select)]);
     // The keys are untouched.
@@ -966,9 +966,9 @@ fn only_the_first_button_down_is_watched() {
     change(&mut s, &mut c, Info, 1);
     // Two go down in one frame, then a third: the first is the one.
     s.update(&mut c, &buttons(&[Button::West, Button::Start], &[], 0.0));
-    s.update(&mut c, &buttons(&[Button::RightTrigger], &[], 0.25));
+    s.update(&mut c, &buttons(&[Button::RightStickPress], &[], 0.25));
     // The others let go: still waiting.
-    let others = [Button::Start, Button::RightTrigger];
+    let others = [Button::Start, Button::RightStickPress];
     s.update(&mut c, &buttons(&[], &others, 0.25));
     assert!(s.is_capturing());
     assert_eq!(s.held, Some((Button::West, 0.5)));
@@ -1156,7 +1156,7 @@ fn cursor_buttons_held_after_a_capture_dont_move_the_focus() {
     assert_eq!(s.focus(), Some((Action::DangerZone, 0)));
     // A button tapped into a slot is up again: the next press moves.
     change(&mut s, &mut c, Action::DangerZone, 0);
-    tap(&mut s, &mut c, Button::RightTrigger);
+    tap(&mut s, &mut c, Button::RightStickPress);
     s.update(&mut c, &held);
     assert_eq!(s.focus(), Some((Action::ToggleAutoEnd, 0)));
 }
@@ -1205,21 +1205,25 @@ fn leaving_saves_the_buttons_for_both_layouts_and_leaves_the_keys() {
     let mut c = pad_ctx();
     let mut s = KeyBindingsScreen::new(&c);
     change(&mut s, &mut c, Info, 1);
-    tap(&mut s, &mut c, Button::RightTrigger);
+    tap(&mut s, &mut c, Button::RightStickPress);
     // Nothing changes in the game until the screen closes.
-    assert_eq!(c.keymap.pad_action(Button::RightTrigger), None);
+    assert_eq!(c.keymap.pad_action(Button::RightStickPress), None);
     assert_eq!(c.storage.read(crate::screen::KEYBINDINGS_KEY), Ok(None));
     sounds(&mut c);
     let t = s.update(&mut c, &act(&[Cancel]));
     assert_eq!(format!("{t:?}"), "Pop");
     assert_eq!(sounds(&mut c), [cue(MenuSound::Cancel)]);
     assert_eq!(&c.pad_bindings(), s.pad_bindings());
-    assert_eq!(c.keymap.pad_action(Button::RightTrigger), Some(Info));
+    assert_eq!(c.keymap.pad_action(Button::RightStickPress), Some(Info));
     assert!(c.player_keys().is_custom_pad());
     for layout in Layout::ALL {
         assert!(!c.player_keys().is_custom(layout));
         let km = c.keymap_for(layout);
-        assert_eq!(km.pad_action(Button::RightTrigger), Some(Info), "{layout}");
+        assert_eq!(
+            km.pad_action(Button::RightStickPress),
+            Some(Info),
+            "{layout}"
+        );
     }
     let saved = c.storage.read(crate::screen::KEYBINDINGS_KEY);
     assert_eq!(saved, Ok(Some(c.player_keys().to_ron())));
