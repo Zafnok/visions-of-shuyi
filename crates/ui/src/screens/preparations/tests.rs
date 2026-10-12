@@ -954,3 +954,15 @@ fn the_hosted_screen_gives_its_view() {
     assert!(!view.on_tabs);
     assert_eq!(pack(&view).spare.state, ListState::Focused);
 }
+
+/// The screen can be found by its type (`Stack::find`), for tests that
+/// read its view.
+#[test]
+fn the_screen_opts_into_being_found_by_type() {
+    let c = ctx();
+    let s = screen(&c);
+    let found = s
+        .as_any()
+        .and_then(|any| any.downcast_ref::<PreparationsScreen>());
+    assert_eq!(found.map(PreparationsScreen::tab), Some(Tab::Loadouts));
+}
