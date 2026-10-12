@@ -205,6 +205,103 @@ mod tests {
         assert_eq!(&bytes[41..], &[4, 5]);
     }
 
+    /// A 4×4 atlas of two 2×4 cells, `'a'` the second: its glyph is lit at
+    /// (0, 0) and (1, 3). The first cell tests what counts as lit.
+    fn tiny() -> Atlas {
+        let mut pixels = vec![0; 4 * 4 * 4];
+        let mut set = |x: usize, y: usize, rgba: [u8; 4]| {
+            pixels[(y * 4 + x) * 4..][..4].copy_from_slice(&rgba);
+        };
+        set(0, 0, [255, 255, 255, 127]);
+        set(1, 0, [127, 255, 255, 255]);
+        set(2, 0, [128, 0, 0, 128]);
+        set(3, 3, [255, 255, 255, 255]);
+        Atlas {
+            def: FontAtlasDef {
+                cell_w: 2,
+                cell_h: 4,
+                columns: 2,
+                glyphs: [('b', 0), ('a', 1)].into_iter().collect(),
+            },
+            width: 4,
+            pixels,
+        }
+    }
+
+    #[test]
+    fn lit_needs_a_bright_enough_opaque_pixel() {
+        let atlas = tiny();
+        assert!(!atlas.lit(0, 0), "alpha 127");
+        assert!(!atlas.lit(1, 0), "red 127");
+        assert!(atlas.lit(2, 0), "128 and 128");
+        assert!(atlas.lit(3, 3));
+        assert!(!atlas.lit(3, 2));
+    }
+
+    #[test]
+    fn the_glyph_is_scaled_and_centered_inside_the_border() {
+        let o = Option_ {
+            name: "t",
+            glyph: 'a',
+            fg: [1, 2, 3],
+            bg: [4, 5, 6],
+            border: [7, 8, 9],
+        };
+        let px = tiny().draw(&o, 16).unwrap();
+        let at = |x: usize, y: usize| px[(y * 16 + x) * 4..][..3].to_vec();
+        // Scale 3: the glyph is 6×12 at (5, 2); its lit pixels are 3×3 blocks.
+        for (x, y) in [(5, 2), (7, 4), (8, 11), (10, 13)] {
+            assert_eq!(at(x, y), o.fg, "{x},{y}");
+        }
+        for (x, y) in [(8, 2), (5, 5), (7, 11), (8, 10), (11, 13), (10, 14), (4, 2)] {
+            assert_eq!(at(x, y), o.bg, "{x},{y}");
+        }
+        for (x, y) in [(0, 5), (15, 5), (5, 0), (5, 15)] {
+            assert_eq!(at(x, y), o.border, "{x},{y}");
+        }
+        assert_eq!(at(1, 1), o.bg);
+        assert_eq!(at(14, 14), o.bg);
+    }
+
+    #[test]
+    fn a_glyph_the_font_lacks_is_an_error() {
+        let o = Option_ {
+            name: "t",
+            glyph: 'z',
+            fg: [0; 3],
+            bg: [0; 3],
+            border: [0; 3],
+        };
+        assert!(tiny().draw(&o, 16).is_err());
+    }
+
+    #[test]
+    fn preview_and_build_write_their_files() {
+        let dir = std::env::temp_dir().join(format!("icon-test-{}", std::process::id()));
+        let fonts = dir.join("assets/fonts");
+        fs::create_dir_all(&fonts).unwrap();
+        for f in ["atlas.png", "atlas.ron"] {
+            fs::copy(root().join("assets/fonts").join(f), fonts.join(f)).unwrap();
+        }
+        let args = |a: &[&str]| a.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>();
+        let previews = dir.join("previews");
+        let out = run(&args(&["preview", previews.to_str().unwrap()]), &dir).unwrap();
+        assert!(out.contains("3 previews"), "{out}");
+        assert!(previews.join("option-2-sword-256.png").is_file());
+        assert!(run(&args(&["bogus", previews.to_str().unwrap()]), &dir).is_err());
+        assert!(run(&args(&["bogus", "1"]), &dir).is_err());
+        assert!(run(&args(&["build", "0"]), &dir).is_err());
+        assert!(run(&args(&["build", "4"]), &dir).is_err());
+        let out = run(&args(&["build", "2"]), &dir).unwrap();
+        assert!(out.contains("option 2 (sword)"), "{out}");
+        let ico = fs::read(dir.join("assets/icon/icon.ico")).unwrap();
+        assert_eq!(&ico[..6], &[0, 0, 1, 0, 4, 0]);
+        for size in WINDOW_SIZES {
+            assert!(dir.join(format!("assets/icon/icon-{size}.png")).is_file());
+        }
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
     #[test]
     fn bad_arguments_are_refused() {
         assert!(run(&["build".to_owned(), "9".to_owned()], root()).is_err());

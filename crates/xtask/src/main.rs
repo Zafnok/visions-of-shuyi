@@ -864,6 +864,15 @@ mod tests {
     }
 
     #[test]
+    fn icon_exits_with_the_outcome() {
+        assert_eq!(dispatch(args(&["icon"]).into_iter()), 2);
+        let dir = env::temp_dir().join(format!("icon-dispatch-{}", std::process::id()));
+        let dir = dir.to_str().unwrap().to_owned();
+        assert_eq!(dispatch(args(&["icon", "preview", &dir]).into_iter()), 0);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
     fn repo_root_points_at_the_workspace_root() {
         let root = repo_root();
         assert!(root.join("Cargo.toml").is_file());
