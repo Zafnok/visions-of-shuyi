@@ -39,7 +39,7 @@ home to her mother. She hates Ardevali nobles on principle, and the lead is one.
 
 | Where | What changes |
 | ----- | ------------ |
-| Ch1 | Scouts for the lead because Harl's men shoot deer out of season. That's her joke; the truth is she likes Harrowby. |
+| Ch1 | Scouts for the lead because Harl's men killed deer in her woods and left them to rot. That's the reason she gives; the truth is she likes Harrowby. |
 | Ch2 | Sees through the false flag at Kell's Ford. Her hatred loses its target. |
 | Ch5 | Her spying comes out in Saltmere: her buyer, a Brennish smuggler, also sells to the envoy's people, and Ragna knows her name. The lead's reaction (a reply tone) matters to her. Side quest "Letters Home". |
 | Ch3 | The Greywater register says Rue was a Candle. Aske stops speaking to her. |
@@ -58,9 +58,10 @@ home to her mother. She hates Ardevali nobles on principle, and the lead is one.
 
 ## Voice notes
 
-- Very short sentences, flat and literal. Deadpan by accident: she means
-  everything she says exactly. Counts things ("Twelve men. Fourteen. Bad
-  archers.").
+- Very short sentences, flat and literal. She means everything she says
+  exactly, and says what she counted and why it matters ("Fourteen men in
+  the fort. I counted twice."). Any comedy in that is by accident and
+  belongs to quiet scenes; it is never a punchline.
 - Brennish words for home and family (*mor* for mother, *hus* for home);
   Ardevali idioms trip her up ("Why would I hold my horses? I have no horse.").
 - Calls the lead "noble" until she doesn't. The day she says "Veyne" is a quiet
@@ -69,8 +70,8 @@ home to her mother. She hates Ardevali nobles on principle, and the lead is one.
 
 **Sample lines**
 
-- "Twelve men. Fourteen. Bad archers. They shoot deer in spring. I will shoot
-  them in spring."
+- "Fourteen men in the fort. I counted twice. Some have bows, and they shoot
+  badly."
 - "You say sorry for the Ashfields. You were not there. It is a cheap sorry,
   noble."
 - "These are not Brennish. Brennish do not wear boots like this. Brennish

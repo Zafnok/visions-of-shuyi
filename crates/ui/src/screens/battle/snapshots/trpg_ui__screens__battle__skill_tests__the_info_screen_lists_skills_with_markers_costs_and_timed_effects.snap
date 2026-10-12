@@ -11,7 +11,7 @@ expression: buf.to_snapshot(&c.palette)
 ║ │                      │   Stats   Effects              --                                       ║
 ║ │       portrait       │   Str   7 Brace                                                         ║
 ║ │                      │   Mag   0 Def +5 Res +5                                                 ║
-║ │                      │   Dex   4 until Player phase Armour                                     ║
+║ │                      │   Dex   4 until Player phase Armor                                      ║
 ║ │                      │   Spd   2                      Chain Mail                               ║
 ║ │                      │   Def  14                      Def +3                                   ║
 ║ └──────────────────────┘   Res   5                                                               ║
@@ -44,7 +44,7 @@ abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbeeeeebbbeeeeeeebbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbccccccccbbbbbbbcbbbbbbbbbbbgggggbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbccccccccccccccccccbeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbccccccccccccccccccbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbgggbbbbbbbbbbbbbbbbbbbbbbccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abccccccccccccccccccccccccbbbbbbbgggbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba

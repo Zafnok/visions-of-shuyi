@@ -44,7 +44,25 @@ same commit as the registry change.
 - **Exposition budget:** max 4 consecutive text boxes of explanation; break it
   with reaction, conflict or a joke.
 - **Tone** follows `bible.md`. Humour is allowed in dark stories; it makes the
-  dark parts land.
+  dark parts land. **Where it goes is decided**
+  (`docs/design/setting-and-tone.md`, *Where the jokes go*): the game's
+  opening and serious battles are played straight. No one-liners, running
+  gags or comic bits before, in or over a fight that matters: boss lines,
+  death and retreat lines included. People in danger talk like it. A dry
+  or bitter line in character is fine; a punchline is not. Banter belongs
+  to downtime (camp, travel, quiet scenes after a fight) and grows as
+  characters get closer (support ranks). The lead's `wry` reply is the
+  player's own joke: it stays, and the answer to it may be light, briefly.
+  A voice is how someone talks, not how often they joke.
+- **Understood on first reading.** A line says what it means: no turn of
+  phrase that hides what happened, no line that leaves out its own logic.
+  The format has no stage directions, so don't write a line that only
+  works if it is muttered or said aside; use narration (`>`) if how it is
+  said matters.
+- **American English** (`setting-and-tone.md`, *Language*): American
+  spelling and American words in all game text (color, armor, gray,
+  peddler; no "whilst", "bloody", "mate", "lads", "that lot").
+  Old-fashioned words are not ruled out; British ones are.
 - **Gameplay tie-in:** pre-battle scenes set up *why this fight*; in-battle
   lines react to what the player is doing (boss taunt, recruit conversation,
   death quote); post-battle scenes pay off consequences.

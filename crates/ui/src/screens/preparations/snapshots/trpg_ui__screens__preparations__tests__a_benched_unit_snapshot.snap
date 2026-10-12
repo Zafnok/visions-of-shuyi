@@ -9,7 +9,7 @@ expression: h.snapshot()
 │ Test Lord    ││ Weapon     Steel Bow       25/25 ││ (put back in stock)                          │
 │ Test Knight  ││ Weapon     -                     ││ Steel Spear     can't use spears             │
 │ Test Archer  ││ Weapon     -                     ││ Iron Axe        can't use axes               │
-│ Test Mage    ││ Armour     Leather Vest          ││ Iron Sword      can't use swords             │
+│ Test Mage    ││ Armor      Leather Vest          ││ Iron Sword      can't use swords             │
 │ Test Scout   ││ Accessory  -                     ││ Iron Bow        20/20  from Test Archer      │
 │              ││                                  ││                                              │
 │              ││ AS 2 → 4 with Iron Bow           ││                                              │

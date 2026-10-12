@@ -58,7 +58,12 @@ hard beats.
   of closeness". So: the opening of the game and serious battles are played
   straight. Banter belongs to downtime (camp, travel, quiet scenes after a
   fight) and grows as characters get closer (support ranks). Ticket 0724
-  rewrites Chapter 1 to this.
+  rewrote Chapter 1 to this. The lead's `wry` reply stays (the player
+  picked the joke), and the answer to it may be light, briefly.
+- **Lines are understood on first reading** (Nick, 2026-10-12, playtest
+  0804, on "that eyebrow's had one scar off me already" and "Twelve men.
+  No. Fourteen. Bad archers."): "idk what this means", "so why would they
+  not be counted?". A line says plainly what it means.
 - **The ending is not a tragedy.** It is resolved and feels like a hard-fought
   victory. Nick fixed this.
 - **Unavoidable story losses are allowed**, including someone close to the lead
@@ -68,6 +73,20 @@ hard beats.
   no shipping, and no S-rank/marriage supports. The only exception is a
   relationship that already exists before the story starts (e.g. a married
   NPC couple), and that is never developed into a romance arc on screen.
+
+## Language — American English
+
+Nick, 2026-10-12 (playtest 0804, on "pedlar" in the Chapter 1 script, asked
+whether he meant American spelling everywhere): "yea no bri'ish english only
+american... idk about modern but not bri'ish".
+
+- **All game text uses American spelling and American words**: dialogue,
+  narration, menus, tips, item and class names. Color, armor, gray,
+  peddler; no "whilst", "bloody", "mate", "lads".
+- **Old-fashioned words are not ruled out.** He ruled out British, not
+  old. A word that is both (pedlar) goes.
+- Names in the data files and ids in the code are not game text
+  (`armour` as a data field stays). Proper names are Nick's to rename.
 
 ## Q3. Who the player follows — a single lord
 
