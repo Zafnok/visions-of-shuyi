@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: sign-off
-completed:
+completed: 2026-10-11
 ---
 
 # 0822 — Game Over offers Rewind while charges are left
@@ -74,12 +74,12 @@ and plays on; then loses with none left and sees no `Rewind`.
 
 ## Acceptance criteria
 
-- [ ] Harness: lose the test battle with charges left → Game Over lists `Rewind`, `Retry Battle`, `Title` → `Rewind` → pick an earlier point → the battle is on again, undecided, with one charge fewer.
-- [ ] Harness: backing out of the rewind screen returns to Game Over.
-- [ ] Harness: with no charges left, Game Over lists only `Retry Battle` and `Title`.
-- [ ] `Retry Battle` still restarts (through Preparations when the battle has them) with every charge back.
-- [ ] Snapshot of Game Over with `Rewind`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Harness: lose the test battle with charges left → Game Over lists `Rewind`, `Retry Battle`, `Title` → `Rewind` → pick an earlier point → the battle is on again, undecided, with one charge fewer.
+- [x] Harness: backing out of the rewind screen returns to Game Over.
+- [x] Harness: with no charges left, Game Over lists only `Retry Battle` and `Title`.
+- [x] `Retry Battle` still restarts (through Preparations when the battle has them) with every charge back.
+- [x] Snapshot of Game Over with `Rewind`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -88,5 +88,18 @@ and plays on; then loses with none left and sees no `Rewind`.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done as planned. Game Over lists `Rewind` first (focused) while the lost
+battle has a charge left, hidden otherwise. The flow keeps the lost
+`BattleScreen` inside `Stage::GameOver`; `Rewind` puts it back with its
+rewind screen open (`BattleScreen::rewind_from_defeat`), restarts the
+battle's music, and backing out pops to Game Over again. `BattleHistory`
+already allowed a rewind after a defeat, so core is unchanged.
+
+- `ai_phase()` is now false once the battle is decided, so the rewind
+  screen takes keys even if the defeat came in an enemy phase.
+- Rewind lists every command, the enemy's included (0307). Picking the
+  newest point on an enemy phase lets the AI play on from there and, on a
+  turn-limit loss, lose again at once. Not changed (out of scope).
+- Existing tests that pressed `Retry Battle` on Game Over now go down one
+  item, because `Rewind` is first while charges are left.
+- *Claude's starting rule:* none.

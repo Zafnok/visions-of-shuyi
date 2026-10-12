@@ -114,6 +114,7 @@
 
     // Game Over, and "To be continued" after the last chapter there is.
     "game_over.heading": "GAME OVER",
+    "game_over.rewind": "Rewind",
     "game_over.retry": "Retry Battle",
     "game_over.title": "Title",
     "game_over.help": "{Cursor} choose · {Confirm} select",
@@ -140,6 +141,7 @@
     "options.row.auto_end": "Auto-end turn",
     "options.row.fullscreen": "Fullscreen",
     "options.row.cursor": "Cursor",
+    "options.row.map_look": "Map look",
     "options.row.music_volume": "Music volume",
     "options.row.sound_volume": "Sound volume",
     "options.row.layout": "Layout",
@@ -156,6 +158,8 @@
     "options.cursor.corners": "Corners",
     "options.cursor.large_corners": "Large corners",
     "options.cursor.tile_glow": "Tile glow",
+    "options.map_look.pictures": "Pictures",
+    "options.map_look.glyphs": "Glyphs",
     "options.mode.classic": "Classic",
     "options.mode.casual": "Casual",
     "options.message.tips_reset": "Tips will show again",

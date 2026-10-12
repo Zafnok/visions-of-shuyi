@@ -18,7 +18,9 @@ use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// The key of Game Over's heading in the language files ([`Ctx::text`]).
 pub const GAME_OVER: &str = "game_over.heading";
-/// The keys of Game Over's items: retry, then back to the title.
+/// The key of Game Over's `Rewind` item, first while a charge is left.
+const REWIND: &str = "game_over.rewind";
+/// The keys of Game Over's other items: retry, then back to the title.
 const ITEMS: [&str; 2] = ["game_over.retry", "game_over.title"];
 /// The key of the last chapter's closing words.
 pub const TO_BE_CONTINUED: &str = "to_be_continued.heading";
@@ -26,31 +28,46 @@ pub const TO_BE_CONTINUED: &str = "to_be_continued.heading";
 /// What the player picked on Game Over.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameOverChoice {
+    /// Back to the lost battle with the rewind screen open (0822).
+    Rewind,
     /// Start the battle again from its first turn, every rewind charge back.
     Retry,
     /// Back to the title screen.
     Title,
 }
 
-/// `GAME OVER` and a `Retry Battle` / `Title` menu. Pops once one is chosen
+/// `GAME OVER` and a `Rewind` (while a charge is left) / `Retry Battle` /
+/// `Title` menu. Pops once one is chosen
 /// ([`result`](Self::result)); there is nothing to back out of.
 #[derive(Debug, Clone)]
 pub struct GameOverScreen {
     menu: Menu,
     chosen: Option<GameOverChoice>,
+    /// The choice each menu item stands for.
+    choices: Vec<GameOverChoice>,
 }
 
 impl GameOverScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "game_over";
 
-    /// The screen with `Retry Battle` focused, labelled in `ctx`'s
-    /// language.
-    pub fn new(ctx: &Ctx) -> Self {
-        let items = ITEMS.map(|key| MenuItem::new(ctx.text(key))).to_vec();
+    /// The screen labelled in `ctx`'s language, with `Rewind` first and
+    /// focused when `can_rewind` (the lost battle has a charge left), else
+    /// `Retry Battle` focused.
+    pub fn new(ctx: &Ctx, can_rewind: bool) -> Self {
+        let mut keys = Vec::new();
+        let mut choices = Vec::new();
+        if can_rewind {
+            keys.push(REWIND);
+            choices.push(GameOverChoice::Rewind);
+        }
+        keys.extend(ITEMS);
+        choices.extend([GameOverChoice::Retry, GameOverChoice::Title]);
+        let items = keys.iter().map(|k| MenuItem::new(ctx.text(k))).collect();
         Self {
             menu: Menu::new(items).without_cancel(),
             chosen: None,
+            choices,
         }
     }
 
@@ -84,11 +101,7 @@ impl Screen for GameOverScreen {
         for &action in &input.actions {
             if let Some(MenuEvent::Chosen(i)) = self.menu.handle_with_sound(action, &mut ctx.audio)
             {
-                self.chosen = Some(if i == 0 {
-                    GameOverChoice::Retry
-                } else {
-                    GameOverChoice::Title
-                });
+                self.chosen = self.choices.get(i).copied();
                 return Transition::Pop;
             }
         }

@@ -392,7 +392,7 @@ fn screens_cover_the_whole_buffer() {
         &crate::screens::ModeSelectScreen::new(&c),
         &crate::screens::LeadSelectScreen::new(),
         &naming,
-        &crate::screens::GameOverScreen::new(&c),
+        &crate::screens::GameOverScreen::new(&c, false),
         &crate::screens::ToBeContinuedScreen,
         &CreditsScreen::new(&c),
     ];

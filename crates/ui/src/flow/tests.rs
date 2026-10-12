@@ -52,7 +52,10 @@ fn retry_goes_back_to_preparations_as_they_were_left() {
     let pack = |f: &FlowScreen| f.battle().map(|b| b.state().pack().items.clone());
     assert_eq!(pack(&flow).as_deref(), Some(&elixir[..]));
     // A defeat's Game Over, then Retry.
-    flow.stage = Stage::GameOver(GameOverScreen::new(&c));
+    let Stage::Battle(lost) = flow.stage.clone() else {
+        panic!("no battle");
+    };
+    flow.stage = Stage::GameOver(GameOverScreen::new(&c, false), lost);
     update(&mut flow, &mut c, &[Confirm]);
     assert_eq!(flow.name(), "preparations");
     let prep = flow.preparations().unwrap_or_else(|| panic!("no prep"));
@@ -304,4 +307,101 @@ fn a_scene_with_nothing_to_say_for_the_army_is_passed_over() {
     // With no scene left: what follows them.
     let flow = start(&mut c, false, &["only_knight"]);
     assert!(matches!(flow.stage(), Stage::SavePrompt(_)));
+}
+
+/// A battle lost on the turn limit with `charges` rewind charges, after
+/// the lord waited once: on Game Over.
+fn lost_flow(c: &mut Ctx, charges: u8) -> FlowScreen {
+    use crate::input::Action::Confirm;
+    use crate::screens::battle::quick_battle;
+    use crate::screens::battle::testing::battle_charged;
+    use trpg_core::Objective;
+    let quick = quick_battle(&c.content).unwrap_or_else(|e| panic!("{e}"));
+    let rout = Objective::Rout {
+        turn_limit: Some(1),
+    };
+    let state = battle_charged(
+        c,
+        quick.map().clone(),
+        quick.units().to_vec(),
+        rout,
+        charges,
+    );
+    let mut battle = BattleScreen::new(state);
+    let lord = battle.state().units()[0].clone();
+    battle.send(&Command::Act {
+        unit: lord.id,
+        dest: lord.pos,
+        action: UnitAction::Wait,
+    });
+    battle.send(&Command::EndPhase);
+    let mut flow = FlowScreen::new_game(c);
+    flow.stage = Stage::Battle(Box::new(battle));
+    for _ in 0..3000 {
+        if flow.name() == "game_over" {
+            return flow;
+        }
+        let input = FrameInput::new(vec![Confirm], 0.25, vec![]);
+        flow.update(c, &input);
+    }
+    panic!("never lost: {}", flow.name());
+}
+
+/// Acceptance (0822): Game Over lists `Rewind` while charges are left;
+/// picking a point plays on, undecided, with one charge fewer.
+#[test]
+fn game_over_rewinds_a_lost_battle() {
+    use crate::input::Action::{Cancel, Confirm};
+    let mut c = ctx();
+    let mut flow = lost_flow(&mut c, 2);
+    let Stage::GameOver(screen, _) = flow.stage() else {
+        panic!("no game over");
+    };
+    let view = screen.view(&c);
+    let labels: Vec<_> = view.menu.items.iter().map(|i| i.label.as_str()).collect();
+    assert_eq!(
+        labels,
+        [
+            c.text("game_over.rewind"),
+            c.text("game_over.retry"),
+            c.text("game_over.title")
+        ]
+    );
+    // Backing out of the rewind screen returns to Game Over.
+    update(&mut flow, &mut c, &[Confirm]);
+    assert_eq!(flow.name(), "battle");
+    assert!(flow.battle().is_some_and(|b| b.rewind().is_some()));
+    update(&mut flow, &mut c, &[Cancel]);
+    assert_eq!(flow.name(), "game_over");
+    // Rewind again and pick the point: the battle is on again.
+    update(&mut flow, &mut c, &[Confirm]);
+    // The oldest point: before the lord's first action.
+    let down = [crate::input::Action::CursorDown; 10];
+    update(&mut flow, &mut c, &down);
+    update(&mut flow, &mut c, &[Confirm, Confirm]);
+    assert_eq!(flow.name(), "battle");
+    let b = flow.battle().unwrap_or_else(|| panic!("no battle"));
+    assert!(b.state().outcome().is_none());
+    assert!(b.rewind().is_none());
+    assert_eq!(b.history().charges_left(), 1);
+    assert_eq!(b.history().len(), 0);
+    // And it carries on: it is not sent back to Game Over.
+    update(&mut flow, &mut c, &[]);
+    assert_eq!(flow.name(), "battle");
+}
+
+/// Acceptance (0822): no charges left, no `Rewind`; `Retry Battle` is first.
+#[test]
+fn game_over_without_charges_has_no_rewind() {
+    let mut c = ctx();
+    let flow = lost_flow(&mut c, 0);
+    let Stage::GameOver(screen, _) = flow.stage() else {
+        panic!("no game over");
+    };
+    let view = screen.view(&c);
+    let labels: Vec<_> = view.menu.items.iter().map(|i| i.label.as_str()).collect();
+    assert_eq!(
+        labels,
+        [c.text("game_over.retry"), c.text("game_over.title")]
+    );
 }

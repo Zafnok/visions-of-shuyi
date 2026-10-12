@@ -219,6 +219,9 @@ pub struct Scene {
 pub struct DialogueTable {
     /// Scenes by id.
     pub scenes: BTreeMap<String, Scene>,
+    /// The file each scene was written in, by scene id (empty for a table
+    /// not read from files).
+    pub files: BTreeMap<String, String>,
 }
 
 impl DialogueTable {
@@ -333,6 +336,10 @@ pub fn scripts_from_sources<F: AsRef<str>>(
             scenes: scenes
                 .iter()
                 .map(|p| (p.scene.id.clone(), p.scene.clone()))
+                .collect(),
+            files: scenes
+                .iter()
+                .map(|p| (p.scene.id.clone(), p.file.clone()))
                 .collect(),
         };
         Ok(Scripts {

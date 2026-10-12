@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0436", "0805"]
 nick_input: none
-completed:
+completed: 2026-10-11
 ---
 
 # 0824 — Options: Map look (pictures or glyphs)
@@ -74,14 +74,14 @@ can veto:
 
 ## Acceptance criteria
 
-- [ ] Harness test on a public fixture tileset: changing the row swaps
+- [x] Harness test on a public fixture tileset: changing the row swaps
       `ctx.map_skin` at once, and the choice is still there after a
       restart.
-- [ ] Harness test: without a picture skin the row isn't on the screen
+- [x] Harness test: without a picture skin the row isn't on the screen
       and the game uses the glyph skin whatever the saved value is.
-- [ ] 0433's `the_skin_never_changes_the_game` still passes.
-- [ ] Snapshot of the Options screen with the row.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] 0433's `the_skin_never_changes_the_game` still passes.
+- [x] Snapshot of the Options screen with the row.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -90,5 +90,23 @@ can veto:
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done: `MapLook` (`Pictures` default | `Glyphs`) in `Settings`, saved with
+the others (a missing field defaults, so no version bump). `map_view::skin_for_look`
+picks the skin from `(look, content)` (Pictures with the bought tileset
+present: `default_skin`; otherwise glyphs); `has_pictures` says whether the
+choice exists. `Ctx` applies it after loading the settings and whenever
+`change_settings` changes the look (so the row, and Restore defaults, swap
+the map at once). The Options row "Map look" sits under Cursor, is hidden
+without the bought tileset, and uses the same left/right/confirm keys and
+help line as the other rows. Tests use the generated test units tileset
+registered under the game tileset's id as the public fixture.
+
+Deviation: none. The debug-menu skin switch is untouched; it stays until the
+next look change.
+
+*Claude's starting rules* (the ticket's list, for Nick to veto): the entry is
+"Map look" with Pictures and Glyphs; Pictures is the default; it switches
+terrain and units together; it changes the map at once and is remembered; a
+build without the bought files has only glyphs and doesn't show the entry.
+
+No follow-up tickets.

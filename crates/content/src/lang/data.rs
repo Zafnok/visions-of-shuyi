@@ -39,6 +39,9 @@ pub struct SourceLine {
     pub text: String,
     /// What it is.
     pub kind: LineKind,
+    /// The stem of the `.dlg` file its scene is in (`ch01` for
+    /// `ch01.dlg`); empty if the dialogue wasn't read from files.
+    pub file: String,
 }
 
 /// Today's English for everything `data.ron` and `dialogue/*.ron` can
@@ -167,8 +170,14 @@ pub(super) fn text_problem(key: &str, text: &str) -> Option<String> {
         .map(|line| format!("a text line is over {MAX_LINE_CHARS} cells: {line:?}"))
 }
 
+/// `ch01` for `assets/dialogue/ch01.dlg`.
+fn file_stem(path: &str) -> &str {
+    let name = path.rsplit(['/', '\\']).next().unwrap_or(path);
+    name.strip_suffix(".dlg").unwrap_or(name)
+}
+
 /// Adds the captions of `steps` (of scene `scene`) to `lines`.
-fn add_captions(scene: &str, steps: &[Step], lines: &mut BTreeMap<String, SourceLine>) {
+fn add_captions(scene: &str, file: &str, steps: &[Step], lines: &mut BTreeMap<String, SourceLine>) {
     for step in steps {
         match step {
             Step::Caption { text } => {
@@ -176,19 +185,20 @@ fn add_captions(scene: &str, steps: &[Step], lines: &mut BTreeMap<String, Source
                     scene: scene.to_owned(),
                     text: text.clone(),
                     kind: LineKind::Caption,
+                    file: file.to_owned(),
                 };
                 lines.insert(caption_key(scene, text), line);
             }
             Step::Choice { options } => {
                 for option in options {
-                    add_captions(scene, &option.steps, lines);
+                    add_captions(scene, file, &option.steps, lines);
                 }
             }
             Step::If {
                 then, otherwise, ..
             } => {
-                add_captions(scene, then, lines);
-                add_captions(scene, otherwise, lines);
+                add_captions(scene, file, then, lines);
+                add_captions(scene, file, otherwise, lines);
             }
             Step::Place { .. }
             | Step::Clear { .. }
@@ -252,6 +262,10 @@ impl DataText {
     /// Adds every line, reply and caption of `dialogue`.
     pub fn add_dialogue(&mut self, dialogue: &DialogueTable) {
         for scene in dialogue.scenes.values() {
+            let file = dialogue
+                .files
+                .get(&scene.id)
+                .map_or("", |path| file_stem(path));
             for line in scene.lines() {
                 let kind = if line.speaker == REPLY_SPEAKER {
                     LineKind::Reply
@@ -262,10 +276,11 @@ impl DataText {
                     scene: scene.id.clone(),
                     text: line.text.to_owned(),
                     kind,
+                    file: file.to_owned(),
                 };
                 self.lines.insert(line.id.as_str().to_owned(), source);
             }
-            add_captions(&scene.id, &scene.steps, &mut self.lines);
+            add_captions(&scene.id, file, &scene.steps, &mut self.lines);
         }
     }
 }

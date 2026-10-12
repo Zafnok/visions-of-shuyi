@@ -308,8 +308,8 @@ fn retry_after_a_defeat_restarts_the_battle() {
     confirm_until(&mut h, "game_over");
     assert_eq!(h.screens(), ["title", "game_over"]);
     assert_snapshot!(h.snapshot());
-    // Retry: the battle from its start, its notes first.
-    h.keys("f");
+    // Retry (below Rewind): the battle from its start, its notes first.
+    h.keys("Down f");
     assert_eq!(h.screens(), ["title", "battle"]);
     assert_eq!(battle(&h), start);
     assert_eq!(charges(&h), 3);
@@ -322,7 +322,7 @@ fn retry_after_a_defeat_restarts_the_battle() {
         send(&mut h, &Command::EndPhase);
     }
     confirm_until(&mut h, "game_over");
-    h.keys("Down f");
+    h.keys("Down Down f");
     assert_eq!(h.screens(), ["title"]);
 }
 
@@ -542,14 +542,14 @@ fn game_over_is_silent_and_retry_plays_the_battles_music_again() {
     confirm_until(&mut h, "game_over");
     assert_eq!(music(&h), ["title", first.as_str(), "-"]);
     h.clear_audio();
-    h.keys("f");
+    h.keys("Down f");
     assert_eq!(h.screens(), ["title", "battle"]);
     assert_eq!(music(&h), [skirmish_pick(&mut h, 1)]);
     for _ in 0..6 {
         send(&mut h, &Command::EndPhase);
     }
     confirm_until(&mut h, "game_over");
-    h.keys("Down f").wait(0.1);
+    h.keys("Down Down f").wait(0.1);
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(music(&h), [skirmish_pick(&mut h, 1).as_str(), "-", "title"]);
 }

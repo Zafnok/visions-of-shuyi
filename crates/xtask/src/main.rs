@@ -39,7 +39,8 @@ ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/REA
 check-keys                         fail on keys hard-coded in game code or text\n  \
 check-text                         count screen text still written as literals in crates/ui,\n  \
                                    and fail on a screen that reads a data name itself\n  \
-lang-status <code>                 list a language pack's missing, stale and orphaned text\n  \
+lang-status <code> [--only ui|data|dialogue] [--file <dlg>]\n  \
+                                   list a language pack's missing, stale and orphaned text\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
 font-atlas <font.bdf>... <out-dir> build the font atlas from BDF fonts\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
@@ -168,9 +169,15 @@ fn check_text(args: &[String]) -> u8 {
 /// failure (ADR-0045): the exit code is 0 unless the content doesn't load
 /// (1) or there is no such pack (2).
 fn lang_status(args: &[String]) -> u8 {
-    let [code] = args else {
-        eprintln!("usage: cargo xtask lang-status <code>");
-        return 2;
+    let (code, options) = match lang_status::parse_args(args) {
+        Ok(parsed) => parsed,
+        Err(e) => {
+            eprintln!("lang-status: {e}");
+            eprintln!(
+                "usage: cargo xtask lang-status <code> [--only ui|data|dialogue] [--file <dlg>]"
+            );
+            return 2;
+        }
     };
     let content = match trpg_content::load_embedded() {
         Ok(content) => content,
@@ -179,7 +186,7 @@ fn lang_status(args: &[String]) -> u8 {
             return 1;
         }
     };
-    match lang_status::report(&content.lang, code) {
+    match lang_status::report(&content.lang, &code, &options) {
         Ok(report) => {
             print!("{report}");
             0
@@ -1064,6 +1071,13 @@ mod tests {
         assert_eq!(lang_status(&args(&["zz"])), 2);
         assert_eq!(lang_status(&[]), 2);
         assert_eq!(lang_status(&args(&["test", "ja"])), 2);
+        assert_eq!(lang_status(&args(&["test", "--only", "dialogue"])), 0);
+        assert_eq!(lang_status(&args(&["test", "--file", "test"])), 0);
+        assert_eq!(
+            lang_status(&args(&["test", "--only", "ui", "--file", "x"])),
+            2
+        );
+        assert_eq!(lang_status(&args(&["test", "--bogus"])), 2);
     }
 
     #[test]
