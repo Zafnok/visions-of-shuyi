@@ -20,7 +20,7 @@ battle ([`docs/design/audio.md`](../../docs/design/audio.md), *Music cues*):
 
 | Cue | Decided in | Plays |
 | --- | ---------- | ----- |
-| `victory` | 0022 | Once, while the `VICTORY` banner is shown |
+| `victory` (a pool) | 0022 | Once, while the `VICTORY` banner is shown: one of 13 versions of Fupi's Win Jingle, picked at random each win |
 | `defeat` | 0023 | Once, while the `DEFEAT` banner is shown |
 | `game_over` | 0024 | On the Game Over screen (loop or once: see 0024's answer) |
 
@@ -31,6 +31,13 @@ replaces that with `game_over`. Audio plumbing: 0212 (ADR-0026), `ui` emits
 cues through `ctx.audio` (`crates/ui/src/audio.rs`: `play_music`,
 `stop_music`), only `app` plays them (ADR-0004). Tracks are imported the way
 0214 did it (`assets-src/audio/import.py`, ADR-0027).
+
+0022's answer: `victory` is a **pool** like `skirmish` (`pools` in
+`assets/audio/audio.ron`, 0807): 13 of the 17 `.wav` files in `winjingle.zip` (not Saw, Square, Banjo or
+Harpsichord: Nick cut them)
+(CC0, one credit entry), each a `looped: false` track. 0022 also reserved
+`victory_grand` and `ceremony_intro`; nothing plays them yet, so do **not**
+import them here.
 
 If one of 0022–0024 recorded "no music here" or "reuse `<cue>`", follow that
 answer for that moment and say so in the PR.
@@ -68,7 +75,7 @@ whether the stings and the Game Over music fit and are timed right.
 
 ## Implementation steps
 
-1. Import: add the three tracks to `assets-src/audio/import.py`'s list with
+1. Import: add the tracks (13 for the `victory` pool, see `audio.md`) to `assets-src/audio/import.py`'s list with
    the source URLs and versions recorded in `audio.md`, run it, commit the
    `.ogg` files and the updated manifest entries.
 2. In the battle screen, where `BannerKind::Outcome` is created on
@@ -82,6 +89,9 @@ whether the stings and the Game Over music fit and are timed right.
 
 - [ ] Harness: winning a battle emits `play_music("victory")` exactly once,
       when the `VICTORY` banner appears.
+- [ ] `victory` is a pool of the 13 Win Jingle versions; a test shows two
+      different seeds can pick two different versions, the way the
+      `skirmish` pool's test does.
 - [ ] Harness: losing (the lord falls) emits `play_music("defeat")` once,
       then the Game Over screen emits `play_music("game_over")`.
 - [ ] Harness: `Retry chapter` from Game Over emits the battle's own cue.
