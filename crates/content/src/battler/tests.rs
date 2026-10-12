@@ -249,6 +249,29 @@ fn every_problem_of_the_backdrops_is_reported_at_once() {
 }
 
 #[test]
+fn the_table_needs_both_the_battlers_and_the_backdrops_to_be_right() {
+    let battlers = || BTreeMap::from([("guard".to_owned(), battler("guard"))]);
+    let fields = || backdrops(r#"(default: "fields.png")"#);
+    let error = |file: &str| vec![ContentError::new(file, "bad")];
+    let good = assemble(battlers(), Vec::new(), fields()).unwrap();
+    assert_eq!(good.battlers, battlers());
+    assert_eq!(Ok(good.backdrops), fields());
+    // A bad battler alone, bad backdrops alone, and both: every error.
+    assert_eq!(
+        messages(assemble(battlers(), error("a.ron"), fields())),
+        ["a.ron: bad"]
+    );
+    assert_eq!(
+        messages(assemble(battlers(), Vec::new(), Err(error("b.ron")))),
+        ["b.ron: bad"]
+    );
+    assert_eq!(
+        messages(assemble(battlers(), error("a.ron"), Err(error("b.ron")))),
+        ["a.ron: bad", "b.ron: bad"]
+    );
+}
+
+#[test]
 fn the_shipped_battlers_and_backdrops_load() {
     let images = ImageTable::load().unwrap_or_default();
     let table = load_all(&images, None);

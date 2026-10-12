@@ -648,8 +648,14 @@ mod tests {
         let _ = fs::remove_dir_all(&empty);
         let e = run(&empty, &TWO, &BACK).unwrap_err();
         assert!(e.contains("cargo xtask private-assets --library"), "{e}");
+        // Only the library, or only the game's files: the same.
         fs::create_dir_all(empty.join(LIBRARY_DIR)).unwrap();
-        assert!(run(&empty, &TWO, &BACK).is_err());
+        let e = run(&empty, &TWO, &BACK).unwrap_err();
+        assert!(e.contains("cargo xtask private-assets --library"), "{e}");
+        fs::remove_dir_all(empty.join(LIBRARY_DIR)).unwrap();
+        fs::create_dir_all(empty.join(GAME_DIR)).unwrap();
+        let e = run(&empty, &TWO, &BACK).unwrap_err();
+        assert!(e.contains("cargo xtask private-assets --library"), "{e}");
         let _ = fs::remove_dir_all(&empty);
 
         let root = root("battlers-bad");

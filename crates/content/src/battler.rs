@@ -168,16 +168,27 @@ pub fn load_all(
             )]
         })
         .and_then(|source| parse_backdrops(&file, source, images, terrain));
-    match backdrops {
-        Ok(backdrops) if errors.is_empty() => Ok(BattlerTable {
+    assemble(battlers, errors, backdrops)
+}
+
+/// The table of `battlers` and `backdrops`, or every error: the
+/// battlers' `errors`, then the backdrops'.
+fn assemble(
+    battlers: BTreeMap<String, Battler>,
+    mut errors: Vec<ContentError>,
+    backdrops: Result<Backdrops, Vec<ContentError>>,
+) -> Result<BattlerTable, Vec<ContentError>> {
+    let backdrops = backdrops.unwrap_or_else(|e| {
+        errors.extend(e);
+        Backdrops::default()
+    });
+    if errors.is_empty() {
+        Ok(BattlerTable {
             battlers,
             backdrops,
-        }),
-        Ok(_) => Err(errors),
-        Err(e) => {
-            errors.extend(e);
-            Err(errors)
-        }
+        })
+    } else {
+        Err(errors)
     }
 }
 
