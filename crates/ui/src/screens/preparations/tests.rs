@@ -18,7 +18,7 @@ use crate::screens::battle::QUICK_BATTLE;
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
 
 /// The Quick Battle's setup and bench, before Preparations.
-fn setup(c: &Ctx) -> Preparations {
+pub(super) fn setup(c: &Ctx) -> Preparations {
     let def = &c.content.battles[QUICK_BATTLE];
     let campaign = battle_campaign(&c.content, def, GameMode::Classic, c.lead.clone());
     Preparations {
@@ -27,12 +27,12 @@ fn setup(c: &Ctx) -> Preparations {
     }
 }
 
-fn screen(c: &Ctx) -> PreparationsScreen {
+pub(super) fn screen(c: &Ctx) -> PreparationsScreen {
     PreparationsScreen::new(setup(c), true)
 }
 
 /// One update with `actions`: the transition, as text.
-fn update(s: &mut PreparationsScreen, c: &mut Ctx, actions: &[Action]) -> String {
+pub(super) fn update(s: &mut PreparationsScreen, c: &mut Ctx, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
     format!("{:?}", s.update(c, &input))
 }
@@ -61,9 +61,12 @@ fn lord_weapons(s: &PreparationsScreen) -> Vec<Option<String>> {
         .collect()
 }
 
-/// The texts of the stock rows.
+/// The stock rows, each as its name and its detail (in the columns the
+/// glyph skin gives them).
 fn stock_texts(s: &PreparationsScreen, c: &Ctx) -> Vec<String> {
-    s.stock_rows(c).into_iter().map(|r| r.text).collect()
+    let rows = s.stock_rows(c).into_iter();
+    rows.map(|r| format!("{:<15} {}", r.name, r.detail).trim_end().to_owned())
+        .collect()
 }
 
 /// The stock row that empties the slot.
@@ -436,18 +439,13 @@ fn help_names_the_players_keys() {
 }
 
 #[test]
-fn lists_wrap_and_scroll() {
+fn lists_wrap() {
     assert_eq!(step(0, 3, true), 1);
     assert_eq!(step(2, 3, true), 0);
     assert_eq!(step(0, 3, false), 2);
     assert_eq!(step(1, 3, false), 0);
     assert_eq!(step(0, 0, true), 0);
     assert_eq!(step(0, 1, false), 0);
-    // A window of 3 rows over 5: it moves only once the cursor leaves it.
-    let starts: Vec<usize> = (0..5).map(|f| window_start(f, 5, 3)).collect();
-    assert_eq!(starts, [0, 0, 0, 1, 2]);
-    assert_eq!(window_start(1, 2, 3), 0);
-    assert_eq!(window_start(0, 0, 3), 0);
 }
 
 #[test]
@@ -525,16 +523,6 @@ fn a_benched_unit_snapshot() {
     assert_snapshot!(h.snapshot());
 }
 
-/// Row `y` of the screen as drawn.
-fn drawn_row(s: &PreparationsScreen, c: &Ctx, y: i32) -> String {
-    let black = c.palette.get(UiColor::Black);
-    let mut buf = GlyphBuffer::new(100, 32, Cell::new(' ', black, black));
-    s.draw(c, &mut buf);
-    (0..100)
-        .map(|x| buf.get(x, y).map_or(' ', |cell| cell.glyph))
-        .collect()
-}
-
 #[test]
 fn down_on_the_tabs_opens_the_tab() {
     let mut c = ctx();
@@ -559,37 +547,6 @@ fn up_and_down_move_over_the_pack() {
     update(&mut s, &mut c, &[Confirm]);
     assert_eq!(s.packed(), [(ItemId::new("elixir"), 1)]);
     assert_eq!(s.setup().stock.count(&potion()), 6);
-}
-
-/// A list longer than its box scrolls to keep the cursor in view and never
-/// draws over the box's border.
-#[test]
-fn a_long_list_scrolls_inside_its_box() {
-    let mut c = ctx();
-    let mut s = screen(&c);
-    let scout = s.prep.bench[0].clone();
-    for i in 0..30 {
-        let mut extra = scout.clone();
-        extra.name = format!("Extra {i}");
-        s.prep.bench.push(extra);
-    }
-    // 4 deployed units, the scout and 30 more: Up from the first wraps to
-    // the last.
-    update(&mut s, &mut c, &[Confirm, CursorUp]);
-    assert_eq!(s.unit().map(|u| u.name.as_str()), Some("Extra 29"));
-    // The box spans rows 3..=27: 23 rows of names between its borders.
-    assert!(
-        drawn_row(&s, &c, 4).starts_with("│ Extra 7"),
-        "{}",
-        drawn_row(&s, &c, 4)
-    );
-    assert!(drawn_row(&s, &c, 26).starts_with("│ Extra 29"));
-    assert!(drawn_row(&s, &c, 27).starts_with("└──────────────┘"));
-    assert_eq!(drawn_row(&s, &c, 28).trim(), "");
-    // Back at the top, the first rows show again.
-    update(&mut s, &mut c, &[CursorDown]);
-    assert!(drawn_row(&s, &c, 4).starts_with("│ Test Lord"));
-    assert!(drawn_row(&s, &c, 26).starts_with("│ Extra 17"));
 }
 
 /// Seals (ticket 0603) are neither consumables nor gear: they stay in the
@@ -670,4 +627,330 @@ fn another_units_item_is_swapped_directly() {
     );
     assert_eq!(s.setup().units[1].loadout.armour, None);
     assert_eq!(s.setup().stock.count(&ItemId::new("leather_vest")), 1);
+}
+
+/// The Loadouts tab of `view`.
+fn loadouts(view: &PreparationsView) -> &LoadoutsView {
+    match &view.body {
+        PrepBody::Loadouts(loadouts) => loadouts,
+        other => panic!("not the Loadouts tab: {other:?}"),
+    }
+}
+
+/// The chosen unit's gear in `view`.
+fn gear(view: &PreparationsView) -> &GearView {
+    loadouts(view).gear.as_ref().expect("a unit is chosen")
+}
+
+/// The Pack tab of `view`.
+fn pack(view: &PreparationsView) -> &PackView {
+    match &view.body {
+        PrepBody::Pack(pack) => pack,
+        other => panic!("not the Pack tab: {other:?}"),
+    }
+}
+
+/// A slot row holding `item`.
+fn slot(label: &str, item: Option<&str>, wear: &str) -> SlotRowView {
+    SlotRowView {
+        label: label.to_owned(),
+        item: item.map(str::to_owned),
+        wear: wear.to_owned(),
+    }
+}
+
+#[test]
+fn the_view_on_the_first_frame_is_the_loadouts_tab_with_the_cursor_on_the_tabs() {
+    let c = ctx();
+    let view = screen(&c).view(&c);
+    assert_eq!(view.heading, "Preparations");
+    let tabs: Vec<_> = view
+        .tabs
+        .iter()
+        .map(|t| (t.tab, &*t.label, t.shown))
+        .collect();
+    assert_eq!(
+        tabs,
+        [
+            (Tab::Loadouts, "Loadouts", true),
+            (Tab::Pack, "Pack", false),
+            (Tab::Options, "Options", false),
+            (Tab::Fight, "Fight!", false),
+        ]
+    );
+    assert!(view.on_tabs);
+    assert_eq!((&view.message, &view.leave_question), (&None, &None));
+    assert_eq!(view.help, "arrows choose · f open · d leave");
+
+    // The army, the one left out of the battle last; nothing chosen yet.
+    let units = &loadouts(&view).units;
+    assert_eq!(units.title, "Units");
+    let rows: Vec<_> = units.rows.iter().map(|u| (&*u.name, u.deployed)).collect();
+    assert_eq!(
+        rows,
+        [
+            ("Test Lord", true),
+            ("Test Knight", true),
+            ("Test Archer", true),
+            ("Test Mage", true),
+            ("Test Scout", false),
+        ]
+    );
+    assert_eq!((units.cursor, units.state), (0, ListState::Idle));
+    // The first unit's gear shows beside it.
+    let gear = gear(&view);
+    assert_eq!(gear.slots.title, "Test Lord · Exile");
+    assert_eq!(
+        gear.slots.rows,
+        [
+            slot("Weapon", Some("Iron Sword"), "20/20"),
+            slot("Weapon", Some("Steel Sword"), "25/25"),
+            slot("Weapon", None, ""),
+            slot("Armor", Some("Leather Vest"), ""),
+            slot("Accessory", None, ""),
+        ]
+    );
+    assert_eq!((gear.slots.cursor, gear.slots.state), (0, ListState::Idle));
+    assert_eq!(gear.speed.as_deref(), Some("AS 6 with Iron Sword"));
+    assert_eq!(gear.benched_note, None);
+    assert_eq!(gear.stock.title, "Stock: weapons");
+    assert_eq!((gear.stock.cursor, gear.stock.state), (0, ListState::Idle));
+}
+
+#[test]
+fn the_view_follows_the_cursor_through_the_loadout_lists() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    update(&mut s, &mut c, &[Confirm]);
+    let view = s.view(&c);
+    assert!(!view.on_tabs);
+    assert_eq!(loadouts(&view).units.state, ListState::Focused);
+    assert_eq!(gear(&view).slots.state, ListState::Idle);
+    assert_eq!(view.help, "arrows choose · f change gear · d back");
+
+    // The lord's third slot: the unit is the chosen one.
+    update(&mut s, &mut c, &[Confirm, CursorDown, CursorDown]);
+    let view = s.view(&c);
+    assert_eq!(loadouts(&view).units.state, ListState::Chosen);
+    let slots = &gear(&view).slots;
+    assert_eq!((slots.cursor, slots.state), (2, ListState::Focused));
+    assert_eq!(gear(&view).stock.state, ListState::Idle);
+    assert_eq!(
+        gear(&view).speed.as_deref(),
+        Some("AS 7 with no weapon"),
+        "the speed is with the highlighted slot's weapon"
+    );
+
+    // Its stock, on the Iron Sword: the slot is the chosen one too, and
+    // the speed shows the change.
+    update(&mut s, &mut c, &[Confirm, CursorUp]);
+    let view = s.view(&c);
+    let gear = gear(&view);
+    assert_eq!(loadouts(&view).units.state, ListState::Chosen);
+    assert_eq!(
+        (gear.slots.cursor, gear.slots.state),
+        (2, ListState::Chosen)
+    );
+    assert_eq!(
+        (gear.stock.cursor, gear.stock.state),
+        (2, ListState::Focused)
+    );
+    let rows: Vec<_> = gear.stock.rows.iter().collect();
+    let row = |name: &str, detail: &str, usable| ItemRowView {
+        name: name.to_owned(),
+        detail: detail.to_owned(),
+        usable,
+    };
+    assert_eq!(
+        rows,
+        [
+            &row("Steel Spear", "can't use spears", false),
+            &row("Iron Axe", "can't use axes", false),
+            &row("Iron Sword", "Mt 5 Hit 90 Wt 2 Rng1 20/20", true),
+        ]
+    );
+    assert_eq!(gear.speed.as_deref(), Some("AS 7 → 6 with Iron Sword"));
+
+    // A refused item's reason is the message.
+    update(&mut s, &mut c, &[CursorDown, Confirm]);
+    let view = s.view(&c);
+    assert_eq!(view.message.as_deref(), Some("Test Lord can't use spears."));
+    assert_eq!(view.leave_question, None);
+
+    // The armour and accessory slots name their own stock.
+    update(&mut s, &mut c, &[Cancel, CursorDown]);
+    assert_eq!(gear_title(&s, &c), "Stock: armor");
+    update(&mut s, &mut c, &[CursorDown]);
+    assert_eq!(gear_title(&s, &c), "Stock: accessories");
+}
+
+/// The title of the stock list beside the slots.
+fn gear_title(s: &PreparationsScreen, c: &Ctx) -> String {
+    gear(&s.view(c)).stock.title.clone()
+}
+
+#[test]
+fn the_view_of_a_slot_that_holds_something_offers_to_put_it_back() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    update(&mut s, &mut c, &[Confirm, Confirm, Confirm]);
+    let view = s.view(&c);
+    let first = &gear(&view).stock.rows[0];
+    assert_eq!(
+        (&*first.name, &*first.detail, first.usable),
+        (PUT_BACK, "", true)
+    );
+}
+
+#[test]
+fn the_view_of_a_benched_unit_says_it_is_not_in_this_battle() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    // The scout, the last unit, and her first slot's list.
+    update(&mut s, &mut c, &[Confirm, CursorUp]);
+    let view = s.view(&c);
+    let units = &loadouts(&view).units;
+    assert_eq!((units.cursor, units.state), (4, ListState::Focused));
+    assert!(!units.rows[4].deployed);
+    let gear = gear(&view);
+    assert_eq!(gear.slots.title, "Test Scout · Archer");
+    assert_eq!(
+        gear.slots.rows[0],
+        slot("Weapon", Some("Steel Bow"), "25/25")
+    );
+    assert_eq!(gear.speed.as_deref(), Some("AS 2 with Steel Bow"));
+    assert_eq!(gear.benched_note.as_deref(), Some("Not in this battle"));
+    // What another unit holds says whose it is.
+    update(&mut s, &mut c, &[Confirm, Confirm, CursorUp]);
+    let view = s.view(&c);
+    let last = self::gear(&view).stock.rows.last().cloned();
+    let last = last.expect("the archer's bow");
+    assert_eq!(
+        (&*last.name, &*last.detail, last.usable),
+        ("Iron Bow", "20/20  from Test Archer", true)
+    );
+    assert_eq!(
+        self::gear(&view).speed.as_deref(),
+        Some("AS 2 → 4 with Iron Bow")
+    );
+}
+
+#[test]
+fn the_view_of_the_pack_tab_counts_both_sides_and_says_when_the_pack_is_full() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    let row = |name: &str, count, effect: &str| ConsumableRowView {
+        name: name.to_owned(),
+        count,
+        effect: effect.to_owned(),
+    };
+    update(&mut s, &mut c, &[CursorRight]);
+    let view = s.view(&c);
+    assert!(view.on_tabs);
+    assert!(view.tabs[1].shown && !view.tabs[0].shown);
+    let tab = pack(&view);
+    assert_eq!(tab.spare.title, "Stock");
+    assert_eq!(
+        tab.spare.rows,
+        [
+            row("Elixir", 2, "Restore all HP"),
+            row("Potion", 6, "Restore 10 HP")
+        ]
+    );
+    assert_eq!(tab.spare.state, ListState::Idle);
+    assert_eq!(tab.pack.title, "Pack 0/6");
+    assert!(tab.pack.rows.is_empty());
+    assert_eq!(tab.pack.state, ListState::Idle);
+
+    // An Elixir and five Potions fill it; one more is refused.
+    update(&mut s, &mut c, &[Confirm, Confirm, CursorDown]);
+    update(
+        &mut s,
+        &mut c,
+        &[Confirm, Confirm, Confirm, Confirm, Confirm],
+    );
+    update(&mut s, &mut c, &[Confirm]);
+    let view = s.view(&c);
+    let tab = pack(&view);
+    assert_eq!(
+        tab.spare.rows,
+        [
+            row("Elixir", 1, "Restore all HP"),
+            row("Potion", 1, "Restore 10 HP")
+        ]
+    );
+    assert_eq!((tab.spare.cursor, tab.spare.state), (1, ListState::Focused));
+    assert_eq!(tab.pack.title, "Pack 6/6");
+    assert_eq!(
+        tab.pack.rows,
+        [
+            row("Elixir", 1, "Restore all HP"),
+            row("Potion", 5, "Restore 10 HP")
+        ]
+    );
+    assert_eq!(tab.pack.state, ListState::Idle);
+    assert_eq!(view.message.as_deref(), Some("The pack is full (6/6)."));
+    assert_eq!(view.help, "arrows choose · f pack it · d back");
+
+    // Over to the pack's second row.
+    update(&mut s, &mut c, &[CursorRight, CursorDown]);
+    let view = s.view(&c);
+    let tab = pack(&view);
+    assert_eq!(view.message, None);
+    assert_eq!(tab.spare.state, ListState::Idle);
+    assert_eq!((tab.pack.cursor, tab.pack.state), (1, ListState::Focused));
+}
+
+#[test]
+fn the_view_of_the_options_and_fight_tabs_and_the_leave_question() {
+    let mut c = ctx();
+    let mut s = screen(&c);
+    update(&mut s, &mut c, &[CursorLeft, CursorLeft]);
+    let view = s.view(&c);
+    assert_eq!(view.body, PrepBody::Options);
+    assert!(view.tabs[2].shown);
+
+    update(&mut s, &mut c, &[CursorRight]);
+    let view = s.view(&c);
+    assert_eq!(view.body, PrepBody::Fight("Units 4 · Pack 0/6".to_owned()));
+    assert!(view.tabs[3].shown && view.on_tabs);
+    assert_eq!(view.leave_question, None);
+    assert_eq!(view.help, "arrows choose · f start the battle · d leave");
+
+    update(&mut s, &mut c, &[Cancel]);
+    let view = s.view(&c);
+    assert_eq!(view.leave_question.as_deref(), Some("Leave preparations?"));
+    assert_eq!(view.message, None);
+    assert_eq!(view.help, "f yes / d no");
+    update(&mut s, &mut c, &[Cancel]);
+    assert_eq!(s.view(&c).leave_question, None);
+}
+
+/// An army of nobody has no gear to show.
+#[test]
+fn the_view_of_an_empty_army_has_no_gear() {
+    let c = ctx();
+    let mut s = screen(&c);
+    s.prep
+        .setup
+        .units
+        .retain(|u| u.faction != trpg_core::Faction::Player);
+    s.prep.bench.clear();
+    let view = s.view(&c);
+    assert!(loadouts(&view).units.rows.is_empty());
+    assert_eq!(loadouts(&view).gear, None);
+}
+
+/// The running game's Preparations says the same through the game flow
+/// that hosts it (ADR-0054: a behaviour test reads the view).
+#[test]
+fn the_hosted_screen_gives_its_view() {
+    use crate::flow::FlowScreen;
+    let mut h = harness();
+    h.keys("Right f");
+    let flow = h.game().screen::<FlowScreen>();
+    let screen = flow.and_then(FlowScreen::preparations);
+    let view = screen.expect("Preparations is open").view(h.game().ctx());
+    assert!(!view.on_tabs);
+    assert_eq!(pack(&view).spare.state, ListState::Focused);
 }
