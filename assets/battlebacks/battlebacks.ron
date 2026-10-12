@@ -1,0 +1,9 @@
+// The picture behind the two fighters in the combat scene (ADR-0056), by
+// the terrain the defender stands on. Format: assets/battlers/README.md.
+(
+    default: "fields.png",
+    terrain: {
+        "mountain": "mountains.png",
+        "peak": "mountains.png",
+    },
+)

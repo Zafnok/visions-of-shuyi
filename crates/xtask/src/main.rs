@@ -3,6 +3,7 @@
 //! A CLI tool prints to stdout by design, so `print_stdout` is allowed here.
 #![allow(clippy::print_stdout)]
 
+mod battler_import;
 mod check_keys;
 mod check_script;
 mod check_text;
@@ -47,6 +48,7 @@ test-card                          write the sprite test image, assets/images/te
 test-tileset                       write the sprite map skins' test tilesets, assets/tilesets/test*\n  \
 effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
+battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \
 tileset-import [--list]            pack the bought terrain tiles and write the game's tileset there\n  \
 playtest <battle-id> [options]     a bot plays a battle many times and reports (playtest --help)\n  \
 private-assets [--library | --pin] fetch the bought art into assets-private/ (ADR-0040)\n  \
@@ -76,6 +78,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("test-tileset") => test_tileset(&args.collect::<Vec<_>>()),
         Some("effect-marks") => effect_marks(&args.collect::<Vec<_>>()),
         Some("map-sprite-import") => map_sprite_import(&args.collect::<Vec<_>>()),
+        Some("battler-import") => battler_import_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("tileset-import") => tileset_import(&args.collect::<Vec<_>>()),
         Some("playtest") => playtest(&args.collect::<Vec<_>>()),
         Some("private-assets") => private_assets(&args.collect::<Vec<_>>()),
@@ -328,6 +331,35 @@ fn map_sprite_import_in(root: &Path, args: &[String]) -> u8 {
         },
         [flag] if flag == "--list" => {
             print!("{}", list(&SPRITES));
+            0
+        }
+        [flag] if flag == "--help" => {
+            println!("{USAGE}");
+            0
+        }
+        _ => {
+            eprintln!("{USAGE}");
+            2
+        }
+    }
+}
+
+/// `battler-import` with the repo at `root`.
+fn battler_import_in(root: &Path, args: &[String]) -> u8 {
+    use battler_import::{BACKDROPS, BATTLERS, USAGE, list, run};
+    match args {
+        [] => match run(root, &BATTLERS, &BACKDROPS) {
+            Ok(summary) => {
+                println!("{summary}");
+                0
+            }
+            Err(e) => {
+                eprintln!("battler-import: {e}");
+                1
+            }
+        },
+        [flag] if flag == "--list" => {
+            print!("{}", list(&BATTLERS, &BACKDROPS));
             0
         }
         [flag] if flag == "--help" => {
@@ -979,6 +1011,22 @@ mod tests {
         assert_eq!(map_sprite_import_in(&bare, &[]), 1);
         assert_eq!(
             dispatch(args(&["map-sprite-import", "--list", "x"]).into_iter()),
+            2
+        );
+    }
+
+    #[test]
+    fn battler_import_help_list_and_bad_args() {
+        // Only the argument check: a real run writes into `assets-private/`.
+        let here = repo_root();
+        assert_eq!(battler_import_in(&here, &args(&["--help"])), 0);
+        assert_eq!(battler_import_in(&here, &args(&["--list"])), 0);
+        assert_eq!(battler_import_in(&here, &args(&["--bogus"])), 2);
+        // No arguments runs it: in a folder with no checkout, that fails.
+        let bare = std::env::temp_dir().join(format!("xtask-bi-none-{}", std::process::id()));
+        assert_eq!(battler_import_in(&bare, &[]), 1);
+        assert_eq!(
+            dispatch(args(&["battler-import", "--list", "x"]).into_iter()),
             2
         );
     }

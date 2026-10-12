@@ -205,3 +205,59 @@ fn the_enemys_actions_get_the_pacing_of_the_players_speeds() {
     });
     assert_eq!(both, super::ai_phase::PACING.at_speed(4.0, (12.0, 48.0)));
 }
+
+/// What the battle's stage shows now, if it is up.
+fn stage_of(h: &Harness) -> Option<stage::view::StageView> {
+    battle(h).stage_view(h.game().ctx())
+}
+
+#[test]
+fn a_fight_plays_on_the_stage_with_both_fighters() {
+    let mut h = fight(|_| {});
+    assert!(in_combat(&h));
+    let view = stage_of(&h).expect("the stage");
+    let names = [&view.fighters[0].name, &view.fighters[1].name];
+    assert_eq!(names, ["Test Lord", "Brigand"]);
+    assert_eq!((view.left, view.melee), (0, true));
+    // Both stand on plain ground: the fields behind them.
+    assert_eq!(
+        view.backdrop.map(trpg_content::ImageId::path),
+        Some("battlebacks/fields.png")
+    );
+    // Drawn where the map was: the pictures, and no playback box.
+    let drawn = h.snapshot();
+    for picture in [
+        "battlebacks/fields.png",
+        "battlers/exile.png",
+        "battlers/brigand.png",
+    ] {
+        assert!(drawn.contains(picture), "{picture}:\n{drawn}");
+    }
+    assert!(!drawn.contains('╔'), "{drawn}");
+    // Once the fight is over the map is back.
+    frames_of_fight(&mut h);
+    assert_eq!(stage_of(&h), None);
+    assert!(!h.snapshot().contains("battlebacks/"));
+}
+
+#[test]
+fn the_backdrop_is_the_one_of_the_ground_the_defender_stands_on() {
+    let c = ctx();
+    let quick = quick_battle(&c.content).unwrap();
+    let mountain = c.content.terrain.display.id_of("mountain").unwrap();
+    let mut map = quick.map().clone();
+    // Under the brigand (8, 2), not under the lord.
+    *map.tiles.get_mut(Pos::new(8, 2)).unwrap() = mountain;
+    let mut units = quick.units().to_vec();
+    units[0].pos = Pos::new(6, 2);
+    let state = super::testing::battle(&c, map, units);
+    let mut h = Harness::with_screen(Box::new(BattleScreen::new(state)));
+    h.keys("f Right f").wait(0.5);
+    h.keys("f f Right f");
+    let view = stage_of(&h).expect("the stage");
+    assert_eq!(view.fighters[1].name, "Brigand");
+    assert_eq!(
+        view.backdrop.map(trpg_content::ImageId::path),
+        Some("battlebacks/mountains.png")
+    );
+}

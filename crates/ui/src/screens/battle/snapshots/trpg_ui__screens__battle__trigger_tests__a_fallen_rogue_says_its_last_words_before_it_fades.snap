@@ -3,24 +3,24 @@ source: crates/ui/src/screens/battle/trigger_tests.rs
 expression: h.snapshot()
 ---
                                                                       ┌────────────────────────────┐
-             ╔══════════════════════════════════════════╗        ╔════════════════════════════════╗│
-             ║ Test Lord             Test Rogue         ║        ║                                ║│
-             ║ HP 19 ██████████      HP  0 ░░░░░░░░░░   ║        ║                                ║│
-             ║                                          ║        ║                                ║│
-             ╚══════════════════════════════════════════╝        ║                                ║│
+                                                                 ╔════════════════════════════════╗│
                                                                  ║                                ║│
                                                                  ║                                ║│
                                                                  ║                                ║│
                                                                  ║                                ║│
                                                                  ║                                ║│
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                 ║                                ║│
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                 ║                                ║│
-                    ≈≈≈≈≈≈====······Br..♣♣♣♣....                 ║                                ║│
-                    ..≈≈≈≈..··..............╦╦..                 ║                                ║│
-                    ....Ar····....Br..▓▓▓▓▓▓▓▓..                 ║                                ║│
-                    ..♣♣··LoRo╦╦......▓▓░░╦╦▓▓..                 ║                                ║│
-                    ♣♣♣♣··..Kn........▓▓░░░░▓▓..                 ║                                ║│
-                    ♣♣♠♠··............▓▓▓▓▐▌▓▓..                 ╚════════════════════════════════╝│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ║                                ║│
+                                                                 ╚════════════════════════════════╝│
                                                                              Test Rogue            │
                                                                       │                            │
 ┌── Test Rogue ────────────────────────────────────────────────────────────────────────────────────┐
@@ -36,69 +36,48 @@ expression: h.snapshot()
                                                                                                     
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaccccccccccccccccccccccccccccccccccccccccccccaaaaaaaaccccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaacdeeeeeeeeedddddddddddddffffffffffdddddddddcaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaacdddddddggggggggggddddddddddddhhhhhhhhhhdddcaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaacddddddddddddddddddddddddddddddddddddddddddcaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaccccccccccccccccccccccccccccccccccccccccccccaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaaiiiiiijjjjkkkkllllmmmmnnnnooaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaaiiiijjjjkkkkppqqppllllnnnnnnaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaaiijjjjrrrrppppppsskkllllkkkkaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaakkjjjjkkppkkkkkkkkkkkkkkttkkaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaakkkkuuppppkkkksskkvvvvvvvvkkaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaakkllppwwssttkkkkkkvvxxttvvkkaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaallllppkkwwkkkkkkkkvvxxxxvvkkaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddcb
-aaaaaaaaaaaaaaaaaaaallmmppkkkkkkkkkkkkvvvvyyvvkkaaaaaaaaaaaaaaaaaccccccccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaddddddddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-bbbzzzzzzzzzzzzbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-bddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
-bddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
-bddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
-bddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddb
-bdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddhddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaccccccccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaccccccccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaab
+bbbddddddddddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab
+baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab
+baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab
+baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab
+baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaeaaaab
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 --- legend ---
-a = fg:text bg:black
+a = fg:text bg:panel_bg
 b = fg:panel_border bg:panel_bg
 c = fg:panel_border_focus bg:panel_bg
-d = fg:text bg:panel_bg
-e = fg:player bg:panel_bg
-f = fg:enemy bg:panel_bg
-g = fg:hp_high bg:panel_bg
-h = fg:text_dim bg:panel_bg
-i = fg:water bg:sea
-j = fg:water bg:water_bg
-k = fg:grass bg:grass_bg
-l = fg:forest bg:forest_bg
-m = fg:thicket bg:thicket_bg
-n = fg:mountain bg:mountain_bg
-o = fg:peak bg:peak_bg
-p = fg:road bg:road_bg
-q = fg:enemy bg:road_bg
-r = fg:wood bg:water_bg
-s = fg:enemy bg:grass_bg
-t = fg:fort bg:fort_bg
-u = fg:player bg:road_bg
-v = fg:stone bg:stone_bg
-w = fg:player bg:grass_bg
-x = fg:floor bg:floor_bg
-y = fg:wood bg:stone_bg
-z = fg:text_highlight bg:panel_bg
+d = fg:text_highlight bg:panel_bg
+e = fg:text_dim bg:panel_bg
+f = fg:text bg:black
 --- overlays ---
-over  209,270 14x2  hp_high
-over  225,286 14x2  hp_high
-over  193,254 14x2  hp_high
-over  289,222 14x2  hp_high
-over  273,254 14x2  hp_high
-over  273,206 14x2  hp_high
-over  225,270 14x2  black
+under sprite 0,0 560x384  battlebacks/fields.png 28,40 280x192 clip=0,0 560x16
+under sprite 0,0 560x384  battlebacks/fields.png 28,40 280x192 clip=0,320 560x16
+under sprite 0,0 560x384  battlebacks/fields.png 28,40 280x192 clip=0,304 520x16
+under sprite 0,0 560x384  battlebacks/fields.png 28,40 280x192 clip=0,16 520x288
+under sprite 104,132 96x144  battlers/exile.png 0,0 48x72
+under sprite 360,132 96x144  battlers/raider.png 0,0 48x72 flip

@@ -26,7 +26,10 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use trpg_core::{CharacterId, Event, Faction, Side, StatKind, StatValue, Strike, Unit, UnitId};
+use trpg_core::{
+    CharacterId, ClassId, Event, Faction, Pos, Side, SideForecast, StatKind, StatValue, Strike,
+    Unit, UnitId,
+};
 
 use super::event_sounds::{Attack, cast_sound, sound_for_strike};
 use super::info::stat_name;
@@ -89,6 +92,12 @@ pub struct Fighter {
     pub start: StatValue,
     /// Its max HP.
     pub max: StatValue,
+    /// Who it is, if it is a named character (for its picture).
+    pub character: Option<CharacterId>,
+    /// Its class (for its picture).
+    pub class: ClassId,
+    /// The tile it fights from.
+    pub pos: Pos,
 }
 
 /// One combat ([`Event::CombatResolved`]).
@@ -100,6 +109,17 @@ pub struct Bout {
     pub defender: Fighter,
     /// Every strike, in order.
     pub strikes: Vec<Strike>,
+    /// The numbers the combat used: the attacker's, then the defender's
+    /// (`None` if it couldn't counter).
+    pub numbers: [Option<SideForecast>; 2],
+}
+
+impl Bout {
+    /// Whether the two fight hand to hand: from tiles side by side (or
+    /// the same tile).
+    pub fn melee(&self) -> bool {
+        Pos::manhattan(self.attacker.pos, self.defender.pos) <= 1
+    }
 }
 
 /// A part of the timeline.
@@ -229,7 +249,9 @@ impl Playback {
     ) -> Option<Self> {
         // HP as the combats go, starting from before the command.
         let mut hp: BTreeMap<UnitId, StatValue> = before.iter().map(|u| (u.id, u.hp)).collect();
-        let fighter = |id: UnitId, hp: &BTreeMap<UnitId, StatValue>| {
+        // Where each unit stands as the events go.
+        let mut at: BTreeMap<UnitId, Pos> = before.iter().map(|u| (u.id, u.pos)).collect();
+        let fighter = |id: UnitId, hp: &BTreeMap<UnitId, StatValue>, at: &BTreeMap<UnitId, Pos>| {
             let unit = before.iter().find(|u| u.id == id)?;
             Some(Fighter {
                 unit: id,
@@ -237,6 +259,9 @@ impl Playback {
                 faction: unit.faction,
                 start: hp.get(&id).copied().unwrap_or(unit.hp),
                 max: unit.stats.hp,
+                character: unit.character.clone(),
+                class: unit.class.clone(),
+                pos: at.get(&id).copied().unwrap_or(unit.pos),
             })
         };
         let mut bouts = Vec::new();
@@ -256,13 +281,19 @@ impl Playback {
                 scenes.push((cue, Anchor::End));
             }
             match event {
+                Event::UnitMoved { unit, path } => {
+                    if let Some(to) = path.last() {
+                        at.insert(*unit, *to);
+                    }
+                }
                 Event::CombatResolved {
                     attacker,
                     defender,
+                    forecast,
                     outcome,
-                    ..
                 } => {
-                    let (Some(a), Some(d)) = (fighter(*attacker, &hp), fighter(*defender, &hp))
+                    let (Some(a), Some(d)) =
+                        (fighter(*attacker, &hp, &at), fighter(*defender, &hp, &at))
                     else {
                         continue;
                     };
@@ -273,6 +304,7 @@ impl Playback {
                         attacker: a,
                         defender: d,
                         strikes: outcome.strikes.clone(),
+                        numbers: [Some(forecast.attacker), forecast.defender],
                     });
                 }
                 Event::UnitFell { unit } => {
@@ -538,6 +570,11 @@ impl Playback {
         self.falls
             .get(fall)
             .map(|u| words.text_with("battle.playback.fallen", &[("name", &words.unit(u))]))
+    }
+
+    /// The length of the half-period of a striker's name flashing.
+    pub fn blink(&self) -> f32 {
+        self.timings.blink
     }
 
     /// The step of `beat`, if the timeline has one.

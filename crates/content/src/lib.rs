@@ -6,6 +6,7 @@ pub mod ai;
 pub mod art;
 pub mod audio;
 pub mod battle;
+pub mod battler;
 pub mod bundle;
 pub mod chapter;
 pub mod character;
@@ -44,6 +45,7 @@ use trpg_core::{
 
 pub use audio::{AudioManifest, Credit, CreditRef, MusicCue, SoundCue};
 pub use battle::BattleRefs;
+pub use battler::{Battler, BattlerTable};
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
 pub use credits::{CreditEntry, CreditGroup, Credits};
@@ -121,6 +123,8 @@ pub struct Content {
     pub supports: SupportTable,
     /// English screen text and the language packs (ADR-0045).
     pub lang: Arc<Lang>,
+    /// Combat pictures and the backdrops behind them (ADR-0056).
+    pub battlers: BattlerTable,
 }
 
 impl Content {
@@ -196,6 +200,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         Ok(i) => portrait::load_all(i),
         Err(_) => Ok(BTreeMap::new()),
     };
+    let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok());
     let audio = audio::load();
     let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
     let (known, cues) = (names.as_ref().ok(), audio.as_ref().ok());
@@ -249,6 +254,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         new_game,
         supports,
         lang: Ok(Lang::default()),
+        battlers: stage_art,
     };
     let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
     units.lang = lang::load(data);
@@ -499,6 +505,18 @@ fn check_map_features(
     }
 }
 
+/// The combat pictures and backdrops (ADR-0056): none if the images failed
+/// to load (their errors are reported once, by the image table).
+fn load_battlers(
+    images: Option<&ImageTable>,
+    terrain: Option<&TerrainDef>,
+) -> Result<BattlerTable, Vec<ContentError>> {
+    match images {
+        Some(images) => battler::load_all(images, terrain.map(|t| &t.display)),
+        None => Ok(BattlerTable::default()),
+    }
+}
+
 /// Loader results for the unit data (kept together to keep [`assemble`]'s
 /// argument list short).
 struct Loaded {
@@ -522,6 +540,7 @@ struct Loaded {
     new_game: Result<NewGameDef, Vec<ContentError>>,
     supports: Result<SupportTable, Vec<ContentError>>,
     lang: Result<Lang, Vec<ContentError>>,
+    battlers: Result<BattlerTable, Vec<ContentError>>,
 }
 
 /// Takes a loader's value, or moves its errors into `errors` and returns a
@@ -570,6 +589,7 @@ fn assemble(
         new_game: take(units.new_game, &mut errors),
         supports: take(units.supports, &mut errors),
         lang: Arc::new(take(units.lang, &mut errors)),
+        battlers: take(units.battlers, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -628,6 +648,10 @@ mod tests {
 
     fn ok_skills() -> Result<SkillTable, Vec<ContentError>> {
         skill::load()
+    }
+
+    fn ok_battlers() -> Result<BattlerTable, Vec<ContentError>> {
+        battler::load_all(&ImageTable::load().unwrap_or_default(), None)
     }
 
     fn ok_portraits() -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
@@ -696,6 +720,7 @@ mod tests {
             new_game,
             supports: ok_supports(),
             lang: lang::load(None),
+            battlers: ok_battlers(),
         }
     }
 
@@ -797,9 +822,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 25] = [
+    const NAMES: [&str; 26] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l",
+        "j", "z", "b", "h", "g", "q", "l", "A",
     ];
 
     #[test]
@@ -833,6 +858,7 @@ mod tests {
                     new_game: Err(e("g")),
                     supports: Err(e("q")),
                     lang: Err(e("l")),
+                    battlers: Err(e("A")),
                 },
             ),
             Err(ContentErrors(NAMES.iter().flat_map(|f| e(f)).collect()))
@@ -889,12 +915,21 @@ mod tests {
                     } else {
                         lang::load(None)
                     },
+                    battlers: if i == 25 { Err(e("A")) } else { ok_battlers() },
                 },
             )
         };
         for (i, f) in NAMES.iter().enumerate() {
             assert_eq!(only(i), Err(ContentErrors(e(f))));
         }
+    }
+
+    #[test]
+    fn battlers_are_skipped_when_the_images_failed() {
+        assert_eq!(load_battlers(None, None), Ok(BattlerTable::default()));
+        let images = ImageTable::load().ok();
+        let loaded = load_battlers(images.as_ref(), ok_terrain().ok().as_ref());
+        assert!(loaded.is_ok_and(|t| !t.battlers.is_empty()));
     }
 
     #[test]

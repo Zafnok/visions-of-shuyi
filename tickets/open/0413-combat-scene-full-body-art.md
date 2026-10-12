@@ -5,7 +5,7 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5
 effort: high
-status: todo
+status: in-progress
 blocked_by: ["0404", "0021", "0035", "0110", "0711", "0231"]
 nick_input: decision
 completed:

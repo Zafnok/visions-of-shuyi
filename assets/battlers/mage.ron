@@ -1,0 +1,6 @@
+// Placeholder (ADR-0056): the bought picture replaces this file.
+(
+    id: "mage",
+    image: "mage.png",
+    faces: Right,
+)
