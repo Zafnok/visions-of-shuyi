@@ -732,7 +732,7 @@ mod tests {
                 vec![Button::DpadUp, Button::LeftStickUp]
             );
             // Unused by default.
-            assert_eq!(km.pad_action(Button::RightTrigger), None);
+            assert_eq!(km.pad_action(Button::RightStickPress), None);
             assert_eq!(km.pad_action(Button::RightStickUp), None);
             assert_eq!(km.buttons_for(Action::Debug), vec![]);
             for action in Action::ALL {
@@ -913,7 +913,7 @@ mod tests {
     fn presses_that_do_nothing_leave_the_device_alone() {
         let mut s = pad_state();
         // An unbound button, and a button on a keymap without buttons.
-        s.pad_down(Button::RightTrigger, PAD);
+        s.pad_down(Button::RightStickPress, PAD);
         assert_eq!(s.device(), Device::Keyboard);
         let mut keys_only = default_state();
         keys_only.pad_down(Button::South, PAD);
@@ -1046,9 +1046,9 @@ mod tests {
     #[test]
     fn unbound_buttons_are_ignored() {
         let mut s = pad_state();
-        s.pad_down(Button::RightTrigger, PAD);
+        s.pad_down(Button::RightStickPress, PAD);
         assert!(s.held.is_empty());
-        s.pad_up(Button::RightTrigger);
+        s.pad_up(Button::RightStickPress);
         assert_eq!(s.update(ms(500)), vec![]);
         // Without buttons in the keymap, every button is unbound.
         let mut s = default_state();

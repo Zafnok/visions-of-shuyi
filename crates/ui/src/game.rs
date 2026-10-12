@@ -466,7 +466,7 @@ mod tests {
         let mut game = Game::start(first_launch());
         pad_tap(&mut game, Button::DpadDown);
         assert_eq!(game.ctx().device, Device::Pad(PadKind::Xbox));
-        game.frame(&[down(Key::Q)], 0.0);
+        game.frame(&[down(Key::Z)], 0.0);
         assert_eq!(game.screens(), ["title", "layout_picker"]);
         assert_eq!(game.ctx().device, Device::Keyboard);
     }
@@ -475,15 +475,15 @@ mod tests {
     /// bound or not, and does nothing else; the next key asks again.
     #[test]
     fn a_pad_button_closes_the_picker_without_choosing() {
-        for button in [Button::South, Button::DpadDown, Button::RightTrigger] {
+        for button in [Button::South, Button::DpadDown, Button::RightStickPress] {
             let mut game = Game::start(first_launch());
-            tap(&mut game, Key::Q);
+            tap(&mut game, Key::Z);
             assert_eq!(game.screens(), ["title", "layout_picker"]);
             pad_tap(&mut game, button);
             assert_eq!(game.screens(), ["title"], "{button:?}");
             assert_eq!(game.ctx().layout(), None);
             assert_eq!(game.ctx().saved_layout(), None);
-            tap(&mut game, Key::Q);
+            tap(&mut game, Key::Z);
             assert_eq!(game.screens(), ["title", "layout_picker"]);
         }
     }
@@ -527,7 +527,7 @@ mod tests {
     #[test]
     fn picking_a_layout_switches_the_input_keys() {
         let mut game = Game::start(first_launch());
-        tap(&mut game, Key::Q);
+        tap(&mut game, Key::Z);
         // Picker keys: `s` moves down, `j` picks.
         tap(&mut game, Key::S);
         tap(&mut game, Key::J);
@@ -550,12 +550,12 @@ mod tests {
     #[test]
     fn a_key_press_moves_the_key_prompt_on() {
         let mut game = Game::start(ctx());
-        game.frame(&[down(Key::Q)], 0.0);
+        game.frame(&[down(Key::Z)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Off);
         let mut game = Game::start(waiting(ctx()));
-        game.frame(&[RawInputEvent::Up(Key::Q)], 0.0);
+        game.frame(&[RawInputEvent::Up(Key::Z)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Waiting);
-        game.frame(&[down(Key::Q)], 0.0);
+        game.frame(&[down(Key::Z)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
         assert_eq!(game.screens(), ["title"]);
     }
@@ -651,7 +651,7 @@ mod tests {
         pad_tap(&mut game, Button::East);
         assert_eq!(game.screens(), ["title"]);
         // Unbound buttons do nothing.
-        pad_tap(&mut game, Button::RightTrigger);
+        pad_tap(&mut game, Button::RightStickPress);
         assert_eq!(game.screens(), ["title"]);
         // D-pad up wraps to Quit; South chooses it.
         pad_tap(&mut game, Button::DpadUp);
@@ -671,7 +671,7 @@ mod tests {
         game.frame(&[RawInputEvent::PadUp(Button::DpadDown)], 0.0);
         assert_eq!(game.ctx().device, Device::Pad(sony));
         // An unbound button on another pad changes nothing.
-        let unbound = RawInputEvent::PadDown(Button::RightTrigger, PadKind::Nintendo);
+        let unbound = RawInputEvent::PadDown(Button::RightStickPress, PadKind::Nintendo);
         game.frame(&[unbound], 0.0);
         assert_eq!(game.ctx().device, Device::Pad(sony));
         game.frame(&[down(Key::Up)], 0.0);
@@ -710,10 +710,13 @@ mod tests {
     #[test]
     fn a_pad_button_moves_the_key_prompt_on() {
         let mut game = Game::start(waiting(ctx()));
-        game.frame(&[RawInputEvent::PadUp(Button::RightTrigger)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::RightStickPress)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Waiting);
         game.frame(
-            &[RawInputEvent::PadDown(Button::RightTrigger, PadKind::Xbox)],
+            &[RawInputEvent::PadDown(
+                Button::RightStickPress,
+                PadKind::Xbox,
+            )],
             0.0,
         );
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
@@ -742,7 +745,7 @@ mod tests {
     #[test]
     fn escape_is_ignored_by_the_first_launch_picker() {
         let mut game = Game::start(first_launch());
-        tap(&mut game, Key::Q);
+        tap(&mut game, Key::Z);
         assert_eq!(
             game.input.keymap().action(Chord::plain(Key::Escape)),
             Some(Action::Cancel)
@@ -890,7 +893,7 @@ mod tests {
     fn screens_see_unbound_and_shifted_presses_as_chords() {
         let seen = std::rc::Rc::default();
         let mut game = Game::new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
-        let shifted = Chord::shifted(Key::Q);
+        let shifted = Chord::shifted(Key::Z);
         game.frame(&[down(Key::Delete), RawInputEvent::Down(shifted)], 0.0);
         let seen = seen.borrow();
         assert!(seen[0].actions.is_empty());

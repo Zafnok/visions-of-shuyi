@@ -55,6 +55,8 @@
             // End turn pressed again.
             "Select": [],
             "ConfirmEndTurn": [],
+            // Switches the battle map between 1x and 2x (pictures only).
+            "ZoomMap": ["q"],
         },
         // W A S D steer; the right hand acts from the J K L ; row, a finger
         // for finger mirror of RightHanded.
@@ -77,6 +79,7 @@
             "Rewind": ["u"],
             "Select": [],
             "ConfirmEndTurn": [],
+            "ZoomMap": ["p"],
         },
     },
     // Before a layout is chosen: either hand's up/down and confirm keys.
@@ -120,6 +123,7 @@
         "Rewind": ["LeftTrigger"],
         "Select": [],
         "ConfirmEndTurn": [],
+        "ZoomMap": ["RightTrigger"],
     },
     // Held cursor keys and buttons, in every layout and the layout picker:
     // first repeat after delay_ms, then every interval_ms.

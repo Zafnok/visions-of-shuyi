@@ -130,8 +130,8 @@ fn a_sprite_skinned_map_is_a_scene_of_sprites() {
     let mut h = Harness::with_layout(Layout::RightHanded);
     h.with_map_skin("sprite").keys("F2 Up Up f");
     let scene = h.game().buffer().backdrop().unwrap().scene();
-    // 14 × 8 tiles of 24 px.
-    assert_eq!((scene.width(), scene.height()), (42, 12));
+    // 14 × 8 tiles of 24 px, at the zoom a new player has (2×).
+    assert_eq!((scene.width(), scene.height()), (84, 24));
     assert!(scene.sprites().len() >= 14 * 8);
     // The console's own items stay its own: the scene's aren't copied in.
     assert!(h.game().buffer().items().is_empty());

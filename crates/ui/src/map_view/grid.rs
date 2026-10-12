@@ -24,6 +24,9 @@ pub struct Grid {
     pub tile: (i32, i32),
     /// Tiles drawn, across × down.
     pub tiles: (i32, i32),
+    /// Console pixels per pixel of the art (the skin's zoom): 1 unless
+    /// everything on the map is drawn bigger. `tile` already counts it.
+    pub scale: i32,
 }
 
 impl Grid {
@@ -57,6 +60,47 @@ impl Grid {
         Some(self.rect_at(dx, dy))
     }
 
+    /// The skin's zoom, at least 1.
+    fn zoom(&self) -> i32 {
+        self.scale.max(1)
+    }
+
+    /// A tile at the art's own size, its corner at (0, 0): what a mark's
+    /// place on a tile is worked out on, whatever the zoom
+    /// ([`zoomed`](Self::zoomed)).
+    pub fn art_tile(&self) -> PxRect {
+        let zoom = self.zoom();
+        Rect::new(0, 0, self.tile.0 / zoom, self.tile.1 / zoom)
+    }
+
+    /// The same tiles at the art's own size, laid from (0, 0): what a
+    /// drawing across tiles (the path) is worked out on, whatever the
+    /// zoom, before [`zoomed`](Self::zoomed) from this grid's corner
+    /// places it.
+    #[must_use]
+    pub fn at_art_size(&self) -> Self {
+        let tile = self.art_tile();
+        Self {
+            corner: (0, 0),
+            tile: (tile.w, tile.h),
+            scale: 1,
+            ..*self
+        }
+    }
+
+    /// `art`, pixels worked out on [`art_tile`](Self::art_tile), on the
+    /// tile whose top-left pixel is `corner`: every art pixel a square of
+    /// the zoom's console pixels.
+    pub fn zoomed(&self, corner: (i32, i32), art: PxRect) -> PxRect {
+        let zoom = self.zoom();
+        Rect::new(
+            corner.0 + art.x * zoom,
+            corner.1 + art.y * zoom,
+            art.w * zoom,
+            art.h * zoom,
+        )
+    }
+
     /// The pixels every drawn tile covers.
     pub fn bounds(&self) -> PxRect {
         let (w, h) = self.tile;
@@ -80,6 +124,7 @@ mod tests {
             corner: (4, 8),
             tile: (24, 20),
             tiles: (3, 2),
+            scale: 1,
         };
         assert_eq!(g.offset(p(5, -2)), Some((0, 0)));
         assert_eq!(g.offset(p(7, -1)), Some((2, 1)));
@@ -101,5 +146,38 @@ mod tests {
         assert_eq!(g.rect(p(6, -1)), Some(Rect::new(28, 28, 24, 20)));
         assert_eq!(g.rect_at(2, 0), Rect::new(52, 8, 24, 20));
         assert_eq!(g.bounds(), Rect::new(4, 8, 72, 40));
+        // At the art's own size, a mark is where it was worked out.
+        assert_eq!(g.art_tile(), Rect::new(0, 0, 24, 20));
+        let mark = Rect::new(3, -2, 5, 7);
+        assert_eq!(g.zoomed((28, 28), mark), Rect::new(31, 26, 5, 7));
+    }
+
+    #[test]
+    fn a_zoomed_grid_draws_every_art_pixel_as_a_square() {
+        let g = Grid {
+            origin: p(0, 0),
+            corner: (8, 0),
+            tile: (48, 40),
+            tiles: (3, 2),
+            scale: 2,
+        };
+        assert_eq!(g.art_tile(), Rect::new(0, 0, 24, 20));
+        // From the tile's corner: twice as far, twice as big.
+        let mark = Rect::new(3, -2, 5, 7);
+        assert_eq!(g.zoomed((56, 40), mark), Rect::new(62, 36, 10, 14));
+        assert_eq!(g.zoomed((56, 40), g.art_tile()), g.rect_at(1, 1));
+        // The same tiles unzoomed, from (0, 0); already so at 1×.
+        let art = Grid {
+            corner: (0, 0),
+            tile: (24, 20),
+            scale: 1,
+            ..g
+        };
+        assert_eq!(g.at_art_size(), art);
+        assert_eq!(art.at_art_size(), art);
+        // A scale below 1 counts as 1.
+        let flat = Grid { scale: 0, ..g };
+        assert_eq!(flat.art_tile(), Rect::new(0, 0, 48, 40));
+        assert_eq!(flat.zoomed((1, 2), mark), Rect::new(4, 0, 5, 7));
     }
 }

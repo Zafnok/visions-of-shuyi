@@ -325,9 +325,11 @@ pub fn paint_pictures(
     units.sort_by_key(|(unit, place)| (place.row, unit.between_tiles()));
     for (unit, place) in units {
         let tile = place.tile;
+        let zoomed = |art: PxRect| grid.zoomed((tile.x, tile.y), art);
         let picture = tileset.unit_picture(&picture_ids(ctx, unit), &unit.class);
         let picture = unit_frame(tileset, picture, unit);
-        let dest = unit_dest(picture, tile);
+        let art = unit_dest(picture, grid.art_tile());
+        let dest = zoomed(art);
         let faction = ctx.palette.get(faction_color(unit.faction));
         let (color, paint) = if unit.acted {
             (faction.dimmed(), Paint::Dimmed)
@@ -350,8 +352,8 @@ pub fn paint_pictures(
                 }
             }
         };
-        for outline in outline_dests(dest) {
-            add(outline, Paint::Solid(color), outline_opacity(unit));
+        for outline in outline_dests(art) {
+            add(zoomed(outline), Paint::Solid(color), outline_opacity(unit));
         }
         add(dest, paint, unit_opacity(unit));
     }
@@ -368,13 +370,14 @@ pub fn paint_marks(ctx: &Ctx, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuff
             continue;
         };
         let tile = place.tile;
+        let zoomed = |art: PxRect| grid.zoomed((tile.x, tile.y), art);
         if fade(unit) >= 0.5 {
             continue;
         }
         // An empty part (full or zero HP) is dropped by `add_overlay`; a
         // walking unit's bar ends where the view does.
-        for (rect, color) in hp_bar(unit, tile) {
-            if let Some(rect) = rect.intersect(&view) {
+        for (rect, color) in hp_bar(unit, grid.art_tile()) {
+            if let Some(rect) = zoomed(rect).intersect(&view) {
                 buf.add_overlay(Overlay::new(rect, ctx.palette.get(color), Layer::Over));
             }
         }
@@ -382,7 +385,7 @@ pub fn paint_marks(ctx: &Ctx, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuff
         if let (Some((mark, bounced)), Some(image)) = (mark, arrows) {
             let top_row = place.row == grid.origin.y;
             let lowered = top_row || place.under;
-            let dest = mark_dest(mark, tile, lowered, bounced);
+            let dest = zoomed(mark_dest(mark, grid.art_tile(), lowered, bounced));
             let mut sprite = Sprite::new(image, mark.src(), dest, Layer::Over);
             sprite.base = Some(tile);
             if unit.acted {

@@ -499,6 +499,26 @@ impl Mode {
         )
     }
 
+    /// Whether the map is what the player is looking at: browsing, a
+    /// unit selected or walking, picking a target, the AI's moves. Not a
+    /// menu, a prompt, the unit's page or a fight's playback. The Zoom map
+    /// key works only here.
+    pub fn shows_map(&self) -> bool {
+        matches!(
+            self,
+            Mode::Idle { .. }
+                | Mode::Selected(_)
+                | Mode::Moving { .. }
+                | Mode::MoveAfter { .. }
+                | Mode::Targeting(_)
+                | Mode::CastTarget(_)
+                | Mode::SkillTarget(_)
+                | Mode::ItemTarget(_)
+                | Mode::TalkTarget { .. }
+                | Mode::AiAction(_)
+        )
+    }
+
     /// Whether this mode picks something on the map with the cursor (a
     /// unit, its tile, a heal/item/talk target), which the Select key does
     /// once it has one; menus, prompts and the attack forecast (a spell's
