@@ -2,7 +2,7 @@
 //! data, in the player's language. The skin ([`super::glyph`]) decides
 //! where and how.
 
-use trpg_content::{Battler, ImageId};
+use trpg_content::{Battler, ImageId, Light};
 use trpg_core::{Faction, StatValue};
 
 use super::motion::Pose;
@@ -12,6 +12,10 @@ use super::motion::Pose;
 pub struct StageView {
     /// The picture behind the fighters.
     pub backdrop: Option<ImageId>,
+    /// The light the backdrop is still to be shaded by (ADR-0057): the
+    /// map's, when the picture is noon's; [`Light::PLAIN`] when it was
+    /// drawn for the map's light.
+    pub shade: Light,
     /// The name of the art or active used, if any.
     pub banner: Option<String>,
     /// The attacker, then the defender.

@@ -414,6 +414,7 @@ fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
     let tiles = Grid::from_cells(64, 40, cells.map(terrain).collect()).unwrap();
     let indoor = MapLook {
         tiles: "indoor".to_owned(),
+        light: "dusk".to_owned(),
     };
     let map = BattleMap::new("Big", tiles);
     let mut s = BattleScreen::new(battle(&c, map, units)).with_look(indoor.clone());

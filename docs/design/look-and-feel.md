@@ -216,8 +216,16 @@ so they aren't in this repository (ADR-0032).
   shows them darkened toward our earthy palette, as in render C3. Unit
   sprites keep their own colours in every light, as they did in C3
   *(Claude's starting rule: that is how C3 was drawn; Nick didn't comment
-  on it)*. Which lights exist and how dark each is: ticket 0438 *(values
-  tunable)*.
+  on it)*. Built in ticket 0438: the lights are **noon** (the tiles as
+  bought), **dusk** (render C3's numbers) and **night** *(Claude's
+  starting values: darker and bluer than dusk)*, each a line of
+  `assets/data/lighting.ron` *(all tunable; more lights are more lines)*.
+  A map file names its light and a battle file may name another, so one
+  map can be fought at two times of day. *Claude's starting rules:* the
+  range colours, the path, the cursor and the HP bars aren't shaded
+  either; the glyph map looks the same in every light. Which map is in
+  which light: every map is at noon until Nick says otherwise (Chapter 1's
+  battle is in the morning; the story doesn't call it low light).
 - **Zoom:** a key and a controller button switch the map between **1×**
   (a 16-pixel tile, about 34×28 tiles on screen, render C) and **2×** (a
   32-pixel tile, about 17×14 tiles, render C2). The game **remembers** the
@@ -691,8 +699,11 @@ sprites.
   or a peak** is in front of the mountains, **every other terrain** in
   front of the fields with the forest edge behind (so a forest, a fort, a
   bridge and a village all fall back to the fields). Which one is the
-  terrain the **defender** stands on. Only the day pictures are used
-  until maps have a light (ticket 0438).
+  terrain the **defender** stands on. The picture follows the map's
+  light (ticket 0438): the bundle's own dusk and night pictures of the
+  same place; a light the bundle has no picture for *(none today)* shows
+  the day picture shaded like the map's ground *(Claude's starting
+  rule)*.
 - **Classes with no hero art use a still image** (updated 2026-10-04,
   ticket 0040; the full list is in *Fighters with no Tiny Tales art*
   below):

@@ -5,7 +5,10 @@
 //!
 //! Which picture each class and character gets is the table [`BATTLERS`]
 //! (`docs/design/look-and-feel.md` has it in words), and which backdrop is
-//! which, [`BACKDROPS`]. A picture drawn on a flat background colour
+//! which, [`BACKDROPS`]: the day pictures under the placeholders' names,
+//! and the bundle's dusk and night pictures of the same places beside
+//! them, named in the backdrops' file it writes there ([`BACKDROPS_RON`];
+//! ticket 0438). A picture drawn on a flat background colour
 //! (Shironejiya's) has that colour made clear on the way in, and a picture
 //! shared by two fighters is recoloured for one of them ([`Tint`]).
 //!
@@ -16,7 +19,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 
-use trpg_content::battler::{BACKDROP_PX, BACKDROPS_DIR, BATTLERS_DIR};
+use trpg_content::battler::{BACKDROP_PX, BACKDROPS_DIR, BACKDROPS_PATH, BATTLERS_DIR};
 use trpg_content::image::png_size;
 
 use crate::font_atlas::{decode_png, encode_png};
@@ -25,7 +28,7 @@ use crate::font_atlas::{decode_png, encode_png};
 pub const USAGE: &str = "usage: cargo xtask battler-import [--list]\n\n\
 Copies each bought combat picture the game uses from assets-private/library/ to\n\
 assets-private/game/battlers/<id>.png with its sidecar <id>.ron, and each backdrop\n\
-to assets-private/game/battlebacks/.\n\
+to assets-private/game/battlebacks/, with the file that names the dusk and night ones.\n\
 --list  print which picture each class and character gets, and copy nothing\n\n\
 Run `cargo xtask private-assets --library` first. Afterwards commit and push in\n\
 assets-private/, then run `cargo xtask private-assets --pin`.";
@@ -226,9 +229,11 @@ pub const BATTLERS: [Picture; 14] = [
     shironejiya("red_captain", "shironejiya/monster_s/m_s_bandanna05.png"),
 ];
 
-/// Each backdrop's file name in `game/battlebacks/` (the public
-/// placeholder's) and the bought picture, relative to [`LIBRARY_DIR`].
-pub const BACKDROPS: [(&str, &str); 2] = [
+/// Each backdrop's file name in `game/battlebacks/` and the bought
+/// picture, relative to [`LIBRARY_DIR`]. The day pictures have the public
+/// placeholders' names; the same places at dusk and at night are named in
+/// [`BACKDROPS_RON`].
+pub const BACKDROPS: [(&str, &str); 6] = [
     (
         "fields.png",
         "tiny-tales/battle-backgrounds/Battleback_FieldsB_Day.png",
@@ -237,7 +242,65 @@ pub const BACKDROPS: [(&str, &str); 2] = [
         "mountains.png",
         "tiny-tales/battle-backgrounds/Battleback_MountainA_Day.png",
     ),
+    (
+        "fields_dusk.png",
+        "tiny-tales/battle-backgrounds/Battleback_FieldsB_Dusk.png",
+    ),
+    (
+        "mountains_dusk.png",
+        "tiny-tales/battle-backgrounds/Battleback_MountainA_Dusk.png",
+    ),
+    (
+        "fields_night.png",
+        "tiny-tales/battle-backgrounds/Battleback_FieldsB_Night.png",
+    ),
+    (
+        "mountains_night.png",
+        "tiny-tales/battle-backgrounds/Battleback_MountainA_Night.png",
+    ),
 ];
+
+/// The backdrops' file of the bought pictures, written over the public
+/// one's place in `game/` (`assets/battlers/README.md` has the format):
+/// the public file's day pictures, and the bundle's own dusk and night
+/// pictures of the same places, so a fight at dusk is in front of the
+/// artist's dusk and not of a shaded day (ADR-0057). Names only: no art.
+pub const BACKDROPS_RON: &str = r#"// Written by `cargo xtask battler-import` (ticket 0438): the public
+// backdrops' file, and the bought pictures of the same places at dusk and
+// at night. Format: assets/battlers/README.md.
+(
+    default: "fields.png",
+    terrain: {
+        "mountain": "mountains.png",
+        "peak": "mountains.png",
+    },
+    lights: {
+        "dusk": (
+            default: "fields_dusk.png",
+            terrain: {
+                "mountain": "mountains_dusk.png",
+                "peak": "mountains_dusk.png",
+            },
+        ),
+        "night": (
+            default: "fields_night.png",
+            terrain: {
+                "mountain": "mountains_night.png",
+                "peak": "mountains_night.png",
+            },
+        ),
+    },
+)
+"#;
+
+/// Writes [`BACKDROPS_RON`] into the private game assets under `root`.
+pub fn write_backdrops_ron(root: &Path) -> Result<(), String> {
+    let path = root.join(GAME_DIR).join(BACKDROPS_PATH);
+    if let Some(dir) = path.parent() {
+        fs::create_dir_all(dir).map_err(|e| format!("creating {}: {e}", dir.display()))?;
+    }
+    fs::write(&path, BACKDROPS_RON).map_err(|e| format!("writing {}: {e}", path.display()))
+}
 
 /// The sidecar of `picture` (`assets/battlers/README.md`).
 pub fn sidecar(picture: &Picture) -> String {
@@ -677,6 +740,69 @@ mod tests {
     }
 
     #[test]
+    fn the_backdrops_file_is_the_public_one_with_the_bought_dusk_and_night() {
+        use trpg_content::battler::parse_backdrops;
+        let content = trpg_content::load_embedded().unwrap();
+        // An image table of the pictures the importer copies.
+        let png = encode_png(336, 248, &vec![9; 336 * 248 * 4]).unwrap();
+        let paths = BACKDROPS.map(|(name, _)| &*format!("{BACKDROPS_DIR}/{name}").leak());
+        let images = ImageTable::from_files(paths.map(|path| (path, &png[..]))).unwrap();
+        // It names only pictures the importer copies, terrain that
+        // exists and lights that exist.
+        let read = |source| {
+            parse_backdrops(
+                "b.ron",
+                source,
+                &images,
+                Some(&content.terrain.display),
+                Some(&content.lighting),
+            )
+        };
+        let bought = read(BACKDROPS_RON).unwrap_or_else(|e| panic!("{e:?}"));
+        // By day it is the public file.
+        let public = trpg_content::bundle::file(BACKDROPS_PATH).unwrap();
+        let public = read(public).unwrap_or_else(|e| panic!("{e:?}"));
+        assert_eq!(
+            (&bought.default, &bought.terrain),
+            (&public.default, &public.terrain)
+        );
+        // Every other light has its own picture of each place.
+        let lights: Vec<&str> = bought.lights.keys().map(String::as_str).collect();
+        assert_eq!(lights, ["dusk", "night"]);
+        let name = |image: trpg_content::ImageId| image.path().to_owned();
+        for (light, set) in &bought.lights {
+            let lit =
+                |day: trpg_content::ImageId| name(day).replace(".png", &format!("_{light}.png"));
+            assert_eq!(set.default.map(name), bought.default.map(lit));
+            let places: Vec<&String> = set.terrain.keys().collect();
+            assert_eq!(places, bought.terrain.keys().collect::<Vec<_>>());
+            for (terrain, &image) in &set.terrain {
+                assert_eq!(
+                    name(image),
+                    lit(bought.terrain[terrain]),
+                    "{light} {terrain}"
+                );
+            }
+        }
+        // Every picture copied is used.
+        let mut used: Vec<String> = [bought.default.map(name)].into_iter().flatten().collect();
+        used.extend(bought.terrain.values().copied().map(name));
+        for set in bought.lights.values() {
+            used.extend(set.default.map(name));
+            used.extend(set.terrain.values().copied().map(name));
+        }
+        for path in paths {
+            assert!(used.iter().any(|u| u == path), "{path} is not used");
+        }
+        // It is written where the game reads it from.
+        let root = root("backdrops-ron");
+        write_backdrops_ron(&root).unwrap();
+        let written = root.join(GAME_DIR).join("battlebacks/battlebacks.ron");
+        assert_eq!(fs::read_to_string(written).unwrap(), BACKDROPS_RON);
+        fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
     fn the_list_names_every_picture_and_backdrop() {
         assert_eq!(
             list(&TWO, &BACK),
@@ -704,10 +830,12 @@ mod tests {
             let (num, den) = p.scale;
             assert!(den > 0 && num >= den && num <= 2 * den, "{}", p.id);
         }
-        // Each bought backdrop replaces a public placeholder of that name.
+        // Each bought day backdrop replaces a public placeholder of that
+        // name; the dusk and night ones have none.
         for (name, _) in BACKDROPS {
             let path = format!("{BACKDROPS_DIR}/{name}");
-            assert!(content.images.id(&path).is_some(), "{path}");
+            let lit = name.contains("_dusk") || name.contains("_night");
+            assert_eq!(content.images.id(&path).is_none(), lit, "{path}");
         }
     }
 }

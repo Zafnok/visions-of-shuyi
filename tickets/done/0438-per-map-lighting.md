@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["0437"]
 nick_input: sign-off
-completed:
+completed: 2026-10-12
 ---
 
 # 0438 — Per-map lighting
@@ -123,18 +123,18 @@ data.
 
 ## Acceptance criteria
 
-- [ ] A map with `light: "dusk"` draws its terrain shaded and its units
+- [x] A map with `light: "dusk"` draws its terrain shaded and its units
       unshaded (test on the sprite items: terrain sprites carry the shade,
       unit sprites don't).
-- [ ] A map with no `look` or no `light` draws exactly as before this
+- [x] A map with no `look` or no `light` draws exactly as before this
       ticket (snapshots unchanged).
-- [ ] Unknown light name: a validator error naming the file and the name.
-- [ ] The shading maths is one pure function with a unit test pinning C3's
+- [x] Unknown light name: a validator error naming the file and the name.
+- [x] The shading maths is one pure function with a unit test pinning C3's
       numbers on three sample colours, used by both renderers.
-- [ ] Glyph-skin snapshots unchanged; `the_skin_never_changes_the_game`
+- [x] Glyph-skin snapshots unchanged; `the_skin_never_changes_the_game`
       passes with a shaded map.
-- [ ] Nick was sent the three renders and the per-map list.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Nick was sent the three renders and the per-map list.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -145,5 +145,81 @@ data.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done (2026-10-12).** A map is in a light: noon (as before), dusk or
+night. With the bought tiles the ground is shaded by it; units, ranges,
+the path, the cursor, HP bars and every panel keep their colours. The
+combat stage's backdrop follows the light too.
+
+**Which light each map got.** Both maps are at **noon**:
+
+- `test_small` (the Quick Battle): noon, as the ticket says.
+- `ch01` (Harrowby Ford): noon. `docs/story/chapters/ch01.md` puts the
+  scene before the battle "at dawn" and the scene after it "at noon", so
+  the battle is in the morning; the story never calls it low light. Not
+  invented: **Nick, say if Chapter 1's battle should be at dusk** (one
+  word in `assets/maps/ch01.map`).
+
+**Claude's starting rules** (Nick can veto; all in `look-and-feel.md`):
+
+- **Night** is darker and bluer than dusk (grey 0.45, tint 0.40 / 0.44 /
+  0.58). Dusk is render C3's numbers exactly.
+- The range colours, the path, the cursor and the HP bars aren't shaded
+  (the ticket listed them; C3 left them alone).
+- In a fight on the combat stage, the backdrop is the bundle's own dusk
+  or night picture of the same place. A light the bundle has no picture
+  for (none today; any light Nick adds later) shows the day picture
+  shaded like the map's ground. The fighters aren't shaded.
+- The glyph map looks the same in every light.
+
+**What was built** (ADR-0057).
+
+- `assets/data/lighting.ron` and `trpg_content::lighting`: the lights as
+  data, each `(grey, tint)`; `Light::apply` is the one function that
+  shades a colour, pinned on C3's numbers.
+- A map's header names its light (`look: (light: "dusk")`); a battle file
+  may name another (`light: "night"`). The battle's light isn't in
+  `core`'s `BattleDef`: `Content::battle_lights` keeps it and
+  `Content::battle_look` gives the game flow the map's look in it.
+- `Paint::Shaded(Light)`: the sprite skin puts it on every picture of the
+  ground. `app` draws it from a recoloured copy of the tileset image,
+  like an acted unit's grey; `frame-png` already painted by
+  `Paint::apply`. Snapshot token: ` shade=350:620,560,460`.
+- The backdrops' file may name pictures per light; `cargo xtask
+  battler-import` now also copies the bundle's dusk and night pictures and
+  writes the file that names them into the private assets.
+- `cargo xtask frame-png --light <name>`: fights every battle in that
+  light, for looking.
+
+**Deviations from the plan.**
+
+- **No shader.** The ticket preferred a fragment shader. `app` already
+  draws recoloured sprites from a copy of the image made on the CPU
+  (ADR-0049), so the shade is one more `Paint`, with one implementation of
+  the sum for the window, the web and `frame-png`. ADR-0057 has the
+  reasons.
+- The shade is a new `Paint`, not a `shade: Option<…>` field of `Sprite`.
+- The light isn't a separate field of `MapScene`: it is `MapScene::look`'s
+  `light`, a plain name, since the whole `MapLook` was already there.
+- **The combat backdrops were built here**, not left to a follow-up: the
+  note 0413 added to this ticket on 2026-10-11 asks for it, and it is
+  newer than the Scope line that says not to.
+- The light check of a map file runs after the maps load
+  (`map::check_lights`), since `parse_map` has no lights' file; the error
+  still names the file, line and column.
+- **Web check not done by reading canvas pixels.** That check was for a
+  shader, which could differ between WebGL and desktop GL. There is none:
+  the recoloured copy is made by the same Rust on every platform, the
+  path acted units have used on the web since 0436. The WASM build gate
+  passes. Nick will see it on Pages; no map there is in low light yet.
+
+**Follow-ups:** none created. Not done because out of scope: lights that
+change during a battle, light sources, shadows, shading the glyph map.
+
+**For Nick (sign-off).** Three renders of the Quick Battle map and of a
+fight on the stage, at noon, dusk and night, with the bought art (sent in
+the session, never committed). To see it in the game: put
+`look: (light: "dusk")` in a map's header, or `light: "dusk"` in a battle
+file, and run with `--features private-assets`. Things to judge: how dark
+dusk and night are; whether Chapter 1's battle should be in low light; and
+that the bundle's dusk backdrop is a bright sunset, brighter than our dusk
+map (say if the shaded day picture would fit better).

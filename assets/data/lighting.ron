@@ -1,0 +1,20 @@
+// The lights a battle map can be in (ticket 0438, ADR-0057;
+// docs/design/look-and-feel.md, "Lighting is set per map"). Loaded by
+// trpg_content::lighting. A map names one in its header
+// (assets/maps/README.md); a battle file may name another
+// (assets/battles/README.md).
+//
+// A light shades the pictures of the ground, never the units, the cursor,
+// the ranges or the UI, and nothing on the glyph map. For every pixel:
+//   1. it goes `grey` of the way to its own grey (0 = not at all, 1 = grey);
+//   2. its red, green and blue are multiplied by `tint`.
+// Every number is from 0 to 1, read to three decimals, and *tunable*.
+// "noon" must exist: it is the light of a map that names none.
+{
+    // The tiles as bought (render C).
+    "noon": (grey: 0.0, tint: (1.0, 1.0, 1.0)),
+    // Render C3, which Nick chose for low light (ticket 0038).
+    "dusk": (grey: 0.35, tint: (0.62, 0.56, 0.46)),
+    // Claude's starting values: darker and bluer than dusk.
+    "night": (grey: 0.45, tint: (0.40, 0.44, 0.58)),
+}

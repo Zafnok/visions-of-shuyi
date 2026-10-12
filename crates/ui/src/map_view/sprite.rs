@@ -764,6 +764,29 @@ pub(crate) mod tests {
         }
     }
 
+    /// The map's light changes the frame of every tileset with terrain
+    /// tiles (ADR-0057), and of no skin that paints the glyph skin's
+    /// ground.
+    #[test]
+    fn the_light_is_painted_by_a_tileset_that_has_terrain_tiles() {
+        let c = ctx();
+        let base = plains(&c);
+        let mut dusk = base.clone();
+        dusk.look.light = "dusk".to_owned();
+        assert_ne!(base, dusk);
+        for s in [skin(&c), ground::tests::layered(&c)] {
+            assert_ne!(painted(&c, &s, &base), painted(&c, &s, &dusk));
+        }
+        let s = sheets(&c);
+        assert_eq!(painted(&c, &s, &base), painted(&c, &s, &dusk));
+        let glyphs = |scene: &MapScene| {
+            let mut buf = blank();
+            GlyphSkin.paint(&c, scene, MAP_VIEW, &mut buf);
+            buf
+        };
+        assert_eq!(glyphs(&base), glyphs(&dusk));
+    }
+
     #[test]
     fn a_tileset_without_terrain_paints_units_on_the_glyph_skins_ground() {
         let c = ctx();

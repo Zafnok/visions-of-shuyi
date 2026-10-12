@@ -4,7 +4,7 @@
 //! module says what the stage shows ([`view()`]); [`motion`] is how the
 //! pictures move and [`glyph`] paints it (ADR-0054).
 
-use trpg_content::Battler;
+use trpg_content::{Battler, Light};
 use trpg_core::{Affinity, Faction, Side, SideForecast, Strike};
 
 use self::motion::{Blow, Pose};
@@ -90,8 +90,10 @@ fn poses(bout: &Bout, beat: Beat, local: f32, len: f32) -> ([Pose; 2], Option<us
 
 /// What the stage shows for playback `pb` now, or `None` if it has no
 /// combat to show. `ground` is the string id of the terrain the defender
-/// stands on, if known (it picks the backdrop).
-pub fn view(ctx: &Ctx, pb: &Playback, ground: Option<&str>) -> Option<StageView> {
+/// stands on, if known, and `light` the name of the light the map is in:
+/// they pick the backdrop, the light's own picture if the backdrops have
+/// one, else noon's shaded by the light.
+pub fn view(ctx: &Ctx, pb: &Playback, ground: Option<&str>, light: &str) -> Option<StageView> {
     let (bout, (step, local)) = (pb.bout()?, pb.now()?);
     let words = ctx.words();
     let (poses, striker, veil) = poses(bout, step.beat, local, step.len);
@@ -123,9 +125,14 @@ pub fn view(ctx: &Ctx, pb: &Playback, ground: Option<&str>) -> Option<StageView>
             ..pose
         },
     };
-    let backdrops = &ctx.content.battlers.backdrops;
+    let backdrop = ctx.content.battlers.backdrops.in_light(ground, light);
+    let shade = match backdrop {
+        Some((_, false)) => ctx.content.lighting.get(light).unwrap_or_default(),
+        _ => Light::PLAIN,
+    };
     Some(StageView {
-        backdrop: ground.map_or(backdrops.default, |g| backdrops.of(g)),
+        backdrop: backdrop.map(|(image, _)| image),
+        shade,
         banner: pb.banner().map(str::to_owned),
         fighters: [
             fighter(0, &bout.attacker, poses[0]),

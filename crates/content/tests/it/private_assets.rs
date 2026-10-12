@@ -124,3 +124,25 @@ fn every_bought_file_has_a_credit() {
         ]
     );
 }
+
+/// The bought backdrops (`cargo xtask battler-import`, ticket 0438): a
+/// fight at dusk or at night is in front of the bundle's own picture of
+/// the place, not of the day picture shaded.
+#[test]
+fn the_bought_backdrops_have_their_own_dusk_and_night() {
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    let backdrops = &content.battlers.backdrops;
+    for light in ["dusk", "night"] {
+        for terrain in [None, Some("plain"), Some("mountain"), Some("peak")] {
+            let found = backdrops.in_light(terrain, light);
+            let Some((image, true)) = found else {
+                panic!("{light} on {terrain:?}: {found:?}");
+            };
+            let path = image.path();
+            assert!(path.ends_with(&format!("_{light}.png")), "{path}");
+        }
+    }
+}

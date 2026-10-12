@@ -1,7 +1,9 @@
 //! The ground a sprite skin paints from its tileset's own tiles
 //! (ADR-0052): each tile's own picture, then the look's layers over them
 //! (pictures between tiles by the [corner rule](crate::map_view::corners),
-//! and pictures on tiles), then what tints a tile.
+//! and pictures on tiles), then what tints a tile. The pictures are
+//! shaded by the light the scene's map is in (ADR-0057); the tints are
+//! not.
 //!
 //! A tile off the map gets no picture, and no part of one: a picture
 //! between tiles is drawn only inside the tiles of the map it covers.
@@ -21,7 +23,8 @@ use crate::map_view::scene::{CursorStyle, CursorView, MapScene, TileView};
 use crate::screen::Ctx;
 
 /// Paints `scene`'s ground in `grid` from `terrain`'s tiles, in the look
-/// the scene's map asks for (the tileset's own if it lacks that one).
+/// the scene's map asks for (the tileset's own if it lacks that one) and
+/// in its light (as the pictures are, if the content has no such light).
 pub(super) fn paint(
     ctx: &Ctx,
     terrain: &TerrainTiles,
@@ -30,7 +33,12 @@ pub(super) fn paint(
     buf: &mut GlyphBuffer,
 ) {
     let look = terrain.looks.get(&scene.look.tiles);
+    let light = ctx.content.lighting.get(&scene.look.light);
     let ground = Ground {
+        paint: match light {
+            Some(light) if !light.is_plain() => Paint::Shaded(light),
+            _ => Paint::Image,
+        },
         scene,
         grid,
         image: terrain.image,
@@ -56,6 +64,8 @@ struct Ground<'a> {
     look: &'a Look,
     /// The terrain each tile is drawn as.
     shown: Shown,
+    /// How the pictures are coloured: by the map's light.
+    paint: Paint,
 }
 
 impl Ground<'_> {
@@ -74,6 +84,11 @@ impl Ground<'_> {
         let (across, down) = self.grid.tiles;
         let places = (0..down).flat_map(move |dy| (0..across).map(move |dx| (dx, dy)));
         places.filter_map(|(dx, dy)| Some((dx, dy, self.tile(dx, dy)?)))
+    }
+
+    /// `picture` on the pixels `dest`, in the map's light.
+    fn sprite(&self, picture: Picture, dest: PxRect) -> Sprite {
+        tile_sprite(picture, dest).painted(self.paint)
     }
 
     /// `rect` of the tileset's image.
@@ -95,7 +110,7 @@ impl Ground<'_> {
     fn paint_tiles(&self, buf: &mut GlyphBuffer) {
         for (dx, dy, rect) in self.tiles() {
             if let Some(picture) = self.own(dx, dy) {
-                buf.add_sprite(tile_sprite(picture, rect));
+                buf.add_sprite(self.sprite(picture, rect));
             }
         }
     }
@@ -113,7 +128,7 @@ impl Ground<'_> {
                 continue;
             };
             let dest = Rect::new(left + i * w - w / 2, top + j * h - h / 2, w, h);
-            let sprite = tile_sprite(self.picture(rect), dest);
+            let sprite = self.sprite(self.picture(rect), dest);
             let round = [(i - 1, j - 1), (i, j - 1), (i - 1, j), (i, j)];
             let parts: Vec<PxRect> = round
                 .iter()
@@ -140,7 +155,7 @@ impl Ground<'_> {
             {
                 let sides = mix_of(self.shown.sides(dx, dy), &layer.beside);
                 let picture = self.picture(layer.picture(sides));
-                buf.add_sprite(tile_sprite(picture, rect));
+                buf.add_sprite(self.sprite(picture, rect));
             }
         }
     }
@@ -525,6 +540,83 @@ pub(crate) mod tests {
         // A look the tileset lacks: its own.
         lake.look.tiles = "cave".to_owned();
         assert_eq!(painted(&c, &s, &lake), outdoor);
+    }
+
+    #[test]
+    fn a_maps_light_shades_its_ground_and_nothing_painted_over_it() {
+        let c = ctx();
+        let s = layered(&c);
+        let dusk = c.content.lighting.get("dusk").unwrap();
+        // A lake and a bridge (a picture on a tile), a range on the
+        // first tile, a glowing cursor on the lake, and a unit.
+        let mut scene = view(&c, ["...", ".~=", "..."]);
+        scene.tint([p(0, 0)], RangeKind::Move);
+        scene.cursor = Some(CursorView {
+            pos: p(1, 1),
+            brightness: 1.0,
+            style: CursorStyle::TileGlow,
+        });
+        scene
+            .units
+            .push(crate::map_view::sprite::tests::brigand(p(2, 0)));
+        let noon = painted(&c, &s, &scene);
+        assert!(
+            noon.sprites()
+                .iter()
+                .all(|s| s.paint != Paint::Shaded(dusk))
+        );
+        scene.look.light = "dusk".to_owned();
+        let lit = painted(&c, &s, &scene);
+        // The same items in the same places: only the paint differs, and
+        // only on the ground's pictures (the tileset's image, in its own
+        // colours).
+        assert_eq!(noon.items().len(), lit.items().len());
+        let (mut ground, mut washes, mut others) = (0, 0, 0);
+        for (before, after) in noon.sprites().iter().zip(lit.sprites()) {
+            let terrain = before.image.path() == "tilesets/test.png";
+            match before.paint {
+                Paint::Image if terrain && before.layer == Depth::Under => {
+                    assert_eq!(after, before.painted(Paint::Shaded(dusk)));
+                    ground += 1;
+                }
+                Paint::Solid(_) if terrain => {
+                    assert_eq!(after, *before);
+                    washes += 1;
+                }
+                _ => {
+                    assert_eq!(after, *before);
+                    others += 1;
+                }
+            }
+        }
+        // Nine tiles, the pictures between them, the bridge's own; the
+        // range's and the glow's wash; the unit's picture, over the glyphs.
+        assert!(ground > 9 + 1, "{ground}");
+        // (The test tileset keeps its units in the same image: their
+        // outlines are one colour too.)
+        assert!(washes >= 2, "{washes}");
+        assert!(others >= 1, "{others}");
+        let rects = |buf: &GlyphBuffer| -> Vec<Overlay> {
+            let items = buf.items().iter();
+            items
+                .filter_map(|item| match item {
+                    crate::glyph_buffer::Item::Rect(r) => Some(*r),
+                    crate::glyph_buffer::Item::Sprite(_) => None,
+                })
+                .collect()
+        };
+        assert_eq!(rects(&noon), rects(&lit));
+        // Noon by name, and a light the content doesn't have: as before.
+        scene.look.light = "noon".to_owned();
+        assert_eq!(painted(&c, &s, &scene), noon);
+        scene.look.light = "midnight".to_owned();
+        assert_eq!(painted(&c, &s, &scene), noon);
+        // Night is another shade.
+        scene.look.light = "night".to_owned();
+        let night = c.content.lighting.get("night").unwrap();
+        let first = sprite_at(&painted(&c, &s, &scene), 0);
+        assert_eq!(first.paint, Paint::Shaded(night));
+        assert_ne!(night, dusk);
     }
 
     #[test]

@@ -38,6 +38,8 @@ options:
   --layout right|left  the key layout picked before (default right)
   --scale N            whole-number scale, 1 to 8 (default 2)
   --prompt             start as the game does (the title waits for a key or button)
+  --light NAME         fight every battle in this light of assets/data/lighting.ron,
+                       whatever its map and its battle file say
 
 Key and button names are the Harness's test-script names (Chord::parse,
 Button::parse), as in crates/ui/tests: input to a test script, not game
@@ -76,6 +78,8 @@ pub struct Options {
     pub scale: u32,
     /// Start as the game does: the title waits for a key or button.
     pub prompt: bool,
+    /// The light every battle is fought in, instead of its own.
+    pub light: Option<String>,
 }
 
 /// Parses `frame-png`'s arguments, checking key and button names up front
@@ -88,6 +92,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
         layout: Layout::RightHanded,
         scale: 2,
         prompt: false,
+        light: None,
     };
     let mut iter = args.iter();
     while let Some(arg) = iter.next() {
@@ -138,6 +143,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
                     })?;
             }
             "--prompt" => options.prompt = true,
+            "--light" => options.light = Some(value()?),
             flag if flag.starts_with("--") => return Err(format!("unknown option: {flag}")),
             path if out.is_none() => out = Some(PathBuf::from(path)),
             extra => return Err(format!("one output path only, not also {extra}")),
@@ -157,6 +163,19 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     };
     // The game as players get it: New Game starts the story.
     let mut h = h.with_shipped_story();
+    if let Some(light) = &options.light {
+        let content = &mut h.ctx_mut().content;
+        if content.lighting.get(light).is_none() {
+            let known = content.lighting.names();
+            return Err(format!(
+                "--light: no light \"{light}\"; the lights are {known}"
+            ));
+        }
+        let battles: Vec<String> = content.battles.keys().cloned().collect();
+        content
+            .battle_lights
+            .extend(battles.into_iter().map(|id| (id, light.clone())));
+    }
     for step in &options.steps {
         match step {
             Step::Keys(script) => h.keys(script),

@@ -23,9 +23,10 @@
 //! `layer  sprite x,y wxh  image x,y wxh`: where it is drawn (`dest`), the
 //! image's path in the asset bundle, and the part of the image shown
 //! (`src`). After that come, only when they aren't the default, ` flip`,
-//! ` opacity=N` (below 255), ` solid=colour` or ` dimmed` (how its pixels
-//! are coloured, ADR-0049) and ` clip=x,y wxh` (not all of `dest` is
-//! drawn).
+//! ` opacity=N` (below 255), ` solid=colour`, ` dimmed` or
+//! ` shade=grey:red,green,blue` (how its pixels are coloured, ADR-0049; a
+//! shade is a light's numbers in thousandths, ADR-0057) and
+//! ` clip=x,y wxh` (not all of `dest` is drawn).
 //!
 //! A see-through cell (ADR-0048) gets a key of its own, whose legend line
 //! says `bg:see-through`: in the colour rows a hole can't be taken for a
@@ -154,6 +155,10 @@ fn sprite_line(s: &Sprite, name: &dyn Fn(Rgb) -> String) -> String {
             let _ = write!(line, " solid={}", name(color));
         }
         Paint::Dimmed => line.push_str(" dimmed"),
+        Paint::Shaded(light) => {
+            let [r, g, b] = light.tint;
+            let _ = write!(line, " shade={}:{r},{g},{b}", light.grey);
+        }
     }
     if s.clip != s.dest {
         let _ = write!(line, " clip={}", px(s.clip));
@@ -295,6 +300,8 @@ mod tests {
             clip: Rect::new(8, 8, 40, 80),
             ..plain.painted(Paint::Dimmed)
         });
+        let dusk = trpg_content::Light::new(0.35, [0.62, 0.56, 0.46]);
+        b.add_sprite(plain.painted(Paint::Shaded(dusk)));
         assert_eq!(
             b.to_snapshot(&p)
                 .split_once("--- overlays ---\n")
@@ -308,7 +315,8 @@ mod tests {
              over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 flip opacity=0 clip=48,40 40x48\n\
              over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 solid=enemy\n\
              over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 solid=#010203\n\
-             over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 opacity=128 dimmed clip=8,8 40x80\n"
+             over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 opacity=128 dimmed clip=8,8 40x80\n\
+             over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 shade=350:620,560,460\n"
         );
     }
 
