@@ -4,7 +4,7 @@ Decided: 2026-09-25
 Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 0021; bought tiles and sprites on the battle map: 0038; walking sprites,
 effect marks, the glyph look as an option, busts in dialogue: 0039; which
-bought tiles each terrain is: 0437)
+bought tiles each terrain is: 0437; threat arrows: 0055)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -439,6 +439,42 @@ so they aren't in this repository (ADR-0032).
   the destination tile, and **ends in a single arrowhead** on that tile. It's
   drawn under glyphs, in `path` colour. The arrowhead marks the destination;
   there's no separate cursor frame there.
+
+### Threat arrows
+
+Decided 2026-10-12, ticket 0055, on mockups drawn over the Chapter 1 map
+with the bought art (five looks: curved lines, straight arrows, a mark
+over each enemy, a red frame around each enemy, lines and marks). The rule
+(which enemies, when) is in `turn-structure.md`, *Threat arrows*.
+
+> [which look:] "B + C" [straight arrows, and a mark over each enemy] …
+> [shown the two together:] "pls shift the exclamation mark a few more
+> pixels up, rn it covers the enemy's head and looks weird" … [an enemy
+> off the screen: A the arrow comes in from the screen's edge:] "A"
+
+- **A slim straight arrow from each enemy to the tile**, ending in an
+  arrowhead just short of the tile's middle. In the mockup: a 1-pixel red
+  line with a 1-pixel dark edge each side, starting at the middle of the
+  enemy's sprite; the arrowhead's two barbs are 4 pixels long (colours
+  and sizes *tunable*).
+- **A mark over each of those enemies:** a yellow `!` with a dark edge,
+  **above the sprite's head, not on it** (Nick: the first mockup had it 4
+  pixels lower, "it covers the enemy's head and looks weird"). In the
+  mockup the mark is 3 pixels wide and 9 tall (a 6-pixel bar, a 1-pixel
+  gap, a 2-pixel dot), centred on the tile, its lowest pixel 4 pixels
+  above the tile's top edge (*tunable*, but it must clear the head).
+- **An enemy off the screen:** its arrow **comes in from the edge of the
+  map view**, along the same straight line. (Its mark is off the screen
+  with it.) Chapter 1's map fits on the screen whole, so this is for
+  bigger maps and the zoom (0439).
+- Arrows and marks are drawn over units and terrain, so they are never
+  hidden.
+- *Claude's starting rules (Nick can veto):*
+  - **The glyph look** gets the same arrows and marks, drawn over the
+    glyphs. Nick saw only the bought-art look.
+  - The mark is drawn in front of a unit standing in the tile above, and
+    on the map view's top row it is moved down to stay inside the view.
+  - Neither moves or blinks.
 
 ### Attack forecast
 

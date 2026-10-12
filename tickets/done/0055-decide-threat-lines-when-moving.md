@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions (Nick)
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-12
 ---
 
 # 0055 — Decide: threat lines when moving
@@ -77,8 +77,8 @@ Each with options from the games above plus "describe your own".
 
 ## Acceptance criteria
 
-- [ ] Each question has Nick's answer in the design docs, quoted and dated.
-- [ ] 0448 says exactly what to build.
+- [x] Each question has Nick's answer in the design docs, quoted and dated.
+- [x] 0448 says exactly what to build.
 
 ## Tests required
 
@@ -86,5 +86,37 @@ Each with options from the games above plus "describe your own".
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Asked 2026-10-12 with mockups drawn over a frame of the Chapter 1 battle
+(bought art; sent to Nick, not committed). Nick's answers:
+
+1. Look: "B + C": straight arrows and a mark over each enemy. He then asked
+   for the mark to sit higher, clear of the enemy's head.
+2. Which enemies: "A": everyone who could attack the tile.
+3. When: "B": while proposing a move, and whenever the cursor rests on one
+   of your units.
+4. Off the screen: "A": the arrow comes in from the screen's edge.
+5. A setting: not asked, as the ticket says; none.
+6. Enemies that wait in place: they count (part of 2A as asked).
+
+Recorded in `docs/design/turn-structure.md` and `look-and-feel.md`
+(*Threat arrows* in both); 0448 updated.
+
+*Claude's starting rules* (Nick can veto; listed in the design docs):
+
+- "Can attack" is worked out like the danger zone, with the selected unit
+  counted on the proposed tile.
+- Pointing at an enemy you can attack: the arrows point at the tile you
+  will attack from.
+- The arrows stay while the action menu is open, and go when the forecast
+  opens.
+- Your units that have already acted show them too; green units don't.
+- An enemy that can only heal gets no arrow.
+- The glyph look gets the same arrows and marks (Nick saw only the
+  bought-art look).
+- The mark is drawn in front of a unit in the tile above, and moves down
+  on the top row of the view. Nothing blinks or moves.
+
+Deviation: questions 5 and 6 weren't asked as separate questions (5 by the
+ticket's own instruction; 6 was put inside question 2's option A, with the
+bridge Raider in the pictures). I said Fire Emblem Engage shows who "can"
+attack with less than full certainty, and told Nick so.
