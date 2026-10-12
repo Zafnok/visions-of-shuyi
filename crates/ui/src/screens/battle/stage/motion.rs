@@ -89,12 +89,11 @@ pub fn run_up(part: f32, critical: bool) -> f32 {
     if !critical {
         return ease_out(part);
     }
-    if part < WIND_UP_PART {
-        -WIND_UP * ease_out(part / WIND_UP_PART)
-    } else {
-        let dash = ease_in((part - WIND_UP_PART) / (1.0 - WIND_UP_PART));
-        -WIND_UP + (1.0 + WIND_UP) * dash
-    }
+    // Each part stays at its end outside its own time, so they add up:
+    // the lean back is done when the dash starts.
+    let back = ease_out(part / WIND_UP_PART);
+    let dash = ease_in((part - WIND_UP_PART) / (1.0 - WIND_UP_PART));
+    -WIND_UP * back + (1.0 + WIND_UP) * dash
 }
 
 /// The striker's [`Pose::lunge`] `since` seconds after its strike landed:
