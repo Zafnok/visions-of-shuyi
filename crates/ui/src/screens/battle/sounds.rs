@@ -59,7 +59,7 @@ fn depth(mode: &Mode) -> u8 {
         | Mode::RestartPrompt
         | Mode::SuspendPrompt => 2,
 
-        Mode::WeaponMenu { .. }
+        Mode::ArtsMenu { .. }
         | Mode::SpellMenu { .. }
         | Mode::SkillMenu { .. }
         | Mode::ItemMenu { .. }

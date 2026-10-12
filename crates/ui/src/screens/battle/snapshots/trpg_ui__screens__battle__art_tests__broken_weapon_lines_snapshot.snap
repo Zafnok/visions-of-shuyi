@@ -14,11 +14,11 @@ expression: "format!(\"{list}\\n=== forecast ===\\n{forecast}\")"
                                                                       ║                            ║
                                                                       ║                            ║
                     ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║                            ║
-┌─────────────────────────────────────────────────────┐               ║                            ║
-│ Iron Sword   Mt  5  Hit  90  Crit  0  Rng 1  broken │               ║                            ║
-│ Steel Sword  Mt  8  Hit  75  Crit  0  Rng 1  25/25  │               ║                            ║
-└─────────────────────────────────────────────────────┘               ║                            ║
-                    ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║                            ║
+┌─ Iron Sword broken ────────────────────┐^^^^^^                      ║                            ║
+│ Flowing Cut     −2 dur  E       broken │♣♣....                      ║                            ║
+│ Guard Break     −4 dur  D       broken │..╦╦..                      ║                            ║
+│ Keen Edge       −3 dur  active  broken │▓▓▓▓..                      ║                            ║
+└────────────────────────────────────────┘╦╦▓▓..                      ║                            ║
                     ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
                     ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║                            ║
                                                                       ║                            ║
@@ -47,13 +47,13 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-booooooooooooooooooooooooooooooooooooooooooooooooooooobaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-bcccccccccccccccccccccccccccccccccccccccccccccggggggccbaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaajjkkppjjjjqqjjjjjjrrssqqrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkppttttjjjjjjjjrrssssrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkllppjjjjjjjjjjuurrrrvvrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bbddddddddddddooooooobbbbbbbbbbbbbbbbbbbbbmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bggggggggggggggggggggggggggggggggooooooogbkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bggggggggggggggggggggggggggggggggooooooogbjjppjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bggggggggggggggggggggggggggggggggooooooogbqqqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbppqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkkrrssssjjjjjjjjqqttttqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkllrrjjjjjjjjjjuuqqqqvvqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
@@ -82,12 +82,12 @@ k = fg:forest bg:forest_bg
 l = fg:thicket bg:thicket_bg
 m = fg:mountain bg:mountain_bg
 n = fg:peak bg:peak_bg
-o = fg:panel_bg bg:panel_border_focus
-p = fg:road bg:road_bg
-q = fg:fort bg:fort_bg
-r = fg:stone bg:stone_bg
-s = fg:floor bg:floor_bg
-t = fg:player bg:grass_bg
+o = fg:hp_low bg:panel_bg
+p = fg:fort bg:fort_bg
+q = fg:stone bg:stone_bg
+r = fg:road bg:road_bg
+s = fg:player bg:grass_bg
+t = fg:floor bg:floor_bg
 u = fg:enemy bg:grass_bg
 v = fg:wood bg:stone_bg
 w = fg:text_dim bg:black
@@ -121,14 +121,14 @@ over  209,286 14x2  hp_high
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
-                            ┌─ Iron Sword broken ────────────────────┐║                            ║
-                            │ Attack                                 │║                            ║
-                            │ Flowing Cut     −2 dur  E       broken │║                            ║
-                            │ Guard Break     −4 dur  D       broken │║                            ║
-                            │ Keen Edge       −3 dur  active  broken │║                            ║
-                            └────────────────────────────────────────┘╚════════════════════════════╝
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ╚════════════════════════════╝
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
- Left/Right target · Up/Down art · f attack · d back                                       F2 debug 
+ arrows next target · f attack · d back                                                    F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbccccccccccbbbbbbbbbb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -154,14 +154,14 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaabbcccccccccccchhhhhhhbbbbbbbbbbbbbbbbbbbbbbddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaabBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBbbddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaabgggggggggggggggggggggggggggggggghhhhhhhgbbddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaabgggggggggggggggggggggggggggggggghhhhhhhgbbddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaabgggggggggggggggggggggggggggggggghhhhhhhgbbddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCa
-aCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBa
+aBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaBBBBBBBBa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -190,8 +190,7 @@ x = fg:player bg:grass_bg
 y = fg:stone bg:stone_bg
 z = fg:floor bg:floor_bg
 A = fg:wood bg:stone_bg
-B = fg:panel_bg bg:panel_border_focus
-C = fg:text_dim bg:black
+B = fg:text_dim bg:black
 --- overlays ---
 over  273,222 14x2  hp_high
 over  225,286 14x2  hp_high

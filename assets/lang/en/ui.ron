@@ -349,7 +349,6 @@
     "battle.hint.end_turn": "{EndTurn} end turn",
     "battle.hint.swap": "{keys} swap",
     "battle.hint.target": "{keys} target",
-    "battle.hint.art": "{keys} art",
     "battle.hint.next_target": "{Cursor} next target",
     "battle.hint.attack": "{Confirm} attack",
     "battle.hint.cast": "{Confirm} cast",
@@ -377,6 +376,7 @@
 
     // The battle: a unit's action menu and the map menu.
     "battle.menu.attack": "Attack",
+    "battle.menu.arts": "Arts",
     "battle.menu.magic": "Magic",
     "battle.menu.seize": "Seize",
     "battle.menu.talk": "Talk",
@@ -413,9 +413,7 @@
 
     // The battle: the lists of weapons, arts, spells, skills and items.
     // `{name}` and the numbers come padded, so the columns line up.
-    "battle.weapon.line": "{name}  Mt {might}  Hit {hit}  Crit {crit}  Rng {range}",
     "battle.weapon.broken": "broken",
-    "battle.art.attack": "Attack",
     "battle.art.cost.durability": "−{n} dur",
     "battle.art.cost.spell_use": "+1 use",
     "battle.art.cost.use": "−1 use",
@@ -434,6 +432,7 @@
     "battle.reason.out_of_range": "out of range",
     "battle.reason.cant_attack": "can't attack",
     "battle.spell.line": "{name}  {left}/{uses}  {numbers} Rng{range}",
+    "battle.spell.with_active": "{spell} + {active}",
     "battle.spell.attack": "Mt{might} Hit{hit}",
     "battle.spell.heal": "HP+{power}",
     "battle.spell.one_round": "{change} (1 round)",

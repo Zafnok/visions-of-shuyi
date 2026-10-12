@@ -1,11 +1,12 @@
 //! What the player is doing on the battle screen (ticket 0403), the Fire
 //! Emblem move loop: browse ([`Mode::Idle`]), select a unit and steer its
 //! path ([`Mode::Selected`]), watch it walk ([`Mode::Moving`]), pick an
-//! action ([`Mode::ActionMenu`]); to attack (0404), maybe pick a weapon
-//! ([`Mode::WeaponMenu`]), pick a target with the forecast
-//! ([`Mode::Targeting`]) and watch the combat ([`Mode::Combat`]); to cast
-//! (0410), pick a spell ([`Mode::SpellMenu`]) and what to cast it on
-//! ([`Mode::CastTarget`]). The move
+//! action ([`Mode::ActionMenu`]); to attack (0404), pick a target with the
+//! forecast ([`Mode::Targeting`]), where left and right swap the weapon, and
+//! watch the combat ([`Mode::Combat`]); to attack with a Combat Art or a
+//! combat active (0442), pick it in the arts menu ([`Mode::ArtsMenu`])
+//! first; to cast (0410), pick a spell ([`Mode::SpellMenu`]) and what to
+//! cast it on ([`Mode::CastTarget`]). The move
 //! is only sent, as one
 //! [`Command::Act`], when an action is chosen, so cancelling is free: until
 //! then the unit's new tile is a drawing override ([`Mode::drawn_pos`]) and
@@ -37,7 +38,8 @@ use trpg_core::{
 };
 
 use super::ai_phase::AiAction;
-use super::attack::{Targeting, WeaponChoice, attack_tile, weapon_choices, weapon_menu};
+use super::art_list::{ArtLine, art_lines, arts_menu, can_use_art};
+use super::attack::{Targeting, WeaponChoice, attack_tile, weapon_choices};
 use super::items::{
     EquipChoice, ItemTargeting, PackGroup, can_equip, can_use_item, equip_choices, equip_command,
     equip_menu, pack_groups, pack_menu,
@@ -146,6 +148,10 @@ impl Selection {
 pub enum MenuEntry {
     /// Attack: enabled when a weapon can attack someone from there.
     Attack,
+    /// Attack with a Combat Art or a combat active (0442): shown when the
+    /// unit has one for a weapon it carries, enabled when one can be used
+    /// on someone from there.
+    Arts,
     /// Cast a spell (0410): shown when the unit knows one, enabled when
     /// one has something to be cast on from there.
     Magic,
@@ -168,6 +174,7 @@ impl MenuEntry {
     pub fn label(self, words: Words<'_>) -> &str {
         words.text(match self {
             MenuEntry::Attack => "battle.menu.attack",
+            MenuEntry::Arts => "battle.menu.arts",
             MenuEntry::Magic => "battle.menu.magic",
             MenuEntry::Seize => "battle.menu.seize",
             MenuEntry::Talk => "battle.menu.talk",
@@ -188,12 +195,14 @@ impl MenuEntry {
     }
 
     /// Whether the entry can be chosen for `sel`'s unit: `Attack` if a
-    /// weapon reaches someone, `Magic` if a spell has a target, `Item` if
+    /// weapon reaches someone, `Arts` if an art or active can be used on
+    /// someone, `Magic` if a spell has a target, `Item` if
     /// the pack has an item usable on someone, `Equip` with two usable
     /// weapons or attack spells.
     fn enabled(self, sel: &Selection, weapons: &[WeaponChoice], state: &BattleState) -> bool {
         match self {
             MenuEntry::Attack => !weapons.is_empty(),
+            MenuEntry::Arts => can_use_art(&art_lines(state, sel.unit, sel.dest())),
             MenuEntry::Magic => can_cast(&spell_choices(state, sel.unit, sel.dest())),
             MenuEntry::Skill => can_use_skill(&skill_choices(state, IN_PLAY, sel)),
             MenuEntry::Item => can_use_item(&pack_groups(state, sel.unit, sel.dest())),
@@ -204,13 +213,17 @@ impl MenuEntry {
 }
 
 /// The action menu for `sel`'s unit at its path's end: `Attack` (enabled if
-/// some weapon can attack someone there), `Magic` if the unit knows a spell
+/// some weapon can attack someone there), `Arts` if it has a Combat Art or a
+/// combat active for a weapon it carries, `Magic` if the unit knows a spell
 /// (enabled if one has a target there), `Seize` if legal there, `Talk` if
 /// it has someone next to it to talk to, `Skill` if the unit knows a
 /// non-combat active, `Item` and `Equip` (enabled when
 /// they can do something), `Wait`.
 pub fn menu_entries(sel: &Selection, state: &BattleState) -> Vec<MenuEntry> {
     let mut entries = vec![MenuEntry::Attack];
+    if !art_lines(state, sel.unit, sel.dest()).is_empty() {
+        entries.push(MenuEntry::Arts);
+    }
     if knows_spells(state, sel.unit) {
         entries.push(MenuEntry::Magic);
     }
@@ -270,14 +283,14 @@ pub enum Mode {
         /// there are any).
         weapons: Vec<WeaponChoice>,
     },
-    /// Several weapons can attack: the player picks one.
-    WeaponMenu {
+    /// The unit's Combat Arts and combat actives (0442).
+    ArtsMenu {
         /// The selection.
         sel: Selection,
-        /// The weapon list.
+        /// The arts menu.
         menu: Menu,
-        /// What each item is.
-        weapons: Vec<WeaponChoice>,
+        /// What each line is.
+        lines: Vec<ArtLine>,
     },
     /// The player picks a target and reads the forecast.
     Targeting(Box<Targeting>),
@@ -390,7 +403,7 @@ pub enum Mode {
 pub(super) const IN_PLAY: Words<'static> = Words::ENGLISH;
 
 impl Mode {
-    /// The mode as the screen paints it: its lists of weapons, arts,
+    /// The mode as the screen paints it: its lists of arts,
     /// spells, skills, items and units written in `words`, each focused
     /// where it is. In English that is the mode itself.
     pub fn told(&self, state: &BattleState, words: Words<'_>) -> Cow<'_, Mode> {
@@ -409,8 +422,8 @@ impl Mode {
                 let items = lines.map(|(e, item)| e.item(words, item.enabled));
                 *menu = Menu::new(items.collect()).focused(menu.focus());
             }
-            Mode::WeaponMenu { sel, menu, weapons } => {
-                *menu = weapon_menu(state, words, sel, weapons).focused(menu.focus());
+            Mode::ArtsMenu { menu, lines, .. } => {
+                *menu = arts_menu(state, words, lines).focused(menu.focus());
             }
             Mode::SpellMenu { sel, menu, choices } => {
                 *menu = spell_menu(state, words, sel.unit, choices).focused(menu.focus());
@@ -428,8 +441,6 @@ impl Mode {
             Mode::UnitList { menu, .. } => {
                 *menu = unit_list(state, words).0.focused(menu.focus());
             }
-            Mode::Targeting(t) => t.tell(state, words),
-            Mode::CastTarget(t) => t.tell(state, words),
             _ => {}
         }
         Cow::Owned(mode)
@@ -553,7 +564,7 @@ impl Mode {
             Mode::Selected(sel)
             | Mode::Moving { sel, .. }
             | Mode::ActionMenu { sel, .. }
-            | Mode::WeaponMenu { sel, .. }
+            | Mode::ArtsMenu { sel, .. }
             | Mode::SpellMenu { sel, .. }
             | Mode::SkillMenu { sel, .. }
             | Mode::ItemMenu { sel, .. }
@@ -578,13 +589,13 @@ impl Mode {
     }
 
     /// Where unit `id` is drawn, if not on its own tile: along its path
-    /// while it walks, at the path's end while it chooses an action, a
-    /// weapon or a target.
+    /// while it walks, at the path's end while it chooses an action, an
+    /// art or a target.
     pub fn drawn_pos(&self, id: UnitId) -> Option<Pos> {
         match self {
             Mode::Moving { sel, t, pace, .. } if sel.unit == id => Some(walk_pos(sel, t * pace)),
             Mode::ActionMenu { sel, .. }
-            | Mode::WeaponMenu { sel, .. }
+            | Mode::ArtsMenu { sel, .. }
             | Mode::SpellMenu { sel, .. }
             | Mode::SkillMenu { sel, .. }
             | Mode::ItemMenu { sel, .. }
@@ -726,10 +737,7 @@ fn walk_ended(sel: Selection, state: &BattleState) -> (Mode, Effect) {
 /// action menu if none does.
 fn open_attack(sel: Selection, state: &BattleState) -> (Mode, Effect) {
     match Targeting::aimed(state, sel.clone()) {
-        Some(t) => {
-            let at = state.unit(t.target()).map_or(sel.dest(), |u| u.pos);
-            (Mode::Targeting(Box::new(t)), Effect::Cursor(at))
-        }
+        Some(t) => show_forecast(t, state),
         None => (open_menu(sel, state), Effect::None),
     }
 }
@@ -742,7 +750,7 @@ pub(super) fn open_menu(sel: Selection, state: &BattleState) -> Mode {
         .iter()
         .map(|e| e.item(IN_PLAY, e.enabled(&sel, &weapons, state)))
         .collect();
-    // It opens on the first of Attack, Magic and Seize that is enabled
+    // It opens on the first of Attack, Arts, Magic and Seize that is enabled
     // (Magic only when a spell reaches an enemy: a forest to burn or an ally
     // to heal doesn't make it the default), else Wait: Item and Equip are
     // never the default.
@@ -750,7 +758,9 @@ pub(super) fn open_menu(sel: Selection, state: &BattleState) -> Mode {
     let first = entries
         .iter()
         .position(|e| match e {
-            MenuEntry::Attack | MenuEntry::Seize => e.enabled(&sel, &weapons, state),
+            MenuEntry::Attack | MenuEntry::Arts | MenuEntry::Seize => {
+                e.enabled(&sel, &weapons, state)
+            }
             MenuEntry::Magic => reaches_an_enemy(state, &spells),
             _ => false,
         })
@@ -791,22 +801,10 @@ pub(super) fn back_to_entry(sel: Selection, state: &BattleState, entry: MenuEntr
     }
 }
 
-/// Targeting with `choice` (from the weapon list `weapons`, if any), the
-/// cursor on its first target; the action menu if no forecast can be made
-/// (only if the battle changed under the menu, which it doesn't).
-fn target_with(
-    state: &BattleState,
-    sel: Selection,
-    choice: &WeaponChoice,
-    weapons: Option<(Menu, Vec<WeaponChoice>)>,
-) -> (Mode, Effect) {
-    match Targeting::new(state, sel.clone(), choice, weapons) {
-        Some(t) => {
-            let at = state.unit(t.target()).map_or(sel.dest(), |u| u.pos);
-            (Mode::Targeting(Box::new(t)), Effect::Cursor(at))
-        }
-        None => (back_to_menu(sel, state), Effect::None),
-    }
+/// The forecast `t`, with the cursor on its target.
+fn show_forecast(t: Targeting, state: &BattleState) -> (Mode, Effect) {
+    let at = state.unit(t.target()).map_or(t.sel.dest(), |u| u.pos);
+    (Mode::Targeting(Box::new(t)), Effect::Cursor(at))
 }
 
 /// Whether `unit` belongs to the player and can still act this phase.
@@ -878,9 +876,7 @@ pub fn step(mode: Mode, action: Action, cursor: Pos, state: &BattleState) -> (Mo
             entries,
             weapons,
         } => step_action_menu(sel, menu, entries, weapons, action, state),
-        Mode::WeaponMenu { sel, menu, weapons } => {
-            step_weapon_menu(sel, menu, weapons, action, state)
-        }
+        Mode::ArtsMenu { sel, menu, lines } => step_arts(sel, menu, lines, action, state),
         Mode::Targeting(t) => step_targeting(*t, action, state),
         Mode::SpellMenu { sel, menu, choices } => step_spells(sel, menu, choices, action, state),
         Mode::CastTarget(t) => step_cast_target(*t, action, state),
@@ -1004,7 +1000,8 @@ fn step_action_menu(
                 Some(MenuEntry::Wait) => UnitAction::Wait,
                 Some(MenuEntry::Seize) => UnitAction::Seize,
                 Some(MenuEntry::Talk) => return choose_talk(sel, state),
-                Some(MenuEntry::Attack) => return choose_attack(sel, weapons, state),
+                Some(MenuEntry::Attack) => return choose_attack(sel, &weapons, state),
+                Some(MenuEntry::Arts) => return open_arts(sel, state),
                 Some(MenuEntry::Magic) => return open_spells(sel, state),
                 Some(MenuEntry::Skill) => return open_skills(sel, state),
                 Some(MenuEntry::Item) => return open_pack(sel, state),
@@ -1109,42 +1106,45 @@ fn step_info(unit: UnitId, action: Action, state: &BattleState) -> (Mode, Effect
     (Mode::Info { unit: next }, Effect::None)
 }
 
-/// Attack chosen in the action menu: the weapon list if several weapons
-/// can attack, else straight to targeting.
-fn choose_attack(
-    sel: Selection,
-    weapons: Vec<WeaponChoice>,
-    state: &BattleState,
-) -> (Mode, Effect) {
-    match weapons.as_slice() {
-        [] => (back_to_menu(sel, state), Effect::None),
-        [only] => {
-            let only = only.clone();
-            target_with(state, sel, &only, None)
-        }
-        _ => {
-            let menu = weapon_menu(state, IN_PLAY, &sel, &weapons);
-            (Mode::WeaponMenu { sel, menu, weapons }, Effect::None)
-        }
+/// `Attack` chosen in the action menu: the forecast with the equipped weapon
+/// if it reaches someone, else the first that does (0442; the action menu
+/// again if none does, which the enabled entry rules out).
+fn choose_attack(sel: Selection, weapons: &[WeaponChoice], state: &BattleState) -> (Mode, Effect) {
+    match Targeting::attack(state, sel.clone(), weapons) {
+        Some(t) => show_forecast(t, state),
+        None => (back_to_menu(sel, state), Effect::None),
     }
 }
 
-/// [`step`] in the weapon list: Confirm targets with the chosen weapon,
-/// Cancel goes back to the action menu.
-fn step_weapon_menu(
+/// `Arts` chosen: the arts menu (the action menu again if no line can be
+/// chosen, which the enabled entry rules out).
+fn open_arts(sel: Selection, state: &BattleState) -> (Mode, Effect) {
+    let lines = art_lines(state, sel.unit, sel.dest());
+    if !can_use_art(&lines) {
+        return (back_to_entry(sel, state, MenuEntry::Arts), Effect::None);
+    }
+    let menu = arts_menu(state, IN_PLAY, &lines);
+    (Mode::ArtsMenu { sel, menu, lines }, Effect::None)
+}
+
+/// [`step`] in the arts menu: Confirm opens the forecast of the chosen art
+/// or active, Cancel goes back to the action menu (on `Arts`).
+fn step_arts(
     sel: Selection,
     mut menu: Menu,
-    weapons: Vec<WeaponChoice>,
+    lines: Vec<ArtLine>,
     action: Action,
     state: &BattleState,
 ) -> (Mode, Effect) {
     match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) => match weapons.get(i).cloned() {
-            Some(choice) => target_with(state, sel, &choice, Some((menu, weapons))),
-            None => (Mode::WeaponMenu { sel, menu, weapons }, Effect::None),
-        },
-        Some(MenuEvent::Cancelled) => (back_to_menu(sel, state), Effect::None),
-        None => (Mode::WeaponMenu { sel, menu, weapons }, Effect::None),
+        Some(MenuEvent::Chosen(i)) => {
+            match Targeting::art(state, sel.clone(), menu.clone(), lines.clone(), i) {
+                Some(t) => show_forecast(t, state),
+                None => (Mode::ArtsMenu { sel, menu, lines }, Effect::None),
+            }
+        }
+        Some(MenuEvent::Cancelled) => (back_to_entry(sel, state, MenuEntry::Arts), Effect::None),
+        None => (Mode::ArtsMenu { sel, menu, lines }, Effect::None),
     }
 }
 
@@ -1188,17 +1188,10 @@ fn step_spells(
 
 /// [`step`] while picking a spell's target: the cursor keys and
 /// `NextUnit`/`PrevUnit` step through the targets (enemies or allies, and
-/// tiles) in reading order; on an enemy with a list of spell actives, up
-/// and down move through that list instead, as in the attack forecast.
-/// Confirm casts, Cancel goes back to the spell list with the cursor on the
+/// tiles) in reading order. Confirm casts, Cancel goes back to the spell list with the cursor on the
 /// unit.
 fn step_cast_target(mut t: CastTargeting, action: Action, state: &BattleState) -> (Mode, Effect) {
-    let list = t.forecast().is_some_and(Targeting::has_list);
     let forward = match action {
-        Action::CursorUp | Action::CursorDown if list => {
-            t.move_list(action == Action::CursorDown, state);
-            return (Mode::CastTarget(Box::new(t)), Effect::None);
-        }
         Action::CursorRight | Action::CursorDown | Action::NextUnit => true,
         Action::CursorLeft | Action::CursorUp | Action::PrevUnit => false,
         Action::Confirm => return (Mode::default(), Effect::Apply(t.command())),
@@ -1476,18 +1469,13 @@ fn step_equip(
     }
 }
 
-/// [`step`] while targeting: left, right and `NextUnit`/`PrevUnit` cycle the
-/// targets (right and next go forward, left and previous go back); up and
-/// down move through the arts list (0414) when it is shown, else cycle the
-/// targets too; Confirm attacks with the chosen line, Cancel goes back to
-/// the weapon list or the action menu (on `Attack`, or `Magic` for a spell)
-/// with the cursor on the unit. In the forecast on an enemy pointed at
-/// (0430), left and right swap the weapon or spell instead when several
-/// reach it.
+/// [`step`] while targeting: the cursor keys and `NextUnit`/`PrevUnit` cycle
+/// the targets (right, down and next go forward; left, up and previous go
+/// back); when several weapons or spells can make the attack, left and right
+/// swap between them instead (0430, 0442). Confirm attacks, Cancel goes back
+/// to the arts menu the forecast was opened from, else to the action menu
+/// (on `Attack`, or `Magic` for a spell), with the cursor on the unit.
 fn step_targeting(mut t: Targeting, action: Action, state: &BattleState) -> (Mode, Effect) {
-    // Up and Down move the arts list's cursor when there is a list; else
-    // they cycle the targets like Left/Right.
-    let list = t.has_list();
     let forward = match action {
         Action::CursorLeft | Action::CursorRight if t.can_swap() => {
             t.swap(action == Action::CursorRight, state);
@@ -1495,10 +1483,6 @@ fn step_targeting(mut t: Targeting, action: Action, state: &BattleState) -> (Mod
                 .unit(t.target())
                 .map_or(Effect::None, |u| Effect::Cursor(u.pos));
             return (Mode::Targeting(Box::new(t)), effect);
-        }
-        Action::CursorUp | Action::CursorDown if list => {
-            t.move_list(action == Action::CursorDown, state);
-            return (Mode::Targeting(Box::new(t)), Effect::None);
         }
         Action::CursorRight | Action::CursorDown | Action::NextUnit => true,
         Action::CursorLeft | Action::CursorUp | Action::PrevUnit => false,
@@ -1509,11 +1493,11 @@ fn step_targeting(mut t: Targeting, action: Action, state: &BattleState) -> (Mod
                 Equipped::Weapon(_) => MenuEntry::Attack,
                 Equipped::Spell(_) => MenuEntry::Magic,
             };
-            let back = match t.weapons {
-                Some((menu, weapons)) => Mode::WeaponMenu {
+            let back = match t.arts {
+                Some((menu, lines)) => Mode::ArtsMenu {
                     sel: t.sel,
                     menu,
-                    weapons,
+                    lines,
                 },
                 None => back_to_entry(t.sel, state, entry),
             };
@@ -1577,6 +1561,7 @@ mod tests {
 
     use super::*;
     use crate::screen::tests::ctx;
+    use crate::screens::battle::art_list::Technique;
     use crate::screens::battle::attack::can_hit;
     use crate::screens::battle::playback::TIMINGS;
     use crate::screens::battle::quick_battle;
@@ -1860,6 +1845,7 @@ mod tests {
             entries,
             &[
                 MenuEntry::Attack,
+                MenuEntry::Arts,
                 MenuEntry::Skill,
                 MenuEntry::Item,
                 MenuEntry::Equip,
@@ -1871,10 +1857,12 @@ mod tests {
             .iter()
             .map(|i| (i.label.as_str(), i.enabled))
             .collect();
-        // Nobody is hurt (no item to use) but the lord has two weapons and
-        // its Inspire has allies near to inspire.
+        // Nobody is hurt (no item to use) and nobody is in reach of a sword
+        // or its arts, but the lord has two weapons and its Inspire has
+        // allies near to inspire.
         let want = [
             ("Attack", false),
+            ("Arts", false),
             ("Skill", true),
             ("Item", false),
             ("Equip", true),
@@ -1924,6 +1912,7 @@ mod tests {
         };
         let all = [
             MenuEntry::Attack,
+            MenuEntry::Arts,
             MenuEntry::Seize,
             MenuEntry::Skill,
             MenuEntry::Item,
@@ -1931,7 +1920,7 @@ mod tests {
             MenuEntry::Wait,
         ];
         assert_eq!(entries, all);
-        assert_eq!(menu.focus(), 1, "focus on Seize");
+        assert_eq!(menu.focus(), 2, "focus on Seize");
         let (_, effect) = run(lord_menu(&s), &[Action::Confirm], p(5, 5), &s);
         assert_eq!(
             effect,
@@ -1945,6 +1934,7 @@ mod tests {
         let sel = selected(&s, &[p(4, 5)]);
         let plain = [
             MenuEntry::Attack,
+            MenuEntry::Arts,
             MenuEntry::Skill,
             MenuEntry::Item,
             MenuEntry::Equip,
@@ -1959,7 +1949,7 @@ mod tests {
         assert_eq!(menu_entries(&knight, &s), all);
         assert_eq!(
             all.map(|entry| entry.label(Words::ENGLISH)),
-            ["Attack", "Seize", "Skill", "Item", "Equip", "Wait"]
+            ["Attack", "Arts", "Seize", "Skill", "Item", "Equip", "Wait"]
         );
     }
 
@@ -2074,76 +2064,71 @@ mod tests {
         walk.tick(1.0, false, s)
     }
 
-    #[test]
-    fn attack_is_enabled_when_a_weapon_reaches_and_lists_the_weapons() {
-        let s = skirmish(&ctx(), 20);
-        let mode = skirmish_menu(&s);
-        let Mode::ActionMenu { menu, weapons, .. } = &mode else {
-            panic!("{mode:?}");
-        };
-        assert!(menu.items()[0].enabled);
-        assert_eq!(menu.focus(), 0, "focus on Attack");
-        assert_eq!(weapons.len(), 2);
-        // Attack: the weapon list (two swords reach).
-        let (mode, effect) = step(mode, Action::Confirm, p(7, 2), &s);
-        assert_eq!(effect, Effect::None);
-        let Mode::WeaponMenu { weapons, .. } = &mode else {
-            panic!("{mode:?}");
-        };
-        assert_eq!(weapons.len(), 2);
-        assert_eq!(mode.drawn_pos(UnitId(1)), Some(p(7, 2)));
-        assert!(!mode.cursor_free());
-        // Cancel: back to the menu, on Attack.
-        let (back, _) = step(mode.clone(), Action::CursorDown, p(7, 2), &s);
-        let (back, _) = step(back, Action::Cancel, p(7, 2), &s);
-        let Mode::ActionMenu { menu, .. } = &back else {
-            panic!("{back:?}");
-        };
-        assert_eq!(menu.focus(), 0);
-        // The steel sword: targeting the first target, the cursor on it.
-        let (list, _) = step(mode, Action::CursorDown, p(7, 2), &s);
-        let (mode, effect) = step(list.clone(), Action::Confirm, p(7, 2), &s);
-        assert_eq!(effect, Effect::Cursor(p(7, 1)));
-        let Mode::Targeting(t) = &mode else {
-            panic!("{mode:?}");
-        };
-        assert_eq!(
-            (&t.with, t.target()),
-            (&trpg_core::Equipped::Weapon(1), UnitId(6))
-        );
-        assert_eq!(mode.selection().map(|s| s.unit), Some(UnitId(1)));
-        assert_eq!(mode.drawn_pos(UnitId(1)), Some(p(7, 2)));
-        // Cancel: back to the list as it was, the cursor on the lord.
-        let (back, effect) = step(mode, Action::Cancel, p(7, 1), &s);
-        assert_eq!(effect, Effect::Cursor(p(7, 2)));
-        assert_eq!(back, list);
+    /// The targeting state of `mode`.
+    fn targeting(mode: &Mode) -> &Targeting {
+        match mode {
+            Mode::Targeting(t) => t,
+            _ => panic!("{mode:?}"),
+        }
     }
 
     #[test]
-    fn targeting_cycles_with_every_direction_and_confirm_attacks() {
+    fn attack_is_enabled_when_a_weapon_reaches_and_opens_the_forecast() {
+        use trpg_core::Equipped::Weapon;
+
         let s = skirmish(&ctx(), 20);
-        let (list, _) = step(skirmish_menu(&s), Action::Confirm, p(7, 2), &s);
-        let (mut mode, _) = step(list, Action::Confirm, p(7, 2), &s);
-        let target = |m: &Mode| match m {
-            Mode::Targeting(t) => t.target(),
-            _ => panic!("{m:?}"),
+        let menu = skirmish_menu(&s);
+        let Mode::ActionMenu {
+            menu: m, weapons, ..
+        } = &menu
+        else {
+            panic!("{menu:?}");
         };
-        // The lord knows sword arts, so Up/Down move the arts list and
-        // keep the target.
-        let (listed, effect) = step(mode.clone(), Action::CursorDown, p(0, 0), &s);
-        assert_eq!((target(&listed), effect), (UnitId(6), Effect::None));
-        assert_ne!(listed, mode);
-        let Mode::Targeting(t) = &listed else {
-            unreachable!()
+        assert!(m.items()[0].enabled);
+        assert_eq!(m.focus(), 0, "focus on Attack");
+        assert_eq!(weapons.len(), 2);
+        // Attack: straight to the forecast with the equipped iron sword
+        // (0442: no weapon list), the cursor on the first target.
+        let (mode, effect) = step(menu, Action::Confirm, p(7, 2), &s);
+        assert_eq!(effect, Effect::Cursor(p(7, 1)));
+        let t = targeting(&mode);
+        assert_eq!((&t.with, t.target()), (&Weapon(0), UnitId(6)));
+        assert_eq!(t.options, [Weapon(0), Weapon(1)]);
+        assert_eq!((&t.technique, &t.arts), (&Technique::Attack, &None));
+        assert_eq!(mode.selection().map(|s| s.unit), Some(UnitId(1)));
+        assert_eq!(mode.drawn_pos(UnitId(1)), Some(p(7, 2)));
+        assert!(!mode.cursor_free());
+        // Right swaps to the steel sword, on the same target; left swaps
+        // back (wrapping either way with two).
+        let (steel, effect) = step(mode.clone(), Action::CursorRight, p(7, 1), &s);
+        assert_eq!(effect, Effect::Cursor(p(7, 1)));
+        let t = targeting(&steel);
+        assert_eq!((&t.with, t.target()), (&Weapon(1), UnitId(6)));
+        assert_eq!(t.options, [Weapon(0), Weapon(1)]);
+        let (iron, _) = step(steel.clone(), Action::CursorLeft, p(7, 1), &s);
+        assert_eq!(iron, mode);
+        let (wrapped, _) = step(mode, Action::CursorLeft, p(7, 1), &s);
+        assert_eq!(wrapped, steel);
+        // Cancel: back to the menu, on Attack, the cursor on the lord.
+        let (back, effect) = step(steel, Action::Cancel, p(7, 1), &s);
+        assert_eq!(effect, Effect::Cursor(p(7, 2)));
+        let Mode::ActionMenu { menu, entries, .. } = &back else {
+            panic!("{back:?}");
         };
-        // Down goes forward: the first art after `Attack`.
-        assert_eq!(t.list.focus(), 1);
-        let (back, _) = step(listed, Action::CursorUp, p(0, 0), &s);
-        assert_eq!(back, mode);
+        assert_eq!(entries[menu.focus()], MenuEntry::Attack);
+    }
+
+    #[test]
+    fn targeting_cycles_with_up_down_and_the_unit_keys_and_confirm_attacks() {
+        let s = skirmish(&ctx(), 20);
+        let (mut mode, _) = step(skirmish_menu(&s), Action::Confirm, p(7, 2), &s);
+        let target = |m: &Mode| targeting(m).target();
+        // Up and down change the target (0442: there is no arts list), as
+        // the unit keys do; down and next go forward.
         for (a, id, at) in [
-            (Action::CursorRight, 4, p(8, 2)),
+            (Action::CursorDown, 4, p(8, 2)),
             (Action::NextUnit, 6, p(7, 1)),
-            (Action::CursorLeft, 4, p(8, 2)),
+            (Action::CursorUp, 4, p(8, 2)),
             (Action::PrevUnit, 6, p(7, 1)),
         ] {
             let (m, effect) = step(mode, a, p(0, 0), &s);
@@ -2152,7 +2137,27 @@ mod tests {
                 (UnitId(id), Effect::Cursor(at)),
                 "{a:?}"
             );
+            assert_eq!(targeting(&m).with, trpg_core::Equipped::Weapon(0), "{a:?}");
             mode = m;
+        }
+        // With a single weapon to attack with, left and right change the
+        // target too.
+        let Mode::Targeting(mut single) = mode.clone() else {
+            unreachable!()
+        };
+        single.options.truncate(1);
+        let mut one = Mode::Targeting(single);
+        for (a, id, at) in [
+            (Action::CursorRight, 4, p(8, 2)),
+            (Action::CursorLeft, 6, p(7, 1)),
+        ] {
+            let (m, effect) = step(one, a, p(0, 0), &s);
+            assert_eq!(
+                (target(&m), effect),
+                (UnitId(id), Effect::Cursor(at)),
+                "{a:?}"
+            );
+            one = m;
         }
         // Other keys do nothing.
         let (same, effect) = step(mode.clone(), Action::Info, p(7, 1), &s);
@@ -2174,11 +2179,154 @@ mod tests {
         );
     }
 
+    /// Ticket 0442: an art is chosen in the arts menu, then its target; the
+    /// attack carries the art, and Cancel goes back to the arts menu, then
+    /// to the action menu on `Arts`.
+    #[test]
+    fn arts_opens_the_arts_menu_then_the_forecast_and_cancel_goes_back() {
+        use trpg_core::Equipped::Weapon;
+
+        let s = skirmish(&ctx(), 20);
+        let menu = skirmish_menu(&s);
+        let Mode::ActionMenu {
+            entries, menu: m, ..
+        } = &menu
+        else {
+            panic!("{menu:?}");
+        };
+        assert_eq!(entries[..2], [MenuEntry::Attack, MenuEntry::Arts]);
+        assert!(m.items()[1].enabled);
+        let (on_arts, _) = step(menu, Action::CursorDown, p(7, 2), &s);
+        let (arts, effect) = step(on_arts, Action::Confirm, p(7, 2), &s);
+        assert_eq!(effect, Effect::None);
+        let Mode::ArtsMenu { menu: m, lines, .. } = &arts else {
+            panic!("{arts:?}");
+        };
+        let names: Vec<String> = lines
+            .iter()
+            .map(|l| l.technique.name(&s, Words::ENGLISH))
+            .collect();
+        assert_eq!(names, ["Flowing Cut", "Guard Break"]);
+        assert!(lines.iter().all(|l| l.slots == [0, 1] && l.slot == 0));
+        assert_eq!(m.focus(), 0);
+        assert_eq!(arts.selection().map(|s| s.unit), Some(UnitId(1)));
+        assert_eq!(arts.drawn_pos(UnitId(1)), Some(p(7, 2)));
+        assert!(!arts.cursor_free() && !arts.picks_on_map());
+        // Guard Break: its forecast on the first target, the cursor on it.
+        let (on_break, _) = step(arts, Action::CursorDown, p(7, 2), &s);
+        let (mode, effect) = step(on_break.clone(), Action::Confirm, p(7, 2), &s);
+        assert_eq!(effect, Effect::Cursor(p(7, 1)));
+        let guard_break = Technique::Art(trpg_core::ArtId::new("guard_break"));
+        let t = targeting(&mode);
+        assert_eq!((&t.with, t.target()), (&Weapon(0), UnitId(6)));
+        assert_eq!(t.technique, guard_break);
+        assert_eq!(t.options, [Weapon(0), Weapon(1)]);
+        assert_eq!(t.preview.art, Some(trpg_core::ArtId::new("guard_break")));
+        // Down changes the target and right swaps the weapon; the art stays.
+        let (mode, _) = step(mode, Action::CursorDown, p(7, 1), &s);
+        let (mode, effect) = step(mode, Action::CursorRight, p(8, 2), &s);
+        assert_eq!(effect, Effect::Cursor(p(8, 2)));
+        let t = targeting(&mode);
+        assert_eq!((&t.with, t.target()), (&Weapon(1), UnitId(4)));
+        assert_eq!(t.technique, guard_break);
+        assert_eq!(t.preview.art, Some(trpg_core::ArtId::new("guard_break")));
+        // Confirm: the attack carries the art.
+        let (after, effect) = step(mode.clone(), Action::Confirm, p(8, 2), &s);
+        assert_eq!(after, Mode::default());
+        assert_eq!(
+            effect,
+            Effect::Apply(Command::Act {
+                unit: UnitId(1),
+                dest: p(7, 2),
+                action: UnitAction::Attack {
+                    target: UnitId(4),
+                    slot: 1,
+                    active: None,
+                    art: Some(trpg_core::ArtId::new("guard_break")),
+                },
+            })
+        );
+        // Cancel: the arts menu as it was, the cursor on the lord; Cancel
+        // again: the action menu, on Arts.
+        let (back, effect) = step(mode, Action::Cancel, p(8, 2), &s);
+        assert_eq!(effect, Effect::Cursor(p(7, 2)));
+        assert_eq!(back, on_break);
+        let (back, effect) = step(back, Action::Cancel, p(7, 2), &s);
+        assert_eq!(effect, Effect::None);
+        let Mode::ActionMenu { menu, entries, .. } = &back else {
+            panic!("{back:?}");
+        };
+        assert_eq!(entries[menu.focus()], MenuEntry::Arts);
+    }
+
+    /// An enemy only an art reaches (the brigand beside the archer, with
+    /// Close Shot) is attacked through `Arts`, not `Attack` or by pointing.
+    #[test]
+    fn an_enemy_only_an_art_reaches_is_attacked_through_arts() {
+        let s = skirmish(&ctx(), 20);
+        let (Mode::Selected(sel), _) = step(Mode::default(), Action::Confirm, p(8, 4), &s) else {
+            panic!("the archer isn't selected");
+        };
+        assert!(can_hit(&s, UnitId(3), p(8, 4), UnitId(4)));
+        assert!(!can_hit(&s, UnitId(3), p(8, 4), UnitId(5)));
+        let (menu, _) = step(Mode::Selected(sel.clone()), Action::Confirm, p(8, 4), &s);
+        let (on_arts, _) = step(menu, Action::CursorDown, p(8, 4), &s);
+        let (arts, _) = step(on_arts, Action::Confirm, p(8, 4), &s);
+        let Mode::ArtsMenu { lines, .. } = &arts else {
+            panic!("{arts:?}");
+        };
+        let names: Vec<String> = lines
+            .iter()
+            .map(|l| l.technique.name(&s, Words::ENGLISH))
+            .collect();
+        assert_eq!(names, ["Close Shot", "Pinning Shot", "Vault"]);
+        let (mode, effect) = step(arts, Action::Confirm, p(8, 4), &s);
+        assert_eq!(effect, Effect::Cursor(p(8, 2)));
+        let t = targeting(&mode);
+        assert_eq!(t.targets, [UnitId(4), UnitId(5)]);
+        assert!(!t.can_swap());
+        // With the brigand two tiles up gone, `Attack` is dimmed and the
+        // menu opens on `Arts`.
+        let mut units = s.units().to_vec();
+        units.retain(|u| u.id != UnitId(4));
+        let rout = Objective::Rout { turn_limit: None };
+        let s = battle_with(&ctx(), s.map().clone(), units, rout);
+        let (menu, _) = step(Mode::Selected(sel), Action::Confirm, p(8, 4), &s);
+        let Mode::ActionMenu { menu, entries, .. } = &menu else {
+            panic!("{menu:?}");
+        };
+        assert!(!menu.items()[0].enabled);
+        assert_eq!(entries[menu.focus()], MenuEntry::Arts);
+    }
+
+    #[test]
+    fn arts_with_nothing_to_use_stays_in_the_menu() {
+        let s = skirmish(&ctx(), 20);
+        let sel = Selection::new(&s, UnitId(1)).unwrap();
+        // The lord where it starts reaches nobody: the lines are dimmed.
+        let lines = art_lines(&s, sel.unit, sel.dest());
+        assert_eq!(lines.len(), 2);
+        assert!(!can_use_art(&lines));
+        let (mode, effect) = open_arts(sel.clone(), &s);
+        assert_eq!(effect, Effect::None);
+        assert!(matches!(mode, Mode::ActionMenu { .. }), "{mode:?}");
+        // A dimmed line is never chosen.
+        let menu = arts_menu(&s, IN_PLAY, &lines);
+        let arts = Mode::ArtsMenu {
+            sel: sel.clone(),
+            menu: menu.clone(),
+            lines: lines.clone(),
+        };
+        let (same, effect) = step(arts.clone(), Action::Confirm, p(6, 2), &s);
+        assert_eq!((same, effect), (arts, Effect::None));
+        assert_eq!(Targeting::art(&s, sel, menu, lines, 0), None);
+    }
+
     #[test]
     fn attack_with_no_weapon_in_reach_stays_in_the_menu() {
         let s = skirmish(&ctx(), 20);
         let sel = Selection::new(&s, UnitId(1)).unwrap();
-        let (mode, effect) = choose_attack(sel, vec![], &s);
+        let (mode, effect) = choose_attack(sel, &[], &s);
         assert_eq!(effect, Effect::None);
         let Mode::ActionMenu { menu, entries, .. } = &mode else {
             panic!("{mode:?}");
@@ -2199,11 +2347,8 @@ mod tests {
         let Mode::Targeting(t) = &mode else {
             panic!("{mode:?}");
         };
-        // The brigand two tiles up, and the one beside it (Close Shot).
-        assert_eq!(
-            (t.targets.clone(), t.weapons.is_none()),
-            (vec![UnitId(4), UnitId(5)], true)
-        );
+        // The brigand two tiles up; the one beside it only with Close Shot.
+        assert_eq!((t.targets.clone(), t.can_swap()), (vec![UnitId(4)], false));
         let (back, effect) = step(mode, Action::Cancel, p(8, 2), &s);
         assert_eq!(effect, Effect::Cursor(p(8, 4)));
         let Mode::ActionMenu { menu, entries, .. } = &back else {
@@ -2433,11 +2578,10 @@ mod tests {
     /// The list `mode` shows.
     fn list(mode: &Mode) -> &Menu {
         match mode {
-            Mode::WeaponMenu { menu, .. }
+            Mode::ArtsMenu { menu, .. }
             | Mode::SkillMenu { menu, .. }
             | Mode::EquipMenu { menu, .. }
             | Mode::UnitList { menu, .. } => menu,
-            Mode::Targeting(t) => &t.list,
             _ => panic!("{mode:?}"),
         }
     }
@@ -2490,20 +2634,14 @@ mod tests {
         let s = skirmish(&c, 20);
         let (lang, code) = (shouting(&c.content), shout());
         let words = Words::new(&lang, &code);
-        let Mode::ActionMenu { sel, weapons, .. } = skirmish_menu(&s) else {
+        let Mode::ActionMenu { sel, .. } = skirmish_menu(&s) else {
             panic!("no action menu");
         };
-        let weapon_list = Mode::WeaponMenu {
-            menu: weapon_menu(&s, IN_PLAY, &sel, &weapons),
-            sel: sel.clone(),
-            weapons: weapons.clone(),
-        };
         let (units, ids) = unit_list(&s, IN_PLAY);
-        let targeting = Targeting::new(&s, sel.clone(), &weapons[0], None).unwrap();
         let skills = skill_choices(&s, Words::ENGLISH, &sel);
         // Each list, with a name it shows in English.
         let lists = [
-            (weapon_list, "Steel Sword"),
+            (open_arts(sel.clone(), &s).0, "Guard Break"),
             (
                 // No ally is near enough to inspire: the list, unopened.
                 Mode::SkillMenu {
@@ -2521,7 +2659,6 @@ mod tests {
                 },
                 "Test Knight",
             ),
-            (Mode::Targeting(Box::new(targeting)), "Flowing Cut"),
         ];
         for (mode, name) in lists {
             // Move the focus off where a list opens, if it can move.

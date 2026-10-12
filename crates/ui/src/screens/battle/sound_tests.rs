@@ -213,7 +213,7 @@ fn an_absorb_strike_sounds_like_a_heal() {
 /// confirms.
 fn attack(h: &mut Harness) {
     h.keys("f Right f").wait(0.5);
-    h.keys("f f Right f");
+    h.keys("f Down f");
 }
 
 #[test]

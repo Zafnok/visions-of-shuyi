@@ -96,6 +96,28 @@ actives should only exist on spells"):
 > active if it is at least proximally close to some enemies (i.e. it thinks
 > the player will reach it, or it the player, within next turn)"
 
+Playing Quick Battle (2026-10-03, while answering ticket 0430), Nick wanted
+the arts out of the forecast:
+
+> "like three houses, but up/down should not pick an art. the arts should not
+> be in the same menu. we should have an arts menu. that was something i didnt
+> like about the current quick battle setup anyway"
+
+and for ticket 0442 (2026-10-12) he chose, from rendered mockups:
+
+> **How do you get to the arts menu?** "A. Action menu only" (the offered
+> option: like Three Houses, `Arts` beside `Attack`; after pointing at an
+> enemy: Cancel, then `Arts`).
+>
+> **Where do the class actives go (Vault, Keen Edge, Overcast)?** "C. Spell
+> actives in spell list" (the offered option: weapon actives in Arts; the
+> spell list gets `Fire + Overcast` lines, no `Arts` for mages).
+>
+> **What do the keys do in the forecast once the list is gone?** "A. Same
+> everywhere (Recommended)" (the offered option: left/right swap the weapon
+> in every weapon forecast, up/down change the target, no weapon list after
+> `Attack`).
+
 So:
 
 - **Combat Arts** are weapon techniques. A unit learns a weapon kind's arts by
@@ -145,9 +167,10 @@ All numbers are FE-sized and rescale with ticket 0013.
 
 ## Using an art (exact rules)
 
-1. **When:** only when the unit **attacks on its own phase**, as an option of
-   the `Attack` action (like combat actives, `progression.md`). Never picked
-   on counters or during another side's phase (Nick).
+1. **When:** only when the unit **attacks on its own phase**, chosen in the
+   `Arts` menu before the target (Nick, 2026-10-12; see *The arts menu and
+   the forecast*). Never picked on counters or during another side's phase
+   (Nick).
 2. **One per attack** (*Claude's starting rule*): an attack uses at most one
    art **or** one combat active, not both.
 3. **Can use** if: the art is usable (above) and the attacking weapon is
@@ -395,33 +418,101 @@ functions. The closest pairs, all judged in the playtest:
     close to some enemies"). It needs a use left: a boss with Brace braces
     on 3 such turns of a battle, then waits.
 
-## Forecast display
+## The arts menu and the forecast
 
-- In the attack flow, after choosing a target, the player can pick an art or
-  combat active from a list. Each row shows name, cost and source
-  (`E`/`D` rank, `weapon` art, `active`). Entries a broken weapon can't
-  pay for are shown dimmed with the reason. An art that costs more than is
-  left stays usable; the forecast shows it breaking the weapon
-  (`Guard Break (3 → 0)`).
-- The forecast then shows the numbers **with** the art applied, plus a line
-  with the art's name and the durability change, e.g. `Guard Break (20 → 16)`.
-- Effects that aren't numbers are spelled out on the forecast: `no counter`,
-  `pierces`, `pins: Mov −3`, `slows: Spd −3`, `stance: avoid +20`.
-- Mockup (approved with the list):
+Nick, ticket 0442 (his words are at the top). Before that the arts were a
+list beside the forecast (ticket 0414).
+
+Example: the lord stands beside a brigand. Its action menu reads `Attack`,
+`Arts`, `Skill`, `Item`, `Equip`, `Wait`. `Arts` lists Flowing Cut and Guard
+Break. The player picks Guard Break, then the brigand, sees the forecast
+with `Guard Break (20 → 16)` and `no counter`, and confirms.
+
+- **`Arts` is an entry of the action menu, under `Attack`** (Nick: "Action
+  menu only", like Fire Emblem: Three Houses). It is the only way to an art:
+  the forecast has no arts list and no key that opens one.
+- **What the menu lists** (Nick: weapon actives in Arts): the Combat Arts of
+  the weapons the unit carries, then its **class actives that swing a
+  weapon** (Keen Edge, Vault, Long Shot). Each line shows name, cost and
+  source (`E`/`D` rank, `weapon` art, `active`). There is no `Attack` line:
+  a plain attack is `Attack` in the action menu.
+- **Spell actives are lines of the spell list** (Nick), not of `Arts`. Under
+  `Magic`, every attack spell is followed by a line for each spell active
+  the unit has: `Fire`, then `Fire + Overcast  +1 use`. A mage has no `Arts`
+  entry. With an active the spell is cast at enemies only (*Claude's
+  starting rule*: Overcast and Siphon do nothing for a tile).
+- **A line that can't be used is dimmed, with the reason after it**:
+  `broken` (the weapon), `1 uses left` (a spell active that needs two),
+  `out of range` (nobody it reaches from that tile). A dimmed line can't be
+  chosen. An art that costs more durability than is left stays usable; the
+  forecast shows it breaking the weapon (`Guard Break (3 → 0)`).
+- **Then the target**, with the forecast: the numbers **with** the art
+  applied, plus a line with the art's name and the durability change, e.g.
+  `Guard Break (20 → 16)`. Effects that aren't numbers are spelled out:
+  `no counter`, `pierces`, `pins: Mov −3`, `slows: Spd −3`,
+  `stance: avoid +20`.
+- **The forecast's keys are the same in every weapon forecast** (Nick: "Same
+  everywhere"): opened from `Attack`, from `Arts` or by pointing at an enemy.
+  - **Left / right swap the weapon.** `Attack` no longer shows a weapon
+    list first: it opens the forecast with the equipped weapon.
+  - **Up / down change the target**, and so do the previous / next unit
+    keys.
+- **Cancel** from the forecast of an art goes back to the arts menu, on that
+  art; Cancel again goes to the action menu, on `Arts`.
+- *Claude's starting rules (Nick can veto):*
+  - `Arts` is listed for a unit that has an art or a weapon active for a
+    weapon it carries, and dimmed when none of them can be used on anyone
+    from that tile.
+  - **`Attack` and pointing at an enemy are plain attacks only.** An enemy
+    only an art reaches is attacked through `Arts`. Example: an archer with
+    a brigand right beside it can't shoot it plainly (a bow reaches 2), so
+    `Attack` is dimmed, the menu opens on `Arts`, and Close Shot hits it.
+  - An art's forecast opens with the equipped weapon if it can use the art
+    on someone, else with the first weapon that can. Left / right swap only
+    between weapons that can, and the art stays chosen. The menu's top
+    border names the weapon and its durability (`Iron Sword 20/20`).
+  - From `Attack`, left / right swap between the unit's **weapons** that
+    reach someone (spells are under `Magic`). After pointing at an enemy
+    they swap between weapons and spells, as before
+    (`turn-structure.md`).
+  - With one weapon to attack with, left / right change the target too.
+  - `Magic` keeps its spell list (a spell can also be cast on an ally or a
+    tile, which a forecast can't show), and a spell's forecast opened from
+    it doesn't swap.
+  - A line with a spell active shows only `Fire + Overcast` and its cost;
+    the spell's uses and numbers are on the spell's own line, above it.
+- The arts menu (Quick Battle's lord):
 
   ```
-   ┌─ Swordsman ── Iron Sword 20/20 ──────┐
-   │ ▸ Attack                              │
-   │   Flowing Cut     −2 dur   E          │
-   │   Guard Break     −4 dur   D          │
-   │   Keen Edge       −3 dur   active     │
-   ├───────────────────────────────────────┤
-   │  Guard Break          (20 → 16)       │
-   │  HP   22              HP   20         │
-   │  Dmg  9 (then 10) ×2  Dmg  —  no counter
-   │  Hit  100             Hit  —          │
-   │  Crit 3               Crit —          │
-   └───────────────────────────────────────┘
+   ┌─ Iron Sword 20/20 ─────────────┐
+   │ Flowing Cut     −2 dur  E      │
+   │▸Guard Break     −4 dur  D      │
+   └────────────────────────────────┘
+  ```
+
+  and the forecast of the art chosen in it:
+
+  ```
+   ╔════════ Forecast ══════════╗
+   ║ Guard Break (20 → 16)      ║
+   ║ Test Lord     Brigand      ║
+   ║ Iron Sword    Iron Axe     ║
+   ║ Hit   100     Hit   --     ║
+   ║  8 dmg  →  1   no counter  ║
+   ║  9 dmg  →  2               ║
+   ╚════════════════════════════╝
+  ```
+
+  The spell list of a Mage:
+
+  ```
+   ┌─────────────────────────────────┐
+   │ Fire   10/10  Mt5 Hit90 Rng1-2  │
+   │▸Fire + Overcast  +1 use         │
+   │ Frost  10/10  Mt4 Hit95 Rng1-2  │
+   │ Frost + Overcast  +1 use        │
+   │ Heal    8/8   HP+10 Rng1        │
+   └─────────────────────────────────┘
   ```
 
 ## Worked example (for 0312's tests)

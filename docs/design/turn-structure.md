@@ -90,7 +90,7 @@ split movement for anyone.
 3. **Choose one action** from the action menu: `Attack`, `Item`, `Wait`, plus
    any action the map or other design docs add (e.g. `Seize` on a seize tile,
    `Talk`, `Trade`, `Heal`/magic per `magic.md`, `Items` per
-   `weapons-and-items.md`).
+   `weapons-and-items.md`, `Arts` per `combat-arts.md`).
 4. Choosing the action **commits** the move and the action together. They
    can't be undone (except by rewind, per `death-and-difficulty.md`).
 5. The unit is now **done** (`acted = true`, drawn dimmed) until the start of
@@ -132,25 +132,33 @@ instead of going through the action menu.
     Houses, through everything that reaches that enemy from that tile:
     weapons first (slot order), then attack spells, wrapping round. Example:
     `Iron Sword → Steel Sword → Fire → Frost → Iron Sword`.
-  - **Previous / next unit keys change the target** in this forecast.
-  - **A separate Combat Arts menu** is ticket 0442. Until it is built, up /
-    down still move the arts list in the forecast, as before.
+  - **Up / down change the target** in this forecast, and so do the
+    previous / next unit keys (Nick, 2026-10-12, ticket 0442: "Same
+    everywhere", the offered option "left/right swap the weapon in every
+    weapon forecast, up/down change the target, no weapon list after
+    `Attack`").
+  - **The arts are not in the forecast** (Nick, ticket 0442: "Action menu
+    only"). To use a Combat Art on an enemy pointed at: Cancel, then `Arts`
+    in the action menu (`combat-arts.md` → *The arts menu and the
+    forecast*). A spell active is under `Magic` (`Fire + Overcast`).
   - *Claude's starting rules (Nick can veto):*
     - If the equipped weapon or spell can't reach the enemy from that tile,
       the forecast opens with the first one that does (weapons before
       spells). Example: a mage with a sword equipped points at an enemy two
       tiles away: the forecast opens with Fire.
+    - Only a plain attack counts: an enemy that only an art reaches (Close
+      Shot on the one beside an archer) can't be pointed at from that tile.
     - With only one weapon or spell that reaches, left / right change the
-      target, as in the forecast opened from `Attack`.
+      target too.
     - After changing target, a swap keeps that target if the new weapon
       reaches it; if not, the cursor goes back to the enemy pointed at.
-    - A swap goes back to a plain attack (a chosen art or active is dropped).
     - Cancel goes back to the action menu at that tile, on `Attack` (on
       `Magic` if the forecast showed a spell), and Cancel again to the path.
     - The help bar says `cast` instead of `attack` when a spell would open.
-    - The forecast opened from the action menu (`Attack`, then the weapon
-      list; `Magic`, then the spell list) is unchanged: no swapping there
-      yet (ticket 0442 asks).
+    - The forecast opened from `Attack` swaps the same way, between the
+      unit's weapons that reach someone (ticket 0442: there is no weapon
+      list any more). `Magic` keeps its spell list, and a spell's forecast
+      opened from it doesn't swap.
 
 **Skill-granted movement.** Specific combat skills may give a unit movement
 *after* its action, like Fire Emblem's bow skill that steps the archer 1 tile

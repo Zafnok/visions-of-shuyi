@@ -18,11 +18,11 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                     ≈≈≈≈≈≈====······....♣♣♣♣....                      ║                            ║
                     ..≈┌────────────────────────────────┐             ║                            ║
                     MaF│ Fire   10/10  Mt5 Hit90 Rng1-2 │             ║                            ║
-                    Kn♣│ Frost  10/10  Mt4 Hit95 Rng1-2 │             ║                            ║
-                    ♣♣♣│ Heal    8/8   HP+10 Rng1       │             ║                            ║
-                    ♣♣♠└────────────────────────────────┘             ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
+                    Kn♣│ Fire + Overcast  +1 use        │             ║                            ║
+                    ♣♣♣│ Frost  10/10  Mt4 Hit95 Rng1-2 │             ║                            ║
+                    ♣♣♠│ Frost + Overcast  +1 use       │             ║                            ║
+                       │ Heal    8/8   HP+10 Rng1       │             ║                            ║
+                       └────────────────────────────────┘             ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
@@ -51,11 +51,11 @@ aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaahhiiiiqqqqoooooojjjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaajjibbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaarrsbttttttttttttttttttttttttttttttttbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaarrkbccccccccccccccccccccccccccccccccbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkbggggggggggggggggggggggggggggggggbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakklbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaarrkbcccccccccccccccccgggggggccccccccbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkbccccccccccccccccccccccccccccccccbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaakklbccccccccccccccccccgggggggcccccccbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaabggggggggggggggggggggggggggggggggbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb

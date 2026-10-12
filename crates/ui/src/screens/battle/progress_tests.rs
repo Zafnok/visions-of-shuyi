@@ -65,7 +65,7 @@ fn expected(state: &BattleState) -> (BattleState, Vec<Event>) {
 /// The keys of the attack: select the lord, one step right, the iron
 /// sword on the brigand, attack, then skip the playback.
 const ATTACK_KEYS: &str = "f Right f";
-const TARGET_KEYS: &str = "f f Right f d";
+const TARGET_KEYS: &str = "f Down f d";
 
 /// Cells `x..x + w` of row `y`.
 fn text(h: &Harness, x: i32, y: i32, w: i32) -> String {
@@ -171,18 +171,13 @@ fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action], wait: f32) {
 
 #[test]
 fn the_screen_waits_for_the_level_up_and_leaves_the_battle_cores() {
-    use Action::{Cancel, Confirm, CursorRight};
+    use Action::{Cancel, Confirm, CursorDown, CursorRight};
     let mut c = ctx();
     let state = skirmish(&c, 99, None);
     let (after, _) = expected(&state);
     let mut s = BattleScreen::new(state);
     press(&mut s, &mut c, &[Confirm, CursorRight, Confirm], 0.5);
-    press(
-        &mut s,
-        &mut c,
-        &[Confirm, Confirm, CursorRight, Confirm],
-        0.0,
-    );
+    press(&mut s, &mut c, &[Confirm, CursorDown, Confirm], 0.0);
     // During the playback: nothing shown yet.
     assert!(matches!(s.mode(), Mode::Combat(_)));
     assert!(s.progress().is_none());
@@ -213,7 +208,7 @@ fn the_screen_waits_for_the_level_up_and_leaves_the_battle_cores() {
 
 #[test]
 fn auto_end_waits_for_the_playback_and_the_exp_bar() {
-    use Action::{Cancel, Confirm, CursorRight, ToggleAutoEnd};
+    use Action::{Cancel, Confirm, CursorDown, CursorRight, ToggleAutoEnd};
     let mut c = ctx();
     // The knight and the archer have acted: the lord is the last one.
     let mut state = skirmish(&c, 0, None);
@@ -223,12 +218,7 @@ fn auto_end_waits_for_the_playback_and_the_exp_bar() {
     let mut s = BattleScreen::new(state);
     press(&mut s, &mut c, &[ToggleAutoEnd], 0.0);
     press(&mut s, &mut c, &[Confirm, CursorRight, Confirm], 0.5);
-    press(
-        &mut s,
-        &mut c,
-        &[Confirm, Confirm, CursorRight, Confirm],
-        0.1,
-    );
+    press(&mut s, &mut c, &[Confirm, CursorDown, Confirm], 0.1);
     assert!(matches!(s.mode(), Mode::Combat(_)));
     assert_eq!(s.state().phase(), Phase::Player, "not during the playback");
     press(&mut s, &mut c, &[Cancel], 0.1);
@@ -241,7 +231,7 @@ fn auto_end_waits_for_the_playback_and_the_exp_bar() {
 
 #[test]
 fn auto_end_waits_for_a_playback_with_no_exp_bar_after_it() {
-    use Action::{Confirm, CursorRight, ToggleAutoEnd};
+    use Action::{Confirm, CursorDown, CursorRight, ToggleAutoEnd};
     let mut c = ctx();
     // The lord is at the level cap with its class mastered: it gains
     // nothing, so no EXP bar follows the combat.
@@ -262,12 +252,7 @@ fn auto_end_waits_for_a_playback_with_no_exp_bar_after_it() {
     let mut s = BattleScreen::new(state);
     press(&mut s, &mut c, &[ToggleAutoEnd], 0.0);
     press(&mut s, &mut c, &[Confirm, CursorRight, Confirm], 0.5);
-    press(
-        &mut s,
-        &mut c,
-        &[Confirm, Confirm, CursorRight, Confirm],
-        0.1,
-    );
+    press(&mut s, &mut c, &[Confirm, CursorDown, Confirm], 0.1);
     assert!(matches!(s.mode(), Mode::Combat(_)));
     assert!(s.progress.is_none());
     assert_eq!(s.state().phase(), Phase::Player, "not during the playback");

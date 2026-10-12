@@ -449,7 +449,9 @@ mod tests {
         let mut sel = Selection::new(state, UnitId(1)).unwrap();
         sel.path = vec![sel.origin(), Pos::new(7, 2)];
         let choice = &weapon_choices(state, &sel)[0];
-        let mut t = Targeting::new(state, sel, choice, None).unwrap();
+        let with = trpg_core::Equipped::Weapon(choice.slot);
+        let plain = super::super::art_list::Technique::Attack;
+        let mut t = Targeting::with(state, sel, with, plain, choice.targets.clone()).unwrap();
         t.cycle(true, state);
         assert_eq!(t.target(), UnitId(4));
         t

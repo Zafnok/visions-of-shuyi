@@ -453,14 +453,13 @@ fn the_lord_fights_the_near_brigand_on_turn_one() {
     let mut h = quick_battle();
     // The lord to (6, 4), beside the brigand at (7, 4).
     h.keys("f Right Right Right Up f").wait(0.5);
-    // Attack: two swords reach, so the weapon list; the iron sword; the
-    // forecast against the brigand.
-    h.keys("f f");
+    // Attack: the forecast against the brigand with the equipped iron
+    // sword. Two swords reach: left/right swap between them (0442).
+    h.keys("f");
     assert_eq!(panel(&h)[1], "Test Lord     Brigand");
-    // The lord knows sword arts: up/down pick one from the list.
     assert_eq!(
         help(&h),
-        "Left/Right target · Up/Down art · f attack · d back"
+        "Left/Right swap · Up/Down target · f attack · d back"
     );
     // Attack, then Cancel skips the playback.
     h.keys("f");
@@ -477,6 +476,112 @@ fn the_lord_fights_the_near_brigand_on_turn_one() {
         "{}",
         help(&h)
     );
+}
+
+/// Moves the cursor from where the map shows it to `to` with the arrow keys.
+fn go(h: &mut Harness, to: Pos) {
+    let Some(at) = h.cursor_tile() else {
+        panic!("no cursor on the map");
+    };
+    let (dx, dy) = (to.x - at.x, to.y - at.y);
+    let (x, y) = (
+        if dx < 0 { "Left" } else { "Right" },
+        if dy < 0 { "Up" } else { "Down" },
+    );
+    for _ in 0..dx.abs() {
+        h.keys(x);
+    }
+    for _ in 0..dy.abs() {
+        h.keys(y);
+    }
+}
+
+/// Ticket 0442, with the default keys: the lord uses a Combat Art from the
+/// arts menu, and the mage casts `Fire + Overcast` from the spell list. A
+/// forecast opened by pointing at the enemy has neither: Cancel, then the
+/// menu.
+#[test]
+fn an_art_from_the_arts_menu_and_a_spell_active_from_the_spell_list() {
+    use trpg_core::{ArtId, SkillId, SpellId, UnitId};
+
+    let mut h = quick_battle();
+    let state = |h: &Harness| h.battle().unwrap().state().clone();
+    let (lord, mage) = (UnitId(1), UnitId(8));
+    // The lord points at the brigand at (7, 4): it walks beside it and the
+    // forecast opens with the iron sword, and no arts list.
+    h.keys("f");
+    go(&mut h, Pos::new(7, 4));
+    h.keys("f").wait(0.5);
+    assert_eq!(panel(&h)[1], "Test Lord     Brigand");
+    assert_eq!(
+        help(&h),
+        "Left/Right swap · Up/Down target · f attack · d back"
+    );
+    assert!(!shows(&h, "Guard Break"));
+    // Cancel: the action menu, on Attack. Arts is the next line.
+    h.keys("d");
+    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    assert!(shows(&h, "Arts"));
+    h.keys("Down f");
+    assert!(shows(&h, "Iron Sword 20/20"));
+    assert!(shows(&h, "Flowing Cut     −2 dur  E"));
+    assert!(shows(&h, "Guard Break     −4 dur  D"));
+    // Guard Break: its forecast on the brigand, which can't counter.
+    h.keys("Down f");
+    assert_eq!(panel(&h)[0], "Guard Break (20 → 16)");
+    assert_eq!(panel(&h)[1], "Test Lord     Brigand");
+    assert!(shows(&h, "no counter"));
+    assert!(!shows(&h, "Flowing Cut"));
+    // Cancel goes back to the arts menu, on Guard Break; Confirm again.
+    h.keys("d");
+    assert!(shows(&h, "Flowing Cut     −2 dur  E"));
+    h.keys("f f");
+    assert_eq!(help(&h), "d skip · hold f fast");
+    h.keys("d f");
+    let after = state(&h);
+    let sword = after.unit(lord).unwrap().loadout.weapon(0).unwrap();
+    assert_eq!(sword.durability_left, 16);
+    assert!(matches!(
+        h.battle().unwrap().history().commands().last(),
+        Some(trpg_core::Command::Act {
+            action: trpg_core::UnitAction::Attack { art: Some(art), .. },
+            ..
+        }) if *art == ArtId::new("guard_break")
+    ));
+    // The mage at (3, 6) points at the brigand too: the forecast of Fire,
+    // with nothing to pick Overcast with. Cancel: the menu, on Magic.
+    go(&mut h, Pos::new(3, 6));
+    h.keys("f");
+    go(&mut h, Pos::new(7, 4));
+    h.keys("f").wait(0.5);
+    assert_eq!(panel(&h)[1], "Test Mage     Brigand");
+    assert!(!shows(&h, "Overcast"));
+    h.keys("d");
+    assert_eq!(help(&h), "arrows choose · f confirm · d back");
+    // Magic: the spell list, with a line for Overcast after each attack
+    // spell.
+    h.keys("f");
+    assert!(shows(&h, "Fire + Overcast  +1 use"));
+    assert!(shows(&h, "Frost + Overcast  +1 use"));
+    h.keys("Down f");
+    assert_eq!(panel(&h)[0], "Overcast");
+    assert_eq!(panel(&h)[1], "Test Mage     Brigand");
+    assert_eq!(help(&h), "arrows next target · f cast · d back");
+    h.keys("f");
+    assert!(matches!(
+        h.battle().unwrap().history().commands().last(),
+        Some(trpg_core::Command::Act {
+            action: trpg_core::UnitAction::Cast { active: Some(active), .. },
+            ..
+        }) if *active == SkillId::new("overcast")
+    ));
+    // The cast and Overcast's extra use.
+    let uses = state(&h)
+        .unit(mage)
+        .unwrap()
+        .spells
+        .uses_left(&SpellId::new("fire"));
+    assert_eq!(uses, 8);
 }
 
 #[test]
