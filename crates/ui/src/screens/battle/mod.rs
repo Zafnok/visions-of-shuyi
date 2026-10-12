@@ -44,6 +44,7 @@ pub mod progress;
 pub mod rewind;
 pub mod skills;
 mod sounds;
+pub mod stage;
 pub mod tips;
 pub mod units;
 pub mod walk;
@@ -933,6 +934,23 @@ impl BattleScreen {
     /// its move is sent ([`Mode::drawn_pos`]).
     fn drawn_pos(&self, unit: &Unit) -> Pos {
         self.mode.drawn_pos(unit.id).unwrap_or(unit.pos)
+    }
+
+    /// What the combat stage shows now (ticket 0413): the fight playing
+    /// back, if one is and combat animations are on.
+    pub fn stage_view(&self, ctx: &Ctx) -> Option<stage::view::StageView> {
+        let Mode::Combat(pb) = &self.mode else {
+            return None;
+        };
+        if !self.show_fights {
+            return None;
+        }
+        let ground = pb
+            .bout()
+            .and_then(|bout| self.state.map().tiles.get(bout.defender.pos))
+            .and_then(|id| ctx.content.terrain.display.get(*id))
+            .map(|terrain| terrain.id.as_str());
+        stage::view(ctx, pb, ground)
     }
 
     /// Applies `cmd` (built by [`mode::step`] from legal choices) and
@@ -2012,7 +2030,9 @@ impl Screen for BattleScreen {
         }
         self.draw_menu(ctx, buf, &scene);
         self.draw_popups(ctx, buf, &scene);
-        if let Mode::Combat(pb) = &self.mode {
+        let stage = self.stage_view(ctx);
+        if let (Mode::Combat(pb), None) = (&self.mode, &stage) {
+            // Combat animations are off: the plain box.
             playback::draw_box(buf, &ctx.palette, ctx.words(), pb);
         }
         if let Some(p) = self.progress() {
@@ -2020,6 +2040,10 @@ impl Screen for BattleScreen {
             progress::draw(buf, look, &ctx.content.portraits, p);
         }
         self.draw_panel(ctx, buf);
+        if let Some(view) = &stage {
+            // Over the map and the side panel, which the plates replace.
+            stage::glyph::paint(ctx, view, buf);
+        }
         self.draw_dialogs(ctx, buf, &scene);
         if let Some(tip) = self
             .shown_tip()

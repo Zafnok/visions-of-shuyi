@@ -650,9 +650,16 @@ mod tests {
             .iter()
             .filter(|c| !c.private.is_empty())
             .collect();
-        assert_eq!(bought.len(), 1);
-        assert_eq!(bought[0].group, CreditGroup::Art);
+        let ids: Vec<&str> = bought.iter().map(|c| c.id.as_str()).collect();
+        assert_eq!(ids, ["tiny_tales", "shironejiya"]);
+        assert!(bought.iter().all(|c| c.group == CreditGroup::Art));
         assert!(bought[0].covers("units/witch.png"));
+        // Each combat picture is its own artist's (0413).
+        assert!(bought[0].covers("battlers/guard.png") && bought[0].covers("battlers/guard.ron"));
+        assert!(bought[0].covers("battlebacks/fields.png"));
+        assert!(!bought[0].covers("battlers/brigand.png"));
+        assert!(bought[1].covers("battlers/brigand.png"));
+        assert!(!bought[1].covers("battlers/guard.png"));
         #[cfg(not(feature = "private-assets"))]
         assert_eq!(credits.in_group(CreditGroup::Art).count(), 0);
         // Without the manifest: the file's entries alone.

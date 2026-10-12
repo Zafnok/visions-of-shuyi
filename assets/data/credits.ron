@@ -27,17 +27,36 @@
         // (0437; the tilesets' artist is Rayane Félix) and the Chapter 1
         // cast's portraits (0706: four heroes' busts, and seven faces made
         // with the bundle's Character Generator EX, whose parts are Rayane
-        // Félix's).
+        // Félix's), and the combat scene's pictures and backdrops (0413:
+        // still battle pictures of *Heroes: A New Beginning*, *Battlers 5:
+        // Faith and Evil* and *Battlers 2: Elemental Forces*, and
+        // *Battlebacks Vol.1*).
         (id: "tiny_tales", group: Art, title: "Tiny Tales",
          author: "Megatiles (artists: Rayane Félix, Lunatic Red, Kodots Games Studio)",
          source: "https://megatiles.itch.io/", license: "Custom (Megatiles)",
          private: [
+            "battlebacks/",
+            "battlers/archer.", "battlers/cleric.", "battlers/exile.",
+            "battlers/fire_elemental.", "battlers/frost_elemental.", "battlers/guard.",
+            "battlers/heretic.", "battlers/lead_f.", "battlers/mage.", "battlers/poacher.",
+            "battlers/retainer.",
             "portraits/heretic", "portraits/keeper", "portraits/lead_f", "portraits/lead_m",
             "portraits/messenger", "portraits/poacher", "portraits/red_captain",
             "portraits/retainer", "portraits/rival", "portraits/sergeant", "portraits/soldier",
             "portraits/test_knight", "portraits/test_lord",
             "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "units/",
          ]),
+
+        // Shironejiya's free battle pictures (0413): the Brigand, the Raider
+        // and Harl in the combat scene. Its terms ask for the site's name,
+        // its address and the no-reuse line in a text shipped with the
+        // game: this entry is that text (the site's name is written in
+        // kanji, which the font doesn't have: THIRD_PARTY_ASSETS.md).
+        (id: "shironejiya", group: Art,
+         title: "Shironejiya battle pictures (the materials in this game may not be reused)",
+         author: "Shironejiya (Shiro Nejiya)",
+         source: "http://hi79.web.fc2.com/", license: "Custom (Shironejiya)",
+         private: ["battlers/brigand.", "battlers/raider.", "battlers/red_captain."]),
 
         // The web build's JavaScript loaders (web/README.md).
         (id: "mq_js_bundle", group: Software, title: "macroquad JS/WASM loader", author: "not-fl3",

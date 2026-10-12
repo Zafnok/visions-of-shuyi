@@ -603,19 +603,73 @@ sprites.
   player's fighter stood on the left and the enemy on the right; the enemy
   was drawn as bought and so faced away, which Nick called the main thing
   wrong with them.
-- **Where the scene is shown is open** (ticket 0413). Nick saw two mockups
-  with a bought battle background behind the fighters, one in the box over
-  the map (art at its own size) and one filling the screen (art at double
-  size), and found both "a little off". His worry about the full-screen one
-  is that it "won't be able to convey all the info", though "maybe it can
-  work with some additional in-battle overlays or pop up messages".
+- **The fight fills the screen above the help bar** (decided 2026-10-11,
+  ticket 0413).
+  Nick first saw two mockups (0038), one in the box over the map and one
+  filling the screen, and found both "a little off"; his worry about the
+  big one was that it "won't be able to convey all the info", though
+  "maybe it can work with some additional in-battle overlays or pop up
+  messages". In 0413 he saw four layouts with the facing fixed: the box
+  with and without a background, and the map pane as a stage with and
+  without one. "1A or 1B not the 2 option but torn between A and B", then,
+  after seeing both with the run-up and Harl: **"1B"**. Seeing it run in
+  the game, he dropped the side panel too: "the side panel is somewhat
+  useless in the fight scene... it has the same information... we can
+  just stretch the whole fight scene over" it. So:
+  - While a fight plays, the map **and the side panel** make way for the
+    two fighters at **double size** in front of a bought **backdrop**;
+    the help bar stays. There is always a backdrop. (The backdrop is
+    narrower than the screen at that size: its two edges are drawn again,
+    mirrored, to fill the width.) Nick allowed keeping the side panel for
+    the glyph look; the stage is drawn the same whichever map look is on,
+    so it never shows it *(Claude's reading; say if the glyph look should
+    get the old box back)*.
+  - **A plate per fighter** under the picture: name, HP with a bar, and
+    its damage, hit and crit for this fight (or "no counter"). The name
+    lights up when that fighter is about to strike.
+  - **The result** (`HIT -8`, `MISS`, `CRITICAL! -27`) pops up over the
+    target's head. An art's or an active's name shows at the top.
+  - **The player's fighter stands on the left**; if neither or both are
+    the player's, the attacker does *(Claude's starting rule; the mockups
+    Nick chose from were drawn that way)*.
+  - With **combat animations off** (Options) fights aren't shown at all,
+    as before.
+- **The motions** (decided 2026-10-11, ticket 0413, on GIFs of both): the
+  striker **runs up to its target and back**, like Fire Emblem GBA, not
+  the short hop of Final Fantasy VI (Nick: "2B"). The rest was in every
+  GIF he saw and is *tunable* in `stage/motion.rs`:
+  - a target that is **hit** flashes white and shakes;
+  - a target that is **missed** steps back out of the way and returns;
+  - a **critical** leans back first, then dashes; the whole stage flashes
+    white and the target shakes twice as hard;
+  - a fighter that **falls** fades and sinks.
+  - *Claude's starting rules:* a fighter striking from **two tiles or
+    more away** (a bow, a spell) only steps forward a little instead of
+    running up; a strike that **heals** its target (Absorb) moves nobody;
+    a line spoken inside a fight (a boss's, last words) plays **over the
+    stage**, not over the map.
+- **Backdrops** (ticket 0413): Tiny Tales' *Battlebacks Vol.1* has
+  desert, oasis, two fields, meadows, two mountains and wasteland, each
+  at day, dusk and night; nothing indoors, no forest interior, no town,
+  no bridge or water. *Claude's starting rule:* a fight on a **mountain
+  or a peak** is in front of the mountains, **every other terrain** in
+  front of the fields with the forest edge behind (so a forest, a fort, a
+  bridge and a village all fall back to the fields). Which one is the
+  terrain the **defender** stands on. Only the day pictures are used
+  until maps have a light (ticket 0438).
 - **Classes with no hero art use a still image** (updated 2026-10-04,
   ticket 0040; the full list is in *Fighters with no Tiny Tales art*
   below):
   - **Cleric:** the church cleric (*Faith and Evil*); she is also Maud's
     picture.
   - **Guard:** the church knight (*Faith and Evil*).
-  - **Brigand:** Shironejiya's human bandits (it was the orc axe fighter).
+  - **Brigand:** Shironejiya's bearded axe bandit in its second colours;
+    **Raider:** its armoured axe fighter in red (decided 2026-10-11,
+    ticket 0413; it was the orc axe fighter). Both classes fight with
+    axes and the picture's weapon must match, and of the headscarf
+    bandits only the bearded one holds an axe (the others are bare-handed
+    or hold knives). So Brigands look like Harl in other clothes. Nick:
+    "2A but open to change as we progress in development".
   - **Rider:** Pixel Flag's Paladin (it was an on-foot lance fighter).
   0413 picks the exact images. None of these have faces; they're generic
   enemies or get a face from the Character Generator.
@@ -624,6 +678,23 @@ sprites.
   where most named units share their class's battle animation in their own
   palette). Characters with their own hero art use it for both face and
   combat picture.
+- **Who is recoloured in Chapter 1** (decided 2026-10-11, ticket 0413, on
+  renders of each pair; Nick: "1A", "2A", "3A"):
+  - **The Guard:** the Church Knight's gold trim, tabard and shield are
+    **red for the Red Company's guard** and **faded Veyne blue for
+    Hollis** (both recoloured, so neither is the bought white and gold).
+  - **The Archer:** **Aske is the Archer hero as bought**; the **Red
+    Company's archers** are the same picture with dark hair and red in
+    their clothes, so they aren't her twins.
+  - **The female lead's** top is blue, as in her portrait (0706).
+  - A **class's picture is what the enemy's soldiers of that class look
+    like**; a named character of the player's who shares it gets their own
+    recolour *(Claude's rule for how the files are set up; in Chapter 1
+    the only soldiers without a name are the Red Company's)*.
+- **Sizes** (decided 2026-10-11, ticket 0413): the **Church Cleric (Maud)
+  and the Church Wizard (the Mage class) are drawn at 1.25×**, like
+  Shironejiya's pictures, so they stand as tall as a hero; the Church
+  Knight is already that tall and stays at 1×. The heroes are 1×.
 - **Face and combat picture should match** (Nick prefers visual
   consistency). Where a character's written look doesn't fit the art we
   can buy, the written look is rewritten to fit the art after purchase
@@ -666,9 +737,11 @@ like shit". What the search was held to after that:
 | ------- | -------------- | ---- | ---------- | ------ |
 | Mounted classes (Rider, Lancer, Outrider, Iron Rider; Tamsin) | The **Paladin** (armoured lancer on a white horse), recoloured per character | 1.5× | MattWalkden's riders | Pixel Flag; MattWalkden |
 | Harl | The **bearded axe bandit** (`bandanna05`) | 1.25× | a Tiny Tales human | Shironejiya |
-| Brigand, Raider and other human bandits | The **headscarf bandits** (`bandanna01`–`04`) and the **armoured axe fighter** (`fighter04`) | 1.25× | a Tiny Tales human | Shironejiya |
+| Brigand | The **bearded axe bandit in its second colours** (`bandanna05_b`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
+| Raider | The **armoured axe fighter**, red (`fighter04_a`) (0413) | 1.25× | a Tiny Tales human | Shironejiya |
+| Other human bandits (none in Chapter 1; they must not fight with axes) | The **headscarf bandits** (`bandanna01`–`04`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Aske | The **Archer** hero, as she is | 1× | the Archer's | Tiny Tales (owned) |
-| Maud (the keeper; Cleric) | The **Church Cleric** | 0413 | the Church Cleric's | Tiny Tales (owned) |
+| Maud (the keeper; Cleric) | The **Church Cleric** | 1.25× (0413) | the Church Cleric's | Tiny Tales (owned) |
 | Crane | The **old hooded man with a staff** (`mage_old_m01`), with a spectacle rim added by Claude (a 21-pixel edit) | 1.25× | a Tiny Tales human | Shironejiya |
 | Brawler | The **fist fighter** (`martial03`) | 1.25× | a Tiny Tales human | Shironejiya |
 | Dace | The **dark knight** (`darkknight`): black horned armour, closed helm, red cape | 1.25× | a Tiny Tales human | Shironejiya |
@@ -782,9 +855,11 @@ black.
 
 - Selection arrows `►Al◄` next to another unit: whole-glyph arrows would hide
   one of its letters (the 0416 bracket problem). Ask Nick before 0403 draws them.
-- Combat screen: scale, where the scene is shown (box or full screen), a
-  background behind the fighters, and the exact motions of the still
-  battle images (ticket 0413).
+- Combat screen (ticket 0413 decided where it is shown, the backdrop, the
+  motions, the sizes and the Chapter 1 recolours): which backdrop each
+  terrain gets (today mountains or fields, Claude's starting rule); the
+  riders, who show a plain figure until Pixel Flag's Paladin is bought
+  (ticket 0446).
 - Sprite units on the map: the outline alone or with a corner mark
   (0436). The zoom key and button (0439).
 - On the bought tiles (seen in ticket 0437, not decided): the cursor's

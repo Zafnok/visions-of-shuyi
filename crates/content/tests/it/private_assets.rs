@@ -116,5 +116,11 @@ fn every_bought_file_has_a_credit() {
         .in_group(CreditGroup::Art)
         .map(|e| e.title.as_str())
         .collect();
-    assert_eq!(art, ["Tiny Tales"]);
+    assert_eq!(
+        art,
+        [
+            "Tiny Tales",
+            "Shironejiya battle pictures (the materials in this game may not be reused)"
+        ]
+    );
 }

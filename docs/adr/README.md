@@ -63,6 +63,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0053](0053-player-controller-buttons.md) | Player controller buttons: one shared set of slots in the saved key bindings (version 2) | Accepted; amends ADR-0031 and ADR-0034 |
 | [0054](0054-screens-say-what-they-show-as-a-view-a-skin-paints-it.md) | A screen says what it shows as a view; a skin paints it | Accepted; extends ADR-0038 |
 | [0055](0055-dialogue-lines-for-who-is-there.md) | Dialogue lines for who is there: `@if` blocks, resolved when the scene starts, and a check that nobody who may be gone is shown | Accepted (0715); extends ADR-0005 and ADR-0011 |
+| [0056](0056-combat-pictures-a-sidecar-per-fighter-moved-by-code-on-a-stage.md) | Combat pictures: a sidecar per fighter, one sprite each, moved by code on a stage | Accepted (0413); follows ADR-0038, ADR-0043 and ADR-0054 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

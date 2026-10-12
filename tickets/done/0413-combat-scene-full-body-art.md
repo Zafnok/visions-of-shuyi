@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["0404", "0021", "0035", "0110", "0711", "0231"]
 nick_input: decision
-completed:
+completed: 2026-10-11
 ---
 
 # 0413 — Combat scene with bought full-body art
@@ -183,13 +183,13 @@ combat rules; buying anything.
 
 ## Acceptance criteria
 
-- [ ] Nick's answers recorded in `look-and-feel.md`.
-- [ ] Playback shows both fighters; the setting turns it off.
-- [ ] A clone without `assets-private/` builds and passes every gate with
+- [x] Nick's answers recorded in `look-and-feel.md`.
+- [x] Playback shows both fighters; the setting turns it off.
+- [x] A clone without `assets-private/` builds and passes every gate with
       the placeholders.
-- [ ] Snapshots of the scene mid-strike (placeholders), and a rendered PNG
+- [x] Snapshots of the scene mid-strike (placeholders), and a rendered PNG
       with the bought sprites sent to Nick.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -200,3 +200,89 @@ combat rules; buying anything.
 
 ## Completion notes
 
+**Done (2026-10-11).** While a fight plays with combat animations on, the
+map and the side panel make way for a stage: the two fighters' bought
+pictures at double size, facing each other in front of a bought backdrop,
+moved by the game; a plate per fighter with name, HP bar and the fight's
+damage, hit and crit; the result over the target's head.
+
+**Nick's decisions** (three rounds, on mockups and then on renders of the
+game; all recorded in `look-and-feel.md`, *Combat screen*):
+
+- Where: the stage, not the box ("1B"), always with a backdrop ("1A or 1B
+  not the 2 option"), and over the side panel too ("the side panel is
+  somewhat useless in the fight scene").
+- Motion: the striker runs up to its target ("2B").
+- Brigand = the bearded axe bandit in its second colours, Raider = the
+  armoured axe fighter in red ("2A but open to change as we progress").
+- Hollis in Veyne blue and the Red Company's guard in red ("1A"); the Red
+  Company's archers recoloured so they aren't Aske ("2A"); the Church
+  Cleric and the Church Wizard at 1.25× ("3A").
+- The Shironejiya pictures may be downloaded; the Paladin isn't needed
+  for the Chapter 1 playtest.
+
+**Claude's starting rules** (Nick can veto):
+
+- The player's fighter stands on the left; if neither or both are the
+  player's, the attacker does.
+- A fighter striking from two tiles or more away (a bow, a spell) only
+  steps forward instead of running up.
+- A strike that heals its target (Absorb) moves nobody.
+- A hit flashes the target white and shakes it; a miss makes the target
+  step back; a critical leans back first, flashes the whole stage and
+  shakes twice as hard; a fall fades and sinks. (All were in the GIFs
+  Nick chose from; the amounts are tunable in `stage/motion.rs` and
+  `stage/glyph.rs`.)
+- A line spoken inside a fight (a boss's, last words) plays over the
+  stage, not over the map.
+- Backdrops: a fight on a mountain or a peak is in front of the
+  mountains, every other terrain in front of the fields; the terrain is
+  the defender's. Day pictures only until maps have a light (0438).
+- The generic Mage class is the Church Wizard; Rue keeps the Witch.
+- A class's picture is what the enemy's unnamed soldiers look like (the
+  Guard class is the red knight); a named character of the player's who
+  shares it has their own recolour.
+- The stage is the same whichever map look is on, so the side panel is
+  hidden in the glyph look too.
+
+**What was built.**
+
+- `trpg_content::battler` (ADR-0056): `assets/battlers/<id>.ron` sidecars
+  (image, facing, scale) and `assets/battlebacks/battlebacks.ron`, with
+  every error reported at once. Format: `assets/battlers/README.md`.
+- Public placeholders: a plain figure per Chapter 1 class, `default`, two
+  backdrops (made once; not art).
+- `cargo xtask battler-import [--list]`: copies the bought pictures into
+  `assets-private/game/`, clears Shironejiya's flat background, recolours
+  (hue tints), writes the sidecars.
+- `screens/battle/stage`: the view of the playback (ADR-0054), the motion
+  functions, the painter. The playback's fighters now carry character,
+  class and tile; its combats the forecast numbers.
+- Credits: Shironejiya's own entry, with the text its terms ask for; the
+  Tiny Tales entry covers its battle pictures and backdrops.
+
+**Deviations from the plan.**
+
+- No new `Sprite` feature was needed (a hit is `Paint::Solid`, a fall is
+  `opacity`, the stage's flash the backdrop drawn again in white), so
+  ADR-0038 has no new note.
+- With combat animations off, fights were already skipped whole (0805),
+  not shown in a box; that is unchanged. The box still shows while a
+  story line waits inside a skipped fight.
+- The Rider has no bought picture: the Paladin isn't bought. It shows the
+  placeholder figure (ticket 0446).
+- Crane, Dace and the Brawler aren't in Chapter 1: their pictures (and
+  Crane's spectacles) come with their chapters. Their Shironejiya files
+  are in the private library already.
+- The Red Company archer's recolour is weaker in the clothes than hoped:
+  the Archer wears mostly brown, so it is the dark hair that tells her
+  from Aske.
+- The placeholders were drawn once by a script, not by an `xtask`
+  generator.
+
+**Follow-up tickets:** 0446 (the riders' Paladin). Lines added to 0438
+(dusk and night backdrops) and 0901 (Shironejiya's text in a release).
+
+**For Nick, when playing:** start any fight. To compare, turn *Combat
+animations* off in Options. Riders are a plain grey-green figure until
+the Paladin is bought.

@@ -1,0 +1,6 @@
+// Placeholder (ADR-0056): the bought picture replaces this file.
+(
+    id: "default",
+    image: "default.png",
+    faces: Right,
+)

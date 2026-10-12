@@ -326,6 +326,35 @@ fn close_line(h: &mut Harness) {
     h.keys("f");
 }
 
+/// The rogue's line waits in a combat's playback: with combat animations
+/// on the stage is up behind it, off the plain box.
+#[test]
+fn a_scene_in_a_combat_plays_over_the_stage_or_the_plain_box() {
+    use super::playback::{BOX, BOX_COLUMNS};
+    let on = lord_attacks_rogue(22);
+    let view = on.battle().and_then(|b| b.stage_view(on.game().ctx()));
+    let names = view.map(|v| v.fighters.map(|f| f.name));
+    assert_eq!(
+        names,
+        Some(["Test Lord".to_owned(), "Test Rogue".to_owned()])
+    );
+    assert!(on.snapshot().contains("battlebacks/fields.png"));
+    assert_ne!(text(&on, BOX_COLUMNS[0], BOX.y + 1, 9), "Test Lord");
+
+    let c = ctx();
+    let mut off = Harness::with_screen(Box::new(BattleScreen::new(rogue_battle(&c, 22))));
+    off.ctx_mut()
+        .change_settings(|s| s.combat_animations = false)
+        .unwrap();
+    off.keys("f f f f f");
+    assert_eq!(off.screens(), ["battle", "dialogue"]);
+    let battle = off.battle().unwrap();
+    assert!(matches!(battle.mode(), Mode::Combat(_)));
+    assert_eq!(battle.stage_view(off.game().ctx()), None);
+    assert!(!off.snapshot().contains("battlebacks/"));
+    assert_eq!(text(&off, BOX_COLUMNS[0], BOX.y + 1, 9), "Test Lord");
+}
+
 #[test]
 fn engaging_the_rogue_plays_its_line_over_the_map_then_the_combat() {
     // At full HP (22): the lord's attack leaves it standing at half or less.
