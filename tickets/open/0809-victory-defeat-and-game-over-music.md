@@ -20,7 +20,7 @@ battle ([`docs/design/audio.md`](../../docs/design/audio.md), *Music cues*):
 
 | Cue | Decided in | Plays |
 | --- | ---------- | ----- |
-| `victory` (a pool) | 0022 | Once, while the `VICTORY` banner is shown: one of 17 versions of Fupi's Win Jingle, picked at random each win |
+| `victory` (a pool) | 0022 | Once, while the `VICTORY` banner is shown: one of 13 versions of Fupi's Win Jingle, picked at random each win |
 | `defeat` | 0023 | Once, while the `DEFEAT` banner is shown |
 | `game_over` | 0024 | On the Game Over screen (loop or once: see 0024's answer) |
 
@@ -33,7 +33,8 @@ cues through `ctx.audio` (`crates/ui/src/audio.rs`: `play_music`,
 0214 did it (`assets-src/audio/import.py`, ADR-0027).
 
 0022's answer: `victory` is a **pool** like `skirmish` (`pools` in
-`assets/audio/audio.ron`, 0807): all 17 `.wav` files from `winjingle.zip`
+`assets/audio/audio.ron`, 0807): 13 of the 17 `.wav` files in `winjingle.zip` (not Saw, Square, Banjo or
+Harpsichord: Nick cut them)
 (CC0, one credit entry), each a `looped: false` track. 0022 also reserved
 `victory_grand` and `ceremony_intro`; nothing plays them yet, so do **not**
 import them here.
@@ -74,7 +75,7 @@ whether the stings and the Game Over music fit and are timed right.
 
 ## Implementation steps
 
-1. Import: add the tracks (17 for the `victory` pool, see `audio.md`) to `assets-src/audio/import.py`'s list with
+1. Import: add the tracks (13 for the `victory` pool, see `audio.md`) to `assets-src/audio/import.py`'s list with
    the source URLs and versions recorded in `audio.md`, run it, commit the
    `.ogg` files and the updated manifest entries.
 2. In the battle screen, where `BannerKind::Outcome` is created on
@@ -88,7 +89,7 @@ whether the stings and the Game Over music fit and are timed right.
 
 - [ ] Harness: winning a battle emits `play_music("victory")` exactly once,
       when the `VICTORY` banner appears.
-- [ ] `victory` is a pool of the 17 Win Jingle versions; a test shows two
+- [ ] `victory` is a pool of the 13 Win Jingle versions; a test shows two
       different seeds can pick two different versions, the way the
       `skirmish` pool's test does.
 - [ ] Harness: losing (the lord falls) emits `play_music("defeat")` once,

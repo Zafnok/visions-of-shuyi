@@ -99,10 +99,9 @@ Three rounds on a listening page
 (https://claude.ai/artifact/VaGGdWgQ4Bo3gGUjLqJ3mS): seven fanfares, six more
 short ones, then all versions of the one Nick chose.
 
-- **`victory`**: Fupi's Win Jingle (CC0, OpenGameArt), all 17 instrument
-  versions as a pool, one picked at random each win. Nick had heard two of
-  the 17 (Brass, Strings) when he said "all the versions"; the other fifteen
-  are on the page for him to drop any. 0809's sign-off covers it.
+- **`victory`**: Fupi's Win Jingle (CC0, OpenGameArt), 13 of its 17
+  instrument versions as a pool, one picked at random each win. Nick heard
+  all 17 and cut Saw, Square, Banjo and Harpsichord.
 - **Reserved, not asked for by the ticket** (Nick placed them himself):
   `victory_grand` (cynicmusic's Victory Fanfare Short: a ceremony, or the
   win after an act boss or other big moment) and `ceremony_intro` (Joshua
@@ -110,7 +109,7 @@ short ones, then all versions of the one Nick chose.
   ceremony). No story moment uses them yet, so there is no ticket to import
   them; the ticket that writes such a moment imports its cue.
 - The second question (one sting or several) is answered by the above.
-- 0809 updated: `victory` is a pool of 17 files, and the two reserved cues
+- 0809 updated: `victory` is a pool of 13 files, and the two reserved cues
   are out of its scope.
 - *Claude's naming, not rules:* the cue ids `victory_grand` and
   `ceremony_intro`.

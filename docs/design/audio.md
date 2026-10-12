@@ -69,17 +69,16 @@ a player. **Version** is the file to import when the page has several.
 | `battle_epic_a`, `battle_epic_b` | Act bosses, truly epic battles | Battle Theme A; Battle Theme B for RPG | cynicmusic | [A](https://opengameart.org/content/battle-theme-a), [B](https://opengameart.org/content/battle-theme-b-for-rpg) | CC0 |
 | `battle_church_2`, `battle_church_3` | Battles against the Church | Fantasy Choir 2; Fantasy Choir 3 | César da Rocha | [OGA](https://opengameart.org/content/fantasy-choir-3-orchestral-pieces) | CC0 |
 | `skirmish` pool | Skirmishes: one track picked at random per battle | Battle Themes 1, 2, 3 and 5; RPG - Battle Theme | Alexandr Zhelanov; jocolloman | [Zhelanov](https://opengameart.org/content/battle-themes), [jocolloman](https://opengameart.org/content/rpg-battle-theme-0) | CC-BY 4.0 |
-| `victory` pool | A battle is won: plays **once** while the `VICTORY` banner is shown, one version picked at random each time (0022) | Win Jingle, all 17 versions (the `.wav` files in `winjingle.zip`; list below) | Fupi | [OGA](https://opengameart.org/content/win-jingle) | CC0 |
+| `victory` pool | A battle is won: plays **once** while the `VICTORY` banner is shown, one version picked at random each time (0022) | Win Jingle, 13 of its 17 versions (`.wav` files in `winjingle.zip`; list below) | Fupi | [OGA](https://opengameart.org/content/win-jingle) | CC0 |
 | `victory_grand` | **Reserved** for a ceremony, or the win after an act boss "or some other big moment"; plays once (0022) | Victory Fanfare Short (`Heavy_ConceptB.wav`, about 12 s) | cynicmusic | [OGA](https://opengameart.org/content/victory-fanfare-short) | CC0 |
 | `ceremony_intro` | **Reserved** for the start of "a royal crowning or some other regal ceremony"; only if the story has one; plays once (0022) | Victory Music Cue (13.3 s; the original `.wav` needs a freesound login, the public HQ preview does not) | Joshua Empyre | [freesound 404025](https://freesound.org/s/404025/) | CC-BY 4.0 |
 
-The `victory` pool's 17 versions are the same 5.7 s tune on different
-instruments: Bandoneon, Banjo, Brass, Doot, Fantasia, Fretless, Grand Piano,
-Harpsichord, Jazz Guitar, Muted Guitar, Nylon, Pizzicato, Saw, Square, Steel
-Drums, Strings, Vibraphone. Nick chose "all the versions" after hearing
-Brass and Strings; the other fifteen are on the 0022 listening page
-(https://claude.ai/artifact/VaGGdWgQ4Bo3gGUjLqJ3mS) for him to drop any he
-dislikes. No story moment uses `victory_grand` or `ceremony_intro` yet:
+The `victory` pool's 13 versions are the same 5.7 s tune on different
+instruments: Bandoneon, Brass, Doot, Fantasia, Fretless, Grand Piano, Jazz
+Guitar, Muted Guitar, Nylon, Pizzicato, Steel Drums, Strings, Vibraphone.
+Nick heard all 17 on the 0022 listening page
+(https://claude.ai/artifact/VaGGdWgQ4Bo3gGUjLqJ3mS) and cut four: **Saw,
+Square, Banjo and Harpsichord are not used.** No story moment uses `victory_grand` or `ceremony_intro` yet:
 Chapter 1 has no act boss and no ceremony.
 
 Which story battle uses which `battle_*` cue, and which scene switches to
@@ -341,7 +340,8 @@ sound as the spell goes off, then the magic hit as it lands.)
 
 **The victory sting** (ticket 0022, 2026-10-12; listening page
 https://claude.ai/artifact/VaGGdWgQ4Bo3gGUjLqJ3mS). Round 1 was seven
-fanfares (A–G), round 2 six more short ones (H–M):
+fanfares (A–G), round 2 six more short ones (H–M), round 3 all 17 versions
+of the win jingle:
 
 > I like elements of A, B, C but don't like any of them as standalone. G
 > would be good as some intro to a royal crowning or some other regal
@@ -350,6 +350,8 @@ fanfares (A–G), round 2 six more short ones (H–M):
 > I guess the win jingle sounds alright from Fupi, maybe if we get all the
 > versions and randomly pick one? and M also sounds quite regal so ceremony
 > like or after an act boss or some other big moment
+
+> saw, square, banjo, and harpsichord can be cut out rest sound ok
 
 (A: VICTORY by Spring Spring. B: Orchestral Victory Fanfare by Sheyvan. C:
 Won! by spuispuin. G: Victory Music Cue by Joshua Empyre. M: Victory Fanfare
