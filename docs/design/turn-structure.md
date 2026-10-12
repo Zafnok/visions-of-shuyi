@@ -161,6 +161,66 @@ target"). Which skills exist and who gets them is decided by
 only guarantees that an action may end with a skill-defined extra move, after
 which the unit is done.
 
+## Threat arrows: who can attack this tile
+
+Decided 2026-10-12, ticket 0055. Nick asked for it while playing Chapter 1
+(ticket 0804):
+
+> "when moving or proposing to move into an enemy's attack range, it should
+> illuminate or draw slim arrows from enemy to the tile or unit you're
+> moving to. Newer fire emblem games do this. So you don't need to rely on
+> danger zone as much."
+
+Asked with mockups on the Chapter 1 map (the look is in
+`look-and-feel.md`, *Threat arrows*):
+
+> **What marks the enemies?** [A curved lines, B straight arrows, C a mark
+> over each enemy, D a red frame around each enemy, E curved lines and
+> marks:] "B + C"
+>
+> **Which enemies get a line?** [A everyone who could attack that tile,
+> guards included; B only those the enemy AI would send at that unit:] "A"
+>
+> **When does it show?** [A only while a unit is selected and the cursor is
+> on a tile it can move to; B also whenever the cursor rests on one of your
+> units:] "B"
+>
+> **When an enemy that reaches the tile is off the screen?** [A the arrow
+> comes in from the screen's edge; B nothing; C the arrow and a count:] "A"
+
+The rule:
+
+- **Which enemies:** every enemy that **could attack the tile in the next
+  enemy phase**: it can move to a tile its weapon or attack spell reaches
+  from. It doesn't matter whether the enemy's AI would choose to. Example:
+  on turn 1 of Chapter 1 the Sergeant proposes the road tile 5 east of
+  him; the Brigand beside it, the Archer, the Brigand to the east and the
+  Raider north of the road bridge all get an arrow.
+- **Enemies that wait in place count** (Chapter 1's bridge and fort guards
+  attack whoever comes within reach): the Raider above stands guard and
+  still gets its arrow. An enemy that never moves (Harl in the keep)
+  counts for the tiles it can attack from where it stands.
+- **When it shows**, on the player's phase:
+  1. **A unit is selected and the cursor is on a tile it can move to**
+     (the tile it stands on included): the arrows point at that tile.
+  2. **Nothing is selected and the cursor rests on one of your units:**
+     the arrows point at that unit where it stands.
+  A tile no enemy can attack shows nothing.
+- **No setting and no new key.** Nick wasn't asked for one and didn't ask.
+- The danger zone and picking an enemy to see its range are unchanged.
+- *Claude's starting rules (Nick can veto):*
+  - "Can attack the tile" is worked out as the danger zone works it out,
+    with one difference: the selected unit is counted as standing on the
+    proposed tile, not where it started.
+  - With a unit selected and the cursor on an enemy it can attack (the
+    cursor aims the path at the tile it will attack from, see *Pointing
+    at an enemy*), the arrows point at that tile.
+  - The arrows stay while the action menu is open on the proposed tile,
+    and go when the forecast opens.
+  - A unit of yours that has already acted shows them too (case 2).
+  - Other-phase (green) units don't: only your own.
+  - Only attacks count: an enemy that can only heal gets no arrow.
+
 ## Ending a phase
 
 **Player phase:**
