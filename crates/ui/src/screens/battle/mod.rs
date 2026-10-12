@@ -56,7 +56,7 @@ use trpg_content::{Content, MapLook, Present, TipTrigger, battle_campaign};
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
-    LeadGender, LeadProfile, Phase, Pos, StatValue, TileSet, Unit, UnitId, danger_zone,
+    LeadGender, LeadProfile, Outcome, Phase, Pos, StatValue, TileSet, Unit, UnitId, danger_zone,
     next_command,
 };
 
@@ -125,6 +125,25 @@ pub const QUICK_PACK_POTIONS: usize = 3;
 
 /// How long the `Auto-end: ON/OFF` message stays, in seconds. *Tunable.*
 pub const TOAST_S: f32 = 1.5;
+
+/// The music of a battle's outcome (0809): asked for once per ending.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum OutcomeMusic {
+    /// Not asked for: the battle is on, or its outcome's banner isn't up
+    /// yet.
+    Unheard,
+    /// Asked for, at the outcome's banner.
+    Heard,
+    /// Asked for, then a rewind undid the ending: the battle's own music
+    /// is due again ([`BattleScreen::take_music_back`]).
+    Undone,
+}
+
+/// The music pool a won battle picks its sting from (`audio.md`, 0022).
+pub const VICTORY_MUSIC_POOL: &str = "victory";
+
+/// The music cue of a lost battle, from its banner on (`audio.md`, 0023).
+pub const DEFEAT_MUSIC: &str = "defeat";
 
 /// How long a tile flashes when its terrain changes, in seconds. *Tunable.*
 pub const TERRAIN_FLASH_S: f32 = 0.4;
@@ -278,6 +297,8 @@ pub struct BattleScreen {
     rewind: Option<RewindScreen>,
     /// Where the rewind screen was opened from (0822).
     rewind_from: RewindFrom,
+    /// Where the outcome's music (0809) is.
+    outcome_music: OutcomeMusic,
     /// One-time tips waiting to show (0406).
     tips: TipState,
     /// Heal numbers floating over units.
@@ -362,6 +383,7 @@ impl BattleScreen {
             history: BattleHistory::new(state.clone()),
             rewind: None,
             rewind_from: RewindFrom::Browsing,
+            outcome_music: OutcomeMusic::Unheard,
             state,
             danger: None,
             auto_end: false,
@@ -508,6 +530,35 @@ impl BattleScreen {
             Some(Queued::Banner(b)) => Some(b),
             _ => None,
         }
+    }
+
+    /// Asks for the outcome's music as its banner comes on screen (0809,
+    /// `docs/design/audio.md`): one of the `victory` pool, played once, or
+    /// `defeat`, which the Game Over screen leaves playing.
+    fn play_outcome_music(&mut self, ctx: &mut Ctx) {
+        let Some(BannerKind::Outcome(outcome)) = self.banner().map(|b| b.kind) else {
+            return;
+        };
+        if std::mem::replace(&mut self.outcome_music, OutcomeMusic::Heard) == OutcomeMusic::Heard {
+            return;
+        }
+        let cue = match outcome {
+            Outcome::Victory => ctx.pick_music(VICTORY_MUSIC_POOL),
+            Outcome::Defeat => Some(DEFEAT_MUSIC.to_owned()),
+        };
+        if let Some(cue) = cue {
+            ctx.audio.play_music(&cue);
+        }
+    }
+
+    /// Whether a rewind undid an ending whose music was asked for, so the
+    /// battle's own music is due again. Asked once: the next call says no.
+    pub fn take_music_back(&mut self) -> bool {
+        let back = self.outcome_music == OutcomeMusic::Undone;
+        if back {
+            self.outcome_music = OutcomeMusic::Unheard;
+        }
+        back
     }
 
     /// Whether the battle's notes are on screen in their box (at the start
@@ -1171,6 +1222,9 @@ impl BattleScreen {
                     self.queue.clear();
                     self.progress = None;
                     self.end_armed = false;
+                    if self.outcome_music == OutcomeMusic::Heard {
+                        self.outcome_music = OutcomeMusic::Undone;
+                    }
                     if self.danger.is_some() {
                         self.danger = Some(danger_tiles(&self.state));
                     }
@@ -1920,6 +1974,8 @@ impl Screen for BattleScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         self.begin_frame(ctx, input.dt);
+        // A banner already up (a battle decided at its start).
+        self.play_outcome_music(ctx);
         let dt = if input.dt.is_finite() {
             input.dt.max(0.0)
         } else {
@@ -2010,6 +2066,7 @@ impl Screen for BattleScreen {
                 self.close_banner();
             }
         }
+        self.play_outcome_music(ctx);
         if let Some(scene) = self.next_scene(ctx) {
             return Transition::Push(Box::new(scene));
         }

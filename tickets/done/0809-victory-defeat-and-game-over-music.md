@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0022", "0023", "0024", "0214", "0801", "0807"]
 nick_input: sign-off
-completed:
+completed: 2026-10-12
 ---
 
 # 0809 — Victory sting, defeat sting, Game Over music
@@ -93,20 +93,21 @@ whether the stings and the Game Over music fit and are timed right.
 
 ## Acceptance criteria
 
-- [ ] Harness: winning a battle emits `play_music("victory")` exactly once,
-      when the `VICTORY` banner appears.
-- [ ] `victory` is a pool of the 13 Win Jingle versions; a test shows two
+- [x] Harness: winning a battle emits `play_music("victory")` exactly once,
+      when the `VICTORY` banner appears. (It asks for the version picked
+      from the pool, e.g. `victory_pizzicato`.)
+- [x] `victory` is a pool of the 13 Win Jingle versions; a test shows two
       different seeds can pick two different versions, the way the
       `skirmish` pool's test does.
-- [ ] Harness: losing (the lord falls) emits `play_music("defeat")` once,
+- [x] Harness: losing (the lord falls) emits `play_music("defeat")` once,
       and the Game Over screen emits no music request, so `defeat` keeps
       playing (0023).
-- [ ] Harness: `Retry chapter` from Game Over emits the battle's own cue.
-- [ ] The content validator loads the new cues; `looped` matches the rules
+- [x] Harness: `Retry chapter` from Game Over emits the battle's own cue.
+- [x] The content validator loads the new cues; `looped` matches the rules
       above; each has a credit.
-- [ ] `THIRD_PARTY_ASSETS.md` lists the new tracks.
+- [x] `THIRD_PARTY_ASSETS.md` lists the new tracks.
 - [ ] Nick signed off.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -117,4 +118,53 @@ whether the stings and the Game Over music fit and are timed right.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Done (2026-10-12).**
+
+- Imported with `import.py`: 13 Win Jingle versions (`music/win_jingle_*.ogg`,
+  3.8 s each, not 5.7 s as `audio.md` said) and The Fallen
+  (`music/the_fallen.ogg`). Manifest: 13 `victory_*` cues (`looped: false`),
+  the `victory` pool, `defeat` (looped), two credits. `THIRD_PARTY_ASSETS.md`
+  has both rows. The Fallen is the first CC BY 3.0 work, so
+  `assets/audio/licenses/CC-BY-3.0.txt` is added (ADR-0027). The pack's own
+  terms ask for the composer's site in the credit: the author reads
+  "Jonathan Shaw (www.jshaw.co.uk)".
+- The battle screen asks for the outcome's music once, when the `VICTORY`
+  or `DEFEAT` banner comes on screen. The Game Over screen asks for nothing
+  and 0807's `stop_music` is gone, so `defeat` plays on from where it was.
+- **0024 was still open.** Asked here (Nick: "Loop it"), recorded in
+  `audio.md`, and 0024 is archived by this PR. Nick then added: "ensure the
+  loop has a 10-15s pause between loops for defeat/game over, and
+  transition b/w defeat and game over should not reset music playhead".
+  The pause is silence at the end of the file, so the loop carries it.
+
+**Deviations.**
+
+- `content`'s test that every cue in `audio.md` is in the manifest was red
+  on `main` since 0022/0023 added rows. It now passes, with a list of the
+  three reserved cues (`victory_grand`, `ceremony_intro`, `scene_loss`)
+  that this ticket was told not to import; the test fails if one of them
+  is imported and left in the list.
+- `Rewind` from Game Over (0822) used to start the battle's music the
+  moment it was chosen. Now it starts once a rewind point is picked (see
+  the rules below), and it is the same track, not a new pick.
+
+**Claude's starting rules** (*tunable*, also in `audio.md`):
+
+- The pause between two rounds of the defeat music is 13.8 s (the piece's
+  own quiet ending, 1.8 s, and 12 s added).
+- After the victory jingle (3.8 s) nothing plays until the next scene's
+  music or the next screen's: the results screen is silent after it. In
+  Chapter 1 the victory scene then starts `scene_sad`.
+- On Game Over, choosing `Rewind` keeps the defeat music while you look
+  through the rewind points. Backing out returns to Game Over with the
+  music still going. Picking a point starts the battle's track again from
+  its beginning: the same track, also in a skirmish.
+- `Retry Battle` starts the battle's music as a new battle does (a
+  skirmish picks a track again).
+
+**For Nick's sign-off:** win and lose a Quick Battle. Listen for the jingle
+at `VICTORY` (a different instrument on different wins), the defeat piece
+starting at `DEFEAT` and carrying on unbroken into Game Over, and, if you
+wait 77 s, the pause before it starts again.
+
+No follow-up tickets.

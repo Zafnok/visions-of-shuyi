@@ -1147,7 +1147,8 @@ mod tests {
         assert!(is_known(audio, &AudioRequest::StopMusic));
     }
 
-    /// A won battle pops back to the title, which asks for its music again.
+    /// A won battle asks for its victory sting once, at the banner (0809),
+    /// and pops back to the title, which asks for its music again.
     #[test]
     fn the_title_music_returns_after_a_battle() {
         use crate::screens::battle::testing::battle_with;
@@ -1155,6 +1156,11 @@ mod tests {
         use trpg_core::{Objective, Pos, UnitId};
 
         let c = ctx();
+        // The run's first pick from the pool.
+        let sting = crate::audio::pick_from_pool(&c.content.audio, "victory", c.music_seed);
+        let sting = AudioRequest::PlayMusic {
+            cue: sting.unwrap().to_owned(),
+        };
         let quick = quick_battle(&c.content).unwrap();
         // The lord next to a brigand on 1 HP, which one hit routs.
         let mut units = quick.units().to_vec();
@@ -1181,7 +1187,7 @@ mod tests {
         for _ in 0..60 {
             music.extend(music_of(game.frame(&[], 0.5).audio));
         }
-        assert!(music.is_empty(), "{music:?}");
+        assert_eq!(music, [sting]);
         assert_eq!(game.screens(), ["title", "battle"]);
         // Past the VICTORY banner, back at the title.
         assert!(game.frame(&[down(Key::F)], 0.0).audio.is_empty());

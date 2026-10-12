@@ -789,7 +789,12 @@ mod tests {
         "heal",
     ];
 
-    /// Every cue `audio.md` lists is in the manifest (ticket 0214).
+    /// Cues `audio.md` reserves for a moment the story doesn't have yet
+    /// (0022, 0023): each is imported by the ticket that first plays it.
+    const RESERVED: [&str; 3] = ["victory_grand", "ceremony_intro", "scene_loss"];
+
+    /// Every cue `audio.md` lists is in the manifest (ticket 0214), but
+    /// for the [`RESERVED`] ones.
     #[test]
     fn every_design_cue_is_in_the_manifest() {
         let m = load().unwrap_or_default();
@@ -804,10 +809,13 @@ mod tests {
                 !(m.sounds.contains_key(*id)
                     || m.music.contains_key(*id)
                     || m.pools.contains_key(*id)
-                    || IN_HOUSE.contains(id))
+                    || IN_HOUSE.contains(id)
+                    || RESERVED.contains(id))
             })
             .collect();
         assert_eq!(missing, Vec::<&str>::new());
+        let imported = |id: &&str| m.music.contains_key(*id);
+        assert!(!RESERVED.iter().any(imported), "drop it from RESERVED");
         // Every third-party cue has a credit (ours are `Own`).
         for (id, credit) in m
             .sounds

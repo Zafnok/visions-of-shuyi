@@ -1,6 +1,7 @@
 use trpg_core::{Command, LeadGender, LeadProfile, Pos, StatKind, UnitAction, UnitId};
 
 use super::*;
+use crate::audio::AudioRequest;
 use crate::game::Game;
 use crate::harness::Harness;
 use crate::input::Action::Cancel;
@@ -354,6 +355,17 @@ fn game_over_rewinds_a_lost_battle() {
     use crate::input::Action::{Cancel, Confirm};
     let mut c = ctx();
     let mut flow = lost_flow(&mut c, 2);
+    // 0809: `defeat` was asked for once, at the banner.
+    let music = |c: &mut Ctx| -> Vec<String> {
+        let cue = |r: AudioRequest| match r {
+            AudioRequest::PlayMusic { cue } => Some(cue),
+            AudioRequest::StopMusic => Some("-".to_owned()),
+            _ => None,
+        };
+        c.audio.take().into_iter().filter_map(cue).collect()
+    };
+    assert_eq!(music(&mut c), ["defeat"]);
+    flow.music = Some("battle_easy".to_owned());
     let Stage::GameOver(screen, _) = flow.stage() else {
         panic!("no game over");
     };
@@ -373,6 +385,9 @@ fn game_over_rewinds_a_lost_battle() {
     assert!(flow.battle().is_some_and(|b| b.rewind().is_some()));
     update(&mut flow, &mut c, &[Cancel]);
     assert_eq!(flow.name(), "game_over");
+    // `defeat` plays on all the while (0809).
+    update(&mut flow, &mut c, &[]);
+    assert_eq!(music(&mut c), [""; 0]);
     // Rewind again and pick the point: the battle is on again.
     update(&mut flow, &mut c, &[Confirm]);
     // The oldest point: before the lord's first action.
@@ -385,9 +400,12 @@ fn game_over_rewinds_a_lost_battle() {
     assert!(b.rewind().is_none());
     assert_eq!(b.history().charges_left(), 1);
     assert_eq!(b.history().len(), 0);
+    // The battle's own track again (0809), asked for once.
+    assert_eq!(music(&mut c), ["battle_easy"]);
     // And it carries on: it is not sent back to Game Over.
     update(&mut flow, &mut c, &[]);
     assert_eq!(flow.name(), "battle");
+    assert_eq!(music(&mut c), [""; 0]);
 }
 
 /// Acceptance (0822): no charges left, no `Rewind`; `Retry Battle` is first.

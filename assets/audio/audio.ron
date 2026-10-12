@@ -64,11 +64,33 @@
         (id: "skirmish_zhelanov_3", file: "zhelanov_battle_theme_3.ogg", volume: 100, length_ms: 84532, credit: Credit("zhelanov_battle_themes")),
         (id: "skirmish_zhelanov_5", file: "zhelanov_battle_theme_5.ogg", volume: 100, length_ms: 90044, credit: Credit("zhelanov_battle_themes")),
         (id: "skirmish_jocolloman", file: "rpg_battle_theme.ogg", volume: 100, length_ms: 77500, credit: Credit("rpg_battle_theme")),
+        // The victory pool's tracks (pools below): each plays once.
+        (id: "victory_bandoneon", file: "win_jingle_bandoneon.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_brass", file: "win_jingle_brass.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_doot", file: "win_jingle_doot.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_fantasia", file: "win_jingle_fantasia.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_fretless", file: "win_jingle_fretless.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_grand_piano", file: "win_jingle_grand_piano.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_jazz_guitar", file: "win_jingle_jazz_guitar.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_muted_guitar", file: "win_jingle_muted_guitar.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_nylon", file: "win_jingle_nylon.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_pizzicato", file: "win_jingle_pizzicato.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_steel_drums", file: "win_jingle_steel_drums.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_strings", file: "win_jingle_strings.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        (id: "victory_vibraphone", file: "win_jingle_vibraphone.ogg", volume: 100, looped: false, length_ms: 3785, credit: Credit("win_jingle")),
+        // From the DEFEAT banner through the Game Over screen (0023). It
+        // loops (0024); the file ends with a pause (import.py, TUNABLE).
+        (id: "defeat", file: "the_fallen.ogg", volume: 100, length_ms: 89140, credit: Credit("the_fallen")),
     ],
     pools: [
         // Skirmishes pick one at random per battle (audio.md rule 8; 0807).
         (id: "skirmish", music: ["skirmish_zhelanov_1", "skirmish_zhelanov_2", "skirmish_zhelanov_3",
                                  "skirmish_zhelanov_5", "skirmish_jocolloman"]),
+        // A won battle picks one at random (audio.md; 0022, 0809).
+        (id: "victory", music: ["victory_bandoneon", "victory_brass", "victory_doot", "victory_fantasia",
+                                "victory_fretless", "victory_grand_piano", "victory_jazz_guitar", "victory_muted_guitar",
+                                "victory_nylon", "victory_pizzicato", "victory_steel_drums", "victory_strings",
+                                "victory_vibraphone"]),
     ],
     credits: [
         // Music (one entry per work; the note names the file or version).
@@ -153,6 +175,16 @@
          source: "https://opengameart.org/content/rpg-battle-theme-0", license: "CC-BY-4.0",
          tags: ["music", "skirmish", "battle", "loop"],
          note: "battle_theme_2.wav (the uncompressed file, made to loop); copyright 2021 Joseph Collard"),
+        (id: "win_jingle", title: "Win Jingle", author: "Fupi",
+         source: "https://opengameart.org/content/win-jingle", license: "CC0-1.0",
+         tags: ["music", "victory", "jingle", "sting"],
+         note: "13 of the 17 .wav versions in winjingle.zip (not Saw, Square, Banjo or Harpsichord)"),
+        // The pack's own terms ask for the composer's site in the credit.
+        (id: "the_fallen", title: "The Fallen", author: "Jonathan Shaw (www.jshaw.co.uk)",
+         source: "https://opengameart.org/content/the-fallen-rpg-orchestral-essentials-defeated-music",
+         license: "CC-BY-3.0",
+         tags: ["music", "defeat", "game over", "sad", "orchestral", "loop"],
+         note: "The Fallen MP3.mp3 from The Fallen MP3_0.zip (RPG Orchestral Essentials), whole, with 12 s of silence added at the end"),
 
         // Sounds (freesound: the public HQ OGG preview of each sound).
         (id: "sword_sound_1", title: "Sword sound 1", author: "Merrick079",
