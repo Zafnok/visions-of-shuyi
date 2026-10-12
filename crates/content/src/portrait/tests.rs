@@ -289,6 +289,6 @@ fn load_all_reports_every_file() {
     );
     assert!(
         errs.iter()
-            .any(|e| e.file == "assets/portraits/test_lord.ron")
+            .any(|e| e.file == "assets-test/portraits/test_lord.ron")
     );
 }

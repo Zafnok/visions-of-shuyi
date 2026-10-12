@@ -98,4 +98,5 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
 
 `ch01.ron` is Chapter 1's battle. `test.ron` (the test chapter's battle)
 and `quick.ron` (the debug Quick Battle) are test files, never part of the
-story.
+story: they are in `assets-test/battles/`, which a build that ships doesn't
+have (ADR-0057).

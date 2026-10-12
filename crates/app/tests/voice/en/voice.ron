@@ -1,5 +1,5 @@
 // Test clips for voice playback (ticket 0238, docs/voice.md): tones, not
-// speech, for three lines of assets/dialogue/test.dlg. The clips are made
+// speech, for three lines of assets-test/dialogue/test.dlg. The clips are made
 // by `cargo xtask voice-test-clips`, one per entry here.
 (
     clips: [

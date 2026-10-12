@@ -1,5 +1,5 @@
 //! Scripted tests of the Preparations screen (ticket 0408) through the real
-//! game: the debug Quick Battle (`assets/battles/quick.ron`) opens it
+//! game: the debug Quick Battle (`assets-test/battles/quick.ron`) opens it
 //! first, with a stock of spare gear, six Potions and two Elixirs, and a
 //! scout left out of the battle who carries a Steel Bow.
 

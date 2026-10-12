@@ -1,0 +1,11 @@
+// The test characters' names (assets-test/data/characters.ron): added to
+// assets/data/names.ron's, by id, in a build that has the test files
+// (ADR-0057). An id or a name that file has too is an error.
+{
+    "test_lord": "Test Lord",
+    "test_knight": "Test Knight",
+    "test_archer": "Test Archer",
+    "test_rogue": "Test Rogue",
+    "test_mage": "Test Mage",
+    "test_scout": "Test Scout",
+}

@@ -90,10 +90,10 @@ use crate::tips::{draw_tip, fill_placeholders};
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::Language;
 
-/// Battle id of the debug Quick Battle (`assets/battles/quick.ron`).
+/// Battle id of the debug Quick Battle (`assets-test/battles/quick.ron`).
 pub const QUICK_BATTLE: &str = "quick";
 
-/// The debug Quick Battle (`assets/battles/quick.ron`, which the title
+/// The debug Quick Battle (`assets-test/battles/quick.ron`, which the title
 /// screen plays through the game flow) at its start, with its own
 /// characters in Classic: `test_small.map` with the placeholder characters
 /// (a caster among them, unit 8) against generic enemies (rout), one

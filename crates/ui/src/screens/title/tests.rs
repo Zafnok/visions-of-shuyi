@@ -6,7 +6,7 @@ use crate::input::Action;
 use crate::screen::tests::ctx;
 use Item::{Continue, Credits, LoadGame, NewGame, Options, QuickBattle, Quit};
 
-/// The pool the Quick Battle's file names (`assets/battles/quick.ron`).
+/// The pool the Quick Battle's file names (`assets-test/battles/quick.ron`).
 const QUICK_BATTLE_MUSIC_POOL: &str = "skirmish";
 
 fn input(actions: &[Action]) -> FrameInput {

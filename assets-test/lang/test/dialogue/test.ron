@@ -1,4 +1,4 @@
-// The test pack's lines for the scene `test` of assets/dialogue/test.dlg
+// The test pack's lines for the scene `test` of assets-test/dialogue/test.dlg
 // (ticket 0235): each the English in capitals. `cargo xtask lines test`
 // lists the scene's line ids. The lines not here show in English.
 [

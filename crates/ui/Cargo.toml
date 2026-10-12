@@ -19,11 +19,13 @@ serde.workspace = true
 ron.workspace = true
 
 [features]
-# The headless test `Harness` (src/harness.rs), for integration tests.
-harness = []
+# The headless test `Harness` (src/harness.rs), for integration tests. It
+# starts games in the test chapter, so it brings the test files (ADR-0057).
+harness = ["trpg-content/test-fixtures"]
 # Debug tools (Quick Battle, glyph sampler) in a release build: the Pages
-# build only (ADR-0023). Never on in shipped builds.
-debug-tools = []
+# build only (ADR-0023). Never on in shipped builds. The Quick Battle is
+# made of the test files (ADR-0057).
+debug-tools = ["trpg-content/test-fixtures"]
 
 [dev-dependencies]
 # Turns on `harness` for this crate's own integration tests in tests/.

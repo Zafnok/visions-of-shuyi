@@ -190,7 +190,7 @@ pub fn load_file() -> Result<CreditsFile, Vec<ContentError>> {
 pub fn load(audio: Option<&AudioManifest>) -> Result<Credits, Vec<ContentError>> {
     let file = load_file()?;
     let mut bought = bundle::files_under("");
-    bought.retain(|p| bundle::display_path(p).starts_with(bundle::PRIVATE_DISPLAY_ROOT));
+    bought.retain(|p| bundle::is_private(p));
     let no_audio = AudioManifest::default();
     Ok(merge(&file, audio.unwrap_or(&no_audio), &bought))
 }

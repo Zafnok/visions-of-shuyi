@@ -1,5 +1,5 @@
 //! Scripted tests of the data's text in another language (ticket 0235),
-//! through the real game: the test pack (`assets/lang/test/`) is English in
+//! through the real game: the test pack (`assets-test/lang/test/`) is English in
 //! capitals for a few names, a tip and some lines of the test scene, so
 //! what it translates shows in capitals and everything else in English.
 
