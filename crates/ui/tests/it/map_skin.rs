@@ -168,11 +168,11 @@ fn quick_battle_with_sprite_units_after_two_actions() {
     h.keys("Down f Left f f");
     // The knight, at (4, 6): Skill, Brace.
     h.keys("Right Down f f Up Up Up f f").wait(1.0);
-    // The archer, at (2, 4): to (5, 4), Attack, Pinning Shot.
+    // The archer, at (2, 4): to (5, 4), Arts, Pinning Shot.
     h.keys("Left Left Left Up Up f Right Right Right");
     h.keys("f").wait(1.0);
-    h.keys("f").wait(0.5);
-    h.keys("Down Down f").wait(0.5);
+    h.keys("Down f").wait(0.5);
+    h.keys("Down f").wait(0.5);
     h.keys("f").wait(30.0);
     h.keys("Down Down");
     let scene = h.map_scene().unwrap();

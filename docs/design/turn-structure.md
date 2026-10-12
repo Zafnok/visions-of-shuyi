@@ -90,7 +90,7 @@ split movement for anyone.
 3. **Choose one action** from the action menu: `Attack`, `Item`, `Wait`, plus
    any action the map or other design docs add (e.g. `Seize` on a seize tile,
    `Talk`, `Trade`, `Heal`/magic per `magic.md`, `Items` per
-   `weapons-and-items.md`).
+   `weapons-and-items.md`, `Arts` per `combat-arts.md`).
 4. Choosing the action **commits** the move and the action together. They
    can't be undone (except by rewind, per `death-and-difficulty.md`).
 5. The unit is now **done** (`acted = true`, drawn dimmed) until the start of
@@ -132,25 +132,33 @@ instead of going through the action menu.
     Houses, through everything that reaches that enemy from that tile:
     weapons first (slot order), then attack spells, wrapping round. Example:
     `Iron Sword → Steel Sword → Fire → Frost → Iron Sword`.
-  - **Previous / next unit keys change the target** in this forecast.
-  - **A separate Combat Arts menu** is ticket 0442. Until it is built, up /
-    down still move the arts list in the forecast, as before.
+  - **Up / down change the target** in this forecast, and so do the
+    previous / next unit keys (Nick, 2026-10-12, ticket 0442: "Same
+    everywhere", the offered option "left/right swap the weapon in every
+    weapon forecast, up/down change the target, no weapon list after
+    `Attack`").
+  - **The arts are not in the forecast** (Nick, ticket 0442: "Action menu
+    only"). To use a Combat Art on an enemy pointed at: Cancel, then `Arts`
+    in the action menu (`combat-arts.md` → *The arts menu and the
+    forecast*). A spell active is under `Magic` (`Fire + Overcast`).
   - *Claude's starting rules (Nick can veto):*
     - If the equipped weapon or spell can't reach the enemy from that tile,
       the forecast opens with the first one that does (weapons before
       spells). Example: a mage with a sword equipped points at an enemy two
       tiles away: the forecast opens with Fire.
+    - Only a plain attack counts: an enemy that only an art reaches (Close
+      Shot on the one beside an archer) can't be pointed at from that tile.
     - With only one weapon or spell that reaches, left / right change the
-      target, as in the forecast opened from `Attack`.
+      target too.
     - After changing target, a swap keeps that target if the new weapon
       reaches it; if not, the cursor goes back to the enemy pointed at.
-    - A swap goes back to a plain attack (a chosen art or active is dropped).
     - Cancel goes back to the action menu at that tile, on `Attack` (on
       `Magic` if the forecast showed a spell), and Cancel again to the path.
     - The help bar says `cast` instead of `attack` when a spell would open.
-    - The forecast opened from the action menu (`Attack`, then the weapon
-      list; `Magic`, then the spell list) is unchanged: no swapping there
-      yet (ticket 0442 asks).
+    - The forecast opened from `Attack` swaps the same way, between the
+      unit's weapons that reach someone (ticket 0442: there is no weapon
+      list any more). `Magic` keeps its spell list, and a spell's forecast
+      opened from it doesn't swap.
 
 **Skill-granted movement.** Specific combat skills may give a unit movement
 *after* its action, like Fire Emblem's bow skill that steps the archer 1 tile
@@ -160,6 +168,66 @@ target"). Which skills exist and who gets them is decided by
 `progression.md` (0005) and `weapons-and-items.md` (0003). The turn system
 only guarantees that an action may end with a skill-defined extra move, after
 which the unit is done.
+
+## Threat arrows: who can attack this tile
+
+Decided 2026-10-12, ticket 0055. Nick asked for it while playing Chapter 1
+(ticket 0804):
+
+> "when moving or proposing to move into an enemy's attack range, it should
+> illuminate or draw slim arrows from enemy to the tile or unit you're
+> moving to. Newer fire emblem games do this. So you don't need to rely on
+> danger zone as much."
+
+Asked with mockups on the Chapter 1 map (the look is in
+`look-and-feel.md`, *Threat arrows*):
+
+> **What marks the enemies?** [A curved lines, B straight arrows, C a mark
+> over each enemy, D a red frame around each enemy, E curved lines and
+> marks:] "B + C"
+>
+> **Which enemies get a line?** [A everyone who could attack that tile,
+> guards included; B only those the enemy AI would send at that unit:] "A"
+>
+> **When does it show?** [A only while a unit is selected and the cursor is
+> on a tile it can move to; B also whenever the cursor rests on one of your
+> units:] "B"
+>
+> **When an enemy that reaches the tile is off the screen?** [A the arrow
+> comes in from the screen's edge; B nothing; C the arrow and a count:] "A"
+
+The rule:
+
+- **Which enemies:** every enemy that **could attack the tile in the next
+  enemy phase**: it can move to a tile its weapon or attack spell reaches
+  from. It doesn't matter whether the enemy's AI would choose to. Example:
+  on turn 1 of Chapter 1 the Sergeant proposes the road tile 5 east of
+  him; the Brigand beside it, the Archer, the Brigand to the east and the
+  Raider north of the road bridge all get an arrow.
+- **Enemies that wait in place count** (Chapter 1's bridge and fort guards
+  attack whoever comes within reach): the Raider above stands guard and
+  still gets its arrow. An enemy that never moves (Harl in the keep)
+  counts for the tiles it can attack from where it stands.
+- **When it shows**, on the player's phase:
+  1. **A unit is selected and the cursor is on a tile it can move to**
+     (the tile it stands on included): the arrows point at that tile.
+  2. **Nothing is selected and the cursor rests on one of your units:**
+     the arrows point at that unit where it stands.
+  A tile no enemy can attack shows nothing.
+- **No setting and no new key.** Nick wasn't asked for one and didn't ask.
+- The danger zone and picking an enemy to see its range are unchanged.
+- *Claude's starting rules (Nick can veto):*
+  - "Can attack the tile" is worked out as the danger zone works it out,
+    with one difference: the selected unit is counted as standing on the
+    proposed tile, not where it started.
+  - With a unit selected and the cursor on an enemy it can attack (the
+    cursor aims the path at the tile it will attack from, see *Pointing
+    at an enemy*), the arrows point at that tile.
+  - The arrows stay while the action menu is open on the proposed tile,
+    and go when the forecast opens.
+  - A unit of yours that has already acted shows them too (case 2).
+  - Other-phase (green) units don't: only your own.
+  - Only attacks count: an enemy that can only heal gets no arrow.
 
 ## Ending a phase
 

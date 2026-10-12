@@ -156,6 +156,7 @@ fn talk_is_offered_next_to_someone_to_talk_to_and_picks_a_target() {
         entries,
         &[
             MenuEntry::Attack,
+            MenuEntry::Arts,
             MenuEntry::Talk,
             MenuEntry::Skill,
             MenuEntry::Item,
@@ -165,8 +166,9 @@ fn talk_is_offered_next_to_someone_to_talk_to_and_picks_a_target() {
     );
     assert_eq!(menu.focus(), 0, "Attack stays the default");
     assert_eq!(MenuEntry::Talk.label(Words::ENGLISH), "Talk");
-    // Talk: the rogue, the cursor on it.
-    let (mode, effect) = step(lord_menu(&s), Action::CursorDown, Pos::new(3, 5), &s);
+    // Talk (past the dimmed Arts): the rogue, the cursor on it.
+    let (mode, _) = step(lord_menu(&s), Action::CursorDown, Pos::new(3, 5), &s);
+    let (mode, effect) = step(mode, Action::CursorDown, Pos::new(3, 5), &s);
     let (mode, effect2) = step(mode, Action::Confirm, Pos::new(3, 5), &s);
     assert_eq!((effect, effect2), (Effect::None, Effect::Cursor(ROGUE_AT)));
     assert!(matches!(&mode, Mode::TalkTarget { targets, index: 0, .. } if targets == &[UnitId(7)]));
@@ -233,6 +235,7 @@ fn talk_cycles_between_several_targets() {
     }
     let s = BattleState::new(setup).0;
     let (mode, _) = step(lord_menu(&s), Action::CursorDown, Pos::new(3, 5), &s);
+    let (mode, _) = step(mode, Action::CursorDown, Pos::new(3, 5), &s);
     let (mode, _) = step(mode, Action::Confirm, Pos::new(3, 5), &s);
     let at = |effect| match effect {
         Effect::Cursor(p) => p,
@@ -255,8 +258,9 @@ fn talking_plays_the_scene_and_keeps_the_units_turn() {
     let mut c = ctx();
     let mut s = BattleScreen::new(rogue_battle(&c, 22));
     s.cursor.jump(Pos::new(3, 5));
-    // Select the lord, stay, Talk, the rogue.
-    for a in [Action::Confirm, Action::Confirm, Action::CursorDown] {
+    // Select the lord, stay, Talk (past Arts), the rogue.
+    let down = Action::CursorDown;
+    for a in [Action::Confirm, Action::Confirm, down, down] {
         frame(&mut s, &mut c, &[a], 0.0);
     }
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);

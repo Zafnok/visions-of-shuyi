@@ -1435,7 +1435,7 @@ impl BattleScreen {
             }
             Mode::Moving { .. } => "battle.help.skip",
             Mode::ActionMenu { .. }
-            | Mode::WeaponMenu { .. }
+            | Mode::ArtsMenu { .. }
             | Mode::SkillMenu { .. }
             | Mode::ItemMenu { .. }
             | Mode::MapMenu { .. }
@@ -1465,8 +1465,9 @@ impl BattleScreen {
         ctx.text_with(key, &[])
     }
 
-    /// The help line while picking an attack's target: left/right pick the
-    /// target and up/down the line of the arts list, if it is shown (0414).
+    /// The help line while picking an attack's target: the cursor keys
+    /// pick the target, or left/right swap the weapon or spell and up/down
+    /// pick the target when several can make the attack (0430, 0442).
     /// Confirm reads `cast` for a spell.
     fn help_targeting(ctx: &Ctx, t: &Targeting) -> String {
         let km = ctx.help_keys();
@@ -1476,20 +1477,11 @@ impl BattleScreen {
             let keys = format!("{}/{}", key_name(km, a), key_name(km, b));
             ctx.text_with(key, &[("keys", &keys)])
         };
-        let (left, right) = (Action::CursorLeft, Action::CursorRight);
-        let art = || pair("battle.hint.art", Action::CursorUp, Action::CursorDown);
         let mut hints = if t.can_swap() {
-            // Left and right swap the weapon or spell of a forecast opened
-            // by pointing (0430); the unit keys then change the target.
-            let units = (Action::PrevUnit, Action::NextUnit);
-            let mut hints = vec![
-                pair("battle.hint.swap", left, right),
-                pair("battle.hint.target", units.0, units.1),
-            ];
-            hints.extend(t.has_list().then(art));
-            hints
-        } else if t.has_list() {
-            vec![pair("battle.hint.target", left, right), art()]
+            vec![
+                pair("battle.hint.swap", Action::CursorLeft, Action::CursorRight),
+                pair("battle.hint.target", Action::CursorUp, Action::CursorDown),
+            ]
         } else {
             vec![plain("battle.hint.next_target")]
         };
@@ -1686,7 +1678,7 @@ impl BattleScreen {
         match &self.mode {
             Mode::Moving { .. }
             | Mode::ActionMenu { .. }
-            | Mode::WeaponMenu { .. }
+            | Mode::ArtsMenu { .. }
             | Mode::SpellMenu { .. }
             | Mode::SkillMenu { .. }
             | Mode::ItemMenu { .. }
@@ -1718,26 +1710,16 @@ impl BattleScreen {
         })
     }
 
-    /// Draws the action menu or the weapon list beside its unit, or the
+    /// Draws the action menu or a list it opened beside its unit, or the
     /// map menu beside the cursor, if open: beside where the map skin has
     /// that tile of `scene`.
     fn draw_menu(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
         let cells = |tile| ctx.map_skin.tile_cells(scene, MAP_VIEW, tile);
         let words = ctx.words();
         let mode = self.mode.told(&self.state, words);
-        if let Some(t) = forecast_of(&mode) {
-            // The arts list, beside the forecast panel (0414).
-            if t.has_list() {
-                let unit_y = cells(t.sel.dest()).map_or(0, |r| r.y);
-                let weapon = (t.sel.unit, &t.with);
-                let told = (&self.state, words);
-                art_list::draw_list(buf, &ctx.palette, told, weapon, &t.list, unit_y);
-            }
-            return;
-        }
         let (tile, menu) = match &*mode {
             Mode::ActionMenu { sel, menu, .. }
-            | Mode::WeaponMenu { sel, menu, .. }
+            | Mode::ArtsMenu { sel, menu, .. }
             | Mode::SpellMenu { sel, menu, .. }
             | Mode::SkillMenu { sel, menu, .. }
             | Mode::ItemMenu { sel, menu, .. }
@@ -1748,6 +1730,15 @@ impl BattleScreen {
         if let Some(tile) = cells(tile) {
             let (x, y) = menu_origin(tile, menu.size());
             menu.draw(&ctx.palette, buf, x, y);
+            if let Mode::ArtsMenu { sel, lines, .. } = &*mode
+                && let Some(line) = lines.get(menu.focus())
+            {
+                // The weapon the focused art would be used with, and its
+                // durability, in the top border.
+                let weapon = (sel.unit, &Equipped::Weapon(line.slot));
+                let told = (&self.state, words);
+                art_list::draw_header(buf, &ctx.palette, told, weapon, (x, y));
+            }
             if matches!(self.mode, Mode::ItemMenu { .. }) {
                 // The pack's size in the top border.
                 let header = format!(" {} ", items::pack_header(&self.state, words));
@@ -3131,18 +3122,20 @@ mod tests {
         let lord = scene.unit_at(Pos::new(5, 5));
         assert_eq!(lord.map(|u| u.label.as_str()), Some("Lo"));
         assert_eq!(scene.unit_at(Pos::new(3, 5)), None);
-        // The menu one cell right of the tile: `Attack` and `Item` (dim),
-        // `Skill`, `Equip`, `Wait`.
+        // The menu one cell right of the tile: `Attack`, `Arts` and `Item`
+        // (dim), `Skill`, `Equip`, `Wait`.
         assert_eq!(row(16, 33, 10), "│ Attack │");
-        assert_eq!(row(17, 33, 10), "│ Skill  │");
-        assert_eq!(row(18, 33, 10), "│ Item   │");
-        assert_eq!(row(19, 33, 10), "│ Equip  │");
-        assert_eq!(row(20, 33, 10), "│ Wait   │");
+        assert_eq!(row(17, 33, 10), "│ Arts   │");
+        assert_eq!(row(18, 33, 10), "│ Skill  │");
+        assert_eq!(row(19, 33, 10), "│ Item   │");
+        assert_eq!(row(20, 33, 10), "│ Equip  │");
+        assert_eq!(row(21, 33, 10), "│ Wait   │");
         let p = &c.palette;
         assert_eq!(buf.get(35, 16).unwrap().fg, p.get(UiColor::TextDim));
-        assert_eq!(buf.get(35, 18).unwrap().fg, p.get(UiColor::TextDim));
+        assert_eq!(buf.get(35, 17).unwrap().fg, p.get(UiColor::TextDim));
+        assert_eq!(buf.get(35, 19).unwrap().fg, p.get(UiColor::TextDim));
         assert_eq!(
-            buf.get(35, 20).unwrap().bg,
+            buf.get(35, 21).unwrap().bg,
             p.get(UiColor::PanelBorderFocus)
         );
         // No cursor, no ranges, the panel shows the lord.

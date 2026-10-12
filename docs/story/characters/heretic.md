@@ -72,9 +72,10 @@ Maud at Harrowby as her "cook" (she can't cook).
 
 ## Voice notes
 
-- Short, rude and funny. Answers questions with questions. Swears by the dead
+- Short and rude. Answers questions with questions. Swears by the dead
   gods irreverently ("Vael's teeth"). Talks about food constantly; she was
-  hungry for years.
+  hungry for years. She is funny once she is safe and among people she has
+  started to trust (downtime, supports); cornered, she is only sharp.
 - Precise and cold when she talks about the Candles; no jokes there, ever.
 - Calls the lead "heir" (sarcastic) until she trusts them. Calls Maud "Keeper"
   with a sneer, then "Maud" by the end.
@@ -82,8 +83,8 @@ Maud at Harrowby as her "cook" (she can't cook).
 
 **Sample lines**
 
-- "I'm not a cook, Keeper. I'm a girl who can light the oven without a match.
-  Different thing."
+- "No. I've hidden in enough cellars. I'm sworn to fire, Keeper, and you know
+  it. I can burn them. I'm fighting."
 - "I've seen that seal before, heir. On a cart. At night. With children in it."
 - "Your friend lifted me in by the collar. He said 'up you go, little one.' He
   was very gentle about it."

@@ -1,4 +1,4 @@
-//! Harness tests of attacking (ticket 0404): the weapon list, targeting,
+//! Harness tests of attacking (ticket 0404): swapping weapons, targeting,
 //! the forecast against `core`'s numbers, the combat playback (Cancel skips, fast
 //! forward, falls) and the battle it leaves.
 
@@ -68,7 +68,8 @@ fn lord_menu(brigand_hp: StatValue) -> Harness {
 /// The lord targeting the brigand with its iron sword (slot 0).
 fn lord_on_brigand(brigand_hp: StatValue) -> Harness {
     let mut h = lord_menu(brigand_hp);
-    h.keys("f f Right");
+    // `Attack` opens the forecast on the raider; down goes to the brigand.
+    h.keys("f Down");
     assert_eq!(panel(&h, 2), "Test Lord     Brigand");
     h
 }
@@ -115,45 +116,41 @@ fn confirm_frames() -> f32 {
 }
 
 #[test]
-fn attack_offers_the_weapons_that_reach_then_cycles_targets_in_order() {
+fn attack_opens_the_forecast_swaps_the_weapons_and_cycles_targets_in_order() {
     let mut h = lord_menu(20);
     assert_eq!(help(&h), "arrows choose · f confirm · d back");
-    // Two swords reach: the weapon list, with their stats.
-    h.keys("f");
-    let all = (0..30).map(|y| row(&h, y)).collect::<Vec<_>>().join("\n");
-    assert!(
-        all.contains("Iron Sword   Mt  5  Hit  90  Crit  0  Rng 1"),
-        "{all}"
-    );
-    assert!(
-        all.contains("Steel Sword  Mt  8  Hit  75  Crit  0  Rng 1"),
-        "{all}"
-    );
-    assert_eq!(help(&h), "arrows choose · f confirm · d back");
-    // Targets in (y, x) order: the raider at (7, 1), then the brigand.
+    // Two swords reach: no weapon list (0442), the forecast with the
+    // equipped one on the first target in (y, x) order, the raider at
+    // (7, 1); right swaps to the other sword, left back.
     h.keys("f");
     assert_eq!(
         help(&h),
-        "Left/Right target · Up/Down art · f attack · d back"
+        "Left/Right swap · Up/Down target · f attack · d back"
     );
     assert_eq!(panel(&h, 2), "Test Lord     Raider");
     assert_eq!(panel(&h, 3), "Iron Sword    Steel Axe");
+    h.keys("Right");
+    assert_eq!(panel(&h, 3), "Steel Sword   Steel Axe");
+    assert_eq!(panel(&h, 2), "Test Lord     Raider");
+    h.keys("Left");
+    assert_eq!(panel(&h, 3), "Iron Sword    Steel Axe");
+    // No arts list beside the forecast.
+    let all = (0..30).map(|y| row(&h, y)).collect::<Vec<_>>().join(" ");
+    assert!(!all.contains("Flowing Cut"), "{all}");
     for (keys, target) in [
-        ("Right", "Brigand"),
-        ("Right", "Raider"),
-        ("Left", "Brigand"),
+        ("Down", "Brigand"),
+        ("Down", "Raider"),
+        ("Up", "Brigand"),
         ("s", "Raider"),
         ("a", "Brigand"),
     ] {
         h.keys(keys);
         assert_eq!(panel(&h, 2), format!("Test Lord     {target}"), "{keys}");
     }
-    // Back to the weapon list, the menu, the path.
+    // Back to the menu, then the path.
     h.keys("d");
     assert_eq!(help(&h), "arrows choose · f confirm · d back");
-    h.keys("Down f");
-    assert_eq!(panel(&h, 3), "Steel Sword   Steel Axe");
-    h.keys("d d d");
+    h.keys("d");
     assert_eq!(help(&h), "arrows move · f move here · d cancel");
 }
 
@@ -224,11 +221,8 @@ fn forecast_with_no_counter_and_a_kill_snapshot() {
     h.keys("Right Right Down Down f f f");
     assert_eq!(panel(&h, 2), "Test Archer   Brigand");
     assert_eq!(text(&h, RIGHT_X + 2, STRIKE_ROW, 10), "no counter");
-    // The archer's arts and Vault: up/down pick one in the list.
-    assert_eq!(
-        help(&h),
-        "Left/Right target · Up/Down art · f attack · d back"
-    );
+    // One bow: nothing to swap, every cursor key picks the target.
+    assert_eq!(help(&h), "arrows next target · f attack · d back");
     assert_snapshot!(h.snapshot());
 }
 
@@ -362,7 +356,7 @@ fn pointing_at_an_enemy_walks_there_and_opens_its_forecast() {
     h.keys("f").wait(0.5);
     assert_eq!(
         help(&h),
-        "Left/Right swap · a/s target · Up/Down art · f attack · d back"
+        "Left/Right swap · Up/Down target · f attack · d back"
     );
     assert_eq!(panel(&h, 2), "Test Lord     Raider");
     assert_eq!(panel(&h, 3), "Iron Sword    Steel Axe");

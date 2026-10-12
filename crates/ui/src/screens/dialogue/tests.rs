@@ -140,8 +140,66 @@ fn instant_text_shows_each_page_at_once() {
 fn holding_confirm_fast_forwards() {
     let mut c = ctx();
     let mut s = full(&two_speakers(&"word ".repeat(50)));
+    // Normal speed up to the delay (0.3 s at 60 a second), then six times it.
+    s.update(&mut c, &frame(&[], 0.3, true));
+    assert!((s.shown - 18.0).abs() < 1e-3, "{}", s.shown);
     s.update(&mut c, &frame(&[], 0.1, true));
-    assert!((s.shown - 36.0).abs() < 1e-3, "{}", s.shown);
+    assert!((s.shown - 54.0).abs() < 1e-3, "{}", s.shown);
+    // A frame that crosses the delay is fast only past it.
+    let mut s = full(&two_speakers(&"word ".repeat(50)));
+    s.update(&mut c, &frame(&[], 0.4, true));
+    assert!((s.shown - 54.0).abs() < 1e-3, "{}", s.shown);
+}
+
+/// Two long boxes, the first one fully shown.
+fn second_page_next(c: &mut Ctx) -> DialogueScreen {
+    let long = "word ".repeat(50);
+    let mut s = full(&scene(vec![
+        say("test_lord", &long),
+        say("test_knight", &long),
+    ]));
+    press(&mut s, c, Action::Confirm);
+    assert!(s.is_revealed());
+    s
+}
+
+#[test]
+fn a_confirm_tap_does_not_fast_forward_the_next_page() {
+    let mut c = ctx();
+    let mut s = second_page_next(&mut c);
+    // The press that turns the page, the key down for 0.1 s more.
+    s.update(&mut c, &frame(&[Action::Confirm], 0.05, true));
+    s.update(&mut c, &frame(&[], 0.05, true));
+    assert!(!s.is_revealed());
+    let mut plain = second_page_next(&mut c);
+    plain.update(&mut c, &frame(&[Action::Confirm], 0.05, false));
+    plain.update(&mut c, &frame(&[], 0.05, false));
+    assert!((s.shown - 6.0).abs() < 1e-3, "{}", s.shown);
+    assert!((s.shown - plain.shown).abs() < 1e-6, "{}", plain.shown);
+}
+
+#[test]
+fn the_fast_forward_delay_starts_again_on_each_page() {
+    let mut c = ctx();
+    let mut s = second_page_next(&mut c);
+    // Held for a second on the shown page, and through the page turn.
+    s.update(&mut c, &frame(&[], 1.0, true));
+    s.update(&mut c, &frame(&[Action::Confirm], 0.0, true));
+    s.update(&mut c, &frame(&[], 0.2, true));
+    assert!((s.shown - 12.0).abs() < 1e-3, "{}", s.shown);
+    // Still held: fast once the delay has passed on this page.
+    s.update(&mut c, &frame(&[], 0.2, true));
+    assert!((s.shown - 54.0).abs() < 1e-3, "{}", s.shown);
+}
+
+#[test]
+fn letting_go_starts_the_fast_forward_delay_again() {
+    let mut c = ctx();
+    let mut s = full(&two_speakers(&"word ".repeat(50)));
+    s.update(&mut c, &frame(&[], 0.2, true));
+    s.update(&mut c, &frame(&[], 0.1, false));
+    s.update(&mut c, &frame(&[], 0.2, true));
+    assert!((s.shown - 30.0).abs() < 1e-3, "{}", s.shown);
 }
 
 #[test]
@@ -173,9 +231,12 @@ fn end_turn_advances_like_confirm() {
     press(&mut s, &mut c, Action::EndTurn);
     assert_eq!(s.page_lines(), ["Second."]);
     // Held, it fast-forwards.
-    let held = FrameInput::new(vec![], 0.05, vec![Action::EndTurn]);
-    s.update(&mut c, &held);
-    assert!(s.is_revealed(), "{}", s.shown);
+    let mut long = full(&two_speakers(&"word ".repeat(50)));
+    let held = FrameInput::new(vec![], 0.4, vec![Action::EndTurn]);
+    long.update(&mut c, &held);
+    assert!((long.shown - 54.0).abs() < 1e-3, "{}", long.shown);
+    press(&mut s, &mut c, Action::EndTurn);
+    assert!(s.is_revealed());
     // It answers yes to the skip question.
     press(&mut s, &mut c, Action::Cancel);
     assert!(matches!(

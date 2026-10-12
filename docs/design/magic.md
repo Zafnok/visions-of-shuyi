@@ -312,6 +312,12 @@ starting rule* or look, for Nick to judge at the sign-off.
 - **The spell list** shows every learned spell: `Fire    6/10  Mt5 Hit90
   Rng1-2`, `Heal    8/8   HP+10 Rng1`. A spell with no target from there is
   dimmed, and so is one with no uses left.
+- **A spell active is a line of the list** (Nick, 2026-10-12, ticket 0442:
+  "Spell actives in spell list"). After each attack spell comes a line for
+  each spell active the unit has: `Fire`, then `Fire + Overcast  +1 use`.
+  It is cast at enemies only, and is dimmed with the reason when the spell
+  can't pay for it (`1 uses left`). See `combat-arts.md` → *The arts menu
+  and the forecast*.
 - **One cursor for everything the spell can target** (Nick). After a spell
   is chosen, the cursor steps through its targets in reading order (row by
   row, left to right): enemies and tiles alike for Fire and Frost, hurt
