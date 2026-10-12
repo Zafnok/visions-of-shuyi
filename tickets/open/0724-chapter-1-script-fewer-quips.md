@@ -70,10 +70,15 @@ What to take from it:
   direction or an expression; if it has none, don't write lines that need
   one, and don't invent `*mumbles*` markup without a ticket for it).
 - **Spelling: "peddler", not "pedlar".** Also in
-  `docs/story/chapters/ch01.md` and `docs/story/ledger.md`. *(Claude's
-  reading, not Nick's words: he wants plain modern American spelling and
-  no words that look archaic. Ask him once in the PR whether that holds
-  for the whole script; until he answers, apply it.)*
+  `docs/story/chapters/ch01.md` and `docs/story/ledger.md`. Asked whether
+  that means American spelling everywhere, Nick (2026-10-12): "yea no
+  bri'ish english only american... idk about modern but not bri'ish". So:
+  **American spelling and American words throughout the game's text**
+  (color, armor, gray, peddler; no "whilst", "bloody", "mate"). He did
+  **not** rule out old-fashioned words as such; don't strip them on his
+  account. Go through the whole of `ch01.dlg` and the language files for
+  British spellings, and add the rule to the `story-writing` skill and
+  `docs/design/setting-and-tone.md` so later scripts follow it.
 
 ## Nick input
 
