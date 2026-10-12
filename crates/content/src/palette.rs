@@ -379,6 +379,20 @@ mod tests {
     }
 
     #[test]
+    fn each_theme_has_its_own_text_key() {
+        let keys: Vec<_> = Theme::ALL.iter().map(|t| t.key()).collect();
+        assert_eq!(
+            keys,
+            [
+                "options.theme.painterly",
+                "options.theme.earthy",
+                "options.theme.parchment",
+                "options.theme.moonlit"
+            ]
+        );
+    }
+
+    #[test]
     fn a_theme_with_other_names_is_reported() {
         let mut base = PaletteDef::load().unwrap_or_default();
         base.colors.insert("extra".into(), [1, 2, 3]);

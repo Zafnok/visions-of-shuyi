@@ -113,7 +113,7 @@ fn the_title_switch_columns_and_groups_have_their_rows() {
     assert_eq!(placed.actions[0], 6);
     assert_eq!(placed.actions[6], 12);
     assert_eq!(placed.actions[7], 15);
-    assert_eq!(placed.actions[15], 23);
+    assert_eq!(placed.actions[16], 24);
     assert!(
         text(&buf, 13)
             .trim_matches(|ch| ch == ' ' || ch == '│')
@@ -121,8 +121,8 @@ fn the_title_switch_columns_and_groups_have_their_rows() {
     );
     assert!(text(&buf, 14).contains("Optional"));
     // Restore defaults is one blank row under the last action.
-    assert_eq!(placed.restore, 25);
-    assert!(text(&buf, 25).contains("Restore defaults"));
+    assert_eq!(placed.restore, 26);
+    assert!(text(&buf, 26).contains("Restore defaults"));
     assert_eq!(text(&buf, i32::from(CONSOLE_H) - 1).trim(), "help");
 }
 

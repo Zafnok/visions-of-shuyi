@@ -5,10 +5,10 @@ type: bug
 milestone: M1 Engine
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0220"]
 nick_input: sign-off
-completed:
+completed: 2026-10-12
 ---
 
 # 0230 — Bug: giving Select a key stops the controller picking on the map
@@ -93,20 +93,20 @@ hasn't seen it spelled out for controllers):
 
 ## Acceptance criteria
 
-- [ ] A Harness test that fails before the fix: with Select bound to a
+- [x] A Harness test that fails before the fix: with Select bound to a
       key, a controller's Confirm on a ready unit selects it, and the
       keyboard's Confirm does not.
-- [ ] Harness: with Confirm end turn bound to a key, Start pressed twice on
+- [x] Harness: with Confirm end turn bound to a key, Start pressed twice on
       a controller ends the turn; End turn pressed twice on the keyboard
       does not.
-- [ ] On the controller the help bar reads `A select` (not `! not mapped
+- [x] On the controller the help bar reads `A select` (not `! not mapped
       select`) in that setup; on the keyboard it reads `g select`.
-- [ ] Unit tests of `select_action` / `end_turn_accept_actions` per device,
+- [x] Unit tests of `select_action` / `end_turn_accept_actions` per device,
       including a keymap where Select has a button but no key.
-- [ ] `crates/ui/tests/it/controller.rs`'s
+- [x] `crates/ui/tests/it/controller.rs`'s
       `an_action_with_no_button_shows_not_mapped_on_a_pad` is rewritten
       around an action that still has no button (it used Select).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -116,5 +116,12 @@ hasn't seen it spelled out for controllers):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `Keymap::select_action` and `end_turn_accept_actions` now take a `Device`
+  (keys for the keyboard, buttons for a pad); `Mode::route` takes the device
+  (`ctx.device`, the one pressed last in a frame); `HelpKeys` has matching
+  methods so help text and tips name the right action.
+- `an_action_with_no_button_shows_not_mapped_on_a_pad` now clears Rewind's
+  button instead of using Select. New Harness tests in `controller.rs`.
+- *Claude's starting rule* (Nick to veto): the split is per device, as
+  worded in the ticket; written into `docs/design/controls.md`.
+- No follow-up tickets.

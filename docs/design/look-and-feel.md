@@ -223,11 +223,25 @@ so they aren't in this repository (ADR-0032).
   on it)*. Which lights exist and how dark each is: ticket 0438 *(values
   tunable)*.
 - **Zoom:** a key and a controller button switch the map between **1×**
-  (a 16-pixel tile, about 34×28 tiles on screen, render C) and **2×** (a
-  32-pixel tile, about 17×14 tiles, render C2). The game **remembers** the
-  choice: the next battle opens at the same zoom. Ticket 0439. Nick picks
-  the default key and button when that ticket is built ("I will decide it
-  later").
+  (a 16-pixel tile, 35×30 tiles on screen, render C) and **2×** (a
+  32-pixel tile, 17×15 tiles, render C2). Tiles, unit sprites, HP bars,
+  effect arrows, the cursor's marks and the path all grow together; the
+  side panel, menus and text don't. The game **remembers** the choice:
+  the next battle, and the next launch, open at the same zoom. Built by
+  ticket 0439.
+  - **A new player starts at 2×** (Nick, 2026-10-12, shown Chapter 1's
+    first turn at both, [`0439-zoom-1x.png`](../screenshots/0439-zoom-1x.png)
+    and [`0439-zoom-2x.png`](../screenshots/0439-zoom-2x.png): "2x"). In
+    the 0804 playtest he had found 1× too small: "I think we can scale
+    the battle map bigger. tile size / overworld unit size. rn it's quite
+    small". The cost he was told: Chapter 1's map is 24×16, so at 2× it
+    scrolls (the fort is off screen at the start).
+  - **The key and the button** (Nick, 2026-10-12): `Q` right-handed, `P`
+    left-handed, the right trigger on a controller; optional. His words
+    and when the key works: `controls.md`, *Zoom map*. Also a row of the
+    Options screen, `Map zoom` (`options.md`).
+  - **Only pictures zoom.** The glyph look's tile is two font cells: with
+    it the key does nothing and the help doesn't list it.
 - **A sprite unit's side** (decided 2026-10-02): a **1-pixel outline in
   its side's colour** (player blue, enemy red, ally green, neutral yellow)
   around the sprite, as in renders B, C, C2 and C3. **The outline alone,
@@ -901,7 +915,7 @@ black.
   riders, who show a plain figure until Pixel Flag's Paladin is bought
   (ticket 0446).
 - Sprite units on the map: the outline alone or with a corner mark
-  (0436). The zoom key and button (0439).
+  (0436).
 - On the bought tiles (seen in ticket 0437, not decided): the cursor's
   thin corner marks are hard to see on bright ground (ticket 0444); the
   picks in the terrain table above, the burning stand-in first.

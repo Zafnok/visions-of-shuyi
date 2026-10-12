@@ -31,6 +31,7 @@
     (key: "options.row.fullscreen", source: "Fullscreen", text: "FULLSCREEN"),
     (key: "options.row.cursor", source: "Cursor", text: "CURSOR"),
     (key: "options.row.map_look", source: "Map look", text: "MAP LOOK"),
+    (key: "options.row.map_zoom", source: "Map zoom", text: "MAP ZOOM"),
     (key: "options.row.theme", source: "Colors", text: "COLORS"),
     (key: "options.row.music_volume", source: "Music volume", text: "MUSIC VOLUME"),
     (key: "options.row.sound_volume", source: "Sound volume", text: "SOUND VOLUME"),
@@ -49,6 +50,8 @@
     (key: "options.cursor.large_corners", source: "Large corners", text: "LARGE CORNERS"),
     (key: "options.map_look.pictures", source: "Pictures", text: "PICTURES"),
     (key: "options.map_look.glyphs", source: "Glyphs", text: "GLYPHS"),
+    (key: "options.map_zoom.x1", source: "1×", text: "1×"),
+    (key: "options.map_zoom.x2", source: "2×", text: "2×"),
     (key: "options.theme.painterly", source: "Rich & painterly", text: "RICH & PAINTERLY"),
     (key: "options.theme.earthy", source: "Earthy painterly", text: "EARTHY PAINTERLY"),
     (key: "options.theme.parchment", source: "War-table parchment", text: "WAR-TABLE PARCHMENT"),
@@ -503,6 +506,7 @@
     ),
     (key: "key_bindings.action.rewind", source: "Rewind", text: "REWIND"),
     (key: "key_bindings.action.menu", source: "Map menu", text: "MAP MENU"),
+    (key: "key_bindings.action.zoom_map", source: "Zoom map", text: "ZOOM MAP"),
     (key: "key_bindings.restore_defaults", source: "Restore defaults", text: "RESTORE DEFAULTS"),
     // `PRESS A KEY` would name the A key to `check-keys`: the article stays
     // small.
@@ -697,6 +701,8 @@
     (key: "battle.hint.attack", source: "{Confirm} attack", text: "{Confirm} ATTACK"),
     (key: "battle.hint.cast", source: "{Confirm} cast", text: "{Confirm} CAST"),
     (key: "battle.hint.back", source: "{Cancel} back", text: "{Cancel} BACK"),
+    (key: "battle.status.zoom_x1", source: "{ZoomMap} zoom: 1×", text: "{ZoomMap} ZOOM: 1×"),
+    (key: "battle.status.zoom_x2", source: "{ZoomMap} zoom: 2×", text: "{ZoomMap} ZOOM: 2×"),
     (
         key: "battle.status.danger_on",
         source: "{DangerZone} danger zone: ON",

@@ -651,10 +651,10 @@ proptest! {
     }
 }
 
-/// The player's buttons with Unit info also on the right trigger.
+/// The player's buttons with Unit info also on the right stick pressed in.
 fn info_on_right_trigger() -> PadBindings {
     let mut b = pad();
-    assert_eq!(b.bind(Info, 1, Button::RightTrigger), Ok(None));
+    assert_eq!(b.bind(Info, 1, Button::RightStickPress), Ok(None));
     b
 }
 
@@ -674,8 +674,11 @@ fn the_buttons_are_shared_by_both_layouts_and_the_layout_picker() {
         keys.layout_picker_keymap(&def),
     ];
     for km in &keymaps {
-        assert_eq!(km.pad_action(Button::RightTrigger), Some(Info));
-        assert_eq!(km.buttons_for(Info), [Button::North, Button::RightTrigger]);
+        assert_eq!(km.pad_action(Button::RightStickPress), Some(Info));
+        assert_eq!(
+            km.buttons_for(Info),
+            [Button::North, Button::RightStickPress]
+        );
         assert_eq!(km.pad_action(Button::South), Some(Confirm));
     }
     // The keys are each layout's own, untouched by the buttons.
@@ -719,7 +722,7 @@ fn saved_buttons_round_trip() {
     assert!(text.contains("layouts: {}"), "{text}");
     assert!(text.contains("pad: Some({"), "{text}");
     assert!(
-        text.contains("\"Info\": [Some(\"North\"), Some(\"RightTrigger\"), None]"),
+        text.contains("\"Info\": [Some(\"North\"), Some(\"RightStickPress\"), None]"),
         "{text}"
     );
     assert!(text.contains("\"Rewind\": [None, None, None]"), "{text}");
@@ -771,9 +774,9 @@ fn a_version_1_config_loads_its_keys_with_the_default_buttons() {
 fn unknown_actions_and_buttons_and_extra_slots_are_dropped() {
     let (b, warnings) = load_pad(&saved_pad(
         "\"Dance\": [Some(\"West\")], \"Debug\": [Some(\"West\")], \
-         \"Info\": [Some(\"Turbo\"), Some(\"RightTrigger\"), None, Some(\"RightStickUp\")]",
+         \"Info\": [Some(\"Turbo\"), Some(\"RightStickPress\"), None, Some(\"RightStickUp\")]",
     ));
-    assert_eq!(buttons(b.slots(Info)), ["-", "RightTrigger", "-"]);
+    assert_eq!(buttons(b.slots(Info)), ["-", "RightStickPress", "-"]);
     assert_eq!(buttons(b.slots(Action::DangerZone)), ["West", "-", "-"]);
     assert_eq!(warnings.len(), 4, "{warnings:?}");
     assert_eq!(warnings[0], "controller: unknown action \"Dance\" dropped");
@@ -788,23 +791,23 @@ fn unknown_actions_and_buttons_and_extra_slots_are_dropped() {
     );
     // A short list is padded, and an action that isn't stored keeps its
     // default buttons.
-    let (b, warnings) = load_pad(&saved_pad("\"Info\": [Some(\"RightTrigger\")]"));
+    let (b, warnings) = load_pad(&saved_pad("\"Info\": [Some(\"RightStickPress\")]"));
     assert!(warnings.is_empty());
-    assert_eq!(buttons(b.slots(Info)), ["RightTrigger", "-", "-"]);
+    assert_eq!(buttons(b.slots(Info)), ["RightStickPress", "-", "-"]);
     assert_eq!(buttons(b.slots(Confirm)), ["South", "-", "-"]);
 }
 
 #[test]
 fn a_button_in_two_stored_slots_stays_in_the_first_and_moves_off_a_default() {
     let (b, warnings) = load_pad(&saved_pad(
-        "\"Rewind\": [Some(\"RightTrigger\")], \
-         \"Info\": [Some(\"North\"), Some(\"RightTrigger\")]",
+        "\"Rewind\": [Some(\"RightStickPress\")], \
+         \"Info\": [Some(\"North\"), Some(\"RightStickPress\")]",
     ));
-    assert_eq!(buttons(b.slots(Info)), ["North", "RightTrigger", "-"]);
+    assert_eq!(buttons(b.slots(Info)), ["North", "RightStickPress", "-"]);
     assert!(b.is_unmapped(Action::Rewind));
     assert_eq!(
         warnings,
-        ["controller: Rewind: RightTrigger is already on another action"]
+        ["controller: Rewind: RightStickPress is already on another action"]
     );
     // Info takes Rewind's default button; Rewind isn't stored.
     let (b, warnings) = load_pad(&saved_pad("\"Info\": [Some(\"LeftTrigger\")]"));

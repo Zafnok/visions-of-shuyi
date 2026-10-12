@@ -1,5 +1,7 @@
 //! A map skin: how a [`MapScene`] looks (ADR-0038).
 
+use std::rc::Rc;
+
 use trpg_core::Pos;
 
 use super::scene::MapScene;
@@ -7,6 +9,7 @@ use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{GlyphBuffer, PxRect, Rect};
 use crate::screen::Ctx;
 use crate::screens::battle::walk::{HELD_WALK_TILES_PER_S, WALK_TILES_PER_S};
+use crate::settings::MapZoom;
 
 /// Paints battle maps. The tile size is the skin's: screens ask it how many
 /// tiles fit and where a tile is. A skin never changes the game: only the
@@ -17,6 +20,17 @@ pub trait MapSkin: std::fmt::Debug {
 
     /// The id of the tileset it paints from, if it paints from one.
     fn tileset_id(&self) -> Option<&str> {
+        None
+    }
+
+    /// The zoom it draws the map at, or `None` if it can't zoom (the
+    /// glyph skin: its tile is two font cells).
+    fn zoom(&self) -> Option<MapZoom> {
+        None
+    }
+
+    /// The same skin drawing at `zoom`, or `None` if it can't zoom.
+    fn at_zoom(&self, _zoom: MapZoom) -> Option<Rc<dyn MapSkin>> {
         None
     }
 
@@ -102,5 +116,8 @@ mod tests {
         assert_eq!(cells(Some(r(-1, -1, 2, 2))), Some(r(-1, -1, 2, 2)));
         assert_eq!(cells(None), None);
         assert_eq!(Fixed(None).tileset_id(), None);
+        // A skin can't zoom unless it says it can.
+        assert_eq!(Fixed(None).zoom(), None);
+        assert!(Fixed(None).at_zoom(MapZoom::X2).is_none());
     }
 }

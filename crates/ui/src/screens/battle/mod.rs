@@ -85,7 +85,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::settings::{AnimSpeed, HELD_SPEED};
+use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{draw_tip, fill_placeholders};
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::Language;
@@ -629,6 +629,20 @@ impl BattleScreen {
             Some(_) => None,
             None => Some(danger_tiles(&self.state)),
         };
+    }
+
+    /// Switches the map between its two zooms and saves the choice with
+    /// the other options, if the map skin can zoom and the map is what
+    /// the player is looking at ([`Mode::shows_map`], no rewind open). The
+    /// next frame fits the cameras to the tiles the skin now shows
+    /// ([`refit`](Self::refit)): the cursor's tile stays in view. Never a
+    /// `Command`: the zoom isn't game state.
+    fn toggle_zoom(&self, ctx: &mut Ctx) {
+        if self.rewind.is_some() || !self.mode.shows_map() || ctx.map_skin.zoom().is_none() {
+            return;
+        }
+        // If saving fails it still holds for this session.
+        let _ = ctx.change_settings(|s| s.map_zoom = s.map_zoom.toggled());
     }
 
     /// Flips auto-end, saves it with the other options and says so.
@@ -1239,7 +1253,9 @@ impl BattleScreen {
     /// out its effect. Returns whether the map menu's `Options` was chosen:
     /// the frame then opens the Options screen.
     fn step_mode(&mut self, ctx: &mut Ctx, action: Action) -> bool {
-        let Some(action) = self.mode.route(action, &ctx.keymap) else {
+        // One device per frame: a key and a button pressed in the same frame
+        // are both routed by the device pressed last (ADR-0036).
+        let Some(action) = self.mode.route(action, &ctx.keymap, ctx.device) else {
             return false;
         };
         let before = self.mode.clone();
@@ -1506,10 +1522,15 @@ impl BattleScreen {
         hints.join(SEPARATOR)
     }
 
-    /// The toggles' state for the message row: the Danger zone key and
-    /// `danger zone: OFF`, then the Auto-end key and `auto-end: ON`, each
-    /// key named from the active keymap.
+    /// The toggles' state for the message row: the Zoom map key and
+    /// `zoom: 2×` (only under a map skin that can zoom), the Danger zone
+    /// key and `danger zone: OFF`, then the Auto-end key and
+    /// `auto-end: ON`, each key named from the active keymap.
     pub fn status(&self, ctx: &Ctx) -> String {
+        let zoom = ctx.map_skin.zoom().map(|zoom| match zoom {
+            MapZoom::X1 => "battle.status.zoom_x1",
+            MapZoom::X2 => "battle.status.zoom_x2",
+        });
         let danger = if self.danger.is_some() {
             "battle.status.danger_on"
         } else {
@@ -1520,9 +1541,12 @@ impl BattleScreen {
         } else {
             "battle.status.auto_end_off"
         };
-        [danger, auto]
+        let hints: Vec<String> = zoom
+            .into_iter()
+            .chain([danger, auto])
             .map(|key| ctx.text_with(key, &[]))
-            .join(SEPARATOR)
+            .collect();
+        hints.join(SEPARATOR)
     }
 
     /// What is on the visible map (ADR-0038), for the map skin to paint and
@@ -1979,8 +2003,13 @@ impl Screen for BattleScreen {
             if self.overlay_key(action) {
                 continue;
             }
+            // The zoom is the player's view, not a move: in any phase.
+            if action == Action::ZoomMap {
+                self.toggle_zoom(ctx);
+                continue;
+            }
             // The AI's phase: only Confirm (hold: faster) and Cancel (skip
-            // a fight) do anything.
+            // a fight) do anything else.
             if self.ai_phase() && !matches!(action, Action::Confirm | Action::Cancel) {
                 continue;
             }
@@ -2347,6 +2376,9 @@ mod trigger_tests;
 
 #[cfg(test)]
 mod notes_tests;
+
+#[cfg(test)]
+mod zoom_tests;
 
 #[cfg(test)]
 mod tests {

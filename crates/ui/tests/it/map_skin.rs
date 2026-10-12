@@ -7,10 +7,17 @@ use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
 use trpg_ui::map_view::{Facing, RangeKind};
+use trpg_ui::settings::MapZoom;
+
+/// Sets the player's map zoom, as the Options screen does.
+fn at_zoom(h: &mut Harness, zoom: MapZoom) {
+    let saved = h.ctx_mut().change_settings(|s| s.map_zoom = zoom);
+    assert_eq!(saved, Ok(()));
+}
 
 /// What one step of a script left: the cursor's tile, the screens, and the
 /// battle (if one is on the stack).
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 struct After {
     step: &'static str,
     cursor: Option<Pos>,
@@ -46,8 +53,9 @@ const SCRIPT: [Step; 16] = [
 
 /// Plays [`SCRIPT`] with the map painted by the skin `skin`: what each
 /// step left, and every sound and music request of the run.
-fn play(skin: &str) -> (Vec<After>, Vec<AudioRequest>) {
+fn play(skin: &str, zoom: MapZoom) -> (Vec<After>, Vec<AudioRequest>) {
     let mut h = Harness::with_layout(Layout::RightHanded);
+    at_zoom(&mut h, zoom);
     h.with_map_skin(skin);
     let mut after = Vec::new();
     for (keys, seconds) in SCRIPT {
@@ -72,7 +80,12 @@ fn play(skin: &str) -> (Vec<After>, Vec<AudioRequest>) {
 /// same screens after every step, the same sounds.
 #[test]
 fn the_skin_never_changes_the_game() {
-    let (glyph, glyph_audio) = play("glyph");
+    let (glyph, glyph_audio) = play("glyph", MapZoom::X1);
+    // The glyph skin doesn't zoom: the same run whatever the setting.
+    assert_eq!(
+        play("glyph", MapZoom::X2),
+        (glyph.clone(), glyph_audio.clone())
+    );
     // The script did what it says: the lord moved and fought, the fight
     // was rewound, and the enemy phase came and went.
     let state = |i: usize| glyph[i].battle.clone().unwrap();
@@ -87,14 +100,17 @@ fn the_skin_never_changes_the_game() {
         .filter(|r| matches!(r, AudioRequest::PlaySound { .. }));
     assert!(sounds.count() > 10);
     // Step by step, the same: under plain tiles, under tiles with layers
-    // between them, and under unit sprites on glyph terrain.
+    // between them, and under unit sprites on glyph terrain, each at both
+    // zooms (ticket 0439: at 2× the view is a quarter of the tiles).
     for skin in ["sprite", "test_auto", "sprite_units"] {
-        let (sprite, sprite_audio) = play(skin);
-        for (g, s) in glyph.iter().zip(&sprite) {
-            assert_eq!(g, s, "after {:?} under {skin}", g.step);
+        for zoom in MapZoom::ALL {
+            let (sprite, sprite_audio) = play(skin, zoom);
+            for (g, s) in glyph.iter().zip(&sprite) {
+                assert_eq!(g, s, "after {:?} under {skin} at {zoom:?}", g.step);
+            }
+            assert_eq!(glyph.len(), sprite.len(), "{skin} at {zoom:?}");
+            assert_eq!(glyph_audio, sprite_audio, "{skin} at {zoom:?}");
         }
-        assert_eq!(glyph.len(), sprite.len(), "{skin}");
-        assert_eq!(glyph_audio, sprite_audio, "{skin}");
     }
 }
 
@@ -108,6 +124,7 @@ fn the_skin_never_changes_the_game() {
 #[test]
 fn quick_battle_with_layers_between_tiles() {
     let mut h = Harness::with_layout(Layout::RightHanded);
+    at_zoom(&mut h, MapZoom::X1);
     h.with_map_skin("test_auto");
     // Past Preparations (Fight!) and the battle's notes; then the lord.
     h.keys("Down f Left f f f");
