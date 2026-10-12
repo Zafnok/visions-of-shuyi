@@ -65,7 +65,10 @@ fn data() -> DataText {
     }
     data.names = names(&[("king", "the King"), ("keep", "Heth Keep")]);
     let scenes = [("gate".to_owned(), scene())].into();
-    data.add_dialogue(&dialogue::DialogueTable { scenes });
+    data.add_dialogue(&dialogue::DialogueTable {
+        scenes,
+        ..Default::default()
+    });
     data
 }
 

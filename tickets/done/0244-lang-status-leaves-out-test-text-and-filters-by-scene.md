@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: sonnet-5
 effort: low
-status: todo
+status: done
 blocked_by: ["0235"]
 nick_input: none
-completed:
+completed: 2026-10-11
 ---
 
 # 0244 — lang-status leaves out test text and can be narrowed to a file
@@ -54,10 +54,10 @@ packs; any translation.
 
 ## Acceptance criteria
 
-- [ ] A pack that translates everything but the test text reports nothing missing (test).
-- [ ] `--file ch01` lists only `ch01.dlg`'s lines and captions (test).
-- [ ] The test pack's report still lists the test scene's untranslated lines (test).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A pack that translates everything but the test text reports nothing missing (test).
+- [x] `--file ch01` lists only `ch01.dlg`'s lines and captions (test).
+- [x] The test pack's report still lists the test scene's untranslated lines (test).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -65,5 +65,12 @@ packs; any translation.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `DialogueTable` now keeps the file each scene came from (`files`), and
+  `SourceLine` the stem of its `.dlg` file, so `lang-status` can filter by file.
+- `cargo xtask lang-status <code> [--only ui|data|dialogue] [--file <stem>]`.
+  Test text (lines of `test*.dlg`, data whose id starts with `test`) is left
+  out and counted in the header, except in the `test` pack's report.
+- The report has three parts (screen text, data, dialogue), each with counts.
+- Orphans are kept under `--file` only when the line they were paired with is
+  in that file (an orphan has no file of its own).
+- No gameplay rules decided. No follow-up tickets.
