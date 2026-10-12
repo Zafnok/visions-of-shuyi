@@ -21,8 +21,8 @@ battle ([`docs/design/audio.md`](../../docs/design/audio.md), *Music cues*):
 | Cue | Decided in | Plays |
 | --- | ---------- | ----- |
 | `victory` (a pool) | 0022 | Once, while the `VICTORY` banner is shown: one of 13 versions of Fupi's Win Jingle, picked at random each win |
-| `defeat` | 0023 | Once, while the `DEFEAT` banner is shown |
-| `game_over` | 0024 | On the Game Over screen (loop or once: see 0024's answer) |
+| `defeat` | 0023 | From the `DEFEAT` banner on, through the Game Over screen: the whole of The Fallen (Jonathan Shaw, CC-BY 3.0, 77 s). No separate sting |
+| (`game_over`) | 0024 | No track of its own (0023). 0024 decides whether `defeat` loops or plays once |
 
 The banners exist already (0405, `crates/ui/src/screens/battle/banner.rs`,
 `BannerKind::Outcome`). The Game Over screen comes from 0801. Battle music
@@ -38,6 +38,12 @@ Harpsichord: Nick cut them)
 (CC0, one credit entry), each a `looped: false` track. 0022 also reserved
 `victory_grand` and `ceremony_intro`; nothing plays them yet, so do **not**
 import them here.
+
+0023's answer: the Game Over screen must **not** stop or replace the music;
+`defeat` keeps playing there. Wherever this ticket says
+`play_music("game_over")`, read: the screen emits nothing, and 0807's
+`stop_music` is removed. `scene_loss` (Bittersweet) is reserved; do **not**
+import it here.
 
 If one of 0022–0024 recorded "no music here" or "reuse `<cue>`", follow that
 answer for that moment and say so in the PR.
@@ -93,7 +99,8 @@ whether the stings and the Game Over music fit and are timed right.
       different seeds can pick two different versions, the way the
       `skirmish` pool's test does.
 - [ ] Harness: losing (the lord falls) emits `play_music("defeat")` once,
-      then the Game Over screen emits `play_music("game_over")`.
+      and the Game Over screen emits no music request, so `defeat` keeps
+      playing (0023).
 - [ ] Harness: `Retry chapter` from Game Over emits the battle's own cue.
 - [ ] The content validator loads the new cues; `looped` matches the rules
       above; each has a credit.

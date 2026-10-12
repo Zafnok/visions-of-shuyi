@@ -25,7 +25,14 @@ handling the level-up and EXP sounds himself.
 This ticket picks **the Game Over music**, cue id `game_over`. It plays when
 the Game Over screen (built by 0801: `Retry chapter` / `Title`) is shown. Today 0807 makes that screen stop the music; this cue replaces that.
 
-Part of the question: loop while the screen is open, or play once and then stay silent.
+**Mostly answered by 0023 (2026-10-12).** Nick picked The Fallen (Jonathan
+Shaw, 77 s) for `defeat` "with the music carrying over to game over, so take
+the whole piece": it starts at the `DEFEAT` banner and keeps playing on the
+Game Over screen, which starts no track of its own (`audio.md`). So there is
+no `game_over` track to pick unless Nick changes his mind after hearing it.
+
+What is left: when the 77 s run out and the screen is still open, loop the
+piece or stay silent. No listening page is needed for that.
 
 Needed for Chapter 1: its implementation ticket 0809 blocks the playtest (0804).
 
@@ -49,12 +56,11 @@ picks one, or asks for another round.
 
 ## Questions
 
-1. **Which track** plays for `game_over`? Options: the candidates on the
-   page (each with composer, licence and a one-line description), **reuse a
-   cue we already have** (name the closest ones from audio.md's table),
-   **no music here**, or **describe your own** (then do another round).
-- Loop or play once?
-- Or reuse an existing sad cue (`scene_sad`) instead of a new track?
+1. When `defeat` (77 s) ends and the Game Over screen is still open: **loop
+   it**, or **play once and stay silent**? (The source says the track loops
+   seamlessly.)
+2. Only if Nick now wants a separate Game Over track after all: run the
+   listening round as first planned.
 
 ## Scope
 
@@ -84,8 +90,8 @@ picks one, or asks for another round.
 
 ## Acceptance criteria
 
-- [ ] `audio.md` has a `game_over` row with a source URL and a licence that
-      ADR-0013/0027 allow, or a recorded "no music here" / "reuse `<cue>`".
+- [ ] `audio.md` records loop or once for `defeat` on the Game Over screen
+      (or a `game_over` row, if Nick asked for a separate track).
 - [ ] The moment is gone from audio.md's *Open sub-questions*.
 - [ ] Nick's words are quoted in audio.md's appendix.
 - [ ] All gates in the `run-gates` skill pass.

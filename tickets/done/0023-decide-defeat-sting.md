@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-12
 ---
 
 # 0023 — Decide: the defeat sting
@@ -83,11 +83,11 @@ picks one, or asks for another round.
 
 ## Acceptance criteria
 
-- [ ] `audio.md` has a `defeat` row with a source URL and a licence that
+- [x] `audio.md` has a `defeat` row with a source URL and a licence that
       ADR-0013/0027 allow, or a recorded "no music here" / "reuse `<cue>`".
-- [ ] The moment is gone from audio.md's *Open sub-questions*.
-- [ ] Nick's words are quoted in audio.md's appendix.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The moment is gone from audio.md's *Open sub-questions*.
+- [x] Nick's words are quoted in audio.md's appendix.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -95,4 +95,22 @@ picks one, or asks for another round.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+One round on a listening page
+(https://claude.ai/artifact/SGaFmZLLWeHwJojM9ded1J): seven candidates, four
+short ones and three longer orchestral pieces with a 9 s cut each.
+
+- **`defeat`**: The Fallen by Jonathan Shaw (CC-BY 3.0, OpenGameArt), the
+  whole 77 s piece. **No separate sting:** it starts at the `DEFEAT` banner
+  and carries on through the Game Over screen, which starts no track of its
+  own. Nick said "probably"; recorded as decided, he can veto at sign-off of
+  0809.
+- **Reserved, not asked for by the ticket** (Nick placed it himself):
+  `scene_loss`, Bittersweet by Emma_MA (CC0), for a story beat where someone
+  is lost by script. No story moment uses it yet, so nothing imports it.
+- This answers most of 0024. 0024 is rewritten to the one thing left: when
+  the 77 s end on the Game Over screen, loop or silence. 0809 updated: the
+  Game Over screen leaves the music alone.
+- *Claude's naming, not a rule:* the cue id `scene_loss`.
+- Deviation: the clips were published with the page (private artifact) so
+  the players work; nothing was added to the repository.
+- Gates: docs only. Ran `cargo xtask ticket-lint` and `typos`.

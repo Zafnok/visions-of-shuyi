@@ -72,6 +72,8 @@ a player. **Version** is the file to import when the page has several.
 | `victory` pool | A battle is won: plays **once** while the `VICTORY` banner is shown, one version picked at random each time (0022) | Win Jingle, 13 of its 17 versions (`.wav` files in `winjingle.zip`; list below) | Fupi | [OGA](https://opengameart.org/content/win-jingle) | CC0 |
 | `victory_grand` | **Reserved** for a ceremony, or the win after an act boss "or some other big moment"; plays once (0022) | Victory Fanfare Short (`Heavy_ConceptB.wav`, about 12 s) | cynicmusic | [OGA](https://opengameart.org/content/victory-fanfare-short) | CC0 |
 | `ceremony_intro` | **Reserved** for the start of "a royal crowning or some other regal ceremony"; only if the story has one; plays once (0022) | Victory Music Cue (13.3 s; the original `.wav` needs a freesound login, the public HQ preview does not) | Joshua Empyre | [freesound 404025](https://freesound.org/s/404025/) | CC-BY 4.0 |
+| `defeat` | A battle is lost: starts when the `DEFEAT` banner is shown and **carries on through the Game Over screen** (0023) | The Fallen (RPG Orchestral Essentials), the whole piece (`The Fallen MP3.mp3` in `The Fallen MP3.zip`, 77 s) | Jonathan Shaw (InspectorJ) | [OGA](https://opengameart.org/content/the-fallen-rpg-orchestral-essentials-defeated-music) | CC-BY 3.0 |
+| `scene_loss` | **Reserved** for "a story beat of a scripted loss of someone"; only if the story has one (0023) | Bittersweet (`bittersweet.mp3`, 34 s; it opens with 1.7 s of silence) | Emma_MA | [OGA](https://opengameart.org/content/bittersweet) | CC0 |
 
 The `victory` pool's 13 versions are the same 5.7 s tune on different
 instruments: Bandoneon, Brass, Doot, Fantasia, Fretless, Grand Piano, Jazz
@@ -80,6 +82,14 @@ Nick heard all 17 on the 0022 listening page
 (https://claude.ai/artifact/VaGGdWgQ4Bo3gGUjLqJ3mS) and cut four: **Saw,
 Square, Banjo and Harpsichord are not used.** No story moment uses `victory_grand` or `ceremony_intro` yet:
 Chapter 1 has no act boss and no ceremony.
+
+There is no separate defeat sting (0023, like Fire Emblem on the GBA): one
+piece, `defeat`, starts at the banner and keeps playing on the Game Over
+screen. The Game Over screen does not start a track of its own. What happens
+when the 77 s run out while that screen is still open (loop, or silence) is
+ticket 0024's question. Nick heard seven candidates on the 0023 listening
+page (https://claude.ai/artifact/SGaFmZLLWeHwJojM9ded1J). No story moment
+uses `scene_loss` yet.
 
 Which story battle uses which `battle_*` cue, and which scene switches to
 which mood, is story content. Each battle file and scene script names its
@@ -157,8 +167,10 @@ sign-off: "it should sound like a heal").
 - **The wuxia continent** (a later act, `setting-and-tone.md`) "would probably
   have more eastern themes". It needs its own round.
 - **Places and moments without a cue yet:** capital city, world map, camp,
-  shops, the defeat sting, game over. Nick hasn't been asked about these
-  (tickets 0023–0028). Level up is Nick's own work.
+  shops. Nick hasn't been asked about these (tickets 0025–0028). Level up
+  is Nick's own work.
+- **Game Over, after `defeat` ends:** the piece is 77 s. Whether it loops
+  or the screen falls silent is not decided (ticket 0024).
 - **Content ID** (decided 2026-10-01, ticket 0904): **no check before
   release.** The plan was to test the chosen tracks against YouTube's
   copyright system (cynicmusic and Alexandr Zhelanov sell or stream their
@@ -359,3 +371,18 @@ Short by cynicmusic. The win jingle was J and K, its brass and strings
 versions. The second question, one sting or several, is answered by the
 same words: the everyday win picks from the jingle's versions, and a big
 win can use M.)
+
+**The defeat sting** (ticket 0023, 2026-10-12; listening page
+https://claude.ai/artifact/SGaFmZLLWeHwJojM9ded1J). Seven candidates (A–G),
+and a second question: a sting and then Game Over music, or one piece from
+the banner through the Game Over screen:
+
+> probably E for lose, with the music carrying over to game over, so take
+> the whole piece probably...
+>
+> G is also a really good track but fits more with a story beat of a
+> scripted loss of someone
+
+(E: The Fallen by Jonathan Shaw. G: Bittersweet by Emma_MA. Recorded as:
+no separate sting; `defeat` is the whole of E, from the banner on. G is
+kept as `scene_loss`.)
