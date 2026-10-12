@@ -57,9 +57,13 @@ friends. The ledger is her joke, her grudge and her grief, all in one book.
 
 ## Voice notes
 
-- Quick and loud, with long sentences that turn into a punchline. Ledger
-  jokes: "Put it on the crown's tab."
-- Uses soldier slang ("hayburner", "the Unpaid", "pay-day" for a battle she
+- Quick and loud. Everything is a cost, a debt or a payment, joking or not.
+  **Off duty** (camp, the road, supports) her long sentences turn into a
+  punchline, and the ledger is her running joke: "Put it on the crown's
+  tab." **With a fight coming or under way she doesn't joke**
+  (`setting-and-tone.md`, *Where the jokes go*): she reports like a
+  sergeant, short and exact, and the ledger is a grief, not a gag.
+- Uses soldier slang ("hayburner", "the Unpaid", "payday" for a battle she
   expects to win).
 - Calls people by nicknames: "Your Former Grace", "Keeper", "Sparks" for Rue,
   "Brennish" for Aske, "Captain" for Hollis.
@@ -68,8 +72,10 @@ friends. The ledger is her joke, her grudge and her grief, all in one book.
 
 **Sample lines**
 
-- "Harl's whole sorry company, on foot, before breakfast. I'm adding
-  breakfast to the ledger."
+- (Under threat) "Harl won't leave with that paper unpaid. Any of them who
+  gets away comes back tonight with torches. So it has to be all of them."
+- (Downtime) "Harl's whole sorry company, on foot, before breakfast. I'm
+  adding breakfast to the ledger."
 - "Your Former Grace, if we're committing treason, I'd like it noted I'm doing
   it for free. Well. For bread."
 - "I held the horses. That's all. I held the horses and I watched it burn."

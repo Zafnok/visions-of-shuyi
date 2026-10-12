@@ -212,9 +212,9 @@ fn reasons_read_as_the_player_sees_them() {
         assert_eq!(reason_text(&c, Unusable::Kind(kind)), text);
     }
     let weights = [
-        (ArmourWeight::Light, "can't wear light armour"),
-        (ArmourWeight::Medium, "can't wear medium armour"),
-        (ArmourWeight::Heavy, "can't wear heavy armour"),
+        (ArmourWeight::Light, "can't wear light armor"),
+        (ArmourWeight::Medium, "can't wear medium armor"),
+        (ArmourWeight::Heavy, "can't wear heavy armor"),
     ];
     for (weight, text) in weights {
         assert_eq!(reason_text(&c, Unusable::Armour(weight)), text);
@@ -236,7 +236,7 @@ fn armour_and_accessories_come_from_the_stock_with_their_counts() {
         [
             PUT_BACK,
             "Chain Mail      ×1  Def +3  Wt 2",
-            "Iron Plate      can't wear heavy armour",
+            "Iron Plate      can't wear heavy armor",
             "Warded Robe     ×1  Res +2  Wt 0",
             // The knight's, to swap for; the others wear the same vest.
             "Chain Mail      from Test Knight",

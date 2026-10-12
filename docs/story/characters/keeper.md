@@ -61,9 +61,11 @@ gently. That report is why the killers came.
 ## Voice notes
 
 - Long, polite sentences that interrupt themselves; qualifiers ("I think,
-  possibly, with respect..."). Nervous humour under pressure: she babbles.
+  possibly, with respect..."). In quiet scenes her fussing is funny. Under
+  real danger it isn't played for laughs (`setting-and-tone.md`, *Where the
+  jokes go*): she gets shorter, apologizes and says the plain thing.
 - Quotes vows and small prayers to Ama, then adds a practical comment ("Ama
-  keep you. Also, keep pressure on that.").
+  keep you. Also, keep pressure on that."): a downtime habit.
 - Can't lie. When she tries, she fails out loud ("I was not... that is, I have
   no... yes. Yes, I did.").
 - **Won't say:** anything cruel, even to Crane. Her defiance is polite, which
@@ -71,8 +73,9 @@ gently. That report is why the killers came.
 
 **Sample lines**
 
-- "Ama keep you. Also, and I say this as a keeper, please keep pressure on
-  that, it's not supposed to be on the outside."
+- (Downtime, a scraped knee) "Ama keep you. Also, and I say this as a
+  keeper, please keep pressure on that."
+- (Under threat) "Please go down. It is you they have come for."
 - "I wrote to them. About you. I asked them to be gentle. I thought... I
   thought that was a thing you could ask."
 - "With respect, Master Crane, and I do mean that, I have a great deal of

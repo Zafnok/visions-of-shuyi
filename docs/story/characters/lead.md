@@ -98,7 +98,7 @@ Each option is at most 60 characters (0708).
 * earnest: He's warning us. He still cares, Hollis.
   retainer[sad]: Aye. That's what worries me.
 * wry: Four years of silence, and now he's urgent.
-  retainer[happy]: Ha. He always did write like a man owed money.
+  retainer[happy]: Ha. He never did write unless he needed something.
 * blunt: What does he want?
   retainer[angry]: Us gone. The question is why.
 @endchoice
@@ -141,7 +141,8 @@ for her top.
   blue stone, and a top **recoloured from pink to his coat's blue** (Nick,
   2026-10-04: "yes recolor"), so Veyne blue holds for both.
 - **Face:** 21. The small scar through the right eyebrow (from Hollis's
-  wooden sword, a running joke) is in the story but not drawn.
+  wooden sword; a joke between them for quiet scenes, not in Chapter 1's
+  script) is in the story but not drawn.
 - **The cut-off crest** on the coat is likewise told, not drawn.
 - **Colours:** Veyne blue, steel grey and gold.
 - **Expressions** (the pack's name in brackets): `neutral`, `happy`
