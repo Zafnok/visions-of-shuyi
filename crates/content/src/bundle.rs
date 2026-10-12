@@ -171,7 +171,12 @@ mod tests {
         assert!(audio.contains(&"audio/audio.ron"));
         assert!(audio.contains(&"audio/sfx/heal.wav"));
         assert!(audio.iter().all(|p| p.starts_with("audio/")));
-        assert_eq!(files_under("data"), files_in("data"));
+        // `data` holds one folder: the colour themes' palettes.
+        let data = files_under("data");
+        assert!(data.contains(&"data/palette.ron"));
+        assert!(data.contains(&"data/palettes/moonlit.ron"));
+        assert!(files_in("data").iter().all(|f| data.contains(f)));
+        assert!(!files_in("data").contains(&"data/palettes/moonlit.ron"));
         assert!(files_under("no_such_dir").is_empty());
     }
 

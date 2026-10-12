@@ -279,6 +279,7 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::Fullscreen, s.fullscreen != before.fullscreen),
             (Row::Cursor, s.cursor_style != before.cursor_style),
             (Row::MapLook, s.map_look != before.map_look),
+            (Row::Theme, s.theme != before.theme),
             (Row::MusicVolume, s.music_volume != before.music_volume),
             (Row::SoundVolume, s.sound_volume != before.sound_volume),
         ];
@@ -313,6 +314,7 @@ fn rows_show_their_values() {
             "Off*",
             "Corners*",
             "Pictures*",
+            "Earthy painterly*",
             "<80/100>",
             "<80/100>",
             "Right-handed",

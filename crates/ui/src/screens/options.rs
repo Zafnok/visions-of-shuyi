@@ -25,6 +25,7 @@ pub mod view;
 
 pub use view::{OptionsView, QuestionView, RowView, ValueView};
 
+use trpg_content::Theme;
 use trpg_core::GameMode;
 
 use super::{KeyBindingsScreen, LayoutPickerScreen, layout_picker};
@@ -74,6 +75,8 @@ pub enum Row {
     Cursor,
     /// [`Settings::map_look`] (only when the game has pictures).
     MapLook,
+    /// [`Settings::theme`].
+    Theme,
     /// [`Settings::music_volume`].
     MusicVolume,
     /// [`Settings::sound_volume`].
@@ -92,7 +95,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 15] = [
+    pub const ALL: [Row; 16] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -101,6 +104,7 @@ impl Row {
         Row::Fullscreen,
         Row::Cursor,
         Row::MapLook,
+        Row::Theme,
         Row::MusicVolume,
         Row::SoundVolume,
         Row::Layout,
@@ -121,6 +125,7 @@ impl Row {
             Row::Fullscreen => "options.row.fullscreen",
             Row::Cursor => "options.row.cursor",
             Row::MapLook => "options.row.map_look",
+            Row::Theme => "options.row.theme",
             Row::MusicVolume => "options.row.music_volume",
             Row::SoundVolume => "options.row.sound_volume",
             Row::Layout => "options.row.layout",
@@ -340,6 +345,7 @@ impl OptionsScreen {
             Row::Fullscreen => on_off_key(s.fullscreen),
             Row::Cursor => cursor_key(s.cursor_style),
             Row::MapLook => s.map_look.key(),
+            Row::Theme => s.theme.key(),
             Row::MusicVolume => return volume(s.music_volume),
             Row::SoundVolume => return volume(s.sound_volume),
             Row::Layout => {
@@ -622,6 +628,7 @@ fn step_setting(s: &mut Settings, row: Row, forward: bool, wrap: bool) {
         Row::Fullscreen => s.fullscreen = stepped(&[false, true], s.fullscreen, forward, wrap),
         Row::Cursor => s.cursor_style = stepped(&CURSOR_STYLES, s.cursor_style, forward, wrap),
         Row::MapLook => s.map_look = stepped(&MapLook::ALL, s.map_look, forward, wrap),
+        Row::Theme => s.theme = stepped(&Theme::ALL, s.theme, forward, wrap),
         Row::MusicVolume => s.music_volume = stepped_volume(s.music_volume, forward),
         Row::SoundVolume => s.sound_volume = stepped_volume(s.sound_volume, forward),
         Row::Layout | Row::KeyBindings | Row::GameMode | Row::ResetTips | Row::RestoreDefaults => {}

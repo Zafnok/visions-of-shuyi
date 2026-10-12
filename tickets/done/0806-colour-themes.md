@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0805"]
 nick_input: sign-off
-completed:
+completed: 2026-10-12
 ---
 
 # 0806 — Colour themes option
@@ -60,10 +60,10 @@ says whether each still looks like its mockup; tweaks become `tuning` tickets.
 
 ## Acceptance criteria
 
-- [ ] All four themes selectable; the choice persists across restart.
-- [ ] Content test: every theme has the same colour names as D.
-- [ ] Snapshots (colour names) of the Quick Battle screen in each theme.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All four themes selectable; the choice persists across restart.
+- [x] Content test: every theme has the same colour names as D.
+- [x] Snapshots (colour names) of the Quick Battle screen in each theme.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -73,3 +73,23 @@ says whether each still looks like its mockup; tweaks become `tuning` tickets.
 
 ## Completion notes
 
+- `trpg_content::Theme` (Painterly, Earthy, Parchment, Moonlit) names each
+  palette file; D stays `data/palette.ron`, the others are in `data/palettes/`
+  (`Theme::path` is the one code path). `Content.themes` holds all four, and
+  content validation fails if a theme's colour names differ from D's.
+- `Settings.theme` (saved, default Earthy), an Options row **Colors** after
+  Map look, applied at once: `Ctx` rebuilds `Ctx.palette` on load and on
+  change, and `app` updates the renderer's background every frame.
+- `black` is the console background everywhere, so E uses a light `black`
+  and no `background` name was added. E's `white` is dark ink (strongest text).
+- Dimming: glyph units already fade toward the tile background; the map
+  cursor's blink faded toward black and now fades toward `black` (the
+  theme's background). Portraits fade by opacity. Pictures are never recoloured
+  (sprite "acted" grey-dimming is unchanged).
+- Colours the mockups didn't list (ally, neutral, heal_range, danger_zone,
+  exp_bar, stone, road, path, hp_mid, effect marks, etc.) are my derivations.
+- Claude's starting rules: the row is named "Colors" and the themes are named
+  as in Nick's list; Restore defaults puts the theme back to D.
+- Tests: content (same names, themes differ), settings round-trip, options
+  unit + scripted (palette changes, saved, relaunch, restore), Quick Battle
+  snapshots in each theme. Existing Options snapshots gained the new row.

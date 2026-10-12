@@ -2,7 +2,7 @@
 //! layer 4), reached from the title screen's debug Quick Battle item.
 
 use insta::assert_snapshot;
-use trpg_content::FontAtlasDef;
+use trpg_content::{FontAtlasDef, Theme};
 use trpg_core::{Faction, Pos};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::{FRAME_DT, Harness};
@@ -66,6 +66,34 @@ fn quick_battle_renders() {
     let h = quick_battle();
     assert_eq!(h.screens(), ["title", "battle"]);
     assert_snapshot!(h.snapshot());
+}
+
+/// The Quick Battle in each colour theme (ticket 0806): the same frame,
+/// with every colour still a palette name, and cells in the theme's
+/// colours.
+#[test]
+fn quick_battle_in_every_theme() {
+    for theme in Theme::ALL {
+        let mut h = Harness::with_layout(Layout::RightHanded);
+        h.ctx_mut().change_settings(|s| s.theme = theme).unwrap();
+        h.keys("Down f Left f f");
+        assert_eq!(h.screens(), ["title", "battle"]);
+        let snapshot = h.snapshot();
+        let legend = snapshot.split("--- overlays ---").next().unwrap_or("");
+        assert!(!legend.contains('#'), "{theme:?} has a colour with no name");
+        // The terrain is painted in this theme's colours.
+        let def = &h.game().ctx().content.themes[&theme];
+        let buf = h.game().buffer();
+        let bg = |x, y| buf.get(x, y).map(|c| c.bg.to_hex());
+        let grass = trpg_ui::color::Rgb::from(def.get("grass_bg").unwrap()).to_hex();
+        assert!(
+            (0..32).any(|y| (0..100).any(|x| bg(x, y) == Some(grass.clone()))),
+            "{theme:?} shows no grass_bg"
+        );
+        insta::with_settings!({snapshot_suffix => format!("{theme:?}")}, {
+            assert_snapshot!(snapshot);
+        });
+    }
 }
 
 /// What the Quick Battle's map shows at its start, as data (ADR-0038): the

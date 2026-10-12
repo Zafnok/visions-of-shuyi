@@ -3,12 +3,63 @@
 
 use std::collections::BTreeMap;
 
+use serde::{Deserialize, Serialize};
+
 use crate::bundle;
 use crate::error::ContentError;
 use crate::ron_loader::parse_ron;
 
-/// Path of the palette inside the asset bundle.
+/// Path of the default theme's palette inside the asset bundle.
 pub const PALETTE_PATH: &str = "data/palette.ron";
+
+/// A colour theme the player can pick (ticket 0806,
+/// `docs/design/look-and-feel.md`): a palette file of its own. A theme
+/// recolours glyphs and the UI, never a picture.
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
+pub enum Theme {
+    /// C, "Rich & painterly".
+    Painterly,
+    /// D, "Earthy painterly": the look the game was made in.
+    #[default]
+    Earthy,
+    /// E, "War-table parchment": a light theme.
+    Parchment,
+    /// G, "Moonlit".
+    Moonlit,
+}
+
+impl Theme {
+    /// Every theme, in the order the Options
+    /// screen steps through them.
+    pub const ALL: [Self; 4] = [
+        Self::Painterly,
+        Self::Earthy,
+        Self::Parchment,
+        Self::Moonlit,
+    ];
+
+    /// The palette file inside the asset bundle.
+    pub const fn path(self) -> &'static str {
+        match self {
+            Self::Painterly => "data/palettes/painterly.ron",
+            Self::Earthy => PALETTE_PATH,
+            Self::Parchment => "data/palettes/parchment.ron",
+            Self::Moonlit => "data/palettes/moonlit.ron",
+        }
+    }
+
+    /// The key of the name the Options screen shows.
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::Painterly => "options.theme.painterly",
+            Self::Earthy => "options.theme.earthy",
+            Self::Parchment => "options.theme.parchment",
+            Self::Moonlit => "options.theme.moonlit",
+        }
+    }
+}
 
 /// Colour names the UI relies on; the palette must define every one.
 pub const REQUIRED_COLORS: &[&str] = &[
@@ -50,10 +101,16 @@ impl PaletteDef {
         self.colors.get(name).copied()
     }
 
-    /// Loads and validates the embedded palette.
+    /// Loads and validates the embedded palette of the default theme.
     pub fn load() -> Result<Self, Vec<ContentError>> {
-        let display = bundle::display_path(PALETTE_PATH);
-        let source = bundle::file(PALETTE_PATH).ok_or_else(|| {
+        Self::load_theme(Theme::default())
+    }
+
+    /// Loads and validates the embedded palette of `theme`.
+    pub fn load_theme(theme: Theme) -> Result<Self, Vec<ContentError>> {
+        let path = theme.path();
+        let display = bundle::display_path(path);
+        let source = bundle::file(path).ok_or_else(|| {
             vec![ContentError::new(
                 &display,
                 "file not found in asset bundle",
@@ -95,6 +152,56 @@ impl PaletteDef {
         } else {
             Err(errors)
         }
+    }
+}
+
+/// Loads every theme's palette. Each must define exactly the colour
+/// names of the default theme's `base` (a name missing would leave
+/// something unpainted; an extra one is a typo). Without a `base`
+/// (it failed to load, and said so) there are none to check.
+pub fn load_themes(
+    base: Option<&PaletteDef>,
+) -> Result<BTreeMap<Theme, PaletteDef>, Vec<ContentError>> {
+    let Some(base) = base else {
+        return Ok(BTreeMap::new());
+    };
+    let mut errors = Vec::new();
+    let mut themes = BTreeMap::new();
+    for theme in Theme::ALL {
+        let palette = match PaletteDef::load_theme(theme) {
+            Ok(p) => p,
+            Err(e) => {
+                errors.extend(e);
+                continue;
+            }
+        };
+        let file = bundle::display_path(theme.path());
+        for name in base
+            .colors
+            .keys()
+            .filter(|n| !palette.colors.contains_key(*n))
+        {
+            errors.push(ContentError::new(
+                &file,
+                format!("missing colour \"{name}\""),
+            ));
+        }
+        for name in palette
+            .colors
+            .keys()
+            .filter(|n| !base.colors.contains_key(*n))
+        {
+            errors.push(ContentError::new(
+                &file,
+                format!("colour \"{name}\" is not in the default theme"),
+            ));
+        }
+        themes.insert(theme, palette);
+    }
+    if errors.is_empty() {
+        Ok(themes)
+    } else {
+        Err(errors)
     }
 }
 
@@ -245,6 +352,40 @@ mod tests {
         assert_eq!(line_of_key(src, "text"), Some(3));
         assert_eq!(line_of_key(src, "text_dim"), Some(2));
         assert_eq!(line_of_key(src, "nope"), None);
+    }
+
+    #[test]
+    fn every_theme_has_the_default_themes_colour_names() {
+        let base = PaletteDef::load().unwrap_or_default();
+        let themes = load_themes(Some(&base)).unwrap_or_default();
+        assert_eq!(themes.len(), Theme::ALL.len());
+        for (theme, palette) in &themes {
+            let names: Vec<_> = palette.colors.keys().collect();
+            assert_eq!(names, base.colors.keys().collect::<Vec<_>>(), "{theme:?}");
+        }
+    }
+
+    #[test]
+    fn themes_differ_and_the_default_is_earthy() {
+        assert_eq!(Theme::default(), Theme::Earthy);
+        assert_eq!(Theme::Earthy.path(), PALETTE_PATH);
+        let base = PaletteDef::load().unwrap_or_default();
+        let themes = load_themes(Some(&base)).unwrap_or_default();
+        for a in Theme::ALL {
+            for b in Theme::ALL.into_iter().filter(|&b| b != a) {
+                assert_ne!(themes.get(&a), themes.get(&b), "{a:?} = {b:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn a_theme_with_other_names_is_reported() {
+        let mut base = PaletteDef::load().unwrap_or_default();
+        base.colors.insert("extra".into(), [1, 2, 3]);
+        base.colors.remove("peak");
+        let errors = load_themes(Some(&base)).unwrap_err();
+        // Each of the four files lacks "extra" and has "peak" besides.
+        assert_eq!(errors.len(), 8, "{errors:?}");
     }
 
     #[test]

@@ -62,7 +62,7 @@ pub use lang::{
 };
 pub use map::{MapDef, MapLegend, MapLook};
 pub use names::Names;
-pub use palette::PaletteDef;
+pub use palette::{PaletteDef, Theme};
 pub use portrait::Portrait;
 pub use terrain::{TerrainDef, TerrainDisplay, TerrainDisplayTable};
 pub use tileset::{CornerLayer, ImageRect, Layer, Look, Picture, TerrainTiles, TileLayer, Tileset};
@@ -73,8 +73,10 @@ pub use voice::{Playable, Variant, VoiceManifest};
 /// All validated game content.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Content {
-    /// Named colours (ADR-0012).
+    /// Named colours of the default theme (ADR-0012).
     pub palette: PaletteDef,
+    /// The palette of every colour theme (ticket 0806), the default's too.
+    pub themes: BTreeMap<Theme, PaletteDef>,
     /// Key bindings for every layout, and repeat timings (ADR-0015).
     pub keymap: KeymapDef,
     /// Font atlas layout; the image is `bundle::bytes(font::ATLAS_PNG_PATH)`.
@@ -258,14 +260,35 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     };
     let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
     units.lang = lang::load(data);
-    assemble(
+    let themes = palette::load_themes(palette.as_ref().ok());
+    let content = assemble(
         palette,
         KeymapDef::load(),
         FontAtlasDef::load(),
         terrain,
         maps,
         units,
-    )
+    );
+    with_themes(content, themes)
+}
+
+/// `content` with the colour themes added, or the errors of both.
+fn with_themes(
+    content: Result<Content, ContentErrors>,
+    themes: Result<BTreeMap<Theme, PaletteDef>, Vec<ContentError>>,
+) -> Result<Content, ContentErrors> {
+    match (content, themes) {
+        (Ok(mut content), Ok(themes)) => {
+            content.themes = themes;
+            Ok(content)
+        }
+        (Ok(_), Err(errors)) => Err(ContentErrors(errors)),
+        (Err(mut content), Err(errors)) => {
+            content.0.extend(errors);
+            Err(content)
+        }
+        (Err(content), Ok(_)) => Err(content),
+    }
 }
 
 /// The English a language pack's data and dialogue text is checked
@@ -565,6 +588,7 @@ fn assemble(
     let mut errors = Vec::new();
     let content = Content {
         palette: take(palette, &mut errors),
+        themes: BTreeMap::new(),
         keymap: take(keymap, &mut errors),
         font: take(font, &mut errors),
         terrain: take(terrain, &mut errors),

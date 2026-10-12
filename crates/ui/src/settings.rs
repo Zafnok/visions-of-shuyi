@@ -1,6 +1,6 @@
 //! The player's settings (ticket 0805): text and animation speeds, combat
-//! animations, auto-end, fullscreen, the layout picked, the cursor style
-//! and the volumes. Saved as RON under [`SETTINGS_KEY`]; [`Ctx`] loads them
+//! animations, auto-end, fullscreen, the layout picked, the cursor style,
+//! the colour theme and the volumes. Saved as RON under [`SETTINGS_KEY`]; [`Ctx`] loads them
 //! with its storage and saves them on every change
 //! ([`Ctx::change_settings`]). Key bindings are saved apart (ADR-0031).
 //!
@@ -10,6 +10,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::input::Layout;
+use trpg_content::Theme;
+
 use crate::map_view::CursorStyle;
 
 /// [`Storage`](crate::storage::Storage) key under which the settings are
@@ -193,6 +195,8 @@ pub struct Settings {
     pub cursor_style: CursorStyle,
     /// How the battle map looks (shown only when pictures exist).
     pub map_look: MapLook,
+    /// The colour theme (ticket 0806): the palette glyphs and the UI use.
+    pub theme: Theme,
     /// Music volume, 0 (silent) to [`MAX_VOLUME`].
     pub music_volume: u8,
     /// Sound volume, 0 (silent) to [`MAX_VOLUME`].
@@ -214,6 +218,7 @@ impl Default for Settings {
             fullscreen: false,
             cursor_style: CursorStyle::default(),
             map_look: MapLook::default(),
+            theme: Theme::default(),
             music_volume: DEFAULT_VOLUME,
             sound_volume: DEFAULT_VOLUME,
             layout: None,
@@ -237,6 +242,7 @@ struct SettingsFile {
     layout: Option<String>,
     cursor_style: CursorStyle,
     map_look: MapLook,
+    theme: Theme,
     music_volume: u8,
     sound_volume: u8,
 }
@@ -317,6 +323,7 @@ impl Settings {
             layout: self.layout.map(|l| l.name().to_owned()),
             cursor_style: self.cursor_style,
             map_look: self.map_look,
+            theme: self.theme,
             music_volume: self.music_volume,
             sound_volume: self.sound_volume,
         }
@@ -349,6 +356,7 @@ impl Settings {
             fullscreen: file.fullscreen,
             cursor_style: file.cursor_style,
             map_look: file.map_look,
+            theme: file.theme,
             music_volume: file.music_volume.min(MAX_VOLUME),
             sound_volume: file.sound_volume.min(MAX_VOLUME),
             layout: file.layout.as_deref().and_then(Layout::from_name),
@@ -370,6 +378,7 @@ mod tests {
             fullscreen: true,
             cursor_style: CursorStyle::TileGlow,
             map_look: MapLook::Glyphs,
+            theme: Theme::Parchment,
             music_volume: 0,
             sound_volume: 100,
             layout: Some(Layout::LeftHanded),
@@ -385,6 +394,7 @@ mod tests {
         assert!(s.combat_animations && !s.auto_end_turn && !s.fullscreen);
         assert_eq!(s.cursor_style, CursorStyle::Corners);
         assert_eq!(s.map_look, MapLook::Pictures);
+        assert_eq!(s.theme, Theme::Earthy);
         assert_eq!((s.music_volume, s.sound_volume), (80, 80));
         assert_eq!(s.layout(), None);
     }

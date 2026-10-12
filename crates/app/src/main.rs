@@ -90,6 +90,8 @@ async fn main() {
     // The window starts windowed; the Fullscreen option switches it.
     let mut fullscreen = false;
     loop {
+        // A colour theme changes the console background.
+        renderer.set_clear(game.ctx().palette.get(UiColor::Black));
         let mut events = keys::poll();
         events.extend(pads.poll());
         if running {
