@@ -48,9 +48,18 @@ fn saved(c: &Ctx) -> Settings {
 fn game_mode_shows_only_with_a_campaign() {
     let mut c = ctx();
     let rows = OptionsScreen::rows(&c);
-    assert_eq!(rows.len(), Row::ALL.len() - 1);
+    assert_eq!(rows.len(), Row::ALL.len() - 2);
     assert!(!rows.contains(&Row::GameMode));
     c.campaign_mode = Some(GameMode::Casual);
+    let without_pictures: Vec<Row> = Row::ALL
+        .into_iter()
+        .filter(|&r| r != Row::MapLook)
+        .collect();
+    assert_eq!(OptionsScreen::rows(&c), without_pictures);
+    // Map look shows only when the game has pictures.
+    let mut tileset = c.content.tilesets["test_units"].clone();
+    tileset.id = crate::map_view::GAME_TILESET.to_owned();
+    c.content.tilesets.insert(tileset.id.clone(), tileset);
     assert_eq!(OptionsScreen::rows(&c), Row::ALL);
 }
 
@@ -269,6 +278,7 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::AutoEnd, s.auto_end_turn != before.auto_end_turn),
             (Row::Fullscreen, s.fullscreen != before.fullscreen),
             (Row::Cursor, s.cursor_style != before.cursor_style),
+            (Row::MapLook, s.map_look != before.map_look),
             (Row::MusicVolume, s.music_volume != before.music_volume),
             (Row::SoundVolume, s.sound_volume != before.sound_volume),
         ];
@@ -302,6 +312,7 @@ fn rows_show_their_values() {
             "Off*",
             "Off*",
             "Corners*",
+            "Pictures*",
             "<80/100>",
             "<80/100>",
             "Right-handed",

@@ -672,7 +672,16 @@ impl Ctx {
         if self.settings == before {
             return Ok(());
         }
+        if self.settings.map_look != before.map_look {
+            self.apply_map_look();
+        }
         self.save_settings()
+    }
+
+    /// Paints the battle map with the skin of the map look in the
+    /// settings (ticket 0824).
+    fn apply_map_look(&mut self) {
+        self.map_skin = crate::map_view::skin_for_look(self.settings.map_look, &self.content);
     }
 
     fn save_settings(&mut self) -> Result<(), StorageError> {
@@ -696,6 +705,7 @@ impl Ctx {
             Settings::default()
         });
         self.settings.layout = self.saved_layout();
+        self.apply_map_look();
     }
 
     /// The Options screen's switch to Casual: one way, only from a Classic

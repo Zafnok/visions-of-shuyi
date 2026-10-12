@@ -4,7 +4,8 @@
 //! a Classic campaign switches to Casual, one way, at Preparations only.
 //!
 //! Rows, top to bottom: Text speed, Animation speed, Combat animations,
-//! Enemy phase speed, Auto-end turn, Fullscreen, Cursor, Music volume,
+//! Enemy phase speed, Auto-end turn, Fullscreen, Cursor, (Map look, with the
+//! bought pictures), Music volume,
 //! Sound volume, Layout, Key bindings, (Game mode, with a campaign), Reset
 //! tips, Restore defaults. `key_bindings_screen.rs` opens the Key bindings
 //! row.
@@ -15,11 +16,14 @@
 
 use insta::assert_snapshot;
 use trpg_core::GameMode;
+use trpg_ui::game::Game;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord, Layout};
-use trpg_ui::map_view::CursorStyle;
+use trpg_ui::map_view::{CursorStyle, GAME_TILESET, TEST_UNITS_TILESET, default_skin};
+use trpg_ui::screen::Ctx;
 use trpg_ui::screens::options::{OptionsScreen, Row, ValueView};
-use trpg_ui::settings::{AnimSpeed, EnemyPhaseSpeed, Settings, TextSpeed};
+use trpg_ui::settings::{AnimSpeed, EnemyPhaseSpeed, MapLook, Settings, TextSpeed};
+use trpg_ui::storage::Storage;
 use trpg_ui::tips::TIPS_SEEN_KEY;
 
 /// From the first row down to each row.
@@ -598,4 +602,83 @@ fn the_help_line_fits_on_every_pad() {
         assert!(help.contains("back"), "{kind:?}: {help}");
         assert!(help.chars().count() <= 100, "{kind:?}: {help}");
     }
+}
+
+/// A launch of a build that has the pictures: the generated test
+/// tileset stands in for the bought art's (`GAME_TILESET`). `storage` is
+/// the last launch's, if any.
+fn launch_with_pictures(storage: Option<Box<dyn Storage>>) -> Harness {
+    let mut ctx = Ctx::embedded().unwrap_or_else(|e| panic!("content: {e}"));
+    ctx.debug_tools = true;
+    let mut tileset = ctx.content.tilesets[TEST_UNITS_TILESET].clone();
+    GAME_TILESET.clone_into(&mut tileset.id);
+    ctx.content
+        .tilesets
+        .insert(GAME_TILESET.to_owned(), tileset);
+    ctx.map_skin = default_skin(&ctx.content);
+    let ctx = match storage {
+        Some(storage) => ctx.with_storage(storage),
+        None => ctx,
+    };
+    let mut h = Harness::from_game(Game::start(ctx.with_layout(Layout::RightHanded)));
+    h.wait(FRAME_DT);
+    h
+}
+
+/// Ticket 0824: with pictures, Map look is a row; changing it swaps the
+/// map's skin at once, is saved, and is still there after a restart.
+#[test]
+fn map_look_swaps_the_skin_at_once_and_is_remembered() {
+    let mut h = launch_with_pictures(None);
+    assert_eq!(h.game().ctx().map_skin.name(), "sprite_units");
+    h.keys("Down Down f");
+    assert_eq!(h.screens(), ["title", "options"]);
+    h.keys(TO_CURSOR);
+    h.keys("Down");
+    assert_eq!(value(&h, Row::MapLook), setting("Pictures"));
+    assert_snapshot!(h.snapshot());
+    h.keys("Right");
+    assert_eq!(value(&h, Row::MapLook), setting("Glyphs"));
+    assert_eq!(settings(&h).map_look, MapLook::Glyphs);
+    assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+
+    let mut h = launch_with_pictures(Some(h.into_storage()));
+    assert_eq!(settings(&h).map_look, MapLook::Glyphs);
+    assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+    h.keys("Down Down f");
+    h.keys(&format!("{TO_CURSOR} Down Left"));
+    assert_eq!(h.game().ctx().map_skin.name(), "sprite_units");
+}
+
+/// Restore defaults puts the look back to Pictures, and the skin with it.
+#[test]
+fn restoring_defaults_brings_the_pictures_back() {
+    let mut h = launch_with_pictures(None);
+    h.ctx_mut()
+        .change_settings(|s| s.map_look = MapLook::Glyphs)
+        .unwrap();
+    assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+    h.keys("Down Down f");
+    h.keys("Up f f");
+    assert_eq!(settings(&h).map_look, MapLook::Pictures);
+    assert_eq!(h.game().ctx().map_skin.name(), "sprite_units");
+}
+
+/// Without the bought files there is no row, and whatever was saved, the
+/// map is glyphs.
+#[test]
+fn without_pictures_there_is_no_row_and_the_map_is_glyphs() {
+    let mut h = title();
+    h.ctx_mut()
+        .change_settings(|s| s.map_look = MapLook::Pictures)
+        .unwrap();
+    h.keys("Down Down f");
+    let view = h
+        .game()
+        .screen::<OptionsScreen>()
+        .unwrap()
+        .view(h.game().ctx());
+    assert!(view.row(Row::MapLook).is_none());
+    assert!(!shows(&h, "Map look"));
+    assert_eq!(h.game().ctx().map_skin.name(), "glyph");
 }
