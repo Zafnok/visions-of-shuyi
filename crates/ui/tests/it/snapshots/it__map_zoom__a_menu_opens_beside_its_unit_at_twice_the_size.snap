@@ -21,12 +21,12 @@ expression: h.snapshot()
                                                                       ║                            ║
                            ┌────────┐                                 ║                            ║
                            │ Attack │                                 ║                            ║
+                           │ Arts   │                                 ║                            ║
                            │ Skill  │                                 ║                            ║
                            │ Item   │                                 ║                            ║
                            │ Equip  │                                 ║                            ║
                            │ Wait   │                                 ║                            ║
                            └────────┘                                 ║                            ║
-                                                                      ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
@@ -54,12 +54,12 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabggggggggbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaabggggggggbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabggggggggbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabhhhhhhhhbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
@@ -161,8 +161,10 @@ under sprite 16,384 48x48  tilesets/test.png 96,0 24x24
 under sprite 64,384 48x48  tilesets/test.png 120,0 24x24
 under sprite 112,384 48x48  tilesets/test.png 24,0 24x24
 under sprite 160,384 48x48  tilesets/test.png 0,0 24x24
-under sprite 208,384 48x48  tilesets/test.png 0,0 24x24
-under sprite 256,384 48x48  tilesets/test.png 0,0 24x24
+under sprite 208,384 48x48  tilesets/test.png 0,0 24x24 clip=208,400 48x32
+under sprite 208,384 48x48  tilesets/test.png 0,0 24x24 clip=208,384 8x16
+under sprite 256,384 48x48  tilesets/test.png 0,0 24x24 clip=256,400 48x32
+under sprite 256,384 48x48  tilesets/test.png 0,0 24x24 clip=296,384 8x16
 under sprite 304,384 48x48  tilesets/test.png 0,0 24x24
 under sprite 352,384 48x48  tilesets/test.png 0,0 24x24
 under sprite 400,384 48x48  tilesets/test.png 0,0 24x24

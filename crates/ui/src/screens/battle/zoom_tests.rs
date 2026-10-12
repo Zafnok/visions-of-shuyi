@@ -141,12 +141,12 @@ fn it_works_while_a_unit_walks_and_while_picking_a_target() {
     assert!(matches!(battle(&h).mode(), Mode::Moving { .. }));
     h.keys("q");
     assert_eq!(zoom(&h), Some(MapZoom::X1));
-    // Its menu: nothing. Attack, the iron sword: picking the target.
+    // Its menu: nothing. Attack (the iron sword): picking the target.
     h.wait(0.5);
     assert!(matches!(battle(&h).mode(), Mode::ActionMenu { .. }));
     h.keys("q");
     assert_eq!(zoom(&h), Some(MapZoom::X1));
-    h.keys("f f");
+    h.keys("f");
     assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
     let state = battle(&h).state().clone();
     h.keys("q");
@@ -154,7 +154,7 @@ fn it_works_while_a_unit_walks_and_while_picking_a_target() {
     assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
     assert_eq!(battle(&h).state(), &state);
     // The fight's playback: nothing.
-    h.keys("Right f");
+    h.keys("Down f");
     assert!(matches!(battle(&h).mode(), Mode::Combat(_)));
     h.keys("q");
     assert_eq!(zoom(&h), Some(MapZoom::X2));
