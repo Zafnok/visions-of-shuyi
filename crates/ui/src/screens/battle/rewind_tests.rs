@@ -42,13 +42,13 @@ fn attacked(c: &mut Ctx, charges: u8) -> (BattleScreen, BattleState) {
     let mut s = BattleScreen::new(start.clone());
     // Select the lord, one step right, move there.
     press(&mut s, c, &[Confirm, CursorRight, Confirm], 0.5);
-    // Attack, the iron sword, the brigand, attack, skip the playback
+    // Attack (the iron sword), the brigand, attack, skip the playback
     // (Cancel), and let the EXP bar close.
     let exp = PROGRESS_TIMINGS.exp_fill + PROGRESS_TIMINGS.exp_hold;
     press(
         &mut s,
         c,
-        &[Confirm, Confirm, CursorRight, Confirm, Cancel],
+        &[Confirm, CursorDown, Confirm, Cancel],
         0.1 + exp,
     );
     assert!(s.progress().is_none());
@@ -127,12 +127,7 @@ fn the_same_attack_after_a_rewind_gives_the_same_result() {
         0.0,
     );
     press(&mut s, &mut c, &[Confirm, CursorRight, Confirm], 0.5);
-    press(
-        &mut s,
-        &mut c,
-        &[Confirm, Confirm, CursorRight, Confirm, Cancel],
-        0.1,
-    );
+    press(&mut s, &mut c, &[Confirm, CursorDown, Confirm, Cancel], 0.1);
     assert_eq!(ron(s.state()), first);
 }
 

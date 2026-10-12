@@ -2,10 +2,10 @@
 source: crates/ui/src/screens/battle/magic_tests.rs
 expression: "forecast_snapshot(&mut c, state, 0)"
 ---
-                                    ┌─ Fire 10/10 ───────────────────┐╔═════════ Forecast ═════════╗
-                                    │ Attack                         │║                            ║
-                                    │ Overcast        +1 use  active │║ Test Mage     Frost Element║
-                                    └────────────────────────────────┘║ Fire          Frost        ║
+                                                                      ╔═════════ Forecast ═════════╗
+                                                                      ║                            ║
+                                                                      ║ Test Mage     Frost Element║
+                                                                      ║ Fire          Frost        ║
                                                                       ║ 10/10         10/10        ║
                                                                       ║ HP 16 ███▒▒   HP 30 ██▒▒▒  ║
                                                                       ║ Hit  90       Hit  93      ║
@@ -33,27 +33,27 @@ expression: "forecast_snapshot(&mut c, state, 0)"
                                                                       ║                            ║
                                                                       ╚════════════════════════════╝
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
- Left/Right target · Up/Down art · f cast · d back                                         F2 debug 
+ arrows next target · f cast · d back                                                      F2 debug 
 --- colours ---
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbccccccddddddbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeebbddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddddddbbdfffffffffdddddgggggggggggggb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbdhhhhddddddddddhhhhhddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhhdddddddddhhhhhddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhddddiiijjdddhhddddiijjjddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhdddddddddddhhhddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdhhhhddddddddddhhhhdddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbccccccccccbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeedddddfffffffffffffb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddgggggddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhiidddggddddhhiiiddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdddddddcddhddhddddddddddddddb
-aaaaaaaaaaaaaaaaaaaakkkkkkllllmmmmnnnnooooppppqqaaaaaaaaaaaaaaaaaaaaaabdddddddddddddhdhddddddddddddb
-aaaaaaaaaaaaaaaaaaaakkkkllllmmmmrrssrrnnnnppppppaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaakkllllttttrrrrrrmmmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabdddddddddddhhhhhddddddddddddb
-aaaaaaaaaaaaaaaaaaaammllllmmrrmmmmmmmmmmmmmmuummaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaavvwwxxrrrrmmmmyymmzzzzzzzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaavvAArrvvmmuummmmmmzzBBuuzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaAAnnrrmmvvmmmmmmmmzzBBBBzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannoorrmmmmmmmmmmmmzzzzCCzzmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdddddddcddgddgddddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabdddddddddddddgdgddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaajjkkkkssssqqqqqqllllmmmmllllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
+aaaaaaaaaaaaaaaaaaaallkkkkllqqllllllllllllllttllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaauuvvwwqqqqllllxxllyyyyyyyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaauuzzqquullttllllllyyAAttyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaazzmmqqlluullllllllyyAAAAyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnqqllllllllllllyyyyBByyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -65,39 +65,38 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDa
-aDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCa
+aCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
 c = fg:text_highlight bg:panel_bg
 d = fg:text bg:panel_bg
-e = fg:panel_bg bg:panel_border_focus
-f = fg:player bg:panel_bg
-g = fg:enemy bg:panel_bg
-h = fg:text_dim bg:panel_bg
-i = fg:hp_mid bg:panel_bg
-j = fg:hp_low bg:panel_bg
-k = fg:water bg:sea
-l = fg:water bg:water_bg
-m = fg:grass bg:grass_bg
-n = fg:forest bg:forest_bg
-o = fg:thicket bg:thicket_bg
-p = fg:mountain bg:mountain_bg
-q = fg:peak bg:peak_bg
-r = fg:road bg:road_bg
-s = fg:enemy bg:road_bg
-t = fg:wood bg:water_bg
-u = fg:fort bg:fort_bg
-v = fg:player bg:grass_bg
-w = fg:enemy bg:#4c271c
-x = fg:enemy bg:#50281d
-y = fg:enemy bg:grass_bg
-z = fg:stone bg:stone_bg
-A = fg:fire bg:fire_bg
-B = fg:floor bg:floor_bg
-C = fg:wood bg:stone_bg
-D = fg:text_dim bg:black
+e = fg:player bg:panel_bg
+f = fg:enemy bg:panel_bg
+g = fg:text_dim bg:panel_bg
+h = fg:hp_mid bg:panel_bg
+i = fg:hp_low bg:panel_bg
+j = fg:water bg:sea
+k = fg:water bg:water_bg
+l = fg:grass bg:grass_bg
+m = fg:forest bg:forest_bg
+n = fg:thicket bg:thicket_bg
+o = fg:mountain bg:mountain_bg
+p = fg:peak bg:peak_bg
+q = fg:road bg:road_bg
+r = fg:enemy bg:road_bg
+s = fg:wood bg:water_bg
+t = fg:fort bg:fort_bg
+u = fg:player bg:grass_bg
+v = fg:enemy bg:#4c271c
+w = fg:enemy bg:#50281d
+x = fg:enemy bg:grass_bg
+y = fg:stone bg:stone_bg
+z = fg:fire bg:fire_bg
+A = fg:floor bg:floor_bg
+B = fg:wood bg:stone_bg
+C = fg:text_dim bg:black
 --- overlays ---
 over  209,270 14x2  hp_high
 over  161,270 14x2  hp_high

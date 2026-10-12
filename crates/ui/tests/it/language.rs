@@ -276,7 +276,7 @@ fn a_weapon_list_is_painted_in_the_test_language() {
     assert_eq!(mode(&test), mode(&english));
 }
 
-/// A fight: the weapon list, the forecast with its arts, the combat's
+/// A fight: the arts menu, the forecast with its weapons, the combat's
 /// fighters and the rewind list all name things in the player's language.
 /// The combat is made by a command applied between frames, in the
 /// language of the frame before.
@@ -285,17 +285,23 @@ fn a_fight_names_everything_in_the_test_language() {
     let mut h = quick_battle();
     // The lord to (6, 4), beside the brigand at (7, 4); Attack.
     h.keys("f Right Right Right Up f").wait(0.5);
-    h.keys("f");
+    // Arts: the lord's arts, and the sword they are used with.
+    h.keys("Down f");
     assert!(shows(&h, "IRON SWORD "));
-    assert!(shows(&h, "Steel Sword"));
     assert!(!shows(&h, "Iron Sword"));
-    // The forecast, and the lord's arts beside it.
-    h.keys("f");
-    assert!(shows(&h, "Test Lord     BRIGAND"));
-    assert!(shows(&h, "IRON SWORD"));
     assert!(shows(&h, "GUARD BREAK"));
     assert!(shows(&h, "Flowing Cut"));
     assert!(!shows(&h, "Guard Break"));
+    // Back, and Attack: the forecast; right swaps to a weapon the pack
+    // lacks.
+    h.keys("d Up f");
+    assert!(shows(&h, "Test Lord     BRIGAND"));
+    assert!(shows(&h, "IRON SWORD"));
+    h.keys("Right");
+    assert!(shows(&h, "Steel Sword"));
+    h.keys("Left");
+    assert!(shows(&h, "IRON SWORD"));
+    assert!(!shows(&h, "Iron Sword"));
     // The combat.
     h.keys("f");
     assert!(shows(&h, "BRIGAND"));

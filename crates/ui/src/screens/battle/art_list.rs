@@ -1,20 +1,19 @@
-//! The Combat Arts list of the attack flow (ticket 0414,
-//! `docs/design/combat-arts.md` → *Forecast display*): while a target is
-//! chosen, `Attack`, then the arts the attacking weapon can use, then the
-//! unit's combat actives, each with its cost and source. What can't be paid
-//! for is dimmed with the reason; what doesn't fit the attack isn't listed.
-//! Every check is [`BattleState::preview_attack`], so the list never offers
-//! what the core would refuse (ADR-0004). An attack spell cast at a unit
-//! (0410) has the same list: `Attack`, then the unit's spell actives.
+//! The arts menu of the attack flow (tickets 0414 and 0442,
+//! `docs/design/combat-arts.md` → *The arts menu*): `Arts` in the action
+//! menu lists the Combat Arts of the weapons the unit carries, then its
+//! combat actives that swing a weapon, each with its cost and source. What
+//! can't be used from there is dimmed with the reason. Every check is
+//! [`BattleState::preview_attack`], so the menu never offers what the core
+//! would refuse (ADR-0004). A spell active is a line of the spell list
+//! instead (`Fire + Overcast`, [`super::magic`]).
 
 use trpg_core::{
     ArtDef, ArtId, ArtNote, BattleState, CastTarget, CommandError, CostError, Equipped, Event,
-    Faction, Pos, SkillCost, SkillId, StatKind, Unit, UnitAction, UnitId,
+    Faction, Pos, SkillCost, SkillId, StatKind, Unit, UnitAction, UnitId, WEAPON_SLOTS,
 };
 
 use super::attack::{spell_uses, weapon_durability};
 use super::info::stat_name;
-use super::layout::{MAP_VIEW, SIDE_PANEL};
 use super::skills::{skill_cost, skill_name, timed_text};
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::GlyphBuffer;
@@ -58,10 +57,11 @@ impl Technique {
         }
     }
 
-    /// Its name as the list and the forecast show it.
+    /// Its name as the arts menu and the forecast show it (none for a
+    /// plain attack).
     pub fn name(&self, state: &BattleState, words: Words<'_>) -> String {
         match self {
-            Technique::Attack => words.text("battle.art.attack").to_owned(),
+            Technique::Attack => String::new(),
             Technique::Art(id) => art_name(state, words, id),
             Technique::Active(id) => skill_name(state, words, id),
         }
@@ -74,17 +74,32 @@ pub fn art_name(state: &BattleState, words: Words<'_>, id: &ArtId) -> String {
     art.map_or(id.0.as_str(), |a| words.art(a)).to_owned()
 }
 
-/// One line of the list.
+/// One line of the arts menu.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ArtChoice {
+pub struct ArtLine {
     /// What the line attacks with.
     pub technique: Technique,
-    /// Why it can't be chosen now (`broken`, `out of range`); `None` if it
-    /// can.
-    pub reason: Option<String>,
+    /// The weapon slots it can attack someone with from there, in slot
+    /// order. Empty: the line is dimmed.
+    pub slots: Vec<usize>,
+    /// The slot of the weapon its forecast opens with: the equipped weapon
+    /// if that is one of `slots`, else the first of them; for a dimmed
+    /// line, the weapon whose cost or range stands in the way.
+    pub slot: usize,
+    /// What stands in the way, for a dimmed line: its cost
+    /// ([`Fit::Cost`]: `broken`) or its range ([`Fit::Far`]: `out of
+    /// range`). `None` if it can be chosen.
+    pub blocked: Option<Fit>,
 }
 
-/// Why a cost can't be paid, as the list shows it.
+impl ArtLine {
+    /// Whether the line can be chosen.
+    pub fn usable(&self) -> bool {
+        !self.slots.is_empty()
+    }
+}
+
+/// Why a cost can't be paid, as a menu shows it.
 pub fn reason_text(words: Words<'_>, error: &CostError) -> String {
     match error {
         CostError::WeaponBroken => words.text("battle.reason.broken").to_owned(),
@@ -98,66 +113,112 @@ pub fn reason_text(words: Words<'_>, error: &CostError) -> String {
     }
 }
 
-/// The line for `technique`: usable if the core accepts the attack, dimmed
-/// if only its cost stands in the way, not listed otherwise (it doesn't fit
-/// this attack).
-fn choice(
-    state: &BattleState,
-    words: Words<'_>,
-    unit: UnitId,
-    dest: Pos,
-    action: &UnitAction,
-    technique: Technique,
-) -> Option<ArtChoice> {
-    let reason = match state.preview_attack(unit, dest, action) {
-        Ok(_) => None,
-        Err(CommandError::CannotPayArt { error, .. } | CommandError::CannotPay { error, .. }) => {
-            Some(reason_text(words, &error))
-        }
-        Err(_) => return None,
-    };
-    Some(ArtChoice { technique, reason })
+/// Why a dimmed line can't be chosen, as a menu shows it after the line
+/// (nothing for one that can).
+pub fn blocked_text(words: Words<'_>, blocked: &Fit) -> String {
+    match blocked {
+        Fit::Cost(error) => reason_text(words, error),
+        Fit::Far => words.text("battle.reason.out_of_range").to_owned(),
+        Fit::Hits | Fit::No => String::new(),
+    }
 }
 
-/// The list for `unit` attacking `target` from `dest` with `with` (the
-/// weapon in a slot, or an attack spell): `Attack`, a weapon's arts (rank
-/// arts lowest rank first, then the weapon's own), then the unit's combat
-/// actives. `Attack` is always listed; it is dimmed (`out of range`) on a
-/// target only an art or active reaches (Close Shot, Long Shot: 0426).
-pub fn art_choices(
+/// What stands between a technique with one weapon or spell and an attack
+/// on someone.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Fit {
+    /// Nothing: it can attack someone.
+    Hits,
+    /// Its cost can't be paid.
+    Cost(CostError),
+    /// Nobody is in its range.
+    Far,
+    /// It doesn't go with that weapon or spell.
+    No,
+}
+
+/// How `technique` with `with` fits an attack by `unit` from `dest`: every
+/// check is the core's ([`BattleState::preview_attack`] on each unit).
+pub fn fit(
     state: &BattleState,
-    words: Words<'_>,
     unit: UnitId,
     dest: Pos,
     with: &Equipped,
-    target: UnitId,
-) -> Vec<ArtChoice> {
-    let plain = Technique::Attack.action(target, with);
-    let reason = match state.preview_attack(unit, dest, &plain) {
-        Ok(_) => None,
-        Err(CommandError::OutOfRange { .. }) => Some("battle.reason.out_of_range"),
-        Err(_) => Some("battle.reason.cant_attack"),
-    };
-    let mut out = vec![ArtChoice {
-        technique: Technique::Attack,
-        reason: reason.map(|key| words.text(key).to_owned()),
-    }];
-    let Some(u) = state.unit(unit) else {
-        return out;
-    };
-    if let Equipped::Weapon(slot) = *with {
-        let arts = u.arts_for(slot, state.classes(), state.items(), state.arts());
-        for art in arts {
-            let t = Technique::Art(art.id.clone());
-            out.extend(choice(state, words, unit, dest, &t.action(target, with), t));
+    technique: &Technique,
+) -> Fit {
+    let mut found = Fit::No;
+    for target in state.units() {
+        match state.preview_attack(unit, dest, &technique.action(target.id, with)) {
+            Ok(_) => return Fit::Hits,
+            Err(
+                CommandError::CannotPayArt { error, .. } | CommandError::CannotPay { error, .. },
+            ) => found = Fit::Cost(error),
+            // (The core checks the cost before the range: never both.)
+            Err(CommandError::OutOfRange { .. }) => found = Fit::Far,
+            Err(_) => {}
         }
     }
+    found
+}
+
+/// The techniques `u` may have for the weapon in `slot`: its arts (rank arts
+/// lowest rank first, then the weapon's own), then the unit's combat
+/// actives. Whether an active goes with that weapon is the core's to say
+/// ([`fit`]).
+fn techniques(state: &BattleState, u: &Unit, slot: usize) -> Vec<Technique> {
+    let arts = u.arts_for(slot, state.classes(), state.items(), state.arts());
     let actives = u.usable_skills(state.classes(), state.skills());
-    for skill in actives.into_iter().filter(|s| s.is_combat()) {
-        let t = Technique::Active(skill.id.clone());
-        out.extend(choice(state, words, unit, dest, &t.action(target, with), t));
+    let arts = arts.into_iter().map(|a| Technique::Art(a.id.clone()));
+    let actives = actives.into_iter().filter(|s| s.is_combat());
+    arts.chain(actives.map(|s| Technique::Active(s.id.clone())))
+        .collect()
+}
+
+/// The arts menu's lines for `unit` at `dest` (ticket 0442): the Combat
+/// Arts of every weapon it carries, then its combat actives that swing a
+/// weapon, each once. A line is dimmed with the reason when no weapon can
+/// use it on anyone from there.
+pub fn art_lines(state: &BattleState, unit: UnitId, dest: Pos) -> Vec<ArtLine> {
+    let Some(u) = state.unit(unit) else {
+        return vec![];
+    };
+    // Arts before actives, each in the order of the first weapon with it.
+    let mut found: Vec<(Technique, Vec<(usize, Fit)>)> = vec![];
+    for slot in 0..WEAPON_SLOTS {
+        for technique in techniques(state, u, slot) {
+            let how = fit(state, unit, dest, &Equipped::Weapon(slot), &technique);
+            match found.iter_mut().find(|(t, _)| *t == technique) {
+                Some((_, fits)) => fits.push((slot, how)),
+                None => found.push((technique, vec![(slot, how)])),
+            }
+        }
     }
-    out
+    found.sort_by_key(|(t, _)| matches!(t, Technique::Active(_)));
+    let equipped = u.loadout.equipped_slot();
+    let line = |(technique, fits): (Technique, Vec<(usize, Fit)>)| {
+        let with = |want: fn(&Fit) -> bool| fits.iter().filter(move |(_, how)| want(how));
+        let slots: Vec<usize> = with(|how| *how == Fit::Hits).map(|&(s, _)| s).collect();
+        let (slot, blocked) = if let Some(&first) = slots.first() {
+            let slot = equipped.filter(|e| slots.contains(e)).unwrap_or(first);
+            (slot, None)
+        } else {
+            let cost = with(|how| matches!(how, Fit::Cost(_))).next();
+            let (slot, how) = cost.or_else(|| with(|how| *how == Fit::Far).next())?;
+            (*slot, Some(how.clone()))
+        };
+        Some(ArtLine {
+            technique,
+            slots,
+            slot,
+            blocked,
+        })
+    };
+    found.into_iter().filter_map(line).collect()
+}
+
+/// Whether `Arts` is enabled: some line can be chosen.
+pub fn can_use_art(lines: &[ArtLine]) -> bool {
+    lines.iter().any(ArtLine::usable)
 }
 
 /// What a line costs: `−4 dur` or `+1 use` (empty for `Attack`). A cost in
@@ -194,31 +255,26 @@ pub fn source_label(state: &BattleState, words: Words<'_>, technique: &Technique
 /// Width of the name column.
 const NAME_W: usize = 14;
 
-/// The list as a menu: `Guard Break     −4 dur  D`, a dimmed line with its
-/// reason after it, focused on `focus` (or the first line that can be
-/// chosen).
-pub fn art_menu(
-    state: &BattleState,
-    words: Words<'_>,
-    choices: &[ArtChoice],
-    focus: usize,
-) -> Menu {
-    let items = choices
+/// The arts menu: `Guard Break     −4 dur  D`, a dimmed line with its
+/// reason after it, focused on the first line that can be chosen.
+pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Menu {
+    let items = lines
         .iter()
         .map(|c| {
             let name = c.technique.name(state, words);
             let cost = cost_label(state, words, &c.technique);
             let source = source_label(state, words, &c.technique);
             let label = format!("{name:<NAME_W$}  {cost:>6}  {source:<6}");
-            match &c.reason {
+            match &c.blocked {
                 None => MenuItem::new(label),
                 Some(why) => {
-                    MenuItem::disabled(label).with_suffix(format!(" {why}"), UiColor::HpLow)
+                    let why = format!(" {}", blocked_text(words, why));
+                    MenuItem::disabled(label).with_suffix(why, UiColor::HpLow)
                 }
             }
         })
         .collect();
-    Menu::new(items).focused(focus)
+    Menu::new(items)
 }
 
 /// A weapon's durability as its lines show it: `20/20`, or `broken` at 0.
@@ -230,32 +286,16 @@ pub fn durability_text(words: Words<'_>, left: u32, max: u32) -> String {
     }
 }
 
-/// The list's box beside the forecast panel, on the half of the map away
-/// from the row `unit_y` (the attacker's cell row), so it doesn't hide the
-/// fight. `(w, h)` is the menu's size.
-pub fn list_origin(unit_y: i32, (w, h): (i32, i32)) -> (i32, i32) {
-    let x = (SIDE_PANEL.x - w).max(MAP_VIEW.x);
-    let y = if unit_y < MAP_VIEW.y + MAP_VIEW.h / 2 {
-        MAP_VIEW.y + MAP_VIEW.h - h
-    } else {
-        MAP_VIEW.y
-    };
-    (x, y)
-}
-
-/// Draws the list `menu` for `unit` attacking with `with`, with the
-/// weapon's name and durability (`Iron Sword 20/20`) or the spell's name
-/// and uses (`Fire 6/10`) in its top border.
-pub fn draw_list(
+/// Prints the header of a menu at `(x, y)` in its top border: the name and
+/// durability of `unit`'s weapon (`Iron Sword 20/20`) or the name and uses
+/// of its spell (`Fire 6/10`).
+pub fn draw_header(
     buf: &mut GlyphBuffer,
     palette: &Palette,
     (state, words): (&BattleState, Words<'_>),
     (unit, with): (UnitId, &Equipped),
-    menu: &Menu,
-    unit_y: i32,
+    (x, y): (i32, i32),
 ) {
-    let (x, y) = list_origin(unit_y, menu.size());
-    menu.draw(palette, buf, x, y);
     let header = match with {
         Equipped::Weapon(slot) => weapon_durability(state, words, unit, *slot),
         Equipped::Spell(spell) => spell_uses(state, words, unit, spell),
@@ -427,17 +467,6 @@ mod tests {
         assert_eq!(durability_text(Words::ENGLISH, 20, 20), "20/20");
         assert_eq!(durability_text(Words::ENGLISH, 3, 20), "3/20");
         assert_eq!(durability_text(Words::ENGLISH, 0, 20), "broken");
-    }
-
-    #[test]
-    fn the_list_sits_beside_the_panel_away_from_the_attacker() {
-        // An attacker in the top half: the list at the bottom of the map.
-        assert_eq!(list_origin(3, (34, 6)), (SIDE_PANEL.x - 34, 24));
-        // In the bottom half: at the top.
-        assert_eq!(list_origin(20, (34, 6)), (SIDE_PANEL.x - 34, 0));
-        assert_eq!(list_origin(15, (34, 6)).1, 0);
-        // Never left of the map.
-        assert_eq!(list_origin(3, (200, 6)).0, MAP_VIEW.x);
     }
 
     #[test]

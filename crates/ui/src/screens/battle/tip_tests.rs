@@ -206,12 +206,12 @@ fn the_forecast_shows_its_tip() {
     let mut c = tipped();
     let mut s = BattleScreen::new(skirmish(&c, 100));
     dismiss_all(&mut s, &mut c);
-    // Select the lord, step right, open the menu: Attack, first weapon.
+    // Select the lord, step right, open the menu: Attack.
     press(&mut s, &mut c, &[Action::Confirm]);
     dismiss_all(&mut s, &mut c);
     press(&mut s, &mut c, &[Action::CursorRight, Action::Confirm]);
     frame(&mut s, &mut c, &[], 1.0);
-    press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
+    press(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Targeting(_)), "{:?}", s.mode());
     assert_eq!(dismiss_all(&mut s, &mut c), [TipTrigger::FirstForecast]);
     // The forecast is still there under the dismissed tip.

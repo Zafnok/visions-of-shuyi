@@ -64,19 +64,19 @@ fn select_picks_on_the_map_and_confirm_keeps_menus_and_the_forecast() {
     assert_eq!(help(&h), "arrows move · g move here · d cancel");
     h.keys("g").wait(0.5);
     assert_eq!(help(&h), "arrows choose · f confirm · d back");
-    // Select does nothing in the menu; Confirm picks Attack, then the iron
-    // sword, and the forecast opens on Confirm.
+    // Select does nothing in the menu; Confirm picks Attack, and the
+    // forecast stays on Confirm.
     h.keys("g");
     assert_eq!(help(&h), "arrows choose · f confirm · d back");
-    h.keys("f f");
+    h.keys("f");
     assert_eq!(
         help(&h),
-        "Left/Right target · Up/Down art · f attack · d back"
+        "Left/Right swap · Up/Down target · f attack · d back"
     );
     h.keys("g");
     assert_eq!(
         help(&h),
-        "Left/Right target · Up/Down art · f attack · d back"
+        "Left/Right swap · Up/Down target · f attack · d back"
     );
     // Confirm accepts the forecast: the attack plays.
     h.keys("f");

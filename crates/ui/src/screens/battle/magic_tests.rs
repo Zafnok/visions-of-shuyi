@@ -10,12 +10,13 @@ use trpg_core::{
     Phase, Pos, Reinforcement, SkillId, SpellId, StatValue, UnitAction, UnitId,
 };
 
+use super::art_list::Technique;
 use super::attack::{Targeting, aimed_options, attack_tile, can_hit};
 use super::forecast::{AFFINITY_ROW, LEFT_X, NAME_ROW, STRIKE_ROW};
 use super::items::{can_equip, equip_choices, equip_menu};
 use super::magic::{
-    CastTargeting, can_cast, cast, cast_targets, knows_spells, reaches_an_enemy, spell_choices,
-    spell_label, spell_menu, target_pos,
+    CastTargeting, SpellChoice, can_cast, cast, cast_targets, knows_spells, reaches_an_enemy,
+    spell_choices, spell_label, spell_menu, target_pos,
 };
 use super::mode::{Effect, MenuEntry, Mode, Selection, menu_entries, open_menu};
 use super::playback::TIMINGS;
@@ -151,15 +152,52 @@ fn spell_list(c: &mut Ctx, state: BattleState) -> BattleScreen {
     s
 }
 
-/// Picking the target of line `line` of the mage's spell list of `state`
-/// (0 Fire, 1 Frost, 2 Heal).
+/// Picking the target of spell `line` of the mage's spell list of `state`
+/// (0 Fire, 1 Frost, 2 Heal), cast plainly.
 fn casting(c: &mut Ctx, state: BattleState, line: usize) -> BattleScreen {
+    casting_with(c, state, line, None)
+}
+
+/// [`casting`], with the spell active `active` (`Fire + Overcast`).
+fn casting_with(
+    c: &mut Ctx,
+    state: BattleState,
+    line: usize,
+    active: Option<&str>,
+) -> BattleScreen {
     let mut s = spell_list(c, state);
-    // The list opens on Fire, the equipped spell.
-    step(&mut s, c, &vec![Action::CursorDown; line]);
+    let Mode::SpellMenu { choices, .. } = s.mode() else {
+        unreachable!()
+    };
+    let spell = &plain(choices.clone())[line].spell;
+    let active = active.map(SkillId::new);
+    let at = choices
+        .iter()
+        .position(|c| c.spell == *spell && c.active == active)
+        .unwrap_or_else(|| panic!("no line {line} with {active:?}: {choices:?}"));
+    // The list opens on Fire, the equipped spell; Down skips dimmed lines.
+    for _ in 0..choices.len() {
+        let Mode::SpellMenu { menu, .. } = s.mode() else {
+            unreachable!()
+        };
+        if menu.focus() == at {
+            break;
+        }
+        step(&mut s, c, &[Action::CursorDown]);
+    }
     step(&mut s, c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::CastTarget(_)), "{:?}", s.mode());
     s
+}
+
+/// The lines of `choices` that cast a spell plainly (no spell active).
+fn plain(choices: Vec<SpellChoice>) -> Vec<SpellChoice> {
+    choices.into_iter().filter(|c| c.active.is_none()).collect()
+}
+
+/// The plain lines of the spell list of `unit` at `dest`.
+fn plain_choices(state: &BattleState, unit: UnitId, dest: Pos) -> Vec<SpellChoice> {
+    plain(spell_choices(state, unit, dest))
 }
 
 fn targeting(s: &BattleScreen) -> &CastTargeting {
@@ -233,7 +271,7 @@ fn a_spells_targets_are_what_the_core_accepts_in_reading_order() {
 fn the_list_has_every_learned_spell_dimmed_without_a_target() {
     let c = ctx();
     let s = field(&c, 0);
-    let choices = spell_choices(&s, MAGE, p(0, 4));
+    let choices = plain_choices(&s, MAGE, p(0, 4));
     let ids: Vec<&str> = choices.iter().map(|c| c.spell.0.as_str()).collect();
     assert_eq!(ids, ["fire", "frost", "heal"]);
     assert_eq!(choices[0].targets.len(), 4);
@@ -262,9 +300,13 @@ fn the_list_has_every_learned_spell_dimmed_without_a_target() {
     // (A battle's start refills every spell.)
     assert_eq!(uses(&s2, "fire"), 10);
     let choices2 = spell_choices(&s2, MAGE, p(0, 4));
+    // On Frost's plain line, past Fire and `Fire + Overcast`.
+    let focus = spell_menu(&s2, Words::ENGLISH, MAGE, &choices2).focus();
+    assert_eq!((focus, &choices2[focus].active), (2, &None));
+    let choices2 = plain(choices2);
     assert_eq!(spell_menu(&s2, Words::ENGLISH, MAGE, &choices2).focus(), 1);
     // The equipped spell with nothing to be cast on: the first that has.
-    let far = spell_choices(&s2, MAGE, p(0, 3));
+    let far = plain_choices(&s2, MAGE, p(0, 3));
     assert_eq!(far[1].targets.len(), 6);
     let mut none = far.clone();
     none[1].targets.clear();
@@ -329,7 +371,7 @@ fn magic_is_listed_for_casters_and_is_the_default_only_against_an_enemy() {
     let (map, mut units) = quick_units(&c);
     units[0].hp -= 5;
     let hurt = battle_with(&c, map, units, Objective::Rout { turn_limit: None });
-    let choices = spell_choices(&hurt, MAGE, p(3, 6));
+    let choices = plain_choices(&hurt, MAGE, p(3, 6));
     assert_eq!(choices[2].targets, [on_unit(1)]);
     assert!(!reaches_an_enemy(&hurt, &choices));
     assert_eq!(magic(&hurt), (true, MenuEntry::Wait));
@@ -366,19 +408,15 @@ fn fire_on_the_elemental_shows_the_forecast_and_casts() {
     let state = field(&c, 0);
     let mut s = casting(&mut c, state, 0);
     // The cursor is on the first target, the elemental, with the forecast
-    // and the list of spell actives (the Mage's Overcast).
+    // (and no list beside it: Overcast is a line of the spell list, 0442).
     assert_eq!(targeting(&s).target(), on_unit(7));
     assert_eq!(s.cursor().pos, p(1, 4));
     let t = targeting(&s).forecast().expect("a forecast");
     assert_eq!(t.with, Equipped::Spell(sid("fire")));
     assert_eq!(t.target(), ELEMENTAL);
-    assert!(t.has_list());
     assert!(t.preview.forecast.attacker.effective);
     assert_eq!(t.preview.forecast.attacker.affinity, Some(Affinity::Weak));
-    assert_eq!(
-        s.help(&c),
-        "Left/Right target · Up/Down art · f cast · d back"
-    );
+    assert_eq!(s.help(&c), "arrows next target · f cast · d back");
     assert!(!s.mode().picks_on_map(), "the forecast stays on Confirm");
     // The caster is drawn at the end of its path while it aims; nobody
     // else is moved.
@@ -392,9 +430,7 @@ fn fire_on_the_elemental_shows_the_forecast_and_casts() {
     assert_eq!(text(&buf, LEFT_X, NAME_ROW + 2, 8), "10/10");
     assert_eq!(text(&buf, LEFT_X + 6, STRIKE_ROW, 1), "!");
     assert_eq!(text(&buf, LEFT_X, AFFINITY_ROW, 8), "");
-    // The list's border names the spell and its uses.
-    assert!(shows(&buf, " Fire 10/10 "));
-    assert!(shows(&buf, "Overcast"));
+    assert!(!shows(&buf, "Overcast"));
     // Both enemies are tinted as attack targets; the forests show what
     // they would become.
     let scene = s.scene(&c);
@@ -407,12 +443,12 @@ fn fire_on_the_elemental_shows_the_forecast_and_casts() {
         assert_eq!(looks(&c, &plain, x, y), "forest");
         assert_eq!(looks(&c, &scene, x, y), "burning");
     }
-    // Up and down move through the list, not the targets.
+    // Up and down move through the targets, as left and right do.
     step(&mut s, &mut c, &[Action::CursorDown]);
-    assert_eq!(targeting(&s).target(), on_unit(7));
-    let overcast = Some(SkillId::new("overcast"));
-    assert_eq!(targeting(&s).forecast().unwrap().preview.active, overcast);
+    assert_eq!(targeting(&s).target(), on_unit(4));
+    assert_eq!(targeting(&s).forecast().unwrap().preview.active, None);
     step(&mut s, &mut c, &[Action::CursorUp]);
+    assert_eq!(targeting(&s).target(), on_unit(7));
     assert_eq!(targeting(&s).forecast().unwrap().preview.active, None);
     // Confirm casts: the combat plays, a use is spent, the mage has acted.
     step(&mut s, &mut c, &[Action::Confirm]);
@@ -426,8 +462,8 @@ fn fire_on_the_elemental_shows_the_forecast_and_casts() {
 fn an_active_chosen_in_the_list_is_cast_with_the_spell() {
     let mut c = ctx();
     let state = field(&c, 0);
-    let mut s = casting(&mut c, state, 0);
-    step(&mut s, &mut c, &[Action::CursorDown]);
+    // `Fire + Overcast`, the line after `Fire`.
+    let mut s = casting_with(&mut c, state, 0, Some("overcast"));
     let cmd = targeting(&s).command();
     assert_eq!(
         cmd,
@@ -441,39 +477,128 @@ fn an_active_chosen_in_the_list_is_cast_with_the_spell() {
             },
         }
     );
-    // The chosen line stays on the next enemy; on a tile there is no list.
+    // With an active the spell is cast at enemies only: no tiles to step
+    // onto, and the active stays on the next enemy.
+    assert_eq!(targeting(&s).targets(), [on_unit(7), on_unit(4)]);
+    assert_eq!(s.help(&c), "arrows next target · f cast · d back");
+    let active = |s: &BattleScreen| targeting(s).forecast().unwrap().preview.active.clone();
     step(&mut s, &mut c, &[Action::CursorRight]);
     assert_eq!(targeting(&s).target(), on_unit(4));
-    let active = |s: &BattleScreen| targeting(s).forecast().unwrap().preview.active.clone();
     assert_eq!(active(&s), Some(SkillId::new("overcast")));
-    step(&mut s, &mut c, &[Action::CursorRight]);
-    assert_eq!(targeting(&s).target(), on_tile(1, 5));
-    assert!(targeting(&s).forecast().is_none());
+    step(&mut s, &mut c, &[Action::CursorDown]);
+    assert_eq!(targeting(&s).target(), on_unit(7));
+    assert_eq!(active(&s), Some(SkillId::new("overcast")));
+    // The forecast names the active.
+    assert!(shows(&render(&s, &c), "Overcast"));
+    // Cancel goes back to the spell list, on that line.
+    let mut back = casting_with(&mut c, s.state().clone(), 0, Some("overcast"));
+    step(&mut back, &mut c, &[Action::Cancel]);
+    let Mode::SpellMenu { menu, choices, .. } = back.mode() else {
+        panic!("{:?}", back.mode());
+    };
+    assert_eq!(choices[menu.focus()].active, Some(SkillId::new("overcast")));
     // Overcast costs an extra use.
-    step(&mut s, &mut c, &[Action::CursorLeft, Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(uses(s.state(), "fire"), 8);
 }
 
+/// Ticket 0442 (Nick): a spell active is a line of the spell list after its
+/// spell, not a list beside the forecast.
 #[test]
-fn down_and_up_walk_a_longer_list_of_actives_in_order() {
+fn each_spell_active_is_a_line_after_its_attack_spell() {
     let mut c = ctx();
     let plain = field(&c, 0);
-    // The mage also knows the Mystic's Siphon: Attack, Overcast, Siphon.
+    // The mage also knows the Mystic's Siphon.
     let mut units = plain.units().to_vec();
     units[7].learned_skills.insert(SkillId::new("siphon"));
     let rout = Objective::Rout { turn_limit: None };
     let state = battle_with(&c, plain.map().clone(), units, rout);
-    let mut s = casting(&mut c, state, 0);
-    let mut press = |a: Action| {
-        step(&mut s, &mut c, &[a]);
-        let chosen = targeting(&s).forecast().unwrap().preview.active.clone();
-        chosen.map(|id| id.0)
+    let choices = spell_choices(&state, MAGE, p(0, 4));
+    let lines: Vec<(&str, Option<&str>)> = choices
+        .iter()
+        .map(|c| (c.spell.0.as_str(), c.active.as_ref().map(|a| a.0.as_str())))
+        .collect();
+    // Heal is no attack: it has no line with an active.
+    assert_eq!(
+        lines,
+        [
+            ("fire", None),
+            ("fire", Some("overcast")),
+            ("fire", Some("siphon")),
+            ("frost", None),
+            ("frost", Some("overcast")),
+            ("frost", Some("siphon")),
+            ("heal", None),
+        ]
+    );
+    // An active reaches the enemies its spell does, never a tile.
+    assert_eq!(choices[1].targets, [on_unit(7), on_unit(4)]);
+    assert!(choices[0].targets.len() > 2);
+    assert!(choices.iter().all(|c| c.blocked.is_none()));
+    let menu = spell_menu(&state, Words::ENGLISH, MAGE, &choices);
+    let labels: Vec<&str> = menu.items().iter().map(|i| i.label.as_str()).collect();
+    assert_eq!(
+        labels[..3],
+        [
+            "Fire   10/10  Mt5 Hit90 Rng1-2",
+            "Fire + Overcast",
+            "Fire + Siphon",
+        ]
+    );
+    let cost = |i: usize| menu.items()[i].suffix.clone();
+    assert_eq!(cost(0), None);
+    assert_eq!(cost(1), Some((" +1 use".to_owned(), UiColor::TextDim)));
+    // It opens on the equipped spell's plain line.
+    assert_eq!(menu.focus(), 0);
+    // `Fire + Siphon` casts Fire with Siphon.
+    let s = casting_with(&mut c, state, 0, Some("siphon"));
+    let with_siphon = UnitAction::Cast {
+        spell: sid("fire"),
+        target: on_unit(7),
+        active: Some(SkillId::new("siphon")),
     };
-    assert_eq!(press(Action::CursorDown).as_deref(), Some("overcast"));
-    assert_eq!(press(Action::CursorDown).as_deref(), Some("siphon"));
-    assert_eq!(press(Action::CursorDown), None);
-    assert_eq!(press(Action::CursorUp).as_deref(), Some("siphon"));
-    assert_eq!(press(Action::CursorUp).as_deref(), Some("overcast"));
+    assert_eq!(
+        targeting(&s).command(),
+        Command::Act {
+            unit: MAGE,
+            dest: p(0, 4),
+            action: with_siphon,
+        }
+    );
+}
+
+/// Ticket 0442: a spell active that can't be paid for is dimmed, with the
+/// reason after it, and can't be chosen.
+#[test]
+fn an_active_the_spell_cant_pay_for_is_dimmed_with_the_reason() {
+    let mut c = ctx();
+    // One use of Fire left: enough to cast it, not for Overcast's extra one.
+    c.content.spells.spells.get_mut(&sid("fire")).unwrap().uses = 1;
+    let state = field(&c, 0);
+    let choices = spell_choices(&state, MAGE, p(0, 4));
+    assert_eq!(choices[1].active, Some(SkillId::new("overcast")));
+    assert!(choices[1].targets.is_empty());
+    assert!(choices[1].blocked.is_some());
+    assert!(!choices[0].targets.is_empty());
+    let menu = spell_menu(&state, Words::ENGLISH, MAGE, &choices);
+    assert!(menu.items()[0].enabled);
+    assert!(!menu.items()[1].enabled);
+    assert_eq!(
+        menu.items()[1].suffix,
+        Some((" 1 uses left".to_owned(), UiColor::HpLow))
+    );
+    // On screen, and Down from Fire skips it to Frost.
+    let mut s = spell_list(&mut c, state);
+    assert!(shows(&render(&s, &c), "1 uses left"));
+    step(&mut s, &mut c, &[Action::CursorDown, Action::Confirm]);
+    assert_eq!(targeting(&s).spell(), &sid("frost"));
+    // Chosen anyway, it has nothing to be cast on.
+    let Mode::SpellMenu { sel, menu, choices } =
+        spell_list(&mut c, s.state().clone()).mode().clone()
+    else {
+        unreachable!()
+    };
+    assert_eq!(CastTargeting::new(s.state(), sel, menu, choices, 1), None);
 }
 
 /// The forecast panel's text and colours, with the affinity marker.
@@ -888,10 +1013,10 @@ fn cancelling_at_each_level_leaves_the_battle_unchanged() {
         step(&mut s, &mut c, &[Action::NextUnit]);
         // Back to the spell list, on the spell, the cursor on the mage.
         step(&mut s, &mut c, &[Action::Cancel]);
-        let Mode::SpellMenu { menu, .. } = s.mode() else {
+        let Mode::SpellMenu { menu, choices, .. } = s.mode() else {
             panic!("{:?}", s.mode());
         };
-        assert_eq!(menu.focus(), line);
+        assert_eq!(choices[menu.focus()], plain(choices.clone())[line]);
         assert_eq!(s.cursor().pos, p(0, 4));
         // Back to the action menu, on Magic.
         step(&mut s, &mut c, &[Action::Cancel]);
@@ -1051,7 +1176,7 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
         "* Fire   Mt 5 Hit 90 Crit 0 Wt 0 Rng1-2  0/1"
     );
     assert!(!menu.items()[0].enabled);
-    let spells = spell_choices(&state, MAGE, p(0, 4));
+    let spells = plain_choices(&state, MAGE, p(0, 4));
     assert!(spells[0].targets.is_empty());
     let list = spell_menu(&state, Words::ENGLISH, MAGE, &spells);
     assert_eq!(list.items()[0].label, "Fire    0/1   Mt5 Hit90 Rng1-2");
@@ -1340,7 +1465,7 @@ fn the_pointed_forecast_opens_with_what_is_equipped_and_swaps_through_sword_and_
     assert_eq!(t.command(), cmd(stab));
     assert_eq!(
         Ok(&t.preview),
-        s.preview_attack(MAGE, p(0, 4), &t.technique().action(ELEMENTAL, &all[0]))
+        s.preview_attack(MAGE, p(0, 4), &t.technique.action(ELEMENTAL, &all[0]))
             .as_ref()
     );
     t.swap(true, &s);
@@ -1406,7 +1531,7 @@ fn the_pointed_forecast_opens_with_what_is_equipped_and_swaps_through_sword_and_
     // A forecast opened from a menu has nothing to swap, and stays put.
     let enemies = vec![ELEMENTAL];
     let sel = Selection::new(&s, MAGE).unwrap();
-    let mut plain = Targeting::with(&s, sel, all[1].clone(), enemies, None).unwrap();
+    let mut plain = Targeting::with(&s, sel, all[1].clone(), Technique::Attack, enemies).unwrap();
     assert!(!plain.can_swap());
     let before = plain.clone();
     plain.swap(true, &s);
@@ -1443,7 +1568,7 @@ fn harness_pointing_at_the_elemental_walks_there_and_opens_fires_forecast() {
     assert_eq!(h.cursor_tile(), Some(elemental));
     assert_eq!(
         help(&h),
-        "Left/Right swap · a/s target · Up/Down art · f cast · d back"
+        "Left/Right swap · Up/Down target · f cast · d back"
     );
     // Right and left swap to Frost and back.
     h.keys("Right");
@@ -1466,7 +1591,7 @@ fn harness_pointing_at_the_elemental_walks_there_and_opens_fires_forecast() {
     assert_eq!(h.battle().unwrap().state(), &quick);
 }
 
-/// The spell list and the forecast's list of spell actives are painted in
+/// The spell list, with its lines of spell actives, is painted in
 /// the player's language (ticket 0235); the mode itself is played in
 /// English.
 #[test]
@@ -1495,31 +1620,24 @@ fn the_spell_lists_are_told_in_the_players_language() {
         "{:?}",
         labels(theirs)
     );
-    assert!(labels(theirs)[1].starts_with("FROST "));
+    assert!(labels(theirs)[2].starts_with("FROST "));
     assert_eq!(theirs.focus(), menu.focus());
     assert_eq!(theirs.focus(), 1);
     assert!(matches!(
         s.mode().told(s.state(), Words::ENGLISH),
         std::borrow::Cow::Borrowed(_)
     ));
-    // Fire on the elemental: the forecast's list has the Mage's Overcast.
+    // The line of the Mage's Overcast, and what it costs.
+    assert_eq!(labels(menu)[1], "Fire + Overcast");
+    assert_eq!(labels(theirs)[1], "FIRE + OVERCAST");
+    let cost = |menu: &crate::widgets::menu::Menu| menu.items()[1].suffix.clone().unwrap().0;
+    assert_eq!(cost(menu), " +1 use");
+    assert_eq!(cost(theirs), cost(menu));
+    // A forecast has no list: it is told as it is.
     let state = field(&c, 0);
-    let mut s = casting(&mut c, state, 0);
-    step(&mut s, &mut c, &[Action::CursorDown]);
-    let ours = targeting(&s).forecast().expect("a forecast");
-    assert!(labels(&ours.list).join("\n").contains("Overcast"));
+    let s = casting_with(&mut c, state, 0, Some("overcast"));
     let told = s.mode().told(s.state(), words).into_owned();
-    let Mode::CastTarget(t) = &told else {
-        panic!("{told:?}");
-    };
-    let theirs = t.forecast().expect("a forecast");
-    let shown = labels(&theirs.list).join("\n");
-    assert!(shown.contains("OVERCAST"), "{shown}");
-    assert!(!shown.contains("Overcast"), "{shown}");
-    assert_eq!(theirs.list.focus(), ours.list.focus());
-    assert_eq!(theirs.list.focus(), 1);
-    // What is cast is the same.
-    assert_eq!(t.command(), targeting(&s).command());
+    assert_eq!(&told, s.mode());
     // On a tile there is no forecast, and nothing to tell.
     let state = field(&c, 0);
     let mut s = casting(&mut c, state, 0);
