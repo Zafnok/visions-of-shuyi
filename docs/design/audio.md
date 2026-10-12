@@ -85,9 +85,10 @@ Chapter 1 has no act boss and no ceremony.
 
 There is no separate defeat sting (0023, like Fire Emblem on the GBA): one
 piece, `defeat`, starts at the banner and keeps playing on the Game Over
-screen. The Game Over screen does not start a track of its own. What happens
-when the 77 s run out while that screen is still open (loop, or silence) is
-ticket 0024's question. Nick heard seven candidates on the 0023 listening
+screen. The Game Over screen does not start a track of its own. When the
+77 s run out while that screen is still open, there is a short silence and
+then the piece plays again, and so on (0024: "brief pause before looping...
+probably 10-15s pause"). Nick heard seven candidates on the 0023 listening
 page (https://claude.ai/artifact/SGaFmZLLWeHwJojM9ded1J). No story moment
 uses `scene_loss` yet.
 
@@ -152,6 +153,8 @@ sign-off: "it should sound like a heal").
 - Sound effects play at 40 % of that matched level (about 8 dB quieter);
   music stays at 100 %. Nick found the sounds "way too loud" at 100 (ticket
   0222). The map cursor tick is still 60 % of the menu move sound, so 24 %.
+- The silence between two plays of `defeat` on the Game Over screen is
+  12 s. Nick gave the range: "probably 10-15s" (ticket 0024).
 - The menu select/confirm and cancel sounds play at 15 %: at 40 % Nick
   still found them "much too high" next to the rest (ticket 0223).
 
@@ -169,8 +172,6 @@ sign-off: "it should sound like a heal").
 - **Places and moments without a cue yet:** capital city, world map, camp,
   shops. Nick hasn't been asked about these (tickets 0025–0028). Level up
   is Nick's own work.
-- **Game Over, after `defeat` ends:** the piece is 77 s. Whether it loops
-  or the screen falls silent is not decided (ticket 0024).
 - **Content ID** (decided 2026-10-01, ticket 0904): **no check before
   release.** The plan was to test the chosen tracks against YouTube's
   copyright system (cynicmusic and Alexandr Zhelanov sell or stream their
@@ -386,3 +387,9 @@ the banner through the Game Over screen:
 (E: The Fallen by Jonathan Shaw. G: Bittersweet by Emma_MA. Recorded as:
 no separate sting; `defeat` is the whole of E, from the banner on. G is
 kept as `scene_loss`.)
+
+**The Game Over music** (ticket 0024, 2026-10-12). 0023 had already put
+The Fallen on the Game Over screen; the question left was what happens
+when it ends:
+
+> brief pause before looping... probably 10-15s pause

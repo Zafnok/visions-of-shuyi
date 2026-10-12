@@ -22,7 +22,7 @@ battle ([`docs/design/audio.md`](../../docs/design/audio.md), *Music cues*):
 | --- | ---------- | ----- |
 | `victory` (a pool) | 0022 | Once, while the `VICTORY` banner is shown: one of 13 versions of Fupi's Win Jingle, picked at random each win |
 | `defeat` | 0023 | From the `DEFEAT` banner on, through the Game Over screen: the whole of The Fallen (Jonathan Shaw, CC-BY 3.0, 77 s). No separate sting |
-| (`game_over`) | 0024 | No track of its own (0023). 0024 decides whether `defeat` loops or plays once |
+| (`game_over`) | 0024 | No track of its own (0023). When `defeat` ends and the Game Over screen is still open: 12 s of silence (*tunable*; Nick: "10-15s"), then it plays again, and so on |
 
 The banners exist already (0405, `crates/ui/src/screens/battle/banner.rs`,
 `BannerKind::Outcome`). The Game Over screen comes from 0801. Battle music
@@ -44,6 +44,11 @@ import them here.
 `play_music("game_over")`, read: the screen emits nothing, and 0807's
 `stop_music` is removed. `scene_loss` (Bittersweet) is reserved; do **not**
 import it here.
+
+0024's answer: `defeat` repeats with a silence between plays (12 s,
+*tunable*, a named value in the data or code, not baked into the file's
+tail unless that is the simplest way). Add a Harness or manifest test
+for it.
 
 If one of 0022–0024 recorded "no music here" or "reuse `<cue>`", follow that
 answer for that moment and say so in the PR.

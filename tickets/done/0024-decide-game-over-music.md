@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-12
 ---
 
 # 0024 — Decide: the Game Over music
@@ -90,11 +90,11 @@ picks one, or asks for another round.
 
 ## Acceptance criteria
 
-- [ ] `audio.md` records loop or once for `defeat` on the Game Over screen
+- [x] `audio.md` records loop or once for `defeat` on the Game Over screen
       (or a `game_over` row, if Nick asked for a separate track).
-- [ ] The moment is gone from audio.md's *Open sub-questions*.
-- [ ] Nick's words are quoted in audio.md's appendix.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The moment is gone from audio.md's *Open sub-questions*.
+- [x] Nick's words are quoted in audio.md's appendix.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -102,4 +102,16 @@ picks one, or asks for another round.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+No listening page: 0023 had already chosen the music (The Fallen, from the
+`DEFEAT` banner through the Game Over screen), so this ticket only asked
+what happens when its 77 s end.
+
+- **Nick:** "brief pause before looping... probably 10-15s pause". The
+  piece ends, the screen is silent for a while, then it plays again, and so
+  on while the Game Over screen is open.
+- *Claude's starting value (tunable):* the silence is **12 s**, inside
+  Nick's 10 to 15.
+- There is no `game_over` row in `audio.md`: the recorded answer is "reuse
+  `defeat`". The moment is gone from the open sub-questions.
+- 0809 updated with the repeat and the pause.
+- Gates: docs only. Ran `cargo xtask ticket-lint` and `typos`.
