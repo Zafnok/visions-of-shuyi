@@ -151,6 +151,7 @@ mod tests {
                     ((*id).into(), scene)
                 })
                 .collect(),
+            ..DialogueTable::default()
         }
     }
 

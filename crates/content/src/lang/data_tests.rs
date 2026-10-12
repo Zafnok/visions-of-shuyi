@@ -65,7 +65,10 @@ fn data() -> DataText {
     }
     data.names = names(&[("king", "the King"), ("keep", "Heth Keep")]);
     let scenes = [("gate".to_owned(), scene())].into();
-    data.add_dialogue(&dialogue::DialogueTable { scenes });
+    data.add_dialogue(&dialogue::DialogueTable {
+        scenes,
+        ..Default::default()
+    });
     data
 }
 
@@ -922,4 +925,23 @@ fn the_embedded_test_pack_has_an_orphan_and_stale_data() {
     assert!(status.missing.contains(&"test_36a692b7".to_owned()));
     assert!(!status.missing.contains(&"test_5da5d147".to_owned()));
     assert!(!status.missing.contains(&"items.potion.name".to_owned()));
+}
+
+/// A line knows the `.dlg` file its scene was written in, by stem, whatever
+/// the path says.
+#[test]
+fn lines_know_their_dlg_file() {
+    for (path, stem) in [
+        ("assets/dialogue/ch01.dlg", "ch01"),
+        (r"C:\game\test.dlg", "test"),
+        ("bare", "bare"),
+    ] {
+        let table =
+            dialogue::from_sources(&[(path, "@scene s\n> Hi.\n@end\n")], None, None, None, None)
+                .unwrap();
+        let mut data = DataText::default();
+        data.add_dialogue(&table);
+        assert!(data.lines.values().all(|line| line.file == stem), "{path}");
+        assert_eq!(data.lines.len(), 1);
+    }
 }
