@@ -64,6 +64,7 @@ needed). Key choices are Nick's; the defaults below are his.
 | End turn | `Space` | `Space` | Double-tap: see below |
 | Auto-end on/off | `Shift+Space` | `Shift+Space` | Replaces the `Shift+e` placeholder in `turn-structure.md` |
 | Rewind (ticket 0307) | `R` | `U` | Proposed by Claude, approved by Nick: `R` was already planned; `U` is its mirror |
+| Zoom map (ticket 0439) | `Q` | `P` | Nick, 2026-10-12: see *Zoom map* below |
 | Map menu | `Cancel` with nothing to cancel, or `Confirm` on an empty tile | same | Unchanged from before |
 
 *Proposed by Claude, approved by Nick:*
@@ -75,6 +76,51 @@ needed). Key choices are Nick's; the defaults below are his.
 - "Mirror" is taken literally, finger for finger, so in the left-handed
   layout *previous* unit is the right-most key (`;`) and *next* is `L`. If
   that feels backwards, swap them.
+
+### Zoom map
+
+Decided 2026-10-12, ticket 0439 (the zoom itself: `look-and-feel.md`,
+*Zoom*). Nick was shown Chapter 1's first turn at 1× and at 2× and asked
+four things:
+
+> **Which key toggles the zoom by default, in each layout?** Options:
+> `Q` / `P` (finger mirrors, the top row beside the danger-zone key);
+> `G` / `H` (beside Confirm); `Tab` in both; no default key. "Q / P"
+>
+> **Which controller button?** Options: right trigger; pressing the right
+> stick; no default button. "what about bumper? or is it already bound"
+> [told both bumpers are Previous / Next ready unit, his 2A pick, and
+> offered the right trigger, the right stick's press, zoom on the right
+> bumper with Next unit moved to the right trigger, or no button:]
+> "Right trigger"
+>
+> **Must Zoom map always have a key?** Options: optional, like Unit info
+> and Rewind; required. "Optional"
+
+- **`Q`** (right-handed) and **`P`** (left-handed) switch the battle map
+  between 1× and 2×. On a controller: the **right trigger**.
+- It is **optional**: it may be left `! not mapped`; the zoom can also be
+  set in Options (`Map zoom`, `options.md`).
+- It only does something where the map is drawn with pictures. With the
+  glyph look the key does nothing and the help doesn't list it.
+
+*Claude's starting rules (Nick can veto):*
+
+- **The key works whenever the map is what you are looking at**: browsing,
+  with a unit selected or walking, while picking a target, and during the
+  enemy's turn. It does nothing while a menu or a yes/no question is
+  open, during a fight's playback, or on the rewind screen. Example: Mia
+  is choosing who to attack and presses `Q`: the map zooms out and she is
+  still choosing. With the action menu open, `Q` does nothing.
+- **After a switch the cursor's tile is in the middle of the view**, or as
+  near it as the map's edges allow.
+- **The hint** is first on the toggles line above the key help: `q zoom:
+  2× · w danger zone: OFF · Shift+Space auto-end: OFF` (ticket 0445
+  decides where that line's hints sit). No sound and no message: the map
+  changing is the answer.
+- **On the Key bindings screen** `Zoom map` is the row before `Map menu`.
+- **"Pick your layout"** lights `Q` and `P` on its keyboards like the
+  other keys in use; its list of keys is unchanged (it has no free line).
 
 ### Fight playback: Cancel skips, hold Confirm speeds up
 
@@ -145,7 +191,7 @@ keys in its slots. Only one slot needs a key.
 | Cursor up, down, left, right | Select *(new, see below)* |
 | Confirm | Confirm end turn *(new, see below)* |
 | Cancel | Previous / next ready unit |
-| End turn | Unit info, danger zone, auto-end on/off, rewind, map menu |
+| End turn | Unit info, danger zone, auto-end on/off, rewind, map menu, zoom map *(0439)* |
 
 The developer Debug key is not on the screen.
 
@@ -202,7 +248,8 @@ also named the layout; it is now in the switch row under it, see
 `Key 2` `Key 3` and two groups. **Must have a key:** Cursor up, down, left,
 right, Confirm, Cancel (`+ Escape` after its name), End turn. **Optional:**
 Select, Confirm end turn, Previous ready unit, Next ready unit, Unit info,
-Danger zone, Auto-end on/off, Rewind, Map menu. Then **Restore defaults**.
+Danger zone, Auto-end on/off, Rewind, Zoom map (since ticket 0439), Map
+menu. Then **Restore defaults**.
 An empty slot is a small dot; `! not mapped` sits at the right of the row,
 red for a required action and dim for an optional one. Screenshots:
 [`0815-key-bindings.png`](../screenshots/0815-key-bindings.png),
@@ -312,12 +359,14 @@ the PlayStation / Switch name) for each position.
 | End turn | Start | `Start` (☰) | `Options` | `+` | Press twice, like `Space` |
 | Auto-end on/off | Back | `Back` (⧉) | `Create` / `Share` | `−` | The toggle shortcut `turn-structure.md` asks for |
 | Rewind (ticket 0307) | left trigger | `LT` | `L2` | `ZL` | |
+| Zoom map (ticket 0439) | right trigger | `RT` | `R2` | `ZR` | Nick, 2026-10-12 (*Zoom map* above) |
 | Map menu | *no button*: Cancel with nothing to cancel, or Confirm on an empty tile | | | | Same as the keyboard |
 | Select *(optional, 0218)* | *no button* | | | | Starts empty, as on the keyboard |
 | Confirm end turn *(optional, 0218)* | *no button* | | | | Starts empty: Start pressed again accepts |
 | Debug | *no button* | | | | Keyboard only |
 
-Unused by default: right trigger, right stick, pressing either stick.
+Unused by default: right stick, pressing either stick. (The right trigger
+was unused until ticket 0439 put Zoom map on it.)
 
 **Confirm and Cancel follow the controller (Q1 C).** On Xbox, PlayStation,
 Steam Deck and unknown pads the **bottom** button confirms and the

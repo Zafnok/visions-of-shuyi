@@ -118,12 +118,12 @@ fn each_default_button_does_what_its_key_does() {
 #[test]
 fn unused_buttons_do_nothing() {
     let mut h = quick_battle();
-    h.pad("RightTrigger LeftStickPress RightStickPress");
+    h.pad("LeftStickPress RightStickPress");
     h.pad("RightStickUp RightStickDown RightStickLeft RightStickRight");
-    // The same as pressing a key bound to nothing seven times (the cursor
+    // The same as pressing a key bound to nothing six times (the cursor
     // pulses, so time has to pass in both).
     let mut idle = quick_battle();
-    idle.keys("q q q q q q q");
+    idle.keys("z z z z z z");
     // Buttons that do nothing don't switch the help to button names.
     assert_eq!(h.snapshot(), idle.snapshot());
 }
@@ -227,8 +227,8 @@ fn a_first_launch_plays_with_a_pad_and_no_layout() {
 #[test]
 fn a_button_ends_the_titles_wait() {
     let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
-    // The right trigger is bound to nothing: it still counts.
-    h.pad("RightTrigger");
+    // Pressing the right stick in is bound to nothing: it still counts.
+    h.pad("RightStickPress");
     assert_eq!(h.snapshot(), title().snapshot());
     let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
     h.pad("South");
@@ -344,7 +344,7 @@ fn a_tip_names_the_buttons_of_the_pad_in_use() {
     assert_snapshot!("tip_nintendo", tip(Some(PadKind::Nintendo)).snapshot());
     // Pressing a key while the tip is up switches it back to keys.
     let mut h = tip(Some(PadKind::PlayStation));
-    h.keys("q");
+    h.keys("z");
     assert!(shows(&h, "✕ close"), "an unbound key doesn't count");
     h.keys("Up");
     assert!(shows(&h, "Press f on one of"));

@@ -311,16 +311,16 @@ mod tests {
         assert_eq!(names(NINTENDO, Action::Cancel), "B");
         assert_eq!(names(Device::Keyboard, Action::Cancel), "d/Escape");
         let two = keymap(&[]).with_pad([
-            (Button::RightTrigger, Action::Info),
+            (Button::RightStickPress, Action::Info),
             (Button::North, Action::Info),
         ]);
         assert_eq!(
             all_key_names(HelpKeys::new(&two, PLAYSTATION), Action::Info),
-            "R2/△"
+            "R3/△"
         );
         assert_eq!(
             key_name(HelpKeys::new(&two, PLAYSTATION), Action::Info),
-            "R2"
+            "R3"
         );
     }
 

@@ -258,6 +258,8 @@ pub struct Ctx {
     pub debug_tools: bool,
     /// How battle maps look (ADR-0038): the glyph skin, unless a debug tool
     /// swaps in another. Screens build a `MapScene` and this paints it.
+    /// Change it with [`set_map_skin`](Self::set_map_skin), which keeps
+    /// the player's zoom.
     pub map_skin: Rc<dyn MapSkin>,
     /// Whether battles show their one-time tips (0406). Off here, so
     /// screen tests aren't interrupted by them; `app` turns it on.
@@ -349,7 +351,9 @@ impl Ctx {
     pub fn new(content: Content) -> Result<Self, LoadError> {
         let palette = Palette::new(&content.palette).map_err(LoadError::Palette)?;
         let keymap = Keymap::layout_picker(&content.keymap);
+        let settings = Settings::default();
         let map_skin = crate::map_view::default_skin(&content);
+        let map_skin = map_skin.at_zoom(settings.map_zoom).unwrap_or(map_skin);
         Ok(Self {
             content,
             palette,
@@ -359,7 +363,7 @@ impl Ctx {
             player_keys: PlayerKeys::default(),
             warnings: Vec::new(),
             storage: Box::new(MemoryStorage::new()),
-            settings: Settings::default(),
+            settings,
             campaign_mode: None,
             mode_switch: ModeSwitch::Closed,
             debug_tools: DEBUG_TOOLS,
@@ -674,6 +678,8 @@ impl Ctx {
         }
         if self.settings.map_look != before.map_look {
             self.apply_map_look();
+        } else if self.settings.map_zoom != before.map_zoom {
+            self.set_map_skin(Rc::clone(&self.map_skin));
         }
         self.save_settings()
     }
@@ -681,7 +687,15 @@ impl Ctx {
     /// Paints the battle map with the skin of the map look in the
     /// settings (ticket 0824).
     fn apply_map_look(&mut self) {
-        self.map_skin = crate::map_view::skin_for_look(self.settings.map_look, &self.content);
+        let skin = crate::map_view::skin_for_look(self.settings.map_look, &self.content);
+        self.set_map_skin(skin);
+    }
+
+    /// Paints the battle map with `skin`, at the zoom in the settings if
+    /// it can zoom (ticket 0439): the zoom is kept from one skin to the
+    /// next.
+    pub fn set_map_skin(&mut self, skin: Rc<dyn MapSkin>) {
+        self.map_skin = skin.at_zoom(self.settings.map_zoom).unwrap_or(skin);
     }
 
     fn save_settings(&mut self) -> Result<(), StorageError> {
@@ -1425,6 +1439,53 @@ pub(crate) mod tests {
         assert_eq!(c.layout(), Some(Layout::LeftHanded));
     }
 
+    /// Ticket 0439: the map skin is drawn at the zoom in the settings,
+    /// whichever changes: the zoom, or the skin (which keeps the zoom).
+    #[test]
+    fn the_map_skin_follows_the_zoom_in_the_settings() {
+        use crate::map_view::{GlyphSkin, skin_named};
+        use crate::screens::battle::layout::MAP_VIEW;
+        use crate::settings::MapZoom;
+        let mut c = ctx();
+        let sprite = |c: &Ctx| skin_named(&c.content, "sprite").unwrap();
+        // A skin that zooms starts at the player's zoom (2× for a new one).
+        assert_eq!(sprite(&c).zoom(), Some(MapZoom::X1));
+        c.set_map_skin(sprite(&c));
+        assert_eq!(c.map_skin.zoom(), Some(MapZoom::X2));
+        assert_eq!(c.map_skin.view_tiles(MAP_VIEW), (11, 10));
+        // Changing the zoom redraws the same skin at it, and saves it.
+        c.change_settings(|s| s.map_zoom = MapZoom::X1).unwrap();
+        assert_eq!(c.map_skin.zoom(), Some(MapZoom::X1));
+        assert_eq!(c.map_skin.tileset_id(), Some("test"));
+        assert_eq!(c.map_skin.view_tiles(MAP_VIEW), (23, 20));
+        let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
+        assert_eq!(Settings::from_ron(&saved).unwrap().map_zoom, MapZoom::X1);
+        // Another setting leaves the skin as it is.
+        c.change_settings(|s| s.fullscreen = true).unwrap();
+        assert_eq!(c.map_skin.zoom(), Some(MapZoom::X1));
+        // A skin that can't zoom is taken as it is, and the zoom is kept
+        // for the next that can.
+        c.set_map_skin(Rc::new(GlyphSkin));
+        assert_eq!((c.map_skin.name(), c.map_skin.zoom()), ("glyph", None));
+        c.change_settings(|s| s.map_zoom = MapZoom::X2).unwrap();
+        assert_eq!(c.map_skin.name(), "glyph");
+        c.set_map_skin(skin_named(&c.content, "test_auto").unwrap());
+        assert_eq!(c.map_skin.zoom(), Some(MapZoom::X2));
+        assert_eq!(c.map_skin.tileset_id(), Some("test_auto"));
+        // The next launch reads the zoom back with the settings, and a
+        // game that starts with a picture skin starts at it.
+        c.change_settings(|s| s.map_zoom = MapZoom::X1).unwrap();
+        let mut content = Ctx::embedded().unwrap().content;
+        let mut tileset = content.tilesets["test"].clone();
+        tileset.id = crate::map_view::GAME_TILESET.to_owned();
+        content.tilesets.insert(tileset.id.clone(), tileset);
+        let fresh = Ctx::new(content.clone()).unwrap();
+        assert_eq!(fresh.map_skin.zoom(), Some(MapZoom::X2));
+        let again = Ctx::new(content).unwrap().with_storage(c.storage);
+        assert_eq!(again.settings().map_zoom, MapZoom::X1);
+        assert_eq!(again.map_skin.zoom(), Some(MapZoom::X1));
+    }
+
     #[test]
     fn unreadable_settings_give_the_defaults_and_a_warning() {
         let mut storage = MemoryStorage::new();
@@ -1559,10 +1620,10 @@ pub(crate) mod tests {
         assert_eq!(c.keymap_for(Layout::RightHanded), before);
     }
 
-    /// Unit info also on the right trigger.
+    /// Unit info also on the right stick pressed in.
     fn info_on_right_trigger(c: &Ctx) -> PadBindings {
         let mut b = c.pad_bindings();
-        assert!(b.bind(Action::Info, 1, Button::RightTrigger).is_ok());
+        assert!(b.bind(Action::Info, 1, Button::RightStickPress).is_ok());
         b
     }
 
@@ -1574,7 +1635,7 @@ pub(crate) mod tests {
         assert_eq!(c.set_pad_bindings(b.clone()), Ok(()));
         assert_eq!(c.pad_bindings(), b);
         assert_eq!(
-            c.keymap.pad_action(Button::RightTrigger),
+            c.keymap.pad_action(Button::RightStickPress),
             Some(Action::Info)
         );
         let saved = c.storage.read(KEYBINDINGS_KEY).unwrap().unwrap();
@@ -1587,7 +1648,7 @@ pub(crate) mod tests {
         );
         c.use_layout(Layout::LeftHanded);
         assert_eq!(
-            c.keymap.pad_action(Button::RightTrigger),
+            c.keymap.pad_action(Button::RightStickPress),
             Some(Action::Info)
         );
         // Before a layout is chosen: the layout picker's keys, these buttons.
@@ -1603,7 +1664,7 @@ pub(crate) mod tests {
         let again = Ctx::embedded().unwrap().with_storage(storage);
         assert_eq!(again.pad_bindings(), b);
         assert_eq!(
-            again.keymap.pad_action(Button::RightTrigger),
+            again.keymap.pad_action(Button::RightStickPress),
             Some(Action::Info)
         );
         // A failed save still applies them.
@@ -1611,7 +1672,7 @@ pub(crate) mod tests {
         assert!(failing.set_pad_bindings(b.clone()).is_err());
         assert_eq!(failing.pad_bindings(), b);
         assert_eq!(
-            failing.keymap.pad_action(Button::RightTrigger),
+            failing.keymap.pad_action(Button::RightStickPress),
             Some(Action::Info)
         );
     }
