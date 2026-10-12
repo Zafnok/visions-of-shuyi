@@ -73,6 +73,21 @@ impl Grid {
         Rect::new(0, 0, self.tile.0 / zoom, self.tile.1 / zoom)
     }
 
+    /// The same tiles at the art's own size, laid from (0, 0): what a
+    /// drawing across tiles (the path) is worked out on, whatever the
+    /// zoom, before [`zoomed`](Self::zoomed) from this grid's corner
+    /// places it.
+    #[must_use]
+    pub fn at_art_size(&self) -> Self {
+        let tile = self.art_tile();
+        Self {
+            corner: (0, 0),
+            tile: (tile.w, tile.h),
+            scale: 1,
+            ..*self
+        }
+    }
+
     /// `art`, pixels worked out on [`art_tile`](Self::art_tile), on the
     /// tile whose top-left pixel is `corner`: every art pixel a square of
     /// the zoom's console pixels.
@@ -151,6 +166,15 @@ mod tests {
         let mark = Rect::new(3, -2, 5, 7);
         assert_eq!(g.zoomed((56, 40), mark), Rect::new(62, 36, 10, 14));
         assert_eq!(g.zoomed((56, 40), g.art_tile()), g.rect_at(1, 1));
+        // The same tiles unzoomed, from (0, 0); already so at 1×.
+        let art = Grid {
+            corner: (0, 0),
+            tile: (24, 20),
+            scale: 1,
+            ..g
+        };
+        assert_eq!(g.at_art_size(), art);
+        assert_eq!(art.at_art_size(), art);
         // A scale below 1 counts as 1.
         let flat = Grid { scale: 0, ..g };
         assert_eq!(flat.art_tile(), Rect::new(0, 0, 48, 40));

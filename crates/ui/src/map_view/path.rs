@@ -86,13 +86,7 @@ fn arrowhead(from: Pos, to: Pos, grid: &Grid) -> Vec<PxRect> {
 /// square of the zoom's.
 pub fn path_overlays(path: &[Pos], grid: &Grid, color: Rgb) -> Vec<Overlay> {
     let view = grid.bounds();
-    // The same tiles at the art's own size, from (0, 0).
-    let art = Grid {
-        corner: (0, 0),
-        tile: (grid.art_tile().w, grid.art_tile().h),
-        scale: 1,
-        ..*grid
-    };
+    let art = grid.at_art_size();
     let mut out = Vec::new();
     let mut add = |rect: PxRect, layer| {
         if let Some(rect) = grid.zoomed(grid.corner, rect).intersect(&view) {
