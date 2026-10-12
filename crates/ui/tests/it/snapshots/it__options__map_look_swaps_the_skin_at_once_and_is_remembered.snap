@@ -15,6 +15,7 @@ expression: h.snapshot()
                     │   Fullscreen                Off                          │                    
                     │   Cursor                    Corners                      │                    
                     │   Map look                ◄ Pictures ►                   │                    
+                    │   Map zoom                  2×                           │                    
                     │   Music volume              ████████░░  80               │                    
                     │   Sound volume              ████████░░  80               │                    
                     │                                                          │                    
@@ -23,7 +24,6 @@ expression: h.snapshot()
                     │                                                          │                    
                     │   Reset tips                                             │                    
                     │   Restore defaults                                       │                    
-                    │                                                          │                    
                     └──────────────────────────────────────────────────────────┘                    
                                                                                                     
                                                                                                     

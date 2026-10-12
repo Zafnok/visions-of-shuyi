@@ -16,6 +16,7 @@ mod key_bindings_screen;
 mod language;
 mod layout_picker;
 mod map_skin;
+mod map_zoom;
 mod options;
 mod preparations;
 mod rebind_buttons;

@@ -373,11 +373,14 @@ pub enum Action {
     /// Accept the end-turn prompt. Optional: with no key, End turn pressed
     /// again does it (`docs/design/controls.md`, *Optional split keys*).
     ConfirmEndTurn,
+    /// Switch the battle map between its two zooms
+    /// (`docs/design/look-and-feel.md`, *Zoom*). Optional.
+    ZoomMap,
 }
 
 impl Action {
     /// Every action, in declaration order.
-    pub const ALL: [Action; 17] = [
+    pub const ALL: [Action; 18] = [
         Self::CursorLeft,
         Self::CursorDown,
         Self::CursorUp,
@@ -395,11 +398,12 @@ impl Action {
         Self::Rewind,
         Self::Select,
         Self::ConfirmEndTurn,
+        Self::ZoomMap,
     ];
 
     /// The name used in keymap files (the variant name).
     pub fn name(self) -> &'static str {
-        const NAMES: [&str; 17] = [
+        const NAMES: [&str; 18] = [
             "CursorLeft",
             "CursorDown",
             "CursorUp",
@@ -417,6 +421,7 @@ impl Action {
             "Rewind",
             "Select",
             "ConfirmEndTurn",
+            "ZoomMap",
         ];
         NAMES[self as usize]
     }
@@ -1284,8 +1289,8 @@ mod tests {
         // docs/design/controls.md, Controller → Default buttons.
         use Button::{
             DpadDown, DpadLeft, DpadRight, DpadUp, East, LeftShoulder, LeftStickDown,
-            LeftStickLeft, LeftStickRight, LeftStickUp, LeftTrigger, North, RightShoulder, Select,
-            South, Start, West,
+            LeftStickLeft, LeftStickRight, LeftStickUp, LeftTrigger, North, RightShoulder,
+            RightTrigger, Select, South, Start, West,
         };
         let k = KeymapDef::load().unwrap_or_default();
         let design: PadKeys = [
@@ -1303,6 +1308,7 @@ mod tests {
             (Action::EndTurn, vec![Start]),
             (Action::ToggleAutoEnd, vec![Select]),
             (Action::Rewind, vec![LeftTrigger]),
+            (Action::ZoomMap, vec![RightTrigger]),
             // No button: the map menu, the optional split keys, Debug.
             (Action::Menu, vec![]),
             (Action::Select, vec![]),
@@ -1662,6 +1668,7 @@ mod tests {
         assert_eq!(get("Shift+Space"), Some(Action::ToggleAutoEnd));
         assert_eq!(get("F2"), Some(Action::Debug));
         assert_eq!(get("r"), Some(Action::Rewind));
+        assert_eq!(get("q"), Some(Action::ZoomMap));
     }
 
     #[test]
@@ -1683,15 +1690,17 @@ mod tests {
         assert_eq!(get("Shift+Space"), Some(Action::ToggleAutoEnd));
         assert_eq!(get("F2"), Some(Action::Debug));
         assert_eq!(get("u"), Some(Action::Rewind));
+        assert_eq!(get("p"), Some(Action::ZoomMap));
     }
 
     #[test]
     fn embedded_keymap_has_exactly_the_design_bindings() {
-        // 14 chords per layout: nothing bound beyond the design table.
+        // 15 chords per layout: nothing bound beyond the design table.
         let k = KeymapDef::load().unwrap_or_default();
         for layout in Layout::ALL {
-            assert_eq!(k.bindings(layout).map(|b| b.len()), Some(14), "{layout}");
-            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(17));
+            assert_eq!(k.bindings(layout).map(|b| b.len()), Some(15), "{layout}");
+            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(18));
+            assert!(!Action::ZoomMap.is_required());
             // The optional split keys start with no key (controls.md).
             for split in [Action::Select, Action::ConfirmEndTurn] {
                 assert_eq!(k.chords(layout, split), [], "{layout} {split}");

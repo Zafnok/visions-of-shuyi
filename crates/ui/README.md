@@ -206,9 +206,16 @@ Rules:
 
 - **The tile size is the skin's.** Nothing outside a skin knows a tile is
   two cells, 16 pixels or 24. The camera gets the view's size in tiles
-  from `skin.view_tiles(area)`; when it changes (a skin switched mid-battle)
-  the battle screen re-centres its cameras, and an AI action's pan is
-  worked out again in the same time.
+  from `skin.view_tiles(area)`; when it changes (a skin switched or zoomed
+  mid-battle) the battle screen re-centres its cameras, and an AI action's
+  pan is worked out again in the same time.
+- **The zoom is the skin's too** (ticket 0439): a skin that paints the
+  whole map from pictures says `zoom()` and gives itself at another one
+  with `at_zoom(…)`; the glyph skins say `None`. The player's choice is
+  `Settings::map_zoom`. Swap the skin with `ctx.set_map_skin(…)`, never by
+  assigning `ctx.map_skin`, so the new skin is drawn at that zoom. A skin
+  works out every mark on a tile at the art's own size and places it with
+  `Grid::zoomed`, so nothing needs a second set of sizes.
 - **A new thing on the map** (a village, a spell's flash on a tile) is a new
   field of `MapScene`, set in `BattleScreen::scene` and painted by every
   skin. Never draw it into the buffer from the battle screen.
@@ -235,7 +242,8 @@ Rules:
   skin's look read the buffer (see *Writing a Harness test*).
   `h.with_map_skin("sprite")` runs any Harness script under the sprite
   skin (`"sprite_units"`: sprite units on glyph terrain; `"test_auto"`,
-  or any tileset's id: that tileset);
+  or any tileset's id: that tileset), at the zoom in the settings (2×
+  unless the test changes `map_zoom`);
   `crates/ui/tests/it/map_skin.rs` plays one under each and checks nothing
   in the game changes.
 

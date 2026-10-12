@@ -144,20 +144,20 @@ fn a_button_moved_off_confirm_blocks_leaving_until_it_has_one_again() {
     assert_eq!(h.top_screen(), "key_bindings");
     assert_eq!(message(&h), "Give Confirm a button first");
     // The buttons the screen was opened with still steer it: give Confirm
-    // the right trigger, and leaving works.
-    h.pad(INFO_TO_CONFIRM).pad("South South RightTrigger");
-    assert!(has(&h, Action::Confirm, "RT"));
+    // the right stick pressed in, and leaving works.
+    h.pad(INFO_TO_CONFIRM).pad("South South RightStickPress");
+    assert!(has(&h, Action::Confirm, "RS"));
     assert_eq!(message(&h), "");
     h.pad("East");
     assert_eq!(h.screens(), ["title", "options"]);
-    assert_eq!(slots(&h, Action::Confirm), ["RightTrigger", "-", "-"]);
+    assert_eq!(slots(&h, Action::Confirm), ["RightStickPress", "-", "-"]);
     assert_eq!(slots(&h, Action::Info), ["South", "-", "-"]);
     // In the game the new buttons count: the old Confirm button is Unit
-    // info now, and the right trigger confirms.
+    // info now, and pressing the right stick confirms.
     h.pad("East South");
     assert_eq!(h.screens(), ["title"]);
     // (The title is still on Options.)
-    h.pad("RightTrigger");
+    h.pad("RightStickPress");
     assert_eq!(h.screens(), ["title", "options"]);
 }
 
@@ -169,22 +169,22 @@ fn a_hold_backs_out_a_tap_binds_and_clear_empties() {
     let before = h.snapshot();
     h.pad(TO_INFO).pad("DpadRight South South");
     assert!(has(&h, Action::Info, "Press a button…"));
-    h.hold_pad("RightTrigger", 1.2);
+    h.hold_pad("RightStickPress", 1.2);
     assert!(!has(&h, Action::Info, "Press a button…"));
-    assert!(!has(&h, Action::Info, "RT"));
+    assert!(!has(&h, Action::Info, "RS"));
     h.pad("DpadLeft")
         .pad(INFO_TO_CONFIRM)
         .pad("DpadUp DpadUp DpadUp DpadUp");
     assert_eq!(h.snapshot(), before, "nothing changed");
     // A hold just short of the time is a tap.
     h.pad(TO_INFO).pad("DpadRight South South");
-    h.hold_pad("RightTrigger", 0.8);
-    assert_eq!(shown(&h, Action::Info), ["Y", "RT", "-"]);
+    h.hold_pad("RightStickPress", 0.8);
+    assert_eq!(shown(&h, Action::Info), ["Y", "RS", "-"]);
     // Clear: the second line of the choices.
     h.pad("DpadLeft South DpadDown South");
-    assert_eq!(shown(&h, Action::Info), ["-", "RT", "-"]);
+    assert_eq!(shown(&h, Action::Info), ["-", "RS", "-"]);
     h.pad("East East");
-    assert_eq!(slots(&h, Action::Info), ["-", "RightTrigger", "-"]);
+    assert_eq!(slots(&h, Action::Info), ["-", "RightStickPress", "-"]);
     assert_eq!(h.screens(), ["title"]);
 }
 
@@ -193,19 +193,20 @@ fn a_hold_backs_out_a_tap_binds_and_clear_empties() {
 #[test]
 fn a_rebound_button_plays_a_battle() {
     let mut h = open(PadKind::Xbox);
-    h.pad(TO_CONFIRM).pad("South South RightTrigger East East");
+    h.pad(TO_CONFIRM)
+        .pad("South South RightStickPress East East");
     assert_eq!(h.screens(), ["title"]);
-    assert_eq!(slots(&h, Action::Confirm), ["RightTrigger", "-", "-"]);
+    assert_eq!(slots(&h, Action::Confirm), ["RightStickPress", "-", "-"]);
     // Quick Battle (one up from Options) with the new Confirm (through
     // Preparations: left wraps to `Fight!`), and the same with the
     // keyboard.
-    h.pad("DpadUp RightTrigger DpadLeft RightTrigger RightTrigger");
+    h.pad("DpadUp RightStickPress DpadLeft RightStickPress RightStickPress");
     assert_eq!(h.screens(), ["title", "battle"]);
     let mut keys = Harness::with_layout(Layout::RightHanded);
     keys.keys("Down f Left f f");
     assert_eq!(h.cursor_tile(), keys.cursor_tile());
     // Pick the unit under the cursor and move it one tile.
-    h.pad("RightTrigger DpadRight RightTrigger");
+    h.pad("RightStickPress DpadRight RightStickPress");
     keys.keys("f Right f");
     assert_eq!(h.cursor_tile(), keys.cursor_tile());
     assert_eq!(
@@ -217,7 +218,7 @@ fn a_rebound_button_plays_a_battle() {
     h.pad("South");
     assert_eq!(h.snapshot(), before);
     // The help bar names the new button.
-    assert!(h.snapshot().contains("RT "), "{}", h.snapshot());
+    assert!(h.snapshot().contains("RS "), "{}", h.snapshot());
 }
 
 #[test]
@@ -244,14 +245,17 @@ fn a_stick_direction_can_be_bound_like_a_button() {
 fn switching_layout_leaves_the_buttons_unchanged() {
     let mut h = open(PadKind::Xbox);
     h.pad(TO_INFO)
-        .pad("DpadRight South South RightTrigger East East");
+        .pad("DpadRight South South RightStickPress East East");
     let edited = buttons(&h);
-    assert_eq!(slots(&h, Action::Info), ["North", "RightTrigger", "-"]);
+    assert_eq!(slots(&h, Action::Info), ["North", "RightStickPress", "-"]);
     for layout in [Layout::LeftHanded, Layout::RightHanded] {
         assert_eq!(h.ctx_mut().choose_layout(layout), Ok(()));
         assert_eq!(buttons(&h), edited, "{layout}");
         let keymap = &h.game().ctx().keymap;
-        assert_eq!(keymap.pad_action(Button::RightTrigger), Some(Action::Info));
+        assert_eq!(
+            keymap.pad_action(Button::RightStickPress),
+            Some(Action::Info)
+        );
         // The keys are that layout's own defaults.
         let ctx = h.game().ctx();
         assert!(!ctx.player_keys().is_custom(layout));
@@ -260,7 +264,7 @@ fn switching_layout_leaves_the_buttons_unchanged() {
     assert_eq!(h.ctx_mut().choose_layout(Layout::LeftHanded), Ok(()));
     reopen_from_options(&mut h);
     assert_eq!(view(&h).switch.keyboard, "Keyboard · Left-handed");
-    assert_eq!(shown(&h, Action::Info), ["Y", "RT", "-"]);
+    assert_eq!(shown(&h, Action::Info), ["Y", "RS", "-"]);
 }
 
 /// Acceptance: edits persist across a restart.
@@ -268,18 +272,21 @@ fn switching_layout_leaves_the_buttons_unchanged() {
 fn edited_buttons_survive_a_restart() {
     let mut h = open(PadKind::Xbox);
     h.pad(TO_CONFIRM)
-        .pad("DpadRight South South RightTrigger East East");
+        .pad("DpadRight South South RightStickPress East East");
     let edited = buttons(&h);
-    assert_eq!(slots(&h, Action::Confirm), ["South", "RightTrigger", "-"]);
+    assert_eq!(
+        slots(&h, Action::Confirm),
+        ["South", "RightStickPress", "-"]
+    );
     let mut h = Harness::with_storage(h.into_storage());
     assert_eq!(buttons(&h), edited);
-    h.pad("RightTrigger");
+    h.pad("RightStickPress");
     assert_eq!(h.screens(), ["title", "mode_select"]);
     h.pad("East");
     // The screen shows the saved buttons when opened again, and Restore
     // defaults (one down from the last row) puts the defaults back.
     reopen(&mut h);
-    assert_eq!(shown(&h, Action::Confirm), ["A", "RT", "-"]);
+    assert_eq!(shown(&h, Action::Confirm), ["A", "RS", "-"]);
     h.pad("DpadUp DpadUp South");
     let question = view(&h).question.map(|q| q.text);
     assert_eq!(question.as_deref(), Some("Restore the default buttons?"));

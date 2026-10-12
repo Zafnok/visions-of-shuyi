@@ -104,6 +104,7 @@ impl Layout {
             corner: (self.cell.0 * cw, self.cell.1 * ch),
             tile: (TILE_W_CELLS * cw, ch),
             tiles: self.tiles,
+            scale: 1,
         }
     }
 }

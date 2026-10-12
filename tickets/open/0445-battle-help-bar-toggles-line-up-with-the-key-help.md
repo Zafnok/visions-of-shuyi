@@ -40,6 +40,11 @@ The danger-zone hint starts where the key help starts, and the auto-end
 hint starts in the column where the end-turn hint starts below it: the two
 things about ending a turn read as one column.
 
+**Since ticket 0439** the toggles line has a third hint, first on the
+line and only when the map is drawn with pictures: `q zoom: 2×`. Where it
+sits is this ticket's to decide with the other two (show it in the
+rendered frames).
+
 Two things his sentence doesn't settle, which need his eye on a rendered
 frame (`docs/design/look-and-feel.md`, *Nick's words*: he judges pictures):
 

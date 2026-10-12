@@ -31,7 +31,7 @@ fn title_help(h: &Harness) -> Option<String> {
 /// key (any key) opened it.
 fn picker() -> Harness {
     let mut h = Harness::new();
-    h.keys("q");
+    h.keys("z");
     h
 }
 

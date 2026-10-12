@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["0433"]
 nick_input: decision
-completed:
+completed: 2026-10-12
 ---
 
 # 0439 — Map zoom toggle (1× / 2×), remembered
@@ -125,23 +125,23 @@ the test tileset from the debug menu if the bought-art skin isn't in yet).
 
 ## Acceptance criteria
 
-- [ ] Nick's key, button and required-or-optional answer is in
+- [x] Nick's key, button and required-or-optional answer is in
       `controls.md` with his words, and `keymap.ron` matches it (the
       keymap-matches-design test).
-- [ ] Pressing the Zoom map key on the sprite skin switches between 1×
+- [x] Pressing the Zoom map key on the sprite skin switches between 1×
       and 2×; the cursor's tile is inside the view after each switch (a
       scene assertion, for cursor positions at each map corner).
-- [ ] The zoom survives leaving the battle and starting another, and a
+- [x] The zoom survives leaving the battle and starting another, and a
       restart (a storage test).
-- [ ] With the glyph skin the action changes nothing, and the help text
+- [x] With the glyph skin the action changes nothing, and the help text
       doesn't list it.
-- [ ] `the_skin_never_changes_the_game` (0433) passes with the script run
+- [x] `the_skin_never_changes_the_game` (0433) passes with the script run
       at 2×: same `BattleState`, same cursor tiles, same sounds.
-- [ ] Rebinding the action works, and it shows `! not mapped` when
+- [x] Rebinding the action works, and it shows `! not mapped` when
       unbound (if optional).
-- [ ] Snapshots of Quick Battle on the test tileset at 2×.
-- [ ] `cargo xtask check-keys` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Snapshots of Quick Battle on the test tileset at 2×.
+- [x] `cargo xtask check-keys` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -154,5 +154,68 @@ the test tileset from the debug menu if the bought-art skin isn't in yet).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Nick's answers (2026-10-12, asked before the feature was written, with
+Chapter 1's first turn rendered at both zooms):** a new player starts at
+**2×**; the key is **`Q`** right-handed and **`P`** left-handed; the
+controller button is the **right trigger** (he asked about a bumper; both
+are Previous / Next ready unit, so he took the trigger); the action is
+**optional**. Recorded in `controls.md` (*Zoom map*, both tables, the
+required/optional lists), `look-and-feel.md` (*Zoom*) and `options.md`
+(*Map zoom*).
+
+**What was done**
+
+- `Action::ZoomMap` (optional), its defaults in `keymap.ron`, its row on
+  the Key bindings screen.
+- `MapZoom` (1× / 2×) in `Settings`, saved as its number; a number the
+  game doesn't have falls back to the default. `Ctx::set_map_skin` draws
+  whatever skin is put in at the player's zoom, so the zoom is kept from
+  one skin to the next and from one launch to the next.
+- The sprite skin draws at the zoom: `Grid` carries the scale, and every
+  mark on a tile (unit, outline, HP bar, effect arrow, cursor arms, path)
+  is worked out at the art's own size and placed with `Grid::zoomed`, so
+  a 2× frame is the 1× frame with every pixel doubled (a test checks
+  exactly that). `MapSkin::zoom` / `at_zoom`: the glyph skin, and unit
+  pictures on glyph terrain, say they can't zoom.
+- The battle screen flips the setting on the key. The cameras were
+  already refitted when the view's size changes (0433), so the cursor's
+  tile is centred after a switch. Not a `Command`.
+- The Options screen has a `Map zoom` row (0805 is done, so it is here).
+- Screenshots: `docs/screenshots/0439-zoom-1x.png`, `0439-zoom-2x.png`
+  (Chapter 1's first turn, the bought art, as shown to Nick).
+
+**Claude's starting rules (Nick can veto; `controls.md`, *Zoom map*, and
+`options.md`):**
+
+- The key works whenever the map is what you are looking at: browsing,
+  with a unit selected or walking, while picking a target, and during the
+  enemy's turn. It does nothing while a menu or a yes/no question is
+  open, during a fight's playback, or on the rewind screen.
+- After a switch the cursor's tile is in the middle of the view (as near
+  as the map's edges allow).
+- The hint is first on the toggles line: `q zoom: 2× · w danger zone: OFF
+  · Shift+Space auto-end: OFF`. No sound, no message.
+- `Zoom map` is the row before `Map menu` on the Key bindings screen.
+- The Options row `Map zoom` sits under `Map look` and shows only when
+  the game has pictures to zoom.
+- "Pick your layout" lights `Q` / `P` on its keyboards as keys in use, but
+  its list of keys is unchanged (the panel has no free line).
+
+**Deviations**
+
+- The ticket said "Default 1×"; Nick picked 2×. Tests that relied on the
+  test tileset showing as many tiles as before now say which zoom they
+  mean (`map_skin.rs`), or expect the 2× numbers.
+- Tests that used the right trigger or `q` as "a button / key with no
+  job" now use the right stick's press and `z`.
+- No new help-bar hint on the key-help row: it is already at its longest
+  on a PlayStation pad, so the hint went on the toggles line. A line in
+  0445 says so.
+- No ADR: the zoom follows ADR-0038 as written ("Tile size belongs to the
+  skin"); `crates/ui/README.md` documents `zoom` / `at_zoom` /
+  `set_map_skin`.
+
+**For Nick, when playing on Pages:** the Pages build has no bought art, so
+the map is glyphs and the key does nothing there. To try it: debug menu →
+`Map skin` until it says `test tileset`, start Quick Battle, press `Q`.
+The real look is `cargo run -p trpg-app --features private-assets`.
