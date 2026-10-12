@@ -423,7 +423,7 @@ mod tests {
         let after = lines_of("@scene gate\n> The gate is barred.\n> Nobody answers.\n@end\n");
         let new_id = id_of(&after, "The gate is barred.");
         assert_eq!(
-            report(&lang(after), "xx", &Options::default()).unwrap(),
+            report(&lang(after.clone()), "xx", &Options::default()).unwrap(),
             format!(
                 "lang-status xx (Xx, machine-made): 1 missing, 0 stale, 2 orphaned\n\
                  screen text: 0 missing, 0 stale\n\
@@ -439,6 +439,25 @@ mod tests {
                 road = id_of(&before, "Dust."),
             )
         );
+        // `--file` keeps an orphan only if its paired line is in that file.
+        let in_file = |stem: &str| Options {
+            file: Some(stem.to_owned()),
+            ..Options::default()
+        };
+        let report = |stem| report(&lang(after.clone()), "xx", &in_file(stem)).unwrap();
+        assert!(report("t").starts_with(
+            "lang-status xx (Xx, machine-made): 1 missing, 0 stale, 1 orphaned
+"
+        ));
+        assert!(report("t").contains(&format!(
+            "  {}
+    was: \"The gate",
+            id_of(&before, "The gate is shut.")
+        )));
+        assert!(report("other").contains(
+            "0 missing, 0 stale, 0 orphaned
+"
+        ));
     }
 
     /// English with two `.dlg` files (a real one and a test one) and some
@@ -581,6 +600,12 @@ mod tests {
         assert!(parse_args(&args(&["xx", "--only"])).is_err());
         assert!(parse_args(&args(&["xx", "--file"])).is_err());
         assert!(parse_args(&args(&["xx", "--bogus"])).is_err());
+        assert_eq!(
+            parse_args(&args(&["--bogus"])).unwrap_err(),
+            "unknown option --bogus"
+        );
+        let (_, options) = parse_args(&args(&["xx", "--only", "ui"])).unwrap();
+        assert_eq!(options.only, Some(Part::Screen));
         assert!(parse_args(&args(&["xx", "--only", "ui", "--file", "a"])).is_err());
         assert!(parse_args(&args(&["xx", "--only", "dialogue", "--file", "a"])).is_ok());
     }
