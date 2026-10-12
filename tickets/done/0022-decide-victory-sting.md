@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-12
 ---
 
 # 0022 — Decide: the victory sting
@@ -83,11 +83,11 @@ picks one, or asks for another round.
 
 ## Acceptance criteria
 
-- [ ] `audio.md` has a `victory` row with a source URL and a licence that
+- [x] `audio.md` has a `victory` row with a source URL and a licence that
       ADR-0013/0027 allow, or a recorded "no music here" / "reuse `<cue>`".
-- [ ] The moment is gone from audio.md's *Open sub-questions*.
-- [ ] Nick's words are quoted in audio.md's appendix.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The moment is gone from audio.md's *Open sub-questions*.
+- [x] Nick's words are quoted in audio.md's appendix.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -95,4 +95,25 @@ picks one, or asks for another round.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Three rounds on a listening page
+(https://claude.ai/artifact/VaGGdWgQ4Bo3gGUjLqJ3mS): seven fanfares, six more
+short ones, then all versions of the one Nick chose.
+
+- **`victory`**: Fupi's Win Jingle (CC0, OpenGameArt), all 17 instrument
+  versions as a pool, one picked at random each win. Nick had heard two of
+  the 17 (Brass, Strings) when he said "all the versions"; the other fifteen
+  are on the page for him to drop any. 0809's sign-off covers it.
+- **Reserved, not asked for by the ticket** (Nick placed them himself):
+  `victory_grand` (cynicmusic's Victory Fanfare Short: a ceremony, or the
+  win after an act boss or other big moment) and `ceremony_intro` (Joshua
+  Empyre's Victory Music Cue: the start of a crowning or other regal
+  ceremony). No story moment uses them yet, so there is no ticket to import
+  them; the ticket that writes such a moment imports its cue.
+- The second question (one sting or several) is answered by the above.
+- 0809 updated: `victory` is a pool of 17 files, and the two reserved cues
+  are out of its scope.
+- *Claude's naming, not rules:* the cue ids `victory_grand` and
+  `ceremony_intro`.
+- Deviation: the clips were published with the page (private artifact) so
+  the players work; nothing was added to the repository.
+- Gates: docs only. Ran `cargo xtask ticket-lint` and `typos`.
