@@ -14,15 +14,27 @@
 //!   Cancel does nothing unless the caller allows leaving; then it asks
 //!   [`LEAVE_QUESTION`].
 //! - **Loadouts**: the units (the ones left out of this battle after the
-//!   others, dimmed, so their gear can be traded: Nick, 0408), then the
+//!   others, marked as such, so their gear can be traded: Nick, 0408), then the
 //!   chosen unit's slots, then the stock for that slot; Confirm goes one list deeper, Cancel one back. Confirm
 //!   on a stock item puts it in the slot (what was there goes back to the
 //!   stock); the list also has what the other units hold in such a slot,
-//!   and Confirm on one of those swaps the two units' items; items the unit can't use are dimmed with the reason and can't
+//!   and Confirm on one of those swaps the two units' items; items the unit can't use say why and can't
 //!   be taken. The attack speed line shows the change before it is made.
 //! - **Pack**: the stock's consumables on the left, the pack on the right;
 //!   Left and Right switch sides, Confirm moves one item across. A full
 //!   pack takes no more and says so.
+//!
+//! **The look is a skin** (ADR-0054): this module decides what the screen
+//! shows and does, and says it as a [`PreparationsView`]; [`glyph`] paints
+//! it.
+
+pub mod glyph;
+pub mod view;
+
+pub use view::{
+    ConsumableRowView, GearView, ItemRowView, ListState, ListView, LoadoutsView, PackView,
+    PrepBody, PreparationsView, SlotRowView, TabView, UnitRowView,
+};
 
 use std::fmt::Display;
 
@@ -31,12 +43,11 @@ use trpg_core::{
     Preparations, StatValue, StockItem, Unit, Unusable, WeaponKind,
 };
 
+use super::OptionsScreen;
 use super::battle::info::bonus_text;
 use super::battle::items::effect_text;
-use super::{OptionsScreen, print_centred};
 use crate::audio::MenuSound;
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::words::Words;
@@ -45,28 +56,11 @@ use crate::words::Words;
 /// allowed. Like all the screen's text it is in `assets/lang/en/ui.ron`
 /// under `prep.` (ADR-0045).
 pub const LEAVE_QUESTION: &str = "prep.leave_question";
-/// Shown for an empty slot.
-const EMPTY: &str = "-";
 /// Text key of the stock row that empties the slot.
 pub const PUT_BACK: &str = "prep.put_back";
 /// Text key of what is said when a slot is chosen and the stock has
 /// nothing for it.
 pub const NOTHING_IN_STOCK: &str = "prep.nothing_in_stock";
-
-/// Row of the heading and the tabs.
-const TABS_ROW: i32 = 1;
-/// The units list.
-const UNITS_BOX: Rect = Rect::new(0, 3, 16, 25);
-/// The chosen unit's slots.
-const SLOTS_BOX: Rect = Rect::new(16, 3, 36, 25);
-/// The stock for the chosen slot.
-const STOCK_BOX: Rect = Rect::new(52, 3, 48, 25);
-/// The stock's consumables (Pack tab).
-const SPARE_BOX: Rect = Rect::new(8, 3, 40, 25);
-/// The pack (Pack tab).
-const PACK_BOX: Rect = Rect::new(52, 3, 40, 25);
-/// Row of the message.
-const MESSAGE_ROW: i32 = 29;
 
 /// One of the screen's tabs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -139,9 +133,11 @@ pub enum Source {
 pub struct StockRow {
     /// What Confirm takes.
     pub from: Source,
-    /// The row's text.
-    pub text: String,
-    /// Why the unit can't use it, if it can't (the row is dimmed).
+    /// The item's name (or the row that empties the slot).
+    pub name: String,
+    /// Its numbers and where it comes from, or why the unit can't use it.
+    pub detail: String,
+    /// Why the unit can't use it, if it can't.
     pub unusable: Option<Unusable>,
 }
 
@@ -182,14 +178,6 @@ fn step(i: usize, len: usize, down: bool) -> usize {
         (_, true) => (i + 1) % len,
         (_, false) => (i + len - 1) % len,
     }
-}
-
-/// The first row shown of a list of `len` in a window of `rows` rows, so
-/// that row `focus` is in it.
-fn window_start(focus: usize, len: usize, rows: usize) -> usize {
-    (focus + 1)
-        .saturating_sub(rows)
-        .min(len.saturating_sub(rows))
 }
 
 /// Before a battle: loadouts and the pack. See the module docs. Pops with
@@ -355,7 +343,8 @@ impl PreparationsScreen {
         if self.held(ctx.words(), unit, slot).is_some() {
             rows.push(StockRow {
                 from: Source::PutBack,
-                text: ctx.text(PUT_BACK).to_owned(),
+                name: ctx.text(PUT_BACK).to_owned(),
+                detail: String::new(),
                 unusable: None,
             });
         }
@@ -364,7 +353,8 @@ impl PreparationsScreen {
             let detail = unusable.map_or(detail, |why| reason_text(ctx, why));
             StockRow {
                 from: Source::Stock(item),
-                text: format!("{name:<15} {detail}"),
+                name,
+                detail,
                 unusable,
             }
         };
@@ -455,7 +445,7 @@ impl PreparationsScreen {
                 let (Some(id), Some((name, wear))) = (id, held) else {
                     continue;
                 };
-                // Only what this unit could take: the stock's dimmed rows
+                // Only what this unit could take: the stock's own rows
                 // say what it can't use, and an army's worth more would
                 // bury the list.
                 if self.prep.unusable(who, id).is_some() {
@@ -478,7 +468,8 @@ impl PreparationsScreen {
                 };
                 rows.push(StockRow {
                     from: Source::Unit(holder, theirs),
-                    text: format!("{name:<15} {detail}"),
+                    name,
+                    detail,
                     unusable: None,
                 });
             }
@@ -809,168 +800,154 @@ impl PreparationsScreen {
         false
     }
 
-    /// The heading and the tabs: the shown one lit, as a bar while the
-    /// cursor is on the tabs.
-    fn draw_tabs(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        let heading = ctx.text("prep.heading");
-        buf.print(2, TABS_ROW, heading, c(UiColor::TextHighlight), black);
-        let mut x = 30;
-        for tab in Tab::ALL {
-            let label = format!(" {} ", ctx.text(tab.key()));
-            let (fg, bg) = match (tab == self.tab, self.focus == Focus::Tabs) {
-                (true, true) => (c(UiColor::PanelBg), c(UiColor::PanelBorderFocus)),
-                (true, false) => (c(UiColor::TextHighlight), black),
-                (false, _) => (c(UiColor::Text), black),
-            };
-            buf.print(x, TABS_ROW, &label, fg, bg);
-            x += i32::try_from(label.chars().count()).unwrap_or(0) + 4;
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint`]): the tabs, the shown tab's lists with their
+    /// cursors, the message or the leave question, and the help line.
+    pub fn view(&self, ctx: &Ctx) -> PreparationsView {
+        let tabs = Tab::ALL.into_iter().map(|tab| TabView {
+            tab,
+            label: ctx.text(tab.key()).to_owned(),
+            shown: tab == self.tab,
+        });
+        let body = match self.tab {
+            Tab::Loadouts => PrepBody::Loadouts(self.loadouts_view(ctx)),
+            Tab::Pack => PrepBody::Pack(self.pack_view(ctx)),
+            Tab::Options => PrepBody::Options,
+            Tab::Fight => {
+                let units = self.prep.setup.player_units().count();
+                let pack = self.pack_header(ctx);
+                let args: [(&str, &dyn Display); 2] = [("units", &units), ("pack", &pack)];
+                PrepBody::Fight(ctx.text_with("prep.ready", &args))
+            }
+        };
+        PreparationsView {
+            heading: ctx.text("prep.heading").to_owned(),
+            tabs: tabs.collect(),
+            on_tabs: self.focus == Focus::Tabs,
+            body,
+            message: self.message.clone(),
+            leave_question: self.leaving.then(|| ctx.text(LEAVE_QUESTION).to_owned()),
+            help: self.help(ctx),
         }
     }
 
-    /// A titled box; its border is lit while it has the cursor.
-    fn draw_box(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, title: &str, focused: bool) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let border = if focused {
-            UiColor::PanelBorderFocus
+    /// What the cursor is doing in the list that has it at `focus`; its
+    /// row is the chosen one while the cursor is in a list `after` it.
+    fn list_state(&self, focus: Focus, after: &[Focus]) -> ListState {
+        if self.focus == focus {
+            ListState::Focused
+        } else if after.contains(&self.focus) {
+            ListState::Chosen
         } else {
-            UiColor::PanelBorder
-        };
-        buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(rect, BoxStyle::Single, c(border), bg);
-        let title = format!(" {title} ");
-        buf.print(rect.x + 2, rect.y, &title, c(UiColor::TextHighlight), bg);
-    }
-
-    /// The rows of a list inside `rect`, scrolled so row `at` shows: each
-    /// `(text, enabled)`. Row `at` is a bar while `focused`, lit otherwise
-    /// if `marked`; disabled rows are dim.
-    fn draw_list(
-        ctx: &Ctx,
-        buf: &mut GlyphBuffer,
-        rect: Rect,
-        rows: &[(String, bool)],
-        at: usize,
-        (focused, marked): (bool, bool),
-    ) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let height = usize::try_from(rect.h - 2).unwrap_or(0);
-        let start = window_start(at, rows.len(), height);
-        let shown = rows.iter().enumerate().skip(start).take(height);
-        for (y, (i, (text, enabled))) in (rect.y + 1..).zip(shown) {
-            let (fg, row_bg) = match (i == at, enabled) {
-                (true, _) if focused => (bg, c(UiColor::PanelBorderFocus)),
-                (_, false) => (c(UiColor::TextDim), bg),
-                (true, true) if marked => (c(UiColor::TextHighlight), bg),
-                (_, true) => (c(UiColor::Text), bg),
-            };
-            let line = Rect::new(rect.x + 1, y, rect.w - 2, 1);
-            buf.fill_rect(line, Cell::new(' ', fg, row_bg));
-            buf.print(rect.x + 2, y, text, fg, row_bg);
+            ListState::Idle
         }
     }
 
     /// The Loadouts tab: units, the chosen unit's slots and attack speed,
     /// and the stock for the chosen slot.
-    fn draw_loadouts(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let in_tab = self.focus != Focus::Tabs;
-        // Units left out of the battle are dimmed.
-        let units: Vec<(String, bool)> = self
-            .units()
-            .iter()
-            .map(|(who, u)| {
-                let name = ctx.words().unit(u).to_owned();
-                (name, matches!(who, PrepUnit::Deployed(_)))
-            })
-            .collect();
-        let on_units = self.focus == Focus::Units;
-        Self::draw_box(ctx, buf, UNITS_BOX, ctx.text("prep.units"), on_units);
-        Self::draw_list(ctx, buf, UNITS_BOX, &units, self.unit, (on_units, in_tab));
-
-        let Some(unit) = self.unit() else {
-            return;
+    fn loadouts_view(&self, ctx: &Ctx) -> LoadoutsView {
+        let rows = self.units().into_iter().map(|(who, u)| UnitRowView {
+            name: ctx.words().unit(u).to_owned(),
+            deployed: matches!(who, PrepUnit::Deployed(_)),
+        });
+        let units = ListView {
+            title: ctx.text("prep.units").to_owned(),
+            rows: rows.collect(),
+            cursor: self.unit,
+            state: self.list_state(Focus::Units, &[Focus::Slots, Focus::Stock]),
         };
+        let gear = self.unit().map(|unit| self.gear_view(ctx, unit));
+        LoadoutsView { units, gear }
+    }
+
+    /// The chosen `unit`'s slots, attack speed and stock list.
+    fn gear_view(&self, ctx: &Ctx, unit: &Unit) -> GearView {
         let words = ctx.words();
         let class = words.class_of(&unit.class, &self.prep.setup.classes);
-        let title = format!("{} · {class}", words.unit(unit));
-        let on_slots = self.focus == Focus::Slots;
-        Self::draw_box(ctx, buf, SLOTS_BOX, &title, on_slots);
-        let slots = self.slots();
-        let rows: Vec<(String, bool)> = slots
-            .iter()
-            .map(|&slot| {
-                let label = ctx.text(match slot {
-                    GearSlot::Weapon(_) => "prep.slot.weapon",
-                    GearSlot::Armour => "prep.slot.armour",
-                    GearSlot::Accessory => "prep.slot.accessory",
-                });
-                let (name, wear) = self
-                    .held(ctx.words(), unit, slot)
-                    .unwrap_or_else(|| (EMPTY.to_owned(), String::new()));
-                (format!("{label:<9}  {name:<15} {wear}"), true)
-            })
-            .collect();
-        let marked = self.focus == Focus::Stock;
-        Self::draw_list(ctx, buf, SLOTS_BOX, &rows, self.slot, (on_slots, marked));
-        if let Some(line) = self.speed_line(ctx) {
-            let y = SLOTS_BOX.y + 2 + i32::try_from(rows.len()).unwrap_or(0);
-            buf.print(SLOTS_BOX.x + 2, y, &line, c(UiColor::Text), bg);
-            if matches!(self.who(), Some(PrepUnit::Benched(_))) {
-                let dim = c(UiColor::TextDim);
-                let note = ctx.text("prep.not_in_battle");
-                buf.print(SLOTS_BOX.x + 2, y + 2, note, dim, bg);
+        let rows = self.slots().into_iter().map(|slot| {
+            let label = ctx.text(match slot {
+                GearSlot::Weapon(_) => "prep.slot.weapon",
+                GearSlot::Armour => "prep.slot.armour",
+                GearSlot::Accessory => "prep.slot.accessory",
+            });
+            let (item, wear) = match self.held(words, unit, slot) {
+                Some((name, wear)) => (Some(name), wear),
+                None => (None, String::new()),
+            };
+            SlotRowView {
+                label: label.to_owned(),
+                item,
+                wear,
             }
-        }
-
+        });
+        let slots = ListView {
+            title: format!("{} · {class}", words.unit(unit)),
+            rows: rows.collect(),
+            cursor: self.slot,
+            state: self.list_state(Focus::Slots, &[Focus::Stock]),
+        };
+        let speed = self.speed_line(ctx);
+        let benched = matches!(self.who(), Some(PrepUnit::Benched(_)));
+        let benched_note =
+            (speed.is_some() && benched).then(|| ctx.text("prep.not_in_battle").to_owned());
         let title = ctx.text(match self.gear_slot() {
             Some(GearSlot::Weapon(_)) => "prep.stock.weapons",
             Some(GearSlot::Armour) => "prep.stock.armour",
             Some(GearSlot::Accessory) | None => "prep.stock.accessories",
         });
-        let on_stock = self.focus == Focus::Stock;
-        Self::draw_box(ctx, buf, STOCK_BOX, title, on_stock);
-        let rows: Vec<(String, bool)> = self
-            .stock_rows(ctx)
-            .into_iter()
-            .map(|r| (r.text, r.unusable.is_none()))
-            .collect();
-        Self::draw_list(ctx, buf, STOCK_BOX, &rows, self.stock, (on_stock, false));
+        let rows = self.stock_rows(ctx).into_iter().map(|r| ItemRowView {
+            // check-text: not a data name (the row's own)
+            name: r.name,
+            detail: r.detail,
+            usable: r.unusable.is_none(),
+        });
+        let stock = ListView {
+            title: title.to_owned(),
+            rows: rows.collect(),
+            cursor: self.stock,
+            state: self.list_state(Focus::Stock, &[]),
+        };
+        GearView {
+            slots,
+            speed,
+            benched_note,
+            stock,
+        }
     }
 
-    /// One consumable row: `Potion ×4  Restore 10 HP`.
-    fn consumable_row(&self, words: Words<'_>, id: &ItemId, count: usize) -> (String, bool) {
+    /// `count` of consumable `id`, with what it does.
+    fn consumable_row(&self, words: Words<'_>, id: &ItemId, count: usize) -> ConsumableRowView {
         let effect = self.prep.setup.items.consumable(id).map(|c| c.effect);
-        let effect = effect.map(|e| effect_text(words, e)).unwrap_or_default();
-        let name = self.item_name(words, id);
-        (format!("{name:<15} ×{count:<2}  {effect}"), true)
+        ConsumableRowView {
+            name: self.item_name(words, id),
+            count,
+            effect: effect.map(|e| effect_text(words, e)).unwrap_or_default(),
+        }
     }
 
     /// The Pack tab: the stock's consumables and the pack.
-    fn draw_pack(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let on_spare = self.focus == Focus::Spare;
-        Self::draw_box(ctx, buf, SPARE_BOX, ctx.text("prep.stock"), on_spare);
-        let rows: Vec<(String, bool)> = self
-            .spare()
-            .iter()
-            .map(|(id, n)| {
-                let n = usize::try_from(*n).unwrap_or(usize::MAX);
-                self.consumable_row(ctx.words(), id, n)
-            })
-            .collect();
-        Self::draw_list(ctx, buf, SPARE_BOX, &rows, self.spare, (on_spare, false));
-        let on_pack = self.focus == Focus::Pack;
-        Self::draw_box(ctx, buf, PACK_BOX, &self.pack_header(ctx), on_pack);
-        let rows: Vec<(String, bool)> = self
-            .packed()
-            .iter()
-            .map(|(id, n)| self.consumable_row(ctx.words(), id, *n))
-            .collect();
-        Self::draw_list(ctx, buf, PACK_BOX, &rows, self.pack, (on_pack, false));
+    fn pack_view(&self, ctx: &Ctx) -> PackView {
+        let words = ctx.words();
+        let spare = self.spare().into_iter().map(|(id, n)| {
+            let n = usize::try_from(n).unwrap_or(usize::MAX);
+            self.consumable_row(words, &id, n)
+        });
+        let packed = self.packed().into_iter();
+        let packed = packed.map(|(id, n)| self.consumable_row(words, &id, n));
+        PackView {
+            spare: ListView {
+                title: ctx.text("prep.stock").to_owned(),
+                rows: spare.collect(),
+                cursor: self.spare,
+                state: self.list_state(Focus::Spare, &[]),
+            },
+            pack: ListView {
+                title: self.pack_header(ctx),
+                rows: packed.collect(),
+                cursor: self.pack,
+                state: self.list_state(Focus::Pack, &[]),
+            },
+        }
     }
 }
 
@@ -992,32 +969,11 @@ impl Screen for PreparationsScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        self.draw_tabs(ctx, buf);
-        match self.tab {
-            Tab::Loadouts => self.draw_loadouts(ctx, buf),
-            Tab::Pack => self.draw_pack(ctx, buf),
-            Tab::Options => {}
-            Tab::Fight => {
-                let units = self.prep.setup.player_units().count();
-                let pack = self.pack_header(ctx);
-                let args: [(&str, &dyn Display); 2] = [("units", &units), ("pack", &pack)];
-                let ready = ctx.text_with("prep.ready", &args);
-                print_centred(buf, 14, &ready, c(UiColor::Text), black);
-            }
-        }
-        let message = if self.leaving {
-            Some(ctx.text(LEAVE_QUESTION))
-        } else {
-            self.message()
-        };
-        if let Some(message) = message {
-            print_centred(buf, MESSAGE_ROW, message, c(UiColor::TextHighlight), black);
-        }
-        let bottom = i32::from(buf.height()) - 1;
-        print_centred(buf, bottom, &self.help(ctx), c(UiColor::TextDim), black);
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 
