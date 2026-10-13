@@ -1015,7 +1015,7 @@ impl BattleScreen {
             .and_then(|bout| self.state.map().tiles.get(bout.defender.pos))
             .and_then(|id| ctx.content.terrain.display.get(*id))
             .map(|terrain| terrain.id.as_str());
-        stage::view(ctx, pb, ground)
+        stage::view(ctx, pb, ground, &self.look.light)
     }
 
     /// Applies `cmd` (built by [`mode::step`] from legal choices) and

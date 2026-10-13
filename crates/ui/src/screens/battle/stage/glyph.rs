@@ -272,8 +272,13 @@ pub fn paint(ctx: &Ctx, view: &StageView, buf: &mut GlyphBuffer) {
     buf.fill_rect(STAGE, Cell::new(' ', c(UiColor::Text), bg));
     let scene = scene_px();
     if let Some(backdrop) = view.backdrop {
+        let paint = if view.shade.is_plain() {
+            Paint::Image
+        } else {
+            Paint::Shaded(view.shade)
+        };
         for sprite in backdrop_sprites(backdrop) {
-            buf.add_sprite(sprite);
+            buf.add_sprite(sprite.painted(paint));
         }
     }
     // The striker last: in front of its target when they meet.

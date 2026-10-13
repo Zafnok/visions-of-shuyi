@@ -24,4 +24,7 @@
     difficulty: Normal,
     music: Pool("skirmish"),
     seed: 1,
+    // A battle file's own light (ticket 0438). Noon, the light of a map
+    // that names none, so the battle looks as it did.
+    light: "noon",
 )

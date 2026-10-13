@@ -51,12 +51,26 @@ const SCRIPT: [Step; 16] = [
     ("Down Down", 0.0),
 ];
 
-/// Plays [`SCRIPT`] with the map painted by the skin `skin`: what each
-/// step left, and every sound and music request of the run.
-fn play(skin: &str, zoom: MapZoom) -> (Vec<After>, Vec<AudioRequest>) {
+/// The Quick Battle's id: what a battle file's `light` is kept under.
+const QUICK: &str = "quick";
+
+/// Has the Quick Battle fought in the light `light`, as its battle file's
+/// `light:` would (ticket 0438).
+fn light_quick_battle(h: &mut Harness, light: &str) {
+    let lights = &mut h.ctx_mut().content.battle_lights;
+    lights.insert(QUICK.to_owned(), light.to_owned());
+}
+
+/// Plays [`SCRIPT`] with the map painted by the skin `skin` at the zoom
+/// `zoom`, in the light `light` if one is given: what each step left, and
+/// every sound and music request of the run.
+fn play_in(skin: &str, zoom: MapZoom, light: Option<&str>) -> (Vec<After>, Vec<AudioRequest>) {
     let mut h = Harness::with_layout(Layout::RightHanded);
     at_zoom(&mut h, zoom);
     h.with_map_skin(skin);
+    if let Some(light) = light {
+        light_quick_battle(&mut h, light);
+    }
     let mut after = Vec::new();
     for (keys, seconds) in SCRIPT {
         h.keys(keys);
@@ -72,6 +86,11 @@ fn play(skin: &str, zoom: MapZoom) -> (Vec<After>, Vec<AudioRequest>) {
         });
     }
     (after, h.audio_requests())
+}
+
+/// [`play_in`] the map's own light.
+fn play(skin: &str, zoom: MapZoom) -> (Vec<After>, Vec<AudioRequest>) {
+    play_in(skin, zoom, None)
 }
 
 /// One long scripted Quick Battle, played under the glyph skin, under the
@@ -112,6 +131,75 @@ fn the_skin_never_changes_the_game() {
             assert_eq!(glyph_audio, sprite_audio, "{skin} at {zoom:?}");
         }
     }
+    // Nor does the light the map is in (ticket 0438): shaded ground, and
+    // a shaded backdrop behind the fight.
+    for skin in ["test_auto", "glyph"] {
+        let (dusk, dusk_audio) = play_in(skin, MapZoom::X1, Some("dusk"));
+        assert_eq!(glyph, dusk, "{skin} at dusk");
+        assert_eq!(glyph_audio, dusk_audio, "{skin} at dusk");
+    }
+}
+
+/// The Quick Battle with the lord selected, fought at dusk (its battle
+/// file's `light`, here set by hand) under the public tileset with layers:
+/// the scene names the light; every picture of the ground (each tile's
+/// own, the pictures between tiles, the fort and the bridge) carries
+/// dusk's shade; the ranges' washes, the units, their bars and the cursor
+/// are as at noon. Under the glyph skin the frame is noon's.
+#[test]
+fn quick_battle_at_dusk_shades_the_ground_only() {
+    let start = |skin: &str, light: Option<&str>| {
+        let mut h = Harness::with_layout(Layout::RightHanded);
+        at_zoom(&mut h, MapZoom::X1);
+        h.with_map_skin(skin);
+        if let Some(light) = light {
+            light_quick_battle(&mut h, light);
+        }
+        h.keys("Down f Left f f f");
+        assert_eq!(h.screens(), ["title", "battle"]);
+        h
+    };
+    let noon = start("test_auto", None);
+    let dusk = start("test_auto", Some("dusk"));
+    let scene = dusk.map_scene().unwrap();
+    assert_eq!(scene.look.light, "dusk");
+    assert_eq!(noon.map_scene().unwrap().look.light, "noon");
+    // What is shown is the same but for the light's name.
+    let text = dusk.map_text();
+    assert!(
+        text.lines().next().unwrap().ends_with(" light dusk"),
+        "{text}"
+    );
+    assert_eq!(text.replacen(" light dusk", "", 1), noon.map_text());
+    // Line by line, the frame is noon's with a shade on the ground's
+    // pictures: the tileset's own image, not one colour, under the glyphs.
+    let (lit, plain) = (dusk.snapshot(), noon.snapshot());
+    assert_eq!(lit.lines().count(), plain.lines().count());
+    let shade = " shade=350:620,560,460";
+    let mut shaded = 0;
+    for (lit, plain) in lit.lines().zip(plain.lines()) {
+        if lit == plain {
+            assert!(!lit.contains("shade="), "{lit}");
+            continue;
+        }
+        assert_eq!(lit.replacen(shade, "", 1), plain);
+        assert!(lit.starts_with("under sprite "), "{lit}");
+        assert!(lit.contains(" tilesets/test_auto.png "), "{lit}");
+        assert!(!lit.contains("solid="), "{lit}");
+        shaded += 1;
+    }
+    // Every tile of the 15 × 10 map, and the pictures between them.
+    assert!(shaded > 150, "{shaded}");
+    // The units aren't the tileset image's ground: none is shaded.
+    let units = lit.lines().filter(|l| l.contains("tilesets/test_units"));
+    assert!(units.clone().count() > 0);
+    assert!(units.into_iter().all(|l| !l.contains("shade=")));
+    assert_snapshot!(lit);
+    // The glyph skin has no pictures to shade.
+    assert_eq!(
+        start("glyph", Some("dusk")).snapshot(),
+        start("glyph", None).snapshot()
+    );
 }
 
 /// The Quick Battle with the lord selected, under the public tileset with

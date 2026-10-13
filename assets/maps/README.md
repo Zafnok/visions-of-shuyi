@@ -50,7 +50,7 @@ features: {
 ### Look
 
 ```
-look: (tiles: "indoor"),
+look: (tiles: "indoor", light: "dusk"),
 ```
 
 `tiles` names the set of pictures a skin that has pictures paints the
@@ -60,6 +60,14 @@ and so the rules, are the same, and the glyph look ignores it. A tileset
 says what each look is (`assets/tilesets/README.md`); one that lacks a look
 paints the map with its own. The loader keeps it beside the map the rules
 see (`MapDef::look`), never in it (ADR-0038, ADR-0052).
+
+`light` names the light the map is in: one of `assets/data/lighting.ron`
+(`"noon"`, the default: leave it out; `"dusk"`; `"night"`). A skin that
+has pictures shades the ground by it; units, ranges, the cursor and the
+panels keep their colours, and the glyph look ignores it (ADR-0058). A
+battle file may name another light for its own fight
+(`assets/battles/README.md`). Either of `tiles` and `light` may be left
+out.
 
 One character per tile is the *file* format only: on screen each tile is two
 glyphs wide, taken from the terrain's `glyphs` in `terrain.ron` (ADR-0012).
@@ -77,6 +85,7 @@ Each is reported with `file:line:column`, and all are reported at once:
 - a feature outside the map, on a tile no movement type can enter, a shop
   with an empty list (or a blacksmith with a list), a chest with 0 gold;
 - an unknown item id, or a shop listing an item its kind doesn't sell;
-- a `look` whose `tiles` isn't `"outdoor"` or `"indoor"`.
+- a `look` whose `tiles` isn't `"outdoor"` or `"indoor"`;
+- a `look` whose `light` isn't a light of `assets/data/lighting.ron`.
 
 Unused legend entries are allowed.

@@ -368,9 +368,12 @@ fn map_sprite_import_in(root: &Path, args: &[String]) -> u8 {
 
 /// `battler-import` with the repo at `root`.
 fn battler_import_in(root: &Path, args: &[String]) -> u8 {
-    use battler_import::{BACKDROPS, BATTLERS, USAGE, list, run};
+    use battler_import::{BACKDROPS, BATTLERS, USAGE, list, run, write_backdrops_ron};
     match args {
-        [] => match run(root, &BATTLERS, &BACKDROPS) {
+        [] => match run(root, &BATTLERS, &BACKDROPS).and_then(|said| {
+            write_backdrops_ron(root)?;
+            Ok(said)
+        }) {
             Ok(summary) => {
                 println!("{summary}");
                 0

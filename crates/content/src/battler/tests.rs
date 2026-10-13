@@ -1,5 +1,6 @@
 use super::*;
 use crate::image::png_header;
+use crate::lighting::Light;
 
 /// An image table of `files`: bundle path, width, height.
 fn table(files: &[(&'static str, u32, u32)]) -> ImageTable {
@@ -199,8 +200,16 @@ fn terrains() -> TerrainDisplayTable {
     crate::TerrainDef::load(None).unwrap_or_default().display
 }
 
+/// The lights `noon` and `dusk`.
+fn lights() -> Lighting {
+    let dusk = Light::new(0.35, [0.62, 0.56, 0.46]);
+    Lighting {
+        lights: [("noon".to_owned(), Light::PLAIN), ("dusk".to_owned(), dusk)].into(),
+    }
+}
+
 fn backdrops(src: &str) -> Result<Backdrops, Vec<ContentError>> {
-    parse_backdrops("b.ron", src, &images(), Some(&terrains()))
+    parse_backdrops("b.ron", src, &images(), Some(&terrains()), Some(&lights()))
 }
 
 #[test]
@@ -217,6 +226,79 @@ fn a_terrain_has_its_backdrop_or_the_default() {
         Some("battlebacks/fields.png")
     );
     assert_eq!(Backdrops::default().of("plain"), None);
+}
+
+#[test]
+fn a_light_has_its_own_backdrops_or_noons_to_shade() {
+    let b = backdrops(
+        r#"(default: "fields.png", terrain: { "mountain": "hills.png" },
+            lights: { "dusk": (default: "hills.png", terrain: { "peak": "fields.png" }) })"#,
+    )
+    .unwrap();
+    let path = |terrain, light| {
+        let (image, drawn) = b.in_light(terrain, light)?;
+        Some((image.path(), drawn))
+    };
+    // Dusk has pictures: its own for the terrain, else its default.
+    assert_eq!(
+        path(Some("peak"), "dusk"),
+        Some(("battlebacks/fields.png", true))
+    );
+    assert_eq!(
+        path(Some("mountain"), "dusk"),
+        Some(("battlebacks/hills.png", true))
+    );
+    assert_eq!(path(None, "dusk"), Some(("battlebacks/hills.png", true)));
+    // Noon and a light without pictures: noon's, not drawn for the light.
+    for light in ["noon", "night"] {
+        assert_eq!(
+            path(Some("mountain"), light),
+            Some(("battlebacks/hills.png", false))
+        );
+        assert_eq!(
+            path(Some("peak"), light),
+            Some(("battlebacks/fields.png", false))
+        );
+        assert_eq!(path(None, light), Some(("battlebacks/fields.png", false)));
+    }
+    assert_eq!(Backdrops::default().in_light(Some("plain"), "dusk"), None);
+    // No light needs pictures.
+    let plain = backdrops(r#"(default: "fields.png")"#).unwrap();
+    assert!(plain.lights.is_empty());
+}
+
+#[test]
+fn every_problem_of_a_lights_backdrops_is_reported_at_once() {
+    let src = r#"(default: "fields.png", lights: {
+        "dusk": (default: "none.png", terrain: { "swamp": "short.png" }),
+        "midnight": (default: "hills.png"),
+    })"#;
+    assert_eq!(
+        messages(backdrops(src)),
+        [
+            "b.ron: light \"dusk\": default: assets/battlebacks/none.png is not a PNG image in the assets",
+            "b.ron: light \"dusk\": terrain \"swamp\": assets/battlebacks/short.png is 336×247 px; a backdrop is 336×248 px",
+            "b.ron: light \"dusk\": terrain \"swamp\": no such terrain",
+            "b.ron: light \"midnight\": no such light",
+        ]
+    );
+    // Without the lights' file (it failed to load), names aren't checked.
+    let unchecked = parse_backdrops(
+        "b.ron",
+        r#"(default: "fields.png", lights: { "midnight": (default: "hills.png") })"#,
+        &images(),
+        None,
+        None,
+    );
+    assert!(unchecked.is_ok_and(|b| b.lights.contains_key("midnight")));
+    // A light's pictures need a default.
+    assert_eq!(
+        messages(backdrops(
+            r#"(default: "fields.png", lights: { "dusk": (terrain: {}) })"#
+        ))
+        .len(),
+        1
+    );
 }
 
 #[test]
@@ -239,6 +321,7 @@ fn every_problem_of_the_backdrops_is_reported_at_once() {
         "b.ron",
         r#"(default: "fields.png", terrain: { "swamp": "hills.png" })"#,
         &images(),
+        None,
         None,
     );
     assert!(unchecked.is_ok(), "{unchecked:?}");
@@ -274,7 +357,7 @@ fn the_table_needs_both_the_battlers_and_the_backdrops_to_be_right() {
 #[test]
 fn the_shipped_battlers_and_backdrops_load() {
     let images = ImageTable::load().unwrap_or_default();
-    let table = load_all(&images, None);
+    let table = load_all(&images, None, None);
     assert!(table.is_ok(), "{table:?}");
     let table = table.unwrap_or_default();
     assert!(table.battlers.contains_key(DEFAULT_BATTLER));

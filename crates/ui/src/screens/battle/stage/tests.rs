@@ -99,7 +99,7 @@ fn kill() -> Playback {
 fn at(pb: &Playback, t: f32) -> StageView {
     let mut pb = pb.clone();
     pb.tick(t, false);
-    view(&ctx(), &pb, None).unwrap()
+    view(&ctx(), &pb, None, "noon").unwrap()
 }
 
 fn close(a: f32, b: f32) -> bool {
@@ -265,7 +265,8 @@ fn the_backdrop_follows_the_ground_and_the_banner_is_shown() {
     let c = ctx();
     let pb = kill().with_banner(Some("Pinning Shot".to_owned()));
     let on = |ground| {
-        let v = view(&c, &pb, ground).unwrap();
+        let v = view(&c, &pb, ground, "noon").unwrap();
+        assert!(v.shade.is_plain());
         (v.backdrop.map(trpg_content::ImageId::path), v.banner)
     };
     let banner = Some("Pinning Shot".to_owned());
@@ -278,6 +279,39 @@ fn the_backdrop_follows_the_ground_and_the_banner_is_shown() {
         (Some("battlebacks/fields.png"), banner.clone())
     );
     assert_eq!(on(None), (Some("battlebacks/fields.png"), banner));
+}
+
+#[test]
+fn the_backdrop_is_the_lights_own_picture_or_noons_shaded() {
+    let mut c = ctx();
+    let pb = kill();
+    let dusk = c.content.lighting.get("dusk").unwrap();
+    let on = |c: &Ctx, ground, light| {
+        let v = view(c, &pb, ground, light).unwrap();
+        (v.backdrop.map(trpg_content::ImageId::path), v.shade)
+    };
+    // The public backdrops are noon's only: shaded by the map's light.
+    assert!(c.content.battlers.backdrops.lights.is_empty());
+    let fields = Some("battlebacks/fields.png");
+    let mountains = Some("battlebacks/mountains.png");
+    assert_eq!(on(&c, Some("plain"), "dusk"), (fields, dusk));
+    assert_eq!(on(&c, Some("mountain"), "dusk"), (mountains, dusk));
+    assert_eq!(on(&c, None, "dusk"), (fields, dusk));
+    // A light the content doesn't have shades nothing.
+    assert_eq!(on(&c, Some("plain"), "midnight"), (fields, Light::PLAIN));
+    // Pictures drawn for dusk are shown as they are.
+    let backdrops = &mut c.content.battlers.backdrops;
+    let own = trpg_content::battler::BackdropSet {
+        default: backdrops.of("mountain"),
+        terrain: [("peak".to_owned(), backdrops.default.unwrap())].into(),
+    };
+    backdrops.lights.insert("dusk".to_owned(), own);
+    assert_eq!(on(&c, Some("plain"), "dusk"), (mountains, Light::PLAIN));
+    assert_eq!(on(&c, Some("peak"), "dusk"), (fields, Light::PLAIN));
+    assert_eq!(on(&c, None, "dusk"), (mountains, Light::PLAIN));
+    // Night has none of its own still.
+    let night = c.content.lighting.get("night").unwrap();
+    assert_eq!(on(&c, Some("plain"), "night"), (fields, night));
 }
 
 /// A playback of one hit by `attacker` (at `to`) on `defender`.
@@ -419,8 +453,8 @@ fn a_picture_is_the_characters_then_that_of_the_class_then_the_default() {
 fn no_combat_no_stage() {
     let c = ctx();
     let mut pb = kill();
-    assert!(view(&c, &pb, None).is_some());
+    assert!(view(&c, &pb, None, "noon").is_some());
     // At the very end the last combat still shows.
     pb.skip();
-    assert!(view(&c, &pb, None).is_some());
+    assert!(view(&c, &pb, None, "noon").is_some());
 }

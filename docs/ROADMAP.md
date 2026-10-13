@@ -80,7 +80,7 @@ battle map, with per-map lighting and a zoom key): after **0433** and
 **0110**, **0436** units as the bought map sprites (→ **0440** they step
 on the spot and walk along their path) → **0437** terrain from
 the bought tilesets (auto-tiling; done 2026-10-03, ADR-0052) → **0438**
-per-map lighting; **0439** the
+per-map lighting (done 2026-10-12, ADR-0058); **0439** the
 1× / 2× zoom toggle (after 0433; Nick picks its key when it is built).
 Nick wants the bought-art map in his Chapter 1 playtest, so **0432, 0433,
 0436, 0437 and 0440 are on the critical path** (0438 is not; 0439 is since
