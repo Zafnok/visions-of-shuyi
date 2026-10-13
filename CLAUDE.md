@@ -91,3 +91,8 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
   (with the character generators and the original zips) is
   `D:\tactical-rpg\assets-private\`.
 - Git remote: `https://github.com/Zafnok/visions-of-shuyi` (public).
+- **Never write a bare `@word` on GitHub** (PR title or body, commit message,
+  comment, release notes): GitHub turns it into a mention of that user, and
+  the generated release notes then list them as a contributor (it happened
+  in v0.1.0 with `@music`, a dialogue directive). Put it in backticks or
+  drop the `@`. Only mention a real person on purpose.
