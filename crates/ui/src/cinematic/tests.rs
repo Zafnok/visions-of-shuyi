@@ -87,6 +87,26 @@ fn a_time_falls_in_the_shot_that_started_last() {
 }
 
 #[test]
+fn the_last_shot_runs_from_its_start_to_the_end() {
+    let t = test_timeline();
+    assert_eq!(t.last_start_ms(), 6000);
+    assert!(!t.in_last_shot(0));
+    assert!(!t.in_last_shot(5999));
+    assert!(t.in_last_shot(6000));
+    assert!(t.in_last_shot(9999));
+    // Wrapped: the length is the first shot again.
+    assert!(!t.in_last_shot(10_000));
+    assert!(t.in_last_shot(16_000));
+    assert_eq!(
+        Timeline::new(vec![0, 1000, 3000], 4000).last_start_ms(),
+        3000
+    );
+    // One shot is the last one; no shots start at 0.
+    assert!(Timeline::new(vec![0], 500).in_last_shot(0));
+    assert_eq!(Timeline::new(vec![], 500).last_start_ms(), 0);
+}
+
+#[test]
 fn seconds_are_whole_milliseconds_from_zero() {
     let t = test_timeline();
     assert_eq!(t.at(0.0), at(0, 0.0));

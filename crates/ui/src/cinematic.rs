@@ -75,6 +75,16 @@ impl Timeline {
         self.length_ms
     }
 
+    /// When the last shot starts, in milliseconds (0 with no shots).
+    pub fn last_start_ms(&self) -> u32 {
+        self.starts_ms.last().copied().unwrap_or(0)
+    }
+
+    /// Whether `t_ms` (wrapped at the length) falls in the last shot.
+    pub fn in_last_shot(&self, t_ms: u64) -> bool {
+        self.wrapped_ms(t_ms) >= self.last_start_ms()
+    }
+
     /// How long shot `index` lasts, in milliseconds: until the next one
     /// starts, the last until the end. 0 for a shot there isn't.
     pub fn shot_ms(&self, index: usize) -> u32 {

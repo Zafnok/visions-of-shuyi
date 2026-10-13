@@ -289,7 +289,7 @@ fn a_written_save_is_noted_as_the_last_one() {
 }
 
 /// A save whose lead is `name`, of `gender`.
-fn save_of(c: &Ctx, name: &str, gender: LeadGender) -> SaveFile {
+pub(crate) fn save_of(c: &Ctx, name: &str, gender: LeadGender) -> SaveFile {
     let mut save = suspended(c);
     save.campaign.lead = LeadProfile::new(name, gender);
     save

@@ -8,7 +8,9 @@ and 0827,
 one cinematic, loaded by `trpg_content::cinematic` and validated by the
 all-assets test. The file stem is its id. `trpg_ui::cinematic` plays it.
 
-There is none here yet: the title's comes with tickets 0819 and 0820. The
+`title.ron` is the title screen's intro cinematic, which the title plays
+in time with its song (ticket 0819); until ticket 0820 writes its real
+shots it is a stand-in (one pan over the Chapter 1 map, then the logo). The
 test one is `assets-test/cinematics/test.ron` (the debug menu's "Play test
 cinematic" plays it).
 

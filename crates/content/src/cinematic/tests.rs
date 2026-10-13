@@ -76,10 +76,33 @@ fn the_test_cinematic_loads() {
         shot: Shot::Logo,
     };
     assert_eq!(test.shots[3], logo);
-    // The test files hold the only cinematic so far: a build that ships
-    // has none.
-    let shipped = bundle::story_only(|| load_all(Refs::of(&c)));
-    assert_eq!(shipped, Ok(BTreeMap::new()));
+    // A build that ships has the title's alone.
+    let shipped = bundle::story_only(|| load_all(Refs::of(&c))).unwrap();
+    assert_eq!(shipped.keys().collect::<Vec<_>>(), ["title"]);
+    assert_eq!(shipped["title"], c.cinematics["title"]);
+}
+
+/// The title's cinematic is as long as the title song and ends on the
+/// logo, from the song's last note (1:57) to its loop
+/// (`docs/design/title-screen.md`, *Intro cinematic*). Its shots before
+/// that are a stand-in until ticket 0820: a pan over a story battle.
+#[test]
+fn the_title_cinematic_is_as_long_as_its_song_and_ends_on_the_logo() {
+    let c = content();
+    let title = &c.cinematics["title"];
+    assert_eq!(title.music.as_deref(), Some("title"));
+    assert_eq!(title.length_ms, c.audio.music["title"].length_ms);
+    assert_eq!(title.shots[0].at_ms, 0);
+    let logo = ShotDef {
+        at_ms: 117_000,
+        shot: Shot::Logo,
+    };
+    assert_eq!(title.shots.last(), Some(&logo));
+    for shot in &title.shots {
+        if let Shot::MapPan { battle, .. } = &shot.shot {
+            assert_eq!(battle, "ch01");
+        }
+    }
 }
 
 #[test]

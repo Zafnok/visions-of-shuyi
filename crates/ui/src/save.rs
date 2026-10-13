@@ -231,4 +231,4 @@ pub fn playtime_text(seconds: u64) -> String {
 }
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;

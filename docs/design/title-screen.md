@@ -310,6 +310,24 @@ Chapter 1 map by 0820; the mockup's fight was made up.
   its fights). Only the song, and the skip sound.
 - **The skip sound** is the game's sword hit (`hit_sword`) until Nick picks
   one (ticket 0041).
+- **The song fades out on a skip** over the half second every piece of
+  music in the game fades over, instead of cutting dead (ticket 0819).
+  The logo and menu show at once; the song starts again 16.7 seconds
+  after the skip, as long as its own silence lasts.
+- **The logo shot always has the menu** (ticket 0819). If the 15 seconds
+  run out while the logo is up, the menu waits for the song to loop.
+  Example: the player moves the cursor a moment after the logo appears;
+  15 seconds later the logo is still up, so the menu stays until the song
+  starts again, then fades.
+- **A press while the menu is fading out** brings the menu straight back
+  and counts as a normal menu press (ticket 0819). Example: the menu
+  starts to fade and the player presses down; the menu is back at once
+  with the cursor one line lower.
+- **While the song has not started yet** (its file is still loading), the
+  cinematic waits at its first picture for up to 3 seconds, then runs
+  without the song (ticket 0819).
+- **The stand-in cinematic** (ticket 0819, until 0820): one slow pan over
+  the Chapter 1 battlefield, from the party to the fort, then the logo.
 - **Snippet length:** each dialogue shot shows as many opening boxes of its
   scene as can be read comfortably in its time (0818's timing; 0820 sets
   the counts).

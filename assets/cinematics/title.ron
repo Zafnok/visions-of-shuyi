@@ -1,0 +1,15 @@
+// The title screen's intro cinematic (docs/design/title-screen.md, *Intro
+// cinematic*), played in time with the title song by the title screen
+// (ticket 0819).
+//
+// A STAND-IN until ticket 0820 writes the storyboard's shots: one slow pan
+// over the Chapter 1 battlefield, from the party in Harrowby to the
+// toll-fort, then the logo from the song's last note (1:57) to its loop.
+(
+    id: "title",
+    length: Music("title"),
+    shots: [
+        (at: 0.0, shot: MapPan(battle: "ch01", from: (5, 12), to: (18, 4), zoom: 3)),
+        (at: 117.0, shot: Logo),
+    ],
+)

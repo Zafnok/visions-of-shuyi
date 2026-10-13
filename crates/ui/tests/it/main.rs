@@ -28,4 +28,5 @@ mod split_keys;
 mod sprite_test;
 mod threat;
 mod title;
+mod title_cinematic;
 mod voice;

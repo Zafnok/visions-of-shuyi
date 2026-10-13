@@ -3,13 +3,40 @@
 //! ([`TitleScreen::view`](super::TitleScreen::view)) and a skin paints it
 //! ([`super::glyph::paint`] today); see ADR-0054.
 
+use std::rc::Rc;
+
 use trpg_content::ImageId;
 
+use crate::cinematic::CinematicPlayer;
 use crate::widgets::MenuView;
 
+/// As solid or as bright as can be ([`TitleView::menu_opacity`],
+/// [`CinematicView::brightness`]).
+pub const FULL: u8 = 255;
+
+/// The intro cinematic as the title shows it this frame (ticket 0819).
+#[derive(Debug, Clone, PartialEq)]
+pub struct CinematicView {
+    /// What plays; it draws any moment of itself.
+    pub player: Rc<CinematicPlayer>,
+    /// The moment, in milliseconds from the cinematic's start.
+    pub t_ms: u32,
+    /// How bright it is, up to [`FULL`]. The title's own picture (the
+    /// backdrop, the sparks, the logo) shows over it as solid as the
+    /// cinematic is dark: at [`FULL`] not at all.
+    pub brightness: u8,
+}
+
 /// The whole screen, as it is this frame.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TitleView {
+    /// The cinematic behind everything; `None` while the title shows its
+    /// own picture alone.
+    pub cinematic: Option<CinematicView>,
+    /// How solid the menu, its notice, the prompt and the help line are,
+    /// up to [`FULL`]: they fade out before the cinematic and in on its
+    /// logo.
+    pub menu_opacity: u8,
     /// The picture behind the logo this launch; `None` when the game has
     /// none.
     pub backdrop: Option<ImageId>,
