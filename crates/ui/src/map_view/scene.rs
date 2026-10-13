@@ -1,7 +1,8 @@
 //! What is on the visible battle map, as plain data (ADR-0038): terrain
 //! (flashing where it just changed, or marked with what a spell would turn
-//! it into), ranges, units, the cursor and the path. No colours, glyphs, cells or
-//! pixels: a [`MapSkin`](super::MapSkin) turns a scene into those.
+//! it into), ranges, units, the cursor, the path and the enemies that
+//! threaten a tile. No colours, glyphs, cells or pixels: a
+//! [`MapSkin`](super::MapSkin) turns a scene into those.
 
 use std::fmt::Write as _;
 
@@ -37,6 +38,9 @@ pub struct MapScene {
     /// The selected unit's path, its own tile first; empty = none. Its
     /// tiles may lie outside the view.
     pub path: Vec<Pos>,
+    /// The enemies that could attack a tile a unit of the player's stands
+    /// on or is about to move to (0448); `None` = nothing to show.
+    pub threat: Option<ThreatView>,
     /// The screen's animation clock, in milliseconds: what a skin moves
     /// its marks by (a sprite unit's effect arrows bounce and take turns).
     /// It only ever goes forward.
@@ -260,6 +264,17 @@ pub struct CursorView {
     pub style: CursorStyle,
 }
 
+/// The enemies that could attack a tile in their next phase
+/// (`docs/design/turn-structure.md`, *Threat arrows*).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ThreatView {
+    /// The tile they could attack.
+    pub tile: Pos,
+    /// The tiles those enemies stand on, in the battle's order; never
+    /// empty. They may lie outside the view.
+    pub enemies: Vec<Pos>,
+}
+
 impl MapScene {
     /// A view of `size` tiles from `origin` with nothing on it: every tile
     /// off the map. A negative size counts as zero.
@@ -275,6 +290,7 @@ impl MapScene {
             units: Vec::new(),
             cursor: None,
             path: Vec::new(),
+            threat: None,
             clock_ms: 0,
         }
     }
@@ -453,7 +469,9 @@ impl MapScene {
     /// faces the camera), how far it is towards the next tile
     /// (`offset=(0.50,0.00)`) and its walking frame (`frame=0`). The frame
     /// of a unit stepping on the spot isn't shown: it goes by the clock
-    /// alone. The cursor's number is its brightness.
+    /// alone. The cursor's number is its brightness. A last line,
+    /// `threat (5,3) from (6,3) (9,1)`, is there only when enemies
+    /// threaten a tile: the tile, then where each of them stands.
     // check-text: not player text (the scene as text, for tests)
     pub fn to_text(&self, content: &Content) -> String {
         let mut out = String::new();
@@ -493,6 +511,14 @@ impl MapScene {
             let _ = write!(out, " ({},{})", p.x, p.y);
         }
         out.push('\n');
+        if let Some(threat) = &self.threat {
+            let Pos { x, y } = threat.tile;
+            let _ = write!(out, "threat ({x},{y}) from");
+            for p in &threat.enemies {
+                let _ = write!(out, " ({},{})", p.x, p.y);
+            }
+            out.push('\n');
+        }
         out
     }
 
@@ -662,6 +688,7 @@ mod tests {
         assert_eq!(s.tiles, vec![TileView::default(); 8]);
         assert_eq!(s.tiles[0].terrain, None);
         assert!(s.units.is_empty() && s.path.is_empty() && s.cursor.is_none());
+        assert_eq!(s.threat, None);
         assert_eq!(s.clock_ms, 0);
         // The ring round a 4 × 2 view: 6 above, 6 below, 2 at each side.
         assert_eq!(s.rim, vec![None; 16]);
@@ -1006,6 +1033,14 @@ mod tests {
              cursor (1,3) corners 0.76\n\
              path (1,3) (1,2)\n"
         );
+        // Enemies threatening a tile add a line: the tile, then theirs.
+        s.threat = Some(ThreatView {
+            tile: p(1, 2),
+            enemies: vec![p(0, 2), p(9, -4)],
+        });
+        let text = s.to_text(&c.content);
+        let end = "path (1,3) (1,2)\nthreat (1,2) from (0,2) (9,-4)\n";
+        assert!(text.ends_with(end), "{text}");
     }
 
     #[test]

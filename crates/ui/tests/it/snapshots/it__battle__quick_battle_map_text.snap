@@ -1,5 +1,5 @@
 ---
-source: crates/ui/tests/battle.rs
+source: crates/ui/tests/it/battle.rs
 expression: start
 ---
 origin (-10,-11) size 35x30
@@ -44,3 +44,4 @@ units 8
   #8 Ma player mage [test_mage] (3,6) hp 16/16
 cursor (3,5) corners 0.99
 path -
+threat (3,5) from (7,4)

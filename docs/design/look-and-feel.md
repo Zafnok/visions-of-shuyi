@@ -497,7 +497,13 @@ over each enemy, a red frame around each enemy, lines and marks). The rule
   hidden.
 - *Claude's starting rules (Nick can veto):*
   - **The glyph look** gets the same arrows and marks, drawn over the
-    glyphs. Nick saw only the bought-art look.
+    glyphs. Nick saw only the bought-art look. One difference (ticket
+    0448): there an arrow starts at the **edge of the enemy's tile**, not
+    its middle, so it never covers the enemy's two letters (the path line
+    starts at its unit's edge for the same reason).
+  - The arrows are in the palette's `enemy` colour and the marks in
+    `text_highlight`, both edged in `black`, so they follow the colour
+    theme (ticket 0448).
   - The mark is drawn in front of a unit standing in the tile above, and
     on the map view's top row it is moved down to stay inside the view.
   - Neither moves or blinks.

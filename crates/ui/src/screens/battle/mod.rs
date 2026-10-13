@@ -49,6 +49,7 @@ pub mod tips;
 pub mod units;
 pub mod walk;
 
+use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::fmt::Display;
 use trpg_content::{Content, MapLook, Present, TipTrigger, battle_campaign};
@@ -57,7 +58,7 @@ use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
     LeadGender, LeadProfile, Outcome, Phase, Pos, StatValue, TileSet, Unit, UnitId, danger_zone,
-    next_command,
+    next_command, threats_at,
 };
 
 use self::ai_phase::{AiAction, PACING};
@@ -83,7 +84,7 @@ use crate::color::Rgb;
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
-use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, UnitView};
+use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, ThreatView, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{draw_tip, fill_placeholders};
@@ -223,6 +224,33 @@ pub fn danger_tiles(state: &BattleState) -> TileSet {
     .unwrap_or_else(|_| TileSet::new(tiles.width(), tiles.height()))
 }
 
+/// Where the enemies stand that could attack unit `unit` in their next
+/// phase if it stood on `tile` ([`threats_at`] with each unit's attack
+/// ranges), in the battle's order; none if it can't be worked out.
+pub fn threat_enemies(state: &BattleState, unit: UnitId, tile: Pos) -> Vec<Pos> {
+    let ids = threats_at(
+        state.map(),
+        state.terrain(),
+        state.classes(),
+        state.units(),
+        unit,
+        tile,
+        |u| u.attack_ranges(state.classes(), state.items(), state.spells()),
+    )
+    .unwrap_or_default();
+    let at = ids.into_iter().filter_map(|id| state.unit(id));
+    at.map(|u| u.pos).collect()
+}
+
+/// The answer of [`threat_enemies`] for a unit on a tile, kept by the
+/// screen so that it isn't worked out again every frame.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct KeptThreat {
+    unit: UnitId,
+    tile: Pos,
+    enemies: Vec<Pos>,
+}
+
 /// Something the battle screen shows once no combat is playing, one at a
 /// time in order.
 #[derive(Debug, Clone, PartialEq)]
@@ -275,6 +303,11 @@ pub struct BattleScreen {
     mode: Mode,
     /// The danger zone, while shown (recomputed after every command).
     danger: Option<TileSet>,
+    /// The threat arrows last worked out (0448): the unit and the tile
+    /// they were for, and where the enemies stand
+    /// ([`threat_enemies`]). Kept until the scene asks about another unit
+    /// or tile, and dropped whenever the battle changes.
+    threats: RefCell<Option<KeptThreat>>,
     /// Auto-end: end the player phase when its last unit has acted. Off by
     /// default (`docs/design/turn-structure.md`, ticket 0420). The
     /// player's setting ([`Settings::auto_end_turn`]), read at the start
@@ -386,6 +419,7 @@ impl BattleScreen {
             outcome_music: OutcomeMusic::Unheard,
             state,
             danger: None,
+            threats: RefCell::new(None),
             auto_end: false,
             show_fights: true,
             end_armed: false,
@@ -1069,6 +1103,7 @@ impl BattleScreen {
             if self.danger.is_some() {
                 self.danger = Some(danger_tiles(&self.state));
             }
+            self.threats.take();
             // Checked (phase, units ready) once back to browsing.
             self.end_armed = true;
             let told = (&self.state, self.language.words());
@@ -1232,6 +1267,7 @@ impl BattleScreen {
                 // The screen only confirms a listed point with a charge left.
                 if let Ok(state) = self.history.rewind_to(point) {
                     self.state = state;
+                    self.threats.take();
                     self.mode = Mode::after_command(&self.state);
                     self.queue.clear();
                     self.progress = None;
@@ -1587,7 +1623,67 @@ impl BattleScreen {
         if let Mode::Selected(sel) = &self.mode {
             scene.path.clone_from(&sel.path);
         }
+        scene.threat = self.threat_view();
         scene
+    }
+
+    /// The unit of the player's and the tile the threat arrows are for
+    /// (`docs/design/turn-structure.md`, *Threat arrows*), in the player's
+    /// phase of a battle still running:
+    ///
+    /// - browsing with the cursor on one of the player's units (one that
+    ///   has acted too): that unit where it stands;
+    /// - a unit selected and the cursor on a tile it can stop on, or on an
+    ///   enemy the path is aimed at: the unit at its path's end;
+    /// - the unit walking there, and then its action menu and the lists
+    ///   that opens: the same. Not while a target is picked (the forecast).
+    fn threat_target(&self) -> Option<(UnitId, Pos)> {
+        if self.state.phase() != Phase::Player || self.state.outcome().is_some() {
+            return None;
+        }
+        match &self.mode {
+            Mode::Idle { .. } => {
+                let unit = self.hovered()?;
+                (unit.faction == Faction::Player).then_some((unit.id, unit.pos))
+            }
+            Mode::Selected(sel) => {
+                let dest = sel.dest();
+                let pointed = self.cursor.pos == dest || sel.target.is_some();
+                (pointed && sel.reach.is_stoppable(dest)).then_some((sel.unit, dest))
+            }
+            Mode::Moving { sel, .. }
+            | Mode::ActionMenu { sel, .. }
+            | Mode::ArtsMenu { sel, .. }
+            | Mode::SpellMenu { sel, .. }
+            | Mode::SkillMenu { sel, .. }
+            | Mode::ItemMenu { sel, .. }
+            | Mode::EquipMenu { sel, .. } => Some((sel.unit, sel.dest())),
+            _ => None,
+        }
+    }
+
+    /// The threat arrows to show: the tile [`threat_target`] gives and
+    /// the enemies that could attack its unit there, if any can. Worked out
+    /// once for a unit and a tile, then kept until either changes or the
+    /// battle does.
+    ///
+    /// [`threat_target`]: Self::threat_target
+    fn threat_view(&self) -> Option<ThreatView> {
+        let (unit, tile) = self.threat_target()?;
+        let mut kept = self.threats.borrow_mut();
+        let enemies = match &*kept {
+            Some(k) if (k.unit, k.tile) == (unit, tile) => k.enemies.clone(),
+            _ => {
+                let enemies = threat_enemies(&self.state, unit, tile);
+                *kept = Some(KeptThreat {
+                    unit,
+                    tile,
+                    enemies: enemies.clone(),
+                });
+                enemies
+            }
+        };
+        (!enemies.is_empty()).then_some(ThreatView { tile, enemies })
     }
 
     /// Lays the danger zone on `scene`, if shown, then the mode's ranges
@@ -2362,6 +2458,8 @@ mod skill_tests;
 #[cfg(test)]
 mod sound_tests;
 
+#[cfg(test)]
+mod threat_tests;
 #[cfg(test)]
 mod tip_tests;
 
