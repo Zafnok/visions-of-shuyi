@@ -1,4 +1,4 @@
-//! "Play test cinematic" (debug builds, ticket 0817): plays
+//! "Play test cinematic" (debug builds, tickets 0817, 0818): plays
 //! `assets-test/cinematics/test.ron` on the screen's own frame clock,
 //! looping, until Cancel. For watching a cinematic file by eye.
 
@@ -30,11 +30,12 @@ impl CinematicScreen {
     pub const NAME: &'static str = "cinematic";
 
     /// The test cinematic at its start, its logo over the first of the
-    /// title's backdrops.
+    /// title's backdrops, with the lead a game without a save has.
     pub fn new(ctx: &Ctx) -> Self {
         let backdrop = ctx.content.title.backdrops.first().copied();
         Self {
-            player: CinematicPlayer::new(ctx, TEST_CINEMATIC).map(|p| p.with_backdrop(backdrop)),
+            player: CinematicPlayer::new(ctx, TEST_CINEMATIC, None)
+                .map(|p| p.with_backdrop(backdrop)),
             time: 0.0,
         }
     }
@@ -135,8 +136,14 @@ mod tests {
         assert!((screen.time() - 2.5).abs() < 1e-4);
         screen.update(&mut ctx, &frame(&[], 4.0));
         assert!((screen.time() - 6.5).abs() < 1e-4);
+        assert!(matches!(shown(&ctx, &screen), Frame::Talk { .. }));
+        screen.update(&mut ctx, &frame(&[], 5.0));
+        assert!(matches!(shown(&ctx, &screen), Frame::Characters { .. }));
+        screen.update(&mut ctx, &frame(&[], 5.0));
+        assert!((screen.time() - 16.5).abs() < 1e-4);
         assert_eq!(shown(&ctx, &screen), Frame::Logo { sparks: None });
-        // Ten seconds long: 6.5 + 4 is half a second into the next round.
+        // Twenty seconds long: 16.5 + 4 is half a second into the next
+        // round.
         screen.update(&mut ctx, &frame(&[], 4.0));
         assert!((screen.time() - 0.5).abs() < 1e-3, "{}", screen.time());
         assert!(matches!(shown(&ctx, &screen), Frame::MapPan { .. }));
@@ -169,7 +176,7 @@ mod tests {
         assert!(!buf.get(50, last).unwrap().see_through);
         // The logo is over the title's first backdrop.
         let first = ctx.content.title.backdrops[0];
-        screen.update(&mut ctx, &frame(&[], 4.0));
+        screen.update(&mut ctx, &frame(&[], 14.0));
         let logo = draw(&ctx, &screen);
         assert!(logo.backdrop().is_none());
         assert!(logo.sprites().iter().any(|s| s.image == first));

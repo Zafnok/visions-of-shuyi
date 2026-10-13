@@ -12,6 +12,9 @@ use crate::portrait::dim_opacity;
 use crate::screen::tests::ctx;
 use crate::settings::TextSpeed;
 
+/// Row of the name plates: the one under the portrait frames.
+const PLATE_Y: i32 = 19;
+
 /// One frame of `dt` seconds with `actions`, Confirm held if `held`.
 fn frame(actions: &[Action], dt: f32, held: bool) -> FrameInput {
     let held = if held { vec![Action::Confirm] } else { vec![] };

@@ -1,6 +1,6 @@
 # Cinematic files (`.ron`)
 
-A cinematic is a list of **shots** and when each starts (ticket 0817,
+A cinematic is a list of **shots** and when each starts (tickets 0817, 0818,
 [ADR-0060](../../docs/adr/0060-cinematics-a-file-of-timed-shots-drawn-from-the-time-alone.md);
 `docs/design/title-screen.md`, *Intro cinematic*). Each `*.ron` file here is
 one cinematic, loaded by `trpg_content::cinematic` and validated by the
@@ -16,7 +16,9 @@ cinematic" plays it).
     length: Music("title"),
     shots: [
         (at: 0.0, shot: MapPan(battle: "ch01", from: (4, 9), to: (12, 3.5), zoom: 2)),
-        (at: 6.0, shot: Logo),
+        (at: 15.0, shot: Talk(scene: "ch01_intro", first: 0, count: 3)),
+        (at: 31.0, shot: Characters(who: ["lead", "retainer"], expression: "neutral")),
+        (at: 117.0, shot: Logo),
     ],
 )
 ```
@@ -57,5 +59,57 @@ its art's own size, whatever zoom the player has the battle map at.
 The title's logo over the title's backdrop, with its sparks
 (`assets/title/README.md`), drawn by the title screen's own code.
 
-More kinds come with tickets 0818 (characters, conversation snippets),
-0827 (units that march and fight) and 1010 (the overworld).
+### `Talk(scene, first, count)`
+
+Text boxes of a dialogue scene (`assets/dialogue/`) playing by themselves
+in the dialogue screen's look: portraits, name plates, the caption, the
+text typing out. Nothing waits for a key, so there is no `▼` and no key
+name. The lines are whatever the script file says; the cinematic has no
+text of its own.
+
+| Field | Meaning |
+| ----- | ------- |
+| `scene` | The scene's id. |
+| `first` | The first text box shown, counted from `0`. A text box is a speech or narration line; the scene is read with everyone there (every `@if` block plays its first part). |
+| `count` | How many text boxes are shown, at least `1`. |
+
+- The boxes must come **before the scene's first `@choice`**: a cinematic
+  never shows a reply choice.
+- Each box must fit **one page** of the text box (3 lines of 92), with the
+  lead's name and every name at its longest: a cinematic turns no pages.
+- Each box gets an equal share of the shot. Its text types out at the
+  player's text speed (Options), faster if it would otherwise be whole for
+  less than the last third of its share, and then holds. Rule of thumb:
+  give a box about 4 seconds, more for three full lines.
+- `{lead}` and the lead's pronouns are those of the lead the cinematic
+  shows (below).
+
+### `Characters(who, expression, from)`
+
+Faces in the dialogue screen's portrait frames, each with its name under
+it, crossing the screen one after another at one speed. The shot starts
+with the first face just off the edge and ends when the last has just
+left by the other; with a face in the middle of the screen, half of the
+next one is in.
+
+| Field | Meaning |
+| ----- | ------- |
+| `who` | The characters (`assets/data/characters.ron`), in the order they cross. At least one. |
+| `expression` | The expression every face wears. Each character's portrait must have it; a character without a portrait gets an empty frame, and the expression must then be a standard one. |
+| `from` | `Right` (the default; may be left out) or `Left`: the side they come in from. A face looks the way it is going. |
+
+The name is the character's short name (`<id>.first` in
+`assets/data/names.ron`, ticket 0712), or the whole name if it has none.
+
+Six faces need about 19 seconds (the title's storyboard); fewer seconds
+make them cross faster.
+
+### The lead in `Talk` and `Characters`
+
+Both show the lead of **the most recent save**: the name and the look the
+player chose (Nick, ticket 0036). Without a save, the names table's name
+for the lead and the male look, `lead_m`. The game notes which save was
+written last under the storage key `last_save`.
+
+More kinds come with tickets 0827 (units that march and fight) and 1010
+(the overworld).

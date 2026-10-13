@@ -1,14 +1,20 @@
-//! The "Play test cinematic" debug tool through the Harness (ticket 0817,
-//! ADR-0060): `assets-test/cinematics/test.ron` plays on the screen's own
-//! clock (a pan over the test battle's map for six seconds, a hard cut to
-//! the logo for four), loops, and closes on Cancel.
+//! The "Play test cinematic" debug tool through the Harness (tickets 0817,
+//! 0818, ADR-0060): `assets-test/cinematics/test.ron` plays on the screen's
+//! own clock (a pan over the test battle's map for six seconds, two text
+//! boxes of the test scene for four, three faces crossing for six, the
+//! logo for four, each after a hard cut), loops, and closes on Cancel.
 
 use insta::assert_snapshot;
-use trpg_ui::cinematic::Frame;
+use trpg_content::new_campaign;
+use trpg_core::{GameMode, LeadGender, LeadProfile, SaveFile};
+use trpg_ui::cinematic::{CinematicPlayer, Frame};
+use trpg_ui::color::UiColor;
+use trpg_ui::console::{CONSOLE_H, CONSOLE_W};
 use trpg_ui::debug::CinematicScreen;
-use trpg_ui::glyph_buffer::Rect;
+use trpg_ui::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::save;
 
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);
 
@@ -60,14 +66,63 @@ fn the_test_cinematic_plays_cuts_to_the_logo_and_loops() {
     // Just before the cut it is nearly at its end.
     h.wait(2.9);
     assert!(pan_x(&h) > 23.9, "{}", pan_x(&h));
-    // The logo: a hard cut, no map behind it.
-    h.wait(1.1);
+    // A hard cut to the dialogue screen's look, no map behind it: the
+    // first box's text typing out, the lord speaking on the left.
+    h.wait(0.3);
+    let Frame::Talk { index: 0, shown } = frame(&h) else {
+        panic!("not the first box: {:?}", frame(&h));
+    };
+    assert!((10..=14).contains(&shown), "{shown}");
+    let typing = h.snapshot();
+    assert!(!typing.contains("--- backdrop"));
+    assert!(typing.contains("It's always") && !typing.contains("about you."));
+    assert_snapshot!("cinematic_talk_typing", typing);
+    // Typed out, it holds.
+    h.wait(7.5 - time(&h));
+    assert_eq!(
+        frame(&h),
+        Frame::Talk {
+            index: 0,
+            shown: 22
+        }
+    );
+    let held = h.snapshot();
+    assert!(held.contains("It's always about you."));
+    // Nothing waits for a key: no key name, no ▼.
+    assert!(!held.contains('▼'));
+    assert_snapshot!("cinematic_talk_held", held);
+    // The second box, to the lead a game without a save has.
+    h.wait(9.5 - time(&h));
+    assert_eq!(
+        frame(&h),
+        Frame::Talk {
+            index: 1,
+            shown: 29
+        }
+    );
+    assert!(h.snapshot().contains("Ellery! You came back for us."));
+    // The faces: the lead reaches the middle of the screen while the lord
+    // is half in behind.
+    h.wait(11.0 - time(&h));
+    for _ in 0..600 {
+        if matches!(frame(&h), Frame::Characters { x, .. } if x <= 33) {
+            break;
+        }
+        h.wait(1.0 / 240.0);
+    }
+    assert_eq!(frame(&h), Frame::Characters { x: 33, step: 50 });
+    let faces = h.snapshot();
+    assert!(faces.contains("Ellery") && faces.contains("Test "));
+    assert!(!faces.contains("Knight"));
+    assert_snapshot!("cinematic_faces", faces);
+    // The logo: a hard cut again.
+    h.wait(16.5 - time(&h));
     assert_eq!(frame(&h), Frame::Logo { sparks: None });
     let logo = h.snapshot();
     assert!(!logo.contains("--- backdrop"));
     assert_snapshot!("cinematic_logo", logo);
-    // Ten seconds in, it starts again.
-    h.wait(3.5);
+    // Twenty seconds in, it starts again.
+    h.wait(4.0);
     assert!(time(&h) < 1.0, "{}", time(&h));
     assert!(pan_x(&h) < 1.0);
     // Nothing but Cancel does anything, and nothing makes a sound.
@@ -108,4 +163,59 @@ fn it_follows_the_map_skin_in_use() {
     // The test tileset: 14 × 8 tiles of 24 px, in whole cells.
     assert_eq!((scene.width(), scene.height()), (42, 12));
     assert!(!scene.sprites().is_empty());
+}
+
+/// The frame of `player` at `t`, drawn as the debug tool draws it.
+fn drawn(h: &Harness, player: &CinematicPlayer, t: f32) -> GlyphBuffer {
+    let ctx = h.game().ctx();
+    let p = &ctx.palette;
+    let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
+    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    player.draw(ctx, t, 1.0, &mut buf);
+    buf
+}
+
+#[test]
+fn the_lead_is_the_most_recent_saves_and_the_default_without_one() {
+    let mut h = Harness::with_layout(Layout::RightHanded);
+    let face = |h: &Harness, id: &str| {
+        let portrait = &h.game().ctx().content.portraits[id];
+        portrait.expression("neutral").unwrap().image
+    };
+    // What the second text box (9.5 s) and the faces with the lead in the
+    // middle (11.73 s) show: the text, and the portraits drawn.
+    let shown = |h: &Harness| {
+        let ctx = h.game().ctx();
+        let lead = save::latest_lead(ctx.storage.as_ref());
+        let player = CinematicPlayer::new(ctx, "test", lead).unwrap();
+        let (talk, faces) = (drawn(h, &player, 9.5), drawn(h, &player, 11.73));
+        let images =
+            |buf: &GlyphBuffer| -> Vec<_> { buf.sprites().iter().map(|s| s.image).collect() };
+        let text = [
+            talk.to_snapshot(&ctx.palette),
+            faces.to_snapshot(&ctx.palette),
+        ];
+        (text, images(&talk), images(&faces))
+    };
+    // No save: the default name and the male look.
+    let ([talk, faces], in_talk, in_faces) = shown(&h);
+    assert!(talk.contains("Ellery! You came back for us."));
+    assert!(faces.contains("Ellery"));
+    assert_eq!(in_talk, [face(&h, "lead_m")]);
+    assert_eq!(in_faces, [face(&h, "lead_m"), face(&h, "test_lord")]);
+    // A save whose lead was renamed and has the other look.
+    let lead = LeadProfile::new("Mara", LeadGender::Female);
+    let campaign = new_campaign(&h.game().ctx().content, GameMode::Classic, lead);
+    let file = SaveFile::chapter_cleared(campaign);
+    save::write(h.ctx_mut().storage.as_mut(), &save::slot_key(4), &file).unwrap();
+    let ([talk, faces], in_talk, in_faces) = shown(&h);
+    assert!(talk.contains("Mara! You came back for us."));
+    assert!(faces.contains("Mara") && !faces.contains("Ellery"));
+    assert!(!talk.contains("Ellery"));
+    assert_eq!(in_talk, [face(&h, "lead_f")]);
+    assert_eq!(in_faces, [face(&h, "lead_f"), face(&h, "test_lord")]);
+    // The debug tool plays it with the default lead whatever is saved.
+    h.keys("F2 Up Up Up f");
+    h.wait(9.5);
+    assert!(h.snapshot().contains("Ellery! You came back for us."));
 }

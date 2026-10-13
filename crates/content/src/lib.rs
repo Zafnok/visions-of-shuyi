@@ -237,7 +237,8 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         scenes,
         audio.as_ref().ok(),
     );
-    let cinematics = load_cinematics(battles.as_ref().ok(), audio.as_ref().ok());
+    let (fields, songs) = (battles.as_ref().ok(), audio.as_ref().ok());
+    let cinematics = load_cinematics(fields, songs, scenes, (cast, faces, known));
     let credits = credits::load(audio.as_ref().ok());
     let supports = support::load(characters.as_ref().ok(), scenes);
     let dialogue = check_presence(
@@ -607,18 +608,40 @@ fn load_title(images: Option<&ImageTable>) -> Result<TitleArt, Vec<ContentError>
     }
 }
 
-/// The cinematics, checked against the battles and the music they name.
-/// Skipped (none, no errors) when the audio failed, or when there are no
-/// battles: they failed, or were skipped because what they need failed.
+/// The cinematics, checked against the battles, the music, the scenes and
+/// the characters (`people`: the characters, their portraits, the names)
+/// they name. Skipped (none, no errors) when one of those failed, or when
+/// there are no battles: they failed, or were skipped because what they
+/// need failed.
 fn load_cinematics(
     battles: Option<&BTreeMap<String, BattleDef>>,
     audio: Option<&AudioManifest>,
+    scenes: Option<&DialogueTable>,
+    people: People<'_>,
 ) -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
-    match (battles.filter(|b| !b.is_empty()), audio) {
-        (Some(battles), Some(audio)) => cinematic::load_all(battles, audio),
-        _ => Ok(BTreeMap::new()),
-    }
+    let battles = battles.filter(|b| !b.is_empty());
+    let (Some(battles), Some(audio), Some(scenes)) = (battles, audio, scenes) else {
+        return Ok(BTreeMap::new());
+    };
+    let (Some(characters), Some(portraits), Some(names)) = people else {
+        return Ok(BTreeMap::new());
+    };
+    cinematic::load_all(cinematic::Refs {
+        battles,
+        audio,
+        scenes,
+        characters,
+        portraits,
+        names,
+    })
 }
+
+/// The characters, their portraits and the names table, each if it loaded.
+type People<'a> = (
+    Option<&'a CharacterTable>,
+    Option<&'a BTreeMap<String, Portrait>>,
+    Option<&'a Names>,
+);
 
 /// Loader results for the unit data (kept together to keep [`assemble`]'s
 /// argument list short).
@@ -853,7 +876,17 @@ mod tests {
     }
 
     fn ok_cinematics() -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
-        load_cinematics(ok_story().0.ok().as_ref(), audio::load().ok().as_ref())
+        let faces = ok_portraits().ok();
+        load_cinematics(
+            ok_story().0.ok().as_ref(),
+            audio::load().ok().as_ref(),
+            ok_dialogue().ok().as_ref(),
+            (
+                ok_characters().ok().as_ref(),
+                faces.as_ref(),
+                names::load().ok().as_ref(),
+            ),
+        )
     }
 
     fn ok_portraits() -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
@@ -1148,16 +1181,26 @@ mod tests {
     }
 
     #[test]
-    fn the_cinematics_are_skipped_without_battles_or_audio() {
+    fn the_cinematics_are_skipped_without_what_they_name() {
         let (battles, audio) = (ok_story().0.ok(), audio::load().ok());
+        let (scenes, cast) = (ok_dialogue().ok(), ok_characters().ok());
+        let (faces, names) = (ok_portraits().ok(), names::load().ok());
+        let (b, a, s) = (battles.as_ref(), audio.as_ref(), scenes.as_ref());
+        let people = (cast.as_ref(), faces.as_ref(), names.as_ref());
         let none = BTreeMap::new();
-        assert_eq!(load_cinematics(None, audio.as_ref()), Ok(BTreeMap::new()));
-        assert_eq!(
-            load_cinematics(Some(&none), audio.as_ref()),
-            Ok(BTreeMap::new())
-        );
-        assert_eq!(load_cinematics(battles.as_ref(), None), Ok(BTreeMap::new()));
-        let loaded = load_cinematics(battles.as_ref(), audio.as_ref());
+        let skipped = [
+            load_cinematics(None, a, s, people),
+            load_cinematics(Some(&none), a, s, people),
+            load_cinematics(b, None, s, people),
+            load_cinematics(b, a, None, people),
+            load_cinematics(b, a, s, (None, people.1, people.2)),
+            load_cinematics(b, a, s, (people.0, None, people.2)),
+            load_cinematics(b, a, s, (people.0, people.1, None)),
+        ];
+        for loaded in skipped {
+            assert_eq!(loaded, Ok(BTreeMap::new()));
+        }
+        let loaded = load_cinematics(b, a, s, people);
         assert!(loaded.is_ok_and(|c| c.contains_key("test")));
     }
 
