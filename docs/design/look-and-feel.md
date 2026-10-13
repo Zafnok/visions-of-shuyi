@@ -257,6 +257,14 @@ so they aren't in this repository (ADR-0032).
   no corner mark** (decided 2026-10-03, ticket 0436: Nick was shown the
   game's own frames with the outline alone and with a 3×3 corner mark in
   the tile's top-left, and picked "Outline alone").
+  **The player's outline is a deeper blue** than the side's blue used
+  elsewhere (`player_outline`, `#2a60ff`; decided 2026-10-13, ticket 0447).
+  Nick, playing Chapter 1: "the blue outline is hard to see for
+  friendlies, the red is very clear." Shown the game's frames with a
+  deeper blue, cyan, a 2-pixel outline, a dark edge and mixes of them, he
+  picked the deeper blue at 1 pixel: "A1 looks good". The other sides'
+  outlines, the width, and the blue of names and of the glyph look are
+  unchanged. It is the same in every color theme, as the tiles are.
 - **An acted sprite unit** is drawn grey and darker, as in the renders;
   its outline dims with it. A change of brightness, not of hue, like the
   glyph look's rule. Each pixel goes 75% of the way to its own grey and is

@@ -5,10 +5,10 @@ type: tuning
 milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-13
 ---
 
 # 0447 — The player's blue outline, easier to see
@@ -72,11 +72,11 @@ standing next to each other. Expect more than one round.
 
 ## Acceptance criteria
 
-- [ ] `look-and-feel.md` records Nick's pick, with the date.
-- [ ] The outline is what he picked, with a test naming its rectangles
+- [x] `look-and-feel.md` records Nick's pick, with the date.
+- [x] The outline is what he picked, with a test naming its rectangles
       and colour.
-- [ ] Every glyph-skin snapshot is unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every glyph-skin snapshot is unchanged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,5 +86,27 @@ standing next to each other. Expect more than one round.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Nick's pick (2026-10-13): "A1 looks good"**: a deeper blue, still
+  1 pixel, for the player's side only. He was shown the game's own frames
+  (Chapter 1's first turn by day and at night, and the Quick Battle, one
+  unit already acted in each) with: today's look, a deeper blue, cyan,
+  2 pixels for every side, a dark edge for every side, and each color at
+  2 pixels. The frames showed the bought art, so they were sent to him and
+  not committed.
+- The color is a new palette name, `player_outline` (`#2a60ff`), used only
+  by the sprite skin (`outline_color` in `sprite/units.rs`). `player` is
+  untouched, so the glyph look, the names in the side panel and everything
+  else that is "player blue" stay as they were. It has the same value in
+  all four color themes: the bought tiles don't change with the theme, so
+  what is visible on them doesn't either.
+- The width did not change, so the clip mask (step 3) needed nothing.
+- Snapshots: the sprite skin's now say `solid=player_outline` (and the
+  dimmed grey of an acted unit is `#3f4967`, was `#737b85`); the debug
+  color sampler lists the new color. No glyph-skin snapshot changed.
+- Not shown in the frames, and said so to Nick: a unit standing on a water
+  tile (none can on these maps), and an acted enemy (unchanged by this).
+- **For Nick when playing:** an acted unit of yours now has a darker rim
+  than before (the deeper blue dims to a darker grey), so "has acted"
+  reads from the grey sprite more than from its rim. Say so if you want
+  that rim lighter.
+- No gameplay rule was decided here. No follow-up tickets.

@@ -1,6 +1,7 @@
 //! How a sprite skin draws units (`docs/design/look-and-feel.md`, *Battle
 //! map: bought tiles and unit sprites*; ADR-0049): each unit's picture with
-//! a 1-pixel outline in its side's colour, standing on its HP bar; grey and
+//! a 1-pixel outline in its side's colour (the player's a deeper blue:
+//! [`outline_color`]), standing on its HP bar; grey and
 //! darker once it has acted; an arrow in the top-right corner of its tile
 //! while it is under a timed effect. A unit whose picture is in a walking
 //! sheet turns the way it faces and shows its walking frame; every unit is
@@ -14,7 +15,7 @@
 
 use trpg_content::image::EFFECT_MARKS_PATH;
 use trpg_content::{Picture, Tileset};
-use trpg_core::{CharacterId, Pos};
+use trpg_core::{CharacterId, Faction, Pos};
 
 use super::super::glyph::units::{HP_BAR_H, HP_BAR_INSET, flash};
 use super::super::grid::Grid;
@@ -24,6 +25,16 @@ use crate::color::{UiColor, to_channel};
 use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, Paint, PxRect, Rect, Sprite};
 use crate::screen::Ctx;
 use crate::screens::battle::units::{faction_color, hp_fill};
+
+/// The colour of the outline of a unit of `faction`: its side's, but for
+/// the player's, a deeper blue than the side's own, which is hard to see
+/// on the bought grass (Nick, ticket 0447).
+pub const fn outline_color(faction: Faction) -> UiColor {
+    match faction {
+        Faction::Player => UiColor::PlayerOutline,
+        other => faction_color(other),
+    }
+}
 
 /// The side of an effect arrow's box in [`EFFECT_MARKS_PATH`], in pixels:
 /// the 5 × 5 arrow and its 1-pixel dark edge.
@@ -339,7 +350,7 @@ pub fn paint_pictures(
         let picture = unit_frame(tileset, picture, unit);
         let art = unit_dest(picture, grid.art_tile());
         let dest = zoomed(art);
-        let faction = ctx.palette.get(faction_color(unit.faction));
+        let faction = ctx.palette.get(outline_color(unit.faction));
         let (color, paint) = if unit.acted {
             (faction.dimmed(), Paint::Dimmed)
         } else {
@@ -1180,7 +1191,7 @@ mod tests {
     fn each_side_has_its_outline_colour() {
         let c = ctx();
         let sides = [
-            (Faction::Player, UiColor::Player),
+            (Faction::Player, UiColor::PlayerOutline),
             (Faction::Enemy, UiColor::Enemy),
             (Faction::Ally, UiColor::Ally),
             (Faction::Neutral, UiColor::Neutral),
@@ -1193,6 +1204,31 @@ mod tests {
             let outline = sprites(&items(&c, &scene))[0].paint;
             assert_eq!(outline, Paint::Solid(c.palette.get(color)), "{faction:?}");
         }
+        // The player's: a deeper blue than the side's own colour, the same
+        // in every theme.
+        let blue = Rgb::new(0x2a, 0x60, 0xff);
+        assert_eq!(c.palette.get(UiColor::PlayerOutline), blue);
+        assert_ne!(c.palette.get(UiColor::Player), blue);
+        for palette in c.content.themes.values() {
+            assert_eq!(palette.get("player_outline"), Some([0x2a, 0x60, 0xff]));
+        }
+        // Fresh and acted, on tile (0, 0) (16..40 × 24..48): the picture
+        // one pixel each way, in that blue, then in its dimmed grey.
+        let dest = Rect::new(16, 22, 24, 24);
+        for (acted, color) in [(false, blue), (true, blue.dimmed())] {
+            let mut scene = plains(&c);
+            let mut u = brigand(p(0, 0));
+            u.faction = Faction::Player;
+            u.acted = acted;
+            scene.push_unit(u);
+            let drawn = sprites(&items(&c, &scene));
+            let outline: Vec<PxRect> = drawn[..4].iter().map(|s| s.dest).collect();
+            assert_eq!(outline, outline_dests(dest), "{acted}");
+            for s in &drawn[..4] {
+                assert_eq!((s.paint, s.opacity), (Paint::Solid(color), 255));
+            }
+        }
+        assert_ne!(blue.dimmed(), blue);
     }
 
     #[test]
