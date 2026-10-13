@@ -5,9 +5,9 @@
 //!   tileset's `tile_px`, a size known only here, behind
 //!   [`SpriteSkin::tile_size`]. The ground is each tile's own picture and
 //!   the tileset's layers over them, in the look the map asks for (see
-//!   `ground`). The cursor's corner marks sit just inside its tile, and a
-//!   unit a battle note picks out stands on a light square (both Claude's
-//!   placeholders: nothing has decided them).
+//!   `ground`). The cursor is corner marks with a dark edge, inside its
+//!   tile (ticket 0444). A unit a battle note picks out stands on a light
+//!   square (Claude's placeholder: nothing has decided it).
 //! - A tileset **without** them paints only the units: terrain, ranges,
 //!   the path and the cursor are the glyph skin's, on its tiles, and each
 //!   unit's tile loses its terrain glyphs under the picture.
@@ -129,23 +129,53 @@ impl SpriteSkin {
         }
     }
 
-    /// The cursor's corner marks just inside its tile (the glow style
-    /// tints the tile instead, with the ground).
+    /// The cursor: corner marks in the cursor's colour with a dark edge
+    /// round them, inside its tile, in every style (pictures have no tile
+    /// glow: ticket 0444). The colour pulses; the edge doesn't.
     fn paint_own_cursor(ctx: &Ctx, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
         if let Some(c) = &scene.cursor
             && let Some(tile) = grid.rect(c.pos)
         {
+            let edge = ctx.palette.get(UiColor::Black);
             let color = ctx.palette.get(UiColor::Cursor).scale(c.brightness);
-            let arm = match c.style {
-                CursorStyle::Corners => 3,
-                CursorStyle::LargeCorners => 4,
-                // Tinted with the tile.
-                CursorStyle::TileGlow => 0,
-            };
-            for r in corner_arms(grid.art_tile(), arm) {
-                let r = grid.zoomed((tile.x, tile.y), r);
-                buf.add_overlay(Overlay::new(r, color, Layer::Over));
+            let marks = CursorMarks::of(c.style, grid.zoom());
+            let art = grid.art_tile();
+            let edges = corner_marks(art, 0, marks.arm + 2, marks.thick + 2);
+            let arms = corner_marks(art, 1, marks.arm, marks.thick);
+            for (rects, color) in [(edges, edge), (arms, color)] {
+                for r in rects {
+                    let r = grid.zoomed((tile.x, tile.y), r);
+                    buf.add_overlay(Overlay::new(r, color, Layer::Over));
+                }
             }
+        }
+    }
+}
+
+/// The size of the cursor's corner marks on picture tiles, in pixels of
+/// the art (Nick, 2026-10-13, ticket 0444).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct CursorMarks {
+    /// How long each arm of a corner is.
+    arm: i32,
+    /// How thick.
+    thick: i32,
+}
+
+impl CursorMarks {
+    /// At the art's own size, thick marks (2 px, 4 px long); zoomed in,
+    /// thin ones (1 px of the art, 3 long), which the zoom thickens.
+    /// Large corners are a pixel longer; the glow style has no look of
+    /// its own here and is the corners.
+    const fn of(style: CursorStyle, zoom: i32) -> Self {
+        let (arm, thick) = if zoom == 1 { (4, 2) } else { (3, 1) };
+        let longer = match style {
+            CursorStyle::Corners | CursorStyle::TileGlow => 0,
+            CursorStyle::LargeCorners => 1,
+        };
+        Self {
+            arm: arm + longer,
+            thick,
         }
     }
 }
@@ -214,8 +244,7 @@ impl MapSkin for SpriteSkin {
         (px.w.max(0) / w, px.h.max(0) / h)
     }
 
-    /// The ground (terrain tinted by flashes, ranges and the cursor's
-    /// glow), the path line, the units' outlines and pictures, their HP
+    /// The ground (terrain tinted by flashes and ranges), the path line, the units' outlines and pictures, their HP
     /// bars and marks, the path's arrowhead, then the cursor; over them
     /// all, the threat arrows and marks.
     fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer) {
@@ -267,25 +296,22 @@ fn tile_sprite(picture: Picture, dest: PxRect) -> Sprite {
     Sprite::new(picture.image, src_rect(picture.rect), dest, Layer::Under)
 }
 
-/// The eight 1 px arms, each `arm` px long, of corner marks just inside
-/// the corners of the pixels `tile`. None for an `arm` of 0.
-fn corner_arms(tile: PxRect, arm: i32) -> Vec<Rect> {
-    if arm <= 0 {
-        return Vec::new();
-    }
-    let (left, top) = (tile.x, tile.y);
-    let (right, bottom) = (tile.x + tile.w - 1, tile.y + tile.h - 1);
-    let across = |x0, y0| Rect::new(x0, y0, arm, 1);
-    let down = |x0, y0| Rect::new(x0, y0, 1, arm);
-    vec![
+/// The eight arms, each `arm` px long and `thick` px thick, of corner
+/// marks `inset` px inside the corners of the pixels `tile`.
+fn corner_marks(tile: PxRect, inset: i32, arm: i32, thick: i32) -> [Rect; 8] {
+    let (left, top) = (tile.x + inset, tile.y + inset);
+    let (right, bottom) = (tile.x + tile.w - inset, tile.y + tile.h - inset);
+    let across = |x0, y0| Rect::new(x0, y0, arm, thick);
+    let down = |x0, y0| Rect::new(x0, y0, thick, arm);
+    [
         across(left, top),
         down(left, top),
-        across(right - arm + 1, top),
-        down(right, top),
-        across(left, bottom),
-        down(left, bottom - arm + 1),
-        across(right - arm + 1, bottom),
-        down(right, bottom - arm + 1),
+        across(right - arm, top),
+        down(right - thick, top),
+        across(left, bottom - thick),
+        down(left, bottom - arm),
+        across(right - arm, bottom - thick),
+        down(right - thick, bottom - arm),
     ]
 }
 
@@ -296,9 +322,8 @@ pub(crate) mod tests {
     use trpg_core::{CharacterId, ClassId, Faction, TerrainId, UnitId};
 
     use super::*;
-    use crate::color::{Rgb, to_channel};
-    use crate::glyph_buffer::{Cell, Item, Paint};
-    use crate::map_view::glyph::cursor::GLOW_MAX;
+    use crate::color::Rgb;
+    use crate::glyph_buffer::{Cell, Item};
     use crate::map_view::glyph::tests::any_scene;
     use crate::map_view::scene::{
         CursorView, Facing, RangeKind, STANDING_FRAME, ThreatView, TileView, UnitEffects, UnitView,
@@ -575,21 +600,16 @@ pub(crate) mod tests {
     /// the console's corner and at 2× into an area twice the size: the
     /// same items in the same order, every one twice as far from the
     /// corner and twice as big (tiles, units and their outlines, HP bars,
-    /// effect arrows, the path, the ranges and the cursor's marks), each
-    /// showing the same part of the same image.
+    /// effect arrows, the path and the ranges), each showing the same part
+    /// of the same image. (Not the cursor: its marks have a size for each
+    /// zoom.)
     #[test]
     fn at_twice_the_zoom_everything_is_twice_the_size() {
         let c = ctx();
         let s = with_walking_brigand(&c, &with_lord(&skin(&c)));
         let twice = s.clone().zoomed(MapZoom::X2);
         let double = |r: PxRect| Rect::new(2 * r.x, 2 * r.y, 2 * r.w, 2 * r.h);
-        let styles = [
-            CursorStyle::Corners,
-            CursorStyle::LargeCorners,
-            CursorStyle::TileGlow,
-        ];
-        let clocks = [0, units::BOUNCE_MS, units::TURN_MS];
-        for (clock_ms, style) in clocks.into_iter().zip(styles) {
+        for clock_ms in [0, units::BOUNCE_MS, units::TURN_MS] {
             let mut scene = MapScene::new(p(0, 0), (2, 2));
             scene.set_terrain(|_| c.content.terrain.display.id_of("plain"));
             scene.clock_ms = clock_ms;
@@ -615,11 +635,6 @@ pub(crate) mod tests {
             scene.push_unit(enemy);
             scene.push_unit(brigand(p(1, 0)).fading(0.25));
             scene.path = vec![p(0, 0), p(0, 1), p(1, 1)];
-            scene.cursor = Some(CursorView {
-                pos: p(1, 1),
-                brightness: 0.5,
-                style,
-            });
             let paint = |skin: &SpriteSkin, area| {
                 let mut buf = blank();
                 skin.paint(&c, &scene, area, &mut buf);
@@ -629,7 +644,7 @@ pub(crate) mod tests {
             let small = paint(&s, Rect::new(0, 0, 6, 3));
             let big = paint(&twice, Rect::new(0, 0, 12, 6));
             assert!(small.items().len() > 20, "{}", small.items().len());
-            assert_eq!(small.items().len(), big.items().len(), "{style:?}");
+            assert_eq!(small.items().len(), big.items().len());
             for (one, two) in small.items().iter().zip(big.items()) {
                 let expected = match *one {
                     Item::Rect(o) => Item::Rect(Overlay {
@@ -643,7 +658,7 @@ pub(crate) mod tests {
                         ..sprite
                     }),
                 };
-                assert_eq!(*two, expected, "{style:?} at {clock_ms} ms");
+                assert_eq!(*two, expected, "at {clock_ms} ms");
             }
         }
     }
@@ -685,67 +700,82 @@ pub(crate) mod tests {
         assert_eq!(painted(&c, &s, &scene).sprites().len(), 2);
     }
 
+    /// Ticket 0444: thick marks with a dark edge at the art's own size,
+    /// thin ones with a dark edge zoomed in; a pixel longer as large
+    /// corners; the glow style is the corners.
     #[test]
-    fn the_cursor_marks_the_corners_inside_its_tile_or_glows() {
+    fn the_cursor_is_dark_edged_corner_marks_inside_its_tile() {
         let c = ctx();
         let s = skin(&c);
         let cursor = c.palette.get(UiColor::Cursor);
-        let painted_with = |style, brightness| {
+        let black = c.palette.get(UiColor::Black);
+        let painted_with = |skin: &SpriteSkin, pos, style, brightness| {
             let mut scene = plains(&c);
             scene.cursor = Some(CursorView {
-                pos: p(1, 1),
+                pos,
                 brightness,
                 style,
             });
-            painted(&c, &s, &scene)
+            painted(&c, skin, &scene)
         };
-        let buf = painted_with(CursorStyle::Corners, 1.0);
+        let buf = painted_with(&s, p(1, 1), CursorStyle::Corners, 1.0);
         let r = Rect::new;
-        let arms: Vec<_> = buf.overlays().iter().map(|o| o.rect).collect();
-        // Tile (1, 1): pixels 40..64 × 48..72.
+        let rects = |buf: &GlyphBuffer| buf.overlays().iter().map(|o| o.rect).collect::<Vec<_>>();
+        // Tile (1, 1): pixels 40..64 × 48..72. The dark edges, then the
+        // marks a pixel inside them.
         assert_eq!(
-            arms,
+            rects(&buf),
             [
-                r(40, 48, 3, 1),
-                r(40, 48, 1, 3),
-                r(61, 48, 3, 1),
-                r(63, 48, 1, 3),
-                r(40, 71, 3, 1),
-                r(40, 69, 1, 3),
-                r(61, 71, 3, 1),
-                r(63, 69, 1, 3),
+                r(40, 48, 6, 4),
+                r(40, 48, 4, 6),
+                r(58, 48, 6, 4),
+                r(60, 48, 4, 6),
+                r(40, 68, 6, 4),
+                r(40, 66, 4, 6),
+                r(58, 68, 6, 4),
+                r(60, 66, 4, 6),
+                r(41, 49, 4, 2),
+                r(41, 49, 2, 4),
+                r(59, 49, 4, 2),
+                r(61, 49, 2, 4),
+                r(41, 69, 4, 2),
+                r(41, 67, 2, 4),
+                r(59, 69, 4, 2),
+                r(61, 67, 2, 4),
             ]
         );
-        let look = |o: &Overlay| (o.color, o.layer);
-        assert!(
-            buf.overlays()
+        let looks = |buf: &GlyphBuffer, range: std::ops::Range<usize>, color| {
+            let look = |o: &Overlay| (o.color, o.layer);
+            buf.overlays()[range]
                 .iter()
-                .all(|o| look(o) == (cursor, Layer::Over))
-        );
-        let large = painted_with(CursorStyle::LargeCorners, 0.5);
-        assert_eq!(large.overlays()[2].rect, r(60, 48, 4, 1));
-        assert_eq!(large.overlays()[0].color, cursor.scale(0.5));
-        // The glow: the tile's own shape in the cursor colour over it,
-        // as strong as the glow; no marks.
-        let glow = painted_with(CursorStyle::TileGlow, 1.0);
-        let over = sprite_at(&glow, 4);
-        assert_eq!(over.dest, r(40, 48, 24, 24));
-        assert_eq!(over.src, sprite_at(&glow, 3).src);
-        let look = (over.paint, over.opacity);
-        assert_eq!(look, (Paint::Solid(cursor), to_channel(255.0 * GLOW_MAX)));
-        assert_eq!(glow.items().len(), 4 + 1);
-        let dim = painted_with(CursorStyle::TileGlow, 0.5);
-        let opacity = to_channel(255.0 * GLOW_MAX * 0.5);
-        assert_eq!(sprite_at(&dim, 4).opacity, opacity);
-        assert!(corner_arms(r(0, 0, 8, 8), 0).is_empty());
+                .all(|o| look(o) == (color, Layer::Over))
+        };
+        assert!(looks(&buf, 0..8, black));
+        assert!(looks(&buf, 8..16, cursor));
+        // Large corners: a pixel longer. The marks pulse; the edge doesn't.
+        let large = painted_with(&s, p(1, 1), CursorStyle::LargeCorners, 0.5);
+        assert_eq!(large.overlays()[2].rect, r(57, 48, 7, 4));
+        assert_eq!(large.overlays()[8].rect, r(41, 49, 5, 2));
+        assert!(looks(&large, 0..8, black));
+        assert!(looks(&large, 8..16, cursor.scale(0.5)));
+        // The glow style: the corners, and nothing tints the tile.
+        let glow = painted_with(&s, p(1, 1), CursorStyle::TileGlow, 1.0);
+        assert_eq!(glow, buf);
+        // At 2×, one 48 px tile from (16, 24): thin marks, 1 px of the
+        // art thick and 3 long, their edge 1 px of the art.
+        let twice = s.clone().zoomed(MapZoom::X2);
+        let zoomed = painted_with(&twice, p(0, 0), CursorStyle::Corners, 1.0);
+        let all = rects(&zoomed);
+        assert_eq!(all.len(), 16);
+        assert_eq!((all[0], all[1]), (r(16, 24, 10, 6), r(16, 24, 6, 10)));
+        assert_eq!((all[8], all[9]), (r(18, 26, 6, 2), r(18, 26, 2, 6)));
+        assert_eq!((all[7], all[15]), (r(58, 62, 6, 10), r(60, 64, 2, 6)));
+        let zoomed = painted_with(&twice, p(0, 0), CursorStyle::LargeCorners, 1.0);
+        let all = rects(&zoomed);
+        assert_eq!((all[0], all[8]), (r(16, 24, 12, 6), r(18, 26, 8, 2)));
         // A cursor off the view: nothing.
-        let mut scene = plains(&c);
-        scene.cursor = Some(CursorView {
-            pos: p(2, 0),
-            brightness: 1.0,
-            style: CursorStyle::TileGlow,
-        });
-        assert_eq!(painted(&c, &s, &scene), painted(&c, &s, &plains(&c)));
+        let off = painted_with(&s, p(2, 0), CursorStyle::Corners, 1.0);
+        assert_eq!(off, painted(&c, &s, &plains(&c)));
     }
 
     #[test]

@@ -61,7 +61,7 @@ impl Grid {
     }
 
     /// The skin's zoom, at least 1.
-    fn zoom(&self) -> i32 {
+    pub fn zoom(&self) -> i32 {
         self.scale.max(1)
     }
 

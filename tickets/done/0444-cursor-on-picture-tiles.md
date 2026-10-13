@@ -5,10 +5,10 @@ type: tuning
 milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0437"]
 nick_input: sign-off
-completed:
+completed: 2026-10-13
 ---
 
 # 0444 — The cursor on picture tiles
@@ -82,11 +82,11 @@ Pages after 0437 merged).
 
 ## Acceptance criteria
 
-- [ ] `look-and-feel.md` records Nick's answer, with the date.
-- [ ] If he wanted a change: the cursor on picture tiles is the look he
+- [x] `look-and-feel.md` records Nick's answer, with the date.
+- [x] If he wanted a change: the cursor on picture tiles is the look he
       picked, in every `CursorStyle`, with a test naming its rectangles.
-- [ ] Every glyph-skin snapshot is unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every glyph-skin snapshot is unchanged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -96,5 +96,53 @@ Pages after 0437 merged).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Nick's answer** (2026-10-13), shown four looks cut from Quick Battle
+frames with the bought tiles (thick marks; thin marks with a dark edge;
+thick marks with a dark edge; a frame round the tile), on a unit, grass,
+forest, road, water and the fort, at both zooms:
+
+> "can we use C style for 1x and B style for 2x? and for tile glow imo we
+> deprecate it for the 2D style it's simply unsustainable to keep it
+> around for this style but for glyph we might consider keeping it"
+
+**Done:**
+
+- Picture tiles, map at 1× zoom: corner marks 2 px thick and 4 px long
+  with a 1 px near-black edge. At 2× zoom: marks 1 px of the art thick and
+  3 long with an edge of 1 px of the art. All inside the tile. The marks
+  pulse; the edge doesn't. Large corners are a pixel longer.
+  (`sprite.rs`: `paint_own_cursor`, `CursorMarks`, `corner_marks`.)
+- Tile glow is no longer drawn on picture tiles: the ground's tints no
+  longer take the cursor (`sprite/ground.rs`, `tints`).
+- The Options menu's `Cursor` row doesn't offer `Tile glow` while the
+  map is pictures (Nick, 2026-10-13, after seeing the PR: "just hide it on
+  options menu, it should not be selectable when graphics are 2D/picture
+  mode. Make the change here we don't need a new ticket for it").
+  (`screens/options.rs`: `cursor_styles`, `shown_cursor_style`.)
+- `look-and-feel.md`, *Cursor and selection*, records it.
+- The glyph look and the mixed skin (sprite units on glyph terrain) are
+  untouched: no glyph-skin snapshot changed. Four sprite-skin snapshots
+  changed, in the cursor's rectangles only.
+- Looked at with `frame-png` and the private assets (Quick Battle, both
+  zooms; not committed).
+
+**Deviations:**
+
+- `at_twice_the_zoom_everything_is_twice_the_size` no longer has a
+  cursor: its marks now have a size for each zoom, which
+  `the_cursor_is_dark_edged_corner_marks_inside_its_tile` names.
+- ADR-0052 (section 4) still lists the cursor's glow among the tints over
+  a picture. It is accepted, so not edited; the rule that changed is a
+  look, recorded in `look-and-feel.md`.
+
+- The Options row is outside this ticket's first scope; Nick asked for
+  it here.
+
+**Claude's starting rule** (Nick to agree or veto):
+
+- A player who picked `Tile glow` on glyphs and then switches the map to
+  pictures sees the normal corner marks, and the `Cursor` row says
+  `Corners`. Their glow comes back if they return to glyphs without
+  picking another cursor.
+
+**Follow-up tickets:** none.

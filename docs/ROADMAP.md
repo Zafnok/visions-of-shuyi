@@ -55,7 +55,7 @@ feedback "impacts my first impression more than I thought"; 0804 is parked
 until it is built). 0804 now also waits for: **0727** a Confirm tap no
 longer fast-forwards the next page of dialogue · **0724** the script
 rewrite (American English, lines that read plainly) · **0447** the
-player's blue outline easier to see · **0444** the cursor easier to see ·
+player's blue outline easier to see · **0444** the cursor easier to see (done) ·
 **0055** → **0448** which enemies can attack the tile you are moving to ·
 **0442** Combat Arts in their own menu · **0439** the 1× / 2× zoom (and
 which one the game starts at) · the title's logo and cinematic (**0012** →

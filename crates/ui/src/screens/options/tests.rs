@@ -131,6 +131,52 @@ fn confirm_steps_a_setting_and_goes_round() {
     );
 }
 
+/// Ticket 0444: while pictures paint the whole map the cursor never
+/// glows, so the row doesn't offer `Tile glow`; a player who had picked it
+/// is shown `Corners` and steps on from there. On glyphs it is back.
+#[test]
+fn the_cursor_row_offers_no_tile_glow_while_the_map_is_pictures() {
+    use crate::map_view::{GlyphSkin, MapSkin, skin_named};
+    use std::rc::Rc;
+    let value = |c: &Ctx, row| match OptionsScreen::value(c, row) {
+        ValueView::Text { text, adjustable } => {
+            format!("{text}{}", if adjustable { "*" } else { "" })
+        }
+        other => panic!("{other:?}"),
+    };
+    let mut c = ctx();
+    c.change_settings(|s| s.cursor_style = CursorStyle::TileGlow)
+        .unwrap();
+    assert_eq!(value(&c, Row::Cursor), "Tile glow*");
+    c.set_map_skin(skin_named(&c.content, "sprite").unwrap());
+    assert_eq!(value(&c, Row::Cursor), "Corners*");
+    assert_eq!(c.settings().cursor_style, CursorStyle::TileGlow);
+    let mut s = on(Row::Cursor);
+    let styles: Vec<_> = (0..3)
+        .map(|_| {
+            press(&mut s, &mut c, &[Action::Confirm]);
+            c.settings().cursor_style
+        })
+        .collect();
+    let (corners, large) = (CursorStyle::Corners, CursorStyle::LargeCorners);
+    assert_eq!(styles, [large, corners, large]);
+    assert_eq!(value(&c, Row::Cursor), "Large corners*");
+    // Left and Right stop at the ends.
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    assert_eq!(c.settings().cursor_style, large);
+    press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
+    assert_eq!(c.settings().cursor_style, corners);
+    // Unit pictures on glyph terrain, and glyphs: the glow is offered.
+    let glyphs: Rc<dyn MapSkin> = Rc::new(GlyphSkin);
+    for skin in [skin_named(&c.content, "sprite_units").unwrap(), glyphs] {
+        c.set_map_skin(skin);
+        c.change_settings(|s| s.cursor_style = large).unwrap();
+        press(&mut s, &mut c, &[Action::Confirm]);
+        assert_eq!(c.settings().cursor_style, CursorStyle::TileGlow);
+        assert_eq!(value(&c, Row::Cursor), "Tile glow*");
+    }
+}
+
 /// One frame of typing: the characters `text`, then the keys `keys`.
 fn type_in(s: &mut OptionsScreen, c: &mut Ctx, text: &str, keys: &[Key]) {
     let chords = keys.iter().map(|&k| Chord::plain(k)).collect();
