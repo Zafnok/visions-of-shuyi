@@ -261,6 +261,13 @@ mod tests {
         }
         assert_eq!(at(1, 1), o.bg);
         assert_eq!(at(14, 14), o.bg);
+        // The border is a sixteenth of the size: two pixels at 32.
+        let px = tiny().draw(&o, 32).unwrap();
+        let at = |x: usize, y: usize| px[(y * 32 + x) * 4..][..3].to_vec();
+        assert_eq!(at(1, 5), o.border);
+        assert_eq!(at(2, 5), o.bg);
+        assert_eq!(at(30, 5), o.border);
+        assert_eq!(at(29, 5), o.bg);
     }
 
     #[test]
