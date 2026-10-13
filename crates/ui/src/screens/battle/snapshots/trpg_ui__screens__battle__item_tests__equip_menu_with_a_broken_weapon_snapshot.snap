@@ -93,3 +93,6 @@ v = fg:text_dim bg:black
 --- overlays ---
 over  289,222 14x2  hp_high
 over  273,206 14x2  hp_high
+over  277,227 5x11  black
+over  278,228 3x6  text_highlight
+over  278,235 3x2  text_highlight

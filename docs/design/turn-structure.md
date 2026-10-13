@@ -219,12 +219,21 @@ The rule:
 - *Claude's starting rules (Nick can veto):*
   - "Can attack the tile" is worked out as the danger zone works it out,
     with one difference: the selected unit is counted as standing on the
-    proposed tile, not where it started.
+    proposed tile, not where it started. (Built in ticket 0448. A second
+    difference turned up there: the danger zone tints the tiles an enemy
+    that never moves could attack if it walked first, so it is wider
+    round Harl than his arrows. Ticket 0450 fixes the danger zone.)
   - With a unit selected and the cursor on an enemy it can attack (the
     cursor aims the path at the tile it will attack from, see *Pointing
     at an enemy*), the arrows point at that tile.
   - The arrows stay while the action menu is open on the proposed tile,
-    and go when the forecast opens.
+    and go when the forecast opens. They also stay while the unit walks
+    to the tile and in the lists the action menu opens (arts, spells,
+    skills, items, equip); they go whenever a target is being picked
+    (ticket 0448).
+  - With a unit selected and the cursor on a tile it can't stop on (out
+    of its range, or a tile another unit stands on), nothing shows
+    (ticket 0448).
   - A unit of yours that has already acted shows them too (case 2).
   - Other-phase (green) units don't: only your own.
   - Only attacks count: an enemy that can only heal gets no arrow.

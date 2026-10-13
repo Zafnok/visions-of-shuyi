@@ -15,6 +15,7 @@ pub mod path;
 pub mod scene;
 pub mod skin;
 pub mod sprite;
+pub mod threat;
 
 use std::rc::Rc;
 
@@ -24,8 +25,8 @@ use crate::settings::MapLook;
 
 pub use glyph::GlyphSkin;
 pub use scene::{
-    CursorStyle, CursorView, Facing, MapScene, RangeKind, STANDING_FRAME, TileView, UnitEffects,
-    UnitView,
+    CursorStyle, CursorView, Facing, MapScene, RangeKind, STANDING_FRAME, ThreatView, TileView,
+    UnitEffects, UnitView,
 };
 pub use skin::MapSkin;
 pub use sprite::SpriteSkin;

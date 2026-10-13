@@ -92,5 +92,8 @@ over  289,222 14x2  hp_high
 over  280,254 7x2  hp_high
 over  280,206 7x2  hp_high
 over  289,302 14x2  hp_high
+over  280,227 2x11  black
+over  280,228 1x6  text_highlight
+over  280,235 1x2  text_highlight
 under sprite 16,32 256x256  portraits/test_lord/happy.png 0,0 32x32
 under sprite 528,32 256x256  portraits/test_knight/angry.png 0,0 32x32 flip opacity=140

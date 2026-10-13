@@ -196,10 +196,9 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     );
     let items = check_seals(item::load(), classes.as_ref().ok());
     let maps = check_map_features(maps, items.as_ref().ok(), terrain.as_ref().ok());
-    let lighting = lighting::load();
+    let (lighting, names) = (lighting::load(), names::load());
     let lit = lighting.as_ref().ok();
     let (maps, battle_lights) = (check_map_lights(maps, lit), load_battle_lights(lit));
-    let names = names::load();
     let characters = character::load(
         classes.as_ref().ok(),
         items.as_ref().ok(),
@@ -212,13 +211,12 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     );
     let skills = check_skill_references(skill::load(), classes.as_ref().ok());
     let arts = check_art_references(art::load(), items.as_ref().ok());
-    let images = ImageTable::load();
+    let (images, audio) = (ImageTable::load(), audio::load());
     let portraits = match &images {
         Ok(i) => portrait::load_all(i),
         Err(_) => Ok(BTreeMap::new()),
     };
     let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok(), lit);
-    let audio = audio::load();
     let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
     let (known, cues) = (names.as_ref().ok(), audio.as_ref().ok());
     let scripts = match scripts {

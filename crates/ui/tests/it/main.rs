@@ -25,5 +25,6 @@ mod scene_camera;
 mod scene_preview;
 mod split_keys;
 mod sprite_test;
+mod threat;
 mod title;
 mod voice;

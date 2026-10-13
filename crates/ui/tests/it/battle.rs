@@ -98,15 +98,20 @@ fn quick_battle_in_every_theme() {
 
 /// What the Quick Battle's map shows at its start, as data (ADR-0038): the
 /// terrain, the units and the cursor on the lord. Moving the cursor one
-/// tile changes its line and nothing else.
+/// tile off him changes its line and takes the threat's line away, and
+/// nothing else.
 #[test]
 fn quick_battle_map_text() {
     let mut h = quick_battle();
     let start = h.map_text();
     assert_snapshot!(start);
+    // The brigand that could attack the lord (0448).
+    let threat = "threat (3,5) from (7,4)";
+    assert_eq!(start.lines().last(), Some(threat));
     h.keys("Right");
     let moved = h.map_text();
-    assert_eq!(start.lines().count(), moved.lines().count());
+    assert_eq!(start.lines().count(), moved.lines().count() + 1);
+    assert!(!moved.contains("threat"), "{moved}");
     let changed: Vec<(&str, &str)> = start
         .lines()
         .zip(moved.lines())
