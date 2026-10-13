@@ -208,6 +208,16 @@ impl FrameInput {
     }
 }
 
+/// Whether screens show their idle motion ([`Ctx::idle_motion`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum IdleMotion {
+    /// Nothing moves while a screen is left alone.
+    #[default]
+    Off,
+    /// Decoration moves (the title's sparks).
+    On,
+}
+
 /// Resources shared by every screen. A plain struct: add fields as later
 /// tickets need them (settings, …).
 #[derive(Debug)]
@@ -264,6 +274,10 @@ pub struct Ctx {
     /// Whether battles show their one-time tips (0406). Off here, so
     /// screen tests aren't interrupted by them; `app` turns it on.
     pub tips_enabled: bool,
+    /// Whether screens show their idle motion (the title's drifting
+    /// sparks, 0811). Off here, so a screen left alone in a test looks the
+    /// same a moment later; `app` turns it on.
+    pub idle_motion: IdleMotion,
     /// Sounds and music screens ask for this frame (ADR-0026), e.g.
     /// `ctx.audio.play_sound("menu_move")`. `Game` passes them to `app`.
     pub audio: AudioQueue,
@@ -369,6 +383,7 @@ impl Ctx {
             debug_tools: DEBUG_TOOLS,
             map_skin,
             tips_enabled: false,
+            idle_motion: IdleMotion::Off,
             audio: AudioQueue::default(),
             music_clock: None,
             voices_on: true,
@@ -1314,7 +1329,7 @@ pub(crate) mod tests {
         c.lang = LangCode::new(TEST).unwrap();
         assert_eq!(c.text("title.new_game"), "NEW GAME");
         // Stale and missing entries are English.
-        assert_eq!(c.text("title.subtitle"), "an ASCII tactics game");
+        assert_eq!(c.text("title.continue"), "Continue");
         assert_eq!(c.text("title.credits"), "Credits");
         // The test pack is only for builds with debug tools.
         c.debug_tools = false;

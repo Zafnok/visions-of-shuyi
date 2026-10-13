@@ -982,7 +982,7 @@ mod tests {
         // The test pack keeps one stale and one missing entry.
         let status = lang.status(&test).unwrap();
         assert_eq!(status.missing, ["title.credits"]);
-        assert_eq!(status.stale, ["title.subtitle"]);
+        assert_eq!(status.stale, ["title.continue"]);
         assert_eq!(status.orphans, []);
     }
 

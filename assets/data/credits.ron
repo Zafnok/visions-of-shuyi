@@ -30,7 +30,8 @@
         // Félix's), and the combat scene's pictures and backdrops (0413:
         // still battle pictures of *Heroes: A New Beginning*, *Battlers 5:
         // Faith and Evil* and *Battlers 2: Elemental Forces*, and
-        // *Battlebacks Vol.1*).
+        // *Battlebacks Vol.1*), and the title screen's backdrops (0811:
+        // seven more pictures of *Battlebacks Vol.1*).
         (id: "tiny_tales", group: Art, title: "Tiny Tales",
          author: "Megatiles (artists: Rayane Félix, Lunatic Red, Kodots Games Studio)",
          source: "https://megatiles.itch.io/", license: "Custom (Megatiles)",
@@ -44,7 +45,7 @@
             "portraits/messenger", "portraits/poacher", "portraits/red_captain",
             "portraits/retainer", "portraits/rival", "portraits/sergeant", "portraits/soldier",
             "portraits/test_knight", "portraits/test_lord",
-            "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "units/",
+            "tilesets/tiny_tales.png", "tilesets/tiny_tales.ron", "title/", "units/",
          ]),
 
         // Shironejiya's free battle pictures (0413): the Brigand, the Raider

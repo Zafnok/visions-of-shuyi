@@ -299,8 +299,10 @@ fn writes_the_title_screen_and_the_same_bytes_twice() {
     let first = fs::read(dir.join("out/title.png")).unwrap();
     let (w, h, rgba) = decode_png(&first).unwrap();
     assert_eq!((w, h), (800, 512));
-    // The console background, opaque, in the corner.
-    assert_eq!(&rgba[..4], &[0, 0, 0, 255]);
+    // The console background, opaque, in the bottom corner (the help
+    // line's row: the title's backdrop ends above it).
+    let corner = 511 * 800 * 4;
+    assert_eq!(&rgba[corner..corner + 4], &[0, 0, 0, 255]);
     // Something is drawn.
     assert!(rgba.chunks(4).any(|p| p[..3] != [0, 0, 0]));
     run(&dir, &options).unwrap();

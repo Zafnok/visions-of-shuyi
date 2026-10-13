@@ -163,6 +163,8 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     };
     // The game as players get it: New Game starts the story.
     let mut h = h.with_shipped_story();
+    // And as `app` shows it: with the idle motion on.
+    h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
     if let Some(light) = &options.light {
         let content = &mut h.ctx_mut().content;
         if content.lighting.get(light).is_none() {

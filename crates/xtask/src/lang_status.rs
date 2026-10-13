@@ -349,7 +349,7 @@ mod tests {
             report.contains("  test_36a692b7\n    english: \"Let's move.\"\n"),
             "{report}"
         );
-        assert!(report.contains("stale:\n  title.subtitle\n"), "{report}");
+        assert!(report.contains("stale:\n  title.continue\n"), "{report}");
         let axe = "  items.iron_axe.name\n    was: \"Old Axe\"\n    now: \"Iron Axe\"\n";
         assert!(report.contains(axe), "{report}");
         // The orphan is paired with the reworded line.

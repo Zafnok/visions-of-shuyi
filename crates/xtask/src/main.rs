@@ -26,6 +26,7 @@ mod test_units;
 mod tickets;
 mod tileset_import;
 mod tileset_ron;
+mod title_art;
 mod voice_test;
 mod web;
 
@@ -49,6 +50,7 @@ frame-png <out.png> [steps]        render a scripted game frame to a PNG (frame-
 test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
 effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
+title-art [--bought]               write the title logo and placeholder backdrops, assets/title/\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
 battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \
 tileset-import [--list]            pack the bought terrain tiles and write the game's tileset there\n  \
@@ -80,6 +82,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("test-card") => test_card(&args.collect::<Vec<_>>()),
         Some("test-tileset") => test_tileset(&args.collect::<Vec<_>>()),
         Some("effect-marks") => effect_marks(&args.collect::<Vec<_>>()),
+        Some("title-art") => title_art_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("map-sprite-import") => map_sprite_import(&args.collect::<Vec<_>>()),
         Some("battler-import") => battler_import_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("tileset-import") => tileset_import(&args.collect::<Vec<_>>()),
@@ -394,6 +397,32 @@ fn battler_import_in(root: &Path, args: &[String]) -> u8 {
         _ => {
             eprintln!("{USAGE}");
             2
+        }
+    }
+}
+
+fn title_art_in(root: &Path, args: &[String]) -> u8 {
+    use title_art::{BACKDROPS, USAGE, run, run_bought};
+    let result = match args {
+        [] => run(root),
+        [flag] if flag == "--bought" => run_bought(root, &BACKDROPS),
+        [flag] if flag == "--help" => {
+            println!("{USAGE}");
+            return 0;
+        }
+        _ => {
+            eprintln!("{USAGE}");
+            return 2;
+        }
+    };
+    match result {
+        Ok(summary) => {
+            println!("{summary}");
+            0
+        }
+        Err(e) => {
+            eprintln!("title-art: {e}");
+            1
         }
     }
 }
@@ -1063,6 +1092,19 @@ mod tests {
             dispatch(args(&["battler-import", "--list", "x"]).into_iter()),
             2
         );
+    }
+
+    #[test]
+    fn title_art_help_and_bad_args() {
+        // Only the argument check: a real run writes into `assets/`.
+        let here = repo_root();
+        assert_eq!(title_art_in(&here, &args(&["--help"])), 0);
+        assert_eq!(title_art_in(&here, &args(&["--bogus"])), 2);
+        assert_eq!(title_art_in(&here, &args(&["--bought", "x"])), 2);
+        // In a folder with no logo source and no checkout, both runs fail.
+        let bare = std::env::temp_dir().join(format!("xtask-ta-none-{}", std::process::id()));
+        assert_eq!(title_art_in(&bare, &[]), 1);
+        assert_eq!(title_art_in(&bare, &args(&["--bought"])), 1);
     }
 
     #[test]

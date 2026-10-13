@@ -3,15 +3,20 @@
 //! ([`TitleScreen::view`](super::TitleScreen::view)) and a skin paints it
 //! ([`super::glyph::paint`] today); see ADR-0054.
 
+use trpg_content::ImageId;
+
 use crate::widgets::MenuView;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TitleView {
-    /// The game's name.
-    pub title: String,
-    /// The line under it.
-    pub subtitle: String,
+    /// The picture behind the logo this launch; `None` when the game has
+    /// none.
+    pub backdrop: Option<ImageId>,
+    /// The sparks drifting up the screen, as how long the title has been
+    /// shown, in milliseconds: that alone places them. `None`: no sparks
+    /// ([`Ctx::idle_motion`](crate::screen::Ctx::idle_motion) is off).
+    pub sparks: Option<u32>,
     /// The "press any key" prompt, while the screen waits for a key; the
     /// menu is not shown meanwhile.
     pub prompt: Option<String>,

@@ -911,7 +911,7 @@ fn a_packs_data_and_dialogue_files_are_loaded_and_checked() {
 fn the_embedded_test_pack_has_an_orphan_and_stale_data() {
     let content = crate::load_embedded().unwrap();
     let status = content.lang.status(&code(TEST)).unwrap();
-    assert_eq!(status.stale, ["title.subtitle", "items.iron_axe.name"]);
+    assert_eq!(status.stale, ["title.continue", "items.iron_axe.name"]);
     assert_eq!(status.orphans.len(), 1);
     let orphan = &status.orphans[0];
     assert_eq!(orphan.key, "test_00000000");

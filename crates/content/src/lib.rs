@@ -32,6 +32,7 @@ pub mod support;
 pub mod terrain;
 pub mod tileset;
 pub mod tip;
+pub mod title;
 pub mod trigger;
 pub mod voice;
 
@@ -69,6 +70,7 @@ pub use portrait::Portrait;
 pub use terrain::{TerrainDef, TerrainDisplay, TerrainDisplayTable};
 pub use tileset::{CornerLayer, ImageRect, Layer, Look, Picture, TerrainTiles, TileLayer, Tileset};
 pub use tip::{Tip, TipTable, TipTrigger};
+pub use title::TitleArt;
 pub use trigger::check_triggers;
 pub use voice::{Playable, Variant, VoiceManifest};
 
@@ -135,6 +137,8 @@ pub struct Content {
     /// id, for the battles that name one. Look data: it isn't in the
     /// [`BattleDef`].
     pub battle_lights: BTreeMap<String, String>,
+    /// The title screen's logo and backdrops (ADR-0059).
+    pub title: TitleArt,
 }
 
 impl Content {
@@ -188,12 +192,8 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let palette = PaletteDef::load();
     let terrain = TerrainDef::load(palette.as_ref().ok());
     let maps = load_maps(terrain.as_ref().ok());
-    let classes = class::load(
-        terrain
-            .as_ref()
-            .ok()
-            .map(|t| t.rules.movement_types.as_slice()),
-    );
+    let movement = terrain.as_ref().ok().map(|t| &t.rules.movement_types[..]);
+    let classes = class::load(movement);
     let items = check_seals(item::load(), classes.as_ref().ok());
     let maps = check_map_features(maps, items.as_ref().ok(), terrain.as_ref().ok());
     let (lighting, names) = (lighting::load(), names::load());
@@ -212,11 +212,11 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let skills = check_skill_references(skill::load(), classes.as_ref().ok());
     let arts = check_art_references(art::load(), items.as_ref().ok());
     let (images, audio) = (ImageTable::load(), audio::load());
-    let portraits = match &images {
-        Ok(i) => portrait::load_all(i),
-        Err(_) => Ok(BTreeMap::new()),
-    };
+    let portraits = images
+        .as_ref()
+        .map_or_else(|_| Ok(BTreeMap::new()), portrait::load_all);
     let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok(), lit);
+    let title_art = load_title(images.as_ref().ok());
     let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
     let (known, cues) = (names.as_ref().ok(), audio.as_ref().ok());
     let scripts = match scripts {
@@ -272,6 +272,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         battlers: stage_art,
         lighting,
         battle_lights,
+        title: title_art,
     };
     let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
     units.lang = lang::load(data);
@@ -591,6 +592,15 @@ fn load_battlers(
     }
 }
 
+/// The title screen's art (ADR-0059): none if the images failed to load
+/// (their errors are reported once, by the image table).
+fn load_title(images: Option<&ImageTable>) -> Result<TitleArt, Vec<ContentError>> {
+    match images {
+        Some(images) => title::load(images),
+        None => Ok(TitleArt::default()),
+    }
+}
+
 /// Loader results for the unit data (kept together to keep [`assemble`]'s
 /// argument list short).
 struct Loaded {
@@ -617,6 +627,7 @@ struct Loaded {
     battlers: Result<BattlerTable, Vec<ContentError>>,
     lighting: Result<Lighting, Vec<ContentError>>,
     battle_lights: Result<BTreeMap<String, String>, Vec<ContentError>>,
+    title: Result<TitleArt, Vec<ContentError>>,
 }
 
 /// Takes a loader's value, or moves its errors into `errors` and returns a
@@ -669,6 +680,7 @@ fn assemble(
         battlers: take(units.battlers, &mut errors),
         lighting: take(units.lighting, &mut errors),
         battle_lights: take(units.battle_lights, &mut errors),
+        title: take(units.title, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -815,6 +827,10 @@ mod tests {
         battler::load_all(&ImageTable::load().unwrap_or_default(), None, None)
     }
 
+    fn ok_title() -> Result<TitleArt, Vec<ContentError>> {
+        title::load(&ImageTable::load().unwrap_or_default())
+    }
+
     fn ok_portraits() -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
         portrait::load_all(&ImageTable::load().unwrap_or_default())
     }
@@ -884,6 +900,7 @@ mod tests {
             battlers: ok_battlers(),
             lighting: lighting::load(),
             battle_lights: Ok(BTreeMap::new()),
+            title: ok_title(),
         }
     }
 
@@ -985,9 +1002,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 28] = [
+    const NAMES: [&str; 29] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B",
+        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T",
     ];
 
     /// `ok`, or the error of file `name` if `bad`.
@@ -1037,6 +1054,7 @@ mod tests {
                     battlers: Err(e("A")),
                     lighting: Err(e("L")),
                     battle_lights: Err(e("B")),
+                    title: Err(e("T")),
                 },
             ),
             Err(ContentErrors(NAMES.iter().flat_map(|f| e(f)).collect()))
@@ -1092,12 +1110,20 @@ mod tests {
                     battlers: if i == 25 { Err(e("A")) } else { ok_battlers() },
                     lighting: pick(i == 26, "L", lighting::load()),
                     battle_lights: pick(i == 27, "B", Ok(BTreeMap::new())),
+                    title: pick(i == 28, "T", ok_title()),
                 },
             )
         };
         for (i, f) in NAMES.iter().enumerate() {
             assert_eq!(only(i), Err(ContentErrors(e(f))));
         }
+    }
+
+    #[test]
+    fn the_title_art_is_skipped_when_the_images_failed() {
+        assert_eq!(load_title(None), Ok(TitleArt::default()));
+        let images = ImageTable::load().ok();
+        assert!(load_title(images.as_ref()).is_ok_and(|t| t.logo.is_some()));
     }
 
     #[test]
