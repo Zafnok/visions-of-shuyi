@@ -482,10 +482,12 @@ fn every_problem_of_an_action_is_reported_at_once() {
     // An entry the format doesn't have is refused.
     let unknown = "(at: 0, do: Cast(unit: \"lead\"))";
     assert_eq!(problems(&c, &acted(unknown)).len(), 1);
-    // So is an action that is neither a list nor a name.
-    assert_eq!(
-        problems(&c, &source("Seconds(10)", &pan("action: 3"))).len(),
-        1
+    // So is an action that is neither a list nor a name, saying what one is.
+    let neither = problems(&c, &source("Seconds(10)", &pan("action: 3")));
+    assert_eq!(neither.len(), 1);
+    assert!(
+        neither[0].contains("a list of actions, or the name of one in `actions`"),
+        "{neither:?}"
     );
 }
 
