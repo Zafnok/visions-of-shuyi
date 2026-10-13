@@ -15,6 +15,7 @@ use trpg_core::{
 
 use crate::bundle;
 use crate::error::ContentError;
+use crate::lighting::{Lighting, NOON};
 use crate::ron_loader::parse_ron;
 use crate::terrain::TerrainDisplayTable;
 
@@ -34,24 +35,39 @@ pub const TILE_LOOKS: [&str; 2] = ["outdoor", "indoor"];
 pub const DEFAULT_TILES: &str = TILE_LOOKS[0];
 
 /// How a map looks, as far as its file says: which pictures a skin that
-/// has pictures paints its terrain with. A skin without them (the glyph
-/// skin) ignores it. Look data only: the rules never see it.
+/// has pictures paints its terrain with, and in which light. A skin
+/// without them (the glyph skin) ignores it. Look data only: the rules
+/// never see it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MapLook {
     /// Which set of terrain pictures: one of [`TILE_LOOKS`].
     #[serde(default = "default_tiles")]
     pub tiles: String,
+    /// Which light the map is in: a light of `data/lighting.ron`
+    /// ([`Lighting`]; ticket 0438). [`NOON`] unless the file says.
+    #[serde(default = "default_light", skip_serializing_if = "is_noon")]
+    pub light: String,
 }
 
 fn default_tiles() -> String {
     DEFAULT_TILES.to_owned()
 }
 
+fn default_light() -> String {
+    NOON.to_owned()
+}
+
+#[allow(clippy::ptr_arg)] // serde gives the field as it is
+fn is_noon(light: &String) -> bool {
+    light == NOON
+}
+
 impl Default for MapLook {
     fn default() -> Self {
         Self {
             tiles: default_tiles(),
+            light: default_light(),
         }
     }
 }
@@ -61,6 +77,16 @@ impl MapLook {
     /// a map is printed.
     pub fn is_default(&self) -> bool {
         *self == Self::default()
+    }
+
+    /// This look in the light `light`, if one is given: a battle's own
+    /// light instead of its map's.
+    #[must_use]
+    pub fn lit(mut self, light: Option<&str>) -> Self {
+        if let Some(light) = light {
+            light.clone_into(&mut self.light);
+        }
+        self
     }
 }
 
@@ -201,6 +227,41 @@ pub fn load_all(
     } else {
         Err(errors)
     }
+}
+
+/// Every map of `maps` whose light isn't one of `lighting`'s, each
+/// reported where its file names it.
+pub fn check_lights(maps: &BTreeMap<String, MapDef>, lighting: &Lighting) -> Vec<ContentError> {
+    let unknown = maps
+        .iter()
+        .filter(|(_, def)| lighting.get(&def.look.light).is_none());
+    unknown
+        .map(|(id, def)| {
+            let path = format!("{MAPS_DIR}/{id}{MAP_EXTENSION}");
+            let source = bundle::file(&path).unwrap_or_default();
+            light_error(
+                &bundle::display_path(&path),
+                source,
+                &def.look.light,
+                lighting,
+            )
+        })
+        .collect()
+}
+
+/// The error for map file `file` (its text is `source`) naming `light`,
+/// which isn't one of `lighting`'s: at the name in the header, or at the
+/// file's start if it isn't found.
+pub fn light_error(file: &str, source: &str, light: &str, lighting: &Lighting) -> ContentError {
+    let lines: Vec<&str> = source.lines().collect();
+    let header = lines.iter().position(|&l| l == SEPARATOR);
+    let header = &lines[..header.unwrap_or(lines.len())];
+    let (line, col) = position_of(header, &format!("\"{light}\"")).unwrap_or((1, 1));
+    let message = format!(
+        "look: light \"{light}\" is not a light; the lights are {}",
+        lighting.names()
+    );
+    ContentError::new(file, message).at(line, Some(col))
 }
 
 /// Parses map `source` (errors attributed to `file`), resolving legend
@@ -693,6 +754,69 @@ mod tests {
     }
 
     #[test]
+    fn a_map_names_its_light_or_is_at_noon() {
+        let small = format!("{HEADER}.T\n");
+        let plain = parse(&small).unwrap();
+        assert_eq!(plain.look.light, "noon");
+        let source = small.replacen("legend:", "look: (light: \"dusk\"),\n  legend:", 1);
+        let dusk = parse(&source).unwrap();
+        assert_eq!(
+            (dusk.look.tiles.as_str(), dusk.look.light.as_str()),
+            ("outdoor", "dusk")
+        );
+        assert!(!dusk.look.is_default());
+        assert_eq!(dusk.map, plain.map);
+        let printed = print_map(&dusk.map, &dusk.legend, &dusk.look).unwrap();
+        assert!(
+            printed.contains("look:(tiles:\"outdoor\",light:\"dusk\")"),
+            "{printed}"
+        );
+        assert_eq!(parse(&printed).map(|d| d.look), Ok(dusk.look.clone()));
+        // Both, in either order.
+        let both = small.replacen(
+            "legend:",
+            "look: (light: \"night\", tiles: \"indoor\"),\n  legend:",
+            1,
+        );
+        let look = parse(&both).unwrap().look;
+        assert_eq!(
+            (look.tiles.as_str(), look.light.as_str()),
+            ("indoor", "night")
+        );
+        // A battle's own light replaces the map's; none leaves it.
+        assert_eq!(look.clone().lit(None), look);
+        let lit = look.lit(Some("dusk"));
+        assert_eq!((lit.tiles.as_str(), lit.light.as_str()), ("indoor", "dusk"));
+    }
+
+    #[test]
+    fn an_unknown_light_is_reported_where_it_is_written() {
+        let lighting = crate::lighting::load().unwrap();
+        let source = "(\n  name: \"M\",\n  legend: {'.': \"plain\"},\n  look: (light: \"midnight\"),\n)\n---\n.\n";
+        let error = light_error("m.map", source, "midnight", &lighting);
+        assert_eq!(
+            error.to_string(),
+            "m.map:4:17: look: light \"midnight\" is not a light; the lights are \"dusk\", \"night\", \"noon\""
+        );
+        // A name the header doesn't have (it was set some other way): the
+        // file's start. One below the tiles' line isn't the header's.
+        let below = "(name: \"M\")\n---\n\"midnight\"\n";
+        let error = light_error("m.map", below, "midnight", &lighting);
+        assert_eq!((error.line, error.column), (Some(1), Some(1)));
+        // Every shipped map names a light that exists.
+        let terrain = crate::TerrainDef::load(None).unwrap_or_default();
+        let maps = load_all(&terrain.display).unwrap();
+        assert_eq!(check_lights(&maps, &lighting), []);
+        let mut odd = maps;
+        for def in odd.values_mut() {
+            def.look.light = "midnight".to_owned();
+        }
+        let errors = check_lights(&odd, &lighting);
+        assert_eq!(errors.len(), odd.len());
+        assert!(errors.iter().all(|e| e.file.contains("/maps/")));
+    }
+
+    #[test]
     fn an_unknown_look_is_reported_where_it_is_written() {
         let header = HEADER.replace(
             ",
@@ -1011,7 +1135,8 @@ mod tests {
     proptest! {
         #[test]
         fn parse_print_round_trip((map, legend) in arb_map(), look in 0..TILE_LOOKS.len()) {
-            let look = MapLook { tiles: TILE_LOOKS[look].to_owned() };
+            let light = ["noon", "dusk"][look % 2].to_owned();
+            let look = MapLook { tiles: TILE_LOOKS[look].to_owned(), light };
             let printed = print_map(&map, &legend, &look);
             prop_assert!(printed.is_some());
             let parsed = parse(&printed.unwrap_or_default());

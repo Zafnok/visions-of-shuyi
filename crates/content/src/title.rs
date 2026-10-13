@@ -1,4 +1,4 @@
-//! The title screen's art (`assets/title/`, ticket 0811, ADR-0057): the
+//! The title screen's art (`assets/title/`, ticket 0811, ADR-0059): the
 //! logo, a picture of the game's name, and the backdrops one of which is
 //! behind it each launch. `content` reads only each image's size; the
 //! title screen draws them as sprites (ADR-0038). Format:

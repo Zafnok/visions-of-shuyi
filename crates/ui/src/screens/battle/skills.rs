@@ -1,7 +1,7 @@
 //! Skills in the battle UI (ticket 0412): the text that describes a skill
 //! (its cost and one-line effect), and the `Skill` menu of non-combat
 //! actives with the target mode of Shove (combat actives are chosen in the
-//! attack flow's arts list, [`super::art_list`]). Legality is the core's: the attack forecast and
+//! arts menu, [`super::art_list`]). Legality is the core's: the attack forecast and
 //! the commands refuse what a unit can't do, and this module only asks (a
 //! command applied to a copy of the battle), so the player is never offered
 //! a skill that would be refused (ADR-0004).

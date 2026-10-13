@@ -6,8 +6,9 @@
 //! cargo test -p trpg-content --features private-assets --test it private_assets::
 //! ```
 //!
-//! Run it after changing anything in `assets-private/game/`; the Pages build
-//! runs it before it builds the game.
+//! Run it after changing anything in `assets-private/game/` or
+//! `assets-private/test/` (the bought art of the test files, ADR-0057); the
+//! Pages build runs it before it builds the game.
 
 /// Every content file still loads and validates with the private files laid
 /// over `assets/`.
@@ -18,12 +19,35 @@ fn the_content_loads_with_the_private_assets_over_it() {
     }
 }
 
+/// A build that ships has the private files and no test files (ADR-0057):
+/// the content loads that way too, and none of it is a test file's.
+#[test]
+fn the_content_loads_with_the_private_assets_and_without_the_test_files() {
+    use trpg_content::bundle;
+
+    let content = match bundle::story_only(trpg_content::load_embedded) {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    assert!(content.tilesets.contains_key("tiny_tales"));
+    let test = |id: &&String| id.starts_with("test");
+    assert_eq!(content.portraits.keys().find(test), None);
+    assert_eq!(content.tilesets.keys().find(test), None);
+    for path in bundle::story_only(|| bundle::files_under("")) {
+        let parts: Vec<&str> = path.split(['/', '.']).collect();
+        assert!(!parts.iter().any(|part| part.starts_with("test")), "{path}");
+    }
+    // With them, the bought test portraits replace the placeholders.
+    let shown = bundle::display_path("portraits/test_lord.ron");
+    assert_eq!(shown, "assets-private/test/portraits/test_lord.ron");
+}
+
 /// Every portrait image that comes from the private assets is what
 /// `cargo xtask portrait-import` writes (ADR-0043): a 64×64 cut bust, which
 /// fills the dialogue frame at 4×, or a 48×48 face.
 #[test]
 fn bought_portraits_are_cut_busts_or_faces() {
-    use trpg_content::bundle::{PRIVATE_DISPLAY_ROOT, display_path};
+    use trpg_content::bundle::{display_path, is_private};
 
     let content = match trpg_content::load_embedded() {
         Ok(content) => content,
@@ -34,7 +58,7 @@ fn bought_portraits_are_cut_busts_or_faces() {
             let shown = display_path(expression.image.path());
             let size = (expression.size.width, expression.size.height);
             assert!(
-                !shown.starts_with(PRIVATE_DISPLAY_ROOT) || matches!(size, (64, 64) | (48, 48)),
+                !is_private(&shown) || matches!(size, (64, 64) | (48, 48)),
                 "{shown} is {size:?}"
             );
         }
@@ -95,11 +119,11 @@ fn the_bought_tiles_paint_every_look_a_map_can_name() {
 /// screen's list has the bought art's.
 #[test]
 fn every_bought_file_has_a_credit() {
-    use trpg_content::bundle::{PRIVATE_DISPLAY_ROOT, display_path, files_under};
+    use trpg_content::bundle::{display_path, files_under, is_private};
     use trpg_content::{CreditGroup, credits};
 
     let mut bought = files_under("");
-    bought.retain(|p| display_path(p).starts_with(PRIVATE_DISPLAY_ROOT));
+    bought.retain(|p| is_private(&display_path(p)));
     assert!(bought.len() > 10, "{bought:?}");
     let file = credits::load_file().unwrap_or_default();
     let uncredited = credits::uncredited(&file, &bought);
@@ -123,4 +147,26 @@ fn every_bought_file_has_a_credit() {
             "Shironejiya battle pictures (the materials in this game may not be reused)"
         ]
     );
+}
+
+/// The bought backdrops (`cargo xtask battler-import`, ticket 0438): a
+/// fight at dusk or at night is in front of the bundle's own picture of
+/// the place, not of the day picture shaded.
+#[test]
+fn the_bought_backdrops_have_their_own_dusk_and_night() {
+    let content = match trpg_content::load_embedded() {
+        Ok(content) => content,
+        Err(errors) => panic!("{errors}"),
+    };
+    let backdrops = &content.battlers.backdrops;
+    for light in ["dusk", "night"] {
+        for terrain in [None, Some("plain"), Some("mountain"), Some("peak")] {
+            let found = backdrops.in_light(terrain, light);
+            let Some((image, true)) = found else {
+                panic!("{light} on {terrain:?}: {found:?}");
+            };
+            let path = image.path();
+            assert!(path.ends_with(&format!("_{light}.png")), "{path}");
+        }
+    }
 }

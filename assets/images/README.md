@@ -7,7 +7,7 @@ rectangles.
 
 Every `*.png` under `assets/` (in any directory, the font atlas aside) is in
 the image table, `Content::images` (`trpg_content::image`), under its path
-relative to `assets/`, e.g. `images/test_card.png`. The all-assets test
+relative to `assets/`, e.g. `images/effect_marks.png`. The all-assets test
 (ADR-0005) fails on a file named `.png` that isn't a PNG, an empty image, or
 one with a side over 4096 pixels.
 
@@ -17,8 +17,13 @@ with its own directory and sidecar files (portraits, 0711; combat pictures,
 
 | File | What |
 | ---- | ---- |
-| `test_card.png` | 16×16 test image: a one-pixel white border around four coloured quadrants (red and green above blue and yellow), so a flip, a crop and a scale each show. Used by tests and the "Sprite test" debug tool |
 | `effect_marks.png` | 14×7: the arrows a sprite map skin puts on a unit under a timed effect (ADR-0049, `docs/design/look-and-feel.md`): an **up arrow** for a bonus, then a **down arrow** for a penalty, each 5×5 with a 1-pixel dark edge. Our own picture, in the palette's `effect_bonus`, `effect_penalty` and `black` |
+
+The test image is a test file, in `assets-test/images/` (ADR-0057):
+
+| File | What |
+| ---- | ---- |
+| `test_card.png` | 16×16 test image: a one-pixel white border around four coloured quadrants (red and green above blue and yellow), so a flip, a crop and a scale each show. Used by tests and the "Sprite test" debug tool |
 
 Both are **generated**; never edit them by hand. To regenerate (the arrows
 after changing their palette colours):

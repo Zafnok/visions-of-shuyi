@@ -31,7 +31,7 @@ Builds on: 0227 (each music cue's length), 0228 (the pan and zoom window),
 loader).
 
 **Added 2026-10-12 (0811 is done):** the logo is a picture, a sprite
-(`assets/title/logo.png`, ADR-0057), over one of the title's backdrops,
+(`assets/title/logo.png`, ADR-0059), over one of the title's backdrops,
 with sparks drifting up. `trpg_ui::screens::title::glyph::paint_logo(ctx,
 backdrop, sparks, buf)` paints exactly the logo shot (backdrop, sparks,
 logo, nothing else): call it; don't copy it. The backdrop is the one the
@@ -117,7 +117,7 @@ no fades between shots.
    cinematic", a screen that advances `t` by `dt` and loops; Cancel closes
    it. Help line per the `keyboard-input` skill.
 6. `assets/cinematics/test.ron` on the test battle from 0801
-   (`assets/battles/test.ron`), short (about 10 s).
+   (`assets-test/battles/test.ron`), short (about 10 s).
 
 ## Acceptance criteria
 

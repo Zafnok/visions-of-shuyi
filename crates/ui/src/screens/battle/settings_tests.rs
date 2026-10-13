@@ -16,9 +16,9 @@ fn fight(change: impl FnOnce(&mut Settings)) -> Harness {
     let state = skirmish(&ctx(), 20);
     let mut h = Harness::with_screen(Box::new(BattleScreen::new(state)));
     h.ctx_mut().change_settings(change).unwrap();
-    // The lord one step right, Attack, the iron sword, the brigand.
+    // The lord one step right, Attack (the iron sword), the brigand.
     h.keys("f Right f").wait(0.5);
-    h.keys("f f Right f");
+    h.keys("f Down f");
     h
 }
 
@@ -253,7 +253,7 @@ fn the_backdrop_is_the_one_of_the_ground_the_defender_stands_on() {
     let state = super::testing::battle(&c, map, units);
     let mut h = Harness::with_screen(Box::new(BattleScreen::new(state)));
     h.keys("f Right f").wait(0.5);
-    h.keys("f f Right f");
+    h.keys("f Down f");
     let view = stage_of(&h).expect("the stage");
     assert_eq!(view.fighters[1].name, "Brigand");
     assert_eq!(

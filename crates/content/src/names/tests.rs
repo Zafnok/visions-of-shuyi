@@ -380,3 +380,68 @@ fn only_a_latin_first_letter_is_capitalised() {
     assert!(!is_latin_letter('1') && !is_latin_letter('ɐ') && !is_latin_letter('¿'));
     assert_eq!(capitalise(""), "");
 }
+
+/// Every error message for adding names `src` (file `t.ron`) to the
+/// story's (file `n.ron`).
+fn part_errors(src: &str) -> Vec<String> {
+    with_part(story(), "n.ron", "t.ron", src)
+        .err()
+        .unwrap_or_default()
+        .iter()
+        .map(ToString::to_string)
+        .collect()
+}
+
+/// The test files' names are added to the story's, by id (ADR-0057).
+#[test]
+fn a_part_adds_its_names_by_id() {
+    let src = "{\n\"test_a\": \"Test A\",\n\"test_b\": \"Test B\",\n}";
+    let names = with_part(story(), "n.ron", "t.ron", src).unwrap_or_default();
+    assert_eq!(names.get("test_a"), Some("Test A"));
+    assert_eq!(names.get("test_b"), Some("Test B"));
+    assert_eq!(names.names.len(), story().names.len() + 2);
+    for (id, name) in &story().names {
+        assert_eq!(names.get(id), Some(name.as_str()));
+    }
+    assert_eq!(with_part(story(), "n.ron", "t.ron", "{}"), Ok(story()));
+}
+
+#[test]
+fn a_part_with_an_id_or_a_name_of_the_story_is_an_error() {
+    let src = "{\n\"test_a\": \"Test A\",\n\"king\": \"Other\",\n\"test_c\": \"Rue\",\n}";
+    assert_eq!(
+        part_errors(src),
+        [
+            "t.ron:3: name id \"king\" is already in n.ron",
+            "t.ron:4: \"Rue\" is the name of \"heretic\" in n.ron too; names must be unique",
+        ]
+    );
+    // The same id with the same name is still a clash.
+    assert_eq!(
+        part_errors("{\n\"king\": \"Emeric\",\n}"),
+        ["t.ron:2: name id \"king\" is already in n.ron"]
+    );
+}
+
+#[test]
+fn a_part_is_checked_like_a_names_file() {
+    assert_eq!(
+        part_errors("{\n\"Bad Id\": \"X\",\n}"),
+        ["t.ron:2: \"Bad Id\" is not a valid name id; use lowercase letters, digits, _ and ."]
+    );
+    let syntax = part_errors("{");
+    assert_eq!(syntax.len(), 1);
+    assert!(syntax[0].starts_with("t.ron:1:"), "{syntax:?}");
+}
+
+/// The embedded table has the test characters' names only with the test
+/// files (ADR-0057).
+#[test]
+fn the_embedded_table_has_the_test_names_only_with_the_test_files() {
+    let names = load().unwrap_or_default();
+    assert_eq!(names.get("test_lord"), Some("Test Lord"));
+    let shipped = bundle::story_only(load).unwrap_or_default();
+    assert_eq!(shipped.get("test_lord"), None);
+    assert_eq!(shipped.get("lead"), names.get("lead"));
+    assert_eq!(shipped.names.len() + 6, names.names.len());
+}

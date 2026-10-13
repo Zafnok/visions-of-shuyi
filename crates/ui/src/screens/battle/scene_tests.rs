@@ -241,8 +241,7 @@ fn lord_menu(c: &mut Ctx) -> BattleScreen {
 fn the_targets_of_an_attack_are_an_attack_range() {
     let mut c = ctx();
     let mut s = lord_menu(&mut c);
-    // Attack, then the weapon.
-    step(&mut s, &mut c, &[Action::Confirm]);
+    // Attack: the forecast with the equipped weapon.
     step(&mut s, &mut c, &[Action::Confirm]);
     let Mode::Targeting(t) = s.mode() else {
         panic!("{:?}", s.mode());
@@ -313,13 +312,12 @@ fn a_combat_shows_its_units_as_the_playback_has_them() {
     );
     wait(&mut s, &mut c, 1.0);
     step(&mut s, &mut c, &[Action::Confirm]);
-    step(&mut s, &mut c, &[Action::Confirm]);
     let Mode::Targeting(t) = s.mode() else {
         panic!("{:?}", s.mode());
     };
     // Onto the brigand (unit 4), then attack.
     if t.target() != UnitId(4) {
-        step(&mut s, &mut c, &[Action::CursorRight]);
+        step(&mut s, &mut c, &[Action::CursorDown]);
     }
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Combat(_)), "{:?}", s.mode());
@@ -416,6 +414,7 @@ fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
     let tiles = Grid::from_cells(64, 40, cells.map(terrain).collect()).unwrap();
     let indoor = MapLook {
         tiles: "indoor".to_owned(),
+        light: "dusk".to_owned(),
     };
     let map = BattleMap::new("Big", tiles);
     let mut s = BattleScreen::new(battle(&c, map, units)).with_look(indoor.clone());

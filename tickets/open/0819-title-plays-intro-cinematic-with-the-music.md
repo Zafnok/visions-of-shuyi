@@ -49,7 +49,7 @@ note ends at about 117 s and the rest is silence until it loops.
 
 **Added 2026-10-12 (0811 is done):** the title now paints its logo with
 `title::glyph::paint_logo` (a backdrop that changes each launch, drifting
-sparks, the logo picture; ADR-0057) and the menu over it. The sparks only
+sparks, the logo picture; ADR-0059) and the menu over it. The sparks only
 move while `Ctx::idle_motion` is on (`app` sets it; tests leave it off
 unless they test the motion). The menu's fade must also fade the dark
 band behind `Press any key or button` and behind a notice.

@@ -20,6 +20,7 @@ pub mod image;
 pub mod item;
 pub mod keymap;
 pub mod lang;
+pub mod lighting;
 pub mod map;
 pub mod names;
 pub mod palette;
@@ -61,9 +62,10 @@ pub use keymap::{
 pub use lang::{
     Lang, LangCode, LangInfo, LangPack, LangStatus, LineEntry, LineText, MadeBy, Orphan,
 };
+pub use lighting::{Light, Lighting};
 pub use map::{MapDef, MapLegend, MapLook};
 pub use names::Names;
-pub use palette::PaletteDef;
+pub use palette::{PaletteDef, Theme};
 pub use portrait::Portrait;
 pub use terrain::{TerrainDef, TerrainDisplay, TerrainDisplayTable};
 pub use tileset::{CornerLayer, ImageRect, Layer, Look, Picture, TerrainTiles, TileLayer, Tileset};
@@ -75,8 +77,10 @@ pub use voice::{Playable, Variant, VoiceManifest};
 /// All validated game content.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Content {
-    /// Named colours (ADR-0012).
+    /// Named colours of the default theme (ADR-0012).
     pub palette: PaletteDef,
+    /// The palette of every colour theme (ticket 0806), the default's too.
+    pub themes: BTreeMap<Theme, PaletteDef>,
     /// Key bindings for every layout, and repeat timings (ADR-0015).
     pub keymap: KeymapDef,
     /// Font atlas layout; the image is `bundle::bytes(font::ATLAS_PNG_PATH)`.
@@ -127,7 +131,13 @@ pub struct Content {
     pub lang: Arc<Lang>,
     /// Combat pictures and the backdrops behind them (ADR-0056).
     pub battlers: BattlerTable,
-    /// The title screen's logo and backdrops (ADR-0057).
+    /// The lights a map can be in (ADR-0058).
+    pub lighting: Lighting,
+    /// The light a battle is fought in instead of its map's, by battle
+    /// id, for the battles that name one. Look data: it isn't in the
+    /// [`BattleDef`].
+    pub battle_lights: BTreeMap<String, String>,
+    /// The title screen's logo and backdrops (ADR-0059).
     pub title: TitleArt,
 }
 
@@ -138,6 +148,13 @@ impl Content {
     pub fn map_look(&self, map: &BattleMap) -> MapLook {
         let file = self.maps.values().find(|def| def.map == *map);
         file.map(|def| def.look.clone()).unwrap_or_default()
+    }
+
+    /// How `battle`'s map looks: [its map's look](Self::map_look), in the
+    /// battle's own light if its file names one.
+    pub fn battle_look(&self, battle: &BattleDef) -> MapLook {
+        let light = self.battle_lights.get(&battle.id);
+        self.map_look(&battle.map).lit(light.map(String::as_str))
     }
 
     /// The tables battles read, shared.
@@ -174,18 +191,14 @@ pub fn load_with_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> Result<Content
 fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, ContentErrors> {
     let palette = PaletteDef::load();
     let terrain = TerrainDef::load(palette.as_ref().ok());
-    let maps = match &terrain {
-        Ok(t) => map::load_all(&t.display),
-        Err(_) => Ok(BTreeMap::new()),
-    };
-    let classes = class::load(
-        terrain
-            .as_ref()
-            .ok()
-            .map(|t| t.rules.movement_types.as_slice()),
-    );
+    let maps = load_maps(terrain.as_ref().ok());
+    let movement = terrain.as_ref().ok().map(|t| &t.rules.movement_types[..]);
+    let classes = class::load(movement);
     let items = check_seals(item::load(), classes.as_ref().ok());
     let maps = check_map_features(maps, items.as_ref().ok(), terrain.as_ref().ok());
+    let lighting = lighting::load();
+    let lit = lighting.as_ref().ok();
+    let (maps, battle_lights) = (check_map_lights(maps, lit), load_battle_lights(lit));
     let names = names::load();
     let characters = character::load(
         classes.as_ref().ok(),
@@ -200,11 +213,10 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let skills = check_skill_references(skill::load(), classes.as_ref().ok());
     let arts = check_art_references(art::load(), items.as_ref().ok());
     let images = ImageTable::load();
-    let portraits = match &images {
-        Ok(i) => portrait::load_all(i),
-        Err(_) => Ok(BTreeMap::new()),
-    };
-    let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok());
+    let portraits = images
+        .as_ref()
+        .map_or_else(|_| Ok(BTreeMap::new()), portrait::load_all);
+    let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok(), lit);
     let title_art = load_title(images.as_ref().ok());
     let audio = audio::load();
     let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
@@ -260,18 +272,41 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         supports,
         lang: Ok(Lang::default()),
         battlers: stage_art,
+        lighting,
+        battle_lights,
         title: title_art,
     };
     let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
     units.lang = lang::load(data);
-    assemble(
+    let themes = palette::load_themes(palette.as_ref().ok());
+    let content = assemble(
         palette,
         KeymapDef::load(),
         FontAtlasDef::load(),
         terrain,
         maps,
         units,
-    )
+    );
+    with_themes(content, themes)
+}
+
+/// `content` with the colour themes added, or the errors of both.
+fn with_themes(
+    content: Result<Content, ContentErrors>,
+    themes: Result<BTreeMap<Theme, PaletteDef>, Vec<ContentError>>,
+) -> Result<Content, ContentErrors> {
+    match (content, themes) {
+        (Ok(mut content), Ok(themes)) => {
+            content.themes = themes;
+            Ok(content)
+        }
+        (Ok(_), Err(errors)) => Err(ContentErrors(errors)),
+        (Err(mut content), Err(errors)) => {
+            content.0.extend(errors);
+            Err(content)
+        }
+        (Err(content), Ok(_)) => Err(content),
+    }
 }
 
 /// The English a language pack's data and dialogue text is checked
@@ -511,19 +546,55 @@ fn check_map_features(
     }
 }
 
+/// Adds the light check ([`map::check_lights`]: every map's light is one
+/// of the lights' file) to the maps' result. Skipped when the maps or the
+/// lights failed to load.
+fn check_map_lights(
+    maps: Result<BTreeMap<String, MapDef>, Vec<ContentError>>,
+    lighting: Option<&Lighting>,
+) -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {
+    match (maps, lighting) {
+        (Ok(maps), Some(lighting)) => {
+            let errors = map::check_lights(&maps, lighting);
+            if errors.is_empty() {
+                Ok(maps)
+            } else {
+                Err(errors)
+            }
+        }
+        (maps, _) => maps,
+    }
+}
+
+/// The maps ([`map::load_all`]): none if the terrain failed to load.
+fn load_maps(terrain: Option<&TerrainDef>) -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {
+    terrain.map_or_else(|| Ok(BTreeMap::new()), |t| map::load_all(&t.display))
+}
+
+/// The light each battle names instead of its map's
+/// ([`battle::load_lights`]): none if the lights failed to load.
+fn load_battle_lights(
+    lighting: Option<&Lighting>,
+) -> Result<BTreeMap<String, String>, Vec<ContentError>> {
+    lighting.map_or_else(|| Ok(BTreeMap::new()), battle::load_lights)
+}
+
 /// The combat pictures and backdrops (ADR-0056): none if the images failed
-/// to load (their errors are reported once, by the image table).
+/// to load (their errors are reported once, by the image table). The
+/// backdrops' terrain and lights are checked against `terrain` and
+/// `lighting`, each if it loaded.
 fn load_battlers(
     images: Option<&ImageTable>,
     terrain: Option<&TerrainDef>,
+    lighting: Option<&Lighting>,
 ) -> Result<BattlerTable, Vec<ContentError>> {
     match images {
-        Some(images) => battler::load_all(images, terrain.map(|t| &t.display)),
+        Some(images) => battler::load_all(images, terrain.map(|t| &t.display), lighting),
         None => Ok(BattlerTable::default()),
     }
 }
 
-/// The title screen's art (ADR-0057): none if the images failed to load
+/// The title screen's art (ADR-0059): none if the images failed to load
 /// (their errors are reported once, by the image table).
 fn load_title(images: Option<&ImageTable>) -> Result<TitleArt, Vec<ContentError>> {
     match images {
@@ -556,6 +627,8 @@ struct Loaded {
     supports: Result<SupportTable, Vec<ContentError>>,
     lang: Result<Lang, Vec<ContentError>>,
     battlers: Result<BattlerTable, Vec<ContentError>>,
+    lighting: Result<Lighting, Vec<ContentError>>,
+    battle_lights: Result<BTreeMap<String, String>, Vec<ContentError>>,
     title: Result<TitleArt, Vec<ContentError>>,
 }
 
@@ -581,6 +654,7 @@ fn assemble(
     let mut errors = Vec::new();
     let content = Content {
         palette: take(palette, &mut errors),
+        themes: BTreeMap::new(),
         keymap: take(keymap, &mut errors),
         font: take(font, &mut errors),
         terrain: take(terrain, &mut errors),
@@ -606,6 +680,8 @@ fn assemble(
         supports: take(units.supports, &mut errors),
         lang: Arc::new(take(units.lang, &mut errors)),
         battlers: take(units.battlers, &mut errors),
+        lighting: take(units.lighting, &mut errors),
+        battle_lights: take(units.battle_lights, &mut errors),
         title: take(units.title, &mut errors),
     };
     if errors.is_empty() {
@@ -631,6 +707,7 @@ mod tests {
         assert_eq!(content.map_look(&map), MapLook::default());
         let indoor = MapLook {
             tiles: "indoor".to_owned(),
+            ..MapLook::default()
         };
         if let Some(def) = content.maps.get_mut("test_small") {
             def.look = indoor.clone();
@@ -641,6 +718,87 @@ mod tests {
         let mut other = map;
         other.name = "Elsewhere".to_owned();
         assert_eq!(content.map_look(&other), MapLook::default());
+    }
+
+    #[test]
+    fn a_battles_look_is_its_maps_in_its_own_light_if_it_names_one() {
+        let mut content = load_embedded().unwrap();
+        let battle = content.battles["test"].clone();
+        let dusk = MapLook {
+            tiles: "indoor".to_owned(),
+            light: "dusk".to_owned(),
+        };
+        for def in content.maps.values_mut().filter(|d| d.map == battle.map) {
+            def.look = dusk.clone();
+        }
+        // The test battle's file names noon: fought at noon on a dusk map.
+        let noon = Some("noon".to_owned());
+        assert_eq!(content.battle_lights.get("test"), noon.as_ref());
+        let look = content.battle_look(&battle);
+        assert_eq!(
+            (look.tiles.as_str(), look.light.as_str()),
+            ("indoor", "noon")
+        );
+        // No light of its own: its map's.
+        assert_eq!(content.battle_lights.remove("test"), noon);
+        assert_eq!(content.battle_look(&battle), dusk);
+        // Its own light, on its map's tiles; another battle's is not its.
+        content
+            .battle_lights
+            .insert("other".to_owned(), "noon".to_owned());
+        assert_eq!(content.battle_look(&battle), dusk);
+        content
+            .battle_lights
+            .insert("test".to_owned(), "night".to_owned());
+        let look = content.battle_look(&battle);
+        assert_eq!(
+            (look.tiles.as_str(), look.light.as_str()),
+            ("indoor", "night")
+        );
+    }
+
+    #[test]
+    fn battle_lights_are_read_when_the_lights_loaded() {
+        let lights = lighting::load().ok();
+        let read = load_battle_lights(lights.as_ref()).unwrap();
+        assert_eq!(read.get("test").map(String::as_str), Some("noon"));
+        assert_eq!(load_battle_lights(None), Ok(BTreeMap::new()));
+    }
+
+    #[test]
+    fn the_shipped_maps_and_battles_name_lights_that_exist() {
+        let content = load_embedded().unwrap();
+        for def in content.maps.values() {
+            assert!(content.lighting.get(&def.look.light).is_some());
+        }
+        for light in content.battle_lights.values() {
+            assert!(content.lighting.get(light).is_some());
+        }
+        // The test map is at noon.
+        assert_eq!(content.maps["test_small"].look.light, lighting::NOON);
+    }
+
+    #[test]
+    fn a_maps_light_is_checked_when_the_maps_and_the_lights_loaded() {
+        let lights = lighting::load().ok();
+        let odd = || {
+            let mut maps = ok_maps().unwrap_or_default();
+            if let Some(def) = maps.get_mut("test_small") {
+                def.look.light = "midnight".to_owned();
+            }
+            maps
+        };
+        assert_eq!(check_map_lights(ok_maps(), lights.as_ref()), ok_maps());
+        let errors = check_map_lights(Ok(odd()), lights.as_ref())
+            .err()
+            .unwrap_or_default();
+        assert_eq!(errors.len(), 1);
+        assert_eq!(errors[0].file, "assets-test/maps/test_small.map");
+        assert!(errors[0].message.contains("\"midnight\""), "{errors:?}");
+        // Unchecked without the lights; the maps' own errors pass through.
+        assert_eq!(check_map_lights(Ok(odd()), None), Ok(odd()));
+        let bad = || Err(vec![ContentError::new("m", "bad")]);
+        assert_eq!(check_map_lights(bad(), lights.as_ref()), bad());
     }
 
     fn ok_maps() -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {
@@ -668,7 +826,7 @@ mod tests {
     }
 
     fn ok_battlers() -> Result<BattlerTable, Vec<ContentError>> {
-        battler::load_all(&ImageTable::load().unwrap_or_default(), None)
+        battler::load_all(&ImageTable::load().unwrap_or_default(), None, None)
     }
 
     fn ok_title() -> Result<TitleArt, Vec<ContentError>> {
@@ -742,6 +900,8 @@ mod tests {
             supports: ok_supports(),
             lang: lang::load(None),
             battlers: ok_battlers(),
+            lighting: lighting::load(),
+            battle_lights: Ok(BTreeMap::new()),
             title: ok_title(),
         }
     }
@@ -844,10 +1004,23 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 27] = [
+    const NAMES: [&str; 29] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A", "B",
+        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T",
     ];
+
+    /// `ok`, or the error of file `name` if `bad`.
+    fn pick<T>(
+        bad: bool,
+        name: &str,
+        ok: Result<T, Vec<ContentError>>,
+    ) -> Result<T, Vec<ContentError>> {
+        if bad {
+            Err(vec![ContentError::new(name, "bad")])
+        } else {
+            ok
+        }
+    }
 
     #[test]
     fn assemble_reports_loader_errors() {
@@ -881,7 +1054,9 @@ mod tests {
                     supports: Err(e("q")),
                     lang: Err(e("l")),
                     battlers: Err(e("A")),
-                    title: Err(e("B")),
+                    lighting: Err(e("L")),
+                    battle_lights: Err(e("B")),
+                    title: Err(e("T")),
                 },
             ),
             Err(ContentErrors(NAMES.iter().flat_map(|f| e(f)).collect()))
@@ -933,13 +1108,11 @@ mod tests {
                     chapters: if i == 21 { Err(e("h")) } else { ok_story().1 },
                     new_game: if i == 22 { Err(e("g")) } else { ok_story().2 },
                     supports: if i == 23 { Err(e("q")) } else { ok_supports() },
-                    lang: if i == 24 {
-                        Err(e("l"))
-                    } else {
-                        lang::load(None)
-                    },
+                    lang: pick(i == 24, "l", lang::load(None)),
                     battlers: if i == 25 { Err(e("A")) } else { ok_battlers() },
-                    title: if i == 26 { Err(e("B")) } else { ok_title() },
+                    lighting: pick(i == 26, "L", lighting::load()),
+                    battle_lights: pick(i == 27, "B", Ok(BTreeMap::new())),
+                    title: pick(i == 28, "T", ok_title()),
                 },
             )
         };
@@ -957,9 +1130,10 @@ mod tests {
 
     #[test]
     fn battlers_are_skipped_when_the_images_failed() {
-        assert_eq!(load_battlers(None, None), Ok(BattlerTable::default()));
+        assert_eq!(load_battlers(None, None, None), Ok(BattlerTable::default()));
         let images = ImageTable::load().ok();
-        let loaded = load_battlers(images.as_ref(), ok_terrain().ok().as_ref());
+        let lights = lighting::load().ok();
+        let loaded = load_battlers(images.as_ref(), ok_terrain().ok().as_ref(), lights.as_ref());
         assert!(loaded.is_ok_and(|t| !t.battlers.is_empty()));
     }
 
@@ -1204,7 +1378,7 @@ mod tests {
         assert_eq!(
             first.as_deref(),
             Some(
-                "assets/dialogue/test.dlg:10: \"test_lord\" may have fallen or left the army by \
+                "assets-test/dialogue/test.dlg:10: \"test_lord\" may have fallen or left the army by \
                  now; put their lines inside \"@if test_lord\" ... \"@endif\" \
                  (assets/dialogue/README.md, \"Who is still there\")"
             )
@@ -1216,8 +1390,8 @@ mod tests {
         assert_eq!(
             files.into_iter().collect::<Vec<_>>(),
             [
-                "assets/dialogue/test.dlg",
-                "assets/dialogue/test_triggers.dlg"
+                "assets-test/dialogue/test.dlg",
+                "assets-test/dialogue/test_triggers.dlg"
             ]
         );
         // Skipped when another file failed, or the dialogue did.

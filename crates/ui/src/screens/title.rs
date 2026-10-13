@@ -9,7 +9,7 @@
 //! shows and does, and says it as plain data: a [`TitleView`]
 //! ([`TitleScreen::view`]). [`glyph::paint`] draws that view: the logo
 //! picture over this launch's backdrop (`docs/design/look-and-feel.md`,
-//! *Title screen*; ADR-0057), with the menu under it.
+//! *Title screen*; ADR-0059), with the menu under it.
 //! Tests of what happened read the view; only [`glyph`]'s tests read cells.
 
 pub mod glyph;

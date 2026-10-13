@@ -1,6 +1,6 @@
 //! The player's settings (ticket 0805): text and animation speeds, combat
-//! animations, auto-end, fullscreen, the layout picked, the cursor style
-//! and the volumes. Saved as RON under [`SETTINGS_KEY`]; [`Ctx`] loads them
+//! animations, auto-end, fullscreen, the layout picked, the cursor style,
+//! the colour theme and the volumes. Saved as RON under [`SETTINGS_KEY`]; [`Ctx`] loads them
 //! with its storage and saves them on every change
 //! ([`Ctx::change_settings`]). Key bindings are saved apart (ADR-0031).
 //!
@@ -10,6 +10,8 @@
 use serde::{Deserialize, Serialize};
 
 use crate::input::Layout;
+use trpg_content::Theme;
+
 use crate::map_view::CursorStyle;
 
 /// [`Storage`](crate::storage::Storage) key under which the settings are
@@ -170,6 +172,56 @@ impl MapLook {
     }
 }
 
+/// How big the battle map's pictures are drawn (ticket 0439,
+/// `docs/design/look-and-feel.md`, *Zoom*). The Zoom map key in battle
+/// flips it. Only a skin that paints the whole map from pictures zooms.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MapZoom {
+    /// The art's own size: a 16-pixel tile.
+    X1,
+    /// Twice that: a 32-pixel tile. What a new player starts at (Nick,
+    /// 2026-10-12).
+    #[default]
+    X2,
+}
+
+impl MapZoom {
+    /// Every zoom, smallest first.
+    pub const ALL: [Self; 2] = [Self::X1, Self::X2];
+
+    /// Console pixels per pixel of the art.
+    pub const fn factor(self) -> i32 {
+        match self {
+            Self::X1 => 1,
+            Self::X2 => 2,
+        }
+    }
+
+    /// The zoom drawing `factor` console pixels per pixel of the art, if
+    /// there is one.
+    pub fn from_factor(factor: i32) -> Option<Self> {
+        Self::ALL.into_iter().find(|zoom| zoom.factor() == factor)
+    }
+
+    /// The other zoom.
+    #[must_use]
+    pub const fn toggled(self) -> Self {
+        match self {
+            Self::X1 => Self::X2,
+            Self::X2 => Self::X1,
+        }
+    }
+
+    /// The key of the name the Options screen shows
+    /// ([`Ctx::text`](crate::screen::Ctx::text)).
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::X1 => "options.map_zoom.x1",
+            Self::X2 => "options.map_zoom.x2",
+        }
+    }
+}
+
 /// Everything the Options screen sets. The defaults are how the game
 /// behaved before it had options.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -193,6 +245,11 @@ pub struct Settings {
     pub cursor_style: CursorStyle,
     /// How the battle map looks (shown only when pictures exist).
     pub map_look: MapLook,
+    /// How big the battle map's pictures are drawn. The Zoom map key in
+    /// battle flips it too.
+    pub map_zoom: MapZoom,
+    /// The colour theme (ticket 0806): the palette glyphs and the UI use.
+    pub theme: Theme,
     /// Music volume, 0 (silent) to [`MAX_VOLUME`].
     pub music_volume: u8,
     /// Sound volume, 0 (silent) to [`MAX_VOLUME`].
@@ -214,6 +271,8 @@ impl Default for Settings {
             fullscreen: false,
             cursor_style: CursorStyle::default(),
             map_look: MapLook::default(),
+            map_zoom: MapZoom::default(),
+            theme: Theme::default(),
             music_volume: DEFAULT_VOLUME,
             sound_volume: DEFAULT_VOLUME,
             layout: None,
@@ -237,6 +296,9 @@ struct SettingsFile {
     layout: Option<String>,
     cursor_style: CursorStyle,
     map_look: MapLook,
+    /// [`MapZoom::factor`].
+    map_zoom: i32,
+    theme: Theme,
     music_volume: u8,
     sound_volume: u8,
 }
@@ -317,6 +379,8 @@ impl Settings {
             layout: self.layout.map(|l| l.name().to_owned()),
             cursor_style: self.cursor_style,
             map_look: self.map_look,
+            map_zoom: self.map_zoom.factor(),
+            theme: self.theme,
             music_volume: self.music_volume,
             sound_volume: self.sound_volume,
         }
@@ -349,6 +413,8 @@ impl Settings {
             fullscreen: file.fullscreen,
             cursor_style: file.cursor_style,
             map_look: file.map_look,
+            map_zoom: MapZoom::from_factor(file.map_zoom).unwrap_or_default(),
+            theme: file.theme,
             music_volume: file.music_volume.min(MAX_VOLUME),
             sound_volume: file.sound_volume.min(MAX_VOLUME),
             layout: file.layout.as_deref().and_then(Layout::from_name),
@@ -370,6 +436,8 @@ mod tests {
             fullscreen: true,
             cursor_style: CursorStyle::TileGlow,
             map_look: MapLook::Glyphs,
+            map_zoom: MapZoom::X2,
+            theme: Theme::Parchment,
             music_volume: 0,
             sound_volume: 100,
             layout: Some(Layout::LeftHanded),
@@ -385,6 +453,9 @@ mod tests {
         assert!(s.combat_animations && !s.auto_end_turn && !s.fullscreen);
         assert_eq!(s.cursor_style, CursorStyle::Corners);
         assert_eq!(s.map_look, MapLook::Pictures);
+        // But the map zoom: a new player starts at 2× (Nick, ticket 0439).
+        assert_eq!(s.map_zoom, MapZoom::X2);
+        assert_eq!(s.theme, Theme::Earthy);
         assert_eq!((s.music_volume, s.sound_volume), (80, 80));
         assert_eq!(s.layout(), None);
     }
@@ -397,6 +468,54 @@ mod tests {
         let text = changed().to_ron();
         assert!(text.starts_with("Settings("), "{text}");
         assert!(text.contains("layout: Some(\"LeftHanded\")"), "{text}");
+        // The zoom is saved as its number, either one.
+        assert!(text.contains("map_zoom: 2,"), "{text}");
+        let small = Settings {
+            map_zoom: MapZoom::X1,
+            ..Settings::default()
+        };
+        assert!(small.to_ron().contains("map_zoom: 1,"));
+        assert_eq!(Settings::from_ron(&small.to_ron()), Ok(small));
+    }
+
+    #[test]
+    fn the_two_zooms_are_one_and_two_pixels_a_pixel() {
+        assert_eq!(MapZoom::ALL, [MapZoom::X1, MapZoom::X2]);
+        assert_eq!(MapZoom::ALL.map(MapZoom::factor), [1, 2]);
+        assert_eq!(
+            MapZoom::ALL.map(MapZoom::toggled),
+            [MapZoom::X2, MapZoom::X1]
+        );
+        let keys = ["options.map_zoom.x1", "options.map_zoom.x2"];
+        assert_eq!(MapZoom::ALL.map(MapZoom::key), keys);
+        for zoom in MapZoom::ALL {
+            assert_eq!(MapZoom::from_factor(zoom.factor()), Some(zoom));
+        }
+        for other in [0, 3, 4, -1, i32::MAX] {
+            assert_eq!(MapZoom::from_factor(other), None, "{other}");
+        }
+    }
+
+    /// A saved zoom the game doesn't have falls back to the default, and
+    /// the rest of the settings are kept.
+    #[test]
+    fn a_zoom_out_of_range_falls_back_to_the_default() {
+        for saved in ["0", "3", "-2", "200"] {
+            let text = format!("Settings(version: 1, map_zoom: {saved}, sound_volume: 3)");
+            let expected = Settings {
+                sound_volume: 3,
+                ..Settings::default()
+            };
+            assert_eq!(Settings::from_ron(&text), Ok(expected), "{saved}");
+        }
+        let kept = Settings::from_ron("Settings(version: 1, map_zoom: 1)").unwrap();
+        assert_eq!(kept.map_zoom, MapZoom::X1);
+        // Without one (a save from before the zoom): the default.
+        let old = Settings::from_ron("Settings(version: 1)").unwrap();
+        assert_eq!(old.map_zoom, MapZoom::X2);
+        // Not a number at all: unreadable, so every default (the rule for
+        // any unreadable settings), never a crash.
+        assert!(Settings::from_ron("Settings(version: 1, map_zoom: \"big\")").is_err());
     }
 
     #[test]

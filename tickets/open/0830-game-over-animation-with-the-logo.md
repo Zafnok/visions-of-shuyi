@@ -32,7 +32,7 @@ makes, so this ticket waits for it.
 
 **Added 2026-10-12 (0811 is done):** the logo is a sprite,
 `assets/title/logo.png` (52×31, drawn 8× by
-`title::glyph::logo_sprite`; ADR-0057;
+`title::glyph::logo_sprite`; ADR-0059;
 `docs/design/look-and-feel.md`, *Title screen*). The title shows it over a
 bought backdrop with sparks drifting up (`title::glyph::paint_logo`);
 whether Game Over uses the backdrop and the sparks too is part of the

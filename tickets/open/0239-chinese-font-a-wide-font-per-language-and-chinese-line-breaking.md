@@ -43,7 +43,7 @@ format and validation; which wide set a language uses; widths that
 depend on the language; the wrapping rules; ADR-0045 amended.
 
 **Out (do not do):** translating (0726); the language pack's text files
-other than what a test needs in `assets/lang/test/`; changing any Latin
+other than what a test needs in `assets-test/lang/test/`; changing any Latin
 or Japanese glyph; Traditional Chinese; typing Chinese (0045 decides
 whether that is ever built). If 0045 chose one font for both languages
 that has a single shape per character (Unifont), steps 2 and 3 shrink to

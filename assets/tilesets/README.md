@@ -9,9 +9,10 @@ into `Content::tilesets`, by id.
 The game starts with the tileset called **`tiny_tales`** when it has it.
 That one is bought art: it exists only in the private assets
 (`assets-private/game/tilesets/`, ADR-0040), so a build without them
-starts with the glyph skin (coloured letters). The tilesets in this folder
-are generated test fixtures, reachable from the debug menu (F2 → *Map
-skin*, which goes round every tileset).
+starts with the glyph skin (coloured letters). The public tilesets are
+generated test fixtures, reachable from the debug menu (F2 → *Map
+skin*, which goes round every tileset). They are test files: they are in
+`assets-test/tilesets/`, which a build that ships doesn't have (ADR-0057).
 
 ## Format
 
@@ -161,6 +162,8 @@ its name:
   tileset's own, `outdoor`.
 
 ## Files
+
+The test tilesets, in `assets-test/tilesets/`:
 
 | File | What |
 | ---- | ---- |

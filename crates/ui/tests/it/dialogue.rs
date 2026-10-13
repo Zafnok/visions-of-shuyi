@@ -1,5 +1,5 @@
 //! Scripted tests of the dialogue screen through the real game (ADR-0007
-//! layer 4): the test scene (`assets/dialogue/test.dlg`) opened from the
+//! layer 4): the test scene (`assets-test/dialogue/test.dlg`) opened from the
 //! debug menu, full-screen and over the battle map, and reply choices
 //! (0708).
 
@@ -84,8 +84,9 @@ fn space_plays_the_scene_too() {
 #[test]
 fn holding_space_fast_forwards() {
     let mut h = full_screen();
-    h.keys("Space").hold("Space", 0.05);
-    assert!(row(&h, 23).contains("You're late."));
+    // The press that moves on to the knight's long line stays held.
+    h.keys("Space Space Space Space Space").hold("Space", 0.4);
+    assert!(row(&h, 23).contains("from you often"));
 }
 
 #[test]
@@ -118,12 +119,29 @@ fn skipping_asks_first() {
 #[test]
 fn holding_confirm_fast_forwards() {
     let mut normal = full_screen();
-    normal.keys("f f").wait(0.05);
+    normal.keys("f f f f f f").wait(0.4);
     let mut fast = full_screen();
-    // The press that moves on to the knight's line stays held.
-    fast.keys("f").hold("f", 0.05);
-    assert!(row(&fast, 23).contains("You're late."));
-    assert!(!row(&normal, 23).contains("You're late."));
+    // The press that moves on to the knight's long line stays held.
+    fast.keys("f f f f f").hold("f", 0.4);
+    assert!(row(&fast, 23).contains("from you often"));
+    assert!(!row(&normal, 23).contains("from you often"));
+}
+
+/// 0727: the press that turns the page, held a moment (a tap), reveals no
+/// more of the next line than a press let go at once.
+#[test]
+fn a_tap_does_not_fast_forward() {
+    let mut quick = full_screen();
+    // The same time on the line: the release is one frame of it.
+    quick.keys("f f f f f f").wait(0.11 - 1.0 / 60.0);
+    let mut tap = full_screen();
+    tap.keys("f f f f f").hold("f", 0.11);
+    assert!(
+        row(&quick, 23).starts_with("│   Than ne  "),
+        "{}",
+        row(&quick, 23)
+    );
+    assert_eq!(row(&tap, 23), row(&quick, 23));
 }
 
 /// The narration that opens the test scene, fully shown, under the caption.
@@ -139,7 +157,7 @@ fn narration_snapshot() {
 fn mid_reveal_snapshot() {
     let mut h = full_screen();
     h.keys("f f f f").wait(0.1);
-    assert!(row(&h, 23).starts_with("│   Better late t  "));
+    assert!(row(&h, 23).starts_with("│   Better l  "));
     assert_snapshot!(h.snapshot());
 }
 

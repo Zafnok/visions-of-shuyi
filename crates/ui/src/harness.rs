@@ -462,7 +462,7 @@ impl Harness {
     pub fn with_map_skin(&mut self, name: &str) -> &mut Self {
         let ctx = self.game.ctx_mut();
         let skin = skin_named(&ctx.content, name);
-        ctx.map_skin = skin.unwrap_or_else(|| panic!("no map skin {name:?}"));
+        ctx.set_map_skin(skin.unwrap_or_else(|| panic!("no map skin {name:?}")));
         self
     }
 
@@ -645,7 +645,7 @@ mod tests {
         let mut h = Harness::with_layout(Layout::RightHanded);
         let keys = h.snapshot();
         assert_eq!(h.game().ctx().device, Device::Keyboard);
-        h.pad("RightTrigger");
+        h.pad("RightStickPress");
         // Unbound: still the keyboard.
         assert_eq!(h.game().ctx().device, Device::Keyboard);
         h.pad("DpadDown DpadUp");
@@ -743,7 +743,7 @@ mod tests {
     #[test]
     fn storage_carries_over_between_runs() {
         let mut h = Harness::new();
-        h.keys("q Enter");
+        h.keys("z Enter");
         let h = Harness::with_storage(h.into_storage());
         assert_eq!(h.screens(), ["title"]);
         assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
@@ -808,8 +808,9 @@ mod tests {
         assert_eq!(h.battle().map(|b| b.state().units().len()), Some(8));
         h.with_map_skin("sprite").wait(FRAME_DT);
         assert_eq!(h.game().ctx().map_skin.name(), "sprite");
-        // The test tileset's 24 px tiles: 23 × 20 of them.
-        assert!(h.map_text().contains(" size 23x20\n"), "{}", h.map_text());
+        // The test tileset's 24 px tiles at the zoom a new player has
+        // (2×, 48 px): 11 × 10 of them.
+        assert!(h.map_text().contains(" size 11x10\n"), "{}", h.map_text());
         h.with_map_skin("glyph");
         assert_eq!(h.game().ctx().map_skin.name(), "glyph");
     }

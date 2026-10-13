@@ -43,6 +43,7 @@ plays; later the world map's battles and skirmishes (1007, 1008) will too.
     difficulty: Normal,
     music: Cue("battle_bright"),        // or Pool("skirmish")
     seed: 12345,
+    light: "dusk",                      // optional: not its map's light
 )
 ```
 
@@ -67,6 +68,7 @@ plays; later the world map's battles and skirmishes (1007, 1008) will too.
 | `difficulty` | The map's tier: `Easy`, `Normal`, `Hard`, `Finale` → 2 / 3 / 5 / 8 rewind charges (`death-and-difficulty.md`). |
 | `music` | **Required.** What plays from the battle's start to its end, through both phases (`docs/design/audio.md`): `Cue("battle_bright")`, one music cue of `assets/audio/audio.ron` (a story battle's chosen theme), or `Pool("skirmish")`, one of its pools, from which a track is picked at random each time the battle starts (skirmishes). Restarting or retrying the battle picks again; rewinding never changes the track. |
 | `seed` | Seed of the battle's random numbers. |
+| `light` | Optional, written bare (`light: "dusk"`): the light this battle is fought in instead of its map's, one of `assets/data/lighting.ron`, so one map can be fought at two times of day. A look only (ADR-0058): no rule reads it, and it isn't in the battle the rules see. Default: the map's (`assets/maps/README.md`). |
 
 ## Rules checked by the loader
 
@@ -74,6 +76,7 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
 `enemy 3`, `reinforcement 1`):
 
 - the id doesn't match the file name; an unknown map;
+- a `light` that isn't a light of `assets/data/lighting.ron` (with its line and column);
 - `preparations: true` with a `default_pack`; an unknown `solo_stock` item; a `solo_bench` character that is unknown, in the battle or listed twice;
 - an unknown character or template; an enemy with both or neither;
 - a level outside `1..=level_cap`, or a level given for a character;
@@ -98,4 +101,5 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
 
 `ch01.ron` is Chapter 1's battle. `test.ron` (the test chapter's battle)
 and `quick.ron` (the debug Quick Battle) are test files, never part of the
-story.
+story: they are in `assets-test/battles/`, which a build that ships doesn't
+have (ADR-0057).

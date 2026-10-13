@@ -663,3 +663,42 @@ fn embedded_battles_load() {
     assert_eq!(quick.music, skirmish);
     assert_eq!(c.battles["test"].music, skirmish);
 }
+
+/// A battle may name the light it is fought in (ticket 0438); the name is
+/// look data, so the battle itself is the same with or without it.
+#[test]
+fn a_battle_may_name_its_light() {
+    let c = content();
+    let seed = "    seed: 42,";
+    assert_eq!(light_of("b.ron", OK, &c.lighting), Ok(None));
+    let dusk = OK.replacen(seed, "    seed: 42,\n    light: \"dusk\",", 1);
+    assert_eq!(
+        light_of("b.ron", &dusk, &c.lighting),
+        Ok(Some("dusk".to_owned()))
+    );
+    assert_eq!(load(&c, &dusk), load(&c, OK));
+    // A name that is no light: reported where it is written.
+    let odd = OK.replacen(seed, "    seed: 42,\n    light: \"midnight\",", 1);
+    let line = u32::try_from(odd.lines().count() - 1).unwrap_or(0);
+    assert_eq!(
+        light_of("b.ron", &odd, &c.lighting),
+        Err(ContentError::new(
+            "b.ron",
+            "light: \"midnight\" is not a light; the lights are \"dusk\", \"night\", \"noon\""
+        )
+        .at(line, Some(12)))
+    );
+    // A file that doesn't parse names none: the battle loader reports it.
+    assert_eq!(light_of("b.ron", "(", &c.lighting), Ok(None));
+    // The bundle's battle files: the test battle names noon, no other
+    // names a light.
+    assert_eq!(
+        load_lights(&c.lighting),
+        Ok(BTreeMap::from([("test".to_owned(), "noon".to_owned())]))
+    );
+    // A light the lights' file lacks is an error of that battle's file.
+    let none = Lighting::default();
+    let errors = load_lights(&none).err().unwrap_or_default();
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].file.ends_with("battles/test.ron"), "{errors:?}");
+}

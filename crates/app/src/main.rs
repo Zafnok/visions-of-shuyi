@@ -1,5 +1,8 @@
 //! Window, main loop and platform glue. See ADR-0004.
 
+// A release build on Windows is a GUI program: no console window (ticket 0902).
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+
 mod args;
 mod audio;
 mod keys;
@@ -17,6 +20,17 @@ use crate::audio::device::Macroquad;
 use crate::pads::PadInput;
 use crate::render::Renderer;
 
+// A build that ships has none of the test files (ADR-0057): only a debug
+// build and a `debug-tools` build embed them. Features are shared across a
+// build, so a release build of the whole workspace (or of this crate's
+// tests) would bring them in through `xtask` or the test Harness.
+#[cfg(not(any(debug_assertions, feature = "debug-tools")))]
+const _: () = assert!(
+    !trpg_content::bundle::TEST_FILES,
+    "this release build would embed the test files (assets-test/): build the game \
+     alone, with `-p trpg-app` (ADR-0057)"
+);
+
 fn window_conf() -> Conf {
     Conf {
         window_title: "Visions of Shuyi".to_owned(),
@@ -28,8 +42,23 @@ fn window_conf() -> Conf {
         // Full-resolution framebuffer on scaled displays, so the console's
         // integer scale is in real pixels (see render.rs).
         high_dpi: true,
+        icon: window_icon(),
         ..Default::default()
     }
+}
+
+/// The window's icon (ticket 0902), from `assets/icon/` (`cargo xtask icon`).
+/// `None` if a file doesn't decode, which the content tests rule out.
+fn window_icon() -> Option<miniquad::conf::Icon> {
+    fn pixels<const N: usize>(png: &[u8]) -> Option<[u8; N]> {
+        let image = Image::from_file_with_format(png, None).ok()?;
+        image.bytes.try_into().ok()
+    }
+    Some(miniquad::conf::Icon {
+        small: pixels(include_bytes!("../../../assets/icon/icon-16.png"))?,
+        medium: pixels(include_bytes!("../../../assets/icon/icon-32.png"))?,
+        big: pixels(include_bytes!("../../../assets/icon/icon-64.png"))?,
+    })
 }
 
 #[macroquad::main(window_conf)]
@@ -91,6 +120,11 @@ async fn main() {
     // The window starts windowed; the Fullscreen option switches it.
     let mut fullscreen = false;
     loop {
+        if keys::fullscreen_shortcut() {
+            game.toggle_fullscreen();
+        }
+        // A colour theme changes the console background.
+        renderer.set_clear(game.ctx().palette.get(UiColor::Black));
         let mut events = keys::poll();
         events.extend(pads.poll());
         if running {
@@ -144,5 +178,13 @@ async fn show_errors(text: &str) {
             y += 24.0;
         }
         next_frame().await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn the_window_has_an_icon() {
+        assert!(super::window_icon().is_some());
     }
 }

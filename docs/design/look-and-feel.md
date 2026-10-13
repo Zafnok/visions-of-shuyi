@@ -4,7 +4,8 @@ Decided: 2026-09-25
 Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 0021; bought tiles and sprites on the battle map: 0038; walking sprites,
 effect marks, the glyph look as an option, busts in dialogue: 0039; which
-bought tiles each terrain is: 0437; the title screen: 0811)
+bought tiles each terrain is: 0437; threat arrows: 0055; the title
+screen: 0811)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -187,10 +188,14 @@ Names, stats, weapons and the sample face in the screenshots are placeholders.
   **The same 75% on the bought tiles** (decided 2026-10-04, ticket 0437:
   Nick was shown a selected unit's ranges over the picture tiles at 75%,
   50% and 35%: "75% looks ok").
-- **Colour themes (later):** the player may pick among four palettes, **C Rich
-  & painterly, D Earthy painterly (default), E War-table parchment (light), G
-  Moonlit**. That's a separate ticket (0806). Their mockup values are recorded
-  below so they don't need re-deriving.
+- **Colour themes** (ticket 0806): Options has a **Colors** row with four
+  palettes, **C Rich & painterly, D Earthy painterly (default), E War-table
+  parchment (light), G Moonlit**. D is `assets/data/palette.ron`, the others
+  `assets/data/palettes/{painterly,parchment,moonlit}.ron`. A theme recolours
+  glyphs and the UI, never a picture. Their mockup values are recorded below;
+  the colours the mockups didn't list were derived to match each theme's feel
+  *(tunable)*. In E, `black` is the light console background and `white` is
+  the strongest ink.
 
 ### Battle map: bought tiles and unit sprites
 
@@ -216,14 +221,36 @@ so they aren't in this repository (ADR-0032).
   shows them darkened toward our earthy palette, as in render C3. Unit
   sprites keep their own colours in every light, as they did in C3
   *(Claude's starting rule: that is how C3 was drawn; Nick didn't comment
-  on it)*. Which lights exist and how dark each is: ticket 0438 *(values
-  tunable)*.
+  on it)*. Built in ticket 0438: the lights are **noon** (the tiles as
+  bought), **dusk** (render C3's numbers) and **night** *(Claude's
+  starting values: darker and bluer than dusk)*, each a line of
+  `assets/data/lighting.ron` *(all tunable; more lights are more lines)*.
+  A map file names its light and a battle file may name another, so one
+  map can be fought at two times of day. *Claude's starting rules:* the
+  range colours, the path, the cursor and the HP bars aren't shaded
+  either; the glyph map looks the same in every light. Which map is in
+  which light: every map is at noon until Nick says otherwise (Chapter 1's
+  battle is in the morning; the story doesn't call it low light).
 - **Zoom:** a key and a controller button switch the map between **1×**
-  (a 16-pixel tile, about 34×28 tiles on screen, render C) and **2×** (a
-  32-pixel tile, about 17×14 tiles, render C2). The game **remembers** the
-  choice: the next battle opens at the same zoom. Ticket 0439. Nick picks
-  the default key and button when that ticket is built ("I will decide it
-  later").
+  (a 16-pixel tile, 35×30 tiles on screen, render C) and **2×** (a
+  32-pixel tile, 17×15 tiles, render C2). Tiles, unit sprites, HP bars,
+  effect arrows, the cursor's marks and the path all grow together; the
+  side panel, menus and text don't. The game **remembers** the choice:
+  the next battle, and the next launch, open at the same zoom. Built by
+  ticket 0439.
+  - **A new player starts at 2×** (Nick, 2026-10-12, shown Chapter 1's
+    first turn at both, [`0439-zoom-1x.png`](../screenshots/0439-zoom-1x.png)
+    and [`0439-zoom-2x.png`](../screenshots/0439-zoom-2x.png): "2x"). In
+    the 0804 playtest he had found 1× too small: "I think we can scale
+    the battle map bigger. tile size / overworld unit size. rn it's quite
+    small". The cost he was told: Chapter 1's map is 24×16, so at 2× it
+    scrolls (the fort is off screen at the start).
+  - **The key and the button** (Nick, 2026-10-12): `Q` right-handed, `P`
+    left-handed, the right trigger on a controller; optional. His words
+    and when the key works: `controls.md`, *Zoom map*. Also a row of the
+    Options screen, `Map zoom` (`options.md`).
+  - **Only pictures zoom.** The glyph look's tile is two font cells: with
+    it the key does nothing and the help doesn't list it.
 - **A sprite unit's side** (decided 2026-10-02): a **1-pixel outline in
   its side's colour** (player blue, enemy red, ally green, neutral yellow)
   around the sprite, as in renders B, C, C2 and C3. **The outline alone,
@@ -440,6 +467,42 @@ so they aren't in this repository (ADR-0032).
   drawn under glyphs, in `path` colour. The arrowhead marks the destination;
   there's no separate cursor frame there.
 
+### Threat arrows
+
+Decided 2026-10-12, ticket 0055, on mockups drawn over the Chapter 1 map
+with the bought art (five looks: curved lines, straight arrows, a mark
+over each enemy, a red frame around each enemy, lines and marks). The rule
+(which enemies, when) is in `turn-structure.md`, *Threat arrows*.
+
+> [which look:] "B + C" [straight arrows, and a mark over each enemy] …
+> [shown the two together:] "pls shift the exclamation mark a few more
+> pixels up, rn it covers the enemy's head and looks weird" … [an enemy
+> off the screen: A the arrow comes in from the screen's edge:] "A"
+
+- **A slim straight arrow from each enemy to the tile**, ending in an
+  arrowhead just short of the tile's middle. In the mockup: a 1-pixel red
+  line with a 1-pixel dark edge each side, starting at the middle of the
+  enemy's sprite; the arrowhead's two barbs are 4 pixels long (colours
+  and sizes *tunable*).
+- **A mark over each of those enemies:** a yellow `!` with a dark edge,
+  **above the sprite's head, not on it** (Nick: the first mockup had it 4
+  pixels lower, "it covers the enemy's head and looks weird"). In the
+  mockup the mark is 3 pixels wide and 9 tall (a 6-pixel bar, a 1-pixel
+  gap, a 2-pixel dot), centred on the tile, its lowest pixel 4 pixels
+  above the tile's top edge (*tunable*, but it must clear the head).
+- **An enemy off the screen:** its arrow **comes in from the edge of the
+  map view**, along the same straight line. (Its mark is off the screen
+  with it.) Chapter 1's map fits on the screen whole, so this is for
+  bigger maps and the zoom (0439).
+- Arrows and marks are drawn over units and terrain, so they are never
+  hidden.
+- *Claude's starting rules (Nick can veto):*
+  - **The glyph look** gets the same arrows and marks, drawn over the
+    glyphs. Nick saw only the bought-art look.
+  - The mark is drawn in front of a unit standing in the tile above, and
+    on the map view's top row it is moved down to stay inside the view.
+  - Neither moves or blinks.
+
 ### Attack forecast
 
 Decided 2026-09-27, ticket 0404, over three rounds of renders (the ticket's
@@ -655,8 +718,11 @@ sprites.
   or a peak** is in front of the mountains, **every other terrain** in
   front of the fields with the forest edge behind (so a forest, a fort, a
   bridge and a village all fall back to the fields). Which one is the
-  terrain the **defender** stands on. Only the day pictures are used
-  until maps have a light (ticket 0438).
+  terrain the **defender** stands on. The picture follows the map's
+  light (ticket 0438): the bundle's own dusk and night pictures of the
+  same place; a light the bundle has no picture for *(none today)* shows
+  the day picture shaded like the map's ground *(Claude's starting
+  rule)*.
 - **Classes with no hero art use a still image** (updated 2026-10-04,
   ticket 0040; the full list is in *Fighters with no Tiny Tales art*
   below):
@@ -945,7 +1011,7 @@ black.
   riders, who show a plain figure until Pixel Flag's Paladin is bought
   (ticket 0446).
 - Sprite units on the map: the outline alone or with a corner mark
-  (0436). The zoom key and button (0439).
+  (0436).
 - On the bought tiles (seen in ticket 0437, not decided): the cursor's
   thin corner marks are hard to see on bright ground (ticket 0444); the
   picks in the terrain table above, the burning stand-in first.

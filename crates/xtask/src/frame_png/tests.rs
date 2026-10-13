@@ -186,6 +186,12 @@ fn a_painted_sprite_is_one_colour_or_dimmed_where_the_image_is_solid() {
     assert_eq!(dimmed.pixel(0, 0), rgba(white.dimmed()));
     assert_eq!(dimmed.pixel(1, 1), rgba(red.dimmed()));
     assert_ne!(red.dimmed(), red);
+    // Shaded: each pixel as it is in the light (ADR-0058).
+    let dusk = trpg_content::Light::new(0.35, [0.62, 0.56, 0.46]);
+    let shaded = render(Paint::Shaded(dusk), 255);
+    assert_eq!(shaded.pixel(0, 0), Some([158, 143, 117, 255]));
+    assert_eq!(shaded.pixel(1, 1), rgba(Paint::Shaded(dusk).apply(red)));
+    assert_ne!(Paint::Shaded(dusk).apply(red), red);
     // The image's own colours, as before.
     let plain = render(Paint::Image, 255);
     assert_eq!(plain.pixel(1, 1), rgba(red));
@@ -212,7 +218,7 @@ fn a_bad_atlas_image_is_an_error() {
 fn parses_steps_in_order_and_options() {
     let parsed = parse_args(&args(&[
         "out.png", "--keys", "F2 Up", "--wait", "0.5", "--pad", "South", "--keys", "f", "--layout",
-        "left", "--scale", "3", "--prompt",
+        "left", "--scale", "3", "--prompt", "--light", "dusk",
     ]))
     .unwrap();
     assert_eq!(
@@ -228,14 +234,15 @@ fn parses_steps_in_order_and_options() {
             layout: Layout::LeftHanded,
             scale: 3,
             prompt: true,
+            light: Some("dusk".into()),
         }
     );
     let zero = parse_args(&args(&["a.png", "--wait", "0", "--scale", "8"])).unwrap();
     assert_eq!((zero.steps, zero.scale), (vec![Step::Wait(0.0)], 8));
     let plain = parse_args(&args(&["a.png"])).unwrap();
     assert_eq!(
-        (plain.layout, plain.scale, plain.prompt),
-        (Layout::RightHanded, 2, false)
+        (plain.layout, plain.scale, plain.prompt, plain.light),
+        (Layout::RightHanded, 2, false, None)
     );
     assert!(plain.steps.is_empty());
 }
@@ -253,11 +260,26 @@ fn rejects_bad_arguments() {
         &["a.png", "--layout", "middle"],
         &["a.png", "--scale", "0"],
         &["a.png", "--scale", "9"],
+        &["a.png", "--light"],
         &["a.png", "--bogus"],
         &["--bogus"],
     ] {
         assert!(parse_args(&args(bad)).is_err(), "{bad:?}");
     }
+}
+
+#[test]
+fn a_light_must_be_one_of_the_lights() {
+    let dir = temp_dir("light");
+    let options = |light| parse_args(&args(&["out.png", "--scale", "1", "--light", light]));
+    let err = run(&dir, &options("midnight").unwrap()).unwrap_err();
+    assert_eq!(
+        err,
+        "--light: no light \"midnight\"; the lights are \"dusk\", \"night\", \"noon\""
+    );
+    assert!(!dir.join("out.png").exists());
+    assert!(run(&dir, &options("night").unwrap()).is_ok());
+    let _ = fs::remove_dir_all(&dir);
 }
 
 /// A fresh empty directory under the system temp directory.

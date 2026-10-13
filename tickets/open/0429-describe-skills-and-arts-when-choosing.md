@@ -140,12 +140,19 @@ what each one does without leaving the menu?
   an art and an active.
 - Snapshot / integration: harness focus changes and the snapshots above.
 
-## Note: ticket 0442 (either order works)
+## Note: ticket 0442 is done (2026-10-12)
 
-Ticket 0442 moves the Combat Arts out of the forecast into their own menu
-(Nick, 2026-10-03). If 0442 is done first, the list this ticket describes is
-that arts menu. If this ticket is done first, 0442 keeps its descriptions in
-the new menu.
+Ticket 0442 moved the Combat Arts out of the forecast into their own menu
+(`docs/design/combat-arts.md` → *The arts menu and the forecast*). So in
+this ticket:
+
+- "The arts list" is the **arts menu**: `Arts` in the action menu
+  (`Mode::ArtsMenu`, lines from `art_lines`, drawn by `arts_menu` in
+  `art_list.rs` and by `draw_menu` in `mod.rs`). It has no `Attack` line,
+  and there is no `draw_list` any more.
+- Spell actives are **lines of the spell list** (`Fire + Overcast`,
+  `SpellChoice::active` in `magic.rs`): describe the active on those lines.
+- The sign-off's "archer's and lord's arts list" is their `Arts` menu.
 
 ## Completion notes
 

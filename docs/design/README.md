@@ -12,7 +12,7 @@ here.
 | Turn structure | [`turn-structure.md`](turn-structure.md) | 0002 | ✅ decided 2026-09-25 |
 | Weapons, gear, items, shops | [`weapons-and-items.md`](weapons-and-items.md) | 0003, 0408 (Preparations) | ✅ decided 2026-09-25 (Preparations: bring only your own items, retry returns there, 2026-10-01) |
 | The Preparations shop: basic items and tiers | `weapons-and-items.md` | 0044 | ⏳ after playtest 0804 |
-| Combat Arts (and active-skill costs) | [`combat-arts.md`](combat-arts.md) | 0014 | ✅ decided 2026-09-25 (non-attack actives cost uses per battle, 2026-10-01) |
+| Combat Arts (and active-skill costs) | [`combat-arts.md`](combat-arts.md) | 0014 | ✅ decided 2026-09-25 (non-attack actives cost uses per battle, 2026-10-01; arts in their own menu, 2026-10-12, ticket 0442) |
 | Combat Arts for ranks C–S, special weapons | `combat-arts.md` | 0018 | ⏳ after playtest 0804 |
 | Magic & healing | [`magic.md`](magic.md) | 0004 | ✅ decided 2026-09-25 (spells after a class change and terrain magic details revised 2026-09-27; casting on the battle screen added 2026-10-01) |
 | Level ups, classes, class tree | [`progression.md`](progression.md) | 0005, 0017, 0019 | ✅ decided 2026-09-25 (fliers moved to tier 3+ by 0017; no per-class stat caps, 0019, 2026-09-28; seals only between battles, 0603, 2026-09-30) |
@@ -24,12 +24,13 @@ here.
 | Supports & relationships | [`supports.md`](supports.md) | 0010 | ✅ decided 2026-09-25 |
 | Look & feel | [`look-and-feel.md`](look-and-feel.md) | 0011, 0404 (forecast), 0021 (bought art), 0038 (bought tiles and sprites on the battle map), 0039 (sprite units and dialogue busts) | ✅ decided 2026-09-25 (forecast 2026-09-27; bought portraits and battle art 2026-09-30; art bought, and the battle map drawn with it, per-map lighting and a zoom key 2026-10-02; walking sprites, effect arrows, the glyph look as an option and busts at 4× in dialogue 2026-10-02) |
 | Fighters with no Tiny Tales art | [`look-and-feel.md`](look-and-feel.md) (*Fighters with no Tiny Tales art*) | 0040, 0035 (Harl) | ✅ decided 2026-10-04 (Shironejiya for foot fighters, Pixel Flag's Paladin for riders) |
-| Sprite units: the zoom key (the outline alone, no corner mark: decided 2026-10-03, 0436) | `look-and-feel.md`, `controls.md` | 0035, 0439 | ⏳ open |
+| Sprite units: the zoom key (the outline alone, no corner mark: decided 2026-10-03, 0436) | `look-and-feel.md` (*Zoom*), `controls.md` (*Zoom map*) | 0035, 0439 | ✅ decided 2026-10-12 (starts at 2×; `Q` / `P`, right trigger, optional) |
 | Music & sound effects | [`audio.md`](audio.md) | 0020 | ✅ decided 2026-09-28 (banter track, plain-spell crit, fliers and later places still open) |
 | Title screen: the logo, its backdrops and the sparks | [`look-and-feel.md`](look-and-feel.md) (*Title screen*) | 0811 | ✅ decided 2026-10-12 (block lettering over a bought backdrop that changes each launch, drifting sparks, no line under the title) |
 | Title | [`title.md`](title.md) | 0012 | ✅ decided 2026-09-29 (*Visions of Shuyi*) |
 | Title screen: "Press any key or button" | [`title-screen.md`](title-screen.md) | 0034, 0032, 0226 | ✅ decided 2026-09-30 (every build, keys and buttons, since 0032; the keyboard and controller pictures 2026-10-04) |
 | Title screen: intro cinematic | [`title-screen.md`](title-screen.md) (*Intro cinematic*) | 0036 | ✅ decided 2026-10-03 (an off switch in Options: later; skip sound 0041; overworld shot 1010) |
+| Threat arrows: which enemies can attack the tile you're moving to | [`turn-structure.md`](turn-structure.md) (*Threat arrows*), [`look-and-feel.md`](look-and-feel.md) (*Threat arrows*) | 0055 (built by 0448) | ✅ decided 2026-10-12 |
 | Terrain: movement costs & bonuses | [`terrain.md`](terrain.md) | 0301 | ✅ decided 2026-09-26 (capturing & healing tiles deferred) |
 | Controls, key layouts & controller | [`controls.md`](controls.md) | 0015, 0030, 0032 | ✅ decided 2026-09-25 (rebinding keys 0030, 2026-09-29; controller 0032, 2026-09-30) |
 | The Options screen: speeds, volumes, asking first | [`options.md`](options.md) | 0805 | ✅ decided 2026-10-04 |

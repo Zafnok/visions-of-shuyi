@@ -65,6 +65,12 @@ The rules to know from the start:
   list every one with its fix.
 - **A speaker must be on screen**: put them there with `@left` or
   `@right` before their first line.
+- **American English**: American spelling and words (color, armor, gray,
+  peddler). Old-fashioned words are fine; British ones are not.
+- **Jokes have a place.** The game's opening and serious battles are
+  played straight; banter belongs to quiet scenes and grows as characters
+  get closer ([`setting-and-tone.md`](../design/setting-and-tone.md),
+  *Where the jokes go*).
 
 ## 2. The cues
 

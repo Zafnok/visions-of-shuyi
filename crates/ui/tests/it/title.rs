@@ -263,7 +263,7 @@ fn the_pictures_sit_beside_the_line_in_the_test_language() {
 fn any_key_shows_the_menu_and_starts_the_music() {
     let mut h = waiting_title();
     // `q` is bound to nothing: it still counts.
-    h.keys("q");
+    h.keys("z");
     assert_eq!(music(&h), ["title"]);
     assert_eq!(h.snapshot(), title().snapshot());
 }
@@ -311,7 +311,7 @@ fn first_launch_a_key_at_the_prompt_opens_the_layout_picker() {
     assert_eq!(h.screens(), ["title"]);
     assert!(prompt_shows(&h));
     // `s` moves the picker's highlight and `f` picks: here they only open it.
-    for key in ["s", "f", "q"] {
+    for key in ["s", "f", "z"] {
         let mut h = Harness::at_prompt();
         h.keys(key);
         assert_eq!(h.screens(), ["title", "layout_picker"], "{key}");
@@ -392,7 +392,7 @@ fn a_key_mid_battle_opens_the_layout_picker_until_one_is_picked() {
     h.keys("Down");
     assert_eq!(h.screens(), ["title", "battle"]);
     assert_ne!(h.cursor_tile(), cursor);
-    h.pad("DpadUp").keys("Down").pad("DpadUp").keys("q");
+    h.pad("DpadUp").keys("Down").pad("DpadUp").keys("z");
     assert_eq!(h.screens(), ["title", "battle"]);
     assert_eq!(h.cursor_tile(), cursor);
 }
@@ -403,7 +403,7 @@ fn a_later_launch_shows_the_prompt_then_the_menu() {
     let mut h = waiting_title();
     assert_eq!(h.game().ctx().key_prompt, trpg_ui::KeyPrompt::Waiting);
     assert!(prompt_shows(&h));
-    h.keys("q");
+    h.keys("z");
     assert_eq!(h.screens(), ["title"], "a layout is picked: no picker");
     assert!(!prompt_shows(&h));
 }

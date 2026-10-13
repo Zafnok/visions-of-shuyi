@@ -22,7 +22,7 @@ fix an error; add a new one.
 - Maud's autumn report reached Ossary. Crane recognised Rue and ordered the
   witnesses of the night at the mill silenced. Dace received the order, hired
   the Red Company under his Veyne seal, and sent the lead a warning letter by
-  pedlar.
+  peddler.
 - The Red Company took the old toll-fort by Harrowby's ford last night.
 
 ### Who knows what
@@ -116,7 +116,7 @@ is in "If a companion died in Chapter 1", at the end of this section
 | The kill order named the lead, Hollis and Rue, and bore the Veyne seal, which only the lord of Veyne (Dace) may use | all six | why; that the order came from Crane |
 | Harl's last words: "the new lord of Veyne pays in good silver" | whoever was near; treat it as known to all six | — |
 | Rue saw the Veyne seal four years ago "on a cart, at night, with children in it" | all six heard her say it | what the cart was, that she was in it, that Dace was there (she explained nothing; Chapter 3) |
-| Rue is gifted and swears fire | all six: she said she "can light the oven without a match" and fought with fire | that she was a Candle (Chapter 3); only Maud had guessed she was gifted before today |
+| Rue is gifted and swears fire | all six: she told Maud on the green "I'm sworn to fire, Keeper, and you know it" and fought with fire | that she was a Candle (Chapter 3); only Maud had guessed she was gifted before today |
 | Maud's report brought the killers | Maud (she understood at "the girl with the burned hands") | everyone else. She gave herself away twice in front of them ("I only asked them to...", and later "Somebody was told that Rue is in Harrowby") and nobody asked |
 | Dace's masters believe the three are dead | the player | the party; Crane will learn otherwise (when is later chapters' call) |
 | Dace answers to "the Master of Vows" | the player | the party has not heard the title |
@@ -133,7 +133,7 @@ Aske's spying).
 | The lead ↔ Rue | Open suspicion, said to the lead's face: the seal on the cart was "your family's to stamp". The lead asked "Where?" and got "You tell me." She comes along, in her words not following but "walking behind you. Where I can see your hands." |
 | The lead ↔ Hollis | Hollis has said nothing about the seal. What he did say: "The boy's at Veyne Hall", and that the lead should say the word and go, outlaw or not. |
 | Hollis ↔ Dace | Hollis has his son's letter and has seen his son's seal on a kill order. He hasn't said his son's name once ("the boy", "him", "his own father"). |
-| Tamsin ↔ Harl | Over. She joked over him, nobody laughed, and she closed his eyes: "Just a job." |
+| Tamsin ↔ Harl | Over. She marked him in her ledger, "paid in full", without a smile, and closed his eyes: "Just a job." |
 | The lead ↔ Tamsin | She rides along "as far as there's pay. ...Further, probably." She guessed the seal's owner aloud when nobody else would: "Dace Marr, hero of the war. The Captain's boy." |
 | The lead ↔ Aske | She came "once, for the deer", then stayed: "You owe me eleven arrows, noble." Still "noble". |
 | Maud ↔ Rue | Maud knows what her letter did and hasn't told Rue. She tried to hide Rue in the chapel cellar; Rue fought instead. |
@@ -199,7 +199,7 @@ What each death changes. Several can hold at once.
 
 - **The lead has her ledger** (she asked for it as she died): 4,212
   crowns, "don't let them off a single one".
-- She never joked over Harl, never closed his eyes, never said "just a
+- She never marked Harl paid, never closed his eyes, never said "just a
   job". Hollis (if alive) found the order and said she would have had a
   word for Harl; otherwise the lead found it.
 - Nobody said Dace's name aloud over the seal. The party knows whose seal

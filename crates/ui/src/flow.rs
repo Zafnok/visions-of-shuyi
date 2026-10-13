@@ -85,7 +85,7 @@ fn play_battle_music(ctx: &mut Ctx, def: &BattleDef) -> Option<String> {
     cue
 }
 
-/// The chapter the debug Quick Battle plays (`assets/chapters/quick.ron`).
+/// The chapter the debug Quick Battle plays (`assets-test/chapters/quick.ron`).
 pub const QUICK_CHAPTER: &str = "quick";
 
 /// The screen the flow shows now.
@@ -212,7 +212,7 @@ impl FlowScreen {
         flow.music = music;
         flow.adopt(ctx, campaign);
         flow.chapter = Some(chapter);
-        let look = ctx.content.map_look(&def.map);
+        let look = ctx.content.battle_look(&def);
         let battle = BattleScreen::resume(*history).with_look(look.clone());
         flow.fight = Some(Fight { def, prep, look });
         flow.stage = Stage::Battle(Box::new(battle));
@@ -403,7 +403,7 @@ impl FlowScreen {
         self.fight = Some(Fight {
             def: def.clone(),
             prep,
-            look: ctx.content.map_look(&def.map),
+            look: ctx.content.battle_look(def),
         });
         self.restart(ctx);
     }

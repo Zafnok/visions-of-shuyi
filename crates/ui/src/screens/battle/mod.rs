@@ -85,15 +85,15 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::settings::{AnimSpeed, HELD_SPEED};
+use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{draw_tip, fill_placeholders};
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::Language;
 
-/// Battle id of the debug Quick Battle (`assets/battles/quick.ron`).
+/// Battle id of the debug Quick Battle (`assets-test/battles/quick.ron`).
 pub const QUICK_BATTLE: &str = "quick";
 
-/// The debug Quick Battle (`assets/battles/quick.ron`, which the title
+/// The debug Quick Battle (`assets-test/battles/quick.ron`, which the title
 /// screen plays through the game flow) at its start, with its own
 /// characters in Classic: `test_small.map` with the placeholder characters
 /// (a caster among them, unit 8) against generic enemies (rout), one
@@ -631,6 +631,20 @@ impl BattleScreen {
         };
     }
 
+    /// Switches the map between its two zooms and saves the choice with
+    /// the other options, if the map skin can zoom and the map is what
+    /// the player is looking at ([`Mode::shows_map`], no rewind open). The
+    /// next frame fits the cameras to the tiles the skin now shows
+    /// ([`refit`](Self::refit)): the cursor's tile stays in view. Never a
+    /// `Command`: the zoom isn't game state.
+    fn toggle_zoom(&self, ctx: &mut Ctx) {
+        if self.rewind.is_some() || !self.mode.shows_map() || ctx.map_skin.zoom().is_none() {
+            return;
+        }
+        // If saving fails it still holds for this session.
+        let _ = ctx.change_settings(|s| s.map_zoom = s.map_zoom.toggled());
+    }
+
     /// Flips auto-end, saves it with the other options and says so.
     fn toggle_auto_end(&mut self, ctx: &mut Ctx) {
         self.auto_end = !self.auto_end;
@@ -1001,7 +1015,7 @@ impl BattleScreen {
             .and_then(|bout| self.state.map().tiles.get(bout.defender.pos))
             .and_then(|id| ctx.content.terrain.display.get(*id))
             .map(|terrain| terrain.id.as_str());
-        stage::view(ctx, pb, ground)
+        stage::view(ctx, pb, ground, &self.look.light)
     }
 
     /// Applies `cmd` (built by [`mode::step`] from legal choices) and
@@ -1239,7 +1253,9 @@ impl BattleScreen {
     /// out its effect. Returns whether the map menu's `Options` was chosen:
     /// the frame then opens the Options screen.
     fn step_mode(&mut self, ctx: &mut Ctx, action: Action) -> bool {
-        let Some(action) = self.mode.route(action, &ctx.keymap) else {
+        // One device per frame: a key and a button pressed in the same frame
+        // are both routed by the device pressed last (ADR-0036).
+        let Some(action) = self.mode.route(action, &ctx.keymap, ctx.device) else {
             return false;
         };
         let before = self.mode.clone();
@@ -1421,7 +1437,7 @@ impl BattleScreen {
             }
             Mode::Moving { .. } => "battle.help.skip",
             Mode::ActionMenu { .. }
-            | Mode::WeaponMenu { .. }
+            | Mode::ArtsMenu { .. }
             | Mode::SkillMenu { .. }
             | Mode::ItemMenu { .. }
             | Mode::MapMenu { .. }
@@ -1451,8 +1467,9 @@ impl BattleScreen {
         ctx.text_with(key, &[])
     }
 
-    /// The help line while picking an attack's target: left/right pick the
-    /// target and up/down the line of the arts list, if it is shown (0414).
+    /// The help line while picking an attack's target: the cursor keys
+    /// pick the target, or left/right swap the weapon or spell and up/down
+    /// pick the target when several can make the attack (0430, 0442).
     /// Confirm reads `cast` for a spell.
     fn help_targeting(ctx: &Ctx, t: &Targeting) -> String {
         let km = ctx.help_keys();
@@ -1462,20 +1479,11 @@ impl BattleScreen {
             let keys = format!("{}/{}", key_name(km, a), key_name(km, b));
             ctx.text_with(key, &[("keys", &keys)])
         };
-        let (left, right) = (Action::CursorLeft, Action::CursorRight);
-        let art = || pair("battle.hint.art", Action::CursorUp, Action::CursorDown);
         let mut hints = if t.can_swap() {
-            // Left and right swap the weapon or spell of a forecast opened
-            // by pointing (0430); the unit keys then change the target.
-            let units = (Action::PrevUnit, Action::NextUnit);
-            let mut hints = vec![
-                pair("battle.hint.swap", left, right),
-                pair("battle.hint.target", units.0, units.1),
-            ];
-            hints.extend(t.has_list().then(art));
-            hints
-        } else if t.has_list() {
-            vec![pair("battle.hint.target", left, right), art()]
+            vec![
+                pair("battle.hint.swap", Action::CursorLeft, Action::CursorRight),
+                pair("battle.hint.target", Action::CursorUp, Action::CursorDown),
+            ]
         } else {
             vec![plain("battle.hint.next_target")]
         };
@@ -1514,10 +1522,15 @@ impl BattleScreen {
         hints.join(SEPARATOR)
     }
 
-    /// The toggles' state for the message row: the Danger zone key and
-    /// `danger zone: OFF`, then the Auto-end key and `auto-end: ON`, each
-    /// key named from the active keymap.
+    /// The toggles' state for the message row: the Zoom map key and
+    /// `zoom: 2×` (only under a map skin that can zoom), the Danger zone
+    /// key and `danger zone: OFF`, then the Auto-end key and
+    /// `auto-end: ON`, each key named from the active keymap.
     pub fn status(&self, ctx: &Ctx) -> String {
+        let zoom = ctx.map_skin.zoom().map(|zoom| match zoom {
+            MapZoom::X1 => "battle.status.zoom_x1",
+            MapZoom::X2 => "battle.status.zoom_x2",
+        });
         let danger = if self.danger.is_some() {
             "battle.status.danger_on"
         } else {
@@ -1528,9 +1541,12 @@ impl BattleScreen {
         } else {
             "battle.status.auto_end_off"
         };
-        [danger, auto]
+        let hints: Vec<String> = zoom
+            .into_iter()
+            .chain([danger, auto])
             .map(|key| ctx.text_with(key, &[]))
-            .join(SEPARATOR)
+            .collect();
+        hints.join(SEPARATOR)
     }
 
     /// What is on the visible map (ADR-0038), for the map skin to paint and
@@ -1664,7 +1680,7 @@ impl BattleScreen {
         match &self.mode {
             Mode::Moving { .. }
             | Mode::ActionMenu { .. }
-            | Mode::WeaponMenu { .. }
+            | Mode::ArtsMenu { .. }
             | Mode::SpellMenu { .. }
             | Mode::SkillMenu { .. }
             | Mode::ItemMenu { .. }
@@ -1696,26 +1712,16 @@ impl BattleScreen {
         })
     }
 
-    /// Draws the action menu or the weapon list beside its unit, or the
+    /// Draws the action menu or a list it opened beside its unit, or the
     /// map menu beside the cursor, if open: beside where the map skin has
     /// that tile of `scene`.
     fn draw_menu(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
         let cells = |tile| ctx.map_skin.tile_cells(scene, MAP_VIEW, tile);
         let words = ctx.words();
         let mode = self.mode.told(&self.state, words);
-        if let Some(t) = forecast_of(&mode) {
-            // The arts list, beside the forecast panel (0414).
-            if t.has_list() {
-                let unit_y = cells(t.sel.dest()).map_or(0, |r| r.y);
-                let weapon = (t.sel.unit, &t.with);
-                let told = (&self.state, words);
-                art_list::draw_list(buf, &ctx.palette, told, weapon, &t.list, unit_y);
-            }
-            return;
-        }
         let (tile, menu) = match &*mode {
             Mode::ActionMenu { sel, menu, .. }
-            | Mode::WeaponMenu { sel, menu, .. }
+            | Mode::ArtsMenu { sel, menu, .. }
             | Mode::SpellMenu { sel, menu, .. }
             | Mode::SkillMenu { sel, menu, .. }
             | Mode::ItemMenu { sel, menu, .. }
@@ -1726,6 +1732,15 @@ impl BattleScreen {
         if let Some(tile) = cells(tile) {
             let (x, y) = menu_origin(tile, menu.size());
             menu.draw(&ctx.palette, buf, x, y);
+            if let Mode::ArtsMenu { sel, lines, .. } = &*mode
+                && let Some(line) = lines.get(menu.focus())
+            {
+                // The weapon the focused art would be used with, and its
+                // durability, in the top border.
+                let weapon = (sel.unit, &Equipped::Weapon(line.slot));
+                let told = (&self.state, words);
+                art_list::draw_header(buf, &ctx.palette, told, weapon, (x, y));
+            }
             if matches!(self.mode, Mode::ItemMenu { .. }) {
                 // The pack's size in the top border.
                 let header = format!(" {} ", items::pack_header(&self.state, words));
@@ -1988,8 +2003,13 @@ impl Screen for BattleScreen {
             if self.overlay_key(action) {
                 continue;
             }
+            // The zoom is the player's view, not a move: in any phase.
+            if action == Action::ZoomMap {
+                self.toggle_zoom(ctx);
+                continue;
+            }
             // The AI's phase: only Confirm (hold: faster) and Cancel (skip
-            // a fight) do anything.
+            // a fight) do anything else.
             if self.ai_phase() && !matches!(action, Action::Confirm | Action::Cancel) {
                 continue;
             }
@@ -2356,6 +2376,9 @@ mod trigger_tests;
 
 #[cfg(test)]
 mod notes_tests;
+
+#[cfg(test)]
+mod zoom_tests;
 
 #[cfg(test)]
 mod tests {
@@ -3101,18 +3124,20 @@ mod tests {
         let lord = scene.unit_at(Pos::new(5, 5));
         assert_eq!(lord.map(|u| u.label.as_str()), Some("Lo"));
         assert_eq!(scene.unit_at(Pos::new(3, 5)), None);
-        // The menu one cell right of the tile: `Attack` and `Item` (dim),
-        // `Skill`, `Equip`, `Wait`.
+        // The menu one cell right of the tile: `Attack`, `Arts` and `Item`
+        // (dim), `Skill`, `Equip`, `Wait`.
         assert_eq!(row(16, 33, 10), "│ Attack │");
-        assert_eq!(row(17, 33, 10), "│ Skill  │");
-        assert_eq!(row(18, 33, 10), "│ Item   │");
-        assert_eq!(row(19, 33, 10), "│ Equip  │");
-        assert_eq!(row(20, 33, 10), "│ Wait   │");
+        assert_eq!(row(17, 33, 10), "│ Arts   │");
+        assert_eq!(row(18, 33, 10), "│ Skill  │");
+        assert_eq!(row(19, 33, 10), "│ Item   │");
+        assert_eq!(row(20, 33, 10), "│ Equip  │");
+        assert_eq!(row(21, 33, 10), "│ Wait   │");
         let p = &c.palette;
         assert_eq!(buf.get(35, 16).unwrap().fg, p.get(UiColor::TextDim));
-        assert_eq!(buf.get(35, 18).unwrap().fg, p.get(UiColor::TextDim));
+        assert_eq!(buf.get(35, 17).unwrap().fg, p.get(UiColor::TextDim));
+        assert_eq!(buf.get(35, 19).unwrap().fg, p.get(UiColor::TextDim));
         assert_eq!(
-            buf.get(35, 20).unwrap().bg,
+            buf.get(35, 21).unwrap().bg,
             p.get(UiColor::PanelBorderFocus)
         );
         // No cursor, no ranges, the panel shows the lord.

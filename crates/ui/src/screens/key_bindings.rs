@@ -53,7 +53,7 @@ use crate::widgets::help::SEPARATOR;
 /// (`Unit info`), in the order the screen lists them (Nick's pick, ticket
 /// 0815): the required actions, then the optional ones, as in
 /// `controls.md`'s *Required and optional* table.
-pub const ROWS: [(Action, &str); 16] = [
+pub const ROWS: [(Action, &str); 17] = [
     (Action::CursorUp, "key_bindings.action.cursor_up"),
     (Action::CursorDown, "key_bindings.action.cursor_down"),
     (Action::CursorLeft, "key_bindings.action.cursor_left"),
@@ -72,6 +72,7 @@ pub const ROWS: [(Action, &str); 16] = [
     (Action::DangerZone, "key_bindings.action.danger_zone"),
     (Action::ToggleAutoEnd, "key_bindings.action.toggle_auto_end"),
     (Action::Rewind, "key_bindings.action.rewind"),
+    (Action::ZoomMap, "key_bindings.action.zoom_map"),
     (Action::Menu, "key_bindings.action.menu"),
 ];
 

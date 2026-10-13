@@ -6,7 +6,7 @@ use crate::input::Action;
 use crate::screen::tests::ctx;
 use Item::{Continue, Credits, LoadGame, NewGame, Options, QuickBattle, Quit};
 
-/// The pool the Quick Battle's file names (`assets/battles/quick.ron`).
+/// The pool the Quick Battle's file names (`assets-test/battles/quick.ron`).
 const QUICK_BATTLE_MUSIC_POOL: &str = "skirmish";
 
 fn input(actions: &[Action]) -> FrameInput {
@@ -543,6 +543,7 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("save.rs", include_str!("../save.rs")),
         ("results.rs", include_str!("../results.rs")),
         ("credits.rs", include_str!("../credits.rs")),
+        ("preparations.rs", include_str!("../preparations.rs")),
     ];
     for (file, source) in sources {
         for name in ["UiColor", "Rect", "BoxStyle", "Cell"] {

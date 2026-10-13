@@ -1,4 +1,4 @@
-// The title screen's art (ticket 0811, ADR-0057). Format: README.md here.
+// The title screen's art (ticket 0811, ADR-0059). Format: README.md here.
 // One of the backdrops is behind the logo each launch.
 (
     logo: "logo.png",

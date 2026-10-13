@@ -1,6 +1,6 @@
 # Title art
 
-The title screen's pictures (ticket 0811, ADR-0057;
+The title screen's pictures (ticket 0811, ADR-0059;
 `docs/design/look-and-feel.md`, *Title screen*). Each is drawn as a sprite
 item (ADR-0038).
 

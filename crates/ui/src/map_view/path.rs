@@ -81,20 +81,23 @@ fn arrowhead(from: Pos, to: Pos, grid: &Grid) -> Vec<PxRect> {
 
 /// The overlays drawing `path` (the unit's tile first) in `color`: the
 /// line `Under` the glyphs, then the arrowhead `Over` them; nothing for a
-/// path of one tile. Clipped to the tiles of `grid`.
+/// path of one tile. Clipped to the tiles of `grid`. On a zoomed grid
+/// the line and the arrowhead are the art-sized tile's, every pixel a
+/// square of the zoom's.
 pub fn path_overlays(path: &[Pos], grid: &Grid, color: Rgb) -> Vec<Overlay> {
     let view = grid.bounds();
+    let art = grid.at_art_size();
     let mut out = Vec::new();
     let mut add = |rect: PxRect, layer| {
-        if let Some(rect) = rect.intersect(&view) {
+        if let Some(rect) = grid.zoomed(grid.corner, rect).intersect(&view) {
             out.push(Overlay::new(rect, color, layer));
         }
     };
     for (i, pair) in path.windows(2).enumerate() {
-        add(segment(pair[0], pair[1], grid, i == 0), Layer::Under);
+        add(segment(pair[0], pair[1], &art, i == 0), Layer::Under);
     }
     if let [.., from, to] = path {
-        for rect in arrowhead(*from, *to, grid) {
+        for rect in arrowhead(*from, *to, &art) {
             add(rect, Layer::Over);
         }
     }
@@ -199,6 +202,7 @@ mod tests {
             corner: (0, 0),
             tile: (24, 20),
             tiles: (10, 10),
+            scale: 1,
         };
         let r: Vec<_> = path_overlays(&[p(1, 1), p(2, 1), p(2, 2)], &grid, RED)
             .iter()
@@ -224,6 +228,34 @@ mod tests {
         assert_eq!(xs, [62, 61, 60, 59, 58, 57]);
         assert_eq!((line_offset(24), line_mid(24), arrow_base(24)), (11, 12, 9));
         assert_eq!(arrow_base(20), 7);
+        // The same tiles at twice the size, from (8, 16): every rectangle
+        // twice as far from the corner and twice as big.
+        let path = [p(1, 1), p(2, 1), p(2, 2)];
+        let zoomed = Grid {
+            corner: (8, 16),
+            tile: (48, 40),
+            scale: 2,
+            ..grid
+        };
+        let twice: Vec<_> = path_overlays(&path, &zoomed, RED)
+            .iter()
+            .map(|o| (o.layer, o.rect.x, o.rect.y, o.rect.w, o.rect.h))
+            .collect();
+        let doubled: Vec<_> = r
+            .iter()
+            .map(|&(layer, x, y, w, h)| (layer, 8 + 2 * x, 16 + 2 * y, 2 * w, 2 * h))
+            .collect();
+        assert_eq!(twice, doubled);
+        assert_eq!(twice[0], (Layer::Under, 104, 74, 28, 6));
+        // Clipped to the zoomed tiles: a path that leaves a two-tile view.
+        let two = Grid {
+            tiles: (2, 1),
+            ..zoomed
+        };
+        let cut = path_overlays(&[p(0, 0), p(1, 0), p(2, 0)], &two, RED);
+        let right = two.bounds().x + two.bounds().w;
+        assert!(cut.iter().all(|o| o.rect.x + o.rect.w <= right), "{cut:?}");
+        assert_eq!(cut.len(), 2);
     }
 
     #[test]

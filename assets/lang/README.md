@@ -12,9 +12,10 @@ assets/lang/
     ui.ron              screen text
     data.ron            names, tips, titles and notes of the data files
     dialogue/<file>.ron lines and captions, one file per .dlg file
-  test/                 the pack the tests use (English in capitals);
-                        never offered to players
 ```
+
+The pack the tests use, `test` (English in capitals; never offered to
+players), is a test file: `assets-test/lang/test/` (ADR-0057).
 
 A pack needs `lang.ron` and `ui.ron`; `data.ron` and `dialogue/` are
 optional. Any other file is an error.

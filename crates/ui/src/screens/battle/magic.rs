@@ -2,33 +2,52 @@
 //! list with what each spell can be cast on from where the unit stands, and
 //! the cast target mode. One cursor steps through everything the chosen
 //! spell can target (Nick): an enemy shows the attack forecast (0404's
-//! [`Targeting`], with the unit's spell actives as its list), a hurt ally
-//! the heal's `HP 10 → 25`, an empty tile the terrain change (`Forest →
-//! Burning (1 round)`). Every target is one the core accepts
+//! [`Targeting`]), a hurt ally the heal's `HP 10 → 25`, an empty tile the
+//! terrain change (`Forest → Burning (1 round)`). A spell active is a line
+//! of the list after its spell (`Fire + Overcast`, Nick, 0442), cast at
+//! enemies only. Every target is one the core accepts
 //! ([`BattleState::check`]), so the UI never decides what is legal
 //! (ADR-0004).
 
 use trpg_core::{
-    BattleState, CastTarget, Command, EffectDuration, Equipped, Pos, SpellDef, SpellId, SpellKind,
-    TerrainId, UnitAction, UnitId,
+    BattleState, CastTarget, Command, CostError, EffectDuration, Equipped, Pos, SkillId, SpellDef,
+    SpellId, SpellKind, TerrainId, UnitAction, UnitId,
 };
 
-use super::attack::Targeting;
+use super::art_list::{Fit, Technique, cost_label, fit, reason_text};
+use super::attack::{Targeting, reach};
 use super::info::range_text;
 use super::items::heal_preview;
 use super::mode::Selection;
+use super::skills::skill_name;
+use crate::color::UiColor;
 use crate::widgets::menu::{Menu, MenuItem};
 use crate::words::Words;
+use std::fmt::Display;
 
 /// One line of the spell list.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpellChoice {
     /// The spell.
     pub spell: SpellId,
+    /// The spell active it is cast with (`Fire + Overcast`), if any.
+    pub active: Option<SkillId>,
     /// What it can be cast on from the destination, in `(y, x)` order of
     /// their tiles: enemies (an attack spell), hurt allies (a heal), empty
-    /// tiles (a terrain effect). Empty: the line is dimmed.
+    /// tiles (a terrain effect); with an active, enemies only. Empty: the
+    /// line is dimmed.
     pub targets: Vec<CastTarget>,
+    /// Why the active's cost can't be paid (`1 uses left`), if it can't.
+    pub blocked: Option<CostError>,
+}
+
+impl SpellChoice {
+    /// What the line casts with: plainly, or its spell active.
+    pub fn technique(&self) -> Technique {
+        self.active
+            .clone()
+            .map_or(Technique::Attack, Technique::Active)
+    }
 }
 
 /// Casting `spell` on `target`, with no active.
@@ -80,20 +99,44 @@ pub fn cast_targets(
     found.into_iter().map(|(_, target)| target).collect()
 }
 
-/// The spells `unit` has learned, in id order, with what each could be cast
-/// on from `dest`.
+/// The spell list's lines for `unit` at `dest`: the spells it has learned,
+/// in id order, with what each could be cast on from there; after an attack
+/// spell, a line for each of the unit's spell actives (`Fire + Overcast`).
 pub fn spell_choices(state: &BattleState, unit: UnitId, dest: Pos) -> Vec<SpellChoice> {
     let Some(u) = state.unit(unit) else {
         return vec![];
     };
-    u.learned
-        .iter()
-        .filter_map(|id| state.spells().get(id))
-        .map(|def| SpellChoice {
+    let actives = u.usable_skills(state.classes(), state.skills());
+    let mut lines = vec![];
+    for def in u.learned.iter().filter_map(|id| state.spells().get(id)) {
+        lines.push(SpellChoice {
             spell: def.id.clone(),
+            active: None,
             targets: cast_targets(state, unit, dest, def),
-        })
-        .collect()
+            blocked: None,
+        });
+        if !def.is_attack() {
+            continue;
+        }
+        let with = Equipped::Spell(def.id.clone());
+        for skill in &actives {
+            let technique = Technique::Active(skill.id.clone());
+            let blocked = match fit(state, unit, dest, &with, &technique) {
+                // Not a spell active: no line.
+                Fit::No => continue,
+                Fit::Cost(error) => Some(error),
+                Fit::Hits | Fit::Far => None,
+            };
+            let targets = reach(state, unit, dest, &with, &technique);
+            lines.push(SpellChoice {
+                spell: def.id.clone(),
+                active: Some(skill.id.clone()),
+                targets: targets.into_iter().map(CastTarget::Unit).collect(),
+                blocked,
+            });
+        }
+    }
+    lines
 }
 
 /// Whether the action menu lists `Magic` for `unit`: it knows a spell.
@@ -151,7 +194,9 @@ pub fn spell_label(
 
 /// The spell list: one line per choice, dimmed when it has nothing to be
 /// cast on (always so at 0 uses), focused on the equipped spell if it can
-/// be cast.
+/// be cast. A line with a spell active reads just `Fire + Overcast`, with
+/// what the active costs after it (`+1 use`), or why that can't be paid:
+/// the spell's uses and numbers are on its own line, above.
 pub fn spell_menu(
     state: &BattleState,
     words: Words<'_>,
@@ -167,17 +212,41 @@ pub fn spell_menu(
     let caster = state.unit(unit);
     let items = defs()
         .map(|(c, def)| {
-            let left = caster.map_or(0, |u| u.spells.uses_left(&c.spell));
-            let label = spell_label(words, def, words.spell(def), left, name_w.unwrap_or(0));
-            if c.targets.is_empty() {
+            let label = match &c.active {
+                None => {
+                    let left = caster.map_or(0, |u| u.spells.uses_left(&c.spell));
+                    spell_label(words, def, words.spell(def), left, name_w.unwrap_or(0))
+                }
+                Some(active) => {
+                    let active = skill_name(state, words, active);
+                    let keys = [
+                        ("spell", &words.spell(def) as &dyn Display),
+                        ("active", &active),
+                    ];
+                    words.text_with("battle.spell.with_active", &keys)
+                }
+            };
+            let item = if c.targets.is_empty() {
                 MenuItem::disabled(label)
             } else {
                 MenuItem::new(label)
+            };
+            match (&c.blocked, &c.active) {
+                (Some(error), _) => {
+                    item.with_suffix(format!(" {}", reason_text(words, error)), UiColor::HpLow)
+                }
+                (None, Some(_)) => {
+                    let cost = cost_label(state, words, &c.technique());
+                    item.with_suffix(format!(" {cost}"), UiColor::TextDim)
+                }
+                (None, None) => item,
             }
         })
         .collect();
     let equipped = caster.and_then(|u| u.loadout.equipped_spell());
-    let focus = choices.iter().position(|c| Some(&c.spell) == equipped);
+    let focus = choices
+        .iter()
+        .position(|c| Some(&c.spell) == equipped && c.active.is_none());
     let menu = Menu::new(items);
     match focus {
         Some(i) => menu.focused(i),
@@ -198,8 +267,9 @@ pub struct CastTargeting {
     pub chosen: usize,
     /// The target under the cursor, an index of the line's targets.
     pub index: usize,
-    /// The forecast (and list of spell actives) against the units an attack
-    /// spell reaches; shown while the cursor is on one of them.
+    /// The forecast against the units an attack spell reaches (with the
+    /// line's spell active, if it has one); shown while the cursor is on
+    /// one of them.
     attack: Option<Targeting>,
 }
 
@@ -225,7 +295,7 @@ impl CastTargeting {
             .collect();
         // No forecast can be made of a heal: its units get the HP line.
         let with = Equipped::Spell(choice.spell.clone());
-        let mut attack = Targeting::with(state, sel.clone(), with, enemies, None);
+        let mut attack = Targeting::with(state, sel.clone(), with, choice.technique(), enemies);
         if let (Some(attack), CastTarget::Unit(id)) = (&mut attack, first) {
             attack.aim(id, state);
         }
@@ -260,14 +330,6 @@ impl CastTargeting {
         &self.used().targets
     }
 
-    /// Writes the forecast's list of spell actives in `words`, for the
-    /// screen to paint ([`Mode::told`](super::mode::Mode::told)).
-    pub fn tell(&mut self, state: &BattleState, words: Words<'_>) {
-        if let Some(attack) = &mut self.attack {
-            attack.tell(state, words);
-        }
-    }
-
     /// The attack forecast, while the cursor is on a unit an attack spell
     /// hits.
     pub fn forecast(&self) -> Option<&Targeting> {
@@ -288,14 +350,6 @@ impl CastTargeting {
         };
         if let (CastTarget::Unit(id), Some(attack)) = (self.target(), &mut self.attack) {
             attack.aim(id, state);
-        }
-    }
-
-    /// Moves the focus of the forecast's list of spell actives (see
-    /// [`Targeting::move_list`]); nothing without a forecast.
-    pub fn move_list(&mut self, down: bool, state: &BattleState) {
-        if let (CastTarget::Unit(_), Some(attack)) = (self.target(), &mut self.attack) {
-            attack.move_list(down, state);
         }
     }
 

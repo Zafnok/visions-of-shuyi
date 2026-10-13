@@ -5,7 +5,7 @@
 //!
 //! Rows, top to bottom: Text speed, Animation speed, Combat animations,
 //! Enemy phase speed, Auto-end turn, Fullscreen, Cursor, (Map look, with the
-//! bought pictures), Music volume,
+//! bought pictures), Colors, Music volume,
 //! Sound volume, Layout, Key bindings, (Game mode, with a campaign), Reset
 //! tips, Restore defaults. `key_bindings_screen.rs` opens the Key bindings
 //! row.
@@ -15,7 +15,9 @@
 //! glyph look.
 
 use insta::assert_snapshot;
+use trpg_content::Theme;
 use trpg_core::GameMode;
+use trpg_ui::color::UiColor;
 use trpg_ui::game::Game;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord, Layout};
@@ -30,8 +32,9 @@ use trpg_ui::tips::TIPS_SEEN_KEY;
 const TO_AUTO_END: &str = "Down Down Down Down";
 const TO_FULLSCREEN: &str = "Down Down Down Down Down";
 const TO_CURSOR: &str = "Down Down Down Down Down Down";
-const TO_MUSIC: &str = "Down Down Down Down Down Down Down";
-const TO_LAYOUT: &str = "Down Down Down Down Down Down Down Down Down";
+const TO_THEME: &str = "Down Down Down Down Down Down Down";
+const TO_MUSIC: &str = "Down Down Down Down Down Down Down Down";
+const TO_LAYOUT: &str = "Down Down Down Down Down Down Down Down Down Down";
 
 /// A launch after the right-handed layout was picked.
 fn title() -> Harness {
@@ -681,4 +684,69 @@ fn without_pictures_there_is_no_row_and_the_map_is_glyphs() {
     assert!(view.row(Row::MapLook).is_none());
     assert!(!shows(&h, "Map look"));
     assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+}
+
+/// Ticket 0806: Colors steps through the four themes, rebuilds the
+/// palette at once, is saved, and is still there after a restart.
+#[test]
+fn colors_swap_the_palette_at_once_and_are_remembered() {
+    let mut h = title();
+    let palette = |h: &Harness| h.game().ctx().palette.clone();
+    let earthy = palette(&h);
+    assert_eq!(settings(&h).theme, Theme::Earthy);
+    h.keys("Down Down f");
+    h.keys(TO_THEME);
+    assert_eq!(value(&h, Row::Theme), setting("Earthy painterly"));
+    assert_snapshot!(h.snapshot());
+
+    let mut seen = vec![earthy.clone()];
+    for (key, theme, name) in [
+        ("Right", Theme::Parchment, "War-table parchment"),
+        ("Right", Theme::Moonlit, "Moonlit"),
+        ("Left Left Left", Theme::Painterly, "Rich & painterly"),
+    ] {
+        h.keys(key);
+        assert_eq!(settings(&h).theme, theme);
+        assert_eq!(value(&h, Row::Theme), setting(name));
+        let now = palette(&h);
+        assert!(!seen.contains(&now), "{theme:?} repeats a palette");
+        let def = &h.game().ctx().content.themes[&theme];
+        assert_eq!(now.get(UiColor::Text), def.get("text").unwrap().into());
+        seen.push(now);
+    }
+    // Parchment is the light one: its console background is light.
+    let black = |t: Theme| h.game().ctx().content.themes[&t].get("black").unwrap();
+    assert!(black(Theme::Parchment).iter().all(|&c| c >= 0xc0));
+    assert!(black(Theme::Moonlit).iter().all(|&c| c < 0x20));
+
+    h.keys("Right Right");
+    assert_eq!(settings(&h).theme, Theme::Parchment);
+    let h = relaunch(h);
+    assert_eq!(settings(&h).theme, Theme::Parchment);
+    assert_ne!(palette(&h), earthy);
+    assert_eq!(
+        palette(&h).get(UiColor::Black),
+        h.game().ctx().content.themes[&Theme::Parchment]
+            .get("black")
+            .unwrap()
+            .into()
+    );
+}
+
+/// Restore defaults puts the colors back to Earthy painterly.
+#[test]
+fn restoring_defaults_brings_the_earthy_colors_back() {
+    let mut h = title();
+    h.ctx_mut()
+        .change_settings(|s| s.theme = Theme::Moonlit)
+        .unwrap();
+    let moonlit = h.game().ctx().palette.clone();
+    h.keys("Down Down f");
+    h.keys("Up f f");
+    assert_eq!(settings(&h).theme, Theme::Earthy);
+    assert_ne!(h.game().ctx().palette, moonlit);
+    assert_eq!(
+        h.game().ctx().palette.get(UiColor::Black).to_hex(),
+        "#000000"
+    );
 }

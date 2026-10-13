@@ -15,6 +15,7 @@ use serde::Deserialize;
 use crate::bundle;
 use crate::error::ContentError;
 use crate::image::{ImageId, ImageInfo, ImageTable};
+use crate::lighting::Lighting;
 use crate::ron_loader::parse_ron;
 use crate::terrain::TerrainDisplayTable;
 
@@ -95,12 +96,45 @@ pub struct Backdrops {
     pub default: Option<ImageId>,
     /// Backdrops by terrain string id.
     pub terrain: BTreeMap<String, ImageId>,
+    /// The pictures drawn for another light than noon's, by the light's
+    /// name (ticket 0438). A light with none here shows the ones above.
+    pub lights: BTreeMap<String, BackdropSet>,
+}
+
+/// The backdrops drawn for one light.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct BackdropSet {
+    /// The backdrop of a terrain that names none.
+    pub default: Option<ImageId>,
+    /// Backdrops by terrain string id.
+    pub terrain: BTreeMap<String, ImageId>,
+}
+
+impl BackdropSet {
+    /// The backdrop of a fight on terrain `terrain` (the default's if
+    /// `None`).
+    fn of(&self, terrain: Option<&str>) -> Option<ImageId> {
+        let own = terrain.and_then(|t| self.terrain.get(t));
+        own.copied().or(self.default)
+    }
 }
 
 impl Backdrops {
     /// The backdrop of a fight on terrain `terrain`.
     pub fn of(&self, terrain: &str) -> Option<ImageId> {
         self.terrain.get(terrain).copied().or(self.default)
+    }
+
+    /// The backdrop of a fight on terrain `terrain` (the default's if
+    /// `None`) in the light called `light`, and whether it is a picture
+    /// drawn for that light. If it isn't (the file has no pictures for
+    /// the light), it is noon's picture, still to be shaded.
+    pub fn in_light(&self, terrain: Option<&str>, light: &str) -> Option<(ImageId, bool)> {
+        let drawn = self.lights.get(light).and_then(|set| set.of(terrain));
+        let noon = || terrain.map_or(self.default, |t| self.of(t));
+        drawn
+            .map(|id| (id, true))
+            .or_else(|| Some((noon()?, false)))
     }
 }
 
@@ -125,15 +159,26 @@ struct BackdropFile {
     default: String,
     #[serde(default)]
     terrain: BTreeMap<String, String>,
+    #[serde(default)]
+    lights: BTreeMap<String, RawSet>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawSet {
+    default: String,
+    #[serde(default)]
+    terrain: BTreeMap<String, String>,
 }
 
 /// Loads every sidecar in the bundle's battlers directory and the
-/// backdrops' file, checking each image against `images` and each
-/// backdrop's terrain against `terrain` (if it loaded). Reports every
-/// error of every file.
+/// backdrops' file, checking each image against `images`, each
+/// backdrop's terrain against `terrain` and each light against
+/// `lighting` (each if it loaded). Reports every error of every file.
 pub fn load_all(
     images: &ImageTable,
     terrain: Option<&TerrainDisplayTable>,
+    lighting: Option<&Lighting>,
 ) -> Result<BattlerTable, Vec<ContentError>> {
     let mut battlers = BTreeMap::new();
     let mut errors = Vec::new();
@@ -167,7 +212,7 @@ pub fn load_all(
                 "file is missing or not valid UTF-8",
             )]
         })
-        .and_then(|source| parse_backdrops(&file, source, images, terrain));
+        .and_then(|source| parse_backdrops(&file, source, images, terrain, lighting));
     assemble(battlers, errors, backdrops)
 }
 
@@ -264,42 +309,84 @@ pub fn parse_battler(
 }
 
 /// Parses the backdrops' file `source` (errors attributed to `file`),
-/// checking each image against `images` and each terrain id against
-/// `terrain` (if given). Reports every problem.
+/// checking each image against `images`, each terrain id against
+/// `terrain` and each light's name against `lighting` (each if given).
+/// Reports every problem.
 pub fn parse_backdrops(
     file: &str,
     source: &str,
     images: &ImageTable,
     terrain: Option<&TerrainDisplayTable>,
+    lighting: Option<&Lighting>,
 ) -> Result<Backdrops, Vec<ContentError>> {
     let raw: BackdropFile = parse_ron(file, source).map_err(|e| vec![e])?;
     let mut errors = Vec::new();
-    let mut check = |what: &str, relative: &str| {
-        let result = check_backdrop(relative, images);
-        if let Err(problem) = &result {
-            errors.push(ContentError::new(file, format!("{what}: {problem}")));
+    let noon = parse_set("", &raw.default, &raw.terrain, images, terrain);
+    let noon = noon.unwrap_or_else(|problems| {
+        errors.extend(problems);
+        BackdropSet::default()
+    });
+    let mut lights = BTreeMap::new();
+    for (light, set) in &raw.lights {
+        let of = format!("light \"{light}\": ");
+        if lighting.is_some_and(|known| known.get(light).is_none()) {
+            errors.push(format!("{of}no such light"));
         }
-        result.ok()
-    };
-    let default = check("default", &raw.default);
-    let mut by_terrain = BTreeMap::new();
-    for (id, relative) in &raw.terrain {
-        if let Some(image) = check(&format!("terrain \"{id}\""), relative) {
-            by_terrain.insert(id.clone(), image);
-        }
-    }
-    if let Some(known) = terrain {
-        for id in raw.terrain.keys().filter(|id| known.id_of(id).is_none()) {
-            errors.push(ContentError::new(
-                file,
-                format!("terrain \"{id}\": no such terrain"),
-            ));
+        match parse_set(&of, &set.default, &set.terrain, images, terrain) {
+            Ok(set) => {
+                lights.insert(light.clone(), set);
+            }
+            Err(problems) => errors.extend(problems),
         }
     }
     if errors.is_empty() {
         Ok(Backdrops {
+            default: noon.default,
+            terrain: noon.terrain,
+            lights,
+        })
+    } else {
+        Err(errors
+            .into_iter()
+            .map(|message| ContentError::new(file, message))
+            .collect())
+    }
+}
+
+/// One light's backdrops, `default` and `by_terrain` as the file has
+/// them, or every problem with them in plain words, each starting with
+/// `of` (which light, if not noon).
+fn parse_set(
+    of: &str,
+    default: &str,
+    by_terrain: &BTreeMap<String, String>,
+    images: &ImageTable,
+    terrain: Option<&TerrainDisplayTable>,
+) -> Result<BackdropSet, Vec<String>> {
+    let mut errors = Vec::new();
+    let mut check = |what: &str, relative: &str| {
+        let result = check_backdrop(relative, images);
+        if let Err(problem) = &result {
+            errors.push(format!("{of}{what}: {problem}"));
+        }
+        result.ok()
+    };
+    let default = check("default", default);
+    let mut pictures = BTreeMap::new();
+    for (id, relative) in by_terrain {
+        if let Some(image) = check(&format!("terrain \"{id}\""), relative) {
+            pictures.insert(id.clone(), image);
+        }
+    }
+    if let Some(known) = terrain {
+        for id in by_terrain.keys().filter(|id| known.id_of(id).is_none()) {
+            errors.push(format!("{of}terrain \"{id}\": no such terrain"));
+        }
+    }
+    if errors.is_empty() {
+        Ok(BackdropSet {
             default,
-            terrain: by_terrain,
+            terrain: pictures,
         })
     } else {
         Err(errors)

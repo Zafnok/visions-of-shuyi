@@ -75,14 +75,14 @@ the night at the mill, and has never said a word about it.
 - Calls the lead "Veyne", or "kid" when he's worried, and very rarely by
   first name, when it matters. Never a gendered word ("lad", "lass"): the
   script is gender-neutral (`setting-and-tone.md`).
-- Dry humour by understatement. Never makes a speech, except once, in
-  Chapter 8.
+- Dry humour by understatement, in quiet hours only: when there is danger
+  he gives orders and says what he sees (`setting-and-tone.md`, *Where the
+  jokes go*). Never makes a speech, except once, in Chapter 8.
 - **Won't say:** Dace's name, if he can avoid it. He says "the boy" or "him".
 
 **Sample lines**
 
-- "Wooden swords. Four years of wooden swords. Try not to cut yourself on the
-  real one."
+- "Four years of wooden swords. This one cuts. So will theirs."
 - "I've buried better men than Harl Coster. I'll dig this one's hole myself,
   it's the least I can do for him."
 - "I knew. Not all of it. Enough. I told myself enough wasn't knowing."

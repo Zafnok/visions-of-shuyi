@@ -1,5 +1,5 @@
 //! `cargo xtask title-art`: writes the title screen's pictures (ticket
-//! 0811, ADR-0057; `assets/title/README.md`).
+//! 0811, ADR-0059; `assets/title/README.md`).
 //!
 //! - The **logo**, `assets/title/logo.png`, from `assets-src/title/logo.txt`
 //!   and the palette: our own picture, one character a pixel.

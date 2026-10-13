@@ -1,6 +1,6 @@
 //! The second half of `cargo xtask test-tileset`: writes
-//! `assets/tilesets/test_units.ron` and a sheet per class in
-//! `assets/tilesets/test_units/`, the public test tileset of **unit sheets**
+//! `assets-test/tilesets/test_units.ron` and a sheet per class in
+//! `assets-test/tilesets/test_units/`, the public test tileset of **unit sheets**
 //! (ticket 0436, ADR-0049).
 //!
 //! It is shaped like the bought map sprites, which never enter this
@@ -17,7 +17,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 
-use trpg_content::bundle::display_path;
+use trpg_content::bundle::test_display_path;
 
 use crate::font_atlas::encode_png;
 use crate::test_tileset::{Canvas, DISC, FALLBACK_LETTERS, LETTERS, Sources};
@@ -146,7 +146,7 @@ pub fn run(root: &Path) -> Result<String, String> {
         files.push((sheet_path(name), encode_png(width, height, &rgba)?));
     }
     for (bundle_path, bytes) in files {
-        let path = root.join(display_path(&bundle_path));
+        let path = root.join(test_display_path(&bundle_path));
         if let Some(dir) = path.parent() {
             fs::create_dir_all(dir).map_err(|e| format!("creating {}: {e}", dir.display()))?;
         }
@@ -154,9 +154,9 @@ pub fn run(root: &Path) -> Result<String, String> {
     }
     Ok(format!(
         "test-tileset: wrote {} and {} sheets in {}",
-        display_path(RON_PATH),
+        test_display_path(RON_PATH),
         sheets.len(),
-        display_path(SHEETS_DIR),
+        test_display_path(SHEETS_DIR),
     ))
 }
 
@@ -267,11 +267,11 @@ mod tests {
         let src = sources();
         let sheets = sheets(&src);
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let text = fs::read_to_string(root.join(display_path(RON_PATH))).unwrap();
+        let text = fs::read_to_string(root.join(test_display_path(RON_PATH))).unwrap();
         let hint = "rerun `cargo xtask test-tileset`";
         assert_eq!(text.replace("\r\n", "\n"), ron(&sheets), "{hint}");
         for (name, letters) in &sheets {
-            let png = fs::read(root.join(display_path(&sheet_path(name)))).unwrap();
+            let png = fs::read(root.join(test_display_path(&sheet_path(name)))).unwrap();
             assert_eq!(
                 decode_png(&png).unwrap(),
                 sheet(&src, *letters),
@@ -279,7 +279,7 @@ mod tests {
             );
         }
         // No sheet is left over from a class since dropped.
-        let dir = fs::read_dir(root.join(display_path(SHEETS_DIR))).unwrap();
+        let dir = fs::read_dir(root.join(test_display_path(SHEETS_DIR))).unwrap();
         assert_eq!(dir.count(), sheets.len(), "{hint}");
     }
 
@@ -289,12 +289,12 @@ mod tests {
         let summary = run(&root).unwrap();
         assert_eq!(
             summary,
-            "test-tileset: wrote assets/tilesets/test_units.ron and 8 sheets in assets/tilesets/test_units"
+            "test-tileset: wrote assets-test/tilesets/test_units.ron and 8 sheets in assets-test/tilesets/test_units"
         );
         let src = sources();
-        let written = fs::read(root.join("assets/tilesets/test_units/mage.png")).unwrap();
+        let written = fs::read(root.join("assets-test/tilesets/test_units/mage.png")).unwrap();
         assert_eq!(decode_png(&written).unwrap(), sheet(&src, ['M', 'a']));
-        let text = fs::read_to_string(root.join("assets/tilesets/test_units.ron")).unwrap();
+        let text = fs::read_to_string(root.join("assets-test/tilesets/test_units.ron")).unwrap();
         assert_eq!(text, ron(&sheets(&src)));
         // A root that can't hold directories fails with the path.
         let file = root.join("file");
@@ -303,7 +303,7 @@ mod tests {
         assert!(err.starts_with("creating "), "{err}");
         // A sheet's own path taken by a directory fails the write.
         let blocked = root.join("blocked");
-        fs::create_dir_all(blocked.join("assets/tilesets/test_units/archer.png")).unwrap();
+        fs::create_dir_all(blocked.join("assets-test/tilesets/test_units/archer.png")).unwrap();
         let err = run(&blocked).unwrap_err();
         assert!(err.starts_with("writing "), "{err}");
         fs::remove_dir_all(&root).unwrap();

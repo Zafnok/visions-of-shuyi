@@ -76,8 +76,27 @@ Every backdrop is a 336×248 PNG in `assets/battlebacks/`; the scene shows
 its whole width and 192 rows of it at double size, and its two edges again,
 mirrored, to fill the screen's width. The loader checks that each image is there
 and that size, and that each terrain id exists. The files there are
-placeholders too: the bought ones replace them by name, so the two share
-this file.
+placeholders too: the bought ones replace them by name.
+
+**Lights** (ticket 0438, ADR-0058). A fight on a map that isn't at noon
+shows the picture above shaded by the map's light
+(`assets/data/lighting.ron`), unless the file has pictures drawn for that
+light:
+
+```ron
+    lights: {
+        "dusk": (
+            default: "fields_dusk.png",
+            terrain: { "mountain": "mountains_dusk.png" },
+        ),
+    },
+```
+
+A light's pictures are used whole: a terrain it doesn't name gets its
+`default`, never noon's picture. Each name must be a light, and its
+pictures are checked like the others. The public file has none; the
+bought pictures come at dusk and at night, and `cargo xtask
+battler-import` writes the file that names them into the private assets.
 
 ## Seeing one
 

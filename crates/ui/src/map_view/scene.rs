@@ -27,7 +27,8 @@ pub struct MapScene {
     /// [`terrain_near`](Self::terrain_near).
     pub rim: Vec<Option<TerrainId>>,
     /// How the map looks, as far as its file says: which set of pictures
-    /// a skin that has pictures paints its terrain with.
+    /// a skin that has pictures paints its terrain with, and which light
+    /// it shades them by (the light's name: the skin says how it looks).
     pub look: MapLook,
     /// The units on visible tiles, in the battle's order.
     pub units: Vec<UnitView>,
@@ -428,7 +429,7 @@ impl MapScene {
     /// gives the same text. The clock isn't in it (nothing happens by it),
     /// nor the ring of terrain round the view (it is the map's, one tile
     /// further out). A look other than a map's usual one ends the first
-    /// line: `look indoor`.
+    /// line: `look indoor`; so does a light other than noon: `light dusk`.
     ///
     /// ```text
     /// origin (-10,-11) size 35x30
@@ -460,8 +461,12 @@ impl MapScene {
         let (w, h) = self.size;
         // Writing to a `String` can't fail.
         let _ = write!(out, "origin ({x},{y}) size {w}x{h}");
-        if !self.look.is_default() {
+        let usual = MapLook::default();
+        if self.look.tiles != usual.tiles {
             let _ = write!(out, " look {}", self.look.tiles);
+        }
+        if self.look.light != usual.light {
+            let _ = write!(out, " light {}", self.look.light);
         }
         out.push('\n');
         for dy in 0..h {
@@ -777,6 +782,17 @@ mod tests {
         let text = s.to_text(&c.content);
         let first = "origin (0,-1) size 2x1 look indoor\n";
         assert!(text.starts_with(first), "{text}");
+        // A light other than noon, after it or alone.
+        s.look.light = "dusk".to_owned();
+        let text = s.to_text(&c.content);
+        let first = "origin (0,-1) size 2x1 look indoor light dusk\n";
+        assert!(text.starts_with(first), "{text}");
+        s.look.tiles = "outdoor".to_owned();
+        let text = s.to_text(&c.content);
+        assert!(
+            text.starts_with("origin (0,-1) size 2x1 light dusk\n"),
+            "{text}"
+        );
     }
 
     #[test]

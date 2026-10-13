@@ -99,7 +99,7 @@ pub struct ArtEffect {
 }
 
 /// An effect of an art that isn't a number of the forecast, for the UI to
-/// spell out (`combat-arts.md`, *Forecast display*).
+/// spell out (`combat-arts.md`, *The arts menu and the forecast*).
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ArtNote {
     /// The defender can't counter.

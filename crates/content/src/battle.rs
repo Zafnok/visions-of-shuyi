@@ -16,7 +16,8 @@ use crate::bundle;
 use crate::character::{CharacterTable, RawLoadout, character_unit, check_map_labels};
 use crate::dialogue::DialogueTable;
 use crate::error::ContentError;
-use crate::map::MapDef;
+use crate::lighting::Lighting;
+use crate::map::{MapDef, column_number, line_number};
 use crate::ron_loader::parse_ron;
 use crate::trigger::check_triggers;
 
@@ -88,6 +89,11 @@ struct RawBattle {
     difficulty: Difficulty,
     music: BattleMusic,
     seed: u64,
+    /// The light the battle is fought in instead of its map's, written
+    /// bare: `light: "dusk"`. Look data: read by [`light_of`], never put
+    /// in the [`BattleDef`].
+    #[serde(default, deserialize_with = "bare")]
+    light: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -201,6 +207,66 @@ pub fn load_all(refs: &BattleRefs<'_>) -> Result<BTreeMap<String, BattleDef>, Ve
     } else {
         Err(errors)
     }
+}
+
+/// The light each battle file of the bundle names instead of its map's
+/// (ticket 0438), by battle id (the file stem), checked against
+/// `lighting`. A file that doesn't parse names none here: [`load_all`]
+/// reports it.
+pub fn load_lights(lighting: &Lighting) -> Result<BTreeMap<String, String>, Vec<ContentError>> {
+    let mut lights = BTreeMap::new();
+    let mut errors = Vec::new();
+    for path in bundle::files_in(BATTLES_DIR) {
+        let stem = path
+            .strip_prefix(BATTLES_DIR)
+            .and_then(|p| p.strip_prefix('/'))
+            .and_then(|p| p.strip_suffix(EXTENSION));
+        let (Some(stem), Some(source)) = (stem, bundle::file(path)) else {
+            continue;
+        };
+        match light_of(&bundle::display_path(path), source, lighting) {
+            Ok(Some(light)) => {
+                lights.insert(stem.to_owned(), light);
+            }
+            Ok(None) => {}
+            Err(e) => errors.push(e),
+        }
+    }
+    if errors.is_empty() {
+        Ok(lights)
+    } else {
+        Err(errors)
+    }
+}
+
+/// The light battle file `source` names (`light: "dusk"`), if it names
+/// one; an error at the name (attributed to `file`) if it isn't one of
+/// `lighting`'s. `None` for a file that doesn't parse.
+pub fn light_of(
+    file: &str,
+    source: &str,
+    lighting: &Lighting,
+) -> Result<Option<String>, ContentError> {
+    let Ok(raw) = parse_ron::<RawBattle>(file, source) else {
+        return Ok(None);
+    };
+    let Some(light) = raw.light else {
+        return Ok(None);
+    };
+    if lighting.get(&light).is_some() {
+        return Ok(Some(light));
+    }
+    let needle = format!("\"{light}\"");
+    let at = source.lines().enumerate().find_map(|(i, line)| {
+        let byte = line.find(&needle)?;
+        Some((line_number(i), column_number(line[..byte].chars().count())))
+    });
+    let (line, col) = at.unwrap_or((1, 1));
+    let message = format!(
+        "light: \"{light}\" is not a light; the lights are {}",
+        lighting.names()
+    );
+    Err(ContentError::new(file, message).at(line, Some(col)))
 }
 
 /// Parses and validates battle file `source` (errors attributed to

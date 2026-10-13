@@ -1,7 +1,7 @@
 //! Debug screens (F2 in debug builds): a menu of tools. The glyph sampler
 //! shows every font glyph and palette colour, for judging the look (ticket
 //! 0011); the portrait viewer shows every portrait (ticket 0703); the test
-//! scene plays `assets/dialogue/test.dlg` full-screen or over the screen the
+//! scene plays `assets-test/dialogue/test.dlg` full-screen or over the screen the
 //! menu was opened from (ticket 0704). The sprite test
 //! draws the test card as sprite items (ticket 0231). The class-choice
 //! screen opens on a test unit, to promote or reclass it (ticket 0603),
@@ -142,7 +142,7 @@ fn skin_label(skin: &dyn MapSkin) -> &str {
 /// Swaps `ctx`'s map skin for the next in the round: the glyph skin, each
 /// tileset the content has, then the glyph skin again.
 fn switch_skin(ctx: &mut Ctx) {
-    ctx.map_skin = next_skin(&ctx.content, ctx.map_skin.as_ref());
+    ctx.set_map_skin(next_skin(&ctx.content, ctx.map_skin.as_ref()));
 }
 
 impl Screen for DebugMenuScreen {

@@ -12,7 +12,7 @@ use std::collections::{HashMap, HashSet};
 
 use macroquad::prelude::*;
 use trpg_content::font::{AtlasRect, FALLBACK_GLYPH};
-use trpg_content::{FontAtlasDef, ImageId, ImageTable, bundle};
+use trpg_content::{FontAtlasDef, ImageId, ImageTable, Light, bundle};
 use trpg_ui::console::{CELL_H_PX, CELL_W_PX, Layout, layout};
 use trpg_ui::{Backdrop, GlyphBuffer, Item, Layer, Paint, Rgb, Sprite};
 
@@ -30,6 +30,8 @@ enum Recolour {
     Silhouette,
     /// Every pixel grey and darker ([`Paint::Dimmed`]).
     Dimmed,
+    /// Every pixel as it is in a light ([`Paint::Shaded`]).
+    Shaded(Light),
 }
 
 /// Which solid cells get their background drawn.
@@ -88,6 +90,12 @@ impl Renderer {
             recoloured: HashMap::new(),
             warned_images: HashSet::new(),
         })
+    }
+
+    /// Sets the console background (the palette's `black`), which a
+    /// colour theme changes.
+    pub fn set_clear(&mut self, clear: Rgb) {
+        self.clear = clear;
     }
 
     /// Draws `buf` scaled to the current window size.
@@ -236,6 +244,7 @@ impl Renderer {
             Paint::Image => (None, Rgb::new(255, 255, 255)),
             Paint::Solid(color) => (Some(Recolour::Silhouette), color),
             Paint::Dimmed => (Some(Recolour::Dimmed), Rgb::new(255, 255, 255)),
+            Paint::Shaded(light) => (Some(Recolour::Shaded(light)), Rgb::new(255, 255, 255)),
         };
         let texture = match recolour {
             None => self.images.get(&sprite.image),
@@ -299,9 +308,11 @@ fn recoloured(image: ImageId, recolour: Recolour) -> Option<Texture2D> {
     let png = bundle::bytes(image.path())?;
     let mut picture = Image::from_file_with_format(png, Some(ImageFormat::Png)).ok()?;
     for pixel in picture.bytes.as_chunks_mut::<4>().0 {
+        let own = Rgb::new(pixel[0], pixel[1], pixel[2]);
         let rgb = match recolour {
             Recolour::Silhouette => Rgb::new(255, 255, 255),
-            Recolour::Dimmed => Paint::Dimmed.apply(Rgb::new(pixel[0], pixel[1], pixel[2])),
+            Recolour::Dimmed => Paint::Dimmed.apply(own),
+            Recolour::Shaded(light) => Paint::Shaded(light).apply(own),
         };
         pixel[..3].copy_from_slice(&[rgb.r, rgb.g, rgb.b]);
     }

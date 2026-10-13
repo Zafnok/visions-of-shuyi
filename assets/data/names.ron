@@ -133,13 +133,4 @@
     "place.ossuary_gate": "the Ossuary Gate",
     "word.mother": "mor",
     "word.home": "hus",
-
-    // Test characters (characters.ron): the tests and the debug Quick
-    // Battle.
-    "test_lord": "Test Lord",
-    "test_knight": "Test Knight",
-    "test_archer": "Test Archer",
-    "test_rogue": "Test Rogue",
-    "test_mage": "Test Mage",
-    "test_scout": "Test Scout",
 }

@@ -1,6 +1,7 @@
 //! Named characters, generic unit templates and dialogue speakers
 //! (`assets/data/characters.ron`).
 
+use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
@@ -193,7 +194,64 @@ pub fn load(
             "file not found in asset bundle",
         )]
     })?;
-    from_source(&display, source, classes, items, names)
+    let table = from_source(&display, source, classes, items, names)?;
+    match bundle::test_part(CHARACTERS_PATH) {
+        Some((file, source)) => {
+            let part = from_source(&file, source, classes, items, names)?;
+            with_part(table, part, &display, &file, source)
+        }
+        None => Ok(table),
+    }
+}
+
+/// `table` (of file `story`) with the entries of `part` added: the test
+/// files' characters, templates and speakers (ADR-0057), read from `file`
+/// (`source`, for the errors' lines). An id that `table` has too is an
+/// error, whichever of the three it is there.
+pub fn with_part(
+    mut table: CharacterTable,
+    part: CharacterTable,
+    story: &str,
+    file: &str,
+    source: &str,
+) -> Result<CharacterTable, Vec<ContentError>> {
+    let mut errors = Vec::new();
+    let mut clash = |what: &str, id: &str| {
+        let e = ContentError::new(file, format!("{what} \"{id}\" is already in {story}"));
+        let line = line_of(source, &format!("id: \"{id}\""))
+            .or_else(|| line_of(source, &format!("\"{id}\"")));
+        errors.push(match line {
+            Some(l) => e.at(l, None),
+            None => e,
+        });
+    };
+    for (id, def) in part.characters {
+        if table.can_speak(&id) {
+            clash("character", &id.0);
+        } else {
+            table.characters.insert(id, def);
+        }
+    }
+    for (id, template) in part.generics {
+        match table.generics.entry(id) {
+            Entry::Occupied(taken) => clash("generic", taken.key()),
+            Entry::Vacant(free) => {
+                free.insert(template);
+            }
+        }
+    }
+    for id in part.speakers {
+        if table.can_speak(&id) {
+            clash("speaker", &id.0);
+        } else {
+            table.speakers.insert(id);
+        }
+    }
+    if errors.is_empty() {
+        Ok(table)
+    } else {
+        Err(errors)
+    }
 }
 
 /// Parses and validates character `source`, attributing errors to `file`.
@@ -779,6 +837,115 @@ mod tests {
                 "ch.ron:12: duplicate generic id \"g\"",
             ]
         );
+    }
+
+    /// A story file: `hero`, generic `g` and speaker `voice`.
+    fn story_file() -> String {
+        file(
+            &[character("hero", "swordsman", "")],
+            "(id: \"g\", class: \"brigand\", level: 1)",
+        )
+        .replace("],\n)", "],\n    speakers: [\"voice\"],\n)")
+    }
+
+    /// The story file (`ch.ron`) with the entries of `part` (`t.ron`).
+    fn with_test_part(part: &str) -> Result<CharacterTable, Vec<String>> {
+        let table = load_src(&story_file()).unwrap_or_default();
+        from_source("t.ron", part, Some(&classes()), Some(&items()), None)
+            .and_then(|loaded| with_part(table, loaded, "ch.ron", "t.ron", part))
+            .map_err(|errors| errors.iter().map(ToString::to_string).collect())
+    }
+
+    /// The test files' entries are added to the story's, by id (ADR-0057).
+    #[test]
+    fn a_part_adds_its_characters_generics_and_speakers_by_id() {
+        let part = file(
+            &[character("test_hero", "swordsman", "")],
+            "(id: \"test_g\", class: \"brigand\", level: 2)",
+        )
+        .replace("],\n)", "],\n    speakers: [\"test_voice\"],\n)");
+        let table = with_test_part(&part).unwrap_or_default();
+        let story = load_src(&story_file()).unwrap_or_default();
+        let ids = |t: &CharacterTable| -> Vec<String> {
+            let characters = t.characters.keys().map(|c| c.0.clone());
+            let generics = t.generics.keys().cloned();
+            let speakers = t.speakers.iter().map(|c| c.0.clone());
+            characters.chain(generics).chain(speakers).collect()
+        };
+        assert_eq!(ids(&story), ["hero", "g", "voice"]);
+        assert_eq!(
+            ids(&table),
+            ["hero", "test_hero", "g", "test_g", "test_voice", "voice"]
+        );
+        assert_eq!(table.generics["test_g"].level, 2);
+        let hero = CharacterId("hero".into());
+        assert_eq!(table.characters.get(&hero), story.characters.get(&hero));
+        assert_eq!(table.generics["g"], story.generics["g"]);
+    }
+
+    #[test]
+    fn a_part_with_an_id_of_the_story_is_an_error() {
+        // A character with the id of a story character, and of a speaker;
+        // a generic with a story generic's id.
+        let part = file(
+            &[
+                character("hero", "swordsman", ""),
+                character("voice", "swordsman", ""),
+                character("test_hero", "swordsman", ""),
+            ],
+            "(id: \"g\", class: \"brigand\", level: 1)",
+        );
+        assert_eq!(
+            with_test_part(&part),
+            Err(vec![
+                "t.ron:4: character \"hero\" is already in ch.ron".to_owned(),
+                "t.ron:8: character \"voice\" is already in ch.ron".to_owned(),
+                "t.ron:16: generic \"g\" is already in ch.ron".to_owned(),
+            ])
+        );
+        // A speaker with the id of a story character, and of a speaker.
+        let part = file(&[], "").replace(
+            "],\n)",
+            "],\n    speakers: [\n\"voice\",\n\"test_voice\",\n\"hero\"],\n)",
+        );
+        assert_eq!(
+            with_test_part(&part),
+            Err(vec![
+                "t.ron:8: speaker \"hero\" is already in ch.ron".to_owned(),
+                "t.ron:6: speaker \"voice\" is already in ch.ron".to_owned(),
+            ])
+        );
+        // A generic may share an id with a character, as in one file.
+        let part = file(&[], "(id: \"hero\", class: \"brigand\", level: 1)");
+        assert!(with_test_part(&part).is_ok());
+    }
+
+    /// A part is checked like a character file before it is added.
+    #[test]
+    fn a_part_is_checked_like_a_character_file() {
+        let part = file(&[character("test_hero", "nope", "")], "");
+        assert_eq!(
+            with_test_part(&part),
+            Err(vec![
+                "t.ron:4: character \"test_hero\": unknown class \"nope\"".to_owned()
+            ])
+        );
+    }
+
+    /// The embedded table has the test characters and templates only with
+    /// the test files (ADR-0057).
+    #[test]
+    fn the_embedded_table_has_the_test_entries_only_with_the_test_files() {
+        let load = || load(Some(&classes()), Some(&items()), None).unwrap_or_default();
+        let (table, shipped) = (load(), bundle::story_only(load));
+        let test_lord = CharacterId("test_lord".into());
+        assert!(table.characters.contains_key(&test_lord));
+        assert!(table.generics.contains_key("test_brigand"));
+        assert!(!shipped.characters.contains_key(&test_lord));
+        assert!(!shipped.generics.contains_key("test_brigand"));
+        assert_eq!(shipped.characters.len() + 6, table.characters.len());
+        assert_eq!(shipped.generics.len() + 3, table.generics.len());
+        assert_eq!(shipped.speakers, table.speakers);
     }
 
     #[test]

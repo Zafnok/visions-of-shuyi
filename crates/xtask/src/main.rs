@@ -11,6 +11,7 @@ mod clean_targets;
 mod effect_marks;
 mod font_atlas;
 mod frame_png;
+mod icon;
 mod lang_status;
 mod lines;
 mod map_sprite_import;
@@ -46,8 +47,8 @@ clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merg
 font-atlas <font.bdf>... <out-dir> build the font atlas from BDF fonts\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
 frame-png <out.png> [steps]        render a scripted game frame to a PNG (frame-png --help)\n  \
-test-card                          write the sprite test image, assets/images/test_card.png\n  \
-test-tileset                       write the sprite map skins' test tilesets, assets/tilesets/test*\n  \
+test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
+test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
 effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
 title-art [--bought]               write the title logo and placeholder backdrops, assets/title/\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
@@ -74,6 +75,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("lang-status") => lang_status(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
         Some("font-atlas") => font_atlas(&args.collect::<Vec<_>>()),
+        Some("icon") => icon(&args.collect::<Vec<_>>()),
         Some("web") => web(&args.collect::<Vec<_>>()),
         Some("sfx") => sfx(&args.collect::<Vec<_>>()),
         Some("frame-png") => frame_png(&args.collect::<Vec<_>>()),
@@ -223,6 +225,19 @@ fn clean_merged_targets(args: &[String]) -> u8 {
     }
 }
 
+fn icon(args: &[String]) -> u8 {
+    match icon::run(args, &repo_root()) {
+        Ok(summary) => {
+            println!("{summary}");
+            0
+        }
+        Err(e) => {
+            eprintln!("icon: {e}");
+            2
+        }
+    }
+}
+
 fn font_atlas(args: &[String]) -> u8 {
     let Some((out_dir, fonts @ [_, ..])) = args.split_last() else {
         eprintln!("usage: cargo xtask font-atlas <font.bdf>... <out-dir>");
@@ -356,9 +371,12 @@ fn map_sprite_import_in(root: &Path, args: &[String]) -> u8 {
 
 /// `battler-import` with the repo at `root`.
 fn battler_import_in(root: &Path, args: &[String]) -> u8 {
-    use battler_import::{BACKDROPS, BATTLERS, USAGE, list, run};
+    use battler_import::{BACKDROPS, BATTLERS, USAGE, list, run, write_backdrops_ron};
     match args {
-        [] => match run(root, &BATTLERS, &BACKDROPS) {
+        [] => match run(root, &BATTLERS, &BACKDROPS).and_then(|said| {
+            write_backdrops_ron(root)?;
+            Ok(said)
+        }) {
             Ok(summary) => {
                 println!("{summary}");
                 0
@@ -875,6 +893,15 @@ mod tests {
         assert_eq!(lines(&args(&["--help"])), 0);
         assert_eq!(lines(&args(&["no_such_scene"])), 1);
         assert_eq!(lines(&args(&["ch01_intro", "ch01_prebattle"])), 2);
+    }
+
+    #[test]
+    fn icon_exits_with_the_outcome() {
+        assert_eq!(dispatch(args(&["icon"]).into_iter()), 2);
+        let dir = env::temp_dir().join(format!("icon-dispatch-{}", std::process::id()));
+        let dir = dir.to_str().unwrap().to_owned();
+        assert_eq!(dispatch(args(&["icon", "preview", &dir]).into_iter()), 0);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

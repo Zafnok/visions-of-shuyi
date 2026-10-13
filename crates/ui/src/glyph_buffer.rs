@@ -21,7 +21,7 @@ use std::rc::Rc;
 
 pub use backdrop::{Backdrop, MAX_ZOOM};
 
-use trpg_content::ImageId;
+use trpg_content::{ImageId, Light};
 
 use crate::color::Rgb;
 use crate::console::{CELL_H_PX, CELL_W_PX};
@@ -167,6 +167,9 @@ pub enum Paint {
     /// Each pixel [dimmed](Rgb::dimmed): grey and darker (a unit that has
     /// acted).
     Dimmed,
+    /// Each pixel as it is in this light (ADR-0058): the ground of a map
+    /// at dusk.
+    Shaded(Light),
 }
 
 impl Paint {
@@ -177,6 +180,7 @@ impl Paint {
             Paint::Image => rgb,
             Paint::Solid(color) => color,
             Paint::Dimmed => rgb.dimmed(),
+            Paint::Shaded(light) => light.apply([rgb.r, rgb.g, rgb.b]).into(),
         }
     }
 }

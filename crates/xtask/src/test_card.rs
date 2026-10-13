@@ -1,4 +1,4 @@
-//! `cargo xtask test-card`: writes `assets/images/test_card.png`, the
+//! `cargo xtask test-card`: writes `assets-test/images/test_card.png`, the
 //! public test image for sprite items (ticket 0231, ADR-0038).
 //!
 //! 16×16: a one-pixel white border around four coloured quadrants (red and
@@ -9,7 +9,7 @@
 use std::fs;
 use std::path::Path;
 
-use trpg_content::bundle::display_path;
+use trpg_content::bundle::test_display_path;
 use trpg_content::image::TEST_CARD_PATH;
 
 use crate::font_atlas::encode_png;
@@ -46,7 +46,7 @@ pub fn pixels() -> Vec<u8> {
 
 /// Runs the command: writes the card under repo root `root`.
 pub fn run(root: &Path) -> Result<String, String> {
-    let shown = display_path(TEST_CARD_PATH);
+    let shown = test_display_path(TEST_CARD_PATH);
     let path = root.join(&shown);
     let png = encode_png(SIZE, SIZE, &pixels())?;
     if let Some(dir) = path.parent() {
@@ -102,7 +102,7 @@ mod tests {
     #[test]
     fn committed_card_is_what_the_tool_makes() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let path = root.join(display_path(TEST_CARD_PATH));
+        let path = root.join(test_display_path(TEST_CARD_PATH));
         let committed = fs::read(&path).unwrap();
         assert_eq!(
             decode_png(&committed).unwrap(),
@@ -117,9 +117,9 @@ mod tests {
         let summary = run(&root).unwrap();
         assert_eq!(
             summary,
-            "test-card: wrote assets/images/test_card.png (16×16)"
+            "test-card: wrote assets-test/images/test_card.png (16×16)"
         );
-        let written = fs::read(root.join("assets/images/test_card.png")).unwrap();
+        let written = fs::read(root.join("assets-test/images/test_card.png")).unwrap();
         assert_eq!(decode_png(&written).unwrap(), (16, 16, pixels()));
         // A root that can't hold directories fails with the path.
         let file = root.join("file");
@@ -128,7 +128,7 @@ mod tests {
         assert!(err.starts_with("creating "), "{err}");
         // The card's own path taken by a directory fails the write.
         let blocked = root.join("blocked");
-        fs::create_dir_all(blocked.join("assets/images/test_card.png")).unwrap();
+        fs::create_dir_all(blocked.join("assets-test/images/test_card.png")).unwrap();
         let err = run(&blocked).unwrap_err();
         assert!(err.starts_with("writing "), "{err}");
         fs::remove_dir_all(&root).unwrap();

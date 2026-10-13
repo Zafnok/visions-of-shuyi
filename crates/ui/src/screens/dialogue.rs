@@ -46,11 +46,15 @@ pub const TEXT_LINES: usize = 3;
 pub const LISTENER_DIM: f32 = 0.45;
 /// Reveal speed multiplier while Confirm is held.
 pub const FAST_FORWARD: f32 = 6.0;
+/// Seconds Confirm must be held on a page before it reveals faster, so the
+/// tap that turned the page doesn't speed the next one up.
+pub const FAST_FORWARD_DELAY: f32 = 0.3;
 /// The `▼` is shown for this long, then hidden for as long, while waiting.
 const BLINK_S: f32 = 0.5;
 
 /// Plays a scene: Confirm reveals the text at once, or moves on when it's
-/// all shown; holding Confirm reveals faster. The End turn key does
+/// all shown; holding Confirm reveals faster, after a short delay on each
+/// page. The End turn key does
 /// everything Confirm does. Cancel asks whether to skip
 /// the scene. At a reply choice, the cursor keys move through the lead's
 /// replies and Confirm picks one; skipping stops at each choice. Pops when
@@ -66,6 +70,9 @@ pub struct DialogueScreen {
     page: usize,
     /// Characters of the page revealed so far (fractional between frames).
     shown: f32,
+    /// Seconds an advance key has been held on this page, for the
+    /// fast-forward ([`FAST_FORWARD_DELAY`]).
+    held_s: f32,
     /// Seconds since the page was fully revealed, for the blinking `▼`.
     waiting: f32,
     /// Whether the "Skip scene?" question is open.
@@ -87,6 +94,7 @@ impl DialogueScreen {
             lines: Vec::new(),
             page: 0,
             shown: 0.0,
+            held_s: 0.0,
             waiting: 0.0,
             asking_skip: false,
             menu: None,
@@ -174,6 +182,7 @@ impl DialogueScreen {
 
     fn start_page(&mut self) {
         self.shown = 0.0;
+        self.held_s = 0.0;
         self.waiting = 0.0;
     }
 
@@ -293,18 +302,21 @@ impl DialogueScreen {
                 _ => {}
             }
         }
+        if ADVANCE_KEYS.iter().any(|&a| input.is_held(a)) {
+            self.held_s += input.dt;
+        } else {
+            self.held_s = 0.0;
+        }
         if !self.asking_skip {
             if self.is_revealed() {
                 self.waiting += input.dt;
             } else {
-                let fast = if ADVANCE_KEYS.iter().any(|&a| input.is_held(a)) {
-                    FAST_FORWARD
-                } else {
-                    1.0
-                };
+                // The part of this frame past the delay goes faster.
+                let fast_dt = (self.held_s - FAST_FORWARD_DELAY).clamp(0.0, input.dt);
+                let dt = input.dt + fast_dt * (FAST_FORWARD - 1.0);
                 let len = page_len(self.page_lines());
                 self.shown = match ctx.settings().text_speed.chars_per_s() {
-                    Some(speed) => (self.shown + input.dt * speed * fast).min(len),
+                    Some(speed) => (self.shown + dt * speed).min(len),
                     // Instant: the whole page at once.
                     None => len,
                 };

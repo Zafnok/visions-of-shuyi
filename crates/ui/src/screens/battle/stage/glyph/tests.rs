@@ -48,6 +48,7 @@ fn stage(c: &Ctx) -> StageView {
     let brigand = picture(c, (64, 64), Facing::Left, (5, 4));
     StageView {
         backdrop: c.content.battlers.backdrops.default,
+        shade: trpg_content::Light::PLAIN,
         banner: None,
         fighters: [
             fighter("Ellery", Faction::Player, Some(lord)),
@@ -308,6 +309,28 @@ fn the_backdrop_then_the_target_then_the_striker_are_drawn() {
     view.backdrop = None;
     view.veil = true;
     assert_eq!(images(&view), [BRIGAND, LORD]);
+}
+
+#[test]
+fn a_backdrop_still_to_be_shaded_is_shaded_and_the_fighters_are_not() {
+    let c = ctx();
+    let mut view = stage(&c);
+    let plain = painted(&c, &view);
+    let dusk = c.content.lighting.get("dusk").unwrap();
+    view.shade = dusk;
+    view.veil = true;
+    let lit = painted(&c, &view);
+    let sprites = lit.sprites();
+    assert_eq!(sprites.len(), 8);
+    // The backdrop's three pieces, shaded; the two fighters as they were.
+    for (piece, before) in sprites[..3].iter().zip(plain.sprites()) {
+        assert_eq!(*piece, before.painted(Paint::Shaded(dusk)));
+    }
+    assert_eq!(sprites[3..5], plain.sprites()[3..5]);
+    // The veil is white whatever the light.
+    for piece in &sprites[5..] {
+        assert_eq!(piece.paint, Paint::Solid(c.palette.get(UiColor::White)));
+    }
 }
 
 #[test]

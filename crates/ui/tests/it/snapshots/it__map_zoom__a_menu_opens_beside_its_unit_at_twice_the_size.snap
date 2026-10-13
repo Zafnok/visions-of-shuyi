@@ -1,0 +1,223 @@
+---
+source: crates/ui/tests/it/map_zoom.rs
+expression: h.snapshot()
+---
+                                                                      ╔════════════════════════════╗
+                                                                      ║ Plain                      ║
+                                                                      ║ DEF +0  AVO +0             ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║ Test Lord                  ║
+                                                                      ║ Exile  Lv 1                ║
+                                                                      ║ HP 19/19   ██████████      ║
+                                                                      ║ Player                     ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                           ┌────────┐                                 ║                            ║
+                           │ Attack │                                 ║                            ║
+                           │ Arts   │                                 ║                            ║
+                           │ Skill  │                                 ║                            ║
+                           │ Item   │                                 ║                            ║
+                           │ Equip  │                                 ║                            ║
+                           │ Wait   │                                 ║                            ║
+                           └────────┘                                 ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ║                            ║
+                                                                      ╚════════════════════════════╝
+                                        q zoom: 2× · w danger zone: OFF · Shift+Space auto-end: OFF 
+ arrows choose · f confirm · d back                                                        F2 debug 
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabceeeeeeeeeccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaabggggggggbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaabggggggggbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaabggggggggbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaabhhhhhhhhbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiia
+aiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaiiiiiiiia
+--- legend ---
+a = fg:text bg:black
+b = fg:panel_border bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:text_highlight bg:panel_bg
+e = fg:player bg:panel_bg
+f = fg:hp_high bg:panel_bg
+g = fg:text_dim bg:panel_bg
+h = fg:panel_bg bg:panel_border_focus
+i = fg:text_dim bg:black
+--- overlays ---
+under sprite 16,48 48x48  tilesets/test.png 24,24 24x24
+under sprite 64,48 48x48  tilesets/test.png 24,24 24x24
+under sprite 112,48 48x48  tilesets/test.png 24,24 24x24
+under sprite 160,48 48x48  tilesets/test.png 0,24 24x24
+under sprite 208,48 48x48  tilesets/test.png 0,24 24x24
+under sprite 256,48 48x48  tilesets/test.png 0,0 24x24
+under sprite 304,48 48x48  tilesets/test.png 0,0 24x24
+under sprite 352,48 48x48  tilesets/test.png 96,0 24x24
+under sprite 400,48 48x48  tilesets/test.png 96,0 24x24
+under sprite 448,48 48x48  tilesets/test.png 120,0 24x24
+under sprite 496,48 48x48  tilesets/test.png 120,0 24x24
+under sprite 16,96 48x48  tilesets/test.png 24,24 24x24
+under sprite 64,96 48x48  tilesets/test.png 24,24 24x24
+under sprite 112,96 48x48  tilesets/test.png 0,24 24x24
+under sprite 160,96 48x48  tilesets/test.png 0,24 24x24
+under sprite 208,96 48x48  tilesets/test.png 0,0 24x24
+under sprite 256,96 48x48  tilesets/test.png 0,0 24x24
+under sprite 304,96 48x48  tilesets/test.png 24,0 24x24
+under sprite 352,96 48x48  tilesets/test.png 24,0 24x24
+under sprite 400,96 48x48  tilesets/test.png 24,0 24x24
+under sprite 448,96 48x48  tilesets/test.png 96,0 24x24
+under sprite 496,96 48x48  tilesets/test.png 96,0 24x24
+under sprite 16,144 48x48  tilesets/test.png 24,24 24x24
+under sprite 64,144 48x48  tilesets/test.png 0,24 24x24
+under sprite 112,144 48x48  tilesets/test.png 0,24 24x24
+under sprite 160,144 48x48  tilesets/test.png 48,0 24x24
+under sprite 208,144 48x48  tilesets/test.png 48,0 24x24
+under sprite 256,144 48x48  tilesets/test.png 24,0 24x24
+under sprite 304,144 48x48  tilesets/test.png 24,0 24x24
+under sprite 352,144 48x48  tilesets/test.png 24,0 24x24
+under sprite 400,144 48x48  tilesets/test.png 0,0 24x24
+under sprite 448,144 48x48  tilesets/test.png 0,0 24x24
+under sprite 496,144 48x48  tilesets/test.png 96,0 24x24
+under sprite 16,192 48x48  tilesets/test.png 0,0 24x24
+under sprite 64,192 48x48  tilesets/test.png 0,24 24x24
+under sprite 112,192 48x48  tilesets/test.png 0,24 24x24
+under sprite 160,192 48x48  tilesets/test.png 0,0 24x24
+under sprite 208,192 48x48  tilesets/test.png 24,0 24x24
+under sprite 256,192 48x48  tilesets/test.png 0,0 24x24
+under sprite 304,192 48x48  tilesets/test.png 0,0 24x24
+under sprite 352,192 48x48  tilesets/test.png 0,0 24x24
+under sprite 400,192 48x48  tilesets/test.png 0,0 24x24
+under sprite 448,192 48x48  tilesets/test.png 0,0 24x24
+under sprite 496,192 48x48  tilesets/test.png 0,0 24x24
+under sprite 16,240 48x48  tilesets/test.png 0,0 24x24
+under sprite 64,240 48x48  tilesets/test.png 0,0 24x24
+under sprite 112,240 48x48  tilesets/test.png 24,0 24x24
+under sprite 160,240 48x48  tilesets/test.png 24,0 24x24
+under sprite 208,240 48x48  tilesets/test.png 24,0 24x24 clip=208,240 48x32
+under sprite 208,240 48x48  tilesets/test.png 24,0 24x24 clip=208,272 8x16
+under sprite 256,240 48x48  tilesets/test.png 0,0 24x24 clip=256,240 48x32
+under sprite 256,240 48x48  tilesets/test.png 0,0 24x24 clip=296,272 8x16
+under sprite 304,240 48x48  tilesets/test.png 0,0 24x24
+under sprite 352,240 48x48  tilesets/test.png 0,0 24x24
+under sprite 400,240 48x48  tilesets/test.png 0,0 24x24
+under sprite 448,240 48x48  tilesets/test.png 168,24 24x24
+under sprite 496,240 48x48  tilesets/test.png 168,24 24x24
+under sprite 16,288 48x48  tilesets/test.png 0,0 24x24
+under sprite 64,288 48x48  tilesets/test.png 96,0 24x24
+under sprite 112,288 48x48  tilesets/test.png 24,0 24x24
+under sprite 160,288 48x48  tilesets/test.png 0,0 24x24
+under sprite 208,288 48x48  tilesets/test.png 0,0 24x24 clip=208,288 8x48
+under sprite 256,288 48x48  tilesets/test.png 48,24 24x24 clip=296,288 8x48
+under sprite 304,288 48x48  tilesets/test.png 0,0 24x24
+under sprite 352,288 48x48  tilesets/test.png 0,0 24x24
+under sprite 400,288 48x48  tilesets/test.png 0,0 24x24
+under sprite 448,288 48x48  tilesets/test.png 168,24 24x24
+under sprite 496,288 48x48  tilesets/test.png 72,0 24x24
+under sprite 16,336 48x48  tilesets/test.png 96,0 24x24
+under sprite 64,336 48x48  tilesets/test.png 96,0 24x24
+under sprite 112,336 48x48  tilesets/test.png 24,0 24x24
+under sprite 160,336 48x48  tilesets/test.png 0,0 24x24
+under sprite 208,336 48x48  tilesets/test.png 0,0 24x24 clip=208,336 8x48
+under sprite 256,336 48x48  tilesets/test.png 0,0 24x24 clip=296,336 8x48
+under sprite 304,336 48x48  tilesets/test.png 0,0 24x24
+under sprite 352,336 48x48  tilesets/test.png 0,0 24x24
+under sprite 400,336 48x48  tilesets/test.png 0,0 24x24
+under sprite 448,336 48x48  tilesets/test.png 168,24 24x24
+under sprite 496,336 48x48  tilesets/test.png 72,0 24x24
+under sprite 16,384 48x48  tilesets/test.png 96,0 24x24
+under sprite 64,384 48x48  tilesets/test.png 120,0 24x24
+under sprite 112,384 48x48  tilesets/test.png 24,0 24x24
+under sprite 160,384 48x48  tilesets/test.png 0,0 24x24
+under sprite 208,384 48x48  tilesets/test.png 0,0 24x24 clip=208,400 48x32
+under sprite 208,384 48x48  tilesets/test.png 0,0 24x24 clip=208,384 8x16
+under sprite 256,384 48x48  tilesets/test.png 0,0 24x24 clip=256,400 48x32
+under sprite 256,384 48x48  tilesets/test.png 0,0 24x24 clip=296,384 8x16
+under sprite 304,384 48x48  tilesets/test.png 0,0 24x24
+under sprite 352,384 48x48  tilesets/test.png 0,0 24x24
+under sprite 400,384 48x48  tilesets/test.png 0,0 24x24
+under sprite 448,384 48x48  tilesets/test.png 168,24 24x24
+under sprite 496,384 48x48  tilesets/test.png 168,24 24x24
+over  sprite 352,90 48x48  tilesets/test.png 24,144 24x24 solid=enemy
+over  sprite 352,94 48x48  tilesets/test.png 24,144 24x24 solid=enemy
+over  sprite 350,92 48x48  tilesets/test.png 24,144 24x24 solid=enemy
+over  sprite 354,92 48x48  tilesets/test.png 24,144 24x24 solid=enemy
+over  sprite 352,92 48x48  tilesets/test.png 24,144 24x24
+over  sprite 400,138 48x48  tilesets/test.png 0,72 24x24 solid=enemy
+over  sprite 400,142 48x48  tilesets/test.png 0,72 24x24 solid=enemy
+over  sprite 398,140 48x48  tilesets/test.png 0,72 24x24 solid=enemy clip=398,144 2x44
+over  sprite 398,140 48x48  tilesets/test.png 0,72 24x24 solid=enemy clip=400,140 46x48
+over  sprite 402,140 48x48  tilesets/test.png 0,72 24x24 solid=enemy
+over  sprite 400,140 48x48  tilesets/test.png 0,72 24x24
+over  sprite 112,234 48x48  tilesets/test.png 24,48 24x24 solid=player
+over  sprite 112,238 48x48  tilesets/test.png 24,48 24x24 solid=player
+over  sprite 110,236 48x48  tilesets/test.png 24,48 24x24 solid=player
+over  sprite 114,236 48x48  tilesets/test.png 24,48 24x24 solid=player
+over  sprite 112,236 48x48  tilesets/test.png 24,48 24x24
+over  sprite 352,234 48x48  tilesets/test.png 0,72 24x24 solid=enemy
+over  sprite 352,238 48x48  tilesets/test.png 0,72 24x24 solid=enemy
+over  sprite 350,236 48x48  tilesets/test.png 0,72 24x24 solid=enemy
+over  sprite 354,236 48x48  tilesets/test.png 0,72 24x24 solid=enemy
+over  sprite 352,236 48x48  tilesets/test.png 0,72 24x24
+over  sprite 160,282 48x48  tilesets/test.png 168,72 24x24 solid=player
+over  sprite 160,286 48x48  tilesets/test.png 168,72 24x24 solid=player
+over  sprite 158,284 48x48  tilesets/test.png 168,72 24x24 solid=player clip=158,288 2x44
+over  sprite 158,284 48x48  tilesets/test.png 168,72 24x24 solid=player clip=160,284 46x48
+over  sprite 162,284 48x48  tilesets/test.png 168,72 24x24 solid=player
+over  sprite 160,284 48x48  tilesets/test.png 168,72 24x24
+over  sprite 208,330 48x48  tilesets/test.png 120,96 24x24 solid=player clip=208,330 8x48
+over  sprite 208,334 48x48  tilesets/test.png 120,96 24x24 solid=player clip=208,334 8x48
+over  sprite 206,332 48x48  tilesets/test.png 120,96 24x24 solid=player clip=206,336 2x44
+over  sprite 206,332 48x48  tilesets/test.png 120,96 24x24 solid=player clip=208,332 8x48
+over  sprite 210,332 48x48  tilesets/test.png 120,96 24x24 solid=player clip=210,332 6x48
+over  sprite 208,332 48x48  tilesets/test.png 120,96 24x24 clip=208,332 8x48
+over  sprite 160,330 48x48  tilesets/test.png 48,120 24x24 solid=player clip=160,336 48x42
+over  sprite 160,334 48x48  tilesets/test.png 48,120 24x24 solid=player clip=160,336 48x46
+over  sprite 158,332 48x48  tilesets/test.png 48,120 24x24 solid=player clip=158,336 48x44
+over  sprite 162,332 48x48  tilesets/test.png 48,120 24x24 solid=player clip=162,336 48x44
+over  sprite 160,332 48x48  tilesets/test.png 48,120 24x24 clip=160,336 48x44
+over  sprite 400,378 48x48  tilesets/test.png 48,96 24x24 solid=enemy
+over  sprite 400,382 48x48  tilesets/test.png 48,96 24x24 solid=enemy
+over  sprite 398,380 48x48  tilesets/test.png 48,96 24x24 solid=enemy
+over  sprite 402,380 48x48  tilesets/test.png 48,96 24x24 solid=enemy
+over  sprite 400,380 48x48  tilesets/test.png 48,96 24x24
+over  162,332 44x4  hp_high
+over  210,380 6x4  hp_high
+over  114,284 44x4  hp_high
+over  402,188 44x4  hp_high
+over  354,284 44x4  hp_high
+over  354,140 44x4  hp_high
+over  402,428 44x4  hp_high
+over  162,380 44x4  hp_high
