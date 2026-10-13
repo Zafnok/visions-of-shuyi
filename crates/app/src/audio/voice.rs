@@ -259,7 +259,7 @@ mod tests {
     use super::*;
     use crate::audio::Audio;
 
-    /// The three lines of `assets/dialogue/test.dlg` that have a test clip
+    /// The three lines of `assets-test/dialogue/test.dlg` that have a test clip
     /// (`crates/app/tests/voice/`), and a fourth and fifth that don't.
     const LINES: [&str; 5] = [
         "test_21833604",

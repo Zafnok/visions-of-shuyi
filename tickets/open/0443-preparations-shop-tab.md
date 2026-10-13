@@ -65,7 +65,7 @@ them, and comments.
 3. `ui`: add `Tab::Shop`; draw it with 0409's shop lists (price, the
    unaffordable ones dimmed, `Gold 1 250` in the heading). Confirm buys
    one; a bought consumable is then on the `Pack` tab's stock list.
-4. `assets/battles/quick.ron`: `solo_gold`, read by
+4. `assets-test/battles/quick.ron`: `solo_gold`, read by
    `trpg_content::battle_campaign`; document it in
    `assets/battles/README.md`.
 5. Follow the `keyboard-input` skill for the help line.

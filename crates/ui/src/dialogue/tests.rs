@@ -41,7 +41,7 @@ fn play_with(scene: &Scene, there: &[&str]) -> DialoguePlayer {
 /// More text boxes than any scene in these tests has.
 const MAX_BOXES: usize = 100;
 
-/// The embedded `test` scene (`assets/dialogue/test.dlg`).
+/// The embedded `test` scene (`assets-test/dialogue/test.dlg`).
 fn test_scene() -> Scene {
     let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
     content

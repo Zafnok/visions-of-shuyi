@@ -1,5 +1,5 @@
 //! The sprite test (debug builds, ticket 0231): the test card
-//! (`assets/images/test_card.png`) drawn as sprite items in each way a
+//! (`assets-test/images/test_card.png`) drawn as sprite items in each way a
 //! [`Sprite`] can be, for checking that a renderer draws them right
 //! (ADR-0038).
 
@@ -241,7 +241,7 @@ mod tests {
         let buf = draw(&ctx);
         assert_eq!(buf.items(), []);
         let row: String = (0..40).map(|x| buf.get(x, 2).unwrap().glyph).collect();
-        assert_eq!(row.trim(), "No assets/images/test_card.png");
+        assert_eq!(row.trim(), "No assets-test/images/test_card.png");
     }
 
     #[test]

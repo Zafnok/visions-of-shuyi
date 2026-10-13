@@ -1,0 +1,41 @@
+# Test files (`assets-test/`)
+
+The files only the **tests** and the **debug tools** use
+([ADR-0057](../docs/adr/0057-test-files-in-their-own-embedded-directory.md)).
+They are laid out like `assets/` and loaded with it, but only a debug build
+or a build with the debug tools (the Pages build) embeds them. **A build
+that ships has none of them.**
+
+| Path | What |
+| ---- | ---- |
+| `data/characters.ron` | The test characters (`test_lord`, `test_knight`, `test_archer`, `test_scout`, `test_rogue`, `test_mage`) and generic templates (`test_brigand`, `test_raider`, `test_frost_elemental`) |
+| `data/names.ron` | The test characters' names |
+| `data/supports.ron` | The two test support pairs |
+| `chapters/test.ron`, `battles/test.ron` | The test chapter: the tests of the game flow start a new game there (`NewGameDef::test_chapter`) |
+| `chapters/quick.ron`, `battles/quick.ron` | The debug Quick Battle (title screen, where the debug tools are on) |
+| `maps/test_small.map` | The map of both battles |
+| `dialogue/test*.dlg` | The test scenes: the dialogue test, the test chapter's scenes, the battle triggers' and the supports' |
+| `portraits/test_lord*`, `portraits/test_knight*` | Placeholder portraits. The bought ones are in the private repository's `test/` folder (`assets-private/test/`), which is laid over this one the way `assets-private/game/` is laid over `assets/` |
+| `lang/test/` | The language pack the tests use: English in capitals. Never offered to players |
+| `tilesets/test*` | The generated test tilesets (`cargo xtask test-tileset`; `assets/tilesets/README.md` describes them) |
+| `images/test_card.png` | The sprite test card (`cargo xtask test-card`) |
+
+Each kind's format is described in the README of its directory under
+`assets/`.
+
+## Rules
+
+- A file goes here when it exists for tests or debug tools and nothing in
+  the story refers to it. Its id starts with `test` (the Quick Battle's
+  files are `quick`).
+- **No story file may refer to a test file** (a test character, scene,
+  map…): the story's files must load without this directory, and a test
+  fails if they don't.
+- **No path may be in both `assets/` and here**, apart from the three data
+  tables in `data/`. Those hold only the test entries, which are added to
+  the story's table by id. An id (or, for names, a name) that the story's
+  file has too is an error.
+- `tilesets/` and `images/test_card.png` are generated: never edit them by
+  hand.
+- The licence rules of `assets/` apply here too (ADR-0013,
+  `THIRD_PARTY_ASSETS.md`).

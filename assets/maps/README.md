@@ -2,7 +2,8 @@
 
 Each `*.map` file here is one battle map, loaded by `trpg_content::map` and
 validated by the all-assets test (ADR-0005). The file stem is the map's id
-(`test_small.map` → `"test_small"`).
+(`test_small.map` → `"test_small"`). `test_small.map`, the map of the test
+battles, is in `assets-test/maps/` (ADR-0057).
 
 ## Format
 

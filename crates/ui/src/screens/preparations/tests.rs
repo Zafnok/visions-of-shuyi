@@ -1,5 +1,5 @@
 //! Tests of the Preparations screen on the debug Quick Battle
-//! (`assets/battles/quick.ron`): the test lord (swords), knight (spears,
+//! (`assets-test/battles/quick.ron`): the test lord (swords), knight (spears,
 //! medium and heavy armour), archer and mage, the test scout left out of the
 //! battle with a Steel Bow, a stock of three weapons, three armours, three
 //! accessories, six Potions and two Elixirs, and a pack cap of 6.

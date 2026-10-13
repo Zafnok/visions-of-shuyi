@@ -5,6 +5,8 @@
 //!
 //! - `game/`: the files embedded in the game over `assets/` when it is built
 //!   with the `private-assets` feature.
+//! - `test/`: the bought art of the test files (ADR-0057), embedded over
+//!   `assets-test/` in a build that has both.
 //! - `voice/`: the voice clips (ADR-0046), which ship as files beside the
 //!   game. Copied to the git-ignored `voice/` in this repository's root
 //!   when the private repository has them.
@@ -14,11 +16,11 @@
 //!
 //! `assets-private.rev` in this repository names the commit of the private
 //! one that this checkout's code is built with. With no flag the command
-//! clones `assets-private/` if it isn't there (only `game/` and `voice/`,
+//! clones `assets-private/` if it isn't there (only `game/`, `test/` and `voice/`,
 //! and without the history's files), fetches, and puts it at that commit. `--library` also
 //! brings `library/`. `--pin` writes the commit `assets-private/` is at into
 //! `assets-private.rev`, after checking that it is pushed and that every
-//! file in `game/` has a credit (ADR-0051).
+//! file in `game/` and `test/` has a credit (ADR-0051).
 
 use std::fs;
 use std::path::Path;
@@ -40,6 +42,9 @@ const PIN_FILE: &str = "assets-private.rev";
 
 /// The folder of the private repository that is embedded in the game.
 const GAME_DIR: &str = "game";
+/// The folder of the private repository with the bought art of the test
+/// files: embedded only where `assets-test/` is (ADR-0057).
+const TEST_DIR: &str = "test";
 /// The folder of the private repository with the voice clips (ADR-0046).
 /// Beside `game/`, not in it: everything in `game/` is embedded, and
 /// voices ship as files next to the game. Copied to `voice/` in this
@@ -137,16 +142,16 @@ fn fetch(repo_root: &Path, url: &str, library: bool) -> Result<String, String> {
             &[&clone[..], &long_paths[..], &[url, CHECKOUT]].concat(),
         )
         .map_err(|e| no_access(url, &e))?;
-        let folders = ["sparse-checkout", "set", "--cone", GAME_DIR, VOICE_DIR];
-        git(&checkout, &folders)?;
+        git(&checkout, &["sparse-checkout", "set", "--cone", GAME_DIR])?;
     }
 
     // Unset (a full clone) is an error from `git config --get`.
     let sparse =
         git(&checkout, &["config", "--get", "core.sparseCheckout"]).as_deref() == Ok("true");
     if sparse {
-        // A clone made before voices existed holds only `game/`.
-        git(&checkout, &["sparse-checkout", "add", VOICE_DIR])?;
+        // A clone made before voices or the test files' art existed holds
+        // only `game/`.
+        git(&checkout, &["sparse-checkout", "add", TEST_DIR, VOICE_DIR])?;
     }
     if library && sparse {
         git(&checkout, &["sparse-checkout", "add", LIBRARY_DIR])?;
@@ -203,9 +208,10 @@ fn files_below(dir: &Path, prefix: &str, paths: &mut Vec<String>) -> Result<(), 
     Ok(())
 }
 
-/// The files of `assets-private/game/` that no entry of this repository's
-/// credits file covers (ADR-0051), sorted.
-fn uncredited(repo_root: &Path) -> Result<Vec<String>, String> {
+/// The files of `assets-private/<dir>/` that no entry of this repository's
+/// credits file covers (ADR-0051), sorted. None for a folder that isn't
+/// there.
+fn uncredited(repo_root: &Path, dir: &str) -> Result<Vec<String>, String> {
     let credits_file = bundle::display_path(credits::CREDITS_PATH);
     let source = fs::read_to_string(repo_root.join(&credits_file))
         .map_err(|e| format!("{credits_file}: {e}"))?;
@@ -214,7 +220,10 @@ fn uncredited(repo_root: &Path) -> Result<Vec<String>, String> {
         lines.join("\n")
     })?;
     let mut files = Vec::new();
-    files_below(&repo_root.join(CHECKOUT).join(GAME_DIR), "", &mut files)?;
+    let dir = repo_root.join(CHECKOUT).join(dir);
+    if dir.is_dir() {
+        files_below(&dir, "", &mut files)?;
+    }
     files.sort_unstable();
     let paths: Vec<&str> = files.iter().map(String::as_str).collect();
     let uncredited = credits::uncredited(&file, &paths);
@@ -222,7 +231,8 @@ fn uncredited(repo_root: &Path) -> Result<Vec<String>, String> {
 }
 
 /// Writes the commit `assets-private/` is at into the pin file. Refuses when
-/// there are uncommitted changes, when a file in `game/` has no credit, or
+/// there are uncommitted changes, when a file in `game/` or `test/` has no
+/// credit, or
 /// when the commit isn't on the private repository's `main` yet: the builds
 /// that ship fetch the pin from there.
 fn pin(repo_root: &Path, url: &str) -> Result<String, String> {
@@ -239,15 +249,17 @@ fn pin(repo_root: &Path, url: &str) -> Result<String, String> {
              commit and push them, then run this again"
         ));
     }
-    let uncredited = uncredited(repo_root)?;
-    if !uncredited.is_empty() {
-        return Err(format!(
-            "these files in {CHECKOUT}/{GAME_DIR}/ have no credit:\n  {}\n\
-             add their path to an entry's `private` list in {} (a new pack also needs \
-             a row in THIRD_PARTY_ASSETS.md), then run this again",
-            uncredited.join("\n  "),
-            bundle::display_path(credits::CREDITS_PATH)
-        ));
+    for dir in [GAME_DIR, TEST_DIR] {
+        let uncredited = uncredited(repo_root, dir)?;
+        if !uncredited.is_empty() {
+            return Err(format!(
+                "these files in {CHECKOUT}/{dir}/ have no credit:\n  {}\n\
+                 add their path to an entry's `private` list in {} (a new pack also needs \
+                 a row in THIRD_PARTY_ASSETS.md), then run this again",
+                uncredited.join("\n  "),
+                bundle::display_path(credits::CREDITS_PATH)
+            ));
+        }
     }
     git(&checkout, &["fetch", "--quiet", "origin"]).map_err(|e| no_access(url, &e))?;
     let head = git(&checkout, &["rev-parse", "HEAD"])?;
@@ -472,7 +484,7 @@ mod tests {
         assert_eq!(
             scratch.fetch(false),
             Ok(format!(
-                "assets-private/ is at {} (game, voice); voice/ holds its 2 voice files",
+                "assets-private/ is at {} (game, test, voice); voice/ holds its 2 voice files",
                 scratch.two
             ))
         );
@@ -498,7 +510,7 @@ mod tests {
         assert_eq!(
             scratch.fetch(false),
             Ok(format!(
-                "assets-private/ is at {} (game, voice)",
+                "assets-private/ is at {} (game, test, voice)",
                 scratch.one
             ))
         );
@@ -581,7 +593,7 @@ mod tests {
         assert_eq!(
             scratch.fetch(true),
             Ok(format!(
-                "assets-private/ is at {} (game, library, voice); voice/ holds its 2 voice files",
+                "assets-private/ is at {} (game, library, test, voice); voice/ holds its 2 voice files",
                 scratch.two
             ))
         );
@@ -798,6 +810,27 @@ mod tests {
 
         scratch.set_credits("\"portraits/\", \"units/\"");
         assert!(scratch.pin().is_ok());
+        assert_eq!(read_pin(&scratch.public()), Ok(new.clone()));
+
+        // The bought art of the test files (`test/`, ADR-0057) needs a
+        // credit too.
+        fs::create_dir_all(scratch.checkout("test/tiles")).unwrap();
+        fs::write(scratch.checkout("test/tiles/t.png"), "t").unwrap();
+        let with_test = commit(&checkout, "test tiles");
+        g(&checkout, &["push", "--quiet", "origin", "HEAD:main"]);
+        assert_eq!(
+            scratch.pin(),
+            Err(
+                "these files in assets-private/test/ have no credit:\n  tiles/t.png\n\
+                 add their path to an entry's `private` list in \
+                 assets/data/credits.ron (a new pack also needs a row in \
+                 THIRD_PARTY_ASSETS.md), then run this again"
+                    .into()
+            )
+        );
         assert_eq!(read_pin(&scratch.public()), Ok(new));
+        scratch.set_credits("\"portraits/\", \"units/\", \"tiles/\"");
+        assert!(scratch.pin().is_ok());
+        assert_eq!(read_pin(&scratch.public()), Ok(with_test));
     }
 }

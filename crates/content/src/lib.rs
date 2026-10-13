@@ -1173,7 +1173,7 @@ mod tests {
         assert_eq!(
             first.as_deref(),
             Some(
-                "assets/dialogue/test.dlg:10: \"test_lord\" may have fallen or left the army by \
+                "assets-test/dialogue/test.dlg:10: \"test_lord\" may have fallen or left the army by \
                  now; put their lines inside \"@if test_lord\" ... \"@endif\" \
                  (assets/dialogue/README.md, \"Who is still there\")"
             )
@@ -1185,8 +1185,8 @@ mod tests {
         assert_eq!(
             files.into_iter().collect::<Vec<_>>(),
             [
-                "assets/dialogue/test.dlg",
-                "assets/dialogue/test_triggers.dlg"
+                "assets-test/dialogue/test.dlg",
+                "assets-test/dialogue/test_triggers.dlg"
             ]
         );
         // Skipped when another file failed, or the dialogue did.

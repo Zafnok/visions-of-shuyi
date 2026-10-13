@@ -1,5 +1,5 @@
 //! Tests of the battle notes on the battle screen (ticket 0411), on the
-//! test chapter's battle (`assets/battles/test.ron`): a note about its
+//! test chapter's battle (`assets-test/battles/test.ron`): a note about its
 //! brigand (unit 3) and one about no unit.
 
 use trpg_content::{TipTrigger, new_campaign};

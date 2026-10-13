@@ -31,6 +31,9 @@ pub const MARKER: &str = "check-keys: keyboard picture";
 /// Rust source trees scanned.
 const RUST_DIRS: [&str; 3] = ["crates/ui/src", "crates/app/src", "crates/content/src"];
 
+/// Asset trees scanned: the story's files and the test files (ADR-0057).
+const ASSET_DIRS: [&str; 2] = ["assets", "assets-test"];
+
 /// The key pipeline: files that may name key and button types and key
 /// names. `pads.rs` is to controllers what `keys.rs` is to the keyboard.
 const KEY_FILES: [&str; 4] = [
@@ -80,12 +83,14 @@ pub fn run(repo_root: &Path) -> Vec<String> {
             }
         }
     }
-    for file in files_under(&repo_root.join("assets"), &mut errors) {
-        let rel = relative(repo_root, &file);
-        if has_ext(&file, "dlg") {
-            read_and(&file, &rel, &mut errors, scan_dlg);
-        } else if has_ext(&file, "ron") && rel != "assets/data/keymap.ron" {
-            read_and(&file, &rel, &mut errors, scan_ron);
+    for assets in ASSET_DIRS {
+        for file in files_under(&repo_root.join(assets), &mut errors) {
+            let rel = relative(repo_root, &file);
+            if has_ext(&file, "dlg") {
+                read_and(&file, &rel, &mut errors, scan_dlg);
+            } else if has_ext(&file, "ron") && rel != "assets/data/keymap.ron" {
+                read_and(&file, &rel, &mut errors, scan_ron);
+            }
         }
     }
     errors
@@ -982,11 +987,14 @@ let d = is_key_down_fast(x);
         fs::write(screens.join("tests.rs"), "fn f() { g(Key::F); }\n").unwrap();
         fs::write(root.join("assets/data/tips.ron"), "[\"press f\"]\n").unwrap();
         fs::write(root.join("assets/data/keymap.ron"), "(\"Space\")\n").unwrap();
+        fs::create_dir_all(root.join("assets-test/dialogue")).unwrap();
+        let script = "@scene s\nlord: Press Space to end your turn.\n";
+        fs::write(root.join("assets-test/dialogue/x.dlg"), script).unwrap();
         let errs = run(&root);
         let _ = fs::remove_dir_all(&root);
         // Missing crates/app/src and crates/content/src are reported too.
         let hits: Vec<&String> = errs.iter().filter(|e| e.contains(HINT)).collect();
-        assert_eq!(hits.len(), 2, "{errs:?}");
+        assert_eq!(hits.len(), 3, "{errs:?}");
         assert!(
             hits[0].starts_with("crates/ui/src/screens/foo.rs:1: "),
             "{}",
@@ -997,7 +1005,12 @@ let d = is_key_down_fast(x);
             "{}",
             hits[1]
         );
-        assert_eq!(errs.len(), 4, "{errs:?}");
+        assert!(
+            hits[2].starts_with("assets-test/dialogue/x.dlg:2: "),
+            "{}",
+            hits[2]
+        );
+        assert_eq!(errs.len(), 5, "{errs:?}");
     }
 
     #[test]

@@ -15,6 +15,12 @@ workspace = true
 # Turned on only by builds that ship (Pages, release.yml) and by hand to look
 # at the art; never by a gate, so tests always read the public placeholders.
 private-assets = []
+# Embeds the test files in `assets-test/` after `assets/` (ADR-0057): the
+# test characters, chapter, battles and pictures. A debug build has them
+# without this feature; it is for release-profile builds that need them (the
+# tests, and `debug-tools` builds through `trpg-ui`). Never on in a build
+# that ships.
+test-fixtures = []
 
 [dependencies]
 trpg-core = { path = "../core" }
@@ -24,6 +30,8 @@ include_dir.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
+# Turns on `test-fixtures` for this crate's own tests in any profile.
+trpg-content = { path = ".", features = ["test-fixtures"] }
 proptest.workspace = true
 
 [package.metadata.cargo-machete]
