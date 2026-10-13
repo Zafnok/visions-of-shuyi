@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["0817"]
 nick_input: none
-completed:
+completed: 2026-10-13
 ---
 
 # 0827 — Cinematic shots where units march and fight
@@ -105,18 +105,18 @@ sign-off.
 
 ## Acceptance criteria
 
-- [ ] Unit: `action_state` before, during and after a walk (including a
+- [x] Unit: `action_state` before, during and after a walk (including a
       corner of the path), at each stage of a strike, and after a unit
       falls.
-- [ ] Unit: two shots with the same action and different `action_from`
+- [x] Unit: two shots with the same action and different `action_from`
       show the same unit positions at the same action-clock value.
-- [ ] Each validator error has a test.
-- [ ] Snapshot: the test cinematic mid-walk and mid-strike; the same `t`
+- [x] Each validator error has a test.
+- [x] Snapshot: the test cinematic mid-walk and mid-strike; the same `t`
       drawn twice gives the same buffer.
-- [ ] The tests of what happened read the map scene, not cells (ADR-0038);
+- [x] The tests of what happened read the map scene, not cells (ADR-0038);
       both map skins paint a moving, flashing and fading unit.
-- [ ] The ADR text is written and listed in `docs/adr/README.md`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The ADR text is written and listed in `docs/adr/README.md`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -128,5 +128,65 @@ sign-off.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.**
+
+- **Format** (`assets/cinematics/README.md`): `MapPan` takes an optional
+  `action` (a list of `(at, do: Walk(…) | Strike(…))` written in place,
+  or the name of one in the file's new top-level `actions` table) and
+  `action_from`. Loaded as `ShotAction { from_ms, actions }` with unit
+  ids, whole milliseconds and a path of every tile
+  (`crates/content/src/cinematic/action.rs`).
+- **Validator**: every rule in step 2, each with a test, all reported at
+  once with the file name and the entry's number.
+- **Scene at time `t`**: `trpg_ui::cinematic::action_state` (pure), and
+  `CinematicPlayer::scene(t)`, the `MapScene` the map skin is handed. A
+  shot with an action is painted each frame; one without, once as before.
+- **Skins**: `UnitView` got one field, `flash`. The glyph skin lights the
+  struck unit's tile; the sprite skins draw its shape in the text colour
+  over its picture. Walks and falls use what the scene already had
+  (`offset`, `facing`, `frame`, `fade`).
+- **Test cinematic**: the lead walks round a corner to the brigand and
+  fells it in two strikes, through a named list. 0817's snapshots
+  updated (`cinematic_pan_middle` replaced by `cinematic_mid_walk` and
+  `cinematic_mid_strike`).
+- **ADR-0061** (extends ADR-0060), listed in `docs/adr/README.md`.
+
+**Deviations from the plan**
+
+- `action_state(start, actions, clock_ms)` takes the battle's units as
+  they start (scene entries) rather than the battle, and returns scene
+  entries: a tile plus an offset in tiles, not map pixels. Pixels belong
+  to the skin (ADR-0038); both skins already paint tile + offset.
+- An enemy's `id` isn't kept in `BattleDef`, so `battle::load_unit_names`
+  reads the ids from the battle files (as `load_lights` does the light).
+  A unit is named by a slot's character, an enemy's `id`, or an enemy's
+  character (Chapter 1's captain has no `id`).
+- Extra checks the ticket didn't list, each so the list can be drawn:
+  a unit's walk can't start before its walk before has ended; a unit
+  can't strike in the middle of its own walk, or itself; a walk takes
+  more than 0 seconds and has at least two tiles; `action_from` needs an
+  `action`; a named list no shot uses is an error (it would never be
+  checked).
+
+**Look choices where the ticket was silent** (*Claude's starting
+choices*; nothing here is a game rule, all are tunable constants in
+`crates/ui/src/cinematic/action.rs`, to judge at 0820's sign-off):
+
+- A struck unit flashes for 0.2 seconds, brightest as the blow lands.
+- A striking unit leans a quarter of a tile toward its target (4 pixels
+  on the glyph map's tiles, 6 on the 24-pixel sprite tiles) and faces it.
+  From further away (an archer) it leans the same little, along the line
+  to the target.
+- `hp_left` is a percentage of the unit's **full** HP, rounded up, so 1
+  never shows an empty bar on a unit still standing.
+- Units the list doesn't name stand still: they don't step on the spot
+  as units do in a battle.
+- On the glyph map a walking unit goes from tile to tile and the lean of
+  a strike doesn't show (its units stand in character cells); the flash,
+  the HP bar and the fade do. The sprite map shows all of it.
+
+**Not done here**: I did not watch it in a running build; the snapshots
+and the scene tests are the check. 0820 writes the real action on the
+Chapter 1 map.
+
+**Follow-up tickets**: none.

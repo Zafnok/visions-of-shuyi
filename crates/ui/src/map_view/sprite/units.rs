@@ -16,7 +16,7 @@ use trpg_content::image::EFFECT_MARKS_PATH;
 use trpg_content::{Picture, Tileset};
 use trpg_core::{CharacterId, Pos};
 
-use super::super::glyph::units::{HP_BAR_H, HP_BAR_INSET};
+use super::super::glyph::units::{HP_BAR_H, HP_BAR_INSET, flash};
 use super::super::grid::Grid;
 use super::super::scene::{Facing, MapScene, UnitView};
 use super::{side, src_rect};
@@ -161,6 +161,13 @@ pub fn fade(unit: &UnitView) -> f32 {
 /// falls.
 pub fn unit_opacity(unit: &UnitView) -> u8 {
     to_channel(255.0 * (1.0 - fade(unit)))
+}
+
+/// The opacity of the flash over `unit`'s picture: none unless a blow
+/// just landed on it, solid at the flash's full strength, and fading out
+/// with the picture as the unit falls.
+pub fn flash_opacity(unit: &UnitView) -> u8 {
+    to_channel(255.0 * flash(unit) * (1.0 - fade(unit)))
 }
 
 /// The opacity of `unit`'s outline: gone by half way through its fall, as
@@ -312,7 +319,9 @@ pub fn place(scene: &MapScene, grid: &Grid, unit: &UnitView) -> Option<Place> {
 /// unit between two tiles after those standing): each in its side's colour
 /// (dimmed, with the picture, once it has acted), turned and stepping as
 /// the scene says, moved by its offset, nothing outside the grid, and
-/// nothing over a unit standing above it ([`place`]).
+/// nothing over a unit standing above it ([`place`]). A unit a blow just
+/// landed on has its shape in the text colour over its picture
+/// ([`flash_opacity`]).
 pub fn paint_pictures(
     ctx: &Ctx,
     tileset: &Tileset,
@@ -356,6 +365,9 @@ pub fn paint_pictures(
             add(zoomed(outline), Paint::Solid(color), outline_opacity(unit));
         }
         add(dest, paint, unit_opacity(unit));
+        // A blow just landed: its shape in the text colour over it.
+        let light = Paint::Solid(ctx.palette.get(UiColor::Text));
+        add(dest, light, flash_opacity(unit));
     }
 }
 
@@ -1105,6 +1117,63 @@ mod tests {
         assert!(items(&c, &scene).is_empty());
         scene.units[0].fade = 0.49;
         assert_eq!(items(&c, &scene).len(), 5 + 1 + 1);
+    }
+
+    #[test]
+    fn a_struck_unit_has_its_shape_in_the_text_colour_over_its_picture() {
+        let c = ctx();
+        let light = Paint::Solid(c.palette.get(UiColor::Text));
+        let drawn = |u: UnitView| {
+            let mut scene = plains(&c);
+            scene.push_unit(u);
+            sprites(&items(&c, &scene))
+        };
+        let struck = |flash: f32, fade: f32| {
+            let mut u = brigand(p(0, 0)).fading(fade);
+            u.flash = flash;
+            u
+        };
+        let at = |flash, fade| flash_opacity(&struck(flash, fade));
+        assert_eq!(at(0.0, 0.0), 0);
+        assert_eq!(at(1.0, 0.0), 255);
+        assert_eq!(at(0.5, 0.0), 128);
+        assert_eq!(at(0.25, 0.0), 64);
+        // It fades with the picture of a unit that is falling.
+        assert_eq!(at(1.0, 0.5), 128);
+        assert_eq!(at(0.5, 0.5), 64);
+        assert_eq!(at(1.0, 1.0), 0);
+        // Out of range, or not a number.
+        assert_eq!(at(9.0, 0.0), 255);
+        for none in [-1.0, f32::NAN, f32::INFINITY] {
+            assert_eq!(at(none, 0.0), 0);
+        }
+        // Not struck: the four outlines and the picture, as ever.
+        let plain = drawn(struck(0.0, 0.0));
+        assert_eq!(plain.len(), 5);
+        // Struck: the same five, and over them the picture's own frame in
+        // one colour.
+        let s = drawn(struck(0.5, 0.0));
+        assert_eq!(s.len(), 6);
+        assert_eq!(s[..5], plain[..]);
+        let over = Sprite {
+            paint: light,
+            opacity: 128,
+            ..s[4]
+        };
+        assert_eq!(s[5], over);
+        assert_ne!(s[4].paint, light);
+        // A struck unit that has acted is lit all the same.
+        let mut acted = struck(1.0, 0.0);
+        acted.acted = true;
+        let s = drawn(acted);
+        assert_eq!(
+            (s[4].paint, s[5].paint, s[5].opacity),
+            (Paint::Dimmed, light, 255)
+        );
+        // Falling: the flash goes with the picture.
+        let s = drawn(struck(1.0, 0.75));
+        assert_eq!(s.len(), 2);
+        assert_eq!((s[0].opacity, s[1].opacity, s[1].paint), (64, 64, light));
     }
 
     #[test]

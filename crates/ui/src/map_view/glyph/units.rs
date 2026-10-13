@@ -37,8 +37,14 @@ pub fn hp_bar(hp: StatValue, max: StatValue) -> (i32, UiColor) {
     hp_fill(hp, max, HP_BAR_W)
 }
 
+/// How far a unit struck at full strength ([`UnitView::flash`] of `1`)
+/// lights its tile's background toward the text colour. *Tunable.*
+pub const FLASH_BLEND: f32 = 0.75;
+
 /// Draws `unit` on the tile whose left cell is `(x, y)`: the label over the
-/// cells' existing (terrain) background, then the HP bar overlays.
+/// cells' existing (terrain) background, then the HP bar overlays. A unit
+/// a blow just landed on ([`UnitView::flash`]) has its tile's background
+/// lit toward the text colour, by [`FLASH_BLEND`] at full strength.
 ///
 /// A unit part of the way through falling ([`UnitView::fade`], ticket 0404)
 /// fades: over the first half its label and HP bar fade into the tile's
@@ -63,6 +69,7 @@ pub fn draw_unit(buf: &mut GlyphBuffer, palette: &Palette, unit: &UnitView, x: i
     let k = fade * 2.0;
     let faction = palette.get(faction_color(unit.faction));
     let effect = palette.get(UiColor::Effect);
+    let lit = FLASH_BLEND * flash(unit);
     let tile_bg = buf.get(x, y).map_or(faction, |c| c.bg);
     for (i, glyph) in (0..TILE_W_CELLS).zip(unit.label.chars()) {
         let Some(&cell) = buf.get(x + i, y) else {
@@ -81,6 +88,7 @@ pub fn draw_unit(buf: &mut GlyphBuffer, palette: &Palette, unit: &UnitView, x: i
         } else {
             cell.bg
         };
+        let bg = bg.lerp(palette.get(UiColor::Text), lit);
         buf.set(x + i, y, Cell::new(glyph, fg, bg));
     }
     let (width, color) = hp_bar(unit.hp.0, unit.hp.1);
@@ -93,6 +101,15 @@ pub fn draw_unit(buf: &mut GlyphBuffer, palette: &Palette, unit: &UnitView, x: i
     // An empty part (full or zero HP) is dropped by `add_overlay`.
     buf.add_overlay(bar(px, width, color));
     buf.add_overlay(bar(px + width, HP_BAR_W - width, UiColor::Black));
+}
+
+/// How strongly `unit` flashes, in `0..=1` (`0` if not a number).
+pub fn flash(unit: &UnitView) -> f32 {
+    if unit.flash.is_finite() {
+        unit.flash.clamp(0.0, 1.0)
+    } else {
+        0.0
+    }
 }
 
 /// Takes the terrain's glyphs off the tile whose left cell is `(x, y)`,
@@ -316,6 +333,49 @@ mod tests {
         assert_eq!(b.get(2, 1), Some(&Cell::new('r', enemy, behind)));
         // The terrain beside it keeps its own.
         assert_eq!(b.get(3, 1).map(|c| c.bg), Some(bg));
+    }
+
+    #[test]
+    fn a_struck_unit_lights_its_tiles_background() {
+        let p = game_palette();
+        let bg = Rgb::new(0, 0, 100);
+        let (enemy, light) = (p.get(UiColor::Enemy), p.get(UiColor::Text));
+        let struck = |flash: f32| {
+            let mut u = unit("Br", 20, 30, false);
+            u.flash = flash;
+            u
+        };
+        let plain = drawn(&struck(0.0));
+        let behind = |flash: f32| {
+            let b = drawn(&struck(flash));
+            // The letters, the bar and the tiles beside it are as ever.
+            assert_eq!(b.overlays(), plain.overlays());
+            assert_eq!(b.get(3, 1), plain.get(3, 1));
+            for x in [1, 2] {
+                let (cell, was) = (b.get(x, 1).unwrap(), plain.get(x, 1).unwrap());
+                assert_eq!((cell.glyph, cell.fg), (was.glyph, enemy));
+            }
+            assert_eq!(b.get(1, 1).unwrap().bg, b.get(2, 1).unwrap().bg);
+            b.get(1, 1).unwrap().bg
+        };
+        assert_eq!(FLASH_BLEND.to_bits(), 0.75_f32.to_bits());
+        assert_eq!(behind(0.0), bg);
+        assert_eq!(behind(1.0), bg.lerp(light, 0.75));
+        assert_eq!(behind(0.5), bg.lerp(light, 0.375));
+        assert_ne!(behind(0.5), behind(1.0));
+        assert_ne!(behind(0.5), bg);
+        // More than a whole flash is a whole one; less than none, or not
+        // a number, is none.
+        assert_eq!(behind(3.0), behind(1.0));
+        for none in [-1.0, f32::NAN, f32::INFINITY] {
+            assert_eq!(behind(none), bg);
+        }
+        assert_eq!(flash(&struck(0.25)).to_bits(), 0.25_f32.to_bits());
+        // Under a timed effect: the effect colour, lit.
+        let mut both = struck(1.0);
+        both.effects.bonus = true;
+        let effect = bg.lerp(p.get(UiColor::Effect), EFFECT_BLEND);
+        assert_eq!(drawn(&both).get(1, 1).unwrap().bg, effect.lerp(light, 0.75));
     }
 
     #[test]

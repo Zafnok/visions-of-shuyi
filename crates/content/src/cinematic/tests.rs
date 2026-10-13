@@ -3,6 +3,8 @@
 use super::*;
 use crate::Content;
 
+mod actions;
+
 fn content() -> Content {
     crate::load_embedded().unwrap_or_else(|e| panic!("{e}"))
 }
@@ -14,8 +16,22 @@ fn source(length: &str, shots: &str) -> String {
 
 const PAN: &str = "(at: 0.0, shot: MapPan(battle: \"test\", from: (0, 0), to: (13, 7), zoom: 2))";
 
+type UnitNames = BTreeMap<String, BTreeMap<String, UnitId>>;
+
+fn refs<'a>(c: &'a Content, units: &'a UnitNames) -> CinematicRefs<'a> {
+    CinematicRefs {
+        battles: &c.battles,
+        audio: &c.audio,
+        units,
+        classes: &c.classes,
+        terrain: &c.terrain.rules,
+        characters: &c.characters,
+    }
+}
+
 fn load(c: &Content, source: &str) -> Result<CinematicDef, Vec<ContentError>> {
-    from_source("c.ron", "t", source, &c.battles, &c.audio)
+    let units = crate::battle::load_unit_names();
+    from_source("c.ron", "t", source, &refs(c, &units))
 }
 
 /// The messages of the errors of `source` as file `t`.
@@ -44,6 +60,10 @@ fn the_test_cinematic_loads() {
             from: TilePoint::new(5.75, 3.5),
             to: TilePoint::new(7.25, 3.5),
             zoom: 4,
+            action: Some(ShotAction {
+                from_ms: 0,
+                actions: actions::duel(),
+            }),
         }
     );
     let logo = ShotDef {
@@ -53,7 +73,7 @@ fn the_test_cinematic_loads() {
     assert_eq!(test.shots[1], logo);
     // The test files hold the only cinematic so far: a build that ships
     // has none.
-    let shipped = bundle::story_only(|| load_all(&c.battles, &c.audio));
+    let shipped = bundle::story_only(|| load_all(&refs(&c, &BTreeMap::new())));
     assert_eq!(shipped, Ok(BTreeMap::new()));
 }
 

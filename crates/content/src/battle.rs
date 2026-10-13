@@ -141,7 +141,7 @@ struct RawEnemy {
 }
 
 /// Reads an optional field written without `Some(…)`.
-fn bare<'de, D: serde::Deserializer<'de>, T: Deserialize<'de>>(
+pub(crate) fn bare<'de, D: serde::Deserializer<'de>, T: Deserialize<'de>>(
     d: D,
 ) -> Result<Option<T>, D::Error> {
     T::deserialize(d).map(Some)
@@ -267,6 +267,40 @@ pub fn light_of(
         lighting.names()
     );
     Err(ContentError::new(file, message).at(line, Some(col)))
+}
+
+/// The enemies each battle file of the bundle gives an `id`, by battle id
+/// (the file stem) and then by that `id`, as their unit ids: the names a
+/// cinematic's action knows them by (ticket 0827). Only those on the map
+/// at the start. A file that doesn't parse names none here: [`load_all`]
+/// reports it.
+pub fn load_unit_names() -> BTreeMap<String, BTreeMap<String, UnitId>> {
+    let mut names = BTreeMap::new();
+    for path in bundle::files_in(BATTLES_DIR) {
+        let stem = path
+            .strip_prefix(BATTLES_DIR)
+            .and_then(|p| p.strip_prefix('/'))
+            .and_then(|p| p.strip_suffix(EXTENSION));
+        if let (Some(stem), Some(source)) = (stem, bundle::file(path)) {
+            names.insert(stem.to_owned(), unit_names_of(source));
+        }
+    }
+    names
+}
+
+/// The enemies battle file `source` gives an `id`, by it, as their unit
+/// ids ([`from_source`] numbers them the same way); none for a file that
+/// doesn't parse.
+pub fn unit_names_of(source: &str) -> BTreeMap<String, UnitId> {
+    let Ok(raw) = parse_ron::<RawBattle>("", source) else {
+        return BTreeMap::new();
+    };
+    let early = raw.player_slots.iter().filter(|s| !s.after_enemies).count();
+    let first = BattleDef::first_enemy_id(early);
+    let numbered = (first..).zip(&raw.enemies);
+    numbered
+        .filter_map(|(id, enemy)| Some((enemy.id.clone()?, UnitId(id))))
+        .collect()
 }
 
 /// Parses and validates battle file `source` (errors attributed to

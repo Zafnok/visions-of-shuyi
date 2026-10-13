@@ -68,6 +68,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0058](0058-a-maps-light-shades-the-grounds-sprites-from-a-recoloured-copy.md) | A map's light is a name; the ground's sprites carry its shade and are drawn from a recoloured copy of the image | Accepted (0438); extends ADR-0038, ADR-0049, ADR-0052 and ADR-0056 |
 | [0059](0059-title-art-a-generated-logo-picture-over-a-backdrop-per-launch.md) | Title art: a generated logo picture over a backdrop per launch | Accepted (0811); follows ADR-0038, ADR-0040, ADR-0054 and ADR-0056 |
 | [0060](0060-cinematics-a-file-of-timed-shots-drawn-from-the-time-alone.md) | Cinematics: a file of timed shots, each frame drawn from the time alone | Accepted (0817); follows ADR-0005, ADR-0037, ADR-0038, ADR-0048 and ADR-0059 |
+| [0061](0061-cinematic-action-authored-walks-and-strikes-in-the-map-scene.md) | Cinematic action: authored walks and strikes, put in the map scene from the action clock alone | Accepted (0827); extends ADR-0060, follows ADR-0038 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

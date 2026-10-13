@@ -5,11 +5,15 @@
 //! **Every frame is drawn from the time alone**: nothing is carried from
 //! one frame to the next. So whoever owns the clock can follow the music,
 //! jump or loop (the title, 0819), and a test can draw any moment.
+//!
+//! A map shot may have an action (ticket 0827, ADR-0061): its units walk
+//! and strike. [`CinematicPlayer::scene`] is the map scene at a time, with
+//! each unit as [`action_state`] has it; the map skin paints it.
 
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
-use trpg_content::{CinematicDef, ImageId, Shot, battle_campaign};
+use trpg_content::{CinematicDef, ImageId, Shot, ShotAction, battle_campaign};
 use trpg_core::{BattleDef, GameMode, Pos};
 
 use crate::cinema;
@@ -20,6 +24,10 @@ use crate::map_view::{MapScene, MapSkin, UnitView};
 use crate::screen::{Ctx, IdleMotion};
 use crate::screens::title::glyph::paint_logo;
 use crate::settings::MapZoom;
+
+mod action;
+
+pub use action::{FALL_MS, FLASH_MS, LUNGE_MS, LUNGE_TILES, action_state};
 
 /// An area surely big enough for one tile of any skin, to ask its size.
 const ROOMY: Rect = Rect::new(0, 0, 64, 64);
@@ -72,14 +80,22 @@ impl Timeline {
     /// the length. A shot lasts until the next one starts, the last until
     /// the end; time before the first shot's start is the first shot's.
     pub fn at_ms(&self, t_ms: u64) -> ShotAt {
-        let t = self.wrapped_ms(t_ms);
-        let index = self.starts_ms.iter().rposition(|&s| s <= t).unwrap_or(0);
-        let start = self.starts_ms.get(index).map_or(0, |&s| s.min(t));
+        let (index, into) = self.shot_ms(t_ms);
+        let start = self.wrapped_ms(t_ms) - into;
         let end = self.starts_ms.get(index + 1).map_or(self.length_ms, |&s| s);
         let span = end.saturating_sub(start).max(1);
         #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
-        let progress = ((t - start) as f32 / span as f32).clamp(0.0, 1.0);
+        let progress = (into as f32 / span as f32).clamp(0.0, 1.0);
         ShotAt { index, progress }
+    }
+
+    /// The shot `t_ms` falls in ([`at_ms`](Self::at_ms)), counted from 0,
+    /// and how many milliseconds into it that is.
+    pub fn shot_ms(&self, t_ms: u64) -> (usize, u32) {
+        let t = self.wrapped_ms(t_ms);
+        let index = self.starts_ms.iter().rposition(|&s| s <= t).unwrap_or(0);
+        let start = self.starts_ms.get(index).map_or(0, |&s| s.min(t));
+        (index, t - start)
     }
 
     /// [`at_ms`](Self::at_ms) for `t` seconds ([`millis`]).
@@ -184,17 +200,29 @@ pub fn battle_scene(ctx: &Ctx, def: &BattleDef) -> MapScene {
     scene
 }
 
+/// A battle's map as its shots show it.
+#[derive(Debug, Clone, PartialEq)]
+struct Stage {
+    /// The map with its units where they start: what is painted.
+    scene: Rc<MapScene>,
+    /// That scene, painted once.
+    picture: MapPicture,
+}
+
 /// A shot with what it needs to be drawn, built once.
 #[derive(Debug, Clone, PartialEq)]
 enum Built {
-    /// A pan over `picture` (`None`: the battle couldn't be painted, and
-    /// the shot is blank), the middle of the screen going from the
-    /// picture's pixel `from` to `to`.
+    /// A pan over `stage`'s picture (`None`: the battle couldn't be
+    /// painted, and the shot is blank), the middle of the screen going
+    /// from the picture's pixel `from` to `to`. With an `action`, the
+    /// units are as it has them at each moment, and the scene is painted
+    /// anew each frame.
     MapPan {
-        picture: Option<MapPicture>,
+        stage: Option<Stage>,
         from: (f32, f32),
         to: (f32, f32),
         zoom: u8,
+        action: Option<ShotAction>,
     },
     /// The title's logo.
     Logo,
@@ -234,29 +262,36 @@ impl CinematicPlayer {
     /// A player of the cinematic `id`, or `None` if the content has none
     /// of that name. Paints each battle its shots pan over once, with
     /// `ctx`'s map skin (at the art's own size, [`shot_skin`]), palette
-    /// and lead as they are now. The logo is on
+    /// and lead as they are now. (A shot with an action is painted again
+    /// each frame, by the skin `ctx` has then: make the player again
+    /// after a change of skin.) The logo is on
     /// no backdrop until [`with_backdrop`](Self::with_backdrop) gives one.
     pub fn new(ctx: &Ctx, id: &str) -> Option<Self> {
         let def = ctx.content.cinematics.get(id)?;
         let skin = shot_skin(ctx);
-        let mut pictures: BTreeMap<&str, Option<MapPicture>> = BTreeMap::new();
+        let mut stages: BTreeMap<&str, Option<Stage>> = BTreeMap::new();
         let shots = def.shots.iter().map(|s| match &s.shot {
             Shot::MapPan {
                 battle,
                 from,
                 to,
                 zoom,
+                action,
             } => {
-                let picture = pictures.entry(battle).or_insert_with(|| {
-                    let def = ctx.content.battles.get(battle)?;
-                    MapPicture::paint(ctx, skin.as_ref(), &battle_scene(ctx, def))
+                let stage = stages.entry(battle).or_insert_with(|| {
+                    let scene = battle_scene(ctx, ctx.content.battles.get(battle)?);
+                    let picture = MapPicture::paint(ctx, skin.as_ref(), &scene)?;
+                    let scene = Rc::new(scene);
+                    Some(Stage { scene, picture })
                 });
-                let px = |point: (f32, f32)| picture.as_ref().map_or(point, |p| p.point_px(point));
+                let picture = stage.as_ref().map(|s| &s.picture);
+                let px = |point: (f32, f32)| picture.map_or(point, |p| p.point_px(point));
                 Built::MapPan {
                     from: px(from.tiles()),
                     to: px(to.tiles()),
                     zoom: *zoom,
-                    picture: picture.clone(),
+                    stage: stage.clone(),
+                    action: action.clone(),
                 }
             }
             Shot::Logo => Built::Logo,
@@ -286,10 +321,11 @@ impl CinematicPlayer {
         let at = self.timeline.at(t);
         match self.shots.get(at.index) {
             Some(Built::MapPan {
-                picture: Some(picture),
+                stage: Some(Stage { picture, .. }),
                 from,
                 to,
                 zoom,
+                ..
             }) => {
                 let eased = ease_in_out(at.progress);
                 let centre = (
@@ -308,8 +344,32 @@ impl CinematicPlayer {
                 sparks: (ctx.idle_motion == IdleMotion::On)
                     .then(|| self.timeline.wrapped_ms(millis(t))),
             },
-            Some(Built::MapPan { picture: None, .. }) | None => Frame::Blank,
+            Some(Built::MapPan { stage: None, .. }) | None => Frame::Blank,
         }
+    }
+
+    /// The map scene shown `t` seconds after the start (wrapped at the
+    /// length): the battle's whole map and its units, each where the
+    /// shot's action has it by then ([`action_state`], on the action's
+    /// clock: the shot's `action_from` plus the time since the shot
+    /// started), or where it starts in a shot with no action. `None` when
+    /// the shot isn't of a map.
+    pub fn scene(&self, t: f32) -> Option<MapScene> {
+        let (index, into_ms) = self.timeline.shot_ms(millis(t));
+        let Some(Built::MapPan {
+            stage: Some(stage),
+            action,
+            ..
+        }) = self.shots.get(index)
+        else {
+            return None;
+        };
+        let mut scene = MapScene::clone(&stage.scene);
+        if let Some(action) = action {
+            let clock_ms = u64::from(action.from_ms) + u64::from(into_ms);
+            scene.units = action_state(&scene.units, &action.actions, clock_ms);
+        }
+        Some(scene)
     }
 
     /// Draws the cinematic as it is `t` seconds after its start (wrapped
@@ -320,13 +380,24 @@ impl CinematicPlayer {
         let c = |u| ctx.palette.get(u);
         let (text, black) = (c(UiColor::Text), c(UiColor::Black));
         let picture = match self.shots.get(self.timeline.at(t).index) {
-            Some(Built::MapPan { picture, .. }) => picture.as_ref(),
+            // Units that stand were painted once; units that act are
+            // painted as they are now.
+            Some(Built::MapPan {
+                stage: Some(stage),
+                action,
+                ..
+            }) => {
+                let acted = action.as_ref().and_then(|_| self.scene(t));
+                let skin = shot_skin(ctx);
+                let now = acted.and_then(|scene| MapPicture::paint(ctx, skin.as_ref(), &scene));
+                Some(now.map_or_else(|| Rc::clone(&stage.picture.scene), |p| p.scene))
+            }
             _ => None,
         };
         match (self.frame(ctx, t, buf.bounds()), picture) {
             (Frame::MapPan { origin_px, zoom }, Some(picture)) => {
                 buf.fill_rect(buf.bounds(), Cell::see_through(' ', text));
-                buf.set_backdrop(Rc::clone(&picture.scene), buf.bounds(), origin_px, zoom);
+                buf.set_backdrop(picture, buf.bounds(), origin_px, zoom);
             }
             (Frame::Logo { sparks }, _) => paint_logo(ctx, self.backdrop, sparks, buf),
             _ => buf.fill_rect(buf.bounds(), Cell::new(' ', text, black)),

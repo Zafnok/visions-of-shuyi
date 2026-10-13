@@ -1,7 +1,9 @@
 # Cinematic files (`.ron`)
 
-A cinematic is a list of **shots** and when each starts (ticket 0817,
-[ADR-0060](../../docs/adr/0060-cinematics-a-file-of-timed-shots-drawn-from-the-time-alone.md);
+A cinematic is a list of **shots** and when each starts (tickets 0817 and
+0827,
+[ADR-0060](../../docs/adr/0060-cinematics-a-file-of-timed-shots-drawn-from-the-time-alone.md),
+[ADR-0061](../../docs/adr/0061-cinematic-action-authored-walks-and-strikes-in-the-map-scene.md);
 `docs/design/title-screen.md`, *Intro cinematic*). Each `*.ron` file here is
 one cinematic, loaded by `trpg_content::cinematic` and validated by the
 all-assets test. The file stem is its id. `trpg_ui::cinematic` plays it.
@@ -25,6 +27,7 @@ cinematic" plays it).
 | ----- | ------- |
 | `id` | Must match the file name. |
 | `length` | How long the cinematic is. `Music("cue")`: as long as that music cue (`assets/audio/audio.ron`, its `length_ms`), for a cinematic that plays with a track. `Seconds(10.0)`: a length of its own, above 0 and at most an hour. |
+| `actions` | Optional. Action lists by name, for map shots to share: `actions: { "duel": [ … ] }` ([below](#action-units-that-march-and-fight)). Every list must be used by a shot. |
 | `shots` | The shots, in order of time. At least one. |
 | `at` | When the shot starts, in seconds from the start. The first is `0.0`; each is after the one before it and before the end. A shot lasts until the next one starts; the last one until the end. Kept to the millisecond. |
 | `shot` | What is shown: one of the kinds below. |
@@ -34,10 +37,11 @@ in the file. After its end a cinematic starts again from `0.0`.
 
 ## Shot kinds
 
-### `MapPan(battle, from, to, zoom)`
+### `MapPan(battle, from, to, zoom, action_from, action)`
 
 A battle's whole map (`assets/battles/`), with its units where they stand
-when the battle starts, behind the whole screen. The middle of the screen
+when the battle starts (or doing what the shot's `action` says), behind
+the whole screen. The middle of the screen
 moves from `from` to `to` over the shot, slowly at both ends.
 
 | Field | Meaning |
@@ -45,6 +49,8 @@ moves from `from` to `to` over the shot, slowly at both ends.
 | `battle` | The battle's id. |
 | `from`, `to` | The point of the map in the middle of the screen at the shot's start and end, in tiles, as `(column, row)`. A whole number is the **middle** of that tile: `(4, 9)` is the middle of the tile at column 4, row 9, and `(4.5, 9)` the edge between it and the tile to its right. Both must be on the map. Kept to a thousandth of a tile. |
 | `zoom` | How many screen pixels a pixel of the map is: `1`, `2`, `3` or `4`. One size for the whole shot. |
+| `action` | Optional. What the units do during the shot: a list written in place, or the name of one in the file's `actions`. |
+| `action_from` | Optional, only with `action`: where on the action's clock the shot starts, in seconds. `0.0` if left out. |
 
 The screen never shows past the map's edge: near an edge the picture stops
 there, so a point closer to the edge than half of what the screen shows
@@ -52,10 +58,78 @@ moves nothing. Along a direction in which the whole map fits on screen, the
 map is centred and doesn't move. The map is drawn by the map skin in use at
 its art's own size, whatever zoom the player has the battle map at.
 
+#### Action: units that march and fight
+
+```ron
+(
+    id: "title",
+    length: Music("title"),
+    actions: {
+        "bridge": [
+            (at: 1.0, do: Walk(unit: "sergeant", path: [(6, 11), (11, 11), (11, 8)], secs: 6.0)),
+            (at: 8.5, do: Strike(unit: "sergeant", target: "red_captain", hp_left: 40)),
+            (at: 9.5, do: Strike(unit: "sergeant", target: "red_captain", hp_left: 0)),
+        ],
+    },
+    shots: [
+        (at: 0.0, shot: MapPan(battle: "ch01", from: (6, 11), to: (10, 9), zoom: 3, action: "bridge")),
+        (at: 7.0, shot: MapPan(battle: "ch01", from: (11, 8), to: (11, 8), zoom: 4,
+            action_from: 7.0, action: "bridge")),
+        (at: 12.0, shot: Logo),
+    ],
+)
+```
+
+(An example of the form only: the title's cinematic is ticket 0820's.)
+
+An action is a list of things units do, each with the time it starts.
+They are **pictures, not a battle**: the combat rules are never run, so a
+strike does what the file says whatever the units' stats are, and nothing
+here changes when the game is rebalanced. An action makes no sound.
+
+The action has its own clock, in seconds. A shot starts it at its
+`action_from` and it then runs with the cinematic. So the two shots above
+show one fight: the first from its start, the second (seven seconds on,
+from another place, closer) from where the first left off. A shot may
+start anywhere on the clock, also after the list's last entry: it then
+shows how it all ended. Whatever the clock, each unit is where the
+entries before that time put it.
+
+| Field | Meaning |
+| ----- | ------- |
+| `at` | When the entry starts, in seconds on the action's clock. Entries are in order of time (two may start together). |
+| `do` | `Walk` or `Strike`. |
+
+A **unit** is named as the battle file names it: a player slot by its
+`character`, an enemy by its `id`, and an enemy that is a character by
+that character. Only units on the map when the battle starts
+(reinforcements are not there).
+
+`Walk(unit, path, secs)`: the unit walks along `path` at an even speed,
+taking `secs` seconds (more than 0), and stays at its end.
+
+- `path` is tiles as `(column, row)`, at least two. The first is where
+  the unit is then: where it starts the battle, or the end of its walk
+  before. Each next tile is a straight run along the row or the column
+  from the one before it (a neighbour or further), so a path only needs
+  its corners.
+- Every tile on the way is on the map and one the unit's movement type
+  can enter.
+- A unit's walk starts no sooner than its walk before ends.
+
+`Strike(unit, target, hp_left)`: the unit leans a few pixels toward the
+target and back (0.4 s). Half way, the target flashes and its HP bar drops
+to `hp_left` percent of its full HP (`0` to `100`, never more than it had
+left). At `hp_left: 0` the target then fades out over half a second and is
+gone.
+
+- A unit doesn't strike in the middle of its own walk, nor itself.
+- After a strike left it with `0`, a unit can't be named again.
+
 ### `Logo`
 
 The title's logo over the title's backdrop, with its sparks
 (`assets/title/README.md`), drawn by the title screen's own code.
 
-More kinds come with tickets 0818 (characters, conversation snippets),
-0827 (units that march and fight) and 1010 (the overworld).
+More kinds come with tickets 0818 (characters, conversation snippets)
+and 1010 (the overworld).

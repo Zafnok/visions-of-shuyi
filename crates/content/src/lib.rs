@@ -51,7 +51,9 @@ pub use battle::BattleRefs;
 pub use battler::{Battler, BattlerTable};
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
-pub use cinematic::{CinematicDef, Shot, ShotDef, TilePoint};
+pub use cinematic::{
+    Act, ActionDef, CinematicDef, CinematicRefs, Shot, ShotAction, ShotDef, TilePoint,
+};
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Present, Scene, Side, Step};
 pub use error::{ContentError, ContentErrors};
@@ -237,7 +239,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         scenes,
         audio.as_ref().ok(),
     );
-    let cinematics = load_cinematics(battles.as_ref().ok(), audio.as_ref().ok());
+    let cinematics = cinematics_from(&battles, &audio, &classes, &terrain, &characters);
     let credits = credits::load(audio.as_ref().ok());
     let supports = support::load(characters.as_ref().ok(), scenes);
     let dialogue = check_presence(
@@ -607,17 +609,49 @@ fn load_title(images: Option<&ImageTable>) -> Result<TitleArt, Vec<ContentError>
     }
 }
 
-/// The cinematics, checked against the battles and the music they name.
-/// Skipped (none, no errors) when the audio failed, or when there are no
-/// battles: they failed, or were skipped because what they need failed.
+/// The cinematics, checked against the battles and the music they name,
+/// and their actions against the battles' units and the tiles those can
+/// walk on. Skipped (none, no errors) when the audio failed, or when
+/// there are no battles: they failed, or were skipped because what they
+/// need failed (the classes, the terrain and the characters among it).
 fn load_cinematics(
     battles: Option<&BTreeMap<String, BattleDef>>,
     audio: Option<&AudioManifest>,
+    classes: Option<&ClassTable>,
+    terrain: Option<&TerrainDef>,
+    characters: Option<&CharacterTable>,
 ) -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
-    match (battles.filter(|b| !b.is_empty()), audio) {
-        (Some(battles), Some(audio)) => cinematic::load_all(battles, audio),
-        _ => Ok(BTreeMap::new()),
-    }
+    let battles = battles.filter(|b| !b.is_empty());
+    let (Some(battles), Some(audio), Some(classes), Some(terrain), Some(characters)) =
+        (battles, audio, classes, terrain, characters)
+    else {
+        return Ok(BTreeMap::new());
+    };
+    cinematic::load_all(&CinematicRefs {
+        battles,
+        audio,
+        units: &battle::load_unit_names(),
+        classes,
+        terrain: &terrain.rules,
+        characters,
+    })
+}
+
+/// [`load_cinematics`] from the loaders' results.
+fn cinematics_from(
+    battles: &Result<BTreeMap<String, BattleDef>, Vec<ContentError>>,
+    audio: &Result<AudioManifest, Vec<ContentError>>,
+    classes: &Result<ClassTable, Vec<ContentError>>,
+    terrain: &Result<TerrainDef, Vec<ContentError>>,
+    characters: &Result<CharacterTable, Vec<ContentError>>,
+) -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
+    load_cinematics(
+        battles.as_ref().ok(),
+        audio.as_ref().ok(),
+        classes.as_ref().ok(),
+        terrain.as_ref().ok(),
+        characters.as_ref().ok(),
+    )
 }
 
 /// Loader results for the unit data (kept together to keep [`assemble`]'s
@@ -853,7 +887,18 @@ mod tests {
     }
 
     fn ok_cinematics() -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
-        load_cinematics(ok_story().0.ok().as_ref(), audio::load().ok().as_ref())
+        cinematics_of(ok_story().0.ok().as_ref(), audio::load().ok().as_ref())
+    }
+
+    /// [`load_cinematics`] with the embedded classes, terrain and
+    /// characters.
+    fn cinematics_of(
+        battles: Option<&BTreeMap<String, BattleDef>>,
+        audio: Option<&AudioManifest>,
+    ) -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
+        let (classes, terrain, characters) = (ok_classes(), ok_terrain(), ok_characters());
+        let (classes, terrain) = (classes.as_ref().ok(), terrain.as_ref().ok());
+        load_cinematics(battles, audio, classes, terrain, characters.as_ref().ok())
     }
 
     fn ok_portraits() -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
@@ -1148,17 +1193,33 @@ mod tests {
     }
 
     #[test]
-    fn the_cinematics_are_skipped_without_battles_or_audio() {
+    fn the_cinematics_are_skipped_without_what_they_are_checked_against() {
         let (battles, audio) = (ok_story().0.ok(), audio::load().ok());
+        let (battles, audio) = (battles.as_ref(), audio.as_ref());
         let none = BTreeMap::new();
-        assert_eq!(load_cinematics(None, audio.as_ref()), Ok(BTreeMap::new()));
-        assert_eq!(
-            load_cinematics(Some(&none), audio.as_ref()),
-            Ok(BTreeMap::new())
-        );
-        assert_eq!(load_cinematics(battles.as_ref(), None), Ok(BTreeMap::new()));
-        let loaded = load_cinematics(battles.as_ref(), audio.as_ref());
+        assert_eq!(cinematics_of(None, audio), Ok(BTreeMap::new()));
+        assert_eq!(cinematics_of(Some(&none), audio), Ok(BTreeMap::new()));
+        assert_eq!(cinematics_of(battles, None), Ok(BTreeMap::new()));
+        let loaded = cinematics_of(battles, audio);
         assert!(loaded.is_ok_and(|c| c.contains_key("test")));
+        // The classes, the terrain or the characters failed: so did the
+        // battles, and that is what is reported.
+        let (classes, terrain, characters) = (ok_classes(), ok_terrain(), ok_characters());
+        let all = (
+            classes.as_ref().ok(),
+            terrain.as_ref().ok(),
+            characters.as_ref().ok(),
+        );
+        for missing in 0..3 {
+            let classes = all.0.filter(|_| missing != 0);
+            let terrain = all.1.filter(|_| missing != 1);
+            let characters = all.2.filter(|_| missing != 2);
+            assert_eq!(
+                load_cinematics(battles, audio, classes, terrain, characters),
+                Ok(BTreeMap::new()),
+                "{missing}"
+            );
+        }
     }
 
     #[test]
