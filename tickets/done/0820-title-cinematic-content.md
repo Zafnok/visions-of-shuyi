@@ -5,10 +5,10 @@ type: content
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["0036", "0706", "0707", "0803", "0818", "0819", "0827"]
 nick_input: sign-off
-completed:
+completed: 2026-10-13
 ---
 
 # 0820 — The title cinematic itself
@@ -110,16 +110,17 @@ there (a yes becomes a ticket that adds the row to the Options menu).
 
 ## Acceptance criteria
 
-- [ ] Content validation loads `title.ron`.
-- [ ] Every shot in 0036's storyboard is there, in order; the completion
+- [x] Content validation loads `title.ron`.
+- [x] Every shot in 0036's storyboard is there, in order; the completion
       notes list each shot's storyboard time and final time.
-- [ ] The logo is on screen from the song's last note to the loop.
-- [ ] Both snippets start at their scene's first box, stop before its
+- [x] The logo is on screen from the song's last note to the loop.
+- [x] Both snippets start at their scene's first box, stop before its
       first `@choice`, and the notes give each one's scene and box count.
-- [ ] Snapshots: one per shot.
+- [x] Snapshots: one per shot.
 - [ ] Watched with sound on native and web for two full loops; the notes
-      say so.
-- [ ] All gates in the `run-gates` skill pass.
+      say so. (**Not met:** Claude can't hear. See the notes for what was
+      checked instead; Nick's sign-off is the check by ear.)
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -128,5 +129,105 @@ there (a yes becomes a ticket that adds the row to the Options menu).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done 2026-10-13.** `assets/cinematics/title.ron` is the storyboard's nine
+shots. No code changed: the player and the title screen already did
+everything the storyboard needs.
+
+**Shots and times** (the table is also in `title-screen.md`, *As built*):
+
+| # | Shot | Storyboard | Built |
+| - | ---- | ---------- | ----- |
+| 1 | The party, 3×, the camera drifting to them | 0:00 | 0:00 |
+| 2 | `ch01_intro`, 3 boxes | 0:15 | 0:15 |
+| 3 | Six faces: the lead, Hollis, Tamsin, Aske, Maud, Rue | 0:31 | 0:30.75 |
+| 4 | `ch01_prebattle`, 1 box | 0:50 | 0:50 |
+| 5 | The march, 3× | 1:08 | 1:08.5 |
+| 6 | The lead and a brigand on the road, 4× | 1:25 | 1:25.25 |
+| 7 | Tamsin and Aske at the footbridge, 4× | 1:35 | 1:35.5 |
+| 8 | The whole field, 2× | 1:45 | 1:44.5 |
+| 9 | The logo | 1:57 | 1:57 |
+
+No cut moved more than half a second.
+
+**How the cuts were set.** Claude can't hear, so "by ear" became a
+measurement: the song file's loudness in quarter-second steps (a
+throwaway program, not in the repo). It swells at 30.75 s, phrases start
+at 50.0 and 68.5, the loud part comes in at 85.25 and lifts at 95.5 and
+104.5; the last chord is struck at 115.8 and has died away by 117.
+
+**The snippets** (the script's own lines, from each scene's first box,
+both before the scene's first `@choice`):
+
+- `ch01_intro`, **3 boxes**: the three opening captions ("Three years
+  after the Ash Peace." / "The war is won. The soldiers who won it were
+  never paid." / "In Thornmarch, a long way from any court, an exile chops
+  wood."), 5.25 s each.
+- `ch01_prebattle`, **1 box**: Tamsin's news that Red Harl took the
+  toll-fort, three lines, up for 18.5 s. Two boxes would get 9 s each,
+  not enough to read three lines twice.
+
+Neither gives away more than the opening premise (`outline.md`).
+
+**The march and the fights** are one action list, `field`, shared by
+shots 5 to 8 (its clock is the song's time less 68.5 s):
+
+- The party leaves Harrowby east along the road. Tamsin (mounted) rides
+  round to the footbridge and Aske follows to the bank below it.
+- The brigand south of the road comes down to meet the lead. They trade
+  blows; the brigand falls; the lead is left at 55% HP. Hollis comes up.
+- At the footbridge Tamsin crosses and fights the brigand who guards it
+  (she is left at 75%); Aske shoots him over the river from two tiles
+  away; Tamsin fells him.
+- Whole field: the enemy archer by the road falls back to the road
+  bridge, the lead follows up the road, the others advance. The fort is
+  at the top right.
+- Two enemies fall, nobody of the party. Every walk is on tiles the
+  unit's movement type can enter (the validator checks it), and no two
+  units pass through each other.
+
+**Other changes**
+
+- `assets/battles/ch01.ron`: three enemies got an `id` (`road_brigand`,
+  `road_archer`, `footbridge_brigand`) so the cinematic can name them. An
+  id changes nothing in the battle.
+- Tests: `the_storyboard_plays_shot_by_shot` in
+  `crates/ui/tests/it/title_cinematic.rs` walks the nine shots, reads who
+  is where from the scene, and takes one snapshot per shot. The 0819 loop
+  test now expects the real shots; one content test expected Chapter 1 to
+  name no enemies.
+- `title-screen.md` (*As built*; the stand-in rule removed) and
+  `assets/cinematics/README.md`.
+
+**Deviations**
+
+- **Not watched with sound.** Every shot was looked at as rendered frames
+  (`cargo xtask frame-png`), in the glyph look and with the bought art,
+  and the Harness test plays the whole loop. The web build compiles but
+  was not watched. Whether the cuts feel right on the music is for Nick's
+  sign-off.
+- **Shot 1 can't pan "across the party"** at 3×: they stand in the map's
+  bottom left corner, where the camera stops at the edges. It drifts from
+  the fords down and left until it rests on them instead.
+- **The first two blows of the road fight land at the end of the march
+  shot**, so the close-up cuts in mid-fight.
+- The Context paragraph about 0724 is out of date: 0724 landed first, and
+  the snippets show its rewritten lines.
+
+**Claude's starting rules** (Nick can veto): which units march where, who
+fights whom, the HP each is left with, and the two box counts, all as
+above.
+
+**Follow-up tickets:** none.
+
+**For Nick when he plays** (Pages build and the Windows download, sound
+on, one whole loop):
+
+1. Does each cut land where the music changes? The logo comes when the
+   last chord has faded (1:57); it could instead cut on the chord itself
+   (1:55.8), say if you'd like that.
+2. Is one text box for 18 seconds in the second snippet too long? Two
+   boxes are possible but each would be up 9 seconds.
+3. Do the snippets give anything away? Does anything look off?
+4. Now that you have seen it: should Options get a setting to turn the
+   cinematic off? (Your answer goes in `title-screen.md`, *Open
+   sub-questions*; a yes becomes a ticket.)

@@ -9,8 +9,8 @@ one cinematic, loaded by `trpg_content::cinematic` and validated by the
 all-assets test. The file stem is its id. `trpg_ui::cinematic` plays it.
 
 `title.ron` is the title screen's intro cinematic, which the title plays
-in time with its song (ticket 0819); until ticket 0820 writes its real
-shots it is a stand-in (one pan over the Chapter 1 map, then the logo). The
+in time with its song (ticket 0819): the nine shots of Nick's storyboard
+(ticket 0820), cut where the song changes. The
 test one is `assets-test/cinematics/test.ron` (the debug menu's "Play test
 cinematic" plays it).
 

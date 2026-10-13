@@ -5,12 +5,18 @@
 //!
 //! The song is 133.743 s long; its cinematic's last shot, the logo, starts
 //! at 117 s. What shows is read from the title's view, never from cells.
+//!
+//! The cinematic itself is ticket 0820's: the storyboard's nine shots
+//! (`docs/design/title-screen.md`, *Storyboard*), one snapshot of each.
 
+use insta::assert_snapshot;
+use trpg_core::{Faction, Pos, UnitId};
 use trpg_ui::audio::{AudioRequest, MusicCommand};
 use trpg_ui::cinematic::Frame;
 use trpg_ui::glyph_buffer::Rect;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::map_view::MapScene;
 use trpg_ui::screens::TitleScreen;
 use trpg_ui::screens::title::TitleView;
 
@@ -158,24 +164,12 @@ fn left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops() {
     assert!((100..156).contains(&half), "{half}");
     wait_until(&mut h, 17.0);
     assert_alone_at(&h, 17.0);
-    // The stand-in's shot (ticket 0820 writes the real ones): a pan over
-    // the Chapter 1 map at 3×, which has moved on by the next look.
-    let Frame::MapPan { origin_px, zoom: 3 } = frame(&h) else {
-        panic!("not the pan: {:?}", frame(&h));
-    };
-    assert!(h.snapshot().contains("zoom 3 ---"));
+    // The second shot (the first is under the menu): the chapter's
+    // opening lines; then the storyboard's other shots, to the logo.
+    assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
     wait_until(&mut h, 60.0);
     assert_alone_at(&h, 60.0);
-    let Frame::MapPan {
-        origin_px: later, ..
-    } = frame(&h)
-    else {
-        panic!("not the pan: {:?}", frame(&h));
-    };
-    assert!(
-        later.0 > origin_px.0 && later.1 < origin_px.1,
-        "{origin_px:?} to {later:?}"
-    );
+    assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
     wait_until(&mut h, LOGO - 0.1);
     assert_alone_at(&h, LOGO - 0.1);
     // The logo: the menu fades in on it over half a second.
@@ -195,6 +189,7 @@ fn left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops() {
     assert_eq!(shows(&h), Shows::Fading);
     wait(&mut h, 1.0);
     assert_alone_at(&h, 1.5);
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
     // All by itself: one request for the song, and not a sound.
     assert_eq!(music(&h), ["title"]);
     assert!(h.sounds().is_empty(), "{:?}", h.sounds());
@@ -479,4 +474,140 @@ fn back_from_a_battle_the_menu_shows_and_the_song_starts_over() {
     assert_eq!(shows(&h), Shows::Menu(255));
     wait_until(&mut h, 16.0);
     assert_alone_at(&h, 16.0);
+}
+
+/// The map scene the cinematic shows now (none if it isn't a map shot).
+fn scene(h: &Harness) -> Option<MapScene> {
+    let shot = view(h).cinematic?;
+    #[allow(clippy::cast_precision_loss)]
+    let t = shot.t_ms as f32 / 1000.0;
+    shot.player.scene(t)
+}
+
+/// Where the unit `id` is shown on the map now (nowhere once it fell).
+fn tile(h: &Harness, id: u32) -> Option<Pos> {
+    scene(h)?.unit(UnitId(id)).map(|u| u.pos)
+}
+
+/// How many units of `faction` the map shows now.
+fn count(h: &Harness, faction: Faction) -> usize {
+    let scene = scene(h).unwrap_or_else(|| panic!("no map"));
+    let of = scene.units.iter().filter(|u| u.faction == faction);
+    of.count()
+}
+
+/// The party, by its slots in `assets/battles/ch01.ron`, and the three
+/// enemies the cinematic moves.
+const LEAD: u32 = 1;
+const SERGEANT: u32 = 3;
+const POACHER: u32 = 4;
+const ROAD_BRIGAND: u32 = 7;
+const ROAD_ARCHER: u32 = 9;
+const FOOTBRIDGE_BRIGAND: u32 = 11;
+
+/// Ticket 0820: the storyboard's nine shots in order, each where the song
+/// changes, with a snapshot of each. Nobody in the party falls.
+#[test]
+fn the_storyboard_plays_shot_by_shot() {
+    let mut h = title();
+    // 2 (0:15): the opening lines of `ch01_intro`, three boxes.
+    wait_until(&mut h, 22.0);
+    assert_alone_at(&h, 22.0);
+    assert!(matches!(frame(&h), Frame::Talk { index: 1, .. }));
+    assert_snapshot!("title_cinematic_2_intro_lines", h.snapshot());
+    wait_until(&mut h, 30.5);
+    assert!(matches!(frame(&h), Frame::Talk { index: 2, .. }));
+    // 3 (0:30.75): the six faces, crossing from the right.
+    wait_until(&mut h, 31.0);
+    let Frame::Characters { x: early, step } = frame(&h) else {
+        panic!("not the faces: {:?}", frame(&h));
+    };
+    assert!(step > 0, "{step}");
+    wait_until(&mut h, 40.0);
+    let Frame::Characters { x, .. } = frame(&h) else {
+        panic!("not the faces: {:?}", frame(&h));
+    };
+    assert!(x < early, "{early} to {x}");
+    let faces = h.snapshot();
+    assert!(faces.contains("Tamsin") && faces.contains("Aske"));
+    assert_snapshot!("title_cinematic_3_faces", faces);
+    // 4 (0:50): the opening line of `ch01_prebattle`, one box.
+    wait_until(&mut h, 60.0);
+    assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
+    assert_snapshot!("title_cinematic_4_prebattle_line", h.snapshot());
+    wait_until(&mut h, 68.4);
+    assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
+    // 5 (1:08.5): the march at 3×. Everyone is still at the cut; the lead
+    // then walks east and the brigand comes down to the road to meet.
+    wait_until(&mut h, 68.6);
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
+    assert_eq!(tile(&h, LEAD), Some(Pos::new(4, 12)));
+    assert_eq!(tile(&h, ROAD_BRIGAND), Some(Pos::new(10, 10)));
+    wait_until(&mut h, 76.0);
+    assert_snapshot!("title_cinematic_5_march", h.snapshot());
+    wait_until(&mut h, 80.0);
+    assert_eq!(tile(&h, LEAD), Some(Pos::new(9, 11)));
+    assert_eq!(tile(&h, ROAD_BRIGAND), Some(Pos::new(10, 11)));
+    // 6 (1:25.25): the two of them close up at 4×; the brigand falls.
+    wait_until(&mut h, 86.5);
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 4, .. }));
+    assert_snapshot!("title_cinematic_6_road_fight", h.snapshot());
+    wait_until(&mut h, 95.0);
+    assert_eq!(tile(&h, ROAD_BRIGAND), None);
+    assert_eq!(count(&h, Faction::Enemy), 13);
+    // 7 (1:35.5): the footbridge at 4×. The rider is across and beside
+    // the brigand, the archer two tiles from it over the river.
+    wait_until(&mut h, 99.0);
+    let Frame::MapPan { origin_px, zoom: 4 } = frame(&h) else {
+        panic!("not the close-up: {:?}", frame(&h));
+    };
+    assert!(origin_px.1 < 40.0, "{origin_px:?}");
+    assert_eq!(tile(&h, SERGEANT), Some(Pos::new(4, 5)));
+    assert_eq!(tile(&h, FOOTBRIDGE_BRIGAND), Some(Pos::new(5, 5)));
+    assert_eq!(tile(&h, POACHER), Some(Pos::new(5, 7)));
+    assert_snapshot!("title_cinematic_7_footbridge_fight", h.snapshot());
+    wait_until(&mut h, 104.0);
+    assert_eq!(tile(&h, FOOTBRIDGE_BRIGAND), None);
+    // 8 (1:44.5): the whole map at 2×, the party moving on.
+    wait_until(&mut h, 110.0);
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 2, .. }));
+    assert_snapshot!("title_cinematic_8_whole_field", h.snapshot());
+    wait_until(&mut h, LOGO - 0.1);
+    assert_eq!(tile(&h, LEAD), Some(Pos::new(11, 7)));
+    assert_eq!(tile(&h, ROAD_ARCHER), Some(Pos::new(11, 6)));
+    // Two enemies fell and nobody of the party.
+    assert_eq!(count(&h, Faction::Player), 6);
+    assert_eq!(count(&h, Faction::Enemy), 12);
+    // 9 (1:57): the logo, with the menu, until the song loops.
+    wait_until(&mut h, 125.0);
+    assert_eq!(shows(&h), Shows::Menu(255));
+    assert!((time(&h) - 125.0).abs() < 0.05, "{}", time(&h));
+    assert_snapshot!("title_cinematic_9_logo", h.snapshot());
+    // 1 (0:00), seen from the first loop on: the party where the battle
+    // starts, nobody moving, the camera drifting to them at 3×.
+    wait(&mut h, SONG - 125.0 + 3.0);
+    assert_alone_at(&h, song(&h));
+    let Frame::MapPan { origin_px, zoom: 3 } = frame(&h) else {
+        panic!("not the pan: {:?}", frame(&h));
+    };
+    let standing = scene(&h);
+    assert_eq!(tile(&h, LEAD), Some(Pos::new(4, 12)));
+    assert_eq!(
+        (count(&h, Faction::Player), count(&h, Faction::Enemy)),
+        (6, 14)
+    );
+    wait_until(&mut h, 8.0);
+    assert_snapshot!("title_cinematic_1_party", h.snapshot());
+    wait_until(&mut h, 14.0);
+    let Frame::MapPan {
+        origin_px: later, ..
+    } = frame(&h)
+    else {
+        panic!("not the pan: {:?}", frame(&h));
+    };
+    assert!(
+        later.0 < origin_px.0 && later.1 > origin_px.1,
+        "{origin_px:?} to {later:?}"
+    );
+    assert_eq!(scene(&h), standing);
 }

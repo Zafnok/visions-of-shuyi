@@ -49,6 +49,39 @@ screen before the title), web only or Windows too (A web only / B both):
                  Press any key
 ```
 
+**As built (ticket 0820, `assets/cinematics/title.ron`).** The cuts were
+moved onto the song's changes, measured in the song file (Claude can't
+hear it; Nick judges them by ear at sign-off):
+
+| Shot | Storyboard | Built | What the song does there |
+| ---- | ---------- | ----- | ------------------------ |
+| The party | 0:00 | 0:00 | Starts |
+| `ch01_intro` lines | 0:15 | 0:15 | Still quiet (the menu's 15 seconds end here) |
+| Six faces | 0:31 | 0:30.75 | Swells into the middle section |
+| `ch01_prebattle` line | 0:50 | 0:50 | A phrase starts |
+| The march | 1:08 | 1:08.5 | A phrase starts |
+| Fight on the road | 1:25 | 1:25.25 | The loud part comes in |
+| Fight at the footbridge | 1:35 | 1:35.5 | Lifts again |
+| The whole field | 1:45 | 1:44.5 | Lifts again |
+| The logo | 1:57 | 1:57 | The last chord (struck at 1:55.8) has died away |
+
+- **The snippets:** the first **three** boxes of `ch01_intro` (the three
+  opening captions, about 5 seconds each) and the first **one** box of
+  `ch01_prebattle` (Tamsin's news, three lines, up for the whole 18
+  seconds). Two boxes there would get 9 seconds each, too short to read
+  three lines twice.
+- **The march and the fights** (one action on the real Chapter 1 map):
+  the party sets off east along the road while Tamsin rides for the
+  footbridge and Aske follows; the brigand south of the road comes down to
+  meet the lead, who trades blows with him and fells him (the lead is
+  left with about half HP); at the footbridge Tamsin crosses and fights
+  the brigand there, and Aske shoots him over the river from two tiles
+  away; in the whole-field shot the enemy archer on the road falls back
+  to the road bridge and everyone moves on. Two enemies fall, nobody of
+  the party.
+- **The first shot** drifts from the fords down to the party; at 3× the
+  party's corner of the map leaves no room to pan across them.
+
 ### Claude's starting rules (Nick can veto)
 
 - The key that dismisses the prompt does nothing else: it doesn't also move
@@ -326,11 +359,9 @@ Chapter 1 map by 0820; the mockup's fight was made up.
 - **While the song has not started yet** (its file is still loading), the
   cinematic waits at its first picture for up to 3 seconds, then runs
   without the song (ticket 0819).
-- **The stand-in cinematic** (ticket 0819, until 0820): one slow pan over
-  the Chapter 1 battlefield, from the party to the fort, then the logo.
 - **Snippet length:** each dialogue shot shows as many opening boxes of its
-  scene as can be read comfortably in its time (0818's timing; 0820 sets
-  the counts).
+  scene as can be read comfortably in its time (0818's timing; the
+  counts are under the storyboard, *As built*).
 - **How a snippet's text appears** (0818, *tunable*): the boxes of a
   dialogue shot share its time equally. A box types out at the text speed
   from Options and then stays up until the next. A long box types faster

@@ -1,0 +1,146 @@
+---
+source: crates/ui/tests/it/title_cinematic.rs
+expression: h.snapshot()
+---
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                           F2 debug 
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbba
+--- legend ---
+a = fg:text bg:see-through
+b = fg:text_dim bg:black
+--- backdrop: clip 0,0 100x32  origin 0.0,24.0  zoom 4 ---
+♣♣♣♣♣♣♣♣........♣♣♣♣♣♣..............^^^^▲▲▲▲▲▲▲▲
+♣♣♣♣♣♣♣♣......♣♣♣♣♣♣♣♣..............▓▓▓▓▓▓▓▓▓▓▲▲
+..♣♣♣♣♣♣♣♣♣♣♣♣♣♣♣♣........············░░Ha░░▓▓^^
+....♣♣♣♣♣♣♣♣♣♣............··....Ri..▓▓Ra░░Ar▓▓^^
+......♣♣..............······........▓▓▓▓··▓▓▓▓..
+......··TaBr..........Ra....Ar♣♣Br......Br......
+≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈......Gu..♣♣♣♣
+......··..As..........··........≈≈≈≈≈≈≈≈==≈≈≈≈≈≈
+......··..............··......♣♣♣♣......··......
+..♣♣♣♣··..............··Ar..♣♣♣♣♣♣♣♣....Ra......
+..♣♣♣♣····............··......♣♣♣♣......··..^^^^
+........····Ma······HoEl········Br········..^^^^
+....╦╦..··....Ru..........................^^^^^^
+........··....^^^^......................♣♣♣♣....
+..............^^^^^^....................♣♣♣♣♣♣..
+................^^......................♣♣♣♣....
+--- colours ---
+aaaaaaaabbbbbbbbaaaaaabbbbbbbbbbbbbbccccdddddddd
+aaaaaaaabbbbbbaaaaaaaabbbbbbbbbbbbbbeeeeeeeeeedd
+bbaaaaaaaaaaaaaaaabbbbbbbbffffffffffffgghhggeecc
+bbbbaaaaaaaaaabbbbbbbbbbbbffbbbbiibbeejjggjjeecc
+bbbbbbaabbbbbbbbbbbbbbffffffbbbbbbbbeeeeffeeeebb
+bbbbbbffkkiibbbbbbbbbbllbbbbmmaaiibbbbbbllbbbbbb
+nnnnnnoonnnnnnnnnnnnnnoonnnnnnnnnnbbbbbbllbbaaaa
+bbbbbbffbbkkbbbbbbbbbbffbbbbbbbbnnnnnnnnoonnnnnn
+bbbbbbffbbbbbbbbbbbbbbffbbbbbbaaaabbbbbbffbbbbbb
+bbaaaaffbbbbbbbbbbbbbbffiibbaaaaaaaabbbbllbbbbbb
+bbaaaaffffbbbbbbbbbbbbffbbbbbbaaaabbbbbbffbbcccc
+bbbbbbbbffffppffffffppppffffffffllffffffffbbcccc
+bbbbqqbbffbbbbkkbbbbbbbbbbbbbbbbbbbbbbbbbbcccccc
+bbbbbbbbffbbbbccccbbbbbbbbbbbbbbbbbbbbbbaaaabbbb
+bbbbbbbbbbbbbbccccccbbbbbbbbbbbbbbbbbbbbaaaaaabb
+bbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbaaaabbbb
+--- legend ---
+a = fg:forest bg:forest_bg
+b = fg:grass bg:grass_bg
+c = fg:mountain bg:mountain_bg
+d = fg:peak bg:peak_bg
+e = fg:stone bg:stone_bg
+f = fg:road bg:road_bg
+g = fg:floor bg:floor_bg
+h = fg:enemy bg:fort_bg
+i = fg:enemy bg:grass_bg
+j = fg:enemy bg:floor_bg
+k = fg:player bg:grass_bg
+l = fg:enemy bg:road_bg
+m = fg:enemy bg:forest_bg
+n = fg:water bg:water_bg
+o = fg:wood bg:water_bg
+p = fg:player bg:road_bg
+q = fg:fort bg:fort_bg
+--- overlays ---
+over  177,190 8x2  hp_mid
+over  185,190 6x2  black
+over  161,190 14x2  hp_high
+over  65,94 14x2  hp_high
+over  81,126 14x2  hp_high
+over  97,190 14x2  hp_high
+over  113,206 14x2  hp_high
+over  257,190 14x2  hp_high
+over  193,158 14x2  hp_high
+over  321,158 14x2  hp_high
+over  81,94 8x2  hp_mid
+over  89,94 6x2  black
+over  177,94 14x2  hp_high
+over  225,94 14x2  hp_high
+over  257,94 14x2  hp_high
+over  257,62 14x2  hp_high
+over  321,110 14x2  hp_high
+over  321,94 14x2  hp_high
+over  305,62 14x2  hp_high
+over  337,62 14x2  hp_high
+over  321,46 14x2  hp_high
