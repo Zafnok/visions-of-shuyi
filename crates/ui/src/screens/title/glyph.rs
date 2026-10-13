@@ -373,6 +373,15 @@ mod tests {
             // It sways: more than one column, never more than two to a side.
             assert!((2..=5).contains(&columns.len()), "spark {i}: {columns:?}");
         }
+        // However long the title is left open, a spark sways as it did in
+        // its first sway: the time doesn't run out or lose its precision.
+        for i in 0..SPARKS {
+            for late in [u32::MAX, u32::MAX - 1234, 4_000_000_000] {
+                let (x, y, ..) = spark(i, late);
+                assert_eq!(x, spark(i, late % SWAY_MS).0, "spark {i} at {late}");
+                assert!((0..SPARK_ROWS).contains(&y), "spark {i} at {late}");
+            }
+        }
         assert_eq!(speeds.len(), 2, "slow and fast sparks");
         assert!(kinds.len() >= 5, "{kinds:?}");
     }
