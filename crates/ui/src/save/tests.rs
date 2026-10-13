@@ -273,3 +273,66 @@ fn playtime_reads_as_hours_minutes_seconds() {
     assert_eq!(playtime_text(3725), "1:02:05");
     assert_eq!(playtime_text(3600 * 123 + 59 * 60 + 59), "123:59:59");
 }
+
+#[test]
+fn a_written_save_is_noted_as_the_last_one() {
+    let c = ctx();
+    let mut storage = MemoryStorage::new();
+    assert_eq!(storage.read(LAST_SAVE_KEY), Ok(None));
+    write(&mut storage, &slot_key(3), &suspended(&c)).unwrap();
+    assert_eq!(storage.read(LAST_SAVE_KEY), Ok(Some(slot_key(3))));
+    write(&mut storage, SUSPEND_KEY, &suspended(&c)).unwrap();
+    assert_eq!(storage.read(LAST_SAVE_KEY).unwrap().unwrap(), SUSPEND_KEY);
+    // A save that wasn't written isn't noted.
+    assert!(write(&mut storage, "No Such Key", &suspended(&c)).is_err());
+    assert_eq!(storage.read(LAST_SAVE_KEY).unwrap().unwrap(), SUSPEND_KEY);
+}
+
+/// A save whose lead is `name`, of `gender`.
+pub(crate) fn save_of(c: &Ctx, name: &str, gender: LeadGender) -> SaveFile {
+    let mut save = suspended(c);
+    save.campaign.lead = LeadProfile::new(name, gender);
+    save
+}
+
+#[test]
+fn the_latest_lead_is_the_lead_of_the_save_written_last() {
+    let c = ctx();
+    let lead = |name: &str, gender| Some(LeadProfile::new(name, gender));
+    let (male, female) = (LeadGender::Male, LeadGender::Female);
+    let mut storage = MemoryStorage::new();
+    assert_eq!(latest_lead(&storage), None);
+    write(&mut storage, &slot_key(2), &save_of(&c, "Mara", female)).unwrap();
+    assert_eq!(latest_lead(&storage), lead("Mara", female));
+    // A later save in an earlier slot, then the suspend save, then a
+    // later slot: always the one written last.
+    write(&mut storage, &slot_key(1), &save_of(&c, "Odo", male)).unwrap();
+    assert_eq!(latest_lead(&storage), lead("Odo", male));
+    write(&mut storage, SUSPEND_KEY, &save_of(&c, "Anna", female)).unwrap();
+    assert_eq!(latest_lead(&storage), lead("Anna", female));
+    write(&mut storage, &slot_key(9), &save_of(&c, "Piet", male)).unwrap();
+    assert_eq!(latest_lead(&storage), lead("Piet", male));
+    // The last one gone, or unreadable: the suspend save's.
+    storage.delete(&slot_key(9)).unwrap();
+    assert_eq!(latest_lead(&storage), lead("Anna", female));
+    storage.write(&slot_key(9), "junk").unwrap();
+    assert_eq!(latest_lead(&storage), lead("Anna", female));
+    // A note that names no key at all is no worse.
+    storage.write(LAST_SAVE_KEY, "No Such Key").unwrap();
+    assert_eq!(latest_lead(&storage), lead("Anna", female));
+    // No suspend save: the first slot that holds a save.
+    storage.delete(SUSPEND_KEY).unwrap();
+    assert_eq!(latest_lead(&storage), lead("Odo", male));
+    storage.write(&slot_key(1), "junk").unwrap();
+    assert_eq!(latest_lead(&storage), lead("Mara", female));
+    // Saves from before the note was kept: the same order.
+    storage.delete(LAST_SAVE_KEY).unwrap();
+    assert_eq!(latest_lead(&storage), lead("Mara", female));
+    let text = encode(&save_of(&c, "Anna", female)).unwrap();
+    storage.write(SUSPEND_KEY, &text).unwrap();
+    assert_eq!(latest_lead(&storage), lead("Anna", female));
+    // Nothing readable: nobody.
+    storage.delete(SUSPEND_KEY).unwrap();
+    storage.delete(&slot_key(2)).unwrap();
+    assert_eq!(latest_lead(&storage), None);
+}

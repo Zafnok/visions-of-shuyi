@@ -37,6 +37,10 @@ pub const DIALOGUE_EXTENSION: &str = ".dlg";
 /// Longest text of one speech or narration line, in characters (two text
 /// boxes of about 3 × 70; ADR-0011).
 pub const MAX_TEXT_LEN: usize = 200;
+/// Characters per line of the dialogue screen's text box.
+pub const BOX_WIDTH: usize = 92;
+/// Lines of text the text box shows at once: one page.
+pub const BOX_LINES: usize = 3;
 /// Longest text of a reply choice, in characters: it must fit the menu.
 pub const MAX_OPTION_LEN: usize = 60;
 /// Most text steps (speech or narration) in one reply's reaction, so the

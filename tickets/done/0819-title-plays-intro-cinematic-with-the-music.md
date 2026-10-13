@@ -195,10 +195,9 @@ band behind `Press any key or button` and behind a notice.
   scope. If the player leaves the title and comes back inside that half
   second, the song plays on (ADR-0026 keeps a track that is asked for
   again while it fades) and the picture follows it.
-- **Step 6 (the lead of the latest save):** not done. `save::latest_lead`
-  and the player's lead parameter belong to 0818, which is still open.
-  The player is made with `ctx` as it is, each time the title is shown
-  (`TitleScreen::refresh`); 0818's step 3 now says to pass the lead there.
+- **Step 6 (the lead of the latest save):** done once 0818 merged (it
+  landed while this PR was open): `TitleScreen::refresh` passes
+  `save::latest_lead` to the player each time the title is shown.
 - **Step 1:** the player is made by `refresh` (the first update, and
   every time the title is shown again), not only on the first update, and
   opening Options also marks the title stale, since a colour theme
@@ -223,7 +222,7 @@ can veto):
 - The stand-in cinematic until 0820: one slow pan over the Chapter 1
   battlefield, then the logo.
 
-**Follow-ups:** none new. 0818 (hands the title the lead), 0820 (the real
+**Follow-ups:** none new. 0820 (the real
 shots; its tests of what shows at which second replace the stand-in's
 line in `title_cinematic.rs`), 0041 (the skip sound: `TITLE_SKIP_SOUND`).
 

@@ -609,10 +609,10 @@ mod tests {
         }
     }
 
-    /// The test cinematic (a pan for six seconds, then the logo) at
+    /// The test cinematic (a pan for six seconds; the logo from 16) at
     /// `t_ms`, this bright.
     fn shot(c: &Ctx, t_ms: u32, brightness: u8) -> CinematicView {
-        let player = CinematicPlayer::new(c, "test").unwrap();
+        let player = CinematicPlayer::new(c, "test", None).unwrap();
         CinematicView {
             player: Rc::new(player),
             t_ms,
@@ -644,7 +644,7 @@ mod tests {
         v.backdrop = Some(c.content.title.backdrops[0]);
         v.sparks = Some(500);
         // The pan, half way; then the logo shot.
-        for (t_ms, t) in [(3000, 3.0), (1500, 1.5), (7000, 7.0)] {
+        for (t_ms, t) in [(3000, 3.0), (1500, 1.5), (17_000, 17.0)] {
             let playing = shot(&c, t_ms, FULL);
             v.cinematic = Some(playing.clone());
             assert_eq!(painted(&c, &v), drawn(&c, &playing, t, 1.0), "{t_ms}");

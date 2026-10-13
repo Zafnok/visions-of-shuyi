@@ -268,10 +268,12 @@ impl TitleScreen {
     /// or continued, a first save made), the focus goes to its first item;
     /// otherwise it stays.
     ///
-    /// Makes the cinematic again too, as `ctx` paints it now.
+    /// Makes the cinematic again too, as `ctx` paints it now, with the
+    /// lead of the most recent save ([`save::latest_lead`]).
     pub fn refresh(&mut self, ctx: &Ctx) {
         self.stale = false;
-        let player = CinematicPlayer::new(ctx, TITLE_CINEMATIC);
+        let lead = save::latest_lead(ctx.storage.as_ref());
+        let player = CinematicPlayer::new(ctx, TITLE_CINEMATIC, lead);
         self.player = player.map(|p| Rc::new(p.with_backdrop(self.backdrop)));
         let storage = ctx.storage.as_ref();
         let suspended = save::has_suspend(storage);

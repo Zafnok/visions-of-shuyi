@@ -802,7 +802,7 @@ fn left_alone_the_menu_fades_out_over_the_cinematic() {
     song_tick(&mut t, &mut c, 80.5, 0.0);
     assert_eq!(playing(&t, &c), Some((80_500, FULL)));
     // The player it shows is the title cinematic, on this launch's backdrop.
-    let want = CinematicPlayer::new(&c, TITLE_CINEMATIC).unwrap();
+    let want = CinematicPlayer::new(&c, TITLE_CINEMATIC, None).unwrap();
     let shown = t.view(&c).cinematic.unwrap().player;
     assert_eq!(*shown, want.with_backdrop(t.backdrop));
     assert!(t.backdrop.is_some());
@@ -1039,6 +1039,29 @@ fn the_cinematic_is_made_again_when_the_title_is_shown_again() {
     assert_eq!(t.player.as_ref().unwrap().timeline().length_ms(), 125_000);
     // `refreshed` makes it at once.
     assert!(TitleScreen::new(&c).refreshed(&c).player.is_some());
+}
+
+/// The cinematic's lead is the lead of the most recent save, looked up
+/// each time the title is shown; with no save, the player's own default.
+#[test]
+fn the_cinematics_lead_follows_the_latest_save() {
+    use crate::save::tests::save_of;
+    use trpg_core::{LeadGender, LeadProfile};
+    let mut c = ctx();
+    let mut t = TitleScreen::new(&c);
+    t.update(&mut c, &input(&[]));
+    let nobody = CinematicPlayer::new(&c, TITLE_CINEMATIC, None).unwrap();
+    assert_eq!(t.player.as_ref().unwrap().lead(), nobody.lead());
+    let mara = save_of(&c, "Mara", LeadGender::Female);
+    save::write(c.storage.as_mut(), &save::slot_key(2), &mara).unwrap();
+    // Not under the title itself; when it is shown again.
+    t.update(&mut c, &input(&[]));
+    assert_eq!(t.player.as_ref().unwrap().lead(), nobody.lead());
+    t.update(&mut c, &input(&[Action::Confirm]));
+    t.update(&mut c, &input(&[]));
+    let lead = LeadProfile::new("Mara", LeadGender::Female);
+    assert_eq!(t.player.as_ref().unwrap().lead(), &lead);
+    assert_ne!(&lead, nobody.lead());
 }
 
 /// Before the first press there is no cinematic, however long it takes.
