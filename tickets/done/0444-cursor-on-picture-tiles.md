@@ -114,6 +114,11 @@ forest, road, water and the fort, at both zooms:
   (`sprite.rs`: `paint_own_cursor`, `CursorMarks`, `corner_marks`.)
 - Tile glow is no longer drawn on picture tiles: the ground's tints no
   longer take the cursor (`sprite/ground.rs`, `tints`).
+- The Options menu's `Cursor` row doesn't offer `Tile glow` while the
+  map is pictures (Nick, 2026-10-13, after seeing the PR: "just hide it on
+  options menu, it should not be selectable when graphics are 2D/picture
+  mode. Make the change here we don't need a new ticket for it").
+  (`screens/options.rs`: `cursor_styles`, `shown_cursor_style`.)
 - `look-and-feel.md`, *Cursor and selection*, records it.
 - The glyph look and the mixed skin (sprite units on glyph terrain) are
   untouched: no glyph-skin snapshot changed. Four sprite-skin snapshots
@@ -130,12 +135,14 @@ forest, road, water and the fort, at both zooms:
   a picture. It is accepted, so not edited; the rule that changed is a
   look, recorded in `look-and-feel.md`.
 
-**Claude's starting rules** (Nick to agree or veto):
+- The Options row is outside this ticket's first scope; Nick asked for
+  it here.
 
-- With the map as pictures, a player who has picked `Tile glow` sees the
-  normal corner marks.
-- The Options menu still offers `Tile glow` there. What the menu should do
-  is ticket **0451**.
+**Claude's starting rule** (Nick to agree or veto):
 
-**Follow-up:** 0451 (the `Tile glow` choice in Options when the map is
-pictures).
+- A player who picked `Tile glow` on glyphs and then switches the map to
+  pictures sees the normal corner marks, and the `Cursor` row says
+  `Corners`. Their glow comes back if they return to glyphs without
+  picking another cursor.
+
+**Follow-up tickets:** none.

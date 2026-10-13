@@ -172,6 +172,27 @@ const CURSOR_STYLES: [CursorStyle; 3] = [
     CursorStyle::TileGlow,
 ];
 
+/// The cursor styles the row offers: every one, but no `Tile glow` while
+/// pictures paint the whole map, where a cursor never glows (Nick,
+/// 2026-10-13, ticket 0444).
+fn cursor_styles(ctx: &Ctx) -> &'static [CursorStyle] {
+    match ctx.map_skin.zoom() {
+        Some(_) => &[CursorStyle::Corners, CursorStyle::LargeCorners],
+        None => &CURSOR_STYLES,
+    }
+}
+
+/// The cursor style the row shows: the setting, or `Corners` (what the
+/// map draws) while the setting isn't offered.
+fn shown_cursor_style(ctx: &Ctx) -> CursorStyle {
+    let style = ctx.settings().cursor_style;
+    if cursor_styles(ctx).contains(&style) {
+        style
+    } else {
+        CursorStyle::Corners
+    }
+}
+
 /// The text key of a game mode's name.
 const fn mode_key(mode: GameMode) -> &'static str {
     match mode {
@@ -352,7 +373,7 @@ impl OptionsScreen {
             Row::EnemyPhaseSpeed => s.enemy_phase_speed.key(),
             Row::AutoEnd => on_off_key(s.auto_end_turn),
             Row::Fullscreen => on_off_key(s.fullscreen),
-            Row::Cursor => cursor_key(s.cursor_style),
+            Row::Cursor => cursor_key(shown_cursor_style(ctx)),
             Row::MapLook => s.map_look.key(),
             Row::MapZoom => s.map_zoom.key(),
             Row::Theme => s.theme.key(),
@@ -419,7 +440,8 @@ impl OptionsScreen {
     /// goes round at the ends.
     fn change(&mut self, ctx: &mut Ctx, forward: bool, wrap: bool) {
         let row = self.row;
-        self.set(ctx, |s| step_setting(s, row, forward, wrap));
+        let cursors = cursor_styles(ctx);
+        self.set(ctx, |s| step_setting(s, row, cursors, forward, wrap));
     }
 
     /// Lets `change` edit the settings; if it changed anything, saves them
@@ -621,8 +643,9 @@ impl OptionsScreen {
     }
 }
 
-/// Steps the setting `row` shows; other rows have none.
-fn step_setting(s: &mut Settings, row: Row, forward: bool, wrap: bool) {
+/// Steps the setting `row` shows; other rows have none. The cursor steps
+/// through `cursors`, from the first of them if its style isn't one.
+fn step_setting(s: &mut Settings, row: Row, cursors: &[CursorStyle], forward: bool, wrap: bool) {
     match row {
         Row::TextSpeed => s.text_speed = stepped(&TextSpeed::ALL, s.text_speed, forward, wrap),
         Row::AnimSpeed => s.anim_speed = stepped(&AnimSpeed::ALL, s.anim_speed, forward, wrap),
@@ -636,7 +659,7 @@ fn step_setting(s: &mut Settings, row: Row, forward: bool, wrap: bool) {
         }
         Row::AutoEnd => s.auto_end_turn = stepped(&[false, true], s.auto_end_turn, forward, wrap),
         Row::Fullscreen => s.fullscreen = stepped(&[false, true], s.fullscreen, forward, wrap),
-        Row::Cursor => s.cursor_style = stepped(&CURSOR_STYLES, s.cursor_style, forward, wrap),
+        Row::Cursor => s.cursor_style = stepped(cursors, s.cursor_style, forward, wrap),
         Row::MapLook => s.map_look = stepped(&MapLook::ALL, s.map_look, forward, wrap),
         Row::MapZoom => s.map_zoom = stepped(&MapZoom::ALL, s.map_zoom, forward, wrap),
         Row::Theme => s.theme = stepped(&Theme::ALL, s.theme, forward, wrap),

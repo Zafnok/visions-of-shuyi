@@ -474,10 +474,13 @@ so they aren't in this repository (ADR-0032).
   - **Large corners:** the same, one pixel longer.
   - **Tile glow** is not drawn on picture tiles. Nick: "for tile glow imo
     we deprecate it for the 2D style it's simply unsustainable to keep it
-    around for this style but for glyph we might consider keeping it". A
-    player who has picked it sees the corner marks there (*Claude's
-    starting rule*, as is leaving the choice in the Options menu: ticket
-    0451). The glyph look keeps its glow.
+    around for this style but for glyph we might consider keeping it".
+    And of the Options menu: "just hide it on options menu, it should not
+    be selectable when graphics are 2D/picture mode". So while the map is
+    pictures the `Cursor` row offers only `Corners` and `Large corners`.
+    A player who had picked the glow sees the corner marks, and the row
+    says `Corners`, until they pick again or go back to glyphs (*Claude's
+    starting rule*). The glyph look keeps its glow.
 - **Unit selected, cursor still on it:** arrows `►Al◄` replace the corner
   marks. *(Open, see below: as whole glyphs they would cover a neighbour's
   initial, as the brackets did.)*
@@ -1040,8 +1043,6 @@ black.
   (0436).
 - On the bought tiles (seen in ticket 0437, not decided): the picks in
   the terrain table above, the burning stand-in first.
-- The Options menu still offers `Tile glow` when the map is pictures,
-  where it is drawn as corner marks (ticket 0451).
 - The battle screen's bottom two rows: the danger-zone hint on the left
   and the auto-end hint in a column with `end turn` (Nick, 2026-10-04);
   where a message goes, and what auto-end lines up with when the key help
