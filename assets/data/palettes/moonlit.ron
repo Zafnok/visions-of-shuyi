@@ -21,6 +21,10 @@
     "enemy": "#ff5030",
     "ally": "#60d890",
     "neutral": "#f0d060",
+    // The outline of the player's sprite units on the bought tiles
+    // (ticket 0447): a deeper blue than `player`, which is lost on grass.
+    // The tiles are the same in every theme, so this is too.
+    "player_outline": "#2a60ff",
 
     // Overlay background tints (blended ~75% over the terrain background)
     "move_range": "#1c3a6a",

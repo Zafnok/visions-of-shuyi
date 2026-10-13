@@ -75,6 +75,7 @@ pub const REQUIRED_COLORS: &[&str] = &[
     "enemy",
     "ally",
     "neutral",
+    "player_outline",
     "move_range",
     "attack_range",
     "heal_range",

@@ -129,6 +129,7 @@ ui_colors! {
     Enemy => "enemy",
     Ally => "ally",
     Neutral => "neutral",
+    PlayerOutline => "player_outline",
     MoveRange => "move_range",
     AttackRange => "attack_range",
     HealRange => "heal_range",
