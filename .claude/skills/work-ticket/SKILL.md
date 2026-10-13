@@ -127,6 +127,13 @@ cannot be met, say so in the Completion notes and in the PR; don't hide it.
 - Commit messages: `[NNNN] imperative summary`.
 - Push and open a PR:
   - Title: `[NNNN] <ticket title>`
+  - **No bare `@word` in a PR title, PR body, commit message or comment.**
+    GitHub reads it as a mention of the user with that name: the release
+    notes are generated from PR titles, and v0.1.0 listed the stranger
+    `github.com/music` as a contributor because PR #157 was titled
+    "...: @music" after the dialogue directive. Put backticks around it
+    (`` `@music` ``) or leave the `@` out ("the music directive"). If the
+    ticket's own title has one, change it for the PR title.
   - Body: summary bullets, list of acceptance criteria (checked), follow-up
     tickets created, and `Nick input:` line (e.g. "Sign-off: please play the
     build from the Pages link and try X").
