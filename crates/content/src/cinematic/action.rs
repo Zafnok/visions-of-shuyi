@@ -260,7 +260,7 @@ impl<'r> Checker<'_, 'r> {
         if !walkable {
             return Vec::new();
         }
-        let path = tile_by_tile(&corners);
+        let path = tile_by_tile(&corners, i32::from(width.max(height)));
         for at in &path {
             let cost = (tiles.get(*at).copied().zip(class))
                 .map(|(terrain, class)| self.refs.terrain.move_cost(terrain, class.movement_type));
@@ -313,15 +313,17 @@ impl<'r> Checker<'_, 'r> {
 }
 
 /// Every tile of a walk through `corners`, each a straight run from the
-/// one before it: the first corner, then tile after tile.
-fn tile_by_tile(corners: &[Pos]) -> Vec<Pos> {
+/// one before it: the first corner, then tile after tile. No run is taken
+/// further than `longest` tiles (a map's longer side), so that corners
+/// that aren't on the map can never make a path without end.
+fn tile_by_tile(corners: &[Pos], longest: i32) -> Vec<Pos> {
     let mut path: Vec<Pos> = corners.first().copied().into_iter().collect();
     for pair in corners.windows(2) {
-        let (mut at, to) = (pair[0], pair[1]);
-        while at != to {
-            at = Pos::new(at.x + (to.x - at.x).signum(), at.y + (to.y - at.y).signum());
-            path.push(at);
-        }
+        let (from, to) = (pair[0], pair[1]);
+        let (dx, dy) = (to.x.saturating_sub(from.x), to.y.saturating_sub(from.y));
+        let run = dx.saturating_abs().max(dy.saturating_abs()).min(longest);
+        let tile = |i: i32| Pos::new(from.x + dx.signum() * i, from.y + dy.signum() * i);
+        path.extend((1..=run).map(tile));
     }
     path
 }
