@@ -1,5 +1,5 @@
 //! Scripted tests of the dialogue screen through the real game (ADR-0007
-//! layer 4): the test scene (`assets/dialogue/test.dlg`) opened from the
+//! layer 4): the test scene (`assets-test/dialogue/test.dlg`) opened from the
 //! debug menu, full-screen and over the battle map, and reply choices
 //! (0708).
 

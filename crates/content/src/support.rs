@@ -42,9 +42,18 @@ struct RawPair {
     conversations: ByRank<String>,
 }
 
-/// Loads and validates the embedded support file. Characters and
-/// conversations are checked against `characters` and `dialogue` when
-/// given (each is skipped if its files failed to load).
+/// The test files' support file (ADR-0057): pairs only; the rules are the
+/// story file's.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RawPart {
+    pairs: Vec<RawPair>,
+}
+
+/// Loads and validates the embedded support file, with the test files'
+/// pairs when the build has them (ADR-0057). Characters and conversations
+/// are checked against `characters` and `dialogue` when given (each is
+/// skipped if its files failed to load).
 pub fn load(
     characters: Option<&CharacterTable>,
     dialogue: Option<&DialogueTable>,
@@ -56,7 +65,9 @@ pub fn load(
             "file not found in asset bundle",
         )]
     })?;
-    from_source(&display, source, characters, dialogue)
+    let part = bundle::test_part(SUPPORTS_PATH);
+    let part = part.as_ref().map(|(file, source)| (file.as_str(), *source));
+    from_sources(&display, source, part, characters, dialogue)
 }
 
 /// Parses and validates support `source`, attributing errors to `file`.
@@ -67,56 +78,98 @@ pub fn from_source(
     characters: Option<&CharacterTable>,
     dialogue: Option<&DialogueTable>,
 ) -> Result<SupportTable, Vec<ContentError>> {
+    from_sources(file, source, None, characters, dialogue)
+}
+
+/// [`from_source`] with the pairs of `part` (a file name and its source:
+/// the test files' pairs, ADR-0057) added after `source`'s. A pair both
+/// have is listed twice, an error.
+pub fn from_sources(
+    file: &str,
+    source: &str,
+    part: Option<(&str, &str)>,
+    characters: Option<&CharacterTable>,
+    dialogue: Option<&DialogueTable>,
+) -> Result<SupportTable, Vec<ContentError>> {
     let raw: RawFile = parse_ron(file, source).map_err(|e| vec![e])?;
     let mut errors: Vec<ContentError> = rule_problems(&raw.rules)
         .into_iter()
         .map(|p| ContentError::new(file, p))
         .collect();
-    let mut seen = BTreeSet::new();
-    let mut pairs = Vec::new();
-    for p in raw.pairs {
-        let what = format!("pair \"{}\" and \"{}\"", p.a, p.b);
-        let line = line_of(source, &format!("a: \"{}\", b: \"{}\"", p.a, p.b));
-        let mut at = |message: String| {
-            let e = ContentError::new(file, format!("{what}: {message}"));
-            errors.push(match line {
-                Some(l) => e.at(l, None),
-                None => e,
-            });
-        };
-        let pair = SupportPair::new(CharacterId(p.a.clone()), CharacterId(p.b.clone()));
-        if p.a == p.b {
-            at("a character can't be paired with itself".into());
-        } else if !seen.insert(pair.clone()) {
-            at("the pair is listed twice".into());
+    let mut checker = PairChecker {
+        characters,
+        dialogue,
+        seen: BTreeSet::new(),
+        pairs: Vec::new(),
+    };
+    errors.extend(checker.add(file, source, raw.pairs));
+    if let Some((file, source)) = part {
+        match parse_ron::<RawPart>(file, source) {
+            Ok(part) => errors.extend(checker.add(file, source, part.pairs)),
+            Err(e) => errors.push(e),
         }
-        if let Some(characters) = characters {
-            for id in pair.members() {
-                if !characters.characters.contains_key(id) {
-                    at(format!("unknown character \"{}\"", id.0));
-                }
-            }
-        }
-        if let Some(t) = p.thresholds.filter(|t| !t.is_increasing()) {
-            at(rising(&t));
-        }
-        if let Some(dialogue) = dialogue {
-            for scene in [&p.conversations.c, &p.conversations.b, &p.conversations.a] {
-                if dialogue.get(scene).is_none() {
-                    at(format!("unknown dialogue scene \"{scene}\""));
-                }
-            }
-        }
-        pairs.push(PairDef {
-            pair,
-            thresholds: p.thresholds,
-            conversations: p.conversations,
-        });
     }
     if errors.is_empty() {
-        Ok(SupportTable::new(raw.rules, pairs))
+        Ok(SupportTable::new(raw.rules, checker.pairs))
     } else {
         Err(errors)
+    }
+}
+
+/// Checks pairs, file by file, and keeps them.
+struct PairChecker<'a> {
+    characters: Option<&'a CharacterTable>,
+    dialogue: Option<&'a DialogueTable>,
+    /// The pairs of every file so far.
+    seen: BTreeSet<SupportPair>,
+    pairs: Vec<PairDef>,
+}
+
+impl PairChecker<'_> {
+    /// Checks and keeps the pairs `raw` of `file` (`source`), returning
+    /// every problem found.
+    fn add(&mut self, file: &str, source: &str, raw: Vec<RawPair>) -> Vec<ContentError> {
+        let mut errors = Vec::new();
+        for p in raw {
+            let what = format!("pair \"{}\" and \"{}\"", p.a, p.b);
+            let line = line_of(source, &format!("a: \"{}\", b: \"{}\"", p.a, p.b));
+            let mut at = |message: String| {
+                let e = ContentError::new(file, format!("{what}: {message}"));
+                errors.push(match line {
+                    Some(l) => e.at(l, None),
+                    None => e,
+                });
+            };
+            let pair = SupportPair::new(CharacterId(p.a.clone()), CharacterId(p.b.clone()));
+            if p.a == p.b {
+                at("a character can't be paired with itself".into());
+            } else if !self.seen.insert(pair.clone()) {
+                at("the pair is listed twice".into());
+            }
+            if let Some(characters) = self.characters {
+                for id in pair.members() {
+                    if !characters.characters.contains_key(id) {
+                        at(format!("unknown character \"{}\"", id.0));
+                    }
+                }
+            }
+            if let Some(t) = p.thresholds.filter(|t| !t.is_increasing()) {
+                at(rising(&t));
+            }
+            if let Some(dialogue) = self.dialogue {
+                for scene in [&p.conversations.c, &p.conversations.b, &p.conversations.a] {
+                    if dialogue.get(scene).is_none() {
+                        at(format!("unknown dialogue scene \"{scene}\""));
+                    }
+                }
+            }
+            self.pairs.push(PairDef {
+                pair,
+                thresholds: p.thresholds,
+                conversations: p.conversations,
+            });
+        }
+        errors
     }
 }
 
@@ -365,6 +418,88 @@ mod tests {
         )";
         let source = file(&[bad]).replace("(c: 20, b: 80, a: 180)", "(c: 2, b: 1, a: 3)");
         assert_eq!(checked(&source).map_err(|e| e.len()), Err(6));
+    }
+
+    /// `source` with the pairs of `part` (file `t.ron`) added, checked
+    /// against the embedded characters and scenes.
+    fn with_part(source: &str, part: &str) -> Result<SupportTable, Vec<String>> {
+        let (characters, scenes) = (characters(), scenes());
+        from_sources(
+            "s.ron",
+            source,
+            Some(("t.ron", part)),
+            Some(&characters),
+            Some(&scenes),
+        )
+        .map_err(|errors| errors.iter().map(ToString::to_string).collect())
+    }
+
+    /// The test files' pairs are added after the story's, under the
+    /// story's rules (ADR-0057).
+    #[test]
+    fn a_part_adds_its_pairs() {
+        let knight = format!("(a: \"test_lord\", b: \"test_knight\", {TALKS})");
+        let part = format!("(pairs: [\n(a: \"test_mage\", b: \"test_lord\", {TALKS}),\n])");
+        let table = with_part(&file(&[&knight]), &part).unwrap();
+        assert_eq!(table.rules, SupportRules::STARTING);
+        let pairs: Vec<&SupportPair> = table.pairs().map(|def| &def.pair).collect();
+        assert_eq!(
+            pairs,
+            [
+                &pair("test_lord", "test_knight"),
+                &pair("test_lord", "test_mage")
+            ]
+        );
+        // Without a part, and with a part that has no pair: the story's.
+        let alone = checked(&file(&[&knight])).unwrap();
+        assert_eq!(with_part(&file(&[&knight]), "(pairs: [])"), Ok(alone));
+    }
+
+    #[test]
+    fn a_part_with_a_pair_of_the_story_is_an_error() {
+        let knight = format!("(a: \"test_lord\", b: \"test_knight\", {TALKS})");
+        // Either way round.
+        let part = format!("(pairs: [\n(a: \"test_knight\", b: \"test_lord\", {TALKS}),\n])");
+        assert_eq!(
+            with_part(&file(&[&knight]), &part),
+            Err(vec![
+                "t.ron:2: pair \"test_knight\" and \"test_lord\": the pair is listed twice"
+                    .to_owned()
+            ])
+        );
+    }
+
+    /// A part's pairs are checked like the story's, and its problems are
+    /// reported with the story file's.
+    #[test]
+    fn a_part_is_checked_like_the_story_pairs() {
+        let nobody = format!("(a: \"nobody\", b: \"test_lord\", {TALKS})");
+        let part = format!("(pairs: [\n(a: \"test_lord\", b: \"no_one\", {TALKS}),\n])");
+        assert_eq!(
+            with_part(&file(&[&nobody]), &part),
+            Err(vec![
+                "s.ron:9: pair \"nobody\" and \"test_lord\": unknown character \"nobody\""
+                    .to_owned(),
+                "t.ron:2: pair \"test_lord\" and \"no_one\": unknown character \"no_one\""
+                    .to_owned(),
+            ])
+        );
+        // A part has pairs and nothing else: the rules are the story's.
+        let errors = with_part(&file(&[]), &file(&[])).unwrap_err();
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].starts_with("t.ron:2:"), "{errors:?}");
+    }
+
+    /// The embedded file has the test pairs only with the test files
+    /// (ADR-0057).
+    #[test]
+    fn the_embedded_file_has_the_test_pairs_only_with_the_test_files() {
+        let (characters, scenes) = (characters(), scenes());
+        let load = || load(Some(&characters), Some(&scenes)).unwrap();
+        let (table, shipped) = (load(), bundle::story_only(load));
+        assert_eq!(table.pairs().count(), 2);
+        assert_eq!(shipped.pairs().count(), 0);
+        assert_eq!(shipped.rules, table.rules);
     }
 
     #[test]

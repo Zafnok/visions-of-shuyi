@@ -109,7 +109,7 @@ no fades between shots.
    cinematic", a screen that advances `t` by `dt` and loops; Cancel closes
    it. Help line per the `keyboard-input` skill.
 6. `assets/cinematics/test.ron` on the test battle from 0801
-   (`assets/battles/test.ron`), short (about 10 s).
+   (`assets-test/battles/test.ron`), short (about 10 s).
 
 ## Acceptance criteria
 

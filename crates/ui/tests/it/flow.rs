@@ -1,5 +1,5 @@
 //! Scripted tests of the game flow (ticket 0801) through the real game:
-//! New Game → mode → lead → the test chapter (`assets/chapters/test.ron`:
+//! New Game → mode → lead → the test chapter (`assets-test/chapters/test.ron`:
 //! an intro scene, a battle where the lead seizes the fort at (5, 5)
 //! within 3 turns, the results (0810), a victory scene) → "Save your
 //! progress?" (declined here; `save.rs` saves) → "To be continued" →

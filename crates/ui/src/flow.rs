@@ -85,7 +85,7 @@ fn play_battle_music(ctx: &mut Ctx, def: &BattleDef) -> Option<String> {
     cue
 }
 
-/// The chapter the debug Quick Battle plays (`assets/chapters/quick.ron`).
+/// The chapter the debug Quick Battle plays (`assets-test/chapters/quick.ron`).
 pub const QUICK_CHAPTER: &str = "quick";
 
 /// The screen the flow shows now.

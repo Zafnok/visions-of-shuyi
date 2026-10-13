@@ -18,7 +18,7 @@ use crate::map_view::{CursorStyle, CursorView, MapScene};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::widgets::help::{cursor_keys_name, help_line, key_name};
 
-/// The map shown: `assets/maps/test_small.map`.
+/// The map shown: `assets-test/maps/test_small.map`.
 const MAP: &str = "test_small";
 /// Left column of the title and the lines under it.
 const LEFT: i32 = 2;
@@ -446,7 +446,7 @@ mod tests {
         let buf = draw(&ctx, &screen);
         assert!(buf.backdrop().is_none());
         let row: String = (0..40).map(|x| buf.get(x, 2).unwrap().glyph).collect();
-        assert_eq!(row.trim(), "No assets/maps/test_small.map");
+        assert_eq!(row.trim(), "No assets-test/maps/test_small.map");
         assert!(!buf.get(WINDOW.x, WINDOW.y).unwrap().see_through);
     }
 }

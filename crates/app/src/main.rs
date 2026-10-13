@@ -17,6 +17,17 @@ use crate::audio::device::Macroquad;
 use crate::pads::PadInput;
 use crate::render::Renderer;
 
+// A build that ships has none of the test files (ADR-0057): only a debug
+// build and a `debug-tools` build embed them. Features are shared across a
+// build, so a release build of the whole workspace (or of this crate's
+// tests) would bring them in through `xtask` or the test Harness.
+#[cfg(not(any(debug_assertions, feature = "debug-tools")))]
+const _: () = assert!(
+    !trpg_content::bundle::TEST_FILES,
+    "this release build would embed the test files (assets-test/): build the game \
+     alone, with `-p trpg-app` (ADR-0057)"
+);
+
 fn window_conf() -> Conf {
     Conf {
         window_title: "Visions of Shuyi".to_owned(),

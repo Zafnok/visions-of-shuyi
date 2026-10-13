@@ -4,6 +4,9 @@ Loads and validates all game content from the `assets/` directory, which is
 embedded in the binary (ADR-0005). No filesystem I/O, no macroquad.
 
 - `bundle` — the embedded `assets/` tree: `file(path)`, `files_in(dir)`.
+  A debug build (so every test) also has the test files of `assets-test/`
+  (ADR-0057); `story_only(|| ...)` hides them, for tests of what a build
+  that ships holds.
 - `error` — `ContentError` (`file:line:col: message`) and `ContentErrors`.
 - `ron_loader` — `load_ron` / `parse_ron` with RON positions mapped to line/col.
 - `palette` — `PaletteDef` from `assets/data/palette.ron`; the other colour themes are in `assets/data/palettes/` (`Theme`).
