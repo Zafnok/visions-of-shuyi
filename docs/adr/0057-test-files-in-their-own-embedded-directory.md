@@ -114,7 +114,7 @@ to a new **`test/`** folder (same paths: `test/portraits/test_lord.ron`).
 With `private-assets` **and** the test files, `bundle.rs` embeds
 `assets-private/test/` as a fourth layer, before `assets-test/`, so a
 bought test file replaces its placeholder; it is shown as
-`assets-private/test/...`. `bundle::is_private` says whether a file comes
+`assets-private/test/...`. `bundle::is_private` says whether a shown name comes
 from either private folder (the credits screen and the opt-in test use
 it). `cargo xtask private-assets` and `.github/actions/private-assets`
 check `test/` out too, and `--pin` refuses a file in `test/` without a

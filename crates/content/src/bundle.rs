@@ -225,17 +225,17 @@ pub fn test_display_path(path: &str) -> String {
     format!("{TEST_DISPLAY_ROOT}/{path}")
 }
 
-/// Whether the file at `path` is read from the private assets: bought art
-/// (ADR-0040), the game's or the test files'.
-pub fn is_private(path: &str) -> bool {
-    private_in(layers(), path)
-}
-
-/// [`is_private`] in `layers`.
-fn private_in(layers: &'static [Layer], path: &str) -> bool {
-    find(layers, path).is_some_and(|(layer, _)| {
-        [PRIVATE_DISPLAY_ROOT, PRIVATE_TEST_DISPLAY_ROOT].contains(&layer.display_root)
-    })
+/// Whether `shown` (a human-facing name, from [`display_path`]) names a
+/// file of the private assets: bought art (ADR-0040), the game's or the
+/// test files'.
+pub fn is_private(shown: &str) -> bool {
+    [PRIVATE_DISPLAY_ROOT, PRIVATE_TEST_DISPLAY_ROOT]
+        .iter()
+        .any(|root| {
+            shown
+                .strip_prefix(root)
+                .is_some_and(|rest| rest.starts_with('/'))
+        })
 }
 
 #[cfg(test)]
@@ -349,7 +349,7 @@ mod tests {
         assert_eq!(display_path(map), "assets-test/maps/test_small.map");
         assert!(files_in("maps").contains(&map));
         assert!(files_under("").contains(&map));
-        assert!(!is_private(map));
+        assert!(!is_private(&display_path(map)));
         assert_eq!(test_display_path(map), display_path(map));
         assert_eq!(test_display_path("x/new.png"), "assets-test/x/new.png");
     }
@@ -556,18 +556,31 @@ mod tests {
             display_in(WITH_TESTS, "portraits/t.png"),
             "assets-private/test/portraits/t.png"
         );
-        assert!(private_in(WITH_TESTS, "portraits/t.png"));
-        assert!(private_in(WITH_TESTS, "data/a.ron"));
-        assert!(private_in(WITH_TESTS, "portraits/new.portrait"));
-        assert!(!private_in(WITH_TESTS, "data/b.ron"));
-        assert!(!private_in(WITH_TESTS, "data/t.ron"));
-        assert!(!private_in(WITH_TESTS, "data/nope.ron"));
+        assert!(is_private(&display_in(WITH_TESTS, "portraits/t.png")));
+        assert!(is_private(&display_in(WITH_TESTS, "data/a.ron")));
+        assert!(is_private(&display_in(
+            WITH_TESTS,
+            "portraits/new.portrait"
+        )));
+        assert!(!is_private(&display_in(WITH_TESTS, "data/b.ron")));
+        assert!(!is_private(&display_in(WITH_TESTS, "data/t.ron")));
+        assert!(!is_private(&display_in(WITH_TESTS, "data/nope.ron")));
         // Without the bought test files the placeholder is back.
         assert_eq!(
             text(&WITH_TESTS[3..], "portraits/t.png"),
             Some("placeholder t")
         );
-        assert!(!private_in(&WITH_TESTS[3..], "portraits/t.png"));
+        assert!(!is_private(&display_in(
+            &WITH_TESTS[3..],
+            "portraits/t.png"
+        )));
+        // Only a name under one of the two private folders.
+        assert!(is_private("assets-private/game/x.png"));
+        assert!(is_private("assets-private/test/x.png"));
+        assert!(!is_private("assets-private/games/x.png"));
+        assert!(!is_private("assets-private/game"));
+        assert!(!is_private("assets-private/library/x.png"));
+        assert!(!is_private("x/assets-private/game/x.png"));
     }
 
     fn text(layers: &'static [Layer], path: &str) -> Option<&'static str> {

@@ -58,7 +58,7 @@ fn bought_portraits_are_cut_busts_or_faces() {
             let shown = display_path(expression.image.path());
             let size = (expression.size.width, expression.size.height);
             assert!(
-                !is_private(expression.image.path()) || matches!(size, (64, 64) | (48, 48)),
+                !is_private(&shown) || matches!(size, (64, 64) | (48, 48)),
                 "{shown} is {size:?}"
             );
         }
@@ -119,11 +119,11 @@ fn the_bought_tiles_paint_every_look_a_map_can_name() {
 /// screen's list has the bought art's.
 #[test]
 fn every_bought_file_has_a_credit() {
-    use trpg_content::bundle::{files_under, is_private};
+    use trpg_content::bundle::{display_path, files_under, is_private};
     use trpg_content::{CreditGroup, credits};
 
     let mut bought = files_under("");
-    bought.retain(|p| is_private(p));
+    bought.retain(|p| is_private(&display_path(p)));
     assert!(bought.len() > 10, "{bought:?}");
     let file = credits::load_file().unwrap_or_default();
     let uncredited = credits::uncredited(&file, &bought);
