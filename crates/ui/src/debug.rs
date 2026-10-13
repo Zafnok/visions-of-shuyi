@@ -10,15 +10,19 @@
 //! the choice isn't saved. The scene camera pans and zooms the test map
 //! as a backdrop behind a window (ticket 0228, ADR-0048). "Voice test"
 //! says the test scene's lines that have a voice clip, one per press
-//! (ticket 0238), until the dialogue screen plays voices (0720). The scene
+//! (ticket 0238), until the dialogue screen plays voices (0720). "Play
+//! test cinematic" plays `assets-test/cinematics/test.ron` in a loop
+//! (ticket 0817, ADR-0060). The scene
 //! preview isn't in the menu: `app` opens the game on it for `--scene`
 //! (ticket 0723).
 
+mod cinematic;
 mod portrait_viewer;
 mod scene_camera;
 mod scene_preview;
 mod sprite_test;
 
+pub use cinematic::{CinematicScreen, TEST_CINEMATIC};
 pub use portrait_viewer::PortraitViewerScreen;
 pub use scene_camera::SceneCameraScreen;
 pub use scene_preview::{ScenePreviewScreen, ScenePreviewView};
@@ -42,18 +46,19 @@ use crate::widgets::{Menu, MenuEvent, MenuItem};
 /// Names of every screen the debug key does nothing on: the debug screens,
 /// and the Key bindings screen (the Debug key is a key like any other while
 /// it captures one, and is refused as reserved).
-pub const SCREENS: [&str; 6] = [
+pub const SCREENS: [&str; 7] = [
     DebugMenuScreen::NAME,
     GlyphSamplerScreen::NAME,
     PortraitViewerScreen::NAME,
     KeyBindingsScreen::NAME,
     SpriteTestScreen::NAME,
     SceneCameraScreen::NAME,
+    CinematicScreen::NAME,
 ];
 
 /// The debug tools, in menu order, before "Map skin" ([`MAP_SKIN_TOOL`]),
 /// whose label names the skin in use.
-const TOOLS: [&str; 9] = [
+const TOOLS: [&str; 10] = [
     "Glyph sampler",
     "Portraits",
     "Play test scene",
@@ -62,6 +67,7 @@ const TOOLS: [&str; 9] = [
     "Class change: promote",
     "Class change: reclass",
     "Voice test",
+    "Play test cinematic",
     "Scene camera",
 ];
 /// Index of "Sprite test" in [`TOOLS`].
@@ -71,7 +77,9 @@ const PROMOTE_TOOL: usize = 5;
 /// Index of "Class change: reclass" in [`TOOLS`].
 const RECLASS_TOOL: usize = 6;
 /// Index of "Scene camera" in [`TOOLS`].
-const SCENE_CAMERA_TOOL: usize = 8;
+const SCENE_CAMERA_TOOL: usize = 9;
+/// Index of "Play test cinematic" in [`TOOLS`].
+const CINEMATIC_TOOL: usize = 8;
 /// Index of "Voice test" in [`TOOLS`].
 const VOICE_TEST_TOOL: usize = 7;
 /// Index of "Map skin" in the menu: after [`TOOLS`].
@@ -165,6 +173,9 @@ impl Screen for DebugMenuScreen {
                 }
                 Some(MenuEvent::Chosen(SCENE_CAMERA_TOOL)) => {
                     return Transition::Push(Box::new(SceneCameraScreen::new(ctx)));
+                }
+                Some(MenuEvent::Chosen(CINEMATIC_TOOL)) => {
+                    return Transition::Push(Box::new(CinematicScreen::new(ctx)));
                 }
                 Some(MenuEvent::Chosen(MAP_SKIN_TOOL)) => {
                     switch_skin(ctx);
@@ -524,6 +535,10 @@ mod tests {
         assert_eq!(outcome(&mut menu, &[CursorDown, Confirm]), "None");
         assert_eq!(
             outcome(&mut menu, &[CursorDown, Confirm]),
+            "Push(cinematic)"
+        );
+        assert_eq!(
+            outcome(&mut menu, &[CursorDown, Confirm]),
             "Push(scene_camera)"
         );
         assert_eq!(outcome(&mut menu, &[Cancel, Confirm]), "Pop");
@@ -546,7 +561,8 @@ mod tests {
                 "portrait_viewer",
                 "key_bindings",
                 "sprite_test",
-                "scene_camera"
+                "scene_camera",
+                "cinematic"
             ]
         );
         assert_eq!(TOOLS[SPRITE_TEST_TOOL], "Sprite test");
@@ -554,6 +570,7 @@ mod tests {
         assert_eq!(TOOLS[RECLASS_TOOL], "Class change: reclass");
         assert_eq!(TOOLS[SCENE_CAMERA_TOOL], "Scene camera");
         assert_eq!(TOOLS[VOICE_TEST_TOOL], "Voice test");
+        assert_eq!(TOOLS[CINEMATIC_TOOL], "Play test cinematic");
     }
 
     /// Ticket 0238: "Voice test" says the test scene's voiced lines in

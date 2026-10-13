@@ -10,6 +10,7 @@ pub mod battler;
 pub mod bundle;
 pub mod chapter;
 pub mod character;
+pub mod cinematic;
 pub mod class;
 pub mod credits;
 pub mod dialogue;
@@ -50,6 +51,7 @@ pub use battle::BattleRefs;
 pub use battler::{Battler, BattlerTable};
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
+pub use cinematic::{CinematicDef, Shot, ShotDef, TilePoint};
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Present, Scene, Side, Step};
 pub use error::{ContentError, ContentErrors};
@@ -139,6 +141,8 @@ pub struct Content {
     pub battle_lights: BTreeMap<String, String>,
     /// The title screen's logo and backdrops (ADR-0059).
     pub title: TitleArt,
+    /// Cinematics by id (file stem), ADR-0060.
+    pub cinematics: BTreeMap<String, CinematicDef>,
 }
 
 impl Content {
@@ -233,6 +237,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         scenes,
         audio.as_ref().ok(),
     );
+    let cinematics = load_cinematics(battles.as_ref().ok(), audio.as_ref().ok());
     let credits = credits::load(audio.as_ref().ok());
     let supports = support::load(characters.as_ref().ok(), scenes);
     let dialogue = check_presence(
@@ -273,6 +278,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         lighting,
         battle_lights,
         title: title_art,
+        cinematics,
     };
     let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
     units.lang = lang::load(data);
@@ -601,6 +607,19 @@ fn load_title(images: Option<&ImageTable>) -> Result<TitleArt, Vec<ContentError>
     }
 }
 
+/// The cinematics, checked against the battles and the music they name.
+/// Skipped (none, no errors) when the audio failed, or when there are no
+/// battles: they failed, or were skipped because what they need failed.
+fn load_cinematics(
+    battles: Option<&BTreeMap<String, BattleDef>>,
+    audio: Option<&AudioManifest>,
+) -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
+    match (battles.filter(|b| !b.is_empty()), audio) {
+        (Some(battles), Some(audio)) => cinematic::load_all(battles, audio),
+        _ => Ok(BTreeMap::new()),
+    }
+}
+
 /// Loader results for the unit data (kept together to keep [`assemble`]'s
 /// argument list short).
 struct Loaded {
@@ -628,6 +647,7 @@ struct Loaded {
     lighting: Result<Lighting, Vec<ContentError>>,
     battle_lights: Result<BTreeMap<String, String>, Vec<ContentError>>,
     title: Result<TitleArt, Vec<ContentError>>,
+    cinematics: Result<BTreeMap<String, CinematicDef>, Vec<ContentError>>,
 }
 
 /// Takes a loader's value, or moves its errors into `errors` and returns a
@@ -681,6 +701,7 @@ fn assemble(
         lighting: take(units.lighting, &mut errors),
         battle_lights: take(units.battle_lights, &mut errors),
         title: take(units.title, &mut errors),
+        cinematics: take(units.cinematics, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -831,6 +852,10 @@ mod tests {
         title::load(&ImageTable::load().unwrap_or_default())
     }
 
+    fn ok_cinematics() -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
+        load_cinematics(ok_story().0.ok().as_ref(), audio::load().ok().as_ref())
+    }
+
     fn ok_portraits() -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
         portrait::load_all(&ImageTable::load().unwrap_or_default())
     }
@@ -901,6 +926,7 @@ mod tests {
             lighting: lighting::load(),
             battle_lights: Ok(BTreeMap::new()),
             title: ok_title(),
+            cinematics: ok_cinematics(),
         }
     }
 
@@ -1002,9 +1028,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 29] = [
+    const NAMES: [&str; 30] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T",
+        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C",
     ];
 
     /// `ok`, or the error of file `name` if `bad`.
@@ -1055,6 +1081,7 @@ mod tests {
                     lighting: Err(e("L")),
                     battle_lights: Err(e("B")),
                     title: Err(e("T")),
+                    cinematics: Err(e("C")),
                 },
             ),
             Err(ContentErrors(NAMES.iter().flat_map(|f| e(f)).collect()))
@@ -1111,12 +1138,27 @@ mod tests {
                     lighting: pick(i == 26, "L", lighting::load()),
                     battle_lights: pick(i == 27, "B", Ok(BTreeMap::new())),
                     title: pick(i == 28, "T", ok_title()),
+                    cinematics: pick(i == 29, "C", ok_cinematics()),
                 },
             )
         };
         for (i, f) in NAMES.iter().enumerate() {
             assert_eq!(only(i), Err(ContentErrors(e(f))));
         }
+    }
+
+    #[test]
+    fn the_cinematics_are_skipped_without_battles_or_audio() {
+        let (battles, audio) = (ok_story().0.ok(), audio::load().ok());
+        let none = BTreeMap::new();
+        assert_eq!(load_cinematics(None, audio.as_ref()), Ok(BTreeMap::new()));
+        assert_eq!(
+            load_cinematics(Some(&none), audio.as_ref()),
+            Ok(BTreeMap::new())
+        );
+        assert_eq!(load_cinematics(battles.as_ref(), None), Ok(BTreeMap::new()));
+        let loaded = load_cinematics(battles.as_ref(), audio.as_ref());
+        assert!(loaded.is_ok_and(|c| c.contains_key("test")));
     }
 
     #[test]

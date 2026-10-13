@@ -1,0 +1,11 @@
+// TEST FILE: the cinematic the tests and the debug menu's "Play test
+// cinematic" play (ticket 0817): a pan over the test battle's map, then
+// the logo. Ten seconds long, on no music.
+(
+    id: "test",
+    length: Seconds(10.0),
+    shots: [
+        (at: 0.0, shot: MapPan(battle: "test", from: (5.75, 3.5), to: (7.25, 3.5), zoom: 4)),
+        (at: 6.0, shot: Logo),
+    ],
+)

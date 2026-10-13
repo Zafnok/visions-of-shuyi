@@ -6,6 +6,7 @@
 
 mod battle;
 mod ch01_winnable;
+mod cinematic;
 mod class_change;
 mod controller;
 mod credits;

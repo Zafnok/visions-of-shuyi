@@ -69,7 +69,9 @@ band behind `Press any key or button` and behind a notice.
 - "Jumping the song to the silence" without a seek (step 3).
 - A fallback so the cinematic still runs when there is no music clock.
 - Until 0820 lands, `assets/cinematics/title.ron` is a stand-in: one map
-  pan over the test battle, then the logo from 117 s.
+  pan over the Chapter 1 battle (a story file may not name a test battle,
+  ADR-0057), then the logo from 117 s. Its `length` is `Music("title")`
+  (ADR-0060).
 
 **Out (do not do):**
 - The real shots and their timing (0820).
@@ -84,7 +86,7 @@ band behind `Press any key or button` and behind a notice.
 ## Implementation steps
 
 1. `TitleScreen` owns a `CinematicPlayer` for `title` (built on first
-   update, since it needs `Ctx`). `draw` calls `player.draw(ctx, t, buf)`
+   update, since it needs `Ctx`). `draw` calls `player.draw(ctx, t, brightness, buf)`
    and then draws the menu / prompt over it as 0036 decided.
 2. **Where `t` comes from**, each update:
    - `ctx.music_clock` is `Some` and its cue is `TITLE_MUSIC`: `t =

@@ -35,6 +35,15 @@ impl Backdrop {
         }
     }
 
+    /// Shows a copy of the scene [faded](GlyphBuffer::fade) to
+    /// `brightness` instead. The scene itself, which others may share, is
+    /// not touched.
+    pub(super) fn fade(&mut self, brightness: f32) {
+        let mut scene = (*self.scene).clone();
+        scene.fade(brightness);
+        self.scene = Rc::new(scene);
+    }
+
     /// The picture shown: its cells, rectangles and sprites.
     pub fn scene(&self) -> &GlyphBuffer {
         &self.scene

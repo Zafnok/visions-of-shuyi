@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["0036", "0227", "0228", "0801", "0811"]
 nick_input: answer-first
-completed:
+completed: 2026-10-12
 ---
 
 # 0817 — Cinematic file format and player
@@ -121,16 +121,16 @@ no fades between shots.
 
 ## Acceptance criteria
 
-- [ ] Content validation loads `test.ron`; each validator error has a test.
-- [ ] Unit: `Timeline::at` at a shot's start, middle and end and at the
+- [x] Content validation loads `test.ron`; each validator error has a test.
+- [x] Unit: `Timeline::at` at a shot's start, middle and end and at the
       wrap. A snapshot at `brightness` 0.5 dims cells and items alike.
-- [ ] Snapshot: the test cinematic at three times (start of the pan, its
+- [x] Snapshot: the test cinematic at three times (start of the pan, its
       middle, the logo). Drawing the same `t` twice gives the same buffer.
-- [ ] Harness: F2 → "Play test cinematic" plays, loops and closes on
+- [x] Harness: F2 → "Play test cinematic" plays, loops and closes on
       Cancel.
-- [ ] The logo is drawn by the same code as the title screen's.
-- [ ] The ADR is written and listed in `docs/adr/README.md`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The logo is drawn by the same code as the title screen's.
+- [x] The ADR is written and listed in `docs/adr/README.md`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -141,5 +141,56 @@ no fades between shots.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done**
+
+- **Format, loader, validator**: `crates/content/src/cinematic.rs`,
+  `Content::cinematics`, documented in `assets/cinematics/README.md`.
+  Every problem of every file is reported at once, with the file name;
+  each rule has a test.
+- **`trpg_ui::cinematic`**: `Timeline` (whole milliseconds, wrapped at the
+  length), `CinematicPlayer` (`frame` says what is shown as plain data,
+  `draw` paints it), `MapPicture` (a whole map painted by a map skin; the
+  scene camera now uses it too) and `ease_in_out`.
+- **Brightness**: `GlyphBuffer::fade` darkens cells, rectangles, sprites
+  (by opacity) and the backdrop's scene alike.
+- **Debug tool**: F2 → "Play test cinematic"
+  (`crates/ui/src/debug/cinematic.rs`): plays, loops, Cancel closes.
+- **ADR-0060**, listed in `docs/adr/README.md`.
+
+**Deviations from the plan**
+
+- **`length: Music("title")` or `length: Seconds(10.0)`** instead of a
+  required `music:` field. The ticket wanted a test cinematic of about
+  10 s whose length is a music cue's, and the shortest cue is 48 s. A
+  cinematic on a track still takes the cue's length and never repeats it.
+- **The test cinematic is `assets-test/cinematics/test.ron`**, not
+  `assets/cinematics/test.ron`: it names the test battle, and a file that
+  ships may not name a test file (ADR-0057, which is newer than this
+  ticket). `assets/cinematics/` holds only its README until 0819.
+- **Times in milliseconds, map points in thousandths of a tile** inside
+  `Content` (it is compared with `Eq`, so it holds no floats). The file
+  is still written in seconds and tiles.
+- **A whole number in `from`/`to` is the middle of that tile** (the ticket
+  didn't say whether `(4, 9)` is a tile's corner or its middle).
+- **The map is painted through the map skin** (0432 is done), at the
+  art's own size whatever the player's map zoom is, so a shot's `zoom` is
+  the only zoom. `BattleScreen::draw_terrain` no longer exists to share.
+- **`draw(ctx, t, brightness, buf)`** with `t` in seconds, as the music
+  clock gives it. The backdrop behind the logo is given with
+  `with_backdrop` (0819 passes the title's; the debug tool uses the first).
+- **The backdrop has no brightness of its own**: `fade` swaps in a faded
+  copy of its scene, so no renderer changed.
+- "Play test cinematic" sits before "Scene camera" in the debug menu, so
+  two tests that count key presses to a tool were updated.
+
+**Follow-up tickets touched** (wording only, to match the above): 0818 and
+0827 (the test file's path), 0819 (the `draw` call; its stand-in
+`title.ron` must pan over the Chapter 1 battle, not the test one).
+
+**Gameplay rules decided here**: none. The look (hard cuts, whole zoom
+steps, ease in and out) is as 0036 and this ticket say.
+
+**For Nick**: nothing to see in the game yet. In a debug build or on the
+Pages build, F2 → "Play test cinematic" shows six seconds of the test map
+sliding sideways, a cut to the logo, and round again. The title gets its
+cinematic with 0819 and 0820.

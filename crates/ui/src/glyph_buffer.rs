@@ -700,6 +700,36 @@ impl GlyphBuffer {
         });
     }
 
+    /// Darkens the whole frame towards black by `brightness` (1 = as it
+    /// is, 0 = black; clamped, and not a number counts as 1): every cell's
+    /// colours, every rectangle's colour, every sprite's `opacity`, and
+    /// the backdrop's scene the same way. Unlike [`dim`](Self::dim) it
+    /// leaves nothing out (ADR-0060).
+    pub fn fade(&mut self, brightness: f32) {
+        let brightness = if brightness.is_nan() {
+            1.0
+        } else {
+            brightness.clamp(0.0, 1.0)
+        };
+        if brightness >= 1.0 {
+            return;
+        }
+        self.dim(self.bounds(), brightness);
+        for item in &mut self.items {
+            match item {
+                Item::Rect(o) => o.color = o.color.scale(brightness),
+                Item::Sprite(s) => {
+                    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 0..=255
+                    let opacity = (f32::from(s.opacity) * brightness).round() as u8;
+                    s.opacity = opacity;
+                }
+            }
+        }
+        if let Some(backdrop) = &mut self.backdrop {
+            backdrop.fade(brightness);
+        }
+    }
+
     /// Copies all of `other` so its top-left lands at `(dest_x, dest_y)`,
     /// clipped to this buffer. Items already over the copied area are
     /// removed, and `other`'s items come along, offset and clipped (a

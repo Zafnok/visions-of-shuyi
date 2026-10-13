@@ -157,3 +157,98 @@ fn buffers_differ_by_their_backdrop() {
     assert_ne!(a, with_backdrop(clip, (1.0, 2.0), 3));
     assert_ne!(a, with_backdrop(Rect::new(2, 1, 6, 2), (1.0, 2.0), 2));
 }
+
+/// A frame with a cell, a rectangle and two sprites, over a scene with
+/// the same.
+fn busy() -> GlyphBuffer {
+    busy_sharing().0
+}
+
+/// [`busy`], and its scene as someone else holds it.
+fn busy_sharing() -> (GlyphBuffer, Rc<GlyphBuffer>) {
+    use trpg_content::{ImageInfo, ImageTable};
+    let size = ImageInfo {
+        width: 16,
+        height: 16,
+    };
+    let table = ImageTable {
+        images: [("a.png", size)].into(),
+    };
+    let image = table.id("a.png").unwrap();
+    let px = Rect::new(0, 0, 16, 16);
+    let fill = |b: &mut GlyphBuffer| {
+        b.add_overlay(Overlay::new(px, Rgb::new(100, 50, 201), Layer::Under));
+        b.add_sprite(Sprite::new(image, px, px, Layer::Over));
+        let mut faint = Sprite::new(image, px, px, Layer::Over);
+        faint.opacity = 101;
+        b.add_sprite(faint);
+    };
+    let mut scene = GlyphBuffer::new(6, 4, Cell::new('s', FG, BG));
+    fill(&mut scene);
+    let mut b = GlyphBuffer::new(10, 5, BLANK);
+    b.set(1, 1, Cell::see_through('t', FG));
+    fill(&mut b);
+    let scene = Rc::new(scene);
+    b.set_backdrop(Rc::clone(&scene), b.bounds(), (1.0, 2.0), 2);
+    (b, scene)
+}
+
+#[test]
+fn fade_darkens_cells_rectangles_sprites_and_the_scene_alike() {
+    let (mut b, scene_before) = busy_sharing();
+    b.fade(0.5);
+    let check = |b: &GlyphBuffer, cell: Cell| {
+        assert_eq!(b.get(0, 0), Some(&cell));
+        assert_eq!(b.overlays()[0].color, Rgb::new(50, 25, 101));
+        let opacities: Vec<u8> = b.sprites().iter().map(|s| s.opacity).collect();
+        assert_eq!(opacities, [128, 51]);
+    };
+    let (fg, bg) = (Rgb::new(100, 100, 100), Rgb::new(5, 10, 15));
+    check(&b, Cell::new(' ', fg, bg));
+    // A hole stays a hole; its glyph darkens.
+    assert_eq!(b.get(1, 1), Some(&Cell::see_through('t', fg)));
+    let backdrop = b.backdrop().unwrap();
+    check(backdrop.scene(), Cell::new('s', fg, bg));
+    // Where the window is doesn't change, nor the scene others share.
+    assert_eq!((backdrop.origin_px(), backdrop.zoom()), ((1.0, 2.0), 2));
+    assert_eq!(backdrop.clip(), b.bounds());
+    assert_eq!(scene_before.get(0, 0), Some(&Cell::new('s', FG, BG)));
+    assert_eq!(scene_before.sprites()[0].opacity, 255);
+    // Nothing else about an item changes.
+    let (faded, plain) = (b.sprites()[0], busy().sprites()[0]);
+    assert_eq!(
+        Sprite {
+            opacity: 255,
+            ..faded
+        },
+        plain
+    );
+}
+
+#[test]
+fn fade_is_clamped_and_full_brightness_changes_nothing() {
+    for same in [1.0, 1.5, f32::INFINITY, f32::NAN] {
+        let (mut b, scene) = busy_sharing();
+        b.fade(same);
+        assert_eq!(b, busy(), "{same}");
+        // Not even a copy of the scene is made.
+        let shown = b.backdrop().map(Backdrop::scene);
+        assert!(shown.is_some_and(|shown| std::ptr::eq(shown, &raw const *scene)));
+    }
+    for black in [0.0, -1.0, f32::NEG_INFINITY] {
+        let mut b = busy();
+        b.fade(black);
+        let dark = Rgb::new(0, 0, 0);
+        assert_eq!(b.get(0, 0), Some(&Cell::new(' ', dark, dark)), "{black}");
+        assert_eq!(b.overlays()[0].color, dark);
+        assert!(b.sprites().iter().all(|s| s.opacity == 0));
+        let scene = b.backdrop().unwrap().scene();
+        assert_eq!(scene.get(0, 0), Some(&Cell::new('s', dark, dark)));
+        assert!(scene.sprites().iter().all(|s| s.opacity == 0));
+    }
+    // Without a backdrop there is only the frame to fade.
+    let mut b = GlyphBuffer::new(2, 1, BLANK);
+    b.fade(0.5);
+    assert!(b.backdrop().is_none());
+    assert_eq!(b.get(1, 0).unwrap().fg, Rgb::new(100, 100, 100));
+}
