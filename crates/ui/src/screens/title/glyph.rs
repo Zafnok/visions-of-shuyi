@@ -9,7 +9,7 @@ use std::f32::consts::TAU;
 
 use trpg_content::ImageId;
 
-use super::view::TitleView;
+use super::view::{FULL, TitleView};
 use crate::audio::splitmix64;
 use crate::color::UiColor;
 use crate::console::{CELL_W_PX, CONSOLE_W};
@@ -160,11 +160,59 @@ pub fn paint_logo(
     }
 }
 
-/// Paints `view` over the whole of `buf`.
+/// Adds the title's picture over what `buf` already shows, `opacity` (up
+/// to [`FULL`]) solid, changing no cell's background: the pictures of
+/// [`paint_logo`] that much solid, the sparks that much bright. Nothing at
+/// 0.
+pub fn paint_logo_over(
+    ctx: &Ctx,
+    backdrop: Option<ImageId>,
+    sparks: Option<u32>,
+    opacity: u8,
+    buf: &mut GlyphBuffer,
+) {
+    if opacity == 0 {
+        return;
+    }
+    let part = f32::from(opacity) / f32::from(FULL);
+    let faded = |mut sprite: Sprite| {
+        sprite.opacity = opacity;
+        sprite
+    };
+    for sprite in backdrop.into_iter().flat_map(backdrop_sprites) {
+        buf.add_sprite(faded(sprite));
+    }
+    if let Some(millis) = sparks {
+        for i in 0..SPARKS {
+            let (x, y, glyph, color) = spark(i, millis);
+            let fg = ctx.palette.get(color).scale(part);
+            buf.print_fg(x, y, glyph.encode_utf8(&mut [0; 4]), fg);
+        }
+    }
+    if let Some((image, size)) = ctx.content.title.logo {
+        buf.add_sprite(faded(logo_sprite(image, size)));
+    }
+}
+
+/// Paints `view` over the whole of `buf`: the cinematic, if it shows one,
+/// with the title's picture over it as solid as the cinematic is dark
+/// (else the title's picture alone), then the prompt or the menu, as
+/// bright as the view's `menu_opacity`.
 pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let (dim, panel) = (c(UiColor::TextDim), c(UiColor::PanelBg));
-    paint_logo(ctx, view.backdrop, view.sparks, buf);
+    if let Some(shot) = &view.cinematic {
+        #[allow(clippy::cast_precision_loss)] // far below 2^24 ms
+        let t = shot.t_ms as f32 / 1000.0;
+        let brightness = f32::from(shot.brightness) / f32::from(FULL);
+        shot.player.draw(ctx, t, brightness, buf);
+        let rest = FULL - shot.brightness;
+        paint_logo_over(ctx, view.backdrop, view.sparks, rest, buf);
+    } else {
+        paint_logo(ctx, view.backdrop, view.sparks, buf);
+    }
+    // What is painted from here on fades with the menu.
+    let solid = f32::from(view.menu_opacity) / f32::from(FULL);
     let bottom = i32::from(buf.height()) - 1;
     if let Some(prompt) = &view.prompt {
         let len = i32::try_from(prompt.chars().count()).unwrap_or(0);
@@ -180,11 +228,13 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
             buf.print(left - PICTURE_GAP - w, y, keys, dim, panel);
             buf.print(right, y, pad, dim, panel);
         }
+        buf.dim(band, solid);
     }
     if let Some(menu) = &view.menu {
         let (w, h) = menu_glyph::size(menu);
         let x = centre_x(buf, usize::try_from(w).unwrap_or(0));
         menu_glyph::paint(&ctx.palette, menu, buf, x, MENU_ROW);
+        buf.dim(Rect::new(x, MENU_ROW, w, h), solid);
         if let Some(notice) = &view.notice {
             // On a band of its own, a blank cell wider on each side.
             let len = notice.chars().count();
@@ -192,10 +242,17 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
             let band = Rect::new(at, MENU_ROW + h + 1, i32::try_from(len).unwrap_or(0) + 2, 1);
             buf.fill_rect(band, Cell::new(' ', dim, panel));
             buf.print(at + 1, MENU_ROW + h + 1, notice, c(UiColor::HpLow), panel);
+            buf.dim(band, solid);
         }
     }
     if let Some(help) = &view.help {
-        print_centred(buf, bottom, help, dim, c(UiColor::Black));
+        if view.cinematic.is_some() {
+            // Over the cinematic: its letters alone, no strip behind them.
+            let x = centre_x(buf, help.chars().count());
+            buf.print_fg(x, bottom, help, dim.scale(solid));
+        } else {
+            print_centred(buf, bottom, help, dim.scale(solid), c(UiColor::Black));
+        }
     }
     if let Some(hint) = &view.debug_hint {
         paint_debug_hint(&ctx.palette, hint, buf, bottom);
@@ -204,9 +261,13 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
 
 #[cfg(test)]
 mod tests {
+    use std::rc::Rc;
+
     use super::*;
+    use crate::cinematic::CinematicPlayer;
     use crate::console::{CONSOLE_H, CONSOLE_W};
     use crate::screen::tests::ctx;
+    use crate::screens::title::view::CinematicView;
     use crate::widgets::{MenuItemView, MenuView};
 
     /// Row `y` of `buf` as text.
@@ -236,6 +297,8 @@ mod tests {
 
     fn view() -> TitleView {
         TitleView {
+            cinematic: None,
+            menu_opacity: FULL,
             backdrop: None,
             sparks: None,
             prompt: None,
@@ -544,6 +607,219 @@ mod tests {
                 .count();
             assert_eq!(left, 0);
         }
+    }
+
+    /// The test cinematic (a pan for six seconds, then the logo) at
+    /// `t_ms`, this bright.
+    fn shot(c: &Ctx, t_ms: u32, brightness: u8) -> CinematicView {
+        let player = CinematicPlayer::new(c, "test").unwrap();
+        CinematicView {
+            player: Rc::new(player),
+            t_ms,
+            brightness,
+        }
+    }
+
+    /// The cinematic's own frame, as its player draws it.
+    fn drawn(c: &Ctx, shot: &CinematicView, t: f32, brightness: f32) -> GlyphBuffer {
+        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale(c));
+        shot.player.draw(c, t, brightness, &mut buf);
+        buf
+    }
+
+    /// `color` as it shows `opacity` solid.
+    fn at_opacity(color: crate::color::Rgb, opacity: u8) -> crate::color::Rgb {
+        color.scale(f32::from(opacity) / 255.0)
+    }
+
+    /// The cinematic alone is its player's frame at the view's time, and
+    /// nothing of the title over it.
+    #[test]
+    fn the_cinematic_alone_is_its_own_frame() {
+        let c = ctx();
+        let mut v = view();
+        v.menu = None;
+        v.help = None;
+        v.menu_opacity = 0;
+        v.backdrop = Some(c.content.title.backdrops[0]);
+        v.sparks = Some(500);
+        // The pan, half way; then the logo shot.
+        for (t_ms, t) in [(3000, 3.0), (1500, 1.5), (7000, 7.0)] {
+            let playing = shot(&c, t_ms, FULL);
+            v.cinematic = Some(playing.clone());
+            assert_eq!(painted(&c, &v), drawn(&c, &playing, t, 1.0), "{t_ms}");
+        }
+        assert_ne!(
+            drawn(&c, &shot(&c, 0, FULL), 3.0, 1.0),
+            drawn(&c, &shot(&c, 0, FULL), 1.5, 1.0)
+        );
+        assert!(painted(&c, &v).backdrop().is_none(), "the logo shot");
+    }
+
+    /// While the menu fades out the cinematic is drawn as bright as the
+    /// fade is far, and the title's pictures over it as solid as the rest.
+    #[test]
+    fn the_titles_picture_fades_over_the_cinematic() {
+        let c = ctx();
+        let image = c.content.title.backdrops[0];
+        let (logo, size) = c.content.title.logo.unwrap();
+        let mut v = view();
+        v.menu = None;
+        v.help = None;
+        v.backdrop = Some(image);
+        v.sparks = Some(0);
+        let playing = shot(&c, 3000, 64);
+        v.cinematic = Some(playing.clone());
+        v.menu_opacity = 191;
+        let buf = painted(&c, &v);
+        // The cinematic, a quarter bright.
+        let under = drawn(&c, &playing, 3.0, 64.0 / 255.0);
+        assert_eq!(buf.backdrop(), under.backdrop());
+        assert_ne!(buf.backdrop(), drawn(&c, &playing, 3.0, 1.0).backdrop());
+        // The title's four pictures, three quarters solid, as they are
+        // placed on the title itself.
+        let mut want = backdrop_sprites(image).to_vec();
+        want.push(logo_sprite(logo, size));
+        for sprite in &mut want {
+            sprite.opacity = 191;
+        }
+        assert_eq!(buf.sprites(), want);
+        // The sparks: their glyphs over the map, no cell made solid.
+        let sparks: Vec<Spark> = (0..SPARKS).map(|i| spark(i, 0)).collect();
+        for y in 0..i32::from(CONSOLE_H) {
+            for x in 0..i32::from(CONSOLE_W) {
+                let cell = buf.get(x, y).unwrap();
+                assert!(cell.see_through, "({x}, {y})");
+                match sparks.iter().rev().find(|s| (s.0, s.1) == (x, y)) {
+                    Some(&(_, _, glyph, color)) => {
+                        assert_eq!(cell.glyph, glyph, "({x}, {y})");
+                        assert_eq!(cell.fg, at_opacity(c.palette.get(color), 191));
+                    }
+                    None => assert_eq!(Some(cell), under.get(x, y), "({x}, {y})"),
+                }
+            }
+        }
+        // No sparks, no backdrop: only the logo is added.
+        v.sparks = None;
+        v.backdrop = None;
+        let buf = painted(&c, &v);
+        assert_eq!(buf.sprites(), [want[3]]);
+        assert_eq!(buf.get(35, 15), under.get(35, 15));
+        // Fully bright, nothing of the title is.
+        v.sparks = Some(0);
+        v.backdrop = Some(image);
+        v.cinematic = Some(shot(&c, 3000, FULL));
+        assert_eq!(painted(&c, &v), drawn(&c, &playing, 3.0, 1.0));
+        let mut buf = drawn(&c, &playing, 3.0, 1.0);
+        paint_logo_over(&c, Some(image), Some(0), 0, &mut buf);
+        assert_eq!(buf, drawn(&c, &playing, 3.0, 1.0));
+        // Fully solid, the pictures are as on the title.
+        paint_logo_over(&c, Some(image), None, FULL, &mut buf);
+        assert_eq!(buf.sprites(), logo_painted(&c, Some(image), None).sprites());
+    }
+
+    /// The menu, the notice and the help line are as bright as the view's
+    /// `menu_opacity`; the logo behind them is not touched.
+    #[test]
+    fn the_menu_its_notice_and_the_help_fade_together() {
+        let c = ctx();
+        let mut v = view();
+        v.notice = Some("Notice".to_owned());
+        v.backdrop = Some(c.content.title.backdrops[0]);
+        let full = painted(&c, &v);
+        let bottom = i32::from(CONSOLE_H) - 1;
+        let rows = [MENU_ROW, MENU_ROW + 1, MENU_ROW + 3, MENU_ROW + 5, bottom];
+        for opacity in [128, 0] {
+            v.menu_opacity = opacity;
+            let buf = painted(&c, &v);
+            let mut faded = 0;
+            for y in 0..i32::from(CONSOLE_H) {
+                for x in 0..i32::from(CONSOLE_W) {
+                    let (was, is) = (full.get(x, y).unwrap(), buf.get(x, y).unwrap());
+                    assert_eq!(is.glyph, was.glyph, "({x}, {y})");
+                    let lit = was.glyph != ' ' || was.bg != c.palette.get(UiColor::Black);
+                    if rows.contains(&y) && lit {
+                        assert_eq!(is.fg, at_opacity(was.fg, opacity), "({x}, {y})");
+                        assert_eq!(is.bg, at_opacity(was.bg, opacity), "({x}, {y})");
+                        faded += 1;
+                    } else if !(MENU_ROW..=MENU_ROW + 5).contains(&y) && y != bottom {
+                        assert_eq!(is, was, "({x}, {y})");
+                    }
+                }
+            }
+            // The box's 12 cells on each row, the notice's band of 8, the
+            // help's four letters.
+            assert_eq!(faded, 3 * 12 + 8 + 4, "{opacity}");
+            assert_eq!(buf.sprites(), full.sprites());
+        }
+    }
+
+    /// Over the cinematic the help line is its letters alone, and the
+    /// menu's box hides what is under it.
+    #[test]
+    fn over_the_cinematic_the_help_has_no_strip_and_the_menu_is_a_box() {
+        let c = ctx();
+        let mut v = view();
+        let playing = shot(&c, 3000, 128);
+        v.cinematic = Some(playing.clone());
+        v.menu_opacity = 127;
+        let buf = painted(&c, &v);
+        let under = drawn(&c, &playing, 3.0, 128.0 / 255.0);
+        let bottom = i32::from(CONSOLE_H) - 1;
+        let at = column(&buf, bottom, "help");
+        assert_eq!(at, (i32::from(CONSOLE_W) - 4) / 2);
+        let dim = at_opacity(c.palette.get(UiColor::TextDim), 127);
+        for x in 0..i32::from(CONSOLE_W) {
+            let cell = buf.get(x, bottom).unwrap();
+            assert!(cell.see_through, "{x}");
+            if (at..at + 4).contains(&x) {
+                assert_eq!(cell.fg, dim, "{x}");
+            } else {
+                assert_eq!(Some(cell), under.get(x, bottom), "{x}");
+            }
+        }
+        // The menu: solid cells, as bright as its opacity.
+        let middle = (i32::from(CONSOLE_W) - 12) / 2;
+        let mut plain = view();
+        plain.menu_opacity = 127;
+        let alone = painted(&c, &plain);
+        for y in MENU_ROW..MENU_ROW + 4 {
+            for x in middle..middle + 12 {
+                assert_eq!(buf.get(x, y), alone.get(x, y), "({x}, {y})");
+                assert!(!buf.get(x, y).unwrap().see_through);
+            }
+            assert!(buf.get(middle - 1, y).unwrap().see_through);
+            assert!(buf.get(middle + 12, y).unwrap().see_through);
+        }
+    }
+
+    /// The prompt's band fades with the same number (the title never
+    /// fades it today: the prompt is over before anything does).
+    #[test]
+    fn the_prompts_band_fades_too() {
+        let c = ctx();
+        let mut v = view();
+        v.menu = None;
+        v.help = None;
+        v.prompt = Some("Press".to_owned());
+        let full = painted(&c, &v);
+        v.menu_opacity = 64;
+        let buf = painted(&c, &v);
+        let panel = c.palette.get(UiColor::PanelBg);
+        let mut band = 0;
+        for y in 0..i32::from(CONSOLE_H) {
+            for x in 0..i32::from(CONSOLE_W) {
+                let (was, is) = (full.get(x, y).unwrap(), buf.get(x, y).unwrap());
+                if was.bg == panel {
+                    assert_eq!(is.fg, at_opacity(was.fg, 64), "({x}, {y})");
+                    assert_eq!(is.bg, at_opacity(was.bg, 64), "({x}, {y})");
+                    band += 1;
+                } else {
+                    assert_eq!(is, was, "({x}, {y})");
+                }
+            }
+        }
+        assert_eq!(band, 3 * (5 + 2 * (5 + 11 + 2)));
     }
 
     const SPARK_PINS: [Spark; 4] = [

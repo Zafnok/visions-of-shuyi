@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0036", "0226", "0227", "0811", "0817"]
 nick_input: answer-first
-completed:
+completed: 2026-10-13
 ---
 
 # 0819 — Title screen plays the intro cinematic with the music
@@ -138,16 +138,16 @@ band behind `Press any key or button` and behind a notice.
 
 ## Acceptance criteria
 
-- [ ] Harness: after the first press the menu shows; with no further
+- [x] Harness: after the first press the menu shows; with no further
       press, at music position 10 s the menu is still up, at 17 s the
       screen is the stand-in's pan with no menu, at 120 s it is the logo
       with the menu, and after `wait`ing past 133.7 s it is the pan from
       the start again (it looped with the song).
-- [ ] Harness with `music_load_delay(2.0)`: the picture holds at `t = 0`
+- [x] Harness with `music_load_delay(2.0)`: the picture holds at `t = 0`
       until the music starts, then follows it.
-- [ ] Harness with `without_music()`: after 3 s the cinematic runs anyway
+- [x] Harness with `without_music()`: after 3 s the cinematic runs anyway
       and still loops at the track's length.
-- [ ] Harness: each rule in *How the title behaves* and each of *Claude's
+- [x] Harness: each rule in *How the title behaves* and each of *Claude's
       starting rules* that this ticket builds has a test: a press at 14 s
       keeps the menu another 15 s; a press during the cinematic asks for
       the skip sound, stops the music, shows logo and menu, doesn't move
@@ -155,10 +155,10 @@ band behind `Press any key or button` and behind a notice.
       press in the silence keeps the menu past the loop; the timer doesn't
       run under Load Game; returning from a battle shows the menu with the
       song from 0.
-- [ ] The existing title tests (menu choices, music requests, the prompt)
+- [x] The existing title tests (menu choices, music requests, the prompt)
       still pass, changed only where 0036's rules require it.
-- [ ] `screens_cover_the_whole_buffer` still holds for the title.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `screens_cover_the_whole_buffer` still holds for the title.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -167,5 +167,67 @@ band behind `Press any key or button` and behind a notice.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done (2026-10-13).**
+
+- `crates/ui/src/screens/title.rs`: the title has three states (`Phase`):
+  the menu, the menu fading out over the cinematic, the cinematic alone.
+  `TitleScreen::play` moves them each frame; `view` says what shows
+  (`TitleView::cinematic`, `menu_opacity`) and `title/glyph.rs` paints it
+  (ADR-0054): the cinematic at its brightness, the title's own pictures
+  over it at the rest, the menu, notice and help line dimmed.
+- `crates/ui/src/screens/title/song.rs` (`SongTime`): where the
+  cinematic's time comes from: the music clock, the 3 s hold and the frame
+  clock without it, and the silence counted out after a skip.
+- `Timeline::last_start_ms` / `in_last_shot` (`cinematic.rs`): the logo
+  shot is the cinematic's last shot.
+- `assets/cinematics/title.ron`: the stand-in (a pan over the Chapter 1
+  map at 3x from the party to the fort, the logo from 117 s).
+- Tests: `title/song.rs` (the choice of `t`), `title/tests.rs` (the
+  states, from the view), `title/glyph.rs` (the look of the fades),
+  `tests/it/title_cinematic.rs` (the Harness acceptance tests).
+
+**Deviations**
+
+- **Step 3, "stop the music at once":** the skip asks for the usual
+  `StopMusic`, so the song fades out over the game's half second
+  (`music_fade_ms`) instead of cutting. An instant stop would be a new
+  kind of audio request, and "changing how the music fades" is out of
+  scope. If the player leaves the title and comes back inside that half
+  second, the song plays on (ADR-0026 keeps a track that is asked for
+  again while it fades) and the picture follows it.
+- **Step 6 (the lead of the latest save):** not done. `save::latest_lead`
+  and the player's lead parameter belong to 0818, which is still open.
+  The player is made with `ctx` as it is, each time the title is shown
+  (`TitleScreen::refresh`); 0818's step 3 now says to pass the lead there.
+- **Step 1:** the player is made by `refresh` (the first update, and
+  every time the title is shown again), not only on the first update, and
+  opening Options also marks the title stale, since a colour theme
+  changes what the cinematic is painted in.
+- **Step 3, `FadingOut`:** the title's pictures (backdrop, logo) fade by
+  their opacity over the cinematic; the menu's box, which is made of
+  cells, darkens to black and is gone when the fade ends. A cell can't be
+  see-through by halves.
+- `Harness::wait` runs at most about 33 s, so the tests wait in pieces.
+
+**Claude's starting rules** (also in `docs/design/title-screen.md`; Nick
+can veto):
+
+- A skip fades the song out over half a second instead of cutting it.
+  The logo and menu show at once.
+- The logo always has the menu on it. If the 15 seconds run out while the
+  logo is up, the menu stays until the song loops.
+- A press while the menu is fading out brings the menu straight back and
+  counts as a normal menu press (it moves the cursor or chooses).
+- If the song hasn't started after 3 seconds (its file is slow or
+  missing), the cinematic runs without it.
+- The stand-in cinematic until 0820: one slow pan over the Chapter 1
+  battlefield, then the logo.
+
+**Follow-ups:** none new. 0818 (hands the title the lead), 0820 (the real
+shots; its tests of what shows at which second replace the stand-in's
+line in `title_cinematic.rs`), 0041 (the skip sound: `TITLE_SKIP_SOUND`).
+
+**For Nick, when playing:** leave the title alone for 15 seconds; press
+any key during the cinematic; leave it again and watch it loop after the
+logo. The fade of the menu box (it darkens, it doesn't dissolve) is the
+part most worth a look.

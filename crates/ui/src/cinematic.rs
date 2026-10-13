@@ -63,6 +63,16 @@ impl Timeline {
         self.length_ms
     }
 
+    /// When the last shot starts, in milliseconds (0 with no shots).
+    pub fn last_start_ms(&self) -> u32 {
+        self.starts_ms.last().copied().unwrap_or(0)
+    }
+
+    /// Whether `t_ms` (wrapped at the length) falls in the last shot.
+    pub fn in_last_shot(&self, t_ms: u64) -> bool {
+        self.wrapped_ms(t_ms) >= self.last_start_ms()
+    }
+
     /// `t_ms` wrapped at the length: the cinematic loops.
     pub fn wrapped_ms(&self, t_ms: u64) -> u32 {
         u32::try_from(t_ms % u64::from(self.length_ms)).unwrap_or(0)

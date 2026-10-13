@@ -57,7 +57,8 @@ Claude never draws character art.
   (0820).
 - Writing or changing dialogue. The shots show whatever the script file
   says.
-- The title screen (0819).
+- The title screen (0819), except the one line that hands the player
+  the lead (step 3).
 - Combat pictures (0036 didn't choose them).
 
 ## Implementation steps
@@ -97,6 +98,12 @@ Claude never draws character art.
    With no save: the names table's default name, and the default look
    that 0706 recorded: `lead_m` (as the dialogue screen falls back
    today). The debug tool passes `None`.
+   **Added 2026-10-13 (0819 is done):** the title already plays the
+   cinematic and makes its player in `TitleScreen::refresh`
+   (`crates/ui/src/screens/title.rs`), each time the title is shown.
+   Pass `save::latest_lead(ctx.storage)` there (0819 could not: this
+   function did not exist yet), with a title test that the lead follows
+   the save.
 4. Add one of each to `test.ron` using the test portraits and the `test`
    scene, and update the 0817 snapshots.
 
