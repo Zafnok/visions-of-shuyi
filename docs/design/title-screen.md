@@ -313,6 +313,23 @@ Chapter 1 map by 0820; the mockup's fight was made up.
 - **Snippet length:** each dialogue shot shows as many opening boxes of its
   scene as can be read comfortably in its time (0818's timing; 0820 sets
   the counts).
+- **How a snippet's text appears** (0818, *tunable*): the boxes of a
+  dialogue shot share its time equally. A box types out at the text speed
+  from Options and then stays up until the next. A long box types faster
+  so that it is always whole for the last third of its time. Example: two
+  boxes in a 16-second shot get 8 seconds each; a 60-letter line is typed
+  in 1 second at Normal speed and stays for 7.
+- **How the faces cross** (0818, *tunable*): at one steady speed, in a
+  row, from just off the right edge until the last has left on the left.
+  When one face is in the middle of the screen, half of the next is
+  already in and half of the one before is still leaving. They face the
+  way they move (left). Each is in the frame the dialogue screen gives
+  whoever is speaking, with the first name under it ("Hollis", not
+  "Hollis Marr"); the lead's is the name the player gave.
+- **"The most recent save"** is the one written last, a chapter save or
+  a suspend save. If that one is gone (a suspend save is used up when the
+  battle is resumed), the cinematic takes the suspend save if there is
+  one, else the lowest save slot in use.
 
 ### Open sub-questions
 
