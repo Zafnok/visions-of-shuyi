@@ -656,6 +656,104 @@ fn danger_zone_reports_bad_units() {
     assert_eq!(r, Err(MoveError::UnknownClass(ClassId("boat".into()))));
 }
 
+// ---------------------------------------------------------- threats to a tile
+
+impl Scene {
+    /// Who threatens [`MOVER`] standing on `at`, every unit with `ranges`.
+    fn threats(&self, at: Pos, ranges: &[AttackRange]) -> Vec<u32> {
+        let ids = threats_at(
+            &self.map,
+            &self.terrain,
+            &self.classes,
+            &self.units,
+            MOVER,
+            at,
+            |_| ranges.to_vec(),
+        );
+        ids.unwrap().into_iter().map(|id| id.0).collect()
+    }
+}
+
+#[test]
+fn threats_are_the_hostile_units_whose_threat_area_holds_the_tile() {
+    // Mov 2, swords: the enemy two tiles from x 3 walks next to it; the one
+    // five tiles away can't. The ally and the other player never count.
+    let s = scene(&["@..e.a.pe"], "foot", 2);
+    assert_eq!(s.threats(p(0, 0), &[(1, 1)]), [1]);
+    assert_eq!(s.threats(p(1, 0), &[(1, 1)]), [1]);
+    // Between two enemies both reach: in the units' order.
+    let s = scene(&["@..e...e."], "foot", 2);
+    assert_eq!(s.threats(p(5, 0), &[(1, 1)]), [1, 2]);
+    assert_eq!(s.threats(p(0, 0), &[(1, 1)]), [1]);
+    // Nobody reaches with no weapon.
+    assert!(s.threats(p(5, 0), &[]).is_empty());
+    // An enemy asks about the players' side.
+    let s = scene_as(&["@..p.e"], "foot", 2, Faction::Enemy);
+    assert_eq!(s.threats(p(0, 0), &[(1, 1)]), [1]);
+    assert_eq!(s.threats(p(0, 0), &[(2, 2)]), [1]);
+}
+
+#[test]
+fn threats_count_the_unit_on_the_tile_asked_about_not_where_it_stands() {
+    // The mover blocks the corridor where it stands: the enemy can't get
+    // past it to the tile behind. Asked about that tile, the mover is
+    // there instead and the corridor is open.
+    let s = scene(&["#####", ".@.e.", "#####"], "foot", 3);
+    assert_eq!(s.threats(p(0, 1), &[(1, 1)]), [1]);
+    assert_eq!(s.threats(p(1, 1), &[(1, 1)]), [1]);
+    // Where the mover would stand is no longer a tile to attack from: an
+    // archer (range 2 only) with Mov 0 two tiles from the mover's own tile
+    // doesn't reach a mover that stepped next to it.
+    let s = scene(&["@.e"], "foot", 0);
+    assert_eq!(s.threats(p(0, 0), &[(2, 2)]), [1]);
+    assert!(s.threats(p(1, 0), &[(2, 2)]).is_empty());
+    // The mover's old tile is free for the enemy to attack from.
+    let s = scene(&["#####", "#.@e#", "#.###", "#####"], "foot", 1);
+    assert!(s.threats(p(1, 2), &[(1, 1)]).is_empty());
+    let s = scene(&["#####", "#.@e#", "#.###", "#####"], "foot", 2);
+    assert_eq!(s.threats(p(1, 2), &[(1, 1)]), [1]);
+}
+
+#[test]
+fn a_unit_that_never_moves_threatens_only_from_its_own_tile() {
+    use crate::ai::AiBehavior;
+    let mut s = scene(&["@...e"], "foot", 5);
+    assert_eq!(s.threats(p(0, 0), &[(1, 2)]), [1]);
+    s.units[1].ai = AiBehavior::Stationary;
+    assert!(s.threats(p(0, 0), &[(1, 2)]).is_empty());
+    assert!(s.threats(p(1, 0), &[(1, 2)]).is_empty());
+    assert_eq!(s.threats(p(2, 0), &[(1, 2)]), [1]);
+    assert_eq!(s.threats(p(3, 0), &[(1, 2)]), [1]);
+    // Its minimum range counts too.
+    assert!(s.threats(p(3, 0), &[(2, 2)]).is_empty());
+    assert!(s.threats(p(3, 0), &[]).is_empty());
+    // One that waits for someone to come within reach moves to attack.
+    s.units[1].ai = AiBehavior::Guard;
+    assert_eq!(s.threats(p(0, 0), &[(1, 2)]), [1]);
+}
+
+#[test]
+fn threats_report_bad_units() {
+    let mut s = scene(&["@.e"], "foot", 1);
+    let ask = |s: &Scene, id| {
+        threats_at(
+            &s.map,
+            &s.terrain,
+            &s.classes,
+            &s.units,
+            id,
+            p(0, 0),
+            |_| vec![(1, 1)],
+        )
+    };
+    assert_eq!(ask(&s, UnitId(9)), Err(MoveError::UnknownUnit(UnitId(9))));
+    s.units[1].class = ClassId("boat".into());
+    assert_eq!(
+        ask(&s, MOVER),
+        Err(MoveError::UnknownClass(ClassId("boat".into())))
+    );
+}
+
 // ------------------------------------------------------------------ TileSet
 
 #[test]
@@ -957,5 +1055,31 @@ proptest! {
         prop_assert_eq!(set.is_empty(), model.is_empty());
         let members: Vec<(i32, i32)> = set.iter().map(|q| (q.y, q.x)).collect();
         prop_assert_eq!(members, model.into_iter().collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn a_unit_is_a_threat_exactly_when_the_tile_is_in_its_threat_area(
+        s in arb_scene(),
+        (x, y) in (0i32..10, 0i32..10),
+        min in 0u32..3,
+        len in 0u32..3,
+    ) {
+        let at = p(x, y);
+        let ranges = [(min, min + len)];
+        let listed = threats_at(
+            &s.map, &s.terrain, &s.classes, &s.units, MOVER, at, |_| ranges.to_vec(),
+        );
+        // The same units with the mover on the tile asked about.
+        let mut moved = s.clone();
+        moved.units[0].pos = at;
+        let mut expected = Vec::new();
+        for u in &moved.units {
+            if u.faction.is_hostile_to(s.mover().faction)
+                && moved.threat(u.id, &ranges).unwrap().contains(at)
+            {
+                expected.push(u.id);
+            }
+        }
+        prop_assert_eq!(listed, Ok(expected));
     }
 }

@@ -832,6 +832,7 @@ pub(crate) mod tests {
             scene.units.clear();
             scene.cursor = None;
             scene.path.clear();
+            scene.threat = None;
             for tile in &mut scene.tiles {
                 tile.flashes.clear();
                 tile.tints.clear();

@@ -33,6 +33,11 @@
 //!   of the unit's weapon ranges. A unit with no ranges (no usable weapon)
 //!   threatens nothing. The **danger zone** ([`danger_zone`]) is the union of
 //!   the threat areas of every unit hostile to a faction.
+//! - **Threats to a tile** ([`threats_at`]): the units hostile to a unit
+//!   that could attack it next phase if it stood on a given tile: the tile is
+//!   in their threat area, worked out with the unit standing there. A unit
+//!   whose AI never moves ([`AiBehavior::Stationary`]) only counts the tiles
+//!   its ranges reach from where it stands.
 //! - Every unit in the `units` slice occupies its tile; callers pass the
 //!   living units of the battle.
 
@@ -40,6 +45,7 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::fmt;
 
+use crate::ai::AiBehavior;
 use crate::class::{ClassId, ClassTable};
 use crate::geom::{Grid, Pos};
 use crate::map::BattleMap;
@@ -519,6 +525,49 @@ pub fn danger_zone(
         )?);
     }
     Ok(zone)
+}
+
+/// The units hostile to unit `unit` that could attack it in their next
+/// phase if it stood on `at` (`docs/design/turn-structure.md`, *Threat
+/// arrows*), in the order of `units`: `at` is in their [`threat_area`],
+/// worked out with `unit` on `at` instead of its own tile. Whether their AI
+/// would choose to doesn't matter, except that one that never moves
+/// ([`AiBehavior::Stationary`]) threatens only what its ranges reach from
+/// its own tile. `ranges` gives each unit's attack ranges, as for
+/// [`danger_zone`].
+pub fn threats_at(
+    map: &BattleMap,
+    terrain: &TerrainTable,
+    classes: &ClassTable,
+    units: &[Unit],
+    unit: UnitId,
+    at: Pos,
+    ranges: impl Fn(&Unit) -> Vec<AttackRange>,
+) -> Result<Vec<UnitId>, MoveError> {
+    let Some(target) = units.iter().find(|u| u.id == unit) else {
+        return Err(MoveError::UnknownUnit(unit));
+    };
+    let faction = target.faction;
+    let mut moved = units.to_vec();
+    for u in moved.iter_mut().filter(|u| u.id == unit) {
+        u.pos = at;
+    }
+    let mut out = Vec::new();
+    for u in moved.iter().filter(|u| u.faction.is_hostile_to(faction)) {
+        let ranges = ranges(u);
+        let reaches = if u.ai == AiBehavior::Stationary {
+            let distance = Pos::manhattan(u.pos, at);
+            ranges
+                .iter()
+                .any(|&(min, max)| (min..=max).contains(&distance))
+        } else {
+            threat_area(map, terrain, classes, &moved, u.id, &ranges)?.contains(at)
+        };
+        if reaches {
+            out.push(u.id);
+        }
+    }
+    Ok(out)
 }
 
 #[cfg(test)]

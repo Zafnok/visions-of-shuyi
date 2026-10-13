@@ -27,6 +27,7 @@ use super::grid::{Grid, px_rect};
 use super::path;
 use super::scene::{CursorStyle, MapScene};
 use super::skin::MapSkin;
+use super::threat;
 use crate::color::UiColor;
 use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect, Sprite};
 use crate::screen::Ctx;
@@ -215,7 +216,8 @@ impl MapSkin for SpriteSkin {
 
     /// The ground (terrain tinted by flashes, ranges and the cursor's
     /// glow), the path line, the units' outlines and pictures, their HP
-    /// bars and marks, the path's arrowhead, then the cursor.
+    /// bars and marks, the path's arrowhead, then the cursor; over them
+    /// all, the threat arrows and marks.
     fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer) {
         let grid = self.grid(scene, area);
         let layout = glyph::Layout::new(scene, area);
@@ -242,6 +244,7 @@ impl MapSkin for SpriteSkin {
         } else {
             glyph::draw_cursor(ctx, buf, scene, &layout);
         }
+        threat::paint(ctx, scene, &grid, threat::Start::Middle, buf);
     }
 
     fn tile_px(&self, scene: &MapScene, area: Rect, tile: Pos) -> Option<PxRect> {
@@ -298,7 +301,7 @@ pub(crate) mod tests {
     use crate::map_view::glyph::cursor::GLOW_MAX;
     use crate::map_view::glyph::tests::any_scene;
     use crate::map_view::scene::{
-        CursorView, Facing, RangeKind, STANDING_FRAME, TileView, UnitEffects, UnitView,
+        CursorView, Facing, RangeKind, STANDING_FRAME, ThreatView, TileView, UnitEffects, UnitView,
     };
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
@@ -375,6 +378,67 @@ pub(crate) mod tests {
             facing: Facing::Down,
             frame: STANDING_FRAME,
             offset: (0.0, 0.0),
+        }
+    }
+
+    fn threat(tile: Pos, enemies: &[Pos]) -> ThreatView {
+        ThreatView {
+            tile,
+            enemies: enemies.to_vec(),
+        }
+    }
+
+    /// The threat arrows and marks are the last things painted, over the
+    /// units and the cursor, on the skin's own tiles at its zoom: under a
+    /// tileset with terrain tiles and under one without.
+    #[test]
+    fn threat_arrows_and_marks_are_painted_last_on_the_skins_tiles() {
+        let c = ctx();
+        let colors = threat::colors(&c);
+        // 192 × 128 px: the whole 3 × 2 view even at twice the size.
+        let area = Rect::new(2, 1, 24, 8);
+        let skins = [
+            skin(&c),
+            skin(&c).zoomed(MapZoom::X2),
+            sheets(&c),
+            sheets(&c).zoomed(MapZoom::X2),
+        ];
+        for skin in skins {
+            let mut scene = plains(&c);
+            scene.push_unit(brigand(p(1, 1)));
+            scene.cursor = Some(CursorView {
+                pos: p(1, 1),
+                brightness: 1.0,
+                style: CursorStyle::Corners,
+            });
+            let mut buf = blank();
+            skin.paint(&c, &scene, area, &mut buf);
+            let before = buf.items().len();
+            scene.threat = Some(threat(p(0, 0), &[p(1, 1)]));
+            let mut buf = blank();
+            skin.paint(&c, &scene, area, &mut buf);
+            let grid = skin.grid(&scene, area);
+            let arrows = threat(p(0, 0), &[p(1, 1)]);
+            let expect: Vec<Item> =
+                threat::threat_overlays(&arrows, &grid, threat::Start::Middle, colors)
+                    .into_iter()
+                    .map(Item::Rect)
+                    .collect();
+            assert!(expect.len() > 4, "{}", skin.name());
+            assert_eq!(&buf.items()[before..], expect, "{}", skin.name());
+            // The mark is over the brigand's tile, in the highlight colour.
+            let tile = grid.rect(p(1, 1)).unwrap();
+            let marks: Vec<_> = buf
+                .overlays()
+                .into_iter()
+                .filter(|o| o.color == colors.mark)
+                .collect();
+            assert_eq!(marks.len(), 2, "{}", skin.name());
+            for mark in marks {
+                let r = mark.rect;
+                assert!(r.x > tile.x && r.x + r.w < tile.x + tile.w, "{r:?}");
+                assert!(r.y + r.h <= tile.y, "{r:?}");
+            }
         }
     }
 
@@ -768,6 +832,7 @@ pub(crate) mod tests {
             units: _,
             cursor: _,
             path: _,
+            threat: _,
             clock_ms: _,
         } = scene;
         let TileView {
@@ -847,6 +912,7 @@ pub(crate) mod tests {
             feature("frame", &unit(|u| u.frame = 0)),
             feature("offset", &unit(|u| u.offset = (-0.5, 0.0))),
             feature("path", &|s| s.path = vec![p(0, 0), p(1, 0)]),
+            feature("threat", &|s| s.threat = Some(threat(p(0, 0), &[p(1, 1)]))),
         ];
         // The clock moves the marks: an arrow rests, then is bounced.
         let mut clock = feature("clock", &|s| s.clock_ms = units::BOUNCE_MS);
@@ -898,7 +964,7 @@ pub(crate) mod tests {
         let own = with_walking_brigand(&c, &with_lord(&skin(&c)));
         for s in [own, with_lord(&sheets(&c))] {
             let features = features(&c);
-            assert_eq!(features.len(), 18 + 4 + 6);
+            assert_eq!(features.len(), 19 + 4 + 6);
             for f in features {
                 assert_ne!(f.without, f.with, "{}: no change", f.name);
                 let (without, with) = (painted(&c, &s, &f.without), painted(&c, &s, &f.with));

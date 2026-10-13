@@ -11,6 +11,7 @@ use super::grid::{Grid, px_rect};
 use super::path;
 use super::scene::{MapScene, RangeKind};
 use super::skin::MapSkin;
+use super::threat;
 use crate::color::{Palette, Rgb, UiColor};
 use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{Cell, GlyphBuffer, PxRect, Rect};
@@ -43,7 +44,8 @@ impl MapSkin for GlyphSkin {
     }
 
     /// Terrain, then the ranges tinting it, then the units (a highlighted
-    /// one with its tile's colours swapped), the path and the cursor.
+    /// one with its tile's colours swapped), the path and the cursor; over
+    /// them all, the threat arrows and marks.
     fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer) {
         let layout = Layout::new(scene, area);
         draw_tiles(ctx, buf, scene, &layout);
@@ -60,6 +62,8 @@ impl MapSkin for GlyphSkin {
             buf.add_overlay(overlay);
         }
         draw_cursor(ctx, buf, scene, &layout);
+        // From the edge of each enemy's tile: never over its letters.
+        threat::paint(ctx, scene, &layout.grid(), threat::Start::Edge, buf);
     }
 
     fn tile_px(&self, scene: &MapScene, area: Rect, tile: Pos) -> Option<PxRect> {
@@ -198,7 +202,8 @@ pub(crate) mod tests {
 
     use super::*;
     use crate::map_view::scene::{
-        CursorStyle, CursorView, Facing, STANDING_FRAME, TileView, UnitEffects, UnitView,
+        CursorStyle, CursorView, Facing, STANDING_FRAME, ThreatView, TileView, UnitEffects,
+        UnitView,
     };
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
@@ -352,6 +357,64 @@ pub(crate) mod tests {
                 assert_eq!(paint(&walking), still, "{facing:?} {frame}");
             }
         }
+    }
+
+    /// The threat arrows and marks are the last things painted, over the
+    /// units, the path and the cursor, on the skin's 16 px tiles.
+    #[test]
+    fn threat_arrows_and_marks_are_painted_last_over_everything() {
+        let c = ctx();
+        let pal = &c.palette;
+        let area = Rect::new(10, 5, 8, 3);
+        let mut scene = MapScene::new(p(2, 2), (4, 3));
+        scene.push_unit(brigand(p(5, 3)));
+        scene.path = vec![p(2, 2), p(3, 2)];
+        scene.cursor = Some(CursorView {
+            pos: p(3, 2),
+            brightness: 1.0,
+            style: CursorStyle::Corners,
+        });
+        let mut buf = blank();
+        GlyphSkin.paint(&c, &scene, area, &mut buf);
+        let before = buf.overlays();
+        let threat = ThreatView {
+            tile: p(3, 2),
+            enemies: vec![p(5, 3)],
+        };
+        scene.threat = Some(threat.clone());
+        let mut with = blank();
+        GlyphSkin.paint(&c, &scene, area, &mut with);
+        // No cell changes: the arrows are drawn over the glyphs.
+        for y in 0..32 {
+            for x in 0..100 {
+                assert_eq!(with.get(x, y), buf.get(x, y), "({x}, {y})");
+            }
+        }
+        let colors = threat::colors(&c);
+        assert_eq!(colors.arrow, pal.get(UiColor::Enemy));
+        assert_eq!(colors.mark, pal.get(UiColor::TextHighlight));
+        assert_eq!(colors.edge, pal.get(UiColor::Black));
+        let grid = Layout::new(&scene, area).grid();
+        let expect = threat::threat_overlays(&threat, &grid, threat::Start::Edge, colors);
+        let after = with.overlays();
+        assert_eq!(&after[..before.len()], before);
+        assert_eq!(&after[before.len()..], expect);
+        // The arrow's line starts just off the brigand's tile (cells
+        // (16, 6) and (17, 6): pixels 128..144 × 96..112), on its way up
+        // and left from the tile's middle, and no red is on the tile; the
+        // mark is above that tile, 3 px clear of it.
+        let red: Vec<_> = expect.iter().filter(|o| o.color == colors.arrow).collect();
+        assert_eq!(red[0].rect, Rect::new(127, 100, 1, 1));
+        let tile = Rect::new(128, 96, 16, 16);
+        assert!(red.iter().all(|o| o.rect.intersect(&tile).is_none()));
+        assert!(
+            red.iter()
+                .all(|o| o.layer == crate::glyph_buffer::Layer::Over)
+        );
+        let yellow: Vec<_> = expect.iter().filter(|o| o.color == colors.mark).collect();
+        assert_eq!(yellow[0].rect, Rect::new(134, 84, 3, 6));
+        assert_eq!(yellow[1].rect, Rect::new(134, 91, 3, 2));
+        assert_eq!(yellow.len(), 2);
     }
 
     #[test]
@@ -572,11 +635,13 @@ pub(crate) mod tests {
             units in prop::collection::vec(any_unit(), 0..8),
             cursor in prop::option::of(any_cursor()),
             path in prop::collection::vec(any_pos(), 0..6),
+            threat in prop::option::of((any_pos(), prop::collection::vec(any_pos(), 1..4))),
             clock_ms in 0u64..5000,
         ) -> MapScene {
             let rim = rim.into_iter().map(|id| id.map(TerrainId)).collect();
             let look = trpg_content::MapLook { tiles: look.to_owned(), light: light.to_owned() };
-            MapScene { origin, size, tiles, rim, look, units, cursor, path, clock_ms }
+            let threat = threat.map(|(tile, enemies)| ThreatView { tile, enemies });
+            MapScene { origin, size, tiles, rim, look, units, cursor, path, threat, clock_ms }
         }
     }
 
