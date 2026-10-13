@@ -157,7 +157,7 @@ sign-off.
   they start (scene entries) rather than the battle, and returns scene
   entries: a tile plus an offset in tiles, not map pixels. Pixels belong
   to the skin (ADR-0038); both skins already paint tile + offset.
-- An enemy's `id` isn't kept in `BattleDef`, so `battle::load_unit_names`
+- An enemy's `id` isn't kept in `BattleDef`, so `battle::unit_names`
   reads the ids from the battle files (as `load_lights` does the light).
   A unit is named by a slot's character, an enemy's `id`, or an enemy's
   character (Chapter 1's captain has no `id`).

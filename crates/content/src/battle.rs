@@ -269,23 +269,14 @@ pub fn light_of(
     Err(ContentError::new(file, message).at(line, Some(col)))
 }
 
-/// The enemies each battle file of the bundle gives an `id`, by battle id
-/// (the file stem) and then by that `id`, as their unit ids: the names a
-/// cinematic's action knows them by (ticket 0827). Only those on the map
-/// at the start. A file that doesn't parse names none here: [`load_all`]
-/// reports it.
-pub fn load_unit_names() -> BTreeMap<String, BTreeMap<String, UnitId>> {
-    let mut names = BTreeMap::new();
-    for path in bundle::files_in(BATTLES_DIR) {
-        let stem = path
-            .strip_prefix(BATTLES_DIR)
-            .and_then(|p| p.strip_prefix('/'))
-            .and_then(|p| p.strip_suffix(EXTENSION));
-        if let (Some(stem), Some(source)) = (stem, bundle::file(path)) {
-            names.insert(stem.to_owned(), unit_names_of(source));
-        }
-    }
-    names
+/// The enemies the file of battle `battle` gives an `id`, by that `id`,
+/// as their unit ids: the names a cinematic's action knows them by
+/// (ticket 0827). Only those on the map at the start. None for a battle
+/// with no file in the bundle, or one that doesn't parse ([`load_all`]
+/// reports that).
+pub fn unit_names(battle: &str) -> BTreeMap<String, UnitId> {
+    let path = format!("{BATTLES_DIR}/{battle}{EXTENSION}");
+    bundle::file(&path).map(unit_names_of).unwrap_or_default()
 }
 
 /// The enemies battle file `source` gives an `id`, by it, as their unit

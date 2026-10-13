@@ -1,6 +1,7 @@
 //! Tests of the timeline and the player, on the test cinematic
 //! (`assets-test/cinematics/test.ron`): a pan over the test battle's map
-//! at 4× for six seconds, then the logo for four.
+//! at 4× for six seconds, two text boxes for four, three faces for six,
+//! then the logo for four (the talk and characters shots: `shot_tests`).
 
 use insta::assert_snapshot;
 use proptest::prelude::*;
@@ -24,7 +25,7 @@ fn at(index: usize, progress: f32) -> ShotAt {
 }
 
 fn player(ctx: &Ctx) -> CinematicPlayer {
-    CinematicPlayer::new(ctx, "test").unwrap()
+    CinematicPlayer::new(ctx, "test", None).unwrap()
 }
 
 /// `player`'s frame at `t` and `brightness`, over a stale buffer.
@@ -70,18 +71,18 @@ fn a_time_falls_in_the_shot_that_started_last() {
     assert_eq!(three.at_ms(2500), at(1, 0.75));
     assert_eq!(three.at_ms(3500), at(2, 0.5));
     // The same, as milliseconds into the shot.
-    assert_eq!(three.shot_ms(0), (0, 0));
-    assert_eq!(three.shot_ms(999), (0, 999));
-    assert_eq!(three.shot_ms(1000), (1, 0));
-    assert_eq!(three.shot_ms(2500), (1, 1500));
-    assert_eq!(three.shot_ms(3999), (2, 999));
-    assert_eq!(three.shot_ms(4000), (0, 0));
-    assert_eq!(three.shot_ms(4000 * 7 + 3001), (2, 1));
-    assert_eq!(t.shot_ms(28_000), (1, 2000));
+    assert_eq!(three.into_shot(0), (0, 0));
+    assert_eq!(three.into_shot(999), (0, 999));
+    assert_eq!(three.into_shot(1000), (1, 0));
+    assert_eq!(three.into_shot(2500), (1, 1500));
+    assert_eq!(three.into_shot(3999), (2, 999));
+    assert_eq!(three.into_shot(4000), (0, 0));
+    assert_eq!(three.into_shot(4000 * 7 + 3001), (2, 1));
+    assert_eq!(t.into_shot(28_000), (1, 2000));
     // Before a first shot that doesn't start at 0: at its very start.
     let late = Timeline::new(vec![500, 1000], 2000);
-    assert_eq!(late.shot_ms(200), (0, 0));
-    assert_eq!(late.shot_ms(700), (0, 200));
+    assert_eq!(late.into_shot(200), (0, 0));
+    assert_eq!(late.into_shot(700), (0, 200));
     assert_eq!(late.at_ms(200), at(0, 0.0));
 }
 
@@ -132,8 +133,13 @@ fn a_timeline_never_divides_by_nothing() {
 fn the_timeline_of_a_cinematic_is_its_shots_starts_and_its_length() {
     let ctx = ctx();
     let def = &ctx.content.cinematics["test"];
-    assert_eq!(Timeline::of(def), test_timeline());
-    assert_eq!(player(&ctx).timeline(), &test_timeline());
+    let timeline = Timeline::new(vec![0, 6000, 10_000, 16_000], 20_000);
+    assert_eq!(Timeline::of(def), timeline);
+    assert_eq!(player(&ctx).timeline(), &timeline);
+    // A shot lasts until the next starts, the last until the end.
+    let lengths: Vec<u32> = (0..6).map(|i| timeline.shot_ms(i)).collect();
+    assert_eq!(lengths, [6000, 4000, 6000, 4000, 0, 0]);
+    assert_eq!(Timeline::new(vec![0, 500], 400).shot_ms(1), 0);
 }
 
 #[test]
@@ -277,17 +283,21 @@ fn the_pan_moves_the_middle_of_the_screen_from_one_point_to_the_other() {
     assert!(near(origin(1.5), (24.0 * 0.15625, 0.0)));
     assert!(near(origin(4.5), (24.0 * 0.84375, 0.0)));
     assert!(origin(5.999).0 > 23.99);
-    // A hard cut to the logo, then round again.
-    assert_eq!(
+    // A hard cut to the next shot; after the logo, round again.
+    assert!(matches!(
         player.frame(&ctx, 6.0, SCREEN),
+        Frame::Talk { .. }
+    ));
+    assert_eq!(
+        player.frame(&ctx, 16.0, SCREEN),
         Frame::Logo { sparks: None }
     );
     assert_eq!(
-        player.frame(&ctx, 9.999, SCREEN),
+        player.frame(&ctx, 19.999, SCREEN),
         Frame::Logo { sparks: None }
     );
-    assert!(near(origin(10.0), (0.0, 0.0)));
-    assert!(near(origin(13.0), (12.0, 0.0)));
+    assert!(near(origin(20.0), (0.0, 0.0)));
+    assert!(near(origin(23.0), (12.0, 0.0)));
     // On a smaller screen the window is another, and so is its corner:
     // 50 × 4 cells at 4× show 100 × 16 pixels round (112, 64).
     let small = player.frame(&ctx, 3.0, Rect::new(0, 0, 50, 4));
@@ -330,18 +340,22 @@ fn the_logo_shot_carries_the_sparks_time_when_screens_move() {
     let mut ctx = ctx();
     let player = player(&ctx);
     assert_eq!(
-        player.frame(&ctx, 7.25, SCREEN),
+        player.frame(&ctx, 17.25, SCREEN),
         Frame::Logo { sparks: None }
     );
     ctx.idle_motion = IdleMotion::On;
     assert_eq!(
-        player.frame(&ctx, 7.25, SCREEN),
-        Frame::Logo { sparks: Some(7250) }
+        player.frame(&ctx, 17.25, SCREEN),
+        Frame::Logo {
+            sparks: Some(17250)
+        }
     );
     // The same moment a round later: the same sparks.
     assert_eq!(
-        player.frame(&ctx, 17.25, SCREEN),
-        Frame::Logo { sparks: Some(7250) }
+        player.frame(&ctx, 37.25, SCREEN),
+        Frame::Logo {
+            sparks: Some(17250)
+        }
     );
     // The pan has none.
     assert!(matches!(
@@ -386,12 +400,12 @@ fn the_logo_shot_is_the_titles_own_picture() {
     let mut ctx = ctx();
     let backdrop = ctx.content.title.backdrops.get(1).copied();
     assert!(backdrop.is_some());
-    for (motion, sparks) in [(IdleMotion::Off, None), (IdleMotion::On, Some(7250))] {
+    for (motion, sparks) in [(IdleMotion::Off, None), (IdleMotion::On, Some(17250))] {
         ctx.idle_motion = motion;
         // With no backdrop given, the logo is on none.
         for given in [None, backdrop] {
             let player = player(&ctx).with_backdrop(given);
-            let buf = draw(&ctx, &player, 7.25, 1.0);
+            let buf = draw(&ctx, &player, 17.25, 1.0);
             let mut title = draw(&ctx, &player, 0.0, 1.0);
             glyph::paint_logo(&ctx, given, sparks, &mut title);
             assert_eq!(buf, title);
@@ -406,13 +420,13 @@ fn the_same_time_draws_the_same_frame() {
     let mut ctx = ctx();
     ctx.idle_motion = IdleMotion::On;
     let player = player(&ctx);
-    for t in [0.0, 1.7, 3.0, 5.999, 6.0, 8.3] {
+    for t in [0.0, 1.7, 3.0, 5.999, 6.0, 8.3, 10.0, 12.4, 16.0, 18.3] {
         let first = draw(&ctx, &player, t, 1.0);
         assert_eq!(draw(&ctx, &player, t, 1.0), first, "{t}");
         // Whatever was drawn in between, and a whole round later.
-        draw(&ctx, &player, 9.1, 0.3);
+        draw(&ctx, &player, 19.1, 0.3);
         assert_eq!(draw(&ctx, &player, t, 1.0), first, "{t}");
-        assert_eq!(draw(&ctx, &player, t + 10.0, 1.0), first, "{t}");
+        assert_eq!(draw(&ctx, &player, t + 20.0, 1.0), first, "{t}");
         assert_ne!(draw(&ctx, &player, t + 0.5, 1.0), first, "{t}");
     }
 }
@@ -421,7 +435,7 @@ fn the_same_time_draws_the_same_frame() {
 fn brightness_fades_the_whole_frame_cells_and_items_alike() {
     let ctx = ctx();
     let player = player(&ctx).with_backdrop(ctx.content.title.backdrops.first().copied());
-    for t in [3.0, 7.0] {
+    for t in [3.0, 8.0, 12.0, 17.0] {
         let full = draw(&ctx, &player, t, 1.0);
         let mut faded = full.clone();
         faded.fade(0.5);
@@ -439,11 +453,11 @@ fn brightness_fades_the_whole_frame_cells_and_items_alike() {
     assert_eq!(cell(&half).glyph, cell(&full).glyph);
     // The logo: its sprites (the backdrop's three, then the logo) are
     // half as solid.
-    let half = draw(&ctx, &player, 7.0, 0.5);
+    let half = draw(&ctx, &player, 17.0, 0.5);
     let opacities: Vec<u8> = half.sprites().iter().map(|s| s.opacity).collect();
     assert_eq!(opacities, [128; 4]);
     // Black is black.
-    let black = draw(&ctx, &player, 7.0, 0.0);
+    let black = draw(&ctx, &player, 17.0, 0.0);
     assert!(black.sprites().iter().all(|s| s.opacity == 0));
     assert_snapshot!(
         "pan_middle_half_bright",
@@ -500,7 +514,7 @@ fn a_battle_is_painted_once_for_all_its_shots() {
 fn still(shot: &mut Shot) {
     match shot {
         Shot::MapPan { action, .. } => *action = None,
-        Shot::Logo => panic!("not a pan"),
+        other => panic!("not a pan: {other:?}"),
     }
 }
 
@@ -567,11 +581,12 @@ fn the_test_cinematics_units_walk_and_fight() {
         assert_eq!(scene(t).units.len(), start.units.len() - 1);
         assert_eq!(scene(t).unit_at(p(8, 3)), None);
     }
-    // The logo is no map; then it all starts again.
-    assert_eq!(player.scene(6.0), None);
-    assert_eq!(player.scene(9.0), None);
-    assert_eq!(scene(10.0), start);
-    assert_eq!(scene(12.25), scene(2.25));
+    // The shots after it are no map; then it all starts again.
+    for t in [6.0, 9.0, 12.0, 17.0, 19.999] {
+        assert_eq!(player.scene(t), None, "{t}");
+    }
+    assert_eq!(scene(20.0), start);
+    assert_eq!(scene(22.25), scene(2.25));
     // The terrain never changes.
     assert_eq!(scene(5.9).tiles, start.tiles);
     assert_eq!(scene(5.9).look, start.look);
@@ -697,13 +712,13 @@ fn the_test_cinematic_mid_walk_and_mid_strike() {
     assert_snapshot!("mid_strike", frame(4.3));
     assert_snapshot!("the_brigand_falling", frame(5.45));
     assert_eq!(frame(2.25), frame(2.25));
-    assert_eq!(frame(4.3), frame(12.0 + 2.3));
+    assert_eq!(frame(4.3), frame(24.3));
 }
 
 #[test]
 fn a_cinematic_or_battle_that_is_not_there() {
     let mut ctx = ctx();
-    assert!(CinematicPlayer::new(&ctx, "nope").is_none());
+    assert!(CinematicPlayer::new(&ctx, "nope", None).is_none());
     // The battle gone after the content was checked: the shot is blank.
     ctx.content.battles.remove("test");
     let player = player(&ctx);
@@ -718,7 +733,7 @@ fn a_cinematic_or_battle_that_is_not_there() {
     assert_eq!(buf.get(99, 31), Some(&Cell::new(' ', text, black)));
     // The logo still plays.
     assert_eq!(
-        player.frame(&ctx, 7.0, SCREEN),
+        player.frame(&ctx, 17.0, SCREEN),
         Frame::Logo { sparks: None }
     );
 }

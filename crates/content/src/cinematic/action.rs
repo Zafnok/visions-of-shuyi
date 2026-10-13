@@ -12,7 +12,8 @@ use serde::de::value::SeqAccessDeserializer;
 use serde::de::{SeqAccess, Visitor};
 use trpg_core::{BattleDef, CharacterId, ClassDef, Pos, UnitId};
 
-use super::{CinematicRefs, millis, seconds};
+use super::{Refs, millis, seconds};
+use crate::battle;
 
 /// The action of one shot: a list, and where on its clock the shot starts.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -122,7 +123,7 @@ struct Actor<'a> {
 /// The units on `battle`'s map at its start, by the names a cinematic
 /// knows them by: a player slot's character, an enemy's `id` in the
 /// battle file, and an enemy that is a character by that character.
-fn cast<'a>(battle: &BattleDef, refs: &CinematicRefs<'a>) -> BTreeMap<String, Actor<'a>> {
+fn cast<'a>(battle: &BattleDef, refs: Refs<'a>) -> BTreeMap<String, Actor<'a>> {
     let classes = refs.classes;
     let mut cast = BTreeMap::new();
     for slot in &battle.player_slots {
@@ -134,9 +135,9 @@ fn cast<'a>(battle: &BattleDef, refs: &CinematicRefs<'a>) -> BTreeMap<String, Ac
         };
         cast.insert(slot.character.0.clone(), actor);
     }
-    let named = refs.units.get(&battle.id);
+    let named = battle::unit_names(&battle.id);
     for unit in &battle.enemies {
-        let ids = named.into_iter().flatten();
+        let ids = named.iter();
         let own = ids.filter(|&(_, &id)| id == unit.id).map(|(name, _)| name);
         let character = unit.character.as_ref().map(|CharacterId(c)| c);
         for name in own.chain(character) {
@@ -165,7 +166,7 @@ struct Standing {
 /// Reads one action list against one battle.
 struct Checker<'a, 'r> {
     battle: &'a BattleDef,
-    refs: &'a CinematicRefs<'r>,
+    refs: Refs<'r>,
     cast: BTreeMap<String, Actor<'r>>,
     state: BTreeMap<UnitId, Standing>,
     problems: Vec<String>,
@@ -344,7 +345,7 @@ fn tile_by_tile(corners: &[Pos], longest: i32) -> Vec<Pos> {
 pub(super) fn check(
     raw: &[RawAction],
     battle: &BattleDef,
-    refs: &CinematicRefs<'_>,
+    refs: Refs<'_>,
 ) -> (Vec<ActionDef>, Vec<String>) {
     let mut v = Checker {
         battle,

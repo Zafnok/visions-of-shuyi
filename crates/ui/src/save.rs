@@ -1,6 +1,7 @@
 //! Saves in [`Storage`] (ticket 0802, ADR-0039): [`SaveFile`]s as RON text
 //! under the keys `slot_01` … `slot_30` (the chapter saves) and `suspend`
-//! (the one-time battle save).
+//! (the one-time battle save). `last_save` holds the key written last: a
+//! save carries no time of day (only `app` reads a clock).
 //!
 //! Reading a save never panics: text that isn't a save is
 //! [`SaveError::Corrupt`], a save written by another
@@ -10,7 +11,7 @@
 use std::fmt;
 
 use trpg_content::Content;
-use trpg_core::{Campaign, GameMode, SaveFile, SaveHeader, SavePoint};
+use trpg_core::{Campaign, GameMode, LeadProfile, SaveFile, SaveHeader, SavePoint};
 
 use crate::screen::Ctx;
 use crate::storage::{Storage, StorageError};
@@ -21,6 +22,10 @@ pub const SLOTS: usize = 30;
 
 /// [`Storage`] key of the suspend save.
 pub const SUSPEND_KEY: &str = "suspend";
+
+/// [`Storage`] key of the note of which save was written last: the key
+/// [`write()`] stored it under.
+pub const LAST_SAVE_KEY: &str = "last_save";
 
 /// [`Storage`] key of save slot `slot` (1 to [`SLOTS`]): `slot_01` …
 pub fn slot_key(slot: usize) -> String {
@@ -90,10 +95,31 @@ pub fn read(storage: &dyn Storage, key: &str) -> Result<Option<SaveFile>, SaveEr
     }
 }
 
-/// Stores `save` at `key`, replacing what was there.
+/// Stores `save` at `key`, replacing what was there, and notes `key` as
+/// the save written last ([`LAST_SAVE_KEY`]). The save is saved even if
+/// the note can't be written: [`latest_lead`] then makes do without it.
 pub fn write(storage: &mut dyn Storage, key: &str, save: &SaveFile) -> Result<(), SaveError> {
     let text = encode(save)?;
-    storage.write(key, &text).map_err(SaveError::Storage)
+    storage.write(key, &text).map_err(SaveError::Storage)?;
+    storage.write(LAST_SAVE_KEY, key).ok();
+    Ok(())
+}
+
+/// The lead of the most recent save (ticket 0818: the title's cinematic
+/// shows the lead the player last played): of the save written last
+/// ([`LAST_SAVE_KEY`]); if nothing says which that is, or it can't be read
+/// any more (a suspend save is deleted when it is resumed), the suspend
+/// save's, else the first slot's that holds a readable save. `None`
+/// without a readable save.
+pub fn latest_lead(storage: &dyn Storage) -> Option<LeadProfile> {
+    let last = storage.read(LAST_SAVE_KEY).ok().flatten();
+    let slots = (1..=SLOTS).map(slot_key);
+    let keys = last
+        .into_iter()
+        .chain([SUSPEND_KEY.to_owned()])
+        .chain(slots);
+    let mut saves = keys.filter_map(|key| read(storage, &key).ok().flatten());
+    saves.next().map(|save| save.campaign.lead)
 }
 
 /// Whether there is a suspend save (readable or not).

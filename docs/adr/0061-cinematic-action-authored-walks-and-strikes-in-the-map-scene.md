@@ -59,8 +59,8 @@ cinematic::action`), reporting every problem at once:
 
 Loaded, names are unit ids, times whole milliseconds, and a path is every
 tile of the walk (`ShotAction`, `ActionDef`, `Act`). An enemy's `id` isn't
-in `BattleDef` (core has no use for it): `battle::load_unit_names` reads
-it from the battle files, as `battle::load_lights` reads their light.
+in `BattleDef` (core has no use for it): `battle::unit_names` reads
+it from the battle's file, as `battle::load_lights` reads their light.
 
 ### 2. The action clock
 

@@ -13,8 +13,8 @@
 use std::collections::BTreeMap;
 use std::rc::Rc;
 
-use trpg_content::{CinematicDef, ImageId, Shot, ShotAction, battle_campaign};
-use trpg_core::{BattleDef, GameMode, Pos};
+use trpg_content::{CinematicDef, ImageId, Shot, ShotAction, Side, battle_campaign};
+use trpg_core::{BattleDef, GameMode, LEAD_ID, LeadGender, LeadProfile, Pos};
 
 use crate::cinema;
 use crate::color::UiColor;
@@ -26,8 +26,12 @@ use crate::screens::title::glyph::paint_logo;
 use crate::settings::MapZoom;
 
 mod action;
+pub mod faces;
+pub mod talk;
 
 pub use action::{FALL_MS, FLASH_MS, LUNGE_MS, LUNGE_TILES, action_state};
+use faces::{Face, draw_faces, first_x};
+use talk::{TalkBox, talk_at};
 
 /// An area surely big enough for one tile of any skin, to ask its size.
 const ROOMY: Rect = Rect::new(0, 0, 64, 64);
@@ -71,6 +75,16 @@ impl Timeline {
         self.length_ms
     }
 
+    /// How long shot `index` lasts, in milliseconds: until the next one
+    /// starts, the last until the end. 0 for a shot there isn't.
+    pub fn shot_ms(&self, index: usize) -> u32 {
+        let Some(&start) = self.starts_ms.get(index) else {
+            return 0;
+        };
+        let end = self.starts_ms.get(index + 1).copied();
+        end.unwrap_or(self.length_ms).saturating_sub(start)
+    }
+
     /// `t_ms` wrapped at the length: the cinematic loops.
     pub fn wrapped_ms(&self, t_ms: u64) -> u32 {
         u32::try_from(t_ms % u64::from(self.length_ms)).unwrap_or(0)
@@ -80,7 +94,7 @@ impl Timeline {
     /// the length. A shot lasts until the next one starts, the last until
     /// the end; time before the first shot's start is the first shot's.
     pub fn at_ms(&self, t_ms: u64) -> ShotAt {
-        let (index, into) = self.shot_ms(t_ms);
+        let (index, into) = self.into_shot(t_ms);
         let start = self.wrapped_ms(t_ms) - into;
         let end = self.starts_ms.get(index + 1).map_or(self.length_ms, |&s| s);
         let span = end.saturating_sub(start).max(1);
@@ -91,7 +105,7 @@ impl Timeline {
 
     /// The shot `t_ms` falls in ([`at_ms`](Self::at_ms)), counted from 0,
     /// and how many milliseconds into it that is.
-    pub fn shot_ms(&self, t_ms: u64) -> (usize, u32) {
+    pub fn into_shot(&self, t_ms: u64) -> (usize, u32) {
         let t = self.wrapped_ms(t_ms);
         let index = self.starts_ms.iter().rposition(|&s| s <= t).unwrap_or(0);
         let start = self.starts_ms.get(index).map_or(0, |&s| s.min(t));
@@ -226,6 +240,14 @@ enum Built {
     },
     /// The title's logo.
     Logo,
+    /// Text boxes of a scene, one after another.
+    Talk { boxes: Vec<TalkBox> },
+    /// Faces crossing the screen from `from`.
+    Characters {
+        faces: Vec<Face>,
+        expression: String,
+        from: Side,
+    },
 }
 
 /// What a frame of a cinematic shows, as plain data: for tests of what
@@ -245,7 +267,23 @@ pub enum Frame {
         /// when screens show no idle motion.
         sparks: Option<u32>,
     },
-    /// Nothing: a shot whose map isn't there.
+    /// A text box of a scene in the dialogue screen's look.
+    Talk {
+        /// Which of the shot's boxes, counted from 0.
+        index: usize,
+        /// How many characters of its text are typed out.
+        shown: usize,
+    },
+    /// Faces in frames with their names, side by side.
+    Characters {
+        /// The column of the first face's frame (off screen below 0 and
+        /// from the screen's width on).
+        x: i32,
+        /// Columns from each face to the one after it; below 0 when they
+        /// come from the left.
+        step: i32,
+    },
+    /// Nothing: a shot whose map or scene isn't there.
     Blank,
 }
 
@@ -256,6 +294,8 @@ pub struct CinematicPlayer {
     shots: Vec<Built>,
     /// The picture behind the logo.
     backdrop: Option<ImageId>,
+    /// The lead the talk and characters shots show.
+    lead: LeadProfile,
 }
 
 impl CinematicPlayer {
@@ -266,8 +306,19 @@ impl CinematicPlayer {
     /// each frame, by the skin `ctx` has then: make the player again
     /// after a change of skin.) The logo is on
     /// no backdrop until [`with_backdrop`](Self::with_backdrop) gives one.
-    pub fn new(ctx: &Ctx, id: &str) -> Option<Self> {
+    ///
+    /// `lead` is who the talk and characters shots show as the lead, by
+    /// name and look: the most recent save's
+    /// ([`save::latest_lead`](crate::save::latest_lead)). `None`: the
+    /// names table's name for the lead, and the male look
+    /// (`docs/design/title-screen.md`, *Intro cinematic*). Their scenes
+    /// are read in the player's language as it is now.
+    pub fn new(ctx: &Ctx, id: &str, lead: Option<LeadProfile>) -> Option<Self> {
         let def = ctx.content.cinematics.get(id)?;
+        let lead = lead.unwrap_or_else(|| {
+            let name = ctx.words().name(&ctx.content.names, LEAD_ID);
+            LeadProfile::new(name, LeadGender::Male)
+        });
         let skin = shot_skin(ctx);
         let mut stages: BTreeMap<&str, Option<Stage>> = BTreeMap::new();
         let shots = def.shots.iter().map(|s| match &s.shot {
@@ -295,11 +346,32 @@ impl CinematicPlayer {
                 }
             }
             Shot::Logo => Built::Logo,
+            Shot::Talk {
+                scene,
+                first,
+                count,
+            } => {
+                let scene = ctx.content.dialogue.get(scene);
+                let boxes = scene.map(|s| talk::boxes(ctx, s, &lead, *first, *count));
+                Built::Talk {
+                    boxes: boxes.unwrap_or_default(),
+                }
+            }
+            Shot::Characters {
+                who,
+                expression,
+                from,
+            } => Built::Characters {
+                faces: faces::faces(ctx, who, &lead),
+                expression: expression.clone(),
+                from: *from,
+            },
         });
         Some(Self {
             shots: shots.collect(),
             timeline: Timeline::of(def),
             backdrop: None,
+            lead,
         })
     }
 
@@ -308,6 +380,27 @@ impl CinematicPlayer {
     #[must_use]
     pub fn with_backdrop(self, backdrop: Option<ImageId>) -> Self {
         Self { backdrop, ..self }
+    }
+
+    /// The lead its talk and characters shots show.
+    pub fn lead(&self) -> &LeadProfile {
+        &self.lead
+    }
+
+    /// The text boxes of shot `index`, if it is a talk shot.
+    pub fn talk_boxes(&self, index: usize) -> Option<&[TalkBox]> {
+        match self.shots.get(index) {
+            Some(Built::Talk { boxes }) => Some(boxes),
+            _ => None,
+        }
+    }
+
+    /// The faces of shot `index`, if it is a characters shot.
+    pub fn faces(&self, index: usize) -> Option<&[Face]> {
+        match self.shots.get(index) {
+            Some(Built::Characters { faces, .. }) => Some(faces),
+            _ => None,
+        }
     }
 
     /// When its shots start and how long it is.
@@ -344,7 +437,23 @@ impl CinematicPlayer {
                 sparks: (ctx.idle_motion == IdleMotion::On)
                     .then(|| self.timeline.wrapped_ms(millis(t))),
             },
-            Some(Built::MapPan { stage: None, .. }) | None => Frame::Blank,
+            Some(Built::Talk { boxes }) => {
+                #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
+                let shot_s = self.timeline.shot_ms(at.index) as f32 / 1000.0;
+                let lens: Vec<usize> = boxes.iter().map(TalkBox::chars).collect();
+                let speed = ctx.settings().text_speed.chars_per_s();
+                match talk_at(at.progress, shot_s, &lens, speed) {
+                    Some((index, shown)) => Frame::Talk { index, shown },
+                    None => Frame::Blank,
+                }
+            }
+            Some(Built::Characters { faces, from, .. }) if !faces.is_empty() => {
+                let (x, step) = first_x(at.progress, faces.len(), *from, screen.w);
+                Frame::Characters { x, step }
+            }
+            Some(Built::MapPan { stage: None, .. } | Built::Characters { .. }) | None => {
+                Frame::Blank
+            }
         }
     }
 
@@ -355,7 +464,7 @@ impl CinematicPlayer {
     /// started), or where it starts in a shot with no action. `None` when
     /// the shot isn't of a map.
     pub fn scene(&self, t: f32) -> Option<MapScene> {
-        let (index, into_ms) = self.timeline.shot_ms(millis(t));
+        let (index, into_ms) = self.timeline.into_shot(millis(t));
         let Some(Built::MapPan {
             stage: Some(stage),
             action,
@@ -379,32 +488,47 @@ impl CinematicPlayer {
     pub fn draw(&self, ctx: &Ctx, t: f32, brightness: f32, buf: &mut GlyphBuffer) {
         let c = |u| ctx.palette.get(u);
         let (text, black) = (c(UiColor::Text), c(UiColor::Black));
-        let picture = match self.shots.get(self.timeline.at(t).index) {
-            // Units that stand were painted once; units that act are
-            // painted as they are now.
-            Some(Built::MapPan {
-                stage: Some(stage),
-                action,
-                ..
-            }) => {
+        buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
+        let shot = self.shots.get(self.timeline.at(t).index);
+        match (self.frame(ctx, t, buf.bounds()), shot) {
+            (
+                Frame::MapPan { origin_px, zoom },
+                Some(Built::MapPan {
+                    stage: Some(stage),
+                    action,
+                    ..
+                }),
+            ) => {
+                // Units that stand were painted once; units that act are
+                // painted as they are now.
                 let acted = action.as_ref().and_then(|_| self.scene(t));
                 let skin = shot_skin(ctx);
                 let now = acted.and_then(|scene| MapPicture::paint(ctx, skin.as_ref(), &scene));
-                Some(now.map_or_else(|| Rc::clone(&stage.picture.scene), |p| p.scene))
-            }
-            _ => None,
-        };
-        match (self.frame(ctx, t, buf.bounds()), picture) {
-            (Frame::MapPan { origin_px, zoom }, Some(picture)) => {
+                let picture = now.map_or_else(|| Rc::clone(&stage.picture.scene), |p| p.scene);
                 buf.fill_rect(buf.bounds(), Cell::see_through(' ', text));
                 buf.set_backdrop(picture, buf.bounds(), origin_px, zoom);
             }
             (Frame::Logo { sparks }, _) => paint_logo(ctx, self.backdrop, sparks, buf),
-            _ => buf.fill_rect(buf.bounds(), Cell::new(' ', text, black)),
+            (Frame::Talk { index, shown }, Some(Built::Talk { boxes })) => {
+                if let Some(talk) = boxes.get(index) {
+                    talk.draw(ctx, &self.lead, shown, buf);
+                }
+            }
+            (
+                Frame::Characters { x, step },
+                Some(Built::Characters {
+                    faces, expression, ..
+                }),
+            ) => {
+                draw_faces(ctx, buf, faces, expression, (x, step));
+            }
+            _ => {}
         }
         buf.fade(brightness);
     }
 }
 
+#[cfg(test)]
+mod shot_tests;
 #[cfg(test)]
 mod tests;

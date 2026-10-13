@@ -2,7 +2,7 @@
 //! lead at (3, 5) and the knight at (3, 6), the brigand the battle file
 //! calls `road_brigand` at (8, 3).
 
-use trpg_core::{CharacterId, Pos};
+use trpg_core::{CharacterId, Pos, UnitId};
 
 use super::*;
 
@@ -197,7 +197,7 @@ fn shots_share_a_named_list() {
         .iter()
         .map(|s| match &s.shot {
             Shot::MapPan { action, .. } => action.as_ref().unwrap(),
-            Shot::Logo => panic!("a logo"),
+            other => panic!("{other:?}"),
         })
         .collect();
     assert_eq!((actions[0].from_ms, actions[1].from_ms), (0, 4000));
@@ -287,15 +287,6 @@ fn units_are_those_on_the_battles_map_at_its_start() {
             target: UnitId(1),
             hp_left: 50
         }
-    );
-    // Without the battles' names (a battle file that doesn't parse), an
-    // enemy's `id` is unknown.
-    let none_named = BTreeMap::new();
-    let src = acted(&strike("0", "lead", "road_brigand", "50"));
-    let errors = from_source("c.ron", "t", &src, &refs(&c, &none_named)).unwrap_err();
-    assert_eq!(
-        errors[0].message,
-        format!("shot 1: action 1: {}", none("road_brigand"))
     );
 }
 
@@ -493,18 +484,15 @@ fn every_problem_of_an_action_is_reported_at_once() {
 
 #[test]
 fn the_battles_name_their_enemies_by_unit_id() {
-    let names = crate::battle::load_unit_names();
+    let names = crate::battle::unit_names;
     assert_eq!(
-        names["test"],
+        names("test"),
         BTreeMap::from([("road_brigand".to_owned(), BRIGAND)])
     );
-    // Chapter 1's file names none; every battle file has an entry.
-    assert_eq!(names["ch01"], BTreeMap::new());
-    let c = content();
-    assert_eq!(
-        names.keys().collect::<Vec<_>>(),
-        c.battles.keys().collect::<Vec<_>>()
-    );
+    // Chapter 1's file names none; nor does a battle that has no file.
+    assert_eq!(names("ch01"), BTreeMap::new());
+    assert_eq!(names("nope"), BTreeMap::new());
+    assert_eq!(names(""), BTreeMap::new());
     // Ids follow the slots that aren't numbered after the enemies.
     let of = crate::battle::unit_names_of;
     let src = "(id: \"b\", map: \"m\",
