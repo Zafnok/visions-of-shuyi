@@ -1,12 +1,14 @@
 //! The "Play test cinematic" debug tool through the Harness (tickets 0817,
-//! 0818, ADR-0060): `assets-test/cinematics/test.ron` plays on the screen's
-//! own clock (a pan over the test battle's map for six seconds, two text
-//! boxes of the test scene for four, three faces crossing for six, the
-//! logo for four, each after a hard cut), loops, and closes on Cancel.
+//! 0818 and 0827, ADR-0060, ADR-0061): `assets-test/cinematics/test.ron`
+//! plays on the screen's own clock (a pan over the test battle's map for
+//! six seconds, in which the lead walks up to the brigand and fells it,
+//! two text boxes of the test scene for four, three faces crossing for
+//! six, the logo for four, each after a hard cut), loops, and closes on
+//! Cancel.
 
 use insta::assert_snapshot;
 use trpg_content::new_campaign;
-use trpg_core::{GameMode, LeadGender, LeadProfile, SaveFile};
+use trpg_core::{GameMode, LeadGender, LeadProfile, Pos, SaveFile, UnitId};
 use trpg_ui::cinematic::{CinematicPlayer, Frame};
 use trpg_ui::color::UiColor;
 use trpg_ui::console::{CONSOLE_H, CONSOLE_W};
@@ -14,6 +16,7 @@ use trpg_ui::debug::CinematicScreen;
 use trpg_ui::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::map_view::{Facing, MapScene, UnitView};
 use trpg_ui::save;
 
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);
@@ -40,6 +43,20 @@ fn frame(h: &Harness) -> Frame {
     shown.unwrap_or(Frame::Blank)
 }
 
+/// The map scene the cinematic shows now, if it shows a map.
+fn scene(h: &Harness) -> Option<MapScene> {
+    let screen = h.game().screen::<CinematicScreen>()?;
+    screen.player()?.scene(screen.time())
+}
+
+/// The unit `id` as the cinematic shows it now, if it is there.
+fn unit(h: &Harness, id: UnitId) -> Option<UnitView> {
+    scene(h)?.unit(id).cloned()
+}
+
+const LEAD: UnitId = UnitId(1);
+const BRIGAND: UnitId = UnitId(3);
+
 /// The left edge of the map picture on screen, in its own pixels.
 fn pan_x(h: &Harness) -> f32 {
     match frame(h) {
@@ -55,20 +72,56 @@ fn the_test_cinematic_plays_cuts_to_the_logo_and_loops() {
     assert!(time(&h) < 0.05, "{}", time(&h));
     assert!(pan_x(&h) < 0.01);
     assert_snapshot!("cinematic_pan_start", h.snapshot());
-    // Its middle: half of the 24 pixels there are to move.
+    // Everyone stands where the battle starts.
+    let (lead, brigand) = (unit(&h, LEAD).unwrap(), unit(&h, BRIGAND).unwrap());
+    assert_eq!((lead.pos, brigand.pos), (Pos::new(3, 5), Pos::new(8, 3)));
+    let full = brigand.hp;
+    assert_eq!(full.0, full.1);
+    // Mid-walk: the lead has turned the corner and heads right, between
+    // two tiles of row 3.
+    h.wait(2.25 - time(&h));
+    assert!((time(&h) - 2.25).abs() < 0.02, "{}", time(&h));
+    let lead = unit(&h, LEAD).unwrap();
+    assert_eq!((lead.pos, lead.facing), (Pos::new(4, 3), Facing::Right));
+    assert!(
+        lead.offset.0 > 0.3 && lead.offset.0 < 0.7,
+        "{:?}",
+        lead.offset
+    );
+    assert_eq!(unit(&h, BRIGAND).unwrap(), brigand);
+    assert_snapshot!("cinematic_mid_walk", h.snapshot());
+    // The pan's middle: half of the 24 pixels there are to move.
     h.wait(3.0 - time(&h));
     assert!((time(&h) - 3.0).abs() < 0.02, "{}", time(&h));
     assert!((pan_x(&h) - 12.0).abs() < 0.2, "{}", pan_x(&h));
     let middle = h.snapshot();
     assert!(middle.contains("--- backdrop: clip 0,0 100x32  origin 12."));
     assert!(middle.contains("zoom 4 ---"));
-    assert_snapshot!("cinematic_pan_middle", middle);
-    // Just before the cut it is nearly at its end.
-    h.wait(2.9);
+    // Mid-strike: the lead, arrived beside the brigand, leans at it, and
+    // the brigand flashes with less HP.
+    h.wait(4.3 - time(&h));
+    let (lead, struck) = (unit(&h, LEAD).unwrap(), unit(&h, BRIGAND).unwrap());
+    assert_eq!((lead.pos, lead.facing), (Pos::new(7, 3), Facing::Right));
+    assert!(
+        lead.offset.0 > 0.0 && lead.offset.1 == 0.0,
+        "{:?}",
+        lead.offset
+    );
+    assert!(struck.hp.0 > 0 && struck.hp.0 < full.0, "{:?}", struck.hp);
+    assert!(struck.flash > 0.2 && struck.flash < 0.8, "{}", struck.flash);
+    assert_eq!((struck.pos, struck.hp.1), (brigand.pos, full.1));
+    assert_snapshot!("cinematic_mid_strike", h.snapshot());
+    // Just before the cut the pan is nearly at its end, and the brigand
+    // has fallen: the others are still there.
+    h.wait(5.9 - time(&h));
     assert!(pan_x(&h) > 23.9, "{}", pan_x(&h));
+    assert_eq!(unit(&h, BRIGAND), None);
+    assert_eq!(scene(&h).unwrap().units.len(), 2);
+    assert_eq!(unit(&h, LEAD).unwrap().pos, Pos::new(7, 3));
     // A hard cut to the dialogue screen's look, no map behind it: the
     // first box's text typing out, the lord speaking on the left.
-    h.wait(0.3);
+    h.wait(6.2 - time(&h));
+    assert_eq!(scene(&h), None);
     let Frame::Talk { index: 0, shown } = frame(&h) else {
         panic!("not the first box: {:?}", frame(&h));
     };
@@ -118,6 +171,7 @@ fn the_test_cinematic_plays_cuts_to_the_logo_and_loops() {
     // The logo: a hard cut again.
     h.wait(16.5 - time(&h));
     assert_eq!(frame(&h), Frame::Logo { sparks: None });
+    assert_eq!(scene(&h), None);
     let logo = h.snapshot();
     assert!(!logo.contains("--- backdrop"));
     assert_snapshot!("cinematic_logo", logo);
@@ -125,6 +179,8 @@ fn the_test_cinematic_plays_cuts_to_the_logo_and_loops() {
     h.wait(4.0);
     assert!(time(&h) < 1.0, "{}", time(&h));
     assert!(pan_x(&h) < 1.0);
+    // The brigand is back where it started, unhurt.
+    assert_eq!(unit(&h, BRIGAND), Some(brigand));
     // Nothing but Cancel does anything, and nothing makes a sound.
     h.clear_audio();
     h.keys("f Up Down Left Right");
@@ -163,6 +219,17 @@ fn it_follows_the_map_skin_in_use() {
     // The test tileset: 14 × 8 tiles of 24 px, in whole cells.
     assert_eq!((scene.width(), scene.height()), (42, 12));
     assert!(!scene.sprites().is_empty());
+    // Its units are sprites: a walking one is drawn somewhere else each
+    // moment, the ground the same.
+    let sprites = |h: &Harness| h.game().buffer().backdrop().unwrap().scene().sprites();
+    let standing = sprites(&h);
+    h.wait(2.25);
+    let walking = sprites(&h);
+    assert_eq!(standing.len(), walking.len());
+    assert_ne!(standing, walking);
+    // Felled, the brigand's sprites are gone.
+    h.wait(3.6);
+    assert!(sprites(&h).len() < standing.len());
 }
 
 /// The frame of `player` at `t`, drawn as the debug tool draws it.

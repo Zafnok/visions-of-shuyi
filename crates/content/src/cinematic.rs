@@ -3,13 +3,15 @@
 //! format is described in `assets/cinematics/README.md`; the loader checks
 //! every rule listed there.
 
-use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::lead::{self, LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE, Part};
-use trpg_core::{BattleDef, CharacterId};
+use trpg_core::{BattleDef, CharacterId, ClassTable, TerrainTable};
 
 use crate::audio::AudioManifest;
+use crate::battle::bare;
 use crate::bundle;
 use crate::character::CharacterTable;
 use crate::dialogue::{
@@ -20,6 +22,11 @@ use crate::lang::text_width;
 use crate::names::{Names, name_token};
 use crate::portrait::PortraitTable;
 use crate::ron_loader::parse_ron;
+
+mod action;
+
+pub use action::{Act, ActionDef, ShotAction};
+use action::{RawAction, RawActionRef};
 
 /// Directory of the cinematic files inside the asset bundle.
 pub const CINEMATICS_DIR: &str = "cinematics";
@@ -76,6 +83,9 @@ pub enum Shot {
         /// Screen pixels per map pixel: 1 to [`MAX_ZOOM`], the same for
         /// the whole shot.
         zoom: u8,
+        /// What its units act out (ticket 0827), if anything: without it
+        /// they stand where they start.
+        action: Option<ShotAction>,
     },
     /// The title's logo over its backdrop.
     Logo,
@@ -132,6 +142,10 @@ pub struct Refs<'a> {
     pub portraits: &'a PortraitTable,
     /// The names table: how long a name token can get.
     pub names: &'a Names,
+    /// The classes: what a walking unit's movement type is (0827).
+    pub classes: &'a ClassTable,
+    /// The terrain rules: which tiles a movement type can enter.
+    pub terrain: &'a TerrainTable,
 }
 
 impl<'a> Refs<'a> {
@@ -144,6 +158,8 @@ impl<'a> Refs<'a> {
             characters: &content.characters,
             portraits: &content.portraits,
             names: &content.names,
+            classes: &content.classes,
+            terrain: &content.terrain.rules,
         }
     }
 }
@@ -190,6 +206,9 @@ impl TilePoint {
 struct RawCinematic {
     id: String,
     length: RawLength,
+    /// Action lists by name, for shots to share.
+    #[serde(default)]
+    actions: BTreeMap<String, Vec<RawAction>>,
     shots: Vec<RawShotAt>,
 }
 
@@ -214,6 +233,12 @@ enum RawShot {
         from: (f32, f32),
         to: (f32, f32),
         zoom: u8,
+        /// Written bare: `action_from: 2.5`.
+        #[serde(default, deserialize_with = "bare")]
+        action_from: Option<f32>,
+        /// Written bare: `action: [ … ]` or `action: "name"`.
+        #[serde(default, deserialize_with = "bare")]
+        action: Option<RawActionRef>,
     },
     Logo,
     Talk {
@@ -281,6 +306,11 @@ pub fn load_all(refs: Refs<'_>) -> Result<BTreeMap<String, CinematicDef>, Vec<Co
 ///   one before it, or not before the end;
 /// - a map pan whose battle doesn't exist, whose `from` or `to` isn't on
 ///   the battle's map, or whose zoom isn't 1 to [`MAX_ZOOM`];
+/// - a map pan's action: an `action_from` that isn't a time, or with no
+///   `action`; an `action` naming no list of the file's `actions`; a
+///   named list no shot uses; and every problem of the list itself
+///   (`action::check`), a named one's reported once for each battle it is
+///   used on.
 /// - a talk shot whose scene doesn't exist, that shows no box, whose
 ///   boxes aren't all among the scene's [`opening_boxes`] (the scene has
 ///   fewer, or a reply choice comes first), or one of whose boxes may
@@ -325,6 +355,12 @@ pub fn from_source(
         err("shots: a cinematic needs at least one shot".to_owned());
     }
     let mut shots = Vec::new();
+    let mut lists = ActionLists {
+        table: &raw.actions,
+        refs,
+        named: BTreeMap::new(),
+        used: BTreeSet::new(),
+    };
     for (i, RawShotAt { at, shot }) in raw.shots.iter().enumerate() {
         let n = i + 1;
         let at_ms = millis(*at);
@@ -349,11 +385,18 @@ pub fn from_source(
         for problem in shot_problems(shot, refs) {
             err(format!("shot {n}: {problem}"));
         }
+        let mut checked = shot.checked();
+        if let Shot::MapPan { action, .. } = &mut checked {
+            let mut problems = Vec::new();
+            *action = lists.of_shot(n, shot, &mut problems);
+            problems.into_iter().for_each(&mut err);
+        }
         shots.push(ShotDef {
             at_ms: at_ms.unwrap_or(0),
-            shot: shot.checked(),
+            shot: checked,
         });
     }
+    lists.unused().into_iter().for_each(&mut err);
     match length_ms {
         Some(length_ms) if errors.is_empty() => Ok(CinematicDef {
             id: raw.id,
@@ -362,6 +405,88 @@ pub fn from_source(
             shots,
         }),
         _ => Err(errors),
+    }
+}
+
+/// The action lists of one cinematic file, as its shots use them.
+struct ActionLists<'a, 'r> {
+    /// The file's `actions`: lists by name.
+    table: &'a BTreeMap<String, Vec<RawAction>>,
+    refs: Refs<'r>,
+    /// Each named list as checked against each battle it is used on, by
+    /// (name, battle).
+    named: BTreeMap<(&'a str, &'a str), Vec<ActionDef>>,
+    /// The named lists a shot has used.
+    used: BTreeSet<&'a str>,
+}
+
+impl<'a> ActionLists<'a, '_> {
+    /// The action of `shot` (shot `n` of the file, counted from 1), if it
+    /// is a map pan with one, adding what is wrong with it to `problems`.
+    /// A named list's own problems are added the first time a shot uses it
+    /// on a battle; nothing is checked on a battle that doesn't exist.
+    fn of_shot(
+        &mut self,
+        n: usize,
+        shot: &'a RawShot,
+        problems: &mut Vec<String>,
+    ) -> Option<ShotAction> {
+        let RawShot::MapPan {
+            battle,
+            action_from,
+            action,
+            ..
+        } = shot
+        else {
+            return None;
+        };
+        let from_ms = action_from.map(millis);
+        if let Some((from, None)) = action_from.zip(from_ms) {
+            problems.push(format!("shot {n}: action_from {from} is not a time"));
+        }
+        if action.is_none() && action_from.is_some() {
+            problems.push(format!("shot {n}: action_from without an action"));
+        }
+        let refs = self.refs;
+        let def = refs.battles.get(battle);
+        let actions = match (action.as_ref()?, def) {
+            (RawActionRef::List(list), Some(def)) => {
+                let (actions, wrong) = action::check(list, def, refs);
+                problems.extend(wrong.iter().map(|w| format!("shot {n}: {w}")));
+                actions
+            }
+            (RawActionRef::Named(name), def) => {
+                let Some((name, list)) = self.table.get_key_value(name) else {
+                    problems.push(format!("shot {n}: no actions named \"{name}\""));
+                    return None;
+                };
+                self.used.insert(name);
+                let key = (name.as_str(), battle.as_str());
+                if let Entry::Vacant(unchecked) = self.named.entry(key) {
+                    let (actions, wrong) = action::check(list, def?, refs);
+                    let on = format!("actions \"{name}\" (on battle \"{battle}\")");
+                    problems.extend(wrong.iter().map(|w| format!("{on}: {w}")));
+                    unchecked.insert(actions);
+                }
+                self.named.get(&key)?.clone()
+            }
+            (RawActionRef::List(_), None) => return None,
+        };
+        Some(ShotAction {
+            from_ms: from_ms.flatten().unwrap_or(0),
+            actions,
+        })
+    }
+
+    /// A problem for each named list no shot has used (so never checked).
+    fn unused(&self) -> Vec<String> {
+        let unused = self
+            .table
+            .keys()
+            .filter(|name| !self.used.contains(name.as_str()));
+        unused
+            .map(|name| format!("actions \"{name}\": no shot uses it"))
+            .collect()
     }
 }
 
@@ -386,6 +511,7 @@ fn shot_problems(shot: &RawShot, refs: Refs<'_>) -> Vec<String> {
             from,
             to,
             zoom,
+            ..
         } => pan_problems(refs.battles, battle, [("from", *from), ("to", *to)], *zoom),
         RawShot::Logo => Vec::new(),
         RawShot::Talk {
@@ -534,7 +660,7 @@ fn characters_problems(refs: Refs<'_>, who: &[String], expression: &str) -> Vec<
 }
 
 impl RawShot {
-    /// The shot as the game keeps it.
+    /// The shot as the game keeps it, without its action.
     fn checked(&self) -> Shot {
         match self {
             RawShot::MapPan {
@@ -542,11 +668,13 @@ impl RawShot {
                 from,
                 to,
                 zoom,
+                ..
             } => Shot::MapPan {
                 battle: battle.clone(),
                 from: TilePoint::new(from.0, from.1),
                 to: TilePoint::new(to.0, to.1),
                 zoom: *zoom,
+                action: None,
             },
             RawShot::Logo => Shot::Logo,
             RawShot::Talk {

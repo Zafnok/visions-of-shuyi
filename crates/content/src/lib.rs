@@ -51,7 +51,7 @@ pub use battle::BattleRefs;
 pub use battler::{Battler, BattlerTable};
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
-pub use cinematic::{CinematicDef, Shot, ShotDef, TilePoint};
+pub use cinematic::{Act, ActionDef, CinematicDef, Shot, ShotAction, ShotDef, TilePoint};
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Present, Scene, Side, Step};
 pub use error::{ContentError, ContentErrors};
@@ -237,8 +237,8 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         scenes,
         audio.as_ref().ok(),
     );
-    let (fields, songs) = (battles.as_ref().ok(), audio.as_ref().ok());
-    let cinematics = load_cinematics(fields, songs, scenes, (cast, faces, known));
+    let (fields, rules) = (battles.as_ref().ok(), (&classes, &terrain));
+    let cinematics = load_cinematics(fields, cues, scenes, (cast, faces, known), rules);
     let credits = credits::load(audio.as_ref().ok());
     let supports = support::load(characters.as_ref().ok(), scenes);
     let dialogue = check_presence(
@@ -610,20 +610,25 @@ fn load_title(images: Option<&ImageTable>) -> Result<TitleArt, Vec<ContentError>
 
 /// The cinematics, checked against the battles, the music, the scenes and
 /// the characters (`people`: the characters, their portraits, the names)
-/// they name. Skipped (none, no errors) when one of those failed, or when
-/// there are no battles: they failed, or were skipped because what they
-/// need failed.
+/// they name, and their actions against the tiles a unit can walk on
+/// (`rules`: the classes and the terrain). Skipped (none, no errors) when
+/// one of those failed, or when there are no battles: they failed, or
+/// were skipped because what they need failed.
 fn load_cinematics(
     battles: Option<&BTreeMap<String, BattleDef>>,
     audio: Option<&AudioManifest>,
     scenes: Option<&DialogueTable>,
     people: People<'_>,
+    rules: Rules<'_>,
 ) -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
     let battles = battles.filter(|b| !b.is_empty());
     let (Some(battles), Some(audio), Some(scenes)) = (battles, audio, scenes) else {
         return Ok(BTreeMap::new());
     };
     let (Some(characters), Some(portraits), Some(names)) = people else {
+        return Ok(BTreeMap::new());
+    };
+    let (Ok(classes), Ok(terrain)) = rules else {
         return Ok(BTreeMap::new());
     };
     cinematic::load_all(cinematic::Refs {
@@ -633,8 +638,16 @@ fn load_cinematics(
         characters,
         portraits,
         names,
+        classes,
+        terrain: &terrain.rules,
     })
 }
+
+/// The classes and the terrain as their loaders left them.
+type Rules<'a> = (
+    &'a Result<ClassTable, Vec<ContentError>>,
+    &'a Result<TerrainDef, Vec<ContentError>>,
+);
 
 /// The characters, their portraits and the names table, each if it loaded.
 type People<'a> = (
@@ -877,6 +890,7 @@ mod tests {
 
     fn ok_cinematics() -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
         let faces = ok_portraits().ok();
+        let (classes, terrain) = (ok_classes(), ok_terrain());
         load_cinematics(
             ok_story().0.ok().as_ref(),
             audio::load().ok().as_ref(),
@@ -886,6 +900,7 @@ mod tests {
                 faces.as_ref(),
                 names::load().ok().as_ref(),
             ),
+            (&classes, &terrain),
         )
     }
 
@@ -1185,22 +1200,26 @@ mod tests {
         let (battles, audio) = (ok_story().0.ok(), audio::load().ok());
         let (scenes, cast) = (ok_dialogue().ok(), ok_characters().ok());
         let (faces, names) = (ok_portraits().ok(), names::load().ok());
+        let (classes, terrain, failed) = (ok_classes(), ok_terrain(), Err(Vec::new()));
         let (b, a, s) = (battles.as_ref(), audio.as_ref(), scenes.as_ref());
         let people = (cast.as_ref(), faces.as_ref(), names.as_ref());
+        let rules = (&classes, &terrain);
         let none = BTreeMap::new();
         let skipped = [
-            load_cinematics(None, a, s, people),
-            load_cinematics(Some(&none), a, s, people),
-            load_cinematics(b, None, s, people),
-            load_cinematics(b, a, None, people),
-            load_cinematics(b, a, s, (None, people.1, people.2)),
-            load_cinematics(b, a, s, (people.0, None, people.2)),
-            load_cinematics(b, a, s, (people.0, people.1, None)),
+            load_cinematics(None, a, s, people, rules),
+            load_cinematics(Some(&none), a, s, people, rules),
+            load_cinematics(b, None, s, people, rules),
+            load_cinematics(b, a, None, people, rules),
+            load_cinematics(b, a, s, (None, people.1, people.2), rules),
+            load_cinematics(b, a, s, (people.0, None, people.2), rules),
+            load_cinematics(b, a, s, (people.0, people.1, None), rules),
+            load_cinematics(b, a, s, people, (&Err(Vec::new()), rules.1)),
+            load_cinematics(b, a, s, people, (rules.0, &failed)),
         ];
         for loaded in skipped {
             assert_eq!(loaded, Ok(BTreeMap::new()));
         }
-        let loaded = load_cinematics(b, a, s, people);
+        let loaded = load_cinematics(b, a, s, people, rules);
         assert!(loaded.is_ok_and(|c| c.contains_key("test")));
     }
 

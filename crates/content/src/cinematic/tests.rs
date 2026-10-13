@@ -3,6 +3,8 @@
 use super::*;
 use crate::Content;
 
+mod actions;
+
 fn content() -> Content {
     crate::load_embedded().unwrap_or_else(|e| panic!("{e}"))
 }
@@ -44,6 +46,10 @@ fn the_test_cinematic_loads() {
             from: TilePoint::new(5.75, 3.5),
             to: TilePoint::new(7.25, 3.5),
             zoom: 4,
+            action: Some(ShotAction {
+                from_ms: 0,
+                actions: actions::duel(),
+            }),
         }
     );
     let talk = ShotDef {

@@ -331,6 +331,7 @@ pub(crate) mod tests {
             facing: Facing::Down,
             frame: STANDING_FRAME,
             offset: (0.0, 0.0),
+            flash: 0.0,
         }
     }
 

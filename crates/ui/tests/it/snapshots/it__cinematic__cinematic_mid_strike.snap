@@ -1,6 +1,6 @@
 ---
 source: crates/ui/tests/it/cinematic.rs
-expression: middle
+expression: h.snapshot()
 ---
                                                                                                     
                                                                                                     
@@ -70,24 +70,24 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:see-through
 b = fg:text_dim bg:black
---- backdrop: clip 0,0 100x32  origin 12.0,0.0  zoom 4 ---
+--- backdrop: clip 0,0 100x32  origin 19.3,0.0  zoom 4 ---
 ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲
 ≈≈≈≈≈≈≈≈....······♣♣♣♣^^^^^^
 ≈≈≈≈≈≈====······....♣♣♣♣....
-..≈≈≈≈..··......Br......╦╦..
+..≈≈≈≈..··....ElBr......╦╦..
 ....······........▓▓▓▓▓▓▓▓..
-..♣♣··El..╦╦......▓▓░░╦╦▓▓..
+..♣♣··....╦╦......▓▓░░╦╦▓▓..
 ♣♣♣♣··Kn..........▓▓░░░░▓▓..
 ♣♣♠♠··............▓▓▓▓▐▌▓▓..
 --- colours ---
 aaaaaabbbbccccddddeeeeffffgg
 aaaabbbbcccchhhhhhddddffffff
 aabbbbiiiihhhhhhccccddddcccc
-ccbbbbcchhccccccjjcccccckkcc
-cccchhhhhhccccccccllllllllcc
-ccddhhmmcckkccccccllnnkkllcc
-ddddhhmmccccccccccllnnnnllcc
-ddeehhcccccccccccclllloollcc
+ccbbbbcchhccccjjkkccccccllcc
+cccchhhhhhccccccccmmmmmmmmcc
+ccddhhccccllccccccmmnnllmmcc
+ddddhhjjccccccccccmmnnnnmmcc
+ddeehhccccccccccccmmmmoommcc
 --- legend ---
 a = fg:water bg:sea
 b = fg:water bg:water_bg
@@ -98,13 +98,14 @@ f = fg:mountain bg:mountain_bg
 g = fg:peak bg:peak_bg
 h = fg:road bg:road_bg
 i = fg:wood bg:water_bg
-j = fg:enemy bg:grass_bg
-k = fg:fort bg:fort_bg
-l = fg:stone bg:stone_bg
-m = fg:player bg:grass_bg
+j = fg:player bg:grass_bg
+k = fg:enemy bg:#605b49
+l = fg:fort bg:fort_bg
+m = fg:stone bg:stone_bg
 n = fg:floor bg:floor_bg
 o = fg:wood bg:stone_bg
 --- overlays ---
-over  49,94 14x2  hp_high
+over  113,62 14x2  hp_high
 over  49,110 14x2  hp_high
-over  129,62 14x2  hp_high
+over  129,62 6x2  hp_mid
+over  135,62 8x2  black

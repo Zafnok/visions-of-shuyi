@@ -1,12 +1,20 @@
 // TEST FILE: the cinematic the tests and the debug menu's "Play test
-// cinematic" play (tickets 0817, 0818): a pan over the test battle's map,
-// two text boxes of the test scene, three faces crossing, then the logo.
-// Twenty seconds long, on no music.
+// cinematic" play (tickets 0817, 0818, 0827): a pan over the test battle's
+// map, on which the lead walks up to the brigand and fells it with two
+// strikes, two text boxes of the test scene, three faces crossing, then
+// the logo. Twenty seconds long, on no music.
 (
     id: "test",
     length: Seconds(20.0),
+    actions: {
+        "duel": [
+            (at: 0.5, do: Walk(unit: "lead", path: [(3, 5), (3, 3), (7, 3)], secs: 3.0)),
+            (at: 4.0, do: Strike(unit: "lead", target: "road_brigand", hp_left: 40)),
+            (at: 5.0, do: Strike(unit: "lead", target: "road_brigand", hp_left: 0)),
+        ],
+    },
     shots: [
-        (at: 0.0, shot: MapPan(battle: "test", from: (5.75, 3.5), to: (7.25, 3.5), zoom: 4)),
+        (at: 0.0, shot: MapPan(battle: "test", from: (5.75, 3.5), to: (7.25, 3.5), zoom: 4, action: "duel")),
         // "It's always about you." and "{lead}! You came back for us."
         (at: 6.0, shot: Talk(scene: "test", first: 6, count: 2)),
         (at: 10.0, shot: Characters(who: ["lead", "test_lord", "test_knight"], expression: "neutral")),

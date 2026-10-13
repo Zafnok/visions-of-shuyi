@@ -141,7 +141,7 @@ struct RawEnemy {
 }
 
 /// Reads an optional field written without `Some(…)`.
-fn bare<'de, D: serde::Deserializer<'de>, T: Deserialize<'de>>(
+pub(crate) fn bare<'de, D: serde::Deserializer<'de>, T: Deserialize<'de>>(
     d: D,
 ) -> Result<Option<T>, D::Error> {
     T::deserialize(d).map(Some)
@@ -267,6 +267,31 @@ pub fn light_of(
         lighting.names()
     );
     Err(ContentError::new(file, message).at(line, Some(col)))
+}
+
+/// The enemies the file of battle `battle` gives an `id`, by that `id`,
+/// as their unit ids: the names a cinematic's action knows them by
+/// (ticket 0827). Only those on the map at the start. None for a battle
+/// with no file in the bundle, or one that doesn't parse ([`load_all`]
+/// reports that).
+pub fn unit_names(battle: &str) -> BTreeMap<String, UnitId> {
+    let path = format!("{BATTLES_DIR}/{battle}{EXTENSION}");
+    bundle::file(&path).map(unit_names_of).unwrap_or_default()
+}
+
+/// The enemies battle file `source` gives an `id`, by it, as their unit
+/// ids ([`from_source`] numbers them the same way); none for a file that
+/// doesn't parse.
+pub fn unit_names_of(source: &str) -> BTreeMap<String, UnitId> {
+    let Ok(raw) = parse_ron::<RawBattle>("", source) else {
+        return BTreeMap::new();
+    };
+    let early = raw.player_slots.iter().filter(|s| !s.after_enemies).count();
+    let first = BattleDef::first_enemy_id(early);
+    let numbered = (first..).zip(&raw.enemies);
+    numbered
+        .filter_map(|(id, enemy)| Some((enemy.id.clone()?, UnitId(id))))
+        .collect()
 }
 
 /// Parses and validates battle file `source` (errors attributed to

@@ -6,10 +6,11 @@
 use insta::assert_snapshot;
 use proptest::prelude::*;
 use trpg_content::TilePoint;
+use trpg_core::UnitId;
 
 use super::*;
 use crate::console::{CONSOLE_H, CONSOLE_W};
-use crate::map_view::skin_named;
+use crate::map_view::{Facing, skin_named};
 use crate::screen::tests::ctx;
 use crate::screens::title::glyph;
 
@@ -69,6 +70,20 @@ fn a_time_falls_in_the_shot_that_started_last() {
     assert_eq!(three.at_ms(1000), at(1, 0.0));
     assert_eq!(three.at_ms(2500), at(1, 0.75));
     assert_eq!(three.at_ms(3500), at(2, 0.5));
+    // The same, as milliseconds into the shot.
+    assert_eq!(three.into_shot(0), (0, 0));
+    assert_eq!(three.into_shot(999), (0, 999));
+    assert_eq!(three.into_shot(1000), (1, 0));
+    assert_eq!(three.into_shot(2500), (1, 1500));
+    assert_eq!(three.into_shot(3999), (2, 999));
+    assert_eq!(three.into_shot(4000), (0, 0));
+    assert_eq!(three.into_shot(4000 * 7 + 3001), (2, 1));
+    assert_eq!(t.into_shot(28_000), (1, 2000));
+    // Before a first shot that doesn't start at 0: at its very start.
+    let late = Timeline::new(vec![500, 1000], 2000);
+    assert_eq!(late.into_shot(200), (0, 0));
+    assert_eq!(late.into_shot(700), (0, 200));
+    assert_eq!(late.at_ms(200), at(0, 0.0));
 }
 
 #[test]
@@ -304,6 +319,7 @@ fn a_pan_goes_both_ways_at_its_own_zoom() {
         from: TilePoint::new(9.5, 5.0),
         to: TilePoint::new(3.5, 2.0),
         zoom: 2,
+        action: None,
     };
     // On a 50 × 4 screen, 2× shows 200 × 32 pixels: room to move down the
     // picture (128 high) but not across it (224 wide: 0 to 24).
@@ -357,9 +373,18 @@ fn the_pan_is_the_battles_picture_behind_the_whole_screen() {
     assert_eq!(backdrop.clip(), buf.bounds());
     assert_eq!(backdrop.zoom(), 4);
     assert!(near(backdrop.origin_px(), (12.0, 0.0)));
-    let scene = battle_scene(&ctx, &ctx.content.battles["test"]);
+    // Three seconds in the lead is on its way: the picture is of the
+    // battle as the action has it then.
+    let start = battle_scene(&ctx, &ctx.content.battles["test"]);
+    let scene = player.scene(3.0).unwrap();
+    assert_ne!(scene, start);
     let picture = MapPicture::paint(&ctx, ctx.map_skin.as_ref(), &scene).unwrap();
     assert_eq!(backdrop.scene(), &*picture.scene);
+    // Before anyone has moved: the battle as it starts.
+    let picture = MapPicture::paint(&ctx, ctx.map_skin.as_ref(), &start).unwrap();
+    let first = draw(&ctx, &player, 0.0, 1.0);
+    assert_eq!(first.backdrop().unwrap().scene(), &*picture.scene);
+    assert_ne!(first.backdrop().unwrap().scene(), backdrop.scene());
     // Every cell is a hole, and nothing is left of the frame before.
     let hole = Cell::see_through(' ', ctx.palette.get(UiColor::Text));
     for y in 0..i32::from(CONSOLE_H) {
@@ -469,6 +494,8 @@ fn a_pan_over_a_sprite_map_fades_its_sprites() {
 fn a_battle_is_painted_once_for_all_its_shots() {
     let mut ctx = ctx();
     let def = ctx.content.cinematics.get_mut("test").unwrap();
+    // Two pans in which nobody moves.
+    still(&mut def.shots[0].shot);
     let pan = def.shots[0].shot.clone();
     def.shots[1].shot = pan;
     let player = player(&ctx);
@@ -477,6 +504,215 @@ fn a_battle_is_painted_once_for_all_its_shots() {
         std::ptr::from_ref(buf.backdrop().unwrap().scene())
     };
     assert_eq!(scene(1.0), scene(7.0));
+    // The scene is the battle as it starts, the whole shot long.
+    let start = battle_scene(&ctx, &ctx.content.battles["test"]);
+    assert_eq!(player.scene(1.0), Some(start.clone()));
+    assert_eq!(player.scene(9.5), Some(start));
+}
+
+/// Takes the action out of the map pan `shot`.
+fn still(shot: &mut Shot) {
+    match shot {
+        Shot::MapPan { action, .. } => *action = None,
+        other => panic!("not a pan: {other:?}"),
+    }
+}
+
+const LEAD: UnitId = UnitId(1);
+const BRIGAND: UnitId = UnitId(3);
+
+/// The test cinematic's action (`assets-test/cinematics/test.ron`): from
+/// half a second in, the lead walks from (3, 5) up to (3, 3) and along to
+/// (7, 3) in three seconds; at four seconds it strikes the brigand on
+/// (8, 3), leaving it 40% of its HP, and at five it fells it.
+#[test]
+fn the_test_cinematics_units_walk_and_fight() {
+    let ctx = ctx();
+    let player = player(&ctx);
+    let start = battle_scene(&ctx, &ctx.content.battles["test"]);
+    let p = Pos::new;
+    assert_eq!(start.unit(LEAD).unwrap().pos, p(3, 5));
+    assert_eq!(start.unit(BRIGAND).unwrap().pos, p(8, 3));
+    let full = start.unit(BRIGAND).unwrap().hp.1;
+    let scene = |t: f32| player.scene(t).unwrap();
+    let unit = |t: f32, id| scene(t).unit(id).cloned().unwrap();
+    // Nobody has moved yet.
+    assert_eq!(scene(0.0), start);
+    assert_eq!(scene(0.499), start);
+    // Mid-walk: three and a half of its six tiles, heading right.
+    let lead = unit(2.25, LEAD);
+    assert_eq!((lead.pos, lead.facing), (p(4, 3), Facing::Right));
+    assert!(near(lead.offset, (0.5, 0.0)), "{:?}", lead.offset);
+    assert_eq!(scene(2.25).unit_at(p(3, 5)), None);
+    // Only the lead differs.
+    let mut others = scene(2.25);
+    others.units.retain(|u| u.id != LEAD);
+    let mut before = start.clone();
+    before.units.retain(|u| u.id != LEAD);
+    assert_eq!(others, before);
+    // The corner, on the way up.
+    assert_eq!(unit(1.25, LEAD).facing, Facing::Up);
+    assert_eq!(
+        (unit(1.6, LEAD).pos, unit(1.6, LEAD).facing),
+        (p(3, 3), Facing::Right)
+    );
+    // Arrived, next to the brigand.
+    let lead = unit(3.5, LEAD);
+    assert_eq!(
+        (lead.pos, lead.facing, lead.offset),
+        (p(7, 3), Facing::Down, (0.0, 0.0))
+    );
+    // The first blow lands at 4.2: the brigand flashes with 40% of its HP.
+    assert_eq!(unit(4.199, BRIGAND).hp.0, full);
+    let (lead, brigand) = (unit(4.2, LEAD), unit(4.2, BRIGAND));
+    assert!(near(lead.offset, (LUNGE_TILES, 0.0)), "{:?}", lead.offset);
+    assert_eq!(lead.facing, Facing::Right);
+    assert_eq!(brigand.hp, ((full * 40 + 99) / 100, full));
+    assert!(brigand.hp.0 > 0 && brigand.hp.0 < full);
+    assert!((brigand.flash - 1.0).abs() < 1e-4 && brigand.fade == 0.0);
+    assert_eq!(unit(4.5, BRIGAND).flash.to_bits(), 0.0_f32.to_bits());
+    // The second, at 5.2, fells it: it fades out and is gone by 5.7.
+    let brigand = unit(5.45, BRIGAND);
+    assert_eq!(brigand.hp.0, 0);
+    assert!((brigand.fade - 0.5).abs() < 1e-4, "{}", brigand.fade);
+    assert!(scene(5.699).unit(BRIGAND).is_some());
+    for t in [5.7, 5.999] {
+        assert_eq!(scene(t).unit(BRIGAND), None, "{t}");
+        assert_eq!(scene(t).units.len(), start.units.len() - 1);
+        assert_eq!(scene(t).unit_at(p(8, 3)), None);
+    }
+    // The shots after it are no map; then it all starts again.
+    for t in [6.0, 9.0, 12.0, 17.0, 19.999] {
+        assert_eq!(player.scene(t), None, "{t}");
+    }
+    assert_eq!(scene(20.0), start);
+    assert_eq!(scene(22.25), scene(2.25));
+    // The terrain never changes.
+    assert_eq!(scene(5.9).tiles, start.tiles);
+    assert_eq!(scene(5.9).look, start.look);
+}
+
+#[test]
+fn shots_of_one_action_show_the_same_moment_from_their_own_action_from() {
+    let mut ctx = ctx();
+    let def = ctx.content.cinematics.get_mut("test").unwrap();
+    // The same list twice: from its start, then (at six seconds, from
+    // another place) from 1.5 seconds into it.
+    let mut second = def.shots[0].clone();
+    second.at_ms = 6000;
+    match &mut second.shot {
+        Shot::MapPan {
+            action: Some(action),
+            from,
+            to,
+            zoom,
+            ..
+        } => {
+            action.from_ms = 1500;
+            (*from, *to, *zoom) = (TilePoint::new(2.0, 2.0), TilePoint::new(9.0, 6.0), 2);
+        }
+        other => panic!("{other:?}"),
+    }
+    def.shots[1] = second;
+    let player = player(&ctx);
+    let units = |t: f32| player.scene(t).unwrap().units;
+    // The action clock at 2.25 in the first shot is 2.25; the second
+    // shot reaches it 0.75 seconds in.
+    assert_eq!(units(2.25), units(6.75));
+    assert_eq!(units(1.5), units(6.0));
+    assert_eq!(units(5.45), units(9.95));
+    assert_ne!(units(2.25), units(6.0));
+    // The second shot never shows the walk's start, and the first never
+    // shows what comes after its cut.
+    let start = battle_scene(&ctx, &ctx.content.battles["test"]).units;
+    assert_eq!(units(0.0), start);
+    let lead = |t: f32| player.scene(t).unwrap().unit(LEAD).cloned().unwrap();
+    assert_eq!(lead(6.1).pos, Pos::new(3, 3));
+    // Another camera on the same moment.
+    assert_ne!(
+        player.frame(&ctx, 2.25, SCREEN),
+        player.frame(&ctx, 6.75, SCREEN)
+    );
+    // Past the list's end: how it all ended.
+    let def = ctx.content.cinematics.get_mut("test").unwrap();
+    if let Shot::MapPan {
+        action: Some(action),
+        ..
+    } = &mut def.shots[1].shot
+    {
+        action.from_ms = 600_000;
+    }
+    let player = self::player(&ctx);
+    let ended = player.scene(6.0).unwrap();
+    assert_eq!(ended, player.scene(9.9).unwrap());
+    assert_eq!(ended.unit(LEAD).unwrap().pos, Pos::new(7, 3));
+    assert_eq!(ended.unit(BRIGAND), None);
+}
+
+/// Puts a unit back as it was before something an action did to it.
+type Undo = fn(&mut crate::map_view::UnitView);
+
+/// A walking, a struck and a falling unit each change what both skins
+/// paint, and what is drawn is the scene of that moment.
+#[test]
+fn both_skins_paint_a_moving_a_flashing_and_a_fading_unit() {
+    let mut ctx = ctx();
+    for skin in ["glyph", "sprite"] {
+        ctx.map_skin = skin_named(&ctx.content, skin).unwrap();
+        let player = player(&ctx);
+        let painter = shot_skin(&ctx);
+        let paint = |scene: &MapScene| MapPicture::paint(&ctx, painter.as_ref(), scene).unwrap();
+        let start = battle_scene(&ctx, &ctx.content.battles["test"]);
+        let moments: [(&str, f32, UnitId, Undo); 4] = [
+            ("walking", 2.25, LEAD, |u| u.pos = Pos::new(3, 5)),
+            ("lunging", 4.2, LEAD, |u| u.offset = (0.0, 0.0)),
+            ("flashing", 4.3, BRIGAND, |u| u.flash = 0.0),
+            ("fading", 5.45, BRIGAND, |u| u.fade = 0.0),
+        ];
+        for (what, t, id, undo) in moments {
+            let scene = player.scene(t).unwrap();
+            let mut without = scene.clone();
+            let unit = without.units.iter_mut().find(|u| u.id == id).unwrap();
+            undo(unit);
+            assert_ne!(scene, without, "{what}");
+            // The glyph skin's units stand in cells: a lean of a few
+            // pixels is the sprite skin's to show.
+            if (what, skin) != ("lunging", "glyph") {
+                assert_ne!(paint(&scene), paint(&without), "{what} under {skin}");
+            }
+            assert_ne!(paint(&scene), paint(&start), "{what} under {skin}");
+            // The frame shows that scene, and the same one each time.
+            let buf = draw(&ctx, &player, t, 1.0);
+            assert_eq!(buf.backdrop().unwrap().scene(), &*paint(&scene).scene);
+            assert_eq!(buf, draw(&ctx, &player, t, 1.0), "{what} under {skin}");
+        }
+    }
+}
+
+#[test]
+fn an_acted_shot_is_painted_by_the_skin_at_the_arts_own_size() {
+    let mut ctx = ctx();
+    let sprite = skin_named(&ctx.content, "sprite").unwrap();
+    ctx.map_skin = sprite.at_zoom(MapZoom::X2).unwrap();
+    let player = player(&ctx);
+    // Mid-walk, as at the start: 14 × 8 tiles of 24 px, in whole cells.
+    for t in [0.0, 2.25] {
+        let buf = draw(&ctx, &player, t, 1.0);
+        let scene = buf.backdrop().unwrap().scene();
+        assert_eq!((scene.width(), scene.height()), (42, 12), "{t}");
+    }
+}
+
+#[test]
+fn the_test_cinematic_mid_walk_and_mid_strike() {
+    let ctx = ctx();
+    let player = player(&ctx);
+    let frame = |t: f32| draw(&ctx, &player, t, 1.0).to_snapshot(&ctx.palette);
+    assert_snapshot!("mid_walk", frame(2.25));
+    assert_snapshot!("mid_strike", frame(4.3));
+    assert_snapshot!("the_brigand_falling", frame(5.45));
+    assert_eq!(frame(2.25), frame(2.25));
+    assert_eq!(frame(4.3), frame(24.3));
 }
 
 #[test]

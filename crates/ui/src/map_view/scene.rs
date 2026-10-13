@@ -162,6 +162,9 @@ pub struct UnitView {
     /// walk, in tiles across and down, each in `-1.0..=1.0`; `(0, 0)` when
     /// it isn't walking.
     pub offset: (f32, f32),
+    /// How strongly it flashes from a blow that just landed on it (a
+    /// cinematic's strike, 0827): `1` as it lands, fading to `0`.
+    pub flash: f32,
 }
 
 impl UnitView {
@@ -185,6 +188,7 @@ impl UnitView {
             facing: Facing::Down,
             frame: STANDING_FRAME,
             offset: (0.0, 0.0),
+            flash: 0.0,
         }
     }
 
@@ -611,6 +615,9 @@ fn unit_text(u: &UnitView) -> String {
     if walking && u.frame != STANDING_FRAME {
         let _ = write!(text, " frame={}", u.frame);
     }
+    if u.flash > 0.0 {
+        let _ = write!(text, " flash={:.2}", u.flash);
+    }
     text
 }
 
@@ -639,6 +646,7 @@ mod tests {
             facing: Facing::Down,
             frame: STANDING_FRAME,
             offset: (0.0, 0.0),
+            flash: 0.0,
         }
     }
 
@@ -679,6 +687,25 @@ mod tests {
             assert_eq!(line(&walker), expect);
         }
         assert_eq!((Facing::default(), STANDING_FRAME), (Facing::Down, 1));
+    }
+
+    #[test]
+    fn a_struck_unit_has_its_flash_in_the_text() {
+        let mut struck = brigand(4, p(0, 2));
+        assert!(!unit_text(&struck).contains("flash"));
+        struck.flash = 0.5;
+        assert_eq!(
+            unit_text(&struck),
+            "#4 Br enemy brigand (0,2) hp 20/30 flash=0.50"
+        );
+        // After everything else.
+        struck.fade = 0.25;
+        struck.facing = Facing::Left;
+        struck.flash = 1.0;
+        assert_eq!(
+            unit_text(&struck),
+            "#4 Br enemy brigand (0,2) hp 20/30 fade=0.25 facing=left flash=1.00"
+        );
     }
 
     #[test]

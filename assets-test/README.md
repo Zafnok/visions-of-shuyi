@@ -14,7 +14,7 @@ that ships has none of them.**
 | `chapters/test.ron`, `battles/test.ron` | The test chapter: the tests of the game flow start a new game there (`NewGameDef::test_chapter`) |
 | `chapters/quick.ron`, `battles/quick.ron` | The debug Quick Battle (title screen, where the debug tools are on) |
 | `maps/test_small.map` | The map of both battles |
-| `cinematics/test.ron` | The test cinematic: a pan over the test battle's map, two text boxes of the test scene, three faces crossing, then the logo. The debug menu's "Play test cinematic" plays it |
+| `cinematics/test.ron` | The test cinematic: a pan over the test battle's map, on which the lead walks up to the brigand and fells it, two text boxes of the test scene, three faces crossing, then the logo. The debug menu's "Play test cinematic" plays it |
 | `dialogue/test*.dlg` | The test scenes: the dialogue test, the test chapter's scenes, the battle triggers' and the supports' |
 | `portraits/test_lord*`, `portraits/test_knight*` | Placeholder portraits. The bought ones are in the private repository's `test/` folder (`assets-private/test/`), which is laid over this one the way `assets-private/game/` is laid over `assets/` |
 | `lang/test/` | The language pack the tests use: English in capitals. Never offered to players |

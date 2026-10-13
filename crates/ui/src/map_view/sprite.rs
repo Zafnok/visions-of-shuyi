@@ -378,6 +378,7 @@ pub(crate) mod tests {
             facing: Facing::Down,
             frame: STANDING_FRAME,
             offset: (0.0, 0.0),
+            flash: 0.0,
         }
     }
 
@@ -860,6 +861,7 @@ pub(crate) mod tests {
             facing: _,
             frame: _,
             offset: _,
+            flash: _,
         } = &scene.units[0];
         let CursorView {
             pos: _,
@@ -911,6 +913,7 @@ pub(crate) mod tests {
             feature("facing", &unit(|u| u.facing = Facing::Left)),
             feature("frame", &unit(|u| u.frame = 0)),
             feature("offset", &unit(|u| u.offset = (-0.5, 0.0))),
+            feature("unit flash", &unit(|u| u.flash = 0.5)),
             feature("path", &|s| s.path = vec![p(0, 0), p(1, 0)]),
             feature("threat", &|s| s.threat = Some(threat(p(0, 0), &[p(1, 1)]))),
         ];
@@ -964,7 +967,7 @@ pub(crate) mod tests {
         let own = with_walking_brigand(&c, &with_lord(&skin(&c)));
         for s in [own, with_lord(&sheets(&c))] {
             let features = features(&c);
-            assert_eq!(features.len(), 19 + 4 + 6);
+            assert_eq!(features.len(), 20 + 4 + 6);
             for f in features {
                 assert_ne!(f.without, f.with, "{}: no change", f.name);
                 let (without, with) = (painted(&c, &s, &f.without), painted(&c, &s, &f.with));
