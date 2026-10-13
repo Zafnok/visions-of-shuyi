@@ -107,6 +107,16 @@ pub fn to_key(code: KeyCode) -> Option<Key> {
     })
 }
 
+/// Whether the window's fullscreen shortcut was pressed this frame: `F11`,
+/// or `Alt+Enter`. Like the window's close button these belong to the
+/// platform, not to the game's keymap (ticket 0902).
+pub fn fullscreen_shortcut() -> bool {
+    let alt = is_key_down(KeyCode::LeftAlt) || is_key_down(KeyCode::RightAlt);
+    get_keys_pressed().into_iter().any(|code| {
+        code == KeyCode::F11 || (alt && matches!(code, KeyCode::Enter | KeyCode::KpEnter))
+    })
+}
+
 /// This frame's key releases, then presses (with the current Shift state),
 /// then the characters typed (for text boxes, with the keyboard's layout).
 pub fn poll() -> Vec<RawInputEvent> {

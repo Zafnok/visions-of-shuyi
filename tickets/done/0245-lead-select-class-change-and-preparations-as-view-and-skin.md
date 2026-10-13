@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: sonnet-5
 effort: high
-status: todo
+status: done
 blocked_by: ["0241"]
 nick_input: none
-completed:
+completed: 2026-10-12
 ---
 
 # 0245 — Lead select, class change and Preparations as view + skin
@@ -86,17 +86,17 @@ blocked by this one, and make 0242 blocked by that too.
 
 ## Acceptance criteria
 
-- [ ] None of the three logic modules imports `UiColor`, `Rect`,
+- [x] None of the three logic modules imports `UiColor`, `Rect`,
       `BoxStyle` or `Cell`; each `draw` is one call to its skin (the grep
       test is extended).
-- [ ] No snapshot file's content changes.
-- [ ] Each view has a unit test of its content on the first frame and in
+- [x] No snapshot file's content changes.
+- [x] Each view has a unit test of its content on the first frame and in
       each state the screen has (the name box and the letter grid, a
       promotion question, a reclass choice, a full pack, a benched unit,
       the leave question, …).
-- [ ] `cargo xtask check-keys` and `check-text` pass; the `check-text`
+- [x] `cargo xtask check-keys` and `check-text` pass; the `check-text`
       limit isn't raised.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -107,5 +107,39 @@ blocked by this one, and make 0242 blocked by that too.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Split, as the scope said to.** The three screens were far over ~600
+changed lines, so this ticket did the largest, **Preparations**; class
+change is 0246 and lead select is 0247 (two tickets, not one: the two
+together would have been over the limit again). 0242 is now blocked by
+both.
+
+What was done:
+
+- `preparations/view.rs`: `PreparationsView` (heading, tabs, whether the
+  cursor is on the tabs, the shown tab's body, the message, the leave
+  question, the help line). Each list is a `ListView<Row>` with its
+  title, every row, the cursor and a `ListState` (`Idle`, `Chosen`,
+  `Focused`). Rows are meanings: a unit is `{ name, deployed }`, a slot is
+  `{ label, item: Option, wear }`, a stock row is `{ name, detail,
+  usable }`, a consumable is `{ name, count, effect }`.
+- `preparations/glyph.rs`: `paint`, with every box, row constant, colour,
+  column width, the `-` of an empty slot and the scrolling window
+  (`window_start`: which rows fit is the box's business).
+- `preparations.rs`: `view()`, `draw` is one call, `as_any`; it names no
+  cell, colour, rectangle or box style (the grep test covers it).
+- `StockRow` holds `name` and `detail` instead of one padded `text` (the
+  padding is the skin's).
+- Tests: seven view tests (first frame, the cursor through the loadout
+  lists, put back, a benched unit, the pack up to full, Options / Fight /
+  the leave question, an empty army) and one through the Harness and
+  `FlowScreen::preparations()`. The two look tests
+  (`a_long_list_scrolls_inside_its_box` and the window half of
+  `lists_wrap_and_scroll`) moved to `preparations/glyph/tests.rs`, with
+  new tests of the placement and the colours. The four snapshots are
+  unchanged.
+
+Acceptance criteria, for Preparations: all met. For lead select and class
+change they carry over to 0247 and 0246.
+
+Deviations: none besides the split. No gameplay rule was decided; nothing
+the player sees changed.

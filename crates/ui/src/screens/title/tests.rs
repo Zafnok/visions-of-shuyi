@@ -544,6 +544,7 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("save.rs", include_str!("../save.rs")),
         ("results.rs", include_str!("../results.rs")),
         ("credits.rs", include_str!("../credits.rs")),
+        ("preparations.rs", include_str!("../preparations.rs")),
     ];
     for (file, source) in sources {
         for name in ["UiColor", "Rect", "BoxStyle", "Cell"] {

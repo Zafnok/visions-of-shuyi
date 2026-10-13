@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0241", "0245"]
+blocked_by: ["0241", "0245", "0246", "0247"]
 nick_input: none
 completed:
 ---
@@ -19,7 +19,7 @@ Last of three tickets that give every screen the split the Options screen
 has (ticket 0805, Nick 2026-10-04: a bought UI pack must be able to
 replace the look "without affecting logic").
 [ADR-0054](../../docs/adr/0054-screens-say-what-they-show-as-a-view-a-skin-paints-it.md)
-is the pattern; Options is the worked example; 0240, 0241 and 0245 did the
+is the pattern; Options is the worked example; 0240, 0241 and 0245 to 0247 did the
 menus.
 
 The battle *map* is already a skin (ADR-0038: `MapScene`, `MapSkin`). What
