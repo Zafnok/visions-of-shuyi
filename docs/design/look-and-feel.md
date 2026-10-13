@@ -458,6 +458,26 @@ so they aren't in this repository (ADR-0032).
   - **Tile glow:** no marks; the tile's background is tinted towards the
     `cursor` colour (up to about 30% at full brightness, *tunable*), pulsing
     the same way.
+- **On picture tiles** (the bought tiles; decided 2026-10-13, ticket 0444,
+  from rendered options). Nick, 2026-10-12, after playing Chapter 1: "the
+  cursor is also a bit hard to see". Shown thick marks, marks with a dark
+  edge, both together and a frame round the tile, he picked: "can we use C
+  style [thick marks with a dark edge] for 1x and B style [thin marks with
+  a dark edge] for 2x?"
+  - **Map at 1× zoom:** corner marks **2 px thick and 4 px long**, with a
+    1 px near-black edge round them.
+  - **Map at 2× zoom:** marks 1 px of the art thick and 3 long, with an
+    edge of 1 px of the art (so 2 px thick, 6 long and a 2 px edge on
+    screen).
+  - The marks and their edge stay inside the tile. The marks pulse as
+    above; the edge doesn't, so the cursor never fades into the ground.
+  - **Large corners:** the same, one pixel longer.
+  - **Tile glow** is not drawn on picture tiles. Nick: "for tile glow imo
+    we deprecate it for the 2D style it's simply unsustainable to keep it
+    around for this style but for glyph we might consider keeping it". A
+    player who has picked it sees the corner marks there (*Claude's
+    starting rule*, as is leaving the choice in the Options menu: ticket
+    0451). The glyph look keeps its glow.
 - **Unit selected, cursor still on it:** arrows `►Al◄` replace the corner
   marks. *(Open, see below: as whole glyphs they would cover a neighbour's
   initial, as the brackets did.)*
@@ -1018,9 +1038,10 @@ black.
   (ticket 0446).
 - Sprite units on the map: the outline alone or with a corner mark
   (0436).
-- On the bought tiles (seen in ticket 0437, not decided): the cursor's
-  thin corner marks are hard to see on bright ground (ticket 0444); the
-  picks in the terrain table above, the burning stand-in first.
+- On the bought tiles (seen in ticket 0437, not decided): the picks in
+  the terrain table above, the burning stand-in first.
+- The Options menu still offers `Tile glow` when the map is pictures,
+  where it is drawn as corner marks (ticket 0451).
 - The battle screen's bottom two rows: the danger-zone hint on the left
   and the auto-end hint in a column with `end turn` (Nick, 2026-10-04);
   where a message goes, and what auto-end lines up with when the key help

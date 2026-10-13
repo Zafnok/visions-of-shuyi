@@ -10,16 +10,14 @@
 
 use trpg_content::tileset::{CornerLayer, Layer, Look, TileLayer};
 use trpg_content::{ImageId, ImageRect, Picture, TerrainTiles};
-use trpg_core::Pos;
 
 use super::tile_sprite;
 use crate::color::{Rgb, UiColor, to_channel};
 use crate::glyph_buffer::{GlyphBuffer, Layer as Depth, Overlay, Paint, PxRect, Rect, Sprite};
 use crate::map_view::corners::{Shown, mix_of};
-use crate::map_view::glyph::cursor::GLOW_MAX;
 use crate::map_view::glyph::{OVERLAY_BLEND, named, range_color};
 use crate::map_view::grid::Grid;
-use crate::map_view::scene::{CursorStyle, CursorView, MapScene, TileView};
+use crate::map_view::scene::{MapScene, TileView};
 use crate::screen::Ctx;
 
 /// Paints `scene`'s ground in `grid` from `terrain`'s tiles, in the look
@@ -168,21 +166,18 @@ impl Ground<'_> {
             let Some(tile) = self.scene.tile_at(dx, dy) else {
                 continue;
             };
-            let pos = Pos::new(self.scene.origin.x + dx, self.scene.origin.y + dy);
-            let cursor = self.scene.cursor.filter(|c| c.pos == pos);
             let own = self.tile(dx, dy).and_then(|_| self.own(dx, dy));
             let rect = self.grid.rect_at(dx, dy);
-            paint_tinted(buf, rect, own, &tints(ctx, tile, cursor), black);
+            paint_tinted(buf, rect, own, &tints(ctx, tile), black);
         }
     }
 }
 
 /// What tints `tile`, in order, as colours and strengths: its flashes
-/// (towards its terrain's glyph colour, as on the glyph skin), its ranges,
-/// then the glow of `cursor` (if it is on the tile and glows). A tile a
-/// spell would change is drawn as what it would become, so only the glow
-/// tints it.
-fn tints(ctx: &Ctx, tile: &TileView, cursor: Option<CursorView>) -> Vec<(Rgb, f32)> {
+/// (towards its terrain's glyph colour, as on the glyph skin), then its
+/// ranges. A tile a spell would change is drawn as what it would become,
+/// so nothing tints it. (The cursor never tints a picture: ticket 0444.)
+fn tints(ctx: &Ctx, tile: &TileView) -> Vec<(Rgb, f32)> {
     let mut out = Vec::new();
     if tile.becomes.is_none() {
         let display = &ctx.content.terrain.display;
@@ -196,9 +191,6 @@ fn tints(ctx: &Ctx, tile: &TileView, cursor: Option<CursorView>) -> Vec<(Rgb, f3
         for &kind in &tile.tints {
             out.push((ctx.palette.get(range_color(kind)), OVERLAY_BLEND));
         }
-    }
-    if let Some(c) = cursor.filter(|c| c.style == CursorStyle::TileGlow) {
-        out.push((ctx.palette.get(UiColor::Cursor), GLOW_MAX * c.brightness));
     }
     out
 }
@@ -548,14 +540,10 @@ pub(crate) mod tests {
         let s = layered(&c);
         let dusk = c.content.lighting.get("dusk").unwrap();
         // A lake and a bridge (a picture on a tile), a range on the
-        // first tile, a glowing cursor on the lake, and a unit.
+        // first tile and another on the lake, and a unit.
         let mut scene = view(&c, ["...", ".~=", "..."]);
         scene.tint([p(0, 0)], RangeKind::Move);
-        scene.cursor = Some(CursorView {
-            pos: p(1, 1),
-            brightness: 1.0,
-            style: CursorStyle::TileGlow,
-        });
+        scene.tint([p(1, 1)], RangeKind::Attack);
         scene
             .units
             .push(crate::map_view::sprite::tests::brigand(p(2, 0)));
@@ -590,7 +578,7 @@ pub(crate) mod tests {
             }
         }
         // Nine tiles, the pictures between them, the bridge's own; the
-        // range's and the glow's wash; the unit's picture, over the glyphs.
+        // ranges' washes; the unit's picture, over the glyphs.
         assert!(ground > 9 + 1, "{ground}");
         // (The test tileset keeps its units in the same image: their
         // outlines are one colour too.)
@@ -628,20 +616,10 @@ pub(crate) mod tests {
         // As the lake it would be: its neighbours' pictures join it.
         let lake = view(&c, ["...", ".~.", "..."]);
         assert_eq!(painted(&c, &s, &scene), painted(&c, &s, &lake));
-        // Its ranges and flashes don't tint it; the cursor's glow does.
+        // Its ranges and flashes don't tint it.
         scene.tint([p(1, 1)], RangeKind::Danger);
         scene.tiles[4].flashes.push(1.0);
         assert_eq!(painted(&c, &s, &scene), painted(&c, &s, &lake));
-        scene.cursor = Some(CursorView {
-            pos: p(1, 1),
-            brightness: 1.0,
-            style: CursorStyle::TileGlow,
-        });
-        let buf = painted(&c, &s, &scene);
-        assert_eq!(buf.items().len(), 13 + 1);
-        let glow = sprite_at(&buf, 13);
-        let cursor = c.palette.get(UiColor::Cursor);
-        assert_eq!(glow.paint, Paint::Solid(cursor));
         // What the tileset lacks becomes nothing: the tile has no picture.
         let mut scene = view(&c, ["...", "...", "..."]);
         scene.tiles[4].becomes = Some(TerrainId(999));
@@ -762,45 +740,30 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn flashes_tint_towards_the_terrain_colour_then_the_ranges_then_the_glow() {
+    fn flashes_tint_towards_the_terrain_colour_then_the_ranges() {
         let c = ctx();
         let pal = &c.palette;
         let display = &c.content.terrain.display;
         let plain = display.get(display.id_of("plain").unwrap()).unwrap();
         let fg = pal.lookup(&plain.fg).unwrap();
         let attack = pal.get(UiColor::AttackRange);
-        let cursor = pal.get(UiColor::Cursor);
         let mut tile = TileView {
             terrain: display.id_of("plain"),
             flashes: vec![1.0, 0.5],
             tints: vec![RangeKind::Attack],
             becomes: None,
         };
-        let glow = |brightness| CursorView {
-            pos: p(0, 0),
-            brightness,
-            style: CursorStyle::TileGlow,
-        };
         assert_eq!(
-            tints(&c, &tile, Some(glow(0.5))),
+            tints(&c, &tile),
             [
                 (fg, OVERLAY_BLEND),
                 (fg, OVERLAY_BLEND * 0.5),
                 (attack, OVERLAY_BLEND),
-                (cursor, GLOW_MAX * 0.5),
             ]
         );
-        // A cursor of corner marks doesn't tint.
-        let corners = CursorView {
-            style: CursorStyle::Corners,
-            ..glow(1.0)
-        };
-        assert_eq!(tints(&c, &tile, Some(corners)).len(), 3);
-        assert_eq!(tints(&c, &tile, None).len(), 3);
-        // A tile a spell would change: only the glow.
+        // A tile a spell would change: nothing.
         tile.becomes = display.id_of("forest");
-        assert_eq!(tints(&c, &tile, Some(glow(1.0))), [(cursor, GLOW_MAX)]);
-        assert!(tints(&c, &tile, None).is_empty());
+        assert!(tints(&c, &tile).is_empty());
         // Off the map, a flash has no colour to go towards.
         let off = TileView {
             terrain: None,
@@ -808,7 +771,7 @@ pub(crate) mod tests {
             tints: vec![RangeKind::Attack],
             becomes: None,
         };
-        assert_eq!(tints(&c, &off, None), [(attack, OVERLAY_BLEND)]);
+        assert_eq!(tints(&c, &off), [(attack, OVERLAY_BLEND)]);
     }
 
     proptest! {
