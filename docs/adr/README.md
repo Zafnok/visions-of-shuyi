@@ -64,7 +64,8 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0054](0054-screens-say-what-they-show-as-a-view-a-skin-paints-it.md) | A screen says what it shows as a view; a skin paints it | Accepted; extends ADR-0038 |
 | [0055](0055-dialogue-lines-for-who-is-there.md) | Dialogue lines for who is there: `@if` blocks, resolved when the scene starts, and a check that nobody who may be gone is shown | Accepted (0715); extends ADR-0005 and ADR-0011 |
 | [0056](0056-combat-pictures-a-sidecar-per-fighter-moved-by-code-on-a-stage.md) | Combat pictures: a sidecar per fighter, one sprite each, moved by code on a stage | Accepted (0413); follows ADR-0038, ADR-0043 and ADR-0054 |
-| [0057](0057-a-maps-light-shades-the-grounds-sprites-from-a-recoloured-copy.md) | A map's light is a name; the ground's sprites carry its shade and are drawn from a recoloured copy of the image | Accepted (0438); extends ADR-0038, ADR-0049, ADR-0052 and ADR-0056 |
+| [0057](0057-test-files-in-their-own-embedded-directory.md) | Test files live in `assets-test/`, embedded only in debug and debug-tools builds | Accepted (0122); extends ADR-0005, ADR-0023 and ADR-0040 |
+| [0058](0058-a-maps-light-shades-the-grounds-sprites-from-a-recoloured-copy.md) | A map's light is a name; the ground's sprites carry its shade and are drawn from a recoloured copy of the image | Accepted (0438); extends ADR-0038, ADR-0049, ADR-0052 and ADR-0056 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

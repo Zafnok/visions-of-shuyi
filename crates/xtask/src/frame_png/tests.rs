@@ -186,7 +186,7 @@ fn a_painted_sprite_is_one_colour_or_dimmed_where_the_image_is_solid() {
     assert_eq!(dimmed.pixel(0, 0), rgba(white.dimmed()));
     assert_eq!(dimmed.pixel(1, 1), rgba(red.dimmed()));
     assert_ne!(red.dimmed(), red);
-    // Shaded: each pixel as it is in the light (ADR-0057).
+    // Shaded: each pixel as it is in the light (ADR-0058).
     let dusk = trpg_content::Light::new(0.35, [0.62, 0.56, 0.46]);
     let shaded = render(Paint::Shaded(dusk), 255);
     assert_eq!(shaded.pixel(0, 0), Some([158, 143, 117, 255]));

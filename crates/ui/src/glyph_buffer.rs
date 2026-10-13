@@ -167,7 +167,7 @@ pub enum Paint {
     /// Each pixel [dimmed](Rgb::dimmed): grey and darker (a unit that has
     /// acted).
     Dimmed,
-    /// Each pixel as it is in this light (ADR-0057): the ground of a map
+    /// Each pixel as it is in this light (ADR-0058): the ground of a map
     /// at dusk.
     Shaded(Light),
 }

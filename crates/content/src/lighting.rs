@@ -1,5 +1,5 @@
 //! The lights a battle map can be in (`assets/data/lighting.ron`, ticket
-//! 0438, ADR-0057): each a recipe for shading the pictures of the ground.
+//! 0438, ADR-0058): each a recipe for shading the pictures of the ground.
 //! A map names its light in its header's `look`
 //! ([`MapLook::light`](crate::MapLook::light)); a battle file may name
 //! another. Look data only: the rules never see it.

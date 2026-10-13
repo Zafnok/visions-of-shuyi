@@ -1,5 +1,5 @@
 //! Supports in a battle built from the real content (ticket 1002): the
-//! test pairs of `assets/data/supports.ron` (the test lord with the test
+//! test pairs of `assets-test/data/supports.ron` (the test lord with the test
 //! knight and with the test mage), the real rules and the real `Heal`
 //! spell. A healer heals a partner and two units fight side by side; the
 //! test checks the support events and the pairs' final state against the

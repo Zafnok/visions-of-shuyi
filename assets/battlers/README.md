@@ -78,7 +78,7 @@ mirrored, to fill the screen's width. The loader checks that each image is there
 and that size, and that each terrain id exists. The files there are
 placeholders too: the bought ones replace them by name.
 
-**Lights** (ticket 0438, ADR-0057). A fight on a map that isn't at noon
+**Lights** (ticket 0438, ADR-0058). A fight on a map that isn't at noon
 shows the picture above shaded by the map's light
 (`assets/data/lighting.ron`), unless the file has pictures drawn for that
 light:

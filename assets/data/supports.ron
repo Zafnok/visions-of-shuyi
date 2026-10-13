@@ -42,25 +42,7 @@
             a: (hit: 15, avoid: 15),
         ),
     ),
-    pairs: [
-        // PLACEHOLDER pairs of the test characters (the debug Quick Battle
-        // deploys all three), so the rules can be tried before the story
-        // has real pairs. Their scenes are in dialogue/test_supports.dlg.
-        (
-            a: "test_lord", b: "test_knight",
-            conversations: (
-                c: "test_support_lord_knight_c",
-                b: "test_support_lord_knight_b",
-                a: "test_support_lord_knight_a",
-            ),
-        ),
-        (
-            a: "test_lord", b: "test_mage",
-            conversations: (
-                c: "test_support_lord_mage_c",
-                b: "test_support_lord_mage_b",
-                a: "test_support_lord_mage_a",
-            ),
-        ),
-    ],
+    // No pair yet: the story pipeline writes them. The test characters'
+    // pairs are in assets-test/data/supports.ron (ADR-0057).
+    pairs: [],
 )

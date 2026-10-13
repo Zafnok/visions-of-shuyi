@@ -813,7 +813,7 @@ mod tests {
         }
         let errors = check_lights(&odd, &lighting);
         assert_eq!(errors.len(), odd.len());
-        assert!(errors.iter().all(|e| e.file.starts_with("assets/maps/")));
+        assert!(errors.iter().all(|e| e.file.contains("/maps/")));
     }
 
     #[test]

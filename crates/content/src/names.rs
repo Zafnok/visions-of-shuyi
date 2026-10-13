@@ -187,7 +187,48 @@ pub fn load() -> Result<Names, Vec<ContentError>> {
             "file not found in asset bundle",
         )]
     })?;
-    from_source(&display, source)
+    let names = from_source(&display, source)?;
+    match bundle::test_part(NAMES_PATH) {
+        Some((file, part)) => with_part(names, &display, &file, part),
+        None => Ok(names),
+    }
+}
+
+/// `names` (the table of file `story`) with the names of `source` added:
+/// the test files' names (ADR-0057). `source` is checked like a names
+/// file of its own, attributing errors to `file`; an id or a name that
+/// `names` has too is an error.
+pub fn with_part(
+    mut names: Names,
+    story: &str,
+    file: &str,
+    source: &str,
+) -> Result<Names, Vec<ContentError>> {
+    let part = from_source(file, source)?;
+    let mut errors = Vec::new();
+    for (id, name) in part.names {
+        let mut err = |message: String| {
+            let e = ContentError::new(file, message);
+            errors.push(match line_of(source, &format!("\"{id}\":")) {
+                Some(l) => e.at(l, None),
+                None => e,
+            });
+        };
+        if names.names.contains_key(&id) {
+            err(format!("name id \"{id}\" is already in {story}"));
+        } else if let Some((other, _)) = names.names.iter().find(|(_, n)| **n == name) {
+            err(format!(
+                "\"{name}\" is the name of \"{other}\" in {story} too; names must be unique"
+            ));
+        } else {
+            names.names.insert(id, name);
+        }
+    }
+    if errors.is_empty() {
+        Ok(names)
+    } else {
+        Err(errors)
+    }
 }
 
 /// Parses and validates names `source`, attributing errors to `file`:

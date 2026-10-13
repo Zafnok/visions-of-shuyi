@@ -1,0 +1,74 @@
+// The test characters and templates: what the tests and the debug Quick
+// Battle use (ids starting `test_`: never in the story). Added to
+// assets/data/characters.ron's, by id, in a build that has the test files
+// (ADR-0057); the format is described there. An id that file has too is an
+// error.
+(
+    characters: [
+        (
+            id: "test_lord", class: "exile", level: 1, is_lord: true,
+            map_label: Some("Lo"),
+            talent: Spd,
+            base: (19, 6, 1, 7, 7, 4, 3),
+            weapon_ranks: [(Sword, D)],
+            loadout: (weapons: ["iron_sword", "steel_sword"], armour: Some("leather_vest")),
+        ),
+        (
+            id: "test_knight", class: "guard", level: 1,
+            map_label: Some("Kn"),
+            talent: Def,
+            base: (20, 7, 0, 4, 2, 9, 0),
+            weapon_ranks: [(Spear, D)],
+            loadout: (weapons: ["iron_spear"], armour: Some("chain_mail")),
+        ),
+        (
+            id: "test_archer", class: "archer", level: 1,
+            map_label: Some("Ar"),
+            talent: Dex,
+            base: (17, 5, 0, 7, 5, 3, 1),
+            weapon_ranks: [(Bow, D)],
+            loadout: (weapons: ["iron_bow"], armour: Some("leather_vest")),
+        ),
+        // A second archer who sits the debug Quick Battle out, with the
+        // better bow: for trading gear on the Preparations screen (0408).
+        (
+            id: "test_scout", class: "archer", level: 1,
+            map_label: Some("Sc"),
+            talent: Spd,
+            base: (16, 4, 0, 6, 7, 2, 1),
+            weapon_ranks: [(Bow, D)],
+            loadout: (weapons: ["steel_bow"], armour: Some("leather_vest")),
+        ),
+        // An enemy the lord can talk into joining: the debug Quick
+        // Battle's trigger fixture (ticket 0705).
+        (
+            id: "test_rogue", class: "raider", level: 2,
+            map_label: Some("Ro"),
+            talent: Str,
+            base: (22, 7, 0, 3, 4, 4, 0),
+            weapon_ranks: [(Axe, D)],
+            loadout: (weapons: ["iron_axe"]),
+        ),
+        // The debug Quick Battle's caster (ticket 0410): Fire from the
+        // class; Frost (a Mage's level-5 spell) and Heal as personal spells,
+        // so one unit can try every kind of cast.
+        (
+            id: "test_mage", class: "mage", level: 1,
+            map_label: Some("Ma"),
+            talent: Mag,
+            base: (16, 1, 6, 5, 5, 1, 5),
+            weapon_ranks: [],
+            personal_spells: [(1, "frost"), (1, "heal")],
+            loadout: (armour: Some("leather_vest")),
+        ),
+    ],
+    generics: [
+        (id: "test_brigand", class: "brigand", level: 1, loadout: (weapons: ["iron_axe"])),
+        // The debug Quick Battle's elemental (Nick, ticket 0410).
+        (id: "test_frost_elemental", class: "frost_elemental", level: 1),
+        (
+            id: "test_raider", class: "raider", level: 2,
+            loadout: (weapons: ["steel_axe", "iron_axe"]),
+        ),
+    ],
+)

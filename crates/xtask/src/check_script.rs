@@ -10,10 +10,12 @@ use std::fs;
 use std::path::Path;
 
 use trpg_content::ContentError;
+use trpg_content::bundle::{DISPLAY_ROOT, TEST_DISPLAY_ROOT};
 use trpg_content::dialogue::{DIALOGUE_DIR, DIALOGUE_EXTENSION};
 
 pub const USAGE: &str = "usage: cargo xtask check-script [file]\n\n\
-checks the dialogue scripts (assets/dialogue/*.dlg) and prints every problem as\n  \
+checks the dialogue scripts (assets/dialogue/*.dlg, and the test scripts in\n\
+assets-test/dialogue/) and prints every problem as\n  \
 <file>:<line>: <what is wrong, and the fix where there is one>\n\
 then how many there are. exits 0 when there are none.\n\
 with a file, only that file's problems are listed: a script in assets/dialogue/,\n\
@@ -65,24 +67,31 @@ fn same_file(a: &Path, b: &Path) -> bool {
     matches!((a.canonicalize(), b.canonicalize()), (Ok(a), Ok(b)) if a == b)
 }
 
-/// The scripts to check: every `.dlg` file of `<root>/assets/dialogue/`,
-/// by name, then `extra` if it isn't one of them. Returns them with the
-/// name `extra` is reported under.
+/// The folders of the repository whose `dialogue/` holds scripts: the
+/// test files' (ADR-0057: the content is checked with them, as in a test
+/// build), then the story's.
+const ROOTS: [&str; 2] = [TEST_DISPLAY_ROOT, DISPLAY_ROOT];
+
+/// The scripts to check: every `.dlg` file of `<root>/assets/dialogue/`
+/// and `<root>/assets-test/dialogue/`, by name, then `extra` if it isn't
+/// one of them. Returns them with the name `extra` is reported under.
 pub fn scripts(root: &Path, extra: Option<&Path>) -> Result<(Vec<Script>, Option<String>), String> {
-    let dir = root.join("assets").join(DIALOGUE_DIR);
-    let entries = fs::read_dir(&dir).map_err(|e| format!("can't read {}: {e}", shown(&dir)))?;
-    let mut paths: Vec<_> = entries.filter_map(|e| Some(e.ok()?.path())).collect();
-    paths.retain(|p| shown(p).ends_with(DIALOGUE_EXTENSION));
-    paths.sort();
     let mut only = None;
     let mut out = Vec::new();
-    for path in &paths {
-        let file = path.file_name().unwrap_or_default().to_string_lossy();
-        let name = format!("assets/{DIALOGUE_DIR}/{file}");
-        if extra.is_some_and(|e| same_file(e, path)) {
-            only = Some(name.clone());
+    for assets in ROOTS {
+        let dir = root.join(assets).join(DIALOGUE_DIR);
+        let entries = fs::read_dir(&dir).map_err(|e| format!("can't read {}: {e}", shown(&dir)))?;
+        let mut paths: Vec<_> = entries.filter_map(|e| Some(e.ok()?.path())).collect();
+        paths.retain(|p| shown(p).ends_with(DIALOGUE_EXTENSION));
+        paths.sort();
+        for path in &paths {
+            let file = path.file_name().unwrap_or_default().to_string_lossy();
+            let name = format!("{assets}/{DIALOGUE_DIR}/{file}");
+            if extra.is_some_and(|e| same_file(e, path)) {
+                only = Some(name.clone());
+            }
+            out.push((name, read_script(path)?));
         }
-        out.push((name, read_script(path)?));
     }
     if let (Some(extra), None) = (extra, &only) {
         out.push((shown(extra), read_script(extra)?));
@@ -187,6 +196,10 @@ mod tests {
         assert_eq!(only, None);
         let names: Vec<&str> = scripts.iter().map(|(n, _)| n.as_str()).collect();
         assert!(names.contains(&"assets/dialogue/ch01.dlg"), "{names:?}");
+        assert!(
+            names.contains(&"assets-test/dialogue/test.dlg"),
+            "{names:?}"
+        );
         assert!(names.is_sorted());
         let dlg = |n: &&str| n.ends_with(DIALOGUE_EXTENSION);
         assert!(names.iter().all(dlg), "{names:?}");
@@ -234,7 +247,10 @@ mod tests {
         assert!(error.contains("no_such_script.dlg"), "{error}");
         let error = scripts(&root().join("no_such_dir"), None).unwrap_err();
         assert!(error.starts_with("can't read "), "{error}");
-        assert!(error.contains("no_such_dir/assets/dialogue"), "{error}");
+        assert!(
+            error.contains("no_such_dir/assets-test/dialogue"),
+            "{error}"
+        );
     }
 
     fn problem(file: &str, line: u32) -> ContentError {

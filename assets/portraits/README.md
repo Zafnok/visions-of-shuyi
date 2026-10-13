@@ -9,7 +9,9 @@ two portraits, `lead_m` and `lead_f`, and dialogue shows the one for the
 gender the player picked.
 
 `test_lord` and `test_knight` are **placeholders** for tests and the viewer,
-not real characters. `lead_m` and `lead_f` are placeholder recolours of
+not real characters: they are test files, in `assets-test/portraits/`
+(ADR-0057; their bought versions are in `assets-private/test/portraits/`).
+`lead_m` and `lead_f` are placeholder recolours of
 `test_lord`. The real portraits are bought art (ADR-0032): they are not in
 this repository but in `assets-private/game/portraits/` (ADR-0040), where a
 file replaces the one at the same path here. Ticket 0706 picked the

@@ -1,4 +1,4 @@
-// The lights a battle map can be in (ticket 0438, ADR-0057;
+// The lights a battle map can be in (ticket 0438, ADR-0058;
 // docs/design/look-and-feel.md, "Lighting is set per map"). Loaded by
 // trpg_content::lighting. A map names one in its header
 // (assets/maps/README.md); a battle file may name another

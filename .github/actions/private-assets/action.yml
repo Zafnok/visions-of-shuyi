@@ -64,10 +64,13 @@ runs:
         ref: ${{ steps.plan.outputs.rev }}
         ssh-key: ${{ inputs.key }}
         path: assets-private
-        # Only what the game embeds and the voice clips that ship beside it
-        # (ADR-0046); the bought packs themselves stay behind.
+        # Only what the game embeds, the bought art of the test files (a
+        # build with the debug tools embeds it too, ADR-0057) and the voice
+        # clips that ship beside the game (ADR-0046); the bought packs
+        # themselves stay behind.
         sparse-checkout: |
           game
+          test
           voice
         persist-credentials: false
     - name: Put the voice clips beside the game

@@ -2,7 +2,7 @@
 //! (ADR-0052): each tile's own picture, then the look's layers over them
 //! (pictures between tiles by the [corner rule](crate::map_view::corners),
 //! and pictures on tiles), then what tints a tile. The pictures are
-//! shaded by the light the scene's map is in (ADR-0057); the tints are
+//! shaded by the light the scene's map is in (ADR-0058); the tints are
 //! not.
 //!
 //! A tile off the map gets no picture, and no part of one: a picture

@@ -264,7 +264,7 @@ pub const BACKDROPS: [(&str, &str); 6] = [
 /// one's place in `game/` (`assets/battlers/README.md` has the format):
 /// the public file's day pictures, and the bundle's own dusk and night
 /// pictures of the same places, so a fight at dusk is in front of the
-/// artist's dusk and not of a shaded day (ADR-0057). Names only: no art.
+/// artist's dusk and not of a shaded day (ADR-0058). Names only: no art.
 pub const BACKDROPS_RON: &str = r#"// Written by `cargo xtask battler-import` (ticket 0438): the public
 // backdrops' file, and the bought pictures of the same places at dusk and
 // at night. Format: assets/battlers/README.md.

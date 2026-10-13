@@ -1,5 +1,5 @@
 //! The third part of `cargo xtask test-tileset`: writes
-//! `assets/tilesets/test_auto.png` and `test_auto.ron`, the public test
+//! `assets-test/tilesets/test_auto.png` and `test_auto.ron`, the public test
 //! tileset with **layers and looks** (ticket 0437, ADR-0052).
 //!
 //! It is shaped like the bought tileset, which never enters this
@@ -20,7 +20,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::path::Path;
 
-use trpg_content::bundle::display_path;
+use trpg_content::bundle::test_display_path;
 
 use crate::font_atlas::encode_png;
 use crate::test_tileset::{Canvas, Sources, TerrainLook};
@@ -268,8 +268,8 @@ pub fn run(root: &Path) -> Result<String, String> {
     let (width, height, rgba) = image(&src)?;
     let png = encode_png(width, height, &rgba)?;
     let text = ron(&src, &test_units::sheets(&src));
-    let png_shown = display_path(PNG_PATH);
-    let ron_shown = display_path(RON_PATH);
+    let png_shown = test_display_path(PNG_PATH);
+    let ron_shown = test_display_path(RON_PATH);
     for (shown, bytes) in [(&png_shown, png), (&ron_shown, text.into_bytes())] {
         let path = root.join(shown);
         if let Some(dir) = path.parent() {
@@ -513,13 +513,13 @@ mod tests {
     fn committed_files_are_what_the_tool_makes() {
         let src = sources();
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let png = fs::read(root.join(display_path(PNG_PATH))).unwrap();
+        let png = fs::read(root.join(test_display_path(PNG_PATH))).unwrap();
         assert_eq!(
             decode_png(&png).unwrap(),
             image(&src).unwrap(),
             "rerun `cargo xtask test-tileset`"
         );
-        let text = fs::read_to_string(root.join(display_path(RON_PATH))).unwrap();
+        let text = fs::read_to_string(root.join(test_display_path(RON_PATH))).unwrap();
         assert_eq!(
             text.replace("\r\n", "\n"),
             ron(&src, &test_units::sheets(&src)),
@@ -533,13 +533,13 @@ mod tests {
         let summary = run(&root).unwrap();
         assert_eq!(
             summary,
-            "test-tileset: wrote assets/tilesets/test_auto.png (256×80) and \
-             assets/tilesets/test_auto.ron"
+            "test-tileset: wrote assets-test/tilesets/test_auto.png (256×80) and \
+             assets-test/tilesets/test_auto.ron"
         );
         let src = sources();
-        let written = fs::read(root.join("assets/tilesets/test_auto.png")).unwrap();
+        let written = fs::read(root.join("assets-test/tilesets/test_auto.png")).unwrap();
         assert_eq!(decode_png(&written).unwrap(), image(&src).unwrap());
-        let text = fs::read_to_string(root.join("assets/tilesets/test_auto.ron")).unwrap();
+        let text = fs::read_to_string(root.join("assets-test/tilesets/test_auto.ron")).unwrap();
         assert_eq!(text, ron(&src, &test_units::sheets(&src)));
         // A root that can't hold directories fails with the path.
         let file = root.join("file");
@@ -548,7 +548,7 @@ mod tests {
         assert!(err.starts_with("creating "), "{err}");
         // The image's own path taken by a directory fails the write.
         let blocked = root.join("blocked");
-        fs::create_dir_all(blocked.join("assets/tilesets/test_auto.png")).unwrap();
+        fs::create_dir_all(blocked.join("assets-test/tilesets/test_auto.png")).unwrap();
         let err = run(&blocked).unwrap_err();
         assert!(err.starts_with("writing "), "{err}");
         fs::remove_dir_all(&root).unwrap();

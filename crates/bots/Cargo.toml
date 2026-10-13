@@ -16,5 +16,6 @@ workspace = true
 trpg-core = { path = "../core" }
 
 [dev-dependencies]
-# The game's tables and battle files, for tests on real battles.
-trpg-content = { path = "../content" }
+# The game's tables and battle files, for tests on real battles, and the
+# test files' (ADR-0057).
+trpg-content = { path = "../content", features = ["test-fixtures"] }

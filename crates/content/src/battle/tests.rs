@@ -690,6 +690,15 @@ fn a_battle_may_name_its_light() {
     );
     // A file that doesn't parse names none: the battle loader reports it.
     assert_eq!(light_of("b.ron", "(", &c.lighting), Ok(None));
-    // No shipped battle names a light that isn't one.
-    assert!(load_lights(&c.lighting).is_ok());
+    // The bundle's battle files: the test battle names noon, no other
+    // names a light.
+    assert_eq!(
+        load_lights(&c.lighting),
+        Ok(BTreeMap::from([("test".to_owned(), "noon".to_owned())]))
+    );
+    // A light the lights' file lacks is an error of that battle's file.
+    let none = Lighting::default();
+    let errors = load_lights(&none).err().unwrap_or_default();
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].file.ends_with("battles/test.ron"), "{errors:?}");
 }

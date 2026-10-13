@@ -933,7 +933,7 @@ pub(crate) mod tests {
     }
 
     /// The map's light changes the frame of every tileset with terrain
-    /// tiles (ADR-0057), and of no skin that paints the glyph skin's
+    /// tiles (ADR-0058), and of no skin that paints the glyph skin's
     /// ground.
     #[test]
     fn the_light_is_painted_by_a_tileset_that_has_terrain_tiles() {

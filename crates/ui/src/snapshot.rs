@@ -25,7 +25,7 @@
 //! (`src`). After that come, only when they aren't the default, ` flip`,
 //! ` opacity=N` (below 255), ` solid=colour`, ` dimmed` or
 //! ` shade=grey:red,green,blue` (how its pixels are coloured, ADR-0049; a
-//! shade is a light's numbers in thousandths, ADR-0057) and
+//! shade is a light's numbers in thousandths, ADR-0058) and
 //! ` clip=x,y wxh` (not all of `dest` is drawn).
 //!
 //! A see-through cell (ADR-0048) gets a key of its own, whose legend line

@@ -45,8 +45,8 @@ clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merg
 font-atlas <font.bdf>... <out-dir> build the font atlas from BDF fonts\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
 frame-png <out.png> [steps]        render a scripted game frame to a PNG (frame-png --help)\n  \
-test-card                          write the sprite test image, assets/images/test_card.png\n  \
-test-tileset                       write the sprite map skins' test tilesets, assets/tilesets/test*\n  \
+test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
+test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
 effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
 battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \

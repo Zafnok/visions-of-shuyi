@@ -127,7 +127,7 @@ pub struct Content {
     pub lang: Arc<Lang>,
     /// Combat pictures and the backdrops behind them (ADR-0056).
     pub battlers: BattlerTable,
-    /// The lights a map can be in (ADR-0057).
+    /// The lights a map can be in (ADR-0058).
     pub lighting: Lighting,
     /// The light a battle is fought in instead of its map's, by battle
     /// id, for the battles that name one. Look data: it isn't in the
@@ -695,8 +695,16 @@ mod tests {
         for def in content.maps.values_mut().filter(|d| d.map == battle.map) {
             def.look = dusk.clone();
         }
+        // The test battle's file names noon: fought at noon on a dusk map.
+        let noon = Some("noon".to_owned());
+        assert_eq!(content.battle_lights.get("test"), noon.as_ref());
+        let look = content.battle_look(&battle);
+        assert_eq!(
+            (look.tiles.as_str(), look.light.as_str()),
+            ("indoor", "noon")
+        );
         // No light of its own: its map's.
-        assert_eq!(content.battle_lights.get("test"), None);
+        assert_eq!(content.battle_lights.remove("test"), noon);
         assert_eq!(content.battle_look(&battle), dusk);
         // Its own light, on its map's tiles; another battle's is not its.
         content
@@ -711,6 +719,14 @@ mod tests {
             (look.tiles.as_str(), look.light.as_str()),
             ("indoor", "night")
         );
+    }
+
+    #[test]
+    fn battle_lights_are_read_when_the_lights_loaded() {
+        let lights = lighting::load().ok();
+        let read = load_battle_lights(lights.as_ref()).unwrap();
+        assert_eq!(read.get("test").map(String::as_str), Some("noon"));
+        assert_eq!(load_battle_lights(None), Ok(BTreeMap::new()));
     }
 
     #[test]
@@ -741,7 +757,7 @@ mod tests {
             .err()
             .unwrap_or_default();
         assert_eq!(errors.len(), 1);
-        assert_eq!(errors[0].file, "assets/maps/test_small.map");
+        assert_eq!(errors[0].file, "assets-test/maps/test_small.map");
         assert!(errors[0].message.contains("\"midnight\""), "{errors:?}");
         // Unchecked without the lights; the maps' own errors pass through.
         assert_eq!(check_map_lights(Ok(odd()), None), Ok(odd()));
@@ -1312,7 +1328,7 @@ mod tests {
         assert_eq!(
             first.as_deref(),
             Some(
-                "assets/dialogue/test.dlg:10: \"test_lord\" may have fallen or left the army by \
+                "assets-test/dialogue/test.dlg:10: \"test_lord\" may have fallen or left the army by \
                  now; put their lines inside \"@if test_lord\" ... \"@endif\" \
                  (assets/dialogue/README.md, \"Who is still there\")"
             )
@@ -1324,8 +1340,8 @@ mod tests {
         assert_eq!(
             files.into_iter().collect::<Vec<_>>(),
             [
-                "assets/dialogue/test.dlg",
-                "assets/dialogue/test_triggers.dlg"
+                "assets-test/dialogue/test.dlg",
+                "assets-test/dialogue/test_triggers.dlg"
             ]
         );
         // Skipped when another file failed, or the dialogue did.

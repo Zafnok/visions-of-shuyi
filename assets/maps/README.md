@@ -2,7 +2,8 @@
 
 Each `*.map` file here is one battle map, loaded by `trpg_content::map` and
 validated by the all-assets test (ADR-0005). The file stem is the map's id
-(`test_small.map` → `"test_small"`).
+(`test_small.map` → `"test_small"`). `test_small.map`, the map of the test
+battles, is in `assets-test/maps/` (ADR-0057).
 
 ## Format
 
@@ -63,7 +64,7 @@ see (`MapDef::look`), never in it (ADR-0038, ADR-0052).
 `light` names the light the map is in: one of `assets/data/lighting.ron`
 (`"noon"`, the default: leave it out; `"dusk"`; `"night"`). A skin that
 has pictures shades the ground by it; units, ranges, the cursor and the
-panels keep their colours, and the glyph look ignores it (ADR-0057). A
+panels keep their colours, and the glyph look ignores it (ADR-0058). A
 battle file may name another light for its own fight
 (`assets/battles/README.md`). Either of `tiles` and `light` may be left
 out.

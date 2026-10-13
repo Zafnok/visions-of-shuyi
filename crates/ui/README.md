@@ -496,7 +496,7 @@ cargo xtask frame-png target/battle.png --keys "Down f Left f" --wait 1.5
 Steps (`--keys`, `--pad`, `--wait`) run in the order given, from a later
 launch with `--layout right|left` (`--prompt`: as the game starts, the title waiting for a key or button).
 `--light dusk` fights every battle in that light of
-`assets/data/lighting.ron` (ADR-0057), whatever its files say.
+`assets/data/lighting.ron` (ADR-0058), whatever its files say.
 `--scale` defaults to 2; `--help` has the rest. It is for looking, never a
 test: tests read the scene, the state or the snapshot.
 - Debug screens are always on in the Harness, so `F2` works in any build.

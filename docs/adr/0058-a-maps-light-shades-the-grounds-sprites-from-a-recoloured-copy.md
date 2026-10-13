@@ -1,4 +1,4 @@
-# ADR-0057: A map's light is a name; the ground's sprites carry its shade and are drawn from a recoloured copy of the image
+# ADR-0058: A map's light is a name; the ground's sprites carry its shade and are drawn from a recoloured copy of the image
 
 - **Status:** Accepted
 - **Date:** 2026-10-12

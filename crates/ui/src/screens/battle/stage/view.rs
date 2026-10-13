@@ -12,7 +12,7 @@ use super::motion::Pose;
 pub struct StageView {
     /// The picture behind the fighters.
     pub backdrop: Option<ImageId>,
-    /// The light the backdrop is still to be shaded by (ADR-0057): the
+    /// The light the backdrop is still to be shaded by (ADR-0058): the
     /// map's, when the picture is noon's; [`Light::PLAIN`] when it was
     /// drawn for the map's light.
     pub shade: Light,

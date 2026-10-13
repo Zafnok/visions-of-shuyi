@@ -171,7 +171,7 @@ combat stage's backdrop follows the light too.
   shaded like the map's ground. The fighters aren't shaded.
 - The glyph map looks the same in every light.
 
-**What was built** (ADR-0057).
+**What was built** (ADR-0058).
 
 - `assets/data/lighting.ron` and `trpg_content::lighting`: the lights as
   data, each `(grey, tint)`; `Light::apply` is the one function that
@@ -195,7 +195,7 @@ combat stage's backdrop follows the light too.
 - **No shader.** The ticket preferred a fragment shader. `app` already
   draws recoloured sprites from a copy of the image made on the CPU
   (ADR-0049), so the shade is one more `Paint`, with one implementation of
-  the sum for the window, the web and `frame-png`. ADR-0057 has the
+  the sum for the window, the web and `frame-png`. ADR-0058 has the
   reasons.
 - The shade is a new `Paint`, not a `shade: Option<…>` field of `Sprite`.
 - The light isn't a separate field of `MapScene`: it is `MapScene::look`'s
