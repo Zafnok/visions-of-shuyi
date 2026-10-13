@@ -108,10 +108,15 @@ const fn grown(r: PxRect) -> PxRect {
     Rect::new(r.x - 1, r.y - 1, r.w + 2, r.h + 2)
 }
 
-/// The nearest whole pixel to `(x, y)`.
-#[allow(clippy::cast_possible_truncation)] // a pixel on the console
+/// The furthest from pixel 0 an arrow's end may be, each way: far past any
+/// console, and near enough that a [`line`] to it is quick to work out.
+const FAR: f32 = 32_000.0;
+
+/// The nearest whole pixel to `(x, y)`, no further than [`FAR`] out.
+#[allow(clippy::cast_possible_truncation)] // within `FAR`
 fn pixel(x: f32, y: f32) -> (i32, i32) {
-    (x.round() as i32, y.round() as i32)
+    let whole = |v: f32| v.round().clamp(-FAR, FAR) as i32;
+    (whole(x), whole(y))
 }
 
 /// The arrow from tile `from` (its middle or its edge: `start`) to just
@@ -326,6 +331,15 @@ mod tests {
         let diagonal = line((0, 0), (3, 3));
         assert_eq!(pixels(&diagonal), [(0, 0), (1, 1), (2, 2), (3, 3)]);
         assert_eq!(diagonal.len(), 4);
+    }
+
+    #[test]
+    fn a_pixel_is_the_nearest_one_and_never_far_off_the_console() {
+        assert_eq!(pixel(2.4, -2.6), (2, -3));
+        assert_eq!(pixel(2.5, 7.0), (3, 7));
+        assert_eq!(pixel(f32::INFINITY, f32::NEG_INFINITY), (32_000, -32_000));
+        assert_eq!(pixel(1e9, -1e9), (32_000, -32_000));
+        assert_eq!(pixel(f32::NAN, 31_999.6), (0, 32_000));
     }
 
     #[test]
