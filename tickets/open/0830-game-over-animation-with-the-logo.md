@@ -30,6 +30,15 @@ Code: `crates/ui/src/screens/game_over.rs` builds a `GameOverView`;
 `game_over/glyph.rs` paints it (ADR-0054). The logo is whatever 0811
 makes, so this ticket waits for it.
 
+**Added 2026-10-12 (0811 is done):** the logo is a sprite,
+`assets/title/logo.png` (52×31, drawn 8× by
+`title::glyph::logo_sprite`; ADR-0057;
+`docs/design/look-and-feel.md`, *Title screen*). The title shows it over a
+bought backdrop with sparks drifting up (`title::glyph::paint_logo`);
+whether Game Over uses the backdrop and the sparks too is part of the
+question for Nick. Idle motion is drawn only while `Ctx::idle_motion`
+is on.
+
 ## Nick input
 
 **Decision, asked first** (`ask-nick`; show moving mockups or frame

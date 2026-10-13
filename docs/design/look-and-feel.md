@@ -4,7 +4,7 @@ Decided: 2026-09-25
 Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 0021; bought tiles and sprites on the battle map: 0038; walking sprites,
 effect marks, the glyph look as an option, busts in dialogue: 0039; which
-bought tiles each terrain is: 0437)
+bought tiles each terrain is: 0437; the title screen: 0811)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -813,6 +813,88 @@ like shit". What the search was held to after that:
   以外でも利用可・商用利用可"), in a 1990s semi-realistic style. Nick has
   the link; nothing is decided about it.
 
+### Title screen
+
+Decided 2026-10-12, ticket 0811, over four rounds of renders at the game's
+size. Screenshot of the built screen:
+[`0811-title.png`](../screenshots/0811-title.png).
+
+Round 1 (A big block lettering on black; B thin letters from box-line
+glyphs; C the game's font at 4×; D the lettering over a glyph scene with a
+castle; E the lettering over a bought battle backdrop, at night or at
+dusk; F the lettering with embers drifting up; a line under the title: A
+none, B "an ASCII tactics game", C his own; the music: A at once, B faded
+in):
+
+> 1. probably E1 or E2 with maybe F as well. But I was thinking probably
+> have a distinction between Visions and Of. The Shuyi looks good but Of
+> should not have same importance as Visions. We probably need to nail
+> down the backdrop.
+> 2. A
+> 3. A
+
+Round 2 (lettering L1 "VISIONS of" on one line, L2 "of" in the text font
+between hairlines, L3 a small "OF" between two bars; nine backdrops side
+by side; the embers over a backdrop: A as shown, B fewer or slower, C
+none):
+
+> 1. I like L1 and L3. Can I see lowercase of with the lines?
+> 2. rotate between them on launch imo. Other than 7 and 8 probably.
+> 3. A and we might tune it a bit later but it looks more dynamic than a
+> static background this way
+
+Round 3 (L4, a lowercase "of" between the bars; the rotation's rules):
+
+> 1. can we make the of the same color as visions
+> 2. yes sounds good
+
+Shown `of` pale with the bars gold, and with the bars pale too:
+
+> I like pale of, gold bars btw
+
+- **The logo is block lettering in three rows:** `VISIONS` in pale
+  letters, a small lowercase `of` between two short bars, and `SHUYI` big
+  below, shaded from pale gold at the top to brown at the bottom. Every
+  part has a dark edge down and to the right, so it reads on any backdrop.
+  Each block is 8 screen pixels. `of` is the same pale colour as
+  `VISIONS`, and the two bars are gold.
+- **No line under the title** (Nick: "A"). "an ASCII tactics game" is
+  gone.
+- **Behind the logo is a bought battle backdrop** (Tiny Tales *Battlebacks
+  Vol.1*), filling the screen above the help line, its edges mirrored to
+  reach the sides as in fights.
+- **The backdrop changes with each launch** (Nick: "rotate between them on
+  launch"). The pool is seven pictures: Fields A at dusk and at night,
+  Fields B by day, at dusk and at night, Meadows at dusk and at night.
+  Mountain B at night and Wasteland at night are out (their mirrored edges
+  looked wrong). *Claude's starting rules, which Nick agreed to ("yes
+  sounds good"):*
+  - One backdrop per launch, picked at random, never the same one twice
+    in a row. Example: the game opens on Meadows at dusk; quit and start
+    again, and it is any of the other six.
+  - It stays for the whole launch: back from a battle or Game Over, the
+    title shows the same picture.
+  - The lettering is the same on every backdrop.
+- **Sparks drift up the screen** (Nick: "it looks more dynamic than a
+  static background this way"; "we might tune it a bit later"): 46 small
+  dots and stars in warm colours, each rising 9 or 18 rows a second and
+  swaying a cell or two (*all tunable*, `title/glyph.rs`). They pass
+  behind the logo and the menu, and show from the first frame, before the
+  first press too *(Claude's starting rule)*.
+- **The title music starts at once** on the first press, as before (Nick:
+  "A"): the song's own opening is quiet and rising.
+- **Layout:** the logo at the top; under it the menu, or `Press any key or
+  button` with its two pictures on a dark band so it reads on a bright
+  backdrop; a notice under the menu on a band too; the help line on the
+  bottom row, which the backdrop doesn't cover.
+- **The logo follows `title.md`'s precautions**: plain block letters, no
+  sword or tree built into it. (The ticket's "crossed swords" idea was not
+  offered for that reason.)
+- **A copy of the public repository** shows the logo over a flat
+  placeholder: the bought pictures aren't in it (ADR-0040).
+- The intro cinematic's last shot (`title-screen.md`, *Intro cinematic*)
+  and the Game Over animation (ticket 0830) use this logo.
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side
@@ -853,6 +935,8 @@ black.
 
 ## Open sub-questions
 
+- Title screen: the sparks may be tuned after Nick has seen them in the
+  game (ticket 0811).
 - Selection arrows `►Al◄` next to another unit: whole-glyph arrows would hide
   one of its letters (the 0416 bracket problem). Ask Nick before 0403 draws them.
 - Combat screen (ticket 0413 decided where it is shown, the backdrop, the

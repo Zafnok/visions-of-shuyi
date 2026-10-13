@@ -7,7 +7,9 @@
 //!
 //! **The look is a skin** (ADR-0054). This module decides what the screen
 //! shows and does, and says it as plain data: a [`TitleView`]
-//! ([`TitleScreen::view`]). [`glyph::paint`] draws that view as glyphs.
+//! ([`TitleScreen::view`]). [`glyph::paint`] draws that view: the logo
+//! picture over this launch's backdrop (`docs/design/look-and-feel.md`,
+//! *Title screen*; ADR-0057), with the menu under it.
 //! Tests of what happened read the view; only [`glyph`]'s tests read cells.
 
 pub mod glyph;
@@ -15,16 +17,25 @@ pub mod view;
 
 pub use view::TitleView;
 
+use trpg_content::ImageId;
+
 use super::{CreditsScreen, OptionsScreen, debug_hint};
 use crate::audio::MenuSound;
+use crate::audio::splitmix64;
 use crate::flow::FlowScreen;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::save;
-use crate::screen::{Ctx, FrameInput, KeyPrompt, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, IdleMotion, KeyPrompt, Screen, Transition};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// The title screen's music cue (`audio.md`).
 pub const TITLE_MUSIC: &str = "title";
+
+/// Where the title keeps the backdrop it last showed ([`Storage`] key), so
+/// that the next launch shows another.
+///
+/// [`Storage`]: crate::storage::Storage
+pub const BACKDROP_KEY: &str = "title_backdrop";
 
 /// One line of the title menu.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -60,7 +71,21 @@ impl Item {
     }
 }
 
-/// Title, subtitle and a menu (`Continue` while a battle is suspended,
+/// The backdrop for this launch: one of `ctx`'s title backdrops picked by
+/// [`Ctx::music_seed`], never the one stored as shown last (unless it is
+/// the only one; a storage that can't be read rules none out). `None` if
+/// the game has no backdrops.
+fn pick_backdrop(ctx: &Ctx) -> Option<ImageId> {
+    let all = &ctx.content.title.backdrops;
+    let last = ctx.storage.read(BACKDROP_KEY).ok().flatten();
+    let fresh = |b: &&ImageId| all.len() == 1 || Some(b.path()) != last.as_deref();
+    let others: Vec<ImageId> = all.iter().filter(fresh).copied().collect();
+    let len = u64::try_from(others.len()).ok().filter(|&n| n > 0)?;
+    let index = usize::try_from(splitmix64(ctx.music_seed) % len).ok()?;
+    others.get(index).copied()
+}
+
+/// The logo and a menu (`Continue` while a battle is suspended,
 /// `New Game`, `Load Game`, `Options`, `Credits`, `Quit`), with a help line naming
 /// the keys of the active layout.
 #[derive(Debug, Clone)]
@@ -82,6 +107,14 @@ pub struct TitleScreen {
     /// Whether the "press any key or button" prompt ([`Ctx::key_prompt`])
     /// is over. It shows once per launch.
     prompt_done: bool,
+    /// The picture behind the logo, kept for the whole launch; `None` if
+    /// the game has none.
+    backdrop: Option<ImageId>,
+    /// The backdrop still to be stored as the one shown last (the first
+    /// update does: making the screen can't write).
+    unstored: Option<ImageId>,
+    /// Seconds this screen has been updated for: it places the sparks.
+    time: f32,
 }
 
 impl TitleScreen {
@@ -107,6 +140,9 @@ impl TitleScreen {
             notice: None,
             music_on: false,
             prompt_done: false,
+            backdrop: pick_backdrop(ctx),
+            unstored: pick_backdrop(ctx),
+            time: 0.0,
         }
     }
 
@@ -182,14 +218,16 @@ impl TitleScreen {
     }
 
     /// The screen as it is now, as plain data for a skin to paint
-    /// ([`glyph::paint`]): the title and subtitle, then either the "press
-    /// any key" prompt or the menu with its notice and help line, and the
-    /// debug hint.
+    /// ([`glyph::paint`]): the backdrop and the sparks (the logo is always
+    /// shown), then either the "press any key" prompt or the menu with
+    /// its notice and help line, and the debug hint.
     pub fn view(&self, ctx: &Ctx) -> TitleView {
         let waiting = self.waiting(ctx);
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // clamped
+        let millis = (f64::from(self.time) * 1000.0).clamp(0.0, f64::from(u32::MAX)) as u32;
         TitleView {
-            title: ctx.text("title.title").to_owned(),
-            subtitle: ctx.text("title.subtitle").to_owned(),
+            backdrop: self.backdrop,
+            sparks: (ctx.idle_motion == IdleMotion::On).then_some(millis),
             prompt: waiting.then(|| ctx.text("title.press_any_key").to_owned()),
             menu: (!waiting).then(|| self.menu.view()),
             notice: self.notice.clone().filter(|_| !waiting),
@@ -211,6 +249,13 @@ impl Screen for TitleScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        if let Some(backdrop) = self.unstored.take() {
+            // Not being able to remember it must not stop the title.
+            let _ = ctx.storage.write(BACKDROP_KEY, backdrop.path());
+        }
+        if input.dt.is_finite() {
+            self.time += input.dt.max(0.0);
+        }
         if self.waiting(ctx) {
             // The key or button that ends the wait does nothing else (a
             // key with no layout chosen yet opens the layout picker over

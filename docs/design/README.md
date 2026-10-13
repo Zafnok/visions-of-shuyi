@@ -26,6 +26,7 @@ here.
 | Fighters with no Tiny Tales art | [`look-and-feel.md`](look-and-feel.md) (*Fighters with no Tiny Tales art*) | 0040, 0035 (Harl) | ✅ decided 2026-10-04 (Shironejiya for foot fighters, Pixel Flag's Paladin for riders) |
 | Sprite units: the zoom key (the outline alone, no corner mark: decided 2026-10-03, 0436) | `look-and-feel.md`, `controls.md` | 0035, 0439 | ⏳ open |
 | Music & sound effects | [`audio.md`](audio.md) | 0020 | ✅ decided 2026-09-28 (banter track, plain-spell crit, fliers and later places still open) |
+| Title screen: the logo, its backdrops and the sparks | [`look-and-feel.md`](look-and-feel.md) (*Title screen*) | 0811 | ✅ decided 2026-10-12 (block lettering over a bought backdrop that changes each launch, drifting sparks, no line under the title) |
 | Title | [`title.md`](title.md) | 0012 | ✅ decided 2026-09-29 (*Visions of Shuyi*) |
 | Title screen: "Press any key or button" | [`title-screen.md`](title-screen.md) | 0034, 0032, 0226 | ✅ decided 2026-09-30 (every build, keys and buttons, since 0032; the keyboard and controller pictures 2026-10-04) |
 | Title screen: intro cinematic | [`title-screen.md`](title-screen.md) (*Intro cinematic*) | 0036 | ✅ decided 2026-10-03 (an off switch in Options: later; skip sound 0041; overworld shot 1010) |

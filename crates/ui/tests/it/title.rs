@@ -409,8 +409,8 @@ fn a_later_launch_shows_the_prompt_then_the_menu() {
 }
 
 /// Screen text comes from the language in use (ticket 0233): the test pack
-/// is English in capitals, with one stale entry (the subtitle) and one
-/// missing (Credits), which stay English.
+/// is English in capitals, with one missing entry (Credits), which stays
+/// English.
 #[test]
 fn the_title_in_the_test_language() {
     let mut h = title();
@@ -419,9 +419,6 @@ fn the_title_in_the_test_language() {
     h.keys("f d");
     assert_snapshot!(h.snapshot());
     let shown = view(&h);
-    assert_eq!(shown.title, "VISIONS OF SHUYI");
-    // Stale and missing: English.
-    assert_eq!(shown.subtitle, "an ASCII tactics game");
     assert_eq!(
         shown.help.as_deref(),
         Some("ARROWS MOVE · f SELECT · d BACK")

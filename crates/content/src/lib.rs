@@ -31,6 +31,7 @@ pub mod support;
 pub mod terrain;
 pub mod tileset;
 pub mod tip;
+pub mod title;
 pub mod trigger;
 pub mod voice;
 
@@ -67,6 +68,7 @@ pub use portrait::Portrait;
 pub use terrain::{TerrainDef, TerrainDisplay, TerrainDisplayTable};
 pub use tileset::{CornerLayer, ImageRect, Layer, Look, Picture, TerrainTiles, TileLayer, Tileset};
 pub use tip::{Tip, TipTable, TipTrigger};
+pub use title::TitleArt;
 pub use trigger::check_triggers;
 pub use voice::{Playable, Variant, VoiceManifest};
 
@@ -125,6 +127,8 @@ pub struct Content {
     pub lang: Arc<Lang>,
     /// Combat pictures and the backdrops behind them (ADR-0056).
     pub battlers: BattlerTable,
+    /// The title screen's logo and backdrops (ADR-0057).
+    pub title: TitleArt,
 }
 
 impl Content {
@@ -201,6 +205,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         Err(_) => Ok(BTreeMap::new()),
     };
     let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok());
+    let title_art = load_title(images.as_ref().ok());
     let audio = audio::load();
     let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
     let (known, cues) = (names.as_ref().ok(), audio.as_ref().ok());
@@ -255,6 +260,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         supports,
         lang: Ok(Lang::default()),
         battlers: stage_art,
+        title: title_art,
     };
     let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
     units.lang = lang::load(data);
@@ -517,6 +523,15 @@ fn load_battlers(
     }
 }
 
+/// The title screen's art (ADR-0057): none if the images failed to load
+/// (their errors are reported once, by the image table).
+fn load_title(images: Option<&ImageTable>) -> Result<TitleArt, Vec<ContentError>> {
+    match images {
+        Some(images) => title::load(images),
+        None => Ok(TitleArt::default()),
+    }
+}
+
 /// Loader results for the unit data (kept together to keep [`assemble`]'s
 /// argument list short).
 struct Loaded {
@@ -541,6 +556,7 @@ struct Loaded {
     supports: Result<SupportTable, Vec<ContentError>>,
     lang: Result<Lang, Vec<ContentError>>,
     battlers: Result<BattlerTable, Vec<ContentError>>,
+    title: Result<TitleArt, Vec<ContentError>>,
 }
 
 /// Takes a loader's value, or moves its errors into `errors` and returns a
@@ -590,6 +606,7 @@ fn assemble(
         supports: take(units.supports, &mut errors),
         lang: Arc::new(take(units.lang, &mut errors)),
         battlers: take(units.battlers, &mut errors),
+        title: take(units.title, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -652,6 +669,10 @@ mod tests {
 
     fn ok_battlers() -> Result<BattlerTable, Vec<ContentError>> {
         battler::load_all(&ImageTable::load().unwrap_or_default(), None)
+    }
+
+    fn ok_title() -> Result<TitleArt, Vec<ContentError>> {
+        title::load(&ImageTable::load().unwrap_or_default())
     }
 
     fn ok_portraits() -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
@@ -721,6 +742,7 @@ mod tests {
             supports: ok_supports(),
             lang: lang::load(None),
             battlers: ok_battlers(),
+            title: ok_title(),
         }
     }
 
@@ -822,9 +844,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 26] = [
+    const NAMES: [&str; 27] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A",
+        "j", "z", "b", "h", "g", "q", "l", "A", "B",
     ];
 
     #[test]
@@ -859,6 +881,7 @@ mod tests {
                     supports: Err(e("q")),
                     lang: Err(e("l")),
                     battlers: Err(e("A")),
+                    title: Err(e("B")),
                 },
             ),
             Err(ContentErrors(NAMES.iter().flat_map(|f| e(f)).collect()))
@@ -916,12 +939,20 @@ mod tests {
                         lang::load(None)
                     },
                     battlers: if i == 25 { Err(e("A")) } else { ok_battlers() },
+                    title: if i == 26 { Err(e("B")) } else { ok_title() },
                 },
             )
         };
         for (i, f) in NAMES.iter().enumerate() {
             assert_eq!(only(i), Err(ContentErrors(e(f))));
         }
+    }
+
+    #[test]
+    fn the_title_art_is_skipped_when_the_images_failed() {
+        assert_eq!(load_title(None), Ok(TitleArt::default()));
+        let images = ImageTable::load().ok();
+        assert!(load_title(images.as_ref()).is_ok_and(|t| t.logo.is_some()));
     }
 
     #[test]

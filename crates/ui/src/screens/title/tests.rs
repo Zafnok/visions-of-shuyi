@@ -426,8 +426,8 @@ fn the_first_frame_shows_the_names_the_menu_and_the_help() {
     let c = ctx();
     let t = TitleScreen::new(&c);
     let view = t.view(&c);
-    assert_eq!(view.title, "Visions of Shuyi");
-    assert_eq!(view.subtitle, c.text("title.subtitle"));
+    assert!(c.content.title.backdrops.contains(&view.backdrop.unwrap()));
+    assert_eq!(view.sparks, None);
     assert_eq!(view.prompt, None);
     assert_eq!(view.notice, None);
     assert_eq!(
@@ -512,7 +512,6 @@ fn the_prompt_stands_in_for_the_menu_until_a_key_is_pressed() {
         (&view.menu, &view.help, &view.notice),
         (&None, &None, &None)
     );
-    assert_eq!(view.title, "Visions of Shuyi");
     assert_eq!(view.debug_hint.as_deref(), Some("F2 debug"));
     // A key ends the wait: the menu, the help and no prompt.
     c.key_prompt = KeyPrompt::Pressed;
@@ -581,4 +580,128 @@ fn names_word_finds_whole_identifiers_only() {
     assert!(!names_word("RectSomething and MyCell and Cells", "Cell"));
     assert!(!names_word("RectSomething", "Rect"));
     assert!(!names_word("", "Rect"));
+}
+
+fn tick(dt: f32) -> FrameInput {
+    FrameInput::new(vec![], dt, vec![])
+}
+
+/// A launch with `c`'s storage: a new title, updated once.
+fn launch(c: &mut Ctx) -> Option<ImageId> {
+    let mut t = TitleScreen::new(c);
+    t.update(c, &input(&[]));
+    t.view(c).backdrop
+}
+
+#[test]
+fn the_backdrop_is_picked_at_the_start_and_kept_for_the_launch() {
+    let mut c = ctx();
+    let all = c.content.title.backdrops.clone();
+    assert!(all.len() >= 2);
+    let mut t = TitleScreen::new(&c);
+    let picked = t.view(&c).backdrop.unwrap();
+    assert!(all.contains(&picked));
+    assert_eq!(c.storage.read(BACKDROP_KEY), Ok(None));
+    // The first update remembers it for the next launch.
+    t.update(&mut c, &input(&[]));
+    assert_eq!(t.view(&c).backdrop, Some(picked));
+    assert_eq!(
+        c.storage.read(BACKDROP_KEY),
+        Ok(Some(picked.path().to_owned()))
+    );
+    // Later updates, another seed and other screens in between don't
+    // change it.
+    c.music_seed ^= 0xABCD;
+    t.update(&mut c, &input(&[Action::CursorDown]));
+    t.refresh(&c);
+    t.update(&mut c, &input(&[]));
+    assert_eq!(t.view(&c).backdrop, Some(picked));
+    // It is stored once: a later change of what is stored stays.
+    c.storage.write(BACKDROP_KEY, "other").unwrap();
+    t.update(&mut c, &input(&[]));
+    assert_eq!(c.storage.read(BACKDROP_KEY), Ok(Some("other".to_owned())));
+    // While the prompt waits it is there too.
+    let mut c = ctx();
+    c.key_prompt = KeyPrompt::Waiting;
+    let mut t = TitleScreen::new(&c);
+    t.update(&mut c, &input(&[]));
+    assert!(t.view(&c).backdrop.is_some());
+    assert!(t.view(&c).prompt.is_some());
+    assert!(c.storage.read(BACKDROP_KEY).unwrap().is_some());
+}
+
+#[test]
+fn the_next_launch_never_shows_the_same_backdrop() {
+    let mut c = ctx();
+    let all = c.content.title.backdrops.clone();
+    let mut seen = std::collections::BTreeSet::new();
+    let mut last = None;
+    for seed in 0..200 {
+        c.music_seed = seed;
+        let picked = launch(&mut c);
+        assert!(picked.is_some_and(|p| all.contains(&p)));
+        assert_ne!(picked, last, "seed {seed}");
+        seen.extend(picked.map(ImageId::path));
+        last = picked;
+    }
+    assert_eq!(seen.len(), all.len(), "every backdrop gets its turn");
+    // The pick follows the seed: the same launch twice is the same pick.
+    let pick_with = |seed: u64, stored: &str| {
+        let mut c = ctx();
+        c.music_seed = seed;
+        c.storage.write(BACKDROP_KEY, stored).unwrap();
+        launch(&mut c)
+    };
+    let first = all[0].path();
+    assert_eq!(pick_with(5, first), pick_with(5, first));
+    assert!((0..50).any(|seed| pick_with(seed, first) != pick_with(5, first)));
+    // A stored name that is no backdrop (an old build's) rules nothing out.
+    let any: std::collections::BTreeSet<_> = (0..200)
+        .filter_map(|seed| pick_with(seed, "title/gone.png"))
+        .collect();
+    assert_eq!(any.len(), all.len());
+}
+
+#[test]
+fn one_backdrop_is_shown_every_launch_and_none_is_none() {
+    let mut c = ctx();
+    c.content.title.backdrops.truncate(1);
+    let only = c.content.title.backdrops[0];
+    for seed in 0..5 {
+        c.music_seed = seed;
+        assert_eq!(launch(&mut c), Some(only));
+    }
+    let mut c = ctx();
+    c.content.title.backdrops.clear();
+    assert_eq!(launch(&mut c), None);
+    assert_eq!(c.storage.read(BACKDROP_KEY), Ok(None));
+}
+
+#[test]
+fn the_sparks_follow_how_long_the_title_was_updated() {
+    let mut c = ctx();
+    let mut t = TitleScreen::new(&c);
+    // Only with idle motion on (the game; not a test that doesn't ask).
+    t.update(&mut c, &tick(0.25));
+    assert_eq!(t.view(&c).sparks, None);
+    c.idle_motion = IdleMotion::On;
+    assert_eq!(t.view(&c).sparks, Some(250));
+    t.update(&mut c, &tick(0.5));
+    assert_eq!(t.view(&c).sparks, Some(750));
+    // A frame that isn't a time, or goes backwards, adds nothing.
+    for bad in [f32::NAN, f32::INFINITY, -1.0] {
+        t.update(&mut c, &tick(bad));
+        assert_eq!(t.view(&c).sparks, Some(750), "{bad}");
+    }
+    // It runs while the prompt waits, too, from 0.
+    let mut c = ctx();
+    c.idle_motion = IdleMotion::On;
+    c.key_prompt = KeyPrompt::Waiting;
+    let mut t = TitleScreen::new(&c);
+    assert_eq!(t.view(&c).sparks, Some(0));
+    t.update(&mut c, &tick(1.0));
+    assert_eq!(t.view(&c).sparks, Some(1000));
+    // A very long time stops at the biggest number.
+    t.time = 1.0e30;
+    assert_eq!(t.view(&c).sparks, Some(u32::MAX));
 }

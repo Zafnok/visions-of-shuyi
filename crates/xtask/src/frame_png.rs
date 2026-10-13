@@ -157,6 +157,8 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     };
     // The game as players get it: New Game starts the story.
     let mut h = h.with_shipped_story();
+    // And as `app` shows it: with the idle motion on.
+    h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
     for step in &options.steps {
         match step {
             Step::Keys(script) => h.keys(script),

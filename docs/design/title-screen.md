@@ -3,6 +3,13 @@
 Decided: 2026-09-30
 Source: ticket 0034
 
+> **The title's look** (the logo, its backdrops, the sparks; no line
+> under the title; the music starts at once) is decided in
+> [`look-and-feel.md`](look-and-feel.md), *Title screen* (ticket 0811).
+> The small text mockups below predate it: where they show `Visions of
+> Shuyi` and `an ASCII tactics game` as text, the game now shows the
+> logo picture and no second line.
+
 ## "Press any key" on the web build
 
 Browsers block a page's sound until the player presses a key or clicks, so on

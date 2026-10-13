@@ -47,6 +47,13 @@ starting rules**. Read them first; in short:
 The title song (`title`, `music/new_sunrise_v1.ogg`) is 133.7 s; its last
 note ends at about 117 s and the rest is silence until it loops.
 
+**Added 2026-10-12 (0811 is done):** the title now paints its logo with
+`title::glyph::paint_logo` (a backdrop that changes each launch, drifting
+sparks, the logo picture; ADR-0057) and the menu over it. The sparks only
+move while `Ctx::idle_motion` is on (`app` sets it; tests leave it off
+unless they test the motion). The menu's fade must also fade the dark
+band behind `Press any key or button` and behind a notice.
+
 ## Nick input
 
 **Answer first:** ticket 0036 (answered 2026-10-03).

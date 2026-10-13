@@ -30,6 +30,14 @@ Builds on: 0227 (each music cue's length), 0228 (the pan and zoom window),
 0801 (battle files: a map with its units), 0811 (the logo art and its
 loader).
 
+**Added 2026-10-12 (0811 is done):** the logo is a picture, a sprite
+(`assets/title/logo.png`, ADR-0057), over one of the title's backdrops,
+with sparks drifting up. `trpg_ui::screens::title::glyph::paint_logo(ctx,
+backdrop, sparks, buf)` paints exactly the logo shot (backdrop, sparks,
+logo, nothing else): call it; don't copy it. The backdrop is the one the
+title picked for this launch (`TitleView::backdrop`), so the shot and the
+title show the same picture.
+
 ## Nick input
 
 **Answer first:** ticket 0036 (answered 2026-10-03,

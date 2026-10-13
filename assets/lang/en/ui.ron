@@ -7,8 +7,6 @@
 // a value the screen fills in.
 {
     // The title screen.
-    "title.title": "Visions of Shuyi",
-    "title.subtitle": "an ASCII tactics game",
     "title.press_any_key": "Press any key or button",
     "title.continue": "Continue",
     "title.new_game": "New Game",

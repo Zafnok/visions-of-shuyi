@@ -41,6 +41,7 @@ async fn main() {
     let mut ctx = match Ctx::embedded() {
         Ok(mut ctx) => {
             ctx.tips_enabled = true;
+            ctx.idle_motion = trpg_ui::screen::IdleMotion::On;
             ctx.music_seed = miniquad::date::now().to_bits();
             ctx.key_prompt = KeyPrompt::Waiting;
             ctx.with_storage(storage::platform())
