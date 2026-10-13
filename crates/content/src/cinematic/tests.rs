@@ -412,8 +412,11 @@ fn page_lines_wraps_as_the_text_box_does_with_tokens_at_their_longest() {
     assert_eq!(page_lines(&format!("{pad}aaaaa {{themself}}"), 5), 1);
     assert_eq!(page_lines(&format!("{pad}aaaaaa {{themself}}"), 5), 2);
     // Something in braces that is no token counts as written.
-    assert_eq!(page_lines(&format!("{pad}aaaaaaaa {{ab}}"), 5), 1);
-    assert_eq!(page_lines(&format!("{pad}aaaaaaaaa {{ab}}"), 5), 2);
+    assert_eq!(page_lines(&format!("{pad}aaaaaaa {{abc}}"), 5), 1);
+    assert_eq!(page_lines(&format!("{pad}aaaaaaaa {{abc}}"), 5), 2);
+    // The space between words counts, for every word of a line.
+    assert_eq!(page_lines(&format!("{} b c", a(w - 4)), 5), 1);
+    assert_eq!(page_lines(&format!("{} b c", a(w - 3)), 5), 2);
     assert_eq!(page_lines(&format!("{pad}aaa {{unclosed"), 5), 1);
     assert_eq!(page_lines(&format!("{pad}aaaa {{unclosed"), 5), 2);
 }

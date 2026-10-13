@@ -102,7 +102,7 @@ pub fn draw_faces(
             name: &face.name,
             speaking: true,
             // The art looks right; coming from the right, they go left.
-            mirror: step > 0,
+            mirror: step.is_positive(),
         };
         draw_face(ctx, buf, &frame);
     }

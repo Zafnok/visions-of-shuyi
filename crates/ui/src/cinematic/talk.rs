@@ -56,13 +56,8 @@ impl TalkBox {
     }
 
     /// How many characters the text has to type out.
-    pub fn len(&self) -> usize {
+    pub fn chars(&self) -> usize {
         self.lines.iter().map(|l| l.chars().count()).sum()
-    }
-
-    /// Whether the box has no text.
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
     }
 
     /// Draws the box over the whole of `buf` with the first `shown`

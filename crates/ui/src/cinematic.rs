@@ -406,7 +406,7 @@ impl CinematicPlayer {
             Some(Built::Talk { boxes }) => {
                 #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
                 let shot_s = self.timeline.shot_ms(at.index) as f32 / 1000.0;
-                let lens: Vec<usize> = boxes.iter().map(TalkBox::len).collect();
+                let lens: Vec<usize> = boxes.iter().map(TalkBox::chars).collect();
                 let speed = ctx.settings().text_speed.chars_per_s();
                 match talk_at(at.progress, shot_s, &lens, speed) {
                     Some((index, shown)) => Frame::Talk { index, shown },

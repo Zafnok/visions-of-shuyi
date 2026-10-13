@@ -186,8 +186,7 @@ fn the_boxes_of_a_talk_shot_are_the_scenes_as_the_lead_reads_them() {
         lines,
         [["It's always about you."], ["Mara! You came back for us."]]
     );
-    assert_eq!((got[0].len(), got[1].len()), (22, 27));
-    assert!(!got[0].is_empty());
+    assert_eq!((got[0].chars(), got[1].chars()), (22, 27));
     // The first boxes: narration under the caption, before anyone is up.
     let opening = boxes(&ctx, scene, &mara(), 0, 2);
     assert_eq!(
@@ -208,6 +207,28 @@ fn the_boxes_of_a_talk_shot_are_the_scenes_as_the_lead_reads_them() {
     other.lang = LangCode::new("test").unwrap();
     let told = boxes(&other, scene, &mara(), 7, 1);
     assert_eq!(told[0].lines(), ["Mara! YOU CAME BACK FOR US."]);
+}
+
+#[test]
+fn a_narration_box_is_drawn_as_the_dialogue_screen_draws_narration() {
+    let ctx = ctx();
+    let scene = &ctx.content.dialogue.scenes["test"];
+    let narration = &boxes(&ctx, scene, &mara(), 0, 1)[0];
+    let p = &ctx.palette;
+    let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
+    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    narration.draw(&ctx, &mara(), 12, &mut buf);
+    // Under the caption; one line of narration is dim, in the middle row
+    // of the text box and centred across it (40 characters: from 30).
+    assert_eq!(row(&buf, 0).trim(), "Village of Heth, dusk");
+    assert_eq!(text_row(&buf), "");
+    let typed = row(&buf, 24);
+    assert_eq!(typed.chars().position(|c| c == 'T'), Some(30));
+    assert_eq!(typed.trim_matches(|c| c == '│' || c == ' '), "The rain had");
+    assert_eq!(buf.get(30, 24).unwrap().fg, p.get(UiColor::TextDim));
+    // Nobody is up yet.
+    assert!(buf.sprites().is_empty());
+    assert_eq!(row(&buf, 19).trim(), "");
 }
 
 #[test]
