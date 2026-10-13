@@ -100,6 +100,11 @@ fn of_full(part: f32) -> u8 {
     n
 }
 
+/// How much of a fade `whole` seconds long a frame of `dt` seconds is.
+fn share(dt: f32, whole: f32) -> f32 {
+    dt / whole
+}
+
 /// Whether anything was pressed this frame: a key (bound or not, or held
 /// long enough to repeat) or a controller button.
 fn pressed(input: &FrameInput) -> bool {
@@ -419,7 +424,7 @@ impl TitleScreen {
             }
             _ if pressed => self.phase = Phase::MENU,
             Phase::FadingOut { f } => {
-                *f += dt / FADE_OUT_SECS;
+                *f += share(dt, FADE_OUT_SECS);
                 if *f >= 1.0 {
                     self.phase = Phase::Cinematic;
                 }
@@ -430,7 +435,7 @@ impl TitleScreen {
                 shown,
             } => {
                 *idle += dt;
-                *shown += dt / FADE_IN_SECS;
+                *shown += share(dt, FADE_IN_SECS);
                 // The logo shot always has the menu on it.
                 if (*with_logo || *idle >= IDLE_SECS) && !on_logo {
                     self.phase = Phase::FadingOut { f: 0.0 };

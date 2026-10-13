@@ -745,6 +745,13 @@ fn a_part_of_full_is_rounded_and_stays_in_range() {
 }
 
 #[test]
+fn a_frame_is_its_share_of_a_fade() {
+    assert!((share(0.25, 0.5) - 0.5).abs() < f32::EPSILON);
+    assert!((share(0.5, 2.0) - 0.25).abs() < f32::EPSILON);
+    assert!((share(0.5, FADE_OUT_SECS) - 0.5 / FADE_OUT_SECS).abs() < f32::EPSILON);
+}
+
+#[test]
 fn a_key_an_action_or_a_button_is_a_press() {
     let chord = crate::input::Chord::parse("z").unwrap();
     assert!(!pressed(&input(&[])));
