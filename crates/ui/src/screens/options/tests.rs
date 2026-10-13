@@ -290,6 +290,7 @@ fn every_setting_row_changes_its_own_setting() {
             (Row::Cursor, s.cursor_style != before.cursor_style),
             (Row::MapLook, s.map_look != before.map_look),
             (Row::MapZoom, s.map_zoom != before.map_zoom),
+            (Row::Theme, s.theme != before.theme),
             (Row::MusicVolume, s.music_volume != before.music_volume),
             (Row::SoundVolume, s.sound_volume != before.sound_volume),
         ];
@@ -325,6 +326,7 @@ fn rows_show_their_values() {
             "Corners*",
             "Pictures*",
             "2×*",
+            "Earthy painterly*",
             "<80/100>",
             "<80/100>",
             "Right-handed",

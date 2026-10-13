@@ -1,0 +1,78 @@
+// Named colours (ADR-0012) of the colour theme "C. Rich & painterly" (ticket 0806,
+// docs/design/look-and-feel.md). Teal and amber on a deep blue-black.
+// Same names as assets/data/palette.ron (a content test checks it). Values are tunable.
+{
+    // Basics. `black` is the console background (a light one in a light theme).
+    "black": "#0b1416",
+    "white": "#ffffff",
+
+    // Text
+    "text": "#b8ccc6",
+    "text_dim": "#5e7a78",
+    "text_highlight": "#e8b848",
+
+    // Panels (UI chrome)
+    "panel_bg": "#0f2024",
+    "panel_border": "#2e7c86",
+    "panel_border_focus": "#e8b848",
+
+    // Factions: player, enemy, ally, neutral
+    "player": "#6ec8f0",
+    "enemy": "#e8582a",
+    "ally": "#6cd890",
+    "neutral": "#f0d870",
+
+    // Overlay background tints (blended ~75% over the terrain background)
+    "move_range": "#1a5a78",
+    "attack_range": "#7a2c14",
+    "heal_range": "#1e5a38",
+    "danger_zone": "#40180e",
+
+    // Units under a timed effect: background, then the bonus and penalty arrows
+    "effect": "#3c3468",
+    "effect_bonus": "#70e0f0",
+    "effect_penalty": "#d080f0",
+
+    // Cursor and the movement path line
+    "cursor": "#f0c850",
+    "path": "#f4dc90",
+
+    // Bars
+    "hp_high": "#8cd050",
+    "hp_mid": "#e8c040",
+    "hp_low": "#e8582a",
+    "exp_bar": "#a888e8",
+
+    // Terrain: glyph colour, and the per-terrain background tint
+    "grass": "#8aa050",
+    "grass_bg": "#1a2412",
+    "road": "#c0a878",
+    "road_bg": "#2a2416",
+    "wood": "#a07040",
+    "wood_bg": "#241a10",
+    "floor": "#6a7a78",
+    "floor_bg": "#141c1c",
+    "forest": "#3ea83a",
+    "forest_bg": "#0e2410",
+    "thicket": "#2c7a30",
+    "thicket_bg": "#08180a",
+    "mountain": "#c09868",
+    "mountain_bg": "#2c2016",
+    "peak": "#d0c0a0",
+    "peak_bg": "#3a3024",
+    "water": "#58c0d8",
+    "water_bg": "#0c3440",
+    "sea": "#08202e",
+    "stone": "#98a0a0",
+    "stone_bg": "#1c2224",
+    "fort": "#e8b848",
+    "fort_bg": "#2a2616",
+
+    // Terrain magic
+    "fire": "#f08040",
+    "fire_bg": "#3a1608",
+    "ash": "#687070",
+    "ash_bg": "#161a1a",
+    "ice": "#c8f0f8",
+    "ice_bg": "#1c3c4c",
+}

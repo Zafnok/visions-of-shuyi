@@ -41,7 +41,8 @@ pub fn draw_cursor(
             return;
         }
     };
-    let fg = color.scale(cursor.brightness);
+    // Fades toward the console background, which a light theme makes light.
+    let fg = color.lerp(palette.get(UiColor::Black), 1.0 - cursor.brightness);
     let view = px_rect(view);
     for r in corner_arms(x, y, arm) {
         if let Some(r) = r.intersect(&view) {

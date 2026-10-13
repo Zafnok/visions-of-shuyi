@@ -92,6 +92,12 @@ impl Renderer {
         })
     }
 
+    /// Sets the console background (the palette's `black`), which a
+    /// colour theme changes.
+    pub fn set_clear(&mut self, clear: Rgb) {
+        self.clear = clear;
+    }
+
     /// Draws `buf` scaled to the current window size.
     ///
     /// The layout is computed in physical framebuffer pixels (the window is

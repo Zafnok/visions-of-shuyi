@@ -187,10 +187,14 @@ Names, stats, weapons and the sample face in the screenshots are placeholders.
   **The same 75% on the bought tiles** (decided 2026-10-04, ticket 0437:
   Nick was shown a selected unit's ranges over the picture tiles at 75%,
   50% and 35%: "75% looks ok").
-- **Colour themes (later):** the player may pick among four palettes, **C Rich
-  & painterly, D Earthy painterly (default), E War-table parchment (light), G
-  Moonlit**. That's a separate ticket (0806). Their mockup values are recorded
-  below so they don't need re-deriving.
+- **Colour themes** (ticket 0806): Options has a **Colors** row with four
+  palettes, **C Rich & painterly, D Earthy painterly (default), E War-table
+  parchment (light), G Moonlit**. D is `assets/data/palette.ron`, the others
+  `assets/data/palettes/{painterly,parchment,moonlit}.ron`. A theme recolours
+  glyphs and the UI, never a picture. Their mockup values are recorded below;
+  the colours the mockups didn't list were derived to match each theme's feel
+  *(tunable)*. In E, `black` is the light console background and `white` is
+  the strongest ink.
 
 ### Battle map: bought tiles and unit sprites
 

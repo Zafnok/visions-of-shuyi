@@ -122,6 +122,8 @@ async fn main() {
         if keys::fullscreen_shortcut() {
             game.toggle_fullscreen();
         }
+        // A colour theme changes the console background.
+        renderer.set_clear(game.ctx().palette.get(UiColor::Black));
         let mut events = keys::poll();
         events.extend(pads.poll());
         if running {

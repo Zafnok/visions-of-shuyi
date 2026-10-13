@@ -681,7 +681,20 @@ impl Ctx {
         } else if self.settings.map_zoom != before.map_zoom {
             self.set_map_skin(Rc::clone(&self.map_skin));
         }
+        if self.settings.theme != before.theme {
+            self.apply_theme();
+        }
         self.save_settings()
+    }
+
+    /// Builds [`palette`](Self::palette) from the colour theme in the
+    /// settings (ticket 0806). Keeps the palette if the theme's is
+    /// missing, which content validation rules out.
+    fn apply_theme(&mut self) {
+        let def = self.content.themes.get(&self.settings.theme);
+        if let Some(palette) = def.and_then(|d| Palette::new(d).ok()) {
+            self.palette = palette;
+        }
     }
 
     /// Paints the battle map with the skin of the map look in the
@@ -720,6 +733,7 @@ impl Ctx {
         });
         self.settings.layout = self.saved_layout();
         self.apply_map_look();
+        self.apply_theme();
     }
 
     /// The Options screen's switch to Casual: one way, only from a Classic
