@@ -11,6 +11,7 @@ mod clean_targets;
 mod effect_marks;
 mod font_atlas;
 mod frame_png;
+mod icon;
 mod lang_status;
 mod lines;
 mod map_sprite_import;
@@ -72,6 +73,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("lang-status") => lang_status(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
         Some("font-atlas") => font_atlas(&args.collect::<Vec<_>>()),
+        Some("icon") => icon(&args.collect::<Vec<_>>()),
         Some("web") => web(&args.collect::<Vec<_>>()),
         Some("sfx") => sfx(&args.collect::<Vec<_>>()),
         Some("frame-png") => frame_png(&args.collect::<Vec<_>>()),
@@ -216,6 +218,19 @@ fn clean_merged_targets(args: &[String]) -> u8 {
         Err(e) => {
             eprintln!("clean-merged-targets: {e}");
             1
+        }
+    }
+}
+
+fn icon(args: &[String]) -> u8 {
+    match icon::run(args, &repo_root()) {
+        Ok(summary) => {
+            println!("{summary}");
+            0
+        }
+        Err(e) => {
+            eprintln!("icon: {e}");
+            2
         }
     }
 }
@@ -846,6 +861,15 @@ mod tests {
         assert_eq!(lines(&args(&["--help"])), 0);
         assert_eq!(lines(&args(&["no_such_scene"])), 1);
         assert_eq!(lines(&args(&["ch01_intro", "ch01_prebattle"])), 2);
+    }
+
+    #[test]
+    fn icon_exits_with_the_outcome() {
+        assert_eq!(dispatch(args(&["icon"]).into_iter()), 2);
+        let dir = env::temp_dir().join(format!("icon-dispatch-{}", std::process::id()));
+        let dir = dir.to_str().unwrap().to_owned();
+        assert_eq!(dispatch(args(&["icon", "preview", &dir]).into_iter()), 0);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

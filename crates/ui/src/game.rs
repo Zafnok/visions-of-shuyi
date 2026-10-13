@@ -199,6 +199,13 @@ impl Game {
             playing.and_then(|(cue, elapsed)| MusicClock::from_elapsed(manifest, cue, elapsed));
     }
 
+    /// Flips the Fullscreen setting, as the window's own shortcut does
+    /// (ticket 0902). `app` then switches the window on the next frame, and
+    /// the Settings screen shows the new value.
+    pub fn toggle_fullscreen(&mut self) {
+        let _ = self.ctx.change_settings(|s| s.fullscreen = !s.fullscreen);
+    }
+
     /// Runs one frame: applies `events` (in order), advances input by `dt`
     /// seconds, updates the top screen with the resulting actions, collects
     /// its audio requests and redraws. After a quit, frames do nothing.
@@ -777,6 +784,18 @@ mod tests {
         assert_eq!(game.screens(), ["title"]);
         assert_eq!(game.buffer(), &before);
         assert!(game.frame(&[], 0.0).quit);
+    }
+
+    /// Ticket 0902: the window's shortcut flips the Fullscreen setting.
+    #[test]
+    fn toggling_fullscreen_flips_the_setting_and_tells_app() {
+        let mut game = Game::start(ctx());
+        assert!(!game.frame(&[], 0.0).fullscreen);
+        game.toggle_fullscreen();
+        assert!(game.frame(&[], 0.0).fullscreen);
+        assert!(game.ctx().settings().fullscreen);
+        game.toggle_fullscreen();
+        assert!(!game.frame(&[], 0.0).fullscreen);
     }
 
     #[test]
