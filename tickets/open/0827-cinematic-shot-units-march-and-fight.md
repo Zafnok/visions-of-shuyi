@@ -50,7 +50,7 @@ sign-off.
 - The player builds the map scene for time `t` from the battle's starting
   places plus the actions that have happened by then.
 - Validator rules, `assets/cinematics/README.md`, a short action in
-  `assets/cinematics/test.ron`.
+  `assets-test/cinematics/test.ron`.
 - An addendum to 0817's ADR (or a new ADR that extends it): actions are
   authored, drawn from `t` alone, and never use the combat rules.
 

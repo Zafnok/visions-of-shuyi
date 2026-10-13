@@ -3,6 +3,7 @@
 
 pub mod audio;
 pub mod cinema;
+pub mod cinematic;
 pub mod color;
 pub mod console;
 pub mod debug;

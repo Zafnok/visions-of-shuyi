@@ -10,6 +10,7 @@ use trpg_core::Pos;
 
 use crate::audio::MenuSound;
 use crate::cinema::{self, MAX_ZOOM};
+use crate::cinematic::MapPicture;
 use crate::color::UiColor;
 use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
@@ -32,8 +33,6 @@ const TEXT_BOX: Rect = Rect::new(62, 15, 24, 5);
 const BOX_TEXT: [&str; 3] = ["A text box drawn", "over the scene", "hides it."];
 /// How fast a held cursor key pans, in scene pixels a second.
 const PAN_SPEED: f32 = 60.0;
-/// An area surely big enough for one tile of any skin, to ask its size.
-const ROOMY: Rect = Rect::new(0, 0, 64, 64);
 
 /// Shows the test map through a window: the cursor actions pan (held),
 /// `Confirm` steps the zoom 1× to 4× and round again, `Cancel` closes.
@@ -55,7 +54,7 @@ impl SceneCameraScreen {
     /// The camera at 1× over the middle of the test map, as `ctx`'s map
     /// skin paints it.
     pub fn new(ctx: &Ctx) -> Self {
-        let scene = map_picture(ctx).map(Rc::new);
+        let scene = map_picture(ctx);
         let (w, h) = scene.as_deref().map_or((0, 0), pixel_size);
         #[allow(clippy::cast_precision_loss)] // pixel sizes are small
         let centre = (w as f32 / 2.0, h as f32 / 2.0);
@@ -115,7 +114,7 @@ fn pixel_size(buf: &GlyphBuffer) -> (u32, u32) {
 /// The whole test map with a path and the cursor on it (pixel-placed
 /// rectangles, to see them scale), painted by `ctx`'s map skin into a
 /// buffer just big enough. `None` without the map.
-fn map_picture(ctx: &Ctx) -> Option<GlyphBuffer> {
+fn map_picture(ctx: &Ctx) -> Option<Rc<GlyphBuffer>> {
     let map = ctx.content.maps.get(MAP)?;
     let tiles = &map.map.tiles;
     let size = (i32::from(tiles.width()), i32::from(tiles.height()));
@@ -130,21 +129,7 @@ fn map_picture(ctx: &Ctx) -> Option<GlyphBuffer> {
         brightness: 1.0,
         style: CursorStyle::Corners,
     });
-    let skin = &ctx.map_skin;
-    let tile = skin.tile_px(&scene, ROOMY, scene.origin)?;
-    let cells = |tiles: i32, tile_px: i32, cell_px: u16| {
-        let cell_px = i32::from(cell_px);
-        u16::try_from((tiles * tile_px + cell_px - 1) / cell_px).unwrap_or(0)
-    };
-    let (w, h) = (
-        cells(size.0, tile.w, CELL_W_PX),
-        cells(size.1, tile.h, CELL_H_PX),
-    );
-    let c = |u| ctx.palette.get(u);
-    let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
-    let mut buf = GlyphBuffer::new(w, h, blank);
-    skin.paint(ctx, &scene, buf.bounds(), &mut buf);
-    Some(buf)
+    MapPicture::paint(ctx, ctx.map_skin.as_ref(), &scene).map(|picture| picture.scene)
 }
 
 impl Screen for SceneCameraScreen {

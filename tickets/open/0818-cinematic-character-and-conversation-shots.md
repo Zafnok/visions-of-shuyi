@@ -50,7 +50,7 @@ Claude never draws character art.
   text), with no input.
 - Both shots show the lead as the most recent save has them (below).
 - Validator rules for both; both added to `assets/cinematics/README.md`
-  and to `assets/cinematics/test.ron`.
+  and to `assets-test/cinematics/test.ron`.
 
 **Out (do not do):**
 - Choosing which scenes and how many boxes the title cinematic shows
