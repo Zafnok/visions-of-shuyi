@@ -18,14 +18,16 @@
         (character: "heretic", pos: (4, 13)),
     ],
     enemies: [
+        // The two with an `id` are named by the title cinematic
+        // (cinematics/title.ron, ticket 0820).
         // South of the river: they come for the village at once.
-        (template: "red_brigand", pos: (10, 10)),
+        (template: "red_brigand", pos: (10, 10), id: "road_brigand"),
         (template: "red_brigand", pos: (16, 11)),
-        (template: "red_archer", pos: (12, 9)),
+        (template: "red_archer", pos: (12, 9), id: "road_archer"),
         // The road to the toll bridge, held.
         (template: "red_raider", pos: (20, 9), ai: Guard),
         // The footbridge's north end.
-        (template: "red_brigand", pos: (5, 4), ai: Guard),
+        (template: "red_brigand", pos: (5, 4), ai: Guard, id: "footbridge_brigand"),
         // The road bridge's north end.
         (template: "red_raider", pos: (11, 5), ai: Guard),
         (template: "red_archer", pos: (14, 5), ai: Guard),

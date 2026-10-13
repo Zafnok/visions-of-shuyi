@@ -489,8 +489,12 @@ fn the_battles_name_their_enemies_by_unit_id() {
         names("test"),
         BTreeMap::from([("road_brigand".to_owned(), BRIGAND)])
     );
-    // Chapter 1's file names none; nor does a battle that has no file.
-    assert_eq!(names("ch01"), BTreeMap::new());
+    // Chapter 1's file names the three the title cinematic moves; a
+    // battle that has no file names none.
+    assert_eq!(
+        names("ch01").into_keys().collect::<Vec<_>>(),
+        ["footbridge_brigand", "road_archer", "road_brigand"]
+    );
     assert_eq!(names("nope"), BTreeMap::new());
     assert_eq!(names(""), BTreeMap::new());
     // Ids follow the slots that aren't numbered after the enemies.
