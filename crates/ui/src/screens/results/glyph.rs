@@ -48,7 +48,7 @@ pub fn paint(ctx: &Ctx, view: &ResultsView, buf: &mut GlyphBuffer) {
             let size = |v: i32| u16::try_from(v).unwrap_or(0);
             let mut page = GlyphBuffer::new(size(w), size(h), blank);
             let look = (&ctx.palette, ctx.words());
-            progress::draw(&mut page, look, &ctx.content.portraits, pages);
+            progress::draw(&mut page, look, (&ctx.content.portraits, &ctx.lead), pages);
             buf.blit(&page, centre_x(buf, usize::from(page.width())), 0);
         }
         ResultsBody::Tally(tally) => paint_tally(ctx, tally, buf),

@@ -777,7 +777,7 @@ impl Screen for ClassChangeScreen {
             // The pages name the unit and its classes themselves.
             Stage::Result(pages) => {
                 let look = (&ctx.palette, ctx.words());
-                progress::draw(buf, look, &ctx.content.portraits, pages);
+                progress::draw(buf, look, (&ctx.content.portraits, &ctx.lead), pages);
             }
             Stage::Done => {}
         }

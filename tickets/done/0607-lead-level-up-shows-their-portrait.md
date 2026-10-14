@@ -5,10 +5,10 @@ type: bug
 milestone: M5 Progression
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: sign-off
-completed:
+completed: 2026-10-14
 ---
 
 # 0607 — The lead's level-up page shows their portrait
@@ -85,4 +85,11 @@ the lead's face shows, the one picked on the lead-select screen.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+`progress::draw` now takes `(&portraits, &LeadProfile)` and looks the
+portrait up through `LeadProfile::portrait_for` (new helper `portrait_of`),
+so the lead gets `lead_m` / `lead_f` on the level-up and promotion pages.
+All three call sites (battle, results, class change) pass `&ctx.lead`.
+Deviation: one unit test of `portrait_of` (male, female, other character,
+none) instead of a test per call site or a Harness test, since all three
+call the same `draw`; the test was written with the fix, not seen failing
+first. No gameplay rules decided.
