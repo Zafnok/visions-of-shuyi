@@ -59,9 +59,11 @@ home to her mother. She hates Ardevali nobles on principle, and the lead is one.
 ## Voice notes
 
 - Very short sentences, flat and literal. She means everything she says
-  exactly, and says what she counted and why it matters ("Fourteen men in
-  the fort. I counted twice."). Any comedy in that is by accident and
-  belongs to quiet scenes; it is never a punchline.
+  exactly, and says what she counted and why it matters ("Fourteen in the
+  fort. I counted at dusk and again at first light."). She judges people
+  the way a hunter judges: by what they hit and what they waste. Any
+  comedy in that is by accident and belongs to quiet scenes; it is never a
+  punchline. No contractions: "I cannot", "do not".
 - Brennish words for home and family (*mor* for mother, *hus* for home);
   Ardevali idioms trip her up ("Why would I hold my horses? I have no horse.").
 - Calls the lead "noble" until she doesn't. The day she says "Veyne" is a quiet
@@ -70,8 +72,9 @@ home to her mother. She hates Ardevali nobles on principle, and the lead is one.
 
 **Sample lines**
 
-- "Fourteen men in the fort. I counted twice. Some have bows, and they shoot
-  badly."
+- "Fourteen in the fort. I counted at dusk and again at first light. Three
+  have bows. Last night they shot at the deer from the wall. Many arrows.
+  Most of them hit nothing."
 - "You say sorry for the Ashfields. You were not there. It is a cheap sorry,
   noble."
 - "These are not Brennish. Brennish do not wear boots like this. Brennish
