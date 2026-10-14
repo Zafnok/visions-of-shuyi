@@ -35,6 +35,10 @@ loading any of 30 save slots, and soon Replay after a win (0046).
 Ironman there is no rewind, no Replay, no Restart battle and no Retry
 Battle, and fallen units die as in Classic.
 
+Where it is kept (0058, `docs/design/options.md`, *Where options are
+kept*): like the game mode, Ironman belongs to the campaign (its saves),
+not to the player profile.
+
 ## Nick input
 
 **Decision.** Run with the `ask-nick` skill, one question at a time, each

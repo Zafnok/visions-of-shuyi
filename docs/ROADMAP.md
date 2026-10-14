@@ -80,7 +80,10 @@ Chapter 1, Guides in the battle menu; built by **0455** the guide's face in
 the tip box, **0835** the familiarity question → **0456** checklist lessons
 → **0457** the lessons → **0458** new tips and Guides → **0731** the guide's
 name and lines), **0058** which options
-belong to a save, **0029** backgrounds behind conversations (Nick's idea:
+belong to a save (decided 2026-10-14: player profiles hold every option
+and their own saves; built by **0836** profiles under the options and saves
+→ **0837** the title's Profile screen, and **0838** the tutorial level in
+Options, after 0835), **0029** backgrounds behind conversations (Nick's idea:
 a short moving scene, then the portraits over it, darkened), each with the
 tickets it creates. All of these are on the critical path now.
 

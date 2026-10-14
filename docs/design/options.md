@@ -88,3 +88,77 @@ Nick's.
 
 - The row shows the campaign's mode. See `death-and-difficulty.md`, *Mode
   changes*: Classic → Casual only, and only at Preparations.
+
+## Where options are kept
+
+Decided: 2026-10-14
+Source: ticket 0058
+
+### Nick's words
+
+In the Chapter 1 playtest, round 2 (0804), 2026-10-14:
+
+> "they should probably be per-save-file. I have never saved and yet the
+> browser cached my options settings which feels weird to me."
+
+Asked in ticket 0058 (per computer, per save, a split, or player profiles),
+Nick picked **player profiles**, like *Into the Breach*, and then the
+recommended answer to each follow-up:
+
+- A profile holds **every option**.
+- At launch the game opens on **the last profile used**; the title menu
+  switches.
+- Each profile has **its own save slots and its own suspend save**.
+- The first profile is **made for you** and can be renamed later.
+- Options being kept before any save is **fine now**: they belong to a
+  profile you can see, switch and delete, not to the browser.
+- The **tutorial level can be changed later, in Options**, for the save
+  being played.
+- A New Game starts with **the options last used** (with profiles, the
+  profile's own).
+
+### Rules
+
+- **A player profile** holds that player's options and saves: every
+  option on the Options screen (text, animation and enemy-phase speed,
+  combat animations, auto end turn, fullscreen, cursor style, map look,
+  map zoom, color theme, music and sound volume, and later the language
+  (0825) and voices (0826)), the hand layout and key bindings, the tips
+  already seen, the 30 save slots and the suspend save.
+- **What stays with the campaign** (in its saves, not the profile): the
+  game mode (`death-and-difficulty.md`) and the tutorial level
+  (`tutorial.md`), and Ironman if 0049 adds it.
+- **What stays with the computer** (no profile): which profile was last
+  used, and the title screen's backdrop order (*Claude's starting rule*;
+  neither is an option).
+- **First launch** makes a profile called `Player 1` without asking, then
+  runs the first-launch setup (the hand-layout picker) as today. A player
+  who never shares the computer never has to see profiles.
+- **At launch** the game opens on the last profile used.
+- **A `Profile` item on the title menu** (*Claude's starting rule*: below
+  `Options`) lists the profiles with the current one marked, and can
+  **switch** to one, **add** one, **rename** one and **delete** one.
+  - **Adding** asks for a name, then runs the first-launch setup for the
+    new profile; a new profile starts from the default options
+    (*Claude's starting rule*: each person has their own hands and keys).
+  - **Deleting asks yes/no first** (the *Asking first* rule), naming that
+    its saves go with it, with the focus on No. The only profile left
+    can't be deleted (*Claude's starting rule*).
+  - A name is up to 12 characters (*tunable*); two profiles can't share a
+    name (*Claude's starting rule*). Up to 8 profiles (*tunable*).
+- **Changes are kept at once**, in the current profile, as today: no
+  save needed (Nick: fine now).
+- **Options opened from the title** change the current profile's options;
+  opened in a game, the same, since the profile is the one playing.
+- **A New Game** uses the profile's options as they are; nothing is reset.
+- **Players from before profiles:** their options, keys, tips seen, saves
+  and suspend save become the first profile, `Player 1`. Nothing is lost.
+- **The tutorial level row** (`Tutorial: Full / Short / None`) is on the
+  Options screen while a campaign is loaded (in a battle, at Preparations),
+  and changes that campaign's level at once, any time; it doesn't show on
+  the title's Options. It doesn't ask first (a value row, changed back with
+  one key). Lessons already skipped stay readable in *Guides*.
+
+### Open sub-questions
+
+- None.
