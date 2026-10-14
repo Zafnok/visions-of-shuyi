@@ -634,6 +634,16 @@ fn portrait_of<'a>(
     portraits.get(lead.portrait_for(id?))
 }
 
+/// Whether `buf` draws a picture of the portrait of `id` (any of its
+/// expressions): for tests of whose face a page shows.
+#[cfg(test)]
+pub(crate) fn shows_face_of(buf: &GlyphBuffer, ctx: &Ctx, id: &str) -> bool {
+    let portrait = &ctx.content.portraits[id];
+    buf.sprites()
+        .iter()
+        .any(|s| portrait.expressions.iter().any(|e| e.image == s.image))
+}
+
 /// Draws the page on screen.
 pub fn draw(
     buf: &mut GlyphBuffer,

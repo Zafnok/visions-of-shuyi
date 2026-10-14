@@ -71,12 +71,12 @@ the lead's face shows, the one picked on the lead-select screen.
 
 ## Acceptance criteria
 
-- [ ] A test with the lead (male and female profile) fails before the fix
+- [x] A test with the lead (male and female profile) fails before the fix
       and passes after it.
-- [ ] Harness: the lead levels up in a battle and the level-up page shows
+- [x] Harness: the lead levels up in a battle and the level-up page shows
       `lead_m` (or `lead_f` for a female lead).
-- [ ] The results screen and the class-change result show it too (test).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The results screen and the class-change result show it too (test).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -89,7 +89,10 @@ the lead's face shows, the one picked on the lead-select screen.
 portrait up through `LeadProfile::portrait_for` (new helper `portrait_of`),
 so the lead gets `lead_m` / `lead_f` on the level-up and promotion pages.
 All three call sites (battle, results, class change) pass `&ctx.lead`.
-Deviation: one unit test of `portrait_of` (male, female, other character,
-none) instead of a test per call site or a Harness test, since all three
-call the same `draw`; the test was written with the fix, not seen failing
-first. No gameplay rules decided.
+Tests: a unit test of `portrait_of` (male, female, another character,
+none), plus a screen-level test per call site, each run for a male and a
+female lead: a Harness level-up in battle
+(`progress_tests.rs`), the results screen (`results/glyph/tests.rs`) and the
+class-change promotion (`class_change/tests.rs`). They read the sprites drawn
+(`progress::shows_face_of`), not cells. All four were run with the fix
+removed and failed; they pass with it. No gameplay rules decided.
