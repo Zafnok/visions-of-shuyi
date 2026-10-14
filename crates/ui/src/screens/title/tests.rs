@@ -386,13 +386,17 @@ fn screens_cover_the_whole_buffer() {
     let typing = FrameInput::new(vec![Action::CursorDown], 0.0, vec![]);
     naming.update(&mut ctx(), &typing);
     naming.update(&mut ctx(), &input(&[Action::Confirm]));
+    // Game Over opens over the lost battle; it covers the buffer once
+    // its animation is over (0830).
+    let mut game_over = crate::screens::GameOverScreen::new(&c, false);
+    game_over.skip();
     let screens: [&dyn Screen; 8] = [
         &TitleScreen::new(&ctx()),
         &TitleScreen::with_quick_battle(&ctx()),
         &crate::screens::ModeSelectScreen::new(&c),
         &crate::screens::LeadSelectScreen::new(),
         &naming,
-        &crate::screens::GameOverScreen::new(&c, false),
+        &game_over,
         &crate::screens::ToBeContinuedScreen,
         &CreditsScreen::new(&c),
     ];

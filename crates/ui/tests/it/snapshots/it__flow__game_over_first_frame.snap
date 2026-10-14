@@ -1,0 +1,105 @@
+---
+source: crates/ui/tests/it/flow.rs
+expression: h.snapshot()
+---
+                                                                      ┌────────────────────────────┐
+                                                                      │ Plain                      │
+                                                                      │ DEF +0  AVO +0             │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │ Ellery                     │
+                                                                      │ Exile  Lv 1                │
+                                                                      │ HP 19/19   ██████████      │
+                                                                      │ Player                     │
+                                                                      │                            │
+                                                                      │                            │
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │                            │
+                    ≈≈≈≈≈≈≈≈....······♣♣♣♣^^^^^^                      │                            │
+                    ≈≈≈≈≈≈====······....♣♣♣♣....                      │                            │
+                    ..≈≈≈≈..··......Br......╦╦..                      │                            │
+                    ....······........▓▓▓▓▓▓▓▓..                      │                            │
+                    ..♣♣··El..╦╦......▓▓░░╦╦▓▓..                      │                            │
+                    ♣♣♣♣··Kn..........▓▓░░░░▓▓..                      │                            │
+                    ♣♣♠♠··............▓▓▓▓▐▌▓▓..                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      │                            │
+                                                                      └────────────────────────────┘
+                                                     w danger zone: OFF · Shift+Space auto-end: OFF 
+ arrows move · e info · s next unit · d menu · Space end turn                              F2 debug 
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdddddccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabceeeeeecccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccffffffffffccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcggggggcccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooooookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaahhiiiippppoooooojjjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjiiiijjoojjjjjjqqjjjjjjrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjjjoooooojjjjjjjjssssssssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaajjkkoottjjrrjjjjjjssuurrssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaakkkkoottjjjjjjjjjjssuuuussjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaakklloojjjjjjjjjjjjssssvvssjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwa
+awwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwa
+--- legend ---
+a = fg:#cbc0a4 bg:black
+b = fg:#68583f bg:#1b1612
+c = fg:#cbc0a4 bg:#1b1612
+d = fg:#e1b45e bg:#1b1612
+e = fg:#7ba4db bg:#1b1612
+f = fg:#87ac4e bg:#1b1612
+g = fg:#7d725e bg:#1b1612
+h = fg:#6897b4 bg:#0c192b
+i = fg:#6897b4 bg:#14232f
+j = fg:#777d46 bg:#1b1b10
+k = fg:#5c8d37 bg:#141f10
+l = fg:#3d6827 bg:#0e170a
+m = fg:#9c8566 bg:#291f16
+n = fg:#c4b495 bg:#392d21
+o = fg:#b49c6d bg:#292114
+p = fg:#976839 bg:#14232f
+q = fg:#cf684e bg:#1b1b10
+r = fg:#cba45e bg:#2b2317
+s = fg:#979185 bg:#211f1f
+t = fg:#7ba4db bg:#1b1b10
+u = fg:#686056 bg:#191716
+v = fg:#976839 bg:#211f1f
+w = fg:#7d725e bg:black
+--- overlays ---
+over  209,270 14x2  #87ac4e
+over  209,286 14x2  #87ac4e
+over  289,238 14x2  #87ac4e
+over  207,256 3x1  #c7b785
+over  207,256 1x3  #c7b785
+over  221,256 3x1  #c7b785
+over  223,256 1x3  #c7b785
+over  207,269 3x1  #c7b785
+over  207,267 1x3  #c7b785
+over  221,269 3x1  #c7b785
+over  223,267 1x3  #c7b785

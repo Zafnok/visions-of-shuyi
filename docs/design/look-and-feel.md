@@ -998,6 +998,56 @@ Shown `of` pale with the bars gold, and with the bars pale too:
 - The intro cinematic's last shot (`title-screen.md`, *Intro cinematic*)
   and the Game Over animation (ticket 0830) use this logo.
 
+### Game Over screen
+
+Decided 2026-10-13, ticket 0830, over two rounds of renders made with the
+game's own renderer: five moving ones, then two stills.
+
+Round 1 (what moves: A the battle fades to black, `GAME OVER` fades in, the
+logo small and gray under it, as Fire Emblem's plain fade; B the battle
+stays, dark, with a black band and red words, as Dark Souls' `YOU DIED`; C
+the title's gold logo drains to gray and its sparks die; D the logo
+crumbles away. Behind it: A black, B the lost battle, darkened. How long:
+A two to three seconds and any press skips, B the same with no skip, C
+about five seconds and any press skips):
+
+> 1. A but align the GAME OVER with the logo better...
+> 2. A
+> 3. A
+
+Round 2 (the logo at its title size, so the words and the logo are the
+same width: A1 the words on top and the logo under them, A2 the logo on
+top and the words under it):
+
+> A2
+
+- **The lost battle fades to black**, then **the logo fades in** where the
+  title screen has it, at the same size, **drained to gray**; then the
+  words **`GAME OVER` fade in under it in gold**, in block lettering as
+  wide as the logo, their edges in line with its edges. Then the menu
+  (`Rewind` while a charge is left, `Retry Battle`, `Title`) and the help
+  line are there.
+- **Black behind it** (Nick: "A"): nothing of the battle is left once it
+  has faded. No backdrop and no sparks.
+- **It takes two seconds** (Nick: "A", the short one): the battle is gone
+  after 0.7 s, the logo is there from 0.6 s to 1.4 s, the words from 1.1 s
+  to 1.9 s (*the split is tunable*, `game_over/glyph.rs`).
+- **Any press skips it** (Nick: "A"): a key, bound or not, or a controller
+  button jumps to the finished screen. That press does nothing else.
+  Example: the cursor will be on `Rewind`; pressing Confirm during the
+  fade shows the menu and does not rewind; the next Confirm does.
+- **The menu can't be used before the end**: it isn't shown until then.
+- The `defeat` music plays on through it, as before (`audio.md`); the
+  animation is in time with nothing.
+- *Claude's starting rules:*
+  - Backing out of the rewind screen returns to Game Over as it was left,
+    without the animation playing again.
+  - The skip makes no sound.
+  - The menu appears at once at the end; it doesn't fade in.
+  - `GAME OVER` is a picture, like the logo
+    (`assets-src/title/game_over.txt`), so it reads the same in every
+    language until a language brings its own (ticket 0831).
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side

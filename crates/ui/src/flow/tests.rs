@@ -57,6 +57,9 @@ fn retry_goes_back_to_preparations_as_they_were_left() {
         panic!("no battle");
     };
     flow.stage = Stage::GameOver(GameOverScreen::new(&c, false), lost);
+    // The first press ends Game Over's animation, the second picks.
+    update(&mut flow, &mut c, &[Confirm]);
+    assert_eq!(flow.name(), "game_over");
     update(&mut flow, &mut c, &[Confirm]);
     assert_eq!(flow.name(), "preparations");
     let prep = flow.preparations().unwrap_or_else(|| panic!("no prep"));
@@ -339,7 +342,9 @@ fn lost_flow(c: &mut Ctx, charges: u8) -> FlowScreen {
     let mut flow = FlowScreen::new_game(c);
     flow.stage = Stage::Battle(Box::new(battle));
     for _ in 0..3000 {
-        if flow.name() == "game_over" {
+        if let Stage::GameOver(screen, _) = &mut flow.stage {
+            // Past its opening animation (0830).
+            screen.skip();
             return flow;
         }
         let input = FrameInput::new(vec![Confirm], 0.25, vec![]);
@@ -369,8 +374,8 @@ fn game_over_rewinds_a_lost_battle() {
     let Stage::GameOver(screen, _) = flow.stage() else {
         panic!("no game over");
     };
-    let view = screen.view(&c);
-    let labels: Vec<_> = view.menu.items.iter().map(|i| i.label.as_str()).collect();
+    let menu = screen.view(&c).menu.unwrap();
+    let labels: Vec<_> = menu.items.iter().map(|i| i.label.as_str()).collect();
     assert_eq!(
         labels,
         [
@@ -385,6 +390,12 @@ fn game_over_rewinds_a_lost_battle() {
     assert!(flow.battle().is_some_and(|b| b.rewind().is_some()));
     update(&mut flow, &mut c, &[Cancel]);
     assert_eq!(flow.name(), "game_over");
+    // As it was left: its opening animation doesn't play again (0830).
+    let Stage::GameOver(screen, _) = flow.stage() else {
+        panic!("no game over");
+    };
+    assert!(screen.finished());
+    assert!(!screen.shows_battle());
     // `defeat` plays on all the while (0809).
     update(&mut flow, &mut c, &[]);
     assert_eq!(music(&mut c), [""; 0]);
@@ -416,8 +427,8 @@ fn game_over_without_charges_has_no_rewind() {
     let Stage::GameOver(screen, _) = flow.stage() else {
         panic!("no game over");
     };
-    let view = screen.view(&c);
-    let labels: Vec<_> = view.menu.items.iter().map(|i| i.label.as_str()).collect();
+    let menu = screen.view(&c).menu.unwrap();
+    let labels: Vec<_> = menu.items.iter().map(|i| i.label.as_str()).collect();
     assert_eq!(
         labels,
         [c.text("game_over.retry"), c.text("game_over.title")]

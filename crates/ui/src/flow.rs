@@ -151,6 +151,10 @@ pub struct FlowScreen {
     can_leave: bool,
     /// The battle's music cue, as asked for when it last started.
     music: Option<String>,
+    /// The rewind charges left when `Rewind` was picked on Game Over:
+    /// backing out of the rewind screen (no charge spent) returns to Game
+    /// Over as it was left, without its opening animation (0830).
+    rewinding_with: Option<u8>,
 }
 
 impl FlowScreen {
@@ -167,6 +171,7 @@ impl FlowScreen {
             started_at: 0.0,
             can_leave: false,
             music: None,
+            rewinding_with: None,
         }
     }
 
@@ -259,6 +264,14 @@ impl FlowScreen {
     pub fn preparations(&self) -> Option<&PreparationsScreen> {
         match &self.stage {
             Stage::Preparations(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    /// The Game Over screen, while it is open.
+    pub fn game_over(&self) -> Option<&GameOverScreen> {
+        match &self.stage {
+            Stage::GameOver(s, _) => Some(s),
             _ => None,
         }
     }
@@ -462,6 +475,7 @@ impl FlowScreen {
     /// on (0809). Returns `true` when the flow is over (suspended: back to
     /// the title).
     fn battle_over(&mut self, ctx: &mut Ctx, battle: Box<BattleScreen>) -> bool {
+        let backed_out = self.rewinding_with.take() == Some(battle.history().charges_left());
         if battle.restart_requested() {
             self.restart(ctx);
             return false;
@@ -473,7 +487,11 @@ impl FlowScreen {
             self.won(ctx, &battle);
         } else {
             let can_rewind = battle.history().charges_left() > 0;
-            self.stage = Stage::GameOver(GameOverScreen::new(ctx, can_rewind), battle);
+            let mut screen = GameOverScreen::new(ctx, can_rewind);
+            if backed_out {
+                screen.skip();
+            }
+            self.stage = Stage::GameOver(screen, battle);
         }
         false
     }
@@ -560,6 +578,7 @@ impl FlowScreen {
             Stage::Battle(b) => return self.battle_over(ctx, b),
             Stage::GameOver(s, mut battle) => match s.result() {
                 Some(GameOverChoice::Rewind) => {
+                    self.rewinding_with = Some(battle.history().charges_left());
                     battle.rewind_from_defeat(ctx);
                     self.stage = Stage::Battle(battle);
                 }
@@ -665,6 +684,12 @@ impl Screen for FlowScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
+        // Game Over opens over the lost battle, which it fades out (0830).
+        if let Stage::GameOver(s, battle) = &self.stage
+            && s.shows_battle()
+        {
+            battle.draw(ctx, buf);
+        }
         self.screen().draw(ctx, buf);
     }
 

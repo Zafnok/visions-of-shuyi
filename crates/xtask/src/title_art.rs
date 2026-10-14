@@ -3,6 +3,8 @@
 //!
 //! - The **logo**, `assets/title/logo.png`, from `assets-src/title/logo.txt`
 //!   and the palette: our own picture, one character a pixel.
+//! - The **Game Over words**, `assets/title/game_over.png`, from
+//!   `assets-src/title/game_over.txt` the same way (ticket 0830).
 //! - The public **placeholder backdrops**, `assets/title/<name>.png`: three
 //!   flat bands of palette colours each, 336×248.
 //! - With `--bought`: the bought backdrops, copied from
@@ -25,8 +27,9 @@ use crate::font_atlas::encode_png;
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask title-art [--bought]\n\n\
-Writes assets/title/logo.png from assets-src/title/logo.txt and the palette, and the\n\
-placeholder backdrops beside it.\n\
+Writes assets/title/logo.png from assets-src/title/logo.txt and the palette,\n\
+assets/title/game_over.png from assets-src/title/game_over.txt, and the placeholder\n\
+backdrops beside them.\n\
 --bought  instead copy the bought backdrops from assets-private/library/ to\n\
           assets-private/game/title/ (run `cargo xtask private-assets --library` first;\n\
           afterwards commit and push in assets-private/, then run\n\
@@ -36,6 +39,11 @@ placeholder backdrops beside it.\n\
 pub const LOGO_SOURCE: &str = "assets-src/title/logo.txt";
 /// The logo's file name in the title directory.
 pub const LOGO_FILE: &str = "logo.png";
+/// The source of the Game Over words, relative to the repo root: a
+/// picture in the logo's format.
+pub const GAME_OVER_SOURCE: &str = "assets-src/title/game_over.txt";
+/// The Game Over words' file name in the title directory.
+pub const GAME_OVER_FILE: &str = "game_over.png";
 /// The line of the logo's source that ends its colours and starts its rows.
 pub const ROWS_MARK: &str = "---";
 /// The sorted bought packs, relative to the repo root.
@@ -180,11 +188,17 @@ pub fn placeholder(colors: [[u8; 3]; 3]) -> Picture {
 }
 
 /// Every public file the command writes: its name in the title directory
-/// and its picture. `logo_source` is the text of [`LOGO_SOURCE`].
-pub fn pictures(logo_source: &str) -> Result<Vec<(&'static str, Picture)>, String> {
+/// and its picture. `logo_source` is the text of [`LOGO_SOURCE`] and
+/// `game_over_source` that of [`GAME_OVER_SOURCE`].
+pub fn pictures(
+    logo_source: &str,
+    game_over_source: &str,
+) -> Result<Vec<(&'static str, Picture)>, String> {
     let palette = palette()?;
     let logo = parse_logo(logo_source, &palette).map_err(|e| format!("{LOGO_SOURCE}: {e}"))?;
-    let mut out = vec![(LOGO_FILE, logo)];
+    let game_over =
+        parse_logo(game_over_source, &palette).map_err(|e| format!("{GAME_OVER_SOURCE}: {e}"))?;
+    let mut out = vec![(LOGO_FILE, logo), (GAME_OVER_FILE, game_over)];
     for (name, bands, _) in BACKDROPS {
         let color = |band: &str| {
             palette
@@ -205,14 +219,16 @@ fn write(path: &Path, bytes: &[u8]) -> Result<(), String> {
     fs::write(path, bytes).map_err(|e| format!("writing {}: {e}", path.display()))
 }
 
-/// Runs the command without `--bought`: writes the logo and the
-/// placeholders under repo root `root`.
+/// Runs the command without `--bought`: writes the logo, the Game Over
+/// words and the placeholders under repo root `root`.
 pub fn run(root: &Path) -> Result<String, String> {
-    let source = root.join(LOGO_SOURCE);
-    let source =
-        fs::read_to_string(&source).map_err(|e| format!("reading {}: {e}", source.display()))?;
+    let read = |relative: &str| {
+        let path = root.join(relative);
+        fs::read_to_string(&path).map_err(|e| format!("reading {}: {e}", path.display()))
+    };
+    let (logo, game_over) = (read(LOGO_SOURCE)?, read(GAME_OVER_SOURCE)?);
     let mut lines = Vec::new();
-    for (name, (w, h, rgba)) in pictures(&source)? {
+    for (name, (w, h, rgba)) in pictures(&logo, &game_over)? {
         let shown = format!("assets/{TITLE_DIR}/{name}");
         write(&root.join(&shown), &encode_png(w, h, &rgba)?)?;
         lines.push(format!("title-art: wrote {shown} ({w}×{h})"));
@@ -366,9 +382,9 @@ mod tests {
 
     #[test]
     fn committed_pictures_are_what_the_tool_makes() {
-        let source = fs::read_to_string(repo().join(LOGO_SOURCE)).unwrap();
-        let made = pictures(&source).unwrap();
-        assert_eq!(made.len(), 8);
+        let source = |relative: &str| fs::read_to_string(repo().join(relative)).unwrap();
+        let made = pictures(&source(LOGO_SOURCE), &source(GAME_OVER_SOURCE)).unwrap();
+        assert_eq!(made.len(), 9);
         for (name, picture) in made {
             let committed = fs::read(repo().join(format!("assets/title/{name}"))).unwrap();
             assert!(
@@ -384,12 +400,18 @@ mod tests {
         assert!(run(&root).unwrap_err().starts_with("reading "));
         fs::create_dir_all(root.join("assets-src/title")).unwrap();
         fs::write(root.join(LOGO_SOURCE), "c cursor\n---\ncc\n").unwrap();
+        assert!(run(&root).unwrap_err().starts_with("reading "));
+        fs::write(root.join(GAME_OVER_SOURCE), "c cursor\n---\nccc\n").unwrap();
         let summary = run(&root).unwrap();
         let lines: Vec<_> = summary.lines().collect();
-        assert_eq!(lines.len(), 8);
+        assert_eq!(lines.len(), 9);
         assert_eq!(lines[0], "title-art: wrote assets/title/logo.png (2×1)");
         assert_eq!(
             lines[1],
+            "title-art: wrote assets/title/game_over.png (3×1)"
+        );
+        assert_eq!(
+            lines[2],
             "title-art: wrote assets/title/fields_a_dusk.png (336×248)"
         );
         let written = fs::read(root.join("assets/title/logo.png")).unwrap();
@@ -401,6 +423,12 @@ mod tests {
         assert_eq!(
             run(&root).unwrap_err(),
             "assets-src/title/logo.txt: line 3: no colour for 'x'"
+        );
+        fs::write(root.join(LOGO_SOURCE), "c cursor\n---\ncc\n").unwrap();
+        fs::write(root.join(GAME_OVER_SOURCE), "c cursor\n---\nx\n").unwrap();
+        assert_eq!(
+            run(&root).unwrap_err(),
+            "assets-src/title/game_over.txt: line 3: no colour for 'x'"
         );
         fs::remove_dir_all(&root).unwrap();
     }

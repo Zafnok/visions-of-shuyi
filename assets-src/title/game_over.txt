@@ -1,0 +1,13 @@
+# The words GAME OVER on the Game Over screen (ticket 0830): `cargo xtask
+# title-art` makes assets/title/game_over.png from it. Format:
+# assets/title/README.md. As wide as the logo, so the two line up; one
+# character is one pixel, drawn 8 screen pixels big; `.` is clear.
+h text_highlight
+---
+.hhh...hhh..h...h.hhhhh......hhh..h...h.hhhhh.hhhh..
+h...h.h...h.hh.hh.h.........h...h.h...h.h.....h...h.
+h.....h...h.h.h.h.h.........h...h.h...h.h.....h...h.
+h.hhh.hhhhh.h.h.h.hhhh......h...h.h...h.hhhh..hhhh..
+h...h.h...h.h...h.h.........h...h.h...h.h.....h.h...
+h...h.h...h.h...h.h.........h...h..h.h..h.....h..h..
+.hhh..h...h.h...h.hhhhh......hhh....h...hhhhh.h...h.

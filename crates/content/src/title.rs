@@ -1,7 +1,8 @@
 //! The title screen's art (`assets/title/`, ticket 0811, ADR-0059): the
 //! logo, a picture of the game's name, and the backdrops one of which is
-//! behind it each launch. `content` reads only each image's size; the
-//! title screen draws them as sprites (ADR-0038). Format:
+//! behind it each launch, and the words `GAME OVER` as a picture for the
+//! Game Over screen (ticket 0830). `content` reads only each image's
+//! size; the screens draw them as sprites (ADR-0038). Format:
 //! `assets/title/README.md`.
 
 use serde::Deserialize;
@@ -30,6 +31,10 @@ pub struct TitleArt {
     /// The pictures one of which is behind the logo, in file order. May
     /// be empty: the logo is then on the plain background.
     pub backdrops: Vec<ImageId>,
+    /// The words `GAME OVER` as a picture in the logo's lettering, with
+    /// its size in its own pixels; `None` if the file names none (the
+    /// Game Over screen then shows the words as text).
+    pub game_over: Option<(ImageId, (u32, u32))>,
 }
 
 #[derive(Deserialize)]
@@ -38,6 +43,8 @@ struct TitleFile {
     logo: String,
     #[serde(default)]
     backdrops: Vec<String>,
+    #[serde(default)]
+    game_over: Option<String>,
 }
 
 /// Loads the embedded title art file, checking each image against
@@ -51,8 +58,9 @@ pub fn load(images: &ImageTable) -> Result<TitleArt, Vec<ContentError>> {
 
 /// Parses title art `source` (errors attributed to `file`), checking each
 /// image against `images`: the logo must be there and at most
-/// [`LOGO_MAX_PX`]; each backdrop must be there, [`BACKDROP_PX`] big and
-/// named once. Reports every problem.
+/// [`LOGO_MAX_PX`], and so must the Game Over words if named; each
+/// backdrop must be there, [`BACKDROP_PX`] big and named once. Reports
+/// every problem.
 pub fn from_source(
     file: &str,
     source: &str,
@@ -78,8 +86,16 @@ pub fn from_source(
             backdrops.push(image);
         }
     }
+    let game_over = raw
+        .game_over
+        .as_deref()
+        .and_then(|relative| check("game_over".to_owned(), check_logo(relative, images)));
     if errors.is_empty() {
-        Ok(TitleArt { logo, backdrops })
+        Ok(TitleArt {
+            logo,
+            backdrops,
+            game_over,
+        })
     } else {
         Err(errors)
     }
@@ -170,6 +186,11 @@ mod tests {
         assert_eq!(Some(size), images.info(logo).map(|i| (i.width, i.height)));
         assert!(art.backdrops.len() >= 2, "the title rotates its backdrops");
         assert!(art.backdrops.iter().all(|b| b.path().starts_with("title/")));
+        let (words, size) = art.game_over.unwrap();
+        assert_eq!(words.path(), "title/game_over.png");
+        assert_eq!(Some(size), images.info(words).map(|i| (i.width, i.height)));
+        // As wide as the logo: the two line up on the Game Over screen.
+        assert_eq!(size.0, art.logo.unwrap().1.0);
     }
 
     #[test]
@@ -190,6 +211,15 @@ mod tests {
         // Backdrops are optional.
         let art = from_source(FILE, r#"(logo: "logo.png")"#, &images).unwrap();
         assert_eq!(art.backdrops, []);
+        // So are the Game Over words.
+        assert_eq!(art.game_over, None);
+        let art = from_source(
+            FILE,
+            r#"(logo: "logo.png", game_over: Some("logo.png"))"#,
+            &images,
+        )
+        .unwrap();
+        assert_eq!(art.game_over, art.logo);
     }
 
     #[test]
@@ -211,6 +241,18 @@ mod tests {
             messages(r#"(logo: "tall.png")"#),
             [format!(
                 "{FILE}: logo: tall.png is 100×35 px; a logo is at most 100×34 px"
+            )]
+        );
+        assert_eq!(
+            messages(r#"(logo: "logo.png", game_over: Some("wide.png"))"#),
+            [format!(
+                "{FILE}: game_over: wide.png is 101×34 px; a logo is at most 100×34 px"
+            )]
+        );
+        assert_eq!(
+            messages(r#"(logo: "logo.png", game_over: Some("none.png"))"#),
+            [format!(
+                "{FILE}: game_over: assets/title/none.png is not a PNG image in the assets"
             )]
         );
         assert_eq!(
