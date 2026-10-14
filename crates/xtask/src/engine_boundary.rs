@@ -512,6 +512,44 @@ mod tests {
     }
 
     #[test]
+    fn game_ids_has_every_kind_of_id() {
+        let ids = game_ids().unwrap_or_default();
+        for id in [
+            "swordsman",     // class
+            "retainer",      // character
+            "red_brigand",   // generic unit
+            "thicket",       // terrain
+            "iron_sword",    // item
+            "cinder_oath",   // spell
+            "keen_edge",     // skill
+            "flowing_cut",   // art
+            "menu_move",     // sound cue
+            "dungeon_tense", // music cue
+        ] {
+            assert!(ids.contains(id), "{id}");
+        }
+        assert!(!ids.contains("fire"), "allowed words are left out");
+    }
+
+    #[test]
+    fn run_reports_findings_in_engine_files() {
+        let root =
+            std::env::temp_dir().join(format!("xtask-engine-boundary-{}", std::process::id()));
+        let engine = root.join(ENGINE_DIR);
+        fs::create_dir_all(&engine).unwrap();
+        fs::write(engine.join("README.md"), "```engine-deps\nserde\n```\n").unwrap();
+        fs::write(engine.join("lib.rs"), "use trpg_core::Pos;\n").unwrap();
+        fs::write(engine.join("pic.png"), [0xff, 0xfe, 0x00]).unwrap();
+        let errors = run(&root);
+        let _ = fs::remove_dir_all(&root);
+        assert!(
+            errors.contains(&"engine/lib.rs:1: names `trpg_`, which is the game's".to_owned()),
+            "{errors:?}"
+        );
+        assert!(!errors.iter().any(|e| e.contains("pic.png")), "{errors:?}");
+    }
+
+    #[test]
     fn allow_has_only_lowercase_ids_longer_than_the_skip() {
         for word in ALLOW {
             assert!(word.len() > MAX_SKIPPED_LEN, "{word} is skipped anyway");
