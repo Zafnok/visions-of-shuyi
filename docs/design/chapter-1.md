@@ -159,7 +159,25 @@ party (`1` the lead, `2` Hollis, `3` Tamsin, `4` Aske, `5` Maud, `6` Rue);
 ### Teaching
 
 - **Contextual hints**: the help bar plus one-time tips when something new
-  happens (ticket 0406). **No forced tutorial steps.**
+  happens (ticket 0406).
+- **A tutorial, decided 2026-10-14** (ticket 0057; the full rules are in
+  [`tutorial.md`](tutorial.md)). This replaces the first rule here, "No
+  forced tutorial steps". Nick: "Let's make the very basic controls
+  optional, and anywhere our game differs from traditional strategy rpgs
+  (even something like rewind) forced. Let's let player pick familiarity."
+  - New Game asks how familiar the player is: **Full** (basic controls,
+    plus what's different here, plus every tip), **Short** (only what's
+    different here), **None** (nothing).
+  - A guide, the **Fox Miko** face, outside the story for now, speaks the
+    lessons and tips in the tip box.
+  - The lessons are **checklists** done in any order, **inside this
+    battle**, each the first time it matters (Nick picked this over a
+    practice battle: like Fire Emblem Awakening's prologue). The turn
+    can't end until the open one is done.
+  - What's *different here*: the keyboard controls, rewind, threat arrows,
+    Combat Arts, terrain magic (the last waits for a battle where it can
+    happen).
+  - A **Guides** entry in the battle menu shows every lesson and tip again.
 
 ### Extras
 

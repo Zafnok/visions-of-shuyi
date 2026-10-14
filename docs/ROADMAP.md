@@ -74,7 +74,12 @@ Chapter 1 script reworked as scenes (0719, 0722 and 0726 wait for it) ·
 **0729** the dialogue log · **0730** Maud's softer eyes · **0832** a
 combat-scene shot → **0833** the title cinematic moving like the game
 (also after 0728) · **0834** Tamsin less dominant · and the decisions
-**0056** Cinder Oath's range, **0057** a tutorial, **0058** which options
+**0056** Cinder Oath's range, **0057** a tutorial (decided 2026-10-14:
+New Game asks how familiar you are, a Fox Miko guide, checklist lessons in
+Chapter 1, Guides in the battle menu; built by **0455** the guide's face in
+the tip box, **0835** the familiarity question → **0456** checklist lessons
+→ **0457** the lessons → **0458** new tips and Guides → **0731** the guide's
+name and lines), **0058** which options
 belong to a save, **0029** backgrounds behind conversations (Nick's idea:
 a short moving scene, then the portraits over it, darkened), each with the
 tickets it creates. All of these are on the critical path now.

@@ -33,6 +33,7 @@ here.
 | Title screen: "Press any key or button" | [`title-screen.md`](title-screen.md) | 0034, 0032, 0226 | ✅ decided 2026-09-30 (every build, keys and buttons, since 0032; the keyboard and controller pictures 2026-10-04) |
 | Title screen: intro cinematic | [`title-screen.md`](title-screen.md) (*Intro cinematic*) | 0036 | ✅ decided 2026-10-03 (an off switch in Options: later; skip sound 0041; overworld shot 1010) |
 | Threat arrows: which enemies can attack the tile you're moving to | [`turn-structure.md`](turn-structure.md) (*Threat arrows*), [`look-and-feel.md`](look-and-feel.md) (*Threat arrows*) | 0055 (built by 0448) | ✅ decided 2026-10-12 |
+| Tutorial: how familiar you are, the guide, checklist lessons, Guides | [`tutorial.md`](tutorial.md) (+ `chapter-1.md`, *Teaching*) | 0057 (built by 0455, 0456, 0457, 0458, 0731, 0835) | ✅ decided 2026-10-14 |
 | Terrain: movement costs & bonuses | [`terrain.md`](terrain.md) | 0301 | ✅ decided 2026-09-26 (capturing & healing tiles deferred) |
 | Controls, key layouts & controller | [`controls.md`](controls.md) | 0015, 0030, 0032 | ✅ decided 2026-09-25 (rebinding keys 0030, 2026-09-29; controller 0032, 2026-09-30) |
 | The Options screen: speeds, volumes, asking first | [`options.md`](options.md) | 0805 | ✅ decided 2026-10-04 |
