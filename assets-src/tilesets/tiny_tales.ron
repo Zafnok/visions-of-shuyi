@@ -8,7 +8,9 @@
 // tilesets (assets-private/library/tiny-tales/tilesets/<sheet>.tsx), an id
 // counts its 16×16 tiles row by row from 0. A `Corners` layer names a
 // Tiled "terrain" of a sheet instead: the sheet's own table gives the tile
-// for each mix of corners.
+// for each mix of corners. A `Block` layer names the top-left tile of
+// nine (three by three) that draw a patch of the terrain with its edge on
+// every side: each of our tiles is joined from their quarters.
 (
     // Each of our terrains' own tile, painted first, unless a look below
     // has another. What stands on grass has the grass; water under a
@@ -70,24 +72,15 @@
             of: ["burnt"],
             sheet: "world-map/Set_A_Standard_Fields1", terrain: "Grounds2",
         ),
-        "forest": Corners(
-            of: ["forest"],
-            sheet: "world-map/Set_H_Trees1", terrain: "Trees",
-        ),
-        "thicket": Corners(
-            of: ["thicket"],
-            sheet: "world-map/Set_H_Trees6", terrain: "Trees2",
-        ),
-        "burnt": Corners(
-            of: ["burnt"],
-            sheet: "world-map/Set_H_Trees3", terrain: "Trees2",
-        ),
+        // Trees are a block of the sheet joined on each tile (ticket 0452):
+        // a wood ends inside its own tiles, its edge whole trees, so the
+        // ground beside it is never under a tree.
+        "forest": Block(of: ["forest"], sheet: "world-map/Set_H_Trees1", block: 5),
+        "thicket": Block(of: ["thicket"], sheet: "world-map/Set_H_Trees6", block: 13),
+        "burnt": Block(of: ["burnt"], sheet: "world-map/Set_H_Trees3", block: 13),
         // Nothing in the bundle burns: the forest's trees recoloured in
         // the palette's fire colour.
-        "burning": Corners(
-            of: ["burning"],
-            sheet: "world-map/Set_H_Trees1", terrain: "Trees", tint: "fire",
-        ),
+        "burning": Block(of: ["burning"], sheet: "world-map/Set_H_Trees1", block: 5, tint: "fire"),
         // The sheet has two tiles for some mixes; the second is the one
         // whose edge ends where the tile does.
         "mountain": Corners(

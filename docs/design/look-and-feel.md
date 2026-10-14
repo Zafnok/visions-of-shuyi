@@ -333,8 +333,25 @@ so they aren't in this repository (ADR-0032).
 - **Tiles are joined from the terrain alone** (ticket 0437, ADR-0052): a
   shore, a road's edge and the outline of a wood are worked out from which
   tiles are which, and end exactly where their tiles end, so what is seen
-  is what the rules count. (The trees overhang their tile by a few
-  pixels, as the art is drawn.)
+  is what the rules count.
+- **A wood stops inside its own tiles** (decided 2026-10-14, ticket 0452,
+  after Chapter 1 playtest round 2). Nick saw the trees spill half a
+  tile onto the road and the grass, and chose from six renders (today's,
+  one tree per tile, one tree per tile on a dark floor, two other tree
+  masses, and the trees cut off at the forest's tiles). His words: "C and
+  D look better but the thing is D is clipped too aggressively, it would
+  be better if the forest, rather than A and C overflowing, it
+  underflowed, so just take the half trees out of D and it will still
+  occupy the tiles it needs to without visually confusing anybody."
+  So the trees are drawn only on the forest's tiles, and the wood's edge
+  is a row of whole trees a few pixels inside them: no tree is cut in
+  half and none stands on the road or the grass beside it. A forest tile
+  alone is a small clump of whole trees in the middle of its tile.
+  Thicket, burnt and burning trees are drawn the same way (*Claude's
+  starting rule*: the same problem, the same art layout; say if they
+  should differ). Where a wood turns a corner inward (forest above and
+  beside a tile but not on the diagonal), the trees run on to the corner
+  of the tile (*Claude's starting rule*).
 - **What the bought-art maps don't have** (each its own ticket if Nick
   wants it): the bundle's castles, towns and houses bigger than one tile;
   moving water and waterfalls (one still frame is used); hand-placed

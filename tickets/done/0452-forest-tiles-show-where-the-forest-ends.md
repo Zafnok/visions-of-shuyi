@@ -5,10 +5,10 @@ type: tuning
 milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-14
 ---
 
 # 0452 — Forest tiles show where the forest ends
@@ -97,13 +97,13 @@ which tiles are forest?
 
 ## Acceptance criteria
 
-- [ ] `look-and-feel.md` records Nick's choice and words.
-- [ ] The re-imported tileset is in the private repository and
+- [x] `look-and-feel.md` records Nick's choice and words.
+- [x] The re-imported tileset is in the private repository and
       `assets-private.rev` points at it.
-- [ ] Any code change has a skin test (test tileset): a lone forest tile
+- [x] Any code change has a skin test (test tileset): a lone forest tile
       draws forest over its whole tile and nothing over the road beside it
-      (or what Nick chose).
-- [ ] All gates in the `run-gates` skill pass.
+      (or what Nick chose). *No skin code changed; see the notes.*
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -111,4 +111,38 @@ which tiles are forest?
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **Renders shown to Nick** (Chapter 1 opening, zoom 2× and 1×, local
+  only, never committed): today's; B one tree per tile (`Set_G_Trees1`);
+  B+A the same on a darker grass (`Set_A_Standard_Fields3` 233); C
+  `pick: 1`, and the bigger tree mass (`Set_G_Trees1` "Tree1"); D today's
+  trees cut off at the forest's tiles (a throwaway switch in
+  `ground.rs`, removed). A alone (dark floor under today's trees) looked
+  the same as today: the trees cover it. E (an edge line) wasn't
+  rendered.
+- **Nick chose** D without the half trees: the wood keeps to its own
+  tiles and ends a little inside them, in whole trees (his words are in
+  `look-and-feel.md`).
+- **How:** the tree sheets have a 3×3 block (tiles 5–7 / 21–23 / 37–39,
+  or from 13 for the second mass) drawing a patch of trees whose edge is
+  4 px inside the block, every edge tree whole. A new mapping layer,
+  `Block(of, sheet, block, tint)`, makes the importer join each tile from
+  that block's quarters for the sides where the terrain ends (top edge
+  when the tile above isn't forest, the edge all round for a lone tile),
+  and writes it as an ordinary `Tiles` layer with a picture for each of
+  the 16 mixes of sides (`beside` = every other terrain). So the game's
+  tileset format and the skin's code are unchanged, which is why there is
+  no new skin test: the existing `Tiles` tests cover it
+  (`a_tile_layers_picture_goes_by_the_neighbours_it_looks_for`). The
+  importer's tests cover the joining and the layer on a made-up sheet.
+- Forest, thicket, burnt and burning all use it (same art layout).
+- *Claude's starting rules* (also in `look-and-feel.md`): thicket, burnt
+  and burning get the same treatment as forest; at an inward corner of a
+  wood (forest above and beside a tile but not on the diagonal) the trees
+  run on to the tile's corner, as the side mixes don't look at the
+  diagonal.
+- The burnt ground under the bare trees (`ash`, a corner layer) still
+  spreads half a tile like before; out of the ticket's scope (not
+  trees), and Chapter 1 has none.
+- Private repository commit `cec0924`, pinned in `assets-private.rev`.
+- No ADR: the mapping file is the importer's input and its header
+  explains `Block`; the game's file format didn't change.
