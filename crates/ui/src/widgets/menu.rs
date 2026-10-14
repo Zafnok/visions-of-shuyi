@@ -23,6 +23,9 @@ pub struct MenuItem {
     pub enabled: bool,
     /// Text drawn after the label in its own colour (e.g. `(broken)`).
     pub suffix: Option<(String, UiColor)>,
+    /// What the item does, shown under the list while it has the focus
+    /// (ticket 0429, `look-and-feel.md` → *Descriptions in lists*).
+    pub note: Option<String>,
 }
 
 impl MenuItem {
@@ -32,6 +35,7 @@ impl MenuItem {
             label: label.into(),
             enabled: true,
             suffix: None,
+            note: None,
         }
     }
 
@@ -42,12 +46,21 @@ impl MenuItem {
         self
     }
 
+    /// The same item with `text` saying what it does, shown under the
+    /// list while it has the focus.
+    #[must_use]
+    pub fn with_note(mut self, text: impl Into<String>) -> Self {
+        self.note = Some(text.into());
+        self
+    }
+
     /// A disabled item.
     pub fn disabled(label: impl Into<String>) -> Self {
         Self {
             label: label.into(),
             enabled: false,
             suffix: None,
+            note: None,
         }
     }
 }
@@ -71,6 +84,9 @@ pub struct Menu {
     focus: usize,
     /// Whether `Cancel` reports [`MenuEvent::Cancelled`].
     cancellable: bool,
+    /// Whether the focus also stops on disabled items, so their notes can
+    /// be read (they still can't be chosen).
+    browse_disabled: bool,
 }
 
 impl Menu {
@@ -82,6 +98,7 @@ impl Menu {
             items,
             focus,
             cancellable: true,
+            browse_disabled: false,
         }
     }
 
@@ -93,10 +110,21 @@ impl Menu {
         self
     }
 
-    /// The same menu focused on item `index`, if it exists and is enabled.
+    /// The same menu where the focus also stops on disabled items, so the
+    /// player can read what they do (`look-and-feel.md` → *Descriptions in
+    /// lists*). Confirm on one still chooses nothing.
+    #[must_use]
+    pub fn browsing_disabled(mut self) -> Self {
+        self.browse_disabled = true;
+        self
+    }
+
+    /// The same menu focused on item `index`, if it exists and the focus
+    /// may stop on it (it is enabled, or the menu is
+    /// [`browsing_disabled`](Self::browsing_disabled)).
     #[must_use]
     pub fn focused(mut self, index: usize) -> Self {
-        if self.items.get(index).is_some_and(|i| i.enabled) {
+        if self.items.get(index).is_some_and(|i| self.stops_on(i)) {
             self.focus = index;
         }
         self
@@ -105,6 +133,11 @@ impl Menu {
     /// The items, in order.
     pub fn items(&self) -> &[MenuItem] {
         &self.items
+    }
+
+    /// Whether the focus may stop on `item`.
+    fn stops_on(&self, item: &MenuItem) -> bool {
+        item.enabled || self.browse_disabled
     }
 
     /// Index of the focused item.
@@ -157,8 +190,9 @@ impl Menu {
         event
     }
 
-    /// Moves the focus to the next (or previous) enabled item, wrapping.
-    /// Stays put if no other item is enabled.
+    /// Moves the focus to the next (or previous) item it may stop on
+    /// (enabled, unless the menu browses disabled ones too), wrapping.
+    /// Stays put if there is none.
     fn step(&mut self, down: bool) {
         let n = self.items.len();
         let next = (1..n)
@@ -169,7 +203,7 @@ impl Menu {
                     (self.focus + n - k) % n
                 }
             })
-            .find(|&i| self.items[i].enabled);
+            .find(|&i| self.stops_on(&self.items[i]));
         if let Some(i) = next {
             self.focus = i;
         }
@@ -180,6 +214,7 @@ impl Menu {
         let items = self.items.iter().enumerate().map(|(i, item)| MenuItemView {
             label: item.label.clone(),
             suffix: item.suffix.clone(),
+            note: item.note.clone(),
             enabled: item.enabled,
             focused: i == self.focus,
         });
@@ -223,6 +258,7 @@ mod tests {
                     label: format!("item {i}"),
                     enabled: on,
                     suffix: None,
+                    note: None,
                 })
                 .collect(),
         )
@@ -361,6 +397,41 @@ mod tests {
     }
 
     #[test]
+    fn a_browsing_menu_stops_on_disabled_items_but_never_chooses_them() {
+        let mut m = menu(&[true, false, true]).browsing_disabled();
+        assert_eq!(m.focus(), 0);
+        m.handle(CursorDown);
+        assert_eq!(m.focus(), 1, "stops on the disabled item");
+        assert_eq!(m.handle(Confirm), None);
+        let mut audio = AudioQueue::default();
+        m.handle_with_sound(Confirm, &mut audio);
+        assert_eq!(audio.take().len(), 1, "the denied sound");
+        m.handle(CursorDown);
+        assert_eq!(m.focus(), 2);
+        m.handle(CursorUp);
+        assert_eq!(m.focus(), 1);
+        // Focusing it by index works too; a plain menu refuses it.
+        assert_eq!(
+            menu(&[true, false]).browsing_disabled().focused(1).focus(),
+            1
+        );
+        assert_eq!(menu(&[true, false]).focused(1).focus(), 0);
+        // It still opens on the first enabled item.
+        assert_eq!(menu(&[false, true]).browsing_disabled().focus(), 1);
+    }
+
+    #[test]
+    fn a_note_goes_to_the_view() {
+        let m = Menu::new(vec![
+            MenuItem::new("a").with_note("does a"),
+            MenuItem::new("b"),
+        ]);
+        let view = m.view();
+        assert_eq!(view.items[0].note.as_deref(), Some("does a"));
+        assert_eq!(view.items[1].note, None);
+    }
+
+    #[test]
     fn events() {
         let mut m = menu(&[true, true]);
         assert_eq!(m.handle(Confirm), Some(MenuEvent::Chosen(0)));
@@ -380,6 +451,7 @@ mod tests {
                 label: "a".into(),
                 enabled: true,
                 suffix: None,
+                note: None,
             }
         );
         assert!(!MenuItem::disabled("b").enabled);

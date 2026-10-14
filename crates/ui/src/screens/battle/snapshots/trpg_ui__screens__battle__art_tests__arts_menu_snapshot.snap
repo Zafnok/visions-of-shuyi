@@ -18,9 +18,9 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 │ Flowing Cut     −2 dur  E      │LoBr..♣♣♣♣....                      ║                            ║
 │ Guard Break     −4 dur  D      │..........╦╦..                      ║                            ║
 │ Keen Edge       −3 dur  active │BrAr▓▓▓▓▓▓▓▓..                      ║                            ║
-└────────────────────────────────┘....▓▓░░╦╦▓▓..                      ║                            ║
-                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║                            ║
+├────────────────────────────────┤....▓▓░░╦╦▓▓..                      ║                            ║
+│ +10 hit; no counter            │....▓▓░░░░▓▓..                      ║                            ║
+└────────────────────────────────┘..Fr▓▓▓▓▐▌▓▓..                      ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
@@ -52,8 +52,8 @@ bccccccccccccccccccccccccccccccccbqqrrjjkkkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccc
 bssssssssssssssssssssssssssssssssbjjjjjjjjjjttjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 bccccccccccccccccccccccccccccccccbrruuvvvvvvvvjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbjjjjvvwwttvvjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkppuuuujjjjjjjjvvwwwwvvjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkllppjjjjjjjjjjrrvvvvxxvvjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bccccccccccccccccccccccccccccccccbjjjjvvwwwwvvjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbjjrrvvvvxxvvjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
@@ -95,13 +95,11 @@ x = fg:wood bg:stone_bg
 y = fg:text_dim bg:black
 --- overlays ---
 over  273,222 14x2  hp_high
-over  225,286 14x2  hp_high
 over  289,254 14x2  hp_high
 over  289,222 14x2  hp_high
 over  273,254 14x2  hp_high
 over  273,206 14x2  hp_high
 over  289,302 14x2  hp_high
-over  209,286 14x2  hp_high
 over  282,215 7x3  black
 over  282,215 3x3  black
 over  283,216 4x3  black

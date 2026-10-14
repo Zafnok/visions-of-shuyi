@@ -28,8 +28,10 @@ pub struct MenuItemView {
     /// palette role it is shown in. (A role the screen chose; the screens
     /// that give one move to a meaning when 0241 and 0242 convert them.)
     pub suffix: Option<(String, UiColor)>,
-    /// Whether it can be chosen: a disabled item is dimmed and skipped by
-    /// the cursor.
+    /// What it does, shown under the list while it has the focus.
+    pub note: Option<String>,
+    /// Whether it can be chosen: a disabled item is dimmed (and skipped by
+    /// the cursor, unless the menu browses disabled items).
     pub enabled: bool,
     /// Whether the cursor is on it.
     pub focused: bool,

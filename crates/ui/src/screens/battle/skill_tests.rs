@@ -111,6 +111,20 @@ fn focus_entry(s: &mut BattleScreen, c: &mut Ctx, entry: MenuEntry) {
     panic!("no {entry:?} in the menu");
 }
 
+/// The `Skill` menu's focus moved down to line `i`.
+fn focus_line(s: &mut BattleScreen, c: &mut Ctx, i: usize) {
+    for _ in 0..8 {
+        let Mode::SkillMenu { menu, .. } = s.mode() else {
+            panic!("{:?}", s.mode());
+        };
+        if menu.focus() == i {
+            return;
+        }
+        step(s, c, &[Action::CursorDown]);
+    }
+    panic!("no line {i} in the skill menu");
+}
+
 /// The knight (unit 2, a Guard, knowing Brace) selected and its action menu
 /// open where it stands, with its weapon's durability set to `durability`.
 fn knight_menu(c: &mut Ctx, durability: u32) -> BattleScreen {
@@ -336,6 +350,46 @@ fn skill_menu_snapshot() {
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
+/// The `Skill` menu in the left-handed layout (0208): the same list and
+/// effect, the help in that layout's keys.
+#[test]
+fn skill_menu_left_handed_snapshot() {
+    let mut c = ctx();
+    c.use_layout(crate::input::Layout::LeftHanded);
+    let mut s = knight_menu(&mut c, 20);
+    focus_entry(&mut s, &mut c, MenuEntry::Skill);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}
+
+/// What the focused line of the `Skill` menu says it does (ticket 0429).
+fn focused_note(s: &BattleScreen) -> Option<String> {
+    let Mode::SkillMenu { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    menu.view().focused().and_then(|i| i.note.clone())
+}
+
+/// The focused skill's effect shows under the list and follows the
+/// focus, onto a dimmed line too (ticket 0429: "Brace what does it do").
+#[test]
+fn the_skill_menu_describes_the_focused_line_dimmed_or_not() {
+    let mut c = ctx();
+    let mut s = spent_brace_menu(&mut c);
+    // It opens on Fortify, the line that can be used.
+    assert_eq!(focused_note(&s).as_deref(), Some("self: Def +8 Res +8"));
+    // Down wraps to the spent Brace: dimmed, but the focus stops on it.
+    step(&mut s, &mut c, &[Action::CursorDown]);
+    assert_eq!(focused_note(&s).as_deref(), Some("self: Def +5 Res +5"));
+    // Confirm on it uses nothing.
+    let before = s.state().clone();
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::SkillMenu { .. }), "{:?}", s.mode());
+    assert_eq!(s.state(), &before);
+    step(&mut s, &mut c, &[Action::CursorDown]);
+    assert_eq!(focused_note(&s).as_deref(), Some("self: Def +8 Res +8"));
+}
+
 /// The knight also knowing Fortify, after its 3 Braces: the skill list
 /// opened from its action menu.
 fn spent_brace_menu(c: &mut Ctx) -> BattleScreen {
@@ -449,9 +503,7 @@ fn shove_picks_an_adjacent_enemy_and_pushes_it() {
     };
     assert!(raider_tints(&s, &c).is_empty());
     let i = choices.iter().position(|c| c.skill.0 == "shove").unwrap();
-    for _ in 0..i {
-        step(&mut s, &mut c, &[Action::CursorDown]);
-    }
+    focus_line(&mut s, &mut c, i);
     step(&mut s, &mut c, &[Action::Confirm]);
     let Mode::SkillTarget(t) = s.mode() else {
         panic!("{:?}", s.mode());
@@ -564,9 +616,7 @@ fn the_scene_marks_who_a_skill_can_target() {
     let scene = s.scene(&c);
     assert_eq!(scene.cursor, None);
     assert!(scene.tinted(RangeKind::Attack).is_empty());
-    for _ in 0..i {
-        step(&mut s, &mut c, &[Action::CursorDown]);
-    }
+    focus_line(&mut s, &mut c, i);
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::SkillTarget(_)), "{:?}", s.mode());
     let scene = s.scene(&c);

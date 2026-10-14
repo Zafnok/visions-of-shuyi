@@ -21,9 +21,9 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                     ..♣♣··Lo..╦┌───────────────────────────────┐      ║                            ║
                     ♣♣♣♣··MaKn.│ Brace       0/3  no uses left │      ║                            ║
                     ♣♣♠♠··.....│ Fortify     2/2               │      ║                            ║
+                               ├───────────────────────────────┤      ║                            ║
+                               │ self: Def +8 Res +8           │      ║                            ║
                                └───────────────────────────────┘      ║                            ║
-                                                                      ║                            ║
-                                                                      ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
@@ -55,8 +55,8 @@ aaaaaaaaaaaaaaaaaaaajjkkoovvjjsbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaakkkkoovvvvjbgggggggggggggggggwwwwwwwwwwwwwgbaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaakklloojjjjjbxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxbaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcccccccccccccccccccccccccccccccbaaaaaabccccccccccccccccccccccccccccb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
