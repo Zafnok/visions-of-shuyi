@@ -148,7 +148,7 @@ fn use_art(s: &mut BattleScreen, c: &mut Ctx, name: &str, target: UnitId) {
     choose_entry(s, c, MenuEntry::Arts);
     let at = lines(s).iter().position(|l| l.0 == name);
     let at = at.unwrap_or_else(|| panic!("{name} isn't listed: {:?}", lines(s)));
-    // Down skips the dimmed lines.
+    // Down to the line (it opened on the first one that can be chosen).
     for _ in 0..at {
         let Mode::ArtsMenu { menu, .. } = s.mode() else {
             unreachable!()
@@ -340,7 +340,7 @@ fn a_broken_weapon_dims_every_art_with_the_reason() {
 /// Ticket 0442: a dimmed line shows its reason in the menu and can't be
 /// chosen.
 #[test]
-fn a_dimmed_line_shows_its_reason_and_cant_be_chosen() {
+fn a_dimmed_line_shows_its_reason_and_effect_and_cant_be_chosen() {
     let mut c = ctx();
     // Only the brigand beside the archer is left near it: Close Shot
     // reaches it; Pinning Shot and Vault (the bow's own range) reach
@@ -363,8 +363,26 @@ fn a_dimmed_line_shows_its_reason_and_cant_be_chosen() {
     let all = screen_text(&render(&s, &c));
     assert!(all.contains("Pinning Shot"), "{all}");
     assert!(all.contains("out of range"), "{all}");
-    // Down doesn't reach the dimmed line; Confirm uses Close Shot.
-    step(&mut s, &mut c, &[Action::CursorDown, Action::Confirm]);
+    // Close Shot's effect shows under the list (ticket 0429).
+    let all = screen_text(&render(&s, &c));
+    assert!(all.contains("-10 hit; min range 1"), "{all}");
+    // Down stops on the dimmed line, which shows its effect too, but
+    // Confirm on it does nothing.
+    step(&mut s, &mut c, &[Action::CursorDown]);
+    let all = screen_text(&render(&s, &c));
+    assert!(all.contains("pins: Mov −3"), "{all}");
+    assert!(!all.contains("min range 1"), "{all}");
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::ArtsMenu { .. }), "{:?}", s.mode());
+    step(&mut s, &mut c, &[Action::CursorDown]);
+    let all = screen_text(&render(&s, &c));
+    assert!(all.contains("Bow: move 1 after"), "{all}");
+    // Back up to Close Shot: Confirm uses it.
+    step(
+        &mut s,
+        &mut c,
+        &[Action::CursorUp, Action::CursorUp, Action::Confirm],
+    );
     let t = targeting(&s);
     assert_eq!(t.technique, Technique::Art(ArtId::new("close_shot")));
     assert_eq!(t.targets, [UnitId(5)]);
@@ -472,6 +490,62 @@ fn arts_menu_snapshot() {
     choose_entry(&mut s, &mut c, MenuEntry::Arts);
     step(&mut s, &mut c, &[Action::CursorDown]);
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}
+
+/// The lord's arts menu in the left-handed layout (0208).
+#[test]
+fn arts_menu_left_handed_snapshot() {
+    let mut c = ctx();
+    c.use_layout(crate::input::Layout::LeftHanded);
+    let state = swordsman(&c, 20);
+    let mut s = lord_menu(&mut c, state);
+    choose_entry(&mut s, &mut c, MenuEntry::Arts);
+    step(&mut s, &mut c, &[Action::CursorDown]);
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}
+
+/// The archer's arts menu, on Close Shot, its other lines dimmed.
+#[test]
+fn archer_arts_menu_snapshot() {
+    let mut c = ctx();
+    let state = battle(&c, |units| units[3].pos = p(12, 0));
+    let mut s = archer_menu(&mut c, state);
+    choose_entry(&mut s, &mut c, MenuEntry::Arts);
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}
+
+/// What the focused line of the arts menu says it does (ticket 0429).
+fn focused_note(s: &BattleScreen) -> Option<String> {
+    let Mode::ArtsMenu { menu, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    menu.view().focused().and_then(|i| i.note.clone())
+}
+
+/// Moving down the arts menu changes the effect under it to the next
+/// line's.
+#[test]
+fn the_arts_menu_describes_the_focused_line() {
+    let mut c = ctx();
+    let state = battle(&c, |units| {
+        units[0].class = ClassId("swordsman".to_owned());
+        assert!(units[0].learn_skill(&SkillId::new("keen_edge"), &c.content.skills));
+    });
+    let mut s = lord_menu(&mut c, state);
+    choose_entry(&mut s, &mut c, MenuEntry::Arts);
+    let mut seen = vec![];
+    for _ in 0..3 {
+        seen.push(focused_note(&s).unwrap());
+        step(&mut s, &mut c, &[Action::CursorDown]);
+    }
+    assert_eq!(
+        seen,
+        [
+            "follow-up ×3/2",
+            "+10 hit; no counter",
+            "Sword: +30 hit +10 crit"
+        ]
+    );
 }
 
 /// The lord (Swordsman) with Guard Break chosen: the art's line and `no

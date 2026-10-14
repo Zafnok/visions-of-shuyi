@@ -170,6 +170,7 @@ mod tests {
         let item = |label: &str, focused| MenuItemView {
             label: label.to_owned(),
             suffix: None,
+            note: None,
             enabled: true,
             focused,
         };

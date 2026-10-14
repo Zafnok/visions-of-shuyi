@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: sign-off
-completed:
+completed: 2026-10-14
 ---
 
 # 0429 — Show what a skill or art does while choosing it
@@ -165,5 +165,43 @@ He thought this was done; it isn't. **The playtest waits for it**
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done (2026-10-14).** Nick saw four real renders (A strip in the menu
+box, B window under the list, C help bar, D side panel) and chose "A but
+with the more pronounced coloration of B": the effect is a row under a
+rule inside the menu box, in white, the name not repeated. He also chose
+that the cursor stops on greyed-out lines. Recorded in
+`look-and-feel.md` → *Descriptions in lists*.
+
+- `MenuItem::with_note` and `Menu::browsing_disabled` (`widgets/menu.rs`);
+  the glyph skin paints the focused item's note under a rule, the box as
+  wide as its widest note so it doesn't jump as the focus moves, and a
+  focused disabled line as a muted bar (`panel_border`).
+- `art_effect_text` and `Technique::effect_text` (`art_list.rs`); the arts
+  menu and the `Skill` menu give every line its note and browse disabled
+  lines (Confirm on one still does nothing).
+- Tests: every art's text (non-empty, ≤ 40 characters, exact strings for
+  all ten), every skill's text ≤ 40 characters, `Technique` texts, the
+  menu and skin, harness tests that the note follows the focus in both
+  menus and onto a dimmed line (`the_skill_menu_describes_the_focused_line_dimmed_or_not`:
+  spent Brace reads `self: Def +5 Res +5`), snapshots of the lord's, the
+  archer's and the left-handed arts menu and of the Skill menu.
+
+**Deviations**
+- Text colour is `text` (white), not `text_dim` as step 3 said: Nick's
+  choice.
+- Line Pierce's description reads `then strikes the unit behind` instead
+  of the forecast's terse `pierces`, so the description says what it does.
+- No `draw_list` / no `Attack` line exists any more (0442); the note is a
+  menu item field painted by the menu skin, so `draw_menu` didn't change.
+- 0410 was already done: follow-up **0453** (spell list descriptions)
+  instead of editing it.
+
+**Claude's starting rules** (veto freely)
+- A greyed line under the cursor is a dimmer bar (the border colour)
+  rather than the gold one.
+- The `Arts` / `Skill` entries of the action menu are still greyed when
+  nothing in them can be used, so you can't open the list just to read it.
+
+**Follow-ups:** 0453 (spell list descriptions), 0454 (a menu too wide for
+either side of its unit covers it: seen on the archer's Arts menu; it was
+already so before this ticket).

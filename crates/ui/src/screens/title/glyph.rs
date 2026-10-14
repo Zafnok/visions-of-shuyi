@@ -290,6 +290,7 @@ mod tests {
         MenuItemView {
             label: label.to_owned(),
             suffix: None,
+            note: None,
             enabled: true,
             focused,
         }

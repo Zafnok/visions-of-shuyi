@@ -8,13 +8,14 @@
 //! instead (`Fire + Overcast`, [`super::magic`]).
 
 use trpg_core::{
-    ArtDef, ArtId, ArtNote, BattleState, CastTarget, CommandError, CostError, Equipped, Event,
-    Faction, Pos, SkillCost, SkillId, StatKind, Unit, UnitAction, UnitId, WEAPON_SLOTS,
+    ArtDef, ArtId, ArtNote, BattleState, CastTarget, CombatMods, CommandError, CostError, Equipped,
+    Event, Faction, Pos, SkillCost, SkillId, StatKind, Unit, UnitAction, UnitId, UnitTag,
+    WEAPON_SLOTS,
 };
 
 use super::attack::{spell_uses, weapon_durability};
 use super::info::stat_name;
-use super::skills::{skill_cost, skill_name, timed_text};
+use super::skills::{effect_text, mods_text, skill_cost, skill_name, timed_text};
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::widgets::menu::{Menu, MenuItem};
@@ -66,6 +67,71 @@ impl Technique {
             Technique::Active(id) => skill_name(state, words, id),
         }
     }
+
+    /// What it does in a few words, as the menus describe the focused
+    /// line: `plain attack`, the art's [`art_effect_text`] or the active's
+    /// [`effect_text`] (empty if the table lacks it).
+    pub fn effect_text(&self, state: &BattleState, words: Words<'_>) -> String {
+        match self {
+            Technique::Attack => words.text("battle.art.desc.attack").to_owned(),
+            Technique::Art(id) => state
+                .arts()
+                .get(id)
+                .map(|a| art_effect_text(words, a))
+                .unwrap_or_default(),
+            Technique::Active(id) => state
+                .skills()
+                .get(id)
+                .map(|s| effect_text(words, s))
+                .unwrap_or_default(),
+        }
+    }
+}
+
+/// The name of a class tag (`Mounted`).
+fn tag_name(words: Words<'_>, tag: UnitTag) -> &str {
+    words.text(match tag {
+        UnitTag::Mounted => "class.tag.mounted",
+        UnitTag::Flying => "class.tag.flying",
+        UnitTag::Armored => "class.tag.armored",
+    })
+}
+
+/// An art's effect in a few words, built from its data: the number
+/// changes first (`+10 hit`, `×3 vs Mounted`, `min range 1`), then what the
+/// forecast's numbers don't show ([`note_text`], but `then strikes the
+/// unit behind` for Line Pierce), apart by `; `.
+pub fn art_effect_text(words: Words<'_>, art: &ArtDef) -> String {
+    let e = &art.effect;
+    let mut parts = vec![];
+    if e.hit != 0 {
+        let mods = CombatMods {
+            hit: e.hit,
+            ..CombatMods::default()
+        };
+        parts.push(mods_text(words, &mods));
+    }
+    if let Some((num, den)) = e.sword_followup {
+        parts.push(words.text_with("battle.art.desc.followup", &[("num", &num), ("den", &den)]));
+    }
+    for &(tag, mult) in &e.effective {
+        let tag = tag_name(words, tag);
+        parts.push(words.text_with(
+            "battle.art.desc.effective",
+            &[("mult", &mult), ("tag", &tag)],
+        ));
+    }
+    if let Some(n) = e.axe_min_damage {
+        parts.push(words.text_with("battle.art.desc.axe_min", &[("n", &n)]));
+    }
+    if let Some(n) = e.min_range {
+        parts.push(words.text_with("battle.art.desc.min_range", &[("n", &n)]));
+    }
+    parts.extend(e.notes().iter().map(|note| match note {
+        ArtNote::Pierces => words.text("battle.art.desc.pierces").to_owned(),
+        _ => note_text(words, note),
+    }));
+    parts.join("; ")
 }
 
 /// The name of art `id` (its id if the table lacks it).
@@ -256,7 +322,9 @@ pub fn source_label(state: &BattleState, words: Words<'_>, technique: &Technique
 const NAME_W: usize = 14;
 
 /// The arts menu: `Guard Break     −4 dur  D`, a dimmed line with its
-/// reason after it, focused on the first line that can be chosen.
+/// reason after it, focused on the first line that can be chosen. The
+/// focused line's effect shows under the list (ticket 0429), dimmed lines
+/// too: the focus stops on them.
 pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Menu {
     let items = lines
         .iter()
@@ -265,16 +333,17 @@ pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Me
             let cost = cost_label(state, words, &c.technique);
             let source = source_label(state, words, &c.technique);
             let label = format!("{name:<NAME_W$}  {cost:>6}  {source:<6}");
-            match &c.blocked {
+            let item = match &c.blocked {
                 None => MenuItem::new(label),
                 Some(why) => {
                     let why = format!(" {}", blocked_text(words, why));
                     MenuItem::disabled(label).with_suffix(why, UiColor::HpLow)
                 }
-            }
+            };
+            item.with_note(c.technique.effect_text(state, words))
         })
         .collect();
-    Menu::new(items)
+    Menu::new(items).browsing_disabled()
 }
 
 /// A weapon's durability as its lines show it: `20/20`, or `broken` at 0.
@@ -460,6 +529,49 @@ mod tests {
         // No combat active costs its own uses; a skill that does reads so.
         assert_eq!(active("brace"), "−1 use");
         assert_eq!(active("nope"), "");
+    }
+
+    #[test]
+    fn every_art_says_what_it_does() {
+        let c = crate::screen::tests::ctx();
+        let arts = &c.content.arts;
+        for art in arts.arts.values() {
+            let text = art_effect_text(Words::ENGLISH, art);
+            assert!(!text.is_empty(), "{} has no text", art.id.0);
+            assert!(text.chars().count() <= 40, "{}: {text}", art.id.0);
+        }
+        let text = |id: &str| art_effect_text(Words::ENGLISH, arts.get(&ArtId::new(id)).unwrap());
+        assert_eq!(text("guard_break"), "+10 hit; no counter");
+        assert_eq!(text("unhorse"), "+10 hit; ×3 vs Mounted");
+        assert_eq!(text("armor_cleave"), "×2 vs Armored");
+        assert_eq!(text("pinning_shot"), "pins: Mov −3");
+        assert_eq!(text("pressure_point"), "slows: Spd −3");
+        assert_eq!(text("flowing_cut"), "follow-up ×3/2");
+        assert_eq!(text("crushing_swing"), "+20 hit; min damage 8");
+        assert_eq!(text("close_shot"), "-10 hit; min range 1");
+        assert_eq!(text("line_pierce"), "then strikes the unit behind");
+        assert_eq!(text("sidestep"), "stance: +20 avo");
+    }
+
+    #[test]
+    fn techniques_say_what_they_do() {
+        let c = crate::screen::tests::ctx();
+        let (map, units) = crate::screens::battle::testing::quick_units(&c);
+        let rout = trpg_core::Objective::Rout { turn_limit: None };
+        let state = crate::screens::battle::testing::battle_with(&c, map, units, rout);
+        let text = |t: Technique| t.effect_text(&state, Words::ENGLISH);
+        assert_eq!(text(Technique::Attack), "plain attack");
+        assert_eq!(
+            text(Technique::Art(ArtId::new("guard_break"))),
+            "+10 hit; no counter"
+        );
+        assert_eq!(
+            text(Technique::Active(SkillId::new("keen_edge"))),
+            "Sword: +30 hit +10 crit"
+        );
+        // Neither in the tables.
+        assert_eq!(text(Technique::Art(ArtId::new("nope"))), "");
+        assert_eq!(text(Technique::Active(SkillId::new("nope"))), "");
     }
 
     #[test]

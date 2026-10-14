@@ -5,7 +5,7 @@ Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 0021; bought tiles and sprites on the battle map: 0038; walking sprites,
 effect marks, the glyph look as an option, busts in dialogue: 0039; which
 bought tiles each terrain is: 0437; threat arrows: 0055; the title
-screen: 0811)
+screen: 0811; descriptions in lists: 0429)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -167,6 +167,15 @@ Names, stats, weapons and the sample face in the screenshots are placeholders.
 > and right? this would be always active" … [asked whether that goes for
 > the glyph look too:] "I think glyph look should also have 14px hp bar
 > otherwise rest is good"
+
+Descriptions in lists (ticket 0429, 2026-10-14; shown four renders of the
+knight's `Skill` menu and the lord's `Arts` menu: A a strip inside the menu
+box, B a window under the list with the name in its border, C the help bar,
+D the side panel):
+
+> "A but with the more pronounced coloration of B. I don't like repeating
+> the skill name but white is easier to read" … [asked whether the cursor
+> should stop on greyed-out lines so they can be read:] "Stop on them"
 
 ## Rules
 
@@ -1047,6 +1056,37 @@ top and the words under it):
   - `GAME OVER` is a picture, like the logo
     (`assets-src/title/game_over.txt`), so it reads the same in every
     language until a language brings its own (ticket 0831).
+
+### Descriptions in lists
+
+Decided 2026-10-14 (ticket 0429). When you move the cursor over a line of
+a list where you choose what a unit does, the menu box tells you what that
+line does, on its own row under the list:
+
+```
+┌─ Iron Sword 20/20 ─────────────┐
+│ Flowing Cut     −2 dur  E      │
+│ Guard Break     −4 dur  D      │   ← the cursor is here
+├────────────────────────────────┤
+│ +10 hit; no counter            │
+└────────────────────────────────┘
+```
+
+- The row is inside the same box, under a rule, and changes as the cursor
+  moves. The name isn't repeated there: only what it does, in the normal
+  (white) text colour.
+- The box is as wide as its longest line or description, so it doesn't
+  change size as the cursor moves.
+- **Greyed-out lines can be read too:** the cursor stops on a line you
+  can't use right now (`no uses left`, `out of range`, `broken`), shown as
+  a dimmer bar, and its description shows. Pressing confirm on it does
+  nothing. Example: the knight has spent all 3 Braces; the cursor can
+  still go to `Brace  0/3  no uses left` and read `self: Def +5 Res +5`.
+- The text is built from the game's own numbers (`+10 hit; no counter`,
+  `self: Def +5 Res +5`), so it always matches the rules.
+- Where it applies: the `Skill` menu and the `Arts` menu (0429). Later
+  lists follow the same rule: the spell list, the preparations lists and
+  the promotion choice.
 
 ### Screen layout
 
