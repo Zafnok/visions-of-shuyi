@@ -335,7 +335,12 @@ starting rule* or look, for Nick to judge at the sign-off.
 - **Pointing at an enemy** with a caster selected (ticket 0430) walks to a
   tile the spell reaches it from and opens the forecast of the equipped
   spell; left / right swap spells. The rules are in `turn-structure.md`
-  (*Pointing at an enemy*). Tiles and allies are still cast on from `Magic`.
+  (*Pointing at an enemy*). Tiles are still cast on from `Magic`.
+- **Pointing at a hurt ally** with a healer selected (Nick, 2026-10-14,
+  ticket 0451) walks to the closest tile any of its heals reaches that ally
+  from and opens the list of its heals; the chosen heal's preview opens on
+  that ally, and up / down change the ally. Potions are not used this way.
+  The rules are in `turn-structure.md` (*Pointing at an ally*).
 - **Affinity markers in the forecast:** Weak shows the `!` of an effective
   strike; `(resist)` or `heals N` is written under the caster's crit.
 - **The unit info screen** marks an equipped spell `E` and lists the class's

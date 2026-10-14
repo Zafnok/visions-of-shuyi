@@ -331,6 +331,7 @@
     "battle.help.info": "{NextUnit} next unit · {PrevUnit} previous · {Cancel} close",
     "battle.help.aim_attack": "{Cursor} move · {Select} attack · {Cancel} cancel",
     "battle.help.aim_cast": "{Cursor} move · {Select} cast · {Cancel} cancel",
+    "battle.help.aim_heal": "{Cursor} move · {Select} heal · {Cancel} cancel",
     "battle.help.move_here": "{Cursor} move · {Select} move here · {Cancel} cancel",
     "battle.help.selected": "{Cursor} move · {Cancel} cancel",
     "battle.help.menu": "{Cursor} choose · {Confirm} confirm · {Cancel} back",

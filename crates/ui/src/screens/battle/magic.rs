@@ -15,7 +15,7 @@ use trpg_core::{
 };
 
 use super::art_list::{Fit, Technique, cost_label, fit, reason_text};
-use super::attack::{Targeting, reach};
+use super::attack::{Targeting, aim_tile, reach};
 use super::info::range_text;
 use super::items::heal_preview;
 use super::mode::Selection;
@@ -137,6 +137,64 @@ pub fn spell_choices(state: &BattleState, unit: UnitId, dest: Pos) -> Vec<SpellC
         }
     }
     lines
+}
+
+/// The lines of the heal list that pointing at the hurt ally `target`
+/// opens (Nick, 0451): the heal spells `unit` has learned, in id order.
+/// A heal that can be cast on `target` from `dest` has the hurt allies it
+/// reaches from there, starting at `target`, then on in reading order; one
+/// that can't is dimmed (no targets).
+pub fn heal_choices(
+    state: &BattleState,
+    unit: UnitId,
+    dest: Pos,
+    target: UnitId,
+) -> Vec<SpellChoice> {
+    heal_spells(state, unit)
+        .map(|def| {
+            let mut targets = cast_targets(state, unit, dest, def);
+            let at = targets.iter().position(|&t| t == CastTarget::Unit(target));
+            match at {
+                Some(at) => targets.rotate_left(at),
+                None => targets.clear(),
+            }
+            SpellChoice {
+                spell: def.id.clone(),
+                active: None,
+                targets,
+                blocked: None,
+            }
+        })
+        .collect()
+}
+
+/// The heal spells `unit` has learned, in id order.
+fn heal_spells(state: &BattleState, unit: UnitId) -> impl Iterator<Item = &SpellDef> {
+    let learned = state.unit(unit).into_iter().flat_map(|u| &u.learned);
+    learned
+        .filter_map(|id| state.spells().get(id))
+        .filter(|def| matches!(def.kind, SpellKind::Heal { .. }))
+}
+
+/// Whether some heal spell of `unit` can be cast on `target` from `from`
+/// (0451): the core accepts it (an ally, hurt, in range, a use left).
+pub fn can_heal(state: &BattleState, unit: UnitId, from: Pos, target: UnitId) -> bool {
+    heal_spells(state, unit).any(|def| {
+        let action = cast(&def.id, CastTarget::Unit(target));
+        let command = Command::Act {
+            unit,
+            dest: from,
+            action,
+        };
+        state.check(&command).is_ok()
+    })
+}
+
+/// The tile `sel`'s unit heals `target` from when the player points at it
+/// (Nick, 0451): [`aim_tile`] with the tiles some heal reaches it from, the
+/// same rule as an enemy's.
+pub fn heal_tile(state: &BattleState, sel: &Selection, target: UnitId) -> Option<Pos> {
+    aim_tile(sel, |from| can_heal(state, sel.unit, from, target))
 }
 
 /// Whether the action menu lists `Magic` for `unit`: it knows a spell.

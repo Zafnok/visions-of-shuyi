@@ -32,6 +32,7 @@ here.
 | Title | [`title.md`](title.md) | 0012 | ✅ decided 2026-09-29 (*Visions of Shuyi*) |
 | Title screen: "Press any key or button" | [`title-screen.md`](title-screen.md) | 0034, 0032, 0226 | ✅ decided 2026-09-30 (every build, keys and buttons, since 0032; the keyboard and controller pictures 2026-10-04) |
 | Title screen: intro cinematic | [`title-screen.md`](title-screen.md) (*Intro cinematic*) | 0036 | ✅ decided 2026-10-03 (an off switch in Options: later; skip sound 0041; overworld shot 1010) |
+| Pointing at a hurt ally to heal it | [`turn-structure.md`](turn-structure.md) (*Pointing at an ally*), [`magic.md`](magic.md) | 0451 | ✅ decided 2026-10-14 (closest tile any heal reaches, then a list of the heals) |
 | Threat arrows: which enemies can attack the tile you're moving to | [`turn-structure.md`](turn-structure.md) (*Threat arrows*), [`look-and-feel.md`](look-and-feel.md) (*Threat arrows*) | 0055 (built by 0448) | ✅ decided 2026-10-12 |
 | Tutorial: how familiar you are, the guide, checklist lessons, Guides | [`tutorial.md`](tutorial.md) (+ `chapter-1.md`, *Teaching*) | 0057 (built by 0455, 0456, 0457, 0458, 0731, 0835) | ✅ decided 2026-10-14 |
 | Terrain: movement costs & bonuses | [`terrain.md`](terrain.md) | 0301 | ✅ decided 2026-09-26 (capturing & healing tiles deferred) |

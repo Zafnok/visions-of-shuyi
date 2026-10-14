@@ -1457,13 +1457,15 @@ impl BattleScreen {
                     .and_then(|t| self.state.unit(t))
                     .is_some_and(|u| u.pos == self.cursor.pos);
                 if aimed {
-                    // The forecast opens with a weapon or a spell (0430).
+                    // The forecast opens with a weapon or a spell (0430); an
+                    // ally nothing attacks is healed (0451).
                     let options = sel.target.map_or_else(Vec::new, |t| {
                         aimed_options(&self.state, sel.unit, sel.dest(), t)
                     });
                     match aimed_first(&self.state, sel.unit, &options) {
                         Some(Equipped::Spell(_)) => "battle.help.aim_cast",
-                        _ => "battle.help.aim_attack",
+                        Some(Equipped::Weapon(_)) => "battle.help.aim_attack",
+                        None => "battle.help.aim_heal",
                     }
                 } else if self.cursor.pos == sel.dest() && sel.reach.is_stoppable(sel.dest()) {
                     "battle.help.move_here"
@@ -2435,6 +2437,8 @@ mod art_tests;
 #[cfg(test)]
 mod attack_tests;
 
+#[cfg(test)]
+mod heal_aim_tests;
 #[cfg(test)]
 mod item_tests;
 
