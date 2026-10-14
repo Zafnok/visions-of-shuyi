@@ -37,6 +37,14 @@ other ADRs set.
 - **The bots are dev tooling, never in the game** (`CLAUDE.md`). A
   modder's balance report (1021) runs them in a separate tool, never in the
   game binary.
+- **The engine split (ADR-0063, 1101).** If 1103 is done, the bundle is
+  `engine_assets::Bundle::new(Vec<Layer>)` and runtime layers belong
+  there (ADR-0065 §1 plans disk layers for hot reload in 1124; a mod is
+  one more disk layer). If 1103 isn't done, design the layers in
+  `trpg_content::bundle` as step 2.3 says, and 1103 moves them. Either
+  way, the modder's tool (step 2.9) should be built on `engine-cli`'s
+  contract (ADR-0066) if 1129 exists, so a modder's checks are the same
+  as a game developer's.
 
 ## Nick input
 

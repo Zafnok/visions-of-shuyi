@@ -27,7 +27,9 @@ tickets/
 | `07xx` | M6 Story & dialogue | Story bible, dialogue engine, portraits, Chapter 1 script |
 | `08xx` | M7 Chapter 1 & game flow | Flow, save/load, Chapter 1 map, playtest, options |
 | `09xx` | M8 Release | itch.io, Windows polish, Steam |
-| `10xx`+ | Post–Chapter 1 | Created as needed |
+| `10xx` | Post–Chapter 1 | Created as needed |
+| `11xx` | **The engine** | The open-source engine split from the game ([ADR-0063](../docs/adr/0063-an-engine-and-a-game-one-boundary-now-two-repositories-later.md), [`docs/engine/`](../docs/engine/README.md)): the carve, real time, more styles, going public, AI tooling (`1101`–`1135`), networking (`1140`–`1150`). Never on the Chapter 1 critical path |
+| `12xx`+ | Later | Created as needed |
 
 New tickets (including bugs) take the next free number in their block. Numbers
 are never reused.

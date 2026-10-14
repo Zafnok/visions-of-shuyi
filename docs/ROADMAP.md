@@ -20,6 +20,7 @@ folders: `tickets/open/` vs `tickets/done/`.
 | `07xx` | M6 Story & dialogue | Story bible, dialogue engine, two-portrait scenes, Chapter 1 art + script, lead reply choices | 0701–0708 |
 | `08xx` | M7 Chapter 1 | Full flow, saves, Chapter 1 content, **Nick's playtest**, options, colour themes, music, credits, end-of-battle music, results, title art, chapter card, transitions | 0801–0813 |
 | `09xx` | M8 Release | itch.io, Windows polish, Steam readiness | 0901–0903 |
+| `11xx` | The engine | An open-source 2D engine carved out of this codebase; the game built on it ([`docs/engine/`](engine/README.md)) | 1101–1150 |
 
 **Audio** (decided in 0020, [`docs/design/audio.md`](design/audio.md)) runs
 across the blocks: **0212** playback plumbing → **0213** our own sounds and
@@ -132,6 +133,27 @@ Options rows (after 0805) → **0722** Chapter 1's voices.
 *Disclosure:* **0907** credits and store text say what is machine-made
 (0901 and 0903 use it).
 
+**The engine** (Nick, 2026-10-14: split an open-source, general 2D
+engine from the game, which stays paid; later the same day, networking
+from LAN play up to MMO and global chat, "if it turns out feasible
+without jeopardizing our own velocity"). Ticket 1101 studied it:
+[`docs/engine/feasibility.md`](engine/feasibility.md) is the report,
+ADR-0063 to ADR-0067 the plan. **None of it is on the Chapter 1 critical
+path, and nothing that moves code starts before 0804.** Now: **1102**
+the `engine/` folder and the boundary gate (no conflicts with open work)
+· decisions **0059** (the engine's license, name, going public; any
+time) and **0060** (does the army ever walk around freely; after 0804).
+After 0804, the carve, one at a time: **1103** → **1104** → **1105** →
+**1106** → **1107** → **1108** → **1109** → **1110** → **1111** →
+**1112** → **1113**, with **1114** (the tactics kit in `core`) beside
+them → **1115**, **1116** → **1117** → **1118** the first example. Then
+engine-only work, when Nick says so (or when 0060 says the game walks
+around freely): **1119**–**1125** real time and a walkable-town example,
+**1126**–**1128** isometric, side view, physics; **1129**–**1135** the
+tool contract, license and name (after 0059), its own repository, docs,
+MCP, skills, visual scripting research; networking **1140**–**1150**
+(our game's own multiplayer stays **0053**'s decision, after launch).
+
 ## Nick's queue (answer these first; any order within a row)
 
 Design answers unblock most of the rules work. Suggested order:
@@ -141,8 +163,10 @@ Design answers unblock most of the rules work. Suggested order:
 3. **0011** look & feel sign-off (after the font ticket 0203 shows real pixels)
 4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** Harl's combat picture (done: Shironejiya's bearded axe bandit) · **0040** more packs for fighters with no fitting art (done) · **0413** how the combat scene looks · **0022** victory sting (done: Fupi's Win Jingle, a random version each win) · **0023** defeat sting (done: no sting; The Fallen plays from the banner through Game Over) · **0024** Game Over music (done: The Fallen loops, with a pause between rounds) · **0810** how battle rewards are shown
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0029** dialogue backgrounds · **0812** chapter card · **0813** transitions
+   · **0059** the engine's license, name, and when it goes public (`docs/engine/feasibility.md`)
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
+   · **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
 

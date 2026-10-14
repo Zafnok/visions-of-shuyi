@@ -70,6 +70,11 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0060](0060-cinematics-a-file-of-timed-shots-drawn-from-the-time-alone.md) | Cinematics: a file of timed shots, each frame drawn from the time alone | Accepted (0817); follows ADR-0005, ADR-0037, ADR-0038, ADR-0048 and ADR-0059 |
 | [0061](0061-cinematic-action-authored-walks-and-strikes-in-the-map-scene.md) | Cinematic action: authored walks and strikes, put in the map scene from the action clock alone | Accepted (0827); extends ADR-0060, follows ADR-0038 |
 | [0062](0062-cinematic-combat-shot-a-fight-the-rules-work-out.md) | Cinematic combat shot: a fight the rules work out, played back on the battle's own stage | Accepted (0832); extends ADR-0060, follows ADR-0004, ADR-0054 and ADR-0056 |
+| [0063](0063-an-engine-and-a-game-one-boundary-now-two-repositories-later.md) | An engine and a game: one boundary in this repository now, two repositories later | Proposed (1101); accepted when Nick approves `docs/engine/feasibility.md` |
+| [0064](0064-game-styles-stages-two-kinds-of-simulation-cameras-and-projections.md) | Game styles: stages, two kinds of simulation, cameras and projections | Proposed (1101); with ADR-0063 |
+| [0065](0065-assets-standard-files-in-the-engines-own-data-out-and-a-deterministic-movement-kit.md) | Assets: standard files in, the engine's own data out; a deterministic movement kit, physics optional | Proposed (1101); with ADR-0063 |
+| [0066](0066-ai-native-tooling-one-contract-three-surfaces-and-visual-scripting-as-a-view-over-text.md) | AI-native tooling: one contract, three surfaces (CLI, MCP, skills); visual scripting as a view over text | Proposed (1101); with ADR-0063 |
+| [0067](0067-networking-in-layers-transports-sessions-sync-models-services.md) | Networking in layers: transports, sessions, sync models, services; determinism is the contract | Proposed (1101); with ADR-0063 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

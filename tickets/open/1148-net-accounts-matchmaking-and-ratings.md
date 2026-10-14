@@ -1,0 +1,94 @@
+---
+id: "1148"
+title: "Networking, step 9: accounts, a matchmaking queue, Glicko-2 ratings and verified results"
+type: feature
+milestone: "Engine: networking"
+model: opus-5.5
+effort: xhigh
+status: todo
+blocked_by: ["1146"]
+nick_input: setup
+completed:
+---
+
+# 1148 — Accounts, matchmaking, ratings, verified results
+
+## Context
+
+ADR-0067 §1, §4, §7. Ranked play needs four things:
+
+- accounts, to know who is who;
+- a queue that pairs players of similar rating;
+- a rating system;
+- results nobody can fake. The referee (1146) records them, or a checker
+  re-simulates them.
+
+Glicko-2 is public domain and is implemented by `skillratings`
+(MIT/Apache, no dependencies). Never TrueSkill: it is patented
+(estimated expiry 2029) and trademarked.
+
+This brings the first stored personal data: account ids, names and match
+history. That means a privacy policy and a decision on where the data
+lives.
+
+## Nick input
+
+**Setup**, before anything runs publicly. Nothing here is turned on in
+our game without 0053.
+
+- Choose where the database runs: a small VPS with Postgres, or a managed
+  Postgres. Claude lists the prices on the day.
+- Approve a privacy policy and terms of service written for this. A
+  lawyer's look is recommended, as for `LICENSE`.
+
+## Scope
+
+**In:**
+- `engine-services` is a server crate: tokio, Postgres through `sqlx`
+  with `default-features = false` and rustls with ring, checked with
+  `cargo deny`.
+  - **Accounts.** A device id, or a Steam auth ticket when the `steam`
+    feature is on. No passwords. A display name with the word filter
+    (1149's `rustrict`).
+  - **Matchmaking queue.** Rating ranges that widen while waiting.
+    Matches are handed to a referee.
+  - **Ratings.** Glicko-2 via `skillratings` for one-against-one, and
+    Weng-Lin for teams. Ratings update only from referee-recorded or
+    re-simulated results.
+  - **Leaderboards.** Read from the same verified results.
+- A client API in `engine-net` for queueing, cancelling, getting matched,
+  and reading a rating.
+- Data rules, written in `engine/docs/net-services.md`:
+  - what is stored and for how long;
+  - account deletion;
+  - export of a player's own data (GDPR).
+- Tests with a Postgres container in CI:
+  - queue pairing;
+  - rating updates against the published Glicko-2 worked example;
+  - a forged result is refused;
+  - deletion removes everything.
+
+**Out (do not do):**
+- chat (1149);
+- running a public instance;
+- anything in our game.
+
+## Implementation steps
+
+1. Write the schema, the services, and the client API.
+2. Write the tests.
+3. Write the docs and the data rules, plus a draft privacy policy for
+   Nick in `docs/engine/`.
+
+## Acceptance criteria
+
+- [ ] The tests above pass in CI.
+- [ ] The Glicko-2 example matches the paper's numbers.
+- [ ] `cargo deny check` passes.
+- [ ] All gates pass.
+
+## Tests required
+
+- Integration: services with Postgres; ratings; forged results; deletion.
+
+## Completion notes

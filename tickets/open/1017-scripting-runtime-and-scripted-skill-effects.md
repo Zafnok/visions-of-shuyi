@@ -28,6 +28,16 @@ A script reads; it never changes battle state. It returns effects, and the
 battle applies them through the same code paths as data effects, so rewind,
 saves (a battle is its history, ADR-0039) and the bots keep working.
 
+**Where the runtime lives (ADR-0063, 1101).** A deterministic, sandboxed
+script runtime is engine material, and visual scripting (1135) compiles
+to it (ADR-0066 §5). If `engine-core` exists (1114), put the runtime
+there behind a `script` feature, and keep this game's view types and
+`PassiveEffect::Script` in `trpg-core`. If it doesn't, build it in
+`crates/core/src/script.rs` as below and 1114's successors move it.
+Research for 1101 confirmed Rhai (MIT/Apache, pure Rust) builds for
+`wasm32-unknown-unknown`, and that `mlua` supports only emscripten on the
+web, which our build doesn't use.
+
 ## Nick input
 
 None.
