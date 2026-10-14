@@ -24,9 +24,11 @@ use crate::portrait::PortraitTable;
 use crate::ron_loader::parse_ron;
 
 mod action;
+mod combat;
 
 pub use action::{Act, ActionDef, ShotAction};
 use action::{RawAction, RawActionRef};
+pub use combat::{CombatShot, Fight, check_fights, fight};
 
 /// Directory of the cinematic files inside the asset bundle.
 pub const CINEMATICS_DIR: &str = "cinematics";
@@ -109,6 +111,12 @@ pub enum Shot {
         /// The side of the screen the faces come in from.
         from: Side,
     },
+    /// One exchange of the battle's own combat scene (ticket 0832): the
+    /// two fighters' pictures over the backdrop of the defender's ground,
+    /// as a battle shows an attack with combat animations on. The rules
+    /// work the combat out ([`fight`]); the file only says who attacks
+    /// whom, from where and with which luck.
+    Combat(CombatShot),
 }
 
 /// The text boxes a [`Shot::Talk`] counts in `scene`: its speech and
@@ -252,6 +260,17 @@ enum RawShot {
         #[serde(default)]
         from: RawSide,
     },
+    Combat {
+        battle: String,
+        attacker: String,
+        target: String,
+        /// Written bare: `from: (7, 3)`.
+        #[serde(default, deserialize_with = "bare")]
+        from: Option<(i32, i32)>,
+        /// Written bare: `seed: 4`.
+        #[serde(default, deserialize_with = "bare")]
+        seed: Option<u64>,
+    },
 }
 
 /// The side faces come in from; the right unless the file says otherwise
@@ -317,7 +336,13 @@ pub fn load_all(refs: Refs<'_>) -> Result<BTreeMap<String, CinematicDef>, Vec<Co
 ///   not fit one page of the text box;
 /// - a characters shot with nobody, with someone who isn't a character,
 ///   or with an expression one of their portraits lacks (for a character
-///   without a portrait: one that isn't a standard expression).
+///   without a portrait: one that isn't a standard expression);
+/// - a combat shot whose battle doesn't exist, whose attacker or target
+///   isn't on the battle's map at its start (named as an action names
+///   them), that attacks itself, or whose `from` isn't on the map, is a
+///   tile the attacker can't stand on or where another unit starts
+///   (whether the rules allow the attack: [`check_fights`], once all the
+///   content is loaded).
 pub fn from_source(
     file: &str,
     stem: &str,
@@ -385,7 +410,7 @@ pub fn from_source(
         for problem in shot_problems(shot, refs) {
             err(format!("shot {n}: {problem}"));
         }
-        let mut checked = shot.checked();
+        let mut checked = shot.checked(refs);
         if let Shot::MapPan { action, .. } = &mut checked {
             let mut problems = Vec::new();
             *action = lists.of_shot(n, shot, &mut problems);
@@ -522,6 +547,13 @@ fn shot_problems(shot: &RawShot, refs: Refs<'_>) -> Vec<String> {
         RawShot::Characters {
             who, expression, ..
         } => characters_problems(refs, who, expression),
+        RawShot::Combat {
+            battle,
+            attacker,
+            target,
+            from,
+            seed,
+        } => combat::check(refs, (battle, attacker, target), *from, *seed).1,
     }
 }
 
@@ -660,8 +692,9 @@ fn characters_problems(refs: Refs<'_>, who: &[String], expression: &str) -> Vec<
 }
 
 impl RawShot {
-    /// The shot as the game keeps it, without its action.
-    fn checked(&self) -> Shot {
+    /// The shot as the game keeps it, without its action (a combat
+    /// shot's units 0 where a name is wrong: then there are problems).
+    fn checked(&self, refs: Refs<'_>) -> Shot {
         match self {
             RawShot::MapPan {
                 battle,
@@ -698,6 +731,13 @@ impl RawShot {
                     RawSide::Right => Side::Right,
                 },
             },
+            RawShot::Combat {
+                battle,
+                attacker,
+                target,
+                from,
+                seed,
+            } => Shot::Combat(combat::check(refs, (battle, attacker, target), *from, *seed).0),
         }
     }
 }

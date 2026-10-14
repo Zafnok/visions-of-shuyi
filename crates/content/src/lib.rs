@@ -51,7 +51,9 @@ pub use battle::BattleRefs;
 pub use battler::{Battler, BattlerTable};
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
-pub use cinematic::{Act, ActionDef, CinematicDef, Shot, ShotAction, ShotDef, TilePoint};
+pub use cinematic::{
+    Act, ActionDef, CinematicDef, CombatShot, Fight, Shot, ShotAction, ShotDef, TilePoint,
+};
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Present, Scene, Side, Step};
 pub use error::{ContentError, ContentErrors};
@@ -292,7 +294,8 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         maps,
         units,
     );
-    with_themes(content, themes)
+    // The combat shots' fights need everything else (ADR-0062).
+    with_themes(content.and_then(cinematic::check_fights), themes)
 }
 
 /// `content` with the colour themes added, or the errors of both.

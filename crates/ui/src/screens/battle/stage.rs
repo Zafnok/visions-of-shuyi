@@ -5,7 +5,7 @@
 //! pictures move and [`glyph`] paints it (ADR-0054).
 
 use trpg_content::{Battler, Light};
-use trpg_core::{Affinity, Faction, Side, SideForecast, Strike};
+use trpg_core::{Affinity, Faction, LeadProfile, Side, SideForecast, Strike};
 
 use self::motion::{Blow, Pose};
 use self::view::{FighterView, Numbers, StageView};
@@ -40,11 +40,11 @@ fn left(bout: &Bout) -> usize {
     usize::from(players(&bout.defender) && !players(&bout.attacker))
 }
 
-/// The picture of `fighter`: its character's (the lead's by gender
-/// first), else its class's, else the default one.
-fn picture(ctx: &Ctx, fighter: &Fighter) -> Option<Battler> {
+/// The picture of `fighter`: its character's (the lead's by `lead`'s
+/// gender first), else its class's, else the default one.
+fn picture(ctx: &Ctx, lead: &LeadProfile, fighter: &Fighter) -> Option<Battler> {
     let character = fighter.character.as_ref().map(|c| c.0.as_str());
-    let by_gender = character.map(|c| ctx.lead.portrait_for(c));
+    let by_gender = character.map(|c| lead.portrait_for(c));
     let ids = [by_gender, character, Some(fighter.class.0.as_str())];
     ctx.content
         .battlers
@@ -94,6 +94,18 @@ fn poses(bout: &Bout, beat: Beat, local: f32, len: f32) -> ([Pose; 2], Option<us
 /// they pick the backdrop, the light's own picture if the backdrops have
 /// one, else noon's shaded by the light.
 pub fn view(ctx: &Ctx, pb: &Playback, ground: Option<&str>, light: &str) -> Option<StageView> {
+    view_for(ctx, &ctx.lead, pb, ground, light)
+}
+
+/// [`view()`] with `lead` as the lead, for its picture: a cinematic's
+/// combat shot shows the lead its other shots show (ticket 0832).
+pub fn view_for(
+    ctx: &Ctx,
+    lead: &LeadProfile,
+    pb: &Playback,
+    ground: Option<&str>,
+    light: &str,
+) -> Option<StageView> {
     let (bout, (step, local)) = (pb.bout()?, pb.now()?);
     let words = ctx.words();
     let (poses, striker, veil) = poses(bout, step.beat, local, step.len);
@@ -119,7 +131,7 @@ pub fn view(ctx: &Ctx, pb: &Playback, ground: Option<&str>, light: &str) -> Opti
         max: f.max,
         lit: lit == Some(i),
         numbers: bout.numbers[i].as_ref().map(numbers),
-        picture: picture(ctx, f),
+        picture: picture(ctx, lead, f),
         pose: Pose {
             fade: pb.fade(f.unit).unwrap_or(0.0),
             ..pose

@@ -1,0 +1,11 @@
+// TEST FILE: the combat shot's cinematic (ticket 0832): the lead, put
+// beside the brigand of the test battle, attacks it on the combat stage,
+// the fight the rules work out on the battle's own luck. Six seconds,
+// longer than the fight, on no music.
+(
+    id: "combat",
+    length: Seconds(6.0),
+    shots: [
+        (at: 0.0, shot: Combat(battle: "test", attacker: "lead", target: "road_brigand", from: (7, 3))),
+    ],
+)

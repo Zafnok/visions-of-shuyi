@@ -2,7 +2,7 @@
 //! (ADR-0054), never from cells.
 
 use trpg_core::{
-    CharacterId, ClassId, CombatOutcome, Event, Forecast, Pos, StatValue, Unit, UnitId,
+    CharacterId, ClassId, CombatOutcome, Event, Forecast, LeadGender, Pos, StatValue, Unit, UnitId,
 };
 
 use super::*;
@@ -411,6 +411,7 @@ fn a_picture_is_the_characters_then_that_of_the_class_then_the_default() {
     };
     table.insert("heretic".to_owned(), named("heretic"));
     table.insert("lead_m".to_owned(), named("lead_m"));
+    table.insert("lead_f".to_owned(), named("lead_f"));
     let fighter = |character: Option<&str>, class: &str| Fighter {
         unit: LORD,
         name: String::new(),
@@ -421,7 +422,7 @@ fn a_picture_is_the_characters_then_that_of_the_class_then_the_default() {
         class: ClassId(class.to_owned()),
         pos: Pos::new(0, 0),
     };
-    let id = |f: &Fighter| picture(&c, f).map(|p| p.id);
+    let id = |f: &Fighter| picture(&c, &c.lead, f).map(|p| p.id);
     // Rue has her own, whatever her class.
     assert_eq!(
         id(&fighter(Some("heretic"), "mage")).as_deref(),
@@ -432,6 +433,10 @@ fn a_picture_is_the_characters_then_that_of_the_class_then_the_default() {
         id(&fighter(Some("lead"), "exile")).as_deref(),
         Some("lead_m")
     );
+    // The lead asked for: a cinematic's (0832).
+    let mara = LeadProfile::new("Mara", LeadGender::Female);
+    let lead = fighter(Some("lead"), "exile");
+    assert_eq!(picture(&c, &mara, &lead).unwrap().id, "lead_f");
     // Hollis has none: his class's.
     assert_eq!(
         id(&fighter(Some("retainer"), "guard")).as_deref(),
