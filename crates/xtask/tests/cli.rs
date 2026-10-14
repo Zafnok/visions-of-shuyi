@@ -65,3 +65,18 @@ fn playtest_prints_the_report_and_exits_0() {
     );
     let _ = std::fs::remove_dir_all(&history);
 }
+
+#[test]
+fn check_engine_boundary_on_the_real_repo_exits_0() {
+    let output = xtask()
+        .arg("check-engine-boundary")
+        .output()
+        .unwrap_or_else(|e| panic!("spawn xtask: {e}"));
+    assert_eq!(
+        output.status.code(),
+        Some(0),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(String::from_utf8_lossy(&output.stdout).contains("check-engine-boundary: OK"));
+}

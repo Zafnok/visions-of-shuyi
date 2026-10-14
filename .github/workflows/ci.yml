@@ -159,6 +159,9 @@ jobs:
       # No key hard-coded in game code or player text (keyboard-input skill).
       - name: Check for hard-coded keys
         run: cargo xtask check-keys
+      # Nothing of the game in engine/ (ADR-0063 §4).
+      - name: Check the engine boundary
+        run: cargo xtask check-engine-boundary
       # No new screen text written as a string literal (ADR-0045).
       - name: Check for screen text written as literals
         run: cargo xtask check-text
