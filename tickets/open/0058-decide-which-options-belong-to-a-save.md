@@ -56,6 +56,10 @@ example (two players sharing a computer; one player with two campaigns):
   its saves).
 - **E.** "Describe your own."
 
+Also: the **tutorial level** (ticket 0057, `docs/design/tutorial.md`):
+picked at New Game and kept with the campaign (0835). Ask whether the
+player can change it later, and where (Options, per save).
+
 Sub-questions: what does a New Game start with (defaults, or the last
 used)? What happens to options changed on the title screen?
 
