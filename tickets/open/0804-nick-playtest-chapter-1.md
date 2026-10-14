@@ -5,7 +5,7 @@ type: playtest
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
-status: todo
+status: in-progress
 blocked_by: ["0803", "0802", "0602", "0307", "0406", "0107", "0108", "0414", "0417", "0424", "0425", "0710", "0807", "0814", "0215", "0809", "0810", "0413", "0035", "0316", "0231", "0435", "0714", "0715", "0716", "0436", "0437", "0440", "0116", "0822", "0727", "0724", "0447", "0444", "0055", "0448", "0442", "0439", "0811", "0819", "0820", "0830"]
 nick_input: sign-off
 completed:
@@ -137,4 +137,23 @@ with Windows, Linux, macOS and web packages.
 Still to ask, in round 2: steps 4 and 5 (the rewind EXP
 bonus, the two signature spells, the four scene music picks, enemies
 waiting at the bridges and the fort).
+
+### Round 2 (started 2026-10-13)
+
+All 42 blockers are in `tickets/done/`. The version is bumped to 0.2.0
+(root `Cargo.toml`, `Cargo.lock`) in its own PR, because the release
+workflow refuses a tag that doesn't match `Cargo.toml`; this ticket stays
+open in that PR. After the merge: tag `v0.2.0` on `main`, wait for the
+release, send Nick the message of step 2 with steps 4 and 5's questions.
+
+The round 1 tickets left these for Nick to judge by playing; they go in
+the message:
+
+- 0727: does the text speed-up start soon enough when the key is held
+  (0.3 s, *Claude's starting rule*)?
+- 0447: one of his units that has acted has a darker rim than before.
+- 0055 / 0448: the threat arrows' starting rules (they stay while the
+  action menu is open; units that have acted show them too; the glyph
+  look has them too).
+- 0439: the map starts at 2×; the zoom key switches.
 

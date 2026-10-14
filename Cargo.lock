@@ -1075,7 +1075,7 @@ checksum = "06bdbd8cfc056b8d2e2e85f29b56a3bdbecb527cef81eb39e3e7b98af4652770"
 
 [[package]]
 name = "trpg-app"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "gilrs",
  "macroquad",
@@ -1091,7 +1091,7 @@ dependencies = [
 
 [[package]]
 name = "trpg-bots"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "trpg-content",
  "trpg-core",
@@ -1099,7 +1099,7 @@ dependencies = [
 
 [[package]]
 name = "trpg-content"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "include_dir",
  "proptest",
@@ -1112,7 +1112,7 @@ dependencies = [
 
 [[package]]
 name = "trpg-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "proptest",
  "ron",
@@ -1121,7 +1121,7 @@ dependencies = [
 
 [[package]]
 name = "trpg-ui"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "insta",
  "proptest",
@@ -1426,7 +1426,7 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "mutants",
  "png 0.18.1",
