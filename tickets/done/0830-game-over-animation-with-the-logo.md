@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0811"]
 nick_input: decision
-completed:
+completed: 2026-10-13
 ---
 
 # 0830 — Game Over animation with the logo
@@ -84,13 +84,13 @@ w our logo"; everything else is open, so don't pick for him:
 
 ## Acceptance criteria
 
-- [ ] `look-and-feel.md` records Nick's pick, with the date.
-- [ ] Test: the view goes from start to finished over the decided time,
+- [x] `look-and-feel.md` records Nick's pick, with the date.
+- [x] Test: the view goes from start to finished over the decided time,
       and the menu can't be used before the end.
-- [ ] Test: a press during the animation finishes it and picks nothing.
-- [ ] Snapshots of the first, a middle and the last frame.
-- [ ] `Rewind`, `Retry Battle` and `Title` behave as before.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Test: a press during the animation finishes it and picks nothing.
+- [x] Snapshots of the first, a middle and the last frame.
+- [x] `Rewind`, `Retry Battle` and `Title` behave as before.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -100,5 +100,53 @@ w our logo"; everything else is open, so don't pick for him:
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Nick's answers (2026-10-13, two rounds of renders; recorded in
+`docs/design/look-and-feel.md`, *Game Over screen*):** the battle fades to
+black; the logo at its title size and place, gray; the words `GAME OVER`
+in gold under it, as wide as the logo ("A but align the GAME OVER with the
+logo better", then "A2"); black behind; two seconds; any press skips.
+
+**Done:**
+- `GameOverScreen` counts the animation's time from `input.dt` alone
+  (`ANIMATION_SECONDS` = 2). `GameOverView` gained `progress` (0 to 255);
+  `menu` and `help` are `None` until the end. A press before the end
+  (any key or controller button) jumps to it and is used up.
+- `game_over/glyph.rs` paints it: what the buffer holds fades to black
+  (the flow draws the lost battle under the screen while it still shows),
+  the logo fades in through `title::glyph::logo_sprite`, painted dimmed,
+  then the words.
+- The words are a picture, `assets/title/game_over.png` (52×7), generated
+  by `cargo xtask title-art` from `assets-src/title/game_over.txt` like the
+  logo, and named by `title.ron`'s new optional `game_over` field. Our own
+  lettering: no third-party asset, no credit needed. Without the picture
+  the screen prints the heading as text.
+- Tests: unit tests of the screen and of the skin; in
+  `crates/ui/tests/it/flow.rs`, the two behaviour tests through the real
+  game, with snapshots of the first, a middle and the last frame.
+
+**Deviations:**
+- Step 5: `options.md` has no "Reduce motion" or animation-speed setting,
+  so there was nothing to apply. `Ctx::idle_motion` is for motion that
+  never ends (the title's sparks); this animation runs once, so it doesn't
+  depend on it.
+- The three frame snapshots are of the real flow (the lost battle is in
+  the first), not of the skin alone; the skin's own tests read sprites and
+  cells.
+- Tests that pressed keys the moment Game Over opened now press once more
+  first (the skip), or wait two seconds.
+
+**Gameplay rules Claude decided (starting rules, Nick may veto):**
+- Backing out of the rewind screen returns to Game Over as it was left:
+  the animation doesn't play a second time.
+- The skip makes no sound.
+- The menu appears at once at the end of the two seconds; it doesn't fade.
+- The time is split so: the battle is gone after 0.7 s, the logo fades in
+  from 0.6 s to 1.4 s, the words from 1.1 s to 1.9 s.
+- `GAME OVER` reads the same in every language until a language brings
+  its own picture (follow-up below).
+
+**Follow-up tickets:** 0831 (a language can bring its own Game Over
+words, or show its text).
+
+**For Nick:** lose a battle (or let the turn limit run out) and watch Game
+Over open; press a key half way through to see the skip.

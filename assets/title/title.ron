@@ -2,6 +2,8 @@
 // One of the backdrops is behind the logo each launch.
 (
     logo: "logo.png",
+    // The words on the Game Over screen, in the logo's lettering (0830).
+    game_over: Some("game_over.png"),
     backdrops: [
         "fields_a_dusk.png",
         "fields_a_night.png",

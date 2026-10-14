@@ -307,6 +307,8 @@ fn retry_after_a_defeat_restarts_the_battle() {
     assert_eq!(battle(&h).outcome(), Some(Outcome::Defeat));
     confirm_until(&mut h, "game_over");
     assert_eq!(h.screens(), ["title", "game_over"]);
+    // Past its opening animation (0830).
+    h.wait(2.1);
     assert_snapshot!(h.snapshot());
     // Retry (below Rewind): the battle from its start, its notes first.
     h.keys("Down f");
@@ -322,8 +324,98 @@ fn retry_after_a_defeat_restarts_the_battle() {
         send(&mut h, &Command::EndPhase);
     }
     confirm_until(&mut h, "game_over");
-    h.keys("Down Down f");
+    // The first press ends the animation; the rest is the menu's.
+    h.keys("f Down Down f");
     assert_eq!(h.screens(), ["title"]);
+}
+
+/// A lost battle, on the first frame of Game Over (two rewind charges
+/// left).
+fn lost() -> Harness {
+    let mut h = to_battle();
+    for _ in 0..6 {
+        send(&mut h, &Command::EndPhase);
+    }
+    assert_eq!(battle(&h).outcome(), Some(Outcome::Defeat));
+    confirm_until(&mut h, "game_over");
+    h
+}
+
+/// Game Over as it is this frame.
+fn game_over(h: &Harness) -> trpg_ui::screens::game_over::GameOverView {
+    let screen = h
+        .flow()
+        .and_then(|f| f.game_over())
+        .unwrap_or_else(|| panic!("no game over"));
+    screen.view(h.game().ctx())
+}
+
+/// Ticket 0830: Game Over opens with a two-second animation over the lost
+/// battle, and the menu is there only at its end. Snapshots: the first
+/// frame (the battle, as it was lost), the middle (black, the logo
+/// fading in) and the last (the logo, the words, the menu).
+#[test]
+fn game_over_opens_with_its_animation() {
+    let mut h = lost();
+    let first = game_over(&h);
+    assert!(first.progress < 16, "{}", first.progress);
+    assert_eq!((first.menu, first.help), (None, None));
+    assert_snapshot!("game_over_first_frame", h.snapshot());
+    h.wait(1.0);
+    let middle = game_over(&h);
+    assert!(
+        (120..=136).contains(&middle.progress),
+        "{}",
+        middle.progress
+    );
+    assert_eq!((middle.menu, middle.help), (None, None));
+    assert_snapshot!("game_over_middle_frame", h.snapshot());
+    // Still not there a tenth of a second before the end.
+    h.wait(0.85);
+    let late = game_over(&h);
+    assert!(late.progress < 255, "{}", late.progress);
+    assert_eq!(late.menu, None);
+    h.wait(0.2);
+    let last = game_over(&h);
+    assert_eq!(last.progress, 255);
+    let menu = last.menu.unwrap_or_else(|| panic!("no menu"));
+    let labels: Vec<_> = menu.items.iter().map(|i| i.label.as_str()).collect();
+    assert_eq!(labels, ["Rewind", "Retry Battle", "Title"]);
+    assert_eq!(menu.focused().map(|i| i.label.as_str()), Some("Rewind"));
+    assert!(last.help.is_some());
+    assert_snapshot!("game_over_last_frame", h.snapshot());
+    // Waiting picked nothing, and the menu works as before: Retry.
+    assert_eq!(h.screens(), ["title", "game_over"]);
+    h.keys("Down f");
+    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(charges(&h), 3);
+}
+
+/// Ticket 0830: a press during the animation jumps to its end and does
+/// nothing else: `Rewind`, under the cursor, is not picked.
+#[test]
+fn a_press_ends_game_overs_animation_and_picks_nothing() {
+    for skip in ["f", "Down", "d"] {
+        let mut h = lost();
+        h.wait(0.5);
+        assert_eq!(game_over(&h).menu, None);
+        h.clear_audio();
+        h.keys(skip);
+        assert_eq!(h.screens(), ["title", "game_over"], "{skip}");
+        let view = game_over(&h);
+        assert_eq!(view.progress, 255, "{skip}");
+        let menu = view.menu.unwrap_or_else(|| panic!("no menu"));
+        assert_eq!(menu.focused().map(|i| i.label.as_str()), Some("Rewind"));
+        assert_eq!(h.sounds(), [""; 0], "{skip}");
+        // The next press is the menu's: the rewind screen, on the battle.
+        h.keys("f");
+        assert_eq!(h.screens(), ["title", "battle"], "{skip}");
+        assert_eq!(battle(&h).outcome(), Some(Outcome::Defeat));
+        // Backed out of, Game Over is as it was left: no animation again.
+        h.keys("d");
+        assert_eq!(h.screens(), ["title", "game_over"], "{skip}");
+        assert_eq!(game_over(&h).progress, 255, "{skip}");
+    }
 }
 
 /// Acceptance: map menu → `Restart Battle` → confirm: the same as Retry.
@@ -583,7 +675,8 @@ fn defeat_plays_through_game_over_and_retry_plays_the_battles_music_again() {
         send(&mut h, &Command::EndPhase);
     }
     confirm_until(&mut h, "game_over");
-    h.keys("Down Down f").wait(0.1);
+    // The first press ends Game Over's opening animation (0830).
+    h.keys("f Down Down f").wait(0.1);
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(
         music(&h),

@@ -251,7 +251,8 @@ fn continue_works_in_the_next_launch() {
         h.keys("f");
     }
     assert_eq!(h.top_screen(), "game_over");
-    h.keys("Down Down f");
+    // The first press ends Game Over's opening animation (0830).
+    h.keys("f Down Down f");
     assert_eq!(h.screens(), ["title"]);
     assert!(!shows(&h, "Continue"));
 }

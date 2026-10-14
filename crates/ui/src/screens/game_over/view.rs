@@ -6,15 +6,21 @@
 
 use crate::widgets::MenuView;
 
+pub use crate::screens::title::view::FULL;
+
 /// Game Over, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GameOverView {
     /// The words `GAME OVER`.
     pub heading: String,
-    /// The two ways on: retry the battle, or back to the title.
-    pub menu: MenuView,
-    /// The help line: what the keys do here.
-    pub help: String,
+    /// How far along the opening animation is, 0 to [`FULL`] (over).
+    pub progress: u8,
+    /// The ways on: rewind (while a charge is left), retry the battle, or
+    /// back to the title. `None` until the animation is over.
+    pub menu: Option<MenuView>,
+    /// The help line: what the keys do here. `None` until the animation
+    /// is over.
+    pub help: Option<String>,
 }
 
 /// "To be continued", as it is this frame.

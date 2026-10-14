@@ -107,7 +107,7 @@ fn share(dt: f32, whole: f32) -> f32 {
 
 /// Whether anything was pressed this frame: a key (bound or not, or held
 /// long enough to repeat) or a controller button.
-fn pressed(input: &FrameInput) -> bool {
+pub(crate) fn pressed(input: &FrameInput) -> bool {
     !input.actions.is_empty() || !input.pressed_chords().is_empty() || input.pad_pressed()
 }
 

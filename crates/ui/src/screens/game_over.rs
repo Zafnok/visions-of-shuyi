@@ -2,6 +2,11 @@
 //! defeat (`Retry Battle` / `Title`, `docs/design/death-and-difficulty.md`) and
 //! "To be continued" after the last chapter there is.
 //!
+//! Game Over opens with an animation (ticket 0830;
+//! `docs/design/look-and-feel.md`, *Game Over screen*): the lost battle
+//! fades to black, the logo and the words fade in, and then the menu is
+//! there. Any press jumps to its end and does nothing else.
+//!
 //! **The look is a skin** (ADR-0054): this module decides what the screens
 //! show and do, and says it as a [`GameOverView`] and a
 //! [`ToBeContinuedView`]; [`glyph`] paints them.
@@ -10,6 +15,8 @@ pub mod glyph;
 pub mod view;
 
 pub use view::{GameOverView, ToBeContinuedView};
+
+use view::FULL;
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
@@ -25,6 +32,10 @@ const ITEMS: [&str; 2] = ["game_over.retry", "game_over.title"];
 /// The key of the last chapter's closing words.
 pub const TO_BE_CONTINUED: &str = "to_be_continued.heading";
 
+/// How long Game Over's opening animation takes, in seconds (Nick,
+/// 2026-10-13: the short one).
+pub const ANIMATION_SECONDS: f32 = 2.0;
+
 /// What the player picked on Game Over.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GameOverChoice {
@@ -37,7 +48,7 @@ pub enum GameOverChoice {
 }
 
 /// `GAME OVER` and a `Rewind` (while a charge is left) / `Retry Battle` /
-/// `Title` menu. Pops once one is chosen
+/// `Title` menu, after the opening animation. Pops once one is chosen
 /// ([`result`](Self::result)); there is nothing to back out of.
 #[derive(Debug, Clone)]
 pub struct GameOverScreen {
@@ -45,6 +56,9 @@ pub struct GameOverScreen {
     chosen: Option<GameOverChoice>,
     /// The choice each menu item stands for.
     choices: Vec<GameOverChoice>,
+    /// Seconds of the opening animation played, up to
+    /// [`ANIMATION_SECONDS`].
+    elapsed: f32,
 }
 
 impl GameOverScreen {
@@ -68,7 +82,32 @@ impl GameOverScreen {
             menu: Menu::new(items).without_cancel(),
             chosen: None,
             choices,
+            elapsed: 0.0,
         }
+    }
+
+    /// Jumps to the end of the opening animation.
+    pub fn skip(&mut self) {
+        self.elapsed = ANIMATION_SECONDS;
+    }
+
+    /// Whether the opening animation is over: the menu is there.
+    pub fn finished(&self) -> bool {
+        self.elapsed >= ANIMATION_SECONDS
+    }
+
+    /// How far along the opening animation is, 0 to [`FULL`].
+    pub fn progress(&self) -> u8 {
+        let part = (self.elapsed / ANIMATION_SECONDS).clamp(0.0, 1.0);
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 0 to 255
+        let progress = (part * f32::from(FULL)).round() as u8;
+        progress
+    }
+
+    /// Whether the lost battle still shows behind the screen: the flow
+    /// draws it under this screen while it does.
+    pub fn shows_battle(&self) -> bool {
+        glyph::battle_brightness(self.progress()) > 0.0
     }
 
     /// The choice, once the screen has popped.
@@ -82,12 +121,15 @@ impl GameOverScreen {
     }
 
     /// The screen as it is now, as plain data for a skin to paint
-    /// ([`glyph::paint`]): the heading, the menu and the help line.
+    /// ([`glyph::paint`]): the heading and how far along the animation
+    /// is; once it is over, the menu and the help line too.
     pub fn view(&self, ctx: &Ctx) -> GameOverView {
+        let finished = self.finished();
         GameOverView {
             heading: ctx.text(GAME_OVER).to_owned(),
-            menu: self.menu.view(),
-            help: Self::help(ctx),
+            progress: self.progress(),
+            menu: finished.then(|| self.menu.view()),
+            help: finished.then(|| Self::help(ctx)),
         }
     }
 }
@@ -98,6 +140,15 @@ impl Screen for GameOverScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        if !self.finished() {
+            // A press jumps to the end, and is used up by that.
+            if super::title::pressed(input) {
+                self.skip();
+            } else {
+                self.elapsed = (self.elapsed + input.dt).min(ANIMATION_SECONDS);
+            }
+            return Transition::None;
+        }
         for &action in &input.actions {
             if let Some(MenuEvent::Chosen(i)) = self.menu.handle_with_sound(action, &mut ctx.audio)
             {
