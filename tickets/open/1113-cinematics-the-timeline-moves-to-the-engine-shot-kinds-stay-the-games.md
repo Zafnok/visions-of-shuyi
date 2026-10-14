@@ -29,11 +29,11 @@ None. The title cinematic must play identically (compare frames).
 ## Scope
 
 **In:**
-- `engine_assets::cinematic`: the file's frame (`id`, `length`, `shots:
+- `shuyi_assets::cinematic`: the file's frame (`id`, `length`, `shots:
   [(at, shot)]`, ordering checks) generic over a shot type `S:
   DeserializeOwned + ShotCheck`, so the game's `Shot` enum plugs in and
   keeps its RON format.
-- `engine_ui::cinematic`: `Timeline`, `ShotAt`, easing, the player
+- `shuyi_ui::cinematic`: `Timeline`, `ShotAt`, easing, the player
   skeleton (`CinematicPlayer<S>` calling a `ShotPainter` trait the game
   implements), brightness fades, `cinema::view` framing.
 - The backdrop pan and zoom (ADR-0048) are already in the frame (1108).

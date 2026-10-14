@@ -57,7 +57,7 @@ None. Nothing a player sees changes.
   saved files load unchanged.
 - The rebinding screen takes its rows and groups from the game
   (`&[(A, text_key, group)]`).
-- The game: `pub type Keymap = engine_keymap::Keymap<Action>` style
+- The game: `pub type Keymap = shuyi_keymap::Keymap<Action>` style
   aliases in `trpg-ui` so screens keep compiling with field-path edits
   only.
 

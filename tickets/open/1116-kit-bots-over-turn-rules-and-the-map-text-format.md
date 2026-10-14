@@ -33,13 +33,13 @@ None.
 ## Scope
 
 **In:**
-- `engine_core::bots` holds three things:
+- `shuyi_core::bots` holds three things:
   - `trait Bot<R: TurnRules> { fn choose(&mut self, &R) -> R::Command }`
   - `play<R>(rules, bots_by_side, limit) -> Report` (outcome, turns,
     commands)
   - a seeded random bot over `legal_commands()`
 - `trpg-bots` keeps its bots and measures and uses the generic loop.
-- `engine_assets::grid_map` holds the `.map` reader and printer, with a
+- `shuyi_assets::grid_map` holds the `.map` reader and printer, with a
   hook for the game's tile features. The game keeps Shop and Chest as
   its features. The printer round-trips: parse → print → parse gives
   the same map.

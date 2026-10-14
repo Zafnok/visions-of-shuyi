@@ -1,6 +1,6 @@
 ---
 id: "1105"
-title: "engine-assets: languages, text tokens, the dialogue format, voice and tip files"
+title: "shuyi-assets: languages, text tokens, the dialogue format, voice and tip files"
 type: infra
 milestone: "Engine: carve"
 model: opus-5.5
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1105 — engine-assets: languages, text tokens, dialogue, voice, tips
+# 1105 — shuyi-assets: languages, text tokens, dialogue, voice, tips
 
 ## Context
 
@@ -31,7 +31,7 @@ None.
 ## Scope
 
 **In:**
-- Move to `engine-assets`:
+- Move to `shuyi-assets`:
   - text by key and packs, stale and missing detection (`lang.rs`), with
     `DataText` (the game's names of classes, items…) taken out of `Lang`
     and kept by the game beside it;

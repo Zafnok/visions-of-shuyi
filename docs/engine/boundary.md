@@ -85,7 +85,7 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    `include_dir!` and a static `LAYERS`. Two cargo features and `build.rs`
    are tied to them. There is no runtime (disk or mod) layer.
    **Fix:** `Bundle::new(&[Layer])`. The game registers its layers once.
-   Runtime layers are for mods (1011) and hot reload (ADR-0065).
+   Runtime layers are for mods (1011) and hot reload (engine ADR-0004).
 10. **The `Harness` is wired to the flow, the battle and the test chapter**
     (`ui/src/harness.rs:20-28,542`). Its driver core is generic: about 750
     lines of key, pad and wait scripts, the audio and music simulation, and
@@ -209,7 +209,7 @@ These are all G today: `BattleState`, `Command`, `AiWeights` and the rest.
 The `PlayerBot::choose` trait, the `play_battle` loop and the measures
 pattern (about 200 lines) become kit code once `TurnRules` exists (1114, then 1116).
 
-## What other game styles would break (for ADR-0064)
+## What other game styles would break (for engine ADR-0003)
 
 - **Integer tile positions everywhere.** Units, triggers, objectives,
   cinematic walks and `TilePoint` all use them. Only one unit may stand on

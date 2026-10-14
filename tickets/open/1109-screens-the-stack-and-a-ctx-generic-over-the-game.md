@@ -32,15 +32,15 @@ None.
 ## Scope
 
 **In:**
-- `engine_ui::Ctx<G>`: the engine's services (text by key and language,
+- `shuyi_ui::Ctx<G>`: the engine's services (text by key and language,
   keys and help names, settings the engine owns, the audio queue and
   music clock, voice, storage) plus `pub game: G`. `trpg-ui` defines
   `pub struct Shuyi { content, campaign_mode, mode_switch, map_skin,
-  lead, … }` and `pub type Ctx = engine_ui::Ctx<Shuyi>`; it implements
+  lead, … }` and `pub type Ctx = shuyi_ui::Ctx<Shuyi>`; it implements
   `Deref`-free accessors only where many call sites need them.
-- `engine_ui::screen`: `Screen<G, A>` (or `Screen<C>` with `C = Ctx<G>`),
+- `shuyi_ui::screen`: `Screen<G, A>` (or `Screen<C>` with `C = Ctx<G>`),
   `Transition`, `FrameInput<A>`, `ScreenStack`.
-- `engine_ui::Game<G, A>`: the frame loop and `RawInputEvent` /
+- `shuyi_ui::Game<G, A>`: the frame loop and `RawInputEvent` /
   `FrameOutput`; the game gives a root screen and a `GameHooks` value
   (first-key hook, debug hook, fade time). `trpg-ui` keeps `start()` and
   `start_on_scene()` as functions that build the hooks and root.
@@ -58,13 +58,13 @@ None.
    `Shuyi`; fix call sites (mechanical: `ctx.content` → `ctx.game.content`).
 2. Make `Game` take the root screen and hooks.
 3. Split settings; check the saved settings fixture loads unchanged.
-4. Move `screen.rs` (generic part) and `game.rs` (loop) to `engine-ui`.
-5. A test in `engine-ui` runs a two-screen toy game (push, pop, quit)
+4. Move `screen.rs` (generic part) and `game.rs` (loop) to `shuyi-ui`.
+5. A test in `shuyi-ui` runs a two-screen toy game (push, pop, quit)
    with a toy `G` and a toy action set.
 
 ## Acceptance criteria
 
-- [ ] The toy two-screen test passes in `engine-ui` alone.
+- [ ] The toy two-screen test passes in `shuyi-ui` alone.
 - [ ] No snapshot changes; every test passes.
 - [ ] A settings file saved by the current `main` loads unchanged.
 - [ ] All gates in the `run-gates` skill pass.

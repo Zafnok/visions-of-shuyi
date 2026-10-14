@@ -1,6 +1,6 @@
 ---
 id: "1103"
-title: "engine-assets: the asset bundle as layers the game gives, plus file errors and RON loading"
+title: "shuyi-assets: the asset bundle as layers the game gives, plus file errors and RON loading"
 type: infra
 milestone: "Engine: carve"
 model: opus-5.5
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1103 — engine-assets: the bundle as layers the game gives
+# 1103 — shuyi-assets: the bundle as layers the game gives
 
 ## Context
 
@@ -33,16 +33,16 @@ None.
 ## Scope
 
 **In:**
-- New crate `engine/crates/assets` (package `engine-assets`), depending
+- New crate `engine/crates/assets` (package `shuyi-assets`), depending
   only on allowed crates (1102's list).
-- `engine_assets::bundle`: `Layer { name, dir: &'static Dir<'static>,
+- `shuyi_assets::bundle`: `Layer { name, dir: &'static Dir<'static>,
   private: bool, test: bool }`, `Bundle::new(Vec<Layer>)`, and the
   existing behavior as methods: `file`, `files_in` (merged, sorted,
   de-duplicated), `display_path`, `is_private`, `story_only`,
   `test_part`. A process-wide `Bundle` is registered once
-  (`engine_assets::bundle::install(Bundle)`, a `OnceLock`) so the
+  (`shuyi_assets::bundle::install(Bundle)`, a `OnceLock`) so the
   `&'static` API loaders rely on stays.
-- `engine_assets::{error, ron}`: `ContentError` with file:line:col
+- `shuyi_assets::{error, ron}`: `ContentError` with file:line:col
   (`content/src/error.rs`), `parse_ron<T>` (`ron_loader.rs`), and the
   `line_of` helper now in `content/src/terrain.rs:285`.
 - `trpg-content` keeps its `include_dir!` calls, features and `build.rs`
@@ -65,8 +65,8 @@ moving any other loader (1104, 1105).
 
 ## Acceptance criteria
 
-- [ ] `engine-assets` builds and tests alone (`cargo test -p
-      engine-assets`) with no game file.
+- [ ] `shuyi-assets` builds and tests alone (`cargo test -p
+      shuyi-assets`) with no game file.
 - [ ] Every existing test passes unchanged; no snapshot changes.
 - [ ] `cargo build -p trpg-app --target wasm32-unknown-unknown` passes.
 - [ ] `docs/engine/boundary.md` rows for `bundle.rs`, `build.rs`,

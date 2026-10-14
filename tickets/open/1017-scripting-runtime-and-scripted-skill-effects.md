@@ -30,7 +30,7 @@ saves (a battle is its history, ADR-0039) and the bots keep working.
 
 **Where the runtime lives (ADR-0063, 1101).** A deterministic, sandboxed
 script runtime is engine material, and visual scripting (1135) compiles
-to it (ADR-0066 §5). If `engine-core` exists (1114), put the runtime
+to it (engine ADR-0005 §5). If `shuyi-core` exists (1114), put the runtime
 there behind a `script` feature, and keep this game's view types and
 `PassiveEffect::Script` in `trpg-core`. If it doesn't, build it in
 `crates/core/src/script.rs` as below and 1114's successors move it.

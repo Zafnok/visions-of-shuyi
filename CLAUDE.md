@@ -63,6 +63,7 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 | `assets-test/` | The **test files**: test characters, the test chapter, the debug Quick Battle, test tilesets, the `test` language pack. Laid out like `assets/`, embedded only in debug builds and builds with the debug tools, never in a build that ships (ADR-0057) |
 | `assets-src/` | Inputs to asset tools (e.g. the font BDF for `cargo xtask font-atlas`); not embedded |
 | `assets-private/` | **Git-ignored**: the checkout of the private repository with the bought art (ADR-0040). `game/` is embedded over `assets/` by the `private-assets` feature; `library/tiny-tales/` is the bought bundle, sorted. `assets-private.rev` (tracked) names the commit to build with |
+| `engine/` | Shuyi Engine's code while it is carved out of the game (ADR-0063, tickets 1102–1118); moves to the engine's own repository, [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine) (public, MIT OR Apache-2.0), with 1131. That repository holds the engine's ADRs, tickets and plans |
 | `voice/` | **Git-ignored**: voice clips by dialogue line id, shipped beside the game, never embedded (ADR-0046, `docs/voice.md`). Copied from the private repository's `voice/` by `cargo xtask private-assets`. Test clips: `crates/app/tests/voice/` |
 
 ## Environment

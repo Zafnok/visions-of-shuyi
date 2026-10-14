@@ -66,7 +66,7 @@ networking; ADRs; tickets; the report.
 - [x] `docs/engine/boundary.md`: every module classified, with the
       couplings that block a second game.
 - [x] `docs/engine/feasibility.md`: the report, with sources.
-- [x] ADR-0063 to ADR-0067, with index rows.
+- [x] ADR-0063 to engine ADR-0006, with index rows.
 - [x] Tickets for the decisions, the boundary gate, the carve, real
       time, more styles, going public, AI tooling and networking; `cargo
       xtask ticket-lint` passes.
@@ -77,23 +77,50 @@ None (docs only).
 
 ## Completion notes
 
-Done 2026-10-14 by a session with four research subagents (two crate
-audits, one landscape study, one networking study).
+Done 2026-10-14. The session used four research subagents: two crate
+audits, one landscape study and one networking study.
 
 - **Report:** [`docs/engine/feasibility.md`](../../docs/engine/feasibility.md).
 - **Audit:** [`docs/engine/boundary.md`](../../docs/engine/boundary.md).
-- **ADRs (all Proposed until Nick approves the plan):** 0063 (the split:
-  one boundary now, two repositories later), 0064 (game styles: stages,
-  turn and tick simulations, cameras, projections), 0065 (assets,
-  animation, collision, optional physics), 0066 (AI tooling: one contract,
-  CLI + MCP + skills; visual scripting as a view over text), 0067
-  (networking in layers).
-- **Tickets created:** 0059, 0060 (decisions for Nick); 1102 (the
-  boundary gate, can start now); 1103–1118 (the carve, after 0804);
-  1119–1125 (real time and the first free-movement example); 1126–1128
-  (isometric, side view, physics); 1129–1135 (going public, AI tooling,
-  visual scripting); 1140–1150 (networking).
-- **Tickets changed:** 0053 (multiplayer decision: links ADR-0067), 1011
-  (mods: the bundle's layers), 1017 (scripting: where the runtime lives).
-- **Docs changed:** `tickets/README.md` (the `11xx` block),
-  `docs/ROADMAP.md` (the engine section), `docs/adr/README.md`.
+- **Nick's answers:** plan B, with the extra styles and networking
+  parked until the engine reaches parity with the game. He named the
+  engine **Shuyi Engine** and wants it public, under **MIT OR
+  Apache-2.0**, with formats as plugins. His words are in the engine
+  repository's
+  [`docs/decisions.md`](https://github.com/Zafnok/shuyi-engine/blob/main/docs/decisions.md).
+- **The engine's repository:**
+  [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine) was
+  created and set up in the same session (its ticket 2001).
+- **ADRs:**
+  - ADR-0063 (the split) is Accepted here.
+  - The proposals 0064–0067 moved to the engine repository as its
+    ADR-0003 to ADR-0006.
+  - It also gained ADR-0001, ADR-0002 (the rules it inherits from this
+    repository) and ADR-0007 (formats are plugins).
+- **Tickets here:**
+  - 0059: the tactics kit and contributions; narrowed after Nick's
+    answers.
+  - 0060: free movement in the game.
+  - 1102: the boundary gate; it can start now.
+  - 1103–1118: the carve, after 0804, with the crates named `shuyi-*`
+    from the start.
+  - 1131: the code moves to the engine repository.
+  - The proposed 1130 (license and name) was dropped: both are settled.
+- **Tickets moved to the engine repository**, with their numbers:
+  - 1119–1129 and 1132–1135: real time, styles, physics, the tool
+    contract, docs, MCP, skills, visual scripting. The styles and visual
+    scripting are parked.
+  - 1140–1150: networking, parked.
+- **New engine tickets:** 2002 (its gates); 2201–2204 (formats as
+  plugins, Yarn and Ink dialogue, more image and audio formats, an
+  optimized pack); 2901 (research: better images with machine learning).
+- **Tickets changed here:**
+  - 0053 now links engine ADR-0006.
+  - 1011 notes where the bundle's layers will live.
+  - 1017 notes where the script runtime will live.
+- **Docs changed:**
+  - `CLAUDE.md` (the `engine/` row);
+  - `tickets/README.md` (the `11xx` block);
+  - `docs/ROADMAP.md` (the engine section and Nick's queue);
+  - `docs/adr/README.md`;
+  - `docs/engine/README.md`.

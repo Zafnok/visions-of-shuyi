@@ -43,7 +43,7 @@ None. Nothing a player sees changes.
   ask for a small fixed set of engine names (`text`, `text_dim`,
   `panel`, `border`, `highlight`, `warning`), which the game's palette
   must define.
-- Move to `engine-ui::frame`: `GlyphBuffer`, items, layers, backdrop,
+- Move to `shuyi-ui::frame`: `GlyphBuffer`, items, layers, backdrop,
   `snapshot`, `console` (letterboxing), `cinema` (framing math),
   `portrait` (fit an image at a whole scale), `Rgb` and `Palette`.
 - Aliases in `trpg-ui`.
@@ -64,7 +64,7 @@ renderer in `app` (1110).
 ## Acceptance criteria
 
 - [ ] No snapshot of the game changes.
-- [ ] The 40×20 test passes in `engine-ui` with no game crate.
+- [ ] The 40×20 test passes in `shuyi-ui` with no game crate.
 - [ ] `cargo xtask frame-png` still renders the same PNGs for the game
       (compare one before and after).
 - [ ] All gates in the `run-gates` skill pass.

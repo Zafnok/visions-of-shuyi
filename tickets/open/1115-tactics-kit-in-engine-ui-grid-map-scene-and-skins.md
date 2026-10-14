@@ -1,6 +1,6 @@
 ---
 id: "1115"
-title: "Tactics kit in engine-ui: a grid map scene generic over the game's pieces, skins, ground layers, cursor and tile camera"
+title: "Tactics kit in shuyi-ui: a grid map scene generic over the game's pieces, skins, ground layers, cursor and tile camera"
 type: infra
 milestone: "Engine: carve"
 model: opus-5.5
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1115 — Tactics kit in engine-ui: grid map scene and skins
+# 1115 — Tactics kit in shuyi-ui: grid map scene and skins
 
 ## Context
 
@@ -37,7 +37,7 @@ None. The battle map must look identical in the glyph and sprite looks.
 ## Scope
 
 **In:**
-- `engine_ui::grid::MapScene<P>`, where `P` is the game's piece view
+- `shuyi_ui::grid::MapScene<P>`, where `P` is the game's piece view
   (this game: today's `UnitView`).
 - Ranges become `RangeLayer { kind: name, tiles }`, and the skin colors
   them by name.
@@ -47,14 +47,14 @@ None. The battle map must look identical in the glyph and sprite looks.
 - Moved with their tests:
   - the corner autotiling rule and ground layers with light (ADR-0052,
     ADR-0058);
-  - grid math (with a `Projection` hook left for 1126, ADR-0064 §6);
+  - grid math (with a `Projection` hook left for 1126, engine ADR-0003 §6);
   - path and threat arrows;
   - the tile camera, virtual cursor, path steering and walk timing.
   Walk speeds become skin settings.
 - The glyph and sprite skins split. The terrain and cursor parts move to
   the engine. The unit labels, HP bars, effect marks and unit sheets stay
   the game's, as its `PiecePainter`s.
-- `Pos` comes from `engine-core` (1114).
+- `Pos` comes from `shuyi-core` (1114).
 
 **Out (do not do):**
 - isometric (1126);
@@ -73,7 +73,7 @@ None. The battle map must look identical in the glyph and sprite looks.
 
 ## Acceptance criteria
 
-- [ ] The toy grid game passes in `engine-ui` alone, in both skins.
+- [ ] The toy grid game passes in `shuyi-ui` alone, in both skins.
 - [ ] No snapshot of the game changes in either look.
 - [ ] Every battle test passes.
 - [ ] All gates in the `run-gates` skill pass.

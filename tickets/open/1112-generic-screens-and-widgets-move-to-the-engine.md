@@ -44,7 +44,7 @@ None. Nothing a player sees changes.
 ## Scope
 
 **In:**
-- Move the generic parts to `engine-ui::{widgets, screens, debug,
+- Move the generic parts to `shuyi-ui::{widgets, screens, debug,
   dialogue, text, audio, storage}`; the game injects rows, entries,
   cue ids (`AudioConfig { menu_move, menu_select, menu_cancel,
   cursor_move }`) and the lead/cast hooks into dialogue

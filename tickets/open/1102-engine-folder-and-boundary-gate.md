@@ -34,12 +34,17 @@ None.
 ## Scope
 
 **In:**
-- `engine/README.md`: what the engine is (ADR-0063 §1), the working name
-  (§3), the five crates planned and what each owns (§2), the allowed
-  third-party crates (start with `serde`, `ron`, `thiserror`,
-  `include_dir`, `macroquad`, `quad-snd`, `gilrs`, `quad-storage`,
-  `proptest`, `insta`), and that its files stay under `LICENSE` until
-  1130.
+- `engine/README.md` covers:
+  - what this folder is: the code of Shuyi Engine being carved out
+    (ADR-0063 §1, §3);
+  - that the engine's plans, ADRs and tickets live in [its
+    repository](https://github.com/Zafnok/shuyi-engine);
+  - the five crates planned and what each owns (§2);
+  - the allowed third-party crates (start with `serde`, `ron`,
+    `thiserror`, `include_dir`, `macroquad`, `quad-snd`, `gilrs`,
+    `quad-storage`, `proptest`, `insta`);
+  - that its files stay under this repository's `LICENSE` until 1131
+    moves them to the engine repository (MIT OR Apache-2.0).
 - `engine/crates/` (empty, with a `.gitkeep`), and the workspace
   `members` extended to `["crates/*", "engine/crates/*"]` so a crate
   added there is built.
@@ -62,8 +67,9 @@ None.
 - The check runs in CI next to `check-keys`, and is added to the
   `run-gates` skill's list.
 
-**Out (do not do):** moving any code (1103 onward); a license for the
-engine (1130); renaming anything.
+**Out (do not do):** moving any code (1103 onward); license files in
+`engine/` (the license applies when 1131 moves the code); renaming
+anything.
 
 ## Implementation steps
 

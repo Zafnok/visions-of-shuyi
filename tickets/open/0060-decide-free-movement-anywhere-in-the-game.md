@@ -34,9 +34,10 @@ before anything is built for the game:
   screens.
 
 Why it matters beyond the game: the engine's free-movement mode
-(ADR-0064, tickets 1119–1125) is paid for by the game only if the game
-uses it. If the answer is "never", that work is engine-only and is
-scheduled as such (`docs/engine/feasibility.md`, *Cost to the game*).
+(engine ADR-0003; engine tickets 1119–1125, parked in [Shuyi
+Engine](https://github.com/Zafnok/shuyi-engine/blob/main/docs/ROADMAP.md)) is paid for by the game only if
+the game uses it. If the answer is "never", that work stays parked until
+the engine reaches parity with the game (plan B).
 
 ## Nick input
 
@@ -47,8 +48,9 @@ scheduled as such (`docs/engine/feasibility.md`, *Cost to the game*).
 
 **In:** the questions below; the answer recorded in `world-structure.md`
 (a *Walking around* part) and its `docs/design/README.md` row; changes to
-1007, 1003 and 1119–1125 that the answer calls for (for example 1007
-gains a town scene that is walked through, or nothing changes).
+1007 and 1003 that the answer calls for (for example 1007 gains a town
+scene that is walked through, or nothing changes), and unparking engine
+tickets 1119–1125 if the answer is B–D.
 
 **Out (do not do):** building any of it; changing the world map's node
 design (that is 0008's answer and stays unless Nick changes it here).
@@ -86,14 +88,18 @@ design (that is 0008's answer and stays unless Nick changes it here).
 3. Record Nick's words verbatim and the rules in `world-structure.md`.
 4. Update 1007 and 1003 (a walked-through town or camp, or no change),
    and the *Game styles* table in `docs/engine/feasibility.md` (whether
-   the game uses free movement). If the answer is B–D, add 1119–1125 to the
-   tickets the first walked-through place waits for.
+   the game uses free movement). If the answer is B–D:
+   - unpark engine tickets 1119–1125 in Shuyi Engine, with a small PR
+     there that follows its `tickets/README.md`, *Parked tickets*;
+   - write the game ticket for the first walked-through place, waiting
+     for 1131 and noting the engine tickets it needs.
 
 ## Acceptance criteria
 
 - [ ] Nick's answer, verbatim, is in `world-structure.md`.
-- [ ] 1007, 1003, 1119–1125 and `docs/engine/feasibility.md` match the
-      answer; `cargo xtask ticket-lint` passes.
+- [ ] 1007, 1003, `docs/engine/feasibility.md` and (if B–D) the engine
+      tickets 1119–1125 match the answer; `cargo xtask ticket-lint`
+      passes.
 
 ## Tests required
 

@@ -1,6 +1,6 @@
 ---
 id: "1117"
-title: "engine-cli: frame-png, font-atlas, check-keys, check-text, lang-status, web and private-assets move to the engine, configured by a file"
+title: "shuyi-cli: frame-png, font-atlas, check-keys, check-text, lang-status, web and private-assets move to the engine, configured by a file"
 type: infra
 milestone: "Engine: carve"
 model: sonnet-5
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1117 — engine-cli: the generic tools move
+# 1117 — shuyi-cli: the generic tools move
 
 ## Context
 
@@ -35,10 +35,9 @@ None.
 ## Scope
 
 **In:**
-- New crate `engine/crates/cli`: package `engine-cli`, binary `engine`
-  (renamed with the engine in 1130). It holds the listed commands as
-  library functions plus a thin `main`.
-- A project file `engine.ron` at the game's root gives:
+- New crate `engine/crates/cli`: package `shuyi-cli`, binary `shuyi`.
+  It holds the listed commands as library functions plus a thin `main`.
+- A project file `shuyi.ron` at the game's root gives:
   - the paths each check scans;
   - the Harness entry point for `frame-png`;
   - the private repository settings;
@@ -46,11 +45,11 @@ None.
 - `cargo xtask` keeps the repository-only commands: `ticket-lint`,
   `clean-merged-targets`, the bought-art imports, `title-art`,
   `effect-marks`, `playtest` and `test-units`. Its old subcommand names
-  for the moved tools forward to `engine-cli`, so skills and CI keep
+  for the moved tools forward to `shuyi-cli`, so skills and CI keep
   working. Update `run-gates`, `work-ticket`, `CLAUDE.md` and the CI
   workflows to the new commands in the same PR.
 - `frame-png` runs any game that exposes a Harness constructor named in
-  `engine.ron`. The game's `--light` option becomes a game argument
+  `shuyi.ron`. The game's `--light` option becomes a game argument
   passed through.
 
 **Out (do not do):** the JSON contract, `new`, `doctor` (1129); MCP (1133).
@@ -58,7 +57,7 @@ None.
 ## Implementation steps
 
 1. Create the crate. Move one command at a time with its tests.
-2. Add `engine.ron` for this repository. Run each command before and
+2. Add `shuyi.ron` for this repository. Run each command before and
    after and compare outputs.
 3. Update skills, CI and `CLAUDE.md`.
 
@@ -73,6 +72,6 @@ None.
 ## Tests required
 
 - Unit: the moved tests.
-- Integration: `engine-cli` on the toy game and on this repository.
+- Integration: `shuyi-cli` on the toy game and on this repository.
 
 ## Completion notes

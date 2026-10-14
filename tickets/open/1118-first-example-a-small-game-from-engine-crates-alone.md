@@ -16,7 +16,7 @@ completed:
 ## Context
 
 ADR-0063 §8.2: the engine moves to its own repository only once an
-example game runs and is tested without any game crate. ADR-0064 §1:
+example game runs and is tested without any game crate. engine ADR-0003 §1:
 the README claims a style only when its example passes CI. This is the
 first example. It proves the carve (1103–1117) left nothing of our game
 in the engine's way.
@@ -29,7 +29,7 @@ None.
 
 **In:**
 - `engine/examples/hello-grid/`, a binary crate depending only on
-  `engine-*`. It has:
+  `shuyi-*`. It has:
   - a title menu;
   - an options screen with two settings;
   - key rebinding;
@@ -38,7 +38,7 @@ None.
     while one enemy piece steps toward it, using `TurnRules`;
   - a win screen.
 - It ships with CC0 art only: the Terminus font, plus a tileset made by
-  `engine-cli` from glyphs (as `xtask test-tileset` does).
+  `shuyi-cli` from glyphs (as `xtask test-tileset` does).
 - Tests:
   - a Harness test that plays it to the win;
   - a bot test (random bots over `TurnRules`);
@@ -50,9 +50,9 @@ None.
   example shows.
 
 **Out (do not do):**
-- other styles (1125 onward);
-- `engine new` (1129);
-- the license (1130).
+- other styles (engine tickets 1119–1128, parked);
+- `shuyi new` (engine ticket 1129);
+- moving the code to the engine repository (1131).
 
 ## Implementation steps
 

@@ -20,7 +20,7 @@ folders: `tickets/open/` vs `tickets/done/`.
 | `07xx` | M6 Story & dialogue | Story bible, dialogue engine, two-portrait scenes, Chapter 1 art + script, lead reply choices | 0701–0708 |
 | `08xx` | M7 Chapter 1 | Full flow, saves, Chapter 1 content, **Nick's playtest**, options, colour themes, music, credits, end-of-battle music, results, title art, chapter card, transitions | 0801–0813 |
 | `09xx` | M8 Release | itch.io, Windows polish, Steam readiness | 0901–0903 |
-| `11xx` | The engine | An open-source 2D engine carved out of this codebase; the game built on it ([`docs/engine/`](engine/README.md)) | 1101–1150 |
+| `11xx` | The engine | Shuyi Engine, an open-source 2D engine carved out of this codebase; the game built on it ([`docs/engine/`](engine/README.md), [its repository](https://github.com/Zafnok/shuyi-engine)) | 1101–1118, 1131 (the rest moved to the engine's repository) |
 
 **Audio** (decided in 0020, [`docs/design/audio.md`](design/audio.md)) runs
 across the blocks: **0212** playback plumbing → **0213** our own sounds and
@@ -133,26 +133,36 @@ Options rows (after 0805) → **0722** Chapter 1's voices.
 *Disclosure:* **0907** credits and store text say what is machine-made
 (0901 and 0903 use it).
 
-**The engine** (Nick, 2026-10-14: split an open-source, general 2D
-engine from the game, which stays paid; later the same day, networking
-from LAN play up to MMO and global chat, "if it turns out feasible
-without jeopardizing our own velocity"). Ticket 1101 studied it:
-[`docs/engine/feasibility.md`](engine/feasibility.md) is the report,
-ADR-0063 to ADR-0067 the plan. **None of it is on the Chapter 1 critical
-path, and nothing that moves code starts before 0804.** Now: **1102**
-the `engine/` folder and the boundary gate (no conflicts with open work)
-· decisions **0059** (the engine's license, name, going public; any
-time) and **0060** (does the army ever walk around freely; after 0804).
-After 0804, the carve, one at a time: **1103** → **1104** → **1105** →
-**1106** → **1107** → **1108** → **1109** → **1110** → **1111** →
-**1112** → **1113**, with **1114** (the tactics kit in `core`) beside
-them → **1115**, **1116** → **1117** → **1118** the first example. Then
-engine-only work, when Nick says so (or when 0060 says the game walks
-around freely): **1119**–**1125** real time and a walkable-town example,
-**1126**–**1128** isometric, side view, physics; **1129**–**1135** the
-tool contract, license and name (after 0059), its own repository, docs,
-MCP, skills, visual scripting research; networking **1140**–**1150**
-(our game's own multiplayer stays **0053**'s decision, after launch).
+**The engine: Shuyi Engine** (Nick, 2026-10-14: split an open-source,
+general 2D engine from the game, which stays paid; networking too, "if it
+turns out feasible without jeopardizing our own velocity").
+
+- **The study.** Ticket 1101: [`docs/engine/feasibility.md`](engine/feasibility.md)
+  is the report and ADR-0063 the split.
+- **Nick's answers.** Plan B. The engine's own repository,
+  [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine), is public under MIT OR Apache-2.0 and
+  holds its ADRs, tickets, decisions and roadmap. The extra game styles
+  and networking are parked until the engine reaches parity with the game.
+- **The critical path.** None of it is on the Chapter 1 critical path,
+  and nothing that moves code starts before 0804.
+
+The order:
+
+1. **Now:**
+   - **1102**: the `engine/` folder and the boundary gate. It doesn't
+     conflict with open work.
+   - **0059**: whether the tactics kit is open, and who may contribute.
+     Any time.
+   - **0060**: does the army ever walk around freely? After 0804.
+2. **After 0804, the carve, one at a time:** **1103** → **1104** →
+   **1105** → **1106** → **1107** → **1108** → **1109** → **1110** →
+   **1111** → **1112** → **1113**. **1114** (the tactics kit in `core`)
+   runs beside them. Then **1115** and **1116** → **1117** → **1118**,
+   the first example. Then **1131**, the code moves to the engine
+   repository.
+3. **Then the engine's own tickets, in its repository:** its MVP
+   (parity), then what comes after, and the parked tickets. Our game's
+   own multiplayer stays **0053**'s decision, after launch.
 
 ## Nick's queue (answer these first; any order within a row)
 
@@ -163,7 +173,7 @@ Design answers unblock most of the rules work. Suggested order:
 3. **0011** look & feel sign-off (after the font ticket 0203 shows real pixels)
 4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** Harl's combat picture (done: Shironejiya's bearded axe bandit) · **0040** more packs for fighters with no fitting art (done) · **0413** how the combat scene looks · **0022** victory sting (done: Fupi's Win Jingle, a random version each win) · **0023** defeat sting (done: no sting; The Fallen plays from the banner through Game Over) · **0024** Game Over music (done: The Fallen loops, with a pause between rounds) · **0810** how battle rewards are shown
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0029** dialogue backgrounds · **0812** chapter card · **0813** transitions
-   · **0059** the engine's license, name, and when it goes public (`docs/engine/feasibility.md`)
+   · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
    · **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)

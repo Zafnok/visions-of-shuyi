@@ -1,6 +1,6 @@
 ---
 id: "1114"
-title: "Tactics kit in engine-core: a TurnRules trait, grid and pathfinding over a cost function, the RNG, replay and save versioning"
+title: "Tactics kit in shuyi-core: a TurnRules trait, grid and pathfinding over a cost function, the RNG, replay and save versioning"
 type: infra
 milestone: "Engine: carve"
 model: opus-5.5
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1114 — Tactics kit in engine-core
+# 1114 — Tactics kit in shuyi-core
 
 ## Context
 
@@ -38,27 +38,27 @@ None. No rule changes: every battle plays identically.
 ## Scope
 
 **In:**
-- New crate `engine/crates/core` (package `engine-core`): pure, no I/O,
+- New crate `engine/crates/core` (package `shuyi-core`): pure, no I/O,
   `#![forbid(unsafe_code)]`, depends on `serde` only.
-- `engine_core::rng`: `SimRng` (PCG32), `RandomSource`, `ScriptedRng`
+- `shuyi_core::rng`: `SimRng` (PCG32), `RandomSource`, `ScriptedRng`
   (moved).
-- `engine_core::grid`: `Pos`, `Dir`, `Grid<T>`, `TileSet`, Manhattan and
+- `shuyi_core::grid`: `Pos`, `Dir`, `Grid<T>`, `TileSet`, Manhattan and
   neighbours (moved).
-- `engine_core::path`: `reachable(start, budget, cost: impl Fn(Pos) ->
+- `shuyi_core::path`: `reachable(start, budget, cost: impl Fn(Pos) ->
   Option<u32>) -> Reach` and `path_to`, Dijkstra with the deterministic
   `(cost, y, x)` tie-break and `Dir::ALL` order; `flow_field` for the AI's
   use. The game's `movement.rs` and `ai.rs:755` call it with their cost
   closures; the duplicate Dijkstra goes.
-- `engine_core::turn`: `trait TurnRules { type Command; type Event; type
+- `shuyi_core::turn`: `trait TurnRules { type Command; type Event; type
   Error; type Outcome; fn check(&self, &Self::Command) -> Result<(),
   Self::Error>; fn apply(&mut self, Self::Command) ->
   Result<Vec<Self::Event>, Self::Error>; fn legal_commands(&self) ->
   Vec<Self::Command>; fn outcome(&self) -> Option<Self::Outcome>; }`.
   `BattleState` implements it in an `impl` block that calls the
   existing methods.
-- `engine_core::history`: replay, `state_at`, rewind over `TurnRules +
+- `shuyi_core::history`: replay, `state_at`, rewind over `TurnRules +
   Clone` (the rewind *charges* stay the game's).
-- `engine_core::save`: the version header and the refuse-don't-migrate
+- `shuyi_core::save`: the version header and the refuse-don't-migrate
   rule (ADR-0039); the game's `SaveFile` payload stays.
 
 **Out (do not do):** the battle's turn loop, phases, factions, triggers
@@ -78,7 +78,7 @@ tactics example); bots (1116); the map scene (1115).
 
 ## Acceptance criteria
 
-- [ ] `engine-core` tests pass alone, including the property tests.
+- [ ] `shuyi-core` tests pass alone, including the property tests.
 - [ ] Every `core`, `content`, `ui` and `bots` test passes unchanged; no
       snapshot changes; the golden saves load.
 - [ ] Only one Dijkstra remains in the workspace (`grep`).

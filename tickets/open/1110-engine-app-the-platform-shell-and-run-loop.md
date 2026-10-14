@@ -1,6 +1,6 @@
 ---
 id: "1110"
-title: "engine-app: the platform shell and run loop; trpg-app becomes a small binary that picks the game"
+title: "shuyi-app: the platform shell and run loop; trpg-app becomes a small binary that picks the game"
 type: infra
 milestone: "Engine: carve"
 model: opus-5.5
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1110 — engine-app: the platform shell and run loop
+# 1110 — shuyi-app: the platform shell and run loop
 
 ## Context
 
@@ -31,14 +31,14 @@ None. The game must look, sound and save exactly as before.
 ## Scope
 
 **In:**
-- New crate `engine/crates/app` (package `engine-app`) with
+- New crate `engine/crates/app` (package `shuyi-app`) with
   `pub fn run<G, A>(config: AppConfig, make: impl FnOnce(&Platform) ->
-  engine_ui::Game<G, A>)`. `AppConfig`: window title, size, icon bytes,
+  shuyi_ui::Game<G, A>)`. `AppConfig`: window title, size, icon bytes,
   storage name (native folder and web prefix), the font atlas, extra
   checks to run at start (the game's release check).
 - Move `render.rs`, `keys.rs`, `pads*`, `storage/`, `audio*` and the loop
   from `main.rs`. The web JS plugin names `trpg_pad_*` become
-  `engine_pad_*` (update `web/` and `xtask web` in the same PR).
+  `shuyi_pad_*` (update `web/` and `xtask web` in the same PR).
 - `trpg-app/src/main.rs` keeps the `#[macroquad::main]` entry (macroquad
   needs it in the binary), builds `AppConfig` and calls `run`. `args.rs`
   stays the game's.

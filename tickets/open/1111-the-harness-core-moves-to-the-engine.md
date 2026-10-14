@@ -29,7 +29,7 @@ None.
 ## Scope
 
 **In:**
-- `engine_ui::harness::Harness<G, A>` wrapping `engine_ui::Game<G, A>`
+- `shuyi_ui::harness::Harness<G, A>` wrapping `shuyi_ui::Game<G, A>`
   with the generic API, behind a `harness` feature (as today, ADR-0017).
 - `trpg-ui`'s `Harness` becomes a thin wrapper adding `flow()`,
   `battle()`, `map_scene()`, `cursor_tile()` and the test chapter start.
@@ -51,7 +51,7 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo test -p engine-ui` runs Harness tests against the toy game.
+- [ ] `cargo test -p shuyi-ui` runs Harness tests against the toy game.
 - [ ] Every game Harness test passes unchanged.
 - [ ] All gates in the `run-gates` skill pass.
 

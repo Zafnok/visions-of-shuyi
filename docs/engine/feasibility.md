@@ -1,7 +1,27 @@
 # An engine and a game: feasibility report
 
 Ticket 1101, 2026-10-14, for Nick. The technical plan is in ADR-0063 to
-ADR-0067. The module-by-module audit is in [`boundary.md`](boundary.md).
+engine ADR-0006. The module-by-module audit is in [`boundary.md`](boundary.md).
+
+> **Update, later on 2026-10-14 (Nick's answers).**
+>
+> - **The choice.** Nick chose **plan B**, with the extra styles and
+>   networking parked "after MVP/parity".
+> - **The name and the repository.** The engine is **Shuyi Engine**. Its
+>   own public repository is [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine), under
+>   **MIT OR Apache-2.0**.
+> - **What moved there.** The ADRs this report calls 0064–0067 became
+>   its ADR-0003 to ADR-0006 (written "engine ADR-…" below). The
+>   engine-only tickets moved there with the same numbers.
+> - **What was added.** His point about formats added the engine's
+>   ADR-0007 (formats are plugins) and the tickets 2201–2204 and 2901.
+> - **What stays here.** The carve (1102–1118) and the move (1131),
+>   because they change this repository.
+> - **Ticket 1130 is gone.** The license and name are set, and the carve
+>   names the crates `shuyi-*` from the start.
+>
+> His words are in the engine repository's `docs/decisions.md`. The
+> rest of this report is as written for the decision.
 
 ## The short answer
 
@@ -50,29 +70,29 @@ needs it. Details are under *What I recommend*.
 
 | You asked for | Where it is in the plan | Our game uses it? |
 | ------------- | ----------------------- | ----------------- |
-| Engine and game as two repositories, engine as an external dependency | ADR-0063: an `engine/` folder now (1102–1118), its own repository once the license and name are set and the API has settled (1130, 1131) | Yes |
-| Engine free/open source, game paid | 0059 (your call: the license and name), 1130 | — |
+| Engine and game as two repositories, engine as an external dependency | ADR-0063: an `engine/` folder now (1102–1118), its own repository (created 2026-10-14 for plans; the code moves with 1131) | Yes |
+| Engine free/open source, game paid | Done: MIT OR Apache-2.0, public (the engine repository's `docs/decisions.md`) | — |
 | Top-down grid (our game) | Exists; becomes the engine's "tactics kit" (1114–1116) | Yes |
-| Top-down free movement | ADR-0064; 1119–1125, with a walkable town example | Only if 0060 says so |
+| Top-down free movement | engine ADR-0003; 1119–1125, with a walkable town example | Only if 0060 says so |
 | Isometric, grid or free | 1126, with a small isometric tactics example | No |
 | Side-scroller | 1127, with a platformer example | No |
-| Moving between styles ("1 and 2 for an open world section") | ADR-0064 §1: a style is a screen, so moving between them is a screen change; 1125 shows a town that starts a grid battle and comes back | If 0060 says so |
-| Asset loading: raw files, tilesets, sprite sheets | ADR-0065; Tiled and LDtk maps (1124), Aseprite and TexturePacker sheets (1123), plus today's formats | Partly (already) |
+| Moving between styles ("1 and 2 for an open world section") | engine ADR-0003 §1: a style is a screen, so moving between them is a screen change; 1125 shows a town that starts a grid battle and comes back | If 0060 says so |
+| Asset loading: raw files, tilesets, sprite sheets | engine ADR-0004; Tiled and LDtk maps (1124), Aseprite and TexturePacker sheets (1123), plus today's formats | Partly (already) |
 | Animations | 1123 (clips from Aseprite tags) | Already has walk cycles |
 | Cutscenes | Exist (the cinematic files); the timeline moves in 1113 | Yes |
 | Audio cues | Exist; move in 1104 and 1110 | Yes |
 | Collision | 1122 (exact, replayable) | Only with free movement |
 | Physics | 1128 (optional rigid bodies, rapier2d) | No |
-| Graphical coding (like Blueprints) | ADR-0066 §5; research 1135, after the scripting runtime (1017) | No |
-| Good AI "vibe coding" support | ADR-0066; the tool contract (1129), an MCP server (1133) | Yes (it speeds up our own work) |
-| Shippable skills, like REA | ADR-0066 §3; 15 skills (1134) | Indirectly |
-| Networking: P2P on a LAN or the internet | ADR-0067; 1140–1143 | If 0053 picks online play |
+| Graphical coding (like Blueprints) | engine ADR-0005 §5; research 1135, after the scripting runtime (1017) | No |
+| Good AI "vibe coding" support | engine ADR-0005; the tool contract (1129), an MCP server (1133) | Yes (it speeds up our own work) |
+| Shippable skills, like REA | engine ADR-0005 §3; 15 skills (1134) | Indirectly |
+| Networking: P2P on a LAN or the internet | engine ADR-0006; 1140–1143 | If 0053 picks online play |
 | Sessions | 1145 | " |
 | Hosted multiplayer (a player's machine, or a company's) | 1146 (a "referee" server, listen or dedicated) | " |
 | Matchmaking and ELO | 1148 (Glicko-2) | " |
 | MMO | 1150, research only | No |
 | Global chat | 1149 (chat channels and moderation tools); 1150 (what global chat really takes) | Your call, later |
-| High-level and low-level access | ADR-0067 §1: every layer is public | — |
+| High-level and low-level access | engine ADR-0006 §1: every layer is public | — |
 | No 3D | Out of scope everywhere | — |
 
 ## Where the code stands
@@ -126,21 +146,20 @@ Each one is a ticket in the carve.
 - animation clips;
 - importers for map and sprite editors.
 
-ADR-0064 and ADR-0065 plan these without giving up exact replays.
+engine ADR-0003 and engine ADR-0004 plan these without giving up exact replays.
 
 ## The plan
 
 ```
-engine-app    (window, drawing, sound, saving, controllers)  ◄── our game's small binary
-engine-ui     (frame, screens, input, widgets, cinematics, Harness, grid map kit)  ◄── our screens
-engine-assets (asset layers, images, fonts, sounds, languages, dialogue, importers)  ◄── our data
-engine-core   (dice, turn and tick simulations, grid and paths, collision)  ◄── our rules
-engine-cli    (frame-png, checks, new, run, replay, MCP)  ◄── our repo-only tools
+shuyi-app    (window, drawing, sound, saving, controllers)  ◄── our game's small binary
+shuyi-ui     (frame, screens, input, widgets, cinematics, Harness, grid map kit)  ◄── our screens
+shuyi-assets (asset layers, images, fonts, sounds, languages, dialogue, importers)  ◄── our data
+shuyi-core   (dice, turn and tick simulations, grid and paths, collision)  ◄── our rules
+shuyi-cli    (frame-png, checks, new, run, replay, MCP)  ◄── our repo-only tools
 ```
 
 Each of our crates sits on the engine crate of the same layer, so the
-rules we already follow (ADR-0004) carry over unchanged. "engine" is a
-working name until 0059.
+rules we already follow (ADR-0004) carry over unchanged.
 
 | Phase | Tickets | When | Conflicts with game work? |
 | ----- | ------- | ---- | ------------------------- |
@@ -179,7 +198,7 @@ can't merge.
 So the engine's pitch would be: **a 2D engine an AI agent can make,
 run, see, test and replay games in, with no window and no human.**
 
-- ADR-0066 makes it one contract (`new`, `check`, `run`, `scene`,
+- engine ADR-0005 makes it one contract (`new`, `check`, `run`, `scene`,
   `frame-png`, `replay`, `bots`, `import`, `doctor`) over a CLI, an MCP
   server and 15 skills.
 - Each skill's worked example runs in CI, so the skills stay true.
@@ -325,7 +344,7 @@ example that runs in CI before the engine claims it.
   framework, while the art stays his.
 
 **macroquad has one main maintainer** and two open security advisories
-we already accept. The engine keeps it in one thin crate (`engine-app`),
+we already accept. The engine keeps it in one thin crate (`shuyi-app`),
 so a different backend later is a contained job.
 
 ## What I recommend

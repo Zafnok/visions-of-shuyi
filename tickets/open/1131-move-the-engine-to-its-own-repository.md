@@ -1,85 +1,109 @@
 ---
 id: "1131"
-title: "Move the engine to its own public repository; the game pins it by revision"
+title: "Move the carved engine code to the Shuyi Engine repository with its history; the game pins it by revision"
 type: infra
-milestone: "Engine: public"
+milestone: "Engine: carve"
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["1130"]
-nick_input: setup
+blocked_by: ["1118"]
+nick_input: none
 completed:
 ---
 
-# 1131 — Move the engine to its own repository
+# 1131 — Move the engine code to Shuyi Engine
 
 ## Context
 
-ADR-0063 §8 sets three conditions for the move:
+ADR-0063 §3 and §8. The engine's repository,
+[`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine), has
+existed since 2026-10-14. It is public, dual-licensed MIT OR
+Apache-2.0, and holds the engine's ADRs, tickets, decisions and skills.
+The code is carved in this repository's `engine/` folder (1102–1118).
+When the first example runs on engine crates alone (1118), the code moves
+there with its history, and the game uses it like any other dependency.
 
-1. the license and name are applied (1130);
-2. an example runs on the engine alone (1118);
-3. the API has settled: over the last 30 days, fewer than 1 in 5 merged
-   game PRs had to change a file under `engine/`.
+Moving the code is what makes it MIT OR Apache-2.0: Nick owns it and
+chose that license (the engine repository's `docs/decisions.md`). This
+repository's `LICENSE` is not changed.
 
-Check condition 3 first, by listing the merged PRs and the files they
-touched with `gh pr list --state merged` and `gh pr view --json files`.
-If it doesn't hold, stop. Write in the Completion notes what the count
-was and set `status: blocked` with that reason.
+The engine repository's MVP tickets wait for this one (`game#1131` in
+their `blocked_by`): 2002, 2201, 1129, 1133, 1134 and 1132.
 
 ## Nick input
 
-**Setup.** Nick creates the empty public repository
-`github.com/Zafnok/<name>` (no README, no license; the history brings
-them) and gives the session push access, with the same settings as this
-repository's free tier:
-
-- branch protection on `main`, requiring the CI checks;
-- Dependabot, CodeQL and secret scanning on.
+None. The repository exists, and Nick's `gh` login can push to it.
 
 ## Scope
 
 **In:**
-- `git filter-repo --subdirectory-filter engine` on a fresh clone, so
-  the history of every engine file is kept. Push it to the new
-  repository.
-- A CI for the engine repository, copied from this one's and cut to the
-  engine's crates and examples. It includes the mutation gate in shards
-  (ADR-0047) and Pages for the examples.
-- This repository:
-  - delete `engine/`;
-  - the game's crates depend on the engine by git URL and revision, and
-    `engine.rev` holds the pinned revision (like `assets-private.rev`,
-    ADR-0040);
-  - add `cargo xtask engine-pin` to update it;
-  - `CLAUDE.md` and the `work-ticket` skill say how a ticket that needs
-    an engine change runs: engine PR first, then a game PR that moves
+- **Measure first.** Over the last 30 days, how many merged PRs here
+  changed a file under `engine/`? Use `gh pr list --state merged
+  --search "merged:>=<date>"` and `gh pr view --json files`. Write the
+  count in the Completion notes. If it is 1 in 5 or more, also do the
+  local-checkout step below (ADR-0063 §8).
+- **Move with history.**
+  1. Run `git filter-repo --subdirectory-filter engine` on a fresh
+     clone.
+  2. Push the result to a branch of the engine repository.
+  3. Merge that branch into the engine repository's `main` with
+     `--allow-unrelated-histories`, through a PR there.
+  4. Resolve any clash with the files already there (`README.md`,
+     `docs/`): the engine repository's versions win, and the moved
+     files' content is merged into them.
+- **CI for the engine repository.** Add the code gates to the CI that
+  engine ticket 2002 started:
+  - fmt;
+  - clippy pedantic;
+  - tests and docs;
+  - the web build of the examples;
+  - `cargo deny` and machete;
+  - the mutation gate in shards (ADR-0047);
+  - Pages for the examples.
+
+  Update its `run-gates` skill.
+- **This repository:**
+  - Delete `engine/`.
+  - Make the game's crates depend on the engine by git URL and revision.
+    `shuyi-engine.rev` holds the pinned revision (like
+    `assets-private.rev`, ADR-0040), and `cargo xtask engine-pin`
+    updates it.
+  - Retire `check-engine-boundary` (1102): the boundary is now a
+    repository wall.
+  - Update `CLAUDE.md` and the `work-ticket` skill: a ticket that needs
+    an engine change is an engine PR first, then a game PR that moves
     the pin.
-- Publishing to crates.io: the engine crates get `publish = true` and
-  version `0.1.0`. Publish only if Nick said "yes" to going public in
-  0059.
+- **The local checkout** (only if the measure says so):
+  - `cargo xtask engine` checks the engine repository out at the pinned
+    revision into a git-ignored `shuyi-engine/` folder.
+  - A Cargo `[patch]` in `.cargo/config.toml` points the game at that
+    folder, so one working copy edits both.
+  - CI never uses the patch.
 
 **Out (do not do):**
-- community files and the docs site (1132);
-- a crates.io release before 0059 allows it.
+- the engine's MVP tickets (they are the engine repository's);
+- publishing to crates.io. Write an engine ticket for the first release
+  if none exists.
 
 ## Implementation steps
 
-1. Check condition 3.
-2. Do the filter-repo, push, and CI for the new repository, until it is
-   green.
+1. Measure.
+2. Filter, push, and open the merge PR in the engine repository. Its CI
+   must be green.
 3. Switch the game to the pinned dependency and delete `engine/`. The
-   game's CI must be green.
-4. Update `CLAUDE.md`, the skills, `docs/engine/README.md` and ADR-0063's
-   status line ("moved to its own repository on …").
+   game's gates must pass.
+4. Add the local checkout if needed.
+5. Update `CLAUDE.md`, the skills, `docs/engine/README.md`, and
+   ADR-0063's status line ("code moved on …").
 
 ## Acceptance criteria
 
-- [ ] The engine repository's CI is green, with history kept
-      (`git log` on an engine file shows commits from before the move).
+- [ ] The engine repository's CI is green with the code, and history is
+      kept (`git log` on a moved file shows commits from before the
+      move).
 - [ ] The game builds from the pinned revision, native and web, and its
       gates pass.
-- [ ] `engine.rev` and `cargo xtask engine-pin` work.
+- [ ] `shuyi-engine.rev` and `cargo xtask engine-pin` work.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

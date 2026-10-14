@@ -1,6 +1,6 @@
 ---
 id: "1104"
-title: "engine-assets: images, fonts, named colors, lights, audio cues and credits"
+title: "shuyi-assets: images, fonts, named colors, lights, audio cues and credits"
 type: infra
 milestone: "Engine: carve"
 model: sonnet-5
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1104 — engine-assets: images, fonts, colors, lights, audio, credits
+# 1104 — shuyi-assets: images, fonts, colors, lights, audio, credits
 
 ## Context
 
@@ -29,7 +29,7 @@ None.
 ## Scope
 
 **In:**
-- Move to `engine-assets`: `ImageId`, `ImageTable` and the PNG header
+- Move to `shuyi-assets`: `ImageId`, `ImageTable` and the PNG header
   reader; `FontAtlasDef`; `Light` and light recipes; `AudioManifest`
   (cues, pools, credits, licenses, WAV/OGG header checks); credits and
   ADR-0051's check that bought files are credited (the private folder
@@ -54,7 +54,7 @@ None.
 
 ## Acceptance criteria
 
-- [ ] The listed types live in `engine-assets` and are tested there with
+- [ ] The listed types live in `shuyi-assets` and are tested there with
       fixtures only.
 - [ ] No snapshot changes; every existing test passes.
 - [ ] `docs/engine/boundary.md` rows updated.

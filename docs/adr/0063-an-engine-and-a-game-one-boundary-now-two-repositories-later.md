@@ -1,13 +1,15 @@
 # ADR-0063: An engine and a game: one boundary in this repository now, two repositories later
 
-- **Status:** Proposed (1101). It becomes Accepted when Nick approves the
-  plan in `docs/engine/feasibility.md`; the first engine ticket that lands
-  (1102) changes this line.
+- **Status:** Accepted (Nick chose plan B, 2026-10-14). The same day the
+  engine got its own repository for its plans, tickets and skills,
+  [Shuyi Engine](https://github.com/Zafnok/shuyi-engine); §3 and §8 say
+  how that fits.
 - **Date:** 2026-10-14
 - **Related tickets:** 1101 (the study), 0059 (license, name, going
   public), 0060 (free movement in the game), 1102 (the boundary gate),
-  1103–1117 (the carve), 1118 (the first example), 1130–1132 (the move to
-  its own repository)
+  1103–1117 (the carve), 1118 (the first example), 1131 (the code moves
+  to the engine's repository); the engine-only tickets moved to Shuyi
+  Engine with their numbers (1119–1129, 1132–1135, 1140–1150)
 - **Extends:** ADR-0004 (crate layering), ADR-0013 (licensing),
   ADR-0038 and ADR-0054 (a view, a skin)
 
@@ -86,39 +88,47 @@ What the code looks like today (audit in `docs/engine/boundary.md`):
 Each game crate sits on the engine crate of the same layer:
 
 ```
-engine-app    (window, blitting, input devices, audio backend, storage, run loop)  ◄── trpg-app (the binary: picks the game and its settings)
-engine-ui     (frame, screens, input actions, widgets, skins, cinematics, Harness) ◄── trpg-ui  (this game's screens and skins)
-engine-assets (bundle layers, images, fonts, palette, audio cues, languages,       ◄── trpg-content (this game's tables and files)
+shuyi-app    (window, blitting, input devices, audio backend, storage, run loop)  ◄── trpg-app (the binary: picks the game and its settings)
+shuyi-ui     (frame, screens, input actions, widgets, skins, cinematics, Harness) ◄── trpg-ui  (this game's screens and skins)
+shuyi-assets (bundle layers, images, fonts, palette, audio cues, languages,       ◄── trpg-content (this game's tables and files)
                keymaps, tilesets, importers, error reports)
-engine-core   (RNG, simulation traits, tactics kit: grid, paths, turns; no I/O)    ◄── trpg-core (this game's rules)
-engine-cli    (frame-png, font-atlas, check-keys, check-text, web, …)             ◄── xtask (this repository's own tools)
+shuyi-core   (RNG, simulation traits, tactics kit: grid, paths, turns; no I/O)    ◄── trpg-core (this game's rules)
+shuyi-cli    (frame-png, font-atlas, check-keys, check-text, web, …)             ◄── xtask (this repository's own tools)
 ```
 
 ADR-0004's rules hold for each engine crate exactly as for the game crate
-beside it: `engine-core` is pure and deterministic; only `engine-app`
+beside it: `shuyi-core` is pure and deterministic; only `shuyi-app`
 touches the platform; time is an argument; no `unsafe` outside
-`engine-app`. A game crate may depend on the engine crate of its layer
+`shuyi-app`. A game crate may depend on the engine crate of its layer
 and the ones below; an engine crate never depends on a game crate.
 
-### 3. Where it lives until it has its own repository
+### 3. Where it lives: plans there, code here until the carve is done
 
-- A top-level `engine/` folder holds everything that will become the
-  engine's repository: `engine/crates/{core,assets,ui,app,cli}`, its
-  `README.md`, `docs/`, `examples/` (sample games, ADR-0064) and
-  `skills/` (ADR-0066). Package names `engine-core`, `engine-assets`,
-  `engine-ui`, `engine-app`, `engine-cli`: a **working name**, renamed in
-  one ticket when 0059 gives the real one.
-- One Cargo workspace (`members = ["crates/*", "engine/crates/*"]`), one
-  CI, one PR for a change that needs both sides. Nothing about our ticket
-  workflow changes while the API is still moving.
-- Engine files stay under `LICENSE` until 1130 adds the license Nick
-  chose, in the engine folder only.
+- **The name is Shuyi Engine** (Nick, 2026-10-14; the engine
+  repository's `docs/decisions.md`). Its crates are `shuyi-core`,
+  `shuyi-assets`, `shuyi-ui`, `shuyi-app` and `shuyi-cli`, and its
+  binary is `shuyi`.
+- **The engine's own repository**, `github.com/Zafnok/shuyi-engine`
+  (public, MIT OR Apache-2.0), holds three things from day one:
+  - its ADRs ("engine ADR-NNNN"; this repository's proposals 0064–0067
+    became its 0003–0006);
+  - its engine-only tickets;
+  - Nick's product decisions, its roadmap and its development skills.
+- **The code is carved here first.** A top-level `engine/` folder holds
+  the crates as they are carved (`engine/crates/{core,assets,ui,app,cli}`,
+  then `engine/examples/`). It sits in one Cargo workspace (`members =
+  ["crates/*", "engine/crates/*"]`) with one CI, so a change that needs
+  both sides is one PR while the API is still moving.
+- **Licensing while here.** Files in `engine/` stay under this
+  repository's `LICENSE` while they are here. They become MIT OR
+  Apache-2.0 when 1131 publishes them in the engine's repository. Nick
+  owns them and chose that license. `LICENSE` itself is not changed.
 
 ### 4. The boundary is a gate
 
 `cargo xtask check-engine-boundary` (1102) fails when:
 
-- an `engine-*` crate depends on a `trpg-*` crate, or on a third-party
+- an `shuyi-*` crate depends on a `trpg-*` crate, or on a third-party
   crate not on the engine's list in `engine/README.md`;
 - a file under `engine/` names `trpg_`, `visions-of-shuyi`, `assets/`,
   `assets-private`, or an id from this game's data (class, character,
@@ -142,8 +152,8 @@ game knowledge back out of the engine.
   part generic in place (an `ActionSet` trait instead of the closed
   `Action`, `Ctx<G>` instead of a `Ctx` holding `Content`), then moves it.
 - **Game code keeps its names.** The game defines type aliases
-  (`pub type Ctx = engine_ui::Ctx<Shuyi>`, `pub type FrameInput =
-  engine_ui::FrameInput<Action>`) so the 40,000 lines of game screens
+  (`pub type Ctx = shuyi_ui::Ctx<Shuyi>`, `pub type FrameInput =
+  shuyi_ui::FrameInput<Action>`) so the 40,000 lines of game screens
   change field paths, not signatures.
 - **`core`'s tactics code is not moved as it is.** The kit gets a
   `TurnRules` trait (check, apply, legal commands, outcome) that
@@ -169,26 +179,38 @@ game knowledge back out of the engine.
   every move touches files the playtest tickets touch, and the playtest's
   feel work is the top priority. No engine ticket is ever put on the
   Chapter 1 critical path.
-- Engine-only features (other game styles, ADR-0064; networking,
-  ADR-0067) are scheduled by Nick's say-so (`docs/engine/feasibility.md`,
-  *What it costs the game*), not as a side effect of game tickets.
+- Engine-only features are **parked** in the engine's repository until
+  the engine reaches parity with the game (plan B; its `docs/ROADMAP.md`):
+  - other game styles (engine ADR-0003);
+  - networking (engine ADR-0006);
+  - visual scripting.
 
-### 8. Moving to its own repository
+  They are never a side effect of game tickets. Each is unparked early
+  only if the game needs it: 0060 for free movement, 0053 for online
+  play.
 
-The `engine/` folder becomes its own public repository (1131) when all
-three hold:
+### 8. Moving the code to the engine's repository
 
-1. Nick has chosen the license and name (0059) and 1130 has applied them;
-2. an example game in `engine/examples/` runs and is tested without any
-   game crate (1118);
-3. the API has settled: over the last 30 days, fewer than 1 in 5 merged
-   game PRs had to change a file under `engine/`.
+The `engine/` folder moves to Shuyi Engine (1131) once the carve is done
+and an example game in `engine/examples/` runs and is tested without any
+game crate (1118). The license and name are already settled.
 
-Then: `git filter-repo --subdirectory-filter engine` keeps the engine's
-history; the game depends on the engine by a pinned git revision
-(`engine.rev`, like `assets-private.rev`, ADR-0040) and later by
-crates.io versions; a game ticket that needs an engine change becomes an
-engine PR first, then a game PR that moves the pin.
+How it moves:
+
+1. `git filter-repo --subdirectory-filter engine` keeps the engine's
+   history. It is merged into the engine repository's `main` with
+   `--allow-unrelated-histories`, beside the plans already there.
+2. The game depends on the engine by a pinned git revision
+   (`shuyi-engine.rev`, like `assets-private.rev`, ADR-0040), and later
+   by crates.io versions.
+3. A game ticket that needs an engine change becomes an engine PR first,
+   then a game PR that moves the pin.
+
+Over the last 30 days, if 1 in 5 merged game PRs or more changed a file
+under `engine/`, the API is still moving. In that case 1131 also sets up
+a local checkout of the engine repository (git-ignored, at the pinned
+revision, as `assets-private/` is) and a Cargo `[patch]` that points at
+it, so a change to both sides stays one working copy.
 
 ## Consequences
 
@@ -199,11 +221,14 @@ engine PR first, then a game PR that moves the pin.
   (`docs/engine/boundary.md`), and the `Action` and `Ctx` changes touch
   most screens. It costs about 15 tickets, run one at a time, during which
   other `ui` work must rebase.
-- Until the engine has its own repository, its users are us. Claims that
-  it supports other kinds of games are only true once a sample game of
-  that kind runs in `engine/examples/` (ADR-0064).
-- After the split, a change that needs both sides costs two PRs and a pin
-  bump. Rule 8.3 delays that until it is rare.
+- Until the code moves, the engine's users are us. A claim that it
+  supports another kind of game is true only once an example of that kind
+  runs in its examples (engine ADR-0003).
+- Plans and code live apart until 1131. The engine repository's tickets
+  name this repository's as `game#NNNN`, and the carve's tickets stay
+  here because they change this repository's code.
+- After 1131, a change that needs both sides costs two PRs and a pin bump.
+  The local checkout in §8 keeps that cheap while the API still moves.
 - A second consumer (the samples, later other people's games) means the
   engine's API is a promise: breaking changes need a version bump and a
   note, which game tickets never needed.
@@ -213,10 +238,11 @@ engine PR first, then a game PR that moves the pin.
 
 ## Alternatives considered
 
-- **Two repositories now** — every engine-touching game ticket would be
-  two PRs and a pin bump while the API changes weekly, during the
-  playtest work Nick put first. Rejected; rule 8 gets there once it is
-  cheap.
+- **All code in two repositories now** — every engine-touching game
+  ticket would be two PRs and a pin bump while the carve changes the API
+  weekly, during the playtest work Nick put first. Rejected for the code;
+  the engine's repository exists now for its plans (Nick, 2026-10-14),
+  and §8 moves the code once the carve is done.
 - **Keep one product; never split** — simplest, but loses Nick's goal,
   and the game's generic parts stay tangled with its rules (the closed
   `Action`, the game-wired `Ctx`), which already costs us in tests.
@@ -225,7 +251,7 @@ engine PR first, then a game PR that moves the pin.
   means rewriting `ui` and `app` around an ECS, the reasons ADR-0003 gave
   (compile times, WASM size) still hold, and our edge (state as plain
   data, a text-snapshot Harness, `frame-png`, a deterministic core) is
-  harder to keep in an ECS world. A Bevy backend for `engine-app` stays
+  harder to keep in an ECS world. A Bevy backend for `shuyi-app` stays
   possible later because the platform shell is thin.
 - **Port the game to Godot and build tools for Godot instead** — a
   rewrite of ~180k lines, loses the Rust test and mutation gates, and
