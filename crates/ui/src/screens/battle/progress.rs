@@ -24,6 +24,7 @@
 use std::collections::BTreeMap;
 
 use trpg_content::Portrait;
+use trpg_core::lead::LeadProfile;
 use trpg_core::progression::EXP_PER_LEVEL;
 use trpg_core::{
     BattleState, ClassId, ClassLevel, ClassTable, Event, Faction, ItemTable, Level, SkillTable,
@@ -623,22 +624,42 @@ pub fn class_line(words: Words<'_>, page: &ClassPage) -> String {
     }
 }
 
+/// The portrait of the character `id`: the lead's id stands for the
+/// portrait of the gender the player picked.
+fn portrait_of<'a>(
+    portraits: &'a BTreeMap<String, Portrait>,
+    lead: &LeadProfile,
+    id: Option<&str>,
+) -> Option<&'a Portrait> {
+    portraits.get(lead.portrait_for(id?))
+}
+
+/// Whether `buf` draws a picture of the portrait of `id` (any of its
+/// expressions): for tests of whose face a page shows.
+#[cfg(test)]
+pub(crate) fn shows_face_of(buf: &GlyphBuffer, ctx: &Ctx, id: &str) -> bool {
+    let portrait = &ctx.content.portraits[id];
+    buf.sprites()
+        .iter()
+        .any(|s| portrait.expressions.iter().any(|e| e.image == s.image))
+}
+
 /// Draws the page on screen.
 pub fn draw(
     buf: &mut GlyphBuffer,
     (palette, words): (&Palette, Words<'_>),
-    portraits: &BTreeMap<String, Portrait>,
+    (portraits, lead): (&BTreeMap<String, Portrait>, &LeadProfile),
     progress: &Progress,
 ) {
     let look = (palette, words);
     match progress.page() {
         Some(Page::Exp(p)) => draw_exp(buf, look, p, progress.exp_shown().unwrap_or(p.from)),
         Some(Page::LevelUp(p)) => {
-            let portrait = p.character.as_ref().and_then(|c| portraits.get(c));
+            let portrait = portrait_of(portraits, lead, p.character.as_deref());
             draw_level_up(buf, look, p, portrait, progress.stats_shown());
         }
         Some(Page::Promotion(p)) => {
-            let portrait = p.character.as_ref().and_then(|c| portraits.get(c));
+            let portrait = portrait_of(portraits, lead, p.character.as_deref());
             draw_promotion(buf, look, p, portrait, progress.stats_shown());
         }
         Some(Page::Class(p)) => draw_class(buf, look, p),
@@ -875,6 +896,38 @@ mod tests {
     use crate::screens::battle::quick_battle;
 
     const T: ProgressTimings = PROGRESS_TIMINGS;
+
+    #[test]
+    fn the_leads_pages_show_the_portrait_of_their_gender() {
+        use trpg_core::lead::{LEAD_ID, LeadGender};
+        let portraits: BTreeMap<String, Portrait> = ["lead_m", "lead_f", "test_lord"]
+            .iter()
+            .map(|id| {
+                let p = Portrait {
+                    character: (*id).into(),
+                    expressions: vec![],
+                };
+                ((*id).to_string(), p)
+            })
+            .collect();
+        let shown = |gender, id: Option<&str>| {
+            portrait_of(&portraits, &LeadProfile::new("Ren", gender), id)
+                .map(|p| p.character.clone())
+        };
+        assert_eq!(
+            shown(LeadGender::Male, Some(LEAD_ID)).as_deref(),
+            Some("lead_m")
+        );
+        assert_eq!(
+            shown(LeadGender::Female, Some(LEAD_ID)).as_deref(),
+            Some("lead_f")
+        );
+        assert_eq!(
+            shown(LeadGender::Male, Some("test_lord")).as_deref(),
+            Some("test_lord")
+        );
+        assert_eq!(shown(LeadGender::Male, None), None);
+    }
 
     fn state() -> BattleState {
         quick_battle(&ctx().content).unwrap()

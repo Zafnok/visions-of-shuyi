@@ -34,6 +34,33 @@ fn shows(buf: &GlyphBuffer, text: &str) -> bool {
 }
 
 #[test]
+fn the_leads_level_up_page_shows_the_face_the_player_picked() {
+    use crate::screens::battle::progress::shows_face_of;
+    use trpg_core::CharacterId;
+    use trpg_core::lead::{LEAD_ID, LeadGender, LeadProfile};
+    for (gender, face) in [(LeadGender::Male, "lead_m"), (LeadGender::Female, "lead_f")] {
+        let st = state();
+        let mut rewards = rewards(&st);
+        rewards.deployed[0].character = Some(CharacterId(LEAD_ID.into()));
+        let mut s = ResultsScreen::new(&rewards, (&st, Words::ENGLISH), 3, 1500);
+        press(&mut s, Action::Confirm);
+        press(&mut s, Action::Confirm);
+        let mut c = ctx();
+        c.lead = LeadProfile::new("Ren", gender);
+        let blank = Cell::new(
+            '?',
+            c.palette.get(UiColor::Text),
+            c.palette.get(UiColor::Text),
+        );
+        let mut buf = GlyphBuffer::new(100, 32, blank);
+        s.draw(&c, &mut buf);
+        assert!(shows(&buf, "LEVEL UP!"));
+        assert!(shows_face_of(&buf, &c, face), "{face}");
+        assert!(!shows_face_of(&buf, &c, "test_lord"));
+    }
+}
+
+#[test]
 fn the_level_up_page_is_moved_from_the_map_view_to_the_middle_of_the_screen() {
     let mut s = screen();
     press(&mut s, Action::Confirm);

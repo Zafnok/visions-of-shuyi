@@ -157,6 +157,31 @@ fn a_level_up_fills_the_bar_then_shows_the_events_numbers() {
     });
 }
 
+/// The skirmish with the lord made the lead (`LEAD_ID`) and the lead the
+/// player made of `gender`: the level-up page shows the face of that
+/// gender, not the lord's and not the placeholder (ticket 0607).
+#[test]
+fn the_leads_level_up_page_shows_the_face_the_player_picked() {
+    use trpg_core::CharacterId;
+    use trpg_core::lead::{LEAD_ID, LeadGender, LeadProfile};
+    for (gender, face) in [(LeadGender::Male, "lead_m"), (LeadGender::Female, "lead_f")] {
+        let c = ctx();
+        let mut state = skirmish(&c, 99, None);
+        let mut units = state.units().to_vec();
+        units[0].character = Some(CharacterId(LEAD_ID.into()));
+        let (map, _) = quick_units(&c);
+        state = battle(&c, map, units);
+        let mut h = attacked(state);
+        h.ctx_mut().lead = LeadProfile::new("Ren", gender);
+        h.wait(EXP_S + 2.0);
+        assert!(shows(&h, "LEVEL UP!"));
+        let ctx = h.game().ctx();
+        let buf = h.game().buffer();
+        assert!(super::progress::shows_face_of(buf, ctx, face), "{face}");
+        assert!(!super::progress::shows_face_of(buf, ctx, "test_lord"));
+    }
+}
+
 /// Presses each action in its own frame, then lets `wait` seconds pass.
 fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action], wait: f32) {
     for &a in actions {

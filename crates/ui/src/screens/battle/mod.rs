@@ -2210,7 +2210,7 @@ impl Screen for BattleScreen {
         }
         if let Some(p) = self.progress() {
             let look = (&ctx.palette, ctx.words());
-            progress::draw(buf, look, &ctx.content.portraits, p);
+            progress::draw(buf, look, (&ctx.content.portraits, &ctx.lead), p);
         }
         self.draw_panel(ctx, buf);
         if let Some(view) = &stage {

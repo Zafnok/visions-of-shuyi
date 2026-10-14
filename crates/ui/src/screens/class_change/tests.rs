@@ -298,6 +298,23 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
 }
 
 #[test]
+fn the_leads_promotion_page_shows_the_face_the_player_picked() {
+    use crate::screens::battle::progress::shows_face_of;
+    use trpg_core::lead::{LEAD_ID, LeadGender, LeadProfile};
+    for (gender, face) in [(LeadGender::Male, "lead_m"), (LeadGender::Female, "lead_f")] {
+        let mut c = ctx();
+        c.lead = LeadProfile::new("Ren", gender);
+        let mut s = demo(&c, ChangeKind::Promote);
+        s.unit.character = Some(CharacterId(LEAD_ID.into()));
+        step(&mut s, &mut c, &[Confirm, Confirm]);
+        let buf = render(&s, &c);
+        assert_eq!(text(&buf, 43, 7, 20), "PROMOTED!");
+        assert!(shows_face_of(&buf, &c, face), "{face}");
+        assert!(!shows_face_of(&buf, &c, "test_knight"));
+    }
+}
+
+#[test]
 fn the_pages_play_by_themselves_and_holding_confirm_speeds_them_up() {
     let mut c = ctx();
     let mut s = demo(&c, ChangeKind::Promote);
