@@ -107,6 +107,24 @@ pub enum LayerMap {
         #[serde(default)]
         sides: BTreeMap<String, TileRef>,
     },
+    /// A picture on each tile, joined from a block of a sheet: nine tiles,
+    /// three by three, of a patch of the terrain with its edge on every
+    /// side (ticket 0452). Each quarter of a tile is the same quarter of
+    /// the block's tile for whether the tile's neighbours that way are in
+    /// the layer: a tile with no neighbour of the layer above has the top
+    /// edge, one alone has the edge all round. So the patch's edge, inside
+    /// its tiles, is drawn on the tiles where the terrain ends.
+    Block {
+        /// Our terrains that get it.
+        of: Vec<String>,
+        /// The bought sheet.
+        sheet: String,
+        /// The block's top-left tile.
+        block: u32,
+        /// A palette colour to recolour it in, as for `Corners`.
+        #[serde(default)]
+        tint: String,
+    },
 }
 
 const fn yes() -> bool {
@@ -355,13 +373,53 @@ pub fn tint(pixels: &mut [u8], color: [u8; 3]) {
     }
 }
 
+/// Which picture of a sheet a cell of the packed image is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Cut {
+    /// One tile, by its id.
+    Tile(u32),
+    /// A tile joined from a block's quarters ([`LayerMap::Block`]): the
+    /// block's top-left tile, and the mix of sides (up, right, down,
+    /// left) where the terrain ends.
+    Joined { block: u32, ends: u8 },
+}
+
+/// A tile joined from the quarters of the block of `sheet` whose top-left
+/// tile is `block`, for a tile whose terrain ends on the mix of sides
+/// `ends` (up, right, down, left): RGBA8, row by row.
+fn joined(sheet: &Sheet, block: u32, ends: u8) -> Result<Vec<u8>, String> {
+    if block % sheet.tsx.columns + 3 > sheet.tsx.columns {
+        return Err(format!(
+            "the block from tile {block} runs past the image's right edge"
+        ));
+    }
+    let [up, right, down, left] = [8, 4, 2, 1].map(|bit| ends & bit != 0);
+    // The block's row for the tile's top and bottom half, and its column
+    // for the left and right half.
+    let rows = [u32::from(!up), if down { 2 } else { 1 }];
+    let columns = [u32::from(!left), if right { 2 } else { 1 }];
+    let half = usize::try_from(TILE / 2).unwrap_or(0);
+    let line = usize::try_from(TILE * 4).unwrap_or(0);
+    let mut out = vec![0; line * half * 2];
+    for (qy, row) in rows.into_iter().enumerate() {
+        for (qx, column) in columns.into_iter().enumerate() {
+            let tile = sheet.tile(block + row * sheet.tsx.columns + column)?;
+            for y in qy * half..(qy + 1) * half {
+                let at = y * line + qx * half * 4;
+                out[at..at + half * 4].copy_from_slice(&tile[at..at + half * 4]);
+            }
+        }
+    }
+    Ok(out)
+}
+
 /// The packed image being made: each bought tile the mapping uses, once.
 struct Packer<'a> {
     dir: &'a Path,
     colors: &'a dyn Fn(&str) -> Option<[u8; 3]>,
     sheets: BTreeMap<String, Sheet>,
-    /// The sheet, tile and tint of each cell, in the image's order.
-    cells: Vec<(String, u32, String)>,
+    /// The sheet, picture and tint of each cell, in the image's order.
+    cells: Vec<(String, Cut, String)>,
     /// The cells' pixels, in the same order.
     pixels: Vec<Vec<u8>>,
 }
@@ -380,13 +438,24 @@ impl Packer<'_> {
     /// `tint_name` (empty: as it is), is in the packed image; packed now
     /// if it wasn't.
     fn cell(&mut self, sheet: &str, tile: u32, tint_name: &str) -> Result<At, String> {
-        let key = (sheet.to_owned(), tile, tint_name.to_owned());
+        self.packed(sheet, Cut::Tile(tile), tint_name)
+    }
+
+    /// Where picture `cut` of sheet `sheet`, recoloured in the palette's
+    /// `tint_name` (empty: as it is), is in the packed image; packed now
+    /// if it wasn't.
+    fn packed(&mut self, sheet: &str, cut: Cut, tint_name: &str) -> Result<At, String> {
+        let key = (sheet.to_owned(), cut, tint_name.to_owned());
         let packed = self.cells.iter().position(|cell| *cell == key);
         let index = if let Some(index) = packed {
             index
         } else {
-            let cut = self.sheet(sheet)?.tile(tile);
-            let mut pixels = cut.map_err(|e| format!("{sheet}: {e}"))?;
+            let source = self.sheet(sheet)?;
+            let pixels = match cut {
+                Cut::Tile(tile) => source.tile(tile),
+                Cut::Joined { block, ends } => joined(source, block, ends),
+            };
+            let mut pixels = pixels.map_err(|e| format!("{sheet}: {e}"))?;
             if !tint_name.is_empty() {
                 let color = (self.colors)(tint_name)
                     .ok_or_else(|| format!("no palette colour \"{tint_name}\""))?;
@@ -431,7 +500,8 @@ pub struct Imported {
 }
 
 /// One layer of the mapping as the tileset file has it, its tiles packed.
-fn layer(packer: &mut Packer, layer: &LayerMap) -> Result<LayerText, String> {
+/// `terrains` are ours, by id.
+fn layer(packer: &mut Packer, layer: &LayerMap, terrains: &[String]) -> Result<LayerText, String> {
     match layer {
         LayerMap::Corners {
             of,
@@ -481,6 +551,37 @@ fn layer(packer: &mut Packer, layer: &LayerMap) -> Result<LayerText, String> {
                 sides: pictures,
             })
         }
+        LayerMap::Block {
+            of,
+            sheet,
+            block,
+            tint,
+        } => {
+            let mut join = |ends| {
+                packer.packed(
+                    sheet,
+                    Cut::Joined {
+                        block: *block,
+                        ends,
+                    },
+                    tint,
+                )
+            };
+            // Where the terrain ends on no side: the block's middle.
+            let at = join(0)?;
+            let mut sides = Vec::new();
+            for ends in 1..16 {
+                sides.push((ends, join(ends)?));
+            }
+            // The terrain ends on a side whose neighbour is any other.
+            let beside = terrains.iter().filter(|id| !of.contains(id)).cloned();
+            Ok(LayerText::Tiles {
+                of: of.clone(),
+                at,
+                beside: beside.collect(),
+                sides,
+            })
+        }
     }
 }
 
@@ -507,7 +608,9 @@ pub fn check(mapping: &Mapping, terrains: &[String]) -> Result<(), String> {
     for (name, layer) in &mapping.layers {
         let what = format!("layer \"{name}\"");
         match layer {
-            LayerMap::Corners { of, .. } => known(&what, of, terrains)?,
+            LayerMap::Corners { of, .. } | LayerMap::Block { of, .. } => {
+                known(&what, of, terrains)?;
+            }
             LayerMap::Tiles {
                 of, beside, sides, ..
             } => {
@@ -582,7 +685,7 @@ pub fn import(
         for layer_name in &look.layers {
             let map = mapping.layers.get(layer_name);
             let map = map.ok_or_else(|| format!("{what}: no layer \"{layer_name}\""))?;
-            let made = layer(&mut packer, map);
+            let made = layer(&mut packer, map, terrains);
             text.layers
                 .push(made.map_err(|e| format!("layer \"{layer_name}\": {e}"))?);
         }
@@ -653,6 +756,9 @@ pub fn list(mapping: &Mapping) -> String {
                 Some(LayerMap::Tiles { of, tile: at, .. }) => {
                     format!("on {}: {}", of.join(", "), tile(at))
                 }
+                Some(LayerMap::Block {
+                    of, sheet, block, ..
+                }) => format!("on {}: {sheet} block from tile {block}", of.join(", ")),
                 None => "(no such layer)".to_owned(),
             };
             let _ = writeln!(out, "  layer {layer_name:<10} {described}");
