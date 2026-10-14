@@ -27,7 +27,9 @@ tickets/
 | `07xx` | M6 Story & dialogue | Story bible, dialogue engine, portraits, Chapter 1 script |
 | `08xx` | M7 Chapter 1 & game flow | Flow, save/load, Chapter 1 map, playtest, options |
 | `09xx` | M8 Release | itch.io, Windows polish, Steam |
-| `10xx`+ | Post–Chapter 1 | Created as needed |
+| `10xx` | Post–Chapter 1 | Created as needed |
+| `11xx` | **The engine** | Shuyi Engine, the open-source engine split from the game ([ADR-0063](../docs/adr/0063-an-engine-and-a-game-one-boundary-now-two-repositories-later.md), [`docs/engine/`](../docs/engine/README.md)). Here: 1101 (the study), 1102–1118 (the carve), 1131 (the code moves). 1119–1129, 1132–1135 and 1140–1150 moved to the [engine's repository](https://github.com/Zafnok/shuyi-engine/tree/main/tickets) with their numbers. Never on the Chapter 1 critical path |
+| `12xx`+ | Later | Created as needed |
 
 New tickets (including bugs) take the next free number in their block. Numbers
 are never reused.

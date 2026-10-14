@@ -43,6 +43,20 @@ deterministic (ADR-0004, ADR-0019), so a match is its start plus a list of
 commands. Two machines only send each other moves (lockstep), never game
 state, and a replay is free.
 
+**The engine's networking (added by 1101, 2026-10-14).** engine ADR-0006 plans
+networking as engine layers, built as engine work and never in front of
+the game: an in-memory network and lockstep (1140), a relay server with
+room codes (1141), the browser through our own JS plugin (1142), LAN
+play (1143), Steam lobbies and relayed P2P (1144), sessions and a lobby
+screen (1145), a referee server that holds the seed and the fog for
+ranked play (1146), real-time rollback (1147), accounts, matchmaking and
+Glicko-2 ratings (1148), and chat channels with moderation tools (1149).
+Use it in the comparison: it changes the size of each option (for
+example, live PvP over lockstep and the relay is a few game tickets once
+1140–1145 exist; ranked play needs 1146 and 1148 and a server we run).
+Global chat is a decision about moderation and legal duties
+(engine ADR-0006 §8, 1150), so add it as a question if Nick wants chat at all.
+
 What Steam gives (Nick: "doesn't steam provide servers somehow"), as told
 to him on 2026-10-05; **re-check against Valve's Steamworks documentation
 on the day**:
