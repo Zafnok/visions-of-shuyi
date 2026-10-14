@@ -1,5 +1,6 @@
 //! The glyph look of a [`Menu`](super::Menu): paints a [`MenuView`] as a
-//! single-line box of text rows with the focused one as a bar. Everything
+//! single-line box of text rows with the focused one as a bar and, when
+//! its items have notes, the focused item's note under a rule. Everything
 //! about the look lives here; nothing here decides what the menu shows.
 //! Another look is another `paint` of the same view (ADR-0054).
 
@@ -16,21 +17,41 @@ fn width(item: &MenuItemView) -> usize {
     item.label.chars().count() + suffix
 }
 
-/// Box size in cells: the widest label plus a space and a border on each
-/// side, by one row per item plus the border.
+/// Cells the note of `item` takes.
+fn note_width(item: &MenuItemView) -> usize {
+    item.note.as_ref().map_or(0, |n| n.chars().count())
+}
+
+/// Whether the menu has a note row: some item has a note.
+fn has_notes(view: &MenuView) -> bool {
+    view.items.iter().any(|i| i.note.is_some())
+}
+
+/// Box size in cells: the widest label (or note, so the box keeps its
+/// width as the focus moves) plus a space and a border on each side, by
+/// one row per item plus the border, and a rule and a note row if any
+/// item has a note.
 pub fn size(view: &MenuView) -> (i32, i32) {
-    let widest = view.items.iter().map(width).max().unwrap_or(0);
+    let widest = view
+        .items
+        .iter()
+        .map(|i| width(i).max(note_width(i)))
+        .max()
+        .unwrap_or(0);
     let w = i32::try_from(widest).unwrap_or(i32::MAX).saturating_add(4);
+    let notes = if has_notes(view) { 2 } else { 0 };
     let h = i32::try_from(view.items.len())
         .unwrap_or(i32::MAX)
-        .saturating_add(2);
+        .saturating_add(2 + notes);
     (w, h)
 }
 
 /// Paints `view` with its top-left corner at `(x, y)`: a `panel_bg` box
 /// with a `panel_border` single line, items in `text`, disabled ones in
 /// `text_dim`, and the focused one as a bar of `panel_bg` text on
-/// `panel_border_focus`.
+/// `panel_border_focus` (on `panel_border` for a disabled one: a menu that
+/// browses disabled items). Under the items, if any has a note: a
+/// `panel_border` rule and the focused item's note in `text`.
 pub fn paint(palette: &Palette, view: &MenuView, buf: &mut GlyphBuffer, x: i32, y: i32) {
     let color = |u| palette.get(u);
     let bg = color(UiColor::PanelBg);
@@ -40,7 +61,8 @@ pub fn paint(palette: &Palette, view: &MenuView, buf: &mut GlyphBuffer, x: i32, 
     buf.draw_box(rect, BoxStyle::Single, color(UiColor::PanelBorder), bg);
     for (row, item) in (y + 1..).zip(&view.items) {
         let (fg, row_bg) = match (item.focused, item.enabled) {
-            (_, false) => (color(UiColor::TextDim), bg),
+            (true, false) => (bg, color(UiColor::PanelBorder)),
+            (false, false) => (color(UiColor::TextDim), bg),
             (true, true) => (bg, color(UiColor::PanelBorderFocus)),
             (false, true) => (color(UiColor::Text), bg),
         };
@@ -49,12 +71,22 @@ pub fn paint(palette: &Palette, view: &MenuView, buf: &mut GlyphBuffer, x: i32, 
         if let Some((text, suffix_color)) = &item.suffix {
             let at = x + 3 + i32::try_from(item.label.chars().count()).unwrap_or(0);
             // On the focus bar the colour would vanish: keep the bar's.
-            let fg = if item.focused && item.enabled {
+            let fg = if item.focused {
                 fg
             } else {
                 color(*suffix_color)
             };
             buf.print(at, row, text, fg, row_bg);
+        }
+    }
+    if has_notes(view) {
+        let rule = y + h - 3;
+        let border = color(UiColor::PanelBorder);
+        buf.fill_rect(Rect::new(x + 1, rule, w - 2, 1), Cell::new('─', border, bg));
+        buf.set(x, rule, Cell::new('├', border, bg));
+        buf.set(x + w - 1, rule, Cell::new('┤', border, bg));
+        if let Some(note) = view.focused().and_then(|i| i.note.as_ref()) {
+            buf.print(x + 2, rule + 1, note, color(UiColor::Text), bg);
         }
     }
 }
@@ -68,6 +100,7 @@ mod tests {
         MenuItemView {
             label: label.to_owned(),
             suffix: None,
+            note: None,
             enabled,
             focused,
         }
@@ -137,6 +170,51 @@ mod tests {
         assert_eq!(at(3, 2).fg, p.get(UiColor::Text));
         assert_eq!(at(3, 3).fg, p.get(UiColor::TextDim));
         assert_ne!(at(3, 3).bg, bar);
+    }
+
+    #[test]
+    fn the_focused_items_note_shows_under_a_rule_at_the_widest_notes_width() {
+        let mut brace = item("Brace", true, true);
+        brace.note = Some("self: Def +5".to_owned());
+        let mut shove = item("Shove", false, false);
+        shove.note = Some("push 1 tile, 5 on impact".to_owned());
+        let view = MenuView {
+            items: vec![brace, shove],
+        };
+        // As wide as the longest note, whichever item has the focus.
+        assert_eq!(size(&view), (28, 6));
+        let (buf, p) = painted(&view);
+        assert_eq!(row(&buf, 4).trim(), "├──────────────────────────┤");
+        assert_eq!(row(&buf, 5).trim(), "│ self: Def +5             │");
+        assert_eq!(row(&buf, 6).trim(), "└──────────────────────────┘");
+        assert_eq!(buf.get(3, 5).unwrap().fg, p.get(UiColor::Text));
+    }
+
+    #[test]
+    fn a_focused_disabled_item_is_a_muted_bar_with_its_note() {
+        let mut brace = item("Brace", true, false);
+        brace.note = Some("self".to_owned());
+        let mut shove = item("Shove", false, true);
+        shove.note = Some("push".to_owned());
+        shove.suffix = Some(("no uses left".to_owned(), UiColor::HpLow));
+        let view = MenuView {
+            items: vec![brace, shove],
+        };
+        let (buf, p) = painted(&view);
+        let at = |x, y| *buf.get(x, y).unwrap();
+        assert_eq!(at(2, 3).bg, p.get(UiColor::PanelBorder));
+        assert_eq!(at(3, 3).fg, p.get(UiColor::PanelBg));
+        // The reason takes the bar's colour too.
+        assert_eq!(at(9, 3).fg, p.get(UiColor::PanelBg));
+        assert_eq!(row(&buf, 5).trim(), "│ push               │");
+    }
+
+    #[test]
+    fn a_menu_without_notes_has_no_rule() {
+        let view = MenuView {
+            items: vec![item("Wait", true, true)],
+        };
+        assert_eq!(size(&view), (8, 3));
     }
 
     #[test]

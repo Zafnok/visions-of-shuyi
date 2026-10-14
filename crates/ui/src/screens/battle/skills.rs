@@ -377,7 +377,9 @@ fn menu_line(
 
 /// The `Skill` menu: each skill with its uses left this battle,
 /// `Brace     3/3`. Unusable lines are dimmed, with the reason after one
-/// that can't be paid for (`no uses left`).
+/// that can't be paid for (`no uses left`). The focused line's effect
+/// shows under the list (ticket 0429), dimmed lines too: the focus stops
+/// on them.
 pub fn skill_menu(
     state: &BattleState,
     words: Words<'_>,
@@ -401,16 +403,18 @@ pub fn skill_menu(
                 uses_left(state, unit, &c.skill),
                 weapon,
             );
-            match (&c.reason, c.usable) {
+            let item = match (&c.reason, c.usable) {
                 (_, true) => MenuItem::new(text),
                 (Some(why), false) => {
                     MenuItem::disabled(text).with_suffix(format!(" {why}"), UiColor::HpLow)
                 }
                 (None, false) => MenuItem::disabled(text),
-            }
+            };
+            let skill = state.skills().get(&c.skill);
+            item.with_note(skill.map(|s| effect_text(words, s)).unwrap_or_default())
         })
         .collect();
-    Menu::new(items)
+    Menu::new(items).browsing_disabled()
 }
 
 /// Picking who a skill (Shove) is used on.
@@ -711,6 +715,8 @@ mod tests {
         for skill in c.content.skills.skills.values() {
             let text = effect_text(Words::ENGLISH, skill);
             assert!(!text.is_empty(), "{} has no text", skill.id.0);
+            // Short enough for the line under a menu (ticket 0429).
+            assert!(text.chars().count() <= 40, "{}: {text}", skill.id.0);
         }
     }
 

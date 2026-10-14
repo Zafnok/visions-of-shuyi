@@ -1,4 +1,4 @@
-# Chapter 1: The Letter (ticket 0707).
+# Chapter 1: The Letter (ticket 0707; reworked scene by scene in 0728).
 # Beat sheet: docs/story/chapters/ch01.md. Continuity: docs/story/ledger.md.
 #
 # Scene ids, as chapters/ch01.ron and battles/ch01.ron wire them (0803):
@@ -24,13 +24,20 @@
 #     ch01_tbc
 #
 # The lead has three reply choices: one each in ch01_intro, ch01_prebattle
-# and ch01_victory. Aske counts fourteen men in the fort: the map's enemy
-# count should not contradict it (chapter-1.md allows 12-14 and the boss).
+# and ch01_victory. Aske counts fourteen men in the fort, three of them
+# with bows: the map's enemy count should not contradict it (chapter-1.md:
+# thirteen soldiers, three of them Archers, and the boss).
 #
-# Tone (0724; docs/design/setting-and-tone.md, "Where the jokes go"): the
-# opening and the battle are played straight. Nobody jokes in ch01_intro,
-# ch01_prebattle or a battle scene, except briefly in answer to the lead's
-# wry reply. ch01_victory has one light moment (the eleven arrows).
+# The title cinematic (assets/cinematics/title.ron) shows the first three
+# boxes of ch01_intro (the opening captions) and the first box of
+# ch01_prebattle (Tamsin's news). Keep those boxes first.
+#
+# Tone (0724, 0728; docs/design/setting-and-tone.md, "Where the jokes go"):
+# the opening and the battle are played straight. Nobody jokes in
+# ch01_intro, ch01_prebattle or a battle scene, except briefly in answer to
+# the lead's wry reply. Serious is not flat: a line gives its speaker's
+# angle on a fact, not only the fact. ch01_victory has one light moment
+# (the eleven arrows).
 #
 # A companion who fell in Classic is gone (0716; @if blocks, 0715,
 # ADR-0055). ch01_victory plays without any of the five, and without all
@@ -44,6 +51,11 @@
 # Before the battle
 # ---------------------------------------------------------------------------
 
+# Hollis has had the letter in his coat all night. He drilled the lead at
+# dawn anyway, because it is what they do, and because he wanted one more
+# ordinary morning before he handed it over. The lead disarms him for the
+# first time on the worst morning in four years.
+
 @scene ch01_intro
 @music village_home
 > Three years after {n:event.ash_peace}.
@@ -54,18 +66,22 @@
 @right retainer neutral
 > Dawn, in the yard behind a rented house. Two practice swords crack
   together, wood on wood, as they have every morning for four years.
-retainer: Guard up, {n:family.veyne}. Higher. Keep it there.
+retainer: Guard up, {n:family.veyne}. Higher. It drops when you're tired.
+  Don't let it.
 lead: Again.
-> Three strokes. The fourth takes the old man's sword out of his hand.
-retainer[surprised]: ...Good. That's the first time you've taken it out of
-  my hand.
-retainer[sad]: Leave it. Sit down, kid. A peddler left this last night. No
-  seal, no name. I know the handwriting. So will you.
+> Three strokes. On the fourth, the old man's sword is lying in the dirt
+  between them.
+retainer[surprised]: ...Good. That's good. Four years I've been waiting for
+  you to do that.
+retainer[sad]: Leave it where it is. Sit down, kid. There's something in my
+  coat that I've spent all morning not giving you.
+retainer: A peddler left it last night. No seal, no name. It didn't need
+  one. I'd know that handwriting anywhere, and so will you.
 > "Leave the march. Tonight. They are coming for everyone who was there
   that night. Burn this."
 lead: {n:rival.first}.
-retainer: Four years, and not a word. Not to you. Not to his own father.
-  Then that.
+retainer: Four years. Not a line to you. Not one to his own father. And
+  when he finally writes, it's that.
 @choice
 * earnest: He's warning us. He still cares, {n:retainer.first}.
   retainer[sad]: Aye. That's what worries me.
@@ -73,8 +89,8 @@ retainer: Four years, and not a word. Not to you. Not to his own father.
   retainer[happy]: Ha. He never did write unless he needed something.
   retainer[sad]: I'd take four more years of quiet over this.
 * blunt: What does he want?
-  retainer[angry]: Us gone, by the look of it. What I'd ask is who's
-    coming, and how he knows.
+  retainer[angry]: Us gone, by the look of it. What I'd ask him is who's
+    coming. And how he knows.
 @endchoice
 retainer[sad]: "Everyone who was there." That's you. That's me. That's
   him. And my girl, and she's past anyone coming for her.
@@ -82,24 +98,32 @@ retainer[sad]: "Everyone who was there." That's you. That's me. That's
   his coat.
 > Hooves on the ford road, coming hard.
 retainer[neutral]: That's the sergeant. She doesn't ride like that for good
-  news.
+  news. Get your coat.
 @end
+
+# The green. Everyone comes in with the thing they noticed: Tamsin the
+# price and the thumb over the seal, Maud the words "burned hands", Rue
+# the eyes on her, Aske the arrows and the deer. Hollis says nothing until
+# he has steel in his hands.
 
 @scene ch01_prebattle
 @caption The green, {n:place.harrowby}
 @music dungeon_tense
 @left  retainer neutral
 @right sergeant angry
-sergeant: Captain! Your Former Grace! {N:red_captain.nickname} took the
-  toll-fort in the night, with his whole company. I rode up to ask why. He
-  offered me my old job back.
+sergeant: Captain. Your Former Grace. {N:red_captain.nickname} is in the
+  toll-fort with the whole company. I rode up to the gate to ask him what
+  he wanted here. He asked me if I wanted my old job back.
 @left keeper surprised
-keeper: Sergeant! We heard the horse from the chapel. Is someone hurt? I've
-  brought bandages, and {n:heretic} to help me carry them.
+keeper: Sergeant? We heard the horse from the chapel. Nobody rides onto the
+  green like that unless someone is hurt. I've brought bandages, and
+  {n:heretic} to carry the rest.
 sergeant[neutral]: Nobody's hurt yet, Keeper. He showed me a paper with a
-  lord's seal on it, and kept his thumb over the seal. It names three
-  people, and a price for each.
-sergeant: "The exile, the old man, and the girl with the burned hands."
+  lord's seal on it. His thumb stayed over the seal the whole time I was
+  reading.
+sergeant: Three people on it, and a price by each that would feed his
+  company till spring. No names. "The exile, the old man, and the girl
+  with the burned hands."
 keeper: Burned... but I only asked them to... Oh. Oh, {n:god.mother.name}.
 @right heretic angry
 heretic: What? What's everyone looking at? They're hands. And don't you
@@ -110,15 +134,17 @@ heretic: What? What's everyone looking at? They're hands. And don't you
   rabbits.
 @left  poacher neutral
 @right sergeant neutral
-poacher: Fourteen men in the fort. I counted twice. Some have bows, and they
-  shoot badly.
-sergeant: That's what I saw too, {n:faction.brennmark.adj}. Why bring it to
-  us?
-poacher[angry]: Not for you. They killed three deer last night and left two
-  to rot, in my woods. I will help you, noble. Once. For the deer.
+poacher: Fourteen in the fort. I counted at dusk and again at first light.
+  Three have bows. Last night they shot at the deer from the wall. Many
+  arrows. Most of them hit nothing.
+sergeant: Fourteen is what I counted from the gate, too. Why bring it to
+  us, {n:faction.brennmark.adj}?
+poacher[angry]: Not to you. They killed three deer and carried off one. The
+  other two are lying in my woods for the crows. I will help you, noble.
+  Once. For the deer.
 @left  keeper sad
 @right heretic angry
-keeper: {N:heretic}, the chapel cellar bars from the inside. Please go
+keeper: {N:heretic}. The chapel cellar bars from the inside. Please go
   down. It is you they have come for.
 heretic: No. I've hidden in enough cellars. I'm sworn to fire, Keeper, and
   you know it. I can burn them. I'm fighting.
@@ -128,20 +154,20 @@ heretic: No. I've hidden in enough cellars. I'm sworn to fire, Keeper, and
   oilcloth. It has been under the floorboards since the day they came.
 retainer: Four years of wooden swords. This one cuts. So will theirs.
 > {lead} takes the sword. The terms of {their} exile forbid it.
-retainer[sad]: They've come for three of us. There are forty people between
-  here and that fort who never did a thing to anyone. Your call,
+retainer[sad]: That paper has three of us on it. Between here and that
+  fort there are forty people who aren't on any paper. Your call,
   {n:family.veyne}.
 @choice
 * earnest: We keep them away from the village.
   @right poacher neutral
-  poacher: The miller's wife buys my rabbits. She pays too much, on
-    purpose. Keep them away from her.
+  poacher: The miller's wife buys my rabbits. She pays me too much and
+    pretends she cannot count. Keep them away from her.
   @right sergeant neutral
 * wry: Only fourteen? I'm insulted.
   @right sergeant happy
   sergeant: Ha! Somebody had to say it.
-  sergeant[neutral]: Don't be. They were good soldiers once, and
-    {n:red_captain.first} still is.
+  sergeant[neutral]: Don't be. I rode with them. They were good soldiers
+    once, and {n:red_captain.first} still is.
 * blunt: We hit the fort first.
   @right heretic angry
   heretic: Giving orders already, heir? ...Fine. It's the right one.
@@ -159,7 +185,8 @@ lead: Let's move.
 
 @scene ch01_first_turn
 @left retainer neutral
-retainer: Stay close, kid. The first real one's always ugly.
+retainer: Stay close, kid. The first real one's always ugly. Guard up, and
+  let them come to us.
 @end
 
 # Harl's first fight. A scene written for him and one character replaces
@@ -235,9 +262,9 @@ retainer: Eyes front, {lead}. And if you ever see the boy again, tell
 
 @scene ch01_retreat_retainer
 @left retainer angry
-retainer: My leg's gone. I'm no use in the line like this. I'm falling back.
-retainer[neutral]: Guard up, {n:family.veyne}. Finish it. I'll be at the
-  house.
+retainer: Hnh. That's my leg. I'm no good to you in the line on one leg.
+retainer[neutral]: Guard up, {n:family.veyne}. Finish it, then come and
+  find me at the house.
 @end
 
 @scene ch01_death_sergeant
@@ -249,8 +276,8 @@ sergeant: Take the ledger off my belt, Your Former Grace. Four thousand, two
 
 @scene ch01_retreat_sergeant
 @left sergeant angry
-sergeant: I'm hit. I can't stay in the saddle like this.
-sergeant[neutral]: I'm out, Your Former Grace. Don't let any of them walk
+sergeant: That's a hole in me. I can't keep the saddle with it.
+sergeant[neutral]: I'm out, Your Former Grace. Don't let one of them walk
   away.
 @end
 
@@ -263,7 +290,7 @@ poacher[sad]: My silver is in my left boot. Send it north, noble. To my
 
 @scene ch01_retreat_poacher
 @left poacher angry
-poacher: I am hit. It is not deep, but I cannot draw the bow.
+poacher: I am hit. It is not deep. But I cannot draw the bow with this arm.
 poacher: I go back to the mill. Do not lose, noble.
 @end
 
@@ -276,8 +303,9 @@ keeper[sad]: {N:god.mother.name} keep you all. I did a thing this autumn,
 
 @scene ch01_retreat_keeper
 @left keeper surprised
-keeper: I'm hurt. I... yes. I can't heal anyone like this.
-keeper[sad]: I must withdraw. I'm sorry. {N:god.mother.name} keep you all.
+keeper: I'm hurt. I... oh. I can hardly stand, and I can't mend anyone
+  like this.
+keeper[sad]: I must go back. I'm sorry. {N:god.mother.name} keep you all.
 @end
 
 @scene ch01_death_heretic
@@ -290,8 +318,8 @@ heretic[sad]: Don't stare, heir. The Keeper's stove was warm. I should have
 
 @scene ch01_retreat_heretic
 @left heretic angry
-heretic: {N:god.pyre.name}'s teeth! I can't hold the fire steady. I'm
-  going.
+heretic: {N:god.pyre.name}'s teeth! I can't hold the fire. It's shaking in
+  my hands.
 heretic: Finish them, heir. All of them.
 @end
 
@@ -310,11 +338,11 @@ heretic: Finish them, heir. All of them.
 # without him too, the lead does.
 @if sergeant
 @right sergeant neutral
-sergeant: Payday, {n:red_captain.first}. I'll mark you in the ledger. Paid
-  in full.
+sergeant: Payday, {n:red_captain.first}. You go in the ledger with the rest
+  of them. Paid in full.
 > She doesn't smile. She crouches, closes his eyes with two fingers, and
   takes a folded paper from inside his vest.
-sergeant[sad]: ...Just a job. That's all it was.
+sergeant[sad]: He taught me to ride. ...It was a job. That's all it was.
 @right clear
 @else
 > {N:red_captain} lies where he fell. {N:sergeant.first}'s ledger is in

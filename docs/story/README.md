@@ -17,7 +17,7 @@ real arcs → outline → per-chapter beat sheets → scripts in `assets/dialogu
 | [`ledger.md`](ledger.md) | Continuity: what each character knows/did as of each chapter | 0701, updated by each script ticket | ✅ start of Chapter 1 · after Chapter 1 (0707) |
 
 Scripts themselves live in `assets/dialogue/*.dlg` (format: ticket 0702).
-Written so far: Chapter 1, `ch01.dlg` (0707).
+Written so far: Chapter 1, `ch01.dlg` (0707; played straight by 0724, reworked scene by scene by 0728).
 
 ## For a human writer
 

@@ -5,7 +5,7 @@ Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 0021; bought tiles and sprites on the battle map: 0038; walking sprites,
 effect marks, the glyph look as an option, busts in dialogue: 0039; which
 bought tiles each terrain is: 0437; threat arrows: 0055; the title
-screen: 0811)
+screen: 0811; descriptions in lists: 0429)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -168,6 +168,15 @@ Names, stats, weapons and the sample face in the screenshots are placeholders.
 > the glyph look too:] "I think glyph look should also have 14px hp bar
 > otherwise rest is good"
 
+Descriptions in lists (ticket 0429, 2026-10-14; shown four renders of the
+knight's `Skill` menu and the lord's `Arts` menu: A a strip inside the menu
+box, B a window under the list with the name in its border, C the help bar,
+D the side panel):
+
+> "A but with the more pronounced coloration of B. I don't like repeating
+> the skill name but white is easier to read" … [asked whether the cursor
+> should stop on greyed-out lines so they can be read:] "Stop on them"
+
 ## Rules
 
 ### Colour
@@ -324,8 +333,25 @@ so they aren't in this repository (ADR-0032).
 - **Tiles are joined from the terrain alone** (ticket 0437, ADR-0052): a
   shore, a road's edge and the outline of a wood are worked out from which
   tiles are which, and end exactly where their tiles end, so what is seen
-  is what the rules count. (The trees overhang their tile by a few
-  pixels, as the art is drawn.)
+  is what the rules count.
+- **A wood stops inside its own tiles** (decided 2026-10-14, ticket 0452,
+  after Chapter 1 playtest round 2). Nick saw the trees spill half a
+  tile onto the road and the grass, and chose from six renders (today's,
+  one tree per tile, one tree per tile on a dark floor, two other tree
+  masses, and the trees cut off at the forest's tiles). His words: "C and
+  D look better but the thing is D is clipped too aggressively, it would
+  be better if the forest, rather than A and C overflowing, it
+  underflowed, so just take the half trees out of D and it will still
+  occupy the tiles it needs to without visually confusing anybody."
+  So the trees are drawn only on the forest's tiles, and the wood's edge
+  is a row of whole trees a few pixels inside them: no tree is cut in
+  half and none stands on the road or the grass beside it. A forest tile
+  alone is a small clump of whole trees in the middle of its tile.
+  Thicket, burnt and burning trees are drawn the same way (*Claude's
+  starting rule*: the same problem, the same art layout; say if they
+  should differ). Where a wood turns a corner inward (forest above and
+  beside a tile but not on the diagonal), the trees run on to the corner
+  of the tile (*Claude's starting rule*).
 - **What the bought-art maps don't have** (each its own ticket if Nick
   wants it): the bundle's castles, towns and houses bigger than one tile;
   moving water and waterfalls (one still frame is used); hand-placed
@@ -1047,6 +1073,37 @@ top and the words under it):
   - `GAME OVER` is a picture, like the logo
     (`assets-src/title/game_over.txt`), so it reads the same in every
     language until a language brings its own (ticket 0831).
+
+### Descriptions in lists
+
+Decided 2026-10-14 (ticket 0429). When you move the cursor over a line of
+a list where you choose what a unit does, the menu box tells you what that
+line does, on its own row under the list:
+
+```
+┌─ Iron Sword 20/20 ─────────────┐
+│ Flowing Cut     −2 dur  E      │
+│ Guard Break     −4 dur  D      │   ← the cursor is here
+├────────────────────────────────┤
+│ +10 hit; no counter            │
+└────────────────────────────────┘
+```
+
+- The row is inside the same box, under a rule, and changes as the cursor
+  moves. The name isn't repeated there: only what it does, in the normal
+  (white) text colour.
+- The box is as wide as its longest line or description, so it doesn't
+  change size as the cursor moves.
+- **Greyed-out lines can be read too:** the cursor stops on a line you
+  can't use right now (`no uses left`, `out of range`, `broken`), shown as
+  a dimmer bar, and its description shows. Pressing confirm on it does
+  nothing. Example: the knight has spent all 3 Braces; the cursor can
+  still go to `Brace  0/3  no uses left` and read `self: Def +5 Res +5`.
+- The text is built from the game's own numbers (`+10 hit; no counter`,
+  `self: Def +5 Res +5`), so it always matches the rules.
+- Where it applies: the `Skill` menu and the `Arts` menu (0429). Later
+  lists follow the same rule: the spell list, the preparations lists and
+  the promotion choice.
 
 ### Screen layout
 

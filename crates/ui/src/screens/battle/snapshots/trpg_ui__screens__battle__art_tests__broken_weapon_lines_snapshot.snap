@@ -18,9 +18,9 @@ expression: "format!(\"{list}\\n=== forecast ===\\n{forecast}\")"
 │ Flowing Cut     −2 dur  E       broken │♣♣....                      ║                            ║
 │ Guard Break     −4 dur  D       broken │..╦╦..                      ║                            ║
 │ Keen Edge       −3 dur  active  broken │▓▓▓▓..                      ║                            ║
-└────────────────────────────────────────┘╦╦▓▓..                      ║                            ║
-                    ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
-                    ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║                            ║
+├────────────────────────────────────────┤╦╦▓▓..                      ║                            ║
+│ follow-up ×3/2                         │░░▓▓..                      ║                            ║
+└────────────────────────────────────────┘▐▌▓▓..                      ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
                                                                       ║                            ║
@@ -48,12 +48,12 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 bbddddddddddddooooooobbbbbbbbbbbbbbbbbbbbbmmmmmmaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-bggggggggggggggggggggggggggggggggooooooogbkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-bggggggggggggggggggggggggggggggggooooooogbjjppjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-bggggggggggggggggggggggggggggggggooooooogbqqqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbppqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkkkrrssssjjjjjjjjqqttttqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
-aaaaaaaaaaaaaaaaaaaakkllrrjjjjjjjjjjuuqqqqvvqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bppppppppppppppppppppppppppppppppppppppppbkkjjjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bggggggggggggggggggggggggggggggggooooooogbjjqqjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bggggggggggggggggggggggggggggggggooooooogbrrrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbqqrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bccccccccccccccccccccccccccccccccccccccccbssrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbttrrjjaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabccccccccccccccccccccccccccccb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwa
-awwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaawwwwwwwwa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaauuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuua
+auuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaauuuuuuuua
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -83,18 +83,13 @@ l = fg:thicket bg:thicket_bg
 m = fg:mountain bg:mountain_bg
 n = fg:peak bg:peak_bg
 o = fg:hp_low bg:panel_bg
-p = fg:fort bg:fort_bg
-q = fg:stone bg:stone_bg
-r = fg:road bg:road_bg
-s = fg:player bg:grass_bg
-t = fg:floor bg:floor_bg
-u = fg:enemy bg:grass_bg
-v = fg:wood bg:stone_bg
-w = fg:text_dim bg:black
+p = fg:panel_bg bg:panel_border
+q = fg:fort bg:fort_bg
+r = fg:stone bg:stone_bg
+s = fg:floor bg:floor_bg
+t = fg:wood bg:stone_bg
+u = fg:text_dim bg:black
 --- overlays ---
-over  225,286 14x2  hp_high
-over  289,302 14x2  hp_high
-over  209,286 14x2  hp_high
 over  277,179 5x11  black
 over  278,180 3x6  text_highlight
 over  278,187 3x2  text_highlight

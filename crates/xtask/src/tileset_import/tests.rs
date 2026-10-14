@@ -1,5 +1,6 @@
 //! Tests of the importer, on a made-up Tiled sheet: never a bought one.
 
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 
 use trpg_content::ImageTable;
@@ -453,7 +454,9 @@ fn more_tiles_than_a_row_holds_go_on_the_next_row() {
     // Seventeen different pictures: the same tiles, tinted or not, and
     // made different by name.
     for i in 0..17u32 {
-        packer.cells.push((format!("filler {i}"), 0, String::new()));
+        packer
+            .cells
+            .push((format!("filler {i}"), Cut::Tile(0), String::new()));
         packer
             .pixels
             .push(vec![u8::try_from(i).unwrap(); 16 * 16 * 4]);
@@ -751,4 +754,143 @@ fn run_writes_the_image_and_the_tileset_into_the_private_checkout() {
     blocked.write("assets-private/game/tilesets", b"x");
     let err = run(&blocked.0, &UNITS).unwrap_err();
     assert!(err.starts_with("creating "), "{err}");
+}
+
+/// A made-up sheet of `columns` × 3 tiles: each pixel is its tile's
+/// number, then where it is in the tile.
+fn block_sheet(columns: u32) -> Sheet {
+    let mut rgba = Vec::new();
+    for y in 0..48u32 {
+        for x in 0..columns * 16 {
+            let id = (y / 16) * columns + x / 16;
+            let [id, x, y] = [id, x % 16, y % 16].map(|v| u8::try_from(v).unwrap());
+            rgba.extend([id, x, y, 255]);
+        }
+    }
+    Sheet {
+        tsx: parse_tsx(&TSX.replace("columns=\"4\"", &format!("columns=\"{columns}\""))).unwrap(),
+        size: (columns * 16, 48),
+        rgba,
+    }
+}
+
+#[test]
+fn a_blocks_tile_is_joined_from_the_quarters_for_where_the_terrain_ends() {
+    let sheet = block_sheet(4);
+    // The block from tile 1: tiles 1 2 3 / 5 6 7 / 9 10 11. Each quarter
+    // of the joined tile is the same quarter of the tile named: top-left,
+    // top-right, bottom-left, bottom-right.
+    let quarters = |ends: u8| {
+        let tile = joined(&sheet, 1, ends).unwrap();
+        assert_eq!(tile.len(), 16 * 16 * 4);
+        let mut out = Vec::new();
+        for (left, top) in [(0, 0), (8, 0), (0, 8), (8, 8)] {
+            let ids: BTreeSet<u8> = (top..top + 8)
+                .flat_map(|y| (left..left + 8).map(move |x| (x, y)))
+                .map(|(x, y)| {
+                    let at = (y * 16 + x) * 4;
+                    let px = &tile[at..at + 4];
+                    assert_eq!(
+                        px[1..],
+                        [u8::try_from(x).unwrap(), u8::try_from(y).unwrap(), 255]
+                    );
+                    px[0]
+                })
+                .collect();
+            assert_eq!(ids.len(), 1, "{ends:04b}: a quarter of one tile");
+            out.push(*ids.first().unwrap());
+        }
+        out
+    };
+    // Ending nowhere: the middle; everywhere: the corners.
+    assert_eq!(quarters(0b0000), [6, 6, 6, 6]);
+    assert_eq!(quarters(0b1111), [1, 3, 9, 11]);
+    // Up, right, down, left.
+    assert_eq!(quarters(0b1000), [2, 2, 6, 6]);
+    assert_eq!(quarters(0b0100), [6, 7, 6, 7]);
+    assert_eq!(quarters(0b0010), [6, 6, 10, 10]);
+    assert_eq!(quarters(0b0001), [5, 6, 5, 6]);
+    // A strip across, and the end of one.
+    assert_eq!(quarters(0b1010), [2, 2, 10, 10]);
+    assert_eq!(quarters(0b1110), [2, 3, 10, 11]);
+    // A block that runs off the sheet, at the side or the bottom.
+    assert_eq!(
+        joined(&sheet, 2, 0).unwrap_err(),
+        "the block from tile 2 runs past the image's right edge"
+    );
+    assert!(joined(&sheet, 1, 0).is_ok() && joined(&sheet, 4, 0).is_ok());
+    assert!(joined(&sheet, 5, 0).is_ok());
+    // Five tiles across: a block fits from the third, not the fourth.
+    let wide = block_sheet(5);
+    assert!(joined(&wide, 2, 0).is_ok());
+    assert!(joined(&wide, 3, 0).is_err());
+    assert_eq!(
+        joined(&sheet, 5, 0b0010).unwrap_err(),
+        "tile 14 is outside the 64×48 px image"
+    );
+}
+
+#[test]
+fn a_block_layer_is_a_picture_on_each_tile_for_each_way_its_terrain_ends() {
+    let temp = Temp::new("block").with_sheet("lib");
+    let sheet = block_sheet(4);
+    let png = encode_png(64, 48, &sheet.rgba).unwrap();
+    temp.write(
+        "lib/set/Big.tsx",
+        TSX.replace("made.png", "big.png").as_bytes(),
+    );
+    temp.write("lib/set/Images/big.png", &png);
+    let layers = r#""wood": Block(of: ["forest", "thicket"], sheet: "set/Big", block: 1),
+                    "fire": Block(of: ["burning"], sheet: "set/Big", block: 1, tint: "fire"),"#;
+    let looks = r#""outdoor": (layers: ["wood", "fire"])"#;
+    let map = mapping(layers, looks);
+    let terrains = terrains();
+    assert_eq!(check(&map, &terrains), Ok(()));
+    let imported = import(&temp.0.join("lib"), &map, &terrains, &fire).unwrap();
+    // Tile 1 for every terrain and 6 for water, then sixteen joined
+    // tiles, then sixteen more in the fire colour.
+    assert_eq!(imported.image.1, 48);
+    let LayerText::Tiles {
+        of,
+        at,
+        beside,
+        sides,
+    } = &imported.own.layers[0]
+    else {
+        panic!("{:?}", imported.own.layers);
+    };
+    assert_eq!(of, &["forest", "thicket"]);
+    assert_eq!(*at, (2, 0));
+    // Every other terrain ends it.
+    let others: Vec<&String> = terrains
+        .iter()
+        .filter(|id| *id != "forest" && *id != "thicket")
+        .collect();
+    assert_eq!(beside.iter().collect::<Vec<_>>(), others);
+    let mixes: Vec<u8> = sides.iter().map(|&(mix, _)| mix).collect();
+    assert_eq!(mixes, (1..16).collect::<Vec<u8>>());
+    assert_eq!(sides[14], (15, (1, 1)));
+    let LayerText::Tiles { at, sides, .. } = &imported.own.layers[1] else {
+        panic!("{:?}", imported.own.layers);
+    };
+    assert_eq!((*at, sides[14].1), ((2, 1), (1, 2)));
+    // The joined tile of a wood alone is the block's corners.
+    let (width, _, rgba) = &imported.image;
+    let px = |x: u32, y: u32| rgba[usize::try_from((y * width + x) * 4).unwrap()];
+    assert_eq!(
+        [px(16, 16), px(31, 16), px(16, 31), px(31, 31)],
+        [1, 3, 9, 11]
+    );
+    // The list names the block.
+    let text = list(&map);
+    assert!(
+        text.contains("layer wood       on forest, thicket: set/Big block from tile 1\n"),
+        "{text}"
+    );
+    // A terrain that isn't ours.
+    let bad = mapping(&layers.replace("\"thicket\"", "\"moss\""), looks);
+    assert_eq!(
+        check(&bad, &terrains).unwrap_err(),
+        "layer \"wood\": terrain \"moss\" is not in terrain.ron"
+    );
 }
