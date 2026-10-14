@@ -9,6 +9,7 @@ mod check_script;
 mod check_text;
 mod clean_targets;
 mod effect_marks;
+mod engine_boundary;
 mod font_atlas;
 mod frame_png;
 mod icon;
@@ -41,6 +42,7 @@ ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/REA
 check-keys                         fail on keys hard-coded in game code or text\n  \
 check-text                         count screen text still written as literals in crates/ui,\n  \
                                    and fail on a screen that reads a data name itself\n  \
+check-engine-boundary              fail when engine/ names or depends on the game (ADR-0063)\n  \
 lang-status <code> [--only ui|data|dialogue] [--file <dlg>]\n  \
                                    list a language pack's missing, stale and orphaned text\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
@@ -72,6 +74,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("ticket-lint") => ticket_lint(&args.collect::<Vec<_>>()),
         Some("check-keys") => check_keys(&args.collect::<Vec<_>>()),
         Some("check-text") => check_text(&args.collect::<Vec<_>>()),
+        Some("check-engine-boundary") => check_engine_boundary(&args.collect::<Vec<_>>()),
         Some("lang-status") => lang_status(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
         Some("font-atlas") => font_atlas(&args.collect::<Vec<_>>()),
@@ -141,6 +144,23 @@ fn check_keys(args: &[String]) -> u8 {
     eprintln!("check-keys: {} hard-coded key(s)", errors.len());
     for error in &errors {
         eprintln!("  {error}");
+    }
+    1
+}
+
+fn check_engine_boundary(args: &[String]) -> u8 {
+    if !args.is_empty() {
+        eprintln!("usage: cargo xtask check-engine-boundary");
+        return 2;
+    }
+    let errors = engine_boundary::run(&repo_root());
+    if errors.is_empty() {
+        println!("check-engine-boundary: OK");
+        return 0;
+    }
+    eprintln!("check-engine-boundary: {} finding(s)", errors.len());
+    for error in &errors {
+        eprintln!("{error}");
     }
     1
 }
@@ -1123,6 +1143,12 @@ mod tests {
     fn check_keys_passes_on_the_real_repo() {
         assert_eq!(check_keys(&[]), 0);
         assert_eq!(dispatch(args(&["check-keys"]).into_iter()), 0);
+    }
+
+    #[test]
+    fn check_engine_boundary_passes_on_the_real_repo() {
+        assert_eq!(check_engine_boundary(&[]), 0);
+        assert_eq!(check_engine_boundary(&args(&["--bogus"])), 2);
     }
 
     #[test]

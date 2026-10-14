@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: boundary"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-14
 ---
 
 # 1102 — The engine folder and the boundary gate
@@ -88,11 +88,11 @@ anything.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask check-engine-boundary` passes on `main` with the
+- [x] `cargo xtask check-engine-boundary` passes on `main` with the
       empty folder.
-- [ ] Its unit tests cover each rule above (passing and failing case).
-- [ ] CI runs it; `run-gates` lists it.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Its unit tests cover each rule above (passing and failing case).
+- [x] CI runs it; `run-gates` lists it.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -101,3 +101,26 @@ anything.
   repository and expects success.
 
 ## Completion notes
+
+- `engine/README.md`, `engine/crates/.gitkeep`, and the workspace members
+  glob `["crates/*", "engine/crates/*"]` (cargo skips the `.gitkeep`).
+- `cargo xtask check-engine-boundary` (`crates/xtask/src/engine_boundary.rs`)
+  checks engine packages' dependencies from `cargo metadata` against the
+  README's `engine-deps` block, and scans every UTF-8 file under `engine/`
+  for game crate names, game asset folders and data ids. Binary files are
+  skipped. Ids are matched as whole words, ignoring case.
+- Ids come from `trpg_content::load_embedded()`, so in a debug build (CI,
+  the gates) the test files' ids are checked too: stricter, not looser.
+- Audio: sound and music cue ids are checked; music pool and credit ids
+  are not (they are not cues).
+- A path "starting with `assets/`" also catches `../assets/`; an
+  `assets/` folder inside a longer path (`examples/demo/assets/`) is
+  allowed, so engine examples can have their own.
+- `ALLOW` keeps ordinary words that are also game ids (`fire`, `floor`,
+  `resolve`, `guard`, generic terrain like `water` and `wall`, …), each
+  with its reason. A finding line for a dependency points at its line in
+  the manifest.
+- Checked by hand with a throwaway engine crate depending on `trpg-core`
+  and `png` and naming `swordsman`, `archer` and `assets/data`: all six
+  findings reported, then removed.
+- No gameplay rules decided.
