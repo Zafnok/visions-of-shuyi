@@ -4,6 +4,7 @@ use super::*;
 use crate::Content;
 
 mod actions;
+mod combat;
 
 fn content() -> Content {
     crate::load_embedded().unwrap_or_else(|e| panic!("{e}"))

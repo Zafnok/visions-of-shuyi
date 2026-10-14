@@ -1,9 +1,10 @@
 # Cinematic files (`.ron`)
 
-A cinematic is a list of **shots** and when each starts (tickets 0817, 0818
-and 0827,
+A cinematic is a list of **shots** and when each starts (tickets 0817, 0818,
+0827 and 0832,
 [ADR-0060](../../docs/adr/0060-cinematics-a-file-of-timed-shots-drawn-from-the-time-alone.md),
-[ADR-0061](../../docs/adr/0061-cinematic-action-authored-walks-and-strikes-in-the-map-scene.md);
+[ADR-0061](../../docs/adr/0061-cinematic-action-authored-walks-and-strikes-in-the-map-scene.md),
+[ADR-0062](../../docs/adr/0062-cinematic-combat-shot-a-fight-the-rules-work-out.md);
 `docs/design/title-screen.md`, *Intro cinematic*). Each `*.ron` file here is
 one cinematic, loaded by `trpg_content::cinematic` and validated by the
 all-assets test. The file stem is its id. `trpg_ui::cinematic` plays it.
@@ -12,7 +13,8 @@ all-assets test. The file stem is its id. `trpg_ui::cinematic` plays it.
 in time with its song (ticket 0819): the nine shots of Nick's storyboard
 (ticket 0820), cut where the song changes. The
 test one is `assets-test/cinematics/test.ron` (the debug menu's "Play test
-cinematic" plays it).
+cinematic" plays it); `assets-test/cinematics/combat.ron` is a test of the
+combat shot alone.
 
 ```ron
 (
@@ -180,9 +182,50 @@ The name is the character's short name (`<id>.first` in
 Six faces need about 19 seconds (the title's storyboard); fewer seconds
 make them cross faster.
 
-### The lead in `Talk` and `Characters`
+### `Combat(battle, attacker, target, from, seed)`
 
-Both show the lead of **the most recent save**: the name and the look the
+The battle's own **combat scene** for one attack: the two fighters'
+full-body pictures over the backdrop of the ground the defender stands on,
+their plates with name, HP and numbers under them, the strikes, the HP
+draining and a fall, exactly as a battle shows an attack with combat
+animations on (`crates/ui/src/screens/battle/stage.rs`). Nothing is drawn
+from the file: **the rules work the fight out.** The battle is set up as
+it starts (the player's side as a battle played on its own has it), the
+attacker is put on `from`, and it attacks the target from there through
+the game's own rules, so the numbers, hits, misses and HP are the game's.
+
+```ron
+(at: 50.0, shot: Combat(battle: "ch01", attacker: "lead", target: "road_brigand", from: (9, 11))),
+```
+
+| Field | Meaning |
+| ----- | ------- |
+| `battle` | The battle's id. |
+| `attacker`, `target` | Two units on the battle's map at its start, named as an [action](#action-units-that-march-and-fight) names them (a player slot by its `character`, an enemy by its `id` or its character). |
+| `from` | Optional. The tile `(column, row)` the attacker strikes from; where it starts if left out. On the map, a tile the attacker's class can stand on, and not where another unit starts. Only the attacker moves: the target fights from where it starts, on its own ground. |
+| `seed` | Optional. A whole number that seeds the fight's luck; the battle's own `seed` if left out. The same seed always gives the same fight. To show a miss, a critical or a fall, try seeds until the fight goes that way. |
+
+- The rules must allow the attack: the two are enemies, and the target is
+  in range of what the attacker carries from `from`. An enemy attacker
+  attacks in its own phase. The attacker uses what it has equipped, or
+  else the first other weapon the rules allow. No art, active or item.
+- The content check runs every combat shot's fight. A file whose fight
+  the rules refuse fails it with the reason, so a rebalance that puts a
+  target out of reach is found by the tests, not on the title.
+- A rebalance can change how a fight goes (its HP, a hit that becomes a
+  miss). It is the game's fight, so it follows the game.
+- The fight plays at the battle's normal speed from the shot's start
+  (2½ to 4 seconds for two or three strikes, half a second more with a
+  fall). A
+  shot longer than its fight holds its last moment; a shorter one is cut
+  off at the next shot, like any shot.
+- No sound: a cinematic plays its music alone. The scenes an attack may
+  set off in a battle (a boss's lines, a death quote) are not shown.
+- The lead's name and picture are the cinematic's lead (below).
+
+### The lead in `Talk`, `Characters` and `Combat`
+
+All three show the lead of **the most recent save**: the name and the look the
 player chose (Nick, ticket 0036). Without a save, the names table's name
 for the lead and the male look, `lead_m`. The game notes which save was
 written last under the storage key `last_save`.

@@ -9,6 +9,10 @@
 //! A map shot may have an action (ticket 0827, ADR-0061): its units walk
 //! and strike. [`CinematicPlayer::scene`] is the map scene at a time, with
 //! each unit as [`action_state`] has it; the map skin paints it.
+//!
+//! A combat shot (ticket 0832, ADR-0062) is the battle's own combat
+//! scene for an attack the rules work out: [`CinematicPlayer::stage`] is
+//! the stage at a time, and the combat scene's skin paints it.
 
 use std::collections::BTreeMap;
 use std::rc::Rc;
@@ -22,14 +26,17 @@ use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::{MapScene, MapSkin, UnitView};
 use crate::screen::{Ctx, IdleMotion};
+use crate::screens::battle::stage::{self, view::StageView};
 use crate::screens::title::glyph::paint_logo;
 use crate::settings::MapZoom;
 
 mod action;
+pub mod combat;
 pub mod faces;
 pub mod talk;
 
 pub use action::{FALL_MS, FLASH_MS, LUNGE_MS, LUNGE_TILES, action_state};
+use combat::Duel;
 use faces::{Face, draw_faces, first_x};
 use talk::{TalkBox, talk_at};
 
@@ -258,6 +265,9 @@ enum Built {
         expression: String,
         from: Side,
     },
+    /// A fight on the combat stage (`None`: the rules allow it no longer,
+    /// and the shot is blank).
+    Combat { duel: Option<Duel> },
 }
 
 /// What a frame of a cinematic shows, as plain data: for tests of what
@@ -293,6 +303,12 @@ pub enum Frame {
         /// come from the left.
         step: i32,
     },
+    /// The combat stage: a fight playing ([`CinematicPlayer::stage`]).
+    Combat {
+        /// Seconds into the fight: the time since the shot started, up to
+        /// the fight's end, where it holds.
+        seconds: f32,
+    },
     /// Nothing: a shot whose map or scene isn't there.
     Blank,
 }
@@ -304,7 +320,7 @@ pub struct CinematicPlayer {
     shots: Vec<Built>,
     /// The picture behind the logo.
     backdrop: Option<ImageId>,
-    /// The lead the talk and characters shots show.
+    /// The lead the talk, characters and combat shots show.
     lead: LeadProfile,
 }
 
@@ -317,12 +333,14 @@ impl CinematicPlayer {
     /// after a change of skin.) The logo is on
     /// no backdrop until [`with_backdrop`](Self::with_backdrop) gives one.
     ///
-    /// `lead` is who the talk and characters shots show as the lead, by
-    /// name and look: the most recent save's
+    /// `lead` is who the talk, characters and combat shots show as the
+    /// lead, by name and look: the most recent save's
     /// ([`save::latest_lead`](crate::save::latest_lead)). `None`: the
     /// names table's name for the lead, and the male look
-    /// (`docs/design/title-screen.md`, *Intro cinematic*). Their scenes
-    /// are read in the player's language as it is now.
+    /// (`docs/design/title-screen.md`, *Intro cinematic*). Their scenes,
+    /// and the names on the combat stage, are in the player's language as
+    /// it is now. Each combat shot's fight is worked out by the rules
+    /// once, here.
     pub fn new(ctx: &Ctx, id: &str, lead: Option<LeadProfile>) -> Option<Self> {
         let def = ctx.content.cinematics.get(id)?;
         let lead = lead.unwrap_or_else(|| {
@@ -375,6 +393,9 @@ impl CinematicPlayer {
                 faces: faces::faces(ctx, who, &lead),
                 expression: expression.clone(),
                 from: *from,
+            },
+            Shot::Combat(shot) => Built::Combat {
+                duel: Duel::new(ctx, shot, &lead),
             },
         });
         Some(Self {
@@ -461,9 +482,20 @@ impl CinematicPlayer {
                 let (x, step) = first_x(at.progress, faces.len(), *from, screen.w);
                 Frame::Characters { x, step }
             }
-            Some(Built::MapPan { stage: None, .. } | Built::Characters { .. }) | None => {
-                Frame::Blank
+            Some(Built::Combat { duel: Some(duel) }) => {
+                let (_, into_ms) = self.timeline.into_shot(millis(t));
+                #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
+                let into = into_ms as f32 / 1000.0;
+                Frame::Combat {
+                    seconds: into.min(duel.seconds()),
+                }
             }
+            Some(
+                Built::MapPan { stage: None, .. }
+                | Built::Characters { .. }
+                | Built::Combat { duel: None },
+            )
+            | None => Frame::Blank,
         }
     }
 
@@ -489,6 +521,21 @@ impl CinematicPlayer {
             scene.units = action_state(&scene.units, &action.actions, clock_ms);
         }
         Some(scene)
+    }
+
+    /// The combat stage shown `t` seconds after the start (wrapped at the
+    /// length): the fight of the shot then, as far into it as the shot
+    /// has played (at its end from then on), as a battle shows it with
+    /// combat animations on. `None` when the shot isn't a fight.
+    pub fn stage(&self, ctx: &Ctx, t: f32) -> Option<StageView> {
+        let Frame::Combat { seconds } = self.frame(ctx, t, Rect::new(0, 0, 0, 0)) else {
+            return None;
+        };
+        let index = self.timeline.at(t).index;
+        let Some(Built::Combat { duel: Some(duel) }) = self.shots.get(index) else {
+            return None;
+        };
+        duel.view(ctx, &self.lead, seconds)
     }
 
     /// Draws the cinematic as it is `t` seconds after its start (wrapped
@@ -532,12 +579,19 @@ impl CinematicPlayer {
             ) => {
                 draw_faces(ctx, buf, faces, expression, (x, step));
             }
+            (Frame::Combat { .. }, _) => {
+                if let Some(view) = self.stage(ctx, t) {
+                    stage::glyph::paint(ctx, &view, buf);
+                }
+            }
             _ => {}
         }
         buf.fade(brightness);
     }
 }
 
+#[cfg(test)]
+mod combat_tests;
 #[cfg(test)]
 mod shot_tests;
 #[cfg(test)]

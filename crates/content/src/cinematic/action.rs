@@ -113,17 +113,17 @@ impl<'de> Deserialize<'de> for RawActionRef {
 }
 
 /// A unit on a battle's map when the battle starts.
-struct Actor<'a> {
-    id: UnitId,
-    pos: Pos,
+pub(super) struct Actor<'a> {
+    pub(super) id: UnitId,
+    pub(super) pos: Pos,
     /// Its class, if the class table has it.
-    class: Option<&'a ClassDef>,
+    pub(super) class: Option<&'a ClassDef>,
 }
 
 /// The units on `battle`'s map at its start, by the names a cinematic
 /// knows them by: a player slot's character, an enemy's `id` in the
 /// battle file, and an enemy that is a character by that character.
-fn cast<'a>(battle: &BattleDef, refs: Refs<'a>) -> BTreeMap<String, Actor<'a>> {
+pub(super) fn cast<'a>(battle: &BattleDef, refs: Refs<'a>) -> BTreeMap<String, Actor<'a>> {
     let classes = refs.classes;
     let mut cast = BTreeMap::new();
     for slot in &battle.player_slots {
