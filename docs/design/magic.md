@@ -419,6 +419,12 @@ surely and 3 times a battle. Vigil Light heals a little over half of Heal,
 from 2 tiles away. Whether signature spells grow stronger later isn't
 decided.
 
+Nick, after playing Chapter 1 (2026-10-14, ticket 0804): "seem ok other than
+cinder oath concern I raised", and on Cinder Oath: "Rue's skill is range 1
+really? seems a bit weird what is the flavor here? why should mage special
+skill be range 1?" So **Vigil Light stays as above**; Cinder Oath's range
+is being decided in ticket 0056.
+
 ## Worked examples
 
 All other formulas come from `stats-and-combat.md`. Nobody wears armour, and

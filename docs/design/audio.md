@@ -107,7 +107,10 @@ cue.
 | Veyne Hall (`ch01_tbc`) | `talk_antagonist` | *Claude's pick* |
 
 On the four scene picks Nick said "I'll have to feel them out": they are in
-the build for him to hear in the playtest (0804), not approved. The battle's
+the build for him to hear in the playtest (0804), not approved. After playing
+(2026-10-14) he said "I want to see how the cutscenes would play out with
+this ambience": they wait for the conversations' backgrounds (ticket 0029
+and the ticket it creates), and are asked about again then. The battle's
 own story scenes (Harl's lines, the death quotes) don't change the music.
 
 ## Sound effects
