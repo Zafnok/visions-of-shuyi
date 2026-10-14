@@ -138,7 +138,7 @@ party (`1` the lead, `2` Hollis, `3` Tamsin, `4` Aske, `5` Maud, `6` Rue);
 - **The toll-fort** is a walled ruin with two ways in (the road from the
   west, the gate in the south). Harl stands on its fort tile and never
   leaves it.
-- **14 Red Company: 13 soldiers and Harl**, so Aske's "fourteen" is right:
+- **14 Red Company: 13 soldiers and Harl**, so Aske's "fourteen" and her "three have bows" are right:
   5 Brigands, 3 Raiders, 3 Archers, 1 Rider, 1 Guard, all level 1 except
   the three in and before the fort (level 2), and Harl (Brigand, level 5,
   Steel Axe and Iron Axe). No flier.

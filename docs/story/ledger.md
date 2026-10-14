@@ -79,10 +79,11 @@ fix an error; add a new one.
 
 ## After Chapter 1
 
-Written by 0707 from `assets/dialogue/ch01.dlg`. It describes a battle
-everyone lived through. What changes when a companion died in it (Classic)
-is in "If a companion died in Chapter 1", at the end of this section
-(0716).
+Written by 0707 from `assets/dialogue/ch01.dlg`; 0724 and 0728 reworked
+the lines and corrected this section where a fact was said differently.
+It describes a battle everyone lived through. What changes when a
+companion died in it (Classic) is in "If a companion died in Chapter 1",
+at the end of this section (0716).
 
 ### What happened
 
@@ -90,9 +91,14 @@ is in "If a companion died in Chapter 1", at the end of this section
   Tonight. They are coming for everyone who was there that night. Burn
   this." The lead named Dace; Hollis didn't. **Hollis didn't burn it. He
   still carries it in his coat.**
-- Tamsin rode in: Harl had taken the toll-fort and tried to hire her back,
-  showing a sealed paper (his thumb on the seal) that named "the exile, the
-  old man, and the girl with the burned hands".
+- Tamsin rode in: Harl had taken the toll-fort and, when she rode up to
+  the gate to ask what he wanted, asked if she wanted her old job back. He
+  showed her a sealed paper (his thumb over the seal the whole time) that
+  named nobody: it described "the exile, the old man, and the girl with the
+  burned hands", with a price by each.
+- Aske had watched the fort from dusk to first light: fourteen men, three
+  with bows. They shot at her deer from the wall, killed three, carried off
+  one and left two to rot. She helped "once, for the deer".
 - The lead took up steel: one of the two swords from under the floor.
   Hollis carries the other.
 - The six fought the Red Company at the ford and destroyed it. Harl is
@@ -100,6 +106,8 @@ is in "If a companion died in Chapter 1", at the end of this section
 - Harl's orders were on his body: three hundred crowns a head for the
   three, sealed in blue wax with the Veyne crest. The party has the paper
   (who carries it isn't said).
+- Over Harl's body Tamsin marked him paid in the ledger, closed his eyes,
+  and said "He taught me to ride" before calling it a job.
 - Hollis buried Harl himself.
 - At dusk all six left Harrowby for Veyne Hall, to ask Dace. Past the
   march's boundary the lead is an outlaw.
@@ -121,6 +129,7 @@ is in "If a companion died in Chapter 1", at the end of this section
 | Dace's masters believe the three are dead | the player | the party; Crane will learn otherwise (when is later chapters' call) |
 | Dace answers to "the Master of Vows" | the player | the party has not heard the title |
 | The Red Company burned "the farm" for a lord's coin, and Tamsin left over it | Tamsin, Harl (dead). Said aloud only if Tamsin fought Harl (`ch01_boss_engage_sergeant`), and nobody else is shown hearing it | the party: Coldwell is still hers to tell |
+| Harl taught Tamsin to ride | whoever stood near her over his body; treat it as known to the five | what else he was to her |
 
 Unchanged and still secret: everything else in the start-of-chapter table
 (Dace and Vosse, Hollis's burned purse, Wren alive, the prince, the Door,
@@ -133,7 +142,7 @@ Aske's spying).
 | The lead ↔ Rue | Open suspicion, said to the lead's face: the seal on the cart was "your family's to stamp". The lead asked "Where?" and got "You tell me." She comes along, in her words not following but "walking behind you. Where I can see your hands." |
 | The lead ↔ Hollis | Hollis has said nothing about the seal. What he did say: "The boy's at Veyne Hall", and that the lead should say the word and go, outlaw or not. |
 | Hollis ↔ Dace | Hollis has his son's letter and has seen his son's seal on a kill order. He hasn't said his son's name once ("the boy", "him", "his own father"). |
-| Tamsin ↔ Harl | Over. She marked him in her ledger, "paid in full", without a smile, and closed his eyes: "Just a job." |
+| Tamsin ↔ Harl | Over. She marked him in her ledger, "paid in full", without a smile, and closed his eyes. "He taught me to ride. ...It was a job. That's all it was." |
 | The lead ↔ Tamsin | She rides along "as far as there's pay. ...Further, probably." She guessed the seal's owner aloud when nobody else would: "Dace Marr, hero of the war. The Captain's boy." |
 | The lead ↔ Aske | She came "once, for the deer", then stayed: "You owe me eleven arrows, noble." Still "noble". |
 | Maud ↔ Rue | Maud knows what her letter did and hasn't told Rue. She tried to hide Rue in the chapel cellar; Rue fought instead. |
