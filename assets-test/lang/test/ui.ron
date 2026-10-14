@@ -627,6 +627,11 @@
         text: "{Cursor} MOVE · {Select} CAST · {Cancel} CANCEL",
     ),
     (
+        key: "battle.help.aim_heal",
+        source: "{Cursor} move · {Select} heal · {Cancel} cancel",
+        text: "{Cursor} MOVE · {Select} HEAL · {Cancel} CANCEL",
+    ),
+    (
         key: "battle.help.move_here",
         source: "{Cursor} move · {Select} move here · {Cancel} cancel",
         text: "{Cursor} MOVE · {Select} MOVE HERE · {Cancel} CANCEL",

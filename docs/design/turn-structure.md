@@ -160,6 +160,59 @@ instead of going through the action menu.
       list any more). `Magic` keeps its spell list, and a spell's forecast
       opened from it doesn't swap.
 
+**Pointing at an ally** (Nick, 2026-10-14, ticket 0451). With a healer
+selected, moving the cursor onto a hurt ally it can heal after moving aims
+the path at a tile a heal reaches them from, like pointing at an enemy.
+
+> "healers should have the same hover over friendly unit, click, means
+> heal, like units have for enemy attacks..."
+
+Asked with Maud (Heal, range 1, +16; Vigil Light, range 1–2, +12) and
+Hollis at 10/24 HP:
+
+> **Where does she walk?** [A beside him, for Heal; B the closest tile any
+> heal reaches:] "Closest tile any heal reaches"
+>
+> **What opens after Confirm?** [A the heal preview at once, left / right
+> swap Heal and Vigil Light; B a list of her heals first:] "A list of her
+> heals first"
+>
+> **Up / down in the preview change the target, as in the enemy
+> forecast?** "Yes, same as enemies"
+>
+> **Only a hurt ally is pointed at; potions aren't used this way; a unit
+> that can attack and heal attacks enemies and heals allies:** "Agree with
+> all three"
+
+- **Which tile:** the same rule as an enemy: keep the arrow the player drew
+  if a heal reaches the ally from its end; otherwise the cheapest tile from
+  which **any** heal reaches (same tie-break). Example: Maud two tiles from
+  Hollis stays where she is, since Vigil Light reaches; to use Heal, draw
+  the arrow next to him first.
+- **What opens:** Confirm walks there and opens **the list of the unit's
+  heals** (Heal, Vigil Light; no attack spells). Choosing one opens its
+  preview on that ally (`Heal on Hollis: HP 10 → 24`); Confirm heals.
+- **Up / down** (and the cursor keys, and the previous / next unit keys)
+  step to the other hurt allies that heal reaches from there, as when a
+  heal is cast from `Magic`.
+- **Only a hurt ally** is pointed at. Over an ally at full HP the cursor
+  does what it does today (a tile the unit can't stop on).
+- **Heal spells only.** A potion is not used by pointing; a unit that only
+  carries potions behaves as before.
+- **Enemies are attacked, allies healed.** A unit that can do both does
+  each as before.
+- *Claude's starting rules (Nick can veto):*
+  - In the list, a heal that can't reach the ally pointed at from that
+    tile is dimmed (Heal, two tiles away), and the list opens on the first
+    one that can.
+  - The list opens even when only one heal is listed (the Test Mage, or a
+    healer that knows only Heal), so it always looks the same.
+  - Cancel in the preview goes back to the list; Cancel in the list to the
+    action menu at that tile, on `Magic`; Cancel again to the path.
+  - The help bar reads `heal` while the cursor is on a hurt ally the unit
+    can heal (`arrows move · f heal · d cancel`).
+  - An ally of the green side counts as an ally, as for `Magic`.
+
 **Skill-granted movement.** Specific combat skills may give a unit movement
 *after* its action, like Fire Emblem's bow skill that steps the archer 1 tile
 away after attacking. These are not a general rule: each skill states exactly

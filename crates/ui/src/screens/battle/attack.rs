@@ -108,18 +108,25 @@ pub fn can_hit(state: &BattleState, unit: UnitId, from: Pos, target: UnitId) -> 
 }
 
 /// The tile `sel`'s unit attacks `target` from when the player points at it
-/// (0428): the path's end if it can already hit from there, else the
-/// stoppable tile that can, cheapest first, then the shortest path, then
-/// lowest `(y, x)`. `None` if no tile can.
+/// (0428): [`aim_tile`] with what can hit it.
 pub fn attack_tile(state: &BattleState, sel: &Selection, target: UnitId) -> Option<Pos> {
+    aim_tile(sel, |from| can_hit(state, sel.unit, from, target))
+}
+
+/// The tile `sel`'s unit acts from when the player points at a unit, an
+/// enemy to attack (0428) or an ally to heal (0451), where `reaches` says
+/// from which tiles it can: the path's end if it reaches from there, else
+/// the stoppable tile that does, cheapest first, then the shortest path,
+/// then lowest `(y, x)`. `None` if no tile does.
+pub fn aim_tile(sel: &Selection, reaches: impl Fn(Pos) -> bool) -> Option<Pos> {
     let end = sel.dest();
-    if sel.reach.is_stoppable(end) && can_hit(state, sel.unit, end, target) {
+    if sel.reach.is_stoppable(end) && reaches(end) {
         return Some(end);
     }
     sel.reach
         .stoppable()
         .iter()
-        .filter(|&t| can_hit(state, sel.unit, t, target))
+        .filter(|&t| reaches(t))
         .filter_map(|t| {
             let cost = sel.reach.cost(t)?;
             let len = sel.reach.path_to(t)?.len();

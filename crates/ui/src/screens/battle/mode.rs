@@ -16,7 +16,10 @@
 //! (0428), with a weapon or an attack spell (0430), aims the path at the
 //! tile it will attack from; Confirm walks there and goes straight to the
 //! forecast on that enemy with what the unit has equipped, where left and
-//! right swap between the weapons and spells that reach it.
+//! right swap between the weapons and spells that reach it. Pointing at a
+//! hurt ally with a unit that knows a heal spell (0451) aims the path the
+//! same way at a tile a heal reaches it from; Confirm walks there and opens
+//! the list of the unit's heals, then the heal's preview on that ally.
 //!
 //! Around it (0405): the map menu ([`Mode::MapMenu`], [`Mode::UnitList`],
 //! [`Mode::Objective`]), the end-turn prompt ([`Mode::EndTurnPrompt`]), the
@@ -45,8 +48,8 @@ use super::items::{
     equip_menu, pack_groups, pack_menu,
 };
 use super::magic::{
-    CastTargeting, SpellChoice, can_cast, knows_spells, reaches_an_enemy, spell_choices,
-    spell_menu, target_pos,
+    CastTargeting, SpellChoice, can_cast, heal_choices, heal_tile, knows_spells, reaches_an_enemy,
+    spell_choices, spell_menu, target_pos,
 };
 use super::map_menu::{MapEntry, map_menu, ready_players, unit_list};
 use super::path::steer;
@@ -79,7 +82,8 @@ pub struct Selection {
     pub attack: TileSet,
     /// The path arrow: the unit's tile first, never empty.
     pub path: Vec<Pos>,
-    /// The enemy under the cursor the path is aimed at (0428), if any.
+    /// The unit under the cursor the path is aimed at, if any: an enemy to
+    /// attack (0428) or a hurt ally to heal (0451).
     pub target: Option<UnitId>,
 }
 
@@ -561,11 +565,14 @@ impl Mode {
         Some(action)
     }
 
-    /// The cursor moved to `to`: a selected unit's path follows it.
+    /// The cursor moved to `to`: a selected unit's path follows it, or is
+    /// aimed at the enemy it can attack (0428) or the hurt ally it can heal
+    /// (0451) there.
     pub fn cursor_moved(&mut self, to: Pos, state: &BattleState) {
         if let Mode::Selected(sel) = self {
-            let enemy = state.units().iter().find(|u| u.pos == to).map(|u| u.id);
-            let aim = enemy.and_then(|id| attack_tile(state, sel, id).map(|t| (id, t)));
+            let unit = state.units().iter().find(|u| u.pos == to).map(|u| u.id);
+            let tile = |id| attack_tile(state, sel, id).or_else(|| heal_tile(state, sel, id));
+            let aim = unit.and_then(|id| tile(id).map(|t| (id, t)));
             if let Some((id, tile)) = aim {
                 if tile != sel.dest() {
                     sel.path = sel.reach.path_to(tile).unwrap_or_else(|| sel.path.clone());
@@ -742,24 +749,43 @@ fn aimed_at(sel: &Selection, cursor: Pos, state: &BattleState) -> Option<UnitId>
     (state.unit(t)?.pos == cursor).then_some(t)
 }
 
-/// A walk ended: the attack on the aimed enemy (0428), else the action menu.
+/// A walk ended: the attack on the aimed enemy (0428) or the heal of the
+/// aimed ally (0451), else the action menu.
 fn walk_ended(sel: Selection, state: &BattleState) -> (Mode, Effect) {
     if sel.target.is_some() {
-        open_attack(sel, state)
+        open_aimed(sel, state)
     } else {
         (open_menu(sel, state), Effect::None)
     }
 }
 
-/// The unit stands at the path's end, aimed at an enemy (0428, 0430): the
-/// forecast on it with the equipped weapon or spell if that reaches it, else
-/// the first that does; left and right swap between those that do. The
-/// action menu if none does.
-fn open_attack(sel: Selection, state: &BattleState) -> (Mode, Effect) {
-    match Targeting::aimed(state, sel.clone()) {
-        Some(t) => show_forecast(t, state),
+/// The unit stands at the path's end, aimed at a unit. An enemy (0428,
+/// 0430): the forecast on it with the equipped weapon or spell if that
+/// reaches it, else the first that does; left and right swap between those
+/// that do. A hurt ally (0451): the list of the unit's heals. The action
+/// menu if nothing reaches it.
+fn open_aimed(sel: Selection, state: &BattleState) -> (Mode, Effect) {
+    if let Some(t) = Targeting::aimed(state, sel.clone()) {
+        return show_forecast(t, state);
+    }
+    match open_heals(&sel, state) {
+        Some(mode) => (mode, Effect::None),
         None => (open_menu(sel, state), Effect::None),
     }
+}
+
+/// The heal list of `sel`'s unit for the ally it is aimed at (Nick, 0451):
+/// its heal spells, those that can't reach that ally dimmed. Choosing one
+/// opens its preview on that ally; Cancel goes to the action menu, on
+/// `Magic`. `None` if no heal reaches it.
+fn open_heals(sel: &Selection, state: &BattleState) -> Option<Mode> {
+    let choices = heal_choices(state, sel.unit, sel.dest(), sel.target?);
+    if !can_cast(&choices) {
+        return None;
+    }
+    let menu = spell_menu(state, IN_PLAY, sel.unit, &choices);
+    let sel = sel.clone();
+    Some(Mode::SpellMenu { sel, menu, choices })
 }
 
 /// The action menu for `sel`.
@@ -858,7 +884,7 @@ pub fn step(mode: Mode, action: Action, cursor: Pos, state: &BattleState) -> (Mo
         Mode::Selected(sel) => match action {
             Action::Confirm if aimed_at(&sel, cursor, state).is_some() => {
                 if sel.path.len() == 1 {
-                    open_attack(sel, state)
+                    open_aimed(sel, state)
                 } else {
                     let walk = Mode::Moving {
                         sel,
@@ -2574,7 +2600,7 @@ mod tests {
         // Aimed at the raider but still standing at (6, 2), out of reach.
         let mut sel = pick(&s, p(6, 2));
         sel.target = Some(UnitId(6));
-        let (mode, effect) = open_attack(sel, &s);
+        let (mode, effect) = open_aimed(sel, &s);
         assert_eq!(effect, Effect::None);
         assert!(matches!(mode, Mode::ActionMenu { .. }), "{mode:?}");
     }

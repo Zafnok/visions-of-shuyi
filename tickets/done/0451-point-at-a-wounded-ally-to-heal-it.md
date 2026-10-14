@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-14
 ---
 
 # 0451 — Point at a wounded ally to heal it
@@ -84,16 +84,17 @@ ally: she walks next to them and the heal opens.
 
 ## Acceptance criteria
 
-- [ ] `turn-structure.md` and `magic.md` record Nick's answers.
-- [ ] Harness (Chapter 1 or the Quick Battle): a healer selected, cursor on
+- [x] `turn-structure.md` and `magic.md` record Nick's answers.
+- [x] Harness (Chapter 1 or the Quick Battle): a healer selected, cursor on
       a hurt ally two tiles away → the path ends next to them; Confirm →
-      the heal preview on that ally; Confirm → the ally's HP went up and the
+      the heal preview on that ally (through the heal list, Nick's answer); Confirm → the ally's HP went up and the
       healer has acted (read the state).
-- [ ] Harness: an ally at full HP is not a target (the cursor behaves as
+- [x] Harness: an ally at full HP is not a target (the cursor behaves as
       before).
-- [ ] Harness: left / right swaps Heal and Vigil Light for Maud.
-- [ ] Pointing at an enemy still works (existing tests pass unchanged).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Harness: ~~left / right swaps~~ the heal list offers Heal and Vigil
+      Light for Maud (Nick chose a list instead of swapping).
+- [x] Pointing at an enemy still works (existing tests pass unchanged).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -103,4 +104,44 @@ ally: she walks next to them and the heal opens.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Nick's answers (2026-10-14), recorded in `turn-structure.md` (*Pointing at
+an ally*), `magic.md` and the design README:
+
+- **Which tile:** the closest tile **any** heal reaches the ally from, the
+  same rule as an enemy (not "beside him for Heal"). So Maud two tiles from
+  a hurt ally stays put and only Vigil Light can be used; draw the arrow
+  next to the ally to use Heal.
+- **What opens:** a **list of the unit's heals** first (not the preview
+  straight away with left / right swapping). This changed the acceptance
+  criterion about left / right: the list now offers both heals.
+- **Up / down** change the ally, as in the enemy forecast.
+- Hurt allies only; no potions; enemies attacked, allies healed: as
+  proposed.
+
+Built:
+
+- `attack::aim_tile` is the one tile choice for both cases; `attack_tile`
+  and the new `magic::heal_tile` call it with what reaches from a tile.
+- `magic::heal_choices` builds the heal list for the ally pointed at (each
+  heal's targets start at that ally); `can_heal` asks the core.
+- `mode.rs`: the cursor aims at a hurt ally when no attack applies;
+  Confirm walks there and opens the heal list (`Mode::SpellMenu`), which
+  leads to the usual heal preview (`Mode::CastTarget`) and the same
+  `Command::Act` cast the `Magic` menu sends.
+- Help bar: `battle.help.aim_heal` (`arrows move · f heal · d cancel`, keys
+  from the keymap), in English and the `test` pack.
+- Tests: `screens/battle/heal_aim_tests.rs` (tile choice, targets, the
+  heal list, harness runs, one snapshot of the preview opened by pointing).
+
+*Claude's starting rules* (Nick can veto):
+
+- In the list, a heal that can't reach the ally pointed at from that tile
+  is dimmed, and the list opens on the first one that can.
+- The list opens even with only one heal listed.
+- Cancel: preview → list → action menu (on `Magic`) → path.
+- The help bar says `heal` over a hurt ally the unit can heal.
+- A green-side (Other) ally counts as an ally, as for `Magic`.
+
+**Sign-off for Nick:** in Chapter 1, select Maud and move the cursor onto a
+hurt ally: she walks to the closest tile a heal reaches from and the list
+of her heals opens.
