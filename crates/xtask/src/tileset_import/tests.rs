@@ -756,27 +756,27 @@ fn run_writes_the_image_and_the_tileset_into_the_private_checkout() {
     assert!(err.starts_with("creating "), "{err}");
 }
 
-/// A made-up sheet of 4 × 3 tiles: each pixel is its tile's number, then
-/// where it is in the tile.
-fn block_sheet() -> Sheet {
+/// A made-up sheet of `columns` × 3 tiles: each pixel is its tile's
+/// number, then where it is in the tile.
+fn block_sheet(columns: u32) -> Sheet {
     let mut rgba = Vec::new();
     for y in 0..48u32 {
-        for x in 0..64u32 {
-            let id = (y / 16) * 4 + x / 16;
+        for x in 0..columns * 16 {
+            let id = (y / 16) * columns + x / 16;
             let [id, x, y] = [id, x % 16, y % 16].map(|v| u8::try_from(v).unwrap());
             rgba.extend([id, x, y, 255]);
         }
     }
     Sheet {
-        tsx: parse_tsx(TSX).unwrap(),
-        size: (64, 48),
+        tsx: parse_tsx(&TSX.replace("columns=\"4\"", &format!("columns=\"{columns}\""))).unwrap(),
+        size: (columns * 16, 48),
         rgba,
     }
 }
 
 #[test]
 fn a_blocks_tile_is_joined_from_the_quarters_for_where_the_terrain_ends() {
-    let sheet = block_sheet();
+    let sheet = block_sheet(4);
     // The block from tile 1: tiles 1 2 3 / 5 6 7 / 9 10 11. Each quarter
     // of the joined tile is the same quarter of the tile named: top-left,
     // top-right, bottom-left, bottom-right.
@@ -820,6 +820,10 @@ fn a_blocks_tile_is_joined_from_the_quarters_for_where_the_terrain_ends() {
     );
     assert!(joined(&sheet, 1, 0).is_ok() && joined(&sheet, 4, 0).is_ok());
     assert!(joined(&sheet, 5, 0).is_ok());
+    // Five tiles across: a block fits from the third, not the fourth.
+    let wide = block_sheet(5);
+    assert!(joined(&wide, 2, 0).is_ok());
+    assert!(joined(&wide, 3, 0).is_err());
     assert_eq!(
         joined(&sheet, 5, 0b0010).unwrap_err(),
         "tile 14 is outside the 64×48 px image"
@@ -829,7 +833,7 @@ fn a_blocks_tile_is_joined_from_the_quarters_for_where_the_terrain_ends() {
 #[test]
 fn a_block_layer_is_a_picture_on_each_tile_for_each_way_its_terrain_ends() {
     let temp = Temp::new("block").with_sheet("lib");
-    let sheet = block_sheet();
+    let sheet = block_sheet(4);
     let png = encode_png(64, 48, &sheet.rgba).unwrap();
     temp.write(
         "lib/set/Big.tsx",
