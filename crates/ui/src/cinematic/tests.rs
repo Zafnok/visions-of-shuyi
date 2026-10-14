@@ -775,3 +775,76 @@ fn a_shot_is_painted_at_the_arts_own_size_whatever_the_players_map_zoom() {
         assert_eq!((scene.width(), scene.height()), (42, 12));
     }
 }
+
+/// Ticket 0833: the title's battle moves as the game plays one. Every walk
+/// goes at the speed the game's pictures walk in a battle (the bought art
+/// the game ships with), and only one unit walks at a time.
+#[test]
+fn the_title_walks_one_unit_at_a_time_at_the_games_speed() {
+    use crate::screens::battle::walk::SPRITE_WALK_TILES_PER_S;
+    let ctx = ctx();
+    // The map shots share one action list: each walk once.
+    let mut walks = std::collections::BTreeSet::new();
+    for shot in &ctx.content.cinematics["title"].shots {
+        let Shot::MapPan {
+            action: Some(action),
+            ..
+        } = &shot.shot
+        else {
+            continue;
+        };
+        for entry in &action.actions {
+            if let trpg_content::Act::Walk { unit, path, ms } = &entry.act {
+                let tiles: u32 = path.windows(2).map(|w| Pos::manhattan(w[0], w[1])).sum();
+                walks.insert((entry.at_ms, unit.0, tiles, *ms));
+            }
+        }
+    }
+    assert!(walks.len() >= 10, "{walks:?}");
+    let mut free_from = 0;
+    for &(at_ms, unit, tiles, ms) in &walks {
+        #[allow(clippy::cast_precision_loss)]
+        let due = tiles as f32 * 1000.0 / SPRITE_WALK_TILES_PER_S;
+        #[allow(clippy::cast_precision_loss)]
+        let off = (ms as f32 - due).abs();
+        assert!(
+            off <= 1.0,
+            "unit {unit} at {at_ms} ms: {tiles} tiles in {ms} ms"
+        );
+        assert!(
+            at_ms >= free_from,
+            "unit {unit} at {at_ms} ms walks with another"
+        );
+        free_from = at_ms + ms;
+    }
+}
+
+/// Ticket 0833: a fight of the title is never cut off: each combat shot
+/// lasts at least as long as its fight.
+#[test]
+fn the_titles_fights_end_before_their_cuts() {
+    let ctx = ctx();
+    let title = &ctx.content.cinematics["title"];
+    let lead = LeadProfile::new(
+        ctx.words().name(&ctx.content.names, LEAD_ID),
+        LeadGender::Male,
+    );
+    let mut fights = 0;
+    for (i, shot) in title.shots.iter().enumerate() {
+        let Shot::Combat(combat) = &shot.shot else {
+            continue;
+        };
+        let duel = Duel::new(&ctx, combat, &lead).unwrap();
+        let end = title.shots.get(i + 1).map_or(title.length_ms, |s| s.at_ms);
+        #[allow(clippy::cast_precision_loss)]
+        let lasts = (end - shot.at_ms) as f32 / 1000.0;
+        assert!(
+            duel.seconds() <= lasts,
+            "shot {}: {} s",
+            i + 1,
+            duel.seconds()
+        );
+        fights += 1;
+    }
+    assert!(fights >= 1);
+}

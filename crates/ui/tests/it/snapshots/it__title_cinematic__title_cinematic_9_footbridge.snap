@@ -70,20 +70,20 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:text bg:see-through
 b = fg:text_dim bg:black
---- backdrop: clip 0,0 100x32  origin -8.0,0.0  zoom 2 ---
+--- backdrop: clip 0,0 100x32  origin 0.0,48.0  zoom 4 ---
 ♣♣♣♣♣♣♣♣........♣♣♣♣♣♣..............^^^^▲▲▲▲▲▲▲▲
 ♣♣♣♣♣♣♣♣......♣♣♣♣♣♣♣♣..............▓▓▓▓▓▓▓▓▓▓▲▲
 ..♣♣♣♣♣♣♣♣♣♣♣♣♣♣♣♣........············░░Ha░░▓▓^^
 ....♣♣♣♣♣♣♣♣♣♣............··....Ri..▓▓Ra░░Ar▓▓^^
 ......♣♣..............······........▓▓▓▓··▓▓▓▓..
-......··..........Ta..Ra....Ar♣♣Br......Br......
+......··AsTa..........Ra....Ar♣♣Br......Br......
 ≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈≈≈≈≈Ar≈≈≈≈≈≈≈≈≈≈......Gu..♣♣♣♣
-......As..............··........≈≈≈≈≈≈≈≈==≈≈≈≈≈≈
-......··..............El......♣♣♣♣......··......
-..♣♣♣♣··..............··....♣♣♣♣♣♣♣♣....Ra......
+......··..............··........≈≈≈≈≈≈≈≈==≈≈≈≈≈≈
+......··..............··......♣♣♣♣......··......
+..♣♣♣♣··..............El....♣♣♣♣♣♣♣♣....Ra......
 ..♣♣♣♣····............··......♣♣♣♣......··..^^^^
-........······Ma········Ho······Br········..^^^^
-....╦╦..··........Ru......................^^^^^^
+........········MaRuHo··········Br········..^^^^
+....╦╦..··................................^^^^^^
 ........··....^^^^......................♣♣♣♣....
 ..............^^^^^^....................♣♣♣♣♣♣..
 ................^^......................♣♣♣♣....
@@ -93,14 +93,14 @@ aaaaaaaabbbbbbaaaaaaaabbbbbbbbbbbbbbeeeeeeeeeedd
 bbaaaaaaaaaaaaaaaabbbbbbbbffffffffffffgghhggeecc
 bbbbaaaaaaaaaabbbbbbbbbbbbffbbbbiibbeejjggjjeecc
 bbbbbbaabbbbbbbbbbbbbbffffffbbbbbbbbeeeeffeeeebb
-bbbbbbffbbbbbbbbbbkkbbllbbbbmmaaiibbbbbbllbbbbbb
+bbbbbbffkkkkbbbbbbbbbbllbbbbmmaaiibbbbbbllbbbbbb
 nnnnnnoonnnnnnnnnnnnnnppnnnnnnnnnnbbbbbbllbbaaaa
-bbbbbbqqbbbbbbbbbbbbbbffbbbbbbbbnnnnnnnnoonnnnnn
-bbbbbbffbbbbbbbbbbbbbbqqbbbbbbaaaabbbbbbffbbbbbb
-bbaaaaffbbbbbbbbbbbbbbffbbbbaaaaaaaabbbbllbbbbbb
+bbbbbbffbbbbbbbbbbbbbbffbbbbbbbbnnnnnnnnoonnnnnn
+bbbbbbffbbbbbbbbbbbbbbffbbbbbbaaaabbbbbbffbbbbbb
+bbaaaaffbbbbbbbbbbbbbbqqbbbbaaaaaaaabbbbllbbbbbb
 bbaaaaffffbbbbbbbbbbbbffbbbbbbaaaabbbbbbffbbcccc
-bbbbbbbbffffffqqffffffffqqffffffllffffffffbbcccc
-bbbbrrbbffbbbbbbbbkkbbbbbbbbbbbbbbbbbbbbbbcccccc
+bbbbbbbbffffffffqqqqqqffffffffffllffffffffbbcccc
+bbbbrrbbffbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccc
 bbbbbbbbffbbbbccccbbbbbbbbbbbbbbbbbbbbbbaaaabbbb
 bbbbbbbbbbbbbbccccccbbbbbbbbbbbbbbbbbbbbaaaaaabb
 bbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbaaaabbbb
@@ -124,14 +124,14 @@ p = fg:enemy bg:water_bg
 q = fg:player bg:road_bg
 r = fg:fort bg:fort_bg
 --- overlays ---
-over  177,142 8x2  hp_mid
-over  185,142 6x2  black
-over  193,190 14x2  hp_high
-over  145,94 11x2  hp_high
-over  156,94 3x2  black
-over  49,126 14x2  hp_high
-over  113,190 14x2  hp_high
-over  145,206 14x2  hp_high
+over  177,158 8x2  hp_mid
+over  185,158 6x2  black
+over  161,190 14x2  hp_high
+over  81,94 9x2  hp_mid
+over  90,94 5x2  black
+over  65,94 14x2  hp_high
+over  129,190 14x2  hp_high
+over  145,190 14x2  hp_high
 over  257,190 14x2  hp_high
 over  177,110 14x2  hp_high
 over  321,158 14x2  hp_high
