@@ -154,6 +154,15 @@ this ticket:
   `SpellChoice::active` in `magic.rs`): describe the active on those lines.
 - The sign-off's "archer's and lord's arts list" is their `Arts` menu.
 
+## Nick again (playtest round 2, 2026-10-14)
+
+> "I see still no helper text for i.e. Brace what the hell does it do I
+> thought we already took care of this ticket but it still tells me nothing
+> about what it does when I hover over it in skill menu about to select it"
+
+He thought this was done; it isn't. **The playtest waits for it**
+(0804's `blocked_by`). Brace is the example to check first in the sign-off.
+
 ## Completion notes
 
 *(Filled in by the session that completes the ticket: what was done, deviations,

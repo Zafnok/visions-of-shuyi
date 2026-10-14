@@ -87,6 +87,32 @@ location in `docs/story/chapters/ch01.md`)?
 
 - None (design decision; docs only).
 
+## Nick's idea (playtest round 2, 2026-10-14)
+
+Nick, after playing Chapter 1 (0804):
+
+> "probably the conversations should have some kind of background imagery,
+> similar to a cutscene... like even just Dace pacing a castle or
+> whatever... and then flip to the conversation portraits with the
+> background opacity lessened or otherwise darkened... it would set the
+> mood better than portraits against black background"
+
+So this is now his option, and it leads the question: a short scene first
+(units or a character moving in a place, like the title cinematic's map
+shots), then the portraits over that place, darkened. Mock it up next to
+A–D (bought backdrops, a tileset room or yard, the battle map itself) and
+ask how many places Chapter 1 needs and whether every conversation opens
+with the moving part or only the first in a place.
+
+**The playtest waits for this** (Nick, 2026-10-14: all round 2 feedback is
+done before he replays Chapter 1). The follow-up implementation ticket(s)
+go in 0804's `blocked_by` and in `docs/ROADMAP.md`'s round 3 list.
+
+**Scene music:** asked about the four scene music picks, Nick said "I want
+to see how the cutscenes would play out with this ambience". The picks
+(`audio.md`, *Chapter 1's cues*) stay unapproved until he sees the scenes
+with their backgrounds; the follow-up's sign-off asks about them.
+
 ## Completion notes
 
 *(Filled in by the session that completes the ticket.)*

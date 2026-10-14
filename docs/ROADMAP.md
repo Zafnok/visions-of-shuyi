@@ -63,6 +63,21 @@ which one the game starts at) · the title's logo and cinematic (**0012** →
 **0830** the Game Over animation with the logo (after 0811). All of these
 are on the critical path now.
 
+**Playtest round 3** (Nick, 2026-10-14, after playing `v0.2.0`: "it's my
+top priority to get all this feedback done and then replay ch1 over and
+over to get the feel correct"). 0804 now also waits for: **0607** the lead's
+portrait on level-up · **0451** point at a hurt
+ally to heal · **0452** forest tiles that show where the forest ends ·
+**0429** what a skill or art does, shown while choosing it · **0728** the
+Chapter 1 script reworked as scenes (0719, 0722 and 0726 wait for it) ·
+**0729** the dialogue log · **0730** Maud's softer eyes · **0832** a
+combat-scene shot → **0833** the title cinematic moving like the game
+(also after 0728) · **0834** Tamsin less dominant · and the decisions
+**0056** Cinder Oath's range, **0057** a tutorial, **0058** which options
+belong to a save, **0029** backgrounds behind conversations (Nick's idea:
+a short moving scene, then the portraits over it, darkened), each with the
+tickets it creates. All of these are on the critical path now.
+
 **Replaceable graphics** (Nick, 2026-10-01: swapping the map's glyphs for
 sprites from image files must be a small job; ADR-0038): **0231** pictures
 in the frame as sprite items (no open dependencies; 0711 and 0413 now draw

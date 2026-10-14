@@ -276,6 +276,7 @@ FE style: chapter saves plus a one-time suspend.
 
 ## Open sub-questions (deferred)
 
-- Whether 7% of a level per unused charge feels right: check at the Chapter 1
-  playtest (0804).
+*(Settled: 7% of a level per unused charge. Asked after playing Chapter 1,
+Nick said it "feels fine" (2026-10-14, ticket 0804).)*
+
 - Harder difficulty modes: after Chapter 1.

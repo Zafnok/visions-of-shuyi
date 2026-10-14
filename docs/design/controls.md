@@ -151,6 +151,7 @@ Nick, playing Chapter 1 (2026-10-12, ticket 0727):
   Nick taps `F` to turn the page; the next line starts at the normal
   speed. He keeps `F` down through three pages; each one starts at the
   normal speed and goes fast a moment later.
+  Nick, after playing with it (2026-10-14, 0804): "it's fine". Kept.
 
 ### End turn: double-tap Space
 

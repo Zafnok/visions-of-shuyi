@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: sonnet-5
 effort: medium
 status: todo
-blocked_by: ["0716", "0720", "0721", "0826"]
+blocked_by: ["0716", "0720", "0721", "0826", "0728"]
 nick_input: sign-off
 completed:
 ---

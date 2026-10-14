@@ -147,6 +147,7 @@ party (`1` the lead, `2` Hollis, `3` Tamsin, `4` Aske, `5` Maud, `6` Rue);
   the others). Everyone else holds a place (a bridge, the fort road, the
   fort) and attacks whoever comes within reach. The ticket's plan was
   "mostly aggressive"; with that, the mindless bot won about 1 try in 10.
+  Nick, after playing (2026-10-14, 0804): "its ok I guess". Kept.
 - **The party:** the lead, Aske, Maud and Rue are level 1, Tamsin level 2,
   Hollis level 3 (a guard captain of twenty years). Everyone has iron
   weapons; the lead also carries a Steel Sword and Hollis a Steel Spear.
