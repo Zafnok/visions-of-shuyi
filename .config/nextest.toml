@@ -1,0 +1,51 @@
+# nextest runs only in the PR mutation gate (ADR-0073); `cargo test` runs
+# everywhere else. The `mutants` profile is chosen there by
+# `NEXTEST_PROFILE=mutants` (ticket 0127).
+
+# A caught mutant needs one failing test, so the run stops at the first
+# failure and also stops the tests still running, instead of waiting for
+# them.
+[profile.mutants]
+fail-fast = { max-fail = 1, terminate = "immediate" }
+
+# Slow tests run last, so a mutant that a quick test catches never waits
+# for them. They still run for every mutant that gets that far: only the
+# order changes. The list is every test that took 5 s or more in the
+# unmutated `trpg-ui` run of PR #287's mutation run (2026-10-15); a test
+# renamed or made faster (ticket 0128) only loses its place here.
+[[profile.mutants.overrides]]
+priority = -100
+filter = '''
+    test(=battle::quick_battle_keeps_one_skirmish_track)
+  | test(=credits::after_the_last_row_the_list_starts_again_from_the_top)
+  | test(=dialogue::tests::no_embedded_scene_shows_someone_who_is_gone)
+  | test(=dialogue_log::a_jump_back_shows_the_portraits_as_they_were_and_reading_on_keeps_the_lines)
+  | test(=dialogue_log::a_reply_passed_on_the_way_back_is_asked_again)
+  | test(=dialogue_log::going_to_a_reply_opens_its_replies_again)
+  | test(=dialogue_log::log_snapshot_left_handed)
+  | test(=dialogue_log::log_snapshot_right_handed)
+  | test(=dialogue_log::on_a_key_the_scene_uses_the_scene_wins)
+  | test(=flow::tests::the_victory_scene_plays_for_the_army_as_the_battle_left_it)
+  | test(=harness::tests::the_title_music_clock_counts_up_and_wraps_at_the_track_length)
+  | test(=map_skin::the_skin_never_changes_the_game)
+  | test(=map_view::glyph::tests::glyph_skin_paints_only_the_area)
+  | test(=map_view::sprite::ground::tests::every_tile_of_the_map_has_one_picture_of_its_own_and_none_spills)
+  | test(=map_view::sprite::tests::sprite_skin_paints_only_the_area)
+  | test(=map_view::sprite::tests::sprite_units_skin_paints_only_the_area)
+  | test(=map_view::sprite::tests::tiles_lie_inside_the_area_edge_to_edge)
+  | test(=map_view::sprite::units::tests::a_picture_is_centred_and_stands_on_the_hp_bar)
+  | test(=screens::battle::path::tests::steered_paths_are_legal_and_follow_the_cursor)
+  | test(=screens::battle::scene_tests::scene_units_are_visible)
+  | test(=screens::key_bindings::glyph::tests::the_choices_are_drawn_under_the_slot_or_over_it_on_the_last_rows)
+  | test(=screens::title::tests::each_quick_battle_rolls_its_track_afresh)
+  | test(=screens::title::tests::the_next_launch_never_shows_the_same_backdrop)
+  | test(=title_cinematic::a_press_at_14_seconds_keeps_the_menu_another_15)
+  | test(=title_cinematic::a_press_during_the_cinematic_skips_to_the_logo_and_the_silence)
+  | test(=title_cinematic::a_press_in_the_silence_keeps_the_menu_past_the_loop)
+  | test(=title_cinematic::back_from_a_battle_the_menu_shows_and_the_song_starts_over)
+  | test(=title_cinematic::left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops)
+  | test(=title_cinematic::the_battle_plays_as_turns_with_the_combat_scene)
+  | test(=title_cinematic::the_storyboard_plays_shot_by_shot)
+  | test(=title_cinematic::the_timer_does_not_run_under_load_game_or_options)
+  | test(=title_cinematic::without_music_the_cinematic_runs_anyway_and_loops)
+'''

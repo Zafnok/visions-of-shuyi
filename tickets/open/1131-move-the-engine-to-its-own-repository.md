@@ -58,7 +58,7 @@ None. The repository exists, and Nick's `gh` login can push to it.
   - tests and docs;
   - the web build of the examples;
   - `cargo deny` and machete;
-  - the mutation gate in shards (ADR-0047);
+  - the mutation gate in shards (ADR-0073);
   - Pages for the examples.
 
   Update its `run-gates` skill.

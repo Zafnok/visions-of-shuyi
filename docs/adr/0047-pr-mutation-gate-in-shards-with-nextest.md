@@ -1,6 +1,6 @@
 # ADR-0047: The PR mutation gate runs in shards, with nextest as its test runner
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0073
 - **Date:** 2026-10-03
 - **Related tickets:** 0119, 0105
 - **Related ADRs:** ADR-0007 (layer 7), ADR-0008, ADR-0014

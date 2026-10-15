@@ -48,7 +48,7 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: git diff "origin/$BASE_REF...HEAD" -- '*.rs' > git.diff
       # 1 shard up to 40 mutants, 4 up to 160, otherwise 8: every shard pays
-      # for its own build and unmutated test run, so a small diff gets one.
+      # for its own setup and first full build, so a small diff gets one.
       - name: Count mutants and pick shards
         id: count
         run: |
@@ -72,6 +72,29 @@ jobs:
             echo "of=$of"
             echo "shards=[$shards]"
           } >> "$GITHUB_OUTPUT"
+
+  # The unmutated tree must pass under nextest, once for the whole run,
+  # beside the shards instead of before each of them (ticket 0127). It
+  # runs every crate the mutants can be in, with the shards' profile.
+  baseline:
+    needs: [changes, plan]
+    if: needs.plan.outputs.mutants != '0'
+    name: mutants (diff, baseline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Install macroquad system libraries
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
+      - uses: taiki-e/install-action@83ac0ad63c0167e6f06796fab0fce28db1bf3db0 # v2.87.22
+        with:
+          tool: cargo-nextest
+      - name: Run the tests unmutated
+        run: cargo nextest run --workspace --exclude trpg-app --profile mutants
 
   pr:
     needs: [changes, plan]
@@ -103,15 +126,26 @@ jobs:
       # spread over every shard. nextest stops at the first failing test, so
       # a caught mutant does not pay for the whole suite. Two mutants at a
       # time (never more: cargo-mutants warns of timeouts), each in its own
-      # copy of the tree (ADR-0047).
+      # copy of the tree (ADR-0047, ADR-0073).
+      #
+      # Ticket 0127: the `mutants` nextest profile runs the slow tests last
+      # and stops at the first failure. Incremental builds are back on
+      # (rust-cache turns them off for the job; the mutants build in their
+      # own copies under /tmp, which are never cached), so a mutant
+      # recompiles only what changed. The unmutated run is the `baseline`
+      # job, so the timeout is fixed: 720 s is the 705 s that
+      # `timeout_multiplier = 3.0` gave on the 232 s unmutated `ui` run,
+      # rounded up. Raise it if that run grows past about 240 s.
       - name: Run cargo mutants on this shard of the diff
         env:
           SHARD: ${{ matrix.shard }}
           OF: ${{ needs.plan.outputs.of }}
+          NEXTEST_PROFILE: mutants
         run: >
+          CARGO_INCREMENTAL=1
           cargo mutants --in-diff git.diff --jobs 2
           --shard "$SHARD/$OF" --sharding round-robin
-          --test-tool=nextest -vV
+          --test-tool=nextest --baseline=skip --timeout 720 -vV
       - name: Upload mutants.out
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -126,7 +160,7 @@ jobs:
   mutants-result:
     name: mutants (diff)
     if: always() && github.event_name == 'pull_request'
-    needs: [changes, plan, pr]
+    needs: [changes, plan, baseline, pr]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any needed job failed or was cancelled
