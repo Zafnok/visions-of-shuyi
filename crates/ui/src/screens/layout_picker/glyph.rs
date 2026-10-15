@@ -8,6 +8,7 @@ use super::view::{KeyRole, LayoutPickerView, LayoutView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Key;
+use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
 

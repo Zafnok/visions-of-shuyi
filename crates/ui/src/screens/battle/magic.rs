@@ -9,6 +9,7 @@
 //! ([`BattleState::check`]), so the UI never decides what is legal
 //! (ADR-0004).
 
+use crate::prelude::*;
 use trpg_core::{
     BattleState, CastTarget, Command, CostError, EffectDuration, Equipped, Pos, SkillId, SpellDef,
     SpellId, SpellKind, TerrainId, UnitAction, UnitId,
@@ -22,7 +23,7 @@ use super::mode::Selection;
 use super::skills::skill_name;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::words::Words;
-use std::fmt::Display;
+use core::fmt::Display;
 
 /// One line of the spell list.
 #[derive(Debug, Clone, PartialEq, Eq)]

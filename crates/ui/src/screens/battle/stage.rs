@@ -4,6 +4,7 @@
 //! module says what the stage shows ([`view()`]); [`motion`] is how the
 //! pictures move and [`glyph`] paints it (ADR-0054).
 
+use crate::prelude::*;
 use trpg_content::{Battler, Light};
 use trpg_core::{Affinity, Faction, LeadProfile, Side, SideForecast, Strike};
 

@@ -4,7 +4,8 @@
 //! threaten a tile. No colours, glyphs, cells or pixels: a
 //! [`MapSkin`](super::MapSkin) turns a scene into those.
 
-use std::fmt::Write as _;
+use crate::prelude::*;
+use core::fmt::Write as _;
 
 use serde::{Deserialize, Serialize};
 use trpg_content::{Content, MapLook};

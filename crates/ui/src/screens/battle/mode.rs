@@ -33,7 +33,8 @@
 //! Transitions are pure ([`step`], [`Mode::tick`]); the screen owns the
 //! cursor and applies the [`Effect`]s.
 
-use std::borrow::Cow;
+use crate::prelude::*;
+use alloc::borrow::Cow;
 
 use trpg_core::{
     BattleState, Command, Equipped, Faction, Phase, Pos, Reach, TileSet, UnitAction, UnitId,

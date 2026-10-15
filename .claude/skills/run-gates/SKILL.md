@@ -31,6 +31,7 @@ cargo doc --workspace --no-deps          # with RUSTDOCFLAGS="-D warnings"
 cargo build -p trpg-app --target wasm32-unknown-unknown
 cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf   # Playdate, no std (ADR-0070)
 cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf
+cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf
 cargo deny check                          # after ticket 0103
 cargo machete                             # after ticket 0103
 typos                                     # after ticket 0103

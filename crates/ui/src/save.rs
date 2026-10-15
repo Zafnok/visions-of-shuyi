@@ -9,7 +9,8 @@
 //! [`SAVE_VERSION`](trpg_core::SAVE_VERSION) is
 //! [`SaveError::Incompatible`]. The player sees the error's text.
 
-use std::fmt;
+use crate::prelude::*;
+use core::fmt;
 
 use trpg_content::Content;
 use trpg_core::{Campaign, GameMode, LeadProfile, SaveFile, SaveHeader, SavePoint};
@@ -58,7 +59,7 @@ impl fmt::Display for SaveError {
     }
 }
 
-impl std::error::Error for SaveError {}
+impl core::error::Error for SaveError {}
 
 impl SaveError {
     /// What the player is told, in `ctx`'s language (the `Display` text is

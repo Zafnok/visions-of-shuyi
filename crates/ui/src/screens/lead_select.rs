@@ -17,6 +17,7 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{GenderView, GridView, LeadSelectView, NameRowView, TypingView};
 
 use trpg_core::lead::{DEFAULT_NAME, FAMILY_NAME, MAX_NAME_LEN};
@@ -519,7 +520,7 @@ impl Screen for LeadSelectScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

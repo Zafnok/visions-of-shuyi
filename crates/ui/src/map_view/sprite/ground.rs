@@ -8,6 +8,7 @@
 //! A tile off the map gets no picture, and no part of one: a picture
 //! between tiles is drawn only inside the tiles of the map it covers.
 
+use crate::prelude::*;
 use trpg_content::tileset::{CornerLayer, Layer, Look, TileLayer};
 use trpg_content::{ImageId, ImageRect, Picture, TerrainTiles};
 

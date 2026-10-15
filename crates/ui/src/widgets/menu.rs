@@ -7,6 +7,7 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{MenuItemView, MenuView, SuffixKind};
 
 use crate::audio::{AudioQueue, MenuSound};

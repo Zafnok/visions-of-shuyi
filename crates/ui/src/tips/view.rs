@@ -2,6 +2,7 @@
 //! face, the tip's heading and lines, and the close hint. A skin paints it
 //! ([`super::glyph::paint`]).
 
+use crate::prelude::*;
 use trpg_content::Tip;
 use trpg_content::tip::GUIDE_PORTRAIT;
 

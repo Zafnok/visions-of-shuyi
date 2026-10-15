@@ -3,6 +3,7 @@
 //! frame ([`ClassChangeScreen::view`](super::ClassChangeScreen::view)) and
 //! a skin paints it ([`super::glyph::paint`] today); see ADR-0054.
 
+use crate::prelude::*;
 use trpg_core::StatValue;
 
 use crate::screens::battle::progress::Progress;

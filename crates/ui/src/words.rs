@@ -5,8 +5,9 @@
 //! ([`Ctx::words`](crate::Ctx::words)), never by reading a `name` field
 //! itself (`cargo xtask check-text` fails on one).
 
-use std::fmt::Display;
-use std::sync::Arc;
+use crate::prelude::*;
+use alloc::sync::Arc;
+use core::fmt::Display;
 
 use trpg_content::{ChapterDef, Lang, LangCode, Names, Scene, Tip};
 use trpg_core::lead::LEAD_ID;

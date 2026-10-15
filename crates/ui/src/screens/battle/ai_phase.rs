@@ -10,6 +10,7 @@
 //! (ADR-0004 rule 3); the screen owns the camera and cursor and copies them
 //! from it each frame.
 
+use crate::prelude::*;
 use trpg_core::{Pos, Unit, UnitId};
 
 use super::mode::Mode;

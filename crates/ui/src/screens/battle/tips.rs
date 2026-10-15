@@ -1,7 +1,8 @@
 //! The battle's one-time tips (0406): which triggers have fired, the tips
 //! waiting to be shown, and which the player has already seen.
 
-use std::collections::VecDeque;
+use crate::prelude::*;
+use alloc::collections::VecDeque;
 
 use trpg_content::TipTrigger;
 use trpg_core::TutorialLevel;
@@ -38,7 +39,7 @@ impl TipState {
     /// saves them as seen. With tips off, or a campaign whose tutorial
     /// level shows none (0835), they are just forgotten.
     pub fn absorb(&mut self, ctx: &mut Ctx) {
-        let fired = std::mem::take(&mut self.fired);
+        let fired = core::mem::take(&mut self.fired);
         let level_shows = ctx.campaign_tutorial.is_none_or(TutorialLevel::shows_tips);
         if !ctx.tips_enabled || !level_shows {
             return;

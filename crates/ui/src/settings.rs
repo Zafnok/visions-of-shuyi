@@ -8,6 +8,7 @@
 //! [`Ctx`]: crate::screen::Ctx
 //! [`Ctx::change_settings`]: crate::screen::Ctx::change_settings
 
+use crate::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::input::Layout;

@@ -8,6 +8,7 @@ use super::view::TipView;
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::portrait::draw_portrait_in;
+use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
 

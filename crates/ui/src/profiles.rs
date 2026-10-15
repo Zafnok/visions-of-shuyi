@@ -11,7 +11,8 @@
 //! the first profile on a first launch, and moves a player's keys from
 //! before profiles into it ([`migrate`]).
 
-use std::fmt;
+use crate::prelude::*;
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
@@ -114,7 +115,7 @@ impl fmt::Display for ProfileError {
     }
 }
 
-impl std::error::Error for ProfileError {}
+impl core::error::Error for ProfileError {}
 
 /// The list of profiles, in the order they were made, and the one in use.
 #[derive(Debug, Clone, PartialEq, Eq)]

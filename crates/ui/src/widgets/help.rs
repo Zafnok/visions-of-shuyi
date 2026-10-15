@@ -5,7 +5,8 @@
 //! (`docs/design/controls.md`, *Controller*): keys on the keyboard, the
 //! pad's own button names on a controller.
 
-use std::ops::Deref;
+use crate::prelude::*;
+use core::ops::Deref;
 
 use crate::input::{ARROWS, Action, Device, Keymap};
 

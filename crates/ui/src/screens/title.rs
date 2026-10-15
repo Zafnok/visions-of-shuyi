@@ -21,9 +21,10 @@ pub mod glyph;
 pub mod song;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{CinematicView, TitleView};
 
-use std::rc::Rc;
+use alloc::rc::Rc;
 
 use trpg_content::ImageId;
 
@@ -532,7 +533,7 @@ impl Screen for TitleScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

@@ -2,6 +2,7 @@
 //! themselves in the dialogue screen's look. Which box is up and how much
 //! of its text is typed out come from the time alone ([`talk_at`]).
 
+use crate::prelude::*;
 use trpg_content::{Present, Scene, Side};
 use trpg_core::{CharacterId, LeadProfile};
 

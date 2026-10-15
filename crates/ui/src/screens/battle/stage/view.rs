@@ -2,6 +2,7 @@
 //! data, in the player's language. The skin ([`super::glyph`]) decides
 //! where and how.
 
+use crate::prelude::*;
 use trpg_content::{Battler, ImageId, Light};
 use trpg_core::{Faction, StatValue};
 

@@ -6,6 +6,7 @@
 //! command applied to a copy of the battle), so the player is never offered
 //! a skill that would be refused (ADR-0004).
 
+use crate::prelude::*;
 use trpg_core::{
     ActiveEffect, Area, BattleState, CombatMods, Command, CommandError, Condition, PassiveEffect,
     Phase, Pos, SkillCost, SkillDef, SkillId, SkillKind, StatKind, StatValue, TimedEffect,

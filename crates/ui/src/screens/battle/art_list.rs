@@ -7,6 +7,7 @@
 //! would refuse (ADR-0004). A spell active is a line of the spell list
 //! instead (`Fire + Overcast`, [`super::magic`]).
 
+use crate::prelude::*;
 use trpg_core::{
     ArtDef, ArtId, ArtNote, BattleState, CastTarget, CombatMods, CommandError, CostError, Equipped,
     Event, Faction, Pos, SkillCost, SkillId, StatKind, Unit, UnitAction, UnitId, UnitTag,

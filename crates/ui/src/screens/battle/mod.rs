@@ -51,9 +51,10 @@ pub mod units;
 pub mod view;
 pub mod walk;
 
-use std::cell::RefCell;
-use std::collections::VecDeque;
-use std::fmt::Display;
+use crate::prelude::*;
+use alloc::collections::VecDeque;
+use core::cell::RefCell;
+use core::fmt::Display;
 use trpg_content::{Content, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
@@ -567,7 +568,7 @@ impl BattleScreen {
         let Some(BannerKind::Outcome(outcome)) = self.banner().map(|b| b.kind) else {
             return;
         };
-        if std::mem::replace(&mut self.outcome_music, OutcomeMusic::Heard) == OutcomeMusic::Heard {
+        if core::mem::replace(&mut self.outcome_music, OutcomeMusic::Heard) == OutcomeMusic::Heard {
             return;
         }
         let cue = match outcome {
@@ -840,7 +841,7 @@ impl BattleScreen {
         let to = self.camera.origin;
         self.camera.origin = from;
         self.cursor.jump(start);
-        let then = std::mem::take(&mut self.mode);
+        let then = core::mem::take(&mut self.mode);
         let pacing = PACING.at_speed(self.ai_speed, self.pace);
         let action = AiAction::new(unit, before, (from, to), path, then, pacing);
         self.mode = Mode::AiAction(Box::new(action));
@@ -1280,7 +1281,7 @@ impl BattleScreen {
             return false;
         };
         let before = self.mode.clone();
-        let mode = std::mem::take(&mut self.mode);
+        let mode = core::mem::take(&mut self.mode);
         let (mode, effect) = mode::step(mode, action, self.cursor.pos, &self.state);
         let mode = mode.at_pace(self.pace.0);
         if let Some(sound) = sounds::step_sound(action, &before, &mode, &effect) {
@@ -1323,7 +1324,7 @@ impl BattleScreen {
         let own_pace = matches!(self.mode, Mode::Moving { .. } | Mode::AiAction(_));
         let dt = if own_pace { dt } else { scaled };
         self.play_sounds(ctx, dt, held);
-        let mode = std::mem::take(&mut self.mode);
+        let mode = core::mem::take(&mut self.mode);
         self.mode = mode.tick(dt, held, &self.state);
         self.follow_ai_action();
         // A walk aimed at an enemy (0428) ends in its forecast: the cursor
@@ -2189,7 +2190,7 @@ impl Screen for BattleScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

@@ -8,6 +8,7 @@
 //! under the striker's crit. All numbers come from [`AttackPreview`];
 //! nothing is computed here.
 
+use crate::prelude::*;
 use trpg_core::{
     Affinity, ArtNote, AttackPreview, BattleState, Equipped, PlannedStrike, Side, SideForecast,
     StatKind, StatValue, Unit,

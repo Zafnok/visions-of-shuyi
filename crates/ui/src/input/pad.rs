@@ -16,7 +16,8 @@
 //!
 //! [`InputState`]: super::InputState
 
-use std::collections::BTreeMap;
+use crate::prelude::*;
+use alloc::collections::BTreeMap;
 
 use super::{Button, StickDef};
 
