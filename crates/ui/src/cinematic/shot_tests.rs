@@ -15,7 +15,8 @@ use crate::console::ConsoleSpec;
 use crate::input::Action;
 use crate::screen::tests::ctx;
 use crate::screen::{FrameInput, Screen};
-use crate::screens::dialogue::{DialogueScreen, FRAME};
+use crate::screens::dialogue::DialogueScreen;
+use crate::screens::dialogue::glyph::FRAME;
 use crate::settings::TextSpeed;
 
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);

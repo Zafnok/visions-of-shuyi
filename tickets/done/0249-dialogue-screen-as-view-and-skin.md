@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["0248"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 0249 — The dialogue screen as view + skin
@@ -72,15 +72,15 @@ None. Nothing the player sees changes.
 
 ## Acceptance criteria
 
-- [ ] `dialogue.rs` doesn't name `UiColor`, `Rect`, `BoxStyle`, `Cell` or
+- [x] `dialogue.rs` doesn't name `UiColor`, `Rect`, `BoxStyle`, `Cell` or
       `draw_portrait`, and its `draw` is one call to its skin (the grep
       test covers it).
-- [ ] No snapshot file changes.
-- [ ] The view has unit tests for the reveal, the choices and the skip
+- [x] No snapshot file changes.
+- [x] The view has unit tests for the reveal, the choices and the skip
       question appearing and going.
-- [ ] `cargo xtask check-keys` and `check-text` pass; the `check-text`
+- [x] `cargo xtask check-keys` and `check-text` pass; the `check-text`
       limit isn't raised.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -91,5 +91,33 @@ None. Nothing the player sees changes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `screens/dialogue/view.rs`: `DialogueView` (overlay or not, caption,
+  the two sides' `FaceView`s with portrait id, expression and name, the
+  speaker's side, the text box's `TextView`, the open log's `LogView`).
+  `TextView` has the page's lines in full, the revealed characters as a
+  count, the replies as a `MenuView`, the skip question (`SkipView`) and,
+  while the page waits for a key, a `WaitView` (the key's name, the log's
+  hint if its action has a key, and whether the blinking marker is lit).
+- `screens/dialogue/glyph.rs`: `paint`, with the layout constants
+  (`TEXT_BOX`, the frames, `LISTENER_DIM`) and how the text box grows
+  over the replies (`text_box`, which was a public method of the screen).
+  `FaceFrame`/`draw_face`/`FRAME`, which the cinematic's characters shot
+  uses, moved here too: they are the look.
+- `draw_told` and `Told` are gone: the talk shot builds a view with
+  `view::told` and calls `glyph::paint`, the same function the screen
+  uses (with no choices, no skip question and nothing waiting, `paint`
+  draws exactly what `draw_told` did; the existing test that the talk
+  shot matches the dialogue screen cell for cell still passes).
+- The grep test covers `dialogue.rs`. The behaviour tests in
+  `dialogue/tests.rs` and `tests/it/dialogue.rs` read the view; the look
+  tests moved to `dialogue/glyph/tests.rs` and build views by hand. New
+  view tests: the reveal (`revealed`, `waiting` appearing once the page
+  is shown, blinking, going with the page and under the skip question),
+  the replies appearing, following the cursor and going, the skip
+  question appearing and going, the log appearing and going, no log hint
+  without a log key.
+- Deviation: the blink's timing (`BLINK_S`) stays in the logic, which
+  says whether the marker is lit, as the map scene does for a unit's
+  blink; a skin only draws it or not.
+- No snapshot changed; nothing the player sees changes. No new
+  gameplay rules.

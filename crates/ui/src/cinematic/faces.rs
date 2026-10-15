@@ -8,7 +8,7 @@ use trpg_core::{CharacterId, LEAD_ID, LeadProfile};
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::screen::Ctx;
-use crate::screens::dialogue::{FRAME, FaceFrame, draw_face};
+use crate::screens::dialogue::glyph::{FRAME, FaceFrame, draw_face};
 
 /// Columns from one face's frame to the next one's: with a face in the
 /// middle of the screen, half of the one behind it has come in and half
