@@ -54,7 +54,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0043](0043-png-portraits.md) | Portraits are PNG files named by a sidecar, drawn as one sprite at a whole scale | Accepted |
 | [0045](0045-languages-text-by-key-and-line-ids.md) | Languages: text by key, dialogue lines by id, wide glyphs in two cells | Accepted (0233, 0717); amends ADR-0016 and ADR-0011 |
 | [0046](0046-voice-clips-by-line-id.md) | Voice clips are files keyed by dialogue line id, generated now, replaceable by recordings | Accepted; amends ADR-0026 and ADR-0032 rule 2 |
-| [0047](0047-pr-mutation-gate-in-shards-with-nextest.md) | The PR mutation gate runs in shards, with nextest as its test runner | Accepted |
+| [0047](0047-pr-mutation-gate-in-shards-with-nextest.md) | The PR mutation gate runs in shards, with nextest as its test runner | Superseded by ADR-0073 |
 | [0048](0048-backdrop-a-second-glyph-picture-panned-and-zoomed.md) | A backdrop: a second glyph picture behind the console, panned by the pixel and zoomed in whole steps | Accepted |
 | [0049](0049-unit-sprites-from-their-own-files-and-the-game-picks-its-map-skin.md) | Unit sprites come from their own image files, a tileset may leave terrain to the glyph skin, and the game picks its map skin from what it has | Accepted; extends ADR-0038; the tileset file's writer changed by ADR-0052 |
 | [0050](0050-player-settings.md) | Player settings: one saved RON record, read through `Ctx` | Accepted; where they are kept and saving at once superseded by ADR-0069 |
@@ -80,6 +80,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0070](0070-playdate-front-end.md) | The Playdate front end: stable Rust, the SDK's own C build, rules without `std` | Accepted (1026) |
 | [0071](0071-sonar-backlog-becomes-batched-github-issues.md) | SonarCloud's backlog becomes batched GitHub issues, filtered by a checked-in policy | Accepted (0126) |
 | [0072](0072-options-changes-previewed-then-kept-or-put-back.md) | Options changes are previewed, then kept or put back on leaving | Accepted (0839); amends ADR-0050 and ADR-0069 |
+| [0073](0073-mutation-shards-build-incrementally-and-run-slow-tests-last.md) | Mutation shards build incrementally, run the slow tests last, and share one baseline | Accepted |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
