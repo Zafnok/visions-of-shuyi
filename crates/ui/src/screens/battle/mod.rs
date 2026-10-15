@@ -854,16 +854,12 @@ impl BattleScreen {
         self.lessons.ticked()
     }
 
-    /// The box of the lesson on screen ([`Self::shown_lesson`]), if any:
-    /// at the bottom of the map while the cursor is in its top half on
-    /// `scene`, so the box never hides the cursor's tile.
-    fn lesson_view(&self, ctx: &Ctx, scene: &MapScene) -> Option<LessonView> {
+    /// The box of the lesson on screen ([`Self::shown_lesson`]), if any,
+    /// which never hides the cursor's tile.
+    fn lesson_view(&self, ctx: &Ctx) -> Option<LessonView> {
         let lesson = ctx.content.lessons.get(self.shown_lesson()?)?;
-        let tile = ctx.map_skin.tile_cells(scene, MAP_VIEW, self.cursor.pos);
-        let middle = MAP_VIEW.y + MAP_VIEW.h / 2;
-        let high = tile.is_some_and(|t| t.y + t.h / 2 < middle);
         let ticked = self.lessons.ticked();
-        Some(LessonView::new(ctx, lesson, ticked, high))
+        Some(LessonView::new(ctx, lesson, ticked, self.cursor.pos))
     }
 
     /// Notes that the player did `done`, for the lesson in play
@@ -2040,7 +2036,7 @@ impl BattleScreen {
         let debug_hint = super::debug_hint(ctx);
         let words = ctx.words();
         if let Some(rewind) = &self.rewind {
-            let lesson = self.lesson_view(ctx, &scene);
+            let lesson = self.lesson_view(ctx);
             return BattleView {
                 lesson,
                 scene,
@@ -2094,7 +2090,7 @@ impl BattleScreen {
             noted: self.noted(),
             banner: self.banner().map(|b| b.view(words, limit)),
             tip: self.tip_view(ctx),
-            lesson: self.lesson_view(ctx, &scene),
+            lesson: self.lesson_view(ctx),
             message: self.message(),
             status: self.status(ctx),
             scene,

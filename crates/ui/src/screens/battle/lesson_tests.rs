@@ -9,14 +9,15 @@ use trpg_content::{DoneWhen, Lesson, LessonItem, LessonLevel, TipTrigger};
 use trpg_core::{Command, Phase, TutorialLevel, UnitAction};
 
 use super::cursor::Cursor;
+use super::glyph::{in_top_half, lesson_rect};
 use super::layout::MAP_VIEW;
 use super::mode::Selection;
 use super::testing::{skirmish_charged, vaulted, wait};
 use super::*;
 use crate::audio::AudioRequest;
+use crate::glyph_buffer::Rect;
 use crate::harness::Harness;
 use crate::screen::tests::ctx;
-use crate::tips::glyph::lesson_rect;
 
 /// The test lesson (`assets-test/data/lessons.ron`).
 const TEST_LESSON: &str = "test_cursor";
@@ -512,8 +513,7 @@ fn the_box_never_hides_the_cursor() {
             s.cursor = Cursor::new(Pos::new(x, y));
             s.follow(Pos::new(x, y));
             let view = s.view(&c);
-            let lesson = view.lesson.expect("the lesson");
-            let rect = lesson_rect(&lesson);
+            let rect = lesson_rect(&c, &view).expect("the lesson's box");
             let cell = c.map_skin.tile_cells(&view.scene, MAP_VIEW, Pos::new(x, y));
             let cell = cell.expect("the cursor's tile in view");
             let apart = cell.y + cell.h <= rect.y || rect.y + rect.h <= cell.y;
@@ -522,8 +522,9 @@ fn the_box_never_hides_the_cursor() {
             // in the top half.
             assert_eq!(cell.h, 1);
             let middle = MAP_VIEW.y + MAP_VIEW.h / 2;
-            assert_eq!(lesson.at_bottom, cell.y < middle, "({x}, {y}): {cell:?}");
-            places.insert(lesson.at_bottom);
+            let at_bottom = rect.y > MAP_VIEW.y;
+            assert_eq!(at_bottom, cell.y < middle, "({x}, {y}): {cell:?}");
+            places.insert(at_bottom);
         }
     }
     let middle = MAP_VIEW.y + MAP_VIEW.h / 2;
@@ -533,6 +534,22 @@ fn the_box_never_hides_the_cursor() {
         .map(|r| r.y);
     // The test map's first row is in the top half: the box went down.
     assert!(top_row.is_some_and(|y| y < middle) && places.contains(&true));
+}
+
+/// A tile is in the map's top half when its middle row is: with tiles
+/// taller than a row (a sprite skin's), what counts is their middle.
+#[test]
+fn a_tile_is_high_by_its_middle_row() {
+    let middle = MAP_VIEW.y + MAP_VIEW.h / 2;
+    let tile = |y, h| Rect::new(0, y, 2, h);
+    assert!(in_top_half(tile(middle - 1, 1)));
+    assert!(!in_top_half(tile(middle, 1)));
+    // Rows 13 and 14, middle 14: high. Rows 14 and 15, middle 15: low.
+    assert!(in_top_half(tile(middle - 2, 2)));
+    assert!(!in_top_half(tile(middle - 1, 2)));
+    // Rows 12 to 15, middle 14: high; rows 13 to 16, middle 15: low.
+    assert!(in_top_half(tile(middle - 3, 4)));
+    assert!(!in_top_half(tile(middle - 2, 4)));
 }
 
 /// The lesson's box over the Quick Battle, two of its four items done.

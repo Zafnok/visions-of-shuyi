@@ -79,15 +79,15 @@ pub fn rect(view: &TipView) -> Rect {
 }
 
 /// Where the box of lesson `view` goes: against the top edge of the map
-/// view, or its bottom edge when the view says, centred on it (`left`).
-pub fn lesson_rect(view: &LessonView) -> Rect {
+/// view, or its bottom edge if `at_bottom`, centred on it (`left`).
+pub fn lesson_rect(view: &LessonView, at_bottom: bool) -> Rect {
     let text = widest(view.lines.iter().chain([&view.heading, &view.progress]));
     let items = MARK_CELLS + widest(view.items.iter().map(|i| &i.label));
     // A blank row, the heading, the lines, a blank row, the items, a blank
     // row, the count.
     let rows = view.lines.len() + view.items.len() + 5;
     let (w, h) = size(&view.title, view.face.as_ref(), text.max(items), rows);
-    let y = if view.at_bottom {
+    let y = if at_bottom {
         MAP_VIEW.y + MAP_VIEW.h - h
     } else {
         MAP_VIEW.y
@@ -158,11 +158,12 @@ pub fn paint(ctx: &Ctx, view: &TipView, buf: &mut GlyphBuffer) {
     buf.print(x, rect.y + rect.h - 2, &view.close, dim, bg);
 }
 
-/// Paints lesson `view`'s box.
-pub fn paint_lesson(ctx: &Ctx, view: &LessonView, buf: &mut GlyphBuffer) {
+/// Paints lesson `view`'s box, against the map view's bottom edge if
+/// `at_bottom`, else its top edge.
+pub fn paint_lesson(ctx: &Ctx, view: &LessonView, at_bottom: bool, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    let rect = lesson_rect(view);
+    let rect = lesson_rect(view, at_bottom);
     let x = paint_frame(ctx, rect, &view.title, view.face.as_ref(), buf);
     // The checklist starts after a blank row.
     let mut y = paint_text(ctx, (x, rect.y + 2), &view.heading, &view.lines, buf) + 1;
@@ -252,6 +253,72 @@ mod tests {
         );
         assert_eq!(fg(x + 2, y + 3), Some(cx.palette.get(UiColor::Text)));
         assert!(buf.sprites().is_empty());
+    }
+
+    /// A lesson's box with `lines` lines of text and `items` items.
+    fn lesson(lines: usize, items: usize) -> LessonView {
+        LessonView {
+            title: "Guide".into(),
+            face: None,
+            heading: "Head".into(),
+            lines: vec!["text".to_owned(); lines],
+            items: (0..items)
+                .map(|i| super::super::view::LessonItemView {
+                    label: "x".repeat(i + 1),
+                    done: i % 2 == 0,
+                })
+                .collect(),
+            progress: "1 of 3 done".into(),
+            clear_of: trpg_core::Pos::new(0, 0),
+        }
+    }
+
+    /// Ticket 0456: the lesson's box is its border, a blank row, the
+    /// heading, the text, a blank row, the items, a blank row and the
+    /// count; against the map's top edge, or its bottom one.
+    #[test]
+    fn the_lesson_box_holds_its_rows_at_the_top_or_the_bottom() {
+        for (lines, items) in [(1, 3), (2, 1), (2, 6), (1, 1)] {
+            let top = lesson_rect(&lesson(lines, items), false);
+            let h = i32::try_from(lines + items + 7).unwrap();
+            assert_eq!((top.y, top.h), (MAP_VIEW.y, h), "{lines} {items}");
+            let bottom = lesson_rect(&lesson(lines, items), true);
+            assert_eq!(bottom.y + bottom.h, MAP_VIEW.y + MAP_VIEW.h);
+            assert_eq!((bottom.x, bottom.w, bottom.h), (top.x, top.w, top.h));
+        }
+        // Painted: the items under the text, the count above the border.
+        let c = ctx();
+        let v = lesson(1, 3);
+        let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
+        paint_lesson(&c, &v, false, &mut buf);
+        let r = lesson_rect(&v, false);
+        let row = |y: i32| -> String {
+            (r.x + 2..r.x + r.w - 2)
+                .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
+                .collect::<String>()
+                .trim_end()
+                .to_owned()
+        };
+        let rows: Vec<String> = (r.y + 1..r.y + r.h - 1).map(row).collect();
+        assert_eq!(
+            rows,
+            [
+                "",
+                "Head",
+                "text",
+                "",
+                "[x] x",
+                "[ ] xx",
+                "[x] xxx",
+                "",
+                "1 of 3 done"
+            ]
+        );
+        let fg = |x, y| buf.get(x, y).map(|c| c.fg);
+        assert_eq!(fg(r.x + 3, r.y + 5), Some(c.palette.get(UiColor::HpHigh)));
+        assert_eq!(fg(r.x + 6, r.y + 5), Some(c.palette.get(UiColor::TextDim)));
+        assert_eq!(fg(r.x + 6, r.y + 6), Some(c.palette.get(UiColor::Text)));
     }
 
     #[test]

@@ -7,6 +7,7 @@
 use crate::prelude::*;
 use trpg_content::tip::GUIDE_PORTRAIT;
 use trpg_content::{Lesson, Tip};
+use trpg_core::Pos;
 
 use super::fill_placeholders;
 use crate::screen::Ctx;
@@ -83,9 +84,9 @@ pub struct LessonView {
     pub items: Vec<LessonItemView>,
     /// How much is done, e.g. `2 of 4 done`.
     pub progress: String,
-    /// Whether the box goes at the bottom of the map, not the top: the
-    /// cursor is in the map's top half, and the box never hides it.
-    pub at_bottom: bool,
+    /// The map tile the box must not hide: the cursor's. The skin puts the
+    /// box where it doesn't.
+    pub clear_of: Pos,
 }
 
 /// One item of a lesson's checklist.
@@ -100,8 +101,8 @@ pub struct LessonItemView {
 impl LessonView {
     /// The box of `lesson`, spoken by the guide, its items ticked as
     /// `ticked` says (in order; an item past its end isn't), at the bottom
-    /// of the map if `at_bottom`.
-    pub fn new(ctx: &Ctx, lesson: &Lesson, ticked: &[bool], at_bottom: bool) -> Self {
+    /// clear of map tile `clear_of`.
+    pub fn new(ctx: &Ctx, lesson: &Lesson, ticked: &[bool], clear_of: Pos) -> Self {
         let words = ctx.words();
         let keys = ctx.help_keys();
         let guide = ctx.content.portraits.get(GUIDE_PORTRAIT);
@@ -127,7 +128,7 @@ impl LessonView {
             lines: text.lines().map(str::to_owned).collect(),
             items,
             progress,
-            at_bottom,
+            clear_of,
         }
     }
 }
