@@ -4,6 +4,7 @@
 //! [`ToBeContinuedScreen::view`](super::ToBeContinuedScreen::view)) and a
 //! skin paints it ([`super::glyph`] today); see ADR-0054.
 
+use crate::prelude::*;
 use crate::widgets::MenuView;
 
 pub use crate::screens::title::view::FULL;

@@ -13,6 +13,8 @@
 use super::view::{FULL, GameOverView, ToBeContinuedView};
 use crate::color::UiColor;
 use crate::console::ConsoleSpec;
+#[cfg(not(feature = "std"))]
+use crate::float::Float;
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, Paint, PxRect, Sprite};
 use crate::screen::Ctx;
 use crate::screens::title::glyph::{LOGO_SCALE, logo_sprite};

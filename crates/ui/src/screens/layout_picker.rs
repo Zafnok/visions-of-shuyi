@@ -13,6 +13,7 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{KeyCapView, KeyRole, LayoutPickerView, LayoutView, LegendRow};
 
 use crate::glyph_buffer::GlyphBuffer;
@@ -238,7 +239,7 @@ impl Screen for LayoutPickerScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

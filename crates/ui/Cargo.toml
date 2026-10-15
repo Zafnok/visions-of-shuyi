@@ -11,14 +11,21 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-trpg-core = { path = "../core" }
-trpg-content = { path = "../content" }
+trpg-core = { path = "../core", default-features = false }
+trpg-content = { path = "../content", default-features = false }
 thiserror.workspace = true
 # The player's saved key bindings (ticket 0217, ADR-0031).
 serde.workspace = true
 ron.workspace = true
+# `LazyLock`, float maths and `HashMap` without `std` (ADR-0070 §3).
+once_cell.workspace = true
+libm.workspace = true
+hashbrown.workspace = true
 
 [features]
+default = ["std"]
+# Without it the crate is `no_std` + `alloc` for the Playdate (ADR-0070 §3).
+std = ["trpg-core/std", "trpg-content/std", "ron/std", "thiserror/std", "serde/std"]
 # The headless test `Harness` (src/harness.rs), for integration tests. It
 # starts games in the test chapter, so it brings the test files (ADR-0057).
 harness = ["trpg-content/test-fixtures"]

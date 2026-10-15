@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
 status: in-progress
-blocked_by: ["0803", "0802", "0602", "0307", "0406", "0107", "0108", "0414", "0417", "0424", "0425", "0710", "0807", "0814", "0215", "0809", "0810", "0413", "0035", "0316", "0231", "0435", "0714", "0715", "0716", "0436", "0437", "0440", "0116", "0822", "0727", "0724", "0447", "0444", "0055", "0448", "0442", "0439", "0811", "0819", "0820", "0830", "0607", "0451", "0452", "0056", "0057", "0058", "0029", "0429", "0728", "0729", "0730", "0832", "0833", "0834", "0455", "0456", "0457", "0458", "0731", "0835", "0836", "0837", "0838", "0839"]
+blocked_by: ["0803", "0802", "0602", "0307", "0406", "0107", "0108", "0414", "0417", "0424", "0425", "0710", "0807", "0814", "0215", "0809", "0810", "0413", "0035", "0316", "0231", "0435", "0714", "0715", "0716", "0436", "0437", "0440", "0116", "0822", "0727", "0724", "0447", "0444", "0055", "0448", "0442", "0439", "0811", "0819", "0820", "0830", "0607", "0451", "0452", "0056", "0317", "0057", "0058", "0029", "0429", "0728", "0729", "0730", "0832", "0833", "0834", "0455", "0456", "0457", "0458", "0731", "0835", "0836", "0837", "0838", "0839"]
 nick_input: sign-off
 completed:
 ---
@@ -192,7 +192,7 @@ the same commit. The message went out the same day.
 | "seems the forest tilemap doesn't line up well with our grid and makes it a little confusing where the forest starts and ends visually. it overlaps with road but becomes road, it overlaps with plain but becomes plain. Need better differentiating here." | **0452** (new) |
 | "healers should have the same hover over friendly unit, click, means heal, like units have for enemy attacks..." | **0451** (new) |
 | "we should have some kind of basic tutorial, I am almost thinking of the annoying fairy from oot or clippy or something... some tutorial mascot thing idk." | **0057** (new, decision) |
-| "on special skill Rue's skill is range 1 really? seems a bit weird what is the flavor here? why should mage special skill be range 1?" | **0056** (new, decision) |
+| "on special skill Rue's skill is range 1 really? seems a bit weird what is the flavor here? why should mage special skill be range 1?" | **0056** (new, decision): range 1, no counter → **0317** |
 | "Tamsin in general feels too OP for the first fight, constantly doubling on enemy and also having highest mov" | **0834** (new, tuning) |
 | "we should have a chat log, accessible via key shortcut, optional binding. when a conversation plays, press chat log button and able to scroll thru messages, hover to see the portraits and that dialogue how it was, click to skip back (with option to skip forward again to latest seen point). Also if we add VA then it will play the voice again." | **0729** (new) |
 | "probably the conversations should have some kind of background imagery, similar to a cutscene... like even just Dace pacing a castle or whatever... and then flip to the conversation portraits with the background opacity lessened or otherwise darkened... it would set the mood better than portraits against black background" | **0029** (open; his idea added as the leading option) |

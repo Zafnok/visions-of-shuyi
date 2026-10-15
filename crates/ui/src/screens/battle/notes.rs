@@ -4,6 +4,7 @@
 //! either is up, the units the notes are about blink on the map, and the
 //! box keeps off their rows.
 
+use crate::prelude::*;
 use trpg_core::{BattleNote, UnitId};
 
 use crate::widgets::wrap::word_wrap;

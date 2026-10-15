@@ -19,8 +19,10 @@
 pub mod bindings;
 pub mod pad;
 
-use std::collections::{BTreeMap, HashMap};
-use std::time::Duration;
+use crate::prelude::*;
+use alloc::collections::BTreeMap;
+use core::time::Duration;
+use hashbrown::HashMap;
 
 pub use bindings::{BindError, ButtonSlots, LayoutBindings, PadBindings, PlayerKeys, Slots};
 pub use pad::{ButtonSet, PadId, PadKind, PadState, Pads};
@@ -360,7 +362,7 @@ impl Keymap {
 
 /// Binds `item` to `action` in `lookup`, replacing (and returning) the
 /// action of the same [`KeyGroup`] it had; its actions stay in group order.
-fn put<T: Copy + Eq + std::hash::Hash>(
+fn put<T: Copy + Eq + core::hash::Hash>(
     lookup: &mut HashMap<T, Vec<Action>>,
     item: T,
     action: Action,
@@ -556,7 +558,7 @@ impl InputState {
     /// [`MAX_REPEATS_PER_UPDATE`]; repeats beyond the cap are dropped, not
     /// deferred). Negative or non-finite `dt` counts as zero.
     pub fn update(&mut self, dt: f32) -> Vec<Action> {
-        let mut actions = std::mem::take(&mut self.pending);
+        let mut actions = core::mem::take(&mut self.pending);
         let RepeatDef {
             delay_ms,
             interval_ms,

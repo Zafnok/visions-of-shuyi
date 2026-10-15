@@ -31,12 +31,13 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{
     ConsumableRowView, GearView, ItemRowView, ListState, ListView, LoadoutsView, PackView,
     PrepBody, PreparationsView, SlotRowView, TabView, UnitRowView,
 };
 
-use std::fmt::Display;
+use core::fmt::Display;
 
 use trpg_core::{
     ArmourWeight, BattleSetup, Equipped, GearSlot, ItemDef, ItemId, PrepError, PrepUnit,
@@ -428,7 +429,7 @@ impl PreparationsScreen {
             return Vec::new();
         };
         let same_kind =
-            |other: GearSlot| std::mem::discriminant(&other) == std::mem::discriminant(&slot);
+            |other: GearSlot| core::mem::discriminant(&other) == core::mem::discriminant(&slot);
         let mut rows = Vec::new();
         for (holder, unit) in self.units() {
             if holder == who {
@@ -961,7 +962,7 @@ impl Screen for PreparationsScreen {
             if self.handle(action, ctx) {
                 return Transition::Pop;
             }
-            if std::mem::take(&mut self.open_options) {
+            if core::mem::take(&mut self.open_options) {
                 return Transition::Push(Box::new(OptionsScreen::new()));
             }
         }
@@ -972,7 +973,7 @@ impl Screen for PreparationsScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

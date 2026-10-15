@@ -4,6 +4,7 @@
 //! and a skin paints it ([`super::glyph::paint`] today); see ADR-0054.
 
 use super::Tab;
+use crate::prelude::*;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]

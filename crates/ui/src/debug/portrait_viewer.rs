@@ -7,6 +7,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::portrait::draw_portrait;
+use crate::prelude::*;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::widgets::help::{help_line, key_name};
 

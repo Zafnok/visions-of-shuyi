@@ -5,10 +5,10 @@ type: infra
 milestone: Post–Chapter 1
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["1028"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 1029 — Playdate: `trpg-ui` builds without `std`
@@ -60,9 +60,9 @@ None. Nothing a player sees changes.
 
 ## Acceptance criteria
 
-- [ ] `cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf` passes locally and in CI.
-- [ ] `cargo test -p trpg-ui` passes; `cargo insta` shows no changed snapshot.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf` passes locally and in CI.
+- [x] `cargo test -p trpg-ui` passes; `cargo insta` shows no changed snapshot.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -70,5 +70,23 @@ None. Nothing a player sees changes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `crates/ui` has a default `std` feature; without it the crate is
+  `#![no_std]` + `alloc` with the same prelude as `core` and `content`
+  (`use crate::prelude::*;` in the ~105 files that need it, `std::` paths
+  now `core::`/`alloc::`). Redone on today's `main` from compiler errors
+  rather than copying the spike, so no `#[allow(unused_imports)]` anywhere.
+- Floats: `src/float.rs` holds a `libm`-backed `Float` trait (`f32`: `round`,
+  `floor`, `sin`, `cos`, `hypot`, `rem_euclid`) and `Round` (`f64::round`,
+  used once by `cinematic::millis`). It is in the prelude only without
+  `std`; the seven float-only files import it under the same `cfg`. With
+  `std` every call is still the standard method.
+- `HashMap` in `input.rs` and `snapshot.rs` → `hashbrown` 0.17 (MIT OR
+  Apache-2.0; brings `foldhash` 0.2, Zlib). Only lookups, never iterated
+  for output, so nothing depends on its order. `Ctx::effective_lang`'s
+  `LazyLock` → `once_cell::race::OnceBox`, as `content` did.
+- `trpg-ui` added to the `no-std` CI job and the `run-gates` list.
+- Deviation: three small tests in `float.rs` (built under `cfg(test)` too)
+  hold the `libm` versions to `std`'s numbers: bit-equal for rounding and
+  remainders, within 1e-6 for `sin`/`cos`/`hypot`. Without them CI's
+  mutation testing would see the `no_std`-only code as untested.
+- No snapshot changed. Nothing a player sees changes; nothing for Nick.

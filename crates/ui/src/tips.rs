@@ -11,10 +11,11 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{FaceView, TipView};
 
-use std::collections::BTreeSet;
-use std::fmt::Display;
+use alloc::collections::BTreeSet;
+use core::fmt::Display;
 
 use trpg_content::tip::CURSOR_PLACEHOLDER;
 

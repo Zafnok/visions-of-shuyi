@@ -11,6 +11,7 @@
 //! rectangles, one per step across it. An enemy outside the view has its
 //! arrow cut at the view's edge and no mark.
 
+use crate::prelude::*;
 use trpg_core::Pos;
 
 use super::grid::Grid;

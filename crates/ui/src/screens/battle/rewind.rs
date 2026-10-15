@@ -8,7 +8,8 @@
 //! draws the battle screen's map with another state and hands the chosen
 //! point back, which a pushed screen can't.
 
-use std::fmt::Display;
+use crate::prelude::*;
+use core::fmt::Display;
 
 use trpg_core::{
     BattleHistory, BattleState, Command, Event, Phase, Replayed, Side, UnitAction, UnitId,
@@ -207,7 +208,7 @@ fn wrap(line: &str) -> Vec<String> {
     for word in line.split(' ') {
         let len = current.chars().count();
         if len > 0 && len + 1 + word.chars().count() > TEXT_W {
-            lines.push(std::mem::replace(
+            lines.push(core::mem::replace(
                 &mut current,
                 format!("{WRAP_INDENT}{word}"),
             ));

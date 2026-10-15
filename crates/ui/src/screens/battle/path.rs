@@ -1,6 +1,7 @@
 //! The movement path (ADR-0018, `docs/design/look-and-feel.md`): how it
 //! follows the cursor. A map skin draws it ([`crate::map_view`]).
 
+use crate::prelude::*;
 use trpg_core::{Pos, Reach};
 
 /// The path after the cursor moves to `to`. `path` runs from the unit's

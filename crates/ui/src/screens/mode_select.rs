@@ -9,6 +9,7 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{ModeLineView, ModeSelectView};
 
 use trpg_core::GameMode;
@@ -117,7 +118,7 @@ impl Screen for ModeSelectScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

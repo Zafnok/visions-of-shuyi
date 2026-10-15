@@ -3,7 +3,7 @@
 //! [`mode::step`](super::mode::step), so the sound is read off what a step
 //! changed: nothing changed, nothing plays.
 
-use std::cmp::Ordering;
+use core::cmp::Ordering;
 
 use super::mode::{Effect, Mode};
 use crate::audio::MenuSound;

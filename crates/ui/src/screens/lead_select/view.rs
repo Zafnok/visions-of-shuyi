@@ -3,6 +3,7 @@
 //! ([`LeadSelectScreen::view`](super::LeadSelectScreen::view)) and a skin
 //! paints it ([`super::glyph::paint`] today); see ADR-0054.
 
+use crate::prelude::*;
 use trpg_core::LeadGender;
 
 use super::Row;

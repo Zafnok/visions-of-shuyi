@@ -3,7 +3,8 @@
 //! ([`TitleScreen::view`](super::TitleScreen::view)) and a skin paints it
 //! ([`super::glyph::paint`] today); see ADR-0054.
 
-use std::rc::Rc;
+use crate::prelude::*;
+use alloc::rc::Rc;
 
 use trpg_content::ImageId;
 

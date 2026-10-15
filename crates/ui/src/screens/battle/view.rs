@@ -10,6 +10,7 @@
 //! battle's own state by their old draw functions: [`OldParts`] hands the
 //! skin that state until ticket 0248 gives them views of their own.
 
+use crate::prelude::*;
 use trpg_core::{BattleState, Faction, Pos, StatValue, Unit};
 
 use super::HealPopup;

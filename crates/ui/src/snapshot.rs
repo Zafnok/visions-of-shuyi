@@ -35,8 +35,9 @@
 //! in console cells, the scene pixel at its top-left to a tenth of a pixel,
 //! the zoom) and then the scene's own snapshot, in this same format.
 
-use std::collections::HashMap;
-use std::fmt::Write as _;
+use crate::prelude::*;
+use core::fmt::Write as _;
+use hashbrown::HashMap;
 
 use crate::color::{Palette, Rgb};
 use crate::glyph_buffer::Cell;

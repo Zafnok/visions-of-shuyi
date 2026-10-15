@@ -4,6 +4,7 @@
 //! core's ([`Command`]s it refuses change nothing); this module only decides
 //! what to offer, so the player is never shown a use that heals nothing.
 
+use crate::prelude::*;
 use trpg_core::{
     BattleState, Command, ConsumableEffect, Equipped, ItemId, Pos, SpellDef, StatValue, Unit,
     UnitAction, UnitId, WEAPON_SLOTS,

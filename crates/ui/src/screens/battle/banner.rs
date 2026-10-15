@@ -3,6 +3,7 @@
 //! a phase starts, `VICTORY` / `DEFEAT` when the battle ends. The battle
 //! screen's skin paints them.
 
+use crate::prelude::*;
 use trpg_core::{Event, Outcome, Phase, Turn};
 
 use super::view::BannerView;

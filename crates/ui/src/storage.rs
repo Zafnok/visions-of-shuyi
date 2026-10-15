@@ -3,8 +3,9 @@
 //! implementation per platform; [`MemoryStorage`] is for tests and the
 //! test harness.
 
-use std::collections::BTreeMap;
-use std::fmt;
+use crate::prelude::*;
+use alloc::collections::BTreeMap;
+use core::fmt;
 
 /// Longest key [`Storage`] accepts, in bytes.
 pub const MAX_KEY_LEN: usize = 64;
