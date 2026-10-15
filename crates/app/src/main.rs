@@ -71,6 +71,7 @@ async fn main() {
         Ok(mut ctx) => {
             ctx.console = ConsoleSpec::PC;
             ctx.tips_enabled = true;
+            ctx.lessons = trpg_ui::screen::Lessons::On;
             ctx.idle_motion = trpg_ui::screen::IdleMotion::On;
             ctx.music_seed = miniquad::date::now().to_bits();
             ctx.key_prompt = KeyPrompt::Waiting;

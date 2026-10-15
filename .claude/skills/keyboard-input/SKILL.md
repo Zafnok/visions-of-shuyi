@@ -134,7 +134,8 @@ Nintendo's `A` on the right). You get this for free by following rule 2:
    `widgets::help::{key_name, all_key_names, cursor_keys_name, help_line}`,
    given `ctx.help_keys()` (so they name buttons on a controller).
    Tips and other data text: `{ActionName}` / `{Cursor}` placeholders
-   (`assets/data/tips.ron`, `crates/ui/src/tips.rs`). Never write `"f"`,
+   (`assets/data/tips.ron`, `assets/data/lessons.ron`,
+   `crates/ui/src/tips.rs`). Never write `"f"`,
    `"[F]"`, `"Space"`, `"Esc"`, `"arrows"` or `"WASD"` into player text.
    Doc comments name the action ("the End turn key"), not a key.
 3. **Expect any key, or none.** Game code can't assume which key an action

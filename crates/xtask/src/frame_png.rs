@@ -37,7 +37,7 @@ options:
   --layout right|left  the key layout picked before (default right)
   --scale N            whole-number scale, 1 to 8 (default 2)
   --prompt             start as the game does (the title waits for a key or button)
-  --tips               show the one-time tips, as the game does
+  --tips               show the guide's tips and lessons, as the game does
   --light NAME         fight every battle in this light of assets/data/lighting.ron,
                        whatever its map and its battle file say
 
@@ -80,7 +80,8 @@ pub struct Options {
     pub prompt: bool,
     /// The light every battle is fought in, instead of its own.
     pub light: Option<String>,
-    /// Show the one-time tips, as `app` does.
+    /// Show the guide's one-time tips and checklist lessons, as `app`
+    /// does.
     pub tips: bool,
 }
 
@@ -170,7 +171,7 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     // And as `app` shows it: with the idle motion on.
     h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
     if options.tips {
-        h.with_tips();
+        h.with_tips().with_lessons();
     }
     if let Some(light) = &options.light {
         let content = &mut h.ctx_mut().content;

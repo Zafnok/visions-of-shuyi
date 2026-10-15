@@ -10,7 +10,8 @@
 //! auto-end), and the phase and outcome [`banner`]s. Every command sent is
 //! kept in a [`BattleHistory`], and Rewind opens the [`rewind`] screen
 //! (0307). One-time [`tips`] pop up over it the first time something new
-//! happens (0406). The battle's [`notes`] (0411) show in a box at its start
+//! happens (0406), and checklist [`lessons`] (0456) wait, the turn with
+//! them, until the player has done what they ask. The battle's [`notes`] (0411) show in a box at its start
 //! and on the map menu's `Objective` page. Scenes the battle's triggers fire (0705) play as a
 //! [`DialogueScreen`] overlay over the map, in order with the banners, or
 //! inside a combat's playback (a boss's line before the combat, a death
@@ -34,6 +35,7 @@ pub mod glyph;
 pub mod info;
 pub mod items;
 pub mod layout;
+pub mod lessons;
 pub mod magic;
 pub mod map_menu;
 pub mod mode;
@@ -55,7 +57,7 @@ use crate::prelude::*;
 use alloc::collections::VecDeque;
 use core::cell::RefCell;
 use core::fmt::Display;
-use trpg_content::{Content, MapLook, Present, TipTrigger, battle_campaign};
+use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campaign};
 
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
@@ -72,6 +74,7 @@ use self::camera::Camera;
 use self::cursor::Cursor;
 use self::event_sounds::CueQueue;
 use self::layout::MAP_VIEW;
+use self::lessons::LessonState;
 use self::mode::{Effect, MenuEntry, Mode, Selection};
 use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
@@ -90,7 +93,7 @@ use crate::input::Action;
 use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, ThreatView, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
-use crate::tips::TipView;
+use crate::tips::{LessonView, TipView};
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::{Language, Words};
 
@@ -329,6 +332,15 @@ pub struct BattleScreen {
     outcome_music: OutcomeMusic,
     /// One-time tips waiting to show (0406).
     tips: TipState,
+    /// Checklist lessons waiting or open (0456).
+    lessons: LessonState,
+    /// What the player did since the lessons were last ticked
+    /// ([`tick_lessons`](Self::tick_lessons)).
+    noticed: Vec<DoneWhen>,
+    /// The id of the battle (its file's), which the game flow gives
+    /// ([`in_battle`](Self::in_battle)): a lesson may start only in some
+    /// battles. `None` for a battle made any other way.
+    battle_id: Option<String>,
     /// Heal numbers floating over units.
     popups: Vec<HealPopup>,
     /// Tiles flashing after their terrain changed.
@@ -381,6 +393,32 @@ fn forecast_of(mode: &Mode) -> Option<&Targeting> {
     }
 }
 
+/// What the mode shows that the lessons watch for (0456): a unit selected,
+/// the attack forecast open.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct Marks {
+    selected: bool,
+    forecast: bool,
+}
+
+impl Marks {
+    fn of(mode: &Mode) -> Self {
+        Self {
+            selected: matches!(mode, Mode::Selected(_)),
+            forecast: forecast_of(mode).is_some(),
+        }
+    }
+}
+
+/// Whether the step from `before` to `after` with `effect` ends the
+/// player's phase or asks whether to: `EndPhase`, or the End turn prompt
+/// opening.
+fn ends_turn(before: &Mode, after: &Mode, effect: &Effect) -> bool {
+    let asks = matches!(after, Mode::EndTurnPrompt { .. })
+        && !matches!(before, Mode::EndTurnPrompt { .. });
+    asks || matches!(effect, Effect::Apply(Command::EndPhase))
+}
+
 impl BattleScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "battle";
@@ -421,6 +459,9 @@ impl BattleScreen {
             toast: None,
             queue: VecDeque::new(),
             tips: TipState::default(),
+            lessons: LessonState::default(),
+            noticed: Vec::new(),
+            battle_id: None,
             popups: vec![],
             flashes: vec![],
             progress: None,
@@ -440,6 +481,14 @@ impl BattleScreen {
     #[must_use]
     pub fn with_look(mut self, look: MapLook) -> Self {
         self.look = look;
+        self
+    }
+
+    /// This screen as battle `id`'s (its file's id), for the lessons that
+    /// start only in some battles.
+    #[must_use]
+    pub fn in_battle(mut self, id: &str) -> Self {
+        self.battle_id = Some(id.to_owned());
         self
     }
 
@@ -679,52 +728,75 @@ impl BattleScreen {
                 if self.state.unit(*unit).is_some_and(|u| u.faction == Faction::Player))
         });
         if player_level_up {
-            self.tips.fire(TipTrigger::FirstLevelUp);
+            self.fire(TipTrigger::FirstLevelUp);
         }
     }
 
-    /// Fires the tip triggers that show in the battle's current state (the
+    /// Notes that `trigger` happened, for the tips and the lessons.
+    fn fire(&mut self, trigger: TipTrigger) {
+        self.tips.fire(trigger);
+        self.lessons.fire(trigger);
+    }
+
+    /// Fires the triggers that show in the battle's current state (the
     /// ones that come from a command's events are fired as it applies).
     fn detect_tips(&mut self) {
+        for trigger in self.triggers_now() {
+            self.fire(trigger);
+        }
+    }
+
+    /// The tip and lesson triggers the battle's current state shows.
+    fn triggers_now(&self) -> Vec<TipTrigger> {
+        let mut fired = Vec::new();
         let state = &self.state;
         if state.turn() == 1 && state.phase() == Phase::Player {
-            self.tips.fire(TipTrigger::FirstBattleStart);
+            fired.push(TipTrigger::FirstBattleStart);
         }
         if state.phase() == Phase::Enemy {
-            self.tips.fire(TipTrigger::FirstEnemyPhase);
+            fired.push(TipTrigger::FirstEnemyPhase);
         }
         let low = |u: &Unit| u.faction == Faction::Player && u.hp > 0 && u.hp * 2 <= u.stats.hp;
         if state.units().iter().any(low) {
-            self.tips.fire(TipTrigger::FirstLowHp);
+            fired.push(TipTrigger::FirstLowHp);
         }
         match &self.mode {
             Mode::Selected(sel) => {
-                self.tips.fire(TipTrigger::FirstUnitSelected);
+                fired.push(TipTrigger::FirstUnitSelected);
                 let reachable = |u: &&Unit| {
                     u.faction != Faction::Player
                         && (sel.moves.contains(u.pos) || sel.attack.contains(u.pos))
                 };
                 if state.units().iter().any(|u| reachable(&u)) {
-                    self.tips.fire(TipTrigger::FirstEnemyInRange);
+                    fired.push(TipTrigger::FirstEnemyInRange);
                 }
             }
-            Mode::Targeting(_) => self.tips.fire(TipTrigger::FirstForecast),
+            Mode::Targeting(_) => fired.push(TipTrigger::FirstForecast),
             Mode::Idle { .. } => {
                 let on_enemy = self.hovered().is_some_and(|u| u.faction == Faction::Enemy);
                 if on_enemy && self.danger.is_none() {
-                    self.tips.fire(TipTrigger::DangerZoneAvailable);
+                    fired.push(TipTrigger::DangerZoneAvailable);
                 }
             }
             _ => {}
         }
+        fired
     }
 
-    /// The tip on screen, if any: the first queued whose moment has come.
-    /// Tips wait out a combat's playback, a scene (queued or playing over
-    /// the battle), the battle notes and the rewind screen;
-    /// the enemy-phase tip shows as that phase begins (over its banner),
-    /// the others once a player phase is browsing without a banner.
+    /// The tip on screen, if any: the first queued whose moment has come
+    /// (`due_tip`), unless an open lesson is on screen:
+    /// tips wait for it (0456).
     pub fn shown_tip(&self) -> Option<TipTrigger> {
+        let lesson_up = self.lessons.is_open() && self.lesson_moment();
+        self.due_tip().filter(|_| !lesson_up)
+    }
+
+    /// The first queued tip whose moment has come, if any. Tips wait out a
+    /// combat's playback, a scene (queued or playing over the battle), the
+    /// battle notes and the rewind screen; the enemy-phase tip shows as
+    /// that phase begins (over its banner), the others once a player phase
+    /// is browsing without a banner.
+    fn due_tip(&self) -> Option<TipTrigger> {
         if self.rewind.is_some()
             || self.playing()
             || self.progress.is_some()
@@ -744,6 +816,111 @@ impl BattleScreen {
     pub fn tip_view(&self, ctx: &Ctx) -> Option<TipView> {
         let tip = ctx.content.tips.for_trigger(self.shown_tip()?)?;
         Some(TipView::new(ctx, tip))
+    }
+
+    /// Whether a lesson may be on screen now: the player's phase of a
+    /// battle still on, with no combat or AI action playing, no EXP or
+    /// level up, scene, banner or battle notes over the map, and no rewind
+    /// screen unless the lesson needs it. Lessons wait as tips do.
+    fn lesson_moment(&self) -> bool {
+        (self.rewind.is_none() || self.lessons.needs_rewind())
+            && !self.playing()
+            && self.progress.is_none()
+            && self.queued_scene().is_none()
+            && !self.tips.under_scene()
+            && !self.notes_open()
+            && self.state.phase() == Phase::Player
+            && self.state.outcome().is_none()
+            && self.banner().is_none()
+    }
+
+    /// The id of the lesson on screen, if any: the one in play, once its
+    /// moment has come. One not yet open also waits for a tip on screen,
+    /// so it comes after the tip of the same moment.
+    pub fn shown_lesson(&self) -> Option<&str> {
+        let id = self.lessons.current()?;
+        let clear = self.lessons.is_open() || self.due_tip().is_none();
+        (self.lesson_moment() && clear).then_some(id)
+    }
+
+    /// Whether the lesson in play is open: shown once and not done yet.
+    /// While it is, the turn waits for it unless an item ends it.
+    pub fn lesson_open(&self) -> bool {
+        self.lessons.is_open()
+    }
+
+    /// Each item of the lesson in play, ticked yet, in order.
+    pub fn lesson_ticks(&self) -> &[bool] {
+        self.lessons.ticked()
+    }
+
+    /// The box of the lesson on screen ([`Self::shown_lesson`]), if any,
+    /// which never hides the cursor's tile.
+    fn lesson_view(&self, ctx: &Ctx) -> Option<LessonView> {
+        let lesson = ctx.content.lessons.get(self.shown_lesson()?)?;
+        let ticked = self.lessons.ticked();
+        Some(LessonView::new(ctx, lesson, ticked, self.cursor.pos))
+    }
+
+    /// Notes that the player did `done`, for the lesson in play
+    /// ([`tick_lessons`](Self::tick_lessons) ticks it).
+    fn notice(&mut self, done: DoneWhen) {
+        self.noticed.push(done);
+    }
+
+    /// Notes that the battle used `action`, in the player's phase.
+    fn notice_pressed(&mut self, action: Action) {
+        if !self.ai_phase() {
+            self.notice(DoneWhen::Pressed(action));
+        }
+    }
+
+    /// Notes what the player did that changed the mode from what `was`
+    /// marks: selected a unit, picked where it goes, opened the forecast.
+    fn notice_mode(&mut self, was: Marks) {
+        let now = Marks::of(&self.mode);
+        if now.selected && !was.selected {
+            self.notice(DoneWhen::UnitSelected);
+        }
+        let gone = matches!(
+            self.mode,
+            Mode::Moving { .. }
+                | Mode::ActionMenu { .. }
+                | Mode::Targeting(_)
+                | Mode::CastTarget(_)
+        );
+        if was.selected && gone {
+            self.notice(DoneWhen::UnitMoved);
+        }
+        if now.forecast && !was.forecast {
+            self.notice(DoneWhen::ForecastOpened);
+        }
+    }
+
+    /// Notes what the player did that player command `cmd` with `events`
+    /// shows: a unit of theirs attacked (in the player's phase every combat
+    /// a command fights is the player's attack), moved after its action,
+    /// or they ended their phase.
+    fn notice_events(&mut self, cmd: &Command, events: &[Event]) {
+        match cmd {
+            Command::EndPhase => self.notice(DoneWhen::TurnEnded),
+            Command::MoveAfter { .. } => self.notice(DoneWhen::UnitMoved),
+            _ => {}
+        }
+        if events
+            .iter()
+            .any(|e| matches!(e, Event::CombatResolved { .. }))
+        {
+            self.notice(DoneWhen::Attacked);
+        }
+    }
+
+    /// Ticks the lesson in play's items for what was noticed since last
+    /// time; one that is done closes, and the campaign keeps it.
+    fn tick_lessons(&mut self, ctx: &mut Ctx) {
+        for done in core::mem::take(&mut self.noticed) {
+            self.lessons.tick(ctx, done);
+        }
     }
 
     /// Closes the banner on screen. An outcome's leaves the battle.
@@ -872,10 +1049,12 @@ impl BattleScreen {
     /// With auto-end on, ends the player phase once the screen is back to
     /// browsing after the command that left no player unit ready.
     fn check_auto_end(&mut self) {
+        // An open lesson holds the turn (0456): auto-end waits for it.
         if !self.end_armed
             || !matches!(self.mode, Mode::Idle { .. })
             || !self.queue.is_empty()
             || self.progress.is_some()
+            || self.lessons.holds_turn()
         {
             return;
         }
@@ -1059,6 +1238,9 @@ impl BattleScreen {
         if let Some(events) = &events {
             self.history.push(cmd.clone());
             self.note_level_ups(events);
+            if was_player {
+                self.notice_events(cmd, events);
+            }
             let in_playback = playback.is_some();
             self.queue.extend(events.iter().filter_map(|e| match e {
                 Event::SceneTriggered { .. } if !in_playback => SceneCue::of(e).map(Queued::Scene),
@@ -1283,6 +1465,12 @@ impl BattleScreen {
         let before = self.mode.clone();
         let mode = core::mem::take(&mut self.mode);
         let (mode, effect) = mode::step(mode, action, self.cursor.pos, &self.state);
+        if self.lessons.holds_turn() && ends_turn(&before, &mode, &effect) {
+            // An open lesson holds the turn (0456): nothing happens.
+            self.mode = before;
+            ctx.audio.menu(MenuSound::Denied);
+            return false;
+        }
         let mode = mode.at_pace(self.pace.0);
         if let Some(sound) = sounds::step_sound(action, &before, &mode, &effect) {
             ctx.audio.menu(sound);
@@ -1303,6 +1491,48 @@ impl BattleScreen {
             Effect::Options => return true,
         }
         false
+    }
+
+    /// Gives `action` to the rewind screen if open, else to the map: opens
+    /// the rewind screen, toggles the danger zone, cycles the units, moves
+    /// the cursor, or steps the mode ([`step_mode`](Self::step_mode)).
+    /// Notes what the player did for the lessons (0456). Returns whether
+    /// the map menu's `Options` was chosen.
+    fn play_key(&mut self, ctx: &mut Ctx, action: Action) -> bool {
+        if self.rewind.is_some() {
+            // On the rewind screen a key is the list's, not the map's.
+            self.rewind_step(ctx, action);
+            return false;
+        }
+        let was = Marks::of(&self.mode);
+        let mut options = false;
+        match action {
+            Action::Rewind if self.can_open_rewind() => {
+                let charges = self.state.rewind_charges();
+                self.rewind = Some(RewindScreen::new(&self.history, charges, ctx.words()));
+                ctx.audio.menu(MenuSound::Select);
+                self.notice(DoneWhen::RewindOpened);
+            }
+            Action::DangerZone if self.mode.cursor_free() => self.toggle_danger(),
+            Action::NextUnit | Action::PrevUnit if matches!(self.mode, Mode::Idle { .. }) => {
+                let from = self.cursor.pos;
+                self.cycle(action == Action::NextUnit);
+                if self.cursor.pos != from {
+                    ctx.audio.play_sound(CURSOR_MOVE);
+                }
+            }
+            Action::CursorLeft | Action::CursorRight | Action::CursorUp | Action::CursorDown
+                if self.mode.cursor_free() =>
+            {
+                if self.move_cursor(action) {
+                    ctx.audio.play_sound(CURSOR_MOVE);
+                }
+            }
+            _ => options = self.step_mode(ctx, action),
+        }
+        self.notice_mode(was);
+        self.notice_pressed(action);
+        options
     }
 
     /// Plays the frame's sounds and advances what is animated by `dt`
@@ -1806,7 +2036,9 @@ impl BattleScreen {
         let debug_hint = super::debug_hint(ctx);
         let words = ctx.words();
         if let Some(rewind) = &self.rewind {
+            let lesson = self.lesson_view(ctx);
             return BattleView {
+                lesson,
                 scene,
                 menu: None,
                 popups: Vec::new(),
@@ -1858,6 +2090,7 @@ impl BattleScreen {
             noted: self.noted(),
             banner: self.banner().map(|b| b.view(words, limit)),
             tip: self.tip_view(ctx),
+            lesson: self.lesson_view(ctx),
             message: self.message(),
             status: self.status(ctx),
             scene,
@@ -2088,13 +2321,16 @@ impl Screen for BattleScreen {
         self.tick_popups(dt);
         self.detect_tips();
         self.tips.absorb(ctx);
+        self.lessons.absorb(ctx, self.battle_id.as_deref());
         for &action in &input.actions {
+            self.tick_lessons(ctx);
             if self.overlay_key(action) {
                 continue;
             }
             // The zoom is the player's view, not a move: in any phase.
             if action == Action::ZoomMap {
                 self.toggle_zoom(ctx);
+                self.notice_pressed(action);
                 continue;
             }
             // The AI's phase: only Confirm (hold: faster) and Cancel (skip
@@ -2104,6 +2340,7 @@ impl Screen for BattleScreen {
             }
             if action == Action::ToggleAutoEnd {
                 self.toggle_auto_end(ctx);
+                self.notice_pressed(action);
                 continue;
             }
             if self.progress_key(action) {
@@ -2121,36 +2358,9 @@ impl Screen for BattleScreen {
             if self.ai_phase() && !self.playing() {
                 continue;
             }
-            match action {
-                _ if self.rewind.is_some() => self.rewind_step(ctx, action),
-                Action::Rewind if self.can_open_rewind() => {
-                    let charges = self.state.rewind_charges();
-                    self.rewind = Some(RewindScreen::new(&self.history, charges, ctx.words()));
-                    ctx.audio.menu(MenuSound::Select);
-                }
-                Action::DangerZone if self.mode.cursor_free() => self.toggle_danger(),
-                Action::NextUnit | Action::PrevUnit if matches!(self.mode, Mode::Idle { .. }) => {
-                    let from = self.cursor.pos;
-                    self.cycle(action == Action::NextUnit);
-                    if self.cursor.pos != from {
-                        ctx.audio.play_sound(CURSOR_MOVE);
-                    }
-                }
-                Action::CursorLeft
-                | Action::CursorRight
-                | Action::CursorUp
-                | Action::CursorDown
-                    if self.mode.cursor_free() =>
-                {
-                    if self.move_cursor(action) {
-                        ctx.audio.play_sound(CURSOR_MOVE);
-                    }
-                }
+            if self.play_key(ctx, action) {
                 // The map menu's Options: over the battle.
-                _ if self.step_mode(ctx, action) => {
-                    return Transition::Push(Box::new(OptionsScreen::new()));
-                }
-                _ => {}
+                return Transition::Push(Box::new(OptionsScreen::new()));
             }
             if self.leaving.is_some() {
                 return Transition::Pop;
@@ -2163,8 +2373,12 @@ impl Screen for BattleScreen {
             }
         }
 
+        self.tick_lessons(ctx);
         self.tick_notes(dt);
+        let was = Marks::of(&self.mode);
         self.animate(ctx, dt, input.is_held(Action::Confirm));
+        self.notice_mode(was);
+        self.tick_lessons(ctx);
         let waiting = self.shown_tip().is_some() || self.playing();
         if let Some(Queued::Banner(banner)) = self.queue.front_mut()
             && !waiting
@@ -2182,6 +2396,11 @@ impl Screen for BattleScreen {
         }
         self.check_auto_end();
         self.drive_ai(ctx);
+        self.tick_lessons(ctx);
+        // On screen as this frame ends: open from now on.
+        if self.shown_lesson().is_some() {
+            self.lessons.mark_open();
+        }
         Transition::None
     }
 
@@ -2409,6 +2628,9 @@ mod sound_tests;
 mod threat_tests;
 #[cfg(test)]
 mod tip_tests;
+
+#[cfg(test)]
+mod lesson_tests;
 
 #[cfg(test)]
 mod turn_tests;

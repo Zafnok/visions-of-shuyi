@@ -30,6 +30,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::screen::Ctx;
 use crate::screens::paint_debug_hint;
 use crate::tips as tip_box;
+use crate::tips::LessonView;
 use crate::widgets::menu::{self, MenuView};
 use trpg_core::Outcome;
 
@@ -69,6 +70,10 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     if let Some(r) = &view.rewind {
         // The list in the side panel, and the help line.
         rewind::paint(ctx, r, buf);
+        if let Some(lesson) = &view.lesson {
+            let at_bottom = lesson_at_bottom(ctx, view, lesson);
+            tip_box::glyph::paint_lesson(ctx, lesson, at_bottom, buf);
+        }
         buf.print(1, HELP_ROW, &view.help, c(UiColor::TextDim), black);
         paint_hint(ctx, view, buf);
         return;
@@ -97,10 +102,38 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
         stage::glyph::paint(ctx, stage, buf);
     }
     paint_dialogs(ctx, view, buf);
+    if let Some(lesson) = &view.lesson {
+        let at_bottom = lesson_at_bottom(ctx, view, lesson);
+        tip_box::glyph::paint_lesson(ctx, lesson, at_bottom, buf);
+    }
     if let Some(tip) = &view.tip {
         tip_box::glyph::paint(ctx, tip, buf);
     }
     paint_bar(ctx, view, buf);
+}
+
+/// Whether `lesson`'s box goes against the bottom edge of the map view:
+/// while the tile it must not hide is in the map view's top half, as the
+/// map skin draws `view`'s scene (0456). Else (or with that tile out of
+/// view) against the top edge.
+pub fn lesson_at_bottom(ctx: &Ctx, view: &BattleView, lesson: &LessonView) -> bool {
+    let tile = ctx
+        .map_skin
+        .tile_cells(&view.scene, MAP_VIEW, lesson.clear_of);
+    tile.is_some_and(in_top_half)
+}
+
+/// Where `view`'s lesson box is painted, if it has one.
+pub fn lesson_rect(ctx: &Ctx, view: &BattleView) -> Option<Rect> {
+    let lesson = view.lesson.as_ref()?;
+    let at_bottom = lesson_at_bottom(ctx, view, lesson);
+    Some(tip_box::glyph::lesson_rect(lesson, at_bottom))
+}
+
+/// Whether the cells `tile` are in the map view's top half: their middle
+/// row is.
+pub fn in_top_half(tile: Rect) -> bool {
+    tile.y + tile.h / 2 < MAP_VIEW.y + MAP_VIEW.h / 2
 }
 
 /// Paints the debug hint at the right of the help row.

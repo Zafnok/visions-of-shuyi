@@ -348,6 +348,8 @@
     // The guide who speaks every tip (docs/design/tutorial.md): the tip
     // box's title. Ticket 0731 names the guide.
     "guide.name": "Guide",
+    // Under a lesson's checklist (0456): how many of its items are done.
+    "battle.lesson.progress": "{n} of {m} done",
 
     // The battle: its help bar. A `help` is a whole line; a `hint` is one
     // part of a line whose parts come and go. `{keys}`, `{accept}` and

@@ -224,7 +224,9 @@ impl FlowScreen {
         flow.adopt(ctx, campaign);
         flow.chapter = Some(chapter);
         let look = ctx.content.battle_look(&def);
-        let battle = BattleScreen::resume(*history).with_look(look.clone());
+        let battle = BattleScreen::resume(*history)
+            .with_look(look.clone())
+            .in_battle(&def.id);
         flow.fight = Some(Fight { def, prep, look });
         flow.stage = Stage::Battle(Box::new(battle));
         Ok(flow)
@@ -334,6 +336,7 @@ impl FlowScreen {
         ctx.lead = campaign.lead.clone();
         ctx.campaign_mode = Some(campaign.mode);
         ctx.campaign_tutorial = Some(campaign.tutorial);
+        ctx.campaign_lessons.clone_from(&campaign.lessons_done);
         #[expect(clippy::cast_precision_loss, reason = "exact below 2^53 s")]
         let played = campaign.playtime_s as f64;
         self.started_at = ctx.clock_s - played;
@@ -452,7 +455,9 @@ impl FlowScreen {
             return;
         };
         let (state, events) = BattleState::new(fight.prep.setup.clone());
-        let battle = BattleScreen::start(state, &events).with_look(fight.look.clone());
+        let battle = BattleScreen::start(state, &events)
+            .with_look(fight.look.clone())
+            .in_battle(&fight.def.id);
         self.stage = Stage::Battle(Box::new(battle));
     }
 
@@ -631,6 +636,7 @@ impl FlowScreen {
         let Some(campaign) = &mut self.campaign else {
             ctx.campaign_mode = None;
             ctx.campaign_tutorial = None;
+            ctx.campaign_lessons.clear();
             ctx.mode_switch = ModeSwitch::Closed;
             return;
         };
@@ -648,6 +654,17 @@ impl FlowScreen {
             Stage::Preparations(_) => ModeSwitch::Open,
             _ => ModeSwitch::Closed,
         };
+    }
+
+    /// Takes the lessons a battle finished ([`Ctx::campaign_lessons`],
+    /// which only grows from the campaign's own) into the campaign, so
+    /// its saves keep them (0456).
+    fn keep_lessons(&mut self, ctx: &Ctx) {
+        if let Some(campaign) = &mut self.campaign
+            && campaign.lessons_done.len() != ctx.campaign_lessons.len()
+        {
+            campaign.lessons_done.clone_from(&ctx.campaign_lessons);
+        }
     }
 
     /// Brings the campaign's playtime up to date.
@@ -677,6 +694,8 @@ impl Screen for FlowScreen {
         self.count_playtime(ctx);
         self.sync_mode(ctx);
         let transition = self.screen_mut().update(ctx, input);
+        // Before a suspend or a won battle saves the campaign.
+        self.keep_lessons(ctx);
         // A rewind out of a defeat: the battle's own track again.
         if let (Stage::Battle(battle), Some(cue)) = (&mut self.stage, &self.music)
             && battle.take_music_back()
@@ -689,6 +708,7 @@ impl Screen for FlowScreen {
                     // Back to the title: no campaign.
                     ctx.campaign_mode = None;
                     ctx.campaign_tutorial = None;
+                    ctx.campaign_lessons.clear();
                     ctx.mode_switch = ModeSwitch::Closed;
                     return Transition::Pop;
                 }

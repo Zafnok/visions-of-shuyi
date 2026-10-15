@@ -32,7 +32,7 @@ use super::HealPopup;
 use super::banner::BannerKind;
 use super::stage::view::StageView;
 use crate::map_view::MapScene;
-use crate::tips::TipView;
+use crate::tips::{LessonView, TipView};
 use crate::widgets::menu::MenuView;
 
 /// The whole battle screen, as it is this frame.
@@ -64,6 +64,9 @@ pub struct BattleView {
     pub banner: Option<BannerView>,
     /// The one-time tip on screen (ticket 0406).
     pub tip: Option<TipView>,
+    /// The checklist lesson on screen (ticket 0456): over the map, and on
+    /// the rewind screen too when it is about rewinding.
+    pub lesson: Option<LessonView>,
     /// The line over the help: a combat's message, the preview of what is
     /// being aimed, or the toast.
     pub message: Option<MessageView>,
@@ -298,6 +301,11 @@ impl BattleView {
         if let Some(t) = &self.tip {
             texts.extend([t.title.as_str(), &t.heading, &t.close]);
             texts.extend(t.lines.iter().map(String::as_str));
+        }
+        if let Some(l) = &self.lesson {
+            texts.extend([l.title.as_str(), &l.heading, &l.progress]);
+            texts.extend(l.lines.iter().map(String::as_str));
+            texts.extend(l.items.iter().map(|i| i.label.as_str()));
         }
         texts.extend(self.message.as_ref().map(|m| m.text.as_str()));
         texts

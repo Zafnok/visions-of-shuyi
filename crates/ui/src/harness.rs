@@ -522,6 +522,13 @@ impl Harness {
         self
     }
 
+    /// Turns the checklist lessons on (they are off in tests by default,
+    /// so a test can end its turns).
+    pub fn with_lessons(&mut self) -> &mut Self {
+        self.game.ctx_mut().lessons = crate::screen::Lessons::On;
+        self
+    }
+
     /// Ends the run, handing back its storage, to start the next launch
     /// with [`with_storage`](Self::with_storage).
     pub fn into_storage(self) -> Box<dyn Storage> {

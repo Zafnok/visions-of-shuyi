@@ -57,6 +57,10 @@ fn data() -> DataText {
         ("tips.move.title", "Your move"),
         ("tips.move.text", "Press {Confirm}.\nThen wait."),
         ("tips.wait.text", "Wait."),
+        ("lessons.go.title", "Go"),
+        ("lessons.go.text", "Go."),
+        ("lessons.go.item_1", "Up"),
+        ("lessons.go.item_2", "Down"),
         ("battles.gate.note_1", "Hold the gate."),
         ("battles.road.note_1", "Hold the road."),
         ("battles.wall.note_1", "Hold the road."),
@@ -262,6 +266,70 @@ fn a_tip_in_a_pack_keeps_to_the_tip_limits_in_cells() {
     );
 }
 
+/// Ticket 0456: a lesson's title, text and items keep to the lesson
+/// limits, in cells.
+#[test]
+fn a_lesson_in_a_pack_keeps_to_the_lesson_limits_in_cells() {
+    let entry = |key: &str, source: &str, text: &str| {
+        data_errors(&format!(
+            r#"[(key: "lessons.go.{key}", source: "{source}", text: "{text}")]"#
+        ))
+    };
+    let wide = "é".repeat(60);
+    assert_eq!(entry("title", "Go", &"é".repeat(30)), Vec::<String>::new());
+    assert_eq!(
+        entry("title", "Go", &"é".repeat(31)),
+        ["xx/data.ron: \"lessons.go.title\": the title must be 1 to 30 cells"]
+    );
+    assert_eq!(
+        entry("text", "Go.", &format!("{wide}\n{wide}")),
+        Vec::<String>::new()
+    );
+    assert_eq!(
+        entry("text", "Go.", "1\n2\n3"),
+        ["xx/data.ron: \"lessons.go.text\": the text must have 1 to 2 lines"]
+    );
+    assert_eq!(entry("item_1", "Up", &"é".repeat(56)), Vec::<String>::new());
+    let item = entry("item_2", "Down", &"é".repeat(57));
+    assert_eq!(item.len(), 1);
+    assert!(item[0].contains("an item must be one line of 1 to 56 cells"));
+}
+
+/// Ticket 0456: a lesson's title, text and each item are looked up by
+/// their own keys, while the pack's source is today's English.
+#[test]
+fn lesson_lookups_use_the_pack_by_key() {
+    let ron = r#"[
+        (key: "lessons.go.title", source: "Go", text: "Los"),
+        (key: "lessons.go.text", source: "Go.", text: "Los."),
+        (key: "lessons.go.item_2", source: "Down", text: "Runter"),
+    ]"#;
+    let lang = lang(pack(ron, &[]).unwrap());
+    let item = |label: &str| crate::lesson::LessonItem {
+        label: label.to_owned(),
+        done_when: crate::lesson::DoneWhen::Attacked,
+    };
+    let lesson = crate::lesson::Lesson {
+        id: "go".to_owned(),
+        level: crate::lesson::LessonLevel::Full,
+        trigger: crate::tip::TipTrigger::FirstForecast,
+        battles: Vec::new(),
+        title: "Go".to_owned(),
+        text: "Go.".to_owned(),
+        items: vec![item("Up"), item("Down")],
+        face: None,
+    };
+    let xx = code("xx");
+    assert_eq!(lang.lesson_title(&xx, &lesson), "Los");
+    assert_eq!(lang.lesson_text(&xx, &lesson), "Los.");
+    assert_eq!(lang.lesson_item(&xx, &lesson, 0), "Up");
+    assert_eq!(lang.lesson_item(&xx, &lesson, 1), "Runter");
+    assert_eq!(lang.lesson_item(&xx, &lesson, 2), "");
+    // English stays English.
+    let en = LangCode::english();
+    assert_eq!(lang.lesson_text(&en, &lesson), "Go.");
+}
+
 #[test]
 fn without_english_data_a_packs_data_and_dialogue_are_left_out() {
     let sources = PackSources {
@@ -416,6 +484,14 @@ fn the_test_pack_translates_a_little_of_every_kind() {
         .unwrap();
     assert_eq!(lang.tip_title(&test, other), "Moving a unit");
     assert_eq!(lang.tip_text(&test, other), other.text);
+    let lesson = content.lessons.get("test_cursor").unwrap();
+    assert_eq!(lang.lesson_title(&test, lesson), "MOVING THE CURSOR");
+    assert_eq!(lang.lesson_title(&en, lesson), "Moving the cursor");
+    assert_eq!(lang.lesson_text(&test, lesson), lesson.text);
+    assert_eq!(lang.lesson_item(&test, lesson, 0), "MOVE IT UP: {CursorUp}");
+    assert_eq!(lang.lesson_item(&en, lesson, 0), "Move it up: {CursorUp}");
+    assert_eq!(lang.lesson_item(&test, lesson, 1), lesson.items[1].label);
+    assert_eq!(lang.lesson_item(&test, lesson, 9), "");
     let chapter = &content.chapters["test"];
     assert_eq!(lang.chapter_title(&test, chapter), "TEST CHAPTER");
     assert_eq!(lang.chapter_title(&en, chapter), "Test Chapter");
@@ -770,8 +846,8 @@ fn status_lists_what_a_pack_lacks_of_each_kind() {
     assert!(status.missing.contains(&id("Nobody answers.")));
     assert!(status.missing.contains(&id("The gate, dusk")));
     assert!(!status.missing.contains(&id("Gone.")));
-    // 1 screen text, 9 data texts of 11, 8 lines of 10.
-    assert_eq!(status.missing.len(), 1 + 9 + 8);
+    // 1 screen text, 13 data texts of 15, 8 lines of 10.
+    assert_eq!(status.missing.len(), 1 + 13 + 8);
     assert_eq!(
         status.stale,
         ["classes.guard.name".to_owned(), id("The gate is shut.")]

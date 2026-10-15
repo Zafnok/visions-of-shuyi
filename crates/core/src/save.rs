@@ -23,7 +23,8 @@
 //!   [`Campaign::tutorial`] (0835) came later without a new version, on
 //!   purpose: it is left out of a save at its default and a save without
 //!   it reads as that default, so every version 2 save still reads and
-//!   writes back the same.
+//!   writes back the same. [`Campaign::lessons_done`] (0456) likewise:
+//!   left out while empty.
 
 use crate::prelude::*;
 
