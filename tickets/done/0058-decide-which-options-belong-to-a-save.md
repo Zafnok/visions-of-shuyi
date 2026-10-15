@@ -119,6 +119,12 @@ Follow-up tickets, all added to 0804's `blocked_by` and the roadmap:
 - **0837** the title menu's Profile screen (switch, add, rename, delete),
   after 0836.
 - **0838** the tutorial-level row in Options, after 0835.
+- **0839** leaving Options asks whether to keep the changes (Nick on the
+  PR: overwriting options must be deliberate).
+
+Nick on the PR also said the controller's letter grid stays, but Steam
+(and any console) uses the platform's own keyboard: recorded in
+`options.md` and in 0903's Deck step.
 
 0825 and 0826 now say their settings belong to the profile (no new
 dependency); 0049 says Ironman stays with the campaign; 0835 points at
@@ -135,4 +141,6 @@ dependency); 0049 says Ironman stays with the campaign; 0835 points at
   computer.
 - The tutorial row shows only while a campaign is loaded, not on the
   title's Options, and changes the level at once without asking.
-- On a controller the name box is an on-screen letter grid.
+- Leaving Options with changes asks Keep / Discard / Back, cursor on
+  Back; backing out of a name box with an unkept name asks the same way.
+- The Zoom map key and the hand-layout picker keep saving at once.

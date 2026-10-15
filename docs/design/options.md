@@ -117,6 +117,16 @@ recommended answer to each follow-up:
 - A New Game starts with **the options last used** (with profiles, the
   profile's own).
 
+On the pull request (PR #264), 2026-10-14:
+
+> "ensure it's deliberate when a player overwrites their options, or
+> presses cancel when backing out of profile screen and they didn't save,
+> etc. if they don't want to overwrite, let them make that choice."
+>
+> "for controller, we can keep the on screen letter grid, but when we have
+> steam launch or if we ever do a console launch etc then we should use the
+> native input keyboard thing"
+
 ### Rules
 
 - **A player profile** holds that player's options and saves: every
@@ -146,8 +156,28 @@ recommended answer to each follow-up:
     can't be deleted (*Claude's starting rule*).
   - A name is up to 12 characters (*tunable*); two profiles can't share a
     name (*Claude's starting rule*). Up to 8 profiles (*tunable*).
-- **Changes are kept at once**, in the current profile, as today: no
-  save needed (Nick: fine now).
+  - **Typing a name:** on a keyboard, typed letters. On a controller, an
+    on-screen letter grid for now; **on Steam (and any console release),
+    the platform's own on-screen keyboard** instead (Nick, PR #264; on
+    Steam, its gamepad text input, ticket 0903). The same goes for every
+    place the player types, the lead's name too.
+- **Keeping changed options is the player's choice** (Nick, PR #264).
+  A change on the Options screen shows at once (as today, so the player
+  sees and hears it), but it is **kept in the profile only when the
+  player says so**. Leaving Options with anything changed asks
+  `Keep these changes?` with three answers: **Keep** (kept in the
+  profile), **Discard** (everything goes back to how it was when the
+  screen opened) and **Back** (stay on the Options screen). The cursor
+  starts on Back, so neither keeping nor throwing away happens by a stray
+  press (*Claude's starting rule*). Leaving with nothing changed asks
+  nothing. No save game is needed (Nick: fine now).
+- The same goes for the **Profile screen** and anything else that edits
+  the profile: backing out of a name box with a name typed and not kept
+  asks whether to keep it, throw it away or go back, cursor on going back
+  (*Claude's starting rule*, from Nick's "let them make that choice").
+- **The Zoom map key** in battle changes the zoom and keeps it at once:
+  pressing it is already the player's choice, and it changes back with one
+  key (*Claude's starting rule*).
 - **Options opened from the title** change the current profile's options;
   opened in a game, the same, since the profile is the one playing.
 - **A New Game** uses the profile's options as they are; nothing is reset.
@@ -155,9 +185,10 @@ recommended answer to each follow-up:
   and suspend save become the first profile, `Player 1`. Nothing is lost.
 - **The tutorial level row** (`Tutorial: Full / Short / None`) is on the
   Options screen while a campaign is loaded (in a battle, at Preparations),
-  and changes that campaign's level at once, any time; it doesn't show on
-  the title's Options. It doesn't ask first (a value row, changed back with
-  one key). Lessons already skipped stay readable in *Guides*.
+  and changes that campaign's level, any time; it doesn't show on the
+  title's Options. It has no yes/no of its own (a value row); like every
+  row it is kept or discarded when leaving Options. Lessons already
+  skipped stay readable in *Guides*.
 
 ### Open sub-questions
 

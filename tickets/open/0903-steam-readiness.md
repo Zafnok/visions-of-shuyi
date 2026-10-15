@@ -57,9 +57,11 @@ Until then this ticket can do everything with Valve's test App ID 480.
    needed for Deck Verified and ticket each gap: readable text at
    1280×800; controller prompts matching the Deck (0220's names or Steam
    Input glyphs); an on-screen keyboard where the player types (renaming
-   the lead, `docs/design/setting-and-tone.md`: Steam's
-   `ShowGamepadTextInput` or our own letter picker, a design question for
-   Nick); and whether to ship a Steam Input configuration that passes the
+   the lead, `docs/design/setting-and-tone.md`, and profile names,
+   0837): **Steam's own gamepad keyboard** (`ShowGamepadTextInput` or the
+   floating keyboard), replacing our letter grid in the Steam build
+   (Nick, 2026-10-14, `docs/design/options.md`; build it here or ticket
+   it); and whether to ship a Steam Input configuration that passes the
    pad through as a gamepad (so 0219's gilrs input keeps working) or adopt
    the Steam Input API with action sets (Steam-only; would need an ADR).
 4. Write a new ADR only if the integration approach departs from ADR-0009.

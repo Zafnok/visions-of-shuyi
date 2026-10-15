@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0836"]
+blocked_by: ["0836", "0839"]
 nick_input: sign-off
 completed:
 ---
@@ -42,7 +42,11 @@ in it, switch back to `Player 1` and see your own options and saves.
   `options.md`). No name box exists yet: build a small one (typed
   letters, Backspace deletes, Confirm keeps, Cancel leaves the name as it
   was, like the volume box in `options.md`); on a controller, an
-  on-screen letter grid (*Claude's starting rule*).
+  on-screen letter grid (Nick, PR #264; on Steam and consoles the
+  platform's own keyboard replaces it, ticket 0903, not here).
+- **Backing out asks first** (`options.md`, *Keeping changed options is
+  the player's choice*): Cancel in a name box with a name typed and not
+  kept asks keep / throw away / go back, cursor on go back.
 - Words in the language files (Claude writes them; American English;
   `test` pack too). Keys named through the keymap (`keyboard-input` skill).
 
@@ -67,6 +71,8 @@ in it, switch back to `Player 1` and see your own options and saves.
 - [ ] Renaming keeps the profile's options and saves (test).
 - [ ] Deleting asks first with focus on No; the only profile can't be
       deleted (tests).
+- [ ] Cancel in a name box with an unkept name asks first, cursor on go
+      back; with nothing typed it just closes (tests).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

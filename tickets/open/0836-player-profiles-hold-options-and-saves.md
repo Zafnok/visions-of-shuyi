@@ -59,6 +59,9 @@ before are still there (now `Player 1`).
   and ADR-0031's keys live (`write-adr` skill).
 - Bump whatever format version changes; the settings record itself keeps
   its fields.
+- Options are written to the profile only when the player keeps them
+  (`options.md`; the Options screen's question is **0839**); the ADR
+  records that the save-at-once rule of ADR-0050 is gone.
 
 **Out (do not do):**
 - The title menu's Profile screen and its name box (0837).

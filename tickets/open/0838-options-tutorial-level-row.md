@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
 status: todo
-blocked_by: ["0835"]
+blocked_by: ["0835", "0839"]
 nick_input: sign-off
 completed:
 ---
@@ -19,7 +19,8 @@ Ticket 0058 (`docs/design/options.md`, *Where options are kept*;
 `docs/design/tutorial.md`): the tutorial level (Full / Short / None),
 picked at New Game and kept with the campaign by 0835, **can be changed
 later in Options** while that campaign is loaded. It is a value row: no
-yes/no question, it changes at once.
+yes/no question of its own; like the other rows it is kept or discarded
+when the player leaves Options (0839).
 
 ## Nick input
 
@@ -33,7 +34,9 @@ None, and see that tips stop.
   while a campaign is loaded (in a battle, at Preparations); not on the
   title's Options. Its place on the screen is *Claude's starting rule*
   (next to the game mode row).
-- It changes the running campaign's `tutorial` at once, kept in the
+- Like every Options row, the change shows at once and is kept only when
+  the player picks Keep on leaving (0839; Discard puts the level back).
+- It changes the running campaign's `tutorial`, kept in the
   campaign's next save, the way the mode row goes through the flow
   (ADR-0050, `Ctx::campaign_mode`).
 - Words in the language files (American English; `test` pack too).

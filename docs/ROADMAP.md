@@ -82,8 +82,9 @@ the tip box, **0835** the familiarity question → **0456** checklist lessons
 name and lines), **0058** which options
 belong to a save (decided 2026-10-14: player profiles hold every option
 and their own saves; built by **0836** profiles under the options and saves
-→ **0837** the title's Profile screen, and **0838** the tutorial level in
-Options, after 0835), **0029** backgrounds behind conversations (Nick's idea:
+→ **0837** the title's Profile screen (also after **0839**, leaving
+Options asks whether to keep the changes), and **0838** the tutorial level
+in Options, after 0835 and 0839), **0029** backgrounds behind conversations (Nick's idea:
 a short moving scene, then the portraits over it, darkened), each with the
 tickets it creates. All of these are on the critical path now.
 
