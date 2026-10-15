@@ -427,8 +427,35 @@ decided.
 Nick, after playing Chapter 1 (2026-10-14, ticket 0804): "seem ok other than
 cinder oath concern I raised", and on Cinder Oath: "Rue's skill is range 1
 really? seems a bit weird what is the flavor here? why should mage special
-skill be range 1?" So **Vigil Light stays as above**; Cinder Oath's range
-is being decided in ticket 0056.
+skill be range 1?" So **Vigil Light stays as above**.
+
+#### Cinder Oath: range 1, no counter
+
+Decided: 2026-10-15, ticket 0056. Asked with the flavor (Rue swore the vow
+standing in the Ashfields fire with burned hands, so it is close and
+desperate; her Act 2 spell Kept Promise reaches 1–3) and four choices:
+keep range 1, range 1–2 like Fire, range 1 with no counter, range 2 only.
+Nick: "C, but only because of flavor, and it should get upgraded later in
+the game after some personal arc or a support level increase".
+
+- **Range 1, and the enemy can't strike back** at a Cinder Oath attack,
+  like the Guard Break art (`stats-and-combat.md`): the defender's side of
+  the forecast shows `—  no counter`. Standing next to the enemy is still a
+  risk on its next phase.
+- The other numbers stay as in the table above (9 might, 80 hit, 3 uses,
+  burns a forest tile).
+- *Claude's starting rule:* "no counter" covers only Rue's own attack. If
+  Cinder Oath is her equipped attack and an enemy attacks her from the next
+  tile, she still counters with it, as with any attack spell.
+- Until the engine has the rule (ticket 0317), the spell plays as before:
+  range 1 and the enemy counters.
+- **It gets upgraded later in the game**, after a personal arc or a support
+  level (Nick). The upgrade is her Kept Promise (range 1–3, lower hit, her
+  sheet). *Open:* what triggers it (a story beat, a support level, or
+  something else), and whether Kept Promise also stops counters. Nick
+  (2026-10-15): "we'll iterate it later, it might be a story beat, or a
+  support level, but until we have ch1 playtest done and other P0 items
+  then this is not a conversation worth having".
 
 ## Worked examples
 
@@ -492,7 +519,9 @@ equips Force on their turn, the mage counters with Force (and spends a use).
 - **Personal signature spells:** named by 0701 (in `docs/story/characters/`:
   Maud, Rue, and Crane as an enemy). Rue's Cinder Oath and Maud's Vigil
   Light have starting numbers (0803, above); Rue's Kept Promise and Crane's
-  are still to be set. Whether they can be upgraded is open (Nick, 0803).
+  are still to be set. Cinder Oath is range 1 with no counter and gets
+  upgraded later (0056, above); what triggers the upgrade is open. Whether
+  the others can be upgraded is open (Nick, 0803).
 - **Elemental enemies in Chapter 1, and a terrain-magic moment on the Chapter
   1 map:** neither in Chapter 1 (0009, `chapter-1.md`).
 - **Push spells, more elements, more terrain interactions, spell Combat
