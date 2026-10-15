@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0835", "0839"]
 nick_input: sign-off
-completed:
+completed: 2026-10-15
 ---
 
 # 0838 — Options can change the campaign's tutorial level
@@ -53,10 +53,10 @@ None, and see that tips stop.
 
 ## Acceptance criteria
 
-- [ ] The row shows in a battle and at Preparations, not on the title.
-- [ ] Changing it changes which tips show from then on, and the level is
+- [x] The row shows in a battle and at Preparations, not on the title.
+- [x] Changing it changes which tips show from then on, and the level is
       in the next save (test).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -66,4 +66,30 @@ None, and see that tips stop.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `Tutorial: Full / Short / None` is a value row on the Options screen,
+  shown only while a campaign is loaded (`Ctx::campaign_tutorial` is
+  set), right under `Game mode`. Left/right step it (stopping at the
+  ends), Confirm steps it round, like the other value rows. It changes
+  `Ctx::campaign_tutorial` at once, so tips follow it straight away.
+- Leaving Options counts it as a change: Keep keeps it, Discard puts the
+  level back as it was when the screen opened.
+- The game flow (`sync_mode`) takes `Ctx::campaign_tutorial` into its
+  campaign each frame, so the next save (suspend or chapter save) holds it.
+  `Ctx` already had the field from 0835; no new method was needed.
+- **Skin fix:** the Options panel was a fixed 20 rows. With a campaign the
+  rows now need 18 lines, which put `Restore defaults` on the bottom
+  border; with the bought pictures and a campaign it already did before
+  this ticket (the `map_look_swaps_the_skin_at_once_and_is_remembered`
+  snapshot showed it). The glyph skin now grows the panel down to fit its
+  rows (never smaller than before), and the message moves under it.
+- Tests: unit tests for the row (values, stepping, Keep/Discard, hidden
+  without a campaign), a glyph test for the taller panel, and integration
+  tests: None set at Preparations stops the battle's start tip
+  (snapshot of the screen with the row), Discard in a battle puts it back
+  and the title has no row, and a level set in a battle is in the suspend
+  save and still None after Continue in the next launch.
+
+**Claude's starting rules** (Nick can veto):
+- The row sits right under `Game mode`.
+- Left/right stop at Full and None; Confirm goes round
+  (Full → Short → None → Full), as on the other value rows.

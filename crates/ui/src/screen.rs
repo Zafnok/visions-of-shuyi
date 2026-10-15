@@ -286,7 +286,9 @@ pub struct Ctx {
     /// ([`switch_to_casual`](Self::switch_to_casual)) into its campaign.
     pub campaign_mode: Option<GameMode>,
     /// The tutorial level of the campaign being played (0835): `None` with
-    /// no campaign. The game flow keeps it up to date. Battle tips show
+    /// no campaign. The game flow keeps it up to date, and takes a change
+    /// made here (the Options screen's `Tutorial` row, 0838) into its
+    /// campaign. Battle tips show
     /// only at [`TutorialLevel::Full`] (or with no campaign, as in screen
     /// tests).
     pub campaign_tutorial: Option<TutorialLevel>,

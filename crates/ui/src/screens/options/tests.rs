@@ -52,12 +52,13 @@ fn unsaved(c: &Ctx) -> bool {
 }
 
 #[test]
-fn game_mode_shows_only_with_a_campaign() {
+fn game_mode_and_tutorial_show_only_with_a_campaign() {
     let mut c = ctx();
     let rows = OptionsScreen::rows(&c);
-    assert_eq!(rows.len(), Row::ALL.len() - 3);
-    assert!(!rows.contains(&Row::GameMode));
+    assert_eq!(rows.len(), Row::ALL.len() - 4);
+    assert!(!rows.contains(&Row::GameMode) && !rows.contains(&Row::Tutorial));
     c.campaign_mode = Some(GameMode::Casual);
+    c.campaign_tutorial = Some(TutorialLevel::Full);
     let without_pictures: Vec<Row> = Row::ALL
         .into_iter()
         .filter(|&r| r != Row::MapLook && r != Row::MapZoom)
@@ -319,7 +320,11 @@ fn the_volume_box_steps_by_one_on_a_controller() {
 #[test]
 fn every_setting_row_changes_its_own_setting() {
     let mut c = ctx();
-    for row in Row::ALL.into_iter().filter(|r| r.is_setting()) {
+    // The tutorial level is the campaign's, not a setting (below).
+    let rows = Row::ALL
+        .into_iter()
+        .filter(|&r| r.is_setting() && r != Row::Tutorial);
+    for row in rows {
         let before = c.settings().clone();
         // Right, or left for a setting already at its last value.
         press(&mut on(row), &mut c, &[Action::CursorRight]);
@@ -386,6 +391,7 @@ fn rows_show_their_values() {
             "",
             "",
             "",
+            "",
             ""
         ]
     );
@@ -407,6 +413,54 @@ fn rows_show_their_values() {
     assert_eq!(c.text(cursor_key(CursorStyle::TileGlow)), "Tile glow");
     c.campaign_mode = Some(GameMode::Casual);
     assert_eq!(value(&c, Row::GameMode), "Casual");
+    for (level, shown) in [
+        (TutorialLevel::Full, "Full*"),
+        (TutorialLevel::Short, "Short*"),
+        (TutorialLevel::None, "None*"),
+    ] {
+        c.campaign_tutorial = Some(level);
+        assert_eq!(value(&c, Row::Tutorial), shown);
+    }
+}
+
+/// Ticket 0838: the campaign's tutorial level is a value row. It changes
+/// at once, and like any row is kept or put back on leaving.
+#[test]
+fn the_tutorial_row_steps_the_level_and_leaving_keeps_or_discards_it() {
+    let mut c = ctx();
+    c.campaign_mode = Some(GameMode::Classic);
+    c.campaign_tutorial = Some(TutorialLevel::Full);
+    let mut s = on(Row::Tutorial);
+    assert_eq!(s.help(&c), "arrows move · f change · d back");
+    // Left stops at Full; right steps to Short, then None, and stops.
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Full));
+    assert!(sounds(&mut c).is_empty());
+    assert!(!s.changed(&c));
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Short));
+    assert_eq!(sounds(&mut c), ["menu_move"]);
+    assert!(s.changed(&c));
+    press(&mut s, &mut c, &[Action::CursorRight, Action::CursorRight]);
+    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::None));
+    // Confirm goes round, like the other value rows.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Full));
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Short));
+    // No setting changed, but leaving still asks. Discard puts it back.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(s.leaving(), Some(LeaveChoice::Back));
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Full));
+    // Keep keeps it.
+    let mut s = on(Row::Tutorial);
+    press(&mut s, &mut c, &[Action::CursorRight, Action::CursorRight]);
+    press(&mut s, &mut c, &[Action::Cancel]);
+    let keep = [Action::CursorLeft, Action::CursorLeft, Action::Confirm];
+    assert_eq!(press(&mut s, &mut c, &keep), "Pop");
+    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::None));
 }
 
 /// The view is the whole screen as data: what a skin paints.
@@ -448,6 +502,7 @@ fn the_view_says_what_the_screen_shows() {
         );
     }
     assert_eq!(view.row(Row::GameMode), None);
+    assert_eq!(view.row(Row::Tutorial), None);
     assert_eq!(
         view.row(Row::Layout).and_then(|r| r.value.text()),
         Some("Right-handed")

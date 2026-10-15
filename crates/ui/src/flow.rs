@@ -626,7 +626,9 @@ impl FlowScreen {
     /// opens the switch to Casual only at Preparations
     /// ([`Ctx::mode_switch`]): a switch made on the Options screen
     /// there (0805) goes into the campaign and into the battle being
-    /// prepared, so it starts (and restarts) in Casual.
+    /// prepared, so it starts (and restarts) in Casual. The same goes for
+    /// [`Ctx::campaign_tutorial`]: a level picked on the Options screen
+    /// (0838) goes into the campaign, and so into its next save.
     fn sync_mode(&mut self, ctx: &mut Ctx) {
         let Some(campaign) = &mut self.campaign else {
             ctx.campaign_mode = None;
@@ -641,6 +643,9 @@ impl FlowScreen {
             if let Stage::Preparations(screen) = &mut self.stage {
                 screen.switch_to_casual();
             }
+        }
+        if let Some(level) = ctx.campaign_tutorial {
+            campaign.tutorial = level;
         }
         ctx.campaign_mode = Some(campaign.mode);
         ctx.campaign_tutorial = Some(campaign.tutorial);
