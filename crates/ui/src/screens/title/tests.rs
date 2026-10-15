@@ -550,10 +550,12 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("results.rs", include_str!("../results.rs")),
         ("credits.rs", include_str!("../credits.rs")),
         ("preparations.rs", include_str!("../preparations.rs")),
+        ("lead_select.rs", include_str!("../lead_select.rs")),
         ("class_change.rs", include_str!("../class_change.rs")),
     ];
     for (file, source) in sources {
-        for name in ["UiColor", "Rect", "BoxStyle", "Cell"] {
+        // A picture is placed by the skin too (the view names it).
+        for name in ["UiColor", "Rect", "BoxStyle", "Cell", "draw_portrait"] {
             assert!(!names_word(source, name), "{file} names `{name}`");
         }
         // Their `draw` is one call to the skin (a file with two screens,
