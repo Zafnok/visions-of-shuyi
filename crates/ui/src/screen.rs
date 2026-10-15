@@ -19,6 +19,7 @@ use trpg_core::{GameMode, LeadGender, LeadProfile, TutorialLevel};
 
 use crate::audio::{AudioQueue, MusicClock, pick_from_pool};
 use crate::color::Palette;
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{
     Action, Button, Chord, Device, Keymap, Layout, LayoutBindings, PadBindings, PlayerKeys,
@@ -227,6 +228,10 @@ pub struct Ctx {
     pub content: Content,
     /// Named colours, from `content.palette`.
     pub palette: Palette,
+    /// The console the frame is drawn on (ADR-0070 §6):
+    /// [`ConsoleSpec::PC`] here; a front end sets its own before the
+    /// [`Game`](crate::Game) starts.
+    pub console: ConsoleSpec,
     /// The active key bindings, for help text that names keys: the chosen
     /// layout's with the player's changes, or [`Keymap::layout_picker`]
     /// until one is chosen. Change it with [`use_layout`](Self::use_layout),
@@ -390,6 +395,7 @@ impl Ctx {
         Ok(Self {
             content,
             palette,
+            console: ConsoleSpec::PC,
             keymap,
             device: Device::default(),
             layout: None,

@@ -381,7 +381,7 @@ fn texts_name_the_layout_keys() {
 /// Opaque screens must paint every cell, not rely on `Game` clearing.
 #[test]
 fn screens_cover_the_whole_buffer() {
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     let c = ctx();
     let mut naming = crate::screens::LeadSelectScreen::new();
     let typing = FrameInput::new(vec![Action::CursorDown], 0.0, vec![]);
@@ -407,10 +407,10 @@ fn screens_cover_the_whole_buffer() {
             c.palette.get(UiColor::Enemy),
             c.palette.get(UiColor::Enemy),
         );
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
         screen.draw(&c, &mut buf);
-        let left = (0..i32::from(CONSOLE_H))
-            .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+        let left = (0..i32::from(ConsoleSpec::PC.rows))
+            .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
             .filter(|&(x, y)| buf.get(x, y) == Some(&stale))
             .count();
         assert_eq!(left, 0, "{} left stale cells", screen.name());
@@ -550,9 +550,12 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("results.rs", include_str!("../results.rs")),
         ("credits.rs", include_str!("../credits.rs")),
         ("preparations.rs", include_str!("../preparations.rs")),
+        ("lead_select.rs", include_str!("../lead_select.rs")),
+        ("class_change.rs", include_str!("../class_change.rs")),
     ];
     for (file, source) in sources {
-        for name in ["UiColor", "Rect", "BoxStyle", "Cell"] {
+        // A picture is placed by the skin too (the view names it).
+        for name in ["UiColor", "Rect", "BoxStyle", "Cell", "draw_portrait"] {
             assert!(!names_word(source, name), "{file} names `{name}`");
         }
         // Their `draw` is one call to the skin (a file with two screens,

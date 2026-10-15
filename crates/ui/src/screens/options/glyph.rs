@@ -133,16 +133,17 @@ fn paint_question(ctx: &Ctx, buf: &mut GlyphBuffer, question: &QuestionView) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::screen::tests::ctx;
     use crate::screens::options::Row;
 
     /// Row `y` of `view` as painted, trimmed.
     fn painted_row(c: &Ctx, view: &OptionsView, y: i32) -> String {
         let black = c.palette.get(UiColor::Black);
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new(' ', black, black));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
         paint(c, view, &mut buf);
-        let glyphs = (0..i32::from(CONSOLE_W)).map(|x| buf.get(x, y).map_or(' ', |c| c.glyph));
+        let glyphs =
+            (0..i32::from(ConsoleSpec::PC.cols)).map(|x| buf.get(x, y).map_or(' ', |c| c.glyph));
         glyphs.collect::<String>().trim().to_owned()
     }
 
@@ -281,9 +282,9 @@ mod tests {
                 typing: true,
             };
             let black = c.palette.get(UiColor::Black);
-            let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new(' ', black, black));
+            let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
             paint(&c, &view(vec![row("Sound volume", value, true)]), &mut buf);
-            (VALUE_X - 1..i32::from(CONSOLE_W))
+            (VALUE_X - 1..i32::from(ConsoleSpec::PC.cols))
                 .take_while(|&x| buf.get(x, PANEL.y + 2).is_some_and(|cell| cell.bg == bar))
                 .count()
         };
@@ -311,7 +312,7 @@ mod tests {
             text: "Show every tip again?".to_owned(),
             answers: "f yes / d no".to_owned(),
         });
-        let top = (i32::from(CONSOLE_H) - QUESTION_H) / 2;
+        let top = (i32::from(ConsoleSpec::PC.rows) - QUESTION_H) / 2;
         assert!(painted_row(&c, &v, top).contains("╔═══════════════════════╗"));
         assert!(painted_row(&c, &v, top + 2).contains("║ Show every tip again? ║"));
         assert!(painted_row(&c, &v, top + 3).contains("║ f yes / d no          ║"));

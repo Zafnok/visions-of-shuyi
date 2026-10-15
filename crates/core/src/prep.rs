@@ -35,8 +35,10 @@
 //!   (`Spd + rank speed − burden`, gear-adjusted) for the weapon in a slot,
 //!   without skill bonuses.
 
-use std::fmt;
-use std::sync::Arc;
+use crate::prelude::*;
+
+use alloc::sync::Arc;
+use core::fmt;
 
 use crate::battle::{BattleSetup, BattleState};
 use crate::class::{ArmourWeight, ClassDef, ClassTable};
@@ -117,7 +119,7 @@ impl fmt::Display for PrepError {
     }
 }
 
-impl std::error::Error for PrepError {}
+impl core::error::Error for PrepError {}
 
 /// The tables the gear rules read.
 #[derive(Clone, Copy)]

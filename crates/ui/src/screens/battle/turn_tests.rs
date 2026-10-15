@@ -9,7 +9,7 @@ use trpg_core::{ItemId, Objective, Outcome, UnitAction};
 use super::banner::{BannerKind, PHASE_BANNER_S};
 use super::testing::{battle_with, skirmish, through_ai_phases, wait};
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::map_view::RangeKind;
 use crate::screen::tests::ctx;
 use crate::settings::SETTINGS_KEY;
@@ -21,7 +21,7 @@ fn quick() -> BattleScreen {
 
 fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
     let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     screen.draw(c, &mut buf);
     buf
 }
@@ -41,7 +41,7 @@ fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) -> String {
 
 /// The text of row `y`, trimmed.
 fn row(buf: &GlyphBuffer, y: i32) -> String {
-    (0..i32::from(CONSOLE_W))
+    (0..i32::from(ConsoleSpec::PC.cols))
         .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
         .collect::<String>()
         .trim()
@@ -50,14 +50,14 @@ fn row(buf: &GlyphBuffer, y: i32) -> String {
 
 /// Whether some row of `buf` contains `text`.
 fn shows(buf: &GlyphBuffer, text: &str) -> bool {
-    (0..i32::from(CONSOLE_H)).any(|y| row(buf, y).contains(text))
+    (0..i32::from(ConsoleSpec::PC.rows)).any(|y| row(buf, y).contains(text))
 }
 
 /// Every glyph of `buf` is in the game's font.
 fn assert_in_font(buf: &GlyphBuffer) {
     let font = FontAtlasDef::load().unwrap_or_default();
-    for y in 0..i32::from(CONSOLE_H) {
-        for x in 0..i32::from(CONSOLE_W) {
+    for y in 0..i32::from(ConsoleSpec::PC.rows) {
+        for x in 0..i32::from(ConsoleSpec::PC.cols) {
             let g = buf.get(x, y).unwrap().glyph;
             assert!(font.glyph_rect(g).is_some(), "{g:?} missing from the font");
         }

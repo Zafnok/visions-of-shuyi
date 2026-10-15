@@ -31,6 +31,8 @@
 //!   the highest tier it has (the tables never decrease, and content
 //!   validation requires an entry for every tier in use).
 
+use crate::prelude::*;
+
 use serde::{Deserialize, Serialize};
 
 use crate::battle::Event;

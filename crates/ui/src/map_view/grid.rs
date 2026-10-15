@@ -4,12 +4,16 @@
 
 use trpg_core::Pos;
 
-use crate::console::{CELL_H_PX, CELL_W_PX};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{PxRect, Rect};
+
+/// A console cell in pixels, across × down. The map skins lay the map out
+/// in [`ConsoleSpec::PC`]'s cells: the battle screen's layout is the PC's.
+pub const CELL_PX: (i32, i32) = (ConsoleSpec::PC.cell_w as i32, ConsoleSpec::PC.cell_h as i32);
 
 /// `cells` in console pixels.
 pub fn px_rect(cells: Rect) -> PxRect {
-    let (cw, ch) = (i32::from(CELL_W_PX), i32::from(CELL_H_PX));
+    let (cw, ch) = CELL_PX;
     Rect::new(cells.x * cw, cells.y * ch, cells.w * cw, cells.h * ch)
 }
 

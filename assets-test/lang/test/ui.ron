@@ -638,6 +638,7 @@
     (key: "battle.faction.enemy", source: "Enemy", text: "ENEMY"),
     (key: "battle.faction.ally", source: "Ally", text: "ALLY"),
     (key: "battle.faction.neutral", source: "Neutral", text: "NEUTRAL"),
+    (key: "guide.name", source: "Guide", text: "GUIDE"),
     (key: "battle.help.close", source: "{Confirm} close", text: "{Confirm} CLOSE"),
     (key: "battle.help.continue", source: "{Confirm} continue", text: "{Confirm} CONTINUE"),
     (key: "battle.help.skip", source: "{Confirm} skip", text: "{Confirm} SKIP"),

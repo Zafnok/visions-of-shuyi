@@ -20,16 +20,16 @@ pub const HELP_ROW: i32 = HELP_BAR.y + 1;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
 
     #[test]
     fn regions_tile_the_console() {
         assert_eq!(MAP_VIEW.x + MAP_VIEW.w, SIDE_PANEL.x);
-        assert_eq!(SIDE_PANEL.x + SIDE_PANEL.w, i32::from(CONSOLE_W));
+        assert_eq!(SIDE_PANEL.x + SIDE_PANEL.w, i32::from(ConsoleSpec::PC.cols));
         assert_eq!(MAP_VIEW.h, SIDE_PANEL.h);
         assert_eq!(HELP_BAR.y, MAP_VIEW.h);
-        assert_eq!(HELP_BAR.y + HELP_BAR.h, i32::from(CONSOLE_H));
-        assert_eq!(HELP_BAR.w, i32::from(CONSOLE_W));
+        assert_eq!(HELP_BAR.y + HELP_BAR.h, i32::from(ConsoleSpec::PC.rows));
+        assert_eq!(HELP_BAR.w, i32::from(ConsoleSpec::PC.cols));
         assert_eq!(HELP_ROW, 31);
     }
 }

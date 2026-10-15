@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: sign-off
-completed:
+completed: 2026-10-15
 ---
 
 # 0455 — The guide's face in the tip box
@@ -92,15 +92,15 @@ counts. Fix it here, since this ticket changes how the tip is drawn.
 
 ## Acceptance criteria
 
-- [ ] With the private assets, the first tip in Chapter 1 shows the Fox
+- [x] With the private assets, the first tip in Chapter 1 shows the Fox
       Miko face at 2× left of the text, titled `Guide`.
-- [ ] Without them, the tip box looks as before (snapshot unchanged except
+- [x] Without them, the tip box looks as before (snapshot unchanged except
       the title/first line change).
-- [ ] The credit lists the new files; `cargo xtask private-assets --pin`
+- [x] The credit lists the new files; `cargo xtask private-assets --pin`
       passes; `assets-private.rev` is committed.
-- [ ] A test shows the start tip doesn't show while `ch01_first_turn`
+- [x] A test shows the start tip doesn't show while `ch01_first_turn`
       plays, and shows after it closes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -111,4 +111,35 @@ counts. Fix it here, since this ticket changes how the tip is drawn.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **Portrait:** the Fox Miko busts imported as `guide` with `cargo xtask
+  portrait-import` (no `--shift-x`: the head sits in the middle), all 8
+  expressions, the required five mapped as the other heroes (`happy` =
+  smile, `angry` = stern...). Pushed to the private repository (9a096e1);
+  `assets-private.rev` pinned. Credit: `portraits/guide/` and
+  `portraits/guide.ron` added to the Tiny Tales entry (the pack's artists,
+  Lunatic Red and Rayane Félix, were already in its `author`), and the
+  pack to its row in `THIRD_PARTY_ASSETS.md`.
+- **The box** (ADR-0054): `crates/ui/src/tips/view.rs` builds a `TipView`
+  (title = the guide's name, `guide.name`; face; heading = the tip's own
+  title; lines; close hint), `crates/ui/src/tips/glyph.rs` paints it. The
+  face is `draw_portrait_in` in a 16×8-cell area (128×128 px: a 64×64 bust
+  at 2×), at the box's top left inside the border, the text 2 cells to its
+  right. Without the guide's portrait the box is as before, its title now
+  `Guide` and `Your move` its first line, in the highlight colour.
+- **Width (for Nick's sign-off):** the map area is 70 cells wide, and the
+  face (16) plus a 60-character line plus margins needs 82, so a box with
+  long lines can't fit the map area. The box stays centred on the map
+  while it fits and otherwise slides left and over the side panel, never
+  off the screen. Today's longest tip line (49 characters) makes the
+  Chapter 1 start tip 71 cells wide: it covers the side panel's left
+  border by one cell.
+- **`face`** in `tips.ron`: optional, `smile` if absent, checked against
+  the guide's portrait's expressions when that portrait exists (the
+  public build has none, so it isn't checked there).
+- **The bug:** the battle screen notes when it starts a scene over itself
+  and shows no tip until it is updated again (on top once more). Test:
+  `the_start_tip_waits_for_the_first_turn_scene` (Chapter 1, tips on).
+- **Tooling:** `cargo xtask frame-png --tips` shows the tips (the Harness
+  has them off), needed for step 6. The render was looked at: the face, the
+  name and the text fit.
+- No gameplay rules decided. No follow-up tickets.

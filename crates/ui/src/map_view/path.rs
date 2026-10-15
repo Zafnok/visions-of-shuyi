@@ -107,8 +107,8 @@ pub fn path_overlays(path: &[Pos], grid: &Grid, color: Rgb) -> Vec<Overlay> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::CELL_W_PX;
     use crate::map_view::glyph::tests::layout_at;
+    use crate::map_view::grid::CELL_PX;
     use crate::screens::battle::layout::MAP_VIEW;
 
     const RED: Rgb = Rgb::new(255, 0, 0);
@@ -262,7 +262,7 @@ mod tests {
     fn overlays_are_clipped_to_the_map_view() {
         // The viewport is 35 tiles wide: tile 35 is under the side panel.
         let r = rects(&[p(33, 0), p(34, 0), p(35, 0)]);
-        let right = MAP_VIEW.w * i32::from(CELL_W_PX);
+        let right = MAP_VIEW.w * CELL_PX.0;
         assert!(r.iter().all(|o| o.1 + o.3 <= right), "{r:?}");
         assert_eq!(r.len(), 2, "no arrowhead off the view: {r:?}");
     }

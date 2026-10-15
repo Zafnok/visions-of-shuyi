@@ -3,7 +3,6 @@
 
 use trpg_content::{ImageInfo, Portrait};
 
-use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{GlyphBuffer, Layer, PxRect, Rect, Sprite};
 
 /// The space a portrait is drawn in, in cells: 256×256 console pixels
@@ -76,11 +75,12 @@ pub fn draw_portrait_in(
     let Some(expression) = portrait.expression(expr) else {
         return false;
     };
+    let (cw, ch) = buf.spec().cell_px();
     let frame = Rect::new(
-        x.saturating_mul(i32::from(CELL_W_PX)),
-        y.saturating_mul(i32::from(CELL_H_PX)),
-        w.saturating_mul(i32::from(CELL_W_PX)),
-        h.saturating_mul(i32::from(CELL_H_PX)),
+        x.saturating_mul(cw),
+        y.saturating_mul(ch),
+        w.saturating_mul(cw),
+        h.saturating_mul(ch),
     );
     let size = expression.size;
     let src = (i32::try_from(size.width), i32::try_from(size.height));

@@ -26,7 +26,9 @@
 //! - **Heal spells** restore `min(heal_power + Mag, max HP − HP)` to an ally;
 //!   no roll, no counter. The battle rules are in [`crate::battle`].
 
-use std::collections::{BTreeMap, BTreeSet};
+use crate::prelude::*;
+
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 

@@ -2,11 +2,13 @@
 //! follow the rules overlays have.
 
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use proptest::prelude::*;
 use trpg_content::{ImageInfo, ImageTable};
 
 use super::*;
+use crate::console::ConsoleSpec;
 
 const FG: Rgb = Rgb::new(200, 200, 200);
 const BG: Rgb = Rgb::new(0, 0, 0);
@@ -627,4 +629,70 @@ proptest! {
             }
         }
     }
+}
+
+/// Ticket 1030: the frame takes the console's size from a [`ConsoleSpec`].
+#[test]
+fn a_playdate_console_is_50_by_15_cells_of_400_by_240_pixels() {
+    let mut b = GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE, BLANK);
+    assert_eq!(b.spec(), ConsoleSpec::PLAYDATE);
+    assert_eq!((b.width(), b.height()), (50, 15));
+    assert_eq!(b.bounds(), Rect::new(0, 0, 50, 15));
+    assert_eq!(b.pixel_bounds(), Rect::new(0, 0, 400, 240));
+
+    // Text stops at the 50th column.
+    b.print(45, 14, "corner!", RED, BG);
+    let last: String = (40..50).map(|x| b.get(x, 14).unwrap().glyph).collect();
+    assert_eq!(last, "     corne");
+    assert_eq!(b.get(50, 14), None);
+
+    // A sprite over the bottom-right corner is clipped to 400 × 240.
+    b.add_sprite(at(392, 232, 16, 16));
+    assert_eq!(clips(&b), [Rect::new(392, 232, 8, 8)]);
+
+    // A backdrop's window is counted in the console's cells.
+    let scene = GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE.sized(10, 4), BLANK);
+    b.set_backdrop(Rc::new(scene), Rect::new(40, 10, 20, 20), (0.0, 0.0), 1);
+    let backdrop = b.backdrop().unwrap();
+    assert_eq!(backdrop.clip(), Rect::new(40, 10, 10, 5));
+    assert_eq!(backdrop.clip_px(), Rect::new(320, 160, 80, 80));
+}
+
+/// The cell size comes from the spec too: pixels, cutting and `blit`
+/// count in a 4 × 6 pixel cell here.
+#[test]
+fn every_pixel_rule_uses_the_specs_cell_size() {
+    let small = ConsoleSpec {
+        cols: 10,
+        rows: 5,
+        cell_w: 4,
+        cell_h: 6,
+    };
+    let mut b = GlyphBuffer::with_spec(small, BLANK);
+    assert_eq!(b.pixel_bounds(), Rect::new(0, 0, 40, 30));
+
+    // Filling cell (1, 1) cuts the sprite's pixels 4..8 × 6..12.
+    b.add_sprite(at(0, 0, 12, 12));
+    b.fill_rect(Rect::new(1, 1, 1, 1), BLANK);
+    let mut cut = clips(&b);
+    cut.sort_by_key(|r| (r.y, r.x));
+    assert_eq!(
+        cut,
+        [
+            Rect::new(0, 0, 12, 6),
+            Rect::new(0, 6, 4, 6),
+            Rect::new(8, 6, 4, 6),
+        ]
+    );
+
+    // A blit at cell (2, 1) moves the other buffer's sprite by 8 × 6 px.
+    let mut src = GlyphBuffer::with_spec(small.sized(3, 2), BLANK);
+    src.add_sprite(at(0, 0, 4, 4));
+    let mut dest = GlyphBuffer::with_spec(small, BLANK);
+    dest.blit(&src, 2, 1);
+    assert_eq!(clips(&dest), [Rect::new(8, 6, 4, 4)]);
+
+    let scene = Rc::new(GlyphBuffer::with_spec(small.sized(2, 2), BLANK));
+    b.set_backdrop(scene, Rect::new(1, 2, 3, 2), (0.0, 0.0), 1);
+    assert_eq!(b.backdrop().unwrap().clip_px(), Rect::new(4, 12, 12, 12));
 }

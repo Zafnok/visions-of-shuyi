@@ -15,7 +15,6 @@ use std::path::{Path, PathBuf};
 
 use trpg_content::font::{AtlasRect, FALLBACK_GLYPH};
 use trpg_content::{FontAtlasDef, ImageId, ImageTable};
-use trpg_ui::console::{CELL_H_PX, CELL_W_PX};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Button, Chord, Layout};
 use trpg_ui::{Backdrop, GlyphBuffer, Item, Layer, Paint, PxRect, Rgb, Sprite, UiColor};
@@ -38,6 +37,7 @@ options:
   --layout right|left  the key layout picked before (default right)
   --scale N            whole-number scale, 1 to 8 (default 2)
   --prompt             start as the game does (the title waits for a key or button)
+  --tips               show the one-time tips, as the game does
   --light NAME         fight every battle in this light of assets/data/lighting.ron,
                        whatever its map and its battle file say
 
@@ -80,6 +80,8 @@ pub struct Options {
     pub prompt: bool,
     /// The light every battle is fought in, instead of its own.
     pub light: Option<String>,
+    /// Show the one-time tips, as `app` does.
+    pub tips: bool,
 }
 
 /// Parses `frame-png`'s arguments, checking key and button names up front
@@ -93,6 +95,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
         scale: 2,
         prompt: false,
         light: None,
+        tips: false,
     };
     let mut iter = args.iter();
     while let Some(arg) = iter.next() {
@@ -143,6 +146,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
                     })?;
             }
             "--prompt" => options.prompt = true,
+            "--tips" => options.tips = true,
             "--light" => options.light = Some(value()?),
             flag if flag.starts_with("--") => return Err(format!("unknown option: {flag}")),
             path if out.is_none() => out = Some(PathBuf::from(path)),
@@ -165,6 +169,9 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     let mut h = h.with_shipped_story();
     // And as `app` shows it: with the idle motion on.
     h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
+    if options.tips {
+        h.with_tips();
+    }
     if let Some(light) = &options.light {
         let content = &mut h.ctx_mut().content;
         if content.lighting.get(light).is_none() {
@@ -351,7 +358,8 @@ impl Painter {
     /// window, then the console over it, as in `app`.
     pub fn render(&self, buf: &GlyphBuffer, scale: u32) -> Image {
         let s = i64::from(scale);
-        let (cell_w, cell_h) = (i64::from(CELL_W_PX) * s, i64::from(CELL_H_PX) * s);
+        let spec = buf.spec();
+        let (cell_w, cell_h) = (i64::from(spec.cell_w) * s, i64::from(spec.cell_h) * s);
         let width = u32::try_from(i64::from(buf.width()) * cell_w).unwrap_or(0);
         let height = u32::try_from(i64::from(buf.height()) * cell_h).unwrap_or(0);
         let mut out = Image::filled(width, height, self.clear);
@@ -403,7 +411,8 @@ impl Painter {
         px: i64,
         all_fills: bool,
     ) {
-        let (cell_w, cell_h) = (i64::from(CELL_W_PX) * px, i64::from(CELL_H_PX) * px);
+        let spec = buf.spec();
+        let (cell_w, cell_h) = (i64::from(spec.cell_w) * px, i64::from(spec.cell_h) * px);
         let cells = || {
             (0..i32::from(buf.height())).flat_map(move |y| {
                 (0..i32::from(buf.width())).filter_map(move |x| {

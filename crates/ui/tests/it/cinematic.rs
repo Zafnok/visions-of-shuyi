@@ -11,7 +11,7 @@ use trpg_content::new_campaign;
 use trpg_core::{GameMode, LeadGender, LeadProfile, Pos, SaveFile, UnitId};
 use trpg_ui::cinematic::{CinematicPlayer, Frame};
 use trpg_ui::color::UiColor;
-use trpg_ui::console::{CONSOLE_H, CONSOLE_W};
+use trpg_ui::console::ConsoleSpec;
 use trpg_ui::debug::CinematicScreen;
 use trpg_ui::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use trpg_ui::harness::Harness;
@@ -237,7 +237,7 @@ fn drawn(h: &Harness, player: &CinematicPlayer, t: f32) -> GlyphBuffer {
     let ctx = h.game().ctx();
     let p = &ctx.palette;
     let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     player.draw(ctx, t, 1.0, &mut buf);
     buf
 }

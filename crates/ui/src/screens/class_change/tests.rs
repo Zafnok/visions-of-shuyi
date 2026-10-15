@@ -1,51 +1,56 @@
 //! Tests of the class-choice screen, on the debug menu's test knight: a
 //! Guard (mastered) with Def 49 of 50, a Rider record at class level 6 and
-//! one of every seal.
+//! one of every seal. They read the view and the state; where the skin
+//! puts things is tested in `glyph::tests`.
 
 use insta::assert_snapshot;
 use trpg_core::{ItemId, WeaponKind, WeaponRank};
 
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
+use crate::glyph_buffer::Cell;
 use crate::screen::tests::ctx;
 use Action::{Cancel, Confirm, CursorLeft, CursorRight};
 
-fn demo(c: &Ctx, kind: ChangeKind) -> ClassChangeScreen {
+pub(super) fn demo(c: &Ctx, kind: ChangeKind) -> ClassChangeScreen {
     ClassChangeScreen::demo(c, kind).expect("the test knight")
 }
 
-fn step(s: &mut ClassChangeScreen, c: &mut Ctx, actions: &[Action]) -> Transition {
+pub(super) fn step(s: &mut ClassChangeScreen, c: &mut Ctx, actions: &[Action]) -> Transition {
     s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]))
 }
 
-fn render(s: &ClassChangeScreen, c: &Ctx) -> GlyphBuffer {
+pub(super) fn render(s: &ClassChangeScreen, c: &Ctx) -> GlyphBuffer {
     let stale = Cell::new(
         'x',
         crate::color::Rgb::new(1, 2, 3),
         crate::color::Rgb::new(1, 2, 3),
     );
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(c, &mut buf);
     buf
 }
 
-/// The text of `w` cells of row `y` from column `x`, trimmed.
-fn text(buf: &GlyphBuffer, x: i32, y: i32, w: i32) -> String {
-    (x..x + w)
-        .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
-        .collect::<String>()
-        .trim()
-        .to_owned()
+/// The columns the screen shows.
+pub(super) fn columns(s: &ClassChangeScreen, c: &Ctx) -> ColumnsView {
+    match s.view(c).body {
+        ClassChangeBody::Columns(columns) => *columns,
+        other => panic!("not the columns: {other:?}"),
+    }
 }
 
-/// The text inside column `slot` (0 = leftmost shown) on row `row` of it.
-fn cell(buf: &GlyphBuffer, slot: i32, row: i32) -> String {
-    text(buf, COLUMNS_X + slot * COLUMN_W + 2, COLUMNS_Y + row, 20)
+/// The names of the columns on show.
+fn names(view: &ColumnsView) -> Vec<&str> {
+    view.columns.iter().map(|col| col.name.as_str()).collect()
 }
 
-/// Whether some row of the screen contains `needle`.
-fn shows(buf: &GlyphBuffer, needle: &str) -> bool {
-    (0..i32::from(CONSOLE_H)).any(|y| text(buf, 0, y, i32::from(CONSOLE_W)).contains(needle))
+/// A column's stat rows as `(name, before, after, at_max)`.
+fn stats(column: &ColumnView) -> Vec<(&str, StatValue, StatValue, bool)> {
+    let row = |r| -> (&str, StatValue, StatValue, bool) {
+        let r: &StatRowView = r;
+        (&r.name, r.before, r.after, r.at_max)
+    };
+    column.stats.iter().map(row).collect()
 }
 
 fn classes(s: &ClassChangeScreen) -> Vec<&str> {
@@ -79,136 +84,109 @@ fn a_promotion_offers_the_branches_with_what_promote_would_do() {
 /// base `28 11 0 6 4 14 2` less Guard `20 7 0 4 2 9 0`; Iron Rider
 /// `27 10 0 6 6 11 2`.
 #[test]
-fn the_columns_show_each_stat_before_and_after_and_mark_a_maxed_one() {
+fn the_columns_say_each_stat_before_and_after_and_mark_a_maxed_one() {
     let c = ctx();
     let s = demo(&c, ChangeKind::Promote);
-    let buf = render(&s, &c);
-    assert_eq!(text(&buf, 2, 1, 40), "Promotion");
-    assert_eq!(text(&buf, 2, 2, 40), "Test Knight  Guard  Lv 12");
-    assert_eq!(text(&buf, 70, 2, 28), "Tier 2 Seal ×1");
-    let column = |slot| (1..24).map(|row| cell(&buf, slot, row)).collect::<Vec<_>>();
+    let view = columns(&s, &c);
+    assert_eq!(view.title, "Promotion");
     assert_eq!(
-        column(0),
+        (view.unit.as_str(), view.class_level.as_str()),
+        ("Test Knight", "Guard  Lv 12")
+    );
+    assert_eq!(
+        view.seal,
+        Some(SealView {
+            name: "Tier 2 Seal".into(),
+            held: 1
+        })
+    );
+    assert_eq!(view.none, None);
+    // Two columns only: no scroll marks.
+    assert_eq!((view.more_left, view.more_right), (None, None));
+    assert_eq!(
+        (view.weapons_heading.as_str(), view.active_heading.as_str()),
+        ("Weapons", "Active")
+    );
+    assert_eq!(view.max_mark, "MAX");
+    assert_eq!(view.question, None);
+    let [bulwark, rider] = view.columns.as_slice() else {
+        panic!("{:?}", view.columns)
+    };
+    assert_eq!(
+        (
+            bulwark.focused,
+            bulwark.offered,
+            rider.focused,
+            rider.offered
+        ),
+        (true, true, false, true)
+    );
+    assert_eq!(bulwark.name, "Bulwark");
+    assert_eq!((bulwark.tier.as_str(), &bulwark.record), ("Tier 2", &None));
+    assert_eq!(
+        (bulwark.mov.as_str(), bulwark.movement.as_str()),
+        ("Mov   4", "armored")
+    );
+    assert_eq!(bulwark.tags, ["Armored"]);
+    assert_eq!(bulwark.weapons, ["Spear    D → C", "Axe      E → D"]);
+    assert_eq!(bulwark.active.as_deref(), Some("Fortify"));
+    assert_eq!(
+        stats(bulwark),
         [
-            "Bulwark",
-            "Tier 2",
-            "",
-            "Mov   4     armored",
-            "Armored",
-            "",
-            "Weapons",
-            "Spear    D → C",
-            "Axe      E → D",
-            "",
-            "",
-            "Active",
-            "Fortify",
-            "",
-            "HP   28 → 36  +8",
-            "Str  11 → 15  +4",
-            "Mag   0",
-            "Dex   7 → 9   +2",
-            "Spd   5 → 7   +2",
+            ("HP", 28, 36, false),
+            ("Str", 11, 15, false),
+            ("Mag", 0, 0, false),
+            ("Dex", 7, 9, false),
+            ("Spd", 5, 7, false),
             // Def +5 is cut at the hard ceiling (50).
-            "Def  49 → 50  +1 MAX",
-            "Res   0 → 2   +2",
-            "",
-            "",
+            ("Def", 49, 50, true),
+            ("Res", 0, 2, false),
         ]
     );
+    assert_eq!(bulwark.refused, None);
+    assert_eq!(rider.name, "Iron Rider");
     assert_eq!(
-        column(1),
+        (rider.mov.as_str(), rider.movement.as_str()),
+        ("Mov   4 → 6", "mounted")
+    );
+    assert_eq!(rider.tags, ["Mounted", "Armored"]);
+    assert_eq!(
+        rider.weapons,
+        ["Spear    D → C", "Axe      E → D", "Sword    E → D"]
+    );
+    assert_eq!(rider.active.as_deref(), Some("Trample"));
+    assert_eq!(
+        stats(rider),
         [
-            "Iron Rider",
-            "Tier 2",
-            "",
-            "Mov   4 → 6 mounted",
-            "Mounted Armored",
-            "",
-            "Weapons",
-            "Spear    D → C",
-            "Axe      E → D",
-            "Sword    E → D",
-            "",
-            "Active",
-            "Trample",
-            "",
-            "HP   28 → 35  +7",
-            "Str  11 → 14  +3",
-            "Mag   0",
-            "Dex   7 → 9   +2",
-            "Spd   5 → 9   +4",
-            "Def  49 → 50  +1 MAX",
-            "Res   0 → 2   +2",
-            "",
-            "",
+            ("HP", 28, 35, false),
+            ("Str", 11, 14, false),
+            ("Mag", 0, 0, false),
+            ("Dex", 7, 9, false),
+            ("Spd", 5, 9, false),
+            ("Def", 49, 50, true),
+            ("Res", 0, 2, false),
         ]
     );
-    // Two columns only: nothing past them, no scroll marks.
-    assert_eq!(text(&buf, COLUMNS_X + 2 * COLUMN_W, COLUMNS_Y, 48), "");
-    assert_eq!(text(&buf, 0, MORE_ROW, 100), "");
-    // The gain and the mark are highlighted; the focused column is boxed
-    // double, the other single.
-    let hi = c.palette.get(UiColor::TextHighlight);
-    let at = |x: i32, row: i32| buf.get(COLUMNS_X + 2 + x, COLUMNS_Y + row).unwrap();
-    assert_eq!((at(14, 15).glyph, at(14, 15).fg), ('+', hi));
-    assert_eq!((at(17, 20).glyph, at(17, 20).fg), ('M', hi));
-    assert_eq!(at(0, 15).fg, c.palette.get(UiColor::Text));
-    assert_eq!(at(0, 17).fg, c.palette.get(UiColor::TextDim));
-    assert_eq!(buf.get(COLUMNS_X, COLUMNS_Y).unwrap().glyph, '╔');
-    assert_eq!(buf.get(COLUMNS_X + COLUMN_W, COLUMNS_Y).unwrap().glyph, '┌');
-    assert_eq!(s.help(&c), "Left/Right class · f choose · d back");
-}
-
-#[test]
-fn long_text_is_cut_inside_the_column() {
-    assert_eq!(i32::try_from(TEXT_W).unwrap() + 4, COLUMN_W);
-    let mut c = ctx();
-    if let Some(class) = c
-        .content
-        .classes
-        .classes
-        .get_mut(&ClassId("bulwark".into()))
-    {
-        class.name = "Sentinel of the High Marches".into();
-    }
-    let s = demo(&c, ChangeKind::Promote);
-    let buf = render(&s, &c);
-    assert_eq!(cell(&buf, 0, 1), "Sentinel of the High");
-    // The borders on both sides of the cut are whole.
-    let border = |x: i32| buf.get(x, COLUMNS_Y + 1).unwrap().glyph;
-    assert_eq!(border(COLUMNS_X + COLUMN_W - 2), ' ');
-    assert_eq!(border(COLUMNS_X + COLUMN_W - 1), '║');
-    assert_eq!(border(COLUMNS_X + COLUMN_W), '│');
+    let v = s.view(&c);
+    assert_eq!(v.help, "Left/Right class · f choose · d back");
+    assert_eq!(v.help, s.help(&c));
 }
 
 #[test]
 fn text_rows() {
-    assert_eq!(
-        stat_line(Words::ENGLISH, StatKind::Str, 9, 12, 50),
-        "Str   9 → 12  +3"
-    );
-    assert_eq!(
-        stat_line(Words::ENGLISH, StatKind::Mag, 1, 1, 50),
-        "Mag   1"
-    );
-    assert_eq!(
-        stat_line(Words::ENGLISH, StatKind::Def, 48, 50, 50),
-        "Def  48 → 50  +2 MAX"
-    );
+    let row = |kind, before, after, ceiling| stat_row(Words::ENGLISH, kind, before, after, ceiling);
+    let max = |name: &str, before, after| StatRowView {
+        name: name.to_owned(),
+        before,
+        after,
+        at_max: true,
+    };
+    assert!(!row(StatKind::Str, 9, 12, 50).at_max);
+    assert_eq!(row(StatKind::Def, 48, 50, 50), max("Def", 48, 50));
     // Already at the ceiling, or past it.
-    assert_eq!(
-        stat_line(Words::ENGLISH, StatKind::Res, 50, 50, 50),
-        "Res  50 MAX"
-    );
-    assert_eq!(
-        stat_line(Words::ENGLISH, StatKind::Hp, 81, 81, 80),
-        "HP   81 MAX"
-    );
-    assert_eq!(
-        stat_line(Words::ENGLISH, StatKind::Hp, 70, 79, 80),
-        "HP   70 → 79  +9"
-    );
+    assert_eq!(row(StatKind::Res, 50, 50, 50), max("Res", 50, 50));
+    assert_eq!(row(StatKind::Hp, 81, 81, 80), max("HP", 81, 81));
+    assert!(!row(StatKind::Hp, 70, 79, 80).at_max);
     assert_eq!(mov_line(Words::ENGLISH, 5, 5), "Mov   5");
     assert_eq!(mov_line(Words::ENGLISH, 4, 6), "Mov   4 → 6");
     let c = ctx();
@@ -233,6 +211,14 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     // Left and right move between the columns, wrapping.
     step(&mut s, &mut c, &[CursorRight]);
     assert_eq!(s.focus(), 1);
+    let focused = |s: &ClassChangeScreen, c: &Ctx| {
+        let view = columns(s, c);
+        view.columns
+            .iter()
+            .map(|col| col.focused)
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(focused(&s, &c), [false, true]);
     step(&mut s, &mut c, &[CursorRight]);
     assert_eq!(s.focus(), 0);
     step(&mut s, &mut c, &[CursorLeft]);
@@ -244,19 +230,24 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     step(&mut s, &mut c, &[Confirm]);
     assert!(s.is_confirming());
     assert_eq!(s.help(&c), "f yes · d no");
-    let buf = render(&s, &c);
-    for line in [
-        "║ Promote Test Knight to Iron Rider? ║",
-        "║ Uses 1 Tier 2 Seal (1 in stock).   ║",
-        "║ f yes / d no                       ║",
-    ] {
-        assert!(shows(&buf, line), "{line}");
-    }
+    let view = columns(&s, &c);
+    assert_eq!(
+        view.question,
+        Some(QuestionView {
+            ask: "Promote Test Knight to Iron Rider?".into(),
+            cost: "Uses 1 Tier 2 Seal (1 in stock).".into(),
+            keys: "f yes / d no".into(),
+        })
+    );
+    // The columns stay under it.
+    assert_eq!(names(&view), ["Bulwark", "Iron Rider"]);
+    assert_eq!(s.view(&c).help, "f yes · d no");
     // The cursor keys do nothing while it asks.
     step(&mut s, &mut c, &[CursorLeft]);
     assert_eq!((s.focus(), s.is_confirming()), (1, true));
     step(&mut s, &mut c, &[Cancel]);
     assert_eq!((s.focus(), s.is_confirming()), (1, false));
+    assert_eq!(columns(&s, &c).question, None);
     assert_eq!(s.unit().class, ClassId("guard".into()));
     // Confirm twice makes the change.
     let before = s.unit().clone();
@@ -281,37 +272,30 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     assert_eq!(page.gains.0, [7, 3, 0, 2, 4, 1, 2]);
     assert_eq!(page.character.as_deref(), Some("test_knight"));
     assert_eq!(s.help(&c), "f skip · hold f fast");
+    // The view holds the pages, and nothing else.
+    let view = s.view(&c);
+    assert_eq!(
+        view.body,
+        ClassChangeBody::Result(Box::new(s.progress().unwrap().clone()))
+    );
+    assert_eq!(view.help, "f skip · hold f fast");
     // A press reveals every stat, the next closes the page and the screen.
     let t = step(&mut s, &mut c, &[Confirm]);
     assert!(matches!(t, Transition::None));
     assert_eq!(s.help(&c), "f continue");
-    let buf = render(&s, &c);
-    assert_eq!(text(&buf, 43, 7, 20), "PROMOTED!");
-    assert_eq!(text(&buf, 43, 9, 20), "Test Knight");
-    assert_eq!(text(&buf, 43, 10, 20), "Guard → Iron Rider");
-    assert_eq!(text(&buf, 43, 12, 20), "HP   28 → 35  +7");
-    assert_eq!(text(&buf, 43, 17, 20), "Def  49 → 50  +1");
-    // Nothing else is on screen.
-    assert_eq!(text(&buf, 0, 2, 100), "");
+    assert!(s.progress().is_some_and(Progress::page_played));
     let t = step(&mut s, &mut c, &[Cancel]);
     assert!(matches!(t, Transition::Pop), "{t:?}");
 }
 
 #[test]
-fn the_leads_promotion_page_shows_the_face_the_player_picked() {
-    use crate::screens::battle::progress::shows_face_of;
-    use trpg_core::lead::{LEAD_ID, LeadGender, LeadProfile};
-    for (gender, face) in [(LeadGender::Male, "lead_m"), (LeadGender::Female, "lead_f")] {
-        let mut c = ctx();
-        c.lead = LeadProfile::new("Ren", gender);
-        let mut s = demo(&c, ChangeKind::Promote);
-        s.unit.character = Some(CharacterId(LEAD_ID.into()));
-        step(&mut s, &mut c, &[Confirm, Confirm]);
-        let buf = render(&s, &c);
-        assert_eq!(text(&buf, 43, 7, 20), "PROMOTED!");
-        assert!(shows_face_of(&buf, &c, face), "{face}");
-        assert!(!shows_face_of(&buf, &c, "test_knight"));
-    }
+fn once_the_pages_are_done_the_view_is_empty() {
+    let c = ctx();
+    let mut s = demo(&c, ChangeKind::Promote);
+    s.stage = Stage::Done;
+    let view = s.view(&c);
+    assert_eq!(view.body, ClassChangeBody::Done);
+    assert_eq!(view.help, "");
 }
 
 #[test]
@@ -343,7 +327,7 @@ fn cancel_closes_the_screen_with_nothing_changed() {
 }
 
 #[test]
-fn a_refused_class_is_dimmed_with_the_reason_and_cannot_be_chosen() {
+fn a_refused_class_says_why_and_cannot_be_chosen() {
     let mut c = ctx();
     let knight = demo(&c, ChangeKind::Promote).unit().clone();
     // No seal in stock.
@@ -352,19 +336,24 @@ fn a_refused_class_is_dimmed_with_the_reason_and_cannot_be_chosen() {
         s.options()[0].after,
         Err(ClassChangeError::NoSeal(SealKind::Tier(2)))
     );
-    let buf = render(&s, &c);
-    assert_eq!(cell(&buf, 0, 23), "No Tier 2 Seal");
-    // Its stats stay as they are, dimmed like the rest.
-    assert_eq!(cell(&buf, 0, 15), "HP   28");
-    assert_eq!(cell(&buf, 0, 20), "Def  49");
-    let dim = c.palette.get(UiColor::TextDim);
-    let at = |x: i32, row: i32| buf.get(COLUMNS_X + 2 + x, COLUMNS_Y + row).unwrap();
-    assert_eq!((at(0, 1).fg, at(0, 13).fg), (dim, dim));
-    assert_eq!(at(0, 23).fg, c.palette.get(UiColor::HpLow));
-    assert_eq!(text(&buf, 70, 2, 28), "Tier 2 Seal ×0");
+    let view = columns(&s, &c);
+    let refused = &view.columns[0];
+    assert!(!refused.offered);
+    assert_eq!(refused.refused.as_deref(), Some("No Tier 2 Seal"));
+    // Its stats stay as they are.
+    assert_eq!(stats(refused)[0], ("HP", 28, 28, false));
+    assert_eq!(stats(refused)[5], ("Def", 49, 49, false));
+    assert_eq!(
+        view.seal,
+        Some(SealView {
+            name: "Tier 2 Seal".into(),
+            held: 0
+        })
+    );
     assert_eq!(s.help(&c), "Left/Right class · d back");
     step(&mut s, &mut c, &[Confirm]);
     assert!(!s.is_confirming());
+    assert_eq!(columns(&s, &c).question, None);
     // Not mastered.
     let mut fresh = knight;
     fresh
@@ -373,7 +362,12 @@ fn a_refused_class_is_dimmed_with_the_reason_and_cannot_be_chosen() {
     let mut stock = Stock::default();
     stock.add(item("tier_2_seal"));
     let s = ClassChangeScreen::new(&c, ChangeKind::Promote, fresh, stock);
-    assert_eq!(cell(&render(&s, &c), 1, 23), "Class not mastered");
+    let view = columns(&s, &c);
+    assert!(!view.columns[1].offered);
+    assert_eq!(
+        view.columns[1].refused.as_deref(),
+        Some("Class not mastered")
+    );
 }
 
 #[test]
@@ -383,8 +377,13 @@ fn a_unit_with_nowhere_to_go_sees_an_empty_screen() {
     top.class = ClassId("bastion".into());
     let mut s = ClassChangeScreen::new(&c, ChangeKind::Promote, top, Stock::default());
     assert_eq!(s.options().len(), 0);
-    let buf = render(&s, &c);
-    assert_eq!(text(&buf, 0, COLUMNS_Y + 1, 100), "No class to change to.");
+    let view = columns(&s, &c);
+    assert_eq!(view.none.as_deref(), Some("No class to change to."));
+    assert!(view.columns.is_empty());
+    assert_eq!(
+        (view.seal, view.more_left, view.more_right),
+        (None, None, None)
+    );
     assert_eq!(s.help(&c), "d back");
     let t = step(&mut s, &mut c, &[CursorRight, Confirm]);
     assert!(matches!(t, Transition::None));
@@ -417,52 +416,73 @@ fn a_reclass_lists_every_class_the_seal_reaches_and_scrolls() {
         assert!(made.is_ok(), "{made:?}");
         assert_eq!(option.after.as_ref(), Ok(&unit), "{:?}", option.class);
     }
-    let buf = render(&s, &c);
-    assert_eq!(text(&buf, 2, 1, 40), "Class change");
-    assert_eq!(text(&buf, 70, 2, 28), "Reclass Seal ×1");
-    let names = |buf: &GlyphBuffer| (0..4).map(|slot| cell(buf, slot, 1)).collect::<Vec<_>>();
-    assert_eq!(names(&buf), ["Archer", "Brawler", "Cleric", "Mage"]);
-    assert_eq!(text(&buf, 0, MORE_ROW, 100), "more →");
-    // A class never entered is `new`; no stat changes, the maxed one marked.
-    assert_eq!(cell(&buf, 0, 2), "Tier 1   new");
-    assert_eq!(cell(&buf, 0, 4), "Mov   4 → 5 foot");
-    assert_eq!(cell(&buf, 0, 15), "HP   28");
-    assert_eq!(cell(&buf, 0, 20), "Def  49");
+    let view = columns(&s, &c);
+    assert_eq!(view.title, "Class change");
+    assert_eq!(
+        view.seal,
+        Some(SealView {
+            name: "Reclass Seal".into(),
+            held: 1
+        })
+    );
+    assert_eq!(names(&view), ["Archer", "Brawler", "Cleric", "Mage"]);
+    assert_eq!(view.more_left, None);
+    assert_eq!(view.more_right.as_deref(), Some("more →"));
+    // A class never entered is `new`; no stat changes, none at its ceiling.
+    let archer = &view.columns[0];
+    assert_eq!(
+        (archer.tier.as_str(), archer.record.as_deref()),
+        ("Tier 1", Some("new"))
+    );
+    assert_eq!(
+        (archer.mov.as_str(), archer.movement.as_str()),
+        ("Mov   4 → 5", "foot")
+    );
+    assert_eq!(stats(archer)[0], ("HP", 28, 28, false));
+    assert_eq!(stats(archer)[5], ("Def", 49, 49, false));
     // Moving past the last column shown scrolls.
     for _ in 0..5 {
         step(&mut s, &mut c, &[CursorRight]);
     }
     assert_eq!(s.focus(), 5);
-    let buf = render(&s, &c);
-    assert_eq!(names(&buf), ["Cleric", "Mage", "Raider", "Rider"]);
+    let view = columns(&s, &c);
+    assert_eq!(names(&view), ["Cleric", "Mage", "Raider", "Rider"]);
+    assert_eq!(view.more_left.as_deref(), Some("← more"));
+    assert_eq!(view.more_right.as_deref(), Some("more →"));
+    // The Rider's saved class level; the cursor is on it.
+    let rider = &view.columns[3];
     assert_eq!(
-        text(&buf, 0, MORE_ROW, 100).replace("  ", ""),
-        "← moremore →"
+        (rider.tier.as_str(), rider.record.as_deref()),
+        ("Tier 1", Some("CL 6"))
     );
-    // The Rider's saved class level.
-    assert_eq!(cell(&buf, 3, 2), "Tier 1   CL 6");
-    assert_eq!(
-        buf.get(COLUMNS_X + 3 * COLUMN_W, COLUMNS_Y).unwrap().glyph,
-        '╔'
-    );
+    let focused: Vec<bool> = view.columns.iter().map(|col| col.focused).collect();
+    assert_eq!(focused, [false, false, false, true]);
     // One more: both marks still show, with two columns left to the right.
     step(&mut s, &mut c, &[CursorRight]);
-    let buf = render(&s, &c);
-    assert_eq!(names(&buf), ["Mage", "Raider", "Rider", "Swordsman"]);
-    assert!(text(&buf, 0, MORE_ROW, 100).ends_with("more →"));
+    let view = columns(&s, &c);
+    assert_eq!(names(&view), ["Mage", "Raider", "Rider", "Swordsman"]);
+    assert!(view.more_left.is_some() && view.more_right.is_some());
     // Wrapping to the first column scrolls back; and to the last.
     for _ in 0..3 {
         step(&mut s, &mut c, &[CursorRight]);
     }
     assert_eq!(s.focus(), 0);
-    assert_eq!(cell(&render(&s, &c), 0, 1), "Archer");
+    assert_eq!(names(&columns(&s, &c))[0], "Archer");
     step(&mut s, &mut c, &[CursorLeft]);
-    let buf = render(&s, &c);
-    assert_eq!(names(&buf), ["Rider", "Swordsman", "Bulwark", "Iron Rider"]);
-    assert_eq!(text(&buf, 0, MORE_ROW, 100), "← more");
+    let view = columns(&s, &c);
+    assert_eq!(
+        names(&view),
+        ["Rider", "Swordsman", "Bulwark", "Iron Rider"]
+    );
+    assert_eq!(view.more_left.as_deref(), Some("← more"));
+    assert_eq!(view.more_right, None);
     // No bonus by this road: a reclass never changes stats.
-    assert_eq!(cell(&buf, 3, 15), "HP   28");
-    assert_eq!(cell(&buf, 3, 2), "Tier 2   new");
+    let rider = &view.columns[3];
+    assert_eq!(stats(rider)[0], ("HP", 28, 28, false));
+    assert_eq!(
+        (rider.tier.as_str(), rider.record.as_deref()),
+        ("Tier 2", Some("new"))
+    );
 }
 
 #[test]
@@ -472,9 +492,9 @@ fn a_reclass_keeps_stats_and_shows_what_was_learned_and_stowed() {
     let stats = s.unit().stats;
     step(&mut s, &mut c, &[CursorRight, CursorRight, CursorRight]);
     step(&mut s, &mut c, &[Confirm]);
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "║ Change Test Knight to Mage?       ║"));
-    assert!(shows(&buf, "║ Uses 1 Reclass Seal (1 in stock). ║"));
+    let question = columns(&s, &c).question.expect("the question");
+    assert_eq!(question.ask, "Change Test Knight to Mage?");
+    assert_eq!(question.cost, "Uses 1 Reclass Seal (1 in stock).");
     step(&mut s, &mut c, &[Confirm]);
     assert_eq!(s.unit().class, ClassId("mage".into()));
     // Only Mov follows the class.
@@ -493,10 +513,7 @@ fn a_reclass_keeps_stats_and_shows_what_was_learned_and_stowed() {
     assert!(page.changed);
     assert_eq!(page.learned, ["Fire"]);
     assert_eq!(page.stowed, ["Chain Mail"]);
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "Test Knight  Guard → Mage"));
-    assert!(shows(&buf, "Learned: Fire"));
-    assert!(shows(&buf, "To stock: Chain Mail"));
+    assert!(matches!(s.view(&c).body, ClassChangeBody::Result(_)));
     // The page waits for a key, then the screen closes.
     let idle = s.update(&mut c, &FrameInput::new(vec![], 60.0, vec![]));
     assert!(matches!(idle, Transition::None));
@@ -542,6 +559,16 @@ fn sounds() {
     assert_eq!(one.focus(), 0);
     let closed = heard(&mut one, &mut c, Cancel);
     assert!(closed.contains("menu_cancel"), "{closed}");
+}
+
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn opts_into_as_any() {
+    let c = ctx();
+    let s = demo(&c, ChangeKind::Promote);
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    let found = any.downcast_ref::<ClassChangeScreen>().expect("the screen");
+    assert_eq!(found.view(&c), s.view(&c));
 }
 
 #[test]

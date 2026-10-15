@@ -14,15 +14,17 @@
 //! Name rules for both: letters (A-Z, a-z), `-`, `'` and single spaces
 //! between words, at most [`MAX_NAME_LEN`] characters, not blank.
 
+pub mod glyph;
+pub mod view;
+
+pub use view::{GenderView, GridView, LeadSelectView, NameRowView, TypingView};
+
 use trpg_core::lead::{DEFAULT_NAME, FAMILY_NAME, MAX_NAME_LEN};
 use trpg_core::{LeadGender, LeadProfile};
 
-use super::print_centred;
 use crate::audio::MenuSound;
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, TextKey, text_key, text_keys_help};
-use crate::portrait::draw_portrait;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 
 /// The key of the heading in the language files ([`Ctx::text`]).
@@ -39,25 +41,6 @@ pub const DELETE: &str = "lead_select.grid.delete";
 pub const DONE: &str = "lead_select.grid.done";
 /// The key of the title of the typing box and of the name grid.
 const FIRST_NAME: &str = "lead_select.first_name";
-
-/// Row of the heading.
-const HEADING_ROW: i32 = 1;
-/// Portrait frame size: a 32×16-cell portrait plus its border.
-const FRAME: (i32, i32) = (34, 18);
-/// Top row of the portrait frames.
-const FRAME_Y: i32 = 3;
-/// Left column of the male and female frames.
-const FRAME_X: [i32; 2] = [14, 52];
-/// Row of the gender labels under the frames.
-const LABEL_ROW: i32 = 21;
-/// Row of the name.
-const NAME_ROW: i32 = 24;
-/// Row of the Start button.
-const START_ROW: i32 = 27;
-/// The name grid's box.
-const GRID_BOX: Rect = Rect::new(27, 8, 46, 14);
-/// The typing box.
-const TYPE_BOX: Rect = Rect::new(27, 10, 46, 7);
 /// The key of the typing box's hint.
 pub const TYPE_HINT: &str = "lead_select.type_hint";
 
@@ -441,132 +424,53 @@ impl LeadSelectScreen {
         false
     }
 
-    /// One gender's frame, portrait and label; the chosen one is lit, with
-    /// a double border while the gender row has the focus.
-    fn draw_gender(&self, ctx: &Ctx, buf: &mut GlyphBuffer, gender: LeadGender, x: i32) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let chosen = gender == self.gender;
-        let (style, border) = match (chosen, self.row == Row::Gender) {
-            (true, true) => (BoxStyle::Double, UiColor::PanelBorderFocus),
-            (true, false) => (BoxStyle::Single, UiColor::PanelBorderFocus),
-            (false, _) => (BoxStyle::Single, UiColor::PanelBorder),
-        };
-        let frame = Rect::new(x, FRAME_Y, FRAME.0, FRAME.1);
-        buf.fill_rect(frame, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(frame, style, c(border), bg);
-        let profile = LeadProfile::new(self.name.clone(), gender);
-        if let Some(art) = ctx.content.portraits.get(profile.portrait_id()) {
-            let dim = if chosen { 0.0 } else { 0.45 };
-            // check-text: not player text
-            draw_portrait(buf, (x + 1, FRAME_Y + 1), art, "neutral", dim, false);
-        }
-        let label = ctx.text(match gender {
-            LeadGender::Male => "lead_select.male",
-            LeadGender::Female => "lead_select.female",
-        });
-        let fg = if chosen {
-            UiColor::TextHighlight
-        } else {
-            UiColor::TextDim
-        };
-        let w = i32::try_from(label.chars().count()).unwrap_or(0);
-        let black = c(UiColor::Black);
-        buf.print(x + (FRAME.0 - w) / 2, LABEL_ROW, label, c(fg), black);
-    }
-
-    /// The name row and the Start button, the focused one lit.
-    fn draw_rows(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        let lit = |row| {
-            if self.row == row && self.entry.is_none() && self.typing.is_none() {
-                UiColor::TextHighlight
-            } else {
-                UiColor::Text
-            }
-        };
-        let first = self.first_name();
-        let label = ctx.text(NAME_LABEL);
-        let full = format!("{label}   {first} {FAMILY_NAME}");
-        let x = (i32::from(buf.width()) - i32::try_from(full.chars().count()).unwrap_or(0)) / 2;
-        buf.print(x, NAME_ROW, label, c(UiColor::TextDim), black);
-        let name_x = x + i32::try_from(label.chars().count() + 3).unwrap_or(0);
-        buf.print(name_x, NAME_ROW, first, c(lit(Row::Name)), black);
-        let family_x = name_x + i32::try_from(first.chars().count() + 1).unwrap_or(0);
-        buf.print(family_x, NAME_ROW, FAMILY_NAME, c(UiColor::TextDim), black);
-        let start = format!("[ {} ]", ctx.text(START));
-        print_centred(buf, START_ROW, &start, c(lit(Row::Start)), black);
-    }
-
-    /// The typing box: the name so far with a cursor, and the hint to type.
-    fn draw_typing(ctx: &Ctx, buf: &mut GlyphBuffer, typing: &NameBox) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        buf.fill_rect(TYPE_BOX, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(TYPE_BOX, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-        let title = format!(" {} ", ctx.text(FIRST_NAME));
-        buf.print(
-            TYPE_BOX.x + 2,
-            TYPE_BOX.y,
-            &title,
-            c(UiColor::TextHighlight),
-            bg,
-        );
-        let centred = |text: &str| {
-            let w = i32::try_from(text.chars().count()).unwrap_or(0);
-            TYPE_BOX.x + (TYPE_BOX.w - w) / 2
-        };
-        let shown = format!("{}_", typing.name());
-        buf.print(
-            centred(&shown),
-            TYPE_BOX.y + 2,
-            &shown,
-            c(UiColor::Text),
-            bg,
-        );
-        let hint_fg = c(UiColor::TextDim);
-        let hint = ctx.text(TYPE_HINT);
-        buf.print(centred(hint), TYPE_BOX.y + 4, hint, hint_fg, bg);
-    }
-
-    /// The name grid's box: the name so far with a cursor, then the grid,
-    /// the focused cell as a lit bar.
-    fn draw_entry(ctx: &Ctx, buf: &mut GlyphBuffer, entry: &NameEntry) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        buf.fill_rect(GRID_BOX, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(GRID_BOX, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-        buf.print(
-            GRID_BOX.x + 2,
-            GRID_BOX.y,
-            &format!(" {} ", ctx.text(FIRST_NAME)),
-            c(UiColor::TextHighlight),
-            bg,
-        );
-        let shown = format!("{}_", entry.name());
-        let w = i32::try_from(shown.chars().count()).unwrap_or(0);
-        let name_x = GRID_BOX.x + (GRID_BOX.w - w) / 2;
-        buf.print(name_x, GRID_BOX.y + 2, &shown, c(UiColor::Text), bg);
-        for (r, row) in grid().iter().enumerate() {
-            let y = GRID_BOX.y + 4 + i32::try_from(r * 2).unwrap_or(0);
-            let labels: Vec<String> = row.iter().map(|g| g.label(ctx)).collect();
-            // Each cell is its label with a space either side.
-            let widths: Vec<i32> = labels
-                .iter()
-                .map(|l| i32::try_from(l.chars().count()).unwrap_or(0) + 2)
-                .collect();
-            let total: i32 = widths.iter().sum();
-            let mut x = GRID_BOX.x + (GRID_BOX.w - total) / 2;
-            for (col, (label, w)) in labels.iter().zip(&widths).enumerate() {
-                let (fg, cell_bg) = if entry.focus() == (r, col) {
-                    (c(UiColor::PanelBg), c(UiColor::PanelBorderFocus))
-                } else {
-                    (c(UiColor::Text), bg)
-                };
-                buf.print(x, y, &format!(" {label} "), fg, cell_bg);
-                x += w;
-            }
+    /// What the screen shows this frame, for a skin to paint
+    /// ([`glyph::paint`]): the two genders with their portraits, the
+    /// cursor's row, the name and Start, the typing box or letter grid
+    /// while open, and the help line.
+    pub fn view(&self, ctx: &Ctx) -> LeadSelectView {
+        let boxed = self.typing.is_some() || self.entry.is_some();
+        let genders = LeadGender::ALL
+            .into_iter()
+            .map(|gender| GenderView {
+                gender,
+                label: ctx
+                    .text(match gender {
+                        LeadGender::Male => "lead_select.male",
+                        LeadGender::Female => "lead_select.female",
+                    })
+                    .to_owned(),
+                portrait: LeadProfile::new(self.name.clone(), gender).portrait_id(),
+                // check-text: not player text
+                expression: "neutral",
+                chosen: gender == self.gender,
+            })
+            .collect();
+        LeadSelectView {
+            heading: ctx.text(HEADING).to_owned(),
+            genders,
+            cursor: (!boxed).then_some(self.row),
+            name_row: NameRowView {
+                label: ctx.text(NAME_LABEL).to_owned(),
+                first: self.first_name().to_owned(),
+                family: FAMILY_NAME.to_owned(),
+            },
+            start: ctx.text(START).to_owned(),
+            typing: self.typing.as_ref().map(|t| TypingView {
+                title: ctx.text(FIRST_NAME).to_owned(),
+                typed: t.name().to_owned(),
+                hint: ctx.text(TYPE_HINT).to_owned(),
+            }),
+            grid: self.entry.as_ref().map(|e| GridView {
+                title: ctx.text(FIRST_NAME).to_owned(),
+                spelled: e.name().to_owned(),
+                rows: grid()
+                    .iter()
+                    .map(|row| row.iter().map(|g| g.label(ctx)).collect())
+                    .collect(),
+                focus: e.focus(),
+            }),
+            help: self.help(ctx),
         }
     }
 }
@@ -612,23 +516,11 @@ impl Screen for LeadSelectScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        let heading = ctx.text(HEADING);
-        print_centred(buf, HEADING_ROW, heading, c(UiColor::TextHighlight), black);
-        for (gender, x) in LeadGender::ALL.into_iter().zip(FRAME_X) {
-            self.draw_gender(ctx, buf, gender, x);
-        }
-        self.draw_rows(ctx, buf);
-        if let Some(entry) = &self.entry {
-            Self::draw_entry(ctx, buf, entry);
-        }
-        if let Some(typing) = &self.typing {
-            Self::draw_typing(ctx, buf, typing);
-        }
-        let bottom = i32::from(buf.height()) - 1;
-        print_centred(buf, bottom, &self.help(ctx), c(UiColor::TextDim), black);
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 

@@ -16,7 +16,7 @@ use super::testing::{battle, quick_units, skirmish, vaulted};
 use super::walk::{SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S};
 use super::{BattleScreen, quick_battle};
 use crate::color::{Rgb, UiColor};
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{Cell, GlyphBuffer, PxRect, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorStyle, Facing, GlyphSkin, MapScene, MapSkin, RangeKind};
@@ -458,7 +458,7 @@ fn the_view_is_as_big_as_the_skin_says() {
     assert_eq!(scene.cursor.map(|c| c.pos), Some(p(30, 20)));
     // Only those tiles are drawn: the top-left 20 × 8 cells of the map view.
     let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(&c, &mut buf);
     let (text, bg) = (c.palette.get(UiColor::Text), c.palette.get(UiColor::Black));
     let blank = Cell::new(' ', text, bg);
@@ -534,7 +534,7 @@ fn menus_open_beside_the_tile_where_the_skin_has_it() {
     step(&mut s, &mut c, &[Action::Cancel]);
     assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
     let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(&c, &mut buf);
     // The cursor's tile is at cells (10, 4) and (11, 4) in this view (it
     // would be at (34, 15) in the default one): the menu's box starts one

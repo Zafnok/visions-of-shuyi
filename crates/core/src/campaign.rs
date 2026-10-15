@@ -67,8 +67,10 @@
 //!   [`LEAD_ID`]) the player's name, and a map label of that name's first
 //!   two letters (*Claude's starting rule*).
 
-use std::collections::BTreeMap;
-use std::sync::Arc;
+use crate::prelude::*;
+
+use alloc::collections::BTreeMap;
+use alloc::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 
@@ -330,15 +332,15 @@ pub enum ApplyError {
     NotWon,
 }
 
-impl std::fmt::Display for ApplyError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for ApplyError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             ApplyError::NotWon => f.write_str("the battle wasn't won"),
         }
     }
 }
 
-impl std::error::Error for ApplyError {}
+impl core::error::Error for ApplyError {}
 
 impl Campaign {
     /// A new game at `chapter`, with `roster` (made from the character

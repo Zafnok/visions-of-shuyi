@@ -32,7 +32,9 @@
 //! campaign carries the [`SupportBook`] from battle to battle
 //! ([`crate::campaign`]).
 
-use std::collections::BTreeMap;
+use crate::prelude::*;
+
+use alloc::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
@@ -339,8 +341,8 @@ pub enum SupportError {
     NothingUnlocked,
 }
 
-impl std::fmt::Display for SupportError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for SupportError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::NoSuchPair => f.write_str("these two have no support"),
             Self::NotInArmy(c) => write!(f, "{} isn't in the army", c.0),
@@ -349,7 +351,7 @@ impl std::fmt::Display for SupportError {
     }
 }
 
-impl std::error::Error for SupportError {}
+impl core::error::Error for SupportError {}
 
 /// A support conversation that was just viewed.
 #[derive(Debug, Clone, PartialEq, Eq)]

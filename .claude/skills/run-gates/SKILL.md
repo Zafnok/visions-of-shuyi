@@ -15,6 +15,8 @@ locally, install it with `cargo install --locked <tool>`.
   (`x86_64-pc-windows-gnu`); **MSVC is not installed**. Don't add anything that
   needs MSVC locally. CI builds MSVC.
 - `cargo-binstall` doesn't build on this machine; use `cargo install --locked`.
+- The `no_std` build needs the Playdate's target once:
+  `rustup target add thumbv7em-none-eabihf`.
 
 ## Order (fast → slow; stop at first failure and fix)
 
@@ -27,6 +29,7 @@ cargo xtask check-text                    # no new screen text written as a lite
 cargo xtask check-engine-boundary         # nothing of the game in engine/ (ADR-0063)
 cargo doc --workspace --no-deps          # with RUSTDOCFLAGS="-D warnings"
 cargo build -p trpg-app --target wasm32-unknown-unknown
+cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf   # Playdate, no std (ADR-0070)
 cargo deny check                          # after ticket 0103
 cargo machete                             # after ticket 0103
 typos                                     # after ticket 0103

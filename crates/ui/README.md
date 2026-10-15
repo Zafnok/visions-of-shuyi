@@ -364,9 +364,11 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      `menu.view()` in its own view, and its skin paints it with
      `widgets::menu::glyph::paint`. `screens/options.rs` is the example;
      the title, Key bindings and layout picker (0240), the other menu
-     screens (0241) and Preparations (0245) follow it. Lead select, class
-     change, dialogue and the battle screen's panels still draw in `draw`
-     until tickets 0246, 0247 and 0242 convert them, so don't copy them.
+     screens (0241), Preparations (0245), lead select (0247: its view
+     names each portrait and its expression, and the skin places it with
+     `portrait::draw_portrait`) and class change (0246) follow it.
+     Dialogue and the battle screen's panels still draw in `draw` until
+     ticket 0242 converts them, so don't copy them.
    - Text the player reads is never a string literal (ADR-0045). Put it
      in `assets/lang/en/ui.ron` under a `screen.thing` key and ask for it
      with `ctx.text("title.new_game")`, or `ctx.text_with("results.turns",

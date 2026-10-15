@@ -9,6 +9,11 @@
 // Triggers: FirstBattleStart, FirstUnitSelected, FirstEnemyInRange,
 // FirstForecast, FirstLowHp, FirstLevelUp, FirstEnemyPhase,
 // DangerZoneAvailable. At most one tip per trigger.
+//
+// The guide speaks every tip (docs/design/tutorial.md, The guide): `face:
+// "<expression>"` picks the guide's expression while it shows, `smile` if
+// none. It must be one of the guide's portrait (portraits/guide.ron, in the
+// bought art).
 (
     tips: [
         (
