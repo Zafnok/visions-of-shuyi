@@ -69,6 +69,9 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     if let Some(r) = &view.rewind {
         // The list in the side panel, and the help line.
         rewind::paint(ctx, r, buf);
+        if let Some(lesson) = &view.lesson {
+            tip_box::glyph::paint_lesson(ctx, lesson, buf);
+        }
         buf.print(1, HELP_ROW, &view.help, c(UiColor::TextDim), black);
         paint_hint(ctx, view, buf);
         return;
@@ -97,6 +100,9 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
         stage::glyph::paint(ctx, stage, buf);
     }
     paint_dialogs(ctx, view, buf);
+    if let Some(lesson) = &view.lesson {
+        tip_box::glyph::paint_lesson(ctx, lesson, buf);
+    }
     if let Some(tip) = &view.tip {
         tip_box::glyph::paint(ctx, tip, buf);
     }

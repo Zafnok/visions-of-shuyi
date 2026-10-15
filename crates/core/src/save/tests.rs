@@ -90,6 +90,26 @@ fn the_tutorial_level_is_saved_and_an_old_save_loads_as_full() {
     assert_eq!(campaign().tutorial, TutorialLevel::Full);
 }
 
+/// The lessons done are saved and read back; none are left out of the
+/// save, so a save made before lessons existed loads with none (0456).
+#[test]
+fn the_lessons_done_are_saved_and_an_old_save_has_none() {
+    let mut game = campaign();
+    assert!(game.lessons_done.is_empty());
+    let old = ron::to_string(&SaveFile::chapter_cleared(game.clone())).unwrap();
+    assert!(!old.contains("lessons_done"));
+    let back: SaveFile = ron::from_str(&old).unwrap();
+    assert!(back.campaign.lessons_done.is_empty());
+    game.lessons_done = ["cursor".to_owned(), "rewind".to_owned()].into();
+    let text = ron::to_string(&SaveFile::chapter_cleared(game.clone())).unwrap();
+    assert!(
+        text.contains("lessons_done:[\"cursor\",\"rewind\"]"),
+        "{text}"
+    );
+    let back: SaveFile = ron::from_str(&text).unwrap();
+    assert_eq!(back.campaign, game);
+}
+
 prop_compose! {
     fn arb_campaign()(
         roster in prop::collection::vec(arb_unit(), 0..=6),
@@ -105,6 +125,7 @@ prop_compose! {
         gold in any::<u32>(),
         playtime_s in any::<u64>(),
         flags in prop::collection::btree_map("[a-z_]{1,8}", any::<bool>(), 0..=4),
+        lessons_done in prop::collection::btree_set("[a-z_]{1,8}", 0..=3),
         potions in 0u32..=5,
         spare in prop::option::of(arb_unit()),
     ) -> Campaign {
@@ -127,6 +148,7 @@ prop_compose! {
         let mut campaign =
             Campaign::new_game(mode, LeadProfile::new(name, gender), chapter, roster, gold, stock);
         campaign.tutorial = tutorial;
+        campaign.lessons_done = lessons_done;
         campaign.flags = flags;
         campaign.playtime_s = playtime_s;
         campaign

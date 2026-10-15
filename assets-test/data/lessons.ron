@@ -1,0 +1,21 @@
+// The test lesson (ticket 0456): the cursor's four directions, on the first
+// turn of the test chapter and of the debug Quick Battle. Added to the
+// story's lessons by id; the format is in assets/data/lessons.ron.
+(
+    lessons: [
+        (
+            id: "test_cursor",
+            level: Full,
+            trigger: FirstBattleStart,
+            battles: ["test", "quick"],
+            title: "Moving the cursor",
+            text: "Move the cursor with {Cursor}, one tile each way.\nThe turn can't end until the list is done.",
+            items: [
+                (label: "Move it up: {CursorUp}", done_when: Pressed("CursorUp")),
+                (label: "Move it down: {CursorDown}", done_when: Pressed("CursorDown")),
+                (label: "Move it left: {CursorLeft}", done_when: Pressed("CursorLeft")),
+                (label: "Move it right: {CursorRight}", done_when: Pressed("CursorRight")),
+            ],
+        ),
+    ],
+)

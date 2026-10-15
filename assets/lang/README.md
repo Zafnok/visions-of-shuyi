@@ -10,7 +10,7 @@ assets/lang/
   <code>/               one pack (2 to 8 lowercase letters: ja)
     lang.ron            its own name, and who made it
     ui.ron              screen text
-    data.ron            names, tips, titles and notes of the data files
+    data.ron            names, tips, lessons, titles and notes of the data files
     dialogue/<file>.ron lines and captions, one file per .dlg file
 ```
 
@@ -69,6 +69,7 @@ Keys chosen by hand, `screen.thing` (`title.new_game`), listed in
 | A terrain's name | `terrain.<id>.name` | `data/terrain.ron` |
 | A name of the names table (people, places, factions, terms) | `names.<id>` | `data/names.ron` |
 | A tip's title and text | `tips.<id>.title`, `tips.<id>.text` | `data/tips.ron` |
+| A lesson's title, text and items | `lessons.<id>.title`, `lessons.<id>.text`, `lessons.<id>.item_<n>` (n from 1, in file order) | `data/lessons.ron` |
 | A chapter's title | `chapters.<id>.title` | `chapters/<id>.ron` |
 | A battle note | `battles.<id>.note_<n>` (n from 1, in file order) | `battles/<id>.ron` |
 
@@ -77,6 +78,9 @@ Rules beyond the same placeholders as the `source`:
 - A name isn't empty and holds no `{` or `}`.
 - A tip keeps to the limits of English tips, counted in cells: a title of
   1 to 30, a text of 1 to 3 lines of at most 60.
+- A lesson keeps to the limits of English lessons, counted in cells: a
+  title of 1 to 30, a text of 1 or 2 lines of at most 60, an item of one
+  line of 1 to 56.
 
 Not here, because nothing shows them or they aren't translated:
 

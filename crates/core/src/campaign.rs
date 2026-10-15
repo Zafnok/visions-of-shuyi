@@ -63,13 +63,16 @@
 //!   picked at New Game after the mode (0835); [`Campaign::new_game`] starts
 //!   at [`TutorialLevel::Full`]. A save made before the level existed loads
 //!   as `Full`, as the game behaved then (*Claude's starting rule*).
+//! - **Lessons done** ([`Campaign::lessons_done`], 0456): the ids of the
+//!   checklist lessons finished, so none shows twice in a campaign
+//!   (*Claude's starting rule*). A new game has none.
 //! - **Lead.** [`Campaign::new_game`] gives the lead's unit (character
 //!   [`LEAD_ID`]) the player's name, and a map label of that name's first
 //!   two letters (*Claude's starting rule*).
 
 use crate::prelude::*;
 
-use alloc::collections::BTreeMap;
+use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::sync::Arc;
 
 use serde::{Deserialize, Serialize};
@@ -275,6 +278,12 @@ pub struct Campaign {
     /// (ADR-0039: a deliberate `#[serde(default)]`, 0835).
     #[serde(default, skip_serializing_if = "TutorialLevel::is_full")]
     pub tutorial: TutorialLevel,
+    /// The checklist lessons finished, by id (0456): each shows once per
+    /// campaign. Plain data; the game decides when one is done. Left out
+    /// of the save while empty, and a save without it has none, so saves
+    /// of `SAVE_VERSION` 2 made before it still load (as `tutorial`).
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub lessons_done: BTreeSet<String>,
     /// Who the player made the lead.
     pub lead: LeadProfile,
     /// The chapter being played (or next, between chapters), by id.
@@ -363,6 +372,7 @@ impl Campaign {
         Self {
             mode,
             tutorial: TutorialLevel::Full,
+            lessons_done: BTreeSet::new(),
             lead,
             chapter: chapter.into(),
             roster,

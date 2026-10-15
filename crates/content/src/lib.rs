@@ -42,6 +42,7 @@ pub mod image;
 pub mod item;
 pub mod keymap;
 pub mod lang;
+pub mod lesson;
 pub mod lighting;
 pub mod map;
 pub mod names;
@@ -87,6 +88,7 @@ pub use keymap::{
 pub use lang::{
     Lang, LangCode, LangInfo, LangPack, LangStatus, LineEntry, LineText, MadeBy, Orphan,
 };
+pub use lesson::{DoneWhen, Lesson, LessonItem, LessonLevel, LessonTable};
 pub use lighting::{Light, Lighting};
 pub use map::{MapDef, MapLegend, MapLook};
 pub use names::Names;
@@ -140,6 +142,8 @@ pub struct Content {
     pub ai: AiWeights,
     /// One-time contextual tips.
     pub tips: TipTable,
+    /// Checklist lessons (ticket 0456).
+    pub lessons: LessonTable,
     /// Sound and music cues, pools and credits (ADR-0026).
     pub audio: AudioManifest,
     /// Every third-party work, for the credits screen (ticket 0808).
@@ -239,9 +243,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let skills = check_skill_references(skill::load(), classes.as_ref().ok());
     let arts = check_art_references(art::load(), items.as_ref().ok());
     let (images, audio) = (ImageTable::load(), audio::load());
-    let portraits = images
-        .as_ref()
-        .map_or_else(|_| Ok(BTreeMap::new()), portrait::load_all);
+    let portraits = load_portraits(images.as_ref().ok());
     let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok(), lit);
     let title_art = load_title(images.as_ref().ok());
     let (cast, faces) = (characters.as_ref().ok(), portraits.as_ref().ok());
@@ -277,6 +279,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         classes.as_ref().ok(),
         characters.as_ref().ok(),
     );
+    let lessons = load_lessons(battles.as_ref().ok(), faces);
     let mut units = Loaded {
         classes,
         items,
@@ -287,6 +290,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         characters,
         // Before the portraits move in: checked against the guide's.
         tips: tip::load(faces),
+        lessons,
         portraits,
         dialogue,
         ai: ai::load(),
@@ -318,6 +322,24 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     );
     // The combat shots' fights need everything else (ADR-0062).
     with_themes(content.and_then(cinematic::check_fights), themes)
+}
+
+/// The portraits in `images`; none if the images failed to load.
+fn load_portraits(
+    images: Option<&ImageTable>,
+) -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
+    images.map_or_else(|| Ok(BTreeMap::new()), portrait::load_all)
+}
+
+/// The lessons, checked against `battles` and the guide's portrait in
+/// `faces`. No battle is checked when there are none: the battles load
+/// empty, without an error, when a file they need failed.
+fn load_lessons(
+    battles: Option<&BTreeMap<String, BattleDef>>,
+    faces: Option<&BTreeMap<String, Portrait>>,
+) -> Result<LessonTable, Vec<ContentError>> {
+    let battles = battles.filter(|b| !b.is_empty());
+    lesson::load(lesson::Refs { battles, faces })
 }
 
 /// `content` with the colour themes added, or the errors of both.
@@ -361,6 +383,7 @@ fn data_text(
         terrain: terrain?,
         names: units.names.as_ref().ok()?,
         tips: units.tips.as_ref().ok()?,
+        lessons: units.lessons.as_ref().ok()?,
         chapters: units.chapters.as_ref().ok()?,
         battles: units.battles.as_ref().ok()?,
         dialogue: units.dialogue.as_ref().ok()?,
@@ -695,6 +718,7 @@ struct Loaded {
     dialogue: Result<DialogueTable, Vec<ContentError>>,
     ai: Result<AiWeights, Vec<ContentError>>,
     tips: Result<TipTable, Vec<ContentError>>,
+    lessons: Result<LessonTable, Vec<ContentError>>,
     audio: Result<AudioManifest, Vec<ContentError>>,
     credits: Result<Credits, Vec<ContentError>>,
     images: Result<ImageTable, Vec<ContentError>>,
@@ -763,6 +787,7 @@ fn assemble(
         battle_lights: take(units.battle_lights, &mut errors),
         title: take(units.title, &mut errors),
         cinematics: take(units.cinematics, &mut errors),
+        lessons: take(units.lessons, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -933,6 +958,14 @@ mod tests {
         tip::load(ok_portraits().ok().as_ref())
     }
 
+    fn ok_lessons() -> Result<LessonTable, Vec<ContentError>> {
+        let (battles, faces) = (ok_story().0.ok(), ok_portraits().ok());
+        lesson::load(lesson::Refs {
+            battles: battles.as_ref(),
+            faces: faces.as_ref(),
+        })
+    }
+
     fn ok_portraits() -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
         portrait::load_all(&ImageTable::load().unwrap_or_default())
     }
@@ -990,6 +1023,7 @@ mod tests {
             dialogue: ok_dialogue(),
             ai: ai::load(),
             tips: ok_tips(),
+            lessons: ok_lessons(),
             audio: audio::load(),
             credits: ok_credits(),
             images: ImageTable::load(),
@@ -1105,9 +1139,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 30] = [
+    const NAMES: [&str; 31] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C",
+        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E",
     ];
 
     /// `ok`, or the error of file `name` if `bad`.
@@ -1145,6 +1179,7 @@ mod tests {
                     dialogue: Err(e("d")),
                     ai: Err(e("w")),
                     tips: Err(e("y")),
+                    lessons: Err(e("E")),
                     audio: Err(e("v")),
                     credits: Err(e("r")),
                     images: Err(e("j")),
@@ -1216,6 +1251,7 @@ mod tests {
                     battle_lights: pick(i == 27, "B", Ok(BTreeMap::new())),
                     title: pick(i == 28, "T", ok_title()),
                     cinematics: pick(i == 29, "C", ok_cinematics()),
+                    lessons: pick(i == 30, "E", ok_lessons()),
                 },
             )
         };
@@ -1321,6 +1357,9 @@ mod tests {
         assert_eq!(text(&units), None);
         let mut units = ok_units();
         units.tips = failed();
+        assert_eq!(text(&units), None);
+        let mut units = ok_units();
+        units.lessons = failed();
         assert_eq!(text(&units), None);
         let units = ok_units();
         assert_eq!(data_text(&units, terrain.as_ref(), None), None);

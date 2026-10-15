@@ -9,7 +9,7 @@ use crate::prelude::*;
 use alloc::sync::Arc;
 use core::fmt::Display;
 
-use trpg_content::{ChapterDef, Lang, LangCode, Names, Scene, Tip};
+use trpg_content::{ChapterDef, Lang, LangCode, Lesson, Names, Scene, Tip};
 use trpg_core::lead::LEAD_ID;
 use trpg_core::{
     ArtDef, BattleNote, ClassDef, ClassId, ClassTable, ItemDef, ItemId, ItemTable, LeadGender,
@@ -202,6 +202,31 @@ impl<'a> Words<'a> {
         }
     }
 
+    /// The title of `lesson`.
+    pub fn lesson_title(self, lesson: &'a Lesson) -> &'a str {
+        match self.pack {
+            Some((lang, code)) => lang.lesson_title(code, lesson),
+            None => &lesson.title,
+        }
+    }
+
+    /// The text of `lesson`, placeholders and all.
+    pub fn lesson_text(self, lesson: &'a Lesson) -> &'a str {
+        match self.pack {
+            Some((lang, code)) => lang.lesson_text(code, lesson),
+            None => &lesson.text,
+        }
+    }
+
+    /// The label of `lesson`'s item number `index` (from 0), placeholders
+    /// and all; empty if it has no such item.
+    pub fn lesson_item(self, lesson: &'a Lesson, index: usize) -> &'a str {
+        match self.pack {
+            Some((lang, code)) => lang.lesson_item(code, lesson, index),
+            None => lesson.items.get(index).map_or("", |i| i.label.as_str()),
+        }
+    }
+
     /// The title of `chapter`.
     pub fn chapter_title(self, chapter: &'a ChapterDef) -> &'a str {
         match self.pack {
@@ -243,7 +268,7 @@ pub(crate) mod testing {
     }
 
     /// `content`'s data with a pack, [`shout`], that has every name, title
-    /// and note of the data in capitals (the tips aside: their
+    /// and note of the data in capitals (the tips and lessons aside: their
     /// placeholders must stay as written). A test that shows a name in it
     /// sees at once whether the name went through [`Words`](super::Words).
     pub(crate) fn shouting(content: &Content) -> Lang {
@@ -251,7 +276,7 @@ pub(crate) mod testing {
         let entries: Vec<String> = source
             .data
             .iter()
-            .filter(|(key, _)| !key.starts_with("tips."))
+            .filter(|(key, _)| !key.starts_with("tips.") && !key.starts_with("lessons."))
             .map(|(key, english)| {
                 let text = english.to_uppercase();
                 format!("(key: {key:?}, source: {english:?}, text: {text:?})")

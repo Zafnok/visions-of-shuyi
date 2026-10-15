@@ -8,6 +8,7 @@
 //! so overlays (menus, dialogs) show the screen below them.
 
 use crate::prelude::*;
+use alloc::collections::BTreeSet;
 use alloc::rc::Rc;
 use core::any::Any;
 use core::fmt::{self, Display};
@@ -222,6 +223,16 @@ pub enum IdleMotion {
     On,
 }
 
+/// Whether battles open their checklist lessons ([`Ctx::lessons`], 0456).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Lessons {
+    /// No lesson opens, so a test can end its turns.
+    #[default]
+    Off,
+    /// Lessons open as the campaign's tutorial level says.
+    On,
+}
+
 /// Resources shared by every screen. A plain struct: add fields as later
 /// tickets need them (settings, …).
 #[derive(Debug)]
@@ -290,6 +301,12 @@ pub struct Ctx {
     /// only at [`TutorialLevel::Full`] (or with no campaign, as in screen
     /// tests).
     pub campaign_tutorial: Option<TutorialLevel>,
+    /// The checklist lessons the campaign being played has finished, by id
+    /// (0456): a battle opens none of them. The game flow fills it from
+    /// the campaign and keeps the campaign up to date with what a battle
+    /// adds; empty with no campaign (a battle then keeps what it finishes
+    /// here, as in screen tests).
+    pub campaign_lessons: BTreeSet<String>,
     /// Whether the campaign's mode may be switched now: only at
     /// Preparations, before a battle (`death-and-difficulty.md`). The game
     /// flow keeps it up to date.
@@ -307,6 +324,9 @@ pub struct Ctx {
     /// Whether battles show their one-time tips (0406). Off here, so
     /// screen tests aren't interrupted by them; `app` turns it on.
     pub tips_enabled: bool,
+    /// Whether battles open their checklist lessons (0456). Off here, so
+    /// screen tests can end their turns; `app` turns it on.
+    pub lessons: Lessons,
     /// Whether screens show their idle motion (the title's drifting
     /// sparks, 0811). Off here, so a screen left alone in a test looks the
     /// same a moment later; `app` turns it on.
@@ -417,10 +437,12 @@ impl Ctx {
             settings,
             campaign_mode: None,
             campaign_tutorial: None,
+            campaign_lessons: BTreeSet::new(),
             mode_switch: ModeSwitch::Closed,
             debug_tools: DEBUG_TOOLS,
             map_skin,
             tips_enabled: false,
+            lessons: Lessons::Off,
             idle_motion: IdleMotion::Off,
             audio: AudioQueue::default(),
             music_clock: None,

@@ -1,0 +1,33 @@
+// Checklist lessons (ticket 0456, docs/design/tutorial.md "The lessons"):
+// the guide's box with a list of things to do, ticked as the player does
+// them, in any order. The lesson closes when every item is ticked; while it
+// is open the turn can't end (unless an item is `TurnEnded`). Each lesson
+// shows once per campaign, the first time its trigger happens in a battle,
+// one at a time.
+//
+// Fields:
+//   id        snake_case; the campaign keeps it once the lesson is done.
+//   level     Full (shows only at Full) or Short (at Full and Short).
+//   trigger   what starts it: a tip trigger (tips.ron), e.g.
+//             FirstBattleStart.
+//   battles   optional: the battle ids it may start in (any if left out).
+//   title     the heading, at most 30 characters.
+//   text      1 or 2 lines of at most 60 characters.
+//   items     1 to 6 of (label: "...", done_when: ...); a label is one line
+//             of at most 56 characters. Two items can't share a done_when.
+//   face      optional: the guide's expression, `smile` if left out.
+//
+// {Action} in text and labels is replaced with the key bound to that action
+// (e.g. {Confirm}), {Cursor} with the keys that move the cursor, {Select}
+// with the key that picks on the map, as in tips.ron.
+//
+// done_when: Pressed("<Action>") (the battle used that action, e.g.
+// Pressed("CursorUp"), Pressed("Info"), Pressed("NextUnit")), UnitSelected,
+// UnitMoved (where the unit goes was picked), ForecastOpened, Attacked,
+// RewindOpened, TurnEnded.
+//
+// The lessons themselves are ticket 0457. The test lesson is in
+// assets-test/data/lessons.ron.
+(
+    lessons: [],
+)

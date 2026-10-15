@@ -1,10 +1,14 @@
 //! The glyph look of a tip box: paints a [`TipView`] as a double-line box
 //! near the top of the map view, the guide's name over its top border, the
 //! face (if any) on the left at twice the size of a 64×64 bust, and the
-//! text to its right. Everything about the look lives here; nothing here
-//! decides what a tip says.
+//! text to its right. A lesson's box ([`LessonView`], 0456) is the same
+//! box against the map's top or bottom edge, its checklist under the text:
+//! `[ ]` before an item to do, `[x]` in the done colour (`hp_high`) with
+//! the label dimmed before one done, then how many are done. Everything
+//! about the look lives here; nothing here decides what a tip or a lesson
+//! says.
 
-use super::view::TipView;
+use super::view::{FaceView, LessonView, TipView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::portrait::draw_portrait_in;
@@ -20,69 +24,166 @@ pub const FACE_CELLS: (i32, i32) = (16, 8);
 /// the text.
 const MARGIN: i32 = 2;
 
-/// Where the box of `view` goes: near the top of the map view, centred on
-/// it; a box wider than the map starts at the screen's left edge and
-/// reaches over the side panel.
-pub fn rect(view: &TipView) -> Rect {
-    let cells = |n: usize| i32::try_from(n).unwrap_or(0);
-    let widest = view
-        .lines
-        .iter()
-        .chain([&view.heading, &view.close])
-        .map(|l| cells(l.chars().count()))
-        .chain([cells(view.title.chars().count()) + 2])
-        .max()
-        .unwrap_or(0);
-    let face_w = if view.face.is_some() {
+/// The mark before an item to do, and before one done: glyphs of the box,
+/// like its borders, not text.
+const MARKS: [[char; 3]; 2] = [['[', ' ', ']'], ['[', 'x', ']']];
+
+/// Cells across the mark before an item, with the gap after it.
+const MARK_CELLS: i32 = 4;
+
+/// A count of cells as an `i32`.
+fn cells(n: usize) -> i32 {
+    i32::try_from(n).unwrap_or(0)
+}
+
+/// The size of a box with `title` over its border, `face` or none, text
+/// `widest` cells wide beside it, and `rows` rows of text between its
+/// borders: at least as tall as the face and the borders.
+fn size(title: &str, face: Option<&FaceView>, widest: i32, rows: usize) -> (i32, i32) {
+    let widest = widest.max(cells(title.chars().count()) + 2);
+    let face_w = if face.is_some() {
         FACE_CELLS.0 + MARGIN
     } else {
         0
     };
     let w = MARGIN + face_w + widest + MARGIN;
-    // Border, blank row, the heading, the lines, blank row, the close
-    // hint, border; at least as tall as the face and the border.
-    let text_h = cells(view.lines.len()) + 6;
-    let h = match view.face {
+    let text_h = cells(rows) + 2;
+    let h = match face {
         Some(_) => text_h.max(FACE_CELLS.1 + 2),
         None => text_h,
     };
-    // Centred on the map, the widest box (82 cells) ends at most 41
-    // cells right of the map's middle: still on the console.
-    let x = (MAP_VIEW.x + (MAP_VIEW.w - w) / 2).max(0);
-    Rect::new(x, MAP_VIEW.y + 1, w, h)
+    (w, h)
 }
 
-/// Paints `view`'s box.
-pub fn paint(ctx: &Ctx, view: &TipView, buf: &mut GlyphBuffer) {
+/// The widest of `texts`, in cells.
+fn widest<'a>(texts: impl Iterator<Item = &'a String>) -> i32 {
+    texts.map(|t| cells(t.chars().count())).max().unwrap_or(0)
+}
+
+/// The column a box `w` cells wide starts at: centred on the map view; a
+/// box wider than the map starts at the screen's left edge and reaches
+/// over the side panel. Centred on the map, the widest box (82 cells)
+/// ends at most 41 cells right of the map's middle: still on the console.
+fn left(w: i32) -> i32 {
+    (MAP_VIEW.x + (MAP_VIEW.w - w) / 2).max(0)
+}
+
+/// Where the box of `view` goes: near the top of the map view, centred on
+/// it (`left`).
+pub fn rect(view: &TipView) -> Rect {
+    let wide = widest(view.lines.iter().chain([&view.heading, &view.close]));
+    // A blank row, the heading, the lines, a blank row, the close hint.
+    let rows = view.lines.len() + 4;
+    let (w, h) = size(&view.title, view.face.as_ref(), wide, rows);
+    Rect::new(left(w), MAP_VIEW.y + 1, w, h)
+}
+
+/// Where the box of lesson `view` goes: against the top edge of the map
+/// view, or its bottom edge when the view says, centred on it (`left`).
+pub fn lesson_rect(view: &LessonView) -> Rect {
+    let text = widest(view.lines.iter().chain([&view.heading, &view.progress]));
+    let items = MARK_CELLS + widest(view.items.iter().map(|i| &i.label));
+    // A blank row, the heading, the lines, a blank row, the items, a blank
+    // row, the count.
+    let rows = view.lines.len() + view.items.len() + 5;
+    let (w, h) = size(&view.title, view.face.as_ref(), text.max(items), rows);
+    let y = if view.at_bottom {
+        MAP_VIEW.y + MAP_VIEW.h - h
+    } else {
+        MAP_VIEW.y
+    };
+    Rect::new(left(w), y, w, h)
+}
+
+/// Paints a box at `rect` with `title` over its top border and `face` (if
+/// the game has its portrait) at its top left. Returns the column its text
+/// starts at: right of the face's place, if it has one.
+fn paint_frame(
+    ctx: &Ctx,
+    rect: Rect,
+    title: &str,
+    face: Option<&FaceView>,
+    buf: &mut GlyphBuffer,
+) -> i32 {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    let rect = rect(view);
     buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
     buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorder), bg);
     buf.print(
         rect.x + MARGIN,
         rect.y,
-        &format!(" {} ", view.title),
+        &format!(" {title} "),
         c(UiColor::TextHighlight),
         bg,
     );
-    let mut x = rect.x + MARGIN;
-    if let Some(face) = &view.face
-        && let Some(portrait) = ctx.content.portraits.get(&face.portrait)
-    {
+    let x = rect.x + MARGIN;
+    let Some(face) = face else {
+        return x;
+    };
+    if let Some(portrait) = ctx.content.portraits.get(&face.portrait) {
         let at = (x, rect.y + 1);
         draw_portrait_in(buf, at, FACE_CELLS, portrait, &face.expression, 0.0, false);
     }
-    if view.face.is_some() {
-        x += FACE_CELLS.0 + MARGIN;
-    }
-    let mut y = rect.y + 2;
-    buf.print(x, y, &view.heading, c(UiColor::TextHighlight), bg);
-    for line in &view.lines {
+    x + FACE_CELLS.0 + MARGIN
+}
+
+/// Paints `heading` highlighted at `(x, y)`, then `lines` under it.
+/// Returns the row of the last.
+fn paint_text(
+    ctx: &Ctx,
+    (x, mut y): (i32, i32),
+    heading: &str,
+    lines: &[String],
+    buf: &mut GlyphBuffer,
+) -> i32 {
+    let c = |u| ctx.palette.get(u);
+    let bg = c(UiColor::PanelBg);
+    buf.print(x, y, heading, c(UiColor::TextHighlight), bg);
+    for line in lines {
         y += 1;
         buf.print(x, y, line, c(UiColor::Text), bg);
     }
-    buf.print(x, rect.y + rect.h - 2, &view.close, c(UiColor::TextDim), bg);
+    y
+}
+
+/// Paints `view`'s box.
+pub fn paint(ctx: &Ctx, view: &TipView, buf: &mut GlyphBuffer) {
+    let rect = rect(view);
+    let x = paint_frame(ctx, rect, &view.title, view.face.as_ref(), buf);
+    paint_text(ctx, (x, rect.y + 2), &view.heading, &view.lines, buf);
+    let (dim, bg) = (
+        ctx.palette.get(UiColor::TextDim),
+        ctx.palette.get(UiColor::PanelBg),
+    );
+    buf.print(x, rect.y + rect.h - 2, &view.close, dim, bg);
+}
+
+/// Paints lesson `view`'s box.
+pub fn paint_lesson(ctx: &Ctx, view: &LessonView, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let bg = c(UiColor::PanelBg);
+    let rect = lesson_rect(view);
+    let x = paint_frame(ctx, rect, &view.title, view.face.as_ref(), buf);
+    // The checklist starts after a blank row.
+    let mut y = paint_text(ctx, (x, rect.y + 2), &view.heading, &view.lines, buf) + 1;
+    for item in &view.items {
+        y += 1;
+        let (mark, label) = if item.done {
+            (c(UiColor::HpHigh), c(UiColor::TextDim))
+        } else {
+            (c(UiColor::Text), c(UiColor::Text))
+        };
+        let glyphs: String = MARKS[usize::from(item.done)].iter().collect();
+        buf.print(x, y, &glyphs, mark, bg);
+        buf.print(x + MARK_CELLS, y, &item.label, label, bg);
+    }
+    buf.print(
+        x,
+        rect.y + rect.h - 2,
+        &view.progress,
+        c(UiColor::TextDim),
+        bg,
+    );
 }
 
 #[cfg(test)]

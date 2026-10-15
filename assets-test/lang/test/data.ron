@@ -1,5 +1,5 @@
-// The test pack's data text (ticket 0235): a few names, a tip, a chapter
-// title and a battle note, each the English in capitals. Everything else
+// The test pack's data text (ticket 0235): a few names, a tip, a lesson's
+// title and first item (0456), a chapter title and a battle note, each the English in capitals. Everything else
 // in the data is missing here, so it shows in English.
 // Kept on purpose: `items.iron_axe.name` is stale (its `source` is not
 // today's English), so the axe shows in English too.
@@ -22,6 +22,8 @@
         source: "Steer the cursor with {Cursor}. Press {Select} on one of\nyour units to select it. {NextUnit} jumps to the next unit\nthat can still act; {Info} shows a unit's details.",
         text: "STEER THE CURSOR WITH {Cursor}. PRESS {Select} ON ONE OF\nYOUR UNITS TO SELECT IT. {NextUnit} JUMPS TO THE NEXT UNIT\nTHAT CAN STILL ACT; {Info} SHOWS A UNIT'S DETAILS.",
     ),
+    (key: "lessons.test_cursor.title", source: "Moving the cursor", text: "MOVING THE CURSOR"),
+    (key: "lessons.test_cursor.item_1", source: "Move it up: {CursorUp}", text: "MOVE IT UP: {CursorUp}"),
     (key: "chapters.test.title", source: "Test Chapter", text: "TEST CHAPTER"),
     (
         key: "battles.test.note_2",

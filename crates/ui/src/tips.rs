@@ -12,7 +12,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
-pub use view::{FaceView, TipView};
+pub use view::{FaceView, LessonItemView, LessonView, TipView};
 
 use alloc::collections::BTreeSet;
 use core::fmt::Display;

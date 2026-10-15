@@ -1,5 +1,5 @@
 //! The English a pack's `data.ron` and `dialogue/` files translate
-//! (ADR-0045 §2): every name, tip, title and note in the data files and
+//! (ADR-0045 §2): every name, tip, lesson, title and note in the data files and
 //! every dialogue line and caption, by key ([`DataText`]), and the lookups
 //! that give each in a language. English stays in the data files; a lookup
 //! is handed today's English and returns the pack's text only when its
@@ -16,6 +16,7 @@ use trpg_core::{
 use super::{Lang, LangCode, text_width};
 use crate::chapter::ChapterDef;
 use crate::dialogue::{DialogueTable, REPLY_SPEAKER, Step, caption_key};
+use crate::lesson::{self, Lesson, LessonTable};
 use crate::names::Names;
 use crate::terrain::TerrainDef;
 use crate::tip::{MAX_LINE_CHARS, MAX_TEXT_LINES, MAX_TITLE_CHARS, Tip, TipTable};
@@ -50,7 +51,8 @@ pub struct SourceLine {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct DataText {
     /// Data text by key: `<file>.<id>.<field>`, `names.<id>`,
-    /// `tips.<id>.title`, `tips.<id>.text`.
+    /// `tips.<id>.title`, `tips.<id>.text`, `lessons.<id>.title`,
+    /// `lessons.<id>.text`, `lessons.<id>.item_<n>` (from 1).
     pub data: BTreeMap<String, String>,
     /// Dialogue lines by line id, and captions by [`caption_key`].
     pub lines: BTreeMap<String, SourceLine>,
@@ -77,6 +79,8 @@ pub struct Tables<'a> {
     pub names: &'a Names,
     /// Tips.
     pub tips: &'a TipTable,
+    /// Lessons.
+    pub lessons: &'a LessonTable,
     /// Chapters by id.
     pub chapters: &'a BTreeMap<String, ChapterDef>,
     /// Battles by id.
@@ -103,6 +107,25 @@ fn tip_title_key(id: &str) -> String {
 /// The key of tip `id`'s text.
 fn tip_text_key(id: &str) -> String {
     format!("tips.{id}.text")
+}
+
+/// What every key of a lesson's text starts with.
+const LESSON_PREFIX: &str = "lessons.";
+
+/// The key of lesson `id`'s title.
+fn lesson_title_key(id: &str) -> String {
+    format!("{LESSON_PREFIX}{id}.title")
+}
+
+/// The key of lesson `id`'s text.
+fn lesson_text_key(id: &str) -> String {
+    format!("{LESSON_PREFIX}{id}.text")
+}
+
+/// The key of lesson `id`'s item number `index` (from 0):
+/// `lessons.<id>.item_1`.
+fn lesson_item_key(id: &str, index: usize) -> String {
+    format!("{LESSON_PREFIX}{id}.item_{}", index + 1)
 }
 
 /// The key of chapter `id`'s title.
@@ -154,9 +177,16 @@ pub(super) fn text_problem(key: &str, text: &str) -> Option<String> {
             .contains(['{', '}'])
             .then(|| "a name can't hold a brace".to_owned());
     }
+    if let Some(field) = key.strip_prefix(LESSON_PREFIX) {
+        let field = field.rsplit('.').next().unwrap_or(field);
+        return match field {
+            "title" => title_problem(text),
+            "text" => lesson::text_problem(text),
+            _ => lesson::item_problem(text),
+        };
+    }
     if is_tip_title_key(key) {
-        let bad = text.is_empty() || text_width(text) > MAX_TITLE_CHARS;
-        return bad.then(|| format!("the title must be 1 to {MAX_TITLE_CHARS} cells"));
+        return title_problem(text);
     }
     if !is_tip_text_key(key) {
         return None;
@@ -169,6 +199,12 @@ pub(super) fn text_problem(key: &str, text: &str) -> Option<String> {
         .iter()
         .find(|line| text_width(line) > MAX_LINE_CHARS)
         .map(|line| format!("a text line is over {MAX_LINE_CHARS} cells: {line:?}"))
+}
+
+/// What is wrong with a tip's or a lesson's title `text`, if anything.
+fn title_problem(text: &str) -> Option<String> {
+    let bad = text.is_empty() || text_width(text) > MAX_TITLE_CHARS;
+    bad.then(|| format!("the title must be 1 to {MAX_TITLE_CHARS} cells"))
 }
 
 /// `ch01` for `assets/dialogue/ch01.dlg`.
@@ -242,6 +278,13 @@ impl DataText {
         for tip in &tables.tips.tips {
             data.insert(tip_title_key(&tip.id), tip.title.clone());
             data.insert(tip_text_key(&tip.id), tip.text.clone());
+        }
+        for lesson in &tables.lessons.lessons {
+            data.insert(lesson_title_key(&lesson.id), lesson.title.clone());
+            data.insert(lesson_text_key(&lesson.id), lesson.text.clone());
+            for (i, item) in lesson.items.iter().enumerate() {
+                data.insert(lesson_item_key(&lesson.id, i), item.label.clone());
+            }
         }
         for chapter in tables.chapters.values() {
             data.insert(chapter_key(&chapter.id), chapter.title.clone());
@@ -368,6 +411,25 @@ impl Lang {
     /// The text of `tip` in language `code`, placeholders and all.
     pub fn tip_text<'a>(&'a self, code: &LangCode, tip: &'a Tip) -> &'a str {
         self.data_text(code, || tip_text_key(&tip.id), &tip.text)
+    }
+
+    /// The title of `lesson` in language `code`.
+    pub fn lesson_title<'a>(&'a self, code: &LangCode, lesson: &'a Lesson) -> &'a str {
+        self.data_text(code, || lesson_title_key(&lesson.id), &lesson.title)
+    }
+
+    /// The text of `lesson` in language `code`, placeholders and all.
+    pub fn lesson_text<'a>(&'a self, code: &LangCode, lesson: &'a Lesson) -> &'a str {
+        self.data_text(code, || lesson_text_key(&lesson.id), &lesson.text)
+    }
+
+    /// The label of `lesson`'s item number `index` (from 0) in language
+    /// `code`, placeholders and all; empty if it has no such item.
+    pub fn lesson_item<'a>(&'a self, code: &LangCode, lesson: &'a Lesson, index: usize) -> &'a str {
+        let Some(item) = lesson.items.get(index) else {
+            return "";
+        };
+        self.data_text(code, || lesson_item_key(&lesson.id, index), &item.label)
     }
 
     /// The title of `chapter` in language `code`.
