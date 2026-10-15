@@ -23,7 +23,7 @@ pub use view::{BonusView, GoldView, ResultsBody, ResultsView, RewindsView, Tally
 use trpg_core::progression::EXP_PER_LEVEL;
 use trpg_core::{BattleRewards, BattleState, Gold, Level};
 
-use super::battle::progress::{PROGRESS_TIMINGS, Progress, ProgressTimings, playing_help};
+use super::battle::progress::{self, PROGRESS_TIMINGS, Progress, ProgressTimings, playing_help};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
@@ -215,7 +215,10 @@ impl ResultsScreen {
     /// are done with, and the help line.
     pub fn view(&self, ctx: &Ctx) -> ResultsView {
         let body = match &self.pages {
-            Some(pages) if self.paging => ResultsBody::LevelUp(Box::new(pages.clone())),
+            Some(pages) if self.paging => {
+                let faces = (&ctx.content.portraits, &ctx.lead);
+                ResultsBody::LevelUp(progress::view(ctx.words(), faces, pages).map(Box::new))
+            }
             _ => ResultsBody::Tally(self.tally(ctx)),
         };
         ResultsView {

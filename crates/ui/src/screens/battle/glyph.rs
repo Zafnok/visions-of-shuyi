@@ -2,9 +2,17 @@
 //! the map viewport on the left (painted by the map skin, ADR-0038), the
 //! side panel in a box on the right (double-bordered while a unit is
 //! selected), the message and help rows at the bottom, menus beside their
-//! tile, and boxes and banners centred on the map. Everything about the
-//! look lives here; nothing here decides what the screen shows. Another
-//! look is another `paint` of the same view (ADR-0054).
+//! tile, and boxes and banners centred on the map. The forecast, the info
+//! screen, the fight box, the EXP and level-up pages and the rewind screen
+//! have a module each. Everything about the look lives here; nothing here
+//! decides what the screen shows. Another look is another `paint` of the
+//! same view (ADR-0054).
+
+pub mod fight_box;
+pub mod forecast;
+pub mod info;
+pub mod progress;
+pub mod rewind;
 
 use crate::prelude::*;
 use trpg_core::Phase;
@@ -16,7 +24,7 @@ use super::view::{
     BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, NotesView,
     PanelUnitView, PanelView,
 };
-use super::{PopupKind, forecast, info, playback, progress, stage};
+use super::{PopupKind, stage};
 use crate::color::{Rgb, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::screen::Ctx;
@@ -53,15 +61,14 @@ pub const BANNER_W: i32 = 24;
 pub const BANNER_H: i32 = 6;
 
 /// Paints `view`: the map, then what is over it, then the bars.
-pub fn paint(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let black = c(UiColor::Black);
     buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
     ctx.map_skin.paint(ctx, &view.scene, MAP_VIEW, buf);
-    let words = ctx.words();
-    if let Some(r) = view.old.rewind {
+    if let Some(r) = &view.rewind {
         // The list in the side panel, and the help line.
-        r.draw(&ctx.palette, words, buf);
+        rewind::paint(ctx, r, buf);
         buf.print(1, HELP_ROW, &view.help, c(UiColor::TextDim), black);
         paint_hint(ctx, view, buf);
         return;
@@ -72,16 +79,15 @@ pub fn paint(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
         paint_menu_beside(ctx, view, m, tile, buf);
     }
     paint_popups(ctx, view, buf);
-    if let Some(pb) = view.old.fight_box {
+    if let Some(b) = &view.fight_box {
         // Combat animations are off: the plain box.
-        playback::draw_box(buf, &ctx.palette, words, pb);
+        fight_box::paint(ctx, b, buf);
     }
-    if let Some(p) = view.old.progress {
-        let look = (&ctx.palette, words);
-        progress::draw(buf, look, (&ctx.content.portraits, &ctx.lead), p);
+    if let Some(p) = &view.progress {
+        progress::paint(ctx, p, buf);
     }
-    if let Some(t) = view.old.forecast {
-        forecast::draw_forecast(buf, &ctx.palette, (view.old.state, words), t);
+    if let Some(f) = &view.forecast {
+        forecast::paint(ctx, f, buf);
     }
     if let Some(panel) = &view.panel {
         paint_panel(ctx, panel, buf);
@@ -98,7 +104,7 @@ pub fn paint(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
 }
 
 /// Paints the debug hint at the right of the help row.
-fn paint_hint(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+fn paint_hint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     if let Some(hint) = &view.debug_hint {
         paint_debug_hint(&ctx.palette, hint, buf, HELP_ROW);
     }
@@ -125,7 +131,7 @@ pub fn menu_origin(tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
 /// with its header in the top border.
 fn paint_menu_beside(
     ctx: &Ctx,
-    view: &BattleView<'_>,
+    view: &BattleView,
     m: &BattleMenuView,
     tile: trpg_core::Pos,
     buf: &mut GlyphBuffer,
@@ -170,7 +176,7 @@ pub const fn popup_color(kind: PopupKind) -> UiColor {
 
 /// Paints the heal and burn numbers over the units they tell of: over
 /// where the map skin has their tiles, a row up.
-fn paint_popups(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+fn paint_popups(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     for p in &view.popups {
         let fg = ctx.palette.get(popup_color(p.kind));
         let Some(tile) = ctx.map_skin.tile_cells(&view.scene, MAP_VIEW, p.pos) else {
@@ -241,7 +247,7 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
 /// Paints the boxes over the map: the unit list, the objective page (the
 /// notes under it), a question or the info screen, then the battle notes
 /// box and the banner.
-fn paint_dialogs(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+fn paint_dialogs(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     if let Some(m) = &view.menu
         && m.place == MenuPlace::Centred
     {
@@ -271,8 +277,8 @@ fn paint_dialogs(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
         }
         None => {}
     }
-    if let Some(u) = view.old.info {
-        info::draw_info(buf, &ctx.palette, (view.old.state, ctx.words()), u);
+    if let Some(i) = &view.info {
+        info::paint(ctx, i, buf);
     }
     if let Some(notes) = &view.notes {
         paint_notes(ctx, view, notes, buf);
@@ -283,7 +289,7 @@ fn paint_dialogs(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
 }
 
 /// Paints the battle notes box, off the rows of the units they are about.
-fn paint_notes(ctx: &Ctx, view: &BattleView<'_>, notes: &NotesView, buf: &mut GlyphBuffer) {
+fn paint_notes(ctx: &Ctx, view: &BattleView, notes: &NotesView, buf: &mut GlyphBuffer) {
     let lines: Vec<_> = notes
         .lines
         .iter()
@@ -297,7 +303,7 @@ fn paint_notes(ctx: &Ctx, view: &BattleView<'_>, notes: &NotesView, buf: &mut Gl
 /// The top row of a box `h` rows tall listing the battle notes: off the
 /// rows of the units they are about ([`box_top`]), where the map skin has
 /// their tiles.
-fn notes_top(ctx: &Ctx, view: &BattleView<'_>, h: i32) -> i32 {
+fn notes_top(ctx: &Ctx, view: &BattleView, h: i32) -> i32 {
     let rows: Vec<i32> = view
         .noted
         .iter()
@@ -427,7 +433,7 @@ fn paint_banner(ctx: &Ctx, banner: &super::view::BannerView, buf: &mut GlyphBuff
 
 /// Paints the bar under the map and panel: the toggles' state at the right
 /// of the message row, the message at its left, then the help row.
-fn paint_bar(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+fn paint_bar(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let black = c(UiColor::Black);
     buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));

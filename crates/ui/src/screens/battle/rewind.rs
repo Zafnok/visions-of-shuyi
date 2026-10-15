@@ -5,8 +5,9 @@
 //! goes back there for one charge.
 //!
 //! It lives inside the battle screen rather than on the screen stack: it
-//! draws the battle screen's map with another state and hands the chosen
-//! point back, which a pushed screen can't.
+//! shows the battle screen's map with another state and hands the chosen
+//! point back, which a pushed screen can't. [`RewindScreen::view`] says
+//! what it shows; the battle skin paints it (ADR-0054).
 
 use crate::prelude::*;
 use core::fmt::Display;
@@ -15,27 +16,9 @@ use trpg_core::{
     BattleHistory, BattleState, Command, Event, Phase, Replayed, Side, UnitAction, UnitId,
 };
 
-use super::glyph::{TEXT_W, TEXT_X};
-use super::layout::SIDE_PANEL;
-use crate::color::{Palette, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use super::view::RewindView;
 use crate::input::Action;
 use crate::words::Words;
-
-/// Row of the title.
-pub const TITLE_ROW: i32 = SIDE_PANEL.y + 1;
-
-/// Row of the charges line.
-pub const CHARGES_ROW: i32 = TITLE_ROW + 1;
-
-/// First row of the list, after a blank row.
-pub const LIST_ROW: i32 = TITLE_ROW + 3;
-
-/// Row of the confirm prompt (the list stops above it).
-pub const PROMPT_ROW: i32 = SIDE_PANEL.y + SIDE_PANEL.h - 3;
-
-/// Indent of an entry's wrapped lines.
-const WRAP_INDENT: &str = "  ";
 
 /// One past action.
 #[derive(Debug, Clone, PartialEq)]
@@ -134,21 +117,12 @@ impl RewindScreen {
         RewindEffect::None
     }
 
-    /// Draws the panel: title, charges, the list (scrolled to keep the
-    /// highlighted entry in view) and the prompt.
-    pub fn draw(&self, palette: &Palette, words: Words<'_>, buf: &mut GlyphBuffer) {
-        let c = |u| palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        buf.fill_rect(SIDE_PANEL, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(SIDE_PANEL, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-        let print = |buf: &mut GlyphBuffer, y, text: &str, fg, bg| {
-            buf.print(TEXT_X, y, text, fg, bg);
-        };
-        let title = words.text("battle.rewind.title");
-        print(buf, TITLE_ROW, title, c(UiColor::TextHighlight), bg);
-        let charges = if self.charges_left == 0 {
-            let none = words.text("battle.rewind.no_charges").to_owned();
-            (none, c(UiColor::HpLow))
+    /// What the screen shows: title, charges, the list, the highlighted
+    /// entry and the question while it is asked.
+    pub fn view(&self, words: Words<'_>) -> RewindView {
+        let spent = self.charges_left == 0;
+        let charges = if spent {
+            words.text("battle.rewind.no_charges").to_owned()
         } else {
             let key = if self.charges == 1 {
                 "battle.rewind.charges.one"
@@ -159,77 +133,29 @@ impl RewindScreen {
                 ("left", &self.charges_left as &dyn Display),
                 ("charges", &self.charges),
             ];
-            (words.text_with(key, &counts), c(UiColor::Text))
+            words.text_with(key, &counts)
         };
-        print(buf, CHARGES_ROW, &charges.0, charges.1, bg);
-        if self.entries.is_empty() {
-            let nothing = words.text("battle.rewind.nothing");
-            print(buf, LIST_ROW, nothing, c(UiColor::TextDim), bg);
-            return;
-        }
-        let blocks: Vec<Vec<String>> = self.entries.iter().map(|e| wrap(&e.line)).collect();
-        let first = first_shown(&blocks, self.focus, PROMPT_ROW - 1 - LIST_ROW);
-        let mut y = LIST_ROW;
-        for (i, block) in blocks.iter().enumerate().skip(first) {
-            let rows = i32::try_from(block.len()).unwrap_or(i32::MAX);
-            if y + rows > PROMPT_ROW - 1 {
-                break;
-            }
-            let (fg, row_bg) = if i == self.focus {
-                (bg, c(UiColor::PanelBorderFocus))
-            } else {
-                (c(UiColor::Text), bg)
-            };
-            for text in block {
-                buf.fill_rect(
-                    Rect::new(TEXT_X - 1, y, SIDE_PANEL.w - 2, 1),
-                    Cell::new(' ', fg, row_bg),
-                );
-                print(buf, y, text, fg, row_bg);
-                y += 1;
-            }
-        }
-        if self.confirming {
+        let prompt = self.confirming.then(|| {
             let key = if self.charges_left == 1 {
                 "battle.rewind.use.one"
             } else {
                 "battle.rewind.use.many"
             };
-            let ask = words.text_with(key, &[("left", &self.charges_left)]);
-            print(buf, PROMPT_ROW, &ask, c(UiColor::TextHighlight), bg);
+            words.text_with(key, &[("left", &self.charges_left)])
+        });
+        RewindView {
+            title: words.text("battle.rewind.title").to_owned(),
+            charges,
+            spent,
+            entries: self.entries.iter().map(|e| e.line.clone()).collect(),
+            focus: self.focus,
+            nothing: self
+                .entries
+                .is_empty()
+                .then(|| words.text("battle.rewind.nothing").to_owned()),
+            prompt,
         }
     }
-}
-
-/// `line` word-wrapped to the panel's text width, wrapped lines indented.
-fn wrap(line: &str) -> Vec<String> {
-    let mut lines = Vec::new();
-    let mut current = String::new();
-    for word in line.split(' ') {
-        let len = current.chars().count();
-        if len > 0 && len + 1 + word.chars().count() > TEXT_W {
-            lines.push(core::mem::replace(
-                &mut current,
-                format!("{WRAP_INDENT}{word}"),
-            ));
-        } else {
-            if len > 0 {
-                current.push(' ');
-            }
-            current.push_str(word);
-        }
-    }
-    lines.push(current);
-    lines
-}
-
-/// The first block to show so that blocks `first..=focus` fit in `rows`.
-/// (`focus` itself if even it alone doesn't fit).
-fn first_shown(blocks: &[Vec<String>], focus: usize, rows: i32) -> usize {
-    let height = |b: &Vec<String>| i32::try_from(b.len()).unwrap_or(i32::MAX);
-    (0..focus)
-        .find(|&first| blocks[first..=focus].iter().map(height).sum::<i32>() <= rows)
-        .unwrap_or(focus)
 }
 
 /// A unit's name in `state`, or `?` (never shown: a command only names
@@ -360,149 +286,4 @@ const fn phase_ended(phase: Phase) -> &'static str {
 }
 
 #[cfg(test)]
-mod tests {
-    use trpg_core::Pos;
-
-    use super::*;
-    use crate::console::ConsoleSpec;
-    use crate::screen::tests::ctx;
-    use crate::screens::battle::testing::skirmish;
-
-    #[test]
-    fn wrap_keeps_lines_within_the_panel_and_indents_the_rest() {
-        let lines = wrap("Turn 12 · Test Lord attacked Brigand (2 hits, 14 dmg, defeated)");
-        assert_eq!(
-            lines,
-            [
-                "Turn 12 · Test Lord",
-                "  attacked Brigand (2",
-                "  hits, 14 dmg, defeated)"
-            ]
-        );
-        assert!(lines.iter().all(|l| l.chars().count() <= TEXT_W));
-        assert_eq!(wrap("short"), ["short"]);
-        // Exactly the panel's width fits on one line.
-        let full = format!("{} {}", "a".repeat(12), "b".repeat(TEXT_W - 13));
-        assert_eq!(wrap(&full), std::slice::from_ref(&full));
-        // A word longer than the panel isn't preceded by an empty line.
-        let long = "c".repeat(TEXT_W + 4);
-        assert_eq!(wrap(&long), std::slice::from_ref(&long));
-    }
-
-    #[test]
-    fn first_shown_scrolls_just_enough_to_show_the_focus() {
-        let b = |n| vec![String::new(); n];
-        let blocks = [b(2), b(2), b(3), b(1)];
-        assert_eq!(first_shown(&blocks, 0, 4), 0);
-        assert_eq!(first_shown(&blocks, 1, 4), 0);
-        assert_eq!(first_shown(&blocks, 2, 4), 2);
-        assert_eq!(first_shown(&blocks, 2, 5), 1);
-        assert_eq!(first_shown(&blocks, 3, 6), 1);
-        assert_eq!(first_shown(&blocks, 3, 4), 2);
-        // A block taller than the rows: shown from itself.
-        assert_eq!(first_shown(&[b(5)], 0, 4), 0);
-        assert_eq!(first_shown(&blocks, 2, 2), 2);
-    }
-
-    #[test]
-    fn panel_rows() {
-        assert_eq!(
-            (TITLE_ROW, CHARGES_ROW, LIST_ROW, PROMPT_ROW),
-            (1, 2, 4, 27)
-        );
-    }
-
-    fn screen(lines: usize, focus: usize) -> RewindScreen {
-        let before = skirmish(&ctx(), 20);
-        let entries = (0..lines)
-            .map(|i| Entry {
-                line: format!("e{i}"),
-                point: lines - 1 - i,
-                before: before.clone(),
-            })
-            .collect();
-        RewindScreen {
-            entries,
-            focus,
-            confirming: false,
-            charges_left: 3,
-            charges: 3,
-        }
-    }
-
-    /// Row `y` of the panel drawn for `r`, inside its border, trimmed.
-    fn drawn(r: &RewindScreen) -> impl Fn(i32) -> String + use<> {
-        let c = ctx();
-        let black = c.palette.get(UiColor::Black);
-        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
-        r.draw(&c.palette, Words::ENGLISH, &mut buf);
-        move |y| {
-            (TEXT_X..SIDE_PANEL.x + SIDE_PANEL.w - 1)
-                .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
-                .collect::<String>()
-                .trim()
-                .to_owned()
-        }
-    }
-
-    #[test]
-    fn a_long_list_fills_the_rows_above_the_prompt_and_scrolls_to_the_focus() {
-        // 22 rows from LIST_ROW to the blank row above the prompt.
-        let row = drawn(&screen(30, 0));
-        assert_eq!(row(LIST_ROW), "e0");
-        assert_eq!(row(PROMPT_ROW - 2), "e21");
-        assert_eq!(row(PROMPT_ROW - 1), "");
-        assert_eq!(row(PROMPT_ROW), "");
-        let row = drawn(&screen(30, 29));
-        assert_eq!(row(LIST_ROW), "e8");
-        assert_eq!(row(PROMPT_ROW - 2), "e29");
-        assert_eq!(row(PROMPT_ROW - 1), "");
-    }
-
-    #[test]
-    fn the_prompt_freezes_the_choice() {
-        let mut r = screen(3, 0);
-        assert_eq!(r.step(Action::CursorDown), RewindEffect::None);
-        assert_eq!(r.step(Action::Confirm), RewindEffect::None);
-        assert!(r.is_confirming());
-        // Up and down do nothing while it's up.
-        r.step(Action::CursorDown);
-        assert_eq!(r.focused().map(|e| e.point), Some(1));
-        r.step(Action::CursorUp);
-        assert_eq!(r.focused().map(|e| e.point), Some(1));
-        assert_eq!(r.step(Action::Confirm), RewindEffect::Rewind(1));
-    }
-
-    #[test]
-    fn using_an_item_names_the_target_unless_it_is_the_user() {
-        let before = skirmish(&ctx(), 20);
-        let used = |target| Replayed {
-            before: before.clone(),
-            command: Command::Act {
-                unit: UnitId(1),
-                dest: Pos::new(6, 2),
-                action: UnitAction::UseItem {
-                    pack_index: 0,
-                    target: UnitId(target),
-                },
-            },
-            events: vec![],
-        };
-        assert_eq!(
-            describe(&used(1), Words::ENGLISH),
-            "Turn 1 · Test Lord used an item"
-        );
-        assert_eq!(
-            describe(&used(2), Words::ENGLISH),
-            "Turn 1 · Test Lord used an item on Test Knight"
-        );
-    }
-
-    #[test]
-    fn phase_names() {
-        let ended = |phase| Words::ENGLISH.text(phase_ended(phase));
-        assert_eq!(ended(Phase::Player), "Player phase ended");
-        assert_eq!(ended(Phase::Enemy), "Enemy phase ended");
-        assert_eq!(ended(Phase::Other), "Ally phase ended");
-    }
-}
+mod tests;

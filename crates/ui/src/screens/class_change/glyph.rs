@@ -16,6 +16,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
+use crate::screens::battle::glyph::progress as pages_skin;
 use crate::screens::battle::progress;
 
 /// Width of a column's box, in cells.
@@ -94,11 +95,8 @@ pub fn paint(ctx: &Ctx, view: &ClassChangeView, buf: &mut GlyphBuffer) {
             }
         }
         // The pages name the unit and its classes themselves.
-        ClassChangeBody::Result(pages) => {
-            let look = (&ctx.palette, ctx.words());
-            progress::draw(buf, look, (&ctx.content.portraits, &ctx.lead), pages);
-        }
-        ClassChangeBody::Done => {}
+        ClassChangeBody::Result(Some(page)) => pages_skin::paint(ctx, page, buf),
+        ClassChangeBody::Result(None) | ClassChangeBody::Done => {}
     }
     let bottom = i32::from(buf.height()) - 1;
     buf.print(1, bottom, &view.help, c(UiColor::TextDim), black);

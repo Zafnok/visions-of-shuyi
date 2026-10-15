@@ -8,8 +8,8 @@ use trpg_core::{BattleState, Command, UnitAction, UnitId};
 use super::BattleScreen;
 use super::progress::PROGRESS_TIMINGS;
 use super::rewind::RewindScreen;
-use super::rewind::{CHARGES_ROW, LIST_ROW, PROMPT_ROW, TITLE_ROW};
 use super::testing::skirmish_charged;
+use super::view::RewindView;
 use crate::harness::{FRAME_DT, Harness};
 use crate::input::Action;
 use crate::screen::tests::ctx;
@@ -63,19 +63,10 @@ fn attacked(c: &mut Ctx, charges: u8) -> (BattleScreen, BattleState) {
     (s, start)
 }
 
-/// Harness cells `x..x + w` of row `y`, trimmed.
-fn text(h: &Harness, x: i32, y: i32, w: i32) -> String {
-    let buf = h.game().buffer();
-    (x..x + w)
-        .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
-        .collect::<String>()
-        .trim()
-        .to_owned()
-}
-
-/// The side panel's row `y`, inside its border.
-fn panel(h: &Harness, y: i32) -> String {
-    text(h, 71, y, 28)
+/// The rewind screen on `h` (ADR-0054: read from its view).
+fn shown(h: &Harness) -> RewindView {
+    let view = h.battle().expect("a battle").view(h.game().ctx());
+    view.rewind.expect("the rewind screen")
 }
 
 /// The help line of the battle on `h` (ADR-0054: read from its view).
@@ -148,10 +139,11 @@ fn with_no_charges_the_screen_says_so_and_cant_confirm() {
 
     let mut h = Harness::with_screen(Box::new(attacked(&mut c, 0).0));
     h.keys("r");
-    assert_eq!(panel(&h, CHARGES_ROW), "No charges left");
+    let r = shown(&h);
+    assert_eq!((r.charges.as_str(), r.spent), ("No charges left", true));
     assert_eq!(help(&h), "arrows choose · d close");
     h.keys("f");
-    assert_eq!(panel(&h, PROMPT_ROW), "");
+    assert_eq!(shown(&h).prompt, None);
 }
 
 #[test]
@@ -176,9 +168,11 @@ fn rewind_opens_only_while_browsing() {
 
     let mut h = Harness::with_screen(Box::new(BattleScreen::new(skirmish_charged(&c, 20, 3))));
     h.keys("r");
-    assert_eq!(panel(&h, TITLE_ROW), "Rewind");
-    assert_eq!(panel(&h, CHARGES_ROW), "3 of 3 charges left");
-    assert_eq!(panel(&h, LIST_ROW), "Nothing to rewind yet");
+    let r = shown(&h);
+    assert_eq!(r.title, "Rewind");
+    assert_eq!(r.charges, "3 of 3 charges left");
+    assert_eq!(r.nothing.as_deref(), Some("Nothing to rewind yet"));
+    assert!(r.entries.is_empty());
     assert_eq!(help(&h), "d close");
 }
 
@@ -223,12 +217,20 @@ fn rewind_screen_snapshot() {
     let mut c = ctx();
     let mut h = Harness::with_screen(Box::new(attacked(&mut c, 3).0));
     h.keys("r");
-    assert_eq!(panel(&h, TITLE_ROW), "Rewind");
-    assert_eq!(panel(&h, CHARGES_ROW), "3 of 3 charges left");
-    assert!(panel(&h, LIST_ROW).starts_with("Turn 1 · Test Lord"));
+    let r = shown(&h);
+    assert_eq!(
+        (r.title.as_str(), r.charges.as_str()),
+        ("Rewind", "3 of 3 charges left")
+    );
+    assert!(
+        r.entries[0].starts_with("Turn 1 · Test Lord"),
+        "{:?}",
+        r.entries
+    );
+    assert_eq!((r.focus, r.nothing, r.prompt), (0, None, None));
     assert_eq!(help(&h), "arrows choose · f rewind here · d close");
     h.keys("f");
-    assert_eq!(panel(&h, PROMPT_ROW), "Use 1 of 3 charges?");
+    assert_eq!(shown(&h).prompt.as_deref(), Some("Use 1 of 3 charges?"));
     assert_eq!(help(&h), "f rewind · d back");
     assert_snapshot!(h.snapshot());
 }

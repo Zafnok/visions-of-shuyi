@@ -13,12 +13,12 @@ use trpg_core::{
 use super::BattleScreen;
 use super::art_list::{Technique, art_lines, arts_menu, playback_banner};
 use super::attack::reach;
-use super::forecast::{HP_ROW, LEFT_X, RIGHT_X, SKILL_ROW, STRIKE_ROW};
 use super::mode::{MenuEntry, Mode};
-use super::playback::{BOX, Playback, TIMINGS, draw_box};
+use super::playback::{Playback, TIMINGS, box_view};
 use super::testing::{battle_with, quick_units};
+use super::view::{ForecastView, InfoView, SkillLineView};
 use crate::FrameInput;
-use crate::color::{Rgb, UiColor};
+use crate::color::Rgb;
 use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
@@ -210,12 +210,26 @@ fn durability(state: &BattleState, unit: UnitId) -> u32 {
 }
 
 /// The info screen of unit `id` of `state`, rendered.
-fn info(c: &mut Ctx, state: &BattleState, id: UnitId) -> GlyphBuffer {
+fn info(c: &mut Ctx, state: &BattleState, id: UnitId) -> InfoView {
     let mut s = BattleScreen::new(state.clone());
     s.cursor.jump(state.unit(id).unwrap().pos);
     step(&mut s, c, &[Action::Info]);
     assert!(matches!(s.mode(), Mode::Info { .. }), "{:?}", s.mode());
-    render(&s, c)
+    s.view(c).info.expect("the info screen")
+}
+
+/// The forecast on screen.
+fn forecast_of(s: &BattleScreen, c: &Ctx) -> ForecastView {
+    s.view(c).forecast.expect("a forecast")
+}
+
+/// The forecast's art or active line: its name and the durability before
+/// and after.
+fn skill_line(name: &str, from: u32, to: u32) -> SkillLineView {
+    SkillLineView {
+        name: name.to_owned(),
+        durability: Some((from, to)),
+    }
 }
 
 #[test]
@@ -232,12 +246,12 @@ fn guard_break_shows_cores_forecast_and_is_paid_when_attacking() {
         .unwrap();
     let mut s = lord_on_brigand(&mut c, state, "Guard Break");
     assert_eq!(targeting(&s).preview, expected);
-    let buf = render(&s, &c);
-    assert_eq!(text(&buf, LEFT_X, SKILL_ROW, 26), "Guard Break (20 → 16)");
-    assert_eq!(text(&buf, LEFT_X + 5, HP_ROW + 1, 3), "100");
+    let shown = forecast_of(&s, &c);
+    assert_eq!(shown.skill, Some(skill_line("Guard Break", 20, 16)));
+    assert_eq!(shown.sides[0].hit, Some(100));
     assert_eq!(expected.forecast.attacker.hit, 100);
-    assert_eq!(text(&buf, RIGHT_X + 2, STRIKE_ROW, 11), "no counter");
-    assert_eq!(text(&buf, RIGHT_X + 5, HP_ROW + 1, 3), "--");
+    assert_eq!(shown.no_counter.as_deref(), Some("no counter"));
+    assert_eq!(shown.sides[1].hit, None);
     // The art was chosen in the arts menu: the forecast has no list, left
     // and right swap between the two swords and up and down pick the target.
     let help = s.help(&c);
@@ -252,9 +266,8 @@ fn guard_break_shows_cores_forecast_and_is_paid_when_attacking() {
     }
     assert_eq!(durability(s.state(), UnitId(1)), 16);
     let after = s.state().clone();
-    let buf = info(&mut c, &after, UnitId(1));
-    let weapons = text(&buf, 56, 2, 43);
-    assert!(weapons.ends_with("16/20"), "{weapons}");
+    let sword = info(&mut c, &after, UnitId(1)).weapons[0].clone().unwrap();
+    assert_eq!((sword.left, sword.max, sword.broken), (16, 20, None));
 }
 
 #[test]
@@ -270,10 +283,10 @@ fn guard_break_with_three_left_goes_through_and_breaks_the_sword() {
     assert_eq!((gb.1, gb.2.as_deref()), (true, None));
     step(&mut s, &mut c, &[Action::Cancel]);
     use_art(&mut s, &mut c, "Guard Break", UnitId(4));
-    let buf = render(&s, &c);
-    assert_eq!(text(&buf, LEFT_X, SKILL_ROW, 26), "Guard Break (3 → 0)");
+    let shown = forecast_of(&s, &c);
+    assert_eq!(shown.skill, Some(skill_line("Guard Break", 3, 0)));
     // Fought with the unbroken sword: the same hit as at 20/20.
-    assert_eq!(text(&buf, LEFT_X + 5, HP_ROW + 1, 3), "100");
+    assert_eq!(shown.sides[0].hit, Some(100));
     step(&mut s, &mut c, &[Action::Confirm]);
     for _ in 0..40 {
         wait(&mut s, &mut c, 0.5);
@@ -281,9 +294,8 @@ fn guard_break_with_three_left_goes_through_and_breaks_the_sword() {
     }
     assert_eq!(durability(s.state(), UnitId(1)), 0);
     let after = s.state().clone();
-    let buf = info(&mut c, &after, UnitId(1));
-    let weapons = text(&buf, 56, 2, 43);
-    assert!(weapons.ends_with("broken"), "{weapons}");
+    let sword = info(&mut c, &after, UnitId(1)).weapons[0].clone().unwrap();
+    assert_eq!(sword.broken.as_deref(), Some("broken"));
 }
 
 /// The lord as a Swordsman with only its iron sword, broken.
@@ -432,8 +444,10 @@ fn a_chosen_active_is_used_and_paid_for() {
         assert!(units[0].learn_skill(&SkillId::new("keen_edge"), &c.content.skills));
     });
     let mut s = lord_on_brigand(&mut c, state, "Keen Edge");
-    let buf = render(&s, &c);
-    assert_eq!(text(&buf, LEFT_X, SKILL_ROW, 26), "Keen Edge (20 → 17)");
+    assert_eq!(
+        forecast_of(&s, &c).skill,
+        Some(skill_line("Keen Edge", 20, 17))
+    );
     step(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(durability(s.state(), UnitId(1)), 17);
 }
@@ -565,11 +579,10 @@ fn forecast_with_pinning_shot_snapshot() {
     let mut c = ctx();
     let state = battle(&c, |_| {});
     let s = archer_on_brigand(&mut c, state, "Pinning Shot");
-    let buf = render(&s, &c);
-    let all = screen_text(&buf);
-    assert!(all.contains("Pinning Shot (20 → 17)"), "{all}");
-    assert!(all.contains("pins: Mov −3"), "{all}");
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    let shown = forecast_of(&s, &c);
+    assert_eq!(shown.skill, Some(skill_line("Pinning Shot", 20, 17)));
+    assert_eq!(shown.notes, ["pins: Mov −3"]);
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
 /// The lord's only sword broken: every line of the arts menu dimmed with
@@ -616,8 +629,7 @@ fn a_pin_shows_on_the_info_screen_with_when_it_ends() {
     assert_eq!(effect.source, EffectSource::Art(ArtId::new("pinning_shot")));
     // Until the end of the Enemy phase: the start of the next one.
     let until = format!("until {:?} phase", effect.until);
-    let buf = info(&mut c, &pinned, UnitId(4));
-    let all = screen_text(&buf);
+    let all = info(&mut c, &pinned, UnitId(4)).texts().join("\n");
     for part in ["Effects", "Pinning Shot", "Mov -3", until.as_str()] {
         assert!(all.contains(part), "{part}: {all}");
     }
@@ -672,7 +684,7 @@ fn a_boss_or_green_units_art_names_the_playback_and_the_players_doesnt() {
         playback_banner(&state, Words::ENGLISH, &[own], &units),
         None
     );
-    // Drawn in the box's top border.
+    // Named in the box.
     let mut after = state.clone();
     let events = after
         .apply(&trpg_core::Command::Act {
@@ -690,20 +702,8 @@ fn a_boss_or_green_units_art_names_the_playback_and_the_players_doesnt() {
     )
     .unwrap()
     .with_banner(Some("Guard Break".to_owned()));
-    let mut buf = GlyphBuffer::with_spec(
-        ConsoleSpec::PC,
-        Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0)),
-    );
-    draw_box(&mut buf, &c.palette, Words::ENGLISH, &pb);
-    let top = text(&buf, BOX.x, BOX.y, BOX.w);
-    assert!(top.contains(" Guard Break "), "{top}");
-    // Centred: " Guard Break " is 13 cells, (44 - 13) / 2 = 15 in.
-    let x = BOX.x + 16;
-    assert_eq!(text(&buf, x, BOX.y, 11), "Guard Break");
-    assert_eq!(
-        buf.get(x, BOX.y).unwrap().fg,
-        c.palette.get(UiColor::TextHighlight)
-    );
+    let shown = box_view(Words::ENGLISH, &pb).expect("the box");
+    assert_eq!(shown.banner.as_deref(), Some("Guard Break"));
 }
 
 #[test]
@@ -719,8 +719,10 @@ fn close_shot_reaches_an_adjacent_enemy_that_a_plain_shot_cant() {
     // Close Shot does, and the brigand two tiles up as well.
     let mut s = archer_on_brigand(&mut c, state, "Close Shot");
     assert_eq!(targeting(&s).targets, [UnitId(4), UnitId(5)]);
-    let buf = render(&s, &c);
-    assert_eq!(text(&buf, LEFT_X, SKILL_ROW, 26), "Close Shot (20 → 18)");
+    assert_eq!(
+        forecast_of(&s, &c).skill,
+        Some(skill_line("Close Shot", 20, 18))
+    );
     // Shoot the adjacent one: paid 2.
     aim(&mut s, &mut c, UnitId(5));
     assert_eq!(

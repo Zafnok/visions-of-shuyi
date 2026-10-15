@@ -5,20 +5,31 @@
 //! ([`super::glyph::paint`] today). Nothing here says where a thing goes or
 //! how it looks.
 //!
-//! The forecast, the unit info screen, the fight box, the EXP bar and
-//! level-up pages and the rewind screen are still painted from the
-//! battle's own state by their old draw functions: [`OldParts`] hands the
-//! skin that state until ticket 0248 gives them views of their own.
+//! The forecast, the unit info screen, the fight box, the EXP and level-up
+//! pages and the rewind screen have views of their own, in this module's
+//! children (ticket 0248).
+
+mod fight_box;
+mod forecast;
+mod info;
+mod progress;
+mod rewind;
 
 use crate::prelude::*;
-use trpg_core::{BattleState, Faction, Pos, StatValue, Unit};
 
+use trpg_core::{Faction, Pos, StatValue};
+
+pub use self::fight_box::{BoxFighterView, FightBoxView};
+pub use self::forecast::{
+    ForecastHp, ForecastSideView, ForecastView, LeftView, SkillLineView, StrikeView, TotalView,
+};
+pub use self::info::{
+    GearView, InfoEffectView, InfoSkillView, InfoSpellView, InfoStatView, InfoView, InfoWeaponView,
+};
+pub use self::progress::{ClassProgressView, ExpView, GainsView, ProgressView, StatGainView};
+pub use self::rewind::RewindView;
 use super::HealPopup;
-use super::attack::Targeting;
 use super::banner::BannerKind;
-use super::playback::Playback;
-use super::progress::Progress;
-use super::rewind::RewindScreen;
 use super::stage::view::StageView;
 use crate::map_view::MapScene;
 use crate::tips::TipView;
@@ -26,7 +37,7 @@ use crate::widgets::menu::MenuView;
 
 /// The whole battle screen, as it is this frame.
 #[derive(Debug, Clone)]
-pub struct BattleView<'a> {
+pub struct BattleView {
     /// What is on the visible map (ADR-0038): the map skin paints it.
     pub scene: MapScene,
     /// The menu open, if any: a unit's action menu or a list it opened,
@@ -35,8 +46,8 @@ pub struct BattleView<'a> {
     /// The heal and burn numbers floating over units.
     pub popups: Vec<HealPopup>,
     /// The side panel: the terrain and unit under the cursor. `None` while
-    /// the forecast fills it ([`OldParts::forecast`]) and on the rewind
-    /// screen.
+    /// the forecast fills it ([`forecast`](Self::forecast)) and on the
+    /// rewind screen.
     pub panel: Option<PanelView>,
     /// The combat stage (ticket 0413): a fight playing back with combat
     /// animations on. It covers the map and the side panel.
@@ -63,29 +74,19 @@ pub struct BattleView<'a> {
     pub help: String,
     /// The debug tools' key, when they are on.
     pub debug_hint: Option<String>,
-    /// The parts still painted from the battle's state.
-    pub old: OldParts<'a>,
-}
-
-/// The parts of the screen that don't have a view yet (ticket 0248): the
-/// battle's state, for their old draw functions to paint.
-#[derive(Debug, Clone, Copy)]
-pub struct OldParts<'a> {
-    /// The battle, as those functions read it.
-    pub state: &'a BattleState,
     /// The attack forecast, while an attack or a spell is aimed at an
     /// enemy: it fills the side panel.
-    pub forecast: Option<&'a Targeting>,
-    /// The unit whose info screen is open.
-    pub info: Option<&'a Unit>,
+    pub forecast: Option<ForecastView>,
+    /// The unit info screen, while it is open.
+    pub info: Option<InfoView>,
     /// The fight playing back in the plain box (combat animations off).
-    pub fight_box: Option<&'a Playback>,
+    pub fight_box: Option<FightBoxView>,
     /// The EXP bar or level-up page on screen.
-    pub progress: Option<&'a Progress>,
+    pub progress: Option<ProgressView>,
     /// The rewind screen, while it is open: it replaces everything but the
     /// map (as it was before the action it is on), the help and the debug
     /// hint.
-    pub rewind: Option<&'a RewindScreen>,
+    pub rewind: Option<RewindView>,
 }
 
 /// A menu and where it opens.
@@ -240,11 +241,27 @@ pub enum MessageKind {
 }
 
 #[cfg(test)]
-impl BattleView<'_> {
-    /// Every line of text the view shows (not the parts still painted from
-    /// the battle's state, [`OldParts`]), for tests asking whether the
+impl BattleView {
+    /// Every line of text the view shows, for tests asking whether the
     /// screen shows something.
-    pub fn texts(&self) -> Vec<&str> {
+    pub fn texts(&self) -> Vec<String> {
+        let mut texts: Vec<String> = self.own_texts().into_iter().map(str::to_owned).collect();
+        texts.extend(self.forecast.iter().flat_map(ForecastView::texts));
+        texts.extend(self.info.iter().flat_map(InfoView::texts));
+        if let Some(b) = &self.fight_box {
+            texts.extend(b.banner.clone());
+            for side in &b.sides {
+                texts.push(side.name.clone());
+                texts.extend(side.result.clone());
+            }
+        }
+        texts.extend(self.progress.iter().flat_map(ProgressView::texts));
+        texts.extend(self.rewind.iter().flat_map(RewindView::texts));
+        texts
+    }
+
+    /// The lines of text of the parts with no view type of their own.
+    fn own_texts(&self) -> Vec<&str> {
         let mut texts: Vec<&str> = vec![&self.status, &self.help];
         if let Some(m) = &self.menu {
             texts.extend(m.menu.items.iter().map(|i| i.label.as_str()));

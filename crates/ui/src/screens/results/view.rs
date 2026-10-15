@@ -6,10 +6,10 @@
 use crate::prelude::*;
 use trpg_core::Gold;
 
-use crate::screens::battle::progress::Progress;
+use crate::screens::battle::view::ProgressView;
 
 /// The whole screen, as it is this frame.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResultsView {
     /// What fills the screen.
     pub body: ResultsBody,
@@ -18,15 +18,13 @@ pub struct ResultsView {
 }
 
 /// The tally or a level-up page.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ResultsBody {
     /// The gold, the rewind charges, the bonus and every unit's EXP bar.
     Tally(TallyView),
     /// A level-up page of a unit the bonus levelled, as the battle screen
-    /// shows it after a combat. (The page is still the battle screen's own
-    /// state, which its skin paints; it becomes a view with the rest of the
-    /// battle screen, ticket 0242.)
-    LevelUp(Box<Progress>),
+    /// shows it after a combat; `None` once the last has closed.
+    LevelUp(Option<Box<ProgressView>>),
 }
 
 /// The tally.

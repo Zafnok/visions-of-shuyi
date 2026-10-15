@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["0242"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 0248 — Forecast, unit info, fight box, EXP/level-up and rewind as view + skin
@@ -95,15 +95,15 @@ None. Nothing the player sees changes.
 
 ## Acceptance criteria
 
-- [ ] `forecast.rs`, `info.rs`, `playback.rs`, `progress.rs` and
+- [x] `forecast.rs`, `info.rs`, `playback.rs`, `progress.rs` and
       `rewind.rs` don't name `UiColor`, `Rect`, `BoxStyle`, `Cell` or
       `draw_portrait` (the grep test covers them).
-- [ ] `OldParts` is gone; `battle/glyph.rs` paints the five from views.
-- [ ] No snapshot file changes.
-- [ ] `battle/view_tests.rs` has a test of each part appearing and going.
-- [ ] `cargo xtask check-keys` and `check-text` pass; the `check-text`
+- [x] `OldParts` is gone; `battle/glyph.rs` paints the five from views.
+- [x] No snapshot file changes.
+- [x] `battle/view_tests.rs` has a test of each part appearing and going.
+- [x] `cargo xtask check-keys` and `check-text` pass; the `check-text`
       limit isn't raised.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -114,5 +114,50 @@ None. Nothing the player sees changes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+What was done:
+
+- Each of the five parts has a view (plain data) in `battle/view/`:
+  `ForecastView` (`forecast.rs`), `InfoView` (`info.rs`), `FightBoxView`
+  (`fight_box.rs`), `ProgressView` (`progress.rs`) and `RewindView`
+  (`rewind.rs`), re-exported from `battle/view.rs`. The logic modules
+  build them: `forecast::view`, `info::view`, `playback::box_view`,
+  `progress::view` and `RewindScreen::view`. Values are meanings: HP as
+  `{ now, after, max }`, strikes as text plus `effective` / `kills` /
+  `after_a_fall` flags, totals as `{ damage, strikes }`, a weapon's
+  durability as `left` / `max` or a broken flag, stat gains as `{ name,
+  before, gain }`, the EXP bar as `{ exp, max }`, the level-up face as a
+  portrait id and expression (`tips::view::FaceView`, reused).
+- Their drawing moved to the battle skin, one module each:
+  `battle/glyph/{forecast,info,fight_box,progress,rewind}.rs`, with their
+  layout constants, the skull, the rewind list's wrapping and scrolling,
+  and the EXP bar's cell count (`bar_cells`, now shared with the results
+  screen's skin).
+- `BattleView` holds `forecast`, `info`, `fight_box`, `progress` and
+  `rewind`; `OldParts` is gone, and with it `BattleView`'s lifetime.
+- The class change's `ClassChangeBody::Result` and the results screen's
+  `ResultsBody::LevelUp` hold the progress view (`None` once the last page
+  has closed); both paint it with the battle's progress skin.
+- The grep test (`the_logic_modules_name_no_cells_or_colours`) lists the
+  five logic modules with `battle/mode.rs` and also checks that none of
+  them names `GlyphBuffer`.
+- Tests: the Harness tests that read forecast rows, the info screen, the
+  fight box, the EXP and level-up pages and the rewind panel through cells
+  read the views now (`attack_tests`, `art_tests`, `magic_tests`,
+  `progress_tests`, `rewind_tests`, `trigger_tests`, `turn_tests`, the
+  class change and results tests). The skin's tests pin where rows go and
+  their colours. `view_tests.rs` has a test of each part appearing and
+  going (a new one for the fight box and the EXP bar). No snapshot changed.
+
+Deviations:
+
+- The results screen also paints the level-up pages, so it holds the
+  progress view too (the ticket only named the class change).
+- The views live in `battle/view/<part>.rs` rather than
+  `battle/<part>/view.rs`, beside the rest of `BattleView`.
+- A stat gain has no `at_max`: the level-up pages show no `MAX` mark
+  today, and adding one would change what is shown.
+- The inline tests of `progress.rs` and `rewind.rs` moved to
+  `progress/tests.rs` and `rewind/tests.rs`: the grep test reads the whole
+  file, and their drawing tests moved to the skin.
+
+No gameplay rules were decided. Nothing the player sees changes.

@@ -34,10 +34,7 @@ use trpg_core::{
 
 use super::event_sounds::{Attack, cast_sound, sound_for_strike};
 use super::info::stat_name;
-use super::layout::MAP_VIEW;
-use super::units::{faction_color, hp_fill};
-use crate::color::{Palette, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use super::view::{BoxFighterView, FightBoxView};
 use crate::words::Words;
 
 /// How long each part of the playback takes, in seconds. *Tunable.*
@@ -648,40 +645,12 @@ pub fn result_text(words: Words<'_>, strike: &Strike) -> String {
     words.text_with(key, &[("n", &strike.damage)])
 }
 
-/// The playback box's size, in cells.
-pub const BOX_W: i32 = 44;
-
-/// The playback box: centred at the top of the map view.
-pub const BOX: Rect = Rect::new(
-    MAP_VIEW.x + (MAP_VIEW.w - BOX_W) / 2,
-    MAP_VIEW.y + 1,
-    BOX_W,
-    5,
-);
-
-/// Length of the box's HP bars, in cells.
-pub const BOX_BAR_CELLS: i32 = 10;
-
-/// Columns of the attacker's and the defender's text in the box.
-pub const BOX_COLUMNS: [i32; 2] = [BOX.x + 2, BOX.x + 2 + BOX_W / 2];
-
-/// Draws the playback box: both combatants' names (the striker's
-/// flashing before its strike), HP and HP bars, and the current strike's
-/// result under its target.
-pub fn draw_box(buf: &mut GlyphBuffer, palette: &Palette, words: Words<'_>, pb: &Playback) {
-    let (Some(bout), Some((step, local))) = (pb.bout(), pb.now()) else {
-        return;
-    };
-    let c = |u| palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    buf.fill_rect(BOX, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(BOX, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-    if let Some(name) = pb.banner() {
-        let text = format!(" {name} ");
-        let w = i32::try_from(text.chars().count()).unwrap_or(0);
-        let x = BOX.x + ((BOX.w - w) / 2).max(1);
-        buf.print(x, BOX.y, &text, c(UiColor::TextHighlight), bg);
-    }
+/// What the fight box shows now (combat animations off): both
+/// combatants' names (the striker's flashing before its strike) and HP,
+/// and the current strike's result under its target. `None` before the
+/// first combat and once the playback is over.
+pub fn box_view(words: Words<'_>, pb: &Playback) -> Option<FightBoxView> {
+    let (bout, (step, local)) = (pb.bout()?, pb.now()?);
     let flashing = match step.beat {
         Beat::Flash { strike, .. } => {
             // Whole half-periods since the flash began: on, off, on, …
@@ -698,42 +667,26 @@ pub fn draw_box(buf: &mut GlyphBuffer, palette: &Palette, words: Words<'_>, pb: 
         Beat::Result { strike, .. } | Beat::Gap { strike, .. } => bout.strikes.get(strike),
         _ => None,
     };
-    let sides = [
-        (Side::Attacker, &bout.attacker, BOX_COLUMNS[0]),
-        (Side::Defender, &bout.defender, BOX_COLUMNS[1]),
-    ];
-    for (side, f, x) in sides {
-        let color = c(faction_color(f.faction));
-        let (fg, name_bg) = if flashing == Some(side) {
-            (bg, color)
-        } else {
-            (color, bg)
-        };
-        // check-text: not a data name (the view's own)
-        buf.print(x, BOX.y + 1, &f.name, fg, name_bg);
-        let hp = pb.hp(f.unit).unwrap_or(f.start);
-        let hp_text = format!("{} {hp:>2}", stat_name(words, StatKind::Hp));
-        buf.print(x, BOX.y + 2, &hp_text, c(UiColor::Text), bg);
-        let (filled, bar) = hp_fill(hp, f.max, BOX_BAR_CELLS);
-        for i in 0..BOX_BAR_CELLS {
-            let (glyph, fg) = if i < filled {
-                ('█', c(bar))
-            } else {
-                ('░', c(UiColor::TextDim))
-            };
-            buf.set(x + 6 + i, BOX.y + 2, Cell::new(glyph, fg, bg));
-        }
+    let side = |side: Side, f: &Fighter| BoxFighterView {
+        // check-text: not a data name (the fighter's, named when the playback began)
+        name: f.name.clone(),
+        faction: f.faction,
+        flashing: flashing == Some(side),
+        hp: pb.hp(f.unit).unwrap_or(f.start),
+        max: f.max,
         // The result shows under the strike's target.
-        if let Some(s) = result.filter(|s| s.by != side) {
-            buf.print(
-                x,
-                BOX.y + 3,
-                &result_text(words, s),
-                c(UiColor::TextHighlight),
-                bg,
-            );
-        }
-    }
+        result: result
+            .filter(|s| s.by != side)
+            .map(|s| result_text(words, s)),
+    };
+    Some(FightBoxView {
+        banner: pb.banner().map(str::to_owned),
+        hp_name: stat_name(words, StatKind::Hp).to_owned(),
+        sides: [
+            side(Side::Attacker, &bout.attacker),
+            side(Side::Defender, &bout.defender),
+        ],
+    })
 }
 
 #[cfg(test)]
@@ -1140,39 +1093,45 @@ mod tests {
 
     #[test]
     fn the_box_flashes_the_striker_then_shows_the_result_under_the_target() {
-        let c = ctx();
-        let p = &c.palette;
-        let render = |t: f32| {
+        let shown = |t: f32| {
             let mut pb = playback();
             pb.tick(t, false);
-            let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
-            let mut buf = GlyphBuffer::new(100, 32, blank);
-            draw_box(&mut buf, p, Words::ENGLISH, &pb);
-            buf
+            box_view(Words::ENGLISH, &pb).expect("the box")
         };
-        let (lx, rx) = (BOX_COLUMNS[0], BOX_COLUMNS[1]);
-        let text = |buf: &GlyphBuffer, x: i32, y: i32, n: i32| -> String {
-            (x..x + n).map(|x| buf.get(x, y).unwrap().glyph).collect()
-        };
-        // The first flash's first half-period: the lord's name inverted.
-        let buf = render(T.intro + T.blink / 2.0);
-        assert_eq!(text(&buf, lx, BOX.y + 1, 9), "Test Lord");
-        assert_eq!(buf.get(lx, BOX.y + 1).unwrap().bg, p.get(UiColor::Player));
-        // Its second half-period: normal.
-        let buf = render(T.intro + T.blink * 1.5);
-        assert_eq!(buf.get(lx, BOX.y + 1).unwrap().bg, p.get(UiColor::PanelBg));
+        let flashing = |v: &FightBoxView| v.sides.each_ref().map(|s| s.flashing);
+        let results = |v: &FightBoxView| v.sides.each_ref().map(|s| s.result.clone());
+        // At the start: both of them, no result, nothing flashing.
+        let v = shown(0.0);
+        assert_eq!((v.banner.as_deref(), v.hp_name.as_str()), (None, "HP"));
+        let [lord, brigand] = &v.sides;
+        assert_eq!(
+            (lord.name.as_str(), lord.faction),
+            ("Test Lord", Faction::Player)
+        );
+        assert_eq!((brigand.hp, brigand.max), (20, 20));
+        assert_eq!((lord.hp, lord.max), (19, 19));
+        assert_eq!(flashing(&v), [false, false]);
+        assert_eq!(results(&v), [None, None]);
+        // The first flash's first half-period: the lord's name lit; its
+        // second: not.
+        assert_eq!(flashing(&shown(T.intro + T.blink / 2.0)), [true, false]);
+        assert_eq!(flashing(&shown(T.intro + T.blink * 1.5)), [false, false]);
         // The result under the brigand; the drain done by the gap.
-        let buf = render(T.intro + T.flash + T.result + T.gap / 2.0);
-        assert_eq!(text(&buf, rx, BOX.y + 3, 6), "HIT -8");
-        assert_eq!(text(&buf, rx, BOX.y + 2, 5), "HP 12");
-        assert_eq!(text(&buf, lx, BOX.y + 3, 6), "      ");
+        let v = shown(T.intro + T.flash + T.result + T.gap / 2.0);
+        assert_eq!(results(&v), [None, Some("HIT -8".into())]);
+        assert_eq!(v.sides[1].hp, 12);
         // The brigand's miss shows under the lord.
         let second = T.intro + 2.0 * (T.flash + T.result + T.gap);
-        let buf = render(second - T.gap / 2.0);
-        assert_eq!(text(&buf, lx, BOX.y + 3, 4), "MISS");
-        // At the start: the box, no result.
-        let buf = render(0.0);
-        assert_eq!(text(&buf, lx, BOX.y + 1, 9), "Test Lord");
-        assert_eq!(text(&buf, lx, BOX.y + 3, 6), "      ");
+        let v = shown(second - T.gap / 2.0);
+        assert_eq!(results(&v), [Some("MISS".into()), None]);
+        // The art's or active's name, if any.
+        let named = playback().with_banner(Some("Guard Break".into()));
+        let v = box_view(Words::ENGLISH, &named).unwrap();
+        assert_eq!(v.banner.as_deref(), Some("Guard Break"));
+        // Through the fall to the end: the last combat, its result gone.
+        let mut over = playback();
+        over.skip();
+        let v = box_view(Words::ENGLISH, &over).unwrap();
+        assert_eq!((results(&v), v.sides[1].hp), ([None, None], 0));
     }
 }

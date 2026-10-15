@@ -10,6 +10,7 @@ use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
 use crate::screens::battle::progress::Page;
 use crate::screens::battle::quick_battle;
+use crate::screens::battle::view::ProgressView;
 
 pub(super) fn state() -> BattleState {
     quick_battle(&ctx().content).unwrap()
@@ -179,8 +180,14 @@ fn a_press_on_full_bars_shows_the_level_up_which_waits_for_its_own() {
         let ResultsBody::LevelUp(page) = s.view(&c).body else {
             panic!("the level-up page is up");
         };
-        assert!(matches!(page.page(), Some(Page::LevelUp(p)) if p.unit == UnitId(1)));
-        assert_eq!(page.stats_shown(), 0);
+        let Some(ProgressView::Gains(g)) = page.as_deref() else {
+            panic!("{page:?}")
+        };
+        assert_eq!(
+            (g.banner.as_str(), g.name.as_str()),
+            ("LEVEL UP!", "Test Lord")
+        );
+        assert_eq!(stats_shown(page.as_deref()), 0);
         // The help is the page's: it is still revealing its stats.
         assert_eq!(s.view(&c).help, "f skip · hold f fast");
         // It reveals its stats and then waits, however long.
@@ -188,10 +195,18 @@ fn a_press_on_full_bars_shows_the_level_up_which_waits_for_its_own() {
         let ResultsBody::LevelUp(page) = s.view(&c).body else {
             panic!("the level-up page is up");
         };
-        assert_eq!(page.stats_shown(), 7);
+        assert_eq!(stats_shown(page.as_deref()), 7);
         assert_eq!(s.view(&c).help, "f continue");
         assert!(!press(&mut s, Action::CursorDown));
         assert!(press(&mut s, key), "{key:?} closes the last page");
+    }
+}
+
+/// How many stat rows the level-up `page` shows.
+fn stats_shown(page: Option<&ProgressView>) -> usize {
+    match page {
+        Some(ProgressView::Gains(g)) => g.stats.len(),
+        other => panic!("not a level up: {other:?}"),
     }
 }
 
@@ -202,7 +217,7 @@ fn a_press_mid_reveal_shows_every_stat_before_closing() {
     press(&mut s, Action::Confirm);
     press(&mut s, Action::Confirm);
     let stats = |s: &ResultsScreen| match s.view(&c).body {
-        ResultsBody::LevelUp(page) => page.stats_shown(),
+        ResultsBody::LevelUp(page) => stats_shown(page.as_deref()),
         ResultsBody::Tally(_) => panic!("the level-up page is up"),
     };
     assert!(stats(&s) < 7);

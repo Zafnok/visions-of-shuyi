@@ -12,10 +12,9 @@ use trpg_core::{
 
 use super::banner::Banner;
 use super::mode::Mode;
-use super::progress::{
-    EXP_BOX, LEVEL_BANNER_ROW, LEVEL_TEXT_X, PROGRESS_TIMINGS, Page, STAT_ROW, stat_row,
-};
+use super::progress::{PROGRESS_TIMINGS, Page};
 use super::testing::{battle, quick_units, wait};
+use super::view::{ExpView, GainsView, ProgressView, StatGainView};
 use super::{BattleScreen, Queued};
 use crate::harness::{FRAME_DT, Harness};
 use crate::input::Action;
@@ -66,22 +65,27 @@ fn expected(state: &BattleState) -> (BattleState, Vec<Event>) {
 const ATTACK_KEYS: &str = "f Right f";
 const TARGET_KEYS: &str = "f Down f d";
 
-/// Cells `x..x + w` of row `y`.
-fn text(h: &Harness, x: i32, y: i32, w: i32) -> String {
-    let buf = h.game().buffer();
-    (x..x + w)
-        .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
-        .collect()
-}
-
 /// The help line of the battle on `h` (ADR-0054: read from its view).
 fn help(h: &Harness) -> String {
     h.battle().expect("a battle").view(h.game().ctx()).help
 }
 
-/// Whether some row shows `s`.
+/// Whether the battle on `h` shows `s` (in its view).
 fn shows(h: &Harness, s: &str) -> bool {
-    (0..32).any(|y| text(h, 0, y, 100).contains(s))
+    h.battle().expect("a battle").view(h.game().ctx()).shows(s)
+}
+
+/// The EXP bar or level-up page on screen.
+fn page(h: &Harness) -> Option<ProgressView> {
+    h.battle().expect("a battle").view(h.game().ctx()).progress
+}
+
+/// The level-up page on screen.
+fn level_up(h: &Harness) -> GainsView {
+    match page(h) {
+        Some(ProgressView::Gains(g)) => g,
+        other => panic!("not a level up: {other:?}"),
+    }
 }
 
 /// The skirmish in the harness, the attack sent and its playback skipped.
@@ -113,32 +117,32 @@ fn a_level_up_fills_the_bar_then_shows_the_events_numbers() {
         Event::ExpGained { amount, .. } => Some(*amount),
         _ => None,
     });
-    let shown = format!("{:>2}", (99 + gained.unwrap_or(0)) % 100);
-    assert!(shows(&h, "EXP "), "the bar");
-    assert!(shows(&h, &shown));
-    // Everything inside the box: its right border is whole.
-    let right = EXP_BOX.x + EXP_BOX.w - 1;
-    assert_eq!(text(&h, right, EXP_BOX.y + 1, 1), "║");
-    assert_eq!(text(&h, right - 3, EXP_BOX.y + 1, 2), shown);
+    let shown = (99 + gained.unwrap_or(0)) % 100;
+    let Some(ProgressView::Exp(ExpView { name, exp, max, .. })) = page(&h) else {
+        panic!("the bar: {:?}", page(&h))
+    };
+    assert_eq!((name.as_str(), exp, max), ("Test Lord", shown, 100));
     assert_snapshot!("exp_bar", h.snapshot());
     // Then the level-up page, its stats appearing one by one.
     h.wait(PROGRESS_TIMINGS.exp_hold);
-    assert!(shows(&h, "LEVEL UP!"));
-    assert_eq!(text(&h, LEVEL_TEXT_X, LEVEL_BANNER_ROW + 3, 6), "Lv 1 →");
-    assert_eq!(text(&h, LEVEL_TEXT_X, STAT_ROW + 6, 3), "   ");
+    let page = level_up(&h);
+    assert_eq!(
+        (page.banner.as_str(), page.line.as_str()),
+        ("LEVEL UP!", "Lv 1 → 2")
+    );
+    assert!(page.stats.len() < 7, "{:?}", page.stats);
     h.wait(2.0);
     let lord = &state.units()[0];
-    for (i, kind) in StatKind::GROWABLE.iter().enumerate() {
-        let row = stat_row(
-            crate::Words::ENGLISH,
-            *kind,
-            lord.stats.get(*kind),
-            gains.1.0[i],
-        );
-        let w = i32::try_from(row.chars().count()).unwrap_or(0);
-        let y = STAT_ROW + i32::try_from(i).unwrap_or(0);
-        assert_eq!(text(&h, LEVEL_TEXT_X, y, w), row);
-    }
+    let rows: Vec<StatGainView> = StatKind::GROWABLE
+        .iter()
+        .enumerate()
+        .map(|(i, kind)| StatGainView {
+            name: super::info::stat_name(crate::Words::ENGLISH, *kind).to_owned(),
+            before: lord.stats.get(*kind),
+            gain: gains.1.0[i],
+        })
+        .collect();
+    assert_eq!(level_up(&h).stats, rows);
     assert_eq!(help(&h), "f continue");
     assert_snapshot!("level_up", h.snapshot());
     // Confirm closes it: browsing again.
@@ -173,11 +177,17 @@ fn the_leads_level_up_page_shows_the_face_the_player_picked() {
         let mut h = attacked(state);
         h.ctx_mut().lead = LeadProfile::new("Ren", gender);
         h.wait(EXP_S + 2.0);
-        assert!(shows(&h, "LEVEL UP!"));
+        let page = level_up(&h);
+        assert_eq!(page.banner, "LEVEL UP!");
+        let shown = page.face.expect("a face").portrait;
+        assert_eq!(shown, face);
+        // Painted.
         let ctx = h.game().ctx();
         let buf = h.game().buffer();
-        assert!(super::progress::shows_face_of(buf, ctx, face), "{face}");
-        assert!(!super::progress::shows_face_of(buf, ctx, "test_lord"));
+        assert!(
+            super::glyph::progress::shows_face_of(buf, ctx, face),
+            "{face}"
+        );
     }
 }
 

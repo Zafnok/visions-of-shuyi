@@ -4,7 +4,7 @@
 use super::*;
 use crate::input::Action;
 use crate::screen::{Screen, tests::ctx};
-use crate::screens::battle::progress::{LEVEL_BANNER_ROW, LEVEL_TEXT_X};
+use crate::screens::battle::glyph::progress::{LEVEL_BANNER_ROW, LEVEL_TEXT_X};
 use crate::screens::results::tests::{deployed, press, rewards, screen, state, wait};
 use crate::screens::results::{FILL_S, INTRO_S, ResultsScreen};
 use crate::words::Words;
@@ -35,7 +35,7 @@ fn shows(buf: &GlyphBuffer, text: &str) -> bool {
 
 #[test]
 fn the_leads_level_up_page_shows_the_face_the_player_picked() {
-    use crate::screens::battle::progress::shows_face_of;
+    use crate::screens::battle::glyph::progress::shows_face_of;
     use trpg_core::CharacterId;
     use trpg_core::lead::{LEAD_ID, LeadGender, LeadProfile};
     for (gender, face) in [(LeadGender::Male, "lead_m"), (LeadGender::Female, "lead_f")] {
