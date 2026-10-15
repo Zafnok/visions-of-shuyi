@@ -6,13 +6,14 @@
 //! key. A pack entry carries the English it was made from; when that is
 //! no longer today's English the entry is **stale**, and a key with no
 //! entry is **missing**. Both show in English and fail nothing.
+use crate::prelude::*;
 
 mod data;
 mod lines;
 
-use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
-use std::sync::LazyLock;
+use alloc::collections::{BTreeMap, BTreeSet};
+use core::fmt;
+use once_cell::race::OnceBox;
 
 use serde::Deserialize;
 use serde::de::{Deserializer, MapAccess, Visitor};
@@ -342,12 +343,12 @@ pub fn english_from_source(
 /// with no [`Lang`] at hand. Empty if the file is broken (loading the
 /// content reports that).
 pub fn english_ui() -> &'static BTreeMap<String, String> {
-    static ENGLISH_UI: LazyLock<BTreeMap<String, String>> = LazyLock::new(|| {
+    static ENGLISH_UI: OnceBox<BTreeMap<String, String>> = OnceBox::new();
+    ENGLISH_UI.get_or_init(|| {
         let path = format!("{LANG_DIR}/{ENGLISH}/{UI_FILE}");
         let english = bundle::file(&path).map(|source| english_from_source(&path, source));
-        english.and_then(Result::ok).unwrap_or_default()
-    });
-    &ENGLISH_UI
+        Box::new(english.and_then(Result::ok).unwrap_or_default())
+    })
 }
 
 /// A file of a pack: the name it is reported under, and its text.

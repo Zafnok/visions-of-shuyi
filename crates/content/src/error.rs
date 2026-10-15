@@ -1,7 +1,8 @@
 //! Content errors: every problem names the file and, when known, the line and
 //! column, so a broken asset can be fixed without reading Rust (ADR-0005).
+use crate::prelude::*;
 
-use std::fmt;
+use core::fmt;
 
 /// One problem found while loading or validating an asset.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]

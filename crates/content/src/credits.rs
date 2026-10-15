@@ -7,8 +7,9 @@
 //! A bought work (ADR-0032) names the folders of `assets-private/game/` it
 //! covers (ADR-0051). It is shown only in a build that has files there, and
 //! [`uncredited`] finds the bought files no credit covers.
+use crate::prelude::*;
 
-use std::collections::BTreeSet;
+use alloc::collections::BTreeSet;
 
 use serde::Deserialize;
 

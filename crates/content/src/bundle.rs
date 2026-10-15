@@ -12,8 +12,9 @@
 //! the **test files** in `assets-test/` (ADR-0057): the characters, chapter,
 //! battles and pictures of the tests and the debug tools. They are added
 //! after the story's files ([`TEST_FILES`]); a build that ships has none.
+use crate::prelude::*;
 
-use std::cell::Cell;
+use core::cell::Cell;
 
 use include_dir::{Dir, File, include_dir};
 
@@ -303,6 +304,63 @@ mod tests {
         assert!(files_in("data").iter().all(|f| data.contains(f)));
         assert!(!files_in("data").contains(&"data/palettes/moonlit.ron"));
         assert!(files_under("no_such_dir").is_empty());
+    }
+
+    /// `assets/` alone, as `include_dir` embeds it: what the `no_std`
+    /// bundle's table must hold.
+    static ASSETS_ONLY: &[Layer] = &[Layer {
+        display_root: DISPLAY_ROOT,
+        dir: &ASSETS,
+        test: false,
+    }];
+
+    /// The `no_std` bundle (`build.rs`'s table) and `include_dir` list the
+    /// same files of `assets/` with the same bytes, and answer every
+    /// function the same, so the two can't drift (ADR-0070 §3).
+    #[test]
+    fn the_no_std_table_holds_the_same_files_as_include_dir() {
+        use crate::bundle_table as table;
+
+        let all = list(ASSETS_ONLY, "", true);
+        assert!(all.len() > 100, "{} files", all.len());
+        assert_eq!(table::files_under(""), all);
+        for path in &all {
+            let (_, embedded) = find(ASSETS_ONLY, path).unwrap();
+            assert_eq!(table::bytes(path), Some(embedded.contents()), "{path}");
+            assert_eq!(table::file(path), embedded.contents_utf8(), "{path}");
+            assert_eq!(table::display_path(path), display_in(ASSETS_ONLY, path));
+        }
+        for dir in ["", "data", "audio", "audio/sfx", "lang", "no_such_dir"] {
+            assert_eq!(table::files_in(dir), list(ASSETS_ONLY, dir, false), "{dir}");
+            assert_eq!(
+                table::files_under(dir),
+                list(ASSETS_ONLY, dir, true),
+                "{dir}"
+            );
+        }
+        assert_eq!(table::bytes("data/nope.ron"), None);
+        assert_eq!(table::file("data/nope.ron"), None);
+        assert_eq!(table::test_part("data/characters.ron"), None);
+        const { assert!(!table::TEST_FILES) };
+        assert_eq!(table::story_only(|| 7), 7);
+        let roots = [
+            (table::DISPLAY_ROOT, DISPLAY_ROOT),
+            (table::PRIVATE_DISPLAY_ROOT, PRIVATE_DISPLAY_ROOT),
+            (table::TEST_DISPLAY_ROOT, TEST_DISPLAY_ROOT),
+            (table::PRIVATE_TEST_DISPLAY_ROOT, PRIVATE_TEST_DISPLAY_ROOT),
+        ];
+        assert!(roots.iter().all(|(table, here)| table == here));
+        assert_eq!(
+            table::test_display_path("x/y.png"),
+            test_display_path("x/y.png")
+        );
+        for shown in [
+            "assets-private/game/x.png",
+            "assets-private/test/x",
+            "assets/x",
+        ] {
+            assert_eq!(table::is_private(shown), is_private(shown), "{shown}");
+        }
     }
 
     #[test]

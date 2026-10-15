@@ -3,8 +3,9 @@
 //! A map names its light in its header's `look`
 //! ([`MapLook::light`](crate::MapLook::light)); a battle file may name
 //! another. Look data only: the rules never see it.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 
@@ -79,7 +80,7 @@ impl Default for Light {
 /// `v` (0 to 1) in thousandths. NaN counts as 0.
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // clamped first
 fn parts(v: f32) -> u16 {
-    (v * f32::from(PARTS)).round().clamp(0.0, f32::from(PARTS)) as u16
+    libm::roundf(v * f32::from(PARTS)).clamp(0.0, f32::from(PARTS)) as u16
 }
 
 /// Thousandths as a fraction.
@@ -90,7 +91,7 @@ fn fraction(parts: u16) -> f32 {
 /// Rounds and saturates a channel value to `0..=255`.
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // clamped first
 fn to_channel(v: f32) -> u8 {
-    v.round().clamp(0.0, 255.0) as u8
+    libm::roundf(v).clamp(0.0, 255.0) as u8
 }
 
 /// Every light, by name.

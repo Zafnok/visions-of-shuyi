@@ -1,8 +1,9 @@
 //! Named characters, generic unit templates and dialogue speakers
 //! (`assets/data/characters.ron`).
+use crate::prelude::*;
 
-use std::collections::btree_map::Entry;
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::btree_map::Entry;
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::{

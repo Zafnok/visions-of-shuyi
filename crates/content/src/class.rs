@@ -1,6 +1,7 @@
 //! The class tree (`assets/data/classes.ron`) → [`trpg_core::ClassTable`].
+use crate::prelude::*;
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::{

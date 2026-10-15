@@ -7,10 +7,11 @@
 //! loader must parse chords and action names to validate the file, and
 //! `trpg-ui` depends on this crate, not the other way round. `trpg-ui::input`
 //! re-exports them.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
-use std::fmt;
-use std::str::FromStr;
+use alloc::collections::BTreeMap;
+use core::fmt;
+use core::str::FromStr;
 
 use serde::Deserialize;
 

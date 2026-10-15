@@ -2,7 +2,6 @@
 //! dependency (ADR-0004), so each enum is mirrored here with the same variant
 //! names and converted with `From`. An unknown variant name is a RON parse
 //! error with a line and column.
-
 use serde::Deserialize;
 
 /// Declares a deserializable mirror of a core enum and its conversion.

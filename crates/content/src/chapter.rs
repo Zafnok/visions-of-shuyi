@@ -2,8 +2,9 @@
 //! around a battle (its scenes and what comes next), and the New Game file
 //! (`assets/data/new_game.ron`): the first chapter, roster, gold and stock.
 //! See `assets/chapters/README.md`.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 use trpg_core::{

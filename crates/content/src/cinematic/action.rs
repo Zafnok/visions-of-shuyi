@@ -4,8 +4,9 @@
 //! the list can be drawn (the units exist, a walk starts where its unit
 //! is, a unit that fell does nothing more). The format is described in
 //! `assets/cinematics/README.md`.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 use serde::de::value::SeqAccessDeserializer;
@@ -96,7 +97,7 @@ impl<'de> Deserialize<'de> for RawActionRef {
         impl<'de> Visitor<'de> for Either {
             type Value = RawActionRef;
 
-            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            fn expecting(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
                 f.write_str("a list of actions, or the name of one in `actions`")
             }
 

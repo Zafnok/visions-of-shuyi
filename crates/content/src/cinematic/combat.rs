@@ -8,8 +8,9 @@
 //! content is loaded, so a rebalance that makes one impossible fails the
 //! content check, not the title. The format is described in
 //! `assets/cinematics/README.md`.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use trpg_core::{
     BattleState, CastTarget, Command, Equipped, Event, GameMode, LeadGender, LeadProfile, Phase,

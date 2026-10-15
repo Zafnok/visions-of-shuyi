@@ -1,8 +1,9 @@
 //! Battle files (`assets/battles/*.ron`, ticket 0801): everything needed to
 //! play one battle. See `assets/battles/README.md` for the format; the
 //! loader builds a [`BattleDef`] and checks every rule listed there.
+use crate::prelude::*;
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::{

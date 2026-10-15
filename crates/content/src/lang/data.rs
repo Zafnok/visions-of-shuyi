@@ -4,8 +4,9 @@
 //! that give each in a language. English stays in the data files; a lookup
 //! is handed today's English and returns the pack's text only when its
 //! entry was made from exactly that.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use trpg_core::{
     ArtDef, ArtTable, BattleDef, BattleNote, ClassId, ClassTable, ItemId, ItemTable, SkillDef,

@@ -1,5 +1,6 @@
 //! The AI's numbers (`assets/data/ai.ron`, ticket 0501). The rules that use
 //! them are in `trpg_core::ai`.
+use crate::prelude::*;
 
 use trpg_core::AiWeights;
 

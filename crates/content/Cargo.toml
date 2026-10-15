@@ -11,6 +11,11 @@ repository.workspace = true
 workspace = true
 
 [features]
+default = ["std"]
+# Without it the crate is `no_std` + `alloc` for the Playdate (ADR-0070 §3):
+# the bundle is the table `build.rs` writes instead of `include_dir`, with no
+# test files and no private layer.
+std = ["dep:include_dir", "trpg-core/std", "ron/std", "thiserror/std", "serde/std"]
 # Embeds the bought art in `assets-private/game/` over `assets/` (ADR-0040).
 # Turned on only by builds that ship (Pages, release.yml) and by hand to look
 # at the art; never by a gate, so tests always read the public placeholders.
@@ -23,11 +28,14 @@ private-assets = []
 test-fixtures = []
 
 [dependencies]
-trpg-core = { path = "../core" }
+trpg-core = { path = "../core", default-features = false }
 serde.workspace = true
 ron.workspace = true
-include_dir.workspace = true
+include_dir = { workspace = true, optional = true }
 thiserror.workspace = true
+# `LazyLock` and float rounding without `std` (ADR-0070 §3).
+once_cell.workspace = true
+libm.workspace = true
 
 [dev-dependencies]
 # Turns on `test-fixtures` for this crate's own tests in any profile.

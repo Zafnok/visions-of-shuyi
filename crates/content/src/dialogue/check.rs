@@ -2,8 +2,9 @@
 //! expressions, text length, lead and name tokens, names written out, lead
 //! lines, reply choices, `@if` blocks, music cues, line ids that clash,
 //! and scene ids unique across files.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use trpg_core::CharacterId;
 use trpg_core::lead::{self, LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE, Part};

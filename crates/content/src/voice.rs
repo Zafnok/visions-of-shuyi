@@ -7,8 +7,9 @@
 //! A clip records the words it says (`spoken`). When the line says
 //! something else today (a name in `names.ron` changed), the clip is
 //! **stale** and is left out of the [`Playable`] set.
+use crate::prelude::*;
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::lead::{self, LeadGender, LeadProfile, Part};

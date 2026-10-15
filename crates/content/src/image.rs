@@ -2,9 +2,9 @@
 //! atlas, by bundle path, with its size. Screens name a picture by an
 //! [`ImageId`] from this table; `app` decodes and draws it. `content` reads
 //! only each file's header, never its pixels.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
-use std::path::Path;
+use alloc::collections::BTreeMap;
 
 use crate::bundle;
 use crate::error::ContentError;
@@ -110,9 +110,9 @@ impl ImageTable {
 
 /// Whether `path` is named as a PNG (`.png`, any case).
 fn is_png(path: &str) -> bool {
-    Path::new(path)
-        .extension()
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("png"))
+    path.rsplit_once('.').is_some_and(|(stem, ext)| {
+        !stem.is_empty() && !stem.ends_with('/') && ext.eq_ignore_ascii_case("png")
+    })
 }
 
 /// The size in PNG file `bytes`, or what is wrong with it in plain words.

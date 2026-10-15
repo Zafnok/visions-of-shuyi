@@ -1,7 +1,8 @@
 //! Terrain types (`assets/data/terrain.ron`): the rules half becomes a
 //! [`trpg_core::TerrainTable`], the look half a [`TerrainDisplayTable`].
+use crate::prelude::*;
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::{TerrainId, TerrainRules, TerrainTable};

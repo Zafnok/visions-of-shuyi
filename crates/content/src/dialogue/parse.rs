@@ -2,6 +2,7 @@
 //! (unknown directives, bad ids, missing `@end`, blocks left open, non-ASCII
 //! text); checks
 //! that need the whole scene or other files are in `check`.
+use crate::prelude::*;
 
 use trpg_core::CharacterId;
 
@@ -609,7 +610,7 @@ impl Parser<'_> {
             Some((speaker, expression)) => (speaker, Some(expression)),
             None => (head, None),
         };
-        for id in std::iter::once(speaker).chain(expression) {
+        for id in core::iter::once(speaker).chain(expression) {
             if !is_id(id) {
                 self.bad_id(n, id);
             }

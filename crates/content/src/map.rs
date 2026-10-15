@@ -4,8 +4,9 @@
 //!
 //! A header may also say how the map looks ([`MapLook`]). That is kept
 //! beside the map the rules see, never in it (ADR-0038).
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 use trpg_core::{

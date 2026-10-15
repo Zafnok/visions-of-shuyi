@@ -87,7 +87,7 @@ jobs:
           path: dist/web
 
   # the rules build without `std` for the Playdate (ADR-0070 §3); 1028
-  # and 1029 add `trpg-content` and `trpg-ui` here.
+  # added `trpg-content`; 1029 adds `trpg-ui`.
   no-std:
     name: no-std
     needs: changes
@@ -101,6 +101,7 @@ jobs:
       - run: rustup target add thumbv7em-none-eabihf
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf --locked
+      - run: cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf --locked
 
   docs:
     name: docs
