@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-15
 ---
 
 # 0056 — Decide: Cinder Oath's range
@@ -83,10 +83,10 @@ comparison is worse than none.
 
 ## Acceptance criteria
 
-- [ ] `magic.md` and `heretic.md` record the answer and Nick's words.
-- [ ] `spells.ron` matches it.
-- [ ] Sim result written in the Completion notes; replay tests pass.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `magic.md` and `heretic.md` record the answer and Nick's words.
+- [x] `spells.ron` matches it.
+- [x] Sim result written in the Completion notes; replay tests pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -94,4 +94,26 @@ comparison is worse than none.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Asked Nick (2026-10-15) with the flavor and the four options (Into the
+Breach's Flame Mech, GBA Elfire/Bolganone, Three Houses' Windsweep, GBA
+bows). Nick: "C, but only because of flavor, and it should get upgraded
+later in the game after some personal arc or a support level increase".
+On what triggers the upgrade: "we'll iterate it later, it might be a story
+beat, or a support level, but until we have ch1 playtest done and other P0
+items then this is not a conversation worth having".
+
+- Recorded in `magic.md` (*Personal signature spells* → *Cinder Oath: range
+  1, no counter*, and the open-questions list) and in Rue's sheet
+  (`heretic.md`): Cinder Oath stays range 1 and the enemy can't counter
+  it; Kept Promise (1–3) is its later upgrade, trigger open.
+- The engine has no-counter only for arts, not spells, so the rule is
+  follow-up **0317** (attack spells the enemy can't counter), added to
+  0804's `blocked_by` and the roadmap. `spells.ron` keeps its numbers (no
+  field to set yet); only its comment changed.
+- **Sim not re-run:** no number in the data changed, so the Chapter 1 sim
+  and the winning replay play exactly as before. 0317 re-runs both when
+  the rule changes play. The full test suite (including the replay tests)
+  passes.
+- *Claude's starting rule:* "no counter" covers only Rue's own attack. If
+  Cinder Oath is her equipped attack and an enemy attacks her from the
+  next tile, she still counters with it, as any attack spell does.

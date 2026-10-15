@@ -117,8 +117,15 @@ Numbers are set by 0005 or a balance ticket (`magic.md`).
 
 | Spell | Kind | Element | Effect (one line) |
 | ----- | ---- | ------- | ----------------- |
-| **Cinder Oath** | Attack | Fire | The vow she swore at the Ashfields. A close-range fire strike (range 1) with high might and few uses; it can burn a forest tile like any fire vow. Known from the start. |
-| **Kept Promise** | Attack | Fire | The vow she swears anew (Act 2): a longer-range fire attack (range 1–3) with lower hit. Learned at a set level. |
+| **Cinder Oath** | Attack | Fire | The vow she swore at the Ashfields. A close-range fire strike (range 1) with high might and few uses: she grabs the enemy with her burned hands, and it **can't strike back** (0056). It can burn a forest tile like any fire vow. Known from the start. |
+| **Kept Promise** | Attack | Fire | The vow she swears anew (Act 2): Cinder Oath's upgrade, a longer-range fire attack (range 1–3) with lower hit. What triggers it (a beat of her personal arc, or a support level) is open (0056). |
+
+Nick on Cinder Oath (2026-10-15, ticket 0056): "C, but only because of
+flavor, and it should get upgraded later in the game after some personal arc
+or a support level increase". On what triggers the upgrade: "we'll iterate it
+later, it might be a story beat, or a support level, but until we have ch1
+playtest done and other P0 items then this is not a conversation worth
+having".
 
 ## Support partners
 
