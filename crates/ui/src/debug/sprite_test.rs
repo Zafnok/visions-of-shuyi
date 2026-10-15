@@ -8,7 +8,7 @@ use trpg_content::image::TEST_CARD_PATH;
 
 use crate::audio::MenuSound;
 use crate::color::UiColor;
-use crate::console::{CELL_H_PX, CELL_W_PX};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, PxRect, Rect, Sprite};
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
@@ -42,9 +42,11 @@ impl SpriteTestScreen {
     pub const NAME: &'static str = "sprite_test";
 }
 
-/// The console pixel at the top-left of cell `(col, row)`.
-fn cell_px(col: i32, row: i32) -> (i32, i32) {
-    (col * i32::from(CELL_W_PX), row * i32::from(CELL_H_PX))
+/// The console pixel at the top-left of cell `(col, row)` of a `spec`
+/// console.
+fn cell_px(spec: ConsoleSpec, col: i32, row: i32) -> (i32, i32) {
+    let (cw, ch) = spec.cell_px();
+    (col * cw, row * ch)
 }
 
 impl Screen for SpriteTestScreen {
@@ -85,8 +87,9 @@ impl Screen for SpriteTestScreen {
         let (width, height) = (px(info.width), px(info.height));
         let whole = Rect::new(0, 0, width, height);
         // All of the card at `scale`, its top-left at cell `(col, row)`.
+        let spec = buf.spec();
         let card_at = |col: i32, row: i32, scale: i32| {
-            let (left, top) = cell_px(col, row);
+            let (left, top) = cell_px(spec, col, row);
             let dest: PxRect = Rect::new(left, top, width * scale, height * scale);
             Sprite::new(card, whole, dest, Layer::Over)
         };
@@ -152,14 +155,13 @@ mod tests {
     use trpg_content::ImageId;
 
     use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::screen::tests::ctx;
 
     fn draw(ctx: &Ctx) -> GlyphBuffer {
         let p = &ctx.palette;
-        let mut buf = GlyphBuffer::new(
-            CONSOLE_W,
-            CONSOLE_H,
+        let mut buf = GlyphBuffer::with_spec(
+            ConsoleSpec::PC,
             Cell::new('x', p.get(UiColor::Text), p.get(UiColor::PanelBg)),
         );
         SpriteTestScreen.draw(ctx, &mut buf);
@@ -172,8 +174,8 @@ mod tests {
 
     #[test]
     fn cell_px_is_the_cells_top_left_pixel() {
-        assert_eq!(cell_px(0, 0), (0, 0));
-        assert_eq!(cell_px(3, 2), (24, 32));
+        assert_eq!(cell_px(ConsoleSpec::PC, 0, 0), (0, 0));
+        assert_eq!(cell_px(ConsoleSpec::PC, 3, 2), (24, 32));
     }
 
     #[test]

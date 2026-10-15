@@ -1,5 +1,5 @@
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::input::{
     Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Key, KeyGroup, PadKind, SLOTS,
 };
@@ -76,7 +76,7 @@ fn painted(c: &Ctx, view: &KeyBindingsView) -> GlyphBuffer {
         c.palette.get(UiColor::Enemy),
         c.palette.get(UiColor::Enemy),
     );
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     paint(c, view, &mut buf);
     buf
 }
@@ -134,7 +134,10 @@ fn the_title_switch_columns_and_groups_have_their_rows() {
     assert_eq!(placed.restore, 28);
     assert!(text(&buf, 28).contains("Restore defaults"));
     assert!(text(&buf, 29).contains('└'));
-    assert_eq!(text(&buf, i32::from(CONSOLE_H) - 1).trim(), "help");
+    assert_eq!(
+        text(&buf, i32::from(ConsoleSpec::PC.rows) - 1).trim(),
+        "help"
+    );
 }
 
 #[test]
@@ -142,8 +145,8 @@ fn it_covers_the_whole_buffer() {
     let c = ctx();
     let stale = c.palette.get(UiColor::Enemy);
     let buf = painted(&c, &view(Side::Keyboard));
-    let left = (0..i32::from(CONSOLE_H))
-        .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+    let left = (0..i32::from(ConsoleSpec::PC.rows))
+        .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
         .filter(|&(x, y)| buf.get(x, y).is_some_and(|c| c.bg == stale))
         .count();
     assert_eq!(left, 0, "an opaque screen covers the whole buffer");
@@ -330,7 +333,11 @@ fn the_message_is_painted_under_the_panel_in_the_warning_colour() {
     let bottom = PANEL.y + PANEL.h - 1;
     assert!(text(&buf, bottom).contains('└'));
     assert_eq!(MESSAGE_ROW, bottom + 1);
-    assert_eq!(MESSAGE_ROW, i32::from(CONSOLE_H) - 2, "over the help line");
+    assert_eq!(
+        MESSAGE_ROW,
+        i32::from(ConsoleSpec::PC.rows) - 2,
+        "over the help line"
+    );
     let message = text(&buf, MESSAGE_ROW);
     assert_eq!(message.trim(), "Give Cancel a key first");
     let x = x_of(&buf, MESSAGE_ROW, "Give");
@@ -349,7 +356,7 @@ fn the_question_is_a_box_in_the_middle_with_its_answers_under_it() {
         answers: "f yes / d no".to_owned(),
     });
     let buf = painted(&c, &v);
-    let top = (i32::from(CONSOLE_H) - QUESTION_H) / 2;
+    let top = (i32::from(ConsoleSpec::PC.rows) - QUESTION_H) / 2;
     let border = format!("╔{}╗", "═".repeat(44));
     assert!(text(&buf, top).contains(&border), "{}", text(&buf, top));
     assert!(text(&buf, top + 2).contains("║ Restore the default keys for Right-handed? ║"));
@@ -358,7 +365,7 @@ fn the_question_is_a_box_in_the_middle_with_its_answers_under_it() {
     // No question, no box.
     v.question = None;
     let buf = painted(&c, &v);
-    assert!(!(0..i32::from(CONSOLE_H)).any(|y| text(&buf, y).contains('║')));
+    assert!(!(0..i32::from(ConsoleSpec::PC.rows)).any(|y| text(&buf, y).contains('║')));
 }
 
 /// The choices go under the slot, or over it on the last rows.
@@ -419,7 +426,7 @@ fn choices_with_no_focused_row_are_not_painted() {
         slot: 0,
     });
     let buf = painted(&c, &v);
-    assert!(!(0..i32::from(CONSOLE_H)).any(|y| text(&buf, y).contains('╔')));
+    assert!(!(0..i32::from(ConsoleSpec::PC.rows)).any(|y| text(&buf, y).contains('╔')));
 }
 
 #[test]

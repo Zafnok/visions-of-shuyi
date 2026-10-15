@@ -10,7 +10,7 @@ use trpg_core::StatKind;
 use super::motion::Pose;
 use super::view::{FighterView, StageView};
 use crate::color::{Rgb, UiColor};
-use crate::console;
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Paint, PxRect, Rect, Sprite};
 use crate::portrait::dim_opacity;
 use crate::screen::Ctx;
@@ -64,17 +64,18 @@ pub const PLATE: (i32, i32) = (STAGE.w / 2, STAGE.h - SCENE_ROWS);
 /// Cells of a plate's HP bar.
 pub const BAR_CELLS: i32 = 20;
 
-/// A cell's size in console pixels.
-const CELL_W_PX: i32 = console::CELL_W_PX as i32;
-const CELL_H_PX: i32 = console::CELL_H_PX as i32;
+/// A cell's size in console pixels: the battle screen is laid out on the
+/// PC console.
+const CELL_W: i32 = ConsoleSpec::PC.cell_w as i32;
+const CELL_H: i32 = ConsoleSpec::PC.cell_h as i32;
 
 /// The cells `cells` in console pixels.
 fn cells_px(cells: Rect) -> PxRect {
     PxRect::new(
-        cells.x * CELL_W_PX,
-        cells.y * CELL_H_PX,
-        cells.w * CELL_W_PX,
-        cells.h * CELL_H_PX,
+        cells.x * CELL_W,
+        cells.y * CELL_H,
+        cells.w * CELL_W,
+        cells.h * CELL_H,
     )
 }
 
@@ -188,7 +189,7 @@ pub fn result_row(view: &StageView, i: usize) -> i32 {
         .picture
         .as_ref()
         .map_or(0, |p| size_px(p).1);
-    SCENE.y + ((FEET_Y - height) / CELL_H_PX - 1).max(1)
+    SCENE.y + ((FEET_Y - height) / CELL_H - 1).max(1)
 }
 
 /// `text` in a label `w` cells wide at most, centred on console pixel
@@ -197,7 +198,7 @@ fn label(buf: &mut GlyphBuffer, middle: i32, y: i32, text: &str, fg: Rgb, bg: Rg
     let width = usize::try_from(SCENE.w - 2).unwrap_or(0);
     let cut: String = text.chars().take(width).collect();
     let w = i32::try_from(cut.chars().count()).unwrap_or(0) + 2;
-    let x = (SCENE.x + middle / CELL_W_PX - w / 2).clamp(SCENE.x, SCENE.x + SCENE.w - w);
+    let x = (SCENE.x + middle / CELL_W - w / 2).clamp(SCENE.x, SCENE.x + SCENE.w - w);
     buf.fill_rect(Rect::new(x, y, w, 1), Cell::new(' ', fg, bg));
     buf.print(x + 1, y, &cut, fg, bg);
 }

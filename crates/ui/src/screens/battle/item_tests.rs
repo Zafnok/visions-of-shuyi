@@ -11,7 +11,7 @@ use super::testing::{battle_packed, quick_units};
 use super::{BattleScreen, HealPopup, PopupKind, TIMINGS};
 use crate::FrameInput;
 use crate::color::UiColor;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
 use crate::map_view::RangeKind;
@@ -51,7 +51,7 @@ fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
         crate::color::Rgb::new(1, 2, 3),
         crate::color::Rgb::new(1, 2, 3),
     );
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(c, &mut buf);
     buf
 }
@@ -369,17 +369,17 @@ fn equip_menu_with_a_broken_weapon_snapshot() {
     step(&mut s, &mut c, &EQUIP);
     let buf = render(&s, &c);
     // `(broken)` in the warning colour, after the durability `0/25`.
-    let row = (0..i32::from(CONSOLE_H))
-        .find(|&y| text(&buf, 0, y, i32::from(CONSOLE_W)).contains("(broken)"))
+    let row = (0..i32::from(ConsoleSpec::PC.rows))
+        .find(|&y| text(&buf, 0, y, i32::from(ConsoleSpec::PC.cols)).contains("(broken)"))
         .expect("a broken weapon is tagged");
-    let cell = (0..i32::from(CONSOLE_W))
+    let cell = (0..i32::from(ConsoleSpec::PC.cols))
         .find(|&cx| text(&buf, cx, row, 8) == "(broken)")
         .expect("cell");
     assert_eq!(
         buf.get(cell, row).unwrap().fg,
         c.palette.get(UiColor::HpLow)
     );
-    assert!(text(&buf, 0, row, i32::from(CONSOLE_W)).contains("0/25"));
+    assert!(text(&buf, 0, row, i32::from(ConsoleSpec::PC.cols)).contains("0/25"));
     assert_snapshot!(buf.to_snapshot(&c.palette));
 }
 

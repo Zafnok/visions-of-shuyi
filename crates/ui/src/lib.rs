@@ -30,6 +30,7 @@ pub mod words;
 
 pub use audio::{AudioQueue, AudioRequest, MusicClock, MusicCommand, MusicState};
 pub use color::{Palette, Rgb, UiColor};
+pub use console::ConsoleSpec;
 pub use game::{FrameOutput, Game, RawInputEvent};
 pub use glyph_buffer::{
     Backdrop, BoxStyle, Cell, GlyphBuffer, Item, Layer, Overlay, Paint, PxRect, Rect, Sprite,

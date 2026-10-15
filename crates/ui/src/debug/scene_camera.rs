@@ -12,7 +12,7 @@ use crate::audio::MenuSound;
 use crate::cinema::{self, MAX_ZOOM};
 use crate::cinematic::MapPicture;
 use crate::color::UiColor;
-use crate::console::{CELL_H_PX, CELL_W_PX};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorStyle, CursorView, MapScene};
@@ -99,7 +99,10 @@ impl SceneCameraScreen {
 /// The window's size in console pixels.
 fn window_px() -> (u32, u32) {
     let px = |cells: i32, cell: u16| u32::try_from(cells).unwrap_or(0) * u32::from(cell);
-    (px(WINDOW.w, CELL_W_PX), px(WINDOW.h, CELL_H_PX))
+    (
+        px(WINDOW.w, ConsoleSpec::PC.cell_w),
+        px(WINDOW.h, ConsoleSpec::PC.cell_h),
+    )
 }
 
 /// `buf`'s size in its own pixels.
@@ -216,15 +219,14 @@ impl Screen for SceneCameraScreen {
 mod tests {
     use super::*;
     use crate::color::Rgb;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::map_view::skin_named;
     use crate::screen::tests::ctx;
 
     fn draw(ctx: &Ctx, screen: &SceneCameraScreen) -> GlyphBuffer {
         let p = &ctx.palette;
-        let mut buf = GlyphBuffer::new(
-            CONSOLE_W,
-            CONSOLE_H,
+        let mut buf = GlyphBuffer::with_spec(
+            ConsoleSpec::PC,
             Cell::new('x', p.get(UiColor::Text), p.get(UiColor::PanelBg)),
         );
         screen.draw(ctx, &mut buf);
@@ -284,8 +286,8 @@ mod tests {
         // A scene smaller than the window is centred in it.
         assert!(near(backdrop.origin_px(), (-80.0, -48.0)));
         assert_eq!(backdrop.scene(), screen.scene.as_deref().unwrap());
-        for y in 0..i32::from(CONSOLE_H) {
-            for x in 0..i32::from(CONSOLE_W) {
+        for y in 0..i32::from(ConsoleSpec::PC.rows) {
+            for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 let hole = WINDOW.contains(x, y) && !TEXT_BOX.contains(x, y);
                 assert_eq!(buf.get(x, y).unwrap().see_through, hole, "({x}, {y})");
             }

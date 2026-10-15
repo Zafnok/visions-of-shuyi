@@ -11,7 +11,7 @@ use trpg_core::CharacterId;
 use super::faces::{FACE_SPACING, faces, first_x};
 use super::talk::{HOLD_SHARE, boxes, talk_at};
 use super::*;
-use crate::console::{CELL_W_PX, CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::input::Action;
 use crate::screen::tests::ctx;
 use crate::screen::{FrameInput, Screen};
@@ -32,7 +32,7 @@ fn mara() -> LeadProfile {
 fn draw(ctx: &Ctx, player: &CinematicPlayer, t: f32) -> GlyphBuffer {
     let p = &ctx.palette;
     let stale = Cell::new('x', p.get(UiColor::Enemy), p.get(UiColor::PanelBg));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     player.draw(ctx, t, 1.0, &mut buf);
     buf
 }
@@ -216,7 +216,7 @@ fn a_narration_box_is_drawn_as_the_dialogue_screen_draws_narration() {
     let narration = &boxes(&ctx, scene, &mara(), 0, 1)[0];
     let p = &ctx.palette;
     let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     narration.draw(&ctx, &mara(), 12, &mut buf);
     // Under the caption; one line of narration is dim, in the middle row
     // of the text box and centred across it (40 characters: from 30).
@@ -285,8 +285,8 @@ fn a_talk_shot_looks_like_the_dialogue_screen_without_what_waits_for_a_key() {
         // right of the text box's last row, are not in the shot.
         let marker = |x: i32, y: i32| y == 26 && (80..98).contains(&x);
         let blank = got.get(4, 26).copied();
-        for y in 0..i32::from(CONSOLE_H) {
-            for x in 0..i32::from(CONSOLE_W) {
+        for y in 0..i32::from(ConsoleSpec::PC.rows) {
+            for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 if marker(x, y) {
                     assert_eq!(got.get(x, y).copied(), blank, "({x}, {y})");
                 } else {
@@ -344,8 +344,8 @@ fn a_talk_shot_without_its_scene_or_its_boxes_is_blank() {
     let buf = draw(&ctx, &player, 7.0);
     let c = |u| ctx.palette.get(u);
     let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
-    for y in 0..i32::from(CONSOLE_H) {
-        for x in 0..i32::from(CONSOLE_W) {
+    for y in 0..i32::from(ConsoleSpec::PC.rows) {
+        for x in 0..i32::from(ConsoleSpec::PC.cols) {
             assert_eq!(buf.get(x, y), Some(&blank), "({x}, {y})");
         }
     }
@@ -447,7 +447,7 @@ fn a_characters_shot_draws_each_face_in_its_frame_over_its_name() {
             .unwrap()
             .image
     };
-    let cell_w = i32::from(CELL_W_PX);
+    let cell_w = i32::from(ConsoleSpec::PC.cell_w);
     // The lead in the middle of the screen, the lord half in behind.
     let buf = draw(&ctx, &player, 11.73);
     // A frame is 18 rows and its name the row under: rows 6 to 23, and 24.

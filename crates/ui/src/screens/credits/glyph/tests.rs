@@ -1,7 +1,7 @@
 use trpg_content::CreditGroup;
 
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::input::Action;
 use crate::screen::{Screen, tests::ctx};
 use crate::screens::credits::tests::{ctx_with, entry, input, long_list};
@@ -13,7 +13,7 @@ fn draw(s: &CreditsScreen, c: &Ctx) -> GlyphBuffer {
         c.palette.get(UiColor::Enemy),
         c.palette.get(UiColor::Enemy),
     );
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(c, &mut buf);
     buf
 }
@@ -64,7 +64,9 @@ fn long_lines_stay_inside_the_panel() {
 fn a_short_list_draws_no_scroll_marks() {
     let c = ctx_with(vec![entry(CreditGroup::Fonts, "Font")]);
     let buf = draw(&CreditsScreen::new(&c), &c);
-    let all: String = (0..i32::from(CONSOLE_H)).map(|y| row(&buf, y)).collect();
+    let all: String = (0..i32::from(ConsoleSpec::PC.rows))
+        .map(|y| row(&buf, y))
+        .collect();
     assert!(!all.contains(MORE_ABOVE) && !all.contains(MORE_BELOW));
 }
 

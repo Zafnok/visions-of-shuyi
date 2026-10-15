@@ -6,7 +6,7 @@ use trpg_core::CharacterId;
 
 use super::*;
 use crate::audio::AudioRequest;
-use crate::console::{CELL_H_PX, CELL_W_PX};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::Sprite;
 use crate::portrait::dim_opacity;
 use crate::screen::tests::ctx;
@@ -342,7 +342,7 @@ fn speaker_frame_is_double_and_bright() {
 
 /// The sprite of the portrait in the frame at column `x`.
 fn portrait_sprite(buf: &GlyphBuffer, x: i32) -> Option<Sprite> {
-    let left = (x + 1) * i32::from(CELL_W_PX);
+    let left = (x + 1) * i32::from(ConsoleSpec::PC.cell_w);
     let inside = |s: &Sprite| (left..left + 256).contains(&s.dest.x);
     buf.sprites().into_iter().find(inside)
 }
@@ -354,7 +354,7 @@ fn the_speaker_is_bright_and_the_listener_dimmed_and_mirrored() {
     let buf = draw(&s, &c);
     assert_eq!(buf.sprites().len(), 2);
     // The placeholders are 32×32: 8× fills the 256×256 px inside the frame.
-    let top = (FRAME_Y + 1) * i32::from(CELL_H_PX);
+    let top = (FRAME_Y + 1) * i32::from(ConsoleSpec::PC.cell_h);
     let listener = portrait_sprite(&buf, RIGHT_X).unwrap();
     assert_eq!(listener.image.path(), "portraits/test_knight/neutral.png");
     assert_eq!(listener.dest, Rect::new((RIGHT_X + 1) * 8, top, 256, 256));

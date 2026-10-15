@@ -15,7 +15,6 @@ use std::path::{Path, PathBuf};
 
 use trpg_content::font::{AtlasRect, FALLBACK_GLYPH};
 use trpg_content::{FontAtlasDef, ImageId, ImageTable};
-use trpg_ui::console::{CELL_H_PX, CELL_W_PX};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Button, Chord, Layout};
 use trpg_ui::{Backdrop, GlyphBuffer, Item, Layer, Paint, PxRect, Rgb, Sprite, UiColor};
@@ -359,7 +358,8 @@ impl Painter {
     /// window, then the console over it, as in `app`.
     pub fn render(&self, buf: &GlyphBuffer, scale: u32) -> Image {
         let s = i64::from(scale);
-        let (cell_w, cell_h) = (i64::from(CELL_W_PX) * s, i64::from(CELL_H_PX) * s);
+        let spec = buf.spec();
+        let (cell_w, cell_h) = (i64::from(spec.cell_w) * s, i64::from(spec.cell_h) * s);
         let width = u32::try_from(i64::from(buf.width()) * cell_w).unwrap_or(0);
         let height = u32::try_from(i64::from(buf.height()) * cell_h).unwrap_or(0);
         let mut out = Image::filled(width, height, self.clear);
@@ -411,7 +411,8 @@ impl Painter {
         px: i64,
         all_fills: bool,
     ) {
-        let (cell_w, cell_h) = (i64::from(CELL_W_PX) * px, i64::from(CELL_H_PX) * px);
+        let spec = buf.spec();
+        let (cell_w, cell_h) = (i64::from(spec.cell_w) * px, i64::from(spec.cell_h) * px);
         let cells = || {
             (0..i32::from(buf.height())).flat_map(move |y| {
                 (0..i32::from(buf.width())).filter_map(move |x| {

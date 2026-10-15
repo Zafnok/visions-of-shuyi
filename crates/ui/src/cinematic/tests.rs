@@ -9,7 +9,7 @@ use trpg_content::TilePoint;
 use trpg_core::UnitId;
 
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::map_view::{Facing, skin_named};
 use crate::screen::tests::ctx;
 use crate::screens::title::glyph;
@@ -32,7 +32,7 @@ fn player(ctx: &Ctx) -> CinematicPlayer {
 fn draw(ctx: &Ctx, player: &CinematicPlayer, t: f32, brightness: f32) -> GlyphBuffer {
     let p = &ctx.palette;
     let stale = Cell::new('x', p.get(UiColor::Enemy), p.get(UiColor::PanelBg));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     player.draw(ctx, t, brightness, &mut buf);
     buf
 }
@@ -407,8 +407,8 @@ fn the_pan_is_the_battles_picture_behind_the_whole_screen() {
     assert_ne!(first.backdrop().unwrap().scene(), backdrop.scene());
     // Every cell is a hole, and nothing is left of the frame before.
     let hole = Cell::see_through(' ', ctx.palette.get(UiColor::Text));
-    for y in 0..i32::from(CONSOLE_H) {
-        for x in 0..i32::from(CONSOLE_W) {
+    for y in 0..i32::from(ConsoleSpec::PC.rows) {
+        for x in 0..i32::from(ConsoleSpec::PC.cols) {
             assert_eq!(buf.get(x, y), Some(&hole), "({x}, {y})");
         }
     }

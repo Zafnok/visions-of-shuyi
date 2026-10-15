@@ -9,7 +9,7 @@ use trpg_core::{BattleState, Command, Phase, UnitId, next_command};
 use super::ai_phase::PACING;
 use super::testing::through_ai_phases;
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
 
@@ -29,16 +29,16 @@ fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
 
 fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
     let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     s.draw(c, &mut buf);
     buf
 }
 
 /// The glyphs of every row of `buf`.
 fn glyphs(buf: &GlyphBuffer) -> Vec<String> {
-    (0..i32::from(CONSOLE_H))
+    (0..i32::from(ConsoleSpec::PC.rows))
         .map(|y| {
-            (0..i32::from(CONSOLE_W))
+            (0..i32::from(ConsoleSpec::PC.cols))
                 .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
                 .collect()
         })

@@ -12,7 +12,7 @@ use trpg_content::ImageId;
 use super::view::{FULL, TitleView};
 use crate::audio::splitmix64;
 use crate::color::UiColor;
-use crate::console::{CELL_W_PX, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, PxRect, Rect, Sprite};
 use crate::screen::Ctx;
 use crate::screens::{centre_x, paint_debug_hint, print_centred};
@@ -72,7 +72,7 @@ pub type Spark = (i32, i32, char, UiColor);
 pub fn spark(i: u64, millis: u32) -> Spark {
     let bits = splitmix64(i);
     let part = |shift: u32, n: u64| i32::try_from((bits >> shift) % n).unwrap_or(0);
-    let (x0, y0) = (part(0, CONSOLE_W.into()), part(16, 31));
+    let (x0, y0) = (part(0, ConsoleSpec::PC.cols.into()), part(16, 31));
     // Two sparks in three are slow.
     let speed = if part(24, 3) == 0 { 18 } else { 9 };
     let rose = i64::from(millis) * speed / 1000;
@@ -81,7 +81,7 @@ pub fn spark(i: u64, millis: u32) -> Spark {
     let turn = (part(32, 1000) as f32 / 1000.0) + (millis % SWAY_MS) as f32 / SWAY_MS as f32;
     #[allow(clippy::cast_possible_truncation)] // -2 to 2
     let sway = (1.5 * (turn * TAU).sin()).round() as i32;
-    let x = (x0 + sway).rem_euclid(CONSOLE_W.into());
+    let x = (x0 + sway).rem_euclid(ConsoleSpec::PC.cols.into());
     let (glyph, color) = SPARK_KINDS[usize::try_from(part(40, 7)).unwrap_or(0)];
     (x, i32::try_from(y).unwrap_or(0), glyph, color)
 }
@@ -123,7 +123,7 @@ pub fn logo_sprite(image: ImageId, size: (u32, u32)) -> Sprite {
         i32::try_from(size.0).unwrap_or(0),
         i32::try_from(size.1).unwrap_or(0),
     );
-    let console_px = i32::from(CONSOLE_W) * i32::from(CELL_W_PX);
+    let console_px = ConsoleSpec::PC.px().0;
     let dest = PxRect::new(
         (console_px - w * LOGO_SCALE) / 2,
         LOGO_TOP_PX,
@@ -265,7 +265,7 @@ mod tests {
 
     use super::*;
     use crate::cinematic::CinematicPlayer;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::screen::tests::ctx;
     use crate::screens::title::view::CinematicView;
     use crate::widgets::{MenuItemView, MenuView};
@@ -321,13 +321,13 @@ mod tests {
     }
 
     fn painted(c: &Ctx, view: &TitleView) -> GlyphBuffer {
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale(c));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale(c));
         paint(c, view, &mut buf);
         buf
     }
 
     fn logo_painted(c: &Ctx, backdrop: Option<ImageId>, sparks: Option<u32>) -> GlyphBuffer {
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale(c));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale(c));
         paint_logo(c, backdrop, sparks, &mut buf);
         buf
     }
@@ -353,7 +353,7 @@ mod tests {
         // With no backdrop it is the only picture.
         assert_eq!(logo_painted(&c, None, None).sprites(), [logo]);
         // The menu sits under it, clear of it.
-        let menu_top = MENU_ROW * i32::from(crate::console::CELL_H_PX);
+        let menu_top = MENU_ROW * i32::from(crate::console::ConsoleSpec::PC.cell_h);
         assert!(logo.dest.y + logo.dest.h <= menu_top);
     }
 
@@ -427,7 +427,10 @@ mod tests {
             for step in 0..64 {
                 let t = step * SWAY_MS / 64;
                 let (x, y, g, col) = spark(i, t);
-                assert!((0..i32::from(CONSOLE_W)).contains(&x), "spark {i} x {x}");
+                assert!(
+                    (0..i32::from(ConsoleSpec::PC.cols)).contains(&x),
+                    "spark {i} x {x}"
+                );
                 assert!((0..SPARK_ROWS).contains(&y), "spark {i} y {y}");
                 assert_eq!((g, col), (glyph, color));
                 // A sway later it is back in the same column.
@@ -466,14 +469,14 @@ mod tests {
             }
             // Nothing else is on the screen: every other cell is blank.
             let empty = Cell::new(' ', c.palette.get(UiColor::Text), black);
-            for y in 0..i32::from(CONSOLE_H) {
-                for x in 0..i32::from(CONSOLE_W) {
+            for y in 0..i32::from(ConsoleSpec::PC.rows) {
+                for x in 0..i32::from(ConsoleSpec::PC.cols) {
                     if !sparks.iter().any(|s| (s.0, s.1) == (x, y)) {
                         assert_eq!(buf.get(x, y), Some(&empty), "({x}, {y})");
                     }
                 }
             }
-            assert_eq!(text(&buf, i32::from(CONSOLE_H) - 1).trim(), "");
+            assert_eq!(text(&buf, i32::from(ConsoleSpec::PC.rows) - 1).trim(), "");
         }
         // The view's sparks are the ones painted, and none is none.
         let mut v = view();
@@ -481,7 +484,7 @@ mod tests {
         v.help = None;
         let none = painted(&c, &v);
         assert_eq!(none, logo_painted(&c, None, None));
-        assert!((0..i32::from(CONSOLE_H)).all(|y| text(&none, y).trim().is_empty()));
+        assert!((0..i32::from(ConsoleSpec::PC.rows)).all(|y| text(&none, y).trim().is_empty()));
         v.sparks = Some(0);
         let at_0 = painted(&c, &v);
         v.sparks = Some(1000);
@@ -496,14 +499,17 @@ mod tests {
     fn the_menu_is_centred_under_the_logo_and_the_help_is_at_the_bottom() {
         let c = ctx();
         let buf = painted(&c, &view());
-        let middle = (i32::from(CONSOLE_W) - 12) / 2;
+        let middle = (i32::from(ConsoleSpec::PC.cols) - 12) / 2;
         assert_eq!(column(&buf, MENU_ROW, "┌──────────┐"), middle);
         assert_eq!(column(&buf, MENU_ROW + 1, "│ New Game │"), middle);
         assert_eq!(column(&buf, MENU_ROW + 2, "│ Quit     │"), middle);
         assert_eq!(column(&buf, MENU_ROW + 3, "└──────────┘"), middle);
-        let bottom = i32::from(CONSOLE_H) - 1;
+        let bottom = i32::from(ConsoleSpec::PC.rows) - 1;
         assert_eq!(text(&buf, bottom).trim(), "help");
-        assert_eq!(column(&buf, bottom, "help"), (i32::from(CONSOLE_W) - 4) / 2);
+        assert_eq!(
+            column(&buf, bottom, "help"),
+            (i32::from(ConsoleSpec::PC.cols) - 4) / 2
+        );
         let help = buf.get(column(&buf, bottom, "help"), bottom).unwrap();
         assert_eq!(help.fg, c.palette.get(UiColor::TextDim));
         assert_eq!(help.bg, c.palette.get(UiColor::Black));
@@ -526,7 +532,7 @@ mod tests {
             v.prompt = Some(prompt.to_owned());
             let buf = painted(&c, &v);
             let len = i32::try_from(prompt.chars().count()).unwrap();
-            let left = (i32::from(CONSOLE_W) - len) / 2;
+            let left = (i32::from(ConsoleSpec::PC.cols) - len) / 2;
             let rows = [
                 "┌─┬─┬─┬─┬─┐".to_owned() + &" ".repeat(prompt.len() + 10) + "╭─────────╮",
                 format!("├─┴┬┴─┴┬┴─┤     {prompt}     │ ┼ ╭─╮ ◯ │"),
@@ -548,8 +554,10 @@ mod tests {
                     }
                 }
             }
-            assert!(!(0..i32::from(CONSOLE_H)).any(|y| text(&buf, y).contains("New Game")));
-            assert_eq!(text(&buf, i32::from(CONSOLE_H) - 1).trim(), "");
+            assert!(
+                !(0..i32::from(ConsoleSpec::PC.rows)).any(|y| text(&buf, y).contains("New Game"))
+            );
+            assert_eq!(text(&buf, i32::from(ConsoleSpec::PC.rows) - 1).trim(), "");
         }
     }
 
@@ -563,7 +571,7 @@ mod tests {
         let buf = painted(&c, &v);
         let below = MENU_ROW + 4 + 1;
         let at = column(&buf, below, "This save can't be read");
-        assert_eq!(at, (i32::from(CONSOLE_W) - 23) / 2);
+        assert_eq!(at, (i32::from(ConsoleSpec::PC.cols) - 23) / 2);
         let panel = c.palette.get(UiColor::PanelBg);
         for x in at - 2..=at + 24 {
             let cell = buf.get(x, below).unwrap();
@@ -577,7 +585,7 @@ mod tests {
         // None with the prompt: there is no menu to be under.
         v.menu = None;
         let buf = painted(&c, &v);
-        assert!(!(0..i32::from(CONSOLE_H)).any(|y| text(&buf, y).contains("This save")));
+        assert!(!(0..i32::from(ConsoleSpec::PC.rows)).any(|y| text(&buf, y).contains("This save")));
     }
 
     #[test]
@@ -586,7 +594,7 @@ mod tests {
         let mut v = view();
         v.debug_hint = Some("F2 debug".to_owned());
         let buf = painted(&c, &v);
-        let bottom = text(&buf, i32::from(CONSOLE_H) - 1);
+        let bottom = text(&buf, i32::from(ConsoleSpec::PC.rows) - 1);
         assert!(bottom.ends_with("F2 debug "), "{bottom:?}");
         assert!(bottom.contains("help"));
         // With the prompt too.
@@ -594,7 +602,7 @@ mod tests {
         v.help = None;
         v.prompt = Some("Press any key".to_owned());
         let buf = painted(&c, &v);
-        assert!(text(&buf, i32::from(CONSOLE_H) - 1).ends_with("F2 debug "));
+        assert!(text(&buf, i32::from(ConsoleSpec::PC.rows) - 1).ends_with("F2 debug "));
     }
 
     /// Opaque screens must paint every cell, not rely on `Game` clearing.
@@ -602,8 +610,8 @@ mod tests {
     fn it_covers_the_whole_buffer() {
         let c = ctx();
         for buf in [painted(&c, &view()), logo_painted(&c, None, Some(0))] {
-            let left = (0..i32::from(CONSOLE_H))
-                .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+            let left = (0..i32::from(ConsoleSpec::PC.rows))
+                .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
                 .filter(|&(x, y)| buf.get(x, y) == Some(&stale(&c)))
                 .count();
             assert_eq!(left, 0);
@@ -623,7 +631,7 @@ mod tests {
 
     /// The cinematic's own frame, as its player draws it.
     fn drawn(c: &Ctx, shot: &CinematicView, t: f32, brightness: f32) -> GlyphBuffer {
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale(c));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale(c));
         shot.player.draw(c, t, brightness, &mut buf);
         buf
     }
@@ -687,8 +695,8 @@ mod tests {
         assert_eq!(buf.sprites(), want);
         // The sparks: their glyphs over the map, no cell made solid.
         let sparks: Vec<Spark> = (0..SPARKS).map(|i| spark(i, 0)).collect();
-        for y in 0..i32::from(CONSOLE_H) {
-            for x in 0..i32::from(CONSOLE_W) {
+        for y in 0..i32::from(ConsoleSpec::PC.rows) {
+            for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 let cell = buf.get(x, y).unwrap();
                 assert!(cell.see_through, "({x}, {y})");
                 match sparks.iter().rev().find(|s| (s.0, s.1) == (x, y)) {
@@ -728,14 +736,14 @@ mod tests {
         v.notice = Some("Notice".to_owned());
         v.backdrop = Some(c.content.title.backdrops[0]);
         let full = painted(&c, &v);
-        let bottom = i32::from(CONSOLE_H) - 1;
+        let bottom = i32::from(ConsoleSpec::PC.rows) - 1;
         let rows = [MENU_ROW, MENU_ROW + 1, MENU_ROW + 3, MENU_ROW + 5, bottom];
         for opacity in [128, 0] {
             v.menu_opacity = opacity;
             let buf = painted(&c, &v);
             let mut faded = 0;
-            for y in 0..i32::from(CONSOLE_H) {
-                for x in 0..i32::from(CONSOLE_W) {
+            for y in 0..i32::from(ConsoleSpec::PC.rows) {
+                for x in 0..i32::from(ConsoleSpec::PC.cols) {
                     let (was, is) = (full.get(x, y).unwrap(), buf.get(x, y).unwrap());
                     assert_eq!(is.glyph, was.glyph, "({x}, {y})");
                     let lit = was.glyph != ' ' || was.bg != c.palette.get(UiColor::Black);
@@ -766,11 +774,11 @@ mod tests {
         v.menu_opacity = 127;
         let buf = painted(&c, &v);
         let under = drawn(&c, &playing, 3.0, 128.0 / 255.0);
-        let bottom = i32::from(CONSOLE_H) - 1;
+        let bottom = i32::from(ConsoleSpec::PC.rows) - 1;
         let at = column(&buf, bottom, "help");
-        assert_eq!(at, (i32::from(CONSOLE_W) - 4) / 2);
+        assert_eq!(at, (i32::from(ConsoleSpec::PC.cols) - 4) / 2);
         let dim = at_opacity(c.palette.get(UiColor::TextDim), 127);
-        for x in 0..i32::from(CONSOLE_W) {
+        for x in 0..i32::from(ConsoleSpec::PC.cols) {
             let cell = buf.get(x, bottom).unwrap();
             assert!(cell.see_through, "{x}");
             if (at..at + 4).contains(&x) {
@@ -780,7 +788,7 @@ mod tests {
             }
         }
         // The menu: solid cells, as bright as its opacity.
-        let middle = (i32::from(CONSOLE_W) - 12) / 2;
+        let middle = (i32::from(ConsoleSpec::PC.cols) - 12) / 2;
         let mut plain = view();
         plain.menu_opacity = 127;
         let alone = painted(&c, &plain);
@@ -808,8 +816,8 @@ mod tests {
         let buf = painted(&c, &v);
         let panel = c.palette.get(UiColor::PanelBg);
         let mut band = 0;
-        for y in 0..i32::from(CONSOLE_H) {
-            for x in 0..i32::from(CONSOLE_W) {
+        for y in 0..i32::from(ConsoleSpec::PC.rows) {
+            for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 let (was, is) = (full.get(x, y).unwrap(), buf.get(x, y).unwrap());
                 if was.bg == panel {
                     assert_eq!(is.fg, at_opacity(was.fg, 64), "({x}, {y})");

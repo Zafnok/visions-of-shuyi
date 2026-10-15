@@ -22,7 +22,6 @@ use trpg_core::{BattleDef, GameMode, LEAD_ID, LeadGender, LeadProfile, Pos};
 
 use crate::cinema;
 use crate::color::UiColor;
-use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::{MapScene, MapSkin, UnitView};
 use crate::screen::{Ctx, IdleMotion};
@@ -174,13 +173,14 @@ impl MapPicture {
             let cell_px = i32::from(cell_px);
             u16::try_from((tiles * tile_px + cell_px - 1) / cell_px).unwrap_or(0)
         };
+        let console = ctx.console;
         let (w, h) = (
-            cells(scene.size.0, tile.w, CELL_W_PX),
-            cells(scene.size.1, tile.h, CELL_H_PX),
+            cells(scene.size.0, tile.w, console.cell_w),
+            cells(scene.size.1, tile.h, console.cell_h),
         );
         let c = |u| ctx.palette.get(u);
         let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
-        let mut buf = GlyphBuffer::new(w, h, blank);
+        let mut buf = GlyphBuffer::with_spec(console.sized(w, h), blank);
         skin.paint(ctx, scene, buf.bounds(), &mut buf);
         Some(Self {
             scene: Rc::new(buf),
@@ -458,7 +458,10 @@ impl CinematicPlayer {
                 );
                 let px =
                     |cells: i32, cell: u16| u32::try_from(cells).unwrap_or(0) * u32::from(cell);
-                let clip = (px(screen.w, CELL_W_PX), px(screen.h, CELL_H_PX));
+                let clip = (
+                    px(screen.w, ctx.console.cell_w),
+                    px(screen.h, ctx.console.cell_h),
+                );
                 Frame::MapPan {
                     origin_px: cinema::view(picture.size_px(), clip, centre, *zoom),
                     zoom: *zoom,

@@ -1,7 +1,7 @@
 use insta::assert_snapshot;
 
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::screen::tests::ctx;
 
 fn frame(actions: &[Action]) -> FrameInput {
@@ -10,9 +10,8 @@ fn frame(actions: &[Action]) -> FrameInput {
 
 fn draw(screen: &PortraitViewerScreen, ctx: &Ctx) -> GlyphBuffer {
     let p = &ctx.palette;
-    let mut buf = GlyphBuffer::new(
-        CONSOLE_W,
-        CONSOLE_H,
+    let mut buf = GlyphBuffer::with_spec(
+        ConsoleSpec::PC,
         Cell::new('x', p.get(UiColor::Text), p.get(UiColor::PanelBg)),
     );
     screen.draw(ctx, &mut buf);
