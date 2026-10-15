@@ -78,7 +78,7 @@ use self::rewind::{RewindEffect, RewindScreen};
 use self::tips::TipState;
 use self::view::{
     BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, MessageView,
-    NotesView, ObjectiveView, OldParts, PanelView, QuestionView,
+    NotesView, ObjectiveView, PanelView, QuestionView,
 };
 use self::walk::Gait;
 use super::OptionsScreen;
@@ -1799,19 +1799,12 @@ impl BattleScreen {
     /// [`scene`](Self::scene) and everything around and over it, for the
     /// skin to paint and for tests to read. On the rewind screen: the map,
     /// the rewind list, the help and the debug hint.
-    pub fn view(&self, ctx: &Ctx) -> BattleView<'_> {
+    pub fn view(&self, ctx: &Ctx) -> BattleView {
         let scene = self.scene(ctx);
         let help = self.help(ctx);
         let debug_hint = super::debug_hint(ctx);
-        let old = OldParts {
-            state: &self.state,
-            forecast: None,
-            info: None,
-            fight_box: None,
-            progress: None,
-            rewind: self.rewind.as_ref(),
-        };
-        if self.rewind.is_some() {
+        let words = ctx.words();
+        if let Some(rewind) = &self.rewind {
             return BattleView {
                 scene,
                 menu: None,
@@ -1827,20 +1820,28 @@ impl BattleScreen {
                 status: String::new(),
                 help,
                 debug_hint,
-                old,
+                forecast: None,
+                info: None,
+                fight_box: None,
+                progress: None,
+                rewind: Some(rewind.view(words)),
             };
         }
-        let words = ctx.words();
+        let told = (&self.state, words);
         let stage = self.stage_view(ctx);
         let fight_box = match (&self.mode, &stage) {
-            (Mode::Combat(pb), None) => Some(&**pb),
+            (Mode::Combat(pb), None) => playback::box_view(words, pb),
             _ => None,
         };
         let info = match self.mode {
-            Mode::Info { unit } => self.state.unit(unit),
+            Mode::Info { unit } => self.state.unit(unit).map(|u| info::view(told, u)),
             _ => None,
         };
-        let forecast = self.forecast();
+        let forecast = self.forecast().and_then(|t| forecast::view(told, t));
+        let faces = (&ctx.content.portraits, &ctx.lead);
+        let progress = self
+            .progress()
+            .and_then(|p| progress::view(words, faces, p));
         let notes = self.notes_open().then(|| NotesView {
             title: ctx.text(notes::NOTES_TITLE).to_owned(),
             lines: notes::note_lines(self.state.battle_notes(), words),
@@ -1861,13 +1862,11 @@ impl BattleScreen {
             scene,
             help,
             debug_hint,
-            old: OldParts {
-                forecast,
-                info,
-                fight_box,
-                progress: self.progress(),
-                ..old
-            },
+            forecast,
+            info,
+            fight_box,
+            progress,
+            rewind: None,
         }
     }
 

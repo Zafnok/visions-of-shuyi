@@ -9,8 +9,8 @@ use super::view::{ResultsBody, ResultsView, TallyView, UnitView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::screen::Ctx;
+use crate::screens::battle::glyph::progress::{self, EXP_BAR_CELLS, bar_cells};
 use crate::screens::battle::layout::MAP_VIEW;
-use crate::screens::battle::progress::{self, EXP_BAR_CELLS};
 use crate::screens::{centre_x, print_centred};
 
 /// The panel.
@@ -41,14 +41,14 @@ pub fn paint(ctx: &Ctx, view: &ResultsView, buf: &mut GlyphBuffer) {
     let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
     buf.fill_rect(buf.bounds(), blank);
     match &view.body {
-        ResultsBody::LevelUp(pages) => {
+        ResultsBody::LevelUp(None) => {}
+        ResultsBody::LevelUp(Some(view)) => {
             // The pages are laid out on the battle's map view: drawn
             // there, then moved to the middle of the screen.
             let (w, h) = (MAP_VIEW.x + MAP_VIEW.w, MAP_VIEW.y + MAP_VIEW.h);
             let size = |v: i32| u16::try_from(v).unwrap_or(0);
             let mut page = GlyphBuffer::new(size(w), size(h), blank);
-            let look = (&ctx.palette, ctx.words());
-            progress::draw(&mut page, look, (&ctx.content.portraits, &ctx.lead), pages);
+            progress::paint(ctx, view, &mut page);
             buf.blit(&page, centre_x(buf, usize::from(page.width())), 0);
         }
         ResultsBody::Tally(tally) => paint_tally(ctx, tally, buf),
@@ -124,13 +124,6 @@ fn paint_unit(ctx: &Ctx, unit: &UnitView, buf: &mut GlyphBuffer, y: i32) {
     if let Some(mark) = &unit.level_up {
         buf.print(X + COLS[5], y, mark, hi, bg);
     }
-}
-
-/// How many of the bar's cells `exp` of `max` fills.
-fn bar_cells(exp: u32, max: u32) -> i32 {
-    let cells = u32::try_from(EXP_BAR_CELLS).unwrap_or(0);
-    let filled = (exp.min(max) * cells).checked_div(max).unwrap_or(0);
-    i32::try_from(filled).unwrap_or(EXP_BAR_CELLS)
 }
 
 #[cfg(test)]

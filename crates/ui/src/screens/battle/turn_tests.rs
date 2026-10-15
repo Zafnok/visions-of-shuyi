@@ -265,25 +265,28 @@ fn info_shows_plain_stats_and_the_loadout() {
     let mut c = ctx();
     let mut s = quick();
     press(&mut s, &mut c, &[Action::Info]);
-    let buf = render(&s, &c);
+    let info = s.view(&c).info.expect("the info screen");
     let lord = s.state().unit(UnitId(1)).unwrap().clone();
-    let text = |x: i32, y: i32, n: i32| -> String {
-        (x..x + n).map(|x| buf.get(x, y).unwrap().glyph).collect()
-    };
-    assert_eq!(text(29, 1, 9), "Test Lord");
+    assert_eq!(info.name, "Test Lord");
     // Stats are plain numbers, no class caps (0423); HP is only on the HP
     // line, so Str is the first stat.
-    assert_eq!(text(29, 7, 20).trim(), format!("Str {:>3}", lord.stats.str));
-    assert_eq!(text(29, 8, 20).trim(), format!("Mag {:>3}", lord.stats.mag));
-    assert!(!shows(&buf, "/22"));
-    assert!(shows(&buf, "Weapons"));
-    assert!(shows(&buf, "Weapon ranks"));
-    assert!(shows(&buf, "portrait"));
+    let stat = |i: usize| (info.stats[i].name.as_str(), info.stats[i].value);
+    assert_eq!(stat(0), ("Str", lord.stats.str));
+    assert_eq!(stat(1), ("Mag", lord.stats.mag));
+    assert!(info.stats.iter().all(|s| s.name != "HP"));
+    assert_eq!((info.hp, info.max), (lord.hp, lord.stats.hp));
+    assert_eq!(info.weapons_title, "Weapons");
+    assert_eq!(info.ranks_title, "Weapon ranks");
+    assert_eq!(info.portrait, "portrait");
     let equipped = lord.loadout.equipped_slot().unwrap();
     let def = &lord.loadout.weapon(equipped).unwrap().def;
     let name = &s.state().items().weapon(def).unwrap().name;
-    assert!(shows(&buf, &format!("E {name}")));
-    assert_in_font(&buf);
+    let shown = info.weapons[equipped]
+        .as_ref()
+        .expect("the equipped weapon");
+    assert_eq!((&shown.name, shown.equipped), (name, true));
+    assert_eq!(info.equipped_mark, "E");
+    assert_in_font(&render(&s, &c));
 }
 
 /// The knight (armoured) wounded, its spear broken, with a ring and a
@@ -308,12 +311,13 @@ fn info_screen_full_loadout_snapshot() {
     let mut s = BattleScreen::new(state);
     s.cursor.jump(Pos::new(4, 6));
     press(&mut s, &mut c, &[Action::Info]);
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "Armored"));
-    assert!(shows(&buf, "Power Ring"));
-    assert!(shows(&buf, "Str +2"));
-    assert!(shows(&buf, "Fire"));
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    let info = s.view(&c).info.expect("the info screen");
+    assert_eq!(info.tags, ["Armored"]);
+    let ring = ("Power Ring".to_owned(), "Str +2".to_owned());
+    assert_eq!(info.accessory.item, Some(ring));
+    assert!(info.spells.iter().any(|s| s.name == "Fire"));
+    assert!(info.weapons[0].as_ref().is_some_and(|w| w.broken.is_some()));
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
 /// The lord's info screen.

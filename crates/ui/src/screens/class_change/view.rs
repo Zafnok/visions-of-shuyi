@@ -5,10 +5,10 @@
 
 use trpg_core::StatValue;
 
-use crate::screens::battle::progress::Progress;
+use crate::screens::battle::view::ProgressView;
 
 /// The whole screen, as it is this frame.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ClassChangeView {
     /// What fills the screen.
     pub body: ClassChangeBody,
@@ -17,15 +17,13 @@ pub struct ClassChangeView {
 }
 
 /// The columns, the change's result, or nothing.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ClassChangeBody {
     /// Picking a class, and the question asked before the change.
     Columns(Box<ColumnsView>),
-    /// The change was made: its pages, as the battle screen shows a
-    /// level-up. (The pages are still the battle screen's own state, which
-    /// its skin paints; they become a view with the rest of the battle
-    /// screen, ticket 0242.)
-    Result(Box<Progress>),
+    /// The change was made: the page on screen, as the battle screen
+    /// shows a level-up; `None` once the last has closed.
+    Result(Option<Box<ProgressView>>),
     /// Nothing left to show: the screen closes.
     Done,
 }

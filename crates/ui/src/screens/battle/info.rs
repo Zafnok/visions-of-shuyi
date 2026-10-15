@@ -1,9 +1,10 @@
 //! The unit info screen (ticket 0405): everything about one unit, over the
-//! map and side panel. A 24 × 12 portrait area on the left (a placeholder
-//! box until portraits exist, 0703), then the unit's name, level, EXP, HP
-//! and stats as plain numbers (`Str 7`; no class caps, ticket 0423), and on
-//! the right its loadout, spells and skills. Under the weapon ranks, the
-//! class's elemental affinities (`Fire  Weak`, ticket 0410).
+//! map and side panel. A portrait (a placeholder until portraits exist,
+//! 0703), then the unit's name, level, EXP, HP and stats as plain numbers
+//! (`Str 7`; no class caps, ticket 0423), and its loadout, spells and
+//! skills. Under the weapon ranks, the class's elemental affinities
+//! (`Fire  Weak`, ticket 0410). [`view`] says what it shows; the battle
+//! skin paints it (ADR-0054).
 
 use trpg_core::skill::effect_bonuses;
 use trpg_core::{
@@ -13,54 +14,13 @@ use trpg_core::{
 
 use super::art_list::art_name;
 use super::art_list::durability_text;
-use super::layout::MAP_VIEW;
 use super::skills::{
     cost_text, effect_text, kind_name, skill_cost, skill_name, timed_text, until_text,
 };
-use super::units::{faction_color, hp_fill};
-use crate::color::{Palette, Rgb, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use super::view::{
+    GearView, InfoEffectView, InfoSkillView, InfoSpellView, InfoStatView, InfoView, InfoWeaponView,
+};
 use crate::words::Words;
-
-/// The whole screen above the help bar.
-pub const INFO: Rect = Rect::new(0, 0, 100, MAP_VIEW.h);
-
-/// The portrait area.
-pub const PORTRAIT: Rect = Rect::new(2, 1, 24, 12);
-
-/// Left column (under the portrait): movement, tags, weapon ranks.
-const LEFT_X: i32 = 3;
-
-/// Middle column: name, level, HP, stats, skills.
-const MID_X: i32 = 29;
-
-/// Right column: loadout and spells.
-const RIGHT_X: i32 = 56;
-
-/// Widest text in the right column, so nothing reaches the border.
-const RIGHT_W: usize = 42;
-
-/// Widest item name or bonus, indented two cells in the right column.
-const ITEM_W: usize = 40;
-
-/// Most skills listed, two rows each: name and cost, then the effect (rows
-/// 16..28).
-const SKILL_MAX: usize = 6;
-
-/// Column of the timed effects, right of the stats.
-const EFFECT_X: i32 = 37;
-
-/// Widest text in the effects column.
-const EFFECT_W: usize = 18;
-
-/// Most timed effects listed, three rows each (rows 7..13).
-const EFFECT_MAX: usize = 2;
-
-/// Most spells listed (rows 18..28).
-const SPELL_ROWS: usize = 10;
-
-/// Length of the HP bar, in cells.
-const HP_BAR_CELLS: i32 = 10;
 
 /// The stat's short name, as the design docs write it.
 pub fn stat_name(words: Words<'_>, kind: StatKind) -> &str {
@@ -134,199 +94,98 @@ pub(super) fn range_text(min: u32, max: u32) -> String {
     }
 }
 
-/// Where the screen is being drawn and in which colours.
-struct Pen<'a> {
-    buf: &'a mut GlyphBuffer,
-    palette: &'a Palette,
-    bg: Rgb,
-}
-
-impl Pen<'_> {
-    fn text(&mut self, x: i32, y: i32, text: &str, color: UiColor) -> i32 {
-        let fg = self.palette.get(color);
-        let n = self.buf.print(x, y, text, fg, self.bg);
-        x + i32::from(n)
-    }
-
-    /// `text`, cut to `width` characters.
-    fn cut(&mut self, x: i32, y: i32, text: &str, width: usize, color: UiColor) {
-        let cut: String = text.chars().take(width).collect();
-        self.text(x, y, &cut, color);
-    }
-}
-
-/// Draws the info screen for `unit` of `state`.
-pub fn draw_info(
-    buf: &mut GlyphBuffer,
-    palette: &Palette,
-    (state, words): (&BattleState, Words<'_>),
-    unit: &Unit,
-) {
-    let bg = palette.get(UiColor::PanelBg);
-    buf.fill_rect(INFO, Cell::new(' ', palette.get(UiColor::Text), bg));
-    buf.draw_box(
-        INFO,
-        BoxStyle::Double,
-        palette.get(UiColor::PanelBorder),
-        bg,
-    );
-    buf.draw_box(
-        PORTRAIT,
-        BoxStyle::Single,
-        palette.get(UiColor::TextDim),
-        bg,
-    );
-    let mut pen = Pen { buf, palette, bg };
-    let label = words.text("battle.portrait");
-    let w = i32::try_from(label.len()).unwrap_or(0);
-    pen.text(
-        PORTRAIT.x + (PORTRAIT.w - w) / 2,
-        PORTRAIT.y + PORTRAIT.h / 2,
-        label,
-        UiColor::TextDim,
-    );
-    draw_left(&mut pen, state, words, unit);
-    draw_middle(&mut pen, state, words, unit);
-    draw_right(&mut pen, state, words, unit);
-}
-
-/// Under the portrait: Mov and movement type, class tags, weapon ranks,
-/// and the class's affinities if it has any.
-fn draw_left(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
+/// What the info screen of `unit` of `state` shows.
+pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView {
     let class = state.classes().get(&unit.class);
-    let mut y = PORTRAIT.y + PORTRAIT.h + 1;
-    let label = format!("{} ", stat_name(words, StatKind::Mov));
-    let x = pen.text(LEFT_X, y, &label, UiColor::TextDim);
-    let x = pen.text(x, y, &unit.move_points().to_string(), UiColor::Text);
-    if let Some(name) = class.and_then(|c| {
+    let class_name = words.class_of(&unit.class, state.classes());
+    let at_cap = unit.level >= state.classes().level_cap;
+    let movement = class.and_then(|c| {
         state
             .terrain()
             .movement_types
             .get(usize::from(c.movement_type.0))
-    }) {
-        pen.text(x + 2, y, name, UiColor::Text);
-    }
-    y += 1;
+    });
     let tags = class.map(|c| c.tags).unwrap_or_default();
-    let names = tag_names(words, tags);
-    if !names.is_empty() {
-        pen.text(LEFT_X, y, &names.join(" "), UiColor::Text);
-    }
-    y += 2;
-    let title = words.text("battle.info.weapon_ranks");
-    pen.text(LEFT_X, y, title, UiColor::TextHighlight);
-    for (kind, rank) in &unit.weapon_ranks {
-        y += 1;
-        let x = pen.text(LEFT_X, y, kind_name(words, *kind), UiColor::Text);
-        pen.text(x.max(LEFT_X + 10), y, &format!("{rank:?}"), UiColor::Text);
-    }
     let affinities = class.map(|c| c.affinities.as_slice()).unwrap_or_default();
-    if affinities.is_empty() {
-        return;
-    }
-    y += 2;
-    let title = words.text("battle.info.affinities");
-    pen.text(LEFT_X, y, title, UiColor::TextHighlight);
-    for &(element, affinity) in affinities {
-        y += 1;
-        let x = pen.text(LEFT_X, y, element_name(words, element), UiColor::Text);
-        let name = affinity_name(words, affinity);
-        pen.text(x.max(LEFT_X + 10), y, name, UiColor::Text);
-    }
-}
-
-/// Name, class and level, EXP, HP with a bar, stats, skills. Max HP is
-/// shown on the HP line, so the stat list leaves HP out.
-fn draw_middle(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
-    let x = MID_X;
-    pen.cut(x, 1, words.unit(unit), 25, faction_color(unit.faction));
-    let class_name = words.class_of(&unit.class, state.classes());
-    let class_line = class_level(words, class_name, unit.level);
-    pen.cut(x, 2, &class_line, 25, UiColor::Text);
-    let at_cap = unit.level >= state.classes().level_cap;
-    let exp = if at_cap {
-        "--".to_owned()
-    } else {
-        unit.exp.to_string()
-    };
-    let label = format!("{} ", words.text("battle.exp"));
-    let ex = pen.text(x, 3, &label, UiColor::TextDim);
-    pen.text(ex, 3, &exp, UiColor::Text);
-    let label = format!("{} ", stat_name(words, StatKind::Hp));
-    let hx = pen.text(x, 4, &label, UiColor::TextDim);
-    pen.text(
-        hx,
-        4,
-        &format!("{}/{}", unit.hp, unit.stats.hp),
-        UiColor::Text,
-    );
-    let (filled, color) = hp_fill(unit.hp, unit.stats.hp, HP_BAR_CELLS);
-    for i in 0..HP_BAR_CELLS {
-        let (glyph, fg) = if i < filled {
-            ('█', color)
-        } else {
-            ('░', UiColor::TextDim)
-        };
-        pen.text(x + 11 + i, 4, &glyph.to_string(), fg);
-    }
-    pen.text(
-        x,
-        6,
-        words.text("battle.info.stats"),
-        UiColor::TextHighlight,
-    );
+    // Timed effects count: a raised or lowered stat is marked.
+    let shown = effect_bonuses(&unit.effects).apply(unit.stats);
     let listed = StatKind::GROWABLE
         .into_iter()
-        .filter(|&k| k != StatKind::Hp);
-    // Timed effects count: a raised or lowered stat shows in the effect
-    // colour.
-    let shown = effect_bonuses(&unit.effects).apply(unit.stats);
-    for (y, kind) in (7..).zip(listed) {
-        pen.text(x, y, stat_name(words, kind), UiColor::Text);
-        let value = format!("{:>3}", shown.get(kind));
-        let color = if shown.get(kind) == unit.stats.get(kind) {
-            UiColor::Text
-        } else {
-            UiColor::Effect
-        };
-        pen.text(x + 4, y, &value, color);
-    }
-    draw_effects(pen, state, words, unit);
-    draw_skills(pen, state, words, unit);
-}
-
-/// The unit's timed effects right of the stats: name, what it changes, and
-/// until when it lasts (0412).
-fn draw_effects(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
-    if unit.effects.is_empty() {
-        return;
-    }
-    let title = words.text("battle.info.effects");
-    pen.text(EFFECT_X, 6, title, UiColor::TextHighlight);
-    let mut y = 7;
-    for effect in unit.effects.iter().take(EFFECT_MAX) {
-        pen.cut(
-            EFFECT_X,
-            y,
-            &effect_name(state, words, effect),
-            EFFECT_W,
-            UiColor::Effect,
-        );
-        pen.cut(
-            EFFECT_X,
-            y + 1,
-            &timed_text(words, &effect.mods),
-            EFFECT_W,
-            UiColor::Text,
-        );
-        pen.cut(
-            EFFECT_X,
-            y + 2,
-            until_text(words, effect),
-            EFFECT_W,
-            UiColor::TextDim,
-        );
-        y += 3;
+        .filter(|&k| k != StatKind::Hp)
+        .map(|kind| InfoStatView {
+            name: stat_name(words, kind).to_owned(),
+            value: shown.get(kind),
+            changed: shown.get(kind) != unit.stats.get(kind),
+        })
+        .collect();
+    let effects = unit
+        .effects
+        .iter()
+        .map(|effect| InfoEffectView {
+            name: effect_name(state, words, effect),
+            mods: timed_text(words, &effect.mods),
+            until: until_text(words, effect).to_owned(),
+        })
+        .collect();
+    let text = |key| words.text(key).to_owned();
+    InfoView {
+        portrait: text("battle.portrait"),
+        name: words.unit(unit).to_owned(),
+        faction: unit.faction,
+        class_level: class_level(words, class_name, unit.level),
+        exp_name: text("battle.exp"),
+        exp: (!at_cap).then_some(unit.exp),
+        hp_name: stat_name(words, StatKind::Hp).to_owned(),
+        hp: unit.hp,
+        max: unit.stats.hp,
+        stats_title: text("battle.info.stats"),
+        stats: listed,
+        effects_title: text("battle.info.effects"),
+        effects,
+        skills_title: text("battle.info.skills"),
+        skills: skills(state, words, unit),
+        mov_name: stat_name(words, StatKind::Mov).to_owned(),
+        mov: unit.move_points(),
+        movement: movement.cloned(),
+        tags: tag_names(words, tags)
+            .into_iter()
+            .map(str::to_owned)
+            .collect(),
+        ranks_title: text("battle.info.weapon_ranks"),
+        ranks: unit
+            .weapon_ranks
+            .iter()
+            .map(|(kind, rank)| (kind_name(words, *kind).to_owned(), format!("{rank:?}")))
+            .collect(),
+        affinities_title: text("battle.info.affinities"),
+        affinities: affinities
+            .iter()
+            .map(|&(element, affinity)| {
+                let element = element_name(words, element).to_owned();
+                (element, affinity_name(words, affinity).to_owned())
+            })
+            .collect(),
+        weapons_title: text("battle.info.weapons"),
+        equipped_mark: text("battle.info.mark.equipped"),
+        weapons: weapons(state, words, unit),
+        armour: GearView {
+            title: text("battle.info.armour"),
+            item: unit.loadout.armour.as_ref().and_then(|id| {
+                let a = state.items().armour(id)?;
+                let name = words.item(id, state.items()).to_owned();
+                Some((name, bonus_text(words, &a.bonus)))
+            }),
+        },
+        accessory: GearView {
+            title: text("battle.info.accessory"),
+            item: unit.loadout.accessory.as_ref().and_then(|id| {
+                let a = state.items().accessory(id)?;
+                let name = words.item(id, state.items()).to_owned();
+                Some((name, bonus_text(words, &a.bonus)))
+            }),
+        },
+        spells_title: text("battle.info.spells"),
+        spells: spells(state, words, unit),
     }
 }
 
@@ -338,173 +197,75 @@ fn effect_name(state: &BattleState, words: Words<'_>, effect: &TimedEffect) -> S
     }
 }
 
-/// The skills block: `P` (passive, always on) or `A` (active) markers, the
-/// rank, the cost of an active (for a non-attack active its uses left this
-/// battle, `2/3`), and each effect in a line under it.
-fn draw_skills(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
-    let x = MID_X;
-    pen.text(
-        x,
-        15,
-        words.text("battle.info.skills"),
-        UiColor::TextHighlight,
-    );
-    let skills = unit.usable_skills(state.classes(), state.skills());
-    if skills.is_empty() {
-        pen.text(x, 16, "--", UiColor::TextDim);
-    }
-    for (y, skill) in (16..).step_by(2).zip(skills.into_iter().take(SKILL_MAX)) {
-        let cost = skill_cost(skill);
-        let mark = words.text(if cost.is_some() {
-            "battle.info.mark.active"
-        } else {
-            "battle.info.mark.passive"
-        });
-        pen.text(x, y, mark, UiColor::TextHighlight);
-        let name_w = if cost.is_some() { 16 } else { 23 };
-        pen.cut(x + 2, y, words.skill(skill), name_w, UiColor::Text);
-        if let Some(cost) = cost {
-            let text = cost_text(words, cost, unit.skill_uses.uses_left(&skill.id));
-            let w = i32::try_from(text.len()).unwrap_or(0);
-            pen.text(x + 25 - w, y, &text, UiColor::TextDim);
-        }
-        pen.cut(
-            x + 2,
-            y + 1,
-            &effect_text(words, skill),
-            23,
-            UiColor::TextDim,
-        );
-    }
+/// The skills the unit can use: passive (always on) or active, the cost
+/// of an active (for a non-attack active its uses left this battle,
+/// `2/3`), and what each does.
+fn skills(state: &BattleState, words: Words<'_>, unit: &Unit) -> Vec<InfoSkillView> {
+    unit.usable_skills(state.classes(), state.skills())
+        .into_iter()
+        .map(|skill| {
+            let cost = skill_cost(skill);
+            let mark = words.text(if cost.is_some() {
+                "battle.info.mark.active"
+            } else {
+                "battle.info.mark.passive"
+            });
+            let left = unit.skill_uses.uses_left(&skill.id);
+            InfoSkillView {
+                mark: mark.to_owned(),
+                name: words.skill(skill).to_owned(),
+                cost: cost.map(|cost| cost_text(words, cost, left)),
+                effect: effect_text(words, skill),
+            }
+        })
+        .collect()
 }
 
-/// The three weapon slots (the equipped one marked `E`, durability `20/20`
-/// or `broken`), armour, accessory, then the spells ([`draw_spells`]).
-fn draw_right(pen: &mut Pen<'_>, state: &BattleState, words: Words<'_>, unit: &Unit) {
-    let x = RIGHT_X;
+/// The weapon slots: each weapon, whether it is equipped, its durability
+/// and numbers.
+fn weapons(state: &BattleState, words: Words<'_>, unit: &Unit) -> Vec<Option<InfoWeaponView>> {
     let items = state.items();
     let loadout = &unit.loadout;
-    pen.text(
-        x,
-        1,
-        words.text("battle.info.weapons"),
-        UiColor::TextHighlight,
-    );
-    let mut y = 2;
-    for slot in 0..WEAPON_SLOTS {
-        let weapon = loadout
-            .weapon(slot)
-            .and_then(|w| Some((w, items.weapon(&w.def)?)));
-        match weapon {
-            Some((inst, def)) => {
-                let mark = if loadout.equipped_slot() == Some(slot) {
-                    words.text("battle.info.mark.equipped")
-                } else {
-                    " "
-                };
-                let mark = &format!("{mark} ");
-                let color = if inst.is_broken() {
-                    UiColor::HpLow
-                } else {
-                    UiColor::Text
-                };
-                pen.text(x, y, mark, UiColor::TextHighlight);
-                pen.cut(x + 2, y, words.item(&inst.def, items), 28, color);
-                let dur = if inst.is_broken() {
-                    durability_text(words, 0, def.durability)
-                } else {
-                    format!("{:>2}/{}", inst.durability_left, def.durability)
-                };
-                let dw = i32::try_from(dur.len()).unwrap_or(0);
-                let right = x + i32::try_from(RIGHT_W).unwrap_or(0);
-                pen.text(right - dw, y, &dur, color);
-                let numbers = words.text_with(
-                    "battle.info.weapon_numbers",
-                    &[
-                        ("might", &def.might),
-                        ("hit", &def.hit),
-                        ("crit", &def.crit),
-                        ("range", &range_text(def.min_range, def.max_range)),
-                        ("weight", &def.weight),
-                    ],
-                );
-                pen.cut(x + 2, y + 1, &numbers, ITEM_W, UiColor::TextDim);
-            }
-            None => {
-                pen.text(x + 2, y, "--", UiColor::TextDim);
-            }
-        }
-        y += 2;
-    }
-    y += 1;
-    let gear = [
-        (
-            "battle.info.armour",
-            loadout
-                .armour
-                .as_ref()
-                .and_then(|id| Some((id, items.armour(id)?)))
-                .map(|(id, a)| (words.item(id, items), bonus_text(words, &a.bonus))),
-        ),
-        (
-            "battle.info.accessory",
-            loadout
-                .accessory
-                .as_ref()
-                .and_then(|id| Some((id, items.accessory(id)?)))
-                .map(|(id, a)| (words.item(id, items), bonus_text(words, &a.bonus))),
-        ),
-    ];
-    for (title, piece) in gear {
-        pen.text(x, y, words.text(title), UiColor::TextHighlight);
-        match piece {
-            Some((name, bonus)) => {
-                pen.cut(x + 2, y + 1, name, ITEM_W, UiColor::Text);
-                pen.cut(x + 2, y + 2, &bonus, ITEM_W, UiColor::TextDim);
-            }
-            None => {
-                pen.text(x + 2, y + 1, "--", UiColor::TextDim);
-            }
-        }
-        y += 4;
-    }
-    draw_spells(pen, (state, words), unit, y);
+    (0..WEAPON_SLOTS)
+        .map(|slot| {
+            let inst = loadout.weapon(slot)?;
+            let def = items.weapon(&inst.def)?;
+            let numbers = words.text_with(
+                "battle.info.weapon_numbers",
+                &[
+                    ("might", &def.might),
+                    ("hit", &def.hit),
+                    ("crit", &def.crit),
+                    ("range", &range_text(def.min_range, def.max_range)),
+                    ("weight", &def.weight),
+                ],
+            );
+            Some(InfoWeaponView {
+                name: words.item(&inst.def, items).to_owned(),
+                equipped: loadout.equipped_slot() == Some(slot),
+                broken: inst
+                    .is_broken()
+                    .then(|| durability_text(words, 0, def.durability)),
+                left: inst.durability_left,
+                max: def.durability,
+                numbers,
+            })
+        })
+        .collect()
 }
 
-/// The spells block from row `y`: each learned spell with its uses left,
-/// the equipped one marked `E`.
-fn draw_spells(pen: &mut Pen<'_>, (state, words): (&BattleState, Words<'_>), unit: &Unit, y: i32) {
-    let x = RIGHT_X;
-    pen.text(
-        x,
-        y,
-        words.text("battle.info.spells"),
-        UiColor::TextHighlight,
-    );
-    let spells: Vec<_> = unit
-        .learned
+/// The spells the unit has learned, with their uses left.
+fn spells(state: &BattleState, words: Words<'_>, unit: &Unit) -> Vec<InfoSpellView> {
+    unit.learned
         .iter()
         .filter_map(|id| state.spells().get(id))
-        .collect();
-    if spells.is_empty() {
-        pen.text(x + 2, y + 1, "--", UiColor::TextDim);
-    }
-    for (row, spell) in (y + 1..).zip(spells.into_iter().take(SPELL_ROWS)) {
-        let uses = unit.spells.uses_left(&spell.id);
-        if unit.loadout.equipped_spell() == Some(&spell.id) {
-            let mark = words.text("battle.info.mark.equipped");
-            pen.text(x, row, mark, UiColor::TextHighlight);
-        }
-        pen.cut(x + 2, row, words.spell(spell), 28, UiColor::Text);
-        let text = format!("{uses}/{}", spell.uses);
-        let w = i32::try_from(text.len()).unwrap_or(0);
-        pen.text(
-            x + i32::try_from(RIGHT_W).unwrap_or(0) - w,
-            row,
-            &text,
-            UiColor::Text,
-        );
-    }
+        .map(|spell| InfoSpellView {
+            name: words.spell(spell).to_owned(),
+            equipped: unit.loadout.equipped_spell() == Some(&spell.id),
+            left: unit.spells.uses_left(&spell.id),
+            uses: spell.uses,
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -555,12 +316,55 @@ mod tests {
     }
 
     #[test]
-    fn the_columns_fit_inside_the_border() {
-        const { assert!(PORTRAIT.x + PORTRAIT.w < MID_X) };
-        assert!(RIGHT_X + i32::try_from(RIGHT_W).unwrap() < INFO.x + INFO.w - 1);
-        const { assert!(ITEM_W + 2 <= RIGHT_W) };
-        // The lists end above the bottom border (row 29).
-        assert!(16 + 2 * i32::try_from(SKILL_MAX).unwrap() < INFO.h);
-        assert!(18 + i32::try_from(SPELL_ROWS).unwrap() < INFO.h);
+    fn the_view_reads_the_unit_its_effects_and_its_loadout() {
+        use trpg_core::{Phase, SkillId, TimedMods, UnitId};
+
+        use crate::screen::tests::ctx;
+        use crate::screens::battle::quick_battle;
+
+        let c = ctx();
+        let state = quick_battle(&c.content).unwrap();
+        let mut lord = state.unit(UnitId(1)).unwrap().clone();
+        let plain = view((&state, Words::ENGLISH), &lord);
+        assert_eq!(
+            (plain.name.as_str(), plain.hp, plain.max),
+            ("Test Lord", lord.hp, lord.stats.hp)
+        );
+        assert_eq!(plain.exp, Some(lord.exp));
+        assert_eq!(plain.mov, lord.move_points());
+        assert_eq!(plain.stats.len(), 6);
+        assert!(plain.stats.iter().all(|s| !s.changed), "{:?}", plain.stats);
+        assert!(plain.effects.is_empty());
+        let equipped = lord.loadout.equipped_slot().unwrap();
+        let weapons: Vec<bool> = plain.weapons.iter().flatten().map(|w| w.equipped).collect();
+        assert_eq!(weapons.iter().filter(|&&e| e).count(), 1);
+        assert!(plain.weapons[equipped].as_ref().is_some_and(|w| w.equipped));
+        // A timed effect raises Def: shown raised and marked; the others
+        // stay as they are.
+        lord.effects.push(TimedEffect {
+            source: EffectSource::Skill(SkillId::new("keen_edge")),
+            mods: TimedMods {
+                stats: vec![(StatKind::Def, 2)],
+                ..TimedMods::default()
+            },
+            until: Phase::Player,
+        });
+        let raised = view((&state, Words::ENGLISH), &lord);
+        let def = raised.stats.iter().find(|s| s.name == "Def").unwrap();
+        assert_eq!((def.value, def.changed), (lord.stats.def + 2, true));
+        let str_ = raised.stats.iter().find(|s| s.name == "Str").unwrap();
+        assert_eq!((str_.value, str_.changed), (lord.stats.str, false));
+        assert_eq!(raised.effects.len(), 1);
+        assert_eq!(raised.effects[0].mods, "Def +2");
+        // At the level cap: no EXP.
+        lord.level = state.classes().level_cap;
+        assert_eq!(view((&state, Words::ENGLISH), &lord).exp, None);
+        // A broken weapon says so.
+        if let Some(w) = lord.loadout.weapons[equipped].as_mut() {
+            w.durability_left = 0;
+        }
+        let broken = view((&state, Words::ENGLISH), &lord);
+        let shown = broken.weapons[equipped].as_ref().unwrap();
+        assert_eq!((shown.broken.as_deref(), shown.left), (Some("broken"), 0));
     }
 }

@@ -369,9 +369,11 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      `portrait::draw_portrait`) and class change (0246) follow it.
      The battle screen (0242) builds a `BattleView` holding its map's
      `MapScene` and everything around it; its forecast, unit info, fight
-     box, level-up and rewind screen are still painted from the battle's
-     state (`OldParts`) until 0248, and dialogue still draws in `draw`
-     until 0249, so don't copy those.
+     box, EXP and level-up pages and rewind screen (0248) have views of
+     their own (`battle/view/`), built by their logic modules and
+     painted by `battle/glyph/<part>.rs` (the class change and results
+     screens paint the level-up pages with the same skin). Dialogue
+     still draws in `draw` until 0249, so don't copy that.
    - Text the player reads is never a string literal (ADR-0045). Put it
      in `assets/lang/en/ui.ron` under a `screen.thing` key and ask for it
      with `ctx.text("title.new_game")`, or `ctx.text_with("results.turns",

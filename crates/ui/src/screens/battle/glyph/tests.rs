@@ -35,7 +35,7 @@ fn row(buf: &GlyphBuffer, y: i32) -> String {
 }
 
 /// `view` of `s` changed by `change`, painted.
-fn painted(s: &BattleScreen, change: impl FnOnce(&mut BattleView<'_>)) -> GlyphBuffer {
+fn painted(s: &BattleScreen, change: impl FnOnce(&mut BattleView)) -> GlyphBuffer {
     let c = ctx();
     let mut view = s.view(&c);
     change(&mut view);
