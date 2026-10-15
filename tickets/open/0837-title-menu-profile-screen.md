@@ -50,6 +50,10 @@ in it, switch back to `Player 1` and see your own options and saves.
 - Words in the language files (Claude writes them; American English;
   `test` pack too). Keys named through the keymap (`keyboard-input` skill).
 
+**Playdate:** if 1045 (the Playdate New Game and Options screens) is
+done, give the Profile screen a Playdate paint too, chosen by `ctx`'s
+`SkinSet` (1037); if not, 1045 does it.
+
 **Out (do not do):**
 - The storage and migration (0836).
 - Showing the profile anywhere but the title (a later ticket if Nick asks).

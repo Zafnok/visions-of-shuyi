@@ -44,6 +44,12 @@ None.
   its features. The printer round-trips: parse → print → parse gives
   the same map.
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6).
+
 **Out (do not do):** the map editor (1019); bot personas (0506).
 
 ## Implementation steps

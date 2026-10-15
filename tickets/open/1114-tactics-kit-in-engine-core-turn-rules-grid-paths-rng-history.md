@@ -61,6 +61,12 @@ None. No rule changes: every battle plays identically.
 - `shuyi_core::save`: the version header and the refuse-don't-migrate
   rule (ADR-0039); the game's `SaveFile` payload stays.
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6). 1051 (the AI plans once per phase) changes the AI wherever it lives.
+
 **Out (do not do):** the battle's turn loop, phases, factions, triggers
 (they stay the game's; a generic phase model can come with a second
 tactics example); bots (1116); the map scene (1115).

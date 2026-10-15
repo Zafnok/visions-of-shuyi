@@ -51,6 +51,10 @@ Sub-question: the same transition everywhere, or only between big steps
   the time. If 0805 isn't done, add a note there.
 - Record the choice in `docs/design/look-and-feel.md`.
 
+**Playdate:** if 1044 (the Playdate title screen) is done, give the
+transitions a Playdate paint too, chosen by `ctx`'s `SkinSet` (1037);
+if not, 1044 does it.
+
 **Out (do not do):**
 - Transitions inside the battle screen (phase banners, combat playback).
 - Chapter title card (0812).

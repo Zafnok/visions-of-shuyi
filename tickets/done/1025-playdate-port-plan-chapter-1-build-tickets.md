@@ -5,10 +5,10 @@ type: research
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: blocked
+status: done
 blocked_by: ["1026", "0061"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 1025 — Playdate port: plan the build tickets for Chapter 1
@@ -157,10 +157,10 @@ web game's look or controls for the Playdate's sake; the engine carve.
 
 ## Acceptance criteria
 
-- [ ] Build tickets exist for every part of 0061's answers and 1026's
+- [x] Build tickets exist for every part of 0061's answers and 1026's
       ADR, each with `blocked_by` filled in.
-- [ ] `docs/ROADMAP.md` lists them in order.
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] `docs/ROADMAP.md` lists them in order.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -168,5 +168,80 @@ web game's look or controls for the Playdate's sake; the engine carve.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** 28 tickets (27 build tickets and one decision for Nick, 0062) take Chapter 1 to a Playdate build that is sold on
+itch.io and then sent to Catalog. `docs/ROADMAP.md`'s Playdate bullet lists
+them in order:
+
+| Ticket | What |
+| ------ | ---- |
+| 1027, 1028, 1029 | `core`, `content`, `ui` build without `std` (one per crate), plus the `no-std` CI job |
+| 1030 | The console size is passed in (`ConsoleSpec`): the part of carve ticket 1108 the skins need, done first |
+| 1031 | `crates/playdate`: the C shim, allocator, the game on its own 64 KB stack, `cargo xtask playdate`, the CI device build, `THIRD_PARTY_ASSETS.md` rows |
+| 1032 | The one-bit frame: 1-bit font, Playdate palette, renderer, `frame-png --playdate`, an ADR |
+| 1033 | The front end runs the game: the loop, D-pad/A/B as a controller, saves on the SDK's files |
+| 1034, 1035 | Button chords (A+B, hold B + left/right); the crank rewinds, the system menu, map menu entries |
+| 1036 | Load only what the Playdate uses, a loading card, measured again. It writes the binary-format ticket only if loading still takes over 2 s |
+| 1037 | The one-bit map skin, and choosing the Playdate's skins (`SkinSet`) |
+| 1038, 1039 | The battle screen (full-screen map, corner pop-ups, menus); forecast, unit info, level-up, rewind |
+| 0062 | Nick decides how the one-bit pictures look (portraits, combat picture, launcher card and icon) |
+| 1040, 1041, 1042 | One-bit images at build time; the combat picture; one-bit portraits (private repository) |
+| 1043, 1044 | The dialogue screen; the title screen and cinematic |
+| 1045, 1046 | New Game and Options screens; preparations, results, saves, game over, credits |
+| 1047, 1048 | Sound and music in device formats (an ADR); voices |
+| 1049 | One build per language |
+| 1050 | Nick plays Chapter 1 on his Playdate; his feedback becomes tickets |
+| 1051 | Optional: the AI plans once per phase (only if the enemy pauses feel long) |
+| 1052, 1053 | Package and sell on itch.io; prepare the Catalog application |
+
+Every ticket with device work names what is measured on Nick's Playdate.
+
+**Dependency chain, both ways:**
+- The skins wait for the screens' views: 1038 and 1039 for 0242, 1043 for
+  0242's split-off (c), 1045 for 0247. 0242 now says to add its two
+  split-offs' ids to 1039's and 1043's `blocked_by` when it writes them.
+- 1048 waits for 0722 (the voices). 1049 waits for 0719 and 0726 (the
+  translations; the wide fonts come through them). 1052 waits for 0901
+  (itch.io publishing).
+- 1108 is now blocked by 1030, and skips its step 1 when it runs. 1108
+  and 1110 say what to do with the Playdate code. 1103–1107, 1109,
+  1111–1117 and 1131 got a **Playdate** line (ADR-0070 §6: carved crates
+  keep the `std` feature and the `no-std` build). Each Playdate ticket
+  says what happens if the carve ticket it touches lands first.
+- 0812, 0813 and 0837 say to add a Playdate paint if 1044 or 1045 is
+  already done. 1049 and 1052 do the same for the language channels.
+
+**Deviations.**
+- **A new decision ticket, 0062.** 0061 kept "one-bit portraits" and "a
+  simple one-bit combat picture", but Nick only saw mockups of the map.
+  How those pictures look, and the launcher card and icon every Playdate
+  game needs, are look-and-feel questions for him, so they get a
+  decision ticket rather than a guess.
+- **1030 does part of 1108 early.** ADR-0070 §6 allowed it ("or do that
+  part of 1108 first"). The carve chain to 1108 is long, and Nick asked
+  to rush the port.
+- **The binary data format** has no ticket yet. 1036 writes one only if
+  its device measurement says it is needed. The AI speed-up (1051) does
+  exist, but 1050 closes it as not needed if Nick finds the pauses fine.
+
+**Claude's starting rules in the new tickets** (Nick can veto; the
+build tickets mark them):
+- The loading card shows the game's name, centred (1036).
+- The Playdate's battle map has no help bar. The map menu and the
+  buttons printed on the Playdate stand in for it (1038).
+- The corner pop-ups move to the bottom when the cursor is in the top 5
+  rows (1038; *tunable*, from 0061's "top corners, move down when the
+  cursor comes near").
+- The unit's own things go on Unit info. The chapter, turn and rewinds
+  go in the map menu's header (1039, splitting 0061's "on the Unit info
+  screen and in the map menu").
+- The Playdate's title menu has no Quit entry; the system menu does that
+  (1044).
+- The dialogue face sits beside the text box as on the PC, or above it
+  if it doesn't fit (1043).
+- Technical, tunable: the A+B chord window starts at 80 ms (1034), and a
+  crank notch is 30° (1035).
+
+**For Nick:** the only new question for you is 0062 (how the one-bit
+faces, combat picture and launcher card look). Everything else follows
+your 0061 answers. The fastest path to playing Chapter 1 on your
+Playdate is rows 1–8 of the ROADMAP list, then 1050.

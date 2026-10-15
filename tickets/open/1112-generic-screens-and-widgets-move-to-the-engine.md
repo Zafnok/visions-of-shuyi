@@ -53,6 +53,12 @@ None. Nothing a player sees changes.
 - The options screen takes rows from the game: each row a label key and
   a typed value (`Toggle`, `Choice`, `Volume`, `Action`).
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6). The Playdate paints of moved screens (1038–1046) stay the game's skins over them.
+
 **Out (do not do):** cinematics (1113); the map view (1115).
 
 ## Implementation steps

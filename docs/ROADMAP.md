@@ -187,7 +187,7 @@ Design answers unblock most of the rules work. Suggested order:
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
    · **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
-8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`)
+8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card)
 9. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
 
 Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
@@ -252,11 +252,38 @@ early so every later PR is checked by them.
 - **Playdate port of Chapter 1** (Nick, 2026-10-15: "rush" it; unparked
   ahead of the engine carve): 1026 technical test (do the rules build for
   the device, how long an enemy turn takes) and 0061 Nick's decisions
-  (decided 2026-10-15, `design/playdate.md`) run side by side → 1025 writes
-  the build tickets. 1026 is done: the rules run on Nick's Playdate
+  (decided 2026-10-15, `design/playdate.md`) ran side by side; 1025 wrote
+  the build tickets (2026-10-15). The rules run on Nick's Playdate
   (ADR-0070: stable Rust and the SDK's C build; a 14-enemy turn thinks for
   1.2 s, start-up loads in 3.7 s). Not on the Chapter 1 critical
-  path; nothing on the desktop or web game changes for it.
+  path; nothing on the desktop or web game changes for it. The build
+  tickets in order (tickets on one row can run side by side):
+  1. **1027** `core` without `std` (+ the `no-std` CI job) · **1030** the
+     console size passed in (`ConsoleSpec`, ahead of carve ticket 1108) ·
+     **0062** Nick decides the one-bit pictures (portraits, combat
+     picture, launcher card)
+  2. **1028** `content` without `std` → **1029** `ui` without `std`
+  3. **1031** `crates/playdate`, the game on its own stack,
+     `cargo xtask playdate` and its CI job · **1032** the one-bit frame
+     (1-bit font, Playdate palette, renderer)
+  4. **1033** the front end runs the game (loop, D-pad/A/B, saves)
+  5. **1034** button chords → **1035** the crank rewinds, the system menu,
+     map menu entries · **1036** load only what the Playdate uses, loading
+     card · **1037** the one-bit map skin
+  6. **1040** one-bit images · **1047** sound and music · **1038** the
+     battle screen (after 0242) → **1039** forecast, unit info, level-up,
+     rewind (after 0242's split-off (b))
+  7. **1041** the combat picture · **1042** one-bit portraits · **1045**
+     New Game and Options screens (after 0247) · **1046** preparations,
+     results, saves, game over
+  8. **1043** the dialogue screen (after 0242's split-off (c)) · **1044**
+     the title screen and cinematic
+  9. **1050** Nick plays Chapter 1 on his Playdate → **1051** the AI plans
+     once per phase (only if the enemy pauses feel long)
+  10. **1052** package and sell on itch.io (after 0901) → **1053** the
+      Catalog application
+  11. When their inputs exist: **1048** voices (after 0722) · **1049** one
+      build per language (after 0719, 0726)
 - Controller support on every build (web, Windows, Linux, macOS; needed for
   Steam Deck): 0032 decide buttons → 0219 input → 0220 button names in help
   bars → 0816 rebinding (after 0815). Not on the Chapter 1 critical path;
