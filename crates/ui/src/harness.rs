@@ -21,6 +21,7 @@ use crate::flow::FlowScreen;
 use crate::game::{Game, RawInputEvent};
 use crate::input::{Button, Chord, Device, Layout, PadKind};
 use crate::map_view::{MapScene, RangeKind, UnitView, skin_named};
+use crate::profiles::ProfileId;
 use crate::screen::{Ctx, KeyPrompt, Screen};
 use crate::screens::BattleScreen;
 use crate::settings::{SETTINGS_KEY, Settings};
@@ -120,7 +121,7 @@ impl Harness {
     pub fn with_layout(layout: Layout) -> Self {
         let mut storage = MemoryStorage::new();
         let settings = Settings::default().with_layout(layout);
-        if let Err(e) = storage.write(SETTINGS_KEY, &settings.to_ron()) {
+        if let Err(e) = storage.write(&ProfileId::FIRST.key(SETTINGS_KEY), &settings.to_ron()) {
             panic!("saving the layout: {e}");
         }
         Self::with_storage(Box::new(storage))
@@ -524,7 +525,7 @@ impl Harness {
     /// Ends the run, handing back its storage, to start the next launch
     /// with [`with_storage`](Self::with_storage).
     pub fn into_storage(self) -> Box<dyn Storage> {
-        self.game.into_ctx().storage
+        self.game.into_ctx().storage.into_computer()
     }
 }
 

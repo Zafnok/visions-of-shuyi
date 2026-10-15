@@ -39,13 +39,13 @@ impl TipState {
         }
         let seen = self
             .seen
-            .get_or_insert_with(|| TipsSeen::load(&*ctx.storage));
+            .get_or_insert_with(|| TipsSeen::load(&ctx.storage));
         for trigger in fired {
             let Some(tip) = ctx.content.tips.for_trigger(trigger) else {
                 continue;
             };
             if !seen.contains(&tip.id) {
-                seen.mark(&tip.id, &mut *ctx.storage);
+                seen.mark(&tip.id, &mut ctx.storage);
                 self.queue.push_back(trigger);
             }
         }

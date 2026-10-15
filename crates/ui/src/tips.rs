@@ -1,5 +1,6 @@
 //! One-time contextual tips (ticket 0406): which have been seen (kept in
-//! [`Storage`] under [`TIPS_SEEN_KEY`]), key names in tip text, and the box
+//! [`Storage`] under [`TIPS_SEEN_KEY`], per player profile, ADR-0069), key
+//! names in tip text, and the box
 //! that shows one. The battle screen decides when a trigger has happened.
 
 use std::collections::BTreeSet;

@@ -24,8 +24,9 @@ use crate::input::{
     Action, Button, Chord, Device, Keymap, Layout, LayoutBindings, PadBindings, PlayerKeys,
 };
 use crate::map_view::MapSkin;
+use crate::profiles::{self, ProfileError, ProfileId, ProfileStore, Profiles};
 use crate::settings::{SETTINGS_KEY, Settings};
-use crate::storage::{MemoryStorage, Storage, StorageError};
+use crate::storage::{Storage, StorageError};
 use crate::tips::fill_text;
 use crate::widgets::help::HelpKeys;
 use crate::words::{Language, Words};
@@ -246,9 +247,21 @@ pub struct Ctx {
     /// Problems found while loading saved data, for `app` to log.
     warnings: Vec<String>,
     /// Where saves and settings persist (0207): files on native,
-    /// `localStorage` on web. Defaults to [`MemoryStorage`]; `app` swaps in
+    /// `localStorage` on web. Defaults to [`MemoryStorage`](crate::storage::MemoryStorage); `app` swaps in
     /// the platform implementation with [`Ctx::with_storage`].
-    pub storage: Box<dyn Storage>,
+    ///
+    /// It reads and writes the keys of the profile in use (ADR-0069): its
+    /// settings, key bindings, tips seen and saves.
+    /// [`computer`](ProfileStore::computer) is the storage of what stays
+    /// with the computer (the title's backdrop).
+    pub storage: ProfileStore,
+    /// The player profiles and the one in use (0836), loaded from the
+    /// computer's storage. Change them with
+    /// [`switch_profile`](Self::switch_profile),
+    /// [`add_profile`](Self::add_profile),
+    /// [`rename_profile`](Self::rename_profile) and
+    /// [`delete_profile`](Self::delete_profile), which save them.
+    profiles: Profiles,
     /// The player's settings (0805), loaded from `storage`. Change them
     /// with [`change_settings`](Self::change_settings), which saves them.
     settings: Settings,
@@ -360,7 +373,7 @@ pub const DEFAULT_MUSIC_SEED: u64 = 0;
 
 impl Ctx {
     /// Builds the shared context from loaded content. Fails with the names
-    /// of any UI colours the palette lacks. Starts with [`MemoryStorage`]
+    /// of any UI colours the palette lacks. Starts with [`MemoryStorage`](crate::storage::MemoryStorage)
     /// and no layout chosen (so [`Keymap::layout_picker`] is active).
     pub fn new(content: Content) -> Result<Self, LoadError> {
         let palette = Palette::new(&content.palette).map_err(LoadError::Palette)?;
@@ -368,6 +381,7 @@ impl Ctx {
         let settings = Settings::default();
         let map_skin = crate::map_view::default_skin(&content);
         let map_skin = map_skin.at_zoom(settings.map_zoom).unwrap_or(map_skin);
+        let profiles = Profiles::first(&numbered_profile(&content, ProfileId::FIRST.get()));
         Ok(Self {
             content,
             palette,
@@ -376,7 +390,8 @@ impl Ctx {
             layout: None,
             player_keys: PlayerKeys::default(),
             warnings: Vec::new(),
-            storage: Box::new(MemoryStorage::new()),
+            storage: ProfileStore::default(),
+            profiles,
             settings,
             campaign_mode: None,
             mode_switch: ModeSwitch::Closed,
@@ -766,15 +781,104 @@ impl Ctx {
     }
 
     /// Replaces the storage backend (the harness and tests keep
-    /// [`MemoryStorage`]; `app` installs the platform implementation) and
-    /// loads the player's key bindings and settings from it.
+    /// [`MemoryStorage`](crate::storage::MemoryStorage); `app` installs the platform implementation),
+    /// loads the profiles from it ([`profiles::load`]: the last one used,
+    /// `Player 1` made on a first launch, a player's keys from before
+    /// profiles moved into it) and that profile's key bindings and
+    /// settings.
     #[must_use]
-    pub fn with_storage(mut self, storage: Box<dyn Storage>) -> Self {
-        self.storage = storage;
+    pub fn with_storage(mut self, mut storage: Box<dyn Storage>) -> Self {
+        let content = &self.content;
+        let (profiles, warnings) = profiles::load(&mut *storage, |n| numbered_profile(content, n));
+        self.warnings.extend(warnings);
+        self.storage = ProfileStore::new(storage, profiles.current());
+        self.profiles = profiles;
         self.load_player_keys();
         self.load_settings();
         self
     }
+
+    /// The player profiles and the one in use.
+    pub fn profiles(&self) -> &Profiles {
+        &self.profiles
+    }
+
+    /// Makes `id` the profile in use (for the title's Profile screen,
+    /// 0837): its settings, key bindings and layout replace these
+    /// (`None` if it has none yet: the layout picker's keys), and the tips
+    /// seen and the saves are its own from the next read
+    /// ([`storage`](Self::storage)). It is the one the next launch opens
+    /// on. The switch happens even if the list can't be saved (the next
+    /// launch then opens on the profile used before).
+    pub fn switch_profile(&mut self, id: ProfileId) -> Result<(), ProfileError> {
+        self.profiles.set_current(id)?;
+        self.load_profile();
+        self.profiles
+            .save(self.storage.computer_mut())
+            .map_err(ProfileError::Storage)
+    }
+
+    /// Loads everything the profile in use holds.
+    fn load_profile(&mut self) {
+        self.storage.set_profile(self.profiles.current());
+        self.load_player_keys();
+        self.load_settings();
+        self.layout = self.settings.layout();
+        self.refresh_keymap();
+    }
+
+    /// Adds a profile called `name`, starting from the default options and
+    /// keys, and returns its id; the one in use stays. Refused (and
+    /// nothing changes) for a name that's empty, too long or taken, past
+    /// [`MAX_PROFILES`](profiles::MAX_PROFILES), or if the list can't be
+    /// saved.
+    pub fn add_profile(&mut self, name: &str) -> Result<ProfileId, ProfileError> {
+        let mut changed = self.profiles.clone();
+        let id = changed.add(name)?;
+        self.keep_profiles(changed)?;
+        Ok(id)
+    }
+
+    /// Renames the profile `id`. Refused (and nothing changes) as
+    /// [`add_profile`](Self::add_profile) is.
+    pub fn rename_profile(&mut self, id: ProfileId, name: &str) -> Result<(), ProfileError> {
+        let mut changed = self.profiles.clone();
+        changed.rename(id, name)?;
+        self.keep_profiles(changed)
+    }
+
+    /// Deletes the profile `id` and every key it holds (its options, keys,
+    /// tips seen and saves), and no other profile's. If it was in use, the
+    /// first profile left is ([`switch_profile`](Self::switch_profile)).
+    /// Refused (and nothing changes) for the only profile, or if the list
+    /// can't be saved; once the list is saved, an error deleting its keys
+    /// is returned with the profile gone (they are never read again).
+    pub fn delete_profile(&mut self, id: ProfileId) -> Result<(), ProfileError> {
+        let mut changed = self.profiles.clone();
+        changed.remove(id)?;
+        let was_current = self.profiles.current() == id;
+        self.keep_profiles(changed)?;
+        if was_current {
+            self.load_profile();
+        }
+        profiles::delete_keys(self.storage.computer_mut(), id).map_err(ProfileError::Storage)
+    }
+
+    /// Saves `changed` and, once it is saved, takes it as the list.
+    fn keep_profiles(&mut self, changed: Profiles) -> Result<(), ProfileError> {
+        changed
+            .save(self.storage.computer_mut())
+            .map_err(ProfileError::Storage)?;
+        self.profiles = changed;
+        Ok(())
+    }
+}
+
+/// The name of the profile numbered `n` when the player hasn't named it:
+/// `Player 1` for the first one, made on a first launch.
+fn numbered_profile(content: &Content, n: u32) -> String {
+    let text = content.lang.text(&LangCode::english(), "profile.numbered");
+    crate::tips::fill_values(text, &[("n", &n)])
 }
 
 /// Why the game's content could not be loaded.
@@ -900,6 +1004,7 @@ pub(crate) mod tests {
 
     use super::*;
     use crate::glyph_buffer::Cell;
+    use crate::storage::MemoryStorage;
     use crate::{AudioRequest, Rgb, UiColor};
     use trpg_content::Variant;
 
@@ -1453,7 +1558,7 @@ pub(crate) mod tests {
         })
         .unwrap();
         assert_eq!(c.settings().music_volume, 3);
-        let storage = std::mem::replace(&mut c.storage, Box::new(MemoryStorage::new()));
+        let storage = std::mem::take(&mut c.storage).into_computer();
         let mut again = Ctx::embedded().unwrap().with_storage(storage);
         assert_eq!(again.settings(), c.settings());
         assert!(again.take_warnings().is_empty());
@@ -1510,7 +1615,9 @@ pub(crate) mod tests {
         content.tilesets.insert(tileset.id.clone(), tileset);
         let fresh = Ctx::new(content.clone()).unwrap();
         assert_eq!(fresh.map_skin.zoom(), Some(MapZoom::X2));
-        let again = Ctx::new(content).unwrap().with_storage(c.storage);
+        let again = Ctx::new(content)
+            .unwrap()
+            .with_storage(c.storage.into_computer());
         assert_eq!(again.settings().map_zoom, MapZoom::X1);
         assert_eq!(again.map_skin.zoom(), Some(MapZoom::X1));
     }
@@ -1602,6 +1709,7 @@ pub(crate) mod tests {
         assert_eq!(
             c.take_warnings(),
             [
+                "profiles: can't be read: storage error: down",
                 "keybindings: can't be read, using the default keys: storage error: down",
                 "settings: can't be read: storage error: down, using the defaults"
             ]
@@ -1689,7 +1797,7 @@ pub(crate) mod tests {
             Keymap::layout_picker(&none.content.keymap).with_pad(b.pairs())
         );
         // They load with the storage, with or without a layout.
-        let storage = std::mem::replace(&mut none.storage, Box::new(MemoryStorage::new()));
+        let storage = std::mem::take(&mut none.storage).into_computer();
         let again = Ctx::embedded().unwrap().with_storage(storage);
         assert_eq!(again.pad_bindings(), b);
         assert_eq!(
@@ -1712,7 +1820,7 @@ pub(crate) mod tests {
         let b = info_on_g(&c, Layout::RightHanded);
         c.set_layout_bindings(Layout::RightHanded, b.clone())
             .unwrap();
-        let storage = std::mem::replace(&mut c.storage, Box::new(MemoryStorage::new()));
+        let storage = std::mem::take(&mut c.storage).into_computer();
         // A layout already in use picks up the loaded keys.
         let mut again = ctx().with_storage(storage);
         assert_eq!(again.layout_bindings(Layout::RightHanded), b);

@@ -19,6 +19,7 @@
         source: "{CursorUp} {CursorDown} choose · {Confirm} pick · {Cancel} back",
         text: "{CursorUp} {CursorDown} CHOOSE · {Confirm} PICK · {Cancel} BACK",
     ),
+    (key: "profile.numbered", source: "Player {n}", text: "PLAYER {n}"),
     // The Options screen.
     (key: "options.title", source: "Options", text: "OPTIONS"),
     (key: "options.row.text_speed", source: "Text speed", text: "TEXT SPEED"),

@@ -89,7 +89,7 @@ async fn main() {
         warn!("{}", warning);
     }
     #[cfg(debug_assertions)]
-    storage::smoke_check(&mut *ctx.storage);
+    storage::smoke_check(ctx.storage.computer_mut());
     let png = trpg_content::bundle::bytes(ATLAS_PNG_PATH).unwrap_or_default();
     let black = ctx.palette.get(UiColor::Black);
     let images = &ctx.content.images;

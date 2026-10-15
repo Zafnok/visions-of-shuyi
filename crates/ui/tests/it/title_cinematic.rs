@@ -12,6 +12,7 @@
 
 use insta::assert_snapshot;
 use trpg_core::{Faction, Pos, UnitId};
+use trpg_ui::Storage;
 use trpg_ui::audio::{AudioRequest, MusicCommand};
 use trpg_ui::cinematic::Frame;
 use trpg_ui::glyph_buffer::Rect;

@@ -13,6 +13,7 @@ use crate::console::{CONSOLE_H, CONSOLE_W};
 use crate::map_view::RangeKind;
 use crate::screen::tests::ctx;
 use crate::settings::SETTINGS_KEY;
+use crate::storage::Storage;
 
 fn quick() -> BattleScreen {
     BattleScreen::new(quick_battle(&ctx().content).unwrap())

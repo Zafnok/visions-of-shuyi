@@ -17,6 +17,10 @@
     "title.quit": "Quit",
     "title.help": "{Cursor} move · {Confirm} select · {Cancel} back",
 
+    // Player profiles (`docs/design/options.md`). `{n}` is the profile's
+    // number: the first profile, made on a first launch, is `Player 1`.
+    "profile.numbered": "Player {n}",
+
     // The layout picker, on first launch and opened from Options. In
     // `help_first`, `{up}`, `{down}` and `{confirm}` are every key of each.
     "layout_picker.title": "Pick your layout",
