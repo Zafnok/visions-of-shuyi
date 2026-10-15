@@ -15,7 +15,7 @@ use trpg_content::lang::TEST;
 use trpg_content::voice::{self, SOURCE_LANG};
 use trpg_content::{Content, ContentErrors, LangCode, LineId, Playable};
 use trpg_core::lead::DEFAULT_NAME;
-use trpg_core::{GameMode, LeadGender, LeadProfile};
+use trpg_core::{GameMode, LeadGender, LeadProfile, TutorialLevel};
 
 use crate::audio::{AudioQueue, MusicClock, pick_from_pool};
 use crate::color::Palette;
@@ -257,6 +257,11 @@ pub struct Ctx {
     /// date, and takes a change to Casual here
     /// ([`switch_to_casual`](Self::switch_to_casual)) into its campaign.
     pub campaign_mode: Option<GameMode>,
+    /// The tutorial level of the campaign being played (0835): `None` with
+    /// no campaign. The game flow keeps it up to date. Battle tips show
+    /// only at [`TutorialLevel::Full`] (or with no campaign, as in screen
+    /// tests).
+    pub campaign_tutorial: Option<TutorialLevel>,
     /// Whether the campaign's mode may be switched now: only at
     /// Preparations, before a battle (`death-and-difficulty.md`). The game
     /// flow keeps it up to date.
@@ -379,6 +384,7 @@ impl Ctx {
             storage: Box::new(MemoryStorage::new()),
             settings,
             campaign_mode: None,
+            campaign_tutorial: None,
             mode_switch: ModeSwitch::Closed,
             debug_tools: DEBUG_TOOLS,
             map_skin,

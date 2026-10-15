@@ -20,6 +20,10 @@
 //!   the version of a save whose other fields no longer parse).
 //!   Version 2 (ticket 1002) added the supports to the campaign and the
 //!   battle state, and [`Event::SupportPoints`](crate::Event::SupportPoints).
+//!   [`Campaign::tutorial`] (0835) came later without a new version, on
+//!   purpose: it is left out of a save at its default and a save without
+//!   it reads as that default, so every version 2 save still reads and
+//!   writes back the same.
 
 use serde::{Deserialize, Serialize};
 

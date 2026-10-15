@@ -332,6 +332,46 @@
         source: "{Cursor} choose · {Confirm} select · {Cancel} back",
         text: "{Cursor} CHOOSE · {Confirm} SELECT · {Cancel} BACK",
     ),
+    (
+        key: "familiarity.heading",
+        source: "How familiar are you?",
+        text: "HOW FAMILIAR ARE YOU?",
+    ),
+    (
+        key: "familiarity.full",
+        source: "Not familiar",
+        text: "NOT FAMILIAR",
+    ),
+    (
+        key: "familiarity.full_line",
+        source: "Not familiar: learn the controls and how this game works as you play, with tips.",
+        text: "NOT FAMILIAR: LEARN THE CONTROLS AND HOW THIS GAME WORKS AS YOU PLAY, WITH TIPS.",
+    ),
+    (
+        key: "familiarity.short",
+        source: "Familiar with other strategy RPGs",
+        text: "FAMILIAR WITH OTHER STRATEGY RPGS",
+    ),
+    (
+        key: "familiarity.short_line",
+        source: "Familiar with other strategy RPGs: learn only what this game does differently.",
+        text: "FAMILIAR WITH OTHER STRATEGY RPGS: LEARN ONLY WHAT THIS GAME DOES DIFFERENTLY.",
+    ),
+    (
+        key: "familiarity.none",
+        source: "Familiar with this game",
+        text: "FAMILIAR WITH THIS GAME",
+    ),
+    (
+        key: "familiarity.none_line",
+        source: "Familiar with this game: no lessons and no tips.",
+        text: "FAMILIAR WITH THIS GAME: NO LESSONS AND NO TIPS.",
+    ),
+    (
+        key: "familiarity.help",
+        source: "{Cursor} choose · {Confirm} select · {Cancel} back",
+        text: "{Cursor} CHOOSE · {Confirm} SELECT · {Cancel} BACK",
+    ),
     (key: "lead_select.heading", source: "Choose your lead", text: "CHOOSE YOUR LEAD"),
     (key: "lead_select.male", source: "Male", text: "MALE"),
     (key: "lead_select.female", source: "Female", text: "FEMALE"),

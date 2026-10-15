@@ -100,8 +100,8 @@ fn send(h: &mut Harness, command: &Command) {
 #[test]
 fn chapter_1_plays_from_new_game_to_to_be_continued() {
     let mut h = Harness::with_layout(Layout::RightHanded).with_shipped_story();
-    // New Game, Classic, the default lead.
-    h.keys("f f Up f");
+    // New Game, Classic, Not familiar, the default lead.
+    h.keys("f f f Up f");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("ch01"));
     // The letter, then the Red Company.

@@ -4,6 +4,7 @@
 use std::collections::VecDeque;
 
 use trpg_content::TipTrigger;
+use trpg_core::TutorialLevel;
 
 use crate::screen::Ctx;
 use crate::tips::TipsSeen;
@@ -31,10 +32,12 @@ impl TipState {
     }
 
     /// Queues the fired triggers whose tip exists and hasn't been seen, and
-    /// saves them as seen. With tips off, they are just forgotten.
+    /// saves them as seen. With tips off, or a campaign whose tutorial
+    /// level shows none (0835), they are just forgotten.
     pub fn absorb(&mut self, ctx: &mut Ctx) {
         let fired = std::mem::take(&mut self.fired);
-        if !ctx.tips_enabled {
+        let level_shows = ctx.campaign_tutorial.is_none_or(TutorialLevel::shows_tips);
+        if !ctx.tips_enabled || !level_shows {
             return;
         }
         let seen = self

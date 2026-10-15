@@ -2,7 +2,7 @@
 //! scenes and battle to the result; and saving and loading it (0802).
 //!
 //! ```text
-//! New Game → mode → lead → [chapter: intro scenes → (Preparations) → battle
+//! New Game → mode → familiarity → lead → [chapter: intro scenes → (Preparations) → battle
 //!     ├─ victory → apply the result → the results (0810: gold, rewind
 //!     │            bonus, level ups) → victory scenes
 //!     │            → "Save your progress?" (→ slot picker)
@@ -57,12 +57,13 @@ use std::collections::VecDeque;
 use trpg_content::{ChapterDef, MapLook, Present, Scene, battle_campaign, new_campaign};
 use trpg_core::{
     BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, Outcome, Preparations,
-    SaveFile, SavePoint,
+    SaveFile, SavePoint, TutorialLevel,
 };
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::save::{self, SUSPEND_KEY, SaveError};
 use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Transition};
+use crate::screens::familiarity::FamiliarityScreen;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen, ToBeContinuedScreen};
 use crate::screens::lead_select::LeadSelectScreen;
 use crate::screens::mode_select::ModeSelectScreen;
@@ -93,8 +94,11 @@ pub const QUICK_CHAPTER: &str = "quick";
 pub enum Stage {
     /// Classic or Casual.
     Mode(ModeSelectScreen),
-    /// The lead's gender and name, in the mode picked.
-    Lead(GameMode, LeadSelectScreen),
+    /// How familiar the player is (the tutorial level), in the mode
+    /// picked.
+    Familiarity(GameMode, FamiliarityScreen),
+    /// The lead's gender and name, in the mode and tutorial level picked.
+    Lead(GameMode, TutorialLevel, LeadSelectScreen),
     /// A chapter's scene.
     Scene(Box<DialogueScreen>),
     /// Loadouts and the pack, before a battle that has Preparations.
@@ -293,7 +297,8 @@ impl FlowScreen {
     fn screen(&self) -> &dyn Screen {
         match &self.stage {
             Stage::Mode(s) => s,
-            Stage::Lead(_, s) => s,
+            Stage::Familiarity(_, s) => s,
+            Stage::Lead(_, _, s) => s,
             Stage::Scene(s) => s.as_ref(),
             Stage::Preparations(s) => s.as_ref(),
             Stage::Battle(s) => s.as_ref(),
@@ -308,7 +313,8 @@ impl FlowScreen {
     fn screen_mut(&mut self) -> &mut dyn Screen {
         match &mut self.stage {
             Stage::Mode(s) => s,
-            Stage::Lead(_, s) => s,
+            Stage::Familiarity(_, s) => s,
+            Stage::Lead(_, _, s) => s,
             Stage::Scene(s) => s.as_mut(),
             Stage::Preparations(s) => s.as_mut(),
             Stage::Battle(s) => s.as_mut(),
@@ -325,6 +331,7 @@ impl FlowScreen {
     fn adopt(&mut self, ctx: &mut Ctx, campaign: Campaign) {
         ctx.lead = campaign.lead.clone();
         ctx.campaign_mode = Some(campaign.mode);
+        ctx.campaign_tutorial = Some(campaign.tutorial);
         #[expect(clippy::cast_precision_loss, reason = "exact below 2^53 s")]
         let played = campaign.playtime_s as f64;
         self.started_at = ctx.clock_s - played;
@@ -563,15 +570,20 @@ impl FlowScreen {
         let stage = std::mem::replace(&mut self.stage, Stage::ToBeContinued(ToBeContinuedScreen));
         match stage {
             Stage::Mode(s) => match s.result() {
-                Some(mode) => self.stage = Stage::Lead(mode, LeadSelectScreen::new()),
+                Some(mode) => self.stage = Stage::Familiarity(mode, FamiliarityScreen::new(ctx)),
                 None => return true,
             },
-            Stage::Lead(mode, s) => match s.result() {
+            Stage::Familiarity(mode, s) => match s.result() {
+                Some(level) => self.stage = Stage::Lead(mode, level, LeadSelectScreen::new()),
+                None => self.stage = Stage::Mode(ModeSelectScreen::new(ctx)),
+            },
+            Stage::Lead(mode, level, s) => match s.result() {
                 Some(lead) => {
-                    let campaign = new_campaign(&ctx.content, mode, lead.clone());
+                    let mut campaign = new_campaign(&ctx.content, mode, lead.clone());
+                    campaign.tutorial = level;
                     self.begin(ctx, campaign);
                 }
-                None => self.stage = Stage::Mode(ModeSelectScreen::new(ctx)),
+                None => self.stage = Stage::Familiarity(mode, FamiliarityScreen::new(ctx)),
             },
             Stage::Scene(_) | Stage::Results(_) => self.next_scene(ctx),
             Stage::Preparations(p) => return self.prepared(&p),
@@ -616,6 +628,7 @@ impl FlowScreen {
     fn sync_mode(&mut self, ctx: &mut Ctx) {
         let Some(campaign) = &mut self.campaign else {
             ctx.campaign_mode = None;
+            ctx.campaign_tutorial = None;
             ctx.mode_switch = ModeSwitch::Closed;
             return;
         };
@@ -628,6 +641,7 @@ impl FlowScreen {
             }
         }
         ctx.campaign_mode = Some(campaign.mode);
+        ctx.campaign_tutorial = Some(campaign.tutorial);
         ctx.mode_switch = match self.stage {
             Stage::Preparations(_) => ModeSwitch::Open,
             _ => ModeSwitch::Closed,
@@ -672,6 +686,7 @@ impl Screen for FlowScreen {
                 if self.advance(ctx) {
                     // Back to the title: no campaign.
                     ctx.campaign_mode = None;
+                    ctx.campaign_tutorial = None;
                     ctx.mode_switch = ModeSwitch::Closed;
                     return Transition::Pop;
                 }
