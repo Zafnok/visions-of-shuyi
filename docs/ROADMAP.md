@@ -187,7 +187,8 @@ Design answers unblock most of the rules work. Suggested order:
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
    · **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
-8. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
+8. Now, at Nick's request (2026-10-15): **0061** the Playdate version of Chapter 1 (screen, buttons, crank, what's left out)
+9. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
 
 Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
 preparations, 0409 shops, 0410 spells, 0411 battle notes, 0502 enemy
@@ -247,8 +248,13 @@ early so every later PR is checked by them.
 - World map (0008 chose FE Sacred Stones-style, after the linear opening
   chapters): 1007 nodes/travel/towns/save/camp, 1008 fixed and random skirmishes.
 - Supports (FE GBA-style, earned in battle) and camp events: 1002, 1003.
-  Parked far-future ideas: hub activities (1004), pair abilities (1005),
-  a Playdate port (1025, after 0903).
+  Parked far-future ideas: hub activities (1004), pair abilities (1005).
+- **Playdate port of Chapter 1** (Nick, 2026-10-15: "rush" it; unparked
+  ahead of the engine carve): 1026 technical test (do the rules build for
+  the device, how long an enemy turn takes) and 0061 Nick's decisions
+  (400 × 240 one-bit screen, buttons and crank, what is left out) run side
+  by side → 1025 writes the build tickets. Not on the Chapter 1 critical
+  path; nothing on the desktop or web game changes for it.
 - Controller support on every build (web, Windows, Linux, macOS; needed for
   Steam Deck): 0032 decide buttons → 0219 input → 0220 button names in help
   bars → 0816 rebinding (after 0815). Not on the Chapter 1 critical path;

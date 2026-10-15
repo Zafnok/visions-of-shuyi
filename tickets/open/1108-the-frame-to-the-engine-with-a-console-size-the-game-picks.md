@@ -48,6 +48,9 @@ None. Nothing a player sees changes.
   `portrait` (fit an image at a whole scale), `Rgb` and `Palette`.
 - Aliases in `trpg-ui`.
 
+**Playdate:** if a Playdate front end exists by then (1025's build tickets,
+Nick 2026-10-15), it passes its own `ConsoleSpec` and must keep building.
+
 **Out (do not do):** world layers, cameras and sort keys (1120); the
 renderer in `app` (1110).
 
