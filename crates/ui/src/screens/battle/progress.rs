@@ -605,11 +605,18 @@ pub fn exp_line(exp: u32) -> (i32, u32) {
 /// The text of stat `kind`'s row: `Str   6 → 7  +1` if it grew, else
 /// `Def   5`.
 pub fn stat_row(words: Words<'_>, kind: StatKind, before: StatValue, gain: StatValue) -> String {
-    let name = stat_name(words, kind);
+    let (row, gain) = stat_row_parts(stat_name(words, kind), before, gain);
+    row + &gain.unwrap_or_default()
+}
+
+/// [`stat_row`] of the stat called `name`, in two parts: the row up to the
+/// gain (`Str   6 → 7  `), and the gain (`+1`) if it grew.
+pub fn stat_row_parts(name: &str, before: StatValue, gain: StatValue) -> (String, Option<String>) {
     if gain > 0 {
-        format!("{name:<4}{before:>3} → {:<3} +{gain}", before + gain)
+        let row = format!("{name:<4}{before:>3} → {:<3} ", before + gain);
+        (row, Some(format!("+{gain}")))
     } else {
-        format!("{name:<4}{before:>3}")
+        (format!("{name:<4}{before:>3}"), None)
     }
 }
 

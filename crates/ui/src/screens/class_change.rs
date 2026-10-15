@@ -24,6 +24,16 @@
 //! Until the between-battle menus exist (Preparations, 0408; camp), the
 //! screen is reached from the debug menu with a test unit
 //! ([`ClassChangeScreen::demo`]).
+//!
+//! The screen says what it shows as a [`ClassChangeView`]
+//! ([`ClassChangeScreen::view`]); [`glyph::paint`] draws that view.
+
+pub mod glyph;
+pub mod view;
+
+pub use view::{
+    ClassChangeBody, ClassChangeView, ColumnView, ColumnsView, QuestionView, SealView, StatRowView,
+};
 
 use trpg_core::progression::class_change::ChangeTables;
 use trpg_core::{
@@ -36,8 +46,7 @@ use super::battle::info::{class_level, stat_name, tag_names};
 use super::battle::progress::{self, PROGRESS_TIMINGS, Progress, ProgressTables};
 use super::battle::skills::kind_name;
 use crate::audio::MenuSound;
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::widgets::help::{SEPARATOR, key_name};
@@ -45,30 +54,6 @@ use crate::words::Words;
 
 /// Columns shown at once.
 pub const COLUMNS: usize = 4;
-
-/// Width of a column's box, in cells.
-const COLUMN_W: i32 = 24;
-
-/// Column of the first column's box.
-const COLUMNS_X: i32 = 2;
-
-/// Row of the columns' top border.
-const COLUMNS_Y: i32 = 4;
-
-/// Height of a column's box.
-const COLUMN_H: i32 = 25;
-
-/// Widest text in a column (one blank cell inside each border).
-const TEXT_W: usize = 20;
-
-/// Row of the title.
-const TITLE_ROW: i32 = 1;
-
-/// Row of the unit's line.
-const UNIT_ROW: i32 = 2;
-
-/// Row of the `← more` / `more →` marks.
-const MORE_ROW: i32 = 3;
 
 /// The key of the mark after a stat at its hard ceiling (`MAX`).
 pub const MAX_MARK: &str = "class_change.max";
@@ -158,20 +143,22 @@ fn change(
     }
 }
 
-/// The text of stat `kind`'s row: `Str   9 → 12  +3` if it grows, else
-/// `Mag   1`; with [`MAX_MARK`] after a stat that ends at its `ceiling`.
-pub fn stat_line(
+/// Stat `kind`'s row, `before` the change and `after` it, marked
+/// [`at_max`](StatRowView::at_max) if it ends at its hard `ceiling` (or
+/// past it). A skin writes it as `Str   9 → 12  +3`, or `Def  49 MAX`
+/// ([`glyph::stat_line`]).
+pub fn stat_row(
     words: Words<'_>,
     kind: StatKind,
     before: StatValue,
     after: StatValue,
     ceiling: StatValue,
-) -> String {
-    let row = progress::stat_row(words, kind, before, after - before);
-    if after >= ceiling {
-        format!("{row} {}", words.text(MAX_MARK))
-    } else {
-        row
+) -> StatRowView {
+    StatRowView {
+        name: stat_name(words, kind).to_owned(),
+        before,
+        after,
+        at_max: after >= ceiling,
     }
 }
 
@@ -481,235 +468,119 @@ impl ClassChangeScreen {
         }
     }
 
-    /// The title, the unit's line and the seals in stock for the focused
-    /// class.
-    fn draw_header(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
+    /// The screen as it is now, as plain data for a skin to paint
+    /// ([`glyph::paint`]): the columns (with the question while it is
+    /// open), or the change's pages, and the help line.
+    pub fn view(&self, ctx: &Ctx) -> ClassChangeView {
+        let body = match &self.stage {
+            Stage::Choosing => ClassChangeBody::Columns(Box::new(self.columns_view(ctx, false))),
+            Stage::Confirming => ClassChangeBody::Columns(Box::new(self.columns_view(ctx, true))),
+            Stage::Result(pages) => ClassChangeBody::Result(Box::new(pages.clone())),
+            Stage::Done => ClassChangeBody::Done,
+        };
+        ClassChangeView {
+            body,
+            help: self.help(ctx),
+        }
+    }
+
+    /// The title, the unit's line, the seals in stock for the focused
+    /// class, the columns on show and the marks for those scrolled away;
+    /// with the question if `asking`.
+    fn columns_view(&self, ctx: &Ctx, asking: bool) -> ColumnsView {
+        let words = ctx.words();
         let classes = &ctx.content.classes;
-        buf.print(
-            COLUMNS_X,
-            TITLE_ROW,
-            ctx.text(self.kind.title()),
-            c(UiColor::TextHighlight),
-            black,
-        );
-        let n = buf.print(
-            COLUMNS_X,
-            UNIT_ROW,
-            ctx.words().unit(&self.unit),
-            c(UiColor::Player),
-            black,
-        );
-        let class = ctx.words().class_of(&self.unit.class, classes);
-        let line = class_level(ctx.words(), class, self.unit.level);
-        buf.print(
-            COLUMNS_X + i32::from(n) + 2,
-            UNIT_ROW,
-            &line,
-            c(UiColor::Text),
-            black,
-        );
-        let Some(class) = self.focused().and_then(|o| classes.get(&o.class)) else {
-            return;
-        };
-        let (seal, held) = self.seal_of(ctx, class);
-        let text = format!("{seal} ×{held}");
-        let w = i32::try_from(text.chars().count()).unwrap_or(0);
-        let right = COLUMNS_X + COLUMN_W * i32::try_from(COLUMNS).unwrap_or(0);
-        let color = if held == 0 {
-            UiColor::HpLow
-        } else {
-            UiColor::Text
-        };
-        buf.print(right - w, UNIT_ROW, &text, c(color), black);
-    }
-
-    /// The columns on screen, and the marks for those scrolled away.
-    fn draw_columns(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        if self.options.is_empty() {
-            let none = ctx.text("class_change.none");
-            buf.print(COLUMNS_X, COLUMNS_Y + 1, none, c(UiColor::TextDim), black);
-            return;
-        }
+        let class = words.class_of(&self.unit.class, classes);
+        let focused = self.focused().and_then(|o| classes.get(&o.class));
+        let seal = focused.map(|class| {
+            let (name, held) = self.seal_of(ctx, class);
+            SealView { name, held }
+        });
+        let question = focused.filter(|_| asking).map(|class| {
+            let [ask, cost] = self.question(ctx, class);
+            let keys = ctx.text_with("class_change.yes_no", &[]);
+            QuestionView { ask, cost, keys }
+        });
         let shown = self.options.iter().enumerate().skip(self.first);
-        for (slot, (index, option)) in (0..).zip(shown.take(COLUMNS)) {
-            let x = COLUMNS_X + slot * COLUMN_W;
-            self.draw_column(ctx, buf, x, option, index == self.focus);
-        }
-        let dim = c(UiColor::TextDim);
-        if self.first > 0 {
-            let more = ctx.text("class_change.more_left");
-            buf.print(COLUMNS_X, MORE_ROW, more, dim, black);
-        }
-        if self.first + COLUMNS < self.options.len() {
-            let text = ctx.text("class_change.more_right");
-            let w = i32::try_from(text.chars().count()).unwrap_or(0);
-            let right = COLUMNS_X + COLUMN_W * i32::try_from(COLUMNS).unwrap_or(0);
-            buf.print(right - w, MORE_ROW, text, dim, black);
+        // Every option is a class of the content: the targets come from it.
+        let columns = shown
+            .take(COLUMNS)
+            .filter_map(|(index, option)| {
+                let class = classes.get(&option.class)?;
+                Some(self.column_view(ctx, class, option, index == self.focus))
+            })
+            .collect();
+        let more = |key| ctx.text(key).to_owned();
+        let some = !self.options.is_empty();
+        ColumnsView {
+            title: ctx.text(self.kind.title()).to_owned(),
+            unit: words.unit(&self.unit).to_owned(),
+            class_level: class_level(words, class, self.unit.level),
+            seal,
+            none: (!some).then(|| ctx.text("class_change.none").to_owned()),
+            columns,
+            more_left: (self.first > 0).then(|| more("class_change.more_left")),
+            more_right: (self.first + COLUMNS < self.options.len())
+                .then(|| more("class_change.more_right")),
+            weapons_heading: ctx.text("class_change.weapons").to_owned(),
+            active_heading: ctx.text("class_change.active").to_owned(),
+            max_mark: ctx.text(MAX_MARK).to_owned(),
+            question,
         }
     }
 
-    /// One class's column, its box's left edge at column `x`.
-    fn draw_column(
+    /// The column of `class`, the class of `option`.
+    fn column_view(
         &self,
         ctx: &Ctx,
-        buf: &mut GlyphBuffer,
-        x: i32,
+        class: &ClassDef,
         option: &ClassOption,
         focused: bool,
-    ) {
+    ) -> ColumnView {
         let content = &ctx.content;
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let rect = Rect::new(x, COLUMNS_Y, COLUMN_W, COLUMN_H);
-        buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-        let (style, border) = if focused {
-            (BoxStyle::Double, UiColor::PanelBorderFocus)
-        } else {
-            (BoxStyle::Single, UiColor::PanelBorder)
-        };
-        buf.draw_box(rect, style, c(border), bg);
-        let Some(class) = content.classes.get(&option.class) else {
-            return;
-        };
-        let offered = option.after.is_ok();
-        // A refused class is dimmed whole.
-        let shade = |color| if offered { color } else { UiColor::TextDim };
-        let pen = |buf: &mut GlyphBuffer, row: i32, text: &str, color: UiColor| {
-            let cut: String = text.chars().take(TEXT_W).collect();
-            buf.print(x + 2, COLUMNS_Y + row, &cut, c(shade(color)), bg);
-        };
-        let title = if focused {
-            UiColor::TextHighlight
-        } else {
-            UiColor::Text
-        };
-        pen(buf, 1, ctx.words().class(class), title);
         let words = ctx.words();
-        let tier = ctx.text_with("class_change.tier", &[("tier", &class.tier)]);
         let record = match (self.kind, self.unit.class_records.get(&class.id)) {
-            (ChangeKind::Promote, _) => String::new(),
+            (ChangeKind::Promote, _) => None,
             (ChangeKind::Reclass, Some(r)) => {
-                ctx.text_with("class_change.class_level", &[("level", &r.class_level)])
+                Some(ctx.text_with("class_change.class_level", &[("level", &r.class_level)]))
             }
-            (ChangeKind::Reclass, None) => ctx.text("class_change.new").to_owned(),
+            (ChangeKind::Reclass, None) => Some(ctx.text("class_change.new").to_owned()),
         };
-        pen(buf, 2, &format!("{tier:<9}{record}"), UiColor::TextDim);
         let movement = content
             .terrain
             .rules
             .movement_types
             .get(usize::from(class.movement_type.0))
             .map_or("", String::as_str);
-        let mov = mov_line(words, self.unit.stats.mov, class.move_points);
-        pen(buf, 4, &format!("{mov:<12}{movement}"), UiColor::Text);
-        let tags = tag_names(words, class.tags);
-        pen(buf, 5, &tags.join(" "), UiColor::Text);
-        pen(
-            buf,
-            7,
-            ctx.text("class_change.weapons"),
-            UiColor::TextHighlight,
-        );
-        let weapons = weapon_lines(words, &self.unit, class);
-        if weapons.is_empty() {
-            pen(buf, 8, "--", UiColor::TextDim);
-        }
-        for (row, line) in (8..11).zip(&weapons) {
-            pen(buf, row, line, UiColor::Text);
-        }
-        pen(
-            buf,
-            12,
-            ctx.text("class_change.active"),
-            UiColor::TextHighlight,
-        );
         let active = class.active.as_ref().map(|id| {
             let skill = content.skills.get(id);
-            skill
-                .map_or(id.0.as_str(), |s| ctx.words().skill(s))
-                .to_owned()
+            skill.map_or(id.0.as_str(), |s| words.skill(s)).to_owned()
         });
-        match active {
-            Some(name) => pen(buf, 13, &name, UiColor::Text),
-            None => pen(buf, 13, "--", UiColor::TextDim),
-        }
-        self.draw_stats(ctx, buf, x, option);
-    }
-
-    /// The stat rows of `option`'s column (its box's left edge at column
-    /// `x`), and under them the reason a refused class is refused. A
-    /// refused class changes nothing: its rows show the stats as they are,
-    /// dimmed.
-    fn draw_stats(&self, ctx: &Ctx, buf: &mut GlyphBuffer, x: i32, option: &ClassOption) {
-        let content = &ctx.content;
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let offered = option.after.is_ok();
-        let shade = |color| if offered { color } else { UiColor::TextDim };
-        let after = option.after.as_ref().map_or(&self.unit, |u| u);
-        for (row, kind) in (15..).zip(StatKind::GROWABLE) {
+        // A refused class changes nothing: its rows show the stats as
+        // they are.
+        let after = option.after.as_ref().unwrap_or(&self.unit);
+        let stats = StatKind::GROWABLE.into_iter().map(|kind| {
             let (before, then) = (self.unit.stats.get(kind), after.stats.get(kind));
             let ceiling = content.classes.hard_ceilings.get(kind);
-            let words = ctx.words();
-            let line = stat_line(words, kind, before, then, ceiling);
-            let color = if then > before {
-                UiColor::Text
-            } else {
-                UiColor::TextDim
-            };
-            let (tx, ty) = (x + 2, COLUMNS_Y + row);
-            buf.print(tx, ty, &line, c(shade(color)), bg);
-            // The gain and the `MAX` mark in the highlight colour.
-            let plain = progress::stat_row(words, kind, before, 0).chars().count();
-            let tail: String = line.chars().skip(plain).collect();
-            let mark = || tail.find(words.text(MAX_MARK));
-            if let Some(at) = tail.find('+').or_else(mark) {
-                let skipped = plain + tail[..at].chars().count();
-                let col = i32::try_from(skipped).unwrap_or(0);
-                let hi = c(shade(UiColor::TextHighlight));
-                buf.print(tx + col, ty, &tail[at..], hi, bg);
-            }
-        }
-        if let (Err(error), Some(class)) = (&option.after, content.classes.get(&option.class)) {
-            let reason: String = self
-                .reason(ctx, class, error)
-                .chars()
-                .take(TEXT_W)
-                .collect();
-            buf.print(x + 2, COLUMNS_Y + 23, &reason, c(UiColor::HpLow), bg);
-        }
-    }
-
-    /// The `Promote … ?` box, centred.
-    fn draw_question(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let Some(class) = self
-            .focused()
-            .and_then(|o| ctx.content.classes.get(&o.class))
-        else {
-            return;
-        };
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let yes_no = ctx.text_with("class_change.yes_no", &[]);
-        let [ask, cost] = self.question(ctx, class);
-        let lines = [
-            (ask, UiColor::Text),
-            (cost, UiColor::Text),
-            (yes_no, UiColor::TextDim),
-        ];
-        let widest = lines.iter().map(|(l, _)| l.chars().count()).max();
-        let w = i32::try_from(widest.unwrap_or(0)).unwrap_or(0) + 4;
-        let h = i32::try_from(lines.len()).unwrap_or(0) + 4;
-        let (bw, bh) = (i32::from(buf.width()), i32::from(buf.height()));
-        let rect = Rect::new((bw - w) / 2, (bh - h) / 2, w, h);
-        buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-        buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-        for (y, (line, color)) in (rect.y + 2..).zip(&lines) {
-            buf.print(rect.x + 2, y, line, c(*color), bg);
+            stat_row(words, kind, before, then, ceiling)
+        });
+        let refused = option.after.as_ref().err();
+        ColumnView {
+            focused,
+            offered: refused.is_none(),
+            name: words.class(class).to_owned(),
+            tier: ctx.text_with("class_change.tier", &[("tier", &class.tier)]),
+            record,
+            mov: mov_line(words, self.unit.stats.mov, class.move_points),
+            movement: movement.to_owned(),
+            tags: tag_names(words, class.tags)
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+            weapons: weapon_lines(words, &self.unit, class),
+            active,
+            stats: stats.collect(),
+            refused: refused.map(|error| self.reason(ctx, class, error)),
         }
     }
 }
@@ -761,28 +632,11 @@ impl Screen for ClassChangeScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        match &self.stage {
-            Stage::Choosing => {
-                self.draw_header(ctx, buf);
-                self.draw_columns(ctx, buf);
-            }
-            Stage::Confirming => {
-                self.draw_header(ctx, buf);
-                self.draw_columns(ctx, buf);
-                self.draw_question(ctx, buf);
-            }
-            // The pages name the unit and its classes themselves.
-            Stage::Result(pages) => {
-                let look = (&ctx.palette, ctx.words());
-                progress::draw(buf, look, (&ctx.content.portraits, &ctx.lead), pages);
-            }
-            Stage::Done => {}
-        }
-        let bottom = i32::from(buf.height()) - 1;
-        buf.print(1, bottom, &self.help(ctx), c(UiColor::TextDim), black);
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 }
 

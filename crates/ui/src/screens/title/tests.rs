@@ -550,6 +550,7 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("results.rs", include_str!("../results.rs")),
         ("credits.rs", include_str!("../credits.rs")),
         ("preparations.rs", include_str!("../preparations.rs")),
+        ("class_change.rs", include_str!("../class_change.rs")),
     ];
     for (file, source) in sources {
         for name in ["UiColor", "Rect", "BoxStyle", "Cell"] {
