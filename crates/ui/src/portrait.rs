@@ -51,7 +51,23 @@ pub fn dim_opacity(dim: f32) -> u8 {
 /// nothing, when the portrait has no such expression.
 pub fn draw_portrait(
     buf: &mut GlyphBuffer,
+    at: (i32, i32),
+    portrait: &Portrait,
+    expr: &str,
+    dim: f32,
+    mirror: bool,
+) -> bool {
+    draw_portrait_in(buf, at, FRAME_CELLS, portrait, expr, dim, mirror)
+}
+
+/// [`draw_portrait`] in an area of `(w, h)` cells instead of
+/// [`FRAME_CELLS`]: at the largest whole scale that fits it (a small face
+/// in the dialogue log, ticket 0729). Draws nothing (and returns `true`)
+/// if the picture is too big for the area even at 1×.
+pub fn draw_portrait_in(
+    buf: &mut GlyphBuffer,
     (x, y): (i32, i32),
+    (w, h): (i32, i32),
     portrait: &Portrait,
     expr: &str,
     dim: f32,
@@ -63,8 +79,8 @@ pub fn draw_portrait(
     let frame = Rect::new(
         x.saturating_mul(i32::from(CELL_W_PX)),
         y.saturating_mul(i32::from(CELL_H_PX)),
-        FRAME_CELLS.0 * i32::from(CELL_W_PX),
-        FRAME_CELLS.1 * i32::from(CELL_H_PX),
+        w.saturating_mul(i32::from(CELL_W_PX)),
+        h.saturating_mul(i32::from(CELL_H_PX)),
     );
     let size = expression.size;
     let src = (i32::try_from(size.width), i32::try_from(size.height));

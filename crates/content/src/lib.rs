@@ -60,8 +60,8 @@ pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
 pub use image::{ImageId, ImageInfo, ImageTable};
 pub use keymap::{
-    Action, Bindings, Button, Chord, Key, KeymapDef, Layout, LayoutKeys, PadKeys, RepeatDef, SLOTS,
-    StickDef,
+    Action, Bindings, Button, Chord, Key, KeyGroup, KeymapDef, Layout, LayoutKeys, PadKeys,
+    RepeatDef, SLOTS, StickDef,
 };
 pub use lang::{
     Lang, LangCode, LangInfo, LangPack, LangStatus, LineEntry, LineText, MadeBy, Orphan,

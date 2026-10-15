@@ -1,5 +1,5 @@
 ---
-source: crates/ui/tests/dialogue.rs
+source: crates/ui/tests/it/dialogue.rs
 expression: h.snapshot()
 ---
                                        Village of Heth, dusk                                        
@@ -28,7 +28,7 @@ expression: h.snapshot()
 │                                                                                                  │
 │                             The rain had not stopped for three days.                             │
 │                                                                                                  │
-│                                                                                             f ▼  │
+│                                                                                     b log   f ▼  │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
                                                                                                     
                                                                                                     
@@ -61,7 +61,7 @@ cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
 cdddddddddddddddddddddddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddddddddddddddddddddddc
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
-cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddedfddc
+cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddeeeeedddedfddc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

@@ -376,11 +376,33 @@ pub enum Action {
     /// Switch the battle map between its two zooms
     /// (`docs/design/look-and-feel.md`, *Zoom*). Optional.
     ZoomMap,
+    /// Open the dialogue log while a scene plays
+    /// (`docs/design/look-and-feel.md`, *Dialogue log*). Optional, and in
+    /// a [`KeyGroup`] of its own (`docs/design/controls.md`, *Dialogue
+    /// log*).
+    DialogueLog,
+}
+
+/// Which actions may share a key or button (`docs/design/controls.md`,
+/// *Dialogue log*): only actions of the same group clash, since actions of
+/// different groups are used in different places. A key is on at most one
+/// action of each group.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum KeyGroup {
+    /// The map, the menus and everything else.
+    General,
+    /// The dialogue log, opened while a scene plays.
+    DialogueLog,
+}
+
+impl KeyGroup {
+    /// Every group, in the order the Key bindings screen lists them.
+    pub const ALL: [KeyGroup; 2] = [Self::General, Self::DialogueLog];
 }
 
 impl Action {
     /// Every action, in declaration order.
-    pub const ALL: [Action; 18] = [
+    pub const ALL: [Action; 19] = [
         Self::CursorLeft,
         Self::CursorDown,
         Self::CursorUp,
@@ -399,11 +421,12 @@ impl Action {
         Self::Select,
         Self::ConfirmEndTurn,
         Self::ZoomMap,
+        Self::DialogueLog,
     ];
 
     /// The name used in keymap files (the variant name).
     pub fn name(self) -> &'static str {
-        const NAMES: [&str; 18] = [
+        const NAMES: [&str; 19] = [
             "CursorLeft",
             "CursorDown",
             "CursorUp",
@@ -422,6 +445,7 @@ impl Action {
             "Select",
             "ConfirmEndTurn",
             "ZoomMap",
+            "DialogueLog",
         ];
         NAMES[self as usize]
     }
@@ -454,6 +478,15 @@ impl Action {
                 | Self::Cancel
                 | Self::EndTurn
         )
+    }
+
+    /// The [`KeyGroup`] whose actions this one's keys may not be shared
+    /// with.
+    pub fn group(self) -> KeyGroup {
+        match self {
+            Self::DialogueLog => KeyGroup::DialogueLog,
+            _ => KeyGroup::General,
+        }
     }
 
     /// Whether the player can rebind this action. Only the developer Debug
@@ -546,13 +579,13 @@ impl fmt::Display for Layout {
     }
 }
 
-/// Validated bindings as a lookup: each chord maps to exactly one action.
-/// Unbound chords are absent.
+/// Validated bindings as a lookup: each chord maps to exactly one action
+/// (of one [`KeyGroup`]). Unbound chords are absent.
 pub type Bindings = BTreeMap<Chord, Action>;
 
 /// One layout's default keys: every [`Action`] with its chords in the order
 /// the keymap file lists them (at most [`SLOTS`], none [reserved]), no chord
-/// on two actions. The order matters: the first chord is the one help text
+/// on two actions of one [`KeyGroup`]. The order matters: the first chord is the one help text
 /// names, and the chords fill the player's key slots in this order.
 ///
 /// [reserved]: Chord::is_reserved
@@ -560,7 +593,7 @@ pub type LayoutKeys = BTreeMap<Action, Vec<Chord>>;
 
 /// The default controller buttons: every [`Action`] with its buttons in the
 /// order the keymap file lists them (at most [`SLOTS`]), no button on two
-/// actions. One table for both layouts (`docs/design/controls.md`,
+/// actions of one [`KeyGroup`]. One table for both layouts (`docs/design/controls.md`,
 /// *Controller*).
 pub type PadKeys = BTreeMap<Action, Vec<Button>>;
 
@@ -608,13 +641,14 @@ impl KeymapDef {
         Self::from_source(&display, source)
     }
 
-    /// `layout`'s default bindings as a chord lookup (`None` only for a
-    /// definition built by hand without it; a loaded keymap has every
-    /// layout).
-    pub fn bindings(&self, layout: Layout) -> Option<Bindings> {
+    /// `layout`'s default bindings of the actions in `group`, as a chord
+    /// lookup (`None` only for a definition built by hand without that
+    /// layout; a loaded keymap has every layout).
+    pub fn bindings(&self, layout: Layout, group: KeyGroup) -> Option<Bindings> {
         let keys = self.layouts.get(&layout)?;
         Some(
             keys.iter()
+                .filter(|(a, _)| a.group() == group)
                 .flat_map(|(&a, chords)| chords.iter().map(move |&c| (c, a)))
                 .collect(),
         )
@@ -797,7 +831,8 @@ impl Bound for Button {
 /// names): a layout, the layout picker or the `pad` table. Messages start
 /// with `label`; lines are searched from line index `from` (just after the
 /// section's own line) on. For a `complete` section (a layout, `pad`), every
-/// [`Action`] must be listed, with at most [`SLOTS`] entries.
+/// [`Action`] must be listed, with at most [`SLOTS`] entries. A chord or
+/// button may be on one action of each [`KeyGroup`].
 fn validate_bindings<T: Bound>(
     file: &str,
     source: &str,
@@ -855,7 +890,7 @@ fn validate_bindings<T: Bound>(
                     action_name,
                     format!("action \"{action}\": \"{bound}\" can't be bound here: {why}"),
                 ));
-            } else if let Some(&other) = bindings.get(&bound) {
+            } else if let Some(&other) = bindings.get(&(action.group(), bound)) {
                 let message = if other == action {
                     format!("{noun} \"{bound}\" is listed twice for \"{action}\"")
                 } else {
@@ -863,7 +898,7 @@ fn validate_bindings<T: Bound>(
                 };
                 errors.push(err_at(action_name, message));
             } else {
-                bindings.insert(bound, action);
+                bindings.insert((action.group(), bound), action);
                 listed.push(bound);
             }
         }
@@ -1079,7 +1114,8 @@ mod tests {
     }
 
     fn left(k: &KeymapDef) -> Bindings {
-        k.bindings(Layout::LeftHanded).unwrap_or_default()
+        k.bindings(Layout::LeftHanded, KeyGroup::General)
+            .unwrap_or_default()
     }
 
     #[test]
@@ -1175,6 +1211,60 @@ mod tests {
             "{}",
             errs[0]
         );
+    }
+
+    #[test]
+    fn a_chord_may_be_on_one_action_of_each_key_group() {
+        // controls.md, Dialogue log: the log has its own group.
+        assert_eq!(Action::DialogueLog.group(), KeyGroup::DialogueLog);
+        let others = Action::ALL
+            .into_iter()
+            .filter(|&a| a != Action::DialogueLog);
+        assert!(others.into_iter().all(|a| a.group() == KeyGroup::General));
+        let shared = "            \"Confirm\": [\"f\"],
+            \"DialogueLog\": [\"f\"],
+";
+        let src = source_of(&[
+            block("LeftHanded", "Confirm", "").replace(
+                "            \"DialogueLog\": [],
+",
+                shared,
+            ),
+            block("RightHanded", "", ""),
+        ]);
+        let k = KeymapDef::from_source("k.ron", &src).unwrap_or_default();
+        let f = Chord::plain(Key::F);
+        assert_eq!(left(&k).get(&f), Some(&Action::Confirm));
+        let log = k.bindings(Layout::LeftHanded, KeyGroup::DialogueLog);
+        assert_eq!(log.unwrap_or_default().get(&f), Some(&Action::DialogueLog));
+        // In one group they still clash.
+        let errs = errors(&source_with(
+            "Info",
+            "            \"Info\": [\"Up\"],
+            \"CursorUp\": [\"Up\"],
+",
+        ));
+        assert!(
+            errs.iter().any(|e| e.contains("is bound to both")),
+            "{errs:?}"
+        );
+    }
+
+    #[test]
+    fn a_button_may_be_on_one_action_of_each_key_group() {
+        let mut src = pad_source(
+            "Info",
+            "        \"Info\": [\"West\"],
+",
+        );
+        // The pad section is last: its DialogueLog entry is the last one.
+        let log = "\"DialogueLog\": []";
+        if let Some(at) = src.rfind(log) {
+            src.replace_range(at..at + log.len(), "\"DialogueLog\": [\"West\"]");
+        }
+        let k = KeymapDef::from_source("k.ron", &src).unwrap_or_default();
+        assert_eq!(k.buttons(Action::Info), [Button::West]);
+        assert_eq!(k.buttons(Action::DialogueLog), [Button::West]);
     }
 
     #[test]
@@ -1309,6 +1399,8 @@ mod tests {
             (Action::ToggleAutoEnd, vec![Select]),
             (Action::Rewind, vec![LeftTrigger]),
             (Action::ZoomMap, vec![RightTrigger]),
+            // Another key group, so it shares Danger zone's button.
+            (Action::DialogueLog, vec![West]),
             // No button: the map menu, the optional split keys, Debug.
             (Action::Menu, vec![]),
             (Action::Select, vec![]),
@@ -1336,7 +1428,8 @@ mod tests {
         assert_eq!(b.get(&Chord::plain(Key::F)), Some(&Action::Confirm));
         assert_eq!(b.get(&Chord::plain(Key::Space)), Some(&Action::Confirm));
         assert_eq!(b.len(), 2);
-        assert_eq!(k.bindings(Layout::RightHanded).map(|b| b.len()), Some(0));
+        let general = k.bindings(Layout::RightHanded, KeyGroup::General);
+        assert_eq!(general.map(|b| b.len()), Some(0));
         assert_eq!(
             k.chords(Layout::LeftHanded, Action::Confirm),
             [Chord::plain(Key::F), Chord::plain(Key::Space)]
@@ -1355,7 +1448,7 @@ mod tests {
         ]);
         let k = KeymapDef::from_source("k.ron", &src).unwrap_or_default();
         let get = |l| {
-            k.bindings(l)
+            k.bindings(l, KeyGroup::General)
                 .and_then(|b| b.get(&Chord::plain(Key::F)).copied())
         };
         assert_eq!(get(Layout::LeftHanded), Some(Action::Confirm));
@@ -1639,11 +1732,18 @@ mod tests {
         assert_eq!(Layout::from_name("lefthanded"), None);
     }
 
-    /// Looks `chord` up in the embedded keymap's `layout`.
+    /// Looks `chord` up in the embedded keymap's `layout`, among the
+    /// [`KeyGroup::General`] actions.
     fn embedded(layout: Layout) -> impl Fn(&str) -> Option<Action> {
+        embedded_in(layout, KeyGroup::General)
+    }
+
+    /// Looks `chord` up in the embedded keymap's `layout`, among `group`'s
+    /// actions.
+    fn embedded_in(layout: Layout, group: KeyGroup) -> impl Fn(&str) -> Option<Action> {
         let bindings = KeymapDef::load()
             .ok()
-            .and_then(|k| k.bindings(layout))
+            .and_then(|k| k.bindings(layout, group))
             .unwrap_or_default();
         move |s| Chord::parse(s).ok().and_then(|c| bindings.get(&c).copied())
     }
@@ -1669,6 +1769,8 @@ mod tests {
         assert_eq!(get("F2"), Some(Action::Debug));
         assert_eq!(get("r"), Some(Action::Rewind));
         assert_eq!(get("q"), Some(Action::ZoomMap));
+        let log = embedded_in(Layout::RightHanded, KeyGroup::DialogueLog);
+        assert_eq!(log("b"), Some(Action::DialogueLog));
     }
 
     #[test]
@@ -1691,6 +1793,8 @@ mod tests {
         assert_eq!(get("F2"), Some(Action::Debug));
         assert_eq!(get("u"), Some(Action::Rewind));
         assert_eq!(get("p"), Some(Action::ZoomMap));
+        let log = embedded_in(Layout::LeftHanded, KeyGroup::DialogueLog);
+        assert_eq!(log("n"), Some(Action::DialogueLog));
     }
 
     #[test]
@@ -1698,8 +1802,12 @@ mod tests {
         // 15 chords per layout: nothing bound beyond the design table.
         let k = KeymapDef::load().unwrap_or_default();
         for layout in Layout::ALL {
-            assert_eq!(k.bindings(layout).map(|b| b.len()), Some(15), "{layout}");
-            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(18));
+            let general = k.bindings(layout, KeyGroup::General);
+            assert_eq!(general.map(|b| b.len()), Some(15), "{layout}");
+            let log = k.bindings(layout, KeyGroup::DialogueLog);
+            assert_eq!(log.map(|b| b.len()), Some(1), "{layout}");
+            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(19));
+            assert!(!Action::DialogueLog.is_required());
             assert!(!Action::ZoomMap.is_required());
             // The optional split keys start with no key (controls.md).
             for split in [Action::Select, Action::ConfirmEndTurn] {

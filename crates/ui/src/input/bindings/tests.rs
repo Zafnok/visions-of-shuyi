@@ -4,7 +4,7 @@
 use proptest::prelude::*;
 
 use super::*;
-use crate::input::Key;
+use crate::input::{Key, KeyGroup};
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp, Debug, Info};
 
 fn chord(s: &str) -> Chord {
@@ -273,17 +273,52 @@ proptest! {
                 }
                 Op::Clear(a, i) => b.clear(a, i),
             }
-            let all: Vec<Chord> = Action::ALL
-                .into_iter()
-                .flat_map(|a| b.slots(a).into_iter().flatten())
-                .collect();
-            let mut unique = all.clone();
-            unique.sort_unstable();
-            unique.dedup();
-            prop_assert_eq!(unique.len(), all.len(), "a chord in two slots: {:?}", all);
-            prop_assert!(all.iter().all(|&c| !b.is_reserved(c)));
+            // At most once in each key group.
+            for group in KeyGroup::ALL {
+                let all: Vec<Chord> = Action::ALL
+                    .into_iter()
+                    .filter(|a| a.group() == group)
+                    .flat_map(|a| b.slots(a).into_iter().flatten())
+                    .collect();
+                let mut unique = all.clone();
+                unique.sort_unstable();
+                unique.dedup();
+                prop_assert_eq!(unique.len(), all.len(), "a chord in two slots: {:?}", all);
+                prop_assert!(all.iter().all(|&c| !b.is_reserved(c)));
+            }
         }
     }
+}
+
+#[test]
+fn a_key_moves_only_within_its_group() {
+    // controls.md, Dialogue log: the log's key may be another group's too.
+    let mut b = LayoutBindings::defaults(&def(), Layout::RightHanded);
+    assert_eq!(b.bind(Action::DialogueLog, 0, chord("f")), Ok(None));
+    assert_eq!(b.slots(Confirm)[0], Some(chord("f")), "Confirm keeps f");
+    assert_eq!(b.find(KeyGroup::General, chord("f")), Some((Confirm, 0)));
+    assert_eq!(
+        b.find(KeyGroup::DialogueLog, chord("f")),
+        Some((Action::DialogueLog, 0))
+    );
+    let km = b.keymap(RepeatDef::default());
+    assert_eq!(km.actions(chord("f")), [Confirm, Action::DialogueLog]);
+    // In one group it still moves.
+    assert_eq!(b.bind(Info, 1, chord("f")), Ok(Some((Confirm, 0))));
+    assert!(b.is_unmapped(Confirm));
+    assert_eq!(b.slots(Action::DialogueLog)[0], Some(chord("f")));
+}
+
+#[test]
+fn saved_keys_of_another_group_keep_the_logs_default() {
+    // A config from before the log: `b` on Unit info; the log keeps `b`.
+    let saved =
+        "PlayerKeys(version: 2, layouts: {\"RightHanded\": {\"Info\": [Some(\"b\"), None, None]}})";
+    let (keys, warnings) = PlayerKeys::from_ron(saved, &def());
+    assert_eq!(warnings, Vec::<String>::new());
+    let b = keys.bindings(&def(), Layout::RightHanded);
+    assert_eq!(b.slots(Info)[0], Some(chord("b")));
+    assert_eq!(b.slots(Action::DialogueLog)[0], Some(chord("b")));
 }
 
 // --- Saved config ----------------------------------------------------------
@@ -493,12 +528,12 @@ fn a_repaired_layout_equal_to_the_defaults_has_no_entry() {
 #[test]
 fn find_names_the_slot_a_chord_is_in() {
     let mut b = right();
-    assert_eq!(b.find(chord("f")), Some((Confirm, 0)));
-    assert_eq!(b.find(chord("g")), None);
+    assert_eq!(b.find(KeyGroup::General, chord("f")), Some((Confirm, 0)));
+    assert_eq!(b.find(KeyGroup::General, chord("g")), None);
     assert_eq!(b.bind(Info, 2, chord("g")), Ok(None));
-    assert_eq!(b.find(chord("g")), Some((Info, 2)));
+    assert_eq!(b.find(KeyGroup::General, chord("g")), Some((Info, 2)));
     b.clear(Info, 2);
-    assert_eq!(b.find(chord("g")), None);
+    assert_eq!(b.find(KeyGroup::General, chord("g")), None);
 }
 
 fn pad() -> PadBindings {
@@ -520,9 +555,12 @@ fn default_buttons_fill_the_first_slots_in_file_order() {
     assert_eq!(buttons(b.slots(Debug)), ["-", "-", "-"]);
     assert!(b.unmapped_required().is_empty());
     assert!(b.is_unmapped(Action::Menu) && !b.is_unmapped(Info));
-    assert_eq!(b.find(Button::South), Some((Confirm, 0)));
-    assert_eq!(b.find(Button::LeftStickUp), Some((CursorUp, 1)));
-    assert_eq!(b.find(Button::RightStickUp), None);
+    assert_eq!(b.find(KeyGroup::General, Button::South), Some((Confirm, 0)));
+    assert_eq!(
+        b.find(KeyGroup::General, Button::LeftStickUp),
+        Some((CursorUp, 1))
+    );
+    assert_eq!(b.find(KeyGroup::General, Button::RightStickUp), None);
     // Every default button, with its action.
     let def = def();
     let pairs: Vec<(Button, Action)> = b.pairs().collect();
@@ -554,7 +592,7 @@ fn a_bound_button_moves_and_any_button_can_be_bound() {
     // No button is reserved: every one can go in a slot.
     for &button in Button::ALL {
         assert!(b.bind(Action::Menu, 0, button).is_ok(), "{button}");
-        assert_eq!(b.find(button), Some((Action::Menu, 0)));
+        assert_eq!(b.find(KeyGroup::General, button), Some((Action::Menu, 0)));
     }
     b.clear(Action::Menu, 0);
     assert!(b.is_unmapped(Action::Menu));
@@ -626,21 +664,24 @@ proptest! {
                     let before = b.clone();
                     if b.bind(a, i, button).is_ok() {
                         prop_assert_eq!(b.slots(a).get(i).copied().flatten(), Some(button));
-                        prop_assert_eq!(b.find(button), Some((a, i)));
+                        prop_assert_eq!(b.find(a.group(), button), Some((a, i)));
                     } else {
                         prop_assert_eq!(&b, &before);
                     }
                 }
                 PadOp::Clear(a, i) => b.clear(a, i),
             }
-            let all: Vec<Button> = Action::ALL
-                .into_iter()
-                .flat_map(|a| b.slots(a).into_iter().flatten())
-                .collect();
-            let mut unique = all.clone();
-            unique.sort_unstable();
-            unique.dedup();
-            prop_assert_eq!(unique.len(), all.len(), "a button in two slots: {:?}", all);
+            for group in KeyGroup::ALL {
+                let all: Vec<Button> = Action::ALL
+                    .into_iter()
+                    .filter(|a| a.group() == group)
+                    .flat_map(|a| b.slots(a).into_iter().flatten())
+                    .collect();
+                let mut unique = all.clone();
+                unique.sort_unstable();
+                unique.dedup();
+                prop_assert_eq!(unique.len(), all.len(), "a button in two slots: {:?}", all);
+            }
             // The keymap these give has exactly these buttons.
             let km = Keymap::new([], RepeatDef::default()).with_pad(b.pairs());
             for action in Action::ALL {

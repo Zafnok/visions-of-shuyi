@@ -47,6 +47,9 @@ language setting (a new ticket if 0043 chose Japanese voices).
 2. Options: a "Voices" row (On / Off) and a "Voice volume" row beside
    music and sound volume, with 0043's label. Turning voices off stops a
    clip that is playing.
+2b. A **Voice on hover in the log: On / Off** row under the voice volume,
+   starting On (0729; `options.md`, *Voices in the dialogue log*). Off, the
+   dialogue log's cursor plays no voice (0720 step 7).
 3. If 0043 chose a question at New Game: ask it once in the new-game
    flow (where 0043 placed it), with the default focus on the
    non-destructive answer 0043 names; the answer sets `Settings::voices`
@@ -62,6 +65,7 @@ language setting (a new ticket if 0043 chose Japanese voices).
 - [ ] Voice volume changes what `app` plays; 0 is silent; both settings survive a restart (tests).
 - [ ] Old saved settings load with 0043's defaults (test).
 - [ ] The new-game question behaves as the design doc says (Harness test), or is absent if not chosen.
+- [ ] Voice on hover in the log: Off stops the log's cursor playing voices (Harness test, with 0720).
 - [ ] Snapshot of the Options rows.
 - [ ] All gates in the `run-gates` skill pass.
 

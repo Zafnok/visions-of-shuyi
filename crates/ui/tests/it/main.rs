@@ -11,6 +11,7 @@ mod class_change;
 mod controller;
 mod credits;
 mod dialogue;
+mod dialogue_log;
 mod flow;
 mod key_bindings;
 mod key_bindings_screen;

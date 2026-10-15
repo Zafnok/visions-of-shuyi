@@ -136,11 +136,15 @@ fn starts_on_the_first_slot_of_the_layout_in_use() {
     assert!(!view.switch.focused);
     assert_eq!(view.columns, ["Key 1", "Key 2", "Key 3"]);
     let headings: Vec<_> = view.groups.iter().map(|g| g.heading.as_str()).collect();
-    assert_eq!(headings, ["Must have a key", "Optional"]);
+    assert_eq!(
+        headings,
+        ["Must have a key", "Optional", "In the dialogue log"]
+    );
     assert_eq!(
         view.groups.iter().map(|g| g.rows.len()).collect::<Vec<_>>(),
-        [7, 10]
+        [7, 10, 1]
     );
+    assert_eq!(view.groups[2].rows[0].label, "Open the log");
     assert_eq!(view.restore.label, "Restore defaults");
     assert!(!view.restore.focused);
     assert_eq!(
@@ -172,7 +176,10 @@ fn up_and_down_wrap_through_the_rows_and_restore_defaults() {
     assert_eq!(s.focus(), None, "and up again wraps to Restore");
     assert!(!s.is_on_switch());
     s.update(&mut c, &act(&[CursorUp]));
+    assert_eq!(s.focus(), Some((Action::DialogueLog, 0)));
+    s.update(&mut c, &act(&[CursorUp]));
     assert_eq!(s.focus(), Some((Action::Menu, 0)));
+    s.update(&mut c, &act(&[CursorDown]));
     s.update(&mut c, &act(&[CursorDown, CursorDown]));
     assert!(s.is_on_switch());
     s.update(&mut c, &act(&[CursorDown]));
@@ -332,7 +339,11 @@ fn the_clear_key_is_ignored_while_capturing() {
     s.update(&mut c, &both);
     assert!(!s.is_capturing());
     assert_eq!(s.bindings().slots(CursorUp)[0], Some(chord("g")));
-    assert_eq!(s.bindings().find(chord("h")), None);
+    assert_eq!(
+        s.bindings()
+            .find(crate::input::KeyGroup::General, chord("h")),
+        None
+    );
 }
 
 #[test]
@@ -825,7 +836,10 @@ fn the_controller_side_shows_buttons_as_the_pad_names_them() {
     let view = s.view(&c);
     assert_eq!(view.columns, ["Button 1", "Button 2", "Button 3"]);
     let headings: Vec<_> = view.groups.iter().map(|g| g.heading.as_str()).collect();
-    assert_eq!(headings, ["Must have a button", "Optional"]);
+    assert_eq!(
+        headings,
+        ["Must have a button", "Optional", "In the dialogue log"]
+    );
     assert_eq!(shown(&view, CursorUp), ["↑", "L-stick ↑", "-"]);
     assert_eq!(shown(&view, Confirm)[0], "A");
     assert!(row_of(&view, Cancel).fixed.is_empty(), "no fixed button");

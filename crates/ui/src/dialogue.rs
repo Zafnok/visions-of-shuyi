@@ -4,8 +4,9 @@
 //! (ticket 0704) draws its [`View`] and asks for the music.
 
 use std::borrow::Cow;
+use std::sync::Arc;
 
-use trpg_content::{ChoiceOption, MusicLine, Names, Present, Scene, Side, Step};
+use trpg_content::{ChoiceOption, LineId, MusicLine, Names, Present, Scene, Side, Step};
 use trpg_core::{CharacterId, LeadProfile};
 
 /// A character standing on one side of the screen.
@@ -96,11 +97,13 @@ struct Reaction {
 /// It plays the scene as it is for those present when it starts
 /// (ADR-0055): the lines of an `@if` block whose character isn't there are
 /// no part of it, read or skipped.
-/// Pure: no drawing, no clock, no sound.
+/// Pure: no drawing, no clock, no sound. Cheap to clone (the scene is
+/// shared), so a copy can be kept as the scene was at a line (the dialogue
+/// log, ticket 0729).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DialoguePlayer {
     /// The scene for those present: it has no `@if` blocks.
-    scene: Scene,
+    scene: Arc<Scene>,
     /// Fills in the lead's name and pronouns.
     lead: LeadProfile,
     /// Fills in name tokens (`{n:king}`).
@@ -126,7 +129,7 @@ impl DialoguePlayer {
     /// its text. A scene with nothing to say for them is finished at once.
     pub fn new(scene: &Scene, lead: LeadProfile, names: Names, present: &Present) -> Self {
         let mut player = Self {
-            scene: scene.resolved(present),
+            scene: Arc::new(scene.resolved(present)),
             lead,
             names,
             next: 0,
@@ -210,6 +213,35 @@ impl DialoguePlayer {
             narration: matches!(step, Some(Step::Narrate { .. })),
             choices,
         }
+    }
+
+    /// The id of the line in the text box (while a choice is open, of the
+    /// line being answered); `None` once the scene is finished.
+    pub fn line(&self) -> Option<&LineId> {
+        let at = match self.showing {
+            Showing::Text(at) => Some(at),
+            Showing::Choice(_, before) => before,
+            Showing::Finished => None,
+        };
+        match at.and_then(|at| self.step(at)) {
+            Some(Step::Say { line, .. } | Step::Narrate { line, .. }) => Some(line),
+            _ => None,
+        }
+    }
+
+    /// The id of reply `option` of the open choice, if a choice is open and
+    /// has it.
+    pub fn reply_line(&self, option: usize) -> Option<&LineId> {
+        let Showing::Choice(index, _) = self.showing else {
+            return None;
+        };
+        self.options(index).get(option).map(|o| &o.line)
+    }
+
+    /// The music the scene has asked for and [`take_music`](Self::take_music)
+    /// hasn't taken yet, without taking it.
+    pub fn pending_music(&self) -> Option<&MusicLine> {
+        self.music.as_ref()
     }
 
     /// Moves to the next text box, applying every portrait and caption step

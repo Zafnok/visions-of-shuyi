@@ -39,7 +39,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0028](0028-native-music-decoded-off-the-main-thread.md) | Native music is decoded on a worker thread, in its own quad-snd context | Accepted |
 | [0029](0029-acted-units-keep-label-case.md) | Acted units are dimmed only; the label keeps its case | Accepted |
 | [0030](0030-battle-dialogue-triggers.md) | Dialogue triggers are battle data; their scenes are events at their moment | Accepted |
-| [0031](0031-player-key-bindings.md) | Player key bindings: slots, per-layout config, fixed Esc/Delete | Accepted; saved config now version 2 with the buttons, ADR-0053 |
+| [0031](0031-player-key-bindings.md) | Player key bindings: slots, per-layout config, fixed Esc/Delete | Accepted; saved config now version 2 with the buttons, ADR-0053; a key on one action per group, ADR-0068 |
 | [0032](0032-bought-art.md) | Bought art is allowed; audio stays free | Accepted |
 | [0033](0033-playtest-bots.md) | Playtest bots play through `core`'s commands, on reseeded copies, outside the game | Accepted |
 | [0034](0034-controller-input.md) | Controller input: gilrs on native, a Gamepad API plugin on web | Accepted; buttons rebindable by ADR-0053 |
@@ -75,6 +75,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | 0065 | Assets: standard files in, the engine's own data out; a deterministic movement kit, physics optional | Moved to [Shuyi Engine](https://github.com/Zafnok/shuyi-engine/tree/main/docs/adr) as its ADR-0004 (1101) |
 | 0066 | AI-native tooling: one contract, three surfaces (CLI, MCP, skills); visual scripting as a view over text | Moved to [Shuyi Engine](https://github.com/Zafnok/shuyi-engine/tree/main/docs/adr) as its ADR-0005 (1101) |
 | 0067 | Networking in layers: transports, sessions, sync models, services; determinism is the contract | Moved to [Shuyi Engine](https://github.com/Zafnok/shuyi-engine/tree/main/docs/adr) as its ADR-0006 (1101) |
+| [0068](0068-key-groups-a-key-on-one-action-per-group.md) | Key groups: a key or button on one action per group, one press giving each group's | Accepted (0729); amends ADR-0031 and ADR-0053 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

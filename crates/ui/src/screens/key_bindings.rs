@@ -41,7 +41,7 @@ use super::layout_picker;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{
-    Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Device, Keymap, Layout,
+    Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Device, KeyGroup, Keymap, Layout,
     LayoutBindings, PadBindings, PadKind, SLOTS, capture_abort_key_name, clear_slot_key_name,
     is_capture_abort, is_clear_slot,
 };
@@ -53,7 +53,7 @@ use crate::widgets::help::SEPARATOR;
 /// (`Unit info`), in the order the screen lists them (Nick's pick, ticket
 /// 0815): the required actions, then the optional ones, as in
 /// `controls.md`'s *Required and optional* table.
-pub const ROWS: [(Action, &str); 17] = [
+pub const ROWS: [(Action, &str); 18] = [
     (Action::CursorUp, "key_bindings.action.cursor_up"),
     (Action::CursorDown, "key_bindings.action.cursor_down"),
     (Action::CursorLeft, "key_bindings.action.cursor_left"),
@@ -74,6 +74,7 @@ pub const ROWS: [(Action, &str); 17] = [
     (Action::Rewind, "key_bindings.action.rewind"),
     (Action::ZoomMap, "key_bindings.action.zoom_map"),
     (Action::Menu, "key_bindings.action.menu"),
+    (Action::DialogueLog, "key_bindings.action.dialogue_log"),
 ];
 
 /// Which bindings the screen shows and edits.
@@ -110,6 +111,9 @@ pub const REQUIRED_HEADING: &str = "key_bindings.must_have_key";
 pub const REQUIRED_BUTTON_HEADING: &str = "key_bindings.must_have_button";
 /// Text key of the heading over the optional actions.
 pub const OPTIONAL_HEADING: &str = "key_bindings.optional";
+/// Text key of the heading over the actions of the dialogue log's
+/// [`KeyGroup`], which may share keys with the rest.
+pub const DIALOGUE_LOG_HEADING: &str = "key_bindings.dialogue_log";
 /// Text key of the row under the actions that puts the shown side's
 /// defaults back.
 pub const RESTORE_DEFAULTS: &str = "key_bindings.restore_defaults";
@@ -665,11 +669,14 @@ impl KeyBindingsScreen {
             Side::Controller => ctx.text_with("key_bindings.button_column", &[("n", &(j + 1))]),
         });
         let mut groups: Vec<GroupView> = Vec::new();
+        let mut last = None;
         for (i, &(action, _)) in ROWS.iter().enumerate() {
             let required = action.is_required();
-            if groups.last().is_none_or(|g| g.required != required) {
+            let group = (required, action.group());
+            if last != Some(group) {
+                last = Some(group);
                 groups.push(GroupView {
-                    heading: self.group_heading(ctx, required),
+                    heading: self.group_heading(ctx, required, action.group()),
                     required,
                     rows: Vec::new(),
                 });
@@ -712,12 +719,15 @@ impl KeyBindingsScreen {
         }
     }
 
-    /// The heading over the required (or the optional) actions.
-    fn group_heading(&self, ctx: &Ctx, required: bool) -> String {
-        match (required, self.side) {
-            (true, Side::Keyboard) => ctx.text(REQUIRED_HEADING).to_owned(),
-            (true, Side::Controller) => ctx.text(REQUIRED_BUTTON_HEADING).to_owned(),
-            (false, _) => ctx.text(OPTIONAL_HEADING).to_owned(),
+    /// The heading over the required (or the optional) actions of `group`.
+    fn group_heading(&self, ctx: &Ctx, required: bool, group: KeyGroup) -> String {
+        match (group, required, self.side) {
+            (KeyGroup::DialogueLog, ..) => ctx.text(DIALOGUE_LOG_HEADING).to_owned(),
+            (KeyGroup::General, true, Side::Keyboard) => ctx.text(REQUIRED_HEADING).to_owned(),
+            (KeyGroup::General, true, Side::Controller) => {
+                ctx.text(REQUIRED_BUTTON_HEADING).to_owned()
+            }
+            (KeyGroup::General, false, _) => ctx.text(OPTIONAL_HEADING).to_owned(),
         }
     }
 

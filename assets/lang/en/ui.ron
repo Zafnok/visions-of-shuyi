@@ -66,6 +66,13 @@
     // A dialogue scene.
     "dialogue.skip_question": "Skip scene?",
     "dialogue.skip_answers": "{Confirm} yes / {Cancel} no",
+    // Next to the Confirm key in the text box: the dialogue log's key.
+    "dialogue.log_hint": "{DialogueLog} log",
+
+    // The dialogue log: every line of the scene so far.
+    "dialogue.log.title": "Log",
+    "dialogue.log.back_to_latest": "Back to latest",
+    "dialogue.log.help": "{Cursor} move · {Confirm} go to this line · {Cancel} close",
 
     // The results after a won battle.
     "results.heading": "VICTORY",
@@ -197,6 +204,7 @@
     "key_bindings.must_have_key": "Must have a key",
     "key_bindings.must_have_button": "Must have a button",
     "key_bindings.optional": "Optional",
+    "key_bindings.dialogue_log": "In the dialogue log",
     "key_bindings.action.cursor_up": "Cursor up",
     "key_bindings.action.cursor_down": "Cursor down",
     "key_bindings.action.cursor_left": "Cursor left",
@@ -214,6 +222,7 @@
     "key_bindings.action.rewind": "Rewind",
     "key_bindings.action.menu": "Map menu",
     "key_bindings.action.zoom_map": "Zoom map",
+    "key_bindings.action.dialogue_log": "Open the log",
     "key_bindings.restore_defaults": "Restore defaults",
     "key_bindings.press_a_key": "Press a key…",
     "key_bindings.press_a_button": "Press a button…",

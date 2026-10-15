@@ -6,6 +6,13 @@
 //! `x = 65` from row 1, name plates on row 19, the text box on rows 21–27.
 //! While the lead's replies are up, the text box grows upward to list them
 //! under the line being answered (Nick, 0708: like Stardew Valley).
+//!
+//! The dialogue log (ticket 0729) lists the lines seen so far over the
+//! whole screen: [`history`] keeps them, [`log`] is what it shows and
+//! [`log::glyph`] paints it.
+
+pub mod history;
+pub mod log;
 
 use trpg_content::{MusicLine, Names, Present, Scene, Side};
 use trpg_core::{LEAD_ID, LeadProfile};
@@ -14,13 +21,15 @@ use crate::audio::MenuSound;
 use crate::color::UiColor;
 use crate::dialogue::{DialoguePlayer, Portrait, View};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
-use crate::input::Action;
+use crate::input::{Action, Button, Chord, Keymap};
 use crate::portrait::draw_portrait;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::screens::print_centred;
 use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use crate::widgets::word_wrap;
+use history::History;
+use log::LogView;
 
 /// Top row of the portrait frames.
 const FRAME_Y: i32 = 1;
@@ -49,6 +58,8 @@ pub const FAST_FORWARD: f32 = 6.0;
 pub const FAST_FORWARD_DELAY: f32 = 0.3;
 /// The `▼` is shown for this long, then hidden for as long, while waiting.
 const BLINK_S: f32 = 0.5;
+/// Cells between the log's key hint and the Confirm key's name.
+const LOG_HINT_GAP: i32 = 3;
 
 /// Plays a scene: Confirm reveals the text at once, or moves on when it's
 /// all shown; holding Confirm reveals faster, after a short delay on each
@@ -58,6 +69,12 @@ const BLINK_S: f32 = 0.5;
 /// replies and Confirm picks one; skipping stops at each choice. Pops when
 /// the scene ends or is skipped. A `@music` line changes the music when the
 /// scene reaches it; skipping asks only for the last one passed.
+///
+/// The Open the log key opens the dialogue log (`docs/design/look-and-feel.md`,
+/// *Dialogue log*): the cursor keys move through the lines seen, Confirm
+/// goes to the highlighted one (back, or forward again) and Cancel closes
+/// it. If the log's key is also a key the scene is using (Confirm, End
+/// turn, Cancel; the cursor keys at a choice), the scene's use wins.
 #[derive(Debug, Clone)]
 pub struct DialogueScreen {
     player: DialoguePlayer,
@@ -77,6 +94,14 @@ pub struct DialogueScreen {
     asking_skip: bool,
     /// The lead's replies, while a choice is open.
     menu: Option<Menu>,
+    /// Every line seen, for the log.
+    history: History,
+    /// The log's cursor (a row of [`log::row_count`]), while it is open.
+    log: Option<usize>,
+    /// The music the scene set last (`None` before its first `@music`).
+    music: Option<MusicLine>,
+    /// Music to play: the music of a line the log jumped to.
+    jumped_music: Option<MusicLine>,
 }
 
 impl DialogueScreen {
@@ -96,6 +121,10 @@ impl DialogueScreen {
             waiting: 0.0,
             asking_skip: false,
             menu: None,
+            history: History::new(),
+            log: None,
+            music: None,
+            jumped_music: None,
         };
         screen.start_box();
         screen
@@ -159,10 +188,42 @@ impl DialogueScreen {
         self.menu.as_ref()
     }
 
+    /// The lines seen so far, for the log.
+    pub fn history(&self) -> &History {
+        &self.history
+    }
+
+    /// Whether the dialogue log is open.
+    pub fn is_log_open(&self) -> bool {
+        self.log.is_some()
+    }
+
+    /// What the log shows, while it is open ([`log::glyph::paint`] paints
+    /// it).
+    pub fn log_view(&self, ctx: &Ctx) -> Option<LogView> {
+        self.log.map(|focus| log::view(ctx, &self.history, focus))
+    }
+
+    /// The music playing at the line now on screen: the scene's last, or
+    /// one it has just reached.
+    fn music_here(&self) -> Option<MusicLine> {
+        self.player.pending_music().or(self.music.as_ref()).cloned()
+    }
+
+    /// A new text box (or a choice) is up: the log keeps a text box, then
+    /// [`show_box`](Self::show_box).
+    fn start_box(&mut self) {
+        let view = self.player.current();
+        if view.text.is_some() && view.choices.is_none() {
+            self.history.reached(&self.player, self.music_here());
+        }
+        self.show_box();
+    }
+
     /// Wraps the player's current text box and starts on its first page.
     /// At a choice, the line being answered stays up, fully shown (its last
     /// page), under the replies menu.
-    fn start_box(&mut self) {
+    fn show_box(&mut self) {
         let view = self.player.current();
         let lines = word_wrap(view.text.as_deref().unwrap_or(""), TEXT_W);
         let menu = view.choices.map(|choices| {
@@ -228,11 +289,18 @@ impl Screen for DialogueScreen {
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         let transition = self.read(ctx, input);
         // The music the scene reached this frame (or, the first frame,
-        // before its first text box).
-        match self.player.take_music() {
-            Some(MusicLine::Cue(cue)) => ctx.audio.play_music(&cue),
+        // before its first text box), or that of a line the log jumped to.
+        let music = self
+            .jumped_music
+            .take()
+            .or_else(|| self.player.take_music());
+        match &music {
+            Some(MusicLine::Cue(cue)) => ctx.audio.play_music(cue),
             Some(MusicLine::Stop) => ctx.audio.stop_music(),
             None => {}
+        }
+        if music.is_some() {
+            self.music = music;
         }
         transition
     }
@@ -258,8 +326,25 @@ impl DialogueScreen {
         }
         for &action in &input.actions {
             let action = advance_key(action);
+            if self.log.is_some() {
+                if self.read_log(ctx, action) {
+                    // The rest of this frame's keys are for the scene
+                    // jumped to; they wait.
+                    break;
+                }
+                continue;
+            }
+            if action == Action::DialogueLog {
+                if !self.asking_skip && !self.history.is_empty() && self.log_key_free(ctx, input) {
+                    ctx.audio.menu(MenuSound::Select);
+                    self.log = Some(self.history.at());
+                }
+                continue;
+            }
             if let Some(menu) = self.menu.as_mut() {
                 if let Some(MenuEvent::Chosen(i)) = menu.handle_with_sound(action, &mut ctx.audio) {
+                    let music = self.music_here();
+                    self.history.replied(&self.player, i, music);
                     self.player.choose(i);
                     self.start_box();
                     if self.player.is_finished() {
@@ -300,6 +385,11 @@ impl DialogueScreen {
                 _ => {}
             }
         }
+        if self.log.is_some() {
+            // The scene waits while the log is open.
+            self.held_s = 0.0;
+            return Transition::None;
+        }
         if ADVANCE_KEYS.iter().any(|&a| input.is_held(a)) {
             self.held_s += input.dt;
         } else {
@@ -323,8 +413,104 @@ impl DialogueScreen {
         Transition::None
     }
 
-    /// The whole screen: caption, portraits and text box.
+    /// One key in the open log: the cursor keys move, Confirm goes to the
+    /// line, Cancel closes. Returns whether the log jumped to a line.
+    fn read_log(&mut self, ctx: &mut Ctx, action: Action) -> bool {
+        let Some(focus) = self.log else {
+            return false;
+        };
+        let rows = log::row_count(&self.history);
+        match action {
+            Action::CursorUp | Action::CursorDown => {
+                let to = if action == Action::CursorUp {
+                    focus.saturating_sub(1)
+                } else {
+                    (focus + 1).min(rows.saturating_sub(1))
+                };
+                if to != focus {
+                    ctx.audio.menu(MenuSound::Move);
+                    self.log = Some(to);
+                }
+                false
+            }
+            Action::Confirm => {
+                ctx.audio.menu(MenuSound::Select);
+                self.log = None;
+                let line = if focus >= self.history.seen().len() {
+                    self.history.latest()
+                } else {
+                    focus
+                };
+                self.jump(line);
+                true
+            }
+            Action::Cancel => {
+                ctx.audio.menu(MenuSound::Cancel);
+                self.log = None;
+                false
+            }
+            _ => false,
+        }
+    }
+
+    /// Shows line `i` of the log as it was: the scene, its portraits and
+    /// caption, its music; the text types out from the start.
+    fn jump(&mut self, i: usize) {
+        let Some(seen) = self.history.jump(i) else {
+            return;
+        };
+        let mut player = seen.player;
+        // The music it had reached then is in `seen.music`.
+        player.take_music();
+        self.player = player;
+        if seen.music.is_some() && seen.music != self.music {
+            self.jumped_music = seen.music;
+        }
+        self.asking_skip = false;
+        self.show_box();
+    }
+
+    /// The actions the scene uses now: what the log's key gives way to.
+    fn scene_actions(&self) -> &'static [Action] {
+        if self.menu.is_some() {
+            &[
+                Action::CursorUp,
+                Action::CursorDown,
+                Action::Confirm,
+                Action::EndTurn,
+                Action::Cancel,
+            ]
+        } else {
+            &[Action::Confirm, Action::EndTurn, Action::Cancel]
+        }
+    }
+
+    /// Whether this frame's Open the log comes from a key or button the
+    /// scene isn't using now ([`scene_actions`](Self::scene_actions)): the
+    /// log's key may share one with another group's action
+    /// (`docs/design/controls.md`, *Dialogue log*). Input made of actions
+    /// alone (no keys or buttons) counts as free.
+    fn log_key_free(&self, ctx: &Ctx, input: &FrameInput) -> bool {
+        let (chords, buttons) = (input.pressed_chords(), input.pressed_buttons());
+        if chords.is_empty() && buttons.is_empty() {
+            return true;
+        }
+        let used = self.scene_actions();
+        let free = |actions: &[Action]| {
+            actions.contains(&Action::DialogueLog) && !actions.iter().any(|a| used.contains(a))
+        };
+        let keymap: &Keymap = &ctx.keymap;
+        let by_key = |&c: &Chord| free(keymap.actions(c));
+        let by_button = |&b: &Button| free(keymap.pad_actions(b));
+        chords.iter().any(by_key) || buttons.iter().any(by_button)
+    }
+
+    /// The whole screen: caption, portraits and text box; or the log.
     fn draw_scene(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
+        if let Some(view) = self.log_view(ctx) {
+            log::glyph::paint(ctx, &view, buf);
+            return;
+        }
         let c = |u| ctx.palette.get(u);
         let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
         if self.overlay {
@@ -611,6 +797,13 @@ impl DialogueScreen {
             let key = key_name(km, Action::Confirm);
             let w = i32::try_from(key.chars().count()).unwrap_or(0);
             buf.print(right - 1 - w, bottom, &key, c(UiColor::TextDim), bg);
+            // The log's key, if it has one, before it.
+            if key_name(km, Action::DialogueLog) != km.not_mapped() {
+                let hint = ctx.text_with("dialogue.log_hint", &[]);
+                let hint_w = i32::try_from(hint.chars().count()).unwrap_or(0);
+                let x = right - 1 - w - LOG_HINT_GAP - hint_w;
+                buf.print(x, bottom, &hint, c(UiColor::TextDim), bg);
+            }
             if self.waiting % (2.0 * BLINK_S) < BLINK_S {
                 buf.print(right, bottom, "▼", c(UiColor::TextHighlight), bg);
             }

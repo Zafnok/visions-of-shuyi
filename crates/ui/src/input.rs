@@ -25,7 +25,8 @@ use std::time::Duration;
 pub use bindings::{BindError, ButtonSlots, LayoutBindings, PadBindings, PlayerKeys, Slots};
 pub use pad::{ButtonSet, PadId, PadKind, PadState, Pads};
 pub use trpg_content::keymap::{
-    Action, Button, Chord, Key, KeymapDef, Layout, LayoutKeys, PadKeys, RepeatDef, SLOTS, StickDef,
+    Action, Button, Chord, Key, KeyGroup, KeymapDef, Layout, LayoutKeys, PadKeys, RepeatDef, SLOTS,
+    StickDef,
 };
 
 /// The keys every keymap has on top of its own bindings, whatever the
@@ -117,16 +118,21 @@ pub fn text_keys_help(ctx: &crate::screen::Ctx) -> String {
 /// lag spike can't teleport the cursor across the map.
 pub const MAX_REPEATS_PER_UPDATE: u64 = 5;
 
-/// Lookup from chord, and from controller button, to action, plus repeat
-/// timings.
+/// Lookup from chord, and from controller button, to actions, plus repeat
+/// timings. A chord or button is on at most one action of each
+/// [`KeyGroup`] (`docs/design/controls.md`, *Dialogue log*), so one press
+/// can give an action of each group: the screen on top reacts to the ones
+/// it uses.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Keymap {
-    /// Every chord that does something, fixed keys included.
-    bindings: HashMap<Chord, Action>,
+    /// Every chord that does something, fixed keys included, with its
+    /// actions in [`KeyGroup`] order.
+    bindings: HashMap<Chord, Vec<Action>>,
     /// Each action's own chords (not the fixed keys), in the order given.
     chords: BTreeMap<Action, Vec<Chord>>,
-    /// Every controller button that does something.
-    pad: HashMap<Button, Action>,
+    /// Every controller button that does something, with its actions in
+    /// [`KeyGroup`] order.
+    pad: HashMap<Button, Vec<Action>>,
     /// Each action's buttons, in the order given.
     buttons: BTreeMap<Action, Vec<Button>>,
     repeat: RepeatDef,
@@ -134,9 +140,9 @@ pub struct Keymap {
 
 impl Keymap {
     /// A keymap with `bindings` plus the fixed keys (plain `Escape` is
-    /// Cancel). A chord listed twice keeps its last action;
-    /// [reserved](Chord::is_reserved) chords (plain `Escape` and `Delete`)
-    /// are left out.
+    /// Cancel). A chord listed twice for one [`KeyGroup`] keeps its last
+    /// action of that group; [reserved](Chord::is_reserved) chords (plain
+    /// `Escape` and `Delete`) are left out.
     pub fn new(bindings: impl IntoIterator<Item = (Chord, Action)>, repeat: RepeatDef) -> Self {
         let mut lookup = HashMap::new();
         let mut chords: BTreeMap<Action, Vec<Chord>> = BTreeMap::new();
@@ -144,14 +150,16 @@ impl Keymap {
             if chord.is_reserved() {
                 continue;
             }
-            if let Some(old) = lookup.insert(chord, action)
+            if let Some(old) = put(&mut lookup, chord, action)
                 && let Some(list) = chords.get_mut(&old)
             {
                 list.retain(|&c| c != chord);
             }
             chords.entry(action).or_default().push(chord);
         }
-        lookup.extend(FIXED);
+        for (chord, action) in FIXED {
+            put(&mut lookup, chord, action);
+        }
         Self {
             bindings: lookup,
             chords,
@@ -168,7 +176,7 @@ impl Keymap {
         self.pad.clear();
         self.buttons.clear();
         for (button, action) in pad {
-            if let Some(old) = self.pad.insert(button, action)
+            if let Some(old) = put(&mut self.pad, button, action)
                 && let Some(list) = self.buttons.get_mut(&old)
             {
                 list.retain(|&b| b != button);
@@ -208,15 +216,28 @@ impl Keymap {
         Self::new(bindings, def.repeat).with_default_pad(def)
     }
 
-    /// The action bound to `chord`, if any. `Shift+h` and `h` are distinct:
-    /// there is no fallback from a shifted chord to the plain one.
-    pub fn action(&self, chord: Chord) -> Option<Action> {
-        self.bindings.get(&chord).copied()
+    /// The actions bound to `chord`, one at most of each [`KeyGroup`], in
+    /// group order. `Shift+h` and `h` are distinct: there is no fallback
+    /// from a shifted chord to the plain one.
+    pub fn actions(&self, chord: Chord) -> &[Action] {
+        self.bindings.get(&chord).map_or(&[], Vec::as_slice)
     }
 
-    /// The action bound to the controller button `button`, if any.
+    /// The first of [`actions`](Self::actions), if any: the only one for a
+    /// chord of a single group.
+    pub fn action(&self, chord: Chord) -> Option<Action> {
+        self.actions(chord).first().copied()
+    }
+
+    /// The actions bound to the controller button `button`, as
+    /// [`actions`](Self::actions).
+    pub fn pad_actions(&self, button: Button) -> &[Action] {
+        self.pad.get(&button).map_or(&[], Vec::as_slice)
+    }
+
+    /// The first of [`pad_actions`](Self::pad_actions), if any.
     pub fn pad_action(&self, button: Button) -> Option<Action> {
-        self.pad.get(&button).copied()
+        self.pad_actions(button).first().copied()
     }
 
     /// Every controller button bound to `action`, in the order they were
@@ -337,6 +358,23 @@ impl Keymap {
     }
 }
 
+/// Binds `item` to `action` in `lookup`, replacing (and returning) the
+/// action of the same [`KeyGroup`] it had; its actions stay in group order.
+fn put<T: Copy + Eq + std::hash::Hash>(
+    lookup: &mut HashMap<T, Vec<Action>>,
+    item: T,
+    action: Action,
+) -> Option<Action> {
+    let actions = lookup.entry(item).or_default();
+    let old = actions
+        .iter()
+        .position(|a| a.group() == action.group())
+        .map(|i| actions.remove(i));
+    actions.push(action);
+    actions.sort_by_key(|a| a.group());
+    old
+}
+
 /// What the player is playing with: whatever they pressed last
 /// (`docs/design/controls.md`, *Switching between keyboard and
 /// controller*). Help text names keys or this pad's buttons to match.
@@ -400,8 +438,8 @@ pub struct InputState {
     keymap: Keymap,
     /// Actions from presses since the last update.
     pending: Vec<Action>,
-    /// Bound keys and buttons currently down with the action they
-    /// triggered, oldest first.
+    /// Bound keys and buttons currently down with the actions they
+    /// triggered (one entry each), oldest first.
     held: Vec<(Input, Action)>,
     repeat: Option<Repeat>,
     /// Where the last bound press came from.
@@ -448,8 +486,8 @@ impl InputState {
     /// A key went down (with its modifier state). Unbound chords and keys
     /// already held are ignored.
     pub fn key_down(&mut self, chord: Chord) {
-        let action = self.keymap.action(chord);
-        self.press(Input::Key(chord.key), action, Device::Keyboard);
+        let actions = self.keymap.actions(chord).to_vec();
+        self.press(Input::Key(chord.key), &actions, Device::Keyboard);
     }
 
     /// A key went down that `Game` kept for itself (it opened the layout
@@ -468,8 +506,8 @@ impl InputState {
     /// the pads and gives the button's binding position). Unbound buttons
     /// and buttons already held are ignored.
     pub fn pad_down(&mut self, button: Button, kind: PadKind) {
-        let action = self.keymap.pad_action(button);
-        self.press(Input::Pad(button), action, Device::Pad(kind));
+        let actions = self.keymap.pad_actions(button).to_vec();
+        self.press(Input::Pad(button), &actions, Device::Pad(kind));
     }
 
     /// A controller button went up. Stops its repeat, if it was the
@@ -478,19 +516,19 @@ impl InputState {
         self.release(Input::Pad(button));
     }
 
-    /// `input` went down on `device`, bound to `action` (if any).
-    fn press(&mut self, input: Input, action: Option<Action>, device: Device) {
-        if self.held.iter().any(|&(i, _)| i == input) {
+    /// `input` went down on `device`, bound to `actions` (none if
+    /// unbound).
+    fn press(&mut self, input: Input, actions: &[Action], device: Device) {
+        if actions.is_empty() || self.held.iter().any(|&(i, _)| i == input) {
             return;
         }
-        let Some(action) = action else {
-            return;
-        };
         self.device = device;
-        self.held.push((input, action));
-        self.pending.push(action);
-        if action.is_repeatable() {
-            self.repeat = Some(Repeat::start(input, action));
+        for &action in actions {
+            self.held.push((input, action));
+            self.pending.push(action);
+            if action.is_repeatable() {
+                self.repeat = Some(Repeat::start(input, action));
+            }
         }
     }
 
@@ -1151,6 +1189,41 @@ mod tests {
         s.pad_down(Button::South, PAD);
         s.pad_up(Button::South);
         assert_eq!(s.update(ms(55)), vec![Confirm, CursorDown]);
+    }
+
+    #[test]
+    fn one_key_gives_an_action_of_each_group() {
+        // controls.md, Dialogue log: another group's action may share it.
+        let log = Action::DialogueLog;
+        let km = Keymap::new(
+            [
+                (chord("Up"), CursorUp),
+                (chord("Up"), log),
+                (chord("b"), log),
+                (chord("b"), Info),
+                // The same group again: the last one keeps it.
+                (chord("b"), Confirm),
+            ],
+            RepeatDef::default(),
+        )
+        .with_pad([(Button::West, log), (Button::West, Action::DangerZone)]);
+        assert_eq!(km.actions(chord("Up")), [CursorUp, log]);
+        assert_eq!(km.action(chord("Up")), Some(CursorUp));
+        assert_eq!(km.actions(chord("b")), [Confirm, log]);
+        assert_eq!(km.chords_for(Info), []);
+        assert_eq!(km.chords_for(log), [chord("Up"), chord("b")]);
+        assert_eq!(km.pad_actions(Button::West), [Action::DangerZone, log]);
+        assert_eq!(km.pad_action(Button::West), Some(Action::DangerZone));
+        // A press gives both, held while it is, and only the cursor repeats.
+        let mut s = InputState::new(km);
+        s.key_down(chord("Up"));
+        assert_eq!(s.update(0.0), [CursorUp, log]);
+        assert!(s.is_held(CursorUp) && s.is_held(log));
+        assert_eq!(s.update(0.3), [CursorUp]);
+        s.key_up(Key::Up);
+        assert!(!s.is_held(log));
+        s.pad_down(Button::West, PAD);
+        assert_eq!(s.update(0.0), [Action::DangerZone, log]);
     }
 
     #[test]

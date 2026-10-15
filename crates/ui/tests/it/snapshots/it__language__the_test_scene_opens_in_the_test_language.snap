@@ -28,7 +28,7 @@ expression: h.snapshot()
 │                                                                                                  │
 │                             THE RAIN HAD NOT STOPPED FOR THREE DAYS.                             │
 │                                                                                                  │
-│                                                                                             f ▼  │
+│                                                                                     b LOG   f ▼  │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
                                                                                                     
                                                                                                     
@@ -61,7 +61,7 @@ cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
 cdddddddddddddddddddddddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddddddddddddddddddddddddddddc
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
-cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddedfddc
+cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddeeeeedddedfddc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

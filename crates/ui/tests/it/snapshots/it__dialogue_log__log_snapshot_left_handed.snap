@@ -1,0 +1,78 @@
+---
+source: crates/ui/tests/it/dialogue_log.rs
+expression: h.snapshot()
+---
+┌── Log ───────────────────────────────────────────────────────────────────────────────────────────┐
+│           Three years after the Ash Peace.                                                       │
+│                                                                                                  │
+│           The war is won. The soldiers who won it were never paid.                               │
+│                                                                                                  │
+│           In the Thornmarch, a long way from any court, an exile chops wood.                     │
+│                                                                                                  │
+│           Dawn, in the yard behind a rented house. Two practice swords crack together, wood on   │
+│           wood, as they have every morning for four years.                                       │
+│                                                                                                  │
+│           Hollis Marr                                                                            │
+│           Guard up, Veyne. Higher. It drops when you're tired. Don't let it.                     │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│           Ellery                                                                                 │
+│           Again.                                                                                 │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│ ▶         Three strokes. On the fourth, the old man's sword is lying in the dirt between them.   │
+│                                                                                                  │
+│           Hollis Marr                                                                            │
+│           ...Good. That's good. Four years I've been waiting for you to do that.                 │
+│                                                                                                  │
+│                                                                                                  │
+│                                                                                                  │
+│           Hollis Marr                                                                            │
+│           Leave it where it is. Sit down, kid. There's something in my coat that I've spent all  │
+│           morning not giving you.                                                                │
+│                                                                                                  │
+└─────────────────────────────────────────────────────── wasd move · j go to this line · k close ──┘
+--- colours ---
+aaabbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+acccccccccccddddddddddddddddddddddddddddddddccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddccca
+acccccccccccddddddddddddddddddddddddddddddddddddddddddddddddccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccbbbbbbccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+aefeeeeeeeeeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeeea
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccaaaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccaaaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacca
+acccccccccccaaaaaaaaaaaaaaaaaaaaaaacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadddddddddddddddddddddddddddddddddddddddddaaa
+--- legend ---
+a = fg:panel_border bg:panel_bg
+b = fg:text_highlight bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:text_dim bg:panel_bg
+e = fg:text bg:black
+f = fg:text_highlight bg:black
+--- overlays ---
+under sprite 24,240 64x64  portraits/lead_m/neutral.png 0,0 32x32
