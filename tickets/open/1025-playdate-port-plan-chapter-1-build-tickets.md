@@ -92,8 +92,15 @@ Each ticket is one PR's worth of work. Expect roughly:
 - the 1-bit font and the Playdate skins: the map scene and each Chapter 1
   screen's view painted at 400 × 240 (ADR-0038, ADR-0054), screen by
   screen, limited to what Chapter 1 uses;
-- sound and music in formats the device plays, if 0061 keeps them;
-- packaging and the store page (next to 0901).
+- sound and music in formats the device plays (0061 keeps them), and the
+  voices;
+- one-bit portraits made from the bought art (check ADR-0040's license
+  notes first) and a simple one-bit combat picture (0061 keeps both);
+- the title cinematic on the Playdate (0061 keeps it);
+- one build per language (English, Japanese, Chinese), not all languages
+  in one build (0061);
+- packaging and the store page: itch.io first, one purchase giving every
+  language's build, then the Catalog application (0061; next to 0901).
 
 **Out (do not do):** the build work itself; any change to the desktop or
 web game's look or controls for the Playdate's sake; the engine carve.
