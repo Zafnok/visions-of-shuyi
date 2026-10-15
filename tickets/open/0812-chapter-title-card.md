@@ -44,6 +44,10 @@ game's size in palette D:
   Confirm; Cancel also closes it.
 - Record the choice in `docs/design/look-and-feel.md`.
 
+**Playdate:** if 1044 (the Playdate title screen) is done, give the
+card a Playdate paint too, chosen by `ctx`'s `SkinSet` (1037); if not,
+1044 does it.
+
 **Out (do not do):**
 - Transitions between screens (0813).
 - Music on the card (the intro scene's `@music` decides, 0710).

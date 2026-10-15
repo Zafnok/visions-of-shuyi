@@ -52,6 +52,12 @@ None.
   `shuyi.ron`. The game's `--light` option becomes a game argument
   passed through.
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6).
+
 **Out (do not do):** the JSON contract, `new`, `doctor` (1129); MCP (1133).
 
 ## Implementation steps

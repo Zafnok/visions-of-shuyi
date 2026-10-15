@@ -41,6 +41,12 @@ None.
 - `font::REQUIRED_GLYPHS` stays the game's and is passed in.
 - Re-export everything under the old paths in `trpg-content`.
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6). 1032's one-bit font and Playdate palette, 1040's one-bit image format and 1047's audio conversion move with the assets they belong to.
+
 **Out (do not do):** `UiColor` in `ui` (1108); languages and dialogue
 (1105); keymaps (1106/1107).
 

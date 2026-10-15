@@ -51,6 +51,12 @@ None.
   re-exports the moved items under their old paths so other crates
   don't change.
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6). 1028's generated file table (the `no_std` bundle) and 1036's Playdate bundle list become layers of the new bundle.
+
 **Out (do not do):** disk layers and hot reload (1124); mods (1011);
 moving any other loader (1104, 1105).
 

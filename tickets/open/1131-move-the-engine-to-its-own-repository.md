@@ -80,6 +80,12 @@ None. The repository exists, and Nick's `gh` login can push to it.
     folder, so one working copy edits both.
   - CI never uses the patch.
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6).
+
 **Out (do not do):**
 - the engine's MVP tickets (they are the engine repository's);
 - publishing to crates.io. Write an engine ticket for the first release

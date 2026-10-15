@@ -45,10 +45,14 @@ None. The game must look, sound and save exactly as before.
 - The storage name stays `tactical-rpg` for this game so saves are
   found (test: the path is unchanged).
 
-**Playdate:** if a Playdate front end exists by then (1025's build tickets,
-Nick 2026-10-15), it must keep building; either move its shared loop code
-into the engine app's design or leave it as a second front end beside
-`shuyi-app`, and say which in the completion notes.
+**Playdate:** if a Playdate front end exists by then (`crates/playdate`,
+1031 and 1033 of 1025's build tickets, Nick 2026-10-15), it must keep
+building (`cargo xtask playdate`, the CI `playdate` job). ADR-0070 §6
+keeps it a **second front end beside `shuyi-app`** (no `std`, no threads,
+a C entry point and a callback loop): what the two share is
+`Game::frame` (input events and `dt` in, a frame out), so keep that
+platform-neutral, and keep the "no keyboard" start setting 1033 adds.
+Say in the completion notes if anything else turned out shareable.
 
 **Out (do not do):** new platform features (mouse, touch: 1121); a
 headless runner (the Harness covers it).

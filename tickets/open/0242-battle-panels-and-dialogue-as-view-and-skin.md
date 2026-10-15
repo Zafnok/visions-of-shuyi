@@ -48,6 +48,13 @@ None. Nothing the player sees changes.
   adds (how much is revealed, the open choice menu, the question).
 - Removing `Menu::draw` once nothing calls it.
 
+**Playdate:** the Playdate skins paint the views this ticket and its
+split-offs make: the battle screen (1038), the forecast, info, fight
+box, level-up and rewind (1039) and the dialogue screen (1043). When
+you write (b) and (c), add (b)'s id to 1039's `blocked_by` and (c)'s
+to 1043's. Those tickets may add view fields the Playdate needs (for
+both skins).
+
 **Out (do not do):**
 - The map itself, its skins, `MapScene` (ADR-0038: done).
 - Any change to what is shown, its text, keys, timing or layout.

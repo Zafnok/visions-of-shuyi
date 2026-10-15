@@ -49,6 +49,12 @@ None.
   cursor style, map look and zoom and combat animations stay the game's
   (ADR-0050's saved record keeps its format: test with a fixture).
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6).
+
 **Out (do not do):** the Harness (1111); widgets and generic screens
 (1112); `app` (1110).
 

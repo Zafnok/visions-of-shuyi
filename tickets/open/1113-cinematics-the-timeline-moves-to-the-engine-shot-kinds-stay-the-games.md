@@ -39,6 +39,12 @@ None. The title cinematic must play identically (compare frames).
 - The backdrop pan and zoom (ADR-0048) are already in the frame (1108).
 - The game keeps every shot kind and its painter.
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6). 1044's Playdate paint of the title cinematic's shots stays the game's.
+
 **Out (do not do):** new shot kinds; `MapPan` into the tactics kit
 (stays the game's until 1115 offers a generic grid map; then it may move,
 in 1115's discretion).

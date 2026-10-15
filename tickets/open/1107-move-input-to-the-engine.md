@@ -38,6 +38,12 @@ None.
   of `widgets/help.rs` to `shuyi-ui::input`.
 - Re-export or alias under the old paths.
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6). 1034's button chords and 1035's crank input move with input; the `playdate` key table stays the game's.
+
 **Out (do not do):** the rebinding and layout-picker *screens* (1112);
 `app`'s key and pad code (1110).
 

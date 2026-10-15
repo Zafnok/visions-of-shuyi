@@ -56,6 +56,12 @@ None. The battle map must look identical in the glyph and sprite looks.
   the game's, as its `PiecePainter`s.
 - `Pos` comes from `shuyi-core` (1114).
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6). 1037's Playdate map skin stays the game's skin over the engine's scene.
+
 **Out (do not do):**
 - isometric (1126);
 - making the battle screen itself generic (it is the game's);

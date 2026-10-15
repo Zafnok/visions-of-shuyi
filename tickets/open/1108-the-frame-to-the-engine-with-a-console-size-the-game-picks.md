@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["1107"]
+blocked_by: ["1107", "1030"]
 nick_input: none
 completed:
 ---
@@ -48,8 +48,14 @@ None. Nothing a player sees changes.
   `portrait` (fit an image at a whole scale), `Rgb` and `Palette`.
 - Aliases in `trpg-ui`.
 
-**Playdate:** if a Playdate front end exists by then (1025's build tickets,
-Nick 2026-10-15), it passes its own `ConsoleSpec` and must keep building.
+**Playdate:** 1030 (in `blocked_by`) already added `ConsoleSpec` in
+place in `trpg-ui`, with `ConsoleSpec::PC` and `ConsoleSpec::PLAYDATE`
+(50 × 15): skip step 1 and move it with the frame. If the one-bit
+renderer (1032, `trpg_ui::onebit`) exists, it moves with the frame too
+(it knows nothing about this game). The moved crates keep the default
+`std` feature and stay in the `no-std` CI build (ADR-0070 §6), and the
+Playdate front end (`crates/playdate`, 1031) passes
+`ConsoleSpec::PLAYDATE` and must keep building (`cargo xtask playdate`).
 
 **Out (do not do):** world layers, cameras and sort keys (1120); the
 renderer in `app` (1110).

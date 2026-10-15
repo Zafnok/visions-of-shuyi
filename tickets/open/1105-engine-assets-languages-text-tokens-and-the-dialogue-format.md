@@ -53,6 +53,12 @@ None.
   `load()` functions that name its folders.
 - Re-export under old paths.
 
+**Playdate:** the Playdate port (1025's tickets, 1027–1053) builds
+`core`, `content` and `ui` without `std` and adds a second front end,
+`crates/playdate`. If those tickets have landed, code this ticket moves
+keeps its default `std` feature and stays in the `no-std` CI build, and
+`cargo xtask playdate` keeps building (ADR-0070 §6). 1049's one-language Playdate builds use whatever language layers this makes.
+
 **Out (do not do):** the dialogue *player* and box in `ui` (1112);
 cinematics (1113).
 
