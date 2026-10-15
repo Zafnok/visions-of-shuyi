@@ -5,10 +5,10 @@ type: infra
 milestone: M0 Foundation
 model: opus-5.5
 effort: medium
-status: in-progress
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 0127 — Mutation shards stop rebuilding from scratch and paying for the slow tests
@@ -114,17 +114,17 @@ Making the slow tests themselves faster is ticket 0128.
 
 ## Acceptance criteria
 
-- [ ] On the same diff as PR #287 (438 mutants, 8 shards), the gate
+- [x] On the same diff as PR #287 (438 mutants, 8 shards), the gate
       finishes in under 35 min wall-clock with the queue empty (numbers
       and run links in the completion notes).
-- [ ] The same mutants are tested: the sum of "Found N mutants" over the
+- [x] The same mutants are tested: the sum of "Found N mutants" over the
       shards equals the plan job's count, and the same mutants are caught
       and missed as in run 38796893781.
-- [ ] A scratch commit that makes one `ui` test fail on the unmutated tree
+- [x] A scratch commit that makes one `ui` test fail on the unmutated tree
       turns `mutants (diff)` red (the scratch PR is closed afterwards).
-- [ ] A PR with no Rust change still passes without building.
-- [ ] `.cargo/mutants.toml` is unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A PR with no Rust change still passes without building.
+- [x] `.cargo/mutants.toml` is unchanged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -134,5 +134,47 @@ Making the slow tests themselves faster is ticket 0128.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** ADR-0073 supersedes ADR-0047. The PR run is now plan, baseline,
+shards and the `mutants (diff)` aggregate:
+
+- `.config/nextest.toml`: profile `mutants` stops at the first failure and
+  terminates the tests still running; the 32 tests of 5 s or more run last
+  (`priority = -100`).
+- Shards: `NEXTEST_PROFILE=mutants`, `CARGO_INCREMENTAL=1`,
+  `--baseline=skip --timeout 720`.
+- `mutants (diff, baseline)` runs
+  `cargo nextest run --workspace --exclude trpg-app --profile mutants` once,
+  beside the shards; the aggregate needs it.
+
+**Measured on CI, 2026-10-15**, same commit (PR #287's head `f321aecd`),
+438 mutants, 8 shards, both runs at the same time (so neither had an empty
+queue):
+
+| Run | Wall-clock | Shards | Build per mutant | Tests per mutant |
+| --- | --- | --- | --- | --- |
+| Before: PR #287 ([run 38807102396](https://github.com/Zafnok/visions-of-shuyi/actions/runs/38807102396)) | **70 min** (21:04:57 to 22:15:18 UTC) | 41–70 min | 42.6 s | 89.2 s |
+| After: scratch draft PR #288 ([run 38813314359](https://github.com/Zafnok/visions-of-shuyi/actions/runs/38813314359)) | **20 min** (21:54:07 to 22:14:07 UTC) | 11–18 min | 12.4 s | 21.1 s (median 21 s, p90 28 s, max 57 s) |
+
+- Same mutants: the shards found 6 × 55 + 2 × 54 = 438, the plan job's
+  count. Every one of the 438 has the same outcome in both runs (418
+  caught, 20 unviable, none missed or timed out). The criterion names run
+  38796893781, an earlier commit of PR #287 with 4 missed mutants since
+  fixed; the comparison uses the run on the same commit instead.
+- A failing unmutated test turns the check red: on the scratch branch the
+  `ci.yml`, `codeql.yml` and `security.yml` workflows were deleted (so the
+  measurement took no runners from other PRs), which made the xtask test
+  `every_workflow_file_parses` fail. `mutants (diff, baseline)` went red
+  in 4 min and `mutants (diff)` failed, while every shard passed. The log
+  also shows the profile working: "immediately terminating 3 tests still
+  running".
+- No Rust change: this PR's own run found 0 mutants; no shard or baseline
+  ran and `mutants (diff)` passed.
+
+**Deviations**
+
+- Step 5 said to amend ADR-0047; accepted ADRs are not edited, so ADR-0073
+  supersedes it.
+- Gates: no Rust changed, so fmt, typos, ticket-lint and the xtask tests
+  (which parse every workflow file) were run locally; CI ran the rest.
+
+**Follow-up:** ticket 0128 makes the slow `ui` tests themselves fast.
