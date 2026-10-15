@@ -6,8 +6,9 @@
 //! The song is 133.743 s long; its cinematic's last shot, the logo, starts
 //! at 117 s. What shows is read from the title's view, never from cells.
 //!
-//! The cinematic itself is ticket 0820's: the storyboard's nine shots
-//! (`docs/design/title-screen.md`, *Storyboard*), one snapshot of each.
+//! The cinematic itself is tickets 0820 and 0833's: the storyboard's shots
+//! (`docs/design/title-screen.md`, *Storyboard* and *As built*), one
+//! snapshot of each.
 
 use insta::assert_snapshot;
 use trpg_core::{Faction, Pos, UnitId};
@@ -167,8 +168,8 @@ fn left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops() {
     // The second shot (the first is under the menu): the chapter's
     // opening lines; then the storyboard's other shots, to the logo.
     assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
-    wait_until(&mut h, 60.0);
-    assert_alone_at(&h, 60.0);
+    wait_until(&mut h, 53.0);
+    assert_alone_at(&h, 53.0);
     assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
     wait_until(&mut h, LOGO - 0.1);
     assert_alone_at(&h, LOGO - 0.1);
@@ -499,14 +500,29 @@ fn count(h: &Harness, faction: Faction) -> usize {
 /// The party, by its slots in `assets/battles/ch01.ron`, and the three
 /// enemies the cinematic moves.
 const LEAD: u32 = 1;
+const RETAINER: u32 = 2;
 const SERGEANT: u32 = 3;
 const POACHER: u32 = 4;
 const ROAD_BRIGAND: u32 = 7;
 const ROAD_ARCHER: u32 = 9;
 const FOOTBRIDGE_BRIGAND: u32 = 11;
 
-/// Ticket 0820: the storyboard's nine shots in order, each where the song
-/// changes, with a snapshot of each. Nobody in the party falls.
+/// The combat shot's fight now: who attacks whom (their names, the
+/// attacker first), and how far in it is.
+fn fight(h: &Harness) -> Option<([String; 2], f32)> {
+    let shot = view(h).cinematic?;
+    #[allow(clippy::cast_precision_loss)]
+    let t = shot.t_ms as f32 / 1000.0;
+    let Frame::Combat { seconds } = shot.player.frame(h.game().ctx(), t, SCREEN) else {
+        return None;
+    };
+    let stage = shot.player.stage(h.game().ctx(), t)?;
+    let names = stage.fighters.each_ref().map(|f| f.name.clone());
+    Some((names, seconds))
+}
+
+/// Tickets 0820 and 0833: the storyboard's shots in order, each where the
+/// song changes, with a snapshot of each (the battle's shots: below).
 #[test]
 fn the_storyboard_plays_shot_by_shot() {
     let mut h = title();
@@ -531,58 +547,18 @@ fn the_storyboard_plays_shot_by_shot() {
     let faces = h.snapshot();
     assert!(faces.contains("Tamsin") && faces.contains("Aske"));
     assert_snapshot!("title_cinematic_3_faces", faces);
-    // 4 (0:50): the opening line of `ch01_prebattle`, one box.
-    wait_until(&mut h, 60.0);
+    // 4 (0:50): the opening line of `ch01_prebattle`, one box, for six
+    // seconds.
+    wait_until(&mut h, 53.0);
     assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
     assert_snapshot!("title_cinematic_4_prebattle_line", h.snapshot());
-    wait_until(&mut h, 68.4);
+    wait_until(&mut h, 55.9);
     assert!(matches!(frame(&h), Frame::Talk { index: 0, .. }));
-    // 5 (1:08.5): the march at 3×. Everyone is still at the cut; the lead
-    // then walks east and the brigand comes down to the road to meet.
-    wait_until(&mut h, 68.6);
-    assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
-    assert_eq!(tile(&h, LEAD), Some(Pos::new(4, 12)));
-    assert_eq!(tile(&h, ROAD_BRIGAND), Some(Pos::new(10, 10)));
-    wait_until(&mut h, 76.0);
-    assert_snapshot!("title_cinematic_5_march", h.snapshot());
-    wait_until(&mut h, 80.0);
-    assert_eq!(tile(&h, LEAD), Some(Pos::new(9, 11)));
-    assert_eq!(tile(&h, ROAD_BRIGAND), Some(Pos::new(10, 11)));
-    // 6 (1:25.25): the two of them close up at 4×; the brigand falls.
-    wait_until(&mut h, 86.5);
-    assert!(matches!(frame(&h), Frame::MapPan { zoom: 4, .. }));
-    assert_snapshot!("title_cinematic_6_road_fight", h.snapshot());
-    wait_until(&mut h, 95.0);
-    assert_eq!(tile(&h, ROAD_BRIGAND), None);
-    assert_eq!(count(&h, Faction::Enemy), 13);
-    // 7 (1:35.5): the footbridge at 4×. The rider is across and beside
-    // the brigand, the archer two tiles from it over the river.
-    wait_until(&mut h, 99.0);
-    let Frame::MapPan { origin_px, zoom: 4 } = frame(&h) else {
-        panic!("not the close-up: {:?}", frame(&h));
-    };
-    assert!(origin_px.1 < 40.0, "{origin_px:?}");
-    assert_eq!(tile(&h, SERGEANT), Some(Pos::new(4, 5)));
-    assert_eq!(tile(&h, FOOTBRIDGE_BRIGAND), Some(Pos::new(5, 5)));
-    assert_eq!(tile(&h, POACHER), Some(Pos::new(5, 7)));
-    assert_snapshot!("title_cinematic_7_footbridge_fight", h.snapshot());
-    wait_until(&mut h, 104.0);
-    assert_eq!(tile(&h, FOOTBRIDGE_BRIGAND), None);
-    // 8 (1:44.5): the whole map at 2×, the party moving on.
-    wait_until(&mut h, 110.0);
-    assert!(matches!(frame(&h), Frame::MapPan { zoom: 2, .. }));
-    assert_snapshot!("title_cinematic_8_whole_field", h.snapshot());
-    wait_until(&mut h, LOGO - 0.1);
-    assert_eq!(tile(&h, LEAD), Some(Pos::new(11, 7)));
-    assert_eq!(tile(&h, ROAD_ARCHER), Some(Pos::new(11, 6)));
-    // Two enemies fell and nobody of the party.
-    assert_eq!(count(&h, Faction::Player), 6);
-    assert_eq!(count(&h, Faction::Enemy), 12);
-    // 9 (1:57): the logo, with the menu, until the song loops.
+    // 12 (1:57): the logo, with the menu, until the song loops.
     wait_until(&mut h, 125.0);
     assert_eq!(shows(&h), Shows::Menu(255));
     assert!((time(&h) - 125.0).abs() < 0.05, "{}", time(&h));
-    assert_snapshot!("title_cinematic_9_logo", h.snapshot());
+    assert_snapshot!("title_cinematic_12_logo", h.snapshot());
     // 1 (0:00), seen from the first loop on: the party where the battle
     // starts, nobody moving, the camera drifting to them at 3×.
     wait(&mut h, SONG - 125.0 + 3.0);
@@ -610,4 +586,76 @@ fn the_storyboard_plays_shot_by_shot() {
         "{origin_px:?} to {later:?}"
     );
     assert_eq!(scene(&h), standing);
+}
+
+/// Ticket 0833: the storyboard's battle, shots 5 to 11, played as turns,
+/// one unit moving at a time, its fights the combat scene. Nobody in the
+/// party falls.
+#[test]
+fn the_battle_plays_as_turns_with_the_combat_scene() {
+    let mut h = title();
+    // 5 (0:56): turn 1 at 3×. Everyone is still at the cut; then one
+    // after another: Tamsin first, the lead next.
+    wait_until(&mut h, 56.1);
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
+    assert_eq!(tile(&h, LEAD), Some(Pos::new(4, 12)));
+    assert_eq!(tile(&h, SERGEANT), Some(Pos::new(6, 11)));
+    wait_until(&mut h, 59.0);
+    assert_eq!(tile(&h, SERGEANT), Some(Pos::new(3, 7)));
+    assert_eq!(tile(&h, LEAD), Some(Pos::new(4, 12)));
+    wait_until(&mut h, 60.5);
+    assert_eq!(tile(&h, LEAD), Some(Pos::new(8, 11)));
+    assert_eq!(tile(&h, RETAINER), Some(Pos::new(5, 11)));
+    assert_snapshot!("title_cinematic_5_turn_one", h.snapshot());
+    // Then the brigand comes down to the road beside the lead.
+    wait_until(&mut h, 68.4);
+    assert_eq!(tile(&h, ROAD_BRIGAND), Some(Pos::new(9, 11)));
+    // 6 (1:08.5): the combat scene: the brigand attacks the lead, and
+    // falls.
+    wait_until(&mut h, 70.0);
+    let (names, seconds) = fight(&h).unwrap_or_else(|| panic!("{:?}", frame(&h)));
+    assert_eq!(names, ["Brigand", "Ellery"]);
+    assert!((seconds - 1.5).abs() < 0.05, "{seconds}");
+    assert_snapshot!("title_cinematic_6_road_fight", h.snapshot());
+    // 7 (1:14.5): turn 2 at 3×: the brigand is gone; the archer falls
+    // back; the party moves up; Tamsin goes to the footbridge's brigand.
+    wait_until(&mut h, 75.0);
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
+    assert_eq!(tile(&h, ROAD_BRIGAND), None);
+    assert_eq!(count(&h, Faction::Enemy), 13);
+    wait_until(&mut h, 80.0);
+    assert_eq!(tile(&h, ROAD_ARCHER), Some(Pos::new(11, 6)));
+    assert_eq!(tile(&h, LEAD), Some(Pos::new(11, 9)));
+    assert_snapshot!("title_cinematic_7_turn_two", h.snapshot());
+    wait_until(&mut h, 85.0);
+    assert_eq!(tile(&h, SERGEANT), Some(Pos::new(5, 5)));
+    assert_eq!(tile(&h, FOOTBRIDGE_BRIGAND), Some(Pos::new(5, 4)));
+    // 8 (1:25.25): the combat scene: Tamsin attacks him, and he falls.
+    wait_until(&mut h, 87.0);
+    let (names, _) = fight(&h).unwrap_or_else(|| panic!("{:?}", frame(&h)));
+    assert_eq!(names, ["Tamsin Rook", "Brigand"]);
+    assert_snapshot!("title_cinematic_8_footbridge_fight", h.snapshot());
+    // 9 (1:31.25): the footbridge at 4×: Aske crosses after her.
+    wait_until(&mut h, 91.5);
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 4, .. }));
+    assert_eq!(tile(&h, FOOTBRIDGE_BRIGAND), None);
+    assert_eq!(tile(&h, POACHER), Some(Pos::new(3, 9)));
+    wait_until(&mut h, 94.0);
+    assert_eq!(tile(&h, POACHER), Some(Pos::new(4, 5)));
+    assert_snapshot!("title_cinematic_9_footbridge", h.snapshot());
+    // 10 (1:35.5): turn 3 at 3×: the party moves up to the road bridge.
+    wait_until(&mut h, 102.0);
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 3, .. }));
+    assert_eq!(tile(&h, LEAD), Some(Pos::new(11, 8)));
+    assert_snapshot!("title_cinematic_10_turn_three", h.snapshot());
+    // 11 (1:44.5): the whole map at 2×, Tamsin and Aske moving on.
+    wait_until(&mut h, 110.0);
+    assert!(matches!(frame(&h), Frame::MapPan { zoom: 2, .. }));
+    assert_snapshot!("title_cinematic_11_whole_field", h.snapshot());
+    wait_until(&mut h, LOGO - 0.1);
+    assert_eq!(tile(&h, SERGEANT), Some(Pos::new(9, 5)));
+    assert_eq!(tile(&h, ROAD_ARCHER), Some(Pos::new(11, 6)));
+    // Two enemies fell and nobody of the party.
+    assert_eq!(count(&h, Faction::Player), 6);
+    assert_eq!(count(&h, Faction::Enemy), 12);
 }

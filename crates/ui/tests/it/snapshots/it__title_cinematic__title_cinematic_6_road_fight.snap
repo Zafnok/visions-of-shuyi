@@ -26,12 +26,12 @@ expression: h.snapshot()
                                                                                                     
                                                                                                     
                                                                                                     
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
-                                                                                                    
+┌────────────────────────────────────────────────┐┌────────────────────────────────────────────────┐
+│ Ellery                                         ││ Brigand                                        │
+│ HP 10 ███████████░░░░░░░░░ /19                 ││ HP 20 ████████████████████ /20                 │
+│                                                ││                                                │
+│ 9 dmg  Hit 96  Crit 3                          ││ 9 dmg  Hit 65  Crit 0                          │
+└────────────────────────────────────────────────┘└────────────────────────────────────────────────┘
                                                                                                     
                                                                                            F2 debug 
 --- colours ---
@@ -59,89 +59,26 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbba
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccc
+babbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcacccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac
+baaaaaaadddddddddddeeeeeeeeeaeeeaaaaaaaaaaaaaaaaabcaaaaaaaffffffffffffffffffffaeeeaaaaaaaaaaaaaaaaac
+baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac
+baeeeeeeeeeeeeeeeeeeeeeaaaaaaaaaaaaaaaaaaaaaaaaaabcaeeeeeeeeeeeeeeeeeeeeeaaaaaaaaaaaaaaaaaaaaaaaaaac
+bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccccccccccccccccccccccccccccccccccccccccccccccc
+gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggghhhhhhhhg
 --- legend ---
-a = fg:text bg:see-through
-b = fg:text_dim bg:black
---- backdrop: clip 0,0 100x32  origin 56.0,120.0  zoom 4 ---
-♣♣♣♣♣♣♣♣........♣♣♣♣♣♣..............^^^^▲▲▲▲▲▲▲▲
-♣♣♣♣♣♣♣♣......♣♣♣♣♣♣♣♣..............▓▓▓▓▓▓▓▓▓▓▲▲
-..♣♣♣♣♣♣♣♣♣♣♣♣♣♣♣♣........············░░Ha░░▓▓^^
-....♣♣♣♣♣♣♣♣♣♣............··....Ri..▓▓Ra░░Ar▓▓^^
-......♣♣..Br..........······........▓▓▓▓··▓▓▓▓..
-......··..............Ra....Ar♣♣Br......Br......
-≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈......Gu..♣♣♣♣
-......Ta..As..........··........≈≈≈≈≈≈≈≈==≈≈≈≈≈≈
-......··..............··......♣♣♣♣......··......
-..♣♣♣♣··..............··Ar..♣♣♣♣♣♣♣♣....Ra......
-..♣♣♣♣····............··......♣♣♣♣......··..^^^^
-........····Ma··HoElBr··········Br········..^^^^
-....╦╦..··....Ru..........................^^^^^^
-........··....^^^^......................♣♣♣♣....
-..............^^^^^^....................♣♣♣♣♣♣..
-................^^......................♣♣♣♣....
---- colours ---
-aaaaaaaabbbbbbbbaaaaaabbbbbbbbbbbbbbccccdddddddd
-aaaaaaaabbbbbbaaaaaaaabbbbbbbbbbbbbbeeeeeeeeeedd
-bbaaaaaaaaaaaaaaaabbbbbbbbffffffffffffgghhggeecc
-bbbbaaaaaaaaaabbbbbbbbbbbbffbbbbiibbeejjggjjeecc
-bbbbbbaabbiibbbbbbbbbbffffffbbbbbbbbeeeeffeeeebb
-bbbbbbffbbbbbbbbbbbbbbkkbbbbllaaiibbbbbbkkbbbbbb
-mmmmmmnnmmmmmmmmmmmmmmnnmmmmmmmmmmbbbbbbkkbbaaaa
-bbbbbboobbppbbbbbbbbbbffbbbbbbbbmmmmmmmmnnmmmmmm
-bbbbbbffbbbbbbbbbbbbbbffbbbbbbaaaabbbbbbffbbbbbb
-bbaaaaffbbbbbbbbbbbbbbffiibbaaaaaaaabbbbkkbbbbbb
-bbaaaaffffbbbbbbbbbbbbffbbbbbbaaaabbbbbbffbbcccc
-bbbbbbbbffffooffooookkffffffffffkkffffffffbbcccc
-bbbbqqbbffbbbbppbbbbbbbbbbbbbbbbbbbbbbbbbbcccccc
-bbbbbbbbffbbbbccccbbbbbbbbbbbbbbbbbbbbbbaaaabbbb
-bbbbbbbbbbbbbbccccccbbbbbbbbbbbbbbbbbbbbaaaaaabb
-bbbbbbbbbbbbbbbbccbbbbbbbbbbbbbbbbbbbbbbaaaabbbb
---- legend ---
-a = fg:forest bg:forest_bg
-b = fg:grass bg:grass_bg
-c = fg:mountain bg:mountain_bg
-d = fg:peak bg:peak_bg
-e = fg:stone bg:stone_bg
-f = fg:road bg:road_bg
-g = fg:floor bg:floor_bg
-h = fg:enemy bg:fort_bg
-i = fg:enemy bg:grass_bg
-j = fg:enemy bg:floor_bg
-k = fg:enemy bg:road_bg
-l = fg:enemy bg:forest_bg
-m = fg:water bg:water_bg
-n = fg:wood bg:water_bg
-o = fg:player bg:road_bg
-p = fg:player bg:grass_bg
-q = fg:fort bg:fort_bg
+a = fg:text bg:panel_bg
+b = fg:player bg:panel_bg
+c = fg:enemy bg:panel_bg
+d = fg:hp_mid bg:panel_bg
+e = fg:text_dim bg:panel_bg
+f = fg:hp_high bg:panel_bg
+g = fg:text bg:black
+h = fg:text_dim bg:black
 --- overlays ---
-over  145,190 12x2  hp_high
-over  157,190 2x2  black
-over  129,190 14x2  hp_high
-over  49,126 14x2  hp_high
-over  81,126 14x2  hp_high
-over  97,190 14x2  hp_high
-over  113,206 14x2  hp_high
-over  161,190 5x2  hp_mid
-over  166,190 9x2  black
-over  257,190 14x2  hp_high
-over  193,158 14x2  hp_high
-over  321,158 14x2  hp_high
-over  81,78 14x2  hp_high
-over  177,94 14x2  hp_high
-over  225,94 14x2  hp_high
-over  257,94 14x2  hp_high
-over  257,62 14x2  hp_high
-over  321,110 14x2  hp_high
-over  321,94 14x2  hp_high
-over  305,62 14x2  hp_high
-over  337,62 14x2  hp_high
-over  321,46 14x2  hp_high
+under sprite 64,0 672x384  battlebacks/fields.png 0,40 336x192
+under sprite 0,0 64x384  battlebacks/fields.png 0,40 32x192 flip
+under sprite 736,0 64x384  battlebacks/fields.png 304,40 32x192 flip
+under sprite 502,132 96x144  battlers/brigand.png 0,0 48x72 flip
+under sprite 373,132 96x144  battlers/exile.png 0,0 48x72

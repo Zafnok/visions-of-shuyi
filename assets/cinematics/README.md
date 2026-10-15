@@ -10,8 +10,9 @@ one cinematic, loaded by `trpg_content::cinematic` and validated by the
 all-assets test. The file stem is its id. `trpg_ui::cinematic` plays it.
 
 `title.ron` is the title screen's intro cinematic, which the title plays
-in time with its song (ticket 0819): the nine shots of Nick's storyboard
-(ticket 0820), cut where the song changes. The
+in time with its song (ticket 0819): Nick's storyboard (tickets 0820 and
+0833), cut where the song changes, its battle played as turns with the
+combat scene for each fight. The
 test one is `assets-test/cinematics/test.ron` (the debug menu's "Play test
 cinematic" plays it); `assets-test/cinematics/combat.ron` is a test of the
 combat shot alone.

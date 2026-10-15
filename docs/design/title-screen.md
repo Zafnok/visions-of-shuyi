@@ -49,9 +49,11 @@ screen before the title), web only or Windows too (A web only / B both):
                  Press any key
 ```
 
-**As built (ticket 0820, `assets/cinematics/title.ron`).** The cuts were
-moved onto the song's changes, measured in the song file (Claude can't
-hear it; Nick judges them by ear at sign-off):
+**As built (tickets 0820 and 0833, `assets/cinematics/title.ron`).** The
+cuts were moved onto the song's changes, measured in the song file
+(Claude can't hear it; Nick judges them by ear at sign-off). Nick's
+playtest of Chapter 1 (2026-10-14, ticket 0833) asked for a third of the
+talk, units that move as the game moves them, and the combat scene:
 
 | Shot | Storyboard | Built | What the song does there |
 | ---- | ---------- | ----- | ------------------------ |
@@ -59,26 +61,44 @@ hear it; Nick judges them by ear at sign-off):
 | `ch01_intro` lines | 0:15 | 0:15 | Still quiet (the menu's 15 seconds end here) |
 | Six faces | 0:31 | 0:30.75 | Swells into the middle section |
 | `ch01_prebattle` line | 0:50 | 0:50 | A phrase starts |
-| The march | 1:08 | 1:08.5 | A phrase starts |
-| Fight on the road | 1:25 | 1:25.25 | The loud part comes in |
-| Fight at the footbridge | 1:35 | 1:35.5 | Lifts again |
-| The whole field | 1:45 | 1:44.5 | Lifts again |
+| Turn 1: the march, 3× | 1:08 | 0:56 | A note comes in after a hush |
+| Combat scene: the brigand attacks the lead | 1:25 | 1:08.5 | A phrase starts |
+| Turn 2: the party moves up, 3× | | 1:14.5 | On the beat |
+| Combat scene: Tamsin attacks the footbridge's brigand | 1:35 | 1:25.25 | The loud part comes in |
+| Aske crosses the footbridge, 4× | | 1:31.25 | An accent |
+| Turn 3: the party moves up the road, 3× | | 1:35.5 | Lifts again |
+| The whole field, 2× | 1:45 | 1:44.5 | Lifts again |
 | The logo | 1:57 | 1:57 | The last chord (struck at 1:55.8) has died away |
 
 - **The snippets:** the first **three** boxes of `ch01_intro` (the three
   opening captions, about 5 seconds each) and the first **one** box of
-  `ch01_prebattle` (Tamsin's news, three lines, up for the whole 18
-  seconds). Two boxes there would get 9 seconds each, too short to read
-  three lines twice.
-- **The march and the fights** (one action on the real Chapter 1 map):
-  the party sets off east along the road while Tamsin rides for the
-  footbridge and Aske follows; the brigand south of the road comes down to
-  meet the lead, who trades blows with him and fells him (the lead is
-  left with about half HP); at the footbridge Tamsin crosses and fights
-  the brigand there, and Aske shoots him over the river from two tiles
-  away; in the whole-field shot the enemy archer on the road falls back
-  to the road bridge and everyone moves on. Two enemies fall, nobody of
-  the party.
+  `ch01_prebattle` (Tamsin's news, three lines, up for **6 seconds**: a
+  third of the 18 it had).
+- **The battle plays as turns** (one action on the real Chapter 1 map):
+  one unit at a time walks, then acts; first the party's phase, then the
+  enemy's. A walk goes at the game's own walking speed in a battle with
+  the bought pictures (6 tiles a second), and the moves fall on the
+  song's beats, about one and a half seconds apart.
+  - Turn 1: the party sets off east along the road while Tamsin rides for
+    the footbridge and Aske follows. In the enemy's phase the brigand
+    south of the road comes down beside the lead and attacks him.
+  - Turn 2: the enemy archer by the road falls back to the road bridge.
+    The lead, Hollis, Rue and Maud move up the road; Tamsin crosses the
+    footbridge and attacks the brigand who guards it; Aske crosses after
+    her.
+  - Turn 3: the party moves up toward the road bridge, Tamsin and Aske
+    along the north bank. The fort is in view at the end.
+- **Every fight is the combat scene**, as in a battle with combat
+  animations on (the game's default), worked out by the rules
+  (ticket 0832): the brigand hits the lead and falls to his counter (the
+  lead is left with 10 HP of 19); Tamsin fells the footbridge's brigand
+  (she is left with 13 of 21). Each fight takes about 4 seconds; the
+  shot holds its last moment for the other 2. Back on the map, the HP
+  bars show what the fight left. Two enemies fall, nobody of the party.
+- **The storyboard's "two party units bring down a second enemy"** is
+  now Tamsin alone, with Aske following her across: the combat scene
+  starts every fight at the battle's starting HP, so a second fight on
+  the same enemy would show him unhurt.
 - **The first shot** drifts from the fords down to the party; at 3× the
   party's corner of the map leaves no room to pan across them.
 
