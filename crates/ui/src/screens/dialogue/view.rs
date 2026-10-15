@@ -92,12 +92,6 @@ impl TextView {
         }
         revealed
     }
-
-    /// Whether the whole page is revealed.
-    pub fn is_revealed(&self) -> bool {
-        let len: usize = self.lines.iter().map(|l| l.chars().count()).sum();
-        self.shown >= len
-    }
 }
 
 /// The question asked before skipping the scene.
