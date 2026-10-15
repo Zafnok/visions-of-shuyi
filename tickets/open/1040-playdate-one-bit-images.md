@@ -47,6 +47,14 @@ None. The look is 0062's; this ticket applies it.
   a generated folder (e.g. `target/playdate/images/`), never committed;
   pictures from `assets-private/game/` convert into the private
   checkout's own generated folder, never into this repository (ADR-0040).
+- **The methods** (`playdate.md`, *One-bit pictures*): enlarge to the
+  size shown first (pixel doubling for whole sizes, a smooth resample
+  for 1.25×), then the brightness stretch and a 4 × 4 Bayer dither at
+  screen pixels; optionally a brightness curve, rounding to N levels,
+  and the art's own dark lines drawn on top (styles A+ lines, F+ lines,
+  G). **Portraits are converted once per style** (A, A+ lines, F+
+  lines, G) for 1042's Options toggle. The listener's fade is drawn at
+  run time, not converted.
 - **Which images:** the ones the Playdate build uses (1036's list): the
   Playdate bundle names the one-bit file in place of the PNG, so screens
   and sidecars (`.ron`) keep naming the same image id.

@@ -39,7 +39,11 @@ its name to the release secrets as 0901 did.
 
 **In:**
 - **Launcher assets:** `card.png` (350 × 155), `icon.png` (32 × 32) and
-  the launch image as 0062 decided, in the `.pdx`'s `launcher/` folder
+  the launch image as 0062 decided (`playdate.md`, *One-bit pictures*:
+  the card is the Bayer-dithered title backdrop Fields B at dusk with the
+  logo in white; the icon the block S of `SHUYI`,
+  `docs/design/playdate/0062-icon.png`; the launch image the card's look
+  at 400 × 240; no animation, no wrapping paper), in the `.pdx`'s `launcher/` folder
   (`pdxinfo`'s `imagePath`); made from public art only (or kept in the
   private repository if made from bought art, ADR-0040).
 - **`pdxinfo`:** name (no "Playdate" or "Panic"), author, description,

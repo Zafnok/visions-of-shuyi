@@ -37,7 +37,9 @@ Simulator or on his Playdate and comments.
 
 **In:**
 - One-bit versions of `assets/title/`'s pictures with 1040's tool and
-  0062's method; the Playdate bundle (1036) lists them.
+  0062's method (`playdate.md`, *One-bit pictures*, *The title
+  cinematic*: backdrops lightened and Bayer-dithered, the logo with white
+  letters and a black shadow and rim); the Playdate bundle (1036) lists them.
 - A Playdate paint of the title view (chosen by `SkinSet`): the
   cinematic's shots framed for 400 × 240 (the cinema framing in
   `crates/ui/src/cinema.rs` reads the console size since 1030), the

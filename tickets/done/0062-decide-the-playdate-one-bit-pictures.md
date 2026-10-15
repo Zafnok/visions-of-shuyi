@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-15
 ---
 
 # 0062 — Decide: the Playdate's one-bit pictures
@@ -82,10 +82,10 @@ art are not committed).
 
 ## Acceptance criteria
 
-- [ ] `docs/design/playdate.md` has the *One-bit pictures* section with
+- [x] `docs/design/playdate.md` has the *One-bit pictures* section with
       Nick's words and rules.
-- [ ] No picture made from the bought art is committed.
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] No picture made from the bought art is committed.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -93,5 +93,37 @@ art are not committed).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- Three rounds with Nick, the second also on his Playdate: a scratch
+  slideshow `.pdx` (16 slides, built with `pdc`, sideloaded from the
+  Simulator). The pictures and the slideshow stayed in the session's
+  scratch folder; none made from bought art are committed.
+- **Decided** (`docs/design/playdate.md`, *One-bit pictures*):
+  - Portraits: style **A** (Bayer 4 × 4) by default, plus a
+    Playdate-only Options setting with A, A+ lines, F+ lines and G.
+  - Portraits at **2×** in today's dialogue layout.
+  - Combat: fighters in style A on white ground, the dithered backdrop
+    only above a horizon line.
+  - Launcher card: the dithered title backdrop with a white logo.
+    Icon: the block S of `SHUYI`.
+- **Found while making them:** a fighter drawn at 1.25× (the Brigand)
+  had its face broken by pixel-doubling before the dither. It is now
+  enlarged smoothly first (a rule in the doc; 1040 does it).
+- **Claude's starting rules** (Nick can veto):
+  - The listener is faded by a 50% checker.
+  - The portrait style setting doesn't change the combat fighters (A
+    only).
+  - The setting is called *Portrait style*.
+  - The launcher card's backdrop is Fields B at dusk, fixed, not
+    animated (1054 animates it later).
+  - The launch image is the card's look at 400 × 240.
+  - No wrapping paper.
+  - A build without the bought art shows the logo over a checker.
+  - The cinematic's backdrops and logo are converted like the card's.
+- **Ticket created:** 1054, an animated launcher card (Nick asked for
+  one later).
+- **Tickets updated:** 1040 (the methods, one portrait set per style),
+  1041 (the horizon stage), 1042 (2×, the style setting is in its
+  scope), 1044 (the backdrops and logo), 1052 (card, icon, launch
+  image).
+- Committed: `docs/design/playdate/0062-icon.png` (×4 too) and
+  `0062-card-logo.png`, made from the game's own logo only.
