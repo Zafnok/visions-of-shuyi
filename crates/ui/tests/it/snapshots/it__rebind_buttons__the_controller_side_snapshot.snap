@@ -5,7 +5,6 @@ expression: h.snapshot()
                                                                                                     
   ┌─ Key bindings ───────────────────────────────────────────────────────────────────────────────┐  
   │   Keyboard · Right-handed    Controller                                                      │  
-  │                                                                                              │  
   │                           Button 1          Button 2          Button 3                       │  
   │ Must have a button                                                                           │  
   │   Cursor up               ↑                 L-stick ↑         ·                              │  
@@ -28,17 +27,17 @@ expression: h.snapshot()
   │   Zoom map                RT                ·                 ·                              │  
   │   Map menu                ·                 ·                 ·                 ! not mapped │  
   │                                                                                              │  
+  │ In the dialogue log                                                                          │  
+  │   Open the log            X                 ·                 ·                              │  
+  │                                                                                              │  
   │   Restore defaults                                                                           │  
   └──────────────────────────────────────────────────────────────────────────────────────────────┘  
-                                                                                                    
-                                                                                                    
                                                                                                     
                                D-pad/L-stick move · A change · B back                               
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aabbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
 aabdddeeeeeeeeeeeeeeeeeeeeeeeddddccccccccccddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
-aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabdddddddddddddddddddddddddddeeeeeeeeddddddddddeeeeeeeeddddddddddeeeeeeeedddddddddddddddddddddddbaa
 aabdffffffffffffffffffdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabdddcccccccccddddddddddddddggggggggggggggggdddddddddddddddddddddeddddddddddddddddddddddddddddddbaa
@@ -61,10 +60,11 @@ aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddd
 aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
 aabdddddddddddddddddddddddddddedddddddddddddddddedddddddddddddddddedddddddddddddddddeeeeeeeeeeeedbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdfffffffffffffffffffddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
+aabdddddddddddddddddddddddddddddddddddddddddddddedddddddddddddddddeddddddddddddddddddddddddddddddbaa
+aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaa
 aabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---

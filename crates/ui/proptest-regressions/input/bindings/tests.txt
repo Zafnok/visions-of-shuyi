@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 6cc63f332eaeab85b8b83084723be01adbeccefd4523803070a00fe8ae182ad3 # shrinks to ops = [Bind(CursorLeft, 0, South)]
+cc eda87a4d0c6289e0df2ddf1c4dd912ea673827b2a39d4f9a5023c1f60acb3f24 # shrinks to ops = [Bind(CursorLeft, 0, Chord { key: Kp2, shift: true }), Bind(DialogueLog, 0, Chord { key: Kp2, shift: true })], layout = RightHanded

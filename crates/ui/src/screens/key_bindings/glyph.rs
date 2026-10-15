@@ -11,8 +11,8 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::screen::Ctx;
 use crate::screens::print_centred;
 
-/// The panel, in cells.
-const PANEL: Rect = Rect::new(2, 1, 96, 27);
+/// The panel, in cells: down to the row over the message.
+const PANEL: Rect = Rect::new(2, 1, 96, 29);
 /// Column of the action labels.
 const LABEL_X: i32 = PANEL.x + 4;
 /// Column of the title and the group headings, two cells left of the
@@ -20,9 +20,9 @@ const LABEL_X: i32 = PANEL.x + 4;
 const HEADING_X: i32 = LABEL_X - 2;
 /// Row of the keyboard / controller switch.
 const SWITCH_Y: i32 = PANEL.y + 1;
-/// Row of the slot columns' headings; the first group's heading is on the
-/// next row.
-const COLUMNS_Y: i32 = PANEL.y + 3;
+/// Row of the slot columns' headings, right under the switch; the first
+/// group's heading is on the next row.
+const COLUMNS_Y: i32 = PANEL.y + 2;
 /// Column of the first slot's highlight bar; its text starts one cell in.
 const SLOTS_X: i32 = LABEL_X + 23;
 /// Cells a slot's key name may take (the longest chord name fits).
@@ -37,8 +37,8 @@ const QUESTION_H: i32 = 6;
 /// The box of the choices, in cells: a line each and the border.
 const CHOICE_W: i32 = 12;
 const CHOICE_H: i32 = 4;
-/// Row of the message under the panel.
-const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
+/// Row of the message, right under the panel and over the help line.
+const MESSAGE_ROW: i32 = PANEL.y + PANEL.h;
 
 /// Left edge of slot `i`'s highlight bar.
 fn slot_x(i: usize) -> i32 {

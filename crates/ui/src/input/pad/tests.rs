@@ -637,7 +637,8 @@ fn on_a_nintendo_pad_east_confirms_and_south_cancels() {
     let buttons = [South, East, North, West, Start, DpadUp];
     let others = [
         vec![Action::Info],
-        vec![Action::DangerZone],
+        // Another key group's action shares the button.
+        vec![Action::DangerZone, Action::DialogueLog],
         vec![Action::EndTurn],
         vec![Action::CursorUp],
     ];

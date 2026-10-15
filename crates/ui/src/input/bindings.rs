@@ -7,16 +7,19 @@
 //! Pure: [`Ctx`](crate::screen::Ctx) reads and writes the saved text through
 //! `Storage`.
 //!
-//! Invariants: a chord is in at most one slot of a [`LayoutBindings`], and
-//! no [reserved](LayoutBindings::is_reserved) chord is in any; a button is
-//! in at most one slot of a [`PadBindings`].
+//! Invariants: a chord is in at most one slot of a [`LayoutBindings`]'s
+//! actions of each [`KeyGroup`], and no
+//! [reserved](LayoutBindings::is_reserved) chord is in any; a button is in
+//! at most one slot of a [`PadBindings`]'s actions of each group. Actions
+//! of different groups may share one (`docs/design/controls.md`, *Dialogue
+//! log*).
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use super::{Action, Button, Chord, Keymap, KeymapDef, Layout, RepeatDef, SLOTS};
+use super::{Action, Button, Chord, KeyGroup, Keymap, KeymapDef, Layout, RepeatDef, SLOTS};
 use crate::screen::DEBUG_TOOLS;
 
 /// One action's key slots; `None` is an empty slot.
@@ -29,8 +32,9 @@ pub type ButtonSlots = [Option<Button>; SLOTS];
 type Saved = BTreeMap<String, Vec<Option<String>>>;
 
 /// Every rebindable action's slots of keys or of buttons, with the rules
-/// both share: a thing is in at most one slot, and binding one that is
-/// already in a slot moves it.
+/// both share: a thing is in at most one slot of each [`KeyGroup`]'s
+/// actions, and binding one that is already in a slot of that group moves
+/// it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct SlotTable<T> {
     slots: BTreeMap<Action, [Option<T>; SLOTS]>,
@@ -53,9 +57,10 @@ impl<T: Copy + Eq> SlotTable<T> {
         self.slots.get(&action).copied().unwrap_or([None; SLOTS])
     }
 
-    /// The slot holding `item`, if any.
-    fn find(&self, item: T) -> Option<(Action, usize)> {
-        self.slots.iter().find_map(|(&action, slots)| {
+    /// The slot of one of `group`'s actions holding `item`, if any.
+    fn find(&self, group: KeyGroup, item: T) -> Option<(Action, usize)> {
+        let in_group = self.slots.iter().filter(|(a, _)| a.group() == group);
+        in_group.into_iter().find_map(|(&action, slots)| {
             slots
                 .iter()
                 .position(|&c| c == Some(item))
@@ -75,7 +80,8 @@ impl<T: Copy + Eq> SlotTable<T> {
     }
 
     /// Puts `item` in `action`'s slot `i`, replacing what was there. If it
-    /// was in another slot, that slot is emptied and returned.
+    /// was in another slot of `action`'s group, that slot is emptied and
+    /// returned.
     fn place(
         &mut self,
         action: Action,
@@ -83,7 +89,7 @@ impl<T: Copy + Eq> SlotTable<T> {
         item: T,
     ) -> Result<Option<(Action, usize)>, BindError> {
         Self::check(action, i)?;
-        let from = self.find(item);
+        let from = self.find(action.group(), item);
         if from == Some((action, i)) {
             return Ok(None);
         }
@@ -212,15 +218,16 @@ impl LayoutBindings {
         chord.is_reserved() || (self.debug_reserved && self.debug.contains(&chord))
     }
 
-    /// The slot holding `chord`, if any.
-    pub fn find(&self, chord: Chord) -> Option<(Action, usize)> {
-        self.table.find(chord)
+    /// The slot of one of `group`'s actions holding `chord`, if any.
+    pub fn find(&self, group: KeyGroup, chord: Chord) -> Option<(Action, usize)> {
+        self.table.find(group, chord)
     }
 
     /// Puts `chord` in `action`'s slot `i`, replacing what was there. If
-    /// `chord` was in another slot (of any action, including `action`),
-    /// that slot is emptied and returned: the key *moves*
-    /// (`docs/design/controls.md`), which may leave that action with no key.
+    /// `chord` was in another slot (of any action of `action`'s
+    /// [`KeyGroup`], including `action`), that slot is emptied and
+    /// returned: the key *moves* (`docs/design/controls.md`), which may
+    /// leave that action with no key. An action of another group keeps it.
     pub fn bind(
         &mut self,
         action: Action,
@@ -304,15 +311,16 @@ impl PadBindings {
         self.table.get(action)
     }
 
-    /// The slot holding `button`, if any.
-    pub fn find(&self, button: Button) -> Option<(Action, usize)> {
-        self.table.find(button)
+    /// The slot of one of `group`'s actions holding `button`, if any.
+    pub fn find(&self, group: KeyGroup, button: Button) -> Option<(Action, usize)> {
+        self.table.find(group, button)
     }
 
     /// Puts `button` in `action`'s slot `i`, replacing what was there. If
-    /// `button` was in another slot (of any action, including `action`),
-    /// that slot is emptied and returned: the button *moves*, which may
-    /// leave that action with no button.
+    /// `button` was in another slot (of any action of `action`'s
+    /// [`KeyGroup`], including `action`), that slot is emptied and
+    /// returned: the button *moves*, which may leave that action with no
+    /// button. An action of another group keeps it.
     pub fn bind(
         &mut self,
         action: Action,
@@ -480,9 +488,10 @@ impl PlayerKeys {
     /// - unknown layouts or actions, unreadable chords or buttons and extra
     ///   slots are dropped;
     /// - reserved chords are dropped;
-    /// - a chord in two stored slots stays in the first (in
-    ///   [`Action::ALL`] and slot order); a default slot holding a stored
-    ///   chord is emptied (the key moves, as with [`LayoutBindings::bind`]);
+    /// - a chord in two stored slots of one [`KeyGroup`]'s actions stays in
+    ///   the first (in [`Action::ALL`] and slot order); a default slot of
+    ///   that group holding a stored chord is emptied (the key moves, as
+    ///   with [`LayoutBindings::bind`]);
     /// - an action the layout doesn't list keeps its default slots;
     /// - a layout left with a required action unmapped goes back to its
     ///   defaults;
@@ -583,7 +592,7 @@ fn repair<T: Copy + Ord + fmt::Display>(
                     continue;
                 }
             };
-            if !claimed.insert(item) {
+            if !claimed.insert((action.group(), item)) {
                 warn(format!("{action}: {item} is already on another action"));
                 continue;
             }

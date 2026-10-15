@@ -54,6 +54,13 @@ new ticket if 0043 asks for them); an auto-advance mode (a new ticket if
    7 says otherwise.
 6. Rewinding a battle past a scene, or replaying one, plays voices again
    like the first time.
+7. **The dialogue log** (0729, `docs/design/look-and-feel.md`, *Dialogue
+   log*): jumping to a line from the log shows its box again, so steps 1–2
+   play its voice as usual. **Moving the log's cursor onto a line plays
+   that line's voice** (stopping the one playing), unless the Options
+   setting *Voice on hover in the log* (0826) is off. The log's rows know
+   their line (`LogRow::line` in `screens/dialogue/log.rs`); a reply row
+   follows step 3's rule for reply text.
 
 ## Acceptance criteria
 
@@ -61,6 +68,7 @@ new ticket if 0043 asks for them); an auto-advance mode (a new ticket if
 - [ ] Skipping a scene queues no `PlayVoice` for skipped lines and stops the current one.
 - [ ] With voices off, no voice request is queued.
 - [ ] Lines 0043 says aren't voiced never ask (one test per kind).
+- [ ] The dialogue log: moving its cursor onto a voiced line queues its `PlayVoice` (and none with *Voice on hover in the log* off); jumping to a line plays it as the box appears.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

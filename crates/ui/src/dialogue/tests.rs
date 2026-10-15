@@ -586,7 +586,7 @@ fn tokens_follow_the_lead() {
     assert_eq!(v.caption.as_deref(), Some("Isolde's camp"));
     assert_eq!(v.text.as_deref(), Some("She fed herself."));
     // The scene itself is unchanged.
-    assert_eq!(player.scene, scene);
+    assert_eq!(*player.scene, scene);
 }
 
 #[test]
@@ -632,7 +632,7 @@ fn name_tokens_are_filled_in() {
         player.current().text.as_deref(),
         Some("Osric rode out, and Osric rode home. He waited.")
     );
-    assert_eq!(player.scene, scene);
+    assert_eq!(*player.scene, scene);
 }
 
 fn arb_step() -> impl Strategy<Value = Step> {
@@ -1023,4 +1023,57 @@ proptest! {
             prop_assert!(player.is_finished());
         }
     }
+}
+
+/// Each text box and reply knows its line's id (the log keeps it for the
+/// voice, ticket 0729), and the music not yet taken can be looked at.
+#[test]
+fn the_line_on_screen_and_each_reply_have_their_ids() {
+    let say = |text: &str, line: &str| Step::Say {
+        speaker: id("lead"),
+        expression: None,
+        text: text.into(),
+        line: LineId::new(line),
+    };
+    let reply = |text: &str, line: &str| ChoiceOption {
+        tone: "plain".into(),
+        text: text.into(),
+        line: LineId::new(line),
+        steps: vec![],
+    };
+    let scene = Scene {
+        id: "t".into(),
+        steps: vec![
+            Step::Place {
+                side: Side::Left,
+                character: id("lead"),
+                expression: "neutral".into(),
+            },
+            Step::Music(MusicLine::Cue("village".into())),
+            say("Well?", "t.well"),
+            Step::Choice {
+                options: vec![reply("Yes.", "t.yes"), reply("No.", "t.no")],
+            },
+            Step::Narrate {
+                text: "Done.".into(),
+                line: LineId::new("t.done"),
+            },
+        ],
+    };
+    let mut p = play(&scene);
+    assert_eq!(p.line(), Some(&LineId::new("t.well")));
+    assert_eq!(p.reply_line(0), None, "no choice open");
+    assert_eq!(p.pending_music(), Some(&MusicLine::Cue("village".into())));
+    assert_eq!(p.pending_music(), Some(&MusicLine::Cue("village".into())));
+    p.take_music();
+    assert_eq!(p.pending_music(), None);
+    p.advance();
+    assert!(p.is_choosing());
+    assert_eq!(p.line(), Some(&LineId::new("t.well")), "the line answered");
+    assert_eq!(p.reply_line(1), Some(&LineId::new("t.no")));
+    assert_eq!(p.reply_line(2), None);
+    p.choose(1);
+    assert_eq!(p.line(), Some(&LineId::new("t.done")));
+    p.advance();
+    assert_eq!(p.line(), None);
 }

@@ -81,9 +81,10 @@ Nick's.
 - Ticket 0729 (Nick, 2026-10-14: the log plays a line's voice "also on
   hover with option to disable this behavior"; `look-and-feel.md`,
   *Dialogue log*): a row **Voice on hover in the log: On / Off**, starting
-  **On** (*Claude's starting rule*). It comes with the voices (ticket
-  0720), under the voice volume; until the game has voices there is
-  nothing for it to turn off, so it isn't shown.
+  **On** (*Claude's starting rule*). It comes with the voice options
+  (ticket 0826), under the voice volume, and is kept in the player profile
+  like them; until the game has voices there is nothing for it to turn
+  off, so it isn't shown.
 
 ### Asking first
 

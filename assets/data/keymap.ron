@@ -5,7 +5,8 @@
 // every layout, every action must be listed (use [] to leave one unbound),
 // with at most 3 chords (the player's 3 key slots, filled in this order; the
 // first is the one help text shows), and a chord may be bound to only one
-// action.
+// action of each key group. DialogueLog is in a group of its own, so it may
+// share a chord with an action of the rest (controls.md, Dialogue log).
 //
 // Esc and Delete are fixed and may not appear anywhere in this file: Esc
 // always cancels (in every layout and the layout picker) and Delete empties
@@ -57,6 +58,8 @@
             "ConfirmEndTurn": [],
             // Switches the battle map between 1x and 2x (pictures only).
             "ZoomMap": ["q"],
+            // Opens the dialogue log while a scene plays. Its own key group.
+            "DialogueLog": ["b"],
         },
         // W A S D steer; the right hand acts from the J K L ; row, a finger
         // for finger mirror of RightHanded.
@@ -80,6 +83,7 @@
             "Select": [],
             "ConfirmEndTurn": [],
             "ZoomMap": ["p"],
+            "DialogueLog": ["n"],
         },
     },
     // Before a layout is chosen: either hand's up/down and confirm keys.
@@ -92,7 +96,8 @@
     },
     // Controller buttons (controls.md, Controller): one table for both
     // layouts and the layout picker, with the same rules as a layout (every
-    // action listed, at most 3 buttons, a button on only one action). Debug
+    // action listed, at most 3 buttons, a button on only one action of each
+    // key group). Debug
     // is keyboard only and must stay []. Buttons are named by position on an
     // Xbox-shaped pad, whatever is printed on them: "South" "East" "West"
     // "North" (the face buttons), "LeftShoulder" "RightShoulder"
@@ -124,6 +129,8 @@
         "Select": [],
         "ConfirmEndTurn": [],
         "ZoomMap": ["RightTrigger"],
+        // The left face button, like Danger zone: another key group.
+        "DialogueLog": ["West"],
     },
     // Held cursor keys and buttons, in every layout and the layout picker:
     // first repeat after delay_ms, then every interval_ms.

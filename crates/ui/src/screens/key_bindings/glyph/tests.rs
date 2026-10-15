@@ -1,7 +1,7 @@
 use super::*;
 use crate::console::{CONSOLE_H, CONSOLE_W};
 use crate::input::{
-    Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Key, PadKind, SLOTS,
+    Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Key, KeyGroup, PadKind, SLOTS,
 };
 use crate::screen::tests::ctx;
 use crate::screens::key_bindings::view::{GroupView, RestoreView};
@@ -35,12 +35,12 @@ fn view(side: Side) -> KeyBindingsView {
         blocks_leaving: false,
         lost_key: false,
     };
-    let group = |heading: &str, required: bool| GroupView {
+    let group = |heading: &str, required: bool, group: KeyGroup| GroupView {
         heading: heading.to_owned(),
         required,
         rows: ROWS
             .iter()
-            .filter(|(a, _)| a.is_required() == required)
+            .filter(|(a, _)| a.is_required() == required && a.group() == group)
             .map(row)
             .collect(),
     };
@@ -53,7 +53,11 @@ fn view(side: Side) -> KeyBindingsView {
             focused: false,
         },
         columns: (1..=SLOTS).map(|n| format!("Key {n}")).collect(),
-        groups: vec![group("Must have a key", true), group("Optional", false)],
+        groups: vec![
+            group("Must have a key", true, KeyGroup::General),
+            group("Optional", false, KeyGroup::General),
+            group("In the dialogue log", false, KeyGroup::DialogueLog),
+        ],
         restore: RestoreView {
             label: "Restore defaults".to_owned(),
             focused: false,
@@ -104,25 +108,32 @@ fn the_title_switch_columns_and_groups_have_their_rows() {
     let buf = painted(&c, &v);
     assert!(text(&buf, 1).contains("─ Key bindings ─"));
     assert!(text(&buf, 2).contains("  Keyboard · Left-handed    Controller  "));
-    let columns = text(&buf, 4);
+    // The slot columns' headings are right under the switch.
+    let columns = text(&buf, 3);
     assert!(columns.contains("Key 1") && columns.contains("Key 3"));
-    assert!(text(&buf, 5).contains("Must have a key"));
-    // Seven required actions, then a blank row and the other heading.
+    assert!(text(&buf, 4).contains("Must have a key"));
+    // Seven required actions, then a blank row and the optional ones, then
+    // the dialogue log's group.
     let placed = place(&v);
-    assert_eq!(placed.headings, [5, 14]);
-    assert_eq!(placed.actions[0], 6);
-    assert_eq!(placed.actions[6], 12);
-    assert_eq!(placed.actions[7], 15);
-    assert_eq!(placed.actions[16], 24);
-    assert!(
-        text(&buf, 13)
+    assert_eq!(placed.headings, [4, 13, 25]);
+    assert_eq!(placed.actions[0], 5);
+    assert_eq!(placed.actions[6], 11);
+    assert_eq!(placed.actions[7], 14);
+    assert_eq!(placed.actions[16], 23);
+    assert_eq!(placed.actions[17], 26);
+    let blank = |y| {
+        text(&buf, y)
             .trim_matches(|ch| ch == ' ' || ch == '│')
             .is_empty()
-    );
-    assert!(text(&buf, 14).contains("Optional"));
-    // Restore defaults is one blank row under the last action.
-    assert_eq!(placed.restore, 26);
-    assert!(text(&buf, 26).contains("Restore defaults"));
+    };
+    assert!(blank(12) && blank(24));
+    assert!(text(&buf, 13).contains("Optional"));
+    assert!(text(&buf, 25).contains("In the dialogue log"));
+    // Restore defaults is one blank row under the last action, on the
+    // panel's last row.
+    assert_eq!(placed.restore, 28);
+    assert!(text(&buf, 28).contains("Restore defaults"));
+    assert!(text(&buf, 29).contains('└'));
     assert_eq!(text(&buf, i32::from(CONSOLE_H) - 1).trim(), "help");
 }
 
@@ -286,9 +297,9 @@ fn the_controller_side_headings_and_buttons_are_painted_as_given() {
     v.groups[0].heading = "Must have a button".to_owned();
     row_mut(&mut v, Action::EndTurn).slots[0] = SlotView::Bound("Start".to_owned());
     let buf = painted(&c, &v);
-    assert!(text(&buf, 4).contains("Button 1") && text(&buf, 4).contains("Button 3"));
-    assert!(!text(&buf, 4).contains("Key 1"));
-    assert!(text(&buf, 5).contains("Must have a button"));
+    assert!(text(&buf, 3).contains("Button 1") && text(&buf, 3).contains("Button 3"));
+    assert!(!text(&buf, 3).contains("Key 1"));
+    assert!(text(&buf, 4).contains("Must have a button"));
     assert!(text(&buf, y_of(&v, Action::EndTurn)).contains(" Start "));
 }
 
@@ -318,8 +329,8 @@ fn the_message_is_painted_under_the_panel_in_the_warning_colour() {
     let buf = painted(&c, &v);
     let bottom = PANEL.y + PANEL.h - 1;
     assert!(text(&buf, bottom).contains('└'));
-    assert_eq!(text(&buf, bottom + 1).trim(), "");
-    assert_eq!(MESSAGE_ROW, bottom + 2);
+    assert_eq!(MESSAGE_ROW, bottom + 1);
+    assert_eq!(MESSAGE_ROW, i32::from(CONSOLE_H) - 2, "over the help line");
     let message = text(&buf, MESSAGE_ROW);
     assert_eq!(message.trim(), "Give Cancel a key first");
     let x = x_of(&buf, MESSAGE_ROW, "Give");
@@ -378,7 +389,7 @@ fn the_choices_are_drawn_under_the_slot_or_over_it_on_the_last_rows() {
     assert_ne!(buf.get(x + 1, y + 2).unwrap().bg, bar);
     assert!(text(&buf, y + 2).contains("║ Change   ║"));
     // Only under the last row it doesn't fit.
-    for (row, over) in [(13, false), (14, false), (15, true)] {
+    for (row, over) in [(15, false), (16, false), (17, true)] {
         let mut v = view(Side::Controller);
         let action = ROWS[row].0;
         row_mut(&mut v, action).focus = Some(0);

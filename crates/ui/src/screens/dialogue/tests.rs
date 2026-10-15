@@ -845,3 +845,99 @@ fn music_around_a_choice() {
     assert_eq!(s.page_lines(), ["Oh."]);
     assert_eq!(music_requests(&mut c), [play_music("scene_sad")]);
 }
+
+/// The sound `sound` makes, as [`sounds`] reports it.
+fn cue(sound: MenuSound) -> String {
+    let mut c = ctx();
+    c.audio.menu(sound);
+    sounds(&mut c).remove(0)
+}
+
+/// Opens the log and moves its cursor `up` rows.
+fn open_log(s: &mut DialogueScreen, c: &mut Ctx, up: usize) {
+    press(s, c, Action::DialogueLog);
+    for _ in 0..up {
+        press(s, c, Action::CursorUp);
+    }
+}
+
+/// Jumping to a line plays the music that was on there, and only when it
+/// isn't on already.
+#[test]
+fn a_jump_in_the_log_plays_that_lines_music() {
+    let mut c = ctx();
+    let mut s = full(&scene(vec![
+        music("village"),
+        narrate("One."),
+        music("talk_calm"),
+        narrate("Two."),
+        narrate("Three."),
+    ]));
+    s.update(&mut c, &frame(&[], 0.0, false));
+    assert_eq!(music_requests(&mut c), [play_music("village")]);
+    press(&mut s, &mut c, Action::Confirm);
+    press(&mut s, &mut c, Action::Confirm);
+    assert_eq!(music_requests(&mut c), [play_music("talk_calm")]);
+    press(&mut s, &mut c, Action::Confirm);
+    press(&mut s, &mut c, Action::Confirm);
+    assert_eq!(s.page_lines(), ["Three."]);
+    // To "Two.": its music is on already.
+    open_log(&mut s, &mut c, 1);
+    press(&mut s, &mut c, Action::Confirm);
+    assert_eq!(s.page_lines(), ["Two."]);
+    assert_eq!(music_requests(&mut c), []);
+    // To "One.": the village again, once.
+    open_log(&mut s, &mut c, 1);
+    press(&mut s, &mut c, Action::Confirm);
+    assert_eq!(s.page_lines(), ["One."]);
+    assert_eq!(music_requests(&mut c), [play_music("village")]);
+    s.update(&mut c, &frame(&[], 0.0, false));
+    assert_eq!(music_requests(&mut c), []);
+    // Reading on reaches `@music talk_calm` again.
+    press(&mut s, &mut c, Action::Confirm);
+    press(&mut s, &mut c, Action::Confirm);
+    assert_eq!(music_requests(&mut c), [play_music("talk_calm")]);
+}
+
+/// The log sounds like a menu: opening, moving (not past either end),
+/// going to a line and closing.
+#[test]
+fn the_log_makes_the_menu_sounds() {
+    let mut c = ctx();
+    let mut s = full(&scene(vec![narrate("One."), narrate("Two.")]));
+    press(&mut s, &mut c, Action::Confirm);
+    press(&mut s, &mut c, Action::Confirm);
+    sounds(&mut c);
+    press(&mut s, &mut c, Action::DialogueLog);
+    assert!(s.is_log_open());
+    assert_eq!(sounds(&mut c), [cue(MenuSound::Select)]);
+    // The log's key again does nothing in the log.
+    press(&mut s, &mut c, Action::DialogueLog);
+    press(&mut s, &mut c, Action::CursorDown);
+    assert_eq!(sounds(&mut c), Vec::<String>::new());
+    assert!(s.is_log_open());
+    press(&mut s, &mut c, Action::CursorUp);
+    assert_eq!(sounds(&mut c), [cue(MenuSound::Move)]);
+    press(&mut s, &mut c, Action::CursorUp);
+    assert_eq!(sounds(&mut c), Vec::<String>::new(), "at the top already");
+    press(&mut s, &mut c, Action::Cancel);
+    assert_eq!(sounds(&mut c), [cue(MenuSound::Cancel)]);
+    assert!(!s.is_log_open());
+    assert_eq!(s.page_lines(), ["Two."]);
+    // End turn goes to the line, as Confirm does.
+    open_log(&mut s, &mut c, 1);
+    sounds(&mut c);
+    press(&mut s, &mut c, Action::EndTurn);
+    assert_eq!(sounds(&mut c), [cue(MenuSound::Select)]);
+    assert_eq!(s.page_lines(), ["One."]);
+    assert!(!s.is_revealed(), "it types out from the start");
+}
+
+/// Nothing seen yet (a scene with nothing to say): the log doesn't open.
+#[test]
+fn an_empty_scene_has_no_log() {
+    let mut c = ctx();
+    let mut s = full(&scene(vec![music("village")]));
+    press(&mut s, &mut c, Action::DialogueLog);
+    assert!(!s.is_log_open());
+}
