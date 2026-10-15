@@ -286,6 +286,10 @@ mod tests {
             assert_eq!(bottom.y + bottom.h, MAP_VIEW.y + MAP_VIEW.h);
             assert_eq!((bottom.x, bottom.w, bottom.h), (top.x, top.w, top.h));
         }
+        // An item as the widest line: its mark and its label, in the margins.
+        let mut wide = lesson(1, 1);
+        wide.items[0].label = "l".repeat(30);
+        assert_eq!(lesson_rect(&wide, false).w, 2 + 4 + 30 + 2);
         // Painted: the items under the text, the count above the border.
         let c = ctx();
         let v = lesson(1, 3);
