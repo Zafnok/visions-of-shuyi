@@ -551,6 +551,7 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("credits.rs", include_str!("../credits.rs")),
         ("preparations.rs", include_str!("../preparations.rs")),
         ("lead_select.rs", include_str!("../lead_select.rs")),
+        ("class_change.rs", include_str!("../class_change.rs")),
     ];
     for (file, source) in sources {
         // A picture is placed by the skin too (the view names it).

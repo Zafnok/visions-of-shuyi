@@ -88,7 +88,7 @@ pub fn paint(ctx: &Ctx, view: &TipView, buf: &mut GlyphBuffer) {
 mod tests {
     use super::*;
     use crate::Rgb;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::screen::tests::ctx;
     use crate::tips::view::FaceView;
 
@@ -107,7 +107,7 @@ mod tests {
 
     fn painted(c: &Ctx, view: &TipView) -> GlyphBuffer {
         let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
         paint(c, view, &mut buf);
         buf
     }
@@ -188,7 +188,10 @@ mod tests {
         assert_eq!(r.w, 16 + 2 + 60 + 4);
         // Wider than the map: from the left edge, over the side panel.
         assert_eq!(r.x, 0);
-        assert!(r.x >= 0 && r.x + r.w <= i32::from(CONSOLE_W), "{r:?}");
+        assert!(
+            r.x >= 0 && r.x + r.w <= i32::from(ConsoleSpec::PC.cols),
+            "{r:?}"
+        );
         assert!(r.y + r.h <= MAP_VIEW.y + MAP_VIEW.h, "{r:?}");
         let buf = painted(&c, &v);
         let glyph = |x, y| buf.get(x, y).map(|c| c.glyph);

@@ -5,7 +5,7 @@ use trpg_core::LeadGender;
 
 use super::*;
 use crate::color::Rgb;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::input::Action::{CursorDown, CursorRight};
 use crate::screen::tests::ctx;
 use crate::screens::lead_select::LeadSelectScreen;
@@ -15,7 +15,7 @@ use crate::screens::lead_select::tests::{spelling, typing, update};
 /// unpainted.
 fn stale(c: &Ctx) -> GlyphBuffer {
     let enemy = c.palette.get(UiColor::Enemy);
-    GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new('x', enemy, enemy))
+    GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new('x', enemy, enemy))
 }
 
 /// `view` as painted.
