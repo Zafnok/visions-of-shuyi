@@ -45,6 +45,11 @@ None. The game must look, sound and save exactly as before.
 - The storage name stays `tactical-rpg` for this game so saves are
   found (test: the path is unchanged).
 
+**Playdate:** if a Playdate front end exists by then (1025's build tickets,
+Nick 2026-10-15), it must keep building; either move its shared loop code
+into the engine app's design or leave it as a second front end beside
+`shuyi-app`, and say which in the completion notes.
+
 **Out (do not do):** new platform features (mouse, touch: 1121); a
 headless runner (the Harness covers it).
 

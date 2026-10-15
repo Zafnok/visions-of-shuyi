@@ -1,17 +1,17 @@
 ---
 id: "1025"
-title: "Parked: Playdate port (glyph look, crank rewinds)"
+title: "Playdate port: plan the build tickets for Chapter 1"
 type: research
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: blocked
-blocked_by: ["0903"]
-nick_input: decision
+blocked_by: ["1026", "0061"]
+nick_input: none
 completed:
 ---
 
-# 1025 — Parked: Playdate port
+# 1025 — Playdate port: plan the build tickets for Chapter 1
 
 ## Context
 
@@ -22,8 +22,22 @@ the rewind mechanic can use the winding mechanism on the side. this is for
 hella after launch but if we just reuse the retro glyph stuff it could
 totally scale down to Playdate I think".
 
-This ticket keeps the idea and what a first look found on record.
-**Do not start it** until the game has launched (0903) and Nick asks for it.
+Nick, 2026-10-15, unparking it: "I wanna rush a playdate port!!! how can
+we get ch1 on playdate asap?!" He chose to run the technical test first
+and not wait for the engine carve (1103–1131). The work is split:
+
+- **1026**: the technical test. Do `core`, `content` and `ui` build for
+  the device without `std`? How long does an enemy turn take? Which
+  bindings and toolchain? It writes the Playdate front-end ADR.
+- **0061**: Nick's decisions (screen size and layout, telling things
+  apart without colour, buttons and crank, what is left out, where it is
+  sold), recorded in `docs/design/playdate.md`.
+- **This ticket**: once both are done, write the build tickets that put
+  Chapter 1 on the Playdate.
+
+The engine carve goes on as planned. Carve tickets 1108 (console size)
+and 1110 (platform shell) must keep a Playdate front end building if one
+exists by then (noted in those tickets).
 
 What the first look found (2026-10-07; check again when revived, the
 numbers come from memory of the Playdate documentation, not a fresh read):
@@ -63,41 +77,48 @@ numbers come from memory of the Playdate documentation, not a fresh read):
 
 ## Nick input
 
-**Decision:** when Nick wants it, run a `00xx` decision ticket (`ask-nick`
-skill, with rendered 400 × 240 black-and-white mockups) on: the buttons and
-the crank; how the battle screen is cut down; how sides and states are
-told apart without colour; what is left out (portraits, voices, Japanese
-and Chinese text); where it is sold.
+`None.` His answers come from 0061.
 
 ## Scope
 
-**In:** when Nick revives the idea: a short feasibility spike (does `core`
-build for the Playdate, how long does an enemy turn take on the device or
-simulator), an ADR for the Playdate front end, the `00xx` decision ticket,
-and the implementation tickets.
+**In:** the build tickets (`write-ticket` skill) that take Chapter 1, as
+0061 decided it, to a Playdate build that can be sold where 0061 says.
+Each ticket is one PR's worth of work. Expect roughly:
+- making `core`, `content` and `ui` build without `std` behind a default
+  `std` feature, one ticket per crate, using 1026's findings;
+- the Playdate front-end crate (beside `app`, per 1026's ADR): run loop,
+  buttons and crank to `Action`s through a keymap (`keyboard-input`
+  skill), saves, and a CI job that builds it;
+- the 1-bit font and the Playdate skins: the map scene and each Chapter 1
+  screen's view painted at 400 × 240 (ADR-0038, ADR-0054), screen by
+  screen, limited to what Chapter 1 uses;
+- sound and music in formats the device plays, if 0061 keeps them;
+- packaging and the store page (next to 0901).
 
-**Out (do not do):** any Playdate code, layouts or dependencies before
-launch and before Nick's decisions. No change to the desktop or web game
-for the Playdate's sake.
+**Out (do not do):** the build work itself; any change to the desktop or
+web game's look or controls for the Playdate's sake; the engine carve.
 
 ## Implementation steps
 
-1. Wait for 0903 and for Nick to ask for the port.
-2. Re-check the facts in *Context* against the current Playdate SDK and
-   its licence (ADR-0013), and the licences of the Rust bindings.
-3. Do the feasibility spike; record the result in an ADR (`write-adr`).
-4. Write the `00xx` decision ticket and the implementation tickets
-   (`write-ticket`), and close this one as superseded.
+1. Read 1026's ADR, `docs/design/playdate.md` (0061) and this ticket's
+   *Context*.
+2. Write the build tickets. Check each one's dependency chain both ways
+   (`write-ticket`). For each ticket, say what happens if carve tickets
+   1108/1110 land first, and add a matching line to 1108/1110 if they are
+   still open.
+3. Add the tickets to the Playdate bullet in `docs/ROADMAP.md`.
+4. Run `cargo xtask ticket-lint`. Archive this ticket.
 
 ## Acceptance criteria
 
-- [ ] Nick asked for it after launch.
-- [ ] An ADR records whether and how the port is built.
-- [ ] A `00xx` decision ticket and the implementation tickets exist.
+- [ ] Build tickets exist for every part of 0061's answers and 1026's
+      ADR, each with `blocked_by` filled in.
+- [ ] `docs/ROADMAP.md` lists them in order.
+- [ ] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
-- None.
+- None (planning).
 
 ## Completion notes
 
