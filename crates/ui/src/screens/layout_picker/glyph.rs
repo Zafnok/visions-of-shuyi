@@ -185,7 +185,7 @@ fn paint_panel(ctx: &Ctx, buf: &mut GlyphBuffer, layout: &LayoutView, x: i32, y:
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::screen::tests::ctx;
     use crate::screens::layout_picker::LayoutPickerScreen;
     use crate::screens::layout_picker::view::{KeyCapView, LegendRow};
@@ -196,7 +196,7 @@ mod tests {
             c.palette.get(UiColor::Enemy),
             c.palette.get(UiColor::Enemy),
         );
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
         paint(c, view, &mut buf);
         buf
     }
@@ -248,7 +248,7 @@ mod tests {
         }
     }
 
-    const LEFT: i32 = (CONSOLE_W as i32 - PANEL_W) / 2;
+    const LEFT: i32 = (ConsoleSpec::PC.cols as i32 - PANEL_W) / 2;
     const SECOND: i32 = FIRST_PANEL_ROW + PANEL_H + PANEL_GAP;
 
     #[test]
@@ -264,7 +264,10 @@ mod tests {
         assert!(second.contains("╔═ ► Second ═"), "{second}");
         assert!(text(&buf, FIRST_PANEL_ROW + PANEL_H - 1).contains('└'));
         assert!(text(&buf, SECOND + PANEL_H - 1).contains('╚'));
-        assert_eq!(text(&buf, i32::from(CONSOLE_H) - 1).trim(), "help");
+        assert_eq!(
+            text(&buf, i32::from(ConsoleSpec::PC.rows) - 1).trim(),
+            "help"
+        );
         // The gap between the panels is blank.
         assert!(text(&buf, FIRST_PANEL_ROW + PANEL_H).trim().is_empty());
     }
@@ -324,8 +327,8 @@ mod tests {
             c.palette.get(UiColor::Enemy),
         );
         let buf = painted(&c, &screen.view(&c));
-        let left = (0..i32::from(CONSOLE_H))
-            .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+        let left = (0..i32::from(ConsoleSpec::PC.rows))
+            .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
             .filter(|&(x, y)| buf.get(x, y) == Some(&stale))
             .count();
         assert_eq!(left, 0);

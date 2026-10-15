@@ -2,7 +2,7 @@
 //! debug Quick Battle (`preparations::tests`) and on views made by hand.
 
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::input::Action::{Confirm, CursorDown, CursorUp};
 use crate::screen::{Screen, tests::ctx};
 use crate::screens::preparations::tests::{screen, update};
@@ -12,7 +12,7 @@ use crate::screens::preparations::{Tab, TabView, UnitRowView};
 /// unpainted.
 fn stale(c: &Ctx) -> GlyphBuffer {
     let enemy = c.palette.get(UiColor::Enemy);
-    GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new('x', enemy, enemy))
+    GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new('x', enemy, enemy))
 }
 
 /// `view` as painted.
@@ -133,8 +133,8 @@ fn every_cell_is_painted_on_every_tab() {
     for body in bodies {
         view.body = body;
         let buf = painted(&c, &view);
-        let left = (0..i32::from(CONSOLE_H))
-            .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+        let left = (0..i32::from(ConsoleSpec::PC.rows))
+            .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
             .filter(|&(x, y)| buf.get(x, y).is_some_and(|cell| cell.glyph == 'x'))
             .count();
         assert_eq!(left, 0, "{left} stale cells on {:?}", view.body);

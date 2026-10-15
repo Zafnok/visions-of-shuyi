@@ -9,7 +9,7 @@ use trpg_core::{Command, Event, Objective, Phase, StatGains, UnitId};
 use super::banner::PHASE_BANNER_S;
 use super::testing::{battle_with, skirmish, skirmish_charged, through_ai_phases};
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::input::Layout;
 use crate::screen::tests::ctx;
 use crate::storage::Storage;
@@ -28,7 +28,7 @@ fn quick() -> BattleScreen {
 
 fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
     let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     screen.draw(c, &mut buf);
     buf
 }
@@ -46,8 +46,8 @@ fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
 /// Whether some row of the rendered screen contains `text`.
 fn shows(s: &BattleScreen, c: &Ctx, text: &str) -> bool {
     let buf = render(s, c);
-    (0..i32::from(CONSOLE_H)).any(|y| {
-        let row: String = (0..i32::from(CONSOLE_W))
+    (0..i32::from(ConsoleSpec::PC.rows)).any(|y| {
+        let row: String = (0..i32::from(ConsoleSpec::PC.cols))
             .map(|x| buf.get(x, y).map_or(' ', |cell| cell.glyph))
             .collect();
         row.contains(text)
@@ -81,6 +81,47 @@ fn the_first_battle_shows_the_start_tip_and_confirm_dismisses_it() {
     assert_eq!(s.shown_tip(), None);
     assert!(!shows(&s, &c, "Your move"));
     assert_eq!(s.mode(), &Mode::default());
+}
+
+/// Ticket 0455: the guide speaks the tip: their name is the box's title,
+/// the tip's title its first line, and their face is beside the text when
+/// the game has their portrait, smiling unless the tip says otherwise.
+#[test]
+fn the_tip_box_is_the_guides() {
+    let mut c = tipped();
+    let mut s = quick();
+    assert_eq!(s.tip_view(&c), None);
+    press(&mut s, &mut c, &[]);
+    let view = s.tip_view(&c).unwrap();
+    assert_eq!(view.title, "Guide");
+    assert_eq!(view.heading, "Your move");
+    assert_eq!(view.face, None);
+    assert_eq!(view.lines.len(), 3);
+    assert!(view.lines[0].starts_with("Steer the cursor with arrows."));
+    assert_eq!(view.close, "f close");
+    // With the guide's portrait (the bought art), the face.
+    let mut guide = c.content.portraits["test_lord"].clone();
+    let smile = guide.expressions[1].clone();
+    guide.expressions.push(trpg_content::portrait::Expression {
+        name: "smile".into(),
+        ..smile
+    });
+    c.content.portraits.insert("guide".into(), guide);
+    let face = s.tip_view(&c).and_then(|v| v.face).unwrap();
+    assert_eq!(
+        (face.portrait.as_str(), face.expression.as_str()),
+        ("guide", "smile")
+    );
+    // A tip naming another expression shows it.
+    let tip = c
+        .content
+        .tips
+        .tips
+        .iter_mut()
+        .find(|t| t.id == "battle_start");
+    tip.unwrap().face = Some("sad".into());
+    let face = s.tip_view(&c).and_then(|v| v.face).unwrap();
+    assert_eq!(face.expression, "sad");
 }
 
 /// A campaign's tutorial level (0835): tips show at `Full` (and with no

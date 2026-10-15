@@ -2,7 +2,7 @@
 //! cursor's bar go, the colours, and the scrolling.
 
 use super::*;
-use crate::console::{CELL_H_PX, CELL_W_PX, CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::Item;
 use crate::portrait::dim_opacity;
 use crate::screen::tests::ctx;
@@ -42,7 +42,7 @@ fn painted(view: &LogView) -> GlyphBuffer {
         c.palette.get(UiColor::Enemy),
         c.palette.get(UiColor::Enemy),
     );
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     paint(&c, view, &mut buf);
     buf
 }
@@ -74,8 +74,8 @@ fn faces(buf: &GlyphBuffer) -> Vec<((i32, i32), u8)> {
         .filter_map(|item| match item {
             Item::Sprite(s) => Some((
                 (
-                    s.dest.x / i32::from(CELL_W_PX),
-                    s.dest.y / i32::from(CELL_H_PX),
+                    s.dest.x / i32::from(ConsoleSpec::PC.cell_w),
+                    s.dest.y / i32::from(ConsoleSpec::PC.cell_h),
                 ),
                 s.opacity,
             )),
@@ -88,12 +88,12 @@ fn faces(buf: &GlyphBuffer) -> Vec<((i32, i32), u8)> {
 fn it_fills_the_screen_with_the_title_and_the_help_on_the_border() {
     let buf = painted(&log(vec![row(RowKind::Speech, "Again.")]));
     assert!(text(&buf, 0).starts_with("┌── Log ─"));
-    let bottom = i32::from(CONSOLE_H) - 1;
+    let bottom = i32::from(ConsoleSpec::PC.rows) - 1;
     assert!(text(&buf, bottom).trim_end().ends_with(" help keys ──┘"));
     let c = ctx();
     let stale = c.palette.get(UiColor::Enemy);
-    let left = (0..i32::from(CONSOLE_H))
-        .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+    let left = (0..i32::from(ConsoleSpec::PC.rows))
+        .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
         .filter(|&(x, y)| buf.get(x, y).is_some_and(|c| c.bg == stale))
         .count();
     assert_eq!(left, 0, "it covers the whole buffer");
@@ -208,7 +208,7 @@ fn long_text_wraps_under_the_name() {
     let long = "word ".repeat(40);
     let buf = painted(&log(vec![row(RowKind::Speech, long.trim())]));
     let width = |y| text(&buf, y).trim_end_matches([' ', '│']).chars().count();
-    assert!(width(2) <= usize::from(CONSOLE_W) - 3);
+    assert!(width(2) <= usize::from(ConsoleSpec::PC.cols) - 3);
     assert!(text(&buf, 3).contains("word"));
     assert_eq!(col(&buf, 3, "word"), Some(TEXT_X));
 }
@@ -233,7 +233,7 @@ fn shows(buf: &GlyphBuffer, word: &str) -> bool {
 
 /// The bottom border is whole: nothing was drawn past the last row.
 fn border_whole(buf: &GlyphBuffer) -> bool {
-    let bottom = text(buf, i32::from(CONSOLE_H) - 1);
+    let bottom = text(buf, i32::from(ConsoleSpec::PC.rows) - 1);
     !bottom.contains('x') && !bottom.contains("tag")
 }
 

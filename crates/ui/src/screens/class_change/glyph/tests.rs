@@ -3,7 +3,7 @@
 //! hand.
 
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::input::Action::{Cancel, Confirm, CursorLeft, CursorRight};
 use crate::screen::tests::ctx;
 use crate::screens::class_change::tests::{demo, render, step};
@@ -26,7 +26,8 @@ fn cell(buf: &GlyphBuffer, slot: i32, row: i32) -> String {
 
 /// Whether some row of the screen contains `needle`.
 fn shows(buf: &GlyphBuffer, needle: &str) -> bool {
-    (0..i32::from(CONSOLE_H)).any(|y| text(buf, 0, y, i32::from(CONSOLE_W)).contains(needle))
+    (0..i32::from(ConsoleSpec::PC.rows))
+        .any(|y| text(buf, 0, y, i32::from(ConsoleSpec::PC.cols)).contains(needle))
 }
 
 /// A stat row made by hand.
@@ -122,7 +123,7 @@ fn the_columns_show_each_stat_before_and_after_and_mark_a_maxed_one() {
     assert_eq!(buf.get(COLUMNS_X, COLUMNS_Y).unwrap().glyph, '╔');
     assert_eq!(buf.get(COLUMNS_X + COLUMN_W, COLUMNS_Y).unwrap().glyph, '┌');
     // The help line, at the bottom.
-    let bottom = i32::from(CONSOLE_H) - 1;
+    let bottom = i32::from(ConsoleSpec::PC.rows) - 1;
     assert_eq!(
         text(&buf, 0, bottom, 100),
         "Left/Right class · f choose · d back"
@@ -343,8 +344,8 @@ fn every_cell_is_painted_and_an_empty_view_shows_only_the_help() {
         },
     ] {
         let buf = render_view(&c, &view);
-        let left = (0..i32::from(CONSOLE_H))
-            .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+        let left = (0..i32::from(ConsoleSpec::PC.rows))
+            .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
             .filter(|&(x, y)| buf.get(x, y).is_some_and(|cell| cell.glyph == STALE))
             .count();
         assert_eq!(left, 0, "{left} stale cells on {:?}", view.body);
@@ -354,7 +355,7 @@ fn every_cell_is_painted_and_an_empty_view_shows_only_the_help() {
         help: "help".to_owned(),
     };
     let buf = render_view(&c, &done);
-    let bottom = i32::from(CONSOLE_H) - 1;
+    let bottom = i32::from(ConsoleSpec::PC.rows) - 1;
     assert_eq!(text(&buf, 0, bottom, 100), "help");
     assert!(!shows(&buf, "Promotion"));
 }
@@ -365,7 +366,7 @@ const STALE: char = '¤';
 /// `view` painted over a buffer of stale cells.
 fn render_view(c: &Ctx, view: &ClassChangeView) -> GlyphBuffer {
     let enemy = c.palette.get(UiColor::Enemy);
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new(STALE, enemy, enemy));
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(STALE, enemy, enemy));
     paint(c, view, &mut buf);
     buf
 }

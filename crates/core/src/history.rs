@@ -23,7 +23,9 @@
 //!   without its content tables: the loader must call
 //!   [`BattleHistory::restore_tables`] before replaying.
 
-use std::fmt;
+use crate::prelude::*;
+
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
@@ -69,7 +71,7 @@ impl fmt::Display for RewindError {
     }
 }
 
-impl std::error::Error for RewindError {}
+impl core::error::Error for RewindError {}
 
 impl BattleHistory {
     /// A history starting at `initial` (a battle just started), with its

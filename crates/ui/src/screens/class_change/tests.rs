@@ -7,7 +7,7 @@ use insta::assert_snapshot;
 use trpg_core::{ItemId, WeaponKind, WeaponRank};
 
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::Cell;
 use crate::screen::tests::ctx;
 use Action::{Cancel, Confirm, CursorLeft, CursorRight};
@@ -26,7 +26,7 @@ pub(super) fn render(s: &ClassChangeScreen, c: &Ctx) -> GlyphBuffer {
         crate::color::Rgb::new(1, 2, 3),
         crate::color::Rgb::new(1, 2, 3),
     );
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(c, &mut buf);
     buf
 }

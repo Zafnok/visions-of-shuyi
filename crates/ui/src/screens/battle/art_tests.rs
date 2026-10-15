@@ -19,7 +19,7 @@ use super::playback::{BOX, Playback, TIMINGS, draw_box};
 use super::testing::{battle_with, quick_units};
 use crate::FrameInput;
 use crate::color::{Rgb, UiColor};
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
 use crate::screen::tests::ctx;
@@ -40,7 +40,7 @@ fn wait(s: &mut BattleScreen, c: &mut Ctx, seconds: f32) {
 
 fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
     let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(c, &mut buf);
     buf
 }
@@ -56,8 +56,8 @@ fn text(buf: &GlyphBuffer, x: i32, y: i32, w: i32) -> String {
 
 /// Every row of the screen, joined.
 fn screen_text(buf: &GlyphBuffer) -> String {
-    (0..i32::from(CONSOLE_H))
-        .map(|y| text(buf, 0, y, i32::from(CONSOLE_W)))
+    (0..i32::from(ConsoleSpec::PC.rows))
+        .map(|y| text(buf, 0, y, i32::from(ConsoleSpec::PC.cols)))
         .collect::<Vec<_>>()
         .join("\n")
 }
@@ -689,9 +689,8 @@ fn a_boss_or_green_units_art_names_the_playback_and_the_players_doesnt() {
     )
     .unwrap()
     .with_banner(Some("Guard Break".to_owned()));
-    let mut buf = GlyphBuffer::new(
-        CONSOLE_W,
-        CONSOLE_H,
+    let mut buf = GlyphBuffer::with_spec(
+        ConsoleSpec::PC,
         Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0)),
     );
     draw_box(&mut buf, &c.palette, Words::ENGLISH, &pb);

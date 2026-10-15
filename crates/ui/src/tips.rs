@@ -2,16 +2,23 @@
 //! [`Storage`] under [`TIPS_SEEN_KEY`], per player profile, ADR-0069), key
 //! names in tip text, and the box
 //! that shows one. The battle screen decides when a trigger has happened.
+//!
+//! **The look is a skin** (ADR-0054): a tip box is a [`TipView`], plain
+//! data; [`glyph::paint`] draws it. The guide speaks every tip, with their
+//! face beside the text when the game has the guide's portrait (ticket
+//! 0455).
+
+pub mod glyph;
+pub mod view;
+
+pub use view::{FaceView, TipView};
 
 use std::collections::BTreeSet;
 use std::fmt::Display;
 
 use trpg_content::tip::CURSOR_PLACEHOLDER;
 
-use crate::color::{Palette, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
-use crate::screens::battle::layout::MAP_VIEW;
 use crate::storage::{Storage, StorageError};
 use crate::widgets::help::{HelpKeys, cursor_keys_name, key_name};
 
@@ -128,41 +135,6 @@ fn fill_by(
     out
 }
 
-/// Draws a tip: a double-line box with `title` over its top border and the
-/// `body` lines inside, near the top of the map view, and `close` (e.g.
-/// `f close`) under them.
-pub fn draw_tip(buf: &mut GlyphBuffer, palette: &Palette, title: &str, body: &str, close: &str) {
-    let c = |u| palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let lines: Vec<&str> = body.lines().collect();
-    let widest = lines
-        .iter()
-        .map(|l| l.chars().count())
-        .chain([close.chars().count(), title.chars().count() + 2])
-        .max()
-        .unwrap_or(0);
-    let cells = |n: usize| i32::try_from(n).unwrap_or(0);
-    let w = cells(widest) + 4;
-    // Border, blank row, the lines, blank row, the close hint, border.
-    let h = cells(lines.len()) + 5;
-    let rect = Rect::new(MAP_VIEW.x + (MAP_VIEW.w - w) / 2, MAP_VIEW.y + 1, w, h);
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-    buf.print(
-        rect.x + 2,
-        rect.y,
-        &format!(" {title} "),
-        c(UiColor::TextHighlight),
-        bg,
-    );
-    let mut y = rect.y + 2;
-    for line in lines {
-        buf.print(rect.x + 2, y, line, c(UiColor::Text), bg);
-        y += 1;
-    }
-    buf.print(rect.x + 2, y + 1, close, c(UiColor::TextDim), bg);
-}
-
 #[cfg(test)]
 mod tests {
     #[test]
@@ -187,34 +159,6 @@ mod tests {
             pairs.iter().map(|&(c, a)| (Chord::parse(c).unwrap(), a)),
             RepeatDef::default(),
         )
-    }
-
-    #[test]
-    fn the_box_is_as_wide_as_its_widest_line_or_title() {
-        let content = trpg_content::load_embedded().unwrap();
-        let palette = Palette::new(&content.palette).unwrap();
-        let blank = Cell::new(' ', palette.get(UiColor::Text), palette.get(UiColor::Black));
-        let mut buf = GlyphBuffer::new(100, 32, blank);
-        // A title of 20 cells gives 22 inside the borders, plus 2 margins.
-        draw_tip(
-            &mut buf,
-            &palette,
-            &"T".repeat(20),
-            "a
-bb",
-            "x",
-        );
-        let (w, h) = (26, 2 + 5);
-        let x = MAP_VIEW.x + (MAP_VIEW.w - w) / 2;
-        let y = MAP_VIEW.y + 1;
-        let glyph = |x, y| buf.get(x, y).map(|c| c.glyph);
-        assert_eq!(glyph(x, y), Some('╔'));
-        assert_eq!(glyph(x + w - 1, y), Some('╗'));
-        assert_eq!(glyph(x + w, y), Some(' '));
-        assert_eq!(glyph(x, y + h - 1), Some('╚'));
-        assert_eq!(glyph(x + 2, y + 2), Some('a'));
-        assert_eq!(glyph(x + 3, y + 3), Some('b'));
-        assert_eq!(glyph(x + 2, y + 5), Some('x'));
     }
 
     #[test]

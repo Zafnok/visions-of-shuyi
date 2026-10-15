@@ -1,6 +1,6 @@
 use super::*;
 use crate::audio::AudioRequest;
-use crate::console::CONSOLE_W;
+use crate::console::ConsoleSpec;
 use crate::screen::tests::ctx;
 use crate::storage::Storage;
 
@@ -1339,7 +1339,10 @@ fn help_follows_the_side_and_the_device() {
         s.update(&mut c, &act(&[CursorUp]));
         lines.push(s.help(&c));
         for line in lines {
-            assert!(line.chars().count() <= usize::from(CONSOLE_W), "{line}");
+            assert!(
+                line.chars().count() <= usize::from(ConsoleSpec::PC.cols),
+                "{line}"
+            );
         }
     }
 }

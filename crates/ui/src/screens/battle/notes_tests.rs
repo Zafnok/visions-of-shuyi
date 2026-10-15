@@ -8,7 +8,7 @@ use trpg_core::{Command, UnitId};
 use super::banner::{BannerKind, PHASE_BANNER_S};
 use super::notes::{BLINK_S, NOTES_TITLE};
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::screen::tests::ctx;
 
 /// The brigand the first note is about.
@@ -29,7 +29,7 @@ fn started(c: &Ctx) -> BattleScreen {
 
 fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
     let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     screen.draw(c, &mut buf);
     buf
 }
@@ -44,8 +44,8 @@ fn frame(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action], dt: f32) -> Stri
 
 fn shows(s: &BattleScreen, c: &Ctx, text: &str) -> bool {
     let buf = render(s, c);
-    (0..i32::from(CONSOLE_H)).any(|y| {
-        let row: String = (0..i32::from(CONSOLE_W))
+    (0..i32::from(ConsoleSpec::PC.rows)).any(|y| {
+        let row: String = (0..i32::from(ConsoleSpec::PC.cols))
             .map(|x| buf.get(x, y).map_or(' ', |cell| cell.glyph))
             .collect();
         row.contains(text)

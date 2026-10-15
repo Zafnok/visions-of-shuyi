@@ -22,7 +22,9 @@
 //!   gold and the item are unchanged.
 //! - **Chests** hold [`Loot`]: gold or one item.
 
-use std::fmt;
+use crate::prelude::*;
+
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
@@ -125,7 +127,7 @@ impl fmt::Display for ShopError {
     }
 }
 
-impl std::error::Error for ShopError {}
+impl core::error::Error for ShopError {}
 
 /// The price at which a shop buys an item from the party: half its price,
 /// rounded down.

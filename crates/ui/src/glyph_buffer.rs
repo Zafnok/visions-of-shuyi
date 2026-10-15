@@ -24,7 +24,7 @@ pub use backdrop::{Backdrop, MAX_ZOOM};
 use trpg_content::{ImageId, Light};
 
 use crate::color::Rgb;
-use crate::console::{CELL_H_PX, CELL_W_PX};
+use crate::console::ConsoleSpec;
 
 /// One console cell: a glyph with foreground and background colours.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash)]
@@ -114,7 +114,8 @@ impl Rect {
 }
 
 /// A rectangle in console pixels (the logical space before scaling: a cell
-/// is [`CELL_W_PX`] × [`CELL_H_PX`]). Same shape as a cell [`Rect`].
+/// is its buffer's [`ConsoleSpec::cell_px`]). Same shape as a cell
+/// [`Rect`].
 pub type PxRect = Rect;
 
 /// When an [`Item`] is drawn relative to the cells' glyphs.
@@ -358,10 +359,11 @@ fn offset_clipped(r: PxRect, dx: i64, dy: i64, bounds: PxRect) -> Option<PxRect>
     Some(Rect::new(fit(x0), fit(y0), fit(x1 - x0), fit(y1 - y0)))
 }
 
-/// The pixel rectangle covered by cells `x..x + w`, `y..y + h`, or `None`
-/// if it doesn't fit in `i32` (only far off any buffer).
-fn cells_to_px(x: i64, y: i64, w: i64, h: i64) -> Option<PxRect> {
-    let (cw, ch) = (i64::from(CELL_W_PX), i64::from(CELL_H_PX));
+/// The pixel rectangle covered by cells `x..x + w`, `y..y + h` of a
+/// `spec` console, or `None` if it doesn't fit in `i32` (only far off any
+/// buffer).
+fn cells_to_px(spec: ConsoleSpec, x: i64, y: i64, w: i64, h: i64) -> Option<PxRect> {
+    let (cw, ch) = (i64::from(spec.cell_w), i64::from(spec.cell_h));
     let fit = |v: i64| i32::try_from(v).ok();
     Some(Rect::new(
         fit(x * cw)?,
@@ -423,8 +425,8 @@ fn clip_span(start: i32, len: i32, limit: u16) -> std::ops::Range<i32> {
 /// A grid of [`Cell`]s, row-major.
 #[derive(Clone, PartialEq, Debug)]
 pub struct GlyphBuffer {
-    width: u16,
-    height: u16,
+    /// Its size in cells and the size of a cell.
+    spec: ConsoleSpec,
     cells: Vec<Cell>,
     /// In drawing order; each one's [`Item::visible`] lies inside
     /// [`pixel_bounds`](Self::pixel_bounds).
@@ -434,15 +436,26 @@ pub struct GlyphBuffer {
 }
 
 impl GlyphBuffer {
-    /// A `width × height` buffer with every cell set to `fill`.
+    /// A `width × height` buffer of [`ConsoleSpec::PC`]'s cells (8 × 16
+    /// pixels) with every cell set to `fill`.
     pub fn new(width: u16, height: u16, fill: Cell) -> Self {
+        Self::with_spec(ConsoleSpec::PC.sized(width, height), fill)
+    }
+
+    /// A buffer the size of a `spec` console, with every cell set to
+    /// `fill`.
+    pub fn with_spec(spec: ConsoleSpec, fill: Cell) -> Self {
         Self {
-            width,
-            height,
-            cells: vec![fill; usize::from(width) * usize::from(height)],
+            spec,
+            cells: vec![fill; usize::from(spec.cols) * usize::from(spec.rows)],
             items: Vec::new(),
             backdrop: None,
         }
+    }
+
+    /// Its size in cells and the size of a cell, in pixels.
+    pub fn spec(&self) -> ConsoleSpec {
+        self.spec
     }
 
     /// The scene shown behind the see-through cells, if one is set.
@@ -465,7 +478,7 @@ impl GlyphBuffer {
     ) {
         self.backdrop = clip
             .intersect(&self.bounds())
-            .map(|clip| Backdrop::new(scene, clip, origin_px, zoom));
+            .map(|clip| Backdrop::new(scene, self.spec, clip, origin_px, zoom));
     }
 
     /// Removes the backdrop.
@@ -475,12 +488,8 @@ impl GlyphBuffer {
 
     /// The whole buffer in console pixels.
     pub fn pixel_bounds(&self) -> PxRect {
-        Rect::new(
-            0,
-            0,
-            i32::from(self.width) * i32::from(CELL_W_PX),
-            i32::from(self.height) * i32::from(CELL_H_PX),
-        )
+        let (w, h) = self.spec.px();
+        Rect::new(0, 0, w, h)
     }
 
     /// The rectangles and sprites, in drawing order (within a layer, later
@@ -539,7 +548,7 @@ impl GlyphBuffer {
     fn cut_items(&mut self, rect: Rect) {
         let Some(hole) = rect
             .intersect(&self.bounds())
-            .and_then(|r| cells_to_px(r.x.into(), r.y.into(), r.w.into(), r.h.into()))
+            .and_then(|r| cells_to_px(self.spec, r.x.into(), r.y.into(), r.w.into(), r.h.into()))
         else {
             return;
         };
@@ -561,24 +570,24 @@ impl GlyphBuffer {
 
     /// Width in cells.
     pub fn width(&self) -> u16 {
-        self.width
+        self.spec.cols
     }
 
     /// Height in cells.
     pub fn height(&self) -> u16 {
-        self.height
+        self.spec.rows
     }
 
     /// The whole buffer as a rectangle.
     pub fn bounds(&self) -> Rect {
-        Rect::new(0, 0, i32::from(self.width), i32::from(self.height))
+        Rect::new(0, 0, i32::from(self.spec.cols), i32::from(self.spec.rows))
     }
 
     /// Index of `(x, y)` in `cells`, or `None` if out of bounds.
     fn index(&self, x: i32, y: i32) -> Option<usize> {
-        let x = u16::try_from(x).ok().filter(|&x| x < self.width)?;
-        let y = u16::try_from(y).ok().filter(|&y| y < self.height)?;
-        Some(usize::from(y) * usize::from(self.width) + usize::from(x))
+        let x = u16::try_from(x).ok().filter(|&x| x < self.spec.cols)?;
+        let y = u16::try_from(y).ok().filter(|&y| y < self.spec.rows)?;
+        Some(usize::from(y) * usize::from(self.spec.cols) + usize::from(x))
     }
 
     /// The cell at `(x, y)`, or `None` if out of bounds.
@@ -600,8 +609,8 @@ impl GlyphBuffer {
 
     /// Calls `f` on every cell of `rect` that lies inside the buffer.
     fn for_each_in(&mut self, rect: Rect, mut f: impl FnMut(i32, i32, &mut Cell)) {
-        for y in clip_span(rect.y, rect.h, self.height) {
-            for x in clip_span(rect.x, rect.w, self.width) {
+        for y in clip_span(rect.y, rect.h, self.spec.rows) {
+            for x in clip_span(rect.x, rect.w, self.spec.cols) {
                 if let Some(c) = self.get_mut(x, y) {
                     f(x, y, c);
                 }
@@ -635,7 +644,7 @@ impl GlyphBuffer {
             let Some(cx) = i32::try_from(i).ok().and_then(|i| x.checked_add(i)) else {
                 break;
             };
-            if cx >= i32::from(self.width) {
+            if cx >= i32::from(self.spec.cols) {
                 break;
             }
             if let Some(c) = self.get_mut(cx, y) {
@@ -733,13 +742,14 @@ impl GlyphBuffer {
     /// Copies all of `other` so its top-left lands at `(dest_x, dest_y)`,
     /// clipped to this buffer. Items already over the copied area are
     /// removed, and `other`'s items come along, offset and clipped (a
-    /// sprite's `dest` moves with it, its `clip` is clipped).
+    /// sprite's `dest` moves with it, its `clip` is clipped). Both buffers
+    /// have cells of the same size.
     pub fn blit(&mut self, other: &GlyphBuffer, dest_x: i32, dest_y: i32) {
         let target = Rect::new(
             dest_x,
             dest_y,
-            i32::from(other.width),
-            i32::from(other.height),
+            i32::from(other.width()),
+            i32::from(other.height()),
         );
         self.for_each_in(target, |x, y, c| {
             // In-bounds of `target`, so the source offsets are in `other`.
@@ -750,8 +760,8 @@ impl GlyphBuffer {
         self.cut_items(target);
         let bounds = self.pixel_bounds();
         let (dx, dy) = (
-            i64::from(dest_x) * i64::from(CELL_W_PX),
-            i64::from(dest_y) * i64::from(CELL_H_PX),
+            i64::from(dest_x) * i64::from(self.spec.cell_w),
+            i64::from(dest_y) * i64::from(self.spec.cell_h),
         );
         for item in &other.items {
             let Some(visible) = offset_clipped(item.visible(), dx, dy, bounds) else {
@@ -1146,8 +1156,18 @@ mod tests {
                 Rect::new(6, 3, 4, 5),
             ]
         );
-        assert_eq!(cells_to_px(1, 2, 3, 4), Some(Rect::new(8, 32, 24, 64)));
-        assert_eq!(cells_to_px(i64::from(i32::MAX), 0, 1, 1), None);
+        let pc = ConsoleSpec::PC;
+        assert_eq!(cells_to_px(pc, 1, 2, 3, 4), Some(Rect::new(8, 32, 24, 64)));
+        assert_eq!(cells_to_px(pc, i64::from(i32::MAX), 0, 1, 1), None);
+        let small = ConsoleSpec {
+            cell_w: 4,
+            cell_h: 6,
+            ..pc
+        };
+        assert_eq!(
+            cells_to_px(small, 1, 2, 3, 4),
+            Some(Rect::new(4, 12, 12, 24))
+        );
     }
 
     fn marked(w: u16, h: u16) -> GlyphBuffer {

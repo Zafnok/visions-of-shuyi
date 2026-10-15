@@ -12,7 +12,7 @@ use super::mode::{MenuEntry, Mode};
 use super::testing::{battle_with, quick_units};
 use crate::FrameInput;
 use crate::color::Rgb;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
 use crate::map_view::{RangeKind, UnitView};
@@ -33,7 +33,7 @@ fn wait(s: &mut BattleScreen, c: &mut Ctx, seconds: f32) {
 
 fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
     let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(c, &mut buf);
     buf
 }

@@ -355,9 +355,11 @@
 //! called with the game's tables, as loaded from the same content. The map is
 //! saved because it is battle state (terrain magic changes tiles).
 
-use std::collections::BTreeSet;
-use std::fmt;
-use std::sync::Arc;
+use crate::prelude::*;
+
+use alloc::collections::BTreeSet;
+use alloc::sync::Arc;
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
@@ -1433,7 +1435,7 @@ impl CommandError {
     }
 }
 
-impl std::error::Error for CommandError {}
+impl core::error::Error for CommandError {}
 
 /// The shared content tables a battle reads. Not saved (see the module docs).
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -2651,14 +2653,14 @@ impl BattleState {
         }
         events.extend(broke);
         let victim = attack.pierce.map(|(victim, _)| victim);
-        let order: Vec<UnitId> = std::iter::once(target).chain(victim).chain([id]).collect();
+        let order: Vec<UnitId> = core::iter::once(target).chain(victim).chain([id]).collect();
         self.remove_fallen(&order, events);
         for clash in &clashes {
             self.award_combat(clash, events);
         }
         // Whoever was attacked: the target, then a Line Pierce's victim.
         let attacked = clashes.iter().map(|clash| clash.units[1]);
-        let fighters: Vec<UnitId> = std::iter::once(id).chain(attacked).collect();
+        let fighters: Vec<UnitId> = core::iter::once(id).chain(attacked).collect();
         self.support_fighters(&fighters, events);
         attack.move_after
     }
@@ -2776,7 +2778,7 @@ impl BattleState {
     /// order they were set, burning whoever stands on them first.
     fn burn_out(&mut self, events: &mut Vec<Event>) {
         let phase = self.phase;
-        let (done, left) = std::mem::take(&mut self.burning)
+        let (done, left) = core::mem::take(&mut self.burning)
             .into_iter()
             .partition(|b| b.phase == phase);
         self.burning = left;
@@ -3044,7 +3046,7 @@ impl BattleState {
     fn arrive(&mut self) -> Vec<UnitId> {
         let mut arrived = Vec::new();
         let mut waiting = Vec::new();
-        for r in std::mem::take(&mut self.pending) {
+        for r in core::mem::take(&mut self.pending) {
             let due = r.turn <= self.turn && Phase::of(r.unit.faction) == self.phase;
             if due && !self.units.iter().any(|u| u.pos == r.unit.pos) {
                 let mut unit = r.unit;
@@ -3176,7 +3178,7 @@ impl BattleState {
     /// Shares the EXP pool out among the player units on the map below the
     /// level cap: `pool / count` each (remainder lost), in unit order.
     fn share_exp_pool(&mut self, events: &mut Vec<Event>) {
-        let pool = std::mem::take(&mut self.exp_pool);
+        let pool = core::mem::take(&mut self.exp_pool);
         let cap = self.tables.classes.level_cap;
         let eligible = |u: &Unit| u.faction == Faction::Player && u.level < cap;
         let count = self.units.iter().filter(|u| eligible(u)).count();
@@ -3213,7 +3215,7 @@ impl SkillAward {
             },
             SkillStep::Push { target, struck, .. } => SkillAward {
                 healed: false,
-                pushed: std::iter::once(*target).chain(*struck).collect(),
+                pushed: core::iter::once(*target).chain(*struck).collect(),
             },
         }
     }

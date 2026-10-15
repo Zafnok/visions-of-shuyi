@@ -180,8 +180,8 @@ fn harness_pointing_at_a_hurt_ally_walks_next_to_it_and_heals_it() {
     let healed = (5 + 16).min(max);
     let line = format!("Heal on Test Archer: HP 5 → {healed}");
     let buf = h.game().buffer();
-    let shown = (0..i32::from(crate::console::CONSOLE_H)).any(|y| {
-        let row: String = (0..i32::from(crate::console::CONSOLE_W))
+    let shown = (0..i32::from(crate::console::ConsoleSpec::PC.rows)).any(|y| {
+        let row: String = (0..i32::from(crate::console::ConsoleSpec::PC.cols))
             .map(|x| buf.get(x, y).map_or(' ', |cell| cell.glyph))
             .collect();
         row.contains(&line)

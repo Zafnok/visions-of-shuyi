@@ -108,10 +108,12 @@
 //! from it to a tile next to one of its targets, ignoring units (Dijkstra
 //! from every target at once). A tile it can't walk from has none.
 
-use std::cell::RefCell;
-use std::cmp::{Ordering, Reverse};
-use std::collections::{BTreeMap, BinaryHeap};
-use std::rc::Rc;
+use crate::prelude::*;
+
+use alloc::collections::{BTreeMap, BinaryHeap};
+use alloc::rc::Rc;
+use core::cell::RefCell;
+use core::cmp::{Ordering, Reverse};
 
 use serde::{Deserialize, Serialize};
 
@@ -499,7 +501,7 @@ impl<'a> Planner<'a> {
         }
         let mut ids: Vec<UnitId> = state.units().iter().map(|u| u.id).collect();
         ids.sort();
-        let targets: Vec<Option<UnitId>> = std::iter::once(None)
+        let targets: Vec<Option<UnitId>> = core::iter::once(None)
             .chain(ids.into_iter().map(Some))
             .collect();
         let action = unit

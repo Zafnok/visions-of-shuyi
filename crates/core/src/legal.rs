@@ -58,6 +58,8 @@
 //! out of range, so this only saves work. Each unit's moves are worked out
 //! once.
 
+use crate::prelude::*;
+
 use crate::battle::{BattleState, CastTarget, Command, Phase, SellFrom, ShopTxn, UnitAction};
 use crate::geom::Pos;
 use crate::item::{Equipped, WEAPON_SLOTS};
@@ -73,7 +75,7 @@ pub fn legal_commands(state: &BattleState) -> Vec<Command> {
         return Vec::new();
     }
     if let Some(pending) = state.pending_move() {
-        return std::iter::once(None)
+        return core::iter::once(None)
             .chain(state.move_after_tiles().into_iter().map(Some))
             .map(|to| Command::MoveAfter {
                 unit: pending.unit,
@@ -229,7 +231,7 @@ impl Options {
             }));
         }
         for skill in &self.others {
-            let targets = std::iter::once(None).chain(state.units().iter().map(|t| Some(t.id)));
+            let targets = core::iter::once(None).chain(state.units().iter().map(|t| Some(t.id)));
             out.extend(targets.map(|target| UnitAction::UseSkill {
                 skill: skill.clone(),
                 target,

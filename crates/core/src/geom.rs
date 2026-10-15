@@ -1,6 +1,8 @@
 //! Grid geometry: positions, the four directions and a rectangular grid.
 
-use std::fmt;
+use crate::prelude::*;
+
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 

@@ -87,7 +87,7 @@ use crate::input::Action;
 use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, ThreatView, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
-use crate::tips::{draw_tip, fill_placeholders};
+use crate::tips::{self as tip_box, TipView};
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::Language;
 
@@ -741,8 +741,8 @@ impl BattleScreen {
     }
 
     /// The tip on screen, if any: the first queued whose moment has come.
-    /// Tips wait out a combat's playback, a scene, the battle notes and the
-    /// rewind screen;
+    /// Tips wait out a combat's playback, a scene (queued or playing over
+    /// the battle), the battle notes and the rewind screen;
     /// the enemy-phase tip shows as that phase begins (over its banner),
     /// the others once a player phase is browsing without a banner.
     pub fn shown_tip(&self) -> Option<TipTrigger> {
@@ -750,6 +750,7 @@ impl BattleScreen {
             || self.playing()
             || self.progress.is_some()
             || self.queued_scene().is_some()
+            || self.tips.under_scene()
             || self.notes_open()
         {
             return None;
@@ -758,6 +759,12 @@ impl BattleScreen {
             t == TipTrigger::FirstEnemyPhase
                 || (self.state.phase() == Phase::Player && self.banner().is_none())
         })
+    }
+
+    /// The box of the tip on screen ([`Self::shown_tip`]), if any.
+    pub fn tip_view(&self, ctx: &Ctx) -> Option<TipView> {
+        let tip = ctx.content.tips.for_trigger(self.shown_tip()?)?;
+        Some(TipView::new(ctx, tip))
     }
 
     /// Closes the banner on screen. An outcome's leaves the battle.
@@ -2086,6 +2093,8 @@ impl Screen for BattleScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        // Updated, so on top again: any scene it started is closed.
+        self.tips.set_under_scene(false);
         self.begin_frame(ctx, input.dt);
         // A banner already up (a battle decided at its start).
         self.play_outcome_music(ctx);
@@ -2186,6 +2195,7 @@ impl Screen for BattleScreen {
         }
         self.play_outcome_music(ctx);
         if let Some(scene) = self.next_scene(ctx) {
+            self.tips.set_under_scene(true);
             return Transition::Push(Box::new(scene));
         }
         self.check_auto_end();
@@ -2220,14 +2230,8 @@ impl Screen for BattleScreen {
             stage::glyph::paint(ctx, view, buf);
         }
         self.draw_dialogs(ctx, buf, &scene);
-        if let Some(tip) = self
-            .shown_tip()
-            .and_then(|t| ctx.content.tips.for_trigger(t))
-        {
-            let words = ctx.words();
-            let text = fill_placeholders(words.tip_text(tip), ctx.help_keys());
-            let close = ctx.text_with("battle.help.close", &[]);
-            draw_tip(buf, &ctx.palette, words.tip_title(tip), &text, &close);
+        if let Some(view) = self.tip_view(ctx) {
+            tip_box::glyph::paint(ctx, &view, buf);
         }
         buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));
         let status = self.status(ctx);
@@ -2490,7 +2494,7 @@ mod tests {
 
     use super::testing::{battle, vaulted, wait};
     use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::harness::Harness;
     use crate::map_view::CursorStyle;
     use crate::screen::tests::ctx;
@@ -2501,7 +2505,7 @@ mod tests {
 
     fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
         let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
         screen.draw(c, &mut buf);
         buf
     }
@@ -2989,8 +2993,8 @@ mod tests {
         let c = ctx();
         let buf = render(&quick(), &c);
         let stale = Rgb::new(1, 2, 3);
-        for y in 0..i32::from(CONSOLE_H) {
-            for x in 0..i32::from(CONSOLE_W) {
+        for y in 0..i32::from(ConsoleSpec::PC.rows) {
+            for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 let cell = buf.get(x, y).unwrap();
                 assert!(cell.fg != stale && cell.bg != stale, "({x}, {y})");
             }

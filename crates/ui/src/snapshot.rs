@@ -190,7 +190,7 @@ mod tests {
     use super::*;
     use crate::color::UiColor;
     use crate::color::tests::game_palette;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::glyph_buffer::{BoxStyle, Cell, Rect};
 
     #[test]
@@ -416,8 +416,8 @@ mod tests {
         let p = game_palette();
         let c = |u| p.get(u);
         let mut b = GlyphBuffer::new(
-            CONSOLE_W / 4,
-            CONSOLE_H / 4,
+            ConsoleSpec::PC.cols / 4,
+            ConsoleSpec::PC.rows / 4,
             Cell::new(' ', c(UiColor::Text), c(UiColor::Black)),
         );
         let panel = Rect::new(1, 1, 22, 6);

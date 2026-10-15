@@ -1,7 +1,9 @@
 //! The battle map: a named grid of terrain, plus shops and chests on some
 //! tiles. Units live elsewhere (0302).
 
-use std::collections::BTreeMap;
+use crate::prelude::*;
+
+use alloc::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 

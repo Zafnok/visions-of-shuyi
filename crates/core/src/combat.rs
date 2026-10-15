@@ -60,6 +60,8 @@
 //! those strikes alternate after the first two, attacker first
 //! (*Claude's starting rule*).
 
+use crate::prelude::*;
+
 use serde::{Deserialize, Serialize};
 
 use crate::class::{UnitTag, UnitTags};

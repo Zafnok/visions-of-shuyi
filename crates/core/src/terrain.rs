@@ -1,6 +1,8 @@
 //! Terrain rules: movement costs and combat bonuses per terrain type. How a
 //! terrain looks lives in `trpg-content`, not here.
 
+use crate::prelude::*;
+
 use serde::{Deserialize, Serialize};
 
 /// Index of a movement type (`foot`, `mounted`, …) in [`TerrainTable`].

@@ -1,8 +1,10 @@
 //! Units on the battle map, the named-character data they are made from, and
 //! factions (`docs/design/progression.md`).
 
-use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
+use crate::prelude::*;
+
+use alloc::collections::{BTreeMap, BTreeSet};
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
@@ -196,7 +198,7 @@ pub const MAP_LABEL_LEN: usize = 2;
 pub fn default_map_label(name: &str) -> String {
     let letters = name.chars().filter(|c| c.is_alphabetic());
     letters
-        .chain(std::iter::repeat(' '))
+        .chain(core::iter::repeat(' '))
         .take(MAP_LABEL_LEN)
         .collect()
 }
@@ -229,7 +231,7 @@ impl fmt::Display for UnitError {
     }
 }
 
-impl std::error::Error for UnitError {}
+impl core::error::Error for UnitError {}
 
 impl From<LoadoutError> for UnitError {
     fn from(e: LoadoutError) -> Self {

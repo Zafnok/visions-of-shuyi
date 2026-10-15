@@ -363,7 +363,7 @@ mod tests {
     use trpg_core::Pos;
 
     use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::screen::tests::ctx;
     use crate::screens::battle::testing::skirmish;
 
@@ -433,7 +433,7 @@ mod tests {
     fn drawn(r: &RewindScreen) -> impl Fn(i32) -> String + use<> {
         let c = ctx();
         let black = c.palette.get(UiColor::Black);
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new(' ', black, black));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
         r.draw(&c.palette, Words::ENGLISH, &mut buf);
         move |y| {
             (TEXT_X..SIDE_PANEL.x + SIDE_PANEL.w - 1)

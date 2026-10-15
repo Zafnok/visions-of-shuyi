@@ -2,12 +2,13 @@
 //! layer 4), reached from the title screen's debug Quick Battle item.
 
 use insta::assert_snapshot;
-use trpg_content::{FontAtlasDef, Theme};
+use trpg_content::{FontAtlasDef, Theme, TipTrigger};
 use trpg_core::{Faction, Pos};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::Layout;
 use trpg_ui::map_view::RangeKind;
+use trpg_ui::screens::BattleScreen;
 
 /// At the title with the right-handed layout, then Quick Battle, still
 /// under turn 1's `PLAYER PHASE` banner.
@@ -629,6 +630,44 @@ fn tips_show_when_switched_on() {
     assert_eq!(help(&h), "f close");
     h.keys("f");
     assert!(!shows(&h, "Your move"));
+}
+
+/// Ticket 0455: Chapter 1's start tip waits for Hollis's first-turn scene
+/// (`ch01_first_turn`), which plays over the battle once the banner is
+/// closed, and shows once the scene ends.
+#[test]
+fn the_start_tip_waits_for_the_first_turn_scene() {
+    let mut h = Harness::with_layout(Layout::RightHanded).with_shipped_story();
+    h.with_tips();
+    // New Game, Classic, Not familiar, the default lead; the intro scenes
+    // skipped.
+    h.keys("f f f Up f");
+    skip_scenes(&mut h);
+    assert_eq!(h.screens(), ["title", "battle"]);
+    assert!(shows(&h, "PLAYER PHASE"));
+    // Closing the banner starts the scene: no tip under it.
+    h.keys("f");
+    assert_eq!(h.screens(), ["title", "battle", "dialogue"]);
+    h.wait(1.0);
+    let tip = |h: &Harness| h.battle().and_then(BattleScreen::shown_tip);
+    assert_eq!(tip(&h), None);
+    assert!(!shows(&h, "Your move"));
+    skip_scenes(&mut h);
+    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(tip(&h), Some(TipTrigger::FirstBattleStart));
+    assert!(shows(&h, "Your move"));
+    assert!(shows(&h, " Guide "));
+}
+
+/// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".
+fn skip_scenes(h: &mut Harness) {
+    for _ in 0..8 {
+        if h.top_screen() != "dialogue" {
+            return;
+        }
+        h.keys("d f");
+    }
+    panic!("the scenes never end: {:?}", h.screens());
 }
 
 /// The Quick Battle's dialogue triggers (0705): its rogue arrives on the

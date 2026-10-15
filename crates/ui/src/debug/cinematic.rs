@@ -95,7 +95,7 @@ impl Screen for CinematicScreen {
 mod tests {
     use super::*;
     use crate::cinematic::Frame;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::glyph_buffer::Rect;
     use crate::screen::tests::ctx;
 
@@ -106,7 +106,7 @@ mod tests {
     fn draw(ctx: &Ctx, screen: &CinematicScreen) -> GlyphBuffer {
         let p = &ctx.palette;
         let stale = Cell::new('x', p.get(UiColor::Text), p.get(UiColor::PanelBg));
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
         screen.draw(ctx, &mut buf);
         buf
     }
@@ -165,9 +165,9 @@ mod tests {
         assert_ne!(buf, expected);
         screen.player().unwrap().draw(&ctx, 3.0, 1.0, &mut expected);
         // All but the help line is the player's frame at full brightness.
-        let last = i32::from(CONSOLE_H) - 1;
+        let last = i32::from(ConsoleSpec::PC.rows) - 1;
         for y in 0..last {
-            for x in 0..i32::from(CONSOLE_W) {
+            for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 assert_eq!(buf.get(x, y), expected.get(x, y), "({x}, {y})");
             }
         }

@@ -264,10 +264,11 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         arts,
         names,
         characters,
+        // Before the portraits move in: checked against the guide's.
+        tips: tip::load(faces),
         portraits,
         dialogue,
         ai: ai::load(),
-        tips: tip::load(),
         audio,
         credits,
         images,
@@ -907,6 +908,10 @@ mod tests {
         )
     }
 
+    fn ok_tips() -> Result<TipTable, Vec<ContentError>> {
+        tip::load(ok_portraits().ok().as_ref())
+    }
+
     fn ok_portraits() -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
         portrait::load_all(&ImageTable::load().unwrap_or_default())
     }
@@ -963,7 +968,7 @@ mod tests {
             portraits: ok_portraits(),
             dialogue: ok_dialogue(),
             ai: ai::load(),
-            tips: tip::load(),
+            tips: ok_tips(),
             audio: audio::load(),
             credits: ok_credits(),
             images: ImageTable::load(),
@@ -1171,7 +1176,7 @@ mod tests {
                     portraits: if i == 12 { Err(e("o")) } else { ok_portraits() },
                     dialogue: if i == 13 { Err(e("d")) } else { ok_dialogue() },
                     ai: if i == 14 { Err(e("w")) } else { ai::load() },
-                    tips: if i == 15 { Err(e("y")) } else { tip::load() },
+                    tips: if i == 15 { Err(e("y")) } else { ok_tips() },
                     audio: if i == 16 { Err(e("v")) } else { audio::load() },
                     credits: if i == 17 { Err(e("r")) } else { ok_credits() },
                     images: if i == 18 {

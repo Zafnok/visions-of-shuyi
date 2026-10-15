@@ -381,7 +381,7 @@ fn texts_name_the_layout_keys() {
 /// Opaque screens must paint every cell, not rely on `Game` clearing.
 #[test]
 fn screens_cover_the_whole_buffer() {
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     let c = ctx();
     let mut naming = crate::screens::LeadSelectScreen::new();
     let typing = FrameInput::new(vec![Action::CursorDown], 0.0, vec![]);
@@ -407,10 +407,10 @@ fn screens_cover_the_whole_buffer() {
             c.palette.get(UiColor::Enemy),
             c.palette.get(UiColor::Enemy),
         );
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
         screen.draw(&c, &mut buf);
-        let left = (0..i32::from(CONSOLE_H))
-            .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+        let left = (0..i32::from(ConsoleSpec::PC.rows))
+            .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
             .filter(|&(x, y)| buf.get(x, y) == Some(&stale))
             .count();
         assert_eq!(left, 0, "{} left stale cells", screen.name());

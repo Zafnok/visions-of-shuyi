@@ -32,7 +32,7 @@ use trpg_content::Present;
 
 use crate::audio::MenuSound;
 use crate::color::{Palette, UiColor};
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{MapSkin, TEST_TILESET, next_skin};
@@ -318,13 +318,14 @@ fn panels_top_for(colours: usize, glyphs: &[char]) -> i32 {
     palette_top(glyphs) + 2 + swatch_rows
 }
 
-/// A console-sized buffer: the top half shows every glyph in `glyphs` in a
+/// A buffer the size of the PC console (its layout is the PC's): the top
+/// half shows every glyph in `glyphs` in a
 /// grid; the bottom half shows every palette colour as a swatch plus its
 /// name, a line of sample text and two sample panels.
 pub fn glyph_sampler(palette: &Palette, glyphs: &[char]) -> GlyphBuffer {
     let c = |u| palette.get(u);
     let (text, dim, black) = (c(UiColor::Text), c(UiColor::TextDim), c(UiColor::Black));
-    let mut b = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new(' ', text, black));
+    let mut b = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', text, black));
 
     let title = format!("Glyphs ({})", glyphs.len());
     b.print(1, 0, &title, c(UiColor::TextHighlight), black);
@@ -364,7 +365,7 @@ pub fn glyph_sampler(palette: &Palette, glyphs: &[char]) -> GlyphBuffer {
 fn sample_panels(buf: &mut GlyphBuffer, palette: &Palette, top: i32) {
     let ui = |u| palette.get(u);
     let bg = ui(UiColor::PanelBg);
-    let height = i32::from(CONSOLE_H) - top;
+    let height = i32::from(buf.height()) - top;
 
     let panel = Rect::new(1, top, 40, height);
     buf.fill_rect(panel, Cell::new(' ', ui(UiColor::Text), bg));
@@ -424,7 +425,10 @@ mod tests {
         let p = game_palette();
         let glyphs = atlas_glyphs();
         let b = glyph_sampler(&p, &glyphs);
-        assert_eq!((b.width(), b.height()), (CONSOLE_W, CONSOLE_H));
+        assert_eq!(
+            (b.width(), b.height()),
+            (ConsoleSpec::PC.cols, ConsoleSpec::PC.rows)
+        );
         let bottom = palette_top(&glyphs);
         let row_end = 2 + 2 * i32::try_from(GLYPHS_PER_ROW).unwrap();
         let shown: String = (1..bottom)
@@ -437,8 +441,8 @@ mod tests {
             "top half must list every glyph in order"
         );
         for (name, rgb) in p.iter() {
-            let found = (bottom..i32::from(CONSOLE_H)).any(|y| {
-                (0..i32::from(CONSOLE_W)).any(|x| {
+            let found = (bottom..i32::from(ConsoleSpec::PC.rows)).any(|y| {
+                (0..i32::from(ConsoleSpec::PC.cols)).any(|x| {
                     let cell = b.get(x, y).unwrap();
                     cell.glyph == '█' && cell.fg == rgb
                 })
@@ -452,15 +456,15 @@ mod tests {
         let glyphs = atlas_glyphs();
         let rows = glyphs.len().div_ceil(GLYPHS_PER_ROW);
         assert!(i32::try_from(rows).unwrap() < palette_top(&glyphs));
-        assert!(2 + 2 * GLYPHS_PER_ROW <= usize::from(CONSOLE_W));
-        assert!(SWATCH_COLUMNS * SWATCH_W < i32::from(CONSOLE_W));
+        assert!(2 + 2 * GLYPHS_PER_ROW <= usize::from(ConsoleSpec::PC.cols));
+        assert!(SWATCH_COLUMNS * SWATCH_W < i32::from(ConsoleSpec::PC.cols));
     }
 
     #[test]
     fn demo_panels_fit_below_the_embedded_palette() {
         let p = game_palette();
         let glyphs = atlas_glyphs();
-        assert!(panels_top(&p, &glyphs) <= i32::from(CONSOLE_H) - 4);
+        assert!(panels_top(&p, &glyphs) <= i32::from(ConsoleSpec::PC.rows) - 4);
     }
 
     #[test]
@@ -468,9 +472,9 @@ mod tests {
         let p = game_palette();
         let glyphs = atlas_glyphs();
         assert!(p.iter().count() <= PALETTE_HEADROOM);
-        assert!(panels_top_for(PALETTE_HEADROOM, &glyphs) <= i32::from(CONSOLE_H) - 4);
+        assert!(panels_top_for(PALETTE_HEADROOM, &glyphs) <= i32::from(ConsoleSpec::PC.rows) - 4);
         // At least two spare rows for today's palette.
-        assert!(panels_top(&p, &glyphs) <= i32::from(CONSOLE_H) - 6);
+        assert!(panels_top(&p, &glyphs) <= i32::from(ConsoleSpec::PC.rows) - 6);
     }
 
     #[test]
@@ -479,9 +483,8 @@ mod tests {
         let mut screen = GlyphSamplerScreen::new(&ctx);
         assert_eq!(screen.name(), "glyph_sampler");
         let p = &ctx.palette;
-        let mut buf = GlyphBuffer::new(
-            CONSOLE_W,
-            CONSOLE_H,
+        let mut buf = GlyphBuffer::with_spec(
+            ConsoleSpec::PC,
             Cell::new('x', p.get(UiColor::Text), p.get(UiColor::Black)),
         );
         screen.draw(&ctx, &mut buf);
@@ -615,9 +618,8 @@ mod tests {
     fn debug_menu_snapshot() {
         let ctx = crate::screen::tests::ctx();
         let p = &ctx.palette;
-        let mut buf = GlyphBuffer::new(
-            CONSOLE_W,
-            CONSOLE_H,
+        let mut buf = GlyphBuffer::with_spec(
+            ConsoleSpec::PC,
             Cell::new('x', p.get(UiColor::Text), p.get(UiColor::PanelBg)),
         );
         DebugMenuScreen::new(&ctx).draw(&ctx, &mut buf);

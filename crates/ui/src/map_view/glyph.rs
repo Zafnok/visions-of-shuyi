@@ -7,13 +7,12 @@ pub mod units;
 
 use trpg_core::{Pos, TerrainId};
 
-use super::grid::{Grid, px_rect};
+use super::grid::{CELL_PX, Grid, px_rect};
 use super::path;
 use super::scene::{MapScene, RangeKind};
 use super::skin::MapSkin;
 use super::threat;
 use crate::color::{Palette, Rgb, UiColor};
-use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{Cell, GlyphBuffer, PxRect, Rect};
 use crate::screen::Ctx;
 
@@ -23,7 +22,7 @@ const TILE_W_CELLS: i32 = 2;
 /// A map tile in console pixels, across × down: for a skin that paints its
 /// units over this skin's terrain (ADR-0049).
 pub(super) fn tile_px() -> (i32, i32) {
-    (TILE_W_CELLS * i32::from(CELL_W_PX), i32::from(CELL_H_PX))
+    (TILE_W_CELLS * CELL_PX.0, CELL_PX.1)
 }
 
 /// How far range overlays tint a tile's background toward their colour
@@ -102,7 +101,7 @@ impl Layout {
 
     /// The tiles in console pixels: 16 × 16 each.
     pub fn grid(&self) -> Grid {
-        let (cw, ch) = (i32::from(CELL_W_PX), i32::from(CELL_H_PX));
+        let (cw, ch) = CELL_PX;
         Grid {
             origin: self.origin,
             corner: (self.cell.0 * cw, self.cell.1 * ch),

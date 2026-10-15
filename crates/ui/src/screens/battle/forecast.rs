@@ -21,7 +21,7 @@ use super::panel::TEXT_X;
 use super::skills::skill_name;
 use super::units::{faction_color, hp_fill};
 use crate::color::{Palette, Rgb, UiColor};
-use crate::console::{CELL_H_PX, CELL_W_PX};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, Rect};
 use crate::words::Words;
 
@@ -78,7 +78,7 @@ const SKULL_TOP: i32 = 4;
 /// The skull drawn in the cell at `(x, y)` in `color`: one overlay per run
 /// of pixels in a row.
 pub fn skull(x: i32, y: i32, color: Rgb) -> Vec<Overlay> {
-    let (cw, ch) = (i32::from(CELL_W_PX), i32::from(CELL_H_PX));
+    let (cw, ch) = ConsoleSpec::PC.cell_px();
     let mut runs = Vec::new();
     for (row, line) in (0..).zip(SKULL) {
         let mut start = None;
@@ -437,7 +437,7 @@ mod tests {
     use trpg_core::{Pos, UnitId};
 
     use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::screen::tests::ctx;
     use crate::screens::battle::attack::weapon_choices;
     use crate::screens::battle::mode::Selection;
@@ -460,7 +460,7 @@ mod tests {
     fn render(state: &BattleState, t: &Targeting) -> GlyphBuffer {
         let c = ctx();
         let blank = Cell::new(' ', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
         draw_forecast(&mut buf, &c.palette, (state, Words::ENGLISH), t);
         buf
     }
@@ -476,7 +476,7 @@ mod tests {
         let pixels: i32 = runs.iter().map(|o| o.rect.w * o.rect.h).sum();
         let drawn = SKULL.iter().flat_map(|l| l.chars()).filter(|&c| c == 'X');
         assert_eq!(pixels, i32::try_from(drawn.count()).unwrap());
-        let (cw, ch) = (i32::from(CELL_W_PX), i32::from(CELL_H_PX));
+        let (cw, ch) = ConsoleSpec::PC.cell_px();
         for o in &runs {
             assert_eq!((o.color, o.layer, o.rect.h), (red, Layer::Over, 1));
             assert!(o.rect.x >= 3 * cw && o.rect.x + o.rect.w <= 4 * cw);
@@ -549,7 +549,7 @@ mod tests {
             .overlays()
             .iter()
             .filter(|o| o.color == p.get(UiColor::HpLow))
-            .map(|o| o.rect.y / i32::from(CELL_H_PX))
+            .map(|o| o.rect.y / i32::from(ConsoleSpec::PC.cell_h))
             .collect();
         assert!(!skulls.is_empty() && skulls.iter().all(|&y| y == STRIKE_ROW));
         // The lord keeps all its HP (5 cells); the brigand's 3 of 20 HP
@@ -568,7 +568,7 @@ mod tests {
         let mut p = targeting(&state).preview;
         p.notes = vec![ArtNote::NoCounter, ArtNote::Pierces, ArtNote::Pierces];
         let blank = Cell::new(' ', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
         let border = SIDE_PANEL.y + SIDE_PANEL.h - 1;
         draw_notes(&mut buf, &c.palette, Words::ENGLISH, &p, border - 1);
         // `no counter` isn't repeated; one row is left for the two notes.
@@ -656,7 +656,7 @@ mod tests {
         let side = |left| {
             let t = targeting(&state);
             let blank = Cell::new(' ', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-            let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+            let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
             let column = Column {
                 x: LEFT_X,
                 unit: &state.units()[0],
