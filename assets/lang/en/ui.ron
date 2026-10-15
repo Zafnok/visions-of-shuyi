@@ -326,6 +326,10 @@
     "battle.faction.ally": "Ally",
     "battle.faction.neutral": "Neutral",
 
+    // The guide who speaks every tip (docs/design/tutorial.md): the tip
+    // box's title. Ticket 0731 names the guide.
+    "guide.name": "Guide",
+
     // The battle: its help bar. A `help` is a whole line; a `hint` is one
     // part of a line whose parts come and go. `{keys}`, `{accept}` and
     // `{also}` are key names the screen fills in.

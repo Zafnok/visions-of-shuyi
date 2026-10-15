@@ -3,15 +3,15 @@ source: crates/ui/tests/it/language.rs
 expression: h.snapshot()
 ---
                                                                       ┌────────────────────────────┐
-        ╔═ YOUR MOVE ═══════════════════════════════════════╗         │ Plain                      │
+        ╔═ GUIDE ═══════════════════════════════════════════╗         │ Plain                      │
         ║                                                   ║         │ DEF +0  AVO +0             │
+        ║ YOUR MOVE                                         ║         │                            │
         ║ STEER THE CURSOR WITH ARROWS. PRESS f ON ONE OF   ║         │                            │
-        ║ YOUR UNITS TO SELECT IT. s JUMPS TO THE NEXT UNIT ║         │                            │
-        ║ THAT CAN STILL ACT; e SHOWS A UNIT'S DETAILS.     ║         │ Test Lord                  │
-        ║                                                   ║         │ Exile  LV 1                │
-        ║ f CLOSE                                           ║         │ HP 19/19   ██████████      │
-        ╚═══════════════════════════════════════════════════╝         │ PLAYER                     │
-                                                                      │                            │
+        ║ YOUR UNITS TO SELECT IT. s JUMPS TO THE NEXT UNIT ║         │ Test Lord                  │
+        ║ THAT CAN STILL ACT; e SHOWS A UNIT'S DETAILS.     ║         │ Exile  LV 1                │
+        ║                                                   ║         │ HP 19/19   ██████████      │
+        ║ f CLOSE                                           ║         │ PLAYER                     │
+        ╚═══════════════════════════════════════════════════╝         │                            │
                                                                       │                            │
                     ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │                            │
                     ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      │                            │
@@ -36,15 +36,15 @@ expression: h.snapshot()
  f CLOSE                                                                                   F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaabbcccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabdcccccddddddddddddddddddddddb
+aaaaaaaabbcccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabdcccccddddddddddddddddddddddb
 aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaabdcccccccccdddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabdeeeeeeeeeddddddddddddddddddb
 aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaabdfffffffdddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddggggggggggddddddb
-aaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabdffffffdddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddffffffffffddddddb
+aaaaaaaabdgggggggdddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabdggggggdddddddddddddddddddddb
+aaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -73,8 +73,8 @@ b = fg:panel_border bg:panel_bg
 c = fg:text_highlight bg:panel_bg
 d = fg:text bg:panel_bg
 e = fg:player bg:panel_bg
-f = fg:text_dim bg:panel_bg
-g = fg:hp_high bg:panel_bg
+f = fg:hp_high bg:panel_bg
+g = fg:text_dim bg:panel_bg
 h = fg:water bg:sea
 i = fg:water bg:water_bg
 j = fg:grass bg:grass_bg

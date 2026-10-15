@@ -31,7 +31,9 @@
         // still battle pictures of *Heroes: A New Beginning*, *Battlers 5:
         // Faith and Evil* and *Battlers 2: Elemental Forces*, and
         // *Battlebacks Vol.1*), and the title screen's backdrops (0811:
-        // seven more pictures of *Battlebacks Vol.1*).
+        // seven more pictures of *Battlebacks Vol.1*), and the guide's face
+        // in the tip box (0455: the Fox Miko hero of *Heroes 2: Rebellious
+        // Souls*).
         (id: "tiny_tales", group: Art, title: "Tiny Tales",
          author: "Megatiles (artists: Rayane Félix, Lunatic Red, Kodots Games Studio)",
          source: "https://megatiles.itch.io/", license: "Custom (Megatiles)",
@@ -41,6 +43,7 @@
             "battlers/fire_elemental.", "battlers/frost_elemental.", "battlers/guard.",
             "battlers/heretic.", "battlers/lead_f.", "battlers/mage.", "battlers/poacher.",
             "battlers/retainer.",
+            "portraits/guide/", "portraits/guide.ron",
             "portraits/heretic", "portraits/keeper", "portraits/lead_f", "portraits/lead_m",
             "portraits/messenger", "portraits/poacher", "portraits/red_captain",
             "portraits/retainer", "portraits/rival", "portraits/sergeant", "portraits/soldier",

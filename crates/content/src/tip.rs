@@ -2,7 +2,7 @@
 //! triggers each and what it says. The screens decide when a trigger has
 //! happened and remember which tips were seen.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 
@@ -10,6 +10,7 @@ use crate::bundle;
 use crate::error::ContentError;
 use crate::keymap::Action;
 use crate::lang::text_width;
+use crate::portrait::Portrait;
 use crate::ron_loader::parse_ron;
 
 /// Path of the tips file inside the asset bundle.
@@ -23,6 +24,14 @@ pub const MAX_LINE_CHARS: usize = 60;
 
 /// Longest tip title, in characters.
 pub const MAX_TITLE_CHARS: usize = 30;
+
+/// The portrait of the guide, who speaks every tip
+/// (`docs/design/tutorial.md`, *The guide*; ticket 0455). Only the bought
+/// art has it: without it the tip box has no face.
+pub const GUIDE_PORTRAIT: &str = "guide";
+
+/// The guide's expression in a tip that names none.
+pub const DEFAULT_FACE: &str = "smile";
 
 /// The placeholder for the keys that move the cursor (`{Cursor}`); every
 /// other placeholder is an [`Action`] name, e.g. `{Confirm}`.
@@ -62,6 +71,22 @@ pub struct Tip {
     /// The body: lines separated by `\n`, with `{Action}` placeholders
     /// for key names.
     pub text: String,
+    /// The guide's expression while the tip shows; [`DEFAULT_FACE`] if
+    /// none. Written `face: "sad"`.
+    #[serde(default, deserialize_with = "some_name")]
+    pub face: Option<String>,
+}
+
+/// A name written plainly (`face: "sad"`, not `Some("sad")`).
+fn some_name<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
+    String::deserialize(d).map(Some)
+}
+
+impl Tip {
+    /// The guide's expression while the tip shows.
+    pub fn face(&self) -> &str {
+        self.face.as_deref().unwrap_or(DEFAULT_FACE)
+    }
 }
 
 #[derive(Deserialize)]
@@ -84,8 +109,9 @@ impl TipTable {
     }
 }
 
-/// Loads and validates the embedded tips file.
-pub fn load() -> Result<TipTable, Vec<ContentError>> {
+/// Loads and validates the embedded tips file, each tip's face against
+/// the guide's portrait in `faces` when there is one.
+pub fn load(faces: Option<&BTreeMap<String, Portrait>>) -> Result<TipTable, Vec<ContentError>> {
     let display = bundle::display_path(TIPS_PATH);
     let source = bundle::file(TIPS_PATH).ok_or_else(|| {
         vec![ContentError::new(
@@ -93,12 +119,18 @@ pub fn load() -> Result<TipTable, Vec<ContentError>> {
             "file not found in asset bundle",
         )]
     })?;
-    from_source(&display, source)
+    from_source(&display, source, faces)
 }
 
-/// Parses and validates tips `source`, attributing errors to `file`.
+/// Parses and validates tips `source`, attributing errors to `file`, each
+/// tip's face against the guide's portrait in `faces` when there is one.
 /// Reports every problem found.
-pub fn from_source(file: &str, source: &str) -> Result<TipTable, Vec<ContentError>> {
+pub fn from_source(
+    file: &str,
+    source: &str,
+    faces: Option<&BTreeMap<String, Portrait>>,
+) -> Result<TipTable, Vec<ContentError>> {
+    let guide = faces.and_then(|f| f.get(GUIDE_PORTRAIT));
     let raw: RawFile = parse_ron(file, source).map_err(|e| vec![e])?;
     let mut errors = Vec::new();
     let mut ids = BTreeSet::new();
@@ -145,6 +177,14 @@ pub fn from_source(file: &str, source: &str) -> Result<TipTable, Vec<ContentErro
                 err(format!("unknown placeholder {{{name}}}"));
             }
         }
+        if let Some(guide) = guide
+            && guide.expression(tip.face()).is_none()
+        {
+            err(format!(
+                "the guide's portrait has no expression \"{}\"",
+                tip.face()
+            ));
+        }
     }
     if errors.is_empty() {
         Ok(TipTable { tips: raw.tips })
@@ -173,7 +213,7 @@ mod tests {
     use super::*;
 
     fn errors(source: &str) -> Vec<String> {
-        from_source("t.ron", source)
+        from_source("t.ron", source, None)
             .err()
             .unwrap_or_default()
             .into_iter()
@@ -183,7 +223,7 @@ mod tests {
 
     #[test]
     fn the_shipped_file_loads_and_covers_every_trigger() {
-        let table = load().unwrap();
+        let table = load(None).unwrap();
         for trigger in [
             TipTrigger::FirstBattleStart,
             TipTrigger::FirstUnitSelected,
@@ -208,7 +248,7 @@ mod tests {
     fn a_good_tip_loads() {
         let source = r#"(tips: [(id: "a", trigger: FirstForecast, title: "T",
             text: "Press {Confirm}.\n{Cursor}")])"#;
-        let table = from_source("t.ron", source).unwrap();
+        let table = from_source("t.ron", source, None).unwrap();
         assert_eq!(table.tips.len(), 1);
         assert_eq!(
             table.for_trigger(TipTrigger::FirstForecast),
@@ -254,6 +294,61 @@ mod tests {
         assert_eq!(errors(&source).len(), 1, "{source}");
         let source = source.replace(&line, &format!("{line}x"));
         assert_eq!(errors(&source).len(), 4);
+    }
+
+    /// Ticket 0455: a tip's face is the guide's expression, `smile` by
+    /// default, checked against the guide's portrait when there is one.
+    #[test]
+    fn faces_are_checked_against_the_guides_portrait() {
+        let source = r#"(tips: [
+            (id: "a", trigger: FirstForecast, title: "T", text: "x"),
+            (id: "b", trigger: FirstLowHp, title: "T", text: "x", face: "sad"),
+            (id: "c", trigger: FirstLevelUp, title: "T", text: "x", face: "smug"),
+            ])"#;
+        // Without the guide's portrait any face goes.
+        let table = from_source("t.ron", source, None).unwrap();
+        let faces: Vec<&str> = table.tips.iter().map(Tip::face).collect();
+        assert_eq!(faces, [DEFAULT_FACE, "sad", "smug"]);
+        assert_eq!(table.tips[0].face, None);
+        // A guide with the required expressions plus `smile`.
+        let names = [
+            "neutral",
+            "happy",
+            "angry",
+            "sad",
+            "surprised",
+            DEFAULT_FACE,
+        ];
+        let paths = names.map(|n| -> &'static str { format!("portraits/guide/{n}.png").leak() });
+        let pngs = paths.map(|p| (p, crate::image::png_header(64, 64)));
+        let images =
+            crate::ImageTable::from_files(pngs.iter().map(|(p, png)| (*p, &png[..]))).unwrap();
+        let sidecar = names
+            .map(|n| format!("{n:?}: \"guide/{n}.png\""))
+            .join(", ");
+        let sidecar = format!("(character: \"guide\", expressions: {{{sidecar}}})");
+        let mut guide =
+            crate::portrait::parse_portrait("guide.ron", "guide", &sidecar, &images).unwrap();
+        let with = |guide: &Portrait| {
+            let faces = BTreeMap::from([(GUIDE_PORTRAIT.to_owned(), guide.clone())]);
+            from_source("t.ron", source, Some(&faces))
+                .err()
+                .unwrap_or_default()
+                .into_iter()
+                .map(|e| e.message)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            with(&guide),
+            ["tip \"c\": the guide's portrait has no expression \"smug\""]
+        );
+        // Without `smile`, a tip that names no face fails too.
+        guide.expressions.retain(|e| e.name != DEFAULT_FACE);
+        assert_eq!(with(&guide).len(), 2);
+        assert!(with(&guide)[0].contains("no expression \"smile\""));
+        // Another character's portrait is not the guide's.
+        let others = BTreeMap::from([("test_lord".to_owned(), guide)]);
+        assert!(from_source("t.ron", source, Some(&others)).is_ok());
     }
 
     #[test]

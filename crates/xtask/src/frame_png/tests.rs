@@ -218,7 +218,7 @@ fn a_bad_atlas_image_is_an_error() {
 fn parses_steps_in_order_and_options() {
     let parsed = parse_args(&args(&[
         "out.png", "--keys", "F2 Up", "--wait", "0.5", "--pad", "South", "--keys", "f", "--layout",
-        "left", "--scale", "3", "--prompt", "--light", "dusk",
+        "left", "--scale", "3", "--prompt", "--light", "dusk", "--tips",
     ]))
     .unwrap();
     assert_eq!(
@@ -235,14 +235,21 @@ fn parses_steps_in_order_and_options() {
             scale: 3,
             prompt: true,
             light: Some("dusk".into()),
+            tips: true,
         }
     );
     let zero = parse_args(&args(&["a.png", "--wait", "0", "--scale", "8"])).unwrap();
     assert_eq!((zero.steps, zero.scale), (vec![Step::Wait(0.0)], 8));
     let plain = parse_args(&args(&["a.png"])).unwrap();
     assert_eq!(
-        (plain.layout, plain.scale, plain.prompt, plain.light),
-        (Layout::RightHanded, 2, false, None)
+        (
+            plain.layout,
+            plain.scale,
+            plain.prompt,
+            plain.light,
+            plain.tips
+        ),
+        (Layout::RightHanded, 2, false, None, false)
     );
     assert!(plain.steps.is_empty());
 }
@@ -329,6 +336,20 @@ fn the_prompt_start_draws_another_title() {
         fs::read(dir.join("t.png")).unwrap()
     };
     assert_ne!(render(&["--prompt"]), render(&[]));
+    fs::remove_dir_all(&dir).unwrap();
+}
+
+/// Ticket 0455: `--tips` shows the start tip over the Quick Battle.
+#[test]
+fn tips_show_with_the_tips_option() {
+    let dir = temp_dir("tips");
+    let render = |extra: &[&str]| {
+        let mut all = vec!["t.png", "--keys", "Down f Left f f", "--scale", "1"];
+        all.extend_from_slice(extra);
+        run(&dir, &parse_args(&args(&all)).unwrap()).unwrap();
+        fs::read(dir.join("t.png")).unwrap()
+    };
+    assert_ne!(render(&["--tips"]), render(&[]));
     fs::remove_dir_all(&dir).unwrap();
 }
 
