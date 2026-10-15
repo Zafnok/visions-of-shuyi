@@ -5,10 +5,10 @@ type: tuning
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-15
 ---
 
 # 0834 — Tamsin is less dominant in Chapter 1
@@ -76,11 +76,11 @@ sim's numbers:
 
 ## Acceptance criteria
 
-- [ ] `chapter-1.md` records the table, the choice and Nick's words.
-- [ ] `characters.ron` matches it.
-- [ ] Sim result inside 30–70% (or Nick accepted another number); replay
+- [x] `chapter-1.md` records the table, the choice and Nick's words.
+- [x] `characters.ron` matches it.
+- [x] Sim result inside 30–70% (or Nick accepted another number); replay
       tests pass.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -88,4 +88,27 @@ sim's numbers:
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **Why she doubled:** the Red Company is slow, not Tamsin fast. An Iron
+  Axe weighs 6 and a Brigand's or Raider's Str carries 1 of it, so their
+  attack speed is −1. Tamsin had 4 with the Iron Spear and 6 with the Iron
+  Sword, and doubled 10 or 11 of the 14 enemies. Charge 1 adds might, not
+  speed. The table is in `docs/design/chapter-1.md` (*Tamsin toned down*).
+- **Options shown with the sim** (mindless bot, 200 tries, before 37%):
+  A Spd 5 34%, B level 1 28%, C Mov 6 34% (simulated by giving every
+  Rider Mov 6, the one enemy Rider too), D Chain Mail 38%, A+D 46%,
+  A + no Iron Sword 30%. Recommended A+D.
+- **Nick chose A + no Iron Sword:** `characters.ron` gives Tamsin Spd 5
+  (was 7) and only the Iron Spear. She now doubles only the Guard. Mov 7,
+  level 2 and her Sword rank E stay.
+- **Sim after:** 30% won (60 of 200), the bottom edge of the 30–70% target.
+  The mindless bot still loses her on turn 1–2 in most tries (it sends her
+  in alone), so the sim says little about how strong she feels.
+- **Replay:** the winning playthrough used her sword and broke; re-recorded
+  (`cargo test -p trpg-ui --test it ch01_winnable::record -- --ignored`).
+  The new flawless win takes 12 turns (was 8), nobody lost.
+- **For Nick:** the lead (Iron Sword, attack speed 6) and Aske (Iron Bow,
+  4) still double the same 10 enemies Tamsin used to. Not changed here
+  (out of scope); say if you want a ticket for it.
+- The title cinematic's footbridge combat-scene snapshot changed: the
+  Brigand's hit on Tamsin is 69 (was 65), as 2 less Spd is 4 less avoid.
+- No gameplay rules decided by Claude.
