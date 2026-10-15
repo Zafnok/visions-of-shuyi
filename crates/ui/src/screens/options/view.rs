@@ -7,6 +7,7 @@
 //! its tests of what happened don't change.
 
 use super::Row;
+use crate::prelude::*;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]

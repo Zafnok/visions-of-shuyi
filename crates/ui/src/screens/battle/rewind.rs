@@ -9,7 +9,8 @@
 //! point back, which a pushed screen can't. [`RewindScreen::view`] says
 //! what it shows; the battle skin paints it (ADR-0054).
 
-use std::fmt::Display;
+use crate::prelude::*;
+use core::fmt::Display;
 
 use trpg_core::{
     BattleHistory, BattleState, Command, Event, Phase, Replayed, Side, UnitAction, UnitId,

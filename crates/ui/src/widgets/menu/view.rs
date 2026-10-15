@@ -3,6 +3,8 @@
 //! the [`MenuView`] in its own view and its skin paints it
 //! ([`super::glyph::paint`] today; ADR-0054).
 
+use crate::prelude::*;
+
 /// The whole menu, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MenuView {

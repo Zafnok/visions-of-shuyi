@@ -2,6 +2,7 @@
 //! and controller-button events and the frame time and blits the buffer it
 //! returns; the test `Harness` drives it the same way without a window.
 
+use crate::prelude::*;
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{LeadGender, LeadProfile};
 
@@ -336,12 +337,12 @@ impl Game {
 
     /// The top-most screen of type `T` on the stack, if it opts in
     /// ([`Screen::as_any`]).
-    pub fn screen<T: std::any::Any>(&self) -> Option<&T> {
+    pub fn screen<T: core::any::Any>(&self) -> Option<&T> {
         self.stack.find()
     }
 
     /// [`screen`](Self::screen), mutable, for scripted tests.
-    pub fn screen_mut<T: std::any::Any>(&mut self) -> Option<&mut T> {
+    pub fn screen_mut<T: core::any::Any>(&mut self) -> Option<&mut T> {
         self.stack.find_mut()
     }
 

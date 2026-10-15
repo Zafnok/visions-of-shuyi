@@ -17,6 +17,7 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{BonusView, GoldView, ResultsBody, ResultsView, RewindsView, TallyView, UnitView};
 
 use trpg_core::progression::EXP_PER_LEVEL;
@@ -303,7 +304,7 @@ impl Screen for ResultsScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

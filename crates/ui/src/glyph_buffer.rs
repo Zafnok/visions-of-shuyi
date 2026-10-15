@@ -17,7 +17,8 @@
 
 mod backdrop;
 
-use std::rc::Rc;
+use crate::prelude::*;
+use alloc::rc::Rc;
 
 pub use backdrop::{Backdrop, MAX_ZOOM};
 
@@ -413,7 +414,7 @@ impl BoxStyle {
 }
 
 /// The part of `start..start + len` inside `0..limit`.
-fn clip_span(start: i32, len: i32, limit: u16) -> std::ops::Range<i32> {
+fn clip_span(start: i32, len: i32, limit: u16) -> core::ops::Range<i32> {
     let limit = i64::from(limit);
     let lo = i64::from(start).clamp(0, limit);
     let hi = (i64::from(start) + i64::from(len)).clamp(lo, limit);

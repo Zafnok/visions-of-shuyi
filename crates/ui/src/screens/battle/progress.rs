@@ -22,7 +22,8 @@
 //! finished page that waits for the player, closes it. Cancel does the same
 //! (Nick, PR #87: "cancel can do the same as confirm on these screens").
 
-use std::collections::BTreeMap;
+use crate::prelude::*;
+use alloc::collections::BTreeMap;
 
 use trpg_content::Portrait;
 use trpg_core::lead::LeadProfile;

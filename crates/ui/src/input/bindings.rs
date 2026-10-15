@@ -14,8 +14,9 @@
 //! of different groups may share one (`docs/design/controls.md`, *Dialogue
 //! log*).
 
-use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
+use crate::prelude::*;
+use alloc::collections::{BTreeMap, BTreeSet};
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 

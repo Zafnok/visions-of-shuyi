@@ -15,6 +15,8 @@ mod info;
 mod progress;
 mod rewind;
 
+use crate::prelude::*;
+
 use trpg_core::{Faction, Pos, StatValue};
 
 pub use self::fight_box::{BoxFighterView, FightBoxView};

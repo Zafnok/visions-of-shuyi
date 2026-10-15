@@ -14,8 +14,9 @@
 //! scene for an attack the rules work out: [`CinematicPlayer::stage`] is
 //! the stage at a time, and the combat scene's skin paints it.
 
-use std::collections::BTreeMap;
-use std::rc::Rc;
+use crate::prelude::*;
+use alloc::collections::BTreeMap;
+use alloc::rc::Rc;
 
 use trpg_content::{CinematicDef, ImageId, Shot, ShotAction, Side, battle_campaign};
 use trpg_core::{BattleDef, GameMode, LEAD_ID, LeadGender, LeadProfile, Pos};

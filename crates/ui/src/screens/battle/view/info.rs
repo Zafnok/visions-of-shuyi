@@ -3,6 +3,7 @@
 //! [`info::view`](super::super::info::view). The lists are whole: the skin
 //! shows as many as it has room for.
 
+use crate::prelude::*;
 use trpg_core::{Faction, StatValue};
 
 /// The unit info screen.

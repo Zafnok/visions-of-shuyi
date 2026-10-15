@@ -1,6 +1,9 @@
 //! The console's size, which the game picks ([`ConsoleSpec`]), and how it
 //! fits the window (ADR-0012).
 
+#[cfg(not(feature = "std"))]
+use crate::float::Float;
+
 /// A console's size: `cols × rows` cells of `cell_w × cell_h` logical
 /// pixels. The frame ([`GlyphBuffer`](crate::GlyphBuffer)) keeps the spec
 /// it was made with; the game picks one when it starts (ADR-0070 §6).

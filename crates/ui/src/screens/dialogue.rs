@@ -14,6 +14,7 @@
 pub mod history;
 pub mod log;
 
+use crate::prelude::*;
 use trpg_content::{MusicLine, Names, Present, Scene, Side};
 use trpg_core::{LEAD_ID, LeadProfile};
 
@@ -313,7 +314,7 @@ impl Screen for DialogueScreen {
         self.overlay
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

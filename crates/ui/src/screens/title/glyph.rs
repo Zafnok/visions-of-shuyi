@@ -5,7 +5,9 @@
 //! spark is); nothing here decides what the screen shows. Another look is
 //! another `paint` of the same view (ADR-0054).
 
-use std::f32::consts::TAU;
+#[cfg(not(feature = "std"))]
+use crate::float::Float;
+use core::f32::consts::TAU;
 
 use trpg_content::ImageId;
 

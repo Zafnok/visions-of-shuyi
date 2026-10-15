@@ -7,9 +7,11 @@
 //! input to the top screen only and draws from the top-most opaque screen up,
 //! so overlays (menus, dialogs) show the screen below them.
 
-use std::any::Any;
-use std::fmt::{self, Display};
-use std::rc::Rc;
+use crate::prelude::*;
+use alloc::rc::Rc;
+use core::any::Any;
+use core::fmt::{self, Display};
+use once_cell::race::OnceBox;
 
 use trpg_content::lang::TEST;
 use trpg_content::voice::{self, SOURCE_LANG};
@@ -464,9 +466,9 @@ impl Ctx {
     /// The language text is shown in: [`lang`](Self::lang), but English
     /// for the test pack without [`debug_tools`](Self::debug_tools).
     pub fn effective_lang(&self) -> &LangCode {
-        static ENGLISH: std::sync::LazyLock<LangCode> = std::sync::LazyLock::new(LangCode::english);
+        static ENGLISH: OnceBox<LangCode> = OnceBox::new();
         if self.lang.as_str() == TEST && !self.debug_tools {
-            return &ENGLISH;
+            return ENGLISH.get_or_init(|| Box::new(LangCode::english()));
         }
         &self.lang
     }
@@ -667,7 +669,7 @@ impl Ctx {
     /// Takes the warnings gathered while loading saved data (e.g. repaired
     /// key bindings), for `app` to log.
     pub fn take_warnings(&mut self) -> Vec<String> {
-        std::mem::take(&mut self.warnings)
+        core::mem::take(&mut self.warnings)
     }
 
     /// Builder form of [`use_layout`](Self::use_layout).
@@ -912,7 +914,7 @@ impl fmt::Display for LoadError {
     }
 }
 
-impl std::error::Error for LoadError {}
+impl core::error::Error for LoadError {}
 
 /// The stack of open screens. Only the top screen is updated; drawing starts
 /// at the top-most opaque screen and goes up through the overlays above it.

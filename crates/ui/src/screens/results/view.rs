@@ -3,6 +3,7 @@
 //! ([`ResultsScreen::view`](super::ResultsScreen::view)) and a skin paints
 //! it ([`super::glyph::paint`] today); see ADR-0054.
 
+use crate::prelude::*;
 use trpg_core::Gold;
 
 use crate::screens::battle::view::ProgressView;

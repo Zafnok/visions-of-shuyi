@@ -8,6 +8,7 @@
 use super::view::{ResultsBody, ResultsView, TallyView, UnitView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::glyph::progress::{self, EXP_BAR_CELLS, bar_cells};
 use crate::screens::battle::layout::MAP_VIEW;

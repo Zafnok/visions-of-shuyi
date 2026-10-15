@@ -3,6 +3,7 @@
 //! scene was on it, and which one is on screen. Pure: the dialogue screen
 //! tells it what happens; jumping hands back the scene to show.
 
+use crate::prelude::*;
 use trpg_content::MusicLine;
 
 use crate::dialogue::DialoguePlayer;

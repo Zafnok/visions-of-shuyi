@@ -14,6 +14,7 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{GameOverView, ToBeContinuedView};
 
 use view::FULL;
@@ -163,7 +164,7 @@ impl Screen for GameOverScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }
@@ -209,7 +210,7 @@ impl Screen for ToBeContinuedScreen {
         glyph::paint_to_be_continued(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

@@ -7,6 +7,7 @@
 //! moment asked: nothing is carried from one frame to the next
 //! (ADR-0060 §2).
 
+use crate::prelude::*;
 use trpg_content::CombatShot;
 use trpg_core::{Event, LeadProfile};
 

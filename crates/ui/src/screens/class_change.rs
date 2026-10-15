@@ -31,6 +31,7 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{
     ClassChangeBody, ClassChangeView, ColumnView, ColumnsView, QuestionView, SealView, StatRowView,
 };
@@ -638,7 +639,7 @@ impl Screen for ClassChangeScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

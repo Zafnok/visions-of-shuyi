@@ -2,6 +2,8 @@
 //! newest first, the charges left and the question before a rewind. Built
 //! by [`RewindScreen::view`](super::super::rewind::RewindScreen::view).
 
+use crate::prelude::*;
+
 /// The rewind screen's list.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RewindView {

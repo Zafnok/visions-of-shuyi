@@ -4,6 +4,7 @@
 //! [`SlotPickerScreen::view`](super::SlotPickerScreen::view)) and a skin
 //! paints it ([`super::glyph`] today); see ADR-0054.
 
+use crate::prelude::*;
 use trpg_core::GameMode;
 
 use crate::widgets::MenuView;

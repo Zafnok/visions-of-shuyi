@@ -3,6 +3,7 @@
 //! [`progress::view`](super::super::progress::view); the battle screen,
 //! the class change and the results screen show it.
 
+use crate::prelude::*;
 use trpg_core::StatValue;
 
 use crate::tips::view::FaceView;

@@ -3,8 +3,9 @@
 //! choice is open, which music the script asked for); the dialogue screen
 //! (ticket 0704) draws its [`View`] and asks for the music.
 
-use std::borrow::Cow;
-use std::sync::Arc;
+use crate::prelude::*;
+use alloc::borrow::Cow;
+use alloc::sync::Arc;
 
 use trpg_content::{ChoiceOption, LineId, MusicLine, Names, Present, Scene, Side, Step};
 use trpg_core::{CharacterId, LeadProfile};

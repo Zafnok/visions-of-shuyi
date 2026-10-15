@@ -7,7 +7,8 @@
 //! and the end-turn prompt
 //! (`docs/design/turn-structure.md`).
 
-use std::fmt::Display;
+use crate::prelude::*;
+use core::fmt::Display;
 
 use trpg_core::{BattleState, Faction, Objective, Phase, Turn, UnitId};
 

@@ -10,6 +10,7 @@
 //! heading, a menu and a line explaining each choice), so the mode screen's
 //! skin, [`glyph::paint`], draws it.
 
+use crate::prelude::*;
 use trpg_core::TutorialLevel;
 
 use crate::glyph_buffer::GlyphBuffer;
@@ -124,7 +125,7 @@ impl Screen for FamiliarityScreen {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

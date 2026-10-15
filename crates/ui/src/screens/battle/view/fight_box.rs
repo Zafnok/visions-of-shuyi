@@ -2,6 +2,7 @@
 //! with combat animations off, both combatants and the current strike's
 //! result. Built by [`playback::box_view`](super::super::playback::box_view).
 
+use crate::prelude::*;
 use trpg_core::{Faction, StatValue};
 
 /// The fight box.

@@ -3,6 +3,7 @@
 //! each side's total, as numbers and flags. Built by
 //! [`forecast::view`](super::super::forecast::view).
 
+use crate::prelude::*;
 use trpg_core::{Faction, Side, StatValue};
 
 /// The attack forecast, filling the side panel while a target is aimed.

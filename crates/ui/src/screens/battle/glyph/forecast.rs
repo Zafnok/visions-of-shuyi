@@ -6,6 +6,7 @@
 //! effective one, a skull on the kill and the strikes after it dimmed;
 //! then the totals and the notes.
 
+use crate::prelude::*;
 use trpg_core::{Side, StatValue};
 
 use super::TEXT_X;

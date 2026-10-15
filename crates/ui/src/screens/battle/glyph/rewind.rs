@@ -7,6 +7,7 @@
 use super::{TEXT_W, TEXT_X};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::SIDE_PANEL;
 use crate::screens::battle::view::RewindView;
@@ -82,7 +83,7 @@ fn wrap(line: &str) -> Vec<String> {
     for word in line.split(' ') {
         let len = current.chars().count();
         if len > 0 && len + 1 + word.chars().count() > TEXT_W {
-            lines.push(std::mem::replace(
+            lines.push(core::mem::replace(
                 &mut current,
                 format!("{WRAP_INDENT}{word}"),
             ));

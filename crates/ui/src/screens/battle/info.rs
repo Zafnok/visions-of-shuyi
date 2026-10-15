@@ -6,6 +6,7 @@
 //! (`Fire  Weak`, ticket 0410). [`view`] says what it shows; the battle
 //! skin paints it (ADR-0054).
 
+use crate::prelude::*;
 use trpg_core::skill::effect_bonuses;
 use trpg_core::{
     Affinity, BattleState, EffectSource, Element, StatKind, Stats, TimedEffect, Unit, UnitTags,
@@ -78,7 +79,7 @@ pub fn bonus_text(words: Words<'_>, bonus: &Stats) -> String {
 }
 
 /// A class and a level on one line: `Knight  Lv 3`.
-pub fn class_level(words: Words<'_>, class: &str, level: impl std::fmt::Display) -> String {
+pub fn class_level(words: Words<'_>, class: &str, level: impl core::fmt::Display) -> String {
     words.text_with(
         "battle.class_level",
         &[("class", &class), ("level", &level)],

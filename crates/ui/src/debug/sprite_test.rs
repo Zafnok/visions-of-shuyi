@@ -3,6 +3,7 @@
 //! [`Sprite`] can be, for checking that a renderer draws them right
 //! (ADR-0038).
 
+use crate::prelude::*;
 use trpg_content::bundle::display_path;
 use trpg_content::image::TEST_CARD_PATH;
 

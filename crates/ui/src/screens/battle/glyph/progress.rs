@@ -9,6 +9,7 @@ use super::fight_box::BOX;
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::portrait::draw_portrait;
+use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
 use crate::screens::battle::progress::stat_row_parts;

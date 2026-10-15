@@ -7,6 +7,7 @@
 
 pub mod glyph;
 
+use crate::prelude::*;
 use trpg_content::{LineId, Side};
 use trpg_core::LEAD_ID;
 

@@ -3,7 +3,8 @@
 //! and zoomed in whole steps, with a caption and a text box over it. For
 //! checking by eye that a renderer keeps the scene sharp and seamless.
 
-use std::rc::Rc;
+use crate::prelude::*;
+use alloc::rc::Rc;
 
 use trpg_content::bundle::display_path;
 use trpg_core::Pos;
