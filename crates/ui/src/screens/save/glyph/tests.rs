@@ -1,5 +1,5 @@
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::screen::tests::ctx;
 use crate::widgets::{MenuItemView, MenuView};
 use trpg_core::GameMode;
@@ -7,7 +7,7 @@ use trpg_core::GameMode;
 /// A buffer full of a colour no screen uses, to see what is left unpainted.
 fn stale(c: &Ctx) -> GlyphBuffer {
     let enemy = c.palette.get(UiColor::Enemy);
-    GlyphBuffer::new(CONSOLE_W, CONSOLE_H, Cell::new('x', enemy, enemy))
+    GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new('x', enemy, enemy))
 }
 
 fn row(buf: &GlyphBuffer, y: i32) -> String {
@@ -20,8 +20,8 @@ fn shows(buf: &GlyphBuffer, text: &str) -> bool {
 }
 
 fn assert_all_painted(buf: &GlyphBuffer) {
-    let left = (0..i32::from(CONSOLE_H))
-        .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+    let left = (0..i32::from(ConsoleSpec::PC.rows))
+        .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
         .filter(|&(x, y)| buf.get(x, y).is_some_and(|c| c.glyph == 'x'))
         .count();
     assert_eq!(left, 0, "{left} stale cells");
@@ -97,7 +97,10 @@ fn the_prompt_is_a_question_a_menu_and_a_help_line() {
     assert_eq!(row(&buf, QUESTION_ROW).trim(), "SAVE?");
     assert_eq!(row(&buf, MENU_ROW + 1).trim(), "│ Yes │");
     assert_eq!(row(&buf, MENU_ROW + 2).trim(), "│ No  │");
-    assert_eq!(row(&buf, i32::from(CONSOLE_H) - 1).trim(), "help");
+    assert_eq!(
+        row(&buf, i32::from(ConsoleSpec::PC.rows) - 1).trim(),
+        "help"
+    );
 }
 
 #[test]
@@ -121,7 +124,10 @@ fn the_panel_has_the_title_range_headings_and_a_row_per_slot() {
         assert!(second.contains(part), "{part:?} not in {second:?}");
     }
     assert!(row(&buf, FIRST_ROW + 2).contains("Broken"));
-    assert_eq!(row(&buf, i32::from(CONSOLE_H) - 1).trim(), "help");
+    assert_eq!(
+        row(&buf, i32::from(ConsoleSpec::PC.rows) - 1).trim(),
+        "help"
+    );
 }
 
 /// The columns line up with their headings: the playtimes end where the
@@ -223,8 +229,8 @@ fn the_overwrite_question_is_a_double_box_in_the_middle() {
     assert!(shows(&buf, "f yes / d no"));
     // Centred, with a double border: its width is the question plus 4.
     let w = i32::try_from("Overwrite slot 02?".chars().count()).unwrap() + 4;
-    let top = (i32::from(CONSOLE_H) - OVERWRITE_H) / 2;
-    let left = (i32::from(CONSOLE_W) - w) / 2;
+    let top = (i32::from(ConsoleSpec::PC.rows) - OVERWRITE_H) / 2;
+    let left = (i32::from(ConsoleSpec::PC.cols) - w) / 2;
     assert_eq!(buf.get(left, top).unwrap().glyph, '╔');
     assert_eq!(
         buf.get(left + w - 1, top + OVERWRITE_H - 1).unwrap().glyph,

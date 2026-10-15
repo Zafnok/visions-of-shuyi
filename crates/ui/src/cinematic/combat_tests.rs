@@ -8,7 +8,7 @@ use insta::assert_snapshot;
 use trpg_core::{Event, Faction, Side, UnitId};
 
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::screen::tests::ctx;
 use crate::screens::battle::playback::{Playback, TIMINGS};
 
@@ -160,7 +160,7 @@ fn a_fight_the_rules_no_longer_allow_is_blank() {
     assert_eq!(player.stage(&ctx, 0.5), None);
     let p = &ctx.palette;
     let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     player.draw(&ctx, 0.5, 1.0, &mut buf);
     assert!(buf.sprites().is_empty());
     assert_eq!(buf.get(50, 10), Some(&blank));
@@ -172,14 +172,14 @@ fn a_frame_of_the_fight() {
     let player = player(&ctx);
     let p = &ctx.palette;
     let stale = Cell::new('x', p.get(UiColor::Enemy), p.get(UiColor::PanelBg));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     // The lead's first strike has landed: its result over the brigand.
     player.draw(&ctx, 0.9, 1.0, &mut buf);
     let view = player.stage(&ctx, 0.9).unwrap();
     assert_eq!(view.result.as_ref().map(|r| r.0), Some(1));
     // Painted as the battle paints its stage, the help bar's rows black.
     let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
-    let mut battle = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut battle = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     stage::glyph::paint(&ctx, &view, &mut battle);
     assert_eq!(buf, battle);
     assert_snapshot!("combat_first_strike", buf.to_snapshot(&ctx.palette));

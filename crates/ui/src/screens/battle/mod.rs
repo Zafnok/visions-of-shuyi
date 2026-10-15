@@ -2490,7 +2490,7 @@ mod tests {
 
     use super::testing::{battle, vaulted, wait};
     use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::harness::Harness;
     use crate::map_view::CursorStyle;
     use crate::screen::tests::ctx;
@@ -2501,7 +2501,7 @@ mod tests {
 
     fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
         let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
         screen.draw(c, &mut buf);
         buf
     }
@@ -2989,8 +2989,8 @@ mod tests {
         let c = ctx();
         let buf = render(&quick(), &c);
         let stale = Rgb::new(1, 2, 3);
-        for y in 0..i32::from(CONSOLE_H) {
-            for x in 0..i32::from(CONSOLE_W) {
+        for y in 0..i32::from(ConsoleSpec::PC.rows) {
+            for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 let cell = buf.get(x, y).unwrap();
                 assert!(cell.fg != stale && cell.bg != stale, "({x}, {y})");
             }

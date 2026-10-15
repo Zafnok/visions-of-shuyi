@@ -49,7 +49,7 @@ pub fn paint(ctx: &Ctx, view: &ModeSelectView, buf: &mut GlyphBuffer) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::{CONSOLE_H, CONSOLE_W};
+    use crate::console::ConsoleSpec;
     use crate::screen::tests::ctx;
     use crate::screens::mode_select::view::ModeLineView;
     use crate::widgets::{MenuItemView, MenuView};
@@ -92,7 +92,7 @@ mod tests {
             c.palette.get(UiColor::Enemy),
             c.palette.get(UiColor::Enemy),
         );
-        let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
         paint(&c, &view(), &mut buf);
         assert_eq!(row(&buf, HEADING_ROW), "PICK");
         assert_eq!(row(&buf, MENU_ROW + 1), "│ Classic │");
@@ -100,11 +100,11 @@ mod tests {
         assert_eq!(row(&buf, TEXT_ROW), "first line");
         assert_eq!(row(&buf, TEXT_ROW + 1), "");
         assert_eq!(row(&buf, TEXT_ROW + 2), "second line");
-        assert_eq!(row(&buf, i32::from(CONSOLE_H) - 1), "help");
+        assert_eq!(row(&buf, i32::from(ConsoleSpec::PC.rows) - 1), "help");
         // Nothing of the buffer's old contents is left.
         assert!(
-            (0..i32::from(CONSOLE_H))
-                .flat_map(|y| (0..i32::from(CONSOLE_W)).map(move |x| (x, y)))
+            (0..i32::from(ConsoleSpec::PC.rows))
+                .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
                 .all(|(x, y)| buf.get(x, y) != Some(&stale))
         );
     }
@@ -112,9 +112,8 @@ mod tests {
     #[test]
     fn the_focused_modes_line_is_brighter() {
         let c = ctx();
-        let mut buf = GlyphBuffer::new(
-            CONSOLE_W,
-            CONSOLE_H,
+        let mut buf = GlyphBuffer::with_spec(
+            ConsoleSpec::PC,
             Cell::new(
                 ' ',
                 c.palette.get(UiColor::Text),

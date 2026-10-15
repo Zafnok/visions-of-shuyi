@@ -5,9 +5,8 @@
 
 use trpg_core::StatValue;
 
-use super::TILE_W_CELLS;
+use super::{CELL_PX, TILE_W_CELLS};
 use crate::color::{Palette, UiColor};
-use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, Overlay, Rect};
 use crate::map_view::scene::UnitView;
 use crate::screens::battle::units::{faction_color, hp_fill};
@@ -92,8 +91,8 @@ pub fn draw_unit(buf: &mut GlyphBuffer, palette: &Palette, unit: &UnitView, x: i
         buf.set(x + i, y, Cell::new(glyph, fg, bg));
     }
     let (width, color) = hp_bar(unit.hp.0, unit.hp.1);
-    let px = x * i32::from(CELL_W_PX) + HP_BAR_INSET;
-    let py = (y + 1) * i32::from(CELL_H_PX) - HP_BAR_H;
+    let px = x * CELL_PX.0 + HP_BAR_INSET;
+    let py = (y + 1) * CELL_PX.1 - HP_BAR_H;
     let bar = |bx: i32, w: i32, c: UiColor| {
         let color = palette.get(c).lerp(tile_bg, k);
         Overlay::new(Rect::new(bx, py, w, HP_BAR_H), color, Layer::Over)
@@ -180,7 +179,7 @@ mod tests {
 
     #[test]
     fn hp_bar_spans_the_tile_less_a_pixel_each_side() {
-        let tile = TILE_W_CELLS * i32::from(CELL_W_PX);
+        let tile = TILE_W_CELLS * CELL_PX.0;
         assert_eq!(HP_BAR_INSET, 1);
         assert_eq!(HP_BAR_W, tile - 2 * HP_BAR_INSET);
         assert_eq!(HP_BAR_W, 14);

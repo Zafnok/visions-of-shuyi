@@ -13,7 +13,7 @@ use std::collections::{HashMap, HashSet};
 use macroquad::prelude::*;
 use trpg_content::font::{AtlasRect, FALLBACK_GLYPH};
 use trpg_content::{FontAtlasDef, ImageId, ImageTable, Light, bundle};
-use trpg_ui::console::{CELL_H_PX, CELL_W_PX, Layout, layout};
+use trpg_ui::console::{Layout, layout};
 use trpg_ui::{Backdrop, GlyphBuffer, Item, Layer, Paint, Rgb, Sprite};
 
 /// The colour of what is missing: the fallback glyph drawn for a glyph the
@@ -113,7 +113,7 @@ impl Renderer {
         // Rounded: logical size × DPI can land a hair under the real pixel
         // count (913.714 × 1.75 = 1599.99…), which would drop a whole scale step.
         let window_h = (screen_height() * dpi).round();
-        let fit = layout((screen_width() * dpi).round(), window_h);
+        let fit = layout(buf.spec(), (screen_width() * dpi).round(), window_h);
         #[allow(clippy::cast_precision_loss)] // scale is small
         let scale = fit.scale as f32 / dpi;
         let (offset_x, offset_y) = (fit.offset_x / dpi, fit.offset_y / dpi);
@@ -121,8 +121,8 @@ impl Renderer {
         draw_rectangle(
             offset_x,
             offset_y,
-            f32::from(buf.width()) * f32::from(CELL_W_PX) * scale,
-            f32::from(buf.height()) * f32::from(CELL_H_PX) * scale,
+            f32::from(buf.width()) * f32::from(buf.spec().cell_w) * scale,
+            f32::from(buf.height()) * f32::from(buf.spec().cell_h) * scale,
             color(self.clear),
         );
         if let Some(backdrop) = buf.backdrop() {
@@ -179,8 +179,8 @@ impl Renderer {
     /// items.
     fn draw_layers(&mut self, buf: &GlyphBuffer, origin: (f32, f32), scale: f32, fills: Fills) {
         let (offset_x, offset_y) = origin;
-        let cell_w = f32::from(CELL_W_PX) * scale;
-        let cell_h = f32::from(CELL_H_PX) * scale;
+        let cell_w = f32::from(buf.spec().cell_w) * scale;
+        let cell_h = f32::from(buf.spec().cell_h) * scale;
         let cells = || {
             (0..i32::from(buf.height())).flat_map(move |y| {
                 (0..i32::from(buf.width())).filter_map(move |x| {

@@ -7,7 +7,7 @@
 use std::rc::Rc;
 
 use super::{GlyphBuffer, PxRect, Rect};
-use crate::console::{CELL_H_PX, CELL_W_PX};
+use crate::console::ConsoleSpec;
 
 /// The biggest zoom: whole steps 1× to 4× only
 /// (`docs/design/title-screen.md`, *Intro cinematic*).
@@ -17,18 +17,28 @@ pub const MAX_ZOOM: u8 = 4;
 #[derive(Clone, PartialEq, Debug)]
 pub struct Backdrop {
     scene: Rc<GlyphBuffer>,
+    /// The console of the buffer it is shown in, whose cells `clip` counts.
+    console: ConsoleSpec,
     clip: Rect,
     origin_px: (f32, f32),
     zoom: u8,
 }
 
 impl Backdrop {
-    /// `scene` behind the cells of `clip`. A zoom outside 1 to
-    /// [`MAX_ZOOM`] is clamped; an origin that isn't a number counts as 0.
-    pub(super) fn new(scene: Rc<GlyphBuffer>, clip: Rect, origin_px: (f32, f32), zoom: u8) -> Self {
+    /// `scene` behind the cells of `clip` of a `console` buffer. A zoom
+    /// outside 1 to [`MAX_ZOOM`] is clamped; an origin that isn't a number
+    /// counts as 0.
+    pub(super) fn new(
+        scene: Rc<GlyphBuffer>,
+        console: ConsoleSpec,
+        clip: Rect,
+        origin_px: (f32, f32),
+        zoom: u8,
+    ) -> Self {
         let finite = |v: f32| if v.is_finite() { v } else { 0.0 };
         Self {
             scene,
+            console,
             clip,
             origin_px: (finite(origin_px.0), finite(origin_px.1)),
             zoom: zoom.clamp(1, MAX_ZOOM),
@@ -56,7 +66,7 @@ impl Backdrop {
 
     /// The window in console pixels.
     pub fn clip_px(&self) -> PxRect {
-        let (cw, ch) = (i32::from(CELL_W_PX), i32::from(CELL_H_PX));
+        let (cw, ch) = self.console.cell_px();
         let Rect { x, y, w, h } = self.clip;
         Rect::new(x * cw, y * ch, w * cw, h * ch)
     }

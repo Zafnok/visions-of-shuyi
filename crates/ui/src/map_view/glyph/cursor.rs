@@ -2,9 +2,8 @@
 //! around the tile, or a glow on it.
 
 use super::units::HP_BAR_H;
-use super::{Layout, TILE_W_CELLS, px_rect};
+use super::{CELL_PX, Layout, TILE_W_CELLS, px_rect};
 use crate::color::{Palette, UiColor};
-use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, Rect};
 use crate::map_view::scene::{CursorStyle, CursorView};
 
@@ -54,7 +53,7 @@ pub fn draw_cursor(
 /// The eight 1 px arms of the corner marks around the tile whose left cell
 /// is `(x, y)`, each `arm` px long, in console pixels.
 fn corner_arms(x: i32, y: i32, arm: i32) -> [Rect; 8] {
-    let (cw, ch) = (i32::from(CELL_W_PX), i32::from(CELL_H_PX));
+    let (cw, ch) = CELL_PX;
     // Left arms in the left neighbour's last (always blank) pixel column,
     // right arms in this tile's last one; top arms on the tile's first row,
     // bottom arms on the row above the 2 px HP bar.
@@ -276,7 +275,7 @@ mod tests {
                     prop_assert_eq!((a.glyph, a.fg), (b.glyph, b.fg));
                 }
             }
-            let (cw, ch) = (i32::from(CELL_W_PX), i32::from(CELL_H_PX));
+            let (cw, ch) = CELL_PX;
             for r in rects(&buf) {
                 for py in r.y..r.y + r.h {
                     for px in r.x..r.x + r.w {

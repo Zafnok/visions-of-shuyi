@@ -4,8 +4,8 @@ use std::rc::Rc;
 
 use trpg_core::Pos;
 
+use super::grid::CELL_PX;
 use super::scene::MapScene;
-use crate::console::{CELL_H_PX, CELL_W_PX};
 use crate::glyph_buffer::{GlyphBuffer, PxRect, Rect};
 use crate::screen::Ctx;
 use crate::screens::battle::walk::{HELD_WALK_TILES_PER_S, WALK_TILES_PER_S};
@@ -67,7 +67,7 @@ pub trait MapSkin: std::fmt::Debug {
     /// The cells [`tile_px`](Self::tile_px) touches.
     fn tile_cells(&self, scene: &MapScene, area: Rect, tile: Pos) -> Option<Rect> {
         let px = self.tile_px(scene, area, tile)?;
-        let (cw, ch) = (i32::from(CELL_W_PX), i32::from(CELL_H_PX));
+        let (cw, ch) = CELL_PX;
         let (x, y) = (px.x.div_euclid(cw), px.y.div_euclid(ch));
         let right = (px.x + px.w + cw - 1).div_euclid(cw);
         let bottom = (px.y + px.h + ch - 1).div_euclid(ch);

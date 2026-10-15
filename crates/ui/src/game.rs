@@ -7,7 +7,6 @@ use trpg_core::{LeadGender, LeadProfile};
 
 use crate::audio::{AudioRequest, MusicClock, MusicCommand, MusicState};
 use crate::color::UiColor;
-use crate::console::{CONSOLE_H, CONSOLE_W};
 use crate::debug::{self, DebugMenuScreen, ScenePreviewScreen};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::{Action, Button, Chord, InputState, Key, PadId, PadKind, PadState, Pads};
@@ -158,6 +157,7 @@ impl Game {
 
     fn with_stack(ctx: Ctx, stack: ScreenStack) -> Self {
         let input = InputState::new(ctx.keymap.clone());
+        let console = ctx.console;
         let blank = Cell::new(
             ' ',
             ctx.palette.get(UiColor::Text),
@@ -169,7 +169,7 @@ impl Game {
             stack,
             input,
             ctx,
-            buffer: GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank),
+            buffer: GlyphBuffer::with_spec(console, blank),
             quit: false,
             music: MusicState::new(fade_secs),
             audio_out: Vec::new(),
@@ -427,10 +427,7 @@ mod tests {
             g.buffer().clone()
         };
         assert_eq!(game.buffer(), &expected);
-        assert_eq!(
-            (game.buffer().width(), game.buffer().height()),
-            (CONSOLE_W, CONSOLE_H)
-        );
+        assert_eq!(game.buffer().spec(), crate::ConsoleSpec::PC);
     }
 
     fn first_launch() -> Ctx {

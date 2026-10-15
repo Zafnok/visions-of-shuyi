@@ -12,7 +12,7 @@
 
 use super::view::{FULL, GameOverView, ToBeContinuedView};
 use crate::color::UiColor;
-use crate::console::{CELL_H_PX, CELL_W_PX, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, Paint, PxRect, Sprite};
 use crate::screen::Ctx;
 use crate::screens::title::glyph::{LOGO_SCALE, logo_sprite};
@@ -61,10 +61,10 @@ pub fn words_sprite(image: trpg_content::ImageId, size: (u32, u32)) -> Sprite {
         i32::try_from(size.0).unwrap_or(0),
         i32::try_from(size.1).unwrap_or(0),
     );
-    let console_px = i32::from(CONSOLE_W) * i32::from(CELL_W_PX);
+    let console_px = ConsoleSpec::PC.px().0;
     let dest = PxRect::new(
         (console_px - w * LOGO_SCALE) / 2,
-        WORDS_ROW * i32::from(CELL_H_PX),
+        WORDS_ROW * i32::from(ConsoleSpec::PC.cell_h),
         w * LOGO_SCALE,
         h * LOGO_SCALE,
     );
@@ -141,7 +141,7 @@ pub fn paint_to_be_continued(ctx: &Ctx, view: &ToBeContinuedView, buf: &mut Glyp
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::CONSOLE_H;
+    use crate::console::ConsoleSpec;
     use crate::screen::tests::ctx;
     use crate::widgets::{MenuItemView, MenuView};
 
@@ -162,7 +162,7 @@ mod tests {
     }
 
     fn blank(c: &Ctx) -> GlyphBuffer {
-        GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale(c))
+        GlyphBuffer::with_spec(ConsoleSpec::PC, stale(c))
     }
 
     /// Game Over at `progress`, with its menu and help once it is over.
@@ -228,20 +228,23 @@ mod tests {
             PxRect::new(360, 304, 80, 32)
         );
         // The menu under the words, clear of them; the help at the bottom.
-        assert!(gold.dest.y + gold.dest.h <= MENU_ROW * i32::from(CELL_H_PX));
+        assert!(gold.dest.y + gold.dest.h <= MENU_ROW * i32::from(ConsoleSpec::PC.cell_h));
         assert_eq!(row(&buf, MENU_ROW), "┌───────┐");
         assert_eq!(row(&buf, MENU_ROW + 1), "│ Retry │");
         assert_eq!(row(&buf, MENU_ROW + 2), "│ Title │");
-        let x = (0..i32::from(CONSOLE_W))
+        let x = (0..i32::from(ConsoleSpec::PC.cols))
             .find(|&x| buf.get(x, MENU_ROW).is_some_and(|c| c.glyph == '┌'))
             .unwrap();
-        assert_eq!(x, (i32::from(CONSOLE_W) - 9) / 2);
-        assert_eq!(row(&buf, i32::from(CONSOLE_H) - 1), "help");
+        assert_eq!(x, (i32::from(ConsoleSpec::PC.cols) - 9) / 2);
+        assert_eq!(row(&buf, i32::from(ConsoleSpec::PC.rows) - 1), "help");
         // The words are a picture: the heading isn't printed as well.
-        assert!((0..i32::from(CONSOLE_H)).all(|y| !row(&buf, y).contains("OVER")));
+        assert!((0..i32::from(ConsoleSpec::PC.rows)).all(|y| !row(&buf, y).contains("OVER")));
         // Nothing of the buffer's old contents is left.
         let old = stale(&c);
-        assert!((0..i32::from(CONSOLE_H)).all(|y| (0..100).all(|x| buf.get(x, y) != Some(&old))));
+        assert!(
+            (0..i32::from(ConsoleSpec::PC.rows))
+                .all(|y| (0..100).all(|x| buf.get(x, y) != Some(&old)))
+        );
     }
 
     /// What is under the screen fades to black over the first 35% of the
@@ -268,7 +271,10 @@ mod tests {
             c.palette.get(UiColor::Black),
         );
         let buf = painted(&c, 90);
-        assert!((0..i32::from(CONSOLE_H)).all(|y| (0..100).all(|x| buf.get(x, y) == Some(&empty))));
+        assert!(
+            (0..i32::from(ConsoleSpec::PC.rows))
+                .all(|y| (0..100).all(|x| buf.get(x, y) == Some(&empty)))
+        );
     }
 
     /// The logo fades in from 30% to 70%, the words from 55% to 95%; the
@@ -288,7 +294,7 @@ mod tests {
         assert_eq!(pictures(&c, FULL), (Some(255), Some(255)));
         // Before the end there is no menu and no help line.
         let buf = painted(&c, 242);
-        assert!((0..i32::from(CONSOLE_H)).all(|y| row(&buf, y).is_empty()));
+        assert!((0..i32::from(ConsoleSpec::PC.rows)).all(|y| row(&buf, y).is_empty()));
     }
 
     /// With no picture of the words, the heading is printed in their
@@ -298,7 +304,7 @@ mod tests {
         let mut c = ctx();
         c.content.title.game_over = None;
         let gold = c.palette.get(UiColor::TextHighlight);
-        let at = (i32::from(CONSOLE_W) - 4) / 2;
+        let at = (i32::from(ConsoleSpec::PC.cols) - 4) / 2;
         let buf = painted(&c, FULL);
         assert_eq!(row(&buf, WORDS_ROW + 1), "OVER");
         assert_eq!(buf.get(at, WORDS_ROW + 1).unwrap().fg, gold);
@@ -321,13 +327,16 @@ mod tests {
         let mut buf = blank(&c);
         paint_to_be_continued(&c, &view, &mut buf);
         assert_eq!(row(&buf, HEADING_ROW), "TBC");
-        let x = (0..i32::from(CONSOLE_W))
+        let x = (0..i32::from(ConsoleSpec::PC.cols))
             .find(|&x| buf.get(x, HEADING_ROW).is_some_and(|c| c.glyph == 'T'))
             .unwrap();
-        assert_eq!(x, (i32::from(CONSOLE_W) - 3) / 2);
-        assert_eq!(row(&buf, i32::from(CONSOLE_H) - 1), "help");
+        assert_eq!(x, (i32::from(ConsoleSpec::PC.cols) - 3) / 2);
+        assert_eq!(row(&buf, i32::from(ConsoleSpec::PC.rows) - 1), "help");
         assert_eq!(buf.sprites(), []);
         let old = stale(&c);
-        assert!((0..i32::from(CONSOLE_H)).all(|y| (0..100).all(|x| buf.get(x, y) != Some(&old))));
+        assert!(
+            (0..i32::from(ConsoleSpec::PC.rows))
+                .all(|y| (0..100).all(|x| buf.get(x, y) != Some(&old)))
+        );
     }
 }

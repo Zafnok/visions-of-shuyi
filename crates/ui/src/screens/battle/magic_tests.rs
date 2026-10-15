@@ -26,7 +26,7 @@ use super::{BattleScreen, HealPopup, PopupKind, TERRAIN_FLASH_S, TerrainFlash, q
 use crate::FrameInput;
 use crate::audio::MenuSound;
 use crate::color::{Rgb, UiColor};
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::harness::Harness;
 use crate::input::Action;
@@ -83,7 +83,7 @@ fn wait(s: &mut BattleScreen, c: &mut Ctx, seconds: f32) {
 
 fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
     let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(c, &mut buf);
     buf
 }
@@ -99,7 +99,8 @@ fn text(buf: &GlyphBuffer, x: i32, y: i32, w: i32) -> String {
 
 /// Whether some row of `buf` shows `s`.
 fn shows(buf: &GlyphBuffer, s: &str) -> bool {
-    (0..i32::from(CONSOLE_H)).any(|y| text(buf, 0, y, i32::from(CONSOLE_W)).contains(s))
+    (0..i32::from(ConsoleSpec::PC.rows))
+        .any(|y| text(buf, 0, y, i32::from(ConsoleSpec::PC.cols)).contains(s))
 }
 
 /// The terrain the map shows on `(x, y)`: what a spell being aimed would
@@ -1192,8 +1193,8 @@ fn the_info_screen_marks_the_equipped_spell_and_lists_affinities() {
     step(&mut s, &mut c, &[Action::Info]);
     let buf = render(&s, &c);
     let row_of = |buf: &GlyphBuffer, what: &str| {
-        (0..i32::from(CONSOLE_H))
-            .map(|y| text(buf, 0, y, i32::from(CONSOLE_W)))
+        (0..i32::from(ConsoleSpec::PC.rows))
+            .map(|y| text(buf, 0, y, i32::from(ConsoleSpec::PC.cols)))
             .find(|row| row.contains(what))
             .unwrap_or_else(|| panic!("no {what}"))
     };
@@ -1653,7 +1654,7 @@ fn the_spell_lists_are_told_in_the_players_language() {
     let english = render(&s, &c);
     assert!(shows(&english, "Fire"));
     let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     let t = targeting(&s).forecast().expect("a forecast");
     super::forecast::draw_forecast(&mut buf, &c.palette, (s.state(), words), t);
     assert!(shows(&buf, "FIRE"));

@@ -5,10 +5,10 @@ type: infra
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 1030 — The console size is passed in (`ConsoleSpec`)
@@ -75,13 +75,13 @@ test) and move on.
 
 ## Acceptance criteria
 
-- [ ] No snapshot changes (`cargo insta` shows none).
-- [ ] `cargo xtask frame-png` renders the same PNG as before for one
+- [x] No snapshot changes (`cargo insta` shows none).
+- [x] `cargo xtask frame-png` renders the same PNG as before for one
       screen (compare bytes before and after; say which in the PR).
-- [ ] The 50 × 15 test passes.
-- [ ] `CONSOLE_W`/`CONSOLE_H`/`CELL_W_PX`/`CELL_H_PX` are gone outside
+- [x] The 50 × 15 test passes.
+- [x] `CONSOLE_W`/`CONSOLE_H`/`CELL_W_PX`/`CELL_H_PX` are gone outside
       `ConsoleSpec::PC` (grep in the PR).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -90,5 +90,45 @@ test) and move on.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done 2026-10-15.
+
+- `ConsoleSpec { cols, rows, cell_w, cell_h }` in `crates/ui/src/console.rs`
+  (re-exported as `trpg_ui::ConsoleSpec`), with `PC` (100 × 32 × 8 × 16),
+  `PLAYDATE` (50 × 15 × 8 × 16) and small helpers: `sized(cols, rows)`,
+  `cell_px()`, `px()`.
+- **The frame reads the spec.** `GlyphBuffer` keeps the spec it was made
+  with (`GlyphBuffer::with_spec`, `buf.spec()`); `width()`/`height()`,
+  `pixel_bounds`, cutting items under replaced cells and `blit` use it.
+  `GlyphBuffer::new(w, h, fill)` stays for small buffers and makes them
+  with `ConsoleSpec::PC`'s cells. `Backdrop` keeps its buffer's spec for
+  `clip_px`. `console::layout(spec, w, h)` letterboxes any spec. The
+  cinematic's map picture and pan framing read `ctx.console`; the portrait
+  fit reads `buf.spec()`. `app`'s renderer and `xtask frame-png` read the
+  buffer's spec.
+- **`Ctx::console`** holds the spec (`ConsoleSpec::PC` by default); `Game`
+  makes its frame from it, and `app` sets `ConsoleSpec::PC` explicitly at
+  startup. `frame-png` goes through the test `Harness`, whose `Ctx` has the
+  `PC` default, so it doesn't set it again.
+- **The skins keep the PC layout.** Pure layout helpers in the PC glyph
+  skins (title sparks and logo centring, the Game Over words, the forecast
+  skull, the battle stage, the debug screens' windows) read
+  `ConsoleSpec::PC`, because their rows and columns are the PC's. The map
+  skins share one constant, `map_view::grid::CELL_PX`, made from
+  `ConsoleSpec::PC`: their trait methods (`tile_px`, `tile_cells`) have no
+  buffer to ask. Code with a buffer that only needs its size reads the
+  buffer (`debug.rs`'s sample panels, the sprite test card).
+- The four constants are gone: `git grep -E
+  "CONSOLE_W|CONSOLE_H|CELL_W_PX|CELL_H_PX"` finds them only in this
+  ticket. Tests that made a 100 × 32 buffer now say
+  `GlyphBuffer::with_spec(ConsoleSpec::PC, …)`.
+- Tests: `a_playdate_console_is_50_by_15_cells_of_400_by_240_pixels` (text,
+  a sprite clipped at 400 × 240, a backdrop's window in cells and pixels)
+  and `every_pixel_rule_uses_the_specs_cell_size` (a 4 × 6 pixel cell, so
+  a mix-up with the PC's cells would fail) in
+  `glyph_buffer/sprite_tests.rs`; `the_playdate_console_fits_its_own_size`
+  in `console.rs`.
+- **No snapshot changed**, and `cargo xtask frame-png` rendered the title
+  (`--wait 2`) and the debug menu (`--keys F2 --wait 0.5`) to the same
+  bytes on `main` and on this branch (SHA-256 `d4a18324…` and `543d530d…`).
+- No ADR: ADR-0070 §6 already decided this; 1108 skips its step 1.
+- No gameplay rules decided. Nothing a player sees changes.

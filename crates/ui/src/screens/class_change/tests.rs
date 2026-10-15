@@ -6,7 +6,7 @@ use insta::assert_snapshot;
 use trpg_core::{ItemId, WeaponKind, WeaponRank};
 
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::screen::tests::ctx;
 use Action::{Cancel, Confirm, CursorLeft, CursorRight};
 
@@ -24,7 +24,7 @@ fn render(s: &ClassChangeScreen, c: &Ctx) -> GlyphBuffer {
         crate::color::Rgb::new(1, 2, 3),
         crate::color::Rgb::new(1, 2, 3),
     );
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, stale);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
     s.draw(c, &mut buf);
     buf
 }
@@ -45,7 +45,8 @@ fn cell(buf: &GlyphBuffer, slot: i32, row: i32) -> String {
 
 /// Whether some row of the screen contains `needle`.
 fn shows(buf: &GlyphBuffer, needle: &str) -> bool {
-    (0..i32::from(CONSOLE_H)).any(|y| text(buf, 0, y, i32::from(CONSOLE_W)).contains(needle))
+    (0..i32::from(ConsoleSpec::PC.rows))
+        .any(|y| text(buf, 0, y, i32::from(ConsoleSpec::PC.cols)).contains(needle))
 }
 
 fn classes(s: &ClassChangeScreen) -> Vec<&str> {

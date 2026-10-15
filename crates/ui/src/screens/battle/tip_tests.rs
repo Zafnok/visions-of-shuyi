@@ -9,7 +9,7 @@ use trpg_core::{Command, Event, Objective, Phase, StatGains, UnitId};
 use super::banner::PHASE_BANNER_S;
 use super::testing::{battle_with, skirmish, skirmish_charged, through_ai_phases};
 use super::*;
-use crate::console::{CONSOLE_H, CONSOLE_W};
+use crate::console::ConsoleSpec;
 use crate::input::Layout;
 use crate::screen::tests::ctx;
 use crate::storage::Storage;
@@ -28,7 +28,7 @@ fn quick() -> BattleScreen {
 
 fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
     let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-    let mut buf = GlyphBuffer::new(CONSOLE_W, CONSOLE_H, blank);
+    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     screen.draw(c, &mut buf);
     buf
 }
@@ -46,8 +46,8 @@ fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
 /// Whether some row of the rendered screen contains `text`.
 fn shows(s: &BattleScreen, c: &Ctx, text: &str) -> bool {
     let buf = render(s, c);
-    (0..i32::from(CONSOLE_H)).any(|y| {
-        let row: String = (0..i32::from(CONSOLE_W))
+    (0..i32::from(ConsoleSpec::PC.rows)).any(|y| {
+        let row: String = (0..i32::from(ConsoleSpec::PC.cols))
             .map(|x| buf.get(x, y).map_or(' ', |cell| cell.glyph))
             .collect();
         row.contains(text)

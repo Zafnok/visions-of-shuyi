@@ -4,6 +4,7 @@ use trpg_content::portrait::{Expression, FRAME_PX};
 
 use super::*;
 use crate::color::Rgb;
+use crate::console::ConsoleSpec;
 use crate::glyph_buffer::Cell;
 
 const BLANK: Cell = Cell::new(' ', Rgb::new(200, 200, 200), Rgb::new(0, 0, 0));
@@ -58,7 +59,10 @@ fn drawn(
 fn the_frame_is_what_content_checks_images_against() {
     let px = |cells: i32, cell: u16| u32::try_from(cells * i32::from(cell)).unwrap();
     assert_eq!(
-        (px(FRAME_CELLS.0, CELL_W_PX), px(FRAME_CELLS.1, CELL_H_PX)),
+        (
+            px(FRAME_CELLS.0, ConsoleSpec::PC.cell_w),
+            px(FRAME_CELLS.1, ConsoleSpec::PC.cell_h)
+        ),
         FRAME_PX
     );
 }
