@@ -4,15 +4,14 @@
 
 use insta::assert_snapshot;
 use trpg_core::{
-    BattleState, Command, Equipped, Event, Pos, StatValue, UnitAction, UnitId, forecast,
+    BattleState, Command, Equipped, Event, Pos, Side, StatValue, UnitAction, UnitId, forecast,
 };
 
 use super::BattleScreen;
-use super::forecast::{HP_ROW, LEFT_X, RIGHT_X, STRIKE_ROW};
 use super::playback::{Beat, Playback, TIMINGS};
 use super::progress::PROGRESS_TIMINGS;
 use super::testing::skirmish;
-use super::view::BattleView;
+use super::view::{BattleView, ForecastView, ProgressView};
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
 use crate::words::Words;
@@ -28,26 +27,25 @@ fn harness(brigand_hp: StatValue) -> Harness {
     Harness::with_screen(Box::new(BattleScreen::new(skirmish(&ctx(), brigand_hp))))
 }
 
-/// Cells `x..x + w` of row `y`.
-fn text(h: &Harness, x: i32, y: i32, w: i32) -> String {
-    let buf = h.game().buffer();
-    (x..x + w)
-        .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
-        .collect()
+/// The forecast on screen.
+fn shown_forecast(h: &Harness) -> ForecastView {
+    view(h).forecast.expect("a forecast")
 }
 
-/// Row `y`, trimmed.
-fn row(h: &Harness, y: i32) -> String {
-    text(h, 0, y, 100).trim().to_owned()
+/// The forecast's two sides' names: `Test Lord | Brigand`.
+fn names(h: &Harness) -> String {
+    let [a, b] = shown_forecast(h).sides;
+    format!("{} | {}", a.name, b.name)
 }
 
-/// The side panel's row `y`, inside its border, trimmed.
-fn panel(h: &Harness, y: i32) -> String {
-    text(h, 71, y, 28).trim().to_owned()
+/// What the forecast's two sides fight with: `Iron Sword | Iron Axe`.
+fn weapons(h: &Harness) -> String {
+    let [a, b] = shown_forecast(h).sides;
+    format!("{} | {}", a.weapon, b.weapon)
 }
 
 /// What the battle on `h` shows (ADR-0054).
-fn view(h: &Harness) -> BattleView<'_> {
+fn view(h: &Harness) -> BattleView {
     h.battle().expect("a battle").view(h.game().ctx())
 }
 
@@ -86,7 +84,7 @@ fn lord_on_brigand(brigand_hp: StatValue) -> Harness {
     let mut h = lord_menu(brigand_hp);
     // `Attack` opens the forecast on the raider; down goes to the brigand.
     h.keys("f Down");
-    assert_eq!(panel(&h, 2), "Test Lord     Brigand");
+    assert_eq!(names(&h), "Test Lord | Brigand");
     h
 }
 
@@ -143,16 +141,15 @@ fn attack_opens_the_forecast_swaps_the_weapons_and_cycles_targets_in_order() {
         help(&h),
         "Left/Right swap · Up/Down target · f attack · d back"
     );
-    assert_eq!(panel(&h, 2), "Test Lord     Raider");
-    assert_eq!(panel(&h, 3), "Iron Sword    Steel Axe");
+    assert_eq!(names(&h), "Test Lord | Raider");
+    assert_eq!(weapons(&h), "Iron Sword | Steel Axe");
     h.keys("Right");
-    assert_eq!(panel(&h, 3), "Steel Sword   Steel Axe");
-    assert_eq!(panel(&h, 2), "Test Lord     Raider");
+    assert_eq!(weapons(&h), "Steel Sword | Steel Axe");
+    assert_eq!(names(&h), "Test Lord | Raider");
     h.keys("Left");
-    assert_eq!(panel(&h, 3), "Iron Sword    Steel Axe");
+    assert_eq!(weapons(&h), "Iron Sword | Steel Axe");
     // No arts list beside the forecast.
-    let all = (0..30).map(|y| row(&h, y)).collect::<Vec<_>>().join(" ");
-    assert!(!all.contains("Flowing Cut"), "{all}");
+    assert!(!view(&h).shows("Flowing Cut"), "{:?}", view(&h).texts());
     for (keys, target) in [
         ("Down", "Brigand"),
         ("Down", "Raider"),
@@ -161,7 +158,7 @@ fn attack_opens_the_forecast_swaps_the_weapons_and_cycles_targets_in_order() {
         ("a", "Brigand"),
     ] {
         h.keys(keys);
-        assert_eq!(panel(&h, 2), format!("Test Lord     {target}"), "{keys}");
+        assert_eq!(names(&h), format!("Test Lord | {target}"), "{keys}");
     }
     // Back to the menu, then the path.
     h.keys("d");
@@ -198,28 +195,38 @@ fn the_forecast_shows_cores_numbers() {
     let fc = forecast(&rules, &lord_in, &brigand_in, 1).expect("in range");
     let counter = fc.defender.expect("the brigand counters");
     // Hit and crit, both sides.
-    let at = |x, y, w| text(&h, x, y, w).trim().to_owned();
-    assert_eq!(at(LEFT_X + 5, HP_ROW + 1, 3), fc.attacker.hit.to_string());
-    assert_eq!(at(LEFT_X + 5, HP_ROW + 2, 3), fc.attacker.crit.to_string());
-    assert_eq!(at(RIGHT_X + 5, HP_ROW + 1, 3), counter.hit.to_string());
-    assert_eq!(at(RIGHT_X + 5, HP_ROW + 2, 3), counter.crit.to_string());
+    let shown = shown_forecast(&h);
+    let [lord_side, brigand_side] = &shown.sides;
+    assert_eq!(
+        (lord_side.hit, lord_side.crit),
+        (Some(fc.attacker.hit), Some(fc.attacker.crit))
+    );
+    assert_eq!(
+        (brigand_side.hit, brigand_side.crit),
+        (Some(counter.hit), Some(counter.crit))
+    );
     // The lord doubles with a sword: 1st strike, the counter, the
     // follow-up with the sword bonus.
     assert_eq!((fc.attacker.strikes, counter.strikes), (2, 1));
     assert!(fc.attacker.followup_damage > fc.attacker.damage);
     let dmg = |d: StatValue| format!("{d} dmg");
-    assert_eq!(at(LEFT_X, STRIKE_ROW, 7), dmg(fc.attacker.damage));
-    assert_eq!(at(RIGHT_X + 2, STRIKE_ROW + 1, 7), dmg(counter.damage));
+    let strikes: Vec<_> = shown
+        .strikes
+        .iter()
+        .map(|s| (s.by, s.text.trim()))
+        .collect();
     assert_eq!(
-        at(LEFT_X, STRIKE_ROW + 2, 7),
-        dmg(fc.attacker.followup_damage)
+        strikes,
+        [
+            (Side::Attacker, dmg(fc.attacker.damage).as_str()),
+            (Side::Defender, dmg(counter.damage).as_str()),
+            (Side::Attacker, dmg(fc.attacker.followup_damage).as_str()),
+        ]
     );
     let total = fc.attacker.damage + fc.attacker.followup_damage;
-    assert_eq!(at(LEFT_X, STRIKE_ROW + 4, 7), format!("{total} ×2"));
-    assert_eq!(
-        at(RIGHT_X + 2, STRIKE_ROW + 4, 7),
-        format!("{} ×1", counter.damage)
-    );
+    let totals = |s: &super::view::ForecastSideView| s.total.map(|t| (t.damage, t.strikes));
+    assert_eq!(totals(lord_side), Some((total, 2)));
+    assert_eq!(totals(brigand_side), Some((counter.damage, 1)));
 }
 
 /// The lord targeting the brigand: both sides strike, the lord twice.
@@ -235,8 +242,8 @@ fn forecast_with_no_counter_and_a_kill_snapshot() {
     let mut h = harness(12);
     // To the archer at (8, 4); it attacks from where it stands.
     h.keys("Right Right Down Down f f f");
-    assert_eq!(panel(&h, 2), "Test Archer   Brigand");
-    assert_eq!(text(&h, RIGHT_X + 2, STRIKE_ROW, 10), "no counter");
+    assert_eq!(names(&h), "Test Archer | Brigand");
+    assert_eq!(shown_forecast(&h).no_counter.as_deref(), Some("no counter"));
     // One bow: nothing to swap, every cursor key picks the target.
     assert_eq!(help(&h), "arrows next target · f attack · d back");
     assert_snapshot!(h.snapshot());
@@ -269,7 +276,11 @@ fn after_the_playback_the_defenders_hp_is_the_battles() {
     h.wait(expected_playback(20).total());
     // The lord's EXP bar, then browsing again, the cursor on the brigand.
     assert_eq!(help(&h), "f skip · hold f fast");
-    assert!(row(&h, 2).contains("Test Lord    EXP"), "{}", row(&h, 2));
+    let progress = view(&h).progress;
+    assert!(
+        matches!(&progress, Some(ProgressView::Exp(e)) if e.name == "Test Lord"),
+        "{progress:?}"
+    );
     h.wait(EXP_S);
     assert_eq!(
         help(&h),
@@ -374,11 +385,11 @@ fn pointing_at_an_enemy_walks_there_and_opens_its_forecast() {
         help(&h),
         "Left/Right swap · Up/Down target · f attack · d back"
     );
-    assert_eq!(panel(&h, 2), "Test Lord     Raider");
-    assert_eq!(panel(&h, 3), "Iron Sword    Steel Axe");
+    assert_eq!(names(&h), "Test Lord | Raider");
+    assert_eq!(weapons(&h), "Iron Sword | Steel Axe");
     h.keys("Right");
-    assert_eq!(panel(&h, 3), "Steel Sword   Steel Axe");
-    assert_eq!(panel(&h, 2), "Test Lord     Raider");
+    assert_eq!(weapons(&h), "Steel Sword | Steel Axe");
+    assert_eq!(names(&h), "Test Lord | Raider");
     // Cancel goes back through the menu to the path, the cursor on the
     // lord's tile.
     h.keys("d d");

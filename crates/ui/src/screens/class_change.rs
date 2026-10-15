@@ -476,7 +476,10 @@ impl ClassChangeScreen {
         let body = match &self.stage {
             Stage::Choosing => ClassChangeBody::Columns(Box::new(self.columns_view(ctx, false))),
             Stage::Confirming => ClassChangeBody::Columns(Box::new(self.columns_view(ctx, true))),
-            Stage::Result(pages) => ClassChangeBody::Result(Box::new(pages.clone())),
+            Stage::Result(pages) => {
+                let faces = (&ctx.content.portraits, &ctx.lead);
+                ClassChangeBody::Result(progress::view(ctx.words(), faces, pages).map(Box::new))
+            }
             Stage::Done => ClassChangeBody::Done,
         };
         ClassChangeView {

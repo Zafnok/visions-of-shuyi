@@ -211,7 +211,7 @@ fn the_question_is_a_box_in_the_middle_and_the_pages_replace_the_columns() {
 
 #[test]
 fn the_leads_promotion_page_shows_the_face_the_player_picked() {
-    use crate::screens::battle::progress::shows_face_of;
+    use crate::screens::battle::glyph::progress::shows_face_of;
     use trpg_core::CharacterId;
     use trpg_core::lead::{LEAD_ID, LeadGender, LeadProfile};
     for (gender, face) in [(LeadGender::Male, "lead_m"), (LeadGender::Female, "lead_f")] {

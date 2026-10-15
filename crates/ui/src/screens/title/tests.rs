@@ -554,8 +554,16 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("class_change.rs", include_str!("../class_change.rs")),
         ("battle/mod.rs", include_str!("../battle/mod.rs")),
     ];
-    // Logic with no screen of its own to draw: the battle screen's modes.
-    let drawless = [("battle/mode.rs", include_str!("../battle/mode.rs"))];
+    // Logic with no screen of its own to draw: the battle screen's modes
+    // and the parts of it with a view of their own.
+    let drawless = [
+        ("battle/mode.rs", include_str!("../battle/mode.rs")),
+        ("battle/forecast.rs", include_str!("../battle/forecast.rs")),
+        ("battle/info.rs", include_str!("../battle/info.rs")),
+        ("battle/playback.rs", include_str!("../battle/playback.rs")),
+        ("battle/progress.rs", include_str!("../battle/progress.rs")),
+        ("battle/rewind.rs", include_str!("../battle/rewind.rs")),
+    ];
     for (file, source) in sources.iter().chain(&drawless) {
         // A picture is placed by the skin too (the view names it).
         for name in ["UiColor", "Rect", "BoxStyle", "Cell", "draw_portrait"] {
@@ -574,6 +582,10 @@ fn the_logic_modules_name_no_cells_or_colours() {
             draws > 0 && paints == draws,
             "{file}'s draw doesn't paint its view"
         );
+    }
+    for (file, source) in drawless {
+        // Nothing of theirs draws: the battle skin paints their views.
+        assert!(!source.contains("GlyphBuffer"), "{file} draws");
     }
 }
 

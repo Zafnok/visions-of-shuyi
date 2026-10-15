@@ -7,6 +7,7 @@ use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{GameMode, LeadGender, LeadProfile, Phase, Pos, UnitId};
 
 use super::banner::{BannerKind, PHASE_BANNER_S};
+use super::info;
 use super::testing::wait;
 use super::tests::{frame, lord_menu, quick, step};
 use super::view::{
@@ -19,7 +20,7 @@ use crate::screen::tests::ctx;
 use crate::widgets::menu::Menu;
 
 /// The labels of the menu open, if any.
-fn menu_labels(view: &BattleView<'_>) -> Option<Vec<String>> {
+fn menu_labels(view: &BattleView) -> Option<Vec<String>> {
     let menu = view.menu.as_ref()?;
     Some(menu.menu.items.iter().map(|i| i.label.clone()).collect())
 }
@@ -43,9 +44,8 @@ fn browsing_shows_the_panel_the_toggles_and_the_help_and_nothing_over_the_map() 
     assert_eq!(view.banner, None);
     assert_eq!(view.tip, None);
     assert_eq!(view.message, None);
-    let old = view.old;
-    assert!(old.forecast.is_none() && old.info.is_none() && old.rewind.is_none());
-    assert!(old.fight_box.is_none() && old.progress.is_none());
+    assert!(view.forecast.is_none() && view.info.is_none() && view.rewind.is_none());
+    assert!(view.fight_box.is_none() && view.progress.is_none());
 }
 
 #[test]
@@ -233,9 +233,14 @@ fn the_info_screen_is_the_units_and_closes() {
     let mut c = ctx();
     let mut s = quick();
     step(&mut s, &mut c, &[Action::Info]);
-    assert_eq!(s.view(&c).old.info.map(|u| u.id), Some(UnitId(1)));
+    let info = s.view(&c).info.expect("the info screen");
+    assert_eq!(info.name, "Test Lord");
+    assert_eq!(
+        info,
+        info::view((s.state(), c.words()), s.state().unit(UnitId(1)).unwrap())
+    );
     step(&mut s, &mut c, &[Action::Cancel]);
-    assert!(s.view(&c).old.info.is_none());
+    assert!(s.view(&c).info.is_none());
 }
 
 #[test]
@@ -245,7 +250,7 @@ fn the_forecast_takes_the_panels_place_while_an_attack_is_aimed() {
     let view = |h: &Harness| {
         let s = h.battle().unwrap();
         let v = s.view(h.game().ctx());
-        (v.old.forecast.is_some(), v.panel.is_some())
+        (v.forecast.is_some(), v.panel.is_some())
     };
     // The lord moved a step right, its action menu open on `Attack`.
     h.keys("f Right f").wait(0.5);
@@ -262,13 +267,14 @@ fn the_rewind_screen_shows_only_the_map_its_list_and_the_help() {
     let mut s = quick();
     step(&mut s, &mut c, &[Action::Rewind]);
     let view = s.view(&c);
-    assert!(view.old.rewind.is_some());
+    let rewind = view.rewind.as_ref().expect("the rewind screen");
+    assert_eq!(rewind.title, "Rewind");
     assert_eq!(view.help, s.help(&c));
     assert_eq!((view.panel, view.status.as_str()), (None, ""));
     assert_eq!((view.menu, view.message), (None, None));
     step(&mut s, &mut c, &[Action::Cancel]);
     let view = s.view(&c);
-    assert!(view.old.rewind.is_none());
+    assert!(view.rewind.is_none());
     assert!(view.panel.is_some());
 }
 
@@ -293,4 +299,44 @@ fn the_battle_notes_show_at_the_start_with_their_units_and_close() {
     let view = s.view(&c);
     assert_eq!(view.notes, None);
     assert!(view.noted.is_empty());
+}
+
+#[test]
+fn without_the_stage_the_fight_box_plays_then_the_exp_bar_and_both_go() {
+    let mut c = ctx();
+    let mut s = BattleScreen::new(super::testing::skirmish(&c, 20));
+    let parts = |s: &BattleScreen, c: &Ctx| {
+        let v = s.view(c);
+        (v.fight_box, v.progress, v.stage.is_some())
+    };
+    // The lord a step right, `Attack`, the forecast on the raider: attack.
+    step(&mut s, &mut c, &[Action::Confirm, Action::CursorRight]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    frame(&mut s, &mut c, &[], 0.5, false);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::Combat(_)), "{:?}", s.mode());
+    // On the stage, no box; with combat animations off (turned off
+    // mid-fight here, as the playback isn't skipped then), the box.
+    let (fight_box, _, stage) = parts(&s, &c);
+    assert_eq!((fight_box, stage), (None, true));
+    c.change_settings(|set| set.combat_animations = false)
+        .unwrap();
+    s.show_fights = false;
+    let (fight_box, progress, stage) = parts(&s, &c);
+    let names = fight_box.map(|b| b.sides.map(|f| f.name));
+    assert_eq!(names, Some(["Test Lord".to_owned(), "Raider".to_owned()]));
+    assert_eq!((progress, stage), (None, false));
+    // The playback over: the lord's EXP bar instead.
+    while parts(&s, &c).0.is_some() {
+        frame(&mut s, &mut c, &[], 0.1, false);
+    }
+    let (_, progress, _) = parts(&s, &c);
+    let Some(super::view::ProgressView::Exp(bar)) = progress else {
+        panic!("the EXP bar: {progress:?}")
+    };
+    assert_eq!(bar.name, "Test Lord");
+    // Then it closes by itself.
+    frame(&mut s, &mut c, &[], 2.0, false);
+    assert_eq!(parts(&s, &c), (None, None, false));
 }

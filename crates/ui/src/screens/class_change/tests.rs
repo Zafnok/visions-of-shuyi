@@ -10,6 +10,7 @@ use super::*;
 use crate::console::ConsoleSpec;
 use crate::glyph_buffer::Cell;
 use crate::screen::tests::ctx;
+use crate::screens::battle::view::ProgressView;
 use Action::{Cancel, Confirm, CursorLeft, CursorRight};
 
 pub(super) fn demo(c: &Ctx, kind: ChangeKind) -> ClassChangeScreen {
@@ -272,12 +273,22 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     assert_eq!(page.gains.0, [7, 3, 0, 2, 4, 1, 2]);
     assert_eq!(page.character.as_deref(), Some("test_knight"));
     assert_eq!(s.help(&c), "f skip · hold f fast");
-    // The view holds the pages, and nothing else.
+    // The view holds the page on screen, and nothing else.
     let view = s.view(&c);
+    let faces = (&c.content.portraits, &c.lead);
+    let page = progress::view(c.words(), faces, s.progress().unwrap());
     assert_eq!(
         view.body,
-        ClassChangeBody::Result(Box::new(s.progress().unwrap().clone()))
+        ClassChangeBody::Result(page.clone().map(Box::new))
     );
+    let Some(ProgressView::Gains(g)) = page else {
+        panic!("{page:?}")
+    };
+    assert_eq!(
+        (g.banner.as_str(), g.line.as_str()),
+        ("PROMOTED!", "Guard → Iron Rider")
+    );
+    assert!(g.stats.is_empty());
     assert_eq!(view.help, "f skip · hold f fast");
     // A press reveals every stat, the next closes the page and the screen.
     let t = step(&mut s, &mut c, &[Confirm]);

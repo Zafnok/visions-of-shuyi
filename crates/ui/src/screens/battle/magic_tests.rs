@@ -12,7 +12,6 @@ use trpg_core::{
 
 use super::art_list::Technique;
 use super::attack::{Targeting, aimed_options, attack_tile, can_hit};
-use super::forecast::{AFFINITY_ROW, LEFT_X, NAME_ROW, STRIKE_ROW};
 use super::items::{can_equip, equip_choices, equip_menu};
 use super::magic::{
     CastTargeting, SpellChoice, can_cast, cast, cast_targets, knows_spells, reaches_an_enemy,
@@ -22,6 +21,7 @@ use super::mode::{Effect, MenuEntry, Mode, Selection, menu_entries, open_menu};
 use super::playback::TIMINGS;
 use super::sounds::step_sound;
 use super::testing::{battle_with, quick_units, setup, through_ai_phases, tile_cell};
+use super::view::{ForecastView, InfoView, LeftView};
 use super::{BattleScreen, HealPopup, PopupKind, TERRAIN_FLASH_S, TerrainFlash, quick_battle};
 use crate::FrameInput;
 use crate::audio::MenuSound;
@@ -96,6 +96,16 @@ fn text(buf: &GlyphBuffer, x: i32, y: i32, w: i32) -> String {
         .collect::<String>()
         .trim_end()
         .to_owned()
+}
+
+/// The forecast on screen.
+fn forecast_of(s: &BattleScreen, c: &Ctx) -> ForecastView {
+    s.view(c).forecast.expect("a forecast")
+}
+
+/// The info screen on screen.
+fn info_of(s: &BattleScreen, c: &Ctx) -> InfoView {
+    s.view(c).info.expect("the info screen")
 }
 
 /// Whether some row of `buf` shows `s`.
@@ -425,14 +435,15 @@ fn fire_on_the_elemental_shows_the_forecast_and_casts() {
     assert_eq!(s.mode().drawn_pos(MAGE), Some(p(0, 4)));
     assert_eq!(s.mode().drawn_pos(ELEMENTAL), None);
     assert_eq!(s.mode().selection().map(|sel| sel.unit), Some(MAGE));
-    let buf = render(&s, &c);
-    // The spell and its uses, where a weapon's durability goes; `!` on the
-    // strike; no marker of its own for Weak.
-    assert_eq!(text(&buf, LEFT_X, NAME_ROW + 1, 8), "Fire");
-    assert_eq!(text(&buf, LEFT_X, NAME_ROW + 2, 8), "10/10");
-    assert_eq!(text(&buf, LEFT_X + 6, STRIKE_ROW, 1), "!");
-    assert_eq!(text(&buf, LEFT_X, AFFINITY_ROW, 8), "");
-    assert!(!shows(&buf, "Overcast"));
+    // The spell and its uses, where a weapon's durability goes; the strike
+    // effective; no marker of its own for Weak.
+    let shown = forecast_of(&s, &c);
+    let mage = &shown.sides[0];
+    assert_eq!(mage.weapon, "Fire");
+    assert_eq!(mage.left, Some(LeftView::Count { left: 10, max: 10 }));
+    assert!(shown.strikes[0].effective);
+    assert_eq!(mage.affinity, None);
+    assert!(!s.view(&c).shows("Overcast"));
     // Both enemies are tinted as attack targets; the forests show what
     // they would become.
     let scene = s.scene(&c);
@@ -628,12 +639,9 @@ fn forecast_of_frost_on_an_absorbing_target_snapshot() {
     let t = targeting(&s).forecast().unwrap();
     let healed = t.preview.forecast.attacker.damage;
     assert_eq!(t.preview.forecast.attacker.affinity, Some(Affinity::Absorb));
-    let buf = render(&s, &c);
-    assert_eq!(
-        text(&buf, LEFT_X, AFFINITY_ROW, 10),
-        format!("heals {healed}")
-    );
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    let marker = forecast_of(&s, &c).sides[0].affinity.clone();
+    assert_eq!(marker, Some(format!("heals {healed}")));
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
 #[test]
@@ -651,10 +659,10 @@ fn forecast_of_fire_on_a_resisting_target_snapshot() {
     let s = casting(&mut c, state, 0);
     let t = targeting(&s).forecast().unwrap();
     assert_eq!(t.preview.forecast.attacker.affinity, Some(Affinity::Resist));
-    let buf = render(&s, &c);
-    assert_eq!(text(&buf, LEFT_X, AFFINITY_ROW, 10), "(resist)");
-    assert_eq!(text(&buf, LEFT_X + 6, STRIKE_ROW, 1), "");
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    let shown = forecast_of(&s, &c);
+    assert_eq!(shown.sides[0].affinity.as_deref(), Some("(resist)"));
+    assert!(!shown.strikes[0].effective);
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
 // ---- Casting on a tile -----------------------------------------------------------
@@ -697,7 +705,7 @@ fn a_tile_shows_what_it_becomes_and_is_picked_on_the_map() {
     assert_eq!(text(&buf, 1, 30, 40), "Forest → Burning (1 round)");
     // The side panel is the hover panel again, on the tile.
     assert!(shows(&buf, "Forest"));
-    assert!(!shows(&buf, " Forecast "));
+    assert!(s.view(&c).forecast.is_none());
     // The tiles it can burn are shown burning.
     let scene = s.scene(&c);
     assert_eq!(looks(&c, &scene, 1, 5), "burning");
@@ -1190,32 +1198,39 @@ fn the_info_screen_marks_the_equipped_spell_and_lists_affinities() {
     let mut s = BattleScreen::new(field(&c, 0));
     s.cursor.jump(p(0, 4));
     step(&mut s, &mut c, &[Action::Info]);
-    let buf = render(&s, &c);
-    let row_of = |buf: &GlyphBuffer, what: &str| {
-        (0..i32::from(ConsoleSpec::PC.rows))
-            .map(|y| text(buf, 0, y, i32::from(ConsoleSpec::PC.cols)))
-            .find(|row| row.contains(what))
-            .unwrap_or_else(|| panic!("no {what}"))
+    let spells = |v: &InfoView| -> Vec<(String, bool, u8, u8)> {
+        let spells = v.spells.iter();
+        spells
+            .map(|s| (s.name.clone(), s.equipped, s.left, s.uses))
+            .collect()
     };
     // Fire is equipped; every spell shows its uses.
-    assert!(row_of(&buf, "Fire").contains("E Fire"));
-    assert!(row_of(&buf, "Fire").ends_with("10/10 ║"));
-    assert!(!row_of(&buf, "Frost").contains("E Frost"));
-    assert!(row_of(&buf, "Heal").contains("8/8"));
+    let shown = spells(&info_of(&s, &c));
+    assert!(shown.contains(&("Fire".into(), true, 10, 10)), "{shown:?}");
+    assert!(shown.iter().any(|s| s.0 == "Frost" && !s.1), "{shown:?}");
+    assert!(
+        shown.iter().any(|s| s.0 == "Heal" && (s.2, s.3) == (8, 8)),
+        "{shown:?}"
+    );
     // A mage has no affinities: no heading.
-    assert!(!shows(&buf, "Affinities"));
+    assert!(info_of(&s, &c).affinities.is_empty());
     // The elemental: its affinities, under its (empty) weapon ranks.
     s.cursor.jump(p(1, 4));
     step(&mut s, &mut c, &[Action::Cancel]);
     s.cursor.jump(p(1, 4));
     step(&mut s, &mut c, &[Action::Info]);
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "Frost Elemental"));
-    assert!(row_of(&buf, "Affinities").starts_with("║  Affinities"));
-    assert!(row_of(&buf, "Absorb").starts_with("║  Ice       Absorb"));
-    assert!(row_of(&buf, "Weak").starts_with("║  Fire      Weak"));
-    assert!(row_of(&buf, "Frost   ").contains("E Frost"));
-    assert_snapshot!(buf.to_snapshot(&c.palette));
+    let elemental = info_of(&s, &c);
+    assert!(
+        elemental.class_level.starts_with("Frost Elemental"),
+        "{elemental:?}"
+    );
+    assert_eq!(elemental.affinities_title, "Affinities");
+    let pair = |a: &str, b: &str| (a.to_owned(), b.to_owned());
+    assert!(elemental.affinities.contains(&pair("Ice", "Absorb")));
+    assert!(elemental.affinities.contains(&pair("Fire", "Weak")));
+    let frost = spells(&elemental);
+    assert!(frost.iter().any(|s| s.0 == "Frost" && s.1), "{frost:?}");
+    assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
 }
 
 // ---- Harness: the whole flow with the default keys --------------------------------
@@ -1649,11 +1664,10 @@ fn the_spell_lists_are_told_in_the_players_language() {
     c.lang = crate::words::testing::shout();
     let english = render(&s, &c);
     assert!(shows(&english, "Fire"));
-    let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     let t = targeting(&s).forecast().expect("a forecast");
-    super::forecast::draw_forecast(&mut buf, &c.palette, (s.state(), words), t);
-    assert!(shows(&buf, "FIRE"));
-    assert!(shows(&buf, "TEST MAGE"));
-    assert!(!shows(&buf, "Test Mage"));
+    let told = super::forecast::view((s.state(), words), t).expect("a forecast");
+    let texts = told.texts();
+    assert!(texts.iter().any(|t| t.contains("FIRE")), "{texts:?}");
+    assert!(texts.iter().any(|t| t.contains("TEST MAGE")), "{texts:?}");
+    assert!(!texts.iter().any(|t| t.contains("Test Mage")), "{texts:?}");
 }

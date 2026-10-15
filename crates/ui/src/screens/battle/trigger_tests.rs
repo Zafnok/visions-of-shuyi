@@ -334,8 +334,8 @@ fn close_line(h: &mut Harness) {
 /// on the stage is up behind it, off the plain box.
 #[test]
 fn a_scene_in_a_combat_plays_over_the_stage_or_the_plain_box() {
-    use super::playback::{BOX, BOX_COLUMNS};
     let on = lord_attacks_rogue(22);
+    let fight_box = |h: &Harness| h.battle().and_then(|b| b.view(h.game().ctx()).fight_box);
     let view = on.battle().and_then(|b| b.stage_view(on.game().ctx()));
     let names = view.map(|v| v.fighters.map(|f| f.name));
     assert_eq!(
@@ -343,7 +343,7 @@ fn a_scene_in_a_combat_plays_over_the_stage_or_the_plain_box() {
         Some(["Test Lord".to_owned(), "Test Rogue".to_owned()])
     );
     assert!(on.snapshot().contains("battlebacks/fields.png"));
-    assert_ne!(text(&on, BOX_COLUMNS[0], BOX.y + 1, 9), "Test Lord");
+    assert_eq!(fight_box(&on), None);
 
     let c = ctx();
     let mut off = Harness::with_screen(Box::new(BattleScreen::new(rogue_battle(&c, 22))));
@@ -356,7 +356,11 @@ fn a_scene_in_a_combat_plays_over_the_stage_or_the_plain_box() {
     assert!(matches!(battle.mode(), Mode::Combat(_)));
     assert_eq!(battle.stage_view(off.game().ctx()), None);
     assert!(!off.snapshot().contains("battlebacks/"));
-    assert_eq!(text(&off, BOX_COLUMNS[0], BOX.y + 1, 9), "Test Lord");
+    let names = fight_box(&off).map(|b| b.sides.map(|f| f.name));
+    assert_eq!(
+        names,
+        Some(["Test Lord".to_owned(), "Test Rogue".to_owned()])
+    );
 }
 
 #[test]
