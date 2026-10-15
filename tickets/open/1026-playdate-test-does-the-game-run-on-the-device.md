@@ -5,7 +5,7 @@ type: research
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: in-progress
 blocked_by: []
 nick_input: none
 completed:
