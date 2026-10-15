@@ -8,11 +8,12 @@
 //!
 //! Only looks hang off the game's ids here: nothing in a tileset changes a
 //! rule.
+use crate::prelude::*;
 
 mod look;
 
-use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
+use alloc::collections::{BTreeMap, BTreeSet};
+use core::fmt;
 
 use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
@@ -36,7 +37,7 @@ const TILESET_EXTENSION: &str = ".ron";
 
 /// The smallest and largest side of a map tile or a unit picture, in
 /// pixels.
-pub const SIDE_PX: std::ops::RangeInclusive<u32> = 8..=64;
+pub const SIDE_PX: core::ops::RangeInclusive<u32> = 8..=64;
 
 /// The ids the lead's picture may go by in a tileset's `characters`, by
 /// gender: the lead's portrait ids (`trpg_core::lead`).

@@ -1,7 +1,8 @@
 //! Combat Arts (`assets/data/arts.ron`), from `docs/design/combat-arts.md`.
 //! The rules are in `trpg_core::art`.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 use trpg_core::{ArtDef, ArtEffect, ArtId, ArtTable, ItemDef, ItemTable, WeaponKind, WeaponRank};

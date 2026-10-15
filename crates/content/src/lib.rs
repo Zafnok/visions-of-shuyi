@@ -1,13 +1,34 @@
 //! Data schemas, parsers and validation for game content. See ADR-0004 and
 //! ADR-0005. All content comes from the embedded asset bundle ([`bundle`]);
 //! [`load_embedded`] loads and validates everything, reporting every error.
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
+/// What `std`'s prelude gives for free, for the `no_std` build.
+mod prelude {
+    pub use alloc::borrow::ToOwned;
+    pub use alloc::boxed::Box;
+    pub use alloc::string::{String, ToString};
+    pub use alloc::vec::Vec;
+    pub use alloc::{format, vec};
+}
+use prelude::*;
 
 pub mod ai;
 pub mod art;
 pub mod audio;
 pub mod battle;
 pub mod battler;
+#[cfg(feature = "std")]
 pub mod bundle;
+// Without `std` the bundle is `build.rs`'s file table (ADR-0070 §3); with it
+// the table is built for the test that keeps the two the same.
+#[cfg(not(feature = "std"))]
+#[path = "bundle_table.rs"]
+pub mod bundle;
+#[cfg(all(feature = "std", test))]
+mod bundle_table;
 pub mod chapter;
 pub mod character;
 pub mod cinematic;
@@ -37,9 +58,9 @@ pub mod title;
 pub mod trigger;
 pub mod voice;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
-use std::sync::Arc;
+use alloc::sync::Arc;
 
 use trpg_core::{
     AiWeights, ArtTable, BattleDef, BattleMap, ClassTable, GameTables, ItemTable, SkillTable,

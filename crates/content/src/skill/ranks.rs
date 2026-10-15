@@ -11,10 +11,11 @@
 //!   and its kind of cost;
 //! - no number is lower and at least one is higher. A number may go from 0
 //!   to more (Bow Focus 2 adds crit). A cost in durability may be anything.
+use crate::prelude::*;
 
-use std::cmp::Ordering;
-use std::collections::BTreeMap;
-use std::fmt::Debug;
+use alloc::collections::BTreeMap;
+use core::cmp::Ordering;
+use core::fmt::Debug;
 
 use trpg_core::{
     ActiveEffect, CombatMods, PassiveEffect, SkillCost, SkillDef, SkillId, SkillKind, StatKind,

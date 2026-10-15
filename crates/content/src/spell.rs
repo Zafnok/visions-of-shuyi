@@ -1,6 +1,7 @@
 //! Spells (`assets/data/spells.ron`), from `docs/design/magic.md`.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 use trpg_core::{

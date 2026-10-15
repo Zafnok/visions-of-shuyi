@@ -2,8 +2,9 @@
 //! line id or caption key. Rewording an English line gives it a new id, so
 //! the old entry becomes an **orphan**: it fails nothing, and
 //! [`Lang::status`] pairs it with the new line it most likely belongs to.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::{Deserialize, Deserializer};
 use trpg_core::lead::LeadGender;

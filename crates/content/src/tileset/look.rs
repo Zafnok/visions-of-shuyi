@@ -12,8 +12,9 @@
 //! - **Tiles**: one picture on each tile of the layer (a fort, a bridge),
 //!   which may depend on which of its four neighbours are certain terrains
 //!   (a bridge turns to cross the water).
+use crate::prelude::*;
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::TerrainId;

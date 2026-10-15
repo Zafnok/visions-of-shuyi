@@ -5,10 +5,10 @@ type: infra
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["1027"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 1028 — Playdate: `trpg-content` builds without `std`
@@ -74,10 +74,10 @@ lands first, give its bundle the generated-table path instead of
 
 ## Acceptance criteria
 
-- [ ] `cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf` passes locally and in CI.
-- [ ] `cargo test -p trpg-content` passes with no test changed, plus the drift test.
-- [ ] `cargo deny check licenses` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf` passes locally and in CI.
+- [x] `cargo test -p trpg-content` passes with no test changed, plus the drift test.
+- [x] `cargo deny check licenses` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,5 +86,26 @@ lands first, give its bundle the generated-table path instead of
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `trpg-content` has a default `std` feature; without it the crate is
+  `no_std` + `alloc` with the same prelude as `core` (plus `format!`).
+  The spike's diff for `crates/content` was redone on today's `main`
+  (one conflict, in `tip.rs`), without its `#[allow(unused_imports)]`s:
+  the prelude is imported only where it is used, as in `core`.
+- `build.rs` writes `OUT_DIR/bundle_files.rs`, a sorted
+  `(path, include_bytes!(…))` table of every file under `assets/`, read by
+  `src/bundle_table.rs` (the bundle without `std`, binary search, same
+  public functions). With `std` the bundle is `include_dir` as before; the
+  test files and the private layer stay `std`-only.
+- Drift test `the_no_std_table_holds_the_same_files_as_include_dir` (in
+  `bundle.rs`): the table module is compiled into the `std` tests and must
+  list the same paths with the same bytes as `include_dir`'s `assets/`,
+  and answer every public function the same.
+- `ron`, `thiserror` are `default-features = false` at the workspace (as
+  `serde` since 1027), `once_cell` and `libm` are new workspace
+  dependencies (MIT OR Apache-2.0 / MIT); `content`'s `std` forwards their
+  `std`. `core`'s dev-dependency on `ron` asks for `std` itself.
+- CI's `no-std` job and the `run-gates` list build `trpg-content` too.
+- **Deviation:** none in scope. READMEs are in the table, because
+  `include_dir` embeds them today (0123 has not landed); when it does, both
+  paths must skip them and the drift test will say so.
+- Nothing a player sees changes.

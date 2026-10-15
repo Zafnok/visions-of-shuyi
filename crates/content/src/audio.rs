@@ -7,9 +7,10 @@
 //! the bundle can't check them. [`load`] checks the embedded sounds only;
 //! a test checks the music folder with [`from_source`], including each
 //! track's `length_ms` against its file ([`ogg_length_ms`], ADR-0037).
+use crate::prelude::*;
 
-use std::borrow::Cow;
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::borrow::Cow;
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 
@@ -108,7 +109,7 @@ impl CreditRef {
     pub fn ids(&self) -> &[String] {
         match self {
             Self::Own => &[],
-            Self::Credit(id) => std::slice::from_ref(id),
+            Self::Credit(id) => core::slice::from_ref(id),
             Self::Credits(ids) => ids,
         }
     }

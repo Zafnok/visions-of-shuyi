@@ -2,9 +2,10 @@
 //! list of shots and when each starts, played by `trpg_ui::cinematic`. The
 //! format is described in `assets/cinematics/README.md`; the loader checks
 //! every rule listed there.
+use crate::prelude::*;
 
-use std::collections::btree_map::Entry;
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::btree_map::Entry;
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::lead::{self, LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE, Part};
@@ -187,7 +188,7 @@ impl TilePoint {
     /// coordinate that isn't a number counts as 0.
     pub fn new(x: f32, y: f32) -> Self {
         #[allow(clippy::cast_possible_truncation)] // saturating, far off any map
-        let parts = |v: f32| (v * TILE_PARTS).round() as i32;
+        let parts = |v: f32| libm::roundf(v * TILE_PARTS) as i32;
         Self {
             x: parts(x),
             y: parts(y),
@@ -518,7 +519,7 @@ impl<'a> ActionLists<'a, '_> {
 /// `seconds` in whole milliseconds, or `None` if it isn't a time: not a
 /// number, or below 0.
 fn millis(seconds: f32) -> Option<u32> {
-    let ms = (f64::from(seconds) * 1000.0).round();
+    let ms = libm::round(f64::from(seconds) * 1000.0);
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // checked
     (ms.is_finite() && (0.0..=f64::from(u32::MAX)).contains(&ms)).then_some(ms as u32)
 }

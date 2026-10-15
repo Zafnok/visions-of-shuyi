@@ -2,9 +2,10 @@
 //! an id `<scene id>_<8 hex>`, a hash of who says it and its English text
 //! as written. Translations and voice clips attach to it, so rewording a
 //! line gives it a new id and moving it does not.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
-use std::fmt;
+use alloc::collections::BTreeMap;
+use core::fmt;
 
 use super::{Scene, Step};
 

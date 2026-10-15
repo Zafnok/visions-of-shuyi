@@ -1,8 +1,9 @@
 //! One-time contextual tips (`assets/data/tips.ron`, ticket 0406): what
 //! triggers each and what it says. The screens decide when a trigger has
 //! happened and remember which tips were seen.
+use crate::prelude::*;
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 

@@ -7,8 +7,9 @@
 //! both characters of a pair exist and differ, that no pair is listed
 //! twice (either way round), and that each rank's conversation is a
 //! dialogue scene.
+use crate::prelude::*;
 
-use std::collections::BTreeSet;
+use alloc::collections::BTreeSet;
 
 use serde::Deserialize;
 use trpg_core::{

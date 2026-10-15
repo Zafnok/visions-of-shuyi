@@ -1102,6 +1102,8 @@ name = "trpg-content"
 version = "0.2.0"
 dependencies = [
  "include_dir",
+ "libm",
+ "once_cell",
  "proptest",
  "ron",
  "serde",

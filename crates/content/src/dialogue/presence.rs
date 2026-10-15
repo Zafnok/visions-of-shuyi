@@ -4,8 +4,9 @@
 //! from showing someone who may be gone: a character the army can lose
 //! ([`Cast::may_be_absent`]) appears only inside an `@if` block for them,
 //! or in a scene that can't play without them ([`Cast::certain`]).
+use crate::prelude::*;
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use trpg_core::{BattleDef, CharacterId, LEAD_ID, Phase, SupportTable, TriggerWhen, Who};
 
@@ -203,7 +204,7 @@ fn characters(when: &TriggerWhen) -> BTreeSet<CharacterId> {
             Who::Faction(_) => vec![],
         },
         TriggerWhen::CombatStart { unit, against } => {
-            std::iter::once(unit).chain(against).collect()
+            core::iter::once(unit).chain(against).collect()
         }
         TriggerWhen::UnitFell { unit, .. } | TriggerWhen::HalfHp { unit } => vec![unit],
         TriggerWhen::Talk { a, b } => vec![a, b],
@@ -228,7 +229,7 @@ pub fn check_presence(parsed: &ParsedScene, cast: &Cast) -> Vec<ContentError> {
     let mut walk = Walk {
         file: &parsed.file,
         cast,
-        here: std::iter::once(&lead)
+        here: core::iter::once(&lead)
             .chain(certain.into_iter().flatten())
             .collect(),
         gone: Vec::new(),

@@ -1,6 +1,7 @@
 //! Checks a battle's dialogue triggers ([`Trigger`], ticket 0705) against
 //! the battle and the dialogue: the battle-file loader (0801) runs it on
 //! every battle, and the debug Quick Battle on its own.
+use crate::prelude::*;
 
 use trpg_core::{BattleMap, CharacterId, Faction, Trigger, TriggerWhen, Unit, Who};
 
@@ -96,7 +97,7 @@ fn characters(when: &TriggerWhen) -> Vec<&CharacterId> {
             Who::Faction(_) => vec![],
         },
         TriggerWhen::CombatStart { unit, against, .. } => {
-            std::iter::once(unit).chain(against).collect()
+            core::iter::once(unit).chain(against).collect()
         }
         TriggerWhen::UnitFell { unit, .. } | TriggerWhen::HalfHp { unit } => vec![unit],
         TriggerWhen::Talk { a, b } => vec![a, b],

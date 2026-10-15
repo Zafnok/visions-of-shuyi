@@ -3,8 +3,9 @@
 //! `content` reads only each image's size, from the image table; `app`
 //! decodes and draws it. The format is documented in
 //! `assets/portraits/README.md`.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 

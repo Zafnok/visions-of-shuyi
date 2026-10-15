@@ -4,6 +4,7 @@
 //! Game Over screen (ticket 0830). `content` reads only each image's
 //! size; the screens draw them as sprites (ADR-0038). Format:
 //! `assets/title/README.md`.
+use crate::prelude::*;
 
 use serde::Deserialize;
 

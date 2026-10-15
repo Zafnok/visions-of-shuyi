@@ -4,9 +4,10 @@
 //! their name from it, and dialogue text refers to a name with a token,
 //! `{n:<id>}` (or `{N:<id>}` for a capital first letter), filled in by
 //! [`Names::substitute`] when the scene is shown.
+use crate::prelude::*;
 
-use std::borrow::Cow;
-use std::collections::BTreeMap;
+use alloc::borrow::Cow;
+use alloc::collections::BTreeMap;
 
 use trpg_core::lead::{self, Part};
 

@@ -1,7 +1,8 @@
 //! Items and item rules (`assets/data/items.ron`), from
 //! `docs/design/weapons-and-items.md`.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
 use trpg_core::{

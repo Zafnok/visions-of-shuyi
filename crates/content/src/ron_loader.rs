@@ -1,4 +1,5 @@
 //! Loading RON assets from the embedded bundle with `file:line:col` errors.
+use crate::prelude::*;
 
 use serde::de::DeserializeOwned;
 

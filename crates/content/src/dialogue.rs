@@ -5,13 +5,14 @@
 //! back out. Every line that shows text has a [`LineId`] (ADR-0045). Lines
 //! in an `@if` block play only while a character is there ([`Present`],
 //! ADR-0055); [`check_presence`] keeps those who may be gone inside one.
+use crate::prelude::*;
 
 mod check;
 mod line_id;
 mod parse;
 mod presence;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use trpg_core::CharacterId;
 

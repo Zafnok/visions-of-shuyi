@@ -5,8 +5,9 @@
 //! combat actives, an extra spell use for spell actives, uses per battle for
 //! the others) and that every higher rank of a family is the rank below it
 //! with bigger numbers, nothing else (`ranks`).
+use crate::prelude::*;
 
-use std::collections::{BTreeMap, BTreeSet};
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::{

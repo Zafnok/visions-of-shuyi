@@ -1,7 +1,8 @@
 //! The colour palette (`assets/data/palette.ron`, ADR-0012): named colours
 //! that all drawing code refers to by name.
+use crate::prelude::*;
 
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
