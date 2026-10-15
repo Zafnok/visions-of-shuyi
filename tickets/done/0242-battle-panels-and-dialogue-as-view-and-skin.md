@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["0241", "0245", "0246", "0247"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 0242 — Battle panels and the dialogue screen as view + skin
@@ -118,5 +118,48 @@ before, unless (a) turns out small enough to take (b) with it.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done as split (a), as the ticket suggested: the battle screen's panel,
+help bar and message row, menus (action, arts, spell, skill, item, equip,
+map, unit list), the end-turn, restart and suspend questions, the
+objective page, banners, battle notes, tips and heal/burn numbers. Split
+(b) is **0248** (forecast, unit info, fight box, EXP and level-up, rewind
+screen) and (c) is **0249** (the dialogue screen), each blocked by the one
+before. 1039 is now blocked by 0248 and 1043 by 0249 (instead of 0242);
+1038 and the roadmap say so.
+
+- `battle/view.rs`: `BattleView` holds the map's `MapScene` and, for what
+  is on screen this frame, `menu` (a `MenuView`, where it opens: beside a
+  tile or centred, and its top-border header), `popups`, `panel`, `stage`,
+  `dialog` (objective or question), `notes`, `noted` (where the noted
+  units are drawn, for the notes box to keep off their rows), `banner`,
+  `tip`, `message`, `status`, `help`, `debug_hint`.
+- The (b) parts are still painted from the battle's state by their old
+  functions: the view carries them as `OldParts` (`forecast`, `info`,
+  `fight_box`, `progress`, `rewind` and `state`), the way 0246 carried
+  `Progress`. 0248 replaces it.
+- `battle/glyph.rs` paints it all in the old order; the side panel's
+  columns, the banner's size, the dialog boxes, `menu_origin`, `box_top`
+  and `centred_top` moved there from `panel.rs`, `banner.rs`,
+  `map_menu.rs`, `notes.rs` and `mod.rs`. `layout.rs` stays where it is
+  (the logic still asks the map skin how many tiles `MAP_VIEW` shows).
+- `BattleScreen::draw` is `glyph::paint(ctx, &self.view(ctx), buf)`; the
+  grep test covers `battle/mod.rs` and `battle/mode.rs`. The inline tests
+  of `battle/mod.rs` moved to `battle/tests.rs` (same module path, so the
+  same snapshots) since the grep test reads the whole file.
+- `Menu::draw` and `Menu::size` are gone (the debug menu paints the view).
+  A menu item's suffix is now a meaning, `SuffixKind::{Warning, Aside}`,
+  not a palette colour (the menu view's doc asked 0242 for this).
+  `Banner::title` no longer returns a colour, `HealPopup::color` moved to
+  the skin (`popup_color`), and `draw_debug_hint` is gone (the battle was
+  its last caller; `paint_debug_hint` stays).
+- Tests: `battle/view_tests.rs` (new) has each part appearing and going;
+  `battle/glyph/tests.rs` (new) pins placement and colours; the panel,
+  menu, help, message, banner, question and objective tests that read
+  cells read the view (`BattleView::shows` in tests). The forecast, info,
+  EXP and rewind tests still read cells: they are 0248's.
+
+Acceptance: `battle/mod.rs` and `battle/mode.rs` name no look type and
+`draw` is one call; `dialogue.rs` is 0249's (the split). No snapshot
+changed. Gates pass.
+
+No gameplay rules decided. Nothing the player sees changes.

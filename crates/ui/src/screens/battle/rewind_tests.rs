@@ -6,7 +6,6 @@ use insta::assert_snapshot;
 use trpg_core::{BattleState, Command, UnitAction, UnitId};
 
 use super::BattleScreen;
-use super::layout::HELP_ROW;
 use super::progress::PROGRESS_TIMINGS;
 use super::rewind::RewindScreen;
 use super::rewind::{CHARGES_ROW, LIST_ROW, PROMPT_ROW, TITLE_ROW};
@@ -79,9 +78,9 @@ fn panel(h: &Harness, y: i32) -> String {
     text(h, 71, y, 28)
 }
 
-/// The help text: the row left of the right-aligned debug hint.
+/// The help line of the battle on `h` (ADR-0054: read from its view).
 fn help(h: &Harness) -> String {
-    text(h, 0, HELP_ROW, 90)
+    h.battle().expect("a battle").view(h.game().ctx()).help
 }
 
 #[test]

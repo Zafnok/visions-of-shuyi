@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["1037", "1042", "0242"]
+blocked_by: ["1037", "1042", "0249"]
 nick_input: sign-off
 completed:
 ---
@@ -16,10 +16,9 @@ completed:
 ## Context
 
 Chapter 1 is told in dialogue scenes (`crates/ui/src/screens/dialogue.rs`,
-the dialogue log in `dialogue/log*`). 0242 turns the dialogue screen into a
-view painted by a skin (ADR-0054) in the last of the tickets it splits off
-("(c)"). **This ticket needs that one done too**: 0242's session adds its
-id to this ticket's `blocked_by` when it writes it. 1042 made the one-bit
+the dialogue log in `dialogue/log*`). Ticket 0249 (split off from 0242)
+turns the dialogue screen into a view painted by a skin (ADR-0054). **This
+ticket needs 0249 done.** 1042 made the one-bit
 faces; 1037 added the `SkinSet` choice.
 
 The Playdate screen is 50 × 15 cells (400 × 240 px). Nick kept portraits

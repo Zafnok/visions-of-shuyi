@@ -6,8 +6,6 @@
 
 use trpg_core::{BattleNote, UnitId};
 
-use super::layout::MAP_VIEW;
-use super::map_menu::centred_top;
 use crate::widgets::wrap::word_wrap;
 use crate::words::Words;
 
@@ -50,22 +48,6 @@ pub fn note_lines(notes: &[BattleNote], words: Words<'_>) -> Vec<String> {
 /// Whether a note of `notes` is about `unit`.
 pub fn is_noted(notes: &[BattleNote], unit: UnitId) -> bool {
     notes.iter().any(|n| n.units.contains(&unit))
-}
-
-/// The top row of a box `h` rows tall that lists the notes: centred on the
-/// map view, unless it would then cover one of `rows` (the screen rows of
-/// the units the notes are about); then one row from the top of the view,
-/// or one row from its bottom, whichever covers none of them. Centred if
-/// every place covers one.
-pub fn box_top(h: i32, rows: &[i32]) -> i32 {
-    let centred = centred_top(h);
-    let top = MAP_VIEW.y + 1;
-    let bottom = MAP_VIEW.y + MAP_VIEW.h - h - 1;
-    let clear = |y: i32| !rows.iter().any(|&r| r >= y && r < y + h);
-    [centred, top, bottom]
-        .into_iter()
-        .find(|&y| clear(y))
-        .unwrap_or(centred)
 }
 
 /// Whether noted units are highlighted `t` seconds after the notes came
@@ -132,29 +114,12 @@ mod tests {
         assert!(blink_on(f32::NAN));
     }
 
-    #[test]
-    fn the_box_keeps_off_the_noted_units_rows() {
-        // A box of 8 rows is centred on rows 11..19 of the 30-row view.
-        assert_eq!(centred_top(8), 11);
-        assert_eq!(box_top(8, &[]), 11);
-        assert_eq!(box_top(8, &[10, 19]), 11, "just above and below it");
-        // Covered: the top (rows 1..9), unless a unit is there too; then
-        // the bottom (rows 21..29).
-        assert_eq!(box_top(8, &[11]), 1);
-        assert_eq!(box_top(8, &[18, 9, 0]), 1);
-        assert_eq!(box_top(8, &[18, 1]), 21);
-        assert_eq!(box_top(8, &[11, 8]), 21);
-        assert_eq!(box_top(8, &[15, 8, 20, 29]), 21);
-        // Nowhere is clear: centred.
-        assert_eq!(box_top(8, &[15, 8, 21]), 11);
-        assert_eq!(box_top(8, &[15, 5, 28]), 11);
-    }
-
     /// Every battle's notes fit the map view, on the `Objective` page too
     /// (two lines, a blank and the heading over them, in a box with a
     /// blank row inside its border).
     #[test]
     fn every_battles_notes_fit_the_map_view() {
+        use crate::screens::battle::layout::MAP_VIEW;
         let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
         for (id, battle) in &content.battles {
             let lines = note_lines(&battle.battle_notes, Words::ENGLISH);

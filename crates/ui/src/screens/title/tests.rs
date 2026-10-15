@@ -552,12 +552,17 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("preparations.rs", include_str!("../preparations.rs")),
         ("lead_select.rs", include_str!("../lead_select.rs")),
         ("class_change.rs", include_str!("../class_change.rs")),
+        ("battle/mod.rs", include_str!("../battle/mod.rs")),
     ];
-    for (file, source) in sources {
+    // Logic with no screen of its own to draw: the battle screen's modes.
+    let drawless = [("battle/mode.rs", include_str!("../battle/mode.rs"))];
+    for (file, source) in sources.iter().chain(&drawless) {
         // A picture is placed by the skin too (the view names it).
         for name in ["UiColor", "Rect", "BoxStyle", "Cell", "draw_portrait"] {
             assert!(!names_word(source, name), "{file} names `{name}`");
         }
+    }
+    for (file, source) in sources {
         // Their `draw` is one call to the skin (a file with two screens,
         // one for each; the save screens' skin has a painter for each).
         let draws = source.matches("fn draw(").count();

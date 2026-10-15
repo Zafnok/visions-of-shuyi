@@ -16,9 +16,8 @@ use trpg_core::{
 use super::attack::{spell_uses, weapon_durability};
 use super::info::stat_name;
 use super::skills::{effect_text, mods_text, skill_cost, skill_name, timed_text};
-use crate::color::{Palette, UiColor};
-use crate::glyph_buffer::GlyphBuffer;
-use crate::widgets::menu::{Menu, MenuItem};
+use super::view::{MenuHeader, UsesView};
+use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::words::Words;
 
 /// What an attack is made with: the plain weapon, a Combat Art or a combat
@@ -337,7 +336,7 @@ pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Me
                 None => MenuItem::new(label),
                 Some(why) => {
                     let why = format!(" {}", blocked_text(words, why));
-                    MenuItem::disabled(label).with_suffix(why, UiColor::HpLow)
+                    MenuItem::disabled(label).with_suffix(why, SuffixKind::Warning)
                 }
             };
             item.with_note(c.technique.effect_text(state, words))
@@ -355,39 +354,24 @@ pub fn durability_text(words: Words<'_>, left: u32, max: u32) -> String {
     }
 }
 
-/// Prints the header of a menu at `(x, y)` in its top border: the name and
-/// durability of `unit`'s weapon (`Iron Sword 20/20`) or the name and uses
-/// of its spell (`Fire 6/10`).
-pub fn draw_header(
-    buf: &mut GlyphBuffer,
-    palette: &Palette,
+/// What a menu shows in its top border: the name and durability of
+/// `unit`'s weapon (`Iron Sword 20/20`) or the name and uses of its spell
+/// (`Fire 6/10`); `None` if it has no such weapon or spell.
+pub fn header(
     (state, words): (&BattleState, Words<'_>),
     (unit, with): (UnitId, &Equipped),
-    (x, y): (i32, i32),
-) {
-    let header = match with {
+) -> Option<MenuHeader> {
+    let (name, left, max) = match with {
         Equipped::Weapon(slot) => weapon_durability(state, words, unit, *slot),
         Equipped::Spell(spell) => spell_uses(state, words, unit, spell),
-    };
-    let Some((name, left, max)) = header else {
-        return;
-    };
-    let bg = palette.get(UiColor::PanelBg);
-    let at = x + 2;
-    let n = buf.print(
-        at,
-        y,
-        &format!(" {name} "),
-        palette.get(UiColor::TextHighlight),
-        bg,
-    );
-    let color = if left == 0 {
-        UiColor::HpLow
-    } else {
-        UiColor::Text
-    };
-    let dur = format!("{} ", durability_text(words, left, max));
-    buf.print(at + i32::from(n), y, &dur, palette.get(color), bg);
+    }?;
+    Some(MenuHeader {
+        name,
+        uses: Some(UsesView {
+            text: durability_text(words, left, max),
+            spent: left == 0,
+        }),
+    })
 }
 
 /// The name of the art or active a boss or a green unit used in `events`

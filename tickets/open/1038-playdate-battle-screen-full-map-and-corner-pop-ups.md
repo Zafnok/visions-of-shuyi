@@ -31,8 +31,14 @@ Ticket 0242 turns the battle screen's own drawing (panel, help bar,
 menus, questions, objective, banners, notes, tips) into a `BattleView`
 painted by a glyph skin (ADR-0054); this ticket adds the Playdate's
 paint of that view, chosen by 1037's `SkinSet`. 0242 also splits off the
-forecast/info/fight-box/level-up/rewind part and the dialogue part as
-tickets of their own: those are 1039's and 1043's.
+forecast/info/fight-box/level-up/rewind part (0248) and the dialogue part
+(0249) as tickets of their own: those are 1039's and 1043's. Until 0248 is
+done, `BattleView::old` (`OldParts`) carries those five as the battle's
+state; this ticket leaves them to 1039. `BattleView` also holds the heal
+and burn numbers (`popups`). The grep test in `screens/title/tests.rs`
+wants `battle/mod.rs`'s `draw` to be one `glyph::paint(ctx,
+&self.view(ctx), buf);` line: choose the skin inside a `paint` there, or
+change the test to accept the choice.
 
 ## Nick input
 

@@ -12,8 +12,7 @@ use trpg_core::{
 use super::attack::{spell_uses, weapon_name};
 use super::info::range_text;
 use super::mode::Selection;
-use crate::color::UiColor;
-use crate::widgets::menu::{Menu, MenuItem};
+use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::words::Words;
 
 /// One line of the pack list: every copy of one consumable.
@@ -372,7 +371,7 @@ pub fn equip_menu(
                 MenuItem::disabled(label)
             };
             if broken(&c.what) {
-                item.with_suffix(words.text("battle.equip.broken"), UiColor::HpLow)
+                item.with_suffix(words.text("battle.equip.broken"), SuffixKind::Warning)
             } else {
                 item
             }

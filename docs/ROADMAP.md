@@ -272,11 +272,11 @@ early so every later PR is checked by them.
      card · **1037** the one-bit map skin
   6. **1040** one-bit images · **1047** sound and music · **1038** the
      battle screen (after 0242) → **1039** forecast, unit info, level-up,
-     rewind (after 0242's split-off (b))
+     rewind (after 0248)
   7. **1041** the combat picture · **1042** one-bit portraits · **1045**
      New Game and Options screens (after 0247) · **1046** preparations,
      results, saves, game over
-  8. **1043** the dialogue screen (after 0242's split-off (c)) · **1044**
+  8. **1043** the dialogue screen (after 0249) · **1044**
      the title screen and cinematic
   9. **1050** Nick plays Chapter 1 on his Playdate → **1051** the AI plans
      once per phase (only if the enemy pauses feel long)

@@ -1,0 +1,453 @@
+//! The glyph look of the battle screen (ADR-0018, `look-and-feel.md`):
+//! the map viewport on the left (painted by the map skin, ADR-0038), the
+//! side panel in a box on the right (double-bordered while a unit is
+//! selected), the message and help rows at the bottom, menus beside their
+//! tile, and boxes and banners centred on the map. Everything about the
+//! look lives here; nothing here decides what the screen shows. Another
+//! look is another `paint` of the same view (ADR-0054).
+
+use trpg_core::Phase;
+
+use super::banner::BannerKind;
+use super::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
+use super::units::{faction_color, hp_fill};
+use super::view::{
+    BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, NotesView,
+    PanelUnitView, PanelView,
+};
+use super::{PopupKind, forecast, info, playback, progress, stage};
+use crate::color::{Rgb, UiColor};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::screen::Ctx;
+use crate::screens::paint_debug_hint;
+use crate::tips as tip_box;
+use crate::widgets::menu::{self, MenuView};
+use trpg_core::Outcome;
+
+/// Length of the side panel's HP bar, in cells.
+pub const HP_BAR_CELLS: i32 = 10;
+
+/// The side panel's first text column: inside the border, one blank
+/// column in.
+pub const TEXT_X: i32 = SIDE_PANEL.x + 2;
+
+/// The side panel's widest line of text, so nothing reaches the right
+/// border.
+pub const TEXT_W: usize = 26;
+
+/// Row of the terrain name in the side panel; its bonuses follow.
+pub const TERRAIN_ROW: i32 = SIDE_PANEL.y + 1;
+
+/// Row of the unit's name in the side panel; the rest of the unit block
+/// follows.
+pub const UNIT_ROW: i32 = SIDE_PANEL.y + 5;
+
+/// Column of the side panel's HP bar, after `HP 999/999 `.
+pub const HP_BAR_X: i32 = TEXT_X + 11;
+
+/// Banner box width, in cells.
+pub const BANNER_W: i32 = 24;
+
+/// Banner box height: border, blank, title, second line, blank, border.
+pub const BANNER_H: i32 = 6;
+
+/// Paints `view`: the map, then what is over it, then the bars.
+pub fn paint(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let black = c(UiColor::Black);
+    buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
+    ctx.map_skin.paint(ctx, &view.scene, MAP_VIEW, buf);
+    let words = ctx.words();
+    if let Some(r) = view.old.rewind {
+        // The list in the side panel, and the help line.
+        r.draw(&ctx.palette, words, buf);
+        buf.print(1, HELP_ROW, &view.help, c(UiColor::TextDim), black);
+        paint_hint(ctx, view, buf);
+        return;
+    }
+    if let Some(m) = &view.menu
+        && let MenuPlace::Beside(tile) = m.place
+    {
+        paint_menu_beside(ctx, view, m, tile, buf);
+    }
+    paint_popups(ctx, view, buf);
+    if let Some(pb) = view.old.fight_box {
+        // Combat animations are off: the plain box.
+        playback::draw_box(buf, &ctx.palette, words, pb);
+    }
+    if let Some(p) = view.old.progress {
+        let look = (&ctx.palette, words);
+        progress::draw(buf, look, (&ctx.content.portraits, &ctx.lead), p);
+    }
+    if let Some(t) = view.old.forecast {
+        forecast::draw_forecast(buf, &ctx.palette, (view.old.state, words), t);
+    }
+    if let Some(panel) = &view.panel {
+        paint_panel(ctx, panel, buf);
+    }
+    if let Some(stage) = &view.stage {
+        // Over the map and the side panel, which the plates replace.
+        stage::glyph::paint(ctx, stage, buf);
+    }
+    paint_dialogs(ctx, view, buf);
+    if let Some(tip) = &view.tip {
+        tip_box::glyph::paint(ctx, tip, buf);
+    }
+    paint_bar(ctx, view, buf);
+}
+
+/// Paints the debug hint at the right of the help row.
+fn paint_hint(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+    if let Some(hint) = &view.debug_hint {
+        paint_debug_hint(&ctx.palette, hint, buf, HELP_ROW);
+    }
+}
+
+/// Where a menu of `(w, h)` cells goes beside the tile covering the cells
+/// `tile`: one cell right of the tile (clear of the cursor's marks), or
+/// left of it if it would run past the map view; its first item level with
+/// the tile's top row, moved to fit the view.
+pub fn menu_origin(tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
+    let right = tile.x + tile.w + 1;
+    let mx = if right + w <= MAP_VIEW.x + MAP_VIEW.w {
+        right
+    } else {
+        (tile.x - 1 - w).max(MAP_VIEW.x)
+    };
+    let my = (tile.y - 1)
+        .min(MAP_VIEW.y + MAP_VIEW.h - h)
+        .max(MAP_VIEW.y);
+    (mx, my)
+}
+
+/// Paints the menu `m` beside where the map skin has `tile` of the scene,
+/// with its header in the top border.
+fn paint_menu_beside(
+    ctx: &Ctx,
+    view: &BattleView<'_>,
+    m: &BattleMenuView,
+    tile: trpg_core::Pos,
+    buf: &mut GlyphBuffer,
+) {
+    let Some(cells) = ctx.map_skin.tile_cells(&view.scene, MAP_VIEW, tile) else {
+        return;
+    };
+    let (x, y) = menu_origin(cells, menu::glyph::size(&m.menu));
+    menu::glyph::paint(&ctx.palette, &m.menu, buf, x, y);
+    if let Some(header) = &m.header {
+        paint_header(ctx, header, buf, (x, y));
+    }
+}
+
+/// Prints `header` in the top border of a menu at `(x, y)`: its name lit,
+/// then the uses left, in the warning colour once none are.
+fn paint_header(ctx: &Ctx, header: &MenuHeader, buf: &mut GlyphBuffer, (x, y): (i32, i32)) {
+    let c = |u| ctx.palette.get(u);
+    let bg = c(UiColor::PanelBg);
+    let at = x + 2;
+    // check-text: not a data name (the view's own)
+    let name = format!(" {} ", header.name);
+    let n = buf.print(at, y, &name, c(UiColor::TextHighlight), bg);
+    if let Some(uses) = &header.uses {
+        let color = if uses.spent {
+            UiColor::HpLow
+        } else {
+            UiColor::Text
+        };
+        let text = format!("{} ", uses.text);
+        buf.print(at + i32::from(n), y, &text, c(color), bg);
+    }
+}
+
+/// The colour of a heal or burn number.
+pub const fn popup_color(kind: PopupKind) -> UiColor {
+    match kind {
+        PopupKind::Heal => UiColor::HpHigh,
+        PopupKind::Burn => UiColor::HpLow,
+    }
+}
+
+/// Paints the heal and burn numbers over the units they tell of: over
+/// where the map skin has their tiles, a row up.
+fn paint_popups(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+    for p in &view.popups {
+        let fg = ctx.palette.get(popup_color(p.kind));
+        let Some(tile) = ctx.map_skin.tile_cells(&view.scene, MAP_VIEW, p.pos) else {
+            continue;
+        };
+        let y = (tile.y - 1).max(MAP_VIEW.y);
+        let bg = ctx.palette.get(UiColor::Black);
+        buf.print(tile.x, y, &p.text(), fg, bg);
+    }
+}
+
+/// Prints `text` at the panel's text column on row `y`, cut to
+/// [`TEXT_W`].
+fn panel_line(buf: &mut GlyphBuffer, y: i32, text: &str, fg: Rgb) {
+    let bg = buf.get(TEXT_X, y).map_or(fg, |c| c.bg);
+    let cut: String = text.chars().take(TEXT_W).collect();
+    buf.print(TEXT_X, y, &cut, fg, bg);
+}
+
+/// Paints the side panel: its box, the terrain, then the unit.
+fn paint_panel(ctx: &Ctx, panel: &PanelView, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let panel_bg = c(UiColor::PanelBg);
+    buf.fill_rect(SIDE_PANEL, Cell::new(' ', c(UiColor::Text), panel_bg));
+    // Double-line while a unit is selected (`look-and-feel.md`).
+    let style = if panel.selected {
+        BoxStyle::Double
+    } else {
+        BoxStyle::Single
+    };
+    buf.draw_box(SIDE_PANEL, style, c(UiColor::PanelBorder), panel_bg);
+    if let Some(t) = &panel.terrain {
+        // check-text: not a data name (the view's own)
+        panel_line(buf, TERRAIN_ROW, &t.name, c(UiColor::TextHighlight));
+        panel_line(buf, TERRAIN_ROW + 1, &t.bonuses, c(UiColor::Text));
+        if let Some(heals) = &t.heals {
+            panel_line(buf, TERRAIN_ROW + 2, heals, c(UiColor::Text));
+        }
+    }
+    if let Some(unit) = &panel.unit {
+        paint_panel_unit(ctx, unit, buf);
+    }
+}
+
+/// The unit block: name (faction colour), class and level, HP with a bar,
+/// faction.
+fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let y = UNIT_ROW;
+    // check-text: not a data name (the view's own)
+    panel_line(buf, y, &unit.name, c(faction_color(unit.faction)));
+    panel_line(buf, y + 1, &unit.class_level, c(UiColor::Text));
+    let hp = format!("{} {}/{}", unit.hp_name, unit.hp, unit.max);
+    panel_line(buf, y + 2, &hp, c(UiColor::Text));
+    let (filled, color) = hp_fill(unit.hp, unit.max, HP_BAR_CELLS);
+    for i in 0..HP_BAR_CELLS {
+        let (glyph, fg) = if i < filled {
+            ('█', c(color))
+        } else {
+            ('░', c(UiColor::TextDim))
+        };
+        let bg = c(UiColor::PanelBg);
+        buf.set(HP_BAR_X + i, y + 2, Cell::new(glyph, fg, bg));
+    }
+    panel_line(buf, y + 3, &unit.faction_name, c(UiColor::TextDim));
+}
+
+/// Paints the boxes over the map: the unit list, the objective page (the
+/// notes under it), a question or the info screen, then the battle notes
+/// box and the banner.
+fn paint_dialogs(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+    if let Some(m) = &view.menu
+        && m.place == MenuPlace::Centred
+    {
+        paint_centred_menu(ctx, &m.menu, buf);
+    }
+    match &view.dialog {
+        Some(DialogView::Objective(o)) => {
+            let mut lines = vec![
+                (o.objective.clone(), UiColor::Text),
+                (o.turn.clone(), UiColor::Text),
+            ];
+            if let Some(notes) = &o.notes {
+                lines.push((String::new(), UiColor::Text));
+                lines.push((notes.title.clone(), UiColor::TextDim));
+                lines.extend(notes.lines.iter().map(|l| (l.clone(), UiColor::Text)));
+            }
+            let (_, h) = dialog_size(&o.title, &lines);
+            let top = notes_top(ctx, view, h);
+            draw_dialog_at(ctx, buf, &o.title, &lines, top);
+        }
+        Some(DialogView::Question(q)) => {
+            let lines = [
+                (q.question.clone(), UiColor::Text),
+                (q.answers.clone(), UiColor::TextDim),
+            ];
+            draw_dialog(ctx, buf, "", &lines);
+        }
+        None => {}
+    }
+    if let Some(u) = view.old.info {
+        info::draw_info(buf, &ctx.palette, (view.old.state, ctx.words()), u);
+    }
+    if let Some(notes) = &view.notes {
+        paint_notes(ctx, view, notes, buf);
+    }
+    if let Some(b) = &view.banner {
+        paint_banner(ctx, b, buf);
+    }
+}
+
+/// Paints the battle notes box, off the rows of the units they are about.
+fn paint_notes(ctx: &Ctx, view: &BattleView<'_>, notes: &NotesView, buf: &mut GlyphBuffer) {
+    let lines: Vec<_> = notes
+        .lines
+        .iter()
+        .map(|l| (l.clone(), UiColor::Text))
+        .collect();
+    let (_, h) = dialog_size(&notes.title, &lines);
+    let top = notes_top(ctx, view, h);
+    draw_dialog_at(ctx, buf, &notes.title, &lines, top);
+}
+
+/// The top row of a box `h` rows tall listing the battle notes: off the
+/// rows of the units they are about ([`box_top`]), where the map skin has
+/// their tiles.
+fn notes_top(ctx: &Ctx, view: &BattleView<'_>, h: i32) -> i32 {
+    let rows: Vec<i32> = view
+        .noted
+        .iter()
+        .filter_map(|&pos| ctx.map_skin.tile_cells(&view.scene, MAP_VIEW, pos))
+        .map(|cells| cells.y)
+        .collect();
+    box_top(h, &rows)
+}
+
+/// The top row of a box `h` rows tall centred on the map view.
+pub const fn centred_top(h: i32) -> i32 {
+    MAP_VIEW.y + (MAP_VIEW.h - h) / 2
+}
+
+/// The top row of a box `h` rows tall that lists the notes: centred on the
+/// map view, unless it would then cover one of `rows` (the screen rows of
+/// the units the notes are about); then one row from the top of the view,
+/// or one row from its bottom, whichever covers none of them. Centred if
+/// every place covers one.
+pub fn box_top(h: i32, rows: &[i32]) -> i32 {
+    let centred = centred_top(h);
+    let top = MAP_VIEW.y + 1;
+    let bottom = MAP_VIEW.y + MAP_VIEW.h - h - 1;
+    let clear = |y: i32| !rows.iter().any(|&r| r >= y && r < y + h);
+    [centred, top, bottom]
+        .into_iter()
+        .find(|&y| clear(y))
+        .unwrap_or(centred)
+}
+
+/// The size (width, height) of the [`draw_dialog`] box of `lines` under
+/// `title`, in cells.
+fn dialog_size(title: &str, lines: &[(String, UiColor)]) -> (i32, i32) {
+    let widest = lines
+        .iter()
+        .map(|(l, _)| l.chars().count())
+        .chain(std::iter::once(title.chars().count() + 2))
+        .max()
+        .unwrap_or(0);
+    let w = i32::try_from(widest).unwrap_or(0) + 4;
+    let h = i32::try_from(lines.len()).unwrap_or(0) + 4;
+    (w, h)
+}
+
+/// Draws a box of `lines` (text and colour) centred on the map view, one
+/// blank column and row inside a double border; `title` over the top
+/// border.
+fn draw_dialog(ctx: &Ctx, buf: &mut GlyphBuffer, title: &str, lines: &[(String, UiColor)]) {
+    let (_, h) = dialog_size(title, lines);
+    draw_dialog_at(ctx, buf, title, lines, centred_top(h));
+}
+
+/// [`draw_dialog`], with the box's top border on row `top` instead of
+/// centred top to bottom.
+fn draw_dialog_at(
+    ctx: &Ctx,
+    buf: &mut GlyphBuffer,
+    title: &str,
+    lines: &[(String, UiColor)],
+    top: i32,
+) {
+    let c = |u| ctx.palette.get(u);
+    let bg = c(UiColor::PanelBg);
+    let (w, h) = dialog_size(title, lines);
+    let rect = Rect::new(MAP_VIEW.x + (MAP_VIEW.w - w) / 2, top, w, h);
+    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
+    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorder), bg);
+    if !title.is_empty() {
+        buf.print(
+            rect.x + 2,
+            rect.y,
+            &format!(" {title} "),
+            c(UiColor::TextHighlight),
+            bg,
+        );
+    }
+    for (y, (line, color)) in (rect.y + 2..).zip(lines) {
+        buf.print(rect.x + 2, y, line, c(*color), bg);
+    }
+}
+
+/// Paints `menu` centred on the map view.
+fn paint_centred_menu(ctx: &Ctx, menu: &MenuView, buf: &mut GlyphBuffer) {
+    let (w, h) = menu::glyph::size(menu);
+    let x = MAP_VIEW.x + (MAP_VIEW.w - w) / 2;
+    let y = MAP_VIEW.y + (MAP_VIEW.h - h) / 2;
+    menu::glyph::paint(&ctx.palette, menu, buf, x, y);
+}
+
+/// The colour of a banner announcing `kind`: the phase's faction's, or
+/// lit for a victory and the warning colour for a defeat.
+pub const fn banner_color(kind: BannerKind) -> UiColor {
+    match kind {
+        BannerKind::Phase { phase, .. } => match phase {
+            Phase::Player => UiColor::Player,
+            Phase::Enemy => UiColor::Enemy,
+            Phase::Other => UiColor::Ally,
+        },
+        BannerKind::Outcome(Outcome::Victory) => UiColor::TextHighlight,
+        BannerKind::Outcome(Outcome::Defeat) => UiColor::HpLow,
+    }
+}
+
+/// Paints the banner centred on the map view, in a double box of its
+/// colour.
+fn paint_banner(ctx: &Ctx, banner: &super::view::BannerView, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let bg = c(UiColor::PanelBg);
+    let rect = Rect::new(
+        MAP_VIEW.x + (MAP_VIEW.w - BANNER_W) / 2,
+        MAP_VIEW.y + (MAP_VIEW.h - BANNER_H) / 2,
+        BANNER_W,
+        BANNER_H,
+    );
+    let color = banner_color(banner.kind);
+    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
+    buf.draw_box(rect, BoxStyle::Double, c(color), bg);
+    let centred = |text: &str| {
+        let w = i32::try_from(text.chars().count()).unwrap_or(0);
+        rect.x + (rect.w - w) / 2
+    };
+    let title = &banner.title;
+    buf.print(centred(title), rect.y + 2, title, c(color), bg);
+    let sub = &banner.subtitle;
+    buf.print(centred(sub), rect.y + 3, sub, c(UiColor::Text), bg);
+}
+
+/// Paints the bar under the map and panel: the toggles' state at the right
+/// of the message row, the message at its left, then the help row.
+fn paint_bar(ctx: &Ctx, view: &BattleView<'_>, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    let black = c(UiColor::Black);
+    buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));
+    let w = i32::try_from(view.status.chars().count()).unwrap_or(0);
+    buf.print(
+        HELP_BAR.w - 1 - w,
+        HELP_BAR.y,
+        &view.status,
+        c(UiColor::TextDim),
+        black,
+    );
+    if let Some(m) = &view.message {
+        let color = match m.kind {
+            MessageKind::Said => UiColor::Text,
+            MessageKind::Toast => UiColor::TextHighlight,
+        };
+        buf.print(1, HELP_BAR.y, &m.text, c(color), black);
+    }
+    buf.print(1, HELP_ROW, &view.help, c(UiColor::TextDim), black);
+    paint_hint(ctx, view, buf);
+}
+
+#[cfg(test)]
+mod tests;

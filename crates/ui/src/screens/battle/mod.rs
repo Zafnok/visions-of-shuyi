@@ -30,6 +30,7 @@ pub mod camera;
 pub mod cursor;
 pub mod event_sounds;
 pub mod forecast;
+pub mod glyph;
 pub mod info;
 pub mod items;
 pub mod layout;
@@ -47,6 +48,7 @@ mod sounds;
 pub mod stage;
 pub mod tips;
 pub mod units;
+pub mod view;
 pub mod walk;
 
 use std::cell::RefCell;
@@ -68,28 +70,28 @@ use self::attack::{Targeting, aimed_first, aimed_options};
 use self::camera::Camera;
 use self::cursor::Cursor;
 use self::event_sounds::CueQueue;
-use self::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
+use self::layout::MAP_VIEW;
 use self::mode::{Effect, MenuEntry, Mode, Selection};
 use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{RewindEffect, RewindScreen};
 use self::tips::TipState;
+use self::view::{
+    BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, MessageView,
+    NotesView, ObjectiveView, OldParts, PanelView, QuestionView,
+};
 use self::walk::Gait;
 use super::OptionsScreen;
 use super::dialogue::DialogueScreen;
-use super::draw_debug_hint;
 use crate::audio::{CURSOR_MOVE, MenuSound};
-#[cfg(test)]
-use crate::color::Rgb;
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, ThreatView, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
-use crate::tips::{self as tip_box, TipView};
+use crate::tips::TipView;
 use crate::widgets::help::{SEPARATOR, key_name};
-use crate::words::Language;
+use crate::words::{Language, Words};
 
 /// Battle id of the debug Quick Battle (`assets-test/battles/quick.ron`).
 pub const QUICK_BATTLE: &str = "quick";
@@ -196,14 +198,6 @@ impl HealPopup {
         match self.kind {
             PopupKind::Heal => format!("+{}", self.amount),
             PopupKind::Burn => format!("-{}", self.amount),
-        }
-    }
-
-    /// Its colour: `hp_high` for a heal, `hp_low` for a burn.
-    pub fn color(&self) -> UiColor {
-        match self.kind {
-            PopupKind::Heal => UiColor::HpHigh,
-            PopupKind::Burn => UiColor::HpLow,
         }
     }
 }
@@ -634,22 +628,6 @@ impl BattleScreen {
         } else {
             0.0
         };
-    }
-
-    /// The top row of a box `h` rows tall listing the battle notes: off
-    /// the rows of the units they are about ([`notes::box_top`]), where the
-    /// map skin has their tiles of `scene`.
-    fn notes_top(&self, ctx: &Ctx, scene: &MapScene, h: i32) -> i32 {
-        let noted = self.state.battle_notes();
-        let rows: Vec<i32> = self
-            .state
-            .units()
-            .iter()
-            .filter(|u| notes::is_noted(noted, u.id))
-            .filter_map(|u| ctx.map_skin.tile_cells(scene, MAP_VIEW, self.drawn_pos(u)))
-            .map(|cells| cells.y)
-            .collect();
-        notes::box_top(h, &rows)
     }
 
     /// The message shown for a moment, if any.
@@ -1817,45 +1795,180 @@ impl BattleScreen {
         })
     }
 
-    /// Draws the action menu or a list it opened beside its unit, or the
-    /// map menu beside the cursor, if open: beside where the map skin has
-    /// that tile of `scene`.
-    fn draw_menu(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
-        let cells = |tile| ctx.map_skin.tile_cells(scene, MAP_VIEW, tile);
+    /// What the screen shows this frame (ADR-0054): the map's
+    /// [`scene`](Self::scene) and everything around and over it, for the
+    /// skin to paint and for tests to read. On the rewind screen: the map,
+    /// the rewind list, the help and the debug hint.
+    pub fn view(&self, ctx: &Ctx) -> BattleView<'_> {
+        let scene = self.scene(ctx);
+        let help = self.help(ctx);
+        let debug_hint = super::debug_hint(ctx);
+        let old = OldParts {
+            state: &self.state,
+            forecast: None,
+            info: None,
+            fight_box: None,
+            progress: None,
+            rewind: self.rewind.as_ref(),
+        };
+        if self.rewind.is_some() {
+            return BattleView {
+                scene,
+                menu: None,
+                popups: Vec::new(),
+                panel: None,
+                stage: None,
+                dialog: None,
+                notes: None,
+                noted: Vec::new(),
+                banner: None,
+                tip: None,
+                message: None,
+                status: String::new(),
+                help,
+                debug_hint,
+                old,
+            };
+        }
         let words = ctx.words();
+        let stage = self.stage_view(ctx);
+        let fight_box = match (&self.mode, &stage) {
+            (Mode::Combat(pb), None) => Some(&**pb),
+            _ => None,
+        };
+        let info = match self.mode {
+            Mode::Info { unit } => self.state.unit(unit),
+            _ => None,
+        };
+        let forecast = self.forecast();
+        let notes = self.notes_open().then(|| NotesView {
+            title: ctx.text(notes::NOTES_TITLE).to_owned(),
+            lines: notes::note_lines(self.state.battle_notes(), words),
+        });
+        let limit = map_menu::shown_limit(&self.state);
+        BattleView {
+            menu: self.menu_view(words),
+            popups: self.popups.clone(),
+            panel: forecast.is_none().then(|| self.panel_view(words)),
+            stage,
+            dialog: self.dialog_view(ctx),
+            notes,
+            noted: self.noted(),
+            banner: self.banner().map(|b| b.view(words, limit)),
+            tip: self.tip_view(ctx),
+            message: self.message(),
+            status: self.status(ctx),
+            scene,
+            help,
+            debug_hint,
+            old: OldParts {
+                forecast,
+                info,
+                fight_box,
+                progress: self.progress(),
+                ..old
+            },
+        }
+    }
+
+    /// The menu open, if any: the action menu or a list it opened, beside
+    /// its unit (where it will stand); the map menu beside the cursor; the
+    /// unit list in the middle. Written in `words`.
+    fn menu_view(&self, words: Words<'_>) -> Option<BattleMenuView> {
         let mode = self.mode.told(&self.state, words);
-        let (tile, menu) = match &*mode {
+        let (place, menu) = match &*mode {
             Mode::ActionMenu { sel, menu, .. }
             | Mode::ArtsMenu { sel, menu, .. }
             | Mode::SpellMenu { sel, menu, .. }
             | Mode::SkillMenu { sel, menu, .. }
             | Mode::ItemMenu { sel, menu, .. }
-            | Mode::EquipMenu { sel, menu, .. } => (sel.dest(), menu),
-            Mode::MapMenu { menu, .. } => (self.cursor.pos, menu),
-            _ => return,
+            | Mode::EquipMenu { sel, menu, .. } => (MenuPlace::Beside(sel.dest()), menu),
+            Mode::MapMenu { menu, .. } => (MenuPlace::Beside(self.cursor.pos), menu),
+            Mode::UnitList { menu, .. } => (MenuPlace::Centred, menu),
+            _ => return None,
         };
-        if let Some(tile) = cells(tile) {
-            let (x, y) = menu_origin(tile, menu.size());
-            menu.draw(&ctx.palette, buf, x, y);
-            if let Mode::ArtsMenu { sel, lines, .. } = &*mode
-                && let Some(line) = lines.get(menu.focus())
-            {
-                // The weapon the focused art would be used with, and its
-                // durability, in the top border.
+        let header = match &*mode {
+            // The weapon the focused art would be used with, and its
+            // durability.
+            Mode::ArtsMenu { sel, lines, .. } => lines.get(menu.focus()).and_then(|line| {
                 let weapon = (sel.unit, &Equipped::Weapon(line.slot));
-                let told = (&self.state, words);
-                art_list::draw_header(buf, &ctx.palette, told, weapon, (x, y));
-            }
-            if matches!(self.mode, Mode::ItemMenu { .. }) {
-                // The pack's size in the top border.
-                let header = format!(" {} ", items::pack_header(&self.state, words));
-                let (fg, bg) = (
-                    ctx.palette.get(UiColor::TextHighlight),
-                    ctx.palette.get(UiColor::PanelBg),
-                );
-                buf.print(x + 2, y, &header, fg, bg);
-            }
+                art_list::header((&self.state, words), weapon)
+            }),
+            // The pack's size.
+            Mode::ItemMenu { .. } => Some(MenuHeader {
+                name: items::pack_header(&self.state, words),
+                uses: None,
+            }),
+            _ => None,
+        };
+        Some(BattleMenuView {
+            menu: menu.view(),
+            place,
+            header,
+        })
+    }
+
+    /// The side panel: the terrain and the unit under the cursor (as
+    /// drawn, during a playback).
+    fn panel_view(&self, words: Words<'_>) -> PanelView {
+        let pos = self.cursor.pos;
+        let told = (&self.state, words);
+        let selected = self.mode.selection().is_some();
+        if self.playing() {
+            let shown = self.shown_units();
+            let hovered = shown.iter().find(|(u, f)| u.pos == pos && *f < 1.0);
+            panel::view(told, pos, hovered.map(|(u, _)| u), selected)
+        } else {
+            panel::view(told, pos, self.hovered(), selected)
         }
+    }
+
+    /// The box over the map: the objective page (the battle notes under
+    /// it) or a yes/no question.
+    fn dialog_view(&self, ctx: &Ctx) -> Option<DialogView> {
+        let words = ctx.words();
+        let question = |question: String| {
+            DialogView::Question(QuestionView {
+                question,
+                answers: ctx.text_with("battle.yes_no", &[]),
+            })
+        };
+        match &self.mode {
+            Mode::Objective => {
+                let lines = notes::note_lines(self.state.battle_notes(), words);
+                let under = (!lines.is_empty()).then(|| NotesView {
+                    title: ctx.text(notes::NOTES_HEADING).to_owned(),
+                    lines,
+                });
+                Some(DialogView::Objective(ObjectiveView {
+                    title: ctx.text("battle.objective.title").to_owned(),
+                    objective: map_menu::objective_text(&self.state, words),
+                    turn: map_menu::turn_text(&self.state, words),
+                    notes: under,
+                }))
+            }
+            Mode::EndTurnPrompt { ready } => {
+                Some(question(map_menu::end_turn_question(words, *ready)))
+            }
+            Mode::RestartPrompt => Some(question(ctx.text("battle.restart_question").to_owned())),
+            Mode::SuspendPrompt => Some(question(ctx.text("battle.suspend_question").to_owned())),
+            _ => None,
+        }
+    }
+
+    /// Where the units the battle notes are about are drawn, while the
+    /// notes are on screen; empty otherwise.
+    fn noted(&self) -> Vec<Pos> {
+        if !self.notes_shown() {
+            return Vec::new();
+        }
+        let noted = self.state.battle_notes();
+        self.state
+            .units()
+            .iter()
+            .filter(|u| notes::is_noted(noted, u.id))
+            .map(|u| self.drawn_pos(u))
+            .collect()
     }
 
     /// Ages the heal and burn numbers, the terrain flashes and the message
@@ -1882,101 +1995,7 @@ impl BattleScreen {
         }
     }
 
-    /// Draws the heal and burn numbers floating up over the units they
-    /// tell of: over where the map skin has their tiles of `scene`.
-    fn draw_popups(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
-        for p in &self.popups {
-            let fg = ctx.palette.get(p.color());
-            let Some(tile) = ctx.map_skin.tile_cells(scene, MAP_VIEW, p.pos) else {
-                continue;
-            };
-            let y = (tile.y - 1).max(MAP_VIEW.y);
-            let bg = ctx.palette.get(UiColor::Black);
-            buf.print(tile.x, y, &p.text(), fg, bg);
-        }
-    }
-
-    /// Draws the boxes over the map: the unit list, the objective (with
-    /// the battle notes under it), the end-turn question, the info screen,
-    /// the battle notes at the start, and the banner on screen.
-    fn draw_dialogs(&self, ctx: &Ctx, buf: &mut GlyphBuffer, scene: &MapScene) {
-        let p = &ctx.palette;
-        let words = ctx.words();
-        match &*self.mode.told(&self.state, words) {
-            Mode::UnitList { menu, .. } => map_menu::draw_centred_menu(buf, p, menu),
-            Mode::Objective => {
-                let mut lines = vec![
-                    (map_menu::objective_text(&self.state, words), UiColor::Text),
-                    (map_menu::turn_text(&self.state, words), UiColor::Text),
-                ];
-                let noted = notes::note_lines(self.state.battle_notes(), words);
-                if !noted.is_empty() {
-                    lines.push((String::new(), UiColor::Text));
-                    let heading = ctx.text(notes::NOTES_HEADING).to_owned();
-                    lines.push((heading, UiColor::TextDim));
-                    lines.extend(noted.into_iter().map(|l| (l, UiColor::Text)));
-                }
-                let title = ctx.text("battle.objective.title");
-                let (_, h) = map_menu::dialog_size(title, &lines);
-                let top = self.notes_top(ctx, scene, h);
-                map_menu::draw_dialog_at(buf, p, title, &lines, top);
-            }
-            Mode::EndTurnPrompt { ready } => {
-                let yes_no = ctx.text_with("battle.yes_no", &[]);
-                let lines = [
-                    (map_menu::end_turn_question(words, *ready), UiColor::Text),
-                    (yes_no, UiColor::TextDim),
-                ];
-                map_menu::draw_dialog(buf, p, "", &lines);
-            }
-            Mode::RestartPrompt | Mode::SuspendPrompt => {
-                let yes_no = ctx.text_with("battle.yes_no", &[]);
-                let question = ctx.text(if matches!(self.mode, Mode::SuspendPrompt) {
-                    "battle.suspend_question"
-                } else {
-                    "battle.restart_question"
-                });
-                let lines = [
-                    (question.to_owned(), UiColor::Text),
-                    (yes_no, UiColor::TextDim),
-                ];
-                map_menu::draw_dialog(buf, p, "", &lines);
-            }
-            Mode::Info { unit } => {
-                if let Some(u) = self.state.unit(*unit) {
-                    info::draw_info(buf, p, (&self.state, words), u);
-                }
-            }
-            _ => {}
-        }
-        if self.notes_open() {
-            let lines: Vec<_> = notes::note_lines(self.state.battle_notes(), words)
-                .into_iter()
-                .map(|l| (l, UiColor::Text))
-                .collect();
-            let title = ctx.text(notes::NOTES_TITLE);
-            let (_, h) = map_menu::dialog_size(title, &lines);
-            let top = self.notes_top(ctx, scene, h);
-            map_menu::draw_dialog_at(buf, p, title, &lines, top);
-        }
-        if let Some(banner) = self.banner() {
-            banner.draw(buf, p, words, map_menu::shown_limit(&self.state));
-        }
-    }
-}
-
-impl BattleScreen {
-    /// Draws the rewind screen over its map ([`scene`](Self::scene)): the
-    /// list in the side panel and the help line.
-    fn draw_rewind(&self, ctx: &Ctx, buf: &mut GlyphBuffer, r: &RewindScreen) {
-        r.draw(&ctx.palette, ctx.words(), buf);
-        let black = ctx.palette.get(UiColor::Black);
-        let dim = ctx.palette.get(UiColor::TextDim);
-        buf.print(1, HELP_ROW, &self.help(ctx), dim, black);
-        draw_debug_hint(ctx, buf, HELP_ROW);
-    }
-
-    /// The attack forecast on screen: while an attack's target is picked,
+    /// The attack forecast on screen: while an attack's target is picked,    /// The attack forecast on screen: while an attack's target is picked,
     /// or a spell's with the cursor on an enemy.
     fn forecast(&self) -> Option<&Targeting> {
         forecast_of(&self.mode)
@@ -1984,7 +2003,7 @@ impl BattleScreen {
 
     /// The line over the help bar: a combat's message, the preview of the
     /// skill, item or spell being aimed, or the toast.
-    fn message(&self) -> Option<(String, UiColor)> {
+    fn message(&self) -> Option<MessageView> {
         let words = self.language.words();
         let preview = match &self.mode {
             Mode::Combat(pb) => pb.message(words),
@@ -1993,55 +2012,18 @@ impl BattleScreen {
             Mode::CastTarget(t) => t.preview(&self.state, words),
             _ => None,
         };
-        let toast = || Some((self.toast()?.to_owned(), UiColor::TextHighlight));
-        preview.map(|text| (text, UiColor::Text)).or_else(toast)
-    }
-
-    /// Draws the side panel: the forecast while targeting, else the
-    /// terrain and unit under the cursor (as drawn, during a playback).
-    fn draw_panel(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        if let Some(t) = self.forecast() {
-            forecast::draw_forecast(buf, &ctx.palette, (&self.state, ctx.words()), t);
-            return;
-        }
-        let panel_bg = c(UiColor::PanelBg);
-        buf.fill_rect(SIDE_PANEL, Cell::new(' ', c(UiColor::Text), panel_bg));
-        // Double-line while a unit is selected (`look-and-feel.md`).
-        let style = if self.mode.selection().is_some() {
-            BoxStyle::Double
-        } else {
-            BoxStyle::Single
+        let said = |text| MessageView {
+            text,
+            kind: MessageKind::Said,
         };
-        buf.draw_box(SIDE_PANEL, style, c(UiColor::PanelBorder), panel_bg);
-        let pos = self.cursor.pos;
-        let told = (&self.state, ctx.words());
-        if self.playing() {
-            let shown = self.shown_units();
-            let hovered = shown.iter().find(|(u, f)| u.pos == pos && *f < 1.0);
-            let hovered = hovered.map(|(u, _)| u);
-            panel::draw_hover(buf, &ctx.palette, told, pos, hovered);
-        } else {
-            panel::draw_hover(buf, &ctx.palette, told, pos, self.hovered());
-        }
+        let toast = || {
+            Some(MessageView {
+                text: self.toast()?.to_owned(),
+                kind: MessageKind::Toast,
+            })
+        };
+        preview.map(said).or_else(toast)
     }
-}
-
-/// Where a menu of `(w, h)` cells goes beside the tile covering the cells
-/// `tile`: one cell right of the tile (clear of the cursor's marks), or
-/// left of it if it would run past the map view; its first item level with
-/// the tile's top row, moved to fit the view.
-fn menu_origin(tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
-    let right = tile.x + tile.w + 1;
-    let mx = if right + w <= MAP_VIEW.x + MAP_VIEW.w {
-        right
-    } else {
-        (tile.x - 1 - w).max(MAP_VIEW.x)
-    };
-    let my = (tile.y - 1)
-        .min(MAP_VIEW.y + MAP_VIEW.h - h)
-        .max(MAP_VIEW.y);
-    (mx, my)
 }
 
 /// Sets the units of `scene` moving (ticket 0440): the unit of `gait`
@@ -2204,50 +2186,7 @@ impl Screen for BattleScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        let scene = self.scene(ctx);
-        ctx.map_skin.paint(ctx, &scene, MAP_VIEW, buf);
-        if let Some(r) = &self.rewind {
-            self.draw_rewind(ctx, buf, r);
-            return;
-        }
-        self.draw_menu(ctx, buf, &scene);
-        self.draw_popups(ctx, buf, &scene);
-        let stage = self.stage_view(ctx);
-        if let (Mode::Combat(pb), None) = (&self.mode, &stage) {
-            // Combat animations are off: the plain box.
-            playback::draw_box(buf, &ctx.palette, ctx.words(), pb);
-        }
-        if let Some(p) = self.progress() {
-            let look = (&ctx.palette, ctx.words());
-            progress::draw(buf, look, (&ctx.content.portraits, &ctx.lead), p);
-        }
-        self.draw_panel(ctx, buf);
-        if let Some(view) = &stage {
-            // Over the map and the side panel, which the plates replace.
-            stage::glyph::paint(ctx, view, buf);
-        }
-        self.draw_dialogs(ctx, buf, &scene);
-        if let Some(view) = self.tip_view(ctx) {
-            tip_box::glyph::paint(ctx, &view, buf);
-        }
-        buf.fill_rect(HELP_BAR, Cell::new(' ', c(UiColor::Text), black));
-        let status = self.status(ctx);
-        let w = i32::try_from(status.chars().count()).unwrap_or(0);
-        buf.print(
-            HELP_BAR.w - 1 - w,
-            HELP_BAR.y,
-            &status,
-            c(UiColor::TextDim),
-            black,
-        );
-        if let Some((message, color)) = self.message() {
-            buf.print(1, HELP_BAR.y, &message, c(color), black);
-        }
-        buf.print(1, HELP_ROW, &self.help(ctx), c(UiColor::TextDim), black);
-        draw_debug_hint(ctx, buf, HELP_ROW);
+        glyph::paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn std::any::Any> {
@@ -2487,851 +2426,6 @@ mod notes_tests;
 mod zoom_tests;
 
 #[cfg(test)]
-mod tests {
-    use insta::assert_snapshot;
-
-    use trpg_core::{BattleMap, Grid, Objective, Phase, TerrainId, Unit};
-
-    use super::testing::{battle, vaulted, wait};
-    use super::*;
-    use crate::console::ConsoleSpec;
-    use crate::harness::Harness;
-    use crate::map_view::CursorStyle;
-    use crate::screen::tests::ctx;
-
-    fn quick() -> BattleScreen {
-        BattleScreen::new(quick_battle(&ctx().content).unwrap())
-    }
-
-    fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
-        let stale = Cell::new('x', Rgb::new(1, 2, 3), Rgb::new(1, 2, 3));
-        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
-        screen.draw(c, &mut buf);
-        buf
-    }
-
-    #[test]
-    fn quick_battle_state() {
-        let state = quick_battle(&ctx().content).unwrap();
-        assert_eq!(state.map().name, "Test Field");
-        assert_eq!((state.turn(), state.phase()), (1, Phase::Player));
-        assert_eq!(state.objective(), Objective::Rout { turn_limit: None });
-        assert_eq!(state.outcome(), None);
-        let units = state.units();
-        let labels: Vec<(&str, Faction)> = units
-            .iter()
-            .map(|u| (u.map_label.as_str(), u.faction))
-            .collect();
-        assert_eq!(
-            labels,
-            [
-                ("Lo", Faction::Player),
-                ("Kn", Faction::Player),
-                ("Ar", Faction::Player),
-                ("Br", Faction::Enemy),
-                ("Br", Faction::Enemy),
-                ("Ra", Faction::Enemy),
-                ("Fr", Faction::Enemy),
-                ("Ma", Faction::Player),
-            ]
-        );
-        let ids: Vec<u32> = units.iter().map(|u| u.id.0).collect();
-        assert_eq!(ids, [1, 2, 3, 4, 5, 6, 7, 8]);
-        for u in units {
-            assert!(!u.acted, "{}", u.name);
-            assert_eq!(u.hp, u.stats.hp, "{}", u.name);
-            assert!(state.map().tiles.in_bounds(u.pos));
-        }
-        // The caster (0410), numbered after the enemies: Fire from its
-        // class, Frost and Heal of its own, all at full uses, Fire equipped.
-        let mage = state.unit(UnitId(8)).unwrap();
-        assert_eq!(
-            (mage.name.as_str(), mage.pos),
-            ("Test Mage", Pos::new(3, 6))
-        );
-        let spells: Vec<(&str, u8)> = mage
-            .learned
-            .iter()
-            .map(|s| (s.0.as_str(), mage.spells.uses_left(s)))
-            .collect();
-        assert_eq!(spells, [("fire", 10), ("frost", 10), ("heal", 8)]);
-        let fire = trpg_core::SpellId::new("fire");
-        assert_eq!(mage.loadout.equipped, Some(Equipped::Spell(fire)));
-        // The elemental holds its tile.
-        let elemental = state.unit(UnitId(7)).unwrap();
-        assert_eq!(elemental.class.0, "frost_elemental");
-        assert_eq!(elemental.ai, trpg_core::AiBehavior::Stationary);
-        assert_eq!(elemental.pos, Pos::new(8, 7));
-    }
-
-    #[test]
-    fn quick_battle_reports_missing_content() {
-        let mut content = ctx().content;
-        content.battles.clear();
-        assert_eq!(
-            quick_battle(&content),
-            Err("no battle \"quick\"".to_owned())
-        );
-    }
-
-    #[test]
-    fn camera_starts_on_the_first_player_unit() {
-        let c = ctx();
-        let s = quick();
-        // test_small is smaller than the viewport: centred.
-        assert_eq!(s.camera().origin, Pos::new(-10, -11));
-        assert_eq!(s.state().units().len(), 8);
-        let big = BattleMap::new("Big", Grid::filled(64, 40, TerrainId(0)));
-        let units = s.state().units().to_vec();
-        let camera = |units: Vec<Unit>| {
-            BattleScreen::new(battle(&c, big.clone(), units))
-                .camera()
-                .origin
-        };
-        // Lord at (3, 5): clamped to the top-left.
-        assert_eq!(camera(units.clone()), Pos::new(0, 0));
-        let mut far = units.clone();
-        far[0].pos = Pos::new(60, 30);
-        assert_eq!(camera(far), Pos::new(29, 10));
-        let mut enemies_only = units;
-        enemies_only.retain(|u| u.faction != Faction::Player);
-        // Map centre (32, 20).
-        assert_eq!(camera(enemies_only), Pos::new(15, 5));
-    }
-
-    #[test]
-    fn cancel_opens_the_map_menu_and_nothing_pops() {
-        let mut s = quick();
-        let mut c = ctx();
-        let step = |s: &mut BattleScreen, c: &mut Ctx, a: &[Action]| {
-            format!(
-                "{:?}",
-                s.update(c, &FrameInput::new(a.to_vec(), 0.0, vec![]))
-            )
-        };
-        assert_eq!(s.name(), "battle");
-        assert!(!s.is_overlay());
-        assert_eq!(step(&mut s, &mut c, &[]), "None");
-        // Select the lord, then cancel the selection: still here.
-        assert_eq!(step(&mut s, &mut c, &[Action::Confirm]), "None");
-        assert_eq!(step(&mut s, &mut c, &[Action::Cancel]), "None");
-        assert_eq!(s.mode(), &Mode::default());
-        // Browsing: Cancel opens the map menu, and Cancel again closes it.
-        assert_eq!(step(&mut s, &mut c, &[Action::Cancel]), "None");
-        assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
-        assert_eq!(step(&mut s, &mut c, &[Action::Cancel]), "None");
-        assert_eq!(s.mode(), &Mode::default());
-    }
-
-    #[test]
-    fn help_depends_on_what_is_hovered() {
-        let mut c = ctx();
-        let mut state = quick_battle(&c.content).unwrap();
-        // The archer waits where it stands.
-        wait(&mut state, 2);
-        let mut s = BattleScreen::new(state);
-        // On the lord, ready to act.
-        assert_eq!(
-            s.help(&c),
-            "f select · e info · s next unit · r rewind · d menu · Space end turn"
-        );
-        // On the archer, who has acted, and on an enemy.
-        s.cursor.jump(Pos::new(2, 4));
-        assert_eq!(
-            s.help(&c),
-            "arrows move · e info · s next unit · r rewind · d menu · Space end turn"
-        );
-        s.cursor.jump(Pos::new(8, 2));
-        assert_eq!(
-            s.help(&c),
-            "arrows move · f range · e info · s next unit · r rewind · d menu · Space end turn"
-        );
-        // An enemy's range shown: Cancel hides it.
-        step(&mut s, &mut c, &[Action::Confirm]);
-        assert_eq!(
-            s.help(&c),
-            "arrows move · f range · e info · s next unit · r rewind · d hide range · Space end turn"
-        );
-        step(&mut s, &mut c, &[Action::Cancel]);
-        // On an empty tile.
-        s.cursor.jump(Pos::new(0, 0));
-        assert_eq!(
-            s.help(&c),
-            "arrows move · f menu · s next unit · r rewind · d menu · Space end turn"
-        );
-        c.use_layout(crate::input::Layout::LeftHanded);
-        assert_eq!(
-            s.help(&c),
-            "wasd move · j menu · l next unit · u rewind · k menu · Space end turn"
-        );
-        s.cursor.jump(Pos::new(3, 5));
-        assert_eq!(
-            s.help(&c),
-            "j select · i info · l next unit · u rewind · k menu · Space end turn"
-        );
-    }
-
-    #[test]
-    fn help_shows_not_mapped_for_an_action_with_no_key() {
-        let mut c = ctx();
-        let s = quick();
-        let mut keys = c.layout_bindings(crate::input::Layout::RightHanded);
-        keys.clear(Action::Info, 0);
-        c.set_layout_bindings(crate::input::Layout::RightHanded, keys)
-            .unwrap();
-        assert_eq!(
-            s.help(&c),
-            "f select · ! not mapped info · s next unit · r rewind · d menu · Space end turn"
-        );
-    }
-
-    #[test]
-    fn cursor_starts_on_the_first_player_lord() {
-        let c = ctx();
-        let s = quick();
-        assert_eq!(s.cursor(), Cursor::new(Pos::new(3, 5)));
-        // The lord listed after another player unit: still the lord.
-        let mut units = s.state().units().to_vec();
-        units.swap(0, 1);
-        let map = s.state().map().clone();
-        let s2 = BattleScreen::new(battle(&c, map.clone(), units.clone()));
-        assert_eq!(s2.cursor().pos, Pos::new(3, 5));
-        // No lord: the first player unit.
-        for u in &mut units {
-            u.is_lord = false;
-        }
-        let s3 = BattleScreen::new(battle(&c, map.clone(), units.clone()));
-        assert_eq!(s3.cursor().pos, Pos::new(4, 6));
-        // No player unit: the map's centre (test_small is 14 × 8).
-        units.retain(|u| u.faction != Faction::Player);
-        let s4 = BattleScreen::new(battle(&c, map, units));
-        assert_eq!(s4.cursor().pos, Pos::new(7, 4));
-    }
-
-    /// One frame with `actions`.
-    fn step(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]) {
-        s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
-    }
-
-    #[test]
-    fn cursor_moves_one_tile_per_step_and_stays_on_the_map() {
-        let mut c = ctx();
-        let mut s = quick();
-        step(&mut s, &mut c, &[Action::CursorRight; 3]);
-        assert_eq!(s.cursor().pos, Pos::new(6, 5));
-        step(&mut s, &mut c, &[Action::CursorDown, Action::CursorLeft]);
-        assert_eq!(s.cursor().pos, Pos::new(5, 6));
-        step(&mut s, &mut c, &[Action::CursorUp; 20]);
-        assert_eq!(s.cursor().pos, Pos::new(5, 0));
-        step(&mut s, &mut c, &[Action::CursorLeft; 20]);
-        assert_eq!(s.cursor().pos, Pos::new(0, 0));
-        step(&mut s, &mut c, &[Action::CursorDown; 20]);
-        step(&mut s, &mut c, &[Action::CursorRight; 20]);
-        assert_eq!(s.cursor().pos, Pos::new(13, 7));
-        // Other keys don't move it; the small map stays centred.
-        step(
-            &mut s,
-            &mut c,
-            &[Action::Confirm, Action::Info, Action::DangerZone],
-        );
-        assert_eq!(s.cursor().pos, Pos::new(13, 7));
-        assert_eq!(s.camera().origin, Pos::new(-10, -11));
-    }
-
-    #[test]
-    fn cursor_pulses_with_frame_time() {
-        let mut c = ctx();
-        let mut s = quick();
-        s.update(&mut c, &FrameInput::new(vec![], 0.5, vec![]));
-        assert!((s.cursor().brightness() - cursor::BLINK_MIN).abs() < 1e-6);
-        // The map shows it on the lord at (3, 5), dimmed; a fresh battle's
-        // at full brightness.
-        let shown = |s: &BattleScreen| s.scene(&c).cursor.map(|v| (v.pos, v.brightness));
-        assert_eq!(shown(&s), Some((Pos::new(3, 5), cursor::BLINK_MIN)));
-        assert_eq!(shown(&quick()), Some((Pos::new(3, 5), 1.0)));
-    }
-
-    #[test]
-    fn next_and_prev_unit_cycle_ready_units_in_reading_order() {
-        let mut c = ctx();
-        let mut s = quick();
-        // Ready, in reading order: the archer (2, 4), the lord (3, 5), the
-        // mage (3, 6) and the knight (4, 6).
-        assert_eq!(
-            s.ready_units(),
-            [
-                Pos::new(2, 4),
-                Pos::new(3, 5),
-                Pos::new(3, 6),
-                Pos::new(4, 6)
-            ]
-        );
-        let mut visit = |a: Action| {
-            step(&mut s, &mut c, &[a]);
-            s.cursor().pos
-        };
-        assert_eq!(visit(Action::NextUnit), Pos::new(3, 6));
-        assert_eq!(visit(Action::NextUnit), Pos::new(4, 6));
-        assert_eq!(visit(Action::NextUnit), Pos::new(2, 4));
-        assert_eq!(visit(Action::NextUnit), Pos::new(3, 5));
-        assert_eq!(visit(Action::PrevUnit), Pos::new(2, 4));
-        assert_eq!(visit(Action::PrevUnit), Pos::new(4, 6));
-        assert_eq!(visit(Action::PrevUnit), Pos::new(3, 6));
-        assert_eq!(visit(Action::PrevUnit), Pos::new(3, 5));
-        // From a tile between them, in reading order.
-        assert_eq!(visit(Action::CursorRight), Pos::new(4, 5));
-        assert_eq!(visit(Action::NextUnit), Pos::new(3, 6));
-        assert_eq!(visit(Action::NextUnit), Pos::new(4, 6));
-        assert_eq!(visit(Action::CursorUp), Pos::new(4, 5));
-        assert_eq!(visit(Action::PrevUnit), Pos::new(3, 5));
-        // Below every ready unit: next wraps to the first.
-        for _ in 0..5 {
-            visit(Action::CursorDown);
-        }
-        assert_eq!(visit(Action::NextUnit), Pos::new(2, 4));
-    }
-
-    #[test]
-    fn cycling_does_nothing_without_ready_units_and_scrolls_the_camera() {
-        let c = ctx();
-        let mut ctx_ = ctx();
-        let mut units = quick_battle(&c.content).unwrap().units().to_vec();
-        for u in &mut units {
-            u.acted = u.faction == Faction::Player;
-        }
-        let map = BattleMap::new("Big", Grid::filled(64, 40, TerrainId(0)));
-        let mut s = BattleScreen::new(battle(&c, map.clone(), units.clone()));
-        step(&mut s, &mut ctx_, &[Action::NextUnit, Action::PrevUnit]);
-        assert_eq!(s.cursor().pos, Pos::new(3, 5));
-        // A ready unit far away: the camera follows the jump.
-        units[1].acted = false;
-        units[1].pos = Pos::new(60, 35);
-        let mut s = BattleScreen::new(battle(&c, map, units));
-        // (Past the mage, the one unit between the lord and it.)
-        step(&mut s, &mut ctx_, &[Action::NextUnit, Action::NextUnit]);
-        assert_eq!(s.cursor().pos, Pos::new(60, 35));
-        // Scrolled just enough to keep it 3 tiles from the edges.
-        assert_eq!(s.camera().origin, Pos::new(29, 9));
-    }
-
-    /// The Quick Battle's units on a 64 × 40 plain, in the harness.
-    fn big_battle_harness() -> Harness {
-        let c = ctx();
-        let units = quick_battle(&c.content).unwrap().units().to_vec();
-        let map = BattleMap::new("Big", Grid::filled(64, 40, TerrainId(0)));
-        Harness::with_screen(Box::new(BattleScreen::new(battle(&c, map, units))))
-    }
-
-    /// Where the cursor is in the map view, as tiles right of and below
-    /// its top-left tile.
-    fn cursor_in_view(h: &Harness) -> (i32, i32) {
-        let scene = h.map_scene().expect("no battle");
-        let pos = scene.cursor_tile().expect("no cursor on the map");
-        scene.offset(pos).expect("the cursor is in the view")
-    }
-
-    /// Holding a cursor key ticks once per tile moved, and not at the
-    /// map's edge (ticket 0425).
-    #[test]
-    fn held_cursor_ticks_once_per_tile() {
-        let ticks = |h: &Harness| h.sounds().iter().filter(|c| *c == CURSOR_MOVE).count();
-        let mut h = big_battle_harness();
-        // The lord at (3, 5); the camera scrolls as the cursor goes right.
-        h.hold("Right", 1.0);
-        let right = ticks(&h);
-        assert!(right > 5, "{right} ticks: the key should repeat");
-        assert_eq!(h.sounds().len(), right, "{:?}", h.sounds());
-        // Held left for much longer than it takes to reach x = 0: one tick
-        // per tile back, none once at the edge.
-        h.clear_audio().hold("Left", 6.0);
-        assert_eq!(ticks(&h), right + 3);
-        assert_eq!(cursor_in_view(&h).0, 0, "at the left edge");
-        h.clear_audio().keys("Left Up Up Up Up Up Up");
-        assert_eq!(ticks(&h), 5, "only the five steps up to y = 0");
-        // Next unit jumps: one tick.
-        h.clear_audio().keys("s");
-        assert_eq!(h.sounds(), [CURSOR_MOVE]);
-    }
-
-    #[test]
-    fn harness_keys_move_the_cursor() {
-        let mut h = big_battle_harness();
-        // The lord at (3, 5), camera at the top-left.
-        assert_eq!(cursor_in_view(&h), (3, 5));
-        h.keys("Right Right Right");
-        assert_eq!(cursor_in_view(&h), (6, 5));
-        h.keys("Down Left");
-        assert_eq!(cursor_in_view(&h), (5, 6));
-    }
-
-    #[test]
-    fn harness_hold_repeats_with_the_keymap_timing_and_scrolls() {
-        let c = ctx();
-        let repeat = c.content.keymap.repeat;
-        let (delay, interval) = (repeat.delay_ms, repeat.interval_ms);
-        let moves = |ms: u32| i32::try_from(1 + 1 + (ms - delay) / interval).unwrap();
-        let mut h = big_battle_harness();
-        h.hold("Right", 1.2);
-        // 1 press + repeats at 300 ms, then every 55 ms: 18 tiles, to x = 21.
-        assert_eq!(moves(1200), 18);
-        assert_eq!(cursor_in_view(&h), (3 + 18, 5));
-        h.hold("Right", 1.2);
-        // x = 39: the camera keeps it 3 tiles from the right edge.
-        let x = 3 + 2 * moves(1200);
-        let view_w = h.map_scene().unwrap().size.0;
-        assert_eq!(view_w, 35);
-        let origin = x - (view_w - 1 - Camera::MARGIN);
-        assert_eq!(cursor_in_view(&h), (x - origin, 5));
-        // Far right, then back: the cursor stops at the edge and the
-        // camera shows the map's last columns, then scrolls back.
-        h.hold("Right", 3.0).hold("Down", 3.0);
-        assert_eq!(cursor_in_view(&h), (34, 29));
-        h.hold("Left", 4.0).hold("Up", 3.0);
-        assert_eq!(cursor_in_view(&h), (0, 0));
-    }
-
-    /// The text of row `y` of the side panel, inside its border, trimmed.
-    fn panel_row(buf: &GlyphBuffer, y: i32) -> String {
-        let (x0, x1) = (SIDE_PANEL.x + 1, SIDE_PANEL.x + SIDE_PANEL.w - 1);
-        (x0..x1)
-            .map(|x| buf.get(x, y).unwrap().glyph)
-            .collect::<String>()
-            .trim()
-            .to_owned()
-    }
-
-    /// The Quick Battle with the knight wounded (9/20 HP) and moved into
-    /// the forest at (1, 5).
-    fn knight_in_forest() -> BattleScreen {
-        let c = ctx();
-        let state = quick_battle(&c.content).unwrap();
-        let mut units = state.units().to_vec();
-        units[1].pos = Pos::new(1, 5);
-        units[1].hp = units[1].stats.hp * 9 / 20;
-        let mut s = BattleScreen::new(battle(&c, state.map().clone(), units));
-        s.cursor.jump(Pos::new(1, 5));
-        s
-    }
-
-    #[test]
-    fn panel_shows_the_terrain_and_unit_under_the_cursor() {
-        let c = ctx();
-        let s = knight_in_forest();
-        let knight = s.hovered().unwrap().clone();
-        let buf = render(&s, &c);
-        let rows: Vec<String> = (1..10).map(|y| panel_row(&buf, y)).collect();
-        let hp = format!("HP {}/{}", knight.hp, knight.stats.hp);
-        assert_eq!(rows[0], "Forest");
-        assert_eq!(rows[1], "DEF +1  AVO +20");
-        assert_eq!(rows[2], "");
-        assert_eq!(rows[4], "Test Knight");
-        assert_eq!(rows[5], "Guard  Lv 1");
-        assert!(rows[6].starts_with(&hp), "{}", rows[6]);
-        assert_eq!(rows[7], "Player");
-        // The knight is at 9/20 of max HP: 5 of 10 cells, `hp_mid`.
-        let bar: String = (0..panel::HP_BAR_CELLS)
-            .map(|i| buf.get(panel::HP_BAR_X + i, 7).unwrap().glyph)
-            .collect();
-        assert_eq!(bar, "█████░░░░░");
-        let p = &c.palette;
-        assert_eq!(
-            buf.get(panel::HP_BAR_X, 7).unwrap().fg,
-            p.get(UiColor::HpMid)
-        );
-        assert_eq!(
-            buf.get(panel::TEXT_X, 5).unwrap().fg,
-            p.get(UiColor::Player)
-        );
-        // An enemy: its faction, in red.
-        let mut s = s;
-        s.cursor.jump(Pos::new(8, 2));
-        let buf = render(&s, &c);
-        assert_eq!(panel_row(&buf, 8), "Enemy");
-        assert_eq!(buf.get(panel::TEXT_X, 5).unwrap().fg, p.get(UiColor::Enemy));
-    }
-
-    #[test]
-    fn panel_shows_healing_terrain_and_cuts_long_names() {
-        let mut c = ctx();
-        let s = knight_in_forest();
-        let mut rules = c.content.terrain.rules.clone();
-        let forest = c.content.terrain.display.id_of("forest").unwrap();
-        rules.terrains[usize::from(forest.0)].heal_percent = 20;
-        rules.terrains[usize::from(forest.0)].name = "A".repeat(40);
-        c.content.terrain.rules = rules;
-        let mut units = s.state().units().to_vec();
-        units[1].name = "B".repeat(40);
-        let mut s2 = BattleScreen::new(battle(&c, s.state().map().clone(), units));
-        s2.cursor.jump(Pos::new(1, 5));
-        let buf = render(&s2, &c);
-        assert_eq!(panel_row(&buf, 1), "A".repeat(panel::TEXT_W));
-        assert_eq!(panel_row(&buf, 3), "Heals 20% HP");
-        assert_eq!(panel_row(&buf, 5), "B".repeat(panel::TEXT_W));
-    }
-
-    /// Hovering the wounded knight, standing in a forest.
-    #[test]
-    fn hover_unit_on_forest_snapshot() {
-        let c = ctx();
-        assert_snapshot!(render(&knight_in_forest(), &c).to_snapshot(&c.palette));
-    }
-
-    /// Hovering an empty plain: terrain only.
-    #[test]
-    fn hover_empty_plain_snapshot() {
-        let c = ctx();
-        let mut s = quick();
-        s.cursor.jump(Pos::new(6, 5));
-        let buf = render(&s, &c);
-        assert_eq!(panel_row(&buf, 1), "Plain");
-        assert_eq!(panel_row(&buf, 5), "");
-        assert_snapshot!(buf.to_snapshot(&c.palette));
-    }
-
-    #[test]
-    fn draw_covers_the_whole_buffer() {
-        let c = ctx();
-        let buf = render(&quick(), &c);
-        let stale = Rgb::new(1, 2, 3);
-        for y in 0..i32::from(ConsoleSpec::PC.rows) {
-            for x in 0..i32::from(ConsoleSpec::PC.cols) {
-                let cell = buf.get(x, y).unwrap();
-                assert!(cell.fg != stale && cell.bg != stale, "({x}, {y})");
-            }
-        }
-    }
-
-    #[test]
-    fn terrain_tiles_use_their_two_glyphs_and_colours() {
-        let c = ctx();
-        let s = quick();
-        let buf = render(&s, &c);
-        let p = &c.palette;
-        // Tile (0, 0) is sea, drawn at cell (20, 11).
-        let display = &c.content.terrain.display;
-        let sea = display.get(display.id_of("sea").unwrap()).unwrap();
-        let cell = |x| *buf.get(x, 11).unwrap();
-        for x in [20, 21] {
-            assert_eq!(cell(x).glyph, sea.glyphs[usize::try_from(x - 20).unwrap()]);
-            assert_eq!(Some(cell(x).fg), p.lookup(&sea.fg));
-            assert_eq!(Some(cell(x).bg), p.lookup(&sea.bg));
-        }
-        // Left of the map: blank.
-        assert_eq!(
-            cell(19),
-            Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black))
-        );
-    }
-
-    /// A 64 × 40 map of stripes, a unit in the bottom-right corner and the
-    /// cursor and camera moved there.
-    #[test]
-    fn large_map_scrolled_to_bottom_right_snapshot() {
-        let c = ctx();
-        let display = &c.content.terrain.display;
-        let ids =
-            ["plain", "forest", "road", "water", "mountain"].map(|t| display.id_of(t).unwrap());
-        let cells = (0..40)
-            .flat_map(|y: usize| (0..64).map(move |x: usize| ids[(x / 3 + y / 2) % ids.len()]))
-            .collect();
-        let mut units = quick_battle(&c.content).unwrap().units().to_vec();
-        // The camera starts on the lord at (3, 5), top-left.
-        units[5].pos = Pos::new(63, 39);
-        let cornered = units[5].id;
-        units[3].pos = Pos::new(30, 12);
-        units[4].pos = Pos::new(28, 9); // Above the viewport: not drawn.
-        let map = BattleMap::new("Stripes", Grid::from_cells(64, 40, cells).unwrap());
-        let mut s = BattleScreen::new(battle(&c, map, units));
-        assert_eq!(s.camera().origin, Pos::new(0, 0));
-        s.cursor.jump(Pos::new(63, 39));
-        s.follow(Pos::new(63, 39));
-        assert_eq!(s.camera().origin, Pos::new(29, 10));
-        // The corner unit sits in the viewport's last tile.
-        let scene = s.scene(&c);
-        let corner = Pos::new(63, 39);
-        assert_eq!(scene.size, (35, 30));
-        assert_eq!(scene.offset(corner), Some((34, 29)));
-        assert_eq!(scene.unit_at(corner).map(|u| u.id), Some(cornered));
-        assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
-    }
-
-    /// One frame of `dt` seconds with `actions`, Confirm held if `held`.
-    fn frame(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action], dt: f32, held: bool) {
-        let held = if held { vec![Action::Confirm] } else { vec![] };
-        s.update(c, &FrameInput::new(actions.to_vec(), dt, held));
-    }
-
-    /// The Quick Battle with the lord selected and walked two tiles right to
-    /// (5, 5), its action menu open.
-    fn lord_menu(c: &mut Ctx) -> BattleScreen {
-        let mut s = quick();
-        step(
-            &mut s,
-            c,
-            &[Action::Confirm, Action::CursorRight, Action::CursorRight],
-        );
-        step(&mut s, c, &[Action::Confirm]);
-        assert!(matches!(s.mode(), Mode::Moving { .. }), "{:?}", s.mode());
-        frame(&mut s, c, &[], 1.0, false);
-        assert!(
-            matches!(s.mode(), Mode::ActionMenu { .. }),
-            "{:?}",
-            s.mode()
-        );
-        s
-    }
-
-    #[test]
-    fn select_move_and_wait_ends_the_units_action() {
-        let mut c = ctx();
-        let mut s = lord_menu(&mut c);
-        step(&mut s, &mut c, &[Action::Confirm]);
-        let lord = &s.state().units()[0];
-        assert_eq!((lord.pos, lord.acted), (Pos::new(5, 5), true));
-        assert_eq!(s.mode(), &Mode::default());
-        assert_eq!(s.cursor().pos, Pos::new(5, 5));
-        // No longer ready: not selectable, and cycling skips it.
-        step(&mut s, &mut c, &[Action::Confirm]);
-        assert_eq!(s.mode(), &Mode::default());
-        assert_eq!(
-            s.ready_units(),
-            [Pos::new(2, 4), Pos::new(3, 6), Pos::new(4, 6)]
-        );
-    }
-
-    #[test]
-    fn cancelling_from_the_menu_and_the_selection_leaves_the_battle_unchanged() {
-        let mut c = ctx();
-        let before = quick().state().clone();
-        let mut s = lord_menu(&mut c);
-        // The lord is drawn at (5, 5), but the battle hasn't changed.
-        assert_eq!(s.hovered().map(|u| u.id), Some(UnitId(1)));
-        assert_eq!(s.state(), &before);
-        step(&mut s, &mut c, &[Action::Cancel]);
-        let Mode::Selected(sel) = s.mode() else {
-            panic!("{:?}", s.mode());
-        };
-        assert_eq!(sel.path, [Pos::new(3, 5), Pos::new(4, 5), Pos::new(5, 5)]);
-        assert_eq!(s.hovered(), None, "drawn back at its own tile");
-        assert_eq!(s.state(), &before);
-        step(&mut s, &mut c, &[Action::Cancel]);
-        assert_eq!(s.mode(), &Mode::default());
-        assert_eq!(s.cursor().pos, Pos::new(3, 5));
-        assert_eq!(s.state(), &before);
-    }
-
-    #[test]
-    fn a_held_confirm_skips_the_walk() {
-        let mut c = ctx();
-        let mut s = quick();
-        step(&mut s, &mut c, &[Action::Confirm]);
-        step(&mut s, &mut c, &[Action::CursorRight; 2]);
-        // The press starts the walk; still held after 0.2 s, it skips.
-        frame(&mut s, &mut c, &[Action::Confirm], 0.0, true);
-        frame(&mut s, &mut c, &[], mode::HOLD_SKIP_S / 2.0, true);
-        assert!(matches!(s.mode(), Mode::Moving { .. }));
-        frame(&mut s, &mut c, &[], mode::HOLD_SKIP_S / 2.0, true);
-        assert!(matches!(s.mode(), Mode::ActionMenu { .. }));
-    }
-
-    #[test]
-    fn keys_do_only_what_the_mode_allows() {
-        let mut c = ctx();
-        let mut s = quick();
-        step(&mut s, &mut c, &[Action::Confirm, Action::CursorRight]);
-        // Selected: cycling does nothing.
-        step(&mut s, &mut c, &[Action::NextUnit, Action::PrevUnit]);
-        assert_eq!(s.cursor().pos, Pos::new(4, 5));
-        // In the menu, cursor keys move its focus, not the cursor.
-        let mut s = lord_menu(&mut c);
-        step(
-            &mut s,
-            &mut c,
-            &[Action::CursorUp, Action::CursorLeft, Action::NextUnit],
-        );
-        assert_eq!(s.cursor().pos, Pos::new(5, 5));
-        // While walking, too.
-        let mut s = quick();
-        step(&mut s, &mut c, &[Action::Confirm, Action::CursorRight]);
-        step(&mut s, &mut c, &[Action::Confirm, Action::CursorDown]);
-        assert_eq!(s.cursor().pos, Pos::new(4, 5));
-    }
-
-    #[test]
-    fn selecting_draws_ranges_and_a_double_panel_border() {
-        let mut c = ctx();
-        let mut s = quick();
-        let plain = render(&s, &c);
-        assert!(s.scene(&c).tints_at(Pos::new(6, 5)).is_empty());
-        step(&mut s, &mut c, &[Action::Confirm]);
-        let buf = render(&s, &c);
-        let scene = s.scene(&c);
-        // The cursor stays on the lord, as corner marks.
-        let cursor = scene.cursor.unwrap();
-        let lord = Pos::new(3, 5);
-        assert_eq!((cursor.pos, cursor.style), (lord, CursorStyle::Corners));
-        // (6, 5), reachable, is in the move range.
-        assert_eq!(scene.tints_at(Pos::new(6, 5)), [RangeKind::Move]);
-        let Mode::Selected(sel) = s.mode() else {
-            panic!()
-        };
-        let attack = sel.attack.iter().next().unwrap();
-        assert_eq!(scene.tints_at(attack), [RangeKind::Attack]);
-        assert_eq!(buf.get(SIDE_PANEL.x, 0).unwrap().glyph, '╔');
-        assert_eq!(plain.get(SIDE_PANEL.x, 0).unwrap().glyph, '┌');
-        // No path yet: only the lord's own tile.
-        assert_eq!(scene.path, [lord]);
-    }
-
-    #[test]
-    fn the_path_ends_in_an_arrowhead_with_no_cursor_frame_there() {
-        let mut c = ctx();
-        let mut s = quick();
-        step(
-            &mut s,
-            &mut c,
-            &[Action::Confirm, Action::CursorRight, Action::CursorRight],
-        );
-        // The path from the lord ends on the fort at (5, 5) (each skin
-        // draws its end its own way: the glyph skin an arrowhead): no
-        // cursor there, and the lord still on its tile.
-        let scene = s.scene(&c);
-        let (lord, fort) = (Pos::new(3, 5), Pos::new(5, 5));
-        assert_eq!(scene.path, [lord, Pos::new(4, 5), fort]);
-        assert_eq!(scene.cursor, None);
-        assert_eq!(scene.unit_at(lord).map(|u| u.label.as_str()), Some("Lo"));
-        assert_eq!(scene.unit_at(fort), None);
-        let fort_id = c.content.terrain.display.id_of("fort");
-        assert_eq!(scene.terrain_at(fort), fort_id);
-        // On to the map's right edge, past the lord's reach (Mov 5): the
-        // path, through the fort (cost 2), stops at (7, 5), and the cursor
-        // shows its corner marks.
-        step(&mut s, &mut c, &[Action::CursorRight; 8]);
-        assert_eq!(s.cursor().pos, Pos::new(13, 5));
-        let Mode::Selected(sel) = s.mode() else {
-            panic!("{:?}", s.mode());
-        };
-        assert_eq!(sel.dest(), Pos::new(7, 5));
-        assert_eq!(s.scene(&c).cursor_tile(), Some(Pos::new(13, 5)));
-    }
-
-    #[test]
-    fn the_menu_opens_beside_the_unit_drawn_at_its_new_tile() {
-        let mut c = ctx();
-        let s = lord_menu(&mut c);
-        let buf = render(&s, &c);
-        let row = |y: i32, from: i32, n: i32| -> String {
-            (from..from + n)
-                .map(|x| buf.get(x, y).unwrap().glyph)
-                .collect()
-        };
-        // The lord at (5, 5); its old tile is empty.
-        let scene = s.scene(&c);
-        let lord = scene.unit_at(Pos::new(5, 5));
-        assert_eq!(lord.map(|u| u.label.as_str()), Some("Lo"));
-        assert_eq!(scene.unit_at(Pos::new(3, 5)), None);
-        // The menu one cell right of the tile: `Attack`, `Arts` and `Item`
-        // (dim), `Skill`, `Equip`, `Wait`.
-        assert_eq!(row(16, 33, 10), "│ Attack │");
-        assert_eq!(row(17, 33, 10), "│ Arts   │");
-        assert_eq!(row(18, 33, 10), "│ Skill  │");
-        assert_eq!(row(19, 33, 10), "│ Item   │");
-        assert_eq!(row(20, 33, 10), "│ Equip  │");
-        assert_eq!(row(21, 33, 10), "│ Wait   │");
-        let p = &c.palette;
-        assert_eq!(buf.get(35, 16).unwrap().fg, p.get(UiColor::TextDim));
-        assert_eq!(buf.get(35, 17).unwrap().fg, p.get(UiColor::TextDim));
-        assert_eq!(buf.get(35, 19).unwrap().fg, p.get(UiColor::TextDim));
-        assert_eq!(
-            buf.get(35, 21).unwrap().bg,
-            p.get(UiColor::PanelBorderFocus)
-        );
-        // No cursor, no ranges, the panel shows the lord.
-        assert_eq!(scene.cursor, None);
-        assert!(scene.tiles.iter().all(|t| t.tints.is_empty()));
-        assert_eq!(panel_row(&buf, 5), "Test Lord");
-    }
-
-    #[test]
-    fn menus_go_right_of_the_tile_unless_they_would_leave_the_view() {
-        // A glyph tile: two cells wide, one high.
-        let beside = |(x, y), size| menu_origin(Rect::new(x, y, 2, 1), size);
-        // The first item (under the top border) level with the tile.
-        assert_eq!(beside((10, 4), (10, 4)), (13, 3));
-        // Too far right: left of the tile.
-        assert_eq!(beside((60, 4), (10, 4)), (49, 3));
-        assert_eq!(beside((57, 4), (10, 4)), (60, 3));
-        // Too low or high: moved to fit; never off the left edge.
-        assert_eq!(beside((10, 29), (10, 4)), (13, 26));
-        assert_eq!(beside((2, 0), (70, 4)), (0, 0));
-        // A bigger tile (another skin's): right of all of it, level with
-        // its top row.
-        assert_eq!(menu_origin(Rect::new(10, 4, 4, 2), (10, 4)), (15, 3));
-        assert_eq!(menu_origin(Rect::new(58, 4, 4, 2), (10, 4)), (47, 3));
-    }
-
-    #[test]
-    fn help_follows_the_mode() {
-        let mut c = ctx();
-        let mut s = quick();
-        step(&mut s, &mut c, &[Action::Confirm]);
-        // On the unit: its own tile is a legal end.
-        assert_eq!(s.help(&c), "arrows move · f move here · d cancel");
-        step(&mut s, &mut c, &[Action::CursorRight, Action::CursorDown]);
-        // On the knight: can't stop there.
-        assert_eq!(s.help(&c), "arrows move · d cancel");
-        step(&mut s, &mut c, &[Action::CursorUp, Action::CursorRight]);
-        step(&mut s, &mut c, &[Action::Confirm]);
-        assert_eq!(s.help(&c), "f skip");
-        frame(&mut s, &mut c, &[], 1.0, false);
-        assert_eq!(s.help(&c), "arrows choose · f confirm · d back");
-        c.use_layout(crate::input::Layout::LeftHanded);
-        assert_eq!(s.help(&c), "wasd choose · j confirm · k back");
-    }
-
-    #[test]
-    fn an_enemys_threat_area_is_tinted_until_hidden() {
-        let mut c = ctx();
-        let mut s = quick();
-        let brigand = Pos::new(8, 2);
-        s.cursor.jump(brigand);
-        assert!(s.scene(&c).tints_at(brigand).is_empty());
-        step(&mut s, &mut c, &[Action::Confirm]);
-        // The brigand's tile and one it can reach.
-        let shown = s.scene(&c);
-        for pos in [brigand, Pos::new(8, 7)] {
-            assert_eq!(shown.tints_at(pos), [RangeKind::Attack], "{pos:?}");
-        }
-        step(&mut s, &mut c, &[Action::Confirm]);
-        assert!(s.scene(&c).tints_at(brigand).is_empty());
-    }
-
-    #[test]
-    fn a_pending_move_after_an_attack_is_chosen_on_the_map() {
-        let mut c = ctx();
-        let state = vaulted(&c);
-        let tiles = state.move_after_tiles();
-        let mut s = BattleScreen::new(state);
-        let Mode::MoveAfter { unit, .. } = s.mode() else {
-            panic!("{:?}", s.mode());
-        };
-        assert_eq!(*unit, UnitId(3));
-        // Its tiles are in a move range.
-        assert_eq!(s.scene(&c).tints_at(tiles[0]), [RangeKind::Move]);
-        assert!(quick().scene(&c).tints_at(tiles[0]).is_empty());
-        s.cursor.jump(Pos::new(8, 4));
-        assert_eq!(s.help(&c), "arrows move · f stay");
-        s.cursor.jump(tiles[0]);
-        assert_eq!(s.help(&c), "arrows move · f move here");
-        s.cursor.jump(Pos::new(0, 0));
-        assert_eq!(s.help(&c), "arrows move");
-        // Cancel doesn't leave; Confirm on a tile moves there.
-        step(&mut s, &mut c, &[Action::Cancel]);
-        assert!(matches!(s.mode(), Mode::MoveAfter { .. }));
-        s.cursor.jump(tiles[0]);
-        step(&mut s, &mut c, &[Action::Confirm]);
-        assert_eq!(s.mode(), &Mode::default());
-        let archer = s.state().unit(UnitId(3)).unwrap();
-        assert_eq!((archer.pos, archer.acted), (tiles[0], true));
-    }
-}
+mod tests;
+#[cfg(test)]
+mod view_tests;
