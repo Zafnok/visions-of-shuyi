@@ -5,10 +5,10 @@ type: feature
 milestone: M1 Engine
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0245"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 0247 — Lead select as view + skin
@@ -81,16 +81,16 @@ None. Nothing the player sees changes.
 
 ## Acceptance criteria
 
-- [ ] `lead_select.rs` doesn't import `UiColor`, `Rect`, `BoxStyle` or
+- [x] `lead_select.rs` doesn't import `UiColor`, `Rect`, `BoxStyle` or
       `Cell`, nor call `draw_portrait`; its `draw` is one call to its skin
       (the grep test is extended).
-- [ ] No snapshot file's content changes.
-- [ ] The view has a unit test of its content on the first frame, with
+- [x] No snapshot file's content changes.
+- [x] The view has a unit test of its content on the first frame, with
       the other gender chosen, with the cursor on each row, with the
       typing box open and with the letter grid open on a cell.
-- [ ] `cargo xtask check-keys` and `check-text` pass; the `check-text`
+- [x] `cargo xtask check-keys` and `check-text` pass; the `check-text`
       limit isn't raised.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -101,5 +101,26 @@ None. Nothing the player sees changes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done as planned. `lead_select/view.rs` holds `LeadSelectView` (heading,
+the two genders with portrait id, expression and `chosen`, the cursor's
+row or `None` while a box is open, the name row, Start's text, the typing
+box, the letter grid with its cells' labels and focus, the help line);
+`lead_select/glyph.rs` paints it with every layout constant, box, colour,
+the `[ ]` around Start, the `_` cursor and the portrait dimming
+(`DIM_NOT_CHOSEN`). `draw` is one call to the skin; the screen opts into
+`Screen::as_any`.
+
+Deviations:
+- The ticket's `PortraitId` doesn't exist: the view holds the portrait's
+  id as `&'static str`, what `LeadProfile::portrait_id` returns.
+- The name fields are `name_row`, `TypingView::typed` and
+  `GridView::spelled`, not `name`: `check-text` reads any `.name` in a
+  screen as a data name to show through `ctx.words()`.
+- No `FlowScreen::lead_select()` accessor: no Harness test needed it.
+- The old tests read no cells (only the snapshots did), so no test moved;
+  the skin's tests in `lead_select/glyph/tests.rs` are new, checking the
+  placement and colours the snapshots show. The grep test also checks the
+  converted screens don't call `draw_portrait`.
+
+No snapshot changed. No follow-up tickets. Nothing for Nick to play: the
+screen looks and works as before.

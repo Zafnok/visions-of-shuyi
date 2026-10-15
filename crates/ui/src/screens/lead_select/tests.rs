@@ -8,7 +8,7 @@ use crate::screen::tests::ctx;
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
 
 /// One update with `actions`: the transition, as text.
-fn update(s: &mut LeadSelectScreen, c: &mut Ctx, actions: &[Action]) -> String {
+pub(super) fn update(s: &mut LeadSelectScreen, c: &mut Ctx, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
     format!("{:?}", s.update(c, &input))
 }
@@ -72,7 +72,7 @@ fn rows_wrap_and_cancel_goes_back() {
 }
 
 /// The screen with the name grid (controller players) open on "Ellery".
-fn spelling(c: &mut Ctx) -> LeadSelectScreen {
+pub(super) fn spelling(c: &mut Ctx) -> LeadSelectScreen {
     let mut s = LeadSelectScreen::new();
     update(&mut s, c, &[CursorDown]);
     s.entry = Some(NameEntry::new(&s.name));
@@ -114,7 +114,7 @@ fn typed_sounds(s: &mut LeadSelectScreen, c: &mut Ctx, keys: &[Key], text: &str)
 
 /// The screen with the typing box open on "Ellery": Confirm on the name
 /// (its key's `f` isn't typed).
-fn typing(c: &mut Ctx) -> LeadSelectScreen {
+pub(super) fn typing(c: &mut Ctx) -> LeadSelectScreen {
     let mut s = LeadSelectScreen::new();
     update(&mut s, c, &[CursorDown]);
     typed(&mut s, c, &[Confirm], &[Key::F], "f");
@@ -391,4 +391,131 @@ fn name_grid_snapshot() {
     let mut h = Harness::with_screen(Box::new(s));
     h.keys("Down");
     assert_snapshot!(h.snapshot());
+}
+
+// ---- The view ---------------------------------------------------------------
+
+/// The genders of `view` whose `chosen` is set.
+fn chosen(view: &LeadSelectView) -> Vec<LeadGender> {
+    view.genders
+        .iter()
+        .filter(|g| g.chosen)
+        .map(|g| g.gender)
+        .collect()
+}
+
+#[test]
+fn the_view_on_the_first_frame() {
+    let c = ctx();
+    let view = LeadSelectScreen::new().view(&c);
+    let gender = |gender, label: &str, portrait, chosen| GenderView {
+        gender,
+        label: label.to_owned(),
+        portrait,
+        expression: "neutral",
+        chosen,
+    };
+    assert_eq!(
+        view,
+        LeadSelectView {
+            heading: "Choose your lead".to_owned(),
+            genders: vec![
+                gender(LeadGender::Male, "Male", "lead_m", true),
+                gender(LeadGender::Female, "Female", "lead_f", false),
+            ],
+            cursor: Some(Row::Gender),
+            name_row: NameRowView {
+                label: "Name".to_owned(),
+                first: "Ellery".to_owned(),
+                family: FAMILY_NAME.to_owned(),
+            },
+            start: "Start".to_owned(),
+            typing: None,
+            grid: None,
+            help: "arrows choose · f next · d back".to_owned(),
+        }
+    );
+}
+
+#[test]
+fn the_view_with_the_other_gender_chosen() {
+    let mut c = ctx();
+    let mut s = LeadSelectScreen::new();
+    update(&mut s, &mut c, &[CursorRight]);
+    let view = s.view(&c);
+    assert_eq!(chosen(&view), [LeadGender::Female]);
+    // The portraits stay in their places: male, then female.
+    let ids: Vec<&str> = view.genders.iter().map(|g| g.portrait).collect();
+    assert_eq!(ids, ["lead_m", "lead_f"]);
+}
+
+#[test]
+fn the_view_puts_the_cursor_on_each_row() {
+    let mut c = ctx();
+    let mut s = LeadSelectScreen::new();
+    assert_eq!(s.view(&c).cursor, Some(Row::Gender));
+    update(&mut s, &mut c, &[CursorDown]);
+    let view = s.view(&c);
+    assert_eq!(view.cursor, Some(Row::Name));
+    assert_eq!(view.help, "arrows choose · f change name · d back");
+    update(&mut s, &mut c, &[CursorDown]);
+    let view = s.view(&c);
+    assert_eq!(view.cursor, Some(Row::Start));
+    assert_eq!(view.help, "arrows choose · f start · d back");
+    // Moving the cursor off the portraits keeps the gender chosen.
+    assert_eq!(chosen(&view), [LeadGender::Male]);
+}
+
+#[test]
+fn the_view_with_the_typing_box_open() {
+    let mut c = ctx();
+    let mut s = typing(&mut c);
+    typed(&mut s, &mut c, &[], &[Key::Backspace; 3], "");
+    typed(&mut s, &mut c, &[], &[], "y");
+    let view = s.view(&c);
+    // Nothing behind the box is lit; the name row shows the name so far.
+    assert_eq!(view.cursor, None);
+    assert_eq!(view.name_row.first, "Elly");
+    assert_eq!(
+        view.typing,
+        Some(TypingView {
+            title: "First name".to_owned(),
+            typed: "Elly".to_owned(),
+            hint: "Type a name on your keyboard.".to_owned(),
+        })
+    );
+    assert_eq!(view.grid, None);
+    assert_eq!(view.help, "Enter done · Backspace delete · Escape cancel");
+}
+
+#[test]
+fn the_view_with_the_letter_grid_open_on_a_cell() {
+    let mut c = ctx();
+    let mut s = spelling(&mut c);
+    update(
+        &mut s,
+        &mut c,
+        &[Cancel, CursorUp, CursorRight, CursorRight],
+    );
+    let view = s.view(&c);
+    assert_eq!(view.cursor, None);
+    assert_eq!(view.typing, None);
+    assert_eq!(view.name_row.first, "Eller");
+    let grid = view.grid.expect("the grid is open");
+    assert_eq!(grid.title, "First name");
+    assert_eq!(grid.spelled, "Eller");
+    assert_eq!(grid.focus, (4, 2));
+    assert_eq!(grid.rows.len(), 5);
+    assert_eq!(grid.rows[0].concat(), "ABCDEFGHIJKLM");
+    assert_eq!(grid.rows[3].concat(), "nopqrstuvwxyz");
+    assert_eq!(grid.rows[4], ["-", "'", "Blank", "Delete", "Done"]);
+    assert_eq!(view.help, "arrows choose · f type · d delete");
+}
+
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn opts_into_as_any() {
+    let s = LeadSelectScreen::new();
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    assert!(any.downcast_ref::<LeadSelectScreen>().is_some());
 }
