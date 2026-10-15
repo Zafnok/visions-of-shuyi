@@ -5,10 +5,10 @@ type: research
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 1026 — Playdate test: do the rules build for it, and how long does an enemy turn take
@@ -127,16 +127,16 @@ measured scale factor is enough to finish.
 
 ## Acceptance criteria
 
-- [ ] An ADR under `docs/adr/` records the bindings, toolchain, licenses,
+- [x] An ADR under `docs/adr/` records the bindings, toolchain, licenses,
       per-crate `no_std` findings and enemy-turn timings, and is in the
       ADR index.
-- [ ] The `spike/playdate` branch is pushed and linked from the ADR. It
+- [x] The `spike/playdate` branch is pushed and linked from the ADR. It
       builds a Playdate game that runs the Chapter 1 enemy phase in the
       simulator.
-- [ ] 1025 is updated with the findings.
-- [ ] `main` gains no Playdate code: `git diff main --stat` on this
+- [x] 1025 is updated with the findings.
+- [x] `main` gains no Playdate code: `git diff main --stat` on this
       ticket's branch shows only `docs/` and `tickets/`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -145,5 +145,57 @@ measured scale factor is enough to finish.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** [ADR-0070](../../docs/adr/0070-playdate-front-end.md) records
+the answers; 1025's *Context* and *Scope* carry them; the code is on the
+pushed, never-merged branch
+[`spike/playdate`](https://github.com/Zafnok/visions-of-shuyi/tree/spike/playdate)
+(`playdate/README.md` there says how to rerun it).
+
+1. **Do the crates build for the device?** Yes, all three: `core`,
+   `content` and `ui` build for `thumbv7em-none-eabihf` with `no_std` +
+   `alloc` behind a default `std` feature (+140/−62, +318/−73 and
+   +401/−109 lines), and their 703 + 657 + 1,844 tests pass unchanged with
+   `std`. Beyond the expected path changes: `include_dir` is replaced by a
+   generated file table, `LazyLock` by `once_cell`'s `OnceBox`, float
+   rounding and trig by `libm`, two `HashMap`s by `hashbrown`.
+2. **How long do enemy turns take?** Measured on Nick's Playdate (Rev B):
+   a 14-enemy phase 1,162 ms, the average of 31 Chapter 1 phases 493 ms,
+   the slowest single enemy decision 226 ms; loading every data file
+   3,708 ms. The device is ~700× slower than the PC; the Simulator runs at
+   PC speed.
+3. **Bindings and toolchain:** none of the binding crates; stable Rust
+   1.98.1, the SDK's own 0BSD C build support, MSYS2's `arm-none-eabi-gcc`
+   and MinGW `gcc`, `pdc`. No MSVC, no nightly. SDK 3.1.2.
+
+**Deviations.**
+- The ticket expected to pick a binding crate. boozook's `cargo-playdate`
+  (the likely pick) cannot build this workspace: it no longer compiles on
+  current nightly, and on its pinned nightly its built-in Cargo cannot read
+  edition-2024 manifests. The others are unmaintained or self-described as
+  barely functional. The front end uses a thin C shim of its own instead
+  (ADR-0070 §2).
+- Nick sideloaded two builds (he has a Playdate, so no estimate was
+  needed). The first crashed while loading: the game needs ~15 KB of stack
+  and the device gives ~10 KB. The second ran the same code on a 256 KB
+  stack from the heap and measured its use. ADR-0070 §4 makes that the
+  front end's design.
+- The device test loads the data with the game's own RON loader (once
+  `content` built without `std`) rather than a pre-converted blob, so the
+  load time is measured too. Only the 31 phase start states travel as a
+  postcard file, made on the PC.
+- Tools installed on Nick's PC for this (he agreed to each download): the
+  Playdate SDK 3.1.2 (he ran the installer), MSYS2's
+  `mingw-w64-ucrt-x86_64-arm-none-eabi-toolchain`, the Rust target
+  `thumbv7em-none-eabihf`, Rust `nightly` and `nightly-2025-04-25`, and
+  `cargo-playdate` 0.5.8 (to test it; not used by the decision).
+
+**Follow-up tickets:** none created. 1025 writes the build tickets; its
+Scope now lists the xtask/CI build, the own-stack front end, loading
+time, and an optional AI speed-up (ADR-0070 §5).
+
+**Gameplay rules decided:** none.
+
+**For Nick:** nothing changes in the game. Enemy turns on the Playdate
+will have a short pause before each enemy moves (about 0.1 s, at most a
+quarter second), and the game will take a few seconds to start; both can
+be cut later if they bother you when you play it.
