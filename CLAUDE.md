@@ -17,7 +17,9 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 
 1. **Work one ticket at a time** from `tickets/open/`, using the `work-ticket`
    skill. One ticket = one branch = one PR. The PR moves the ticket to
-   `tickets/done/`.
+   `tickets/done/`. One exception: a GitHub issue labelled `sonar` is its
+   own ticket, filed weekly from SonarCloud and fixed with the `sonar-fix`
+   skill (ADR-0071).
 2. **No unticketed work.** Don't write game code "to get a head start". Found
    something else to do? Create a ticket (`write-ticket` skill).
 3. **Never invent game-design answers.** They come from `docs/design/` (decided
@@ -57,10 +59,11 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 | `LICENSE`, `THIRD_PARTY_ASSETS.md` | Proprietary source-available license; registry of shipped third-party assets |
 | `docs/design/` | Nick's game-design decisions (filled by `00xx` tickets) |
 | `docs/story/` | Story beats, bible, characters, outline, ledger (ADR-0011) |
-| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input` |
+| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix` |
 | `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `xtask` (repo tooling) |
 | `assets/` | Everything embedded in the game: `data/`, `fonts/` (later: maps, dialogue, portraits) |
 | `assets-test/` | The **test files**: test characters, the test chapter, the debug Quick Battle, test tilesets, the `test` language pack. Laid out like `assets/`, embedded only in debug builds and builds with the debug tools, never in a build that ships (ADR-0057) |
+| `tools/sonar-triage/` | Files SonarCloud's backlog as batched `sonar` GitHub issues, weekly (ADR-0071); `policy.jsonc` is where a finding is accepted |
 | `assets-src/` | Inputs to asset tools (e.g. the font BDF for `cargo xtask font-atlas`); not embedded |
 | `assets-private/` | **Git-ignored**: the checkout of the private repository with the bought art (ADR-0040). `game/` is embedded over `assets/` by the `private-assets` feature; `library/tiny-tales/` is the bought bundle, sorted. `assets-private.rev` (tracked) names the commit to build with |
 | `engine/` | Shuyi Engine's code while it is carved out of the game (ADR-0063, tickets 1102–1118); moves to the engine's own repository, [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine) (public, MIT OR Apache-2.0), with 1131. That repository holds the engine's ADRs, tickets and plans |
