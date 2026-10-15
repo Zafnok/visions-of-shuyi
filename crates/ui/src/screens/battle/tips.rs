@@ -21,6 +21,9 @@ pub struct TipState {
     fired: Vec<TipTrigger>,
     /// Tips waiting to be shown, first in front.
     queue: VecDeque<TipTrigger>,
+    /// Whether a scene the battle started plays over it, so no tip shows
+    /// (ticket 0455).
+    under_scene: bool,
 }
 
 impl TipState {
@@ -57,6 +60,17 @@ impl TipState {
     /// The queued tips' triggers, first to show first.
     pub fn queued(&self) -> impl Iterator<Item = TipTrigger> + '_ {
         self.queue.iter().copied()
+    }
+
+    /// Notes whether a scene plays over the battle: while one does, no
+    /// tip shows.
+    pub fn set_under_scene(&mut self, under: bool) {
+        self.under_scene = under;
+    }
+
+    /// Whether a scene plays over the battle.
+    pub fn under_scene(&self) -> bool {
+        self.under_scene
     }
 
     /// Drops `trigger`'s tip from the queue.

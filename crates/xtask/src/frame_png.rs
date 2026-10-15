@@ -38,6 +38,7 @@ options:
   --layout right|left  the key layout picked before (default right)
   --scale N            whole-number scale, 1 to 8 (default 2)
   --prompt             start as the game does (the title waits for a key or button)
+  --tips               show the one-time tips, as the game does
   --light NAME         fight every battle in this light of assets/data/lighting.ron,
                        whatever its map and its battle file say
 
@@ -80,6 +81,8 @@ pub struct Options {
     pub prompt: bool,
     /// The light every battle is fought in, instead of its own.
     pub light: Option<String>,
+    /// Show the one-time tips, as `app` does.
+    pub tips: bool,
 }
 
 /// Parses `frame-png`'s arguments, checking key and button names up front
@@ -93,6 +96,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
         scale: 2,
         prompt: false,
         light: None,
+        tips: false,
     };
     let mut iter = args.iter();
     while let Some(arg) = iter.next() {
@@ -143,6 +147,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
                     })?;
             }
             "--prompt" => options.prompt = true,
+            "--tips" => options.tips = true,
             "--light" => options.light = Some(value()?),
             flag if flag.starts_with("--") => return Err(format!("unknown option: {flag}")),
             path if out.is_none() => out = Some(PathBuf::from(path)),
@@ -165,6 +170,9 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     let mut h = h.with_shipped_story();
     // And as `app` shows it: with the idle motion on.
     h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
+    if options.tips {
+        h.with_tips();
+    }
     if let Some(light) = &options.light {
         let content = &mut h.ctx_mut().content;
         if content.lighting.get(light).is_none() {

@@ -83,6 +83,47 @@ fn the_first_battle_shows_the_start_tip_and_confirm_dismisses_it() {
     assert_eq!(s.mode(), &Mode::default());
 }
 
+/// Ticket 0455: the guide speaks the tip: their name is the box's title,
+/// the tip's title its first line, and their face is beside the text when
+/// the game has their portrait, smiling unless the tip says otherwise.
+#[test]
+fn the_tip_box_is_the_guides() {
+    let mut c = tipped();
+    let mut s = quick();
+    assert_eq!(s.tip_view(&c), None);
+    press(&mut s, &mut c, &[]);
+    let view = s.tip_view(&c).unwrap();
+    assert_eq!(view.title, "Guide");
+    assert_eq!(view.heading, "Your move");
+    assert_eq!(view.face, None);
+    assert_eq!(view.lines.len(), 3);
+    assert!(view.lines[0].starts_with("Steer the cursor with arrows."));
+    assert_eq!(view.close, "f close");
+    // With the guide's portrait (the bought art), the face.
+    let mut guide = c.content.portraits["test_lord"].clone();
+    let smile = guide.expressions[1].clone();
+    guide.expressions.push(trpg_content::portrait::Expression {
+        name: "smile".into(),
+        ..smile
+    });
+    c.content.portraits.insert("guide".into(), guide);
+    let face = s.tip_view(&c).and_then(|v| v.face).unwrap();
+    assert_eq!(
+        (face.portrait.as_str(), face.expression.as_str()),
+        ("guide", "smile")
+    );
+    // A tip naming another expression shows it.
+    let tip = c
+        .content
+        .tips
+        .tips
+        .iter_mut()
+        .find(|t| t.id == "battle_start");
+    tip.unwrap().face = Some("sad".into());
+    let face = s.tip_view(&c).and_then(|v| v.face).unwrap();
+    assert_eq!(face.expression, "sad");
+}
+
 /// A campaign's tutorial level (0835): tips show at `Full` (and with no
 /// campaign, as here elsewhere), not at `Short` or `None`, and a tip held
 /// back isn't marked seen.
