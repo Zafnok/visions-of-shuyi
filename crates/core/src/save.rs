@@ -25,6 +25,8 @@
 //!   it reads as that default, so every version 2 save still reads and
 //!   writes back the same.
 
+use crate::prelude::*;
+
 use serde::{Deserialize, Serialize};
 
 use crate::campaign::Campaign;

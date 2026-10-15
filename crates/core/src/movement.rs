@@ -41,9 +41,11 @@
 //! - Every unit in the `units` slice occupies its tile; callers pass the
 //!   living units of the battle.
 
-use std::cmp::Reverse;
-use std::collections::BinaryHeap;
-use std::fmt;
+use crate::prelude::*;
+
+use alloc::collections::BinaryHeap;
+use core::cmp::Reverse;
+use core::fmt;
 
 use crate::ai::AiBehavior;
 use crate::class::{ClassId, ClassTable};
@@ -172,7 +174,7 @@ impl fmt::Display for MoveError {
     }
 }
 
-impl std::error::Error for MoveError {}
+impl core::error::Error for MoveError {}
 
 /// Why a drawn path is not a legal move. `index` is the position in the path
 /// of the offending tile.
@@ -232,7 +234,7 @@ impl fmt::Display for PathError {
     }
 }
 
-impl std::error::Error for PathError {}
+impl core::error::Error for PathError {}
 
 /// Where one unit can move this turn. See the module docs for the rules.
 #[derive(Debug, Clone, PartialEq, Eq)]

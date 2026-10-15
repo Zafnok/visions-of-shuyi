@@ -2,7 +2,9 @@
 //! the Hit/Avoid bonus of a partner nearby. The rules are in the parent
 //! module's docs; the numbers and the pure rules are in [`crate::support`].
 
-use std::sync::Arc;
+use crate::prelude::*;
+
+use alloc::sync::Arc;
 
 use super::skills::SkillStep;
 use super::{BattleState, Event};

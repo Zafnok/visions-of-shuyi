@@ -2,7 +2,9 @@
 //! Skills and spells are referenced by id only; their effects are in
 //! [`crate::skill`] and [`crate::spell`].
 
-use std::collections::BTreeMap;
+use crate::prelude::*;
+
+use alloc::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 

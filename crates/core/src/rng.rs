@@ -8,6 +8,8 @@
 //! Game rules take a [`RandomSource`], so tests can inject a [`ScriptedRng`]
 //! that returns a given list of rolls.
 
+use crate::prelude::*;
+
 use serde::{Deserialize, Serialize};
 
 /// Where game rules get their random numbers from.

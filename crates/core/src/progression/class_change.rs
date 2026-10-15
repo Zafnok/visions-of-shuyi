@@ -42,7 +42,9 @@
 //! - **Errors change nothing**: everything is checked before the unit or
 //!   the stock is touched.
 
-use std::fmt;
+use crate::prelude::*;
+
+use core::fmt;
 
 use crate::battle::Event;
 use crate::class::{ClassDef, ClassId, ClassTable};
@@ -113,7 +115,7 @@ impl fmt::Display for ClassChangeError {
     }
 }
 
-impl std::error::Error for ClassChangeError {}
+impl core::error::Error for ClassChangeError {}
 
 /// Whether `unit` has mastered class `id`.
 pub fn has_mastered(unit: &Unit, id: &ClassId, classes: &ClassTable) -> bool {

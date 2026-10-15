@@ -3,6 +3,8 @@
 //! boss check and the attack preview. The rules are in the parent module's
 //! docs.
 
+use crate::prelude::*;
+
 use super::{BattleState, CommandError, Event, Fight, Phase, Pos, Step, UnitAction};
 use crate::art::{ArtEffect, ArtId, ArtNote};
 use crate::combat::{CombatHp, Forecast, SideForecast, StrikePlan, forecast, if_all_hit};
