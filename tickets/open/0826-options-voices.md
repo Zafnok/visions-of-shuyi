@@ -21,6 +21,11 @@ starting a new game" (`docs/design/voices-languages-and-script.md`).
 the wording. 0238 put `voices_on` and `voice_volume` in `Ctx`; 0805 builds
 Options and `Settings`.
 
+**Where they are kept** (0058, `docs/design/options.md`, *Where options are
+kept*): both settings are fields of `Settings`, so they belong to the
+current player profile (0836) like every option; nothing here needs the
+profiles to exist first.
+
 ## Nick input
 
 **Answer first:** ticket 0043 (questions 5 and 6). Build exactly the

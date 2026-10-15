@@ -60,8 +60,9 @@ New Game asks the player how familiar they are, with three answers:
 - The question comes **after the game mode** (Classic / Casual), before the
   lead screen. *Claude's starting rule.*
 - The answer belongs to the campaign (kept in its saves, like the game
-  mode). *Claude's starting rule;* whether it can be changed later, and
-  where, is part of 0058 (which options belong to a save).
+  mode). *Claude's starting rule.* It **can be changed later in Options**
+  while that campaign is loaded (Nick, 0058; `options.md`, *Where options
+  are kept*).
 - At **Short**, today's standard tips (first unit selected, enemy in reach,
   forecast, low HP, level up, enemy phase, danger zone) don't show; they
   are in *Guides*. *Claude's starting rule.*
@@ -162,7 +163,6 @@ for Nick to veto.
 ## Open sub-questions (deferred)
 
 - Tying the guide into the story (Angel-style): much later (Nick).
-- Changing the tutorial level after New Game: with 0058.
 - The guide's name: 0731.
 
 ## Built by

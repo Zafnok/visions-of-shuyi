@@ -37,7 +37,7 @@ here.
 | Tutorial: how familiar you are, the guide, checklist lessons, Guides | [`tutorial.md`](tutorial.md) (+ `chapter-1.md`, *Teaching*) | 0057 (built by 0455, 0456, 0457, 0458, 0731, 0835) | ✅ decided 2026-10-14 |
 | Terrain: movement costs & bonuses | [`terrain.md`](terrain.md) | 0301 | ✅ decided 2026-09-26 (capturing & healing tiles deferred) |
 | Controls, key layouts & controller | [`controls.md`](controls.md) | 0015, 0030, 0032 | ✅ decided 2026-09-25 (rebinding keys 0030, 2026-09-29; controller 0032, 2026-09-30) |
-| The Options screen: speeds, volumes, asking first | [`options.md`](options.md) | 0805 | ✅ decided 2026-10-04 |
+| The Options screen: speeds, volumes, asking first; where options are kept (player profiles) | [`options.md`](options.md) | 0805, 0058 (built by 0836, 0837, 0838, 0839) | ✅ decided 2026-10-04 (player profiles hold the options and saves, 2026-10-14) |
 | Battle scenes, talking & recruitment | [`battle-scenes-and-recruitment.md`](battle-scenes-and-recruitment.md) | 0705 | ✅ decided 2026-09-29 (quest recruitment later) |
 | Playtest bots: player types, targets, autobalancing | [`playtest-bots.md`](playtest-bots.md) | 0033 | ✅ decided 2026-09-30 |
 | AI voices, Japanese and Chinese options, a hired writer later | [`voices-languages-and-script.md`](voices-languages-and-script.md) | 0042 (Japanese), 0043 (voices), 0045 (Chinese) | ⏳ direction set 2026-10-03 (Chinese added 2026-10-04); details open |

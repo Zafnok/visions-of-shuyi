@@ -21,6 +21,11 @@ the system, or Options only) and how a machine translation is labelled
 (`docs/design/voices-languages-and-script.md`, *Japanese*). 0805 builds
 the Options screen and `Settings`.
 
+**Where it is kept** (0058, `docs/design/options.md`, *Where options are
+kept*): the language is a field of `Settings`, so it belongs to the
+current player profile (0836) like every option; nothing here needs the
+profiles to exist first.
+
 ## Nick input
 
 **Answer first:** ticket 0042 (questions 2 and 3). Build exactly what the

@@ -58,7 +58,8 @@ remembered per computer (`tips_seen`).
 
 **Out (do not do):**
 - Lessons (0456, 0457): this ticket only stores the level and gates tips.
-- Changing the level after New Game (part of 0058's decision; if 0058 is
+- Changing the level after New Game: 0058 put it in Options; that row is
+  **0838** (was: part of 0058's decision; if 0058 is
   done first and puts it in Options, add the row as it says).
 - The guide's face (0455), the Guides list (0458).
 

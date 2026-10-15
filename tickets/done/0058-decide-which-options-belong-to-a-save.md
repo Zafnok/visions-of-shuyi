@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-14
 ---
 
 # 0058 — Decide: which options belong to a save file
@@ -89,10 +89,10 @@ used)? What happens to options changed on the title screen?
 
 ## Acceptance criteria
 
-- [ ] `options.md` records the answer and Nick's words.
-- [ ] Follow-up tickets exist; 0804, 0825, 0826 and 0049 name them where
+- [x] `options.md` records the answer and Nick's words.
+- [x] Follow-up tickets exist; 0804, 0825, 0826 and 0049 name them where
       needed.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -100,4 +100,47 @@ used)? What happens to options changed on the title screen?
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Asked Nick with the question pop-up (two rounds plus one clash check).
+He picked **D, player profiles**, then the recommended answer to every
+follow-up: a profile holds every option (keys, layout, volume and
+fullscreen included), the tips seen and its own 30 slots and suspend save;
+the game opens on the last profile used and the title menu switches; the
+first profile, `Player 1`, is made without asking; options kept before
+any save are fine now that they belong to a profile; the tutorial level
+can be changed later in Options; a New Game uses the options last used.
+
+Recorded in `docs/design/options.md` (*Where options are kept*), with
+`tutorial.md` and the design README updated.
+
+Follow-up tickets, all added to 0804's `blocked_by` and the roadmap:
+- **0836** profiles under the options, keys, tips seen and saves, the
+  migration into `Player 1`, and the ADR superseding ADR-0050's storage
+  part.
+- **0837** the title menu's Profile screen (switch, add, rename, delete),
+  after 0836.
+- **0838** the tutorial-level row in Options, after 0835.
+- **0839** leaving Options asks whether to keep the changes (Nick on the
+  PR: overwriting options must be deliberate).
+
+Nick on the PR also said the controller's letter grid stays, but Steam
+(and any console) uses the platform's own keyboard: recorded in
+`options.md` and in 0903's Deck step.
+
+0825 and 0826 now say their settings belong to the profile (no new
+dependency); 0049 says Ironman stays with the campaign; 0835 points at
+0838.
+
+*Claude's starting rules* (Nick may veto):
+- `Profile` sits below `Options` on the title menu.
+- A new profile starts from the default options and runs the hand-layout
+  picker.
+- Names up to 12 characters (*tunable*), no two alike; up to 8 profiles
+  (*tunable*); the only profile can't be deleted. Deleting asks yes/no,
+  focus on No.
+- Which profile was last used and the title backdrop order stay with the
+  computer.
+- The tutorial row shows only while a campaign is loaded, not on the
+  title's Options, and changes the level at once without asking.
+- Leaving Options with changes asks Keep / Discard / Back, cursor on
+  Back; backing out of a name box with an unkept name asks the same way.
+- The Zoom map key and the hand-layout picker keep saving at once.
