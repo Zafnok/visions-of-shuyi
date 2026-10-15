@@ -55,9 +55,9 @@
         (
             id: "sergeant", class: "rider", level: 2,
             talent: Spd,
-            base: (21, 7, 0, 6, 7, 5, 1),
+            base: (21, 7, 0, 6, 5, 5, 1),
             weapon_ranks: [(Sword, E), (Spear, D)],
-            loadout: (weapons: ["iron_spear", "iron_sword"], armour: Some("leather_vest")),
+            loadout: (weapons: ["iron_spear"], armour: Some("leather_vest")),
         ),
         // Aske.
         (

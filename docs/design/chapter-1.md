@@ -156,6 +156,43 @@ party (`1` the lead, `2` Hollis, `3` Tamsin, `4` Aske, `5` Maud, `6` Rue);
 - **Difficulty sim** (the mindless baseline bot on the player's side, 200
   seeds, Classic): see ticket 0803's completion notes for the numbers.
 
+### Tamsin toned down (ticket 0834, 2026-10-15)
+
+Nick, playtest round 2 (0804): "Tamsin in general feels too OP for the
+first fight, constantly doubling on enemy and also having highest mov".
+
+A unit strikes twice when its attack speed beats the enemy's by 4 or more
+(`stats-and-combat.md`). Attack speed is Spd minus the weight its Str doesn't
+carry (1 weight per 5 Str); ranks E and D add nothing, and Charge 1 adds
+might, not speed. The Red Company is slow: an Iron Axe weighs 6 and a
+Brigand's or Raider's Str carries 1 of it. Level 2 soldiers are as fast as
+level 1 ones (no growth reaches a whole point in one level).
+
+| Enemy (how many) | Attack speed | Tamsin before, Iron Spear (4) | before, Iron Sword (6) | **now, Iron Spear (2)** |
+| ---------------- | ------------ | ---------------------------- | --------------------- | ----------------------- |
+| Brigand (5) | −1 | doubles | doubles | no |
+| Raider (3) | −1 | doubles | doubles | no |
+| Archer (3) | 3 | no | no | no |
+| Rider (1) | 2 | no | doubles | no |
+| Guard (1) | −3 | doubles | doubles | doubles |
+| Harl, Steel Axe (1) | 0 | doubles | doubles | no |
+| **Doubled** | | 10 of 14 | 11 of 14 | **1 of 14** |
+
+Options shown, with the difficulty sim (target 30–70% won; before: 37%):
+A Spd 7→5 (34%); B level 1 (28%); C Mov 6 for her alone (34%; Fire
+Emblem's cavalry has the highest Mov); D Chain Mail instead of the Leather
+Vest (38%); A+D (46%); A and no Iron Sword (30%). A or D alone still left
+her doubling 10 of 14 with the light Iron Sword.
+
+**Nick chose A and no Iron Sword.** Tamsin is Spd **5** (was 7) and carries
+only the **Iron Spear**; she keeps Mov 7, level 2 and her Sword rank E.
+Sim after: **30%** won (60 of 200). The recorded flawless win takes 12
+turns (was 8).
+
+The lead (Iron Sword, 6) and Aske (Iron Bow, 4) still double the same
+Brigands, Raiders, Guard and Harl as Tamsin used to; out of this change's
+scope.
+
 ### Teaching
 
 - **Contextual hints**: the help bar plus one-time tips when something new
