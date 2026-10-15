@@ -253,7 +253,7 @@ fn the_lead_is_the_most_recent_saves_and_the_default_without_one() {
     // middle (11.73 s) show: the text, and the portraits drawn.
     let shown = |h: &Harness| {
         let ctx = h.game().ctx();
-        let lead = save::latest_lead(ctx.storage.as_ref());
+        let lead = save::latest_lead(&ctx.storage);
         let player = CinematicPlayer::new(ctx, "test", lead).unwrap();
         let (talk, faces) = (drawn(h, &player, 9.5), drawn(h, &player, 11.73));
         let images =
@@ -274,7 +274,7 @@ fn the_lead_is_the_most_recent_saves_and_the_default_without_one() {
     let lead = LeadProfile::new("Mara", LeadGender::Female);
     let campaign = new_campaign(&h.game().ctx().content, GameMode::Classic, lead);
     let file = SaveFile::chapter_cleared(campaign);
-    save::write(h.ctx_mut().storage.as_mut(), &save::slot_key(4), &file).unwrap();
+    save::write(&mut h.ctx_mut().storage, &save::slot_key(4), &file).unwrap();
     let ([talk, faces], in_talk, in_faces) = shown(&h);
     assert!(talk.contains("Mara! You came back for us."));
     assert!(faces.contains("Mara") && !faces.contains("Ellery"));

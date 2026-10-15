@@ -21,7 +21,7 @@ fn campaign(c: &Ctx, name: &str, playtime_s: u64) -> Campaign {
 /// Puts a chapter save of `campaign` in slot `slot`.
 fn fill(c: &mut Ctx, slot: usize, campaign: Campaign) {
     let file = SaveFile::chapter_cleared(campaign);
-    save::write(c.storage.as_mut(), &slot_key(slot), &file).unwrap();
+    save::write(&mut c.storage, &slot_key(slot), &file).unwrap();
 }
 
 /// The context with saves in slots 2 (Classic) and 4 (Casual), junk in
@@ -339,7 +339,7 @@ fn saving_into_an_empty_slot_writes_it_at_once() {
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
     assert_eq!(sounds(&mut c), ["menu_select"]);
     assert_eq!(s.result(), Some(&SlotOutcome::Saved(1)));
-    let written = read(c.storage.as_ref(), &slot_key(1)).unwrap();
+    let written = read(&c.storage, &slot_key(1)).unwrap();
     assert_eq!(written, Some(SaveFile::chapter_cleared(game)));
     assert_eq!(s.into_result(), Some(SlotOutcome::Saved(1)));
 }
@@ -348,7 +348,7 @@ fn saving_into_an_empty_slot_writes_it_at_once() {
 fn saving_over_a_slot_asks_first() {
     let mut c = saves();
     let game = campaign(&c, "Nell", 5);
-    let before = read(c.storage.as_ref(), &slot_key(2)).unwrap();
+    let before = read(&c.storage, &slot_key(2)).unwrap();
     let mut s = SlotPickerScreen::save(&c, game.clone()).at(2);
     // The key that opens the question doesn't answer it.
     let twice = [Action::Confirm, Action::Confirm];
@@ -359,7 +359,7 @@ fn saving_over_a_slot_asks_first() {
     let question = s.view(&c).question.unwrap();
     assert_eq!(question.question, "Overwrite slot 02?");
     assert_eq!(question.answers, "f yes / d no");
-    assert_eq!(read(c.storage.as_ref(), &slot_key(2)).unwrap(), before);
+    assert_eq!(read(&c.storage, &slot_key(2)).unwrap(), before);
     // The cursor keys do nothing while it asks; Cancel backs out.
     sounds(&mut c);
     let no = [Action::CursorDown, Action::Cancel];
@@ -368,20 +368,20 @@ fn saving_over_a_slot_asks_first() {
     assert!(!s.is_asking());
     assert_eq!(s.focused_slot(), 2);
     assert_eq!(s.view(&c).question, None);
-    assert_eq!(read(c.storage.as_ref(), &slot_key(2)).unwrap(), before);
+    assert_eq!(read(&c.storage, &slot_key(2)).unwrap(), before);
     assert_eq!(s.result(), None);
     // Asked again and confirmed: written.
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
     assert_eq!(s.result(), Some(&SlotOutcome::Saved(2)));
-    let written = read(c.storage.as_ref(), &slot_key(2)).unwrap();
+    let written = read(&c.storage, &slot_key(2)).unwrap();
     assert_eq!(written, Some(SaveFile::chapter_cleared(game.clone())));
     // A slot that can't be read is asked about too, and can be replaced.
     let mut s = SlotPickerScreen::save(&c, game.clone()).at(5);
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
     assert!(s.is_asking());
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
-    let written = read(c.storage.as_ref(), &slot_key(5)).unwrap();
+    let written = read(&c.storage, &slot_key(5)).unwrap();
     assert_eq!(written, Some(SaveFile::chapter_cleared(game)));
 }
 
@@ -432,7 +432,7 @@ fn cancel_goes_back_without_a_result() {
         assert_eq!(sounds(&mut c), ["menu_cancel"]);
         assert_eq!(s.result(), None);
     }
-    assert_eq!(read(c.storage.as_ref(), &slot_key(1)), Ok(None));
+    assert_eq!(read(&c.storage, &slot_key(1)), Ok(None));
 }
 
 /// A storage that can't be written to.
@@ -457,7 +457,8 @@ impl Storage for ReadOnly {
 #[test]
 fn a_failed_save_says_so_and_stays_open() {
     let mut c = ctx();
-    c.storage = Box::new(ReadOnly);
+    c.storage =
+        crate::profiles::ProfileStore::new(Box::new(ReadOnly), crate::profiles::ProfileId::FIRST);
     let mut s = SlotPickerScreen::save(&c, campaign(&c, "Mara", 0));
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
     assert_eq!(sounds(&mut c), [DENIED]);

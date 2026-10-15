@@ -157,7 +157,7 @@ impl Item {
 /// the game has no backdrops.
 fn pick_backdrop(ctx: &Ctx) -> Option<ImageId> {
     let all = &ctx.content.title.backdrops;
-    let last = ctx.storage.read(BACKDROP_KEY).ok().flatten();
+    let last = ctx.storage.computer().read(BACKDROP_KEY).ok().flatten();
     let fresh = |b: &&ImageId| all.len() == 1 || Some(b.path()) != last.as_deref();
     let others: Vec<ImageId> = all.iter().filter(fresh).copied().collect();
     let len = u64::try_from(others.len()).ok().filter(|&n| n > 0)?;
@@ -272,10 +272,10 @@ impl TitleScreen {
     /// lead of the most recent save ([`save::latest_lead`]).
     pub fn refresh(&mut self, ctx: &Ctx) {
         self.stale = false;
-        let lead = save::latest_lead(ctx.storage.as_ref());
+        let lead = save::latest_lead(&ctx.storage);
         let player = CinematicPlayer::new(ctx, TITLE_CINEMATIC, lead);
         self.player = player.map(|p| Rc::new(p.with_backdrop(self.backdrop)));
-        let storage = ctx.storage.as_ref();
+        let storage = &ctx.storage;
         let suspended = save::has_suspend(storage);
         let saved = save::any_slot(storage);
         let quick_battle = self.items.contains(&Item::QuickBattle);
@@ -462,7 +462,10 @@ impl Screen for TitleScreen {
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if let Some(backdrop) = self.unstored.take() {
             // Not being able to remember it must not stop the title.
-            let _ = ctx.storage.write(BACKDROP_KEY, backdrop.path());
+            let _ = ctx
+                .storage
+                .computer_mut()
+                .write(BACKDROP_KEY, backdrop.path());
         }
         if input.dt.is_finite() {
             self.time += input.dt.max(0.0);

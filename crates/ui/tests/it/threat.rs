@@ -54,8 +54,8 @@ fn skip_scenes(h: &mut Harness) {
 /// its banner closed: the cursor on the lead at (4, 12).
 fn chapter_1() -> Harness {
     let mut h = Harness::with_layout(Layout::RightHanded).with_shipped_story();
-    // New Game, Classic, the default lead.
-    h.keys("f f Up f");
+    // New Game, Classic, Not familiar, the default lead.
+    h.keys("f f f Up f");
     skip_scenes(&mut h);
     h.keys("f");
     skip_scenes(&mut h);

@@ -575,17 +575,17 @@ fn classic_cant_switch_where_the_switch_is_closed() {
 fn reset_tips_forgets_the_tips_seen() {
     let mut c = ctx();
     let mut seen = TipsSeen::default();
-    seen.mark("first_move", &mut *c.storage);
-    assert!(TipsSeen::load(&*c.storage).contains("first_move"));
+    seen.mark("first_move", &mut c.storage);
+    assert!(TipsSeen::load(&c.storage).contains("first_move"));
     let mut s = on(Row::ResetTips);
     assert_eq!(s.help(&c), "arrows move · f reset · d back");
     // Nick: it asks first.
     press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     assert_eq!(s.asking(), Some(Question::ResetTips));
-    assert!(TipsSeen::load(&*c.storage).contains("first_move"));
+    assert!(TipsSeen::load(&c.storage).contains("first_move"));
     press(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!((s.asking(), s.message()), (None, None));
-    assert!(TipsSeen::load(&*c.storage).contains("first_move"));
+    assert!(TipsSeen::load(&c.storage).contains("first_move"));
     press(&mut s, &mut c, &[Action::Confirm]);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(c.storage.read(TIPS_SEEN_KEY), Ok(None));

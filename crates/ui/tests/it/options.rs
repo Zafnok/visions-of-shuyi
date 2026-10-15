@@ -468,9 +468,9 @@ fn a_switch_at_the_first_preparations_starts_the_battle_in_casual() {
 #[test]
 fn a_casual_campaign_shows_its_mode_and_the_title_shows_none() {
     let mut h = title();
-    // New Game, Casual, the default lead; skip the intro scene; close the
+    // New Game, Casual, Not familiar, the default lead; skip the intro scene; close the
     // battle notes and the banner.
-    h.keys("f Down f Up f");
+    h.keys("f Down f f Up f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f f f");
     assert_eq!(h.screens(), ["title", "battle"]);

@@ -6,7 +6,6 @@
 
 use super::view::TipView;
 use crate::color::UiColor;
-use crate::console::CONSOLE_W;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::portrait::draw_portrait_in;
 use crate::screen::Ctx;
@@ -21,8 +20,8 @@ pub const FACE_CELLS: (i32, i32) = (16, 8);
 const MARGIN: i32 = 2;
 
 /// Where the box of `view` goes: near the top of the map view, centred on
-/// it, and moved left over the side panel only as far as a wide box needs
-/// to stay on the console.
+/// it; a box wider than the map starts at the screen's left edge and
+/// reaches over the side panel.
 pub fn rect(view: &TipView) -> Rect {
     let cells = |n: usize| i32::try_from(n).unwrap_or(0);
     let widest = view
@@ -38,7 +37,7 @@ pub fn rect(view: &TipView) -> Rect {
     } else {
         0
     };
-    let w = face_w + widest + 2 * MARGIN;
+    let w = MARGIN + face_w + widest + MARGIN;
     // Border, blank row, the heading, the lines, blank row, the close
     // hint, border; at least as tall as the face and the border.
     let text_h = cells(view.lines.len()) + 6;
@@ -46,9 +45,9 @@ pub fn rect(view: &TipView) -> Rect {
         Some(_) => text_h.max(FACE_CELLS.1 + 2),
         None => text_h,
     };
-    let x = (MAP_VIEW.x + (MAP_VIEW.w - w) / 2)
-        .min(i32::from(CONSOLE_W) - w)
-        .max(0);
+    // Centred on the map, the widest box (82 cells) ends at most 41
+    // cells right of the map's middle: still on the console.
+    let x = (MAP_VIEW.x + (MAP_VIEW.w - w) / 2).max(0);
     Rect::new(x, MAP_VIEW.y + 1, w, h)
 }
 
@@ -89,7 +88,7 @@ pub fn paint(ctx: &Ctx, view: &TipView, buf: &mut GlyphBuffer) {
 mod tests {
     use super::*;
     use crate::Rgb;
-    use crate::console::CONSOLE_H;
+    use crate::console::{CONSOLE_H, CONSOLE_W};
     use crate::screen::tests::ctx;
     use crate::tips::view::FaceView;
 
@@ -187,6 +186,8 @@ mod tests {
         let v = view(true, "Guide", &[&line, &line, &line]);
         let r = rect(&v);
         assert_eq!(r.w, 16 + 2 + 60 + 4);
+        // Wider than the map: from the left edge, over the side panel.
+        assert_eq!(r.x, 0);
         assert!(r.x >= 0 && r.x + r.w <= i32::from(CONSOLE_W), "{r:?}");
         assert!(r.y + r.h <= MAP_VIEW.y + MAP_VIEW.h, "{r:?}");
         let buf = painted(&c, &v);

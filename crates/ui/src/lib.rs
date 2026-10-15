@@ -17,6 +17,7 @@ pub mod harness;
 pub mod input;
 pub mod map_view;
 pub mod portrait;
+pub mod profiles;
 pub mod save;
 pub mod screen;
 pub mod screens;

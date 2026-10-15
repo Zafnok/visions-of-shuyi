@@ -41,6 +41,7 @@ here.
 | Battle scenes, talking & recruitment | [`battle-scenes-and-recruitment.md`](battle-scenes-and-recruitment.md) | 0705 | ✅ decided 2026-09-29 (quest recruitment later) |
 | Playtest bots: player types, targets, autobalancing | [`playtest-bots.md`](playtest-bots.md) | 0033 | ✅ decided 2026-09-30 |
 | AI voices, Japanese and Chinese options, a hired writer later | [`voices-languages-and-script.md`](voices-languages-and-script.md) | 0042 (Japanese), 0043 (voices), 0045 (Chinese) | ⏳ direction set 2026-10-03 (Chinese added 2026-10-04); details open |
+| The Playdate version of Chapter 1: screen size, layout, no colour, buttons and crank, what it keeps, where it is sold | [`playdate.md`](playdate.md) | 0061 (built by 1025's tickets) | ✅ decided 2026-10-15 (today's 8×16 cells, FE-GBA corner pop-ups, your units black and enemies grey, A+B ends turn and the crank rewinds, everything kept with one build per language, itch.io first then Catalog) |
 | Number scale & strike thresholds | [`stats-and-combat.md`](stats-and-combat.md) | 0013 | ⏳ after playtest 0804 |
 | Replayability: stars and Replay, Visions, rewards, Ironman, a run mode, a randomizer, replays and sharing, multiplayer, modding | [`replayability.md`](replayability.md) | 0046–0054 | ⏳ direction set 2026-10-05; details after playtest 0804 (multiplayer after launch) |
 

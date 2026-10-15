@@ -36,7 +36,7 @@ pub use battle::{
 };
 pub use campaign::{
     ApplyError, BattleDef, BattleMusic, BattleRewards, Campaign, Difficulty, GameTables,
-    PlayerSlot, UNUSED_CHARGE_PERCENT,
+    PlayerSlot, TutorialLevel, UNUSED_CHARGE_PERCENT,
 };
 pub use class::{
     ArmourWeight, ClassDef, ClassId, ClassLevel, ClassPoints, ClassTable, Tier, UnitTag, UnitTags,

@@ -25,7 +25,7 @@ use std::sync::Arc;
 
 use trpg_core::{
     BattleHistory, BattleState, Campaign, Faction, GameMode, ItemId, LeadGender, LeadProfile,
-    Phase, Pos, SAVE_VERSION, SaveFile, SaveHeader, SavePoint, Stock, UnitId,
+    Phase, Pos, SAVE_VERSION, SaveFile, SaveHeader, SavePoint, Stock, TutorialLevel, UnitId,
 };
 
 use super::replay;
@@ -157,6 +157,17 @@ fn the_current_versions_golden_saves_read_and_write_back_the_same() {
         );
     }
     assert_eq!(read("chapter").1.point, SavePoint::ChapterCleared);
+}
+
+/// The golden saves were written before the tutorial level (0835) and have
+/// none: they load at `Full`, as the game behaved then.
+#[test]
+fn a_save_without_a_tutorial_level_loads_as_full() {
+    for kind in KINDS {
+        let (text, save) = read(kind);
+        assert!(!text.contains("tutorial"), "{kind}");
+        assert_eq!(save.campaign.tutorial, TutorialLevel::Full, "{kind}");
+    }
 }
 
 /// A rule change that makes old commands play out differently changes what

@@ -59,6 +59,10 @@
 //!   conversation, which is what raises its rank. Both characters must be
 //!   in the army, so a dead character's conversations can't be viewed.
 //! - **Mode.** Classic → Casual only ([`Campaign::downgrade_mode`]).
+//! - **Tutorial level** ([`TutorialLevel`], `docs/design/tutorial.md`):
+//!   picked at New Game after the mode (0835); [`Campaign::new_game`] starts
+//!   at [`TutorialLevel::Full`]. A save made before the level existed loads
+//!   as `Full`, as the game behaved then (*Claude's starting rule*).
 //! - **Lead.** [`Campaign::new_game`] gives the lead's unit (character
 //!   [`LEAD_ID`]) the player's name, and a map label of that name's first
 //!   two letters (*Claude's starting rule*).
@@ -226,11 +230,49 @@ pub struct GameTables {
     pub supports: Arc<SupportTable>,
 }
 
+/// How much the game teaches (`docs/design/tutorial.md`, *How familiar
+/// are you?*), picked at New Game and kept by the campaign (0835).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+pub enum TutorialLevel {
+    /// Not familiar: every lesson and every tip.
+    #[default]
+    Full,
+    /// Familiar with other strategy RPGs: only the lessons on what this
+    /// game does differently; no tips.
+    Short,
+    /// Familiar with this game: no lessons, no tips.
+    None,
+}
+
+impl TutorialLevel {
+    /// Whether the battles' one-time tips show: only at
+    /// [`Full`](Self::Full).
+    pub fn shows_tips(self) -> bool {
+        self == Self::Full
+    }
+
+    /// Whether this is [`Full`](Self::Full), the level a save without one
+    /// loads as (and so the one it is left out of a save for).
+    #[expect(
+        clippy::trivially_copy_pass_by_ref,
+        reason = "serde's skip_serializing_if passes a reference"
+    )]
+    fn is_full(&self) -> bool {
+        *self == Self::Full
+    }
+}
+
 /// The player's game between battles: saved by 0802.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Campaign {
     /// Classic or Casual, picked at New Game.
     pub mode: GameMode,
+    /// How much the game teaches, picked at New Game after the mode. Left
+    /// out of the save at `Full`, and a save without it loads as `Full`,
+    /// so saves of `SAVE_VERSION` 2 made before it existed still load
+    /// (ADR-0039: a deliberate `#[serde(default)]`, 0835).
+    #[serde(default, skip_serializing_if = "TutorialLevel::is_full")]
+    pub tutorial: TutorialLevel,
     /// Who the player made the lead.
     pub lead: LeadProfile,
     /// The chapter being played (or next, between chapters), by id.
@@ -318,6 +360,7 @@ impl Campaign {
         }
         Self {
             mode,
+            tutorial: TutorialLevel::Full,
             lead,
             chapter: chapter.into(),
             roster,

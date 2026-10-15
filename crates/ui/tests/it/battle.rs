@@ -639,8 +639,9 @@ fn tips_show_when_switched_on() {
 fn the_start_tip_waits_for_the_first_turn_scene() {
     let mut h = Harness::with_layout(Layout::RightHanded).with_shipped_story();
     h.with_tips();
-    // New Game, Classic, the default lead; the intro scenes skipped.
-    h.keys("f f Up f");
+    // New Game, Classic, Not familiar, the default lead; the intro scenes
+    // skipped.
+    h.keys("f f f Up f");
     skip_scenes(&mut h);
     assert_eq!(h.screens(), ["title", "battle"]);
     assert!(shows(&h, "PLAYER PHASE"));
