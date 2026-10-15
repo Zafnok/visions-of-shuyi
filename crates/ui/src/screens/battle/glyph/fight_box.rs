@@ -130,6 +130,19 @@ mod tests {
     }
 
     #[test]
+    fn the_box_and_its_columns_sit_at_the_top_of_the_map_view() {
+        // Centred: (70 - 44) / 2 = 13 in; the columns two cells in from
+        // each half's left edge.
+        assert_eq!(BOX, Rect::new(13, 1, 44, 5));
+        assert_eq!(BOX_COLUMNS, [15, 37]);
+        let buf = painted(|_| {});
+        assert_eq!(text(&buf, 15, 2, 9), "Test Lord");
+        assert_eq!(text(&buf, 37, 2, 7), "Brigand");
+        assert_eq!(text(&buf, 14, 2, 1), " ");
+        assert_eq!(text(&buf, 36, 2, 1), " ");
+    }
+
+    #[test]
     fn the_arts_name_is_centred_in_the_top_border() {
         let buf = painted(|v| v.banner = Some("Guard Break".into()));
         let top = text(&buf, BOX.x, BOX.y, BOX.w);
