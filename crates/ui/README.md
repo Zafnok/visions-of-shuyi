@@ -367,8 +367,11 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      screens (0241), Preparations (0245), lead select (0247: its view
      names each portrait and its expression, and the skin places it with
      `portrait::draw_portrait`) and class change (0246) follow it.
-     Dialogue and the battle screen's panels still draw in `draw` until
-     ticket 0242 converts them, so don't copy them.
+     The battle screen (0242) builds a `BattleView` holding its map's
+     `MapScene` and everything around it; its forecast, unit info, fight
+     box, level-up and rewind screen are still painted from the battle's
+     state (`OldParts`) until 0248, and dialogue still draws in `draw`
+     until 0249, so don't copy those.
    - Text the player reads is never a string literal (ADR-0045). Put it
      in `assets/lang/en/ui.ron` under a `screen.thing` key and ask for it
      with `ctx.text("title.new_game")`, or `ctx.text_with("results.turns",

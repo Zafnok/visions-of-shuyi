@@ -7,11 +7,9 @@
 pub mod glyph;
 pub mod view;
 
-pub use view::{MenuItemView, MenuView};
+pub use view::{MenuItemView, MenuView, SuffixKind};
 
 use crate::audio::{AudioQueue, MenuSound};
-use crate::color::{Palette, UiColor};
-use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 
 /// One menu entry.
@@ -21,8 +19,8 @@ pub struct MenuItem {
     pub label: String,
     /// Disabled items are drawn dim, skipped by the cursor and can't be chosen.
     pub enabled: bool,
-    /// Text drawn after the label in its own colour (e.g. `(broken)`).
-    pub suffix: Option<(String, UiColor)>,
+    /// Text shown after the label (e.g. `(broken)`), and what it is.
+    pub suffix: Option<(String, SuffixKind)>,
     /// What the item does, shown under the list while it has the focus
     /// (ticket 0429, `look-and-feel.md` → *Descriptions in lists*).
     pub note: Option<String>,
@@ -39,10 +37,10 @@ impl MenuItem {
         }
     }
 
-    /// The same item with `text` after its label, drawn in `color`.
+    /// The same item with `text` of `kind` after its label.
     #[must_use]
-    pub fn with_suffix(mut self, text: impl Into<String>, color: UiColor) -> Self {
-        self.suffix = Some((text.into(), color));
+    pub fn with_suffix(mut self, text: impl Into<String>, kind: SuffixKind) -> Self {
+        self.suffix = Some((text.into(), kind));
         self
     }
 
@@ -222,21 +220,6 @@ impl Menu {
             items: items.collect(),
         }
     }
-
-    /// Box size in cells ([`glyph::size`] of the [`view`](Self::view)).
-    /// Kept for the screens that haven't moved to a view and a skin yet
-    /// (ADR-0054; tickets 0241 and 0242 convert them, then this goes).
-    pub fn size(&self) -> (i32, i32) {
-        glyph::size(&self.view())
-    }
-
-    /// Draws the menu with its top-left corner at `(x, y)`
-    /// ([`glyph::paint`] of the [`view`](Self::view)). Kept for the screens
-    /// that haven't moved to a view and a skin yet (ADR-0054; tickets 0241
-    /// and 0242 convert them, then this goes).
-    pub fn draw(&self, palette: &Palette, buf: &mut GlyphBuffer, x: i32, y: i32) {
-        glyph::paint(palette, &self.view(), buf, x, y);
-    }
 }
 
 #[cfg(test)]
@@ -245,8 +228,9 @@ mod tests {
     use proptest::prelude::*;
 
     use super::*;
+    use crate::color::UiColor;
     use crate::color::tests::game_palette;
-    use crate::glyph_buffer::Cell;
+    use crate::glyph_buffer::{Cell, GlyphBuffer};
     use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorUp, Info};
 
     fn menu(enabled: &[bool]) -> Menu {
@@ -393,7 +377,7 @@ mod tests {
             m.handle(a);
         }
         assert_eq!(m.handle(Confirm), None);
-        assert_eq!(m.size(), (4, 2));
+        assert_eq!(glyph::size(&m.view()), (4, 2));
     }
 
     #[test]
@@ -457,14 +441,14 @@ mod tests {
         assert!(!MenuItem::disabled("b").enabled);
         let m = Menu::new(vec![MenuItem::new("a"), MenuItem::disabled("bcd")]);
         assert_eq!(m.items()[1].label, "bcd");
-        assert_eq!(m.size(), (7, 4));
+        assert_eq!(glyph::size(&m.view()), (7, 4));
     }
 
     #[test]
     fn the_view_lists_the_items_and_the_focus() {
         let mut m = Menu::new(vec![
             MenuItem::new("Move"),
-            MenuItem::disabled("Attack").with_suffix(" (no foe)", UiColor::HpLow),
+            MenuItem::disabled("Attack").with_suffix(" (no foe)", SuffixKind::Warning),
             MenuItem::new("Wait"),
         ]);
         let view = m.view();
@@ -483,7 +467,7 @@ mod tests {
         );
         assert_eq!(
             view.items[1].suffix,
-            Some((" (no foe)".to_owned(), UiColor::HpLow))
+            Some((" (no foe)".to_owned(), SuffixKind::Warning))
         );
         assert_eq!(view.items[0].suffix, None);
         assert_eq!(view.focused().map(|i| i.label.as_str()), Some("Move"));
@@ -493,28 +477,16 @@ mod tests {
         assert_eq!(Menu::new(vec![]).view().focused(), None);
     }
 
-    #[test]
-    fn size_and_draw_are_the_skins() {
-        let m = Menu::new(vec![MenuItem::new("a"), MenuItem::disabled("bcd")]);
-        assert_eq!(m.size(), glyph::size(&m.view()));
-        let p = game_palette();
-        let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
-        let mut drawn = GlyphBuffer::new(12, 8, blank);
-        let mut painted = drawn.clone();
-        m.draw(&p, &mut drawn, 2, 1);
-        glyph::paint(&p, &m.view(), &mut painted, 2, 1);
-        assert_eq!(drawn.to_snapshot(&p), painted.to_snapshot(&p));
-    }
-
     fn render(m: &Menu) -> String {
         let p = game_palette();
-        let (w, h) = m.size();
+        let view = m.view();
+        let (w, h) = glyph::size(&view);
         let mut buf = GlyphBuffer::new(
             u16::try_from(w + 2).unwrap(),
             u16::try_from(h + 2).unwrap(),
             Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black)),
         );
-        m.draw(&p, &mut buf, 1, 1);
+        glyph::paint(&p, &view, &mut buf, 1, 1);
         buf.to_snapshot(&p)
     }
 

@@ -20,8 +20,7 @@ use super::info::range_text;
 use super::items::heal_preview;
 use super::mode::Selection;
 use super::skills::skill_name;
-use crate::color::UiColor;
-use crate::widgets::menu::{Menu, MenuItem};
+use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::words::Words;
 use std::fmt::Display;
 
@@ -290,12 +289,13 @@ pub fn spell_menu(
                 MenuItem::new(label)
             };
             match (&c.blocked, &c.active) {
-                (Some(error), _) => {
-                    item.with_suffix(format!(" {}", reason_text(words, error)), UiColor::HpLow)
-                }
+                (Some(error), _) => item.with_suffix(
+                    format!(" {}", reason_text(words, error)),
+                    SuffixKind::Warning,
+                ),
                 (None, Some(_)) => {
                     let cost = cost_label(state, words, &c.technique());
-                    item.with_suffix(format!(" {cost}"), UiColor::TextDim)
+                    item.with_suffix(format!(" {cost}"), SuffixKind::Aside)
                 }
                 (None, None) => item,
             }

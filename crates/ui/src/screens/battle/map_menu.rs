@@ -11,9 +11,6 @@ use std::fmt::Display;
 
 use trpg_core::{BattleState, Faction, Objective, Phase, Turn, UnitId};
 
-use super::layout::MAP_VIEW;
-use crate::color::{Palette, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::widgets::menu::{Menu, MenuItem};
 use crate::words::Words;
 
@@ -196,75 +193,6 @@ pub fn end_turn_question(words: Words<'_>, ready: usize) -> String {
         "battle.end_turn_question.many"
     };
     words.text_with(key, &[("ready", &ready)])
-}
-
-/// The size (width, height) of the [`draw_dialog`] box of `lines` under
-/// `title`, in cells.
-pub fn dialog_size(title: &str, lines: &[(String, UiColor)]) -> (i32, i32) {
-    let widest = lines
-        .iter()
-        .map(|(l, _)| l.chars().count())
-        .chain(std::iter::once(title.chars().count() + 2))
-        .max()
-        .unwrap_or(0);
-    let w = i32::try_from(widest).unwrap_or(0) + 4;
-    let h = i32::try_from(lines.len()).unwrap_or(0) + 4;
-    (w, h)
-}
-
-/// The top row of a box `h` rows tall centred on the map view.
-pub const fn centred_top(h: i32) -> i32 {
-    MAP_VIEW.y + (MAP_VIEW.h - h) / 2
-}
-
-/// Draws a box of `lines` (text and colour) centred on the map view, one
-/// blank column and row inside a double border; `title` over the top
-/// border.
-pub fn draw_dialog(
-    buf: &mut GlyphBuffer,
-    palette: &Palette,
-    title: &str,
-    lines: &[(String, UiColor)],
-) {
-    let (_, h) = dialog_size(title, lines);
-    draw_dialog_at(buf, palette, title, lines, centred_top(h));
-}
-
-/// [`draw_dialog`], with the box's top border on row `top` instead of
-/// centred top to bottom.
-pub fn draw_dialog_at(
-    buf: &mut GlyphBuffer,
-    palette: &Palette,
-    title: &str,
-    lines: &[(String, UiColor)],
-    top: i32,
-) {
-    let c = |u| palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let (w, h) = dialog_size(title, lines);
-    let rect = Rect::new(MAP_VIEW.x + (MAP_VIEW.w - w) / 2, top, w, h);
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-    if !title.is_empty() {
-        buf.print(
-            rect.x + 2,
-            rect.y,
-            &format!(" {title} "),
-            c(UiColor::TextHighlight),
-            bg,
-        );
-    }
-    for (y, (line, color)) in (rect.y + 2..).zip(lines) {
-        buf.print(rect.x + 2, y, line, c(*color), bg);
-    }
-}
-
-/// Draws `menu` centred on the map view.
-pub fn draw_centred_menu(buf: &mut GlyphBuffer, palette: &Palette, menu: &Menu) {
-    let (w, h) = menu.size();
-    let x = MAP_VIEW.x + (MAP_VIEW.w - w) / 2;
-    let y = MAP_VIEW.y + (MAP_VIEW.h - h) / 2;
-    menu.draw(palette, buf, x, y);
 }
 
 #[cfg(test)]

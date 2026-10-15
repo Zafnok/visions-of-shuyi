@@ -15,9 +15,9 @@ use trpg_core::{
 
 use super::art_list::{art_name, note_text};
 use super::attack::{Targeting, spell_uses, weapon_durability};
+use super::glyph::TEXT_X;
 use super::info::stat_name;
 use super::layout::SIDE_PANEL;
-use super::panel::TEXT_X;
 use super::skills::skill_name;
 use super::units::{faction_color, hp_fill};
 use crate::color::{Palette, Rgb, UiColor};

@@ -3,8 +3,6 @@
 //! the [`MenuView`] in its own view and its skin paints it
 //! ([`super::glyph::paint`] today; ADR-0054).
 
-use crate::color::UiColor;
-
 /// The whole menu, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MenuView {
@@ -24,10 +22,9 @@ impl MenuView {
 pub struct MenuItemView {
     /// Its text.
     pub label: String,
-    /// Text that follows the label (e.g. why it can't be chosen) and the
-    /// palette role it is shown in. (A role the screen chose; the screens
-    /// that give one move to a meaning when 0241 and 0242 convert them.)
-    pub suffix: Option<(String, UiColor)>,
+    /// Text that follows the label (e.g. why it can't be chosen) and what
+    /// it is.
+    pub suffix: Option<(String, SuffixKind)>,
     /// What it does, shown under the list while it has the focus.
     pub note: Option<String>,
     /// Whether it can be chosen: a disabled item is dimmed (and skipped by
@@ -35,4 +32,13 @@ pub struct MenuItemView {
     pub enabled: bool,
     /// Whether the cursor is on it.
     pub focused: bool,
+}
+
+/// What the text after an item's label is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SuffixKind {
+    /// A warning: why the item can't be chosen, or that it is broken.
+    Warning,
+    /// A detail aside, such as what it costs.
+    Aside,
 }

@@ -41,6 +41,7 @@ use crate::screens::{
     ChangeKind, ClassChangeScreen, DialogueScreen, KeyBindingsScreen, centre_x, print_centred,
 };
 use crate::widgets::help::{cursor_keys_name, help_line, key_name};
+use crate::widgets::menu;
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// Names of every screen the debug key does nothing on: the debug screens,
@@ -222,9 +223,10 @@ impl Screen for DebugMenuScreen {
         buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
         let hi = c(UiColor::TextHighlight);
         print_centred(buf, MENU_TITLE_ROW, "Debug tools", hi, black);
-        let (w, _) = self.menu.size();
+        let menu = self.menu.view();
+        let (w, _) = menu::glyph::size(&menu);
         let x = centre_x(buf, usize::try_from(w).unwrap_or(0));
-        self.menu.draw(&ctx.palette, buf, x, MENU_TITLE_ROW + 2);
+        menu::glyph::paint(&ctx.palette, &menu, buf, x, MENU_TITLE_ROW + 2);
         let km = ctx.help_keys();
         let help = help_line(&[
             (Some(cursor_keys_name(km)), "move"),

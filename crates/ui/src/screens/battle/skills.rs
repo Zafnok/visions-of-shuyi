@@ -15,8 +15,7 @@ use trpg_core::{
 use super::art_list::reason_text;
 use super::info::stat_name;
 use super::mode::Selection;
-use crate::color::UiColor;
-use crate::widgets::menu::{Menu, MenuItem};
+use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::words::Words;
 
 /// A skill's cost as text: `3 dur` (weapon durability), `+1 use` (one more
@@ -406,7 +405,7 @@ pub fn skill_menu(
             let item = match (&c.reason, c.usable) {
                 (_, true) => MenuItem::new(text),
                 (Some(why), false) => {
-                    MenuItem::disabled(text).with_suffix(format!(" {why}"), UiColor::HpLow)
+                    MenuItem::disabled(text).with_suffix(format!(" {why}"), SuffixKind::Warning)
                 }
                 (None, false) => MenuItem::disabled(text),
             };

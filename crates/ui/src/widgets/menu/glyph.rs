@@ -4,7 +4,7 @@
 //! about the look lives here; nothing here decides what the menu shows.
 //! Another look is another `paint` of the same view (ADR-0054).
 
-use super::view::{MenuItemView, MenuView};
+use super::view::{MenuItemView, MenuView, SuffixKind};
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 
@@ -46,6 +46,15 @@ pub fn size(view: &MenuView) -> (i32, i32) {
     (w, h)
 }
 
+/// The colour of the text after a label: the warning colour for a
+/// warning, dim for an aside.
+pub const fn suffix_color(kind: SuffixKind) -> UiColor {
+    match kind {
+        SuffixKind::Warning => UiColor::HpLow,
+        SuffixKind::Aside => UiColor::TextDim,
+    }
+}
+
 /// Paints `view` with its top-left corner at `(x, y)`: a `panel_bg` box
 /// with a `panel_border` single line, items in `text`, disabled ones in
 /// `text_dim`, and the focused one as a bar of `panel_bg` text on
@@ -68,13 +77,13 @@ pub fn paint(palette: &Palette, view: &MenuView, buf: &mut GlyphBuffer, x: i32, 
         };
         buf.fill_rect(Rect::new(x + 1, row, w - 2, 1), Cell::new(' ', fg, row_bg));
         buf.print(x + 2, row, &item.label, fg, row_bg);
-        if let Some((text, suffix_color)) = &item.suffix {
+        if let Some((text, kind)) = &item.suffix {
             let at = x + 3 + i32::try_from(item.label.chars().count()).unwrap_or(0);
             // On the focus bar the colour would vanish: keep the bar's.
             let fg = if item.focused {
                 fg
             } else {
-                color(*suffix_color)
+                color(suffix_color(*kind))
             };
             buf.print(at, row, text, fg, row_bg);
         }
@@ -134,7 +143,7 @@ mod tests {
         assert_eq!(size(&view), (7, 4));
         // A suffix counts, with the space before it.
         let mut with = item("ab", true, true);
-        with.suffix = Some(("(x)".to_owned(), UiColor::HpLow));
+        with.suffix = Some(("(x)".to_owned(), SuffixKind::Warning));
         assert_eq!(size(&MenuView { items: vec![with] }), (10, 3));
     }
 
@@ -196,7 +205,7 @@ mod tests {
         brace.note = Some("self".to_owned());
         let mut shove = item("Shove", false, true);
         shove.note = Some("push".to_owned());
-        shove.suffix = Some(("no uses left".to_owned(), UiColor::HpLow));
+        shove.suffix = Some(("no uses left".to_owned(), SuffixKind::Warning));
         let view = MenuView {
             items: vec![brace, shove],
         };
@@ -220,9 +229,9 @@ mod tests {
     #[test]
     fn a_suffix_keeps_its_colour_except_on_the_focus_bar() {
         let mut broken = item("Sword", false, false);
-        broken.suffix = Some(("(broken)".to_owned(), UiColor::HpLow));
+        broken.suffix = Some(("(broken)".to_owned(), SuffixKind::Warning));
         let mut focused = item("Axe", true, true);
-        focused.suffix = Some(("(worn)".to_owned(), UiColor::HpLow));
+        focused.suffix = Some(("(worn)".to_owned(), SuffixKind::Warning));
         let view = MenuView {
             items: vec![broken, focused],
         };

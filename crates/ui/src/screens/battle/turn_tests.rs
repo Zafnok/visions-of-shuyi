@@ -9,7 +9,9 @@ use trpg_core::{ItemId, Objective, Outcome, UnitAction};
 use super::banner::{BannerKind, PHASE_BANNER_S};
 use super::testing::{battle_with, skirmish, through_ai_phases, wait};
 use super::*;
+use crate::color::Rgb;
 use crate::console::ConsoleSpec;
+use crate::glyph_buffer::Cell;
 use crate::map_view::RangeKind;
 use crate::screen::tests::ctx;
 use crate::settings::SETTINGS_KEY;
@@ -374,8 +376,7 @@ fn units_jumps_the_cursor_to_the_chosen_unit() {
     let mut s = quick();
     press(&mut s, &mut c, &[Action::Cancel, Action::Confirm]);
     assert!(matches!(s.mode(), Mode::UnitList { .. }), "{:?}", s.mode());
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "Test Archer  HP 17/17  ready"));
+    assert!(s.view(&c).shows("Test Archer  HP 17/17  ready"));
     // Cancel: back to the menu, on Units.
     press(&mut s, &mut c, &[Action::Cancel]);
     let Mode::MapMenu { menu, .. } = s.mode() else {
@@ -408,9 +409,8 @@ fn objective_shows_the_goal_and_the_turn() {
     );
     assert_eq!(s.mode(), &Mode::Objective);
     assert_eq!(s.help(&c), "d back");
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "Rout the enemy"));
-    assert!(shows(&buf, "Turn 1"));
+    assert!(s.view(&c).shows("Rout the enemy"));
+    assert!(s.view(&c).shows("Turn 1"));
     // Other keys do nothing; Cancel goes back to the menu, on Objective.
     press(&mut s, &mut c, &[Action::CursorDown, Action::Cancel]);
     let Mode::MapMenu { menu, .. } = s.mode() else {
@@ -480,9 +480,11 @@ fn suspend_asks_first() {
     assert_eq!(s.mode(), &Mode::SuspendPrompt);
     assert!(!s.suspend_requested());
     assert_eq!(s.help(&c), "f suspend · d back");
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "Suspend the battle and return to the title?"));
-    assert!(shows(&buf, "f yes / d no"));
+    assert!(
+        s.view(&c)
+            .shows("Suspend the battle and return to the title?")
+    );
+    assert!(s.view(&c).shows("f yes / d no"));
     // Other keys do nothing; Cancel goes back to the menu, on Suspend.
     let back = [Action::CursorDown, Action::Info, Action::Cancel];
     assert_eq!(press(&mut s, &mut c, &back), "None");
@@ -491,7 +493,7 @@ fn suspend_asks_first() {
     };
     assert_eq!(menu.focus(), 3);
     assert!(!s.suspend_requested());
-    assert!(!shows(&render(&s, &c), "Suspend the battle"));
+    assert!(!s.view(&c).shows("Suspend the battle"));
     // Asked again and confirmed: the screen closes, for the flow to save.
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
@@ -545,9 +547,8 @@ fn end_turn_asks_while_units_are_ready_and_space_again_ends_it() {
     wait_unit(&mut s, 2);
     press(&mut s, &mut c, &[Action::EndTurn]);
     assert_eq!(s.mode(), &Mode::EndTurnPrompt { ready: 3 });
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "End turn with 3 units ready?"));
-    assert!(shows(&buf, "f yes / d no"));
+    assert!(s.view(&c).shows("End turn with 3 units ready?"));
+    assert!(s.view(&c).shows("f yes / d no"));
     assert_eq!(s.help(&c), "Space yes · f yes · d no");
     // Cancel backs out; other keys wait.
     press(&mut s, &mut c, &[Action::Info, Action::Cancel]);
@@ -621,8 +622,8 @@ fn auto_end_is_off_by_default_and_toggles_on() {
     press(&mut s, &mut c, &[Action::ToggleAutoEnd]);
     assert!(s.auto_end());
     assert_eq!(s.toast(), Some("Auto-end: ON"));
-    let buf = render(&s, &c);
-    assert!(row(&buf, HELP_BAR.y).starts_with("Auto-end: ON"));
+    let message = s.view(&c).message.map(|m| m.text);
+    assert_eq!(message.as_deref(), Some("Auto-end: ON"));
     assert!(s.status(&c).ends_with("auto-end: ON"));
     frame(&mut s, &mut c, &[], TOAST_S / 2.0);
     assert!(s.toast().is_some());
@@ -690,9 +691,8 @@ fn a_battle_just_started_opens_on_turn_ones_player_phase_banner() {
     assert_eq!(BattleScreen::new(state.clone()).banner(), None);
     let mut s = BattleScreen::start(state.clone(), &events);
     assert_eq!(phase_banner(&s), Some((Phase::Player, 1)));
-    let buf = render(&s, &c);
-    assert!(shows(&buf, "PLAYER PHASE"));
-    assert!(shows(&buf, "Turn 1"));
+    assert!(s.view(&c).shows("PLAYER PHASE"));
+    assert!(s.view(&c).shows("Turn 1"));
     // Keys other than Confirm are ignored.
     let before = s.cursor().pos;
     press(&mut s, &mut c, &[Action::CursorRight, Action::Cancel]);
@@ -703,7 +703,7 @@ fn a_battle_just_started_opens_on_turn_ones_player_phase_banner() {
     assert_eq!(phase_banner(&s), Some((Phase::Player, 1)));
     frame(&mut s, &mut c, &[], PHASE_BANNER_S * 0.2);
     assert_eq!(s.banner(), None);
-    assert!(!shows(&render(&s, &c), "PLAYER PHASE"));
+    assert!(!s.view(&c).shows("PLAYER PHASE"));
     assert_eq!((s.state().turn(), s.state().phase()), (1, Phase::Player));
     press(&mut s, &mut c, &[Action::CursorRight]);
     assert_ne!(s.cursor().pos, before);
@@ -739,8 +739,8 @@ fn phase_banners_close_after_a_second_or_on_confirm_and_the_enemy_phase_passes()
     assert_eq!(phase_banner(&s), Some((Phase::Player, 2)));
     assert_eq!((s.state().turn(), s.state().phase()), (2, Phase::Player));
     let buf = render(&s, &c);
-    assert!(shows(&buf, "PLAYER PHASE"));
-    assert!(shows(&buf, "Turn 2"));
+    assert!(s.view(&c).shows("PLAYER PHASE"));
+    assert!(s.view(&c).shows("Turn 2"));
     assert_in_font(&buf);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.banner(), None);
@@ -799,7 +799,7 @@ fn victory_shows_after_the_combat_and_confirm_leaves() {
     assert_eq!(frame(&mut s, &mut c, &[], 10.0), "None");
     assert_eq!(s.help(&c), "f continue");
     let buf = render(&s, &c);
-    assert!(shows(&buf, "VICTORY"));
+    assert!(s.view(&c).shows("VICTORY"));
     assert_in_font(&buf);
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
 }
@@ -818,16 +818,16 @@ fn missing_the_turn_limit_is_a_defeat() {
         &mut c,
         &[Action::Cancel, Action::CursorDown, Action::Confirm],
     );
-    assert!(shows(&render(&s, &c), "Turn 1/1"));
+    assert!(s.view(&c).shows("Turn 1/1"));
     press(&mut s, &mut c, &[Action::Cancel, Action::Cancel]);
     press(&mut s, &mut c, &[Action::EndTurn, Action::EndTurn]);
     assert_eq!(phase_banner(&s), Some((Phase::Enemy, 1)));
-    assert!(shows(&render(&s, &c), "Turn 1/1"));
+    assert!(s.view(&c).shows("Turn 1/1"));
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
     through_ai_phases(&mut s, &mut c, 30.0);
     let lost = s.banner().map(|b| b.kind);
     assert_eq!(lost, Some(BannerKind::Outcome(Outcome::Defeat)));
-    assert!(shows(&render(&s, &c), "DEFEAT"));
+    assert!(s.view(&c).shows("DEFEAT"));
     // The map menu can't end a turn any more; Confirm leaves.
     assert!(!map_menu::MapEntry::EndTurn.enabled(s.state()));
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");

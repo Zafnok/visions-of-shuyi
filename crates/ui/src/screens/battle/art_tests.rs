@@ -24,6 +24,7 @@ use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
+use crate::widgets::menu::SuffixKind;
 use crate::words::Words;
 
 fn p(x: i32, y: i32) -> Pos {
@@ -585,7 +586,7 @@ fn broken_weapon_lines_snapshot() {
     let lines = art_lines(s.state(), UnitId(1), p(7, 2));
     let menu = arts_menu(s.state(), Words::ENGLISH, &lines);
     let (text, color) = menu.items()[0].suffix.clone().unwrap();
-    assert_eq!((text.trim(), color), ("broken", UiColor::HpLow));
+    assert_eq!((text.trim(), color), ("broken", SuffixKind::Warning));
     let action_menu = std::mem::replace(&mut s.mode, Mode::ArtsMenu { sel, menu, lines });
     let list = render(&s, &c).to_snapshot(&c.palette);
     s.mode = action_menu;

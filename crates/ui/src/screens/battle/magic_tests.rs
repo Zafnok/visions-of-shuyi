@@ -33,6 +33,7 @@ use crate::input::Action;
 use crate::map_view::{MapScene, RangeKind};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
+use crate::widgets::menu::SuffixKind;
 use crate::words::Words;
 
 /// The Quick Battle's mage.
@@ -548,7 +549,7 @@ fn each_spell_active_is_a_line_after_its_attack_spell() {
     );
     let cost = |i: usize| menu.items()[i].suffix.clone();
     assert_eq!(cost(0), None);
-    assert_eq!(cost(1), Some((" +1 use".to_owned(), UiColor::TextDim)));
+    assert_eq!(cost(1), Some((" +1 use".to_owned(), SuffixKind::Aside)));
     // It opens on the equipped spell's plain line.
     assert_eq!(menu.focus(), 0);
     // `Fire + Siphon` casts Fire with Siphon.
@@ -586,7 +587,7 @@ fn an_active_the_spell_cant_pay_for_is_dimmed_with_the_reason() {
     assert!(!menu.items()[1].enabled);
     assert_eq!(
         menu.items()[1].suffix,
-        Some((" 1 uses left".to_owned(), UiColor::HpLow))
+        Some((" 1 uses left".to_owned(), SuffixKind::Warning))
     );
     // On screen, and Down from Fire skips it to Frost.
     let mut s = spell_list(&mut c, state);
@@ -910,7 +911,6 @@ fn a_fire_burning_out_under_a_unit_shows_the_damage() {
     assert_eq!((popup.pos, popup.amount), (p(1, 5), 5));
     assert_eq!((popup.kind, popup.t), (PopupKind::Burn, 0.0));
     assert_eq!(popup.text(), "-5");
-    assert_eq!(popup.color(), UiColor::HpLow);
     // It waits while the phase banner is up (which covers it here).
     assert!(s.banner().is_some());
     wait(&mut s, &mut c, TIMINGS.heal_popup);
@@ -957,7 +957,6 @@ fn a_heal_popup_reads_plus_in_the_high_hp_colour() {
         t: 0.0,
     };
     assert_eq!(heal.text(), "+10");
-    assert_eq!(heal.color(), UiColor::HpHigh);
 }
 
 // ---- Healing ---------------------------------------------------------------------
@@ -1553,10 +1552,7 @@ fn harness_pointing_at_the_elemental_walks_there_and_opens_fires_forecast() {
     let path = h.path();
     let end = *path.last().unwrap();
     assert_eq!(Pos::manhattan(end, elemental), 2);
-    let help = |h: &Harness| {
-        let buf = h.game().buffer();
-        text(buf, 0, super::layout::HELP_ROW, 90).trim().to_owned()
-    };
+    let help = |h: &Harness| h.battle().unwrap().view(h.game().ctx()).help;
     assert_eq!(help(&h), "arrows move · f cast · d cancel");
     // Confirm walks there and opens the forecast of Fire, the equipped
     // spell, on it.

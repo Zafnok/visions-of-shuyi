@@ -14,8 +14,8 @@ use trpg_core::{
     BattleHistory, BattleState, Command, Event, Phase, Replayed, Side, UnitAction, UnitId,
 };
 
+use super::glyph::{TEXT_W, TEXT_X};
 use super::layout::SIDE_PANEL;
-use super::panel::{TEXT_W, TEXT_X};
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;

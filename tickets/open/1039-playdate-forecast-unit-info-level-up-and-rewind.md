@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["1038", "1035"]
+blocked_by: ["1038", "1035", "0248"]
 nick_input: sign-off
 completed:
 ---
@@ -23,11 +23,10 @@ skull. Picture: `docs/design/playdate/q2-a-forecast.png`. The PC side
 panel's other contents (stats, weapons, chapter, turn, rewinds) are on
 the **Unit info** screen and in the map menu (*Claude's starting rule*).
 
-0242 makes the battle screen's views; it splits off the forecast, unit
+0242 made the battle screen's views; ticket 0248 gives the forecast, unit
 info (`info.rs`), fight box (`playback.rs`), EXP bar and level-up page
-(`progress.rs`) and rewind screen (`rewind.rs`) as a ticket of their own
-("(b)"). **This ticket needs that one done too**: 0242's session adds its
-id to this ticket's `blocked_by` when it writes it. 1038 painted the rest
+(`progress.rs`) and rewind screen (`rewind.rs`) theirs. **This ticket
+needs 0248 done too.** 1038 painted the rest
 of the battle screen; 1035 made the crank drive the rewind screen.
 
 ## Nick input

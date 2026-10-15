@@ -11,7 +11,6 @@ use trpg_core::{
 };
 
 use super::banner::Banner;
-use super::layout::HELP_ROW;
 use super::mode::Mode;
 use super::progress::{
     EXP_BOX, LEVEL_BANNER_ROW, LEVEL_TEXT_X, PROGRESS_TIMINGS, Page, STAT_ROW, stat_row,
@@ -75,9 +74,9 @@ fn text(h: &Harness, x: i32, y: i32, w: i32) -> String {
         .collect()
 }
 
-/// The help text: the row left of the right-aligned debug hint.
+/// The help line of the battle on `h` (ADR-0054: read from its view).
 fn help(h: &Harness) -> String {
-    text(h, 0, HELP_ROW, 90).trim().to_owned()
+    h.battle().expect("a battle").view(h.game().ctx()).help
 }
 
 /// Whether some row shows `s`.

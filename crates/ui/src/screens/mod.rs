@@ -61,16 +61,9 @@ pub(crate) fn debug_hint(ctx: &Ctx) -> Option<String> {
     (ctx.debug_tools && bound).then(|| format!("{} debug", key_name(keys, Action::Debug)))
 }
 
-/// Prints the [`debug_hint`] right-aligned on row `y`, one cell in from the
-/// edge, unless those cells or the one before them already hold text.
-pub(crate) fn draw_debug_hint(ctx: &Ctx, buf: &mut GlyphBuffer, y: i32) {
-    if let Some(hint) = debug_hint(ctx) {
-        paint_debug_hint(&ctx.palette, &hint, buf, y);
-    }
-}
-
-/// [`draw_debug_hint`] for a hint a screen's view already holds (the skins
-/// of the screens converted to views call this).
+/// Prints `hint` (a screen's view holds the [`debug_hint`]) right-aligned
+/// on row `y`, one cell in from the edge, unless those cells or the one
+/// before them already hold text.
 pub(crate) fn paint_debug_hint(palette: &Palette, hint: &str, buf: &mut GlyphBuffer, y: i32) {
     let len = i32::try_from(hint.chars().count()).unwrap_or(i32::MAX);
     let x = i32::from(buf.width()) - 1 - len;
@@ -129,19 +122,19 @@ mod tests {
         let black = c.palette.get(UiColor::Black);
         let mut buf = blank(&c);
         buf.print(0, 0, "0123456789", black, black);
-        draw_debug_hint(&c, &mut buf, 0);
+        paint_debug_hint(&c.palette, "F2 debug", &mut buf, 0);
         assert_eq!(row(&buf, 0), "0123456789 F2 debug ");
         // No gap before the hint's first cell, or text under it: no hint.
         for end in ["01234567890", "0123456789 F2 debu"] {
             let mut buf = blank(&c);
             buf.print(0, 0, end, black, black);
-            draw_debug_hint(&c, &mut buf, 0);
+            paint_debug_hint(&c.palette, "F2 debug", &mut buf, 0);
             assert_eq!(row(&buf, 0).trim_end(), end);
         }
         // Text after the hint's cells (the right margin) doesn't matter.
         let mut buf = blank(&c);
         buf.print(19, 0, "x", black, black);
-        draw_debug_hint(&c, &mut buf, 0);
+        paint_debug_hint(&c.palette, "F2 debug", &mut buf, 0);
         assert_eq!(row(&buf, 0), "           F2 debugx");
     }
 }

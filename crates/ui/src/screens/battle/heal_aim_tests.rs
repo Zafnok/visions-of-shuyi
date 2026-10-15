@@ -52,18 +52,9 @@ fn archer_max(state: &BattleState) -> StatValue {
     state.unit(ARCHER).unwrap().stats.hp
 }
 
-/// The help line of the harness's screen (its first 90 cells, before the
-/// debug key's note).
+/// The help line of the battle on `h` (ADR-0054: read from its view).
 fn help(h: &Harness) -> String {
-    let buf = h.game().buffer();
-    (0..90)
-        .map(|x| {
-            buf.get(x, super::layout::HELP_ROW)
-                .map_or(' ', |cell| cell.glyph)
-        })
-        .collect::<String>()
-        .trim()
-        .to_owned()
+    h.battle().expect("a battle").view(h.game().ctx()).help
 }
 
 /// The lines of the open spell list and whether each can be picked.

@@ -9,10 +9,10 @@ use trpg_core::{
 
 use super::BattleScreen;
 use super::forecast::{HP_ROW, LEFT_X, RIGHT_X, STRIKE_ROW};
-use super::layout::{HELP_BAR, HELP_ROW};
 use super::playback::{Beat, Playback, TIMINGS};
 use super::progress::PROGRESS_TIMINGS;
 use super::testing::skirmish;
+use super::view::BattleView;
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
 use crate::words::Words;
@@ -46,15 +46,31 @@ fn panel(h: &Harness, y: i32) -> String {
     text(h, 71, y, 28).trim().to_owned()
 }
 
-/// The help text: the row left of the right-aligned debug hint.
-fn help(h: &Harness) -> String {
-    text(h, 0, HELP_ROW, 90).trim().to_owned()
+/// What the battle on `h` shows (ADR-0054).
+fn view(h: &Harness) -> BattleView<'_> {
+    h.battle().expect("a battle").view(h.game().ctx())
 }
 
-/// The message line.
+/// The help line.
+fn help(h: &Harness) -> String {
+    view(h).help
+}
+
+/// The message line; empty with none.
 fn message(h: &Harness) -> String {
-    // The left half: the toggles' state is right-aligned after it.
-    text(h, 0, HELP_BAR.y, 50).trim().to_owned()
+    view(h).message.map(|m| m.text).unwrap_or_default()
+}
+
+/// The name of the unit the side panel shows; empty with none.
+fn hovered(h: &Harness) -> String {
+    let unit = view(h).panel.and_then(|p| p.unit);
+    unit.map(|u| u.name).unwrap_or_default()
+}
+
+/// The HP the side panel shows of its unit (`HP 9/20`).
+fn hovered_hp(h: &Harness) -> String {
+    let unit = view(h).panel.and_then(|p| p.unit).expect("a unit");
+    format!("{} {}/{}", unit.hp_name, unit.hp, unit.max)
 }
 
 /// The lord selected, moved one step right to (7, 2) and its action menu
@@ -260,7 +276,7 @@ fn after_the_playback_the_defenders_hp_is_the_battles() {
         "arrows move · f range · e info · s next unit · r rewind · d menu · Space end turn"
     );
     let hp = format!("HP {}/{}", brigand.hp, brigand.stats.hp);
-    assert!(panel(&h, 7).starts_with(&hp), "{}", panel(&h, 7));
+    assert_eq!(hovered_hp(&h), hp);
     // The lord has acted, at (7, 2).
     let lord = h.unit_at(DEST).expect("the lord");
     assert_eq!((lord.label.as_str(), lord.acted), ("Lo", true));
@@ -292,11 +308,11 @@ fn a_kill_fades_the_unit_out_with_a_message_and_removes_it() {
     // Faded, while the box stays up: nobody on its tile in the panel.
     h.wait(fall.len);
     assert_eq!(help(&h), "d skip · hold f fast");
-    assert_eq!(panel(&h, 5), "");
+    assert_eq!(hovered(&h), "");
     // Afterwards: nobody where it stood, nor in the panel.
     h.wait(pb.total());
     assert_eq!(h.unit_at(BRIGAND_AT), None);
-    assert_eq!(panel(&h, 5), "");
+    assert_eq!(hovered(&h), "");
     assert_eq!(message(&h), "");
     assert_eq!(
         help(&h),
@@ -320,9 +336,9 @@ fn cancel_skips_the_playback_and_the_next_keys_work() {
         "arrows move · f range · e info · s next unit · r rewind · d menu · Space end turn"
     );
     h.keys("Left");
-    assert_eq!(panel(&h, 5), "Test Lord");
+    assert_eq!(hovered(&h), "Test Lord");
     h.keys("s");
-    assert_eq!(panel(&h, 5), "Test Archer");
+    assert_eq!(hovered(&h), "Test Archer");
     h.keys("f");
     assert_eq!(help(&h), "arrows move · f move here · d cancel");
 }
@@ -342,7 +358,7 @@ fn holding_confirm_plays_four_times_as_fast() {
     );
     // The same battle either way: the brigand's HP matches.
     slow.wait(total + EXP_S);
-    assert_eq!(panel(&slow, 7), panel(&fast, 7));
+    assert_eq!(hovered_hp(&slow), hovered_hp(&fast));
 }
 
 #[test]
