@@ -43,6 +43,16 @@
     "mode_select.casual_line": "Casual: a unit that falls retreats, and is back for the next battle.",
     "mode_select.help": "{Cursor} choose · {Confirm} select · {Cancel} back",
 
+    // The familiarity screen (0835): how much the game teaches.
+    "familiarity.heading": "How familiar are you?",
+    "familiarity.full": "Not familiar",
+    "familiarity.full_line": "Not familiar: learn the controls and how this game works as you play, with tips.",
+    "familiarity.short": "Familiar with other strategy RPGs",
+    "familiarity.short_line": "Familiar with other strategy RPGs: learn only what this game does differently.",
+    "familiarity.none": "Familiar with this game",
+    "familiarity.none_line": "Familiar with this game: no lessons and no tips.",
+    "familiarity.help": "{Cursor} choose · {Confirm} select · {Cancel} back",
+
     // The lead screen: the lead's gender and first name.
     "lead_select.heading": "Choose your lead",
     "lead_select.male": "Male",

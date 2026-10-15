@@ -2,7 +2,8 @@
 //! a centred heading, the menu box and the explaining lines under it, the
 //! focused mode's line brighter. Everything about the look lives here;
 //! nothing here decides what the screen shows. Another look is another
-//! `paint` of the same view (ADR-0054).
+//! `paint` of the same view (ADR-0054). The familiarity screen (0835) has
+//! the same shape and is painted by it too.
 
 use super::view::ModeSelectView;
 use crate::color::UiColor;

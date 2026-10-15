@@ -82,6 +82,29 @@ fn the_first_battle_shows_the_start_tip_and_confirm_dismisses_it() {
     assert_eq!(s.mode(), &Mode::default());
 }
 
+/// A campaign's tutorial level (0835): tips show at `Full` (and with no
+/// campaign, as here elsewhere), not at `Short` or `None`, and a tip held
+/// back isn't marked seen.
+#[test]
+fn only_a_full_tutorial_shows_tips() {
+    use trpg_core::TutorialLevel;
+    for (level, shown) in [
+        (None, true),
+        (Some(TutorialLevel::Full), true),
+        (Some(TutorialLevel::Short), false),
+        (Some(TutorialLevel::None), false),
+    ] {
+        let mut c = tipped();
+        c.campaign_tutorial = level;
+        let mut s = quick();
+        press(&mut s, &mut c, &[]);
+        let tip = shown.then_some(TipTrigger::FirstBattleStart);
+        assert_eq!(s.shown_tip(), tip, "{level:?}");
+        let seen = c.storage.read(TIPS_SEEN_KEY).ok().flatten();
+        assert_eq!(seen.is_some(), shown, "{level:?}");
+    }
+}
+
 #[test]
 fn the_start_tip_waits_for_the_first_player_phase_banner() {
     let mut c = tipped();

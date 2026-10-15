@@ -543,6 +543,7 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("key_bindings.rs", include_str!("../key_bindings.rs")),
         ("layout_picker.rs", include_str!("../layout_picker.rs")),
         ("mode_select.rs", include_str!("../mode_select.rs")),
+        ("familiarity.rs", include_str!("../familiarity.rs")),
         ("game_over.rs", include_str!("../game_over.rs")),
         ("save.rs", include_str!("../save.rs")),
         ("results.rs", include_str!("../results.rs")),

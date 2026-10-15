@@ -1,13 +1,15 @@
 //! Scripted tests of the game flow (ticket 0801) through the real game:
-//! New Game → mode → lead → the test chapter (`assets-test/chapters/test.ron`:
+//! New Game → mode → familiarity → lead → the test chapter (`assets-test/chapters/test.ron`:
 //! an intro scene, a battle where the lead seizes the fort at (5, 5)
 //! within 3 turns, the results (0810), a victory scene) → "Save your
 //! progress?" (declined here; `save.rs` saves) → "To be continued" →
 //! title. Battles are won and lost with scripted commands.
 
 use insta::assert_snapshot;
+use trpg_content::TipTrigger;
 use trpg_core::{
-    BattleState, Command, GameMode, LeadGender, LeadProfile, Outcome, Pos, UnitAction, UnitId,
+    BattleState, Command, GameMode, LeadGender, LeadProfile, Outcome, Pos, TutorialLevel,
+    UnitAction, UnitId,
 };
 use trpg_ui::audio::{AudioRequest, pick_from_pool};
 use trpg_ui::harness::Harness;
@@ -22,13 +24,15 @@ fn title() -> Harness {
     Harness::with_layout(Layout::RightHanded)
 }
 
-/// From the title: New Game, the mode (`Down` for Casual), then the lead
-/// screen's `keys`, which must end on Start.
+/// From the title: New Game, the mode (`Down` for Casual), "Not familiar",
+/// then the lead screen's `keys`, which must end on Start.
 fn new_game(casual: bool, lead_keys: &str) -> Harness {
     let mut h = title();
     h.keys("f");
     assert_eq!(h.screens(), ["title", "mode_select"]);
     h.keys(if casual { "Down f" } else { "f" });
+    assert_eq!(h.top_screen(), "familiarity");
+    h.keys("f");
     assert_eq!(h.top_screen(), "lead_select");
     h.keys(lead_keys);
     h
@@ -606,7 +610,7 @@ fn the_battles_music_plays_from_its_start_to_the_end_of_the_chapter() {
     if let Some(test) = h.ctx_mut().content.battles.get_mut("test") {
         test.music = trpg_core::BattleMusic::Cue("battle_easy".into());
     }
-    h.keys("f f Up f");
+    h.keys("f f f Up f");
     assert_eq!(h.top_screen(), "dialogue");
     assert_eq!(music(&h), ["title"]);
     skip_scene(&mut h);
@@ -699,7 +703,7 @@ fn restart_battle_asks_for_the_battles_music_again() {
     if let Some(test) = h.ctx_mut().content.battles.get_mut("test") {
         test.music = trpg_core::BattleMusic::Cue("battle_easy".into());
     }
-    h.keys("f f Up f");
+    h.keys("f f f Up f");
     skip_scene(&mut h);
     // The battle notes closed.
     h.keys("f");
@@ -710,11 +714,44 @@ fn restart_battle_asks_for_the_battles_music_again() {
     assert!(h.music_commands().is_empty(), "{:?}", h.music_commands());
 }
 
-/// Cancel on the lead screen goes back to the mode; on the mode, to the
-/// title.
+/// Acceptance (0835): New Game with each familiarity answer goes mode →
+/// familiarity → lead, keeps the answer's tutorial level in the campaign,
+/// and with tips on shows the battle's first-turn tip only at `Full`.
+#[test]
+fn each_familiarity_answer_sets_the_level_and_gates_the_tips() {
+    for (downs, level, tip) in [
+        ("", TutorialLevel::Full, Some(TipTrigger::FirstBattleStart)),
+        ("Down", TutorialLevel::Short, None),
+        ("Down Down", TutorialLevel::None, None),
+    ] {
+        let mut h = title();
+        h.with_tips();
+        h.keys("f");
+        assert_eq!(h.screens(), ["title", "mode_select"]);
+        h.keys("f");
+        assert_eq!(h.screens(), ["title", "familiarity"]);
+        h.keys(downs).keys("f");
+        assert_eq!(h.screens(), ["title", "lead_select"]);
+        h.keys("Up f");
+        skip_scene(&mut h);
+        let campaign = h.flow().and_then(|f| f.campaign());
+        let campaign = campaign.unwrap_or_else(|| panic!("no campaign"));
+        assert_eq!(campaign.tutorial, level);
+        // The battle notes closed, then past the turn's banner.
+        h.keys("f").wait(2.0);
+        let screen = h.flow().and_then(|f| f.battle());
+        let shown = screen.and_then(trpg_ui::screens::battle::BattleScreen::shown_tip);
+        assert_eq!(shown, tip, "{level:?}");
+    }
+}
+
+/// Cancel on the lead screen goes back to the familiarity screen; on it,
+/// to the mode; on the mode, to the title.
 #[test]
 fn back_out_of_new_game() {
     let mut h = new_game(false, "d");
+    assert_eq!(h.screens(), ["title", "familiarity"]);
+    h.keys("d");
     assert_eq!(h.screens(), ["title", "mode_select"]);
     h.keys("d");
     assert_eq!(h.screens(), ["title"]);
@@ -763,8 +800,8 @@ fn the_next_chapter_follows_a_victory() {
         test.next = Some("quick".into());
     }
     let mut h = Harness::from_game(trpg_ui::Game::start(ctx));
-    // New Game, Classic, Start.
-    h.keys("f f Up f");
+    // New Game, Classic, Not familiar, Start.
+    h.keys("f f f Up f");
     skip_scene(&mut h);
     // The battle notes, turn 1's banner, then the VICTORY banner.
     seize(&mut h);
@@ -804,8 +841,8 @@ fn the_next_chapter_follows_a_victory() {
 #[test]
 fn a_controller_spells_the_name_on_the_letter_grid() {
     let mut h = title();
-    // New Game, Classic, down to the name, choose it.
-    h.pad("South South DpadDown South");
+    // New Game, Classic, Not familiar, down to the name, choose it.
+    h.pad("South South South DpadDown South");
     assert_eq!(h.top_screen(), "lead_select");
     assert!(shows(&h, "A  B  C  D"), "{}", h.snapshot());
     assert!(!shows(&h, "Type a name"));

@@ -51,7 +51,7 @@ fn to_battle(h: &mut Harness) {
     assert_eq!(h.screens(), ["title"]);
     // New Game is focused, with or without Load Game enabled.
     assert!(!shows(h, "Continue"));
-    h.keys("f f Up f");
+    h.keys("f f f Up f");
     skip_scene(h);
     assert_eq!(h.screens(), ["title", "battle"]);
     close_notes(h);

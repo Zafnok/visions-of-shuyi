@@ -5,6 +5,7 @@ use proptest::prelude::*;
 use super::*;
 use crate::battle::tests::{arb_setup, arb_unit, cast, item, setup};
 use crate::battle::{BattleState, Command, GameMode};
+use crate::campaign::TutorialLevel;
 use crate::item::Stock;
 use crate::lead::{LeadGender, LeadProfile};
 use crate::legal_commands;
@@ -65,10 +66,39 @@ fn the_header_reads_the_version_of_any_save() {
     assert!(ron::from_str::<SaveHeader>("not a save").is_err());
 }
 
+/// Every tutorial level is saved and read back; `Full` is left out of the
+/// save, so a save made before the level existed (which has none) loads
+/// as `Full` (0835).
+#[test]
+fn the_tutorial_level_is_saved_and_an_old_save_loads_as_full() {
+    for level in [
+        TutorialLevel::Full,
+        TutorialLevel::Short,
+        TutorialLevel::None,
+    ] {
+        let mut game = campaign();
+        game.tutorial = level;
+        let text = ron::to_string(&SaveFile::chapter_cleared(game)).unwrap();
+        assert_eq!(text.contains("tutorial:"), level != TutorialLevel::Full);
+        let back: SaveFile = ron::from_str(&text).unwrap();
+        assert_eq!(back.campaign.tutorial, level);
+    }
+    let old = ron::to_string(&SaveFile::chapter_cleared(campaign())).unwrap();
+    assert!(!old.contains("tutorial"));
+    let back: SaveFile = ron::from_str(&old).unwrap();
+    assert_eq!(back.campaign.tutorial, TutorialLevel::Full);
+    assert_eq!(campaign().tutorial, TutorialLevel::Full);
+}
+
 prop_compose! {
     fn arb_campaign()(
         roster in prop::collection::vec(arb_unit(), 0..=6),
         casual in any::<bool>(),
+        tutorial in prop::sample::select(vec![
+            TutorialLevel::Full,
+            TutorialLevel::Short,
+            TutorialLevel::None,
+        ]),
         female in any::<bool>(),
         name in "[A-Za-z' -]{1,12}",
         chapter in "[a-z0-9_]{0,8}",
@@ -96,6 +126,7 @@ prop_compose! {
         let mode = if casual { GameMode::Casual } else { GameMode::Classic };
         let mut campaign =
             Campaign::new_game(mode, LeadProfile::new(name, gender), chapter, roster, gold, stock);
+        campaign.tutorial = tutorial;
         campaign.flags = flags;
         campaign.playtime_s = playtime_s;
         campaign

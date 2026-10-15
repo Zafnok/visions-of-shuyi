@@ -683,3 +683,14 @@ fn a_casual_retreat_keeps_the_units_supports() {
         Ok(SupportRank::C)
     );
 }
+
+/// Tips show only at a `Full` tutorial, the level a new game starts at
+/// (0835).
+#[test]
+fn only_a_full_tutorial_shows_tips() {
+    assert!(TutorialLevel::Full.shows_tips());
+    assert!(!TutorialLevel::Short.shows_tips());
+    assert!(!TutorialLevel::None.shows_tips());
+    assert_eq!(TutorialLevel::default(), TutorialLevel::Full);
+    assert_eq!(campaign(GameMode::Classic).tutorial, TutorialLevel::Full);
+}
