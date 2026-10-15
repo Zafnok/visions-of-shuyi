@@ -1105,6 +1105,72 @@ line does, on its own row under the list:
   lists follow the same rule: the spell list, the preparations lists and
   the promotion choice.
 
+### Dialogue log
+
+Decided 2026-10-14 (ticket 0729). Nick, playing Chapter 1 (0804):
+
+> "we should have a chat log, accessible via key shortcut, optional
+> binding. when a conversation plays, press chat log button and able to
+> scroll thru messages, hover to see the portraits and that dialogue how it
+> was, click to skip back (with option to skip forward again to latest seen
+> point). Also if we add VA then it will play the voice again."
+
+He was shown three looks rendered over the Chapter 1 opening (the scene
+behind showing the highlighted line with the log under it; a full-screen
+list of names and text, like Fire Emblem: Three Houses' Log; a full-screen
+list with each line's face) and picked **"C: full-screen with faces"**.
+The other answers: replies passed on the way back are **"Asked again"**;
+the log holds **"This scene"**; jumping forward: **"Both"** (pick a dim
+line, or a *Back to latest* row); voices: **"also on hover with option to
+disable this behavior"**; the title cinematic: **"No log there"**. The key
+is in `controls.md`, *Dialogue log*.
+
+- **The log fills the screen**, over the scene (and over the battle map
+  when a scene plays during a battle). Each line the player has seen is a
+  row: the speaker's **face as it was at that line** (the portrait's
+  picture at 1×, with that line's expression), their name, and the text.
+  Narration has no face and no name, in the dim narration colour. A reply
+  the lead picked shows as the lead's line, starting `> `, with their face.
+- **The cursor** starts on the line on screen and moves with the cursor
+  keys; the list scrolls to keep it in view. The help under the log names
+  the keys: move, jump to this line, close.
+- **Confirm jumps to the highlighted line:** the log closes and the scene
+  is back at that line, with the portraits, expressions and caption it had
+  then, and plays on from there.
+- **Jumping forward:** after a jump back, the lines seen past it stay in
+  the log, dimmer. Confirm on one of them jumps forward to it. The last
+  row, **Back to latest**, jumps to the furthest line seen. Example: Mia
+  reads ten lines, opens the log, jumps back to line 7, reads on to
+  line 8, opens the log again: lines 9 and 10 are dim, and *Back to
+  latest* takes her to line 10.
+- **A reply is asked again.** Jumping back to a line before a reply drops
+  the reply and every line after it from the log; jumping forward goes
+  only as far as the line the reply answers. Reading on, the replies come
+  up again and any one can be picked. (Replies never change the story,
+  `docs/story/outline.md`, so this is always safe.)
+- **This scene only.** The log starts empty when a scene starts.
+- **Cancel closes the log** and the scene goes on where it was. Nothing
+  else closes it.
+- **Voices** (when the game has them, ticket 0720): jumping to a line plays
+  it as the scene always does, voice and all. **Moving the cursor onto a
+  line plays its voice too**; an Options setting turns that off
+  (`options.md`, *Voices in the dialogue log*).
+- **No log in the title screen's cinematic**: it plays by itself.
+
+*Claude's starting rules (Nick can veto):*
+
+- A text box too long for one page is one row of the log, in full. The
+  line still typing out when the log opens is in the log in full.
+- Lines passed with *Skip scene?* aren't in the log: they were never read.
+- Jumping to a line starts its text from the beginning, typing out as
+  usual. The music is the music that was playing at that line.
+- *Back to latest* is only there after a jump back (when the line on
+  screen isn't the furthest one seen).
+- The log sounds like a menu: opening it, moving the cursor and closing it
+  make the menu sounds.
+- While a scene plays, the text box shows the log's key next to the
+  Confirm key (`b log   f ▼`). With no key, it shows nothing.
+
 ### Screen layout
 
 As in ADR-0018 and the screenshots: map on the left (single-line frame), side

@@ -65,6 +65,7 @@ needed). Key choices are Nick's; the defaults below are his.
 | Auto-end on/off | `Shift+Space` | `Shift+Space` | Replaces the `Shift+e` placeholder in `turn-structure.md` |
 | Rewind (ticket 0307) | `R` | `U` | Proposed by Claude, approved by Nick: `R` was already planned; `U` is its mirror |
 | Zoom map (ticket 0439) | `Q` | `P` | Nick, 2026-10-12: see *Zoom map* below |
+| Open the dialogue log (ticket 0729) | `B` | `N` | Nick, 2026-10-14: see *Dialogue log* below. In its own group: may share a key |
 | Map menu | `Cancel` with nothing to cancel, or `Confirm` on an empty tile | same | Unchanged from before |
 
 *Proposed by Claude, approved by Nick:*
@@ -121,6 +122,57 @@ four things:
 - **On the Key bindings screen** `Zoom map` is the row before `Map menu`.
 - **"Pick your layout"** lights `Q` and `P` on its keyboards like the
   other keys in use; its list of keys is unchanged (it has no free line).
+
+### Dialogue log
+
+Decided 2026-10-14, ticket 0729 (the log itself: `look-and-feel.md`,
+*Dialogue log*). Nick first said the key is **"optional binding"**, then:
+
+> "up will be default, it will be optional bind though, so players can
+> clear it if they want but it will have a default."
+
+Told that Up is already Cursor up, and that a key works for only one
+action:
+
+> "make it a deliberate entry in the log rather than Cursor Up / Log Up =
+> up, make it 2 rows, and they are in different context menus, so they can
+> overlap. We should have systems to support this behavior across other
+> keys as well. Also, probably, if Log Up is bound and Log Down is not then
+> that should error and vice versa"
+
+Asked what to do at the lead's replies, where Up moves between them:
+
+> "then maybe default shouldn't be cursor up, what does persona bind to? we
+> can use the same. but if the player decides to bind to cursor up then
+> replies win"
+
+Told that Persona 5 Royal opens its log with one key (`B` on PC, per a
+keyboard guide) and scrolls it with the normal up and down, he picked
+**"One key, like Persona"**, and its own group on the Key bindings screen
+(**"Own group, block leaving"**, which with one key has nothing to block).
+
+- **Open the log** is an optional action: **`B`** right-handed, **`N`**
+  left-handed (its finger mirror), and the **left face button** on a
+  controller (`X` on Xbox, `□` on PlayStation, `Y` on Switch-style pads).
+  It opens the log while a scene plays. In the log the cursor keys move,
+  Confirm jumps to the line, Cancel closes; the log key itself does
+  nothing there.
+- **Keys are in groups, and only keys in the same group clash.** An action
+  in one group may have a key or button that an action of another group
+  has, because the two are used in different places. Binding a key moves
+  it only from an action of the same group. Today there are two groups:
+  everything before, and **In the dialogue log** (Open the log). So the
+  pad's left face button is both Danger zone (on the map) and Open the log
+  (in a scene). Later actions can get groups of their own the same way.
+- **What the scene uses wins.** If the log's key is also a key the scene is
+  using at that moment (Confirm, End turn and Cancel always; the cursor
+  keys while the replies are up), pressing it does the scene's thing, not
+  the log. Example: Mia binds Open the log to `Up`. Reading, `Up` opens
+  the log; at the replies, `Up` moves between them.
+- **On the Key bindings screen** the group is the last one, after
+  Optional, headed `In the dialogue log`. (*Claude's starting rule:* to fit
+  the extra group, the blank row between the keyboard / controller switch
+  and the slot columns' headings is gone.)
 
 ### Fight playback: Cancel skips, hold Confirm speeds up
 
@@ -206,7 +258,7 @@ keys in its slots. Only one slot needs a key.
 | Cursor up, down, left, right | Select *(new, see below)* |
 | Confirm | Confirm end turn *(new, see below)* |
 | Cancel | Previous / next ready unit |
-| End turn | Unit info, danger zone, auto-end on/off, rewind, map menu, zoom map *(0439)* |
+| End turn | Unit info, danger zone, auto-end on/off, rewind, map menu, zoom map *(0439)*, open the dialogue log *(0729)* |
 
 The developer Debug key is not on the screen.
 
@@ -271,7 +323,8 @@ also named the layout; it is now in the switch row under it, see
 right, Confirm, Cancel (`+ Escape` after its name), End turn. **Optional:**
 Select, Confirm end turn, Previous ready unit, Next ready unit, Unit info,
 Danger zone, Auto-end on/off, Rewind, Zoom map (since ticket 0439), Map
-menu. Then **Restore defaults**.
+menu. Since ticket 0729 a third group, **In the dialogue log:** Open the
+log. Then **Restore defaults**.
 An empty slot is a small dot; `! not mapped` sits at the right of the row,
 red for a required action and dim for an optional one. Screenshots:
 [`0815-key-bindings.png`](../screenshots/0815-key-bindings.png),
@@ -382,6 +435,7 @@ the PlayStation / Switch name) for each position.
 | Auto-end on/off | Back | `Back` (⧉) | `Create` / `Share` | `−` | The toggle shortcut `turn-structure.md` asks for |
 | Rewind (ticket 0307) | left trigger | `LT` | `L2` | `ZL` | |
 | Zoom map (ticket 0439) | right trigger | `RT` | `R2` | `ZR` | Nick, 2026-10-12 (*Zoom map* above) |
+| Open the dialogue log (ticket 0729) | left face | `X` | `□` | `Y` | Shared with Danger zone: another group (*Dialogue log* above) |
 | Map menu | *no button*: Cancel with nothing to cancel, or Confirm on an empty tile | | | | Same as the keyboard |
 | Select *(optional, 0218)* | *no button* | | | | Starts empty, as on the keyboard |
 | Confirm end turn *(optional, 0218)* | *no button* | | | | Starts empty: Start pressed again accepts |
