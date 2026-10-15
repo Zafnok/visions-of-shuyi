@@ -2,7 +2,7 @@ name: Sonar triage
 
 # Files SonarQube Cloud's *overall* backlog as batched GitHub issues labelled
 # `sonar`. The SonarCloud scan in ci.yml grades only new code, so nothing else
-# looks at what was already there (ADR-0071, ticket 0125).
+# looks at what was already there (ADR-0071, ticket 0126).
 #
 # This job does not run the scanner: ci.yml's coverage job already did on the
 # push to main. It only reads the API and syncs issues, so it needs no Rust.

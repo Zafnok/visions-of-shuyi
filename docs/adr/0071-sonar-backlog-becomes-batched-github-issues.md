@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-10-15
-- **Related tickets:** 0125 (this), 0104 (SonarCloud in CI)
+- **Related tickets:** 0126 (this), 0104 (SonarCloud in CI)
 
 ## Context
 

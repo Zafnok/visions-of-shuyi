@@ -10,7 +10,7 @@ pick up whole.
 
 Design and rejected alternatives:
 [ADR-0071](../../docs/adr/0071-sonar-backlog-becomes-batched-github-issues.md).
-Ported from `Zafnok/code-equivalency` (ticket 0125). The skills that use it:
+Ported from `Zafnok/code-equivalency` (ticket 0126). The skills that use it:
 `sonar-triage` (refresh the queue) and `sonar-fix` (fix one issue).
 
 ## Running it

@@ -1,5 +1,5 @@
 ---
-id: "0125"
+id: "0126"
 title: "SonarCloud's backlog becomes batched GitHub issues (sonar-triage)"
 type: infra
 milestone: M0 Foundation
@@ -11,7 +11,7 @@ nick_input: none
 completed: 2026-10-15
 ---
 
-# 0125 — SonarCloud's backlog becomes batched GitHub issues (sonar-triage)
+# 0126 — SonarCloud's backlog becomes batched GitHub issues (sonar-triage)
 
 ## Context
 

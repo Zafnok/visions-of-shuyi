@@ -9,7 +9,7 @@
     labelled 'sonar'. See docs/adr/0071-sonar-backlog-becomes-batched-github-issues.md and the
     README beside this file.
 
-    Ported from Zafnok/code-equivalency's tools/sonar-triage (ticket 0125).
+    Ported from Zafnok/code-equivalency's tools/sonar-triage (ticket 0126).
 
     Reads are anonymous: the project is public. SONAR_TOKEN is used only when present, and
     is required only by -PushResolutions.
