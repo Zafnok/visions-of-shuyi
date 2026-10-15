@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: sign-off
-completed:
+completed: 2026-10-15
 ---
 
 # 0839 — Leaving Options asks whether to keep the changes
@@ -65,14 +65,14 @@ page, and see the new speed.
 
 ## Acceptance criteria
 
-- [ ] A change shows at once; leaving with changes asks, cursor on Back
+- [x] A change shows at once; leaving with changes asks, cursor on Back
       (tests).
-- [ ] Keep saves; Discard puts every value back, volumes and fullscreen
+- [x] Keep saves; Discard puts every value back, volumes and fullscreen
       included, and saves nothing; Back stays (tests).
-- [ ] Leaving with nothing changed asks nothing (test).
-- [ ] The same from the title, the map menu and the Preparations tab
+- [x] Leaving with nothing changed asks nothing (test).
+- [x] The same from the title, the map menu and the Preparations tab
       (tests).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -83,4 +83,29 @@ page, and see the new speed.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- `Ctx` keeps the settings in use and the settings as stored apart:
+  `preview_settings` changes without saving, `keep_settings` saves,
+  `restore_settings` puts a copy back (writing only if something else was
+  saved meanwhile). `change_settings` is preview + save, so the Zoom map
+  key, the Auto-end key and the window's fullscreen shortcut save at once
+  as before; `choose_layout` saves only the layout. ADR-0072 records it
+  (amends ADR-0050 and ADR-0069's note that waited for this ticket).
+- The Options screen copies the settings on its first frame. Cancel with
+  anything changed opens `Keep these changes?` (Keep / Discard / Back,
+  cursor on Back), as part of the screen's view (`OptionsView::leaving`)
+  painted by the glyph skin. The same screen opens from the title, the
+  map menu and the Preparations tab, and each is tested.
+- `Restore defaults` is now a change like any other; `Reset tips` is
+  unchanged. Existing tests that relaunched after a change now keep it
+  first.
+
+**Claude's starting rules** (the design docs were silent):
+- Cancel on the question is Back (stay).
+- The three answers sit on one line, Keep, Discard, Back; the cursor's
+  keys move between them and stop at the ends.
+- If Keep can't save, the screen stays open and says it couldn't save.
+- Closing the game with Options open and changes not kept loses them
+  (as Discard would).
+- Discard puts back everything as it was when Options opened, including
+  a fullscreen change made with the window's shortcut while it was open.
+

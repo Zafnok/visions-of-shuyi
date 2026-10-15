@@ -4,7 +4,7 @@
 //! slider's blocks, the colours); nothing here decides what the screen
 //! shows or does. Another look is another `paint` of the same view.
 
-use super::view::{OptionsView, QuestionView, RowView, ValueView};
+use super::view::{LeaveView, OptionsView, QuestionView, RowView, ValueView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::screen::Ctx;
@@ -21,6 +21,8 @@ const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
 /// Height of a question's box: its two lines, a blank row above and below,
 /// and the border.
 const QUESTION_H: i32 = 6;
+/// Cells between two answers of the question asked on leaving.
+const CHOICE_GAP: usize = 3;
 /// Cells in a volume's bar.
 const VOLUME_BAR: u8 = 10;
 /// Cells of the number box, inside its highlight.
@@ -64,6 +66,9 @@ pub fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
     }
     if let Some(question) = &view.question {
         paint_question(ctx, buf, question);
+    }
+    if let Some(leaving) = &view.leaving {
+        paint_leave(ctx, buf, leaving);
     }
     let bottom = i32::from(buf.height()) - 1;
     print_centred(buf, bottom, &view.help, dim, black);
@@ -130,6 +135,54 @@ fn paint_question(ctx: &Ctx, buf: &mut GlyphBuffer, question: &QuestionView) {
     buf.print(rect.x + 2, rect.y + 3, &question.answers, dim, bg);
 }
 
+/// The answers of `leaving` on one line: each name with a space either
+/// side, [`CHOICE_GAP`] cells apart. Returns the line and where each
+/// answer starts in it.
+fn choices_line(leaving: &LeaveView) -> (String, Vec<usize>) {
+    let mut line = String::new();
+    let mut starts = Vec::new();
+    for (i, choice) in leaving.choices.iter().enumerate() {
+        if i > 0 {
+            line.push_str(&" ".repeat(CHOICE_GAP));
+        }
+        starts.push(line.chars().count());
+        line.push(' ');
+        line.push_str(&choice.label);
+        line.push(' ');
+    }
+    (line, starts)
+}
+
+/// Paints the question asked on leaving in a double-bordered box in the
+/// middle of the screen (the look of [`paint_question`]), its answers on
+/// the line under it, the one in focus as a highlight bar.
+fn paint_leave(ctx: &Ctx, buf: &mut GlyphBuffer, leaving: &LeaveView) {
+    let c = |u| ctx.palette.get(u);
+    let (bg, text) = (c(UiColor::PanelBg), c(UiColor::Text));
+    let (line, starts) = choices_line(leaving);
+    let widest = leaving.text.chars().count().max(line.chars().count());
+    let w = i32::try_from(widest).unwrap_or(0) + 4;
+    let rect = Rect::new(
+        (i32::from(buf.width()) - w) / 2,
+        (i32::from(buf.height()) - QUESTION_H) / 2,
+        w,
+        QUESTION_H,
+    );
+    buf.fill_rect(rect, Cell::new(' ', text, bg));
+    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
+    buf.print(rect.x + 2, rect.y + 2, &leaving.text, text, bg);
+    let bar = c(UiColor::PanelBorderFocus);
+    for (choice, start) in leaving.choices.iter().zip(starts) {
+        let x = rect.x + 2 + i32::try_from(start).unwrap_or(0);
+        let shown = format!(" {} ", choice.label);
+        if choice.focused {
+            buf.print(x, rect.y + 3, &shown, bg, bar);
+        } else {
+            buf.print(x, rect.y + 3, &shown, text, bg);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -163,6 +216,7 @@ mod tests {
             rows,
             message: None,
             question: None,
+            leaving: None,
             help: "help".to_owned(),
         }
     }
@@ -317,5 +371,41 @@ mod tests {
         assert!(painted_row(&c, &v, top + 2).contains("║ Show every tip again? ║"));
         assert!(painted_row(&c, &v, top + 3).contains("║ f yes / d no          ║"));
         assert!(painted_row(&c, &v, top + 5).contains("╚═══════════════════════╝"));
+    }
+
+    #[test]
+    fn the_question_on_leaving_is_a_box_with_its_answers_in_a_line_the_focused_one_lit() {
+        use crate::screens::options::{ChoiceView, LeaveChoice};
+        let c = ctx();
+        let mut v = view(vec![row("Text speed", words("Fast", true), true)]);
+        let choice = |choice, label: &str| ChoiceView {
+            choice,
+            label: label.to_owned(),
+            focused: choice == LeaveChoice::Back,
+        };
+        v.leaving = Some(LeaveView {
+            text: "Keep these changes?".to_owned(),
+            choices: vec![
+                choice(LeaveChoice::Keep, "Keep"),
+                choice(LeaveChoice::Discard, "Discard"),
+                choice(LeaveChoice::Back, "Back"),
+            ],
+        });
+        let top = (i32::from(ConsoleSpec::PC.rows) - QUESTION_H) / 2;
+        // As wide as the answers' line, the wider.
+        let question = format!("║ {:<27} ║", "Keep these changes?");
+        assert!(painted_row(&c, &v, top + 2).contains(&question));
+        assert!(painted_row(&c, &v, top + 3).contains("║  Keep     Discard     Back  ║"));
+        // Only the focused answer is lit.
+        let black = c.palette.get(UiColor::Black);
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+        paint(&c, &v, &mut buf);
+        let bar = c.palette.get(UiColor::PanelBorderFocus);
+        let lit: String = (0..i32::from(ConsoleSpec::PC.cols))
+            .filter_map(|x| buf.get(x, top + 3))
+            .filter(|cell| cell.bg == bar)
+            .map(|cell| cell.glyph)
+            .collect();
+        assert_eq!(lit, " Back ");
     }
 }

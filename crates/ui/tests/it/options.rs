@@ -23,7 +23,7 @@ use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord, Layout};
 use trpg_ui::map_view::{CursorStyle, GAME_TILESET, TEST_UNITS_TILESET, default_skin};
 use trpg_ui::screen::Ctx;
-use trpg_ui::screens::options::{OptionsScreen, Row, ValueView};
+use trpg_ui::screens::options::{LeaveChoice, OptionsScreen, Row, ValueView};
 use trpg_ui::settings::{AnimSpeed, EnemyPhaseSpeed, MapLook, Settings, TextSpeed};
 use trpg_ui::storage::Storage;
 use trpg_ui::tips::TIPS_SEEN_KEY;
@@ -35,6 +35,10 @@ const TO_CURSOR: &str = "Down Down Down Down Down Down";
 const TO_THEME: &str = "Down Down Down Down Down Down Down";
 const TO_MUSIC: &str = "Down Down Down Down Down Down Down Down";
 const TO_LAYOUT: &str = "Down Down Down Down Down Down Down Down Down Down";
+
+/// Leaves Options with its changes kept: Cancel asks, the cursor starts on
+/// Back, two left is Keep (ticket 0839).
+const KEEP: &str = "d Left Left f";
 
 /// A launch after the right-handed layout was picked.
 fn title() -> Harness {
@@ -49,11 +53,12 @@ fn options() -> Harness {
     h
 }
 
-/// From Options back at the title (still on its Options item), the Quick
+/// From Options with changes, kept, back at the title (still on its
+/// Options item), the Quick
 /// Battle (its Preparations: Left wraps to `Fight!`) with its `PLAYER
 /// PHASE` banner closed.
 fn into_quick_battle(h: &mut Harness) {
-    h.keys("d Up f Left f f");
+    h.keys(KEEP).keys("Up f Left f f");
     assert_eq!(h.screens(), ["title", "battle"]);
 }
 
@@ -172,7 +177,8 @@ fn text_speed_changes_how_fast_dialogue_appears() {
         let mut h = options();
         h.keys(keys);
         assert_eq!(settings(&h).text_speed, speed);
-        h.keys("d F2 Down Down f").wait(0.1);
+        let leave = if keys.is_empty() { "d" } else { KEEP };
+        h.keys(leave).keys("F2 Down Down f").wait(0.1);
         assert_eq!(h.top_screen(), "dialogue");
         glyphs_shown(&h)
     };
@@ -184,7 +190,7 @@ fn text_speed_changes_how_fast_dialogue_appears() {
     assert!(fast < instant, "{fast} {instant}");
     // Instant shows the whole box: more time adds nothing.
     let mut h = options();
-    h.keys("Right Right d F2 Down Down f");
+    h.keys("Right Right").keys(KEEP).keys("F2 Down Down f");
     let at_once = glyphs_shown(&h);
     h.wait(0.5);
     assert!(glyphs_shown(&h) <= at_once + 1, "only the prompt to go on");
@@ -203,6 +209,7 @@ fn the_battle_speed_rows_set_their_settings() {
     h.keys("Down Right");
     assert_eq!(settings(&h).enemy_phase_speed, EnemyPhaseSpeed::Fast);
     assert!(shows(&h, "Combat animations"));
+    h.keys(KEEP);
     let h = relaunch(h);
     let saved = settings(&h);
     assert_eq!(saved.anim_speed, AnimSpeed::Fast);
@@ -226,7 +233,7 @@ fn auto_end_is_one_setting_in_options_and_in_battle() {
     // Options over the battle shows it off, and turns it on again.
     h.keys("d Down Down f").keys(TO_AUTO_END);
     assert_eq!(value(&h, Row::AutoEnd), setting("Off"));
-    h.keys("f d d");
+    h.keys("f").keys(KEEP).keys("d");
     assert!(shows(&h, "auto-end: ON"));
     let h = relaunch(h);
     assert!(settings(&h).auto_end_turn);
@@ -239,6 +246,7 @@ fn fullscreen_is_asked_of_the_app_and_saved() {
     assert!(!h.fullscreen());
     h.keys(TO_FULLSCREEN).keys("Right");
     assert!(h.fullscreen());
+    h.keys(KEEP);
     let mut h = relaunch(h);
     assert!(h.fullscreen(), "from the first frame of the next launch");
     h.keys("Down Down f").keys(TO_FULLSCREEN).keys("Left");
@@ -257,7 +265,7 @@ fn the_cursor_row_changes_the_battle_cursor() {
     // Changed over the battle, it shows as soon as the battle is back.
     h.keys("d Down Down f").keys(TO_CURSOR).keys("Right");
     assert!(shows(&h, "Tile glow"));
-    h.keys("d d");
+    h.keys(KEEP).keys("d");
     assert_eq!(style(&h), Some(CursorStyle::TileGlow));
     let mut h = relaunch(h);
     h.keys("Down f Left f f");
@@ -315,6 +323,7 @@ fn volumes_reach_the_mixer_and_persist() {
     // Right changed nothing.
     h.clear_audio().keys("Left Right Right");
     assert_eq!(h.sounds(), ["menu_move", "menu_move"]);
+    h.keys(KEEP);
     let h = relaunch(h);
     assert!(close(h.volumes(), (0.0, 1.0)), "{:?}", h.volumes());
 }
@@ -547,6 +556,7 @@ fn restore_defaults_asks_first_and_keeps_the_layout_and_the_keys() {
     );
     // Custom keys are reset on the Key bindings screen, not here.
     assert_eq!(h.game().ctx().layout_bindings(Layout::RightHanded), keys);
+    h.keys(KEEP);
     let h = relaunch(h);
     assert_eq!(
         settings(&h),
@@ -563,8 +573,9 @@ fn a_layout_saved_by_an_older_build_is_kept() {
     let mut h = Harness::with_storage(Box::new(storage));
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
-    // Changing an option keeps it.
-    h.keys("s s j d k");
+    // Changing an option (kept on leaving: two left of Back, left-handed)
+    // keeps it.
+    h.keys("s s j d k a a j");
     let h = relaunch(h);
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(settings(&h).layout(), Some(Layout::LeftHanded));
@@ -644,6 +655,7 @@ fn map_look_swaps_the_skin_at_once_and_is_remembered() {
     assert_eq!(value(&h, Row::MapLook), setting("Glyphs"));
     assert_eq!(settings(&h).map_look, MapLook::Glyphs);
     assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+    h.keys(KEEP);
 
     let mut h = launch_with_pictures(Some(h.into_storage()));
     assert_eq!(settings(&h).map_look, MapLook::Glyphs);
@@ -721,6 +733,7 @@ fn colors_swap_the_palette_at_once_and_are_remembered() {
 
     h.keys("Right Right");
     assert_eq!(settings(&h).theme, Theme::Parchment);
+    h.keys(KEEP);
     let h = relaunch(h);
     assert_eq!(settings(&h).theme, Theme::Parchment);
     assert_ne!(palette(&h), earthy);
@@ -749,4 +762,91 @@ fn restoring_defaults_brings_the_earthy_colors_back() {
         h.game().ctx().palette.get(UiColor::Black).to_hex(),
         "#000000"
     );
+}
+
+/// What the settings record in storage holds, if anything.
+fn stored(h: &Harness) -> Option<String> {
+    let key = trpg_ui::settings::SETTINGS_KEY;
+    h.game().ctx().storage.read(key).ok().flatten()
+}
+
+/// Ticket 0839: from wherever Options opens (`open`, leaving it back on
+/// `under`), a change shows at once; leaving asks, on Back; Back stays,
+/// Discard puts everything back (volumes and fullscreen too) and saves
+/// nothing, Keep saves.
+fn leaving_asks_and_each_answer_does_its_part(open: fn() -> Harness, under: &[&str]) {
+    let mut options: Vec<&str> = under.to_vec();
+    options.push("options");
+    let mut h = open();
+    let (before, saved_before) = (settings(&h), stored(&h));
+    // Text speed, fullscreen and the music volume.
+    h.keys("Right").keys("Down Down Down Down Down Right");
+    h.keys("Down Down Down Left");
+    assert!(h.fullscreen());
+    assert!((h.volumes().0 - 0.75).abs() < 1e-6, "{:?}", h.volumes());
+    assert_eq!(stored(&h), saved_before, "nothing saved yet");
+    // Leaving asks, on Back.
+    h.keys("d");
+    assert_eq!(h.screens(), options);
+    let screen = h.game().screen::<OptionsScreen>();
+    let view = screen.map(|s| s.view(h.game().ctx()));
+    let focused = view.and_then(|v| v.leaving?.focused());
+    assert_eq!(focused, Some(LeaveChoice::Back));
+    assert!(shows(&h, "Keep these changes?"));
+    assert!(shows(&h, "arrows choose · f pick · d back"));
+    // Back stays, with the changes.
+    h.keys("f");
+    assert_eq!(h.screens(), options);
+    assert_eq!(settings(&h).text_speed, TextSpeed::Fast);
+    // Discard: every value back, nothing saved.
+    h.keys("d Left f");
+    assert_eq!(h.screens(), under);
+    assert_eq!(settings(&h), before);
+    assert!(!h.fullscreen());
+    assert!((h.volumes().0 - 0.8).abs() < 1e-6, "{:?}", h.volumes());
+    assert_eq!(stored(&h), saved_before);
+    // Again, and Keep: saved.
+    h.keys("f Right d Left Left f");
+    assert_eq!(h.screens(), under);
+    assert_eq!(settings(&h).text_speed, TextSpeed::Fast);
+    let kept = stored(&h).and_then(|text| Settings::from_ron(&text).ok());
+    assert_eq!(kept.map(|s| s.text_speed), Some(TextSpeed::Fast));
+    // Nothing changed: leaving asks nothing.
+    h.keys("f d");
+    assert_eq!(h.screens(), under);
+}
+
+#[test]
+fn leaving_options_from_the_title_asks_whether_to_keep_the_changes() {
+    leaving_asks_and_each_answer_does_its_part(options, &["title"]);
+}
+
+#[test]
+fn leaving_options_from_the_map_menu_asks_whether_to_keep_the_changes() {
+    leaving_asks_and_each_answer_does_its_part(options_in_battle, &["title", "battle"]);
+}
+
+#[test]
+fn leaving_options_at_preparations_asks_whether_to_keep_the_changes() {
+    leaving_asks_and_each_answer_does_its_part(options_at_preparations, &["title", "preparations"]);
+}
+
+/// The question's look.
+#[test]
+fn the_question_on_leaving_with_changes() {
+    let mut h = options();
+    h.keys("Right d");
+    assert_snapshot!(h.snapshot());
+}
+
+/// A kept change is there after a restart; a discarded one isn't.
+#[test]
+fn only_kept_changes_are_there_after_a_restart() {
+    let mut h = options();
+    h.keys("Right d Left f");
+    let mut h = relaunch(h);
+    assert_eq!(settings(&h).text_speed, TextSpeed::Normal);
+    h.keys("Down Down f Right").keys(KEEP);
+    let h = relaunch(h);
+    assert_eq!(settings(&h).text_speed, TextSpeed::Fast);
 }

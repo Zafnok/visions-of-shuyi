@@ -85,6 +85,31 @@
         text: "RESTORE EVERY OPTION TO ITS DEFAULT?",
     ),
     (
+        key: "options.question.keep",
+        source: "Keep these changes?",
+        text: "KEEP THESE CHANGES?",
+    ),
+    (
+        key: "options.leave.keep",
+        source: "Keep",
+        text: "KEEP",
+    ),
+    (
+        key: "options.leave.discard",
+        source: "Discard",
+        text: "DISCARD",
+    ),
+    (
+        key: "options.leave.back",
+        source: "Back",
+        text: "BACK",
+    ),
+    (
+        key: "options.help.leave",
+        source: "{Cursor} choose · {Confirm} pick · {Cancel} back",
+        text: "{Cursor} CHOOSE · {Confirm} PICK · {Cancel} BACK",
+    ),
+    (
         key: "options.question.answers",
         source: "{Confirm} yes / {Cancel} no",
         text: "{Confirm} YES / {Cancel} NO",

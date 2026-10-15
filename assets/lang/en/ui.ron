@@ -207,6 +207,11 @@
     "options.help.restore": "{Cursor} move · {Confirm} restore · {Cancel} back",
     "options.help.none": "{Cursor} move · {Cancel} back",
     "options.help.question": "{Confirm} yes · {Cancel} no",
+    "options.question.keep": "Keep these changes?",
+    "options.leave.keep": "Keep",
+    "options.leave.discard": "Discard",
+    "options.leave.back": "Back",
+    "options.help.leave": "{Cursor} choose · {Confirm} pick · {Cancel} back",
 
     // The Key bindings screen. `{clear}` and `{key}` are keys of the
     // screen's own.
