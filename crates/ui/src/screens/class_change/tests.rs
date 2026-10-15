@@ -561,6 +561,16 @@ fn sounds() {
     assert!(closed.contains("menu_cancel"), "{closed}");
 }
 
+/// The tests (and the game flow) reach the screen through `as_any`.
+#[test]
+fn opts_into_as_any() {
+    let c = ctx();
+    let s = demo(&c, ChangeKind::Promote);
+    let any = Screen::as_any(&s).expect("opts into as_any");
+    let found = any.downcast_ref::<ClassChangeScreen>().expect("the screen");
+    assert_eq!(found.view(&c), s.view(&c));
+}
+
 #[test]
 fn the_demo_needs_its_test_character() {
     let mut c = ctx();
