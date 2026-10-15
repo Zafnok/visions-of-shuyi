@@ -98,6 +98,8 @@ fn three_boxes_in_the_log_lists_the_three_lines_in_order() {
     assert_eq!(lines[0], "ch01_intro_3aec73da");
     assert_eq!(lines.len(), 3);
     assert!(view.rows[2].focused);
+    let focused = view.focused().map(|r| r.text.as_str());
+    assert!(focused.is_some_and(|t| t.starts_with("In the Thornmarch")));
     assert_eq!(view.back_to_latest, None);
     assert_eq!(view.title, "Log");
     assert_eq!(view.help, "arrows move · f go to this line · d close");
@@ -129,6 +131,7 @@ fn jumping_back_shows_the_first_box_and_back_to_latest_the_third() {
     );
     h.keys("Down Down Down");
     assert!(log(&h).back_to_latest.is_some_and(|b| b.focused));
+    assert_eq!(log(&h).focused(), None, "on Back to latest, no line");
     // Down at the last row stays there.
     h.keys("Down f");
     assert!(on_screen(&h).starts_with("In the Thornmarch"));

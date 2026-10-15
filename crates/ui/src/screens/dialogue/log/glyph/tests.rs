@@ -212,3 +212,91 @@ fn long_text_wraps_under_the_name() {
     assert!(text(&buf, 3).contains("word"));
     assert_eq!(col(&buf, 3, "word"), Some(TEXT_X));
 }
+
+/// A narration row of `lines` text lines saying `tag` first.
+fn tall(tag: &str, lines: usize) -> LogRow {
+    // Too long to share a line with the tag: one line each.
+    let word = "x".repeat(84);
+    let rest = vec![word; lines.saturating_sub(1)].join(" ");
+    let text = if rest.is_empty() {
+        tag.to_owned()
+    } else {
+        format!("{tag} {rest}")
+    };
+    row(RowKind::Narration, &text)
+}
+
+/// Whether `word` is painted anywhere.
+fn shows(buf: &GlyphBuffer, word: &str) -> bool {
+    (0..i32::from(buf.height())).any(|y| text(buf, y).contains(word))
+}
+
+/// The bottom border is whole: nothing was drawn past the last row.
+fn border_whole(buf: &GlyphBuffer) -> bool {
+    let bottom = text(buf, i32::from(CONSOLE_H) - 1);
+    !bottom.contains('x') && !bottom.contains("tag")
+}
+
+#[test]
+fn rows_after_the_cursor_only_while_they_fit() {
+    // Two 10-row lines after the cursor's: only one fits under it.
+    let mut view = log(vec![tall("tagA", 10), tall("tagB", 10), tall("tagC", 10)]);
+    view.rows[0].focused = true;
+    let buf = painted(&view);
+    assert!(shows(&buf, "tagA") && shows(&buf, "tagB"));
+    assert!(!shows(&buf, "tagC"));
+    assert!(border_whole(&buf));
+}
+
+#[test]
+fn rows_that_fill_the_panel_exactly_all_show() {
+    // 11 + 11 + 9 = 31 rows with their gaps: the last gap is the border.
+    let mut rows: Vec<LogRow> = (0..4).map(|i| tall(&format!("tagE{i}"), 1)).collect();
+    rows.extend([tall("tagF", 10), tall("tagG", 10), tall("tagH", 8)]);
+    let mut view = log(rows);
+    view.rows[4].focused = true;
+    let buf = painted(&view);
+    assert_eq!(row_of(&buf, "tagF"), 1, "no earlier row fits");
+    assert!(!shows(&buf, "tagE3"));
+    assert_eq!(row_of(&buf, "tagH"), 23);
+    assert!(
+        text(&buf, 30).contains('x'),
+        "its last line is the panel's last"
+    );
+    assert!(border_whole(&buf));
+    // From the top: one 2-row line and 14 one-row lines are 31 too.
+    let mut rows = vec![LogRow {
+        face: None,
+        ..row(RowKind::Speech, "tagS")
+    }];
+    rows.extend((0..14).map(|i| tall(&format!("tagN{i:02}"), 1)));
+    let mut view = log(rows);
+    view.rows[0].focused = true;
+    let buf = painted(&view);
+    assert_eq!(row_of(&buf, "tagN13"), 30);
+    assert!(border_whole(&buf));
+}
+
+#[test]
+fn earlier_rows_only_while_they_fit() {
+    // Before the cursor's 10-row line: a 1-row line, then a 19-row one
+    // that doesn't fit with them.
+    let mut view = log(vec![tall("tagA", 19), tall("tagB", 1), tall("tagC", 10)]);
+    view.rows[2].focused = true;
+    let buf = painted(&view);
+    assert!(!shows(&buf, "tagA"));
+    assert_eq!(row_of(&buf, "tagB"), 1);
+    assert_eq!(row_of(&buf, "tagC"), 3);
+    assert!(border_whole(&buf));
+}
+
+#[test]
+fn nothing_is_drawn_past_the_last_row_that_fits() {
+    let rows: Vec<LogRow> = (0..20).map(|i| tall(&format!("tagL{i:02}"), 1)).collect();
+    let mut view = log(rows);
+    view.rows[0].focused = true;
+    let buf = painted(&view);
+    assert_eq!(row_of(&buf, "tagL14"), 29);
+    assert!(!shows(&buf, "tagL15"));
+    assert!(border_whole(&buf));
+}
