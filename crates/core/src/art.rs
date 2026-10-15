@@ -25,7 +25,9 @@
 //!   forecast shows them), a debuff on the target's first hit, a stance on
 //!   the user, and Line Pierce's extra strike. The battle applies them.
 
-use std::collections::BTreeMap;
+use crate::prelude::*;
+
+use alloc::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 

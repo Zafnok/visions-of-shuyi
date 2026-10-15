@@ -22,7 +22,9 @@
 //! (when: Talk(a: "ana", b: "rook"), scene: "ch02_ana_rook", once: true)
 //! ```
 
-use std::collections::BTreeSet;
+use crate::prelude::*;
+
+use alloc::collections::BTreeSet;
 
 use serde::{Deserialize, Serialize};
 

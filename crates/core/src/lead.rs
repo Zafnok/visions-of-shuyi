@@ -5,7 +5,9 @@
 //! `{their}`, `{theirs}`, `{themself}` (and `{They}` etc.) for pronouns,
 //! filled in by [`LeadProfile::substitute`].
 
-use std::borrow::Cow;
+use crate::prelude::*;
+
+use alloc::borrow::Cow;
 
 use serde::{Deserialize, Serialize};
 
@@ -221,7 +223,7 @@ pub enum Part<'a> {
 /// Splits `text` into plain text and `{tokens}`.
 pub fn split_tokens(text: &str) -> impl Iterator<Item = Part<'_>> {
     let mut rest = text;
-    std::iter::from_fn(move || {
+    core::iter::from_fn(move || {
         if rest.is_empty() {
             return None;
         }

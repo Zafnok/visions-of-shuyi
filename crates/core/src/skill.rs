@@ -48,8 +48,10 @@
 //!   counts for movement ([`Unit::move_points`]). A negative bonus never
 //!   takes a stat below 0 ([`Bonuses::apply`]).
 
-use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
+use crate::prelude::*;
+
+use alloc::collections::{BTreeMap, BTreeSet};
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
@@ -605,7 +607,7 @@ impl fmt::Display for CostError {
     }
 }
 
-impl std::error::Error for CostError {}
+impl core::error::Error for CostError {}
 
 /// Whether `unit` can pay `cost` from `from` (see the module docs).
 pub fn check_cost(unit: &Unit, cost: SkillCost, from: &CostSource) -> Result<(), CostError> {
@@ -781,9 +783,10 @@ impl Unit {
     /// Removes the effects that end at the start of `phase`, returning
     /// their sources in the order they were added.
     pub fn expire_effects(&mut self, phase: Phase) -> Vec<EffectSource> {
-        let (ended, kept): (Vec<TimedEffect>, Vec<TimedEffect>) = std::mem::take(&mut self.effects)
-            .into_iter()
-            .partition(|e| e.until == phase);
+        let (ended, kept): (Vec<TimedEffect>, Vec<TimedEffect>) =
+            core::mem::take(&mut self.effects)
+                .into_iter()
+                .partition(|e| e.until == phase);
         self.effects = kept;
         ended.into_iter().map(|e| e.source).collect()
     }

@@ -2,7 +2,9 @@
 //! actives, skill bonuses in combat, moves after an attack and timed-effect
 //! expiry. The rules are in the parent module's docs.
 
-use std::collections::{BTreeMap, VecDeque};
+use crate::prelude::*;
+
+use alloc::collections::{BTreeMap, VecDeque};
 
 use super::arts::{ArtUse, check_arts_allowed};
 use super::{BattleState, CommandError, Event, PendingMove, Step};
@@ -671,7 +673,7 @@ impl BattleState {
                         damage: lost,
                     });
                 }
-                hurt.extend(std::iter::once(target).chain(struck));
+                hurt.extend(core::iter::once(target).chain(struck));
             }
         }
         events.extend(broke);

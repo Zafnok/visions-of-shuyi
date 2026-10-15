@@ -46,8 +46,10 @@
 //!   pack, where a seal is just an item that can't be used. No shop sells or
 //!   buys them yet (their prices and sources are chapter and shop data).
 
-use std::collections::BTreeMap;
-use std::fmt;
+use crate::prelude::*;
+
+use alloc::collections::BTreeMap;
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
@@ -543,7 +545,7 @@ impl fmt::Display for LoadoutError {
     }
 }
 
-impl std::error::Error for LoadoutError {}
+impl core::error::Error for LoadoutError {}
 
 /// The player side's shared consumables for one battle.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]

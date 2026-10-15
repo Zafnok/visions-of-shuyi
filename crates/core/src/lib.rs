@@ -1,4 +1,16 @@
 //! Pure, deterministic game rules. See ADR-0004.
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
+/// What `std`'s prelude gives for free, for the `no_std` build.
+mod prelude {
+    pub use alloc::borrow::ToOwned;
+    pub use alloc::boxed::Box;
+    pub use alloc::string::{String, ToString};
+    pub use alloc::vec;
+    pub use alloc::vec::Vec;
+}
 
 pub mod ai;
 pub mod art;

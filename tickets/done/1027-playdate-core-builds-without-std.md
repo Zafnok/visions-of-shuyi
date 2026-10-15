@@ -5,10 +5,10 @@ type: infra
 milestone: Post–Chapter 1
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 1027 — Playdate: `trpg-core` builds without `std`
@@ -75,10 +75,10 @@ feature and CI line (ADR-0070 §6: carved crates keep it).
 
 ## Acceptance criteria
 
-- [ ] `cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf` passes locally and in the new CI job.
-- [ ] `cargo test -p trpg-core` passes with no test changed.
-- [ ] Nothing else in the workspace changes behaviour (all tests pass).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf` passes locally and in the new CI job.
+- [x] `cargo test -p trpg-core` passes with no test changed.
+- [x] Nothing else in the workspace changes behaviour (all tests pass).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,5 +86,19 @@ feature and CI line (ADR-0070 §6: carved crates keep it).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `trpg-core` has a default `std` feature (forwarding `serde/std`); with it
+  off the crate is `#![no_std]` + `alloc` and builds for
+  `thumbv7em-none-eabihf`. Redone from `spike/playdate` on today's `main`
+  (one conflict in `save.rs`, from 0835's doc lines).
+- Workspace `serde` is `default-features = false, features = ["derive",
+  "alloc"]`. `ron` and `thiserror` are left as they are: `core` doesn't use
+  them outside its tests, and 1028 changes them for `content`.
+- Deviations from the spike: no `#[allow(unused_imports)]` on the prelude
+  imports. The prelude is imported only in modules that use it (dropped
+  from `stats`, `magic`, `weapon`). The prelude has no `format!`: `core`'s
+  library code doesn't use it (tests run with `std`); add it when needed.
+- No float function needed `libm`.
+- CI: new `no-std` job (gated on `changes`, in `ci-result`'s `needs`);
+  the `run-gates` skill runs the same build and says to add the target.
+- Tests still use `std::` paths: they always build with `std`.
+- Nothing a player sees changed; no game rules decided.
