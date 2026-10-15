@@ -1,6 +1,6 @@
 //! A map skin: how a [`MapScene`] looks (ADR-0038).
 
-use std::rc::Rc;
+use alloc::rc::Rc;
 
 use trpg_core::Pos;
 
@@ -14,7 +14,7 @@ use crate::settings::MapZoom;
 /// Paints battle maps. The tile size is the skin's: screens ask it how many
 /// tiles fit and where a tile is. A skin never changes the game: only the
 /// frame, how many tiles are on screen, and how fast a walk is shown.
-pub trait MapSkin: std::fmt::Debug {
+pub trait MapSkin: core::fmt::Debug {
     /// A stable `snake_case` name for the kind of skin, e.g. `"glyph"`.
     fn name(&self) -> &'static str;
 

@@ -5,6 +5,7 @@
 
 use super::Side;
 use crate::input::Action;
+use crate::prelude::*;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]

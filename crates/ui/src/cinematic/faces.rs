@@ -2,6 +2,7 @@
 //! portrait frames, each with its name under it, crossing the screen one
 //! after another. Where they are comes from the time alone ([`first_x`]).
 
+use crate::prelude::*;
 use trpg_content::Side;
 use trpg_core::{CharacterId, LEAD_ID, LeadProfile};
 

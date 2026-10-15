@@ -102,6 +102,7 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - run: cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf --locked
+      - run: cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf --locked
 
   docs:
     name: docs

@@ -16,6 +16,7 @@ pub mod results;
 pub mod save;
 pub mod title;
 
+use crate::prelude::*;
 pub use battle::BattleScreen;
 pub use class_change::{ChangeKind, ClassChangeScreen};
 pub use credits::CreditsScreen;

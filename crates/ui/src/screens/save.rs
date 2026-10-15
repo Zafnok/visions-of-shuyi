@@ -14,6 +14,7 @@
 pub mod glyph;
 pub mod view;
 
+use crate::prelude::*;
 pub use view::{
     OverwriteView, SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView,
 };
@@ -105,7 +106,7 @@ impl Screen for SavePromptScreen {
         glyph::paint_prompt(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }
@@ -465,7 +466,7 @@ impl Screen for SlotPickerScreen {
         glyph::paint_slots(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

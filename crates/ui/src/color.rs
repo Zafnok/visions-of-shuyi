@@ -5,7 +5,8 @@
 //! time; data-driven names (terrain) go through [`Palette::lookup`] and are
 //! validated when their content is loaded.
 
-use std::collections::BTreeMap;
+use crate::prelude::*;
+use alloc::collections::BTreeMap;
 
 use trpg_content::PaletteDef;
 

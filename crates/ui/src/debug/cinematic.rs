@@ -2,6 +2,7 @@
 //! `assets-test/cinematics/test.ron` on the screen's own frame clock,
 //! looping, until Cancel. For watching a cinematic file by eye.
 
+use crate::prelude::*;
 use trpg_content::bundle::test_display_path;
 
 use crate::audio::MenuSound;
@@ -86,7 +87,7 @@ impl Screen for CinematicScreen {
         print_centred(buf, i32::from(buf.height()) - 1, &help, dim, black);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

@@ -9,6 +9,8 @@
 //! too ([`MapSkin::walk_tiles_per_s`](crate::map_view::MapSkin)): glyph
 //! units jump from tile to tile quickly, sprites take the time to walk.
 
+#[cfg(not(feature = "std"))]
+use crate::float::Float;
 use trpg_core::Pos;
 
 use crate::map_view::{Facing, STANDING_FRAME};
@@ -109,9 +111,9 @@ pub fn gait(path: &[Pos], tiles: f32, pace: f32) -> Option<Gait> {
     // `taken` is at most `tiles`, and small: exact in f32.
     let part = (tiles - f32::from(u16::try_from(taken).unwrap_or(u16::MAX))).clamp(0.0, 1.0);
     let toward = |a: i32, b: i32| match b.cmp(&a) {
-        std::cmp::Ordering::Less => -part,
-        std::cmp::Ordering::Equal => 0.0,
-        std::cmp::Ordering::Greater => part,
+        core::cmp::Ordering::Less => -part,
+        core::cmp::Ordering::Equal => 0.0,
+        core::cmp::Ordering::Greater => part,
     };
     // Whole frames shown so far: far fewer than f32 holds exactly.
     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]

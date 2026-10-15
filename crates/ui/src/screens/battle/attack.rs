@@ -7,6 +7,7 @@
 //! [`BattleState::preview_attack`], the same validation the attack command
 //! gets, so the UI never decides what is legal itself (ADR-0004).
 
+use crate::prelude::*;
 use trpg_core::{
     AttackPreview, BattleState, Equipped, Pos, SpellDef, SpellId, UnitAction, UnitId, WEAPON_SLOTS,
 };
@@ -316,7 +317,7 @@ impl Targeting {
         let targets = Self::targets_from(state, &self.sel, &with, &self.technique, &keep);
         let technique = self.technique.clone();
         if let Some(mut next) = Self::with(state, self.sel.clone(), with, technique, targets) {
-            next.options = std::mem::take(&mut self.options);
+            next.options = core::mem::take(&mut self.options);
             next.arts = self.arts.take();
             *self = next;
         }

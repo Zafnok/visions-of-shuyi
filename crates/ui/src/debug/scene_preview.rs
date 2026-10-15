@@ -8,6 +8,7 @@
 //! What the screen says is a [`ScenePreviewView`]; [`paint`] draws it
 //! (ADR-0054).
 
+use crate::prelude::*;
 use trpg_content::{Present, Scene};
 
 use crate::audio::MenuSound;
@@ -99,7 +100,7 @@ impl Screen for ScenePreviewScreen {
         paint(ctx, &self.view(ctx), buf);
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
 }

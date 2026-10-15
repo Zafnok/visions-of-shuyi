@@ -3,6 +3,7 @@
 //! panel, a plate per fighter under them, the strike's result over its
 //! target.
 
+use crate::prelude::*;
 use trpg_content::Battler;
 use trpg_content::battler::Facing;
 use trpg_core::StatKind;

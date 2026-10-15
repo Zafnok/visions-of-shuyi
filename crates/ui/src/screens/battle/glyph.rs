@@ -6,6 +6,7 @@
 //! look lives here; nothing here decides what the screen shows. Another
 //! look is another `paint` of the same view (ADR-0054).
 
+use crate::prelude::*;
 use trpg_core::Phase;
 
 use super::banner::BannerKind;
@@ -333,7 +334,7 @@ fn dialog_size(title: &str, lines: &[(String, UiColor)]) -> (i32, i32) {
     let widest = lines
         .iter()
         .map(|(l, _)| l.chars().count())
-        .chain(std::iter::once(title.chars().count() + 2))
+        .chain(core::iter::once(title.chars().count() + 2))
         .max()
         .unwrap_or(0);
     let w = i32::try_from(widest).unwrap_or(0) + 4;

@@ -1,5 +1,7 @@
 //! Word wrap for text boxes.
 
+use crate::prelude::*;
+
 /// Splits `text` into lines of at most `width` characters, breaking at
 /// spaces. A word is never split unless it alone is longer than `width`;
 /// then it is cut into `width`-long pieces. Runs of spaces count as one
@@ -19,14 +21,14 @@ pub fn word_wrap(text: &str, width: usize) -> Vec<String> {
             continue;
         }
         if line_len > 0 {
-            lines.push(std::mem::take(&mut line));
+            lines.push(core::mem::take(&mut line));
         }
         let mut pieces = chars.chunks(width).peekable();
         while let Some(piece) = pieces.next() {
             line = piece.iter().collect();
             line_len = piece.len();
             if pieces.peek().is_some() {
-                lines.push(std::mem::take(&mut line));
+                lines.push(core::mem::take(&mut line));
             }
         }
     }

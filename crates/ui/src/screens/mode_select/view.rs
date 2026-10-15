@@ -3,6 +3,7 @@
 //! ([`ModeSelectScreen::view`](super::ModeSelectScreen::view)) and a skin
 //! paints it ([`super::glyph::paint`] today); see ADR-0054.
 
+use crate::prelude::*;
 use crate::widgets::MenuView;
 
 /// The whole screen, as it is this frame.

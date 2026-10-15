@@ -3,6 +3,7 @@
 //! portrait (Nick, ticket 0011). This says what it shows ([`view`]); the
 //! battle screen's skin paints it.
 
+use crate::prelude::*;
 use trpg_core::{BattleState, Faction, Pos, StatKind, Unit};
 
 use super::info::{class_level, stat_name};

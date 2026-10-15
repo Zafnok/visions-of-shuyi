@@ -22,6 +22,7 @@ mod scene_camera;
 mod scene_preview;
 mod sprite_test;
 
+use crate::prelude::*;
 pub use cinematic::{CinematicScreen, TEST_CINEMATIC};
 pub use portrait_viewer::PortraitViewerScreen;
 pub use scene_camera::SceneCameraScreen;

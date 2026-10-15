@@ -8,6 +8,7 @@
 use super::view::{CreditRowKind, CreditsView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
 

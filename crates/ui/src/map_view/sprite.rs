@@ -17,7 +17,8 @@
 mod ground;
 pub mod units;
 
-use std::rc::Rc;
+use crate::prelude::*;
+use alloc::rc::Rc;
 
 use trpg_content::{ImageRect, Picture, TerrainTiles, Tileset};
 use trpg_core::Pos;

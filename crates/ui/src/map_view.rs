@@ -17,7 +17,7 @@ pub mod skin;
 pub mod sprite;
 pub mod threat;
 
-use std::rc::Rc;
+use alloc::rc::Rc;
 
 use trpg_content::Content;
 

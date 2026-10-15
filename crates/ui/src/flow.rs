@@ -51,8 +51,9 @@
 //! a point is picked; then the battle's track (the same one) starts again.
 //! "To be continued" stops the music.
 
-use std::any::Any;
-use std::collections::VecDeque;
+use crate::prelude::*;
+use alloc::collections::VecDeque;
+use core::any::Any;
 
 use trpg_content::{ChapterDef, MapLook, Present, Scene, battle_campaign, new_campaign};
 use trpg_core::{
@@ -568,7 +569,7 @@ impl FlowScreen {
     /// The current screen popped: move on. Returns `true` when the flow is
     /// over (back to the title).
     fn advance(&mut self, ctx: &mut Ctx) -> bool {
-        let stage = std::mem::replace(&mut self.stage, Stage::ToBeContinued(ToBeContinuedScreen));
+        let stage = core::mem::replace(&mut self.stage, Stage::ToBeContinued(ToBeContinuedScreen));
         match stage {
             Stage::Mode(s) => match s.result() {
                 Some(mode) => self.stage = Stage::Familiarity(mode, FamiliarityScreen::new(ctx)),

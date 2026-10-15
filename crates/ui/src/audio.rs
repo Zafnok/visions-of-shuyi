@@ -16,6 +16,7 @@
 //! assert_eq!(audio.pending()[1], AudioRequest::PlayMusic { cue: "title".into() });
 //! ```
 
+use crate::prelude::*;
 use trpg_content::{LineId, Variant};
 
 /// Something a screen wants heard. Cue ids are the ones in
@@ -135,7 +136,7 @@ impl AudioQueue {
 
     /// Empties the queue, returning its requests in order.
     pub fn take(&mut self) -> Vec<AudioRequest> {
-        std::mem::take(&mut self.requests)
+        core::mem::take(&mut self.requests)
     }
 }
 

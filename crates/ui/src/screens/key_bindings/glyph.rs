@@ -8,6 +8,7 @@ use super::Side;
 use super::view::{ChoicesView, KeyBindingsView, QuestionView, RowView, SlotView, SwitchView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
 

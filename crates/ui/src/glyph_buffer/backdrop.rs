@@ -4,7 +4,9 @@
 //! [`Cell::see_through`](super::Cell::see_through); every other cell draws
 //! over it as usual.
 
-use std::rc::Rc;
+#[cfg(not(feature = "std"))]
+use crate::float::Float;
+use alloc::rc::Rc;
 
 use super::{GlyphBuffer, PxRect, Rect};
 use crate::console::ConsoleSpec;

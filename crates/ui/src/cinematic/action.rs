@@ -7,6 +7,7 @@
 //! This only says what is in the map scene; the map skins paint it
 //! (ADR-0038).
 
+use crate::prelude::*;
 use trpg_content::{Act, ActionDef};
 use trpg_core::{Pos, StatValue, UnitId};
 

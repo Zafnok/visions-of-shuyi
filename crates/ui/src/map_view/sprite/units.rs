@@ -13,6 +13,7 @@
 //! never a unit standing there: [`place`]); then every HP bar and mark, so
 //! none is under a neighbour's head.
 
+use crate::prelude::*;
 use trpg_content::image::EFFECT_MARKS_PATH;
 use trpg_content::{Picture, Tileset};
 use trpg_core::{CharacterId, Faction, Pos};

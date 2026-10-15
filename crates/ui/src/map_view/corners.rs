@@ -11,7 +11,8 @@
 //! one the next tile out would give. A tile off the map counts as the
 //! nearest tile on it: the ground runs on to the map's edge unchanged.
 
-use std::collections::BTreeSet;
+use crate::prelude::*;
+use alloc::collections::BTreeSet;
 
 use trpg_content::tileset::mix;
 use trpg_core::TerrainId;

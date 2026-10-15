@@ -1,6 +1,8 @@
 //! Drawing portraits (ADR-0043): each is one sprite item, the expression's
 //! image at the largest whole scale that fits the 32×16-cell frame, centred.
 
+#[cfg(not(feature = "std"))]
+use crate::float::Float;
 use trpg_content::{ImageInfo, Portrait};
 
 use crate::glyph_buffer::{GlyphBuffer, Layer, PxRect, Rect, Sprite};
