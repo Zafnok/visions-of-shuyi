@@ -6,7 +6,7 @@
 //! pack) means another painter of the same view; the screen's logic and
 //! its tests of what happened don't change.
 
-use super::Row;
+use super::{LeaveChoice, Row};
 use crate::prelude::*;
 
 /// The whole screen, as it is this frame.
@@ -20,6 +20,8 @@ pub struct OptionsView {
     pub message: Option<String>,
     /// The yes/no question open over the rows, if any.
     pub question: Option<QuestionView>,
+    /// The question asked on leaving with changes, if it is open.
+    pub leaving: Option<LeaveView>,
     /// The help line: what the keys do here.
     pub help: String,
 }
@@ -97,4 +99,32 @@ pub struct QuestionView {
     pub text: String,
     /// How to answer: the keys for yes and no.
     pub answers: String,
+}
+
+/// The question asked on leaving with changes: keep them, throw them away
+/// or stay.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LeaveView {
+    /// The question.
+    pub text: String,
+    /// The answers, in order.
+    pub choices: Vec<ChoiceView>,
+}
+
+impl LeaveView {
+    /// The answer in focus.
+    pub fn focused(&self) -> Option<LeaveChoice> {
+        self.choices.iter().find(|c| c.focused).map(|c| c.choice)
+    }
+}
+
+/// One answer to a question.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ChoiceView {
+    /// Which answer it is.
+    pub choice: LeaveChoice,
+    /// Its name.
+    pub label: String,
+    /// Whether the cursor is on it.
+    pub focused: bool,
 }

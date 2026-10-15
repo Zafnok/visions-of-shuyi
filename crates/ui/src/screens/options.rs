@@ -1,6 +1,9 @@
 //! The Options screen (ticket 0805), opened from the title, the map menu
 //! and Preparations: the player's [`Settings`] one per row, changed with
-//! the cursor's left and right keys and saved at once. A volume goes from 0
+//! the cursor's left and right keys. A change shows at once but is saved
+//! only when the player keeps it: leaving with anything changed asks
+//! whether to keep it, throw it away or stay (ticket 0839,
+//! `docs/design/options.md`). A volume goes from 0
 //! to 100: left and right move its slider, Confirm opens a box to type the
 //! exact number ([`NumberBox`]). `Layout` opens the layout picker
 //! ([`LayoutPickerScreen::change`]) and `Key bindings` the
@@ -24,7 +27,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
-pub use view::{OptionsView, QuestionView, RowView, ValueView};
+pub use view::{ChoiceView, LeaveView, OptionsView, QuestionView, RowView, ValueView};
 
 use trpg_content::Theme;
 use trpg_core::GameMode;
@@ -48,6 +51,8 @@ pub const TIPS_RESET_MESSAGE: &str = "options.message.tips_reset";
 pub const RESTORED_MESSAGE: &str = "options.message.restored";
 /// Text key of the message once the campaign is Casual.
 pub const CASUAL_MESSAGE: &str = "options.message.casual";
+/// Text key of the question asked on leaving with changes.
+pub const LEAVE_QUESTION: &str = "options.question.keep";
 /// Text key of the message if something couldn't be saved.
 pub const NOT_SAVED_MESSAGE: &str = "options.message.not_saved";
 /// Text key of the message when the mode can't be switched here.
@@ -284,11 +289,42 @@ impl Question {
     }
 }
 
-/// The Options screen. Cancel closes it.
+/// An answer to the question asked on leaving with changes
+/// ([`LEAVE_QUESTION`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LeaveChoice {
+    /// Save the changes and leave.
+    Keep,
+    /// Put every setting back as it was when the screen opened, and leave.
+    Discard,
+    /// Stay on the screen.
+    Back,
+}
+
+impl LeaveChoice {
+    /// Every answer, in the order shown.
+    pub const ALL: [LeaveChoice; 3] = [LeaveChoice::Keep, LeaveChoice::Discard, LeaveChoice::Back];
+
+    /// The text key of its name.
+    pub const fn key(self) -> &'static str {
+        match self {
+            LeaveChoice::Keep => "options.leave.keep",
+            LeaveChoice::Discard => "options.leave.discard",
+            LeaveChoice::Back => "options.leave.back",
+        }
+    }
+}
+
+/// The Options screen. Cancel closes it, asking first if anything changed.
 #[derive(Debug, Clone)]
 pub struct OptionsScreen {
     /// The focused row.
     row: Row,
+    /// The settings as they were when the screen opened (taken on its
+    /// first frame), for Discard.
+    opened_with: Option<Settings>,
+    /// The answer in focus while the question asked on leaving is open.
+    leaving: Option<LeaveChoice>,
     /// The question open, if any.
     asking: Option<Question>,
     /// The volume box, while it is open on the focused volume row.
@@ -305,6 +341,8 @@ impl OptionsScreen {
     pub fn new() -> Self {
         Self {
             row: Row::TextSpeed,
+            opened_with: None,
+            leaving: None,
             asking: None,
             typing: None,
             message: None,
@@ -334,6 +372,22 @@ impl OptionsScreen {
     /// The question open, if any.
     pub fn asking(&self) -> Option<Question> {
         self.asking
+    }
+
+    /// The answer in focus while the question asked on leaving with
+    /// changes is open.
+    pub fn leaving(&self) -> Option<LeaveChoice> {
+        self.leaving
+    }
+
+    /// Whether any setting differs from when the screen opened (the
+    /// layout aside: it is saved when picked).
+    pub fn changed(&self, ctx: &Ctx) -> bool {
+        self.opened_with.as_ref().is_some_and(|opened| {
+            let mut opened = opened.clone();
+            opened.layout = ctx.settings().layout;
+            opened != *ctx.settings()
+        })
     }
 
     /// The volume box, while it is open.
@@ -426,6 +480,17 @@ impl OptionsScreen {
                 text: ctx.text(question.key()).to_owned(),
                 answers: ctx.text_with("options.question.answers", &[]),
             }),
+            leaving: self.leaving.map(|focus| LeaveView {
+                text: ctx.text(LEAVE_QUESTION).to_owned(),
+                choices: LeaveChoice::ALL
+                    .into_iter()
+                    .map(|choice| ChoiceView {
+                        choice,
+                        label: ctx.text(choice.key()).to_owned(),
+                        focused: choice == focus,
+                    })
+                    .collect(),
+            }),
             help: self.help(ctx),
         }
     }
@@ -445,16 +510,14 @@ impl OptionsScreen {
         self.set(ctx, |s| step_setting(s, row, cursors, forward, wrap));
     }
 
-    /// Lets `change` edit the settings; if it changed anything, saves them
-    /// and plays the move sound (at the new volume, for the sound volume).
+    /// Lets `change` edit the settings, unsaved until the player keeps
+    /// them on leaving; if it changed anything, plays the move sound (at
+    /// the new volume, for the sound volume).
     fn set(&mut self, ctx: &mut Ctx, change: impl FnOnce(&mut Settings)) {
-        let before = ctx.settings().clone();
-        let saved = ctx.change_settings(change);
-        if *ctx.settings() == before {
-            return;
+        if ctx.preview_settings(change) {
+            self.message = None;
+            ctx.audio.menu(MenuSound::Move);
         }
-        self.message = saved.is_err().then_some(NOT_SAVED_MESSAGE);
-        ctx.audio.menu(MenuSound::Move);
     }
 
     /// The focused volume row's setting.
@@ -597,13 +660,10 @@ impl OptionsScreen {
                             NOT_SAVED_MESSAGE
                         }
                     }
+                    // Kept or thrown away on leaving, like any change.
                     Question::RestoreDefaults => {
-                        let saved = ctx.change_settings(|s| *s = s.restored());
-                        if saved.is_ok() {
-                            RESTORED_MESSAGE
-                        } else {
-                            NOT_SAVED_MESSAGE
-                        }
+                        ctx.preview_settings(|s| *s = s.restored());
+                        RESTORED_MESSAGE
                     }
                 });
                 ctx.audio.menu(MenuSound::Select);
@@ -615,9 +675,76 @@ impl OptionsScreen {
         true
     }
 
+    /// Cancel on the rows: leaves, or with anything changed asks whether
+    /// to keep the changes, focused on staying.
+    fn leave(&mut self, ctx: &mut Ctx) -> Transition {
+        if self.changed(ctx) {
+            self.leaving = Some(LeaveChoice::Back);
+            self.message = None;
+            ctx.audio.menu(MenuSound::Select);
+            return Transition::None;
+        }
+        ctx.audio.menu(MenuSound::Cancel);
+        Transition::Pop
+    }
+
+    /// An action while the question asked on leaving is open, focused on
+    /// `focus`: the cursor moves between the answers, Confirm picks one,
+    /// Cancel stays. Returns the transition and whether the question
+    /// closed.
+    fn answer_leave(
+        &mut self,
+        ctx: &mut Ctx,
+        focus: LeaveChoice,
+        action: Action,
+    ) -> (Transition, bool) {
+        let choice = match action {
+            Action::CursorUp | Action::CursorLeft | Action::CursorDown | Action::CursorRight => {
+                let forward = matches!(action, Action::CursorDown | Action::CursorRight);
+                let to = stepped(&LeaveChoice::ALL, focus, forward, false);
+                if to != focus {
+                    self.leaving = Some(to);
+                    ctx.audio.menu(MenuSound::Move);
+                }
+                return (Transition::None, false);
+            }
+            Action::Confirm => focus,
+            Action::Cancel => LeaveChoice::Back,
+            _ => return (Transition::None, false),
+        };
+        self.leaving = None;
+        match choice {
+            LeaveChoice::Keep => {
+                if ctx.keep_settings().is_err() {
+                    self.message = Some(NOT_SAVED_MESSAGE);
+                    ctx.audio.menu(MenuSound::Denied);
+                    return (Transition::None, true);
+                }
+                ctx.audio.menu(MenuSound::Select);
+                (Transition::Pop, true)
+            }
+            LeaveChoice::Discard => {
+                if let Some(opened) = self.opened_with.clone() {
+                    // Saves only if something else was saved meanwhile;
+                    // the screen closes either way.
+                    let _ = ctx.restore_settings(&opened);
+                }
+                ctx.audio.menu(MenuSound::Cancel);
+                (Transition::Pop, true)
+            }
+            LeaveChoice::Back => {
+                ctx.audio.menu(MenuSound::Cancel);
+                (Transition::None, true)
+            }
+        }
+    }
+
     /// The text key of the help line for the focused row: what Confirm
     /// does there, if anything.
     fn help_key(&self, ctx: &Ctx) -> &'static str {
+        if self.leaving.is_some() {
+            return "options.help.leave";
+        }
         if self.asking.is_some() {
             return "options.help.question";
         }
@@ -682,12 +809,23 @@ impl Screen for OptionsScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        if self.opened_with.is_none() {
+            self.opened_with = Some(ctx.settings().clone());
+        }
         if self.typing.is_some() {
             // The game's keys do nothing while the box is open.
             self.type_number(ctx, input);
             return Transition::None;
         }
         for &action in &input.actions {
+            if let Some(focus) = self.leaving {
+                let (transition, closed) = self.answer_leave(ctx, focus, action);
+                if closed {
+                    // The answer ends this frame's keys.
+                    return transition;
+                }
+                continue;
+            }
             if let Some(question) = self.asking {
                 // The answer ends this frame's keys.
                 if self.answer(ctx, question, action) {
@@ -712,8 +850,12 @@ impl Screen for OptionsScreen {
                     }
                 }
                 Action::Cancel => {
-                    ctx.audio.menu(MenuSound::Cancel);
-                    return Transition::Pop;
+                    let transition = self.leave(ctx);
+                    if !matches!(transition, Transition::None) {
+                        return transition;
+                    }
+                    // The key that asked isn't the answer.
+                    break;
                 }
                 _ => {}
             }

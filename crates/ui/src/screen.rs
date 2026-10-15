@@ -270,8 +270,16 @@ pub struct Ctx {
     /// [`delete_profile`](Self::delete_profile), which save them.
     profiles: Profiles,
     /// The player's settings (0805), loaded from `storage`. Change them
-    /// with [`change_settings`](Self::change_settings), which saves them.
+    /// with [`change_settings`](Self::change_settings), which saves them,
+    /// or (the Options screen, 0839) with
+    /// [`preview_settings`](Self::preview_settings), which doesn't, then
+    /// [`keep_settings`](Self::keep_settings) or
+    /// [`restore_settings`](Self::restore_settings).
     settings: Settings,
+    /// The settings as `storage` holds them: what was loaded or last
+    /// written. [`settings`](Self::settings) differs from it while a
+    /// previewed change is neither kept nor put back.
+    stored_settings: Settings,
     /// The mode of the campaign being played, for the Options screen:
     /// `None` with no campaign (the title). The game flow keeps it up to
     /// date, and takes a change to Casual here
@@ -405,6 +413,7 @@ impl Ctx {
             warnings: Vec::new(),
             storage: ProfileStore::default(),
             profiles,
+            stored_settings: settings.clone(),
             settings,
             campaign_mode: None,
             campaign_tutorial: None,
@@ -686,7 +695,11 @@ impl Ctx {
     pub fn choose_layout(&mut self, layout: Layout) -> Result<(), StorageError> {
         self.use_layout(layout);
         self.settings.layout = Some(layout);
-        self.save_settings()
+        // Only the layout is saved: a change the Options screen hasn't
+        // kept yet stays unsaved.
+        let mut stored = self.stored_settings.clone();
+        stored.layout = Some(layout);
+        self.write_settings(stored)
     }
 
     /// The layout saved by an earlier [`choose_layout`](Self::choose_layout):
@@ -713,13 +726,53 @@ impl Ctx {
         &mut self,
         change: impl FnOnce(&mut Settings),
     ) -> Result<(), StorageError> {
-        let before = self.settings.clone();
-        change(&mut self.settings);
-        // The layout changes only with the keys (`choose_layout`).
-        self.settings.layout = before.layout;
-        if self.settings == before {
+        if !self.preview_settings(change) {
             return Ok(());
         }
+        self.write_settings(self.settings.clone())
+    }
+
+    /// Lets `change` edit the settings without saving them (ticket 0839):
+    /// the change applies at once (the look, the sound), and is saved only
+    /// by [`keep_settings`](Self::keep_settings) or the next
+    /// [`change_settings`](Self::change_settings). Returns whether it
+    /// changed anything. The layout changes only with the keys
+    /// ([`choose_layout`](Self::choose_layout)).
+    pub fn preview_settings(&mut self, change: impl FnOnce(&mut Settings)) -> bool {
+        let before = self.settings.clone();
+        change(&mut self.settings);
+        self.settings.layout = before.layout;
+        if self.settings == before {
+            return false;
+        }
+        self.apply_changed(&before);
+        true
+    }
+
+    /// Saves the settings if they differ from what `storage` holds (a
+    /// previewed change, [`preview_settings`](Self::preview_settings)).
+    pub fn keep_settings(&mut self) -> Result<(), StorageError> {
+        if self.settings == self.stored_settings {
+            return Ok(());
+        }
+        self.write_settings(self.settings.clone())
+    }
+
+    /// Puts the settings back to `to` (all but the layout, which only the
+    /// keys change), as a previewed change thrown away (ticket 0839). It
+    /// saves only if `storage` holds something else, which is so only if
+    /// another change was saved meanwhile (the window's fullscreen
+    /// shortcut, a layout picked).
+    pub fn restore_settings(&mut self, to: &Settings) -> Result<(), StorageError> {
+        let to = to.clone();
+        self.preview_settings(|s| *s = to);
+        self.keep_settings()
+    }
+
+    /// Applies what changed in the settings since `before`: the map's
+    /// skin or zoom, the colour theme. (Volumes and fullscreen are read
+    /// from the settings every frame.)
+    fn apply_changed(&mut self, before: &Settings) {
         if self.settings.map_look != before.map_look {
             self.apply_map_look();
         } else if self.settings.map_zoom != before.map_zoom {
@@ -728,7 +781,6 @@ impl Ctx {
         if self.settings.theme != before.theme {
             self.apply_theme();
         }
-        self.save_settings()
     }
 
     /// Builds [`palette`](Self::palette) from the colour theme in the
@@ -755,8 +807,12 @@ impl Ctx {
         self.map_skin = skin.at_zoom(self.settings.map_zoom).unwrap_or(skin);
     }
 
-    fn save_settings(&mut self) -> Result<(), StorageError> {
-        self.storage.write(SETTINGS_KEY, &self.settings.to_ron())
+    /// Writes `settings` under [`SETTINGS_KEY`]; once written they are
+    /// what `storage` holds.
+    fn write_settings(&mut self, settings: Settings) -> Result<(), StorageError> {
+        self.storage.write(SETTINGS_KEY, &settings.to_ron())?;
+        self.stored_settings = settings;
+        Ok(())
     }
 
     /// Loads the settings from `storage`: the defaults if none are saved,
@@ -776,6 +832,7 @@ impl Ctx {
             Settings::default()
         });
         self.settings.layout = self.saved_layout();
+        self.stored_settings = self.settings.clone();
         self.apply_map_look();
         self.apply_theme();
     }
@@ -1576,6 +1633,48 @@ pub(crate) mod tests {
         let mut again = Ctx::embedded().unwrap().with_storage(storage);
         assert_eq!(again.settings(), c.settings());
         assert!(again.take_warnings().is_empty());
+    }
+
+    /// Ticket 0839: a previewed change applies at once and is saved only
+    /// when kept; restoring puts it back and saves nothing unless the
+    /// storage holds something else.
+    #[test]
+    fn previewed_settings_are_saved_only_when_kept() {
+        use crate::settings::MapLook;
+        use trpg_content::Theme;
+        let mut c = ctx();
+        assert!(!c.preview_settings(|_| {}));
+        let before = c.settings().clone();
+        assert!(c.preview_settings(|s| {
+            s.theme = Theme::Moonlit;
+            s.map_look = MapLook::Glyphs;
+            s.fullscreen = true;
+        }));
+        let moonlit = Palette::new(&c.content.themes[&Theme::Moonlit]).unwrap();
+        assert_eq!(c.palette.get(UiColor::Text), moonlit.get(UiColor::Text));
+        assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
+        // Put back: as before, nothing written.
+        c.restore_settings(&before).unwrap();
+        assert_eq!(*c.settings(), before);
+        assert_ne!(c.palette.get(UiColor::Text), moonlit.get(UiColor::Text));
+        assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
+        // Kept: written; keeping again writes nothing new.
+        c.preview_settings(|s| s.music_volume = 3);
+        c.keep_settings().unwrap();
+        let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
+        assert_eq!(Settings::from_ron(&saved).unwrap().music_volume, 3);
+        c.storage.write(SETTINGS_KEY, "marker").unwrap();
+        c.keep_settings().unwrap();
+        assert_eq!(c.storage.read(SETTINGS_KEY).unwrap().unwrap(), "marker");
+        // A layout picked meanwhile saves only the layout.
+        c.preview_settings(|s| s.music_volume = 9);
+        c.choose_layout(Layout::LeftHanded).unwrap();
+        let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
+        let saved = Settings::from_ron(&saved).unwrap();
+        assert_eq!(
+            (saved.music_volume, saved.layout()),
+            (3, Some(Layout::LeftHanded))
+        );
     }
 
     #[test]

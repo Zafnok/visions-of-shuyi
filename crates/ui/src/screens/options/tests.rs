@@ -44,6 +44,13 @@ fn saved(c: &Ctx) -> Settings {
     Settings::from_ron(&text).unwrap()
 }
 
+/// Whether the settings in use aren't the ones saved: a change on the
+/// screen is saved only when kept on leaving (ticket 0839).
+fn unsaved(c: &Ctx) -> bool {
+    let text = c.storage.read(SETTINGS_KEY).unwrap();
+    text.map(|t| Settings::from_ron(&t).unwrap()).as_ref() != Some(c.settings())
+}
+
 #[test]
 fn game_mode_shows_only_with_a_campaign() {
     let mut c = ctx();
@@ -100,7 +107,7 @@ fn left_and_right_step_a_setting_and_stop_at_the_ends() {
     let mut s = OptionsScreen::new();
     press(&mut s, &mut c, &[CursorRight]);
     assert_eq!(c.settings().text_speed, TextSpeed::Fast);
-    assert_eq!(saved(&c).text_speed, TextSpeed::Fast);
+    assert!(unsaved(&c));
     assert_eq!(sounds(&mut c), ["menu_move"]);
     press(&mut s, &mut c, &[CursorRight, CursorRight, CursorRight]);
     assert_eq!(c.settings().text_speed, TextSpeed::Instant);
@@ -193,7 +200,7 @@ fn left_and_right_move_a_volumes_slider_five_at_a_time() {
     assert_eq!(s.help(&c), "arrows move · f type a number · d back");
     press(&mut s, &mut c, &[CursorLeft]);
     assert_eq!(c.settings().music_volume, 75);
-    assert_eq!(saved(&c).music_volume, 75);
+    assert!(unsaved(&c));
     press(&mut s, &mut c, &[CursorRight; 6]);
     assert_eq!(c.settings().music_volume, 100);
     // Five steps changed it; the sixth did nothing.
@@ -244,7 +251,7 @@ fn confirm_on_a_volume_opens_a_box_to_type_the_number() {
     type_in(&mut s, &mut c, "7", &[Key::Enter]);
     assert!(s.typing().is_none());
     assert_eq!(c.settings().sound_volume, 37);
-    assert_eq!(saved(&c).sound_volume, 37);
+    assert!(unsaved(&c));
     assert_eq!(c.settings().music_volume, 80);
     // More than 100 is 100.
     press(&mut s, &mut c, &[Action::Confirm]);
@@ -342,7 +349,7 @@ fn every_setting_row_changes_its_own_setting() {
         ];
         let rows: Vec<Row> = changed.iter().filter(|c| c.1).map(|c| c.0).collect();
         assert_eq!(rows, [row]);
-        assert_eq!(saved(&c), s);
+        assert!(unsaved(&c));
     }
 }
 
@@ -616,7 +623,8 @@ fn restore_defaults_asks_first_and_keeps_the_layout() {
     press(&mut s, &mut c, &[Action::Confirm]);
     let expected = Settings::default().with_layout(Layout::LeftHanded);
     assert_eq!(*c.settings(), expected);
-    assert_eq!(saved(&c), expected);
+    // A change like any other: saved only if kept on leaving.
+    assert_eq!(saved(&c), changed);
     assert_eq!(s.message(), Some(RESTORED_MESSAGE));
     assert_eq!(c.layout(), Some(Layout::LeftHanded));
 }
@@ -641,26 +649,165 @@ impl Storage for ReadOnly {
 }
 
 #[test]
-fn a_failed_save_still_changes_the_setting_and_says_so() {
+fn a_failed_save_keeps_the_change_says_so_and_stays() {
     let mut c = ctx().with_storage(Box::new(ReadOnly));
-    let mut s = OptionsScreen::new();
-    press(&mut s, &mut c, &[Action::CursorRight]);
-    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
-    assert_eq!(s.message(), Some(NOT_SAVED_MESSAGE));
     let mut s = on(Row::ResetTips);
     press(&mut s, &mut c, &[Action::Confirm]);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.message(), Some(NOT_SAVED_MESSAGE));
-    let mut s = on(Row::SoundVolume);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    type_in(&mut s, &mut c, "9", &[Key::Enter]);
-    assert_eq!(c.settings().sound_volume, 9);
-    assert_eq!(s.message(), Some(NOT_SAVED_MESSAGE));
+    // A change isn't saved yet, so it says nothing.
+    let mut s = OptionsScreen::new();
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
+    assert_eq!(s.message(), None);
+    // Keep can't save: the change stays, the screen says so and stays.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
+    assert_eq!(s.leaving(), Some(LeaveChoice::Keep));
+    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
+    assert_eq!((s.leaving(), s.message()), (None, Some(NOT_SAVED_MESSAGE)));
+    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
+}
+
+/// The screen with Text speed one step on, its question on leaving open.
+fn asking_to_leave(c: &mut Ctx) -> OptionsScreen {
+    let mut s = OptionsScreen::new();
+    press(&mut s, c, &[Action::CursorRight]);
+    sounds(c);
+    assert_eq!(press(&mut s, c, &[Action::Cancel]), "None");
+    s
+}
+
+#[test]
+fn leaving_with_a_change_asks_with_the_cursor_on_back() {
+    let mut c = ctx();
+    let mut s = asking_to_leave(&mut c);
+    assert!(s.changed(&c));
+    assert_eq!(s.leaving(), Some(LeaveChoice::Back));
+    assert_eq!(sounds(&mut c), ["menu_select"]);
+    let view = s.view(&c);
+    let leaving = view.leaving.as_ref().unwrap();
+    assert_eq!(leaving.text, "Keep these changes?");
+    let labels: Vec<&str> = leaving.choices.iter().map(|c| c.label.as_str()).collect();
+    assert_eq!(labels, ["Keep", "Discard", "Back"]);
+    assert_eq!(leaving.focused(), Some(LeaveChoice::Back));
+    assert_eq!(view.help, "arrows choose · f pick · d back");
+    // The cursor moves between the answers and stops at the ends; the
+    // rows stay as they are.
+    press(&mut s, &mut c, &[Action::CursorRight]);
+    assert_eq!(s.leaving(), Some(LeaveChoice::Back));
+    press(&mut s, &mut c, &[Action::CursorUp]);
+    assert_eq!(s.leaving(), Some(LeaveChoice::Discard));
+    press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
+    assert_eq!(s.leaving(), Some(LeaveChoice::Keep));
+    press(&mut s, &mut c, &[Action::CursorDown]);
+    assert_eq!(s.leaving(), Some(LeaveChoice::Discard));
+    assert_eq!(
+        (s.focus(), c.settings().text_speed),
+        (Row::TextSpeed, TextSpeed::Fast)
+    );
+}
+
+#[test]
+fn back_or_cancel_stays_on_the_screen_with_the_change() {
+    let mut c = ctx();
+    let mut s = asking_to_leave(&mut c);
+    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
+    assert_eq!(s.leaving(), None);
+    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
+    // Cancel is Back; the key that answers doesn't go on to leave.
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(
+        press(&mut s, &mut c, &[Action::Cancel, Action::Cancel]),
+        "None"
+    );
+    assert_eq!(s.leaving(), None);
+    assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
+}
+
+#[test]
+fn keep_saves_the_changes_and_leaves() {
+    let mut c = ctx();
+    let mut s = asking_to_leave(&mut c);
+    press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
+    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    assert_eq!(saved(&c).text_speed, TextSpeed::Fast);
+    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
+}
+
+#[test]
+fn discard_puts_every_setting_back_and_saves_nothing() {
+    let mut c = ctx();
+    c.choose_layout(Layout::LeftHanded).unwrap();
+    let before = c.settings().clone();
+    let stored = c.storage.read(SETTINGS_KEY);
+    let mut s = OptionsScreen::new();
+    for row in OptionsScreen::rows(&c) {
+        if row.is_setting() {
+            s.row = row;
+            press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorRight]);
+            press(&mut s, &mut c, &[Action::CursorRight]);
+        }
+    }
+    assert!(s.changed(&c) && c.settings().fullscreen && c.settings().music_volume != 80);
+    press(&mut s, &mut c, &[Action::Cancel]);
+    press(&mut s, &mut c, &[Action::CursorLeft]);
+    assert_eq!(s.leaving(), Some(LeaveChoice::Discard));
+    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    assert_eq!(*c.settings(), before);
+    assert_eq!(c.storage.read(SETTINGS_KEY), stored);
+    assert_eq!(
+        sounds(&mut c).last().map(String::as_str),
+        Some("menu_cancel")
+    );
+}
+
+#[test]
+fn restored_defaults_are_a_change_kept_or_discarded_on_leaving() {
+    let mut c = ctx();
+    c.change_settings(|s| s.music_volume = 2).unwrap();
     let mut s = on(Row::RestoreDefaults);
     press(&mut s, &mut c, &[Action::Confirm]);
     press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(c.settings().text_speed, TextSpeed::Normal);
-    assert_eq!(s.message(), Some(NOT_SAVED_MESSAGE));
+    assert_eq!(c.settings().music_volume, Settings::default().music_volume);
+    press(&mut s, &mut c, &[Action::Cancel]);
+    assert_eq!(s.leaving(), Some(LeaveChoice::Back));
+    press(&mut s, &mut c, &[Action::CursorLeft, Action::Confirm]);
+    assert_eq!(c.settings().music_volume, 2);
+    assert_eq!(saved(&c).music_volume, 2);
+}
+
+#[test]
+fn leaving_with_nothing_changed_asks_nothing() {
+    let mut c = ctx();
+    let mut s = OptionsScreen::new();
+    // A change taken back is no change.
+    press(&mut s, &mut c, &[Action::CursorRight, Action::CursorLeft]);
+    sounds(&mut c);
+    assert!(!s.changed(&c));
+    assert_eq!(press(&mut s, &mut c, &[Action::Cancel]), "Pop");
+    assert_eq!(sounds(&mut c), ["menu_cancel"]);
+    assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
+    // A layout picked meanwhile is saved at once, so it isn't a change.
+    let mut s = OptionsScreen::new();
+    press(&mut s, &mut c, &[]);
+    c.choose_layout(Layout::LeftHanded).unwrap();
+    assert!(!s.changed(&c));
+    assert_eq!(press(&mut s, &mut c, &[Action::Cancel]), "Pop");
+}
+
+#[test]
+fn discard_after_another_save_puts_the_saved_settings_back_too() {
+    let mut c = ctx();
+    let before = c.settings().clone();
+    let mut s = asking_to_leave(&mut c);
+    // The window's shortcut and a layout picked save at once, with the
+    // unkept speed left out.
+    c.change_settings(|s| s.fullscreen = !s.fullscreen).unwrap();
+    c.choose_layout(Layout::LeftHanded).unwrap();
+    press(&mut s, &mut c, &[Action::CursorUp, Action::Confirm]);
+    assert_eq!(*c.settings(), before.with_layout(Layout::LeftHanded));
+    assert_eq!(saved(&c), *c.settings());
 }
 
 #[test]
