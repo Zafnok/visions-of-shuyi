@@ -1,2 +1,6 @@
-exclude_globs = ["crates/app/**"]
+# `crates/playdate/src/pd/` is the Playdate front end's SDK glue: built only
+# with the crate's `sdk` feature for the device and the Simulator, so no
+# host test compiles it, and every mutant there would count as missed
+# (ticket 1031). CI's `playdate` job builds it.
+exclude_globs = ["crates/app/**", "crates/playdate/src/pd/**"]
 timeout_multiplier = 3.0

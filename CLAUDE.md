@@ -61,6 +61,7 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 | `docs/story/` | Story beats, bible, characters, outline, ledger (ADR-0011) |
 | `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix` |
 | `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `xtask` (repo tooling) |
+| `crates/playdate` | `trpg-playdate`, the Playdate front end (ADR-0070): a second platform crate beside `app`, a `staticlib` linked with `shim/shim.c` by `cargo xtask playdate` into `target/playdate/VisionsOfShuyi.pdx`. Needs the Playdate SDK and MSYS2's ARM compiler (its `README.md`) |
 | `assets/` | Everything embedded in the game: `data/`, `fonts/` (later: maps, dialogue, portraits) |
 | `assets-test/` | The **test files**: test characters, the test chapter, the debug Quick Battle, test tilesets, the `test` language pack. Laid out like `assets/`, embedded only in debug builds and builds with the debug tools, never in a build that ships (ADR-0057) |
 | `tools/sonar-triage/` | Files SonarCloud's backlog as batched `sonar` GitHub issues, weekly (ADR-0071); `policy.jsonc` is where a finding is accepted |

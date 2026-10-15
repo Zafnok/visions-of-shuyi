@@ -16,6 +16,7 @@ mod icon;
 mod lang_status;
 mod lines;
 mod map_sprite_import;
+mod playdate;
 mod playtest;
 mod portrait_import;
 mod private_assets;
@@ -61,7 +62,8 @@ private-assets [--library | --pin] fetch the bought art into assets-private/ (AD
 portrait-import <busts> <id>       cut bought busts into portraits (portrait-import --help)\n  \
 lines [scene]                      list every dialogue line with its line id (lines --help)\n  \
 voice-test-clips                   make the tone clips that test voice playback (needs ffmpeg)\n  \
-web [--release] [--debug-tools] [--private-assets]\n                                     build and package the web (WASM) shell into dist/web/";
+web [--release] [--debug-tools] [--private-assets]\n                                     build and package the web (WASM) shell into dist/web/\n  \
+playdate [--release] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx";
 
 fn main() -> ExitCode {
     ExitCode::from(dispatch(env::args().skip(1)))
@@ -80,6 +82,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("font-atlas") => font_atlas(&args.collect::<Vec<_>>()),
         Some("icon") => icon(&args.collect::<Vec<_>>()),
         Some("web") => web(&args.collect::<Vec<_>>()),
+        Some("playdate") => playdate(&args.collect::<Vec<_>>()),
         Some("sfx") => sfx(&args.collect::<Vec<_>>()),
         Some("frame-png") => frame_png(&args.collect::<Vec<_>>()),
         Some("test-card") => test_card(&args.collect::<Vec<_>>()),
@@ -541,6 +544,26 @@ fn web(args: &[String]) -> u8 {
     }
 }
 
+fn playdate(args: &[String]) -> u8 {
+    let options = match playdate::parse_args(args) {
+        Ok(options) => options,
+        Err(e) => {
+            eprintln!("{e}");
+            return 2;
+        }
+    };
+    match playdate::run(&repo_root(), options) {
+        Ok(summary) => {
+            println!("{summary}");
+            0
+        }
+        Err(e) => {
+            eprintln!("playdate: {e}");
+            1
+        }
+    }
+}
+
 fn playtest(args: &[String]) -> u8 {
     if args.iter().any(|a| a == "--help") {
         println!("{}", playtest::USAGE);
@@ -708,16 +731,15 @@ mod tests {
             .collect()
     }
 
-    /// `trpg-app` copies the workspace lints because one of them differs
-    /// (`unsafe_code`, ADR-0034); the copy must not drift.
+    /// The platform crates, `trpg-app` and `trpg-playdate`, copy the
+    /// workspace lints because one of them differs (`unsafe_code`,
+    /// ADR-0034, ADR-0070 §4); the copies must not drift.
     #[test]
-    fn app_lints_are_the_workspace_lints_except_unsafe_code() {
+    fn platform_lints_are_the_workspace_lints_except_unsafe_code() {
         let root = repo_root();
         let workspace = std::fs::read_to_string(root.join("Cargo.toml")).unwrap();
-        let app = std::fs::read_to_string(root.join("crates/app/Cargo.toml")).unwrap();
         let clippy = table(&workspace, "[workspace.lints.clippy]");
         assert!(clippy.len() > 5, "{clippy:?}");
-        assert_eq!(table(&app, "[lints.clippy]"), clippy);
         let rust: Vec<String> = table(&workspace, "[workspace.lints.rust]")
             .iter()
             .map(|l| l.replace("unsafe_code = \"forbid\"", "unsafe_code = \"deny\""))
@@ -726,7 +748,13 @@ mod tests {
             rust.contains(&"unsafe_code = \"deny\"".to_owned()),
             "{rust:?}"
         );
-        assert_eq!(table(&app, "[lints.rust]"), rust);
+        for platform in ["app", "playdate"] {
+            let manifest =
+                std::fs::read_to_string(root.join(format!("crates/{platform}/Cargo.toml")))
+                    .unwrap();
+            assert_eq!(table(&manifest, "[lints.clippy]"), clippy, "{platform}");
+            assert_eq!(table(&manifest, "[lints.rust]"), rust, "{platform}");
+        }
         // Every other crate inherits the workspace's `forbid`.
         for other in ["bots", "core", "content", "ui", "xtask"] {
             let manifest =
@@ -998,6 +1026,18 @@ mod tests {
     #[test]
     fn font_atlas_reports_failure() {
         assert_eq!(font_atlas(&args(&["no/such/font.bdf", "out"])), 1);
+    }
+
+    #[test]
+    fn playdate_fails_fast_on_bad_args() {
+        // Only checks argument parsing: a real build needs the Playdate SDK
+        // (`playdate::tests` check the build's steps; CI's `playdate` job
+        // runs it).
+        assert_eq!(playdate(&args(&["--bogus"])), 2);
+        assert_eq!(
+            dispatch(args(&["playdate", "--device", "--simulator"]).into_iter()),
+            2
+        );
     }
 
     #[test]
