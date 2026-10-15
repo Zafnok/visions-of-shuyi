@@ -12,6 +12,7 @@ use super::*;
 use crate::console::{CONSOLE_H, CONSOLE_W};
 use crate::input::Layout;
 use crate::screen::tests::ctx;
+use crate::storage::Storage;
 use crate::tips::{TIPS_SEEN_KEY, reset_tips};
 
 /// A context with tips on.
@@ -82,6 +83,29 @@ fn the_first_battle_shows_the_start_tip_and_confirm_dismisses_it() {
     assert_eq!(s.mode(), &Mode::default());
 }
 
+/// A campaign's tutorial level (0835): tips show at `Full` (and with no
+/// campaign, as here elsewhere), not at `Short` or `None`, and a tip held
+/// back isn't marked seen.
+#[test]
+fn only_a_full_tutorial_shows_tips() {
+    use trpg_core::TutorialLevel;
+    for (level, shown) in [
+        (None, true),
+        (Some(TutorialLevel::Full), true),
+        (Some(TutorialLevel::Short), false),
+        (Some(TutorialLevel::None), false),
+    ] {
+        let mut c = tipped();
+        c.campaign_tutorial = level;
+        let mut s = quick();
+        press(&mut s, &mut c, &[]);
+        let tip = shown.then_some(TipTrigger::FirstBattleStart);
+        assert_eq!(s.shown_tip(), tip, "{level:?}");
+        let seen = c.storage.read(TIPS_SEEN_KEY).ok().flatten();
+        assert_eq!(seen.is_some(), shown, "{level:?}");
+    }
+}
+
 #[test]
 fn the_start_tip_waits_for_the_first_player_phase_banner() {
     let mut c = tipped();
@@ -149,7 +173,7 @@ fn a_tip_shows_once_per_profile() {
     let mut again = quick();
     assert_eq!(dismiss_all(&mut again, &mut c), []);
     // Resetting the tips brings it back.
-    reset_tips(&mut *c.storage).unwrap();
+    reset_tips(&mut c.storage).unwrap();
     let mut fresh = quick();
     assert_eq!(
         dismiss_all(&mut fresh, &mut c),

@@ -165,9 +165,9 @@ the three crates) keeps them building once the first build ticket lands.
   if 1025's tickets or Nick's play-through find the pauses too long. It
   must keep the AI's choices identical (determinism, ADR-0004).
 - **Loading:** 3.7 s to parse every data file at start-up. 1025 starts by
-  loading only what the Playdate version uses (0061 decides what is left
-  out, e.g. other languages, the cinematic), behind a loading card, and
-  measures again. Converting the data to a binary format at build time
+  loading only what the Playdate version uses (0061: one build per
+  language, so one language pack instead of all of them), behind a
+  loading card, and measures again. Converting the data to a binary format at build time
   is the fallback if it is still too slow.
 - Timings come from the device only, never the Simulator (§Context).
   Nick's Playdate is Rev B; Rev A is unmeasured (its RAM is said to be

@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: sign-off
-completed:
+completed: 2026-10-15
 ---
 
 # 0835 — New Game asks how familiar you are
@@ -79,13 +79,13 @@ remembered per computer (`tips_seen`).
 
 ## Acceptance criteria
 
-- [ ] New Game shows the familiarity screen after the mode, before the
+- [x] New Game shows the familiarity screen after the mode, before the
       lead; Back returns to the mode.
-- [ ] The chosen level is saved with the campaign and loaded back; an old
+- [x] The chosen level is saved with the campaign and loaded back; an old
       save loads as `Full`.
-- [ ] With tips on: at `Full` the first-turn tip shows; at `Short` and
+- [x] With tips on: at `Full` the first-turn tip shows; at `Short` and
       `None` it doesn't.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -96,4 +96,34 @@ remembered per computer (`tips_seen`).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- New Game now goes title → mode → **familiarity** → lead. The new screen
+  (`crates/ui/src/screens/familiarity.rs`) has a heading, three answers
+  with one line each, the cursor on "Not familiar"; Back from it returns to
+  the mode, and Back from the lead screen returns to it.
+- `TutorialLevel { Full, Short, None }` in `trpg-core` (`campaign.rs`), kept
+  as `Campaign.tutorial`. Battle tips show only at `Full` (and still only
+  with `tips_enabled`); `Ctx::campaign_tutorial` carries the level, kept up
+  to date by the flow like `campaign_mode`. A battle with no campaign (screen
+  tests) counts as `Full`. Quick Battle and the test chapter use `Full`.
+- **Saves:** no `SAVE_VERSION` bump. The field is `#[serde(default)]` and
+  left out of the save when it is `Full`, so every existing version 2 save
+  still reads (as `Full`) and writes back byte for byte; the golden saves
+  are unchanged and a new golden test checks they load as `Full`. ADR-0039
+  allowed this as a deliberate choice; it is noted in `save.rs`.
+- **Deviation:** instead of copying `mode_select`'s `view.rs`/`glyph.rs`,
+  the familiarity screen builds the same view type (`FamiliarityView` is
+  `ModeSelectView`) and is painted by the mode screen's skin: the two
+  screens have the same shape, so one skin keeps them looking alike.
+- Words (American English), *Claude's wording*: heading "How familiar are
+  you?"; "Not familiar: learn the controls and how this game works as you
+  play, with tips."; "Familiar with other strategy RPGs: learn only what
+  this game does differently."; "Familiar with this game: no lessons and
+  no tips."
+- Gameplay rules decided where the docs were silent: none new; the ticket's
+  starting rules (screen after the mode, cursor on "Not familiar", old saves
+  as `Full`) are as written. Lessons don't exist yet (0456, 0457), so today
+  `Short` and `None` play the same: no tips.
+- For Nick: start a New Game three times, once per answer. With "Not
+  familiar" the "Your move" tip shows on the first turn; with either other
+  answer no tip shows. Tips already seen on your computer stay seen
+  (Options → Reset tips to see them again).

@@ -187,7 +187,7 @@ Design answers unblock most of the rules work. Suggested order:
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
    · **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
-8. Now, at Nick's request (2026-10-15): **0061** the Playdate version of Chapter 1 (screen, buttons, crank, what's left out)
+8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`)
 9. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
 
 Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
@@ -252,10 +252,10 @@ early so every later PR is checked by them.
 - **Playdate port of Chapter 1** (Nick, 2026-10-15: "rush" it; unparked
   ahead of the engine carve): 1026 technical test (do the rules build for
   the device, how long an enemy turn takes) and 0061 Nick's decisions
-  (400 × 240 one-bit screen, buttons and crank, what is left out) run side
-  by side → 1025 writes the build tickets. 1026 is done: the rules run on
-  Nick's Playdate (ADR-0070: stable Rust and the SDK's C build; a 14-enemy
-  turn thinks for 1.2 s, start-up loads in 3.7 s). Not on the Chapter 1 critical
+  (decided 2026-10-15, `design/playdate.md`) run side by side → 1025 writes
+  the build tickets. 1026 is done: the rules run on Nick's Playdate
+  (ADR-0070: stable Rust and the SDK's C build; a 14-enemy turn thinks for
+  1.2 s, start-up loads in 3.7 s). Not on the Chapter 1 critical
   path; nothing on the desktop or web game changes for it.
 - Controller support on every build (web, Windows, Linux, macOS; needed for
   Steam Deck): 0032 decide buttons → 0219 input → 0220 button names in help

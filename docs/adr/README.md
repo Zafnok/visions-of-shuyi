@@ -39,7 +39,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0028](0028-native-music-decoded-off-the-main-thread.md) | Native music is decoded on a worker thread, in its own quad-snd context | Accepted |
 | [0029](0029-acted-units-keep-label-case.md) | Acted units are dimmed only; the label keeps its case | Accepted |
 | [0030](0030-battle-dialogue-triggers.md) | Dialogue triggers are battle data; their scenes are events at their moment | Accepted |
-| [0031](0031-player-key-bindings.md) | Player key bindings: slots, per-layout config, fixed Esc/Delete | Accepted; saved config now version 2 with the buttons, ADR-0053; a key on one action per group, ADR-0068 |
+| [0031](0031-player-key-bindings.md) | Player key bindings: slots, per-layout config, fixed Esc/Delete | Accepted; saved config now version 2 with the buttons, ADR-0053; a key on one action per group, ADR-0068; kept in a player profile, ADR-0069 |
 | [0032](0032-bought-art.md) | Bought art is allowed; audio stays free | Accepted |
 | [0033](0033-playtest-bots.md) | Playtest bots play through `core`'s commands, on reseeded copies, outside the game | Accepted |
 | [0034](0034-controller-input.md) | Controller input: gilrs on native, a Gamepad API plugin on web | Accepted; buttons rebindable by ADR-0053 |
@@ -47,7 +47,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0036](0036-help-text-follows-the-device-and-own-font-glyphs.md) | Help text follows the device pressed last; our own glyphs join the font from a second BDF | Accepted |
 | [0037](0037-music-clock.md) | A music clock: `app` reports what is sounding, `ui` wraps it at the track's length | Accepted |
 | [0038](0038-graphics-are-a-skin.md) | Graphics are a skin: screens say what to show, a skin says how it looks | Accepted |
-| [0039](0039-save-file-format.md) | Saves are versioned RON `SaveFile`s; a battle is saved as its history | Accepted |
+| [0039](0039-save-file-format.md) | Saves are versioned RON `SaveFile`s; a battle is saved as its history | Accepted; kept in a player profile, ADR-0069 |
 | [0040](0040-private-assets.md) | Bought art lives in a private repository, pinned by commit and embedded by the `private-assets` feature | Accepted |
 | [0041](0041-prs-up-to-date-before-merging.md) | PRs must be up to date with `main` and green before they merge (no merge queue) | Superseded by ADR-0042 |
 | [0042](0042-prs-merge-on-green-without-updating.md) | PRs merge when their checks are green; they need not be up to date with `main` | Accepted |
@@ -57,7 +57,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0047](0047-pr-mutation-gate-in-shards-with-nextest.md) | The PR mutation gate runs in shards, with nextest as its test runner | Accepted |
 | [0048](0048-backdrop-a-second-glyph-picture-panned-and-zoomed.md) | A backdrop: a second glyph picture behind the console, panned by the pixel and zoomed in whole steps | Accepted |
 | [0049](0049-unit-sprites-from-their-own-files-and-the-game-picks-its-map-skin.md) | Unit sprites come from their own image files, a tileset may leave terrain to the glyph skin, and the game picks its map skin from what it has | Accepted; extends ADR-0038; the tileset file's writer changed by ADR-0052 |
-| [0050](0050-player-settings.md) | Player settings: one saved RON record, read through `Ctx` | Accepted |
+| [0050](0050-player-settings.md) | Player settings: one saved RON record, read through `Ctx` | Accepted; where they are kept and saving at once superseded by ADR-0069 |
 | [0051](0051-a-bought-works-credit-names-its-private-files.md) | A bought work's credit names the private files it covers, and a bought file without a credit is refused | Accepted; extends ADR-0032 and ADR-0040 |
 | [0052](0052-terrain-pictures-between-tiles-in-layers.md) | Terrain is painted in layers of pictures drawn between tiles, chosen from the terrain grid; a map file names its look | Accepted (0437); extends ADR-0038 and ADR-0049 |
 | [0053](0053-player-controller-buttons.md) | Player controller buttons: one shared set of slots in the saved key bindings (version 2) | Accepted; amends ADR-0031 and ADR-0034 |
@@ -76,9 +76,9 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | 0066 | AI-native tooling: one contract, three surfaces (CLI, MCP, skills); visual scripting as a view over text | Moved to [Shuyi Engine](https://github.com/Zafnok/shuyi-engine/tree/main/docs/adr) as its ADR-0005 (1101) |
 | 0067 | Networking in layers: transports, sessions, sync models, services; determinism is the contract | Moved to [Shuyi Engine](https://github.com/Zafnok/shuyi-engine/tree/main/docs/adr) as its ADR-0006 (1101) |
 | [0068](0068-key-groups-a-key-on-one-action-per-group.md) | Key groups: a key or button on one action per group, one press giving each group's | Accepted (0729); amends ADR-0031 and ADR-0053 |
+| [0069](0069-player-profiles-a-prefix-per-profile-in-one-storage.md) | Player profiles: a key prefix per profile in the one storage, a list kept per computer | Accepted (0836); supersedes ADR-0050's storage part, amends ADR-0031 and ADR-0039 |
 | [0070](0070-playdate-front-end.md) | The Playdate front end: stable Rust, the SDK's own C build, rules without `std` | Accepted (1026) |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
-Number 0069 is taken by a PR open on 2026-10-15 (0836, player profiles).
 
 Template: [`0000-template.md`](0000-template.md).

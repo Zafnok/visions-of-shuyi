@@ -1,6 +1,7 @@
 # ADR-0050: Player settings: one saved RON record, read through `Ctx`
 
-- **Status:** Accepted
+- **Status:** Accepted; its storage part (the `settings` key, saving at
+  once on every change) superseded by ADR-0069
 - **Date:** 2026-10-03
 - **Related tickets:** 0805, 0208, 0217, 0416, 0806, 0824, 0825, 0826, 0902
 

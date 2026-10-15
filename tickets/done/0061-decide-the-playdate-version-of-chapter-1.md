@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-15
 ---
 
 # 0061 — Decide: the Playdate version of Chapter 1
@@ -121,12 +121,12 @@ changing the desktop or web game's look or controls; the technical test
 
 ## Acceptance criteria
 
-- [ ] `docs/design/playdate.md` exists with `Decided:`, Nick's words, and
+- [x] `docs/design/playdate.md` exists with `Decided:`, Nick's words, and
       a rule for each of questions 1–6 (or the question marked deferred,
       in Nick's words).
-- [ ] `docs/design/README.md` lists it.
-- [ ] 1025 is updated if the answers change its build tickets.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `docs/design/README.md` lists it.
+- [x] 1025 is updated if the answers change its build tickets.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -134,5 +134,32 @@ changing the desktop or web game's look or controls; the technical test
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- Asked in three rounds with rendered 400 × 240 one-bit mockups of
+  Harrowby Ford (Q1–Q3, then a second Q3 round, then Q4–Q6, then two
+  follow-ups on voices and languages). Recorded in
+  `docs/design/playdate.md`; every option shown is in
+  `docs/design/playdate/` (glyphs only, no bought art).
+- Answers: today's 8×16 cells; FE-GBA corner pop-ups; your units solid
+  black, enemies grey, acted units outlined, ranges as dots / diagonal
+  lines / dashed danger edge; A confirm, B cancel, A+B ends the turn,
+  hold B + left/right cycles ready units, the crank winds back to rewind;
+  everything kept (music, sounds, 1-bit portraits, a simple combat
+  picture, the title cinematic, voices, Japanese and Chinese), but one
+  build per language with one purchase covering all; itch.io first, then
+  Catalog.
+- Added a fourth size option (6×12, Terminus' smaller size) beside the
+  three the ticket listed. The small-size mockups used unscii-8 (public
+  domain) and Spleen 5×8 (BSD-2) as scratch fonts; none ships.
+- Playdate facts checked against the SDK docs: three custom system-menu
+  entries, the six buttons, the crank's change and docked calls.
+- 1025's scope now lists the voices, 1-bit portraits, combat picture,
+  title cinematic, one build per language and the itch.io-then-Catalog
+  order.
+- *Claude's starting rules* (Nick can veto): a white ground; corner
+  pop-ups sit at the top and move down when the cursor comes near; the
+  side panel's other contents live in Unit info and the map menu; the
+  cursor's corner marks flip the pixels under them; winding the crank
+  forwards steps back towards the present while choosing a rewind point;
+  the crank does nothing else on the map; the system menu holds Danger
+  zone, Dialogue log and Options; allies and neutrals wait for a later
+  chapter.

@@ -404,6 +404,7 @@ mod tests {
     use super::*;
     use crate::input::Layout;
     use crate::screen::tests::{ctx, ctx_with_cues};
+    use crate::storage::Storage;
 
     fn down(key: Key) -> RawInputEvent {
         RawInputEvent::Down(Chord::plain(key))

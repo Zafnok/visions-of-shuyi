@@ -1,6 +1,6 @@
 # ADR-0039: Saves are versioned RON `SaveFile`s; a battle is saved as its history
 
-- **Status:** Accepted
+- **Status:** Accepted; its keys are kept in a player profile, ADR-0069
 - **Date:** 2026-10-01
 - **Related tickets:** 0802, 0207, 0307, 0801, 0821, 1007, 0903
 
