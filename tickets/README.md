@@ -64,6 +64,12 @@ Use the **`work-ticket`** skill. Summary: branch `t<NNNN>-<slug>` → implement
 within scope → run gates → fill in Completion notes → `git mv` to `done/` →
 PR titled `[NNNN] Title`.
 
+**The one exception:** a GitHub issue labelled `sonar` is its own ticket.
+`tools/sonar-triage/` files SonarCloud's findings as batched issues every
+week; each is fixed in one PR on a `sonar/<slug>` branch with the
+**`sonar-fix`** skill, with no ticket file
+([ADR-0071](../docs/adr/0071-sonar-backlog-becomes-batched-github-issues.md)).
+
 ## Nick input legend
 
 - `none`: no Nick involvement.

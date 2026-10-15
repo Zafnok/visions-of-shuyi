@@ -78,6 +78,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0068](0068-key-groups-a-key-on-one-action-per-group.md) | Key groups: a key or button on one action per group, one press giving each group's | Accepted (0729); amends ADR-0031 and ADR-0053 |
 | [0069](0069-player-profiles-a-prefix-per-profile-in-one-storage.md) | Player profiles: a key prefix per profile in the one storage, a list kept per computer | Accepted (0836); supersedes ADR-0050's storage part, amends ADR-0031 and ADR-0039 |
 | [0070](0070-playdate-front-end.md) | The Playdate front end: stable Rust, the SDK's own C build, rules without `std` | Accepted (1026) |
+| [0071](0071-sonar-backlog-becomes-batched-github-issues.md) | SonarCloud's backlog becomes batched GitHub issues, filtered by a checked-in policy | Accepted (0125) |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
