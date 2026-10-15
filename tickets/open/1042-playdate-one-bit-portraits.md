@@ -39,6 +39,13 @@ needs another pass.
 
 ## Scope
 
+**0062's answer** (`playdate.md`, *One-bit pictures*): the busts at
+**2×** in today's dialogue layout, listener faded by a 50% checker;
+style **A** by default and a Playdate-only **portrait style** setting in
+Options with A, A+ lines, F+ lines and G (one converted set per style
+from 1040). The setting is in scope here: an Options entry the Playdate
+build shows and the PC doesn't, saved with the other options.
+
 **In:**
 - Convert every face (and expression) Chapter 1's dialogue uses with
   1040's tool and 0062's method; the list from `assets/dialogue/` and

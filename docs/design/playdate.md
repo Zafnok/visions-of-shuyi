@@ -1,7 +1,8 @@
 # The Playdate version (Chapter 1)
 
 Decided: 2026-10-15
-Source: ticket 0061 (build tickets: 1025; technical test: 1026)
+Source: ticket 0061 (build tickets: 1025; technical test: 1026); the
+one-bit pictures: ticket 0062
 
 Nick judged rendered 400 × 240 one-bit mockups of Chapter 1's first battle
 (Harrowby Ford), drawn with the game's own font (Terminus 8×16) and, for the
@@ -145,6 +146,165 @@ Everything Chapter 1 has on the PC, made for the device:
 - One purchase gets all the language builds (Nick: "we can probably sell a
   license too all version builds with one sale"). On itch.io that is one
   page with a download per language.
+
+## One-bit pictures
+
+Decided: 2026-10-15
+Source: ticket 0062 (build tickets: 1040 converter, 1041 combat picture,
+1042 portraits, 1044 title, 1052 launcher)
+
+Nick judged one-bit versions of Chapter 1's real faces (the male lead,
+Harl, Rue, the female lead), battlers (the female lead, the Brigand) and
+title backdrop at 400 × 240, shown at ×2. In the second round they were
+also on his Playdate, as a slideshow he sideloaded. Pictures made from
+the bought art are not in this repository (ADR-0040). The committed
+ones use only the game's own logo:
+
+| Picture | Shows |
+| ------- | ----- |
+| [`playdate/0062-icon.png`](playdate/0062-icon.png), [`×4`](playdate/0062-icon-x4.png) | **The launcher icon** (32 × 32): the block S of `SHUYI` |
+| [`playdate/0062-card-logo.png`](playdate/0062-card-logo.png) | **The logo as on the launcher card**: white letters, a black shadow and rim. The checker here stands in for the dithered backdrop |
+
+### Nick's words
+
+> **Q1, the portraits' style** (A Bayer 4×4, B Floyd–Steinberg, C
+> Atkinson, D threshold, E three tones, F Bayer with five flat greys):
+> "I like A, B, and F for faces and hair, but seems none of the options
+> capture mouth expressions very well. E seems best for the hat of the
+> witch. I don't like C or D." … [round 2: the art's own dark lines kept
+> solid (A+, B+, F+ lines, G: four flat greys plus lines), the skin
+> lighter:] "if there is a way, without bloating ROM size, to include
+> this as a toggle between a few rendering styles in playdate, we can do
+> that. Otherwise I am leaning towards the original A now that mouth and
+> eyes kept... not even A+lines" … [told it costs about 120 KB a style;
+> which A, and which styles go in the toggle:] "A1 round 1" … "G as
+> well,F+ lines,A+ lines"
+>
+> **Q1, the portraits' size** (A 3× speaker only, B 2× both faces, C 1×
+> in a text box over the map): "both A and B seem workable, I would have
+> to see how readable it would look on the real (small) playdate screen.
+> Could be that we have to go with A for readable text" … [after the
+> device:] "B. 2x, both faces"
+>
+> **Q2, the combat picture** (A dithered fighters, on a plain ground or
+> the dithered backdrop; B silhouettes; C outlines; D the map tiles
+> large): "A is more readable but the background is plain, I like A2
+> background but with the dithering on both character and foreground they
+> blend which is not good. B, C, D look bad." … [round 2, four backdrops:
+> faded, outlined fighters, horizontal lines, only above the horizon:]
+> "horizon looks good (D) but the brigand looks horrible here, his face is
+> totally fucked up. The female model looks fine." … [the Brigand fixed,
+> fighters in style A:] "Yes, this one"
+>
+> **Q3, the launcher card** (A the logo on white, B the dithered title
+> backdrop with the logo, C a face beside the logo): "B. Dithered
+> backdrop" … **the icon:** "where is the launcher icon shown in the
+> playdate OS? I don't see it used anywhere" … [told: only in the
+> launcher's list view, and every game must have one:] "A. The S from
+> SHUYI"
+
+### Rules
+
+Every picture is made one-bit **ahead of time** by the converter (1040),
+never on the device. Transparent pixels are white (the ground).
+**Dithering is done at the screen's pixels**: the picture is enlarged
+first, then dithered, so each dot is one Playdate pixel. In the first
+round, dithering the art's own pixels and then enlarging gave blocky 2×2
+dots and was not offered.
+
+**The styles** (the names are the ones Nick saw):
+
+| Style | How |
+| ----- | --- |
+| **A** (A1) | The picture's brightness is stretched so its darkest 3% is black and its lightest 3% white, then a 4 × 4 Bayer ordered dither: a regular grid of dots (the family of *Return of the Obra Dinn*'s 1-bit look) |
+| **A+ lines** | A on a lighter picture (brightness curve 0.8, so skin is lighter), then the art's **own dark lines** drawn solid black on top. A line is an art pixel clearly darker than the brightest pixel around it, or very dark: this keeps mouths, eyes and brows |
+| **F+ lines** | As A+ lines, but each grey is first rounded to one of 5 levels, so an area is one even dot pattern |
+| **G** | As F+ lines with 4 levels: bolder and flatter |
+
+The thresholds (3%, 0.8, how dark a line is) are *tunable*. Nick saw
+that A alone loses some of the mouths ("none of the options capture
+mouth expressions very well") and still chose it as the default. The
+line styles are there for players who want the expressions.
+
+#### Portraits (Q1)
+
+- **Style A by default.** *Options* has a **portrait style** setting with
+  **A, A+ lines, F+ lines and G** (Nick: "a toggle between a few
+  rendering styles"). Each style is a separate set of pictures, about
+  2 KB a face, about 120 KB a style for Chapter 1's cast. The setting
+  exists only on the Playdate.
+- **Size: the bust at 2×** (128 × 128 pixels), today's dialogue layout
+  at half size: the speaker on the left in a double frame, the listener
+  on the right in a single frame, the names under them, and a 3-line
+  text box across the bottom (47 letters a line). 4× does not fit the
+  240-pixel screen.
+- *Claude's starting rules (Nick can veto):*
+  - **The listener is faded** by turning every other pixel of its
+    picture white (a 50% checker), as Nick saw in the mockups. One-bit
+    has no dimming.
+  - A face that faces the wrong way is mirrored, as on the PC.
+  - The setting is called *Portrait style* and lists its choices by
+    what they look like (wording *tunable*).
+
+#### The combat picture (Q2)
+
+- **The fighters are dithered in style A**, at the PC's double size
+  (`look-and-feel.md`, *Combat screen*), facing each other as on the PC.
+  The portrait style setting does not change them: Nick saw the line
+  styles on the Brigand and called his face "totally fucked up"
+  (*Claude's starting rule*).
+- **A fighter drawn at a size that isn't a whole number** (in
+  Chapter 1 the Brigand, the Raider, Harl, the Cleric and the Mage, all
+  at 1.25×) **is enlarged smoothly before it is dithered**, not by doubling pixels. Doubling
+  some rows and not others broke the Brigand's face.
+- **The backdrop shows only above the horizon:** the bought battle
+  backdrop, lightened and dithered (Bayer 4 × 4), down to a black
+  horizon line. Below it the ground is **plain white**, and the fighters
+  stand on it, so they never sit on a pattern. A white rim (2 pixels)
+  around each fighter keeps the tops of their heads apart from the
+  backdrop.
+- The plates (name, HP, damage, hit, crit) sit along the bottom and the
+  result (`HIT -6`) pops up over the target, both in white boxes with a
+  black edge. The striker's plate has the double edge. The motions are
+  the PC's.
+- *Tunable:* the horizon's height (110 pixels from the top in the
+  mockup) and how much the backdrop is lightened. *Claude's starting
+  rule:* the backdrop follows the PC's rules (terrain, time of day),
+  each picture converted the same way.
+
+#### The launcher card and icon (Q3)
+
+The Playdate's launcher shows a game as a **card** (350 × 155, the
+default "cards" view) or as an **icon** with the game's name (32 × 32,
+"list" view). Every game needs both, and a **launch image** shown while
+it loads.
+
+- **Card: the dithered title backdrop with the logo** (Nick: "B"). The
+  backdrop is dithered in Bayer 4 × 4. The logo is drawn 4 pixels a
+  block, its letters white, its shadow black, with a black rim one
+  block wide so it reads over the dots.
+- **Icon: the block S of `SHUYI`**, 2 pixels a block, black with its
+  shadow as a 50% checker, on white.
+- *Claude's starting rules (Nick can veto):*
+  - The card's backdrop is **Fields B at dusk** (the one Nick saw). The
+    card is fixed; the title's rotation is for the game's own title
+    screen.
+  - The first card and icon don't animate. Nick wants an animated card
+    later ("seems the cards view lets you use animated gif or something
+    so we should do that too at some point"): ticket 1054.
+  - The **launch image** (400 × 240) is the card's look at full screen:
+    the same backdrop and logo.
+  - No "wrapping paper" (the optional pattern on a newly downloaded,
+    unopened game).
+  - A build without the bought art has the logo over a 50% checker
+    instead of the backdrop (as in `0062-card-logo.png`).
+
+#### The title cinematic (1044)
+
+*Claude's starting rule:* its backdrops are dithered like the card's
+(lightened, Bayer 4 × 4), and its logo is the card's (white letters,
+black shadow and rim). Its fight shots use the combat picture above.
+Nick saw the card, not the cinematic. He signs off on it in 1044.
 
 ## Open sub-questions
 

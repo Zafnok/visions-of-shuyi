@@ -37,7 +37,10 @@ of the fight's windows.
 
 **In:**
 - A Playdate paint of the stage view, chosen by `SkinSet` (1037), at
-  400 × 240: the two fighters and background as 0062 decided, the HP
+  400 × 240: the two fighters and background as 0062 decided
+  (`playdate.md`, *One-bit pictures*: fighters in style A on plain white
+  ground with a 2-pixel white rim, the dithered backdrop only above a
+  horizon line; the portrait style setting doesn't change them), the HP
   and strike numbers the PC combat screen shows, the hit, miss and
   crit moments the PC shows, at the PC's timing.
 - The pictures it needs converted by 1040's tool (battlers and
