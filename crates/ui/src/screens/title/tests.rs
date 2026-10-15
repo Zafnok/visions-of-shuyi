@@ -4,6 +4,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::Cell;
 use crate::input::Action;
 use crate::screen::tests::ctx;
+use crate::storage::Storage;
 use Item::{Continue, Credits, LoadGame, NewGame, Options, QuickBattle, Quit};
 
 /// The pool the Quick Battle's file names (`assets-test/battles/quick.ron`).
@@ -607,12 +608,12 @@ fn the_backdrop_is_picked_at_the_start_and_kept_for_the_launch() {
     let mut t = TitleScreen::new(&c);
     let picked = t.view(&c).backdrop.unwrap();
     assert!(all.contains(&picked));
-    assert_eq!(c.storage.read(BACKDROP_KEY), Ok(None));
+    assert_eq!(c.storage.computer().read(BACKDROP_KEY), Ok(None));
     // The first update remembers it for the next launch.
     t.update(&mut c, &input(&[]));
     assert_eq!(t.view(&c).backdrop, Some(picked));
     assert_eq!(
-        c.storage.read(BACKDROP_KEY),
+        c.storage.computer().read(BACKDROP_KEY),
         Ok(Some(picked.path().to_owned()))
     );
     // Later updates, another seed and other screens in between don't
@@ -623,9 +624,15 @@ fn the_backdrop_is_picked_at_the_start_and_kept_for_the_launch() {
     t.update(&mut c, &input(&[]));
     assert_eq!(t.view(&c).backdrop, Some(picked));
     // It is stored once: a later change of what is stored stays.
-    c.storage.write(BACKDROP_KEY, "other").unwrap();
+    c.storage
+        .computer_mut()
+        .write(BACKDROP_KEY, "other")
+        .unwrap();
     t.update(&mut c, &input(&[]));
-    assert_eq!(c.storage.read(BACKDROP_KEY), Ok(Some("other".to_owned())));
+    assert_eq!(
+        c.storage.computer().read(BACKDROP_KEY),
+        Ok(Some("other".to_owned()))
+    );
     // While the prompt waits it is there too.
     let mut c = ctx();
     c.key_prompt = KeyPrompt::Waiting;
@@ -633,7 +640,7 @@ fn the_backdrop_is_picked_at_the_start_and_kept_for_the_launch() {
     t.update(&mut c, &input(&[]));
     assert!(t.view(&c).backdrop.is_some());
     assert!(t.view(&c).prompt.is_some());
-    assert!(c.storage.read(BACKDROP_KEY).unwrap().is_some());
+    assert!(c.storage.computer().read(BACKDROP_KEY).unwrap().is_some());
 }
 
 #[test]
@@ -655,7 +662,10 @@ fn the_next_launch_never_shows_the_same_backdrop() {
     let pick_with = |seed: u64, stored: &str| {
         let mut c = ctx();
         c.music_seed = seed;
-        c.storage.write(BACKDROP_KEY, stored).unwrap();
+        c.storage
+            .computer_mut()
+            .write(BACKDROP_KEY, stored)
+            .unwrap();
         launch(&mut c)
     };
     let first = all[0].path();
@@ -680,7 +690,7 @@ fn one_backdrop_is_shown_every_launch_and_none_is_none() {
     let mut c = ctx();
     c.content.title.backdrops.clear();
     assert_eq!(launch(&mut c), None);
-    assert_eq!(c.storage.read(BACKDROP_KEY), Ok(None));
+    assert_eq!(c.storage.computer().read(BACKDROP_KEY), Ok(None));
 }
 
 #[test]
@@ -1058,7 +1068,7 @@ fn the_cinematics_lead_follows_the_latest_save() {
     let nobody = CinematicPlayer::new(&c, TITLE_CINEMATIC, None).unwrap();
     assert_eq!(t.player.as_ref().unwrap().lead(), nobody.lead());
     let mara = save_of(&c, "Mara", LeadGender::Female);
-    save::write(c.storage.as_mut(), &save::slot_key(2), &mara).unwrap();
+    save::write(&mut c.storage, &save::slot_key(2), &mara).unwrap();
     // Not under the title itself; when it is shown again.
     t.update(&mut c, &input(&[]));
     assert_eq!(t.player.as_ref().unwrap().lead(), nobody.lead());

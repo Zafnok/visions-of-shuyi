@@ -12,6 +12,7 @@ use super::*;
 use crate::console::{CONSOLE_H, CONSOLE_W};
 use crate::input::Layout;
 use crate::screen::tests::ctx;
+use crate::storage::Storage;
 use crate::tips::{TIPS_SEEN_KEY, reset_tips};
 
 /// A context with tips on.
@@ -172,7 +173,7 @@ fn a_tip_shows_once_per_profile() {
     let mut again = quick();
     assert_eq!(dismiss_all(&mut again, &mut c), []);
     // Resetting the tips brings it back.
-    reset_tips(&mut *c.storage).unwrap();
+    reset_tips(&mut c.storage).unwrap();
     let mut fresh = quick();
     assert_eq!(
         dismiss_all(&mut fresh, &mut c),

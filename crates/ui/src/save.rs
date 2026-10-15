@@ -1,7 +1,8 @@
 //! Saves in [`Storage`] (ticket 0802, ADR-0039): [`SaveFile`]s as RON text
 //! under the keys `slot_01` … `slot_30` (the chapter saves) and `suspend`
 //! (the one-time battle save). `last_save` holds the key written last: a
-//! save carries no time of day (only `app` reads a clock).
+//! save carries no time of day (only `app` reads a clock). Each player
+//! profile has its own (ADR-0069): pass `ctx.storage`, the profile in use.
 //!
 //! Reading a save never panics: text that isn't a save is
 //! [`SaveError::Corrupt`], a save written by another

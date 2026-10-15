@@ -70,6 +70,7 @@ use crate::screens::mode_select::ModeSelectScreen;
 use crate::screens::preparations::{PrepOutcome, PreparationsScreen};
 use crate::screens::save::{SavePromptScreen, SlotOutcome, SlotPickerScreen};
 use crate::screens::{BattleScreen, DialogueScreen, ResultsScreen};
+use crate::storage::Storage;
 
 /// Asks for battle `def`'s music: its cue, or a track picked from its
 /// pool. The pick is the UI's, not the battle's RNG (ADR-0019): a rewind or
@@ -192,7 +193,7 @@ impl FlowScreen {
     /// `death-and-difficulty.md`); a save that can't be continued is left
     /// alone.
     pub fn resume(ctx: &mut Ctx) -> Result<Self, SaveError> {
-        let file = save::read(ctx.storage.as_ref(), SUSPEND_KEY)?.ok_or(SaveError::Missing)?;
+        let file = save::read(&ctx.storage, SUSPEND_KEY)?.ok_or(SaveError::Missing)?;
         let SaveFile {
             campaign, point, ..
         } = file;
@@ -510,7 +511,7 @@ impl FlowScreen {
         let written = match &self.campaign {
             Some(campaign) => {
                 let file = SaveFile::suspended(campaign.clone(), battle.history().clone());
-                save::write(ctx.storage.as_mut(), SUSPEND_KEY, &file)
+                save::write(&mut ctx.storage, SUSPEND_KEY, &file)
             }
             None => Err(SaveError::Missing),
         };

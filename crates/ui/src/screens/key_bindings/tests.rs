@@ -2,6 +2,7 @@ use super::*;
 use crate::audio::AudioRequest;
 use crate::console::CONSOLE_W;
 use crate::screen::tests::ctx;
+use crate::storage::Storage;
 
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp, Info};
 

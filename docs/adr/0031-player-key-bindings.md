@@ -1,6 +1,6 @@
 # ADR-0031: Player key bindings: slots, per-layout config, fixed Esc/Delete
 
-- **Status:** Accepted
+- **Status:** Accepted; its keys are kept in a player profile, ADR-0069
 - **Date:** 2026-09-30
 - **Related tickets:** 0217, 0030, 0815, 0805, 0218, 0216
 - **Supersedes:** the "per-key overrides from Options (0805) apply on top of

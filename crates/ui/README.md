@@ -156,7 +156,13 @@ buf.fill_rect(text_box, Cell::new(' ', text, panel_bg));   // a solid box
    plays the sounds and executes the music commands. After a quit, frames
    do nothing.
 
-`Game::start` loads the saved layout from `ctx.storage` (key `layout`); on
+`ctx.storage` is the storage of the player profile in use (ADR-0069): its
+settings, key bindings, tips seen and saves, under the keys they always had
+(stored as `p1-settings`, …); `ctx.storage.computer()` is what stays with the
+computer (the list of profiles, the title's backdrop). `Ctx::with_storage`
+opens on the last profile used, making `Player 1` on a first launch.
+
+`Game::start` loads the saved layout from the profile's settings; on
 first launch there is none, and the first key pressed (at the title's prompt
 or anywhere later) opens the layout picker over whatever is showing and does
 nothing else; a controller button closes it again without choosing (ticket
@@ -478,7 +484,8 @@ fn select_opens_new_game() {
   a key or button. `Harness::with_layout(layout)` is a later launch with that layout
   saved. `into_storage()` + `Harness::with_storage(..)` restart with the same
   storage. Saves live in it too (`trpg_ui::save`: keys `slot_01`…`slot_30`
-  and `suspend`; `crates/ui/tests/it/save.rs`).
+  and `suspend` of the profile in use; `crates/ui/tests/it/save.rs`).
+  Profiles: `crates/ui/tests/it/profiles.rs`.
 - `Harness::with_screen(Box::new(MyScreen::new()))` tests a screen on its
   own, with the right-handed layout.
 - Key names in scripts depend on the layout (`docs/design/controls.md`):

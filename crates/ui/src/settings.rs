@@ -3,6 +3,7 @@
 //! the colour theme and the volumes. Saved as RON under [`SETTINGS_KEY`]; [`Ctx`] loads them
 //! with its storage and saves them on every change
 //! ([`Ctx::change_settings`]). Key bindings are saved apart (ADR-0031).
+//! Each player profile has its own (ADR-0069).
 //!
 //! [`Ctx`]: crate::screen::Ctx
 //! [`Ctx::change_settings`]: crate::screen::Ctx::change_settings

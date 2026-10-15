@@ -10,6 +10,7 @@ use trpg_core::{
 };
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::profiles::ProfileId;
 use trpg_ui::save::{SUSPEND_KEY, SaveError, slot_key};
 use trpg_ui::{Ctx, Game, MemoryStorage, Storage};
 
@@ -549,7 +550,7 @@ impl Storage for Flaky {
         self.inner.read(key)
     }
     fn write(&mut self, key: &str, value: &str) -> Result<(), trpg_ui::StorageError> {
-        if self.fail_suspend_write && key == SUSPEND_KEY {
+        if self.fail_suspend_write && key == ProfileId::FIRST.key(SUSPEND_KEY) {
             return Err(trpg_ui::StorageError::Backend("disk full".into()));
         }
         self.inner.write(key, value)
@@ -605,9 +606,10 @@ fn continue_goes_on_even_if_the_save_cant_be_deleted() {
         ..Flaky::default()
     };
     let old = h.into_storage();
-    let text = old.read(SUSPEND_KEY).unwrap_or_else(|e| panic!("{e}"));
+    let key = ProfileId::FIRST.key(SUSPEND_KEY);
+    let text = old.read(&key).unwrap_or_else(|e| panic!("{e}"));
     let text = text.unwrap_or_else(|| panic!("no suspend save"));
-    if let Err(e) = storage.inner.write(SUSPEND_KEY, &text) {
+    if let Err(e) = storage.inner.write(&key, &text) {
         panic!("{e}");
     }
     let mut h = launch(Box::new(storage), false);

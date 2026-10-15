@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: sign-off
-completed:
+completed: 2026-10-15
 ---
 
 # 0836 — Player profiles hold the options, keys, tips seen and saves
@@ -81,16 +81,16 @@ before are still there (now `Player 1`).
 
 ## Acceptance criteria
 
-- [ ] First launch makes `Player 1` and runs the layout picker as today.
-- [ ] Options, keys, tips seen, slots and suspend are kept per profile:
+- [x] First launch makes `Player 1` and runs the layout picker as today.
+- [x] Options, keys, tips seen, slots and suspend are kept per profile:
       changing them in one profile doesn't change another (test).
-- [ ] The next launch opens on the last profile used (test).
-- [ ] A storage from before profiles loads as `Player 1` with every
+- [x] The next launch opens on the last profile used (test).
+- [x] A storage from before profiles loads as `Player 1` with every
       option, key, tip seen, save and suspend save intact (test), and the
       migration runs only once.
-- [ ] Deleting a profile removes its keys and no other profile's (test).
-- [ ] The ADR is written and the index updated.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Deleting a profile removes its keys and no other profile's (test).
+- [x] The ADR is written and the index updated.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -102,4 +102,46 @@ before are still there (now `Player 1`).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Done.**
+
+- `crates/ui/src/profiles.rs`: the profile list (`Profiles`, RON under the
+  per-computer key `profiles`, version 1), `ProfileId` and its key scheme
+  (`p1-settings`, `p2-slot_03`), `load` (first launch, the move from before
+  profiles, an unreadable list rebuilt from the stored keys),
+  `delete_keys`, and `ProfileStore`, the `Storage` of the profile in use.
+- `ctx.storage` is now a `ProfileStore`: every screen that reads or writes
+  settings, key bindings, the old `layout`, tips seen, slots, suspend and
+  `last_save` gets the current profile's without changing.
+  `title_backdrop` moved to `ctx.storage.computer()`; the debug storage
+  smoke check too.
+- `Ctx::profiles`, `switch_profile`, `add_profile`, `rename_profile`,
+  `delete_profile` for 0837. A switch reloads the settings (theme, map look
+  and zoom), key bindings and layout; tips seen and saves are read from
+  storage when needed, so they follow at once.
+- The move into `Player 1`: copy each old key (unless the profile has it),
+  save the list, then delete the old keys; the saved list marks it done.
+  Tested stopping after every write.
+- ADR-0069 written; ADR-0050's storage part superseded, ADR-0031 and
+  ADR-0039 amended (status lines and index rows).
+- No format version changed: the settings, key bindings, tips and saves
+  are stored as they were, only under a prefixed key. The new list is
+  version 1.
+- Saving options at once: the ADR records that it goes with 0839;
+  `change_settings` still saves at once until 0839 adds the question
+  (ticket 0839 owns that change).
+- Text: `profile.numbered` (`Player {n}`) in `assets/lang/en/ui.ron`, for
+  `Player 1` and for profiles rebuilt from an unreadable list.
+
+**Claude's starting rules** (the design docs were silent):
+
+- Two names that differ only in capitals count as the same name
+  (`Mei` and `mei` can't both exist), and spaces around a name are dropped.
+- Deleting the profile in use switches to the first profile left on the
+  list.
+- If the list of profiles can't be read, the game makes one again with a
+  profile for each one whose saves or options are still stored, called
+  `Player 2`, `Player 5`, … by their number, so nothing is lost.
+
+**For Nick when playing:** nothing looks different yet (the Profile
+screen is 0837). Your options, keys, tips seen and saves from before are
+moved into `Player 1` on the first launch of this build.

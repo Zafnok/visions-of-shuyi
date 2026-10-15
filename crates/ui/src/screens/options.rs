@@ -590,7 +590,7 @@ impl OptionsScreen {
                         CASUAL_MESSAGE
                     }
                     Question::ResetTips => {
-                        if reset_tips(&mut *ctx.storage).is_ok() {
+                        if reset_tips(&mut ctx.storage).is_ok() {
                             TIPS_RESET_MESSAGE
                         } else {
                             NOT_SAVED_MESSAGE

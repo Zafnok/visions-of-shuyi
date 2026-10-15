@@ -21,6 +21,7 @@ mod map_skin;
 mod map_zoom;
 mod options;
 mod preparations;
+mod profiles;
 mod rebind_buttons;
 mod save;
 mod scene_camera;
