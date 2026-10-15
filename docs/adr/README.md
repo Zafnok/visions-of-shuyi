@@ -76,7 +76,9 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | 0066 | AI-native tooling: one contract, three surfaces (CLI, MCP, skills); visual scripting as a view over text | Moved to [Shuyi Engine](https://github.com/Zafnok/shuyi-engine/tree/main/docs/adr) as its ADR-0005 (1101) |
 | 0067 | Networking in layers: transports, sessions, sync models, services; determinism is the contract | Moved to [Shuyi Engine](https://github.com/Zafnok/shuyi-engine/tree/main/docs/adr) as its ADR-0006 (1101) |
 | [0068](0068-key-groups-a-key-on-one-action-per-group.md) | Key groups: a key or button on one action per group, one press giving each group's | Accepted (0729); amends ADR-0031 and ADR-0053 |
+| [0070](0070-playdate-front-end.md) | The Playdate front end: stable Rust, the SDK's own C build, rules without `std` | Accepted (1026) |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
+Number 0069 is taken by a PR open on 2026-10-15 (0836, player profiles).
 
 Template: [`0000-template.md`](0000-template.md).

@@ -253,7 +253,9 @@ early so every later PR is checked by them.
   ahead of the engine carve): 1026 technical test (do the rules build for
   the device, how long an enemy turn takes) and 0061 Nick's decisions
   (400 × 240 one-bit screen, buttons and crank, what is left out) run side
-  by side → 1025 writes the build tickets. Not on the Chapter 1 critical
+  by side → 1025 writes the build tickets. 1026 is done: the rules run on
+  Nick's Playdate (ADR-0070: stable Rust and the SDK's C build; a 14-enemy
+  turn thinks for 1.2 s, start-up loads in 3.7 s). Not on the Chapter 1 critical
   path; nothing on the desktop or web game changes for it.
 - Controller support on every build (web, Windows, Linux, macOS; needed for
   Steam Deck): 0032 decide buttons → 0219 input → 0220 button names in help

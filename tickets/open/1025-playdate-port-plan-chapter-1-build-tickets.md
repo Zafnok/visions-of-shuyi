@@ -75,6 +75,39 @@ numbers come from memory of the Playdate documentation, not a fresh read):
   Windows one (players sideload it); Panic's own Catalog store is curated
   and needs an application.
 
+**What 1026 found (2026-10-15, measured on Nick's Playdate, Rev B).**
+Full write-up: [ADR-0070](../../docs/adr/0070-playdate-front-end.md);
+the code is on the never-merged branch
+[`spike/playdate`](https://github.com/Zafnok/visions-of-shuyi/tree/spike/playdate).
+
+- **It runs.** `core`, `content` and `ui` build for the device with
+  `no_std` + `alloc` behind a default `std` feature (+140, +318 and +401
+  changed lines; their tests pass unchanged with `std`). The device loaded
+  every data file and ran Chapter 1's enemy phases.
+- **Tools:** stable Rust (no nightly) plus the SDK's own C build support,
+  linked with MSYS2's `arm-none-eabi-gcc` (device) and MinGW `gcc`
+  (Simulator `pdex.dll`), packed by `pdc`. No binding crate: a thin C
+  shim of our own (boozook's `cargo-playdate` cannot read edition-2024
+  manifests). SDK 3.1.2.
+- **Speed:** the device is ~700× slower than the PC. Loading every data
+  file takes **3.7 s**; a 14-enemy phase thinks for **1.2 s** in all (80 ms
+  per enemy on average, **0.23 s** at worst). The Simulator runs at PC
+  speed, so only device runs count.
+- **Stack:** the game needs ~15 KB of stack; the device gives ~10 KB and
+  the first build crashed. The front end runs the game on a stack it
+  allocates (ADR-0070 §4).
+
+What this adds to the build tickets below: a ticket for the `xtask`
+Playdate build (from the spike's `build.sh`) and its CI job, which also
+builds the three crates with `--no-default-features` for the device; the
+own-stack entry in the front end's first ticket; loading only what 0061
+keeps, behind a loading card, then measuring again (a binary data format
+only if still too slow); and an optional AI speed-up ticket (plan once
+per phase instead of per command, same choices) if the enemy pauses feel
+long when Nick plays. The Playdate skin tickets wait for 1108's
+`ConsoleSpec` (ADR-0070 §6). Each ticket with device-visible work names
+how it is measured on Nick's Playdate.
+
 ## Nick input
 
 `None.` His answers come from 0061.
@@ -85,10 +118,16 @@ numbers come from memory of the Playdate documentation, not a fresh read):
 0061 decided it, to a Playdate build that can be sold where 0061 says.
 Each ticket is one PR's worth of work. Expect roughly:
 - making `core`, `content` and `ui` build without `std` behind a default
-  `std` feature, one ticket per crate, using 1026's findings;
-- the Playdate front-end crate (beside `app`, per 1026's ADR): run loop,
-  buttons and crank to `Action`s through a keymap (`keyboard-input`
-  skill), saves, and a CI job that builds it;
+  `std` feature, one ticket per crate, using 1026's findings (ADR-0070
+  §3 lists every change; `spike/playdate` has a working version);
+- the Playdate build: an `xtask` command and a CI job (stable Rust, the
+  SDK's C build support, `pdc`; ADR-0070 §1);
+- the Playdate front-end crate `crates/playdate` (beside `app`,
+  ADR-0070 §4): the C shim, run loop, the game on its own stack, buttons
+  and crank to `Action`s through a keymap (`keyboard-input` skill),
+  saves;
+- loading time: only the data the Playdate version uses, a loading card,
+  measured on the device (ADR-0070 §5);
 - the 1-bit font and the Playdate skins: the map scene and each Chapter 1
   screen's view painted at 400 × 240 (ADR-0038, ADR-0054), screen by
   screen, limited to what Chapter 1 uses;
