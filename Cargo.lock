@@ -977,6 +977,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "shuyi-core"
+version = "0.3.0"
+dependencies = [
+ "proptest",
+ "ron",
+ "serde",
+]
+
+[[package]]
 name = "simd-adler32"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1143,6 +1152,7 @@ dependencies = [
  "proptest",
  "ron",
  "serde",
+ "shuyi-core",
 ]
 
 [[package]]

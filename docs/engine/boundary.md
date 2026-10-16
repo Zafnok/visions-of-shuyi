@@ -78,12 +78,19 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    **Fix:** a `TurnRules` trait that `BattleState` implements.
    History, replay, the bots and lockstep networking are then written
    against the trait.
+   **Done (1114):** `shuyi_core::TurnRules` (check, apply, legal commands,
+   outcome), implemented by `BattleState` with its own methods. History,
+   replay and rewind are `shuyi_core::history::History` over it; the bots
+   follow in 1116.
 8. **Pathfinding is not generic.** `reachable`, `path_cost`, `threat_area` and
    `danger_zone` take the game's map, tables and units
    (`core/src/movement.rs:334-515`). There is a second Dijkstra in
    `ai.rs:755`, and `movement` and `ai` import each other.
    **Fix:** the kit's Dijkstra over a cost closure, which keeps the
    `(cost, y, x)` tie-break. The game calls it.
+   **Done (1114):** `shuyi_core::path` (`reachable`, `Reach::path_to`,
+   `flow_field`) is the one Dijkstra; `movement.rs` and the AI's flow
+   field call it with their cost closures.
 9. **The bundle is global and fixed at compile time**
    (`content/src/bundle.rs:20-92`). The folders are written into
    `include_dir!` and a static `LAYERS`. Two cargo features and `build.rs`
@@ -101,17 +108,17 @@ These are the things ADR-0063 §6 makes generic before moving anything.
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
-| `rng.rs` | E | Own PCG32 `SimRng`, `RandomSource`, `ScriptedRng`. Depends only on serde. |
-| `geom.rs` | E | `Pos`, `Dir` (4-way), `Grid<T>`. The grid parts go to the kit. |
+| `rng.rs` | E | Moved to `shuyi_core::rng` (1114): own PCG32 `SimRng`, `RandomSource`, `ScriptedRng`. `trpg_core::rng` names it. |
+| `geom.rs` | E | Moved to `shuyi_core::grid` (1114) with `TileSet`: `Pos`, `Dir` (4-way), `Grid<T>`. `trpg_core::geom` names it. |
 | `terrain.rs` | K | Move costs per movement type are K. The `defense`/`avoid`/`heal_percent` fields are G. |
-| `movement.rs` | K→rewrite | `TileSet` and `Reach::path_to` move as they are. Dijkstra, threat and danger zone get rewritten over a cost closure. |
+| `movement.rs` | G on K | Done (1114): `TileSet` moved to the kit's grid, and `reachable` is the kit's Dijkstra (`shuyi_core::path`) with this game's cost closure; its `Reach` adds where a unit may stop. `path_cost`, attack tiles, threat and the danger zone are this game's rules of units and weapons over it. |
 | `map.rs` | M | `BattleMap` grid is K. `TileFeature::{Shop,Chest}` is G. |
-| `history.rs` | M | Replay, `state_at` and rewind are K once `TurnRules` exists. Rewind charges are G. |
-| `save.rs` | M | `SaveHeader` versioning and the refuse-don't-migrate rule are E. `SaveFile` payload is G. |
-| `battle.rs` | M | About 450 lines of turn skeleton (phases, turns, objectives, the validate→plan→execute pattern) are K in shape. The skeleton calls game rules inline, so it stays in the game and implements `TurnRules`. The rest (2,800) is G. |
+| `history.rs` | M | Done (1114): replay, `state_at` and rewind are `shuyi_core::history::History` over `TurnRules`. `BattleHistory` adds the rewind charges (G) and keeps the save's format. |
+| `save.rs` | M | Done (1114): the version header and the refuse-don't-migrate rule are `shuyi_core::save` (`SaveHeader<F: SaveFormat>`). `SaveFile` payload is G. |
+| `battle.rs` | M | About 450 lines of turn skeleton (phases, turns, objectives, the validate→plan→execute pattern) are K in shape. The skeleton calls game rules inline, so it stays in the game and implements `TurnRules` (1114). The rest (2,800) is G. |
 | `battle/triggers.rs` | M | Areas, `Who`, `TurnStart`, enters-area, talk and fired-once are K (about 250 lines). The others are G. |
 | `lead.rs` | M | `split_tokens` (`{token}` text) is E. The lead is G. |
-| `ai.rs`, `legal.rs`, `campaign.rs`, `prep.rs`, `unit.rs`, `class.rs`, `stats.rs`, `combat.rs`, `item.rs`, `weapon.rs`, `magic.rs`, `spell.rs`, `skill.rs`, `art.rs`, `progression*`, `shop.rs`, `support.rs`, `battle/{arts,skills,supports}.rs` | G | This game's rules. `legal.rs`'s pattern becomes `TurnRules::legal_commands`. |
+| `ai.rs`, `legal.rs`, `campaign.rs`, `prep.rs`, `unit.rs`, `class.rs`, `stats.rs`, `combat.rs`, `item.rs`, `weapon.rs`, `magic.rs`, `spell.rs`, `skill.rs`, `art.rs`, `progression*`, `shop.rs`, `support.rs`, `battle/{arts,skills,supports}.rs` | G | This game's rules. `legal.rs` is `BattleState`'s `TurnRules::legal_commands` (1114); the AI's flow field calls the kit's `flow_field`. |
 
 ## `content` (trpg-content)
 
@@ -215,7 +222,8 @@ analog sticks (today they are four digital directions).
 
 These are all G today: `BattleState`, `Command`, `AiWeights` and the rest.
 The `PlayerBot::choose` trait, the `play_battle` loop and the measures
-pattern (about 200 lines) become kit code once `TurnRules` exists (1114, then 1116).
+pattern (about 200 lines) become kit code over `TurnRules` (which 1114
+added) in 1116.
 
 ## What other game styles would break (for engine ADR-0003)
 

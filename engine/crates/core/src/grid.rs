@@ -1,6 +1,8 @@
-//! Grid geometry: positions, the four directions and a rectangular grid.
+//! Grid geometry: positions, the four directions, a rectangular grid and
+//! sets of its tiles.
 
-use crate::prelude::*;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use core::fmt;
 
@@ -181,8 +183,106 @@ impl<T> TryFrom<RawGrid<T>> for Grid<T> {
     }
 }
 
+/// A set of tiles of a `width × height` map, stored as a bitset. Iterates in
+/// row-major order. Positions outside the map are never members.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TileSet {
+    width: u16,
+    height: u16,
+    words: Vec<u64>,
+}
+
+impl TileSet {
+    /// An empty set for a `width × height` map.
+    pub fn new(width: u16, height: u16) -> Self {
+        let bits = usize::from(width) * usize::from(height);
+        Self {
+            width,
+            height,
+            words: vec![0; bits.div_ceil(64)],
+        }
+    }
+
+    /// Map width.
+    pub fn width(&self) -> u16 {
+        self.width
+    }
+
+    /// Map height.
+    pub fn height(&self) -> u16 {
+        self.height
+    }
+
+    /// Whether `pos` is in the set.
+    pub fn contains(&self, pos: Pos) -> bool {
+        self.bit(pos)
+            .is_some_and(|(w, mask)| self.words.get(w).is_some_and(|word| word & mask != 0))
+    }
+
+    /// Adds `pos`; returns whether it was newly added (`false` if already a
+    /// member or outside the map).
+    pub fn insert(&mut self, pos: Pos) -> bool {
+        let Some((w, mask)) = self.bit(pos) else {
+            return false;
+        };
+        let Some(word) = self.words.get_mut(w) else {
+            return false;
+        };
+        let added = *word & mask == 0;
+        *word |= mask;
+        added
+    }
+
+    /// Adds every member of `other` that lies inside this set's map.
+    pub fn union_with(&mut self, other: &TileSet) {
+        for pos in other.iter() {
+            self.insert(pos);
+        }
+    }
+
+    /// Number of members.
+    pub fn len(&self) -> usize {
+        self.words.iter().map(|w| w.count_ones() as usize).sum()
+    }
+
+    /// Whether the set has no members.
+    pub fn is_empty(&self) -> bool {
+        self.words.iter().all(|&w| w == 0)
+    }
+
+    /// Every member, row-major.
+    pub fn iter(&self) -> impl Iterator<Item = Pos> + '_ {
+        let width = usize::from(self.width);
+        self.words
+            .iter()
+            .enumerate()
+            .filter(|&(_, &word)| word != 0)
+            .flat_map(move |(w, &word)| {
+                (0..64)
+                    .filter(move |bit| word >> bit & 1 == 1)
+                    .filter_map(move |bit| {
+                        let index = w * 64 + bit;
+                        // Both fit: index < width * height ≤ u16::MAX².
+                        let x = i32::try_from(index % width).ok()?;
+                        let y = i32::try_from(index / width).ok()?;
+                        Some(Pos::new(x, y))
+                    })
+            })
+    }
+
+    /// The word index and bit mask of `pos`, or `None` outside the map.
+    fn bit(&self, pos: Pos) -> Option<(usize, u64)> {
+        let x = u16::try_from(pos.x).ok().filter(|&x| x < self.width)?;
+        let y = u16::try_from(pos.y).ok().filter(|&y| y < self.height)?;
+        let index = usize::from(y) * usize::from(self.width) + usize::from(x);
+        Some((index / 64, 1 << (index % 64)))
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeSet;
+
     use proptest::prelude::*;
 
     use super::*;
@@ -190,6 +290,10 @@ mod tests {
     fn grid(w: u16, h: u16) -> Grid<u32> {
         let n = u32::from(w) * u32::from(h);
         Grid::from_cells(w, h, (0..n).collect()).unwrap_or_else(|| unreachable!())
+    }
+
+    fn p(x: i32, y: i32) -> Pos {
+        Pos::new(x, y)
     }
 
     #[test]
@@ -306,6 +410,60 @@ mod tests {
         assert_eq!(ron::from_str::<Pos>("(x:-1,y:4)").unwrap(), Pos::new(-1, 4));
     }
 
+    #[test]
+    fn tile_set_basics() {
+        let mut set = TileSet::new(10, 10);
+        assert_eq!((set.width(), set.height()), (10, 10));
+        assert!(set.is_empty());
+        assert_eq!(set.len(), 0);
+        assert!(set.insert(p(4, 6)));
+        assert!(!set.insert(p(4, 6)));
+        assert!(set.insert(p(3, 6)));
+        assert!(set.insert(p(9, 9)));
+        assert!(set.insert(p(0, 0)));
+        for outside in [p(-1, 0), p(10, 0), p(0, 10), p(0, -1), p(10, 10)] {
+            assert!(!set.insert(outside));
+            assert!(!set.contains(outside));
+        }
+        assert!(!set.is_empty());
+        assert_eq!(set.len(), 4);
+        assert!(set.contains(p(4, 6)));
+        assert!(set.contains(p(3, 6)));
+        assert!(!set.contains(p(5, 6)));
+        assert!(!set.contains(p(6, 4)));
+        // Row-major, across the 64-bit word boundary (index 63 | 64).
+        let members: Vec<Pos> = set.iter().collect();
+        assert_eq!(members, [p(0, 0), p(3, 6), p(4, 6), p(9, 9)]);
+    }
+
+    #[test]
+    fn tile_set_word_boundaries() {
+        // 3 × 43 = 129 tiles: three words, the last with one bit.
+        let mut set = TileSet::new(3, 43);
+        let all: Vec<Pos> = (0..43).flat_map(|y| (0..3).map(move |x| p(x, y))).collect();
+        for &pos in &all {
+            assert!(set.insert(pos));
+        }
+        assert_eq!(set.len(), 129);
+        assert_eq!(set.iter().collect::<Vec<_>>(), all);
+        assert!(!set.contains(p(0, 43)));
+        assert!(TileSet::new(0, 0).is_empty());
+        assert_eq!(TileSet::new(0, 5).iter().count(), 0);
+    }
+
+    #[test]
+    fn tile_set_union() {
+        let mut a = TileSet::new(3, 2);
+        a.insert(p(0, 0));
+        let mut b = TileSet::new(4, 4);
+        b.insert(p(2, 1));
+        b.insert(p(3, 3)); // Outside `a`'s map: dropped.
+        b.insert(p(0, 0));
+        a.union_with(&b);
+        assert_eq!(a.iter().collect::<Vec<_>>(), [p(0, 0), p(2, 1)]);
+        assert_eq!(a.len(), 2);
+    }
+
     proptest! {
         #[test]
         fn neighbors_stay_in_bounds(w in 0u16..20, h in 0u16..20, x in -3i32..25, y in -3i32..25) {
@@ -319,6 +477,26 @@ mod tests {
                 let expected = Dir::ALL.iter().filter(|&&d| g.in_bounds(pos.step(d))).count();
                 prop_assert_eq!(g.neighbors4(pos).count(), expected);
             }
+        }
+
+        #[test]
+        fn tile_set_matches_a_btree_set(
+            w in 0u16..20,
+            h in 0u16..20,
+            ops in prop::collection::vec((-2i32..22, -2i32..22), 0..60),
+        ) {
+            let mut set = TileSet::new(w, h);
+            let mut model = BTreeSet::new();
+            for (x, y) in ops {
+                let pos = p(x, y);
+                let inside = x >= 0 && y >= 0 && x < i32::from(w) && y < i32::from(h);
+                let added = inside && model.insert((y, x));
+                prop_assert_eq!(set.insert(pos), added);
+            }
+            prop_assert_eq!(set.len(), model.len());
+            prop_assert_eq!(set.is_empty(), model.is_empty());
+            let members: Vec<(i32, i32)> = set.iter().map(|q| (q.y, q.x)).collect();
+            prop_assert_eq!(members, model.into_iter().collect::<Vec<_>>());
         }
     }
 }

@@ -45,6 +45,10 @@ Carved so far:
   (`font`), named colors and themes (`palette`), one-bit inks (`ink`),
   lights (`lighting`), the audio manifest (`audio`) and the credits
   (`credits`). The game names its files and what it requires.
+- `shuyi-core` (1114): the seeded RNG (`rng`), the grid and tile sets
+  (`grid`), paths over a cost function (`path`), the `TurnRules` trait
+  (`turn`), a game's history over it (`history`) and save versions
+  (`save`).
 
 ## Third-party crates the engine may use
 
