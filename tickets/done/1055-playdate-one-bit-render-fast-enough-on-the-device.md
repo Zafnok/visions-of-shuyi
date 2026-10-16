@@ -215,6 +215,15 @@ changed frame averages 16.9 ms (dialogue) and 17.6 ms (battle), at most
 40.6 ms. The "Render and copy" line in the bench build times only what
 the normal build does (the bench's renders come after it).
 
+The normal build (`VisionsOfShuyi.pdx`, same day), a minute each:
+
+| A minute on | Frames a second | `Game::frame` min / avg / max | Render and copy min / avg / max (frames drawn) |
+| ----------- | --------------- | ----------------------------- | ---------------------------------------------- |
+| Dialogue | **29.7** (1033: 14.8) | 2.4 / 18.0 / 57.4 ms | **3.2 / 10.0 / 40.8 ms** (182) |
+| Battle | **29.2** (1033: 22.8) | 18.1 / 27.5 / 484.6 ms | **12.4 / 17.1 / 24.1 ms** (13) |
+
+Both screens now run at the 30 frames a second the front end asks for.
+
 **Deviations**
 
 - *Measure first*: instead of a device run before any change and another

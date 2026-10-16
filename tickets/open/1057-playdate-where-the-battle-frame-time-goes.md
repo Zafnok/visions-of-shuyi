@@ -30,6 +30,9 @@ drawn), so it alone uses most of a 30 fps frame (33 ms); and one frame
 took 432 ms. 1033's minute in a battle had a minimum of 4.1 ms, so what
 the battle does each frame depends on its state (whose phase, the
 cursor, idle motion, the guide). Nobody knows yet where the time goes.
+The normal build the same day: battle `Game::frame` 18.1 / 27.5 / 484.6
+ms at 29.2 frames a second; a dialogue scene 2.4 / 18.0 / 57.4 ms (1033:
+8.8 ms on average), so a scene's frames are worth timing too.
 
 The enemy AI's per-command replanning is **1051**'s (a pause before each
 enemy acts). This ticket is the rest: the steady cost of a battle frame
