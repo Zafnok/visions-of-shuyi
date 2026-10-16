@@ -7,13 +7,14 @@
 //! same view (ADR-0054).
 
 use super::Row;
-use super::view::{GenderView, GridView, LeadSelectView, NameRowView, TypingView};
+use super::view::{GenderView, LeadSelectView, NameRowView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::portrait::draw_portrait;
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
+use crate::widgets::name_entry::glyph::{paint_grid, paint_typing};
 
 /// Row of the heading.
 const HEADING_ROW: i32 = 1;
@@ -29,7 +30,7 @@ const LABEL_ROW: i32 = 21;
 const NAME_ROW: i32 = 24;
 /// Row of the Start button.
 const START_ROW: i32 = 27;
-/// The name grid's box.
+/// The name grid's box (its height is the grid's).
 const GRID_BOX: Rect = Rect::new(27, 8, 46, 14);
 /// The typing box.
 const TYPE_BOX: Rect = Rect::new(27, 10, 46, 7);
@@ -54,10 +55,10 @@ pub fn paint(ctx: &Ctx, view: &LeadSelectView, buf: &mut GlyphBuffer) {
     }
     paint_rows(ctx, view, buf);
     if let Some(grid) = &view.grid {
-        paint_grid(ctx, buf, grid);
+        paint_grid(ctx, buf, GRID_BOX, grid);
     }
     if let Some(typing) = &view.typing {
-        paint_typing(ctx, buf, typing);
+        paint_typing(ctx, buf, TYPE_BOX, typing);
     }
     let bottom = i32::from(buf.height()) - 1;
     print_centred(buf, bottom, &view.help, c(UiColor::TextDim), black);
@@ -117,61 +118,6 @@ fn paint_rows(ctx: &Ctx, view: &LeadSelectView, buf: &mut GlyphBuffer) {
     buf.print(family_x, NAME_ROW, family, c(UiColor::TextDim), black);
     let start = format!("[ {} ]", view.start);
     print_centred(buf, START_ROW, &start, c(lit(Row::Start)), black);
-}
-
-/// The x that centres `text` in `rect`.
-fn centred_in(rect: Rect, text: &str) -> i32 {
-    rect.x + (rect.w - cells(text)) / 2
-}
-
-/// A double-bordered box at `rect` with `title` in its top border.
-fn paint_box(ctx: &Ctx, buf: &mut GlyphBuffer, rect: Rect, title: &str) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-    let title = format!(" {title} ");
-    buf.print(rect.x + 2, rect.y, &title, c(UiColor::TextHighlight), bg);
-}
-
-/// The typing box: the name so far with a cursor, and the hint to type.
-fn paint_typing(ctx: &Ctx, buf: &mut GlyphBuffer, typing: &TypingView) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    paint_box(ctx, buf, TYPE_BOX, &typing.title);
-    let shown = format!("{}_", typing.typed);
-    let x = centred_in(TYPE_BOX, &shown);
-    buf.print(x, TYPE_BOX.y + 2, &shown, c(UiColor::Text), bg);
-    let hint = &typing.hint;
-    let x = centred_in(TYPE_BOX, hint);
-    buf.print(x, TYPE_BOX.y + 4, hint, c(UiColor::TextDim), bg);
-}
-
-/// The name grid's box: the name so far with a cursor, then the grid, the
-/// focused cell as a lit bar.
-fn paint_grid(ctx: &Ctx, buf: &mut GlyphBuffer, grid: &GridView) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    paint_box(ctx, buf, GRID_BOX, &grid.title);
-    let shown = format!("{}_", grid.spelled);
-    let x = centred_in(GRID_BOX, &shown);
-    buf.print(x, GRID_BOX.y + 2, &shown, c(UiColor::Text), bg);
-    for (r, labels) in grid.rows.iter().enumerate() {
-        let y = GRID_BOX.y + 4 + i32::try_from(r * 2).unwrap_or(0);
-        // Each cell is its label with a space either side.
-        let widths: Vec<i32> = labels.iter().map(|l| cells(l) + 2).collect();
-        let total: i32 = widths.iter().sum();
-        let mut x = GRID_BOX.x + (GRID_BOX.w - total) / 2;
-        for (col, (label, w)) in labels.iter().zip(&widths).enumerate() {
-            let (fg, cell_bg) = if grid.focus == (r, col) {
-                (c(UiColor::PanelBg), c(UiColor::PanelBorderFocus))
-            } else {
-                (c(UiColor::Text), bg)
-            };
-            buf.print(x, y, &format!(" {label} "), fg, cell_bg);
-            x += w;
-        }
-    }
 }
 
 #[cfg(test)]

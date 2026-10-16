@@ -5,10 +5,10 @@ type: feature
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0836", "0839"]
 nick_input: sign-off
-completed:
+completed: 2026-10-15
 ---
 
 # 0837 — The title menu's Profile screen
@@ -67,17 +67,17 @@ done, give the Profile screen a Playdate paint too, chosen by `ctx`'s
 
 ## Acceptance criteria
 
-- [ ] The title menu has `Profile`; the screen lists profiles with the
+- [x] The title menu has `Profile`; the screen lists profiles with the
       current one marked.
-- [ ] Switching changes the options, keys and saves the game uses (test).
-- [ ] Adding asks a name, runs the layout picker, and starts with default
+- [x] Switching changes the options, keys and saves the game uses (test).
+- [x] Adding asks a name, runs the layout picker, and starts with default
       options (test).
-- [ ] Renaming keeps the profile's options and saves (test).
-- [ ] Deleting asks first with focus on No; the only profile can't be
+- [x] Renaming keeps the profile's options and saves (test).
+- [x] Deleting asks first with focus on No; the only profile can't be
       deleted (tests).
-- [ ] Cancel in a name box with an unkept name asks first, cursor on go
+- [x] Cancel in a name box with an unkept name asks first, cursor on go
       back; with nothing typed it just closes (tests).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -87,4 +87,46 @@ done, give the Profile screen a Playdate paint too, chosen by `ctx`'s
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Done.**
+
+- `screens/profile.rs` (+ `view.rs`, `glyph.rs`): the screen builds a
+  `ProfileView`, the glyph skin paints it (ADR-0054). The profiles are
+  listed with the one in use marked `in use`, then `Add a profile`.
+  Confirm on a profile opens a small menu: `Use this profile` (not for
+  the one in use), `Rename`, `Delete` (not for the only profile).
+- `Profile` is on the title menu under `Options`.
+- **The name box:** lead-select already had a typed box and a controller
+  letter grid. Both moved to `widgets/name_entry.rs` (with its glyph
+  painter) and both screens use it, each with its own rules
+  (`NameRules`: most characters, digits or not). Lead-select behaves and
+  looks as before (its snapshots are unchanged); its four shared texts
+  were renamed `name_entry.*`. Cancel is now reported to the screen,
+  which closes the box or asks first.
+- Tests: view, actions, delete question (focus on No), the most profiles,
+  the controller grid, glyph tests, three snapshots (one profile, three,
+  the delete question); scripted in `tests/it/profiles.rs`: add, change
+  an option, switch to `Player 1` and back (options, keys and saves
+  follow), rename keeps options and saves, delete on the screen, Cancel
+  in the name box with and without a name typed, a taken name.
+- Title tests and snapshots updated for the extra menu row.
+- Playdate paint: 1045 isn't done, so 1045 does it (as the ticket says).
+
+**Claude's starting rules** (the design docs were silent):
+
+- **Use this profile** goes straight back to the title, which then shows
+  that profile's options and `Continue`.
+- **Adding** a profile makes it the one in use, then shows the layout
+  picker for it; after picking, you're back on the title.
+- Choosing a profile opens a small menu: `Use this profile`, `Rename`,
+  `Delete`.
+- A profile name may have **digits** (so you can type `Player 3`), as well
+  as letters, `-`, `'` and single spaces, like the lead's name. The letter
+  grid gets a row of digits for it.
+- A name another profile has is refused with `Another profile already
+  has that name.`, and the box stays open.
+- In the `Keep this name?` question, Keep does what Enter would (and if
+  the name is refused, you're back in the box with the message).
+
+**For Nick when playing:** Title → `Profile`. Add a profile, pick its
+hands, change an option and keep it, then `Profile` → `Player 1` →
+`Use this profile`: your own options and saves are back.

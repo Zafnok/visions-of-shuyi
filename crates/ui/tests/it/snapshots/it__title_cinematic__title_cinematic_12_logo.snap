@@ -25,10 +25,10 @@ expression: h.snapshot()
                                           │ Load Game    │                                          
                                           │ Quick Battle │                                          
                                           │ Options      │                                          
+                                          │ Profile      │                                          
                                           │ Credits      │                                          
                                           │ Quit         │                                          
                                           └──────────────┘                                          
-                                                                                                    
                                                                                                     
                                                                                                     
                                                                                                     
@@ -60,8 +60,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabeeeeeeeeeeeeeebaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabeeeeeeeeeeeeeebaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabeeeeeeeeeeeeeebaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabeeeeeeeeeeeeeebaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabeeeeeeeeeeeeeebaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -76,9 +76,9 @@ e = fg:text bg:panel_bg
 f = fg:text_dim bg:black
 --- overlays ---
 under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,0 672x288
-under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,416 672x80
-under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,288 272x128
-under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=464,288 272x128
+under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,432 672x64
+under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,288 272x144
+under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=464,288 272x144
 under sprite 0,0 64x496  title/fields_b_day.png 0,0 32x248 flip
 under sprite 736,0 64x496  title/fields_b_day.png 304,0 32x248 flip
 over  sprite 192,16 416x248  title/logo.png 0,0 52x31

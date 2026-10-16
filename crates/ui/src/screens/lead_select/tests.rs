@@ -75,7 +75,7 @@ fn rows_wrap_and_cancel_goes_back() {
 pub(super) fn spelling(c: &mut Ctx) -> LeadSelectScreen {
     let mut s = LeadSelectScreen::new();
     update(&mut s, c, &[CursorDown]);
-    s.entry = Some(NameEntry::new(&s.name));
+    s.entry = Some(NameEntry::new(&s.name, NAME_RULES));
     c.audio.take();
     s
 }
@@ -363,7 +363,7 @@ fn help_names_the_keys() {
 
 #[test]
 fn grid_cells() {
-    let rows = grid();
+    let rows = grid(NAME_RULES);
     assert_eq!(rows.len(), 5);
     assert!(rows[..4].iter().all(|r| r.len() == 13));
     assert_eq!(rows[1][12], GridCell::Char('Z'));
@@ -387,7 +387,7 @@ fn name_grid_snapshot() {
     let mut s = LeadSelectScreen::new();
     s.gender = LeadGender::Female;
     s.row = Row::Name;
-    s.entry = Some(NameEntry::new("Ell"));
+    s.entry = Some(NameEntry::new("Ell", NAME_RULES));
     let mut h = Harness::with_screen(Box::new(s));
     h.keys("Down");
     assert_snapshot!(h.snapshot());

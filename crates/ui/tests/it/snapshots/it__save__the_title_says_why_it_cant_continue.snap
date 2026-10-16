@@ -26,12 +26,12 @@ expression: h.snapshot()
                                           │ Load Game    │                                          
                                           │ Quick Battle │                                          
                                           │ Options      │                                          
+                                          │ Profile      │                                          
                                           │ Credits      │                                          
                                           │ Quit         │                                          
                                           └──────────────┘                                          
                                                                                                     
                              This save is from an incompatible version                              
-                                                                                                    
                                                                                                     
                                   arrows move · f select · d back                          F2 debug 
 --- colours ---
@@ -61,10 +61,10 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddbaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaefffffffffffffffffffffffffffffffffffffffffeaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaagggggggggggggggggggggggggggggggaaaaaaaaaaaaaaaaaaaaaaaaaagggggggga
 --- legend ---
@@ -77,12 +77,12 @@ f = fg:hp_low bg:panel_bg
 g = fg:text_dim bg:black
 --- overlays ---
 under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,0 672x288
-under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,432 672x16
-under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,464 672x32
-under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,448 160x16
-under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=568,448 168x16
-under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,288 272x144
-under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=464,288 272x144
+under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,448 672x16
+under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,480 672x16
+under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,464 160x16
+under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=568,464 168x16
+under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=64,288 272x160
+under sprite 64,0 672x496  title/fields_b_day.png 0,0 336x248 clip=464,288 272x160
 under sprite 0,0 64x496  title/fields_b_day.png 0,0 32x248 flip
 under sprite 736,0 64x496  title/fields_b_day.png 304,0 32x248 flip
 over  sprite 192,16 416x248  title/logo.png 0,0 52x31
