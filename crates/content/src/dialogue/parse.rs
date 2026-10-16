@@ -4,9 +4,9 @@
 //! that need the whole scene or other files are in `check`.
 use crate::prelude::*;
 
-use trpg_core::CharacterId;
+use trpg_core::{CharacterId, Pos};
 
-use super::{ChoiceOption, LineId, MusicLine, Scene, Side, Step};
+use super::{ChoiceOption, LineId, MusicLine, PlaceLine, Scene, Side, Step};
 use crate::error::ContentError;
 
 /// A scene as written in a file, with the source lines the checks point at.
@@ -130,6 +130,16 @@ pub(crate) fn char_problem(c: char) -> Option<String> {
         }
     };
     Some(format!("non-ASCII punctuation {c:?}; use {ascii} instead"))
+}
+
+/// The tile `<x>,<y>` (two whole numbers from 0, no spaces), if `s` is one.
+fn tile(s: &str) -> Option<Pos> {
+    let (x, y) = s.split_once(',')?;
+    let number = |n: &str| {
+        let digits = !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit());
+        digits.then(|| n.parse::<i32>().ok()).flatten()
+    };
+    Some(Pos::new(number(x)?, number(y)?))
 }
 
 struct Parser<'a> {
@@ -504,6 +514,7 @@ impl Parser<'_> {
             "left" => self.place(n, Side::Left, args),
             "right" => self.place(n, Side::Right, args),
             "music" => self.music(n, args),
+            "place" => self.setting(n, args),
             "choice" => self.open_choice(n, args),
             "endchoice" => self.end_choice(n, args),
             "if" => self.open_if(n, args),
@@ -595,6 +606,44 @@ impl Parser<'_> {
             MusicLine::Cue(arg.into())
         };
         self.push(n, Step::Music(music));
+    }
+
+    /// `@place` with `args`: a map id and a tile (`<x>,<y>`), `battle` and
+    /// a tile, or `none`.
+    fn setting(&mut self, n: u32, args: &str) {
+        let args: Vec<&str> = args.split_whitespace().collect();
+        let place = match args[..] {
+            [PlaceLine::NONE] => PlaceLine::None,
+            [map, at] if map != PlaceLine::NONE => {
+                let Some(at) = tile(at) else {
+                    self.err(
+                        n,
+                        format!("\"{at}\" is not a tile; write it as <x>,<y>, e.g. 3,12"),
+                    );
+                    return;
+                };
+                if map == PlaceLine::BATTLE {
+                    PlaceLine::Battle { at }
+                } else {
+                    if !is_id(map) {
+                        self.bad_id(n, map);
+                    }
+                    PlaceLine::Map {
+                        map: map.into(),
+                        at,
+                    }
+                }
+            }
+            _ => {
+                self.err(
+                    n,
+                    "@place needs a map id and a tile (\"@place ch01 3,12\"), \"battle\" and a \
+                     tile, or \"none\"",
+                );
+                return;
+            }
+        };
+        self.push(n, Step::Setting(place));
     }
 
     /// `id: text` or `id[expression]: text` on line `n`.

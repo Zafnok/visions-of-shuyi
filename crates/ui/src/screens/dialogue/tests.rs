@@ -850,3 +850,100 @@ fn the_log_appears_and_goes_in_the_view() {
     press(&mut s, &mut c, Action::Cancel);
     assert_eq!(s.view(&c).log, None);
 }
+
+// --- The place behind the talk (0732) ---------------------------------------
+
+fn setting(place: PlaceLine) -> Step {
+    Step::Setting(place)
+}
+
+/// A frame that types the page out (the text is instant), then Confirm:
+/// the next line.
+fn next_line(s: &mut DialogueScreen, c: &mut Ctx) {
+    s.update(c, &frame(&[], 0.0, false));
+    press(s, c, Action::Confirm);
+}
+
+fn at(x: i32, y: i32) -> trpg_core::Pos {
+    trpg_core::Pos::new(x, y)
+}
+
+/// A map named by `@place` is shown centred on its tile, as much of it as
+/// the map skin fits on the screen; the battle only when the screen was
+/// given one; `@place none` and an unknown map show none.
+#[test]
+fn the_view_shows_the_place_the_scene_names() {
+    let mut c = ctx();
+    c.change_settings(|s| s.text_speed = TextSpeed::Instant)
+        .unwrap();
+    let ch01 = || PlaceLine::Map {
+        map: "ch01".into(),
+        at: at(3, 12),
+    };
+    let steps = vec![
+        narrate("Black."),
+        setting(ch01()),
+        narrate("The green."),
+        setting(PlaceLine::Battle { at: at(20, 3) }),
+        narrate("The fort."),
+        setting(PlaceLine::Map {
+            map: "no_such_map".into(),
+            at: at(0, 0),
+        }),
+        narrate("Nowhere."),
+        setting(PlaceLine::None),
+        narrate("Black again."),
+    ];
+    let view = screen_tiles(&c);
+    let maps = &c.content.maps;
+    let expected = Place::of_map(&maps["ch01"]).scene(at(3, 12), view);
+    let battle = &c.content.battles["ch01"];
+    let mut field = Place::of_battle(&c.content, battle);
+    field.units = vec![];
+    let places = |s: &mut DialogueScreen, c: &mut Ctx| {
+        let mut seen = vec![s.view(c).place];
+        for _ in 0..4 {
+            next_line(s, c);
+            seen.push(s.view(c).place);
+        }
+        seen
+    };
+    // Without a battle, `@place battle` shows none.
+    let mut s = full(&scene(steps.clone()));
+    assert_eq!(s.battle(), None);
+    let seen = places(&mut s, &mut c);
+    assert_eq!(seen, [None, Some(expected.clone()), None, None, None]);
+    // With one, its field, centred on the fort.
+    let mut s = full(&scene(steps)).with_battle(field.clone());
+    assert_eq!(s.battle(), Some(&field));
+    let seen = places(&mut s, &mut c);
+    let fort = field.scene(at(20, 3), view);
+    assert_eq!(seen, [None, Some(expected), Some(fort), None, None]);
+}
+
+/// Jumping in the log shows the line with the place it had.
+#[test]
+fn a_jump_in_the_log_shows_that_lines_place() {
+    let mut c = ctx();
+    c.change_settings(|s| s.text_speed = TextSpeed::Instant)
+        .unwrap();
+    let ch01 = PlaceLine::Map {
+        map: "ch01".into(),
+        at: at(3, 12),
+    };
+    let mut s = full(&scene(vec![
+        setting(ch01),
+        narrate("One."),
+        setting(PlaceLine::None),
+        narrate("Two."),
+    ]));
+    let green = s.view(&c).place;
+    assert!(green.is_some());
+    next_line(&mut s, &mut c);
+    assert_eq!(s.page_lines(), ["Two."]);
+    assert_eq!(s.view(&c).place, None);
+    open_log(&mut s, &mut c, 1);
+    press(&mut s, &mut c, Action::Confirm);
+    assert_eq!(s.page_lines(), ["One."]);
+    assert_eq!(s.view(&c).place, green);
+}

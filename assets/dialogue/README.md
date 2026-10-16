@@ -55,6 +55,9 @@ Every line is one of these. Directives start at the very first column.
 | `@left clear`, `@right clear` | That side's portrait leaves. |
 | `@music <cue>` | Switches the music to that music cue (the old track fades out first). See "Music". |
 | `@music stop` | Fades the music out to silence. |
+| `@place <map> <x>,<y>` | Draws the scene over that map of `assets/maps/` (its file name without `.map`), darkened, centred on tile `x`,`y`, from here until the next `@place`. See "Places". |
+| `@place battle <x>,<y>` | The same over the map of the scene's battle. |
+| `@place none` | Back to black behind the talk. |
 | `<character>: <text>` | The character speaks. They must be on screen (`@left`/`@right` first). |
 | `<character>[<expression>]: <text>` | The character changes expression, then speaks. The new expression stays. |
 | `> <text>` | Narration: a text box with no speaker. |
@@ -64,7 +67,7 @@ Every line is one of these. Directives start at the very first column.
 
 Each speech or narration line is **one text box** on screen (the screen
 splits a long one into pages). Directives (`@caption`, `@left`, `@right`,
-`@music`) take effect before the next text box.
+`@music`, `@place`) take effect before the next text box.
 
 ## Rules
 
@@ -91,6 +94,10 @@ The validator reports every broken rule, with the file and line:
   "Who is still there".
 - **Music**: `@music` names exactly one music cue from
   `assets/audio/audio.ron` (not a sound, not a music pool), or `stop`.
+- **Places**: `@place` names a map of `assets/maps/` and a tile on it,
+  `battle` and a tile on the battle's map in a scene that has a battle,
+  or `none`. Every reply of a choice, and both parts of an `@if` block,
+  leave the same place (as with the caption).
 
 ## Music
 
@@ -417,3 +424,36 @@ space). So:
 - Renaming a scene changes the id of every line in it.
 - Very rarely, two different lines of one scene hash to the same id; the
   validator reports both, and the fix is to reword one.
+
+## Places
+
+A conversation is drawn over its **place**, darkened
+(`docs/design/look-and-feel.md`, *Places behind conversations*): the
+portraits, name plates, text box and caption go on top of a top-down map,
+as the battle map is seen. With *Map look: Glyphs* the place is drawn in
+glyphs, with *Pictures* in the tiles, like the battle map.
+
+```
+@scene ch01_after
+@caption The toll-fort, noon
+@place battle 20,3
+> Across the river, one barn smokes.
+@place none
+> Later, in the dark.
+@end
+```
+
+- `@place <map> <x>,<y>`: a place away from a battle, a map of
+  `assets/maps/` by its file name (`assets/maps/yard.map` is `yard`). The
+  screen is centred on tile `x`,`y` (counted from 0, left to right and top
+  to bottom) as far as the map allows; a map smaller than the screen sits
+  in its middle.
+- `@place battle <x>,<y>`: the scene's battle map. Only in a scene that
+  has a battle: a chapter's intro and victory scenes (its battle's field,
+  with nobody on it) and a battle trigger's scene (the battle as it
+  stands, units and all). Not in a support conversation.
+- `@place none`: black again.
+- The place lasts until the next `@place`, through text boxes and replies.
+- A scene with no `@place` is drawn on black, as before. A scene played
+  during a battle is drawn over the battle map, darkened, whether it names
+  a place or not.

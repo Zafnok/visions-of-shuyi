@@ -200,8 +200,13 @@ fn fade_darkens_cells_rectangles_sprites_and_the_scene_alike() {
     let check = |b: &GlyphBuffer, cell: Cell| {
         assert_eq!(b.get(0, 0), Some(&cell));
         assert_eq!(b.overlays()[0].color, Rgb::new(50, 25, 101));
-        let opacities: Vec<u8> = b.sprites().iter().map(|s| s.opacity).collect();
-        assert_eq!(opacities, [128, 51]);
+        // Darker, as see-through as they were (ADR-0075).
+        let looks: Vec<(u8, u8)> = b
+            .sprites()
+            .iter()
+            .map(|s| (s.brightness, s.opacity))
+            .collect();
+        assert_eq!(looks, [(128, 255), (128, 101)]);
     };
     let (fg, bg) = (Rgb::new(100, 100, 100), Rgb::new(5, 10, 15));
     check(&b, Cell::new(' ', fg, bg));
@@ -213,12 +218,12 @@ fn fade_darkens_cells_rectangles_sprites_and_the_scene_alike() {
     assert_eq!((backdrop.origin_px(), backdrop.zoom()), ((1.0, 2.0), 2));
     assert_eq!(backdrop.clip(), b.bounds());
     assert_eq!(scene_before.get(0, 0), Some(&Cell::new('s', FG, BG)));
-    assert_eq!(scene_before.sprites()[0].opacity, 255);
+    assert_eq!(scene_before.sprites()[0].brightness, 255);
     // Nothing else about an item changes.
     let (faded, plain) = (b.sprites()[0], busy().sprites()[0]);
     assert_eq!(
         Sprite {
-            opacity: 255,
+            brightness: 255,
             ..faded
         },
         plain
@@ -241,10 +246,10 @@ fn fade_is_clamped_and_full_brightness_changes_nothing() {
         let dark = Rgb::new(0, 0, 0);
         assert_eq!(b.get(0, 0), Some(&Cell::new(' ', dark, dark)), "{black}");
         assert_eq!(b.overlays()[0].color, dark);
-        assert!(b.sprites().iter().all(|s| s.opacity == 0));
+        assert!(b.sprites().iter().all(|s| s.brightness == 0));
         let scene = b.backdrop().unwrap().scene();
         assert_eq!(scene.get(0, 0), Some(&Cell::new('s', dark, dark)));
-        assert!(scene.sprites().iter().all(|s| s.opacity == 0));
+        assert!(scene.sprites().iter().all(|s| s.brightness == 0));
     }
     // Without a backdrop there is only the frame to fade.
     let mut b = GlyphBuffer::new(2, 1, BLANK);

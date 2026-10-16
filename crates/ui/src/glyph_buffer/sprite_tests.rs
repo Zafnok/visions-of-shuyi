@@ -58,6 +58,7 @@ fn new_sprite_is_solid_unflipped_and_shows_all_of_dest() {
             layer: Layer::Under,
             flip_x: false,
             opacity: 255,
+            brightness: 255,
             paint: Paint::Image,
             base: None,
         }

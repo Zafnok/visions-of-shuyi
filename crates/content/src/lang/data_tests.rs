@@ -779,7 +779,7 @@ fn texts(steps: &[Step], out: &mut Vec<String>) {
                 texts(then, out);
                 texts(otherwise, out);
             }
-            Step::Place { .. } | Step::Clear { .. } | Step::Music(_) => {}
+            Step::Place { .. } | Step::Clear { .. } | Step::Music(_) | Step::Setting(_) => {}
         }
     }
 }

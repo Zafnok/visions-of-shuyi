@@ -7,7 +7,7 @@ use crate::prelude::*;
 use alloc::borrow::Cow;
 use alloc::sync::Arc;
 
-use trpg_content::{ChoiceOption, LineId, MusicLine, Names, Present, Scene, Side, Step};
+use trpg_content::{ChoiceOption, LineId, MusicLine, Names, PlaceLine, Present, Scene, Side, Step};
 use trpg_core::{CharacterId, LeadProfile};
 
 /// A character standing on one side of the screen.
@@ -50,6 +50,9 @@ pub struct View<'a> {
     pub text: Option<Cow<'a, str>>,
     /// The location/time caption, if one has been shown.
     pub caption: Option<Cow<'a, str>>,
+    /// The place behind the talk, if the scene has named one (and not gone
+    /// back to none since).
+    pub place: Option<&'a PlaceLine>,
     /// Whether the text is narration (no speaker).
     pub narration: bool,
     /// The lead's replies, in menu order, while a choice is open: pick
@@ -120,6 +123,9 @@ pub struct DialoguePlayer {
     left: Option<Placed>,
     right: Option<Placed>,
     caption: Option<String>,
+    /// The place the last `@place` line named; `None` before one, or after
+    /// `@place none`.
+    place: Option<PlaceLine>,
     /// The last `@music` line reached and not yet taken.
     music: Option<MusicLine>,
 }
@@ -140,6 +146,7 @@ impl DialoguePlayer {
             left: None,
             right: None,
             caption: None,
+            place: None,
             music: None,
         };
         player.step_on();
@@ -211,6 +218,7 @@ impl DialoguePlayer {
             speaker,
             text: step.and_then(Step::text).map(|t| self.fill(t)),
             caption: self.caption.as_deref().map(|c| self.fill(c)),
+            place: self.place.as_ref(),
             narration: matches!(step, Some(Step::Narrate { .. })),
             choices,
         }
@@ -245,8 +253,8 @@ impl DialoguePlayer {
         self.music.as_ref()
     }
 
-    /// Moves to the next text box, applying every portrait and caption step
-    /// before it. After the last one the scene is finished; advancing a
+    /// Moves to the next text box, applying every portrait, caption and
+    /// place step before it. After the last one the scene is finished; advancing a
     /// finished scene does nothing. While a choice is open this does
     /// nothing either: [`choose`](Self::choose) a reply.
     pub fn advance(&mut self) {
@@ -390,6 +398,8 @@ impl DialoguePlayer {
                 }
             }
             Step::Music(music) => self.music = Some(music.clone()),
+            Step::Setting(PlaceLine::None) => self.place = None,
+            Step::Setting(place) => self.place = Some(place.clone()),
             // The scene was resolved for those present: it has no blocks.
             Step::Narrate { .. } | Step::Choice { .. } | Step::If { .. } => {}
         }

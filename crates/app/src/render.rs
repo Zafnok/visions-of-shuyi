@@ -262,6 +262,8 @@ impl Renderer {
             return;
         };
         let [sx, sy, sw, sh] = sprite.clipped_src();
+        // Darker as the sprite's brightness has it (ADR-0075).
+        let tint = tint.scale(f32::from(sprite.brightness) / 255.0);
         draw_texture_ex(
             texture,
             x,
