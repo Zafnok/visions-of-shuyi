@@ -80,14 +80,8 @@ pub const fn ink_is_white(ink: Ink, x: i32, y: i32) -> bool {
 /// The eight pixels of screen row `y` that `ink` paints in a byte of a
 /// [`Frame`]: every pattern repeats within 8 pixels across, so the byte is
 /// the same all along the row.
-const fn ink_byte(ink: Ink, y: i32) -> u8 {
-    let mut byte = 0;
-    let mut x = 0;
-    while x < 8 {
-        byte = (byte << 1) + ink_is_white(ink, x, y) as u8;
-        x += 1;
-    }
-    byte
+fn ink_byte(ink: Ink, y: i32) -> u8 {
+    (0..8).fold(0, |byte, x| (byte << 1) + u8::from(ink_is_white(ink, x, y)))
 }
 
 /// The index in a [`Frame`] of the byte holding screen pixel `(x, y)`,
@@ -303,8 +297,7 @@ impl Target<'_> {
             return;
         }
         let (lo, hi) = (x.max(clip.x0), (x + 64).min(clip.x1));
-        let mut start = lo & !7;
-        while start < hi {
+        for start in ((lo & !7)..hi).step_by(8) {
             // The bits of the 8 pixels from `start`, which is 7 pixels
             // left of `x` at most: with `bits` 8 places up a `u128`, pixel
             // `start` is the highest bit after this shift.
@@ -319,7 +312,6 @@ impl Target<'_> {
                 Pen::Ink(ink) => *byte ^ ((*byte ^ ink_byte(ink, y as i32)) & mask),
                 Pen::Flip => *byte ^ mask,
             };
-            start += 8;
         }
     }
 
@@ -327,11 +319,9 @@ impl Target<'_> {
     fn fill(&mut self, rect: Clip, pen: Pen) {
         let rect = rect.within(self.clip);
         for y in rect.y0..rect.y1 {
-            let mut x = rect.x0;
-            while x < rect.x1 {
+            for x in (rect.x0..rect.x1).step_by(64) {
                 let len = (rect.x1 - x).min(64);
                 self.run(y, x, u64::MAX << (64 - len), pen);
-                x += 64;
             }
         }
     }
@@ -530,7 +520,7 @@ fn draw_sprite(target: &mut Target<'_>, sprite: &Sprite, at: Place, images: &imp
                 (Some(ink), _) => ink_is_white(ink, x as i32, y as i32),
                 // One-bit has no dimming: every other pixel goes white
                 // (`docs/design/playdate.md`, the faded listener).
-                (None, Paint::Dimmed) => white || (x + y) & 1 == 1,
+                (None, Paint::Dimmed) => white || ink_is_white(Ink::Grey, x as i32, y as i32),
                 (None, _) => white,
             };
             target.set(x, y, white);

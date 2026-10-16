@@ -532,6 +532,38 @@ fn scene_of(b: &GlyphBuffer) -> Rc<GlyphBuffer> {
     Rc::new(b.backdrop().unwrap().scene().clone())
 }
 
+/// A scene's cells, glyphs and sprites away from its corner, in a window
+/// away from the screen's, all at zoom 2.
+#[test]
+fn a_zoomed_scene_draws_everything_in_place() {
+    let mut scene = buf(2, 2);
+    scene.print(0, 0, "[", c(Ink::Black), c(Ink::White));
+    scene.set(1, 1, Cell::new(' ', c(Ink::Black), c(Ink::Black)));
+    scene.add_sprite(Sprite::new(
+        picture_id(),
+        Rect::new(0, 0, 4, 2),
+        Rect::new(8, 0, 4, 2),
+        Layer::Over,
+    ));
+    let mut b = buf(5, 6);
+    b.fill_rect(b.bounds(), Cell::see_through(' ', c(Ink::Black)));
+    // The window's top-left is screen pixel (8, 16).
+    b.set_backdrop(Rc::new(scene), Rect::new(1, 1, 4, 5), (0.0, 0.0), 2);
+    let frame = draw_with(&b, &TestImages { none: false });
+    let black = |x, y| !is_white(&frame, x, y);
+    // `[`: two pixels wide, all 32 rows tall.
+    assert!(black(8, 16) && black(9, 47));
+    assert!(!black(10, 30) && !black(8, 48) && !black(7, 30));
+    // Scene cell (1, 1): screen 24..40 × 48..80.
+    assert!(black(24, 48) && black(39, 79));
+    assert!(!black(23, 60) && !black(24, 47) && !black(40, 60) && !black(30, 80));
+    // The picture at scene pixel (8, 0), each pixel 2 × 2.
+    assert_eq!(
+        text(&frame, 24, 16, 8, 5),
+        ["..##..##", "..##..##", "##......", "##......", "........"]
+    );
+}
+
 #[test]
 fn what_lies_past_the_screen_is_cut_off() {
     let mut b = GlyphBuffer::with_spec(

@@ -1099,6 +1099,20 @@ mod tests {
         assert!(h.music_commands().contains(&command("title", start)));
     }
 
+    /// Ticket 1032: the setup changes the context before the game starts,
+    /// so its frame is made with the setup's console; at the prompt too.
+    #[test]
+    fn a_setup_changes_the_context_before_the_game_starts() {
+        let playdate = |ctx: &mut Ctx| ctx.console = crate::ConsoleSpec::PLAYDATE;
+        let h = Harness::with_layout_and(Layout::RightHanded, playdate);
+        assert_eq!(h.game().buffer().spec(), crate::ConsoleSpec::PLAYDATE);
+        assert_eq!(h.game().ctx().key_prompt, KeyPrompt::Off);
+        let h = Harness::at_prompt_with_layout_and(Layout::RightHanded, playdate);
+        assert_eq!(h.game().buffer().spec(), crate::ConsoleSpec::PLAYDATE);
+        assert_eq!(h.game().ctx().key_prompt, KeyPrompt::Waiting);
+        assert_eq!(h.top_screen(), "title");
+    }
+
     /// The waiting title asks for its music at the first key press
     /// (`docs/design/title-screen.md`), so its clock starts there.
     #[test]

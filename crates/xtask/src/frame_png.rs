@@ -259,10 +259,13 @@ pub fn one_bit_picture(frame: &Frame, scale: u32) -> Image {
     let (width, height) = (onebit::WIDTH.unsigned_abs(), onebit::HEIGHT.unsigned_abs());
     let mut image = Image::filled(width * scale, height * scale, Rgb::new(0, 0, 0));
     let s = i64::from(scale);
-    let at = |v: i64| i32::try_from(v / s).unwrap_or(-1);
+    let at = |v: i64| i32::try_from(v / s).ok();
     for y in 0..i64::from(image.height) {
         for x in 0..i64::from(image.width) {
-            if onebit::is_white(frame, at(x), at(y)) {
+            if at(x)
+                .zip(at(y))
+                .is_some_and(|(x, y)| onebit::is_white(frame, x, y))
+            {
                 image.blend(x, y, [1.0; 3], 1.0);
             }
         }
