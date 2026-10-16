@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: in-progress
+status: done
 blocked_by: ["1033"]
 nick_input: sign-off
-completed:
+completed: 2026-10-16
 ---
 
 # 1055 — The one-bit render fast enough on the device
@@ -109,14 +109,14 @@ look smooth, not a few steps a second.
 
 ## Acceptance criteria
 
-- [ ] The before and after device numbers (per phase, and 1033's minute
+- [x] The before and after device numbers (per phase, and 1033's minute
       log on dialogue and battle) are in the completion notes and PR.
-- [ ] Render and copy of a changed frame averages at most 33 ms on the
+- [x] Render and copy of a changed frame averages at most 33 ms on the
       dialogue and battle screens on Nick's Playdate, or the notes say
       what was reached and name the follow-up ticket.
-- [ ] The rendered frames are unchanged: `onebit` tests pass as they
+- [x] The rendered frames are unchanged: `onebit` tests pass as they
       are, and the before/after frame test passes.
-- [ ] All gates in the `run-gates` skill pass, and the CI `playdate` job.
+- [x] All gates in the `run-gates` skill pass, and the CI `playdate` job.
 
 ## Tests required
 
@@ -128,5 +128,106 @@ look smooth, not a few steps a second.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done 2026-10-16. ADR-0077 (*The one-bit render redraws only what
+changed, against a kept reference*) records the design.
+
+**What was done**
+
+- **A faster full render** (`trpg_ui::onebit::render`), same order and
+  pixels: 32-bit screen coordinates; each ink's byte for its 4 rows in a
+  compile-time table (`PATTERNS`); fills write their middle bytes whole;
+  neighbouring cell backgrounds of one ink filled as one rectangle; a
+  glyph row at a whole cell inside the clip written as one byte; only the
+  cells that may reach into the clip visited (`Reach::span`, which also
+  stops a backdrop's scene being walked where its window cuts it away);
+  the ASCII glyphs' atlas offsets in a table in `onebit::Font`; the last
+  colour's ink remembered while walking cells.
+- **Redraw only what changed** (`onebit::render_changed(old, new, ...)`):
+  the screen's 8 × 16 tiles touched by a changed cell (grown a pixel for
+  edges), a changed item (old and new) or a changed backdrop window are
+  redrawn, each run of them from the white ground under a clip, so the
+  result is the full render by construction. The front end
+  (`crates/playdate/src/pd/entry.rs`) draws the first frame whole and
+  every later changed frame this way.
+- **1032's renderer kept as the reference** (`onebit::reference`, with
+  phase marks added; `cfg(test)` or the `onebit-reference` feature, never
+  in a shipped build).
+- **Measuring**: `render_marked(..., mark)` in both renderers;
+  `cargo xtask playdate --release --bench` builds
+  `VisionsOfShuyi-bench.pdx` (feature `bench`, `src/pd/bench.rs`), which
+  renders each drawn frame again with both renderers, times every phase,
+  checks the frames match and logs it with the minute report
+  (`report::Phases`). CI clippies the bench build too.
+- **Tests**: `onebit/tests.rs` untouched and passing. New
+  `onebit/speed_tests.rs`: property tests (random cells, inks,
+  see-through cells, rectangles, masked sprites, zoomed and panned
+  backdrops) that the fast render equals the reference, and that
+  `render(old)` + `render_changed(old, new)` equals `render(new)` over
+  random edits (cells, items, fills that cut items, backdrops); the
+  pattern table against `ink_is_white` on every pixel; the ASCII table
+  against the glyph map (with and without a fallback); the one-byte run
+  path; tile runs; phase marks. `tests/it/playdate.rs` gained
+  `the_one_bit_frames_are_the_references_whole_or_changed`: the title,
+  the opening scene typing out frame by frame and the first battle with
+  its cursor moving, on the Playdate's console and palette, each frame
+  whole and changed-only, all equal to the reference (this is the
+  before/after frame test: the reference *is* the before). `report.rs`,
+  `xtask playdate` (`--bench`) tests.
+
+**Measured** (PC, release, a whole frame, reference → fast): title 251 →
+5.7 µs, dialogue 203 → 3.8 µs, a scene over the battle 235 → 8.7 µs,
+battle 266 → 12.5 µs.
+
+**Measured on Nick's Playdate** (Rev B, bench build, 2026-10-16; the
+per-phase lines are each drawn frame rendered whole again with each
+renderer):
+
+| A minute on | Frames a second | `Game::frame` min / avg / max | Render and copy min / avg / max (frames drawn) |
+| ----------- | --------------- | ----------------------------- | ---------------------------------------------- |
+| Dialogue (1033) | 14.8 | 2.7 / 8.8 / 58.7 ms | 336.6 / 358.6 / 387.8 ms (90) |
+| Battle (1033) | 22.8 | 4.1 / 30.3 / 542.3 ms | 360.0 / 426.1 / 448.7 ms (26) |
+| **Dialogue (now)** | 19.0 | 2.3 / 14.3 / 53.5 ms | **5.4 / 16.9 / 40.6 ms** (53) |
+| **Battle (now)** | 27.3 | 18.2 / 25.5 / 432.3 ms | **9.8 / 17.6 / 25.7 ms** (9) |
+
+A whole frame, min / avg / max:
+
+| Screen | 1032's render | Fast render |
+| ------ | ------------- | ----------- |
+| Dialogue | 335.5 / 400.7 / 574.9 ms | 8.7 / 13.4 / 23.7 ms |
+| Battle | 392.9 / 441.5 / 488.3 ms | 14.2 / 16.6 / 20.1 ms |
+
+Each phase, avg / max ms (dialogue; battle):
+
+| Phase | 1032's | Fast |
+| ----- | ------ | ---- |
+| ground | 0.3 / 0.3; 0.3 / 0.3 | 0.3 / 1.3; 0.3 / 0.3 |
+| backdrop | 0.0; 0.0 | 0.0; 0.0 |
+| backgrounds | 316.9 / 336.2; 321.8 / 336.7 | 2.1 / 3.8; 2.9 / 3.9 |
+| under items | 19.9 / 28.4; 5.2 / 16.6 | 1.1 / 2.4; 0.3 / 0.7 |
+| edges | 5.8 / 7.0; 5.6 / 6.8 | 3.9 / 5.2; 4.0 / 4.4 |
+| glyphs | 48.7 / 252.7; 108.4 / 129.7 | 5.1 / 17.2; 9.0 / 10.8 |
+| over items | 9.2 / 14.6; 0.1 / 0.3 | 0.8 / 2.6; 0.1 / 0.1 |
+| invert | 0.0; 0.0 | 0.0 / 0.8; 0.0 |
+
+No frame on the device differed from 1032's render, and no changed-only
+redraw differed from a whole render. **Goal met**: render and copy of a
+changed frame averages 16.9 ms (dialogue) and 17.6 ms (battle), at most
+40.6 ms. The "Render and copy" line in the bench build times only what
+the normal build does (the bench's renders come after it).
+
+**Deviations**
+
+- *Measure first*: instead of a device run before any change and another
+  after, one bench build carries both renderers and times them on the
+  same frames, so Nick sideloaded once. The PC's phase timings guided the
+  work (backgrounds were 80% of the time there too).
+- The before/after frame test compares with 1032's renderer kept in the
+  code rather than with frames saved from before: saved frames would
+  break whenever a screen's content changes.
+
+**Follow-up**: **1057**, where the battle's `Game::frame` time goes. The
+game's own frame in that battle cost 18 ms at the least and 432 ms once,
+not the render; it is not the AI's per-command planning (1051). Not in
+1050's `blocked_by`: the battle runs at 27 frames a second.
+
+No gameplay rules were decided here.

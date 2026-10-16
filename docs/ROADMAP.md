@@ -322,7 +322,7 @@ early so every later PR is checked by them.
   5. **1034** button chords → **1035** the crank rewinds, the system menu,
      map menu entries · **1036** load only what the Playdate uses, loading
      card · **1037** the one-bit map skin · **1055** the one-bit render
-     fast enough on the device (1033 measured ~360 ms a frame)
+     fast enough on the device (1033 measured ~360 ms a frame; now ~17 ms)
   6. **1040** one-bit images · **1047** sound and music · **1038** the
      battle screen (after 0242) → **1039** forecast, unit info, level-up,
      rewind (after 0248)
@@ -333,7 +333,9 @@ early so every later PR is checked by them.
      the title screen and cinematic
   9. **1050** Nick plays Chapter 1 on his Playdate (also after the
      tutorial fixes **0464**, **0467**, **0841**) → **1051** the AI plans
-     once per phase (only if the enemy pauses feel long)
+     once per phase (only if the enemy pauses feel long) · **1057** the
+     battle's own frame time on the device (1055 measured 18 ms a frame
+     at least; either order with 1050)
   10. **1052** package and sell on itch.io (after 0901) → **1053** the
       Catalog application
   11. When their inputs exist: **1048** voices (after 0722) · **1049** one
