@@ -227,7 +227,7 @@ pub fn format_hex([r, g, b]: [u8; 3]) -> String {
 }
 
 /// 1-based line of the first line containing `"key"`, for error positions.
-fn line_of_key(source: &str, key: &str) -> Option<u32> {
+pub(crate) fn line_of_key(source: &str, key: &str) -> Option<u32> {
     let needle = format!("\"{key}\"");
     let index = source.lines().position(|l| l.contains(&needle))?;
     u32::try_from(index + 1).ok()

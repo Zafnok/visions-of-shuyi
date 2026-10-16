@@ -9,3 +9,4 @@
 *.wasm binary
 *.ogg  binary
 *.wav  binary
+*.bin  binary

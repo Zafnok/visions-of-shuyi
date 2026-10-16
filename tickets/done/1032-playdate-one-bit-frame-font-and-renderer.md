@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["1029", "1030"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 1032 — The one-bit frame
@@ -104,16 +104,16 @@ nothing about this game) and say so in the ADR; if not, it lives in
 
 ## Acceptance criteria
 
-- [ ] An ADR records how a skin asks for each one-bit effect listed in
+- [x] An ADR records how a skin asks for each one-bit effect listed in
       *Context*.
-- [ ] Tests render each effect (solid, grey, white edge, dots,
+- [x] Tests render each effect (solid, grey, white edge, dots,
       diagonals, dashes, invert, a sprite) and pin the pixels.
-- [ ] The renderer builds with `--no-default-features` for
+- [x] The renderer builds with `--no-default-features` for
       `thumbv7em-none-eabihf` (the `no-std` CI job covers it).
-- [ ] `cargo xtask frame-png --playdate title` (or any screen) writes a
+- [x] `cargo xtask frame-png --playdate title` (or any screen) writes a
       400 × 240 black-and-white PNG; one is shown in the PR.
-- [ ] No PC snapshot changes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No PC snapshot changes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -123,5 +123,69 @@ nothing about this game) and say so in the ADR; if not, it lives in
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done 2026-10-15. ADR-0074 (*The one-bit frame*) records the design.
+
+- **Inks are reserved colours** (`trpg_content::Ink`): white, black,
+  `black_edged` (a glyph keeps a white edge one pixel wide, corners too),
+  grey (50% checker), dots, diagonals, dashes (a checker of 2 × 2 squares,
+  so a 1-pixel line is dashed 2 on, 2 off) and invert (a rectangle item
+  flips what is under it, drawn last). Each has an `Rgb` code; the
+  renderer reads a cell's or item's colour back as its ink, and any other
+  colour as white or black by brightness. `Cell`, `Item`, `Palette` and
+  the PC renderer are unchanged. The patterns are the screen's pixels and
+  match Nick's chosen mockup (`q3r2-e-grey.png`), but for the dashes (2 on
+  1 off there), which must repeat within a byte.
+- **The Playdate palette** is `assets/data/palettes/playdate.ron`, colour
+  names to ink names, loaded by `PaletteDef::load_playdate(base)` as an
+  ordinary palette of codes (unknown inks and missing names are errors; a
+  content test checks the embedded file). Its `black` (the console
+  background) is `white`. Not part of `Content`: 1033 loads it for the
+  device.
+- **The 1-bit font:** `cargo xtask font-atlas` also writes
+  `assets/fonts/atlas_1bit.bin` (8,816 bytes: 551 glyphs × 16 rows, a byte
+  a row, highest bit left). `the_one_bit_atlas_matches_the_png` checks it
+  against `atlas.png` pixel for pixel; the up-to-date test covers it too.
+  `.gitattributes` marks `*.bin` binary. `atlas.png` itself is unchanged
+  (regenerating rewrote its bytes with the same pixels; the committed file
+  was kept).
+- **The renderer:** `trpg_ui::onebit::render(buf, font, images, out)`,
+  `no_std`, allocation-free, into a `[u8; 52 × 240]` in the Playdate's
+  layout (1 = white). Order: white ground, a backdrop's scene (zoomed and
+  panned), cell backgrounds, `Under` items, the white edges, glyphs,
+  `Over` items, invert rectangles. Fills and glyph rows go a byte at a
+  time; sprites a pixel at a time. One-bit pictures are `onebit::Image`
+  (the Playdate's bitmap layout, data + optional mask) found through the
+  `Images` trait; a sprite without a picture is a grey box.
+  `Paint::Dimmed` turns every other pixel white (the design's faded
+  listener), `opacity` dithers in Bayer 4 × 4.
+- **Deviation:** no palette argument to `render` (the ticket's sketch had
+  one): the inks are in the colours themselves.
+- **Tests** (`crates/ui/src/onebit/tests.rs`, 17): every ink's fill, the
+  patterns lining up across cells, brightness fallback (including the
+  exact half), glyphs both ways, the white edge (between two adjacent
+  glyphs, above and below, round a block), a glyph in a pattern, the
+  fallback glyph, item order, invert over white/grey/black and after an
+  `Over` item, a sprite (scale, flip, clip, silhouette in black and in
+  dots, dimmed, shaded, faded out, no picture), the dither, image and
+  font size checks, a backdrop (zoom, window cut, pan both ways),
+  cutting at the screen's edge, byte-crossing runs, the game's real font.
+  All as `#`/`.` text pinned in the test.
+- **`cargo xtask frame-png <out> --playdate [steps]`** runs the Harness
+  with `ConsoleSpec::PLAYDATE` and the Playdate palette
+  (`Harness::with_layout_and` / `at_prompt_with_layout_and`, which change
+  the `Ctx` before the game starts) and writes a 400 × 240 black and white
+  PNG (`--scale` defaults to 1 there). The title is all grey boxes until
+  1040 (its backdrop is a picture), so the PR shows the debug menu
+  (`docs/screenshots/1032-playdate-debug-menu.png`) and a hand-built frame
+  of every effect (`docs/screenshots/1032-playdate-effects.png`, from a
+  throwaway test, not committed).
+- `trpg-ui` builds for `thumbv7em-none-eabihf` without `std`. No PC
+  snapshot changed. 1108 gained a line: `Ink` and the palette loader move
+  with the frame.
+- **Not measured:** the renderer's speed on the device; 1033 measures a
+  full frame (no frame loop yet).
+- **Placeholders, not rules:** the Playdate palette's inks for things the
+  design doesn't fix (dim and highlighted text, the heal range, a unit
+  under a timed effect) are placeholders their skin tickets (1037, 1038+)
+  decide, as the file says. Nothing a player sees changes yet, and no
+  gameplay rule was decided.

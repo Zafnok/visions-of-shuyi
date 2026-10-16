@@ -35,6 +35,7 @@ pub mod glyph_buffer;
 pub mod harness;
 pub mod input;
 pub mod map_view;
+pub mod onebit;
 pub mod portrait;
 pub mod profiles;
 pub mod save;

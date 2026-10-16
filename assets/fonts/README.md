@@ -25,9 +25,10 @@ Why Terminus:
 | ---- | ---- |
 | `atlas.png` | 551 glyphs, white on transparent, 32 cells of 8×16 per row (256×288 px) |
 | `atlas.ron` | `FontAtlasDef`: cell size, columns and `char → cell index` map |
+| `atlas_1bit.bin` | The same glyphs packed one bit a pixel for the Playdate (ADR-0074): each glyph in cell index order, 16 bytes (a byte a row, the highest bit the left pixel, a set bit the glyph), so the device never decodes a PNG |
 | `Terminus-LICENSE.txt` | The font's licence (OFL-1.1), shipped with the game |
 
-Both atlas files are **generated**; never edit them by hand. The sources are
+The three atlas files are **generated**; never edit them by hand. The sources are
 in `assets-src/fonts/` (outside `assets/`, so they aren't embedded in the
 game): `ter-u16n.bdf`, the font, and `pad-shapes.bdf`, our own extra glyphs
 (below). To regenerate:
@@ -37,7 +38,8 @@ cargo xtask font-atlas assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes
 ```
 
 A test in `xtask` fails if the committed atlas differs from what the tool
-produces. The glyph selection is `ATLAS_RANGES` in
+produces, and another if `atlas_1bit.bin` doesn't have exactly the pixels of
+`atlas.png`. The glyph selection is `ATLAS_RANGES` in
 `crates/xtask/src/font_atlas.rs`.
 
 ## Our own glyphs (`pad-shapes.bdf`)

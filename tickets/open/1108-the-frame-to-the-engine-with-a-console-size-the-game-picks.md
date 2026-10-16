@@ -52,7 +52,8 @@ None. Nothing a player sees changes.
 place in `trpg-ui`, with `ConsoleSpec::PC` and `ConsoleSpec::PLAYDATE`
 (50 × 15): skip step 1 and move it with the frame. If the one-bit
 renderer (1032, `trpg_ui::onebit`) exists, it moves with the frame too
-(it knows nothing about this game). The moved crates keep the default
+(it knows nothing about this game), and so do `trpg_content::Ink` and
+the Playdate palette loader (ADR-0074). The moved crates keep the default
 `std` feature and stay in the `no-std` CI build (ADR-0070 §6), and the
 Playdate front end (`crates/playdate`, 1031) passes
 `ConsoleSpec::PLAYDATE` and must keep building (`cargo xtask playdate`).

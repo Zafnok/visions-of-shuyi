@@ -119,12 +119,22 @@ impl Harness {
     /// A later launch where `layout` was picked before: at the title screen
     /// with that layout's keys.
     pub fn with_layout(layout: Layout) -> Self {
+        Self::with_layout_and(layout, |_| {})
+    }
+
+    /// [`with_layout`](Self::with_layout), with `setup` changing the
+    /// context once the settings are read, before the game starts: e.g.
+    /// the Playdate's console and palette (`cargo xtask frame-png
+    /// --playdate`).
+    pub fn with_layout_and(layout: Layout, setup: impl FnOnce(&mut Ctx)) -> Self {
         let mut storage = MemoryStorage::new();
         let settings = Settings::default().with_layout(layout);
         if let Err(e) = storage.write(&ProfileId::FIRST.key(SETTINGS_KEY), &settings.to_ron()) {
             panic!("saving the layout: {e}");
         }
-        Self::with_storage(Box::new(storage))
+        let mut ctx = embedded_ctx().with_storage(Box::new(storage));
+        setup(&mut ctx);
+        Self::from_game(Game::start(ctx))
     }
 
     /// Makes New Game start the story as the game ships it
@@ -149,6 +159,12 @@ impl Harness {
     /// ([`at_prompt`](Self::at_prompt)).
     pub fn at_prompt_with_layout(layout: Layout) -> Self {
         Self::with_layout(layout).waiting()
+    }
+
+    /// [`at_prompt_with_layout`](Self::at_prompt_with_layout), with
+    /// `setup` as in [`with_layout_and`](Self::with_layout_and).
+    pub fn at_prompt_with_layout_and(layout: Layout, setup: impl FnOnce(&mut Ctx)) -> Self {
+        Self::with_layout_and(layout, setup).waiting()
     }
 
     /// Sets [`KeyPrompt::Waiting`] and redraws.
@@ -1081,6 +1097,20 @@ mod tests {
         assert_eq!(h.music_clock(), None);
         // The game asked for its music all the same.
         assert!(h.music_commands().contains(&command("title", start)));
+    }
+
+    /// Ticket 1032: the setup changes the context before the game starts,
+    /// so its frame is made with the setup's console; at the prompt too.
+    #[test]
+    fn a_setup_changes_the_context_before_the_game_starts() {
+        let playdate = |ctx: &mut Ctx| ctx.console = crate::ConsoleSpec::PLAYDATE;
+        let h = Harness::with_layout_and(Layout::RightHanded, playdate);
+        assert_eq!(h.game().buffer().spec(), crate::ConsoleSpec::PLAYDATE);
+        assert_eq!(h.game().ctx().key_prompt, KeyPrompt::Off);
+        let h = Harness::at_prompt_with_layout_and(Layout::RightHanded, playdate);
+        assert_eq!(h.game().buffer().spec(), crate::ConsoleSpec::PLAYDATE);
+        assert_eq!(h.game().ctx().key_prompt, KeyPrompt::Waiting);
+        assert_eq!(h.top_screen(), "title");
     }
 
     /// The waiting title asks for its music at the first key press
