@@ -233,6 +233,27 @@ fn on_a_controller_add_spells_the_name_on_the_grid_and_uses_the_new_profile() {
     assert_eq!(c.layout(), None);
 }
 
+/// The list filling up while the name box is open (not something the
+/// screen does): keeping the name is refused with the same message.
+#[test]
+fn a_full_list_refuses_the_name_kept() {
+    let mut c = ctx();
+    for i in 2..MAX_PROFILES {
+        ok(c.add_profile(&format!("P{i}")));
+    }
+    let mut s = ProfileScreen::new(&c);
+    pad(&mut s, &mut c, &[CursorUp]);
+    pad(&mut s, &mut c, &[Confirm]);
+    ok(c.add_profile("Last"));
+    // "A", then up round to the last row and left round to Done.
+    pad(&mut s, &mut c, &[Confirm]);
+    pad(&mut s, &mut c, &[CursorUp, CursorLeft]);
+    assert_eq!(pad(&mut s, &mut c, &[Confirm]), "None");
+    assert_eq!(s.typed(), Some("A"));
+    assert_eq!(s.message(), Some(TOO_MANY_MESSAGE));
+    assert_eq!(c.profiles().all().len(), MAX_PROFILES);
+}
+
 #[test]
 fn cancel_on_an_empty_grid_closes_it_without_asking() {
     let mut c = three();
