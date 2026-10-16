@@ -16,20 +16,22 @@ fn c(ink: Ink) -> Rgb {
 }
 
 /// A test font of 8 × 16 cells: `X` a 2 × 2 block (columns 3–4, rows
-/// 6–7), `?` the two top corners, `[` its left column, `]` its right one.
+/// 6–7), `?` the two top corners, `[` its left column, `]` its right one,
+/// `"` two dots one pixel apart (columns 2 and 4 of row 8).
 fn test_font() -> (FontAtlasDef, Vec<u8>) {
     let atlas = FontAtlasDef {
         cell_w: 8,
         cell_h: 16,
         columns: 32,
-        glyphs: [('X', 0), ('?', 1), ('[', 2), (']', 3)].into(),
+        glyphs: [('X', 0), ('?', 1), ('[', 2), (']', 3), ('"', 4)].into(),
     };
-    let mut bits = vec![0u8; 4 * 16];
+    let mut bits = vec![0u8; 5 * 16];
     bits[6] = 0b0001_1000;
     bits[7] = 0b0001_1000;
     bits[16] = 0b1000_0001;
     bits[32..48].fill(0b1000_0000);
     bits[48..64].fill(0b0000_0001);
+    bits[72] = 0b0010_1000;
     (atlas, bits)
 }
 
@@ -191,6 +193,20 @@ fn edged_glyphs_keep_a_white_edge() {
         [
             "########", "##....##", "##.##.##", "##.##.##", "##....##", "########"
         ]
+    );
+}
+
+/// The edge fills a one-pixel gap inside a glyph too.
+#[test]
+fn the_white_edge_fills_a_gap_between_two_pixels() {
+    let mut b = buf(1, 1);
+    b.fill_rect(
+        b.bounds(),
+        Cell::new('"', c(Ink::BlackEdged), c(Ink::Black)),
+    );
+    assert_eq!(
+        text(&draw(&b), 0, 7, 8, 3),
+        ["#.....##", "#.#.#.##", "#.....##"]
     );
 }
 
@@ -473,7 +489,7 @@ fn image_sizes_are_checked() {
 fn a_font_must_fit_the_one_bit_atlas() {
     let (atlas, bits) = test_font();
     assert!(Font::new(&atlas, &bits).is_ok());
-    assert!(Font::new(&atlas, &bits[..63]).is_err());
+    assert!(Font::new(&atlas, &bits[..79]).is_err());
     let wide = FontAtlasDef {
         cell_w: 9,
         ..atlas.clone()
