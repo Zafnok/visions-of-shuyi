@@ -7,6 +7,11 @@
 //! the label dimmed before one done, then how many are done. Everything
 //! about the look lives here; nothing here decides what a tip or a lesson
 //! says.
+//!
+//! The box stays over the map view (0459): text with a line too long for
+//! the room beside the face is wrapped again at its spaces, and so is an
+//! item, its further rows under its label. Without the face every line of
+//! the formats fits.
 
 use super::view::{FaceView, LessonView, TipView};
 use crate::color::UiColor;
@@ -15,6 +20,7 @@ use crate::portrait::draw_portrait_in;
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
+use crate::widgets::wrap::word_wrap;
 
 /// The face's area, in cells: 128×128 console pixels, a 64×64 bust at 2×
 /// (ADR-0043: the largest whole scale that fits).
@@ -30,6 +36,35 @@ const MARKS: [[char; 3]; 2] = [['[', ' ', ']'], ['[', 'x', ']']];
 
 /// Cells across the mark before an item, with the gap after it.
 const MARK_CELLS: i32 = 4;
+
+/// The widest text a box with `face` or none holds without reaching past
+/// the map view: its width less the margins and the face's place.
+fn text_room(face: Option<&FaceView>) -> usize {
+    let face_w = if face.is_some() {
+        FACE_CELLS.0 + MARGIN
+    } else {
+        0
+    };
+    usize::try_from(MAP_VIEW.w - MARGIN - face_w - MARGIN).unwrap_or(1)
+}
+
+/// `lines` fitted to `room` cells. A paragraph (lines between blank ones)
+/// whose lines all fit stays as written; one with a longer line is joined
+/// and wrapped at its spaces, so no word is left alone on a row.
+fn wrapped(lines: &[String], room: usize) -> Vec<String> {
+    let mut rows = Vec::new();
+    for (i, paragraph) in lines.split(|l| l.trim().is_empty()).enumerate() {
+        if i > 0 {
+            rows.push(String::new());
+        }
+        if paragraph.iter().all(|l| l.chars().count() <= room) {
+            rows.extend_from_slice(paragraph);
+        } else {
+            rows.extend(word_wrap(&paragraph.join(" "), room));
+        }
+    }
+    rows
+}
 
 /// A count of cells as an `i32`.
 fn cells(n: usize) -> i32 {
@@ -60,20 +95,39 @@ fn widest<'a>(texts: impl Iterator<Item = &'a String>) -> i32 {
     texts.map(|t| cells(t.chars().count())).max().unwrap_or(0)
 }
 
-/// The column a box `w` cells wide starts at: centred on the map view; a
-/// box wider than the map starts at the screen's left edge and reaches
-/// over the side panel. Centred on the map, the widest box (82 cells)
-/// ends at most 41 cells right of the map's middle: still on the console.
+/// The column a box `w` cells wide starts at: centred on the map view.
+/// Its text wraps to fit the map (`text_room`), so only a title or a hint
+/// longer than any the formats allow could make it wider; it would start
+/// at the screen's left edge.
 fn left(w: i32) -> i32 {
     (MAP_VIEW.x + (MAP_VIEW.w - w) / 2).max(0)
+}
+
+/// The rows of `view`'s text: its lines, wrapped to fit beside the face.
+fn tip_lines(view: &TipView) -> Vec<String> {
+    wrapped(&view.lines, text_room(view.face.as_ref()))
+}
+
+/// The rows of lesson `view`'s text and of each of its items, wrapped to
+/// fit beside the face (an item's after its mark).
+fn lesson_rows(view: &LessonView) -> (Vec<String>, Vec<Vec<String>>) {
+    let room = text_room(view.face.as_ref());
+    let item_room = room.saturating_sub(usize::try_from(MARK_CELLS).unwrap_or(0));
+    let items = view
+        .items
+        .iter()
+        .map(|i| wrapped(core::slice::from_ref(&i.label), item_room))
+        .collect();
+    (wrapped(&view.lines, room), items)
 }
 
 /// Where the box of `view` goes: near the top of the map view, centred on
 /// it (`left`).
 pub fn rect(view: &TipView) -> Rect {
-    let wide = widest(view.lines.iter().chain([&view.heading, &view.close]));
+    let lines = tip_lines(view);
+    let wide = widest(lines.iter().chain([&view.heading, &view.close]));
     // A blank row, the heading, the lines, a blank row, the close hint.
-    let rows = view.lines.len() + 4;
+    let rows = lines.len() + 4;
     let (w, h) = size(&view.title, view.face.as_ref(), wide, rows);
     Rect::new(left(w), MAP_VIEW.y + 1, w, h)
 }
@@ -81,11 +135,13 @@ pub fn rect(view: &TipView) -> Rect {
 /// Where the box of lesson `view` goes: against the top edge of the map
 /// view, or its bottom edge if `at_bottom`, centred on it (`left`).
 pub fn lesson_rect(view: &LessonView, at_bottom: bool) -> Rect {
-    let text = widest(view.lines.iter().chain([&view.heading, &view.progress]));
-    let items = MARK_CELLS + widest(view.items.iter().map(|i| &i.label));
+    let (lines, items) = lesson_rows(view);
+    let text = widest(lines.iter().chain([&view.heading, &view.progress]));
+    let item_rows = items.iter().map(Vec::len).sum::<usize>();
+    let items = MARK_CELLS + widest(items.iter().flatten());
     // A blank row, the heading, the lines, a blank row, the items, a blank
     // row, the count.
-    let rows = view.lines.len() + view.items.len() + 5;
+    let rows = lines.len() + item_rows + 5;
     let (w, h) = size(&view.title, view.face.as_ref(), text.max(items), rows);
     let y = if at_bottom {
         MAP_VIEW.y + MAP_VIEW.h - h
@@ -150,7 +206,7 @@ fn paint_text(
 pub fn paint(ctx: &Ctx, view: &TipView, buf: &mut GlyphBuffer) {
     let rect = rect(view);
     let x = paint_frame(ctx, rect, &view.title, view.face.as_ref(), buf);
-    paint_text(ctx, (x, rect.y + 2), &view.heading, &view.lines, buf);
+    paint_text(ctx, (x, rect.y + 2), &view.heading, &tip_lines(view), buf);
     let (dim, bg) = (
         ctx.palette.get(UiColor::TextDim),
         ctx.palette.get(UiColor::PanelBg),
@@ -165,18 +221,21 @@ pub fn paint_lesson(ctx: &Ctx, view: &LessonView, at_bottom: bool, buf: &mut Gly
     let bg = c(UiColor::PanelBg);
     let rect = lesson_rect(view, at_bottom);
     let x = paint_frame(ctx, rect, &view.title, view.face.as_ref(), buf);
+    let (lines, item_rows) = lesson_rows(view);
     // The checklist starts after a blank row.
-    let mut y = paint_text(ctx, (x, rect.y + 2), &view.heading, &view.lines, buf) + 1;
-    for item in &view.items {
-        y += 1;
+    let mut y = paint_text(ctx, (x, rect.y + 2), &view.heading, &lines, buf) + 1;
+    for (item, rows) in view.items.iter().zip(&item_rows) {
         let (mark, label) = if item.done {
             (c(UiColor::HpHigh), c(UiColor::TextDim))
         } else {
             (c(UiColor::Text), c(UiColor::Text))
         };
         let glyphs: String = MARKS[usize::from(item.done)].iter().collect();
-        buf.print(x, y, &glyphs, mark, bg);
-        buf.print(x + MARK_CELLS, y, &item.label, label, bg);
+        buf.print(x, y + 1, &glyphs, mark, bg);
+        for row in rows {
+            y += 1;
+            buf.print(x + MARK_CELLS, y, row, label, bg);
+        }
     }
     buf.print(
         x,
@@ -352,23 +411,121 @@ mod tests {
         assert!(buf.sprites().is_empty());
     }
 
+    /// Ticket 0459: beside the face a 60-character line wraps, and the box
+    /// stays over the map view, clear of the side panel.
     #[test]
-    fn sixty_character_lines_beside_the_face_stay_on_the_console() {
+    fn sixty_character_lines_beside_the_face_stay_over_the_map() {
         let c = with_guide();
-        let line = "x".repeat(trpg_content::tip::MAX_LINE_CHARS);
-        let v = view(true, "Guide", &[&line, &line, &line]);
+        let line = "word ".repeat(12).trim_end().to_owned();
+        assert_eq!(line.len(), trpg_content::tip::MAX_LINE_CHARS - 1);
+        let line = format!("{line}.");
+        let v = view(true, "Guide", &[&line, "Short."]);
         let r = rect(&v);
-        assert_eq!(r.w, 16 + 2 + 60 + 4);
-        // Wider than the map: from the left edge, over the side panel.
-        assert_eq!(r.x, 0);
         assert!(
-            r.x >= 0 && r.x + r.w <= i32::from(ConsoleSpec::PC.cols),
+            r.x >= MAP_VIEW.x && r.x + r.w <= MAP_VIEW.x + MAP_VIEW.w,
             "{r:?}"
         );
         assert!(r.y + r.h <= MAP_VIEW.y + MAP_VIEW.h, "{r:?}");
+        // The text wrapped again: 48 cells of words, then the rest; as
+        // tall as the face.
+        assert_eq!(r.h, 2 + FACE_CELLS.1);
         let buf = painted(&c, &v);
-        let glyph = |x, y| buf.get(x, y).map(|c| c.glyph);
-        assert_eq!(glyph(r.x + r.w - 3, r.y + 5), Some('x'));
-        assert_eq!(glyph(r.x + r.w - 1, r.y + 5), Some('║'));
+        let row = |y: i32| -> String {
+            (r.x + 20..r.x + r.w - 1)
+                .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
+                .collect::<String>()
+                .trim_end()
+                .to_owned()
+        };
+        assert_eq!(row(r.y + 3), "word ".repeat(9).trim_end());
+        assert_eq!(row(r.y + 4), "word word word. Short.");
+        assert_eq!(row(r.y + 5), "");
+        // Without the face the same line fits on one row.
+        let r = rect(&view(false, "Guide", &[&line]));
+        assert_eq!(r.w, 2 + 60 + 2);
+        assert_eq!(r.h, 2 + 5);
+    }
+
+    /// Text that fits stays as written; a paragraph with a longer line is
+    /// wrapped again as one, the blank line between paragraphs kept.
+    #[test]
+    fn only_a_paragraph_with_a_long_line_is_wrapped_again() {
+        let lines = |ls: &[&str]| ls.iter().map(|&l| l.to_owned()).collect::<Vec<_>>();
+        let fits = lines(&["a  b", "c"]);
+        assert_eq!(wrapped(&fits, 5), fits);
+        assert_eq!(
+            wrapped(&lines(&["aaa bbb", "ccc", "", "dd", "e"]), 5),
+            lines(&["aaa", "bbb", "ccc", "", "dd", "e"])
+        );
+        assert_eq!(
+            wrapped(&lines(&["aa bb cc dd"]), 5),
+            lines(&["aa bb", "cc dd"])
+        );
+        assert!(wrapped(&[], 5).is_empty());
+    }
+
+    /// Ticket 0459: an item too long for the room beside the face goes on
+    /// under its label, its mark only on the first row.
+    #[test]
+    fn a_long_item_beside_the_face_wraps_under_its_label() {
+        let mut v = lesson(1, 1);
+        v.face = Some(FaceView {
+            portrait: "guide".into(),
+            expression: "smile".into(),
+        });
+        v.items[0].label = format!("{} end", "item ".repeat(9).trim_end());
+        let r = lesson_rect(&v, false);
+        assert!(r.x + r.w <= MAP_VIEW.x + MAP_VIEW.w, "{r:?}");
+        assert_eq!(r.h, 1 + 1 + 1 + 1 + 2 + 2 + 1 + 1);
+        let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
+        paint_lesson(&with_guide(), &v, false, &mut buf);
+        let row = |y: i32| -> String {
+            (r.x + 20..r.x + r.w - 1)
+                .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
+                .collect::<String>()
+                .trim_end()
+                .to_owned()
+        };
+        assert_eq!(
+            row(r.y + 5),
+            format!("[x] {}", "item ".repeat(9).trim_end())
+        );
+        assert_eq!(row(r.y + 6), "    end");
+        assert_eq!(row(r.y + 8), "1 of 3 done");
+    }
+
+    /// Ticket 0459: every tip and lesson the game has, its keys named,
+    /// stays over the map view beside the face.
+    #[test]
+    fn every_tip_and_lesson_fits_beside_the_face() {
+        let c = with_guide();
+        let face = || {
+            Some(FaceView {
+                portrait: "guide".into(),
+                expression: "smile".into(),
+            })
+        };
+        let inside = |r: Rect| {
+            r.x >= MAP_VIEW.x
+                && r.x + r.w <= MAP_VIEW.x + MAP_VIEW.w
+                && r.y >= MAP_VIEW.y
+                && r.y + r.h <= MAP_VIEW.y + MAP_VIEW.h
+        };
+        assert!(!c.content.tips.tips.is_empty());
+        for tip in &c.content.tips.tips {
+            let mut v = TipView::new(&c, tip);
+            v.face = face();
+            assert!(inside(rect(&v)), "{:?}: {:?}", tip.trigger, rect(&v));
+        }
+        assert!(!c.content.lessons.lessons.is_empty());
+        for lesson in &c.content.lessons.lessons {
+            let mut v = LessonView::new(&c, lesson, &[], trpg_core::Pos::new(0, 0));
+            v.face = face();
+            for at_bottom in [false, true] {
+                let r = lesson_rect(&v, at_bottom);
+                assert!(inside(r), "{}: {r:?}", lesson.id);
+            }
+        }
     }
 }
