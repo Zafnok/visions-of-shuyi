@@ -1,9 +1,10 @@
-# Battle maps (`.map`)
+# Maps (`.map`)
 
-Each `*.map` file here is one battle map, loaded by `trpg_content::map` and
-validated by the all-assets test (ADR-0005). The file stem is the map's id
-(`test_small.map` → `"test_small"`). `test_small.map`, the map of the test
-battles, is in `assets-test/maps/` (ADR-0057).
+Each `*.map` file here is one map, loaded by `trpg_content::map` and
+validated by the all-assets test (ADR-0005): a battle's map, or a
+**place** a conversation is drawn over (below). The file stem is the
+map's id (`test_small.map` → `"test_small"`). `test_small.map`, the map
+of the test battles, is in `assets-test/maps/` (ADR-0057).
 
 ## Format
 
@@ -62,7 +63,7 @@ paints the map with its own. The loader keeps it beside the map the rules
 see (`MapDef::look`), never in it (ADR-0038, ADR-0052).
 
 `light` names the light the map is in: one of `assets/data/lighting.ron`
-(`"noon"`, the default: leave it out; `"dusk"`; `"night"`). A skin that
+(`"noon"`, the default: leave it out; `"dawn"`; `"dusk"`; `"night"`). A skin that
 has pictures shades the ground by it; units, ranges, the cursor and the
 panels keep their colours, and the glyph look ignores it (ADR-0058). A
 battle file may name another light for its own fight
@@ -71,6 +72,21 @@ out.
 
 One character per tile is the *file* format only: on screen each tile is two
 glyphs wide, taken from the terrain's `glyphs` in `terrain.ron` (ADR-0012).
+
+## Places
+
+A place is a map a scene is drawn over, darkened, away from a battle
+(`@place <map> <x>,<y>`, `assets/dialogue/README.md`, *Places*). It is
+written like a battle's map, sized to fill the screen at the battle map's
+zoom: 25 × 16 tiles. Its terrain may be **decoration**, the terrain of
+`assets/data/terrain.ron` marked `decoration: true` (a roof, a house wall,
+a desk, a banner…): a battle whose map has any fails to load, so no battle
+changes.
+
+| File | Where |
+| ---- | ----- |
+| `harrowby_yard.map` | Chapter 1, the letter (`ch01_intro`): the yard behind the lead's rented house at Harrowby, at dawn |
+| `veyne_study.map` | Chapter 1, to be continued (`ch01_tbc`): the old lord's study at Veyne Hall, at night |
 
 ## Rules checked by the loader
 

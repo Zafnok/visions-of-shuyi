@@ -817,11 +817,13 @@ pub(crate) mod tests {
             // pictures are below them.
             let sprites = buf.sprites();
             let own = |sprite: &&Sprite| sprite.src.y < 96;
+            // Every terrain has a tile; a made-up id past them has none.
+            let terrains = c.content.terrain.display.terrains.len();
             for &(dx, dy, rect) in &on_map {
                 let pictures = sprites.iter().filter(own).filter(|s| s.dest == rect);
                 // A tile wholly off the console has nothing to show.
                 let seen = rect.intersect(&buf.pixel_bounds()).is_some();
-                let has = seen && shown.at(dx, dy).is_some_and(|id| id.0 < 16);
+                let has = seen && shown.at(dx, dy).is_some_and(|id| usize::from(id.0) < terrains);
                 prop_assert_eq!(pictures.count(), usize::from(has), "tile ({}, {})", dx, dy);
             }
             let area_of = |r: PxRect| i64::from(r.w) * i64::from(r.h);

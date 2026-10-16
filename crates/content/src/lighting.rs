@@ -303,7 +303,7 @@ mod tests {
     }
 
     #[test]
-    fn the_embedded_file_has_noon_dusk_and_night() {
+    fn the_embedded_file_has_noon_dawn_dusk_and_night() {
         let lighting = load().unwrap_or_else(|e| panic!("{e:?}"));
         // Noon shows the tiles as bought; dusk is render C3.
         assert_eq!(lighting.get(NOON), Some(Light::PLAIN));
@@ -312,5 +312,9 @@ mod tests {
         // Night is darker than dusk, and bluer.
         assert!(night.tint[0] < C3.tint[0] && night.tint[1] < C3.tint[1]);
         assert!(night.tint[2] > night.tint[0]);
+        // Dawn (0733) is lighter than dusk, and redder than it is green.
+        let dawn = lighting.get("dawn").unwrap();
+        assert!(dawn.grey < C3.grey && dawn.tint[2] > C3.tint[2]);
+        assert!(dawn.tint[0] > dawn.tint[1]);
     }
 }

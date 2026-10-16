@@ -1,7 +1,8 @@
 //! Conversations drawn over their place, darkened (ticket 0732,
 //! `docs/design/look-and-feel.md`, *Places behind conversations*):
 //! Chapter 1's scenes before and after its battle over the battle's map,
-//! and a scene during a battle over the battle map as it stands.
+//! a scene during a battle over the battle map as it stands, and the
+//! chapter's places of their own (ticket 0733).
 
 use insta::assert_snapshot;
 use trpg_core::{LeadGender, Pos};
@@ -83,8 +84,48 @@ fn the_scene_after_the_battle_is_drawn_over_its_field_at_the_toll_fort() {
     let h = preview("ch01_victory");
     let ctx = h.game().ctx();
     assert_eq!(place(&h), Some(field(ctx, Pos::new(20, 3))));
-    // The scene of the letter has none yet (its place comes with 0733).
-    assert_eq!(place(&preview("ch01_intro")), None);
+}
+
+/// Map file `map` as the whole screen shows it centred on `centre` with
+/// `ctx`'s map skin.
+fn map_place(ctx: &Ctx, map: &str, centre: Pos) -> MapScene {
+    let view = ctx.map_skin.view_tiles(Rect::new(0, 0, 100, 32));
+    Place::of_map(&ctx.content.maps[map]).scene(centre, view)
+}
+
+/// The letter (ticket 0733): the opening captions on black, then the
+/// yard behind the rented house at Harrowby, at dawn. The first line
+/// over it, in the glyph look.
+#[test]
+fn the_letter_is_read_in_the_yard_at_harrowby() {
+    let mut h = preview("ch01_intro");
+    for _ in 0..3 {
+        assert_eq!(place(&h), None);
+        h.wait(3.0);
+        h.keys("f");
+    }
+    let ctx = h.game().ctx();
+    assert_eq!(ctx.map_skin.name(), "glyph");
+    let yard = map_place(ctx, "harrowby_yard", Pos::new(12, 8));
+    assert_eq!(place(&h), Some(yard));
+    assert_eq!(ctx.content.maps["harrowby_yard"].look.light, "dawn");
+    h.wait(5.0);
+    assert_snapshot!(h.snapshot());
+}
+
+/// The scene after the chapter (0733): the old lord's study at Veyne
+/// Hall, at night, centred on the desk.
+#[test]
+fn the_last_scene_is_in_the_study_at_veyne_hall() {
+    let h = preview("ch01_tbc");
+    let ctx = h.game().ctx();
+    let study = map_place(ctx, "veyne_study", Pos::new(12, 7));
+    assert_eq!(place(&h), Some(study));
+    let look = &ctx.content.maps["veyne_study"].look;
+    assert_eq!(
+        (look.tiles.as_str(), look.light.as_str()),
+        ("indoor", "night")
+    );
 }
 
 /// A scene played over the battle map darkens it: every map cell around

@@ -1,0 +1,37 @@
+(
+    // The lead's father's old study at Veyne Hall, at night (ticket 0733,
+    // docs/story/chapters/ch01.md, "To be continued"): the Veyne banner on
+    // the far wall, (11, 2) to (13, 2), bookshelves under it either side,
+    // the desk with the report on it at (12, 6), a rug before it, and the
+    // door the messenger leaves by at (1, 8). A place behind a conversation,
+    // never a battle's map.
+    name: "Veyne Hall",
+    legend: {
+        '_': "floor",
+        '#': "wall",
+        '+': "door",
+        'B': "banner",
+        'S': "shelf",
+        'd': "desk",
+        'p': "papers",
+        'r': "rug",
+    },
+    look: (tiles: "indoor", light: "night"),
+)
+---
+#########################
+#########################
+###########BBB###########
+##__SS_SS_______SS_SS__##
+##_____________________##
+##_______ddddddd_______##
+##_______dddpddd_______##
+##_______rrrrrrr_______##
+#+_______rrrrrrr_______##
+##_______rrrrrrr_______##
+##_____________________##
+##_____________________##
+##_____________________##
+##_____________________##
+#########################
+#########################

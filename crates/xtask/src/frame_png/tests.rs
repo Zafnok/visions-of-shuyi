@@ -318,7 +318,7 @@ fn a_light_must_be_one_of_the_lights() {
     let err = run(&dir, &options("midnight").unwrap()).unwrap_err();
     assert_eq!(
         err,
-        "--light: no light \"midnight\"; the lights are \"dusk\", \"night\", \"noon\""
+        "--light: no light \"midnight\"; the lights are \"dawn\", \"dusk\", \"night\", \"noon\""
     );
     assert!(!dir.join("out.png").exists());
     assert!(run(&dir, &options("night").unwrap()).is_ok());

@@ -62,6 +62,8 @@
 > The war is won. The soldiers who won it were never paid.
 > In {n:place.thornmarch}, a long way from any court, an exile chops wood.
 @caption {N:place.harrowby}, {n:place.thornmarch}
+# The yard behind the rented house, at dawn (harrowby_yard.map).
+@place harrowby_yard 12,8
 @left  lead neutral
 @right retainer neutral
 > Dawn, in the yard behind a rented house. Two practice swords crack
@@ -593,6 +595,8 @@ retainer[neutral]: Go and pack. I'll find a shovel. I've buried better men
 
 @scene ch01_tbc
 @caption {N:place.veyne_hall}
+# The old lord's study, at night: the desk (veyne_study.map).
+@place veyne_study 12,7
 @music talk_antagonist
 > Night. The old lord's study. The banner of {n:house.veyne} hangs where it
   always hung, over a man who was not born under it.

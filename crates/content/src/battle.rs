@@ -20,6 +20,7 @@ use crate::error::ContentError;
 use crate::lighting::Lighting;
 use crate::map::{MapDef, column_number, line_number};
 use crate::ron_loader::parse_ron;
+use crate::terrain::TerrainDisplayTable;
 use crate::trigger::check_triggers;
 
 /// Directory of the battle files inside the asset bundle.
@@ -47,6 +48,9 @@ pub struct BattleRefs<'a> {
     pub maps: &'a BTreeMap<String, MapDef>,
     /// Terrain rules (which tiles a unit can stand on).
     pub terrain: &'a TerrainTable,
+    /// Terrain looks (which terrain is decoration, never on a battle's
+    /// map).
+    pub terrain_looks: &'a TerrainDisplayTable,
     /// Classes.
     pub classes: &'a ClassTable,
     /// Items.
@@ -315,6 +319,7 @@ pub fn from_source(
         v.err(format!("no map \"{}\"", raw.map));
         return Err(v.errors);
     };
+    v.no_decoration(&raw.map, &map);
     let slot_ids = slot_ids(&raw.player_slots, raw.enemies.len());
     let early = raw.player_slots.iter().filter(|s| !s.after_enemies).count();
     let mut next_id = BattleDef::first_enemy_id(early);
@@ -554,6 +559,24 @@ impl<'a, 'r> Checker<'a, 'r> {
         }
         self.place(what, &unit, map, start);
         Some(unit)
+    }
+
+    /// Checks no tile of `map` (map file `map_id`) is decoration, the
+    /// terrain only the places behind conversations have (ticket 0733).
+    fn no_decoration(&mut self, map_id: &str, map: &BattleMap) {
+        let looks = self.refs.terrain_looks;
+        let used: BTreeSet<&str> = map
+            .tiles
+            .cells()
+            .iter()
+            .filter(|&&id| looks.is_decoration(id))
+            .filter_map(|&id| looks.get(id).map(|t| t.id.as_str()))
+            .collect();
+        for id in used {
+            self.err(format!(
+                "map \"{map_id}\" has \"{id}\", a terrain only for the places behind conversations"
+            ));
+        }
     }
 
     /// Checks `unit` stands on a tile of `map` it can stand on, as the only

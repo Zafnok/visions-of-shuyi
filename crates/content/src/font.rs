@@ -42,6 +42,8 @@ pub const REQUIRED_GLYPHS: &str = concat!(
     "░▒▓█▀▄▌▐■",
     // Symbols (the ticket also lists · and ¤, which are Latin-1 above).
     "♣♠♥♦≈•ˇ▲▼◄►←↑→↓☺☻♪†",
+    // The terrain of the places behind conversations (ticket 0733).
+    "╱╲╤╫∩≡◊",
 );
 
 /// The glyph used when a cell's glyph is not in the atlas.

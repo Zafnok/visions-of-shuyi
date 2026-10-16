@@ -561,10 +561,11 @@ pub(crate) mod tests {
 
     prop_compose! {
         pub(crate) fn any_tile()(
-            terrain in prop::option::of(0u16..24),
+            // Past the last terrain too: an id no terrain has.
+            terrain in prop::option::of(0u16..36),
             flashes in prop::collection::vec(0.0f32..1.0, 0..2),
             tints in prop::collection::vec(0usize..4, 0..3),
-            becomes in prop::option::of(0u16..24),
+            becomes in prop::option::of(0u16..36),
         ) -> TileView {
             let kinds = [RangeKind::Danger, RangeKind::Move, RangeKind::Attack, RangeKind::Heal];
             TileView {
@@ -629,7 +630,7 @@ pub(crate) mod tests {
             origin in any_pos(),
             size in (-2..45i32, -2..40i32),
             tiles in prop::collection::vec(any_tile(), 0..200),
-            rim in prop::collection::vec(prop::option::of(0u16..24), 0..180),
+            rim in prop::collection::vec(prop::option::of(0u16..36), 0..180),
             look in prop::sample::select(vec!["outdoor", "indoor", "cave"]),
             light in prop::sample::select(vec!["noon", "dusk", "night", "midnight"]),
             units in prop::collection::vec(any_unit(), 0..8),
