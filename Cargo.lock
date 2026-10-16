@@ -964,6 +964,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "shuyi-assets"
+version = "0.3.0"
+dependencies = [
+ "include_dir",
+ "once_cell",
+ "ron",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "simd-adler32"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1118,7 +1129,7 @@ dependencies = [
  "proptest",
  "ron",
  "serde",
- "thiserror",
+ "shuyi-assets",
  "trpg-content",
  "trpg-core",
 ]

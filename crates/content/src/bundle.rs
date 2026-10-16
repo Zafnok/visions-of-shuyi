@@ -2,6 +2,11 @@
 //! in the binary at compile time (ADR-0005). This is the only way `content`
 //! reads data; there is no filesystem I/O.
 //!
+//! The layering is Shuyi Engine's (`shuyi_assets::bundle`, ticket 1103);
+//! this module gives it the game's folders as layers ([`layers`]), installs
+//! them once ([`install`]), and keeps the functions every loader calls,
+//! which read the installed bundle.
+//!
 //! With the `private-assets` feature the bought art in `assets-private/game/`
 //! is embedded too and laid over `assets/` (ADR-0040): a private file
 //! replaces the public file at the same path, and a private-only file is
@@ -12,30 +17,46 @@
 //! the **test files** in `assets-test/` (ADR-0057): the characters, chapter,
 //! battles and pictures of the tests and the debug tools. They are added
 //! after the story's files ([`TEST_FILES`]); a build that ships has none.
+//!
+//! Without `std` (the Playdate, ADR-0070 §3) `include_dir` does not build:
+//! `assets/` is the table of files `build.rs` writes, and there are no test
+//! files and no private layer.
 use crate::prelude::*;
 
-use core::cell::Cell;
+#[cfg(feature = "std")]
+use include_dir::{Dir, include_dir};
+pub use shuyi_assets::bundle::story_only;
+use shuyi_assets::bundle::{self as engine, Bundle, Layer};
 
-use include_dir::{Dir, File, include_dir};
-
+#[cfg(feature = "std")]
 static ASSETS: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets");
 
-#[cfg(feature = "private-assets")]
+/// Every file under `assets/`: its path (relative to `assets/`,
+/// `/`-separated) and contents, sorted by path. The bundle without `std`;
+/// with it, only the test that keeps the two the same reads it.
+#[cfg(any(not(feature = "std"), test))]
+static TABLE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/bundle_files.rs"));
+
+#[cfg(all(feature = "std", feature = "private-assets"))]
 static PRIVATE: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets-private/game");
 
-#[cfg(any(debug_assertions, feature = "test-fixtures"))]
+#[cfg(all(feature = "std", any(debug_assertions, feature = "test-fixtures")))]
 static TEST: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets-test");
 
 #[cfg(all(
+    feature = "std",
     feature = "private-assets",
     any(debug_assertions, feature = "test-fixtures")
 ))]
 static PRIVATE_TEST: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets-private/test");
 
 /// Whether this build embeds the test files (`assets-test/`, ADR-0057): a
-/// debug build, or one with the `test-fixtures` feature. `false` in every
-/// build that ships.
-pub const TEST_FILES: bool = cfg!(any(debug_assertions, feature = "test-fixtures"));
+/// debug build, or one with the `test-fixtures` feature, with `std`.
+/// `false` in every build that ships.
+pub const TEST_FILES: bool = cfg!(all(
+    feature = "std",
+    any(debug_assertions, feature = "test-fixtures")
+));
 
 /// Prefix used when showing an asset path to a human (`assets/data/x.ron`).
 pub const DISPLAY_ROOT: &str = "assets";
@@ -51,130 +72,40 @@ pub const TEST_DISPLAY_ROOT: &str = "assets-test";
 /// (`assets-private/test/portraits/test_lord/neutral.png`).
 pub const PRIVATE_TEST_DISPLAY_ROOT: &str = "assets-private/test";
 
-/// One embedded directory.
-struct Layer {
-    /// The prefix its files are shown with.
-    display_root: &'static str,
-    /// Its files.
-    dir: &'static Dir<'static>,
-    /// Whether it holds test files (ADR-0057). The test layers come last.
-    test: bool,
+/// The game's embedded directories, in the order a file is read from them:
+/// the bought art, `assets/`, then the test files' bought art and the test
+/// files, each when this build has it.
+pub fn layers() -> Vec<Layer> {
+    vec![
+        #[cfg(all(feature = "std", feature = "private-assets"))]
+        Layer::dir(PRIVATE_DISPLAY_ROOT, &PRIVATE).private(),
+        #[cfg(feature = "std")]
+        Layer::dir(DISPLAY_ROOT, &ASSETS),
+        #[cfg(not(feature = "std"))]
+        Layer::table(DISPLAY_ROOT, TABLE),
+        #[cfg(all(
+            feature = "std",
+            feature = "private-assets",
+            any(debug_assertions, feature = "test-fixtures")
+        ))]
+        Layer::dir(PRIVATE_TEST_DISPLAY_ROOT, &PRIVATE_TEST)
+            .private()
+            .test(),
+        #[cfg(all(feature = "std", any(debug_assertions, feature = "test-fixtures")))]
+        Layer::dir(TEST_DISPLAY_ROOT, &TEST).test(),
+    ]
 }
 
-/// The embedded directories. A file is read from the first one that has it.
-/// The story's come first, then the test files'.
-static LAYERS: &[Layer] = &[
-    #[cfg(feature = "private-assets")]
-    Layer {
-        display_root: PRIVATE_DISPLAY_ROOT,
-        dir: &PRIVATE,
-        test: false,
-    },
-    Layer {
-        display_root: DISPLAY_ROOT,
-        dir: &ASSETS,
-        test: false,
-    },
-    #[cfg(all(
-        feature = "private-assets",
-        any(debug_assertions, feature = "test-fixtures")
-    ))]
-    Layer {
-        display_root: PRIVATE_TEST_DISPLAY_ROOT,
-        dir: &PRIVATE_TEST,
-        test: true,
-    },
-    #[cfg(any(debug_assertions, feature = "test-fixtures"))]
-    Layer {
-        display_root: TEST_DISPLAY_ROOT,
-        dir: &TEST,
-        test: true,
-    },
-];
-
-thread_local! {
-    /// Whether this thread is inside [`story_only`].
-    static STORY_ONLY: Cell<bool> = const { Cell::new(false) };
-}
-
-/// Runs `f` with the test files hidden from this thread: every function
-/// here answers as it does in a build that ships. For the tests that check
-/// what such a build holds; nothing in the game calls it.
-pub fn story_only<T>(f: impl FnOnce() -> T) -> T {
-    /// Puts the old value back, also when `f` panics.
-    struct Restore(bool);
-    impl Drop for Restore {
-        fn drop(&mut self) {
-            STORY_ONLY.set(self.0);
-        }
-    }
-    let _restore = Restore(STORY_ONLY.replace(true));
-    f()
-}
-
-/// `layers` without its test layers (they are last).
-fn story_of(layers: &'static [Layer]) -> &'static [Layer] {
-    let story = layers.iter().take_while(|layer| !layer.test).count();
-    &layers[..story]
-}
-
-/// `layers`' test layers (they are last).
-fn tests_of(layers: &'static [Layer]) -> &'static [Layer] {
-    &layers[story_of(layers).len()..]
-}
-
-/// The layers this thread reads: all of them, or inside [`story_only`]
-/// those that aren't test files.
-fn layers() -> &'static [Layer] {
-    if STORY_ONLY.get() {
-        story_of(LAYERS)
-    } else {
-        LAYERS
-    }
-}
-
-/// The file at `path` and the layer it is read from: the first layer that
-/// has it.
-fn find(layers: &'static [Layer], path: &str) -> Option<(&'static Layer, &'static File<'static>)> {
-    layers
-        .iter()
-        .find_map(|layer| Some((layer, layer.dir.get_file(path)?)))
-}
-
-/// The paths (sorted, each once) of the files of every layer inside `dir`:
-/// directly inside it, or with `deep` also in any directory below it.
-fn list(layers: &'static [Layer], dir: &str, deep: bool) -> Vec<&'static str> {
-    let mut paths = Vec::new();
-    for layer in layers {
-        let root = if dir.is_empty() {
-            Some(layer.dir)
-        } else {
-            layer.dir.get_dir(dir)
-        };
-        let mut pending: Vec<&'static Dir<'static>> = root.into_iter().collect();
-        while let Some(dir) = pending.pop() {
-            paths.extend(dir.files().filter_map(|f| f.path().to_str()));
-            if deep {
-                pending.extend(dir.dirs());
-            }
-        }
-    }
-    paths.sort_unstable();
-    paths.dedup();
-    paths
-}
-
-/// The human-facing name of `path` in `layers`: under the root of the layer
-/// it is read from, or under `assets/` when no layer has it.
-fn display_in(layers: &'static [Layer], path: &str) -> String {
-    let root = find(layers, path).map_or(DISPLAY_ROOT, |(layer, _)| layer.display_root);
-    format!("{root}/{path}")
+/// The game's bundle, the process-wide one: installed from [`layers`] the
+/// first time anything reads a file ([`crate::load_embedded`] does first).
+pub fn install() -> &'static Bundle {
+    engine::get_or_install(|| Bundle::new(layers()))
 }
 
 /// Returns the UTF-8 contents of the embedded file at `path` (relative to
 /// `assets/`, `/`-separated), or `None` if it is missing or not valid UTF-8.
 pub fn file(path: &str) -> Option<&'static str> {
-    find(layers(), path)?.1.contents_utf8()
+    install().file(path)
 }
 
 /// The test files' own file at `path`, with its human-facing name, when
@@ -182,42 +113,34 @@ pub fn file(path: &str) -> Option<&'static str> {
 /// build with the test files (ADR-0057). [`file()`] reads the story's.
 /// `None` without test files, and for a path only one of the two has.
 pub fn test_part(path: &str) -> Option<(String, &'static str)> {
-    part_in(layers(), path)
-}
-
-/// [`test_part`] in `layers`.
-fn part_in(layers: &'static [Layer], path: &str) -> Option<(String, &'static str)> {
-    find(story_of(layers), path)?;
-    let (layer, file) = find(tests_of(layers), path)?;
-    let display = format!("{}/{path}", layer.display_root);
-    Some((display, file.contents_utf8()?))
+    install().test_part(path)
 }
 
 /// Returns the raw bytes of the embedded file at `path` (relative to
 /// `assets/`, `/`-separated), e.g. an image, or `None` if it is missing.
 pub fn bytes(path: &str) -> Option<&'static [u8]> {
-    find(layers(), path).map(|(_, file)| file.contents())
+    install().bytes(path)
 }
 
 /// Lists the paths (relative to `assets/`, `/`-separated, sorted) of every
 /// file directly inside directory `dir`. A missing directory yields an empty
 /// list. Use `""` for the bundle root.
 pub fn files_in(dir: &str) -> Vec<&'static str> {
-    list(layers(), dir, false)
+    install().files_in(dir)
 }
 
 /// Lists the paths (relative to `assets/`, `/`-separated, sorted) of every
 /// file inside directory `dir` or any directory below it. A missing
 /// directory yields an empty list. Use `""` for the whole bundle.
 pub fn files_under(dir: &str) -> Vec<&'static str> {
-    list(layers(), dir, true)
+    install().files_under(dir)
 }
 
 /// The human-facing name of an asset path, e.g. `assets/data/palette.ron`
 /// (`assets-private/game/...` for a file read from the private assets,
 /// `assets-test/...` for a test file).
 pub fn display_path(path: &str) -> String {
-    display_in(layers(), path)
+    install().display_path(path)
 }
 
 /// The human-facing name of the test file at `path`, there or not: where a
@@ -230,19 +153,11 @@ pub fn test_display_path(path: &str) -> String {
 /// file of the private assets: bought art (ADR-0040), the game's or the
 /// test files'.
 pub fn is_private(shown: &str) -> bool {
-    [PRIVATE_DISPLAY_ROOT, PRIVATE_TEST_DISPLAY_ROOT]
-        .iter()
-        .any(|root| {
-            shown
-                .strip_prefix(root)
-                .is_some_and(|rest| rest.starts_with('/'))
-        })
+    install().is_private(shown)
 }
 
 #[cfg(test)]
 mod tests {
-    use include_dir::DirEntry;
-
     use super::*;
 
     #[test]
@@ -306,66 +221,38 @@ mod tests {
         assert!(files_under("no_such_dir").is_empty());
     }
 
-    /// `assets/` alone, as `include_dir` embeds it: what the `no_std`
-    /// bundle's table must hold.
-    static ASSETS_ONLY: &[Layer] = &[Layer {
-        display_root: DISPLAY_ROOT,
-        dir: &ASSETS,
-        test: false,
-    }];
-
     /// The `no_std` bundle (`build.rs`'s table) and `include_dir` list the
     /// same files of `assets/` with the same bytes, and answer every
     /// function the same, so the two can't drift (ADR-0070 §3).
     #[test]
     fn the_no_std_table_holds_the_same_files_as_include_dir() {
-        use crate::bundle_table as table;
-
-        let all = list(ASSETS_ONLY, "", true);
+        let embedded = Bundle::new(vec![Layer::dir(DISPLAY_ROOT, &ASSETS)]);
+        let table = Bundle::new(vec![Layer::table(DISPLAY_ROOT, TABLE)]);
+        let all = embedded.files_under("");
         assert!(all.len() > 100, "{} files", all.len());
-        assert_eq!(table::files_under(""), all);
+        assert_eq!(table.files_under(""), all);
         for path in &all {
-            let (_, embedded) = find(ASSETS_ONLY, path).unwrap();
-            assert_eq!(table::bytes(path), Some(embedded.contents()), "{path}");
-            assert_eq!(table::file(path), embedded.contents_utf8(), "{path}");
-            assert_eq!(table::display_path(path), display_in(ASSETS_ONLY, path));
+            assert_eq!(table.bytes(path), embedded.bytes(path), "{path}");
+            assert_eq!(table.file(path), embedded.file(path), "{path}");
+            assert_eq!(table.display_path(path), embedded.display_path(path));
         }
         for dir in ["", "data", "audio", "audio/sfx", "lang", "no_such_dir"] {
-            assert_eq!(table::files_in(dir), list(ASSETS_ONLY, dir, false), "{dir}");
-            assert_eq!(
-                table::files_under(dir),
-                list(ASSETS_ONLY, dir, true),
-                "{dir}"
-            );
+            assert_eq!(table.files_in(dir), embedded.files_in(dir), "{dir}");
+            assert_eq!(table.files_under(dir), embedded.files_under(dir), "{dir}");
         }
-        assert_eq!(table::bytes("data/nope.ron"), None);
-        assert_eq!(table::file("data/nope.ron"), None);
-        assert_eq!(table::test_part("data/characters.ron"), None);
-        const { assert!(!table::TEST_FILES) };
-        assert_eq!(table::story_only(|| 7), 7);
-        let roots = [
-            (table::DISPLAY_ROOT, DISPLAY_ROOT),
-            (table::PRIVATE_DISPLAY_ROOT, PRIVATE_DISPLAY_ROOT),
-            (table::TEST_DISPLAY_ROOT, TEST_DISPLAY_ROOT),
-            (table::PRIVATE_TEST_DISPLAY_ROOT, PRIVATE_TEST_DISPLAY_ROOT),
-        ];
-        assert!(roots.iter().all(|(table, here)| table == here));
-        assert_eq!(
-            table::test_display_path("x/y.png"),
-            test_display_path("x/y.png")
-        );
-        for shown in [
-            "assets-private/game/x.png",
-            "assets-private/test/x",
-            "assets/x",
-        ] {
-            assert_eq!(table::is_private(shown), is_private(shown), "{shown}");
-        }
+        assert_eq!(table.bytes("data/nope.ron"), None);
+        assert_eq!(table.file("data/nope.ron"), None);
+        assert_eq!(table.test_part("data/characters.ron"), None);
+        assert_eq!(table.display_path("data/nope.ron"), "assets/data/nope.ron");
     }
 
     #[test]
     fn display_path_prefixes_assets() {
         assert_eq!(display_path("data/palette.ron"), "assets/data/palette.ron");
+    }
+
+    fn names(layers: &[Layer]) -> Vec<&'static str> {
+        layers.iter().map(|layer| layer.name).collect()
     }
 
     /// Without the `private-assets` feature (every gate), `assets/` and the
@@ -374,10 +261,18 @@ mod tests {
     #[cfg(not(feature = "private-assets"))]
     #[test]
     fn gates_read_only_the_public_assets_and_the_test_files() {
-        let roots: Vec<&str> = LAYERS.iter().map(|layer| layer.display_root).collect();
-        assert_eq!(roots, [DISPLAY_ROOT, TEST_DISPLAY_ROOT]);
-        assert_eq!(story_of(LAYERS).len(), 1);
-        assert_eq!(TEST_FILES, !tests_of(LAYERS).is_empty());
+        let layers = layers();
+        assert_eq!(names(&layers), [DISPLAY_ROOT, TEST_DISPLAY_ROOT]);
+        assert_eq!(layers.iter().filter(|layer| !layer.test).count(), 1);
+        assert!(layers.iter().all(|layer| !layer.private));
+        assert_eq!(TEST_FILES, layers.iter().any(|layer| layer.test));
+    }
+
+    /// The installed bundle is the game's layers, in their order.
+    #[test]
+    fn the_installed_bundle_is_the_games_layers() {
+        assert_eq!(names(install().layers()), names(&layers()));
+        assert!(core::ptr::eq(install(), install()));
     }
 
     /// The data tables a build with the test files adds entries to: the
@@ -393,8 +288,10 @@ mod tests {
     /// tables, which are merged by id, no path is in both.
     #[test]
     fn only_the_data_tables_are_in_both_the_story_and_the_test_files() {
-        let story = list(story_of(LAYERS), "", true);
-        let shared: Vec<&str> = list(tests_of(LAYERS), "", true)
+        let story = story_only(|| files_under(""));
+        let tests = Bundle::new(layers().into_iter().filter(|l| l.test).collect());
+        let shared: Vec<&str> = tests
+            .files_under("")
             .into_iter()
             .filter(|path| story.contains(path))
             .collect();
@@ -457,253 +354,5 @@ mod tests {
         // Another thread is never affected.
         let elsewhere = story_only(|| std::thread::spawn(move || file(map).is_some()).join());
         assert!(matches!(elsewhere, Ok(true)));
-    }
-
-    const fn entry(path: &'static str, contents: &'static str) -> DirEntry<'static> {
-        DirEntry::File(File::new(path, contents.as_bytes()))
-    }
-
-    /// A stand-in for `assets-private/game/`.
-    static PRIVATE_FIXTURE: Dir<'static> = Dir::new(
-        "",
-        &[
-            DirEntry::Dir(Dir::new("data", &[entry("data/a.ron", "private a")])),
-            DirEntry::Dir(Dir::new(
-                "portraits",
-                &[entry("portraits/new.portrait", "private only")],
-            )),
-            DirEntry::Dir(Dir::new(
-                "deep",
-                &[DirEntry::Dir(Dir::new(
-                    "deep/x",
-                    &[entry("deep/x/y.txt", "private y")],
-                ))],
-            )),
-        ],
-    );
-
-    /// A stand-in for `assets/`.
-    static PUBLIC_FIXTURE: Dir<'static> = Dir::new(
-        "",
-        &[
-            entry("top.txt", "public top"),
-            DirEntry::Dir(Dir::new(
-                "data",
-                &[
-                    entry("data/a.ron", "public a"),
-                    entry("data/b.ron", "public b"),
-                ],
-            )),
-            DirEntry::Dir(Dir::new(
-                "deep",
-                &[DirEntry::Dir(Dir::new(
-                    "deep/x",
-                    &[entry("deep/x/z.txt", "public z")],
-                ))],
-            )),
-        ],
-    );
-
-    /// The private stand-in laid over the public one, as a build with the
-    /// `private-assets` feature has them.
-    static MERGED: &[Layer] = &[
-        Layer {
-            display_root: PRIVATE_DISPLAY_ROOT,
-            dir: &PRIVATE_FIXTURE,
-            test: false,
-        },
-        Layer {
-            display_root: DISPLAY_ROOT,
-            dir: &PUBLIC_FIXTURE,
-            test: false,
-        },
-    ];
-
-    /// A stand-in for `assets-private/test/`.
-    static PRIVATE_TEST_FIXTURE: Dir<'static> = Dir::new(
-        "",
-        &[DirEntry::Dir(Dir::new(
-            "portraits",
-            &[entry("portraits/t.png", "bought t")],
-        ))],
-    );
-
-    /// A stand-in for `assets-test/`.
-    static TEST_FIXTURE: Dir<'static> = Dir::new(
-        "",
-        &[
-            DirEntry::Dir(Dir::new(
-                "data",
-                &[entry("data/b.ron", "test b"), entry("data/t.ron", "test t")],
-            )),
-            DirEntry::Dir(Dir::new(
-                "portraits",
-                &[entry("portraits/t.png", "placeholder t")],
-            )),
-        ],
-    );
-
-    /// Every layer, as a debug build with the `private-assets` feature has
-    /// them.
-    static WITH_TESTS: &[Layer] = &[
-        Layer {
-            display_root: PRIVATE_DISPLAY_ROOT,
-            dir: &PRIVATE_FIXTURE,
-            test: false,
-        },
-        Layer {
-            display_root: DISPLAY_ROOT,
-            dir: &PUBLIC_FIXTURE,
-            test: false,
-        },
-        Layer {
-            display_root: PRIVATE_TEST_DISPLAY_ROOT,
-            dir: &PRIVATE_TEST_FIXTURE,
-            test: true,
-        },
-        Layer {
-            display_root: TEST_DISPLAY_ROOT,
-            dir: &TEST_FIXTURE,
-            test: true,
-        },
-    ];
-
-    fn roots(layers: &'static [Layer]) -> Vec<&'static str> {
-        layers.iter().map(|layer| layer.display_root).collect()
-    }
-
-    #[test]
-    fn the_test_layers_are_the_last_ones() {
-        assert_eq!(
-            roots(story_of(WITH_TESTS)),
-            [PRIVATE_DISPLAY_ROOT, DISPLAY_ROOT]
-        );
-        assert_eq!(
-            roots(tests_of(WITH_TESTS)),
-            [PRIVATE_TEST_DISPLAY_ROOT, TEST_DISPLAY_ROOT]
-        );
-        assert_eq!(roots(story_of(MERGED)), roots(MERGED));
-        assert!(tests_of(MERGED).is_empty());
-    }
-
-    #[test]
-    fn a_test_file_is_added_after_the_story_files() {
-        assert_eq!(text(WITH_TESTS, "data/t.ron"), Some("test t"));
-        assert_eq!(
-            display_in(WITH_TESTS, "data/t.ron"),
-            "assets-test/data/t.ron"
-        );
-        assert_eq!(text(story_of(WITH_TESTS), "data/t.ron"), None);
-        // The story's file is the one read where both have one.
-        assert_eq!(text(WITH_TESTS, "data/b.ron"), Some("public b"));
-        assert_eq!(
-            list(WITH_TESTS, "data", false),
-            ["data/a.ron", "data/b.ron", "data/t.ron"]
-        );
-    }
-
-    #[test]
-    fn a_test_part_is_the_test_files_own_file_where_the_story_has_one_too() {
-        assert_eq!(
-            part_in(WITH_TESTS, "data/b.ron"),
-            Some(("assets-test/data/b.ron".to_owned(), "test b"))
-        );
-        // Only the test files have it: an ordinary file, read whole.
-        assert_eq!(part_in(WITH_TESTS, "data/t.ron"), None);
-        // Only the story has it.
-        assert_eq!(part_in(WITH_TESTS, "data/a.ron"), None);
-        assert_eq!(part_in(WITH_TESTS, "data/nope.ron"), None);
-        // No test layers.
-        assert_eq!(part_in(story_of(WITH_TESTS), "data/b.ron"), None);
-    }
-
-    #[test]
-    fn a_bought_test_file_replaces_the_placeholder_and_is_private() {
-        assert_eq!(text(WITH_TESTS, "portraits/t.png"), Some("bought t"));
-        assert_eq!(
-            display_in(WITH_TESTS, "portraits/t.png"),
-            "assets-private/test/portraits/t.png"
-        );
-        assert!(is_private(&display_in(WITH_TESTS, "portraits/t.png")));
-        assert!(is_private(&display_in(WITH_TESTS, "data/a.ron")));
-        assert!(is_private(&display_in(
-            WITH_TESTS,
-            "portraits/new.portrait"
-        )));
-        assert!(!is_private(&display_in(WITH_TESTS, "data/b.ron")));
-        assert!(!is_private(&display_in(WITH_TESTS, "data/t.ron")));
-        assert!(!is_private(&display_in(WITH_TESTS, "data/nope.ron")));
-        // Without the bought test files the placeholder is back.
-        assert_eq!(
-            text(&WITH_TESTS[3..], "portraits/t.png"),
-            Some("placeholder t")
-        );
-        assert!(!is_private(&display_in(
-            &WITH_TESTS[3..],
-            "portraits/t.png"
-        )));
-        // Only a name under one of the two private folders.
-        assert!(is_private("assets-private/game/x.png"));
-        assert!(is_private("assets-private/test/x.png"));
-        assert!(!is_private("assets-private/games/x.png"));
-        assert!(!is_private("assets-private/game"));
-        assert!(!is_private("assets-private/library/x.png"));
-        assert!(!is_private("x/assets-private/game/x.png"));
-    }
-
-    fn text(layers: &'static [Layer], path: &str) -> Option<&'static str> {
-        find(layers, path)?.1.contents_utf8()
-    }
-
-    #[test]
-    fn a_private_file_replaces_the_public_file_at_the_same_path() {
-        assert_eq!(text(MERGED, "data/a.ron"), Some("private a"));
-        assert_eq!(
-            display_in(MERGED, "data/a.ron"),
-            "assets-private/game/data/a.ron"
-        );
-        // Without the private layer the public file is back.
-        assert_eq!(text(&MERGED[1..], "data/a.ron"), Some("public a"));
-    }
-
-    #[test]
-    fn a_private_only_file_is_added() {
-        assert_eq!(text(MERGED, "portraits/new.portrait"), Some("private only"));
-        assert_eq!(list(MERGED, "portraits", false), ["portraits/new.portrait"]);
-        assert_eq!(text(&MERGED[1..], "portraits/new.portrait"), None);
-        assert!(list(&MERGED[1..], "portraits", false).is_empty());
-    }
-
-    #[test]
-    fn a_public_only_file_is_still_read() {
-        assert_eq!(text(MERGED, "data/b.ron"), Some("public b"));
-        assert_eq!(display_in(MERGED, "data/b.ron"), "assets/data/b.ron");
-    }
-
-    #[test]
-    fn a_file_in_no_layer_is_missing_and_shown_under_assets() {
-        assert!(find(MERGED, "data/nope.ron").is_none());
-        assert_eq!(display_in(MERGED, "data/nope.ron"), "assets/data/nope.ron");
-    }
-
-    #[test]
-    fn lists_merge_the_layers_sorted_with_each_path_once() {
-        assert_eq!(list(MERGED, "data", false), ["data/a.ron", "data/b.ron"]);
-        assert_eq!(list(MERGED, "", false), ["top.txt"]);
-        // `deep` has no files of its own, only in the directory below.
-        assert!(list(MERGED, "deep", false).is_empty());
-        assert_eq!(list(MERGED, "deep", true), ["deep/x/y.txt", "deep/x/z.txt"]);
-        assert_eq!(
-            list(MERGED, "", true),
-            [
-                "data/a.ron",
-                "data/b.ron",
-                "deep/x/y.txt",
-                "deep/x/z.txt",
-                "portraits/new.portrait",
-                "top.txt",
-            ]
-        );
-        assert!(list(MERGED, "no_such_dir", true).is_empty());
     }
 }

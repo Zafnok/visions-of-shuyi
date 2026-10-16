@@ -87,7 +87,8 @@ jobs:
           path: dist/web
 
   # the rules build without `std` for the Playdate (ADR-0070 §3); 1028
-  # added `trpg-content`; 1029 adds `trpg-ui`.
+  # added `trpg-content`; 1029 adds `trpg-ui`; 1103 adds the engine's
+  # `shuyi-assets` (ADR-0070 §6).
   no-std:
     name: no-std
     needs: changes
@@ -103,6 +104,7 @@ jobs:
       - run: cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf --locked
+      - run: cargo build -p shuyi-assets --no-default-features --target thumbv7em-none-eabihf --locked
 
   # The Playdate front end's device build (ADR-0070 §1, ticket 1031):
   # `pdex.elf` linked and packed by the SDK's `pdc`. The Simulator's

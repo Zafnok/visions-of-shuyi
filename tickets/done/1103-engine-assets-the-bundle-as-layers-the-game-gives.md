@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["1102"]
 nick_input: none
-completed:
+completed: 2026-10-16
 ---
 
 # 1103 — shuyi-assets: the bundle as layers the game gives
@@ -74,13 +74,13 @@ moving any other loader (1104, 1105).
 
 ## Acceptance criteria
 
-- [ ] `shuyi-assets` builds and tests alone (`cargo test -p
+- [x] `shuyi-assets` builds and tests alone (`cargo test -p
       shuyi-assets`) with no game file.
-- [ ] Every existing test passes unchanged; no snapshot changes.
-- [ ] `cargo build -p trpg-app --target wasm32-unknown-unknown` passes.
-- [ ] `docs/engine/boundary.md` rows for `bundle.rs`, `build.rs`,
+- [x] Every existing test passes unchanged; no snapshot changes.
+- [x] `cargo build -p trpg-app --target wasm32-unknown-unknown` passes.
+- [x] `docs/engine/boundary.md` rows for `bundle.rs`, `build.rs`,
       `error.rs`, `ron_loader.rs` updated to say where they now live.
-- [ ] All gates in the `run-gates` skill pass, including
+- [x] All gates in the `run-gates` skill pass, including
       `check-engine-boundary`.
 
 ## Tests required
@@ -89,3 +89,52 @@ moving any other loader (1104, 1105).
 - Integration: the game's `all_assets_load` still passes.
 
 ## Completion notes
+
+- New crate `engine/crates/assets` (`shuyi-assets`): `bundle` (`Bundle`,
+  `Layer`, `Files`, `install`, `installed`, `get_or_install`,
+  `story_only`), `error` (`ContentError`, `ContentErrors`, `line_of`) and
+  `ron` (`parse_ron`, plus `load_ron(&Bundle, path)`). Default `std`
+  feature; builds `no_std` for the Playdate, and CI's `no-std` job and the
+  `run-gates` list now build it.
+- `trpg-content` keeps its `include_dir!` calls, both features and
+  `build.rs`; `bundle::layers()` (re-exported as `trpg_content::layers`)
+  builds its `Vec<Layer>`, `bundle::install()` installs it, and the old
+  free functions, constants, `error` and `ron_loader` paths stay as thin
+  wrappers or re-exports, so no other crate changed.
+- `bundle_table.rs` is gone: 1028's generated table is now the bundle's
+  one layer without `std` (`Layer::table`). The test that keeps it equal
+  to `include_dir` compares the two layers.
+- Fixture tests moved to the engine with neutral layer names (`base`,
+  `bought`, `tests`, `bought-tests`): the boundary gate bans the game's
+  folder names there. Tests that read the game's files stay in
+  `trpg-content`. New engine tests: a table layer answers as the same
+  directory, the bundle installs once, `load_ron` over a bundle.
+- Checked by hand: `cargo test -p trpg-content --features private-assets
+  --test it private_assets::` passes with the private repository at the
+  pinned revision (what Pages runs).
+
+Deviations from the plan:
+
+- `Layer` holds `files: Files` (an `include_dir` directory or a sorted
+  table) instead of `dir: &'static Dir`: `include_dir` needs `std`, and
+  the ticket asks for the `no_std` table to be a layer.
+- `story_only` is a free function, not a method: it hides test layers
+  from the thread, for every bundle.
+- The process-wide bundle is a `once_cell::race::OnceBox`, not a
+  `OnceLock`, so it builds without `std`. `once_cell` (MIT OR Apache-2.0,
+  already a workspace crate) is added to the engine's allowed list.
+- The game's bundle is installed on the first file read as well as at the
+  start of `load_embedded` (and `load_with_scripts`): many tests, the app
+  and the tools read files without loading everything first.
+- `is_private` asks the bundle's private layers instead of two fixed
+  names. Same answer for every name `display_path` can give.
+- A path no layer has is shown under the first layer that is neither
+  private nor test files (`assets/` for the game, as before).
+
+Follow-up: 1056 (the debug Playdate build's `pdc` step crashes, on
+`main` too; the release build packs fine).
+
+`trpg-content` no longer depends on `thiserror` (its errors are the
+engine's now).
+
+No gameplay rules decided. Nothing changes for Nick when playing.
