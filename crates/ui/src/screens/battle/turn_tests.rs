@@ -3,7 +3,6 @@
 //! and the phase and outcome banners.
 
 use insta::assert_snapshot;
-use trpg_content::FontAtlasDef;
 use trpg_core::{ItemId, Objective, Outcome, UnitAction};
 
 use super::banner::{BannerKind, PHASE_BANNER_S};
@@ -57,7 +56,7 @@ fn shows(buf: &GlyphBuffer, text: &str) -> bool {
 
 /// Every glyph of `buf` is in the game's font.
 fn assert_in_font(buf: &GlyphBuffer) {
-    let font = FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     for y in 0..i32::from(ConsoleSpec::PC.rows) {
         for x in 0..i32::from(ConsoleSpec::PC.cols) {
             let g = buf.get(x, y).unwrap().glyph;

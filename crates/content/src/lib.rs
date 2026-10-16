@@ -239,7 +239,7 @@ pub fn load_with_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> Result<Content
 /// Loads and validates everything; the dialogue files are `scripts`, or
 /// the bundle's when `None`.
 fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, ContentErrors> {
-    let palette = PaletteDef::load();
+    let palette = crate::palette::load();
     let terrain = TerrainDef::load(palette.as_ref().ok());
     let maps = load_maps(terrain.as_ref().ok());
     let movement = terrain.as_ref().ok().map(|t| &t.rules.movement_types[..]);
@@ -261,7 +261,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     );
     let skills = check_skill_references(skill::load(), classes.as_ref().ok());
     let arts = check_art_references(art::load(), items.as_ref().ok());
-    let (images, audio) = (ImageTable::load(), audio::load());
+    let (images, audio) = (crate::image::load(), audio::load());
     let portraits = load_portraits(images.as_ref().ok());
     let stage_art = load_battlers(images.as_ref().ok(), terrain.as_ref().ok(), lit);
     let title_art = load_title(images.as_ref().ok());
@@ -334,7 +334,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let content = assemble(
         palette,
         KeymapDef::load(),
-        FontAtlasDef::load(),
+        crate::font::load(),
         terrain,
         maps,
         units,
@@ -890,7 +890,7 @@ mod tests {
     use super::*;
 
     fn ok_terrain() -> Result<TerrainDef, Vec<ContentError>> {
-        TerrainDef::load(PaletteDef::load().ok().as_ref())
+        TerrainDef::load(crate::palette::load().ok().as_ref())
     }
 
     #[test]
@@ -1020,11 +1020,11 @@ mod tests {
     }
 
     fn ok_battlers() -> Result<BattlerTable, Vec<ContentError>> {
-        battler::load_all(&ImageTable::load().unwrap_or_default(), None, None)
+        battler::load_all(&crate::image::load().unwrap_or_default(), None, None)
     }
 
     fn ok_title() -> Result<TitleArt, Vec<ContentError>> {
-        title::load(&ImageTable::load().unwrap_or_default())
+        title::load(&crate::image::load().unwrap_or_default())
     }
 
     fn ok_openings() -> Result<BTreeMap<String, OpeningDef>, Vec<ContentError>> {
@@ -1062,7 +1062,7 @@ mod tests {
     }
 
     fn ok_portraits() -> Result<BTreeMap<String, Portrait>, Vec<ContentError>> {
-        portrait::load_all(&ImageTable::load().unwrap_or_default())
+        portrait::load_all(&crate::image::load().unwrap_or_default())
     }
 
     fn ok_dialogue() -> Result<DialogueTable, Vec<ContentError>> {
@@ -1097,7 +1097,7 @@ mod tests {
 
     fn ok_tilesets() -> Result<BTreeMap<String, Tileset>, Vec<ContentError>> {
         load_tilesets(
-            ImageTable::load().ok().as_ref(),
+            crate::image::load().ok().as_ref(),
             ok_terrain().ok().as_ref(),
             ok_classes().ok().as_ref(),
             ok_characters().ok().as_ref(),
@@ -1121,7 +1121,7 @@ mod tests {
             lessons: ok_lessons(),
             audio: audio::load(),
             credits: ok_credits(),
-            images: ImageTable::load(),
+            images: crate::image::load(),
             tilesets: ok_tilesets(),
             battles,
             chapters,
@@ -1140,9 +1140,9 @@ mod tests {
     #[test]
     fn assemble_ok_keeps_content() {
         let content = assemble(
-            PaletteDef::load(),
+            crate::palette::load(),
             KeymapDef::load(),
-            FontAtlasDef::load(),
+            crate::font::load(),
             ok_terrain(),
             ok_maps(),
             ok_units(),
@@ -1150,7 +1150,7 @@ mod tests {
         .ok();
         assert_eq!(
             content.as_ref().map(|c| &c.palette),
-            PaletteDef::load().ok().as_ref()
+            crate::palette::load().ok().as_ref()
         );
         assert_eq!(
             content.as_ref().map(|c| &c.keymap),
@@ -1158,7 +1158,7 @@ mod tests {
         );
         assert_eq!(
             content.as_ref().map(|c| &c.font),
-            FontAtlasDef::load().ok().as_ref()
+            crate::font::load().ok().as_ref()
         );
         assert_eq!(
             content.as_ref().map(|c| &c.terrain),
@@ -1209,7 +1209,7 @@ mod tests {
         );
         assert_eq!(
             content.as_ref().map(|c| &c.images),
-            ImageTable::load().ok().as_ref()
+            crate::image::load().ok().as_ref()
         );
         assert_eq!(
             content.as_ref().map(|c| &c.tilesets),
@@ -1305,7 +1305,7 @@ mod tests {
                 if i == 0 {
                     Err(e("p"))
                 } else {
-                    PaletteDef::load()
+                    crate::palette::load()
                 },
                 if i == 1 {
                     Err(e("k"))
@@ -1315,7 +1315,7 @@ mod tests {
                 if i == 2 {
                     Err(e("f"))
                 } else {
-                    FontAtlasDef::load()
+                    crate::font::load()
                 },
                 if i == 3 { Err(e("t")) } else { ok_terrain() },
                 if i == 4 { Err(e("m")) } else { ok_maps() },
@@ -1340,7 +1340,7 @@ mod tests {
                     images: if i == 18 {
                         Err(e("j"))
                     } else {
-                        ImageTable::load()
+                        crate::image::load()
                     },
                     tilesets: if i == 19 { Err(e("z")) } else { ok_tilesets() },
                     battles: if i == 20 { Err(e("b")) } else { ok_story().0 },
@@ -1394,14 +1394,14 @@ mod tests {
     #[test]
     fn the_title_art_is_skipped_when_the_images_failed() {
         assert_eq!(load_title(None), Ok(TitleArt::default()));
-        let images = ImageTable::load().ok();
+        let images = crate::image::load().ok();
         assert!(load_title(images.as_ref()).is_ok_and(|t| t.logo.is_some()));
     }
 
     #[test]
     fn battlers_are_skipped_when_the_images_failed() {
         assert_eq!(load_battlers(None, None, None), Ok(BattlerTable::default()));
-        let images = ImageTable::load().ok();
+        let images = crate::image::load().ok();
         let lights = lighting::load().ok();
         let loaded = load_battlers(images.as_ref(), ok_terrain().ok().as_ref(), lights.as_ref());
         assert!(loaded.is_ok_and(|t| !t.battlers.is_empty()));
@@ -1409,7 +1409,7 @@ mod tests {
 
     #[test]
     fn tilesets_are_skipped_when_what_they_need_failed() {
-        let (images, terrain) = (ImageTable::load().ok(), ok_terrain().ok());
+        let (images, terrain) = (crate::image::load().ok(), ok_terrain().ok());
         let (classes, characters) = (ok_classes().ok(), ok_characters().ok());
         let all = [
             images.is_some(),

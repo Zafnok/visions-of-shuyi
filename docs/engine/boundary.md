@@ -60,6 +60,10 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    (`color.rs:119-144`), and content requires it (`palette.rs:65-90`,
    `REQUIRED_COLORS`).
    **Fix:** named palette colors, with the required set given by the game.
+   **Partly done in 1104:** `ImageId`, `Light` and `PaletteDef` are
+   `shuyi_assets` types (the frame still imports them through
+   `trpg_content`), and the palette takes its required names from the game.
+   `UiColor` is 1108.
 6. **The map scene carries battle units.** See `UnitView`
    (`ui/src/map_view/scene.rs:131-168`). `RangeKind` is Danger, Move, Attack
    or Heal. Skins take `trpg_core::Pos` and the whole `Ctx`. Generic code
@@ -121,17 +125,19 @@ These are the things ADR-0063 §6 makes generic before moving anything.
 Modules that do not import `trpg_core` at all are the first set to move:
 `audio`, `bundle`, `credits`, `dialogue/line_id`, `error`, `font`, `image`,
 `keymap`, `lang`, `lighting`, `palette`, `portrait`, `ron_loader`, `tip`,
-`title`. `bundle`, `error` and `ron_loader` moved in 1103.
+`title`. `bundle`, `error` and `ron_loader` moved in 1103; `audio`,
+`credits`, `font`, `image`, `lighting` and `palette`'s generic part
+(with `ink`) in 1104.
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
 | `bundle.rs`, `build.rs` | E → moved | 1103: the layer logic is `shuyi_assets::bundle` (`Bundle`, `Layer`, `install`). `bundle.rs` keeps the game's folders (`include_dir!`, `layers()`) and the old free functions over the installed bundle; `build.rs` and the two features stay the game's. |
 | `error.rs`, `ron_loader.rs` | E → moved | 1103: `shuyi_assets::{error, ron}` (`ContentError`, `parse_ron<T>`, `load_ron` over a `Bundle`). Both files are re-exports now; `load_ron(path)` reads the game's bundle. |
-| `font.rs`, `image.rs`, `lighting.rs`, `audio.rs`, `credits.rs` | E | `credits.rs`' bought-art check is ADR-0051's rule, useful to anyone with bought art. |
+| `font.rs`, `image.rs`, `lighting.rs`, `audio.rs`, `credits.rs` | E → moved | 1104: `shuyi_assets::{font, image, lighting, audio, credits}`. The parsers take what names the game's files as arguments: the bundle (`ImageTable::load`), the required glyphs and atlas image's name, the default light, the audio `Files` (with the sound folder's shown names and the music folder), the credits' `Places` (audio manifest and private folder). Each content module keeps its paths, `load()` and a wrapper with its old arguments, and re-exports the rest. `credits.rs`' bought-art check (ADR-0051) moved with it. |
 | `lang.rs`, `names.rs` | E | Text by key, packs, stale or missing text. `Lang` holds the game-built `DataText` (`lang.rs:175`). Cut that. |
 | `dialogue/parse.rs`, `dialogue/line_id.rs` | E | The `.dlg` parser needs only a character-id newtype. |
 | `portrait.rs`, `title.rs`, `tileset/look.rs` | E | The five required expressions and the 256 px frame become parameters. |
-| `palette.rs` | M | Named colors and hex are E. `Theme` and `REQUIRED_COLORS` are G. |
+| `palette.rs`, `ink.rs` | M → cut | 1104: `PaletteDef`, hex, `theme_problems` (a theme has the default's names) and the Playdate's `Ink`s are `shuyi_assets::{palette, ink}`; `PaletteDef::from_source` takes the required names. `Theme`, `REQUIRED_COLORS`, `load_themes` and the palette files' paths stay. |
 | `keymap.rs` | M | Keys, chords, buttons, repeat and sticks are E (about 740 lines). `Action` and `Layout` are G. |
 | `lang/lines.rs`, `lang/data.rs` | M | Per-line translation is E. `ByGender`, and the table lookups for classes and items, are G. |
 | `dialogue.rs`, `dialogue/check.rs`, `dialogue/presence.rs` | M | Scenes, steps, choices, music lines, `@if` and the on-screen checks are E. Lead rules, box sizes and roster checks are G. |

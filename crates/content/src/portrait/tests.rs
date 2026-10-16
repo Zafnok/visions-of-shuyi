@@ -7,7 +7,7 @@ fn table(files: &[(&'static str, u32, u32)]) -> ImageTable {
         .iter()
         .map(|&(path, w, h)| (path, png_header(w, h)))
         .collect();
-    ImageTable::from_files(pngs.iter().map(|(path, png)| (*path, &png[..]))).unwrap_or_default()
+    crate::image::from_files(pngs.iter().map(|(path, png)| (*path, &png[..]))).unwrap_or_default()
 }
 
 /// One 64×64 image per required expression, `portraits/t/<name>.png`, plus
@@ -222,7 +222,7 @@ fn an_image_must_fit_the_frame() {
 /// by name, and a sidecar naming it is told it is no image.
 #[test]
 fn an_unreadable_png_is_reported_by_the_image_table() {
-    let unreadable = ImageTable::from_files([("portraits/t/neutral.png", &b"not an image"[..])]);
+    let unreadable = crate::image::from_files([("portraits/t/neutral.png", &b"not an image"[..])]);
     let errs: Vec<String> = unreadable
         .unwrap_err()
         .iter()
@@ -262,7 +262,7 @@ fn reports_every_problem_at_once() {
 
 #[test]
 fn embedded_placeholders_load() {
-    let images = ImageTable::load().unwrap();
+    let images = crate::image::load().unwrap();
     let portraits = load_all(&images).unwrap();
     for id in ["lead_f", "lead_m", "test_knight", "test_lord"] {
         let p = &portraits[id];

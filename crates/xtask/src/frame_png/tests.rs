@@ -41,7 +41,7 @@ fn test_card() -> &'static [u8] {
 /// A painter with the tiny atlas and the test card, if `with_card`.
 fn painter(with_card: bool) -> (Painter, ImageTable) {
     let (atlas, png) = tiny_atlas();
-    let table = ImageTable::from_files([(TEST_CARD_PATH, test_card())]).unwrap();
+    let table = trpg_content::image::from_files([(TEST_CARD_PATH, test_card())]).unwrap();
     let read = |path: &str| (with_card && path == TEST_CARD_PATH).then(test_card);
     (
         Painter::new(atlas, &png, &table, read, CLEAR).unwrap(),

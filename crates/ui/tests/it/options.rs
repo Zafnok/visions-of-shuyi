@@ -665,7 +665,7 @@ fn a_layout_saved_by_an_older_build_is_kept() {
 
 #[test]
 fn every_glyph_drawn_is_in_the_font() {
-    let font = trpg_content::FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     let mut h = options_in_battle();
     for script in ["", TO_MUSIC, "Up Up Up Up f"] {
         h.keys(script);

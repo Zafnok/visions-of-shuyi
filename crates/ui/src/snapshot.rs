@@ -268,7 +268,7 @@ mod tests {
         use crate::glyph_buffer::{Layer, Overlay};
         let p = game_palette();
         let text = p.get(UiColor::Text);
-        let images = trpg_content::ImageTable::load().unwrap();
+        let images = trpg_content::image::load().unwrap();
         let card = images.id(trpg_content::image::TEST_CARD_PATH).unwrap();
         let src = Rect::new(0, 0, 16, 16);
         let mut b = GlyphBuffer::new(20, 6, Cell::new(' ', text, text));

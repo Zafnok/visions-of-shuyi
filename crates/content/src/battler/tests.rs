@@ -8,7 +8,7 @@ fn table(files: &[(&'static str, u32, u32)]) -> ImageTable {
         .iter()
         .map(|&(path, w, h)| (path, png_header(w, h)))
         .collect();
-    ImageTable::from_files(pngs.iter().map(|(path, png)| (*path, &png[..]))).unwrap_or_default()
+    crate::image::from_files(pngs.iter().map(|(path, png)| (*path, &png[..]))).unwrap_or_default()
 }
 
 fn images() -> ImageTable {
@@ -356,7 +356,7 @@ fn the_table_needs_both_the_battlers_and_the_backdrops_to_be_right() {
 
 #[test]
 fn the_shipped_battlers_and_backdrops_load() {
-    let images = ImageTable::load().unwrap_or_default();
+    let images = crate::image::load().unwrap_or_default();
     let table = load_all(&images, None, None);
     assert!(table.is_ok(), "{table:?}");
     let table = table.unwrap_or_default();

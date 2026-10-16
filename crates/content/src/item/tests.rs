@@ -4,7 +4,6 @@ use trpg_core::{
 };
 
 use super::*;
-use crate::palette::PaletteDef;
 use crate::terrain::TerrainDef;
 
 fn items() -> ItemTable {
@@ -414,12 +413,12 @@ fn syntax_and_unknown_fields_are_positioned() {
 // ---- Worked examples W1–W4 from real units and items.ron --------------------------
 
 fn classes() -> ClassTable {
-    let t = TerrainDef::load(PaletteDef::load().ok().as_ref()).unwrap_or_default();
+    let t = TerrainDef::load(crate::palette::load().ok().as_ref()).unwrap_or_default();
     crate::class::load(Some(&t.rules.movement_types)).unwrap_or_default()
 }
 
 fn terrain(name: &str) -> TerrainRules {
-    let t: TerrainTable = TerrainDef::load(PaletteDef::load().ok().as_ref())
+    let t: TerrainTable = TerrainDef::load(crate::palette::load().ok().as_ref())
         .unwrap_or_default()
         .rules;
     let found = t.terrains.into_iter().find(|r| r.name == name);

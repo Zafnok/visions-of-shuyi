@@ -345,7 +345,7 @@ fn the_optional_split_keys_can_be_given_keys() {
 
 #[test]
 fn every_glyph_drawn_is_in_the_font() {
-    let font = trpg_content::FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     let mut h = open(Layout::RightHanded);
     h.keys("f");
     let snap = h.snapshot();
