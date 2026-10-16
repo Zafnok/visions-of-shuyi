@@ -11,14 +11,16 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
 
-/// The panel, in cells.
+/// The panel, in cells, at its smallest: it grows down to fit its rows
+/// ([`panel`]).
 const PANEL: Rect = Rect::new(20, 3, 60, 20);
 /// Column of the row labels.
 const LABEL_X: i32 = PANEL.x + 4;
 /// Column of the row values.
 const VALUE_X: i32 = PANEL.x + 30;
-/// Row of the message under the panel.
-const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
+/// Panel rows that aren't the screen's rows: the top border, a blank row
+/// under it and the bottom border.
+const PANEL_FRAME_H: i32 = 3;
 /// Height of a question's box: its two lines, a blank row above and below,
 /// and the border.
 const QUESTION_H: i32 = 6;
@@ -42,14 +44,24 @@ fn volume_text(level: u8, max: u8) -> String {
     format!("{bar} {level:>3}")
 }
 
+/// The panel for `view`: [`PANEL`], taller if its rows and the blank rows
+/// between their groups need more.
+fn panel(view: &OptionsView) -> Rect {
+    let gaps = view.rows.iter().filter(|r| r.starts_group).count();
+    let lines = i32::try_from(view.rows.len() + gaps).unwrap_or(i32::MAX);
+    let h = PANEL.h.max(lines.saturating_add(PANEL_FRAME_H));
+    Rect::new(PANEL.x, PANEL.y, PANEL.w, h)
+}
+
 /// Paints `view` over the whole of `buf`.
 pub fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let (black, bg) = (c(UiColor::Black), c(UiColor::PanelBg));
     let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
     buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
-    buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-    buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
+    let panel = panel(view);
+    buf.fill_rect(panel, Cell::new(' ', text, bg));
+    buf.draw_box(panel, BoxStyle::Single, c(UiColor::PanelBorder), bg);
     let title = format!(" {} ", view.title);
     buf.print(PANEL.x + 2, PANEL.y, &title, c(UiColor::TextHighlight), bg);
 
@@ -63,7 +75,9 @@ pub fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
     }
 
     if let Some(message) = &view.message {
-        print_centred(buf, MESSAGE_ROW, message, c(UiColor::TextHighlight), black);
+        // The row under the panel's.
+        let row = panel.y + panel.h + 1;
+        print_centred(buf, row, message, c(UiColor::TextHighlight), black);
     }
     if let Some(question) = &view.question {
         paint_question(ctx, buf, question);
@@ -357,6 +371,26 @@ mod tests {
         assert_eq!(painted_row(&c, &v, bottom + 1), "");
         assert_eq!(painted_row(&c, &v, bottom + 2), "Tips will show again");
         assert_eq!(painted_row(&c, &v, bottom + 3), "");
+    }
+
+    /// Every row a campaign with pictures shows (20 lines with the two
+    /// group gaps) fits inside the panel: it grows, and the message
+    /// moves down with it.
+    #[test]
+    fn the_panel_grows_to_fit_its_rows() {
+        let c = ctx();
+        let mut rows: Vec<RowView> = (0..18)
+            .map(|i| row(&format!("Row {i}"), ValueView::None, false))
+            .collect();
+        rows[12].starts_group = true;
+        rows[16].starts_group = true;
+        let mut v = view(rows);
+        v.message = Some("Defaults restored".to_owned());
+        let last = PANEL.y + 2 + 20 - 1;
+        assert!(painted_row(&c, &v, last).starts_with("│   Row 17"));
+        assert!(painted_row(&c, &v, last + 1).starts_with('└'));
+        assert_eq!(painted_row(&c, &v, last + 3), "Defaults restored");
+        assert_eq!(painted_row(&c, &v, 31), "help");
     }
 
     #[test]

@@ -9,7 +9,9 @@
 //! ([`LayoutPickerScreen::change`]) and `Key bindings` the
 //! [`KeyBindingsScreen`]; with a campaign loaded, `Game mode` shows its
 //! mode, and at Preparations switches Classic to Casual, never back and
-//! never in the middle of a battle (`docs/design/death-and-difficulty.md`);
+//! never in the middle of a battle (`docs/design/death-and-difficulty.md`),
+//! and `Tutorial` its tutorial level, a value row like the settings
+//! (ticket 0838, `docs/design/tutorial.md`);
 //! `Reset tips` shows every one-time tip again; `Restore defaults` puts
 //! every setting back (custom keys are reset on the Key bindings screen,
 //! and the layout stays). Whatever does something big asks first
@@ -30,7 +32,7 @@ use crate::prelude::*;
 pub use view::{ChoiceView, LeaveView, OptionsView, QuestionView, RowView, ValueView};
 
 use trpg_content::Theme;
-use trpg_core::GameMode;
+use trpg_core::{GameMode, TutorialLevel};
 
 use super::{KeyBindingsScreen, LayoutPickerScreen, layout_picker};
 use crate::audio::MenuSound;
@@ -97,6 +99,8 @@ pub enum Row {
     KeyBindings,
     /// The campaign's mode (only with a campaign loaded).
     GameMode,
+    /// The campaign's tutorial level (only with a campaign loaded).
+    Tutorial,
     /// Shows every one-time tip again.
     ResetTips,
     /// Puts every setting back to its default.
@@ -105,7 +109,7 @@ pub enum Row {
 
 impl Row {
     /// Every row, top to bottom.
-    pub const ALL: [Row; 17] = [
+    pub const ALL: [Row; 18] = [
         Row::TextSpeed,
         Row::AnimSpeed,
         Row::CombatAnimations,
@@ -121,6 +125,7 @@ impl Row {
         Row::Layout,
         Row::KeyBindings,
         Row::GameMode,
+        Row::Tutorial,
         Row::ResetTips,
         Row::RestoreDefaults,
     ];
@@ -143,6 +148,7 @@ impl Row {
             Row::Layout => "options.row.layout",
             Row::KeyBindings => "options.row.key_bindings",
             Row::GameMode => "options.row.game_mode",
+            Row::Tutorial => "options.row.tutorial",
             Row::ResetTips => "options.row.reset_tips",
             Row::RestoreDefaults => "options.row.restore_defaults",
         }
@@ -204,6 +210,22 @@ const fn mode_key(mode: GameMode) -> &'static str {
     match mode {
         GameMode::Classic => "options.mode.classic",
         GameMode::Casual => "options.mode.casual",
+    }
+}
+
+/// Every tutorial level, in the order the row steps through them.
+const TUTORIAL_LEVELS: [TutorialLevel; 3] = [
+    TutorialLevel::Full,
+    TutorialLevel::Short,
+    TutorialLevel::None,
+];
+
+/// The text key of a tutorial level's name.
+pub const fn tutorial_key(level: TutorialLevel) -> &'static str {
+    match level {
+        TutorialLevel::Full => "options.tutorial.full",
+        TutorialLevel::Short => "options.tutorial.short",
+        TutorialLevel::None => "options.tutorial.none",
     }
 }
 
@@ -323,6 +345,9 @@ pub struct OptionsScreen {
     /// The settings as they were when the screen opened (taken on its
     /// first frame), for Discard.
     opened_with: Option<Settings>,
+    /// The campaign's tutorial level when the screen opened (taken with
+    /// `opened_with`), for Discard.
+    opened_tutorial: Option<TutorialLevel>,
     /// The answer in focus while the question asked on leaving is open.
     leaving: Option<LeaveChoice>,
     /// The question open, if any.
@@ -342,6 +367,7 @@ impl OptionsScreen {
         Self {
             row: Row::TextSpeed,
             opened_with: None,
+            opened_tutorial: None,
             leaving: None,
             asking: None,
             typing: None,
@@ -349,16 +375,18 @@ impl OptionsScreen {
         }
     }
 
-    /// The rows shown: every one, `Game mode` only with a campaign loaded,
-    /// `Map look` only when the game has pictures and `Map zoom` only
-    /// when it has them or the map skin in use can zoom.
+    /// The rows shown: every one, `Game mode` and `Tutorial` only with a
+    /// campaign loaded, `Map look` only when the game has pictures and
+    /// `Map zoom` only when it has them or the map skin in use can zoom.
     pub fn rows(ctx: &Ctx) -> Vec<Row> {
         let campaign = ctx.campaign_mode.is_some();
+        let tutorial = ctx.campaign_tutorial.is_some();
         let pictures = has_pictures(&ctx.content);
         let zooms = pictures || ctx.map_skin.zoom().is_some();
         Row::ALL
             .into_iter()
             .filter(|&r| r != Row::GameMode || campaign)
+            .filter(|&r| r != Row::Tutorial || tutorial)
             .filter(|&r| r != Row::MapLook || pictures)
             .filter(|&r| r != Row::MapZoom || zooms)
             .collect()
@@ -380,13 +408,14 @@ impl OptionsScreen {
         self.leaving
     }
 
-    /// Whether any setting differs from when the screen opened (the
-    /// layout aside: it is saved when picked).
+    /// Whether any setting, or the campaign's tutorial level, differs
+    /// from when the screen opened (the layout aside: it is saved when
+    /// picked).
     pub fn changed(&self, ctx: &Ctx) -> bool {
         self.opened_with.as_ref().is_some_and(|opened| {
             let mut opened = opened.clone();
             opened.layout = ctx.settings().layout;
-            opened != *ctx.settings()
+            opened != *ctx.settings() || self.opened_tutorial != ctx.campaign_tutorial
         })
     }
 
@@ -407,7 +436,8 @@ impl OptionsScreen {
     }
 
     /// What `row` shows beside its name: the setting, the layout in use,
-    /// the campaign's mode; nothing for the rows that only do something.
+    /// the campaign's mode and tutorial level; nothing for the rows that
+    /// only do something.
     /// (The volume box, while open, is the screen's:
     /// [`view`](Self::view).)
     pub fn value(ctx: &Ctx, row: Row) -> ValueView {
@@ -443,6 +473,10 @@ impl OptionsScreen {
             }
             Row::GameMode => match ctx.campaign_mode {
                 Some(mode) => mode_key(mode),
+                None => return ValueView::None,
+            },
+            Row::Tutorial => match ctx.campaign_tutorial {
+                Some(level) => tutorial_key(level),
                 None => return ValueView::None,
             },
             Row::KeyBindings | Row::ResetTips | Row::RestoreDefaults => return ValueView::None,
@@ -506,6 +540,9 @@ impl OptionsScreen {
     /// goes round at the ends.
     fn change(&mut self, ctx: &mut Ctx, forward: bool, wrap: bool) {
         let row = self.row;
+        if row == Row::Tutorial {
+            return self.step_tutorial(ctx, forward, wrap);
+        }
         let cursors = cursor_styles(ctx);
         self.set(ctx, |s| step_setting(s, row, cursors, forward, wrap));
     }
@@ -515,6 +552,21 @@ impl OptionsScreen {
     /// the new volume, for the sound volume).
     fn set(&mut self, ctx: &mut Ctx, change: impl FnOnce(&mut Settings)) {
         if ctx.preview_settings(change) {
+            self.message = None;
+            ctx.audio.menu(MenuSound::Move);
+        }
+    }
+
+    /// Steps the campaign's tutorial level, as a setting is stepped: it
+    /// changes at once (tips follow it), and goes into the campaign (the
+    /// game flow takes it there) unless the player discards it on leaving.
+    fn step_tutorial(&mut self, ctx: &mut Ctx, forward: bool, wrap: bool) {
+        let Some(level) = ctx.campaign_tutorial else {
+            return;
+        };
+        let to = stepped(&TUTORIAL_LEVELS, level, forward, wrap);
+        if to != level {
+            ctx.campaign_tutorial = Some(to);
             self.message = None;
             ctx.audio.menu(MenuSound::Move);
         }
@@ -728,6 +780,7 @@ impl OptionsScreen {
                     // Saves only if something else was saved meanwhile;
                     // the screen closes either way.
                     let _ = ctx.restore_settings(&opened);
+                    ctx.campaign_tutorial = self.opened_tutorial;
                 }
                 ctx.audio.menu(MenuSound::Cancel);
                 (Transition::Pop, true)
@@ -793,7 +846,12 @@ fn step_setting(s: &mut Settings, row: Row, cursors: &[CursorStyle], forward: bo
         Row::Theme => s.theme = stepped(&Theme::ALL, s.theme, forward, wrap),
         Row::MusicVolume => s.music_volume = stepped_volume(s.music_volume, forward),
         Row::SoundVolume => s.sound_volume = stepped_volume(s.sound_volume, forward),
-        Row::Layout | Row::KeyBindings | Row::GameMode | Row::ResetTips | Row::RestoreDefaults => {}
+        Row::Layout
+        | Row::KeyBindings
+        | Row::GameMode
+        | Row::Tutorial
+        | Row::ResetTips
+        | Row::RestoreDefaults => {}
     }
 }
 
@@ -811,6 +869,7 @@ impl Screen for OptionsScreen {
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if self.opened_with.is_none() {
             self.opened_with = Some(ctx.settings().clone());
+            self.opened_tutorial = ctx.campaign_tutorial;
         }
         if self.typing.is_some() {
             // The game's keys do nothing while the box is open.
