@@ -5,10 +5,10 @@ type: content
 milestone: M6 Story & dialogue
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-15
 ---
 
 # 0730 — Give Maud softer eyes
@@ -73,12 +73,12 @@ Chapter 1 opening; does Maud still look like Maud, and not scary?
 
 ## Acceptance criteria
 
-- [ ] `look-and-feel.md` records the choice and Nick's words.
-- [ ] The new faces are in the private repository and `assets-private.rev`
+- [x] `look-and-feel.md` records the choice and Nick's words.
+- [x] The new faces are in the private repository and `assets-private.rev`
       points at them.
-- [ ] `cargo test -p trpg-content --features private-assets --test it
+- [x] `cargo test -p trpg-content --features private-assets --test it
       private_assets::` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,4 +86,27 @@ Chapter 1 opening; does Maud still look like Maud, and not scary?
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **Nick picked B, Claude's small edit of her own eyes** (2026-10-15),
+  over two other generator eye shapes (A1 droopy, A2 angled) and the
+  Dancer hero's eyes (C). He was shown all 8 expressions beside Hollis and
+  Rue at the game's size and 2×, plus the real dialogue screen. Recorded
+  in `docs/design/look-and-feel.md` (*The Chapter 1 cast's faces*) and
+  `docs/story/characters/keeper.md`.
+- **The edit**, on all 8 faces: each iris one pixel wider (less white), a
+  white catch-light in the near eye, and the hard outer flick of the near
+  lid turned to the lid's brown shade. Brows, mouth and hair are untouched,
+  so every expression still matches.
+- **How the options were made:** Maud's eyes turned out to be the
+  generator's `round_b` part on the Adult Female body. A scratch script
+  rebuilt her from the generator's own layers (today's faces come back
+  within 1–2 pixels), so the A renders are what the generator gives; no
+  generator re-make by Nick was needed. Nothing made from the art is in
+  this repository.
+- **Private repository:** commit `1f5aeca` (the 8 faces and a note in
+  `keeper.ron`), pinned in `assets-private.rev`. Credits unchanged: the
+  source is still the Tiny Tales generator face.
+- **Map sprite and combat picture:** both are the Church Cleric's art, not
+  this face, so they are unchanged (no question needed).
+- **Sign-off for Nick:** play the Chapter 1 opening on Pages; does Maud
+  still look like Maud, and not scary?
+- No gameplay rules decided.

@@ -107,6 +107,9 @@ Nick chose the art and asked for a name that doesn't read as a man's.
   generator's name in brackets): `neutral`, `happy` (smile), `angry`
   (stern), `sad`, `surprised` (surprise), `flustered` (surprise). Spare:
   `happy`, `smug`, `thinking`.
+  Her eyes were softened in ticket 0730 (Nick found the generator's
+  "too scary... cat-like"): wider irises and a softer lid, by Claude's
+  small edit (`docs/design/look-and-feel.md`).
 
 ## Signature spells
 

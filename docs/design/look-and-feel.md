@@ -687,6 +687,19 @@ sprites.
   - **What the generator couldn't do:** hoods, headscarves, caps, wrinkles.
     So Maud's hood is down, Harl has no headscarf in dialogue, and Hollis
     and Harl look younger than they are.
+  - **Maud's eyes are softened by Claude's small edit** (decided
+    2026-10-15, ticket 0730). Nick, after playing Chapter 1 (0804):
+    "Maud's eyes look too scary like they are cat-like like too skinny,
+    too focused, they stare into my soul... maybe she needs different
+    eyes". The generator's eyes gave her 2-pixel irises with a lot of
+    white and a hard flick at the outer lid. He was shown all 8
+    expressions beside Hollis and Rue, at the game's size and 2×, in four
+    versions: two other generator eye shapes (droopy, angled), Claude's
+    edit of her own eyes, and the Dancer hero's eyes. He picked **the
+    edit**: each iris one pixel wider, a white catch-light in the near
+    eye, and the outer flick of the near lid turned to the lid's brown
+    shade. Her map sprite and combat picture are the Church Cleric's, not
+    this face, so they didn't change.
 - **Characters who fight and have no fitting bought art**: Nick wanted
   more packs in a similar style (2026-10-02: "help me locate some more
   itch bundles to fill in with a similar style for rest of cast"). What he
