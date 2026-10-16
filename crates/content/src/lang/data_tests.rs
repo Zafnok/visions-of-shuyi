@@ -171,7 +171,7 @@ fn the_embedded_content_offers_every_kind_of_data_text() {
         assert_eq!(source.data.get(key).map(String::as_str), Some(english));
         assert_eq!(content.lang.english(key), Some(english), "{key}");
     }
-    assert!(source.data["tips.battle_start.text"].starts_with("Steer the cursor"));
+    assert!(source.data["tips.battle_start.text"].starts_with("Over to you."));
     assert_eq!(source.names, content.names);
     let line = &source.lines["test_5da5d147"];
     assert_eq!(line.text, "The rain had not stopped for three days.");
@@ -473,9 +473,9 @@ fn the_test_pack_translates_a_little_of_every_kind() {
     assert_eq!(lang.tip_title(&en, tip), "Your move");
     assert!(
         lang.tip_text(&test, tip)
-            .starts_with("STEER THE CURSOR WITH {Cursor}.")
+            .starts_with("OVER TO YOU. STEER THE CURSOR WITH {Cursor};")
     );
-    assert!(lang.tip_text(&en, tip).starts_with("Steer the cursor"));
+    assert!(lang.tip_text(&en, tip).starts_with("Over to you."));
     let other = content
         .tips
         .tips

@@ -46,8 +46,8 @@ fn a_lessons_checklist_shows_as_plain_lines_with_the_keys() {
     assert_eq!(
         view.lines,
         [
-            "The cursor picks tiles and units on the map.",
-            "Move it one tile each way.",
+            "That's your cursor. It picks tiles and units.",
+            "One tile each way, so you know the feel.",
             "",
             "Move it up: Up",
             "Move it down: Down",
@@ -72,7 +72,7 @@ fn up_and_down_move_through_the_topics_and_wrap() {
     g.step(Action::CursorDown);
     let view = g.view(&c);
     assert_eq!(view.heading, "Played on the keys");
-    assert_eq!(view.lines[0], "No mouse here: the game is played on keys.");
+    assert_eq!(view.lines[0], "No mouse here; it's all keys. And every key");
     // Other keys do nothing; Cancel closes.
     for action in [Action::Confirm, Action::CursorLeft, Action::Info] {
         assert_eq!(g.step(action), GuidesEffect::None);

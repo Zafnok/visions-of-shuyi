@@ -48,7 +48,8 @@
             level: Full,
             trigger: FirstBattleStart,
             title: "Moving the cursor",
-            text: "The cursor picks tiles and units on the map.\nMove it one tile each way.",
+            text: "That's your cursor. It picks tiles and units.\nOne tile each way, so you know the feel.",
+            face: "neutral",
             items: [
                 (label: "Move it up: {CursorUp}", done_when: Pressed("CursorUp")),
                 (label: "Move it down: {CursorDown}", done_when: Pressed("CursorDown")),
@@ -62,7 +63,8 @@
             level: Short,
             trigger: FirstBattleStart,
             title: "Played on the keys",
-            text: "No mouse here: the game is played on keys.\nEvery key can be changed in Options.",
+            text: "No mouse here; it's all keys. And every key\ncan be changed in Options, if you'd rather.",
+            face: "sly",
             items: [
                 (label: "Move the cursor: {Cursor}", done_when: CursorMoved),
                 (label: "Open Options from the map menu: {Cancel}", done_when: OptionsOpened),
@@ -73,7 +75,8 @@
             level: Full,
             trigger: FirstBattleStart,
             title: "Finding your units",
-            text: "{NextUnit} jumps to a unit that hasn't acted.\n{Info} on a unit shows its stats and weapons.",
+            text: "Press {NextUnit} for anyone who hasn't acted,\nand {Info} on one for its stats and weapons.",
+            face: "neutral",
             items: [
                 (label: "Jump to the next unit: {NextUnit}", done_when: Pressed("NextUnit")),
                 (label: "Look at a unit's details: {Info}", done_when: Pressed("Info")),
@@ -84,7 +87,8 @@
             level: Full,
             trigger: FirstBattleStart,
             title: "Selecting a unit",
-            text: "{Select} on a unit: lit tiles show its reach.\n{Select} on one moves it; its menu follows.",
+            text: "Press {Select} on a unit to light its reach.\nPick a lit tile to move; its menu follows.",
+            face: "neutral",
             items: [
                 (label: "Select a unit: {Select}", done_when: UnitSelected),
                 (label: "Pick where it goes: {Select}", done_when: UnitMoved),
@@ -97,7 +101,8 @@
             level: Full,
             trigger: FirstEnemyInRange,
             title: "Attacking",
-            text: "Point at an enemy in reach for the forecast.\n{Confirm} attacks; {Cancel} backs out.",
+            text: "Point at an enemy in reach for the forecast.\nAttack with {Confirm}; {Cancel} backs out.",
+            face: "stern",
             items: [
                 (label: "Open the forecast on an enemy", done_when: ForecastOpened),
                 (label: "Attack: {Confirm}", done_when: Attacked),
@@ -110,7 +115,8 @@
             level: Full,
             trigger: NoUnitLeft,
             title: "Ending the turn",
-            text: "Everyone has acted. {EndTurn} ends the turn,\nor End turn in the map menu ({Cancel}).",
+            text: "That's everyone. End the turn with {EndTurn},\nor End turn in the map menu ({Cancel}).",
+            face: "neutral",
             items: [
                 (label: "End the turn: {EndTurn}", done_when: TurnEnded),
             ],
@@ -121,7 +127,8 @@
             level: Short,
             trigger: SecondTurn,
             title: "Rewind",
-            text: "Rewind undoes turns. Each use spends one of\na few charges per map. Looking is free.",
+            text: "Made a mess? Rewind undoes turns, for one of\na few charges per map. Just looking is free.",
+            face: "sly",
             items: [
                 (label: "Open Rewind: {Rewind}", done_when: RewindOpened),
                 (label: "Close it without rewinding: {Cancel}", done_when: RewindClosed),
@@ -132,7 +139,8 @@
             level: Short,
             trigger: ThreatArrowsShown,
             title: "Threat arrows",
-            text: "Arrows point from each enemy that could hit\nyour unit where it stands or will move.",
+            text: "Each arrow is an enemy that could hit your\nunit where it stands, or where it's headed.",
+            face: "thinking",
             items: [
                 (label: "Point a unit's path where arrows show", done_when: ThreatPointed),
                 (label: "Point it at a tile with no arrows", done_when: SafePointed),
@@ -143,7 +151,8 @@
             level: Short,
             trigger: ArtsAvailable,
             title: "Combat Arts",
-            text: "Arts are strong attacks in their own menu.\nThey cost weapon wear, or uses per battle.",
+            text: "Arts are heavy hitters with their own menu.\nThey cost weapon wear, or uses per battle.",
+            face: "sly",
             items: [
                 (label: "Open Arts in the unit's menu", done_when: ArtsOpened),
             ],
@@ -155,7 +164,8 @@
             level: Short,
             trigger: TileSpellAvailable,
             title: "Spells that change tiles",
-            text: "Some spells change a tile: fire burns forest.\nAim one at a tile to see what it becomes.",
+            text: "Some spells remake a tile: fire burns forest.\nAim one at a tile and see what it turns into.",
+            face: "thinking",
             items: [
                 (label: "Aim a spell at a tile", done_when: TileAimed),
             ],

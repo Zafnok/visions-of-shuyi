@@ -5,10 +5,10 @@ type: content
 milestone: M6 Story & dialogue
 model: fable-5.1
 effort: medium
-status: todo
+status: done
 blocked_by: ["0457", "0458"]
 nick_input: decision
-completed:
+completed: 2026-10-15
 ---
 
 # 0731 — Name the guide and give them a voice
@@ -64,12 +64,12 @@ Ask about the voice only if Nick wants a say ("describe your own").
 
 ## Acceptance criteria
 
-- [ ] The tip and lesson boxes show the guide's name as the title.
-- [ ] Every tip and lesson is in the guide's voice, still ≤ the length
+- [x] The tip and lesson boxes show the guide's name as the title.
+- [x] Every tip and lesson is in the guide's voice, still ≤ the length
       limits, with the same `{Action}` placeholders.
-- [ ] `docs/story/characters/guide.md` has the name and voice notes, and
+- [x] `docs/story/characters/guide.md` has the name and voice notes, and
       Nick's words choosing the name.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -78,4 +78,32 @@ Ask about the voice only if Nick wants a say ("describe your own").
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **Name: Vix** (Nick's words in `docs/story/characters/guide.md`). Nick
+  was shown four candidates (Kit, Rin, Sable, Pip), each with Chapter 1's
+  first tip rendered in that voice with the bought art. He took **Sable's
+  voice** (the dry insider, like Angel in *Borderlands 2*) but not the name
+  ("sounds like a grandma"), and **Rin's face** (the calm `neutral`
+  expression). Of a second round (Vix, Fen, Vesper, Kit) he said Vix, Fen
+  and Kit were all fine and left the pick to Claude: Vix.
+- `guide` is in `docs/story/names.md` (a new "Outside the story" table) and
+  `assets/data/names.ron`. The tip and lesson boxes read their title from
+  the names table (through the language pack, so a translation can rename
+  her: the `test` pack has `names.guide`); the `guide.name` text key is
+  gone.
+- `docs/story/characters/guide.md`: the name, Nick's words, which face
+  goes with what, the voice notes and what she never says. She is "she"
+  (Nick: "rename her"). `docs/design/tutorial.md` points to it.
+- Every tip text and every lesson text rewritten in her voice, each with a
+  `face` (`neutral` mostly; `sly`, `thinking`, `stern`, one `smile` at a
+  level up). Same placeholders, same meaning, same ids; tips within 3 × 60,
+  lesson text within the 45 the story keeps to. **Not changed:** the
+  titles (the Guides list's labels) and the checklist labels (instructions
+  ticked off, kept plain).
+- Read in rendered boxes: the snapshot tests show the start tip (keyboard,
+  three pads, the `test` language), the first lesson and the Guides list;
+  the start tip was also rendered with the bought art (`cargo run -p xtask
+  --features private-assets -- frame-png <out> --tips ...`; not
+  committed).
+- Snapshots updated: the start tip's box is one column wider (its longest
+  line grew by one).
+- No gameplay rules decided. Nick can veto any line.

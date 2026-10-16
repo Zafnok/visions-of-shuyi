@@ -85,9 +85,10 @@ fn the_first_battle_shows_the_start_tip_and_confirm_dismisses_it() {
     assert_eq!(s.mode(), &Mode::default());
 }
 
-/// Ticket 0455: the guide speaks the tip: their name is the box's title,
-/// the tip's title its first line, and their face is beside the text when
-/// the game has their portrait, smiling unless the tip says otherwise.
+/// Ticket 0455: the guide speaks the tip: their name (the names table's
+/// `guide`, 0731) is the box's title, the tip's title its first line, and
+/// their face is beside the text when the game has their portrait, smiling
+/// unless the tip says otherwise.
 #[test]
 fn the_tip_box_is_the_guides() {
     let mut c = tipped();
@@ -95,11 +96,12 @@ fn the_tip_box_is_the_guides() {
     assert_eq!(s.tip_view(&c), None);
     press(&mut s, &mut c, &[]);
     let view = s.tip_view(&c).unwrap();
-    assert_eq!(view.title, "Guide");
+    assert_eq!(Some(view.title.as_str()), c.content.names.get("guide"));
+    assert_eq!(view.title, "Vix");
     assert_eq!(view.heading, "Your move");
     assert_eq!(view.face, None);
     assert_eq!(view.lines.len(), 3);
-    assert!(view.lines[0].starts_with("Steer the cursor with arrows."));
+    assert!(view.lines[0].starts_with("Over to you. Steer the cursor with arrows;"));
     assert_eq!(view.close, "f close");
     // With the guide's portrait (the bought art), the face.
     let mut guide = c.content.portraits["test_lord"].clone();
@@ -109,6 +111,10 @@ fn the_tip_box_is_the_guides() {
         ..smile
     });
     c.content.portraits.insert("guide".into(), guide);
+    // A tip naming no expression smiles.
+    let tips = c.content.tips.tips.iter_mut();
+    tips.filter(|t| t.id == "battle_start")
+        .for_each(|t| t.face = None);
     let face = s.tip_view(&c).and_then(|v| v.face).unwrap();
     assert_eq!(
         (face.portrait.as_str(), face.expression.as_str()),
@@ -462,7 +468,7 @@ fn a_tip_names_the_keys_the_player_has_bound() {
     let mut s = quick();
     press(&mut s, &mut c, &[]);
     assert!(shows(&s, &c, "Steer the cursor with wasd"));
-    assert!(shows(&s, &c, "Press j on one of"));
+    assert!(shows(&s, &c, "with wasd; j on"));
     assert_eq!(s.help(&c), "j close");
 }
 
@@ -474,7 +480,7 @@ fn a_tip_shows_not_mapped_for_an_action_with_no_key() {
     c.set_layout_bindings(Layout::RightHanded, keys).unwrap();
     let mut s = quick();
     press(&mut s, &mut c, &[]);
-    assert!(shows(&s, &c, "your units to select it. ! not mapped jumps"));
+    assert!(shows(&s, &c, "Press ! not mapped for whoever"));
 }
 
 #[test]

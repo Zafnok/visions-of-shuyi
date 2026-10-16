@@ -1,17 +1,18 @@
 ---
 source: crates/ui/tests/it/language.rs
+assertion_line: 229
 expression: h.snapshot()
 ---
                                                                       ┌────────────────────────────┐
-        ╔═ GUIDE ═══════════════════════════════════════════╗         │ Plain                      │
-        ║                                                   ║         │ DEF +0  AVO +0             │
-        ║ YOUR MOVE                                         ║         │                            │
-        ║ STEER THE CURSOR WITH ARROWS. PRESS f ON ONE OF   ║         │                            │
-        ║ YOUR UNITS TO SELECT IT. s JUMPS TO THE NEXT UNIT ║         │ Test Lord                  │
-        ║ THAT CAN STILL ACT; e SHOWS A UNIT'S DETAILS.     ║         │ Exile  LV 1                │
-        ║                                                   ║         │ HP 19/19   ██████████      │
-        ║ f CLOSE                                           ║         │ PLAYER                     │
-        ╚═══════════════════════════════════════════════════╝         │                            │
+        ╔═ VIX ══════════════════════════════════════════════╗        │ Plain                      │
+        ║                                                    ║        │ DEF +0  AVO +0             │
+        ║ YOUR MOVE                                          ║        │                            │
+        ║ OVER TO YOU. STEER THE CURSOR WITH ARROWS; f ON    ║        │                            │
+        ║ ONE OF YOUR UNITS PICKS IT UP. PRESS s FOR WHOEVER ║        │ Test Lord                  │
+        ║ CAN STILL ACT, AND e FOR WHAT YOU'RE WORKING WITH. ║        │ Exile  LV 1                │
+        ║                                                    ║        │ HP 19/19   ██████████      │
+        ║ f CLOSE                                            ║        │ PLAYER                     │
+        ╚════════════════════════════════════════════════════╝        │                            │
                                                                       │                            │
                     ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      │                            │
                     ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      │                            │
@@ -36,15 +37,15 @@ expression: h.snapshot()
  f CLOSE                                                                                   F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaabbcccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabdcccccddddddddddddddddddddddb
-aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaabdcccccccccdddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabdeeeeeeeeeddddddddddddddddddb
-aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabddddddddddddffffffffffddddddb
-aaaaaaaabdgggggggdddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaabdggggggdddddddddddddddddddddb
-aaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaabdcccccddddddddddddddddddddddb
+aaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaabdcccccccccddddddddddddddddddddddddddddddddddddddddddbaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaabdeeeeeeeeeddddddddddddddddddb
+aaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaabddddddddddddffffffffffddddddb
+aaaaaaaabdgggggggddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaabdggggggdddddddddddddddddddddb
+aaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaahhhhhhiiiijjjjkkkkllllmmmmnnaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaahhhhiiiijjjjooppookkkkmmmmmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb

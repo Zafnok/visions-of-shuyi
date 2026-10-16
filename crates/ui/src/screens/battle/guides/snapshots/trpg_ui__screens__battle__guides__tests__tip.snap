@@ -1,15 +1,15 @@
 ---
 source: crates/ui/src/screens/battle/guides/tests.rs
-assertion_line: 194
+assertion_line: 197
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
 ║ Moving the cursor               │  Terrain                                                       ║
 ║ Played on the keys              │                                                                ║
-║ Finding your units              │  Terrain matters. The side panel shows the DEF and AVO a       ║
-║ Selecting a unit                │  unit gets standing on this tile. Some tiles take more         ║
-║ Attacking                       │  movement to cross, and some can't be crossed at all.          ║
+║ Finding your units              │  Mind the ground. The side panel shows the DEF and AVO a       ║
+║ Selecting a unit                │  unit gets standing here. Some tiles cost more movement        ║
+║ Attacking                       │  to cross, and some can't be crossed at all.                   ║
 ║ Ending the turn                 │                                                                ║
 ║ Rewind                          │                                                                ║
 ║ Threat arrows                   │                                                                ║

@@ -59,6 +59,12 @@ Later Act 1 recruits (named in `outline.md`, sheets written by later tickets):
 | `envoy` | Ragna Holt | Brennish envoy in Saltmere (NPC) |
 | `battlemage` | Oriel Mast | Crown battle-mage who gave the order at the Ashfields |
 
+Outside the story (talks only to the player):
+
+| Id | Current name | Who |
+| -- | ------------ | --- |
+| `guide` | Vix | The tutorial guide: the title of the tip and lesson boxes (ticket 0731) |
+
 ## Short forms
 
 What people say instead of the full name. Scripts use these ids like any

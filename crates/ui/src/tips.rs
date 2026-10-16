@@ -315,9 +315,9 @@ mod tests {
         split.push((Chord::parse("g").unwrap(), Action::Select));
         let split = Keymap::new(split, RepeatDef::default());
         for (id, phrase) in [
-            ("battle_start", "Press {} on one of your units"),
-            ("unit_selected", "press {} to move"),
-            ("danger_zone", "{} on an enemy shows just its range"),
+            ("battle_start", "; {} on one of your units"),
+            ("unit_selected", "press {} to send it there"),
+            ("danger_zone", "Press {} on one enemy for just its range"),
         ] {
             let text = tip(id);
             let with = |key| phrase.replace("{}", key);
@@ -332,7 +332,7 @@ mod tests {
         }
         // Menu and forecast wording stays on Confirm.
         let forecast = fill_placeholders(&tip("forecast"), HelpKeys::keyboard(&split));
-        assert!(forecast.contains("f attacks"), "{forecast}");
+        assert!(forecast.contains("attack with f."), "{forecast}");
     }
 
     #[test]

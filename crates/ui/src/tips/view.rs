@@ -12,8 +12,8 @@ use trpg_core::Pos;
 use super::fill_placeholders;
 use crate::screen::Ctx;
 
-/// Text key ([`Ctx::text`]) of the guide's name, the box's title.
-pub const GUIDE_NAME: &str = "guide.name";
+/// Names-table id of the guide's name, the box's title (0731).
+pub const GUIDE_NAME: &str = "guide";
 /// Text key of the close hint under the tip.
 pub const CLOSE_HINT: &str = "battle.help.close";
 /// Text key of the count under a lesson's checklist: `{n} of {m} done`.
@@ -58,7 +58,7 @@ impl TipView {
             });
         let text = fill_placeholders(words.tip_text(tip), ctx.help_keys());
         Self {
-            title: ctx.text(GUIDE_NAME).to_owned(),
+            title: words.name(&ctx.content.names, GUIDE_NAME).to_owned(),
             face,
             heading: words.tip_title(tip).to_owned(),
             lines: text.lines().map(str::to_owned).collect(),
@@ -122,7 +122,7 @@ impl LessonView {
         let done = items.iter().filter(|i| i.done).count();
         let progress = ctx.text_with(LESSON_PROGRESS, &[("n", &done), ("m", &items.len())]);
         Self {
-            title: ctx.text(GUIDE_NAME).to_owned(),
+            title: words.name(&ctx.content.names, GUIDE_NAME).to_owned(),
             face,
             heading: words.lesson_title(lesson).to_owned(),
             lines: text.lines().map(str::to_owned).collect(),

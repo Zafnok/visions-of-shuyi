@@ -3,6 +3,8 @@
 hjkl = "hjkl"
 # Project/tool names typos misreads as misspellings of other words.
 ratatui = "ratatui"
+# Rin, a name offered for the tutorial guide (ticket 0731), quoted by Nick.
+rin = "rin"
 # Fragments from hyphenated/compound tokens split across lines or by
 # typos's identifier splitting (e.g. "CC-BY-ND", "mis-keys", "PNGs").
 nd = "nd"
