@@ -1,8 +1,9 @@
 //! `cargo xtask font-atlas <font.bdf>... <out-dir>`: turns a BDF bitmap font
 //! into the game's font atlas (`atlas.png` + `atlas.ron`, see
-//! `trpg_content::font`). Only glyphs in [`ATLAS_RANGES`] are kept. Further
-//! BDF files add glyphs the first lacks (our own, e.g. the controller
-//! button shapes).
+//! `trpg_content::font`) and its one-bit copy for the Playdate
+//! (`atlas_1bit.bin`, ADR-0074). Only glyphs in [`ATLAS_RANGES`] are kept.
+//! Further BDF files add glyphs the first lacks (our own, e.g. the
+//! controller button shapes).
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -28,6 +29,9 @@ pub const ATLAS_RANGES: &[(char, char)] = &[
 
 /// Atlas cells per row.
 pub const COLUMNS: u32 = 32;
+
+/// The one-bit atlas's file name, next to `atlas.png`.
+const ONE_BIT_FILE: &str = "atlas_1bit.bin";
 
 /// A bitmap font: fixed cell size, each glyph an on/off pixel grid placed
 /// inside the cell (row-major, `cell_w × cell_h`).
@@ -224,6 +228,35 @@ pub fn build_atlas(font: &BitmapFont) -> Atlas {
     }
 }
 
+/// The one-bit atlas (`trpg_content::font::ATLAS_1BIT_PATH`) of the atlas
+/// picture `rgba` (`width` pixels wide) laid out as `def`: each glyph in
+/// cell index order, one byte per pixel row, the highest bit the left
+/// pixel, set where the picture isn't see-through. Fails for cells wider
+/// than 8 pixels.
+pub fn one_bit(def: &FontAtlasDef, width: u32, rgba: &[u8]) -> Result<Vec<u8>, String> {
+    if def.cell_w > 8 {
+        return Err(format!(
+            "the one-bit atlas holds cells up to 8 pixels wide, not {}",
+            def.cell_w
+        ));
+    }
+    let count = def.glyphs.values().max().map_or(0, |&i| i + 1);
+    let mut out = Vec::with_capacity(to_usize(i64::from(count) * i64::from(def.cell_h)));
+    for index in 0..count {
+        let cell = def.cell_rect(index);
+        for y in cell.y..cell.y + cell.h {
+            let mut row = 0u8;
+            for x in cell.x..cell.x + cell.w {
+                let alpha = to_usize((i64::from(y) * i64::from(width) + i64::from(x)) * 4 + 3);
+                let lit = rgba.get(alpha).is_some_and(|&a| a > 0);
+                row |= u8::from(lit) << (7 - (x - cell.x));
+            }
+            out.push(row);
+        }
+    }
+    Ok(out)
+}
+
 /// The `atlas.ron` text for `def`, with a generated-file header.
 pub fn atlas_ron(def: &FontAtlasDef, source_name: &str) -> Result<String, String> {
     // LF on every OS, so regenerating never churns line endings.
@@ -283,8 +316,9 @@ pub const SOURCES: [&str; 2] = [
 ];
 
 /// Runs the command: reads the fonts at `font_paths` (the first is the
-/// font; the rest add glyphs to it), writes `atlas.png` and `atlas.ron`
-/// into `out_dir`. Fails if the result lacks a required glyph.
+/// font; the rest add glyphs to it), writes `atlas.png`, `atlas.ron` and
+/// `atlas_1bit.bin` into `out_dir`. Fails if the result lacks a required
+/// glyph.
 pub fn run(font_paths: &[PathBuf], out_dir: &Path) -> Result<String, String> {
     let (font_path, extras) = font_paths.split_first().ok_or("no font given")?;
     let mut font = read_font(font_path)?;
@@ -309,8 +343,13 @@ pub fn run(font_paths: &[PathBuf], out_dir: &Path) -> Result<String, String> {
         .collect();
     let ron = atlas_ron(&atlas.def, &names.join(" + "))?;
     let png = encode_png(atlas.width, atlas.height, &atlas.rgba)?;
+    let bits = one_bit(&atlas.def, atlas.width, &atlas.rgba)?;
     fs::create_dir_all(out_dir).map_err(|e| format!("creating {}: {e}", out_dir.display()))?;
-    for (file, bytes) in [("atlas.png", png.as_slice()), ("atlas.ron", ron.as_bytes())] {
+    for (file, bytes) in [
+        ("atlas.png", png.as_slice()),
+        ("atlas.ron", ron.as_bytes()),
+        (ONE_BIT_FILE, bits.as_slice()),
+    ] {
         let path = out_dir.join(file);
         fs::write(&path, bytes).map_err(|e| format!("writing {}: {e}", path.display()))?;
     }
@@ -526,6 +565,59 @@ mod tests {
             png(&dir.join("atlas.png")) == png(&root.join("assets/fonts/atlas.png")),
             "assets/fonts/atlas.png is stale: rerun `cargo xtask font-atlas`"
         );
+        assert!(
+            fs::read(dir.join(ONE_BIT_FILE)).unwrap()
+                == fs::read(root.join("assets/fonts").join(ONE_BIT_FILE)).unwrap(),
+            "assets/fonts/{ONE_BIT_FILE} is stale: rerun `cargo xtask font-atlas`"
+        );
         fs::remove_dir_all(&dir).unwrap();
+    }
+
+    /// The committed one-bit atlas has exactly the pixels of the committed
+    /// `atlas.png`, glyph by glyph, at the cells of `atlas.ron`.
+    #[test]
+    fn the_one_bit_atlas_matches_the_png() {
+        let root = repo_root();
+        let fonts = root.join("assets/fonts");
+        let def: FontAtlasDef =
+            ron::from_str(&fs::read_to_string(fonts.join("atlas.ron")).unwrap()).unwrap();
+        let (width, _, rgba) = decode_png(&fs::read(fonts.join("atlas.png")).unwrap()).unwrap();
+        let bits = fs::read(fonts.join(ONE_BIT_FILE)).unwrap();
+        let rows = to_usize(i64::from(def.cell_h));
+        assert_eq!(bits.len(), def.glyphs.len() * rows);
+        for (&c, &index) in &def.glyphs {
+            let cell = def.cell_rect(index);
+            for row in 0..cell.h {
+                let byte = bits[to_usize(i64::from(index)) * rows + to_usize(i64::from(row))];
+                for col in 0..cell.w {
+                    let (x, y) = (cell.x + col, cell.y + row);
+                    let alpha =
+                        rgba[to_usize((i64::from(y) * i64::from(width) + i64::from(x)) * 4 + 3)];
+                    let bit = byte >> (7 - col) & 1 == 1;
+                    assert_eq!(bit, alpha > 0, "{c:?} at ({col}, {row})");
+                }
+            }
+        }
+        // 'A' has its left stroke in the left half of its cell.
+        let a = to_usize(i64::from(def.glyphs[&'A'])) * rows;
+        assert!(bits[a..a + rows].iter().any(|&row| row & 0xf0 != 0));
+    }
+
+    #[test]
+    fn the_one_bit_atlas_packs_rows_left_pixel_highest() {
+        let atlas = build_atlas(&parse_bdf(TINY).unwrap());
+        let bits = one_bit(&atlas.def, atlas.width, &atlas.rgba).unwrap();
+        // 'A' (index 0) then 'b' (index 1), four rows each.
+        assert_eq!(bits, [0, 0b1100_0000, 0b1000_0000, 0, 0, 0, 0, 0b0010_0000]);
+        let wide = FontAtlasDef {
+            cell_w: 9,
+            ..atlas.def
+        };
+        assert_eq!(
+            one_bit(&wide, atlas.width, &atlas.rgba).unwrap_err(),
+            "the one-bit atlas holds cells up to 8 pixels wide, not 9"
+        );
+        let empty = FontAtlasDef::default();
+        assert!(one_bit(&empty, 0, &[]).unwrap().is_empty());
     }
 }

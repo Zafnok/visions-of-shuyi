@@ -8,6 +8,7 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | Module | What |
 | ------ | ---- |
 | `glyph_buffer`, `color`, `snapshot`, `console` | The 100×32 `GlyphBuffer` virtual console (cells, plus rectangles and sprites placed in pixels, and a backdrop behind see-through cells; see *What a frame holds*), palette colours, the text snapshot format |
+| `onebit` | The Playdate's one-bit renderer (ADR-0074): `render` draws a frame made with `ConsoleSpec::PLAYDATE` into a 400 × 240 one-bit `Frame` in the Playdate's layout. Colours that are an `Ink`'s reserved code (the Playdate's palette, `assets/data/palettes/playdate.ron`) draw in that ink: white, black, a white-edged black glyph, grey, dots, diagonals, dashes, or an invert rectangle |
 | `cinema` | `view`: where a backdrop's window starts to look at a point at a zoom, stopping at the scene's edges (ADR-0048) |
 | `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks), the `GlyphSkin` and the `SpriteSkin` (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins), `path` (the path arrow for any tile size) and `threat` (the arrows from the enemies that could attack a tile, and the mark over each: ticket 0448). See *Map view* below |
 | `input` | `Action`s, `Layout`, `Keymap`, `InputState` (key repeat) |
@@ -514,7 +515,9 @@ Steps (`--keys`, `--pad`, `--wait`) run in the order given, from a later
 launch with `--layout right|left` (`--prompt`: as the game starts, the title waiting for a key or button).
 `--light dusk` fights every battle in that light of
 `assets/data/lighting.ron` (ADR-0058), whatever its files say.
-`--scale` defaults to 2; `--help` has the rest. It is for looking, never a
+`--scale` defaults to 2; `--help` has the rest. `--playdate` shows the
+Playdate's screen instead: a 50 × 15 console in the Playdate's palette,
+drawn black and white at 400 × 240 by the one-bit renderer (ADR-0074). It is for looking, never a
 test: tests read the scene, the state or the snapshot.
 - Debug screens are always on in the Harness, so `F2` works in any build.
 - Snapshots: read every `.snap.new` before `cargo insta accept`.

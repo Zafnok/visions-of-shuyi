@@ -232,14 +232,15 @@ fn parses_steps_in_order_and_options() {
                 Step::Keys("f".into()),
             ],
             layout: Layout::LeftHanded,
-            scale: 3,
+            scale: Some(3),
+            playdate: false,
             prompt: true,
             light: Some("dusk".into()),
             tips: true,
         }
     );
     let zero = parse_args(&args(&["a.png", "--wait", "0", "--scale", "8"])).unwrap();
-    assert_eq!((zero.steps, zero.scale), (vec![Step::Wait(0.0)], 8));
+    assert_eq!((zero.steps, zero.scale), (vec![Step::Wait(0.0)], Some(8)));
     let plain = parse_args(&args(&["a.png"])).unwrap();
     assert_eq!(
         (
@@ -247,9 +248,15 @@ fn parses_steps_in_order_and_options() {
             plain.scale,
             plain.prompt,
             plain.light,
-            plain.tips
+            plain.tips,
+            plain.playdate
         ),
-        (Layout::RightHanded, 2, false, None, false)
+        (Layout::RightHanded, None, false, None, false, false)
+    );
+    assert!(
+        parse_args(&args(&["a.png", "--playdate"]))
+            .unwrap()
+            .playdate
     );
     assert!(plain.steps.is_empty());
 }
@@ -526,7 +533,7 @@ fn half_a_scene_pixel_pans_by_one_window_pixel() {
 fn the_scene_camera_frame_shows_the_map_in_its_window() {
     let dir = temp_dir("frame-png-backdrop");
     let mut options = parse_args(&args(&["camera.png", "--keys", "F2 Up Up f f"])).unwrap();
-    options.scale = 1;
+    options.scale = Some(1);
     let printed = run(&dir, &options).unwrap();
     assert!(printed.contains("scene_camera"), "{printed}");
     let frame = Image::decode(&fs::read(dir.join("camera.png")).unwrap()).unwrap();
@@ -535,4 +542,37 @@ fn the_scene_camera_frame_shows_the_map_in_its_window() {
     let middle = frame.pixel(50 * 8, 11 * 16).unwrap();
     assert_ne!(middle, [0, 0, 0, 255]);
     let _ = fs::remove_dir_all(&dir);
+}
+
+/// Ticket 1032: `--playdate` draws the Playdate's screen, black and white.
+#[test]
+fn the_playdate_frame_is_400_by_240_in_black_and_white() {
+    let dir = temp_dir("playdate");
+    // The debug menu: no pictures, which are grey boxes until 1040.
+    let options = parse_args(&args(&["p.png", "--playdate", "--keys", "F2"])).unwrap();
+    let summary = run(&dir, &options).unwrap();
+    assert!(summary.contains("(400×240)"), "{summary}");
+    let (w, h, rgba) = decode_png(&fs::read(dir.join("p.png")).unwrap()).unwrap();
+    assert_eq!((w, h), (400, 240));
+    let black = rgba.chunks(4).filter(|p| *p == [0, 0, 0, 255]).count();
+    let white = rgba.chunks(4).filter(|p| *p == [255; 4]).count();
+    assert_eq!(black + white, 400 * 240);
+    // Mostly the white ground, and something drawn on it.
+    assert!(white > black && black > 0, "{white} white, {black} black");
+    let options = parse_args(&args(&["p.png", "--playdate", "--scale", "2"])).unwrap();
+    assert!(run(&dir, &options).unwrap().contains("(800×480)"));
+    fs::remove_dir_all(&dir).unwrap();
+}
+
+#[test]
+fn a_one_bit_frame_becomes_a_black_and_white_picture() {
+    let mut frame = Box::new([0u8; FRAME_BYTES]);
+    frame[0] = 0b0100_0000;
+    let picture = one_bit_picture(&frame, 2);
+    assert_eq!((picture.width, picture.height), (800, 480));
+    assert_eq!(picture.pixel(0, 0), Some([0, 0, 0, 255]));
+    assert_eq!(picture.pixel(2, 1), Some([255; 4]));
+    assert_eq!(picture.pixel(3, 1), Some([255; 4]));
+    assert_eq!(picture.pixel(4, 0), Some([0, 0, 0, 255]));
+    assert_eq!(picture.pixel(2, 2), Some([0, 0, 0, 255]));
 }

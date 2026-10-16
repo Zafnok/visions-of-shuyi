@@ -1,0 +1,86 @@
+// The Playdate's palette (ADR-0074): not a colour theme, the colours of the
+// one-bit screen. Each name gets an ink, not an RGB value:
+//   white, black, black_edged (black, and a glyph gets a white edge),
+//   grey (a 50% checker), dots, diagonals, dashes,
+//   invert (a rectangle flips the pixels under it).
+// It must have every name of assets/data/palette.ron (a content test checks
+// it) and may add names of its own for the Playdate's skins.
+// The ground is white and the glyphs black (docs/design/playdate.md). Where
+// the design doesn't say, the ink is a placeholder until the skin's ticket
+// (map: 1037; screens: 1038 and later).
+{
+    // Basics. `black` is the console background: the white ground.
+    "black": "white",
+    "white": "black",
+
+    // Text. Dim and highlighted words: placeholders (1038 and later).
+    "text": "black",
+    "text_dim": "black",
+    "text_highlight": "black",
+
+    // Panels (UI chrome)
+    "panel_bg": "white",
+    "panel_border": "black",
+    "panel_border_focus": "black",
+
+    // Factions. The map skin (1037) draws your units white in a black tile
+    // and enemies on a grey one; these are the letters' placeholders.
+    "player": "black",
+    "enemy": "black",
+    "ally": "black",
+    "neutral": "black",
+    "player_outline": "black",
+
+    // Ranges: dots, diagonal lines, a dashed edge (docs/design/playdate.md).
+    // The heal range: placeholder (1037).
+    "move_range": "dots",
+    "attack_range": "diagonals",
+    "heal_range": "diagonals",
+    "danger_zone": "dashes",
+
+    // A unit under a timed effect: placeholder (1037).
+    "effect": "grey",
+    "effect_bonus": "black",
+    "effect_penalty": "black",
+
+    // The cursor's corner marks flip what they cover.
+    "cursor": "invert",
+    "path": "black",
+
+    // Bars
+    "hp_high": "black",
+    "hp_mid": "black",
+    "hp_low": "black",
+    "exp_bar": "black",
+
+    // Terrain: black glyphs on the white ground.
+    "grass": "black",
+    "grass_bg": "white",
+    "road": "black",
+    "road_bg": "white",
+    "wood": "black",
+    "wood_bg": "white",
+    "floor": "black",
+    "floor_bg": "white",
+    "forest": "black",
+    "forest_bg": "white",
+    "thicket": "black",
+    "thicket_bg": "white",
+    "mountain": "black",
+    "mountain_bg": "white",
+    "peak": "black",
+    "peak_bg": "white",
+    "water": "black",
+    "water_bg": "white",
+    "sea": "white",
+    "stone": "black",
+    "stone_bg": "white",
+    "fort": "black",
+    "fort_bg": "white",
+    "fire": "black",
+    "fire_bg": "white",
+    "ash": "black",
+    "ash_bg": "white",
+    "ice": "black",
+    "ice_bg": "white",
+}

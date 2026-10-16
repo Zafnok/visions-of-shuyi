@@ -39,6 +39,7 @@ mod enums;
 pub mod error;
 pub mod font;
 pub mod image;
+pub mod ink;
 pub mod item;
 pub mod keymap;
 pub mod lang;
@@ -81,6 +82,7 @@ pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Present, Scen
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
 pub use image::{ImageId, ImageInfo, ImageTable};
+pub use ink::Ink;
 pub use keymap::{
     Action, Bindings, Button, Chord, Key, KeyGroup, KeymapDef, Layout, LayoutKeys, PadKeys,
     RepeatDef, SLOTS, StickDef,

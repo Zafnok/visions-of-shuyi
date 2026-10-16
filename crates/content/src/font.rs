@@ -18,6 +18,12 @@ use crate::ron_loader::parse_ron;
 pub const ATLAS_PATH: &str = "fonts/atlas.ron";
 /// Path of the atlas image (white glyphs on transparent) inside the bundle.
 pub const ATLAS_PNG_PATH: &str = "fonts/atlas.png";
+/// Path of the one-bit atlas (ADR-0074) inside the bundle: the same glyphs
+/// as [`ATLAS_PNG_PATH`], packed for the Playdate so it never decodes a
+/// PNG. Each glyph, in cell index order, is `cell_h` bytes, one per pixel
+/// row from the top; a byte's highest bit is the row's left pixel, and a
+/// set bit is a pixel of the glyph. So a cell is at most 8 pixels wide.
+pub const ATLAS_1BIT_PATH: &str = "fonts/atlas_1bit.bin";
 
 /// Glyphs the game draws and the atlas must therefore contain: printable
 /// ASCII, Latin-1, box drawing, blocks and the CP437-style symbols used by

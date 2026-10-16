@@ -8,16 +8,24 @@
 //! and before all that, a backdrop's scene in its window (ADR-0048).
 //! Textures are sampled at the nearest pixel and blended over what is
 //! beneath with their alpha, as the GPU does.
+//!
+//! With `--playdate` the game runs on the Playdate's console and palette,
+//! and the frame goes through the one-bit renderer (`trpg_ui::onebit`,
+//! ADR-0074) instead: the picture is the Playdate's screen.
 
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use trpg_content::font::{AtlasRect, FALLBACK_GLYPH};
-use trpg_content::{FontAtlasDef, ImageId, ImageTable};
+use trpg_content::font::{ATLAS_1BIT_PATH, AtlasRect, FALLBACK_GLYPH};
+use trpg_content::{FontAtlasDef, ImageId, ImageTable, PaletteDef};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Button, Chord, Layout};
-use trpg_ui::{Backdrop, GlyphBuffer, Item, Layer, Paint, PxRect, Rgb, Sprite, UiColor};
+use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
+use trpg_ui::screen::Ctx;
+use trpg_ui::{
+    Backdrop, ConsoleSpec, GlyphBuffer, Item, Layer, Paint, Palette, PxRect, Rgb, Sprite, UiColor,
+};
 
 use crate::font_atlas::{decode_png, encode_png};
 
@@ -25,8 +33,8 @@ pub const USAGE: &str = "\
 usage: cargo xtask frame-png <out.png> [steps] [options]
 
 Starts the game in the test Harness, runs the steps in the order given,
-and writes the frame to <out.png> (800×512 times the scale; a relative
-path is from the repo root).
+and writes the frame to <out.png> (800×512 times the scale, or 400×240
+with --playdate; a relative path is from the repo root).
 
 steps (each may repeat):
   --keys \"F2 Up f\"   press and release each key chord in turn
@@ -35,7 +43,10 @@ steps (each may repeat):
 
 options:
   --layout right|left  the key layout picked before (default right)
-  --scale N            whole-number scale, 1 to 8 (default 2)
+  --scale N            whole-number scale, 1 to 8 (default 2; 1 with --playdate)
+  --playdate           the Playdate's screen: a 50×15 console in the Playdate's
+                       palette, drawn black and white by the one-bit renderer.
+                       Pictures are grey boxes until there are one-bit ones (1040)
   --prompt             start as the game does (the title waits for a key or button)
   --tips               show the guide's tips and lessons, as the game does
   --light NAME         fight every battle in this light of assets/data/lighting.ron,
@@ -74,8 +85,10 @@ pub struct Options {
     pub steps: Vec<Step>,
     /// The layout picked before.
     pub layout: Layout,
-    /// Pixels per console pixel.
-    pub scale: u32,
+    /// Pixels per console pixel, if given.
+    pub scale: Option<u32>,
+    /// The Playdate's console, palette and one-bit renderer.
+    pub playdate: bool,
     /// Start as the game does: the title waits for a key or button.
     pub prompt: bool,
     /// The light every battle is fought in, instead of its own.
@@ -93,7 +106,8 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
         out: PathBuf::new(),
         steps: Vec::new(),
         layout: Layout::RightHanded,
-        scale: 2,
+        scale: None,
+        playdate: false,
         prompt: false,
         light: None,
         tips: false,
@@ -138,15 +152,17 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
             }
             "--scale" => {
                 let text = value()?;
-                options.scale = text
-                    .parse()
-                    .ok()
-                    .filter(|s| (1..=MAX_SCALE).contains(s))
-                    .ok_or_else(|| {
-                        format!("--scale: a whole number 1 to {MAX_SCALE}, not {text}")
-                    })?;
+                options.scale = Some(
+                    text.parse()
+                        .ok()
+                        .filter(|s| (1..=MAX_SCALE).contains(s))
+                        .ok_or_else(|| {
+                            format!("--scale: a whole number 1 to {MAX_SCALE}, not {text}")
+                        })?,
+                );
             }
             "--prompt" => options.prompt = true,
+            "--playdate" => options.playdate = true,
             "--tips" => options.tips = true,
             "--light" => options.light = Some(value()?),
             flag if flag.starts_with("--") => return Err(format!("unknown option: {flag}")),
@@ -161,10 +177,17 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
 /// Runs the command: plays the steps in a Harness, writes the frame under
 /// `root` (if `out` is relative) and returns what to print.
 pub fn run(root: &Path, options: &Options) -> Result<String, String> {
+    let playdate = options.playdate.then(playdate_palette).transpose()?;
+    let setup = |ctx: &mut Ctx| {
+        if let Some(palette) = playdate {
+            ctx.console = ConsoleSpec::PLAYDATE;
+            ctx.palette = palette;
+        }
+    };
     let h = if options.prompt {
-        Harness::at_prompt_with_layout(options.layout)
+        Harness::at_prompt_with_layout_and(options.layout, setup)
     } else {
-        Harness::with_layout(options.layout)
+        Harness::with_layout_and(options.layout, setup)
     };
     // The game as players get it: New Game starts the story.
     let mut h = h.with_shipped_story();
@@ -194,14 +217,22 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
         };
     }
     let ctx = h.game().ctx();
-    let painter = Painter::new(
-        ctx.content.font.clone(),
-        trpg_content::bundle::bytes(trpg_content::font::ATLAS_PNG_PATH).unwrap_or_default(),
-        &ctx.content.images,
-        trpg_content::bundle::bytes,
-        ctx.palette.get(UiColor::Black),
-    )?;
-    let frame = painter.render(h.game().buffer(), options.scale);
+    let frame = if options.playdate {
+        let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
+        let font = onebit::Font::new(&ctx.content.font, bits)?;
+        let mut frame = Box::new([0; FRAME_BYTES]);
+        onebit::render(h.game().buffer(), &font, &(), &mut frame);
+        one_bit_picture(&frame, options.scale.unwrap_or(1))
+    } else {
+        let painter = Painter::new(
+            ctx.content.font.clone(),
+            trpg_content::bundle::bytes(trpg_content::font::ATLAS_PNG_PATH).unwrap_or_default(),
+            &ctx.content.images,
+            trpg_content::bundle::bytes,
+            ctx.palette.get(UiColor::Black),
+        )?;
+        painter.render(h.game().buffer(), options.scale.unwrap_or(2))
+    };
     let png = encode_png(frame.width, frame.height, &frame.rgba)?;
     let path = root.join(&options.out);
     if let Some(dir) = path.parent() {
@@ -210,6 +241,33 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     fs::write(&path, png).map_err(|e| format!("writing {}: {e}", path.display()))?;
     let shown = format!("{} → {}", h.top_screen(), options.out.display());
     Ok(summary(&shown, &frame, cfg!(feature = "private-assets")))
+}
+
+/// The Playdate's palette (ADR-0074), over the default theme's names.
+fn playdate_palette() -> Result<Palette, String> {
+    let shown = |errors: Vec<trpg_content::ContentError>| {
+        let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
+        errors.join("; ")
+    };
+    let base = PaletteDef::load().map_err(shown)?;
+    let def = PaletteDef::load_playdate(&base).map_err(shown)?;
+    Palette::new(&def).map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
+}
+
+/// `frame` as a black and white picture, each pixel `scale` × `scale`.
+pub fn one_bit_picture(frame: &Frame, scale: u32) -> Image {
+    let (width, height) = (onebit::WIDTH.unsigned_abs(), onebit::HEIGHT.unsigned_abs());
+    let mut image = Image::filled(width * scale, height * scale, Rgb::new(0, 0, 0));
+    let s = i64::from(scale);
+    let at = |v: i64| i32::try_from(v / s).unwrap_or(-1);
+    for y in 0..i64::from(image.height) {
+        for x in 0..i64::from(image.width) {
+            if onebit::is_white(frame, at(x), at(y)) {
+                image.blend(x, y, [1.0; 3], 1.0);
+            }
+        }
+    }
+    image
 }
 
 /// What `run` prints for frame `frame` of `shown` (screen → path), with a
