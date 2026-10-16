@@ -1,0 +1,85 @@
+---
+source: crates/ui/tests/it/places.rs
+expression: h.snapshot()
+---
+                                      Harrowby, the Thornmarch                                      
+ ┌────────────────────────────────┐                              ┌────────────────────────────────┐ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │                              │                                │ 
+ │                                │╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱│                                │ 
+ │                                │╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱╲╱│                                │ 
+ │                                ││││││││││││││││││││││││││││││││                                │ 
+ │                                ││││││││││││││││││││││││││││││││                                │ 
+ │                                ││││││││││││││▐▌││││││││││││││││                                │ 
+ │                                │·····························.│                                │ 
+ │                                │·······††††········()········.│                                │ 
+ │                                │·····························.│                                │ 
+ │                                │.··························...│                                │ 
+ │                                │...······················.....│                                │ 
+ └────────────────────────────────┘..............................└────────────────────────────────┘ 
+               Ellery              ..............................           Hollis Marr             
+                        ♣♣♣♣..∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩······∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩∩..♣♣♣♣                          
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                                  │
+│    Dawn, in the yard behind a rented house. Two practice swords crack together, wood on wood,    │
+│                            as they have every morning for four years.                            │
+│                                                                                                  │
+│                                                                                     b log   f    │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+accccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacccccccccccccccccccccccccccccccccca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddceeeeeeeeeeeeeeeeeeeeeeeeeeeeeecddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddceeeeeeeeeeeeeeeeeeeeeeeeeeeeeecddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcffffffffffffffffffffffffffffffcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcffffffffffffffffffffffffffffffcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcffffffffffffffffffffffffffffffcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcggggggggggggggggggggggggggggghcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcgggggggiiiiggggggggjjgggggggghcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddcggggggggggggggggggggggggggggghcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddchgggggggggggggggggggggggggghhhcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddchhhgggggggggggggggggggggghhhhhcddddddddddddddddddddddddddddddddca
+acccccccccccccccccccccccccccccccccchhhhhhhhhhhhhhhhhhhhhhhhhhhhhhcccccccccccccccccccccccccccccccccca
+addddddddddddddkkkkkkddddddddddddddhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhdddddddddddkkkkkkkkkkkdddddddddddda
+aaaaaaaaaaaaaaaaaaaaaaaallllhhmmmmmmmmmmmmmmmmggggggmmmmmmmmmmmmmmmmhhllllaaaaaaaaaaaaaaaaaaaaaaaaaa
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
+cddddkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkddddc
+cddddddddddddddddddddddddddddkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkddddddddddddddddddddddddddddc
+cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
+cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddkkkkkdddkddddc
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:#534e43 bg:black
+b = fg:text_highlight bg:black
+c = fg:panel_border bg:panel_bg
+d = fg:text bg:panel_bg
+e = fg:#3e3b36 bg:#0e0a06
+f = fg:#3e2a17 bg:#0e0a06
+g = fg:#4a402d bg:#110e08
+h = fg:#31331d bg:#0b0b06
+i = fg:#3e2a17 bg:#110e08
+j = fg:#3e3b36 bg:#080e13
+k = fg:text_dim bg:panel_bg
+l = fg:#263a16 bg:#080d06
+m = fg:#263a16 bg:#0b0b06
+--- overlays ---
+under sprite 16,32 256x256  portraits/lead_m/neutral.png 0,0 32x32 opacity=140

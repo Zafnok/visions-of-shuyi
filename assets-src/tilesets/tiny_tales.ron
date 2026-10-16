@@ -32,6 +32,20 @@
         "floor": ("dungeons-1/Set_A_Fortress1", 161),
         "wall": ("dungeons-1/Set_E_Fortress1", 22),
         "door": ("dungeons-1/Set_E_Fortress1", 22),
+        // Decoration (ticket 0733): the yard at Harrowby stands on grass
+        // and on the yard's earth, the study's furniture on the floor and
+        // the banner on the wall. The layers below draw them.
+        "roof": ("world-map/Set_A_Standard_Fields2", 89),
+        "house_wall": ("world-map/Set_A_Standard_Fields2", 89),
+        "house_door": ("world-map/Set_A_Standard_Fields2", 89),
+        "hedge": ("world-map/Set_A_Standard_Fields2", 89),
+        "well": ("world-map/Set_A_Standard_Fields1", 41),
+        "rack": ("world-map/Set_A_Standard_Fields1", 41),
+        "desk": ("dungeons-1/Set_A_Fortress1", 161),
+        "papers": ("dungeons-1/Set_A_Fortress1", 161),
+        "shelf": ("dungeons-1/Set_A_Fortress1", 161),
+        "rug": ("dungeons-1/Set_A_Fortress1", 161),
+        "banner": ("dungeons-1/Set_E_Fortress1", 22),
     },
     // `full: false` leaves out the tile of all four corners: the layer's
     // terrains have it as their own tile already.
@@ -45,13 +59,14 @@
         // tile. Drawn over the deep sea, so a beach has shallows.
         "coast": Corners(
             of: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "burning",
-                 "burnt", "floor", "wall", "door"],
+                 "burnt", "floor", "wall", "door", "roof", "house_wall", "house_door", "hedge",
+                 "well", "rack", "desk", "papers", "shelf", "banner", "rug"],
             sheet: "world-map/Set_A_Standard_Coast", terrain: "Coast1", full: false,
         ),
         // The grass's edge, over the shore's sand and against walls.
         "grass": Corners(
             of: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "burning",
-                 "burnt"],
+                 "burnt", "roof", "house_wall", "house_door", "hedge", "well", "rack"],
             sheet: "world-map/Set_A_Standard_Fields2", terrain: "Grass2", full: false,
         ),
         "ice": Corners(
@@ -59,12 +74,12 @@
             sheet: "world-map/Set_A_Standard_Fields1", terrain: "Snow 2", full: false,
         ),
         "road": Corners(
-            of: ["road"],
+            of: ["road", "well", "rack"],
             sheet: "world-map/Set_A_Standard_Fields1", terrain: "Terrains2", full: false,
         ),
         // The floor's slabs end in a rim of the wall's bricks.
         "floor": Corners(
-            of: ["floor"],
+            of: ["floor", "desk", "papers", "shelf", "rug"],
             sheet: "dungeons-1/Set_A_Fortress1", terrain: "Floor2", full: false,
         ),
         // Burnt ground under the bare trees.
@@ -109,7 +124,7 @@
         // Indoors the floor runs under the pools, and a pool has a stone
         // rim on the sides where it ends (up, right, down, left).
         "indoor_floor": Corners(
-            of: ["floor", "water", "sea", "bridge", "ice"],
+            of: ["floor", "water", "sea", "bridge", "ice", "desk", "papers", "shelf", "rug"],
             sheet: "dungeons-1/Set_A_Fortress1", terrain: "Floor2", full: false,
         ),
         "pool": Tiles(
@@ -128,6 +143,82 @@
                 ".##.": ("dungeons-1/Set_A_Fortress1", 82),
             },
         ),
+        // The yard at Harrowby (0733), from the Overworld set: the back
+        // of the lead's rented house (Small Village), its roof and its
+        // plank wall each a patch with its edges where it ends, the door
+        // over the wall with its lintel on the tile above.
+        "roof": Tiles(
+            of: ["roof"],
+            tile: ("overworld/Set_E_Small_Village1", 33),
+            beside: ["roof"],
+            sides: {
+                ".##.": ("overworld/Set_E_Small_Village1", 16),
+                ".###": ("overworld/Set_E_Small_Village1", 17),
+                "..##": ("overworld/Set_E_Small_Village1", 18),
+                "###.": ("overworld/Set_E_Small_Village1", 32),
+                "#.##": ("overworld/Set_E_Small_Village1", 34),
+                "##..": ("overworld/Set_E_Small_Village1", 32),
+                "##.#": ("overworld/Set_E_Small_Village1", 33),
+                "#..#": ("overworld/Set_E_Small_Village1", 34),
+            },
+        ),
+        "house_wall": Tiles(
+            of: ["house_wall", "house_door"],
+            tile: ("overworld/Set_E_Small_Village1", 113),
+            beside: ["house_wall", "house_door"],
+            sides: {
+                ".##.": ("overworld/Set_E_Small_Village1", 96),
+                ".###": ("overworld/Set_E_Small_Village1", 97),
+                "..##": ("overworld/Set_E_Small_Village1", 98),
+                "###.": ("overworld/Set_E_Small_Village1", 112),
+                "#.##": ("overworld/Set_E_Small_Village1", 114),
+                "##..": ("overworld/Set_E_Small_Village1", 128),
+                "##.#": ("overworld/Set_E_Small_Village1", 129),
+                "#..#": ("overworld/Set_E_Small_Village1", 130),
+            },
+        ),
+        // Tile 7 is empty: only the wall tile above a door has the lintel.
+        "lintel": Tiles(
+            of: ["house_wall"],
+            tile: ("overworld/Set_E_Small_Village1", 7),
+            beside: ["house_door"],
+            sides: { "..#.": ("overworld/Set_E_Small_Village1", 200) },
+        ),
+        "house_door": Tiles(of: ["house_door"], tile: ("overworld/Set_E_Small_Village1", 216)),
+        // The Exteriors set: a bush for each tile of the hedge, the stone
+        // well, and the dungeon set's weapon rack for the practice swords.
+        "hedge": Tiles(of: ["hedge"], tile: ("overworld/Set_B_Exteriors", 2)),
+        "well": Tiles(of: ["well"], tile: ("overworld/Set_B_Exteriors", 156)),
+        "rack": Tiles(of: ["rack"], tile: ("overworld/Set_D_Interiors", 193)),
+        // The study at Veyne Hall (0733), from the Overworld set's
+        // furniture: a wooden table, papers on it, bookshelves two tiles
+        // wide and a blue rug. The bundle has no banner: a pale blue
+        // valance (Interiors) hangs on the wall, House Veyne's shield
+        // (Interiors) on its middle tile, a tile empty elsewhere (7).
+        "desk": Block(of: ["desk", "papers"], sheet: "overworld/Set_F_Tables", block: 0),
+        "papers": Tiles(of: ["papers"], tile: ("overworld/Set_D_Interiors", 145)),
+        "shelf": Tiles(
+            of: ["shelf"],
+            tile: ("overworld/Set_C_Interiors", 12),
+            beside: ["shelf"],
+            sides: { "...#": ("overworld/Set_C_Interiors", 13) },
+        ),
+        "rug": Block(of: ["rug"], sheet: "overworld/Set_G_Carpet", block: 69),
+        "banner": Tiles(
+            of: ["banner"],
+            tile: ("overworld/Set_C_Interiors", 133),
+            beside: ["banner"],
+            sides: {
+                ".#..": ("overworld/Set_C_Interiors", 132),
+                "...#": ("overworld/Set_C_Interiors", 134),
+            },
+        ),
+        "crest": Tiles(
+            of: ["banner"],
+            tile: ("overworld/Set_E_Small_Village1", 7),
+            beside: ["banner"],
+            sides: { ".#.#": ("overworld/Set_D_Interiors", 42) },
+        ),
     },
     looks: {
         // A map outdoors (and any map that names no look): the World Map
@@ -135,7 +226,9 @@
         // Dungeons set's.
         "outdoor": (
             layers: ["deep", "coast", "grass", "ice", "road", "floor", "ash", "forest",
-                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "door"],
+                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "door",
+                     "roof", "house_wall", "lintel", "house_door", "hedge", "well", "rack",
+                     "desk", "papers", "shelf", "rug", "banner", "crest"],
         ),
         // A map indoors: the Dungeons set (Fortress). Water is a pool in
         // the floor; the terrains the set lacks keep their outdoor
@@ -147,7 +240,9 @@
                 "bridge": ("dungeons-1/Set_A_Fortress1", 65),
             },
             layers: ["indoor_floor", "pool", "grass", "ice", "road", "ash", "forest",
-                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "door"],
+                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "door",
+                     "roof", "house_wall", "lintel", "house_door", "hedge", "well", "rack",
+                     "desk", "papers", "shelf", "rug", "banner", "crest"],
         ),
     },
 )

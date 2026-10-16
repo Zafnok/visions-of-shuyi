@@ -367,15 +367,15 @@ mod tests {
     #[test]
     fn the_image_has_the_tiles_then_a_row_a_layer_then_the_singles() {
         let src = sources();
-        // 16 terrains: one row; the layers on rows 1 to 3, the singles on
-        // row 4.
-        assert_eq!(terrain_rows(&src), 1);
+        // 27 terrains: two rows; the layers on rows 2 to 4, the singles on
+        // row 5.
+        assert_eq!(terrain_rows(&src), 2);
         assert_eq!((terrain_cell(0), terrain_cell(15)), ((0, 0), (15, 0)));
         assert_eq!(terrain_cell(16), (0, 1));
-        assert_eq!((layer_row(&src, 0), layer_row(&src, 2)), (1, 3));
-        assert_eq!(singles_row(&src), 4);
+        assert_eq!((layer_row(&src, 0), layer_row(&src, 2)), (2, 4));
+        assert_eq!(singles_row(&src), 5);
         let (w, h, rgba) = image(&src).unwrap();
-        assert_eq!((w, h), (256, 80));
+        assert_eq!((w, h), (256, 96));
         let solid = |c: &[u8; 3]| [c[0], c[1], c[2], 255];
         // A terrain tile: its background, with glyph pixels somewhere.
         let (_, _, fg, bg) = &src.terrain[1];
@@ -388,59 +388,76 @@ mod tests {
         // The water layer's picture of mix 3 (the two bottom corners): a
         // line of the water's glyph colour under the middle, clear above.
         let water = line_color(&src, "water").unwrap();
-        assert_eq!(px(&rgba, w, 3 * 16 + 4, 16 + 8), water);
-        assert_eq!(px(&rgba, w, 3 * 16 + 4, 16 + 7), [0; 4]);
+        assert_eq!(px(&rgba, w, 3 * 16 + 4, 32 + 8), water);
+        assert_eq!(px(&rgba, w, 3 * 16 + 4, 32 + 7), [0; 4]);
         // Mixes 0 and 15 have no picture.
         for column in [0, 15] {
-            let clear = (0..16).all(|i| px(&rgba, w, column * 16 + i, 16 + i) == [0; 4]);
+            let clear = (0..16).all(|i| px(&rgba, w, column * 16 + i, 32 + i) == [0; 4]);
             assert!(clear, "{column}");
         }
         // The woods and the floors: their own rows and colours.
         let woods = line_color(&src, "forest").unwrap();
         let floors = line_color(&src, "floor").unwrap();
-        assert_eq!(px(&rgba, w, 3 * 16 + 4, 32 + 8), woods);
-        assert_eq!(px(&rgba, w, 3 * 16 + 4, 48 + 8), floors);
+        assert_eq!(px(&rgba, w, 3 * 16 + 4, 48 + 8), woods);
+        assert_eq!(px(&rgba, w, 3 * 16 + 4, 64 + 8), floors);
         assert_ne!(water, woods);
         // The singles: the fort's frame, the bridge's rails, then turned.
         let fort = line_color(&src, "fort").unwrap();
         let bridge = line_color(&src, "bridge").unwrap();
-        assert_eq!(px(&rgba, w, 0, 64 + 7), fort);
-        assert_eq!(px(&rgba, w, 1, 64 + 7), [0; 4]);
-        assert_eq!(px(&rgba, w, 16 + 7, 64), bridge);
-        assert_eq!(px(&rgba, w, 16, 64 + 7), [0; 4]);
-        assert_eq!(px(&rgba, w, 32, 64 + 7), bridge);
-        assert_eq!(px(&rgba, w, 32 + 7, 64), [0; 4]);
+        assert_eq!(px(&rgba, w, 0, 80 + 7), fort);
+        assert_eq!(px(&rgba, w, 1, 80 + 7), [0; 4]);
+        assert_eq!(px(&rgba, w, 16 + 7, 80), bridge);
+        assert_eq!(px(&rgba, w, 16, 80 + 7), [0; 4]);
+        assert_eq!(px(&rgba, w, 32, 80 + 7), bridge);
+        assert_eq!(px(&rgba, w, 32 + 7, 80), [0; 4]);
     }
 
-    /// One terrain more than a row holds: its tile starts a second row,
+    /// One terrain more than the rows hold: its tile starts a new row,
     /// and the layers and the single pictures move a row down.
     #[test]
-    fn a_seventeenth_terrain_starts_a_second_row() {
+    fn a_terrain_past_a_full_row_starts_a_new_one() {
         let mut src = sources();
+        let rows = terrain_rows(&src);
+        // Fill the last row, then one more: a background no terrain has.
+        let full = usize::try_from(rows * COLUMNS).unwrap();
+        for n in src.terrain.len()..full {
+            let mut pad = src.terrain[0].clone();
+            pad.0 = format!("pad{n}");
+            src.terrain.push(pad);
+        }
         let mut extra = src.terrain[0].clone();
         extra.0 = "extra".to_owned();
-        // A background no terrain has.
         extra.3 = [1, 2, 3];
         src.terrain.push(extra);
-        assert_eq!(src.terrain.len(), 17);
-        assert_eq!(terrain_rows(&src), 2);
-        assert_eq!((layer_row(&src, 0), singles_row(&src)), (2, 5));
+        assert_eq!(terrain_rows(&src), rows + 1);
+        assert_eq!(
+            (layer_row(&src, 0), singles_row(&src)),
+            (rows + 1, rows + 4)
+        );
         let (w, h, rgba) = image(&src).unwrap();
-        assert_eq!((w, h), (256, 96));
-        // Its tile is the first of the second row; the first row is still
-        // the first sixteen, and the rest of the second row is clear.
-        assert_eq!(px(&rgba, w, 0, 16), [1, 2, 3, 255]);
+        assert_eq!((w, h), (256, (rows + 5) * 16));
+        // Its tile is the first of the new row; the first row is still the
+        // first sixteen, and the rest of the new row is clear.
+        let top = rows * 16;
+        assert_eq!(px(&rgba, w, 0, top), [1, 2, 3, 255]);
         let (_, _, _, bg) = &src.terrain[0];
         assert_eq!(px(&rgba, w, 0, 0), [bg[0], bg[1], bg[2], 255]);
-        assert_eq!(px(&rgba, w, 3 * 16 + 4, 16 + 8), [0; 4]);
-        // The water's line: a row lower than with sixteen terrains.
+        assert_eq!(px(&rgba, w, 3 * 16 + 4, top + 8), [0; 4]);
+        // The water's line: a row lower than before.
         let water = line_color(&src, "water").unwrap();
-        assert_eq!(px(&rgba, w, 3 * 16 + 4, 32 + 8), water);
+        assert_eq!(px(&rgba, w, 3 * 16 + 4, top + 16 + 8), water);
         // The file says the same.
         let text = ron(&src, &test_units::sheets(&src));
-        assert!(text.contains("        \"extra\": (0, 1),\n"), "{text}");
-        assert!(text.contains("            (corners: \"...#\", at: (1, 2)),\n"));
-        assert!(text.contains("        Tiles(of: [\"fort\"], at: (0, 5)),\n"));
+        assert!(
+            text.contains(&format!("        \"extra\": (0, {rows}),\n")),
+            "{text}"
+        );
+        let layer = rows + 1;
+        let corner = format!("            (corners: \"...#\", at: (1, {layer})),\n");
+        assert!(text.contains(&corner));
+        let singles = rows + 4;
+        let fort = format!("        Tiles(of: [\"fort\"], at: (0, {singles})),\n");
+        assert!(text.contains(&fort));
         // No terrain at all: no row of tiles.
         src.terrain.clear();
         assert_eq!(terrain_rows(&src), 0);
@@ -468,24 +485,24 @@ mod tests {
         );
         assert!(text.contains(
             "    layers: [\n        Corners(of: [\"water\", \"sea\", \"bridge\", \"ice\"], tiles: [\n            \
-             (corners: \"...#\", at: (1, 1)),\n"
+             (corners: \"...#\", at: (1, 2)),\n"
         ));
-        assert!(text.contains("            (corners: \"###.\", at: (14, 1)),\n        ]),\n"));
+        assert!(text.contains("            (corners: \"###.\", at: (14, 2)),\n        ]),\n"));
         assert!(!text.contains("corners: \"####\"") && !text.contains("corners: \"....\""));
         assert!(text.contains("        Corners(of: [\"forest\", \"thicket\"], tiles: [\n"));
-        assert!(text.contains("            (corners: \"...#\", at: (1, 2)),\n"));
-        assert!(text.contains("        Tiles(of: [\"fort\"], at: (0, 4)),\n"));
+        assert!(text.contains("            (corners: \"...#\", at: (1, 3)),\n"));
+        assert!(text.contains("        Tiles(of: [\"fort\"], at: (0, 5)),\n"));
         assert!(text.contains(
-            "        Tiles(of: [\"bridge\"], at: (1, 4), beside: [\"water\", \"sea\", \"ice\"], sides: [\n            \
-             (sides: \".#.#\", at: (2, 4)),\n            (sides: \"##.#\", at: (2, 4)),\n            \
-             (sides: \".###\", at: (2, 4)),\n            (sides: \"####\", at: (2, 4)),\n        ]),\n    ],\n"
+            "        Tiles(of: [\"bridge\"], at: (1, 5), beside: [\"water\", \"sea\", \"ice\"], sides: [\n            \
+             (sides: \".#.#\", at: (2, 5)),\n            (sides: \"##.#\", at: (2, 5)),\n            \
+             (sides: \".###\", at: (2, 5)),\n            (sides: \"####\", at: (2, 5)),\n        ]),\n    ],\n"
         ));
         assert!(text.contains(
             "    looks: {\n        \"indoor\": (\n            terrain: {\n                \"plain\": (0, 0),\n"
         ));
         assert!(text.contains(
             "            layers: [\n                Corners(of: [\"floor\", \"door\"], tiles: [\n                    \
-             (corners: \"...#\", at: (1, 3)),\n"
+             (corners: \"...#\", at: (1, 4)),\n"
         ));
         assert!(text.contains(
             "                ]),\n            ],\n        ),\n    },\n    unit_px: (16, 20),\n"
@@ -533,7 +550,7 @@ mod tests {
         let summary = run(&root).unwrap();
         assert_eq!(
             summary,
-            "test-tileset: wrote assets-test/tilesets/test_auto.png (256×80) and \
+            "test-tileset: wrote assets-test/tilesets/test_auto.png (256×96) and \
              assets-test/tilesets/test_auto.ron"
         );
         let src = sources();

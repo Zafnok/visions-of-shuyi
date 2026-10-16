@@ -104,5 +104,69 @@
             move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
             defense: 0, avoid: 0, heal_percent: 0,
         ),
+        // Decoration (ticket 0733): the places conversations are drawn
+        // over (assets/maps/README.md, "Places"), never a battle's map
+        // (`decoration: true`, checked when the battles load). The rules
+        // are filler: the rug can be walked on like the floor, the rest
+        // can't. Glyphs and colours: Claude's, TUNABLE.
+        // The yard at Harrowby (harrowby_yard.map).
+        (
+            id: "roof", name: "Roof", glyphs: "╱╲", fg: "stone", bg: "wood_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            id: "house_wall", name: "House wall", glyphs: "││", fg: "wood", bg: "wood_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            id: "house_door", name: "Door", glyphs: "▐▌", fg: "wood", bg: "wood_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            id: "hedge", name: "Hedge", glyphs: "∩∩", fg: "forest", bg: "grass_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            id: "well", name: "Well", glyphs: "()", fg: "stone", bg: "water_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            id: "rack", name: "Weapon rack", glyphs: "††", fg: "wood", bg: "road_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        // The study at Veyne Hall (veyne_study.map).
+        (
+            id: "desk", name: "Desk", glyphs: "╤╤", fg: "wood", bg: "wood_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            // A desk with papers on it.
+            id: "papers", name: "Desk", glyphs: "≡≡", fg: "peak", bg: "wood_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            id: "shelf", name: "Bookshelf", glyphs: "╫╫", fg: "wood", bg: "wood_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            // House Veyne's, in its blue.
+            id: "banner", name: "Banner", glyphs: "▼▼", fg: "player", bg: "stone_bg", decoration: true,
+            move_cost: { "foot": None, "mounted": None, "armored": None, "flying": None },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
+        (
+            id: "rug", name: "Rug", glyphs: "◊◊", fg: "player", bg: "water_bg", decoration: true,
+            move_cost: { "foot": Some(1), "mounted": Some(1), "armored": Some(1), "flying": Some(1) },
+            defense: 0, avoid: 0, heal_percent: 0,
+        ),
     ],
 )

@@ -544,6 +544,7 @@ mod tests {
             glyphs: ['.', '.'],
             fg: "grass".into(),
             bg: "black".into(),
+            decoration: false,
         };
         TerrainDisplayTable {
             terrains: vec![t("plain"), t("forest"), t("water"), t("wall")],
@@ -797,7 +798,7 @@ mod tests {
         let error = light_error("m.map", source, "midnight", &lighting);
         assert_eq!(
             error.to_string(),
-            "m.map:4:17: look: light \"midnight\" is not a light; the lights are \"dusk\", \"night\", \"noon\""
+            "m.map:4:17: look: light \"midnight\" is not a light; the lights are \"dawn\", \"dusk\", \"night\", \"noon\""
         );
         // A name the header doesn't have (it was set some other way): the
         // file's start. One below the tiles' line isn't the header's.

@@ -14,6 +14,7 @@ fn refs(c: &Content) -> BattleRefs<'_> {
     BattleRefs {
         maps: &c.maps,
         terrain: &c.terrain.rules,
+        terrain_looks: &c.terrain.display,
         classes: &c.classes,
         items: &c.items,
         characters: &c.characters,
@@ -162,6 +163,35 @@ fn defaults_fill_what_a_battle_leaves_out() {
     let survive = source.replace("Seize(pos: (5, 5))", "Survive(turns: 8)");
     let def = load(&c, &survive).unwrap_or_else(|e| panic!("{e:?}"));
     assert_eq!(def.objective, Objective::Survive { turns: 8 });
+}
+
+/// A battle's map has none of the terrain only places have (ticket 0733),
+/// each named once.
+#[test]
+fn a_battle_map_with_decoration_is_an_error() {
+    let mut c = content();
+    let id = |name: &str| {
+        c.terrain
+            .display
+            .id_of(name)
+            .unwrap_or_else(|| panic!("{name}"))
+    };
+    let (roof, desk) = (id("roof"), id("desk"));
+    let mut map = c.maps["test_small"].clone();
+    for (at, terrain) in [((0, 0), roof), ((1, 0), roof), ((2, 0), desk)] {
+        if let Some(tile) = map.map.tiles.get_mut(Pos::new(at.0, at.1)) {
+            *tile = terrain;
+        }
+    }
+    c.maps.insert("test_small".into(), map);
+    let only = "a terrain only for the places behind conversations";
+    assert_eq!(
+        errors(&c, "seed: 42", "seed: 42"),
+        [
+            format!("map \"test_small\" has \"desk\", {only}"),
+            format!("map \"test_small\" has \"roof\", {only}"),
+        ]
+    );
 }
 
 #[test]
@@ -684,7 +714,7 @@ fn a_battle_may_name_its_light() {
         light_of("b.ron", &odd, &c.lighting),
         Err(ContentError::new(
             "b.ron",
-            "light: \"midnight\" is not a light; the lights are \"dusk\", \"night\", \"noon\""
+            "light: \"midnight\" is not a light; the lights are \"dawn\", \"dusk\", \"night\", \"noon\""
         )
         .at(line, Some(12)))
     );

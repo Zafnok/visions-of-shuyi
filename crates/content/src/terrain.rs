@@ -27,6 +27,9 @@ pub struct TerrainDisplay {
     pub fg: String,
     /// Background palette colour name.
     pub bg: String,
+    /// Only for the places conversations are drawn over (ticket 0733):
+    /// never on a battle's map.
+    pub decoration: bool,
 }
 
 /// Every terrain's string id and look, indexed by [`TerrainId`].
@@ -46,6 +49,11 @@ impl TerrainDisplayTable {
     /// The display data of terrain `id`.
     pub fn get(&self, id: TerrainId) -> Option<&TerrainDisplay> {
         self.terrains.get(usize::from(id.0))
+    }
+
+    /// Whether terrain `id` is decoration: never on a battle's map.
+    pub fn is_decoration(&self, id: TerrainId) -> bool {
+        self.get(id).is_some_and(|t| t.decoration)
     }
 }
 
@@ -77,6 +85,8 @@ struct RawTerrain {
     defense: i8,
     avoid: i8,
     heal_percent: u8,
+    #[serde(default)]
+    decoration: bool,
 }
 
 impl TerrainDef {
@@ -215,6 +225,7 @@ impl Validator<'_> {
             glyphs,
             fg: t.fg.clone(),
             bg: t.bg.clone(),
+            decoration: t.decoration,
         };
         (rules, display)
     }
@@ -560,6 +571,40 @@ mod tests {
         }
     }
 
+    /// Only the terrain of the places behind conversations is decoration
+    /// (ticket 0733): every terrain of the design doc's table is not.
+    #[test]
+    fn only_the_places_terrain_is_decoration() {
+        let t = TerrainDef::load(None).unwrap_or_default();
+        let decoration: Vec<&str> = t
+            .display
+            .terrains
+            .iter()
+            .filter(|d| d.decoration)
+            .map(|d| d.id.as_str())
+            .collect();
+        assert_eq!(
+            decoration,
+            [
+                "roof",
+                "house_wall",
+                "house_door",
+                "hedge",
+                "well",
+                "rack",
+                "desk",
+                "papers",
+                "shelf",
+                "banner",
+                "rug"
+            ]
+        );
+        let first = t.display.id_of("roof");
+        assert!(first.is_some_and(|id| t.display.is_decoration(id)));
+        let plain = t.display.id_of("plain");
+        assert!(plain.is_some_and(|id| !t.display.is_decoration(id)));
+    }
+
     /// Acceptance: the embedded movement costs match the table in
     /// `docs/design/terrain.md` (foot, mounted, armored, flying).
     #[test]
@@ -585,6 +630,18 @@ mod tests {
             ("burning", [None; 4]),
             ("burnt", open),
             ("ice", open),
+            // Decoration (0733): not in the design doc, never in a battle.
+            ("roof", [None; 4]),
+            ("house_wall", [None; 4]),
+            ("house_door", [None; 4]),
+            ("hedge", [None; 4]),
+            ("well", [None; 4]),
+            ("rack", [None; 4]),
+            ("desk", [None; 4]),
+            ("papers", [None; 4]),
+            ("shelf", [None; 4]),
+            ("banner", [None; 4]),
+            ("rug", open),
         ];
         assert_eq!(t.rules.terrains.len(), expected.len());
         for (id, costs) in expected {

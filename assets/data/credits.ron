@@ -24,8 +24,9 @@
 
         // The bought Tiny Tales bundle (THIRD_PARTY_ASSETS.md): the map
         // sprites (0436), the two test portraits (0711), the terrain tiles
-        // (0437; the tilesets' artist is Rayane Félix) and the Chapter 1
-        // cast's portraits (0706: four heroes' busts, and seven faces made
+        // (0437; the tilesets' artist is Rayane Félix; the Overworld set's
+        // for Chapter 1's places, 0733, are in the same packed image) and
+        // the Chapter 1 cast's portraits (0706: four heroes' busts, and seven faces made
         // with the bundle's Character Generator EX, whose parts are Rayane
         // Félix's), and the combat scene's pictures and backdrops (0413:
         // still battle pictures of *Heroes: A New Beginning*, *Battlers 5:

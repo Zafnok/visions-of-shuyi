@@ -559,6 +559,7 @@ fn load_story(
     let refs = BattleRefs {
         maps,
         terrain: &terrain.rules,
+        terrain_looks: &terrain.display,
         classes,
         items,
         characters,
