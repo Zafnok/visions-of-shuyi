@@ -362,7 +362,7 @@ use alloc::sync::Arc;
 use core::fmt;
 
 use serde::{Deserialize, Serialize};
-use shuyi_core::TurnRules;
+use shuyi_core::{Sides, TurnRules};
 
 use crate::art::{ArtId, ArtTable};
 use crate::campaign::GameTables;
@@ -3232,6 +3232,19 @@ impl TurnRules for BattleState {
 
     fn outcome(&self) -> Option<Outcome> {
         BattleState::outcome(self)
+    }
+}
+
+/// Whose move it is, for the engine's bot loop: the phase being played.
+impl Sides for BattleState {
+    type Side = Phase;
+
+    fn side_to_move(&self) -> Phase {
+        BattleState::phase(self)
+    }
+
+    fn turn(&self) -> u32 {
+        BattleState::turn(self)
     }
 }
 

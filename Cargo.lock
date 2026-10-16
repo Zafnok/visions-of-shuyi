@@ -969,8 +969,10 @@ version = "0.3.0"
 dependencies = [
  "include_dir",
  "once_cell",
+ "proptest",
  "ron",
  "serde",
+ "shuyi-core",
  "thiserror",
 ]
 
@@ -1124,6 +1126,7 @@ dependencies = [
 name = "trpg-bots"
 version = "0.3.0"
 dependencies = [
+ "shuyi-core",
  "trpg-content",
  "trpg-core",
 ]

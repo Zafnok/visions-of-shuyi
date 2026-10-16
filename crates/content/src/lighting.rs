@@ -16,7 +16,7 @@ use crate::ron_loader::parse_ron;
 /// Path of the lights' file inside the asset bundle.
 pub const LIGHTING_PATH: &str = "data/lighting.ron";
 /// The light of a map that names none. The file must have it.
-pub const NOON: &str = "noon";
+pub const NOON: &str = shuyi_assets::grid_map::DEFAULT_LIGHT;
 
 /// How many parts a [`Light`]'s numbers are counted in: the file's `0.35`
 /// is kept as 350.
