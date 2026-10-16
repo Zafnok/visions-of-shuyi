@@ -67,13 +67,13 @@ pub const fn ink_is_white(ink: Ink, x: i32, y: i32) -> bool {
         Ink::White => true,
         Ink::Black | Ink::BlackEdged | Ink::Invert => false,
         // Black where x + y is even.
-        Ink::Grey => (x + y).rem_euclid(2) == 1,
+        Ink::Grey => x.rem_euclid(2) != y.rem_euclid(2),
         // Black every fourth pixel of every other row, the rows staggered.
-        Ink::Dots => !(y.rem_euclid(2) == 0 && (x + y).rem_euclid(4) == 0),
+        Ink::Dots => !(y.rem_euclid(2) == 0 && x.rem_euclid(4) == y.rem_euclid(4)),
         // Black where x − y is a multiple of 4: lines down to the right.
         Ink::Diagonals => (x - y).rem_euclid(4) != 0,
         // A checker of 2 × 2 squares: a 1-pixel line of it is dashed.
-        Ink::Dashes => (x.div_euclid(2) + y.div_euclid(2)).rem_euclid(2) == 1,
+        Ink::Dashes => x.div_euclid(2).rem_euclid(2) != y.div_euclid(2).rem_euclid(2),
     }
 }
 
@@ -84,7 +84,7 @@ const fn ink_byte(ink: Ink, y: i32) -> u8 {
     let mut byte = 0;
     let mut x = 0;
     while x < 8 {
-        byte = byte << 1 | ink_is_white(ink, x, y) as u8;
+        byte = (byte << 1) + ink_is_white(ink, x, y) as u8;
         x += 1;
     }
     byte
@@ -315,7 +315,8 @@ impl Target<'_> {
             mask &= u8::MAX << (start + 8 - hi).max(0);
             let byte = &mut self.frame[byte_index(start, y)];
             *byte = match pen {
-                Pen::Ink(ink) => *byte & !mask | ink_byte(ink, y as i32) & mask,
+                // The ink's bits where `mask` is set, the frame's elsewhere.
+                Pen::Ink(ink) => *byte ^ ((*byte ^ ink_byte(ink, y as i32)) & mask),
                 Pen::Flip => *byte ^ mask,
             };
             start += 8;
@@ -475,7 +476,7 @@ fn widen(byte: u8, scale: i64) -> u64 {
     let mut out = 0u64;
     for i in (0..8).rev() {
         for _ in 0..scale {
-            out = out << 1 | u64::from(byte >> i & 1);
+            out = (out << 1) + u64::from(byte >> i & 1);
         }
     }
     out << (64 - 8 * scale)

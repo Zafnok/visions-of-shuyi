@@ -378,6 +378,51 @@ fn a_sprite_draws_its_one_bit_picture() {
     );
 }
 
+/// A sprite away from the buffer's corner: its picture starts at its own
+/// top-left.
+#[test]
+fn a_sprite_draws_where_it_is_placed() {
+    let mut b = buf(1, 1);
+    b.add_sprite(Sprite::new(
+        picture_id(),
+        Rect::new(0, 0, 4, 2),
+        Rect::new(3, 2, 4, 2),
+        Layer::Over,
+    ));
+    let frame = draw_with(&b, &TestImages { none: false });
+    assert_eq!(
+        text(&frame, 2, 1, 6, 4),
+        ["......", "..#.#.", ".#....", "......"]
+    );
+}
+
+/// A sprite at a scale that isn't whole takes the picture pixel under
+/// each screen pixel's centre; and only its `src`.
+#[test]
+fn a_sprite_samples_pixel_centres_and_its_src() {
+    let draw_one = |src: Rect, dest: Rect| {
+        let mut b = buf(1, 1);
+        b.add_sprite(Sprite::new(picture_id(), src, dest, Layer::Over));
+        let frame = draw_with(&b, &TestImages { none: false });
+        text(&frame, 0, 0, 6, 3)
+    };
+    // 4 × 2 at 1.5 ×: picture columns 0, 1, 1, 2, 3, 3 and rows 0, 1, 1.
+    assert_eq!(
+        draw_one(Rect::new(0, 0, 4, 2), Rect::new(0, 0, 6, 3)),
+        [".##.##", "#.....", "#....."]
+    );
+    // Picture pixels 1 and 2 of the top row: black, white.
+    assert_eq!(
+        draw_one(Rect::new(1, 0, 2, 1), Rect::new(0, 0, 2, 1)),
+        ["#.....", "......", "......"]
+    );
+    // The bottom row's first pixel, alone.
+    assert_eq!(
+        draw_one(Rect::new(0, 1, 1, 1), Rect::new(0, 0, 1, 1)),
+        ["#.....", "......", "......"]
+    );
+}
+
 /// A sprite fading out loses its pixels in a Bayer 4 × 4 order.
 #[test]
 fn a_fading_sprite_dithers() {
