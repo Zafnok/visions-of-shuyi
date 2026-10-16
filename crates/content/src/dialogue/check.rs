@@ -13,7 +13,7 @@ use super::line_id::line_hash;
 use super::parse::{Lines, ParsedScene, PartLines};
 use super::{
     ChoiceOption, MAX_LEAD_LINE_LEN, MAX_OPTION_LEN, MAX_REACTION_TEXTS, MAX_TEXT_LEN, MusicLine,
-    NARRATION_SPEAKER, REPLY_SPEAKER, STANDARD_EXPRESSIONS, Side, Step,
+    NARRATION_SPEAKER, PlaceLine, REPLY_SPEAKER, STANDARD_EXPRESSIONS, Side, Step,
 };
 use crate::audio::AudioManifest;
 use crate::character::CharacterTable;
@@ -73,6 +73,7 @@ fn texts(steps: &[Step]) -> usize {
 struct State<'a> {
     screen: Screen<'a>,
     caption: Option<&'a str>,
+    place: Option<&'a PlaceLine>,
 }
 
 struct Checker<'a> {
@@ -203,7 +204,7 @@ impl<'a> Checker<'a> {
 
     /// Checks an `@if` block on `line` and applies it to `state`: its
     /// character can speak, and its two parts leave the screen and the
-    /// caption the same.
+    /// caption and place the same.
     fn branch<'s>(
         &mut self,
         line: u32,
@@ -239,6 +240,15 @@ impl<'a> Checker<'a> {
                 format!(
                     "this @if block leaves a different caption with \"{}\" here and without; \
                      it must leave the same caption either way",
+                    character.0
+                ),
+            );
+        } else if with.place != without.place {
+            self.err(
+                at,
+                format!(
+                    "this @if block leaves a different @place with \"{}\" here and without; \
+                     it must leave the same place either way",
                     character.0
                 ),
             );
@@ -331,6 +341,7 @@ impl<'a> Checker<'a> {
                 }
             }
             Step::Narrate { text, .. } => self.line_id(line, NARRATION_SPEAKER, text),
+            Step::Setting(place) => state.place = Some(place),
             Step::Choice { .. } | Step::If { .. } | Step::Music(MusicLine::Stop) => {}
         }
     }
@@ -390,6 +401,12 @@ impl<'a> Checker<'a> {
                     at,
                     "this reaction leaves a different caption from the first option's; every \
                      option must leave the same caption"
+                        .to_owned(),
+                ),
+                Some(f) if f.place != after.place => self.err(
+                    at,
+                    "this reaction leaves a different @place from the first option's; every \
+                     option must leave the same place"
                         .to_owned(),
                 ),
                 Some(_) => {}

@@ -133,6 +133,32 @@ changes.
 What the player sees: "The toll-fort, noon" over the first text box,
 replaced by "The toll-fort, dusk" for the second.
 
+### Places: `@place`
+
+`@place` names the place drawn behind the talk, darkened: a top-down map,
+the battle map's art and scale. From that line until the next `@place`.
+
+- `@place <map> <x>,<y>`: a map of `assets/maps/`, centred on that tile.
+  For talk away from a battle (a yard, a hall).
+- `@place battle <x>,<y>`: the scene's battle map, centred on that tile.
+  For talk just before, during or just after a battle; only in a
+  chapter's intro and victory scenes and a battle trigger's scenes.
+- `@place none`: black again.
+
+```dlg
+@scene guide_place
+@caption The toll-fort, noon
+@place ch01 20,3
+> The gate stands open. Nobody has closed it in years.
+@end
+```
+
+What the player sees: the toll-fort of Chapter 1's map
+(`assets/maps/ch01.map`, its keep at 20,2), darkened, behind the text
+box. In Chapter 1's own victory scene the same spot is `@place battle
+20,3`: the battle's map. A scene with no `@place` is on black; a scene during a
+battle is over the battle map, darkened, either way.
+
 ### Music: `@music`
 
 `@music <cue>` changes the music when the scene reaches that line: the

@@ -62,6 +62,7 @@ use trpg_core::{
 };
 
 use crate::glyph_buffer::GlyphBuffer;
+use crate::map_view::Place;
 use crate::save::{self, SUSPEND_KEY, SaveError};
 use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Transition};
 use crate::screens::familiarity::FamiliarityScreen;
@@ -403,7 +404,12 @@ impl FlowScreen {
         let present = self.campaign.as_ref().map_or(Present::Everyone, |c| {
             Present::only(c.roster.iter().filter_map(|u| u.character.clone()))
         });
-        let screen = DialogueScreen::told(ctx, scene, lead, &present);
+        let mut screen = DialogueScreen::told(ctx, scene, lead, &present);
+        // `@place battle` in a chapter's scenes is its battle's field.
+        let battle = self.chapter.as_ref();
+        if let Some(def) = battle.and_then(|c| ctx.content.battles.get(&c.battle)) {
+            screen = screen.with_battle(Place::of_battle(&ctx.content, def));
+        }
         let plays = screen.has_text();
         if plays {
             self.stage = Stage::Scene(Box::new(screen));

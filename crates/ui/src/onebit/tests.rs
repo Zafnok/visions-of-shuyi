@@ -376,6 +376,14 @@ fn a_sprite_draws_its_one_bit_picture() {
         sprite_frame(|s| s.painted(Paint::Shaded(dusk)), false),
         sprite_frame(|s| s, false)
     );
+    // Darkened to black (ADR-0075): where it shows, black, as a black
+    // silhouette is; at full brightness, as it is.
+    let dark = |brightness| move |s: Sprite| Sprite { brightness, ..s };
+    assert_eq!(
+        sprite_frame(dark(0), false),
+        sprite_frame(solid(Ink::Black), false)
+    );
+    assert_eq!(sprite_frame(dark(255), false), sprite_frame(|s| s, false));
     // Faded out: none of it; with no picture, a grey rectangle.
     let faded = |opacity| move |s: Sprite| Sprite { opacity, ..s };
     assert_eq!(sprite_frame(faded(0), false), grey);

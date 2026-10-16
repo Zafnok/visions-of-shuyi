@@ -12,15 +12,21 @@ use trpg_core::LeadProfile;
 use super::log::LogView;
 use super::{TEXT_LINES, display_name};
 use crate::dialogue::{Portrait, View};
+use crate::map_view::MapScene;
 use crate::screen::Ctx;
 use crate::widgets::menu::MenuView;
 
 /// The whole screen, as it is this frame.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DialogueView {
     /// Whether the scene plays over the screen below (the battle map),
-    /// which shows around it; otherwise it fills the screen.
+    /// which shows around it, darkened; otherwise it fills the screen.
     pub overlay: bool,
+    /// The place behind the talk, if the scene names one: the part of its
+    /// map the whole screen shows, for the map skin to paint (darkened)
+    /// over the screen below or the black. `None`: black, or the screen
+    /// below for an overlay.
+    pub place: Option<MapScene>,
     /// The place and time, if the scene has said them.
     pub caption: Option<String>,
     /// Who is on the left, if anyone.
@@ -134,6 +140,7 @@ pub(super) fn scene(
 ) -> DialogueView {
     DialogueView {
         overlay,
+        place: None,
         caption: view.caption.as_deref().map(str::to_owned),
         left: view.left.map(|p| face(ctx, lead, p)),
         right: view.right.map(|p| face(ctx, lead, p)),

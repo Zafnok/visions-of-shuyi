@@ -1,0 +1,86 @@
+---
+source: crates/ui/tests/it/places.rs
+expression: h.snapshot()
+---
+                                        The green, Harrowby                                         
+ ┌────────────────────────────────┐                              ╔════════════════════════════════╗ 
+ │                                │                              ║                                ║ 
+ │                                │                              ║                                ║ 
+ │                                │                              ║                                ║ 
+ │                                │                              ║                                ║ 
+ │                                │                              ║                                ║ 
+ │                                │                              ║                                ║ 
+ │                                │.......♣♣♣♣♣♣..............^^^║                                ║ 
+ │                                │.....♣♣♣♣♣♣♣♣..............▓▓▓║                                ║ 
+ │                                │♣♣♣♣♣♣♣♣♣........············░║                                ║ 
+ │                                │♣♣♣♣♣............··........▓▓░║                                ║ 
+ │                                │.............······........▓▓▓║                                ║ 
+ │                                │.............··....♣♣♣♣.......║                                ║ 
+ │                                │≈≈≈≈≈≈≈≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈.....║                                ║ 
+ │                                │.............··........≈≈≈≈≈≈≈║                                ║ 
+ │                                │.............··......♣♣♣♣.....║                                ║ 
+ │                                │.............··....♣♣♣♣♣♣♣♣...║                                ║ 
+ └────────────────────────────────┘·............··......♣♣♣♣.....╚════════════════════════════════╝ 
+            Hollis Marr            ······························           Tamsin Rook             
+                          ....╦╦..··................................^^^^^^                          
+┌── Tamsin Rook ───────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                                  │
+│   Captain. Your Former Grace. Red Harl is in the toll-fort with the whole company. I rode up     │
+│   to the gate to ask him what he wanted here. He asked me if I wanted my old job back.           │
+│                                                                                                  │
+│                                                                                     b log   f ▼  │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                                                                    
+                                                                                                    
+                                                                                                    
+                                                                                                    
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+accccccccccccccccccccccccccccccccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadddddddddddddddddddddddddddddddddda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaadeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffggggggffffffffffffffhhhdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffggggggggffffffffffffffiiideeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecgggggggggffffffffjjjjjjjjjjjjkdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecgggggffffffffffffjjffffffffiikdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjjjjjffffffffiiideeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffggggfffffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeclllllllllllllmmllllllllllfffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffffffllllllldeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffffggggfffffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecfffffffffffffjjffffggggggggfffdeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeda
+accccccccccccccccccccccccccccccccccjffffffffffffjjffffffggggfffffdddddddddddddddddddddddddddddddddda
+aeeeeeeeeeeennnnnnnnnnneeeeeeeeeeeejjjjjjjjjjjjjjjjjjjjjjjjjjjjjjeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeea
+aaaaaaaaaaaaaaaaaaaaaaaaaaffffooffjjffffffffffffffffffffffffffffffffhhhhhhaaaaaaaaaaaaaaaaaaaaaaaaaa
+cccpppppppppppppcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeec
+ceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeennnnneeenepeec
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:#534e43 bg:black
+b = fg:text_highlight bg:black
+c = fg:panel_border bg:panel_bg
+d = fg:panel_border_focus bg:panel_bg
+e = fg:text bg:panel_bg
+f = fg:#31331d bg:#0b0b06
+g = fg:#263a16 bg:#080d06
+h = fg:#40362a bg:#110d09
+i = fg:#3e3b36 bg:#0e0d0d
+j = fg:#4a402d bg:#110e08
+k = fg:#2a2723 bg:#0a0a09
+l = fg:#2a3e4a bg:#080e13
+m = fg:#3e2a17 bg:#080e13
+n = fg:text_dim bg:panel_bg
+o = fg:#534326 bg:#120e0a
+p = fg:text_highlight bg:panel_bg

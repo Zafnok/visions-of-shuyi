@@ -472,13 +472,13 @@ fn brightness_fades_the_whole_frame_cells_and_items_alike() {
     assert_eq!(cell(&half).bg, cell(&full).bg.scale(0.5));
     assert_eq!(cell(&half).glyph, cell(&full).glyph);
     // The logo: its sprites (the backdrop's three, then the logo) are
-    // half as solid.
+    // half as bright.
     let half = draw(&ctx, &player, 17.0, 0.5);
-    let opacities: Vec<u8> = half.sprites().iter().map(|s| s.opacity).collect();
-    assert_eq!(opacities, [128; 4]);
+    let brightness: Vec<u8> = half.sprites().iter().map(|s| s.brightness).collect();
+    assert_eq!(brightness, [128; 4]);
     // Black is black.
     let black = draw(&ctx, &player, 17.0, 0.0);
-    assert!(black.sprites().iter().all(|s| s.opacity == 0));
+    assert!(black.sprites().iter().all(|s| s.brightness == 0));
     assert_snapshot!(
         "pan_middle_half_bright",
         draw(&ctx, &player, 3.0, 0.5).to_snapshot(&ctx.palette)
@@ -499,8 +499,8 @@ fn a_pan_over_a_sprite_map_fades_its_sprites() {
     assert_eq!(full.len(), half.len());
     for (full, half) in full.iter().zip(&half) {
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let expected = (f32::from(full.opacity) * 0.5).round() as u8;
-        assert_eq!(half.opacity, expected);
+        let expected = (f32::from(full.brightness) * 0.5).round() as u8;
+        assert_eq!((half.brightness, half.opacity), (expected, full.opacity));
     }
     // 336 × 192 at 4×: room both ways, and the 24 px tiles put the
     // points elsewhere: (150, 96) to (186, 96).

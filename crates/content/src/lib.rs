@@ -78,7 +78,9 @@ pub use cinematic::{
     Act, ActionDef, CinematicDef, CombatShot, Fight, Shot, ShotAction, ShotDef, TilePoint,
 };
 pub use credits::{CreditEntry, CreditGroup, Credits};
-pub use dialogue::{ChoiceOption, DialogueTable, LineId, MusicLine, Present, Scene, Side, Step};
+pub use dialogue::{
+    ChoiceOption, DialogueTable, LineId, MusicLine, PlaceLine, Present, Scene, Side, Step,
+};
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
 pub use image::{ImageId, ImageInfo, ImageTable};
@@ -190,6 +192,21 @@ impl Content {
         self.map_look(&battle.map).lit(light.map(String::as_str))
     }
 
+    /// The battle scene `scene` is played for: its chapter's battle, for a
+    /// chapter's intro or victory scene, else the battle with a trigger
+    /// that plays it. `None` for a scene of no battle.
+    pub fn battle_of_scene(&self, scene: &str) -> Option<&BattleDef> {
+        let chapter = self.chapters.values().find(|c| {
+            let mut scenes = c.intro_scenes.iter().chain(&c.victory_scenes);
+            scenes.any(|s| s == scene)
+        });
+        if let Some(battle) = chapter.and_then(|c| self.battles.get(&c.battle)) {
+            return Some(battle);
+        }
+        let mut battles = self.battles.values();
+        battles.find(|b| b.triggers.iter().any(|t| t.scene == scene))
+    }
+
     /// The tables battles read, shared.
     pub fn tables(&self) -> GameTables {
         GameTables {
@@ -268,13 +285,12 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let cinematics = load_cinematics(fields, cues, scenes, (cast, faces, known), rules);
     let credits = credits::load(audio.as_ref().ok());
     let supports = support::load(characters.as_ref().ok(), scenes);
-    let dialogue = check_presence(
-        scripts,
+    let story = (
         battles.as_ref().ok(),
         chapters.as_ref().ok(),
         new_game.as_ref().ok(),
-        supports.as_ref().ok(),
     );
+    let dialogue = check_dialogue(scripts, maps.as_ref().ok(), story, supports.as_ref().ok());
     let tilesets = load_tilesets(
         images.as_ref().ok(),
         terrain.as_ref().ok(),
@@ -390,6 +406,47 @@ fn data_text(
         battles: units.battles.as_ref().ok()?,
         dialogue: units.dialogue.as_ref().ok()?,
     }))
+}
+
+/// The battles, chapters and New Game file, each if it loaded.
+type StoryRefs<'a> = (
+    Option<&'a BTreeMap<String, BattleDef>>,
+    Option<&'a BTreeMap<String, ChapterDef>>,
+    Option<&'a NewGameDef>,
+);
+
+/// Adds the checks that need the maps and the story to the dialogue's
+/// result: the places ([`check_places`]), then who is there
+/// ([`check_presence`]).
+fn check_dialogue(
+    scripts: Result<dialogue::Scripts, Vec<ContentError>>,
+    maps: Option<&BTreeMap<String, MapDef>>,
+    (battles, chapters, new_game): StoryRefs,
+    supports: Option<&SupportTable>,
+) -> Result<DialogueTable, Vec<ContentError>> {
+    let places = dialogue::PlaceRefs::new(maps, battles, chapters, supports);
+    let scripts = check_places(scripts, &places);
+    check_presence(scripts, battles, chapters, new_game, supports)
+}
+
+/// Adds the place checks ([`dialogue::check_places`]: every `@place` line's
+/// map and tile are there, `@place battle` only in a battle's scenes) to
+/// the dialogue's result.
+fn check_places(
+    scripts: Result<dialogue::Scripts, Vec<ContentError>>,
+    places: &dialogue::PlaceRefs,
+) -> Result<dialogue::Scripts, Vec<ContentError>> {
+    let scripts = scripts?;
+    let errors: Vec<ContentError> = scripts
+        .parsed
+        .iter()
+        .flat_map(|scene| dialogue::check_places(scene, places))
+        .collect();
+    if errors.is_empty() {
+        Ok(scripts)
+    } else {
+        Err(errors)
+    }
 }
 
 /// Adds the presence checks ([`dialogue::check_presence`]: nobody who may
@@ -1577,6 +1634,55 @@ mod tests {
             supports.as_ref(),
         );
         assert_eq!(checked, Err(vec![ContentError::new("d", "bad")]));
+    }
+
+    /// A chapter's intro and victory scenes are its battle's, a trigger's
+    /// scene its battle's; a support conversation is played away from
+    /// any. A wrong place in a script is one of the dialogue's errors.
+    #[test]
+    fn place_checks_know_each_scenes_battle_and_join_the_dialogue_errors() {
+        let maps = ok_maps().ok();
+        let (battles, chapters, _) = ok_story();
+        let (battles, chapters, supports) = (battles.ok(), chapters.ok(), ok_supports().ok());
+        let refs = dialogue::PlaceRefs::new(
+            maps.as_ref(),
+            battles.as_ref(),
+            chapters.as_ref(),
+            supports.as_ref(),
+        );
+        assert!(refs.maps.contains_key("ch01"));
+        let of = |scene: &str| -> Vec<&str> {
+            let known = refs.battles.as_ref().and_then(|b| b.get(scene));
+            known.into_iter().flatten().map(|(id, _)| *id).collect()
+        };
+        assert_eq!(of("ch01_prebattle"), ["ch01"]);
+        assert_eq!(of("ch01_victory"), ["ch01"]);
+        assert_eq!(of("test_intro"), ["test"]);
+        assert_eq!(of("test_fort"), ["quick"]);
+        assert_eq!(of("test_support_lord_knight_c"), [] as [&str; 0]);
+        assert!(refs.elsewhere.contains("test_support_lord_knight_c"));
+        assert!(!refs.elsewhere.contains("test_intro"));
+        // Without the chapters (or with none loaded), no battle is known.
+        let none = BTreeMap::new();
+        let without = dialogue::PlaceRefs::new(maps.as_ref(), battles.as_ref(), Some(&none), None);
+        assert!(without.battles.is_none());
+        // A script's wrong place fails the load.
+        let bad = "@scene bad\n@place ch01 30,2\n> x\n@end\n";
+        let mut files = bundle::files_in(dialogue::DIALOGUE_DIR)
+            .into_iter()
+            .filter(|p| p.ends_with(dialogue::DIALOGUE_EXTENSION))
+            .map(|p| (bundle::display_path(p), bundle::file(p).unwrap_or_default()))
+            .collect::<Vec<_>>();
+        files.push(("bad.dlg".to_owned(), bad));
+        let errors = load_with_scripts(&files).unwrap_err();
+        assert_eq!(
+            errors.0,
+            [ContentError::new(
+                "bad.dlg",
+                "tile 30,2 is off map \"ch01\" (24 by 16 tiles, from 0,0 to 23,15)"
+            )
+            .at(2, None)]
+        );
     }
 
     #[test]

@@ -15,13 +15,15 @@ pub mod log;
 pub mod view;
 
 use crate::prelude::*;
-use trpg_content::{MusicLine, Names, Present, Scene};
+use alloc::rc::Rc;
+use trpg_content::{MusicLine, Names, PlaceLine, Present, Scene};
 use trpg_core::{LEAD_ID, LeadProfile};
 
 use crate::audio::MenuSound;
 use crate::dialogue::{DialoguePlayer, Portrait};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Button, Chord, Keymap};
+use crate::map_view::{MapScene, Place, screen_tiles};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
@@ -84,6 +86,9 @@ pub struct DialogueScreen {
     music: Option<MusicLine>,
     /// Music to play: the music of a line the log jumped to.
     jumped_music: Option<MusicLine>,
+    /// The battle's map that `@place battle` shows, if the scene is a
+    /// battle's ([`with_battle`](Self::with_battle)).
+    battle: Option<Rc<Place>>,
 }
 
 impl DialogueScreen {
@@ -107,6 +112,7 @@ impl DialogueScreen {
             log: None,
             music: None,
             jumped_music: None,
+            battle: None,
         };
         screen.start_box();
         screen
@@ -135,6 +141,23 @@ impl DialogueScreen {
             overlay: true,
             ..Self::new(scene, lead, names, present)
         }
+    }
+
+    /// The same screen with `battle` as the map `@place battle` shows: the
+    /// field of the chapter's battle for its intro and victory scenes, the
+    /// battle as it stands for a scene played during it. Without one, a
+    /// `@place battle` line shows no place.
+    #[must_use]
+    pub fn with_battle(self, battle: Place) -> Self {
+        Self {
+            battle: Some(Rc::new(battle)),
+            ..self
+        }
+    }
+
+    /// The map `@place battle` shows, if the screen was given one.
+    pub fn battle(&self) -> Option<&Place> {
+        self.battle.as_deref()
     }
 
     /// Whether the scene has anything to say for those present. One that
@@ -497,8 +520,25 @@ impl DialogueScreen {
             self.text_view(ctx, current.narration),
             self.overlay,
         );
+        view.place = current.place.and_then(|line| self.place_scene(ctx, line));
         view.log = self.log_view(ctx);
         view
+    }
+
+    /// The part of the place `line` names that the whole screen shows with
+    /// `ctx`'s map skin, centred on the line's tile. `None` for no place, a
+    /// map the content hasn't got (the validator rules it out) and the
+    /// battle when the screen has none.
+    fn place_scene(&self, ctx: &Ctx, line: &PlaceLine) -> Option<MapScene> {
+        let view = screen_tiles(ctx);
+        match line {
+            PlaceLine::Map { map, at } => {
+                let def = ctx.content.maps.get(map)?;
+                Some(Place::of_map(def).scene(*at, view))
+            }
+            PlaceLine::Battle { at } => Some(self.battle.as_ref()?.scene(*at, view)),
+            PlaceLine::None => None,
+        }
     }
 
     /// What the text box shows: the page as revealed so far, or the skip

@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 0732 — Draw each conversation over its place, darkened
@@ -129,17 +129,17 @@ have their places and openings.)
 
 ## Acceptance criteria
 
-- [ ] `@place` parses, round-trips through the `.dlg` writer, and a wrong
+- [x] `@place` parses, round-trips through the `.dlg` writer, and a wrong
       map, an off-map tile or a misplaced `battle` fails `check-script`
       with the line number.
-- [ ] `ch01_prebattle` and `ch01_victory` show the battle map, darkened,
+- [x] `ch01_prebattle` and `ch01_victory` show the battle map, darkened,
       behind the talk, at Harrowby and at the toll-fort; in the glyph look
       too.
-- [ ] A battle trigger scene (for example Harl's lines) shows the battle
+- [x] A battle trigger scene (for example Harl's lines) shows the battle
       map behind it darkened.
-- [ ] A scene with no place is drawn exactly as before (existing snapshots
+- [x] A scene with no place is drawn exactly as before (existing snapshots
       unchanged).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -153,5 +153,95 @@ have their places and openings.)
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** Conversations are drawn over their place, darkened.
+
+- **`.dlg`**: `@place <map> <x>,<y>`, `@place battle <x>,<y>` and
+  `@place none` (`Step::Setting(PlaceLine)` in `crates/content`), parsed,
+  written back by `print_scene` (in the round-trip property test) and
+  skipped by the passes over directives (line ids, presence, the
+  translation data). The writer's reference (`assets/dialogue/README.md`,
+  a new *Places* section, last so the README's numbered examples keep
+  their place) and `docs/story/writers-guide.md` describe it; both
+  examples are checked by tests.
+- **Validator**: the map is one of `assets/maps/`, the tile is on it,
+  `battle` is only in a scene a battle plays (a chapter's intro or victory
+  scene, a battle trigger's scene), not a support conversation, and its
+  tile is on that battle's map. `file:line: message` errors, through
+  `check-script` too. They run after the battles and chapters load
+  (`dialogue::check_places`, `PlaceRefs`; `lib.rs` `check_dialogue`), as
+  the step's fallback said.
+- **Player and view**: `DialoguePlayer` keeps the place like the caption
+  (`View.place`); the log keeps players, so a jump restores it.
+  `DialogueView.place` is the part of the map the whole screen shows, as
+  a `MapScene` (plain data), built from a `map_view::Place` (a whole map,
+  its look and its units) centred on the tile with `Camera::centred_on`.
+- **Look**: the dialogue's glyph skin paints the place with `ctx.map_skin`
+  (the player's *Map look*, at their map zoom) over the whole screen,
+  `GlyphBuffer::fade`s it to `PLACE_BRIGHTNESS = 0.4` (sprites and
+  backdrop too), then paints caption, portraits, plates and box on top at
+  full brightness. An overlay with no place fades the battle map below to
+  the same brightness. The log and the skip question are unchanged.
+- **Where the battle comes from**: `DialogueScreen::with_battle(Place)`.
+  The flow gives a chapter's scenes its battle's field (terrain only);
+  a battle's trigger scene gets the battle as it stands
+  (`BattleScreen::place`, units as drawn); the `--scene` preview finds the
+  scene's battle (`Content::battle_of_scene`).
+- **Chapter 1**: `@place battle 3,12` in `ch01_prebattle` (the green by
+  the chapel, where the party starts) and `@place battle 20,3` in
+  `ch01_victory` (the toll-fort, below its keep at 20,2).
+- **Tests**: content (parse, errors, write back, every validator error,
+  each scene's battle from the real files), ui (the player's place, the
+  view's place and the log jump, the battle's place for a trigger scene,
+  the look: place cells under the box, the overlay darkened), and
+  `tests/it/places.rs` (New Game to `ch01_prebattle` with a snapshot in
+  the glyph look, `ch01_victory`, a scene over the darkened battle map).
+  The full-screen scene snapshots are unchanged (no existing scene names
+  a place). The three snapshots of a scene over the battle map (the
+  debug overlay, the rogue's line and its last words) keep every glyph;
+  only their colour legend changed, to the darkened map's colours (and
+  the combat stage's sprites under the rogue's lines list `bright=102`
+  where they listed `opacity=102`).
+
+- **The fade itself (ADR-0075, amends ADR-0060 §4)**: rendering
+  `ch01_prebattle` with the bought art (`cargo xtask frame-png` with
+  `private-assets`) showed the place at nearly full brightness: `fade`
+  lowered each sprite's opacity, and the bought tiles are stacked
+  sprites (ground, then edges and corners), whose see-through layers add
+  back up. Sprites now have a `brightness` that `fade` lowers, and every
+  renderer (`app`, `frame-png`, the one-bit frame) multiplies the
+  sprite's colour by it; snapshots show ` bright=N`. Measured on the
+  render: the battle map's grass, 89,207,147, is 36,83,59 behind the
+  talk, 40%. The title cinematic's fade gets the same fix.
+
+**Deviations**
+
+- The step is `Step::Setting`, not `Step::Place`: `Step::Place` is
+  already the portrait step (`@left`/`@right`).
+- `DialogueView.place` holds the map scene to paint, not a map id and a
+  centre: the skin paints a `MapScene` as the battle map's skins do, and
+  `@place battle` in a battle needs the battle's live units, which no id
+  names. `DialogueView` is `PartialEq` but no longer `Eq` (a map scene
+  has fractions). The view/skin split is ADR-0054's, so no ADR for it;
+  the fade change has its own (ADR-0075).
+- A reply's reaction and an `@if` block must leave the same place on
+  every way through, as they must the caption (a validator rule for the
+  writer, like the caption's).
+- A cinematic's talk shot still draws on black (out of the ticket; 0734
+  is the moving opening).
+
+**For Nick**: in the glyph look the whole of Chapter 1's map fits on the
+screen, so the place is the whole field, darkened, with the talk over it;
+with *Pictures* (the bought tiles) the screen shows the part around the
+spot. Try `ch01_prebattle` and `ch01_victory`, and a battle line (Harl's)
+over the darkened battle.
+
+*Claude's starting rules (Nick can veto):*
+
+- When the spot is near the map's edge, the view stops at the edge
+  rather than showing black past it (as the battle camera does); a map
+  smaller than the screen sits in the middle with black around it.
+- A scene played during a battle covers the battle's key-help row below
+  the text box with black, as before; with a place named, the place
+  fills the whole screen.
+- The battle's field behind a chapter's scenes before and after the
+  battle has nobody on it.

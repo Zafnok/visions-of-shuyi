@@ -92,7 +92,9 @@ use super::dialogue::DialogueScreen;
 use crate::audio::{CURSOR_MOVE, MenuSound};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::map_view::{CursorView, GlyphSkin, MapScene, MapSkin, RangeKind, ThreatView, UnitView};
+use crate::map_view::{
+    CursorView, GlyphSkin, MapScene, MapSkin, Place, RangeKind, ThreatView, UnitView,
+};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{LessonView, TipView};
@@ -1164,7 +1166,22 @@ impl BattleScreen {
         let scene = ctx.content.dialogue.get(&cue.id)?;
         let present = Present::Only(cue.present);
         let screen = DialogueScreen::told_overlay(ctx, scene, ctx.lead.clone(), &present);
-        screen.has_text().then_some(screen)
+        screen.has_text().then(|| screen.with_battle(self.place()))
+    }
+
+    /// The battle as it stands, for a scene played over it to show
+    /// (`@place battle`): the whole map in its look, with the units as the
+    /// map shows them now.
+    pub fn place(&self) -> Place {
+        let tiles = &self.state.map().tiles;
+        let size = (i32::from(tiles.width()), i32::from(tiles.height()));
+        let mut scene = terrain_scene(&self.state, Pos::new(0, 0), size);
+        self.add_units(&mut scene);
+        Place {
+            tiles: tiles.clone(),
+            look: self.look.clone(),
+            units: scene.units,
+        }
     }
 
     /// With auto-end on, ends the player phase once the screen is back to

@@ -12,6 +12,7 @@ pub mod corners;
 pub mod glyph;
 pub mod grid;
 pub mod path;
+pub mod place;
 pub mod scene;
 pub mod skin;
 pub mod sprite;
@@ -24,6 +25,7 @@ use trpg_content::Content;
 use crate::settings::MapLook;
 
 pub use glyph::GlyphSkin;
+pub use place::{Place, screen_tiles};
 pub use scene::{
     CursorStyle, CursorView, Facing, MapScene, RangeKind, STANDING_FRAME, ThreatView, TileView,
     UnitEffects, UnitView,

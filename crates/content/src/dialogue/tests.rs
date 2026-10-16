@@ -587,6 +587,7 @@ fn files_that_are_not_utf8() {
 mod choice;
 mod line_ids;
 mod names;
+mod places;
 mod presence;
 
 // --- Embedded files ---------------------------------------------------------
@@ -877,6 +878,16 @@ fn arb_simple_step() -> impl Strategy<Value = Step> {
             .prop_filter("reserved", |s| s != MusicLine::STOP)
             .prop_map(|cue| Step::Music(MusicLine::Cue(cue))),
         Just(Step::Music(MusicLine::Stop)),
+        // A map named "battle" or "none" would print as those.
+        (arb_id(), 0..100, 0..100)
+            .prop_filter("reserved", |(m, ..)| m != PlaceLine::BATTLE
+                && m != PlaceLine::NONE)
+            .prop_map(|(map, x, y)| Step::Setting(PlaceLine::Map {
+                map,
+                at: Pos::new(x, y)
+            })),
+        (0..100, 0..100).prop_map(|(x, y)| Step::Setting(PlaceLine::Battle { at: Pos::new(x, y) })),
+        Just(Step::Setting(PlaceLine::None)),
     ]
 }
 

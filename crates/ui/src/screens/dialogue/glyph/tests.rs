@@ -40,6 +40,7 @@ fn text(lines: &[&str]) -> TextView {
 fn two_speakers() -> DialogueView {
     DialogueView {
         overlay: false,
+        place: None,
         caption: None,
         left: Some(face("test_lord", "Test Lord")),
         right: Some(face("test_knight", "Test Knight")),
@@ -226,15 +227,80 @@ fn the_overlay_leaves_the_rest_of_the_screen() {
         ..two_speakers()
     };
     let buf = painted(&view);
-    // Between the frames the screen below shows; below the text box (the
-    // battle's key help) is blanked.
-    assert_eq!(glyph(&buf, 50, 5), Some('x'));
-    assert_eq!(glyph(&buf, 50, 20), Some('x'));
+    // Between the frames the screen below shows, darkened; below the text
+    // box (the battle's key help) is blanked.
+    let c = ctx();
+    let below = c.palette.get(UiColor::Text).scale(PLACE_BRIGHTNESS);
+    for (x, y) in [(50, 5), (50, 20)] {
+        let cell = buf.get(x, y).map(|c| (c.glyph, c.fg));
+        assert_eq!(cell, Some(('x', below)), "cell {x},{y}");
+    }
     for y in 28..32 {
         assert_eq!(row(&buf, y).trim(), "", "row {y}");
     }
     let full = painted(&two_speakers());
     assert_eq!(glyph(&full, 50, 5), Some(' '));
+    // The talk itself is at full brightness.
+    let lit = c.palette.get(UiColor::PanelBorderFocus);
+    assert_eq!(buf.get(LEFT_X, FRAME_Y).map(|c| c.fg), Some(lit));
+    assert_eq!(portrait_sprite(&buf, LEFT_X).map(|s| s.opacity), Some(255));
+}
+
+/// Chapter 1's map centred on Harrowby, as the screen's place: the whole
+/// map fits the glyph look's screen, in its middle.
+fn harrowby(c: &Ctx) -> crate::map_view::MapScene {
+    let place = crate::map_view::Place::of_map(&c.content.maps["ch01"]);
+    let view = c.map_skin.view_tiles(Rect::new(0, 0, 100, 32));
+    place.scene(trpg_core::Pos::new(3, 12), view)
+}
+
+#[test]
+fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
+    let c = ctx();
+    assert_eq!(c.map_skin.name(), "glyph");
+    let scene = harrowby(&c);
+    let view = DialogueView {
+        place: Some(scene.clone()),
+        caption: Some("The green".to_owned()),
+        ..two_speakers()
+    };
+    let buf = painted(&view);
+    // The place, as the map skin paints it, then darkened: wherever the
+    // talk leaves it showing (between the frames, around the box).
+    let black = c.palette.get(UiColor::Black);
+    let empty = Cell::new(' ', c.palette.get(UiColor::Text), black);
+    let mut place = GlyphBuffer::new(100, 32, empty);
+    c.map_skin.paint(&c, &scene, place.bounds(), &mut place);
+    place.fade(PLACE_BRIGHTNESS);
+    for (x, y) in [(40, 10), (50, 20), (60, 3), (36, 16)] {
+        assert_eq!(buf.get(x, y), place.get(x, y), "cell {x},{y}");
+        assert_ne!(glyph(&buf, x, y), Some('x'), "cell {x},{y}");
+    }
+    // A map tile there, not the black around the map.
+    assert_ne!(
+        buf.get(40, 10).map(|c| c.bg),
+        Some(black.scale(PLACE_BRIGHTNESS))
+    );
+    // The place covers the whole screen, below the text box too.
+    assert_eq!(buf.get(50, 31), place.get(50, 31));
+    // Portraits, plates, box and caption go on top at full brightness.
+    let lit = c.palette.get(UiColor::PanelBorderFocus);
+    assert_eq!(buf.get(LEFT_X, FRAME_Y).map(|c| c.fg), Some(lit));
+    assert_eq!(portrait_sprite(&buf, LEFT_X).map(|s| s.opacity), Some(255));
+    assert!(row(&buf, TEXT_BOX.y).starts_with("┌── Test Lord ─"));
+    assert!(row(&buf, 0).contains(" The green "));
+    let caption_x = row(&buf, 0).find("The green").unwrap_or(0);
+    let caption_fg = buf
+        .get(i32::try_from(caption_x).unwrap_or(0), 0)
+        .map(|c| c.fg);
+    assert_eq!(caption_fg, Some(c.palette.get(UiColor::TextHighlight)));
+    // An overlay with a place shows the place, not the screen below.
+    let over = painted(&DialogueView {
+        overlay: true,
+        ..view
+    });
+    assert_eq!(over.get(40, 10), place.get(40, 10));
+    assert_eq!(over.get(50, 31), place.get(50, 31));
 }
 
 #[test]

@@ -197,6 +197,35 @@ fn a_painted_sprite_is_one_colour_or_dimmed_where_the_image_is_solid() {
     assert_eq!(plain.pixel(1, 1), rgba(red));
 }
 
+/// A darkened sprite (ADR-0075) is its colours times its brightness, after
+/// its paint, and as solid as before: nothing under it shows through.
+#[test]
+fn a_darkened_sprite_is_darker_not_see_through() {
+    use trpg_ui::Paint;
+    let (painter, table) = painter(true);
+    let card = table.id(TEST_CARD_PATH).unwrap();
+    let full = Rect::new(0, 0, 16, 16);
+    let render = |paint, brightness| {
+        let mut buf = GlyphBuffer::new(2, 1, Cell::new(' ', CLEAR, CLEAR));
+        let mut sprite = Sprite::new(card, full, full, Layer::Over).painted(paint);
+        sprite.brightness = brightness;
+        buf.add_sprite(sprite);
+        painter.render(&buf, 1)
+    };
+    let [red, ..] = crate::test_card::QUADRANTS;
+    let red = Rgb::new(red[0], red[1], red[2]);
+    let rgba = |c: Rgb| Some([c.r, c.g, c.b, 255]);
+    let dark = render(Paint::Image, 102);
+    assert_eq!(dark.pixel(1, 1), rgba(red.scale(0.4)));
+    assert_eq!(dark.pixel(0, 0), rgba(Rgb::new(102, 102, 102)));
+    let blue = Rgb::new(10, 20, 200);
+    let solid = render(Paint::Solid(blue), 102);
+    assert_eq!(solid.pixel(1, 1), rgba(blue.scale(0.4)));
+    // Black where it shows; full brightness as it is.
+    assert_eq!(render(Paint::Image, 0).pixel(1, 1), rgba(Rgb::new(0, 0, 0)));
+    assert_eq!(render(Paint::Image, 255).pixel(1, 1), rgba(red));
+}
+
 #[test]
 fn a_missing_image_draws_magenta_where_the_sprite_shows() {
     let (painter, table) = painter(false);

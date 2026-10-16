@@ -515,6 +515,8 @@ fn draw_sprite(target: &mut Target<'_>, sprite: &Sprite, at: Place, images: &imp
             if !shows(sprite.opacity, x, y) {
                 continue;
             }
+            // A darkened picture (ADR-0075): fewer of its white pixels.
+            let white = white && shows(sprite.brightness, x, y);
             #[allow(clippy::cast_possible_truncation)] // screen pixels
             let white = match (solid, sprite.paint) {
                 (Some(ink), _) => ink_is_white(ink, x as i32, y as i32),

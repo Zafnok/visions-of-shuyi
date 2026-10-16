@@ -11,10 +11,11 @@ mod check;
 mod line_id;
 mod parse;
 mod presence;
+mod setting;
 
 use alloc::collections::BTreeMap;
 
-use trpg_core::CharacterId;
+use trpg_core::{CharacterId, Pos};
 
 pub use check::{check_duplicates, check_scene};
 pub(crate) use check::{longest_width, token_problems};
@@ -23,6 +24,7 @@ pub use line_id::{Line, LineId, NARRATION_SPEAKER, REPLY_SPEAKER, caption_key};
 pub use parse::{Lines, ParsedScene, PartLines, parse_dlg};
 pub(crate) use parse::{char_problem, is_id};
 pub use presence::{Cast, Present, check_presence};
+pub use setting::{PlaceRefs, check_places};
 
 use crate::audio::AudioManifest;
 use crate::bundle;
@@ -135,6 +137,10 @@ pub enum Step {
     /// `@music <cue>` or `@music stop`: the music changes when playback
     /// reaches this line, and stays so after the scene.
     Music(MusicLine),
+    /// `@place <map> <x>,<y>`, `@place battle <x>,<y>` or `@place none`:
+    /// the place drawn behind the talk from this line on, until the next
+    /// one (`docs/design/look-and-feel.md`, *Places behind conversations*).
+    Setting(PlaceLine),
     /// `@if <character>` … `@else` … `@endif`: steps that play only if the
     /// character is there when the scene plays ([`Present`]), and the
     /// steps that play instead if they aren't (ADR-0055).
@@ -170,6 +176,45 @@ impl MusicLine {
     }
 }
 
+/// What a `@place` line asks for: the place behind the talk.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PlaceLine {
+    /// `@place <map> <x>,<y>`: the map of `assets/maps/<map>.map`, centred
+    /// on tile `at`.
+    Map {
+        /// The map's id (its file stem).
+        map: String,
+        /// The tile in the middle.
+        at: Pos,
+    },
+    /// `@place battle <x>,<y>`: the map of the battle the scene belongs to
+    /// (its chapter's, for a chapter's intro or victory scene; the one
+    /// being played, for a battle's scene), centred on tile `at`.
+    Battle {
+        /// The tile in the middle.
+        at: Pos,
+    },
+    /// `@place none`: no place, black again.
+    None,
+}
+
+impl PlaceLine {
+    /// What follows `@place` for [`PlaceLine::Battle`].
+    pub const BATTLE: &'static str = "battle";
+    /// What follows `@place` for [`PlaceLine::None`].
+    pub const NONE: &'static str = "none";
+
+    /// What follows `@place` in a script: `<map> <x>,<y>`,
+    /// `battle <x>,<y>` or `none`.
+    pub fn args(&self) -> String {
+        match self {
+            PlaceLine::Map { map, at } => format!("{map} {},{}", at.x, at.y),
+            PlaceLine::Battle { at } => format!("{} {},{}", Self::BATTLE, at.x, at.y),
+            PlaceLine::None => Self::NONE.to_owned(),
+        }
+    }
+}
+
 /// One reply the lead can pick: `* <tone>: <text>`, then its reaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChoiceOption {
@@ -193,6 +238,7 @@ impl Step {
             | Step::Clear { .. }
             | Step::Choice { .. }
             | Step::Music(_)
+            | Step::Setting(_)
             | Step::If { .. } => None,
         }
     }
@@ -394,6 +440,7 @@ fn print_step(out: &mut String, step: &Step, indent: &str) {
         } => format!("{}: {text}", speaker.0),
         Step::Narrate { text, .. } => format!("> {text}"),
         Step::Music(music) => format!("@music {}", music.arg()),
+        Step::Setting(place) => format!("@place {}", place.args()),
         Step::Choice { options } => {
             out.push_str("@choice\n");
             for o in options {
