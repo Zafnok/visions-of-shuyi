@@ -947,3 +947,37 @@ fn a_jump_in_the_log_shows_that_lines_place() {
     assert_eq!(s.page_lines(), ["One."]);
     assert_eq!(s.view(&c).place, green);
 }
+
+/// A key that reaches an `@opening` starts it (0734); the rest of that
+/// frame's keys neither skip it nor reveal the text waiting behind it.
+#[test]
+fn the_keys_after_the_one_that_starts_an_opening_wait() {
+    let mut c = ctx();
+    let narrate = |text: &str| Step::Narrate {
+        text: text.into(),
+        line: trpg_content::LineId::default(),
+    };
+    let yard = Step::Setting(trpg_content::PlaceLine::Map {
+        map: "harrowby_yard".into(),
+        at: trpg_core::Pos::new(12, 8),
+    });
+    let mut s = full(&scene(vec![
+        narrate("Black."),
+        yard,
+        Step::Opening("ch01_sparring".into()),
+        narrate("The yard."),
+    ]));
+    press(&mut s, &mut c, Action::Confirm);
+    assert!(s.is_revealed() && !s.is_opening());
+    s.update(
+        &mut c,
+        &frame(&[Action::Confirm, Action::Confirm], 0.0, false),
+    );
+    assert!(s.is_opening());
+    assert_eq!(s.view(&c).text.lines, ["The yard."]);
+    assert!(!s.is_revealed());
+    // Once it has played, the line types out from its start.
+    s.update(&mut c, &frame(&[], 5.0, false));
+    assert!(!s.is_opening());
+    assert_eq!(s.view(&c).text.shown, 0);
+}
