@@ -553,6 +553,7 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("lead_select.rs", include_str!("../lead_select.rs")),
         ("class_change.rs", include_str!("../class_change.rs")),
         ("battle/mod.rs", include_str!("../battle/mod.rs")),
+        ("dialogue.rs", include_str!("../dialogue.rs")),
     ];
     // Logic with no screen of its own to draw: the battle screen's modes
     // and the parts of it with a view of their own.

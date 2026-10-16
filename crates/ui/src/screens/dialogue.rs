@@ -2,65 +2,46 @@
 //! with two portraits, name plates and a typewriter text box. Full-screen,
 //! or as an overlay that leaves the battle map visible behind it.
 //!
-//! Layout (100×32): 32×16-cell portraits in 34×18 frames at `x = 1` and
-//! `x = 65` from row 1, name plates on row 19, the text box on rows 21–27.
-//! While the lead's replies are up, the text box grows upward to list them
-//! under the line being answered (Nick, 0708: like Stardew Valley).
+//! What it shows is a [`view::DialogueView`] (ADR-0054); [`glyph`] paints
+//! it.
 //!
 //! The dialogue log (ticket 0729) lists the lines seen so far over the
 //! whole screen: [`history`] keeps them, [`log`] is what it shows and
 //! [`log::glyph`] paints it.
 
+pub mod glyph;
 pub mod history;
 pub mod log;
+pub mod view;
 
 use crate::prelude::*;
-use trpg_content::{MusicLine, Names, Present, Scene, Side};
+use trpg_content::{MusicLine, Names, Present, Scene};
 use trpg_core::{LEAD_ID, LeadProfile};
 
 use crate::audio::MenuSound;
-use crate::color::UiColor;
-use crate::dialogue::{DialoguePlayer, Portrait, View};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::dialogue::{DialoguePlayer, Portrait};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Button, Chord, Keymap};
-use crate::portrait::draw_portrait;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
-use crate::screens::print_centred;
 use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use crate::widgets::word_wrap;
 use history::History;
 use log::LogView;
+use view::{DialogueView, SkipView, TextView, WaitView};
 
-/// Top row of the portrait frames.
-const FRAME_Y: i32 = 1;
-/// Portrait frame size: a 32×16-cell portrait plus its border.
-pub const FRAME: (i32, i32) = (34, 18);
-/// Left column of the left and right frames.
-const LEFT_X: i32 = 1;
-/// Left column of the right frame.
-const RIGHT_X: i32 = 65;
-/// The text box.
-const TEXT_BOX: Rect = Rect::new(0, 21, 100, 7);
-/// Left column of the text.
-const TEXT_X: i32 = 4;
-/// First text row.
-const TEXT_Y: i32 = 23;
 /// Characters per text line: the box less a 3-cell margin each side.
 pub const TEXT_W: usize = trpg_content::dialogue::BOX_WIDTH;
 /// Text lines per box; longer text pages.
 pub const TEXT_LINES: usize = trpg_content::dialogue::BOX_LINES;
-/// How much the listener (and both portraits during narration) is dimmed.
-pub const LISTENER_DIM: f32 = 0.45;
 /// Reveal speed multiplier while Confirm is held.
 pub const FAST_FORWARD: f32 = 6.0;
 /// Seconds Confirm must be held on a page before it reveals faster, so the
 /// tap that turned the page doesn't speed the next one up.
 pub const FAST_FORWARD_DELAY: f32 = 0.3;
-/// The `▼` is shown for this long, then hidden for as long, while waiting.
+/// The marker that says "press to go on" is lit for this long, then out
+/// for as long, while a page waits.
 const BLINK_S: f32 = 0.5;
-/// Cells between the log's key hint and the Confirm key's name.
-const LOG_HINT_GAP: i32 = 3;
 
 /// Plays a scene: Confirm reveals the text at once, or moves on when it's
 /// all shown; holding Confirm reveals faster, after a short delay on each
@@ -307,7 +288,7 @@ impl Screen for DialogueScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        self.draw_scene(ctx, buf);
+        glyph::paint(ctx, &self.view(ctx), buf);
     }
 
     fn is_overlay(&self) -> bool {
@@ -506,137 +487,55 @@ impl DialogueScreen {
         chords.iter().any(by_key) || buttons.iter().any(by_button)
     }
 
-    /// The whole screen: caption, portraits and text box; or the log.
-    fn draw_scene(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        if let Some(view) = self.log_view(ctx) {
-            log::glyph::paint(ctx, &view, buf);
-            return;
-        }
-        let c = |u| ctx.palette.get(u);
-        let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
-        if self.overlay {
-            // Below the text box is the battle's key help, whose keys do
-            // nothing while the scene plays.
-            // (Clipped to the buffer.)
-            let below = TEXT_BOX.y + TEXT_BOX.h;
-            let rest = Rect::new(0, below, i32::from(buf.width()), i32::from(buf.height()));
-            buf.fill_rect(rest, blank);
-        } else {
-            buf.fill_rect(buf.bounds(), blank);
-        }
-        let view = self.player.current();
-        draw_stage(ctx, buf, self.player.lead(), &view);
-        self.draw_text_box(ctx, buf, &view);
+    /// What the screen shows this frame.
+    pub fn view(&self, ctx: &Ctx) -> DialogueView {
+        let current = self.player.current();
+        let mut view = view::scene(
+            ctx,
+            self.player.lead(),
+            &current,
+            self.text_view(ctx, current.narration),
+            self.overlay,
+        );
+        view.log = self.log_view(ctx);
+        view
     }
-}
 
-/// A text box of a scene playing by itself (a cinematic's talk shot,
-/// ticket 0818): what the dialogue screen shows of it, without the things
-/// that wait for a key.
-#[derive(Debug, Clone, Copy)]
-pub struct Told<'a> {
-    /// The lead, for their name and portrait.
-    pub lead: &'a LeadProfile,
-    /// Who is left and right, who speaks, the caption.
-    pub view: &'a View<'a>,
-    /// The text's lines, wrapped: one page ([`TEXT_LINES`]) is drawn.
-    pub lines: &'a [String],
-    /// How many of its characters are revealed.
-    pub shown: usize,
-}
-
-/// Draws `told` over the whole of `buf` as the full-screen dialogue screen
-/// draws that text box: caption, portraits, name plates and the text box
-/// with its text revealed so far. No `▼`, no key name.
-pub fn draw_told(ctx: &Ctx, buf: &mut GlyphBuffer, told: &Told) {
-    let c = |u| ctx.palette.get(u);
-    let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
-    buf.fill_rect(buf.bounds(), blank);
-    draw_stage(ctx, buf, told.lead, told.view);
-    draw_box_frame(ctx, buf, told.lead, told.view, TEXT_BOX);
-    let page = &told.lines[..told.lines.len().min(TEXT_LINES)];
-    draw_lines(
-        ctx,
-        buf,
-        told.view.narration,
-        page,
-        told.shown,
-        TEXT_Y,
-        true,
-    );
-}
-
-/// The caption and both sides' portraits of `view`.
-fn draw_stage(ctx: &Ctx, buf: &mut GlyphBuffer, lead: &LeadProfile, view: &View) {
-    let c = |u| ctx.palette.get(u);
-    if let Some(caption) = &view.caption {
-        let text = format!(" {caption} ");
-        print_centred(buf, 0, &text, c(UiColor::TextHighlight), c(UiColor::Black));
-    }
-    for (side, portrait) in [(Side::Left, view.left), (Side::Right, view.right)] {
-        if let Some(portrait) = portrait {
-            draw_side(ctx, buf, lead, side, portrait, view.speaker == Some(side));
+    /// What the text box shows: the page as revealed so far, or the skip
+    /// question; the replies while a choice is open; what shows while the
+    /// page waits for a key. `narration`: whether the text is narration.
+    fn text_view(&self, ctx: &Ctx, narration: bool) -> TextView {
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "shown is between 0 and the page length"
+        )]
+        let shown = self.shown as usize;
+        let skip = self.asking_skip.then(|| SkipView {
+            question: ctx.text("dialogue.skip_question").to_owned(),
+            answers: ctx.text_with("dialogue.skip_answers", &[]),
+        });
+        let waits = !self.asking_skip && self.menu.is_none() && self.is_revealed();
+        TextView {
+            narration,
+            lines: self.page_lines().to_vec(),
+            shown,
+            choices: self.menu.as_ref().map(Menu::view),
+            skip,
+            waiting: waits.then(|| self.wait_view(ctx)),
         }
     }
-}
 
-/// The text box `text_box`, empty, with `view`'s speaker's name on its
-/// border.
-fn draw_box_frame(
-    ctx: &Ctx,
-    buf: &mut GlyphBuffer,
-    lead: &LeadProfile,
-    view: &View,
-    text_box: Rect,
-) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    buf.fill_rect(text_box, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(text_box, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-    let speaker = match view.speaker {
-        Some(Side::Left) => view.left,
-        Some(Side::Right) => view.right,
-        None => None,
-    };
-    if let Some(speaker) = speaker {
-        let name = format!(" {} ", display_name(ctx, lead, speaker));
-        let fg = c(UiColor::TextHighlight);
-        buf.print(text_box.x + 3, text_box.y, &name, fg, bg);
-    }
-}
-
-/// The first `shown` characters of the page `lines` from row `text_y`.
-/// Narration is dim and centred; vertically too when `alone` (nothing
-/// follows it in the box): one line goes in the middle of the three rows
-/// (two or three fill them from the top).
-fn draw_lines(
-    ctx: &Ctx,
-    buf: &mut GlyphBuffer,
-    narration: bool,
-    lines: &[String],
-    shown: usize,
-    text_y: i32,
-    alone: bool,
-) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let fg = if narration {
-        c(UiColor::TextDim)
-    } else {
-        c(UiColor::Text)
-    };
-    let top = text_y + i32::from(narration && lines.len() == 1 && alone);
-    let mut budget = shown;
-    for (y, line) in (top..).zip(lines) {
-        let len = line.chars().count();
-        let x = if narration {
-            TEXT_BOX.x + (TEXT_BOX.w - i32::try_from(len).unwrap_or(0)) / 2
-        } else {
-            TEXT_X
-        };
-        let visible: String = line.chars().take(budget).collect();
-        buf.print(x, y, &visible, fg, bg);
-        budget = budget.saturating_sub(len);
+    /// What shows while the page waits: the key that goes on, the log's
+    /// hint if its action has a key, and the blinking marker.
+    fn wait_view(&self, ctx: &Ctx) -> WaitView {
+        let km = ctx.help_keys();
+        let log_mapped = key_name(km, Action::DialogueLog) != km.not_mapped();
+        WaitView {
+            key: key_name(km, Action::Confirm),
+            log_hint: log_mapped.then(|| ctx.text_with("dialogue.log_hint", &[])),
+            marker: self.waiting % (2.0 * BLINK_S) < BLINK_S,
+        }
     }
 }
 
@@ -649,167 +548,6 @@ fn display_name<'a>(ctx: &'a Ctx, lead: &'a LeadProfile, portrait: Portrait<'a>)
     }
     ctx.words()
         .name(&ctx.content.names, portrait.character.0.as_str())
-}
-
-/// One side's frame, portrait (the lead's by gender) and name plate.
-fn draw_side(
-    ctx: &Ctx,
-    buf: &mut GlyphBuffer,
-    lead: &LeadProfile,
-    side: Side,
-    portrait: Portrait,
-    speaking: bool,
-) {
-    let x = match side {
-        Side::Left => LEFT_X,
-        Side::Right => RIGHT_X,
-    };
-    let frame = FaceFrame {
-        at: (x, FRAME_Y),
-        portrait: lead.portrait_for(&portrait.character.0),
-        expression: portrait.expression,
-        name: display_name(ctx, lead, portrait),
-        speaking,
-        mirror: side == Side::Right,
-    };
-    draw_face(ctx, buf, &frame);
-}
-
-/// A portrait in its frame with a name plate under it.
-#[derive(Debug, Clone, Copy)]
-pub struct FaceFrame<'a> {
-    /// The frame's top-left cell.
-    pub at: (i32, i32),
-    /// The portrait's id (an empty frame if the content has none).
-    pub portrait: &'a str,
-    /// Its expression.
-    pub expression: &'a str,
-    /// The name on the plate.
-    pub name: &'a str,
-    /// Lit, with a double border, as whoever speaks is; else dimmed.
-    pub speaking: bool,
-    /// Whether the portrait is flipped left to right.
-    pub mirror: bool,
-}
-
-/// Draws `face`: a [`FRAME`] with its portrait, and the name centred on
-/// the row under it. Clipped to the buffer.
-pub fn draw_face(ctx: &Ctx, buf: &mut GlyphBuffer, face: &FaceFrame) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let (x, y) = face.at;
-    let frame = Rect::new(x, y, FRAME.0, FRAME.1);
-    buf.fill_rect(frame, Cell::new(' ', c(UiColor::Text), bg));
-    let (style, border, dim, name_fg) = if face.speaking {
-        (
-            BoxStyle::Double,
-            UiColor::PanelBorderFocus,
-            0.0,
-            UiColor::Text,
-        )
-    } else {
-        (
-            BoxStyle::Single,
-            UiColor::PanelBorder,
-            LISTENER_DIM,
-            UiColor::TextDim,
-        )
-    };
-    buf.draw_box(frame, style, c(border), bg);
-    if let Some(art) = ctx.content.portraits.get(face.portrait) {
-        let at = (x + 1, y + 1);
-        draw_portrait(buf, at, art, face.expression, dim, face.mirror);
-    }
-    let plate = Rect::new(x, y + FRAME.1, FRAME.0, 1);
-    buf.fill_rect(plate, Cell::new(' ', c(UiColor::Text), bg));
-    // check-text: not a data name (the view's own)
-    let name = face.name;
-    let w = i32::try_from(name.chars().count()).unwrap_or(0);
-    buf.print(x + (FRAME.0 - w) / 2, plate.y, name, c(name_fg), bg);
-}
-
-impl DialogueScreen {
-    /// The text box and its first text row. While the replies are up it
-    /// grows upward (its bottom stays put) to fit the line being answered,
-    /// a blank row and one row per reply.
-    pub fn text_box(&self) -> (Rect, i32) {
-        let Some(menu) = &self.menu else {
-            return (TEXT_BOX, TEXT_Y);
-        };
-        let question = self.page_lines().len();
-        let gap = usize::from(question > 0);
-        let rows = i32::try_from(question + gap + menu.items().len()).unwrap_or(0);
-        // The last content row is the one the ▼ uses, free during a choice.
-        let bottom = TEXT_BOX.y + TEXT_BOX.h - 1;
-        let text_y = (bottom - rows).min(TEXT_Y);
-        let top = text_y - (TEXT_Y - TEXT_BOX.y);
-        (
-            Rect::new(TEXT_BOX.x, top, TEXT_BOX.w, bottom + 1 - top),
-            text_y,
-        )
-    }
-
-    /// The text box: speaker name on the border, the revealed text (or the
-    /// skip question), the replies while a choice is open, and the
-    /// blinking `▼` once the page is shown.
-    fn draw_text_box(&self, ctx: &Ctx, buf: &mut GlyphBuffer, view: &View) {
-        let c = |u| ctx.palette.get(u);
-        let bg = c(UiColor::PanelBg);
-        let km = ctx.help_keys();
-        let (text_box, text_y) = self.text_box();
-        draw_box_frame(ctx, buf, self.player.lead(), view, text_box);
-
-        if self.asking_skip {
-            let yes_no = ctx.text_with("dialogue.skip_answers", &[]);
-            let question = ctx.text("dialogue.skip_question");
-            buf.print(TEXT_X, TEXT_Y, question, c(UiColor::Text), bg);
-            buf.print(TEXT_X, TEXT_Y + 1, &yes_no, c(UiColor::TextDim), bg);
-            return;
-        }
-
-        let lines = self.page_lines();
-        #[expect(
-            clippy::cast_possible_truncation,
-            clippy::cast_sign_loss,
-            reason = "shown is between 0 and the page length"
-        )]
-        let shown = self.shown as usize;
-        // Narration isn't centred vertically above replies, which follow
-        // right after.
-        let alone = self.menu.is_none();
-        draw_lines(ctx, buf, view.narration, lines, shown, text_y, alone);
-
-        if let Some(menu) = &self.menu {
-            let gap = i32::from(!lines.is_empty());
-            let first = text_y + i32::try_from(lines.len()).unwrap_or(0) + gap;
-            for (y, (i, item)) in (first..).zip(menu.items().iter().enumerate()) {
-                let (marker, fg) = if i == menu.focus() {
-                    ("> ", c(UiColor::TextHighlight))
-                } else {
-                    ("  ", c(UiColor::Text))
-                };
-                buf.print(TEXT_X, y, &format!("{marker}{}", item.label), fg, bg);
-            }
-        }
-
-        if self.is_revealed() && self.menu.is_none() {
-            let right = TEXT_BOX.x + TEXT_BOX.w - 4;
-            let bottom = TEXT_BOX.y + TEXT_BOX.h - 2;
-            let key = key_name(km, Action::Confirm);
-            let w = i32::try_from(key.chars().count()).unwrap_or(0);
-            buf.print(right - 1 - w, bottom, &key, c(UiColor::TextDim), bg);
-            // The log's key, if it has one, before it.
-            if key_name(km, Action::DialogueLog) != km.not_mapped() {
-                let hint = ctx.text_with("dialogue.log_hint", &[]);
-                let hint_w = i32::try_from(hint.chars().count()).unwrap_or(0);
-                let x = right - 1 - w - LOG_HINT_GAP - hint_w;
-                buf.print(x, bottom, &hint, c(UiColor::TextDim), bg);
-            }
-            if self.waiting % (2.0 * BLINK_S) < BLINK_S {
-                buf.print(right, bottom, "▼", c(UiColor::TextHighlight), bg);
-            }
-        }
-    }
 }
 
 #[cfg(test)]

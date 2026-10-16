@@ -1,19 +1,14 @@
-//! Tests of the dialogue screen: reveal timing, paging, skipping and the
-//! layout. Scripted runs and snapshots are in `crates/ui/tests/it/dialogue.rs`.
+//! Tests of the dialogue screen: reveal timing, paging, skipping and what
+//! it shows (its view). The look is tested in `glyph/tests.rs`; scripted
+//! runs and snapshots are in `crates/ui/tests/it/dialogue.rs`.
 
-use trpg_content::Step;
+use trpg_content::{Side, Step};
 use trpg_core::CharacterId;
 
 use super::*;
 use crate::audio::AudioRequest;
-use crate::console::ConsoleSpec;
-use crate::glyph_buffer::Sprite;
-use crate::portrait::dim_opacity;
 use crate::screen::tests::ctx;
 use crate::settings::TextSpeed;
-
-/// Row of the name plates: the one under the portrait frames.
-const PLATE_Y: i32 = 19;
 
 /// One frame of `dt` seconds with `actions`, Confirm held if `held`.
 fn frame(actions: &[Action], dt: f32, held: bool) -> FrameInput {
@@ -69,21 +64,14 @@ fn two_speakers(text: &str) -> Scene {
     ])
 }
 
-fn draw(s: &DialogueScreen, c: &Ctx) -> GlyphBuffer {
-    let p = &c.palette;
-    let mut buf = GlyphBuffer::new(
-        100,
-        32,
-        Cell::new('x', p.get(UiColor::Text), p.get(UiColor::Black)),
-    );
-    s.draw(c, &mut buf);
-    buf
+/// The text box's lines as revealed so far.
+fn revealed(s: &DialogueScreen, c: &Ctx) -> Vec<String> {
+    s.view(c).text.revealed()
 }
 
-fn row(buf: &GlyphBuffer, y: i32) -> String {
-    (0..i32::from(buf.width()))
-        .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
-        .collect()
+/// The names of who is on the left and the right.
+fn names(view: &DialogueView) -> [Option<&str>; 2] {
+    [Side::Left, Side::Right].map(|side| view.face(side).map(|f| f.name.as_str()))
 }
 
 /// Line counts of each page of the first box of a [`two_speakers`] scene,
@@ -110,8 +98,8 @@ fn reveals_at_the_text_speed() {
     assert!(!s.is_overlay());
     s.update(&mut c, &frame(&[], 0.1, false));
     assert!((s.shown - 6.0).abs() < 1e-3, "{}", s.shown);
-    assert!(row(&draw(&s, &c), TEXT_Y).contains(" Hello "));
-    assert!(!row(&draw(&s, &c), TEXT_Y).contains("Hello t"));
+    assert_eq!(revealed(&s, &c), ["Hello "]);
+    assert!(s.view(&c).text.waiting.is_none());
     // The player's text speed (0805): Slow is 30 characters a second.
     c.change_settings(|s| s.text_speed = TextSpeed::Slow)
         .unwrap();
@@ -268,34 +256,23 @@ fn text_filling_whole_pages_has_no_empty_page_after() {
 }
 
 #[test]
-fn two_lines_of_narration_start_at_the_top() {
-    let c = ctx();
-    let text = format!("{} {}", "a".repeat(60), "b".repeat(60));
-    let mut s = full(&scene(vec![Step::Narrate {
-        text,
-        line: trpg_content::LineId::default(),
-    }]));
-    s.shown = 120.0;
-    let buf = draw(&s, &c);
-    assert!(row(&buf, TEXT_Y).contains(&"a".repeat(60)));
-    assert!(row(&buf, TEXT_Y + 1).contains(&"b".repeat(60)));
-}
-
-#[test]
 fn cancel_asks_before_skipping() {
     let mut c = ctx();
     let mut s = full(&two_speakers("First."));
     press(&mut s, &mut c, Action::Cancel);
     assert!(s.is_asking_skip());
-    let buf = draw(&s, &c);
-    assert!(row(&buf, TEXT_Y).contains("Skip scene?"));
-    assert!(row(&buf, TEXT_Y + 1).contains("f yes / d no"));
+    let skip = SkipView {
+        question: "Skip scene?".to_owned(),
+        answers: "f yes / d no".to_owned(),
+    };
+    assert_eq!(s.view(&c).text.skip, Some(skip));
     // Time stands still while asking.
     s.update(&mut c, &frame(&[], 1.0, false));
     assert!(!s.is_revealed());
     // No: back to the scene where it was.
     press(&mut s, &mut c, Action::Cancel);
     assert!(!s.is_asking_skip());
+    assert_eq!(s.view(&c).text.skip, None);
     assert_eq!(s.page_lines(), ["First."]);
     // Yes: the scene ends.
     press(&mut s, &mut c, Action::Cancel);
@@ -316,139 +293,117 @@ fn a_scene_without_text_pops_at_once() {
 }
 
 #[test]
-fn speaker_frame_is_double_and_bright() {
+fn the_speaker_is_the_side_that_says_the_line() {
     let mut c = ctx();
     let mut s = full(&two_speakers("Hi."));
-    let buf = draw(&s, &c);
-    let glyph = |b: &GlyphBuffer, x, y| b.get(x, y).map(|c| c.glyph);
-    assert_eq!(glyph(&buf, LEFT_X, FRAME_Y), Some('╔'));
-    assert_eq!(glyph(&buf, RIGHT_X, FRAME_Y), Some('┌'));
+    let view = s.view(&c);
+    assert_eq!(names(&view), [Some("Test Lord"), Some("Test Knight")]);
+    assert_eq!(view.speaker, Some(Side::Left));
+    assert_eq!(view.speaking().map(|f| f.name.as_str()), Some("Test Lord"));
+    assert!(!view.text.narration);
+    let lord = view.face(Side::Left);
+    assert_eq!(lord.map(|f| f.portrait.as_str()), Some("test_lord"));
+    assert_eq!(lord.map(|f| f.expression.as_str()), Some("neutral"));
+    // Now the knight speaks.
+    press(&mut s, &mut c, Action::Confirm);
+    press(&mut s, &mut c, Action::Confirm);
+    let view = s.view(&c);
+    assert_eq!(view.speaker, Some(Side::Right));
     assert_eq!(
-        buf.get(LEFT_X, FRAME_Y).map(|c| c.fg),
-        Some(c.palette.get(UiColor::PanelBorderFocus))
+        view.speaking().map(|f| f.name.as_str()),
+        Some("Test Knight")
     );
-    assert!(row(&buf, PLATE_Y).contains("Test Lord"));
-    assert!(row(&buf, PLATE_Y).contains("Test Knight"));
-    // The speaker's name is on the text box's top border.
-    assert!(row(&buf, TEXT_BOX.y).starts_with("┌── Test Lord ─"));
-    // Now the knight speaks: the frames swap.
-    press(&mut s, &mut c, Action::Confirm);
-    press(&mut s, &mut c, Action::Confirm);
-    let buf = draw(&s, &c);
-    assert_eq!(glyph(&buf, LEFT_X, FRAME_Y), Some('┌'));
-    assert_eq!(glyph(&buf, RIGHT_X, FRAME_Y), Some('╔'));
-    assert!(row(&buf, TEXT_BOX.y).starts_with("┌── Test Knight ─"));
-}
-
-/// The sprite of the portrait in the frame at column `x`.
-fn portrait_sprite(buf: &GlyphBuffer, x: i32) -> Option<Sprite> {
-    let left = (x + 1) * i32::from(ConsoleSpec::PC.cell_w);
-    let inside = |s: &Sprite| (left..left + 256).contains(&s.dest.x);
-    buf.sprites().into_iter().find(inside)
 }
 
 #[test]
-fn the_speaker_is_bright_and_the_listener_dimmed_and_mirrored() {
-    let c = ctx();
-    let s = full(&two_speakers("Hi."));
-    let buf = draw(&s, &c);
-    assert_eq!(buf.sprites().len(), 2);
-    // The placeholders are 32×32: 8× fills the 256×256 px inside the frame.
-    let top = (FRAME_Y + 1) * i32::from(ConsoleSpec::PC.cell_h);
-    let listener = portrait_sprite(&buf, RIGHT_X).unwrap();
-    assert_eq!(listener.image.path(), "portraits/test_knight/neutral.png");
-    assert_eq!(listener.dest, Rect::new((RIGHT_X + 1) * 8, top, 256, 256));
-    assert_eq!(listener.clip, listener.dest);
-    assert!(listener.flip_x);
-    assert_eq!(listener.opacity, dim_opacity(LISTENER_DIM));
-    assert!(listener.opacity < 255);
-    let speaker = portrait_sprite(&buf, LEFT_X).unwrap();
-    assert_eq!(speaker.image.path(), "portraits/test_lord/neutral.png");
-    assert_eq!(speaker.dest, Rect::new((LEFT_X + 1) * 8, top, 256, 256));
-    assert!(!speaker.flip_x);
-    assert_eq!(speaker.opacity, 255);
-}
-
-#[test]
-fn narration_dims_both_and_centres_the_text() {
+fn narration_has_no_speaker() {
     let c = ctx();
     let s = full(&scene(vec![
         place(Side::Left, "test_lord"),
         place(Side::Right, "test_knight"),
-        Step::Narrate {
-            text: "Rain.".into(),
-            line: trpg_content::LineId::default(),
-        },
+        narrate("Rain."),
     ]));
-    let mut s = s;
-    s.shown = 5.0;
-    let buf = draw(&s, &c);
-    assert_eq!(buf.get(LEFT_X, FRAME_Y).map(|c| c.glyph), Some('┌'));
-    assert_eq!(buf.get(RIGHT_X, FRAME_Y).map(|c| c.glyph), Some('┌'));
-    // No name on the border; one line, centred in the middle row.
-    assert!(row(&buf, TEXT_BOX.y).starts_with("┌────"));
-    let middle = row(&buf, TEXT_Y + 1);
-    let x = middle.find("Rain.").map(|b| middle[..b].chars().count());
-    assert_eq!(x, Some(47));
-    assert_eq!(
-        buf.get(47, TEXT_Y + 1).map(|c| c.fg),
-        Some(c.palette.get(UiColor::TextDim))
-    );
+    let view = s.view(&c);
+    assert_eq!(view.speaker, None);
+    assert!(view.speaking().is_none());
+    assert!(view.text.narration);
+    assert_eq!(view.text.lines, ["Rain."]);
 }
 
 #[test]
-fn an_empty_side_draws_nothing() {
+fn an_empty_side_has_no_face() {
     let c = ctx();
     let s = full(&scene(vec![
         place(Side::Left, "test_lord"),
         say("test_lord", "Alone."),
     ]));
-    let buf = draw(&s, &c);
-    let black = c.palette.get(UiColor::Black);
-    for y in 0..=PLATE_Y {
-        for x in RIGHT_X..RIGHT_X + FRAME.0 {
-            assert_eq!(buf.get(x, y).map(|c| (c.glyph, c.bg)), Some((' ', black)));
-        }
-    }
+    assert_eq!(names(&s.view(&c)), [Some("Test Lord"), None]);
 }
 
 #[test]
-fn the_overlay_leaves_the_rest_of_the_screen() {
+fn the_overlay_says_so() {
     let c = ctx();
     let s = over(&two_speakers("Hi."));
     assert!(s.is_overlay());
-    let buf = draw(&s, &c);
-    // Between the frames the screen below shows; below the text box (the
-    // battle's key help) is blanked.
-    assert_eq!(buf.get(50, 5).map(|c| c.glyph), Some('x'));
-    assert_eq!(buf.get(50, 20).map(|c| c.glyph), Some('x'));
-    for y in 28..32 {
-        assert_eq!(row(&buf, y).trim(), "", "row {y}");
-    }
-    let full = draw(&full(&two_speakers("Hi.")), &c);
-    assert_eq!(full.get(50, 5).map(|c| c.glyph), Some(' '));
+    assert!(s.view(&c).overlay);
+    assert!(!full(&two_speakers("Hi.")).view(&c).overlay);
 }
 
+/// The marker that says "press to go on" appears once the page is shown,
+/// blinks, and goes with the page.
 #[test]
-fn the_arrow_blinks_once_revealed() {
+fn the_page_waits_once_revealed() {
     let mut c = ctx();
     let mut s = full(&two_speakers("Hi."));
-    let arrow_row = TEXT_BOX.y + TEXT_BOX.h - 2;
-    assert!(!row(&draw(&s, &c), arrow_row).contains('▼'));
+    assert!(s.view(&c).text.waiting.is_none());
     press(&mut s, &mut c, Action::Confirm);
-    assert!(row(&draw(&s, &c), arrow_row).ends_with("f ▼  │"));
-    // Hidden from exactly half a second.
+    let waiting = s.view(&c).text.waiting;
+    let log_hint = c.text_with("dialogue.log_hint", &[]);
+    assert_eq!(
+        waiting,
+        Some(WaitView {
+            key: "f".to_owned(),
+            log_hint: Some(log_hint),
+            marker: true,
+        })
+    );
+    let marker = |s: &DialogueScreen, c: &Ctx| s.view(c).text.waiting.map(|w| w.marker);
+    // Out from exactly half a second.
     s.update(&mut c, &frame(&[], 0.5, false));
-    assert!(!row(&draw(&s, &c), arrow_row).contains('▼'));
+    assert_eq!(marker(&s, &c), Some(false));
     s.update(&mut c, &frame(&[], 0.1, false));
-    assert!(!row(&draw(&s, &c), arrow_row).contains('▼'));
-    assert!(row(&draw(&s, &c), arrow_row).contains(" f "));
+    assert_eq!(marker(&s, &c), Some(false));
     s.update(&mut c, &frame(&[], 0.5, false));
-    assert!(row(&draw(&s, &c), arrow_row).contains('▼'));
+    assert_eq!(marker(&s, &c), Some(true));
+    // The next box types out first.
+    press(&mut s, &mut c, Action::Confirm);
+    assert_eq!(s.page_lines(), ["Second."]);
+    assert!(s.view(&c).text.waiting.is_none());
+    // Nor does the skip question wait.
+    press(&mut s, &mut c, Action::Confirm);
+    assert!(s.view(&c).text.waiting.is_some());
+    press(&mut s, &mut c, Action::Cancel);
+    assert!(s.view(&c).text.waiting.is_none());
+}
+
+/// Without a key for the log, the page doesn't say how to open it.
+#[test]
+fn no_log_hint_without_a_log_key() {
+    let mut c = ctx();
+    let layout = crate::input::Layout::RightHanded;
+    let mut keys = c.layout_bindings(layout);
+    for slot in 0..crate::input::SLOTS {
+        keys.clear(Action::DialogueLog, slot);
+    }
+    c.set_layout_bindings(layout, keys).unwrap();
+    let mut s = full(&two_speakers("Hi."));
+    press(&mut s, &mut c, Action::Confirm);
+    let waiting = s.view(&c).text.waiting;
+    assert_eq!(waiting.map(|w| w.log_hint), Some(None));
 }
 
 #[test]
-fn the_caption_is_top_centre() {
+fn the_caption_is_shown() {
     let c = ctx();
     let s = full(&scene(vec![
         Step::Caption {
@@ -456,22 +411,8 @@ fn the_caption_is_top_centre() {
         },
         say("nobody", "Hm."),
     ]));
-    assert_eq!(row(&draw(&s, &c), 0).trim(), "Heth");
-    assert_eq!(row(&draw(&s, &c), 0).find("Heth"), Some(48));
-}
-
-#[test]
-fn a_character_without_a_portrait_gets_an_empty_frame() {
-    let c = ctx();
-    let s = full(&scene(vec![
-        place(Side::Right, "test_archer"),
-        say("test_archer", "Me?"),
-    ]));
-    let buf = draw(&s, &c);
-    assert_eq!(buf.get(RIGHT_X, FRAME_Y).map(|c| c.glyph), Some('╔'));
-    let inside: String = row(&buf, FRAME_Y + 8).chars().skip(66).take(32).collect();
-    assert_eq!(inside.trim(), "");
-    assert!(row(&buf, PLATE_Y).contains("Test Archer"));
+    assert_eq!(s.view(&c).caption.as_deref(), Some("Heth"));
+    assert_eq!(full(&two_speakers("Hi.")).view(&c).caption, None);
 }
 
 #[test]
@@ -488,10 +429,9 @@ fn a_speaker_who_is_not_a_unit_is_named_by_the_names_table() {
         place(Side::Left, "retainer"),
         say("retainer", "My lord."),
     ]));
-    let buf = draw(&s, &c);
-    assert!(row(&buf, PLATE_Y).contains(&name));
-    assert!(!row(&buf, PLATE_Y).contains("retainer"));
-    assert!(row(&buf, TEXT_BOX.y).starts_with(&format!("┌── {name} ─")));
+    let view = s.view(&c);
+    assert_eq!(names(&view), [Some(name.as_str()), None]);
+    assert_eq!(view.speaking().map(|f| f.name.clone()), Some(name));
 }
 
 #[test]
@@ -501,9 +441,9 @@ fn a_character_without_an_entry_is_named_by_id() {
         place(Side::Left, "stranger"),
         say("stranger", "Who, me?"),
     ]));
-    let buf = draw(&s, &c);
-    assert!(row(&buf, PLATE_Y).contains("stranger"));
-    assert!(row(&buf, TEXT_BOX.y).starts_with("┌── stranger ─"));
+    let view = s.view(&c);
+    assert_eq!(names(&view), [Some("stranger"), None]);
+    assert_eq!(view.speaking().map(|f| f.name.as_str()), Some("stranger"));
 }
 
 // --- Reply choices (0708) ---------------------------------------------------
@@ -539,12 +479,20 @@ fn sounds(c: &mut Ctx) -> Vec<String> {
         .collect()
 }
 
+/// The labels of the replies on screen, and which one has the focus.
+fn replies(s: &DialogueScreen, c: &Ctx) -> Option<(Vec<String>, Option<usize>)> {
+    let choices = s.view(c).text.choices?;
+    let focus = choices.items.iter().position(|i| i.focused);
+    Some((choices.items.into_iter().map(|i| i.label).collect(), focus))
+}
+
 #[test]
 fn a_choice_lists_its_replies_under_the_question() {
     let mut c = ctx();
     let mut s = full(&asking());
     press(&mut s, &mut c, Action::Confirm);
     assert!(s.menu().is_none());
+    assert_eq!(replies(&s, &c), None);
     // The press that opens the choice doesn't pick a reply, even with a
     // second press in the same frame.
     let t = s.update(
@@ -553,59 +501,23 @@ fn a_choice_lists_its_replies_under_the_question() {
     );
     assert!(matches!(t, Transition::None));
     assert_eq!(s.menu().map(Menu::focus), Some(0));
-    let buf = draw(&s, &c);
-    // The question, fully shown, a blank row, then the replies, the
-    // focused one marked; this fits the usual box, so it doesn't grow.
-    assert_eq!(s.text_box(), (TEXT_BOX, TEXT_Y));
+    // The question, fully shown, then the replies, the first focused.
+    let view = s.view(&c);
     assert!(s.is_revealed());
-    assert!(row(&buf, TEXT_Y).starts_with("│   Ready?  "));
-    assert_eq!(row(&buf, TEXT_Y + 1).trim_matches(['│', ' ']), "");
-    assert!(row(&buf, TEXT_Y + 2).starts_with("│   > Yes.  "));
-    assert!(row(&buf, TEXT_Y + 3).starts_with("│     He knows.  "));
-    assert_eq!(
-        buf.get(TEXT_X, TEXT_Y + 2).map(|c| c.fg),
-        Some(c.palette.get(UiColor::TextHighlight))
-    );
-    assert_eq!(
-        buf.get(TEXT_X, TEXT_Y + 3).map(|c| c.fg),
-        Some(c.palette.get(UiColor::Text))
-    );
-    // No ▼ while choosing; the portraits' name plates stay clear.
-    assert!(!row(&buf, TEXT_BOX.y + TEXT_BOX.h - 2).contains('▼'));
-    assert!(row(&buf, PLATE_Y).contains("Test Lord"));
-    // The focus marker follows the cursor.
+    assert_eq!(view.text.revealed(), ["Ready?"]);
+    let both = vec!["Yes.".to_owned(), "He knows.".to_owned()];
+    assert_eq!(replies(&s, &c), Some((both.clone(), Some(0))));
+    // Nothing waits for the key that goes on while choosing; the faces
+    // stay.
+    assert!(view.text.waiting.is_none());
+    assert_eq!(names(&view), [Some("Test Lord"), Some("Test Knight")]);
+    // The focus follows the cursor.
     press(&mut s, &mut c, Action::CursorDown);
-    let buf = draw(&s, &c);
-    assert!(row(&buf, TEXT_Y + 2).starts_with("│     Yes.  "));
-    assert!(row(&buf, TEXT_Y + 3).starts_with("│   > He knows.  "));
-}
-
-/// A long question and three replies: the box grows upward, its bottom
-/// staying put.
-#[test]
-fn the_text_box_grows_to_fit_the_replies() {
-    let mut c = ctx();
-    let long = "word ".repeat(40);
-    let mut s = full(&scene(vec![
-        place(Side::Left, "test_lord"),
-        place(Side::Right, "test_knight"),
-        say("test_knight", long.trim()),
-        Step::Choice {
-            options: vec![reply("A.", "a"), reply("B.", "b"), reply("C.", "c")],
-        },
-    ]));
+    assert_eq!(replies(&s, &c), Some((both, Some(1))));
+    // Picked: the replies go.
     press(&mut s, &mut c, Action::Confirm);
-    press(&mut s, &mut c, Action::Confirm);
-    let lines = s.page_lines().len();
-    assert_eq!(lines, 3);
-    // 3 question rows, a blank one and 3 replies: 7 rows from row 20.
-    let (rect, text_y) = s.text_box();
-    assert_eq!(text_y, 20);
-    assert_eq!(rect, Rect::new(0, 18, 100, 10));
-    let buf = draw(&s, &c);
-    assert!(row(&buf, 18).starts_with("┌── Test Knight ─"));
-    assert!(row(&buf, 26).starts_with("│     C.  "));
-    assert!(row(&buf, 27).starts_with("└──"));
+    assert_eq!(replies(&s, &c), None);
+    assert_eq!(s.page_lines(), ["Hm."]);
 }
 
 #[test]
@@ -693,12 +605,10 @@ fn the_lead_shows_the_players_name_and_gendered_portrait() {
             c.content.names.clone(),
             &Present::Everyone,
         );
-        let buf = draw(&s, &c);
-        assert!(row(&buf, PLATE_Y).contains("Isolde"));
-        assert!(row(&buf, TEXT_BOX.y).starts_with("┌── Isolde ─"));
-        let sprite = portrait_sprite(&buf, LEFT_X).unwrap();
-        assert_eq!(sprite.image.path(), format!("portraits/{art}/neutral.png"));
-        assert_eq!((sprite.opacity, sprite.flip_x), (255, false));
+        let view = s.view(&c);
+        let lead = view.speaking();
+        assert_eq!(lead.map(|f| f.name.as_str()), Some("Isolde"));
+        assert_eq!(lead.map(|f| f.portrait.as_str()), Some(art));
     }
 }
 
@@ -715,24 +625,6 @@ fn two_presses_in_one_frame_both_count() {
     );
     assert_eq!(s.page_lines(), ["Second."]);
     assert!(s.is_revealed());
-}
-
-/// Replies with no line before them get no blank row above them.
-#[test]
-fn replies_without_a_question_start_at_the_top() {
-    let c = ctx();
-    let s = full(&scene(vec![Step::Choice {
-        options: vec![
-            reply("A.", "a"),
-            reply("B.", "b"),
-            reply("C.", "c"),
-            reply("D.", "d"),
-        ],
-    }]));
-    assert_eq!(s.text_box(), (TEXT_BOX, TEXT_Y));
-    let buf = draw(&s, &c);
-    assert!(row(&buf, TEXT_Y).starts_with("│   > A.  "));
-    assert!(row(&buf, TEXT_Y + 3).starts_with("│     D.  "));
 }
 
 fn music(cue: &str) -> Step {
@@ -940,4 +832,21 @@ fn an_empty_scene_has_no_log() {
     let mut s = full(&scene(vec![music("village")]));
     press(&mut s, &mut c, Action::DialogueLog);
     assert!(!s.is_log_open());
+}
+
+/// The log is in the view while it is open, and the scene under it.
+#[test]
+fn the_log_appears_and_goes_in_the_view() {
+    let mut c = ctx();
+    let mut s = full(&scene(vec![narrate("One."), narrate("Two.")]));
+    assert_eq!(s.view(&c).log, None);
+    press(&mut s, &mut c, Action::Confirm);
+    press(&mut s, &mut c, Action::Confirm);
+    press(&mut s, &mut c, Action::DialogueLog);
+    let view = s.view(&c);
+    assert_eq!(view.log, s.log_view(&c));
+    assert!(view.log.is_some());
+    assert_eq!(view.text.lines, ["Two."]);
+    press(&mut s, &mut c, Action::Cancel);
+    assert_eq!(s.view(&c).log, None);
 }
