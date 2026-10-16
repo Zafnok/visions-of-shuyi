@@ -324,5 +324,15 @@ mod tests {
         assert!(row(&buf, top).contains("╔═ Mei ═"), "{}", row(&buf, top));
         assert!(row(&buf, top + 2).contains("║  Rename  ║"));
         assert!(row(&buf, top + 3).contains("║  Delete  ║"));
+        // A name wider than the items widens the box.
+        if let Some(actions) = &mut v.actions {
+            actions.title = "Abcdefghijkl".to_owned();
+        }
+        let buf = painted(&c, &v);
+        assert!(
+            row(&buf, top).contains("╔═ Abcdefghijkl ═══╗"),
+            "{}",
+            row(&buf, top)
+        );
     }
 }

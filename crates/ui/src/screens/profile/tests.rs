@@ -6,7 +6,7 @@ use crate::input::Layout;
 use crate::screen::tests::ctx;
 use crate::settings::TextSpeed;
 
-use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorUp};
+use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
 
 fn press(s: &mut ProfileScreen, c: &mut Ctx, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
@@ -91,6 +91,19 @@ fn a_profile_offers_switch_unless_in_use_and_delete_unless_the_only_one() {
     press(&mut s, &mut c, &[CursorDown, Confirm]);
     assert_eq!(actions(&s, &c), ["Use this profile", "Rename", "Delete"]);
     assert_eq!(s.help(&c), "arrows move · f select · d back");
+    // The cursor moves over the items and wraps both ways.
+    let focused = |s: &ProfileScreen, c: &Ctx| {
+        let view = s.view(c).actions.unwrap_or_else(|| panic!("no menu"));
+        let item = view.items.into_iter().find(|i| i.focused);
+        item.map(|i| i.label)
+    };
+    assert_eq!(focused(&s, &c).as_deref(), Some("Use this profile"));
+    press(&mut s, &mut c, &[CursorUp]);
+    assert_eq!(focused(&s, &c).as_deref(), Some("Delete"));
+    press(&mut s, &mut c, &[CursorDown]);
+    assert_eq!(focused(&s, &c).as_deref(), Some("Use this profile"));
+    press(&mut s, &mut c, &[CursorDown]);
+    assert_eq!(focused(&s, &c).as_deref(), Some("Rename"));
 }
 
 #[test]
@@ -142,12 +155,16 @@ fn deleting_asks_first_focused_on_no() {
     press(&mut s, &mut c, &[Confirm]);
     press(&mut s, &mut c, &[CursorDown, CursorDown, Confirm]);
     press(&mut s, &mut c, &[CursorLeft]);
-    assert_eq!(
-        s.view(&c)
-            .question
-            .and_then(|q| q.focused().map(str::to_owned)),
-        Some("Yes".into())
-    );
+    let answer = |s: &ProfileScreen, c: &Ctx| {
+        let q = s.view(c).question;
+        q.and_then(|q| q.focused().map(str::to_owned))
+    };
+    assert_eq!(answer(&s, &c).as_deref(), Some("Yes"));
+    // Right goes back to No and stops there; Left stops at Yes.
+    press(&mut s, &mut c, &[CursorRight, CursorRight]);
+    assert_eq!(answer(&s, &c).as_deref(), Some("No"));
+    press(&mut s, &mut c, &[CursorLeft, CursorLeft]);
+    assert_eq!(answer(&s, &c).as_deref(), Some("Yes"));
     assert_eq!(press(&mut s, &mut c, &[Confirm]), "None");
     assert_eq!(names(&c), ["Player 1", "Odo"]);
 }
@@ -182,6 +199,7 @@ fn adding_past_the_most_profiles_is_refused_with_a_message() {
     assert_eq!(s.help(&c), "arrows move · d back");
     press(&mut s, &mut c, &[Confirm]);
     assert!(s.typed().is_none());
+    assert_eq!(s.message(), Some(TOO_MANY_MESSAGE));
     assert_eq!(
         s.view(&c).message.as_deref(),
         Some("There can be at most 8 profiles.")

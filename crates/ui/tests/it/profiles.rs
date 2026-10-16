@@ -451,6 +451,8 @@ fn cancel_in_the_name_box_with_a_name_typed_asks_first_on_go_back() {
     h.keys("Down f").type_text("Mei").keys("Escape");
     let asked = question(&h).unwrap_or_else(|| panic!("not asked"));
     assert_eq!(asked, ("Keep this name?".to_owned(), "Back".to_owned()));
+    let help = screen(&h).help(h.game().ctx());
+    assert_eq!(help, "arrows choose · f pick · d back");
     // Back: the box again, the name as it was.
     h.keys("f");
     assert_eq!(question(&h), None);

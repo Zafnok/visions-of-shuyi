@@ -464,7 +464,6 @@ impl ProfileScreen {
             return Transition::None;
         };
         match naming.purpose {
-            NamePurpose::Rename(_) if name == naming.original => {}
             NamePurpose::Rename(id) => {
                 if let Err(e) = ctx.rename_profile(id, &name) {
                     self.refused(ctx, &e);
