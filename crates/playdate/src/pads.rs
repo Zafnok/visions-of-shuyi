@@ -17,12 +17,12 @@ use trpg_ui::input::{Button, PadKind, PadState, Pads, StickDef};
 /// The SDK's `PDButtons` bits (`pd_api_sys.h`; `shim/shim.c` checks this
 /// copy against the header), each with the binding position it reports.
 const BUTTONS: [(u32, Button); 6] = [
-    (1 << 0, Button::DpadLeft),
-    (1 << 1, Button::DpadRight),
-    (1 << 2, Button::DpadUp),
-    (1 << 3, Button::DpadDown),
-    (1 << 4, Button::East),
-    (1 << 5, Button::South),
+    (0x01, Button::DpadLeft),
+    (0x02, Button::DpadRight),
+    (0x04, Button::DpadUp),
+    (0x08, Button::DpadDown),
+    (0x10, Button::East),
+    (0x20, Button::South),
 ];
 
 /// The Playdate's one pad: never unplugged, no sticks.

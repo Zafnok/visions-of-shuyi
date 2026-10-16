@@ -218,6 +218,8 @@ mod tests {
         folders: BTreeSet<String>,
         /// Whether `rename` refuses to move a file onto another.
         no_replace: bool,
+        /// Every path written and every folder made, in order.
+        calls: Vec<String>,
     }
 
     impl Files for MemoryFiles {
@@ -238,6 +240,7 @@ mod tests {
             if !folder.is_empty() && !self.folders.contains(folder) {
                 return Err("no such folder".into());
             }
+            self.calls.push(format!("write {path}"));
             self.files.insert(path.into(), bytes.to_vec());
             Ok(())
         }
@@ -259,7 +262,10 @@ mod tests {
         }
 
         fn mkdir(&mut self, path: &str) -> Result<(), String> {
-            self.folders.insert(path.into());
+            if !self.folders.insert(path.into()) {
+                return Err("folder exists".into());
+            }
+            self.calls.push(format!("mkdir {path}"));
             Ok(())
         }
 
@@ -335,6 +341,41 @@ mod tests {
         let names: Vec<&String> = files.files.keys().collect();
         assert_eq!(names, ["settings.ron"]);
         assert_eq!(files.files["settings.ron"], b"(theme: 1)");
+    }
+
+    /// A write goes to `<key>.ron.tmp` first; a folder is made only
+    /// once, and the data folder itself never.
+    #[test]
+    fn writes_go_through_a_tmp_file_and_make_a_folder_once() {
+        let mut storage = FileStorage::new(MemoryFiles::default());
+        storage.write("settings", "()").unwrap();
+        storage.write("settings", "(a)").unwrap();
+        assert_eq!(
+            storage.files.calls,
+            ["write settings.ron.tmp", "write settings.ron.tmp"]
+        );
+        let mut files = MemoryFiles::default();
+        let mut storage = FileStorage::in_folder(&mut files, "saves");
+        storage.write("slot", "()").unwrap();
+        storage.write("slot", "(a)").unwrap();
+        assert_eq!(
+            files.calls,
+            [
+                "mkdir saves",
+                "write saves/slot.ron.tmp",
+                "write saves/slot.ron.tmp"
+            ]
+        );
+        assert_eq!(files.files.keys().collect::<Vec<_>>(), ["saves/slot.ron"]);
+    }
+
+    /// On a first run the check makes its folder.
+    #[test]
+    fn the_check_makes_its_folder_on_a_first_run() {
+        let mut files = MemoryFiles::default();
+        check(&mut files);
+        assert!(files.folders.contains(CHECK_FOLDER));
+        assert!(files.files.is_empty());
     }
 
     #[test]
