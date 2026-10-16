@@ -25,6 +25,8 @@ fn launch(storage: Box<dyn Storage>) -> Harness {
         .unwrap_or_else(|e| panic!("{e}"))
         .with_storage(storage);
     ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
+    // The story's lessons start in any battle; theirs are in `ch01_lessons`.
+    ctx.content.lessons.lessons.retain(|l| l.id == TEST_LESSON);
     let mut h = Harness::from_game(Game::start(ctx));
     h.with_lessons();
     h

@@ -3,16 +3,24 @@
 // them, in any order. The lesson closes when every item is ticked; while it
 // is open the turn can't end (unless an item is `TurnEnded`). Each lesson
 // shows once per campaign, the first time its trigger happens in a battle,
-// one at a time.
+// one at a time: lessons started by the same trigger come in file order.
+// A lesson that still needs a unit to act when none is left that turn is
+// put away, and comes back the next time its trigger fires in a later turn.
 //
 // Fields:
 //   id        snake_case; the campaign keeps it once the lesson is done.
 //   level     Full (shows only at Full) or Short (at Full and Short).
 //   trigger   what starts it: a tip trigger (tips.ron), e.g.
-//             FirstBattleStart.
+//             FirstBattleStart, or one only lessons use: NoUnitLeft (every
+//             unit has acted), SecondTurn (turn 2's player phase),
+//             ThreatArrowsShown, ArtsAvailable (an action menu with Arts
+//             that can be used), TileSpellAvailable (a spell list with a
+//             spell that can be cast on a tile from there).
 //   battles   optional: the battle ids it may start in (any if left out).
 //   title     the heading, at most 30 characters.
-//   text      1 or 2 lines of at most 60 characters.
+//   text      1 or 2 lines of at most 60 characters. The story's keep to 45
+//             (labels to 41), so the box with the guide's face stays over
+//             the map, off the side panel.
 //   items     1 to 6 of (label: "...", done_when: ...); a label is one line
 //             of at most 56 characters. Two items can't share a done_when.
 //   face      optional: the guide's expression, `smile` if left out.
@@ -22,12 +30,135 @@
 // with the key that picks on the map, as in tips.ron.
 //
 // done_when: Pressed("<Action>") (the battle used that action, e.g.
-// Pressed("CursorUp"), Pressed("Info"), Pressed("NextUnit")), UnitSelected,
-// UnitMoved (where the unit goes was picked), ForecastOpened, Attacked,
-// RewindOpened, TurnEnded.
+// Pressed("CursorUp"), Pressed("Info"), Pressed("NextUnit")), CursorMoved
+// (any way), UnitSelected, UnitMoved (where the unit goes was picked),
+// ActionMenuOpened, ArtsOpened, ForecastOpened, Attacked, TileAimed (a spell
+// aimed at a tile), ThreatPointed / SafePointed (a selected unit's path
+// pointed at a tile with / without threat arrows), RewindOpened,
+// RewindClosed, OptionsOpened, TurnEnded.
 //
-// The lessons themselves are ticket 0457. The test lesson is in
-// assets-test/data/lessons.ron.
+// The lessons (ticket 0457): basic controls at Full, what is different in
+// this game at Short. The test lesson is in assets-test/data/lessons.ron.
 (
-    lessons: [],
+    lessons: [
+        // Basic controls, turn 1. Then the keys (below), at every level
+        // that has lessons.
+        (
+            id: "cursor",
+            level: Full,
+            trigger: FirstBattleStart,
+            title: "Moving the cursor",
+            text: "The cursor picks tiles and units on the map.\nMove it one tile each way.",
+            items: [
+                (label: "Move it up: {CursorUp}", done_when: Pressed("CursorUp")),
+                (label: "Move it down: {CursorDown}", done_when: Pressed("CursorDown")),
+                (label: "Move it left: {CursorLeft}", done_when: Pressed("CursorLeft")),
+                (label: "Move it right: {CursorRight}", done_when: Pressed("CursorRight")),
+            ],
+        ),
+        // Different here: no mouse, and every key can be changed.
+        (
+            id: "keys",
+            level: Short,
+            trigger: FirstBattleStart,
+            title: "Played on the keys",
+            text: "No mouse here: the game is played on keys.\nEvery key can be changed in Options.",
+            items: [
+                (label: "Move the cursor: {Cursor}", done_when: CursorMoved),
+                (label: "Open Options from the map menu: {Cancel}", done_when: OptionsOpened),
+            ],
+        ),
+        (
+            id: "next_unit",
+            level: Full,
+            trigger: FirstBattleStart,
+            title: "Finding your units",
+            text: "{NextUnit} jumps to a unit that hasn't acted.\n{Info} on a unit shows its stats and weapons.",
+            items: [
+                (label: "Jump to the next unit: {NextUnit}", done_when: Pressed("NextUnit")),
+                (label: "Look at a unit's details: {Info}", done_when: Pressed("Info")),
+            ],
+        ),
+        (
+            id: "moving",
+            level: Full,
+            trigger: FirstBattleStart,
+            title: "Moving a unit",
+            text: "{Select} on a unit: lit tiles show its reach.\n{Select} on one moves it; its menu follows.",
+            items: [
+                (label: "Select a unit: {Select}", done_when: UnitSelected),
+                (label: "Pick where it goes: {Select}", done_when: UnitMoved),
+                (label: "See its menu", done_when: ActionMenuOpened),
+            ],
+        ),
+        // The first time a selected unit could reach an enemy.
+        (
+            id: "attacking",
+            level: Full,
+            trigger: FirstEnemyInRange,
+            title: "Attacking",
+            text: "Point at an enemy in reach for the forecast.\n{Confirm} attacks; {Cancel} backs out.",
+            items: [
+                (label: "Open the forecast on an enemy", done_when: ForecastOpened),
+                (label: "Attack: {Confirm}", done_when: Attacked),
+            ],
+        ),
+        // When every unit has acted on the first turn, before auto-end
+        // would end it (auto-end waits for it).
+        (
+            id: "ending_turn",
+            level: Full,
+            trigger: NoUnitLeft,
+            title: "Ending the turn",
+            text: "Everyone has acted. {EndTurn} ends the turn,\nor End turn in the map menu ({Cancel}).",
+            items: [
+                (label: "End the turn: {EndTurn}", done_when: TurnEnded),
+            ],
+        ),
+        // Different here. Turn 2: there is a turn to undo.
+        (
+            id: "rewind",
+            level: Short,
+            trigger: SecondTurn,
+            title: "Rewind",
+            text: "Rewind undoes turns. Each use spends one of\na few charges per map. Looking is free.",
+            items: [
+                (label: "Open Rewind: {Rewind}", done_when: RewindOpened),
+                (label: "Close it without rewinding: {Cancel}", done_when: RewindClosed),
+            ],
+        ),
+        (
+            id: "threat_arrows",
+            level: Short,
+            trigger: ThreatArrowsShown,
+            title: "Threat arrows",
+            text: "Arrows point from each enemy that could hit\nyour unit where it stands or will move.",
+            items: [
+                (label: "Point a unit's path where arrows show", done_when: ThreatPointed),
+                (label: "Point it at a tile with no arrows", done_when: SafePointed),
+            ],
+        ),
+        (
+            id: "combat_arts",
+            level: Short,
+            trigger: ArtsAvailable,
+            title: "Combat Arts",
+            text: "Arts are strong attacks in their own menu.\nThey cost weapon wear, or uses per battle.",
+            items: [
+                (label: "Open Arts in the unit's menu", done_when: ArtsOpened),
+            ],
+        ),
+        // Chapter 1 doesn't script it: the first time it can happen, in
+        // any battle (Rue's Cinder Oath on a forest, in Chapter 1).
+        (
+            id: "terrain_magic",
+            level: Short,
+            trigger: TileSpellAvailable,
+            title: "Spells that change tiles",
+            text: "Some spells change a tile: fire burns forest.\nAim one at a tile to see what it becomes.",
+            items: [
+                (label: "Aim a spell at a tile", done_when: TileAimed),
+            ],
+        ),
+    ],
 )

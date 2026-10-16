@@ -393,19 +393,40 @@ fn forecast_of(mode: &Mode) -> Option<&Targeting> {
     }
 }
 
-/// What the mode shows that the lessons watch for (0456): a unit selected,
-/// the attack forecast open.
+/// What the mode shows that the lessons watch for (0456, 0457): a unit
+/// selected, the attack forecast open, an action menu or arts menu open, a
+/// spell aimed at a tile, or none of these.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Marks {
-    selected: bool,
-    forecast: bool,
+enum Marks {
+    None,
+    Selected,
+    Forecast,
+    ActionMenu,
+    Arts,
+    TileAimed,
 }
 
 impl Marks {
     fn of(mode: &Mode) -> Self {
-        Self {
-            selected: matches!(mode, Mode::Selected(_)),
-            forecast: forecast_of(mode).is_some(),
+        match mode {
+            Mode::Selected(_) => Self::Selected,
+            _ if forecast_of(mode).is_some() => Self::Forecast,
+            Mode::ActionMenu { .. } => Self::ActionMenu,
+            Mode::ArtsMenu { .. } => Self::Arts,
+            Mode::CastTarget(t) if matches!(t.target(), CastTarget::Tile(_)) => Self::TileAimed,
+            _ => Self::None,
+        }
+    }
+
+    /// What it coming up shows the player did.
+    fn done(self) -> Option<DoneWhen> {
+        match self {
+            Self::None => None,
+            Self::Selected => Some(DoneWhen::UnitSelected),
+            Self::Forecast => Some(DoneWhen::ForecastOpened),
+            Self::ActionMenu => Some(DoneWhen::ActionMenuOpened),
+            Self::Arts => Some(DoneWhen::ArtsOpened),
+            Self::TileAimed => Some(DoneWhen::TileAimed),
         }
     }
 }
@@ -778,9 +799,50 @@ impl BattleScreen {
                     fired.push(TipTrigger::DangerZoneAvailable);
                 }
             }
+            Mode::ActionMenu { sel, .. } => {
+                if art_list::can_use_art(&art_list::art_lines(state, sel.unit, sel.dest())) {
+                    fired.push(TipTrigger::ArtsAvailable);
+                }
+            }
+            Mode::SpellMenu { choices, .. } => {
+                let on_tile = |t: &CastTarget| matches!(t, CastTarget::Tile(_));
+                if choices.iter().any(|c| c.targets.iter().any(on_tile)) {
+                    fired.push(TipTrigger::TileSpellAvailable);
+                }
+            }
             _ => {}
         }
+        fired.extend(self.lesson_triggers_now());
         fired
+    }
+
+    /// The triggers only lessons use (0457) that the battle's current
+    /// state shows, besides the menus': every unit has acted, turn 2
+    /// began, the threat arrows show.
+    fn lesson_triggers_now(&self) -> Vec<TipTrigger> {
+        let mut fired = Vec::new();
+        let state = &self.state;
+        if state.phase() != Phase::Player || state.outcome().is_some() {
+            return fired;
+        }
+        if self.no_unit_left() && matches!(self.mode, Mode::Idle { .. }) {
+            fired.push(TipTrigger::NoUnitLeft);
+        }
+        if state.turn() == 2 {
+            fired.push(TipTrigger::SecondTurn);
+        }
+        if self.threat_view().is_some() {
+            fired.push(TipTrigger::ThreatArrowsShown);
+        }
+        fired
+    }
+
+    /// Whether, in the player's phase of a battle still on, every unit of
+    /// the player's has acted.
+    fn no_unit_left(&self) -> bool {
+        self.state.phase() == Phase::Player
+            && self.state.outcome().is_none()
+            && map_menu::ready_players(&self.state) == 0
     }
 
     /// The tip on screen, if any: the first queued whose moment has come
@@ -862,6 +924,17 @@ impl BattleScreen {
         Some(LessonView::new(ctx, lesson, ticked, self.cursor.pos))
     }
 
+    /// Queues the lessons the fired triggers start; with no unit left to
+    /// act, puts away the ones that need one (they come back in a later
+    /// turn).
+    fn absorb_lessons(&mut self, ctx: &Ctx) {
+        let turn = self.state.turn();
+        self.lessons.absorb(ctx, self.battle_id.as_deref(), turn);
+        if self.no_unit_left() {
+            self.lessons.put_away(turn);
+        }
+    }
+
     /// Notes that the player did `done`, for the lesson in play
     /// ([`tick_lessons`](Self::tick_lessons) ticks it).
     fn notice(&mut self, done: DoneWhen) {
@@ -879,9 +952,6 @@ impl BattleScreen {
     /// marks: selected a unit, picked where it goes, opened the forecast.
     fn notice_mode(&mut self, was: Marks) {
         let now = Marks::of(&self.mode);
-        if now.selected && !was.selected {
-            self.notice(DoneWhen::UnitSelected);
-        }
         let gone = matches!(
             self.mode,
             Mode::Moving { .. }
@@ -889,11 +959,25 @@ impl BattleScreen {
                 | Mode::Targeting(_)
                 | Mode::CastTarget(_)
         );
-        if was.selected && gone {
+        if was == Marks::Selected && gone {
             self.notice(DoneWhen::UnitMoved);
         }
-        if now.forecast && !was.forecast {
-            self.notice(DoneWhen::ForecastOpened);
+        if let Some(done) = now.done().filter(|_| now != was) {
+            self.notice(done);
+        }
+    }
+
+    /// Notes where a selected unit's path points, for the threat arrows'
+    /// lesson (0457): at a tile an enemy could attack it on (the arrows
+    /// show), or at one none could.
+    fn notice_threat(&mut self) {
+        if !matches!(self.mode, Mode::Selected(_)) || self.threat_target().is_none() {
+            return;
+        }
+        if self.threat_view().is_some() {
+            self.notice(DoneWhen::ThreatPointed);
+        } else {
+            self.notice(DoneWhen::SafePointed);
         }
     }
 
@@ -1049,12 +1133,13 @@ impl BattleScreen {
     /// With auto-end on, ends the player phase once the screen is back to
     /// browsing after the command that left no player unit ready.
     fn check_auto_end(&mut self) {
-        // An open lesson holds the turn (0456): auto-end waits for it.
+        // A lesson in play holds the turn (0456), and one about ending it
+        // (0457) is the player's to do: auto-end waits for it.
         if !self.end_armed
             || !matches!(self.mode, Mode::Idle { .. })
             || !self.queue.is_empty()
             || self.progress.is_some()
-            || self.lessons.holds_turn()
+            || self.lessons.in_play()
         {
             return;
         }
@@ -1430,7 +1515,10 @@ impl BattleScreen {
         }
         match effect {
             RewindEffect::None => {}
-            RewindEffect::Close => self.rewind = None,
+            RewindEffect::Close => {
+                self.rewind = None;
+                self.notice(DoneWhen::RewindClosed);
+            }
             RewindEffect::Rewind(point) => {
                 // The screen only confirms a listed point with a charge left.
                 if let Ok(state) = self.history.rewind_to(point) {
@@ -1526,6 +1614,7 @@ impl BattleScreen {
             {
                 if self.move_cursor(action) {
                     ctx.audio.play_sound(CURSOR_MOVE);
+                    self.notice(DoneWhen::CursorMoved);
                 }
             }
             _ => options = self.step_mode(ctx, action),
@@ -2321,7 +2410,7 @@ impl Screen for BattleScreen {
         self.tick_popups(dt);
         self.detect_tips();
         self.tips.absorb(ctx);
-        self.lessons.absorb(ctx, self.battle_id.as_deref());
+        self.absorb_lessons(ctx);
         for &action in &input.actions {
             self.tick_lessons(ctx);
             if self.overlay_key(action) {
@@ -2360,6 +2449,8 @@ impl Screen for BattleScreen {
             }
             if self.play_key(ctx, action) {
                 // The map menu's Options: over the battle.
+                self.notice(DoneWhen::OptionsOpened);
+                self.tick_lessons(ctx);
                 return Transition::Push(Box::new(OptionsScreen::new()));
             }
             if self.leaving.is_some() {
@@ -2378,6 +2469,7 @@ impl Screen for BattleScreen {
         let was = Marks::of(&self.mode);
         self.animate(ctx, dt, input.is_held(Action::Confirm));
         self.notice_mode(was);
+        self.notice_threat();
         self.tick_lessons(ctx);
         let waiting = self.shown_tip().is_some() || self.playing();
         if let Some(Queued::Banner(banner)) = self.queue.front_mut()
@@ -2394,6 +2486,13 @@ impl Screen for BattleScreen {
             self.tips.set_under_scene(true);
             return Transition::Push(Box::new(scene));
         }
+        // What the frame did may start a lesson auto-end must wait for
+        // (every unit has acted: ending the turn), or leave one that can't
+        // be finished this turn.
+        for trigger in self.triggers_now() {
+            self.lessons.fire(trigger);
+        }
+        self.absorb_lessons(ctx);
         self.check_auto_end();
         self.drive_ai(ctx);
         self.tick_lessons(ctx);

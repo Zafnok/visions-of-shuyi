@@ -5,6 +5,7 @@
 //! Run one module with `cargo test -p trpg-ui --test it <name>::`.
 
 mod battle;
+mod ch01_lessons;
 mod ch01_winnable;
 mod cinematic;
 mod class_change;

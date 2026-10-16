@@ -30,10 +30,12 @@ const CURSORS: [Action; 4] = [
     Action::CursorRight,
 ];
 
-/// A context with the lessons on.
+/// A context with the lessons on, the test lesson the only one (the
+/// story's lessons, 0457, start in any battle: they have their own tests).
 fn lessoned() -> Ctx {
     let mut c = ctx();
     c.lessons = crate::screen::Lessons::On;
+    c.content.lessons.lessons.retain(|l| l.id == TEST_LESSON);
     c
 }
 
@@ -557,6 +559,7 @@ fn a_tile_is_high_by_its_middle_row() {
 fn the_lesson_box_snapshot() {
     let mut h = Harness::with_screen(Box::new(quick()));
     h.with_lessons();
+    h.ctx_mut().content.lessons = lessoned().content.lessons;
     // Up from its first frame, when the box comes up.
     h.wait(0.1).keys("Left Up");
     let battle = h.battle().expect("a battle");

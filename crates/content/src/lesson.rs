@@ -78,6 +78,43 @@ pub enum DoneWhen {
     /// The player ended their phase. The only item that lets the turn end
     /// while its lesson is open.
     TurnEnded,
+    /// The cursor moved on the map, any way.
+    CursorMoved,
+    /// A unit's action menu opened.
+    ActionMenuOpened,
+    /// A unit's arts menu opened.
+    ArtsOpened,
+    /// A spell was aimed at a tile (one it would change).
+    TileAimed,
+    /// A selected unit's path pointed at a tile an enemy could attack it
+    /// on: the threat arrows showed.
+    ThreatPointed,
+    /// A selected unit's path pointed at a tile no enemy could attack it
+    /// on: no threat arrows.
+    SafePointed,
+    /// The rewind screen closed.
+    RewindClosed,
+    /// The Options screen opened from the battle.
+    OptionsOpened,
+}
+
+impl DoneWhen {
+    /// Whether doing it takes a unit of the player's that hasn't acted
+    /// yet: once none is left in a phase, it can't be done that turn.
+    pub fn needs_unit(self) -> bool {
+        matches!(
+            self,
+            Self::UnitSelected
+                | Self::UnitMoved
+                | Self::ForecastOpened
+                | Self::Attacked
+                | Self::ActionMenuOpened
+                | Self::ArtsOpened
+                | Self::TileAimed
+                | Self::ThreatPointed
+                | Self::SafePointed
+        )
+    }
 }
 
 /// [`DoneWhen`] as written: an action by name (`Pressed("CursorUp")`).
@@ -90,6 +127,14 @@ enum RawDone {
     Attacked,
     RewindOpened,
     TurnEnded,
+    CursorMoved,
+    ActionMenuOpened,
+    ArtsOpened,
+    TileAimed,
+    ThreatPointed,
+    SafePointed,
+    RewindClosed,
+    OptionsOpened,
 }
 
 impl RawDone {
@@ -103,6 +148,14 @@ impl RawDone {
             Self::Attacked => DoneWhen::Attacked,
             Self::RewindOpened => DoneWhen::RewindOpened,
             Self::TurnEnded => DoneWhen::TurnEnded,
+            Self::CursorMoved => DoneWhen::CursorMoved,
+            Self::ActionMenuOpened => DoneWhen::ActionMenuOpened,
+            Self::ArtsOpened => DoneWhen::ArtsOpened,
+            Self::TileAimed => DoneWhen::TileAimed,
+            Self::ThreatPointed => DoneWhen::ThreatPointed,
+            Self::SafePointed => DoneWhen::SafePointed,
+            Self::RewindClosed => DoneWhen::RewindClosed,
+            Self::OptionsOpened => DoneWhen::OptionsOpened,
         })
     }
 }
