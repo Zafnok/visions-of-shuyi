@@ -20,15 +20,7 @@ pub mod art;
 pub mod audio;
 pub mod battle;
 pub mod battler;
-#[cfg(feature = "std")]
 pub mod bundle;
-// Without `std` the bundle is `build.rs`'s file table (ADR-0070 §3); with it
-// the table is built for the test that keeps the two the same.
-#[cfg(not(feature = "std"))]
-#[path = "bundle_table.rs"]
-pub mod bundle;
-#[cfg(all(feature = "std", test))]
-mod bundle_table;
 pub mod chapter;
 pub mod character;
 pub mod cinematic;
@@ -72,6 +64,7 @@ use trpg_core::{
 pub use audio::{AudioManifest, Credit, CreditRef, MusicCue, SoundCue};
 pub use battle::BattleRefs;
 pub use battler::{Battler, BattlerTable};
+pub use bundle::layers;
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
 pub use cinematic::{
@@ -228,8 +221,10 @@ impl Content {
 /// Loads and validates every content type from the embedded bundle. Runs all
 /// loaders and returns every error found, not just the first. Checks that
 /// depend on another file (terrain colours, map legends) are skipped when that
-/// file failed, so one broken file doesn't flood the report.
+/// file failed, so one broken file doesn't flood the report. Installs the
+/// game's bundle first ([`bundle::install`]).
 pub fn load_embedded() -> Result<Content, ContentErrors> {
+    bundle::install();
     load::<&str>(None)
 }
 
@@ -237,6 +232,7 @@ pub fn load_embedded() -> Result<Content, ContentErrors> {
 /// dialogue files instead of the bundle's: every check a script goes
 /// through, on scripts as they are on disk (`cargo xtask check-script`).
 pub fn load_with_scripts<F: AsRef<str>>(scripts: &[(F, &str)]) -> Result<Content, ContentErrors> {
+    bundle::install();
     load(Some(scripts))
 }
 

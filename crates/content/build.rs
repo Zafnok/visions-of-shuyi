@@ -5,8 +5,8 @@
 //! (ADR-0040), after checking that the first is there.
 //!
 //! Also writes `bundle_files.rs` into `OUT_DIR`: the sorted table of every
-//! file under `assets/` that the bundle embeds without `std`, where
-//! `include_dir` does not build (ADR-0070 §3).
+//! file under `assets/` that is the bundle's layer without `std`, where
+//! `include_dir` does not build (ADR-0070 §3, `shuyi_assets::Layer::table`).
 
 use std::fmt::Write as _;
 use std::path::Path;
