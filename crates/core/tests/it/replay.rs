@@ -216,6 +216,7 @@ pub(super) fn spells() -> Arc<SpellTable> {
         max_range: 2,
         uses: 3,
         terrain_effect: None,
+        no_counter: false,
     };
     let fire = SpellDef {
         id: SpellId::new("fire"),

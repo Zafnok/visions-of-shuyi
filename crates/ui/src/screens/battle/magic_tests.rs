@@ -1671,3 +1671,67 @@ fn the_spell_lists_are_told_in_the_players_language() {
     assert!(texts.iter().any(|t| t.contains("TEST MAGE")), "{texts:?}");
     assert!(!texts.iter().any(|t| t.contains("Test Mage")), "{texts:?}");
 }
+
+// ---- Cinder Oath (0317) ------------------------------------------------------
+
+/// Chapter 1 as a new game starts it (the shipped New Game, not
+/// [`ctx`]'s test chapter), with a brigand of the Red Company moved beside
+/// Rue, and Rue's id.
+fn rue_beside_a_brigand() -> (BattleState, UnitId) {
+    let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
+    let lead = trpg_core::LeadProfile::new("Ellery", trpg_core::LeadGender::Male);
+    let campaign = trpg_content::new_campaign(&content, trpg_core::GameMode::Classic, lead);
+    let mut setup = campaign.battle_setup(&content.battles["ch01"], &content.tables());
+    let units = &mut setup.units;
+    let rue = units
+        .iter()
+        .position(|u| u.character.as_ref().is_some_and(|ch| ch.0 == "heretic"))
+        .expect("Rue in Chapter 1");
+    let at = units[rue].pos;
+    let free = [p(1, 0), p(-1, 0), p(0, 1), p(0, -1)]
+        .into_iter()
+        .map(|d| p(at.x + d.x, at.y + d.y))
+        .find(|&t| setup.map.tiles.in_bounds(t) && units.iter().all(|u| u.pos != t))
+        .expect("a free tile beside Rue");
+    let brigand = units
+        .iter()
+        .position(|u| u.faction == trpg_core::Faction::Enemy && u.class.0 == "brigand")
+        .expect("a brigand in Chapter 1");
+    units[brigand].pos = free;
+    let id = units[rue].id;
+    (BattleState::new(setup).0, id)
+}
+
+/// Rue attacks the brigand beside her with Cinder Oath: the forecast's
+/// enemy side says `no counter`.
+#[test]
+fn cinder_oath_shows_no_counter_in_chapter_1() {
+    let mut c = ctx();
+    let (state, rue) = rue_beside_a_brigand();
+    let at = state.unit(rue).unwrap().pos;
+    let mut s = BattleScreen::new(state);
+    s.cursor.jump(at);
+    step(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
+    choose(&mut s, &mut c, MenuEntry::Magic);
+    let Mode::SpellMenu { choices, .. } = s.mode() else {
+        panic!("{:?}", s.mode());
+    };
+    let oath = choices
+        .iter()
+        .position(|ch| ch.spell == sid("cinder_oath") && ch.active.is_none())
+        .expect("Cinder Oath in Rue's spell list");
+    for _ in 0..choices.len() {
+        let Mode::SpellMenu { menu, .. } = s.mode() else {
+            unreachable!()
+        };
+        if menu.focus() == oath {
+            break;
+        }
+        step(&mut s, &mut c, &[Action::CursorDown]);
+    }
+    step(&mut s, &mut c, &[Action::Confirm]);
+    assert!(matches!(s.mode(), Mode::CastTarget(_)), "{:?}", s.mode());
+    let shown = forecast_of(&s, &c);
+    assert_eq!(shown.sides[0].weapon, "Cinder Oath");
+    assert_eq!(shown.no_counter.as_deref(), Some("no counter"));
+}

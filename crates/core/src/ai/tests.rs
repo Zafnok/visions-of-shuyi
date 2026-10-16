@@ -177,6 +177,7 @@ fn spells() -> SpellTable {
         max_range: 2,
         uses: 5,
         terrain_effect: None,
+        no_counter: false,
     };
     let heal = SpellDef {
         id: SpellId::new("heal"),
@@ -187,6 +188,7 @@ fn spells() -> SpellTable {
         max_range: 1,
         uses: 3,
         terrain_effect: None,
+        no_counter: false,
     };
     let ember = SpellDef {
         id: SpellId::new("ember"),

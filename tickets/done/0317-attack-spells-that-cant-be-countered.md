@@ -5,10 +5,10 @@ type: feature
 milestone: M2 Core rules
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0056"]
 nick_input: sign-off
-completed:
+completed: 2026-10-15
 ---
 
 # 0317 — Attack spells the enemy can't counter (Cinder Oath)
@@ -73,16 +73,16 @@ doesn't strike back.
 
 ## Acceptance criteria
 
-- [ ] A core test: an attack spell with `no_counter` against an adjacent
+- [x] A core test: an attack spell with `no_counter` against an adjacent
       defender with a range-1 weapon gives a forecast with no defender side
       and a combat with no counter strike.
-- [ ] A core test: the same defender attacking a unit with that spell
+- [x] A core test: the same defender attacking a unit with that spell
       equipped is still countered by it.
-- [ ] A content test: `no_counter` parses and defaults to `false`.
-- [ ] `cinder_oath` has `no_counter: true`; the forecast in Chapter 1 shows
+- [x] A content test: `no_counter` parses and defaults to `false`.
+- [x] `cinder_oath` has `no_counter: true`; the forecast in Chapter 1 shows
       `no counter` for it (a UI test or snapshot).
-- [ ] Sim result in the Completion notes; replay tests pass.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Sim result in the Completion notes; replay tests pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -93,5 +93,28 @@ doesn't strike back.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `SpellDef::no_counter` (core), parsed from `spells.ron` as `no_counter`
+  (default `false`) and set on `cinder_oath`. `battle.rs` clears the
+  defender's side of the forecast when the attack is such a spell, next to
+  the art's check (one helper, `uncounterable`), in the `Act`'s planning
+  and in the AI's cheap `plain_forecast` alike, so the enemy AI also knows
+  Rue can't be struck back. The `crate::spell` module docs list the rule.
+- Tests: core (`a_no_counter_spell_leaves_the_defender_no_counter`,
+  `a_no_counter_spell_still_counters_when_attacked`, with a test spell
+  `oath` in the battle tests' table), content
+  (`no_counter_parses_and_defaults_to_false`, and Cinder Oath in
+  `spells_match_the_design`), UI (`cinder_oath_shows_no_counter_in_chapter_1`:
+  the shipped Chapter 1 with a brigand moved beside Rue; the forecast says
+  `no counter`). The core tests sit in `battle/tests/spell.rs` with the
+  other spell-combat tests rather than beside Guard Break's art tests.
+- 0453 isn't done, so the spell list's note is left to it; its scope now
+  names `no_counter`.
+- Chapter 1 sim (`cargo xtask playtest ch01 --runs 200`, baseline bot):
+  won 49 of 200 (25%) with the rule, 60 (30%) with the same build and the
+  flag off; turns median 8 and fallen mean 3.5 both ways; Rue fell in 49
+  tries vs 53. The win gap is within what reshuffled dice give at 200 tries
+  (one fewer counter roll changes every roll after it), so no balance
+  change is read from it. The winning replay (`ch01_winnable`) passes
+  unchanged.
+- No new *Claude's starting rule*: the one this ticket implements (only
+  the attacker's spell counts) was already written in `magic.md`.
