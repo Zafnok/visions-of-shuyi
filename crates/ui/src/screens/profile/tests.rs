@@ -106,6 +106,26 @@ fn a_profile_offers_switch_unless_in_use_and_delete_unless_the_only_one() {
     assert_eq!(focused(&s, &c).as_deref(), Some("Rename"));
 }
 
+/// The press that opens the menu or the name box isn't its first: the
+/// rest of that frame's presses are dropped.
+#[test]
+fn the_press_that_opens_something_ends_the_frame() {
+    let mut c = three();
+    let mut s = ProfileScreen::new(&c);
+    press(&mut s, &mut c, &[CursorDown, Confirm, CursorDown]);
+    let view = s.view(&c).actions.unwrap_or_else(|| panic!("no menu"));
+    let focused = view.items.into_iter().find(|i| i.focused);
+    assert_eq!(
+        focused.map(|i| i.label).as_deref(),
+        Some("Use this profile")
+    );
+    press(&mut s, &mut c, &[Cancel]);
+    // The row that adds one: the box opens and the focus stays there.
+    press(&mut s, &mut c, &[CursorDown, CursorDown, Confirm, CursorUp]);
+    assert_eq!(s.naming(), Some(NamePurpose::Add));
+    assert_eq!(s.focused(&c), RowKind::Add);
+}
+
 #[test]
 fn switching_uses_that_profiles_options_and_goes_back_to_the_title() {
     let mut c = three();
