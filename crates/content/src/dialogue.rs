@@ -1,30 +1,30 @@
 //! Dialogue scripts (`assets/dialogue/*.dlg`): scenes of portraits, speech
 //! and narration. The format is documented in `assets/dialogue/README.md`
-//! (ADR-0005). [`parse_dlg`] turns a file into scenes, [`check_scene`] and
-//! [`check_duplicates`] validate them, and [`print_scene`] writes a scene
-//! back out. Every line that shows text has a [`LineId`] (ADR-0045). Lines
-//! in an `@if` block play only while a character is there ([`Present`],
-//! ADR-0055); [`check_presence`] keeps those who may be gone inside one.
+//! (ADR-0005) and is the engine's (`shuyi_assets::dialogue`, ticket 1105);
+//! this module adds the game's two directives ([`Stage`]: `@place` and
+//! `@opening`) and its rules ([`check_scene`]: the cast, portraits, the
+//! lead and the music cues). Every line that shows text has a [`LineId`]
+//! (ADR-0045). Lines in an `@if` block play only while a character is there
+//! ([`Present`], ADR-0055); [`check_presence`] keeps those who may be gone
+//! inside one.
 use crate::prelude::*;
 
-mod check;
-mod line_id;
-mod parse;
+mod openings;
 mod presence;
+mod rules;
 mod setting;
 
-use alloc::collections::BTreeMap;
+use shuyi_assets::dialogue::{self as engine, Directive, Parsed};
+use trpg_core::Pos;
 
-use trpg_core::{CharacterId, Pos};
-
-pub use check::{check_duplicates, check_scene};
-pub(crate) use check::{longest_width, token_problems};
-pub(crate) use line_id::scene_of;
-pub use line_id::{Line, LineId, NARRATION_SPEAKER, REPLY_SPEAKER, caption_key};
-pub use parse::{Lines, ParsedScene, PartLines, parse_dlg};
-pub(crate) use parse::{char_problem, is_id};
-pub use presence::{Cast, Present, check_presence};
+pub use presence::{Cast, check_presence};
+pub use rules::LeadTokens;
 pub use setting::{PlaceRefs, check_places};
+pub(crate) use shuyi_assets::dialogue::is_id;
+pub use shuyi_assets::dialogue::{
+    DialogueLimits, Line, LineId, Lines, MusicLine, NARRATION_SPEAKER, PartLines, Present,
+    REPLY_SPEAKER, Side, caption_key, check_duplicates, print_scene,
+};
 
 use crate::audio::AudioManifest;
 use crate::bundle;
@@ -57,86 +57,37 @@ pub const MAX_LEAD_LINE_LEN: usize = 40;
 /// portrait's expressions.
 pub const STANDARD_EXPRESSIONS: [&str; 5] = ["neutral", "happy", "angry", "sad", "surprised"];
 
-/// A side of the dialogue screen, where one portrait stands.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Side {
-    /// The left portrait.
-    Left,
-    /// The right portrait.
-    Right,
-}
+/// The game's dialogue box and reply menu: what scripts and the language
+/// packs' lines are checked against.
+pub const LIMITS: DialogueLimits = DialogueLimits {
+    box_width: BOX_WIDTH,
+    box_lines: BOX_LINES,
+    max_text: MAX_TEXT_LEN,
+    max_option: MAX_OPTION_LEN,
+    min_options: 2,
+    max_options: 3,
+    max_reaction_texts: MAX_REACTION_TEXTS,
+};
 
-impl Side {
-    /// The side as written in a script: `left` or `right`.
-    pub fn name(self) -> &'static str {
-        match self {
-            Side::Left => "left",
-            Side::Right => "right",
-        }
-    }
+/// One step of a scene, in script order: the engine's, with the game's
+/// [`Stage`] directives.
+pub type Step = engine::Step<Stage>;
+/// One reply the lead can pick: `* <tone>: <text>`, then its reaction.
+pub type ChoiceOption = engine::ChoiceOption<Stage>;
+/// One scene: `@scene <id>` … `@end`.
+pub type Scene = engine::Scene<Stage>;
+/// Every scene of every dialogue file, by id.
+pub type DialogueTable = engine::DialogueTable<Stage>;
+/// A scene as written in a file, with the source lines the checks point at.
+pub type ParsedScene = engine::ParsedScene<Stage>;
+/// Every scene of every dialogue file, with where each was written: what
+/// the checks that need the battles and the roster ([`check_presence`])
+/// run on once those are loaded.
+pub type Scripts = engine::Scripts<Stage>;
 
-    /// The other side.
-    #[must_use]
-    pub fn other(self) -> Self {
-        match self {
-            Side::Left => Side::Right,
-            Side::Right => Side::Left,
-        }
-    }
-}
-
-/// One step of a scene, in script order.
+/// The game's directives: what is staged around the talk.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Step {
-    /// `@caption <text>`: a location/time caption, shown until the next one.
-    Caption {
-        /// The caption.
-        text: String,
-    },
-    /// `@left <id> <expression>`: a character enters (or replaces whoever
-    /// is) on `side`.
-    Place {
-        /// Where.
-        side: Side,
-        /// Who.
-        character: CharacterId,
-        /// With which expression.
-        expression: String,
-    },
-    /// `@left clear`: the portrait on `side` leaves.
-    Clear {
-        /// Which side empties.
-        side: Side,
-    },
-    /// `id: text` or `id[expression]: text`: an on-screen character speaks,
-    /// first changing expression if one is given.
-    Say {
-        /// Who speaks.
-        speaker: CharacterId,
-        /// The speaker's new expression, if it changes.
-        expression: Option<String>,
-        /// What they say.
-        text: String,
-        /// The line's id.
-        line: LineId,
-    },
-    /// `> text`: narration, no speaker.
-    Narrate {
-        /// The narration.
-        text: String,
-        /// The line's id.
-        line: LineId,
-    },
-    /// `@choice` … `@endchoice`: the lead's reply choices (2–3), each with
-    /// its own reaction steps. Every option rejoins the scene after the
-    /// block.
-    Choice {
-        /// The options, in menu order.
-        options: Vec<ChoiceOption>,
-    },
-    /// `@music <cue>` or `@music stop`: the music changes when playback
-    /// reaches this line, and stays so after the scene.
-    Music(MusicLine),
+pub enum Stage {
     /// `@place <map> <x>,<y>`, `@place battle <x>,<y>` or `@place none`:
     /// the place drawn behind the talk from this line on, until the next
     /// one (`docs/design/look-and-feel.md`, *Places behind conversations*).
@@ -145,39 +96,6 @@ pub enum Step {
     /// `assets/openings/<id>.ron` plays on the place (its characters move
     /// at full brightness, then the place darkens): ticket 0734.
     Opening(String),
-    /// `@if <character>` … `@else` … `@endif`: steps that play only if the
-    /// character is there when the scene plays ([`Present`]), and the
-    /// steps that play instead if they aren't (ADR-0055).
-    If {
-        /// Who must be there.
-        character: CharacterId,
-        /// The steps played if they are.
-        then: Vec<Step>,
-        /// The steps played if they aren't (none without an `@else`).
-        otherwise: Vec<Step>,
-    },
-}
-
-/// What a `@music` line asks for.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum MusicLine {
-    /// `@music <cue>`: switch to this music cue of the audio manifest.
-    Cue(String),
-    /// `@music stop`: fade the music out.
-    Stop,
-}
-
-impl MusicLine {
-    /// What follows `@music` for [`MusicLine::Stop`].
-    pub const STOP: &'static str = "stop";
-
-    /// What follows `@music` in a script: the cue id, or `stop`.
-    pub fn arg(&self) -> &str {
-        match self {
-            MusicLine::Cue(cue) => cue,
-            MusicLine::Stop => Self::STOP,
-        }
-    }
 }
 
 /// What a `@place` line asks for: the place behind the talk.
@@ -219,83 +137,118 @@ impl PlaceLine {
     }
 }
 
-/// One reply the lead can pick: `* <tone>: <text>`, then its reaction.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ChoiceOption {
-    /// The reply's tone (`earnest`, `wry`…), for writers; not shown.
-    pub tone: String,
-    /// What the lead says, shown in the menu.
-    pub text: String,
-    /// The reply's id.
-    pub line: LineId,
-    /// The reaction: steps played after picking this option (no choices).
-    pub steps: Vec<Step>,
+/// The tile `<x>,<y>` (two whole numbers from 0, no spaces), if `s` is one.
+fn tile(s: &str) -> Option<Pos> {
+    let (x, y) = s.split_once(',')?;
+    let number = |n: &str| {
+        let digits = !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit());
+        digits.then(|| n.parse::<i32>().ok()).flatten()
+    };
+    Some(Pos::new(number(x)?, number(y)?))
 }
 
-impl Step {
-    /// The text of a text step (one text box): a `Say` or `Narrate`.
-    pub fn text(&self) -> Option<&str> {
-        match self {
-            Step::Say { text, .. } | Step::Narrate { text, .. } => Some(text),
-            Step::Caption { .. }
-            | Step::Place { .. }
-            | Step::Clear { .. }
-            | Step::Choice { .. }
-            | Step::Music(_)
-            | Step::Setting(_)
-            | Step::Opening(_)
-            | Step::If { .. } => None,
+/// `@place` with `args`: a map id and a tile (`<x>,<y>`), `battle` and a
+/// tile, or `none`.
+fn parse_place(args: &str) -> Parsed<Stage> {
+    let args: Vec<&str> = args.split_whitespace().collect();
+    let place = match args[..] {
+        [PlaceLine::NONE] => PlaceLine::None,
+        [map, at] if map != PlaceLine::NONE => {
+            let Some(at) = tile(at) else {
+                return Parsed::error(format!(
+                    "\"{at}\" is not a tile; write it as <x>,<y>, e.g. 3,12"
+                ));
+            };
+            if map == PlaceLine::BATTLE {
+                PlaceLine::Battle { at }
+            } else {
+                let mut parsed = Parsed::step(Stage::Setting(PlaceLine::Map {
+                    map: map.into(),
+                    at,
+                }));
+                if !is_id(map) {
+                    parsed.errors.push(engine::bad_id(map));
+                }
+                return parsed;
+            }
+        }
+        _ => {
+            return Parsed::error(
+                "@place needs a map id and a tile (\"@place ch01 3,12\"), \"battle\" and a \
+                 tile, or \"none\"",
+            );
+        }
+    };
+    Parsed::step(Stage::Setting(place))
+}
+
+/// `@opening` with `args`: one opening id.
+fn parse_opening(args: &str) -> Parsed<Stage> {
+    let args: Vec<&str> = args.split_whitespace().collect();
+    let [id] = args[..] else {
+        return Parsed::error(
+            "@opening needs one opening id (a file of assets/openings/, without .ron)",
+        );
+    };
+    let mut parsed = Parsed::step(Stage::Opening(id.into()));
+    if !is_id(id) {
+        parsed.errors.push(engine::bad_id(id));
+    }
+    parsed
+}
+
+impl Directive for Stage {
+    fn parse(name: &str, args: &str) -> Option<Parsed<Self>> {
+        match name {
+            "place" => Some(parse_place(args)),
+            "opening" => Some(parse_opening(args)),
+            _ => None,
         }
     }
 
-    /// Whether the step is, or has inside it, a speech or narration line.
-    pub fn has_text(&self) -> bool {
-        let any = |steps: &[Step]| steps.iter().any(Step::has_text);
+    fn print(&self) -> String {
         match self {
-            Step::Choice { options } => options.iter().any(|o| any(&o.steps)),
-            Step::If {
-                then, otherwise, ..
-            } => any(then) || any(otherwise),
-            _ => self.text().is_some(),
+            Stage::Setting(place) => format!("place {}", place.args()),
+            Stage::Opening(id) => format!("opening {id}"),
+        }
+    }
+
+    fn kind(&self) -> Option<&'static str> {
+        match self {
+            Stage::Setting(_) => Some("place"),
+            Stage::Opening(_) => None,
         }
     }
 }
 
-/// One scene: `@scene <id>` … `@end`.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Scene {
-    /// Scene id, unique across every dialogue file.
-    pub id: String,
-    /// Its steps, in order.
-    pub steps: Vec<Step>,
+/// Parses dialogue `source` (errors attributed to `file`) into its scenes,
+/// in file order, and every syntax error found. A scene with errors in it
+/// is still returned (without the broken lines), so later checks can run.
+pub fn parse_dlg(file: &str, source: &str) -> (Vec<ParsedScene>, Vec<ContentError>) {
+    engine::parse_dlg(file, source)
 }
 
-/// Every scene of every dialogue file, by id.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct DialogueTable {
-    /// Scenes by id.
-    pub scenes: BTreeMap<String, Scene>,
-    /// The file each scene was written in, by scene id (empty for a table
-    /// not read from files).
-    pub files: BTreeMap<String, String>,
-}
-
-impl DialogueTable {
-    /// The scene with id `id`.
-    pub fn get(&self, id: &str) -> Option<&Scene> {
-        self.scenes.get(id)
-    }
-}
-
-/// Every scene of every dialogue file, with where each was written: what
-/// the checks that need the battles and the roster ([`check_presence`])
-/// run on once those are loaded.
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct Scripts {
-    /// The scenes, by id.
-    pub table: DialogueTable,
-    /// The scenes as written, in file order.
-    pub parsed: Vec<ParsedScene>,
+/// Checks one scene, replaying it to know who is on screen at each line.
+/// Character ids are checked against `characters`, expressions against
+/// `portraits`, name tokens and names written out against `names`, and
+/// `@music` cues against `audio`, when given; and where an `@opening` may
+/// go.
+pub fn check_scene(
+    parsed: &ParsedScene,
+    characters: Option<&CharacterTable>,
+    portraits: Option<&PortraitTable>,
+    names: Option<&Names>,
+    audio: Option<&AudioManifest>,
+) -> Vec<ContentError> {
+    let rules = rules::Rules {
+        characters,
+        portraits,
+        names,
+        audio,
+    };
+    let mut errors = engine::check_scene(parsed, &rules);
+    errors.extend(engine::SceneRules::scene_problems(&rules, parsed));
+    errors
 }
 
 /// Loads and validates every `*.dlg` file in the bundle. Character ids are
@@ -324,34 +277,13 @@ pub fn load_scripts(
         .filter(|path| path.ends_with(DIALOGUE_EXTENSION))
         .map(|path| (bundle::display_path(path), bundle::file(path)))
         .collect();
-    load_files(&files, characters, portraits, names, audio)
-}
-
-/// Like [`from_sources`], for files given as `(file name, source)` where a
-/// `None` source is a file that isn't valid UTF-8 (an error).
-fn load_files(
-    files: &[(String, Option<&str>)],
-    characters: Option<&CharacterTable>,
-    portraits: Option<&PortraitTable>,
-    names: Option<&Names>,
-    audio: Option<&AudioManifest>,
-) -> Result<Scripts, Vec<ContentError>> {
-    let mut sources = Vec::new();
-    let mut errors = Vec::new();
-    for (file, source) in files {
-        match source {
-            Some(source) => sources.push((file, *source)),
-            None => errors.push(ContentError::new(file, "file is not valid UTF-8")),
-        }
-    }
-    match scripts_from_sources(&sources, characters, portraits, names, audio) {
-        Ok(scripts) if errors.is_empty() => Ok(scripts),
-        Ok(_) => Err(errors),
-        Err(e) => {
-            errors.extend(e);
-            Err(errors)
-        }
-    }
+    let rules = rules::Rules {
+        characters,
+        portraits,
+        names,
+        audio,
+    };
+    engine::scripts_from_files(&files, &rules)
 }
 
 /// Parses and validates dialogue files given as `(file name, source)`
@@ -376,113 +308,13 @@ pub fn scripts_from_sources<F: AsRef<str>>(
     names: Option<&Names>,
     audio: Option<&AudioManifest>,
 ) -> Result<Scripts, Vec<ContentError>> {
-    let mut scenes = Vec::new();
-    let mut errors = Vec::new();
-    for (file, source) in files {
-        let (parsed, e) = parse_dlg(file.as_ref(), source);
-        errors.extend(e);
-        scenes.extend(parsed);
-    }
-    for s in &scenes {
-        errors.extend(check_scene(s, characters, portraits, names, audio));
-    }
-    errors.extend(check_duplicates(&scenes));
-    if errors.is_empty() {
-        let table = DialogueTable {
-            scenes: scenes
-                .iter()
-                .map(|p| (p.scene.id.clone(), p.scene.clone()))
-                .collect(),
-            files: scenes
-                .iter()
-                .map(|p| (p.scene.id.clone(), p.file.clone()))
-                .collect(),
-        };
-        Ok(Scripts {
-            table,
-            parsed: scenes,
-        })
-    } else {
-        errors.sort_by(|a, b| (&a.file, a.line).cmp(&(&b.file, b.line)));
-        Err(errors)
-    }
-}
-
-/// Writes `scene` in `.dlg` format (one line per step, reactions indented
-/// under their option, an `@if` block's lines as far in as its `@if`),
-/// ending with `@end` and a newline. Parsing the result gives `scene`
-/// back.
-pub fn print_scene(scene: &Scene) -> String {
-    let mut out = format!("@scene {}\n", scene.id);
-    for step in &scene.steps {
-        print_step(&mut out, step, "");
-    }
-    out.push_str("@end\n");
-    out
-}
-
-/// Appends `step`'s line(s) to `out`, each starting with `indent`.
-fn print_step(out: &mut String, step: &Step, indent: &str) {
-    let line = match step {
-        Step::Caption { text } => format!("@caption {text}"),
-        Step::Place {
-            side,
-            character,
-            expression,
-        } => format!("@{} {} {expression}", side.name(), character.0),
-        Step::Clear { side } => format!("@{} clear", side.name()),
-        Step::Say {
-            speaker,
-            expression: Some(e),
-            text,
-            ..
-        } => format!("{}[{e}]: {text}", speaker.0),
-        Step::Say {
-            speaker,
-            expression: None,
-            text,
-            ..
-        } => format!("{}: {text}", speaker.0),
-        Step::Narrate { text, .. } => format!("> {text}"),
-        Step::Music(music) => format!("@music {}", music.arg()),
-        Step::Setting(place) => format!("@place {}", place.args()),
-        Step::Opening(id) => format!("@opening {id}"),
-        Step::Choice { options } => {
-            out.push_str("@choice\n");
-            for o in options {
-                for part in ["* ", &o.tone, ": ", &o.text, "\n"] {
-                    out.push_str(part);
-                }
-                for s in &o.steps {
-                    print_step(out, s, "  ");
-                }
-            }
-            "@endchoice".to_owned()
-        }
-        Step::If {
-            character,
-            then,
-            otherwise,
-        } => {
-            for part in [indent, "@if ", &character.0, "\n"] {
-                out.push_str(part);
-            }
-            for s in then {
-                print_step(out, s, indent);
-            }
-            if !otherwise.is_empty() {
-                out.push_str(indent);
-                out.push_str("@else\n");
-            }
-            for s in otherwise {
-                print_step(out, s, indent);
-            }
-            "@endif".to_owned()
-        }
+    let rules = rules::Rules {
+        characters,
+        portraits,
+        names,
+        audio,
     };
-    out.push_str(indent);
-    out.push_str(&line);
-    out.push('\n');
+    engine::scripts_from_sources(files, &rules)
 }
 
 #[cfg(test)]

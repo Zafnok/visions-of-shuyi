@@ -53,6 +53,7 @@ const MAX_SKIPPED_LEN: usize = 3;
 const ALLOW: &[&str] = &[
     // Programming words: an engine says these about its own code.
     "block",   // a code or text block; also a sound cue
+    "brace",   // a `{` or `}` in text; also a skill
     "fire",    // fire an event or a trigger; also a spell
     "floor",   // `f32::floor`; also a terrain
     "force",   // force a redraw; also a spell

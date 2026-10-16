@@ -1,4 +1,4 @@
-//! Line ids (ADR-0045 §3): every speech line, narration line and reply has
+//! Line ids: every speech line, narration line and reply has
 //! an id `<scene id>_<8 hex>`, a hash of who says it and its English text
 //! as written. Translations and voice clips attach to it, so rewording a
 //! line gives it a new id and moving it does not.
@@ -23,7 +23,7 @@ pub struct LineId(String);
 
 impl LineId {
     /// The id written `id`, as a file that refers to lines names one (a
-    /// voice manifest, ADR-0046). Nothing checks that a line has it.
+    /// voice manifest). Nothing checks that a line has it.
     pub fn new(id: impl Into<String>) -> Self {
         Self(id.into())
     }
@@ -43,7 +43,7 @@ impl LineId {
 
 /// The id of the scene the line with id `id` is in, or `None` if `id`
 /// doesn't end like a line id (`_<8 hex>`, then `_<n>` on a repeat).
-pub(crate) fn scene_of(id: &str) -> Option<&str> {
+pub fn scene_of(id: &str) -> Option<&str> {
     /// `id` without a `_<8 hex>` ending, if it has one.
     fn strip_hash(id: &str) -> Option<&str> {
         id.rsplit_once('_')
@@ -89,7 +89,7 @@ pub(super) fn fnv1a64(bytes: &[u8]) -> u64 {
 
 /// The hash part of a line id: the low 32 bits of FNV-1a 64 over
 /// `speaker`, a newline and `text`, as 8 lowercase hex digits.
-pub(crate) fn line_hash(speaker: &str, text: &str) -> String {
+pub fn line_hash(speaker: &str, text: &str) -> String {
     let hash = fnv1a64(format!("{speaker}\n{text}").as_bytes());
     format!("{:08x}", hash & 0xffff_ffff)
 }
@@ -98,7 +98,7 @@ pub(crate) fn line_hash(speaker: &str, text: &str) -> String {
 const CAPTION_SPEAKER: &str = "@caption";
 
 /// The key a language pack translates the caption `text` of scene `scene`
-/// by (ADR-0045 §2): `caption.<scene id>_<8 hex>`, hashed like a line id.
+/// by: `caption.<scene id>_<8 hex>`, hashed like a line id.
 /// The same caption twice in a scene has one key.
 pub fn caption_key(scene: &str, text: &str) -> String {
     format!("caption.{scene}_{}", line_hash(CAPTION_SPEAKER, text))
@@ -107,7 +107,7 @@ pub fn caption_key(scene: &str, text: &str) -> String {
 /// Calls `f(speaker, text, id)` for every line of `steps` that shows text,
 /// in script order: a reply, then its reaction, then the next reply; an
 /// `@if` block's lines, then its `@else`'s.
-fn visit_mut(steps: &mut [Step], f: &mut impl FnMut(&str, &str, &mut LineId)) {
+fn visit_mut<D>(steps: &mut [Step<D>], f: &mut impl FnMut(&str, &str, &mut LineId)) {
     for step in steps {
         match step {
             Step::Say {
@@ -133,14 +133,13 @@ fn visit_mut(steps: &mut [Step], f: &mut impl FnMut(&str, &str, &mut LineId)) {
             | Step::Place { .. }
             | Step::Clear { .. }
             | Step::Music(_)
-            | Step::Setting(_)
-            | Step::Opening(_) => {}
+            | Step::Directive(_) => {}
         }
     }
 }
 
 /// Adds the lines of `steps` to `out`, in the order of [`visit_mut`].
-fn collect<'a>(steps: &'a [Step], out: &mut Vec<Line<'a>>) {
+fn collect<'a, D>(steps: &'a [Step<D>], out: &mut Vec<Line<'a>>) {
     for step in steps {
         match step {
             Step::Say {
@@ -178,13 +177,12 @@ fn collect<'a>(steps: &'a [Step], out: &mut Vec<Line<'a>>) {
             | Step::Place { .. }
             | Step::Clear { .. }
             | Step::Music(_)
-            | Step::Setting(_)
-            | Step::Opening(_) => {}
+            | Step::Directive(_) => {}
         }
     }
 }
 
-impl Scene {
+impl<D> Scene<D> {
     /// Every line that shows text (speech, narration, replies and the lines
     /// of their reactions), in script order, whoever is there: both parts
     /// of every `@if` block.

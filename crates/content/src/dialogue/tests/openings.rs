@@ -7,16 +7,16 @@ use trpg_core::{BattleMap, Grid, Pos, TerrainId};
 use super::*;
 
 fn opening(id: &str) -> Step {
-    Step::Opening(id.into())
+    Step::Directive(Stage::Opening(id.into()))
 }
 
 #[test]
 fn an_opening_line_parses_and_prints_back() {
     let src = "@scene s\n@place yard 1,1\n@opening spar\n> x\n@end\n";
-    let place = Step::Setting(PlaceLine::Map {
+    let place = Step::Directive(Stage::Setting(PlaceLine::Map {
         map: "yard".into(),
         at: Pos::new(1, 1),
-    });
+    }));
     let scene = Scene {
         id: "s".into(),
         steps: vec![place, opening("spar"), narrate("x")],
@@ -164,7 +164,7 @@ fn chapter_1_opens_its_two_scenes_away_from_the_battle() {
         let steps = &content.dialogue.get(scene).map(|s| s.steps.clone());
         let steps = steps.iter().flatten();
         steps
-            .filter(|s| matches!(s, Step::Opening(_)))
+            .filter(|s| matches!(s, Step::Directive(Stage::Opening(_))))
             .cloned()
             .collect()
     };

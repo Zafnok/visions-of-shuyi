@@ -1083,14 +1083,14 @@ fn the_line_on_screen_and_each_reply_have_their_ids() {
 #[test]
 fn the_place_lasts_until_the_next_place_line() {
     let at = |map: &str, x, y| {
-        Step::Setting(PlaceLine::Map {
+        Step::Directive(Stage::Setting(PlaceLine::Map {
             map: map.into(),
             at: trpg_core::Pos::new(x, y),
-        })
+        }))
     };
-    let battle = Step::Setting(PlaceLine::Battle {
+    let battle = Step::Directive(Stage::Setting(PlaceLine::Battle {
         at: trpg_core::Pos::new(20, 3),
-    });
+    }));
     let mut p = play(&Scene {
         id: "s".into(),
         steps: vec![
@@ -1105,7 +1105,7 @@ fn the_place_lasts_until_the_next_place_line() {
                 ],
             },
             narration("After."),
-            Step::Setting(PlaceLine::None),
+            Step::Directive(Stage::Setting(PlaceLine::None)),
             narration("Black again."),
         ],
     });
@@ -1141,16 +1141,16 @@ fn the_place_lasts_until_the_next_place_line() {
 /// until the next `@place` line. Skipping passes over it, still due.
 #[test]
 fn an_opening_is_due_once_and_lasts_until_the_place_changes() {
-    let yard = Step::Setting(PlaceLine::Map {
+    let yard = Step::Directive(Stage::Setting(PlaceLine::Map {
         map: "yard".into(),
         at: trpg_core::Pos::new(1, 1),
-    });
+    }));
     let scene = Scene {
         id: "s".into(),
         steps: vec![
             narration("Black."),
             yard.clone(),
-            Step::Opening("spar".into()),
+            Step::Directive(Stage::Opening("spar".into())),
             narration("The yard."),
             narration("Still the yard."),
             yard,

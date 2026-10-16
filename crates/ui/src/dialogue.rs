@@ -8,7 +8,9 @@ use crate::prelude::*;
 use alloc::borrow::Cow;
 use alloc::sync::Arc;
 
-use trpg_content::{ChoiceOption, LineId, MusicLine, Names, PlaceLine, Present, Scene, Side, Step};
+use trpg_content::{
+    ChoiceOption, LineId, MusicLine, Names, PlaceLine, Present, Scene, Side, Stage, Step,
+};
 use trpg_core::{CharacterId, LeadProfile};
 
 /// A character standing on one side of the screen.
@@ -418,11 +420,11 @@ impl DialoguePlayer {
                 }
             }
             Step::Music(music) => self.music = Some(music.clone()),
-            Step::Setting(place) => {
+            Step::Directive(Stage::Setting(place)) => {
                 self.place = (*place != PlaceLine::None).then(|| place.clone());
                 self.opening = None;
             }
-            Step::Opening(id) => {
+            Step::Directive(Stage::Opening(id)) => {
                 self.opening = Some(id.clone());
                 self.opening_due = Some(id.clone());
             }

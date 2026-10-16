@@ -73,12 +73,11 @@ pub enum Role {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct UnitId(pub u32);
 
-/// String id of a named character, e.g. `"test_lord"`. Serialised as the
-/// bare string, so battle files (0801) name characters as `"ana"` in their
+/// String id of a named character, e.g. `"test_lord"`: the engine's
+/// (ticket 1105), which dialogue speakers use too. Serialised as the bare
+/// string, so battle files (0801) name characters as `"ana"` in their
 /// triggers ([`Trigger`](crate::Trigger)).
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
-#[serde(transparent)]
-pub struct CharacterId(pub String);
+pub use shuyi_core::CharacterId;
 
 /// A unit's progress in one class it has unlocked.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

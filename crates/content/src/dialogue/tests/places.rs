@@ -5,14 +5,14 @@ use trpg_core::{BattleMap, Grid, Pos, TerrainId};
 use super::*;
 
 fn map_at(map: &str, x: i32, y: i32) -> Step {
-    Step::Setting(PlaceLine::Map {
+    Step::Directive(Stage::Setting(PlaceLine::Map {
         map: map.into(),
         at: Pos::new(x, y),
-    })
+    }))
 }
 
 fn battle_at(x: i32, y: i32) -> Step {
-    Step::Setting(PlaceLine::Battle { at: Pos::new(x, y) })
+    Step::Directive(Stage::Setting(PlaceLine::Battle { at: Pos::new(x, y) }))
 }
 
 #[test]
@@ -47,7 +47,10 @@ fn place_lines_parse_anywhere_in_a_scene() {
     let Step::Choice { options } = &steps[3] else {
         panic!("no choice: {steps:?}");
     };
-    assert_eq!(options[0].steps[0], Step::Setting(PlaceLine::None));
+    assert_eq!(
+        options[0].steps[0],
+        Step::Directive(Stage::Setting(PlaceLine::None))
+    );
     let Step::If { then, .. } = &steps[4] else {
         panic!("no @if: {steps:?}");
     };
@@ -92,7 +95,7 @@ fn place_line_arguments_print_as_written() {
             map_at("ch01", 3, 12),
             narrate("x"),
             battle_at(20, 3),
-            Step::Setting(PlaceLine::None),
+            Step::Directive(Stage::Setting(PlaceLine::None)),
         ],
     };
     let printed = print_scene(&scene);

@@ -16,7 +16,7 @@ use once_cell::race::OnceBox;
 
 use trpg_content::lang::TEST;
 use trpg_content::voice::{self, SOURCE_LANG};
-use trpg_content::{Content, ContentErrors, LangCode, LineId, Playable};
+use trpg_content::{Content, ContentErrors, LangCode, LineId, Playable, Variant};
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{GameMode, LeadGender, LeadProfile, TutorialLevel};
 
@@ -557,7 +557,7 @@ impl Ctx {
         );
         let content = &self.content;
         self.voices = match voice::from_source(&file, source, &content.dialogue) {
-            Ok(manifest) => manifest.playable(&content.dialogue, &content.names),
+            Ok(manifest) => voice::playable(&manifest, &content.dialogue, &content.names),
             Err(errors) => {
                 let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
                 // check-text: not player text (a warning for the log)
@@ -571,7 +571,11 @@ impl Ctx {
     /// Whether `line` has a voice clip that would play now: voices are on
     /// and the line has a clip that isn't stale.
     pub fn has_voice(&self, line: &LineId) -> bool {
-        self.voices_on && self.voices.variant_for(line, self.lead.gender).is_some()
+        self.voices_on
+            && self
+                .voices
+                .variant_for(line, Variant::of(self.lead.gender))
+                .is_some()
     }
 
     /// Says `line`: plays its voice clip (the one for the lead's gender,
@@ -582,7 +586,7 @@ impl Ctx {
         if !self.voices_on {
             return;
         }
-        if let Some(variant) = self.voices.variant_for(line, self.lead.gender) {
+        if let Some(variant) = self.voices.variant_for(line, Variant::of(self.lead.gender)) {
             self.audio.play_voice(line, variant);
         }
     }
@@ -602,7 +606,12 @@ impl Ctx {
         let gender = self.lead.gender;
         let clips: Vec<_> = lines
             .iter()
-            .filter_map(|line| Some((line.clone(), self.voices.variant_for(line, gender)?)))
+            .filter_map(|line| {
+                Some((
+                    line.clone(),
+                    self.voices.variant_for(line, Variant::of(gender))?,
+                ))
+            })
             .collect();
         if !clips.is_empty() {
             self.audio.preload_voices(clips);
@@ -1121,7 +1130,6 @@ pub(crate) mod tests {
     use crate::glyph_buffer::Cell;
     use crate::storage::MemoryStorage;
     use crate::{AudioRequest, Rgb, UiColor};
-    use trpg_content::Variant;
 
     /// A voice manifest with a clip for each of the test scene's lines
     /// numbered `picks` (in script order), and those lines' ids.

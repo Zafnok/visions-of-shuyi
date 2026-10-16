@@ -1,6 +1,7 @@
 //! Tests of line ids (ADR-0045 §3, ticket 0717).
 
-use super::super::line_id::{fnv1a64, line_hash};
+use shuyi_assets::dialogue::line_hash;
+
 use super::*;
 
 /// `(id, speaker, text)` of every line of the one scene in `src`.
@@ -17,14 +18,6 @@ fn lines(src: &str) -> Vec<(String, String, String)> {
 /// The line ids of the one scene in `src`.
 fn ids(src: &str) -> Vec<String> {
     lines(src).into_iter().map(|(id, ..)| id).collect()
-}
-
-/// The published FNV-1a 64 test vectors.
-#[test]
-fn fnv1a64_matches_its_test_vectors() {
-    assert_eq!(fnv1a64(b""), 0xcbf2_9ce4_8422_2325);
-    assert_eq!(fnv1a64(b"a"), 0xaf63_dc4c_8601_ec8c);
-    assert_eq!(fnv1a64(b"foobar"), 0x8594_4171_f739_67e8);
 }
 
 /// Ids are stored in translation and voice files, so these strings must

@@ -1,103 +1,26 @@
-//! Who is there when a scene plays (ADR-0055). An `@if` block's steps play
-//! only for a character who is [`Present`]; [`Scene::resolved`] gives the
-//! scene as it plays for those present. [`check_presence`] keeps a script
-//! from showing someone who may be gone: a character the army can lose
-//! ([`Cast::may_be_absent`]) appears only inside an `@if` block for them,
-//! or in a scene that can't play without them ([`Cast::certain`]).
+//! Who may be gone when a scene plays (ADR-0055). An `@if` block's steps
+//! play only for a character who is [`Present`](super::Present) (the
+//! engine's); [`check_presence`] keeps a script from showing someone who
+//! may be gone: a character the army can lose ([`Cast::may_be_absent`])
+//! appears only inside an `@if` block for them, or in a scene that can't
+//! play without them ([`Cast::certain`]).
+//!
+//! Who is there:
+//!
+//! - Between battles (a chapter's scenes): the characters of the
+//!   campaign's roster. A unit that died in Classic has left it; one that
+//!   retreated in Casual is still in it.
+//! - During a battle (a trigger's scene): the characters of the units on
+//!   the map at that moment, on any side.
 use crate::prelude::*;
 
 use alloc::collections::{BTreeMap, BTreeSet};
 
 use trpg_core::{BattleDef, CharacterId, LEAD_ID, Phase, SupportTable, TriggerWhen, Who};
 
-use super::parse::{Lines, ParsedScene};
-use super::{ChoiceOption, Scene, Step};
+use super::{Lines, ParsedScene, Step};
 use crate::chapter::{ChapterDef, NewGameDef};
 use crate::error::ContentError;
-
-/// Who is there when a scene plays.
-///
-/// - Between battles (a chapter's scenes): the characters of the
-///   campaign's roster. A unit that died in Classic has left it; one that
-///   retreated in Casual is still in it.
-/// - During a battle (a trigger's scene): the characters of the units on
-///   the map at that moment, on any side.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Present {
-    /// Everyone: every `@if` block plays its first part (the debug scene
-    /// viewer; a scene played outside a campaign).
-    Everyone,
-    /// Only these characters.
-    Only(BTreeSet<CharacterId>),
-}
-
-impl Present {
-    /// Only `characters`.
-    pub fn only(characters: impl IntoIterator<Item = CharacterId>) -> Self {
-        Self::Only(characters.into_iter().collect())
-    }
-
-    /// Whether `character` is there.
-    pub fn has(&self, character: &CharacterId) -> bool {
-        match self {
-            Present::Everyone => true,
-            Present::Only(characters) => characters.contains(character),
-        }
-    }
-}
-
-impl Scene {
-    /// The scene as it plays for those `present`: every `@if` block
-    /// replaced by the steps of the part that holds, in reactions and in
-    /// other blocks too. The lines keep their ids.
-    #[must_use]
-    pub fn resolved(&self, present: &Present) -> Scene {
-        Scene {
-            id: self.id.clone(),
-            steps: resolved(&self.steps, present),
-        }
-    }
-
-    /// Whether the scene has a speech or narration line to play, whichever
-    /// reply is picked. Run on a [`Scene::resolved`] scene: one with
-    /// nothing left to say for those present isn't played.
-    pub fn has_text(&self) -> bool {
-        self.steps.iter().any(Step::has_text)
-    }
-}
-
-/// `steps` with every `@if` block replaced by the part that holds for
-/// those `present`.
-fn resolved(steps: &[Step], present: &Present) -> Vec<Step> {
-    let mut out = Vec::with_capacity(steps.len());
-    for step in steps {
-        match step {
-            Step::If {
-                character,
-                then,
-                otherwise,
-            } => {
-                let part = if present.has(character) {
-                    then
-                } else {
-                    otherwise
-                };
-                out.extend(resolved(part, present));
-            }
-            Step::Choice { options } => {
-                let option = |o: &ChoiceOption| ChoiceOption {
-                    steps: resolved(&o.steps, present),
-                    ..o.clone()
-                };
-                out.push(Step::Choice {
-                    options: options.iter().map(option).collect(),
-                });
-            }
-            other => out.push(other.clone()),
-        }
-    }
-    out
-}
 
 /// What [`check_presence`] knows about who can be missing from a scene.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -288,8 +211,7 @@ impl<'a> Walk<'a> {
                 | Step::Clear { .. }
                 | Step::Narrate { .. }
                 | Step::Music(_)
-                | Step::Setting(_)
-                | Step::Opening(_) => {}
+                | Step::Directive(_) => {}
             }
         }
     }

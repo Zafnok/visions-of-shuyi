@@ -2,7 +2,7 @@
 //! it shows (its view). The look is tested in `glyph/tests.rs`; scripted
 //! runs and snapshots are in `crates/ui/tests/it/dialogue.rs`.
 
-use trpg_content::{Side, Step};
+use trpg_content::{Side, Stage, Step};
 use trpg_core::CharacterId;
 
 use super::*;
@@ -854,7 +854,7 @@ fn the_log_appears_and_goes_in_the_view() {
 // --- The place behind the talk (0732) ---------------------------------------
 
 fn setting(place: PlaceLine) -> Step {
-    Step::Setting(place)
+    Step::Directive(Stage::Setting(place))
 }
 
 /// A frame that types the page out (the text is instant), then Confirm:
@@ -957,14 +957,14 @@ fn the_keys_after_the_one_that_starts_an_opening_wait() {
         text: text.into(),
         line: trpg_content::LineId::default(),
     };
-    let yard = Step::Setting(trpg_content::PlaceLine::Map {
+    let yard = Step::Directive(Stage::Setting(trpg_content::PlaceLine::Map {
         map: "harrowby_yard".into(),
         at: trpg_core::Pos::new(12, 8),
-    });
+    }));
     let mut s = full(&scene(vec![
         narrate("Black."),
         yard,
-        Step::Opening("ch01_sparring".into()),
+        Step::Directive(Stage::Opening("ch01_sparring".into())),
         narrate("The yard."),
     ]));
     press(&mut s, &mut c, Action::Confirm);
