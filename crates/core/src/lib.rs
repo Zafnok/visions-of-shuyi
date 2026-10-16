@@ -18,7 +18,6 @@ pub mod battle;
 pub mod campaign;
 pub mod class;
 pub mod combat;
-pub mod geom;
 pub mod history;
 pub mod item;
 pub mod lead;
@@ -28,7 +27,6 @@ pub mod map;
 pub mod movement;
 pub mod prep;
 pub mod progression;
-pub mod rng;
 pub mod save;
 pub mod shop;
 pub mod skill;
@@ -38,6 +36,11 @@ pub mod support;
 pub mod terrain;
 pub mod unit;
 pub mod weapon;
+
+// The engine's grid and RNG, under the names the game's code uses
+// (ADR-0063 §6).
+pub use shuyi_core::grid as geom;
+pub use shuyi_core::rng;
 
 pub use ai::{AiBehavior, AiWeights, next_command};
 pub use art::{ArtDef, ArtEffect, ArtId, ArtNote, ArtTable, Debuff};

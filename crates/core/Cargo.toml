@@ -12,10 +12,11 @@ workspace = true
 
 [features]
 default = ["std"]
-std = ["serde/std"]
+std = ["serde/std", "shuyi-core/std"]
 
 [dependencies]
 serde.workspace = true
+shuyi-core = { path = "../../engine/crates/core", default-features = false }
 
 [dev-dependencies]
 proptest.workspace = true

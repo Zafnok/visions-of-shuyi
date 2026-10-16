@@ -22,35 +22,63 @@
 //!   Like any saved [`BattleState`] (ADR-0020), the first state comes back
 //!   without its content tables: the loader must call
 //!   [`BattleHistory::restore_tables`] before replaying.
+//!
+//! The points, the replay and the rewind are the engine's
+//! ([`shuyi_core::history`], over the battle's
+//! [`TurnRules`](shuyi_core::TurnRules)); the charges are the game's.
 
 use crate::prelude::*;
 
 use core::fmt;
 
 use serde::{Deserialize, Serialize};
+use shuyi_core::history::{History, NoSuchPoint};
 
-use crate::{BattleState, Command, Event, GameTables};
+use crate::{BattleState, Command, GameTables};
 
 /// A battle's first state, the commands applied since and the rewind
 /// charges left.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(from = "SavedHistory", into = "SavedHistory")]
 pub struct BattleHistory {
+    history: History<BattleState>,
+    charges_left: u8,
+}
+
+/// A [`BattleHistory`] as a save holds it: its fields as they were saved
+/// before the history moved to the engine, so saves keep their format and
+/// version (ADR-0039).
+#[derive(Serialize, Deserialize)]
+#[serde(rename = "BattleHistory")]
+struct SavedHistory {
     initial: BattleState,
     commands: Vec<Command>,
     charges_left: u8,
 }
 
-/// One past command, as shown by the rewind screen.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Replayed {
-    /// The battle just before the command (the point a rewind to it goes
-    /// back to).
-    pub before: BattleState,
-    /// The command.
-    pub command: Command,
-    /// What it did.
-    pub events: Vec<Event>,
+impl From<SavedHistory> for BattleHistory {
+    fn from(saved: SavedHistory) -> Self {
+        Self {
+            history: History::from_parts(saved.initial, saved.commands),
+            charges_left: saved.charges_left,
+        }
+    }
 }
+
+impl From<BattleHistory> for SavedHistory {
+    fn from(battle: BattleHistory) -> Self {
+        let (initial, commands) = battle.history.into_parts();
+        Self {
+            initial,
+            commands,
+            charges_left: battle.charges_left,
+        }
+    }
+}
+
+/// One past command, as shown by the rewind screen: the battle just before
+/// it (the point a rewind to it goes back to), the command and what it did.
+pub type Replayed = shuyi_core::history::Replayed<BattleState>;
 
 /// Why a rewind was refused. Nothing changed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -73,14 +101,19 @@ impl fmt::Display for RewindError {
 
 impl core::error::Error for RewindError {}
 
+impl From<NoSuchPoint> for RewindError {
+    fn from(NoSuchPoint(n): NoSuchPoint) -> Self {
+        Self::NoSuchPoint(n)
+    }
+}
+
 impl BattleHistory {
     /// A history starting at `initial` (a battle just started), with its
     /// [`rewind_charges`](BattleState::rewind_charges).
     pub fn new(initial: BattleState) -> Self {
         Self {
             charges_left: initial.rewind_charges(),
-            initial,
-            commands: Vec::new(),
+            history: History::new(initial),
         }
     }
 
@@ -88,22 +121,22 @@ impl BattleHistory {
     /// (A refused command changes nothing, so recording one by mistake
     /// replays as nothing too.)
     pub fn push(&mut self, cmd: Command) {
-        self.commands.push(cmd);
+        self.history.push(cmd);
     }
 
     /// The commands applied so far, oldest first.
     pub fn commands(&self) -> &[Command] {
-        &self.commands
+        self.history.commands()
     }
 
     /// How many commands were applied (the latest point).
     pub fn len(&self) -> usize {
-        self.commands.len()
+        self.history.len()
     }
 
     /// Whether no command was applied yet (nothing to rewind).
     pub fn is_empty(&self) -> bool {
-        self.commands.is_empty()
+        self.history.is_empty()
     }
 
     /// Rewind charges left.
@@ -114,51 +147,32 @@ impl BattleHistory {
     /// The battle after its first `n` commands (all of them if `n` is past
     /// the end).
     pub fn state_at(&self, n: usize) -> BattleState {
-        let mut state = self.initial.clone();
-        for cmd in self.commands.iter().take(n) {
-            // A refused command changes nothing, as when it was first sent.
-            let _ = state.apply(cmd);
-        }
-        state
+        self.history.state_at(n)
     }
 
     /// Every command replayed in order, with the battle just before it and
     /// its events: one replay for the whole list.
     pub fn replay(&self) -> Vec<Replayed> {
-        let mut state = self.initial.clone();
-        self.commands
-            .iter()
-            .map(|cmd| {
-                let before = state.clone();
-                let events = state.apply(cmd).unwrap_or_default();
-                Replayed {
-                    before,
-                    command: cmd.clone(),
-                    events,
-                }
-            })
-            .collect()
+        self.history.replay()
     }
 
     /// Goes back to point `n` (before command `n`), forgetting that command
     /// and every later one, for one charge. Returns the battle at that
     /// point.
     pub fn rewind_to(&mut self, n: usize) -> Result<BattleState, RewindError> {
-        if n >= self.commands.len() {
-            return Err(RewindError::NoSuchPoint(n));
-        }
-        if self.charges_left == 0 {
+        // A point to go back to, but no charge to get there.
+        if self.charges_left == 0 && n < self.history.len() {
             return Err(RewindError::NoCharges);
         }
+        let state = self.history.rewind_to(n)?;
         self.charges_left -= 1;
-        self.commands.truncate(n);
-        Ok(self.state_at(n))
+        Ok(state)
     }
 
     /// Reattaches the content tables to the first state after
     /// deserialising ([`BattleState::restore_tables`]).
     pub fn restore_tables(&mut self, tables: &GameTables) {
-        self.initial.restore_tables(tables);
+        self.history.initial_mut().restore_tables(tables);
     }
 }
 

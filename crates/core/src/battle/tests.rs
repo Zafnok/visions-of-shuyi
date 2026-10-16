@@ -2602,6 +2602,34 @@ fn commands_and_events_round_trip_through_ron() {
     assert_eq!(ron::from_str::<Vec<Event>>(&text).unwrap(), events);
 }
 
+// ---- The engine's view of the battle (1114) ----------------------------------------
+
+#[test]
+fn the_turn_rules_are_the_battles_own_methods() {
+    let s = start(setup(skirmish()));
+    let legal = TurnRules::legal_commands(&s);
+    assert!(!legal.is_empty());
+    assert_eq!(legal, legal_commands(&s));
+    let enemy_acts = Command::Act {
+        unit: UnitId(3),
+        dest: p(2, 0),
+        action: UnitAction::Wait,
+    };
+    for cmd in [&legal[0], &enemy_acts] {
+        assert_eq!(TurnRules::check(&s, cmd), s.check(cmd), "{cmd:?}");
+    }
+    assert!(s.check(&enemy_acts).is_err());
+    let (mut by_rules, mut by_battle) = (s.clone(), s.clone());
+    let events = TurnRules::apply(&mut by_rules, &Command::EndPhase);
+    assert!(events.as_ref().is_ok_and(|e| !e.is_empty()));
+    assert_eq!(events, by_battle.apply(&Command::EndPhase));
+    assert_eq!(by_rules, by_battle);
+    assert_eq!(TurnRules::outcome(&s), None);
+    let (won, _) = BattleState::new(setup(vec![lord(1, p(0, 0))]));
+    assert_eq!(TurnRules::outcome(&won), Some(Outcome::Victory));
+    assert!(TurnRules::legal_commands(&won).is_empty());
+}
+
 // ---- Property: random legal play -------------------------------------------------
 
 /// Each ready unit's plain attacks from its own tile that `s` accepts: a

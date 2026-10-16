@@ -1,14 +1,14 @@
-//! The battle's random numbers (ADR-0004 rule 1, ADR-0019).
+//! Seeded random numbers for a deterministic simulation.
 //!
 //! [`SimRng`] is a PCG32 (XSH RR, 64-bit state) written in this crate, so its
 //! output is fixed by this file alone: same seed ⇒ same numbers on every
-//! platform and every dependency version. It is serialisable so the battle
+//! platform and every dependency version. It is serialisable so a game's
 //! state (and its RNG position) can be saved, rewound and replayed.
 //!
 //! Game rules take a [`RandomSource`], so tests can inject a [`ScriptedRng`]
 //! that returns a given list of rolls.
 
-use crate::prelude::*;
+use alloc::vec::Vec;
 
 use serde::{Deserialize, Serialize};
 
@@ -17,8 +17,8 @@ pub trait RandomSource {
     /// A uniform, unbiased integer in `0..=99`.
     fn roll_percent(&mut self) -> u8;
 
-    /// A uniform, unbiased integer in `0..n` (the level-up safety net,
-    /// `progression.md`). `n` must be at least 1; `0` gives `0`.
+    /// A uniform, unbiased integer in `0..n`. `n` must be at least 1; `0`
+    /// gives `0`.
     fn roll_below(&mut self, n: u32) -> u32;
 }
 
@@ -38,7 +38,7 @@ const PERCENT_LIMIT: u32 = (u32::MAX / 100) * 100;
 /// The most redraws one [`SimRng::roll_percent`] makes.
 const MAX_REDRAWS: u32 = 16;
 
-/// The seeded simulation RNG owned by the battle state.
+/// The seeded simulation RNG, kept in the game's state.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct SimRng {
     state: u64,
@@ -137,7 +137,7 @@ impl RandomSource for SimRng {
 }
 
 /// A [`RandomSource`] that returns a fixed list of rolls, in order. For
-/// tests that need an exact combat or level-up trace. Percent rolls and
+/// tests that need an exact trace of rolls. Percent rolls and
 /// [`roll_below`](RandomSource::roll_below) draws come from two separate
 /// lists.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

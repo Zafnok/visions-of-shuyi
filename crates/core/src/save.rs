@@ -17,7 +17,8 @@
 //!   one the battle started with.
 //! - **Versions.** Every save names the [`SAVE_VERSION`] that wrote it. A
 //!   save of another version is refused, not migrated ([`SaveHeader`] reads
-//!   the version of a save whose other fields no longer parse).
+//!   the version of a save whose other fields no longer parse). The rule
+//!   and the header are the engine's ([`shuyi_core::save`]).
 //!   Version 2 (ticket 1002) added the supports to the campaign and the
 //!   battle state, and [`Event::SupportPoints`](crate::Event::SupportPoints).
 //!   [`Campaign::tutorial`] (0835) came later without a new version, on
@@ -29,6 +30,7 @@
 use crate::prelude::*;
 
 use serde::{Deserialize, Serialize};
+use shuyi_core::save::SaveFormat;
 
 use crate::campaign::Campaign;
 use crate::history::BattleHistory;
@@ -63,11 +65,12 @@ pub enum SavePoint {
 }
 
 /// Just a save's version: parses any save, whatever the rest of it holds.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename = "SaveFile")]
-pub struct SaveHeader {
-    /// The [`SAVE_VERSION`] that wrote the save.
-    pub version: u32,
+/// Its `version` is the [`SAVE_VERSION`] that wrote the save.
+pub type SaveHeader = shuyi_core::save::SaveHeader<SaveFile>;
+
+impl SaveFormat for SaveFile {
+    const NAME: &'static str = "SaveFile";
+    const VERSION: u32 = SAVE_VERSION;
 }
 
 impl SaveFile {
@@ -88,13 +91,6 @@ impl SaveFile {
             campaign,
             point: SavePoint::Battle(Box::new(history)),
         }
-    }
-}
-
-impl SaveHeader {
-    /// Whether this build can read the save.
-    pub fn is_current(self) -> bool {
-        self.version == SAVE_VERSION
     }
 }
 

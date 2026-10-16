@@ -3,7 +3,7 @@ use proptest::prelude::*;
 use super::*;
 use crate::battle::tests::{arb_setup, attack, cast, p, setup};
 use crate::legal_commands;
-use crate::{Pos, UnitAction, UnitId};
+use crate::{Event, Pos, UnitAction, UnitId};
 
 fn ron(state: &BattleState) -> String {
     ron::to_string(state).unwrap()
@@ -91,6 +91,17 @@ fn the_real_battle_keeps_its_luck() {
         real.apply(&replayed[0].command).unwrap(),
         replayed[0].events
     );
+}
+
+#[test]
+fn without_charges_the_latest_point_is_still_no_point() {
+    let (mut h, _, _) = fought();
+    while h.charges_left() > 0 {
+        h.rewind_to(1).unwrap();
+        h.push(Command::EndPhase);
+    }
+    assert_eq!(h.rewind_to(2), Err(RewindError::NoSuchPoint(2)));
+    assert_eq!(h.rewind_to(1), Err(RewindError::NoCharges));
 }
 
 #[test]
