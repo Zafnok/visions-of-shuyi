@@ -75,5 +75,8 @@
         (id: "sdl_gamecontrollerdb", group: Software, title: "SDL_GameControllerDB",
          author: "Sam Lantinga and the SDL_GameControllerDB contributors",
          source: "https://github.com/mdqinc/SDL_GameControllerDB", license: "Zlib", hidden: true),
+        // The Playdate SDK's start-up file, linked into the Playdate game (1031).
+        (id: "playdate_setup_c", group: Software, title: "Playdate SDK build support (setup.c)",
+         author: "Panic Inc.", source: "https://play.date/dev/", license: "0BSD", hidden: true),
     ],
 )

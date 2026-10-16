@@ -1133,6 +1133,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "trpg-playdate"
+version = "0.2.0"
+dependencies = [
+ "trpg-content",
+ "trpg-core",
+ "trpg-ui",
+]
+
+[[package]]
 name = "trpg-ui"
 version = "0.2.0"
 dependencies = [

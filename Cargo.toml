@@ -58,3 +58,20 @@ debug = "line-tables-only"
 [profile.dev.package."*"]
 opt-level = 2
 debug = false
+
+# The Playdate build (ADR-0070 §1), used only by `cargo xtask playdate`:
+# `--release` builds with `playdate`, otherwise `playdate-dev`. A `no_std`
+# library for the device has no unwinding, so both abort on panic. Line
+# tables stay in `pdex.elf` for reading crash addresses (`pdc` leaves them
+# out of the game it packs); `strip` would take them away.
+[profile.playdate]
+inherits = "release"
+panic = "abort"
+lto = true
+codegen-units = 1
+strip = false
+debug = "line-tables-only"
+
+[profile.playdate-dev]
+inherits = "dev"
+panic = "abort"
