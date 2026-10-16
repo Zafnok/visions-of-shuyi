@@ -5,7 +5,7 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: in-progress
 blocked_by: ["1033"]
 nick_input: sign-off
 completed:

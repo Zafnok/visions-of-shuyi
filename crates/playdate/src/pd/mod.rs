@@ -5,6 +5,8 @@
 #![allow(unsafe_code)]
 
 mod allocator;
+#[cfg(feature = "bench")]
+mod bench;
 mod entry;
 mod files;
 mod game_stack;

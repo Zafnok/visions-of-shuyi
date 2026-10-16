@@ -36,9 +36,14 @@ storage-conformance = []
 # build only (ADR-0023). Never on in shipped builds. The Quick Battle is
 # made of the test files (ADR-0057).
 debug-tools = ["trpg-content/test-fixtures"]
+# `onebit::reference`, the plain one-bit renderer the fast one must equal
+# (ticket 1055): for the Playdate's bench build, which times both on the
+# device. The tests have it anyway.
+onebit-reference = []
 
 [dev-dependencies]
-# Turns on `harness` for this crate's own integration tests in tests/.
-trpg-ui = { path = ".", features = ["harness"] }
+# Turns on `harness` for this crate's own integration tests in tests/, and
+# the one-bit reference renderer `tests/it/playdate.rs` compares with.
+trpg-ui = { path = ".", features = ["harness", "onebit-reference"] }
 proptest.workspace = true
 insta.workspace = true

@@ -1,5 +1,5 @@
-//! `cargo xtask playdate [--release] [--device|--simulator|--both]`: builds
-//! the Playdate front end (`crates/playdate`, ADR-0070) into
+//! `cargo xtask playdate [--release] [--bench] [--device|--simulator|--both]`:
+//! builds the Playdate front end (`crates/playdate`, ADR-0070) into
 //! `target/playdate/VisionsOfShuyi.pdx` (ticket 1031).
 //!
 //! For each target it builds the Rust static library (`trpg-playdate` with
@@ -13,7 +13,10 @@
 //!   `gcc`, linked into `pdex.dll`.
 //!
 //! The default is both. `--release` builds with the `playdate` profile
-//! (what goes on a device), otherwise `playdate-dev`. The SDK comes from
+//! (what goes on a device), otherwise `playdate-dev`. `--bench` builds the
+//! bench build instead (the `bench` feature, ticket 1055), into
+//! `VisionsOfShuyi-bench.pdx`: it times the one-bit renderer on the
+//! device. The SDK comes from
 //! `PLAYDATE_SDK_PATH`, else `~/Documents/PlaydateSDK`; the compilers from
 //! `PATH`, else MSYS2's default places. GNU tools only: no MSVC, no
 //! nightly, no `CMake`.
@@ -38,8 +41,32 @@ const AUTHOR: &str = "Nick Wentz";
 /// after it, so it never changes once a build is out.
 pub const BUNDLE_ID: &str = "com.zafnok.visionsofshuyi";
 
-/// The packed game, in `target/playdate/`.
-const PDX_NAME: &str = "VisionsOfShuyi.pdx";
+/// Which game is built.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Build {
+    /// The game.
+    Game,
+    /// The bench build (`--bench`): the game with the `bench` feature.
+    Bench,
+}
+
+impl Build {
+    /// The packed game, in `target/playdate/`: the bench build's apart.
+    fn pdx_name(self) -> &'static str {
+        match self {
+            Build::Game => "VisionsOfShuyi.pdx",
+            Build::Bench => "VisionsOfShuyi-bench.pdx",
+        }
+    }
+
+    /// `trpg-playdate`'s features.
+    fn features(self) -> &'static str {
+        match self {
+            Build::Game => "sdk",
+            Build::Bench => "sdk,bench",
+        }
+    }
+}
 
 /// The device's Rust target (ADR-0070 §1).
 const DEVICE_TARGET: &str = "thumbv7em-none-eabihf";
@@ -92,28 +119,36 @@ const MSYS2_ARM_GCC: &str = r"C:\msys64\ucrt64\bin\arm-none-eabi-gcc.exe";
 const MSYS2_GCC: &str = r"C:\msys64\mingw64\bin\gcc.exe";
 
 /// Usage line for bad arguments.
-const USAGE: &str = "usage: cargo xtask playdate [--release] [--device|--simulator|--both]";
+const USAGE: &str =
+    "usage: cargo xtask playdate [--release] [--bench] [--device|--simulator|--both]";
 
 /// Parsed `cargo xtask playdate` arguments.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Options {
     /// Build with the `playdate` profile instead of `playdate-dev`.
     pub release: bool,
+    /// The game, or the bench build.
+    pub build: Build,
     /// Build `pdex.elf`, for the device.
     pub device: bool,
     /// Build `pdex.dll`, for the Simulator.
     pub simulator: bool,
 }
 
-/// Parses the arguments after `playdate`: `--release`, and at most one of
-/// `--device`, `--simulator` and `--both` (the default), each at most once.
+/// Parses the arguments after `playdate`: `--release`, `--bench`, and at
+/// most one of `--device`, `--simulator` and `--both` (the default), each
+/// at most once.
 pub fn parse_args(args: &[String]) -> Result<Options, String> {
-    let mut release = false;
+    let (mut release, mut build) = (false, Build::Game);
     let mut which: Option<(bool, bool)> = None;
     for arg in args {
         let targets = match arg.as_str() {
             "--release" if !release => {
                 release = true;
+                continue;
+            }
+            "--bench" if build == Build::Game => {
+                build = Build::Bench;
                 continue;
             }
             "--device" => (true, false),
@@ -128,6 +163,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
     let (device, simulator) = which.unwrap_or((true, true));
     Ok(Options {
         release,
+        build,
         device,
         simulator,
     })
@@ -157,18 +193,18 @@ fn device_rustflags(existing: Option<&str>) -> String {
 }
 
 /// The `cargo` arguments that build the static library for `target`.
-fn cargo_args(target: &str, release: bool) -> Vec<OsString> {
+fn cargo_args(target: &str, options: Options) -> Vec<OsString> {
     [
         "build",
         "-p",
         "trpg-playdate",
         "--lib",
         "--features",
-        "sdk",
+        options.build.features(),
         "--target",
         target,
         "--profile",
-        profile(release),
+        profile(options.release),
     ]
     .into_iter()
     .map(OsString::from)
@@ -360,10 +396,10 @@ pub fn plan(
         Step::Fresh(paths.obj.clone()),
     ];
     if options.device {
-        steps.extend(device_steps(&paths, options.release, tools)?);
+        steps.extend(device_steps(&paths, options, tools)?);
     }
     if options.simulator {
-        steps.extend(simulator_steps(&paths, options.release, tools)?);
+        steps.extend(simulator_steps(&paths, options, tools)?);
     }
     steps.push(Step::Write {
         path: paths.source.join("pdxinfo"),
@@ -380,7 +416,7 @@ pub fn plan(
             OsString::from("-sdkpath"),
             sdk.clone().into_os_string(),
             paths.source.into_os_string(),
-            paths.out.join(PDX_NAME).into_os_string(),
+            paths.out.join(options.build.pdx_name()).into_os_string(),
         ]),
         rustflags: None,
     });
@@ -388,7 +424,8 @@ pub fn plan(
 }
 
 /// The steps that build `pdex.elf`, for the device.
-fn device_steps(paths: &Paths, release: bool, tools: &Tools) -> Result<Vec<Step>, String> {
+fn device_steps(paths: &Paths, options: Options, tools: &Tools) -> Result<Vec<Step>, String> {
+    let release = options.release;
     if !tools.targets.0 {
         return Err(format!(
             "the Rust target {DEVICE_TARGET} is not installed: rustup target add {DEVICE_TARGET}"
@@ -431,7 +468,7 @@ fn device_steps(paths: &Paths, release: bool, tools: &Tools) -> Result<Vec<Step>
         Step::Run {
             what: "cargo build (device)",
             program: PathBuf::from("cargo"),
-            args: cargo_args(DEVICE_TARGET, release),
+            args: cargo_args(DEVICE_TARGET, options),
             rustflags: Some(device_rustflags(tools.rustflags.as_deref())),
         },
         Step::Run {
@@ -457,7 +494,8 @@ fn device_steps(paths: &Paths, release: bool, tools: &Tools) -> Result<Vec<Step>
 }
 
 /// The steps that build `pdex.dll`, for the Simulator.
-fn simulator_steps(paths: &Paths, release: bool, tools: &Tools) -> Result<Vec<Step>, String> {
+fn simulator_steps(paths: &Paths, options: Options, tools: &Tools) -> Result<Vec<Step>, String> {
+    let release = options.release;
     if !tools.windows {
         return Err(
             "the Simulator build (pdex.dll) is made on Windows only; pass --device".to_string(),
@@ -496,7 +534,7 @@ fn simulator_steps(paths: &Paths, release: bool, tools: &Tools) -> Result<Vec<St
         Step::Run {
             what: "cargo build (Simulator)",
             program: PathBuf::from("cargo"),
-            args: cargo_args(SIMULATOR_TARGET, release),
+            args: cargo_args(SIMULATOR_TARGET, options),
             rustflags: None,
         },
         Step::Run {
@@ -561,7 +599,11 @@ pub fn summary(root: &Path, options: Options) -> String {
     if options.simulator {
         parts.push(size("pdex.dll"));
     }
-    format!("{} ({})", out.join(PDX_NAME).display(), parts.join(", "))
+    format!(
+        "{} ({})",
+        out.join(options.build.pdx_name()).display(),
+        parts.join(", ")
+    )
 }
 
 /// The Rust toolchain's sysroot (`rustc --print sysroot`).
@@ -649,6 +691,7 @@ mod tests {
 
     const BOTH: Options = Options {
         release: true,
+        build: Build::Game,
         device: true,
         simulator: true,
     };
@@ -682,6 +725,7 @@ mod tests {
             parse_args(&[]),
             Ok(Options {
                 release: false,
+                build: Build::Game,
                 device: true,
                 simulator: true
             })
@@ -703,6 +747,10 @@ mod tests {
         let simulator = parsed(&["--simulator"]);
         assert!(!simulator.release && !simulator.device && simulator.simulator);
         assert_eq!(parsed(&["--both", "--release"]), BOTH);
+        let bench = parsed(&["--bench", "--release", "--device"]);
+        assert_eq!(bench.build, Build::Bench);
+        assert!(bench.release && bench.device && !bench.simulator);
+        assert_eq!(parsed(&["--release"]).build, Build::Game);
     }
 
     #[test]
@@ -710,6 +758,7 @@ mod tests {
         for bad in [
             &["--bogus"][..],
             &["--release", "--release"],
+            &["--bench", "--bench"],
             &["--device", "--simulator"],
             &["--both", "--both"],
             &["--device", "--device"],
@@ -895,6 +944,24 @@ mod tests {
             built[3].2[2],
             "/repo/target/thumbv7em-none-eabihf/playdate-dev/libtrpg_playdate.a"
         );
+    }
+
+    #[test]
+    fn the_bench_build_has_its_feature_and_its_own_pdx() {
+        let bench = Options {
+            build: Build::Bench,
+            ..BOTH
+        };
+        let steps = plan(Path::new("/repo"), bench, &tools(), "0.2.0").unwrap();
+        let built = runs(&steps);
+        for cargo in [&built[0], &built[4]] {
+            assert_eq!(cargo.2[4..6], ["--features", "sdk,bench"]);
+        }
+        let pdc = built.last().unwrap();
+        assert_eq!(pdc.2[3], "/repo/target/playdate/VisionsOfShuyi-bench.pdx");
+        let root = scratch("bench-summary");
+        assert!(summary(&root, bench).contains("VisionsOfShuyi-bench.pdx"));
+        fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]

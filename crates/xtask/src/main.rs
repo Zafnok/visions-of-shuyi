@@ -63,7 +63,7 @@ portrait-import <busts> <id>       cut bought busts into portraits (portrait-imp
 lines [scene]                      list every dialogue line with its line id (lines --help)\n  \
 voice-test-clips                   make the tone clips that test voice playback (needs ffmpeg)\n  \
 web [--release] [--debug-tools] [--private-assets]\n                                     build and package the web (WASM) shell into dist/web/\n  \
-playdate [--release] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx";
+playdate [--release] [--bench] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx\n                                     (--bench: the build that times the renderer, its own .pdx)";
 
 fn main() -> ExitCode {
     ExitCode::from(dispatch(env::args().skip(1)))

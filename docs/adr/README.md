@@ -84,6 +84,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0074](0074-the-one-bit-frame.md) | The one-bit frame: inks as reserved palette colours, a renderer to the Playdate's frame buffer | Accepted (1032) |
 | [0075](0075-sprites-fade-by-brightness-not-opacity.md) | Sprites fade by brightness, not opacity | Accepted (0732); amends ADR-0060 §4 |
 | [0076](0076-conversation-openings-a-cast-on-a-place-and-the-cinematic-walks.md) | Conversation openings: a cast on a place, and the cinematic walks | Accepted (0734); extends ADR-0061 |
+| [0077](0077-the-one-bit-render-redraws-what-changed.md) | The one-bit render redraws only what changed, against a kept reference | Accepted (1055); extends ADR-0074 §4 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
