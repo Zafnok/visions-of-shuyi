@@ -566,3 +566,121 @@ fn the_lesson_box_snapshot() {
     assert_eq!(battle.lesson_ticks(), [true, false, true, false]);
     assert_snapshot!(h.snapshot());
 }
+
+/// A Harness on `state` whose only lesson asks for `items`, open after a
+/// short wait.
+fn harness_only(state: BattleState, items: &[DoneWhen]) -> Harness {
+    let mut h = Harness::with_screen(Box::new(BattleScreen::new(state)));
+    h.with_lessons();
+    h.ctx_mut().content.lessons.lessons = vec![lesson("only", LessonLevel::Full, items)];
+    h.wait(0.1);
+    assert!(h.battle().is_some_and(BattleScreen::lesson_open));
+    h
+}
+
+fn harness_ticks(h: &Harness) -> Vec<bool> {
+    h.battle()
+        .map(|b| b.lesson_ticks().to_vec())
+        .unwrap_or_default()
+}
+
+/// A heal aimed at an ally is no tile aimed at: only a spell on a tile
+/// ticks `TileAimed` (0457).
+#[test]
+fn a_heal_on_an_ally_is_no_tile_aimed() {
+    let c = ctx();
+    let (map, mut units) = super::testing::quick_units(&c);
+    // The archer two tiles left of the mage, hurt.
+    units[2].pos = Pos::new(1, 6);
+    units[2].hp = 5;
+    let state = super::testing::battle_with(
+        &c,
+        map,
+        units,
+        trpg_core::Objective::Rout { turn_limit: None },
+    );
+    let mut h = harness_only(state, &[DoneWhen::TileAimed, DoneWhen::Attacked]);
+    // The mage selected, pointed at the archer: the heal list, then the
+    // heal's preview on her.
+    h.keys("Down f Left Left f").wait(0.5).keys("f");
+    let battle = h.battle().expect("a battle");
+    assert!(
+        matches!(battle.mode(), Mode::CastTarget(_)),
+        "{:?}",
+        battle.mode()
+    );
+    assert_eq!(harness_ticks(&h), [false, false]);
+}
+
+/// Picking an action from the menu is no move: only leaving the selection
+/// for where the unit goes ticks `UnitMoved` (0457). The second lesson
+/// opens over the action menu, then `Attack` opens the forecast.
+#[test]
+fn picking_an_action_after_the_move_is_no_move() {
+    let mut h = Harness::with_screen(Box::new(BattleScreen::new(skirmish_charged(&ctx(), 30, 2))));
+    h.with_lessons();
+    let mut menu = lesson("menu", LessonLevel::Full, &[DoneWhen::ActionMenuOpened]);
+    menu.title = "First".into();
+    let moved = lesson(
+        "moved",
+        LessonLevel::Full,
+        &[DoneWhen::UnitMoved, DoneWhen::Attacked],
+    );
+    h.ctx_mut().content.lessons.lessons = vec![menu, moved];
+    h.wait(0.1);
+    h.keys("f Right f").wait(0.5);
+    assert_eq!(
+        h.battle().and_then(BattleScreen::shown_lesson),
+        Some("moved")
+    );
+    h.keys("f");
+    let battle = h.battle().expect("a battle");
+    assert!(
+        matches!(battle.mode(), Mode::Targeting(_)),
+        "{:?}",
+        battle.mode()
+    );
+    assert_eq!(harness_ticks(&h), [false, false]);
+}
+
+/// The threat arrows on a unit the cursor rests on don't tick
+/// `ThreatPointed`: only a selected unit's path does (0457).
+#[test]
+fn threat_arrows_while_browsing_dont_tick_the_path_items() {
+    let mut c = lessoned();
+    let state = quick_battle(&c.content).unwrap();
+    let mut s = only(
+        &mut c,
+        state,
+        &[DoneWhen::ThreatPointed, DoneWhen::SafePointed],
+    );
+    // The cursor on the lord, whom a brigand reaches: arrows, browsing.
+    assert!(s.scene(&c).threat.is_some());
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.lesson_ticks(), [false, false]);
+    // Selected, on his own tile: the path points at a tile with arrows.
+    press(&mut s, &mut c, &[Action::Confirm]);
+    press(&mut s, &mut c, &[]);
+    assert_eq!(s.lesson_ticks(), [true, false]);
+}
+
+/// `SecondTurn` fires in turn 2's player phase, not in its enemy phase.
+#[test]
+fn the_second_turn_starts_in_its_player_phase_only() {
+    let c = ctx();
+    let mut state = quick_battle(&c.content).unwrap();
+    let mut seen = Vec::new();
+    while !(state.turn() == 2 && state.phase() == Phase::Enemy) {
+        let fired = BattleScreen::new(state.clone()).lesson_triggers_now();
+        seen.push((
+            state.turn(),
+            state.phase(),
+            fired.contains(&TipTrigger::SecondTurn),
+        ));
+        state.apply(&Command::EndPhase).unwrap();
+    }
+    let fired = BattleScreen::new(state.clone()).lesson_triggers_now();
+    assert!(!fired.contains(&TipTrigger::SecondTurn));
+    let second: Vec<_> = seen.iter().filter(|(_, _, f)| *f).collect();
+    assert_eq!(second, [&(2, Phase::Player, true)]);
+}

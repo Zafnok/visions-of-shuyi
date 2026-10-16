@@ -336,6 +336,18 @@ mod tests {
         s.fire(first);
         s.absorb(&c, None, 1);
         assert!(!s.in_play());
+        // A lesson that wasn't put away still comes this turn.
+        c.content.lessons.lessons.push(lesson(
+            "later",
+            LessonLevel::Full,
+            TipTrigger::FirstLowHp,
+            &[UP],
+        ));
+        s.fire(TipTrigger::FirstLowHp);
+        s.absorb(&c, None, 1);
+        assert_eq!(s.current(), Some("later"));
+        s.mark_open();
+        assert!(s.tick(&mut c, UP));
         // A later turn: back, from an empty list.
         s.fire(first);
         s.absorb(&c, None, 2);
