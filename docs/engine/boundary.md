@@ -23,7 +23,7 @@ that moves a module changes its row.
 | `ui` (78.5k lines) | ~21.8k (28%) | ~6.9k (9%) | ~49.8k (63%) | M files: 28.5k lines, cut by the notes below. |
 | `app` (3.6k lines) | ~3.3k | — | ~0.3k | Thin. The game's leaks are listed below. |
 | `xtask` (18.3k lines) | ~8.4k | ~1.2k | ~4.4k | Plus 4.3k M. Repository tools (`ticket-lint`, `clean-merged-targets`) stay with us. |
-| `bots` (0.7k lines) | — | ~0.2k shape | ~0.5k | The bot trait and play loop need a rules trait first. |
+| `bots` (0.7k lines) | — | ~0.2k shape | ~0.5k | Done (1116): the bot trait and play loop are `shuyi_core::bots`. |
 
 **Total that goes to the engine:** roughly a third of the codebase. That
 is about 60k of about 180k lines, counting tests.
@@ -80,8 +80,10 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    against the trait.
    **Done (1114):** `shuyi_core::TurnRules` (check, apply, legal commands,
    outcome), implemented by `BattleState` with its own methods. History,
-   replay and rewind are `shuyi_core::history::History` over it; the bots
-   follow in 1116.
+   replay and rewind are `shuyi_core::history::History` over it.
+   **Done (1116):** the bots: `shuyi_core::bots` (`Bot`, `play`, a
+   seeded `RandomBot`) over `TurnRules` plus `Sides` (whose move, which
+   turn), which `BattleState` implements with its phase and turn.
 8. **Pathfinding is not generic.** `reachable`, `path_cost`, `threat_area` and
    `danger_zone` take the game's map, tables and units
    (`core/src/movement.rs:334-515`). There is a second Dijkstra in
@@ -142,7 +144,7 @@ Modules that do not import `trpg_core` at all are the first set to move:
 | `lang/lines.rs`, `lang/data.rs` | M | Per-line translation is E. `ByGender`, and the table lookups for classes and items, are G. |
 | `dialogue.rs`, `dialogue/check.rs`, `dialogue/presence.rs` | M | Scenes, steps, choices, music lines, `@if` and the on-screen checks are E. Lead rules, box sizes and roster checks are G. |
 | `voice.rs`, `tip.rs` | M | Clip manifest and tip schema are E. M/F variants and the `TipTrigger` enum are G. |
-| `map.rs` | M | The `.map` format is K. Shop and Chest features are G. |
+| `map.rs` | M | Done (1116): the `.map` format (reader, printer, legend, look and light) is `shuyi_assets::grid_map`, with a `MapFeature` hook. Shop and Chest features, the tile looks, the size limit and the terrain lookup stay here. |
 | `tileset.rs` | M | Terrain tiles, looks and walk sheets are E. Unit pictures keyed by class or character are G. |
 | `terrain.rs` | K | Its generic `line_of` helper moved to `shuyi_assets::error` (1103); `terrain.rs` re-exports it for the 11 modules that use it. |
 | `cinematic.rs` | M | The timeline (shots at ms, music length) is E. `MapPan` is K. `Characters`, `Talk` and `Combat` are G. |
@@ -220,10 +222,11 @@ analog sticks (today they are four digital directions).
 
 ## `bots`
 
-These are all G today: `BattleState`, `Command`, `AiWeights` and the rest.
-The `PlayerBot::choose` trait, the `play_battle` loop and the measures
-pattern (about 200 lines) become kit code over `TurnRules` (which 1114
-added) in 1116.
+Done (1116): the bot trait and the play loop are the kit's
+(`shuyi_core::bots`: `Bot<R>`, `play` and `play_observed`, `RandomBot`),
+over `TurnRules` and `Sides`. `trpg-bots` keeps the game's bots
+(`BaselineBot`; `PlayerBot` is any `Bot<BattleState>`), `play_battle`
+(the engine loop with the AI on the other phases) and the measures.
 
 ## What other game styles would break (for engine ADR-0003)
 

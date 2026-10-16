@@ -1,6 +1,7 @@
 # Maps (`.map`)
 
-Each `*.map` file here is one map, loaded by `trpg_content::map` and
+Each `*.map` file here is one map, read by the engine's `.map` format
+(`shuyi_assets::grid_map`), loaded by `trpg_content::map` and
 validated by the all-assets test (ADR-0005): a battle's map, or a
 **place** a conversation is drawn over (below). The file stem is the
 map's id (`test_small.map` → `"test_small"`). `test_small.map`, the map

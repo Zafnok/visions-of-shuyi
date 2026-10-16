@@ -7,11 +7,16 @@
 //! battle, times the tries and writes the report. Bots know nothing about
 //! the look of the game (ADR-0038).
 //!
-//! - [`PlayerBot`]: what plays the Player phase. [`BaselineBot`] is the
-//!   enemy AI on the player's side; the Casual, Normal and Hardcore bots
-//!   (0506) implement the same trait.
+//! The bot trait and the play loop are the engine's (`shuyi_core::bots`,
+//! ticket 1116); this crate holds the game's bots and measures.
+//!
+//! - [`PlayerBot`]: what plays the Player phase, any engine
+//!   `Bot<BattleState>`. [`BaselineBot`] is the enemy AI on the player's
+//!   side; the Casual, Normal and Hardcore bots (0506) implement the same
+//!   trait.
 //! - [`play_battle`]: one try, from the state given to the battle's end or
-//!   a turn cap. Bots never rewind: it builds no `BattleHistory`.
+//!   a turn cap, through the engine's loop. Bots never rewind: it builds
+//!   no `BattleHistory`.
 //! - [`BattleMeasures`]: what happened in the try.
 
 mod bot;

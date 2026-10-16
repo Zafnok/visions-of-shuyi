@@ -15,7 +15,7 @@ use crate::error::ContentError;
 /// Path of the lights' file inside the asset bundle.
 pub const LIGHTING_PATH: &str = "data/lighting.ron";
 /// The light of a map that names none. The file must have it.
-pub const NOON: &str = "noon";
+pub const NOON: &str = shuyi_assets::grid_map::DEFAULT_LIGHT;
 
 /// Loads the embedded lights' file.
 pub fn load() -> Result<Lighting, Vec<ContentError>> {

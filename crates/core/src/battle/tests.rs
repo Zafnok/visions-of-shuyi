@@ -2630,6 +2630,21 @@ fn the_turn_rules_are_the_battles_own_methods() {
     assert!(TurnRules::legal_commands(&won).is_empty());
 }
 
+#[test]
+fn the_side_to_move_is_the_phase_and_the_turn_is_the_battles() {
+    let mut s = start(setup(skirmish()));
+    let mut seen = Vec::new();
+    while s.turn() < 3 {
+        assert_eq!(Sides::side_to_move(&s), s.phase());
+        assert_eq!(Sides::turn(&s), s.turn());
+        seen.push((Sides::turn(&s), Sides::side_to_move(&s)));
+        s.apply(&Command::EndPhase).unwrap();
+    }
+    assert_eq!(Sides::turn(&s), 3);
+    assert_eq!(seen.first(), Some(&(1, Phase::Player)));
+    assert!(seen.contains(&(2, Phase::Enemy)), "{seen:?}");
+}
+
 // ---- Property: random legal play -------------------------------------------------
 
 /// Each ready unit's plain attacks from its own tile that `s` accepts: a

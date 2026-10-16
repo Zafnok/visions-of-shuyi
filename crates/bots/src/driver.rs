@@ -2,9 +2,10 @@
 
 use std::fmt;
 
-use trpg_core::{AiWeights, BattleState, Command, CommandError, Phase, Turn, next_command};
+use shuyi_core::{Bot, play_observed};
+use trpg_core::{AiWeights, BattleState, Command, CommandError, Phase, Turn};
 
-use crate::{BattleMeasures, PlayerBot};
+use crate::{BaselineBot, BattleMeasures, PlayerBot};
 
 /// A command the battle refused during a try: a bug in the bot (or in the
 /// AI), never skipped.
@@ -34,8 +35,8 @@ impl std::error::Error for PlayError {}
 
 /// Plays `state` to the battle's end, or until turn `turn_cap` has passed:
 /// `bot` plays the Player phase, and every other phase is played as the
-/// game plays it, the AI's command ([`next_command`] with `enemy_weights`)
-/// or else the phase's end.
+/// game plays it, the AI's command ([`trpg_core::next_command`] with `enemy_weights`)
+/// or else the phase's end. The loop is the engine's ([`play_observed`]).
 ///
 /// A try stopped by the cap has no outcome, and its
 /// [`turns`](BattleMeasures::turns) is `turn_cap + 1`, the turn that was
@@ -49,25 +50,24 @@ pub fn play_battle(
     turn_cap: Turn,
 ) -> Result<BattleMeasures, Box<PlayError>> {
     let mut measures = BattleMeasures::new(&state);
-    while state.outcome().is_none() && state.turn() <= turn_cap {
-        let phase = state.phase();
-        let command = if phase == Phase::Player {
-            bot.choose(&state)
-        } else {
-            next_command(&state, enemy_weights).unwrap_or(Command::EndPhase)
-        };
-        match state.apply(&command) {
-            Ok(events) => measures.observe(&state, &events),
-            Err(error) => {
-                return Err(Box::new(PlayError {
-                    command,
-                    turn: state.turn(),
-                    phase,
-                    error,
-                }));
-            }
-        }
-    }
+    let mut enemy = BaselineBot::new(*enemy_weights);
+    let mut other = enemy;
+    let mut bots: [(Phase, &mut dyn Bot<BattleState>); 3] = [
+        (Phase::Player, bot),
+        (Phase::Enemy, &mut enemy),
+        (Phase::Other, &mut other),
+    ];
+    play_observed(&mut state, &mut bots, turn_cap, |after, _, events| {
+        measures.observe(after, events);
+    })
+    .map_err(|e| {
+        Box::new(PlayError {
+            command: e.command,
+            turn: e.turn,
+            phase: e.side,
+            error: e.error,
+        })
+    })?;
     Ok(measures)
 }
 
@@ -76,7 +76,6 @@ mod tests {
     use trpg_core::{AiBehavior, Outcome, UnitAction, UnitId};
 
     use super::*;
-    use crate::BaselineBot;
     use crate::testkit::{content, enemy, player, rigged, start, weak};
 
     /// Ends every Player phase at once. It gives up (panics) when asked for
@@ -87,7 +86,7 @@ mod tests {
         phases: u32,
     }
 
-    impl PlayerBot for Passive {
+    impl Bot<BattleState> for Passive {
         fn choose(&mut self, _: &BattleState) -> Command {
             self.phases += 1;
             assert!(self.phases <= 100, "the try never stops");
@@ -98,7 +97,7 @@ mod tests {
     /// Orders a unit that isn't in the battle.
     struct Broken;
 
-    impl PlayerBot for Broken {
+    impl Bot<BattleState> for Broken {
         fn choose(&mut self, state: &BattleState) -> Command {
             if state.turn() < 2 {
                 return Command::EndPhase;

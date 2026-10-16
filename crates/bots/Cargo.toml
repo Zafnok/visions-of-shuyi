@@ -13,6 +13,8 @@ workspace = true
 # Dev tooling (ADR-0033): used only by `xtask` and tests. Never a dependency
 # of `trpg-ui` or `trpg-app`, and never depends on them (ADR-0038).
 [dependencies]
+# The play loop and the `Bot` trait (ticket 1116).
+shuyi-core = { path = "../../engine/crates/core" }
 trpg-core = { path = "../core" }
 
 [dev-dependencies]
