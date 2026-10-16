@@ -111,8 +111,7 @@ second on the title and the battle, and the stack high-water mark
       Game, the lead's name grid and into Chapter 1's first battle.
 - [x] A profile and a save written in the Simulator are there after a
       restart.
-- [ ] The device numbers are in the PR. *Waits on Nick's sideload (see
-      the completion notes).*
+- [x] The device numbers are in the PR.
 - [x] Tests: `PadKind::Playdate` names; the no-keyboard start; storage
       conformance runs in the Simulator (logged in the PR).
 - [x] The PC game is unchanged (snapshots, harness tests).
@@ -180,19 +179,30 @@ and plays to the familiarity question too. Screens are cut off as the
 ticket expects (the title is all backdrop picture, a grey box until
 1040; the map menu opens below row 15).
 
+**Measured on Nick's Playdate** (Rev B, release build, 2026-10-15):
+
+- Game data loaded in 4,591 ms (1026: 3,708 ms for the data alone; this
+  also builds the context and the title). Game stack used: **18,848 of
+  65,536 bytes**, well under the 64 KB.
+
+| A minute on | Frames a second | `Game::frame` min / avg / max | Render and copy min / avg / max (frames drawn) |
+| ----------- | --------------- | ----------------------------- | ---------------------------------------------- |
+| Dialogue | 14.8 | 2.7 / 8.8 / 58.7 ms | 336.6 / 358.6 / 387.8 ms (90) |
+| Dialogue | 27.2 | 2.0 / 5.4 / 217.2 ms | 345.8 / 360.4 / 384.4 ms (15) |
+| Battle | 22.8 | 4.1 / 30.3 / 542.3 ms | 360.0 / 426.1 / 448.7 ms (26) |
+
+The game's own frame is fast; drawing a changed frame costs about
+360–430 ms, so the screen moves about 3 times a second while anything
+changes. Follow-up **1055** (the one-bit render fast enough on the
+device), now in 1050's `blocked_by`. Nick: "very unplayable rn bc of all
+the cutoff screens and the controls mapping" — the cut-off screens are
+the skin tickets (1037 on) and the controls are 1034/1035, as planned.
+
 **Deviations**
 
 - The debug tools are off on the Playdate: they are made of the test
   files, which the `no_std` build does not have (ADR-0057).
-- The device numbers are not in yet: they need Nick's sideload of the
-  release build (below).
 
-**For Nick:** sideload `target/playdate/VisionsOfShuyi.pdx` (built with
-`cargo xtask playdate --release`), play to the first battle, stay a
-minute on the title and a minute in the battle, and paste the
-Simulator's console: the lines starting "On title for 60 seconds" /
-"On battle for 60 seconds" and the ones after them are the numbers.
-
-No gameplay rules were decided here. No follow-up tickets: what the
-Playdate still lacks (chords, crank, skins, sound) already has tickets
-(1034–1047).
+No gameplay rules were decided here. Follow-up ticket: 1055 (render
+speed). What the Playdate still lacks otherwise (chords, crank, skins,
+sound) already has tickets (1034–1047).

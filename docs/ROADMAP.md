@@ -276,7 +276,8 @@ early so every later PR is checked by them.
   4. **1033** the front end runs the game (loop, D-pad/A/B, saves)
   5. **1034** button chords → **1035** the crank rewinds, the system menu,
      map menu entries · **1036** load only what the Playdate uses, loading
-     card · **1037** the one-bit map skin
+     card · **1037** the one-bit map skin · **1055** the one-bit render
+     fast enough on the device (1033 measured ~360 ms a frame)
   6. **1040** one-bit images · **1047** sound and music · **1038** the
      battle screen (after 0242) → **1039** forecast, unit info, level-up,
      rewind (after 0248)
