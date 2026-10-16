@@ -6,7 +6,7 @@ milestone: M8 Release
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804", "0816", "0902", "0906"]
+blocked_by: ["0804", "0816", "0902", "0906", "0908"]
 nick_input: setup
 completed:
 ---
@@ -23,6 +23,10 @@ partner account and a $100 app fee — Nick's decision and money.
 done before the Steam page is created) and 0816 (step 3 assumes controller
 input, button names and button rebinding all exist; 0816 is the last of
 them and waits for 0220 and 0815).
+
+**Blocker added 2026-10-16:** 0908, the polish of the title's sparks and
+the threat arrows that Nick wants "before release" (Chapter 1 playtest
+round 3).
 
 **Machine-made content (added 2026-10-03, either order with 0907):** if the
 build has AI-generated voices, a machine-translated language or both

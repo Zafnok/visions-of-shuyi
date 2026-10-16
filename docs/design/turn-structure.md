@@ -224,6 +224,16 @@ which the unit is done.
 
 ## Threat arrows: who can attack this tile
 
+Playtest round 3 (2026-10-16): when the arrows show is "Right", and the
+danger zone is now used "rarely, this is great, danger zone should be for
+advanced tacticians not mandatory for every playstyle". Nick asked to
+"ensure the threat arrows are accurate to if the enemies have obstacles
+(like our allied units moving to block them)": they are. An enemy's reach
+is worked out with every unit of yours as a wall it can't walk through,
+and the unit you are moving counted on the tile you're moving it to
+(`threats_at`, `crates/core/src/movement.rs`). An enemy that never moves
+uses only its weapon's range from where it stands.
+
 Decided 2026-10-12, ticket 0055. Nick asked for it while playing Chapter 1
 (ticket 0804):
 

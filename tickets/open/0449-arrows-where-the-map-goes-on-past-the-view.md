@@ -6,7 +6,7 @@ milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: []
+blocked_by: ["1118", "1050"]
 nick_input: decision
 completed:
 ---
@@ -24,6 +24,12 @@ Nick, 2026-10-12, right after ticket 0439 (the 1× / 2× zoom) was built:
 Since 0439 a new player starts at 2×, where the view shows 17×15 tiles of
 the bought art. Chapter 1's map is 24×16, so part of it is off screen (the
 fort in the top right at the start), and nothing on screen says so.
+
+Nick asked again in Chapter 1 playtest round 3 (0804, 2026-10-16): "we
+need the map scroll arrows to ensure players know when it's cut off from
+the whole picture. Otherwise 2x is ok to start on." 0804's round 4 waits
+for this ticket; like the rest of round 3's tickets it waits for the
+engine carve (1118) and the Playdate port (1050), Nick's priority.
 
 **The second half of his sentence is how the game already works.** The
 camera follows the cursor (`Camera::follow`, `crates/ui/src/screens/battle/

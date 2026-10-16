@@ -19,6 +19,9 @@ whcih = "whcih"
 # 0036 and the tickets that quote it).
 reminiscient = "reminiscient"
 conversaiton = "conversaiton"
+# Verbatim quote of Nick on key hints (Chapter 1 playtest round 3, tickets
+# 0804 and 0250).
+discernable = "discernable"
 # Two-letter runs of colour keys in snapshot colour grids (ADR-0007),
 # e.g. `Iy` in the portrait snapshots, `abd` in the dialogue ones.
 iy = "iy"

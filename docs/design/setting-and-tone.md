@@ -64,6 +64,12 @@ hard beats.
   0804, on "that eyebrow's had one scar off me already" and "Twelve men.
   No. Fourteen. Bad archers."): "idk what this means", "so why would they
   not be counted?". A line says plainly what it means.
+- **Words kept** (Nick, playtest round 3, 2026-10-16, asked about the
+  words 0724 left for him): Hollis's "Aye" stays; "Greywater Abbey" keeps
+  its spelling (it's a name, so American spelling doesn't apply); Tamsin's
+  "Your Former Grace" stays. The rest of the Chapter 1 script is written
+  again from the beats (tickets 0736, 0737): "We can keep the beats we
+  agreed on but the whole script is fairly mid imo."
 - **The ending is not a tragedy.** It is resolved and feels like a hard-fought
   victory. Nick fixed this.
 - **Unavoidable story losses are allowed**, including someone close to the lead

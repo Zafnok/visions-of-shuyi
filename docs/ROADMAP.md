@@ -92,6 +92,33 @@ asks; the battle map for talk around a battle; built by **0732** the
 study → **0734** the moving openings, whose sign-off asks again about the
 scene music), each with the tickets it creates. All of these are on the critical path now.
 
+**Playtest round 4** (Nick, 2026-10-16, after playing `v0.3.0`: "generally
+it's an 8/10, where before it was 3 or 4/10... we can park playtest 4 til
+after engine carve and playdate port"). **The engine carve (to 1118) and
+the Playdate port (to 1050) come first**; every round 3 ticket waits for
+both, and so does 0804. Then 0804 waits for: **0736** research what makes
+fantasy dialogue compelling → **0737** the Chapter 1 script written again
+from the beats (0719, 0722 and 0726 now wait for it) → **0742** other music
+for three scenes · **0738** the places' round 3 notes (longer openings, no
+outline on actors, a lighter study, the party at the toll-fort) · **0739**
+how much faces dim over a place · **0740** narration left-aligned · **0741**
+the pre-battle place reads as the chapel green · **0843** the intro's fixes
+(longer news, shorter fight hold, hit sounds, the logo on the chord, a
+start through black) · **0844** a setting to turn the intro off · **0446**
+Tamsin's combat picture · **0449** arrows where the map goes past the view
+· **0466** a zoom tip · **0464** lessons only when they can be done →
+**0465** the end of the lessons points at Guides and offers a fresh start ·
+**0467** tips lost before they show · **0841** Tutorial None stops what's
+queued · **0463** the forecast's weapon swap easy to find · **0468** Vix's
+ears · **0842** Vix's profile nudge on the title · **0250** key names that
+stand out · **0847** a better dialogue log key · **0461** the road up to a
+bridge · **0462** aiming starts on an enemy · **0318** Cinder Oath can't
+counter · **0845** the objective becomes defeating Harl → **0846** the lead
+a little stronger. Parked, not before round 4: **0063** rework the intro's
+shots, **0064** a story role for Vix, **0065** naming Vix and the lead,
+**0469** pictures in Guides, **0908** polish before the Steam release
+(sparks, arrows; 0903 waits for it).
+
 **Replaceable graphics** (Nick, 2026-10-01: swapping the map's glyphs for
 sprites from image files must be a small job; ADR-0038): **0231** pictures
 in the frame as sprite items (no open dependencies; 0711 and 0413 now draw
