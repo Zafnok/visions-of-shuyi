@@ -1,0 +1,58 @@
+[package]
+name = "trpg-playdate"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+# The workspace lints, copied as `trpg-app` copies them and for the same
+# reason: `unsafe_code` is `deny` here instead of `forbid`, because a
+# platform crate holds the FFI, the allocator and the stack switch
+# (ADR-0004 rule 5, ADR-0070 §4). Only `src/pd/` allows it. An xtask test
+# keeps the rest equal to the workspace's.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+unwrap_used = "warn"
+expect_used = "warn"
+dbg_macro = "warn"
+todo = "warn"
+print_stdout = "warn"
+
+[lib]
+# What `cargo xtask playdate` links with the C shim into `pdex.elf` and
+# `pdex.dll` (ADR-0070 §1). Only a `staticlib`: Cargo skips LTO for a
+# library that is an `rlib` too, and without LTO the device link pulls in
+# libgcc's unwinder and newlib's `abort`, which the Playdate does not have.
+# Nothing depends on this crate; its tests and clippy need no `rlib`.
+crate-type = ["staticlib"]
+# No doc tests: they would link the host `staticlib` for nothing.
+doctest = false
+
+[features]
+# The Playdate build itself, turned on only by `cargo xtask playdate`:
+# `no_std`, the SDK calls through `shim/shim.c`, the allocator, the panic
+# handler and the game's own stack (`src/pd/`). Without it the crate is the
+# plain, tested part, so `cargo test --workspace` and `clippy --workspace`
+# build it on any machine.
+sdk = []
+
+[dependencies]
+trpg-core = { path = "../core", default-features = false }
+trpg-content = { path = "../content", default-features = false }
+trpg-ui = { path = "../ui", default-features = false }
+
+[package.metadata.cargo-machete]
+# The front end runs the game's screens from 1033 on; this ticket only
+# loads the game's data (ticket 1031).
+ignored = ["trpg-core", "trpg-ui"]

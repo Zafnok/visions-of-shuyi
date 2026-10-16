@@ -9,7 +9,8 @@ use trpg_core::{CharacterId, LeadProfile};
 use crate::dialogue::{DialoguePlayer, Portrait, View};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::screen::Ctx;
-use crate::screens::dialogue::{TEXT_LINES, TEXT_W, Told, draw_told};
+use crate::screens::dialogue::view::told;
+use crate::screens::dialogue::{TEXT_LINES, TEXT_W, glyph};
 use crate::widgets::word_wrap;
 
 /// The part of a box's time, at its end, for which all of its text is
@@ -79,13 +80,7 @@ impl TalkBox {
             narration: self.narration,
             ..View::default()
         };
-        let told = Told {
-            lead,
-            view: &view,
-            lines: &self.lines,
-            shown,
-        };
-        draw_told(ctx, buf, &told);
+        glyph::paint(ctx, &told(ctx, lead, &view, &self.lines, shown), buf);
     }
 }
 

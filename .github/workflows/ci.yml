@@ -104,6 +104,53 @@ jobs:
       - run: cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf --locked
 
+  # The Playdate front end's device build (ADR-0070 §1, ticket 1031):
+  # `pdex.elf` linked and packed by the SDK's `pdc`. The Simulator's
+  # `pdex.dll` is Windows-only and not built here. The SDK is downloaded
+  # from Panic and cached by version, never committed: its license forbids
+  # redistributing it.
+  playdate:
+    name: playdate
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    env:
+      # The one place the SDK's version is pinned.
+      PLAYDATE_SDK_VERSION: 3.1.2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show
+      - run: rustup target add thumbv7em-none-eabihf
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Install the ARM compiler
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi
+      - name: Point at the Playdate SDK
+        run: echo "PLAYDATE_SDK_PATH=$HOME/playdate-sdk" >> "$GITHUB_ENV"
+      - name: Cache the Playdate SDK
+        id: sdk-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/playdate-sdk
+          key: playdate-sdk-${{ env.PLAYDATE_SDK_VERSION }}-linux
+      - name: Download the Playdate SDK
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$PLAYDATE_SDK_PATH"
+          curl -fsSL "https://download.panic.com/playdate_sdk/Linux/PlaydateSDK-${PLAYDATE_SDK_VERSION}.tar.gz" \
+            | tar -xz -C "$PLAYDATE_SDK_PATH" --strip-components=1
+      - name: Clippy with the SDK glue
+        run: cargo clippy -p trpg-playdate --features sdk --target thumbv7em-none-eabihf --locked -- -D warnings
+      - name: Build the device game
+        run: cargo xtask playdate --release --device
+      - name: Check pdex.elf was linked and pdc packed the game
+        run: |
+          test -s target/playdate/Source/pdex.elf
+          test -s target/playdate/VisionsOfShuyi.pdx/pdex.bin
+          test -s target/playdate/VisionsOfShuyi.pdx/pdxinfo
+          ls -l target/playdate/VisionsOfShuyi.pdx
+
   docs:
     name: docs
     needs: changes
@@ -190,7 +237,7 @@ jobs:
   ci-result:
     name: ci-result
     if: always()
-    needs: [changes, fmt, clippy, test, wasm, no-std, docs, coverage, tickets]
+    needs: [changes, fmt, clippy, test, wasm, no-std, playdate, docs, coverage, tickets]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any needed job failed or was cancelled

@@ -10,6 +10,7 @@ use trpg_ui::audio::{AudioRequest, MusicCommand};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
 use trpg_ui::screens::DialogueScreen;
+use trpg_ui::screens::dialogue::view::{DialogueView, SkipView};
 
 /// Text boxes in the test scene, picking the first reply.
 const TEST_BOXES: usize = 11;
@@ -47,14 +48,22 @@ fn play_to_the_end(h: &mut Harness) -> usize {
     panic!("the scene never ended");
 }
 
-/// The text of row `y`, trimmed.
-fn row(h: &Harness, y: i32) -> String {
-    let buf = h.game().buffer();
-    (0..100)
-        .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
-        .collect::<String>()
-        .trim()
-        .to_owned()
+/// What the dialogue screen shows.
+fn view(h: &Harness) -> DialogueView {
+    let Some(screen) = h.game().screen::<DialogueScreen>() else {
+        panic!("no scene is playing: {:?}", h.screens());
+    };
+    screen.view(h.game().ctx())
+}
+
+/// The text box's text as revealed so far, its lines joined by spaces.
+fn text(h: &Harness) -> String {
+    view(h).text.revealed().join(" ")
+}
+
+/// The text box's page, in full, its lines joined by spaces.
+fn page(h: &Harness) -> String {
+    view(h).text.lines.join(" ")
 }
 
 #[test]
@@ -86,7 +95,7 @@ fn holding_space_fast_forwards() {
     let mut h = full_screen();
     // The press that moves on to the knight's long line stays held.
     h.keys("Space Space Space Space Space").hold("Space", 0.4);
-    assert!(row(&h, 23).contains("from you often"));
+    assert!(text(&h).contains("from you often"));
 }
 
 #[test]
@@ -102,16 +111,21 @@ fn waiting_reveals_the_text_so_one_press_moves_on() {
 fn skipping_asks_first() {
     let mut h = full_screen();
     h.keys("d");
-    assert!(row(&h, 23).starts_with("│   Skip scene?  "));
-    assert!(row(&h, 24).starts_with("│   f yes / d no  "));
+    let skip = SkipView {
+        question: "Skip scene?".to_owned(),
+        answers: "f yes / d no".to_owned(),
+    };
+    assert_eq!(view(&h).text.skip, Some(skip));
     // No: the scene goes on.
     h.keys("d");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("f f");
-    assert!(row(&h, 21).contains(" Test Knight "));
+    let speaking = view(&h).speaking().map(|f| f.name.clone());
+    assert_eq!(speaking.as_deref(), Some("Test Knight"));
     // Yes: it skips to the reply choice; after that, to the end.
     h.keys("d f");
-    assert!(row(&h, 22).contains("Ellery! You came back for us."));
+    assert!(page(&h).contains("Ellery! You came back for us."));
+    assert!(view(&h).text.choices.is_some());
     h.keys("f d f");
     assert_eq!(h.screens(), ["title", "debug_menu"]);
 }
@@ -123,8 +137,8 @@ fn holding_confirm_fast_forwards() {
     let mut fast = full_screen();
     // The press that moves on to the knight's long line stays held.
     fast.keys("f f f f f").hold("f", 0.4);
-    assert!(row(&fast, 23).contains("from you often"));
-    assert!(!row(&normal, 23).contains("from you often"));
+    assert!(text(&fast).contains("from you often"));
+    assert!(!text(&normal).contains("from you often"));
 }
 
 /// 0727: the press that turns the page, held a moment (a tap), reveals no
@@ -136,12 +150,8 @@ fn a_tap_does_not_fast_forward() {
     quick.keys("f f f f f f").wait(0.11 - 1.0 / 60.0);
     let mut tap = full_screen();
     tap.keys("f f f f f").hold("f", 0.11);
-    assert!(
-        row(&quick, 23).starts_with("│   Than ne  "),
-        "{}",
-        row(&quick, 23)
-    );
-    assert_eq!(row(&tap, 23), row(&quick, 23));
+    assert_eq!(text(&quick), "Than ne");
+    assert_eq!(text(&tap), text(&quick));
 }
 
 /// The narration that opens the test scene, fully shown, under the caption.
@@ -157,7 +167,7 @@ fn narration_snapshot() {
 fn mid_reveal_snapshot() {
     let mut h = full_screen();
     h.keys("f f f f").wait(0.1);
-    assert!(row(&h, 23).starts_with("│   Better l  "));
+    assert_eq!(text(&h), "Better l");
     assert_snapshot!(h.snapshot());
 }
 
@@ -215,7 +225,9 @@ fn at_the_choice() -> Harness {
 #[test]
 fn three_reply_choice_snapshot() {
     let h = at_the_choice();
-    assert!(row(&h, 22).contains("Ellery! You came back for us."));
+    assert!(page(&h).contains("Ellery! You came back for us."));
+    let replies = view(&h).text.choices.map(|c| c.items.len());
+    assert_eq!(replies, Some(3));
     assert_snapshot!(h.snapshot());
 }
 
@@ -230,7 +242,7 @@ fn the_cursor_keys_pick_a_reply() {
         ["menu_move", "menu_move", "menu_move", "menu_select"]
     );
     h.keys("f");
-    assert!(row(&h, 23).contains("I carry my own arrows, thank you."));
+    assert!(text(&h).contains("I carry my own arrows, thank you."));
 }
 
 #[test]
@@ -238,7 +250,7 @@ fn skipping_stops_at_the_choice() {
     let mut h = full_screen();
     h.keys("d f");
     assert_eq!(h.top_screen(), "dialogue");
-    assert!(row(&h, 22).contains("Ellery! You came back for us."));
+    assert!(page(&h).contains("Ellery! You came back for us."));
     // Pick the blunt reply, then skip the rest.
     h.keys("Up f d f");
     assert_eq!(h.screens(), ["title", "debug_menu"]);
@@ -289,7 +301,7 @@ fn two_reply_choice_snapshot() {
         &Present::Everyone,
     )));
     h.keys("f f f f");
-    assert!(row(&h, 23).contains("Isolde, will you lead the charge?"));
+    assert!(text(&h).contains("Isolde, will you lead the charge?"));
     assert_snapshot!(h.snapshot());
 }
 
@@ -342,13 +354,13 @@ fn play_music(cue: &str) -> AudioRequest {
 fn music_changes_when_the_scene_reaches_its_line() {
     let mut h = music_scene();
     h.wait(0.5);
-    assert!(row(&h, 24).contains("One."));
+    assert_eq!(text(&h), "One.");
     assert_eq!(music_requests(&h), []);
     h.keys("f").wait(0.5);
-    assert!(row(&h, 24).contains("Two."));
+    assert_eq!(text(&h), "Two.");
     assert_eq!(music_requests(&h), [play_music("village")]);
     h.keys("f").wait(0.5);
-    assert!(row(&h, 24).contains("Three."));
+    assert_eq!(text(&h), "Three.");
     assert_eq!(
         music_requests(&h),
         [play_music("village"), play_music("talk_calm")]
@@ -356,7 +368,7 @@ fn music_changes_when_the_scene_reaches_its_line() {
     // Reading on asks for nothing more, and the mood track is what plays
     // once the village one has faded out.
     h.keys("f").wait(2.0);
-    assert!(row(&h, 24).contains("Four."));
+    assert_eq!(text(&h), "Four.");
     assert_eq!(
         music_requests(&h),
         [play_music("village"), play_music("talk_calm")]

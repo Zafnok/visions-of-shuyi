@@ -5,10 +5,10 @@ type: infra
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["1029"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 1031 — The Playdate front end's crate and build
@@ -134,15 +134,15 @@ high-water mark (1026: 15,256 bytes; it must stay well under 64 KB).
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask playdate` builds `target/playdate/VisionsOfShuyi.pdx`
+- [x] `cargo xtask playdate` builds `target/playdate/VisionsOfShuyi.pdx`
       on Nick's machine (GNU tools only, no MSVC, no nightly).
-- [ ] The `.pdx` runs in the Simulator and shows the load time and stack
+- [x] The `.pdx` runs in the Simulator and shows the load time and stack
       mark.
 - [ ] On Nick's Playdate it loads without crashing; the numbers are in
       the PR.
 - [ ] The CI `playdate` job passes.
-- [ ] `THIRD_PARTY_ASSETS.md` lists the SDK and `setup.c`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `THIRD_PARTY_ASSETS.md` lists the SDK and `setup.c`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -152,5 +152,69 @@ high-water mark (1026: 15,256 bytes; it must stay well under 64 KB).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** New crate `crates/playdate` (`trpg-playdate`) and
+`cargo xtask playdate [--release] [--device|--simulator|--both]`:
+
+- `shim/shim.c`: `eventHandler` (exported for the Simulator under
+  `_WINDLL`), the update callback, and one wrapper per SDK call
+  (`realloc`, log, error, the millisecond clock and the elapsed timer,
+  `clear`, `drawText`, file open/read/write/close), compiled against the
+  installed SDK's `pd_api.h`.
+- `src/pd/` (the `sdk` feature, the only `unsafe`): the `extern "C"`
+  side, a `GlobalAlloc` over the SDK's `realloc` (padding for alignments
+  above 8), a `#[panic_handler]` that shows the message with the SDK's
+  `error` without allocating, `rust_eh_personality` for the Simulator,
+  and the game's own stack: 64 KB from the heap, painted, entered with
+  Thumb assembly by `game_stack::run`; `game_stack::high_water()` reads
+  the mark; a call that reaches the bottom 256 bytes stops the game with
+  an error. On the Simulator `run` is a plain call (the PC's stack) and
+  nothing is measured.
+- What runs: "Loading…" (the system font has the `…`), then
+  `trpg_content::load_embedded()` on the game's stack, then the load time
+  and the stack mark on screen, in the log, and in `load-report.txt` in
+  the game's data folder (for reading a Simulator run without its
+  console). In debug builds the mark is logged once a second when it
+  changed.
+- The plain parts (`heap`, `stack`, `text`, `report`) build without the
+  SDK and are tested on the host; `cargo test/clippy --workspace` never
+  need the SDK.
+- `xtask playdate` is a list of steps (`plan`) run by `execute`: the
+  tests check every command, flag and path without the SDK. Workspace
+  profiles `playdate` (`--release`: `panic = "abort"`, fat LTO, one
+  codegen unit, line tables kept in `pdex.elf`) and `playdate-dev`.
+- CI job `playdate` (Linux): `gcc-arm-none-eabi`, the SDK's Linux tarball
+  from Panic (version 3.1.2 pinned in the job's env, cached by version),
+  clippy with the SDK glue, `cargo xtask playdate --release --device`, and
+  checks for `pdex.elf`, `pdex.bin` and `pdxinfo`. In `ci-result`.
+- Measured on Nick's machine: `pdex.bin` 1.49 MB; nothing linked from
+  newlib or libgcc. Simulator: data loaded in 6 ms (PC speed; the stack is
+  measured on the device only).
+
+**Deviations.**
+
+- The crate is a `staticlib` only, not also an `rlib`: Cargo skips LTO
+  for a library that is both, and without LTO the device link pulled in
+  libgcc's unwinder and newlib's `abort`. Nothing needs the `rlib`.
+- An unoptimized device build keeps ARM unwind tables that name the
+  unwinder's personality routines, so `src/pd/panic.rs` defines empty
+  `__aeabi_unwind_cpp_pr0`/`pr1`/`pr2` (never called: nothing unwinds).
+- The Playdate SDK is listed in a new *Platform SDKs (not shipped)*
+  section of `THIRD_PARTY_ASSETS.md`, not as a table row: every row needs
+  a credit whose license is one of ADR-0013's, and nothing of the SDK
+  ships. `setup.c` has a row, a hidden credit and its license text
+  (`crates/playdate/setup.c-LICENSE.md`).
+- The SDK glue (`crates/playdate/src/pd/**`) is excluded from mutation
+  testing: only the `sdk` feature compiles it, so every mutant there
+  would count as missed. CI's `playdate` job builds it.
+- The Simulator's `pdex.dll` is stripped (14 MB to 3 MB), because the
+  `.pdx` carries it to the device too.
+- `run-gates` gained the Playdate clippy line; the lint-drift test now
+  covers both platform crates.
+
+**For Nick.** On the Playdate the game's name is "Visions of Shuyi",
+its author "Nick Wentz" and its bundle ID `com.zafnok.visionsofshuyi`
+(its data folder on the device; it should not change once a build is
+out). Say if you want other names. No gameplay rules were decided.
+
+**Follow-ups.** None new: 1032 (renderer), 1033 (the game runs), 1036
+(loading card, less data) are already ticketed.

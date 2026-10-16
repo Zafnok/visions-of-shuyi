@@ -372,8 +372,10 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      box, EXP and level-up pages and rewind screen (0248) have views of
      their own (`battle/view/`), built by their logic modules and
      painted by `battle/glyph/<part>.rs` (the class change and results
-     screens paint the level-up pages with the same skin). Dialogue
-     still draws in `draw` until 0249, so don't copy that.
+     screens paint the level-up pages with the same skin). The dialogue
+     screen (0249) builds a `DialogueView` (`dialogue/view.rs`) that a
+     cinematic's talk shot builds too (`view::told`), so both are painted
+     by `dialogue/glyph.rs`.
    - Text the player reads is never a string literal (ADR-0045). Put it
      in `assets/lang/en/ui.ron` under a `screen.thing` key and ask for it
      with `ctx.text("title.new_game")`, or `ctx.text_with("results.turns",

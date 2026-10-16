@@ -101,6 +101,7 @@ from another seller gets its own row and credit.
 | `web/quad-storage.js` (miniquad `localStorage` JS plugin) | https://github.com/optozorax/quad-storage/blob/3760b953aec17d65cc4ca8edfa39c38e7337ec3a/js/quad-storage.js | 0.1.3 (commit `3760b953`, with a local `version` patch, see `web/README.md`) | MIT | [`web/quad-storage-LICENSE-MIT.txt`](web/quad-storage-LICENSE-MIT.txt) | Backs `trpg_ui::storage::Storage` on web | 0207 |
 | `web/sapp_jsutils.js` (JS↔Rust marshalling `quad-storage.js` needs) | https://github.com/not-fl3/sapp-jsutils, shipped inside the `sapp-jsutils` crate's `js/sapp_jsutils.js` | 0.1.7 | MIT (no upstream `LICENSE` file; standard MIT text reconstructed from the crate's declared license, see `web/README.md`) | [`web/sapp_jsutils-LICENSE-MIT.txt`](web/sapp_jsutils-LICENSE-MIT.txt) | Backs `trpg_ui::storage::Storage` on web | 0207 |
 | SDL_GameControllerDB (`gamecontrollerdb.txt`), compiled into native builds by the `gilrs` crate | https://github.com/mdqinc/SDL_GameControllerDB, shipped inside the `gilrs` crate (`SDL_GameControllerDB/`) | The copy in `gilrs` 0.11.2 | Zlib | [`crates/app/SDL_GameControllerDB-LICENSE.txt`](crates/app/SDL_GameControllerDB-LICENSE.txt), copied from the crate's `SDL_GameControllerDB/LICENSE` (the `gilrs` crate itself, MIT / Apache-2.0, is covered by `cargo-deny` and `THIRD_PARTY_LICENSES.html`) | Maps PlayStation, Switch and generic controllers to standard button positions (ADR-0034) | 0219 |
+| Playdate SDK build support: `C_API/buildsupport/setup.c`, compiled and linked into the Playdate game (`pdex.elf`, `pdex.dll`) by `cargo xtask playdate`; never copied into this repository | https://play.date/dev/ (inside the SDK download) | The copy in Playdate SDK 3.1.2 | 0BSD | [`crates/playdate/setup.c-LICENSE.md`](crates/playdate/setup.c-LICENSE.md), copied from the SDK's `C_API/buildsupport/License.md` | The Playdate game's start-up: hands the SDK's allocator to the C library and calls our `eventHandler` (ADR-0070 §1) | 1031 |
 | Music: "New Sunrise" by nene | https://opengameart.org/content/new-sunrise | V1 (New Sunrise.wav) for the title screen; V2 (new_sunrise_V2_0.wav) for a first city visit | CC0-1.0 | [`assets/audio/licenses/CC0-1.0.txt`](assets/audio/licenses/CC0-1.0.txt) | `title`, `city_first_visit` cues | 0214 |
 | Music: "Squirrel Village" by SoManyWhales | https://opengameart.org/content/squirrel-village | SV_loop.mp3 (the loop file) from squirrelvillage.zip | CC-BY-4.0 | [`assets/audio/licenses/CC-BY-4.0.txt`](assets/audio/licenses/CC-BY-4.0.txt) | `village_home` cue | 0214 |
 | Music: "Aria" by Kistol | https://opengameart.org/content/aria | Aria_2.ogg | CC0-1.0 | [`assets/audio/licenses/CC0-1.0.txt`](assets/audio/licenses/CC0-1.0.txt) | `village` cue | 0214 |
@@ -139,3 +140,21 @@ from another seller gets its own row and credit.
 | Sound: "Footstep_Grass_5" by GiocoSound | https://freesound.org/s/421135/ | HQ preview | CC0-1.0 | [`assets/audio/licenses/CC0-1.0.txt`](assets/audio/licenses/CC0-1.0.txt) | `step_foot` cue | 0214 |
 | Sound: "Knight Right Footstep on Gravel 5 (With Chainmail)" by Ali_6868 | https://freesound.org/s/384890/ | HQ preview | CC0-1.0 | [`assets/audio/licenses/CC0-1.0.txt`](assets/audio/licenses/CC0-1.0.txt) | `step_armored` cue | 0214 |
 | Sound: "Maxheadroom's Galloping Horse" by Podsburgh | https://freesound.org/s/274898/ | HQ preview; one hoof-beat pair cut from 0.895-1.035 s | CC0-1.0 | [`assets/audio/licenses/CC0-1.0.txt`](assets/audio/licenses/CC0-1.0.txt) | `step_mounted` cue | 0214 |
+
+## Platform SDKs (not shipped)
+
+SDKs a build is made with but that are not in the game or in this
+repository. They need no row in the table above and no credit: nothing of
+them ships. Their licenses still bind how the game is built and sold
+(ADR-0013, *Platform SDKs*).
+
+- **Playdate SDK** (Panic Inc.), 3.1.2, https://play.date/dev/, under
+  Panic's SDK license (`SDK_LICENSE.md` in the SDK): free and
+  royalty-free, games made with it are ours to sell anywhere; the SDK may
+  not be redistributed, decompiled or used for other platforms, and
+  "Playdate" or "Panic" may not be in the game's name without permission
+  (ADR-0070). Installed by hand on a developer's machine and downloaded
+  from Panic by CI's `playdate` job, never committed. The game calls the
+  Playdate's system through its headers (`crates/playdate/shim/shim.c`);
+  the only SDK file linked into the game is `setup.c` (0BSD, in the table
+  above). Added by ticket 1031.

@@ -16,6 +16,10 @@ lcov.info
 .env
 .claude/settings.local.json
 
+# The Playdate Simulator's crash reporter, written to the folder it is
+# started from (crates/playdate/README.md)
+.sentry-native/
+
 # OS / editor noise
 .DS_Store
 Thumbs.db

@@ -37,6 +37,7 @@
     (key: "options.row.layout", source: "Layout", text: "LAYOUT"),
     (key: "options.row.key_bindings", source: "Key bindings", text: "KEY BINDINGS"),
     (key: "options.row.game_mode", source: "Game mode", text: "GAME MODE"),
+    (key: "options.row.tutorial", source: "Tutorial", text: "TUTORIAL"),
     (key: "options.row.reset_tips", source: "Reset tips", text: "RESET TIPS"),
     (key: "battle.lesson.progress", source: "{n} of {m} done", text: "{n} OF {m} DONE"),
     (key: "options.row.restore_defaults", source: "Restore defaults", text: "RESTORE DEFAULTS"),
@@ -59,6 +60,9 @@
     (key: "options.cursor.tile_glow", source: "Tile glow", text: "TILE GLOW"),
     (key: "options.mode.classic", source: "Classic", text: "CLASSIC"),
     (key: "options.mode.casual", source: "Casual", text: "CASUAL"),
+    (key: "options.tutorial.full", source: "Full", text: "FULL"),
+    (key: "options.tutorial.short", source: "Short", text: "SHORT"),
+    (key: "options.tutorial.none", source: "None", text: "NONE"),
     (
         key: "options.message.tips_reset",
         source: "Tips will show again",
