@@ -475,7 +475,7 @@ pub fn run(
 
 #[cfg(test)]
 mod tests {
-    use trpg_content::ImageTable;
+
     use trpg_content::battler::{Facing, parse_battler};
 
     use super::*;
@@ -516,7 +516,7 @@ mod tests {
             "(\n    id: \"brigand\",\n    image: \"brigand.png\",\n    faces: Left,\n    scale: (5, 4),\n)\n"
         );
         let png = on_lilac();
-        let images = ImageTable::from_files([("battlers/brigand.png", &png[..])]).unwrap();
+        let images = trpg_content::image::from_files([("battlers/brigand.png", &png[..])]).unwrap();
         let battler = parse_battler("brigand.ron", "brigand", &text, &images).unwrap();
         assert_eq!((battler.faces, battler.scale), (Facing::Left, (5, 4)));
         let knight = sidecar(&TWO[0]);
@@ -746,7 +746,7 @@ mod tests {
         // An image table of the pictures the importer copies.
         let png = encode_png(336, 248, &vec![9; 336 * 248 * 4]).unwrap();
         let paths = BACKDROPS.map(|(name, _)| &*format!("{BACKDROPS_DIR}/{name}").leak());
-        let images = ImageTable::from_files(paths.map(|path| (path, &png[..]))).unwrap();
+        let images = trpg_content::image::from_files(paths.map(|path| (path, &png[..]))).unwrap();
         // It names only pictures the importer copies, terrain that
         // exists and lights that exist.
         let read = |source| {

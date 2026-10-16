@@ -24,9 +24,9 @@ use std::fs;
 use std::path::Path;
 
 use serde::Deserialize;
+use trpg_content::TerrainDef;
 use trpg_content::map::{DEFAULT_TILES, TILE_LOOKS};
 use trpg_content::tileset::parse_mix;
-use trpg_content::{PaletteDef, TerrainDef};
 
 use crate::font_atlas::{decode_png, encode_png};
 use crate::map_sprite_import::{self, GAME_DIR, MapSprite, TILESET_ID};
@@ -790,7 +790,7 @@ pub fn run(root: &Path, sprites: &[MapSprite]) -> Result<String, String> {
         let lines: Vec<String> = errors.iter().map(ToString::to_string).collect();
         lines.join("\n")
     };
-    let palette = PaletteDef::load().map_err(joined)?;
+    let palette = trpg_content::palette::load().map_err(joined)?;
     let terrain = TerrainDef::load(Some(&palette)).map_err(joined)?;
     let terrains: Vec<String> = terrain
         .display

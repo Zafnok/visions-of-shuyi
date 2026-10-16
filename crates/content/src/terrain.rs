@@ -521,7 +521,7 @@ mod tests {
     /// `docs/design/terrain.md` (healing is deferred, so 0 everywhere).
     #[test]
     fn embedded_terrain_matches_design_doc() {
-        let t = TerrainDef::load(PaletteDef::load().ok().as_ref());
+        let t = TerrainDef::load(crate::palette::load().ok().as_ref());
         assert!(t.is_ok(), "{t:?}");
         let t = t.unwrap_or_default();
         assert_eq!(

@@ -552,7 +552,7 @@ mod tests {
             ];
             Self {
                 content: crate::load_embedded().unwrap(),
-                images: ImageTable::from_files(files).unwrap(),
+                images: crate::image::from_files(files).unwrap(),
             }
         }
 

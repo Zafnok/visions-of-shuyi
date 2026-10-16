@@ -645,7 +645,7 @@ fn runs_cross_bytes_and_clip() {
 /// The game's own font: a glyph's pixels are the one-bit atlas's.
 #[test]
 fn the_games_font_draws_its_glyphs() {
-    let atlas = FontAtlasDef::load().unwrap();
+    let atlas = trpg_content::font::load().unwrap();
     let bits = trpg_content::bundle::bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
     let font = Font::new(&atlas, bits).unwrap();
     let mut b = GlyphBuffer::with_spec(

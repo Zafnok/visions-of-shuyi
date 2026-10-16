@@ -217,7 +217,7 @@ pub(crate) mod tests {
 
     /// The embedded game palette.
     pub(crate) fn game_palette() -> Palette {
-        Palette::new(&PaletteDef::load().unwrap()).unwrap()
+        Palette::new(&trpg_content::palette::load().unwrap()).unwrap()
     }
 
     fn def(pairs: &[(&str, [u8; 3])]) -> PaletteDef {
@@ -290,7 +290,7 @@ pub(crate) mod tests {
     #[test]
     fn palette_get_and_lookup() {
         let p = game_palette();
-        let def = PaletteDef::load().unwrap();
+        let def = trpg_content::palette::load().unwrap();
         for c in UiColor::ALL {
             assert_eq!(p.get(*c), Rgb::from(def.get(c.name()).unwrap()));
         }
@@ -308,7 +308,7 @@ pub(crate) mod tests {
             Palette::new(&PaletteDef::default()),
             Err(REQUIRED_COLORS.to_vec())
         );
-        let mut d = PaletteDef::load().unwrap();
+        let mut d = trpg_content::palette::load().unwrap();
         d.colors.remove("cursor");
         d.colors.remove("text");
         assert_eq!(Palette::new(&d), Err(vec!["text", "cursor"]));

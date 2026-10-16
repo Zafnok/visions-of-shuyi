@@ -18,7 +18,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use trpg_content::font::{ATLAS_1BIT_PATH, AtlasRect, FALLBACK_GLYPH};
-use trpg_content::{FontAtlasDef, ImageId, ImageTable, PaletteDef};
+use trpg_content::{FontAtlasDef, ImageId, ImageTable};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Button, Chord, Layout};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
@@ -249,8 +249,8 @@ fn playdate_palette() -> Result<Palette, String> {
         let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
         errors.join("; ")
     };
-    let base = PaletteDef::load().map_err(shown)?;
-    let def = PaletteDef::load_playdate(&base).map_err(shown)?;
+    let base = trpg_content::palette::load().map_err(shown)?;
+    let def = trpg_content::ink::load_playdate(&base).map_err(shown)?;
     Palette::new(&def).map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
 }
 

@@ -345,7 +345,7 @@ fn the_keyboard_can_edit_the_buttons_from_the_switch_row() {
 
 #[test]
 fn every_glyph_drawn_is_in_the_font() {
-    let font = trpg_content::FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     for kind in [PadKind::Xbox, PadKind::PlayStation, PadKind::Nintendo] {
         let mut h = open(kind);
         h.pad("South");

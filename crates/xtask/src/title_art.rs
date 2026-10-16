@@ -103,7 +103,7 @@ pub type Picture = (u32, u32, Vec<u8>);
 
 /// The embedded palette.
 fn palette() -> Result<PaletteDef, String> {
-    PaletteDef::load().map_err(|errors| {
+    trpg_content::palette::load().map_err(|errors| {
         let lines: Vec<String> = errors.iter().map(ToString::to_string).collect();
         lines.join("\n")
     })
@@ -284,12 +284,12 @@ mod tests {
     }
 
     fn logo(source: &str) -> Result<Picture, String> {
-        parse_logo(source, &PaletteDef::load().unwrap())
+        parse_logo(source, &trpg_content::palette::load().unwrap())
     }
 
     #[test]
     fn a_logo_is_its_rows_in_the_palettes_colours() {
-        let palette = PaletteDef::load().unwrap();
+        let palette = trpg_content::palette::load().unwrap();
         let solid = |name: &str| {
             let [r, g, b] = palette.get(name).unwrap();
             [r, g, b, 255]

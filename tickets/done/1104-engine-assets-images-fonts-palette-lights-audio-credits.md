@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["1103"]
 nick_input: none
-completed:
+completed: 2026-10-16
 ---
 
 # 1104 — shuyi-assets: images, fonts, colors, lights, audio, credits
@@ -60,14 +60,44 @@ keeps its default `std` feature and stays in the `no-std` CI build, and
 
 ## Acceptance criteria
 
-- [ ] The listed types live in `shuyi-assets` and are tested there with
+- [x] The listed types live in `shuyi-assets` and are tested there with
       fixtures only.
-- [ ] No snapshot changes; every existing test passes.
-- [ ] `docs/engine/boundary.md` rows updated.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No snapshot changes; every existing test passes.
+- [x] `docs/engine/boundary.md` rows updated.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
 - Unit: the moved inline tests.
 
 ## Completion notes
+
+Done on Opus 5.5 (the ticket names Sonnet 5).
+
+- `shuyi-assets` gained `image`, `font`, `lighting`, `audio`, `credits`,
+  `palette` and `ink`, each with its fixture-only inline tests. They
+  take what names the game's files as arguments: `ImageTable::load(bundle,
+  skip)` and `from_files(bundle, files)`; `FontAtlasDef::from_source(...,
+  png_file, png, required)` and `problems(required)`;
+  `lighting::from_source(file, source, default)`; the audio `Files` now
+  carries the sound files' shown names and the music folder's name; the
+  credits' `Places` names the audio manifest and the private folder;
+  `PaletteDef::from_source(file, source, required)`.
+- Content keeps the game's paths, `REQUIRED_GLYPHS`, `NOON`, `Theme`,
+  `REQUIRED_COLORS`, `load_themes` and every `load()`, plus wrappers with
+  the old arguments (`font::from_source`, `lighting::from_source`,
+  `credits::from_source`, `palette::from_source`), and re-exports the
+  rest under the old paths. The tests that read the real files stayed.
+- **Deviation:** a type's inherent `load()` can't stay on a type that now
+  lives in another crate, so `ImageTable::load()`, `ImageTable::from_files`,
+  `FontAtlasDef::load()`, `PaletteDef::load()`/`load_theme` and
+  `PaletteDef::load_playdate` became free functions (`image::load()`,
+  `image::from_files`, `font::load()`, `palette::load()`/`load_theme`,
+  `ink::load_playdate`), like `audio::load()` already was. About 30 call
+  sites changed with them.
+- Playdate: 1032's ink palette moved (`Ink`, `PaletteDef::from_ink_source`);
+  the one-bit atlas is only a path in content and stays. 1040 and 1047
+  have no content code yet. `shuyi-assets` keeps building without `std`
+  (it now needs `libm` for the lights).
+- No gameplay rules decided.
+

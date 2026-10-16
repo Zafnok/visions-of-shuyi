@@ -2,7 +2,7 @@
 //! layer 4), reached from the title screen's debug Quick Battle item.
 
 use insta::assert_snapshot;
-use trpg_content::{FontAtlasDef, Theme, TipTrigger};
+use trpg_content::{Theme, TipTrigger};
 use trpg_core::{Faction, Pos};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::{FRAME_DT, Harness};
@@ -280,7 +280,7 @@ fn info_and_danger_zone_keys() {
 /// draw glyphs the font has.
 #[test]
 fn new_boxes_draw_only_glyphs_in_the_font() {
-    let font = FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     let check = |h: &Harness| {
         let snap = h.snapshot();
         let glyphs = snap.split("\n--- colours ---").next().unwrap_or("");
@@ -298,7 +298,7 @@ fn new_boxes_draw_only_glyphs_in_the_font() {
 
 #[test]
 fn every_glyph_drawn_is_in_the_font() {
-    let font = FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     let snap = quick_battle().snapshot();
     let glyphs = snap.split("\n--- colours ---").next().unwrap_or("");
     for g in glyphs.chars().filter(|&c| c != '\n') {

@@ -5,7 +5,6 @@
 //! Profile, Credits, Quit.
 
 use insta::assert_snapshot;
-use trpg_content::FontAtlasDef;
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
@@ -176,7 +175,7 @@ fn every_credit_can_be_scrolled_to() {
 
 #[test]
 fn every_glyph_drawn_is_in_the_font() {
-    let font = FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     let mut h = credits();
     let mut last = String::new();
     loop {

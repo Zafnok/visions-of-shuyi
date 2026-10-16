@@ -347,8 +347,7 @@ mod tests {
         ];
         let paths = names.map(|n| -> &'static str { format!("portraits/guide/{n}.png").leak() });
         let pngs = paths.map(|p| (p, crate::image::png_header(64, 64)));
-        let images =
-            crate::ImageTable::from_files(pngs.iter().map(|(p, png)| (*p, &png[..]))).unwrap();
+        let images = crate::image::from_files(pngs.iter().map(|(p, png)| (*p, &png[..]))).unwrap();
         let sidecar = names
             .map(|n| format!("{n:?}: \"guide/{n}.png\""))
             .join(", ");

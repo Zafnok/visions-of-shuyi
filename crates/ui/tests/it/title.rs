@@ -7,8 +7,8 @@
 //! look, pictures included.
 
 use insta::assert_snapshot;
+use trpg_content::LangCode;
 use trpg_content::lang::TEST;
-use trpg_content::{FontAtlasDef, LangCode};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
@@ -136,7 +136,7 @@ fn f2_opens_the_debug_menu() {
 
 #[test]
 fn every_glyph_drawn_is_in_the_font() {
-    let font = FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     let mut h = title();
     for script in ["", "Down", "Up f"] {
         h.keys(script);
@@ -242,7 +242,7 @@ fn the_title_waits_for_a_key_or_button() {
     assert_snapshot!(snap);
     assert!(music(&h).is_empty());
     // Every glyph of the pictures is in the font.
-    let font = FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     let glyphs = snap.split("\n--- colours ---").next().unwrap_or("");
     for g in glyphs.chars().filter(|&c| c != '\n') {
         assert!(font.glyph_rect(g).is_some(), "{g:?} missing from the font");
