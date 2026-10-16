@@ -53,6 +53,7 @@ fn title_renders() {
         "Load Game",
         "Quick Battle",
         "Options",
+        "Profile",
         "Credits",
         "Quit",
     ];
@@ -66,7 +67,7 @@ fn title_renders() {
 #[test]
 fn down_to_the_last_item_then_select_quits() {
     let mut h = title();
-    h.keys("Down Down Down Down f");
+    h.keys("Down Down Down Down Down f");
     assert!(h.quit_requested());
 }
 
@@ -110,11 +111,11 @@ fn back_on_the_title_does_nothing() {
 #[test]
 fn holding_down_repeats_and_wraps() {
     // Held for 0.54 s: the press plus repeats at 300, 355, 410, 465 and
-    // 520 ms makes six moves over five items (the harness has debug tools
-    // on, so Quick Battle is there), wrapping round to Quick Battle.
+    // 520 ms makes six moves over six items (the harness has debug tools
+    // on, so Quick Battle is there), wrapping round to New Game.
     let mut h = title();
     h.hold("Down", 0.54).wait(0.5).keys("f");
-    assert_eq!(h.top_screen(), "preparations");
+    assert_eq!(h.top_screen(), "mode_select");
 }
 
 #[test]
@@ -429,6 +430,7 @@ fn the_title_in_the_test_language() {
         "LOAD GAME",
         "QUICK BATTLE",
         "OPTIONS",
+        "PROFILE",
         "Credits",
         "QUIT",
     ];

@@ -13,6 +13,7 @@
     "title.load_game": "Load Game",
     "title.quick_battle": "Quick Battle",
     "title.options": "Options",
+    "title.profile": "Profile",
     "title.credits": "Credits",
     "title.quit": "Quit",
     "title.help": "{Cursor} move · {Confirm} select · {Cancel} back",
@@ -20,6 +21,27 @@
     // Player profiles (`docs/design/options.md`). `{n}` is the profile's
     // number: the first profile, made on a first launch, is `Player 1`.
     "profile.numbered": "Player {n}",
+    // The Profile screen, from the title. `{name}` is a profile's name;
+    // `{n}` the most profiles there can be.
+    "profile.title": "Profile",
+    "profile.current": "in use",
+    "profile.add": "Add a profile",
+    "profile.name_box": "Profile name",
+    "profile.action.switch": "Use this profile",
+    "profile.action.rename": "Rename",
+    "profile.action.delete": "Delete",
+    "profile.question.delete": "Delete {name}? Its options and saves go with it.",
+    "profile.answer.yes": "Yes",
+    "profile.answer.no": "No",
+    "profile.question.keep": "Keep this name?",
+    "profile.message.name_taken": "Another profile already has that name.",
+    "profile.message.too_many": "There can be at most {n} profiles.",
+    "profile.message.not_saved": "The profiles couldn't be saved.",
+    "profile.help.list": "{Cursor} move · {Confirm} choose · {Cancel} back",
+    "profile.help.add": "{Cursor} move · {Confirm} add · {Cancel} back",
+    "profile.help.none": "{Cursor} move · {Cancel} back",
+    "profile.help.actions": "{Cursor} move · {Confirm} select · {Cancel} back",
+    "profile.help.question": "{Cursor} choose · {Confirm} pick · {Cancel} back",
 
     // The layout picker, on first launch and opened from Options. In
     // `help_first`, `{up}`, `{down}` and `{confirm}` are every key of each.
@@ -64,14 +86,14 @@
     "lead_select.name": "Name",
     "lead_select.start": "Start",
     "lead_select.first_name": "First name",
-    "lead_select.type_hint": "Type a name on your keyboard.",
-    "lead_select.grid.blank": "Blank",
-    "lead_select.grid.delete": "Delete",
-    "lead_select.grid.done": "Done",
+    "name_entry.type_hint": "Type a name on your keyboard.",
+    "name_entry.grid.blank": "Blank",
+    "name_entry.grid.delete": "Delete",
+    "name_entry.grid.done": "Done",
     "lead_select.help.gender": "{Cursor} choose · {Confirm} next · {Cancel} back",
     "lead_select.help.name": "{Cursor} choose · {Confirm} change name · {Cancel} back",
     "lead_select.help.start": "{Cursor} choose · {Confirm} start · {Cancel} back",
-    "lead_select.help.grid": "{Cursor} choose · {Confirm} type · {Cancel} delete",
+    "name_entry.help.grid": "{Cursor} choose · {Confirm} type · {Cancel} delete",
 
     // A box the player types in (the lead's name, a volume). `{done}`,
     // `{delete}` and `{cancel}` are its own keys.

@@ -2,6 +2,7 @@
 
 pub mod help;
 pub mod menu;
+pub mod name_entry;
 pub mod wrap;
 
 pub use menu::{Menu, MenuEvent, MenuItem, MenuItemView, MenuView};

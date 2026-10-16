@@ -1,6 +1,7 @@
 //! Player profiles (ticket 0836, ADR-0069): each profile keeps its own
 //! options, keys, tips seen and saves; the game opens on the last one used;
-//! a player from before profiles becomes `Player 1`.
+//! a player from before profiles becomes `Player 1`. The title's Profile
+//! screen (0837) switches, adds, renames and deletes them.
 
 use std::collections::BTreeMap;
 
@@ -10,6 +11,8 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, Chord, Layout};
 use trpg_ui::profiles::{PROFILES_KEY, ProfileError, ProfileId};
 use trpg_ui::save::{self, SUSPEND_KEY, slot_key};
+use trpg_ui::screens::TitleScreen;
+use trpg_ui::screens::profile::ProfileScreen;
 use trpg_ui::screens::title::BACKDROP_KEY;
 use trpg_ui::settings::TextSpeed;
 use trpg_ui::tips::TipsSeen;
@@ -290,4 +293,211 @@ fn a_refused_change_leaves_the_list_as_it_was() {
     let h = Harness::with_storage(h.into_storage());
     assert_eq!(names(&h), ["Player 1", "Shuyi"]);
     assert_eq!(h.game().ctx().profiles().current(), mei);
+}
+
+// ---- The Profile screen (ticket 0837) ------------------------------------
+
+/// A launch with the right-handed layout (`f` Confirm, `d` Cancel), on
+/// the Profile screen: the title's item under Options (past Load Game,
+/// with no saves, Quick Battle and Options).
+fn profile_screen() -> Harness {
+    let mut h = Harness::with_layout(Layout::RightHanded);
+    h.keys("Down Down Down f");
+    assert_eq!(h.screens(), ["title", "profile"]);
+    h
+}
+
+fn screen(h: &Harness) -> &ProfileScreen {
+    let screen = h.game().screen::<ProfileScreen>();
+    screen.unwrap_or_else(|| panic!("no Profile screen: {:?}", h.screens()))
+}
+
+/// The question open on the Profile screen and its answer in focus.
+fn question(h: &Harness) -> Option<(String, String)> {
+    let q = screen(h).view(h.game().ctx()).question?;
+    let focused = q.focused().unwrap_or_default().to_owned();
+    Some((q.text, focused))
+}
+
+/// The labels of the title's menu.
+fn title_items(h: &Harness) -> Vec<String> {
+    let title = h.game().screen::<TitleScreen>();
+    let title = title.unwrap_or_else(|| panic!("no title"));
+    let menu = title.view(h.game().ctx()).menu;
+    let items = menu.map(|m| m.items).unwrap_or_default();
+    items.into_iter().map(|i| i.label).collect()
+}
+
+fn current(h: &Harness) -> String {
+    let profiles = h.game().ctx().profiles();
+    let p = profiles.get(profiles.current());
+    p.map(|p| p.name.clone()).unwrap_or_default()
+}
+
+/// Adds a profile on the screen (from the first row, up round to the row
+/// that adds one): types `name`, keeps it, picks the right-handed layout
+/// for it.
+fn add_on_screen(h: &mut Harness, name: &str) {
+    h.keys("Up f").type_text(name).keys("Enter");
+    assert_eq!(h.screens(), ["title", "layout_picker"]);
+    h.keys("Enter");
+    assert_eq!(h.screens(), ["title"]);
+}
+
+#[test]
+fn the_title_has_profile_under_options() {
+    let h = Harness::with_layout(Layout::RightHanded);
+    let items = title_items(&h);
+    let options = items.iter().position(|i| i == "Options");
+    let under = options.and_then(|i| items.get(i + 1));
+    assert_eq!(under.map(String::as_str), Some("Profile"));
+}
+
+/// The scripted round trip: add a profile, change an option in it,
+/// switch to `Player 1` (its own options, keys and saves), and back.
+#[test]
+fn add_change_an_option_switch_and_switch_back() {
+    let mut h = profile_screen();
+    // Player 1's own: slow text, a second Confirm key, a suspend save.
+    set_text_speed(&mut h, TextSpeed::Slow);
+    let mut keys = h.game().ctx().layout_bindings(Layout::RightHanded);
+    ok(keys.bind(Action::Confirm, 1, chord("g")));
+    ok(h.ctx_mut().set_layout_bindings(Layout::RightHanded, keys));
+    save_at(&mut h, SUSPEND_KEY, "Odo");
+
+    add_on_screen(&mut h, "Mei");
+    assert_eq!(names(&h), ["Player 1", "Mei"]);
+    assert_eq!(current(&h), "Mei");
+    // A new profile starts from the default options and keys, no saves.
+    assert_eq!(text_speed(&h), TextSpeed::Normal);
+    assert!(!confirm_key(&h, "g"));
+    assert!(!title_items(&h).contains(&"Continue".to_owned()));
+
+    // Options (above Profile, where the title's focus stayed): text speed
+    // one faster, kept.
+    h.keys("Up f Right d Left Left f");
+    assert_eq!(text_speed(&h), TextSpeed::Fast);
+
+    // Profile, up to Player 1, its menu, `Use this profile`: the title.
+    h.keys("Down f Up f f");
+    assert_eq!(h.screens(), ["title"]);
+    assert_eq!(current(&h), "Player 1");
+    assert_eq!(text_speed(&h), TextSpeed::Slow);
+    assert!(confirm_key(&h, "g"));
+    assert!(title_items(&h).contains(&"Continue".to_owned()));
+
+    // And back to Mei, with the options kept in it. (Continue came first
+    // in the menu, so its focus went back to the top.)
+    h.keys("Down Down Down Down f Down f f");
+    assert_eq!(current(&h), "Mei");
+    assert_eq!(text_speed(&h), TextSpeed::Fast);
+    assert!(!title_items(&h).contains(&"Continue".to_owned()));
+
+    // The next launch opens on Mei.
+    let h = Harness::with_storage(h.into_storage());
+    assert_eq!(current(&h), "Mei");
+    assert_eq!(text_speed(&h), TextSpeed::Fast);
+}
+
+#[test]
+fn renaming_keeps_the_profiles_options_and_saves() {
+    let mut h = profile_screen();
+    set_text_speed(&mut h, TextSpeed::Slow);
+    save_at(&mut h, &slot_key(2), "Mara");
+    // The only profile: its menu has Rename alone. The box holds its name.
+    h.keys("f f");
+    assert_eq!(screen(&h).typed(), Some("Player 1"));
+    h.keys("Backspace").type_text("Ana").keys("Enter");
+    assert_eq!(screen(&h).typed(), None);
+    assert_eq!(names(&h), ["Player Ana"]);
+    assert_eq!(h.game().ctx().profiles().current(), ProfileId::FIRST);
+    assert_eq!(text_speed(&h), TextSpeed::Slow);
+    assert_eq!(saved_lead(&h, &slot_key(2)).as_deref(), Some("Mara"));
+    let h = Harness::with_storage(h.into_storage());
+    assert_eq!(names(&h), ["Player Ana"]);
+    assert_eq!(saved_lead(&h, &slot_key(2)).as_deref(), Some("Mara"));
+}
+
+#[test]
+fn deleting_on_the_screen_asks_first_and_takes_the_saves() {
+    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mei = add(&mut h, "Mei");
+    switch(&mut h, mei);
+    save_at(&mut h, &slot_key(1), "Mara");
+    switch(&mut h, ProfileId::FIRST);
+    h.keys("Down Down Down f");
+    // Mei, its menu (Use, Rename, Delete), Delete: asked, focus on No.
+    h.keys("Down f Down Down f");
+    let asked = question(&h).unwrap_or_else(|| panic!("not asked"));
+    assert_eq!(asked.0, "Delete Mei? Its options and saves go with it.");
+    assert_eq!(asked.1, "No");
+    h.keys("f");
+    assert_eq!(names(&h), ["Player 1", "Mei"]);
+    h.keys("f Down Down f Left f");
+    assert_eq!(names(&h), ["Player 1"]);
+    let stored = ok(h.game().ctx().storage.computer().list());
+    assert!(!stored.iter().any(|k| k.starts_with(&mei.prefix())));
+    // The only profile can't be deleted: its menu is Rename alone.
+    h.keys("f");
+    let view = screen(&h).view(h.game().ctx());
+    let actions = view.actions.unwrap_or_else(|| panic!("no menu"));
+    let items: Vec<String> = actions.items.into_iter().map(|i| i.label).collect();
+    assert_eq!(items, ["Rename"]);
+}
+
+#[test]
+fn cancel_in_the_name_box_with_a_name_typed_asks_first_on_go_back() {
+    let mut h = profile_screen();
+    h.keys("Down f").type_text("Mei").keys("Escape");
+    let asked = question(&h).unwrap_or_else(|| panic!("not asked"));
+    assert_eq!(asked, ("Keep this name?".to_owned(), "Back".to_owned()));
+    // Back: the box again, the name as it was.
+    h.keys("f");
+    assert_eq!(question(&h), None);
+    assert_eq!(screen(&h).typed(), Some("Mei"));
+    // Cancel on the question is Back too.
+    h.keys("Escape d");
+    assert_eq!(question(&h), None);
+    assert_eq!(screen(&h).typed(), Some("Mei"));
+    // Discard: closed, nothing added.
+    h.keys("Escape Left f");
+    assert_eq!(screen(&h).typed(), None);
+    assert_eq!(names(&h), ["Player 1"]);
+    // Keep: added, as Enter would.
+    h.keys("f").type_text("Mei").keys("Escape Left Left f");
+    assert_eq!(h.screens(), ["title", "layout_picker"]);
+    assert_eq!(names(&h), ["Player 1", "Mei"]);
+}
+
+#[test]
+fn cancel_in_the_name_box_with_nothing_typed_just_closes() {
+    let mut h = profile_screen();
+    // Nothing typed in a new profile's box.
+    h.keys("Down f Escape");
+    assert_eq!(screen(&h).typed(), None);
+    assert_eq!(question(&h), None);
+    // A profile's box with its own name in it.
+    h.keys("Up f f Escape");
+    assert_eq!(screen(&h).typed(), None);
+    assert_eq!(question(&h), None);
+    // Typed and deleted again: the same.
+    h.keys("f f").type_text("x").keys("Backspace Escape");
+    assert_eq!(question(&h), None);
+    assert_eq!(names(&h), ["Player 1"]);
+}
+
+#[test]
+fn a_name_another_profile_has_is_refused_and_the_box_stays() {
+    let mut h = profile_screen();
+    h.keys("Down f").type_text("player 1").keys("Enter");
+    assert_eq!(screen(&h).typed(), Some("player 1"));
+    let message = screen(&h).view(h.game().ctx()).message;
+    assert_eq!(
+        message.as_deref(),
+        Some("Another profile already has that name.")
+    );
+    assert_eq!(names(&h), ["Player 1"]);
+    // Twelve characters at most: the thirteenth isn't typed.
+    h.keys("Escape Left f f").type_text("Abcdefghijklm");
+    assert_eq!(screen(&h).typed(), Some("Abcdefghijkl"));
 }

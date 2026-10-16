@@ -2,8 +2,8 @@
 //! ticket 0801); `Continue` (shown only while there is a suspend save)
 //! carries on the suspended battle and `Load Game` opens the save slots
 //! (0802); debug builds add `Quick Battle`, a test battle through the same
-//! flow; `Options` opens the [`OptionsScreen`] (0805); `Credits` opens the
-//! [`CreditsScreen`] (0808).
+//! flow; `Options` opens the [`OptionsScreen`] (0805); `Profile` the
+//! [`ProfileScreen`] (0837); `Credits` opens the [`CreditsScreen`] (0808).
 //!
 //! **The look is a skin** (ADR-0054). This module decides what the screen
 //! shows and does, and says it as plain data: a [`TitleView`]
@@ -31,7 +31,7 @@ use trpg_content::ImageId;
 use song::SongTime;
 use view::FULL;
 
-use super::{CreditsScreen, OptionsScreen, debug_hint};
+use super::{CreditsScreen, OptionsScreen, ProfileScreen, debug_hint};
 use crate::audio::MenuSound;
 use crate::audio::splitmix64;
 use crate::cinematic::{CinematicPlayer, millis};
@@ -131,6 +131,8 @@ enum Item {
     QuickBattle,
     /// Opens the options.
     Options,
+    /// Opens the player profiles.
+    Profile,
     /// Opens the credits.
     Credits,
     /// Quits.
@@ -146,6 +148,7 @@ impl Item {
             Self::LoadGame => "title.load_game",
             Self::QuickBattle => "title.quick_battle",
             Self::Options => "title.options",
+            Self::Profile => "title.profile",
             Self::Credits => "title.credits",
             Self::Quit => "title.quit",
         }
@@ -167,8 +170,8 @@ fn pick_backdrop(ctx: &Ctx) -> Option<ImageId> {
 }
 
 /// The logo and a menu (`Continue` while a battle is suspended,
-/// `New Game`, `Load Game`, `Options`, `Credits`, `Quit`), with a help line naming
-/// the keys of the active layout.
+/// `New Game`, `Load Game`, `Options`, `Profile`, `Credits`, `Quit`), with
+/// a help line naming the keys of the active layout.
 #[derive(Debug, Clone)]
 pub struct TitleScreen {
     menu: Menu,
@@ -251,6 +254,7 @@ impl TitleScreen {
             items.push(Item::QuickBattle);
         }
         items.push(Item::Options);
+        items.push(Item::Profile);
         items.push(Item::Credits);
         items.push(Item::Quit);
         let entries = items.iter().map(|&item| {
@@ -520,6 +524,12 @@ impl Screen for TitleScreen {
                 Some(Item::Options) => {
                     self.stale = true;
                     return Transition::Push(Box::new(OptionsScreen::new()));
+                }
+                // The profile in use may change, and with it the options,
+                // the saves and the lead the cinematic shows.
+                Some(Item::Profile) => {
+                    self.stale = true;
+                    return Transition::Push(Box::new(ProfileScreen::new(ctx)));
                 }
                 Some(Item::Credits) => return Transition::Push(Box::new(CreditsScreen::new(ctx))),
                 Some(Item::Quit) => return Transition::Quit,

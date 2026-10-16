@@ -7,6 +7,7 @@ use crate::prelude::*;
 use trpg_core::LeadGender;
 
 use super::Row;
+pub use crate::widgets::name_entry::{GridView, TypingView};
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -54,28 +55,4 @@ pub struct NameRowView {
     pub first: String,
     /// The family name.
     pub family: String,
-}
-
-/// The typing box.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TypingView {
-    /// The box's title.
-    pub title: String,
-    /// The name typed so far (without a cursor: that is the skin's).
-    pub typed: String,
-    /// What to do: type.
-    pub hint: String,
-}
-
-/// The letter grid (controller players).
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GridView {
-    /// The grid's title.
-    pub title: String,
-    /// The name spelled so far (without a cursor: that is the skin's).
-    pub spelled: String,
-    /// The cells, row by row, as their labels.
-    pub rows: Vec<Vec<String>>,
-    /// The focused cell: row, column.
-    pub focus: (usize, usize),
 }
