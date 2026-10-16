@@ -14,7 +14,7 @@ use crate::screens::battle::view::GuidesView;
 pub const AREA: Rect = Rect::new(
     MAP_VIEW.x,
     MAP_VIEW.y,
-    SIDE_PANEL.x + SIDE_PANEL.w - MAP_VIEW.x,
+    MAP_VIEW.w + SIDE_PANEL.w,
     MAP_VIEW.h,
 );
 
@@ -74,7 +74,10 @@ pub fn paint(ctx: &Ctx, view: &GuidesView, buf: &mut GlyphBuffer) {
         c(UiColor::TextHighlight),
         bg,
     );
-    for (line, y) in view.lines.iter().zip(TOP_ROW + 2..) {
+    // The text starts after a blank row.
+    let mut y = TOP_ROW + 1;
+    for line in &view.lines {
+        y += 1;
         buf.print(TEXT_X, y, line, c(UiColor::Text), bg);
     }
 }
@@ -99,6 +102,51 @@ mod tests {
             LIST_W,
             i32::try_from(trpg_content::tip::MAX_TITLE_CHARS).unwrap()
         );
+    }
+
+    /// The text of row `y` of `buf`.
+    fn row(buf: &GlyphBuffer, y: i32) -> String {
+        (0..AREA.w)
+            .map(|x| buf.get(x, y).map_or(' ', |c| c.glyph))
+            .collect()
+    }
+
+    /// A long list stays inside the box: as many topics as it has rows,
+    /// from the top or scrolled to the last; the text starts a blank row
+    /// under its heading.
+    #[test]
+    fn a_long_list_fits_in_the_box() {
+        use crate::Rgb;
+        use crate::console::ConsoleSpec;
+        let c = crate::screen::tests::ctx();
+        let paint_at = |focus: usize| {
+            let view = GuidesView {
+                title: "G".into(),
+                topics: (0..40).map(|i| format!("t{i}")).collect(),
+                focus,
+                heading: "Head".into(),
+                lines: vec!["one".into(), "two".into()],
+            };
+            let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
+            let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
+            paint(&c, &view, &mut buf);
+            buf
+        };
+        let last = TOP_ROW + LIST_ROWS - 1;
+        assert_eq!(last, 27);
+        let top = paint_at(0);
+        assert!(row(&top, TOP_ROW).contains("t0 "));
+        assert!(row(&top, last).contains("t25 "));
+        assert!(!row(&top, last + 1).contains('t'));
+        assert!(row(&top, AREA.h - 1).starts_with("╚═══"));
+        let end = paint_at(39);
+        assert!(row(&end, TOP_ROW).contains("t14 "));
+        assert!(row(&end, last).contains("t39 "));
+        // The heading, a blank row, then the text.
+        assert!(row(&top, TOP_ROW).contains("Head"));
+        assert!(!row(&top, TOP_ROW + 1).contains("one"));
+        assert!(row(&top, TOP_ROW + 2).contains("one"));
+        assert!(row(&top, TOP_ROW + 3).contains("two"));
     }
 
     #[test]

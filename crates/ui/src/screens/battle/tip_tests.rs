@@ -616,3 +616,27 @@ fn plain_ground_is_cost_1_with_no_bonus() {
     // Off the map: nothing.
     assert!(!s.special_terrain(Pos::new(-1, 0)));
 }
+
+/// Each bonus alone, or a cost other than 1 for one movement type, makes
+/// terrain not plain ground.
+#[test]
+fn any_one_bonus_or_cost_makes_terrain_not_plain() {
+    let plain = TerrainRules {
+        name: "Plain".into(),
+        move_cost: vec![Some(1), Some(1)],
+        defense: 0,
+        avoid: 0,
+        heal_percent: 0,
+    };
+    assert!(!not_plain(&plain));
+    let with = |edit: fn(&mut TerrainRules)| {
+        let mut t = plain.clone();
+        edit(&mut t);
+        not_plain(&t)
+    };
+    assert!(with(|t| t.defense = 1));
+    assert!(with(|t| t.avoid = 10));
+    assert!(with(|t| t.heal_percent = 10));
+    assert!(with(|t| t.move_cost[1] = Some(2)));
+    assert!(with(|t| t.move_cost[0] = None));
+}

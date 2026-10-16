@@ -63,8 +63,8 @@ use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campa
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
-    LeadGender, LeadProfile, Outcome, Phase, Pos, StatValue, TileSet, Unit, UnitId, danger_zone,
-    next_command, threats_at,
+    LeadGender, LeadProfile, Outcome, Phase, Pos, StatValue, TerrainRules, TileSet, Unit, UnitId,
+    danger_zone, next_command, threats_at,
 };
 
 use self::ai_phase::{AiAction, PACING};
@@ -815,12 +815,7 @@ impl BattleScreen {
             .tiles
             .get(pos)
             .and_then(|&id| state.terrain().get(id));
-        rules.is_some_and(|t| {
-            t.defense != 0
-                || t.avoid != 0
-                || t.heal_percent != 0
-                || t.move_cost.iter().any(|&c| c != Some(1))
-        })
+        rules.is_some_and(not_plain)
     }
 
     /// The tip on screen, if any: the first queued whose moment has come
@@ -2373,6 +2368,16 @@ fn terrain_scene(state: &BattleState, origin: Pos, size: (i32, i32)) -> MapScene
 }
 
 /// The help line on the rewind screen `r`.
+/// Whether terrain `t` is not plain ground: it gives a Def, Avoid or
+/// healing bonus, or costs a movement type other than 1 to enter (more, or
+/// impassable).
+fn not_plain(t: &TerrainRules) -> bool {
+    t.defense != 0
+        || t.avoid != 0
+        || t.heal_percent != 0
+        || t.move_cost.iter().any(|&c| c != Some(1))
+}
+
 fn rewind_help(r: &RewindScreen, ctx: &Ctx) -> String {
     let key = if r.is_confirming() {
         "battle.rewind.help.confirm"
