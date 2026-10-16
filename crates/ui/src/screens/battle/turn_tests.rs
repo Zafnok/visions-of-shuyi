@@ -421,8 +421,9 @@ fn objective_shows_the_goal_and_the_turn() {
         panic!("{:?}", s.mode());
     };
     assert_eq!(menu.focus(), 1);
-    // Down goes on to Options, Suspend, Restart Battle, then End Turn.
-    for focus in [2, 3, 4] {
+    // Down goes on to Guides, Options, Suspend, Restart Battle, then End
+    // Turn.
+    for focus in [2, 3, 4, 5] {
         press(&mut s, &mut c, &[Action::CursorDown]);
         let Mode::MapMenu { menu, .. } = s.mode() else {
             panic!("{:?}", s.mode());
@@ -439,10 +440,11 @@ fn objective_shows_the_goal_and_the_turn() {
 fn options_opens_the_options_screen_over_the_map_menu() {
     let mut c = ctx();
     let mut s = quick();
-    // The map menu: Units, Objective, Options. The key after the one
-    // that opens it isn't the battle's.
+    // The map menu: Units, Objective, Guides, Options. The key after the
+    // one that opens it isn't the battle's.
     let keys = [
         Action::Cancel,
+        Action::CursorDown,
         Action::CursorDown,
         Action::CursorDown,
         Action::Confirm,
@@ -453,7 +455,7 @@ fn options_opens_the_options_screen_over_the_map_menu() {
     let Mode::MapMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    assert_eq!(menu.focus(), 2);
+    assert_eq!(menu.focus(), 3);
     let last = c
         .audio
         .take()
@@ -472,9 +474,10 @@ fn options_opens_the_options_screen_over_the_map_menu() {
 fn suspend_asks_first() {
     let mut c = ctx();
     let mut s = quick();
-    // The map menu: Units, Objective, Options, Suspend.
+    // The map menu: Units, Objective, Guides, Options, Suspend.
     let to_suspend = [
         Action::Cancel,
+        Action::CursorDown,
         Action::CursorDown,
         Action::CursorDown,
         Action::CursorDown,
@@ -495,7 +498,7 @@ fn suspend_asks_first() {
     let Mode::MapMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    assert_eq!(menu.focus(), 3);
+    assert_eq!(menu.focus(), 4);
     assert!(!s.suspend_requested());
     assert!(!s.view(&c).shows("Suspend the battle"));
     // Asked again and confirmed: the screen closes, for the flow to save.

@@ -611,7 +611,8 @@ pub(crate) fn leveling(table: ClassTable) -> ClassTable {
 
 /// The starter spells of `magic.md` (`fire`: forest → burning, then burnt;
 /// `frost`: water or sea → ice; `force`, `heal`, `mend`), plus `bolt`: a
-/// hit-100, might-3 attack spell, range 1–2, 2 uses, for exact combats.
+/// hit-100, might-3 attack spell, range 1–2, 2 uses, for exact combats;
+/// and `oath`: `bolt` at range 1 that can't be countered (like Cinder Oath).
 fn spells() -> SpellTable {
     let attack = |id: &str,
                   element,
@@ -632,6 +633,7 @@ fn spells() -> SpellTable {
             max_range: 2,
             uses,
             terrain_effect: effect,
+            no_counter: false,
         }
     };
     let heal = |id: &str, heal_power, uses| SpellDef {
@@ -643,6 +645,7 @@ fn spells() -> SpellTable {
         max_range: 1,
         uses,
         terrain_effect: None,
+        no_counter: false,
     };
     let burn = TerrainEffect {
         from: vec![FOREST],
@@ -664,6 +667,12 @@ fn spells() -> SpellTable {
         heal("heal", 10, 8),
         heal("mend", 20, 4),
         attack("bolt", Element::None, [3, 100, 0], 2, None),
+        SpellDef {
+            id: SpellId::new("oath"),
+            max_range: 1,
+            no_counter: true,
+            ..attack("oath", Element::None, [3, 100, 0], 2, None)
+        },
     ];
     SpellTable {
         spells: all.into_iter().map(|s| (s.id.clone(), s)).collect(),

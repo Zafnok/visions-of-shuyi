@@ -231,6 +231,50 @@ fn casting_equips_the_spell_and_a_weapon_attack_equips_the_weapon_back() {
 }
 
 #[test]
+fn a_no_counter_spell_leaves_the_defender_no_counter() {
+    let mut units = cast();
+    units[1] = knowing(units[1].clone(), &["bolt", "oath"]);
+    units[3].pos = p(1, 2);
+    units[3].stats.hp = 30;
+    units[3].hp = 30;
+    let mut s = start(setup(units));
+    // Bolt from the next tile: the enemy's range-1 sword strikes back.
+    let preview = |s: &BattleState, spell| {
+        s.preview_attack(UnitId(2), p(0, 2), &cast_on(spell, 4))
+            .unwrap_or_else(|e| panic!("{e}"))
+            .forecast
+    };
+    assert!(preview(&s, "bolt").defender.is_some());
+    // Oath from the same tile: no counter, in the forecast and the combat.
+    let forecast = preview(&s, "oath");
+    assert_eq!(forecast.defender, None);
+    let events = act(&mut s, 2, p(0, 2), cast_on("oath", 4));
+    assert_eq!(combat(&events), forecast);
+    let outcome = events.iter().find_map(|e| match e {
+        Event::CombatResolved { outcome, .. } => Some(outcome),
+        _ => None,
+    });
+    let strikes = &outcome.unwrap().strikes;
+    assert!(!strikes.is_empty());
+    assert!(strikes.iter().all(|st| st.by == Side::Attacker));
+    assert_eq!(s.unit(UnitId(2)).map(|u| u.hp), Some(10));
+}
+
+#[test]
+fn a_no_counter_spell_still_counters_when_attacked() {
+    let mut units = cast();
+    units[1] = knowing(units[1].clone(), &["oath"]);
+    units[1].loadout.equipped = Some(Equipped::Spell(sid("oath")));
+    units[3].pos = p(1, 2);
+    let mut s = start(setup(units));
+    end(&mut s);
+    let events = act(&mut s, 4, p(1, 2), attack(2));
+    let forecast = combat(&events);
+    assert_eq!(forecast.defender.map(|d| d.damage), Some(3));
+    assert!(events.contains(&spell_used(2, "oath", 1)));
+}
+
+#[test]
 fn a_spell_at_zero_uses_cant_be_cast_or_counter() {
     let mut units = cast();
     units[1] = mage(2, Faction::Player, p(0, 3), &["bolt"]);

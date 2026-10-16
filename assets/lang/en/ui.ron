@@ -434,6 +434,7 @@
     "battle.menu.wait": "Wait",
     "battle.map_menu.units": "Units",
     "battle.map_menu.objective": "Objective",
+    "battle.map_menu.guides": "Guides",
     "battle.map_menu.options": "Options",
     "battle.map_menu.suspend": "Suspend",
     "battle.map_menu.restart": "Restart Battle",
@@ -581,6 +582,8 @@
 
     // The battle: the rewind screen. In its list, `{who}` did `{what}`
     // (an item's, a spell's or a skill's name) to `{target}`.
+    "battle.guides.title": "Guides",
+    "battle.guides.help": "{Cursor} choose · {Cancel} close",
     "battle.rewind.title": "Rewind",
     "battle.rewind.no_charges": "No charges left",
     "battle.rewind.charges.one": "{left} of {charges} charge left",

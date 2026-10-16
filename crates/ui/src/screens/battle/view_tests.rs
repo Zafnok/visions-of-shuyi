@@ -62,6 +62,7 @@ fn the_map_menu_opens_beside_the_cursor_and_closes() {
         [
             "Units",
             "Objective",
+            "Guides",
             "Options",
             "Suspend",
             "Restart Battle",

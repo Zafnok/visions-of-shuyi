@@ -83,7 +83,7 @@
             id: "moving",
             level: Full,
             trigger: FirstBattleStart,
-            title: "Moving a unit",
+            title: "Selecting a unit",
             text: "{Select} on a unit: lit tiles show its reach.\n{Select} on one moves it; its menu follows.",
             items: [
                 (label: "Select a unit: {Select}", done_when: UnitSelected),

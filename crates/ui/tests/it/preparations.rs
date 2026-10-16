@@ -107,8 +107,8 @@ fn restart_battle_goes_back_to_preparations_as_they_were_left() {
     h.keys("Right Right f");
     let start = battle(&h);
     // The `PLAYER PHASE` banner closes; the lord waits where he stands, then the map menu's Restart Battle
-    // (after Units, Objective and Suspend) and its confirm.
-    h.keys("f f f f d Down Down Down Down f");
+    // (after Units, Objective, Guides, Options and Suspend) and its confirm.
+    h.keys("f f f f d Down Down Down Down Down f");
     assert!(
         shows(&h, "Restart the battle from turn 1?"),
         "{}",
@@ -207,7 +207,7 @@ fn the_benched_scouts_bow_goes_to_the_archer() {
     assert_eq!(scout(&h).loadout.weapon_count(), 0);
     // Past the banner, Restart Battle: Preparations again, the trade as it
     // was left.
-    h.keys("f f f f d Down Down Down Down f f");
+    h.keys("f f f f d Down Down Down Down Down f f");
     assert_eq!(h.screens(), ["title", "preparations"]);
     let prep = h.flow().and_then(|f| f.preparations());
     let prep = prep.unwrap_or_else(|| panic!("no preparations")).prep();
@@ -225,7 +225,7 @@ fn a_continued_battle_keeps_its_preparations() {
     // Fight!, the banner, then the map menu's Suspend and its confirm.
     h.keys("Right Right f f");
     let start = battle(&h);
-    h.keys("d Down Down Down f f");
+    h.keys("d Down Down Down Down f f");
     assert_eq!(h.screens(), ["title"]);
     // The next launch: Continue is on top of the title menu.
     let mut h = Harness::with_storage(h.into_storage());
@@ -234,7 +234,7 @@ fn a_continued_battle_keeps_its_preparations() {
     assert_eq!(battle(&h), start);
     assert_eq!(battle(&h).pack().items, [potion(), potion()]);
     // Restart Battle: Preparations, with the sword and the Potions.
-    h.keys("d Down Down Down Down f f");
+    h.keys("d Down Down Down Down Down f f");
     assert_eq!(h.screens(), ["title", "preparations"]);
     let prep = h.flow().and_then(|f| f.preparations());
     let prep = prep.unwrap_or_else(|| panic!("no preparations")).prep();

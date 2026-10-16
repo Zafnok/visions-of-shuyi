@@ -32,6 +32,7 @@ pub mod cursor;
 pub mod event_sounds;
 pub mod forecast;
 pub mod glyph;
+pub mod guides;
 pub mod info;
 pub mod items;
 pub mod layout;
@@ -62,8 +63,8 @@ use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campa
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
-    LeadGender, LeadProfile, Outcome, Phase, Pos, StatValue, TileSet, Unit, UnitId, danger_zone,
-    next_command, threats_at,
+    LeadGender, LeadProfile, Outcome, Phase, Pos, StatValue, TerrainRules, TileSet, Unit, UnitId,
+    danger_zone, next_command, threats_at,
 };
 
 use self::ai_phase::{AiAction, PACING};
@@ -73,6 +74,7 @@ use self::attack::{Targeting, aimed_first, aimed_options};
 use self::camera::Camera;
 use self::cursor::Cursor;
 use self::event_sounds::CueQueue;
+use self::guides::{GuidesEffect, GuidesScreen};
 use self::layout::MAP_VIEW;
 use self::lessons::LessonState;
 use self::mode::{Effect, MenuEntry, Mode, Selection};
@@ -326,6 +328,8 @@ pub struct BattleScreen {
     /// events, the first on screen (after a combat's playback).
     queue: VecDeque<Queued>,
     rewind: Option<RewindScreen>,
+    /// The Guides list, while it is open (0458).
+    guides: Option<GuidesScreen>,
     /// Where the rewind screen was opened from (0822).
     rewind_from: RewindFrom,
     /// Where the outcome's music (0809) is.
@@ -469,6 +473,7 @@ impl BattleScreen {
             mode: Mode::after_command(&state),
             history: BattleHistory::new(state.clone()),
             rewind: None,
+            guides: None,
             rewind_from: RewindFrom::Browsing,
             outcome_music: OutcomeMusic::Unheard,
             state,
@@ -784,6 +789,9 @@ impl BattleScreen {
         match &self.mode {
             Mode::Selected(sel) => {
                 fired.push(TipTrigger::FirstUnitSelected);
+                if self.has_skill(sel.unit) {
+                    fired.push(TipTrigger::FirstSkillUnit);
+                }
                 let reachable = |u: &&Unit| {
                     u.faction != Faction::Player
                         && (sel.moves.contains(u.pos) || sel.attack.contains(u.pos))
@@ -798,8 +806,14 @@ impl BattleScreen {
                 if on_enemy && self.danger.is_none() {
                     fired.push(TipTrigger::DangerZoneAvailable);
                 }
+                if self.special_terrain(self.cursor.pos) {
+                    fired.push(TipTrigger::FirstTerrain);
+                }
             }
-            Mode::ActionMenu { sel, .. } => {
+            Mode::ActionMenu { sel, entries, .. } => {
+                if entries.contains(&MenuEntry::Magic) {
+                    fired.push(TipTrigger::FirstCaster);
+                }
                 if art_list::can_use_art(&art_list::art_lines(state, sel.unit, sel.dest())) {
                     fired.push(TipTrigger::ArtsAvailable);
                 }
@@ -845,6 +859,27 @@ impl BattleScreen {
             && map_menu::ready_players(&self.state) == 0
     }
 
+    /// Whether `unit` has a skill it can use now (a passive or an active).
+    fn has_skill(&self, unit: UnitId) -> bool {
+        let state = &self.state;
+        state
+            .unit(unit)
+            .is_some_and(|u| !u.usable_skills(state.classes(), state.skills()).is_empty())
+    }
+
+    /// Whether the terrain at `pos` is not plain ground: it gives a Def,
+    /// Avoid or healing bonus, or costs a movement type other than 1 to
+    /// enter (more, or impassable).
+    fn special_terrain(&self, pos: Pos) -> bool {
+        let state = &self.state;
+        let rules = state
+            .map()
+            .tiles
+            .get(pos)
+            .and_then(|&id| state.terrain().get(id));
+        rules.is_some_and(not_plain)
+    }
+
     /// The tip on screen, if any: the first queued whose moment has come
     /// (`due_tip`), unless an open lesson is on screen:
     /// tips wait for it (0456).
@@ -860,6 +895,7 @@ impl BattleScreen {
     /// is browsing without a banner.
     fn due_tip(&self) -> Option<TipTrigger> {
         if self.rewind.is_some()
+            || self.guides.is_some()
             || self.playing()
             || self.progress.is_some()
             || self.queued_scene().is_some()
@@ -886,6 +922,7 @@ impl BattleScreen {
     /// screen unless the lesson needs it. Lessons wait as tips do.
     fn lesson_moment(&self) -> bool {
         (self.rewind.is_none() || self.lessons.needs_rewind())
+            && self.guides.is_none()
             && !self.playing()
             && self.progress.is_none()
             && self.queued_scene().is_none()
@@ -1577,8 +1614,29 @@ impl BattleScreen {
             Effect::Restart => self.leaving = Some(Leaving::Restart),
             Effect::Suspend => self.leaving = Some(Leaving::Suspend),
             Effect::Options => return true,
+            Effect::Guides => self.guides = Some(GuidesScreen::new(&ctx.content)),
         }
         false
+    }
+
+    /// The Guides list, if open (0458).
+    pub fn guides(&self) -> Option<&GuidesScreen> {
+        self.guides.as_ref()
+    }
+
+    /// Handles one action on the open Guides list.
+    fn guides_step(&mut self, ctx: &mut Ctx, action: Action) {
+        let Some(screen) = self.guides.as_mut() else {
+            return;
+        };
+        match screen.step(action) {
+            GuidesEffect::None => {}
+            GuidesEffect::Moved => ctx.audio.menu(MenuSound::Move),
+            GuidesEffect::Close => {
+                ctx.audio.menu(MenuSound::Cancel);
+                self.guides = None;
+            }
+        }
     }
 
     /// Gives `action` to the rewind screen if open, else to the map: opens
@@ -1590,6 +1648,11 @@ impl BattleScreen {
         if self.rewind.is_some() {
             // On the rewind screen a key is the list's, not the map's.
             self.rewind_step(ctx, action);
+            return false;
+        }
+        if self.guides.is_some() {
+            // So on the Guides list.
+            self.guides_step(ctx, action);
             return false;
         }
         let was = Marks::of(&self.mode);
@@ -1732,6 +1795,9 @@ impl BattleScreen {
     pub fn help(&self, ctx: &Ctx) -> String {
         if let Some(r) = &self.rewind {
             return rewind_help(r, ctx);
+        }
+        if self.guides.is_some() {
+            return ctx.text_with(guides::HELP, &[]);
         }
         if let Some(line) = self.overlay_help(ctx) {
             return line;
@@ -2118,35 +2184,47 @@ impl BattleScreen {
     /// What the screen shows this frame (ADR-0054): the map's
     /// [`scene`](Self::scene) and everything around and over it, for the
     /// skin to paint and for tests to read. On the rewind screen: the map,
-    /// the rewind list, the help and the debug hint.
+    /// the rewind list, the help and the debug hint; on the Guides list
+    /// (0458), the same with the list.
     pub fn view(&self, ctx: &Ctx) -> BattleView {
         let scene = self.scene(ctx);
         let help = self.help(ctx);
         let debug_hint = super::debug_hint(ctx);
         let words = ctx.words();
+        let bare = || BattleView {
+            lesson: None,
+            scene: scene.clone(),
+            menu: None,
+            popups: Vec::new(),
+            panel: None,
+            stage: None,
+            dialog: None,
+            notes: None,
+            noted: Vec::new(),
+            banner: None,
+            tip: None,
+            message: None,
+            status: String::new(),
+            help: help.clone(),
+            debug_hint: debug_hint.clone(),
+            forecast: None,
+            info: None,
+            fight_box: None,
+            progress: None,
+            rewind: None,
+            guides: None,
+        };
         if let Some(rewind) = &self.rewind {
-            let lesson = self.lesson_view(ctx);
             return BattleView {
-                lesson,
-                scene,
-                menu: None,
-                popups: Vec::new(),
-                panel: None,
-                stage: None,
-                dialog: None,
-                notes: None,
-                noted: Vec::new(),
-                banner: None,
-                tip: None,
-                message: None,
-                status: String::new(),
-                help,
-                debug_hint,
-                forecast: None,
-                info: None,
-                fight_box: None,
-                progress: None,
+                lesson: self.lesson_view(ctx),
                 rewind: Some(rewind.view(words)),
+                ..bare()
+            };
+        }
+        if let Some(guides) = &self.guides {
+            return BattleView {
+                guides: Some(guides.view(ctx)),
+                ..bare()
             };
         }
         let told = (&self.state, words);
@@ -2190,6 +2268,7 @@ impl BattleScreen {
             fight_box,
             progress,
             rewind: None,
+            guides: None,
         }
     }
 
@@ -2378,6 +2457,16 @@ fn terrain_scene(state: &BattleState, origin: Pos, size: (i32, i32)) -> MapScene
 }
 
 /// The help line on the rewind screen `r`.
+/// Whether terrain `t` is not plain ground: it gives a Def, Avoid or
+/// healing bonus, or costs a movement type other than 1 to enter (more, or
+/// impassable).
+fn not_plain(t: &TerrainRules) -> bool {
+    t.defense != 0
+        || t.avoid != 0
+        || t.heal_percent != 0
+        || t.move_cost.iter().any(|&c| c != Some(1))
+}
+
 fn rewind_help(r: &RewindScreen, ctx: &Ctx) -> String {
     let key = if r.is_confirming() {
         "battle.rewind.help.confirm"

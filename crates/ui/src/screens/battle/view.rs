@@ -6,11 +6,12 @@
 //! how it looks.
 //!
 //! The forecast, the unit info screen, the fight box, the EXP and level-up
-//! pages and the rewind screen have views of their own, in this module's
-//! children (ticket 0248).
+//! pages, the rewind screen and the Guides list have views of their own, in
+//! this module's children (ticket 0248).
 
 mod fight_box;
 mod forecast;
+mod guides;
 mod info;
 mod progress;
 mod rewind;
@@ -23,6 +24,7 @@ pub use self::fight_box::{BoxFighterView, FightBoxView};
 pub use self::forecast::{
     ForecastHp, ForecastSideView, ForecastView, LeftView, SkillLineView, StrikeView, TotalView,
 };
+pub use self::guides::GuidesView;
 pub use self::info::{
     GearView, InfoEffectView, InfoSkillView, InfoSpellView, InfoStatView, InfoView, InfoWeaponView,
 };
@@ -90,6 +92,9 @@ pub struct BattleView {
     /// map (as it was before the action it is on), the help and the debug
     /// hint.
     pub rewind: Option<RewindView>,
+    /// The Guides list, while it is open (ticket 0458): it covers the map
+    /// and the side panel; the help and the debug hint stay.
+    pub guides: Option<GuidesView>,
 }
 
 /// A menu and where it opens.

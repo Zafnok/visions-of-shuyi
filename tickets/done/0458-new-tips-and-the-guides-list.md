@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0455", "0456"]
 nick_input: sign-off
-completed:
+completed: 2026-10-15
 ---
 
 # 0458 — New tips and the Guides list
@@ -67,11 +67,11 @@ Combat Arts and terrain magic get lessons (0457), so they get no tip.
 
 ## Acceptance criteria
 
-- [ ] Each new tip shows once at `Full`, never at `Short` or `None`.
-- [ ] The battle menu has `Guides`; it lists every tip and lesson; moving
+- [x] Each new tip shows once at `Full`, never at `Short` or `None`.
+- [x] The battle menu has `Guides`; it lists every tip and lesson; moving
       through the list shows each one's text with the player's keys.
-- [ ] Guides works at `None`.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Guides works at `None`.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -81,4 +81,42 @@ Combat Arts and terrain magic get lessons (0457), so they get no tip.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Done.**
+
+- Three new tips in `assets/data/tips.ron` (Full only, in the guide's box,
+  like every tip): **Skills** (`FirstSkillUnit`: a unit with a skill is
+  selected), **Magic** (`FirstCaster`: the action menu opens for a unit
+  that knows a spell), **Terrain** (`FirstTerrain`: the cursor rests on a
+  tile that isn't plain ground). Each shows once per profile, never at
+  Short or None (tests in `tip_tests.rs`).
+- **Guides** is the map menu's third entry (Units, Objective, Guides,
+  Options, …). It covers the map and the side panel: every lesson then
+  every tip by title on the left, the highlighted one's text on the right
+  with the player's keys; a lesson's checklist is plain lines under its
+  text. Up/Down move (wrapping), Cancel goes back to the map menu. Works
+  at every tutorial level. View `GuidesView` + glyph skin
+  (`glyph/guides.rs`), ADR-0054. Tips and lessons wait while it is open.
+- Text keys `battle.map_menu.guides`, `battle.guides.title`,
+  `battle.guides.help` in English and the `test` pack.
+- Rendered with `cargo xtask frame-png` and looked at.
+- Tests that walked the map menu by a count of Downs got one more Down.
+
+**Claude's starting rules** (Nick can veto):
+
+- The Skills tip shows when a unit with a skill is selected. Every player
+  class has an active skill, so in practice it shows on the first
+  selection, right after "Moving a unit".
+- The Magic tip shows when a spell-knower's action menu opens, whether or
+  not a spell has a target there.
+- "Not plain ground" = any DEF, AVO or healing bonus, or a move cost other
+  than 1 for some movement type (impassable tiles count). Only while
+  browsing the map.
+- Guides sits after Objective in the map menu; Confirm does nothing in it.
+- The shipped game has no lessons yet (0457), so its Guides starts with
+  the tips; the test build shows the test lesson first.
+- Tip words (Claude's): Skills "This unit has skills. Passive ones work on
+  their own; an active one is used from Arts or Skill in the action
+  menu. {Info} lists them all…"; Magic "…Pick Magic in the action menu to
+  cast at an enemy or to heal an ally. Each spell has a few uses per
+  battle…"; Terrain "Terrain matters. The side panel shows the DEF and
+  AVO a unit gets standing on this tile…".

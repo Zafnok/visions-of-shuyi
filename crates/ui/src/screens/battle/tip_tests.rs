@@ -242,10 +242,15 @@ fn selecting_a_unit_shows_the_selection_tip_then_the_in_range_tip() {
     dismiss_all(&mut s, &mut c);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::Selected(_)));
-    // The brigand at (7, 4) is within the lord's reach.
+    // The brigand at (7, 4) is within the lord's reach; the lord has a
+    // skill (0458).
     assert_eq!(
         dismiss_all(&mut s, &mut c),
-        [TipTrigger::FirstUnitSelected, TipTrigger::FirstEnemyInRange]
+        [
+            TipTrigger::FirstUnitSelected,
+            TipTrigger::FirstSkillUnit,
+            TipTrigger::FirstEnemyInRange
+        ]
     );
     // Selecting again shows nothing.
     press(&mut s, &mut c, &[Action::Cancel]);
@@ -265,7 +270,10 @@ fn no_in_range_tip_when_no_enemy_is_near() {
     let mut s = BattleScreen::new(battle_with(&c, quick.map().clone(), units, rout));
     dismiss_all(&mut s, &mut c);
     press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(dismiss_all(&mut s, &mut c), [TipTrigger::FirstUnitSelected]);
+    assert_eq!(
+        dismiss_all(&mut s, &mut c),
+        [TipTrigger::FirstUnitSelected, TipTrigger::FirstSkillUnit]
+    );
 }
 
 #[test]
@@ -475,4 +483,160 @@ fn the_start_tip_renders() {
     let mut s = quick();
     press(&mut s, &mut c, &[]);
     assert_snapshot!(render(&s, &c).to_snapshot(&c.palette));
+}
+
+// ---- Skills, magic and terrain (ticket 0458) -----------------------------------
+
+/// Selecting a unit with a skill shows the skills tip; one without
+/// doesn't. Every player class has an active skill, so the unit without
+/// one is the lord made a Brigand (a class with none) that learned none.
+#[test]
+fn selecting_a_unit_with_a_skill_shows_the_skills_tip() {
+    for skilled in [true, false] {
+        let mut c = tipped();
+        let mut s = edited(&c, |units| {
+            if !skilled {
+                units[0].class = trpg_core::ClassId("brigand".into());
+                units[0].class_records.clear();
+                units[0].learned_skills.clear();
+            }
+        });
+        let lord = s.state().units()[0].clone();
+        assert_eq!(s.has_skill(lord.id), skilled);
+        dismiss_all(&mut s, &mut c);
+        s.cursor.jump(lord.pos);
+        press(&mut s, &mut c, &[Action::Confirm]);
+        assert!(matches!(s.mode(), Mode::Selected(_)), "{skilled}");
+        let tips = dismiss_all(&mut s, &mut c);
+        assert_eq!(
+            tips.contains(&TipTrigger::FirstSkillUnit),
+            skilled,
+            "{tips:?}"
+        );
+    }
+}
+
+/// Selects the player unit `name` and keeps it where it stands: its
+/// action menu opens. The tips on the way are dismissed and returned.
+fn open_action_menu(s: &mut BattleScreen, c: &mut Ctx, name: &str) -> Vec<TipTrigger> {
+    let at = s
+        .state()
+        .units()
+        .iter()
+        .find(|u| u.name == name)
+        .unwrap()
+        .pos;
+    dismiss_all(s, c);
+    s.cursor.jump(at);
+    press(s, c, &[Action::Confirm]);
+    let mut tips = dismiss_all(s, c);
+    press(s, c, &[Action::Confirm]);
+    frame(s, c, &[], 1.0);
+    assert!(
+        matches!(s.mode(), Mode::ActionMenu { .. }),
+        "{:?}",
+        s.mode()
+    );
+    tips.extend(dismiss_all(s, c));
+    tips
+}
+
+#[test]
+fn a_casters_action_menu_shows_the_magic_tip_once() {
+    let mut c = tipped();
+    let mut s = quick();
+    let tips = open_action_menu(&mut s, &mut c, "Test Lord");
+    assert!(!tips.contains(&TipTrigger::FirstCaster), "{tips:?}");
+    let mut s = quick();
+    let tips = open_action_menu(&mut s, &mut c, "Test Mage");
+    assert!(tips.contains(&TipTrigger::FirstCaster), "{tips:?}");
+    // Shown once per profile.
+    let mut s = quick();
+    let tips = open_action_menu(&mut s, &mut c, "Test Mage");
+    assert!(!tips.contains(&TipTrigger::FirstCaster), "{tips:?}");
+}
+
+/// A tile with no unit on it whose terrain is plain ground if not
+/// `special`, else not.
+fn empty_tile(s: &BattleScreen, special: bool) -> Pos {
+    let map = &s.state().map().tiles;
+    let w = i32::from(map.width());
+    let h = i32::from(map.height());
+    (0..h)
+        .flat_map(|y| (0..w).map(move |x| Pos::new(x, y)))
+        .find(|&p| !s.state().units().iter().any(|u| u.pos == p) && s.special_terrain(p) == special)
+        .unwrap_or_else(|| panic!("no tile with special = {special}"))
+}
+
+#[test]
+fn resting_on_terrain_that_is_not_plain_ground_shows_the_terrain_tip_at_full_only() {
+    use trpg_core::TutorialLevel;
+    for (level, shown) in [
+        (Some(TutorialLevel::Full), true),
+        (Some(TutorialLevel::Short), false),
+        (Some(TutorialLevel::None), false),
+    ] {
+        let mut c = tipped();
+        c.campaign_tutorial = level;
+        let mut s = quick();
+        dismiss_all(&mut s, &mut c);
+        s.cursor.jump(empty_tile(&s, false));
+        assert_eq!(dismiss_all(&mut s, &mut c), [], "{level:?}");
+        s.cursor.jump(empty_tile(&s, true));
+        let tips = dismiss_all(&mut s, &mut c);
+        let want = if shown {
+            vec![TipTrigger::FirstTerrain]
+        } else {
+            vec![]
+        };
+        assert_eq!(tips, want, "{level:?}");
+        // Once: the next tile like it shows nothing.
+        s.cursor.jump(empty_tile(&s, false));
+        press(&mut s, &mut c, &[]);
+        s.cursor.jump(empty_tile(&s, true));
+        assert_eq!(dismiss_all(&mut s, &mut c), [], "{level:?}");
+    }
+}
+
+#[test]
+fn plain_ground_is_cost_1_with_no_bonus() {
+    let s = quick();
+    let state = s.state();
+    let map = &state.map().tiles;
+    let w = i32::from(map.width());
+    let h = i32::from(map.height());
+    for p in (0..h).flat_map(|y| (0..w).map(move |x| Pos::new(x, y))) {
+        let t = state.terrain().get(*map.get(p).unwrap()).unwrap();
+        let plain = t.defense == 0
+            && t.avoid == 0
+            && t.heal_percent == 0
+            && t.move_cost.iter().all(|&c| c == Some(1));
+        assert_eq!(s.special_terrain(p), !plain, "{p:?} {}", t.name);
+    }
+    // Off the map: nothing.
+    assert!(!s.special_terrain(Pos::new(-1, 0)));
+}
+
+/// Each bonus alone, or a cost other than 1 for one movement type, makes
+/// terrain not plain ground.
+#[test]
+fn any_one_bonus_or_cost_makes_terrain_not_plain() {
+    let plain = TerrainRules {
+        name: "Plain".into(),
+        move_cost: vec![Some(1), Some(1)],
+        defense: 0,
+        avoid: 0,
+        heal_percent: 0,
+    };
+    assert!(!not_plain(&plain));
+    let with = |edit: fn(&mut TerrainRules)| {
+        let mut t = plain.clone();
+        edit(&mut t);
+        not_plain(&t)
+    };
+    assert!(with(|t| t.defense = 1));
+    assert!(with(|t| t.avoid = 10));
+    assert!(with(|t| t.heal_percent = 10));
+    assert!(with(|t| t.move_cost[1] = Some(2)));
+    assert!(with(|t| t.move_cost[0] = None));
 }

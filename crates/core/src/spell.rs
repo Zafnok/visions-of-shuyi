@@ -23,6 +23,10 @@
 //!   magical damage, weight 0, no kind (so no rank speed and no weapon EXP),
 //!   no trait, never broken, and the spell's element. One can be the unit's
 //!   [equipped](crate::item::Equipped) attack, which counters.
+//! - **No counter** ([`SpellDef::no_counter`]): when a unit attacks with such
+//!   a spell, the defender doesn't strike back, whatever it holds. Only the
+//!   attacker's spell counts: a unit with one equipped still counters with
+//!   it when attacked.
 //! - **Heal spells** restore `min(heal_power + Mag, max HP − HP)` to an ally;
 //!   no roll, no counter. The battle rules are in [`crate::battle`].
 
@@ -119,6 +123,11 @@ pub struct SpellDef {
     pub uses: u8,
     /// The terrain change of a tile cast, if the spell allows one.
     pub terrain_effect: Option<TerrainEffect>,
+    /// An attack spell the defender can't counter: when the caster attacks
+    /// with it, only the caster strikes (like an art's
+    /// [`no_counter`](crate::art::ArtEffect::no_counter)). Countering *with*
+    /// it is unchanged.
+    pub no_counter: bool,
 }
 
 impl SpellDef {

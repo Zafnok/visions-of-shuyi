@@ -683,6 +683,7 @@ fn spells() -> SpellTable {
         max_range: 2,
         uses: 10,
         terrain_effect: None,
+        no_counter: false,
     };
     let fire = def(
         "fire",

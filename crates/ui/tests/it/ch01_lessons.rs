@@ -153,7 +153,7 @@ fn end_turn(h: &mut Harness) {
 
 /// Opens Options from the map menu and goes back to the map.
 fn visit_options(h: &mut Harness) {
-    h.keys("d Down Down f");
+    h.keys("d Down Down Down f");
     assert_eq!(h.top_screen(), "options");
     h.keys("d");
     assert_eq!(h.top_screen(), "battle");

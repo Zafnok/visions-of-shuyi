@@ -1,0 +1,77 @@
+---
+source: crates/ui/src/screens/battle/guides/tests.rs
+assertion_line: 192
+expression: "render(&s, &c).to_snapshot(&c.palette)"
+---
+╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
+║                                 │                                                                ║
+║ Moving the cursor               │  Moving the cursor                                             ║
+║ Played on the keys              │                                                                ║
+║ Finding your units              │  The cursor picks tiles and units on the map.                  ║
+║ Selecting a unit                │  Move it one tile each way.                                    ║
+║ Attacking                       │                                                                ║
+║ Ending the turn                 │  Move it up: Up                                                ║
+║ Rewind                          │  Move it down: Down                                            ║
+║ Threat arrows                   │  Move it left: Left                                            ║
+║ Combat Arts                     │  Move it right: Right                                          ║
+║ Spells that change tiles        │                                                                ║
+║ Moving the cursor               │                                                                ║
+║ Your move                       │                                                                ║
+║ Moving a unit                   │                                                                ║
+║ Enemy in reach                  │                                                                ║
+║ Attack forecast                 │                                                                ║
+║ Low HP                          │                                                                ║
+║ Level up!                       │                                                                ║
+║ Enemy phase                     │                                                                ║
+║ Danger zone                     │                                                                ║
+║ Skills                          │                                                                ║
+║ Magic                           │                                                                ║
+║ Terrain                         │                                                                ║
+║                                 │                                                                ║
+║                                 │                                                                ║
+║                                 │                                                                ║
+║                                 │                                                                ║
+║                                 │                                                                ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
+                                                                                                    
+ arrows choose · d close                                                                   F2 debug 
+--- colours ---
+aabbbbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+addddddddddddddddddddddddddddddddcaccbbbbbbbbbbbbbbbbbccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+efffffffffffffffffffffffeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeffffffffe
+--- legend ---
+a = fg:panel_border bg:panel_bg
+b = fg:text_highlight bg:panel_bg
+c = fg:text bg:panel_bg
+d = fg:panel_bg bg:panel_border_focus
+e = fg:text bg:black
+f = fg:text_dim bg:black

@@ -49,7 +49,8 @@ does without leaving the menu?
   `SpellChoice::technique().effect_text(...)` (e.g. `Spell: +1 strike`;
   check the real text in a test).
 - A plain spell line: a `spell_effect_text(words, &SpellDef)` built from the
-  spell's data only (`SpellKind`, `element`, `terrain_effect`), e.g. its
+  spell's data only (`SpellKind`, `element`, `terrain_effect`, and
+  `no_counter` from 0317, shown as `no counter` like Guard Break's), e.g. its
   element and what its tile cast does; no hand-written text per spell. If
   a plain line's numbers are already all on the line, the note says what
   the line doesn't (element, terrain effect, heal amount). Read
