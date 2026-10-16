@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1036", "1039", "1041", "1043", "1044", "1045", "1046", "1047", "1055"]
+blocked_by: ["1036", "1039", "1041", "1043", "1044", "1045", "1046", "1047", "1055", "0464", "0467", "0841"]
 nick_input: sign-off
 completed:
 ---
@@ -25,6 +25,11 @@ later and don't hold this play-through up.
 ADR-0070 §5 left two speed questions for this play-through: whether the
 enemy's pauses (1026: ~0.1 s per enemy, up to ~0.25 s) feel long
 (1051), and whether start-up feels slow (1036's numbers).
+
+**Blockers added 2026-10-16** (Chapter 1 playtest round 3): 0464, 0467
+and 0841, three tutorial bugs Nick hit on the PC. The Playdate runs the
+same tutorial code, so he'd hit them again here; asked, he chose to fix
+them first.
 
 ## Nick input
 

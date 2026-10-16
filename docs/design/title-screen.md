@@ -403,7 +403,7 @@ Chapter 1 map by 0820; the mockup's fight was made up.
 ### Open sub-questions
 
 - **A setting to turn the cinematic off** (a still title for players who
-  dislike motion). Nick: "Later". Ask again after he has seen the real
-  cinematic on the title (0820's sign-off).
+  dislike motion). Nick: "Later", then in playtest round 3 (2026-10-16),
+  having seen it: "Yes, an on/off setting". Built by ticket 0844.
 - **Which sword-clash sound** plays on a skip: ticket 0041.
 - **Where the overworld shot goes** and what it replaces: ticket 1010.

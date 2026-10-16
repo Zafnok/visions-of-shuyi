@@ -6,7 +6,7 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
 status: in-progress
-blocked_by: ["0803", "0802", "0602", "0307", "0406", "0107", "0108", "0414", "0417", "0424", "0425", "0710", "0807", "0814", "0215", "0809", "0810", "0413", "0035", "0316", "0231", "0435", "0714", "0715", "0716", "0436", "0437", "0440", "0116", "0822", "0727", "0724", "0447", "0444", "0055", "0448", "0442", "0439", "0811", "0819", "0820", "0830", "0607", "0451", "0452", "0056", "0317", "0057", "0058", "0029", "0429", "0728", "0729", "0730", "0832", "0833", "0834", "0455", "0456", "0457", "0458", "0731", "0835", "0836", "0837", "0838", "0839", "0732", "0733", "0734"]
+blocked_by: ["0803", "0802", "0602", "0307", "0406", "0107", "0108", "0414", "0417", "0424", "0425", "0710", "0807", "0814", "0215", "0809", "0810", "0413", "0035", "0316", "0231", "0435", "0714", "0715", "0716", "0436", "0437", "0440", "0116", "0822", "0727", "0724", "0447", "0444", "0055", "0448", "0442", "0439", "0811", "0819", "0820", "0830", "0607", "0451", "0452", "0056", "0317", "0057", "0058", "0029", "0429", "0728", "0729", "0730", "0832", "0833", "0834", "0455", "0456", "0457", "0458", "0731", "0835", "0836", "0837", "0838", "0839", "0732", "0733", "0734", "0250", "0318", "0446", "0449", "0461", "0462", "0463", "0464", "0465", "0466", "0467", "0468", "0736", "0737", "0738", "0739", "0740", "0741", "0742", "0841", "0842", "0843", "0844", "0845", "0846", "0847", "1118", "1050"]
 nick_input: sign-off
 completed:
 ---
@@ -92,6 +92,30 @@ four scene music picks once 0029's backgrounds are in (0029 decided
 2026-10-15: the talk over its place, darkened, with a short moving
 opening where the script asks; built by 0732, 0733 and 0734, added to
 `blocked_by`).
+
+**Round 3 played 2026-10-16; round 4 waits for the engine carve and the
+Playdate port, then for its feedback.** Nick: "generally it's an 8/10,
+where before it was 3 or 4/10. I am quite impressed and we can park
+playtest 4 til after engine carve and playdate port considerations. The
+rest I feel is very much taste driven rather than anything else." And on
+the script: "I don't want to delay engine carve or playdate port any
+more. So we can have ch1 playtest 4 come after those milestones with
+update script." Added to `blocked_by`: 1118 (the carve's first example,
+the last carve ticket) and 1050 (Nick plays Chapter 1 on his Playdate),
+plus the round 3 tickets he'd judge in Chapter 1 (the round 3 table in
+the Completion notes says which remark each answers). Every round 3
+ticket also waits for 1118 and 1050 itself, except three tutorial bugs
+(0464, 0467, 0841): the Playdate runs the same tutorial code, so Nick
+chose to fix them before 1050 ("wait for nothing but the way I read this,
+we should prio engine carve. Make it obvious engine carve is now the
+critical path."). They wait for nothing, and 1050 waits for them. The
+carve's first tickets (1103, 1114) no longer wait for 0804, which would
+have been a loop; `docs/ROADMAP.md` now opens with the carve as the
+critical path.
+
+**Round 4 starts at step 2**, with `v0.4.0` (or whatever version the game
+is at then) cut the same way, and a checklist like round 3's. Ask first
+about the new script (0737).
 
 ## Nick input
 
@@ -246,4 +270,83 @@ order. They cover:
 Tips seen now belong to the profile, so the checklist asks him to add
 a fresh profile for this round; Player 1 already remembers the tips from
 rounds 1–2.
+
+`v0.3.0` was tagged on `main` at `9360688` (2026-10-16) and released by
+the release workflow; Pages deployed the same commit.
+
+### Feedback, round 3 (Nick, 2026-10-16, verbatim) and where it went
+
+Nick answered all 76 questions on the checklist page (70 questions plus
+his notes). The overall verdict, and the priority, are in Context.
+
+**Became tickets** (all wait for 1118 and 1050 except 0464, 0467 and
+0841, which come before 1050; ✱ = not in round 4's `blocked_by`, Nick
+didn't need it before then):
+
+| Asked | Nick said | Ticket |
+| ----- | --------- | ------ |
+| The script overall | "Fable still did it line by line. Still 14 archers stuff... We need to toss the script. We can keep the beats we agreed on but the whole script is fairly mid imo. We need to have you get a crash course on fantasy writing that's compelling. Idk a skill repo for writing? Your writing is so bland." | **0736** (research the craft, into the story-writing skill) → **0737** (write it again on a blank page) |
+| Hollis in the yard | "like I said, this is AGAIN a line by line rewrite. Toss the whole thing." | **0737** |
+| Aske's fort report | "again, rewrite" | **0737** |
+| Tamsin over Harl | "we'll rewrite all this crap" | **0737** |
+| Where it drags | "In the conversations" | **0736** (a length budget), **0737** |
+| The intro as a whole (a note) | "some parts of the intro still don't make sense... the narration ends with "somewhere... chops wood" and it's supposed to be exciting? and then the portraits fly by, it's so disjointed... when it zooms on the lead and the archer(?) then it looks like a romantic moment in the middle of a battle... the narration at the beginning is thinking you read slow asf... the music closes with a swell crescendo thing and everybody is just chilling totally stationary it's very anti-climactic... We can park this work til after engine carve and playdate" | **0063** ✱ (decide the rework) |
+| Tamsin's news, 6 s | "just a bit too short if it was 7-8s it would probably be good." | **0843** |
+| The intro's combat scenes | "hold at end too long, want hit sounds, and we need the battler for tamsin" | **0843**; Tamsin's picture **0446** (open; his words added) |
+| Logo at 1:57 or on the chord | "On the chord, 1:55.8" | **0843** |
+| The idle fade into the intro | "it's a little obnoxious the way the fade in and fade out weave together... or just don't fade out the menu and instead go to blacck and fade in the cutscene intro only." | **0843** |
+| A setting to turn the intro off | "Yes, an on/off setting" | **0844** |
+| Darkness behind the talk | "the background should stay at this brightness (or maybe 50-60%) but why are the faces impacted? they are foreground this is weird." | **0739** (the listener's dimming, decided with him) |
+| The sparring opening | "they can spar for maybe 2s... anyway an issue is that they are yellow outlined? don't think I signed off on that, I want them with no outline." | **0738** |
+| Dace pacing | "Longer" | **0738** |
+| The study's darkness | "Darken less in this scene only" | **0738** |
+| The victory talk at the toll-fort | "show who's left standing, and fade to the darkened, rather than being darkened immediately, it looks like early morning not noon." | **0738** |
+| The pre-battle place | "that's a chapel? I don't get that ambience whatsoever" | **0741** |
+| Narration (a note) | "it's odd to me that narration dialogue boxes have their text centered while talking dialogue boxes have their text left aligned. Make it consistent, pref left alignment." | **0740** |
+| Three scene music picks | the letter: "we can experiment some more. the music is ok but not perfect."; the Red Company: "we can experiment more, it's ok."; after the fight: "we can experiment" | **0742** (after 0737) |
+| The dialogue log | "the log is well implemented overall. I just don't like the default key on keyboard. Let's see what visual novels or persona use." | **0847** |
+| The "b log" hint | "all hotkeys need to be more easily discernable right now they blend in "b log" looks like some word... if it were "<B> log" or "[B] log" or bolded B log or something with a different color for the keybind it would be better" | **0250** |
+| The Profile screen | "on first launch, we should have the guide kinda pop off to the right in its own window and be like "Hey! Did you change your profile yet?"... showing only until the player makes a save to their profile (customize options or name) or to the game itself." | **0842** |
+| Vix's face | "it generally looks quite good but I am wondering if her ears are cut off or that's just how her portrait is" | **0468** |
+| Vix's name | "Vix is fine but what we can also do is let players name her like they do the rival in pokemon with pre-filled choices or with free text. We can do the same with the lead character too." | **0065** ✱ |
+| Vix overall | "I think she turned out great actually... maybe if there is a way to slot her into a minor role in the story it would be good. For example in fortune's weave, Fortuna is a clippy, but she just advises on unique maps" | **0064** ✱ |
+| The lessons' moments | "the Arts lesson coming right after the Attack lesson is where the tips first start feeling disjointed... I moved Tamsin to attack a bandit, now the tip says open arts, but this is impossible with every other unit on turn 1... Probably if the tip cannot be achieved then it shouldn't yet show. Also, after the tutorial tips all play, we should ask if the player is OK with their position or wants to retry battle with no penalty, or retry tutorial with no penalty." | **0464**, **0465** |
+| Turn 1's load | "just make sure the tips are actually achievable on the turn they present themselves otherwise it's ok" | **0464** |
+| The new tips | "I didn't get the magic trigger for some reason... also didn't get terrain" | **0467** (bug) |
+| Guides | "hard to find, the guide should say something like "you're on your own for the rest, if you need any help, here is where you find the Guide. Good luck!"... Also it would be good if the guide had rendered mini screens showing what does what." | **0465**; pictures **0469** ✱ |
+| Tutorial set to None in battle | "No" (the tips and lessons didn't stop) | **0841** (bug) |
+| Starting at 2× | "ensure the guide has a tip for zoom on first turn, and also we need the map scroll arrows... Otherwise 2x is ok to start on." | **0466**; arrows **0449** (open; his words added) |
+| The Arts menu | "swapping weapons on forecast menu feels quite hidden as a feature it should be more obvious idk how also the guide should probably mention it" | **0463** |
+| Forest edges | "much clearer but I found a new issue is that the road abruptly becomes very narrow when it touches a bridge for some reason." | **0461** (bug) |
+| Cinder Oath | "She shouldn't counter with it either" | **0318** |
+| Anything else | "lead feels a bit weak actually, usually lead is a bit strong." | **0846** |
+| Anything else | "for this first ch1 fight probably the obj should be changed to just kill harl rather than all enemies cuz a straggler guard is not that important he should just run away after harl dies" | **0845** |
+| Anything else | "anything that attacks should prio an enemy over terrain for its first hover" | **0462** |
+| Sparks; threat arrows' look | "it looks fine for now. Probably before release we tune it"; "probably can be polished before final game release but these came out quite well for now." | **0908** ✱ (blocks the Steam release, 0903) |
+
+**No ticket:**
+
+| Asked | Nick said | Why |
+| ----- | --------- | --- |
+| Anything else | "ensure the threat arrows are accurate to if the enemies have obstacles (like our allied units moving to block them) and not just a simple range indicator." | They already are: an enemy's reach treats every unit of his as a wall, with the moving unit on its new tile (`threats_at`, `crates/core/src/movement.rs`). Written in `turn-structure.md`; told to Nick. |
+| Old saves in Player 1 | "I never clicked save before... I have no data points for you." | Nothing to check. |
+
+**Settled** (recorded in the design docs): the backdrops ("All fine"),
+idle fade aside; the cuts "land"; units move "like the game now"; no
+spoilers; the familiarity question's wording ("Clear") and place ("Both
+right"); the lead-select screen unchanged; the yard ("Feels right");
+Maud's eyes ("Fixed"); "Aye", "Greywater" and "Your Former Grace" kept;
+Vix's voice ("Yes"); holding End turn during a lesson ("Right"); the
+lesson box moving ("a really great feature that I didn't even ask for");
+both short sets right; the box beside the panel ("Both fine"); the cursor
+("much easier to see, great work"); the outline ("Clear") and the acted
+rim ("Fine"); when the arrows show ("Right"); the danger zone used
+"rarely, this is great"; Attack dimmed when only an art reaches
+("Right"); skill descriptions ("Clear"); pointing to heal ("Works how I
+wanted"); Tamsin ("Feels right now"); the lead and Aske doubling
+("Fine"); the difficulty ("Right"); the lead's level-up face ("Yes");
+battle lines over the live map ("Works"); Tamsin's news ("it's ok"); the
+study ("Right"); Veyne Hall's music ("Fits"); the keep-changes prompt
+("Right"); profile switching ("Yes"); Game Over ("Good"); the rebuilt
+screens ("Everything looked normal").
 

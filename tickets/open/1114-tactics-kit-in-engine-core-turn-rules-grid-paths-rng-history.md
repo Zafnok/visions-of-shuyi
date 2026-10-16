@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: opus-5.5
 effort: xhigh
 status: todo
-blocked_by: ["0804", "1102"]
+blocked_by: ["1102"]
 nick_input: none
 completed:
 ---
@@ -29,7 +29,9 @@ ADR-0063 §6: this code is **rewritten generically**, not moved; the
 game's turn loop stays the game's and implements the trait.
 
 This touches only `core`, so it can run in parallel with 1103–1113 (it
-waits for 0804 and the boundary gate only).
+waits for the boundary gate only; it waited for 0804 too until playtest
+round 3, 2026-10-16, when Nick put the carve first and made 0804's round
+4 wait for it).
 
 ## Nick input
 

@@ -6,6 +6,16 @@ in the browser, then publish to itch.io, then Steam.
 All work is in [`tickets/`](../tickets/README.md). Status is read from the
 folders: `tickets/open/` vs `tickets/done/`.
 
+> **The critical path now is the engine carve** (Nick, 2026-10-16, after
+> Chapter 1 playtest round 3 scored 8/10: "we should prio engine carve.
+> Make it obvious engine carve is now the critical path."). Pick carve
+> tickets first: **1103** → … → **1118**, with **1114** beside them (see
+> *The engine* below). Next comes the Playdate port (to **1050**, Nick
+> plays Chapter 1 on his Playdate), then Chapter 1 playtest round 4
+> (**0804**), which waits for both. Every round 3 ticket waits for 1118 and
+> 1050 too, except three small tutorial fixes (**0464**, **0467**,
+> **0841**) that 1050 waits for and that can be done any time.
+
 ## Milestones
 
 | Block | Milestone | Outcome | Tickets |
@@ -92,6 +102,35 @@ asks; the battle map for talk around a battle; built by **0732** the
 study → **0734** the moving openings, whose sign-off asks again about the
 scene music), each with the tickets it creates. All of these are on the critical path now.
 
+**Playtest round 4** (Nick, 2026-10-16, after playing `v0.3.0`: "generally
+it's an 8/10, where before it was 3 or 4/10... we can park playtest 4 til
+after engine carve and playdate port"). **The engine carve (to 1118) and
+the Playdate port (to 1050) come first**. 0804 and every round 3 ticket
+wait for both, except **0464**, **0467** and **0841** (tutorial bugs the
+Playdate shares), which wait for nothing and come before 1050.
+Then 0804 waits for: **0736** research what makes
+fantasy dialogue compelling → **0737** the Chapter 1 script written again
+from the beats (0719, 0722 and 0726 now wait for it) → **0742** other music
+for three scenes · **0738** the places' round 3 notes (longer openings, no
+outline on actors, a lighter study, the party at the toll-fort) · **0739**
+how much faces dim over a place · **0740** narration left-aligned · **0741**
+the pre-battle place reads as the chapel green · **0843** the intro's fixes
+(longer news, shorter fight hold, hit sounds, the logo on the chord, a
+start through black) · **0844** a setting to turn the intro off · **0446**
+Tamsin's combat picture · **0449** arrows where the map goes past the view
+· **0466** a zoom tip · **0464** lessons only when they can be done →
+**0465** the end of the lessons points at Guides and offers a fresh start ·
+**0467** tips lost before they show · **0841** Tutorial None stops what's
+queued · **0463** the forecast's weapon swap easy to find · **0468** Vix's
+ears · **0842** Vix's profile nudge on the title · **0250** key names that
+stand out · **0847** a better dialogue log key · **0461** the road up to a
+bridge · **0462** aiming starts on an enemy · **0318** Cinder Oath can't
+counter · **0845** the objective becomes defeating Harl → **0846** the lead
+a little stronger. Parked, not before round 4: **0063** rework the intro's
+shots, **0064** a story role for Vix, **0065** naming Vix and the lead,
+**0469** pictures in Guides, **0908** polish before the Steam release
+(sparks, arrows; 0903 waits for it).
+
 **Replaceable graphics** (Nick, 2026-10-01: swapping the map's glyphs for
 sprites from image files must be a small job; ADR-0038): **0231** pictures
 in the frame as sprite items (no open dependencies; 0711 and 0413 now draw
@@ -156,18 +195,19 @@ turns out feasible without jeopardizing our own velocity").
   [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine), is public under MIT OR Apache-2.0 and
   holds its ADRs, tickets, decisions and roadmap. The extra game styles
   and networking are parked until the engine reaches parity with the game.
-- **The critical path.** None of it is on the Chapter 1 critical path,
-  and nothing that moves code starts before 0804.
+- **The critical path.** Since 2026-10-16 the carve **is** the critical
+  path (the note at the top). It used to wait for 0804; Chapter 1 playtest
+  round 4 now waits for the carve instead (1103 and 1114 no longer wait
+  for 0804).
 
 The order:
 
-1. **Now:**
-   - **1102**: the `engine/` folder and the boundary gate. It doesn't
-     conflict with open work.
+1. **Done or any time:**
+   - ~~**1102**: the `engine/` folder and the boundary gate~~ (done).
    - **0059**: whether the tactics kit is open, and who may contribute.
      Any time.
    - **0060**: does the army ever walk around freely? After 0804.
-2. **After 0804, the carve, one at a time:** **1103** → **1104** →
+2. **Now, the carve, one at a time (the critical path):** **1103** → **1104** →
    **1105** → **1106** → **1107** → **1108** → **1109** → **1110** →
    **1111** → **1112** → **1113**. **1114** (the tactics kit in `core`)
    runs beside them. Then **1115** and **1116** → **1117** → **1118**,
@@ -204,6 +244,10 @@ script, 0804 playtest). Setup steps (accounts/secrets): 0103, 0104, 0106,
 0108, 0116, 0901, later 0903.
 
 ## Chapter 1 critical path
+
+**Parked since 2026-10-16:** the engine carve is the critical path now
+(the note at the top). What's below is the history of what led up to
+playtest rounds 1 to 3; round 4's list is *Playtest round 4* above.
 
 What's still open between now and Nick's playtest (0804), by dependency depth
 (tickets on the same row can run in parallel sessions/worktrees). Updated
@@ -257,7 +301,8 @@ early so every later PR is checked by them.
 - Supports (FE GBA-style, earned in battle) and camp events: 1002, 1003.
   Parked far-future ideas: hub activities (1004), pair abilities (1005).
 - **Playdate port of Chapter 1** (Nick, 2026-10-15: "rush" it; unparked
-  ahead of the engine carve): 1026 technical test (do the rules build for
+  ahead of the engine carve. Since 2026-10-16 the carve comes first and the
+  port second: the note at the top): 1026 technical test (do the rules build for
   the device, how long an enemy turn takes) and 0061 Nick's decisions
   (decided 2026-10-15, `design/playdate.md`) ran side by side; 1025 wrote
   the build tickets (2026-10-15). The rules run on Nick's Playdate
@@ -286,7 +331,8 @@ early so every later PR is checked by them.
      results, saves, game over
   8. **1043** the dialogue screen (after 0249) · **1044**
      the title screen and cinematic
-  9. **1050** Nick plays Chapter 1 on his Playdate → **1051** the AI plans
+  9. **1050** Nick plays Chapter 1 on his Playdate (also after the
+     tutorial fixes **0464**, **0467**, **0841**) → **1051** the AI plans
      once per phase (only if the enemy pauses feel long)
   10. **1052** package and sell on itch.io (after 0901) → **1053** the
       Catalog application

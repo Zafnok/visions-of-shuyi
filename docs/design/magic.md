@@ -444,9 +444,10 @@ the game after some personal arc or a support level increase".
   risk on its next phase.
 - The other numbers stay as in the table above (9 might, 80 hit, 3 uses,
   burns a forest tile).
-- *Claude's starting rule:* "no counter" covers only Rue's own attack. If
-  Cinder Oath is her equipped attack and an enemy attacks her from the next
-  tile, she still counters with it, as with any attack spell.
+- **She can't counter with it either** (Nick, playtest round 3,
+  2026-10-16, replacing 0317's starting rule that she could): "She
+  shouldn't counter with it either". Built by ticket 0318. Until then she
+  still counters with it.
 - Until the engine has the rule (ticket 0317), the spell plays as before:
   range 1 and the enemy counters.
 - **It gets upgraded later in the game**, after a personal arc or a support

@@ -6,7 +6,7 @@ milestone: M3 Battle UI
 model: sonnet-5
 effort: low
 status: todo
-blocked_by: ["0413"]
+blocked_by: ["0413", "1118", "1050"]
 nick_input: setup
 completed:
 ---
@@ -25,6 +25,12 @@ pack was not bought when 0413 was done, so the Rider class (Tamsin, the
 `sergeant`, and the Red Company's `red_rider` in Chapter 1) shows the
 public placeholder figure in a fight. Nick, 2026-10-11: "is the paladin
 needed before ch1 playtest?"; it isn't, so it is this ticket.
+
+Chapter 1 playtest round 3 (0804, 2026-10-16), on the intro cinematic's
+combat scenes: "we need the battler for tamsin". So 0804's round 4 now
+waits for this ticket, and like the rest of round 3's tickets it waits
+for the engine carve (1118) and the Playdate port (1050), Nick's
+priority.
 
 ## Nick input
 

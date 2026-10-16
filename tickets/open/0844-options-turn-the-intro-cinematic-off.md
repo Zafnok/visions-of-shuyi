@@ -1,0 +1,87 @@
+---
+id: "0844"
+title: "Options: a setting that turns the title's intro cinematic off"
+type: feature
+milestone: M7 Chapter 1 & game flow
+model: sonnet-5
+effort: medium
+status: todo
+blocked_by: ["1118", "1050"]
+nick_input: sign-off
+completed:
+---
+
+# 0844 — Options: turn the intro cinematic off
+
+## Context
+
+In ticket 0036 Nick said "Later" to a setting that turns the title's
+cinematic off, to be asked again once he had seen the real one
+(`docs/design/title-screen.md`, the line "A setting in Options to turn the
+cinematic off (yes / no / later): "Later""). Asked in Chapter 1 playtest
+round 3 (0804, 2026-10-16) with the choices "No setting needed", "Yes, an
+on/off setting" and "Yes, and play it only the first time by default", he
+picked **"Yes, an on/off setting"**.
+
+Options belong to the player's profile (0058, 0836). Leaving Options with
+a change asks Keep / Discard / Back (0839).
+
+**Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
+so `blocked_by` has 1118 and 1050.
+
+## Nick input
+
+**Sign-off:** turn the intro off, wait on the title, and say whether what
+the title does instead feels right.
+
+## Scope
+
+**In:**
+- An Options row **"Intro: On / Off"**, default **On**, kept in the
+  profile like the other options. *Claude's starting rule:* it sits with
+  the other display rows, after Map look / Map zoom; on the title's
+  Options and in battle alike (it does nothing in battle, which is fine).
+- With it Off, the title never goes idle into the cinematic: after the
+  first press it shows the logo, the backdrop, the sparks and the menu
+  with the song, and stays (*Claude's starting rule*). The song keeps
+  looping.
+- Discard on leaving Options brings the old value back (0839's rules).
+- The Playdate's Options (1045) get the row too if they have the title
+  cinematic (1044); if 1045 is done, add the row there in this ticket.
+- Update `docs/design/title-screen.md` and `docs/design/options.md`.
+
+**Out (do not do):**
+- "Only the first time" (Nick didn't pick it).
+- Any change to the cinematic's content (0843, 0063).
+
+## Implementation steps
+
+1. Add the option to the profile's options (the struct 0836 saves),
+   with its default and its text id (`assets/lang/en/ui.ron`; no literal
+   screen text, ADR-0045, `cargo xtask check-text`).
+2. Add the row to the Options view (`crates/ui/src/screens/options.rs`
+   and its view/skin, ADR-0054).
+3. In `crates/ui/src/screens/title.rs`, skip the idle-to-cinematic step
+   when the option is Off.
+4. Tests and snapshot.
+
+## Acceptance criteria
+
+- [ ] The row shows, cycles On/Off, and is kept per profile across a
+      restart.
+- [ ] With Off, the title stays on the logo and menu after 60 s idle (a
+      harness test steps the time).
+- [ ] With On, today's behaviour is unchanged (existing tests pass).
+- [ ] Discard restores the old value.
+- [ ] Design docs updated.
+- [ ] All gates in the `run-gates` skill pass.
+
+## Tests required
+
+- Unit: the option's save/load and default.
+- Integration: the title with the option Off and On; Options keep/discard.
+- Snapshot: the Options screen with the new row.
+
+## Completion notes
+
+*(Filled in by the session that completes the ticket.)*

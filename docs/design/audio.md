@@ -100,18 +100,22 @@ cue.
 
 | Moment | Cue | Decided |
 | ------ | --- | ------- |
-| The letter (`ch01_intro`) | `village_home` | *Claude's pick* |
-| The Red Company (`ch01_prebattle`) | `dungeon_tense` | *Claude's pick* |
+| The letter (`ch01_intro`) | `village_home` | *Claude's pick*; Nick: try others (0742) |
+| The Red Company (`ch01_prebattle`) | `dungeon_tense` | *Claude's pick*; Nick: try others (0742) |
 | The battle | `battle_bright` | Nick ("A") |
-| After the fight (`ch01_victory`) | `scene_sad` | *Claude's pick* |
-| Veyne Hall (`ch01_tbc`) | `talk_antagonist` | *Claude's pick* |
+| After the fight (`ch01_victory`) | `scene_sad` | *Claude's pick*; Nick: try others (0742) |
+| Veyne Hall (`ch01_tbc`) | `talk_antagonist` | Nick ("Fits", 2026-10-16) |
 
 On the four scene picks Nick said "I'll have to feel them out": they are in
 the build for him to hear in the playtest (0804), not approved. After playing
 (2026-10-14) he said "I want to see how the cutscenes would play out with
 this ambience": they wait for the conversations' backgrounds (decided in
 ticket 0029, built by 0732–0734), and are asked about again with 0734's
-sign-off. The battle's
+sign-off.
+Heard over the places in playtest round 3 (2026-10-16): Veyne Hall
+"Fits"; the letter "the music is ok but not perfect", the Red Company
+"it's ok", after the fight "we can experiment". Those three get other
+candidates in ticket 0742, after the script rewrite (0737). The battle's
 own story scenes (Harl's lines, the death quotes) don't change the music.
 
 ## Sound effects

@@ -80,6 +80,10 @@ needed). Key choices are Nick's; the defaults below are his.
 
 ### Zoom map
 
+Playtest round 3 (2026-10-16): starting at 2× stays ("Otherwise 2x is ok
+to start on"), with a zoom tip on the first turn (ticket 0466) and the
+arrows at the view's edges (0449).
+
 Decided 2026-10-12, ticket 0439 (the zoom itself: `look-and-feel.md`,
 *Zoom*). Nick was shown Chapter 1's first turn at 1× and at 2× and asked
 four things:

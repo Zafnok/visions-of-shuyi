@@ -45,6 +45,11 @@ is decided in [`world-structure.md`](world-structure.md) (0008): chapters 1–2
 
 - **Objective: Rout**: defeat every enemy unit on the map. The boss is one of
   them and counts like any other enemy.
+- **Changing to: defeat Red Harl** (Nick, playtest round 3, 2026-10-16):
+  "for this first ch1 fight probably the obj should be changed to just kill
+  harl rather than all enemies cuz a straggler guard is not that important
+  he should just run away after harl dies". Built by ticket 0845 (until
+  then the battle is still Rout).
 - **No turn limit.**
 - **Loss:** the lord falls → game over (`death-and-difficulty.md`, both modes).
   No other loss conditions (no ally or neutral units to protect).
@@ -192,6 +197,11 @@ turns (was 8).
 The lead (Iron Sword, 6) and Aske (Iron Bow, 4) still double the same
 Brigands, Raiders, Guard and Harl as Tamsin used to; out of this change's
 scope.
+
+Nick, playtest round 3 (2026-10-16): Tamsin "Feels right now"; the lead
+and Aske doubling those enemies is "Fine"; the difficulty is "Right". But:
+"lead feels a bit weak actually, usually lead is a bit strong", which is
+ticket 0846 (after the objective change, 0845).
 
 ### Teaching
 

@@ -163,8 +163,23 @@ for Nick to veto.
 
 ## Open sub-questions (deferred)
 
-- Tying the guide into the story (Angel-style): much later (Nick).
-- The guide's name: 0731.
+- Tying the guide into the story (Angel-style): much later (Nick). In
+  playtest round 3 (2026-10-16) he suggested a small role, map hints on
+  unusual maps: ticket 0064.
+- The guide's name: 0731 (Vix). Letting the player name her, and the lead,
+  from suggestions or their own: ticket 0065.
+
+Playtest round 3 (2026-10-16), Nick on what's built: the familiarity
+question's wording and place are right and both short sets are right;
+holding End turn while a lesson is open is right; the lesson box moving
+out of the cursor's way: "this is a really great feature that I didn't
+even ask for"; Vix's voice is right, and "she really ties ch1 together as
+an intro to a quality game". To fix: a lesson that can't be done that turn
+(0464), the end of the lessons pointing at Guides with a fresh start
+(0465), a zoom tip (0466), tips lost before they show (0467), Tutorial
+None not stopping what's queued (0841), the forecast's weapon swap (0463),
+pictures in Guides (0469), a profile nudge on the title (0842), Vix's ears
+(0468).
 
 ## Built by
 
