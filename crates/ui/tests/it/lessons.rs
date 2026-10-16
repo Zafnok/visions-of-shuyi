@@ -107,7 +107,7 @@ fn a_done_lesson_stays_done_after_suspend_and_continue() {
     h.keys("Up Down Left Right");
     assert_eq!(lessons_done(&h), [TEST_LESSON]);
     // The map menu's Suspend, then yes.
-    h.keys("d Down Down Down f f");
+    h.keys("d Down Down Down Down f f");
     assert_eq!(h.screens(), ["title"]);
     let saved = h.game().ctx().storage.read(SUSPEND_KEY);
     let saved = saved
@@ -132,7 +132,7 @@ fn a_lesson_left_open_opens_again_after_continue() {
     let mut h = launch(Box::new(MemoryStorage::new()));
     to_battle(&mut h, "");
     h.keys("Up Down");
-    h.keys("d Down Down Down f f");
+    h.keys("d Down Down Down Down f f");
     assert_eq!(h.screens(), ["title"]);
     let mut h = launch(h.into_storage());
     h.keys("f").wait(0.1);

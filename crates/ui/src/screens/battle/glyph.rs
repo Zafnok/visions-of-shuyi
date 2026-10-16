@@ -3,13 +3,14 @@
 //! side panel in a box on the right (double-bordered while a unit is
 //! selected), the message and help rows at the bottom, menus beside their
 //! tile, and boxes and banners centred on the map. The forecast, the info
-//! screen, the fight box, the EXP and level-up pages and the rewind screen
-//! have a module each. Everything about the look lives here; nothing here
+//! screen, the fight box, the EXP and level-up pages, the rewind screen
+//! and the Guides list have a module each. Everything about the look lives here; nothing here
 //! decides what the screen shows. Another look is another `paint` of the
 //! same view (ADR-0054).
 
 pub mod fight_box;
 pub mod forecast;
+pub mod guides;
 pub mod info;
 pub mod progress;
 pub mod rewind;
@@ -67,6 +68,13 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     let black = c(UiColor::Black);
     buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
     ctx.map_skin.paint(ctx, &view.scene, MAP_VIEW, buf);
+    if let Some(g) = &view.guides {
+        // The list over the map and the side panel, and the help line.
+        guides::paint(ctx, g, buf);
+        buf.print(1, HELP_ROW, &view.help, c(UiColor::TextDim), black);
+        paint_hint(ctx, view, buf);
+        return;
+    }
     if let Some(r) = &view.rewind {
         // The list in the side panel, and the help line.
         rewind::paint(ctx, r, buf);
