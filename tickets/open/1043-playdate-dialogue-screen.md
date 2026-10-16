@@ -41,8 +41,10 @@ font, decided in 0061).
   (face beside the text box) scaled to the 50 × 15 screen; if it doesn't
   fit 0062's portrait size, the face sits above the box.
 - The dialogue log: a full-screen page, scrolled with the cursor.
-- Scene backgrounds, if Chapter 1's scenes use any by then (0029): one-bit
-  versions via 1040's tool, or none.
+- Scene places (0029, `look-and-feel.md`, *Places behind conversations*;
+  built by 0732–0734): on the Playdate the place is drawn in the glyph
+  look, darkened, as the battle map is. If 0732 isn't done, leave it out
+  and add it to 0732's follow-ups.
 - Text that names a button goes through the keymap (`keyboard-input`
   skill).
 - Look tests with the skin; behaviour tests read the view.

@@ -29,6 +29,7 @@ here.
 | Title screen: the logo, its backdrops and the sparks | [`look-and-feel.md`](look-and-feel.md) (*Title screen*) | 0811 | ✅ decided 2026-10-12 (block lettering over a bought backdrop that changes each launch, drifting sparks, no line under the title) |
 | Game Over screen: the opening animation | [`look-and-feel.md`](look-and-feel.md) (*Game Over screen*) | 0830 | ✅ decided 2026-10-13 (the battle fades to black, the gray logo then gold `GAME OVER` under it, two seconds, any press skips) |
 | Descriptions in lists: what the highlighted skill or art does | [`look-and-feel.md`](look-and-feel.md) (*Descriptions in lists*) | 0429 | ✅ decided 2026-10-14 (a row under the list inside the menu box, white text, the cursor stops on greyed lines) |
+| Places behind conversations | [`look-and-feel.md`](look-and-feel.md) (*Places behind conversations*) | 0029 (built by 0732, 0733, 0734) | ✅ decided 2026-10-15 (the talk over its place, darkened; a short moving opening where the script asks; the battle map for talk around a battle) |
 | Title | [`title.md`](title.md) | 0012 | ✅ decided 2026-09-29 (*Visions of Shuyi*) |
 | Title screen: "Press any key or button" | [`title-screen.md`](title-screen.md) | 0034, 0032, 0226 | ✅ decided 2026-09-30 (every build, keys and buttons, since 0032; the keyboard and controller pictures 2026-10-04) |
 | Title screen: intro cinematic | [`title-screen.md`](title-screen.md) (*Intro cinematic*) | 0036 | ✅ decided 2026-10-03 (an off switch in Options: later; skip sound 0041; overworld shot 1010) |
