@@ -346,6 +346,20 @@ fn feature_problems_are_reported() {
     assert!(errs[0].line.is_some());
 }
 
+/// A feature with no problems of its own: the hook's default.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+struct Mark(u8);
+
+impl MapFeature for Mark {}
+
+#[test]
+fn a_feature_has_no_problem_unless_the_game_says() {
+    assert_eq!(Mark(0).problem(), None);
+    let src = HEADER.replace(",\n)", ",\n  features: { (0, 0): (0) },\n)");
+    let map = parse::<u16, Mark>("m.map", &format!("{src}..\n"), &FORMAT, terrain).unwrap();
+    assert_eq!(map.features.get(&Pos::new(0, 0)), Some(&Mark(0)));
+}
+
 #[test]
 fn a_game_without_features_has_none() {
     let map = parse::<u16, NoFeature>("m.map", &format!("{HEADER}..\n"), &FORMAT, terrain);
