@@ -76,6 +76,99 @@ fn a_good_lesson_loads_with_every_condition() {
 }
 
 #[test]
+fn the_lessons_conditions_load_and_say_which_need_a_unit() {
+    let names = [
+        ("CursorMoved", DoneWhen::CursorMoved, false),
+        ("ActionMenuOpened", DoneWhen::ActionMenuOpened, true),
+        ("ArtsOpened", DoneWhen::ArtsOpened, true),
+        ("TileAimed", DoneWhen::TileAimed, true),
+        ("ThreatPointed", DoneWhen::ThreatPointed, true),
+        ("SafePointed", DoneWhen::SafePointed, true),
+        ("RewindClosed", DoneWhen::RewindClosed, false),
+        ("OptionsOpened", DoneWhen::OptionsOpened, false),
+    ];
+    let items: Vec<String> = names
+        .iter()
+        .map(|(name, _, _)| format!(r#"(label: "x", done_when: {name})"#))
+        .collect();
+    let source = format!(
+        "(lessons: [{}, {}])",
+        lesson("a", &items[..6].join(",")),
+        lesson("b", &items[6..].join(","))
+    );
+    let table = from_source("t.ron", &source, Refs::default()).unwrap();
+    let done: Vec<DoneWhen> = table
+        .lessons
+        .iter()
+        .flat_map(|l| l.items.iter().map(|i| i.done_when))
+        .collect();
+    assert_eq!(done, names.map(|(_, d, _)| d));
+    for (_, d, unit) in names {
+        assert_eq!(d.needs_unit(), unit, "{d:?}");
+    }
+    for d in [
+        DoneWhen::UnitSelected,
+        DoneWhen::UnitMoved,
+        DoneWhen::Attacked,
+    ] {
+        assert!(d.needs_unit(), "{d:?}");
+    }
+    let keys = [
+        DoneWhen::Pressed(Action::Info),
+        DoneWhen::RewindOpened,
+        DoneWhen::TurnEnded,
+    ];
+    assert!(keys.iter().all(|d| !d.needs_unit()));
+}
+
+/// The story's lessons (0457): the basic controls at Full, what is
+/// different here at Short, each with the trigger it starts at.
+#[test]
+fn the_story_has_the_ten_lessons_of_the_design() {
+    use LessonLevel::{Full, Short};
+    use TipTrigger as T;
+    let story = bundle::story_only(|| load(Refs::default())).unwrap();
+    let got: Vec<(&str, LessonLevel, TipTrigger)> = story
+        .lessons
+        .iter()
+        .map(|l| (l.id.as_str(), l.level, l.trigger))
+        .collect();
+    assert_eq!(
+        got,
+        [
+            ("cursor", Full, T::FirstBattleStart),
+            ("keys", Short, T::FirstBattleStart),
+            ("next_unit", Full, T::FirstBattleStart),
+            ("moving", Full, T::FirstBattleStart),
+            ("attacking", Full, T::FirstEnemyInRange),
+            ("ending_turn", Full, T::NoUnitLeft),
+            ("rewind", Short, T::SecondTurn),
+            ("threat_arrows", Short, T::ThreatArrowsShown),
+            ("combat_arts", Short, T::ArtsAvailable),
+            ("terrain_magic", Short, T::TileSpellAvailable),
+        ]
+    );
+    // Only ending the turn's lesson lets the turn end.
+    let ends: Vec<&str> = story
+        .lessons
+        .iter()
+        .filter(|l| l.has(DoneWhen::TurnEnded))
+        .map(|l| l.id.as_str())
+        .collect();
+    assert_eq!(ends, ["ending_turn"]);
+    // Narrower than the format allows: the box with the guide's face stays
+    // over the map, off the side panel.
+    for l in &story.lessons {
+        for line in l.text.lines() {
+            assert!(text_width(line) <= 45, "{}: {line:?}", l.id);
+        }
+        for item in &l.items {
+            assert!(text_width(&item.label) <= 41, "{}: {:?}", l.id, item.label);
+        }
+    }
+}
+
+#[test]
 fn a_lesson_starts_in_its_battles_or_any() {
     let source = format!("(lessons: [{}])", lesson("a", UP));
     let mut l = from_source("t.ron", &source, Refs::default())

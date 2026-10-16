@@ -48,6 +48,9 @@ pub struct LessonState {
     /// Whether the front lesson has been on screen: from then on it is
     /// open, its items tick, and the turn waits for it.
     open: bool,
+    /// The lessons put away unfinished ([`put_away`](Self::put_away)) and
+    /// the turn they were put away in: they don't come back that turn.
+    away: Vec<(String, u32)>,
 }
 
 impl LessonState {
@@ -61,19 +64,22 @@ impl LessonState {
     /// Queues the lessons the fired triggers start in battle `battle`:
     /// each one the campaign's tutorial level shows (a battle with no
     /// campaign counts as [`TutorialLevel::Full`]) that isn't done or
-    /// waiting already. With lessons off they are forgotten.
-    pub fn absorb(&mut self, ctx: &Ctx, battle: Option<&str>) {
+    /// waiting already, nor put away in turn `turn`. With lessons off they
+    /// are forgotten.
+    pub fn absorb(&mut self, ctx: &Ctx, battle: Option<&str>, turn: u32) {
         let fired = core::mem::take(&mut self.fired);
         if ctx.lessons == Lessons::Off {
             return;
         }
+        self.away.retain(|(_, t)| *t == turn);
         let level = ctx.campaign_tutorial.unwrap_or(TutorialLevel::Full);
         for trigger in fired {
             for lesson in ctx.content.lessons.for_trigger(trigger) {
                 let due = lesson.level.shows_at(level)
                     && lesson.starts_in(battle)
                     && !ctx.campaign_lessons.contains(&lesson.id)
-                    && !self.queue.iter().any(|w| w.id == lesson.id);
+                    && !self.queue.iter().any(|w| w.id == lesson.id)
+                    && !self.away.iter().any(|(id, _)| *id == lesson.id);
                 if due {
                     self.queue.push_back(Waiting::new(lesson));
                 }
@@ -113,6 +119,36 @@ impl LessonState {
     pub fn needs_rewind(&self) -> bool {
         self.has(DoneWhen::RewindOpened)
             || self.has(DoneWhen::Pressed(trpg_content::Action::Rewind))
+    }
+
+    /// Whether a lesson is in play, open or waiting for its moment.
+    pub fn in_play(&self) -> bool {
+        !self.queue.is_empty()
+    }
+
+    /// Puts the lessons in play away, unfinished, while the one in front
+    /// still needs an item that takes a unit ([`DoneWhen::needs_unit`]):
+    /// call it when no unit is left to act in turn `turn`. Each comes back
+    /// from an empty list the next time its trigger fires in a later turn,
+    /// so a lesson never holds a turn it can't be finished in. Returns
+    /// whether one was put away.
+    pub fn put_away(&mut self, turn: u32) -> bool {
+        let mut any = false;
+        while let Some(front) = self.queue.front() {
+            let stuck = front
+                .items
+                .iter()
+                .zip(&front.ticked)
+                .any(|(d, &t)| !t && d.needs_unit());
+            if !stuck {
+                break;
+            }
+            self.away.push((front.id.clone(), turn));
+            self.queue.pop_front();
+            self.open = false;
+            any = true;
+        }
+        any
     }
 
     /// Each item of the lesson in play, ticked yet, in order.
@@ -187,7 +223,7 @@ mod tests {
     fn start(c: &Ctx) -> LessonState {
         let mut s = LessonState::default();
         s.fire(TipTrigger::FirstBattleStart);
-        s.absorb(c, None);
+        s.absorb(c, None, 1);
         s
     }
 
@@ -204,7 +240,7 @@ mod tests {
         // Fired again (every frame of turn 1): nothing more.
         s.fire(first);
         s.fire(first);
-        s.absorb(&c, None);
+        s.absorb(&c, None, 1);
         let ids: Vec<&str> = s.queue.iter().map(|w| w.id.as_str()).collect();
         assert_eq!(ids, ["a", "b"]);
         // Not open until shown: nothing ticks, the turn may end.
@@ -222,7 +258,7 @@ mod tests {
         let queued = |c: &Ctx, battle| {
             let mut s = LessonState::default();
             s.fire(first);
-            s.absorb(c, battle);
+            s.absorb(c, battle, 1);
             s.queue.into_iter().map(|w| w.id).collect::<Vec<_>>()
         };
         // No campaign: Full.
@@ -273,6 +309,50 @@ mod tests {
         assert!(!s.is_open() && !s.holds_turn());
         s.mark_open();
         assert!(!s.is_open());
+    }
+
+    #[test]
+    fn a_lesson_that_needs_a_unit_is_put_away_for_the_turn_and_comes_back() {
+        let first = TipTrigger::FirstBattleStart;
+        let mut c = with(vec![
+            lesson("unit", LessonLevel::Full, first, &[UP, DoneWhen::Attacked]),
+            lesson("keys", LessonLevel::Full, first, &[UP]),
+            lesson("arts", LessonLevel::Full, first, &[DoneWhen::ArtsOpened]),
+        ]);
+        let mut s = start(&c);
+        s.mark_open();
+        assert!(s.tick(&mut c, UP));
+        // No unit left: the attack can't be done; "keys" stops the sweep.
+        assert!(s.put_away(1));
+        assert_eq!(s.current(), Some("keys"));
+        assert!(!s.is_open());
+        assert!(!s.put_away(1));
+        s.mark_open();
+        assert!(s.tick(&mut c, UP));
+        assert!(s.put_away(1));
+        assert!(!s.in_play());
+        // Not done, and not again this turn.
+        assert!(!c.campaign_lessons.contains("unit"));
+        s.fire(first);
+        s.absorb(&c, None, 1);
+        assert!(!s.in_play());
+        // A lesson that wasn't put away still comes this turn.
+        c.content.lessons.lessons.push(lesson(
+            "later",
+            LessonLevel::Full,
+            TipTrigger::FirstLowHp,
+            &[UP],
+        ));
+        s.fire(TipTrigger::FirstLowHp);
+        s.absorb(&c, None, 1);
+        assert_eq!(s.current(), Some("later"));
+        s.mark_open();
+        assert!(s.tick(&mut c, UP));
+        // A later turn: back, from an empty list.
+        s.fire(first);
+        s.absorb(&c, None, 2);
+        assert_eq!(s.current(), Some("unit"));
+        assert_eq!(s.ticked(), [false, false]);
     }
 
     #[test]

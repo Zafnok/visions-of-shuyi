@@ -28,7 +28,7 @@ fn lessons_come_first_then_the_tips_in_their_order() {
     let tips = c.content.tips.tips.iter().map(|t| t.title.clone());
     let want: Vec<String> = lessons.chain(tips).collect();
     assert_eq!(titles(&c), want);
-    // The test build has the test lesson; the new tips are listed too.
+    // The story's lessons (0457) first; the new tips are listed too.
     let all = titles(&c);
     assert_eq!(all[0], "Moving the cursor");
     for title in ["Your move", "Skills", "Magic", "Terrain"] {
@@ -46,8 +46,8 @@ fn a_lessons_checklist_shows_as_plain_lines_with_the_keys() {
     assert_eq!(
         view.lines,
         [
-            "Move the cursor with arrows, one tile each way.",
-            "The turn can't end until the list is done.",
+            "The cursor picks tiles and units on the map.",
+            "Move it one tile each way.",
             "",
             "Move it up: Up",
             "Move it down: Down",
@@ -71,12 +71,8 @@ fn up_and_down_move_through_the_topics_and_wrap() {
     assert_eq!(g.focus(), 0);
     g.step(Action::CursorDown);
     let view = g.view(&c);
-    assert_eq!(view.heading, "Your move");
-    assert!(
-        view.lines[0].starts_with("Steer the cursor with arrows."),
-        "{:?}",
-        view.lines
-    );
+    assert_eq!(view.heading, "Played on the keys");
+    assert_eq!(view.lines[0], "No mouse here: the game is played on keys.");
     // Other keys do nothing; Cancel closes.
     for action in [Action::Confirm, Action::CursorLeft, Action::Info] {
         assert_eq!(g.step(action), GuidesEffect::None);
@@ -155,8 +151,8 @@ fn the_map_menu_opens_it_at_every_level_and_cancel_goes_back() {
         let view = s.view(&c);
         let guides = view.guides.unwrap();
         assert_eq!(guides.focus, 1);
-        assert_eq!(guides.heading, "Your move");
-        assert!(guides.lines[0].contains("arrows"));
+        assert_eq!(guides.heading, "Played on the keys");
+        assert!(guides.lines.iter().any(|l| l.contains("arrows")));
         // The map's keys don't reach the map.
         let cursor = s.cursor.pos;
         press(&mut s, &mut c, &[Action::CursorRight, Action::NextUnit]);
@@ -178,11 +174,17 @@ fn the_text_names_the_keys_the_player_has_bound() {
     c.use_layout(Layout::LeftHanded);
     let mut s = opened(&mut c);
     let lines = s.view(&c).guides.unwrap().lines;
-    assert_eq!(lines[0], "Move the cursor with wasd, one tile each way.");
     assert_eq!(lines[3], "Move it up: w");
     press(&mut s, &mut c, &[Action::CursorDown]);
     let lines = s.view(&c).guides.unwrap().lines;
-    assert!(lines[0].contains("Press j on one of"), "{lines:?}");
+    assert!(
+        lines.contains(&"Move the cursor: wasd".to_owned()),
+        "{lines:?}"
+    );
+    assert!(
+        lines.contains(&"Open Options from the map menu: k".to_owned()),
+        "{lines:?}"
+    );
     assert_eq!(s.help(&c), "wasd choose · k close");
 }
 

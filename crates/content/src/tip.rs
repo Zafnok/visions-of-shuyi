@@ -65,6 +65,20 @@ pub enum TipTrigger {
     /// Def, Avoid or healing bonus, or a movement cost other than 1
     /// (0458).
     FirstTerrain,
+    // The triggers below start lessons only (ticket 0457): no tip uses them
+    // yet.
+    /// In the player's phase, every unit of the player's has acted.
+    NoUnitLeft,
+    /// The player's phase of turn 2 begins: there is a turn to undo.
+    SecondTurn,
+    /// The threat arrows show: an enemy could attack a unit of the
+    /// player's where it stands or is about to move.
+    ThreatArrowsShown,
+    /// A unit's action menu opens with `Arts` it can use.
+    ArtsAvailable,
+    /// A unit's spell list opens with a spell it could cast on a tile
+    /// (to change it) from there.
+    TileSpellAvailable,
 }
 
 /// One tip.

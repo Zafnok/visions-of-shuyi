@@ -1,14 +1,25 @@
 ---
 source: crates/ui/src/screens/battle/guides/tests.rs
+assertion_line: 194
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
 ║ Moving the cursor               │  Terrain                                                       ║
+║ Played on the keys              │                                                                ║
+║ Finding your units              │  Terrain matters. The side panel shows the DEF and AVO a       ║
+║ Selecting a unit                │  unit gets standing on this tile. Some tiles take more         ║
+║ Attacking                       │  movement to cross, and some can't be crossed at all.          ║
+║ Ending the turn                 │                                                                ║
+║ Rewind                          │                                                                ║
+║ Threat arrows                   │                                                                ║
+║ Combat Arts                     │                                                                ║
+║ Spells that change tiles        │                                                                ║
+║ Moving the cursor               │                                                                ║
 ║ Your move                       │                                                                ║
-║ Moving a unit                   │  Terrain matters. The side panel shows the DEF and AVO a       ║
-║ Enemy in reach                  │  unit gets standing on this tile. Some tiles take more         ║
-║ Attack forecast                 │  movement to cross, and some can't be crossed at all.          ║
+║ Moving a unit                   │                                                                ║
+║ Enemy in reach                  │                                                                ║
+║ Attack forecast                 │                                                                ║
 ║ Low HP                          │                                                                ║
 ║ Level up!                       │                                                                ║
 ║ Enemy phase                     │                                                                ║
@@ -16,16 +27,6 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ║ Skills                          │                                                                ║
 ║ Magic                           │                                                                ║
 ║ Terrain                         │                                                                ║
-║                                 │                                                                ║
-║                                 │                                                                ║
-║                                 │                                                                ║
-║                                 │                                                                ║
-║                                 │                                                                ║
-║                                 │                                                                ║
-║                                 │                                                                ║
-║                                 │                                                                ║
-║                                 │                                                                ║
-║                                 │                                                                ║
 ║                                 │                                                                ║
 ║                                 │                                                                ║
 ║                                 │                                                                ║
@@ -48,17 +49,17 @@ acccccccccccccccccccccccccccccccccaccccccccccccccccccccccccccccccccccccccccccccc
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
+acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 addddddddddddddddddddddddddddddddcacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
-acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca
 acccccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccca

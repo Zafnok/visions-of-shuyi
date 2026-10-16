@@ -45,7 +45,7 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     for text in [
         "Guides",
         "Moving the cursor",
-        "Move the cursor with arrows, one tile each way.",
+        "The cursor picks tiles and units on the map.",
         "Move it up: Up",
         "Danger zone",
         "Terrain",
@@ -54,7 +54,10 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
         assert!(screen.contains(text), "{text}:\n{screen}");
     }
     h.keys("Down");
-    assert!(h.snapshot().contains("Steer the cursor with arrows."));
+    assert!(
+        h.snapshot()
+            .contains("No mouse here: the game is played on keys.")
+    );
     h.keys("Up Up");
     let screen = h.snapshot();
     assert!(screen.contains("Terrain matters."), "{screen}");
