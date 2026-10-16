@@ -72,7 +72,8 @@ None. The repository exists, and Nick's `gh` login can push to it.
     repository wall.
   - Update `CLAUDE.md` and the `work-ticket` skill: a ticket that needs
     an engine change is an engine PR first, then a game PR that moves
-    the pin.
+    the pin. One line each: 1152 turns it into the `engine-change`
+    skill and teaches `ticket-lint` the `engine#NNNN` ids.
 - **The local checkout** (only if the measure says so):
   - `cargo xtask engine` checks the engine repository out at the pinned
     revision into a git-ignored `shuyi-engine/` folder.
