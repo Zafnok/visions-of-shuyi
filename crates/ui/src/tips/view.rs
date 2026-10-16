@@ -5,7 +5,7 @@
 //! [`super::glyph::paint_lesson`]).
 
 use crate::prelude::*;
-use trpg_content::tip::GUIDE_PORTRAIT;
+use trpg_content::tip::{self, GUIDE_PORTRAIT};
 use trpg_content::{Lesson, Tip};
 use trpg_core::Pos;
 
@@ -51,10 +51,10 @@ impl TipView {
         let words = ctx.words();
         let guide = ctx.content.portraits.get(GUIDE_PORTRAIT);
         let face = guide
-            .is_some_and(|p| p.expression(tip.face()).is_some())
+            .is_some_and(|p| p.expression(tip::face(tip)).is_some())
             .then(|| FaceView {
                 portrait: GUIDE_PORTRAIT.to_owned(),
-                expression: tip.face().to_owned(),
+                expression: tip::face(tip).to_owned(),
             });
         let text = fill_placeholders(words.tip_text(tip), ctx.help_keys());
         Self {

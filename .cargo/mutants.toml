@@ -4,3 +4,11 @@
 # (ticket 1031). CI's `playdate` job builds it.
 exclude_globs = ["crates/app/**", "crates/playdate/src/pd/**"]
 timeout_multiplier = 3.0
+# Mutants no test can catch (ticket 1105), each for the reason beside it:
+exclude_re = [
+    # `NoDirective` has no values, so its `print` can never run.
+    "<impl Directive for NoDirective>::print",
+    # The default `scene_problems` is `Vec::new()`: its only viable mutant,
+    # `vec![]`, is the same function.
+    "SceneRules::scene_problems",
+]

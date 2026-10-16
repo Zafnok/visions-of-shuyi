@@ -119,7 +119,7 @@ These are the things ADR-0063 §6 makes generic before moving anything.
 | `save.rs` | M | Done (1114): the version header and the refuse-don't-migrate rule are `shuyi_core::save` (`SaveHeader<F: SaveFormat>`). `SaveFile` payload is G. |
 | `battle.rs` | M | About 450 lines of turn skeleton (phases, turns, objectives, the validate→plan→execute pattern) are K in shape. The skeleton calls game rules inline, so it stays in the game and implements `TurnRules` (1114). The rest (2,800) is G. |
 | `battle/triggers.rs` | M | Areas, `Who`, `TurnStart`, enters-area, talk and fired-once are K (about 250 lines). The others are G. |
-| `lead.rs` | M | `split_tokens` (`{token}` text) is E. The lead is G. |
+| `lead.rs` | M → cut | 1105: `split_tokens` and `Part` (`{token}` text) are `shuyi_core::text`, and `CharacterId` (`unit.rs`) is `shuyi_core::CharacterId`, the dialogue's speaker id too; both re-exported. The lead (`LEAD_ID`, pronouns, gendered portraits, its tokens) is G. |
 | `ai.rs`, `legal.rs`, `campaign.rs`, `prep.rs`, `unit.rs`, `class.rs`, `stats.rs`, `combat.rs`, `item.rs`, `weapon.rs`, `magic.rs`, `spell.rs`, `skill.rs`, `art.rs`, `progression*`, `shop.rs`, `support.rs`, `battle/{arts,skills,supports}.rs` | G | This game's rules. `legal.rs` is `BattleState`'s `TurnRules::legal_commands` (1114); the AI's flow field calls the kit's `flow_field`. |
 
 ## `content` (trpg-content)
@@ -129,21 +129,22 @@ Modules that do not import `trpg_core` at all are the first set to move:
 `keymap`, `lang`, `lighting`, `palette`, `portrait`, `ron_loader`, `tip`,
 `title`. `bundle`, `error` and `ron_loader` moved in 1103; `audio`,
 `credits`, `font`, `image`, `lighting` and `palette`'s generic part
-(with `ink`) in 1104.
+(with `ink`) in 1104; `lang`, `names`, the dialogue format, `voice` and
+`tip`'s generic parts in 1105.
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
 | `bundle.rs`, `build.rs` | E → moved | 1103: the layer logic is `shuyi_assets::bundle` (`Bundle`, `Layer`, `install`). `bundle.rs` keeps the game's folders (`include_dir!`, `layers()`) and the old free functions over the installed bundle; `build.rs` and the two features stay the game's. |
 | `error.rs`, `ron_loader.rs` | E → moved | 1103: `shuyi_assets::{error, ron}` (`ContentError`, `parse_ron<T>`, `load_ron` over a `Bundle`). Both files are re-exports now; `load_ron(path)` reads the game's bundle. |
 | `font.rs`, `image.rs`, `lighting.rs`, `audio.rs`, `credits.rs` | E → moved | 1104: `shuyi_assets::{font, image, lighting, audio, credits}`. The parsers take what names the game's files as arguments: the bundle (`ImageTable::load`), the required glyphs and atlas image's name, the default light, the audio `Files` (with the sound folder's shown names and the music folder), the credits' `Places` (audio manifest and private folder). Each content module keeps its paths, `load()` and a wrapper with its old arguments, and re-exports the rest. `credits.rs`' bought-art check (ADR-0051) moved with it. |
-| `lang.rs`, `names.rs` | E | Text by key, packs, stale or missing text. `Lang` holds the game-built `DataText` (`lang.rs:175`). Cut that. |
-| `dialogue/parse.rs`, `dialogue/line_id.rs` | E | The `.dlg` parser needs only a character-id newtype. |
+| `lang.rs`, `names.rs` | E → moved | 1105: `shuyi_assets::{lang, names}`: text by key, packs, stale, missing and orphaned text, the English the packs translate (`SourceText`, which the game builds) and the lookups by key. A pack is checked by the game's `PackRules` (its data text's rules, tokens, `DialogueLimits`, line variants). Content keeps `LANG_DIR`, `TEST`, `english_ui()`, `load()`, the wrappers with the old arguments and a `Lang` that derefs to the engine's and adds the game's lookups. `names.rs` keeps `NAMES_PATH` and `load()`. |
+| `dialogue/parse.rs`, `dialogue/line_id.rs` | E → moved | 1105: `shuyi_assets::dialogue` (the parser, line ids, captions' keys). A game adds directives with the `Directive` trait (`Step::Directive`). |
 | `portrait.rs`, `title.rs`, `tileset/look.rs` | E | The five required expressions and the 256 px frame become parameters. |
 | `palette.rs`, `ink.rs` | M → cut | 1104: `PaletteDef`, hex, `theme_problems` (a theme has the default's names) and the Playdate's `Ink`s are `shuyi_assets::{palette, ink}`; `PaletteDef::from_source` takes the required names. `Theme`, `REQUIRED_COLORS`, `load_themes` and the palette files' paths stay. |
 | `keymap.rs` | M | Keys, chords, buttons, repeat and sticks are E (about 740 lines). `Action` and `Layout` are G. |
-| `lang/lines.rs`, `lang/data.rs` | M | Per-line translation is E. `ByGender`, and the table lookups for classes and items, are G. |
-| `dialogue.rs`, `dialogue/check.rs`, `dialogue/presence.rs` | M | Scenes, steps, choices, music lines, `@if` and the on-screen checks are E. Lead rules, box sizes and roster checks are G. |
-| `voice.rs`, `tip.rs` | M | Clip manifest and tip schema are E. M/F variants and the `TipTrigger` enum are G. |
+| `lang/lines.rs`, `lang/data.rs` | M → cut | 1105: per-line translation is `shuyi_assets::lang`, with `LineText::Variants` (by variant name) for the old `ByGender`; the game names its variants `m` and `f` (`lang::RULES`). `data.rs` keeps the keys of classes, items, tips, lessons, chapters and battle notes (`from_tables`, `Tables`), the tip and lesson limits, and the lookups (`class_name`…). |
+| `dialogue.rs`, `dialogue/check.rs`, `dialogue/presence.rs` | M → cut | 1105: scenes, steps, choices, music lines, `@if` (`Present`, `Scene::resolved`) and the on-screen checks are `shuyi_assets::dialogue`, checked against a game's `SceneRules` (limits as `DialogueLimits`, its `Tokens`, cast, expressions, music). Content keeps `@place` and `@opening` (`Stage`, `PlaceLine`, `check_places`, where an opening goes), the lead's rules and tokens (`LeadTokens`), the box sizes, `Cast`/`check_presence`, `load()` and aliases (`Step = Step<Stage>`…). |
+| `voice.rs`, `tip.rs` | M → cut | 1105: the clip manifest, cast and staleness are `shuyi_assets::voice` over a game's `ClipVariant`; the tip schema and `{Action}` placeholders are `shuyi_assets::tip` over a game's trigger type. Content keeps `Variant` (M/F) and what a line says of the lead (`spoken_text`), the voice folders, `TipTrigger`, the tip box, the guide and `load()`. |
 | `map.rs` | M | Done (1116): the `.map` format (reader, printer, legend, look and light) is `shuyi_assets::grid_map`, with a `MapFeature` hook. Shop and Chest features, the tile looks, the size limit and the terrain lookup stay here. |
 | `tileset.rs` | M | Terrain tiles, looks and walk sheets are E. Unit pictures keyed by class or character are G. |
 | `terrain.rs` | K | Its generic `line_of` helper moved to `shuyi_assets::error` (1103); `terrain.rs` re-exports it for the 11 modules that use it. |

@@ -3,7 +3,7 @@
 use trpg_core::lead::LeadGender::{Female, Male};
 
 use super::*;
-use crate::dialogue::from_sources;
+use crate::dialogue::{NARRATION_SPEAKER, from_sources};
 
 /// A scene `s` with a plain line, a line with a name, a line that changes
 /// with the lead's gender, a line with the lead's name, and narration.
@@ -291,43 +291,54 @@ fn a_file_that_is_not_a_manifest_is_one_error_with_its_place() {
 fn renaming_a_name_makes_the_clips_that_say_it_stale() {
     let d = dialogue();
     let m = manifest(&full());
-    let stale = |names: &Names| -> Vec<bool> {
-        m.clips
-            .iter()
-            .map(|c| VoiceManifest::is_stale(c, &d, names))
-            .collect()
-    };
+    let stale =
+        |names: &Names| -> Vec<bool> { m.clips.iter().map(|c| is_stale(c, &d, names)).collect() };
     assert_eq!(stale(&names()), [false; 5]);
-    assert_eq!(m.playable(&d, &names()).len(), 5);
+    assert_eq!(playable(&m, &d, &names()).len(), 5);
     // `king` is in the second line and both clips of the third.
     let renamed = names_with("the queen");
     assert_eq!(stale(&renamed), [false, true, true, true, false]);
-    let playable = m.playable(&d, &renamed);
+    let playable = playable(&m, &d, &renamed);
     assert_eq!(playable.len(), 2);
     let line = |id: String| LineId::new(id);
     assert_eq!(
-        playable.variant_for(&line(hello()), Male),
+        playable.variant_for(&line(hello()), Variant::of(Male)),
         Some(Variant::None)
     );
-    assert_eq!(playable.variant_for(&line(rides()), Male), None);
-    assert_eq!(playable.variant_for(&line(sword()), Female), None);
+    assert_eq!(
+        playable.variant_for(&line(rides()), Variant::of(Male)),
+        None
+    );
+    assert_eq!(
+        playable.variant_for(&line(sword()), Variant::of(Female)),
+        None
+    );
 }
 
 #[test]
 fn the_playable_clip_of_a_line_follows_the_leads_gender() {
     let d = dialogue();
-    let playable = manifest(&full()).playable(&d, &names());
+    let playable = playable(&manifest(&full()), &d, &names());
     assert!(!playable.is_empty());
     let sword = LineId::new(sword());
-    assert_eq!(playable.variant_for(&sword, Male), Some(Variant::M));
-    assert_eq!(playable.variant_for(&sword, Female), Some(Variant::F));
+    assert_eq!(
+        playable.variant_for(&sword, Variant::of(Male)),
+        Some(Variant::M)
+    );
+    assert_eq!(
+        playable.variant_for(&sword, Variant::of(Female)),
+        Some(Variant::F)
+    );
     let hello = LineId::new(hello());
     for gender in [Male, Female] {
-        assert_eq!(playable.variant_for(&hello, gender), Some(Variant::None));
+        assert_eq!(
+            playable.variant_for(&hello, Variant::of(gender)),
+            Some(Variant::None)
+        );
         let unknown = LineId::new("s_00000000");
-        assert_eq!(playable.variant_for(&unknown, gender), None);
+        assert_eq!(playable.variant_for(&unknown, Variant::of(gender)), None);
         let unvoiced = LineId::new(welcome());
-        assert_eq!(playable.variant_for(&unvoiced, gender), None);
+        assert_eq!(playable.variant_for(&unvoiced, Variant::of(gender)), None);
     }
     assert!(Playable::default().is_empty());
     assert_eq!(Playable::default().len(), 0);
@@ -341,10 +352,13 @@ fn each_gendered_clip_is_checked_against_its_own_words() {
         clip(&sword(), "variant: M,", "He left his sword with the king."),
         clip(&sword(), "variant: F,", "He left his sword with the king."),
     ]);
-    let playable = m.playable(&d, &names());
+    let playable = playable(&m, &d, &names());
     let sword = LineId::new(sword());
-    assert_eq!(playable.variant_for(&sword, Male), Some(Variant::M));
-    assert_eq!(playable.variant_for(&sword, Female), None);
+    assert_eq!(
+        playable.variant_for(&sword, Variant::of(Male)),
+        Some(Variant::M)
+    );
+    assert_eq!(playable.variant_for(&sword, Variant::of(Female)), None);
 }
 
 #[test]
@@ -353,20 +367,20 @@ fn clips_that_cannot_say_their_line_are_stale() {
     let n = names();
     // One clip for both genders of a line that changes with the gender.
     let both = manifest(&[clip(&sword(), "", "He left his sword with the king.")]);
-    assert!(VoiceManifest::is_stale(&both.clips[0], &d, &n));
-    assert!(both.playable(&d, &n).is_empty());
+    assert!(is_stale(&both.clips[0], &d, &n));
+    assert!(playable(&both, &d, &n).is_empty());
     // A line with the lead's name, whatever the clip says.
     let named = manifest(&[clip(&welcome(), "", "Welcome back, Ellery.")]);
-    assert!(VoiceManifest::is_stale(&named.clips[0], &d, &n));
-    assert!(named.playable(&d, &n).is_empty());
+    assert!(is_stale(&named.clips[0], &d, &n));
+    assert!(playable(&named, &d, &n).is_empty());
     // A clip whose line is gone (the manifest was read with an older script).
     let mut gone = manifest(&[clip(&hello(), "", "Hello.")]);
     gone.clips[0].line = LineId::new("s_00000000");
-    assert!(VoiceManifest::is_stale(&gone.clips[0], &d, &n));
-    assert!(gone.playable(&d, &n).is_empty());
+    assert!(is_stale(&gone.clips[0], &d, &n));
+    assert!(playable(&gone, &d, &n).is_empty());
     // Reworded speech: a different text under the same clip.
     let reworded = manifest(&[clip(&hello(), "", "Hello there.")]);
-    assert!(VoiceManifest::is_stale(&reworded.clips[0], &d, &n));
+    assert!(is_stale(&reworded.clips[0], &d, &n));
 }
 
 #[test]

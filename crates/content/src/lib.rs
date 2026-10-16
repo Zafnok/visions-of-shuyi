@@ -73,7 +73,7 @@ pub use cinematic::{
 };
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{
-    ChoiceOption, DialogueTable, LineId, MusicLine, PlaceLine, Present, Scene, Side, Step,
+    ChoiceOption, DialogueTable, LineId, MusicLine, PlaceLine, Present, Scene, Side, Stage, Step,
 };
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;
@@ -393,7 +393,7 @@ fn data_text(
     maps?;
     units.characters.as_ref().ok()?;
     units.audio.as_ref().ok()?;
-    Some(lang::DataText::from_tables(&lang::Tables {
+    Some(lang::from_tables(&lang::Tables {
         classes: units.classes.as_ref().ok()?,
         items: units.items.as_ref().ok()?,
         spells: units.spells.as_ref().ok()?,

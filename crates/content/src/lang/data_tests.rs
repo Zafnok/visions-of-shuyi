@@ -7,6 +7,7 @@ use trpg_core::{BattleNote, ClassId, ItemId};
 
 use super::*;
 use crate::dialogue::{self, Scene, Step, caption_key};
+use crate::names::Names;
 
 /// A scene with every kind of text: a caption, narration, speech with a
 /// name token, replies with reactions, an `@if` block and a lead token.
@@ -757,7 +758,7 @@ fn a_line_is_looked_up_by_its_id_for_the_leads_gender() {
     );
     let entry = lang.pack(&xx).unwrap().line(&id("{lead} waits.")).unwrap();
     assert_eq!(entry.source, "{lead} waits.");
-    assert_eq!(entry.text.for_lead(f), "SHE WAITS.");
+    assert_eq!(entry.text.get(variant(f)), Some("SHE WAITS."));
 }
 
 /// Every text of `steps`, in script order: captions, lines, replies.
@@ -779,11 +780,7 @@ fn texts(steps: &[Step], out: &mut Vec<String>) {
                 texts(then, out);
                 texts(otherwise, out);
             }
-            Step::Place { .. }
-            | Step::Clear { .. }
-            | Step::Music(_)
-            | Step::Setting(_)
-            | Step::Opening(_) => {}
+            Step::Place { .. } | Step::Clear { .. } | Step::Music(_) | Step::Directive(_) => {}
         }
     }
 }

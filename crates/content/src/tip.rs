@@ -1,18 +1,23 @@
 //! One-time contextual tips (`assets/data/tips.ron`, ticket 0406): what
 //! triggers each and what it says. The screens decide when a trigger has
 //! happened and remember which tips were seen.
+//!
+//! The tip schema and its checks are the engine's (`shuyi_assets::tip`,
+//! ticket 1105); the game adds its triggers ([`TipTrigger`]), its box, its
+//! placeholders and the guide who speaks every tip.
 use crate::prelude::*;
 
-use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::collections::BTreeMap;
 
 use serde::Deserialize;
+use shuyi_assets::tip::{self as engine, TipLimits, TipRules};
 
 use crate::bundle;
 use crate::error::ContentError;
 use crate::keymap::Action;
-use crate::lang::text_width;
 use crate::portrait::Portrait;
-use crate::ron_loader::parse_ron;
+
+pub use shuyi_assets::tip::placeholders;
 
 /// Path of the tips file inside the asset bundle.
 pub const TIPS_PATH: &str = "data/tips.ron";
@@ -25,6 +30,13 @@ pub const MAX_LINE_CHARS: usize = 60;
 
 /// Longest tip title, in characters.
 pub const MAX_TITLE_CHARS: usize = 30;
+
+/// The tip box.
+pub const LIMITS: TipLimits = TipLimits {
+    text_lines: MAX_TEXT_LINES,
+    line_chars: MAX_LINE_CHARS,
+    title_chars: MAX_TITLE_CHARS,
+};
 
 /// The portrait of the guide, who speaks every tip
 /// (`docs/design/tutorial.md`, *The guide*; ticket 0455). Only the bought
@@ -82,54 +94,15 @@ pub enum TipTrigger {
 }
 
 /// One tip.
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Tip {
-    /// Stable id (`snake_case`); what is remembered once the tip was seen.
-    pub id: String,
-    /// What makes it appear.
-    pub trigger: TipTrigger,
-    /// Shown in the box's border.
-    pub title: String,
-    /// The body: lines separated by `\n`, with `{Action}` placeholders
-    /// for key names.
-    pub text: String,
-    /// The guide's expression while the tip shows; [`DEFAULT_FACE`] if
-    /// none. Written `face: "sad"`.
-    #[serde(default, deserialize_with = "some_name")]
-    pub face: Option<String>,
-}
-
-/// A name written plainly (`face: "sad"`, not `Some("sad")`).
-fn some_name<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
-    String::deserialize(d).map(Some)
-}
-
-impl Tip {
-    /// The guide's expression while the tip shows.
-    pub fn face(&self) -> &str {
-        self.face.as_deref().unwrap_or(DEFAULT_FACE)
-    }
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawFile {
-    tips: Vec<Tip>,
-}
+pub type Tip = engine::Tip<TipTrigger>;
 
 /// Every tip, in file order.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct TipTable {
-    /// The tips.
-    pub tips: Vec<Tip>,
-}
+pub type TipTable = engine::TipTable<TipTrigger>;
 
-impl TipTable {
-    /// The tip that `trigger` shows, if the file has one.
-    pub fn for_trigger(&self, trigger: TipTrigger) -> Option<&Tip> {
-        self.tips.iter().find(|t| t.trigger == trigger)
-    }
+/// The guide's expression while `tip` shows: its own, else
+/// [`DEFAULT_FACE`].
+pub fn face(tip: &Tip) -> &str {
+    tip.face_or(DEFAULT_FACE)
 }
 
 /// Loads and validates the embedded tips file, each tip's face against
@@ -154,81 +127,19 @@ pub fn from_source(
     faces: Option<&BTreeMap<String, Portrait>>,
 ) -> Result<TipTable, Vec<ContentError>> {
     let guide = faces.and_then(|f| f.get(GUIDE_PORTRAIT));
-    let raw: RawFile = parse_ron(file, source).map_err(|e| vec![e])?;
-    let mut errors = Vec::new();
-    let mut ids = BTreeSet::new();
-    let mut triggers = BTreeSet::new();
-    for tip in &raw.tips {
-        let mut err = |message: String| {
-            errors.push(ContentError::new(
-                file,
-                format!("tip \"{}\": {message}", tip.id),
-            ));
-        };
-        let id_ok = !tip.id.is_empty()
-            && tip
-                .id
-                .bytes()
-                .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_');
-        if !id_ok {
-            err("the id must be lowercase letters, digits and `_`".into());
-        }
-        if !ids.insert(tip.id.as_str()) {
-            err("the id is used twice".into());
-        }
-        if !triggers.insert(tip.trigger) {
-            err(format!("{:?} already has a tip", tip.trigger));
-        }
-        if tip.title.is_empty() || text_width(&tip.title) > MAX_TITLE_CHARS {
-            err(format!(
-                "the title must be 1 to {MAX_TITLE_CHARS} characters"
-            ));
-        }
-        let lines: Vec<&str> = tip.text.lines().collect();
-        if lines.is_empty() || lines.len() > MAX_TEXT_LINES {
-            err(format!("the text must have 1 to {MAX_TEXT_LINES} lines"));
-        }
-        for line in lines {
-            if text_width(line) > MAX_LINE_CHARS {
-                err(format!(
-                    "a text line is over {MAX_LINE_CHARS} characters: {line:?}"
-                ));
-            }
-        }
-        for name in placeholders(&tip.text) {
-            if name != CURSOR_PLACEHOLDER && Action::from_name(name).is_none() {
-                err(format!("unknown placeholder {{{name}}}"));
-            }
-        }
-        if let Some(guide) = guide
-            && guide.expression(tip.face()).is_none()
-        {
-            err(format!(
-                "the guide's portrait has no expression \"{}\"",
-                tip.face()
-            ));
-        }
-    }
-    if errors.is_empty() {
-        Ok(TipTable { tips: raw.tips })
-    } else {
-        Err(errors)
-    }
-}
-
-/// The names between braces in `text`, in order (`{Confirm}` gives
-/// `Confirm`). An unclosed `{` is ignored.
-pub fn placeholders(text: &str) -> Vec<&str> {
-    let mut names = Vec::new();
-    let mut rest = text;
-    while let Some((_, after)) = rest.split_once('{') {
-        let Some((name, tail)) = after.split_once('}') else {
-            break;
-        };
-        names.push(name);
-        rest = tail;
-    }
-    names
+    let placeholder = |name: &str| name == CURSOR_PLACEHOLDER || Action::from_name(name).is_some();
+    let face_problem = |face: &str| {
+        guide
+            .filter(|g| g.expression(face).is_none())
+            .map(|_| format!("the guide's portrait has no expression \"{face}\""))
+    };
+    let rules = TipRules {
+        limits: LIMITS,
+        placeholder: &placeholder,
+        face_problem: &face_problem,
+        default_face: DEFAULT_FACE,
+    };
+    engine::from_source(file, source, &rules)
 }
 
 #[cfg(test)]
@@ -333,7 +244,7 @@ mod tests {
             ])"#;
         // Without the guide's portrait any face goes.
         let table = from_source("t.ron", source, None).unwrap();
-        let faces: Vec<&str> = table.tips.iter().map(Tip::face).collect();
+        let faces: Vec<&str> = table.tips.iter().map(face).collect();
         assert_eq!(faces, [DEFAULT_FACE, "sad", "smug"]);
         assert_eq!(table.tips[0].face, None);
         // A guide with the required expressions plus `smile`.

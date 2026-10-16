@@ -7,16 +7,16 @@ use trpg_core::{BattleMap, Grid, Pos, TerrainId};
 use super::*;
 
 fn opening(id: &str) -> Step {
-    Step::Opening(id.into())
+    Step::Directive(Stage::Opening(id.into()))
 }
 
 #[test]
 fn an_opening_line_parses_and_prints_back() {
     let src = "@scene s\n@place yard 1,1\n@opening spar\n> x\n@end\n";
-    let place = Step::Setting(PlaceLine::Map {
+    let place = Step::Directive(Stage::Setting(PlaceLine::Map {
         map: "yard".into(),
         at: Pos::new(1, 1),
-    });
+    }));
     let scene = Scene {
         id: "s".into(),
         steps: vec![place, opening("spar"), narrate("x")],
@@ -39,6 +39,42 @@ fn an_opening_needs_one_id() {
             format!("t.dlg:5: {needs}"),
             format!("t.dlg:7: {needs}"),
             "t.dlg:9: \"Spar\" is not a valid id; use lowercase letters, digits and _".to_owned(),
+        ]
+    );
+}
+
+/// The place a top-level block leaves (its first part's) is the one an
+/// opening after it plays on.
+#[test]
+fn an_opening_plays_on_the_place_a_block_leaves() {
+    let src =
+        scene("@if test_knight\n@place yard 1,1\n@else\n@place yard 1,1\n@endif\n@opening a\n> x");
+    assert_eq!(errors(&src), [] as [&str; 0]);
+    let src = scene(
+        "@choice\n* wry: Hm.\n  @place yard 1,1\n* blunt: No.\n  @place yard 1,1\n@endchoice\n@opening a\n> x",
+    );
+    assert_eq!(errors(&src), [] as [&str; 0]);
+}
+
+/// [`check_scene`] runs the engine's checks and the game's: an unknown
+/// character, and an opening in a block.
+#[test]
+fn check_scene_runs_the_engines_checks_and_the_games() {
+    let src = scene("nobody: Hi.\n@if test_knight\n@opening a\n@endif");
+    let (parsed, errors) = parse_dlg("t.dlg", &src);
+    assert_eq!(errors, []);
+    let characters = crate::character::load(None, None, None).unwrap_or_default();
+    let errors: Vec<String> = check_scene(&parsed[0], Some(&characters), None, None, None)
+        .iter()
+        .map(ToString::to_string)
+        .collect();
+    assert_eq!(
+        errors,
+        [
+            "t.dlg:4: unknown character \"nobody\"".to_owned(),
+            "t.dlg:6: an @opening goes at a scene's top level, not in a reply's reaction or an \
+             @if block"
+                .to_owned(),
         ]
     );
 }
@@ -164,7 +200,7 @@ fn chapter_1_opens_its_two_scenes_away_from_the_battle() {
         let steps = &content.dialogue.get(scene).map(|s| s.steps.clone());
         let steps = steps.iter().flatten();
         steps
-            .filter(|s| matches!(s, Step::Opening(_)))
+            .filter(|s| matches!(s, Step::Directive(Stage::Opening(_))))
             .cloned()
             .collect()
     };

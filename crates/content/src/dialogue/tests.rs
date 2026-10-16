@@ -1,8 +1,29 @@
 //! Tests of the `.dlg` parser, validator and printer.
 
+use alloc::collections::BTreeMap;
+
 use proptest::prelude::*;
+use trpg_core::CharacterId;
 
 use super::*;
+
+/// Loads files given as `(file name, source)`, a `None` source being a
+/// file that isn't valid UTF-8, as [`load_scripts`] does the bundle's.
+fn load_files(
+    files: &[(String, Option<&str>)],
+    characters: Option<&CharacterTable>,
+    portraits: Option<&PortraitTable>,
+    names: Option<&Names>,
+    audio: Option<&AudioManifest>,
+) -> Result<Scripts, Vec<ContentError>> {
+    let rules = rules::Rules {
+        characters,
+        portraits,
+        names,
+        audio,
+    };
+    engine::scripts_from_files(files, &rules)
+}
 
 fn id(s: &str) -> CharacterId {
     CharacterId(s.into())
@@ -883,13 +904,17 @@ fn arb_simple_step() -> impl Strategy<Value = Step> {
         (arb_id(), 0..100, 0..100)
             .prop_filter("reserved", |(m, ..)| m != PlaceLine::BATTLE
                 && m != PlaceLine::NONE)
-            .prop_map(|(map, x, y)| Step::Setting(PlaceLine::Map {
-                map,
-                at: Pos::new(x, y)
-            })),
-        (0..100, 0..100).prop_map(|(x, y)| Step::Setting(PlaceLine::Battle { at: Pos::new(x, y) })),
-        Just(Step::Setting(PlaceLine::None)),
-        arb_id().prop_map(Step::Opening),
+            .prop_map(
+                |(map, x, y)| Step::Directive(Stage::Setting(PlaceLine::Map {
+                    map,
+                    at: Pos::new(x, y)
+                }))
+            ),
+        (0..100, 0..100).prop_map(|(x, y)| Step::Directive(Stage::Setting(PlaceLine::Battle {
+            at: Pos::new(x, y)
+        }))),
+        Just(Step::Directive(Stage::Setting(PlaceLine::None))),
+        arb_id().prop_map(|id| Step::Directive(Stage::Opening(id))),
     ]
 }
 

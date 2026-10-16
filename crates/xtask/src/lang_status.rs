@@ -248,8 +248,12 @@ fn write_orphan(out: &mut String, lang: &Lang, orphan: &Orphan) {
         LineText::One(text) => {
             let _ = writeln!(out, "    text: {text:?}");
         }
-        LineText::ByGender { male, female } => {
-            let _ = writeln!(out, "    text_m: {male:?}\n    text_f: {female:?}");
+        LineText::Variants(texts) => {
+            // In the pack files' order: `text_m`, then `text_f`.
+            for variant in trpg_content::lang::RULES.variants {
+                let text = texts.get(*variant).map_or("", String::as_str);
+                let _ = writeln!(out, "    text_{variant}: {text:?}");
+            }
         }
     }
     match &orphan.nearest {

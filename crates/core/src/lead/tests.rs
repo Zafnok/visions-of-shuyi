@@ -122,22 +122,6 @@ fn tokens_and_their_longest_forms() {
 }
 
 #[test]
-fn splits_tokens() {
-    let parts: Vec<_> = split_tokens("a{b}c{d").collect();
-    assert_eq!(
-        parts,
-        [
-            Part::Text("a"),
-            Part::Token("b"),
-            Part::Text("c"),
-            Part::Unclosed("{d")
-        ]
-    );
-    assert_eq!(split_tokens("").count(), 0);
-    assert_eq!(split_tokens("{}").collect::<Vec<_>>(), [Part::Token("")]);
-}
-
-#[test]
 fn round_trips_through_serde() {
     let p = female("Ellery");
     let text = ron::to_string(&p).unwrap_or_default();

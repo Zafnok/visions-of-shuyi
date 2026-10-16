@@ -9,8 +9,8 @@ use alloc::collections::{BTreeMap, BTreeSet};
 
 use trpg_core::{BattleDef, BattleMap, Pos, SupportTable};
 
-use super::parse::{Lines, ParsedScene};
-use super::{PlaceLine, Step};
+use super::{Lines, ParsedScene};
+use super::{PlaceLine, Stage, Step};
 use crate::chapter::ChapterDef;
 use crate::cinematic::OpeningDef;
 use crate::error::ContentError;
@@ -155,7 +155,7 @@ fn opening_lines<'s>(steps: &'s [Step], lines: &Lines) -> Vec<OpeningLine<'s>> {
     let mut out = Vec::new();
     for (step, &line) in steps.iter().zip(&lines.steps) {
         match step {
-            Step::Opening(id) => out.push((line, id.as_str(), place)),
+            Step::Directive(Stage::Opening(id)) => out.push((line, id.as_str(), place)),
             _ => place = last_setting(step).or(place),
         }
     }
@@ -165,9 +165,9 @@ fn opening_lines<'s>(steps: &'s [Step], lines: &Lines) -> Vec<OpeningLine<'s>> {
 /// The place `step` leaves in force, if it changes it: a `@place` line's,
 /// or the last one in a block's first part (every part of a block leaves
 /// the same: `check_scene`).
-fn last_setting(step: &Step) -> Option<&PlaceLine> {
+pub(super) fn last_setting(step: &Step) -> Option<&PlaceLine> {
     match step {
-        Step::Setting(place) => Some(place),
+        Step::Directive(Stage::Setting(place)) => Some(place),
         Step::Choice { options } => last_in(&options.first()?.steps),
         Step::If { then, .. } => last_in(then),
         _ => None,
@@ -185,7 +185,7 @@ fn settings<'s>(steps: &'s [Step], lines: &Lines, out: &mut Vec<(u32, &'s PlaceL
     let mut blocks = lines.blocks.iter();
     for (step, &line) in steps.iter().zip(&lines.steps) {
         let parts: Vec<&[Step]> = match step {
-            Step::Setting(place) => {
+            Step::Directive(Stage::Setting(place)) => {
                 out.push((line, place));
                 continue;
             }

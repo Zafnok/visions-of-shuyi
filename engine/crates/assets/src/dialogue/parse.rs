@@ -1,19 +1,16 @@
 //! The `.dlg` parser: lines → scenes. Reports syntax and structure errors
 //! (unknown directives, bad ids, missing `@end`, blocks left open, non-ASCII
-//! text); checks
-//! that need the whole scene or other files are in `check`.
+//! text); checks that need the whole scene or other files are in `check`.
 use crate::prelude::*;
 
-use trpg_core::{CharacterId, Pos};
-
-use super::{ChoiceOption, LineId, MusicLine, PlaceLine, Scene, Side, Step};
+use super::{CharacterId, ChoiceOption, Directive, LineId, MusicLine, Scene, Side, Step};
 use crate::error::ContentError;
 
 /// A scene as written in a file, with the source lines the checks point at.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ParsedScene {
+pub struct ParsedScene<D = super::NoDirective> {
     /// The scene.
-    pub scene: Scene,
+    pub scene: Scene<D>,
     /// The file it is in (for error messages).
     pub file: String,
     /// 1-based line of its `@scene`.
@@ -47,12 +44,12 @@ pub struct PartLines {
 }
 
 /// A block being read.
-enum Open {
+enum Open<D> {
     /// `@choice`, until its `@endchoice`.
     Choice {
         /// Line of its `@choice`.
         line: u32,
-        options: Vec<ChoiceOption>,
+        options: Vec<ChoiceOption<D>>,
         parts: Vec<PartLines>,
     },
     /// `@if`, until its `@endif`.
@@ -60,13 +57,13 @@ enum Open {
         /// Line of its `@if`.
         line: u32,
         character: CharacterId,
-        then: (Vec<Step>, Lines),
+        then: (Vec<Step<D>>, Lines),
         /// The line of its `@else` and the steps after it, once read.
-        otherwise: Option<(u32, Vec<Step>, Lines)>,
+        otherwise: Option<(u32, Vec<Step<D>>, Lines)>,
     },
 }
 
-impl Open {
+impl<D> Open<D> {
     /// The error for a block still open where its scene or reaction ends.
     fn unclosed(&self) -> (u32, &'static str) {
         match self {
@@ -82,7 +79,11 @@ const REACTION_INDENT: usize = 2;
 /// Parses dialogue `source` (errors attributed to `file`) into its scenes,
 /// in file order, and every syntax error found. A scene with errors in it
 /// is still returned (without the broken lines), so later checks can run.
-pub fn parse_dlg(file: &str, source: &str) -> (Vec<ParsedScene>, Vec<ContentError>) {
+/// A directive the engine doesn't know is read by the game's `D`.
+pub fn parse_dlg<D: Directive>(
+    file: &str,
+    source: &str,
+) -> (Vec<ParsedScene<D>>, Vec<ContentError>) {
     let mut p = Parser {
         file,
         scenes: Vec::new(),
@@ -104,7 +105,7 @@ pub fn parse_dlg(file: &str, source: &str) -> (Vec<ParsedScene>, Vec<ContentErro
 
 /// Whether `s` is a valid scene, character or expression id: lowercase
 /// ASCII letters, digits and `_`, not empty.
-pub(crate) fn is_id(s: &str) -> bool {
+pub fn is_id(s: &str) -> bool {
     !s.is_empty()
         && s.bytes()
             .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
@@ -113,7 +114,7 @@ pub(crate) fn is_id(s: &str) -> bool {
 /// What is wrong with character `c` in dialogue text, if anything. Text
 /// must be printable ASCII (the font may lack anything else); common
 /// typographic punctuation gets its ASCII spelling suggested.
-pub(crate) fn char_problem(c: char) -> Option<String> {
+pub fn char_problem(c: char) -> Option<String> {
     if (' '..='~').contains(&c) {
         return None;
     }
@@ -132,37 +133,32 @@ pub(crate) fn char_problem(c: char) -> Option<String> {
     Some(format!("non-ASCII punctuation {c:?}; use {ascii} instead"))
 }
 
-/// The tile `<x>,<y>` (two whole numbers from 0, no spaces), if `s` is one.
-fn tile(s: &str) -> Option<Pos> {
-    let (x, y) = s.split_once(',')?;
-    let number = |n: &str| {
-        let digits = !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit());
-        digits.then(|| n.parse::<i32>().ok()).flatten()
-    };
-    Some(Pos::new(number(x)?, number(y)?))
+/// What an id that isn't one ([`is_id`]) is told.
+pub fn bad_id(id: &str) -> String {
+    format!("\"{id}\" is not a valid id; use lowercase letters, digits and _")
 }
 
-struct Parser<'a> {
+struct Parser<'a, D> {
     file: &'a str,
-    scenes: Vec<ParsedScene>,
+    scenes: Vec<ParsedScene<D>>,
     /// The scene being read (after `@scene`, before `@end`).
-    open: Option<ParsedScene>,
+    open: Option<ParsedScene<D>>,
     /// The blocks being read inside `open`, the innermost last. At most one
     /// is a `@choice`.
-    blocks: Vec<Open>,
+    blocks: Vec<Open<D>>,
     /// Whether the last line was speech or narration, so an indented line
     /// continues it.
     continuable: bool,
     errors: Vec<ContentError>,
 }
 
-impl Parser<'_> {
+impl<D: Directive> Parser<'_, D> {
     fn err(&mut self, line: u32, message: impl Into<String>) {
         self.errors
             .push(ContentError::new(self.file, message).at(line, None));
     }
 
-    fn no_end(&mut self, open: &ParsedScene) {
+    fn no_end(&mut self, open: &ParsedScene<D>) {
         self.err(
             open.line,
             format!("scene \"{}\" has no @end", open.scene.id),
@@ -172,7 +168,7 @@ impl Parser<'_> {
     /// Adds the complete scene `open` to the scenes read, giving its lines
     /// their ids (their text is final only now: continuation lines add to
     /// it).
-    fn finish(&mut self, mut open: ParsedScene) {
+    fn finish(&mut self, mut open: ParsedScene<D>) {
         open.scene.assign_line_ids();
         self.scenes.push(open);
     }
@@ -264,7 +260,7 @@ impl Parser<'_> {
     /// Reports and closes every `@if` block still open inside the open
     /// `@choice`: its reaction ends here.
     fn close_reaction_ifs(&mut self) {
-        let is_if = |block: &mut Open| matches!(block, Open::If { .. });
+        let is_if = |block: &mut Open<D>| matches!(block, Open::If { .. });
         while let Some(block) = self.blocks.pop_if(is_if) {
             let (line, message) = block.unclosed();
             self.err(line, message);
@@ -393,7 +389,7 @@ impl Parser<'_> {
 
     /// Adds `block`, just closed (taken off the open blocks), as one step
     /// to what it was in.
-    fn add_block(&mut self, block: Open) {
+    fn add_block(&mut self, block: Open<D>) {
         let (line, step, parts) = match block {
             Open::Choice {
                 line,
@@ -442,7 +438,7 @@ impl Parser<'_> {
     /// block (an `@if` block's steps, or its `@else`'s; a `@choice`'s last
     /// option's reaction), or else the open scene. `None` outside a scene
     /// and in a `@choice` before its first option.
-    fn target(&mut self) -> Option<(&mut Vec<Step>, &mut Lines)> {
+    fn target(&mut self) -> Option<(&mut Vec<Step<D>>, &mut Lines)> {
         match self.blocks.last_mut() {
             Some(Open::If {
                 otherwise: Some((_, steps, lines)),
@@ -473,7 +469,7 @@ impl Parser<'_> {
     }
 
     /// The step an indented line would continue: the last one read.
-    fn last_step_mut(&mut self) -> Option<&mut Step> {
+    fn last_step_mut(&mut self) -> Option<&mut Step<D>> {
         self.target().and_then(|(steps, _)| steps.last_mut())
     }
 
@@ -514,14 +510,26 @@ impl Parser<'_> {
             "left" => self.place(n, Side::Left, args),
             "right" => self.place(n, Side::Right, args),
             "music" => self.music(n, args),
-            "place" => self.setting(n, args),
-            "opening" => self.opening(n, args),
             "choice" => self.open_choice(n, args),
             "endchoice" => self.end_choice(n, args),
             "if" => self.open_if(n, args),
             "else" => self.else_if(n, args),
             "endif" => self.end_if(n, args),
-            _ => self.err(n, format!("unknown directive \"@{name}\"")),
+            _ => match D::parse(name, args) {
+                Some(parsed) => self.game_directive(n, parsed),
+                None => self.err(n, format!("unknown directive \"@{name}\"")),
+            },
+        }
+    }
+
+    /// A directive of the game's on line `n`, as [`Directive::parse`] read
+    /// it.
+    fn game_directive(&mut self, n: u32, parsed: super::Parsed<D>) {
+        for error in parsed.errors {
+            self.err(n, error);
+        }
+        if let Some(step) = parsed.step {
+            self.push(n, Step::Directive(step));
         }
     }
 
@@ -609,60 +617,6 @@ impl Parser<'_> {
         self.push(n, Step::Music(music));
     }
 
-    /// `@place` with `args`: a map id and a tile (`<x>,<y>`), `battle` and
-    /// a tile, or `none`.
-    fn setting(&mut self, n: u32, args: &str) {
-        let args: Vec<&str> = args.split_whitespace().collect();
-        let place = match args[..] {
-            [PlaceLine::NONE] => PlaceLine::None,
-            [map, at] if map != PlaceLine::NONE => {
-                let Some(at) = tile(at) else {
-                    self.err(
-                        n,
-                        format!("\"{at}\" is not a tile; write it as <x>,<y>, e.g. 3,12"),
-                    );
-                    return;
-                };
-                if map == PlaceLine::BATTLE {
-                    PlaceLine::Battle { at }
-                } else {
-                    if !is_id(map) {
-                        self.bad_id(n, map);
-                    }
-                    PlaceLine::Map {
-                        map: map.into(),
-                        at,
-                    }
-                }
-            }
-            _ => {
-                self.err(
-                    n,
-                    "@place needs a map id and a tile (\"@place ch01 3,12\"), \"battle\" and a \
-                     tile, or \"none\"",
-                );
-                return;
-            }
-        };
-        self.push(n, Step::Setting(place));
-    }
-
-    /// `@opening` with `args`: one opening id.
-    fn opening(&mut self, n: u32, args: &str) {
-        let args: Vec<&str> = args.split_whitespace().collect();
-        let [id] = args[..] else {
-            self.err(
-                n,
-                "@opening needs one opening id (a file of assets/openings/, without .ron)",
-            );
-            return;
-        };
-        if !is_id(id) {
-            self.bad_id(n, id);
-        }
-        self.push(n, Step::Opening(id.into()));
-    }
-
     /// `id: text` or `id[expression]: text` on line `n`.
     fn speech(&mut self, n: u32, line: &str, body: &str) {
         let Some((head, text)) = body.split_once(':').filter(|(h, _)| !h.contains(' ')) else {
@@ -700,15 +654,12 @@ impl Parser<'_> {
     }
 
     fn bad_id(&mut self, n: u32, id: &str) {
-        self.err(
-            n,
-            format!("\"{id}\" is not a valid id; use lowercase letters, digits and _"),
-        );
+        self.err(n, bad_id(id));
     }
 
     /// Adds `step` (from line `n`) to where steps go now
     /// ([`Self::target`]).
-    fn push(&mut self, n: u32, step: Step) {
+    fn push(&mut self, n: u32, step: Step<D>) {
         match self.target() {
             Some((steps, lines)) => {
                 steps.push(step);
