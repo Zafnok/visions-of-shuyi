@@ -28,7 +28,10 @@ default = ["std"]
 std = ["trpg-core/std", "trpg-content/std", "ron/std", "thiserror/std", "serde/std"]
 # The headless test `Harness` (src/harness.rs), for integration tests. It
 # starts games in the test chapter, so it brings the test files (ADR-0057).
-harness = ["trpg-content/test-fixtures"]
+harness = ["storage-conformance", "trpg-content/test-fixtures"]
+# `storage::conformance_suite`, for a platform's `Storage` (also without
+# `std`: the Playdate's debug build runs it on the device's files).
+storage-conformance = []
 # Debug tools (Quick Battle, glyph sampler) in a release build: the Pages
 # build only (ADR-0023). Never on in shipped builds. The Quick Battle is
 # made of the test files (ADR-0057).

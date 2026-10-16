@@ -460,10 +460,19 @@ impl InputState {
         }
     }
 
+    /// Starts as if `device` had been pressed last (a platform whose only
+    /// input is its pad).
+    #[must_use]
+    pub(crate) fn starting_on(mut self, device: Device) -> Self {
+        self.device = device;
+        self
+    }
+
     /// What the player pressed last: the keyboard, or a pad of some kind.
     /// Only presses that do something count (a bound key or button going
     /// down), so an unbound key or a resting stick never switches it.
-    /// The keyboard until anything is pressed.
+    /// The keyboard until anything is pressed, unless `Game` started it
+    /// on the platform's own pad.
     pub fn device(&self) -> Device {
         self.device
     }

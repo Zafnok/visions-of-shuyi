@@ -233,6 +233,18 @@ pub enum Lessons {
     On,
 }
 
+/// Whether the platform has a keyboard ([`Ctx::keyboard`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Keyboard {
+    /// It does (the PC, the web): a first key press opens the layout
+    /// picker until a layout is chosen.
+    #[default]
+    Present,
+    /// It has only its own buttons (the Playdate): the layout picker
+    /// never opens.
+    Absent,
+}
+
 /// Resources shared by every screen. A plain struct: add fields as later
 /// tickets need them (settings, …).
 #[derive(Debug)]
@@ -253,7 +265,9 @@ pub struct Ctx {
     pub keymap: Keymap,
     /// What the player pressed last, the keyboard or a controller, so help
     /// text names keys or that pad's buttons ([`help_keys`]). `Game` keeps
-    /// it up to date from the input.
+    /// it up to date from the input, starting from the one set here when
+    /// it starts (the keyboard, unless a front end without one sets its
+    /// pad).
     ///
     /// [`help_keys`]: Self::help_keys
     pub device: Device,
@@ -375,6 +389,11 @@ pub struct Ctx {
     /// `app` sets [`KeyPrompt::Waiting`] on every build, and `Game` moves
     /// it on to [`KeyPrompt::Pressed`] at the first key or button press.
     pub key_prompt: KeyPrompt,
+    /// Whether the platform has a keyboard. [`Keyboard::Present`] here; a
+    /// front end without one (the Playdate) sets [`Keyboard::Absent`]
+    /// before the [`Game`](crate::Game) starts, along with the
+    /// [`device`](Self::device) it has.
+    pub keyboard: Keyboard,
     /// The language screen text is shown in (ADR-0045): English until the
     /// player picks another (0825). The test pack counts only with
     /// [`debug_tools`](Self::debug_tools) on; anywhere else it is English.
@@ -456,6 +475,7 @@ impl Ctx {
             lead: LeadProfile::new(DEFAULT_NAME, LeadGender::Male),
             clock_s: 0.0,
             key_prompt: KeyPrompt::Off,
+            keyboard: Keyboard::Present,
             lang: LangCode::english(),
         })
     }

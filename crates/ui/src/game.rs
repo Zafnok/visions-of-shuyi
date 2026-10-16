@@ -11,7 +11,7 @@ use crate::color::UiColor;
 use crate::debug::{self, DebugMenuScreen, ScenePreviewScreen};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::{Action, Button, Chord, InputState, Key, PadId, PadKind, PadState, Pads};
-use crate::screen::{Ctx, FrameInput, KeyPrompt, Screen, ScreenStack};
+use crate::screen::{Ctx, FrameInput, KeyPrompt, Keyboard, Screen, ScreenStack};
 use crate::screens::{LayoutPickerScreen, TitleScreen};
 
 /// A keyboard or controller event as `app` reports it.
@@ -100,6 +100,8 @@ impl Game {
     /// A game starting at the title screen. If no layout is in use yet, the
     /// saved one (the settings') is loaded from `ctx.storage`; if none is
     /// saved (first launch), the first key press opens the layout picker.
+    /// A platform without a keyboard ([`Keyboard::Absent`]) never opens
+    /// it.
     pub fn start(mut ctx: Ctx) -> Self {
         if ctx.layout().is_none()
             && let Some(layout) = ctx.saved_layout()
@@ -150,14 +152,14 @@ impl Game {
         let playing = preview.play(&ctx);
         let mut stack = ScreenStack::new(Box::new(preview));
         stack.push(Box::new(playing));
-        if ctx.layout().is_none() {
+        if ctx.layout().is_none() && ctx.keyboard == Keyboard::Present {
             stack.push(Box::new(LayoutPickerScreen::new()));
         }
         Ok(Self::with_stack(ctx, stack))
     }
 
     fn with_stack(ctx: Ctx, stack: ScreenStack) -> Self {
-        let input = InputState::new(ctx.keymap.clone());
+        let input = InputState::new(ctx.keymap.clone()).starting_on(ctx.device);
         let console = ctx.console;
         let blank = Cell::new(
             ' ',
@@ -254,8 +256,9 @@ impl Game {
         // Until a layout is chosen no key acts: the first one opens "Pick
         // your layout" over whatever is showing and does nothing else; the
         // picker then takes the keys (`docs/design/controls.md`, *Pick
-        // your layout with a controller*).
-        let asks_layout = self.ctx.layout().is_none()
+        // your layout with a controller*). Without a keyboard, never.
+        let asks_layout = self.ctx.keyboard == Keyboard::Present
+            && self.ctx.layout().is_none()
             && !self.stack.names().contains(&LayoutPickerScreen::NAME)
             && events.iter().any(|e| matches!(e, RawInputEvent::Down(_)));
         for &event in events {
@@ -462,6 +465,39 @@ mod tests {
         // Chosen: keys act again and the picker stays away.
         tap(&mut game, Key::J);
         assert_eq!(game.screens(), ["title", "mode_select"]);
+    }
+
+    /// Ticket 1033: a platform without a keyboard (the Playdate) starts on
+    /// its pad and never opens the layout picker, even for a key press;
+    /// its buttons work with no layout chosen.
+    #[test]
+    fn without_a_keyboard_no_layout_picker_opens() {
+        use crate::input::Device;
+        let playdate = Device::Pad(PadKind::Playdate);
+        let mut ctx = first_launch();
+        ctx.keyboard = Keyboard::Absent;
+        ctx.device = playdate;
+        let mut game = Game::start(ctx);
+        game.frame(&[], 0.0);
+        assert_eq!(game.ctx().device, playdate, "help names its buttons");
+        game.frame(&[down(Key::Z)], 0.0);
+        assert_eq!(game.screens(), ["title"]);
+        let press = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
+        game.frame(&[press(Button::South)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.ctx().layout(), None);
+        assert_eq!(game.ctx().device, playdate);
+    }
+
+    /// A scene preview without a keyboard opens no picker either.
+    #[test]
+    fn a_scene_preview_without_a_keyboard_opens_no_picker() {
+        let mut ctx = first_launch();
+        ctx.keyboard = Keyboard::Absent;
+        let scene = ctx.content.dialogue.scenes.keys().next().cloned().unwrap();
+        let game = Game::start_on_scene(ctx, &scene, LeadGender::Female).unwrap();
+        assert!(!game.screens().contains(&LayoutPickerScreen::NAME));
     }
 
     /// The key that opens the picker makes the keyboard the device in

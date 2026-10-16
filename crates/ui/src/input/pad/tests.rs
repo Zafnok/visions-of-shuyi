@@ -41,12 +41,13 @@ fn pads() -> Pads {
     Pads::new(stick())
 }
 
-const KINDS: [PadKind; 5] = [
+const KINDS: [PadKind; 6] = [
     PadKind::Xbox,
     PadKind::PlayStation,
     PadKind::PlayStation4,
     PadKind::Nintendo,
     PadKind::Generic,
+    PadKind::Playdate,
 ];
 
 /// `docs/design/controls.md`, *Controller → Default buttons* and *Button
@@ -106,6 +107,43 @@ fn a_dualshock_4_says_share_and_otherwise_names_as_a_playstation_pad() {
         assert_eq!(PadKind::PlayStation4.button_name(button), expected);
     }
     assert_eq!(PadKind::PlayStation.button_name(Button::Select), "Create");
+}
+
+/// The Playdate's buttons are named as printed on it (its A, B and
+/// D-pad), and its front end reports A and B at the positions the default
+/// bindings give Confirm and Cancel, so no swap: A confirms, B cancels
+/// (`docs/design/playdate.md`, *Buttons and the crank*).
+#[test]
+fn a_playdates_a_confirms_and_its_b_cancels_named_as_printed_on_it() {
+    let playdate = PadKind::Playdate;
+    for button in Button::ALL {
+        assert_eq!(playdate.position(*button), *button, "{button}");
+    }
+    assert_eq!(playdate.button_name(South), "A");
+    assert_eq!(playdate.button_name(East), "B");
+    let dpad = [
+        DpadUp,
+        Button::DpadDown,
+        Button::DpadLeft,
+        Button::DpadRight,
+    ];
+    assert_eq!(dpad.map(|b| playdate.button_name(b)), ["↑", "↓", "←", "→"]);
+    let buttons = [South, East, DpadUp, Button::DpadDown, Button::DpadLeft];
+    assert_eq!(
+        actions_of(playdate, &buttons),
+        [
+            vec![Action::Confirm],
+            vec![Action::Cancel],
+            vec![Action::CursorUp],
+            vec![Action::CursorDown],
+            vec![Action::CursorLeft],
+        ]
+    );
+    let dpad = dpad.map(|b| vec![b]);
+    assert_eq!(
+        cursor_buttons_name(playdate, &dpad).as_deref(),
+        Some("D-pad")
+    );
 }
 
 /// On a Nintendo pad the physical right button is the binding position

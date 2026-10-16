@@ -3,7 +3,7 @@
 //! keymap (ticket 0216, the `keyboard-input` skill, ADR-0015). Controller
 //! buttons are treated like keys (ticket 0219, ADR-0034).
 //!
-//! It scans the non-test Rust in `crates/{ui,app,content}/src` for key and
+//! It scans the non-test Rust in `crates/{ui,app,content,playdate}/src` for key and
 //! button types (`Key::`, `Chord::`, `Button::`) and macroquad key reads
 //! (`KeyCode`, `is_key_down`, …) outside the files that make up the key
 //! pipeline, and scans string
@@ -29,18 +29,25 @@ pub const HINT: &str = "use an Action and `widgets::help::key_name`; see the key
 pub const MARKER: &str = "check-keys: keyboard picture";
 
 /// Rust source trees scanned.
-const RUST_DIRS: [&str; 3] = ["crates/ui/src", "crates/app/src", "crates/content/src"];
+const RUST_DIRS: [&str; 4] = [
+    "crates/ui/src",
+    "crates/app/src",
+    "crates/content/src",
+    "crates/playdate/src",
+];
 
 /// Asset trees scanned: the story's files and the test files (ADR-0057).
 const ASSET_DIRS: [&str; 2] = ["assets", "assets-test"];
 
 /// The key pipeline: files that may name key and button types and key
-/// names. `pads.rs` is to controllers what `keys.rs` is to the keyboard.
-const KEY_FILES: [&str; 4] = [
+/// names. `pads.rs` is to controllers what `keys.rs` is to the keyboard;
+/// the Playdate's `pads.rs` reads its buttons (ticket 1033).
+const KEY_FILES: [&str; 5] = [
     "crates/content/src/keymap.rs",
     "crates/ui/src/input.rs",
     "crates/app/src/keys.rs",
     "crates/app/src/pads.rs",
+    "crates/playdate/src/pads.rs",
 ];
 /// Their submodules: `ui::input`'s, and the per-platform controller code.
 const KEY_DIRS: [&str; 2] = ["crates/ui/src/input/", "crates/app/src/pads/"];
@@ -691,12 +698,14 @@ mod tests {
             "crates/app/src/pads.rs",
             "crates/app/src/pads/native.rs",
             "crates/app/src/pads/web.rs",
+            "crates/playdate/src/pads.rs",
         ] {
             assert_eq!(rust(file, pipeline), Vec::<String>::new(), "{file}");
         }
         // Not just any file whose name starts the same way.
         assert_eq!(rust("crates/app/src/pads_extra.rs", pipeline).len(), 2);
         assert_eq!(rust("crates/app/src/padsx/native.rs", pipeline).len(), 2);
+        assert_eq!(rust("crates/playdate/src/pd/entry.rs", pipeline).len(), 2);
         // Other things called button are not controller buttons.
         let other = "let m = MouseButton::Left;\nlet b = Button;\nfn f(b: Button) {}\n";
         assert_eq!(rust(SCREEN, other), Vec::<String>::new());
@@ -992,7 +1001,7 @@ let d = is_key_down_fast(x);
         fs::write(root.join("assets-test/dialogue/x.dlg"), script).unwrap();
         let errs = run(&root);
         let _ = fs::remove_dir_all(&root);
-        // Missing crates/app/src and crates/content/src are reported too.
+        // Missing crates/{app,content,playdate}/src are reported too.
         let hits: Vec<&String> = errs.iter().filter(|e| e.contains(HINT)).collect();
         assert_eq!(hits.len(), 3, "{errs:?}");
         assert!(
@@ -1010,7 +1019,7 @@ let d = is_key_down_fast(x);
             "{}",
             hits[2]
         );
-        assert_eq!(errs.len(), 5, "{errs:?}");
+        assert_eq!(errs.len(), 6, "{errs:?}");
     }
 
     #[test]

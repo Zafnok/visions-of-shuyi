@@ -9,16 +9,20 @@
 //! without it only the plain parts below are, so the workspace's host
 //! builds and tests never need the SDK.
 //!
-//! So far (ticket 1031) it loads the game's data on the game's own stack
-//! and shows how long that took and how much of the stack it used. The
-//! game itself runs from ticket 1033.
+//! It runs the game (ticket 1033): `trpg_ui::Game::frame` once per SDK
+//! update on the game's own stack, the frame drawn by the one-bit
+//! renderer, the D-pad, A and B fed in as a controller, and the game's
+//! storage on the Playdate's files.
 #![cfg_attr(feature = "sdk", no_std)]
 
 extern crate alloc;
 
 pub mod heap;
+pub mod pads;
 pub mod report;
+pub mod screen;
 pub mod stack;
+pub mod storage;
 pub mod text;
 
 #[cfg(feature = "sdk")]

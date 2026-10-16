@@ -109,15 +109,17 @@ impl Storage for MemoryStorage {
 /// `expect_ok` rather than `.unwrap()`/`.expect()` so it isn't flagged by
 /// `clippy::unwrap_used`/`expect_used` outside `#[cfg(test)]` (this helper
 /// backs [`conformance_suite`], which `app`'s tests call through the
-/// `harness` feature, not just `cfg(test)`).
-#[cfg(any(test, feature = "harness"))]
+/// `harness` feature and the Playdate's debug build through
+/// `storage-conformance`, not just `cfg(test)`).
+#[cfg(any(test, feature = "storage-conformance"))]
 fn expect_ok<T>(result: Result<T, StorageError>) -> T {
     result.unwrap_or_else(|e| panic!("storage error: {e}"))
 }
 
 /// A conformance suite every [`Storage`] implementation must pass, shared by
-/// `trpg-ui`'s own tests and `app`'s platform implementations.
-#[cfg(any(test, feature = "harness"))]
+/// `trpg-ui`'s own tests and the platforms' implementations (`app`'s, the
+/// Playdate's).
+#[cfg(any(test, feature = "storage-conformance"))]
 pub fn conformance_suite(storage: &mut dyn Storage) {
     assert_eq!(
         expect_ok(storage.read("missing")),
