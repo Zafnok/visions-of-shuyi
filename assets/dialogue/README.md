@@ -58,6 +58,7 @@ Every line is one of these. Directives start at the very first column.
 | `@place <map> <x>,<y>` | Draws the scene over that map of `assets/maps/` (its file name without `.map`), darkened, centred on tile `x`,`y`, from here until the next `@place`. See "Places". |
 | `@place battle <x>,<y>` | The same over the map of the scene's battle. |
 | `@place none` | Back to black behind the talk. |
+| `@opening <opening>` | Before the next text box, plays that opening of `assets/openings/` (its file name without `.ron`) on the place: its characters move, then the place darkens and the talk comes up. See "Places". |
 | `<character>: <text>` | The character speaks. They must be on screen (`@left`/`@right` first). |
 | `<character>[<expression>]: <text>` | The character changes expression, then speaks. The new expression stays. |
 | `> <text>` | Narration: a text box with no speaker. |
@@ -67,7 +68,7 @@ Every line is one of these. Directives start at the very first column.
 
 Each speech or narration line is **one text box** on screen (the screen
 splits a long one into pages). Directives (`@caption`, `@left`, `@right`,
-`@music`, `@place`) take effect before the next text box.
+`@music`, `@place`, `@opening`) take effect before the next text box.
 
 ## Rules
 
@@ -98,6 +99,11 @@ The validator reports every broken rule, with the file and line:
   `battle` and a tile on the battle's map in a scene that has a battle,
   or `none`. Every reply of a choice, and both parts of an `@if` block,
   leave the same place (as with the caption).
+- **Openings**: `@opening` names an opening of `assets/openings/` made
+  for the place in force, which is a map of `assets/maps/` (not
+  `battle`, not `none`). It is written at the scene's top level (not in a
+  reply or an `@if` block), and a speech or narration line follows it
+  before the next `@opening` and before `@end`.
 
 ## Music
 
@@ -441,6 +447,11 @@ glyphs, with *Pictures* in the tiles, like the battle map.
 @place none
 > Later, in the dark.
 @end
+@scene ch01_dawn
+@place harrowby_yard 12,8
+@opening ch01_sparring
+> Two practice swords crack together, wood on wood.
+@end
 ```
 
 - `@place <map> <x>,<y>`: a place away from a battle, a map of
@@ -457,3 +468,13 @@ glyphs, with *Pictures* in the tiles, like the battle map.
 - A scene with no `@place` is drawn on black, as before. A scene played
   during a battle is drawn over the battle map, darkened, whether it names
   a place or not.
+- `@opening <opening>`: a short moving opening (ticket 0734), **only where
+  the script asks** for one. Before the next text box the place is shown
+  at full brightness, with no portraits or text box (the caption stays),
+  while the opening's characters walk on it (about a second and a half),
+  then it darkens over half a second and the text box comes up. Its
+  characters stay where it left them, darkened with the place, until the
+  next `@place`. The player's Confirm key goes straight to the text box;
+  skipping the scene passes over it. The opening is a file of
+  `assets/openings/` (who stands where on which map, and how they walk:
+  its README); it must be made for the map of the `@place` in force.

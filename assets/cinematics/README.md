@@ -112,8 +112,9 @@ A **unit** is named as the battle file names it: a player slot by its
 that character. Only units on the map when the battle starts
 (reinforcements are not there).
 
-`Walk(unit, path, secs)`: the unit walks along `path` at an even speed,
-taking `secs` seconds (more than 0), and stays at its end.
+`Walk(unit, path, secs, facing)`: the unit walks along `path` at an even
+speed, taking `secs` seconds (more than 0), and stays at its end, facing
+the camera.
 
 - `path` is tiles as `(column, row)`, at least two. The first is where
   the unit is then: where it starts the battle, or the end of its walk
@@ -123,6 +124,14 @@ taking `secs` seconds (more than 0), and stays at its end.
 - Every tile on the way is on the map and one the unit's movement type
   can enter.
 - A unit's walk starts no sooner than its walk before ends.
+- `facing` is optional (ticket 0734): `Down` (towards the camera),
+  `Left`, `Right` or `Up`, written bare (`facing: Left`). The unit keeps
+  facing that way all along the walk and after it, as someone stepping
+  back or to the side does. Without it, the unit faces the way it goes,
+  and the camera once it has stopped.
+
+The same walks, on a place instead of a battle's map, make a
+conversation's moving opening: `assets/openings/README.md`.
 
 `Strike(unit, target, hp_left)`: the unit leans a few pixels toward the
 target and back (0.4 s). Half way, the target flashes and its HP bar drops

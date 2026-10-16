@@ -18,7 +18,7 @@ expression: h.snapshot()
  │                                │·····························.│                                │ 
  │                                │·······††††········()········.│                                │ 
  │                                │·····························.│                                │ 
- │                                │.··························...│                                │ 
+ │                                │.··········El··Ho··········...│                                │ 
  │                                │...······················.....│                                │ 
  └────────────────────────────────┘..............................└────────────────────────────────┘ 
                Ellery              ..............................           Hollis Marr             
@@ -51,17 +51,17 @@ acddddddddddddddddddddddddddddddddcffffffffffffffffffffffffffffffcdddddddddddddd
 acddddddddddddddddddddddddddddddddcggggggggggggggggggggggggggggghcddddddddddddddddddddddddddddddddca
 acddddddddddddddddddddddddddddddddcgggggggiiiiggggggggjjgggggggghcddddddddddddddddddddddddddddddddca
 acddddddddddddddddddddddddddddddddcggggggggggggggggggggggggggggghcddddddddddddddddddddddddddddddddca
-acddddddddddddddddddddddddddddddddchgggggggggggggggggggggggggghhhcddddddddddddddddddddddddddddddddca
+acddddddddddddddddddddddddddddddddchggggggggggkkggkkgggggggggghhhcddddddddddddddddddddddddddddddddca
 acddddddddddddddddddddddddddddddddchhhgggggggggggggggggggggghhhhhcddddddddddddddddddddddddddddddddca
 acccccccccccccccccccccccccccccccccchhhhhhhhhhhhhhhhhhhhhhhhhhhhhhcccccccccccccccccccccccccccccccccca
-addddddddddddddkkkkkkddddddddddddddhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhdddddddddddkkkkkkkkkkkdddddddddddda
-aaaaaaaaaaaaaaaaaaaaaaaallllhhmmmmmmmmmmmmmmmmggggggmmmmmmmmmmmmmmmmhhllllaaaaaaaaaaaaaaaaaaaaaaaaaa
+addddddddddddddllllllddddddddddddddhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhdddddddddddllllllllllldddddddddddda
+aaaaaaaaaaaaaaaaaaaaaaaammmmhhnnnnnnnnnnnnnnnnggggggnnnnnnnnnnnnnnnnhhmmmmaaaaaaaaaaaaaaaaaaaaaaaaaa
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
-cddddkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkddddc
-cddddddddddddddddddddddddddddkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkddddddddddddddddddddddddddddc
+cddddllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllddddc
+cddddddddddddddddddddddddddddllllllllllllllllllllllllllllllllllllllllllddddddddddddddddddddddddddddc
 cddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddc
-cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddkkkkkdddkddddc
+cdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddllllldddlddddc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -78,8 +78,9 @@ g = fg:#4a402d bg:#110e08
 h = fg:#31331d bg:#0b0b06
 i = fg:#3e2a17 bg:#110e08
 j = fg:#3e3b36 bg:#080e13
-k = fg:text_dim bg:panel_bg
-l = fg:#263a16 bg:#080d06
-m = fg:#263a16 bg:#0b0b06
+k = fg:#5a502d bg:#110e08
+l = fg:text_dim bg:panel_bg
+m = fg:#263a16 bg:#080d06
+n = fg:#263a16 bg:#0b0b06
 --- overlays ---
 under sprite 16,32 256x256  portraits/lead_m/neutral.png 0,0 32x32 opacity=140

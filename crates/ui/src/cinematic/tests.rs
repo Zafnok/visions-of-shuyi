@@ -794,7 +794,7 @@ fn the_title_walks_one_unit_at_a_time_at_the_games_speed() {
             continue;
         };
         for entry in &action.actions {
-            if let trpg_content::Act::Walk { unit, path, ms } = &entry.act {
+            if let trpg_content::Act::Walk { unit, path, ms, .. } = &entry.act {
                 let tiles: u32 = path.windows(2).map(|w| Pos::manhattan(w[0], w[1])).sum();
                 walks.insert((entry.at_ms, unit.0, tiles, *ms));
             }

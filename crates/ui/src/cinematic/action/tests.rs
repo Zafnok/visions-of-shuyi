@@ -32,6 +32,7 @@ fn unit(id: UnitId, pos: Pos, hp: (StatValue, StatValue)) -> UnitView {
         frame: STANDING_FRAME,
         offset: (0.0, 0.0),
         flash: 0.0,
+        marks: true,
     }
 }
 
@@ -42,7 +43,12 @@ fn pair(a: Pos, b: Pos) -> Vec<UnitView> {
 
 fn walk(at_ms: u32, unit: UnitId, path: &[(i32, i32)], ms: u32) -> ActionDef {
     let path = path.iter().map(|&(x, y)| p(x, y)).collect();
-    let act = Act::Walk { unit, path, ms };
+    let act = Act::Walk {
+        unit,
+        path,
+        ms,
+        facing: None,
+    };
     ActionDef { at_ms, act }
 }
 

@@ -75,7 +75,8 @@ pub use battler::{Battler, BattlerTable};
 pub use chapter::{ChapterDef, NewGameDef, battle_campaign, new_campaign};
 pub use character::{CharacterTable, GenericTemplate, character_unit, check_map_labels};
 pub use cinematic::{
-    Act, ActionDef, CinematicDef, CombatShot, Fight, Shot, ShotAction, ShotDef, TilePoint,
+    Act, ActionDef, CastMember, CinematicDef, CombatShot, Fight, Heading, OpeningDef, Shot,
+    ShotAction, ShotDef, TilePoint,
 };
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{
@@ -174,6 +175,9 @@ pub struct Content {
     pub title: TitleArt,
     /// Cinematics by id (file stem), ADR-0060.
     pub cinematics: BTreeMap<String, CinematicDef>,
+    /// The openings a conversation's script may ask for, by id (file
+    /// stem): ticket 0734, ADR-0076.
+    pub openings: BTreeMap<String, OpeningDef>,
 }
 
 impl Content {
@@ -283,21 +287,21 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     );
     let (fields, rules) = (battles.as_ref().ok(), (&classes, &terrain));
     let cinematics = load_cinematics(fields, cues, scenes, (cast, faces, known), rules);
-    let credits = credits::load(audio.as_ref().ok());
+    let openings = load_openings(maps.as_ref().ok(), cast, rules);
     let supports = support::load(characters.as_ref().ok(), scenes);
     let story = (
         battles.as_ref().ok(),
         chapters.as_ref().ok(),
         new_game.as_ref().ok(),
     );
-    let dialogue = check_dialogue(scripts, maps.as_ref().ok(), story, supports.as_ref().ok());
+    let places = (maps.as_ref().ok(), openings.as_ref().ok());
+    let dialogue = check_dialogue(scripts, places, story, supports.as_ref().ok());
     let tilesets = load_tilesets(
         images.as_ref().ok(),
         terrain.as_ref().ok(),
         classes.as_ref().ok(),
         characters.as_ref().ok(),
     );
-    let lessons = load_lessons(battles.as_ref().ok(), faces);
     let mut units = Loaded {
         classes,
         items,
@@ -308,12 +312,12 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         characters,
         // Before the portraits move in: checked against the guide's.
         tips: tip::load(faces),
-        lessons,
+        lessons: load_lessons(battles.as_ref().ok(), faces),
         portraits,
         dialogue,
         ai: ai::load(),
+        credits: credits::load(audio.as_ref().ok()),
         audio,
-        credits,
         images,
         tilesets,
         battles,
@@ -326,6 +330,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
         battle_lights,
         title: title_art,
         cinematics,
+        openings,
     };
     let data = data_text(&units, terrain.as_ref().ok(), maps.as_ref().ok());
     units.lang = lang::load(data);
@@ -415,17 +420,23 @@ type StoryRefs<'a> = (
     Option<&'a NewGameDef>,
 );
 
-/// Adds the checks that need the maps and the story to the dialogue's
-/// result: the places ([`check_places`]), then who is there
-/// ([`check_presence`]).
+/// The maps and the openings, each if it loaded.
+type PlaceFiles<'a> = (
+    Option<&'a BTreeMap<String, MapDef>>,
+    Option<&'a BTreeMap<String, OpeningDef>>,
+);
+
+/// Adds the checks that need the maps, the openings and the story to the
+/// dialogue's result: the places and openings ([`check_places`]), then who
+/// is there ([`check_presence`]).
 fn check_dialogue(
     scripts: Result<dialogue::Scripts, Vec<ContentError>>,
-    maps: Option<&BTreeMap<String, MapDef>>,
+    (maps, openings): PlaceFiles,
     (battles, chapters, new_game): StoryRefs,
     supports: Option<&SupportTable>,
 ) -> Result<DialogueTable, Vec<ContentError>> {
     let places = dialogue::PlaceRefs::new(maps, battles, chapters, supports);
-    let scripts = check_places(scripts, &places);
+    let scripts = check_places(scripts, &places.with_openings(openings));
     check_presence(scripts, battles, chapters, new_game, supports)
 }
 
@@ -751,6 +762,26 @@ fn load_cinematics(
     })
 }
 
+/// The openings ([`cinematic::load_openings`]): none when the maps, the
+/// characters, the classes or the terrain failed to load.
+fn load_openings(
+    maps: Option<&BTreeMap<String, MapDef>>,
+    characters: Option<&CharacterTable>,
+    (classes, terrain): Rules<'_>,
+) -> Result<BTreeMap<String, OpeningDef>, Vec<ContentError>> {
+    let (Some(maps), Some(characters), Ok(classes), Ok(terrain)) =
+        (maps, characters, classes, terrain)
+    else {
+        return Ok(BTreeMap::new());
+    };
+    cinematic::load_openings(cinematic::OpeningRefs {
+        maps,
+        characters,
+        classes,
+        terrain: &terrain.rules,
+    })
+}
+
 /// The classes and the terrain as their loaders left them.
 type Rules<'a> = (
     &'a Result<ClassTable, Vec<ContentError>>,
@@ -793,6 +824,7 @@ struct Loaded {
     battle_lights: Result<BTreeMap<String, String>, Vec<ContentError>>,
     title: Result<TitleArt, Vec<ContentError>>,
     cinematics: Result<BTreeMap<String, CinematicDef>, Vec<ContentError>>,
+    openings: Result<BTreeMap<String, OpeningDef>, Vec<ContentError>>,
 }
 
 /// Takes a loader's value, or moves its errors into `errors` and returns a
@@ -848,6 +880,7 @@ fn assemble(
         title: take(units.title, &mut errors),
         cinematics: take(units.cinematics, &mut errors),
         lessons: take(units.lessons, &mut errors),
+        openings: take(units.openings, &mut errors),
     };
     if errors.is_empty() {
         Ok(content)
@@ -998,6 +1031,12 @@ mod tests {
         title::load(&ImageTable::load().unwrap_or_default())
     }
 
+    fn ok_openings() -> Result<BTreeMap<String, OpeningDef>, Vec<ContentError>> {
+        let (maps, cast) = (load_maps(ok_terrain().as_ref().ok()), ok_characters());
+        let (classes, terrain) = (ok_classes(), ok_terrain());
+        load_openings(maps.as_ref().ok(), cast.as_ref().ok(), (&classes, &terrain))
+    }
+
     fn ok_cinematics() -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
         let faces = ok_portraits().ok();
         let (classes, terrain) = (ok_classes(), ok_terrain());
@@ -1098,6 +1137,7 @@ mod tests {
             battle_lights: Ok(BTreeMap::new()),
             title: ok_title(),
             cinematics: ok_cinematics(),
+            openings: ok_openings(),
         }
     }
 
@@ -1199,9 +1239,9 @@ mod tests {
         );
     }
 
-    const NAMES: [&str; 31] = [
+    const NAMES: [&str; 32] = [
         "p", "k", "f", "t", "m", "c", "i", "s", "x", "a", "n", "u", "o", "d", "w", "y", "v", "r",
-        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E",
+        "j", "z", "b", "h", "g", "q", "l", "A", "L", "B", "T", "C", "E", "O",
     ];
 
     /// `ok`, or the error of file `name` if `bad`.
@@ -1254,10 +1294,16 @@ mod tests {
                     battle_lights: Err(e("B")),
                     title: Err(e("T")),
                     cinematics: Err(e("C")),
+                    openings: Err(e("O")),
                 },
             ),
             Err(ContentErrors(NAMES.iter().flat_map(|f| e(f)).collect()))
         );
+    }
+
+    #[test]
+    fn assemble_reports_each_loaders_errors_alone() {
+        let e = |f: &str| vec![ContentError::new(f, "bad")];
         let only = |i: usize| {
             assemble(
                 if i == 0 {
@@ -1312,6 +1358,7 @@ mod tests {
                     title: pick(i == 28, "T", ok_title()),
                     cinematics: pick(i == 29, "C", ok_cinematics()),
                     lessons: pick(i == 30, "E", ok_lessons()),
+                    openings: pick(i == 31, "O", ok_openings()),
                 },
             )
         };

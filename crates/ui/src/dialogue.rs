@@ -1,7 +1,8 @@
 //! Playing a dialogue [`Scene`] one text box at a time. [`DialoguePlayer`]
 //! is the state machine only (who stands where, what is said, which reply
-//! choice is open, which music the script asked for); the dialogue screen
-//! (ticket 0704) draws its [`View`] and asks for the music.
+//! choice is open, which music and which opening the script asked for);
+//! the dialogue screen (ticket 0704) draws its [`View`], asks for the
+//! music and plays the opening (0734).
 
 use crate::prelude::*;
 use alloc::borrow::Cow;
@@ -53,6 +54,9 @@ pub struct View<'a> {
     /// The place behind the talk, if the scene has named one (and not gone
     /// back to none since).
     pub place: Option<&'a PlaceLine>,
+    /// The opening played on that place, if one was (`@opening`, 0734):
+    /// its characters stay where it left them until the place changes.
+    pub opening: Option<&'a str>,
     /// Whether the text is narration (no speaker).
     pub narration: bool,
     /// The lead's replies, in menu order, while a choice is open: pick
@@ -128,6 +132,11 @@ pub struct DialoguePlayer {
     place: Option<PlaceLine>,
     /// The last `@music` line reached and not yet taken.
     music: Option<MusicLine>,
+    /// The opening of the place in force: the last `@opening` line since
+    /// the last `@place` line.
+    opening: Option<String>,
+    /// The last `@opening` line reached and not yet taken.
+    opening_due: Option<String>,
 }
 
 impl DialoguePlayer {
@@ -148,6 +157,8 @@ impl DialoguePlayer {
             caption: None,
             place: None,
             music: None,
+            opening: None,
+            opening_due: None,
         };
         player.step_on();
         player
@@ -219,6 +230,7 @@ impl DialoguePlayer {
             text: step.and_then(Step::text).map(|t| self.fill(t)),
             caption: self.caption.as_deref().map(|c| self.fill(c)),
             place: self.place.as_ref(),
+            opening: self.opening.as_deref(),
             narration: matches!(step, Some(Step::Narrate { .. })),
             choices,
         }
@@ -299,6 +311,14 @@ impl DialoguePlayer {
     /// skipped. `None` if no `@music` line was reached since.
     pub fn take_music(&mut self) -> Option<MusicLine> {
         self.music.take()
+    }
+
+    /// The opening the scene has asked for since the last call, to play
+    /// before the text box now up: the last `@opening` line reached,
+    /// whether the lines before it were read or skipped. `None` if no
+    /// `@opening` line was reached since.
+    pub fn take_opening(&mut self) -> Option<String> {
+        self.opening_due.take()
     }
 
     /// Whether a reply choice is waiting for [`choose`](Self::choose).
@@ -398,8 +418,14 @@ impl DialoguePlayer {
                 }
             }
             Step::Music(music) => self.music = Some(music.clone()),
-            Step::Setting(PlaceLine::None) => self.place = None,
-            Step::Setting(place) => self.place = Some(place.clone()),
+            Step::Setting(place) => {
+                self.place = (*place != PlaceLine::None).then(|| place.clone());
+                self.opening = None;
+            }
+            Step::Opening(id) => {
+                self.opening = Some(id.clone());
+                self.opening_due = Some(id.clone());
+            }
             // The scene was resolved for those present: it has no blocks.
             Step::Narrate { .. } | Step::Choice { .. } | Step::If { .. } => {}
         }

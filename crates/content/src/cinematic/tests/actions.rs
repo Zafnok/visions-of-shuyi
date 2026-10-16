@@ -30,6 +30,7 @@ pub fn duel() -> Vec<ActionDef> {
         unit: LEAD,
         path: path.iter().map(|&(x, y)| p(x, y)).collect(),
         ms: 3000,
+        facing: None,
     };
     let walk = ActionDef {
         at_ms: 500,
@@ -108,6 +109,7 @@ fn a_list_in_place_is_kept_in_milliseconds_with_its_units_ids() {
         unit,
         path: path.iter().map(|&(x, y)| p(x, y)).collect(),
         ms,
+        facing: None,
     };
     let struck = |unit, hp_left| Act::Strike {
         unit,

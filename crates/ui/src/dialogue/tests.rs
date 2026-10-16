@@ -1135,3 +1135,42 @@ fn the_place_lasts_until_the_next_place_line() {
     assert_eq!(p.current().text.as_deref(), Some("Black again."));
     assert_eq!(place(&p), None);
 }
+
+/// An `@opening` line is due once, for the screen to play before the text
+/// box after it, and stays in force (its characters stand on the place)
+/// until the next `@place` line. Skipping passes over it, still due.
+#[test]
+fn an_opening_is_due_once_and_lasts_until_the_place_changes() {
+    let yard = Step::Setting(PlaceLine::Map {
+        map: "yard".into(),
+        at: trpg_core::Pos::new(1, 1),
+    });
+    let scene = Scene {
+        id: "s".into(),
+        steps: vec![
+            narration("Black."),
+            yard.clone(),
+            Step::Opening("spar".into()),
+            narration("The yard."),
+            narration("Still the yard."),
+            yard,
+            narration("The yard again."),
+        ],
+    };
+    let mut p = play(&scene);
+    assert_eq!((p.take_opening(), p.current().opening), (None, None));
+    p.advance();
+    assert_eq!(p.current().opening, Some("spar"));
+    assert_eq!(p.take_opening().as_deref(), Some("spar"));
+    assert_eq!(p.take_opening(), None);
+    p.advance();
+    assert_eq!(p.current().opening, Some("spar"));
+    assert_eq!(p.take_opening(), None);
+    p.advance();
+    assert_eq!(p.current().text.as_deref(), Some("The yard again."));
+    assert_eq!(p.current().opening, None);
+    // Skipped past, it is still due: the screen drops it.
+    let mut skipped = play(&scene);
+    skipped.skip_to_choice();
+    assert_eq!(skipped.take_opening().as_deref(), Some("spar"));
+}

@@ -5,6 +5,7 @@ use crate::Content;
 
 mod actions;
 mod combat;
+mod openings;
 
 fn content() -> Content {
     crate::load_embedded().unwrap_or_else(|e| panic!("{e}"))

@@ -9,7 +9,7 @@ use crate::glyph_buffer::Sprite;
 use crate::portrait::dim_opacity;
 use crate::screen::tests::ctx;
 use crate::screens::dialogue::log::LogView;
-use crate::screens::dialogue::view::SkipView;
+use crate::screens::dialogue::view::{OpeningView, SkipView};
 use crate::widgets::menu::MenuItemView;
 
 /// Row of the name plates: the one under the portrait frames.
@@ -41,6 +41,7 @@ fn two_speakers() -> DialogueView {
     DialogueView {
         overlay: false,
         place: None,
+        opening: None,
         caption: None,
         left: Some(face("test_lord", "Test Lord")),
         right: Some(face("test_knight", "Test Knight")),
@@ -301,6 +302,44 @@ fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
     });
     assert_eq!(over.get(40, 10), place.get(40, 10));
     assert_eq!(over.get(50, 31), place.get(50, 31));
+}
+
+/// While an opening plays (0734) the place shows bright under the caption
+/// alone, and darkens to the talk's brightness as it ends.
+#[test]
+fn an_opening_shows_the_place_bright_then_darkening_without_the_talk() {
+    let c = ctx();
+    let scene = harrowby(&c);
+    let at = |darkened| {
+        painted(&DialogueView {
+            place: Some(scene.clone()),
+            opening: Some(OpeningView { darkened }),
+            caption: Some("The green".to_owned()),
+            ..two_speakers()
+        })
+    };
+    let black = c.palette.get(UiColor::Black);
+    let mut place = GlyphBuffer::new(100, 32, Cell::new(' ', c.palette.get(UiColor::Text), black));
+    c.map_skin.paint(&c, &scene, place.bounds(), &mut place);
+    let bright = at(0.0);
+    // The place as the map skin paints it, where the frames and the text
+    // box would be too: no portraits, plates or box.
+    for (x, y) in [
+        (40, 10),
+        (LEFT_X + 5, FRAME_Y + 5),
+        (50, TEXT_BOX.y),
+        (80, 25),
+    ] {
+        assert_eq!(bright.get(x, y), place.get(x, y), "cell {x},{y}");
+    }
+    assert!(portrait_sprite(&bright, LEFT_X).is_none());
+    assert!(row(&bright, 0).contains(" The green "));
+    // Half way through darkening, then as dark as behind the talk.
+    let mut half = place.clone();
+    half.fade(1.0 - (1.0 - PLACE_BRIGHTNESS) / 2.0);
+    assert_eq!(at(0.5).get(40, 10), half.get(40, 10));
+    place.fade(PLACE_BRIGHTNESS);
+    assert_eq!(at(1.0).get(40, 10), place.get(40, 10));
 }
 
 #[test]

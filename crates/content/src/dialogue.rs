@@ -141,6 +141,10 @@ pub enum Step {
     /// the place drawn behind the talk from this line on, until the next
     /// one (`docs/design/look-and-feel.md`, *Places behind conversations*).
     Setting(PlaceLine),
+    /// `@opening <id>`: before the next text box, the opening of
+    /// `assets/openings/<id>.ron` plays on the place (its characters move
+    /// at full brightness, then the place darkens): ticket 0734.
+    Opening(String),
     /// `@if <character>` … `@else` … `@endif`: steps that play only if the
     /// character is there when the scene plays ([`Present`]), and the
     /// steps that play instead if they aren't (ADR-0055).
@@ -239,6 +243,7 @@ impl Step {
             | Step::Choice { .. }
             | Step::Music(_)
             | Step::Setting(_)
+            | Step::Opening(_)
             | Step::If { .. } => None,
         }
     }
@@ -441,6 +446,7 @@ fn print_step(out: &mut String, step: &Step, indent: &str) {
         Step::Narrate { text, .. } => format!("> {text}"),
         Step::Music(music) => format!("@music {}", music.arg()),
         Step::Setting(place) => format!("@place {}", place.args()),
+        Step::Opening(id) => format!("@opening {id}"),
         Step::Choice { options } => {
             out.push_str("@choice\n");
             for o in options {

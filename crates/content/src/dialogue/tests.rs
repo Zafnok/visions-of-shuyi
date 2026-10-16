@@ -587,6 +587,7 @@ fn files_that_are_not_utf8() {
 mod choice;
 mod line_ids;
 mod names;
+mod openings;
 mod places;
 mod presence;
 
@@ -888,6 +889,7 @@ fn arb_simple_step() -> impl Strategy<Value = Step> {
             })),
         (0..100, 0..100).prop_map(|(x, y)| Step::Setting(PlaceLine::Battle { at: Pos::new(x, y) })),
         Just(Step::Setting(PlaceLine::None)),
+        arb_id().prop_map(Step::Opening),
     ]
 }
 

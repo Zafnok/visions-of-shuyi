@@ -395,7 +395,7 @@ pub fn paint_marks(ctx: &Ctx, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuff
         };
         let tile = place.tile;
         let zoomed = |art: PxRect| grid.zoomed((tile.x, tile.y), art);
-        if fade(unit) >= 0.5 {
+        if fade(unit) >= 0.5 || !unit.marks {
             continue;
         }
         // An empty part (full or zero HP) is dropped by `add_overlay`; a

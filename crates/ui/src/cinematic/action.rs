@@ -8,7 +8,7 @@
 //! (ADR-0038).
 
 use crate::prelude::*;
-use trpg_content::{Act, ActionDef};
+use trpg_content::{Act, ActionDef, Heading};
 use trpg_core::{Pos, StatValue, UnitId};
 
 use crate::map_view::{Facing, STANDING_FRAME, UnitView};
@@ -33,8 +33,9 @@ pub const FALL_MS: u32 = 500;
 /// they `start` (a battle's units where they stand as it begins):
 ///
 /// - a unit whose walk has started is along its path, at an even speed
-///   over the walk's time, turned the way it goes and stepping; once the
-///   time is up it stands on the path's last tile;
+///   over the walk's time, turned the way it goes (or the way the walk
+///   says it keeps facing) and stepping; once the time is up it stands on
+///   the path's last tile, facing the camera (or the way the walk says);
 /// - a unit that struck less than [`LUNGE_MS`] ago leans toward its
 ///   target, furthest ([`LUNGE_TILES`]) half way through, and faces it;
 /// - from that half-way moment its target has the HP the strike left it
@@ -53,10 +54,18 @@ pub fn action_state(start: &[UnitView], actions: &[ActionDef], clock_ms: u64) ->
             .filter_map(move |a| Some((since(a.at_ms)?, &a.act)))
     };
     for (since, act) in started() {
-        if let Act::Walk { unit, path, ms } = act
+        if let Act::Walk {
+            unit,
+            path,
+            ms,
+            facing,
+        } = act
             && let Some(unit) = units.iter_mut().find(|u| u.id == *unit)
         {
             walk_on(unit, path, *ms, since);
+            if let Some(heading) = facing {
+                unit.facing = facing_of(*heading);
+            }
         }
     }
     // Everyone is where they walked to: a lunge goes toward its target.
@@ -90,6 +99,16 @@ pub fn action_state(start: &[UnitView], actions: &[ActionDef], clock_ms: u64) ->
     }
     units.retain(|u| !gone.contains(&u.id));
     units
+}
+
+/// The way a unit turned `heading` (as a file writes it) faces on the map.
+pub fn facing_of(heading: Heading) -> Facing {
+    match heading {
+        Heading::Down => Facing::Down,
+        Heading::Left => Facing::Left,
+        Heading::Right => Facing::Right,
+        Heading::Up => Facing::Up,
+    }
 }
 
 /// `ms` (a time since something happened) as a part of `of`, from 0 to 1.

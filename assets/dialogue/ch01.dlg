@@ -64,6 +64,7 @@
 @caption {N:place.harrowby}, {n:place.thornmarch}
 # The yard behind the rented house, at dawn (harrowby_yard.map).
 @place harrowby_yard 12,8
+@opening ch01_sparring
 @left  lead neutral
 @right retainer neutral
 > Dawn, in the yard behind a rented house. Two practice swords crack
@@ -598,6 +599,7 @@ retainer[neutral]: Go and pack. I'll find a shovel. I've buried better men
 # The old lord's study, at night: the desk (veyne_study.map).
 @place veyne_study 12,7
 @music talk_antagonist
+@opening ch01_pacing
 > Night. The old lord's study. The banner of {n:house.veyne} hangs where it
   always hung, over a man who was not born under it.
 @left  rival neutral

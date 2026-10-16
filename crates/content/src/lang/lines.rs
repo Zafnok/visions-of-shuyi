@@ -306,7 +306,11 @@ impl Lang {
                     self.translate(code, scene, then, gender);
                     self.translate(code, scene, otherwise, gender);
                 }
-                Step::Place { .. } | Step::Clear { .. } | Step::Music(_) | Step::Setting(_) => {}
+                Step::Place { .. }
+                | Step::Clear { .. }
+                | Step::Music(_)
+                | Step::Setting(_)
+                | Step::Opening(_) => {}
             }
         }
     }

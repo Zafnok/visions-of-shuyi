@@ -22,6 +22,7 @@ mod layout_picker;
 mod lessons;
 mod map_skin;
 mod map_zoom;
+mod openings;
 mod options;
 mod places;
 mod playdate;

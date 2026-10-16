@@ -6,7 +6,9 @@
 //! The scene's place, if it names one, is painted first by the map skin
 //! over the whole screen and darkened to [`PLACE_BRIGHTNESS`]; an overlay
 //! with no place darkens the screen below it (the battle map) the same
-//! way. Everything else goes on top at full brightness.
+//! way. Everything else goes on top at full brightness. While an opening
+//! plays (0734) the place goes from full brightness down to
+//! [`PLACE_BRIGHTNESS`] as it darkens, under the caption alone.
 //!
 //! Layout (100×32): 32×16-cell portraits in 34×18 frames at `x = 1` and
 //! `x = 65` from row 1, name plates on row 19, the text box on rows 21–27.
@@ -60,6 +62,16 @@ pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
     }
     let c = |u| ctx.palette.get(u);
     let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
+    if let Some(opening) = &view.opening {
+        buf.fill_rect(buf.bounds(), blank);
+        if let Some(place) = &view.place {
+            ctx.map_skin.paint(ctx, place, buf.bounds(), buf);
+        }
+        let darkened = opening.darkened.clamp(0.0, 1.0);
+        buf.fade(1.0 + (PLACE_BRIGHTNESS - 1.0) * darkened);
+        paint_caption(ctx, buf, view);
+        return;
+    }
     if let Some(place) = &view.place {
         buf.fill_rect(buf.bounds(), blank);
         ctx.map_skin.paint(ctx, place, buf.bounds(), buf);
@@ -79,13 +91,18 @@ pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
     paint_text_box(ctx, buf, view);
 }
 
-/// The caption and both sides' portraits.
-fn paint_stage(ctx: &Ctx, buf: &mut GlyphBuffer, view: &DialogueView) {
+/// The caption, on the top row.
+fn paint_caption(ctx: &Ctx, buf: &mut GlyphBuffer, view: &DialogueView) {
     let c = |u| ctx.palette.get(u);
     if let Some(caption) = &view.caption {
         let text = format!(" {caption} ");
         print_centred(buf, 0, &text, c(UiColor::TextHighlight), c(UiColor::Black));
     }
+}
+
+/// The caption and both sides' portraits.
+fn paint_stage(ctx: &Ctx, buf: &mut GlyphBuffer, view: &DialogueView) {
+    paint_caption(ctx, buf, view);
     for side in [Side::Left, Side::Right] {
         if let Some(face) = view.face(side) {
             paint_side(ctx, buf, side, face, view.speaker == Some(side));
