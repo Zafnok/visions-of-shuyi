@@ -260,18 +260,6 @@ machine-made. The full plan, in dependency order, is in
 
 ## How it's built
 
-One unusual thing about this project: **Nick designs the game, Claude (an AI)
-writes the code**, and the tests are the code review.
-
-```mermaid
-flowchart TD
-    N["Nick decides the design"] -->|"decision tickets"| T["Design docs → work tickets"]
-    T -->|"one ticket = one change"| C["Claude writes code + tests"]
-    C --> CI{"Automatic checks"}
-    CI -->|pass| M["Browser build updates"]
-    M -->|"Nick plays it"| N
-```
-
 It is written in Rust and runs as a Windows program and in the browser from
 the same code. The rules of the game are kept separate from how it looks,
 which is what makes turn rewind, the playtest bots, the two looks and the
