@@ -6,7 +6,7 @@ milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
+blocked_by: []
 nick_input: none
 completed:
 ---
@@ -44,8 +44,12 @@ cause, not yet proven):
   `Mode::ActionMenu` with a Magic entry (815–818). Seen tips live in the
   profile (`crates/ui/src/tips.rs:59`).
 
-**Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
-so `blocked_by` has 1118 and 1050.
+**Comes before the Playdate playtest.** Round 3's tickets wait for the
+carve (1118) and the Playdate port (1050), Nick's priority. This one is
+an exception he chose (2026-10-16): the Playdate runs the same tutorial
+code, so 1050 waits for it, and it waits for nothing (the carve doesn't
+move the battle screen's tutorial code). The engine carve is still the
+critical path (`docs/ROADMAP.md`); this is a small fix to fit in beside it.
 
 ## Nick input
 

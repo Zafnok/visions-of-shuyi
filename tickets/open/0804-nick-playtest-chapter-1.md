@@ -104,7 +104,14 @@ update script." Added to `blocked_by`: 1118 (the carve's first example,
 the last carve ticket) and 1050 (Nick plays Chapter 1 on his Playdate),
 plus the round 3 tickets he'd judge in Chapter 1 (the round 3 table in
 the Completion notes says which remark each answers). Every round 3
-ticket also waits for 1118 and 1050 itself.
+ticket also waits for 1118 and 1050 itself, except three tutorial bugs
+(0464, 0467, 0841): the Playdate runs the same tutorial code, so Nick
+chose to fix them before 1050 ("wait for nothing but the way I read this,
+we should prio engine carve. Make it obvious engine carve is now the
+critical path."). They wait for nothing, and 1050 waits for them. The
+carve's first tickets (1103, 1114) no longer wait for 0804, which would
+have been a loop; `docs/ROADMAP.md` now opens with the carve as the
+critical path.
 
 **Round 4 starts at step 2**, with `v0.4.0` (or whatever version the game
 is at then) cut the same way, and a checklist like round 3's. Ask first
@@ -272,8 +279,9 @@ the release workflow; Pages deployed the same commit.
 Nick answered all 76 questions on the checklist page (70 questions plus
 his notes). The overall verdict, and the priority, are in Context.
 
-**Became tickets** (all wait for 1118 and 1050; ✱ = not in round 4's
-`blocked_by`, Nick didn't need it before then):
+**Became tickets** (all wait for 1118 and 1050 except 0464, 0467 and
+0841, which come before 1050; ✱ = not in round 4's `blocked_by`, Nick
+didn't need it before then):
 
 | Asked | Nick said | Ticket |
 | ----- | --------- | ------ |

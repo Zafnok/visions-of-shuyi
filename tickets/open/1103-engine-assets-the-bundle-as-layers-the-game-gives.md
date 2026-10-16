@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0804", "1102"]
+blocked_by: ["1102"]
 nick_input: none
 completed:
 ---
@@ -23,8 +23,11 @@ a static `LAYERS` (`bundle.rs:20-92`), two cargo features and
 `build.rs` are tied to them, and every loader calls free functions
 (`bundle::file()`, `files_in()`). `docs/engine/boundary.md`, coupling 9.
 
-Waits for 0804: it touches every loader in `content`, which the playtest
-tickets also change.
+It waited for 0804 (it touches every loader in `content`, which the
+playtest tickets also changed). Since playtest round 3 (2026-10-16) the
+carve comes first: Nick, "we should prio engine carve. Make it obvious
+engine carve is now the critical path." Round 4 of 0804 now waits for
+the carve, so this no longer waits for 0804.
 
 ## Nick input
 

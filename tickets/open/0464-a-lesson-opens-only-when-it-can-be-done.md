@@ -6,7 +6,7 @@ milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
+blocked_by: []
 nick_input: sign-off
 completed:
 ---
@@ -37,9 +37,12 @@ but Tamsin had acted and no other unit could reach an enemy. Units were
 still left to act, so the "put away" rule (no unit left) didn't apply,
 and the turn was held by a lesson nobody could finish.
 
-**Waits for the engine carve and the Playdate port** (Nick, 2026-10-16:
-"We'll prioritize this after engine carve and playdate port now"), so
-`blocked_by` has 1118 and 1050.
+**Comes before the Playdate playtest.** Round 3's tickets wait for the
+carve (1118) and the Playdate port (1050), Nick's priority. This one is
+an exception he chose (2026-10-16): the Playdate runs the same tutorial
+code, so 1050 waits for it, and it waits for nothing (the carve doesn't
+move the battle screen's tutorial code). The engine carve is still the
+critical path (`docs/ROADMAP.md`); this is a small fix to fit in beside it.
 
 ## Nick input
 
