@@ -30,6 +30,8 @@
     "shieldbearer": "Hedda Ravn",
     "envoy": "Ragna Holt",
     "battlemage": "Oriel Mast",
+    // Outside the story: the tutorial guide, the tip box's title (0731).
+    "guide": "Vix",
 
     // Short forms (tickets 0712, 0713): what people say instead of the full
     // name.

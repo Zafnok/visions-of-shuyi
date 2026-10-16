@@ -327,16 +327,13 @@ fn a_tip_names_the_buttons_of_the_pad_in_use() {
         h
     };
     let keys = tip(None);
-    assert!(shows(&keys, "Press f on one of"));
+    assert!(shows(&keys, "with arrows; f on"));
     assert!(shows(&keys, "f close"));
     let xbox = tip(Some(PadKind::Xbox));
-    assert!(shows(
-        &xbox,
-        "Steer the cursor with D-pad/L-stick. Press A on one of"
-    ));
+    assert!(shows(&xbox, "Steer the cursor with D-pad/L-stick; A on"));
     assert!(shows(&xbox, "A close"));
     let sony = tip(Some(PadKind::PlayStation));
-    assert!(shows(&sony, "Press ✕ on one of"));
+    assert!(shows(&sony, "L-stick; ✕ on"));
     assert!(shows(&sony, "✕ close"));
     assert_snapshot!("tip_keyboard", keys.snapshot());
     assert_snapshot!("tip_xbox", xbox.snapshot());
@@ -347,7 +344,7 @@ fn a_tip_names_the_buttons_of_the_pad_in_use() {
     h.keys("z");
     assert!(shows(&h, "✕ close"), "an unbound key doesn't count");
     h.keys("Up");
-    assert!(shows(&h, "Press f on one of"));
+    assert!(shows(&h, "with arrows; f on"));
     assert!(shows(&h, "f close"));
 }
 

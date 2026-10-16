@@ -1,14 +1,15 @@
 ---
 source: crates/ui/tests/it/controller.rs
+assertion_line: 342
 expression: xbox.snapshot()
 ---
                                                                       ┌────────────────────────────┐
-      ╔═ Guide ════════════════════════════════════════════════╗      │ Plain                      │
+      ╔═ Vix ══════════════════════════════════════════════════╗      │ Plain                      │
       ║                                                        ║      │ DEF +0  AVO +0             │
       ║ Your move                                              ║      │                            │
-      ║ Steer the cursor with D-pad/L-stick. Press A on one of ║      │                            │
-      ║ your units to select it. RB jumps to the next unit     ║      │ Test Lord                  │
-      ║ that can still act; Y shows a unit's details.          ║      │ Exile  Lv 1                │
+      ║ Over to you. Steer the cursor with D-pad/L-stick; A on ║      │                            │
+      ║ one of your units picks it up. Press RB for whoever    ║      │ Test Lord                  │
+      ║ can still act, and Y for what you're working with.     ║      │ Exile  Lv 1                │
       ║                                                        ║      │ HP 19/19   ██████████      │
       ║ A close                                                ║      │ Player                     │
       ╚════════════════════════════════════════════════════════╝      │                            │
@@ -36,7 +37,7 @@ expression: xbox.snapshot()
  A close                                                                                   F2 debug 
 --- colours ---
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaabbcccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabdcccccddddddddddddddddddddddb
+aaaaaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaabdcccccddddddddddddddddddddddb
 aaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaabddddddddddddddddddddddddddddb
 aaaaaabdcccccccccddddddddddddddddddddddddddddddddddddddddddddddbaaaaaabddddddddddddddddddddddddddddb
 aaaaaabddddddddddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaabddddddddddddddddddddddddddddb

@@ -1,14 +1,14 @@
 ---
 source: crates/ui/src/screens/battle/guides/tests.rs
-assertion_line: 192
+assertion_line: 195
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔═ Guides ═════════════════════════════════════════════════════════════════════════════════════════╗
 ║                                 │                                                                ║
 ║ Moving the cursor               │  Moving the cursor                                             ║
 ║ Played on the keys              │                                                                ║
-║ Finding your units              │  The cursor picks tiles and units on the map.                  ║
-║ Selecting a unit                │  Move it one tile each way.                                    ║
+║ Finding your units              │  That's your cursor. It picks tiles and units.                 ║
+║ Selecting a unit                │  One tile each way, so you know the feel.                      ║
 ║ Attacking                       │                                                                ║
 ║ Ending the turn                 │  Move it up: Up                                                ║
 ║ Rewind                          │  Move it down: Down                                            ║

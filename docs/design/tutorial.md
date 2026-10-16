@@ -83,9 +83,10 @@ New Game asks the player how familiar they are, with three answers:
   beside the text (the mockup "A1": the tip box over the map, the face at
   twice its size on the left, the guide's name as the box's title). The
   conversation box with the big portrait is not used for tips.
-- The guide's **name** and voice: a story decision for Nick, asked with
-  the guide's lines (ticket 0731). Until then the box's title reads
-  "Guide". Claude writes every line (`docs/story/writers-guide.md`).
+- The guide's **name** and voice: **Vix**, the dry insider (ticket 0731,
+  Nick's words in `docs/story/characters/guide.md`). The box's title is
+  her name, from the names table. Claude writes every line
+  (`docs/story/writers-guide.md`).
 
 ### The lessons (forced, as a checklist)
 

@@ -656,7 +656,7 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
     assert_eq!(h.screens(), ["title", "battle"]);
     assert_eq!(tip(&h), Some(TipTrigger::FirstBattleStart));
     assert!(shows(&h, "Your move"));
-    assert!(shows(&h, " Guide "));
+    assert!(shows(&h, " Vix "));
 }
 
 /// Skips every scene on screen: Cancel, then Confirm on "Skip scene?".

@@ -1,8 +1,9 @@
 ---
 source: crates/ui/src/screens/battle/lesson_tests.rs
+assertion_line: 567
 expression: h.snapshot()
 ---
-         ╔═ Guide ═════════════════════════════════════════╗          ┌────────────────────────────┐
+         ╔═ Vix ═══════════════════════════════════════════╗          ┌────────────────────────────┐
          ║                                                 ║          │ Road                       │
          ║ Moving the cursor                               ║          │ DEF +0  AVO +0             │
          ║ Move the cursor with arrows, one tile each way. ║          │                            │
@@ -35,7 +36,7 @@ expression: h.snapshot()
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  f select · e info · s next unit · r rewind · d menu · Space end turn                      F2 debug 
 --- colours ---
-aaaaaaaaabbcccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+aaaaaaaaabbcccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 aaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaabdccccdddddddddddddddddddddddb
 aaaaaaaaabdcccccccccccccccccdddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaabdddddddddddddddddddddddddddddddddddddddddddddddddbaaaaaaaaaabddddddddddddddddddddddddddddb
