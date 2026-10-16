@@ -6,26 +6,46 @@
 
 mod allocator;
 mod entry;
+mod files;
 mod game_stack;
 mod panic;
 
-use core::ffi::{c_char, c_int, c_uint, c_void};
+use core::ffi::{c_char, c_float, c_int, c_uint, c_void};
+
+use trpg_ui::onebit::Frame;
 
 use crate::text;
 
-// One wrapper per SDK call, in `shim/shim.c`. The shim also has the
-// elapsed-time timer and reading files, declared here once something
-// uses them.
+// One wrapper per SDK call, in `shim/shim.c`. The shim also has reading
+// a file from the game's `.pdx`, declared here once something uses it.
 unsafe extern "C" {
     fn pd_realloc(ptr: *mut c_void, size: usize) -> *mut c_void;
     fn pd_log(text: *const c_char);
     fn pd_error(text: *const c_char);
     fn pd_millis() -> c_uint;
+    fn pd_reset_elapsed();
+    fn pd_elapsed() -> c_float;
+    fn pd_buttons(current: *mut c_uint, pushed: *mut c_uint);
+    fn pd_set_refresh_rate(rate: c_float);
+    fn pd_frame() -> *mut u8;
+    fn pd_mark_updated_rows(start: c_int, end: c_int);
     fn pd_clear();
     fn pd_draw_text(text: *const c_char, len: usize, x: c_int, y: c_int);
     fn pd_file_open_write(name: *const c_char) -> *mut c_void;
+    fn pd_file_open_read_data(name: *const c_char) -> *mut c_void;
+    fn pd_file_read(file: *mut c_void, buf: *mut c_void, len: c_uint) -> c_int;
     fn pd_file_write(file: *mut c_void, buf: *const c_void, len: c_uint) -> c_int;
     fn pd_file_close(file: *mut c_void) -> c_int;
+    fn pd_file_error() -> *const c_char;
+    fn pd_file_kind(name: *const c_char) -> c_int;
+    fn pd_file_list(
+        path: *const c_char,
+        each: extern "C" fn(name: *const c_char, userdata: *mut c_void),
+        userdata: *mut c_void,
+    ) -> c_int;
+    fn pd_file_mkdir(path: *const c_char) -> c_int;
+    fn pd_file_unlink(name: *const c_char) -> c_int;
+    fn pd_file_rename(from: *const c_char, to: *const c_char) -> c_int;
 }
 
 /// Writes `line` to the console (the Simulator's, which also shows a
@@ -38,6 +58,45 @@ pub fn log(line: &str) {
 /// Milliseconds since some fixed moment: for timing, not for the date.
 pub fn millis() -> u32 {
     unsafe { pd_millis() }
+}
+
+/// Seconds since [`reset_elapsed`], from the SDK's high-resolution timer.
+pub fn elapsed() -> f32 {
+    unsafe { pd_elapsed() }
+}
+
+/// Starts [`elapsed`] again from 0.
+pub fn reset_elapsed() {
+    unsafe { pd_reset_elapsed() };
+}
+
+/// The buttons held now and the ones pressed since the last call, as the
+/// SDK's `PDButtons` bits (read by `crate::pads`).
+pub fn buttons() -> (u32, u32) {
+    let (mut current, mut pushed) = (0, 0);
+    unsafe { pd_buttons(&raw mut current, &raw mut pushed) };
+    (current, pushed)
+}
+
+/// How many frames a second the SDK calls the update callback, at most.
+pub fn set_refresh_rate(rate: f32) {
+    unsafe { pd_set_refresh_rate(rate) };
+}
+
+/// Copies the rows of `frame` that changed onto the screen and tells the
+/// SDK which; true if any did.
+pub fn show(frame: &Frame) -> bool {
+    // SAFETY: the SDK's frame buffer is `LCD_ROWSIZE` × `LCD_ROWS` bytes,
+    // which `shim.c` checks is a `Frame`, and nothing else holds it
+    // during the update callback.
+    let screen = unsafe { &mut *pd_frame().cast::<Frame>() };
+    match crate::screen::copy_changed(screen, frame) {
+        Some((first, last)) => {
+            unsafe { pd_mark_updated_rows(first, last) };
+            true
+        }
+        None => false,
+    }
 }
 
 /// Clears the screen to white.

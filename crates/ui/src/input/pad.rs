@@ -44,6 +44,11 @@ pub enum PadKind {
     PlayStation4,
     /// A Nintendo pad (Switch Pro controller, Joy-Cons).
     Nintendo,
+    /// The Playdate's own buttons (ADR-0070): the D-pad, A and B. Its
+    /// front end reports A at the binding position `South` and B at
+    /// `East`, so the default bindings make A Confirm and B Cancel
+    /// (`docs/design/playdate.md`, *Buttons and the crank*).
+    Playdate,
     /// Anything else, or a pad that doesn't say. Treated like an Xbox pad.
     #[default]
     Generic,
@@ -79,12 +84,15 @@ impl PadKind {
     /// this kind of pad (`docs/design/controls.md`, *Button names on
     /// screen*): Xbox letters (also on generic pads), Sony's shapes,
     /// or Nintendo's letters (a PS4 pad says `Share` where later Sony pads
-    /// say `Create`). The only place buttons get their names.
+    /// say `Create`). The Playdate's `A`, `B` and D-pad are named as
+    /// printed on it, which are the Xbox names; it has none of the other
+    /// buttons (their actions move to chords and menus in tickets 1034
+    /// and 1035). The only place buttons get their names.
     // check-text: not player text (a button's name is what is printed on the pad)
     pub fn button_name(self, button: Button) -> &'static str {
         let [xbox, playstation, nintendo] = names(button);
         match self {
-            Self::Xbox | Self::Generic => xbox,
+            Self::Xbox | Self::Generic | Self::Playdate => xbox,
             Self::PlayStation4 if button == Button::Select => "Share",
             Self::PlayStation | Self::PlayStation4 => playstation,
             Self::Nintendo => nintendo,

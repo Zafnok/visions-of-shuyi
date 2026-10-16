@@ -48,11 +48,7 @@ doctest = false
 sdk = []
 
 [dependencies]
-trpg-core = { path = "../core", default-features = false }
 trpg-content = { path = "../content", default-features = false }
-trpg-ui = { path = "../ui", default-features = false }
-
-[package.metadata.cargo-machete]
-# The front end runs the game's screens from 1033 on; this ticket only
-# loads the game's data (ticket 1031).
-ignored = ["trpg-core", "trpg-ui"]
+# `storage-conformance`: the debug build checks the game's storage on the
+# Playdate's files (`src/storage.rs`).
+trpg-ui = { path = "../ui", default-features = false, features = ["storage-conformance"] }

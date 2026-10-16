@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["1031", "1032"]
 nick_input: none
-completed:
+completed: 2026-10-15
 ---
 
 # 1033 — The Playdate front end runs the game
@@ -107,15 +107,16 @@ second on the title and the battle, and the stack high-water mark
 
 ## Acceptance criteria
 
-- [ ] In the Simulator, the D-pad, A and B move through the title, New
+- [x] In the Simulator, the D-pad, A and B move through the title, New
       Game, the lead's name grid and into Chapter 1's first battle.
-- [ ] A profile and a save written in the Simulator are there after a
+- [x] A profile and a save written in the Simulator are there after a
       restart.
-- [ ] The device numbers are in the PR.
-- [ ] Tests: `PadKind::Playdate` names; the no-keyboard start; storage
+- [ ] The device numbers are in the PR. *Waits on Nick's sideload (see
+      the completion notes).*
+- [x] Tests: `PadKind::Playdate` names; the no-keyboard start; storage
       conformance runs in the Simulator (logged in the PR).
-- [ ] The PC game is unchanged (snapshots, harness tests).
-- [ ] All gates in the `run-gates` skill pass, and the CI `playdate` job.
+- [x] The PC game is unchanged (snapshots, harness tests).
+- [x] All gates in the `run-gates` skill pass, and the CI `playdate` job.
 
 ## Tests required
 
@@ -125,5 +126,73 @@ second on the title and the battle, and the stack high-water mark
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done**
+
+- `PadKind::Playdate` (`crates/ui/src/input/pad.rs`): no swap, named
+  `A`, `B` and the D-pad arrows as printed on the Playdate (the Xbox
+  names, which also stand in for the buttons it lacks until 1034 gives it
+  its own `playdate` table). The front end reports A at `South` and B at
+  `East`, so the default `pad` table gives D-pad = cursor, A = Confirm,
+  B = Cancel (test through the real press-to-action path).
+- **No keyboard:** `Ctx::keyboard` (`Keyboard::Present` / `Absent`).
+  `Absent` never opens the layout picker (also not in a scene preview);
+  `Game` now starts its input on `ctx.device`, so the Playdate's help
+  names its buttons from the first frame. PC unchanged (`Present`, the
+  keyboard device).
+- **The loop** (`crates/playdate/src/pd/entry.rs`): `dt` from the SDK's
+  elapsed timer, the buttons through `Pads` (`src/pads.rs`; a tap between
+  two updates is held for one frame so it is never lost), `Game::frame`
+  on the game stack, and only when the `GlyphBuffer` changed the one-bit
+  render plus a copy of the changed rows into `getFrame` with
+  `markUpdatedRows` (`src/screen.rs`). `setRefreshRate(30)`, recorded in
+  the crate README. The shim gained the button, frame buffer, refresh
+  rate and file calls, with `_Static_assert`s pinning the button bits
+  and the 52 × 240 frame buffer to `pd_api.h`.
+- **Storage** (`src/storage.rs`, `src/pd/files.rs`): `<key>.ron` per key
+  in the game's data folder, written to `.ron.tmp` then moved over (old
+  file removed first where the file system will not move onto it). The
+  SDK calls are behind a `Files` trait so the rules run the conformance
+  suite on the host; `trpg-ui` gained a `storage-conformance` feature
+  (part of `harness`) so the `no_std` debug build runs the suite on the
+  real files at start, in a `storage-check` folder it leaves empty.
+- **Measurements:** once a minute, the top screen, frames a second,
+  `Game::frame` and render-and-copy min / avg / max ms, and the stack
+  high-water mark, logged in **every** build (deviation: the ticket says
+  a debug build, but the device must run the release build).
+- `check-keys` scans `crates/playdate/src` and allows its `pads.rs`.
+- Tests: pad names and positions (`pad/tests.rs`), the no-keyboard start
+  (`game.rs`), `pads.rs`, `storage.rs` (conformance on in-memory files,
+  also where files cannot be moved onto others), `screen.rs`, the timing
+  report, and `ui/tests/it/playdate.rs`: the Playdate's console, no
+  keyboard and only A, B and the D-pad from the title through the name
+  grid into Chapter 1's first battle, then Suspend from the map menu
+  writes the suspend save. New `Harness::first_launch_and`.
+
+**In the Simulator** (debug build, keys posted to its window): the
+conformance suite passed on the real files (`storage-check` left empty,
+the game carried on); title → New Game → Classic → familiarity → lead
+(name grid: B deleted a letter, A added `A`, Done) → the opening scenes
+→ Chapter 1's battle (`Idle`) → map menu → Suspend wrote
+`p1-suspend.ron` (19 KB) and `p1-last_save.ron`. After a restart the
+profile was there and A on the title's Continue put the battle back
+(the suspend save then used up, as on the PC). The release build starts
+and plays to the familiarity question too. Screens are cut off as the
+ticket expects (the title is all backdrop picture, a grey box until
+1040; the map menu opens below row 15).
+
+**Deviations**
+
+- The debug tools are off on the Playdate: they are made of the test
+  files, which the `no_std` build does not have (ADR-0057).
+- The device numbers are not in yet: they need Nick's sideload of the
+  release build (below).
+
+**For Nick:** sideload `target/playdate/VisionsOfShuyi.pdx` (built with
+`cargo xtask playdate --release`), play to the first battle, stay a
+minute on the title and a minute in the battle, and paste the
+Simulator's console: the lines starting "On title for 60 seconds" /
+"On battle for 60 seconds" and the ones after them are the numbers.
+
+No gameplay rules were decided here. No follow-up tickets: what the
+Playdate still lacks (chords, crank, skins, sound) already has tickets
+(1034–1047).

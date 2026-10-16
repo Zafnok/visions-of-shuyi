@@ -23,6 +23,7 @@ mod lessons;
 mod map_skin;
 mod map_zoom;
 mod options;
+mod playdate;
 mod preparations;
 mod profiles;
 mod rebind_buttons;

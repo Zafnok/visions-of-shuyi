@@ -116,6 +116,14 @@ impl Harness {
         Self::with_storage(Box::new(MemoryStorage::new()))
     }
 
+    /// [`new`](Self::new), with `setup` changing the context before the
+    /// game starts: e.g. a platform without a keyboard (the Playdate).
+    pub fn first_launch_and(setup: impl FnOnce(&mut Ctx)) -> Self {
+        let mut ctx = embedded_ctx().with_storage(Box::new(MemoryStorage::new()));
+        setup(&mut ctx);
+        Self::from_game(Game::start(ctx))
+    }
+
     /// A later launch where `layout` was picked before: at the title screen
     /// with that layout's keys.
     pub fn with_layout(layout: Layout) -> Self {
