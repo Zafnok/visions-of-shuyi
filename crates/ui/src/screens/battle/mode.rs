@@ -480,6 +480,9 @@ pub enum Effect {
     /// Open the Options screen (the map menu's `Options`); the map menu
     /// stays open under it.
     Options,
+    /// Open the Guides list (the map menu's `Guides`, ticket 0458); the
+    /// map menu stays open under it.
+    Guides,
 }
 
 impl Mode {
@@ -1105,6 +1108,7 @@ fn step_map_menu(
             Some(MapEntry::Suspend) => (Mode::SuspendPrompt, Effect::None),
             Some(MapEntry::EndTurn) => end_turn(state),
             Some(MapEntry::Options) => (Mode::MapMenu { menu, entries }, Effect::Options),
+            Some(MapEntry::Guides) => (Mode::MapMenu { menu, entries }, Effect::Guides),
             None => (Mode::MapMenu { menu, entries }, Effect::None),
         },
         Some(MenuEvent::Cancelled) => (Mode::default(), Effect::None),

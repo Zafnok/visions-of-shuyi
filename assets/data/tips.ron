@@ -8,7 +8,13 @@
 //
 // Triggers: FirstBattleStart, FirstUnitSelected, FirstEnemyInRange,
 // FirstForecast, FirstLowHp, FirstLevelUp, FirstEnemyPhase,
-// DangerZoneAvailable. At most one tip per trigger.
+// DangerZoneAvailable, FirstSkillUnit (a unit with a skill is selected),
+// FirstCaster (the action menu opens for a unit that knows a spell),
+// FirstTerrain (the cursor rests on a tile that isn't plain ground). At
+// most one tip per trigger.
+//
+// The battle menu's Guides lists every tip, in this order, after the
+// lessons (ticket 0458).
 //
 // The guide speaks every tip (docs/design/tutorial.md, The guide): `face:
 // "<expression>"` picks the guide's expression while it shows, `smile` if
@@ -63,6 +69,30 @@
             trigger: DangerZoneAvailable,
             title: "Danger zone",
             text: "Press {DangerZone} to tint every tile the enemy could hit\nnext turn. Press it again to hide it. {Select} on an enemy\nshows just its range.",
+        ),
+        (
+            id: "skills",
+            trigger: FirstSkillUnit,
+            title: "Skills",
+            text: "This unit has skills. Passive ones work on their own;
+an active one is used from Arts or Skill in the action
+menu. {Info} lists them all and what each does.",
+        ),
+        (
+            id: "magic",
+            trigger: FirstCaster,
+            title: "Magic",
+            text: "This unit knows spells. Pick Magic in the action menu to
+cast at an enemy or to heal an ally. Each spell has a
+few uses per battle; {Info} shows how many are left.",
+        ),
+        (
+            id: "terrain",
+            trigger: FirstTerrain,
+            title: "Terrain",
+            text: "Terrain matters. The side panel shows the DEF and AVO a
+unit gets standing on this tile. Some tiles take more
+movement to cross, and some can't be crossed at all.",
         ),
     ],
 )

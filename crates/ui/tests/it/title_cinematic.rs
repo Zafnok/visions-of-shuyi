@@ -461,7 +461,7 @@ fn back_from_a_battle_the_menu_shows_and_the_song_starts_over() {
     assert!(song(&h).is_nan(), "the battle's music");
     // The map menu's Suspend, confirmed: the title.
     h.clear_audio();
-    h.keys("d Down Down Down f f");
+    h.keys("d Down Down Down Down f f");
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(shows(&h), Shows::Menu(255));
     assert_eq!(music(&h), ["title"]);

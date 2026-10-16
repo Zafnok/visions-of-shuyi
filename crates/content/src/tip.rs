@@ -57,6 +57,14 @@ pub enum TipTrigger {
     FirstEnemyPhase,
     /// The cursor rests on an enemy, so its danger zone is worth knowing.
     DangerZoneAvailable,
+    /// The player selects a unit that has a skill (ticket 0458).
+    FirstSkillUnit,
+    /// The action menu opens for a unit that knows a spell (0458).
+    FirstCaster,
+    /// The cursor rests on a tile whose terrain is not plain ground: a
+    /// Def, Avoid or healing bonus, or a movement cost other than 1
+    /// (0458).
+    FirstTerrain,
 }
 
 /// One tip.
@@ -234,6 +242,9 @@ mod tests {
             TipTrigger::FirstLevelUp,
             TipTrigger::FirstEnemyPhase,
             TipTrigger::DangerZoneAvailable,
+            TipTrigger::FirstSkillUnit,
+            TipTrigger::FirstCaster,
+            TipTrigger::FirstTerrain,
         ] {
             assert!(table.for_trigger(trigger).is_some(), "{trigger:?}");
         }

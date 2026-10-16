@@ -63,10 +63,10 @@ fn into_quick_battle(h: &mut Harness) {
 }
 
 /// The Quick Battle, then Options from its map menu (Units, Objective,
-/// Options).
+/// Guides, Options).
 fn options_in_battle() -> Harness {
     let mut h = title();
-    h.keys("Down f Left f f d Down Down f");
+    h.keys("Down f Left f f d Down Down Down f");
     assert_eq!(h.screens(), ["title", "battle", "options"]);
     h
 }
@@ -231,7 +231,7 @@ fn auto_end_is_one_setting_in_options_and_in_battle() {
     assert!(shows(&h, "auto-end: OFF"));
     assert!(!settings(&h).auto_end_turn);
     // Options over the battle shows it off, and turns it on again.
-    h.keys("d Down Down f").keys(TO_AUTO_END);
+    h.keys("d Down Down Down f").keys(TO_AUTO_END);
     assert_eq!(value(&h, Row::AutoEnd), setting("Off"));
     h.keys("f").keys(KEEP).keys("d");
     assert!(shows(&h, "auto-end: ON"));
@@ -263,7 +263,7 @@ fn the_cursor_row_changes_the_battle_cursor() {
     into_quick_battle(&mut h);
     assert_eq!(style(&h), Some(CursorStyle::LargeCorners));
     // Changed over the battle, it shows as soon as the battle is back.
-    h.keys("d Down Down f").keys(TO_CURSOR).keys("Right");
+    h.keys("d Down Down Down f").keys(TO_CURSOR).keys("Right");
     assert!(shows(&h, "Tile glow"));
     h.keys(KEEP).keys("d");
     assert_eq!(style(&h), Some(CursorStyle::TileGlow));
@@ -454,7 +454,7 @@ fn classic_switches_to_casual_at_preparations_and_never_back() {
     let battle = h.battle().map(|b| b.state().mode());
     assert_eq!(battle, Some(GameMode::Casual));
     // Options in the battle: Casual, and no message about Preparations.
-    h.keys("f d Down Down f Up Up Up f");
+    h.keys("f d Down Down Down f Up Up Up f");
     assert_eq!(h.screens(), ["title", "battle", "options"]);
     assert!(shows(&h, "Casual") && !shows(&h, "Preparations"));
     assert_eq!(mode(&h), Some(GameMode::Casual));
@@ -484,7 +484,7 @@ fn a_casual_campaign_shows_its_mode_and_the_title_shows_none() {
     h.keys("d f f f");
     assert_eq!(h.screens(), ["title", "battle"]);
     assert_eq!(mode(&h), Some(GameMode::Casual));
-    h.keys("d Down Down f Up Up Up");
+    h.keys("d Down Down Down f Up Up Up");
     assert_eq!(h.screens(), ["title", "battle", "options"]);
     assert!(shows(&h, "Game mode") && shows(&h, "Casual"));
     h.keys("f");
