@@ -279,6 +279,15 @@ mod tests {
                 rows * 16 + 3
             )]
         );
+        // Two columns of three rows hold six cells: the last is index 5.
+        let narrow = FontAtlasDef {
+            cell_w: 8,
+            cell_h: 16,
+            columns: 2,
+            glyphs: [('a', 5)].into(),
+        };
+        assert_eq!(narrow.image_problems(16, 48), Vec::<String>::new());
+        assert_eq!(narrow.image_problems(16, 32).len(), 1);
         // A glyph in the cell just past what the image holds.
         let mut def = required_only();
         def.glyphs.insert('z', rows * 16);
