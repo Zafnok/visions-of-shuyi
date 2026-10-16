@@ -210,3 +210,40 @@ the same commit. The message went out the same day.
 | Most of the Red Company holding the bridges and the fort | "its ok I guess" | `chapter-1.md`: kept |
 | The 0.3 s before held Confirm speeds text up (0727) | "it's fine" | `controls.md`: kept |
 
+### Round 3 (started 2026-10-16)
+
+All 70 blockers are in `tickets/done/`. The version is bumped to 0.3.0
+(root `Cargo.toml`, `Cargo.lock`) in its own PR, from a branch that doesn't
+start with `t0804`; this ticket stays open in that PR. After the merge: tag
+`v0.3.0` on `main`, wait for the release, and point Nick at the checklist.
+
+Instead of a short message, Nick asked for a checklist with answer
+choices (Nick, 2026-10-16: "make me a checklist, with options… this will
+be a LOT of questions"), published as a private claude.ai page that
+saves his answers for Claude to read back:
+<https://claude.ai/artifact/8kz8qiMc245mNaBNrytYKh>. It has the
+links, the key cheat-sheet from `keymap.ron`, five things to watch,
+the known gaps (0735, 0453, 0454, 0450, 0041), and 70 questions in play
+order. They cover:
+
+- Every round 1 and round 2 item he hasn't reacted to since it shipped:
+  0447's deeper outline and the darker rim of a unit that has acted,
+  0055 / 0448's threat arrows, 0439 starting at 2×, 0444's cursor, 0442's
+  Arts menu, 0811's backdrops and sparks, 0819's idle fade, 0830's Game
+  Over, and 0724's words left for him ("Aye", "Greywater", "Your Former
+  Grace").
+- Each round 2 remark against the ticket that answers it: 0833 / 0832
+  (intro talk length, unit moves, combat scenes), 0730, 0607, 0728, 0429,
+  0452, 0451, 0057 (→ 0455–0459, 0731, 0835), 0056 / 0317, 0834, 0729,
+  0029 (→ 0732–0734) and 0058 (→ 0836–0839).
+- The starting rules those tickets left for him, the intro's cut timing
+  and logo moment, whether the intro gets an off setting ("Later" in
+  0036), and the four scene music picks over their new places
+  (`audio.md`, "Chapter 1's cues").
+- One glance for the screens rebuilt underneath in 0242–0249, plus the
+  overall feel, the pace and a free box.
+
+Tips seen now belong to the profile, so the checklist asks him to add
+a fresh profile for this round; Player 1 already remembers the tips from
+rounds 1–2.
+
