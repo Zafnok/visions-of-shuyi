@@ -243,13 +243,17 @@ impl Bundle {
     pub fn is_private(&self, shown: &str) -> bool {
         self.layers
             .iter()
-            .filter(|layer| layer.private)
-            .any(|layer| {
-                shown
-                    .strip_prefix(layer.name)
-                    .is_some_and(|rest| rest.starts_with('/'))
-            })
+            .any(|layer| layer.private && shown_under(shown, layer.name))
     }
+}
+
+/// Whether `shown` (a human-facing name) names a file under the layer
+/// named `name`: `base/x.png` is under `base`, `bases/x.png` and `base`
+/// are not.
+pub fn shown_under(shown: &str, name: &str) -> bool {
+    shown
+        .strip_prefix(name)
+        .is_some_and(|rest| rest.starts_with('/'))
 }
 
 /// The file at `path` and the layer it is read from: the first of `layers`
@@ -298,32 +302,42 @@ std::thread_local! {
     static STORY_ONLY: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
 }
 
+/// Whether [`story_only`] is running. Without `std` there is one thread.
+#[cfg(not(feature = "std"))]
+static STORY_ONLY: Flag = Flag::new();
+
+/// A `bool` a `static` can hold, with the `get` and `replace` of the
+/// thread-local `Cell` the `std` build uses. Built for the tests too, so
+/// they check the `no_std` build's flag.
+#[cfg(any(not(feature = "std"), test))]
+struct Flag(core::sync::atomic::AtomicBool);
+
+#[cfg(any(not(feature = "std"), test))]
+impl Flag {
+    /// A flag that is off.
+    const fn new() -> Self {
+        Self(core::sync::atomic::AtomicBool::new(false))
+    }
+
+    /// Whether it is on.
+    fn get(&self) -> bool {
+        self.0.load(core::sync::atomic::Ordering::Relaxed)
+    }
+
+    /// Sets it to `on`; returns the old value.
+    fn replace(&self, on: bool) -> bool {
+        self.0.swap(on, core::sync::atomic::Ordering::Relaxed)
+    }
+}
+
 /// Whether this thread is inside [`story_only`].
-#[cfg(feature = "std")]
 fn story_only_now() -> bool {
     STORY_ONLY.get()
 }
 
 /// Sets whether this thread is inside [`story_only`]; returns the old value.
-#[cfg(feature = "std")]
 fn set_story_only(on: bool) -> bool {
     STORY_ONLY.replace(on)
-}
-
-/// Whether [`story_only`] is running. Without `std` there is one thread.
-#[cfg(not(feature = "std"))]
-static STORY_ONLY: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
-
-/// Whether [`story_only`] is running.
-#[cfg(not(feature = "std"))]
-fn story_only_now() -> bool {
-    STORY_ONLY.load(core::sync::atomic::Ordering::Relaxed)
-}
-
-/// Sets whether [`story_only`] is running; returns the old value.
-#[cfg(not(feature = "std"))]
-fn set_story_only(on: bool) -> bool {
-    STORY_ONLY.swap(on, core::sync::atomic::Ordering::Relaxed)
 }
 
 /// Runs `f` with the test layers of every bundle hidden from this thread:
@@ -650,6 +664,26 @@ mod tests {
             std::thread::spawn(move || with_tests().file("data/t.ron").is_some()).join()
         });
         assert!(matches!(elsewhere, Ok(true)));
+    }
+
+    /// The `no_std` build's flag.
+    #[test]
+    fn a_flag_starts_off_and_gives_back_its_old_value() {
+        let flag = Flag::new();
+        assert!(!flag.get());
+        assert!(!flag.replace(true));
+        assert!(flag.get());
+        assert!(flag.replace(false));
+        assert!(!flag.get());
+    }
+
+    #[test]
+    fn a_name_is_shown_under_a_layer_after_its_name_and_a_slash() {
+        assert!(shown_under("base/x.png", "base"));
+        assert!(shown_under("bought-tests/a/b", "bought-tests"));
+        assert!(!shown_under("bases/x.png", "base"));
+        assert!(!shown_under("base", "base"));
+        assert!(!shown_under("x/base/x.png", "base"));
     }
 
     /// The only test that installs: the bundle is process-wide.

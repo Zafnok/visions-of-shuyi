@@ -151,9 +151,11 @@ pub fn test_display_path(path: &str) -> String {
 
 /// Whether `shown` (a human-facing name, from [`display_path`]) names a
 /// file of the private assets: bought art (ADR-0040), the game's or the
-/// test files'.
+/// test files'. Also in a build without them.
 pub fn is_private(shown: &str) -> bool {
-    install().is_private(shown)
+    [PRIVATE_DISPLAY_ROOT, PRIVATE_TEST_DISPLAY_ROOT]
+        .iter()
+        .any(|root| engine::shown_under(shown, root))
 }
 
 #[cfg(test)]
@@ -249,6 +251,20 @@ mod tests {
     #[test]
     fn display_path_prefixes_assets() {
         assert_eq!(display_path("data/palette.ron"), "assets/data/palette.ron");
+    }
+
+    /// Only a name under one of the two private folders, whether this build
+    /// has them or not.
+    #[test]
+    fn a_name_under_a_private_folder_is_private() {
+        assert!(is_private("assets-private/game/x.png"));
+        assert!(is_private("assets-private/test/x.png"));
+        assert!(!is_private("assets-private/games/x.png"));
+        assert!(!is_private("assets-private/game"));
+        assert!(!is_private("assets-private/library/x.png"));
+        assert!(!is_private("x/assets-private/game/x.png"));
+        assert!(!is_private("assets/x.png"));
+        assert!(!is_private("assets-test/x.png"));
     }
 
     fn names(layers: &[Layer]) -> Vec<&'static str> {

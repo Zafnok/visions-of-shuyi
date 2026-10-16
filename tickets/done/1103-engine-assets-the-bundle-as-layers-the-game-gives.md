@@ -126,8 +126,9 @@ Deviations from the plan:
 - The game's bundle is installed on the first file read as well as at the
   start of `load_embedded` (and `load_with_scripts`): many tests, the app
   and the tools read files without loading everything first.
-- `is_private` asks the bundle's private layers instead of two fixed
-  names. Same answer for every name `display_path` can give.
+- `Bundle::is_private` asks the bundle's private layers. The game's
+  `bundle::is_private` still checks its two private folder names, so it
+  answers as before in a build without them.
 - A path no layer has is shown under the first layer that is neither
   private nor test files (`assets/` for the game, as before).
 
