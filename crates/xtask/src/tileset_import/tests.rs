@@ -3,7 +3,6 @@
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
-use trpg_content::ImageTable;
 use trpg_content::tileset::{TilesetRefs, parse_tileset};
 
 use super::*;
@@ -633,7 +632,7 @@ fn the_tileset_file_is_one_the_game_reads() {
     ];
     let content = trpg_content::load_embedded().unwrap();
     let refs = TilesetRefs {
-        images: &ImageTable::from_files(files).unwrap(),
+        images: &trpg_content::image::from_files(files).unwrap(),
         terrain: &content.terrain.display,
         classes: &content.classes,
         characters: &content.characters,
@@ -736,7 +735,7 @@ fn run_writes_the_image_and_the_tileset_into_the_private_checkout() {
     );
     let game = root.join(GAME_DIR);
     let png = fs::read(game.join("tilesets/tiny_tales.png")).unwrap();
-    let palette = PaletteDef::load().unwrap();
+    let palette = trpg_content::palette::load().unwrap();
     let colors = |name: &str| palette.get(name);
     let map = mapping(LAYERS, LOOKS);
     let imported = import(&root.join(LIBRARY_DIR), &map, &terrains(), &colors).unwrap();

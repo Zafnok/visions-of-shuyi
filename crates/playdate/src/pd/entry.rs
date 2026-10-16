@@ -175,7 +175,7 @@ fn start_game() -> Result<Box<Running>, String> {
 
 /// The Playdate's palette (ADR-0074), over the default theme's names.
 fn playdate_palette(base: &PaletteDef) -> Result<Palette, String> {
-    let def = PaletteDef::load_playdate(base).map_err(|errors| {
+    let def = trpg_content::ink::load_playdate(base).map_err(|errors| {
         let errors: alloc::vec::Vec<String> = errors.iter().map(ToString::to_string).collect();
         errors.join("; ")
     })?;

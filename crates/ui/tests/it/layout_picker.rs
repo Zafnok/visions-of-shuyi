@@ -7,7 +7,6 @@
 //! snapshots pin the glyph look.
 
 use insta::assert_snapshot;
-use trpg_content::FontAtlasDef;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
 use trpg_ui::screens::{LayoutPickerScreen, TitleScreen};
@@ -56,7 +55,7 @@ fn left_handed_focused() {
 
 #[test]
 fn every_glyph_drawn_is_in_the_font() {
-    let font = FontAtlasDef::load().unwrap_or_default();
+    let font = trpg_content::font::load().unwrap_or_default();
     let mut h = picker();
     for script in ["", "Down"] {
         h.keys(script);

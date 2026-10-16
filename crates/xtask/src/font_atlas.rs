@@ -328,7 +328,7 @@ pub fn run(font_paths: &[PathBuf], out_dir: &Path) -> Result<String, String> {
             .map_err(|e| format!("{}: {e}", path.display()))?;
     }
     let atlas = build_atlas(&font);
-    let problems = atlas.def.problems();
+    let problems = atlas.def.problems(trpg_content::font::REQUIRED_GLYPHS);
     if !problems.is_empty() {
         return Err(format!(
             "{}: unusable atlas:\n  {}",

@@ -431,7 +431,7 @@ fn errors_with(src: &str, portraits: &PortraitTable) -> Vec<String> {
 
 #[test]
 fn expressions_come_from_the_portrait() {
-    let images = crate::ImageTable::load().unwrap_or_default();
+    let images = crate::image::load().unwrap_or_default();
     let mut portraits = crate::portrait::load_all(&images).unwrap_or_default();
     // The lord's portrait gains a "smug" expression and loses "sad".
     let lord = portraits.get_mut("test_lord").map(|p| &mut p.expressions);

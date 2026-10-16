@@ -15,7 +15,7 @@ use std::path::Path;
 
 use trpg_content::bundle::{self, test_display_path};
 use trpg_content::font::ATLAS_PNG_PATH;
-use trpg_content::{FontAtlasDef, PaletteDef, TerrainDef, class};
+use trpg_content::{FontAtlasDef, TerrainDef, class};
 
 use crate::font_atlas::{decode_png, encode_png};
 
@@ -61,10 +61,10 @@ impl Sources {
                 .collect::<Vec<_>>()
                 .join("\n")
         };
-        let palette = PaletteDef::load().map_err(joined)?;
+        let palette = trpg_content::palette::load().map_err(joined)?;
         let terrain = TerrainDef::load(Some(&palette)).map_err(joined)?;
         let classes = class::load(Some(&terrain.rules.movement_types)).map_err(joined)?;
-        let font = FontAtlasDef::load().map_err(joined)?;
+        let font = trpg_content::font::load().map_err(joined)?;
         let png = bundle::bytes(ATLAS_PNG_PATH).ok_or("the font atlas image is missing")?;
         let (width, _, rgba) = decode_png(png)?;
         let color = |name: &str| {

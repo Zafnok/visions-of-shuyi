@@ -414,13 +414,16 @@ fn sample_panels(buf: &mut GlyphBuffer, palette: &Palette, top: i32) {
 #[cfg(test)]
 mod tests {
     use insta::assert_snapshot;
-    use trpg_content::FontAtlasDef;
 
     use super::*;
     use crate::color::tests::game_palette;
 
     fn atlas_glyphs() -> Vec<char> {
-        FontAtlasDef::load().unwrap().glyphs.into_keys().collect()
+        trpg_content::font::load()
+            .unwrap()
+            .glyphs
+            .into_keys()
+            .collect()
     }
 
     #[test]

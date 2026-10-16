@@ -968,7 +968,9 @@ name = "shuyi-assets"
 version = "0.3.0"
 dependencies = [
  "include_dir",
+ "libm",
  "once_cell",
+ "proptest",
  "ron",
  "serde",
  "thiserror",

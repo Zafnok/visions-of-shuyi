@@ -167,7 +167,7 @@ mod tests {
             .iter()
             .map(|&(path, w, h)| (path, png_header(w, h)))
             .collect();
-        ImageTable::from_files(pngs.iter().map(|(path, png)| (*path, &png[..]))).unwrap()
+        crate::image::from_files(pngs.iter().map(|(path, png)| (*path, &png[..]))).unwrap()
     }
 
     fn messages(source: &str) -> Vec<String> {
@@ -180,7 +180,7 @@ mod tests {
 
     #[test]
     fn the_embedded_title_art_loads() {
-        let images = ImageTable::load().unwrap();
+        let images = crate::image::load().unwrap();
         let art = load(&images).unwrap();
         let (logo, size) = art.logo.unwrap();
         assert_eq!(logo.path(), "title/logo.png");

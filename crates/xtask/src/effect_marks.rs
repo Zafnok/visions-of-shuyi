@@ -11,7 +11,6 @@
 use std::fs;
 use std::path::Path;
 
-use trpg_content::PaletteDef;
 use trpg_content::bundle::display_path;
 use trpg_content::image::EFFECT_MARKS_PATH;
 
@@ -39,7 +38,7 @@ pub struct Colors {
 impl Colors {
     /// The embedded palette's.
     pub fn embedded() -> Result<Self, String> {
-        let palette = PaletteDef::load().map_err(|errors| {
+        let palette = trpg_content::palette::load().map_err(|errors| {
             let lines: Vec<String> = errors.iter().map(ToString::to_string).collect();
             lines.join("\n")
         })?;
@@ -167,7 +166,7 @@ mod tests {
     #[test]
     fn the_colours_are_the_palettes() {
         let colors = Colors::embedded().unwrap();
-        let palette = PaletteDef::load().unwrap();
+        let palette = trpg_content::palette::load().unwrap();
         assert_eq!(colors.arrows[0], palette.get("effect_bonus").unwrap());
         assert_eq!(colors.arrows[1], palette.get("effect_penalty").unwrap());
         assert_eq!(colors.edge, palette.get("black").unwrap());
