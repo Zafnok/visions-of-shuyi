@@ -105,17 +105,19 @@
 //! ## Flow distance
 //!
 //! For each tile, the cheapest cost for the mover's movement type to walk
-//! from it to a tile next to one of its targets, ignoring units (Dijkstra
-//! from every target at once). A tile it can't walk from has none.
+//! from it to a tile next to one of its targets, ignoring units (the
+//! engine's [`flow_field`](shuyi_core::path::flow_field), from every target
+//! at once). A tile it can't walk from has none.
 
 use crate::prelude::*;
 
-use alloc::collections::{BTreeMap, BinaryHeap};
+use alloc::collections::BTreeMap;
 use alloc::rc::Rc;
 use core::cell::RefCell;
 use core::cmp::{Ordering, Reverse};
 
 use serde::{Deserialize, Serialize};
+use shuyi_core::path;
 
 use crate::art::ArtId;
 use crate::battle::{BattleState, CastTarget, Command, PendingMove, Phase, UnitAction};
@@ -757,45 +759,25 @@ fn approach(reach: &Reach, dests: &[Pos], flow: &Flow) -> Option<Pos> {
 fn flow_field(state: &BattleState, faction: Faction, movement_type: MovementTypeId) -> Flow {
     let tiles = &state.map().tiles;
     let (width, height) = (tiles.width(), tiles.height());
-    let enter = |pos| {
-        tiles
-            .get(pos)
-            .and_then(|&t| state.terrain().move_cost(t, movement_type))
-            .map(u32::from)
-    };
-    let mut dist = Grid::filled(width, height, None);
     let mut targets = TileSet::new(width, height);
-    let mut queue = BinaryHeap::new();
     for t in state
         .units()
         .iter()
         .filter(|t| faction.is_hostile_to(t.faction))
     {
         targets.insert(t.pos);
-        queue.push(Reverse((0, t.pos.y, t.pos.x)));
     }
-    // Each tile's distance is settled the first time it comes off the
-    // queue: the cheapest, as costs never go down.
-    while let Some(Reverse((cost, y, x))) = queue.pop() {
-        let pos = Pos::new(x, y);
-        let Some(slot) = dist.get_mut(pos).filter(|d| d.is_none()) else {
-            continue; // Off the map, or already settled.
-        };
-        *slot = Some(cost);
-        // Walking from a neighbour onto `pos` costs entering it; the last
-        // step, onto a target's tile, is free (only tiles next to it count).
-        let step = if targets.contains(pos) {
-            0
-        } else {
-            enter(pos).unwrap_or(0)
-        };
-        for next in tiles.neighbors4(pos) {
-            if enter(next).is_some() && dist.get(next) == Some(&None) {
-                queue.push(Reverse((cost + step, next.y, next.x)));
-            }
+    // Walking onto a tile costs entering it, but the last step, onto a
+    // target's tile, is free: only the tiles next to it count.
+    path::flow_field(width, height, targets.iter(), |pos| {
+        if targets.contains(pos) {
+            return Some(0);
         }
-    }
-    dist
+        let step = tiles
+            .get(pos)
+            .and_then(|&t| state.terrain().move_cost(t, movement_type))?;
+        Some(u32::from(step))
+    })
 }
 
 /// The expected result of a combat, played out from its forecast.

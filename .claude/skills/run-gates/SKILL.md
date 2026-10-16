@@ -29,7 +29,8 @@ cargo xtask check-text                    # no new screen text written as a lite
 cargo xtask check-engine-boundary         # nothing of the game in engine/ (ADR-0063)
 cargo doc --workspace --no-deps          # with RUSTDOCFLAGS="-D warnings"
 cargo build -p trpg-app --target wasm32-unknown-unknown
-cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf   # Playdate, no std (ADR-0070)
+cargo build -p shuyi-core --no-default-features --target thumbv7em-none-eabihf  # Playdate, no std (ADR-0070)
+cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf
 cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf
 cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf
 cargo clippy -p trpg-playdate --features sdk --target thumbv7em-none-eabihf -- -D warnings   # the Playdate front end's SDK glue (1031)

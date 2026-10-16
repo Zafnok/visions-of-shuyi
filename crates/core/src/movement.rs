@@ -20,10 +20,11 @@
 //! - **No Canto, split movement, zones of control or flying over units**
 //!   (`docs/design/turn-structure.md`: FE standard only). Movement skills are
 //!   separate, later rules.
-//! - **Determinism.** Dijkstra with the priority key `(cost, y, x)`;
-//!   neighbours are visited in [`Dir::ALL`](crate::Dir::ALL) order and a tile's recorded
-//!   predecessor only changes for a strictly cheaper cost. So among equally
-//!   cheap paths the one found first (smallest key) wins, every time.
+//! - **Determinism.** The engine's Dijkstra ([`shuyi_core::path`]), with the
+//!   priority key `(cost, y, x)`; neighbours are visited in
+//!   [`Dir::ALL`](crate::Dir::ALL) order and a tile's recorded predecessor
+//!   only changes for a strictly cheaper cost. So among equally cheap paths
+//!   the one found first (smallest key) wins, every time.
 //! - **Attack tiles** ([`attack_tiles`]): every tile at Manhattan distance
 //!   `min..=max` from any stoppable tile, except the stoppable tiles
 //!   themselves (the red overlay drawn around the blue one, as in Fire
@@ -43,115 +44,21 @@
 
 use crate::prelude::*;
 
-use alloc::collections::BinaryHeap;
-use core::cmp::Reverse;
 use core::fmt;
+
+use shuyi_core::path;
 
 use crate::ai::AiBehavior;
 use crate::class::{ClassId, ClassTable};
-use crate::geom::{Grid, Pos};
+use crate::geom::Pos;
 use crate::map::BattleMap;
 use crate::terrain::{MovementTypeId, TerrainTable};
 use crate::unit::{Faction, Unit, UnitId};
 
+pub use shuyi_core::grid::TileSet;
+
 /// A weapon range: `(min, max)` Manhattan distance, inclusive.
 pub type AttackRange = (u32, u32);
-
-/// A set of tiles of a `width × height` map, stored as a bitset. Iterates in
-/// row-major order. Positions outside the map are never members.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TileSet {
-    width: u16,
-    height: u16,
-    words: Vec<u64>,
-}
-
-impl TileSet {
-    /// An empty set for a `width × height` map.
-    pub fn new(width: u16, height: u16) -> Self {
-        let bits = usize::from(width) * usize::from(height);
-        Self {
-            width,
-            height,
-            words: vec![0; bits.div_ceil(64)],
-        }
-    }
-
-    /// Map width.
-    pub fn width(&self) -> u16 {
-        self.width
-    }
-
-    /// Map height.
-    pub fn height(&self) -> u16 {
-        self.height
-    }
-
-    /// Whether `pos` is in the set.
-    pub fn contains(&self, pos: Pos) -> bool {
-        self.bit(pos)
-            .is_some_and(|(w, mask)| self.words.get(w).is_some_and(|word| word & mask != 0))
-    }
-
-    /// Adds `pos`; returns whether it was newly added (`false` if already a
-    /// member or outside the map).
-    pub fn insert(&mut self, pos: Pos) -> bool {
-        let Some((w, mask)) = self.bit(pos) else {
-            return false;
-        };
-        let Some(word) = self.words.get_mut(w) else {
-            return false;
-        };
-        let added = *word & mask == 0;
-        *word |= mask;
-        added
-    }
-
-    /// Adds every member of `other` that lies inside this set's map.
-    pub fn union_with(&mut self, other: &TileSet) {
-        for pos in other.iter() {
-            self.insert(pos);
-        }
-    }
-
-    /// Number of members.
-    pub fn len(&self) -> usize {
-        self.words.iter().map(|w| w.count_ones() as usize).sum()
-    }
-
-    /// Whether the set has no members.
-    pub fn is_empty(&self) -> bool {
-        self.words.iter().all(|&w| w == 0)
-    }
-
-    /// Every member, row-major.
-    pub fn iter(&self) -> impl Iterator<Item = Pos> + '_ {
-        let width = usize::from(self.width);
-        self.words
-            .iter()
-            .enumerate()
-            .filter(|&(_, &word)| word != 0)
-            .flat_map(move |(w, &word)| {
-                (0..64)
-                    .filter(move |bit| word >> bit & 1 == 1)
-                    .filter_map(move |bit| {
-                        let index = w * 64 + bit;
-                        // Both fit: index < width * height ≤ u16::MAX².
-                        let x = i32::try_from(index % width).ok()?;
-                        let y = i32::try_from(index / width).ok()?;
-                        Some(Pos::new(x, y))
-                    })
-            })
-    }
-
-    /// The word index and bit mask of `pos`, or `None` outside the map.
-    fn bit(&self, pos: Pos) -> Option<(usize, u64)> {
-        let x = u16::try_from(pos.x).ok().filter(|&x| x < self.width)?;
-        let y = u16::try_from(pos.y).ok().filter(|&y| y < self.height)?;
-        let index = usize::from(y) * usize::from(self.width) + usize::from(x);
-        Some((index / 64, 1 << (index % 64)))
-    }
-}
 
 /// Why movement could not be worked out for a unit.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -239,32 +146,30 @@ impl core::error::Error for PathError {}
 /// Where one unit can move this turn. See the module docs for the rules.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Reach {
-    origin: Pos,
-    budget: u32,
-    cost: Grid<Option<u32>>,
-    prev: Grid<Option<Pos>>,
+    /// The passable tiles, with their costs and paths.
+    walk: path::Reach,
     stoppable: TileSet,
 }
 
 impl Reach {
     /// The mover's tile.
     pub fn origin(&self) -> Pos {
-        self.origin
+        self.walk.origin()
     }
 
     /// The mover's move points.
     pub fn budget(&self) -> u32 {
-        self.budget
+        self.walk.budget()
     }
 
     /// The cheapest cost to reach `pos`, or `None` if it is not passable.
     pub fn cost(&self, pos: Pos) -> Option<u32> {
-        self.cost.get(pos).copied().flatten()
+        self.walk.cost(pos)
     }
 
     /// Whether the unit can reach `pos` (possibly without stopping there).
     pub fn is_passable(&self, pos: Pos) -> bool {
-        self.cost(pos).is_some()
+        self.walk.contains(pos)
     }
 
     /// Whether the unit can end its move on `pos`.
@@ -274,13 +179,7 @@ impl Reach {
 
     /// Every passable tile.
     pub fn passable(&self) -> TileSet {
-        let mut set = TileSet::new(self.cost.width(), self.cost.height());
-        for (pos, cost) in self.cost.positions().zip(self.cost.cells()) {
-            if cost.is_some() {
-                set.insert(pos);
-            }
-        }
-        set
+        self.walk.tiles()
     }
 
     /// Every tile the unit can end its move on (always includes the origin).
@@ -291,15 +190,7 @@ impl Reach {
     /// The cheapest path from the origin to `dest`, both included, or `None`
     /// if `dest` is not passable. Deterministic (see the module docs).
     pub fn path_to(&self, dest: Pos) -> Option<Vec<Pos>> {
-        self.cost(dest)?;
-        let mut path = vec![dest];
-        let mut cur = dest;
-        while let Some(&Some(p)) = self.prev.get(cur) {
-            path.push(p);
-            cur = p;
-        }
-        path.reverse();
-        Some(path)
+        self.walk.path_to(dest)
     }
 }
 
@@ -352,59 +243,23 @@ pub fn reachable(
         }
     }
 
-    let mut cost = Grid::filled(width, height, None);
-    let mut prev = Grid::filled(width, height, None);
-    if let Some(c) = cost.get_mut(unit.pos) {
-        *c = Some(0);
-    }
-    // Tiles already expanded: their cost and predecessor are final.
-    let mut done = TileSet::new(width, height);
-    let mut queue = BinaryHeap::from([Reverse((0, unit.pos.y, unit.pos.x))]);
-    while let Some(Reverse((c, y, x))) = queue.pop() {
-        let pos = Pos::new(x, y);
-        if !done.insert(pos) {
-            continue; // A stale entry: `pos` was expanded at a lower cost.
+    let walk = path::reachable(width, height, unit.pos, budget, |pos| {
+        if hostile.contains(pos) {
+            return None;
         }
-        for next in tiles.neighbors4(pos) {
-            if done.contains(next) || hostile.contains(next) {
-                continue;
-            }
-            let step = tiles
-                .get(next)
-                .and_then(|&t| terrain.move_cost(t, movement_type));
-            let Some(step) = step else {
-                continue;
-            };
-            let next_cost = c + u32::from(step);
-            if next_cost > budget {
-                continue;
-            }
-            let Some(slot) = cost.get_mut(next) else {
-                continue;
-            };
-            if slot.is_none_or(|old| next_cost < old) {
-                *slot = Some(next_cost);
-                if let Some(p) = prev.get_mut(next) {
-                    *p = Some(pos);
-                }
-                queue.push(Reverse((next_cost, next.y, next.x)));
-            }
-        }
-    }
+        let step = tiles
+            .get(pos)
+            .and_then(|&t| terrain.move_cost(t, movement_type))?;
+        Some(u32::from(step))
+    });
 
     let mut stoppable = TileSet::new(width, height);
-    for (pos, c) in tiles.positions().zip(cost.cells()) {
-        if c.is_some() && (pos == unit.pos || !occupied.contains(pos)) {
+    for pos in walk.tiles().iter() {
+        if pos == unit.pos || !occupied.contains(pos) {
             stoppable.insert(pos);
         }
     }
-    Ok(Reach {
-        origin: unit.pos,
-        budget,
-        cost,
-        prev,
-        stoppable,
-    })
+    Ok(Reach { walk, stoppable })
 }
 
 /// The cost of moving unit `mover` along `path` (its own tile first), or why

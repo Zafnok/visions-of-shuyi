@@ -12,10 +12,11 @@ workspace = true
 
 [features]
 default = ["std"]
-std = ["serde/std"]
+std = ["serde/std", "shuyi-core/std"]
 
 [dependencies]
 serde.workspace = true
+shuyi-core.workspace = true
 
 [dev-dependencies]
 proptest.workspace = true

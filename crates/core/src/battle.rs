@@ -362,6 +362,7 @@ use alloc::sync::Arc;
 use core::fmt;
 
 use serde::{Deserialize, Serialize};
+use shuyi_core::TurnRules;
 
 use crate::art::{ArtId, ArtTable};
 use crate::campaign::GameTables;
@@ -3203,6 +3204,34 @@ impl BattleState {
         for unit in self.units.iter_mut().filter(|u| eligible(u)) {
             events.extend(progression::grant_exp(unit, share, classes, &mut self.rng));
         }
+    }
+}
+
+/// The battle as the engine's generic code sees it (history and replay;
+/// ADR-0063 §6): the battle's own methods. The turn loop, phases and
+/// rules stay here.
+impl TurnRules for BattleState {
+    type Command = Command;
+    type Event = Event;
+    type Error = CommandError;
+    type Outcome = Outcome;
+
+    fn check(&self, command: &Command) -> Result<(), CommandError> {
+        BattleState::check(self, command)
+    }
+
+    fn apply(&mut self, command: &Command) -> Result<Vec<Event>, CommandError> {
+        BattleState::apply(self, command)
+    }
+
+    /// [`legal_commands`](crate::legal_commands), which leaves out shop
+    /// visits of two or more transactions.
+    fn legal_commands(&self) -> Vec<Command> {
+        crate::legal::legal_commands(self)
+    }
+
+    fn outcome(&self) -> Option<Outcome> {
+        BattleState::outcome(self)
     }
 }
 
