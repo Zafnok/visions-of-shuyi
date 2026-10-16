@@ -1,0 +1,21 @@
+// ch01_intro's opening (ticket 0734): dawn in the yard behind the rented
+// house at Harrowby (harrowby_yard.map), the lead and Hollis trading
+// blows with the practice swords, each stepping in and back, facing each
+// other. About 1.5 s; the dialogue screen then darkens the yard over
+// 0.5 s and the talk starts. Steps of 0.2 s: TUNABLE.
+(
+    id: "ch01_sparring",
+    map: "harrowby_yard",
+    cast: [
+        (who: "lead", at: (11, 8), facing: Right),
+        (who: "retainer", at: (13, 8), facing: Left),
+    ],
+    action: [
+        (at: 0.0, do: Walk(unit: "lead", path: [(11, 8), (12, 8)], secs: 0.2)),
+        (at: 0.3, do: Walk(unit: "lead", path: [(12, 8), (11, 8)], secs: 0.2, facing: Right)),
+        (at: 0.55, do: Walk(unit: "retainer", path: [(13, 8), (12, 8)], secs: 0.2)),
+        (at: 0.85, do: Walk(unit: "retainer", path: [(12, 8), (13, 8)], secs: 0.2, facing: Left)),
+        (at: 1.1, do: Walk(unit: "lead", path: [(11, 8), (12, 8)], secs: 0.2)),
+        (at: 1.35, do: Walk(unit: "lead", path: [(12, 8), (11, 8)], secs: 0.2, facing: Right)),
+    ],
+)

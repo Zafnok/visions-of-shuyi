@@ -8,6 +8,11 @@
 //! The dialogue log (ticket 0729) lists the lines seen so far over the
 //! whole screen: [`history`] keeps them, [`log`] is what it shows and
 //! [`log::glyph`] paints it.
+//!
+//! Where the script asks (`@opening`, ticket 0734), a short moving opening
+//! plays before a line: the opening's characters walk on the place at
+//! full brightness ([`crate::cinematic::opening`]), the place darkens,
+//! then the line comes up.
 
 pub mod glyph;
 pub mod history;
@@ -16,21 +21,22 @@ pub mod view;
 
 use crate::prelude::*;
 use alloc::rc::Rc;
-use trpg_content::{MusicLine, Names, PlaceLine, Present, Scene};
+use trpg_content::{MusicLine, Names, OpeningDef, PlaceLine, Present, Scene};
 use trpg_core::{LEAD_ID, LeadProfile};
 
 use crate::audio::MenuSound;
+use crate::cinematic::opening::{cast_units, darkened, opening_ms, opening_units};
 use crate::dialogue::{DialoguePlayer, Portrait};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Button, Chord, Keymap};
-use crate::map_view::{MapScene, Place, screen_tiles};
+use crate::map_view::{MapScene, Place, UnitView, screen_tiles};
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use crate::widgets::word_wrap;
 use history::History;
 use log::LogView;
-use view::{DialogueView, SkipView, TextView, WaitView};
+use view::{DialogueView, OpeningView, SkipView, TextView, WaitView};
 
 /// Characters per text line: the box less a 3-cell margin each side.
 pub const TEXT_W: usize = trpg_content::dialogue::BOX_WIDTH;
@@ -45,6 +51,22 @@ pub const FAST_FORWARD_DELAY: f32 = 0.3;
 /// for as long, while a page waits.
 const BLINK_S: f32 = 0.5;
 
+/// An opening playing (0734): which, and for how long so far.
+#[derive(Debug, Clone, PartialEq)]
+struct Playing {
+    /// The opening's id (`assets/openings/`).
+    id: String,
+    /// Seconds since it started.
+    elapsed_s: f32,
+}
+
+impl Playing {
+    /// Milliseconds since it started.
+    fn clock_ms(&self) -> u64 {
+        crate::cinematic::millis(self.elapsed_s)
+    }
+}
+
 /// Plays a scene: Confirm reveals the text at once, or moves on when it's
 /// all shown; holding Confirm reveals faster, after a short delay on each
 /// page. The End turn key does
@@ -53,6 +75,12 @@ const BLINK_S: f32 = 0.5;
 /// replies and Confirm picks one; skipping stops at each choice. Pops when
 /// the scene ends or is skipped. A `@music` line changes the music when the
 /// scene reaches it; skipping asks only for the last one passed.
+///
+/// An `@opening` line plays its opening before the text box after it:
+/// Confirm (or End turn) goes straight to the text box, Cancel to the
+/// "Skip scene?" question over it. The opening's characters then stay
+/// where it left them, darkened with the place, until the place changes.
+/// Skipping the scene passes over any opening on the way.
 ///
 /// The Open the log key opens the dialogue log (`docs/design/look-and-feel.md`,
 /// *Dialogue log*): the cursor keys move through the lines seen, Confirm
@@ -89,6 +117,8 @@ pub struct DialogueScreen {
     /// The battle's map that `@place battle` shows, if the scene is a
     /// battle's ([`with_battle`](Self::with_battle)).
     battle: Option<Rc<Place>>,
+    /// The opening playing before the text box, if any.
+    playing: Option<Playing>,
 }
 
 impl DialogueScreen {
@@ -113,6 +143,7 @@ impl DialogueScreen {
             music: None,
             jumped_music: None,
             battle: None,
+            playing: None,
         };
         screen.start_box();
         screen
@@ -193,6 +224,11 @@ impl DialogueScreen {
         self.menu.as_ref()
     }
 
+    /// Whether an opening is playing before the text box (0734).
+    pub fn is_opening(&self) -> bool {
+        self.playing.is_some()
+    }
+
     /// The lines seen so far, for the log.
     pub fn history(&self) -> &History {
         &self.history
@@ -215,9 +251,13 @@ impl DialogueScreen {
         self.player.pending_music().or(self.music.as_ref()).cloned()
     }
 
-    /// A new text box (or a choice) is up: the log keeps a text box, then
+    /// A new text box (or a choice) is up: an opening the scene reached
+    /// starts playing before it, the log keeps a text box, then
     /// [`show_box`](Self::show_box).
     fn start_box(&mut self) {
+        if let Some(id) = self.player.take_opening() {
+            self.playing = Some(Playing { id, elapsed_s: 0.0 });
+        }
         let view = self.player.current();
         if view.text.is_some() && view.choices.is_none() {
             self.history.reached(&self.player, self.music_here());
@@ -329,6 +369,9 @@ impl DialogueScreen {
         if self.player.is_finished() {
             return Transition::Pop;
         }
+        if self.playing.is_some() {
+            return self.read_opening(ctx, input);
+        }
         for &action in &input.actions {
             let action = advance_key(action);
             if self.log.is_some() {
@@ -367,6 +410,8 @@ impl DialogueScreen {
                     if self.player.is_finished() {
                         return Transition::Pop;
                     }
+                    // An opening passed on the way doesn't play.
+                    self.player.take_opening();
                     self.start_box();
                     // The rest of this frame's keys can't pick a reply.
                     break;
@@ -387,11 +432,15 @@ impl DialogueScreen {
                 // A choice just opened: the rest of this frame's keys
                 // can't pick a reply.
                 (false, Action::Confirm) if self.menu.is_some() => break,
+                // An opening started: the rest of this frame's keys can't
+                // skip it.
+                (false, Action::Confirm) if self.playing.is_some() => break,
                 _ => {}
             }
         }
-        if self.log.is_some() {
-            // The scene waits while the log is open.
+        if self.log.is_some() || self.playing.is_some() {
+            // The scene waits while the log is open, and the next text box
+            // while the opening a key just reached plays.
             self.held_s = 0.0;
             return Transition::None;
         }
@@ -416,6 +465,40 @@ impl DialogueScreen {
             }
         }
         Transition::None
+    }
+
+    /// One frame of an opening: Confirm (or End turn) ends it, Cancel ends
+    /// it and asks whether to skip the scene; otherwise it plays on, and
+    /// ends once it has played its length and darkened. The text waits.
+    fn read_opening(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        for &action in &input.actions {
+            match advance_key(action) {
+                Action::Confirm => {
+                    self.playing = None;
+                    return Transition::None;
+                }
+                Action::Cancel => {
+                    ctx.audio.menu(MenuSound::Select);
+                    self.playing = None;
+                    self.asking_skip = true;
+                    return Transition::None;
+                }
+                _ => {}
+            }
+        }
+        let length = self.playing_def(ctx).map_or(0, opening_ms);
+        if let Some(playing) = &mut self.playing {
+            playing.elapsed_s += input.dt;
+            if playing.clock_ms() >= u64::from(length) {
+                self.playing = None;
+            }
+        }
+        Transition::None
+    }
+
+    /// The opening playing, if the content has it.
+    fn playing_def<'c>(&self, ctx: &'c Ctx) -> Option<&'c OpeningDef> {
+        ctx.content.openings.get(&self.playing.as_ref()?.id)
     }
 
     /// One key in the open log: the cursor keys move, Confirm goes to the
@@ -465,9 +548,12 @@ impl DialogueScreen {
             return;
         };
         let mut player = seen.player;
-        // The music it had reached then is in `seen.music`.
+        // The music it had reached then is in `seen.music`; its opening
+        // has played.
         player.take_music();
+        player.take_opening();
         self.player = player;
+        self.playing = None;
         if seen.music.is_some() && seen.music != self.music {
             self.jumped_music = seen.music;
         }
@@ -520,25 +606,53 @@ impl DialogueScreen {
             self.text_view(ctx, current.narration),
             self.overlay,
         );
-        view.place = current.place.and_then(|line| self.place_scene(ctx, line));
+        let opening = current.opening.and_then(|id| ctx.content.openings.get(id));
+        view.place = current
+            .place
+            .and_then(|line| self.place_scene(ctx, line, opening));
+        if let Some(playing) = &self.playing {
+            let def = self.playing_def(ctx);
+            view.opening = Some(OpeningView {
+                darkened: def.map_or(1.0, |d| darkened(d, playing.clock_ms())),
+            });
+        }
         view.log = self.log_view(ctx);
         view
     }
 
     /// The part of the place `line` names that the whole screen shows with
-    /// `ctx`'s map skin, centred on the line's tile. `None` for no place, a
-    /// map the content hasn't got (the validator rules it out) and the
-    /// battle when the screen has none.
-    fn place_scene(&self, ctx: &Ctx, line: &PlaceLine) -> Option<MapScene> {
+    /// `ctx`'s map skin, centred on the line's tile, with the characters of
+    /// the `opening` played on it where it has them now. `None` for no
+    /// place, a map the content hasn't got (the validator rules it out)
+    /// and the battle when the screen has none.
+    fn place_scene(
+        &self,
+        ctx: &Ctx,
+        line: &PlaceLine,
+        opening: Option<&OpeningDef>,
+    ) -> Option<MapScene> {
         let view = screen_tiles(ctx);
         match line {
             PlaceLine::Map { map, at } => {
                 let def = ctx.content.maps.get(map)?;
-                Some(Place::of_map(def).scene(*at, view))
+                let mut place = Place::of_map(def);
+                if let Some(opening) = opening.filter(|o| o.map == *map) {
+                    place.units = self.opening_cast(ctx, opening);
+                }
+                Some(place.scene(*at, view))
             }
             PlaceLine::Battle { at } => Some(self.battle.as_ref()?.scene(*at, view)),
             PlaceLine::None => None,
         }
+    }
+
+    /// The characters of `opening` where it has them now: as far into it
+    /// as it has played, or where it left them once it is over.
+    fn opening_cast(&self, ctx: &Ctx, opening: &OpeningDef) -> Vec<UnitView> {
+        let playing = self.playing.as_ref().filter(|p| p.id == opening.id);
+        let clock_ms = playing.map_or(u64::from(opening.length_ms), Playing::clock_ms);
+        let start = cast_units(ctx, opening, self.player.lead());
+        opening_units(&start, opening, clock_ms)
     }
 
     /// What the text box shows: the page as revealed so far, or the skip

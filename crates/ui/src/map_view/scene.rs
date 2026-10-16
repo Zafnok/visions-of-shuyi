@@ -166,6 +166,9 @@ pub struct UnitView {
     /// How strongly it flashes from a blow that just landed on it (a
     /// cinematic's strike, 0827): `1` as it lands, fading to `0`.
     pub flash: f32,
+    /// Whether its HP bar and effect marks show: not for someone in a
+    /// conversation's opening, who isn't fighting (0734).
+    pub marks: bool,
 }
 
 impl UnitView {
@@ -190,6 +193,7 @@ impl UnitView {
             frame: STANDING_FRAME,
             offset: (0.0, 0.0),
             flash: 0.0,
+            marks: true,
         }
     }
 
@@ -619,6 +623,9 @@ fn unit_text(u: &UnitView) -> String {
     if u.flash > 0.0 {
         let _ = write!(text, " flash={:.2}", u.flash);
     }
+    if !u.marks {
+        text.push_str(" no-marks");
+    }
     text
 }
 
@@ -648,6 +655,7 @@ mod tests {
             frame: STANDING_FRAME,
             offset: (0.0, 0.0),
             flash: 0.0,
+            marks: true,
         }
     }
 

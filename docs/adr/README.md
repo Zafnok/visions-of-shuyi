@@ -83,6 +83,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0073](0073-mutation-shards-build-incrementally-and-run-slow-tests-last.md) | Mutation shards build incrementally, run the slow tests last, and share one baseline | Accepted |
 | [0074](0074-the-one-bit-frame.md) | The one-bit frame: inks as reserved palette colours, a renderer to the Playdate's frame buffer | Accepted (1032) |
 | [0075](0075-sprites-fade-by-brightness-not-opacity.md) | Sprites fade by brightness, not opacity | Accepted (0732); amends ADR-0060 §4 |
+| [0076](0076-conversation-openings-a-cast-on-a-place-and-the-cinematic-walks.md) | Conversation openings: a cast on a place, and the cinematic walks | Accepted (0734); extends ADR-0061 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

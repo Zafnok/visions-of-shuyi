@@ -162,6 +162,7 @@ fn place_errors(src: &str, battles_known: bool) -> Vec<String> {
         maps: BTreeMap::from([("yard", &yard)]),
         battles: battles_known.then_some(battles),
         elsewhere: ["talk".to_owned()].into(),
+        openings: None,
     };
     let (parsed, errors) = parse_dlg("t.dlg", src);
     assert_eq!(errors, []);

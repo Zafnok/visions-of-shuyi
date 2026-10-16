@@ -25,8 +25,13 @@ pub struct DialogueView {
     /// The place behind the talk, if the scene names one: the part of its
     /// map the whole screen shows, for the map skin to paint (darkened)
     /// over the screen below or the black. `None`: black, or the screen
-    /// below for an overlay.
+    /// below for an overlay. The characters of an opening played on it
+    /// (0734) are its units, where the opening has them.
     pub place: Option<MapScene>,
+    /// An opening playing before the text box (0734): the place is shown
+    /// without the talk, bright while its characters move, then
+    /// darkening.
+    pub opening: Option<OpeningView>,
     /// The place and time, if the scene has said them.
     pub caption: Option<String>,
     /// Who is on the left, if anyone.
@@ -54,6 +59,14 @@ impl DialogueView {
     pub fn speaking(&self) -> Option<&FaceView> {
         self.face(self.speaker?)
     }
+}
+
+/// An opening playing.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct OpeningView {
+    /// How far the place has darkened: 0 while the characters move, up to
+    /// 1 as the talk comes up (as dark as behind the talk).
+    pub darkened: f32,
 }
 
 /// A character on one side.
@@ -141,6 +154,7 @@ pub(super) fn scene(
     DialogueView {
         overlay,
         place: None,
+        opening: None,
         caption: view.caption.as_deref().map(str::to_owned),
         left: view.left.map(|p| face(ctx, lead, p)),
         right: view.right.map(|p| face(ctx, lead, p)),

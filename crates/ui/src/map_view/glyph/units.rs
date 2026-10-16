@@ -1,7 +1,8 @@
 //! How the glyph skin draws a unit (ADR-0018, `docs/design/look-and-feel.md`):
 //! its two-letter map label in its faction colour on the terrain background,
 //! dimmed once it has acted (the label keeps its case), and a 2-px HP bar
-//! along the bottom of its tile, one pixel in from each side.
+//! along the bottom of its tile, one pixel in from each side (none for a
+//! unit without [marks](UnitView::marks)).
 
 use trpg_core::StatValue;
 
@@ -89,6 +90,9 @@ pub fn draw_unit(buf: &mut GlyphBuffer, palette: &Palette, unit: &UnitView, x: i
         };
         let bg = bg.lerp(palette.get(UiColor::Text), lit);
         buf.set(x + i, y, Cell::new(glyph, fg, bg));
+    }
+    if !unit.marks {
+        return;
     }
     let (width, color) = hp_bar(unit.hp.0, unit.hp.1);
     let px = x * CELL_PX.0 + HP_BAR_INSET;

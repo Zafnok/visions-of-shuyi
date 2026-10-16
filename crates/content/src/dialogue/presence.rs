@@ -288,7 +288,8 @@ impl<'a> Walk<'a> {
                 | Step::Clear { .. }
                 | Step::Narrate { .. }
                 | Step::Music(_)
-                | Step::Setting(_) => {}
+                | Step::Setting(_)
+                | Step::Opening(_) => {}
             }
         }
     }

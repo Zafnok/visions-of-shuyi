@@ -515,6 +515,7 @@ impl Parser<'_> {
             "right" => self.place(n, Side::Right, args),
             "music" => self.music(n, args),
             "place" => self.setting(n, args),
+            "opening" => self.opening(n, args),
             "choice" => self.open_choice(n, args),
             "endchoice" => self.end_choice(n, args),
             "if" => self.open_if(n, args),
@@ -644,6 +645,22 @@ impl Parser<'_> {
             }
         };
         self.push(n, Step::Setting(place));
+    }
+
+    /// `@opening` with `args`: one opening id.
+    fn opening(&mut self, n: u32, args: &str) {
+        let args: Vec<&str> = args.split_whitespace().collect();
+        let [id] = args[..] else {
+            self.err(
+                n,
+                "@opening needs one opening id (a file of assets/openings/, without .ron)",
+            );
+            return;
+        };
+        if !is_id(id) {
+            self.bad_id(n, id);
+        }
+        self.push(n, Step::Opening(id.into()));
     }
 
     /// `id: text` or `id[expression]: text` on line `n`.

@@ -1,6 +1,8 @@
 //! The checks on `@place` lines that need the maps and the battles
 //! ([`check_places`]): the map is one of `assets/maps/`, the tile is on it,
-//! and `@place battle` is only in a scene that has a battle.
+//! and `@place battle` is only in a scene that has a battle. And on
+//! `@opening` lines, which need the openings: the opening is one of
+//! `assets/openings/`, and plays on the place in force (ticket 0734).
 use crate::prelude::*;
 
 use alloc::collections::{BTreeMap, BTreeSet};
@@ -10,6 +12,7 @@ use trpg_core::{BattleDef, BattleMap, Pos, SupportTable};
 use super::parse::{Lines, ParsedScene};
 use super::{PlaceLine, Step};
 use crate::chapter::ChapterDef;
+use crate::cinematic::OpeningDef;
 use crate::error::ContentError;
 use crate::map::MapDef;
 
@@ -26,6 +29,10 @@ pub struct PlaceRefs<'a> {
     /// The scenes also played away from any battle: support
     /// conversations.
     pub elsewhere: BTreeSet<String>,
+    /// The map each opening of `assets/openings/` plays on, by opening id.
+    /// `None` when the openings aren't known: `@opening` isn't checked
+    /// then.
+    pub openings: Option<BTreeMap<&'a str, &'a str>>,
 }
 
 impl<'a> PlaceRefs<'a> {
@@ -80,14 +87,29 @@ impl<'a> PlaceRefs<'a> {
             maps,
             battles,
             elsewhere,
+            openings: None,
         }
+    }
+
+    /// The same, with the `openings` an `@opening` line may name (`None`
+    /// if they failed to load).
+    #[must_use]
+    pub fn with_openings(self, openings: Option<&'a BTreeMap<String, OpeningDef>>) -> Self {
+        let openings = openings.map(|all| {
+            let maps = all.iter().map(|(id, def)| (id.as_str(), def.map.as_str()));
+            maps.collect()
+        });
+        Self { openings, ..self }
     }
 }
 
 /// Checks the `@place` lines of `parsed`: one error for each line that
 /// names a map `refs` hasn't got, a tile off its map, or the battle in a
 /// scene that isn't a battle's (or is also played away from one), or a
-/// tile off that battle's map.
+/// tile off that battle's map. And its `@opening` lines: one error for
+/// each that names an opening `refs` hasn't got, or one that plays on
+/// another map than the place in force. (Where an `@opening` may go:
+/// `check_scene`.)
 pub fn check_places(parsed: &ParsedScene, refs: &PlaceRefs) -> Vec<ContentError> {
     let mut places = Vec::new();
     settings(&parsed.scene.steps, &parsed.lines, &mut places);
@@ -102,7 +124,59 @@ pub fn check_places(parsed: &ParsedScene, refs: &PlaceRefs) -> Vec<ContentError>
             errors.push(ContentError::new(&parsed.file, message).at(line, None));
         }
     }
+    let Some(openings) = &refs.openings else {
+        return errors;
+    };
+    for (line, id, place) in opening_lines(&parsed.scene.steps, &parsed.lines) {
+        let message = match (openings.get(id), place) {
+            (None, _) => Some(format!(
+                "no opening \"{id}\"; an opening is a file of assets/openings/ (its file name \
+                 without .ron)"
+            )),
+            (Some(&on), Some(PlaceLine::Map { map, .. })) if on != map => Some(format!(
+                "opening \"{id}\" plays on map \"{on}\", but the place here is \"{map}\""
+            )),
+            _ => None,
+        };
+        if let Some(message) = message {
+            errors.push(ContentError::new(&parsed.file, message).at(line, None));
+        }
+    }
     errors
+}
+
+/// An `@opening` line: where it is written, the opening's id and the
+/// place in force there.
+type OpeningLine<'s> = (u32, &'s str, Option<&'s PlaceLine>);
+
+/// The `@opening` lines at the top level of `steps` (written at `lines`).
+fn opening_lines<'s>(steps: &'s [Step], lines: &Lines) -> Vec<OpeningLine<'s>> {
+    let mut place = None;
+    let mut out = Vec::new();
+    for (step, &line) in steps.iter().zip(&lines.steps) {
+        match step {
+            Step::Opening(id) => out.push((line, id.as_str(), place)),
+            _ => place = last_setting(step).or(place),
+        }
+    }
+    out
+}
+
+/// The place `step` leaves in force, if it changes it: a `@place` line's,
+/// or the last one in a block's first part (every part of a block leaves
+/// the same: `check_scene`).
+fn last_setting(step: &Step) -> Option<&PlaceLine> {
+    match step {
+        Step::Setting(place) => Some(place),
+        Step::Choice { options } => last_in(&options.first()?.steps),
+        Step::If { then, .. } => last_in(then),
+        _ => None,
+    }
+}
+
+/// The place the last step of `steps` that changes it leaves in force.
+fn last_in(steps: &[Step]) -> Option<&PlaceLine> {
+    steps.iter().rev().find_map(last_setting)
 }
 
 /// Adds every `@place` line of `steps` (written at `lines`) and of the

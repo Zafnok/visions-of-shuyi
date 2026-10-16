@@ -4,6 +4,10 @@
 //! the list can be drawn (the units exist, a walk starts where its unit
 //! is, a unit that fell does nothing more). The format is described in
 //! `assets/cinematics/README.md`.
+//!
+//! A conversation's opening (ticket 0734, `assets/openings/`) is a list of
+//! the same walks, by characters it places on a place's map: the same
+//! checks run on that map and that cast ([`Stage`]).
 use crate::prelude::*;
 
 use alloc::collections::BTreeMap;
@@ -11,10 +15,12 @@ use alloc::collections::BTreeMap;
 use serde::Deserialize;
 use serde::de::value::SeqAccessDeserializer;
 use serde::de::{SeqAccess, Visitor};
-use trpg_core::{BattleDef, CharacterId, ClassDef, Pos, UnitId};
+use trpg_core::{
+    BattleDef, BattleMap, CharacterId, ClassDef, MovementTypeId, Pos, TerrainTable, UnitId,
+};
 
 use super::{Refs, millis, seconds};
-use crate::battle;
+use crate::battle::{self, bare};
 
 /// The action of one shot: a list, and where on its clock the shot starts.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -47,6 +53,9 @@ pub enum Act {
         path: Vec<Pos>,
         /// How long the walk takes, in milliseconds; never 0.
         ms: u32,
+        /// The way the walker keeps facing all along (stepping back, or
+        /// to the side); `None`: the way it goes (ticket 0734).
+        facing: Option<Heading>,
     },
     /// The unit lunges at another, which is left with a part of its HP;
     /// with none, it falls.
@@ -58,6 +67,21 @@ pub enum Act {
         /// The HP the target has left, in percent of its full HP: 0 to 100.
         hp_left: u8,
     },
+}
+
+/// Which way someone is turned, as a file writes it (ticket 0734): `Down`
+/// (towards the camera), `Left`, `Right` or `Up`. A look only.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Deserialize)]
+pub enum Heading {
+    /// Towards the camera.
+    #[default]
+    Down,
+    /// To the left.
+    Left,
+    /// To the right.
+    Right,
+    /// Away from the camera.
+    Up,
 }
 
 /// One entry of an action list, as written.
@@ -76,6 +100,9 @@ enum RawAct {
         unit: String,
         path: Vec<(i32, i32)>,
         secs: f32,
+        /// Written bare: `facing: Left`.
+        #[serde(default, deserialize_with = "bare")]
+        facing: Option<Heading>,
     },
     Strike {
         unit: String,
@@ -113,12 +140,54 @@ impl<'de> Deserialize<'de> for RawActionRef {
     }
 }
 
-/// A unit on a battle's map when the battle starts.
+/// A unit on a battle's map when the battle starts, or a character an
+/// opening places on its map.
 pub(super) struct Actor<'a> {
     pub(super) id: UnitId,
     pub(super) pos: Pos,
     /// Its class, if the class table has it.
     pub(super) class: Option<&'a ClassDef>,
+    /// The movement type it walks by and what it is in a message (its
+    /// class's name); `None`: it may walk anywhere on the map.
+    pub(super) walks: Option<(MovementTypeId, String)>,
+}
+
+impl<'a> Actor<'a> {
+    /// A unit `id` of `class` (if the class table has it) on `pos`,
+    /// walking by its class's movement type.
+    pub(super) fn of_class(id: UnitId, pos: Pos, class: Option<&'a ClassDef>) -> Self {
+        Self {
+            id,
+            pos,
+            class,
+            walks: class.map(|c| (c.movement_type, c.name.clone())),
+        }
+    }
+}
+
+/// Where an action list is acted out: a map and who is on it.
+pub(super) struct Stage<'a> {
+    /// The map walked on.
+    pub(super) map: &'a BattleMap,
+    /// Who is on it, by the names entries call them.
+    pub(super) cast: BTreeMap<String, Actor<'a>>,
+    /// Where someone not in the cast isn't, for a message: `on the map of
+    /// battle "ch01" at its start`.
+    pub(super) nobody: String,
+    /// Whether strikes may be acted out (an opening has walks only).
+    pub(super) strikes: bool,
+}
+
+impl<'a> Stage<'a> {
+    /// `battle`'s map, with its units where they start.
+    pub(super) fn battle(battle: &'a BattleDef, refs: Refs<'a>) -> Self {
+        Self {
+            map: &battle.map,
+            cast: cast(battle, refs),
+            nobody: format!("on the map of battle \"{}\" at its start", battle.id),
+            strikes: true,
+        }
+    }
 }
 
 /// The units on `battle`'s map at its start, by the names a cinematic
@@ -129,11 +198,8 @@ pub(super) fn cast<'a>(battle: &BattleDef, refs: Refs<'a>) -> BTreeMap<String, A
     let mut cast = BTreeMap::new();
     for slot in &battle.player_slots {
         let def = refs.characters.characters.get(&slot.character);
-        let actor = Actor {
-            id: slot.id,
-            pos: slot.pos,
-            class: def.and_then(|d| classes.get(&d.class)),
-        };
+        let class = def.and_then(|d| classes.get(&d.class));
+        let actor = Actor::of_class(slot.id, slot.pos, class);
         cast.insert(slot.character.0.clone(), actor);
     }
     let named = battle::unit_names(&battle.id);
@@ -142,11 +208,7 @@ pub(super) fn cast<'a>(battle: &BattleDef, refs: Refs<'a>) -> BTreeMap<String, A
         let own = ids.filter(|&(_, &id)| id == unit.id).map(|(name, _)| name);
         let character = unit.character.as_ref().map(|CharacterId(c)| c);
         for name in own.chain(character) {
-            let actor = Actor {
-                id: unit.id,
-                pos: unit.pos,
-                class: classes.get(&unit.class),
-            };
+            let actor = Actor::of_class(unit.id, unit.pos, classes.get(&unit.class));
             cast.insert(name.clone(), actor);
         }
     }
@@ -164,27 +226,29 @@ struct Standing {
     fell_at: Option<usize>,
 }
 
-/// Reads one action list against one battle.
+/// Reads one action list on one stage.
 struct Checker<'a, 'r> {
-    battle: &'a BattleDef,
-    refs: Refs<'r>,
-    cast: BTreeMap<String, Actor<'r>>,
+    stage: &'a Stage<'r>,
+    terrain: &'a TerrainTable,
     state: BTreeMap<UnitId, Standing>,
     problems: Vec<String>,
 }
 
-impl<'r> Checker<'_, 'r> {
-    /// The unit called `name`, as it stands now; a problem if the battle
-    /// has none, or if it has fallen.
-    fn unit(&mut self, n: usize, name: &str) -> Option<(UnitId, Option<&'r ClassDef>)> {
-        let Some(actor) = self.cast.get(name) else {
-            self.problems.push(format!(
-                "action {n}: no unit \"{name}\" on the map of battle \"{}\" at its start",
-                self.battle.id
-            ));
+impl<'a> Checker<'a, '_> {
+    /// The unit called `name`, as it stands now, and how it walks; a
+    /// problem if the stage has none, or if it has fallen.
+    fn unit(
+        &mut self,
+        n: usize,
+        name: &str,
+    ) -> Option<(UnitId, Option<&'a (MovementTypeId, String)>)> {
+        let stage = self.stage;
+        let Some(actor) = stage.cast.get(name) else {
+            self.problems
+                .push(format!("action {n}: no unit \"{name}\" {}", stage.nobody));
             return None;
         };
-        let (id, class) = (actor.id, actor.class);
+        let (id, walks) = (actor.id, actor.walks.as_ref());
         let standing = self.state.entry(id).or_insert(Standing {
             pos: actor.pos,
             free_at_ms: 0,
@@ -197,7 +261,7 @@ impl<'r> Checker<'_, 'r> {
             ));
             return None;
         }
-        Some((id, class))
+        Some((id, walks))
     }
 
     /// A problem if the unit `id` (called `name`) is in the middle of a
@@ -216,7 +280,7 @@ impl<'r> Checker<'_, 'r> {
     /// Checks a walk and returns its path tile by tile (empty if the path
     /// as written can't be walked).
     fn walk(&mut self, n: usize, at_ms: u64, name: &str, corners: &[(i32, i32)]) -> Vec<Pos> {
-        let Some((id, class)) = self.unit(n, name) else {
+        let Some((id, walks)) = self.unit(n, name) else {
             return Vec::new();
         };
         self.not_walking(n, name, id, at_ms);
@@ -238,7 +302,7 @@ impl<'r> Checker<'_, 'r> {
                 first.x, first.y, was.x, was.y
             ));
         }
-        let tiles = &self.battle.map.tiles;
+        let tiles = &self.stage.map.tiles;
         let (width, height) = (tiles.width(), tiles.height());
         // Off the map or crooked, there are no tiles to walk.
         let mut walkable = true;
@@ -264,12 +328,12 @@ impl<'r> Checker<'_, 'r> {
         }
         let path = tile_by_tile(&corners, i32::from(width.max(height)));
         for at in &path {
-            let cost = (tiles.get(*at).copied().zip(class))
-                .map(|(terrain, class)| self.refs.terrain.move_cost(terrain, class.movement_type));
-            if let (Some(None), Some(class)) = (cost, class) {
+            let cost = (tiles.get(*at).copied().zip(walks))
+                .map(|(terrain, (movement, _))| self.terrain.move_cost(terrain, *movement));
+            if let (Some(None), Some((_, what))) = (cost, walks) {
                 self.problems.push(format!(
-                    "action {n}: path: a {} can't walk on ({}, {})",
-                    class.name, at.x, at.y
+                    "action {n}: path: a {what} can't walk on ({}, {})",
+                    at.x, at.y
                 ));
             }
         }
@@ -330,13 +394,15 @@ fn tile_by_tile(corners: &[Pos], longest: i32) -> Vec<Pos> {
     path
 }
 
-/// Checks the action list `raw` against `battle` and returns it as the
-/// game keeps it, with every problem in plain words:
+/// Checks the action list `raw` on `stage` (whose tiles a movement type
+/// can enter: `terrain`) and returns it as the game keeps it, with every
+/// problem in plain words:
 ///
 /// - no entries; an `at` that isn't a time, or is before the entry before
 ///   it;
-/// - a unit or a target that isn't on the battle's map at its start, or
-///   that a strike before left with no HP;
+/// - a unit or a target that isn't in the stage's cast (on the battle's
+///   map at its start), or that a strike before left with no HP;
+/// - a strike on a stage that has none (an opening);
 /// - a walk that takes no time, has fewer than two tiles, doesn't start
 ///   where its unit is then, starts before the unit's walk before it has
 ///   ended, leaves the map, turns anywhere but along a row or a column,
@@ -345,13 +411,12 @@ fn tile_by_tile(corners: &[Pos], longest: i32) -> Vec<Pos> {
 ///   `hp_left` that isn't 0 to 100, or is more than the target has left.
 pub(super) fn check(
     raw: &[RawAction],
-    battle: &BattleDef,
-    refs: Refs<'_>,
+    stage: &Stage,
+    terrain: &TerrainTable,
 ) -> (Vec<ActionDef>, Vec<String>) {
     let mut v = Checker {
-        battle,
-        refs,
-        cast: cast(battle, refs),
+        stage,
+        terrain,
         state: BTreeMap::new(),
         problems: Vec::new(),
     };
@@ -375,7 +440,12 @@ pub(super) fn check(
         let at_ms = at_ms.unwrap_or(before).max(before);
         before = at_ms;
         let act = match act {
-            RawAct::Walk { unit, path, secs } => {
+            RawAct::Walk {
+                unit,
+                path,
+                secs,
+                facing,
+            } => {
                 let ms = millis(*secs).filter(|&ms| ms > 0);
                 if ms.is_none() {
                     v.problems.push(format!(
@@ -384,12 +454,21 @@ pub(super) fn check(
                 }
                 let path = v.walk(n, u64::from(at_ms), unit, path);
                 let ms = ms.unwrap_or(1);
-                let id = v.cast.get(unit).map(|actor| actor.id);
+                let id = stage.cast.get(unit).map(|actor| actor.id);
                 if let Some(standing) = id.and_then(|id| v.state.get_mut(&id)) {
                     standing.free_at_ms = u64::from(at_ms) + u64::from(ms);
                 }
-                id.filter(|_| path.len() >= 2)
-                    .map(|unit| Act::Walk { unit, path, ms })
+                id.filter(|_| path.len() >= 2).map(|unit| Act::Walk {
+                    unit,
+                    path,
+                    ms,
+                    facing: *facing,
+                })
+            }
+            RawAct::Strike { .. } if !stage.strikes => {
+                v.problems
+                    .push(format!("action {n}: an opening has walks only, no strikes"));
+                None
             }
             RawAct::Strike {
                 unit,

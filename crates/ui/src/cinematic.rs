@@ -33,9 +33,10 @@ use crate::settings::MapZoom;
 mod action;
 pub mod combat;
 pub mod faces;
+pub mod opening;
 pub mod talk;
 
-pub use action::{FALL_MS, FLASH_MS, LUNGE_MS, LUNGE_TILES, action_state};
+pub use action::{FALL_MS, FLASH_MS, LUNGE_MS, LUNGE_TILES, action_state, facing_of};
 use combat::Duel;
 use faces::{Face, draw_faces, first_x};
 use talk::{TalkBox, talk_at};

@@ -93,9 +93,18 @@ fn map_place(ctx: &Ctx, map: &str, centre: Pos) -> MapScene {
     Place::of_map(&ctx.content.maps[map]).scene(centre, view)
 }
 
+/// `scene` without anyone on it.
+fn bare(scene: Option<MapScene>) -> Option<MapScene> {
+    scene.map(|scene| MapScene {
+        units: Vec::new(),
+        ..scene
+    })
+}
+
 /// The letter (ticket 0733): the opening captions on black, then the
-/// yard behind the rented house at Harrowby, at dawn. The first line
-/// over it, in the glyph look.
+/// yard behind the rented house at Harrowby, at dawn (with the lead and
+/// Hollis on it: its opening, 0734, `openings.rs`). The first line over
+/// it, in the glyph look.
 #[test]
 fn the_letter_is_read_in_the_yard_at_harrowby() {
     let mut h = preview("ch01_intro");
@@ -107,20 +116,21 @@ fn the_letter_is_read_in_the_yard_at_harrowby() {
     let ctx = h.game().ctx();
     assert_eq!(ctx.map_skin.name(), "glyph");
     let yard = map_place(ctx, "harrowby_yard", Pos::new(12, 8));
-    assert_eq!(place(&h), Some(yard));
+    assert_eq!(bare(place(&h)), Some(yard));
     assert_eq!(ctx.content.maps["harrowby_yard"].look.light, "dawn");
     h.wait(5.0);
     assert_snapshot!(h.snapshot());
 }
 
 /// The scene after the chapter (0733): the old lord's study at Veyne
-/// Hall, at night, centred on the desk.
+/// Hall, at night, centred on the desk (with Dace in it: its opening,
+/// 0734).
 #[test]
 fn the_last_scene_is_in_the_study_at_veyne_hall() {
     let h = preview("ch01_tbc");
     let ctx = h.game().ctx();
     let study = map_place(ctx, "veyne_study", Pos::new(12, 7));
-    assert_eq!(place(&h), Some(study));
+    assert_eq!(bare(place(&h)), Some(study));
     let look = &ctx.content.maps["veyne_study"].look;
     assert_eq!(
         (look.tiles.as_str(), look.light.as_str()),

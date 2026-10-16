@@ -159,6 +159,29 @@ box. In Chapter 1's own victory scene the same spot is `@place battle
 20,3`: the battle's map. A scene with no `@place` is on black; a scene during a
 battle is over the battle map, darkened, either way.
 
+### Openings: `@opening`
+
+`@opening <opening>` plays a short moving opening before the next text
+box: the place at full brightness with the opening's characters walking
+on it (about a second and a half), then the place darkens and the talk
+comes up over it. Write one **only where it says something the words
+don't** (Nick: "only where the script asks"). It follows a `@place` with a
+map of `assets/maps/`, and the opening (a file of `assets/openings/`) is
+made for that map.
+
+```dlg
+@scene guide_opening
+@caption {N:place.harrowby}, dawn
+@place harrowby_yard 12,8
+@opening ch01_sparring
+> Two practice swords crack together, wood on wood.
+@end
+```
+
+What the player sees: the yard behind the rented house, bright, the lead
+and Hollis stepping in and back at each other; the yard darkens and the
+narration comes up over it, the two of them standing where they stopped.
+
 ### Music: `@music`
 
 `@music <cue>` changes the music when the scene reaches that line: the

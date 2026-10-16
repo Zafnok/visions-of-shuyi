@@ -1,7 +1,7 @@
 //! Checks on parsed scenes: who is on screen, known characters and
 //! expressions, text length, lead and name tokens, names written out, lead
-//! lines, reply choices, `@if` blocks, music cues, line ids that clash,
-//! and scene ids unique across files.
+//! lines, reply choices, `@if` blocks, music cues, where an `@opening`
+//! may go, line ids that clash, and scene ids unique across files.
 use crate::prelude::*;
 
 use alloc::collections::BTreeMap;
@@ -43,10 +43,20 @@ pub fn check_scene(
         names,
         audio,
         hashes: BTreeMap::new(),
+        depth: 0,
+        opening: None,
         errors: Vec::new(),
     };
     let mut state = State::default();
     c.steps(&parsed.scene.steps, &parsed.lines, &mut state);
+    if let Some(line) = c.opening {
+        c.err(
+            line,
+            "nothing is said after this @opening; it plays before the next speech or \
+             narration line"
+                .to_owned(),
+        );
+    }
     if !parsed.scene.steps.iter().any(Step::has_text) {
         c.err(
             parsed.line,
@@ -85,6 +95,12 @@ struct Checker<'a> {
     /// The first line of the scene with each line-id hash: its source
     /// line, speaker and text.
     hashes: BTreeMap<String, (u32, String, String)>,
+    /// How many blocks (a reply's reaction, a part of an `@if` block) the
+    /// step being checked is in: 0 at the scene's top level.
+    depth: usize,
+    /// The line of the last `@opening`, until a speech or narration line
+    /// follows it.
+    opening: Option<u32>,
     errors: Vec<ContentError>,
 }
 
@@ -217,9 +233,11 @@ impl<'a> Checker<'a> {
             self.err(line, format!("unknown character \"{}\"", character.0));
         }
         let mut after = [*state; 2];
+        self.depth += 1;
         for ((steps, part), after) in branches.into_iter().zip(parts).zip(&mut after) {
             self.steps(steps, &part.lines, after);
         }
+        self.depth -= 1;
         let [with, without] = after;
         // Reported where the part without them starts, if it is written.
         let at = parts.get(1).map_or(line, |p| p.line);
@@ -259,6 +277,7 @@ impl<'a> Checker<'a> {
     /// Checks one step (not a block) on `line` and applies it to `state`.
     fn step<'s>(&mut self, step: &'s Step, line: u32, state: &mut State<'s>) {
         if let Some(text) = step.text() {
+            self.opening = None;
             self.tokens(line, text);
             self.literal_names(line, text);
             let len = self.len(text);
@@ -342,7 +361,41 @@ impl<'a> Checker<'a> {
             }
             Step::Narrate { text, .. } => self.line_id(line, NARRATION_SPEAKER, text),
             Step::Setting(place) => state.place = Some(place),
+            Step::Opening(_) => self.opening_line(line, state),
             Step::Choice { .. } | Step::If { .. } | Step::Music(MusicLine::Stop) => {}
+        }
+    }
+
+    /// Checks where the `@opening` on `line` is: at the scene's top level,
+    /// on a place from `assets/maps/` (`state`), and not right after
+    /// another one with nothing said between them. (Its file, and that it
+    /// is on that map: [`super::check_places`].)
+    fn opening_line(&mut self, line: u32, state: &State) {
+        if self.depth > 0 {
+            self.err(
+                line,
+                "an @opening goes at a scene's top level, not in a reply's reaction or an @if \
+                 block"
+                    .to_owned(),
+            );
+            return;
+        }
+        if !matches!(state.place, Some(PlaceLine::Map { .. })) {
+            self.err(
+                line,
+                "an @opening plays on a place from assets/maps/: put a \"@place <map> <x>,<y>\" \
+                 line before it (not \"@place battle\" or \"@place none\")"
+                    .to_owned(),
+            );
+        }
+        if let Some(before) = self.opening.replace(line) {
+            self.err(
+                line,
+                format!(
+                    "nothing is said between the @opening on line {before} and this one; an \
+                     opening plays before the next speech or narration line"
+                ),
+            );
         }
     }
 
@@ -385,7 +438,9 @@ impl<'a> Checker<'a> {
                 );
             }
             let mut after = *state;
+            self.depth += 1;
             self.steps(&option.steps, &part.lines, &mut after);
+            self.depth -= 1;
             match first {
                 None => first = Some(after),
                 Some(f) if f.screen != after.screen => self.err(

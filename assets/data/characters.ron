@@ -24,9 +24,11 @@
 //   come from the class (progression.md, "Generic units").
 // speakers: ids of people who talk in dialogue (.dlg) but aren't units: no
 //   class, stats or loadout, only a name, which is the id's entry in
-//   names.ron. A speaker can't be put on a map or named in a battle or
-//   chapter file; for that they need an entry in characters (and then come
-//   out of speakers: a character can already speak).
+//   names.ron. A speaker can't be put on a battle's map or named in a
+//   battle or chapter file; for that they need an entry in characters (and
+//   then come out of speakers: a character can already speak). A
+//   conversation's opening (assets/openings/) may place one on a place: a
+//   picture, not a unit.
 (
     characters: [
         // The lead (ticket 0708): the player picks the gender and first

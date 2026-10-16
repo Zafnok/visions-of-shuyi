@@ -26,10 +26,12 @@ use crate::ron_loader::parse_ron;
 
 mod action;
 mod combat;
+mod opening;
 
-pub use action::{Act, ActionDef, ShotAction};
-use action::{RawAction, RawActionRef};
+pub use action::{Act, ActionDef, Heading, ShotAction};
+use action::{RawAction, RawActionRef, Stage};
 pub use combat::{CombatShot, Fight, check_fights, fight};
+pub use opening::{CastMember, OPENINGS_DIR, OpeningDef, OpeningRefs, load_all as load_openings};
 
 /// Directory of the cinematic files inside the asset bundle.
 pub const CINEMATICS_DIR: &str = "cinematics";
@@ -477,7 +479,8 @@ impl<'a> ActionLists<'a, '_> {
         let def = refs.battles.get(battle);
         let actions = match (action.as_ref()?, def) {
             (RawActionRef::List(list), Some(def)) => {
-                let (actions, wrong) = action::check(list, def, refs);
+                let stage = Stage::battle(def, refs);
+                let (actions, wrong) = action::check(list, &stage, refs.terrain);
                 problems.extend(wrong.iter().map(|w| format!("shot {n}: {w}")));
                 actions
             }
@@ -489,7 +492,8 @@ impl<'a> ActionLists<'a, '_> {
                 self.used.insert(name);
                 let key = (name.as_str(), battle.as_str());
                 if let Entry::Vacant(unchecked) = self.named.entry(key) {
-                    let (actions, wrong) = action::check(list, def?, refs);
+                    let stage = Stage::battle(def?, refs);
+                    let (actions, wrong) = action::check(list, &stage, refs.terrain);
                     let on = format!("actions \"{name}\" (on battle \"{battle}\")");
                     problems.extend(wrong.iter().map(|w| format!("{on}: {w}")));
                     unchecked.insert(actions);
