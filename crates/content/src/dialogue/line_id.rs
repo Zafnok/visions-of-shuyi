@@ -129,7 +129,11 @@ fn visit_mut(steps: &mut [Step], f: &mut impl FnMut(&str, &str, &mut LineId)) {
                 visit_mut(then, f);
                 visit_mut(otherwise, f);
             }
-            Step::Caption { .. } | Step::Place { .. } | Step::Clear { .. } | Step::Music(_) => {}
+            Step::Caption { .. }
+            | Step::Place { .. }
+            | Step::Clear { .. }
+            | Step::Music(_)
+            | Step::Setting(_) => {}
         }
     }
 }
@@ -169,7 +173,11 @@ fn collect<'a>(steps: &'a [Step], out: &mut Vec<Line<'a>>) {
                 collect(then, out);
                 collect(otherwise, out);
             }
-            Step::Caption { .. } | Step::Place { .. } | Step::Clear { .. } | Step::Music(_) => {}
+            Step::Caption { .. }
+            | Step::Place { .. }
+            | Step::Clear { .. }
+            | Step::Music(_)
+            | Step::Setting(_) => {}
         }
     }
 }

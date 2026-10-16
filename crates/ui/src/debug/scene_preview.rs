@@ -15,6 +15,7 @@ use crate::audio::MenuSound;
 use crate::color::UiColor;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
+use crate::map_view::Place;
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::screens::{DialogueScreen, print_centred};
 use crate::widgets::help::{help_line, key_name};
@@ -48,10 +49,16 @@ impl ScenePreviewScreen {
     }
 
     /// The scene from its first line, full-screen, with everyone there and
-    /// `ctx`'s lead.
+    /// `ctx`'s lead. `@place battle` shows the field of the scene's battle
+    /// ([`Content::battle_of_scene`](trpg_content::Content::battle_of_scene)),
+    /// with nobody on it.
     pub fn play(&self, ctx: &Ctx) -> DialogueScreen {
         let (lead, names) = (ctx.lead.clone(), ctx.content.names.clone());
-        DialogueScreen::new(&self.scene, lead, names, &Present::Everyone)
+        let screen = DialogueScreen::new(&self.scene, lead, names, &Present::Everyone);
+        match ctx.content.battle_of_scene(&self.scene.id) {
+            Some(def) => screen.with_battle(Place::of_battle(&ctx.content, def)),
+            None => screen,
+        }
     }
 
     /// What the screen shows.

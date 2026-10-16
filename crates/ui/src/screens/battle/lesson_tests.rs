@@ -95,7 +95,7 @@ fn the_test_lesson_opens_on_the_first_turn_and_the_four_directions_close_it() {
     let view = s.view(&c).lesson.unwrap();
     assert_eq!(
         (view.title.as_str(), view.heading.as_str()),
-        ("Guide", "Moving the cursor")
+        ("Vix", "Moving the cursor")
     );
     assert_eq!(
         view.lines[0],

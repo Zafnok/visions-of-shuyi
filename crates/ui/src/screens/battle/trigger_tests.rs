@@ -584,3 +584,37 @@ fn a_scene_plays_for_those_on_the_map_when_it_fired() {
     );
     assert_eq!(s.queued_scene(), None);
 }
+
+// ---- The place behind a scene (0732) -------------------------------------------
+
+/// A battle's scene plays over the battle as it stands: the dialogue
+/// screen has it for `@place battle`, the whole map with every unit where
+/// it is drawn, and (naming no place) shows the battle map below.
+#[test]
+fn a_battles_scene_has_the_battle_as_it_stands_for_its_place() {
+    let mut c = ctx();
+    let (map, units) = quick_units(&c);
+    let (state, events) = BattleState::new(BattleSetup {
+        triggers: vec![turn_start(1)],
+        ..setup(&c, map, units, Objective::Rout { turn_limit: None })
+    });
+    let mut s = BattleScreen::start(state, &events);
+    let place = s.place();
+    assert_eq!(place.tiles, s.state().map().tiles);
+    let drawn: Vec<Pos> = place.units.iter().map(|u| u.pos).collect();
+    let standing: Vec<Pos> = s.state().units().iter().map(|u| u.pos).collect();
+    assert_eq!(drawn, standing);
+    assert!(!drawn.is_empty());
+    let input = FrameInput::new(vec![Action::Confirm], 0.0, vec![]);
+    let Transition::Push(screen) = s.update(&mut c, &input) else {
+        panic!("no scene");
+    };
+    let any = screen.as_any();
+    let Some(dialogue) = any.and_then(|a| a.downcast_ref::<DialogueScreen>()) else {
+        panic!("not a dialogue screen");
+    };
+    assert_eq!(dialogue.battle(), Some(&place));
+    let view = dialogue.view(&c);
+    assert!(view.overlay);
+    assert_eq!(view.place, None);
+}

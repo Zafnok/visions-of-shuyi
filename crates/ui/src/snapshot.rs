@@ -23,7 +23,8 @@
 //! `layer  sprite x,y wxh  image x,y wxh`: where it is drawn (`dest`), the
 //! image's path in the asset bundle, and the part of the image shown
 //! (`src`). After that come, only when they aren't the default, ` flip`,
-//! ` opacity=N` (below 255), ` solid=colour`, ` dimmed` or
+//! ` opacity=N` (below 255), ` bright=N` (below 255: darkened, ADR-0075),
+//! ` solid=colour`, ` dimmed` or
 //! ` shade=grey:red,green,blue` (how its pixels are coloured, ADR-0049; a
 //! shade is a light's numbers in thousandths, ADR-0058) and
 //! ` clip=x,y wxh` (not all of `dest` is drawn).
@@ -149,6 +150,9 @@ fn sprite_line(s: &Sprite, name: &dyn Fn(Rgb) -> String) -> String {
     }
     if s.opacity != u8::MAX {
         let _ = write!(line, " opacity={}", s.opacity);
+    }
+    if s.brightness != u8::MAX {
+        let _ = write!(line, " bright={}", s.brightness);
     }
     match s.paint {
         Paint::Image => {}
@@ -303,6 +307,10 @@ mod tests {
         });
         let dusk = trpg_content::Light::new(0.35, [0.62, 0.56, 0.46]);
         b.add_sprite(plain.painted(Paint::Shaded(dusk)));
+        b.add_sprite(Sprite {
+            brightness: 102,
+            ..plain
+        });
         assert_eq!(
             b.to_snapshot(&p)
                 .split_once("--- overlays ---\n")
@@ -317,7 +325,8 @@ mod tests {
              over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 solid=enemy\n\
              over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 solid=#010203\n\
              over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 opacity=128 dimmed clip=8,8 40x80\n\
-             over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 shade=350:620,560,460\n"
+             over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 shade=350:620,560,460\n\
+             over  sprite 8,8 80x80  images/test_card.png 0,0 16x16 bright=102\n"
         );
     }
 

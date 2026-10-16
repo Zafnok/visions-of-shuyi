@@ -241,7 +241,8 @@ fn add_captions(scene: &str, file: &str, steps: &[Step], lines: &mut BTreeMap<St
             | Step::Clear { .. }
             | Step::Say { .. }
             | Step::Narrate { .. }
-            | Step::Music(_) => {}
+            | Step::Music(_)
+            | Step::Setting(_) => {}
         }
     }
 }

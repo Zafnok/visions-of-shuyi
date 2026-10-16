@@ -434,7 +434,7 @@ mod tests {
         let tip = |id: &str| content.tips.tips.iter().find(|t| t.id == id).unwrap();
         assert_eq!(words.tip_title(tip("battle_start")), "YOUR MOVE");
         let text = words.tip_text(tip("battle_start"));
-        assert!(text.starts_with("STEER THE CURSOR"), "{text}");
+        assert!(text.starts_with("OVER TO YOU"), "{text}");
         assert_eq!(words.tip_title(tip("unit_selected")), "Moving a unit");
         let chapters = &content.chapters;
         assert_eq!(words.chapter_title(&chapters["test"]), "TEST CHAPTER");

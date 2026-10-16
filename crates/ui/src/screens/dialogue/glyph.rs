@@ -3,6 +3,11 @@
 //! colours, how the listener is dimmed); nothing here decides what the
 //! screen shows or does (ADR-0054).
 //!
+//! The scene's place, if it names one, is painted first by the map skin
+//! over the whole screen and darkened to [`PLACE_BRIGHTNESS`]; an overlay
+//! with no place darkens the screen below it (the battle map) the same
+//! way. Everything else goes on top at full brightness.
+//!
 //! Layout (100×32): 32×16-cell portraits in 34×18 frames at `x = 1` and
 //! `x = 65` from row 1, name plates on row 19, the text box on rows 21–27.
 //! While the lead's replies are up, the text box grows upward to list them
@@ -36,12 +41,18 @@ const TEXT_X: i32 = 4;
 const TEXT_Y: i32 = 23;
 /// How much the listener (and both portraits during narration) is dimmed.
 pub const LISTENER_DIM: f32 = 0.45;
+/// How bright the place behind the talk is, and the battle map behind a
+/// battle's scene: about 40% (`docs/design/look-and-feel.md`, *Places
+/// behind conversations*, a little darker than the dimmed listener's
+/// portrait so the faces stand out; *tunable*).
+pub const PLACE_BRIGHTNESS: f32 = 0.4;
 /// Cells between the log's key hint and the Confirm key's name.
 const LOG_HINT_GAP: i32 = 3;
 
 /// Paints `view`: the log over the whole of `buf` while it is open;
-/// otherwise the caption, portraits and text box, over the whole of `buf`
-/// or, for an overlay, leaving the screen below showing around them.
+/// otherwise the caption, portraits and text box over the scene's place,
+/// darkened, or over black; or, for an overlay with no place, leaving the
+/// screen below showing around them, darkened.
 pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
     if let Some(log) = &view.log {
         log::glyph::paint(ctx, log, buf);
@@ -49,7 +60,12 @@ pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
     }
     let c = |u| ctx.palette.get(u);
     let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
-    if view.overlay {
+    if let Some(place) = &view.place {
+        buf.fill_rect(buf.bounds(), blank);
+        ctx.map_skin.paint(ctx, place, buf.bounds(), buf);
+        buf.fade(PLACE_BRIGHTNESS);
+    } else if view.overlay {
+        buf.fade(PLACE_BRIGHTNESS);
         // Below the text box is the battle's key help, whose keys do
         // nothing while the scene plays.
         // (Clipped to the buffer.)

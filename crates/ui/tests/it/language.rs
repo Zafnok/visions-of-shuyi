@@ -230,7 +230,7 @@ fn a_tip_in_the_test_language() {
     assert!(shows(&h, "YOUR MOVE"));
     // Key names are still the player's; the word for the arrow keys is
     // the pack's (ticket 0243).
-    assert!(shows(&h, "STEER THE CURSOR WITH ARROWS. PRESS f ON ONE OF"));
+    assert!(shows(&h, "OVER TO YOU. STEER THE CURSOR WITH ARROWS; f ON"));
     assert!(!shows(&h, "Your move"));
 }
 

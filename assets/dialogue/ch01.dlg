@@ -108,6 +108,8 @@ retainer[neutral]: That's the sergeant. She doesn't ride like that for good
 
 @scene ch01_prebattle
 @caption The green, {n:place.harrowby}
+# Harrowby by the chapel: the green where the party starts (ch01.map).
+@place battle 3,12
 @music dungeon_tense
 @left  retainer neutral
 @right sergeant angry
@@ -329,6 +331,8 @@ heretic: Finish them, heir. All of them.
 
 @scene ch01_victory
 @caption The toll-fort, noon
+# The toll-fort, just below its keep at (20, 2).
+@place battle 20,3
 @music scene_sad
 > Across the river, one barn smokes at the edge of {n:place.harrowby}. Only
   the one.

@@ -549,6 +549,8 @@ impl Painter {
             return;
         };
         let opacity = f32::from(sprite.opacity) / 255.0;
+        // Darker as the sprite's brightness has it (ADR-0075).
+        let bright = f32::from(sprite.brightness) / 255.0;
         let src = sprite.clipped_src();
         blit(
             out,
@@ -557,7 +559,7 @@ impl Painter {
             dest,
             sprite.flip_x,
             sprite.paint,
-            [1.0, 1.0, 1.0, opacity],
+            [bright, bright, bright, opacity],
         );
     }
 

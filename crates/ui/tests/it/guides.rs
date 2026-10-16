@@ -45,7 +45,7 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     for text in [
         "Guides",
         "Moving the cursor",
-        "The cursor picks tiles and units on the map.",
+        "That's your cursor. It picks tiles and units.",
         "Move it up: Up",
         "Danger zone",
         "Terrain",
@@ -56,11 +56,11 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     h.keys("Down");
     assert!(
         h.snapshot()
-            .contains("No mouse here: the game is played on keys.")
+            .contains("No mouse here; it's all keys. And every key")
     );
     h.keys("Up Up");
     let screen = h.snapshot();
-    assert!(screen.contains("Terrain matters."), "{screen}");
+    assert!(screen.contains("Mind the ground."), "{screen}");
     // Back to the map menu, then to the map.
     h.keys("d");
     assert!(battle(&h).guides().is_none());

@@ -349,9 +349,6 @@
     "battle.faction.ally": "Ally",
     "battle.faction.neutral": "Neutral",
 
-    // The guide who speaks every tip (docs/design/tutorial.md): the tip
-    // box's title. Ticket 0731 names the guide.
-    "guide.name": "Guide",
     // Under a lesson's checklist (0456): how many of its items are done.
     "battle.lesson.progress": "{n} of {m} done",
 

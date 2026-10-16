@@ -1077,3 +1077,61 @@ fn the_line_on_screen_and_each_reply_have_their_ids() {
     p.advance();
     assert_eq!(p.line(), None);
 }
+
+/// The place named last is the one shown, through a reply's reaction, until
+/// `@place none` goes back to none.
+#[test]
+fn the_place_lasts_until_the_next_place_line() {
+    let at = |map: &str, x, y| {
+        Step::Setting(PlaceLine::Map {
+            map: map.into(),
+            at: trpg_core::Pos::new(x, y),
+        })
+    };
+    let battle = Step::Setting(PlaceLine::Battle {
+        at: trpg_core::Pos::new(20, 3),
+    });
+    let mut p = play(&Scene {
+        id: "s".into(),
+        steps: vec![
+            narration("Black."),
+            at("ch01", 3, 12),
+            narration("The green."),
+            narration("Still the green."),
+            Step::Choice {
+                options: vec![
+                    option("Go.", vec![battle.clone(), narration("The fort.")]),
+                    option("Stay.", vec![battle]),
+                ],
+            },
+            narration("After."),
+            Step::Setting(PlaceLine::None),
+            narration("Black again."),
+        ],
+    });
+    let place = |p: &DialoguePlayer| p.current().place.cloned();
+    assert_eq!(place(&p), None);
+    p.advance();
+    let green = Some(PlaceLine::Map {
+        map: "ch01".into(),
+        at: trpg_core::Pos::new(3, 12),
+    });
+    assert_eq!(place(&p), green);
+    p.advance();
+    assert_eq!(place(&p), green);
+    p.advance();
+    // The choice is up over the line it answers, still on the green.
+    assert!(p.is_choosing());
+    assert_eq!(place(&p), green);
+    p.choose(0);
+    let fort = Some(PlaceLine::Battle {
+        at: trpg_core::Pos::new(20, 3),
+    });
+    assert_eq!(place(&p), fort);
+    p.advance();
+    assert_eq!(p.current().text.as_deref(), Some("After."));
+    assert_eq!(place(&p), fort);
+    p.advance();
+    assert_eq!(p.current().text.as_deref(), Some("Black again."));
+    assert_eq!(place(&p), None);
+}

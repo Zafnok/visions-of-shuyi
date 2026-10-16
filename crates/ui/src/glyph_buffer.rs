@@ -209,6 +209,11 @@ pub struct Sprite {
     pub flip_x: bool,
     /// 255 = solid; lower lets what is under it show through.
     pub opacity: u8,
+    /// How bright its pixels are drawn: 255 = as the image and the paint
+    /// have them, lower = that much darker, 0 = black where it shows.
+    /// Unlike a lower opacity, a picture over another (a tile's edge over
+    /// its ground) darkens as much as one alone ([`GlyphBuffer::fade`]).
+    pub brightness: u8,
     /// How its pixels are coloured.
     pub paint: Paint,
     /// The console pixels it stands on, for a picture that reaches above
@@ -230,6 +235,7 @@ impl Sprite {
             layer,
             flip_x: false,
             opacity: u8::MAX,
+            brightness: u8::MAX,
             paint: Paint::Image,
             base: None,
         }
@@ -712,9 +718,9 @@ impl GlyphBuffer {
 
     /// Darkens the whole frame towards black by `brightness` (1 = as it
     /// is, 0 = black; clamped, and not a number counts as 1): every cell's
-    /// colours, every rectangle's colour, every sprite's `opacity`, and
+    /// colours, every rectangle's colour, every sprite's `brightness`, and
     /// the backdrop's scene the same way. Unlike [`dim`](Self::dim) it
-    /// leaves nothing out (ADR-0060).
+    /// leaves nothing out (ADR-0060, ADR-0075).
     pub fn fade(&mut self, brightness: f32) {
         let brightness = if brightness.is_nan() {
             1.0
@@ -730,8 +736,8 @@ impl GlyphBuffer {
                 Item::Rect(o) => o.color = o.color.scale(brightness),
                 Item::Sprite(s) => {
                     #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // 0..=255
-                    let opacity = (f32::from(s.opacity) * brightness).round() as u8;
-                    s.opacity = opacity;
+                    let darker = (f32::from(s.brightness) * brightness).round() as u8;
+                    s.brightness = darker;
                 }
             }
         }
