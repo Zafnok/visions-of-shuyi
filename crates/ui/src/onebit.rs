@@ -404,23 +404,23 @@ impl Tiles {
     }
 
     /// Each run of marked tiles along a row of them, as screen pixels.
+    /// Walks a fixed 64 columns a row, so it always ends.
     #[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)] // tiles
     fn regions(&self) -> impl Iterator<Item = Clip> + '_ {
-        (0i32..).zip(self.0).flat_map(|(row, mut bits)| {
-            core::iter::from_fn(move || {
-                if bits == 0 {
-                    return None;
-                }
-                let first = bits.trailing_zeros();
-                let len = (bits >> first).trailing_ones();
-                bits &= !((u64::MAX >> (64 - len)) << first);
-                Some(Clip {
-                    x0: first as i32 * Self::W,
-                    y0: row * Self::H,
-                    x1: (first + len) as i32 * Self::W,
-                    y1: (row + 1) * Self::H,
+        (0i32..).zip(self.0).flat_map(|(row, bits)| {
+            // A run starts at a marked tile whose left neighbour isn't.
+            let starts = bits & !(bits << 1);
+            (0..u64::BITS)
+                .filter(move |&column| starts >> column & 1 == 1)
+                .map(move |first| {
+                    let len = (bits >> first).trailing_ones();
+                    Clip {
+                        x0: first as i32 * Self::W,
+                        y0: row * Self::H,
+                        x1: (first + len) as i32 * Self::W,
+                        y1: (row + 1) * Self::H,
+                    }
                 })
-            })
         })
     }
 }

@@ -363,17 +363,23 @@ fn tiles_gather_into_runs_along_their_rows() {
         x1: 0,
         y1: 3,
     });
-    let regions: Vec<Clip> = tiles.regions().collect();
+    // Two runs apart on one row: a single tile, then two.
     let clip = |x0, y0, x1, y1| Clip { x0, y0, x1, y1 };
+    tiles.add(clip(40, 48, 48, 64));
+    tiles.add(clip(64, 50, 80, 60));
+    // At most a run per tile, so a wrong walk can't go on for ever.
+    let regions: Vec<Clip> = tiles.regions().take(50 * 15).collect();
     assert_eq!(
         regions,
         [
             clip(0, 0, 24, 16),
             clip(0, 16, 24, 32),
+            clip(40, 48, 48, 64),
+            clip(64, 48, 80, 64),
             clip(392, 224, 400, 240)
         ]
     );
-    assert_eq!(Tiles::default().regions().count(), 0);
+    assert_eq!(Tiles::default().regions().take(1).count(), 0);
 }
 
 /// Every phase is marked once, in order.
