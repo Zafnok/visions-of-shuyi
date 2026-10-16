@@ -812,6 +812,17 @@ mod tests {
     }
 
     #[test]
+    fn the_sysroot_is_the_running_toolchains() {
+        // The toolchain that runs the tests has its own standard library.
+        let root = sysroot().unwrap();
+        assert!(
+            root.join("lib").join("rustlib").is_dir(),
+            "{}",
+            root.display()
+        );
+    }
+
+    #[test]
     fn the_device_rustflags_follow_the_callers() {
         assert_eq!(device_rustflags(None), DEVICE_RUSTFLAGS);
         assert_eq!(device_rustflags(Some("  ")), DEVICE_RUSTFLAGS);
