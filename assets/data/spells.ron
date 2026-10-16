@@ -49,11 +49,11 @@
         // Nick judges them in the playtest (0804).
         //
         // Rue's: a close, hard fire strike with few uses. It burns a forest
-        // tile like any fire vow. Range 1 stays (Nick, 0056); the enemy
-        // can't counter it once the engine has the rule (0317).
+        // tile like any fire vow. Range 1 stays (Nick, 0056), and the
+        // enemy can't strike back when Rue attacks with it (no_counter).
         (
             id: "cinder_oath", name: "Cinder Oath", kind: Attack(might: 9, hit: 80, crit: 0),
-            element: Fire, range: (1, 1), uses: 3, terrain_effect: Some((
+            element: Fire, range: (1, 1), uses: 3, no_counter: true, terrain_effect: Some((
                 from: ["forest"], to: "burning",
                 lasts: UntilCastersNextPhase(then: "burnt", damage: 5),
             )),

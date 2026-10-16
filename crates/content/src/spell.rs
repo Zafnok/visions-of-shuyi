@@ -36,6 +36,8 @@ struct RawSpell {
     uses: u8,
     #[serde(default)]
     terrain_effect: Option<RawTerrainEffect>,
+    #[serde(default)]
+    no_counter: bool,
 }
 
 #[derive(Deserialize)]
@@ -155,6 +157,7 @@ pub fn from_source(
             max_range,
             uses: s.uses,
             terrain_effect,
+            no_counter: s.no_counter,
         };
         if spells.insert(id, def).is_some() {
             errors.push(at(format!("duplicate spell id \"{}\"", s.id)));
@@ -290,6 +293,7 @@ mod tests {
             max_range: 2,
             uses,
             terrain_effect: effect,
+            no_counter: false,
         }
     }
 
@@ -303,6 +307,7 @@ mod tests {
             max_range: 1,
             uses,
             terrain_effect: None,
+            no_counter: false,
         }
     }
 
@@ -318,9 +323,11 @@ mod tests {
                 damage: 5,
             },
         };
-        // Rue's reaches only the next tile; Maud's reaches 2.
+        // Rue's reaches only the next tile and can't be countered; Maud's
+        // reaches 2.
         let cinder_oath = SpellDef {
             max_range: 1,
+            no_counter: true,
             ..attack(
                 "cinder_oath",
                 "Cinder Oath",
@@ -406,8 +413,21 @@ mod tests {
                 max_range: 2,
                 uses: 3,
                 terrain_effect: None,
+                no_counter: false,
             })
         );
+    }
+
+    #[test]
+    fn no_counter_parses_and_defaults_to_false() {
+        let no_counter = |fields: &str| {
+            from_source("s.ron", &one(fields), Some(&terrain()))
+                .ok()
+                .and_then(|t| t.get(&SpellId::new("x")).map(|s| s.no_counter))
+        };
+        assert_eq!(no_counter(OK), Some(false));
+        assert_eq!(no_counter(&format!("{OK}, no_counter: true")), Some(true));
+        assert_eq!(no_counter(&format!("{OK}, no_counter: false")), Some(false));
     }
 
     #[test]

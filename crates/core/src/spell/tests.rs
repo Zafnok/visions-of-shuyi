@@ -35,6 +35,7 @@ fn attack(id: &str, uses: u8) -> SpellDef {
                 damage: 5,
             },
         }),
+        no_counter: false,
     }
 }
 
@@ -48,6 +49,7 @@ fn heal(id: &str, uses: u8) -> SpellDef {
         max_range: 1,
         uses,
         terrain_effect: None,
+        no_counter: false,
     }
 }
 
