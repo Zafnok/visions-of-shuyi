@@ -293,11 +293,9 @@ fn fits_ids(len: usize, max_id: usize) -> bool {
     len <= max_id + 1
 }
 
-/// 1-based line of the first line containing `needle`.
-pub(crate) fn line_of(source: &str, needle: &str) -> Option<u32> {
-    let index = source.lines().position(|l| l.contains(needle))?;
-    u32::try_from(index + 1).ok()
-}
+/// 1-based line of the first line containing `needle` (Shuyi Engine's,
+/// ticket 1103).
+pub(crate) use shuyi_assets::line_of;
 
 #[cfg(test)]
 mod tests {
@@ -517,12 +515,6 @@ mod tests {
         assert!(!fits_ids(2, 0));
         assert!(fits_ids(65536, 65535));
         assert!(!fits_ids(65537, 65535));
-    }
-
-    #[test]
-    fn line_of_finds_first_match() {
-        assert_eq!(line_of("a\nbb\nb", "b"), Some(2));
-        assert_eq!(line_of("a", "z"), None);
     }
 
     /// Acceptance: the embedded terrain values match the tables in

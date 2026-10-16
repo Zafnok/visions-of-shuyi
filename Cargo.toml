@@ -11,9 +11,6 @@ license-file = "LICENSE"
 repository = "https://github.com/Zafnok/visions-of-shuyi"
 
 [workspace.dependencies]
-# The engine's crates (ADR-0063), without `std`: a game crate's `std`
-# feature turns it on.
-shuyi-core = { path = "engine/crates/core", default-features = false }
 macroquad = { version = "0.4", features = ["audio"] }
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 # `ron` and `thiserror` without `std` for the Playdate build (ADR-0070 §3);

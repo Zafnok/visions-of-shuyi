@@ -93,6 +93,8 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    are tied to them. There is no runtime (disk or mod) layer.
    **Fix:** `Bundle::new(&[Layer])`. The game registers its layers once.
    Runtime layers are for mods (1011) and hot reload (engine ADR-0004).
+   **Done in 1103** but for runtime layers: `shuyi_assets::Bundle::new(Vec<Layer>)`,
+   installed once from `trpg_content::layers()`.
 10. **The `Harness` is wired to the flow, the battle and the test chapter**
     (`ui/src/harness.rs:20-28,542`). Its driver core is generic: about 750
     lines of key, pad and wait scripts, the audio and music simulation, and
@@ -119,12 +121,12 @@ These are the things ADR-0063 §6 makes generic before moving anything.
 Modules that do not import `trpg_core` at all are the first set to move:
 `audio`, `bundle`, `credits`, `dialogue/line_id`, `error`, `font`, `image`,
 `keymap`, `lang`, `lighting`, `palette`, `portrait`, `ron_loader`, `tip`,
-`title`.
+`title`. `bundle`, `error` and `ron_loader` moved in 1103.
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
-| `bundle.rs`, `build.rs` | E | Layer logic is generic. Paths and features are the game's (see coupling 9). |
-| `error.rs`, `ron_loader.rs` | E | Errors with file:line:col. `parse_ron<T>`. |
+| `bundle.rs`, `build.rs` | E → moved | 1103: the layer logic is `shuyi_assets::bundle` (`Bundle`, `Layer`, `install`). `bundle.rs` keeps the game's folders (`include_dir!`, `layers()`) and the old free functions over the installed bundle; `build.rs` and the two features stay the game's. |
+| `error.rs`, `ron_loader.rs` | E → moved | 1103: `shuyi_assets::{error, ron}` (`ContentError`, `parse_ron<T>`, `load_ron` over a `Bundle`). Both files are re-exports now; `load_ron(path)` reads the game's bundle. |
 | `font.rs`, `image.rs`, `lighting.rs`, `audio.rs`, `credits.rs` | E | `credits.rs`' bought-art check is ADR-0051's rule, useful to anyone with bought art. |
 | `lang.rs`, `names.rs` | E | Text by key, packs, stale or missing text. `Lang` holds the game-built `DataText` (`lang.rs:175`). Cut that. |
 | `dialogue/parse.rs`, `dialogue/line_id.rs` | E | The `.dlg` parser needs only a character-id newtype. |
@@ -136,7 +138,7 @@ Modules that do not import `trpg_core` at all are the first set to move:
 | `voice.rs`, `tip.rs` | M | Clip manifest and tip schema are E. M/F variants and the `TipTrigger` enum are G. |
 | `map.rs` | M | The `.map` format is K. Shop and Chest features are G. |
 | `tileset.rs` | M | Terrain tiles, looks and walk sheets are E. Unit pictures keyed by class or character are G. |
-| `terrain.rs` | K | Holds the generic `line_of` helper (`:285`) that 11 modules use. Move that to `error.rs`. |
+| `terrain.rs` | K | Its generic `line_of` helper moved to `shuyi_assets::error` (1103); `terrain.rs` re-exports it for the 11 modules that use it. |
 | `cinematic.rs` | M | The timeline (shots at ms, music length) is E. `MapPan` is K. `Characters`, `Talk` and `Combat` are G. |
 | `lib.rs` | G | The `Content` struct. Its "run every loader, collect every error" pattern is E. |
 | `cinematic/{action,combat}.rs`, `battler.rs`, `chapter.rs`, `battle.rs`, `character.rs`, `class.rs`, `item.rs`, `spell.rs`, `skill*`, `art.rs`, `support.rs`, `ai.rs`, `trigger.rs`, `enums.rs` | G | The game's data. |
