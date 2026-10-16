@@ -411,7 +411,26 @@ impl Lang {
 
 #[cfg(test)]
 mod tests {
+    use serde::de::IntoDeserializer;
+    use serde::de::value::{BoolDeserializer, Error};
+
     use super::*;
+
+    /// What a file and an entry are told they should be.
+    #[test]
+    fn a_wrong_value_is_told_what_was_expected() {
+        let wrong = || -> BoolDeserializer<Error> { true.into_deserializer() };
+        let file = RawLines { variants: &[] }.deserialize(wrong());
+        assert_eq!(
+            file.err().map(|e| e.to_string()).as_deref(),
+            Some("invalid type: boolean `true`, expected a list of dialogue entries")
+        );
+        let entry = RawLineSeed { variants: &[] }.deserialize(wrong());
+        assert_eq!(
+            entry.err().map(|e| e.to_string()).as_deref(),
+            Some("invalid type: boolean `true`, expected a dialogue entry: key, source and text")
+        );
+    }
 
     #[test]
     fn distance_counts_single_character_edits() {

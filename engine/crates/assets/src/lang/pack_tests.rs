@@ -268,6 +268,15 @@ fn a_dialogue_entry_keeps_to_the_rules_of_english() {
             format!("{file}: {shut:?}: \"{{\" has no closing \"}}\""),
         ]
     );
+    // A line may be exactly as long as its limit.
+    let gone = id("Gone.");
+    let exact = long(LIMITS.max_text);
+    assert_eq!(
+        line_errors(&format!(
+            "[(key: {gone:?}, source: \"Gone.\", text: {exact:?})]"
+        )),
+        [] as [&str; 0]
+    );
     // A speech line keeps to the box's limit, every variant of it.
     let gone = id("Gone.");
     let over = long(LIMITS.max_text + 1);

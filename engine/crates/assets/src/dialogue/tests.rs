@@ -327,6 +327,102 @@ fn a_fixture_script_parses_and_checks_with_custom_limits() {
     );
 }
 
+/// Rules that keep every default: anyone speaks, no names table.
+struct Minimal;
+
+impl SceneRules<NoDirective> for Minimal {
+    fn limits(&self) -> &DialogueLimits {
+        &LIMITS
+    }
+
+    fn tokens(&self) -> &dyn Tokens {
+        &NoTokens
+    }
+}
+
+/// Rules with a names table and no tokens of the game's.
+struct Named(Names);
+
+impl SceneRules<NoDirective> for Named {
+    fn limits(&self) -> &DialogueLimits {
+        &LIMITS
+    }
+
+    fn tokens(&self) -> &dyn Tokens {
+        &NoTokens
+    }
+
+    fn names(&self) -> Option<&Names> {
+        Some(&self.0)
+    }
+}
+
+/// A directive that keeps the trait's defaults: it doesn't stay in force.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Beep;
+
+impl Directive for Beep {
+    fn parse(name: &str, _args: &str) -> Option<Parsed<Self>> {
+        (name == "beep").then(|| Parsed::step(Beep))
+    }
+
+    fn print(&self) -> String {
+        "beep".to_owned()
+    }
+}
+
+/// The messages of `src` under `rules`.
+fn plain_errors(src: &str, rules: &impl SceneRules<NoDirective>) -> Vec<String> {
+    scripts_from_sources(&[("t.dlg", src)], rules)
+        .err()
+        .unwrap_or_default()
+        .iter()
+        .map(ToString::to_string)
+        .collect()
+}
+
+#[test]
+fn the_rules_defaults_let_everything_through() {
+    let src = "@scene a\n@left anyone neutral\nanyone: Hi {n:any_id}.\n@music what\n@end\n";
+    assert_eq!(plain_errors(src, &Minimal), [] as [&str; 0]);
+    assert!(
+        Minimal
+            .scene_problems(&parse_dlg("t.dlg", src).0[0])
+            .is_empty()
+    );
+    // Without the game's advice, a name written out gets the engine's.
+    let names = Names {
+        names: [("smith".to_owned(), "Ada".to_owned())].into(),
+    };
+    assert_eq!(
+        plain_errors("@scene a\n> Ada waits.\n@end\n", &Named(names)),
+        [
+            "t.dlg:2: \"Ada\" is written out; write {n:smith} (\"Ada\") so a rename reaches this line"
+        ]
+    );
+    assert_eq!(NoTokens.written_name("smith", "Ada"), None);
+    assert_eq!(NoTokens.reserved_name("smith", "n:smith"), None);
+    // A directive that doesn't say otherwise doesn't stay in force.
+    assert_eq!(Beep.kind(), None);
+    let (parsed, errors) = parse_dlg::<Beep>("t.dlg", "@scene a\n@beep\n> x\n@end\n");
+    assert_eq!(errors, []);
+    assert_eq!(
+        print_scene(&parsed[0].scene),
+        "@scene a\n@beep\n> x\n@end\n"
+    );
+}
+
+#[test]
+fn a_reply_may_be_as_long_as_the_menu() {
+    let exact = "x".repeat(LIMITS.max_option);
+    assert_eq!(
+        errors(&scene(&format!(
+            "@choice\n* a: {exact}\n* b: y\n@endchoice\n> z"
+        ))),
+        [] as [&str; 0]
+    );
+}
+
 // --- Parsing ----------------------------------------------------------------
 
 #[test]

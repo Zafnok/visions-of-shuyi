@@ -80,12 +80,6 @@ impl Deref for Lang {
     }
 }
 
-impl From<engine::Lang> for Lang {
-    fn from(lang: engine::Lang) -> Self {
-        Self(lang)
-    }
-}
-
 impl Lang {
     /// English screen text with `packs` over it, and no data or dialogue.
     pub fn new(english: BTreeMap<String, String>, packs: BTreeMap<LangCode, LangPack>) -> Self {
