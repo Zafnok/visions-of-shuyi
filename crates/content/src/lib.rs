@@ -1685,6 +1685,23 @@ mod tests {
         );
     }
 
+    /// A chapter's intro and victory scenes are its battle's, a trigger's
+    /// scene its battle's; a support conversation and an unknown scene are
+    /// no battle's.
+    #[test]
+    fn a_scenes_battle_is_its_chapters_or_its_triggers() {
+        let content = load_embedded().unwrap();
+        let of = |scene: &str| content.battle_of_scene(scene).map(|b| b.id.as_str());
+        assert_eq!(of("ch01_prebattle"), Some("ch01"));
+        assert_eq!(of("ch01_victory"), Some("ch01"));
+        assert_eq!(of("test_intro"), Some("test"));
+        assert_eq!(of("test_victory"), Some("test"));
+        assert_eq!(of("test_fort"), Some("quick"));
+        assert_eq!(of("test_rogue_falls"), Some("quick"));
+        assert_eq!(of("test_support_lord_knight_c"), None);
+        assert_eq!(of("no_such_scene"), None);
+    }
+
     #[test]
     fn seal_checks_join_the_item_errors() {
         let classes = ok_classes().ok();
