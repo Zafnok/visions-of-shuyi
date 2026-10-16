@@ -5,7 +5,8 @@ Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 0021; bought tiles and sprites on the battle map: 0038; walking sprites,
 effect marks, the glyph look as an option, busts in dialogue: 0039; which
 bought tiles each terrain is: 0437; threat arrows: 0055; the title
-screen: 0811; descriptions in lists: 0429)
+screen: 0811; descriptions in lists: 0429; places behind conversations:
+0029)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -1104,6 +1105,96 @@ line does, on its own row under the list:
 - Where it applies: the `Skill` menu and the `Arts` menu (0429). Later
   lists follow the same rule: the spell list, the preparations lists and
   the promotion choice.
+
+### Places behind conversations
+
+Decided 2026-10-15 (ticket 0029). Nick, after playing Chapter 1 (0804):
+
+> "probably the conversations should have some kind of background imagery,
+> similar to a cutscene... like even just Dace pacing a castle or
+> whatever... and then flip to the conversation portraits with the
+> background opacity lessened or otherwise darkened... it would set the
+> mood better than portraits against black background"
+
+He was shown real frames of the Chapter 1 conversations with the bought
+portraits over: black with the place line (today); the place drawn in the
+map's glyphs; the bought side-on painted backdrops (*Battlebacks*); a
+top-down place laid out from the bought tilesets; the battle map itself;
+and two moving openings (the lead and Hollis sparring in the yard, then the
+talk over the darkened yard; Dace pacing a stone hall). His answers:
+
+> [the look:] "probably E [a short moving scene, then the talk over the
+> place, darkened], and C [a still backdrop] where E is infeasible. Glyphs
+> if the player chooses it (or on playdate, I guess?) though with E, it
+> seems it takes too long to get to the conversation, like conversation
+> with Hollis and lead could probably start after 1/2 the current time it
+> takes"
+>
+> [what picture:] "if the conversation is outside of battle, like we're
+> using an omniscient view, then use the tileset that is appropriate. if
+> it's taking place before or during or after the battle, then the battle
+> tileset... this should be obvious"
+>
+> [when the moving part plays:] "Only where the script asks"
+>
+> [talk during a battle:] "The battle map, darkened"
+
+- **Every conversation is drawn over its place, darkened.** The portraits,
+  name plates, text box and place line are drawn as today; the black
+  around them shows the place instead. The place is a top-down map, seen
+  from above as the battle map is (the "omniscient view").
+- **Which place:**
+  - **Talk away from a battle:** a place laid out from the bought tilesets
+    for that scene (a yard, a hall, a road), the same art and scale as the
+    battle map.
+  - **Talk just before, during or just after a battle:** the battle map
+    itself, at the spot where the talk happens. During a battle (the
+    boss's lines, death quotes, a turn's line) it is the map being played,
+    darkened, with its units as they stand.
+- **A short moving opening, only where the script asks.** Before the first
+  line, the characters move in the place at full brightness (the lead and
+  Hollis trading blows; Dace pacing alone), then the place darkens and the
+  talk comes up over it. It is short: Nick found the mockup's (3 s of
+  movement and 0.5 s of darkening) twice too long. Scenes the script
+  doesn't ask for one open straight on the darkened place.
+- **The look follows the map look.** With *Map look: Glyphs* (Options), and
+  on the Playdate, whose look is the glyphs (`playdate.md`), the place is
+  drawn in glyphs, as the battle map is; with *Pictures*, in the bought
+  tiles. It is the same place either way.
+- **No bought painted backdrops behind talk.** The *Battlebacks* stay the
+  combat screen's backdrop (*Combat screen* above).
+- **The place line stays** (`@caption`, today's top line: "Harrowby, the
+  Thornmarch").
+- **Chapter 1's places** (`docs/story/chapters/ch01.md`):
+
+  | Scene | Place | Moving opening |
+  | ----- | ----- | -------------- |
+  | `ch01_intro` (the letter) | Harrowby, the yard behind the lead's rented house, dawn: a new tileset place | the lead and Hollis spar |
+  | `ch01_prebattle` (the Red Company) | the battle map, at Harrowby by the chapel | none |
+  | the battle's scenes | the battle map, as it stands | none |
+  | `ch01_victory` (after the fight) | the battle map, at the toll-fort | none |
+  | `ch01_tbc` (Veyne Hall) | Veyne Hall, the lead's father's old study, night: a new tileset place | Dace paces |
+
+*Claude's starting rules (Nick can veto):*
+
+- The place behind the talk is at **about 40% of its brightness**, a
+  little darker than the dimmed listener's portrait, so the faces stand out
+  (tunable).
+- A moving opening lasts **about 1.5 seconds** of movement, then the place
+  darkens over **0.5 seconds** and the first line starts (tunable). A press
+  of Confirm during it skips to the first line.
+- The opening's characters are their map sprites (their glyphs in the glyph
+  look), walking at the battle map's walking speed.
+- The intro and victory scenes of a chapter use the battle map only when
+  the script names it: a scene like the letter, at dawn away from the
+  field, gets its own place. In Chapter 1 that is the table above.
+- A place is lit like its time of day (dawn, noon, night) with the battle
+  map's lighting (ADR-0058) where the pictures have it; the glyph look has
+  no lighting.
+- A scene with no place named keeps today's black.
+- The four scene music picks (`audio.md`, *Chapter 1's cues*) are asked
+  about again once these scenes are in the game (Nick: "I want to see how
+  the cutscenes would play out with this ambience").
 
 ### Dialogue log
 

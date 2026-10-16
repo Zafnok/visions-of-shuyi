@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0021"]
 nick_input: decision
-completed:
+completed: 2026-10-15
 ---
 
 # 0029 — Decide: backgrounds behind dialogue scenes
@@ -79,9 +79,9 @@ location in `docs/story/chapters/ch01.md`)?
 
 ## Acceptance criteria
 
-- [ ] `look-and-feel.md` records the choice and Nick's words.
-- [ ] A follow-up ticket exists if the answer isn't A.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `look-and-feel.md` records the choice and Nick's words.
+- [x] A follow-up ticket exists if the answer isn't A.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -115,4 +115,41 @@ with their backgrounds; the follow-up's sign-off asks about them.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Decided 2026-10-15** (`docs/design/look-and-feel.md`, *Places behind
+conversations*, with Nick's words).
+
+- **Mockups:** real frames of the game (`cargo xtask frame-png`, with the
+  bought art) of `ch01_intro` (the lead and Hollis) and Tamsin's news,
+  with places composited behind at 0.42 brightness: today's black; the
+  battle map in glyphs; the *Battlebacks* (fields at dusk, meadows); the
+  tilesets' sample maps (a cabin yard, a town); the battle map; and two
+  animated openings (the lead and Hollis sparring in the yard, then the
+  talk over it darkened; Dace pacing a stone hall). They show bought art,
+  so they are not committed (CLAUDE.md, *Bought art*).
+- **Found:** option D (a place line) already existed: every Chapter 1
+  scene opens with an `@caption` line. It stays.
+- **Nick's answers:** E (a moving opening, then the talk over the place,
+  darkened), C (a still place) where there's no opening; glyphs when the
+  player picks the glyph look and on the Playdate; the opening should be
+  about half the mockup's length; the place is the fitting tileset place
+  away from a battle and the battle map before, during and after one; an
+  opening only where the script asks; in battle, the battle map darkened.
+- **Chapter 1 needs** two new places (the yard at Harrowby, the study at
+  Veyne Hall) plus the battle map; openings in `ch01_intro` (sparring)
+  and `ch01_tbc` (Dace pacing).
+- **Follow-up tickets** (all in 0804's `blocked_by` and the roadmap's
+  round 3 list; the playtest waits for them): **0732** the `@place`
+  directive and the darkened place, the battle map behind battle scenes;
+  **0733** Chapter 1's yard and study; **0734** the moving openings, whose
+  sign-off asks again about the four scene music picks (`audio.md`).
+  1043 (the Playdate's dialogue screen) now says how the place shows
+  there.
+- **Claude's starting rules** (in the design doc, Nick can veto): the
+  place at about 40% brightness; an opening of about 1.5 s of movement
+  and 0.5 s of darkening, Confirm skips it; actors are their map sprites
+  (glyphs in the glyph look) at the map's walking speed; intro and
+  victory scenes use the battle map only when the script names it (the
+  letter at dawn gets its own place); a place is lit by its time of day
+  where the pictures allow; a scene with no place stays black.
+- **Gates:** docs and tickets only; `cargo xtask ticket-lint`, `typos`
+  and the `xtask` tests were run (no code changed).

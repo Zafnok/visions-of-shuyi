@@ -85,9 +85,12 @@ belong to a save (decided 2026-10-14: player profiles hold every option
 and their own saves; built by **0836** profiles under the options and saves
 → **0837** the title's Profile screen (also after **0839**, leaving
 Options asks whether to keep the changes), and **0838** the tutorial level
-in Options, after 0835 and 0839), **0029** backgrounds behind conversations (Nick's idea:
-a short moving scene, then the portraits over it, darkened), each with the
-tickets it creates. All of these are on the critical path now.
+in Options, after 0835 and 0839), **0029** backgrounds behind conversations (decided 2026-10-15:
+the talk over its place, darkened; a short moving opening where the script
+asks; the battle map for talk around a battle; built by **0732** the
+`place` directive and the darkened place → **0733** Chapter 1's yard and
+study → **0734** the moving openings, whose sign-off asks again about the
+scene music), each with the tickets it creates. All of these are on the critical path now.
 
 **Replaceable graphics** (Nick, 2026-10-01: swapping the map's glyphs for
 sprites from image files must be a small job; ADR-0038): **0231** pictures
@@ -182,7 +185,7 @@ Design answers unblock most of the rules work. Suggested order:
 2. **0005** level ups & classes (after 0001) · **0008** world structure · **0009** Chapter 1 scope (after 0007) · **0014** Combat Arts (after 0003) · **0016** the lord's unique class line (after 0005, 0009)
 3. **0011** look & feel sign-off (after the font ticket 0203 shows real pixels)
 4. Before the Chapter 1 playtest: **0021** bought portraits and battle sprites (done: Tiny Tales) · **0035** Harl's combat picture (done: Shironejiya's bearded axe bandit) · **0040** more packs for fighters with no fitting art (done) · **0413** how the combat scene looks · **0022** victory sting (done: Fupi's Win Jingle, a random version each win) · **0023** defeat sting (done: no sting; The Fallen plays from the banner through Game Over) · **0024** Game Over music (done: The Fallen loops, with a pause between rounds) · **0810** how battle rewards are shown
-5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0029** dialogue backgrounds · **0812** chapter card · **0813** transitions
+5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0812** chapter card · **0813** transitions
    · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
