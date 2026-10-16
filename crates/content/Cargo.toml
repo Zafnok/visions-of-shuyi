@@ -15,7 +15,7 @@ default = ["std"]
 # Without it the crate is `no_std` + `alloc` for the Playdate (ADR-0070 §3):
 # the bundle's one layer is the table `build.rs` writes instead of
 # `include_dir`, with no test files and no private layer.
-std = ["dep:include_dir", "shuyi-assets/std", "trpg-core/std", "ron/std", "serde/std"]
+std = ["dep:include_dir", "shuyi-assets/std", "trpg-core/std", "serde/std"]
 # Embeds the bought art in `assets-private/game/` over `assets/` (ADR-0040).
 # Turned on only by builds that ship (Pages, release.yml) and by hand to look
 # at the art; never by a gate, so tests always read the public placeholders.
@@ -32,7 +32,6 @@ trpg-core = { path = "../core", default-features = false }
 # The bundle's layering, content errors and RON loading (ticket 1103).
 shuyi-assets = { path = "../../engine/crates/assets", default-features = false }
 serde.workspace = true
-ron.workspace = true
 include_dir = { workspace = true, optional = true }
 # `LazyLock` and float rounding without `std` (ADR-0070 §3).
 once_cell.workspace = true
