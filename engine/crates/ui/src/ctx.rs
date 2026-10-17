@@ -105,9 +105,7 @@ pub trait GameData: Debug + Sized + 'static {
 
     /// Which clip of a line plays now, where a line has several (who the
     /// player made the hero, say).
-    fn voice_variant(&self) -> Self::Voice {
-        Self::Voice::default()
-    }
+    fn voice_variant(&self) -> Self::Voice;
 
     /// The clips that may be played, from the text of the voice manifest
     /// the platform read: those whose line still says what they say. `Err`

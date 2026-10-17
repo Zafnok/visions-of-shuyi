@@ -70,7 +70,10 @@ fn a_toy_game_of_two_screens_pushes_pops_and_quits() {
     assert!(game.quit_requested());
     // Quit: the frames that follow do nothing, and say so.
     let before = game.buffer().clone();
+    // Only the top screen updates: home saw the press that opened the
+    // menu, the release after the menu closed, and the press that quit.
     let frames = game.screen::<Home>().map(|h| h.frames);
+    assert_eq!(frames, Some(3));
     assert!(
         game.frame(&[RawInputEvent::Up(Key::D), down(Key::F)], 0.0)
             .quit
@@ -78,6 +81,21 @@ fn a_toy_game_of_two_screens_pushes_pops_and_quits() {
     assert_eq!(game.screens(), ["home"]);
     assert_eq!(game.buffer(), &before);
     assert_eq!(game.screen::<Home>().map(|h| h.frames), frames);
+}
+
+/// A test reaches into a screen on the stack by its type, the top-most
+/// first; a screen that doesn't opt in is never found.
+#[test]
+fn a_screen_on_the_stack_is_found_by_its_type() {
+    let mut game = home(ctx());
+    tap(&mut game, Key::F);
+    assert_eq!(game.screens(), ["home", "menu"]);
+    if let Some(home) = game.screen_mut::<Home>() {
+        home.frames = 40;
+    }
+    assert_eq!(game.screen::<Home>().map(|h| h.frames), Some(40));
+    assert!(game.screen::<Menu>().is_none());
+    assert!(game.screen_mut::<Menu>().is_none());
 }
 
 #[test]

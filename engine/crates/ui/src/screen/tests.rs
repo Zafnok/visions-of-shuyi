@@ -152,6 +152,19 @@ fn draw_starts_at_the_top_most_opaque_screen() {
     assert_eq!(draws(&stack, &log), ["draw b", "draw o", "draw p"]);
 }
 
+/// A screen is opaque unless it says otherwise: one that keeps the default
+/// hides the screens below it.
+#[test]
+fn a_screen_is_opaque_by_default() {
+    let log = Log::default();
+    assert!(!Home::default().is_overlay());
+    let mut stack = ScreenStack::new(Probe::boxed("a", false, &log));
+    stack.push(Box::new(Home::default()));
+    assert!(draws(&stack, &log).is_empty(), "only the home screen draws");
+    stack.push(Probe::boxed("o", true, &log));
+    assert_eq!(draws(&stack, &log), ["draw o"]);
+}
+
 #[test]
 fn all_overlays_draw_everything() {
     let log = Log::default();
