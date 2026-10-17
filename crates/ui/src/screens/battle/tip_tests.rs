@@ -191,9 +191,10 @@ fn cancel_dismisses_too_and_other_keys_wait() {
     let mut c = tipped();
     let mut s = quick();
     let start = s.cursor().pos;
+    press(&mut s, &mut c, &[]);
     press(&mut s, &mut c, &[Action::CursorRight, Action::Confirm]);
     // Neither the cursor move nor the select got through, and the tip is
-    // still up: the first action of the frame was swallowed, then the
+    // gone: the first action of the frame was swallowed, then the
     // Confirm dismissed it.
     assert_eq!(s.cursor().pos, start);
     assert_eq!(s.shown_tip(), None);
@@ -205,6 +206,58 @@ fn cancel_dismisses_too_and_other_keys_wait() {
     press(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!(s.shown_tip(), None);
     assert!(matches!(s.mode(), Mode::Idle { .. }), "{:?}", s.mode());
+}
+
+/// Ticket 0467: a tip is saved as seen when it is on screen, not when its
+/// trigger fires; one that never reached the screen shows on the next
+/// battle (a Retry is a new battle screen).
+#[test]
+fn a_tip_counts_as_seen_once_it_is_shown() {
+    let mut c = tipped();
+    let mut s = quick();
+    s.tips.fire(TipTrigger::FirstBattleStart);
+    s.tips.absorb(&mut c);
+    assert_eq!(
+        s.tips.queued().collect::<Vec<_>>(),
+        [TipTrigger::FirstBattleStart]
+    );
+    assert_eq!(c.storage.read(TIPS_SEEN_KEY).unwrap(), None, "queued only");
+    // Firing again doesn't queue it twice.
+    s.tips.fire(TipTrigger::FirstBattleStart);
+    s.tips.absorb(&mut c);
+    assert_eq!(s.tips.queued().count(), 1);
+    // Left before it showed: the next battle shows it.
+    let mut retry = quick();
+    assert_eq!(
+        dismiss_all(&mut retry, &mut c),
+        [TipTrigger::FirstBattleStart]
+    );
+    // On screen: seen.
+    assert_eq!(
+        c.storage.read(TIPS_SEEN_KEY).unwrap().as_deref(),
+        Some("battle_start")
+    );
+    let mut s = quick();
+    s.tips.show(Some(TipTrigger::FirstLowHp), &mut c);
+    let seen = c.storage.read(TIPS_SEEN_KEY).unwrap().unwrap();
+    assert_eq!(
+        seen,
+        "battle_start
+low_hp"
+    );
+}
+
+/// Ticket 0467: a Confirm in the frame a tip comes due, before it has
+/// been drawn, doesn't close it unseen; it is swallowed.
+#[test]
+fn a_tip_not_yet_drawn_takes_the_key_but_stays() {
+    let mut c = tipped();
+    let mut s = quick();
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
+    assert_eq!(s.mode(), &Mode::default());
+    press(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(s.shown_tip(), None);
 }
 
 #[test]
