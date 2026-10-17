@@ -76,9 +76,14 @@ impl Images for TestImages {
 /// A cell: a glyph, fg and bg (indices into [`GLYPHS`] and
 /// [`colors`]) and whether it is see-through.
 fn cell() -> impl Strategy<Value = Cell> {
+    cell_see_through(0.2)
+}
+
+/// [`cell`], see-through that often.
+fn cell_see_through(odds: f64) -> impl Strategy<Value = Cell> {
     let colors = colors();
     let n = colors.len();
-    (0..GLYPHS.len(), 0..n, 0..n, prop::bool::weighted(0.2)).prop_map(
+    (0..GLYPHS.len(), 0..n, 0..n, prop::bool::weighted(odds)).prop_map(
         move |(glyph, fg, bg, see_through)| Cell {
             glyph: GLYPHS[glyph],
             fg: colors[fg],
@@ -151,16 +156,33 @@ impl Thing {
     }
 }
 
-/// A buffer of Playdate cells up to `max_w × max_h`, sometimes past the
-/// screen, with its cells and things.
-fn plain_buffer(max_w: u16, max_h: u16) -> impl Strategy<Value = GlyphBuffer> {
-    (1..=max_w, 1..=max_h)
-        .prop_flat_map(|(w, h)| {
-            let cells = prop::collection::vec(cell(), usize::from(w) * usize::from(h));
-            (Just((w, h)), cells, prop::collection::vec(thing(), 0..6))
+/// The cells' sizes: the Playdate's, and smaller than the font's glyphs
+/// (8 × 16), which then reach into the cells right of and below theirs.
+const CELL_SIZES: [(u16, u16); 3] = [(8, 16), (6, 8), (8, 12)];
+
+/// A buffer of up to `max_w × max_h` cells of one of [`CELL_SIZES`],
+/// sometimes past the screen, with its cells (see-through that often) and
+/// things.
+fn plain_buffer(max_w: u16, max_h: u16, odds: f64) -> impl Strategy<Value = GlyphBuffer> {
+    (1..=max_w, 1..=max_h, 0..CELL_SIZES.len())
+        .prop_flat_map(move |(w, h, size)| {
+            let n = usize::from(w) * usize::from(h);
+            let cells = prop::collection::vec(cell_see_through(odds), n);
+            (
+                Just((w, h, size)),
+                cells,
+                prop::collection::vec(thing(), 0..6),
+            )
         })
-        .prop_map(|((w, h), cells, things)| {
-            let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE.sized(w, h), cells[0]);
+        .prop_map(|((w, h, size), cells, things)| {
+            let (cell_w, cell_h) = CELL_SIZES[size];
+            let spec = ConsoleSpec {
+                cols: w,
+                rows: h,
+                cell_w,
+                cell_h,
+            };
+            let mut buf = GlyphBuffer::with_spec(spec, cells[0]);
             for (i, cell) in (0i32..).zip(cells) {
                 buf.set(i % i32::from(w), i / i32::from(w), cell);
             }
@@ -176,7 +198,7 @@ type Backdrop = (GlyphBuffer, Rect, (f32, f32), u8);
 
 fn backdrop() -> impl Strategy<Value = Backdrop> {
     (
-        plain_buffer(24, 8),
+        plain_buffer(24, 8, 0.2),
         (0..52, 0..16, 1..30, 1..10).prop_map(|(x, y, w, h)| Rect::new(x, y, w, h)),
         (-80.0f32..80.0, -40.0f32..40.0),
         1..=4u8,
@@ -190,13 +212,13 @@ fn with_backdrop(mut buf: GlyphBuffer, backdrop: Option<Backdrop>) -> GlyphBuffe
     buf
 }
 
-/// Any buffer: a plain one, sometimes with a backdrop.
+/// Any buffer: a plain one, or one mostly see-through over a backdrop.
 fn buffer() -> impl Strategy<Value = GlyphBuffer> {
-    (
-        plain_buffer(52, 16),
-        prop::option::weighted(0.3, backdrop()),
-    )
-        .prop_map(|(buf, backdrop)| with_backdrop(buf, backdrop))
+    prop_oneof![
+        plain_buffer(52, 16, 0.2),
+        (plain_buffer(52, 16, 0.8), backdrop())
+            .prop_map(|(buf, backdrop)| with_backdrop(buf, Some(backdrop))),
+    ]
 }
 
 /// A change to a buffer.
@@ -414,4 +436,194 @@ fn a_render_marks_each_phase_in_order() {
             "invert"
         ]
     );
+}
+
+/// The one-byte path takes only a whole byte, at a byte's start, inside
+/// the clip; anything else goes the long way.
+#[test]
+fn only_a_whole_byte_inside_the_clip_is_written_straight() {
+    let mut frame = Box::new([u8::MAX; FRAME_BYTES]);
+    let target = Target {
+        frame: &mut frame,
+        clip: Clip {
+            x0: 8,
+            y0: 0,
+            x1: 24,
+            y1: 1,
+        },
+    };
+    let byte = u64::from(0b1000_0001u8) << 56;
+    assert_eq!(target.whole_byte(8, byte), Some(0b1000_0001));
+    assert_eq!(target.whole_byte(16, byte), Some(0b1000_0001));
+    // Wider than a byte, off a byte's start, or past the clip either side.
+    assert_eq!(target.whole_byte(8, byte | 1 << 55), None);
+    assert_eq!(target.whole_byte(12, byte), None);
+    assert_eq!(target.whole_byte(0, byte), None);
+    assert_eq!(target.whole_byte(24, byte), None);
+    let narrow = Target {
+        frame: &mut frame,
+        clip: Clip {
+            x0: 0,
+            y0: 0,
+            x1: 5,
+            y1: 1,
+        },
+    };
+    assert_eq!(narrow.whole_byte(0, byte), None);
+}
+
+/// A buffer of another console size is drawn whole.
+#[test]
+fn a_new_console_size_is_drawn_whole() {
+    let (atlas, bits) = test_font();
+    let font = Font::new(&atlas, &bits).unwrap();
+    let cell = Cell::new(
+        '#',
+        Rgb::from(Ink::Black.code()),
+        Rgb::from(Ink::Grey.code()),
+    );
+    let old = GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE.sized(4, 2), cell);
+    let small = ConsoleSpec {
+        cols: 4,
+        rows: 2,
+        cell_w: 6,
+        cell_h: 8,
+    };
+    let new = GlyphBuffer::with_spec(small, cell);
+    let mut frame = fast(&old);
+    render_changed(&old, &new, &font, &TestImages, &mut frame);
+    assert!(*frame == *fast(&new));
+}
+
+/// A scene zoomed and placed away from the screen's corner: its edged
+/// glyphs and its sprites (a picture flipped, dimmed, faded) draw as the
+/// reference draws them.
+#[test]
+fn a_zoomed_scene_away_from_the_corner_draws_as_the_reference() {
+    let black = Rgb::from(Ink::Black.code());
+    let edged = Rgb::from(Ink::BlackEdged.code());
+    let grey = Rgb::from(Ink::Grey.code());
+    for zoom in 2..=4 {
+        let mut scene = GlyphBuffer::with_spec(
+            ConsoleSpec::PLAYDATE.sized(6, 3),
+            Cell::new(' ', black, grey),
+        );
+        scene.print(1, 1, "X#[", edged, grey);
+        scene.print(0, 2, "]\"X", black, grey);
+        for (x, paint) in [(4, Paint::Image), (20, Paint::Dimmed)] {
+            scene.add_sprite(Sprite {
+                flip_x: x == 20,
+                opacity: 200,
+                paint,
+                ..Sprite::new(
+                    picture_id(),
+                    Rect::new(0, 0, 8, 4),
+                    Rect::new(x, 3, 13, 7),
+                    Layer::Over,
+                )
+            });
+        }
+        let mut buf = GlyphBuffer::with_spec(
+            ConsoleSpec::PLAYDATE.sized(50, 15),
+            Cell::see_through(' ', black),
+        );
+        buf.set_backdrop(Rc::new(scene), Rect::new(3, 2, 40, 10), (5.0, 3.0), zoom);
+        let (fast, slow) = (fast(&buf), slow(&buf));
+        assert!(
+            fast == slow,
+            "zoom {zoom}: first differs at {:?}",
+            first_difference(&fast, &slow)
+        );
+        // Something of the scene shows.
+        assert!(fast.iter().any(|&byte| byte != u8::MAX), "zoom {zoom}");
+    }
+}
+
+/// How far a cell may draw: its size, or the font's glyph where that is
+/// bigger, and a pixel all round; and which cells may reach a stretch of
+/// pixels.
+#[test]
+fn a_cell_reaches_its_glyph_and_a_pixel_more() {
+    let (atlas, bits) = test_font();
+    let font = Font::new(&atlas, &bits).unwrap();
+    let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(255, 255, 255));
+    let sized = |cell_w, cell_h| ConsoleSpec {
+        cols: 10,
+        rows: 4,
+        cell_w,
+        cell_h,
+    };
+    let reach = |cell_w, cell_h, scale| {
+        let buf = GlyphBuffer::with_spec(sized(cell_w, cell_h), blank);
+        let r = Reach::of(&buf, &font, scale);
+        (r.cell_w, r.cell_h, r.right, r.below)
+    };
+    // The font's glyphs are 8 × 16.
+    assert_eq!(reach(8, 16, 1), (8, 16, 9, 17));
+    assert_eq!(reach(6, 8, 1), (6, 8, 9, 17));
+    assert_eq!(reach(6, 8, 3), (18, 24, 25, 49));
+    assert_eq!(reach(12, 20, 2), (24, 40, 25, 41));
+    assert_eq!(font.height(3), 48);
+    // Cells of 10 px from x = 5, each reaching 13 px past its start and
+    // a pixel before it: pixels 30..40 are reached by cells 1 to 3.
+    assert_eq!(Reach::span(30, 40, 5, 10, 13, 50), 1..4);
+    assert_eq!(Reach::span(30, 40, 5, 10, 13, 3), 1..3);
+    assert_eq!(Reach::span(0, 400, -100, 10, 13, 50), 8..50);
+    assert_eq!(Reach::span(0, 10, 0, 0, 13, 50), 0..0);
+    // The edge pixel before a cell: pixel 34 is cell 3's (from 35).
+    assert_eq!(Reach::span(34, 35, 5, 10, 11, 50).end, 4);
+    let at = Place {
+        x: 7,
+        y: -3,
+        scale: 3,
+    };
+    assert_eq!(
+        at.screen(Rect::new(2, 5, 4, 6)),
+        Clip {
+            x0: 13,
+            y0: 12,
+            x1: 25,
+            y1: 30,
+        }
+    );
+    let around = Reach::of(&GlyphBuffer::with_spec(sized(6, 8), blank), &font, 1);
+    assert_eq!(
+        around.around(Place::ORIGIN, 2, 3),
+        Clip {
+            x0: 11,
+            y0: 23,
+            x1: 21,
+            y1: 41,
+        }
+    );
+}
+
+/// The dither's threshold, where a pixel just shows or just doesn't
+/// (opacity 247 is the edge for the last pixel of the 4 × 4 order).
+#[test]
+fn a_sprite_at_the_dithers_edge_draws_as_the_reference() {
+    let grey = Rgb::from(Ink::Grey.code());
+    for level in [246, 247, 248] {
+        let mut buf = GlyphBuffer::with_spec(
+            ConsoleSpec::PLAYDATE.sized(4, 2),
+            Cell::new(' ', grey, grey),
+        );
+        buf.add_sprite(Sprite {
+            opacity: level,
+            brightness: level,
+            ..Sprite::new(
+                picture_id(),
+                Rect::new(0, 0, 8, 4),
+                Rect::new(0, 0, 32, 32),
+                Layer::Over,
+            )
+        });
+        let (fast, slow) = (fast(&buf), slow(&buf));
+        assert!(
+            fast == slow,
+            "{level}: first differs at {:?}",
+            first_difference(&fast, &slow)
+        );
+    }
+    assert!(!shows(247, 0, 3) && shows(248, 0, 3) && shows(247, 1, 0));
 }
