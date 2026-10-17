@@ -14,6 +14,7 @@ use trpg_ui::GlyphBuffer;
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame, Phase};
 
 use super::elapsed;
+use crate::pictures::Pictures;
 use crate::report::Phases;
 
 /// The renders' scratch frames and times.
@@ -42,12 +43,18 @@ impl Bench {
 
     /// Renders `buffer` whole with both renderers, timing them, and
     /// checks both against `shown`, the frame the front end drew of it.
-    pub fn measure(&mut self, buffer: &GlyphBuffer, font: &onebit::Font<'_>, shown: &Frame) {
+    pub fn measure(
+        &mut self,
+        buffer: &GlyphBuffer,
+        font: &onebit::Font<'_>,
+        pictures: &Pictures,
+        shown: &Frame,
+    ) {
         time(&mut self.slow_phases, |mut mark| {
-            onebit::reference::render_marked(buffer, font, &(), &mut self.slow, &mut mark);
+            onebit::reference::render_marked(buffer, font, pictures, &mut self.slow, &mut mark);
         });
         time(&mut self.fast_phases, |mut mark| {
-            onebit::render_marked(buffer, font, &(), &mut self.fast, &mut mark);
+            onebit::render_marked(buffer, font, pictures, &mut self.fast, &mut mark);
         });
         if self.fast != self.slow {
             self.unlike_reference += 1;

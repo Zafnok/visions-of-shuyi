@@ -40,6 +40,8 @@ pub mod lighting;
 pub mod map;
 pub mod names;
 pub mod palette;
+#[cfg(feature = "std")]
+pub mod playdate_images;
 pub mod portrait;
 pub mod ron_loader;
 pub mod skill;
@@ -93,6 +95,9 @@ pub use map::{MapDef, MapLegend, MapLook};
 pub use names::Names;
 pub use palette::{PaletteDef, Theme};
 pub use portrait::Portrait;
+/// One-bit pictures, the Playdate's in place of its PNGs (ticket 1040,
+/// ADR-0083): the format is Shuyi Engine's (`shuyi_assets::bitmap`).
+pub use shuyi_assets::bitmap;
 pub use terrain::{TerrainDef, TerrainDisplay, TerrainDisplayTable};
 pub use tileset::{CornerLayer, ImageRect, Layer, Look, Picture, TerrainTiles, TileLayer, Tileset};
 pub use tip::{Tip, TipTable, TipTrigger};

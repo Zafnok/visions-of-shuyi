@@ -14,7 +14,8 @@
 //! renderer, the D-pad, A and B fed in as a controller, and the game's
 //! storage on the Playdate's files. Its bundle is the Playdate's, which
 //! leaves out what it does not use, and a loading card is on the screen
-//! from the first frame while the data loads (ticket 1036).
+//! from the first frame while the data loads (ticket 1036). Its pictures
+//! are one-bit ones made when it is built (`pictures`, ticket 1040).
 #![cfg_attr(feature = "sdk", no_std)]
 
 extern crate alloc;
@@ -22,6 +23,7 @@ extern crate alloc;
 pub mod card;
 pub mod heap;
 pub mod pads;
+pub mod pictures;
 pub mod report;
 pub mod screen;
 pub mod stack;

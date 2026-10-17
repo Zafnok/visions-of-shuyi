@@ -100,6 +100,11 @@ Carved so far:
   embedded files, font and images, its sound files and voice folder;
   `Platform::setup` puts the storage, voices and music seed into its
   context.
+- `shuyi-assets` (1040, written here): one-bit pictures (`bitmap`): the
+  `.1bit` file a one-bit screen draws in place of a PNG, and the
+  converter that makes one (`bitmap::convert`: enlarge, stretch, levels,
+  Bayer dither, dark lines; ADR-0083). The game's table says which
+  pictures and how.
 
 ## Third-party crates the engine may use
 
@@ -123,6 +128,7 @@ quad-storage
 proptest
 insta
 tempfile
+png
 ```
 
 ## License

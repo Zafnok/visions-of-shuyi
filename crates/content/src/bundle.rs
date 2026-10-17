@@ -286,7 +286,9 @@ mod tests {
     }
 
     /// The Playdate's table is `assets/` without the files it leaves out,
-    /// each with the same bytes, and names those as left out.
+    /// each with the same bytes but the pictures it draws one-bit (ticket
+    /// 1040): those are one-bit pictures made from that PNG. It names the
+    /// left-out files as left out.
     #[test]
     fn the_playdate_table_is_assets_without_what_it_leaves_out() {
         let all = Bundle::new(vec![Layer::table(DISPLAY_ROOT, TABLE)]);
@@ -297,7 +299,16 @@ mod tests {
             let left_out = PLAYDATE_LEFT_OUT.contains(&path);
             assert_eq!(playdate.left_out(path), left_out, "{path}");
             assert_eq!(kept.contains(&path), !left_out, "{path}");
-            if !left_out {
+            if left_out {
+                continue;
+            }
+            if crate::playdate_images::kind_of(path).is_some() {
+                let png = all.bytes(path).and_then(crate::image::png_size);
+                let bits = playdate.bytes(path).unwrap_or_default();
+                let source = shuyi_assets::bitmap::bitmap_sizes(bits).map(|(_, source)| source);
+                let source = source.map(|(w, h)| (u32::from(w), u32::from(h)));
+                assert_eq!(source, png, "{path}");
+            } else {
                 assert_eq!(playdate.bytes(path), all.bytes(path), "{path}");
             }
         }
@@ -316,6 +327,28 @@ mod tests {
         ] {
             assert!(playdate.bytes(path).is_some(), "{path}");
         }
+        // One-bit pictures at the size the Playdate shows them, in their
+        // styles (`playdate_images.rs`); the logo stays a PNG.
+        let bitmap = |path| {
+            let bytes = playdate.bytes(path).unwrap_or_default();
+            let bitmap = shuyi_assets::bitmap::Bitmap::parse(bytes).ok();
+            bitmap.map(|b| (b.width(), b.height(), b.styles(), b.mask().is_some()))
+        };
+        assert_eq!(
+            bitmap("portraits/lead_f/happy.png"),
+            Some((64, 64, 4, true))
+        );
+        assert_eq!(bitmap("battlers/default.png"), Some((96, 144, 1, true)));
+        assert_eq!(bitmap("battlebacks/fields.png"), Some((400, 295, 1, false)));
+        assert_eq!(
+            bitmap("title/fields_b_dusk.png"),
+            Some((400, 295, 1, false))
+        );
+        assert_eq!(bitmap("title/logo.png"), None);
+        assert_eq!(
+            playdate.bytes("title/logo.png"),
+            all.bytes("title/logo.png")
+        );
         // The PC's bundle leaves nothing out.
         assert!(!left_out("audio/sfx/heal.wav"));
     }

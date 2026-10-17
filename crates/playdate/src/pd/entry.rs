@@ -24,6 +24,7 @@ use super::{
     buttons, elapsed, game_stack, log, millis, reset_elapsed, set_refresh_rate, show, write_file,
 };
 use crate::pads::PlaydatePad;
+use crate::pictures::Pictures;
 use crate::report::{self, Minute, Reads};
 use crate::storage::{self, FileStorage};
 use crate::{card, start};
@@ -57,6 +58,8 @@ struct Running {
     game: Game,
     pad: PlaydatePad,
     font: onebit::Font<'static>,
+    /// The one-bit pictures sprites show.
+    pictures: Pictures,
     /// The picture last drawn to the screen, `None` before the first.
     shown: Option<GlyphBuffer>,
     /// The one-bit frame the renderer draws into.
@@ -272,11 +275,13 @@ fn start_game(card: Box<Card>) -> Result<Box<Running>, String> {
         log(&warning);
     }
     let pad = PlaydatePad::new(ctx.game.content.keymap.stick);
+    let pictures = Pictures::new(&ctx.game.content.images);
     mark("the title");
     Ok(Box::new(Running {
         game: trpg_ui::game::start(ctx),
         pad,
         font,
+        pictures,
         shown: None,
         frame,
         minute: Minute::default(),
@@ -301,16 +306,17 @@ impl Running {
             return false;
         }
         if let Some(shown) = &mut self.shown {
-            onebit::render_changed(shown, buffer, &self.font, &(), &mut self.frame);
+            onebit::render_changed(shown, buffer, &self.font, &self.pictures, &mut self.frame);
             shown.clone_from(buffer);
         } else {
-            onebit::render(buffer, &self.font, &(), &mut self.frame);
+            onebit::render(buffer, &self.font, &self.pictures, &mut self.frame);
             self.shown = Some(buffer.clone());
         }
         let changed = show(&self.frame);
         self.minute.render.add((elapsed() - framed) * 1000.0);
         #[cfg(feature = "bench")]
-        self.bench.measure(buffer, &self.font, &self.frame);
+        self.bench
+            .measure(buffer, &self.font, &self.pictures, &self.frame);
         changed
     }
 }
