@@ -134,8 +134,7 @@ Stacked on 1107's PR.
 - **Rebased** after 1055's last commit (renderer tests for CI's mutants)
   landed under 1106: its changes to `onebit.rs` and `onebit/speed_tests.rs`
   are in the engine's copies, its proptest regressions file moved to
-  `engine/crates/ui/proptest-regressions/frame/onebit/`, and one of its
-  `assert!(a == b)` is an `assert_eq!` (clippy's `manual_assert_eq`).
+  `engine/crates/ui/proptest-regressions/frame/onebit/`.
 - **Compared PNGs:** `frame-png` rendered six frames (title, battle,
   debug menu, battle at dusk, Playdate title and battle) from 1107's
   branch and from this one: all six are byte-identical.

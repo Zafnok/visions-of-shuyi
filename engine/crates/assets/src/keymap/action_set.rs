@@ -71,10 +71,8 @@ pub trait ActionSet: Copy + Ord + Eq + Hash + Debug + 'static {
     /// The keys every keymap has on top of its own bindings, which the
     /// player can't move or remove (this game: plain `Escape` cancels).
     /// Shown after an action's own keys in help text, but never counted as
-    /// a key of its own.
-    fn fixed_keys() -> &'static [(Chord, Self)] {
-        &[]
-    }
+    /// a key of its own. A game with none returns `&[]`.
+    fn fixed_keys() -> &'static [(Chord, Self)];
 
     /// The first action that [`ui`](Self::ui) maps to `ui`, if any.
     fn for_ui(ui: UiAction) -> Option<Self> {
