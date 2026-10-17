@@ -338,7 +338,7 @@ early so every later PR is checked by them.
      tutorial fixes **0464**, **0467**, **0841**) → **1051** the AI plans
      once per phase (only if the enemy pauses feel long) · **1057** the
      battle's own frame time on the device (1055 measured 18 ms a frame
-     at least; either order with 1050) → **1059** the battle map at 50
+     at least; either order with 1050) → **1060** the battle map at 50
      frames a second (the screen's most; after 1038) · **0067** Nick
      decides whether the map uses the bought tiles and sprites (its build
      tickets follow, after 1037 and 1040)

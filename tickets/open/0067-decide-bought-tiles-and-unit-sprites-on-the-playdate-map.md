@@ -106,7 +106,7 @@ Questions:
 - Building any skin or converter (1037, 1040 and the build tickets this
   ticket writes).
 - The combat picture (0062, 1041) and portraits (1042).
-- The frame rate (1059).
+- The frame rate (1060).
 - Drawing new art or touching up bought sprites by hand (Claude never
   draws character art; Nick vetoed commissions).
 
