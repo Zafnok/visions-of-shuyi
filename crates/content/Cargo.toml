@@ -26,6 +26,10 @@ private-assets = []
 # tests, and `debug-tools` builds through `trpg-ui`). Never on in a build
 # that ships.
 test-fixtures = []
+# The Playdate's bundle (`bundle::playdate_layers`, ticket 1036) with `std`
+# too, for the test that plays Chapter 1 against it. Without `std` it is the
+# only bundle. Never on in a PC or web build.
+playdate-bundle = []
 
 [dependencies]
 trpg-core = { path = "../core", default-features = false }

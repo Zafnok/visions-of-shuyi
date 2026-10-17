@@ -56,3 +56,12 @@ trpg-content = { path = "../content", default-features = false }
 # `storage-conformance`: the debug build checks the game's storage on the
 # Playdate's files (`src/storage.rs`).
 trpg-ui = { path = "../ui", default-features = false, features = ["storage-conformance"] }
+
+[dev-dependencies]
+# The test that plays Chapter 1 through the front end against the
+# Playdate's bundle (`src/chapter_1.rs`, ticket 1036): the test `Harness`,
+# that bundle with `std`, the rules' commands and the playthrough's file.
+trpg-ui = { path = "../ui", features = ["harness"] }
+trpg-content = { path = "../content", features = ["playdate-bundle"] }
+trpg-core = { path = "../core" }
+ron = { workspace = true, features = ["std"] }

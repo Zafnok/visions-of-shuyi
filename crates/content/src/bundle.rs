@@ -20,22 +20,36 @@
 //!
 //! Without `std` (the Playdate, ADR-0070 §3) `include_dir` does not build:
 //! `assets/` is the table of files `build.rs` writes, and there are no test
-//! files and no private layer.
+//! files and no private layer. It is the **Playdate's bundle**
+//! (`playdate_layers`, ticket 1036): `assets/` without the files
+//! `crates/content/playdate-bundle.txt` lists, which it leaves out on
+//! purpose ([`left_out`]).
 use crate::prelude::*;
 
 #[cfg(feature = "std")]
 use include_dir::{Dir, include_dir};
-pub use shuyi_assets::bundle::story_only;
-use shuyi_assets::bundle::{self as engine, Bundle, Layer};
+use shuyi_assets::bundle as engine;
+#[cfg(feature = "std")]
+pub use shuyi_assets::bundle::reading;
+pub use shuyi_assets::bundle::{Bundle, Layer, Watcher, story_only, watch};
 
 #[cfg(feature = "std")]
 static ASSETS: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets");
 
 /// Every file under `assets/`: its path (relative to `assets/`,
-/// `/`-separated) and contents, sorted by path. The bundle without `std`;
-/// with it, only the test that keeps the two the same reads it.
-#[cfg(any(not(feature = "std"), test))]
+/// `/`-separated) and contents, sorted by path. Only the test that keeps it
+/// and `include_dir` the same reads it.
+#[cfg(test)]
 static TABLE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/bundle_files.rs"));
+
+/// [`TABLE`] without the files the Playdate leaves out: the bundle without
+/// `std`.
+#[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
+static PLAYDATE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/playdate_files.rs"));
+
+/// The paths (sorted) of the files of `assets/` the Playdate leaves out.
+#[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
+static PLAYDATE_LEFT_OUT: &[&str] = include!(concat!(env!("OUT_DIR"), "/playdate_left_out.rs"));
 
 #[cfg(all(feature = "std", feature = "private-assets"))]
 static PRIVATE: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets-private/game");
@@ -82,7 +96,7 @@ pub fn layers() -> Vec<Layer> {
         #[cfg(feature = "std")]
         Layer::dir(DISPLAY_ROOT, &ASSETS),
         #[cfg(not(feature = "std"))]
-        Layer::table(DISPLAY_ROOT, TABLE),
+        playdate_layer(),
         #[cfg(all(
             feature = "std",
             feature = "private-assets",
@@ -96,10 +110,33 @@ pub fn layers() -> Vec<Layer> {
     ]
 }
 
+/// `assets/` as the Playdate embeds it: without the files
+/// `playdate-bundle.txt` lists, which it leaves out.
+#[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
+const fn playdate_layer() -> Layer {
+    Layer::table(DISPLAY_ROOT, PLAYDATE).leaving_out(PLAYDATE_LEFT_OUT)
+}
+
+/// The Playdate build's layers (ticket 1036): [`layers`] without `std`.
+/// With it (the `playdate-bundle` feature), for the test that plays
+/// Chapter 1 against them ([`reading`]).
+#[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
+pub fn playdate_layers() -> Vec<Layer> {
+    vec![playdate_layer()]
+}
+
 /// The game's bundle, the process-wide one: installed from [`layers`] the
 /// first time anything reads a file ([`crate::load_embedded`] does first).
+/// Inside [`reading`], the bundle this thread reads instead.
 pub fn install() -> &'static Bundle {
     engine::get_or_install(|| Bundle::new(layers()))
+}
+
+/// Whether this build leaves the file at `path` (relative to `assets/`)
+/// out on purpose: the Playdate's, for what it does without (ticket 1036).
+/// A loader then does without the file instead of reporting it missing.
+pub fn left_out(path: &str) -> bool {
+    install().left_out(path)
 }
 
 /// Returns the UTF-8 contents of the embedded file at `path` (relative to
@@ -246,6 +283,41 @@ mod tests {
         assert_eq!(table.file("data/nope.ron"), None);
         assert_eq!(table.test_part("data/characters.ron"), None);
         assert_eq!(table.display_path("data/nope.ron"), "assets/data/nope.ron");
+    }
+
+    /// The Playdate's table is `assets/` without the files it leaves out,
+    /// each with the same bytes, and names those as left out.
+    #[test]
+    fn the_playdate_table_is_assets_without_what_it_leaves_out() {
+        let all = Bundle::new(vec![Layer::table(DISPLAY_ROOT, TABLE)]);
+        let playdate = Bundle::new(playdate_layers());
+        let kept = playdate.files_under("");
+        assert!(kept.len() > 50, "{} files", kept.len());
+        for path in all.files_under("") {
+            let left_out = PLAYDATE_LEFT_OUT.contains(&path);
+            assert_eq!(playdate.left_out(path), left_out, "{path}");
+            assert_eq!(kept.contains(&path), !left_out, "{path}");
+            if !left_out {
+                assert_eq!(playdate.bytes(path), all.bytes(path), "{path}");
+            }
+        }
+        assert!(PLAYDATE_LEFT_OUT.iter().all(|p| all.bytes(p).is_some()));
+        let mut sorted = PLAYDATE_LEFT_OUT.to_vec();
+        sorted.sort_unstable();
+        assert_eq!(sorted, PLAYDATE_LEFT_OUT);
+        // What `playdate-bundle.txt` lists.
+        for path in ["maps/README.md", "icon/icon.ico", "audio/sfx/heal.wav"] {
+            assert!(playdate.left_out(path), "{path}");
+        }
+        for path in [
+            "data/palette.ron",
+            "audio/audio.ron",
+            "fonts/atlas_1bit.bin",
+        ] {
+            assert!(playdate.bytes(path).is_some(), "{path}");
+        }
+        // The PC's bundle leaves nothing out.
+        assert!(!left_out("audio/sfx/heal.wav"));
     }
 
     #[test]

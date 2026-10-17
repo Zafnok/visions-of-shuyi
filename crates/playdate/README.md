@@ -4,10 +4,24 @@ The game on the Playdate ([ADR-0070](../../docs/adr/0070-playdate-front-end.md))
 A platform crate like `trpg-app`: it owns the SDK's update callback, the
 clock, files and the allocator, and holds no game or screen logic.
 
-It shows "Loading…", loads the game on the game's own stack and runs it
-(ticket 1033). The screens still wear the PC's skins, drawn into a
-50 × 15 console, so most are cut off until their Playdate skins land
-(1037 on).
+From its first frame it shows the loading card, the game's name centred
+in the game's font (ticket 1036, `src/card.rs`); then it loads the game
+on the game's own stack and runs it (ticket 1033). The screens still
+wear the PC's skins, drawn into a 50 × 15 console, so most are cut off
+until their Playdate skins land (1037 on).
+
+## The Playdate's bundle
+
+The game's data is `assets/` without what the Playdate never reads:
+the notes (`README.md`, license texts), the PC's icons and, until 1047,
+the sound files. `crates/content/playdate-bundle.txt` lists what is left
+out; `trpg-content`'s `build.rs` embeds the rest in the build without
+`std`, and the bundle knows what it left out, so the audio manifest's
+sounds go unchecked instead of missing (ticket 1036). `src/chapter_1.rs`
+plays Chapter 1 through `src/start.rs` against that bundle: every file
+the game reads must be in it, and every file in it must be read. A new
+file under `assets/` that the Playdate never reads fails it until it is
+listed.
 
 ## What is where
 
@@ -18,6 +32,9 @@ It shows "Loading…", loads the game on the game's own stack and runs it
 | `src/pads.rs` | The buttons: the SDK's button bits as a `PadKind::Playdate` controller. The only file here that names buttons (`check-keys`) |
 | `src/storage.rs` | The game's `Storage` on the Playdate's files |
 | `src/screen.rs` | Copying the one-bit frame onto the SDK's frame buffer, changed rows only |
+| `src/card.rs` | The loading card, and the game's font read before the rest of the data |
+| `src/start.rs` | The game's context as the Playdate starts it: console, palette, buttons, no keyboard |
+| `src/chapter_1.rs` | The test that plays Chapter 1 against the Playdate's bundle |
 | `src/{heap,stack,text,report}.rs` | The plain, tested parts: allocator arithmetic, the stack's size and high-water mark, C strings, the logged reports |
 | `setup.c-LICENSE.md` | The license of the SDK's `setup.c`, which is linked into the game (0BSD) |
 
@@ -77,8 +94,28 @@ failure stops the game with the error.
 Once a minute the front end logs the screen on top, the frames a second,
 `Game::frame`'s and the render-and-copy's min / avg / max milliseconds,
 and the game stack's high-water mark (device only), in every build: the
-device needs the release build. On start it logs, and writes to
-`load-report.txt`, how long loading the game took.
+device needs the release build.
+
+On start it logs when the loading card was shown, how long loading the
+game took, how many files it read, the ten slowest and when the game's
+first frame (the title) was shown, all in milliseconds after the game
+started:
+
+```
+Loading card shown … ms after start
+Game data loaded in … ms
+Game stack used: … of 65,536 bytes
+Bundle: … reads of … files, 0 not in the bundle
+Slowest files, ms to the next read: dialogue/ch01.dlg …, (the title) …, …
+First frame of the game shown … ms after start
+```
+
+A file's time runs from its read to the next one: the parsing and
+checking of what it holds, roughly (a loader may read several files
+before parsing them). The steps that read no file are named in brackets:
+`(the player's settings and saves)`, `(the title)`. `load-report.txt`
+holds the same lines and every file read with its time; the debug build
+also logs each, and each file read once the game runs.
 
 **The bench build** (`cargo xtask playdate --release --bench`, ticket
 1055) packs `target/playdate/VisionsOfShuyi-bench.pdx`: after each frame

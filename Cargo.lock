@@ -1174,7 +1174,9 @@ dependencies = [
 name = "trpg-playdate"
 version = "0.3.0"
 dependencies = [
+ "ron",
  "trpg-content",
+ "trpg-core",
  "trpg-ui",
 ]
 

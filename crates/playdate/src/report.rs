@@ -1,9 +1,10 @@
-//! What the front end shows and logs: while the game's data loads
-//! (ticket 1031), temporary text with the SDK's own font, replaced by the
-//! loading card of ticket 1036; then, once a minute, how fast the game
-//! runs (ticket 1033), and in the bench build each render phase's time
-//! (ticket 1055).
+//! What the front end logs: how the start went (ticket 1031), with when
+//! the loading card and the game's first frame were shown and which files
+//! took longest to load (ticket 1036); then, once a minute, how fast the
+//! game runs (ticket 1033), and in the bench build each render phase's
+//! time (ticket 1055).
 
+use alloc::collections::BTreeMap;
 use alloc::format;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -12,12 +13,144 @@ use trpg_ui::onebit::Phase;
 
 use crate::stack;
 
-/// Shown while the game's data loads.
-pub const LOADING: &str = "Loading\u{2026}";
-
 /// The file in the game's data folder the report is also written to, for
 /// reading a Simulator run without its console (`Disk/Data/<bundle ID>/`).
+/// It also lists every file read while loading, with its time.
 pub const FILE: &str = "load-report.txt";
+
+/// How many of the slowest files the log names.
+pub const SLOWEST: usize = 10;
+
+/// When the loading card was shown, in milliseconds after the game
+/// started.
+pub fn card_shown(ms: u32) -> String {
+    format!("Loading card shown {} ms after start", grouped(ms as usize))
+}
+
+/// When the game's first frame (the title) was shown, in milliseconds
+/// after the game started.
+pub fn game_shown(ms: u32) -> String {
+    format!(
+        "First frame of the game shown {} ms after start",
+        grouped(ms as usize)
+    )
+}
+
+/// The files the game reads from its bundle while it loads, each with when
+/// (`shuyi_assets::bundle::watch`): a file's time is from its read to the
+/// next read, the parsing and checking of what it holds. Only roughly: a
+/// loader may read several files before it parses them. The steps of the
+/// start that read no file are marked (`mark`), so their time is theirs.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Reads {
+    /// Each read, in order: the path (or a step's name in brackets),
+    /// whether the bundle has it (`None` for a step), and when
+    /// (milliseconds after loading started).
+    reads: Vec<(String, Option<bool>, f32)>,
+}
+
+/// One file's reads, or one step, for the report.
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct FileTime {
+    /// From each of its reads to the next read, summed.
+    ms: f32,
+    /// How many times it was read.
+    reads: u32,
+    /// Whether the bundle has it; `None` for a step.
+    found: Option<bool>,
+}
+
+impl Reads {
+    /// Notes a read of `path`, `at_ms` milliseconds after loading started.
+    pub fn add(&mut self, path: &str, found: bool, at_ms: f32) {
+        self.reads.push((String::from(path), Some(found), at_ms));
+    }
+
+    /// Notes that the step `name` of the start began, `at_ms` milliseconds
+    /// after loading started: the time to the next read is its own.
+    pub fn mark(&mut self, name: &str, at_ms: f32) {
+        self.reads.push((format!("({name})"), None, at_ms));
+    }
+
+    /// Each file read and each step, by name, when loading ended at
+    /// `end_ms`.
+    fn files(&self, end_ms: f32) -> BTreeMap<&str, FileTime> {
+        let mut files: BTreeMap<&str, FileTime> = BTreeMap::new();
+        let ends = self.reads.iter().skip(1).map(|r| r.2).chain([end_ms]);
+        for ((path, found, at), end) in self.reads.iter().zip(ends) {
+            let file = files.entry(path).or_insert(FileTime {
+                ms: 0.0,
+                reads: 0,
+                found: *found,
+            });
+            file.ms += (end - at).max(0.0);
+            file.reads += 1;
+        }
+        files
+    }
+
+    /// The files by time, the slowest first (by path where equal).
+    fn by_time(&self, end_ms: f32) -> Vec<(&str, FileTime)> {
+        let mut files: Vec<(&str, FileTime)> = self.files(end_ms).into_iter().collect();
+        files.sort_by(|a, b| b.1.ms.total_cmp(&a.1.ms).then(a.0.cmp(b.0)));
+        files
+    }
+
+    /// What the log says: how many reads of how many files, which the
+    /// bundle lacks, and the [`SLOWEST`] slowest files and steps.
+    pub fn summary(&self, end_ms: f32) -> Vec<String> {
+        let files = self.by_time(end_ms);
+        let missing: Vec<&str> = files
+            .iter()
+            .filter(|(_, f)| f.found == Some(false))
+            .map(|(path, _)| *path)
+            .collect();
+        let reads = self.reads.iter().filter(|r| r.1.is_some()).count();
+        let read = files.iter().filter(|(_, f)| f.found.is_some()).count();
+        let mut lines = Vec::from([format!(
+            "Bundle: {} reads of {} files, {} not in the bundle",
+            grouped(reads),
+            grouped(read),
+            missing.len()
+        )]);
+        if !missing.is_empty() {
+            lines.push(format!("Not in the bundle: {}", missing.join(", ")));
+        }
+        let slowest: Vec<String> = files
+            .iter()
+            .take(SLOWEST)
+            .map(|(path, f)| format!("{path} {:.0}", f.ms))
+            .collect();
+        if !slowest.is_empty() {
+            lines.push(format!(
+                "Slowest files, ms to the next read: {}",
+                slowest.join(", ")
+            ));
+        }
+        lines
+    }
+
+    /// Every file read and step, the slowest first: its time, and how many
+    /// times it was read when more than once.
+    pub fn each(&self, end_ms: f32) -> Vec<String> {
+        self.by_time(end_ms)
+            .into_iter()
+            .map(|(path, f)| {
+                let missing = if f.found == Some(false) {
+                    ", not in the bundle"
+                } else {
+                    ""
+                };
+                let reads = if f.reads > 1 {
+                    format!(", {} reads", f.reads)
+                } else {
+                    String::new()
+                };
+                format!("  {path}: {:.1} ms{reads}{missing}", f.ms)
+            })
+            .collect()
+    }
+}
 
 /// The report after loading: how long it took, and how much of the
 /// game's stack it used (`None` where it is not measured: the Simulator
@@ -268,6 +401,70 @@ mod tests {
                  backgrounds 0.0 / 0.0, under items 0.0 / 0.0, edges 0.0 / 0.0, \
                  glyphs 4.0 / 6.0, over items 0.0 / 0.0, invert 0.0 / 0.0",
             ]
+        );
+    }
+
+    #[test]
+    fn the_start_lines_name_when_the_card_and_the_game_were_shown() {
+        assert_eq!(card_shown(85), "Loading card shown 85 ms after start");
+        assert_eq!(
+            game_shown(3_812),
+            "First frame of the game shown 3,812 ms after start"
+        );
+    }
+
+    /// A file's time runs to the next read; the last one's to the end.
+    #[test]
+    fn each_file_takes_the_time_to_the_next_read() {
+        let mut reads = Reads::default();
+        reads.add("data/palette.ron", true, 0.0);
+        reads.add("data/terrain.ron", true, 10.0);
+        reads.add("data/palette.ron", true, 40.0);
+        reads.add("lang/fr/ui.ron", false, 42.5);
+        reads.add("dialogue/ch01.dlg", true, 43.0);
+        reads.mark("the title", 113.0);
+        assert_eq!(
+            reads.summary(143.0),
+            [
+                "Bundle: 5 reads of 4 files, 1 not in the bundle",
+                "Not in the bundle: lang/fr/ui.ron",
+                "Slowest files, ms to the next read: dialogue/ch01.dlg 70, \
+                 (the title) 30, data/terrain.ron 30, data/palette.ron 12, lang/fr/ui.ron 0",
+            ]
+        );
+        assert_eq!(
+            reads.each(143.0),
+            [
+                "  dialogue/ch01.dlg: 70.0 ms",
+                "  (the title): 30.0 ms",
+                "  data/terrain.ron: 30.0 ms",
+                "  data/palette.ron: 12.5 ms, 2 reads",
+                "  lang/fr/ui.ron: 0.5 ms, not in the bundle",
+            ]
+        );
+    }
+
+    #[test]
+    fn the_summary_names_only_the_slowest_files() {
+        let mut reads = Reads::default();
+        for i in 0..15_u8 {
+            reads.add(&format!("f{i:02}"), true, f32::from(i) * f32::from(i));
+        }
+        let summary = reads.summary(225.0);
+        assert_eq!(summary.len(), 2, "{summary:?}");
+        assert_eq!(
+            summary[0],
+            "Bundle: 15 reads of 15 files, 0 not in the bundle"
+        );
+        assert_eq!(
+            summary[1],
+            "Slowest files, ms to the next read: f14 29, f13 27, f12 25, f11 23, \
+             f10 21, f09 19, f08 17, f07 15, f06 13, f05 11"
+        );
+        assert_eq!(reads.each(225.0).len(), 15);
+        assert_eq!(
+            Reads::default().summary(0.0),
+            ["Bundle: 0 reads of 0 files, 0 not in the bundle"]
         );
     }
 
