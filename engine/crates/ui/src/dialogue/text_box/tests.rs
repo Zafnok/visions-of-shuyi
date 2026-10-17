@@ -63,7 +63,7 @@ fn holding_the_key_types_faster_after_a_moment() {
     };
     // Under the delay: the plain speed.
     assert!((typed(0.1) - 1.0).abs() < 1e-4);
-    // Well past it: the whole frame fast.
+    // Long past it: the whole frame fast.
     assert!((typed(1.0) - 1.0 * FAST_FORWARD).abs() < 1e-4);
     // Part of the frame past the delay: that part fast.
     let part = typed(FAST_FORWARD_DELAY + 0.05);
