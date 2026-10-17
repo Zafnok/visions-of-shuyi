@@ -48,6 +48,7 @@ pub mod progress;
 pub mod rewind;
 pub mod skills;
 mod sounds;
+pub mod split_keys;
 pub mod stage;
 pub mod tips;
 pub mod units;
@@ -1833,7 +1834,7 @@ impl BattleScreen {
             Mode::SuspendPrompt => "battle.help.suspend",
             Mode::EndTurnPrompt { .. } => {
                 let km = ctx.help_keys();
-                let [accept, also] = km.end_turn_accept_actions();
+                let [accept, also] = split_keys::help_end_turn_accept_actions(km);
                 let (accept, also) = (key_name(km, accept), key_name(km, also));
                 let keys = [("accept", &accept as &dyn Display), ("also", &also)];
                 return ctx.text_with("battle.help.end_turn", &keys);

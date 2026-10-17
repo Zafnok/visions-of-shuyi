@@ -477,7 +477,7 @@ impl ProfileScreen {
                     let _ = ctx.switch_profile(id);
                     // The first-launch setup, for the new profile; then
                     // back to the title, like a switch.
-                    return Transition::Replace(Box::new(LayoutPickerScreen::new()));
+                    return Transition::Replace(Box::new(LayoutPickerScreen::new(ctx)));
                 }
                 Err(e) => {
                     self.refused(ctx, &e);

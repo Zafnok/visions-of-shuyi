@@ -12,12 +12,13 @@ use trpg_content::lang::TEST;
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screens::title::TitleView;
 use trpg_ui::screens::{LayoutPickerScreen, TitleScreen};
 
 /// A launch after the right-handed layout was picked.
 fn title() -> Harness {
-    Harness::with_layout(Layout::RightHanded)
+    Harness::with_layout(RIGHT_HANDED)
 }
 
 /// The title screen on the stack, as it shows itself now.
@@ -227,7 +228,7 @@ fn debug_tool_sounds() {
 /// The game's launch on every build, a layout picked before (tickets 0224
 /// and 0226, `docs/design/title-screen.md`).
 fn waiting_title() -> Harness {
-    Harness::at_prompt_with_layout(Layout::RightHanded)
+    Harness::at_prompt_with_layout(RIGHT_HANDED)
 }
 
 #[test]
@@ -317,17 +318,17 @@ fn first_launch_a_key_at_the_prompt_opens_the_layout_picker() {
         h.keys(key);
         assert_eq!(h.screens(), ["title", "layout_picker"], "{key}");
         assert_eq!(h.game().ctx().layout(), None, "{key}");
-        assert_eq!(picker_focus(&h), Some(Layout::RightHanded), "{key}");
+        assert_eq!(picker_focus(&h), Some(RIGHT_HANDED), "{key}");
         assert!(music(&h).is_empty());
     }
     // Picked: the title's menu and music, no prompt again.
     h.keys("f Down f").wait(0.1);
     assert_eq!(h.screens(), ["title"]);
-    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+    assert_eq!(h.game().ctx().layout(), Some(LEFT_HANDED));
     assert!(!prompt_shows(&h));
     assert_eq!(music(&h), ["title"]);
     let h = Harness::with_storage(h.into_storage());
-    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+    assert_eq!(h.game().ctx().layout(), Some(LEFT_HANDED));
 }
 
 /// Rule 1: a controller button at the prompt goes to the menu; no picker.
@@ -375,7 +376,7 @@ fn a_key_mid_battle_opens_the_layout_picker_until_one_is_picked() {
     // the battle's cursor.
     h.keys("Down");
     assert_eq!(h.screens(), ["title", "battle", "layout_picker"]);
-    assert_eq!(picker_focus(&h), Some(Layout::RightHanded));
+    assert_eq!(picker_focus(&h), Some(RIGHT_HANDED));
     // Back to the controller: the picker closes and the battle goes on.
     h.pad("DpadRight");
     assert_eq!(h.screens(), ["title", "battle"]);
@@ -387,7 +388,7 @@ fn a_key_mid_battle_opens_the_layout_picker_until_one_is_picked() {
     assert_eq!(h.top_screen(), "layout_picker");
     h.keys("f");
     assert_eq!(h.screens(), ["title", "battle"]);
-    assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
+    assert_eq!(h.game().ctx().layout(), Some(RIGHT_HANDED));
     assert_eq!(h.cursor_tile(), cursor);
     // Keys act now, and switching back and forth never opens it again.
     h.keys("Down");

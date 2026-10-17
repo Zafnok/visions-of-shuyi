@@ -7,9 +7,9 @@
 //!
 //! ```
 //! use trpg_ui::harness::Harness;
-//! use trpg_ui::input::Layout;
+//! use trpg_ui::input::RIGHT_HANDED;
 //!
-//! let mut h = Harness::with_layout(Layout::RightHanded);
+//! let mut h = Harness::with_layout(RIGHT_HANDED);
 //! h.keys("f");
 //! assert_eq!(h.top_screen(), "mode_select");
 //! h.keys("d");
@@ -19,6 +19,7 @@
 use crate::audio::{AudioRequest, MusicClock, MusicCommand};
 use crate::flow::FlowScreen;
 use crate::game::{Game, RawInputEvent};
+use crate::input::RIGHT_HANDED;
 use crate::input::{Button, Chord, Device, Layout, PadKind};
 use crate::map_view::{MapScene, RangeKind, UnitView, skin_named};
 use crate::profiles::ProfileId;
@@ -191,7 +192,7 @@ impl Harness {
     /// The game with the embedded content and the right-handed layout,
     /// showing only `root`, for testing a screen on its own.
     pub fn with_screen(root: Box<dyn Screen>) -> Self {
-        let ctx = embedded_ctx().with_layout(Layout::RightHanded);
+        let ctx = embedded_ctx().with_layout(RIGHT_HANDED);
         Self::from_game(Game::new(ctx, root))
     }
 
@@ -597,6 +598,7 @@ mod tests {
     use super::*;
     use crate::glyph_buffer::GlyphBuffer;
     use crate::input::Action;
+    use crate::input::LEFT_HANDED;
     use crate::screen::{FrameInput, Transition};
     use std::cell::RefCell;
     use std::rc::Rc;
@@ -674,7 +676,7 @@ mod tests {
 
     #[test]
     fn use_pad_sets_the_kind_of_pad_pressed_and_snapshot_as_only_looks() {
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         let keys = h.snapshot();
         assert_eq!(h.game().ctx().device, Device::Keyboard);
         h.pad("RightStickPress");
@@ -745,7 +747,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "bad button in test script")]
     fn bad_button_panics() {
-        Harness::with_layout(Layout::RightHanded).pad("f");
+        Harness::with_layout(RIGHT_HANDED).pad("f");
     }
 
     #[test]
@@ -767,9 +769,9 @@ mod tests {
         let h = Harness::default();
         assert_eq!(h.screens(), ["title"]);
         assert_eq!(h.game().ctx().layout(), None);
-        let h = Harness::with_layout(Layout::LeftHanded);
+        let h = Harness::with_layout(LEFT_HANDED);
         assert_eq!(h.screens(), ["title"]);
-        assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+        assert_eq!(h.game().ctx().layout(), Some(LEFT_HANDED));
     }
 
     #[test]
@@ -778,12 +780,12 @@ mod tests {
         h.keys("z Enter");
         let h = Harness::with_storage(h.into_storage());
         assert_eq!(h.screens(), ["title"]);
-        assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
+        assert_eq!(h.game().ctx().layout(), Some(RIGHT_HANDED));
     }
 
     #[test]
     fn reports_game_state() {
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         assert_eq!(h.top_screen(), "title");
         assert_eq!(
             h.snapshot(),
@@ -806,7 +808,7 @@ mod tests {
         use crate::screens::BattleScreen;
         use crate::screens::battle::quick_battle;
         // No battle: no scene, no text.
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         assert_eq!(h.map_scene(), None);
         assert_eq!(h.map_text(), "");
         // The Quick Battle, inside the game flow: no map on its
@@ -834,7 +836,7 @@ mod tests {
 
     #[test]
     fn the_map_skin_can_be_switched_by_name() {
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         assert!(h.battle().is_none());
         h.keys("Down f Left f");
         assert_eq!(h.battle().map(|b| b.state().units().len()), Some(8));
@@ -850,13 +852,13 @@ mod tests {
     #[test]
     #[should_panic(expected = "no map skin \"ascii\"")]
     fn an_unknown_map_skin_panics() {
-        Harness::with_layout(Layout::RightHanded).with_map_skin("ascii");
+        Harness::with_layout(RIGHT_HANDED).with_map_skin("ascii");
     }
 
     #[test]
     fn scene_helpers_read_the_battle_map() {
         // No battle: nothing.
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         assert_eq!(h.cursor_tile(), None);
         assert_eq!(h.unit_at(Pos::new(3, 5)), None);
         assert!(h.tints_at(Pos::new(3, 5)).is_empty());
@@ -882,7 +884,7 @@ mod tests {
 
     #[test]
     fn debug_screens_are_always_on() {
-        let ctx = embedded_ctx().with_layout(Layout::RightHanded);
+        let ctx = embedded_ctx().with_layout(RIGHT_HANDED);
         let game = Game::start(ctx).with_debug_screens(false);
         let mut h = Harness::from_game(game);
         h.keys("F2");
@@ -904,7 +906,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "bad chord in test script")]
     fn bad_chord_panics() {
-        Harness::with_layout(Layout::RightHanded).keys("Ctrl+x");
+        Harness::with_layout(RIGHT_HANDED).keys("Ctrl+x");
     }
 
     /// Plays `beep` on Confirm and music `theme` on Cancel.
@@ -1050,7 +1052,7 @@ mod tests {
     /// Ticket 0227: the title's music clock.
     #[test]
     fn the_title_music_clock_counts_up_and_wraps_at_the_track_length() {
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         assert_eq!(h.music_clock(), None);
         // The title asks for its music in its first frame; the track
         // sounds from then, so the next frame is the first to see a clock.
@@ -1082,7 +1084,7 @@ mod tests {
 
     #[test]
     fn a_music_load_delay_starts_the_clock_late() {
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         h.music_load_delay(2.0).wait(0.0);
         h.wait(1.5);
         assert_eq!(h.music_clock(), None);
@@ -1090,7 +1092,7 @@ mod tests {
         assert!(title_at(&h, 0.5), "{:?}", h.music_clock());
         // A negative or NaN delay is none.
         for delay in [-1.0, f32::NAN] {
-            let mut h = Harness::with_layout(Layout::RightHanded);
+            let mut h = Harness::with_layout(RIGHT_HANDED);
             h.music_load_delay(2.0).music_load_delay(delay).wait(0.0);
             h.wait(0.5);
             assert!(title_at(&h, 0.5), "{delay}: {:?}", h.music_clock());
@@ -1099,7 +1101,7 @@ mod tests {
 
     #[test]
     fn without_music_the_clock_never_starts() {
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         h.without_music().wait(0.0);
         h.wait(3.0);
         assert_eq!(h.music_clock(), None);
@@ -1112,10 +1114,10 @@ mod tests {
     #[test]
     fn a_setup_changes_the_context_before_the_game_starts() {
         let playdate = |ctx: &mut Ctx| ctx.console = crate::ConsoleSpec::PLAYDATE;
-        let h = Harness::with_layout_and(Layout::RightHanded, playdate);
+        let h = Harness::with_layout_and(RIGHT_HANDED, playdate);
         assert_eq!(h.game().buffer().spec(), crate::ConsoleSpec::PLAYDATE);
         assert_eq!(h.game().ctx().key_prompt, KeyPrompt::Off);
-        let h = Harness::at_prompt_with_layout_and(Layout::RightHanded, playdate);
+        let h = Harness::at_prompt_with_layout_and(RIGHT_HANDED, playdate);
         assert_eq!(h.game().buffer().spec(), crate::ConsoleSpec::PLAYDATE);
         assert_eq!(h.game().ctx().key_prompt, KeyPrompt::Waiting);
         assert_eq!(h.top_screen(), "title");
@@ -1125,7 +1127,7 @@ mod tests {
     /// (`docs/design/title-screen.md`), so its clock starts there.
     #[test]
     fn at_the_prompt_the_clock_starts_at_the_first_key_press() {
-        let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
+        let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
         h.wait(1.0);
         assert_eq!(h.music_clock(), None);
         // The press starts the music; the release is one frame later.
@@ -1139,7 +1141,7 @@ mod tests {
     /// starts when the fade ends (0.5 s, `audio.ron`).
     #[test]
     fn the_clock_follows_a_switch_of_track_once_the_fade_ends() {
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         h.wait(0.0).wait(1.0);
         // Quick Battle plays a track from the skirmish pool, from its
         // Preparations screen on.

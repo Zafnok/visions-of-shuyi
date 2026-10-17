@@ -80,8 +80,8 @@ pub use font::FontAtlasDef;
 pub use image::{ImageId, ImageInfo, ImageTable};
 pub use ink::Ink;
 pub use keymap::{
-    Action, Bindings, Button, Chord, Key, KeyGroup, KeymapDef, Layout, LayoutKeys, PadKeys,
-    RepeatDef, SLOTS, StickDef,
+    Action, ActionSet, Bindings, Button, Chord, Key, KeyGroup, KeymapDef, LEFT_HANDED, Layout,
+    LayoutKeys, PadKeys, RIGHT_HANDED, RepeatDef, SLOTS, StickDef, UiAction, load_keymap,
 };
 pub use lang::{
     Lang, LangCode, LangInfo, LangPack, LangStatus, LineEntry, LineText, MadeBy, Orphan,
@@ -333,7 +333,7 @@ fn load<F: AsRef<str>>(scripts: Option<&[(F, &str)]>) -> Result<Content, Content
     let themes = palette::load_themes(palette.as_ref().ok());
     let content = assemble(
         palette,
-        KeymapDef::load(),
+        keymap::load_keymap(),
         crate::font::load(),
         terrain,
         maps,
@@ -1141,7 +1141,7 @@ mod tests {
     fn assemble_ok_keeps_content() {
         let content = assemble(
             crate::palette::load(),
-            KeymapDef::load(),
+            keymap::load_keymap(),
             crate::font::load(),
             ok_terrain(),
             ok_maps(),
@@ -1154,7 +1154,7 @@ mod tests {
         );
         assert_eq!(
             content.as_ref().map(|c| &c.keymap),
-            KeymapDef::load().ok().as_ref()
+            keymap::load_keymap().ok().as_ref()
         );
         assert_eq!(
             content.as_ref().map(|c| &c.font),
@@ -1310,7 +1310,7 @@ mod tests {
                 if i == 1 {
                     Err(e("k"))
                 } else {
-                    KeymapDef::load()
+                    keymap::load_keymap()
                 },
                 if i == 2 {
                     Err(e("f"))

@@ -4,12 +4,13 @@
 
 use insta::assert_snapshot;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{Layout, PadKind};
+use trpg_ui::input::PadKind;
+use trpg_ui::input::RIGHT_HANDED;
 
 /// The title with the scene camera opened from the debug menu (its last
 /// tool but one: only the map skin comes after it).
 fn opened() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("F2 Up Up f");
     assert_eq!(h.screens(), ["title", "debug_menu", "scene_camera"]);
     h
@@ -127,7 +128,7 @@ fn cancel_closes_it_and_the_next_frame_has_no_backdrop() {
 
 #[test]
 fn a_sprite_skinned_map_is_a_scene_of_sprites() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin("sprite").keys("F2 Up Up f");
     let scene = h.game().buffer().backdrop().unwrap().scene();
     // 14 × 8 tiles of 24 px, at the zoom a new player has (2×).
