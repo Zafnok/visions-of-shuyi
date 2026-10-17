@@ -745,6 +745,40 @@ fn each_familiarity_answer_sets_the_level_and_gates_the_tips() {
     }
 }
 
+/// Ticket 0467 (c): a tip queued but not yet shown when the battle is
+/// lost (the start tip, behind the battle notes, then the banners) shows
+/// in the retried battle: it counted as seen only once on screen.
+#[test]
+fn a_tip_not_shown_before_a_retry_shows_after_it() {
+    let mut h = title();
+    h.with_tips();
+    h.keys("f f f Up f");
+    skip_scene(&mut h);
+    assert!(notes_open(&h));
+    let shown = |h: &Harness| {
+        let screen = h.flow().and_then(|f| f.battle());
+        screen.and_then(trpg_ui::screens::battle::BattleScreen::shown_tip)
+    };
+    assert_eq!(shown(&h), None, "the notes go first");
+    for _ in 0..6 {
+        send(&mut h, &Command::EndPhase);
+    }
+    assert_eq!(battle(&h).outcome(), Some(Outcome::Defeat));
+    for _ in 0..20 {
+        if h.top_screen() == "game_over" {
+            break;
+        }
+        assert_eq!(shown(&h), None, "the banners go first");
+        h.keys("f");
+    }
+    assert_eq!(h.top_screen(), "game_over");
+    // Retry: the notes, the banner, then the tip.
+    h.wait(2.1).keys("Down f");
+    assert_eq!(h.screens(), ["title", "battle"]);
+    h.keys("f f").wait(0.1);
+    assert_eq!(shown(&h), Some(TipTrigger::FirstBattleStart));
+}
+
 /// Cancel on the lead screen goes back to the familiarity screen; on it,
 /// to the mode; on the mode, to the title.
 #[test]
