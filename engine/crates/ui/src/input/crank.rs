@@ -13,6 +13,8 @@
 //! never gives a notch). A docked crank gives none and forgets what was
 //! wound.
 
+use core::cmp::Ordering;
+
 use shuyi_assets::keymap::{Button, CrankDef};
 
 /// Thousandths of a degree in a degree: turns are summed in whole
@@ -79,10 +81,10 @@ impl Crank {
     /// for notches backwards, [`Button::CrankForward`] forwards; `None`
     /// for none.
     pub fn presses(notches: Notches) -> Option<(Button, u32)> {
-        let button = match notches {
-            0 => return None,
-            n if n < 0 => Button::CrankBack,
-            _ => Button::CrankForward,
+        let button = match notches.cmp(&0) {
+            Ordering::Equal => return None,
+            Ordering::Less => Button::CrankBack,
+            Ordering::Greater => Button::CrankForward,
         };
         Some((button, notches.unsigned_abs()))
     }

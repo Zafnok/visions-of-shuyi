@@ -1144,11 +1144,11 @@ fn step_map_menu(
             Some(MapEntry::Options) => (Mode::MapMenu { menu, entries }, Effect::Options),
             Some(MapEntry::Guides) => (Mode::MapMenu { menu, entries }, Effect::Guides),
             // A shortcut (ticket 1035): the menu closes and its key acts.
-            Some(&shortcut) if shortcut.action().is_some() => (
+            Some(&shortcut @ (MapEntry::DangerZone | MapEntry::AutoEnd | MapEntry::UnitInfo)) => (
                 Mode::default(),
                 shortcut.action().map_or(Effect::None, Effect::Press),
             ),
-            Some(_) | None => (Mode::MapMenu { menu, entries }, Effect::None),
+            None => (Mode::MapMenu { menu, entries }, Effect::None),
         },
         Some(MenuEvent::Cancelled) => (Mode::default(), Effect::None),
         None => (Mode::MapMenu { menu, entries }, Effect::None),

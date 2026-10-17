@@ -96,6 +96,10 @@ mod tests {
         for index in [-1, 3, i32::MAX] {
             chosen.set(index);
             assert_eq!(chosen.take(), None, "{index}");
+            // Nor does it replace a real choice not yet taken.
+            chosen.set(0);
+            chosen.set(index);
+            assert_eq!(chosen.take(), Some(SystemMenuEntry::DangerZone), "{index}");
         }
     }
 
