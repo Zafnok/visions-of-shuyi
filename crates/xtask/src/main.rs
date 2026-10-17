@@ -18,6 +18,7 @@ mod lines;
 mod map_sprite_import;
 mod playdate;
 mod playdate_audio;
+mod playdate_images;
 mod playtest;
 mod portrait_import;
 mod private_assets;
@@ -64,7 +65,9 @@ portrait-import <busts> <id>       cut bought busts into portraits (portrait-imp
 lines [scene]                      list every dialogue line with its line id (lines --help)\n  \
 voice-test-clips                   make the tone clips that test voice playback (needs ffmpeg)\n  \
 web [--release] [--debug-tools] [--private-assets]\n                                     build and package the web (WASM) shell into dist/web/\n  \
-playdate [--release] [--bench] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx\n                                     (--bench: the build that times the renderer, its own .pdx)";
+playdate [--release] [--bench] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx\n                                     (--bench: the build that times the renderer, its own .pdx)
+  playdate-images                    write the Playdate's one-bit pictures to look at, into
+                                     target/playdate/images/ (and the bought ones' into assets-private/)";
 
 fn main() -> ExitCode {
     ExitCode::from(dispatch(env::args().skip(1)))
@@ -84,6 +87,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("icon") => icon(&args.collect::<Vec<_>>()),
         Some("web") => web(&args.collect::<Vec<_>>()),
         Some("playdate") => playdate(&args.collect::<Vec<_>>()),
+        Some("playdate-images") => playdate_images_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("sfx") => sfx(&args.collect::<Vec<_>>()),
         Some("frame-png") => frame_png(&args.collect::<Vec<_>>()),
         Some("test-card") => test_card(&args.collect::<Vec<_>>()),
@@ -560,6 +564,30 @@ fn playdate(args: &[String]) -> u8 {
         }
         Err(e) => {
             eprintln!("playdate: {e}");
+            1
+        }
+    }
+}
+
+fn playdate_images_in(root: &Path, args: &[String]) -> u8 {
+    match args {
+        [] => {}
+        [flag] if flag == "--help" => {
+            println!("{}", playdate_images::USAGE);
+            return 0;
+        }
+        _ => {
+            eprintln!("{}", playdate_images::USAGE);
+            return 2;
+        }
+    }
+    match playdate_images::run(root) {
+        Ok(summary) => {
+            println!("{summary}");
+            0
+        }
+        Err(e) => {
+            eprintln!("playdate-images: {e}");
             1
         }
     }
@@ -1044,6 +1072,18 @@ mod tests {
             dispatch(args(&["playdate", "--device", "--simulator"]).into_iter()),
             2
         );
+    }
+
+    #[test]
+    fn playdate_images_takes_no_args_but_help() {
+        // `playdate_images::tests` run it in a scratch folder.
+        assert_eq!(
+            dispatch(args(&["playdate-images", "--bogus"]).into_iter()),
+            2
+        );
+        assert_eq!(playdate_images_in(&repo_root(), &args(&["--help"])), 0);
+        let empty = std::env::temp_dir().join(format!("xtask-pi-{}", std::process::id()));
+        assert_eq!(playdate_images_in(&empty, &[]), 1);
     }
 
     #[test]

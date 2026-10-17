@@ -10,6 +10,14 @@ on the game's own stack and runs it (ticket 1033). The screens still
 wear the PC's skins, drawn into a 50 × 15 console, so most are cut off
 until their Playdate skins land (1037 on).
 
+Its pictures are one-bit ones (ticket 1040, ADR-0085): `trpg-content`'s
+`build.rs` converts the portraits, combat pictures and backdrops by the
+game's table (`crates/content/src/playdate_images.rs`) and puts each at
+its PNG's path in the Playdate's bundle; `src/pictures.rs` reads them
+once at start for the renderer. A picture still a PNG (the title's logo,
+the map's) is drawn as a grey box. `cargo xtask playdate-images` writes
+the same pictures as files to look at, into `target/playdate/images/`.
+
 ## The Playdate's bundle
 
 The game's data is `assets/` without what the Playdate never reads:
@@ -35,6 +43,7 @@ listed.
 | `src/storage.rs` | The game's `Storage` on the Playdate's files |
 | `src/screen.rs` | Copying the one-bit frame onto the SDK's frame buffer, changed rows only |
 | `src/card.rs` | The loading card, and the game's font read before the rest of the data |
+| `src/pictures.rs` | The one-bit pictures the renderer draws, read once from the bundle |
 | `src/start.rs` | The game's context as the Playdate starts it: console, palette, buttons, no keyboard |
 | `src/chapter_1.rs` | The test that plays Chapter 1 against the Playdate's bundle |
 | `src/{heap,stack,text,report}.rs` | The plain, tested parts: allocator arithmetic, the stack's size and high-water mark, C strings, the logged reports |
