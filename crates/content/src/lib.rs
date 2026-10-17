@@ -96,7 +96,7 @@ pub use names::Names;
 pub use palette::{PaletteDef, Theme};
 pub use portrait::Portrait;
 /// One-bit pictures, the Playdate's in place of its PNGs (ticket 1040,
-/// ADR-0083): the format is Shuyi Engine's (`shuyi_assets::bitmap`).
+/// ADR-0085): the format is Shuyi Engine's (`shuyi_assets::bitmap`).
 pub use shuyi_assets::bitmap;
 pub use terrain::{TerrainDef, TerrainDisplay, TerrainDisplayTable};
 pub use tileset::{CornerLayer, ImageRect, Layer, Look, Picture, TerrainTiles, TileLayer, Tileset};

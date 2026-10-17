@@ -1,5 +1,5 @@
 //! `cargo xtask playdate-images`: the Playdate's one-bit pictures (ticket
-//! 1040, ADR-0083) as files to look at and to work from. The Playdate's
+//! 1040, ADR-0085) as files to look at and to work from. The Playdate's
 //! build makes its own when it is built (`crates/content/build.rs`); this
 //! makes the same ones, by the same table (`trpg_content::playdate_images`):
 //!

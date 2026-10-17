@@ -16,7 +16,7 @@ default = ["std"]
 # file table (`Layer::table`), since `include_dir` needs `std`.
 std = ["dep:include_dir", "ron/std", "thiserror/std", "serde/std", "shuyi-core/std"]
 # `bitmap::convert::png_pixels`: a tool that makes one-bit pictures reads
-# the PNGs with it (ADR-0083). Only tools turn it on.
+# the PNGs with it (ADR-0085). Only tools turn it on.
 png = ["std", "dep:png"]
 # `keymap::sample`, a sample game's actions and keymap file, for other
 # engine crates' tests of input (ticket 1107).

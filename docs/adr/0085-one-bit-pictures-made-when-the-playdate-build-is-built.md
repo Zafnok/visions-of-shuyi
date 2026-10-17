@@ -1,4 +1,4 @@
-# ADR-0083: One-bit pictures, made when the Playdate build is built, at their PNG's path
+# ADR-0085: One-bit pictures, made when the Playdate build is built, at their PNG's path
 
 - **Status:** Accepted
 - **Date:** 2026-10-17

@@ -1,7 +1,8 @@
 //! The battle's checklist lessons (0456, `docs/design/tutorial.md`, *The
 //! lessons*): the lessons waiting, the one in play and its ticks. One
 //! lesson at a time: a lesson its trigger starts waits behind the one in
-//! play, and opens once it is done and the moment is right.
+//! play, and opens once it is done and the moment is right, if a unit left
+//! can still do what it asks ([`LessonState::settle`], 0464).
 //!
 //! The battle screen decides when a lesson shows and when an item's thing
 //! was done ([`DoneWhen`]); this keeps the list. Ticks live here, not in
@@ -143,24 +144,28 @@ impl LessonState {
         !self.queue.is_empty()
     }
 
-    /// Puts the lessons in play away, unfinished, while the one in front
-    /// still needs an item that takes a unit ([`DoneWhen::needs_unit`]):
-    /// call it when no unit is left to act in turn `turn`. Each comes back
-    /// from an empty list the next time its trigger fires in a later turn,
-    /// so a lesson never holds a turn it can't be finished in. Returns
-    /// whether one was put away.
-    pub fn put_away(&mut self, turn: u32) -> bool {
+    /// Takes the lesson in front out of play, unfinished, while it has an
+    /// item left that no unit left to act in turn `turn` can do (`can`
+    /// says what can be done, [`Doable`](super::doable::Doable), 0464), so
+    /// a lesson never holds a turn it can't be finished in. One open is put
+    /// away: it comes back from an empty list the next time its trigger
+    /// fires in a later turn. One not open yet doesn't open: it waits for
+    /// its trigger to fire again, this turn or a later one. Returns whether
+    /// one was taken out.
+    pub fn settle(&mut self, turn: u32, mut can: impl FnMut(DoneWhen) -> bool) -> bool {
         let mut any = false;
         while let Some(front) = self.queue.front() {
             let stuck = front
                 .items
                 .iter()
                 .zip(&front.ticked)
-                .any(|(d, &t)| !t && d.needs_unit());
+                .any(|(&d, &t)| !t && !can(d));
             if !stuck {
                 break;
             }
-            self.away.push((front.id.clone(), turn));
+            if self.open {
+                self.away.push((front.id.clone(), turn));
+            }
             self.queue.pop_front();
             self.open = false;
             any = true;
@@ -364,6 +369,11 @@ mod tests {
         assert!(!s.is_open());
     }
 
+    /// No unit left: nothing that takes one can be done.
+    fn nobody(d: DoneWhen) -> bool {
+        !d.needs_unit()
+    }
+
     #[test]
     fn a_lesson_that_needs_a_unit_is_put_away_for_the_turn_and_comes_back() {
         let first = TipTrigger::FirstBattleStart;
@@ -376,18 +386,22 @@ mod tests {
         s.mark_open();
         assert!(s.tick(&mut c, UP));
         // No unit left: the attack can't be done; "keys" stops the sweep.
-        assert!(s.put_away(1));
+        assert!(s.settle(1, nobody));
         assert_eq!(s.current(), Some("keys"));
         assert!(!s.is_open());
-        assert!(!s.put_away(1));
+        assert!(!s.settle(1, nobody));
         s.mark_open();
         assert!(s.tick(&mut c, UP));
-        assert!(s.put_away(1));
+        // "arts" never opened: it doesn't, and isn't put away.
+        assert!(s.settle(1, nobody));
         assert!(!s.in_play());
-        // Not done, and not again this turn.
+        // "unit" is not done, and not again this turn; "arts" waits for
+        // its trigger.
         assert!(!c.game.campaign_lessons.contains("unit"));
         s.fire(first);
         s.absorb(&c, None, 1);
+        assert_eq!(s.current(), Some("arts"));
+        assert!(s.settle(1, nobody));
         assert!(!s.in_play());
         // A lesson that wasn't put away still comes this turn.
         c.game.content.lessons.lessons.push(lesson(
@@ -406,6 +420,85 @@ mod tests {
         s.absorb(&c, None, 2);
         assert_eq!(s.current(), Some("unit"));
         assert_eq!(s.ticked(), [false, false]);
+    }
+
+    /// Ticket 0464, for each kind of item a unit does: a lesson waiting
+    /// behind another doesn't open when its turn comes if nobody left can
+    /// do it, and comes back with its trigger that same turn; one open is
+    /// put away for the turn the moment nobody can, ticks and all. What
+    /// can still be done, or is ticked already, keeps it.
+    #[test]
+    fn a_lesson_nobody_left_can_do_doesnt_open_or_is_put_away() {
+        let first = TipTrigger::FirstBattleStart;
+        for done in [
+            DoneWhen::Attacked,
+            DoneWhen::ForecastOpened,
+            DoneWhen::ArtsOpened,
+            DoneWhen::TileAimed,
+            DoneWhen::UnitMoved,
+            DoneWhen::ThreatPointed,
+        ] {
+            let all = |_: DoneWhen| true;
+            let not_it = |d: DoneWhen| d != done;
+            let mut c = with(vec![
+                lesson("before", LessonLevel::Full, first, &[UP]),
+                lesson("it", LessonLevel::Full, first, &[UP, done]),
+            ]);
+            // Waiting: "before" is in play, and it can be done.
+            let mut s = start(&c);
+            assert!(!s.settle(1, not_it));
+            s.mark_open();
+            assert!(s.tick(&mut c, UP));
+            // Its turn: nobody can, so it doesn't open.
+            assert_eq!(s.current(), Some("it"));
+            assert!(s.settle(1, not_it), "{done:?}");
+            assert!(!s.in_play() && !s.holds_turn());
+            // Its trigger again, this turn, once someone can: it opens.
+            s.fire(first);
+            s.absorb(&c, None, 1);
+            assert_eq!(s.current(), Some("it"));
+            assert!(!s.settle(1, all));
+            s.mark_open();
+            assert!(s.tick(&mut c, UP));
+            assert!(s.holds_turn());
+            // Open, and nobody left can: put away, unticked and not done.
+            assert!(s.settle(1, not_it), "{done:?}");
+            assert!(!s.in_play() && !s.holds_turn());
+            assert!(!c.game.campaign_lessons.contains("it"));
+            s.fire(first);
+            s.absorb(&c, None, 1);
+            assert!(!s.in_play(), "{done:?}: not again this turn");
+            s.fire(first);
+            s.absorb(&c, None, 2);
+            assert_eq!(s.current(), Some("it"));
+            assert_eq!(s.ticked(), [false, false]);
+            // Ticked already: the rest can still be done.
+            s.mark_open();
+            assert!(s.tick(&mut c, done));
+            assert!(!s.settle(2, not_it));
+            assert!(s.is_open());
+        }
+    }
+
+    /// A lesson whose items take no unit never leaves for what the units
+    /// can't do.
+    #[test]
+    fn a_lesson_that_takes_no_unit_stays() {
+        let first = TipTrigger::FirstBattleStart;
+        let items = [
+            UP,
+            DoneWhen::CursorMoved,
+            DoneWhen::RewindOpened,
+            DoneWhen::RewindClosed,
+            DoneWhen::OptionsOpened,
+            DoneWhen::TurnEnded,
+        ];
+        let c = with(vec![lesson("keys", LessonLevel::Full, first, &items)]);
+        let mut s = start(&c);
+        assert!(!s.settle(1, nobody));
+        s.mark_open();
+        assert!(!s.settle(1, nobody));
+        assert_eq!(s.current(), Some("keys"));
     }
 
     #[test]

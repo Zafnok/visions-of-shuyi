@@ -15,7 +15,7 @@ completed:
 
 ## Context
 
-1040 (ADR-0083) made the Playdate's pictures one-bit when its bundle is
+1040 (ADR-0085) made the Playdate's pictures one-bit when its bundle is
 built: `crates/content/build.rs` converts every picture of the kinds in
 `crates/content/src/playdate_images.rs` (portraits, combat pictures,
 battle and title backdrops) and puts the one-bit file at the PNG's path
@@ -63,7 +63,7 @@ None.
 
 ## Implementation steps
 
-1. Read ADR-0083, ADR-0082, ADR-0040, `crates/content/build.rs`,
+1. Read ADR-0085, ADR-0082, ADR-0040, `crates/content/build.rs`,
    `crates/content/src/bundle.rs` (`playdate_layer`, `layers`),
    `crates/xtask/src/web.rs` (its `--private-assets`).
 2. `build.rs`: when `CARGO_FEATURE_PRIVATE_ASSETS` is set, walk

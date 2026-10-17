@@ -43,7 +43,7 @@ libm.workspace = true
 
 [build-dependencies]
 # `build.rs` converts the Playdate's pictures to one-bit (ticket 1040,
-# ADR-0083): the converter, which reads the PNGs, and the battler sidecars'
+# ADR-0085): the converter, which reads the PNGs, and the battler sidecars'
 # scales.
 shuyi-assets = { path = "../../engine/crates/assets", features = ["png"] }
 serde.workspace = true

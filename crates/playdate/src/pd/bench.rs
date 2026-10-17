@@ -4,6 +4,10 @@
 //! both, and checks the three frames are the same. Once a minute the
 //! front end logs [`Bench::lines`]. The extra renders slow the game down:
 //! a build for measuring, never for playing.
+//!
+//! It also times the music (ticket 1047): every other minute the music is
+//! paused, so the same work's times with and without the file player
+//! decoding are side by side in the log.
 
 use alloc::boxed::Box;
 use alloc::format;
@@ -27,6 +31,8 @@ pub struct Bench {
     unlike_reference: u32,
     /// Frames redrawn where they changed unlike their whole render.
     unlike_whole: u32,
+    /// Whether the music is paused this minute.
+    music_paused: bool,
 }
 
 impl Bench {
@@ -38,7 +44,14 @@ impl Bench {
             slow_phases: Phases::default(),
             unlike_reference: 0,
             unlike_whole: 0,
+            music_paused: false,
         }
+    }
+
+    /// Whether the music is paused next minute: every other one.
+    pub fn next_minute_paused(&mut self) -> bool {
+        self.music_paused = !self.music_paused;
+        self.music_paused
     }
 
     /// Renders `buffer` whole with both renderers, timing them, and
@@ -73,6 +86,11 @@ impl Bench {
             "Bench: {} frames unlike 1032's render, {} redrawn unlike a whole render",
             self.unlike_reference, self.unlike_whole
         ));
+        lines.push(String::from(if self.music_paused {
+            "Bench: the music was paused this minute"
+        } else {
+            "Bench: the music played this minute"
+        }));
         self.fast_phases = Phases::default();
         self.slow_phases = Phases::default();
         self.unlike_reference = 0;

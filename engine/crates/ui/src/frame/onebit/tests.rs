@@ -424,7 +424,7 @@ fn drawn(image: Image<'_>, src: Rect, dest: Rect, flip_x: bool) -> Vec<String> {
 }
 
 /// An 8 × 4 picture made from a 4 × 2 image enlarged twice before it was
-/// dithered (ADR-0083): drawn at the image's double size, each of its
+/// dithered (ADR-0085): drawn at the image's double size, each of its
 /// pixels is one screen pixel, not a doubled one.
 #[test]
 fn an_enlarged_picture_draws_a_screen_pixel_a_pixel() {

@@ -103,7 +103,7 @@ Carved so far:
 - `shuyi-assets` (1040, written here): one-bit pictures (`bitmap`): the
   `.1bit` file a one-bit screen draws in place of a PNG, and the
   converter that makes one (`bitmap::convert`: enlarge, stretch, levels,
-  Bayer dither, dark lines; ADR-0083). The game's table says which
+  Bayer dither, dark lines; ADR-0085). The game's table says which
   pictures and how.
 
 ## Third-party crates the engine may use

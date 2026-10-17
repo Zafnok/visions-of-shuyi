@@ -4,8 +4,14 @@
 // is open the turn can't end (unless an item is `TurnEnded`). Each lesson
 // shows once per campaign, the first time its trigger happens in a battle,
 // one at a time: lessons started by the same trigger come in file order.
-// A lesson that still needs a unit to act when none is left that turn is
-// put away, and comes back the next time its trigger fires in a later turn.
+// A lesson is only up when a unit still to act that turn could do what it
+// asks (ticket 0464): attack (ForecastOpened, Attacked) needs one that could
+// reach an enemy, ArtsOpened one with an art it could use from a tile it can
+// reach, TileAimed one that could aim a spell at a tile, the other unit items
+// any unit. One whose turn to open comes when nobody can doesn't open, and
+// waits for its trigger to fire again, that turn or later. One open is put
+// away the moment nobody left can, and comes back the next time its trigger
+// fires in a later turn.
 //
 // Fields:
 //   id        snake_case; the campaign keeps it once the lesson is done.

@@ -12,7 +12,7 @@
 //! `playdate_left_out.rs`, the paths of those.
 //!
 //! The Playdate's table holds a one-bit picture in place of each PNG it
-//! draws one-bit (ticket 1040, ADR-0083): `src/playdate_images.rs` says
+//! draws one-bit (ticket 1040, ADR-0085): `src/playdate_images.rs` says
 //! which and how, and this converts them into `OUT_DIR/onebit/`.
 
 use std::collections::BTreeSet;

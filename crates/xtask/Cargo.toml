@@ -16,6 +16,9 @@ trpg-content = { path = "../content" }
 trpg-core = { path = "../core" }
 # The Harness, for `frame-png` (ticket 0232).
 trpg-ui = { path = "../ui", features = ["harness"] }
+# Decoding the sounds and music the Playdate build converts (ticket 1047).
+hound = "3.5"
+lewton = "0.9"
 # The one-bit converter and its PNG reader, for `playdate-images` (ticket
 # 1040).
 shuyi-assets = { path = "../../engine/crates/assets", features = ["png"] }

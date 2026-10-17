@@ -1,4 +1,4 @@
-//! The pictures the one-bit renderer draws (ticket 1040, ADR-0083). The
+//! The pictures the one-bit renderer draws (ticket 1040, ADR-0085). The
 //! Playdate's bundle holds a one-bit picture in place of each PNG the
 //! Playdate draws one-bit (`trpg_content::playdate_images`), at the PNG's
 //! own path, so a sprite's image id finds it. Each is read once, at start.

@@ -165,6 +165,11 @@ pub fn load_time(load_ms: u32) -> String {
     format!("Game data loaded in {} ms", grouped(load_ms))
 }
 
+/// How many sound files were loaded into memory (ticket 1047).
+pub fn sounds(files: usize) -> String {
+    format!("Sounds: {} files loaded", grouped(files))
+}
+
 /// The game stack's high-water mark line.
 pub fn stack_mark(stack_used: Option<usize>) -> String {
     match stack_used {
@@ -339,6 +344,7 @@ mod tests {
                 "Game stack used: 15,256 of 65,536 bytes"
             ]
         );
+        assert_eq!(sounds(21), "Sounds: 21 files loaded");
     }
 
     #[test]

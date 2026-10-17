@@ -1,4 +1,4 @@
-//! The Playdate's one-bit pictures (ticket 1040, ADR-0083): which pictures
+//! The Playdate's one-bit pictures (ticket 1040, ADR-0085): which pictures
 //! the Playdate draws one-bit, at what size and in which styles, as
 //! `docs/design/playdate.md` (*One-bit pictures*, ticket 0062) decided.
 //!

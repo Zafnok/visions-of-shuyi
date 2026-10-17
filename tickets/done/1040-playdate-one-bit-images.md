@@ -99,7 +99,7 @@ the converter an engine tool; the method table stays the game's.
 
 ## Completion notes
 
-**What was done** (ADR-0083):
+**What was done** (ADR-0085):
 
 - **The format** (`shuyi_assets::bitmap`, re-exported as
   `trpg_content::bitmap`, the engine's since 1104 carved images): a

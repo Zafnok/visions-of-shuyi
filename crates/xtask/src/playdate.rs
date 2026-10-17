@@ -5,7 +5,9 @@
 //! For each target it builds the Rust static library (`trpg-playdate` with
 //! its `sdk` feature), compiles and links the C side (`shim/shim.c` and the
 //! SDK's `setup.c`) with the flags of the SDK's `buildsupport/common.mk`,
-//! then packs both with the SDK's `pdc`:
+//! converts the sounds and the music the Playdate ships into `Source/`
+//! (`crate::playdate_audio`, ticket 1047), then packs it all with the
+//! SDK's `pdc`:
 //!
 //! - the device: `thumbv7em-none-eabihf` and `arm-none-eabi-gcc`, linked
 //!   with the SDK's `link_map.ld` into `pdex.elf`;
@@ -29,6 +31,8 @@ use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+
+use crate::playdate_audio;
 
 /// The game's name on the Playdate (`pdxinfo`). The SDK's license keeps
 /// "Playdate" and "Panic" out of it (ADR-0070).
@@ -325,6 +329,17 @@ pub enum Step {
         /// `RUSTFLAGS` for it.
         rustflags: Option<String>,
     },
+    /// Converts the Playdate's sounds and music for the workspace at
+    /// `root` into `source` ([`playdate_audio::run`]), through the cache
+    /// in `out`.
+    Audio {
+        /// The workspace.
+        root: PathBuf,
+        /// `target/playdate/`, where the cache is.
+        out: PathBuf,
+        /// What `pdc` packs.
+        source: PathBuf,
+    },
     /// Writes `text` to `path`.
     Write {
         /// The file.
@@ -401,6 +416,11 @@ pub fn plan(
     if options.simulator {
         steps.extend(simulator_steps(&paths, options, tools)?);
     }
+    steps.push(Step::Audio {
+        root: paths.root.clone(),
+        out: paths.out.clone(),
+        source: paths.source.clone(),
+    });
     steps.push(Step::Write {
         path: paths.source.join("pdxinfo"),
         text: pdxinfo(version)?,
@@ -575,6 +595,7 @@ pub fn execute(steps: &[Step]) -> Result<(), String> {
                     return Err(format!("{what} failed ({status}): {command:?}"));
                 }
             }
+            Step::Audio { root, out, source } => playdate_audio::run(root, out, source)?,
             Step::Write { path, text } => {
                 fs::write(path, text).map_err(|e| format!("write {}: {e}", path.display()))?;
             }
@@ -583,7 +604,8 @@ pub fn execute(steps: &[Step]) -> Result<(), String> {
     Ok(())
 }
 
-/// A line naming the `.pdx` and the size of what went into it.
+/// A line naming the `.pdx` and the size of what went into it: the
+/// programs and the sounds and music.
 pub fn summary(root: &Path, options: Options) -> String {
     let out = out_dir(root);
     let size = |name: &str| {
@@ -599,6 +621,7 @@ pub fn summary(root: &Path, options: Options) -> String {
     if options.simulator {
         parts.push(size("pdex.dll"));
     }
+    parts.push(playdate_audio::Totals::on_disk(&out.join("Source")).line());
     format!(
         "{} ({})",
         out.join(options.build.pdx_name()).display(),
@@ -908,7 +931,15 @@ mod tests {
             path: out.join("Source").join("pdxinfo"),
             text: pdxinfo("0.2.0").unwrap(),
         }));
-        // pdxinfo is written before pdc packs the folder.
+        // The sounds and music, then pdxinfo, before pdc packs the folder.
+        assert_eq!(
+            steps[steps.len() - 3],
+            Step::Audio {
+                root: root.to_path_buf(),
+                out: out.clone(),
+                source: out.join("Source"),
+            }
+        );
         let pdxinfo_at = steps.iter().position(|s| matches!(s, Step::Write { .. }));
         assert_eq!(pdxinfo_at, Some(steps.len() - 2));
     }
@@ -1251,17 +1282,25 @@ mod tests {
         let source = out_dir(&root).join("Source");
         fs::create_dir_all(&source).unwrap();
         fs::write(source.join("pdex.elf"), [0; 10]).unwrap();
+        fs::create_dir_all(source.join("music")).unwrap();
+        fs::write(source.join("music").join("a.wav"), vec![0; 1_500_000]).unwrap();
         let line = summary(&root, BOTH);
         assert!(line.contains("VisionsOfShuyi.pdx"), "{line}");
         assert!(
-            line.ends_with("(pdex.elf 10 bytes, pdex.dll missing)"),
+            line.ends_with(
+                "(pdex.elf 10 bytes, pdex.dll missing, \
+                 audio: 0 sound files 0.0 MB, 1 tracks 1.5 MB)"
+            ),
             "{line}"
         );
         let device = Options {
             simulator: false,
             ..BOTH
         };
-        assert!(summary(&root, device).ends_with("(pdex.elf 10 bytes)"));
+        assert!(
+            summary(&root, device)
+                .ends_with("(pdex.elf 10 bytes, audio: 0 sound files 0.0 MB, 1 tracks 1.5 MB)")
+        );
         fs::remove_dir_all(&root).unwrap();
     }
 }

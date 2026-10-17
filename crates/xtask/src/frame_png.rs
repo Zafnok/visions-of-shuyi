@@ -23,10 +23,10 @@ use trpg_content::{FontAtlasDef, ImageId, ImageTable};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Button, Chord, Layout};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
-use trpg_ui::screen::Ctx;
+use trpg_ui::screen::{Ctx, ShuyiCtx};
 use trpg_ui::{
-    Backdrop, ConsoleSizes, ConsoleSpec, GlyphBuffer, Item, Layer, Paint, Palette, PxRect, Rgb,
-    Sprite, UiColor,
+    Backdrop, Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Item, Layer, Paint, Palette, PxRect,
+    Rect, Rgb, Sprite, UiColor,
 };
 
 use crate::font_atlas::{decode_png, encode_png};
@@ -49,6 +49,9 @@ options:
   --playdate           the Playdate's screen: a 50×15 console in the Playdate's
                        palette, drawn black and white by the one-bit renderer,
                        with the one-bit pictures the Playdate's build makes (1040)
+  --map                the battle's map alone over the whole screen, painted by
+                       the game's map skin (with --playdate the Playdate's: its
+                       battle screen keeps the PC's layout until 1038)
   --prompt             start as the game does (the title waits for a key or button)
   --tips               show the guide's tips and lessons, as the game does
   --light NAME         fight every battle in this light of assets/data/lighting.ron,
@@ -78,6 +81,15 @@ pub enum Step {
     Wait(f32),
 }
 
+/// What a picture shows.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Shows {
+    /// The game's screen.
+    Screen,
+    /// The battle's map alone, over the whole screen (`--map`).
+    MapAlone,
+}
+
 /// The command's arguments.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Options {
@@ -91,6 +103,8 @@ pub struct Options {
     pub scale: Option<u32>,
     /// The Playdate's console, palette and one-bit renderer.
     pub playdate: bool,
+    /// What the picture shows.
+    pub shows: Shows,
     /// Start as the game does: the title waits for a key or button.
     pub prompt: bool,
     /// The light every battle is fought in, instead of its own.
@@ -110,6 +124,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
         layout: RIGHT_HANDED,
         scale: None,
         playdate: false,
+        shows: Shows::Screen,
         prompt: false,
         light: None,
         tips: false,
@@ -165,6 +180,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
             }
             "--prompt" => options.prompt = true,
             "--playdate" => options.playdate = true,
+            "--map" => options.shows = Shows::MapAlone,
             "--tips" => options.tips = true,
             "--light" => options.light = Some(value()?),
             flag if flag.starts_with("--") => return Err(format!("unknown option: {flag}")),
@@ -184,6 +200,7 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
         if let Some(palette) = playdate {
             ctx.console = ConsoleSpec::PLAYDATE;
             ctx.palette = palette;
+            ctx.use_playdate_skins();
         }
     };
     let h = if options.prompt {
@@ -219,13 +236,20 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
         };
     }
     let ctx = h.game().ctx();
+    let map;
+    let buffer = if options.shows == Shows::MapAlone {
+        map = map_alone(&h)?;
+        &map
+    } else {
+        h.game().buffer()
+    };
     let frame = if options.playdate {
         let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
         let font = onebit::Font::new(&ctx.game.content.font, bits)?;
         let mut frame = Box::new([0; FRAME_BYTES]);
         // The pictures the Playdate's build makes (ticket 1040).
         let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
-        onebit::render(h.game().buffer(), &font, &pictures, &mut frame);
+        onebit::render(buffer, &font, &pictures, &mut frame);
         one_bit_picture(&frame, options.scale.unwrap_or(1))
     } else {
         let painter = Painter::new(
@@ -235,7 +259,7 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
             trpg_content::bundle::bytes,
             ctx.palette.get(UiColor::Black),
         )?;
-        painter.render(h.game().buffer(), options.scale.unwrap_or(2))
+        painter.render(buffer, options.scale.unwrap_or(2))
     };
     let png = encode_png(frame.width, frame.height, &frame.rgba)?;
     let path = root.join(&options.out);
@@ -245,6 +269,25 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     fs::write(&path, png).map_err(|e| format!("writing {}: {e}", path.display()))?;
     let shown = format!("{} → {}", h.top_screen(), options.out.display());
     Ok(summary(&shown, &frame, cfg!(feature = "private-assets")))
+}
+
+/// The battle on `h`'s screen, its map alone over the whole console as the
+/// game's map skin paints it, the view centred on the cursor (`--map`).
+fn map_alone(h: &Harness) -> Result<GlyphBuffer, String> {
+    let ctx = h.game().ctx();
+    let console = ctx.console;
+    let screen = Rect::new(0, 0, i32::from(console.cols), i32::from(console.rows));
+    let scene = h
+        .map_scene_in(screen)
+        .ok_or_else(|| format!("--map: no battle on screen ({})", h.top_screen()))?;
+    let blank = Cell::new(
+        ' ',
+        ctx.palette.get(UiColor::Text),
+        ctx.palette.get(UiColor::Black),
+    );
+    let mut buf = GlyphBuffer::with_spec(console, blank);
+    ctx.game.map_skin.paint(ctx, &scene, screen, &mut buf);
+    Ok(buf)
 }
 
 /// The Playdate's palette (ADR-0074), over the default theme's names.
