@@ -29,6 +29,9 @@ pub fn data(seed: u64) -> Result<Ctx, String> {
     // Its own buttons (A + B and the B chords), before the player's are
     // loaded with the storage.
     ctx.use_playdate_buttons();
+    // Its one-bit skins (ADR-0070 §4): the map's, and the screens' as they
+    // come (1038 and later).
+    ctx.use_playdate_skins();
     // The debug tools are made of the test files, which a build without
     // `std` does not have (ADR-0057).
     ctx.debug_tools = false;
@@ -63,6 +66,7 @@ fn palette(base: &PaletteDef) -> Result<Palette, String> {
 #[cfg(test)]
 mod tests {
     use trpg_content::Ink;
+    use trpg_ui::screen::SkinSet;
     use trpg_ui::{MemoryStorage, Rgb};
 
     use super::*;
@@ -81,6 +85,9 @@ mod tests {
         assert_eq!(ctx.idle_motion, IdleMotion::On);
         assert_eq!(ctx.music_seed, 7);
         assert_eq!(ctx.key_prompt, KeyPrompt::Waiting);
+        // Painted with its own skins, the settings just loaded or not.
+        assert_eq!(ctx.game.skin_set, SkinSet::Playdate);
+        assert_eq!(ctx.game.map_skin.name(), "playdate");
         assert!(ctx.palette.iter().count() > 10);
         for (name, rgb) in ctx.palette.iter() {
             let ink = Ink::ALL.iter().find(|ink| Rgb::from(ink.code()) == rgb);

@@ -29,6 +29,7 @@ filter = '''
   | test(=harness::tests::the_title_music_clock_counts_up_and_wraps_at_the_track_length)
   | test(=map_skin::the_skin_never_changes_the_game)
   | test(=map_view::glyph::tests::glyph_skin_paints_only_the_area)
+  | test(=map_view::playdate::tests::the_playdate_skin_paints_only_the_area)
   | test(=map_view::sprite::ground::tests::every_tile_of_the_map_has_one_picture_of_its_own_and_none_spills)
   | test(=map_view::sprite::tests::sprite_skin_paints_only_the_area)
   | test(=map_view::sprite::tests::sprite_units_skin_paints_only_the_area)
