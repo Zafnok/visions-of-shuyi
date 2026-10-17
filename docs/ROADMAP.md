@@ -234,7 +234,7 @@ Design answers unblock most of the rules work. Suggested order:
 6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
    · **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
-8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen
+8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)
 9. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
 
 Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
@@ -337,7 +337,10 @@ early so every later PR is checked by them.
      tutorial fixes **0464**, **0467**, **0841**) → **1051** the AI plans
      once per phase (only if the enemy pauses feel long) · **1057** the
      battle's own frame time on the device (1055 measured 18 ms a frame
-     at least; either order with 1050)
+     at least; either order with 1050) → **1059** the battle map at 50
+     frames a second (the screen's most; after 1038) · **0067** Nick
+     decides whether the map uses the bought tiles and sprites (its build
+     tickets follow, after 1037 and 1040)
   10. **1052** package and sell on itch.io (after 0901) → **1053** the
       Catalog application
   11. When their inputs exist: **1048** voices (after 0722) · **1049** one
