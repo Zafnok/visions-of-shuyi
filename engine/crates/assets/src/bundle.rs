@@ -323,7 +323,11 @@ pub fn install(bundle: Bundle) -> Result<(), Bundle> {
 /// The process-wide bundle, once installed; inside [`reading`], the
 /// bundle this thread reads instead.
 pub fn installed() -> Option<&'static Bundle> {
-    read_instead().or_else(|| INSTALLED.get())
+    #[cfg(feature = "std")]
+    if let Some(bundle) = READING.get() {
+        return Some(bundle);
+    }
+    INSTALLED.get()
 }
 
 /// The process-wide bundle, installing the one `make` builds if none is.
@@ -331,7 +335,11 @@ pub fn installed() -> Option<&'static Bundle> {
 /// Inside [`reading`], the bundle this thread reads instead, and nothing is
 /// installed.
 pub fn get_or_install(make: impl FnOnce() -> Bundle) -> &'static Bundle {
-    read_instead().unwrap_or_else(|| INSTALLED.get_or_init(|| Box::new(make())))
+    #[cfg(feature = "std")]
+    if let Some(bundle) = READING.get() {
+        return bundle;
+    }
+    INSTALLED.get_or_init(|| Box::new(make()))
 }
 
 /// What is told of every file read ([`watch`]): its path, and whether the
@@ -354,18 +362,6 @@ std::thread_local! {
     /// The bundle this thread reads inside [`reading`].
     static READING: core::cell::Cell<Option<&'static Bundle>> =
         const { core::cell::Cell::new(None) };
-}
-
-/// The bundle this thread reads inside [`reading`].
-#[cfg(feature = "std")]
-fn read_instead() -> Option<&'static Bundle> {
-    READING.get()
-}
-
-/// Without `std` there is no [`reading`].
-#[cfg(not(feature = "std"))]
-fn read_instead() -> Option<&'static Bundle> {
-    None
 }
 
 /// Runs `f` with this thread reading `bundle` instead of the installed one
