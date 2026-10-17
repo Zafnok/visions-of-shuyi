@@ -5,10 +5,10 @@ type: bug
 milestone: M3 Battle UI
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-17
 ---
 
 # 0467 — The Magic and Terrain tips never showed
@@ -74,10 +74,12 @@ None.
 
 ## Acceptance criteria
 
-- [ ] Tests (a), (b), (c) fail before the fix and pass after.
-- [ ] A tip already shown once still never shows again for that profile
+- [x] Tests (a), (b), (c) fail before the fix and pass after. **Partly:**
+      (c) and the unit tests fail before and pass after; (a) and (b) pass
+      both before and after (see the notes).
+- [x] A tip already shown once still never shows again for that profile
       (existing tests pass).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,4 +88,35 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done 2026-10-17 (Opus 5.5).
+
+- **The fix:** a tip is queued when its trigger fires and saved as seen
+  only when it is on screen as a frame ends (`TipState::show`, called
+  after `BattleScreen::update`). A queued tip is **not** kept across
+  Retry: it is **re-queued when its trigger fires again** (the start tip
+  on the retried turn 1, Magic the next time a caster's menu opens,
+  Terrain the next time the cursor rests on special ground). A trigger
+  that fires while its tip is already queued doesn't queue it twice.
+- **A second way a tip was lost:** Confirm or Cancel in the very frame a
+  tip came due closed it before it had ever been drawn (and it was
+  already saved as seen). Now a tip takes every key at once, but only
+  closes on Confirm/Cancel once it has been drawn. The old test
+  `cancel_dismisses_too_and_other_keys_wait` pressed Confirm on the
+  first frame; it now lets the tip draw first.
+- **Reproducing (a) and (b):** new `crates/ui/tests/it/ch01_tips.rs`
+  plays Chapter 1 at Full from a fresh profile: Rue's action menu opened
+  while the cursor lesson is open, and the cursor resting on a forest
+  while it is open. Both tips **already showed** once the lesson closed,
+  before the fix too: within one battle a queued tip waits for the
+  lesson and then shows (also checked by hand with Rue moving during
+  the "moving" lesson: the Magic tip shows right after it). So the
+  queue dropping (Retry, leaving or finishing the battle with tips still
+  waiting) and the undrawn-close above are the causes found; the tests
+  stay as guards. (c) (`flow::a_tip_not_shown_before_a_retry_shows_after_it`)
+  uses the test chapter, which can be lost by ending turns; Chapter 1
+  (a rout) can't be lost that quickly.
+- Unit tests in `tip_tests.rs`: `a_tip_counts_as_seen_once_it_is_shown`,
+  `a_tip_not_yet_drawn_takes_the_key_but_stays`.
+- No gameplay rules decided. For Nick: if a tip still never shows in the
+  next playtest, say what you did just before (lost/retried, quit, or
+  pressed keys fast), since the in-battle path now shows them.

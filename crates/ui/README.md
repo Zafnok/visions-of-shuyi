@@ -142,7 +142,14 @@ buf.fill_rect(text_box, Cell::new(' ', text, panel_bg));   // a solid box
    raw key presses also go into `FrameInput::pressed_chords()`, which text
    boxes and the Key bindings screen read (to capture a key for a slot;
    `pressed_buttons` / `released_buttons` are the same for a controller
-   button, ADR-0053).
+   button, ADR-0053). **Button chords** (ADR-0079, ticket 1034; the
+   Playdate's `A+B`, `B+←`, `B+→`): a button in a chord whose own action
+   doesn't repeat holds it back until its partner comes (B until let go,
+   since its partners the D-pad act on press; A for the `chord` window of
+   `keymap.ron`, 80 ms, or until let go), and the chord fires instead when
+   the partner goes down in time. So a pad action may come in a frame
+   with no button going down; `pad_pressed()` still says it came from a
+   pad. The rules are in the engine's `input::state` module docs.
 3. Only the **top** screen's `update(ctx, input)` runs. It returns a
    `Transition`: `None`, `Push(screen)`, `Pop`, `Replace(screen)` or `Quit`.
    Popping the last screen also quits.
@@ -455,6 +462,9 @@ fn select_opens_new_game() {
 - `keys("Down Down f")`: whitespace-separated chords as written in
   `keymap.ron` (`f`, `Left`, `Shift+Space`, `Enter`, `F2`). Each is pressed
   in one frame and released in the next; frames are `FRAME_DT` (1/60 s).
+- `pad("DpadDown South")`: the same for controller buttons;
+  `pad("South+East")` presses both in one frame (a button chord) and
+  lets both go in the next.
 - `hold("Right", 0.5)`: holds a key for 0.5 simulated seconds (so it
   repeats), then releases it. `wait(0.2)`: time passes with no input. One
   call runs at most `MAX_FRAMES` (2 000, ~33 s); longer ones panic.

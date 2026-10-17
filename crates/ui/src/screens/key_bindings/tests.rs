@@ -770,10 +770,10 @@ fn change(s: &mut KeyBindingsScreen, c: &mut Ctx, action: Action, slot: usize) {
     assert!(s.is_capturing());
 }
 
-fn pad_names(s: &KeyBindingsScreen, action: Action) -> [&'static str; SLOTS] {
+fn pad_names(s: &KeyBindingsScreen, action: Action) -> [String; SLOTS] {
     s.pad_bindings()
         .slots(action)
-        .map(|b| b.map_or("-", Button::name))
+        .map(|b| b.map_or_else(|| "-".to_owned(), |b| b.to_string()))
 }
 
 #[test]

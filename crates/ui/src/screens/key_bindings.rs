@@ -42,9 +42,9 @@ use super::layout_picker;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{
-    Action, ActionSet, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Device, KEY_ROWS,
-    Keymap, Layout, LayoutBindings, PadBindings, PadKind, SLOTS, UiAction, capture_abort_key_name,
-    clear_slot_key_name, is_capture_abort, is_clear_slot,
+    Action, ActionSet, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, CHORD_JOIN_TEXT, Chord,
+    Device, KEY_ROWS, Keymap, Layout, LayoutBindings, PadBindings, PadKind, SLOTS, UiAction,
+    capture_abort_key_name, clear_slot_key_name, is_capture_abort, is_clear_slot,
 };
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::tips::fill_text;
@@ -325,7 +325,8 @@ impl KeyBindingsScreen {
                     Device::Pad(kind) => kind,
                     Device::Keyboard => PadKind::default(),
                 };
-                let name = |b| kind.button_name(b).to_owned();
+                let join = ctx.text(CHORD_JOIN_TEXT);
+                let name = |b| kind.chord_name(b, join);
                 self.pad.slots(action).map(|b| b.map(name))
             }
         }

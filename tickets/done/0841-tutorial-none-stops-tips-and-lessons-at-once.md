@@ -91,9 +91,10 @@ every level).
   its trigger if the level goes back up. With nothing in play, End turn
   is never held.
 - Tips: queued tips are **hidden** while the level shows none, rather
-  than deleted. A tip is saved as seen when it is queued, so deleting it
-  would lose it for good; hidden, it shows if the level is raised again.
-  For the player at None or Short it is the same: no tip shows.
+  than deleted (a tip is saved as seen only once shown, 0467, so either
+  way it isn't lost; hidden keeps the queue's order if the level is
+  raised again). For the player at None or Short it is the same: no tip
+  shows.
 - Also checked where shown: the battle's tip and lesson boxes check the
   live level (`tip_view`, `lesson_view`), so a stale queue can't draw for
   a frame.

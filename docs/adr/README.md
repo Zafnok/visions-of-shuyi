@@ -86,6 +86,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0076](0076-conversation-openings-a-cast-on-a-place-and-the-cinematic-walks.md) | Conversation openings: a cast on a place, and the cinematic walks | Accepted (0734); extends ADR-0061 |
 | [0077](0077-the-one-bit-render-redraws-what-changed.md) | The one-bit render redraws only what changed, against a kept reference | Accepted (1055); extends ADR-0074 §4 |
 | [0078](0078-input-actions-an-open-set-the-game-defines.md) | Input actions are an open set the game defines (`ActionSet`); layouts are named data | Accepted (1106); amends ADR-0015 and ADR-0031 |
+| [0079](0079-button-chords-and-the-playdates-own-buttons.md) | Button chords (two pad buttons together), and the Playdate's own buttons | Accepted (1034); extends ADR-0034 and ADR-0053 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
