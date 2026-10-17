@@ -1,4 +1,4 @@
-//! The Playdate's sounds and music (ticket 1047, ADR-0083), converted by
+//! The Playdate's sounds and music (ticket 1047, ADR-0084), converted by
 //! `cargo xtask playdate` into the `.pdx`'s `Source/` folder before `pdc`
 //! packs it.
 //!

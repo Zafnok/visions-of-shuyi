@@ -1,4 +1,4 @@
-# The music the Playdate build ships (ticket 1047, ADR-0083): Chapter 1's.
+# The music the Playdate build ships (ticket 1047, ADR-0084): Chapter 1's.
 #
 # `cargo xtask playdate` converts these tracks from `music/` and packs them
 # in the `.pdx`; a track not listed is not on the Playdate, and asking for

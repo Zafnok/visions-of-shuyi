@@ -30,7 +30,7 @@ listed.
 | ---- | ---- |
 | `shim/shim.c` | The SDK's entry point (`eventHandler`) and one small C wrapper per SDK call, compiled against the installed SDK's `pd_api.h` |
 | `src/pd/` | The `sdk` feature: the Rust side of those calls, the allocator over the SDK's `realloc`, the panic handler, the game's own stack (`run`, `high_water`), the SDK's files behind `storage::Files` (`files.rs`) and the entry points the shim calls (`entry.rs`: the frame loop); with the `bench` feature, the bench build's extra renders (`bench.rs`). The only `unsafe` in the crate |
-| `src/audio.rs` | Playing the frame's sounds and music (ticket 1047, ADR-0083): the PC player's rules over a `Speaker` trait, which `src/pd/sound.rs` puts on the SDK's sample and file players |
+| `src/audio.rs` | Playing the frame's sounds and music (ticket 1047, ADR-0084): the PC player's rules over a `Speaker` trait, which `src/pd/sound.rs` puts on the SDK's sample and file players |
 | `src/pads.rs` | The buttons: the SDK's button bits as a `PadKind::Playdate` controller. The only file here that names buttons (`check-keys`) |
 | `src/storage.rs` | The game's `Storage` on the Playdate's files |
 | `src/screen.rs` | Copying the one-bit frame onto the SDK's frame buffer, changed rows only |
@@ -198,7 +198,7 @@ the device's stack, so always use `--release` for the device.
 
 ## Sound and music
 
-(ticket 1047, [ADR-0083](../../docs/adr/0083-playdate-audio-formats.md))
+(ticket 1047, [ADR-0084](../../docs/adr/0084-playdate-audio-formats.md))
 
 `cargo xtask playdate` converts every sound file of
 `assets/audio/audio.ron` and the music listed in

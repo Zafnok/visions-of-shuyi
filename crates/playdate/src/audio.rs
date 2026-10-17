@@ -1,4 +1,4 @@
-//! Plays each frame's audio on the Playdate (ticket 1047, ADR-0083): the
+//! Plays each frame's audio on the Playdate (ticket 1047, ADR-0084): the
 //! sound requests and the music commands `trpg_ui::Game::frame` returns,
 //! as the PC's player does them (ADR-0026, ADR-0037), through the SDK's
 //! sample players and file players behind [`Speaker`].

@@ -10,7 +10,7 @@
 //! Playdate's bundle leaves the sound files out (ticket 1036): there the
 //! manifest is read, its sounds unchecked, and the Playdate plays its own
 //! copies of the files, which its build converts and packs in the `.pdx`
-//! with the music it lists ([`playdate_music`], ticket 1047, ADR-0083).
+//! with the music it lists ([`playdate_music`], ticket 1047, ADR-0084).
 //!
 //! The manifest is Shuyi Engine's (`shuyi_assets::audio`, ticket 1104);
 //! this module names the game's files and folders.
@@ -71,7 +71,7 @@ fn left_out_sound(file: &str) -> bool {
 }
 
 /// The music the Playdate build ships: `crates/content/playdate-music.txt`
-/// (ticket 1047, ADR-0083).
+/// (ticket 1047, ADR-0084).
 const PLAYDATE_MUSIC: &str = include_str!("../playdate-music.txt");
 
 /// The music cues the Playdate build ships (`playdate-music.txt`,
@@ -102,7 +102,7 @@ pub fn playdate_music(manifest: &AudioManifest) -> Result<BTreeSet<String>, Stri
 /// Where the Playdate build puts the sound file named `file` in the
 /// manifest, as the SDK opens it: `audio/sfx/menu_move` for
 /// `sfx/menu_move.wav`. The SDK's `pdc` packs it as `.pda` and the SDK
-/// finds it without the extension (ADR-0083).
+/// finds it without the extension (ADR-0084).
 pub fn playdate_sound_path(file: &str) -> String {
     format!("{SOUND_DIR}/{}", without_extension(file))
 }

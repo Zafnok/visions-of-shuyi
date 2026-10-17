@@ -92,7 +92,7 @@ word on how it sounds.
 
 - [x] Every sound and music cue Chapter 1 uses plays in the Simulator
       (the device: Nick's sign-off, below).
-- [x] The ADR records the formats and sizes (ADR-0083).
+- [x] The ADR records the formats and sizes (ADR-0084).
 - [ ] Device numbers and Nick's comment in the PR / completion notes
       (waits for Nick's sideload; sign-off never blocks the PR).
 - [x] `cargo deny check licenses` passes.
@@ -106,7 +106,7 @@ word on how it sounds.
 ## Completion notes
 
 **Done (2026-10-17).** The Playdate plays every sound and Chapter 1's
-music ([ADR-0083](../../docs/adr/0083-playdate-audio-formats.md)).
+music ([ADR-0084](../../docs/adr/0084-playdate-audio-formats.md)).
 
 - **Formats:** mono IMA ADPCM at 44.1 kHz for both sounds and music, 22
   KB a second. Sounds: 21 files, 340 KB, all loaded into memory behind

@@ -13,6 +13,7 @@ pub mod glyph;
 pub mod grid;
 pub mod path;
 pub mod place;
+pub mod playdate;
 pub mod scene;
 pub mod skin;
 pub mod sprite;
@@ -22,10 +23,12 @@ use alloc::rc::Rc;
 
 use trpg_content::Content;
 
+use crate::screen::SkinSet;
 use crate::settings::MapLook;
 
 pub use glyph::GlyphSkin;
 pub use place::{Place, screen_tiles};
+pub use playdate::PlaydateSkin;
 pub use scene::{
     CursorStyle, CursorView, Facing, MapScene, RangeKind, STANDING_FRAME, ThreatView, TileView,
     UnitEffects, UnitView,
@@ -63,19 +66,31 @@ pub fn skin_for_look(look: MapLook, content: &Content) -> Rc<dyn MapSkin> {
     }
 }
 
+/// The map skin of skin set `set` for the player's map look: on the PC
+/// ([`SkinSet::Glyph`]) [`skin_for_look`]'s; on the Playdate its
+/// [`PlaydateSkin`], whatever the look (its bought art in one bit is
+/// ticket 0067's question).
+pub fn skin_for(set: SkinSet, look: MapLook, content: &Content) -> Rc<dyn MapSkin> {
+    match set {
+        SkinSet::Glyph => skin_for_look(look, content),
+        SkinSet::Playdate => Rc::new(PlaydateSkin),
+    }
+}
+
 /// Whether `content` has pictures to paint the map with, so that the map
 /// look is a choice ([`GAME_TILESET`] present).
 pub fn has_pictures(content: &Content) -> bool {
     content.tilesets.contains_key(GAME_TILESET)
 }
 
-/// The skin called `name`: `"glyph"`; `"sprite"` and `"sprite_units"`,
+/// The skin called `name`: `"glyph"`; `"playdate"`; `"sprite"` and `"sprite_units"`,
 /// painting with the [`TEST_TILESET`] and the [`TEST_UNITS_TILESET`]; or
 /// the id of any tileset of `content`. `None` for any other name, or
 /// without that tileset. For the debug menu and tests.
 pub fn skin_named(content: &Content, name: &str) -> Option<Rc<dyn MapSkin>> {
     let id = match name {
         "glyph" => return Some(Rc::new(GlyphSkin)),
+        "playdate" => return Some(Rc::new(PlaydateSkin)),
         "sprite" => TEST_TILESET,
         "sprite_units" => TEST_UNITS_TILESET,
         id => id,
@@ -140,6 +155,21 @@ mod tests {
         assert!(has_pictures(&content));
         assert_eq!(name(MapLook::Pictures, &content), "sprite_units");
         assert_eq!(name(MapLook::Glyphs, &content), "glyph");
+    }
+
+    #[test]
+    fn the_skin_set_picks_the_map_skin() {
+        let mut content = trpg_content::load_embedded().unwrap();
+        let mut tileset = content.tilesets[TEST_UNITS_TILESET].clone();
+        tileset.id = GAME_TILESET.to_owned();
+        content.tilesets.insert(GAME_TILESET.to_owned(), tileset);
+        let name = |set, look| skin_for(set, look, &content).name();
+        assert_eq!(name(SkinSet::Glyph, MapLook::Pictures), "sprite_units");
+        assert_eq!(name(SkinSet::Glyph, MapLook::Glyphs), "glyph");
+        assert_eq!(name(SkinSet::Playdate, MapLook::Pictures), "playdate");
+        assert_eq!(name(SkinSet::Playdate, MapLook::Glyphs), "playdate");
+        let found = skin_named(&content, "playdate").map(|s| s.name());
+        assert_eq!(found, Some("playdate"));
     }
 
     #[test]

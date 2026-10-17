@@ -26,6 +26,6 @@ icon/
 
 # The sound effects: the Playdate plays its own copies, which its build
 # converts and packs in the `.pdx` beside the game (ticket 1047,
-# ADR-0083). `audio/audio.ron` stays: the game's scenes and battles name
+# ADR-0084). `audio/audio.ron` stays: the game's scenes and battles name
 # its cues, and the Playdate's player reads their files and volumes.
 audio/sfx/

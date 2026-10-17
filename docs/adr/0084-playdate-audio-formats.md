@@ -1,4 +1,4 @@
-# ADR-0083: Playdate audio formats: mono IMA ADPCM at 44.1 kHz, converted at build time
+# ADR-0084: Playdate audio formats: mono IMA ADPCM at 44.1 kHz, converted at build time
 
 - **Status:** Accepted
 - **Date:** 2026-10-17
