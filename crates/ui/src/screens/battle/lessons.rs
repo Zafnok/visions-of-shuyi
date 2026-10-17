@@ -12,7 +12,7 @@
 use crate::prelude::*;
 use alloc::collections::VecDeque;
 
-use trpg_content::{DoneWhen, Lesson, TipTrigger};
+use trpg_content::{DoneWhen, Lesson, LessonLevel, TipTrigger};
 use trpg_core::TutorialLevel;
 
 use crate::screen::{Ctx, Lessons};
@@ -22,6 +22,8 @@ use crate::screen::{Ctx, Lessons};
 struct Waiting {
     /// Its id.
     id: String,
+    /// The tutorial levels it shows at.
+    level: LessonLevel,
     /// What ticks each item, in order.
     items: Vec<DoneWhen>,
     /// Each item ticked yet, in order.
@@ -32,6 +34,7 @@ impl Waiting {
     fn new(lesson: &Lesson) -> Self {
         Self {
             id: lesson.id.clone(),
+            level: lesson.level,
             items: lesson.items.iter().map(|i| i.done_when).collect(),
             ticked: vec![false; lesson.items.len()],
         }
@@ -61,21 +64,34 @@ impl LessonState {
         }
     }
 
+    /// Whether a lesson of `level` shows in `ctx`: lessons are on and the
+    /// campaign's tutorial level shows it (a battle with no campaign
+    /// counts as [`TutorialLevel::Full`]).
+    pub fn shows(ctx: &Ctx, level: LessonLevel) -> bool {
+        ctx.lessons == Lessons::On
+            && level.shows_at(ctx.campaign_tutorial.unwrap_or(TutorialLevel::Full))
+    }
+
     /// Queues the lessons the fired triggers start in battle `battle`:
-    /// each one the campaign's tutorial level shows (a battle with no
-    /// campaign counts as [`TutorialLevel::Full`]) that isn't done or
-    /// waiting already, nor put away in turn `turn`. With lessons off they
-    /// are forgotten.
+    /// each one that [`shows`](Self::shows) and isn't done or waiting
+    /// already, nor put away in turn `turn`; the others are forgotten.
+    /// First drops the lessons waiting that no longer show, the one in
+    /// play too, unticked and not done (the tutorial level may change
+    /// mid-battle in Options, 0841).
     pub fn absorb(&mut self, ctx: &Ctx, battle: Option<&str>, turn: u32) {
         let fired = core::mem::take(&mut self.fired);
+        let front = self.current().map(str::to_owned);
+        self.queue.retain(|w| Self::shows(ctx, w.level));
+        if self.current() != front.as_deref() {
+            self.open = false;
+        }
         if ctx.lessons == Lessons::Off {
             return;
         }
         self.away.retain(|(_, t)| *t == turn);
-        let level = ctx.campaign_tutorial.unwrap_or(TutorialLevel::Full);
         for trigger in fired {
             for lesson in ctx.content.lessons.for_trigger(trigger) {
-                let due = lesson.level.shows_at(level)
+                let due = Self::shows(ctx, lesson.level)
                     && lesson.starts_in(battle)
                     && !ctx.campaign_lessons.contains(&lesson.id)
                     && !self.queue.iter().any(|w| w.id == lesson.id)
@@ -276,6 +292,42 @@ mod tests {
         assert_eq!(queued(&c, None), ["short"]);
         c.lessons = Lessons::Off;
         assert!(queued(&c, None).is_empty());
+    }
+
+    #[test]
+    fn a_lower_level_drops_the_lessons_it_does_not_show_open_or_waiting() {
+        let first = TipTrigger::FirstBattleStart;
+        let mut c = with(vec![
+            lesson("a", LessonLevel::Full, first, &[UP, DoneWhen::Attacked]),
+            lesson("b", LessonLevel::Short, first, &[UP]),
+            lesson("c", LessonLevel::Full, first, &[UP]),
+        ]);
+        c.campaign_tutorial = Some(TutorialLevel::Full);
+        let mut s = start(&c);
+        s.mark_open();
+        assert!(s.tick(&mut c, UP));
+        assert!(s.holds_turn());
+        // Short: the open Full lesson closes unticked and not done.
+        c.campaign_tutorial = Some(TutorialLevel::Short);
+        s.absorb(&c, None, 1);
+        assert_eq!(s.current(), Some("b"));
+        assert!(!s.is_open() && !s.holds_turn());
+        assert_eq!(s.ticked(), [false]);
+        assert!(c.campaign_lessons.is_empty());
+        // A lesson still shown stays open.
+        s.mark_open();
+        s.absorb(&c, None, 1);
+        assert!(s.is_open());
+        // None: nothing left, nothing holds the turn.
+        c.campaign_tutorial = Some(TutorialLevel::None);
+        s.absorb(&c, None, 1);
+        assert!(!s.in_play() && !s.holds_turn());
+        // Back up to Full: it comes back with its trigger.
+        c.campaign_tutorial = Some(TutorialLevel::Full);
+        s.fire(first);
+        s.absorb(&c, None, 1);
+        assert_eq!(s.current(), Some("a"));
+        assert_eq!(s.ticked(), [false, false]);
     }
 
     #[test]
