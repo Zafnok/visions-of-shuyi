@@ -24,9 +24,7 @@ use crate::audio::{AudioQueue, MusicClock, pick_from_pool};
 use crate::color::Palette;
 use crate::console::ConsoleSpec;
 use crate::glyph_buffer::GlyphBuffer;
-use crate::input::{
-    Action, Button, Chord, Device, Keymap, Layout, LayoutBindings, PadBindings, PlayerKeys,
-};
+use crate::input::{Action, Device, Keymap, Layout, LayoutBindings, PadBindings, PlayerKeys};
 use crate::map_view::MapSkin;
 use crate::profiles::{self, ProfileError, ProfileId, ProfileStore, Profiles};
 use crate::settings::{SETTINGS_KEY, Settings};
@@ -106,112 +104,8 @@ impl fmt::Debug for Transition {
     }
 }
 
-/// One frame's input as a screen sees it.
-#[derive(Debug, Clone, PartialEq)]
-pub struct FrameInput {
-    /// Actions this frame, in order: key presses, then key repeats.
-    pub actions: Vec<Action>,
-    /// Seconds since the previous frame.
-    pub dt: f32,
-    /// Actions whose key is currently held down.
-    held: Vec<Action>,
-    /// The chords pressed this frame, in order.
-    pressed: Vec<Chord>,
-    /// The characters typed this frame, in order.
-    text: Vec<char>,
-    /// Whether a controller button went down this frame.
-    pad: bool,
-    /// The controller buttons that went down this frame, in order.
-    buttons_down: Vec<Button>,
-    /// The controller buttons that went up this frame, in order.
-    buttons_up: Vec<Button>,
-}
-
-impl FrameInput {
-    /// Input for one frame; `held` lists the actions whose keys are down.
-    /// No [`pressed_chords`](Self::pressed_chords).
-    pub fn new(actions: Vec<Action>, dt: f32, held: Vec<Action>) -> Self {
-        Self {
-            actions,
-            dt,
-            held,
-            pressed: Vec::new(),
-            text: Vec::new(),
-            pad: false,
-            buttons_down: Vec::new(),
-            buttons_up: Vec::new(),
-        }
-    }
-
-    /// The same input with the controller buttons that went `down` and
-    /// `up` this frame (and so [`pad_pressed`](Self::pad_pressed) if any
-    /// went down).
-    #[must_use]
-    pub fn with_buttons(mut self, down: Vec<Button>, up: Vec<Button>) -> Self {
-        self.pad = !down.is_empty();
-        self.buttons_down = down;
-        self.buttons_up = up;
-        self
-    }
-
-    /// The controller buttons that went down this frame (bound or not; by
-    /// binding position, stick directions included), for the Key bindings
-    /// screen, which captures the button for a slot. Anything else reacts
-    /// to [`actions`](Self::actions).
-    pub fn pressed_buttons(&self) -> &[Button] {
-        &self.buttons_down
-    }
-
-    /// The controller buttons that went up this frame, as
-    /// [`pressed_buttons`](Self::pressed_buttons).
-    pub fn released_buttons(&self) -> &[Button] {
-        &self.buttons_up
-    }
-
-    /// The same input with whether a controller button went down this
-    /// frame.
-    #[must_use]
-    pub fn with_pad(mut self, pad: bool) -> Self {
-        self.pad = pad;
-        self
-    }
-
-    /// Whether a controller button went down this frame: the player is on
-    /// a controller, so a screen that needs text shows a letter grid
-    /// instead of asking them to type.
-    pub fn pad_pressed(&self) -> bool {
-        self.pad
-    }
-
-    /// The same input with the chords `pressed` and the characters `text`
-    /// typed this frame.
-    #[must_use]
-    pub fn with_typing(mut self, pressed: Vec<Chord>, text: Vec<char>) -> Self {
-        self.pressed = pressed;
-        self.text = text;
-        self
-    }
-
-    /// The chords pressed this frame (bound or not; presses only, no
-    /// repeats), for the few screens that read keys themselves: a text
-    /// box's fixed keys ([`crate::input::text_key`]) and the Key bindings
-    /// screen, which captures the key for a slot.
-    /// Anything else reacts to [`actions`](Self::actions).
-    pub fn pressed_chords(&self) -> &[Chord] {
-        &self.pressed
-    }
-
-    /// The characters typed this frame (printable only), for text boxes.
-    pub fn text(&self) -> &[char] {
-        &self.text
-    }
-
-    /// Whether a key bound to `action` is held (e.g. hold Confirm to
-    /// fast-forward).
-    pub fn is_held(&self, action: Action) -> bool {
-        self.held.contains(&action)
-    }
-}
+/// One frame's input as this game's screens see it.
+pub type FrameInput = crate::input::frame::FrameInput<Action>;
 
 /// Whether screens show their idle motion ([`Ctx::idle_motion`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -758,13 +652,26 @@ impl Ctx {
     /// The layout saved by an earlier [`choose_layout`](Self::choose_layout):
     /// the saved settings', else the one under the old [`LAYOUT_KEY`].
     /// `None` if nothing is saved, or if the saved value can't be read or
-    /// isn't a known layout (the player is simply asked again).
+    /// isn't a layout the keymap file lists (the player is simply asked
+    /// again).
     pub fn saved_layout(&self) -> Option<Layout> {
         let read = |key| self.storage.read(key).ok().flatten();
+        let known = |l: &Layout| self.content.keymap.has_layout(*l);
         let in_settings = read(SETTINGS_KEY)
             .and_then(|text| Settings::from_ron(&text).ok())
-            .and_then(|s| s.layout());
-        in_settings.or_else(|| Layout::from_name(read(LAYOUT_KEY)?.trim()))
+            .and_then(|s| s.layout())
+            .filter(known);
+        in_settings.or_else(|| Layout::from_name(read(LAYOUT_KEY)?.trim()).filter(known))
+    }
+
+    /// The layout a screen about the keys shows: the one in use, else the
+    /// keymap file's first (before a layout is chosen).
+    pub fn shown_layout(&self) -> Layout {
+        let first = || self.content.keymap.first_layout();
+        // The loader refuses a keymap without layouts.
+        self.layout
+            .or_else(first)
+            .unwrap_or(crate::input::RIGHT_HANDED)
     }
 
     /// The player's settings.
@@ -1123,6 +1030,7 @@ impl ScreenStack {
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use crate::input::{Button, LEFT_HANDED, RIGHT_HANDED};
     use std::cell::RefCell;
     use std::rc::Rc;
 
@@ -1307,7 +1215,7 @@ pub(crate) mod tests {
     /// already chosen.
     /// Debug tools are on whatever the build profile, as in the harness.
     pub(crate) fn ctx() -> Ctx {
-        let mut ctx = Ctx::embedded().unwrap().with_layout(Layout::RightHanded);
+        let mut ctx = Ctx::embedded().unwrap().with_layout(RIGHT_HANDED);
         ctx.debug_tools = true;
         // New Game plays the small test chapter, as in the harness.
         ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
@@ -1543,9 +1451,9 @@ pub(crate) mod tests {
         assert_eq!(c.palette, Palette::new(&c.content.palette).unwrap());
         assert_eq!(
             c.keymap,
-            Keymap::for_layout(&c.content.keymap, Layout::RightHanded)
+            Keymap::for_layout(&c.content.keymap, RIGHT_HANDED)
         );
-        assert_eq!(c.layout(), Some(Layout::RightHanded));
+        assert_eq!(c.layout(), Some(RIGHT_HANDED));
         assert_eq!(c.palette.get(UiColor::Black), Rgb::new(0, 0, 0));
     }
 
@@ -1627,18 +1535,15 @@ pub(crate) mod tests {
     #[test]
     fn use_layout_switches_without_saving() {
         let mut c = ctx();
-        c.use_layout(Layout::LeftHanded);
-        assert_eq!(c.layout(), Some(Layout::LeftHanded));
-        assert_eq!(
-            c.keymap,
-            Keymap::for_layout(&c.content.keymap, Layout::LeftHanded)
-        );
+        c.use_layout(LEFT_HANDED);
+        assert_eq!(c.layout(), Some(LEFT_HANDED));
+        assert_eq!(c.keymap, Keymap::for_layout(&c.content.keymap, LEFT_HANDED));
         assert_eq!(c.storage.read(LAYOUT_KEY), Ok(None));
     }
 
     #[test]
     fn choose_layout_saves_and_saved_layout_reads_it_back() {
-        for layout in Layout::ALL {
+        for layout in [RIGHT_HANDED, LEFT_HANDED] {
             let mut c = Ctx::embedded().unwrap();
             assert_eq!(c.choose_layout(layout), Ok(()));
             assert_eq!(c.layout(), Some(layout));
@@ -1652,20 +1557,55 @@ pub(crate) mod tests {
     }
 
     #[test]
+    fn a_saved_layout_the_keymap_doesnt_list_is_ignored() {
+        let mut storage = MemoryStorage::new();
+        let settings = "Settings(version: 1, layout: Some(\"Vim\"))";
+        storage.write(SETTINGS_KEY, settings).unwrap();
+        storage.write(LAYOUT_KEY, "Dvorak").unwrap();
+        let c = Ctx::embedded().unwrap().with_storage(Box::new(storage));
+        assert_eq!(c.saved_layout(), None);
+        assert_eq!(c.settings().layout(), None);
+        assert_eq!(c.shown_layout(), RIGHT_HANDED);
+        // The old key still counts when the settings name an unknown one.
+        let mut storage = MemoryStorage::new();
+        storage.write(SETTINGS_KEY, settings).unwrap();
+        storage.write(LAYOUT_KEY, "LeftHanded").unwrap();
+        let c = Ctx::embedded().unwrap().with_storage(Box::new(storage));
+        assert_eq!(c.saved_layout(), Some(LEFT_HANDED));
+        assert_eq!(c.settings().layout(), Some(LEFT_HANDED));
+        assert_eq!(c.with_layout(LEFT_HANDED).shown_layout(), LEFT_HANDED);
+    }
+
+    #[test]
+    fn every_layout_of_the_keymap_has_a_name_in_every_language() {
+        let mut c = ctx();
+        for lang in [LangCode::new("en").unwrap(), LangCode::new(TEST).unwrap()] {
+            c.lang = lang;
+            for (layout, key) in &c.content.keymap.layout_names {
+                assert_ne!(c.text(key), key.as_str(), "{layout}");
+                assert_eq!(
+                    crate::screens::layout_picker::label(&c, *layout),
+                    c.text(key)
+                );
+            }
+        }
+    }
+
+    #[test]
     fn a_layout_saved_before_the_settings_is_still_found() {
         let mut storage = MemoryStorage::new();
         storage.write(LAYOUT_KEY, "LeftHanded").unwrap();
         let mut c = Ctx::embedded().unwrap().with_storage(Box::new(storage));
-        assert_eq!(c.saved_layout(), Some(Layout::LeftHanded));
-        assert_eq!(c.settings().layout(), Some(Layout::LeftHanded));
+        assert_eq!(c.saved_layout(), Some(LEFT_HANDED));
+        assert_eq!(c.settings().layout(), Some(LEFT_HANDED));
         // The next save of the settings carries it.
         c.change_settings(|s| s.fullscreen = true).unwrap();
         let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
         let saved = Settings::from_ron(&saved).unwrap();
-        assert_eq!(saved.layout(), Some(Layout::LeftHanded));
+        assert_eq!(saved.layout(), Some(LEFT_HANDED));
         // The settings' layout beats the old key.
-        c.choose_layout(Layout::RightHanded).unwrap();
-        assert_eq!(c.saved_layout(), Some(Layout::RightHanded));
+        c.choose_layout(RIGHT_HANDED).unwrap();
+        assert_eq!(c.saved_layout(), Some(RIGHT_HANDED));
     }
 
     #[test]
@@ -1720,22 +1660,19 @@ pub(crate) mod tests {
         assert_eq!(c.storage.read(SETTINGS_KEY).unwrap().unwrap(), "marker");
         // A layout picked meanwhile saves only the layout.
         c.preview_settings(|s| s.music_volume = 9);
-        c.choose_layout(Layout::LeftHanded).unwrap();
+        c.choose_layout(LEFT_HANDED).unwrap();
         let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
         let saved = Settings::from_ron(&saved).unwrap();
-        assert_eq!(
-            (saved.music_volume, saved.layout()),
-            (3, Some(Layout::LeftHanded))
-        );
+        assert_eq!((saved.music_volume, saved.layout()), (3, Some(LEFT_HANDED)));
     }
 
     #[test]
     fn change_settings_cant_change_the_layout() {
         let mut c = ctx();
-        c.choose_layout(Layout::LeftHanded).unwrap();
+        c.choose_layout(LEFT_HANDED).unwrap();
         c.change_settings(|s| *s = Settings::default()).unwrap();
-        assert_eq!(c.settings().layout(), Some(Layout::LeftHanded));
-        assert_eq!(c.layout(), Some(Layout::LeftHanded));
+        assert_eq!(c.settings().layout(), Some(LEFT_HANDED));
+        assert_eq!(c.layout(), Some(LEFT_HANDED));
     }
 
     /// Ticket 0439: the map skin is drawn at the zoom in the settings,
@@ -1837,7 +1774,7 @@ pub(crate) mod tests {
 ",
             )
             .unwrap();
-        assert_eq!(c.saved_layout(), Some(Layout::LeftHanded));
+        assert_eq!(c.saved_layout(), Some(LEFT_HANDED));
     }
 
     /// A storage whose every operation fails.
@@ -1863,8 +1800,8 @@ pub(crate) mod tests {
     fn a_failed_save_still_switches_layout() {
         let mut c = Ctx::embedded().unwrap().with_storage(Box::new(Failing));
         assert_eq!(c.saved_layout(), None);
-        assert!(c.choose_layout(Layout::LeftHanded).is_err());
-        assert_eq!(c.layout(), Some(Layout::LeftHanded));
+        assert!(c.choose_layout(LEFT_HANDED).is_err());
+        assert_eq!(c.layout(), Some(LEFT_HANDED));
     }
 
     #[test]
@@ -1894,32 +1831,28 @@ pub(crate) mod tests {
     #[test]
     fn set_layout_bindings_saves_and_switches_the_layout_in_use() {
         let mut c = ctx();
-        let b = info_on_g(&c, Layout::RightHanded);
-        assert_eq!(
-            c.set_layout_bindings(Layout::RightHanded, b.clone()),
-            Ok(())
-        );
+        let b = info_on_g(&c, RIGHT_HANDED);
+        assert_eq!(c.set_layout_bindings(RIGHT_HANDED, b.clone()), Ok(()));
         assert_eq!(
             c.keymap,
             b.keymap(c.content.keymap.repeat)
                 .with_default_pad(&c.content.keymap)
         );
-        assert_eq!(c.layout_bindings(Layout::RightHanded), b);
+        assert_eq!(c.layout_bindings(RIGHT_HANDED), b);
         let saved = c.storage.read(KEYBINDINGS_KEY).unwrap().unwrap();
         assert_eq!(saved, c.player_keys().to_ron());
         // The other layout's keys change only the saved config.
         let before = c.keymap.clone();
-        let left = info_on_g(&c, Layout::LeftHanded);
-        c.set_layout_bindings(Layout::LeftHanded, left.clone())
-            .unwrap();
+        let left = info_on_g(&c, LEFT_HANDED);
+        c.set_layout_bindings(LEFT_HANDED, left.clone()).unwrap();
         assert_eq!(c.keymap, before);
-        c.use_layout(Layout::LeftHanded);
+        c.use_layout(LEFT_HANDED);
         assert_eq!(
             c.keymap,
             left.keymap(c.content.keymap.repeat)
                 .with_default_pad(&c.content.keymap)
         );
-        assert_eq!(c.keymap_for(Layout::RightHanded), before);
+        assert_eq!(c.keymap_for(RIGHT_HANDED), before);
     }
 
     /// Unit info also on the right stick pressed in.
@@ -1943,12 +1876,12 @@ pub(crate) mod tests {
         let saved = c.storage.read(KEYBINDINGS_KEY).unwrap().unwrap();
         assert_eq!(saved, c.player_keys().to_ron());
         // The keys are the layout's own; the other layout has the buttons too.
-        assert_eq!(c.keymap, c.keymap_for(Layout::RightHanded));
+        assert_eq!(c.keymap, c.keymap_for(RIGHT_HANDED));
         assert_eq!(
             c.keymap.chords_for(Action::Info),
-            Keymap::for_layout(&c.content.keymap, Layout::RightHanded).chords_for(Action::Info)
+            Keymap::for_layout(&c.content.keymap, RIGHT_HANDED).chords_for(Action::Info)
         );
-        c.use_layout(Layout::LeftHanded);
+        c.use_layout(LEFT_HANDED);
         assert_eq!(
             c.keymap.pad_action(Button::RightStickPress),
             Some(Action::Info)
@@ -1982,13 +1915,12 @@ pub(crate) mod tests {
     #[test]
     fn saved_keys_load_with_the_storage() {
         let mut c = ctx();
-        let b = info_on_g(&c, Layout::RightHanded);
-        c.set_layout_bindings(Layout::RightHanded, b.clone())
-            .unwrap();
+        let b = info_on_g(&c, RIGHT_HANDED);
+        c.set_layout_bindings(RIGHT_HANDED, b.clone()).unwrap();
         let storage = std::mem::take(&mut c.storage).into_computer();
         // A layout already in use picks up the loaded keys.
         let mut again = ctx().with_storage(storage);
-        assert_eq!(again.layout_bindings(Layout::RightHanded), b);
+        assert_eq!(again.layout_bindings(RIGHT_HANDED), b);
         assert_eq!(
             again.keymap,
             b.keymap(again.content.keymap.repeat)
@@ -2015,12 +1947,9 @@ pub(crate) mod tests {
         let mut c = Ctx::embedded()
             .unwrap()
             .with_storage(Box::new(Failing))
-            .with_layout(Layout::LeftHanded);
-        let b = info_on_g(&c, Layout::LeftHanded);
-        assert!(
-            c.set_layout_bindings(Layout::LeftHanded, b.clone())
-                .is_err()
-        );
+            .with_layout(LEFT_HANDED);
+        let b = info_on_g(&c, LEFT_HANDED);
+        assert!(c.set_layout_bindings(LEFT_HANDED, b.clone()).is_err());
         assert_eq!(
             c.keymap,
             b.keymap(c.content.keymap.repeat)

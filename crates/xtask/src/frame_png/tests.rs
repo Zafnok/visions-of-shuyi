@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 
 use trpg_content::image::TEST_CARD_PATH;
 use trpg_ui::{Cell, Overlay, Rect};
@@ -260,7 +261,7 @@ fn parses_steps_in_order_and_options() {
                 Step::Pad("South".into()),
                 Step::Keys("f".into()),
             ],
-            layout: Layout::LeftHanded,
+            layout: LEFT_HANDED,
             scale: Some(3),
             playdate: false,
             prompt: true,
@@ -280,7 +281,7 @@ fn parses_steps_in_order_and_options() {
             plain.tips,
             plain.playdate
         ),
-        (Layout::RightHanded, None, false, None, false, false)
+        (RIGHT_HANDED, None, false, None, false, false)
     );
     assert!(
         parse_args(&args(&["a.png", "--playdate"]))

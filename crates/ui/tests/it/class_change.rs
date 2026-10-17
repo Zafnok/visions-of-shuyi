@@ -4,12 +4,12 @@
 
 use insta::assert_snapshot;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 
 /// At the title with the right-handed layout, then the debug menu's
 /// `Class change: promote` (`reclass` one further down).
 fn class_change(reclass: bool) -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("F2 Down Down Down Down Down");
     if reclass {
         h.keys("Down");
@@ -126,7 +126,7 @@ fn reclassing_lists_the_classes_and_keeps_the_stats() {
 fn the_screen_follows_the_players_keys() {
     use trpg_ui::input::{Action, Chord};
     let mut h = class_change(false);
-    let layout = Layout::RightHanded;
+    let layout = RIGHT_HANDED;
     let mut keys = h.game().ctx().layout_bindings(layout);
     let p = Chord::parse("p").expect("a key");
     assert_eq!(keys.bind(Action::Confirm, 0, p), Ok(None));

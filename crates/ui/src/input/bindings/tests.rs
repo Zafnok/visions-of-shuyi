@@ -4,7 +4,10 @@
 use proptest::prelude::*;
 
 use super::*;
-use crate::input::{Key, KeyGroup};
+use crate::input::{
+    Action, Key, KeyGroup, KeymapDef, LEFT_HANDED, LayoutBindings, PadBindings, PlayerKeys,
+    RIGHT_HANDED, load_keymap,
+};
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp, Debug, Info};
 
 fn chord(s: &str) -> Chord {
@@ -12,11 +15,11 @@ fn chord(s: &str) -> Chord {
 }
 
 fn def() -> KeymapDef {
-    KeymapDef::load().unwrap_or_else(|e| panic!("{e:?}"))
+    load_keymap().unwrap_or_else(|e| panic!("{e:?}"))
 }
 
 fn right() -> LayoutBindings {
-    LayoutBindings::defaults(&def(), Layout::RightHanded)
+    LayoutBindings::defaults(&def(), RIGHT_HANDED)
 }
 
 /// Slots as names, `-` for empty.
@@ -36,7 +39,7 @@ fn defaults_fill_the_first_slots_in_file_order() {
         b.keymap(RepeatDef::default()).action(chord("F2")),
         Some(Debug)
     );
-    let left = LayoutBindings::defaults(&def(), Layout::LeftHanded);
+    let left = LayoutBindings::defaults(&def(), LEFT_HANDED);
     assert_eq!(names(left.slots(Confirm)), ["j", "-", "-"]);
     assert!(b.unmapped_required().is_empty());
     assert!(left.unmapped_required().is_empty());
@@ -45,7 +48,7 @@ fn defaults_fill_the_first_slots_in_file_order() {
 #[test]
 fn default_bindings_give_the_default_keymap() {
     let def = def();
-    for layout in Layout::ALL {
+    for layout in [RIGHT_HANDED, LEFT_HANDED] {
         // The layout's keys, plus the controller buttons every keymap has.
         let keys = LayoutBindings::defaults(&def, layout).keymap(def.repeat);
         assert_eq!(
@@ -63,8 +66,8 @@ fn a_hand_built_definition_is_repaired_into_the_invariant() {
         (Confirm, vec![chord("f"), chord("Escape"), chord("g")]),
         (Info, vec![chord("f"), chord("a"), chord("b"), chord("c")]),
     ];
-    def.layouts.insert(Layout::LeftHanded, keys.into());
-    let b = LayoutBindings::defaults(&def, Layout::LeftHanded);
+    def.layouts.insert(LEFT_HANDED, keys.into());
+    let b = LayoutBindings::defaults(&def, LEFT_HANDED);
     // `f` moved to Info (listed later); Esc skipped; a 4th chord dropped.
     assert_eq!(names(b.slots(Confirm)), ["-", "-", "g"]);
     assert_eq!(names(b.slots(Info)), ["f", "a", "b"]);
@@ -123,14 +126,14 @@ fn esc_delete_and_the_debug_key_are_reserved() {
     assert_eq!(km.action(chord("Shift+Delete")), Some(Info));
     assert_eq!(km.action(chord("Escape")), Some(Cancel));
     assert_eq!(
-        BindError::Reserved(chord("Escape")).to_string(),
+        BindError::<Action>::Reserved(chord("Escape")).to_string(),
         "Escape is a fixed key and can't be bound"
     );
 }
 
 #[test]
 fn without_debug_tools_the_debug_key_can_be_bound_and_wins() {
-    let mut b = LayoutBindings::from_def(&def(), Layout::RightHanded, false);
+    let mut b = LayoutBindings::from_def(&def(), RIGHT_HANDED, false);
     assert!(!b.is_reserved(chord("F2")));
     assert!(b.is_reserved(chord("Escape")));
     assert_eq!(b.bind(Info, 1, chord("F2")), Ok(None));
@@ -156,7 +159,7 @@ fn debug_and_bad_slots_are_refused() {
         "Debug can't be rebound"
     );
     assert_eq!(
-        BindError::NoSuchSlot(3).to_string(),
+        BindError::<Action>::NoSuchSlot(3).to_string(),
         "there is no key slot 3"
     );
 }
@@ -258,7 +261,7 @@ proptest! {
     #[test]
     fn no_chord_is_in_two_slots_and_none_is_reserved(
         ops in prop::collection::vec(arb_op(), 0..80),
-        layout in prop::sample::select(Layout::ALL.to_vec()),
+        layout in prop::sample::select(vec![RIGHT_HANDED, LEFT_HANDED]),
     ) {
         let mut b = LayoutBindings::defaults(&def(), layout);
         for op in ops {
@@ -293,7 +296,7 @@ proptest! {
 #[test]
 fn a_key_moves_only_within_its_group() {
     // controls.md, Dialogue log: the log's key may be another group's too.
-    let mut b = LayoutBindings::defaults(&def(), Layout::RightHanded);
+    let mut b = LayoutBindings::defaults(&def(), RIGHT_HANDED);
     assert_eq!(b.bind(Action::DialogueLog, 0, chord("f")), Ok(None));
     assert_eq!(b.slots(Confirm)[0], Some(chord("f")), "Confirm keeps f");
     assert_eq!(b.find(KeyGroup::General, chord("f")), Some((Confirm, 0)));
@@ -316,7 +319,7 @@ fn saved_keys_of_another_group_keep_the_logs_default() {
         "PlayerKeys(version: 2, layouts: {\"RightHanded\": {\"Info\": [Some(\"b\"), None, None]}})";
     let (keys, warnings) = PlayerKeys::from_ron(saved, &def());
     assert_eq!(warnings, Vec::<String>::new());
-    let b = keys.bindings(&def(), Layout::RightHanded);
+    let b = keys.bindings(&def(), RIGHT_HANDED);
     assert_eq!(b.slots(Info)[0], Some(chord("b")));
     assert_eq!(b.slots(Action::DialogueLog)[0], Some(chord("b")));
 }
@@ -326,7 +329,7 @@ fn saved_keys_of_another_group_keep_the_logs_default() {
 #[test]
 fn player_keys_start_as_the_defaults() {
     let keys = PlayerKeys::default();
-    for layout in Layout::ALL {
+    for layout in [RIGHT_HANDED, LEFT_HANDED] {
         assert!(!keys.is_custom(layout));
         assert_eq!(
             keys.bindings(&def(), layout),
@@ -339,21 +342,21 @@ fn player_keys_start_as_the_defaults() {
 fn each_layout_keeps_its_own_keys() {
     let def = def();
     let mut keys = PlayerKeys::default();
-    let mut b = keys.bindings(&def, Layout::RightHanded);
+    let mut b = keys.bindings(&def, RIGHT_HANDED);
     b.bind(Info, 1, chord("g")).ok();
-    keys.set(&def, Layout::RightHanded, b.clone());
-    assert!(keys.is_custom(Layout::RightHanded));
-    assert!(!keys.is_custom(Layout::LeftHanded));
-    assert_eq!(keys.bindings(&def, Layout::RightHanded), b);
+    keys.set(&def, RIGHT_HANDED, b.clone());
+    assert!(keys.is_custom(RIGHT_HANDED));
+    assert!(!keys.is_custom(LEFT_HANDED));
+    assert_eq!(keys.bindings(&def, RIGHT_HANDED), b);
     assert_eq!(
-        keys.keymap(&def, Layout::LeftHanded),
-        Keymap::for_layout(&def, Layout::LeftHanded)
+        keys.keymap(&def, LEFT_HANDED),
+        Keymap::for_layout(&def, LEFT_HANDED)
     );
     // Restoring the defaults leaves no entry.
     keys.set(
         &def,
-        Layout::RightHanded,
-        LayoutBindings::defaults(&def, Layout::RightHanded),
+        RIGHT_HANDED,
+        LayoutBindings::defaults(&def, RIGHT_HANDED),
     );
     assert_eq!(keys, PlayerKeys::default());
 }
@@ -362,12 +365,12 @@ fn each_layout_keeps_its_own_keys() {
 fn saved_keys_round_trip() {
     let def = def();
     let mut keys = PlayerKeys::default();
-    let mut b = keys.bindings(&def, Layout::LeftHanded);
+    let mut b = keys.bindings(&def, LEFT_HANDED);
     b.bind(Confirm, 1, chord("Shift+,")).ok();
     b.bind(Info, 2, chord("\\")).ok();
     b.bind(Info, 0, chord("Kp+")).ok();
     b.clear(Action::Rewind, 0);
-    keys.set(&def, Layout::LeftHanded, b);
+    keys.set(&def, LEFT_HANDED, b);
     let text = keys.to_ron();
     assert!(text.starts_with("PlayerKeys("), "{text}");
     assert!(text.contains("version: 2"), "{text}");
@@ -399,7 +402,7 @@ fn saved(actions: &str) -> String {
 /// Loads `text`: the right-handed bindings and the warnings.
 fn load(text: &str) -> (LayoutBindings, Vec<String>) {
     let (keys, warnings) = PlayerKeys::from_ron(text, &def());
-    (keys.bindings(&def(), Layout::RightHanded), warnings)
+    (keys.bindings(&def(), RIGHT_HANDED), warnings)
 }
 
 #[test]
@@ -520,7 +523,7 @@ fn a_required_action_left_unmapped_resets_the_layout() {
 fn a_repaired_layout_equal_to_the_defaults_has_no_entry() {
     let (keys, warnings) = PlayerKeys::from_ron(&saved("\"Confirm\": [Some(\"f\")]"), &def());
     assert!(warnings.is_empty());
-    assert!(!keys.is_custom(Layout::RightHanded));
+    assert!(!keys.is_custom(RIGHT_HANDED));
 }
 
 // --- Controller buttons (ticket 0816) ---------------------------------------
@@ -710,8 +713,8 @@ fn the_buttons_are_shared_by_both_layouts_and_the_layout_picker() {
     assert!(keys.is_custom_pad());
     assert_eq!(keys.pad_bindings(&def), custom);
     let keymaps = [
-        keys.keymap(&def, Layout::RightHanded),
-        keys.keymap(&def, Layout::LeftHanded),
+        keys.keymap(&def, RIGHT_HANDED),
+        keys.keymap(&def, LEFT_HANDED),
         keys.layout_picker_keymap(&def),
     ];
     for km in &keymaps {
@@ -723,7 +726,7 @@ fn the_buttons_are_shared_by_both_layouts_and_the_layout_picker() {
         assert_eq!(km.pad_action(Button::South), Some(Confirm));
     }
     // The keys are each layout's own, untouched by the buttons.
-    for layout in Layout::ALL {
+    for layout in [RIGHT_HANDED, LEFT_HANDED] {
         assert!(!keys.is_custom(layout));
         let default_keys = LayoutBindings::defaults(&def, layout).keymap(def.repeat);
         assert_eq!(
@@ -737,16 +740,16 @@ fn the_buttons_are_shared_by_both_layouts_and_the_layout_picker() {
         Keymap::layout_picker(&def).chords_for(Confirm)
     );
     // Changing a layout's keys leaves the buttons alone.
-    let mut b = keys.bindings(&def, Layout::LeftHanded);
+    let mut b = keys.bindings(&def, LEFT_HANDED);
     b.bind(Info, 0, chord("g")).ok();
-    keys.set(&def, Layout::LeftHanded, b);
+    keys.set(&def, LEFT_HANDED, b);
     assert_eq!(keys.pad_bindings(&def), custom);
     // Buttons equal to the defaults are "no entry".
     keys.set_pad(&def, pad());
     assert!(!keys.is_custom_pad());
     assert_eq!(
-        keys.keymap(&def, Layout::RightHanded),
-        Keymap::for_layout(&def, Layout::RightHanded)
+        keys.keymap(&def, RIGHT_HANDED),
+        Keymap::for_layout(&def, RIGHT_HANDED)
     );
     assert_eq!(keys.layout_picker_keymap(&def), Keymap::layout_picker(&def));
 }
@@ -773,9 +776,9 @@ fn saved_buttons_round_trip() {
     assert_eq!(loaded, keys);
     assert_eq!(loaded.pad_bindings(&def), custom);
     // Keys and buttons together.
-    let mut b = keys.bindings(&def, Layout::LeftHanded);
+    let mut b = keys.bindings(&def, LEFT_HANDED);
     b.bind(Info, 1, chord("g")).ok();
-    keys.set(&def, Layout::LeftHanded, b);
+    keys.set(&def, LEFT_HANDED, b);
     assert_eq!(PlayerKeys::from_ron(&keys.to_ron(), &def), (keys, vec![]));
 }
 
@@ -794,7 +797,7 @@ fn load_pad(text: &str) -> (PadBindings, Vec<String>) {
 fn a_version_1_config_loads_its_keys_with_the_default_buttons() {
     let (keys, warnings) = PlayerKeys::from_ron(&saved("\"Info\": [Some(\"g\")]"), &def());
     assert!(warnings.is_empty(), "{warnings:?}");
-    let b = keys.bindings(&def(), Layout::RightHanded);
+    let b = keys.bindings(&def(), RIGHT_HANDED);
     assert_eq!(names(b.slots(Info)), ["g", "-", "-"]);
     assert!(!keys.is_custom_pad());
     assert_eq!(keys.pad_bindings(&def()), pad());
@@ -865,7 +868,7 @@ fn a_required_action_left_without_a_button_resets_the_buttons_only() {
     let (keys, warnings) = PlayerKeys::from_ron(text, &def());
     assert_eq!(keys.pad_bindings(&def()), pad());
     assert!(!keys.is_custom_pad());
-    assert!(keys.is_custom(Layout::RightHanded));
+    assert!(keys.is_custom(RIGHT_HANDED));
     assert_eq!(
         warnings,
         ["controller: Confirm would have no button, using the default buttons"]
@@ -884,4 +887,44 @@ fn unreadable_buttons_give_the_defaults_for_everything() {
     assert_eq!(keys, PlayerKeys::default());
     assert_eq!(warnings.len(), 1);
     assert!(warnings[0].starts_with("unreadable, using the default keys"));
+}
+
+/// Ticket 1106: a file saved by the build before input became generic
+/// (custom keys in both layouts, custom buttons; written by `main`'s
+/// `PlayerKeys::to_ron` at 2f10b42d) loads without a fix and saves back
+/// byte for byte. `ron` ends lines as the platform does (CRLF on
+/// Windows), and the repository keeps the file with LF, so the file is
+/// compared in this platform's line endings.
+#[test]
+fn a_file_saved_before_input_was_generic_round_trips_byte_for_byte() {
+    let lf = include_str!("saved_before_1106.ron").replace("\r\n", "\n");
+    let saved = if cfg!(windows) {
+        lf.replace('\n', "\r\n")
+    } else {
+        lf
+    };
+    let saved = saved.as_str();
+    let def = def();
+    let (keys, warnings) = PlayerKeys::from_ron(saved, &def);
+    assert_eq!(warnings, Vec::<String>::new());
+    assert!(keys.is_custom(RIGHT_HANDED) && keys.is_custom(LEFT_HANDED));
+    assert!(keys.is_custom_pad());
+    let right = keys.bindings(&def, RIGHT_HANDED);
+    assert_eq!(
+        right.slots(Info),
+        [Some(chord("e")), Some(chord("g")), None]
+    );
+    assert_eq!(
+        right.slots(Action::Select),
+        [Some(chord("Shift+f")), None, None]
+    );
+    assert!(right.is_unmapped(Action::DialogueLog));
+    let left = keys.bindings(&def, LEFT_HANDED);
+    assert_eq!(
+        left.slots(Action::ZoomMap),
+        [Some(chord("Kp+")), None, None]
+    );
+    let pad = keys.pad_bindings(&def);
+    assert_eq!(pad.slots(Info)[1], Some(Button::RightStickPress));
+    assert_eq!(keys.to_ron(), saved);
 }

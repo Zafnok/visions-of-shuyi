@@ -4,6 +4,14 @@
 //! into the actions screens see, including repeat for held cursor keys and
 //! buttons.
 //!
+//! The mechanism is generic over a game's
+//! [`ActionSet`] (ticket 1106), in the
+//! submodules [`keymap`], [`state`], [`frame`], [`bindings`], [`pad`],
+//! [`fixed`] and [`help_keys`], which ticket 1107 moves to the engine. This
+//! module is the game's: the aliases with this game's [`Action`]
+//! ([`Keymap`], [`InputState`], [`LayoutBindings`], …) and the text keys of
+//! its words.
+//!
 //! [`Key`], [`Chord`], [`Button`], [`Action`] and [`Layout`] are defined in
 //! `trpg-content` (its keymap loader validates them) and re-exported here.
 //! The player's own bindings (3 slots per action, per layout) are in
@@ -11,43 +19,61 @@
 //! presses.
 //!
 //! **Fixed keys** (`docs/design/controls.md`, *Rebinding keys*; ADR-0031):
-//! plain `Escape` is Cancel in every keymap, and `Delete` does nothing in
-//! play (the Key bindings screen reads it to empty a slot). Neither can be
-//! bound; see [`Chord::is_reserved`]. `Shift+Escape` and `Shift+Delete`
-//! are ordinary chords.
+//! plain `Escape` is Cancel in every keymap (this game's
+//! [`fixed_keys`](trpg_content::keymap::ActionSet::fixed_keys)), and
+//! `Delete` does nothing in play (the Key bindings screen reads it to empty
+//! a slot). Neither can be bound; see [`Chord::is_reserved`].
+//! `Shift+Escape` and `Shift+Delete` are ordinary chords.
 
 pub mod bindings;
+pub mod fixed;
+pub mod frame;
+pub mod help_keys;
+pub mod keymap;
 pub mod pad;
+pub mod state;
+#[cfg(test)]
+mod toy_tests;
 
 use crate::prelude::*;
-use alloc::collections::BTreeMap;
-use core::time::Duration;
-use hashbrown::HashMap;
+use trpg_content::keymap::format;
 
-pub use bindings::{BindError, ButtonSlots, LayoutBindings, PadBindings, PlayerKeys, Slots};
+use crate::screens::key_bindings::KeyRow;
+use crate::screens::key_bindings::RowGroup::{self, Optional, Required};
+
+pub use bindings::{ButtonSlots, Slots};
+pub use fixed::{
+    TextKey, capture_abort_key_name, clear_slot_key_name, is_capture_abort, is_clear_slot, text_key,
+};
+pub use help_keys::ARROWS;
 pub use pad::{ButtonSet, PadId, PadKind, PadState, Pads};
+pub use state::{Device, Input, MAX_REPEATS_PER_UPDATE};
 pub use trpg_content::keymap::{
-    Action, Button, Chord, Key, KeyGroup, KeymapDef, Layout, LayoutKeys, PadKeys, RepeatDef, SLOTS,
-    StickDef,
+    Action, ActionSet, Button, Chord, Key, KeyGroup, KeymapDef, LEFT_HANDED, Layout, LayoutKeys,
+    PadKeys, RIGHT_HANDED, RepeatDef, SLOTS, StickDef, UiAction, load_keymap,
 };
 
-/// The keys every keymap has on top of its own bindings, whatever the
-/// player binds: plain `Escape` cancels.
-const FIXED: [(Chord, Action); 1] = [(Chord::plain(Key::Escape), Action::Cancel)];
+/// This game's chord and button lookup ([`keymap::Keymap`]).
+pub type Keymap = keymap::Keymap<Action>;
 
-/// The chord that backs out of the Key bindings screen's "Press a key…"
-/// without changing anything.
-const CAPTURE_ABORT: Chord = Chord::plain(Key::Escape);
+/// This game's held keys and repeat ([`state::InputState`]).
+pub type InputState = state::InputState<Action>;
 
-/// The chord that empties the highlighted slot on the Key bindings screen.
-const CLEAR_SLOT: Chord = Chord::plain(Key::Delete);
+/// One layout's player-edited keys ([`bindings::LayoutBindings`]).
+pub type LayoutBindings = bindings::LayoutBindings<Action>;
 
-/// The English name of the four arrow keys together: what
-/// [`HelpKeys::new`](crate::widgets::help::HelpKeys::new) starts with, and
-/// what tests compare with. The game shows [`ARROWS_TEXT`] of the
-/// language file. Lives here because it names keys (only this module may).
-// check-text: not player text (the default of `HelpKeys::new`; `Ctx::help_keys` gives the language's)
-pub const ARROWS: &str = "arrows";
+/// The player-edited controller buttons ([`bindings::PadBindings`]).
+pub type PadBindings = bindings::PadBindings<Action>;
+
+/// Every layout's player keys and the buttons, as saved
+/// ([`bindings::PlayerKeys`]).
+pub type PlayerKeys = bindings::PlayerKeys<Action>;
+
+/// Why a bind was refused ([`bindings::BindError`]).
+pub type BindError = bindings::BindError<Action>;
+
+/// One layout's default chord lookup ([`format::Bindings`]).
+pub type Bindings = format::Bindings<Action>;
 
 /// The text key of [`ARROWS`] in the player's language.
 pub const ARROWS_TEXT: &str = "keys.arrows";
@@ -60,550 +86,81 @@ pub const CAPTURE_PROMPT: &str = "key_bindings.press_a_key";
 /// button (`docs/design/controls.md`, *Rebinding buttons*).
 pub const CAPTURE_BUTTON_PROMPT: &str = "key_bindings.press_a_button";
 
-/// Whether `chord` backs out of the Key bindings screen's "Press a key…"
-/// (`docs/design/controls.md`, *Rebinding keys*). The screen asks this
-/// rather than naming the key (the `keyboard-input` skill).
-pub fn is_capture_abort(chord: Chord) -> bool {
-    chord == CAPTURE_ABORT
-}
+/// This game's rows on the Key bindings screen: every rebindable action
+/// with the text key of its player-facing label (`Unit info`) and its
+/// group, in the order the screen lists them (Nick's pick, ticket 0815):
+/// the required actions, then the optional ones, as in `controls.md`'s
+/// *Required and optional* table, then the dialogue log's own key group.
+pub const KEY_ROWS: [KeyRow; 18] = [
+    (Action::CursorUp, "key_bindings.action.cursor_up", Required),
+    (
+        Action::CursorDown,
+        "key_bindings.action.cursor_down",
+        Required,
+    ),
+    (
+        Action::CursorLeft,
+        "key_bindings.action.cursor_left",
+        Required,
+    ),
+    (
+        Action::CursorRight,
+        "key_bindings.action.cursor_right",
+        Required,
+    ),
+    (Action::Confirm, "key_bindings.action.confirm", Required),
+    (Action::Cancel, "key_bindings.action.cancel", Required),
+    (Action::EndTurn, "key_bindings.action.end_turn", Required),
+    (Action::Select, "key_bindings.action.select", Optional),
+    (
+        Action::ConfirmEndTurn,
+        "key_bindings.action.confirm_end_turn",
+        Optional,
+    ),
+    (Action::PrevUnit, "key_bindings.action.prev_unit", Optional),
+    (Action::NextUnit, "key_bindings.action.next_unit", Optional),
+    (Action::Info, "key_bindings.action.info", Optional),
+    (
+        Action::DangerZone,
+        "key_bindings.action.danger_zone",
+        Optional,
+    ),
+    (
+        Action::ToggleAutoEnd,
+        "key_bindings.action.toggle_auto_end",
+        Optional,
+    ),
+    (Action::Rewind, "key_bindings.action.rewind", Optional),
+    (Action::ZoomMap, "key_bindings.action.zoom_map", Optional),
+    (Action::Menu, "key_bindings.action.menu", Optional),
+    (
+        Action::DialogueLog,
+        "key_bindings.action.dialogue_log",
+        RowGroup::Shared(DIALOGUE_LOG_HEADING),
+    ),
+];
 
-/// Whether `chord` empties the highlighted slot on the Key bindings screen.
-pub fn is_clear_slot(chord: Chord) -> bool {
-    chord == CLEAR_SLOT
-}
-
-/// The name of the [`is_capture_abort`] key, for help text.
-pub fn capture_abort_key_name() -> String {
-    CAPTURE_ABORT.to_string()
-}
-
-/// The name of the [`is_clear_slot`] key, for help text.
-pub fn clear_slot_key_name() -> String {
-    CLEAR_SLOT.to_string()
-}
-
-/// A text box's own keys (the lead's name, 0801): fixed like `Escape` for
-/// Cancel, since while a player types, every letter key is a letter.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TextKey {
-    /// `Enter`: keep the text.
-    Done,
-    /// `Backspace`: delete the last character.
-    Delete,
-    /// `Escape`: close the box, text unchanged.
-    Cancel,
-}
-
-/// The text-box key `chord` is, if any (Shift or not).
-pub fn text_key(chord: Chord) -> Option<TextKey> {
-    match chord.key {
-        Key::Enter => Some(TextKey::Done),
-        Key::Backspace => Some(TextKey::Delete),
-        Key::Escape => Some(TextKey::Cancel),
-        _ => None,
-    }
-}
+/// Text key of the heading over the actions of the dialogue log's
+/// [`KeyGroup`], which may share keys with the rest.
+pub const DIALOGUE_LOG_HEADING: &str = "key_bindings.dialogue_log";
 
 /// The help line of a text box: `Enter done · Backspace delete · Escape
-/// cancel`, in `ctx`'s language. Lives here because it names keys (only
-/// this module may).
+/// cancel`, in `ctx`'s language.
 pub fn text_keys_help(ctx: &crate::screen::Ctx) -> String {
-    let name = |key| Chord::plain(key).to_string();
-    let (done, delete, cancel) = (name(Key::Enter), name(Key::Backspace), name(Key::Escape));
+    let [done, delete, cancel] = fixed::text_key_names();
     ctx.text_with(
         "text_box.help",
         &[("done", &done), ("delete", &delete), ("cancel", &cancel)],
     )
 }
 
-/// At most this many repeats are emitted by one [`InputState::update`], so a
-/// lag spike can't teleport the cursor across the map.
-pub const MAX_REPEATS_PER_UPDATE: u64 = 5;
-
-/// Lookup from chord, and from controller button, to actions, plus repeat
-/// timings. A chord or button is on at most one action of each
-/// [`KeyGroup`] (`docs/design/controls.md`, *Dialogue log*), so one press
-/// can give an action of each group: the screen on top reacts to the ones
-/// it uses.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Keymap {
-    /// Every chord that does something, fixed keys included, with its
-    /// actions in [`KeyGroup`] order.
-    bindings: HashMap<Chord, Vec<Action>>,
-    /// Each action's own chords (not the fixed keys), in the order given.
-    chords: BTreeMap<Action, Vec<Chord>>,
-    /// Every controller button that does something, with its actions in
-    /// [`KeyGroup`] order.
-    pad: HashMap<Button, Vec<Action>>,
-    /// Each action's buttons, in the order given.
-    buttons: BTreeMap<Action, Vec<Button>>,
-    repeat: RepeatDef,
-}
-
-impl Keymap {
-    /// A keymap with `bindings` plus the fixed keys (plain `Escape` is
-    /// Cancel). A chord listed twice for one [`KeyGroup`] keeps its last
-    /// action of that group; [reserved](Chord::is_reserved) chords (plain
-    /// `Escape` and `Delete`) are left out.
-    pub fn new(bindings: impl IntoIterator<Item = (Chord, Action)>, repeat: RepeatDef) -> Self {
-        let mut lookup = HashMap::new();
-        let mut chords: BTreeMap<Action, Vec<Chord>> = BTreeMap::new();
-        for (chord, action) in bindings {
-            if chord.is_reserved() {
-                continue;
-            }
-            if let Some(old) = put(&mut lookup, chord, action)
-                && let Some(list) = chords.get_mut(&old)
-            {
-                list.retain(|&c| c != chord);
-            }
-            chords.entry(action).or_default().push(chord);
-        }
-        for (chord, action) in FIXED {
-            put(&mut lookup, chord, action);
-        }
-        Self {
-            bindings: lookup,
-            chords,
-            pad: HashMap::new(),
-            buttons: BTreeMap::new(),
-            repeat,
-        }
-    }
-
-    /// This keymap with `pad` as its controller buttons, replacing any it
-    /// had. A button listed twice keeps its last action.
-    #[must_use]
-    pub fn with_pad(mut self, pad: impl IntoIterator<Item = (Button, Action)>) -> Self {
-        self.pad.clear();
-        self.buttons.clear();
-        for (button, action) in pad {
-            if let Some(old) = put(&mut self.pad, button, action)
-                && let Some(list) = self.buttons.get_mut(&old)
-            {
-                list.retain(|&b| b != button);
-            }
-            self.buttons.entry(action).or_default().push(button);
-        }
-        self
-    }
-
-    /// This keymap with the default controller buttons from a validated
-    /// keymap definition: the same in every layout and the layout picker
-    /// (`docs/design/controls.md`, *Controller*).
-    #[must_use]
-    pub fn with_default_pad(self, def: &KeymapDef) -> Self {
-        let pad = def.pad.iter();
-        self.with_pad(pad.flat_map(|(&a, buttons)| buttons.iter().map(move |&b| (b, a))))
-    }
-
-    /// `layout`'s default bindings from a validated keymap definition (no
-    /// player changes; for those see [`PlayerKeys`]), with its repeat
-    /// timings and the default controller buttons. A definition without
-    /// that layout (only possible when built by hand) gives a keymap with
-    /// only the fixed keys and the buttons.
-    pub fn for_layout(def: &KeymapDef, layout: Layout) -> Self {
-        let keys = def.layouts.get(&layout).into_iter().flatten();
-        let bindings = keys.flat_map(|(&a, chords)| chords.iter().map(move |&c| (c, a)));
-        Self::new(bindings, def.repeat).with_default_pad(def)
-    }
-
-    /// The keys that work before any layout is chosen, from the keymap
-    /// definition's `layout_picker` section, so the layout picker can be
-    /// used whichever hand the player types with. Actions it doesn't list
-    /// (e.g. Cancel: a layout must be picked) have no key. The controller
-    /// buttons are the default ones, as in every layout.
-    pub fn layout_picker(def: &KeymapDef) -> Self {
-        let bindings = def.layout_picker.iter().map(|(&c, &a)| (c, a));
-        Self::new(bindings, def.repeat).with_default_pad(def)
-    }
-
-    /// The actions bound to `chord`, one at most of each [`KeyGroup`], in
-    /// group order. `Shift+h` and `h` are distinct: there is no fallback
-    /// from a shifted chord to the plain one.
-    pub fn actions(&self, chord: Chord) -> &[Action] {
-        self.bindings.get(&chord).map_or(&[], Vec::as_slice)
-    }
-
-    /// The first of [`actions`](Self::actions), if any: the only one for a
-    /// chord of a single group.
-    pub fn action(&self, chord: Chord) -> Option<Action> {
-        self.actions(chord).first().copied()
-    }
-
-    /// The actions bound to the controller button `button`, as
-    /// [`actions`](Self::actions).
-    pub fn pad_actions(&self, button: Button) -> &[Action] {
-        self.pad.get(&button).map_or(&[], Vec::as_slice)
-    }
-
-    /// The first of [`pad_actions`](Self::pad_actions), if any.
-    pub fn pad_action(&self, button: Button) -> Option<Action> {
-        self.pad_actions(button).first().copied()
-    }
-
-    /// Every controller button bound to `action`, in the order they were
-    /// given (file order for `keymap.ron`).
-    pub fn buttons_for(&self, action: Action) -> Vec<Button> {
-        self.buttons.get(&action).cloned().unwrap_or_default()
-    }
-
-    /// Key-repeat timings.
-    pub fn repeat(&self) -> RepeatDef {
-        self.repeat
-    }
-
-    /// Every chord bound to `action` (its key slots), in the order they
-    /// were given: slot order for the player's bindings, file order for
-    /// `keymap.ron`. Leaves out the fixed keys (see
-    /// [`fixed_chords_for`](Self::fixed_chords_for)).
-    pub fn chords_for(&self, action: Action) -> Vec<Chord> {
-        self.chords.get(&action).cloned().unwrap_or_default()
-    }
-
-    /// The fixed chords that also trigger `action` in every keymap and
-    /// can't be rebound: plain `Escape` for Cancel, nothing for the rest.
-    pub fn fixed_chords_for(action: Action) -> Vec<Chord> {
-        FIXED
-            .iter()
-            .filter(|&&(_, a)| a == action)
-            .map(|&(c, _)| c)
-            .collect()
-    }
-
-    /// What moves the cursor, for help text: `arrows` (the language's word
-    /// for them) when the four cursor
-    /// actions' [`primary`](Self::primary) chords are the plain arrow keys,
-    /// otherwise those chords in up-left-down-right order (`wasd`). `None`
-    /// if any cursor action is unbound. Lives here, not in `widgets::help`,
-    /// because it names keys (only this module may).
-    pub fn cursor_keys_name(&self, arrows_name: &str) -> Option<String> {
-        let order = [
-            (Action::CursorUp, Key::Up),
-            (Action::CursorLeft, Key::Left),
-            (Action::CursorDown, Key::Down),
-            (Action::CursorRight, Key::Right),
-        ];
-        let chords = order
-            .iter()
-            .map(|&(action, _)| self.primary(action))
-            .collect::<Option<Vec<_>>>()?;
-        let arrows = chords
-            .iter()
-            .zip(order)
-            .all(|(chord, (_, arrow))| *chord == Chord::plain(arrow));
-        Some(if arrows {
-            arrows_name.to_owned()
-        } else {
-            chords.iter().map(ToString::to_string).collect()
-        })
-    }
-
-    /// What moves the cursor on a pad of `kind`, for help text: the whole
-    /// sets of direction buttons the four cursor actions are on, joined
-    /// with `/` (`D-pad/L-stick` with the defaults); if they are on no whole
-    /// set, each one's [`primary_button`](Self::primary_button)'s name in
-    /// up-left-down-right order. `None` if any cursor action has no button.
-    pub fn cursor_buttons_name(&self, kind: PadKind) -> Option<String> {
-        let bound = [
-            Action::CursorUp,
-            Action::CursorDown,
-            Action::CursorLeft,
-            Action::CursorRight,
-        ]
-        .map(|action| self.buttons_for(action));
-        pad::cursor_buttons_name(kind, &bound)
-    }
-
-    /// The button help text names for `action`: the first of
-    /// [`buttons_for`](Self::buttons_for), or `None` if it has none.
-    pub fn primary_button(&self, action: Action) -> Option<Button> {
-        self.buttons_for(action).into_iter().next()
-    }
-
-    /// The chord help text names for `action`: the first of
-    /// [`chords_for`](Self::chords_for), or `None` if it has none.
-    pub fn primary(&self, action: Action) -> Option<Chord> {
-        self.chords_for(action).into_iter().next()
-    }
-
-    /// Whether `action` has a key (keyboard) or a button (pad) for `device`.
-    fn has_input(&self, action: Action, device: Device) -> bool {
-        match device {
-            Device::Keyboard => self.primary(action).is_some(),
-            Device::Pad(_) => self.primary_button(action).is_some(),
-        }
-    }
-
-    /// The action that picks on the map with the cursor (a unit, its tile,
-    /// a target): [`Action::Select`] once it has a key, else
-    /// [`Action::Confirm`] (`docs/design/controls.md`, *Optional split
-    /// keys*). Per device: a key for the keyboard, a button for a pad.
-    pub fn select_action(&self, device: Device) -> Action {
-        if self.has_input(Action::Select, device) {
-            Action::Select
-        } else {
-            Action::Confirm
-        }
-    }
-
-    /// The actions that accept the end-turn prompt, the one help text names
-    /// first: [`Action::ConfirmEndTurn`] and Confirm once it has a key,
-    /// else End turn (pressed again) and Confirm.
-    /// Per device, like [`select_action`](Self::select_action).
-    pub fn end_turn_accept_actions(&self, device: Device) -> [Action; 2] {
-        if self.has_input(Action::ConfirmEndTurn, device) {
-            [Action::ConfirmEndTurn, Action::Confirm]
-        } else {
-            [Action::EndTurn, Action::Confirm]
-        }
-    }
-}
-
-/// Binds `item` to `action` in `lookup`, replacing (and returning) the
-/// action of the same [`KeyGroup`] it had; its actions stay in group order.
-fn put<T: Copy + Eq + core::hash::Hash>(
-    lookup: &mut HashMap<T, Vec<Action>>,
-    item: T,
-    action: Action,
-) -> Option<Action> {
-    let actions = lookup.entry(item).or_default();
-    let old = actions
-        .iter()
-        .position(|a| a.group() == action.group())
-        .map(|i| actions.remove(i));
-    actions.push(action);
-    actions.sort_by_key(|a| a.group());
-    old
-}
-
-/// What the player is playing with: whatever they pressed last
-/// (`docs/design/controls.md`, *Switching between keyboard and
-/// controller*). Help text names keys or this pad's buttons to match.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub enum Device {
-    /// The keyboard.
-    #[default]
-    Keyboard,
-    /// A controller of this kind.
-    Pad(PadKind),
-}
-
-/// Something the player can hold down: a keyboard key or a controller
-/// button (a stick direction counts as a button).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Input {
-    /// A keyboard key.
-    Key(Key),
-    /// A controller button.
-    Pad(Button),
-}
-
-/// The repeat currently running for the most recently pressed repeatable
-/// key or button.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Repeat {
-    input: Input,
-    action: Action,
-    /// Time held so far, in microseconds.
-    held_us: u64,
-    /// Repeats accounted for so far (emitted or dropped by the cap).
-    counted: u64,
-}
-
-impl Repeat {
-    fn start(input: Input, action: Action) -> Self {
-        Self {
-            input,
-            action,
-            held_us: 0,
-            counted: 0,
-        }
-    }
-}
-
-/// Turns key and controller-button events and elapsed time into
-/// [`Action`]s.
-///
-/// Feed it every key press ([`key_down`](Self::key_down)) and release
-/// ([`key_up`](Self::key_up)), and every controller button press
-/// ([`pad_down`](Self::pad_down)) and release ([`pad_up`](Self::pad_up)),
-/// then call [`update`](Self::update) once per frame with the frame time.
-/// Keys and buttons follow the same rules. A press emits its action once.
-/// While a repeatable action's key or button is held, it re-emits after the
-/// repeat delay and then every interval. The most recently pressed
-/// repeatable one is the one that repeats; releasing it hands repeating
-/// back to the most recent repeatable one still held, which waits a full
-/// delay before repeating.
-#[derive(Debug, Clone)]
-pub struct InputState {
-    keymap: Keymap,
-    /// Actions from presses since the last update.
-    pending: Vec<Action>,
-    /// Bound keys and buttons currently down with the actions they
-    /// triggered (one entry each), oldest first.
-    held: Vec<(Input, Action)>,
-    repeat: Option<Repeat>,
-    /// Where the last bound press came from.
-    device: Device,
-}
-
-impl InputState {
-    /// Input handling with the given bindings and repeat timings.
-    pub fn new(keymap: Keymap) -> Self {
-        Self {
-            keymap,
-            pending: Vec::new(),
-            held: Vec::new(),
-            repeat: None,
-            device: Device::default(),
-        }
-    }
-
-    /// Starts as if `device` had been pressed last (a platform whose only
-    /// input is its pad).
-    #[must_use]
-    pub(crate) fn starting_on(mut self, device: Device) -> Self {
-        self.device = device;
-        self
-    }
-
-    /// What the player pressed last: the keyboard, or a pad of some kind.
-    /// Only presses that do something count (a bound key or button going
-    /// down), so an unbound key or a resting stick never switches it.
-    /// The keyboard until anything is pressed, unless `Game` started it
-    /// on the platform's own pad.
-    pub fn device(&self) -> Device {
-        self.device
-    }
-
-    /// The bindings in use.
-    pub fn keymap(&self) -> &Keymap {
-        &self.keymap
-    }
-
-    /// Switches to other bindings (the player picked a layout). Forgets held
-    /// keys, pending presses and any running repeat, so nothing pressed
-    /// under the old bindings leaks into the new ones; a key still down is
-    /// ignored until it is pressed again. The [`device`](Self::device)
-    /// stays.
-    pub fn set_keymap(&mut self, keymap: Keymap) {
-        *self = Self {
-            device: self.device,
-            ..Self::new(keymap)
-        };
-    }
-
-    /// A key went down (with its modifier state). Unbound chords and keys
-    /// already held are ignored.
-    pub fn key_down(&mut self, chord: Chord) {
-        let actions = self.keymap.actions(chord).to_vec();
-        self.press(Input::Key(chord.key), &actions, Device::Keyboard);
-    }
-
-    /// A key went down that `Game` kept for itself (it opened the layout
-    /// picker): the keyboard is the [`device`](Self::device) pressed last,
-    /// and nothing else happens.
-    pub(crate) fn keyboard_used(&mut self) {
-        self.device = Device::Keyboard;
-    }
-
-    /// A key went up. Stops its repeat, if it was the repeating one.
-    pub fn key_up(&mut self, key: Key) {
-        self.release(Input::Key(key));
-    }
-
-    /// A controller button went down, on a pad of `kind` ([`Pads`] merges
-    /// the pads and gives the button's binding position). Unbound buttons
-    /// and buttons already held are ignored.
-    pub fn pad_down(&mut self, button: Button, kind: PadKind) {
-        let actions = self.keymap.pad_actions(button).to_vec();
-        self.press(Input::Pad(button), &actions, Device::Pad(kind));
-    }
-
-    /// A controller button went up. Stops its repeat, if it was the
-    /// repeating one.
-    pub fn pad_up(&mut self, button: Button) {
-        self.release(Input::Pad(button));
-    }
-
-    /// `input` went down on `device`, bound to `actions` (none if
-    /// unbound).
-    fn press(&mut self, input: Input, actions: &[Action], device: Device) {
-        if actions.is_empty() || self.held.iter().any(|&(i, _)| i == input) {
-            return;
-        }
-        self.device = device;
-        for &action in actions {
-            self.held.push((input, action));
-            self.pending.push(action);
-            if action.is_repeatable() {
-                self.repeat = Some(Repeat::start(input, action));
-            }
-        }
-    }
-
-    /// `input` went up.
-    fn release(&mut self, input: Input) {
-        self.held.retain(|&(i, _)| i != input);
-        if self.repeat.is_some_and(|r| r.input == input) {
-            self.repeat = self
-                .held
-                .iter()
-                .rev()
-                .find(|(_, a)| a.is_repeatable())
-                .map(|&(i, a)| Repeat::start(i, a));
-        }
-    }
-
-    /// Whether any held key or button is bound to `action` (e.g. hold to
-    /// fast-forward).
-    pub fn is_held(&self, action: Action) -> bool {
-        self.held.iter().any(|&(_, a)| a == action)
-    }
-
-    /// Advances time by `dt` seconds and returns the actions to handle this
-    /// frame, in order: presses since the last update, then repeats (at most
-    /// [`MAX_REPEATS_PER_UPDATE`]; repeats beyond the cap are dropped, not
-    /// deferred). Negative or non-finite `dt` counts as zero.
-    pub fn update(&mut self, dt: f32) -> Vec<Action> {
-        let mut actions = core::mem::take(&mut self.pending);
-        let RepeatDef {
-            delay_ms,
-            interval_ms,
-        } = self.keymap.repeat;
-        if let Some(r) = &mut self.repeat {
-            r.held_us = r.held_us.saturating_add(seconds_to_micros(dt));
-            let delay_us = u64::from(delay_ms) * 1000;
-            // A zero interval is rejected by the loader; guard anyway.
-            let interval_us = u64::from(interval_ms).max(1) * 1000;
-            let due = match r.held_us.checked_sub(delay_us) {
-                Some(past_delay) => 1 + past_delay / interval_us,
-                None => 0,
-            };
-            let new = due.saturating_sub(r.counted).min(MAX_REPEATS_PER_UPDATE);
-            r.counted = due;
-            for _ in 0..new {
-                actions.push(r.action);
-            }
-        }
-        actions
-    }
-}
-
-/// Converts seconds to whole microseconds, rounding to nearest. Rounding
-/// per frame keeps millisecond-exact timings exact despite `f32` error.
-fn seconds_to_micros(dt: f32) -> u64 {
-    let Ok(d) = Duration::try_from_secs_f32(dt) else {
-        return 0;
-    };
-    u64::try_from(d.as_nanos().saturating_add(500) / 1000).unwrap_or(u64::MAX)
-}
-
 #[cfg(test)]
 mod tests {
+    use core::time::Duration;
+
     use proptest::prelude::*;
 
+    use super::state::seconds_to_micros;
     use super::*;
     use Action::{Confirm, CursorDown, CursorLeft, CursorRight, CursorUp, Info};
 
@@ -675,49 +232,6 @@ mod tests {
         assert_eq!(clear_slot_key_name(), "Delete");
         // Both are reserved, so neither can end up in a slot.
         assert!(chord("Escape").is_reserved() && chord("Delete").is_reserved());
-    }
-
-    #[test]
-    fn select_falls_back_to_confirm_until_it_has_a_key() {
-        let km = test_keymap(170, 55);
-        let pad = Device::Pad(PadKind::Xbox);
-        assert_eq!(km.select_action(Device::Keyboard), Confirm);
-        assert_eq!(km.select_action(pad), Confirm);
-        // A key splits the keyboard only; a button, the pad only.
-        let bound = Keymap::new([(chord("g"), Action::Select)], km.repeat());
-        assert_eq!(bound.select_action(Device::Keyboard), Action::Select);
-        assert_eq!(bound.select_action(pad), Confirm);
-        let button = Keymap::new([], km.repeat()).with_pad([(Button::North, Action::Select)]);
-        assert_eq!(button.select_action(Device::Keyboard), Confirm);
-        assert_eq!(button.select_action(pad), Action::Select);
-    }
-
-    #[test]
-    fn end_turn_is_accepted_by_end_turn_until_confirm_end_turn_has_a_key() {
-        let km = test_keymap(170, 55);
-        let pad = Device::Pad(PadKind::Xbox);
-        let kb = Device::Keyboard;
-        assert_eq!(km.end_turn_accept_actions(kb), [Action::EndTurn, Confirm]);
-        assert_eq!(km.end_turn_accept_actions(pad), [Action::EndTurn, Confirm]);
-        let bound = Keymap::new([(chord("Enter"), Action::ConfirmEndTurn)], km.repeat());
-        assert_eq!(
-            bound.end_turn_accept_actions(pad),
-            [Action::EndTurn, Confirm]
-        );
-        let button =
-            Keymap::new([], km.repeat()).with_pad([(Button::North, Action::ConfirmEndTurn)]);
-        assert_eq!(
-            button.end_turn_accept_actions(pad),
-            [Action::ConfirmEndTurn, Confirm]
-        );
-        assert_eq!(
-            button.end_turn_accept_actions(kb),
-            [Action::EndTurn, Confirm]
-        );
-        assert_eq!(
-            bound.end_turn_accept_actions(kb),
-            [Action::ConfirmEndTurn, Confirm]
-        );
     }
 
     #[test]
@@ -797,12 +311,12 @@ mod tests {
 
     #[test]
     fn every_keymap_from_the_definition_has_the_default_buttons() {
-        let def = KeymapDef::load().unwrap_or_default();
+        let def = load_keymap().unwrap_or_default();
         let keymaps = [
-            Keymap::for_layout(&def, Layout::RightHanded),
-            Keymap::for_layout(&def, Layout::LeftHanded),
+            Keymap::for_layout(&def, RIGHT_HANDED),
+            Keymap::for_layout(&def, LEFT_HANDED),
             Keymap::layout_picker(&def),
-            PlayerKeys::default().keymap(&def, Layout::LeftHanded),
+            PlayerKeys::default().keymap(&def, LEFT_HANDED),
             Keymap::new([], def.repeat).with_default_pad(&def),
         ];
         for km in keymaps {
@@ -822,13 +336,13 @@ mod tests {
             }
         }
         // A layout's keys alone carry no buttons.
-        let keys = LayoutBindings::defaults(&def, Layout::RightHanded).keymap(def.repeat);
+        let keys = LayoutBindings::defaults(&def, RIGHT_HANDED).keymap(def.repeat);
         assert_eq!(keys.pad_action(Button::South), None);
         assert_eq!(keys.clone().with_default_pad(&def), {
-            PlayerKeys::default().keymap(&def, Layout::RightHanded)
+            PlayerKeys::default().keymap(&def, RIGHT_HANDED)
         });
         // A definition built by hand without buttons gives none.
-        let empty = Keymap::for_layout(&KeymapDef::default(), Layout::LeftHanded);
+        let empty = Keymap::for_layout(&KeymapDef::default(), LEFT_HANDED);
         assert_eq!(empty.pad_action(Button::South), None);
     }
 
@@ -837,8 +351,8 @@ mod tests {
         let def = trpg_content::load_embedded()
             .map(|c| c.keymap)
             .unwrap_or_default();
-        let right = Keymap::for_layout(&def, Layout::RightHanded);
-        let left = Keymap::for_layout(&def, Layout::LeftHanded);
+        let right = Keymap::for_layout(&def, RIGHT_HANDED);
+        let left = Keymap::for_layout(&def, LEFT_HANDED);
         assert_eq!(right.action(chord("f")), Some(Confirm));
         assert_eq!(right.action(chord("j")), None);
         assert_eq!(left.action(chord("j")), Some(Confirm));
@@ -846,16 +360,16 @@ mod tests {
         assert_eq!(left.action(chord(";")), Some(Action::PrevUnit));
         assert_eq!(left.repeat(), def.repeat);
         assert_eq!(right.chords_for(Confirm).len(), 1);
-        let empty = Keymap::for_layout(&KeymapDef::default(), Layout::LeftHanded);
+        let empty = Keymap::for_layout(&KeymapDef::default(), LEFT_HANDED);
         assert_eq!(empty.primary(Confirm), None);
     }
 
     #[test]
     fn escape_always_cancels_and_delete_does_nothing() {
-        let def = KeymapDef::load().unwrap_or_default();
+        let def = load_keymap().unwrap_or_default();
         let keymaps = [
-            Keymap::for_layout(&def, Layout::RightHanded),
-            Keymap::for_layout(&def, Layout::LeftHanded),
+            Keymap::for_layout(&def, RIGHT_HANDED),
+            Keymap::for_layout(&def, LEFT_HANDED),
             Keymap::layout_picker(&def),
             Keymap::new([], RepeatDef::default()),
             // Even a keymap that tries to bind them elsewhere.
@@ -915,7 +429,7 @@ mod tests {
 
     #[test]
     fn layout_picker_keys_work_for_either_hand() {
-        let def = KeymapDef::load().unwrap_or_default();
+        let def = load_keymap().unwrap_or_default();
         let km = Keymap::layout_picker(&def);
         for (c, a) in [
             ("Up", CursorUp),
@@ -940,9 +454,7 @@ mod tests {
         let mut s = default_state();
         s.key_down(chord("l"));
         s.key_down(chord("f"));
-        s.set_keymap(Keymap::layout_picker(
-            &KeymapDef::load().unwrap_or_default(),
-        ));
+        s.set_keymap(Keymap::layout_picker(&load_keymap().unwrap_or_default()));
         assert!(!s.is_held(Confirm));
         assert_eq!(s.update(ms(1000)), vec![]);
         // `f` is still physically down: ignored until pressed again.
@@ -1041,8 +553,8 @@ mod tests {
 
     #[test]
     fn the_default_cursor_buttons_are_the_dpad_and_the_stick() {
-        let def = KeymapDef::load().unwrap_or_default();
-        let km = Keymap::for_layout(&def, Layout::LeftHanded);
+        let def = load_keymap().unwrap_or_default();
+        let km = Keymap::for_layout(&def, LEFT_HANDED);
         for kind in [
             PadKind::Xbox,
             PadKind::PlayStation,

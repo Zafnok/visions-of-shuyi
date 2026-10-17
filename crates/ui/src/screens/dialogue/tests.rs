@@ -390,7 +390,7 @@ fn the_page_waits_once_revealed() {
 #[test]
 fn no_log_hint_without_a_log_key() {
     let mut c = ctx();
-    let layout = crate::input::Layout::RightHanded;
+    let layout = crate::input::RIGHT_HANDED;
     let mut keys = c.layout_bindings(layout);
     for slot in 0..crate::input::SLOTS {
         keys.clear(Action::DialogueLog, slot);

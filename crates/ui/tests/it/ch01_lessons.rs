@@ -7,7 +7,7 @@
 
 use trpg_core::{Phase, Pos, TutorialLevel};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::mode::{MenuEntry, Mode};
 
@@ -51,7 +51,7 @@ fn skip_scenes(h: &mut Harness) {
 /// one it is about: turn 1, its scenes skipped and its banner closed, the
 /// cursor on the lead.
 fn chapter_1(level: TutorialLevel, without: &[&str]) -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded).with_shipped_story();
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     h.with_lessons();
     let lessons = &mut h.ctx_mut().content.lessons.lessons;
     lessons.retain(|l| !without.contains(&l.id.as_str()));

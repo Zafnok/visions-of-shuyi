@@ -13,6 +13,10 @@
 // a key slot on the Key bindings screen. "Shift+Escape" and "Shift+Delete"
 // are ordinary chords. See controls.md, Rebinding keys.
 //
+// Each layout has an id (the name the player's saved settings know it by;
+// never rename one), name (the text key of the name the layout picker shows)
+// and keys. The layout picker lists the layouts in this order.
+//
 // layout_picker holds the keys that work before a layout is chosen (the
 // first-launch picker), so it can be used with either hand. Only the actions
 // listed there are bound; the rest do nothing until a layout is picked. It
@@ -24,68 +28,76 @@
 // "PageDown" "F1".."F12", numpad "Kp0".."Kp9" "Kp+" "Kp-" "Kp*" "Kp/" "Kp.",
 // optionally prefixed by "Shift+". "Shift+e" and "e" are different chords.
 (
-    layouts: {
+    layouts: [
         // Arrows steer; the left hand acts from the A S D F row.
-        "RightHanded": {
-            // Held arrow keys repeat.
-            "CursorLeft": ["Left"],
-            "CursorDown": ["Down"],
-            "CursorUp": ["Up"],
-            "CursorRight": ["Right"],
+        (
+            id: "RightHanded",
+            name: "layout_picker.right_handed",
+            keys: {
+                // Held arrow keys repeat.
+                "CursorLeft": ["Left"],
+                "CursorDown": ["Down"],
+                "CursorUp": ["Up"],
+                "CursorRight": ["Right"],
 
-            // Hold Confirm to fast-forward text and animations.
-            "Confirm": ["f"],
-            // With nothing to cancel it opens the map menu. Esc also cancels
-            // (a fixed key, not listed here).
-            "Cancel": ["d"],
-            "PrevUnit": ["a"],
-            "NextUnit": ["s"],
-            "Info": ["e"],
-            "DangerZone": ["w"],
-            // Space opens the end-turn prompt; Space again confirms it.
-            "EndTurn": ["Space"],
-            "ToggleAutoEnd": ["Shift+Space"],
-            // Opened by Cancel with nothing to cancel, or Confirm on an empty tile.
-            "Menu": [],
-            "Debug": ["F2"],
-            // Opens the turn rewind during the player phase.
-            "Rewind": ["r"],
-            // Optional split keys, unbound by default (controls.md,
-            // Optional split keys): Select picks on the map instead of
-            // Confirm; ConfirmEndTurn accepts the end-turn prompt instead of
-            // End turn pressed again.
-            "Select": [],
-            "ConfirmEndTurn": [],
-            // Switches the battle map between 1x and 2x (pictures only).
-            "ZoomMap": ["q"],
-            // Opens the dialogue log while a scene plays. Its own key group.
-            "DialogueLog": ["b"],
-        },
+                // Hold Confirm to fast-forward text and animations.
+                "Confirm": ["f"],
+                // With nothing to cancel it opens the map menu. Esc also cancels
+                // (a fixed key, not listed here).
+                "Cancel": ["d"],
+                "PrevUnit": ["a"],
+                "NextUnit": ["s"],
+                "Info": ["e"],
+                "DangerZone": ["w"],
+                // Space opens the end-turn prompt; Space again confirms it.
+                "EndTurn": ["Space"],
+                "ToggleAutoEnd": ["Shift+Space"],
+                // Opened by Cancel with nothing to cancel, or Confirm on an empty tile.
+                "Menu": [],
+                "Debug": ["F2"],
+                // Opens the turn rewind during the player phase.
+                "Rewind": ["r"],
+                // Optional split keys, unbound by default (controls.md,
+                // Optional split keys): Select picks on the map instead of
+                // Confirm; ConfirmEndTurn accepts the end-turn prompt instead of
+                // End turn pressed again.
+                "Select": [],
+                "ConfirmEndTurn": [],
+                // Switches the battle map between 1x and 2x (pictures only).
+                "ZoomMap": ["q"],
+                // Opens the dialogue log while a scene plays. Its own key group.
+                "DialogueLog": ["b"],
+            },
+        ),
         // W A S D steer; the right hand acts from the J K L ; row, a finger
         // for finger mirror of RightHanded.
-        "LeftHanded": {
-            "CursorLeft": ["a"],
-            "CursorDown": ["s"],
-            "CursorUp": ["w"],
-            "CursorRight": ["d"],
+        (
+            id: "LeftHanded",
+            name: "layout_picker.left_handed",
+            keys: {
+                "CursorLeft": ["a"],
+                "CursorDown": ["s"],
+                "CursorUp": ["w"],
+                "CursorRight": ["d"],
 
-            "Confirm": ["j"],
-            "Cancel": ["k"],
-            "PrevUnit": [";"],
-            "NextUnit": ["l"],
-            "Info": ["i"],
-            "DangerZone": ["o"],
-            "EndTurn": ["Space"],
-            "ToggleAutoEnd": ["Shift+Space"],
-            "Menu": [],
-            "Debug": ["F2"],
-            "Rewind": ["u"],
-            "Select": [],
-            "ConfirmEndTurn": [],
-            "ZoomMap": ["p"],
-            "DialogueLog": ["n"],
-        },
-    },
+                "Confirm": ["j"],
+                "Cancel": ["k"],
+                "PrevUnit": [";"],
+                "NextUnit": ["l"],
+                "Info": ["i"],
+                "DangerZone": ["o"],
+                "EndTurn": ["Space"],
+                "ToggleAutoEnd": ["Shift+Space"],
+                "Menu": [],
+                "Debug": ["F2"],
+                "Rewind": ["u"],
+                "Select": [],
+                "ConfirmEndTurn": [],
+                "ZoomMap": ["p"],
+                "DialogueLog": ["n"],
+            },
+        ),
+    ],
     // Before a layout is chosen: either hand's up/down and confirm keys.
     // Nothing but the fixed Esc cancels, and the picker ignores it (a layout
     // must be picked).

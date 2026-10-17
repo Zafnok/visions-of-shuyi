@@ -9,6 +9,7 @@
 use insta::assert_snapshot;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screens::{LayoutPickerScreen, TitleScreen};
 
 /// The layout the picker on the stack has the cursor on, and its help.
@@ -39,7 +40,7 @@ fn first_launch_shows_the_picker() {
     let h = picker();
     assert_eq!(h.screens(), ["title", "layout_picker"]);
     let (focused, help) = focus_and_help(&h);
-    assert_eq!(focused, Some(Layout::RightHanded));
+    assert_eq!(focused, Some(RIGHT_HANDED));
     assert_eq!(help, "w/Up s/Down choose · f/j/Enter/Space pick");
     assert_snapshot!(h.snapshot());
 }
@@ -49,7 +50,7 @@ fn left_handed_focused() {
     let mut h = picker();
     h.keys("Down");
     assert_eq!(h.top_screen(), "layout_picker");
-    assert_eq!(focus_and_help(&h).0, Some(Layout::LeftHanded));
+    assert_eq!(focus_and_help(&h).0, Some(LEFT_HANDED));
     assert_snapshot!(h.snapshot());
 }
 
@@ -71,11 +72,11 @@ fn every_glyph_drawn_is_in_the_font() {
 fn picker_works_with_either_hand() {
     // Up/Down or w/s choose; f, j, Enter or Space pick.
     for (script, layout) in [
-        ("f", Layout::RightHanded),
-        ("Down Enter", Layout::LeftHanded),
-        ("s j", Layout::LeftHanded),
-        ("s w Space", Layout::RightHanded),
-        ("Up Up j", Layout::RightHanded),
+        ("f", RIGHT_HANDED),
+        ("Down Enter", LEFT_HANDED),
+        ("s j", LEFT_HANDED),
+        ("s w Space", RIGHT_HANDED),
+        ("Up Up j", RIGHT_HANDED),
     ] {
         let mut h = picker();
         h.keys(script);
@@ -98,7 +99,7 @@ fn the_choice_persists_across_restart() {
     h.keys("s j");
     let h = Harness::with_storage(h.into_storage());
     assert_eq!(h.screens(), ["title"], "second launch skips the picker");
-    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+    assert_eq!(h.game().ctx().layout(), Some(LEFT_HANDED));
 }
 
 #[test]

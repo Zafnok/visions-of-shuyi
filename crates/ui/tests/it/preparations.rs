@@ -5,14 +5,14 @@
 
 use trpg_core::{BattleState, ItemId, UnitId};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 
 /// The lord's unit (the first slot).
 const LORD: UnitId = UnitId(1);
 
 /// From the title: Quick Battle, which opens Preparations.
 fn preparations() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f");
     assert_eq!(h.screens(), ["title", "preparations"]);
     h
@@ -147,7 +147,7 @@ fn leaving_the_quick_battles_preparations_returns_to_the_title() {
 /// The screen works with the player's own keys and a controller.
 #[test]
 fn rebound_keys_and_a_controller_work() {
-    let mut h = Harness::with_layout(Layout::LeftHanded);
+    let mut h = Harness::with_layout(LEFT_HANDED);
     // Left-handed: `s` is down, `j` confirms, `a` is left.
     h.keys("s j");
     assert_eq!(h.screens(), ["title", "preparations"]);

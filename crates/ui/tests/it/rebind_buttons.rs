@@ -13,7 +13,8 @@
 
 use insta::assert_snapshot;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{Action, Button, Device, Layout, PadBindings, PadKind};
+use trpg_ui::input::{Action, Button, Device, PadBindings, PadKind};
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screen::KEYBINDINGS_KEY;
 use trpg_ui::screens::key_bindings::{KeyBindingsScreen, KeyBindingsView, SlotView};
 use trpg_ui::{MemoryStorage, Storage};
@@ -28,7 +29,7 @@ const INFO_TO_CONFIRM: &str = "DpadUp DpadUp DpadUp DpadUp DpadUp DpadUp DpadUp"
 /// The Key bindings screen, opened from Options with a pad of `kind`: on
 /// its controller side.
 fn open(kind: PadKind) -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.use_pad(kind);
     reopen(&mut h);
     h
@@ -202,7 +203,7 @@ fn a_rebound_button_plays_a_battle() {
     // keyboard.
     h.pad("DpadUp RightStickPress DpadLeft RightStickPress RightStickPress");
     assert_eq!(h.screens(), ["title", "battle"]);
-    let mut keys = Harness::with_layout(Layout::RightHanded);
+    let mut keys = Harness::with_layout(RIGHT_HANDED);
     keys.keys("Down f Left f f");
     assert_eq!(h.cursor_tile(), keys.cursor_tile());
     // Pick the unit under the cursor and move it one tile.
@@ -248,7 +249,7 @@ fn switching_layout_leaves_the_buttons_unchanged() {
         .pad("DpadRight South South RightStickPress East East");
     let edited = buttons(&h);
     assert_eq!(slots(&h, Action::Info), ["North", "RightStickPress", "-"]);
-    for layout in [Layout::LeftHanded, Layout::RightHanded] {
+    for layout in [LEFT_HANDED, RIGHT_HANDED] {
         assert_eq!(h.ctx_mut().choose_layout(layout), Ok(()));
         assert_eq!(buttons(&h), edited, "{layout}");
         let keymap = &h.game().ctx().keymap;
@@ -261,7 +262,7 @@ fn switching_layout_leaves_the_buttons_unchanged() {
         assert!(!ctx.player_keys().is_custom(layout));
     }
     // The screen shows the same buttons under the other layout.
-    assert_eq!(h.ctx_mut().choose_layout(Layout::LeftHanded), Ok(()));
+    assert_eq!(h.ctx_mut().choose_layout(LEFT_HANDED), Ok(()));
     reopen_from_options(&mut h);
     assert_eq!(view(&h).switch.keyboard, "Keyboard · Left-handed");
     assert_eq!(shown(&h, Action::Info), ["Y", "RS", "-"]);
@@ -306,7 +307,7 @@ fn a_version_1_config_keeps_its_keys_and_gets_the_default_buttons() {
     let mut h = Harness::with_storage(Box::new(storage));
     let ctx = h.game().ctx();
     assert_eq!(buttons(&h), default_buttons(&h));
-    assert!(ctx.player_keys().is_custom(Layout::RightHanded));
+    assert!(ctx.player_keys().is_custom(RIGHT_HANDED));
     let info = ctx.keymap.primary(Action::Info).map(|c| c.to_string());
     assert_eq!(info.as_deref(), Some("g"));
     // The default buttons work.
@@ -318,7 +319,7 @@ fn a_version_1_config_keeps_its_keys_and_gets_the_default_buttons() {
 /// keyboard's own keys clear a slot and back out of a capture.
 #[test]
 fn the_keyboard_can_edit_the_buttons_from_the_switch_row() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down Down f Up Up Up f");
     assert_eq!(view(&h).columns[0], "Key 1");
     h.keys("Up Right");

@@ -42,41 +42,32 @@ use super::layout_picker;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{
-    Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Device, KeyGroup, Keymap, Layout,
-    LayoutBindings, PadBindings, PadKind, SLOTS, capture_abort_key_name, clear_slot_key_name,
-    is_capture_abort, is_clear_slot,
+    Action, ActionSet, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Device, KEY_ROWS,
+    Keymap, Layout, LayoutBindings, PadBindings, PadKind, SLOTS, UiAction, capture_abort_key_name,
+    clear_slot_key_name, is_capture_abort, is_clear_slot,
 };
 use crate::screen::{Ctx, FrameInput, Screen, Transition};
 use crate::tips::fill_text;
 use crate::widgets::help::SEPARATOR;
 
-/// Every rebindable action with the text key of its player-facing label
-/// (`Unit info`), in the order the screen lists them (Nick's pick, ticket
-/// 0815): the required actions, then the optional ones, as in
-/// `controls.md`'s *Required and optional* table.
-pub const ROWS: [(Action, &str); 18] = [
-    (Action::CursorUp, "key_bindings.action.cursor_up"),
-    (Action::CursorDown, "key_bindings.action.cursor_down"),
-    (Action::CursorLeft, "key_bindings.action.cursor_left"),
-    (Action::CursorRight, "key_bindings.action.cursor_right"),
-    (Action::Confirm, "key_bindings.action.confirm"),
-    (Action::Cancel, "key_bindings.action.cancel"),
-    (Action::EndTurn, "key_bindings.action.end_turn"),
-    (Action::Select, "key_bindings.action.select"),
-    (
-        Action::ConfirmEndTurn,
-        "key_bindings.action.confirm_end_turn",
-    ),
-    (Action::PrevUnit, "key_bindings.action.prev_unit"),
-    (Action::NextUnit, "key_bindings.action.next_unit"),
-    (Action::Info, "key_bindings.action.info"),
-    (Action::DangerZone, "key_bindings.action.danger_zone"),
-    (Action::ToggleAutoEnd, "key_bindings.action.toggle_auto_end"),
-    (Action::Rewind, "key_bindings.action.rewind"),
-    (Action::ZoomMap, "key_bindings.action.zoom_map"),
-    (Action::Menu, "key_bindings.action.menu"),
-    (Action::DialogueLog, "key_bindings.action.dialogue_log"),
-];
+/// What a row of the Key bindings screen sits under.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RowGroup {
+    /// The actions that must keep a key (or a button), under the screen's
+    /// own heading for them.
+    Required,
+    /// The other actions of the main key group.
+    Optional,
+    /// A key group of its own, whose keys may overlap the rest's
+    /// (ADR-0068), under the heading with this text key.
+    Shared(&'static str),
+}
+
+/// One row of the Key bindings screen, as the game gives it: the action,
+/// the text key of its player-facing label (`Unit info`) and what it sits
+/// under. Rows of one group come together, in the order the screen lists
+/// them.
+pub type KeyRow = (Action, &'static str, RowGroup);
 
 /// Which bindings the screen shows and edits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -112,9 +103,6 @@ pub const REQUIRED_HEADING: &str = "key_bindings.must_have_key";
 pub const REQUIRED_BUTTON_HEADING: &str = "key_bindings.must_have_button";
 /// Text key of the heading over the optional actions.
 pub const OPTIONAL_HEADING: &str = "key_bindings.optional";
-/// Text key of the heading over the actions of the dialogue log's
-/// [`KeyGroup`], which may share keys with the rest.
-pub const DIALOGUE_LOG_HEADING: &str = "key_bindings.dialogue_log";
 /// Text key of the row under the actions that puts the shown side's
 /// defaults back.
 pub const RESTORE_DEFAULTS: &str = "key_bindings.restore_defaults";
@@ -135,43 +123,39 @@ pub const MOVED_FLASH_SECS: f32 = 1.5;
 /// seconds (*tunable*). Let go sooner, it goes in the slot.
 pub const HOLD_TO_CANCEL_SECS: f32 = 1.0;
 
-/// [`KeyBindingsScreen::row`] on Restore defaults, the row after the
-/// actions.
-const RESTORE_ROW: usize = ROWS.len();
-/// [`KeyBindingsScreen::row`] on the keyboard / controller switch: above
-/// the first action, so one up from it and one down from Restore defaults.
-const SWITCH_ROW: usize = ROWS.len() + 1;
+/// Whether `action` is one the game takes for a move (up, down, left,
+/// right): what moves the focus.
+fn is_cursor(action: Action) -> bool {
+    matches!(
+        action.ui(),
+        Some(UiAction::Up | UiAction::Down | UiAction::Left | UiAction::Right)
+    )
+}
 
-/// The actions that move the focus.
-const CURSOR_ACTIONS: [Action; 4] = [
-    Action::CursorUp,
-    Action::CursorDown,
-    Action::CursorLeft,
-    Action::CursorRight,
-];
-
-/// The player-facing name of `action` ([`ROWS`]) in `ctx`'s language; its
-/// keymap name for an action not on the screen (Debug).
-pub fn label(ctx: &Ctx, action: Action) -> &str {
-    ROWS.iter()
-        .find(|&&(a, _)| a == action)
-        .map_or(action.name(), |&(_, key)| ctx.text(key))
+/// The player-facing name of `action` (its row's label) in `ctx`'s
+/// language; its keymap name for an action not on the screen (Debug).
+pub fn label<'a>(ctx: &'a Ctx, rows: &[KeyRow], action: Action) -> &'a str {
+    rows.iter()
+        .find(|&&(a, ..)| a == action)
+        .map_or(action.name(), |&(_, key, _)| ctx.text(key))
 }
 
 /// The blocked-leave message for `action` on `side` (`Give Cancel a key
 /// first`, `Give Cancel a button first`).
-pub fn blocked_message(ctx: &Ctx, side: Side, action: Action) -> String {
+pub fn blocked_message(ctx: &Ctx, rows: &[KeyRow], side: Side, action: Action) -> String {
     let key = match side {
         Side::Keyboard => "key_bindings.blocked_key",
         Side::Controller => "key_bindings.blocked_button",
     };
-    ctx.text_with(key, &[("action", &label(ctx, action))])
+    ctx.text_with(key, &[("action", &label(ctx, rows, action))])
 }
 
 /// The Key bindings screen for one layout and the controller. Cancel saves
 /// and closes it, unless a required action has no key or no button.
 #[derive(Debug, Clone)]
 pub struct KeyBindingsScreen {
+    /// The game's rows, in the order the screen lists them.
+    rows: &'static [KeyRow],
     /// The layout being edited.
     layout: Layout,
     /// The keymap the screen was opened with: what steers it (`Game` keeps
@@ -184,8 +168,9 @@ pub struct KeyBindingsScreen {
     bindings: LayoutBindings,
     /// The edited copy of the controller's buttons, saved on leaving.
     pad: PadBindings,
-    /// Focused row: an index into [`ROWS`], [`RESTORE_ROW`] or
-    /// [`SWITCH_ROW`].
+    /// Focused row: an index into `rows`, then Restore defaults
+    /// ([`restore_row`](Self::restore_row)) and the switch
+    /// ([`switch_row`](Self::switch_row)).
     row: usize,
     /// Focused slot (kept while on a row that has none).
     slot: usize,
@@ -214,17 +199,24 @@ impl KeyBindingsScreen {
     /// Name reported by [`Screen::name`].
     pub const NAME: &'static str = "key_bindings";
 
-    /// The screen for the layout in use (right-handed if none is chosen
-    /// yet), focused on the first action's first slot, showing the side the
-    /// player pressed last: the controller's buttons after a button press,
-    /// else the keys.
+    /// The screen with this game's rows ([`KEY_ROWS`]), as
+    /// [`with_rows`](Self::with_rows).
     pub fn new(ctx: &Ctx) -> Self {
-        let layout = ctx.layout().unwrap_or(Layout::RightHanded);
+        Self::with_rows(ctx, &KEY_ROWS)
+    }
+
+    /// The screen listing `rows`, for the layout in use (the keymap file's
+    /// first if none is chosen yet), focused on the first action's first
+    /// slot, showing the side the player pressed last: the controller's
+    /// buttons after a button press, else the keys.
+    pub fn with_rows(ctx: &Ctx, rows: &'static [KeyRow]) -> Self {
+        let layout = ctx.shown_layout();
         let side = match ctx.device {
             Device::Keyboard => Side::Keyboard,
             Device::Pad(_) => Side::Controller,
         };
         Self {
+            rows,
             layout,
             opened_with: ctx.keymap.clone(),
             side,
@@ -267,12 +259,25 @@ impl KeyBindingsScreen {
     /// The focused action and slot; `None` on Restore defaults and on the
     /// keyboard / controller switch.
     pub fn focus(&self) -> Option<(Action, usize)> {
-        ROWS.get(self.row).map(|&(action, _)| (action, self.slot))
+        self.rows
+            .get(self.row)
+            .map(|&(action, ..)| (action, self.slot))
     }
 
     /// Whether the focus is on the keyboard / controller switch.
     pub fn is_on_switch(&self) -> bool {
-        self.row == SWITCH_ROW
+        self.row == self.switch_row()
+    }
+
+    /// [`row`](Self::row) on Restore defaults, the row after the actions.
+    fn restore_row(&self) -> usize {
+        self.rows.len()
+    }
+
+    /// [`row`](Self::row) on the keyboard / controller switch: above the
+    /// first action, so one up from it and one down from Restore defaults.
+    fn switch_row(&self) -> usize {
+        self.rows.len() + 1
     }
 
     /// Whether the focused slot is waiting for a key or button.
@@ -341,7 +346,7 @@ impl KeyBindingsScreen {
             Side::Keyboard => self.bindings.unmapped_required(),
             Side::Controller => self.pad.unmapped_required(),
         };
-        let mut rows = ROWS.iter().map(|&(action, _)| action);
+        let mut rows = self.rows.iter().map(|&(action, ..)| action);
         rows.find(|action| unmapped.contains(action))
     }
 
@@ -359,7 +364,7 @@ impl KeyBindingsScreen {
     /// Moves the focus one row up or down, wrapping: the actions, Restore
     /// defaults, the switch, and the first action again.
     fn move_row(&mut self, ctx: &mut Ctx, down: bool) {
-        let rows = ROWS.len() + 2;
+        let rows = self.rows.len() + 2;
         self.row = if down {
             (self.row + 1) % rows
         } else {
@@ -437,22 +442,22 @@ impl KeyBindingsScreen {
         let Some(line) = self.choice else {
             return true;
         };
-        match action {
-            Action::CursorUp | Action::CursorDown => {
+        match action.ui() {
+            Some(UiAction::Up | UiAction::Down) => {
                 self.choice = Some((line + 1) % CHOICES.len());
                 ctx.audio.menu(MenuSound::Move);
                 return false;
             }
-            Action::Confirm if line == 0 => {
+            Some(UiAction::Confirm) if line == 0 => {
                 self.capturing = true;
                 ctx.audio.menu(MenuSound::Select);
             }
-            Action::Confirm => {
+            Some(UiAction::Confirm) => {
                 if !self.clear_slot(ctx) {
                     ctx.audio.menu(MenuSound::Select);
                 }
             }
-            Action::Cancel => ctx.audio.menu(MenuSound::Cancel),
+            Some(UiAction::Cancel) => ctx.audio.menu(MenuSound::Cancel),
             _ => return false,
         }
         self.choice = None;
@@ -463,8 +468,8 @@ impl KeyBindingsScreen {
     /// shown side's defaults, Cancel backs out; either closes the question
     /// (and returns `true`). Nothing else does anything.
     fn answer_restore(&mut self, ctx: &mut Ctx, action: Action) -> bool {
-        match action {
-            Action::Confirm => {
+        match action.ui() {
+            Some(UiAction::Confirm) => {
                 let def = &ctx.content.keymap;
                 match self.side {
                     Side::Keyboard => self.bindings = LayoutBindings::defaults(def, self.layout),
@@ -473,7 +478,7 @@ impl KeyBindingsScreen {
                 self.moved = None;
                 ctx.audio.menu(MenuSound::Select);
             }
-            Action::Cancel => ctx.audio.menu(MenuSound::Cancel),
+            Some(UiAction::Cancel) => ctx.audio.menu(MenuSound::Cancel),
             _ => return false,
         }
         self.asking_restore = false;
@@ -599,7 +604,7 @@ impl KeyBindingsScreen {
             .find_map(|side| Some((side, self.first_unmapped(side)?)));
         if let Some((side, action)) = blocked {
             self.side = side;
-            self.message = Some(blocked_message(ctx, side, action));
+            self.message = Some(blocked_message(ctx, self.rows, side, action));
             ctx.audio.menu(MenuSound::Denied);
             return false;
         }
@@ -671,14 +676,12 @@ impl KeyBindingsScreen {
         });
         let mut groups: Vec<GroupView> = Vec::new();
         let mut last = None;
-        for (i, &(action, _)) in ROWS.iter().enumerate() {
-            let required = action.is_required();
-            let group = (required, action.group());
+        for (i, &(_, _, group)) in self.rows.iter().enumerate() {
             if last != Some(group) {
                 last = Some(group);
                 groups.push(GroupView {
-                    heading: self.group_heading(ctx, required, action.group()),
-                    required,
+                    heading: self.group_heading(ctx, group),
+                    required: group == RowGroup::Required,
                     rows: Vec::new(),
                 });
             }
@@ -703,7 +706,7 @@ impl KeyBindingsScreen {
             groups,
             restore: RestoreView {
                 label: ctx.text(RESTORE_DEFAULTS).to_owned(),
-                focused: self.row == RESTORE_ROW,
+                focused: self.row == self.restore_row(),
             },
             not_mapped: ctx.help_keys().not_mapped().to_owned(),
             message: self.message.clone(),
@@ -720,21 +723,20 @@ impl KeyBindingsScreen {
         }
     }
 
-    /// The heading over the required (or the optional) actions of `group`.
-    fn group_heading(&self, ctx: &Ctx, required: bool, group: KeyGroup) -> String {
-        match (group, required, self.side) {
-            (KeyGroup::DialogueLog, ..) => ctx.text(DIALOGUE_LOG_HEADING).to_owned(),
-            (KeyGroup::General, true, Side::Keyboard) => ctx.text(REQUIRED_HEADING).to_owned(),
-            (KeyGroup::General, true, Side::Controller) => {
-                ctx.text(REQUIRED_BUTTON_HEADING).to_owned()
-            }
-            (KeyGroup::General, false, _) => ctx.text(OPTIONAL_HEADING).to_owned(),
-        }
+    /// The heading over the rows of `group`.
+    fn group_heading(&self, ctx: &Ctx, group: RowGroup) -> String {
+        let key = match (group, self.side) {
+            (RowGroup::Shared(heading), _) => heading,
+            (RowGroup::Required, Side::Keyboard) => REQUIRED_HEADING,
+            (RowGroup::Required, Side::Controller) => REQUIRED_BUTTON_HEADING,
+            (RowGroup::Optional, _) => OPTIONAL_HEADING,
+        };
+        ctx.text(key).to_owned()
     }
 
-    /// Row `i` of [`ROWS`], as the screen shows it.
+    /// Row `i` of `rows`, as the screen shows it.
     fn row_view(&self, ctx: &Ctx, i: usize) -> RowView {
-        let (action, label) = ROWS[i];
+        let (action, label, _) = self.rows[i];
         let label = ctx.text(label);
         let focused = self.row == i;
         let fixed = match self.side {
@@ -780,7 +782,9 @@ impl Screen for KeyBindingsScreen {
                 self.capture_buttons(ctx, input);
             }
             if !self.capturing {
-                self.await_release = CURSOR_ACTIONS.iter().any(|&a| input.is_held(a));
+                self.await_release = Action::ALL
+                    .iter()
+                    .any(|&a| is_cursor(a) && input.is_held(a));
             }
             return Transition::None;
         }
@@ -803,15 +807,17 @@ impl Screen for KeyBindingsScreen {
         if input.pressed_chords().iter().any(|&c| is_clear_slot(c)) {
             self.clear_slot(ctx);
         }
-        self.await_release &= CURSOR_ACTIONS.iter().any(|&a| input.is_held(a));
+        self.await_release &= Action::ALL
+            .iter()
+            .any(|&a| is_cursor(a) && input.is_held(a));
         for &action in &input.actions {
-            match action {
-                cursor if self.await_release && CURSOR_ACTIONS.contains(&cursor) => {}
-                Action::CursorUp => self.move_row(ctx, false),
-                Action::CursorDown => self.move_row(ctx, true),
-                Action::CursorLeft => self.move_across(ctx, false),
-                Action::CursorRight => self.move_across(ctx, true),
-                Action::Confirm => {
+            match action.ui() {
+                _ if self.await_release && is_cursor(action) => {}
+                Some(UiAction::Up) => self.move_row(ctx, false),
+                Some(UiAction::Down) => self.move_row(ctx, true),
+                Some(UiAction::Left) => self.move_across(ctx, false),
+                Some(UiAction::Right) => self.move_across(ctx, true),
+                Some(UiAction::Confirm) => {
                     self.confirm(ctx);
                     if self.capturing || self.asking_restore || self.choice.is_some() {
                         // The key that confirmed isn't the key to bind (or
@@ -820,7 +826,7 @@ impl Screen for KeyBindingsScreen {
                         break;
                     }
                 }
-                Action::Cancel if self.leave(ctx) => return Transition::Pop,
+                Some(UiAction::Cancel) if self.leave(ctx) => return Transition::Pop,
                 _ => {}
             }
         }

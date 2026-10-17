@@ -21,7 +21,8 @@ use trpg_core::{GameMode, TutorialLevel};
 use trpg_ui::color::UiColor;
 use trpg_ui::game::Game;
 use trpg_ui::harness::{FRAME_DT, Harness};
-use trpg_ui::input::{Action, Chord, Layout};
+use trpg_ui::input::{Action, Chord};
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::map_view::{CursorStyle, GAME_TILESET, TEST_UNITS_TILESET, default_skin};
 use trpg_ui::screen::Ctx;
 use trpg_ui::screens::options::{LeaveChoice, OptionsScreen, Row, ValueView};
@@ -43,7 +44,7 @@ const KEEP: &str = "d Left Left f";
 
 /// A launch after the right-handed layout was picked.
 fn title() -> Harness {
-    Harness::with_layout(Layout::RightHanded)
+    Harness::with_layout(RIGHT_HANDED)
 }
 
 /// Options, from the title: two rows under New Game (past Quick Battle).
@@ -141,10 +142,7 @@ fn the_title_opens_options_and_cancel_closes_it() {
     let before = h.snapshot();
     h.keys("Down Down f");
     assert_eq!(h.screens(), ["title", "options"]);
-    assert_eq!(
-        settings(&h),
-        Settings::default().with_layout(Layout::RightHanded)
-    );
+    assert_eq!(settings(&h), Settings::default().with_layout(RIGHT_HANDED));
     // No campaign: no Game mode row.
     assert!(!shows(&h, "Game mode"));
     assert_snapshot!(h.snapshot());
@@ -356,11 +354,11 @@ fn the_layout_switches_from_options_both_ways_and_persists() {
     assert_snapshot!(h.snapshot());
     h.keys("d");
     assert_eq!(h.screens(), ["title", "options"]);
-    assert_eq!(layout(&h), Some(Layout::RightHanded));
+    assert_eq!(layout(&h), Some(RIGHT_HANDED));
     // Left-handed: its keys work at once (`f` and the arrows don't).
     h.keys("f Down f");
     assert_eq!(h.screens(), ["title", "options"]);
-    assert_eq!(layout(&h), Some(Layout::LeftHanded));
+    assert_eq!(layout(&h), Some(LEFT_HANDED));
     assert!(shows(&h, "Left-handed"));
     assert!(shows(&h, "wasd move · j open · k back"));
     h.keys("f Up d");
@@ -370,16 +368,16 @@ fn the_layout_switches_from_options_both_ways_and_persists() {
     h.keys("j");
     assert!(shows(&h, "► Left-handed"));
     h.keys("w j");
-    assert_eq!(layout(&h), Some(Layout::RightHanded));
+    assert_eq!(layout(&h), Some(RIGHT_HANDED));
     assert!(shows(&h, "arrows move · f open · d back"));
     // And once more.
     h.keys("f Down f");
-    assert_eq!(layout(&h), Some(Layout::LeftHanded));
+    assert_eq!(layout(&h), Some(LEFT_HANDED));
     h.keys("k");
     assert_eq!(h.screens(), ["title"]);
     let mut h = relaunch(h);
     assert_eq!(h.screens(), ["title"], "no picker: the layout was saved");
-    assert_eq!(layout(&h), Some(Layout::LeftHanded));
+    assert_eq!(layout(&h), Some(LEFT_HANDED));
     h.keys("j");
     assert_eq!(h.screens(), ["title", "mode_select"]);
 }
@@ -390,20 +388,20 @@ fn switching_layout_loads_that_layouts_own_keys() {
     let chord = |s: &str| Chord::parse(s).unwrap_or_else(|e| panic!("{e}"));
     let mut h = title();
     // Left-handed has `h` as a second Confirm key; right-handed has `g`.
-    let mut left = h.game().ctx().layout_bindings(Layout::LeftHanded);
+    let mut left = h.game().ctx().layout_bindings(LEFT_HANDED);
     assert_eq!(left.bind(Action::Confirm, 1, chord("h")), Ok(None));
-    let mut right = h.game().ctx().layout_bindings(Layout::RightHanded);
+    let mut right = h.game().ctx().layout_bindings(RIGHT_HANDED);
     assert_eq!(right.bind(Action::Confirm, 1, chord("g")), Ok(None));
     let ctx = h.ctx_mut();
-    assert_eq!(ctx.set_layout_bindings(Layout::LeftHanded, left), Ok(()));
-    assert_eq!(ctx.set_layout_bindings(Layout::RightHanded, right), Ok(()));
+    assert_eq!(ctx.set_layout_bindings(LEFT_HANDED, left), Ok(()));
+    assert_eq!(ctx.set_layout_bindings(RIGHT_HANDED, right), Ok(()));
     h.keys("Down Down g");
     assert_eq!(h.screens(), ["title", "options"]);
     // `h` does nothing right-handed.
     h.keys(TO_LAYOUT).keys("h");
     assert_eq!(h.screens(), ["title", "options"]);
     h.keys("g Down g");
-    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+    assert_eq!(h.game().ctx().layout(), Some(LEFT_HANDED));
     // Now `h` confirms (the Layout row opens the picker) and `g` doesn't.
     h.keys("g");
     assert_eq!(h.screens(), ["title", "options"]);
@@ -411,7 +409,7 @@ fn switching_layout_loads_that_layouts_own_keys() {
     assert_eq!(h.screens(), ["title", "options", "layout_picker"]);
     // Back to right-handed: its `g` is back.
     h.keys("w h g");
-    assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
+    assert_eq!(h.game().ctx().layout(), Some(RIGHT_HANDED));
     assert_eq!(h.screens(), ["title", "options", "layout_picker"]);
 }
 
@@ -604,20 +602,14 @@ fn reset_tips_forgets_the_tips_seen() {
 fn restore_defaults_asks_first_and_keeps_the_layout_and_the_keys() {
     let chord = |s: &str| Chord::parse(s).unwrap_or_else(|e| panic!("{e}"));
     let mut h = options();
-    let mut keys = h.game().ctx().layout_bindings(Layout::RightHanded);
+    let mut keys = h.game().ctx().layout_bindings(RIGHT_HANDED);
     assert_eq!(keys.bind(Action::Confirm, 1, chord("g")), Ok(None));
     let ctx = h.ctx_mut();
-    assert_eq!(
-        ctx.set_layout_bindings(Layout::RightHanded, keys.clone()),
-        Ok(())
-    );
+    assert_eq!(ctx.set_layout_bindings(RIGHT_HANDED, keys.clone()), Ok(()));
     // Text speed, animation speed and (six rows on) the music volume.
     h.keys("Right Down Right").keys(TO_CURSOR).keys("Left");
     let changed = settings(&h);
-    assert_ne!(
-        changed,
-        Settings::default().with_layout(Layout::RightHanded)
-    );
+    assert_ne!(changed, Settings::default().with_layout(RIGHT_HANDED));
     // Restore defaults is the last row: round from Music volume's
     // neighbour by going up from the first.
     h.keys("Up Up Up Up Up Up Up Up f");
@@ -631,18 +623,12 @@ fn restore_defaults_asks_first_and_keeps_the_layout_and_the_keys() {
     assert_eq!(settings(&h), changed);
     h.keys("f f");
     assert!(shows(&h, "Defaults restored"));
-    assert_eq!(
-        settings(&h),
-        Settings::default().with_layout(Layout::RightHanded)
-    );
+    assert_eq!(settings(&h), Settings::default().with_layout(RIGHT_HANDED));
     // Custom keys are reset on the Key bindings screen, not here.
-    assert_eq!(h.game().ctx().layout_bindings(Layout::RightHanded), keys);
+    assert_eq!(h.game().ctx().layout_bindings(RIGHT_HANDED), keys);
     h.keys(KEEP);
     let h = relaunch(h);
-    assert_eq!(
-        settings(&h),
-        Settings::default().with_layout(Layout::RightHanded)
-    );
+    assert_eq!(settings(&h), Settings::default().with_layout(RIGHT_HANDED));
 }
 
 /// A layout picked before the settings held it (its own storage key) is
@@ -653,13 +639,13 @@ fn a_layout_saved_by_an_older_build_is_kept() {
     trpg_ui::Storage::write(&mut storage, "layout", "LeftHanded").ok();
     let mut h = Harness::with_storage(Box::new(storage));
     assert_eq!(h.screens(), ["title"]);
-    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+    assert_eq!(h.game().ctx().layout(), Some(LEFT_HANDED));
     // Changing an option (kept on leaving: two left of Back, left-handed)
     // keeps it.
     h.keys("s s j d k a a j");
     let h = relaunch(h);
     assert_eq!(h.screens(), ["title"]);
-    assert_eq!(settings(&h).layout(), Some(Layout::LeftHanded));
+    assert_eq!(settings(&h).layout(), Some(LEFT_HANDED));
     assert_eq!(settings(&h).text_speed, TextSpeed::Fast);
 }
 
@@ -715,7 +701,7 @@ fn launch_with_pictures(storage: Option<Box<dyn Storage>>) -> Harness {
         Some(storage) => ctx.with_storage(storage),
         None => ctx,
     };
-    let mut h = Harness::from_game(Game::start(ctx.with_layout(Layout::RightHanded)));
+    let mut h = Harness::from_game(Game::start(ctx.with_layout(RIGHT_HANDED)));
     h.wait(FRAME_DT);
     h
 }

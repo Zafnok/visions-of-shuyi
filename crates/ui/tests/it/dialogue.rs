@@ -8,7 +8,7 @@ use trpg_content::{ChoiceOption, MusicLine, Present, Scene, Side, Step};
 use trpg_core::{CharacterId, LeadGender, LeadProfile};
 use trpg_ui::audio::{AudioRequest, MusicCommand};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::dialogue::view::{DialogueView, SkipView};
 
@@ -22,7 +22,7 @@ const TEST_PRESSES: usize = 2 * TEST_BOXES + TEST_CHOICES;
 
 /// At the title, then the debug menu's "Play test scene".
 fn full_screen() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("F2 Down Down f");
     assert_eq!(h.screens(), ["title", "debug_menu", "dialogue"]);
     h
@@ -31,7 +31,7 @@ fn full_screen() -> Harness {
 /// In Quick Battle (its `PLAYER PHASE` banner closed), then the debug
 /// menu's "Play test scene (overlay)".
 fn over_the_map() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f Left f f F2 Down Down Down f");
     assert_eq!(h.screens(), ["title", "battle", "dialogue"]);
     h

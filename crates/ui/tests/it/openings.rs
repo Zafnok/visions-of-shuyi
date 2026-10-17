@@ -8,7 +8,7 @@
 use insta::assert_snapshot;
 use trpg_core::{CharacterId, LeadGender, Pos};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::{Facing, MapScene, UnitView};
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::dialogue::view::DialogueView;
@@ -22,7 +22,7 @@ fn p(x: i32, y: i32) -> Pos {
 fn preview(scene: &str, gender: LeadGender) -> Harness {
     let ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
-        .with_layout(Layout::RightHanded);
+        .with_layout(RIGHT_HANDED);
     let game = Game::start_on_scene(ctx, scene, gender).unwrap_or_else(|e| panic!("{e}"));
     Harness::from_game(game)
 }

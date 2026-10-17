@@ -357,7 +357,7 @@ fn help_names_the_keys() {
     let s = spelling(&mut c);
     assert!(s.typing().is_none());
     assert_eq!(s.help(&c), "arrows choose · f type · d delete");
-    c.use_layout(crate::input::Layout::LeftHanded);
+    c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(s.help(&c), "wasd choose · j type · k delete");
 }
 

@@ -1,10 +1,11 @@
 //! Tests of controller state handling: pad kinds and the Nintendo swap,
 //! sticks as 4-way buttons with hysteresis, and merging several pads.
 
+use crate::input::{RIGHT_HANDED, load_keymap};
 use proptest::prelude::*;
 
 use super::*;
-use crate::input::{Action, InputState, Keymap, KeymapDef, Layout};
+use crate::input::{Action, InputState, Keymap};
 use Button::{
     DpadUp, East, LeftStickDown, LeftStickLeft, LeftStickRight, LeftStickUp, North, RightStickDown,
     RightStickLeft, RightStickRight, RightStickUp, South, Start, West,
@@ -642,8 +643,8 @@ fn a_nintendo_pad_reports_its_right_button_as_south() {
 
 /// The embedded keymap's right-handed layout with its default buttons.
 fn default_input() -> InputState {
-    let def = KeymapDef::load().unwrap_or_else(|e| panic!("{e:?}"));
-    InputState::new(Keymap::for_layout(&def, Layout::RightHanded))
+    let def = load_keymap().unwrap_or_else(|e| panic!("{e:?}"));
+    InputState::new(Keymap::for_layout(&def, RIGHT_HANDED))
 }
 
 /// The actions a pad of `kind` gives for pressing each of `buttons` alone.

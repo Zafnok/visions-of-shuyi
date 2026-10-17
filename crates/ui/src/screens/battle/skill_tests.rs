@@ -355,7 +355,7 @@ fn skill_menu_snapshot() {
 #[test]
 fn skill_menu_left_handed_snapshot() {
     let mut c = ctx();
-    c.use_layout(crate::input::Layout::LeftHanded);
+    c.use_layout(crate::input::LEFT_HANDED);
     let mut s = knight_menu(&mut c, 20);
     focus_entry(&mut s, &mut c, MenuEntry::Skill);
     step(&mut s, &mut c, &[Action::Confirm]);

@@ -16,6 +16,7 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 
 use trpg_content::font::{ATLAS_1BIT_PATH, AtlasRect, FALLBACK_GLYPH};
 use trpg_content::{FontAtlasDef, ImageId, ImageTable};
@@ -105,7 +106,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
     let mut options = Options {
         out: PathBuf::new(),
         steps: Vec::new(),
-        layout: Layout::RightHanded,
+        layout: RIGHT_HANDED,
         scale: None,
         playdate: false,
         prompt: false,
@@ -145,8 +146,8 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
             }
             "--layout" => {
                 options.layout = match value()?.as_str() {
-                    "right" => Layout::RightHanded,
-                    "left" => Layout::LeftHanded,
+                    "right" => RIGHT_HANDED,
+                    "left" => LEFT_HANDED,
                     other => return Err(format!("--layout: right or left, not {other}")),
                 };
             }

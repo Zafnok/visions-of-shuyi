@@ -6,14 +6,15 @@ use insta::assert_snapshot;
 use trpg_content::image::TEST_CARD_PATH;
 use trpg_ui::Rect;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{Layout, PadKind};
+use trpg_ui::input::PadKind;
+use trpg_ui::input::RIGHT_HANDED;
 
 /// The title with the sprite test opened from the debug menu (its last
 /// tool but six: the class change tools, the voice test, the test
 /// cinematic, the scene camera
 /// and the map skin come after it).
 fn opened() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("F2 Up Up Up Up Up Up Up f");
     assert_eq!(h.screens(), ["title", "debug_menu", "sprite_test"]);
     h
