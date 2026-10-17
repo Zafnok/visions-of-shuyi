@@ -15,7 +15,9 @@
 //!   (the `harness` feature), and a `toy` game to try things on
 //!   (the `toy` feature).
 //!
-//! - [`widgets`] screens are built from: a menu and word wrap.
+//! - [`widgets`] screens are built from: a menu and word wrap;
+//! - [`screens`] any game can use, with the game's rows: the layout
+//!   picker and the Key bindings screen.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
@@ -42,6 +44,7 @@ pub mod harness;
 pub mod input;
 pub mod profiles;
 pub mod screen;
+pub mod screens;
 pub mod settings;
 pub mod storage;
 pub mod text;

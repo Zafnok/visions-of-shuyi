@@ -119,7 +119,11 @@ mod tests {
     fn painted(view: &MenuView) -> (GlyphBuffer, Palette) {
         let p = engine_palette();
         let (w, h) = size(view);
-        let blank = Cell::new(' ', p.engine(EngineColor::Text), p.engine(EngineColor::Background));
+        let blank = Cell::new(
+            ' ',
+            p.engine(EngineColor::Text),
+            p.engine(EngineColor::Background),
+        );
         let mut buf = GlyphBuffer::new(
             u16::try_from(w + 2).unwrap(),
             u16::try_from(h + 2).unwrap(),

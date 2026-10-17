@@ -65,13 +65,10 @@ pub type Bindings = format::Bindings<Action>;
 /// the engine's ([`shuyi_ui::Ctx::help_keys`]).
 pub use shuyi_ui::ctx::{ARROWS_TEXT, CHORD_JOIN_TEXT};
 
-/// The text key of what a slot on the Key bindings screen shows while it
-/// waits for a key (`docs/design/controls.md`, *Rebinding keys*).
-pub const CAPTURE_PROMPT: &str = "key_bindings.press_a_key";
-
-/// The text key of what a slot shows while it waits for a controller
-/// button (`docs/design/controls.md`, *Rebinding buttons*).
-pub const CAPTURE_BUTTON_PROMPT: &str = "key_bindings.press_a_button";
+/// The text keys of what a slot on the Key bindings screen shows while it
+/// waits for a key or a controller button (`docs/design/controls.md`,
+/// *Rebinding keys* and *Rebinding buttons*): the engine's.
+pub use shuyi_ui::screens::key_bindings::{CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT};
 
 /// This game's rows on the Key bindings screen: every rebindable action
 /// but the [crank's](CRANK_ACTIONS), with the text key of its player-facing label (`Unit info`) and its

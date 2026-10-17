@@ -1,13 +1,26 @@
+//! The Key bindings screen's glyph skin, painting views of the toy game's
+//! rows.
+
+use shuyi_assets::keymap::sample::KeyGroup;
+use shuyi_assets::keymap::{Button, Chord, Key, SLOTS};
+
 use super::*;
-use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::input::KEY_ROWS as ROWS;
-use crate::input::{
-    Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Key, KeyGroup, PadKind, SLOTS,
-};
-use crate::screen::tests::ctx;
-use crate::screens::key_bindings::view::{GroupView, RestoreView};
-use crate::screens::key_bindings::{CHOICES, KeyRow};
-use crate::widgets::help::NOT_MAPPED;
+use crate::frame::console::ConsoleSpec;
+use crate::input::help_keys::NOT_MAPPED;
+use crate::input::pad::PadKind;
+use crate::screens::key_bindings::view::RestoreView;
+use crate::screens::key_bindings::{CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, CHOICES};
+use crate::toy::{Action, ToyCtx};
+use crate::toy::{KEY_ROWS as ROWS, ctx};
+
+type Ctx = ToyCtx;
+type KeyBindingsView = super::KeyBindingsView<Action>;
+type RowView = super::RowView<Action>;
+type GroupView = crate::screens::key_bindings::view::GroupView<Action>;
+type KeyRow = crate::screens::key_bindings::KeyRow<Action>;
+
+/// The console the skin is laid out for.
+const PC: ConsoleSpec = ConsoleSpec::text(100, 32);
 
 /// The row of `view` for `action`, mutable.
 fn row_mut(view: &mut KeyBindingsView, action: Action) -> &mut RowView {
@@ -74,10 +87,10 @@ fn view(side: Side) -> KeyBindingsView {
 fn painted(c: &Ctx, view: &KeyBindingsView) -> GlyphBuffer {
     let stale = Cell::new(
         'x',
-        c.palette.get(UiColor::Enemy),
-        c.palette.get(UiColor::Enemy),
+        c.palette.engine(EngineColor::Warning),
+        c.palette.engine(EngineColor::Warning),
     );
-    let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
+    let mut buf = GlyphBuffer::with_spec(PC, stale);
     paint(c, view, &mut buf);
     buf
 }
@@ -135,19 +148,16 @@ fn the_title_switch_columns_and_groups_have_their_rows() {
     assert_eq!(placed.restore, 28);
     assert!(text(&buf, 28).contains("Restore defaults"));
     assert!(text(&buf, 29).contains('└'));
-    assert_eq!(
-        text(&buf, i32::from(ConsoleSpec::PC.rows) - 1).trim(),
-        "help"
-    );
+    assert_eq!(text(&buf, i32::from(PC.rows) - 1).trim(), "help");
 }
 
 #[test]
 fn it_covers_the_whole_buffer() {
     let c = ctx();
-    let stale = c.palette.get(UiColor::Enemy);
+    let stale = c.palette.engine(EngineColor::Warning);
     let buf = painted(&c, &view(Side::Keyboard));
-    let left = (0..i32::from(ConsoleSpec::PC.rows))
-        .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
+    let left = (0..i32::from(PC.rows))
+        .flat_map(|y| (0..i32::from(PC.cols)).map(move |x| (x, y)))
         .filter(|&(x, y)| buf.get(x, y).is_some_and(|c| c.bg == stale))
         .count();
     assert_eq!(left, 0, "an opaque screen covers the whole buffer");
@@ -171,13 +181,13 @@ fn a_row_shows_its_slots_fixed_keys_and_not_mapped_note() {
     assert_eq!(at(slot_x(0) + 1).glyph, 'f');
     assert_eq!(at(slot_x(1) + 1).glyph, '·');
     assert_eq!(at(slot_x(2) + 1).glyph, '·');
-    assert_eq!(at(slot_x(0) + 1).fg, c.palette.get(UiColor::Text));
-    assert_eq!(at(slot_x(1) + 1).fg, c.palette.get(UiColor::TextDim));
+    assert_eq!(at(slot_x(0) + 1).fg, c.palette.engine(EngineColor::Text));
+    assert_eq!(at(slot_x(1) + 1).fg, c.palette.engine(EngineColor::TextDim));
     // The fixed keys are dim.
     let x = x_of(&buf, y_of(&v, Action::Cancel), "+ Escape");
     assert_eq!(
         buf.get(x, y_of(&v, Action::Cancel)).unwrap().fg,
-        c.palette.get(UiColor::TextDim)
+        c.palette.engine(EngineColor::TextDim)
     );
 }
 
@@ -199,8 +209,14 @@ fn the_not_mapped_note_is_dim_unless_it_blocks_leaving() {
         assert_eq!(x, slot_x(SLOTS) + 1);
         buf.get(x, y).unwrap().fg
     };
-    assert_eq!(note_fg(Action::Select), c.palette.get(UiColor::TextDim));
-    assert_eq!(note_fg(Action::Confirm), c.palette.get(UiColor::HpLow));
+    assert_eq!(
+        note_fg(Action::Select),
+        c.palette.engine(EngineColor::TextDim)
+    );
+    assert_eq!(
+        note_fg(Action::Confirm),
+        c.palette.engine(EngineColor::Warning)
+    );
     // No note on a row that has a key.
     assert!(!text(&buf, y_of(&v, Action::Cancel)).contains(NOT_MAPPED));
 }
@@ -208,7 +224,7 @@ fn the_not_mapped_note_is_dim_unless_it_blocks_leaving() {
 #[test]
 fn the_focused_slot_is_a_bar_and_while_capturing_it_shows_the_prompt() {
     let c = ctx();
-    let bar = c.palette.get(UiColor::PanelBorderFocus);
+    let bar = c.palette.engine(EngineColor::Focus);
     let mut v = view(Side::Keyboard);
     let confirm = row_mut(&mut v, Action::Confirm);
     confirm.focus = Some(0);
@@ -223,7 +239,7 @@ fn the_focused_slot_is_a_bar_and_while_capturing_it_shows_the_prompt() {
     // The focused row's label takes the highlight colour.
     assert_eq!(
         buf.get(LABEL_X, y).unwrap().fg,
-        c.palette.get(UiColor::TextHighlight)
+        c.palette.engine(EngineColor::Highlight)
     );
     // Capturing: the same bar, with the prompt in it. An empty focused slot
     // is an empty bar.
@@ -250,19 +266,19 @@ fn a_row_that_lost_its_key_is_white_unless_the_cursor_is_on_it() {
     let buf = painted(&c, &v);
     assert_eq!(
         buf.get(LABEL_X, y).unwrap().fg,
-        c.palette.get(UiColor::White)
+        c.palette.engine(EngineColor::Bright)
     );
     let other = y_of(&v, Action::Rewind);
     assert_eq!(
         buf.get(LABEL_X, other).unwrap().fg,
-        c.palette.get(UiColor::Text)
+        c.palette.engine(EngineColor::Text)
     );
     // Its own row, when focused, keeps the focus colour.
     row_mut(&mut v, Action::Info).focus = Some(0);
     let buf = painted(&c, &v);
     assert_eq!(
         buf.get(LABEL_X, y).unwrap().fg,
-        c.palette.get(UiColor::TextHighlight)
+        c.palette.engine(EngineColor::Highlight)
     );
 }
 
@@ -274,13 +290,13 @@ fn the_switch_highlights_the_shown_side_and_is_a_bar_when_focused() {
     let fg = |buf: &GlyphBuffer, word: &str| buf.get(x_of(buf, 2, word), 2).unwrap().fg;
     assert_eq!(
         fg(&buf, "Controller"),
-        c.palette.get(UiColor::TextHighlight)
+        c.palette.engine(EngineColor::Highlight)
     );
-    assert_eq!(fg(&buf, "Keyboard"), c.palette.get(UiColor::TextDim));
+    assert_eq!(fg(&buf, "Keyboard"), c.palette.engine(EngineColor::TextDim));
     // On the switch, the shown side is a bar.
     v.switch.focused = true;
     let buf = painted(&c, &v);
-    let bar = c.palette.get(UiColor::PanelBorderFocus);
+    let bar = c.palette.engine(EngineColor::Focus);
     let x = x_of(&buf, 2, "Controller");
     let bg = |x| buf.get(x, 2).unwrap().bg;
     assert_eq!(bg(x - 1), bar);
@@ -313,7 +329,7 @@ fn the_restore_row_is_a_bar_when_focused() {
     let mut v = view(Side::Keyboard);
     let y = place(&v).restore;
     let buf = painted(&c, &v);
-    let bar = c.palette.get(UiColor::PanelBorderFocus);
+    let bar = c.palette.engine(EngineColor::Focus);
     assert_eq!(buf.get(LABEL_X, y).unwrap().glyph, 'R');
     assert_ne!(buf.get(LABEL_X, y).unwrap().bg, bar);
     v.restore.focused = true;
@@ -334,17 +350,13 @@ fn the_message_is_painted_under_the_panel_in_the_warning_colour() {
     let bottom = PANEL.y + PANEL.h - 1;
     assert!(text(&buf, bottom).contains('└'));
     assert_eq!(MESSAGE_ROW, bottom + 1);
-    assert_eq!(
-        MESSAGE_ROW,
-        i32::from(ConsoleSpec::PC.rows) - 2,
-        "over the help line"
-    );
+    assert_eq!(MESSAGE_ROW, i32::from(PC.rows) - 2, "over the help line");
     let message = text(&buf, MESSAGE_ROW);
     assert_eq!(message.trim(), "Give Cancel a key first");
     let x = x_of(&buf, MESSAGE_ROW, "Give");
     assert_eq!(
         buf.get(x, MESSAGE_ROW).unwrap().fg,
-        c.palette.get(UiColor::HpLow)
+        c.palette.engine(EngineColor::Warning)
     );
 }
 
@@ -357,7 +369,7 @@ fn the_question_is_a_box_in_the_middle_with_its_answers_under_it() {
         answers: "f yes / d no".to_owned(),
     });
     let buf = painted(&c, &v);
-    let top = (i32::from(ConsoleSpec::PC.rows) - QUESTION_H) / 2;
+    let top = (i32::from(PC.rows) - QUESTION_H) / 2;
     let border = format!("╔{}╗", "═".repeat(44));
     assert!(text(&buf, top).contains(&border), "{}", text(&buf, top));
     assert!(text(&buf, top + 2).contains("║ Restore the default keys for Right-handed? ║"));
@@ -366,14 +378,14 @@ fn the_question_is_a_box_in_the_middle_with_its_answers_under_it() {
     // No question, no box.
     v.question = None;
     let buf = painted(&c, &v);
-    assert!(!(0..i32::from(ConsoleSpec::PC.rows)).any(|y| text(&buf, y).contains('║')));
+    assert!(!(0..i32::from(PC.rows)).any(|y| text(&buf, y).contains('║')));
 }
 
 /// The choices go under the slot, or over it on the last rows.
 #[test]
 fn the_choices_are_drawn_under_the_slot_or_over_it_on_the_last_rows() {
     let c = ctx();
-    let bar = c.palette.get(UiColor::PanelBorderFocus);
+    let bar = c.palette.engine(EngineColor::Focus);
     let choices = |focused| ChoicesView {
         lines: CHOICES.map(|key| c.text(key).to_owned()).to_vec(),
         focused,
@@ -427,7 +439,7 @@ fn choices_with_no_focused_row_are_not_painted() {
         slot: 0,
     });
     let buf = painted(&c, &v);
-    assert!(!(0..i32::from(ConsoleSpec::PC.rows)).any(|y| text(&buf, y).contains('╔')));
+    assert!(!(0..i32::from(PC.rows)).any(|y| text(&buf, y).contains('╔')));
 }
 
 #[test]

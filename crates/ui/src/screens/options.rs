@@ -34,7 +34,7 @@ pub use view::{ChoiceView, LeaveView, OptionsView, QuestionView, RowView, ValueV
 use trpg_content::Theme;
 use trpg_core::{GameMode, TutorialLevel};
 
-use super::{KeyBindingsScreen, LayoutPickerScreen, layout_picker};
+use super::{key_bindings, layout_picker};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, TextKey, text_key, text_keys_help};
@@ -665,11 +665,11 @@ impl OptionsScreen {
             Row::MusicVolume | Row::SoundVolume => self.open_box(ctx, pad),
             Row::Layout => {
                 ctx.audio.menu(MenuSound::Select);
-                return Transition::Push(Box::new(LayoutPickerScreen::change(ctx)));
+                return Transition::Push(Box::new(layout_picker::change(ctx)));
             }
             Row::KeyBindings => {
                 ctx.audio.menu(MenuSound::Select);
-                return Transition::Push(Box::new(KeyBindingsScreen::new(ctx)));
+                return Transition::Push(Box::new(key_bindings::screen(ctx)));
             }
             Row::GameMode if Self::can_switch_mode(ctx) => {
                 self.asking = Some(Question::SwitchToCasual);

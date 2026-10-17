@@ -2,14 +2,15 @@
 //! one panel per layout, each with a small keyboard (the keys' places are
 //! this skin's) and a legend. Everything about the look lives here; nothing
 //! here decides what the screen shows. Another look is another `paint` of
-//! the same view (ADR-0054).
+//! the same view.
+
+use shuyi_assets::keymap::Key;
 
 use super::view::{KeyRole, LayoutPickerView, LayoutView};
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
-use crate::input::Key;
+use crate::ctx::{Ctx, GameData};
+use crate::frame::color::EngineColor;
+use crate::frame::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
-use crate::screen::Ctx;
 use crate::screens::print_centred;
 
 /// Row of the title.
@@ -78,24 +79,24 @@ const SPACE_X: i32 = KEYS_X + 1 + 2 * CAP_W;
 const SPACE_W: usize = 19;
 
 /// The colour a key cap's label gets for `role`.
-fn role_colour(role: KeyRole) -> UiColor {
+fn role_colour(role: KeyRole) -> EngineColor {
     match role {
-        KeyRole::Movement => UiColor::Player,
-        KeyRole::Bound => UiColor::TextHighlight,
-        KeyRole::Unbound => UiColor::TextDim,
+        KeyRole::Movement => EngineColor::Accent,
+        KeyRole::Bound => EngineColor::Highlight,
+        KeyRole::Unbound => EngineColor::TextDim,
     }
 }
 
 /// Paints `view` over the whole of `buf`.
-pub fn paint(ctx: &Ctx, view: &LayoutPickerView, buf: &mut GlyphBuffer) {
-    let c = |u| ctx.palette.get(u);
-    let black = c(UiColor::Black);
-    buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
+pub fn paint<G: GameData>(ctx: &Ctx<G>, view: &LayoutPickerView, buf: &mut GlyphBuffer) {
+    let c = |e| ctx.palette.engine(e);
+    let black = c(EngineColor::Background);
+    buf.fill_rect(buf.bounds(), Cell::new(' ', c(EngineColor::Text), black));
     print_centred(
         buf,
         TITLE_ROW,
         &view.title,
-        c(UiColor::TextHighlight),
+        c(EngineColor::Highlight),
         black,
     );
     let x = (i32::from(buf.width()) - PANEL_W) / 2;
@@ -104,41 +105,47 @@ pub fn paint(ctx: &Ctx, view: &LayoutPickerView, buf: &mut GlyphBuffer) {
         paint_panel(ctx, buf, layout, x, y);
     }
     let bottom = i32::from(buf.height()) - 1;
-    print_centred(buf, bottom, &view.help, c(UiColor::TextDim), black);
+    print_centred(buf, bottom, &view.help, c(EngineColor::TextDim), black);
 }
 
 /// Paints `layout`'s panel with its top-left corner at `(x, y)`: a double
 /// border and an arrow for the focused one.
-fn paint_panel(ctx: &Ctx, buf: &mut GlyphBuffer, layout: &LayoutView, x: i32, y: i32) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
+fn paint_panel<G: GameData>(
+    ctx: &Ctx<G>,
+    buf: &mut GlyphBuffer,
+    layout: &LayoutView,
+    x: i32,
+    y: i32,
+) {
+    let c = |e| ctx.palette.engine(e);
+    let bg = c(EngineColor::Panel);
     let rect = Rect::new(x, y, PANEL_W, PANEL_H);
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
+    buf.fill_rect(rect, Cell::new(' ', c(EngineColor::Text), bg));
     let (style, border, title) = if layout.focused {
         (
             BoxStyle::Double,
-            c(UiColor::PanelBorderFocus),
+            c(EngineColor::Focus),
             // check-text: not a data name (the view's own)
             format!(" ► {} ", layout.name),
         )
     } else {
         (
             BoxStyle::Single,
-            c(UiColor::PanelBorder),
+            c(EngineColor::Border),
             // check-text: not a data name (the view's own)
             format!(" {} ", layout.name),
         )
     };
     buf.draw_box(rect, style, border, bg);
     let title_fg = if layout.focused {
-        c(UiColor::TextHighlight)
+        c(EngineColor::Highlight)
     } else {
-        c(UiColor::Text)
+        c(EngineColor::Text)
     };
     buf.print(x + 2, y, &title, title_fg, bg);
 
     let cap_fg = |key| c(role_colour(layout.role(key)));
-    let dim = c(UiColor::TextDim);
+    let dim = c(EngineColor::TextDim);
     let mut cap = |cx: i32, cy: i32, key: Key, glyph: &str| {
         buf.print(cx, cy, "[", dim, bg);
         buf.print(cx + 1, cy, glyph, cap_fg(key), bg);
@@ -173,31 +180,34 @@ fn paint_panel(ctx: &Ctx, buf: &mut GlyphBuffer, layout: &LayoutView, x: i32, y:
 
     for (row, line) in (y + LEGEND_Y..).zip(&layout.legend) {
         let fg = if line.movement {
-            c(UiColor::Player)
+            c(EngineColor::Accent)
         } else {
-            c(UiColor::TextHighlight)
+            c(EngineColor::Highlight)
         };
         buf.print(x + LEGEND_X, row, &line.keys, fg, bg);
         let what_x = x + LEGEND_X + i32::try_from(LEGEND_KEY_W).unwrap_or(0);
-        buf.print(what_x, row, &line.what, c(UiColor::Text), bg);
+        buf.print(what_x, row, &line.what, c(EngineColor::Text), bg);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::{ConsoleSizes, ConsoleSpec};
-    use crate::screen::tests::ctx;
+    use crate::frame::console::ConsoleSpec;
     use crate::screens::layout_picker::LayoutPickerScreen;
     use crate::screens::layout_picker::view::{KeyCapView, LegendRow};
+    use crate::toy::{self, ToyCtx, ctx};
 
-    fn painted(c: &Ctx, view: &LayoutPickerView) -> GlyphBuffer {
+    /// The console the skin is laid out for.
+    const PC: ConsoleSpec = ConsoleSpec::text(100, 32);
+
+    fn painted(c: &ToyCtx, view: &LayoutPickerView) -> GlyphBuffer {
         let stale = Cell::new(
             'x',
-            c.palette.get(UiColor::Enemy),
-            c.palette.get(UiColor::Enemy),
+            c.palette.engine(EngineColor::Warning),
+            c.palette.engine(EngineColor::Warning),
         );
-        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
+        let mut buf = GlyphBuffer::with_spec(PC, stale);
         paint(c, view, &mut buf);
         buf
     }
@@ -216,7 +226,7 @@ mod tests {
     /// A one-key legend and two layouts, the second focused.
     fn view(role_of_q: KeyRole, role_of_f: KeyRole) -> LayoutPickerView {
         let layout = |name: &str, focused| LayoutView {
-            layout: crate::input::RIGHT_HANDED,
+            layout: toy::RIGHT_HANDED,
             name: name.to_owned(),
             focused,
             legend: vec![
@@ -249,7 +259,7 @@ mod tests {
         }
     }
 
-    const LEFT: i32 = (ConsoleSpec::PC.cols as i32 - PANEL_W) / 2;
+    const LEFT: i32 = (PC.cols as i32 - PANEL_W) / 2;
     const SECOND: i32 = FIRST_PANEL_ROW + PANEL_H + PANEL_GAP;
 
     #[test]
@@ -265,10 +275,7 @@ mod tests {
         assert!(second.contains("╔═ ► Second ═"), "{second}");
         assert!(text(&buf, FIRST_PANEL_ROW + PANEL_H - 1).contains('└'));
         assert!(text(&buf, SECOND + PANEL_H - 1).contains('╚'));
-        assert_eq!(
-            text(&buf, i32::from(ConsoleSpec::PC.rows) - 1).trim(),
-            "help"
-        );
+        assert_eq!(text(&buf, i32::from(PC.rows) - 1).trim(), "help");
         // The gap between the panels is blank.
         assert!(text(&buf, FIRST_PANEL_ROW + PANEL_H).trim().is_empty());
     }
@@ -283,16 +290,16 @@ mod tests {
         let (qx, qy) = (LEFT + KEYS_X, FIRST_PANEL_ROW + TOP_ROW_Y);
         let q_row = text(&buf, qy);
         assert_eq!(col(&q_row, "[q]"), usize::try_from(qx).unwrap());
-        assert_eq!(at(qx + 1, qy).fg, c.palette.get(UiColor::Player));
+        assert_eq!(at(qx + 1, qy).fg, c.palette.engine(EngineColor::Accent));
         let (fx, fy) = (LEFT + KEYS_X + 1 + 3 * CAP_W, FIRST_PANEL_ROW + HOME_ROW_Y);
         assert_eq!(at(fx + 1, fy).glyph, 'f');
-        assert_eq!(at(fx + 1, fy).fg, c.palette.get(UiColor::TextDim));
+        assert_eq!(at(fx + 1, fy).fg, c.palette.engine(EngineColor::TextDim));
         // The brackets are dim whatever the key does.
-        assert_eq!(at(qx, qy).fg, c.palette.get(UiColor::TextDim));
+        assert_eq!(at(qx, qy).fg, c.palette.engine(EngineColor::TextDim));
         // A key the view doesn't list is unbound.
         let (wx, wy) = (LEFT + KEYS_X + CAP_W, FIRST_PANEL_ROW + TOP_ROW_Y);
         assert_eq!(at(wx + 1, wy).glyph, 'w');
-        assert_eq!(at(wx + 1, wy).fg, c.palette.get(UiColor::TextDim));
+        assert_eq!(at(wx + 1, wy).fg, c.palette.engine(EngineColor::TextDim));
         // The arrow cluster's caps and the space bar.
         let arrows = text(&buf, FIRST_PANEL_ROW + HOME_ROW_Y);
         assert!(arrows.contains("[←][↓][→]"), "{arrows}");
@@ -312,24 +319,24 @@ mod tests {
             usize::try_from(x).unwrap() + LEGEND_KEY_W
         );
         let at = |x, y| buf.get(x, y).unwrap().fg;
-        assert_eq!(at(x, y), c.palette.get(UiColor::Player));
-        assert_eq!(at(x, y + 1), c.palette.get(UiColor::TextHighlight));
+        assert_eq!(at(x, y), c.palette.engine(EngineColor::Accent));
+        assert_eq!(at(x, y + 1), c.palette.engine(EngineColor::Highlight));
         let what_x = x + i32::try_from(LEGEND_KEY_W).unwrap();
-        assert_eq!(at(what_x, y), c.palette.get(UiColor::Text));
+        assert_eq!(at(what_x, y), c.palette.engine(EngineColor::Text));
     }
 
     #[test]
     fn it_paints_the_real_screen_over_the_whole_buffer() {
-        let c = Ctx::embedded().unwrap();
-        let screen = LayoutPickerScreen::new(&c);
+        let c = ctx();
+        let screen = LayoutPickerScreen::new(&c, &toy::LEGEND);
         let stale = Cell::new(
             'x',
-            c.palette.get(UiColor::Enemy),
-            c.palette.get(UiColor::Enemy),
+            c.palette.engine(EngineColor::Warning),
+            c.palette.engine(EngineColor::Warning),
         );
         let buf = painted(&c, &screen.view(&c));
-        let left = (0..i32::from(ConsoleSpec::PC.rows))
-            .flat_map(|y| (0..i32::from(ConsoleSpec::PC.cols)).map(move |x| (x, y)))
+        let left = (0..i32::from(PC.rows))
+            .flat_map(|y| (0..i32::from(PC.cols)).map(move |x| (x, y)))
             .filter(|&(x, y)| buf.get(x, y) == Some(&stale))
             .count();
         assert_eq!(left, 0);
@@ -337,8 +344,8 @@ mod tests {
 
     #[test]
     fn roles_have_their_colours() {
-        assert_eq!(role_colour(KeyRole::Movement), UiColor::Player);
-        assert_eq!(role_colour(KeyRole::Bound), UiColor::TextHighlight);
-        assert_eq!(role_colour(KeyRole::Unbound), UiColor::TextDim);
+        assert_eq!(role_colour(KeyRole::Movement), EngineColor::Accent);
+        assert_eq!(role_colour(KeyRole::Bound), EngineColor::Highlight);
+        assert_eq!(role_colour(KeyRole::Unbound), EngineColor::TextDim);
     }
 }

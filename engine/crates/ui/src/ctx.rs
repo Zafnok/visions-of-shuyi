@@ -24,7 +24,7 @@ use crate::frame::color::{ColorSet, EngineColor, Palette};
 use crate::frame::console::ConsoleSpec;
 use crate::frame::glyph_buffer::Cell;
 use crate::input::bindings::{LayoutBindings, PadBindings, PlayerKeys};
-use crate::input::help_keys::{HelpKeys, key_name};
+use crate::input::help_keys::HelpKeys;
 use crate::input::keymap::Keymap;
 use crate::input::state::Device;
 use crate::profiles::{self, ProfileError, ProfileId, ProfileStore, Profiles};
@@ -105,10 +105,13 @@ pub trait GameData: Debug + Sized + 'static {
     }
 
     /// The text of a `{name}` placeholder that names a key
-    /// ([`Ctx::text_with`]): by default the key of the action called
-    /// `name`; `None` leaves it as written.
+    /// ([`Ctx::text_with`]): by default the cursor keys for `{Cursor}` and
+    /// the key of the action called `name` ([`text::key_text`]); `None`
+    /// leaves it as written.
+    ///
+    /// [`text::key_text`]: crate::text::key_text
     fn key_text(&self, name: &str, keys: HelpKeys<'_, Self::Action>) -> Option<String> {
-        Self::Action::from_name(name).map(|action| key_name(keys, action))
+        crate::text::key_text(name, keys)
     }
 
     /// Which clip of a line plays now, where a line has several (who the
@@ -368,7 +371,18 @@ impl<G: GameData> Ctx<G> {
     /// action's name, [`GameData::key_text`]) by the key the player has
     /// for it ([`help_keys`](Self::help_keys)).
     pub fn text_with(&self, key: &str, args: &[(&str, &dyn Display)]) -> String {
-        let keys = self.help_keys();
+        self.text_with_keys(key, self.help_keys(), args)
+    }
+
+    /// [`text_with`](Self::text_with), naming the keys `keys` has rather
+    /// than the active ones: for a screen steered by the keys it was
+    /// opened with while the player changes them.
+    pub fn text_with_keys(
+        &self,
+        key: &str,
+        keys: HelpKeys<'_, G::Action>,
+        args: &[(&str, &dyn Display)],
+    ) -> String {
         crate::text::fill(self.text(key), args, |name| self.game.key_text(name, keys))
     }
 

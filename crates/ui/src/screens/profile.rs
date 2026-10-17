@@ -23,7 +23,6 @@ pub mod view;
 use crate::prelude::*;
 pub use view::{ActionsView, ChoiceView, ProfileView, QuestionView, RowView};
 
-use super::LayoutPickerScreen;
 use super::options::LeaveChoice;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
@@ -477,7 +476,7 @@ impl ProfileScreen {
                     let _ = ctx.switch_profile(id);
                     // The first-launch setup, for the new profile; then
                     // back to the title, like a switch.
-                    return Transition::Replace(Box::new(LayoutPickerScreen::new(ctx)));
+                    return Transition::Replace(Box::new(super::layout_picker::first(ctx)));
                 }
                 Err(e) => {
                     self.refused(ctx, &e);

@@ -1,9 +1,23 @@
+//! The Key bindings screen on the toy game, whose keymap file is this
+//! repository's game's less the Playdate's actions.
+
 use super::*;
-use crate::audio::AudioRequest;
-use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::input::{CRANK_ACTIONS, KEY_ROWS, LEFT_HANDED, RIGHT_HANDED};
-use crate::screen::tests::ctx;
+use crate::frame::console::ConsoleSpec;
 use crate::storage::Storage;
+use crate::toy::{Action, LEFT_HANDED, RIGHT_HANDED, Toy, ToyCtx};
+use crate::toy::{KEY_ROWS, ctx};
+
+type Ctx = ToyCtx;
+type KeyBindingsScreen = super::KeyBindingsScreen<Toy>;
+type KeyBindingsView = super::KeyBindingsView<Action>;
+type RowView = super::RowView<Action>;
+type LayoutBindings = crate::input::bindings::LayoutBindings<Action>;
+type PadBindings = crate::input::bindings::PadBindings<Action>;
+type FrameInput = crate::screen::FrameInput<Action>;
+type AudioRequest = crate::audio::AudioRequest<crate::toy::Voice>;
+
+/// The console the skin is laid out for.
+const PC: ConsoleSpec = ConsoleSpec::text(100, 32);
 
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp, Info};
 
@@ -22,8 +36,8 @@ fn press(c: &str) -> FrameInput {
 
 /// The screen with the Debug key reserved whatever the build profile.
 fn screen(c: &Ctx) -> KeyBindingsScreen {
-    let reserved = LayoutBindings::from_def(&c.game.content.keymap, RIGHT_HANDED, true);
-    KeyBindingsScreen::new(c).with_bindings(reserved)
+    let reserved = LayoutBindings::from_def(c.game.keymap_def(), RIGHT_HANDED, true);
+    KeyBindingsScreen::new(c, &KEY_ROWS).with_bindings(reserved)
 }
 
 /// Moves the focus to `action`'s slot `slot`.
@@ -102,10 +116,9 @@ fn rows_list_every_rebindable_action_once_required_first() {
     assert_eq!(required, 7);
     assert!(listed[required..].iter().all(|a| !a.is_required()));
     listed.sort();
-    // The crank's actions are bound on the Playdate only (ticket 1035).
     let mut rebindable: Vec<Action> = Action::ALL
         .into_iter()
-        .filter(|a| a.is_rebindable() && !CRANK_ACTIONS.contains(a))
+        .filter(|a| a.is_rebindable())
         .collect();
     rebindable.sort();
     assert_eq!(listed, rebindable);
@@ -124,7 +137,7 @@ fn rows_list_every_rebindable_action_once_required_first() {
 #[test]
 fn starts_on_the_first_slot_of_the_layout_in_use() {
     let c = ctx().with_layout(LEFT_HANDED);
-    let s = KeyBindingsScreen::new(&c);
+    let s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     assert_eq!(s.name(), "key_bindings");
     assert_eq!(s.focus(), Some((CursorUp, 0)));
     assert_eq!(s.bindings(), &c.layout_bindings(LEFT_HANDED));
@@ -160,8 +173,8 @@ fn starts_on_the_first_slot_of_the_layout_in_use() {
     assert!(focused[1..].iter().all(|&(_, f)| f.is_none()));
     assert_eq!(view.focused().map(|r| r.action), Some(CursorUp));
     // Before a layout is chosen (debug menu over the picker): right-handed.
-    let none = Ctx::embedded().unwrap();
-    let s = KeyBindingsScreen::new(&none);
+    let none = crate::toy::first_launch();
+    let s = KeyBindingsScreen::new(&none, &KEY_ROWS);
     assert_eq!(s.bindings(), &none.layout_bindings(RIGHT_HANDED));
 }
 
@@ -344,7 +357,7 @@ fn the_clear_key_is_ignored_while_capturing() {
     assert_eq!(s.bindings().slots(CursorUp)[0], Some(chord("g")));
     assert_eq!(
         s.bindings()
-            .find(crate::input::KeyGroup::General, chord("h")),
+            .find(shuyi_assets::keymap::sample::KeyGroup::General, chord("h")),
         None
     );
 }
@@ -477,7 +490,7 @@ fn clearing_a_slot_clears_the_message() {
 #[test]
 fn leaving_saves_the_edit_and_pops() {
     let mut c = ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     bind(&mut s, &mut c, Confirm, 1, "g");
     sounds(&mut c);
     let before = c.keymap.clone();
@@ -490,7 +503,7 @@ fn leaving_saves_the_edit_and_pops() {
     assert!(c.player_keys().is_custom(RIGHT_HANDED));
     assert!(!c.player_keys().is_custom(LEFT_HANDED));
     assert_eq!(
-        c.storage.read(crate::screen::KEYBINDINGS_KEY).unwrap(),
+        c.storage.read(crate::ctx::KEYBINDINGS_KEY).unwrap(),
         Some(c.player_keys().to_ron())
     );
 }
@@ -498,16 +511,16 @@ fn leaving_saves_the_edit_and_pops() {
 #[test]
 fn leaving_without_a_change_writes_nothing() {
     let mut c = ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     let t = s.update(&mut c, &act(&[Cancel]));
     assert_eq!(format!("{t:?}"), "Pop");
-    assert_eq!(c.storage.read(crate::screen::KEYBINDINGS_KEY), Ok(None));
+    assert_eq!(c.storage.read(crate::ctx::KEYBINDINGS_KEY), Ok(None));
 }
 
 #[test]
 fn leaving_is_blocked_while_a_required_action_has_no_key() {
     let mut c = ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     // Cancel and Cursor down lose their keys; the message names the one
     // listed first on the screen.
     bind(&mut s, &mut c, Info, 1, "d");
@@ -544,7 +557,7 @@ fn leaving_is_blocked_while_a_required_action_has_no_key() {
     assert_eq!(format!("{t:?}"), "Pop");
     assert_eq!(c.keymap.action(chord("k")), Some(Cancel));
     // An optional action with no key never blocks.
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     focus_on(&mut s, &mut c, Action::Rewind, 0);
     s.update(&mut c, &press("Delete"));
     let t = s.update(&mut c, &act(&[Cancel]));
@@ -558,13 +571,13 @@ fn restore_defaults_resets_only_this_layout() {
     let mut left = c.layout_bindings(LEFT_HANDED);
     left.bind(Info, 0, chord("g")).unwrap();
     c.set_layout_bindings(LEFT_HANDED, left.clone()).unwrap();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     bind(&mut s, &mut c, Confirm, 1, "e");
     assert!(s.moved.is_some());
     s.update(&mut c, &act(&[Cancel]));
     assert!(c.player_keys().is_custom(RIGHT_HANDED));
 
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     focus_on_restore(&mut s, &mut c);
     s.moved = Some((Info, 1.0));
     sounds(&mut c);
@@ -579,7 +592,7 @@ fn restore_defaults_resets_only_this_layout() {
     assert!(!s.is_asking_restore());
     assert_eq!(s.moved, None);
     assert_eq!(sounds(&mut c), [cue(MenuSound::Select)]);
-    let defaults = LayoutBindings::defaults(&c.game.content.keymap, RIGHT_HANDED);
+    let defaults = LayoutBindings::defaults(c.game.keymap_def(), RIGHT_HANDED);
     assert_eq!(s.bindings(), &defaults);
     let t = s.update(&mut c, &act(&[Cancel]));
     assert_eq!(format!("{t:?}"), "Pop");
@@ -590,7 +603,7 @@ fn restore_defaults_resets_only_this_layout() {
 #[test]
 fn the_restore_question_can_be_backed_out_of() {
     let mut c = ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     bind(&mut s, &mut c, Confirm, 1, "e");
     let custom = s.bindings().clone();
     focus_on_restore(&mut s, &mut c);
@@ -623,7 +636,7 @@ fn the_restore_question_can_be_backed_out_of() {
     assert_eq!(s.view(&c).question, None);
     // The left-handed question names its layout and keys.
     let left = ctx().with_layout(LEFT_HANDED);
-    let mut s = KeyBindingsScreen::new(&left);
+    let mut s = KeyBindingsScreen::new(&left, &KEY_ROWS);
     s.asking_restore = true;
     assert_eq!(
         s.restore_question(&c),
@@ -638,7 +651,7 @@ fn the_restore_question_can_be_backed_out_of() {
 #[test]
 fn confirm_clears_the_message() {
     let mut c = ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     focus_on(&mut s, &mut c, Confirm, 0);
     s.update(&mut c, &press("Delete"));
     s.update(&mut c, &act(&[Cancel]));
@@ -682,7 +695,7 @@ fn help_names_the_keys_the_screen_was_opened_with() {
     assert_eq!(s.help(&c), "arrows move · f restore · d back");
     let left = ctx().with_layout(LEFT_HANDED);
     assert_eq!(
-        KeyBindingsScreen::new(&left).help(&left),
+        KeyBindingsScreen::new(&left, &KEY_ROWS).help(&left),
         "wasd move · j bind · Delete clear · k back"
     );
 }
@@ -699,7 +712,7 @@ fn the_view_lists_slots_fixed_keys_and_not_mapped_notes() {
     assert_eq!(shown(&view, Action::ToggleAutoEnd)[0], "Shift+Space");
     assert!(row_of(&view, Action::EndTurn).fixed.is_empty());
     assert!(row_of(&view, Confirm).fixed.is_empty());
-    assert_eq!(view.not_mapped, crate::widgets::help::NOT_MAPPED);
+    assert_eq!(view.not_mapped, crate::input::help_keys::NOT_MAPPED);
     // Optional and unmapped: a note that doesn't block leaving. Required and
     // unmapped: one that does.
     let flags = |view: &KeyBindingsView, a| {
@@ -780,9 +793,9 @@ fn pad_names(s: &KeyBindingsScreen, action: Action) -> [String; SLOTS] {
 #[test]
 fn opens_on_the_side_pressed_last() {
     let c = ctx();
-    assert_eq!(KeyBindingsScreen::new(&c).side(), Side::Keyboard);
+    assert_eq!(KeyBindingsScreen::new(&c, &KEY_ROWS).side(), Side::Keyboard);
     let c = pad_ctx();
-    let s = KeyBindingsScreen::new(&c);
+    let s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     assert_eq!(s.side(), Side::Controller);
     assert_eq!(s.focus(), Some((CursorUp, 0)));
     assert_eq!(s.pad_bindings(), &c.pad_bindings());
@@ -826,7 +839,7 @@ fn the_switch_row_shows_the_keyboard_or_the_controller() {
     assert_eq!(s.focus(), Some((CursorUp, 0)));
     // On the controller too, where Confirm doesn't open the choices.
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     s.update(&mut c, &act(&[CursorUp, Confirm]));
     assert_eq!((s.side(), s.choice()), (Side::Keyboard, None));
     // The clear-slot key does nothing there.
@@ -837,7 +850,7 @@ fn the_switch_row_shows_the_keyboard_or_the_controller() {
 #[test]
 fn the_controller_side_shows_buttons_as_the_pad_names_them() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     let view = s.view(&c);
     assert_eq!(view.columns, ["Button 1", "Button 2", "Button 3"]);
     let headings: Vec<_> = view.groups.iter().map(|g| g.heading.as_str()).collect();
@@ -904,7 +917,7 @@ fn with_the_keyboard_confirm_captures_a_button_let_go() {
 #[test]
 fn a_button_taken_from_another_action_moves_and_that_row_lights_up() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     change(&mut s, &mut c, Info, 0);
     s.message = Some("old".to_owned());
     tap(&mut s, &mut c, Button::South);
@@ -924,7 +937,7 @@ fn a_button_taken_from_another_action_moves_and_that_row_lights_up() {
 #[test]
 fn a_button_pressed_and_let_go_in_one_frame_binds() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     change(&mut s, &mut c, Info, 2);
     s.update(&mut c, &buttons(&[Button::West], &[Button::West], 5.0));
     assert!(!s.is_capturing());
@@ -934,7 +947,7 @@ fn a_button_pressed_and_let_go_in_one_frame_binds() {
 #[test]
 fn holding_a_button_backs_out_with_nothing_changed() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     change(&mut s, &mut c, Info, 0);
     sounds(&mut c);
     // The frame it goes down in doesn't count, however long.
@@ -968,7 +981,7 @@ fn holding_a_button_backs_out_with_nothing_changed() {
 #[test]
 fn a_bad_frame_time_neither_backs_out_nor_breaks_the_hold() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     change(&mut s, &mut c, Info, 0);
     s.update(&mut c, &buttons(&[Button::West], &[], 0.0));
     s.update(&mut c, &buttons(&[], &[], f32::NAN));
@@ -981,7 +994,7 @@ fn a_bad_frame_time_neither_backs_out_nor_breaks_the_hold() {
 #[test]
 fn only_the_first_button_down_is_watched() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     change(&mut s, &mut c, Info, 1);
     // Two go down in one frame, then a third: the first is the one.
     s.update(&mut c, &buttons(&[Button::West, Button::Start], &[], 0.0));
@@ -998,7 +1011,7 @@ fn only_the_first_button_down_is_watched() {
 #[test]
 fn a_button_held_since_before_the_capture_is_ignored() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     // Confirm's button went down to pick Change, and is still down.
     change(&mut s, &mut c, Info, 1);
     s.update(&mut c, &buttons(&[], &[], 5.0));
@@ -1011,7 +1024,7 @@ fn a_button_held_since_before_the_capture_is_ignored() {
 #[test]
 fn on_a_controller_confirm_offers_change_or_clear() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     focus_on(&mut s, &mut c, Info, 0);
     s.message = Some("old".to_owned());
     sounds(&mut c);
@@ -1083,7 +1096,7 @@ fn on_a_controller_confirm_offers_change_or_clear() {
 #[test]
 fn the_view_offers_the_choices_for_the_slot_with_the_cursor() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     assert_eq!(s.view(&c).choices, None);
     focus_on(&mut s, &mut c, Info, 1);
     s.update(&mut c, &act(&[Confirm]));
@@ -1160,7 +1173,7 @@ fn on_the_controller_side_the_keyboards_fixed_keys_still_work() {
 #[test]
 fn cursor_buttons_held_after_a_capture_dont_move_the_focus() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     change(&mut s, &mut c, Info, 0);
     s.update(&mut c, &buttons(&[Button::DpadDown], &[], 0.0));
     s.update(&mut c, &FrameInput::new(vec![], 1.0, vec![CursorDown]));
@@ -1183,7 +1196,7 @@ fn cursor_buttons_held_after_a_capture_dont_move_the_focus() {
 #[test]
 fn leaving_is_blocked_while_a_required_action_has_no_button() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     change(&mut s, &mut c, Info, 0);
     tap(&mut s, &mut c, Button::South);
     change(&mut s, &mut c, Info, 1);
@@ -1194,10 +1207,7 @@ fn leaving_is_blocked_while_a_required_action_has_no_button() {
     // The one listed higher on the screen is named.
     assert_eq!(s.message(), Some("Give Confirm a button first"));
     assert_eq!(sounds(&mut c), [cue(MenuSound::Denied)]);
-    assert_eq!(
-        c.pad_bindings(),
-        PadBindings::defaults(&c.game.content.keymap)
-    );
+    assert_eq!(c.pad_bindings(), PadBindings::defaults(c.game.keymap_def()));
     // From the keyboard side too: the screen shows the side that lacks one.
     s.update(&mut c, &act(&[CursorDown]));
     assert_eq!(s.message(), None);
@@ -1214,7 +1224,7 @@ fn leaving_is_blocked_while_a_required_action_has_no_button() {
     assert_eq!(s.side(), Side::Keyboard);
     assert_eq!(s.message(), Some("Give End turn a key first"));
     // An optional action may be left with no button.
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     focus_on(&mut s, &mut c, Info, 0);
     s.update(&mut c, &act(&[Confirm]));
     s.update(&mut c, &act(&[CursorDown, Confirm]));
@@ -1225,12 +1235,12 @@ fn leaving_is_blocked_while_a_required_action_has_no_button() {
 #[test]
 fn leaving_saves_the_buttons_for_both_layouts_and_leaves_the_keys() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     change(&mut s, &mut c, Info, 1);
     tap(&mut s, &mut c, Button::RightStickPress);
     // Nothing changes in the game until the screen closes.
     assert_eq!(c.keymap.pad_action(Button::RightStickPress), None);
-    assert_eq!(c.storage.read(crate::screen::KEYBINDINGS_KEY), Ok(None));
+    assert_eq!(c.storage.read(crate::ctx::KEYBINDINGS_KEY), Ok(None));
     sounds(&mut c);
     let t = s.update(&mut c, &act(&[Cancel]));
     assert_eq!(format!("{t:?}"), "Pop");
@@ -1247,13 +1257,13 @@ fn leaving_saves_the_buttons_for_both_layouts_and_leaves_the_keys() {
             "{layout}"
         );
     }
-    let saved = c.storage.read(crate::screen::KEYBINDINGS_KEY);
+    let saved = c.storage.read(crate::ctx::KEYBINDINGS_KEY);
     assert_eq!(saved, Ok(Some(c.player_keys().to_ron())));
     // Leaving with nothing changed writes nothing.
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     s.update(&mut c, &act(&[Cancel]));
-    assert_eq!(c.storage.read(crate::screen::KEYBINDINGS_KEY), Ok(None));
+    assert_eq!(c.storage.read(crate::ctx::KEYBINDINGS_KEY), Ok(None));
 }
 
 #[test]
@@ -1276,7 +1286,7 @@ fn restore_defaults_on_the_controller_side_resets_only_the_buttons() {
     s.update(&mut c, &act(&[Confirm]));
     assert_eq!(
         s.pad_bindings(),
-        &PadBindings::defaults(&c.game.content.keymap)
+        &PadBindings::defaults(c.game.keymap_def())
     );
     assert_eq!(s.bindings(), &keys);
     assert_eq!(s.moved, None);
@@ -1299,7 +1309,7 @@ fn restore_defaults_on_the_controller_side_resets_only_the_buttons() {
 #[test]
 fn help_follows_the_side_and_the_device() {
     let mut c = pad_ctx();
-    let mut s = KeyBindingsScreen::new(&c);
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
     assert_eq!(s.help(&c), "D-pad/L-stick move · A change · B back");
     s.update(&mut c, &act(&[Confirm]));
     assert_eq!(s.help(&c), "D-pad/L-stick move · A select · B back");
@@ -1344,15 +1354,12 @@ fn help_follows_the_side_and_the_device() {
     // Every line fits the console on every pad.
     for kind in [PadKind::PlayStation, PadKind::Nintendo, PadKind::Generic] {
         c.device = Device::Pad(kind);
-        let mut s = KeyBindingsScreen::new(&c);
+        let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
         let mut lines = vec![s.help(&c)];
         s.update(&mut c, &act(&[CursorUp]));
         lines.push(s.help(&c));
         for line in lines {
-            assert!(
-                line.chars().count() <= usize::from(ConsoleSpec::PC.cols),
-                "{line}"
-            );
+            assert!(line.chars().count() <= usize::from(PC.cols), "{line}");
         }
     }
 }

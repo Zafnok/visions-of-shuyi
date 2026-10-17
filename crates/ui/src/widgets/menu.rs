@@ -39,7 +39,11 @@ mod tests {
                 Some(MenuEvent::Cancelled)
             ]
         );
-        let cues: Vec<_> = audio.take().iter().map(|r| r.cue().map(str::to_owned)).collect();
+        let cues: Vec<_> = audio
+            .take()
+            .iter()
+            .map(|r| r.cue().map(str::to_owned))
+            .collect();
         let cue = |c: &str| Some(c.to_owned());
         assert_eq!(
             cues,

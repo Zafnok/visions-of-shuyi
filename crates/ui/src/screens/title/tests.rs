@@ -575,8 +575,6 @@ fn the_prompt_stands_in_for_the_menu_until_a_key_is_pressed() {
 fn the_logic_modules_name_no_cells_or_colours() {
     let sources = [
         ("title.rs", include_str!("../title.rs")),
-        ("key_bindings.rs", include_str!("../key_bindings.rs")),
-        ("layout_picker.rs", include_str!("../layout_picker.rs")),
         ("mode_select.rs", include_str!("../mode_select.rs")),
         ("familiarity.rs", include_str!("../familiarity.rs")),
         ("game_over.rs", include_str!("../game_over.rs")),

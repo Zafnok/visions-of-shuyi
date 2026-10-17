@@ -31,6 +31,9 @@ use crate::frame::console::ConsoleSpec;
 use crate::frame::glyph_buffer::{Cell, GlyphBuffer, Layer, Rect, Sprite};
 use crate::game::{Game, GameHooks, ScreenHook};
 use crate::screen::{FrameInput, Screen, Transition};
+use crate::screens::key_bindings::KeyRow;
+use crate::screens::key_bindings::RowGroup::{self, Optional, Required};
+use crate::screens::layout_picker::LegendKeys;
 use crate::settings::{GameSettings, Settings, TextSpeed};
 use crate::storage::Storage;
 
@@ -146,6 +149,96 @@ impl GameSettings for Prefs {
     }
 }
 
+/// The Key bindings screen's rows: every action a player can rebind, with
+/// the text key of its label and its group: the required actions, the
+/// optional ones, then the dialogue log's own key group.
+pub const KEY_ROWS: [KeyRow<Action>; 18] = [
+    (Action::CursorUp, "key_bindings.action.cursor_up", Required),
+    (
+        Action::CursorDown,
+        "key_bindings.action.cursor_down",
+        Required,
+    ),
+    (
+        Action::CursorLeft,
+        "key_bindings.action.cursor_left",
+        Required,
+    ),
+    (
+        Action::CursorRight,
+        "key_bindings.action.cursor_right",
+        Required,
+    ),
+    (Action::Confirm, "key_bindings.action.confirm", Required),
+    (Action::Cancel, "key_bindings.action.cancel", Required),
+    (Action::EndTurn, "key_bindings.action.end_turn", Required),
+    (Action::Select, "key_bindings.action.select", Optional),
+    (
+        Action::ConfirmEndTurn,
+        "key_bindings.action.confirm_end_turn",
+        Optional,
+    ),
+    (Action::PrevUnit, "key_bindings.action.prev_unit", Optional),
+    (Action::NextUnit, "key_bindings.action.next_unit", Optional),
+    (Action::Info, "key_bindings.action.info", Optional),
+    (
+        Action::DangerZone,
+        "key_bindings.action.danger_zone",
+        Optional,
+    ),
+    (
+        Action::ToggleAutoEnd,
+        "key_bindings.action.toggle_auto_end",
+        Optional,
+    ),
+    (Action::Rewind, "key_bindings.action.rewind", Optional),
+    (Action::ZoomMap, "key_bindings.action.zoom_map", Optional),
+    (Action::Menu, "key_bindings.action.menu", Optional),
+    (
+        Action::DialogueLog,
+        "key_bindings.action.dialogue_log",
+        RowGroup::Shared("key_bindings.dialogue_log"),
+    ),
+];
+
+/// The layout picker's legend: what the toy's keys do, top to bottom.
+pub const LEGEND: [(LegendKeys<Action>, &str); 10] = [
+    (LegendKeys::Cursor, "layout_picker.legend.move"),
+    (
+        LegendKeys::All(Action::Confirm),
+        "layout_picker.legend.select",
+    ),
+    (LegendKeys::All(Action::Cancel), "layout_picker.legend.back"),
+    (
+        LegendKeys::First(Action::PrevUnit),
+        "layout_picker.legend.prev_unit",
+    ),
+    (
+        LegendKeys::First(Action::NextUnit),
+        "layout_picker.legend.next_unit",
+    ),
+    (
+        LegendKeys::First(Action::Info),
+        "layout_picker.legend.unit_info",
+    ),
+    (
+        LegendKeys::First(Action::DangerZone),
+        "layout_picker.legend.danger_zone",
+    ),
+    (
+        LegendKeys::First(Action::EndTurn),
+        "layout_picker.legend.end_turn",
+    ),
+    (
+        LegendKeys::First(Action::ToggleAutoEnd),
+        "layout_picker.legend.auto_end",
+    ),
+    (
+        LegendKeys::First(Action::Rewind),
+        "layout_picker.legend.rewind",
+    ),
+];
+
 /// The toy's one image: a 16×16 card.
 pub const CARD: &str = "card.png";
 
@@ -160,11 +253,15 @@ const ENGLISH: [(&str, &str); 10] = [
         "{Confirm} opens · {Cancel} quits · {Cursor} {Nope}",
     ),
     ("home.greeting", "Hello, {name}"),
-    ("layout_picker.right_handed", "Right hand"),
-    ("layout_picker.left_handed", "Left hand"),
+    ("layout_picker.right_handed", "Right-handed"),
+    ("layout_picker.left_handed", "Left-handed"),
     ("menu.title", "Menu"),
     ("gallery.help", "{Cancel} back"),
 ];
+
+/// The toy's English text of the engine's screens (the Key bindings
+/// screen, the layout picker, the options, the dialogue box).
+const SCREENS_ENGLISH: &str = include_str!("toy/en.ron");
 
 /// The debug language's text: two keys of today's English, one of
 /// yesterday's.
@@ -239,10 +336,9 @@ impl Toy {
     ///
     /// If its own data doesn't load.
     pub fn new() -> Self {
-        let english: BTreeMap<String, String> = ENGLISH
-            .iter()
-            .map(|&(k, v)| (k.to_owned(), v.to_owned()))
-            .collect();
+        let mut english: BTreeMap<String, String> =
+            ron::from_str(SCREENS_ENGLISH).unwrap_or_else(|e| panic!("toy/en.ron: {e}"));
+        english.extend(ENGLISH.iter().map(|&(k, v)| (k.to_owned(), v.to_owned())));
         let rules = PackRules {
             data_problem: |_, _| None,
             tokens: &NoTokens,
