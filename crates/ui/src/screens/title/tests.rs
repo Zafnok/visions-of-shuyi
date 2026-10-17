@@ -375,7 +375,7 @@ fn continue_with_a_save_that_cant_be_read_says_why() {
     t.menu = TitleScreen::new(&c).refreshed(&c).menu;
     assert_eq!(
         sounds_of(&mut t, &mut c, &[Confirm]),
-        ["menu_select", MenuSound::Denied.cue()]
+        ["menu_select", crate::audio::AUDIO.cue(MenuSound::Denied)]
     );
 }
 

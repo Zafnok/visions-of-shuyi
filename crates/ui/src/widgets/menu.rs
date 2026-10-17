@@ -297,7 +297,11 @@ mod tests {
         // Nothing is enabled, so a disabled item is focused.
         let mut m = menu(&[false, false]);
         assert_eq!(sounds(&mut m, &[Confirm]), ["menu_cancel"]);
-        assert_eq!(MenuSound::Denied.cue(), "menu_cancel", "until 0427");
+        assert_eq!(
+            crate::audio::AUDIO.cue(MenuSound::Denied),
+            "menu_cancel",
+            "until 0427"
+        );
         // An empty menu has nothing to deny.
         assert!(sounds(&mut Menu::new(vec![]), &[Confirm]).is_empty());
     }

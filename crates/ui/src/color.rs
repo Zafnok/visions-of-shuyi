@@ -88,9 +88,13 @@ pub const fn engine_color(color: EngineColor) -> UiColor {
         EngineColor::Panel => UiColor::PanelBg,
         EngineColor::Border => UiColor::PanelBorder,
         EngineColor::Highlight => UiColor::TextHighlight,
-        // No engine widget paints a warning yet; HP running low is the
-        // game's nearest.
+        // HP running low is the game's warning.
         EngineColor::Warning => UiColor::HpLow,
+        EngineColor::Focus => UiColor::PanelBorderFocus,
+        EngineColor::Background => UiColor::Black,
+        // The player's own color: what moves their cursor.
+        EngineColor::Accent => UiColor::Player,
+        EngineColor::Bright => UiColor::White,
     }
 }
 
@@ -145,7 +149,11 @@ pub(crate) mod tests {
                 "panel_bg",
                 "panel_border",
                 "text_highlight",
-                "hp_low"
+                "hp_low",
+                "panel_border_focus",
+                "black",
+                "player",
+                "white"
             ]
         );
         for &e in EngineColor::ALL {

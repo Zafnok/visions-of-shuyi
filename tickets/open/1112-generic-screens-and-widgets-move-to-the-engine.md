@@ -5,7 +5,7 @@ type: infra
 milestone: "Engine: carve"
 model: opus-5.5
 effort: high
-status: todo
+status: in-progress
 blocked_by: ["1111"]
 nick_input: none
 completed:
