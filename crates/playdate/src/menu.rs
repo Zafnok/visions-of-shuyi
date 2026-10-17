@@ -3,7 +3,7 @@
 //! end with the SDK's `addMenuItem` in that order, each named in the
 //! player's language. The SDK calls back when one is chosen, between two
 //! updates; [`Chosen`] keeps the choice until the next update hands it to
-//! the game (`trpg_ui::game::system_menu::choose`). [`Titles`] says which
+//! the game (`Game::act` with the entry's action). [`Titles`] says which
 //! entries' names changed (the player picked another language), for
 //! `setMenuItemTitle`.
 

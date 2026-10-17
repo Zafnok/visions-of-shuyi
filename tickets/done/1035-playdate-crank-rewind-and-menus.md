@@ -140,9 +140,9 @@ an engine input source, as the *Carve* note asked (ADR-0085):
   on the newest action, as Rewind does; on the rewind screen back is
   down (further back), forwards is up; nothing else changed there.
 - **The system menu**: `game::system_menu` (`SystemMenuEntry`: Danger
-  Zone, Dialogue Log, Options, named from the language file) and
-  `choose(game, entry)`, which hands the top screen the entry's action
-  through the engine's new `Game::act` (an action in an update of its
+  Zone, Dialogue Log, Options, named from the language file); the front
+  end hands the top screen the chosen entry's action through the
+  engine's new `Game::act` (an action in an update of its
   own, as if its key were pressed). Options had no action, so there is
   `Action::Options`: no key anywhere, not rebindable; the title,
   Preparations and the battle map (browsing or in the map menu) open

@@ -3,15 +3,15 @@
 //! (ticket 1035, `docs/design/playdate.md`, *Buttons and the crank*):
 //! Danger zone, Dialogue log and Options.
 //!
-//! Choosing one does what the same thing does in the game: it hands the
-//! screen on top the action ([`Game::act`](shuyi_ui::Game::act)), which
-//! toggles the danger zone on the battle map, opens the dialogue log while
-//! a scene plays, and opens Options where a menu has an Options entry (the
-//! title, the battle map, Preparations). Where the screen has no such
+//! Choosing one does what the same thing does in the game: the front end
+//! hands the screen on top the entry's [`action`](SystemMenuEntry::action)
+//! with [`Game::act`](shuyi_ui::Game::act), which toggles the danger zone
+//! on the battle map, opens the dialogue log while a scene plays, and opens
+//! Options where a menu has an Options entry (the title, the battle map,
+//! Preparations). Where the screen has no such
 //! thing, nothing happens. The front end only adds the entries and
 //! forwards the choice.
 
-use crate::game::Game;
 use crate::input::Action;
 use crate::screen::Ctx;
 
@@ -47,12 +47,6 @@ impl SystemMenuEntry {
             Self::Options => Action::Options,
         }
     }
-}
-
-/// The player chose `entry` in the platform's menu: the screen on top does
-/// what the same thing does in the game, or nothing.
-pub fn choose(game: &mut Game, entry: SystemMenuEntry) {
-    game.act(entry.action());
 }
 
 #[cfg(test)]

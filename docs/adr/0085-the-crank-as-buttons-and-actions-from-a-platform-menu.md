@@ -45,10 +45,10 @@ skill), and the front end holds no game logic (ADR-0070).
 4. **A platform's own menu hands the game actions.** `Game::act(action)`
    (engine) gives the top screen one action in an update of its own with
    no time passing, as if its key had been pressed: the screen does what
-   it does with that key, or nothing. The game's
-   `game::system_menu` lists its entries (`SystemMenuEntry`: each one's
-   name from the language file and its action) and `choose(game, entry)`
-   calls `act`. Opening Options had no action, so the game gained
+   it does with that key, or nothing. The game's `game::system_menu`
+   lists its entries (`SystemMenuEntry`: each one's name from the
+   language file and its action), and the front end hands the chosen
+   one's action to `act`. Opening Options had no action, so the game gained
    `Action::Options`: no key anywhere, not rebindable, sent only by a
    platform menu; the title, Preparations and the battle map open Options
    on it where their own menus would.
@@ -56,8 +56,8 @@ skill), and the front end holds no game logic (ADR-0070).
    `getCrankChange` and `isCrankDocked` each frame into `from_crank`, adds
    the three entries with `addMenuItem` (renaming them with
    `setMenuItemTitle` when the language changes), and forwards a choice
-   (the SDK calls back between two updates) to `system_menu::choose`
-   before the next frame, on the game's stack.
+   (the SDK calls back between two updates) to `Game::act` before the
+   next frame, on the game's stack.
 
 ## Consequences
 

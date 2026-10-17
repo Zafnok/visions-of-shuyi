@@ -19,7 +19,7 @@ use core::cell::UnsafeCell;
 use core::ffi::c_int;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
-use trpg_ui::game::system_menu::{self, SystemMenuEntry};
+use trpg_ui::game::system_menu::SystemMenuEntry;
 use trpg_ui::input::{Crank, PadKind};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
 use trpg_ui::{ConsoleSizes, ConsoleSpec, Game, GlyphBuffer, RawInputEvent};
@@ -213,7 +213,7 @@ fn update(step: &mut Step) -> bool {
             let chosen = CHOSEN.take();
             let changed = game_stack::run(|| {
                 if let Some(entry) = chosen {
-                    system_menu::choose(&mut running.game, entry);
+                    running.game.act(entry.action());
                 }
                 running.frame(&events, dt)
             });

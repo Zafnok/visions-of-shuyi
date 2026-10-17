@@ -57,7 +57,7 @@ Each SDK update (`src/pd/entry.rs`):
    crank's turn since the last update (`getCrankChange`, `isCrankDocked`)
    becomes its notches' presses (`RawInputEvent::from_crank`, ADR-0085).
 3. An entry of the system menu chosen since the last update goes to the
-   game (`trpg_ui::game::system_menu::choose`), then `Game::frame(&events,
+   game (`Game::act` with its action), then `Game::frame(&events,
    dt)` runs, both on the game's own stack, told first where the music is
    (the file player's position), and its sounds and music commands are
    played (`src/audio.rs`). The "Game::frame" time counts both.
