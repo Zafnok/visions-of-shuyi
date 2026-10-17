@@ -1,12 +1,12 @@
 //! The keymap file format, generic over a game's [`ActionSet`] (ADR-0015,
-//! ADR-0031, ADR-0034, ticket 1106): [`Key`]s and [`Chord`]s, controller
-//! [`Button`]s, the named [`Layout`]s a file lists, and [`KeymapDef`], a
-//! validated keymap file: each layout's default keys, the keys that work
-//! before a layout is chosen, the default buttons, key-repeat timings and
-//! the sticks' thresholds.
+//! ADR-0031, ADR-0034, tickets 1106 and 1107): [`Key`]s and [`Chord`]s,
+//! controller [`Button`]s, the named [`Layout`]s a file lists, and
+//! [`KeymapDef`], a validated keymap file: each layout's default keys, the
+//! keys that work before a layout is chosen, the default buttons, key-repeat
+//! timings and the sticks' thresholds.
 //!
-//! Nothing here names one game's actions or layouts. Ticket 1107 moves it
-//! to the engine.
+//! Nothing here names one game's actions or layouts: a game gives its
+//! actions as an [`ActionSet`] ([`action_set`]) and its file's text.
 use crate::prelude::*;
 
 use alloc::collections::{BTreeMap, BTreeSet};
@@ -15,9 +15,16 @@ use core::str::FromStr;
 
 use serde::Deserialize;
 
-use super::action_set::ActionSet;
 use crate::error::ContentError;
-use crate::ron_loader::parse_ron;
+use crate::ron::parse_ron;
+
+pub mod action_set;
+#[cfg(any(test, feature = "sample-actions"))]
+pub mod sample;
+#[cfg(test)]
+mod tests;
+
+pub use action_set::{ActionSet, UiAction};
 
 /// Declares [`Key`] with its keymap-file names, keeping the variant list,
 /// [`Key::ALL`] and [`Key::name`] in one table.
@@ -886,7 +893,7 @@ fn positioned(error: ContentError, line: Option<u32>) -> ContentError {
 /// 1-based number of the first line, at or after line index `from`
 /// (0-based), that contains `key` quoted or starts with the field `key:`,
 /// for error positions.
-pub(crate) fn line_of_quoted(source: &str, from: usize, key: &str) -> Option<u32> {
+fn line_of_quoted(source: &str, from: usize, key: &str) -> Option<u32> {
     let quoted = format!("\"{key}\"");
     let field = format!("{key}:");
     let (index, _) = source

@@ -5,13 +5,12 @@
 //! `Backspace` and `Escape`. Which action a fixed key also triggers in
 //! play is the game's data ([`ActionSet::fixed_keys`]).
 //!
-//! Generic over the game (ticket 1106); ticket 1107 moves it to the
-//! engine.
+//! Generic over the game (ticket 1106).
 //!
-//! [`ActionSet::fixed_keys`]: trpg_content::keymap::ActionSet::fixed_keys
+//! [`ActionSet::fixed_keys`]: shuyi_assets::keymap::ActionSet::fixed_keys
 
 use crate::prelude::*;
-use trpg_content::keymap::{Chord, Key};
+use shuyi_assets::keymap::{Chord, Key};
 
 /// The chord that backs out of the Key bindings screen's "Press a key…"
 /// without changing anything.
