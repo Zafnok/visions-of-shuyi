@@ -107,22 +107,34 @@ fn reveals_at_the_text_speed() {
     assert_eq!(s.name(), "dialogue");
     assert!(!s.is_overlay());
     s.update(&mut c, &frame(&[], 0.1, false));
-    assert!((s.shown - 6.0).abs() < 1e-3, "{}", s.shown);
+    assert!(
+        (s.text.progress() - 6.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
     assert_eq!(revealed(&s, &c), ["Hello "]);
     assert!(s.view(&c).text.waiting.is_none());
     // The player's text speed (0805): Slow is 30 characters a second.
     c.change_settings(|s| s.text_speed = TextSpeed::Slow)
         .unwrap();
     s.update(&mut c, &frame(&[], 0.1, false));
-    assert!((s.shown - 9.0).abs() < 1e-3, "{}", s.shown);
+    assert!(
+        (s.text.progress() - 9.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
     c.change_settings(|s| s.text_speed = TextSpeed::Fast)
         .unwrap();
     s.update(&mut c, &frame(&[], 0.05, false));
-    assert!((s.shown - 15.0).abs() < 1e-3, "{}", s.shown);
+    assert!(
+        (s.text.progress() - 15.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
     // Never past the end.
     s.update(&mut c, &frame(&[], 10.0, false));
     assert!(s.is_revealed());
-    assert!((s.shown - 20.0).abs() < 1e-3);
+    assert!((s.text.progress() - 20.0).abs() < 1e-3);
 }
 
 #[test]
@@ -134,7 +146,7 @@ fn instant_text_shows_each_page_at_once() {
     // Even a frame of no time.
     s.update(&mut c, &frame(&[], 0.0, false));
     assert!(s.is_revealed());
-    assert!((s.shown - 20.0).abs() < 1e-3);
+    assert!((s.text.progress() - 20.0).abs() < 1e-3);
 }
 
 #[test]
@@ -143,13 +155,25 @@ fn holding_confirm_fast_forwards() {
     let mut s = full(&two_speakers(&"word ".repeat(50)));
     // Normal speed up to the delay (0.3 s at 60 a second), then six times it.
     s.update(&mut c, &frame(&[], 0.3, true));
-    assert!((s.shown - 18.0).abs() < 1e-3, "{}", s.shown);
+    assert!(
+        (s.text.progress() - 18.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
     s.update(&mut c, &frame(&[], 0.1, true));
-    assert!((s.shown - 54.0).abs() < 1e-3, "{}", s.shown);
+    assert!(
+        (s.text.progress() - 54.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
     // A frame that crosses the delay is fast only past it.
     let mut s = full(&two_speakers(&"word ".repeat(50)));
     s.update(&mut c, &frame(&[], 0.4, true));
-    assert!((s.shown - 54.0).abs() < 1e-3, "{}", s.shown);
+    assert!(
+        (s.text.progress() - 54.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
 }
 
 /// Two long boxes, the first one fully shown.
@@ -175,8 +199,16 @@ fn a_confirm_tap_does_not_fast_forward_the_next_page() {
     let mut plain = second_page_next(&mut c);
     plain.update(&mut c, &frame(&[Action::Confirm], 0.05, false));
     plain.update(&mut c, &frame(&[], 0.05, false));
-    assert!((s.shown - 6.0).abs() < 1e-3, "{}", s.shown);
-    assert!((s.shown - plain.shown).abs() < 1e-6, "{}", plain.shown);
+    assert!(
+        (s.text.progress() - 6.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
+    assert!(
+        (s.text.progress() - plain.text.progress()).abs() < 1e-6,
+        "{}",
+        plain.text.progress()
+    );
 }
 
 #[test]
@@ -187,10 +219,18 @@ fn the_fast_forward_delay_starts_again_on_each_page() {
     s.update(&mut c, &frame(&[], 1.0, true));
     s.update(&mut c, &frame(&[Action::Confirm], 0.0, true));
     s.update(&mut c, &frame(&[], 0.2, true));
-    assert!((s.shown - 12.0).abs() < 1e-3, "{}", s.shown);
+    assert!(
+        (s.text.progress() - 12.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
     // Still held: fast once the delay has passed on this page.
     s.update(&mut c, &frame(&[], 0.2, true));
-    assert!((s.shown - 54.0).abs() < 1e-3, "{}", s.shown);
+    assert!(
+        (s.text.progress() - 54.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
 }
 
 #[test]
@@ -200,7 +240,11 @@ fn letting_go_starts_the_fast_forward_delay_again() {
     s.update(&mut c, &frame(&[], 0.2, true));
     s.update(&mut c, &frame(&[], 0.1, false));
     s.update(&mut c, &frame(&[], 0.2, true));
-    assert!((s.shown - 30.0).abs() < 1e-3, "{}", s.shown);
+    assert!(
+        (s.text.progress() - 30.0).abs() < 1e-3,
+        "{}",
+        s.text.progress()
+    );
 }
 
 #[test]
@@ -235,7 +279,11 @@ fn end_turn_advances_like_confirm() {
     let mut long = full(&two_speakers(&"word ".repeat(50)));
     let held = FrameInput::new(vec![], 0.4, vec![Action::EndTurn]);
     long.update(&mut c, &held);
-    assert!((long.shown - 54.0).abs() < 1e-3, "{}", long.shown);
+    assert!(
+        (long.text.progress() - 54.0).abs() < 1e-3,
+        "{}",
+        long.text.progress()
+    );
     press(&mut s, &mut c, Action::EndTurn);
     assert!(s.is_revealed());
     // It answers yes to the skip question.

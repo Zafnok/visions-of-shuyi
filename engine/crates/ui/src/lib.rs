@@ -37,6 +37,7 @@ mod prelude {
 pub mod audio;
 pub mod ctx;
 pub mod debug;
+pub mod dialogue;
 pub mod float;
 pub mod frame;
 pub mod game;

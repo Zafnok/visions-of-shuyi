@@ -18,14 +18,14 @@
 use trpg_content::Side;
 
 use super::log;
-use super::view::{DialogueView, FaceView, TextView, WaitView};
+use super::view::{DialogueView, FaceView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::portrait::draw_portrait;
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
-use crate::widgets::menu::MenuView;
+use shuyi_ui::dialogue::text_box::{self, glyph::BoxPlace};
 
 /// Top row of the portrait frames.
 const FRAME_Y: i32 = 1;
@@ -48,8 +48,6 @@ pub const LISTENER_DIM: f32 = 0.45;
 /// behind conversations*, a little darker than the dimmed listener's
 /// portrait so the faces stand out; *tunable*).
 pub const PLACE_BRIGHTNESS: f32 = 0.4;
-/// Cells between the log's key hint and the Confirm key's name.
-const LOG_HINT_GAP: i32 = 3;
 
 /// Paints `view`: the log over the whole of `buf` while it is open;
 /// otherwise the caption, portraits and text box over the scene's place,
@@ -181,128 +179,19 @@ pub fn draw_face(ctx: &Ctx, buf: &mut GlyphBuffer, face: &FaceFrame) {
     buf.print(x + (FRAME.0 - w) / 2, plate.y, name, c(name_fg), bg);
 }
 
-/// The text box and its first text row. While the replies are up it grows
-/// upward (its bottom stays put) to fit the line being answered, a blank
-/// row and one row per reply.
-fn text_box(text: &TextView) -> (Rect, i32) {
-    let Some(choices) = &text.choices else {
-        return (TEXT_BOX, TEXT_Y);
-    };
-    let question = text.lines.len();
-    let gap = usize::from(question > 0);
-    let rows = i32::try_from(question + gap + choices.items.len()).unwrap_or(0);
-    // The last content row is the one the ▼ uses, free during a choice.
-    let bottom = TEXT_BOX.y + TEXT_BOX.h - 1;
-    let text_y = (bottom - rows).min(TEXT_Y);
-    let top = text_y - (TEXT_Y - TEXT_BOX.y);
-    (
-        Rect::new(TEXT_BOX.x, top, TEXT_BOX.w, bottom + 1 - top),
-        text_y,
-    )
-}
+/// Where the text box goes: rows 21–27, the text from column 4 of row 23.
+pub const BOX_PLACE: BoxPlace = BoxPlace {
+    frame: TEXT_BOX,
+    text_x: TEXT_X,
+    text_y: TEXT_Y,
+};
 
-/// The text box: speaker name on the border, the revealed text (or the
-/// skip question), the replies while a choice is open, and the blinking
-/// `▼` while the page waits.
+/// The text box ([`shuyi_ui::dialogue::text_box::glyph::paint`]), with the
+/// name of whoever speaks on its border.
 fn paint_text_box(ctx: &Ctx, buf: &mut GlyphBuffer, view: &DialogueView) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let text = &view.text;
-    let (text_box, text_y) = text_box(text);
-    paint_box_frame(ctx, buf, view.speaking(), text_box);
-
-    if let Some(skip) = &text.skip {
-        buf.print(TEXT_X, TEXT_Y, &skip.question, c(UiColor::Text), bg);
-        buf.print(TEXT_X, TEXT_Y + 1, &skip.answers, c(UiColor::TextDim), bg);
-        return;
-    }
-
-    // Narration isn't centred vertically above replies, which follow
-    // right after.
-    let alone = text.choices.is_none();
-    paint_lines(ctx, buf, text, text_y, alone);
-    if let Some(choices) = &text.choices {
-        let gap = i32::from(!text.lines.is_empty());
-        let first = text_y + i32::try_from(text.lines.len()).unwrap_or(0) + gap;
-        paint_choices(ctx, buf, choices, first);
-    }
-    if let Some(waiting) = &text.waiting {
-        paint_waiting(ctx, buf, waiting);
-    }
-}
-
-/// The text box `text_box`, empty, with `speaker`'s name on its border.
-fn paint_box_frame(ctx: &Ctx, buf: &mut GlyphBuffer, speaker: Option<&FaceView>, text_box: Rect) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    buf.fill_rect(text_box, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(text_box, BoxStyle::Single, c(UiColor::PanelBorder), bg);
-    if let Some(speaker) = speaker {
-        // check-text: not a data name (the view's own)
-        let name = format!(" {} ", speaker.name);
-        let fg = c(UiColor::TextHighlight);
-        buf.print(text_box.x + 3, text_box.y, &name, fg, bg);
-    }
-}
-
-/// The revealed part of the page from row `text_y`. Narration is dim and
-/// centred; vertically too when `alone` (nothing follows it in the box):
-/// one line goes in the middle of the three rows (two or three fill them
-/// from the top).
-fn paint_lines(ctx: &Ctx, buf: &mut GlyphBuffer, text: &TextView, text_y: i32, alone: bool) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let narration = text.narration;
-    let fg = if narration {
-        c(UiColor::TextDim)
-    } else {
-        c(UiColor::Text)
-    };
-    let top = text_y + i32::from(narration && text.lines.len() == 1 && alone);
-    for ((y, line), visible) in (top..).zip(&text.lines).zip(text.revealed()) {
-        let x = if narration {
-            let len = i32::try_from(line.chars().count()).unwrap_or(0);
-            TEXT_BOX.x + (TEXT_BOX.w - len) / 2
-        } else {
-            TEXT_X
-        };
-        buf.print(x, y, &visible, fg, bg);
-    }
-}
-
-/// The replies from row `first`, the focused one marked and bright.
-fn paint_choices(ctx: &Ctx, buf: &mut GlyphBuffer, choices: &MenuView, first: i32) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    for (y, item) in (first..).zip(&choices.items) {
-        let (marker, fg) = if item.focused {
-            ("> ", c(UiColor::TextHighlight))
-        } else {
-            ("  ", c(UiColor::Text))
-        };
-        buf.print(TEXT_X, y, &format!("{marker}{}", item.label), fg, bg);
-    }
-}
-
-/// At the right of the text box's last row: the log's hint, the key that
-/// goes on, and the `▼` while it is lit.
-fn paint_waiting(ctx: &Ctx, buf: &mut GlyphBuffer, waiting: &WaitView) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let right = TEXT_BOX.x + TEXT_BOX.w - 4;
-    let bottom = TEXT_BOX.y + TEXT_BOX.h - 2;
-    let key = &waiting.key;
-    let w = i32::try_from(key.chars().count()).unwrap_or(0);
-    buf.print(right - 1 - w, bottom, key, c(UiColor::TextDim), bg);
-    // The log's key, if it has one, before it.
-    if let Some(hint) = &waiting.log_hint {
-        let hint_w = i32::try_from(hint.chars().count()).unwrap_or(0);
-        let x = right - 1 - w - LOG_HINT_GAP - hint_w;
-        buf.print(x, bottom, hint, c(UiColor::TextDim), bg);
-    }
-    if waiting.marker {
-        buf.print(right, bottom, "▼", c(UiColor::TextHighlight), bg);
-    }
+    // check-text: not a data name (the view's own)
+    let speaker = view.speaking().map(|face| face.name.as_str());
+    text_box::glyph::paint(&ctx.palette, buf, BOX_PLACE, &view.text, speaker);
 }
 
 #[cfg(test)]
