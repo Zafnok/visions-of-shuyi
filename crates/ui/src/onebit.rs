@@ -95,7 +95,7 @@ const fn ink_byte(ink: Ink, y: i32) -> u8 {
     let mut byte = 0;
     let mut x = 0;
     while x < 8 {
-        byte = byte << 1 | if ink_is_white(ink, x, y) { 1 } else { 0 };
+        byte = (byte << 1) + if ink_is_white(ink, x, y) { 1 } else { 0 };
         x += 1;
     }
     byte
@@ -612,6 +612,16 @@ impl Pen {
 }
 
 impl Target<'_> {
+    /// The pixels of a run from `x` (as [`run`](Self::run) takes it) if they
+    /// are one whole byte of the frame inside the clip: a glyph's row at a
+    /// whole cell, written straight.
+    #[allow(clippy::cast_possible_truncation)] // a byte's bits
+    fn whole_byte(&self, x: i32, bits: u64) -> Option<u8> {
+        let one_byte = x.trailing_zeros() >= 3 && bits << 8 == 0;
+        let inside = x >= self.clip.x0 && x + 8 <= self.clip.x1;
+        (one_byte && inside).then_some((bits >> 56) as u8)
+    }
+
     /// Applies `pen` to the pixels of screen row `y` from `x` on that
     /// `bits` selects (its highest bit is pixel `x`), inside the clip.
     #[allow(
@@ -624,10 +634,9 @@ impl Target<'_> {
         if bits == 0 || y < clip.y0 || y >= clip.y1 {
             return;
         }
-        // A glyph's row at a whole cell: one byte, all inside.
-        if x.trailing_zeros() >= 3 && bits << 8 == 0 && x >= clip.x0 && x + 8 <= clip.x1 {
+        if let Some(mask) = self.whole_byte(x, bits) {
             let byte = &mut self.frame[byte_index(x, y)];
-            *byte = pen.apply(*byte, (bits >> 56) as u8, y);
+            *byte = pen.apply(*byte, mask, y);
             return;
         }
         let (lo, hi) = (x.max(clip.x0), x.saturating_add(64).min(clip.x1));
@@ -730,11 +739,13 @@ fn draw_layers(
         y1: at.y + (y + 1) * reach.cell_h,
     };
     let (columns, rows) = (&columns, &rows);
+    // Each cell with its top-left on the screen.
     let cells = || {
         rows.clone().flat_map(move |y| {
-            columns
-                .clone()
-                .filter_map(move |x| buf.get(x, y).map(|cell| (span(x, x + 1, y), cell)))
+            columns.clone().filter_map(move |x| {
+                let top_left = (at.x + x * reach.cell_w, at.y + y * reach.cell_h);
+                buf.get(x, y).map(|cell| (top_left, cell))
+            })
         })
     };
     let mut inks = Inks::default();
@@ -755,16 +766,16 @@ fn draw_layers(
     mark(Phase::Backgrounds);
     draw_items(target, buf, Layer::Under, at, images);
     mark(Phase::Under);
-    for (rect, cell) in cells() {
+    for (top_left, cell) in cells() {
         if cell.glyph != ' ' && inks.of(cell.fg) == Ink::BlackEdged {
-            draw_glyph(target, font, cell.glyph, rect, at.scale, Glyph::Edge);
+            draw_glyph(target, font, cell.glyph, top_left, at.scale, Glyph::Edge);
         }
     }
     mark(Phase::Edges);
-    for (rect, cell) in cells() {
+    for (top_left, cell) in cells() {
         if cell.glyph != ' ' {
             let ink = Glyph::Ink(inks.of(cell.fg));
-            draw_glyph(target, font, cell.glyph, rect, at.scale, ink);
+            draw_glyph(target, font, cell.glyph, top_left, at.scale, ink);
         }
     }
     mark(Phase::Glyphs);
@@ -843,14 +854,15 @@ enum Glyph {
 }
 
 /// Draws `glyph` (a space is nothing) of `font` in `part` with its cell's
-/// top-left at `cell`, each of its pixels `scale` screen pixels big.
+/// top-left at screen `(left, top)`, each of its pixels `scale` screen
+/// pixels big.
 #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)] // a glyph's rows
 #[allow(clippy::cast_sign_loss)] // checked to be a row first
 fn draw_glyph(
     target: &mut Target<'_>,
     font: &Font<'_>,
     glyph: char,
-    cell: Clip,
+    (left, top): (i32, i32),
     scale: i32,
     part: Glyph,
 ) {
@@ -862,18 +874,18 @@ fn draw_glyph(
     };
     match part {
         Glyph::Ink(ink) => {
-            let mut y = cell.y0;
+            let mut y = top;
             for &byte in rows {
                 let bits = widen(byte, scale);
                 for _ in 0..scale {
-                    target.run(y, cell.x0, bits, Pen::Ink(ink));
+                    target.run(y, left, bits, Pen::Ink(ink));
                     y += 1;
                 }
             }
         }
         Glyph::Edge => {
             let height = rows.len() as i32 * scale;
-            // The glyph's pixels on screen row `top + dy`, from `cell.x0`.
+            // The glyph's pixels on screen row `top + dy`, from `left`.
             let row = |dy: i32| {
                 if (0..height).contains(&dy) {
                     widen(rows[(dy / scale) as usize], scale)
@@ -885,7 +897,7 @@ fn draw_glyph(
                 // From one pixel left of the cell.
                 let near = (row(dy - 1) | row(dy) | row(dy + 1)) >> 1;
                 let edge = near | near << 1 | near >> 1;
-                target.run(cell.y0 + dy, cell.x0 - 1, edge, Pen::Ink(Ink::White));
+                target.run(top + dy, left - 1, edge, Pen::Ink(Ink::White));
             }
         }
     }
