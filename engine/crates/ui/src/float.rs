@@ -1,21 +1,28 @@
-//! The float methods `core` lacks, from `libm`, for the `no_std` build only
-//! (ADR-0070 §3). With `std` the standard methods are called, so the
-//! numbers stay exactly what they were; the tests below hold the two
-//! together.
+//! The float methods `core` lacks, from `libm`, for the `no_std` build
+//! (ADR-0070 §3): import [`Float`] and [`Round`] only without `std`. With
+//! `std` the standard methods are called, so the numbers stay exactly what
+//! they were; the tests below hold the two together. A game built on the
+//! engine without `std` imports them too.
 
-/// The `f32` methods the crate calls that need `std`.
+/// The `f32` methods the frame and the game call that need `std`.
 pub trait Float: Sized {
     /// Nearest integer, halves away from zero.
+    #[must_use]
     fn round(self) -> Self;
     /// Largest integer not above `self`.
+    #[must_use]
     fn floor(self) -> Self;
     /// Sine, in radians.
+    #[must_use]
     fn sin(self) -> Self;
     /// Cosine, in radians.
+    #[must_use]
     fn cos(self) -> Self;
     /// `sqrt(self² + other²)` without overflow.
+    #[must_use]
     fn hypot(self, other: Self) -> Self;
     /// The least non-negative remainder of `self / rhs`.
+    #[must_use]
     fn rem_euclid(self, rhs: Self) -> Self;
 }
 
@@ -42,9 +49,10 @@ impl Float for f32 {
     }
 }
 
-/// The one `f64` method the crate calls that needs `std`.
+/// The one `f64` method the game calls that needs `std`.
 pub trait Round {
     /// Nearest integer, halves away from zero.
+    #[must_use]
     fn round(self) -> Self;
 }
 

@@ -1,5 +1,5 @@
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
 use crate::widgets::{MenuItemView, MenuView};
 use trpg_core::GameMode;

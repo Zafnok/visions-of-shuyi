@@ -536,7 +536,7 @@ fn the_view_says_what_the_screen_shows() {
 /// Drawing is the glyph skin painting the view, nothing more.
 #[test]
 fn draw_paints_the_view_with_the_glyph_skin() {
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     let mut c = ctx();
     let mut s = on(Row::SoundVolume);
     press(&mut s, &mut c, &[Action::CursorLeft]);

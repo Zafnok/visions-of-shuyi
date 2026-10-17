@@ -12,6 +12,7 @@ use super::attack::aim_tile;
 use super::magic::{can_heal, heal_choices, heal_tile};
 use super::mode::{MenuEntry, Mode, Selection, step};
 use super::testing::{battle_with, quick_units};
+use crate::console::ConsoleSizes;
 use crate::harness::Harness;
 use crate::input::Action;
 use crate::screen::Ctx;

@@ -13,16 +13,15 @@ workspace = true
 [dependencies]
 trpg-core = { path = "../core", default-features = false }
 trpg-content = { path = "../content", default-features = false }
-# Input: keymaps, repeat, controllers, saved bindings and help keys (1107).
+# The frame (1108) and input: keymaps, repeat, controllers, saved bindings
+# and help keys (1107).
 shuyi-ui = { path = "../../engine/crates/ui", default-features = false }
 thiserror.workspace = true
 # The player's saved key bindings (ticket 0217, ADR-0031).
 serde.workspace = true
 ron.workspace = true
-# `LazyLock`, float maths and `HashMap` without `std` (ADR-0070 §3).
+# `LazyLock` without `std` (ADR-0070 §3); float maths are `shuyi_ui::float`.
 once_cell.workspace = true
-libm.workspace = true
-hashbrown.workspace = true
 
 [features]
 default = ["std"]
@@ -48,7 +47,7 @@ debug-tools = ["trpg-content/test-fixtures", "shuyi-ui/debug-tools"]
 # `onebit::reference`, the plain one-bit renderer the fast one must equal
 # (ticket 1055): for the Playdate's bench build, which times both on the
 # device. The tests have it anyway.
-onebit-reference = []
+onebit-reference = ["shuyi-ui/onebit-reference"]
 
 [dev-dependencies]
 # Turns on `harness` for this crate's own integration tests in tests/, and

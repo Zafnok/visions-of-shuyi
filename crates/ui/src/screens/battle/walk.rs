@@ -10,7 +10,7 @@
 //! units jump from tile to tile quickly, sprites take the time to walk.
 
 #[cfg(not(feature = "std"))]
-use crate::float::Float;
+use shuyi_ui::float::Float;
 use trpg_core::Pos;
 
 use crate::map_view::{Facing, STANDING_FRAME};

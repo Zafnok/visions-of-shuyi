@@ -201,7 +201,7 @@ fn paint_leave(ctx: &Ctx, buf: &mut GlyphBuffer, leaving: &LeaveView) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::screen::tests::ctx;
     use crate::screens::options::Row;
 

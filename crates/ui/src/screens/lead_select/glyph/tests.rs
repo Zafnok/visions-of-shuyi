@@ -5,7 +5,7 @@ use trpg_core::LeadGender;
 
 use super::*;
 use crate::color::Rgb;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::input::Action::{CursorDown, CursorRight};
 use crate::screen::tests::ctx;
 use crate::screens::lead_select::LeadSelectScreen;

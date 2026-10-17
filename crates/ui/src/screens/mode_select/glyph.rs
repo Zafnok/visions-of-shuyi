@@ -49,7 +49,7 @@ pub fn paint(ctx: &Ctx, view: &ModeSelectView, buf: &mut GlyphBuffer) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::screen::tests::ctx;
     use crate::screens::mode_select::view::ModeLineView;
     use crate::widgets::{MenuItemView, MenuView};

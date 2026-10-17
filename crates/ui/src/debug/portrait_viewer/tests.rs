@@ -1,7 +1,7 @@
 use insta::assert_snapshot;
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
 
 fn frame(actions: &[Action]) -> FrameInput {

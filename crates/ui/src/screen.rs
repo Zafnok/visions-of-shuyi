@@ -21,8 +21,8 @@ use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{GameMode, LeadGender, LeadProfile, TutorialLevel};
 
 use crate::audio::{AudioQueue, MusicClock, pick_from_pool};
-use crate::color::Palette;
-use crate::console::ConsoleSpec;
+use crate::color::{Palette, UiColor};
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Device, Keymap, Layout, LayoutBindings, PadBindings, PlayerKeys};
 use crate::map_view::MapSkin;
@@ -331,7 +331,7 @@ impl Ctx {
     /// of any UI colours the palette lacks. Starts with [`MemoryStorage`](crate::storage::MemoryStorage)
     /// and no layout chosen (so [`Keymap::layout_picker`] is active).
     pub fn new(content: Content) -> Result<Self, LoadError> {
-        let palette = Palette::new(&content.palette).map_err(LoadError::Palette)?;
+        let palette = Palette::new::<UiColor>(&content.palette).map_err(LoadError::Palette)?;
         let keymap = Keymap::layout_picker(&content.keymap);
         let settings = Settings::default();
         let map_skin = crate::map_view::default_skin(&content);
@@ -748,7 +748,7 @@ impl Ctx {
     /// missing, which content validation rules out.
     fn apply_theme(&mut self) {
         let def = self.content.themes.get(&self.settings.theme);
-        if let Some(palette) = def.and_then(|d| Palette::new(d).ok()) {
+        if let Some(palette) = def.and_then(|d| Palette::new::<UiColor>(d).ok()) {
             self.palette = palette;
         }
     }
@@ -1448,7 +1448,10 @@ pub(crate) mod tests {
     #[test]
     fn ctx_uses_the_content_palette_and_keymap() {
         let c = ctx();
-        assert_eq!(c.palette, Palette::new(&c.content.palette).unwrap());
+        assert_eq!(
+            c.palette,
+            Palette::new::<UiColor>(&c.content.palette).unwrap()
+        );
         assert_eq!(
             c.keymap,
             Keymap::for_layout(&c.content.keymap, RIGHT_HANDED)
@@ -1642,7 +1645,7 @@ pub(crate) mod tests {
             s.map_look = MapLook::Glyphs;
             s.fullscreen = true;
         }));
-        let moonlit = Palette::new(&c.content.themes[&Theme::Moonlit]).unwrap();
+        let moonlit = Palette::new::<UiColor>(&c.content.themes[&Theme::Moonlit]).unwrap();
         assert_eq!(c.palette.get(UiColor::Text), moonlit.get(UiColor::Text));
         assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
         // Put back: as before, nothing written.

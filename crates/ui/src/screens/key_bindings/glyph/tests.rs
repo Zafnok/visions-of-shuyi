@@ -1,5 +1,5 @@
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::input::KEY_ROWS as ROWS;
 use crate::input::{
     Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Key, KeyGroup, PadKind, SLOTS,

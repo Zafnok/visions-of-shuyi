@@ -13,12 +13,8 @@ mod prelude {
     pub use alloc::{format, vec};
 
     #[cfg(not(feature = "std"))]
-    pub use crate::float::{Float, Round};
+    pub use shuyi_ui::float::{Float, Round};
 }
-
-// Built for the tests too, which hold it to `std`'s numbers.
-#[cfg(any(not(feature = "std"), test))]
-mod float;
 
 pub mod audio;
 pub mod cinema;
@@ -50,7 +46,7 @@ pub mod words;
 
 pub use audio::{AudioQueue, AudioRequest, MusicClock, MusicCommand, MusicState};
 pub use color::{Palette, Rgb, UiColor};
-pub use console::ConsoleSpec;
+pub use console::{ConsoleSizes, ConsoleSpec};
 pub use game::{FrameOutput, Game, RawInputEvent};
 pub use glyph_buffer::{
     Backdrop, BoxStyle, Cell, GlyphBuffer, Item, Layer, Overlay, Paint, PxRect, Rect, Sprite,

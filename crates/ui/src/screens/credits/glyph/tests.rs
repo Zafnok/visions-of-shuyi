@@ -1,7 +1,7 @@
 use trpg_content::CreditGroup;
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::input::Action;
 use crate::screen::{Screen, tests::ctx};
 use crate::screens::credits::tests::{ctx_with, entry, input, long_list};

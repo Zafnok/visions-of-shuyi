@@ -13,7 +13,7 @@ use trpg_ui::input::{Device, PadKind};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
 use trpg_ui::save::SUSPEND_KEY;
 use trpg_ui::screen::Keyboard;
-use trpg_ui::{ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, Storage};
+use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, Storage, UiColor};
 
 /// The context as `crates/playdate` sets it up (the tips and lessons
 /// are turned on below).
@@ -82,7 +82,7 @@ fn playdate_with_inks(ctx: &mut Ctx) {
     let palette = trpg_content::palette::load()
         .and_then(|base| trpg_content::ink::load_playdate(&base))
         .ok()
-        .and_then(|inks| Palette::new(&inks).ok());
+        .and_then(|inks| Palette::new::<UiColor>(&inks).ok());
     let Some(palette) = palette else {
         panic!("the Playdate palette does not load");
     };

@@ -11,7 +11,7 @@ use trpg_content::new_campaign;
 use trpg_core::{GameMode, LeadGender, LeadProfile, Pos, SaveFile, UnitId};
 use trpg_ui::cinematic::{CinematicPlayer, Frame};
 use trpg_ui::color::UiColor;
-use trpg_ui::console::ConsoleSpec;
+use trpg_ui::console::{ConsoleSizes, ConsoleSpec};
 use trpg_ui::debug::CinematicScreen;
 use trpg_ui::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use trpg_ui::harness::Harness;

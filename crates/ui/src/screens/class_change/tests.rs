@@ -7,7 +7,7 @@ use insta::assert_snapshot;
 use trpg_core::{ItemId, WeaponKind, WeaponRank};
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Cell;
 use crate::screen::tests::ctx;
 use crate::screens::battle::view::ProgressView;

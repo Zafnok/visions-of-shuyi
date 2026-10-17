@@ -117,7 +117,7 @@ mod tests {
     #[test]
     fn a_long_list_fits_in_the_box() {
         use crate::Rgb;
-        use crate::console::ConsoleSpec;
+        use crate::console::{ConsoleSizes, ConsoleSpec};
         let c = crate::screen::tests::ctx();
         let paint_at = |focus: usize| {
             let view = GuidesView {

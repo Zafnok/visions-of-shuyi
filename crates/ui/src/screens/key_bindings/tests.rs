@@ -1,6 +1,6 @@
 use super::*;
 use crate::audio::AudioRequest;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::input::{KEY_ROWS, LEFT_HANDED, RIGHT_HANDED};
 use crate::screen::tests::ctx;
 use crate::storage::Storage;

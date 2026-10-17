@@ -25,7 +25,8 @@ use trpg_ui::input::{Button, Chord, Layout};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
 use trpg_ui::screen::Ctx;
 use trpg_ui::{
-    Backdrop, ConsoleSpec, GlyphBuffer, Item, Layer, Paint, Palette, PxRect, Rgb, Sprite, UiColor,
+    Backdrop, ConsoleSizes, ConsoleSpec, GlyphBuffer, Item, Layer, Paint, Palette, PxRect, Rgb,
+    Sprite, UiColor,
 };
 
 use crate::font_atlas::{decode_png, encode_png};
@@ -252,7 +253,8 @@ fn playdate_palette() -> Result<Palette, String> {
     };
     let base = trpg_content::palette::load().map_err(shown)?;
     let def = trpg_content::ink::load_playdate(&base).map_err(shown)?;
-    Palette::new(&def).map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
+    Palette::new::<UiColor>(&def)
+        .map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
 }
 
 /// `frame` as a black and white picture, each pixel `scale` × `scale`.

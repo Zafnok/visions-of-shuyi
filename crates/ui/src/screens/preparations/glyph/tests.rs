@@ -2,7 +2,7 @@
 //! debug Quick Battle (`preparations::tests`) and on views made by hand.
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::input::Action::{Confirm, CursorDown, CursorUp};
 use crate::screen::{Screen, tests::ctx};
 use crate::screens::preparations::tests::{screen, update};

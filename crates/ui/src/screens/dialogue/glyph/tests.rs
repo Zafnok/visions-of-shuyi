@@ -4,7 +4,7 @@
 //! `../tests.rs`.
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Sprite;
 use crate::portrait::dim_opacity;
 use crate::screen::tests::ctx;

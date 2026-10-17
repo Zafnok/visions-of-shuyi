@@ -11,7 +11,7 @@ use trpg_core::StatKind;
 use super::motion::Pose;
 use super::view::{FighterView, StageView};
 use crate::color::{Rgb, UiColor};
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Paint, PxRect, Rect, Sprite};
 use crate::portrait::dim_opacity;
 use crate::screen::Ctx;

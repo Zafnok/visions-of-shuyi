@@ -10,7 +10,7 @@ use super::ai_phase::PACING;
 use super::testing::through_ai_phases;
 use super::*;
 use crate::color::Rgb;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Cell;
 use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;

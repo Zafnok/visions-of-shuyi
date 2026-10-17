@@ -8,7 +8,7 @@ use trpg_core::TutorialLevel;
 
 use super::*;
 use crate::color::Rgb;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::screen::tests::ctx;
 use crate::screen::{FrameInput, Screen};

@@ -11,7 +11,7 @@ use trpg_core::CharacterId;
 use super::faces::{FACE_SPACING, faces, first_x};
 use super::talk::{HOLD_SHARE, boxes, talk_at};
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::input::Action;
 use crate::screen::tests::ctx;
 use crate::screen::{FrameInput, Screen};

@@ -12,14 +12,14 @@
 
 use super::view::{FULL, GameOverView, ToBeContinuedView};
 use crate::color::UiColor;
-use crate::console::ConsoleSpec;
-#[cfg(not(feature = "std"))]
-use crate::float::Float;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, Paint, PxRect, Sprite};
 use crate::screen::Ctx;
 use crate::screens::title::glyph::{LOGO_SCALE, logo_sprite};
 use crate::screens::{centre_x, print_centred};
 use crate::widgets::menu::glyph as menu_glyph;
+#[cfg(not(feature = "std"))]
+use shuyi_ui::float::Float;
 
 /// Row of "To be continued"'s heading.
 const HEADING_ROW: i32 = 10;
@@ -143,7 +143,7 @@ pub fn paint_to_be_continued(ctx: &Ctx, view: &ToBeContinuedView, buf: &mut Glyp
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::screen::tests::ctx;
     use crate::widgets::{MenuItemView, MenuView};
 

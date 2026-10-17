@@ -20,7 +20,7 @@ pub const HELP_ROW: i32 = HELP_BAR.y + 1;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
 
     #[test]
     fn regions_tile_the_console() {

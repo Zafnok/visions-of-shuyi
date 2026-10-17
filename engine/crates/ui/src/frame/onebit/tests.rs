@@ -4,11 +4,13 @@
 use alloc::rc::Rc;
 use alloc::string::String;
 
-use trpg_content::{FontAtlasDef, ImageId, Ink};
+use shuyi_assets::font::FontAtlasDef;
+use shuyi_assets::image::ImageId;
+use shuyi_assets::ink::Ink;
 
 use super::*;
-use crate::console::ConsoleSpec;
-use crate::glyph_buffer::{Cell, Layer, Overlay, Rect, Sprite};
+use crate::frame::console::ConsoleSpec;
+use crate::frame::glyph_buffer::{Cell, Layer, Overlay, Rect, Sprite};
 
 /// The colour reserved for `ink`.
 fn c(ink: Ink) -> Rgb {
@@ -38,7 +40,7 @@ fn test_font() -> (FontAtlasDef, Vec<u8>) {
 /// A buffer of `w × h` Playdate cells, blank on white.
 fn buf(w: u16, h: u16) -> GlyphBuffer {
     let blank = Cell::new(' ', c(Ink::Black), c(Ink::White));
-    GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE.sized(w, h), blank)
+    GlyphBuffer::with_spec(ConsoleSpec::text(50, 15).sized(w, h), blank)
 }
 
 /// `buf` rendered with the test font and `images`.
@@ -297,11 +299,11 @@ const PICTURE_MASK: [u8; 2] = [0b1111_0000, 0b1000_0000];
 
 /// A made-up image's id.
 fn picture_id() -> ImageId {
-    let size = trpg_content::ImageInfo {
+    let size = shuyi_assets::image::ImageInfo {
         width: 4,
         height: 2,
     };
-    let table = trpg_content::ImageTable {
+    let table = shuyi_assets::image::ImageTable {
         images: [("p.png", size)].into(),
     };
     table.id("p.png").unwrap()
@@ -371,7 +373,7 @@ fn a_sprite_draws_its_one_bit_picture() {
         sprite_frame(|s| s.painted(Paint::Dimmed), false),
         ["..#...#.", "...#...#", "#.#.#.#.", ".#.#.#.#"]
     );
-    let dusk = trpg_content::Light::default();
+    let dusk = shuyi_assets::lighting::Light::default();
     assert_eq!(
         sprite_frame(|s| s.painted(Paint::Shaded(dusk)), false),
         sprite_frame(|s| s, false)
@@ -591,7 +593,7 @@ fn a_zoomed_scene_draws_everything_in_place() {
 #[test]
 fn what_lies_past_the_screen_is_cut_off() {
     let mut b = GlyphBuffer::with_spec(
-        ConsoleSpec::PC,
+        ConsoleSpec::text(100, 32),
         Cell::new(' ', c(Ink::Black), c(Ink::Black)),
     );
     b.add_overlay(Overlay::new(
@@ -640,27 +642,4 @@ fn runs_cross_bytes_and_clip() {
     assert_eq!(widen(0b1000_0001, 1), 0x81 << 56);
     assert_eq!(widen(0b1000_0001, 2), 0xc003 << 48);
     assert_eq!(widen(0b0100_0000, 4), 0x0f << 56);
-}
-
-/// The game's own font: a glyph's pixels are the one-bit atlas's.
-#[test]
-fn the_games_font_draws_its_glyphs() {
-    let atlas = trpg_content::font::load().unwrap();
-    let bits = trpg_content::bundle::bytes(trpg_content::font::ATLAS_1BIT_PATH).unwrap();
-    let font = Font::new(&atlas, bits).unwrap();
-    let mut b = GlyphBuffer::with_spec(
-        ConsoleSpec::PLAYDATE,
-        Cell::new(' ', c(Ink::Black), c(Ink::White)),
-    );
-    b.print(49, 14, "A", c(Ink::Black), c(Ink::White));
-    let mut frame = Box::new([0u8; FRAME_BYTES]);
-    render(&b, &font, &(), &mut frame);
-    let rows = font.rows('A').unwrap();
-    for (y, &row) in (224..).zip(rows) {
-        for x in 0..8 {
-            let ink = row >> (7 - x) & 1 == 1;
-            assert_eq!(is_white(&frame, 392 + x, y), !ink, "({x}, {y})");
-        }
-    }
-    assert!(rows.iter().any(|&row| row != 0));
 }

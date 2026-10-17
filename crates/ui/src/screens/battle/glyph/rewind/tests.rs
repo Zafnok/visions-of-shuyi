@@ -2,7 +2,7 @@
 //! (`battle/rewind/tests.rs`, `battle/rewind_tests.rs`).
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
 
 #[test]

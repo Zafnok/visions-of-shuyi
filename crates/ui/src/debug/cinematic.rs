@@ -96,7 +96,7 @@ impl Screen for CinematicScreen {
 mod tests {
     use super::*;
     use crate::cinematic::Frame;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::glyph_buffer::Rect;
     use crate::screen::tests::ctx;
 

@@ -16,7 +16,7 @@ use super::testing::{battle, quick_units, skirmish, vaulted};
 use super::walk::{SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S};
 use super::{BattleScreen, quick_battle};
 use crate::color::{Rgb, UiColor};
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer, PxRect, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorStyle, Facing, GlyphSkin, MapScene, MapSkin, RangeKind};

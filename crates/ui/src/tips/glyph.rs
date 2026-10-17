@@ -250,7 +250,7 @@ pub fn paint_lesson(ctx: &Ctx, view: &LessonView, at_bottom: bool, buf: &mut Gly
 mod tests {
     use super::*;
     use crate::Rgb;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::screen::tests::ctx;
     use crate::tips::view::FaceView;
 

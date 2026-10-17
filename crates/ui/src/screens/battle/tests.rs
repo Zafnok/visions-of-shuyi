@@ -8,7 +8,7 @@ use super::testing::{battle, vaulted, wait};
 use super::view::{MenuPlace, PanelUnitView, PanelView, TerrainView};
 use super::*;
 use crate::color::{Rgb, UiColor};
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Cell;
 use crate::harness::Harness;
 use crate::map_view::CursorStyle;

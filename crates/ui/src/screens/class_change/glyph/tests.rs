@@ -3,7 +3,7 @@
 //! hand.
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::input::Action::{Cancel, Confirm, CursorLeft, CursorRight};
 use crate::screen::tests::ctx;
 use crate::screens::class_change::tests::{demo, render, step};

@@ -5,16 +5,16 @@
 //! spark is); nothing here decides what the screen shows. Another look is
 //! another `paint` of the same view (ADR-0054).
 
-#[cfg(not(feature = "std"))]
-use crate::float::Float;
 use core::f32::consts::TAU;
+#[cfg(not(feature = "std"))]
+use shuyi_ui::float::Float;
 
 use trpg_content::ImageId;
 
 use super::view::{FULL, TitleView};
 use crate::audio::splitmix64;
 use crate::color::UiColor;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, PxRect, Rect, Sprite};
 use crate::screen::Ctx;
 use crate::screens::{centre_x, paint_debug_hint, print_centred};
@@ -267,7 +267,7 @@ mod tests {
 
     use super::*;
     use crate::cinematic::CinematicPlayer;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::screen::tests::ctx;
     use crate::screens::title::view::CinematicView;
     use crate::widgets::{MenuItemView, MenuView};
