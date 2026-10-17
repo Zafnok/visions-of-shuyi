@@ -294,16 +294,23 @@ impl Harness {
 
     /// Presses and releases each whitespace-separated controller button in
     /// turn, e.g. `"DpadDown South"`, like [`keys`](Self::keys). The names
-    /// are button positions, as in `keymap.ron`.
+    /// are button positions, as in `keymap.ron`. Buttons joined by `+`
+    /// (`"South+East"`, `"East+DpadRight"`) go down together in one frame,
+    /// in the order written, and up together in the next.
     ///
     /// # Panics
     ///
     /// On a button [`Button::parse`] rejects.
     pub fn pad(&mut self, script: &str) -> &mut Self {
         for token in script.split_whitespace() {
-            let button = parse_button(token);
-            self.frame(&[RawInputEvent::PadDown(button, self.pad_kind)], FRAME_DT);
-            self.frame(&[RawInputEvent::PadUp(button)], FRAME_DT);
+            let buttons: Vec<Button> = token.split('+').map(parse_button).collect();
+            let down: Vec<_> = buttons
+                .iter()
+                .map(|&b| RawInputEvent::PadDown(b, self.pad_kind))
+                .collect();
+            self.frame(&down, FRAME_DT);
+            let up: Vec<_> = buttons.iter().map(|&b| RawInputEvent::PadUp(b)).collect();
+            self.frame(&up, FRAME_DT);
         }
         self
     }

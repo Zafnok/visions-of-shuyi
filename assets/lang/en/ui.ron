@@ -337,10 +337,12 @@
     "prep.weapon_detail": "Mt{might} Hit{hit} Wt{weight} Rng{range}",
     "prep.armour_detail": "{bonus}  Wt {weight}",
 
-    // The words inside a key's name: an action with no key, and the four
-    // arrow keys together.
+    // The words inside a key's name: an action with no key, the four
+    // arrow keys together, and what joins two buttons pressed together
+    // (A+B).
     "keys.not_mapped": "! not mapped",
     "keys.arrows": "arrows",
+    "keys.chord_join": "+",
 
     // The stats' short names, a class's tags and the kinds of weapon, on
     // every screen that lists them.

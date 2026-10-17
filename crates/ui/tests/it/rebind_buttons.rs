@@ -48,7 +48,7 @@ fn reopen(h: &mut Harness) {
 /// closed back to it).
 fn reopen_from_options(h: &mut Harness) {
     let confirm = h.game().ctx().keymap.primary_button(Action::Confirm);
-    let confirm = confirm.map(Button::name).unwrap_or_default();
+    let confirm = confirm.map(|b| b.to_string()).unwrap_or_default();
     h.pad(&format!("{confirm} DpadUp DpadUp DpadUp {confirm}"));
     assert_eq!(h.screens(), ["title", "options", "key_bindings"]);
 }
@@ -62,10 +62,10 @@ fn default_buttons(h: &Harness) -> PadBindings {
 }
 
 /// `action`'s button slots as names, `-` for empty.
-fn slots(h: &Harness, action: Action) -> [&'static str; 3] {
+fn slots(h: &Harness, action: Action) -> [String; 3] {
     buttons(h)
         .slots(action)
-        .map(|b| b.map_or("-", Button::name))
+        .map(|b| b.map_or_else(|| "-".to_owned(), |b| b.to_string()))
 }
 
 /// The Key bindings screen on the stack, as it shows itself now.

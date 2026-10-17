@@ -523,7 +523,10 @@ impl Ctx {
     pub fn help_keys(&self) -> HelpKeys<'_> {
         let not_mapped = self.text("keys.not_mapped");
         let arrows = self.text(crate::input::ARROWS_TEXT);
-        HelpKeys::new(&self.keymap, self.device).worded(not_mapped, arrows)
+        let join = self.text(crate::input::CHORD_JOIN_TEXT);
+        HelpKeys::new(&self.keymap, self.device)
+            .worded(not_mapped, arrows)
+            .chord_joined(join)
     }
 
     /// The layout in use, or `None` if the player hasn't picked one yet.
@@ -535,6 +538,15 @@ impl Ctx {
     /// else its defaults) for this session, without saving the choice.
     pub fn use_layout(&mut self, layout: Layout) {
         self.layout = Some(layout);
+        self.refresh_keymap();
+    }
+
+    /// Makes the keymap file's `playdate` table the default buttons (ticket
+    /// 1034), for the Playdate front end, before the player's bindings are
+    /// loaded: its pad is the only one there is.
+    pub fn use_playdate_buttons(&mut self) {
+        let def = core::mem::take(&mut self.content.keymap);
+        self.content.keymap = def.for_playdate();
         self.refresh_keymap();
     }
 

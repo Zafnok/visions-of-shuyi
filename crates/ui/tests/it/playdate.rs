@@ -8,19 +8,23 @@
 use trpg_content::FontAtlasDef;
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_core::lead::DEFAULT_NAME;
+use trpg_core::{Faction, Phase};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{Device, PadKind};
+use trpg_ui::input::{Action, Device, PadKind};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
 use trpg_ui::save::SUSPEND_KEY;
 use trpg_ui::screen::Keyboard;
+use trpg_ui::screens::battle::mode::Mode;
+use trpg_ui::widgets::help::key_name;
 use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, Storage, UiColor};
 
 /// The context as `crates/playdate` sets it up (the tips and lessons
-/// are turned on below).
+/// are turned on below), with the Playdate's own buttons (ticket 1034).
 fn playdate(ctx: &mut Ctx) {
     ctx.console = ConsoleSpec::PLAYDATE;
     ctx.keyboard = Keyboard::Absent;
     ctx.device = Device::Pad(PadKind::Playdate);
+    ctx.use_playdate_buttons();
     ctx.key_prompt = KeyPrompt::Waiting;
 }
 
@@ -184,4 +188,52 @@ fn the_one_bit_frames_are_the_references_whole_or_changed() {
         one_bit.frames(&mut h, 2, 1.0 / 30.0);
     }
     assert!(one_bit.checked > 60);
+}
+
+/// Ticket 1034: on the Playdate, A + B together ends the turn (its
+/// question shows, as on the PC) and holding B while pressing right or
+/// left picks the next or previous ready unit, in Chapter 1's first
+/// battle; B alone still cancels.
+#[test]
+fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
+    let mut h = Harness::first_launch_and(playdate).with_shipped_story();
+    h.use_pad(PadKind::Playdate);
+    // A to New Game, Classic and the familiarity answer, the name as it
+    // is, Start; past the scenes and the banner.
+    h.pad("South South South South DpadDown DpadDown South");
+    skip_scenes(&mut h);
+    h.pad("South");
+    skip_scenes(&mut h);
+    h.wait(1.0);
+    assert_eq!(h.screens(), ["title", "battle"]);
+    let battle = |h: &Harness| h.battle().map(|b| b.mode().clone());
+    let idle = |h: &Harness| matches!(battle(h), Some(Mode::Idle { .. }));
+    let on_a_ready_unit = |h: &Harness| {
+        let unit = h.cursor_tile().and_then(|at| h.unit_at(at));
+        unit.is_some_and(|u| u.faction == Faction::Player && !u.acted)
+    };
+    assert!(idle(&h) && on_a_ready_unit(&h));
+    let start = h.cursor_tile();
+    // Hold B, press right: the next ready unit, and B cancels nothing.
+    h.pad("East+DpadRight");
+    assert!(idle(&h) && on_a_ready_unit(&h));
+    assert_ne!(h.cursor_tile(), start);
+    // And left: back to the first.
+    h.pad("East+DpadLeft");
+    assert_eq!(h.cursor_tile(), start);
+    assert!(idle(&h));
+    // Help text names the chords through the keymap.
+    let keys = h.game().ctx().help_keys();
+    assert_eq!(key_name(keys, Action::EndTurn), "A+B");
+    assert_eq!(key_name(keys, Action::NextUnit), "B+→");
+    // A + B: the question, as on the PC.
+    h.pad("South+East");
+    assert!(matches!(battle(&h), Some(Mode::EndTurnPrompt { .. })));
+    // B alone backs out of it; A + B again, then A, ends the turn.
+    h.pad("East");
+    assert!(idle(&h));
+    assert_eq!(h.cursor_tile(), start, "B cancels, it doesn't move");
+    h.pad("South+East South");
+    let phase = h.battle().map(|b| b.state().phase());
+    assert_ne!(phase, Some(Phase::Player));
 }
