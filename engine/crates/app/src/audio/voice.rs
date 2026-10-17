@@ -1,5 +1,6 @@
-//! Voice clips (ADR-0046): the files of `voice/<lang>/`, loaded when asked
-//! for and a few ahead, played one at a time and freed when they end.
+//! Voice clips (ADR-0046): the files of the game's voice folder for the
+//! script's language (`voice/<lang>/`, say), loaded when asked for and a
+//! few ahead, played one at a time and freed when they end.
 //!
 //! A clip is loaded like a music track (on native, on ADR-0028's worker
 //! thread). A scene says which clips are coming
@@ -11,8 +12,8 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use trpg_content::voice::{MANIFEST_FILE, SOURCE_LANG, VOICE_DIR, clip_file};
-use trpg_ui::AudioRequest;
+use shuyi_assets::voice::{ClipVariant, clip_file};
+use shuyi_ui::audio::AudioRequest;
 
 use super::{Backend, folder_beside};
 
@@ -62,10 +63,10 @@ impl<B: Backend> Voices<B> {
 
     /// Applies one request (those that aren't about voices do nothing).
     /// Loads dropped before they finished go to `abandoned`.
-    pub(crate) fn request(
+    pub(crate) fn request<V: ClipVariant>(
         &mut self,
         backend: &mut B,
-        request: &AudioRequest,
+        request: &AudioRequest<V>,
         now: f64,
         abandoned: &mut Vec<B::Loading>,
     ) {
@@ -213,27 +214,27 @@ impl<B: Backend> Voices<B> {
     }
 }
 
-/// Where the voice clips of the script's language are: `voice/en`, in the
-/// `voice/` folder next to the executable when it's there (a shipped
+/// Where the voice clips of the script's language `lang` are: `<lang>` in
+/// the voice `folder` next to the executable when it's there (a shipped
 /// build), else relative to the working directory (`cargo run` from the
 /// repo root, or the web build, which fetches from beside the page).
-pub(crate) fn platform_voice_dir() -> String {
+pub(crate) fn platform_voice_dir(folder: &str, lang: &str) -> String {
     let voice = if cfg!(target_arch = "wasm32") {
-        VOICE_DIR.to_owned()
+        folder.to_owned()
     } else {
         let exe = std::env::current_exe().ok();
-        folder_beside(VOICE_DIR, exe.as_deref(), Path::is_dir)
+        folder_beside(folder, exe.as_deref(), Path::is_dir)
     };
-    format!("{voice}/{SOURCE_LANG}")
+    format!("{voice}/{lang}")
 }
 
-/// The text of the voice manifest in `dir`, or `None` if there is none
-/// (no voices: not a problem). `Err` if the file is there and can't be
-/// read.
+/// The text of the voice manifest `file` in `dir`, or `None` if there is
+/// none (no voices: not a problem). `Err` if the file is there and can't
+/// be read.
 #[cfg(not(target_arch = "wasm32"))]
 #[allow(clippy::unused_async)] // The web build fetches it.
-pub(crate) async fn read_manifest(dir: &str) -> Result<Option<String>, String> {
-    let path = format!("{dir}/{MANIFEST_FILE}");
+pub async fn read_manifest(dir: &str, file: &str) -> Result<Option<String>, String> {
+    let path = format!("{dir}/{file}");
     match std::fs::read_to_string(&path) {
         Ok(text) => Ok(Some(text)),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -241,26 +242,24 @@ pub(crate) async fn read_manifest(dir: &str) -> Result<Option<String>, String> {
     }
 }
 
-/// The text of the voice manifest in `dir`, fetched from beside the page,
-/// or `None` if it can't be had: a build without voices has no such file,
-/// and a failed fetch doesn't say why it failed.
+/// The text of the voice manifest `file` in `dir`, fetched from beside the
+/// page, or `None` if it can't be had: a build without voices has no such
+/// file, and a failed fetch doesn't say why it failed.
 #[cfg(target_arch = "wasm32")]
-pub(crate) async fn read_manifest(dir: &str) -> Result<Option<String>, String> {
-    let path = format!("{dir}/{MANIFEST_FILE}");
+pub async fn read_manifest(dir: &str, file: &str) -> Result<Option<String>, String> {
+    let path = format!("{dir}/{file}");
     Ok(macroquad::file::load_string(&path).await.ok())
 }
 
 #[cfg(test)]
 mod tests {
-    use trpg_content::{LineId, Variant};
-    use trpg_ui::{Ctx, ShuyiCtx};
+    use shuyi_assets::dialogue::LineId;
 
-    use super::super::tests::{Fake, audio, block_on};
+    use super::super::tests::{Fake, Request, Take, audio, block_on};
     use super::*;
     use crate::audio::Audio;
 
-    /// The three lines of `assets-test/dialogue/test.dlg` that have a test clip
-    /// (`crates/app/tests/voice/`), and a fourth and fifth that don't.
+    /// Five lines of a scene called `test`.
     const LINES: [&str; 5] = [
         "test_21833604",
         "test_7de7b254",
@@ -268,9 +267,6 @@ mod tests {
         "test_5da5d147",
         "test_d7fb4eb3",
     ];
-
-    /// The test voice folder: laid out as `voice/` is beside the game.
-    const TEST_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/voice/en");
 
     fn line(i: usize) -> LineId {
         LineId::new(LINES[i])
@@ -281,16 +277,16 @@ mod tests {
         format!("voice/en/test/{}.ogg", LINES[i])
     }
 
-    fn play(i: usize) -> AudioRequest {
-        AudioRequest::PlayVoice {
+    fn play(i: usize) -> Request {
+        Request::PlayVoice {
             line: line(i),
-            variant: Variant::None,
+            variant: Take::Only,
         }
     }
 
-    fn preload(lines: &[usize]) -> AudioRequest {
-        AudioRequest::PreloadVoices {
-            lines: lines.iter().map(|&i| (line(i), Variant::None)).collect(),
+    fn preload(lines: &[usize]) -> Request {
+        Request::PreloadVoices {
+            lines: lines.iter().map(|&i| (line(i), Take::Only)).collect(),
         }
     }
 
@@ -342,11 +338,11 @@ mod tests {
             ]
         );
         assert_eq!(held(&audio), [LINES[1]], "the first clip is freed");
-        audio.play(&mut fake, &[AudioRequest::StopVoice], &[], 2.0);
+        audio.play(&mut fake, &[Request::StopVoice], &[], 2.0);
         assert_eq!(fake.calls(), [format!("stop {}", path(1))]);
         assert!(held(&audio).is_empty());
         // Stopping silence does nothing.
-        audio.play(&mut fake, &[AudioRequest::StopVoice], &[], 3.0);
+        audio.play(&mut fake, &[Request::StopVoice], &[], 3.0);
         assert!(fake.calls().is_empty());
         assert!(
             audio.take_warnings().len() <= 1,
@@ -379,12 +375,12 @@ mod tests {
         let mut audio = audio(&mut fake);
         audio.play(&mut fake, &[play(0)], &[], 10.0);
         assert_eq!(fake.calls(), [format!("load {}", path(0))]);
-        audio.play(&mut fake, &[], &[], 10.2);
+        audio.play::<Take>(&mut fake, &[], &[], 10.2);
         assert!(fake.calls().is_empty(), "still loading");
         fake.ready.push(path(0));
-        audio.play(&mut fake, &[], &[], 10.0 + LATE_SECS);
+        audio.play::<Take>(&mut fake, &[], &[], 10.0 + LATE_SECS);
         assert_eq!(fake.calls(), [format!("play {} 1.00", path(0))]);
-        audio.play(&mut fake, &[], &[], 11.0);
+        audio.play::<Take>(&mut fake, &[], &[], 11.0);
         assert!(fake.calls().is_empty(), "started once");
     }
 
@@ -394,18 +390,18 @@ mod tests {
         let mut audio = audio(&mut fake);
         audio.take_warnings();
         audio.play(&mut fake, &[play(0)], &[], 10.0);
-        audio.play(&mut fake, &[], &[], 10.31);
+        audio.play::<Take>(&mut fake, &[], &[], 10.31);
         assert!(held(&audio).is_empty(), "given up on");
         assert_eq!(audio.abandoned.len(), 1);
         fake.ready.push(path(0));
-        audio.play(&mut fake, &[], &[], 10.4);
+        audio.play::<Take>(&mut fake, &[], &[], 10.4);
         assert_eq!(fake.calls(), [format!("load {}", path(0))], "never played");
         assert!(audio.abandoned.is_empty());
         assert!(audio.take_warnings().is_empty());
         // A clock that stepped back doesn't count as late.
         fake.ready.clear();
         audio.play(&mut fake, &[play(1)], &[], 20.0);
-        audio.play(&mut fake, &[], &[], 5.0);
+        audio.play::<Take>(&mut fake, &[], &[], 5.0);
         assert_eq!(held(&audio), [LINES[1]]);
     }
 
@@ -460,18 +456,18 @@ mod tests {
         fake.length = Some(1.5);
         let mut audio = audio(&mut fake);
         audio.play(&mut fake, &[play(0)], &[], 10.0);
-        audio.play(&mut fake, &[], &[], 11.49);
+        audio.play::<Take>(&mut fake, &[], &[], 11.49);
         assert_eq!(held(&audio), [LINES[0]]);
-        audio.play(&mut fake, &[], &[], 11.5);
+        audio.play::<Take>(&mut fake, &[], &[], 11.5);
         assert!(held(&audio).is_empty());
         // It ended by itself: nothing to stop.
         fake.calls();
-        audio.play(&mut fake, &[AudioRequest::StopVoice], &[], 12.0);
+        audio.play(&mut fake, &[Request::StopVoice], &[], 12.0);
         assert!(fake.calls().is_empty());
         // A clip of unknown length is kept until it is stopped.
         fake.length = None;
         audio.play(&mut fake, &[play(1)], &[], 20.0);
-        audio.play(&mut fake, &[], &[], 9_999.0);
+        audio.play::<Take>(&mut fake, &[], &[], 9_999.0);
         assert_eq!(held(&audio), [LINES[1]]);
     }
 
@@ -487,7 +483,7 @@ mod tests {
             [format!("voice clip {}: no such file", path(0))]
         );
         assert!(held(&audio).is_empty());
-        audio.play(&mut fake, &[], &[], 0.1);
+        audio.play::<Take>(&mut fake, &[], &[], 0.1);
         assert_eq!(fake.calls(), [format!("load {}", path(0))], "not retried");
         assert!(audio.take_warnings().is_empty());
     }
@@ -510,36 +506,33 @@ mod tests {
         audio.play(&mut fake, &[play(0)], &[], 0.0);
         fake.calls();
         let others = [
-            AudioRequest::PlaySound {
+            Request::PlaySound {
                 cue: "beep".into(),
                 volume: 1.0,
             },
-            AudioRequest::PlayMusic {
+            Request::PlayMusic {
                 cue: "title".into(),
             },
-            AudioRequest::StopMusic,
+            Request::StopMusic,
         ];
         audio.play(&mut fake, &others, &[], 0.1);
         assert_eq!(fake.calls(), ["play wav100 0.50"], "the voice plays on");
         assert_eq!(held(&audio), [LINES[0]]);
     }
 
-    /// Acceptance: with no `voice/` folder the game starts and logs
-    /// nothing about voices.
+    /// Acceptance: with no voice folder the game starts and logs nothing
+    /// about voices.
     #[test]
-    fn without_a_voice_folder_there_are_no_voices_and_no_warnings() {
+    fn without_a_voice_folder_there_is_no_manifest_and_no_warnings() {
         let nowhere = tempfile::tempdir().unwrap();
         let dir = format!("{}/voice/en", nowhere.path().display());
-        assert_eq!(block_on(read_manifest(&dir)), Ok(None));
-        let mut ctx = Ctx::embedded().unwrap();
-        assert!(ctx.take_warnings().is_empty());
-        assert!(!ctx.has_voice(&line(0)));
+        assert_eq!(block_on(read_manifest(&dir, "voice.ron")), Ok(None));
         // A frame of ordinary audio warns of nothing either.
         let mut fake = Fake::default();
         let mut audio = audio(&mut fake);
         audio.take_warnings();
-        audio.set_voice_volume(&mut fake, ctx.voice_gain());
-        audio.play(&mut fake, &[], &[], 0.0);
+        audio.set_voice_volume(&mut fake, 1.0);
+        audio.play::<Take>(&mut fake, &[], &[], 0.0);
         assert!(audio.take_warnings().is_empty());
         assert!(fake.calls().is_empty());
     }
@@ -548,41 +541,25 @@ mod tests {
     fn a_manifest_that_cannot_be_read_is_an_error_naming_it() {
         // A folder where the file should be.
         let odd = tempfile::tempdir().unwrap();
-        std::fs::create_dir_all(odd.path().join(MANIFEST_FILE)).unwrap();
+        std::fs::create_dir_all(odd.path().join("voice.ron")).unwrap();
         let dir = odd.path().display().to_string();
-        let error = block_on(read_manifest(&dir)).unwrap_err();
-        let start = format!("{dir}/{MANIFEST_FILE}: ");
+        let error = block_on(read_manifest(&dir, "voice.ron")).unwrap_err();
+        let start = format!("{dir}/voice.ron: ");
         assert!(error.starts_with(&start), "{error}");
     }
 
-    /// The test folder is read as the real one is: its manifest is valid,
-    /// every clip may be played, and every file is where the player looks
-    /// for it, an OGG the length reader understands.
     #[test]
-    fn the_test_voice_folder_gives_the_game_its_three_clips() {
-        let manifest = block_on(read_manifest(TEST_DIR)).unwrap().unwrap();
-        let mut ctx = Ctx::embedded().unwrap();
-        ctx.set_voice_manifest(&manifest);
-        assert_eq!(ctx.take_warnings(), [] as [&str; 0]);
-        for (i, id) in LINES.iter().enumerate().take(3) {
-            assert!(ctx.has_voice(&line(i)), "{id}");
-            let file = format!("{TEST_DIR}/{}", clip_file(&line(i), Variant::None));
-            let bytes = std::fs::read(&file).unwrap_or_default();
-            let length = trpg_content::audio::ogg_length_ms(&bytes);
-            let short = length.is_some_and(|ms| (300..2000).contains(&ms));
-            assert!(short, "{file}: {length:?}");
-        }
-        assert!(!ctx.has_voice(&line(3)));
-        // The cast beside it is valid too.
-        let cast = std::fs::read_to_string(format!("{TEST_DIR}/cast.ron")).unwrap();
-        let characters = Some(&ctx.game.content.characters);
-        let cast = trpg_content::voice::cast_from_source("cast.ron", &cast, characters);
-        assert_eq!(cast.map(|c| c.voices.len()), Ok(3));
+    fn a_manifest_is_read_whole() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("voices.ron"), "(clips: [])").unwrap();
+        let dir = dir.path().display().to_string();
+        let text = block_on(read_manifest(&dir, "voices.ron"));
+        assert_eq!(text, Ok(Some("(clips: [])".to_owned())));
     }
 
     #[test]
-    fn the_voice_folder_is_the_scripts_language_under_voice() {
-        let dir = platform_voice_dir();
+    fn the_voice_folder_is_the_scripts_language_under_the_voice_folder() {
+        let dir = platform_voice_dir("voice", "en");
         assert!(dir.ends_with("voice/en"), "{dir}");
         assert!(!dir.contains('\\'), "{dir}");
     }

@@ -1,5 +1,5 @@
 //! The game's [`Storage`] on the Playdate (ticket 1033, ADR-0009): one
-//! `<key>.ron` file per key in the game's data folder, as `trpg-app`'s
+//! `<key>.ron` file per key in the game's data folder, as `shuyi-app`'s
 //! `FileStorage` keeps them in the PC's. Profiles and saves are kept
 //! exactly as on the PC (ADR-0069): this only stores the text.
 //!

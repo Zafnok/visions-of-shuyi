@@ -28,6 +28,14 @@ About half of `xtask` is generic tooling (`docs/engine/boundary.md`,
 Their paths are written into the code (for example `check_keys.rs:32-60`
 and `check_text.rs:66-73`).
 
+Since 1110 the web shell's files in `web/` serve the engine's
+`shuyi-app` (`gamepad.js` is the `shuyi_gamepad` plugin of
+`engine/crates/app/src/pads/web.rs`), but they still live in the game's
+`web/`, and `--allow-undefined` is in the game's `build.rs` (a link
+argument only reaches a binary from its own build script). `web` moving
+here is the time to give the engine its copy of the shell and say how a
+game's binary gets that link argument.
+
 ## Nick input
 
 None.

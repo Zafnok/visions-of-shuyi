@@ -8,11 +8,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use trpg_ui::storage::is_valid_key;
-use trpg_ui::{Storage, StorageError};
-
-/// The per-app subdirectory name under the OS data directory.
-const APP_DIR_NAME: &str = "tactical-rpg";
+use shuyi_ui::storage::{Storage, StorageError, is_valid_key};
 
 /// A [`Storage`] backed by one file per key, under the OS's per-app data
 /// directory ([`data_dir`]). Writes are atomic: the new content lands in
@@ -24,10 +20,11 @@ pub struct FileStorage {
 }
 
 impl FileStorage {
-    /// Locates (but does not create) the data directory for
-    /// `tactical-rpg`. Fails only if the OS has no usable home directory.
-    pub fn new() -> Result<Self, StorageError> {
-        let dir = data_dir().ok_or_else(|| {
+    /// Locates (but does not create) the data directory of the game whose
+    /// storage is called `name` ([`data_dir`]). Fails only if the OS has
+    /// no usable home directory.
+    pub fn new(name: &str) -> Result<Self, StorageError> {
+        let dir = data_dir(name).ok_or_else(|| {
             StorageError::Backend("could not determine an OS data directory".to_owned())
         })?;
         Ok(Self { dir })
@@ -42,30 +39,30 @@ impl FileStorage {
     }
 }
 
-/// The OS's per-app data directory for `tactical-rpg`: `%APPDATA%` on
-/// Windows, `~/Library/Application Support` on macOS, `$XDG_DATA_HOME` (or
+/// The OS's per-app data directory for the game whose storage is called
+/// `name`: that folder in `%APPDATA%` on Windows, in
+/// `~/Library/Application Support` on macOS, in `$XDG_DATA_HOME` (or
 /// `~/.local/share`) elsewhere on Unix. `None` if the relevant environment
 /// variable isn't set.
-fn data_dir() -> Option<PathBuf> {
+pub fn data_dir(name: &str) -> Option<PathBuf> {
     #[cfg(target_os = "windows")]
     {
-        std::env::var_os("APPDATA").map(|dir| PathBuf::from(dir).join(APP_DIR_NAME))
+        std::env::var_os("APPDATA").map(|dir| PathBuf::from(dir).join(name))
     }
     #[cfg(target_os = "macos")]
     {
         std::env::var_os("HOME").map(|home| {
             PathBuf::from(home)
                 .join("Library/Application Support")
-                .join(APP_DIR_NAME)
+                .join(name)
         })
     }
     #[cfg(all(unix, not(target_os = "macos")))]
     {
         if let Some(xdg_data_home) = std::env::var_os("XDG_DATA_HOME") {
-            Some(PathBuf::from(xdg_data_home).join(APP_DIR_NAME))
+            Some(PathBuf::from(xdg_data_home).join(name))
         } else {
-            std::env::var_os("HOME")
-                .map(|home| PathBuf::from(home).join(".local/share").join(APP_DIR_NAME))
+            std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share").join(name))
         }
     }
 }
@@ -135,7 +132,7 @@ fn backend_error(path: &Path, e: &io::Error) -> StorageError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use trpg_ui::storage::conformance_suite;
+    use shuyi_ui::storage::conformance_suite;
 
     fn storage() -> (FileStorage, tempfile::TempDir) {
         let tmp = tempfile::tempdir().unwrap();
@@ -182,5 +179,19 @@ mod tests {
             dir: tmp.path().join("never-created"),
         };
         assert_eq!(storage.list().unwrap(), Vec::<String>::new());
+    }
+
+    #[test]
+    fn the_data_directory_is_the_storage_name_in_the_os_data_folder() {
+        let dir = data_dir("some-game");
+        assert!(
+            dir.as_ref().is_some_and(|d| d.ends_with("some-game")),
+            "{dir:?}"
+        );
+        #[cfg(target_os = "windows")]
+        assert_eq!(
+            dir,
+            std::env::var_os("APPDATA").map(|d| PathBuf::from(d).join("some-game"))
+        );
     }
 }

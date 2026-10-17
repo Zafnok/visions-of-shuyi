@@ -17,7 +17,7 @@ Browser play via WASM ([ADR-0009](../docs/adr/0009-distribution.md)).
   `keydown` listener for browser shortcuts it doesn't cover (Page Up/Down,
   Home/End).
 - `sapp_jsutils.js`, `quad-storage.js` — miniquad JS plugins backing
-  [`trpg_ui::storage::Storage`](../crates/ui/src/storage.rs) on web (ticket
+  [`shuyi_ui::storage::Storage`](../engine/crates/ui/src/storage.rs) on web (ticket
   0207): `quad-storage` exposes `localStorage` to Rust, and needs
   `sapp_jsutils` (its JS↔Rust string/object marshalling) loaded first. Both
   vendored, see below.
@@ -70,7 +70,7 @@ matching tag (or commit, if no tag exists) and update this note and the
   version-mismatch error on every load. Re-apply it when re-vendoring; the
   xtask test `quad_storage_js_version_matches_the_locked_crate` fails if it
   is lost.
-- Both back [`trpg_ui::storage::Storage`](../crates/ui/src/storage.rs) on
+- Both back [`shuyi_ui::storage::Storage`](../engine/crates/ui/src/storage.rs) on
   web (ticket 0207); `index.html` loads `sapp_jsutils.js` before
   `quad-storage.js`, both before `mq_js_bundle.js`'s `load(...)` call. See
   [THIRD_PARTY_ASSETS.md](../THIRD_PARTY_ASSETS.md) for the registry rows.
@@ -83,8 +83,8 @@ the new version of the crate.
 ## Our own `gamepad.js`
 
 - Exposes the connected pads to
-  [`crates/app/src/pads/web.rs`](../crates/app/src/pads/web.rs) as five
-  functions (`trpg_pad_poll`, `_index`, `_vendor`, `_buttons`, `_axis`).
+  [`engine/crates/app/src/pads/web.rs`](../engine/crates/app/src/pads/web.rs) as five
+  functions (`shuyi_pad_poll`, `_index`, `_vendor`, `_buttons`, `_axis`).
   The two files must list the same functions and the same plugin version
   (`VERSION` here, `PLUGIN_VERSION` there): xtask tests fail otherwise.
   Bump both versions when the functions change.

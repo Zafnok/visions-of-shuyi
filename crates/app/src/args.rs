@@ -64,27 +64,6 @@ pub fn startup() -> Result<Startup, String> {
     parse(std::env::args().skip(1)).map_err(|e| format!("{e}\n{USAGE}"))
 }
 
-/// `text` with every line broken at spaces so that none is longer than
-/// `width` characters (a single longer word stays whole).
-pub fn wrap(text: &str, width: usize) -> String {
-    let mut out = Vec::new();
-    for line in text.lines() {
-        let mut current = String::new();
-        for word in line.split(' ') {
-            let fits = current.chars().count() + 1 + word.chars().count() <= width;
-            if !current.is_empty() && !fits {
-                out.push(std::mem::take(&mut current));
-            }
-            if !current.is_empty() {
-                current.push(' ');
-            }
-            current.push_str(word);
-        }
-        out.push(current);
-    }
-    out.join("\n")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -127,16 +106,5 @@ mod tests {
         assert!(LEAD_VALUES.starts_with("--lead needs male or female"));
         assert_eq!(err(&["--lead", "f"]), "--lead needs --scene");
         assert_eq!(err(&["ch01_intro"]), "unknown argument \"ch01_intro\"");
-    }
-
-    #[test]
-    fn long_lines_are_broken_at_spaces() {
-        assert_eq!(wrap("aa bb cc", 5), "aa bb\ncc");
-        assert_eq!(wrap("aa bb cc", 4), "aa\nbb\ncc");
-        assert_eq!(wrap("aa bb cc", 8), "aa bb cc");
-        assert_eq!(wrap("aa bb cc", 7), "aa bb\ncc");
-        assert_eq!(wrap("abcdefgh ij", 3), "abcdefgh\nij");
-        assert_eq!(wrap("one\n\ntwo three", 5), "one\n\ntwo\nthree");
-        assert_eq!(wrap("", 5), "");
     }
 }

@@ -30,16 +30,17 @@ widgets/help.rs, tips  Action → key or button name for text     (`ctx.help_key
 ```
 
 Files allowed to name `Key::…`, `Chord::…` or key names in strings:
-`crates/app/src/keys.rs`, `crates/content/src/keymap.rs`,
-`crates/ui/src/input.rs`, the engine (`engine/`, where the generic keymap
-format and input live, ticket 1107; not scanned), test code (`#[cfg(test)]`
+`crates/content/src/keymap.rs`, `crates/ui/src/input.rs`, the engine
+(`engine/`, where the generic keymap format and input live, ticket 1107,
+and the platform shell's keyboard and controllers, 1110; not scanned),
+test code (`#[cfg(test)]`
 items, `tests.rs`, `*_tests.rs`, `tests/`, `crates/ui/src/harness.rs`), and
 the keyboard *picture* in `crates/ui/src/screens/layout_picker.rs` (which
 keys exist and what each does) and its skin `layout_picker/glyph.rs` (where
 each sits): each picture item there sits under a `// check-keys: keyboard
-picture` comment (the marker is an error in any other file). Only
-`crates/app/src/keys.rs` may use `KeyCode` or macroquad's key reads. Anywhere
-else is a bug.
+picture` comment (the marker is an error in any other file). Only the
+engine's `engine/crates/app/src/keys.rs` may use `KeyCode` or macroquad's
+key reads. Anywhere else is a bug.
 
 `cargo xtask check-keys` enforces this (CI `tickets` job and `run-gates`).
 It scans `crates/{ui,app,content}/src` for key and button types, macroquad key
@@ -85,9 +86,10 @@ covers it). Help text names a chord through the keymap like a button
 (`A+B`, joined by the language's `keys.chord_join`). In harness scripts
 `h.pad("South+East")` presses both in one frame.
 
-`Button::` may be named only where `Key::` may, plus
-`crates/app/src/pads.rs` and `crates/app/src/pads/` (`check-keys` enforces
-it). In code and data buttons are named by position (`South`, not "A").
+`Button::` may be named only where `Key::` may, plus the Playdate's
+`crates/playdate/src/pads.rs` (`check-keys` enforces it); the PC's and the
+web's controllers are read in the engine (`engine/crates/app/src/pads.rs`
+and `pads/`). In code and data buttons are named by position (`South`, not "A").
 Players rebind them on the Key bindings screen's controller side (ticket
 0816, ADR-0053): `PadBindings`, edited like `LayoutBindings` and handed
 back with `ctx.set_pad_bindings(…)`; **no button is fixed or reserved**,
