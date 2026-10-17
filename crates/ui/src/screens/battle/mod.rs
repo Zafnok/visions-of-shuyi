@@ -29,6 +29,7 @@ pub mod attack;
 pub mod banner;
 pub mod camera;
 pub mod cursor;
+pub mod doable;
 pub mod event_sounds;
 pub mod forecast;
 pub mod glyph;
@@ -74,6 +75,7 @@ use self::banner::{Banner, BannerKind};
 use self::attack::{Targeting, aimed_first, aimed_options};
 use self::camera::Camera;
 use self::cursor::Cursor;
+use self::doable::Doable;
 use self::event_sounds::CueQueue;
 use self::guides::{GuidesEffect, GuidesScreen};
 use self::layout::MAP_VIEW;
@@ -341,6 +343,9 @@ pub struct BattleScreen {
     tips: TipState,
     /// Checklist lessons waiting or open (0456).
     lessons: LessonState,
+    /// What the units left to act could do, for the lessons (0464): worked
+    /// out when one asks, started anew whenever the battle changes.
+    doable: Doable,
     /// What the player did since the lessons were last ticked
     /// ([`tick_lessons`](Self::tick_lessons)).
     noticed: Vec<DoneWhen>,
@@ -489,6 +494,7 @@ impl BattleScreen {
             queue: VecDeque::new(),
             tips: TipState::default(),
             lessons: LessonState::default(),
+            doable: Doable::default(),
             noticed: Vec::new(),
             battle_id: None,
             popups: vec![],
@@ -796,11 +802,7 @@ impl BattleScreen {
                 if self.has_skill(sel.unit) {
                     fired.push(TipTrigger::FirstSkillUnit);
                 }
-                let reachable = |u: &&Unit| {
-                    u.faction != Faction::Player
-                        && (sel.moves.contains(u.pos) || sel.attack.contains(u.pos))
-                };
-                if state.units().iter().any(|u| reachable(&u)) {
+                if doable::reaches_enemy(state, sel) {
                     fired.push(TipTrigger::FirstEnemyInRange);
                 }
             }
@@ -971,15 +973,26 @@ impl BattleScreen {
         Some(LessonView::new(ctx, lesson, ticked, self.cursor.pos))
     }
 
-    /// Queues the lessons the fired triggers start; with no unit left to
-    /// act, puts away the ones that need one (they come back in a later
-    /// turn).
+    /// Queues the lessons the fired triggers start, then
+    /// [settles](Self::settle_lessons) them.
     fn absorb_lessons(&mut self, ctx: &Ctx) {
         let turn = self.state.turn();
         self.lessons.absorb(ctx, self.battle_id.as_deref(), turn);
-        if self.no_unit_left() {
-            self.lessons.put_away(turn);
+        self.settle_lessons();
+    }
+
+    /// In the player's phase of a battle still on, takes out of play the
+    /// lesson in front while no unit left to act can do an item it has
+    /// left ([`LessonState::settle`], 0464): one open comes back in a
+    /// later turn, one not open yet with its trigger.
+    fn settle_lessons(&mut self) {
+        if self.state.phase() != Phase::Player || self.state.outcome().is_some() {
+            return;
         }
+        let state = &self.state;
+        let doable = &mut self.doable;
+        self.lessons
+            .settle(state.turn(), |done| doable.can(state, done));
     }
 
     /// Notes that the player did `done`, for the lesson in play
@@ -1422,6 +1435,7 @@ impl BattleScreen {
                 self.danger = Some(danger_tiles(&self.state));
             }
             self.threats.take();
+            self.doable = Doable::default();
             // Checked (phase, units ready) once back to browsing.
             self.end_armed = true;
             let told = (&self.state, self.language.words());
@@ -1589,6 +1603,7 @@ impl BattleScreen {
                 if let Ok(state) = self.history.rewind_to(point) {
                     self.state = state;
                     self.threats.take();
+                    self.doable = Doable::default();
                     self.mode = Mode::after_command(&self.state);
                     self.queue.clear();
                     self.progress = None;
@@ -2611,7 +2626,9 @@ impl BattleScreen {
         self.check_auto_end();
         self.drive_ai(ctx);
         self.tick_lessons(ctx);
-        // On screen as this frame ends: open from now on.
+        // On screen as this frame ends, if it can still be done: open
+        // from now on.
+        self.settle_lessons();
         if self.shown_lesson().is_some() {
             self.lessons.mark_open();
         }

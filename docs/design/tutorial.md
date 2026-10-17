@@ -101,6 +101,21 @@ New Game asks the player how familiar they are, with three answers:
   items are real actions), but **the turn can't end until the checklist is
   done**. *Claude's starting rule* for how "forced" works.
 - Each lesson shows once per campaign. *Claude's starting rule.*
+- **A lesson is only up when it can be done that turn** (0464, Nick:
+  "just make sure the tips are actually achievable on the turn they
+  present themselves"). A lesson that asks a unit to do something opens
+  only if some unit still to act this turn could do it; if none can when
+  its turn to open comes, it doesn't open and waits until it starts again,
+  that turn or a later one. An open one is put away, unfinished, the
+  moment no unit left could do what it still asks, and comes back on a
+  later turn. "Could do it": Attacking, some unit left could reach an
+  enemy; Combat Arts, some unit left has an art it could use from a tile
+  it can reach; Spells that change tiles, some unit left could aim a spell
+  at a tile; Selecting a unit and Threat arrows, any unit left. For
+  example: on turn 1 the Sergeant attacks the Brigand and nobody else can
+  reach an enemy, so Combat Arts waits for a later turn and the turn can
+  end. Lessons that need no unit (the cursor, the keys, the next unit,
+  ending the turn, rewind) are unchanged. *Claude's starting rule.*
 
 **Basic controls** (Full only):
 
