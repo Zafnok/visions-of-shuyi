@@ -4,6 +4,8 @@
 // (`trpg-playdate`, `src/pd/`) uses. It is compiled against the installed
 // SDK's pd_api.h, so the C compiler checks every call against the real API.
 // The SDK's headers are never copied into the repository.
+#include <stdint.h>
+
 #include "pd_api.h"
 
 static PlaydateAPI* pd;
@@ -11,6 +13,7 @@ static PlaydateAPI* pd;
 // The Rust side (`src/pd/entry.rs`).
 extern void trpg_playdate_init(void);
 extern int trpg_playdate_update(void);
+extern void trpg_playdate_menu_chosen(int entry);
 
 // --- memory, console, errors ------------------------------------------------
 
@@ -38,6 +41,27 @@ void pd_buttons(unsigned int* current, unsigned int* pushed)
 	pd->system->getButtonState(&held, &down, &up);
 	*current = (unsigned int)held;
 	*pushed = (unsigned int)down;
+}
+
+// --- the crank --------------------------------------------------------------
+
+// Degrees turned since the last call, clockwise positive.
+float pd_crank_change(void) { return pd->system->getCrankChange(); }
+int pd_crank_docked(void) { return pd->system->isCrankDocked(); }
+
+// --- the system menu ------------------------------------------------------------
+
+// The SDK calls this when the player chooses one of the game's entries;
+// `userdata` is the entry's index, handed on to the Rust side.
+static void menu_chosen(void* userdata) { trpg_playdate_menu_chosen((int)(intptr_t)userdata); }
+
+void* pd_add_menu_item(const char* title, int entry)
+{
+	return pd->system->addMenuItem(title, menu_chosen, (void*)(intptr_t)entry);
+}
+void pd_set_menu_item_title(void* item, const char* title)
+{
+	pd->system->setMenuItemTitle((PDMenuItem*)item, title);
 }
 
 // --- the display ----------------------------------------------------------------

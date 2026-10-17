@@ -11,13 +11,15 @@
 //!
 //! It runs the game (ticket 1033): `trpg_ui::Game::frame` once per SDK
 //! update on the game's own stack, the frame drawn by the one-bit
-//! renderer, the D-pad, A and B fed in as a controller, and the game's
-//! storage on the Playdate's files.
+//! renderer, the D-pad, A, B and the crank fed in as a controller (the
+//! crank since ticket 1035, with the game's entries in the system menu),
+//! and the game's storage on the Playdate's files.
 #![cfg_attr(feature = "sdk", no_std)]
 
 extern crate alloc;
 
 pub mod heap;
+pub mod menu;
 pub mod pads;
 pub mod report;
 pub mod screen;

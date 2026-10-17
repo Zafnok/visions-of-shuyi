@@ -12,6 +12,7 @@ mod files;
 mod game_stack;
 mod panic;
 
+use alloc::vec::Vec;
 use core::ffi::{c_char, c_float, c_int, c_uint, c_void};
 
 use trpg_ui::onebit::Frame;
@@ -28,6 +29,10 @@ unsafe extern "C" {
     fn pd_reset_elapsed();
     fn pd_elapsed() -> c_float;
     fn pd_buttons(current: *mut c_uint, pushed: *mut c_uint);
+    fn pd_crank_change() -> c_float;
+    fn pd_crank_docked() -> c_int;
+    fn pd_add_menu_item(title: *const c_char, entry: c_int) -> *mut c_void;
+    fn pd_set_menu_item_title(item: *mut c_void, title: *const c_char);
     fn pd_set_refresh_rate(rate: c_float);
     fn pd_frame() -> *mut u8;
     fn pd_mark_updated_rows(start: c_int, end: c_int);
@@ -78,6 +83,38 @@ pub fn buttons() -> (u32, u32) {
     let (mut current, mut pushed) = (0, 0);
     unsafe { pd_buttons(&raw mut current, &raw mut pushed) };
     (current, pushed)
+}
+
+/// The degrees the crank turned since the last call (clockwise, which
+/// winds it forwards, positive), and whether it is docked.
+pub fn crank() -> (f32, bool) {
+    let change = unsafe { pd_crank_change() };
+    let docked = unsafe { pd_crank_docked() } != 0;
+    (change, docked)
+}
+
+/// One of the game's entries in the system menu, as the SDK knows it,
+/// with its name as given (kept while the SDK may read it).
+pub struct MenuItem {
+    item: *mut c_void,
+    title: Vec<u8>,
+}
+
+/// Adds the game's entry `entry` (its index, handed back to
+/// `trpg_playdate_menu_chosen` when chosen) to the system menu, named
+/// `title`; `None` if the SDK refused (it takes at most three).
+pub fn add_menu_item(title: &str, entry: usize) -> Option<MenuItem> {
+    let title = text::c_string(title);
+    let entry = c_int::try_from(entry).ok()?;
+    let item = unsafe { pd_add_menu_item(title.as_ptr().cast(), entry) };
+    (!item.is_null()).then_some(MenuItem { item, title })
+}
+
+/// Renames `item` in the system menu.
+pub fn set_menu_item_title(item: &mut MenuItem, title: &str) {
+    let title = text::c_string(title);
+    unsafe { pd_set_menu_item_title(item.item, title.as_ptr().cast()) };
+    item.title = title;
 }
 
 /// How many frames a second the SDK calls the update callback, at most.

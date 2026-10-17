@@ -52,7 +52,7 @@ use super::magic::{
     CastTargeting, SpellChoice, can_cast, heal_choices, heal_tile, knows_spells, reaches_an_enemy,
     spell_choices, spell_menu, target_pos,
 };
-use super::map_menu::{MapEntry, map_menu, ready_players, unit_list};
+use super::map_menu::{MapEntry, map_menu_with, ready_players, unit_list};
 use super::path::steer;
 use super::playback::Playback;
 use super::skills::{
@@ -484,6 +484,9 @@ pub enum Effect {
     /// Open the Guides list (the map menu's `Guides`, ticket 0458); the
     /// map menu stays open under it.
     Guides,
+    /// Do what this action's key does, as if it were pressed now: a
+    /// shortcut chosen in the map menu (ticket 1035), which has closed.
+    Press(Action),
 }
 
 impl Mode {
@@ -883,9 +886,28 @@ fn threat_of(state: &BattleState, id: UnitId) -> Option<Threat> {
 
 /// One non-cursor action in `mode`, with the cursor on `cursor`. Cursor
 /// movement and unit cycling are the screen's; see [`Mode::cursor_moved`].
+/// The map menu lists none of the [shortcuts](MapEntry::SHORTCUTS) (as on
+/// the PC); [`step_with`] gives it some.
 pub fn step(mode: Mode, action: Action, cursor: Pos, state: &BattleState) -> (Mode, Effect) {
+    step_with(mode, action, cursor, state, &[])
+}
+
+/// [`step`], with the map menu listing `shortcuts` (ticket 1035: those
+/// with no button on a platform without a keyboard, `map_menu::shortcuts`).
+pub fn step_with(
+    mode: Mode,
+    action: Action,
+    cursor: Pos,
+    state: &BattleState,
+    shortcuts: &[MapEntry],
+) -> (Mode, Effect) {
+    let menu = MenuAt {
+        state,
+        cursor,
+        shortcuts,
+    };
     match mode {
-        Mode::Idle { threat } => step_idle(threat, action, cursor, state),
+        Mode::Idle { threat } => step_idle(threat, action, menu),
         Mode::Selected(sel) => match action {
             Action::Confirm if aimed_at(&sel, cursor, state).is_some() => {
                 if sel.path.len() == 1 {
@@ -949,7 +971,25 @@ pub fn step(mode: Mode, action: Action, cursor: Pos, state: &BattleState) -> (Mo
         }
         action @ Mode::AiAction(_) => (action, Effect::None),
         Mode::MoveAfter { unit, tiles } => step_move_after(unit, tiles, action, cursor, state),
-        other => step_around(other, action, state),
+        other => step_around(other, action, menu),
+    }
+}
+
+/// Where the map menu opens: in `state`, with the cursor on `cursor` (for
+/// `Unit Info`) and the `shortcuts` the platform lists.
+#[derive(Clone, Copy)]
+struct MenuAt<'a> {
+    state: &'a BattleState,
+    cursor: Pos,
+    shortcuts: &'a [MapEntry],
+}
+
+impl MenuAt<'_> {
+    /// The map menu, focused on `focus`.
+    fn open(self, focus: MapEntry) -> Mode {
+        let (menu, entries) =
+            map_menu_with(self.state, IN_PLAY, focus, self.shortcuts, self.cursor);
+        Mode::MapMenu { menu, entries }
     }
 }
 
@@ -981,7 +1021,8 @@ fn step_move_after(
 
 /// [`step`] in the modes around the move loop: the map menu and what it
 /// opens, the end-turn prompt, the info screen.
-fn step_around(mode: Mode, action: Action, state: &BattleState) -> (Mode, Effect) {
+fn step_around(mode: Mode, action: Action, at: MenuAt<'_>) -> (Mode, Effect) {
+    let state = at.state;
     match mode {
         Mode::MapMenu { menu, entries } => step_map_menu(menu, entries, action, state),
         Mode::UnitList { mut menu, units } => match menu.handle(action) {
@@ -989,13 +1030,11 @@ fn step_around(mode: Mode, action: Action, state: &BattleState) -> (Mode, Effect
                 let at = units.get(i).and_then(|&id| state.unit(id)).map(|u| u.pos);
                 (Mode::default(), at.map_or(Effect::None, Effect::Cursor))
             }
-            Some(MenuEvent::Cancelled) => (open_map_menu(state, MapEntry::Units), Effect::None),
+            Some(MenuEvent::Cancelled) => (at.open(MapEntry::Units), Effect::None),
             None => (Mode::UnitList { menu, units }, Effect::None),
         },
         Mode::Objective => match action {
-            Action::Confirm | Action::Cancel => {
-                (open_map_menu(state, MapEntry::Objective), Effect::None)
-            }
+            Action::Confirm | Action::Cancel => (at.open(MapEntry::Objective), Effect::None),
             _ => (Mode::Objective, Effect::None),
         },
         Mode::EndTurnPrompt { ready } => match action {
@@ -1007,23 +1046,17 @@ fn step_around(mode: Mode, action: Action, state: &BattleState) -> (Mode, Effect
         },
         Mode::RestartPrompt => match action {
             Action::Confirm => (Mode::default(), Effect::Restart),
-            Action::Cancel => (open_map_menu(state, MapEntry::Restart), Effect::None),
+            Action::Cancel => (at.open(MapEntry::Restart), Effect::None),
             _ => (Mode::RestartPrompt, Effect::None),
         },
         Mode::SuspendPrompt => match action {
             Action::Confirm => (Mode::default(), Effect::Suspend),
-            Action::Cancel => (open_map_menu(state, MapEntry::Suspend), Effect::None),
+            Action::Cancel => (at.open(MapEntry::Suspend), Effect::None),
             _ => (Mode::SuspendPrompt, Effect::None),
         },
         Mode::Info { unit } => step_info(unit, action, state),
         other => (other, Effect::None),
     }
-}
-
-/// The map menu, focused on `focus`.
-fn open_map_menu(state: &BattleState, focus: MapEntry) -> Mode {
-    let (menu, entries) = map_menu(state, IN_PLAY, focus);
-    Mode::MapMenu { menu, entries }
 }
 
 /// Ending the turn: the prompt if player units are still ready, else
@@ -1110,7 +1143,12 @@ fn step_map_menu(
             Some(MapEntry::EndTurn) => end_turn(state),
             Some(MapEntry::Options) => (Mode::MapMenu { menu, entries }, Effect::Options),
             Some(MapEntry::Guides) => (Mode::MapMenu { menu, entries }, Effect::Guides),
-            None => (Mode::MapMenu { menu, entries }, Effect::None),
+            // A shortcut (ticket 1035): the menu closes and its key acts.
+            Some(&shortcut) if shortcut.action().is_some() => (
+                Mode::default(),
+                shortcut.action().map_or(Effect::None, Effect::Press),
+            ),
+            Some(_) | None => (Mode::MapMenu { menu, entries }, Effect::None),
         },
         Some(MenuEvent::Cancelled) => (Mode::default(), Effect::None),
         None => (Mode::MapMenu { menu, entries }, Effect::None),
@@ -1569,17 +1607,13 @@ fn step_targeting(mut t: Targeting, action: Action, state: &BattleState) -> (Mod
 /// tile; Cancel hides the threat area, or opens the map menu if none is
 /// shown; `Info` opens the info screen of the unit under the cursor;
 /// `EndTurn` ends the phase (asking first if units are still ready).
-fn step_idle(
-    threat: Option<Threat>,
-    action: Action,
-    cursor: Pos,
-    state: &BattleState,
-) -> (Mode, Effect) {
+fn step_idle(threat: Option<Threat>, action: Action, at: MenuAt<'_>) -> (Mode, Effect) {
+    let MenuAt { state, cursor, .. } = at;
     let idle = |threat| (Mode::Idle { threat }, Effect::None);
     match action {
         Action::Confirm => {
             let Some(unit) = state.units().iter().find(|u| u.pos == cursor) else {
-                return (open_map_menu(state, MapEntry::Units), Effect::None);
+                return (at.open(MapEntry::Units), Effect::None);
             };
             if is_ready_player(state, unit.id) {
                 return match Selection::new(state, unit.id) {
@@ -1597,7 +1631,7 @@ fn step_idle(
             }
         }
         Action::Cancel if threat.is_some() => idle(None),
-        Action::Cancel | Action::Menu => (open_map_menu(state, MapEntry::Units), Effect::None),
+        Action::Cancel | Action::Menu => (at.open(MapEntry::Units), Effect::None),
         Action::Info => match state.units().iter().find(|u| u.pos == cursor) {
             Some(unit) => (Mode::Info { unit: unit.id }, Effect::None),
             None => idle(threat),
@@ -2672,6 +2706,16 @@ mod tests {
         // In the enemy's phase `End Turn` is dimmed.
         let mut theirs = s.clone();
         theirs.apply(&Command::EndPhase).unwrap();
+        let open_map_menu = |state, focus| {
+            let shortcuts = &[];
+            let cursor = Pos::new(0, 0);
+            MenuAt {
+                state,
+                cursor,
+                shortcuts,
+            }
+            .open(focus)
+        };
         let end_turn = open_map_menu(&s, MapEntry::EndTurn);
         let dimmed = open_map_menu(&theirs, MapEntry::Units);
         assert_ne!(enabled(&menu_of(&end_turn)), enabled(&menu_of(&dimmed)));

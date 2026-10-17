@@ -15,8 +15,8 @@ pub use shuyi_assets::keymap as format;
 pub use shuyi_assets::keymap::action_set;
 
 pub use format::{
-    ActionSet, Button, ButtonChord, Chord, ChordDef, Key, LAYOUT_NAME_MAX, Layout, RepeatDef,
-    SLOTS, StickDef, UiAction,
+    ActionSet, Button, ButtonChord, Chord, ChordDef, CrankDef, Key, LAYOUT_NAME_MAX, Layout,
+    RepeatDef, SLOTS, StickDef, UiAction,
 };
 
 /// Path of the keymap inside the asset bundle.
@@ -107,6 +107,19 @@ pub enum Action {
     /// a [`KeyGroup`] of its own (`docs/design/controls.md`, *Dialogue
     /// log*).
     DialogueLog,
+    /// One step further back in the turn rewind, opening it first
+    /// (`docs/design/playdate.md`, *Buttons and the crank*): the Playdate's
+    /// crank wound back one notch. Optional; bound only in the `playdate`
+    /// table, so the Key bindings screen doesn't list it (ticket 1035).
+    RewindBack,
+    /// One step towards the present in the open turn rewind: the crank
+    /// wound forwards one notch. As [`RewindBack`](Self::RewindBack).
+    RewindForward,
+    /// Open the Options screen where a menu has an Options entry (the
+    /// title menu, the map menu, Preparations). It has no key: only a
+    /// platform's own menu sends it (the Playdate's system menu, ticket
+    /// 1035), so it can't be rebound.
+    Options,
 }
 
 /// Which actions may share a key or button (`docs/design/controls.md`,
@@ -128,7 +141,7 @@ impl KeyGroup {
 
 impl Action {
     /// Every action, in declaration order.
-    pub const ALL: [Action; 19] = [
+    pub const ALL: [Action; 22] = [
         Self::CursorLeft,
         Self::CursorDown,
         Self::CursorUp,
@@ -148,11 +161,14 @@ impl Action {
         Self::ConfirmEndTurn,
         Self::ZoomMap,
         Self::DialogueLog,
+        Self::RewindBack,
+        Self::RewindForward,
+        Self::Options,
     ];
 
     /// The name used in keymap files (the variant name).
     pub fn name(self) -> &'static str {
-        const NAMES: [&str; 19] = [
+        const NAMES: [&str; 22] = [
             "CursorLeft",
             "CursorDown",
             "CursorUp",
@@ -172,6 +188,9 @@ impl Action {
             "ConfirmEndTurn",
             "ZoomMap",
             "DialogueLog",
+            "RewindBack",
+            "RewindForward",
+            "Options",
         ];
         NAMES[self as usize]
     }
@@ -215,11 +234,11 @@ impl Action {
         }
     }
 
-    /// Whether the player can rebind this action. Only the developer Debug
-    /// key can't (`docs/design/controls.md`: it is not on the Key bindings
-    /// screen).
+    /// Whether the player can rebind this action. The developer Debug key
+    /// can't (`docs/design/controls.md`: it is not on the Key bindings
+    /// screen), nor can Options, which has no key.
     pub fn is_rebindable(self) -> bool {
-        self != Self::Debug
+        !matches!(self, Self::Debug | Self::Options)
     }
 }
 
@@ -274,7 +293,10 @@ impl ActionSet for Action {
             | Self::Select
             | Self::ConfirmEndTurn
             | Self::ZoomMap
-            | Self::DialogueLog => None,
+            | Self::DialogueLog
+            | Self::RewindBack
+            | Self::RewindForward
+            | Self::Options => None,
         }
     }
 
@@ -344,11 +366,15 @@ mod tests {
             (Action::ZoomMap, vec![RightTrigger]),
             // Another key group, so it shares Danger zone's button.
             (Action::DialogueLog, vec![West]),
-            // No button: the map menu, the optional split keys, Debug.
+            // No button: the map menu, the optional split keys, Debug,
+            // the Playdate's crank and system menu.
             (Action::Menu, vec![]),
             (Action::Select, vec![]),
             (Action::ConfirmEndTurn, vec![]),
             (Action::Debug, vec![]),
+            (Action::RewindBack, vec![]),
+            (Action::RewindForward, vec![]),
+            (Action::Options, vec![]),
         ]
         .map(|(a, buttons)| (a, buttons.into_iter().map(ButtonChord::from).collect()))
         .into();
@@ -367,11 +393,13 @@ mod tests {
     /// Ticket 1034: the Playdate's buttons are `docs/design/playdate.md`'s
     /// (*Buttons and the crank*): the D-pad moves the cursor, A confirms,
     /// B cancels, A + B together ends the turn and hold B + left / right
-    /// picks the previous / next ready unit. Nothing else has a button:
-    /// the map menu has those (ticket 1035), and the crank rewinds.
+    /// picks the previous / next ready unit. Ticket 1035: the crank wound
+    /// back steps the rewind back, wound forwards towards the present, a
+    /// notch being 30° (tunable). Nothing else has a button: the map menu
+    /// and the system menu have those.
     #[test]
     fn embedded_playdate_buttons_match_the_design() {
-        use Button::{DpadDown, DpadLeft, DpadRight, DpadUp, East, South};
+        use Button::{CrankBack, CrankForward, DpadDown, DpadLeft, DpadRight, DpadUp, East, South};
         let k = load_keymap().unwrap_or_default();
         let one = |b| vec![ButtonChord::single(b)];
         let two = |a, b| ButtonChord::pair(a, b).into_iter().collect::<Vec<_>>();
@@ -386,8 +414,11 @@ mod tests {
             (Action::EndTurn, two(South, East)),
             (Action::PrevUnit, two(East, DpadLeft)),
             (Action::NextUnit, two(East, DpadRight)),
+            (Action::RewindBack, one(CrankBack)),
+            (Action::RewindForward, one(CrankForward)),
         ]);
         assert_eq!(k.playdate, design);
+        assert_eq!(k.crank, CrankDef { notch_degrees: 30 });
         // The PC's table is its own.
         assert_ne!(k.pad, k.playdate);
         assert_eq!(k.clone().for_playdate().pad, design);
@@ -509,7 +540,11 @@ mod tests {
             assert_eq!(general.map(|b| b.len()), Some(15), "{layout}");
             let log = k.bindings(layout, KeyGroup::DialogueLog);
             assert_eq!(log.map(|b| b.len()), Some(1), "{layout}");
-            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(19));
+            assert_eq!(k.layouts.get(&layout).map(BTreeMap::len), Some(22));
+            // The crank's and the system menu's actions: no key (1035).
+            for none in [Action::RewindBack, Action::RewindForward, Action::Options] {
+                assert_eq!(k.chords(layout, none), [], "{layout} {none}");
+            }
             assert!(!Action::DialogueLog.is_required());
             assert!(!Action::ZoomMap.is_required());
             // The optional split keys start with no key (controls.md).
@@ -568,6 +603,7 @@ mod tests {
             .into_iter()
             .filter(|a| !a.is_rebindable())
             .collect();
-        assert_eq!(fixed, [Action::Debug]);
+        // Options has no key at all (the Playdate's system menu, 1035).
+        assert_eq!(fixed, [Action::Debug, Action::Options]);
     }
 }

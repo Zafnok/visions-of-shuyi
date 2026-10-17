@@ -88,6 +88,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0078](0078-input-actions-an-open-set-the-game-defines.md) | Input actions are an open set the game defines (`ActionSet`); layouts are named data | Accepted (1106); amends ADR-0015 and ADR-0031 |
 | [0079](0079-button-chords-and-the-playdates-own-buttons.md) | Button chords (two pad buttons together), and the Playdate's own buttons | Accepted (1034); extends ADR-0034 and ADR-0053 |
 | [0080](0080-screens-the-context-and-the-frame-loop-generic-over-the-game.md) | Screens, the context and the frame loop are the engine's, generic over the game (`Ctx<G>`, `GameData`, `GameHooks`) | Accepted (1109); amends ADR-0017 and ADR-0050 |
+| [0081](0081-the-crank-as-buttons-and-actions-from-a-platform-menu.md) | The crank as two buttons (notches through the bindings), and actions from a platform's own menu (`Game::act`) | Accepted (1035); extends ADR-0034 and ADR-0079 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

@@ -22,9 +22,10 @@ use trpg_content::keymap::format;
 use crate::screens::key_bindings::KeyRow;
 use crate::screens::key_bindings::RowGroup::{self, Optional, Required};
 
-pub use shuyi_ui::input::{bindings, fixed, frame, help_keys, keymap, pad, state};
+pub use shuyi_ui::input::{bindings, crank, fixed, frame, help_keys, keymap, pad, state};
 
 pub use bindings::{ButtonSlots, Slots};
+pub use crank::Crank;
 pub use fixed::{
     TextKey, capture_abort_key_name, clear_slot_key_name, is_capture_abort, is_clear_slot, text_key,
 };
@@ -32,8 +33,9 @@ pub use help_keys::ARROWS;
 pub use pad::{ButtonSet, PadId, PadKind, PadState, Pads};
 pub use state::{Device, Input, MAX_REPEATS_PER_UPDATE};
 pub use trpg_content::keymap::{
-    Action, ActionSet, Button, ButtonChord, Chord, ChordDef, Key, KeyGroup, KeymapDef, LEFT_HANDED,
-    Layout, LayoutKeys, PadKeys, RIGHT_HANDED, RepeatDef, SLOTS, StickDef, UiAction, load_keymap,
+    Action, ActionSet, Button, ButtonChord, Chord, ChordDef, CrankDef, Key, KeyGroup, KeymapDef,
+    LEFT_HANDED, Layout, LayoutKeys, PadKeys, RIGHT_HANDED, RepeatDef, SLOTS, StickDef, UiAction,
+    load_keymap,
 };
 
 /// This game's chord and button lookup ([`keymap::Keymap`]).
@@ -72,7 +74,7 @@ pub const CAPTURE_PROMPT: &str = "key_bindings.press_a_key";
 pub const CAPTURE_BUTTON_PROMPT: &str = "key_bindings.press_a_button";
 
 /// This game's rows on the Key bindings screen: every rebindable action
-/// with the text key of its player-facing label (`Unit info`) and its
+/// but the [crank's](CRANK_ACTIONS), with the text key of its player-facing label (`Unit info`) and its
 /// group, in the order the screen lists them (Nick's pick, ticket 0815):
 /// the required actions, then the optional ones, as in `controls.md`'s
 /// *Required and optional* table, then the dialogue log's own key group.
@@ -124,6 +126,10 @@ pub const KEY_ROWS: [KeyRow; 18] = [
         RowGroup::Shared(DIALOGUE_LOG_HEADING),
     ),
 ];
+
+/// The rebindable actions the Key bindings screen doesn't list: only the
+/// Playdate's crank binds them (ticket 1035), which no PC device has.
+pub const CRANK_ACTIONS: [Action; 2] = [Action::RewindBack, Action::RewindForward];
 
 /// Text key of the heading over the actions of the dialogue log's
 /// [`KeyGroup`], which may share keys with the rest.

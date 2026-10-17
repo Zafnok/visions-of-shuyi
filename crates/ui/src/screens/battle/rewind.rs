@@ -95,9 +95,10 @@ impl RewindScreen {
         self.charges_left > 0 && !self.entries.is_empty()
     }
 
-    /// Handles one action: up/down choose (not wrapping), Confirm asks and
-    /// then rewinds, Cancel backs out of the prompt or closes, Rewind
-    /// closes.
+    /// Handles one action: up/down choose (not wrapping), and so do the
+    /// crank's notches (ticket 1035: Rewind back is down, further back;
+    /// Rewind forward is up, towards the present), Confirm asks and then
+    /// rewinds, Cancel backs out of the prompt or closes, Rewind closes.
     pub fn step(&mut self, action: Action) -> RewindEffect {
         match action {
             Action::Cancel if self.confirming => self.confirming = false,
@@ -108,10 +109,12 @@ impl RewindScreen {
                 }
             }
             Action::Confirm => self.confirming = self.can_rewind(),
-            Action::CursorDown if !self.confirming => {
+            Action::CursorDown | Action::RewindBack if !self.confirming => {
                 self.focus = (self.focus + 1).min(self.entries.len().saturating_sub(1));
             }
-            Action::CursorUp if !self.confirming => self.focus = self.focus.saturating_sub(1),
+            Action::CursorUp | Action::RewindForward if !self.confirming => {
+                self.focus = self.focus.saturating_sub(1);
+            }
             _ => {}
         }
         RewindEffect::None

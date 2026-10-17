@@ -18,9 +18,10 @@
 
 use crate::audio::{AudioRequest, MusicClock, MusicCommand};
 use crate::flow::FlowScreen;
+use crate::game::system_menu::{self, SystemMenuEntry};
 use crate::game::{Game, RawInputEvent};
 use crate::input::RIGHT_HANDED;
-use crate::input::{Button, Chord, Device, Layout, PadKind};
+use crate::input::{Button, Chord, Crank, Device, Layout, PadKind};
 use crate::map_view::{MapScene, RangeKind, UnitView, skin_named};
 use crate::profiles::ProfileId;
 use crate::screen::{Ctx, KeyPrompt, Screen, Shuyi, ShuyiCtx};
@@ -52,6 +53,10 @@ pub struct Harness {
     player: Player,
     /// The kind of controller [`pad`](Self::pad) presses buttons on.
     pad_kind: PadKind,
+    /// The crank [`crank`](Self::crank) winds, on the [`pad_kind`] pad.
+    ///
+    /// [`pad_kind`]: Self::use_pad
+    crank: Crank,
     /// What the last frame told `app`: the music and sound volumes and
     /// whether to fill the screen.
     mixer: (f32, f32, bool),
@@ -199,12 +204,14 @@ impl Harness {
     /// Wraps `game`. Debug screens are always on, so F2 behaves the same
     /// in debug and release test runs.
     pub fn from_game(game: Game) -> Self {
+        let crank = Crank::new(game.ctx().game.content.keymap.crank);
         Self {
             game: game.with_debug_screens(true),
             audio: Vec::new(),
             music: Vec::new(),
             player: Player::default(),
             pad_kind: PadKind::default(),
+            crank,
             // Nothing told yet: as `app` starts.
             mixer: (1.0, 1.0, false),
         }
@@ -289,6 +296,26 @@ impl Harness {
         let chord = parse(chord);
         self.advance(&[RawInputEvent::Down(chord)], seconds);
         self.frame(&[RawInputEvent::Up(chord.key)], FRAME_DT);
+        self
+    }
+
+    /// Winds the crank `degrees` in one frame of [`FRAME_DT`] (forwards is
+    /// positive, backwards negative), as the Playdate's front end reports
+    /// it: a press and a release of a crank button for each whole notch
+    /// (`keymap.ron`'s `crank`), the rest of a notch kept for the next
+    /// call (ticket 1035).
+    pub fn crank(&mut self, degrees: f32) -> &mut Self {
+        let events = RawInputEvent::from_crank(&mut self.crank, degrees, false, self.pad_kind);
+        self.frame(&events, FRAME_DT);
+        self
+    }
+
+    /// The player chose `entry` in the platform's own menu (the Playdate's
+    /// system menu, ticket 1035), then a frame of [`FRAME_DT`]: the menu
+    /// closes and the game goes on.
+    pub fn system_menu(&mut self, entry: SystemMenuEntry) -> &mut Self {
+        system_menu::choose(&mut self.game, entry);
+        self.frame(&[], FRAME_DT);
         self
     }
 

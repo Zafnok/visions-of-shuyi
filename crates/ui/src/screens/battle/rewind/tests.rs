@@ -68,6 +68,31 @@ fn the_prompt_freezes_the_choice() {
     assert_eq!(r.step(Action::Confirm), RewindEffect::Rewind(1));
 }
 
+/// Ticket 1035: the crank's notches move the highlight as down and up
+/// do, never past either end and never while the prompt is up, and close
+/// nothing.
+#[test]
+fn crank_notches_step_back_and_towards_the_present() {
+    let mut r = screen(3, 0);
+    let focus = |r: &RewindScreen| r.focused().map(|e| e.point);
+    for _ in 0..4 {
+        assert_eq!(r.step(Action::RewindBack), RewindEffect::None);
+    }
+    assert_eq!(focus(&r), Some(0), "the oldest, not past it");
+    r.step(Action::RewindForward);
+    assert_eq!(focus(&r), Some(1));
+    for _ in 0..3 {
+        assert_eq!(r.step(Action::RewindForward), RewindEffect::None);
+    }
+    assert_eq!(focus(&r), Some(2), "the newest, and still open");
+    r.step(Action::RewindBack);
+    r.step(Action::Confirm);
+    r.step(Action::RewindBack);
+    r.step(Action::RewindForward);
+    assert_eq!(focus(&r), Some(1));
+    assert_eq!(r.step(Action::Confirm), RewindEffect::Rewind(1));
+}
+
 #[test]
 fn using_an_item_names_the_target_unless_it_is_the_user() {
     let before = skirmish(&ctx(), 20);

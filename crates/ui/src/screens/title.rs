@@ -37,6 +37,7 @@ use crate::audio::splitmix64;
 use crate::cinematic::{CinematicPlayer, millis};
 use crate::flow::FlowScreen;
 use crate::glyph_buffer::GlyphBuffer;
+use crate::input::Action;
 use crate::save;
 use crate::screen::{Ctx, FrameInput, IdleMotion, KeyPrompt, Screen, Shuyi, Transition};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
@@ -498,6 +499,12 @@ impl Screen<Shuyi> for TitleScreen {
             self.notice = None;
             let chosen = match self.menu.handle_with_sound(action, &mut ctx.audio) {
                 Some(MenuEvent::Chosen(i)) => self.items.get(i).copied(),
+                // The Playdate's system menu (ticket 1035): as the menu's
+                // own Options.
+                _ if action == Action::Options && self.items.contains(&Item::Options) => {
+                    ctx.audio.menu(MenuSound::Select);
+                    Some(Item::Options)
+                }
                 Some(MenuEvent::Cancelled) | None => None,
             };
             match chosen {

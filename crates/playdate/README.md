@@ -16,6 +16,7 @@ It shows "Loading…", loads the game on the game's own stack and runs it
 | `shim/shim.c` | The SDK's entry point (`eventHandler`) and one small C wrapper per SDK call, compiled against the installed SDK's `pd_api.h` |
 | `src/pd/` | The `sdk` feature: the Rust side of those calls, the allocator over the SDK's `realloc`, the panic handler, the game's own stack (`run`, `high_water`), the SDK's files behind `storage::Files` (`files.rs`) and the entry points the shim calls (`entry.rs`: the frame loop); with the `bench` feature, the bench build's extra renders (`bench.rs`). The only `unsafe` in the crate |
 | `src/pads.rs` | The buttons: the SDK's button bits as a `PadKind::Playdate` controller. The only file here that names buttons (`check-keys`) |
+| `src/menu.rs` | The game's entries in the system menu: the choice the SDK calls back with, kept until the next update, and their names |
 | `src/storage.rs` | The game's `Storage` on the Playdate's files |
 | `src/screen.rs` | Copying the one-bit frame onto the SDK's frame buffer, changed rows only |
 | `src/{heap,stack,text,report}.rs` | The plain, tested parts: allocator arithmetic, the stack's size and high-water mark, C strings, the logged reports |
@@ -33,8 +34,12 @@ Each SDK update (`src/pd/entry.rs`):
    after loading, so the first frame does not count the load).
 2. The buttons become this frame's `RawInputEvent`s (`src/pads.rs`). A
    button pressed and let go between two updates counts as held for one
-   frame, so a quick tap is never lost while a frame takes long.
-3. `Game::frame(&events, dt)` runs on the game's own stack.
+   frame, so a quick tap is never lost while a frame takes long. Then the
+   crank's turn since the last update (`getCrankChange`, `isCrankDocked`)
+   becomes its notches' presses (`RawInputEvent::from_crank`, ADR-0081).
+3. An entry of the system menu chosen since the last update goes to the
+   game (`trpg_ui::game::system_menu::choose`), then `Game::frame(&events,
+   dt)` runs, both on the game's own stack.
 4. Only when the frame's `GlyphBuffer` differs from the last one drawn,
    `trpg_ui::onebit` redraws the parts that differ (`render_changed`,
    ADR-0077; the first frame whole) and the rows that changed are copied
@@ -59,8 +64,22 @@ The D-pad, A and B are one controller of `PadKind::Playdate`, through the
 player's pad bindings like any controller (ADR-0034): A reports as the
 binding position `South` and B as `East`, so the default `pad` table of
 `assets/data/keymap.ron` makes the D-pad the cursor, A Confirm and B
-Cancel. Help text names them `A`, `B` and the D-pad. Chords and the crank
-come with 1034 and 1035.
+Cancel. Help text names them `A`, `B` and the D-pad. Since 1034 the
+front end uses `keymap.ron`'s `playdate` table (A + B, the B chords).
+
+**The crank** (ticket 1035, ADR-0081) is two more buttons of that pad: a
+notch wound back (`notch_degrees` in `keymap.ron`'s `crank`, 30) presses
+and lets go of `CrankBack`, a notch forwards `CrankForward`; the
+`playdate` table binds them to stepping the rewind. A docked crank does
+nothing.
+
+## The system menu
+
+The game adds three entries to the system menu (`src/menu.rs`): Danger
+Zone, Dialogue Log and Options, named in the player's language (renamed
+when it changes). Choosing one hands the screen on top the same action
+as in the game (ADR-0081); where that screen has nothing to do with it,
+nothing happens.
 
 ## Storage
 

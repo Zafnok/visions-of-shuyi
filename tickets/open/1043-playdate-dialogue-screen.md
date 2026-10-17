@@ -22,7 +22,8 @@ ticket needs 0249 done.** 1042 made the one-bit
 faces; 1037 added the `SkinSet` choice.
 
 The Playdate screen is 50 × 15 cells (400 × 240 px). Nick kept portraits
-and the dialogue log (system menu entry and map menu entry, 1035).
+and the dialogue log (its system menu entry, 1035; no map menu entry,
+Nick 2026-10-17: the log only opens in a conversation).
 
 ## Nick input
 

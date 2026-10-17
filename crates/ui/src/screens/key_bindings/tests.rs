@@ -1,7 +1,7 @@
 use super::*;
 use crate::audio::AudioRequest;
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::input::{KEY_ROWS, LEFT_HANDED, RIGHT_HANDED};
+use crate::input::{CRANK_ACTIONS, KEY_ROWS, LEFT_HANDED, RIGHT_HANDED};
 use crate::screen::tests::ctx;
 use crate::storage::Storage;
 
@@ -102,9 +102,10 @@ fn rows_list_every_rebindable_action_once_required_first() {
     assert_eq!(required, 7);
     assert!(listed[required..].iter().all(|a| !a.is_required()));
     listed.sort();
+    // The crank's actions are bound on the Playdate only (ticket 1035).
     let mut rebindable: Vec<Action> = Action::ALL
         .into_iter()
-        .filter(|a| a.is_rebindable())
+        .filter(|a| a.is_rebindable() && !CRANK_ACTIONS.contains(a))
         .collect();
     rebindable.sort();
     assert_eq!(listed, rebindable);
