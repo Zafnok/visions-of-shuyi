@@ -6,7 +6,9 @@
 //! they live in the top-level `music/` folder shipped next to the game, so
 //! the bundle can't check them. [`load`] checks the embedded sounds only;
 //! a test checks the music folder with [`from_source`], including each
-//! track's `length_ms` against its file ([`ogg_length_ms`], ADR-0037).
+//! track's `length_ms` against its file ([`ogg_length_ms`], ADR-0037). The
+//! Playdate's bundle leaves the sound files out until 1047 (ticket 1036):
+//! there the manifest is read, its sounds unchecked.
 //!
 //! The manifest is Shuyi Engine's (`shuyi_assets::audio`, ticket 1104);
 //! this module names the game's files and folders.
@@ -43,6 +45,7 @@ pub fn files(music: Option<&dyn Fn(&str) -> Bytes>) -> Files<'_> {
     Files {
         sound: &embedded_sound,
         sound_shown: &shown_sound,
+        sound_left_out: &left_out_sound,
         music_dir: MUSIC_DIR,
         music,
     }
@@ -56,6 +59,12 @@ fn embedded_sound(file: &str) -> Bytes {
 /// How errors name the sound file named `file` in the manifest.
 fn shown_sound(file: &str) -> String {
     bundle::display_path(&sound_path(file))
+}
+
+/// Whether this build leaves out the sound file named `file` in the
+/// manifest: the Playdate's plays no sound yet (ticket 1036).
+fn left_out_sound(file: &str) -> bool {
+    bundle::left_out(&sound_path(file))
 }
 
 /// Loads and validates the embedded manifest. Music files aren't checked
@@ -81,6 +90,23 @@ mod tests {
         assert!(m.is_ok(), "{m:?}");
         // audio.md's starting fade (TUNABLE): 0.5 s.
         assert_eq!(m.map(|m| m.music_fade_ms), Ok(500));
+    }
+
+    /// The PC's bundle checks every sound file; the Playdate's, which
+    /// leaves them out (ticket 1036), checks none and still loads.
+    #[test]
+    fn the_playdates_bundle_leaves_the_sound_files_out_unchecked() {
+        let heal = "sfx/heal.wav";
+        assert!(!(files(None).sound_left_out)(heal));
+        assert!(embedded_sound(heal).is_some());
+        let playdate = Box::leak(Box::new(bundle::Bundle::new(bundle::playdate_layers())));
+        bundle::reading(playdate, || {
+            assert!((files(None).sound_left_out)(heal));
+            assert!(embedded_sound(heal).is_none());
+            let m = load();
+            assert!(m.is_ok(), "{m:?}");
+            assert!(m.is_ok_and(|m| m.sounds.values().any(|s| s.files.iter().any(|f| f == heal))));
+        });
     }
 
     #[test]
