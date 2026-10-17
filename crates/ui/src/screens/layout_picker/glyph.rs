@@ -216,7 +216,7 @@ mod tests {
     /// A one-key legend and two layouts, the second focused.
     fn view(role_of_q: KeyRole, role_of_f: KeyRole) -> LayoutPickerView {
         let layout = |name: &str, focused| LayoutView {
-            layout: crate::input::Layout::RightHanded,
+            layout: crate::input::RIGHT_HANDED,
             name: name.to_owned(),
             focused,
             legend: vec![
@@ -321,7 +321,7 @@ mod tests {
     #[test]
     fn it_paints_the_real_screen_over_the_whole_buffer() {
         let c = Ctx::embedded().unwrap();
-        let screen = LayoutPickerScreen::new();
+        let screen = LayoutPickerScreen::new(&c);
         let stale = Cell::new(
             'x',
             c.palette.get(UiColor::Enemy),

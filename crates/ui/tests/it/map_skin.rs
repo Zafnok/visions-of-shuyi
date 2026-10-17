@@ -5,7 +5,7 @@ use insta::assert_snapshot;
 use trpg_core::{BattleState, Pos};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::{Facing, RangeKind};
 use trpg_ui::settings::MapZoom;
 
@@ -65,7 +65,7 @@ fn light_quick_battle(h: &mut Harness, light: &str) {
 /// `zoom`, in the light `light` if one is given: what each step left, and
 /// every sound and music request of the run.
 fn play_in(skin: &str, zoom: MapZoom, light: Option<&str>) -> (Vec<After>, Vec<AudioRequest>) {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     at_zoom(&mut h, zoom);
     h.with_map_skin(skin);
     if let Some(light) = light {
@@ -149,7 +149,7 @@ fn the_skin_never_changes_the_game() {
 #[test]
 fn quick_battle_at_dusk_shades_the_ground_only() {
     let start = |skin: &str, light: Option<&str>| {
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         at_zoom(&mut h, MapZoom::X1);
         h.with_map_skin(skin);
         if let Some(light) = light {
@@ -211,13 +211,13 @@ fn quick_battle_at_dusk_shades_the_ground_only() {
 /// sprites.
 #[test]
 fn quick_battle_with_layers_between_tiles() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     at_zoom(&mut h, MapZoom::X1);
     h.with_map_skin("test_auto");
     // Past Preparations (Fight!) and the battle's notes; then the lord.
     h.keys("Down f Left f f f");
     assert_eq!(h.screens(), ["title", "battle"]);
-    let mut glyphs = Harness::with_layout(Layout::RightHanded);
+    let mut glyphs = Harness::with_layout(RIGHT_HANDED);
     glyphs.keys("Down f Left f f f");
     // What is shown is what the glyph skin shows.
     assert_eq!(h.map_text(), glyphs.map_text());
@@ -233,11 +233,11 @@ fn quick_battle_with_layers_between_tiles() {
 /// with its side's outline, standing on its 14-pixel HP bar.
 #[test]
 fn quick_battle_with_sprite_units_on_glyph_terrain() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin("sprite_units");
     h.keys("Down f Left f f");
     assert_eq!(h.screens(), ["title", "battle"]);
-    let mut glyphs = Harness::with_layout(Layout::RightHanded);
+    let mut glyphs = Harness::with_layout(RIGHT_HANDED);
     glyphs.keys("Down f Left f f");
     // What is shown is what the glyph skin shows.
     assert_eq!(h.map_text(), glyphs.map_text());
@@ -251,7 +251,7 @@ fn quick_battle_with_sprite_units_on_glyph_terrain() {
 /// its tile's top edge.
 #[test]
 fn quick_battle_with_sprite_units_after_two_actions() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin("sprite_units");
     h.keys("Down f Left f f");
     // The knight, at (4, 6): Skill, Brace.
@@ -287,7 +287,7 @@ type Seen = Vec<(Pos, Facing, (f32, f32), u8)>;
 /// right and one up: its path, and what the scene shows of it every 50 ms
 /// for a second from the Confirm that starts the walk.
 fn lord_walk(skin: &str) -> (Vec<Pos>, Seen) {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin(skin);
     h.keys("Down f Left f f f Right Right Right Up");
     let path = h.path();

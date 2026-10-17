@@ -9,7 +9,7 @@ use trpg_core::{
     BattleState, Campaign, Command, GameMode, Pos, SAVE_VERSION, SaveFile, UnitAction, UnitId,
 };
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::profiles::ProfileId;
 use trpg_ui::save::{SUSPEND_KEY, SaveError, slot_key};
 use trpg_ui::{Ctx, Game, MemoryStorage, Storage};
@@ -23,7 +23,7 @@ const FORT: Pos = Pos::new(5, 5);
 /// `chained`, the test chapter is followed by the `quick` chapter.
 fn launch(storage: Box<dyn Storage>, chained: bool) -> Harness {
     let mut storage = storage;
-    if let Err(e) = storage.write("layout", Layout::RightHanded.name()) {
+    if let Err(e) = storage.write("layout", RIGHT_HANDED.name()) {
         panic!("saving the layout: {e}");
     }
     let mut ctx = Ctx::embedded()

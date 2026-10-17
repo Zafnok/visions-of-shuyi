@@ -8,10 +8,11 @@
 
 use insta::assert_snapshot;
 use trpg_ui::harness::{FRAME_DT, Harness};
-use trpg_ui::input::{Action, Chord, Device, Layout, PadKind};
+use trpg_ui::input::RIGHT_HANDED;
+use trpg_ui::input::{Action, Chord, Device, PadKind};
 
 fn title() -> Harness {
-    Harness::with_layout(Layout::RightHanded)
+    Harness::with_layout(RIGHT_HANDED)
 }
 
 /// At the title with the right-handed layout, then Quick Battle, chosen
@@ -226,11 +227,11 @@ fn a_first_launch_plays_with_a_pad_and_no_layout() {
 /// controller button counts, and does nothing else.
 #[test]
 fn a_button_ends_the_titles_wait() {
-    let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
+    let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
     // Pressing the right stick in is bound to nothing: it still counts.
     h.pad("RightStickPress");
     assert_eq!(h.snapshot(), title().snapshot());
-    let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
+    let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
     h.pad("South");
     assert_eq!(h.screens(), ["title"]);
     assert!(h.sounds().is_empty());
@@ -368,12 +369,10 @@ fn an_action_with_no_button_shows_not_mapped_on_a_pad() {
 #[test]
 fn a_key_for_select_leaves_the_pads_confirm_picking() {
     let mut h = quick_battle();
-    let mut keys = h.game().ctx().layout_bindings(Layout::RightHanded);
+    let mut keys = h.game().ctx().layout_bindings(RIGHT_HANDED);
     let g = Chord::parse("g").unwrap();
     assert_eq!(keys.bind(Action::Select, 0, g), Ok(None));
-    h.ctx_mut()
-        .set_layout_bindings(Layout::RightHanded, keys)
-        .unwrap();
+    h.ctx_mut().set_layout_bindings(RIGHT_HANDED, keys).unwrap();
     // The keyboard's Confirm no longer picks the lord under the cursor.
     h.keys("Right Left");
     let before = help_rows(&h);
@@ -395,12 +394,10 @@ fn a_key_for_select_leaves_the_pads_confirm_picking() {
 #[test]
 fn a_key_for_confirm_end_turn_leaves_start_twice_ending_the_turn() {
     let mut h = quick_battle();
-    let mut keys = h.game().ctx().layout_bindings(Layout::RightHanded);
+    let mut keys = h.game().ctx().layout_bindings(RIGHT_HANDED);
     let enter = Chord::parse("Enter").unwrap();
     assert_eq!(keys.bind(Action::ConfirmEndTurn, 0, enter), Ok(None));
-    h.ctx_mut()
-        .set_layout_bindings(Layout::RightHanded, keys)
-        .unwrap();
+    h.ctx_mut().set_layout_bindings(RIGHT_HANDED, keys).unwrap();
     h.keys("Space Space");
     assert!(!shows(&h, "ENEMY PHASE"));
     h.keys("d");

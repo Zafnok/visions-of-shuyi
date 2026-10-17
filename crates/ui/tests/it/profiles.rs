@@ -4,11 +4,12 @@
 //! screen (0837) switches, adds, renames and deletes them.
 
 use std::collections::BTreeMap;
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 
 use trpg_content::new_campaign;
 use trpg_core::{GameMode, LeadGender, LeadProfile, SaveFile};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{Action, Chord, Layout};
+use trpg_ui::input::{Action, Chord};
 use trpg_ui::profiles::{PROFILES_KEY, ProfileError, ProfileId};
 use trpg_ui::save::{self, SUSPEND_KEY, slot_key};
 use trpg_ui::screens::TitleScreen;
@@ -98,7 +99,7 @@ fn everything(storage: &dyn Storage) -> BTreeMap<String, String> {
 /// with Confirm on `g`, slow text, a tip seen, a save in slot 3 and a
 /// suspend save, all under their own keys; and the title's backdrop.
 fn storage_from_before_profiles() -> MemoryStorage {
-    let mut h = Harness::with_layout(Layout::LeftHanded);
+    let mut h = Harness::with_layout(LEFT_HANDED);
     set_text_speed(&mut h, TextSpeed::Slow);
     confirm_on(&mut h, "g");
     mark_tip(&mut h, "first_move");
@@ -134,7 +135,7 @@ fn a_storage_from_before_profiles_loads_as_player_1() {
     assert_eq!(names(&h), ["Player 1"]);
     // Every option, key, tip seen, save and suspend save is there.
     assert_eq!(h.screens(), ["title"], "the layout picker doesn't open");
-    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+    assert_eq!(h.game().ctx().layout(), Some(LEFT_HANDED));
     assert_eq!(text_speed(&h), TextSpeed::Slow);
     assert!(confirm_key(&h, "g"));
     assert!(tip_seen(&h, "first_move"));
@@ -165,7 +166,7 @@ fn a_storage_from_before_profiles_loads_as_player_1() {
 
 #[test]
 fn each_profile_keeps_its_own_options_keys_tips_and_saves() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     set_text_speed(&mut h, TextSpeed::Slow);
     confirm_on(&mut h, "g");
     mark_tip(&mut h, "first_move");
@@ -182,7 +183,7 @@ fn each_profile_keeps_its_own_options_keys_tips_and_saves() {
     assert!(!tip_seen(&h, "first_move"));
     assert_eq!(saved_lead(&h, &slot_key(1)), None);
     assert!(!save::any_slot(&h.game().ctx().storage));
-    ok(h.ctx_mut().choose_layout(Layout::LeftHanded));
+    ok(h.ctx_mut().choose_layout(LEFT_HANDED));
     set_text_speed(&mut h, TextSpeed::Fast);
     confirm_on(&mut h, "h");
     save_at(&mut h, &slot_key(2), "Odo");
@@ -190,7 +191,7 @@ fn each_profile_keeps_its_own_options_keys_tips_and_saves() {
 
     for _ in 0..2 {
         switch(&mut h, ProfileId::FIRST);
-        assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
+        assert_eq!(h.game().ctx().layout(), Some(RIGHT_HANDED));
         assert_eq!(text_speed(&h), TextSpeed::Slow);
         assert!(confirm_key(&h, "g") && !confirm_key(&h, "h"));
         assert!(tip_seen(&h, "first_move"));
@@ -203,7 +204,7 @@ fn each_profile_keeps_its_own_options_keys_tips_and_saves() {
         h.keys("d");
 
         switch(&mut h, mei);
-        assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+        assert_eq!(h.game().ctx().layout(), Some(LEFT_HANDED));
         assert_eq!(text_speed(&h), TextSpeed::Fast);
         assert!(confirm_key(&h, "h") && !confirm_key(&h, "g"));
         assert!(!tip_seen(&h, "first_move"));
@@ -215,31 +216,31 @@ fn each_profile_keeps_its_own_options_keys_tips_and_saves() {
 
 #[test]
 fn the_next_launch_opens_on_the_last_profile_used() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     let mei = add(&mut h, "Mei");
     switch(&mut h, mei);
-    ok(h.ctx_mut().choose_layout(Layout::LeftHanded));
+    ok(h.ctx_mut().choose_layout(LEFT_HANDED));
     set_text_speed(&mut h, TextSpeed::Fast);
     let mut h = Harness::with_storage(h.into_storage());
     assert_eq!(h.game().ctx().profiles().current(), mei);
     assert_eq!(h.screens(), ["title"]);
-    assert_eq!(h.game().ctx().layout(), Some(Layout::LeftHanded));
+    assert_eq!(h.game().ctx().layout(), Some(LEFT_HANDED));
     assert_eq!(text_speed(&h), TextSpeed::Fast);
     switch(&mut h, ProfileId::FIRST);
     let h = Harness::with_storage(h.into_storage());
     assert_eq!(h.game().ctx().profiles().current(), ProfileId::FIRST);
-    assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
+    assert_eq!(h.game().ctx().layout(), Some(RIGHT_HANDED));
     assert_eq!(text_speed(&h), TextSpeed::Normal);
 }
 
 #[test]
 fn deleting_a_profile_removes_its_keys_and_no_others() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     save_at(&mut h, &slot_key(1), "Mara");
     let (mei, odo) = (add(&mut h, "Mei"), add(&mut h, "Odo"));
     for id in [mei, odo] {
         switch(&mut h, id);
-        ok(h.ctx_mut().choose_layout(Layout::LeftHanded));
+        ok(h.ctx_mut().choose_layout(LEFT_HANDED));
         mark_tip(&mut h, "first_move");
         save_at(&mut h, &slot_key(1), "Piet");
     }
@@ -254,7 +255,7 @@ fn deleting_a_profile_removes_its_keys_and_no_others() {
     ok(h.ctx_mut().delete_profile(odo));
     assert_eq!(names(&h), ["Player 1", "Mei"]);
     assert_eq!(h.game().ctx().profiles().current(), ProfileId::FIRST);
-    assert_eq!(h.game().ctx().layout(), Some(Layout::RightHanded));
+    assert_eq!(h.game().ctx().layout(), Some(RIGHT_HANDED));
     ok(h.ctx_mut().delete_profile(mei));
     let after = everything(h.game().ctx().storage.computer());
     let kept: BTreeMap<String, String> = before
@@ -283,7 +284,7 @@ fn deleting_a_profile_removes_its_keys_and_no_others() {
 
 #[test]
 fn a_refused_change_leaves_the_list_as_it_was() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     let mei = add(&mut h, "Mei");
     let ctx = h.ctx_mut();
     assert_eq!(ctx.add_profile("player 1"), Err(ProfileError::NameTaken));
@@ -301,7 +302,7 @@ fn a_refused_change_leaves_the_list_as_it_was() {
 /// the Profile screen: the title's item under Options (past Load Game,
 /// with no saves, Quick Battle and Options).
 fn profile_screen() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down Down Down f");
     assert_eq!(h.screens(), ["title", "profile"]);
     h
@@ -346,7 +347,7 @@ fn add_on_screen(h: &mut Harness, name: &str) {
 
 #[test]
 fn the_title_has_profile_under_options() {
-    let h = Harness::with_layout(Layout::RightHanded);
+    let h = Harness::with_layout(RIGHT_HANDED);
     let items = title_items(&h);
     let options = items.iter().position(|i| i == "Options");
     let under = options.and_then(|i| items.get(i + 1));
@@ -360,9 +361,9 @@ fn add_change_an_option_switch_and_switch_back() {
     let mut h = profile_screen();
     // Player 1's own: slow text, a second Confirm key, a suspend save.
     set_text_speed(&mut h, TextSpeed::Slow);
-    let mut keys = h.game().ctx().layout_bindings(Layout::RightHanded);
+    let mut keys = h.game().ctx().layout_bindings(RIGHT_HANDED);
     ok(keys.bind(Action::Confirm, 1, chord("g")));
-    ok(h.ctx_mut().set_layout_bindings(Layout::RightHanded, keys));
+    ok(h.ctx_mut().set_layout_bindings(RIGHT_HANDED, keys));
     save_at(&mut h, SUSPEND_KEY, "Odo");
 
     add_on_screen(&mut h, "Mei");
@@ -420,7 +421,7 @@ fn renaming_keeps_the_profiles_options_and_saves() {
 
 #[test]
 fn deleting_on_the_screen_asks_first_and_takes_the_saves() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     let mei = add(&mut h, "Mei");
     switch(&mut h, mei);
     save_at(&mut h, &slot_key(1), "Mara");

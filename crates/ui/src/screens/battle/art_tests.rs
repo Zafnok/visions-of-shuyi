@@ -511,7 +511,7 @@ fn arts_menu_snapshot() {
 #[test]
 fn arts_menu_left_handed_snapshot() {
     let mut c = ctx();
-    c.use_layout(crate::input::Layout::LeftHanded);
+    c.use_layout(crate::input::LEFT_HANDED);
     let state = swordsman(&c, 20);
     let mut s = lord_menu(&mut c, state);
     choose_entry(&mut s, &mut c, MenuEntry::Arts);

@@ -6,14 +6,14 @@ use trpg_content::{Theme, TipTrigger};
 use trpg_core::{Faction, Pos};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::{FRAME_DT, Harness};
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::RangeKind;
 use trpg_ui::screens::BattleScreen;
 
 /// At the title with the right-handed layout, then Quick Battle, still
 /// under turn 1's `PLAYER PHASE` banner.
 fn quick_battle_banner() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     // Quick Battle, then Preparations: Left wraps to `Fight!`.
     h.keys("Down f Left f");
     assert_eq!(h.screens(), ["title", "battle"]);
@@ -75,7 +75,7 @@ fn quick_battle_renders() {
 #[test]
 fn quick_battle_in_every_theme() {
     for theme in Theme::ALL {
-        let mut h = Harness::with_layout(Layout::RightHanded);
+        let mut h = Harness::with_layout(RIGHT_HANDED);
         h.ctx_mut().change_settings(|s| s.theme = theme).unwrap();
         h.keys("Down f Left f f");
         assert_eq!(h.screens(), ["title", "battle"]);
@@ -620,7 +620,7 @@ fn an_art_from_the_arts_menu_and_a_spell_active_from_the_spell_list() {
 
 #[test]
 fn tips_show_when_switched_on() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_tips().keys("Down f Left f");
     // The start tip waits for the `PLAYER PHASE` banner.
     assert!(shows(&h, "PLAYER PHASE"));
@@ -637,7 +637,7 @@ fn tips_show_when_switched_on() {
 /// closed, and shows once the scene ends.
 #[test]
 fn the_start_tip_waits_for_the_first_turn_scene() {
-    let mut h = Harness::with_layout(Layout::RightHanded).with_shipped_story();
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     h.with_tips();
     // New Game, Classic, Not familiar, the default lead; the intro scenes
     // skipped.
@@ -754,7 +754,7 @@ fn quick_battle_keeps_one_skirmish_track() {
 /// and keeps it the same way.
 #[test]
 fn a_battle_keeps_the_cue_its_file_names() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     let quick = h.ctx_mut().content.battles.get_mut("quick").unwrap();
     quick.music = trpg_core::BattleMusic::Cue("battle_bright".into());
     // The track starts on the Preparations screen and stays on.

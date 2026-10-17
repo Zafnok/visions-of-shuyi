@@ -1,6 +1,6 @@
 //! The first-launch "Pick your layout" screen (`docs/design/controls.md`):
-//! one panel per [`Layout`] with a small keyboard diagram and a legend, both
-//! read from that layout's bindings. The Options screen opens it again to
+//! one panel per [`Layout`] the keymap file lists, with a small keyboard
+//! diagram and a legend, both read from that layout's bindings. The Options screen opens it again to
 //! switch layout ([`LayoutPickerScreen::change`]).
 //!
 //! **The look is a skin** (ADR-0054). This module decides what the screen
@@ -28,12 +28,19 @@ pub const TITLE: &str = "layout_picker.title";
 /// flagged as movement.
 const LEGEND_MOVE: &str = "layout_picker.legend.move";
 
-/// The name shown for a layout, in `ctx`'s language.
+/// The name shown for a layout, in `ctx`'s language: the text key the
+/// keymap file gives it (empty for a layout the keymap doesn't have, which
+/// is never in use).
 pub fn label(ctx: &Ctx, layout: Layout) -> &str {
-    ctx.text(match layout {
-        Layout::RightHanded => "layout_picker.right_handed",
-        Layout::LeftHanded => "layout_picker.left_handed",
-    })
+    ctx.content
+        .keymap
+        .layout_text(layout)
+        .map_or("", |key| ctx.text(key))
+}
+
+/// The layouts the picker shows, in the keymap file's order.
+fn layouts(ctx: &Ctx) -> Vec<Layout> {
+    ctx.content.keymap.layout_ids().collect()
 }
 
 /// Shows both layouts and saves the one picked. Asked for by a key press
@@ -53,11 +60,11 @@ impl LayoutPickerScreen {
     /// Its [`Screen::name`].
     pub const NAME: &'static str = "layout_picker";
 
-    /// The picker with the first layout (right-handed) focused.
-    pub fn new() -> Self {
+    /// The picker with the first layout focused.
+    pub fn new(ctx: &Ctx) -> Self {
         Self {
             // A layout must be picked.
-            menu: Self::menu().without_cancel(),
+            menu: Self::menu(ctx).without_cancel(),
             cancellable: false,
         }
     }
@@ -65,26 +72,26 @@ impl LayoutPickerScreen {
     /// The picker as Options opens it, to switch layout: the layout in use
     /// focused, and Cancel backs out without changing anything.
     pub fn change(ctx: &Ctx) -> Self {
-        let current = Layout::ALL.iter().position(|&l| Some(l) == ctx.layout());
+        let current = layouts(ctx).iter().position(|&l| Some(l) == ctx.layout());
         Self {
-            menu: Self::menu().focused(current.unwrap_or(0)),
+            menu: Self::menu(ctx).focused(current.unwrap_or(0)),
             cancellable: true,
         }
     }
 
     /// One line per layout. The menu only keeps the focus: it is never
     /// drawn, so its lines have no text.
-    fn menu() -> Menu {
-        let items = Layout::ALL.iter().map(|_| MenuItem::new(String::new()));
+    fn menu(ctx: &Ctx) -> Menu {
+        let items = layouts(ctx)
+            .into_iter()
+            .map(|_| MenuItem::new(String::new()));
         Menu::new(items.collect())
     }
 
-    /// The focused layout.
-    pub fn focused(&self) -> Layout {
-        Layout::ALL
-            .get(self.menu.focus())
-            .copied()
-            .unwrap_or(Layout::RightHanded)
+    /// The focused layout (`None` only for a keymap with no layouts, which
+    /// the loader refuses).
+    pub fn focused(&self, ctx: &Ctx) -> Option<Layout> {
+        layouts(ctx).get(self.menu.focus()).copied()
     }
 
     /// The bottom help line: every Cursor up and Cursor down key, then every
@@ -160,13 +167,13 @@ impl LayoutPickerScreen {
     /// ([`glyph::paint`]): each layout with its legend and what every key
     /// of its keyboard does, the one in focus, and the help line.
     pub fn view(&self, ctx: &Ctx) -> LayoutPickerView {
-        let focused = self.focused();
-        let layouts = Layout::ALL.iter().map(|&layout| {
+        let focused = self.focused(ctx);
+        let layouts = layouts(ctx).into_iter().map(|layout| {
             let km = ctx.keymap_for(layout);
             LayoutView {
                 layout,
                 name: label(ctx, layout).to_owned(),
-                focused: layout == focused,
+                focused: Some(layout) == focused,
                 legend: Self::legend(ctx, &km),
                 keys: key_caps(&km),
             }
@@ -203,12 +210,6 @@ fn key_caps(km: &Keymap) -> Vec<KeyCapView> {
         .collect()
 }
 
-impl Default for LayoutPickerScreen {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Screen for LayoutPickerScreen {
     fn name(&self) -> &'static str {
         Self::NAME
@@ -222,10 +223,12 @@ impl Screen for LayoutPickerScreen {
         for &action in &input.actions {
             match self.menu.handle_with_sound(action, &mut ctx.audio) {
                 Some(MenuEvent::Chosen(i)) => {
-                    let layout = Layout::ALL.get(i).copied().unwrap_or(Layout::RightHanded);
-                    // If saving fails the layout is still used this
-                    // session; the player is just asked again next launch.
-                    let _ = ctx.choose_layout(layout);
+                    if let Some(&layout) = layouts(ctx).get(i) {
+                        // If saving fails the layout is still used this
+                        // session; the player is just asked again next
+                        // launch.
+                        let _ = ctx.choose_layout(layout);
+                    }
                     return Transition::Pop;
                 }
                 Some(MenuEvent::Cancelled) => return Transition::Pop,

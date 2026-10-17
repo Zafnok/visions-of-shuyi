@@ -8,14 +8,14 @@ use trpg_content::LangCode;
 use trpg_content::lang::TEST;
 use trpg_core::{LeadGender, LeadProfile};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::BattleScreen;
 use trpg_ui::screens::battle::map_menu::MapEntry;
 use trpg_ui::screens::battle::mode::{MenuEntry, Mode};
 
 /// At the title in the test language, with the right-handed layout.
 fn title() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     let Some(test) = LangCode::new(TEST) else {
         panic!("the test pack's code isn't a language code");
     };
@@ -260,7 +260,7 @@ fn a_weapon_list_is_painted_in_the_test_language() {
         h.keys("f");
         h
     };
-    let mut english = Harness::with_layout(Layout::RightHanded);
+    let mut english = Harness::with_layout(RIGHT_HANDED);
     english.keys("Down f Left f f");
     let english = equip_list(english);
     let test = equip_list(quick_battle());

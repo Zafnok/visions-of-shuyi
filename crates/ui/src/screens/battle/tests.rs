@@ -174,7 +174,7 @@ fn help_depends_on_what_is_hovered() {
         s.help(&c),
         "arrows move · f menu · s next unit · r rewind · d menu · Space end turn"
     );
-    c.use_layout(crate::input::Layout::LeftHanded);
+    c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(
         s.help(&c),
         "wasd move · j menu · l next unit · u rewind · k menu · Space end turn"
@@ -190,9 +190,9 @@ fn help_depends_on_what_is_hovered() {
 fn help_shows_not_mapped_for_an_action_with_no_key() {
     let mut c = ctx();
     let s = quick();
-    let mut keys = c.layout_bindings(crate::input::Layout::RightHanded);
+    let mut keys = c.layout_bindings(crate::input::RIGHT_HANDED);
     keys.clear(Action::Info, 0);
-    c.set_layout_bindings(crate::input::Layout::RightHanded, keys)
+    c.set_layout_bindings(crate::input::RIGHT_HANDED, keys)
         .unwrap();
     assert_eq!(
         s.help(&c),
@@ -780,7 +780,7 @@ fn help_follows_the_mode() {
     assert_eq!(s.help(&c), "f skip");
     frame(&mut s, &mut c, &[], 1.0, false);
     assert_eq!(s.help(&c), "arrows choose · f confirm · d back");
-    c.use_layout(crate::input::Layout::LeftHanded);
+    c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(s.help(&c), "wasd choose · j confirm · k back");
 }
 

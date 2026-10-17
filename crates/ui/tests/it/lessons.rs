@@ -6,7 +6,7 @@
 
 use trpg_core::{Phase, TutorialLevel};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::save::SUSPEND_KEY;
 use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::{Ctx, Game, MemoryStorage, Storage};
@@ -18,7 +18,7 @@ const TEST_LESSON: &str = "test_cursor";
 /// the test chapter, and the lessons on (as the game has them).
 fn launch(storage: Box<dyn Storage>) -> Harness {
     let mut storage = storage;
-    if let Err(e) = storage.write("layout", Layout::RightHanded.name()) {
+    if let Err(e) = storage.write("layout", RIGHT_HANDED.name()) {
         panic!("saving the layout: {e}");
     }
     let mut ctx = Ctx::embedded()

@@ -1,11 +1,12 @@
 use super::*;
 use crate::console::ConsoleSpec;
+use crate::input::KEY_ROWS as ROWS;
 use crate::input::{
     Action, Button, CAPTURE_BUTTON_PROMPT, CAPTURE_PROMPT, Chord, Key, KeyGroup, PadKind, SLOTS,
 };
 use crate::screen::tests::ctx;
 use crate::screens::key_bindings::view::{GroupView, RestoreView};
-use crate::screens::key_bindings::{CHOICES, ROWS};
+use crate::screens::key_bindings::{CHOICES, KeyRow};
 use crate::widgets::help::NOT_MAPPED;
 
 /// The row of `view` for `action`, mutable.
@@ -17,7 +18,7 @@ fn row_mut(view: &mut KeyBindingsView, action: Action) -> &mut RowView {
 /// A view of every action in [`ROWS`], the first slot of each holding a
 /// key and the others empty, nothing focused or open, on `side`.
 fn view(side: Side) -> KeyBindingsView {
-    let row = |&(action, label): &(Action, &str)| RowView {
+    let row = |&(action, label, _): &KeyRow| RowView {
         action,
         label: ctx().text(label).to_owned(),
         fixed: Vec::new(),
@@ -40,7 +41,7 @@ fn view(side: Side) -> KeyBindingsView {
         required,
         rows: ROWS
             .iter()
-            .filter(|(a, _)| a.is_required() == required && a.group() == group)
+            .filter(|(a, ..)| a.is_required() == required && a.group() == group)
             .map(row)
             .collect(),
     };

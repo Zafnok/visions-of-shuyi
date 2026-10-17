@@ -2,6 +2,7 @@
 //! trigger fires once per profile, tips take the keys until dismissed, and
 //! their text names the keys the player has bound.
 
+use crate::input::{LEFT_HANDED, RIGHT_HANDED};
 use insta::assert_snapshot;
 use trpg_content::TipTrigger;
 use trpg_core::{Command, Event, Objective, Phase, StatGains, UnitId};
@@ -12,7 +13,6 @@ use super::*;
 use crate::color::Rgb;
 use crate::console::ConsoleSpec;
 use crate::glyph_buffer::Cell;
-use crate::input::Layout;
 use crate::screen::tests::ctx;
 use crate::storage::Storage;
 use crate::tips::{TIPS_SEEN_KEY, reset_tips};
@@ -464,7 +464,7 @@ fn the_start_tip_is_for_the_first_turn_of_the_player_phase_only() {
 #[test]
 fn a_tip_names_the_keys_the_player_has_bound() {
     let mut c = tipped();
-    c.use_layout(Layout::LeftHanded);
+    c.use_layout(LEFT_HANDED);
     let mut s = quick();
     press(&mut s, &mut c, &[]);
     assert!(shows(&s, &c, "Steer the cursor with wasd"));
@@ -475,9 +475,9 @@ fn a_tip_names_the_keys_the_player_has_bound() {
 #[test]
 fn a_tip_shows_not_mapped_for_an_action_with_no_key() {
     let mut c = tipped();
-    let mut keys = c.layout_bindings(Layout::RightHanded);
+    let mut keys = c.layout_bindings(RIGHT_HANDED);
     keys.clear(Action::NextUnit, 0);
-    c.set_layout_bindings(Layout::RightHanded, keys).unwrap();
+    c.set_layout_bindings(RIGHT_HANDED, keys).unwrap();
     let mut s = quick();
     press(&mut s, &mut c, &[]);
     assert!(shows(&s, &c, "Press ! not mapped for whoever"));

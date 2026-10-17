@@ -4,6 +4,7 @@
 use trpg_core::LeadGender;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::{Ctx, Game};
 
@@ -18,7 +19,7 @@ fn ctx(layout: Option<Layout>) -> Ctx {
 
 /// The game opened on `scene` with the right-handed layout.
 fn preview(scene: &str, gender: LeadGender) -> Harness {
-    let ctx = ctx(Some(Layout::RightHanded));
+    let ctx = ctx(Some(RIGHT_HANDED));
     let game = Game::start_on_scene(ctx, scene, gender).unwrap_or_else(|e| panic!("{e}"));
     Harness::from_game(game)
 }
