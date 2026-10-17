@@ -920,3 +920,31 @@ fn the_game_can_start_on_a_pad_and_mark_the_keyboard_used() {
     assert!(s.update(0.0).is_empty());
     assert_eq!(default_state().device(), Device::Keyboard);
 }
+
+#[test]
+fn a_text_box_has_its_own_fixed_keys_shifted_or_not() {
+    for shift in [false, true] {
+        let key = |k| Chord { key: k, shift };
+        assert_eq!(text_key(key(Key::Enter)), Some(TextKey::Done));
+        assert_eq!(text_key(key(Key::Backspace)), Some(TextKey::Delete));
+        assert_eq!(text_key(key(Key::Escape)), Some(TextKey::Cancel));
+        assert_eq!(text_key(key(Key::Space)), None);
+        assert_eq!(text_key(key(Key::A)), None);
+    }
+    assert_eq!(text_key_names(), ["Enter", "Backspace", "Escape"]);
+}
+
+#[test]
+fn has_input_asks_the_device_in_use() {
+    let def = load_keymap().unwrap_or_default();
+    let km = Keymap::for_layout(&def, RIGHT_HANDED);
+    let pad = Device::Pad(PadKind::Xbox);
+    // Confirm has a key and a button; Debug only a key; the optional
+    // split key Select neither.
+    assert!(km.has_input(Confirm, Device::Keyboard));
+    assert!(km.has_input(Confirm, pad));
+    assert!(km.has_input(Action::Debug, Device::Keyboard));
+    assert!(!km.has_input(Action::Debug, pad));
+    assert!(!km.has_input(Action::Select, Device::Keyboard));
+    assert!(!km.has_input(Action::Select, pad));
+}
