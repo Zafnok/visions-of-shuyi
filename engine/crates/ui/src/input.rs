@@ -32,8 +32,8 @@ pub mod state;
 
 #[cfg(test)]
 mod chord_tests;
-#[cfg(test)]
-pub(crate) mod sample;
+#[cfg(any(test, feature = "toy"))]
+pub mod sample;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

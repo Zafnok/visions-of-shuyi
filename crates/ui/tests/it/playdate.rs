@@ -254,7 +254,16 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
 /// Classic, the familiarity answer, the name as it is, Start, past the
 /// scenes and the banner, with the cursor on the lead.
 fn first_battle() -> Harness {
-    let mut h = Harness::first_launch_and(playdate).with_shipped_story();
+    first_battle_and(|_| {})
+}
+
+/// [`first_battle`], with `setup` changing the context first.
+fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
+    let mut h = Harness::first_launch_and(|ctx| {
+        playdate(ctx);
+        setup(ctx);
+    })
+    .with_shipped_story();
     h.use_pad(PadKind::Playdate);
     h.pad("South South South South DpadDown DpadDown South");
     skip_scenes(&mut h);
@@ -350,6 +359,19 @@ fn winding_the_crank_back_rewinds_one_action_per_notch() {
     h.pad("South South");
     assert!(battle(&h).rewind().is_none());
     assert_eq!(battle(&h).history().charges_left(), charges - 1);
+}
+
+/// Ticket 1035: a notch is as far as the keymap file's `crank` says.
+#[test]
+fn a_notch_is_the_keymaps() {
+    let mut h = first_battle_and(|ctx| ctx.game.content.keymap.crank.notch_degrees = 90);
+    h.crank(-60.0);
+    assert!(
+        battle(&h).rewind().is_none(),
+        "60 of 90 degrees: no notch yet"
+    );
+    h.crank(-30.0);
+    assert!(battle(&h).rewind().is_some());
 }
 
 /// The map menu's entries, with whether each can be chosen.
