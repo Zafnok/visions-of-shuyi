@@ -195,4 +195,29 @@ mod tests {
         assert!(d.can(&s, DoneWhen::Attacked));
         assert!(!Doable::default().can(&s, DoneWhen::Attacked));
     }
+
+    /// Reaching an enemy isn't having an art for it: the Heretic beside a
+    /// brigand, the only one left to act, could attack but has no art.
+    #[test]
+    fn a_unit_in_reach_without_an_art_cant_open_arts() {
+        let content = trpg_content::load_embedded().unwrap_or_else(|e| panic!("{e}"));
+        let lead = trpg_core::LeadProfile::new("Ellery", trpg_core::LeadGender::Male);
+        let campaign = trpg_content::new_campaign(&content, trpg_core::GameMode::Classic, lead);
+        let mut setup = campaign.battle_setup(&content.battles["ch01"], &content.tables());
+        let brigand = setup.units.iter().position(|u| u.faction == Faction::Enemy);
+        let brigand = brigand.unwrap_or_else(|| panic!("an enemy in Chapter 1"));
+        setup.units[brigand].pos = Pos::new(HERETIC.x + 1, HERETIC.y);
+        let mut s = BattleState::new(setup).0;
+        let others: Vec<Pos> = s
+            .units()
+            .iter()
+            .filter(|u| u.faction == Faction::Player && u.pos != HERETIC)
+            .map(|u| u.pos)
+            .collect();
+        for at in others {
+            wait(&mut s, at);
+        }
+        assert!(can(&s, DoneWhen::Attacked));
+        assert!(!can(&s, DoneWhen::ArtsOpened));
+    }
 }

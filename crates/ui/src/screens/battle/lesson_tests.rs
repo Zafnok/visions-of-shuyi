@@ -693,3 +693,20 @@ fn the_second_turn_starts_in_its_player_phase_only() {
     let second: Vec<_> = seen.iter().filter(|(_, _, f)| *f).collect();
     assert_eq!(second, [&(2, Phase::Player, true)]);
 }
+
+/// Ticket 0464: lessons are settled only in the player's phase. In the
+/// enemy's no unit of the player's is left to act, yet a lesson waiting
+/// for a unit stays for the player's next phase.
+#[test]
+fn the_enemy_phase_keeps_a_lesson_waiting_for_a_unit() {
+    let mut c = lessoned();
+    c.game.content.lessons.lessons =
+        vec![lesson("unit", LessonLevel::Full, &[DoneWhen::UnitSelected])];
+    let mut s = quick();
+    s.send(&Command::EndPhase);
+    assert_eq!(s.state().phase(), Phase::Enemy);
+    s.lessons.fire(TipTrigger::FirstBattleStart);
+    s.lessons.absorb(&c, None, s.state().turn());
+    s.settle_lessons();
+    assert_eq!(s.lessons.current(), Some("unit"));
+}
