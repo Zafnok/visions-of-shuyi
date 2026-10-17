@@ -26,6 +26,8 @@ use shuyi_assets::palette::PaletteDef;
 use shuyi_assets::voice::{self, ClipVariant, Playable};
 
 use crate::ctx::{Ctx, GameData};
+use crate::dialogue::text_box::{self, glyph::BoxPlace};
+use crate::dialogue::{DialoguePlayer, Plain, TextBox, TextView, WaitView};
 use crate::frame::color::EngineColor;
 use crate::frame::console::ConsoleSpec;
 use crate::frame::glyph_buffer::{Cell, GlyphBuffer, Layer, Rect, Sprite};
@@ -38,6 +40,7 @@ use crate::screens::layout_picker::{self, LayoutPickerScreen, LegendKeys};
 use crate::screens::options::{self, OptionRow, RowAction, RowValue};
 use crate::settings::{GameSettings, Settings, TextSpeed};
 use crate::storage::Storage;
+use shuyi_assets::dialogue::{Present, Side};
 
 pub use crate::input::sample::{Action, LEFT_HANDED, RIGHT_HANDED};
 
@@ -328,7 +331,8 @@ pub const LEGEND: [(LegendKeys<Action>, &str); 10] = [
 pub const CARD: &str = "card.png";
 
 /// The toy's English text.
-const ENGLISH: [(&str, &str); 19] = [
+const ENGLISH: [(&str, &str); 20] = [
+    ("talk.next", "{Confirm}"),
     ("toy.speed", "Speed"),
     ("toy.speed.calm", "Calm"),
     ("toy.speed.brisk", "Brisk"),
@@ -405,8 +409,8 @@ fn track(cue: &str) -> MusicCue {
 pub struct Toy {
     lang: Lang,
     keymap: KeymapDef<Action>,
-    /// The cues: the sound `click`, the track `theme`, four more in the
-    /// pool `fights`, and a 0.5 s fade.
+    /// The cues: the sound `click` and the engine's menu sounds, the track
+    /// `theme`, four more in the pool `fights`, and a 0.5 s fade.
     pub audio: AudioManifest,
     day: PaletteDef,
     night: PaletteDef,
@@ -469,7 +473,17 @@ impl Toy {
             volume: 100,
             credit: CreditRef::Own,
         };
-        audio.sounds.insert("click".to_owned(), click);
+        audio.sounds.insert("click".to_owned(), click.clone());
+        // The engine's menu sounds, by their default names.
+        let config = crate::audio::AudioConfig::DEFAULT;
+        for cue in [
+            config.move_cue,
+            config.select_cue,
+            config.cancel_cue,
+            config.cursor_cue,
+        ] {
+            audio.sounds.insert(cue.to_owned(), click.clone());
+        }
         let fights = ["drums", "horns", "pipes", "bells"];
         for cue in ["theme"].iter().chain(&fights) {
             audio.music.insert((*cue).to_owned(), track(cue));
@@ -664,6 +678,184 @@ pub fn game_on(ctx: ToyCtx) -> Game<Toy> {
 /// [`Home`], with its [`hooks`].
 pub fn game() -> Game<Toy> {
     game_on(ctx())
+}
+
+/// The toy game with the right-handed layout chosen, at its [`Lobby`],
+/// with its [`hooks`].
+pub fn lobby() -> Game<Toy> {
+    Game::new(ctx(), Box::new(Lobby::new()), hooks())
+}
+
+/// The toy's lobby: an engine [`Menu`](crate::widgets::Menu) of what the
+/// engine's screens offer: the options, the Key bindings screen, a talk
+/// ([`Talk`]) and quitting. Nothing cancels it.
+#[derive(Debug)]
+pub struct Lobby {
+    /// The menu.
+    pub menu: crate::widgets::Menu,
+}
+
+impl Lobby {
+    /// The lobby's items, top to bottom.
+    pub const ITEMS: [&str; 4] = ["Options", "Key bindings", "Talk", "Quit"];
+
+    /// The lobby, on its first item.
+    pub fn new() -> Self {
+        let items = Self::ITEMS
+            .iter()
+            .map(|&i| crate::widgets::MenuItem::new(i));
+        Self {
+            menu: crate::widgets::Menu::new(items.collect()).without_cancel(),
+        }
+    }
+}
+
+impl Default for Lobby {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Screen<Toy> for Lobby {
+    fn name(&self) -> &'static str {
+        "lobby"
+    }
+
+    fn update(&mut self, ctx: &mut ToyCtx, input: &FrameInput<Action>) -> Transition<Toy> {
+        for &action in &input.actions {
+            match self.menu.handle_with_sound(action, &mut ctx.audio) {
+                Some(crate::widgets::MenuEvent::Chosen(0)) => {
+                    return Transition::Push(Box::new(options::OptionsScreen::new(option_rows)));
+                }
+                Some(crate::widgets::MenuEvent::Chosen(1)) => {
+                    return Transition::Push(Box::new(KeyBindingsScreen::new(ctx, &KEY_ROWS)));
+                }
+                Some(crate::widgets::MenuEvent::Chosen(2)) => {
+                    return Transition::Push(Box::new(Talk::new(ctx, "hall")));
+                }
+                Some(crate::widgets::MenuEvent::Chosen(_)) => return Transition::Quit,
+                _ => {}
+            }
+        }
+        Transition::None
+    }
+
+    fn draw(&self, ctx: &ToyCtx, buf: &mut GlyphBuffer) {
+        let bg = ctx.palette.engine(EngineColor::Background);
+        buf.fill_rect(buf.bounds(), Cell::new(' ', bg, bg));
+        crate::widgets::menu::glyph::paint(&ctx.palette, &self.menu.view(), buf, 1, 1);
+    }
+
+    fn as_any(&self) -> Option<&dyn Any> {
+        Some(self)
+    }
+}
+
+/// Where a [`Talk`]'s text box goes: the bottom seven rows of the toy's
+/// console.
+pub const TALK_BOX: BoxPlace = BoxPlace {
+    frame: Rect::new(0, 13, 40, 7),
+    text_x: 2,
+    text_y: 15,
+};
+
+/// A scene of the toy's, read in the engine's text box: Confirm reveals the
+/// page, then goes on; holding it types faster; Cancel leaves. Pops when
+/// the scene ends.
+#[derive(Debug)]
+pub struct Talk {
+    /// The scene playing.
+    pub player: DialoguePlayer<Plain>,
+    /// Its text box.
+    pub text: TextBox,
+}
+
+impl Talk {
+    /// Characters per line of the box.
+    const WIDTH: usize = 34;
+    /// Lines per page.
+    const LINES: usize = 3;
+
+    /// The toy's scene `id`, everyone there (an empty scene if it hasn't
+    /// one).
+    pub fn new(ctx: &ToyCtx, id: &str) -> Self {
+        let scene = ctx.game.dialogue.get(id).cloned().unwrap_or_default();
+        let player = DialoguePlayer::new(&scene, Plain, &Present::Everyone);
+        let text = Self::text_of(&player);
+        Self { player, text }
+    }
+
+    fn text_of(player: &DialoguePlayer<Plain>) -> TextBox {
+        let text = player.current().text.unwrap_or_default();
+        TextBox::new(&text, Self::WIDTH, Self::LINES)
+    }
+
+    /// What its text box shows.
+    pub fn view(&self, ctx: &ToyCtx) -> TextView {
+        let waiting = self.text.is_revealed().then(|| WaitView {
+            key: ctx.text_with("talk.next", &[]),
+            log_hint: None,
+            marker: self.text.marker_lit(),
+        });
+        TextView {
+            narration: self.player.current().narration,
+            lines: self.text.page_lines().to_vec(),
+            shown: self.text.shown(),
+            choices: None,
+            skip: None,
+            waiting,
+        }
+    }
+}
+
+impl Screen<Toy> for Talk {
+    fn name(&self) -> &'static str {
+        "talk"
+    }
+
+    fn update(&mut self, ctx: &mut ToyCtx, input: &FrameInput<Action>) -> Transition<Toy> {
+        if self.player.is_finished() {
+            return Transition::Pop;
+        }
+        for &action in &input.actions {
+            match action {
+                Action::Cancel => return Transition::Pop,
+                Action::Confirm if !self.text.is_revealed() => self.text.reveal(),
+                Action::Confirm if !self.text.next_page() => {
+                    self.player.advance();
+                    if self.player.is_finished() {
+                        return Transition::Pop;
+                    }
+                    self.text = Self::text_of(&self.player);
+                }
+                _ => {}
+            }
+        }
+        self.text.hold(input.is_held(Action::Confirm), input.dt);
+        self.text
+            .type_on(input.dt, ctx.settings().text_speed.chars_per_s());
+        Transition::None
+    }
+
+    fn draw(&self, ctx: &ToyCtx, buf: &mut GlyphBuffer) {
+        // Whoever speaks, by their id, if they stand on a side.
+        let view = self.player.current();
+        let speaking = match view.speaker {
+            Some(Side::Left) => view.left,
+            Some(Side::Right) => view.right,
+            None => None,
+        };
+        let speaker = speaking.map(|p| p.character.0.as_str());
+        text_box::glyph::paint(&ctx.palette, buf, TALK_BOX, &self.view(ctx), speaker);
+    }
+
+    fn is_overlay(&self) -> bool {
+        true
+    }
+
+    fn as_any(&self) -> Option<&dyn Any> {
+        Some(self)
+    }
 }
 
 /// The toy's root screen: Confirm opens the [`Menu`] over it, Cancel quits.
