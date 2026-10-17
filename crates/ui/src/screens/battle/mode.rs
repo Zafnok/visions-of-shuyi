@@ -58,6 +58,7 @@ use super::playback::Playback;
 use super::skills::{
     SkillChoice, SkillTargeting, can_use_skill, has_skill_menu, skill_choices, skill_menu,
 };
+use super::split_keys;
 use super::walk::{self, Gait};
 use crate::input::{Action, Device, Keymap};
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
@@ -546,12 +547,12 @@ impl Mode {
     /// `keymap`, or `None` to ignore it. [`step`] reads a pick on the map
     /// and accepting the end-turn prompt as Confirm; this makes the
     /// optional split keys do them instead: on the map
-    /// [`Keymap::select_action`] picks (and Confirm does nothing once Select
-    /// has a key), and in the prompt [`Keymap::end_turn_accept_actions`]
+    /// [`split_keys::select_action`] picks (and Confirm does nothing once Select
+    /// has a key), and in the prompt [`split_keys::end_turn_accept_actions`]
     /// accept (and End turn does nothing once Confirm end turn has a key).
     pub fn route(&self, action: Action, keymap: &Keymap, device: Device) -> Option<Action> {
         if self.picks_on_map() {
-            if action == keymap.select_action(device) {
+            if action == split_keys::select_action(keymap, device) {
                 return Some(Action::Confirm);
             }
             if action == Action::Confirm {
@@ -559,7 +560,7 @@ impl Mode {
             }
         }
         if matches!(self, Mode::EndTurnPrompt { .. }) {
-            if keymap.end_turn_accept_actions(device).contains(&action) {
+            if split_keys::end_turn_accept_actions(keymap, device).contains(&action) {
                 return Some(Action::Confirm);
             }
             if action == Action::EndTurn {

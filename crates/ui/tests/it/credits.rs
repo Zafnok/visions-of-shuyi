@@ -7,11 +7,11 @@
 use insta::assert_snapshot;
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 
 /// The title screen, then Credits chosen from its menu.
 fn credits() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down Down Down Down f");
     h
 }
@@ -103,7 +103,7 @@ fn after_the_last_row_the_list_starts_again_from_the_top() {
 
 #[test]
 fn cancel_returns_to_the_title() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     let title = h.snapshot();
     h.keys("Down Down Down Down f");
     assert_eq!(h.top_screen(), "credits");
@@ -193,7 +193,7 @@ fn every_glyph_drawn_is_in_the_font() {
 
 #[test]
 fn sounds_and_music() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.wait(0.1).clear_audio().keys("Down Down Down Down f");
     assert_eq!(
         h.sounds(),

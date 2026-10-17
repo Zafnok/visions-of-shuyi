@@ -23,7 +23,7 @@ use trpg_core::{
     UnitAction, legal_commands, next_command,
 };
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 
 const FIXTURE: &str = include_str!("fixtures/ch01_winning.ron");
 
@@ -99,7 +99,7 @@ fn send(h: &mut Harness, command: &Command) {
 /// scenes, the save prompt.
 #[test]
 fn chapter_1_plays_from_new_game_to_to_be_continued() {
-    let mut h = Harness::with_layout(Layout::RightHanded).with_shipped_story();
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     // New Game, Classic, Not familiar, the default lead.
     h.keys("f f f Up f");
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());

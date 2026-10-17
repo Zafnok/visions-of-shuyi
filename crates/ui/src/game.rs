@@ -10,7 +10,9 @@ use crate::audio::{AudioRequest, MusicClock, MusicCommand, MusicState};
 use crate::color::UiColor;
 use crate::debug::{self, DebugMenuScreen, ScenePreviewScreen};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
-use crate::input::{Action, Button, Chord, InputState, Key, PadId, PadKind, PadState, Pads};
+use crate::input::{
+    Action, ActionSet, Button, Chord, InputState, Key, PadId, PadKind, PadState, Pads, UiAction,
+};
 use crate::screen::{Ctx, FrameInput, KeyPrompt, Keyboard, Screen, ScreenStack};
 use crate::screens::{LayoutPickerScreen, TitleScreen};
 
@@ -153,7 +155,7 @@ impl Game {
         let mut stack = ScreenStack::new(Box::new(preview));
         stack.push(Box::new(playing));
         if ctx.layout().is_none() && ctx.keyboard == Keyboard::Present {
-            stack.push(Box::new(LayoutPickerScreen::new()));
+            stack.push(Box::new(LayoutPickerScreen::new(&ctx)));
         }
         Ok(Self::with_stack(ctx, stack))
     }
@@ -299,13 +301,14 @@ impl Game {
             .filter(|&a| self.input.is_held(a))
             .collect();
         let opens_debug_menu = self.ctx.debug_tools
-            && actions.contains(&Action::Debug)
+            && actions.iter().any(|a| a.ui() == Some(UiAction::Debug))
             && !self
                 .stack
                 .top_name()
                 .is_some_and(|n| debug::SCREENS.contains(&n));
         if asks_layout {
-            self.stack.push(Box::new(LayoutPickerScreen::new()));
+            self.stack
+                .push(Box::new(LayoutPickerScreen::new(&self.ctx)));
         }
         if opens_debug_menu {
             self.stack.push(Box::new(DebugMenuScreen::new(&self.ctx)));
@@ -406,7 +409,8 @@ fn is_known(manifest: &trpg_content::AudioManifest, request: &AudioRequest) -> b
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::input::Layout;
+    use crate::input::{LEFT_HANDED, RIGHT_HANDED};
+
     use crate::screen::tests::{ctx, ctx_with_cues};
     use crate::storage::Storage;
 
@@ -461,7 +465,7 @@ mod tests {
         assert_eq!(game.screens(), ["title", "layout_picker"]);
         tap(&mut game, Key::F);
         assert_eq!(game.screens(), ["title"]);
-        assert_eq!(game.ctx().layout(), Some(Layout::LeftHanded));
+        assert_eq!(game.ctx().layout(), Some(LEFT_HANDED));
         // Chosen: keys act again and the picker stays away.
         tap(&mut game, Key::J);
         assert_eq!(game.screens(), ["title", "mode_select"]);
@@ -541,7 +545,7 @@ mod tests {
         assert_eq!(game.screens(), ["title", "mode_select", "layout_picker"]);
         tap(&mut game, Key::F);
         assert_eq!(game.screens(), ["title", "mode_select"]);
-        assert_eq!(game.ctx().layout(), Some(Layout::RightHanded));
+        assert_eq!(game.ctx().layout(), Some(RIGHT_HANDED));
         assert_eq!(game.input.keymap(), &game.ctx().keymap);
         tap(&mut game, Key::D);
         assert_eq!(game.screens(), ["title"]);
@@ -553,7 +557,7 @@ mod tests {
         ctx.storage.write("layout", "LeftHanded").unwrap();
         let game = Game::start(ctx);
         assert_eq!(game.screens(), ["title"]);
-        assert_eq!(game.ctx().layout(), Some(Layout::LeftHanded));
+        assert_eq!(game.ctx().layout(), Some(LEFT_HANDED));
         assert_eq!(game.input.keymap(), &game.ctx().keymap);
     }
 
@@ -563,7 +567,7 @@ mod tests {
         ctx.storage.write("layout", "LeftHanded").unwrap();
         let game = Game::start(ctx);
         assert_eq!(game.screens(), ["title"]);
-        assert_eq!(game.ctx().layout(), Some(Layout::RightHanded));
+        assert_eq!(game.ctx().layout(), Some(RIGHT_HANDED));
     }
 
     #[test]
@@ -574,7 +578,7 @@ mod tests {
         tap(&mut game, Key::S);
         tap(&mut game, Key::J);
         assert_eq!(game.screens(), ["title"]);
-        assert_eq!(game.ctx().layout(), Some(Layout::LeftHanded));
+        assert_eq!(game.ctx().layout(), Some(LEFT_HANDED));
         assert_eq!(game.input.keymap(), &game.ctx().keymap);
         // Left-handed: `j` confirms, `f` does nothing, `k` backs out.
         tap(&mut game, Key::F);
@@ -584,7 +588,7 @@ mod tests {
         tap(&mut game, Key::K);
         assert_eq!(game.screens(), ["title"]);
         let ctx = game.into_ctx();
-        assert_eq!(ctx.saved_layout(), Some(Layout::LeftHanded));
+        assert_eq!(ctx.saved_layout(), Some(LEFT_HANDED));
     }
 
     /// Ticket 0224: the first key press ends the title's wait; releases
@@ -728,7 +732,7 @@ mod tests {
         // Picking a layout (new bindings) doesn't forget it.
         let mut game = Game::start(first_launch());
         pad_tap(&mut game, Button::DpadDown);
-        game.ctx_mut().choose_layout(Layout::LeftHanded).unwrap();
+        game.ctx_mut().choose_layout(LEFT_HANDED).unwrap();
         game.frame(&[], 0.0);
         assert_eq!(game.input.keymap(), &game.ctx().keymap);
         assert_eq!(game.ctx().device, Device::Pad(PadKind::Xbox));
@@ -771,11 +775,9 @@ mod tests {
     #[test]
     fn rebinding_keys_reaches_the_input_before_the_next_press() {
         let mut game = Game::start(ctx());
-        let mut b = game.ctx().layout_bindings(Layout::RightHanded);
+        let mut b = game.ctx().layout_bindings(RIGHT_HANDED);
         assert_eq!(b.bind(Action::Confirm, 0, Chord::plain(Key::G)), Ok(None));
-        game.ctx_mut()
-            .set_layout_bindings(Layout::RightHanded, b)
-            .unwrap();
+        game.ctx_mut().set_layout_bindings(RIGHT_HANDED, b).unwrap();
         // The old key does nothing; the new one confirms at once.
         tap(&mut game, Key::F);
         assert_eq!(game.screens(), ["title"]);

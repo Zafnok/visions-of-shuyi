@@ -3,7 +3,7 @@
 //! from the battle's map menu, stepping through the topics, and back.
 
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::{Ctx, Game, MemoryStorage, Storage};
 
@@ -18,7 +18,7 @@ fn battle(h: &Harness) -> &BattleScreen {
 #[test]
 fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     let mut storage: Box<dyn Storage> = Box::new(MemoryStorage::new());
-    if let Err(e) = storage.write("layout", Layout::RightHanded.name()) {
+    if let Err(e) = storage.write("layout", RIGHT_HANDED.name()) {
         panic!("saving the layout: {e}");
     }
     let mut ctx = Ctx::embedded()

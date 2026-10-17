@@ -5,10 +5,11 @@
 //! ([`PadBindings`]); the lot is saved as [`PlayerKeys`]. Rules from
 //! `docs/design/controls.md`, *Rebinding keys* and *Rebinding buttons*.
 //! Pure: [`Ctx`](crate::screen::Ctx) reads and writes the saved text through
-//! `Storage`.
+//! `Storage`. Generic over the game's [`ActionSet`] (ticket 1106); ticket
+//! 1107 moves it to the engine.
 //!
 //! Invariants: a chord is in at most one slot of a [`LayoutBindings`]'s
-//! actions of each [`KeyGroup`], and no
+//! actions of each [group](ActionSet::Group), and no
 //! [reserved](LayoutBindings::is_reserved) chord is in any; a button is in
 //! at most one slot of a [`PadBindings`]'s actions of each group. Actions
 //! of different groups may share one (`docs/design/controls.md`, *Dialogue
@@ -20,7 +21,10 @@ use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use super::{Action, Button, Chord, KeyGroup, Keymap, KeymapDef, Layout, RepeatDef, SLOTS};
+use trpg_content::keymap::format::KeymapDef;
+use trpg_content::keymap::{ActionSet, Button, Chord, Layout, RepeatDef, SLOTS};
+
+use super::keymap::Keymap;
 use crate::screen::DEBUG_TOOLS;
 
 /// One action's key slots; `None` is an empty slot.
@@ -33,20 +37,20 @@ pub type ButtonSlots = [Option<Button>; SLOTS];
 type Saved = BTreeMap<String, Vec<Option<String>>>;
 
 /// Every rebindable action's slots of keys or of buttons, with the rules
-/// both share: a thing is in at most one slot of each [`KeyGroup`]'s
-/// actions, and binding one that is already in a slot of that group moves
+/// both share: a thing is in at most one slot of each group's actions, and binding one that is already in a slot of that group moves
 /// it.
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct SlotTable<T> {
-    slots: BTreeMap<Action, [Option<T>; SLOTS]>,
+struct SlotTable<A, T> {
+    slots: BTreeMap<A, [Option<T>; SLOTS]>,
 }
 
-impl<T: Copy + Eq> SlotTable<T> {
+impl<A: ActionSet, T: Copy + Eq> SlotTable<A, T> {
     /// Every rebindable action, with empty slots.
     fn empty() -> Self {
         Self {
-            slots: Action::ALL
-                .into_iter()
+            slots: A::ALL
+                .iter()
+                .copied()
                 .filter(|a| a.is_rebindable())
                 .map(|a| (a, [None; SLOTS]))
                 .collect(),
@@ -54,12 +58,12 @@ impl<T: Copy + Eq> SlotTable<T> {
     }
 
     /// `action`'s slots (all empty for an action that has none).
-    fn get(&self, action: Action) -> [Option<T>; SLOTS] {
+    fn get(&self, action: A) -> [Option<T>; SLOTS] {
         self.slots.get(&action).copied().unwrap_or([None; SLOTS])
     }
 
     /// The slot of one of `group`'s actions holding `item`, if any.
-    fn find(&self, group: KeyGroup, item: T) -> Option<(Action, usize)> {
+    fn find(&self, group: A::Group, item: T) -> Option<(A, usize)> {
         let in_group = self.slots.iter().filter(|(a, _)| a.group() == group);
         in_group.into_iter().find_map(|(&action, slots)| {
             slots
@@ -70,7 +74,7 @@ impl<T: Copy + Eq> SlotTable<T> {
     }
 
     /// Whether `action` has a slot `i`.
-    fn check(action: Action, i: usize) -> Result<(), BindError> {
+    fn check(action: A, i: usize) -> Result<(), BindError<A>> {
         if !action.is_rebindable() {
             return Err(BindError::NotRebindable(action));
         }
@@ -83,12 +87,7 @@ impl<T: Copy + Eq> SlotTable<T> {
     /// Puts `item` in `action`'s slot `i`, replacing what was there. If it
     /// was in another slot of `action`'s group, that slot is emptied and
     /// returned.
-    fn place(
-        &mut self,
-        action: Action,
-        i: usize,
-        item: T,
-    ) -> Result<Option<(Action, usize)>, BindError> {
+    fn place(&mut self, action: A, i: usize, item: T) -> Result<Option<(A, usize)>, BindError<A>> {
         Self::check(action, i)?;
         let from = self.find(action.group(), item);
         if from == Some((action, i)) {
@@ -103,35 +102,36 @@ impl<T: Copy + Eq> SlotTable<T> {
 
     /// Empties `action`'s slot `i` (nothing happens for a slot that doesn't
     /// exist).
-    fn clear(&mut self, action: Action, i: usize) {
+    fn clear(&mut self, action: A, i: usize) {
         if let Some(slot) = self.slots.get_mut(&action).and_then(|s| s.get_mut(i)) {
             *slot = None;
         }
     }
 
     /// Whether every slot of `action` is empty.
-    fn is_unmapped(&self, action: Action) -> bool {
+    fn is_unmapped(&self, action: A) -> bool {
         self.get(action).iter().all(Option::is_none)
     }
 
-    /// The [required](Action::is_required) actions with every slot empty,
-    /// in [`Action::ALL`] order.
-    fn unmapped_required(&self) -> Vec<Action> {
-        Action::ALL
-            .into_iter()
+    /// The [required](ActionSet::is_required) actions with every slot empty,
+    /// in [`ActionSet::ALL`] order.
+    fn unmapped_required(&self) -> Vec<A> {
+        A::ALL
+            .iter()
+            .copied()
             .filter(|&a| a.is_required() && self.is_unmapped(a))
             .collect()
     }
 
     /// Every filled slot with its action, in action then slot order.
-    fn pairs(&self) -> impl Iterator<Item = (T, Action)> + '_ {
+    fn pairs(&self) -> impl Iterator<Item = (T, A)> + '_ {
         self.slots
             .iter()
             .flat_map(|(&action, slots)| slots.iter().flatten().map(move |&c| (c, action)))
     }
 }
 
-impl<T: Copy + fmt::Display> SlotTable<T> {
+impl<A: ActionSet, T: Copy + fmt::Display> SlotTable<A, T> {
     /// The saved form: every action with all its slots.
     fn saved(&self) -> Saved {
         self.slots
@@ -146,21 +146,22 @@ impl<T: Copy + fmt::Display> SlotTable<T> {
 
 /// Why [`LayoutBindings::bind`] or [`PadBindings::bind`] refused.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
-pub enum BindError {
-    /// The chord is fixed by the game (`Escape`, `Delete`) or is the Debug
-    /// key in a build with debug tools.
+pub enum BindError<A: ActionSet> {
+    /// The chord is fixed (`Escape`, `Delete`) or is the key of an action
+    /// that can't be rebound (Debug) in a build with debug tools.
     #[error("{0} is a fixed key and can't be bound")]
     Reserved(Chord),
     /// The action can't be rebound (Debug).
-    #[error("{0} can't be rebound")]
-    NotRebindable(Action),
+    #[error("{} can't be rebound", .0.name())]
+    NotRebindable(A),
     /// Slot index past the last slot.
     #[error("there is no key slot {0}")]
     NoSuchSlot(usize),
 }
 
 /// One layout's player-edited bindings: every rebindable action's slots,
-/// plus the Debug key from `keymap.ron` (not rebindable).
+/// plus the keys of the actions that can't be rebound (Debug), from the
+/// keymap file.
 ///
 /// The pure editing API for the Key bindings screen (0815): [`bind`],
 /// [`clear`], [`defaults`] (restore defaults), [`unmapped_required`].
@@ -170,30 +171,35 @@ pub enum BindError {
 /// [`defaults`]: Self::defaults
 /// [`unmapped_required`]: Self::unmapped_required
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LayoutBindings {
+pub struct LayoutBindings<A: ActionSet> {
     /// Every rebindable action → its slots.
-    table: SlotTable<Chord>,
-    /// Debug's chords, as in `keymap.ron`.
-    debug: Vec<Chord>,
-    /// Whether the Debug chords are reserved (builds with debug tools,
+    table: SlotTable<A, Chord>,
+    /// The chords of the actions that can't be rebound (Debug), as in the
+    /// keymap file.
+    fixed: Vec<(Chord, A)>,
+    /// Whether those chords are reserved (builds with debug tools,
     /// ADR-0023). Without debug tools a player may bind them, and their
     /// slot wins over Debug.
-    debug_reserved: bool,
+    fixed_reserved: bool,
 }
 
-impl LayoutBindings {
+impl<A: ActionSet> LayoutBindings<A> {
     /// `layout`'s default keys from `keymap.ron`, each action's chords in
     /// its slots in file order.
-    pub fn defaults(def: &KeymapDef, layout: Layout) -> Self {
+    pub fn defaults(def: &KeymapDef<A>, layout: Layout) -> Self {
         Self::from_def(def, layout, DEBUG_TOOLS)
     }
 
-    /// [`defaults`](Self::defaults), with the Debug chords reserved or not.
-    pub(crate) fn from_def(def: &KeymapDef, layout: Layout, debug_reserved: bool) -> Self {
+    /// [`defaults`](Self::defaults), with the chords of the actions that
+    /// can't be rebound reserved or not.
+    pub(crate) fn from_def(def: &KeymapDef<A>, layout: Layout, fixed_reserved: bool) -> Self {
+        let fixed = A::ALL.iter().filter(|a| !a.is_rebindable());
         let mut bindings = Self {
             table: SlotTable::empty(),
-            debug: def.chords(layout, Action::Debug).to_vec(),
-            debug_reserved,
+            fixed: fixed
+                .flat_map(|&a| def.chords(layout, a).iter().map(move |&c| (c, a)))
+                .collect(),
+            fixed_reserved,
         };
         for (&action, chords) in def.layouts.get(&layout).into_iter().flatten() {
             for (i, &chord) in chords.iter().take(SLOTS).enumerate() {
@@ -206,42 +212,43 @@ impl LayoutBindings {
     }
 
     /// `action`'s slots (all empty for Debug, which has none).
-    pub fn slots(&self, action: Action) -> Slots {
+    pub fn slots(&self, action: A) -> Slots {
         self.table.get(action)
     }
 
     /// Whether `chord` can never be put in a slot: a [fixed chord] (plain
-    /// `Escape` or `Delete`; their `Shift+` chords are ordinary), or a Debug
-    /// chord in a build with debug tools.
+    /// `Escape` or `Delete`; their `Shift+` chords are ordinary), or the
+    /// chord of an action that can't be rebound (Debug) in a build with
+    /// debug tools.
     ///
     /// [fixed chord]: Chord::is_reserved
     pub fn is_reserved(&self, chord: Chord) -> bool {
-        chord.is_reserved() || (self.debug_reserved && self.debug.contains(&chord))
+        chord.is_reserved() || (self.fixed_reserved && self.fixed.iter().any(|&(c, _)| c == chord))
     }
 
     /// The slot of one of `group`'s actions holding `chord`, if any.
-    pub fn find(&self, group: KeyGroup, chord: Chord) -> Option<(Action, usize)> {
+    pub fn find(&self, group: A::Group, chord: Chord) -> Option<(A, usize)> {
         self.table.find(group, chord)
     }
 
     /// Puts `chord` in `action`'s slot `i`, replacing what was there. If
     /// `chord` was in another slot (of any action of `action`'s
-    /// [`KeyGroup`], including `action`), that slot is emptied and
+    /// group, including `action`), that slot is emptied and
     /// returned: the key *moves* (`docs/design/controls.md`), which may
     /// leave that action with no key. An action of another group keeps it.
     pub fn bind(
         &mut self,
-        action: Action,
+        action: A,
         i: usize,
         chord: Chord,
-    ) -> Result<Option<(Action, usize)>, BindError> {
-        SlotTable::<Chord>::check(action, i)?;
+    ) -> Result<Option<(A, usize)>, BindError<A>> {
+        SlotTable::<A, Chord>::check(action, i)?;
         self.allowed(chord)?;
         self.table.place(action, i, chord)
     }
 
     /// [`BindError::Reserved`] if `chord` [is reserved](Self::is_reserved).
-    fn allowed(&self, chord: Chord) -> Result<(), BindError> {
+    fn allowed(&self, chord: Chord) -> Result<(), BindError<A>> {
         if self.is_reserved(chord) {
             return Err(BindError::Reserved(chord));
         }
@@ -250,30 +257,31 @@ impl LayoutBindings {
 
     /// Empties `action`'s slot `i` (nothing happens for a slot that doesn't
     /// exist).
-    pub fn clear(&mut self, action: Action, i: usize) {
+    pub fn clear(&mut self, action: A, i: usize) {
         self.table.clear(action, i);
     }
 
     /// Whether every slot of `action` is empty (shows `! not mapped`).
-    pub fn is_unmapped(&self, action: Action) -> bool {
+    pub fn is_unmapped(&self, action: A) -> bool {
         self.table.is_unmapped(action)
     }
 
-    /// The [required](Action::is_required) actions with no key, in
-    /// [`Action::ALL`] order. The Key bindings screen can't be left while
+    /// The [required](ActionSet::is_required) actions with no key, in
+    /// [`ActionSet::ALL`] order. The Key bindings screen can't be left while
     /// this isn't empty.
-    pub fn unmapped_required(&self) -> Vec<Action> {
+    pub fn unmapped_required(&self) -> Vec<A> {
         self.table.unmapped_required()
     }
 
-    /// The keymap these bindings give: every slot, the Debug chords (unless
-    /// a slot took one), and the fixed keys ([`Keymap::new`]). Keys only:
+    /// The keymap these bindings give: every slot, the chords of the
+    /// actions that can't be rebound (unless a slot took one), and the
+    /// fixed keys ([`Keymap::new`]). Keys only:
     /// controller buttons don't belong to a layout ([`PadBindings`],
     /// [`Keymap::with_pad`]).
-    pub fn keymap(&self, repeat: RepeatDef) -> Keymap {
-        let debug = self.debug.iter().map(|&c| (c, Action::Debug));
+    pub fn keymap(&self, repeat: RepeatDef) -> Keymap<A> {
+        let fixed = self.fixed.iter().copied();
         // A chord given twice keeps its last action, so a slot beats Debug.
-        Keymap::new(debug.chain(self.table.pairs()), repeat)
+        Keymap::new(fixed.chain(self.table.pairs()), repeat)
     }
 }
 
@@ -287,14 +295,14 @@ impl LayoutBindings {
 /// [`defaults`](Self::defaults) (restore defaults),
 /// [`unmapped_required`](Self::unmapped_required).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PadBindings {
-    table: SlotTable<Button>,
+pub struct PadBindings<A: ActionSet> {
+    table: SlotTable<A, Button>,
 }
 
-impl PadBindings {
+impl<A: ActionSet> PadBindings<A> {
     /// The default buttons from `keymap.ron`'s `pad` table, each action's
     /// buttons in its slots in file order.
-    pub fn defaults(def: &KeymapDef) -> Self {
+    pub fn defaults(def: &KeymapDef<A>) -> Self {
         let mut bindings = Self {
             table: SlotTable::empty(),
         };
@@ -308,50 +316,50 @@ impl PadBindings {
     }
 
     /// `action`'s button slots (all empty for Debug, which has none).
-    pub fn slots(&self, action: Action) -> ButtonSlots {
+    pub fn slots(&self, action: A) -> ButtonSlots {
         self.table.get(action)
     }
 
     /// The slot of one of `group`'s actions holding `button`, if any.
-    pub fn find(&self, group: KeyGroup, button: Button) -> Option<(Action, usize)> {
+    pub fn find(&self, group: A::Group, button: Button) -> Option<(A, usize)> {
         self.table.find(group, button)
     }
 
     /// Puts `button` in `action`'s slot `i`, replacing what was there. If
     /// `button` was in another slot (of any action of `action`'s
-    /// [`KeyGroup`], including `action`), that slot is emptied and
+    /// group, including `action`), that slot is emptied and
     /// returned: the button *moves*, which may leave that action with no
     /// button. An action of another group keeps it.
     pub fn bind(
         &mut self,
-        action: Action,
+        action: A,
         i: usize,
         button: Button,
-    ) -> Result<Option<(Action, usize)>, BindError> {
+    ) -> Result<Option<(A, usize)>, BindError<A>> {
         self.table.place(action, i, button)
     }
 
     /// Empties `action`'s slot `i` (nothing happens for a slot that doesn't
     /// exist).
-    pub fn clear(&mut self, action: Action, i: usize) {
+    pub fn clear(&mut self, action: A, i: usize) {
         self.table.clear(action, i);
     }
 
     /// Whether every slot of `action` is empty (shows `! not mapped`).
-    pub fn is_unmapped(&self, action: Action) -> bool {
+    pub fn is_unmapped(&self, action: A) -> bool {
         self.table.is_unmapped(action)
     }
 
-    /// The [required](Action::is_required) actions with no button, in
-    /// [`Action::ALL`] order. The Key bindings screen can't be left while
+    /// The [required](ActionSet::is_required) actions with no button, in
+    /// [`ActionSet::ALL`] order. The Key bindings screen can't be left while
     /// this isn't empty.
-    pub fn unmapped_required(&self) -> Vec<Action> {
+    pub fn unmapped_required(&self) -> Vec<A> {
         self.table.unmapped_required()
     }
 
     /// Every bound button with its action, for [`Keymap::with_pad`]: in
     /// action then slot order.
-    pub fn pairs(&self) -> impl Iterator<Item = (Button, Action)> + '_ {
+    pub fn pairs(&self) -> impl Iterator<Item = (Button, A)> + '_ {
         self.table.pairs()
     }
 }
@@ -371,12 +379,21 @@ const PAD_WARNING: &str = "controller";
 /// the `Storage` key [`KEYBINDINGS_KEY`](crate::screen::KEYBINDINGS_KEY). A
 /// layout the player hasn't changed has no entry and uses its defaults, and
 /// so do the buttons. **Each layout keeps its own keys; the buttons are
-/// shared by both.**
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct PlayerKeys {
-    layouts: BTreeMap<Layout, LayoutBindings>,
+/// shared by every layout.**
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PlayerKeys<A: ActionSet> {
+    layouts: BTreeMap<Layout, LayoutBindings<A>>,
     /// The player's buttons; `None` while they are the defaults.
-    pad: Option<PadBindings>,
+    pad: Option<PadBindings<A>>,
+}
+
+impl<A: ActionSet> Default for PlayerKeys<A> {
+    fn default() -> Self {
+        Self {
+            layouts: BTreeMap::new(),
+            pad: None,
+        }
+    }
 }
 
 /// The saved form: action and chord names as text, so an unknown name
@@ -400,10 +417,10 @@ struct VersionOnly {
     version: u32,
 }
 
-impl PlayerKeys {
+impl<A: ActionSet> PlayerKeys<A> {
     /// `layout`'s bindings: the player's, or the defaults if they haven't
     /// changed that layout.
-    pub fn bindings(&self, def: &KeymapDef, layout: Layout) -> LayoutBindings {
+    pub fn bindings(&self, def: &KeymapDef<A>, layout: Layout) -> LayoutBindings<A> {
         self.layouts
             .get(&layout)
             .cloned()
@@ -412,14 +429,14 @@ impl PlayerKeys {
 
     /// The controller buttons: the player's, or the defaults if they
     /// haven't changed them. The same whatever the layout.
-    pub fn pad_bindings(&self, def: &KeymapDef) -> PadBindings {
+    pub fn pad_bindings(&self, def: &KeymapDef<A>) -> PadBindings<A> {
         self.pad
             .clone()
             .unwrap_or_else(|| PadBindings::defaults(def))
     }
 
     /// The keymap for `layout` with the player's keys and buttons.
-    pub fn keymap(&self, def: &KeymapDef, layout: Layout) -> Keymap {
+    pub fn keymap(&self, def: &KeymapDef<A>, layout: Layout) -> Keymap<A> {
         let keys = self.bindings(def, layout).keymap(def.repeat);
         keys.with_pad(self.pad_bindings(def).pairs())
     }
@@ -427,13 +444,13 @@ impl PlayerKeys {
     /// The keymap before any layout is chosen ([`Keymap::layout_picker`]),
     /// with the player's buttons: someone playing only with a controller
     /// never picks a layout.
-    pub fn layout_picker_keymap(&self, def: &KeymapDef) -> Keymap {
+    pub fn layout_picker_keymap(&self, def: &KeymapDef<A>) -> Keymap<A> {
         Keymap::layout_picker(def).with_pad(self.pad_bindings(def).pairs())
     }
 
     /// Replaces the controller buttons. Buttons equal to the defaults are
     /// stored as "no entry", as in [`set`](Self::set).
-    pub fn set_pad(&mut self, def: &KeymapDef, bindings: PadBindings) {
+    pub fn set_pad(&mut self, def: &KeymapDef<A>, bindings: PadBindings<A>) {
         self.pad = (bindings != PadBindings::defaults(def)).then_some(bindings);
     }
 
@@ -445,7 +462,7 @@ impl PlayerKeys {
     /// Replaces `layout`'s bindings; the other layout is untouched.
     /// Bindings equal to the defaults are stored as "no entry", so a later
     /// change to the default keys reaches a player who restored them.
-    pub fn set(&mut self, def: &KeymapDef, layout: Layout, bindings: LayoutBindings) {
+    pub fn set(&mut self, def: &KeymapDef<A>, layout: Layout, bindings: LayoutBindings<A>) {
         if bindings == LayoutBindings::defaults(def, layout) {
             self.layouts.remove(&layout);
         } else {
@@ -486,11 +503,11 @@ impl PlayerKeys {
     /// - unreadable text or an unknown version: defaults for every layout
     ///   and for the buttons;
     /// - version 1 (keys only): the default buttons;
-    /// - unknown layouts or actions, unreadable chords or buttons and extra
-    ///   slots are dropped;
+    /// - layouts the keymap doesn't have, unknown actions, unreadable
+    ///   chords or buttons and extra slots are dropped;
     /// - reserved chords are dropped;
-    /// - a chord in two stored slots of one [`KeyGroup`]'s actions stays in
-    ///   the first (in [`Action::ALL`] and slot order); a default slot of
+    /// - a chord in two stored slots of one group's actions stays in
+    ///   the first (in [`ActionSet::ALL`] and slot order); a default slot of
     ///   that group holding a stored chord is emptied (the key moves, as
     ///   with [`LayoutBindings::bind`]);
     /// - an action the layout doesn't list keeps its default slots;
@@ -498,7 +515,7 @@ impl PlayerKeys {
     ///   defaults;
     /// - the buttons are repaired by the same rules as one layout's keys.
     // check-text: not player text (warnings for the log)
-    pub fn from_ron(text: &str, def: &KeymapDef) -> (Self, Vec<String>) {
+    pub fn from_ron(text: &str, def: &KeymapDef<A>) -> (Self, Vec<String>) {
         let mut warnings = Vec::new();
         let version = match ron::from_str::<VersionOnly>(text) {
             Ok(v) => v.version,
@@ -522,7 +539,7 @@ impl PlayerKeys {
         };
         let mut keys = Self::default();
         for (name, actions) in &file.layouts {
-            let Some(layout) = Layout::from_name(name) else {
+            let Some(layout) = Layout::from_name(name).filter(|&l| def.has_layout(l)) else {
                 warnings.push(format!("unknown layout \"{name}\" dropped"));
                 continue;
             };
@@ -553,17 +570,17 @@ impl PlayerKeys {
 /// [`PlayerKeys::from_ron`]), calling `warn` for each fix. `what` is what a
 /// slot holds ("key" or "button"), `parse` reads one from its saved name
 /// and `allowed` refuses the ones that may not be in a slot.
-fn repair<T: Copy + Ord + fmt::Display>(
-    defaults: &SlotTable<T>,
+fn repair<A: ActionSet, T: Copy + Ord + fmt::Display>(
+    defaults: &SlotTable<A, T>,
     actions: &Saved,
     what: &str,
     parse: impl Fn(&str) -> Result<T, String>,
-    allowed: impl Fn(T) -> Result<(), BindError>,
+    allowed: impl Fn(T) -> Result<(), BindError<A>>,
     mut warn: impl FnMut(String),
-) -> SlotTable<T> {
+) -> SlotTable<A, T> {
     let mut stored = BTreeMap::new();
     for (name, slots) in actions {
-        match Action::from_name(name).filter(|a| a.is_rebindable()) {
+        match A::from_name(name).filter(|a| a.is_rebindable()) {
             Some(action) => {
                 stored.insert(action, slots);
             }
@@ -580,7 +597,8 @@ fn repair<T: Copy + Ord + fmt::Display>(
     for (&action, slots) in &stored {
         if slots.len() > SLOTS {
             warn(format!(
-                "{action}: {} slots, only the first {SLOTS} kept",
+                "{}: {} slots, only the first {SLOTS} kept",
+                action.name(),
                 slots.len()
             ));
         }
@@ -589,16 +607,19 @@ fn repair<T: Copy + Ord + fmt::Display>(
             let item = match parse(name) {
                 Ok(item) => item,
                 Err(e) => {
-                    warn(format!("{action}: {e}"));
+                    warn(format!("{}: {e}", action.name()));
                     continue;
                 }
             };
             if !claimed.insert((action.group(), item)) {
-                warn(format!("{action}: {item} is already on another action"));
+                warn(format!(
+                    "{}: {item} is already on another action",
+                    action.name()
+                ));
                 continue;
             }
             if let Err(e) = allowed(item).and_then(|()| table.place(action, i, item)) {
-                warn(format!("{action}: {e}"));
+                warn(format!("{}: {e}", action.name()));
             }
         }
     }

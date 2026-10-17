@@ -1,184 +1,26 @@
-//! Help text that names keys and controller buttons. Names always come
-//! from the active [`Keymap`], never string literals, because each layout
-//! binds actions to different keys (ADR-0015) and the player can rebind
-//! them (ADR-0031); and they follow the [`Device`] the player pressed last
-//! (`docs/design/controls.md`, *Controller*): keys on the keyboard, the
-//! pad's own button names on a controller.
+//! Help text that names keys and controller buttons, for this game's
+//! screens: [`HelpKeys`] with this game's actions, and the helpers that
+//! name an action's keys (generic, from
+//! [`input::help_keys`](crate::input::help_keys)). Names always come from
+//! the active [`Keymap`](crate::input::Keymap), never string literals
+//! (ADR-0015, ADR-0031), and follow the device the player pressed last.
 
-use crate::prelude::*;
-use core::ops::Deref;
+use crate::input::Action;
 
-use crate::input::{ARROWS, Action, Device, Keymap};
+pub use crate::input::help_keys::{
+    NOT_MAPPED, SEPARATOR, all_key_names, cursor_keys_name, help_line, key_name,
+};
 
-/// What help text names keys from: the bindings, the device whose keys
-/// or buttons to name, and the two words a key's name can be
-/// (`! not mapped`, `arrows`). Screens get it from
-/// [`Ctx::help_keys`](crate::screen::Ctx::help_keys), with the words in the
-/// player's language. Dereferences to the [`Keymap`].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct HelpKeys<'a> {
-    keymap: &'a Keymap,
-    device: Device,
-    not_mapped: &'a str,
-    arrows: &'a str,
-}
-
-impl<'a> HelpKeys<'a> {
-    /// `keymap`'s keys, or its buttons as a pad names them, by `device`,
-    /// with the English words ([`NOT_MAPPED`], [`ARROWS`]).
-    pub fn new(keymap: &'a Keymap, device: Device) -> Self {
-        Self {
-            keymap,
-            device,
-            not_mapped: NOT_MAPPED,
-            arrows: ARROWS,
-        }
-    }
-
-    /// These keys, named with `not_mapped` for an action with no key and
-    /// `arrows` for the four arrow keys: the player's language's words.
-    #[must_use]
-    pub fn worded(self, not_mapped: &'a str, arrows: &'a str) -> Self {
-        Self {
-            not_mapped,
-            arrows,
-            ..self
-        }
-    }
-
-    /// These words for another set of bindings (a screen showing a keymap
-    /// that isn't the active one).
-    #[must_use]
-    pub fn of(self, keymap: &'a Keymap) -> Self {
-        Self { keymap, ..self }
-    }
-
-    /// These bindings' keyboard keys, whatever the player is using.
-    #[must_use]
-    pub fn on_keyboard(self) -> Self {
-        Self {
-            device: Device::Keyboard,
-            ..self
-        }
-    }
-
-    /// What is shown for an action with no key, or no button on a
-    /// controller (`docs/design/controls.md`, *Rebinding keys*).
-    pub fn not_mapped(self) -> &'a str {
-        self.not_mapped
-    }
-
-    /// `keymap`'s keyboard keys, whatever the player is using (a picture
-    /// of the keyboard, a keyboard-only key).
-    pub fn keyboard(keymap: &'a Keymap) -> Self {
-        Self::new(keymap, Device::Keyboard)
-    }
-
-    /// The device whose keys or buttons are named.
-    pub fn device(self) -> Device {
-        self.device
-    }
-
-    /// [`Keymap::select_action`] for this device.
-    pub fn select_action(&self) -> Action {
-        self.keymap.select_action(self.device)
-    }
-
-    /// [`Keymap::end_turn_accept_actions`] for this device.
-    pub fn end_turn_accept_actions(&self) -> [Action; 2] {
-        self.keymap.end_turn_accept_actions(self.device)
-    }
-}
-
-impl Deref for HelpKeys<'_> {
-    type Target = Keymap;
-
-    fn deref(&self) -> &Keymap {
-        self.keymap
-    }
-}
-
-/// Separator between the parts of a help line.
-pub const SEPARATOR: &str = " · ";
-
-/// The English of [`HelpKeys::not_mapped`]: what [`HelpKeys::new`] starts
-/// with, and what tests compare with. The game shows
-/// `keys.not_mapped` of the language file.
-// check-text: not player text (the default of `HelpKeys::new`; `Ctx::help_keys` gives the language's)
-pub const NOT_MAPPED: &str = "! not mapped";
-
-/// The name of the key for `action` (its [`Keymap::primary`] chord), e.g.
-/// `f` or `Shift+Space`; on a controller, of its button
-/// ([`Keymap::primary_button`]) as that pad labels it, e.g. `A`.
-/// [`HelpKeys::not_mapped`] if it has none.
-pub fn key_name(keys: HelpKeys<'_>, action: Action) -> String {
-    let name = match keys.device {
-        Device::Keyboard => keys.primary(action).map(|c| c.to_string()),
-        Device::Pad(kind) => {
-            let button = keys.primary_button(action);
-            button.map(|b| kind.button_name(b).to_owned())
-        }
-    };
-    name.unwrap_or_else(|| keys.not_mapped.to_owned())
-}
-
-/// Every key for `action`, joined with `/` (e.g. `f/j/Enter/Space`): its
-/// slots in [`Keymap::chords_for`] order, then its fixed keys
-/// ([`Keymap::fixed_chords_for`]). On a controller, every button for it
-/// ([`Keymap::buttons_for`]). [`HelpKeys::not_mapped`] if its slots are empty.
-pub fn all_key_names(keys: HelpKeys<'_>, action: Action) -> String {
-    let names: Vec<String> = match keys.device {
-        Device::Keyboard => {
-            let own = keys.chords_for(action);
-            // The fixed keys alone don't count as a key of its own.
-            let fixed = if own.is_empty() {
-                Vec::new()
-            } else {
-                Keymap::fixed_chords_for(action)
-            };
-            own.iter().chain(&fixed).map(ToString::to_string).collect()
-        }
-        Device::Pad(kind) => {
-            let buttons = keys.buttons_for(action);
-            let name = |&b| kind.button_name(b).to_owned();
-            buttons.iter().map(name).collect()
-        }
-    };
-    if names.is_empty() {
-        return keys.not_mapped.to_owned();
-    }
-    names.join("/")
-}
-
-/// What moves the cursor: `arrows` when the four cursor actions are on the
-/// arrow keys, otherwise their keys in up-left-down-right order (`wasd`).
-/// On a controller, `D-pad/L-stick` or whatever the cursor is on
-/// ([`Keymap::cursor_buttons_name`]). [`HelpKeys::not_mapped`] if any
-/// cursor action has no key. See [`Keymap::cursor_keys_name`].
-pub fn cursor_keys_name(keys: HelpKeys<'_>) -> String {
-    let name = match keys.device {
-        Device::Keyboard => keys.cursor_keys_name(keys.arrows),
-        Device::Pad(kind) => keys.cursor_buttons_name(kind),
-    };
-    name.unwrap_or_else(|| keys.not_mapped.to_owned())
-}
-
-/// Joins `key label` hints with [`SEPARATOR`], leaving out hints whose key
-/// is `None` (hidden by the caller, e.g. a key that does nothing here).
-pub fn help_line(hints: &[(Option<String>, &str)]) -> String {
-    hints
-        .iter()
-        .filter_map(|(key, label)| key.as_ref().map(|k| format!("{k} {label}")))
-        .collect::<Vec<_>>()
-        .join(SEPARATOR)
-}
+/// What help text names keys from, for this game's actions
+/// ([`help_keys::HelpKeys`](crate::input::help_keys::HelpKeys)).
+pub type HelpKeys<'a> = crate::input::help_keys::HelpKeys<'a, Action>;
 
 #[cfg(test)]
 mod tests {
     use trpg_content::{Chord, RepeatDef};
 
     use super::*;
-    use crate::input::{Button, KeymapDef, Layout, PadKind};
+    use crate::input::{ARROWS, Button, Device, Key, Keymap, PadKind, RIGHT_HANDED, load_keymap};
 
     const XBOX: Device = Device::Pad(PadKind::Xbox);
     const PLAYSTATION: Device = Device::Pad(PadKind::PlayStation);
@@ -186,8 +28,8 @@ mod tests {
 
     /// The right-handed defaults: keys and buttons.
     fn defaults() -> Keymap {
-        let def = KeymapDef::load().unwrap_or_else(|e| panic!("{e:?}"));
-        Keymap::for_layout(&def, Layout::RightHanded)
+        let def = load_keymap().unwrap_or_else(|e| panic!("{e:?}"));
+        Keymap::for_layout(&def, RIGHT_HANDED)
     }
 
     /// Ticket 0243: the words inside a key's name are the language's.
@@ -226,7 +68,7 @@ mod tests {
         );
         assert_ne!(keys, HelpKeys::keyboard(&km));
         // It stands in for the keymap.
-        assert_eq!(keys.select_action(), Action::Confirm);
+        assert_eq!(keys.chords_for(Action::Confirm), [Chord::plain(Key::F)]);
         assert_eq!(keys.primary_button(Action::Confirm), Some(Button::South));
     }
 

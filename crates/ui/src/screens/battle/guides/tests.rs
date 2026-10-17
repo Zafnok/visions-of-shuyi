@@ -2,6 +2,7 @@
 //! the highlighted one's text with the player's keys, opened from the map
 //! menu at every tutorial level, closed by Cancel.
 
+use crate::input::LEFT_HANDED;
 use insta::assert_snapshot;
 use trpg_core::TutorialLevel;
 
@@ -9,7 +10,6 @@ use super::*;
 use crate::color::Rgb;
 use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
-use crate::input::Layout;
 use crate::screen::tests::ctx;
 use crate::screen::{FrameInput, Screen};
 use crate::screens::battle::map_menu::MapEntry;
@@ -171,7 +171,7 @@ fn the_map_menu_opens_it_at_every_level_and_cancel_goes_back() {
 #[test]
 fn the_text_names_the_keys_the_player_has_bound() {
     let mut c = ctx();
-    c.use_layout(Layout::LeftHanded);
+    c.use_layout(LEFT_HANDED);
     let mut s = opened(&mut c);
     let lines = s.view(&c).guides.unwrap().lines;
     assert_eq!(lines[3], "Move it up: w");

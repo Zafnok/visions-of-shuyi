@@ -23,15 +23,15 @@ player's controller buttons in the same saved config).
 app/src/keys.rs        macroquad KeyCode → Key / Chord         (only macroquad key code)
 assets/data/keymap.ron default chords per action, per layout   (Nick's keys, controls.md)
 player config          Storage key `keybindings`               (keys per layout + shared buttons, 3 slots; input/bindings.rs)
-ui/src/input.rs        Keymap + InputState: Chord → Action      (fixed Esc = Cancel)
+ui/src/input.rs        Keymap + InputState: Chord → Action      (fixed Esc = Cancel: `Action`'s `fixed_keys`)
 screens                see only `FrameInput.actions` / `is_held(Action)`
 screens/key_bindings.rs  the player edits their slots (reads `pressed_chords` / `pressed_buttons` to capture)
 widgets/help.rs, tips  Action → key or button name for text     (`ctx.help_keys()`)
 ```
 
 Files allowed to name `Key::…`, `Chord::…` or key names in strings:
-`crates/app/src/keys.rs`, `crates/content/src/keymap.rs`,
-`crates/ui/src/input.rs` (and its submodules), test code (`#[cfg(test)]`
+`crates/app/src/keys.rs`, `crates/content/src/keymap.rs` (and its
+submodules), `crates/ui/src/input.rs` (and its submodules), test code (`#[cfg(test)]`
 items, `tests.rs`, `*_tests.rs`, `tests/`, `crates/ui/src/harness.rs`), and
 the keyboard *picture* in `crates/ui/src/screens/layout_picker.rs` (which
 keys exist and what each does) and its skin `layout_picker/glyph.rs` (where
@@ -157,20 +157,37 @@ Nintendo's `A` on the right). You get this for free by following rule 2:
 6. **Held and repeated keys** come from `InputState` (repeat timings in
    `keymap.ron`); don't time key presses in a screen.
 
+## Generic input, this game's actions (ADR-0078)
+
+The mechanism is generic over a game's `ActionSet` (ticket 1106):
+`KeymapDef<A>` (`content/src/keymap/format.rs`), `Keymap<A>`,
+`InputState<A>`, `FrameInput<A>`, `LayoutBindings<A>`, `PadBindings<A>`,
+`PlayerKeys<A>`, `HelpKeys<'a, A>` (`ui/src/input/`). Game code uses the
+aliases with `Action` (`input::Keymap`, `screen::FrameInput`,
+`widgets::help::HelpKeys`) and never names a game action in those generic
+modules. A generic widget or screen reacts to `action.ui()` (`UiAction`:
+up, down, left, right, confirm, cancel, debug), not to `Action::…`. Rules
+that name this game's actions live with the game: the split keys in
+`screens/battle/split_keys.rs`, the Key bindings rows in `input::KEY_ROWS`.
+Layouts are named in `keymap.ron` (`id`, the text key of its `name`,
+`keys`); the game's are `RIGHT_HANDED` and `LEFT_HANDED`.
+
 ## Adding an action
 
 1. `crates/content/src/keymap.rs`: add the `Action` variant with a doc
-   comment saying what it does, add it to `Action::ALL`, give it a RON name.
+   comment saying what it does, add it to `Action::ALL`, give it a RON name,
+   and say in `ActionSet::ui` whether a generic widget takes it for one of
+   its `UiAction`s (usually not).
 2. Is it **required** (must always have a key) or **optional**? That's
    Nick's call: the list is in `controls.md` *Rebinding keys*. If the new
    action isn't covered, ask with `ask-nick`. Set `Action::is_required` to
    match.
 3. `assets/data/keymap.ron`: add it to **every** layout (`[]` if it has no
    default key), at most 3 chords (`SLOTS`), keys from `controls.md`.
-4. The Key bindings screen: add the action with its player-facing label to
-   `ROWS` in `crates/ui/src/screens/key_bindings.rs`, among the required
-   or the optional actions (a test checks every rebindable action is
-   listed once, required ones first).
+4. The Key bindings screen: add the action with its player-facing label
+   and its `RowGroup` to `KEY_ROWS` in `crates/ui/src/input.rs`, among the
+   required or the optional actions (a test checks every rebindable action
+   is listed once, required ones first).
 5. Screens: react to the action; help bars/tips name it via rule 2.
 6. Tests: the keymap-matches-design test, a screen test driven by the
    `Action`, and a Harness test using the default key.

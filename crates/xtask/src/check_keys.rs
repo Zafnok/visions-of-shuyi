@@ -49,8 +49,13 @@ const KEY_FILES: [&str; 5] = [
     "crates/app/src/pads.rs",
     "crates/playdate/src/pads.rs",
 ];
-/// Their submodules: `ui::input`'s, and the per-platform controller code.
-const KEY_DIRS: [&str; 2] = ["crates/ui/src/input/", "crates/app/src/pads/"];
+/// Their submodules: `content::keymap`'s (the generic keymap format, ticket
+/// 1106), `ui::input`'s, and the per-platform controller code.
+const KEY_DIRS: [&str; 3] = [
+    "crates/content/src/keymap/",
+    "crates/ui/src/input/",
+    "crates/app/src/pads/",
+];
 /// The only file that may read macroquad's keyboard.
 const PLATFORM_FILE: &str = "crates/app/src/keys.rs";
 /// Files only compiled for tests (`#[cfg(any(test, feature = "harness"))]`).
@@ -665,6 +670,10 @@ mod tests {
         );
         assert_eq!(
             rust("crates/content/src/keymap.rs", src),
+            Vec::<String>::new()
+        );
+        assert_eq!(
+            rust("crates/content/src/keymap/format.rs", src),
             Vec::<String>::new()
         );
         assert_eq!(rust("crates/app/src/keys.rs", src), Vec::<String>::new());

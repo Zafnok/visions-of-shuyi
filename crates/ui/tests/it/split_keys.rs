@@ -5,16 +5,17 @@
 //! With neither bound the battle plays as before (see `battle.rs`).
 
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{Action, Chord, Layout};
+use trpg_ui::input::RIGHT_HANDED;
+use trpg_ui::input::{Action, Chord};
 
 /// At the title with the right-handed layout, `action`'s first slot on
 /// `key`, then Quick Battle, its `PLAYER PHASE` banner closed.
 fn quick_battle_with(action: Action, key: &str) -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
-    let mut b = h.game().ctx().layout_bindings(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    let mut b = h.game().ctx().layout_bindings(RIGHT_HANDED);
     let chord = Chord::parse(key).unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(b.bind(action, 0, chord), Ok(None));
-    if let Err(e) = h.ctx_mut().set_layout_bindings(Layout::RightHanded, b) {
+    if let Err(e) = h.ctx_mut().set_layout_bindings(RIGHT_HANDED, b) {
         panic!("saving key bindings: {e}");
     }
     h.keys("Down f Left f f");
@@ -137,7 +138,7 @@ fn confirm_still_accepts_the_prompt_with_confirm_end_turn_bound() {
 
 #[test]
 fn without_split_keys_end_turn_again_accepts_the_prompt() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f Left f f");
     one_wait(&mut h);
     h.keys("Space");

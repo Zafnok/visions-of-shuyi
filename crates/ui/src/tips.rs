@@ -20,6 +20,7 @@ use core::fmt::Display;
 use trpg_content::tip::CURSOR_PLACEHOLDER;
 
 use crate::input::Action;
+use crate::screens::battle::split_keys::help_select_action;
 use crate::storage::{Storage, StorageError};
 use crate::widgets::help::{HelpKeys, cursor_keys_name, key_name};
 
@@ -73,11 +74,11 @@ pub fn reset_tips(storage: &mut dyn Storage) -> Result<(), StorageError> {
 /// `text` with each `{Action}` replaced by the key `keys` binds to that
 /// action (its primary key, or on a controller its button), `{Cursor}` by
 /// the cursor keys, `{Select}` by the key that picks on the map
-/// ([`Keymap::select_action`]: Confirm's while Select has no key), and
+/// ([`select_action`]: Confirm's while Select has no key), and
 /// [`NOT_MAPPED`](crate::widgets::help::NOT_MAPPED) for one with no key.
 /// Anything else in braces is left alone.
 ///
-/// [`Keymap::select_action`]: crate::input::Keymap::select_action
+/// [`select_action`]: crate::screens::battle::split_keys::select_action
 pub fn fill_placeholders(text: &str, keys: HelpKeys<'_>) -> String {
     fill_text(text, keys, &[])
 }
@@ -90,7 +91,7 @@ pub fn fill_text(text: &str, keys: HelpKeys<'_>, args: &[(&str, &dyn Display)]) 
         if name == CURSOR_PLACEHOLDER {
             Some(cursor_keys_name(keys))
         } else if name == Action::Select.name() {
-            Some(key_name(keys, keys.select_action()))
+            Some(key_name(keys, help_select_action(keys)))
         } else {
             Action::from_name(name).map(|action| key_name(keys, action))
         }
@@ -138,6 +139,7 @@ fn fill_by(
 
 #[cfg(test)]
 mod tests {
+    use crate::input::{LEFT_HANDED, RIGHT_HANDED};
     #[test]
     fn values_are_filled_and_keys_left_as_written() {
         let filled = fill_values(
@@ -151,7 +153,7 @@ mod tests {
     use trpg_content::{Chord, RepeatDef};
 
     use super::*;
-    use crate::input::{Device, Keymap, Layout, PadKind};
+    use crate::input::{Device, Keymap, PadKind};
     use crate::storage::MemoryStorage;
     use crate::widgets::help::NOT_MAPPED;
 
@@ -253,7 +255,7 @@ mod tests {
     #[test]
     fn placeholders_show_the_buttons_on_a_pad() {
         let content = trpg_content::load_embedded().unwrap();
-        let km = Keymap::for_layout(&content.keymap, Layout::RightHanded);
+        let km = Keymap::for_layout(&content.keymap, RIGHT_HANDED);
         let text = "{Confirm}/{Cancel} {Cursor} {Select} {NextUnit} {Nope} {Debug}";
         let on = |kind| fill_placeholders(text, HelpKeys::new(&km, Device::Pad(kind)));
         assert_eq!(
@@ -303,11 +305,11 @@ mod tests {
             let tip = content.tips.tips.iter().find(|t| t.id == id);
             tip.map(|t| t.text.replace('\n', " ")).unwrap_or_default()
         };
-        let default = Keymap::for_layout(&content.keymap, Layout::RightHanded);
+        let default = Keymap::for_layout(&content.keymap, RIGHT_HANDED);
         let mut split = content
             .keymap
             .layouts
-            .get(&Layout::RightHanded)
+            .get(&RIGHT_HANDED)
             .into_iter()
             .flatten()
             .flat_map(|(&a, chords)| chords.iter().map(move |&c| (c, a)))
@@ -339,8 +341,8 @@ mod tests {
     fn placeholders_follow_the_layout() {
         let content = trpg_content::load_embedded().unwrap();
         let text = "{Confirm} {Cursor} {Rewind}";
-        let right = Keymap::for_layout(&content.keymap, Layout::RightHanded);
-        let left = Keymap::for_layout(&content.keymap, Layout::LeftHanded);
+        let right = Keymap::for_layout(&content.keymap, RIGHT_HANDED);
+        let left = Keymap::for_layout(&content.keymap, LEFT_HANDED);
         assert_eq!(
             fill_placeholders(text, HelpKeys::keyboard(&right)),
             "f arrows r"

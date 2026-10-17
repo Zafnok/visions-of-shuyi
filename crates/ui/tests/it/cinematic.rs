@@ -15,7 +15,7 @@ use trpg_ui::console::ConsoleSpec;
 use trpg_ui::debug::CinematicScreen;
 use trpg_ui::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::{Facing, MapScene, UnitView};
 use trpg_ui::save;
 
@@ -24,7 +24,7 @@ const SCREEN: Rect = Rect::new(0, 0, 100, 32);
 /// The title with the test cinematic opened from the debug menu (its last
 /// tool but two: the scene camera and the map skin come after it).
 fn opened() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("F2 Up Up Up f");
     assert_eq!(h.screens(), ["title", "debug_menu", "cinematic"]);
     h
@@ -212,7 +212,7 @@ fn the_debug_key_does_nothing_on_it() {
 
 #[test]
 fn it_follows_the_map_skin_in_use() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin("sprite");
     h.keys("F2 Up Up Up f");
     let scene = h.game().buffer().backdrop().unwrap().scene();
@@ -244,7 +244,7 @@ fn drawn(h: &Harness, player: &CinematicPlayer, t: f32) -> GlyphBuffer {
 
 #[test]
 fn the_lead_is_the_most_recent_saves_and_the_default_without_one() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     let face = |h: &Harness, id: &str| {
         let portrait = &h.game().ctx().content.portraits[id];
         portrait.expression("neutral").unwrap().image

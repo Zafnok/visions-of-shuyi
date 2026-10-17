@@ -7,6 +7,7 @@ use insta::assert_snapshot;
 use trpg_core::LeadGender;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, Chord, Layout};
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::dialogue::log::{LogView, RowKind};
 use trpg_ui::{Ctx, Game};
@@ -23,7 +24,7 @@ fn intro_in(layout: Layout) -> Harness {
 
 /// [`intro_in`] the right-handed layout.
 fn intro() -> Harness {
-    intro_in(Layout::RightHanded)
+    intro_in(RIGHT_HANDED)
 }
 
 /// The dialogue screen on the stack.
@@ -245,7 +246,7 @@ fn the_log_waits_for_a_line_and_not_at_skip_scene() {
 #[test]
 fn on_a_key_the_scene_uses_the_scene_wins() {
     let mut h = intro();
-    let layout = Layout::RightHanded;
+    let layout = RIGHT_HANDED;
     let mut b = h.game().ctx().layout_bindings(layout);
     let up = Chord::parse("Up").unwrap_or_else(|e| panic!("{e}"));
     // Another group's key: it stays on Cursor up too.
@@ -296,7 +297,7 @@ fn the_text_box_names_the_log_key_only_while_it_has_one() {
             .collect::<String>()
     };
     assert!(bottom(&h).contains("b log   f ▼"), "{}", bottom(&h));
-    let layout = Layout::RightHanded;
+    let layout = RIGHT_HANDED;
     let mut b = h.game().ctx().layout_bindings(layout);
     b.clear(Action::DialogueLog, 0);
     if let Err(e) = h.ctx_mut().set_layout_bindings(layout, b) {
@@ -318,7 +319,7 @@ fn log_snapshot_right_handed() {
 
 #[test]
 fn log_snapshot_left_handed() {
-    let mut h = intro_in(Layout::LeftHanded);
+    let mut h = intro_in(LEFT_HANDED);
     for _ in 0..8 {
         h.wait(10.0);
         h.keys("j");

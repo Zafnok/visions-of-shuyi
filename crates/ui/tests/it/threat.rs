@@ -6,7 +6,7 @@
 use trpg_core::ai::AiBehavior;
 use trpg_core::{Phase, Pos};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::ThreatView;
 
 fn p(x: i32, y: i32) -> Pos {
@@ -53,7 +53,7 @@ fn skip_scenes(h: &mut Harness) {
 /// Chapter 1's battle from New Game, on turn 1 with its scenes skipped and
 /// its banner closed: the cursor on the lead at (4, 12).
 fn chapter_1() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded).with_shipped_story();
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     // New Game, Classic, Not familiar, the default lead.
     h.keys("f f f Up f");
     skip_scenes(&mut h);
@@ -67,7 +67,7 @@ fn chapter_1() -> Harness {
 /// The Quick Battle on turn 1, its banner closed: the cursor on the lord
 /// at (3, 5).
 fn quick_battle() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f Left f f");
     assert_eq!(h.screens(), ["title", "battle"]);
     assert_eq!(h.cursor_tile(), Some(p(3, 5)));

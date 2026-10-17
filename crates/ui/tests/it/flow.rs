@@ -13,7 +13,7 @@ use trpg_core::{
 };
 use trpg_ui::audio::{AudioRequest, pick_from_pool};
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 
 /// The lead's unit in the test battle (its first slot).
 const LEAD: UnitId = UnitId(1);
@@ -21,7 +21,7 @@ const LEAD: UnitId = UnitId(1);
 const FORT: Pos = Pos::new(5, 5);
 
 fn title() -> Harness {
-    Harness::with_layout(Layout::RightHanded)
+    Harness::with_layout(RIGHT_HANDED)
 }
 
 /// From the title: New Game, the mode (`Down` for Casual), "Not familiar",
@@ -794,7 +794,7 @@ fn playtime_counts_while_playing() {
 fn the_next_chapter_follows_a_victory() {
     let mut ctx = trpg_ui::Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
-        .with_layout(Layout::RightHanded);
+        .with_layout(RIGHT_HANDED);
     ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
     if let Some(test) = ctx.content.chapters.get_mut("test") {
         test.next = Some("quick".into());

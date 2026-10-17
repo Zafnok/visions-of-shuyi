@@ -1,6 +1,7 @@
 use super::*;
 use crate::audio::AudioRequest;
 use crate::console::ConsoleSpec;
+use crate::input::{KEY_ROWS, LEFT_HANDED, RIGHT_HANDED};
 use crate::screen::tests::ctx;
 use crate::storage::Storage;
 
@@ -21,13 +22,13 @@ fn press(c: &str) -> FrameInput {
 
 /// The screen with the Debug key reserved whatever the build profile.
 fn screen(c: &Ctx) -> KeyBindingsScreen {
-    let reserved = LayoutBindings::from_def(&c.content.keymap, Layout::RightHanded, true);
+    let reserved = LayoutBindings::from_def(&c.content.keymap, RIGHT_HANDED, true);
     KeyBindingsScreen::new(c).with_bindings(reserved)
 }
 
 /// Moves the focus to `action`'s slot `slot`.
 fn focus_on(s: &mut KeyBindingsScreen, c: &mut Ctx, action: Action, slot: usize) {
-    for _ in 0..=ROWS.len() {
+    for _ in 0..=KEY_ROWS.len() {
         if s.focus().map(|(a, _)| a) == Some(action) {
             break;
         }
@@ -43,7 +44,7 @@ fn focus_on(s: &mut KeyBindingsScreen, c: &mut Ctx, action: Action, slot: usize)
 /// Moves the focus down to Restore defaults. Bounded, so a screen that
 /// never gets there fails the test instead of looping for ever.
 fn focus_on_restore(s: &mut KeyBindingsScreen, c: &mut Ctx) {
-    for _ in 0..=ROWS.len() {
+    for _ in 0..=KEY_ROWS.len() {
         if s.focus().is_none() {
             return;
         }
@@ -96,7 +97,7 @@ fn shown(view: &KeyBindingsView, action: Action) -> Vec<String> {
 
 #[test]
 fn rows_list_every_rebindable_action_once_required_first() {
-    let mut listed: Vec<Action> = ROWS.iter().map(|r| r.0).collect();
+    let mut listed: Vec<Action> = KEY_ROWS.iter().map(|r| r.0).collect();
     let required = listed.iter().take_while(|a| a.is_required()).count();
     assert_eq!(required, 7);
     assert!(listed[required..].iter().all(|a| !a.is_required()));
@@ -107,25 +108,25 @@ fn rows_list_every_rebindable_action_once_required_first() {
         .collect();
     rebindable.sort();
     assert_eq!(listed, rebindable);
-    assert_eq!(label(&ctx(), Action::Info), "Unit info");
-    assert_eq!(label(&ctx(), Action::Debug), "Debug");
+    assert_eq!(label(&ctx(), &KEY_ROWS, Action::Info), "Unit info");
+    assert_eq!(label(&ctx(), &KEY_ROWS, Action::Debug), "Debug");
     assert_eq!(
-        blocked_message(&ctx(), Side::Keyboard, Cancel),
+        blocked_message(&ctx(), &KEY_ROWS, Side::Keyboard, Cancel),
         "Give Cancel a key first"
     );
     assert_eq!(
-        blocked_message(&ctx(), Side::Controller, Cancel),
+        blocked_message(&ctx(), &KEY_ROWS, Side::Controller, Cancel),
         "Give Cancel a button first"
     );
 }
 
 #[test]
 fn starts_on_the_first_slot_of_the_layout_in_use() {
-    let c = ctx().with_layout(Layout::LeftHanded);
+    let c = ctx().with_layout(LEFT_HANDED);
     let s = KeyBindingsScreen::new(&c);
     assert_eq!(s.name(), "key_bindings");
     assert_eq!(s.focus(), Some((CursorUp, 0)));
-    assert_eq!(s.bindings(), &c.layout_bindings(Layout::LeftHanded));
+    assert_eq!(s.bindings(), &c.layout_bindings(LEFT_HANDED));
     assert!(!s.is_capturing());
     assert_eq!(s.message(), None);
     assert_eq!(s.side(), Side::Keyboard);
@@ -160,7 +161,7 @@ fn starts_on_the_first_slot_of_the_layout_in_use() {
     // Before a layout is chosen (debug menu over the picker): right-handed.
     let none = Ctx::embedded().unwrap();
     let s = KeyBindingsScreen::new(&none);
-    assert_eq!(s.bindings(), &none.layout_bindings(Layout::RightHanded));
+    assert_eq!(s.bindings(), &none.layout_bindings(RIGHT_HANDED));
 }
 
 #[test]
@@ -484,9 +485,9 @@ fn leaving_saves_the_edit_and_pops() {
     assert_eq!(format!("{t:?}"), "Pop");
     assert_eq!(sounds(&mut c), [cue(MenuSound::Cancel)]);
     assert_eq!(c.keymap.action(chord("g")), Some(Confirm));
-    assert_eq!(&c.layout_bindings(Layout::RightHanded), s.bindings());
-    assert!(c.player_keys().is_custom(Layout::RightHanded));
-    assert!(!c.player_keys().is_custom(Layout::LeftHanded));
+    assert_eq!(&c.layout_bindings(RIGHT_HANDED), s.bindings());
+    assert!(c.player_keys().is_custom(RIGHT_HANDED));
+    assert!(!c.player_keys().is_custom(LEFT_HANDED));
     assert_eq!(
         c.storage.read(crate::screen::KEYBINDINGS_KEY).unwrap(),
         Some(c.player_keys().to_ron())
@@ -515,7 +516,7 @@ fn leaving_is_blocked_while_a_required_action_has_no_key() {
     assert_eq!(format!("{t:?}"), "None");
     assert_eq!(s.message(), Some("Give Cursor down a key first"));
     assert_eq!(sounds(&mut c), [cue(MenuSound::Denied)]);
-    assert!(!c.player_keys().is_custom(Layout::RightHanded));
+    assert!(!c.player_keys().is_custom(RIGHT_HANDED));
     assert_eq!(
         s.view(&c).message.as_deref(),
         Some("Give Cursor down a key first")
@@ -553,15 +554,14 @@ fn leaving_is_blocked_while_a_required_action_has_no_key() {
 #[test]
 fn restore_defaults_resets_only_this_layout() {
     let mut c = ctx();
-    let mut left = c.layout_bindings(Layout::LeftHanded);
+    let mut left = c.layout_bindings(LEFT_HANDED);
     left.bind(Info, 0, chord("g")).unwrap();
-    c.set_layout_bindings(Layout::LeftHanded, left.clone())
-        .unwrap();
+    c.set_layout_bindings(LEFT_HANDED, left.clone()).unwrap();
     let mut s = KeyBindingsScreen::new(&c);
     bind(&mut s, &mut c, Confirm, 1, "e");
     assert!(s.moved.is_some());
     s.update(&mut c, &act(&[Cancel]));
-    assert!(c.player_keys().is_custom(Layout::RightHanded));
+    assert!(c.player_keys().is_custom(RIGHT_HANDED));
 
     let mut s = KeyBindingsScreen::new(&c);
     focus_on_restore(&mut s, &mut c);
@@ -578,12 +578,12 @@ fn restore_defaults_resets_only_this_layout() {
     assert!(!s.is_asking_restore());
     assert_eq!(s.moved, None);
     assert_eq!(sounds(&mut c), [cue(MenuSound::Select)]);
-    let defaults = LayoutBindings::defaults(&c.content.keymap, Layout::RightHanded);
+    let defaults = LayoutBindings::defaults(&c.content.keymap, RIGHT_HANDED);
     assert_eq!(s.bindings(), &defaults);
     let t = s.update(&mut c, &act(&[Cancel]));
     assert_eq!(format!("{t:?}"), "Pop");
-    assert!(!c.player_keys().is_custom(Layout::RightHanded));
-    assert_eq!(c.layout_bindings(Layout::LeftHanded), left);
+    assert!(!c.player_keys().is_custom(RIGHT_HANDED));
+    assert_eq!(c.layout_bindings(LEFT_HANDED), left);
 }
 
 #[test]
@@ -621,7 +621,7 @@ fn the_restore_question_can_be_backed_out_of() {
     assert_eq!(s.help(&c), "arrows move · f restore · d back");
     assert_eq!(s.view(&c).question, None);
     // The left-handed question names its layout and keys.
-    let left = ctx().with_layout(Layout::LeftHanded);
+    let left = ctx().with_layout(LEFT_HANDED);
     let mut s = KeyBindingsScreen::new(&left);
     s.asking_restore = true;
     assert_eq!(
@@ -679,7 +679,7 @@ fn help_names_the_keys_the_screen_was_opened_with() {
     s.update(&mut c, &act(&[CursorUp, CursorUp, CursorUp, CursorUp]));
     focus_on_restore(&mut s, &mut c);
     assert_eq!(s.help(&c), "arrows move · f restore · d back");
-    let left = ctx().with_layout(Layout::LeftHanded);
+    let left = ctx().with_layout(LEFT_HANDED);
     assert_eq!(
         KeyBindingsScreen::new(&left).help(&left),
         "wasd move · j bind · Delete clear · k back"
@@ -731,7 +731,10 @@ fn the_groups_are_the_required_actions_then_the_optional_ones() {
     assert!(view.groups[0].rows.iter().all(|r| r.action.is_required()));
     assert!(view.groups[1].rows.iter().all(|r| !r.action.is_required()));
     let listed: Vec<_> = view.rows().map(|r| (r.action, r.label.as_str())).collect();
-    let want: Vec<_> = ROWS.iter().map(|&(a, key)| (a, c.text(key))).collect();
+    let want: Vec<_> = KEY_ROWS
+        .iter()
+        .map(|&(a, key, _)| (a, c.text(key)))
+        .collect();
     assert_eq!(listed, want);
 }
 
@@ -827,7 +830,7 @@ fn the_switch_row_shows_the_keyboard_or_the_controller() {
     assert_eq!((s.side(), s.choice()), (Side::Keyboard, None));
     // The clear-slot key does nothing there.
     s.update(&mut c, &press("Delete"));
-    assert_eq!(s.bindings(), &c.layout_bindings(Layout::RightHanded));
+    assert_eq!(s.bindings(), &c.layout_bindings(RIGHT_HANDED));
 }
 
 #[test]
@@ -1231,7 +1234,7 @@ fn leaving_saves_the_buttons_for_both_layouts_and_leaves_the_keys() {
     assert_eq!(&c.pad_bindings(), s.pad_bindings());
     assert_eq!(c.keymap.pad_action(Button::RightStickPress), Some(Info));
     assert!(c.player_keys().is_custom_pad());
-    for layout in Layout::ALL {
+    for layout in [RIGHT_HANDED, LEFT_HANDED] {
         assert!(!c.player_keys().is_custom(layout));
         let km = c.keymap_for(layout);
         assert_eq!(
