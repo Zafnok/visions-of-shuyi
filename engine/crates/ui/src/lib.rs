@@ -15,7 +15,7 @@
 //!   (the `harness` feature), and a `toy` game to try things on
 //!   (the `toy` feature).
 //!
-//! Later tickets add widgets and skins.
+//! - [`widgets`] screens are built from: a menu and word wrap.
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
@@ -47,6 +47,7 @@ pub mod storage;
 pub mod text;
 #[cfg(any(test, feature = "toy"))]
 pub mod toy;
+pub mod widgets;
 
 pub use ctx::{Ctx, GameData, IdleMotion, KeyPrompt, Keyboard};
 pub use game::{FrameOutput, Game, GameHooks, RawInputEvent, ScreenHook};
