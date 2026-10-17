@@ -2,8 +2,8 @@
 // plugin over the browser's Gamepad API. This file is the game's own code
 // (see LICENSE), unlike the vendored plugins next to it.
 //
-// The Rust side is crates/app/src/pads/web.rs, which declares exactly the
-// `trpg_pad_*` functions below (an xtask test compares the two lists) and
+// The Rust side is engine/crates/app/src/pads/web.rs, which declares exactly the
+// `shuyi_pad_*` functions below (an xtask test compares the two lists) and
 // turns what they return into the game's buttons. All the rules (sticks as
 // directions, the Switch-style swap, several pads as one) live in Rust.
 //
@@ -15,15 +15,15 @@
 (function () {
     "use strict";
 
-    // Keep equal to PLUGIN_VERSION in crates/app/src/pads/web.rs.
-    var VERSION = 2;
+    // Keep equal to PLUGIN_VERSION in engine/crates/app/src/pads/web.rs.
+    var VERSION = 3;
 
     // The standard mapping's buttons before its optional extras: face
     // buttons, shoulders, triggers, the two centre buttons, stick presses,
     // D-pad.
     var STANDARD_BUTTONS = 16;
 
-    // The pads found by the last trpg_pad_poll().
+    // The pads found by the last shuyi_pad_poll().
     var pads = [];
 
     // The USB vendor id in a Gamepad.id, or 0. Chrome writes
@@ -44,7 +44,7 @@
     function register_plugin(importObject) {
         // Reads the connected standard-mapping pads; returns how many. The
         // other functions index into this list until the next call.
-        importObject.env.trpg_pad_poll = function () {
+        importObject.env.shuyi_pad_poll = function () {
             pads = [];
             var all;
             try {
@@ -64,19 +64,19 @@
             return pads.length;
         };
         // The browser's own index of the pad (stable while it's plugged in).
-        importObject.env.trpg_pad_index = function (pad) {
+        importObject.env.shuyi_pad_index = function (pad) {
             return pads[pad] ? pads[pad].index : 0;
         };
         // The pad's USB vendor id, or 0 if the browser doesn't tell.
-        importObject.env.trpg_pad_vendor = function (pad) {
+        importObject.env.shuyi_pad_vendor = function (pad) {
             return pads[pad] ? vendor_of(pads[pad].id) : 0;
         };
         // The pad's USB product id, or 0 if the browser doesn't tell.
-        importObject.env.trpg_pad_product = function (pad) {
+        importObject.env.shuyi_pad_product = function (pad) {
             return pads[pad] ? product_of(pads[pad].id) : 0;
         };
         // Bit i is set while the pad's buttons[i] is pressed, i < 16.
-        importObject.env.trpg_pad_buttons = function (pad) {
+        importObject.env.shuyi_pad_buttons = function (pad) {
             var buttons = pads[pad] ? pads[pad].buttons : [];
             var bits = 0;
             for (var i = 0; i < STANDARD_BUTTONS && i < buttons.length; i++) {
@@ -88,7 +88,7 @@
         };
         // The pad's axes[axis]: 0-3 are the left stick's x and y, then the
         // right stick's (down is positive).
-        importObject.env.trpg_pad_axis = function (pad, axis) {
+        importObject.env.shuyi_pad_axis = function (pad, axis) {
             var value = pads[pad] ? pads[pad].axes[axis] : 0;
             return typeof value === "number" ? value : 0;
         };
@@ -96,7 +96,7 @@
 
     miniquad_add_plugin({
         register_plugin: register_plugin,
-        name: "trpg_gamepad",
+        name: "shuyi_gamepad",
         version: VERSION
     });
 })();

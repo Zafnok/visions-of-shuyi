@@ -731,7 +731,7 @@ mod tests {
             .collect()
     }
 
-    /// The platform crates, `trpg-app` and `trpg-playdate`, copy the
+    /// The platform crates, `shuyi-app` and `trpg-playdate`, copy the
     /// workspace lints because one of them differs (`unsafe_code`,
     /// ADR-0034, ADR-0070 §4); the copies must not drift.
     #[test]
@@ -748,18 +748,23 @@ mod tests {
             rust.contains(&"unsafe_code = \"deny\"".to_owned()),
             "{rust:?}"
         );
-        for platform in ["app", "playdate"] {
+        for platform in ["engine/crates/app", "crates/playdate"] {
             let manifest =
-                std::fs::read_to_string(root.join(format!("crates/{platform}/Cargo.toml")))
-                    .unwrap();
+                std::fs::read_to_string(root.join(format!("{platform}/Cargo.toml"))).unwrap();
             assert_eq!(table(&manifest, "[lints.clippy]"), clippy, "{platform}");
             assert_eq!(table(&manifest, "[lints.rust]"), rust, "{platform}");
         }
-        // Every other crate inherits the workspace's `forbid`.
-        for other in ["bots", "core", "content", "ui", "xtask"] {
+        // Every other crate inherits the workspace's `forbid`, the game's
+        // binary too: its platform code is the engine's (ticket 1110).
+        for other in ["app", "bots", "core", "content", "ui", "xtask"] {
             let manifest =
                 std::fs::read_to_string(root.join(format!("crates/{other}/Cargo.toml"))).unwrap();
             assert_eq!(table(&manifest, "[lints]"), ["workspace = true"], "{other}");
+        }
+        for other in ["assets", "core", "ui"] {
+            let path = format!("engine/crates/{other}/Cargo.toml");
+            let manifest = std::fs::read_to_string(root.join(&path)).unwrap();
+            assert_eq!(table(&manifest, "[lints]"), ["workspace = true"], "{path}");
         }
     }
 

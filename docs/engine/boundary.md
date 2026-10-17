@@ -207,10 +207,10 @@ only once the Harness can drive a toy game (1111).
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
-| `render.rs`, `keys.rs`, `pads*` | E | `trpg_pad_*` JS names are renamed. |
-| `storage/` | E | `APP_DIR_NAME = "tactical-rpg"` (`native.rs:15`) and the web `PREFIX` become settings. |
-| `audio*` | E | Uses content's `AudioManifest`, `MUSIC_DIR` and `VOICE_DIR`. |
-| `main.rs`, `build.rs` | M | Game parts: window title, icon, `Ctx::embedded`, start screen, the release check on test files, exe strings. |
+| `render.rs`, `keys.rs`, `pads*` | E → moved | 1110: `shuyi-app`. The renderer reads images with the game's file reader; the JS plugin is `shuyi_gamepad` with `shuyi_pad_*` functions. |
+| `storage/` | E → moved | 1110: the storage's name is `AppConfig::storage_name` (the native folder, and the web prefix `<name>/`); the game's stays `tactical-rpg`. |
+| `audio*` | E → moved | 1110: sounds through the engine's audio `Files` (the music folder's name with them), voices through `AppConfig::voices` (folder, language, manifest); requests generic over the voice variant. |
+| `main.rs`, `build.rs` | M → split | 1110: the loop, the window settings, the icon decoding and the error screen are `shuyi_app::{run, window_conf}`. The game's binary keeps macroquad's entry point, the window's title, size and icon, `Ctx::embedded` and its settings, the start screen, the release check on test files (a compile-time check) and `build.rs` (exe strings, the web's `--allow-undefined`). |
 | `args.rs` | G | `--scene`, `--lead`. |
 
 macroquad APIs in use: window and loop (`Conf`, fullscreen, DPI,

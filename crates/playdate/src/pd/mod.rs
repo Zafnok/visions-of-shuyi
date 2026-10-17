@@ -36,8 +36,6 @@ unsafe extern "C" {
     fn pd_set_refresh_rate(rate: c_float);
     fn pd_frame() -> *mut u8;
     fn pd_mark_updated_rows(start: c_int, end: c_int);
-    fn pd_clear();
-    fn pd_draw_text(text: *const c_char, len: usize, x: c_int, y: c_int);
     fn pd_file_open_write(name: *const c_char) -> *mut c_void;
     fn pd_file_open_read_data(name: *const c_char) -> *mut c_void;
     fn pd_file_read(file: *mut c_void, buf: *mut c_void, len: c_uint) -> c_int;
@@ -136,18 +134,6 @@ pub fn show(frame: &Frame) -> bool {
         }
         None => false,
     }
-}
-
-/// Clears the screen to white.
-pub fn clear() {
-    unsafe { pd_clear() };
-}
-
-/// Draws `line` in the SDK's current font, its top left at `(x, y)`.
-pub fn draw_text(line: &str, x: i32, y: i32) {
-    // `drawText` takes the length in characters, not bytes.
-    let chars = line.chars().count();
-    unsafe { pd_draw_text(line.as_ptr().cast(), chars, x, y) };
 }
 
 /// Replaces the file `name` in the game's data folder with `bytes`.

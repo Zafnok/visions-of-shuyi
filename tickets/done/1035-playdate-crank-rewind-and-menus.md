@@ -122,7 +122,7 @@ it) and the actions stay the game's.
 ## Completion notes
 
 **What was done.** Input had moved to the engine (1107), so the crank is
-an engine input source, as the *Carve* note asked (ADR-0081):
+an engine input source, as the *Carve* note asked (ADR-0083):
 
 - **The crank as two buttons** (`Button::CrankBack`, `CrankForward`,
   appended to `Button::ALL`): a notch wound is a press and a release, so

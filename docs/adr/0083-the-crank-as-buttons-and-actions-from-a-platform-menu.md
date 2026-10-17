@@ -1,4 +1,4 @@
-# ADR-0081: The crank as two buttons, and actions from a platform's own menu
+# ADR-0083: The crank as two buttons, and actions from a platform's own menu
 
 - **Status:** Accepted
 - **Date:** 2026-10-17

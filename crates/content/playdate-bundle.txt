@@ -1,0 +1,30 @@
+# What the Playdate build leaves out of `assets/` (ticket 1036, ADR-0082).
+#
+# `build.rs` embeds every file under `assets/` in the Playdate's bundle but
+# those listed here, and tells the bundle which it left out
+# (`bundle::left_out`), so a loader can tell "left out on purpose" from
+# "missing". A line is a path under `assets/`: a file (`icon/icon.ico`), a
+# folder and everything below it (`audio/sfx/`), or every file of one name
+# (`**/README.md`). A line that matches no file stops the build.
+#
+# A test plays Chapter 1 through the front end against this bundle
+# (`crates/playdate/src/chapter_1.rs`): every file the game reads must be
+# in it, and every file in it must be read. So a new file under `assets/`
+# the Playdate never reads fails that test until it is listed here.
+#
+# The PC and web builds embed all of `assets/`; this list never changes
+# them.
+
+# Notes for whoever edits the files; the game never reads them.
+**/README.md
+audio/licenses/
+fonts/Terminus-LICENSE.txt
+
+# The PC's window and taskbar icons (the Playdate's card and icon are
+# 1052's, in the `.pdx`).
+icon/
+
+# The sound effects: the Playdate plays none until 1047, which decides
+# what it plays and in which format. `audio/audio.ron` stays: the game's
+# scenes and battles name its cues.
+audio/sfx/

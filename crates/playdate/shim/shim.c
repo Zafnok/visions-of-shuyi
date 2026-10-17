@@ -74,14 +74,6 @@ void pd_set_refresh_rate(float rate) { pd->display->setRefreshRate(rate); }
 unsigned char* pd_frame(void) { return pd->graphics->getFrame(); }
 void pd_mark_updated_rows(int start, int end) { pd->graphics->markUpdatedRows(start, end); }
 
-// --- drawing ----------------------------------------------------------------
-
-void pd_clear(void) { pd->graphics->clear(kColorWhite); }
-void pd_draw_text(const char* text, size_t len, int x, int y)
-{
-	pd->graphics->drawText(text, len, kUTF8Encoding, x, y);
-}
-
 // --- files (the game's data folder) -------------------------------------------
 
 void* pd_file_open_write(const char* name) { return pd->file->open(name, kFileWrite); }

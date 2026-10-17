@@ -1,6 +1,6 @@
 //! Controllers (ticket 0219, ADR-0034): reads every connected pad's raw
 //! state each frame, with gilrs on native and the browser's Gamepad API
-//! (through `web/gamepad.js`) on web, and hands it to `trpg-ui`'s [`Pads`],
+//! (through `web/gamepad.js`) on web, and hands it to `shuyi-ui`'s [`Pads`],
 //! which holds all the rules (sticks as directions, the Switch-style swap,
 //! several pads as one). Like `keys.rs`, this only translates.
 
@@ -9,8 +9,8 @@ mod native;
 #[cfg(target_arch = "wasm32")]
 mod web;
 
-use trpg_ui::RawInputEvent;
-use trpg_ui::input::{Pads, StickDef};
+use shuyi_ui::RawInputEvent;
+use shuyi_ui::input::{Pads, StickDef};
 
 /// Every connected controller, polled once per frame.
 pub struct PadInput {

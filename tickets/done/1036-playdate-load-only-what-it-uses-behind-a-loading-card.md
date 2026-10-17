@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["1033"]
 nick_input: none
-completed:
+completed: 2026-10-17
 ---
 
 # 1036 — Playdate loading time
@@ -91,10 +91,10 @@ slowest files, and the stack high-water mark.
 
 ## Acceptance criteria
 
-- [ ] The Playdate build embeds only the listed files (the `.pdx`'s
+- [x] The Playdate build embeds only the listed files (the `.pdx`'s
       `pdex.bin` size before and after is in the PR).
-- [ ] The harness plays through Chapter 1 against the trimmed bundle.
-- [ ] The loading card shows within the first frame.
+- [x] The harness plays through Chapter 1 against the trimmed bundle.
+- [x] The loading card shows within the first frame.
 - [ ] Device numbers are in the PR; the follow-up ticket exists if over
       2 s.
 - [ ] All gates in the `run-gates` skill pass, and the CI `playdate` job.
@@ -106,5 +106,56 @@ slowest files, and the stack high-water mark.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done** (ADR-0082):
+
+- **The Playdate's bundle.** `crates/content/playdate-bundle.txt` lists
+  what the Playdate leaves out of `assets/`: every `README.md`, the
+  license texts, the PC's icons (`icon/`) and the sound files
+  (`audio/sfx/`, until 1047). `build.rs` writes the Playdate's table and
+  the paths it left out; the engine's `Layer::leaving_out` /
+  `Bundle::left_out` let the audio check skip a left-out sound file
+  instead of calling it missing. `pdex.bin`: **2,847,117 → 2,487,387
+  bytes** (-359,730, -12.6%).
+- **The test.** `crates/playdate/src/chapter_1.rs` starts the game with
+  the front end's own code (`start.rs`, `card.rs`), on a thread reading
+  the Playdate's bundle (the engine's `reading`), and plays Chapter 1 from
+  New Game to "To be continued" (the battle with the PC test's recorded
+  commands). It fails if the game reads a file the list left out, or if
+  the bundle holds a file nothing read. Checked both ways by hand.
+- **The loading card** (`src/card.rs`) replaces 1031's "Loading…": the
+  first frame reads only the font (`fonts/atlas.ron`, `atlas_1bit.bin`)
+  and draws the game's name with the one-bit renderer; the next frame
+  loads the rest. The game then draws with that font. The SDK's text
+  calls (`pd_clear`, `pd_draw_text`) are gone.
+- **The measuring.** The front end watches every file read (the engine's
+  `watch`) and times it to the next read; the start's steps that read no
+  file are named (`(the player's settings and saves)`, `(the title)`).
+  It logs when the card and the game's first frame were shown, the load
+  time, the stack mark, and the ten slowest; `load-report.txt` holds every
+  file. A Simulator run: card at 12 ms, data in 11 ms, the title at 49 ms
+  (PC speed, not the device's).
+
+**Deviations:**
+
+- The list comes from the test, not from logging a Simulator play of
+  Chapter 1 by hand: the test runs the same Rust code on every PR, so the
+  list can't drift. The Simulator run checked the card and the report.
+- The list is of what is *left out*, so a new data file reaches the
+  Playdate by default (the test flags it if nothing reads it).
+- Kept in the Playdate's bundle although the PC's: the full-colour
+  pictures (portraits, battle art, title backdrops, which their loaders
+  check against the data; 1040 replaces them with one-bit ones), the PC's
+  colour themes (Options still offers them until 1045) and the PC font's
+  PNG (the font check reads its size). All are read, so the test will say
+  when they stop being.
+- **No lazy loading.** Dialogue, the biggest file, is checked at load
+  against the battles, chapters, supports, openings and cinematics, so
+  loading it per scene is not a small change; it is noted for the binary
+  format follow-up. What was left out isn't parsed, so the load time
+  barely changes: the device numbers decide the follow-up.
+
+**Claude's starting rule** (Nick can veto at 1050): the loading card is
+the game's name, centred, black on the white ground, in the game's font.
+
+**Notes for Nick:** the card shows for as long as the data loads (about
+3.7 s on your Playdate in 1026), then the title.

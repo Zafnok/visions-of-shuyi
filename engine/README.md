@@ -41,7 +41,10 @@ Carved so far:
 - `shuyi-assets` (1103): the bundle as layers the game gives
   (`bundle`), content errors with file, line and column (`error`), and
   RON loading (`ron`). 1116: the `.map` text format of a grid map
-  (`grid_map`), with a hook for a game's tile features.
+  (`grid_map`), with a hook for a game's tile features. 1036: a layer
+  that leaves files out on purpose (`Layer::leaving_out`,
+  `Bundle::left_out`, which the audio check honors), a watcher of every
+  file read (`watch`) and a thread reading another bundle (`reading`).
 - `shuyi-assets` (1104): the image table (`image`), font atlases
   (`font`), named colors and themes (`palette`), one-bit inks (`ink`),
   lights (`lighting`), the audio manifest (`audio`) and the credits
@@ -86,6 +89,17 @@ Carved so far:
   form), profiles (`profiles`), storage (`storage`), audio requests and
   the music (`audio`) and `{name}` placeholders (`text`). A toy game of
   two screens (`toy`, tests only) runs them.
+- `shuyi-app` (1110): the platform shell. `run` opens the window and
+  runs the loop around `Game::frame`: the keyboard (`keys`) and
+  controllers (`pads`, gilrs and the web's `web/gamepad.js`, whose
+  functions are `shuyi_pad_*`), blitting the frame (`render`), the
+  sounds, music and voices (decoded off the main thread on native) and
+  storage (`storage`: a file per key in the OS's data folder, or
+  `localStorage` on the web). The game's binary keeps macroquad's entry
+  point and gives an `AppConfig`: the window, the storage's name, its
+  embedded files, font and images, its sound files and voice folder;
+  `Platform::setup` puts the storage, voices and music seed into its
+  context.
 
 ## Third-party crates the engine may use
 
@@ -108,6 +122,7 @@ gilrs
 quad-storage
 proptest
 insta
+tempfile
 ```
 
 ## License
