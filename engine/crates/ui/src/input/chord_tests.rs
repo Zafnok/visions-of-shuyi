@@ -498,3 +498,43 @@ fn a_taken_press_gives_nothing() {
     s.pad_taken(DpadUp);
     assert_eq!(s.update(0.0), [CursorUp]);
 }
+
+/// The window is the keymap's, not a fixed 80 ms.
+#[test]
+fn the_window_is_the_keymaps() {
+    let slow = ChordDef { window_ms: 300 };
+    let km = playdate_keymap().with_chord(slow);
+    assert_eq!(km.chord(), slow);
+    let mut s = InputState::new(km);
+    assert_eq!(frame(&mut s, &[(South, true)], 0), []);
+    assert_eq!(frame(&mut s, &[], 200), [], "still inside 300 ms");
+    assert_eq!(frame(&mut s, &[(East, true)], 0), [EndTurn]);
+    let mut s = InputState::new(playdate_keymap().with_chord(slow));
+    frame(&mut s, &[(South, true)], 0);
+    assert_eq!(frame(&mut s, &[], 299), []);
+    assert_eq!(frame(&mut s, &[], 1), [Confirm]);
+}
+
+/// A chord that has ended leaves nothing behind: ← held on its own later
+/// keeps moving the cursor when B is tapped, whichever of B and ← was let
+/// go first after the chord.
+#[test]
+fn an_ended_chord_never_touches_a_later_press() {
+    for b_first in [false, true] {
+        let mut s = playdate();
+        frame(&mut s, &[(East, true)], 0);
+        assert_eq!(frame(&mut s, &[(DpadLeft, true)], 0), [PrevUnit]);
+        let ups = if b_first {
+            [(East, false), (DpadLeft, false)]
+        } else {
+            [(DpadLeft, false), (East, false)]
+        };
+        assert_eq!(frame(&mut s, &ups, 0), []);
+        // ← alone, held; B tapped while it is held.
+        assert_eq!(frame(&mut s, &[(DpadLeft, true)], 0), [CursorLeft]);
+        assert_eq!(frame(&mut s, &[(East, true)], 0), []);
+        assert_eq!(frame(&mut s, &[(East, false)], 0), [Cancel]);
+        assert!(s.is_held(CursorLeft), "b_first {b_first}");
+        assert_eq!(s.update(ms(300)), [CursorLeft], "b_first {b_first}");
+    }
+}

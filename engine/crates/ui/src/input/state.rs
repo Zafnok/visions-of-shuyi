@@ -86,6 +86,9 @@ struct Held<A> {
     action: A,
     /// Whether holding it re-emits the action.
     repeats: bool,
+    /// For a button chord's action: the chord's other button, whose
+    /// release ends it too.
+    partner: Option<Button>,
 }
 
 /// How much longer a [`Waiting`] button holds back its own actions.
@@ -108,14 +111,6 @@ struct Waiting<A> {
     until: Until,
     /// A chord fired with it while it was held: it gives nothing.
     used: bool,
-}
-
-/// A button chord's actions held by the button whose press fired it
-/// (`pressed`), until it or `partner` is let go.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct ChordHold {
-    pressed: Button,
-    partner: Button,
 }
 
 /// Turns key and controller-button events and elapsed time into actions.
@@ -144,8 +139,6 @@ pub struct InputState<A: ActionSet> {
     buttons_down: ButtonSet,
     /// Chord buttons holding back their own actions, oldest first.
     waiting: Vec<Waiting<A>>,
-    /// Button chords whose actions are held.
-    chords: Vec<ChordHold>,
     /// Where the last bound press came from.
     device: Device,
 }
@@ -160,7 +153,6 @@ impl<A: ActionSet> InputState<A> {
             repeat: None,
             buttons_down: ButtonSet::EMPTY,
             waiting: Vec::new(),
-            chords: Vec::new(),
             device: Device::default(),
         }
     }
@@ -215,7 +207,7 @@ impl<A: ActionSet> InputState<A> {
 
     /// A key went up. Stops its repeat, if it was the repeating one.
     pub fn key_up(&mut self, key: Key) {
-        self.release(Input::Key(key));
+        self.release(|h| h.input == Input::Key(key));
     }
 
     /// A controller button went down, on a pad of `kind`
@@ -284,11 +276,7 @@ impl<A: ActionSet> InputState<A> {
         let own = self.keymap.pad_actions(button);
         let repeats = own.iter().any(|a| a.is_repeatable());
         self.device = device;
-        self.chords.push(ChordHold {
-            pressed: button,
-            partner,
-        });
-        self.hold(Input::Pad(button), &actions, |a| {
+        self.hold(Input::Pad(button), Some(partner), &actions, |a| {
             repeats || a.is_repeatable()
         });
         true
@@ -305,14 +293,8 @@ impl<A: ActionSet> InputState<A> {
                 self.pending.extend(waited.actions);
             }
         }
-        let ended = self.chords.iter().filter(|c| c.partner == button);
-        let ended: Vec<Input> = ended.map(|c| Input::Pad(c.pressed)).collect();
-        self.chords
-            .retain(|c| c.pressed != button && c.partner != button);
-        for input in ended {
-            self.release(input);
-        }
-        self.release(Input::Pad(button));
+        // Its own actions, and those of the chords it is the partner in.
+        self.release(|h| h.input == Input::Pad(button) || h.partner == Some(button));
     }
 
     /// `input` went down on `device`, bound to `actions` (none if
@@ -322,18 +304,25 @@ impl<A: ActionSet> InputState<A> {
             return;
         }
         self.device = device;
-        self.hold(input, actions, A::is_repeatable);
+        self.hold(input, None, actions, A::is_repeatable);
     }
 
-    /// Emits `actions` for `input`'s press and holds them while it is
-    /// down; those `repeats` says yes to repeat.
-    fn hold(&mut self, input: Input, actions: &[A], repeats: impl Fn(A) -> bool) {
+    /// Emits `actions` for `input`'s press and holds them while it (and a
+    /// chord's `partner`) is down; those `repeats` says yes to repeat.
+    fn hold(
+        &mut self,
+        input: Input,
+        partner: Option<Button>,
+        actions: &[A],
+        repeats: impl Fn(A) -> bool,
+    ) {
         for &action in actions {
             let repeats = repeats(action);
             self.held.push(Held {
                 input,
                 action,
                 repeats,
+                partner,
             });
             self.pending.push(action);
             if repeats {
@@ -342,10 +331,17 @@ impl<A: ActionSet> InputState<A> {
         }
     }
 
-    /// `input` went up.
-    fn release(&mut self, input: Input) {
-        self.held.retain(|h| h.input != input);
-        if self.repeat.is_some_and(|r| r.input == input) {
+    /// Lets go of the held actions that `gone` picks. If the repeating one
+    /// is among them, repeating passes to the most recent repeating one
+    /// still held.
+    fn release(&mut self, gone: impl Fn(&Held<A>) -> bool) {
+        let repeating = |h: &Held<A>| {
+            self.repeat
+                .is_some_and(|r| (r.input, r.action) == (h.input, h.action))
+        };
+        let stops = self.held.iter().any(|h| gone(h) && repeating(h));
+        self.held.retain(|h| !gone(h));
+        if stops {
             self.repeat = self
                 .held
                 .iter()
@@ -433,6 +429,7 @@ impl<A: ActionSet> InputState<A> {
                     input: Input::Pad(button),
                     action,
                     repeats: false,
+                    partner: None,
                 });
                 actions.push(action);
             }
