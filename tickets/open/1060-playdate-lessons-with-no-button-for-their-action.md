@@ -30,9 +30,15 @@ for any lesson item whose action has no button there (check every one:
 `Pressed("…")` items and the `{Action}` placeholders in their labels and
 text).
 
-1035 adds map menu entries for the actions with no button (Unit info,
-Danger zone, Auto-end, Dialogue log) and the crank for Rewind; it says
-nothing about lessons. 1058 makes the lesson box fit the screen; it
+1035 adds map menu entries for the actions with no button (Danger Zone,
+Auto-End, Unit Info; no Dialogue log, Nick 2026-10-17: it only opens in
+a conversation, where the system menu has it) and the crank for Rewind
+(`RewindBack`, which opens the rewind as `Rewind` does). It says nothing
+about lessons, but a map menu shortcut chosen replays its action through
+the battle's own path (ADR-0086), so the battle already notices
+`Pressed(Info)` and the rest when one is chosen: check it with a test
+rather than assume it. Rewind's lesson item is `RewindOpened`, which the
+crank does; its label's `{Rewind}` still shows `! not mapped` there. 1058 makes the lesson box fit the screen; it
 doesn't change what a lesson asks for.
 
 ## Nick input

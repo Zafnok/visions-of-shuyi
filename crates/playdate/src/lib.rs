@@ -11,13 +11,15 @@
 //!
 //! It runs the game (ticket 1033): `trpg_ui::Game::frame` once per SDK
 //! update on the game's own stack, the frame drawn by the one-bit
-//! renderer, the D-pad, A and B fed in as a controller, and the game's
-//! storage on the Playdate's files. Its bundle is the Playdate's, which
-//! leaves out what it does not use, and a loading card is on the screen
-//! from the first frame while the data loads (ticket 1036). Its sounds and
-//! music are converted for the device by its build and played through the
-//! SDK's sample and file players (ticket 1047, `audio`), and its pictures
-//! are one-bit ones made when it is built (`pictures`, ticket 1040).
+//! renderer, the D-pad, A, B and the crank fed in as a controller (the
+//! crank since ticket 1035, with the game's entries in the system menu),
+//! and the game's storage on the Playdate's files. Its bundle is the
+//! Playdate's, which leaves out what it does not use, and a loading card
+//! is on the screen from the first frame while the data loads (ticket
+//! 1036). Its sounds and music are converted for the device by its build
+//! and played through the SDK's sample and file players (ticket 1047,
+//! `audio`), and its pictures are one-bit ones made when it is built
+//! (`pictures`, ticket 1040).
 #![cfg_attr(feature = "sdk", no_std)]
 
 extern crate alloc;
@@ -25,6 +27,7 @@ extern crate alloc;
 pub mod audio;
 pub mod card;
 pub mod heap;
+pub mod menu;
 pub mod pads;
 pub mod pictures;
 pub mod report;

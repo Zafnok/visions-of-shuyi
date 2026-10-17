@@ -31,7 +31,12 @@ scene, and Options:
 The Playdate has no keyboard (1033), so the lead's name is typed on the
 letter grid, and Key bindings shows only the Playdate's buttons, chords
 (1034) and crank (1035): players rebind everything there
-(`keyboard-input` skill).
+(`keyboard-input` skill). 1035 left the crank's two actions (Rewind
+back / Rewind forward, `input::CRANK_ACTIONS`) off `KEY_ROWS` so the
+PC's screen keeps its rows; on the Playdate (`Keyboard::Absent`) the
+controller side lists them too (their labels in the language file), and
+the test `rows_list_every_rebindable_action_once_required_first` says
+where.
 
 ## Nick input
 

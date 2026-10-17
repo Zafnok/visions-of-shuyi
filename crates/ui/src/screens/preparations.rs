@@ -731,6 +731,12 @@ impl PreparationsScreen {
             }
             return false;
         }
+        // The Playdate's system menu (ticket 1035): as the Options tab.
+        if action == Action::Options {
+            ctx.audio.menu(MenuSound::Select);
+            self.open_options = true;
+            return false;
+        }
         if matches!(
             action,
             Cancel | Confirm | CursorDown | CursorLeft | CursorRight | CursorUp

@@ -9,12 +9,17 @@ use trpg_content::FontAtlasDef;
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{Faction, Phase};
+use trpg_ui::flow::{FlowScreen, Stage};
+use trpg_ui::game::system_menu::SystemMenuEntry;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{Action, Device, PadKind};
+use trpg_ui::input::{Action, Button, ButtonChord, Device, PadKind, RIGHT_HANDED};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
 use trpg_ui::save::SUSPEND_KEY;
 use trpg_ui::screen::Keyboard;
+use trpg_ui::screens::battle::BattleScreen;
+use trpg_ui::screens::battle::map_menu::MapEntry;
 use trpg_ui::screens::battle::mode::Mode;
+use trpg_ui::screens::battle::rewind::RewindScreen;
 use trpg_ui::widgets::help::key_name;
 use trpg_ui::{
     ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, ShuyiCtx, Storage, UiColor,
@@ -72,11 +77,16 @@ fn the_d_pad_a_and_b_play_from_the_title_into_chapter_ones_first_battle() {
     name.push('A');
     assert_eq!(h.game().ctx().game.lead.name, name);
     // A closes the first guide; A on the empty tile above the lead opens
-    // the map menu, whose fifth entry is Suspend; A on it and A on
-    // "Suspend the battle?" write the suspend save and go back to the
-    // title.
+    // the map menu, whose seventh entry that can be chosen is Suspend
+    // (after the shortcuts with no button, ticket 1035; Unit Info is
+    // dimmed on an empty tile); A on it and A on "Suspend the battle?"
+    // write the suspend save and go back to the title.
     h.wait(1.0);
-    h.pad("South DpadUp South DpadDown DpadDown DpadDown DpadDown South South");
+    h.pad("South DpadUp South");
+    for _ in 0..6 {
+        h.pad("DpadDown");
+    }
+    h.pad("South South");
     assert_eq!(h.screens(), ["title"]);
     let saved = h.game().ctx().storage.read(SUSPEND_KEY);
     assert!(saved.is_ok_and(|s| s.is_some()), "no suspend save");
@@ -238,4 +248,307 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
     h.pad("South+East South");
     let phase = h.battle().map(|b| b.state().phase());
     assert_ne!(phase, Some(Phase::Player));
+}
+
+/// Chapter 1's first battle on the Playdate, lessons off: New Game,
+/// Classic, the familiarity answer, the name as it is, Start, past the
+/// scenes and the banner, with the cursor on the lead.
+fn first_battle() -> Harness {
+    first_battle_and(|_| {})
+}
+
+/// [`first_battle`], with `setup` changing the context first.
+fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
+    let mut h = Harness::first_launch_and(|ctx| {
+        playdate(ctx);
+        setup(ctx);
+    })
+    .with_shipped_story();
+    h.use_pad(PadKind::Playdate);
+    h.pad("South South South South DpadDown DpadDown South");
+    skip_scenes(&mut h);
+    h.pad("South");
+    skip_scenes(&mut h);
+    h.wait(1.0);
+    assert_eq!(h.screens(), ["title", "battle"]);
+    h
+}
+
+fn battle(h: &Harness) -> &BattleScreen {
+    h.battle().unwrap_or_else(|| panic!("no battle"))
+}
+
+/// Ends the turn (A + B, then A on its question) and plays on to the
+/// player's turn 2: the enemy's phase at the held speed, its banners and
+/// scenes closed.
+fn to_turn_two(h: &mut Harness) {
+    h.pad("South+East South");
+    for _ in 0..200 {
+        skip_scenes(h);
+        let b = battle(h);
+        let state = b.state();
+        if state.turn() == 2 && state.phase() == Phase::Player && b.banner().is_none() {
+            h.wait(0.1);
+            return;
+        }
+        if b.banner().is_some() {
+            h.pad("South");
+        } else {
+            h.hold_pad("South", 0.5);
+        }
+    }
+    panic!("turn 2 never came");
+}
+
+/// The rewind screen's past actions (their points), newest first, and the
+/// one highlighted.
+fn rewind_points(h: &Harness) -> Option<(Vec<usize>, Option<usize>)> {
+    let r = battle(h).rewind()?;
+    let points = r.entries().iter().map(|e| e.point).collect();
+    Some((points, r.focused().map(|e| e.point)))
+}
+
+/// Ticket 1035: in Chapter 1's first battle, the crank wound back opens
+/// the rewind and steps back one action per notch; wound forwards it
+/// steps towards the present; B closes it; A asks "Use 1 of N charges?"
+/// and A again rewinds, as on the PC.
+#[test]
+fn winding_the_crank_back_rewinds_one_action_per_notch() {
+    let mut h = first_battle();
+    // Wound forwards on the map: nothing.
+    h.crank(30.0);
+    assert!(battle(&h).rewind().is_none());
+    assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
+    to_turn_two(&mut h);
+    let charges = battle(&h).history().charges_left();
+    // Three notches back: open on the newest, then two further back.
+    h.crank(-30.0);
+    let Some((points, focus)) = rewind_points(&h) else {
+        panic!("the crank did not open the rewind");
+    };
+    assert!(points.len() >= 3, "{points:?}");
+    assert_eq!(focus, Some(points[0]));
+    h.crank(-30.0).crank(-30.0);
+    assert_eq!(rewind_points(&h), Some((points.clone(), Some(points[2]))));
+    // One forward: the second newest.
+    h.crank(30.0);
+    assert_eq!(rewind_points(&h), Some((points.clone(), Some(points[1]))));
+    // Half a notch is nothing yet; the other half is a notch.
+    h.crank(-15.0);
+    assert_eq!(rewind_points(&h), Some((points.clone(), Some(points[1]))));
+    h.crank(-15.0);
+    assert_eq!(rewind_points(&h), Some((points.clone(), Some(points[2]))));
+    // A big wind: several notches in one frame, never past the oldest.
+    h.crank(-3600.0);
+    let oldest = points.last().copied();
+    assert_eq!(rewind_points(&h), Some((points.clone(), oldest)));
+    // B closes it, the battle as it was.
+    h.pad("East");
+    assert!(battle(&h).rewind().is_none());
+    assert_eq!(battle(&h).history().len(), points.len());
+    // Again: the newest. A asks, and the crank does nothing meanwhile.
+    h.crank(-30.0).pad("South");
+    let asking = |h: &Harness| battle(h).rewind().is_some_and(RewindScreen::is_confirming);
+    assert!(asking(&h));
+    h.crank(-30.0);
+    assert_eq!(rewind_points(&h), Some((points.clone(), Some(points[0]))));
+    // B backs out of the question; A, A rewinds for one charge (to the
+    // enemy's phase, which plays on).
+    h.pad("East");
+    assert!(!asking(&h) && battle(&h).rewind().is_some());
+    h.pad("South South");
+    assert!(battle(&h).rewind().is_none());
+    assert_eq!(battle(&h).history().charges_left(), charges - 1);
+}
+
+/// Ticket 1035: a notch is as far as the keymap file's `crank` says.
+#[test]
+fn a_notch_is_the_keymaps() {
+    let mut h = first_battle_and(|ctx| ctx.game.content.keymap.crank.notch_degrees = 90);
+    h.crank(-60.0);
+    assert!(
+        battle(&h).rewind().is_none(),
+        "60 of 90 degrees: no notch yet"
+    );
+    h.crank(-30.0);
+    assert!(battle(&h).rewind().is_some());
+}
+
+/// The map menu's entries, with whether each can be chosen.
+fn map_menu_entries(h: &Harness) -> Vec<(MapEntry, bool)> {
+    let Mode::MapMenu { menu, entries } = battle(h).mode() else {
+        panic!("no map menu: {:?}", battle(h).mode());
+    };
+    let items = menu.items().iter().map(|i| i.enabled);
+    entries.iter().copied().zip(items).collect()
+}
+
+/// The entries alone.
+fn map_menu_shown(h: &Harness) -> Vec<MapEntry> {
+    map_menu_entries(h).iter().map(|&(e, _)| e).collect()
+}
+
+/// Opens the map menu (B, with nothing to cancel) and chooses `entry`.
+fn choose(h: &mut Harness, entry: MapEntry) {
+    h.pad("East");
+    let at = map_menu_shown(h).iter().position(|&e| e == entry);
+    let Some(at) = at else {
+        panic!("no {entry:?} in the map menu");
+    };
+    for _ in 0..at {
+        h.pad("DpadDown");
+    }
+    h.pad("South");
+}
+
+/// Ticket 1035: with no keyboard, the map menu lists Danger Zone,
+/// Auto-End and Unit Info after Objective while they have no button, and
+/// each does what its key does; Unit Info is dimmed on an empty tile.
+#[test]
+fn the_playdates_map_menu_lists_the_shortcuts_with_no_button() {
+    use MapEntry::{AutoEnd, DangerZone, UnitInfo};
+    let mut h = first_battle();
+    let lead = h.cursor_tile();
+    h.pad("East");
+    let shown = map_menu_shown(&h);
+    assert_eq!(&shown[..2], &MapEntry::ALL[..2]);
+    assert_eq!(&shown[2..5], &[DangerZone, AutoEnd, UnitInfo]);
+    assert_eq!(&shown[5..], &MapEntry::ALL[2..]);
+    assert!(map_menu_entries(&h).iter().all(|&(_, enabled)| enabled));
+    h.pad("East");
+    // Danger Zone: the menu closes and the zone shows; again, it hides.
+    choose(&mut h, DangerZone);
+    assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
+    assert!(battle(&h).danger().is_some());
+    choose(&mut h, DangerZone);
+    assert!(battle(&h).danger().is_none());
+    // Auto-End: on, then off.
+    let auto_end = battle(&h).auto_end();
+    choose(&mut h, AutoEnd);
+    assert_eq!(battle(&h).auto_end(), !auto_end);
+    choose(&mut h, AutoEnd);
+    assert_eq!(battle(&h).auto_end(), auto_end);
+    // Unit Info: the lead's.
+    choose(&mut h, UnitInfo);
+    let units = battle(&h).state().units();
+    let lead_id = units.iter().find(|u| Some(u.pos) == lead).map(|u| u.id);
+    assert!(lead_id.is_some());
+    assert!(matches!(battle(&h).mode(), Mode::Info { unit } if Some(*unit) == lead_id));
+    h.pad("East");
+    assert_eq!(h.cursor_tile(), lead);
+    // On an empty tile (above the lead) it is dimmed.
+    h.pad("DpadUp");
+    assert!(h.cursor_tile().and_then(|at| h.unit_at(at)).is_none());
+    h.pad("East");
+    let unit_info = map_menu_entries(&h)
+        .into_iter()
+        .find(|&(e, _)| e == UnitInfo);
+    assert_eq!(unit_info, Some((UnitInfo, false)));
+    h.pad("East");
+    // Danger Zone given a button by the player (A + down here): gone.
+    let mut buttons = h.game().ctx().pad_bindings();
+    let Some(chord) = ButtonChord::pair(Button::South, Button::DpadDown) else {
+        panic!("not a chord");
+    };
+    assert!(buttons.bind(Action::DangerZone, 0, chord).is_ok());
+    assert!(h.ctx_mut().set_pad_bindings(buttons).is_ok());
+    h.pad("East");
+    let shown = map_menu_shown(&h);
+    assert!(!shown.contains(&DangerZone), "{shown:?}");
+    assert!(shown.contains(&AutoEnd) && shown.contains(&UnitInfo));
+}
+
+/// Ticket 1035: the PC's map menu is unchanged, with the keyboard or a
+/// controller.
+#[test]
+fn the_pcs_map_menu_has_no_shortcut_entries() {
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
+    h.keys("f f f Up f");
+    for _ in 0..8 {
+        if h.top_screen() == "dialogue" {
+            h.keys("d f");
+        } else if h.battle().is_some() {
+            h.keys("f");
+        }
+    }
+    h.wait(1.0);
+    assert_eq!(h.screens(), ["title", "battle"]);
+    assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
+    h.keys("d");
+    assert_eq!(map_menu_shown(&h), MapEntry::ALL);
+    h.keys("d").pad("East");
+    assert_eq!(h.game().ctx().device, Device::Pad(PadKind::Generic));
+    assert_eq!(map_menu_shown(&h), MapEntry::ALL);
+}
+
+/// Ticket 1035: the system menu's Danger Zone, Dialogue Log and Options
+/// each do what the same thing does in the game where it can, and
+/// nothing elsewhere.
+#[test]
+fn the_system_menu_entries_work_where_they_can() {
+    let mut h = Harness::first_launch_and(playdate).with_shipped_story();
+    h.use_pad(PadKind::Playdate);
+    // The title waiting for a button: nothing opens over it.
+    h.system_menu(SystemMenuEntry::Options);
+    assert_eq!(h.screens(), ["title"]);
+    // Its menu: Options opens, B closes it.
+    h.pad("South");
+    h.system_menu(SystemMenuEntry::Options);
+    assert_eq!(h.screens(), ["title", "options"]);
+    h.pad("East");
+    assert_eq!(h.screens(), ["title"]);
+    // No danger zone or log there.
+    h.system_menu(SystemMenuEntry::DangerZone)
+        .system_menu(SystemMenuEntry::DialogueLog);
+    assert_eq!(h.screens(), ["title"]);
+    // Into the opening scene: the log opens once a line has shown.
+    h.pad("South South South DpadDown DpadDown South");
+    for _ in 0..40 {
+        if h.top_screen() == "dialogue" {
+            break;
+        }
+        h.wait(0.25);
+    }
+    assert_eq!(h.top_screen(), "dialogue");
+    // The chapter's scene is the flow's (a battle's scenes are on the
+    // stack).
+    let log_open = |h: &Harness| match h.flow().map(FlowScreen::stage) {
+        Some(Stage::Scene(scene)) => scene.is_log_open(),
+        _ => false,
+    };
+    h.wait(3.0);
+    h.system_menu(SystemMenuEntry::DialogueLog);
+    assert!(log_open(&h));
+    // Options does not open over a scene.
+    h.system_menu(SystemMenuEntry::Options);
+    assert_eq!(h.top_screen(), "dialogue");
+    h.pad("East");
+    assert!(!log_open(&h));
+    skip_scenes(&mut h);
+    h.pad("South");
+    skip_scenes(&mut h);
+    h.wait(1.0);
+    assert_eq!(h.screens(), ["title", "battle"]);
+    // The battle map: the danger zone toggles; no log.
+    h.system_menu(SystemMenuEntry::DangerZone);
+    assert!(battle(&h).danger().is_some());
+    h.system_menu(SystemMenuEntry::DangerZone);
+    assert!(battle(&h).danger().is_none());
+    h.system_menu(SystemMenuEntry::DialogueLog);
+    assert_eq!(h.screens(), ["title", "battle"]);
+    // Options over the map, and over the open map menu.
+    h.system_menu(SystemMenuEntry::Options);
+    assert_eq!(h.screens(), ["title", "battle", "options"]);
+    h.pad("East");
+    h.pad("East");
+    assert!(matches!(battle(&h).mode(), Mode::MapMenu { .. }));
+    h.system_menu(SystemMenuEntry::Options);
+    assert_eq!(h.screens(), ["title", "battle", "options"]);
+    h.pad("East");
+    assert!(matches!(battle(&h).mode(), Mode::MapMenu { .. }));
+    // A unit selected: Options waits for the map.
+    h.pad("East South");
+    assert!(matches!(battle(&h).mode(), Mode::Selected(_)));
+    h.system_menu(SystemMenuEntry::Options);
+    assert_eq!(h.screens(), ["title", "battle"]);
 }

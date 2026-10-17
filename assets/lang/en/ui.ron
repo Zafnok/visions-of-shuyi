@@ -460,6 +460,14 @@
     "battle.map_menu.suspend": "Suspend",
     "battle.map_menu.restart": "Restart Battle",
     "battle.map_menu.end_turn": "End Turn",
+    // The shortcuts with no button, on a platform without a keyboard.
+    "battle.map_menu.danger_zone": "Danger Zone",
+    "battle.map_menu.auto_end": "Auto-End",
+    "battle.map_menu.unit_info": "Unit Info",
+    // The Playdate's system menu (behind its Menu button).
+    "system_menu.danger_zone": "Danger Zone",
+    "system_menu.dialogue_log": "Dialogue Log",
+    "system_menu.options": "Options",
     "battle.units.line": "{name}  HP {hp}  {status}",
     "battle.units.ready": "ready",
     "battle.units.acted": "acted",

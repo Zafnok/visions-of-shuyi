@@ -4,11 +4,13 @@
 //! The first frame shows the loading card (ticket 1036, `crate::card`),
 //! drawn with the game's font. The next loads the game on the game's own
 //! stack, timing every file it reads from the bundle; then the game runs
-//! (ticket 1033): each frame reads the buttons, calls `Game::frame` with
-//! the time since the last frame, and when the picture changed redraws
-//! what changed with `trpg_ui::onebit` (ticket 1055) and copies it to the
-//! screen, and plays the frame's sounds and music (ticket 1047,
-//! `crate::audio`). Once a minute it logs how fast that went.
+//! (ticket 1033): each frame reads the buttons and the crank (ticket
+//! 1035), hands the game an entry of the system menu chosen since the last
+//! frame, calls `Game::frame` with the time since the last frame, and when
+//! the picture changed redraws what changed with `trpg_ui::onebit` (ticket
+//! 1055) and copies it to the screen, and plays the frame's sounds and
+//! music (ticket 1047, `crate::audio`). Once a minute it logs how fast that
+//! went.
 
 use alloc::boxed::Box;
 use alloc::string::String;
@@ -17,15 +19,19 @@ use core::cell::UnsafeCell;
 use core::ffi::c_int;
 use core::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
+use trpg_ui::game::system_menu::SystemMenuEntry;
+use trpg_ui::input::{Crank, PadKind};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
-use trpg_ui::{ConsoleSizes, ConsoleSpec, Game, GlyphBuffer};
+use trpg_ui::{ConsoleSizes, ConsoleSpec, Game, GlyphBuffer, RawInputEvent};
 
 use super::files::SdkFiles;
 use super::sound::Sdk;
 use super::{
-    buttons, elapsed, game_stack, log, millis, reset_elapsed, set_refresh_rate, show, write_file,
+    MenuItem, add_menu_item, buttons, crank, elapsed, game_stack, log, millis, reset_elapsed,
+    set_menu_item_title, set_refresh_rate, show, write_file,
 };
 use crate::audio::Audio;
+use crate::menu::{self, Chosen, Titles};
 use crate::pads::PlaydatePad;
 use crate::pictures::Pictures;
 use crate::report::{self, Minute, Reads};
@@ -60,6 +66,10 @@ struct Card {
 struct Running {
     game: Game,
     pad: PlaydatePad,
+    crank: Crank,
+    /// The game's entries in the system menu, once added, and their names.
+    menu: [Option<MenuItem>; menu::ENTRIES],
+    titles: Titles,
     /// The sounds and music, and the SDK's players they play on.
     audio: Audio<Sdk>,
     speaker: Sdk,
@@ -97,6 +107,9 @@ unsafe impl Sync for Front {}
 
 static FRONT: Front = Front(UnsafeCell::new(None));
 
+/// The system menu's entry chosen since the last frame.
+static CHOSEN: Chosen = Chosen::new();
+
 /// The files read while the game loads; `None` outside it.
 struct Watched(UnsafeCell<Option<Reads>>);
 
@@ -127,6 +140,13 @@ pub extern "C" fn trpg_playdate_init() {
     let _ = trpg_content::bundle::watch(on_read);
     // SAFETY: nothing else holds the state (see `Front`).
     unsafe { *FRONT.0.get() = Some(Step::ShowCard) };
+}
+
+/// Called by the shim when the player chooses the game's system menu entry
+/// `entry` (its index in [`SystemMenuEntry::ALL`]), between two frames.
+#[unsafe(no_mangle)]
+pub extern "C" fn trpg_playdate_menu_chosen(entry: c_int) {
+    CHOSEN.set(entry);
 }
 
 /// Called by the shim every frame; returns 1 when the screen changed.
@@ -184,8 +204,23 @@ fn update(step: &mut Step) -> bool {
             let dt = elapsed();
             reset_elapsed();
             let (current, pushed) = buttons();
-            let events = running.pad.poll(current, pushed);
-            let changed = game_stack::run(|| running.frame(&events, dt));
+            let mut events = running.pad.poll(current, pushed);
+            let (turned, docked) = crank();
+            let kind = PadKind::Playdate;
+            events.extend(RawInputEvent::from_crank(
+                &mut running.crank,
+                turned,
+                docked,
+                kind,
+            ));
+            let chosen = CHOSEN.take();
+            let changed = game_stack::run(|| {
+                if let Some(entry) = chosen {
+                    running.game.act(entry.action());
+                }
+                running.frame(&events, dt)
+            });
+            running.name_menu();
             if changed && let Some(report) = running.report.take() {
                 write_report(&report);
             }
@@ -287,6 +322,7 @@ fn start_game(card: Box<Card>) -> Result<Box<Running>, String> {
         log(&warning);
     }
     let pad = PlaydatePad::new(ctx.game.content.keymap.stick);
+    let crank = Crank::new(ctx.game.content.keymap.crank);
     let pictures = Pictures::new(&ctx.game.content.images);
     mark("the sounds");
     let mut speaker = Sdk::new();
@@ -295,9 +331,12 @@ fn start_game(card: Box<Card>) -> Result<Box<Running>, String> {
         log(&alloc::format!("audio: {warning}"));
     }
     mark("the title");
-    Ok(Box::new(Running {
+    let mut running = Box::new(Running {
         game: trpg_ui::game::start(ctx),
         pad,
+        crank,
+        menu: [None, None, None],
+        titles: Titles::default(),
         audio,
         speaker,
         font,
@@ -308,10 +347,26 @@ fn start_game(card: Box<Card>) -> Result<Box<Running>, String> {
         report: None,
         #[cfg(feature = "bench")]
         bench: super::bench::Bench::new(),
-    }))
+    });
+    running.name_menu();
+    Ok(running)
 }
 
 impl Running {
+    /// Adds the game's entries to the system menu the first time, and
+    /// renames those whose name changed since (another language).
+    fn name_menu(&mut self) {
+        let ctx = self.game.ctx();
+        let now = SystemMenuEntry::ALL.map(|e| e.label(ctx));
+        for i in self.titles.update(now) {
+            let title = self.titles.get(i);
+            match &mut self.menu[i] {
+                Some(item) => set_menu_item_title(item, title),
+                slot @ None => *slot = add_menu_item(title, i),
+            }
+        }
+    }
+
     /// Runs one frame of the game and, if its picture changed, redraws
     /// the parts that did; true if the screen changed.
     fn frame(&mut self, events: &[trpg_ui::RawInputEvent], dt: f32) -> bool {

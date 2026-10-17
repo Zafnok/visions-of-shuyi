@@ -335,6 +335,9 @@ pub struct BattleScreen {
     rewind: Option<RewindScreen>,
     /// The Guides list, while it is open (0458).
     guides: Option<GuidesScreen>,
+    /// A map menu shortcut just chosen (ticket 1035): its action, handled
+    /// next as if its key had been pressed.
+    pressed: Option<Action>,
     /// Where the rewind screen was opened from (0822).
     rewind_from: RewindFrom,
     /// Where the outcome's music (0809) is.
@@ -482,6 +485,7 @@ impl BattleScreen {
             history: BattleHistory::new(state.clone()),
             rewind: None,
             guides: None,
+            pressed: None,
             rewind_from: RewindFrom::Browsing,
             outcome_music: OutcomeMusic::Unheard,
             state,
@@ -1632,7 +1636,9 @@ impl BattleScreen {
         };
         let before = self.mode.clone();
         let mode = core::mem::take(&mut self.mode);
-        let (mode, effect) = mode::step(mode, action, self.cursor.pos, &self.state);
+        let shortcuts = map_menu::shortcuts(ctx.keyboard, &ctx.keymap);
+        let (mode, effect) =
+            mode::step_with(mode, action, self.cursor.pos, &self.state, &shortcuts);
         if self.lessons.holds_turn() && ends_turn(&before, &mode, &effect) {
             // An open lesson holds the turn (0456): nothing happens.
             self.mode = before;
@@ -1658,6 +1664,7 @@ impl BattleScreen {
             Effect::Suspend => self.leaving = Some(Leaving::Suspend),
             Effect::Options => return true,
             Effect::Guides => self.guides = Some(GuidesScreen::new(&ctx.game.content)),
+            Effect::Press(action) => self.pressed = Some(action),
         }
         false
     }
@@ -1701,13 +1708,21 @@ impl BattleScreen {
         let was = Marks::of(&self.mode);
         let mut options = false;
         match action {
-            Action::Rewind if self.can_open_rewind() => {
+            // The crank wound back (ticket 1035) opens it on the newest
+            // action; its next notches step the open screen.
+            Action::Rewind | Action::RewindBack if self.can_open_rewind() => {
                 let charges = self.state.rewind_charges();
                 self.rewind = Some(RewindScreen::new(&self.history, charges, ctx.words()));
                 ctx.audio.menu(MenuSound::Select);
                 self.notice(DoneWhen::RewindOpened);
             }
             Action::DangerZone if self.mode.cursor_free() => self.toggle_danger(),
+            // The Playdate's system menu (ticket 1035): where the map menu
+            // and its Options are a press away.
+            Action::Options if matches!(self.mode, Mode::Idle { .. } | Mode::MapMenu { .. }) => {
+                ctx.audio.menu(MenuSound::Select);
+                options = true;
+            }
             Action::NextUnit | Action::PrevUnit if matches!(self.mode, Mode::Idle { .. }) => {
                 let from = self.cursor.pos;
                 self.cycle(action == Action::NextUnit);
@@ -2548,7 +2563,8 @@ impl BattleScreen {
         self.detect_tips();
         self.tips.absorb(ctx);
         self.absorb_lessons(ctx);
-        for &action in &input.actions {
+        let mut actions: VecDeque<Action> = input.actions.iter().copied().collect();
+        while let Some(action) = actions.pop_front() {
             self.tick_lessons(ctx);
             if self.overlay_key(action) {
                 continue;
@@ -2589,6 +2605,10 @@ impl BattleScreen {
                 self.notice(DoneWhen::OptionsOpened);
                 self.tick_lessons(ctx);
                 return Transition::Push(Box::new(OptionsScreen::new()));
+            }
+            // A map menu shortcut: its key, next.
+            if let Some(pressed) = self.pressed.take() {
+                actions.push_front(pressed);
             }
             if self.leaving.is_some() {
                 return Transition::Pop;

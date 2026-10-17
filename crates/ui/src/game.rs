@@ -6,6 +6,7 @@
 //! module is how this game starts it: at the title ([`start`]) or on a
 //! dialogue scene ([`start_on_scene`]), with this game's [`hooks`] (the
 //! layout picker on the first key, the debug menu on the Debug key).
+//! [`system_menu`] is what a platform's own menu (the Playdate's) does.
 
 use crate::prelude::*;
 use shuyi_ui::{GameHooks, ScreenHook};
@@ -17,6 +18,8 @@ use crate::screen::{Ctx, Keyboard, Screen, ScreenStack, Shuyi};
 use crate::screens::{LayoutPickerScreen, TitleScreen};
 
 pub use shuyi_ui::RawInputEvent;
+
+pub mod system_menu;
 
 /// This game's UI behind one call per frame ([`shuyi_ui::Game`]).
 pub type Game = shuyi_ui::Game<Shuyi>;

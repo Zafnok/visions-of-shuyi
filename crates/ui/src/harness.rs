@@ -26,6 +26,7 @@ use core::ops::{Deref, DerefMut};
 
 use crate::flow::FlowScreen;
 use crate::game::Game;
+use crate::game::system_menu::SystemMenuEntry;
 use crate::glyph_buffer::Rect;
 use crate::input::{Layout, PadKind, RIGHT_HANDED};
 use crate::map_view::{MapScene, RangeKind, UnitView, skin_named};
@@ -159,7 +160,10 @@ impl Harness {
     /// Wraps `game`. Debug screens are always on, so F2 behaves the same
     /// in debug and release test runs.
     pub fn from_game(game: Game) -> Self {
-        Self(Core::new(game.with_debug_screens(true)))
+        let crank = game.ctx().game.content.keymap.crank;
+        let mut core = Core::new(game.with_debug_screens(true));
+        core.set_crank(crank);
+        Self(core)
     }
 
     /// [`Core::music_load_delay`].
@@ -195,6 +199,14 @@ impl Harness {
     /// [`Core::hold`].
     pub fn hold(&mut self, chord: &str, seconds: f32) -> &mut Self {
         self.0.hold(chord, seconds);
+        self
+    }
+
+    /// The player chose `entry` in the platform's own menu (the Playdate's
+    /// system menu, ticket 1035; [`Core::act`] with its action): the menu
+    /// closes and the game goes on.
+    pub fn system_menu(&mut self, entry: SystemMenuEntry) -> &mut Self {
+        self.0.act(entry.action());
         self
     }
 

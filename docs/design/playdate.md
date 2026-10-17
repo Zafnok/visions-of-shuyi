@@ -161,6 +161,24 @@ for ally. This gives more contrast for readability".
   Danger zone, Dialogue log and Options. Help text names the Playdate's
   buttons and the crank, through the keymap as everywhere else
   (`controls.md`).
+- **No Dialogue log in the map menu** (Nick, 2026-10-17, ticket 1035):
+  the log holds the conversation playing and opens only while one plays,
+  when the map menu can't open, so on the map it would never work. Asked
+  whether to leave it out, show it greyed out, or open the last
+  conversation's log from the map, he picked **"Leave it out"**. During a
+  conversation the system menu's Dialogue log opens it. So the Playdate's
+  map menu gains Danger zone, Auto-end and Unit info, each only while it
+  has no button.
+- *Claude's starting rules (ticket 1035, Nick can veto):* the extra
+  entries sit after Objective, in that order. Danger zone and Auto-end
+  close the menu and do what their keys do (the danger zone then shows on
+  the map). Unit info opens the info screen of the unit under the cursor
+  and is greyed out on an empty tile. Winding the crank while "Use 1 of N
+  charges?" is up does nothing; with nothing to rewind or outside the
+  player's turn it does what the Rewind key does there. One notch is 30°
+  (*tunable*, `keymap.ron`'s `crank`) wound one way; turning the other
+  way starts a fresh notch, so after a step back the next step forwards
+  takes a whole notch, and a hand resting on the crank never steps.
 
 ### What the first version keeps (Q5)
 

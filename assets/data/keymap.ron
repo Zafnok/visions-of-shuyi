@@ -67,6 +67,14 @@
                 "ZoomMap": ["q"],
                 // Opens the dialogue log while a scene plays. Its own key group.
                 "DialogueLog": ["b"],
+                // The Playdate's crank (ticket 1035): only its playdate
+                // table below binds them; the Key bindings screen doesn't
+                // list them.
+                "RewindBack": [],
+                "RewindForward": [],
+                // Opens Options where a menu has it. Never a key: only the
+                // Playdate's system menu sends it.
+                "Options": [],
             },
         ),
         // W A S D steer; the right hand acts from the J K L ; row, a finger
@@ -95,6 +103,9 @@
                 "ConfirmEndTurn": [],
                 "ZoomMap": ["p"],
                 "DialogueLog": ["n"],
+                "RewindBack": [],
+                "RewindForward": [],
+                "Options": [],
             },
         ),
     ],
@@ -109,14 +120,14 @@
     // Controller buttons (controls.md, Controller): one table for both
     // layouts and the layout picker, with the same rules as a layout (every
     // action listed, at most 3 buttons, a button on only one action of each
-    // key group). Debug
-    // is keyboard only and must stay []. Buttons are named by position on an
+    // key group). Debug and Options have no button and must stay []. Buttons are named by position on an
     // Xbox-shaped pad, whatever is printed on them: "South" "East" "West"
     // "North" (the face buttons), "LeftShoulder" "RightShoulder"
     // "LeftTrigger" "RightTrigger", "Select" (the left centre button, Back)
     // "Start", "LeftStickPress" "RightStickPress", "DpadUp" "DpadDown"
     // "DpadLeft" "DpadRight", and each stick's directions "LeftStickUp"
-    // "LeftStickDown" "LeftStickLeft" "LeftStickRight" "RightStickUp" ...
+    // "LeftStickDown" "LeftStickLeft" "LeftStickRight" "RightStickUp" ...,
+    // and a crank wound one notch "CrankBack" "CrankForward" (the Playdate's).
     // On Switch-style pads South and East swap, so the button labelled A
     // confirms there too.
     pad: {
@@ -143,12 +154,17 @@
         "ZoomMap": ["RightTrigger"],
         // The left face button, like Danger zone: another key group.
         "DialogueLog": ["West"],
+        "RewindBack": [],
+        "RewindForward": [],
+        "Options": [],
     },
     // The Playdate's buttons (docs/design/playdate.md, Buttons and the
     // crank), in place of `pad` on a Playdate: the D-pad, A (South) and B
     // (East). Two buttons joined by + are pressed together: A + B ends
     // the turn, hold B + left / right picks the previous / next unit. The
-    // shortcuts it has no button for are in the map menu (ticket 1035).
+    // crank wound back opens the rewind and steps it back, wound forwards
+    // steps it towards the present. The shortcuts it has no button for are
+    // in the map menu and its system menu (ticket 1035).
     playdate: {
         "CursorLeft": ["DpadLeft"],
         "CursorDown": ["DpadDown"],
@@ -170,6 +186,9 @@
         "ConfirmEndTurn": [],
         "ZoomMap": [],
         "DialogueLog": [],
+        "RewindBack": ["CrankBack"],
+        "RewindForward": ["CrankForward"],
+        "Options": [],
     },
     // Held cursor keys and buttons, in every layout and the layout picker:
     // first repeat after delay_ms, then every interval_ms.
@@ -182,4 +201,7 @@
     // way, and stops below release_percent (lower, so a stick resting near
     // the edge doesn't flicker). Tunable.
     stick: (press_percent: 50, release_percent: 35),
+    // The Playdate's crank: one notch (one CrankBack or CrankForward) per
+    // notch_degrees wound. Tunable.
+    crank: (notch_degrees: 30),
 )

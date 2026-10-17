@@ -7,12 +7,19 @@
 //! and `End Turn`;
 //! and the end-turn prompt
 //! (`docs/design/turn-structure.md`).
+//!
+//! On a platform with no keyboard (the Playdate, ticket 1035,
+//! `docs/design/playdate.md`) the map menu also holds the shortcuts that
+//! have no button there: `Danger Zone`, `Auto-end` and `Unit Info`, after
+//! `Objective` ([`MapEntry::SHORTCUTS`], [`shortcuts`]).
 
 use crate::prelude::*;
 use core::fmt::Display;
 
-use trpg_core::{BattleState, Faction, Objective, Phase, Turn, UnitId};
+use trpg_core::{BattleState, Faction, Objective, Phase, Pos, Turn, UnitId};
 
+use crate::input::{Action, Keymap};
+use crate::screen::Keyboard;
 use crate::widgets::menu::{Menu, MenuItem};
 use crate::words::Words;
 
@@ -35,10 +42,19 @@ pub enum MapEntry {
     Restart,
     /// End the player phase.
     EndTurn,
+    /// A shortcut with no button (ticket 1035): toggles the enemy danger
+    /// zone, as the Danger zone key does.
+    DangerZone,
+    /// A shortcut with no button: turns auto-end on or off, as the
+    /// Auto-end key does.
+    AutoEnd,
+    /// A shortcut with no button: the info screen of the unit under the
+    /// cursor, as the Unit info key does.
+    UnitInfo,
 }
 
 impl MapEntry {
-    /// Every entry, in menu order.
+    /// The PC's entries (every platform has them), in menu order.
     pub const ALL: [MapEntry; 7] = [
         MapEntry::Units,
         MapEntry::Objective,
@@ -48,6 +64,28 @@ impl MapEntry {
         MapEntry::Restart,
         MapEntry::EndTurn,
     ];
+
+    /// The shortcuts a platform without a keyboard lists when they have
+    /// no button ([`shortcuts`]), in menu order, after `Objective`.
+    pub const SHORTCUTS: [MapEntry; 3] =
+        [MapEntry::DangerZone, MapEntry::AutoEnd, MapEntry::UnitInfo];
+
+    /// The action a shortcut entry does, as if its key were pressed; `None`
+    /// for the other entries.
+    pub fn action(self) -> Option<Action> {
+        match self {
+            MapEntry::DangerZone => Some(Action::DangerZone),
+            MapEntry::AutoEnd => Some(Action::ToggleAutoEnd),
+            MapEntry::UnitInfo => Some(Action::Info),
+            MapEntry::Units
+            | MapEntry::Objective
+            | MapEntry::Guides
+            | MapEntry::Options
+            | MapEntry::Suspend
+            | MapEntry::Restart
+            | MapEntry::EndTurn => None,
+        }
+    }
 
     /// The text shown.
     pub fn label(self, words: Words<'_>) -> &str {
@@ -59,6 +97,9 @@ impl MapEntry {
             MapEntry::Suspend => "battle.map_menu.suspend",
             MapEntry::Restart => "battle.map_menu.restart",
             MapEntry::EndTurn => "battle.map_menu.end_turn",
+            MapEntry::DangerZone => "battle.map_menu.danger_zone",
+            MapEntry::AutoEnd => "battle.map_menu.auto_end",
+            MapEntry::UnitInfo => "battle.map_menu.unit_info",
         })
     }
 
@@ -73,27 +114,72 @@ impl MapEntry {
 
     /// Whether it can be chosen in `state`: `Suspend` while the battle is
     /// still going, `End Turn` only in the player phase of a battle still
-    /// going, the others (`Restart Battle` too) always.
+    /// going, the others (`Restart Battle` too) always. `Unit Info` also
+    /// needs a unit under the cursor ([`available`](Self::available)).
     pub fn enabled(self, state: &BattleState) -> bool {
         match self {
             MapEntry::Units
             | MapEntry::Objective
             | MapEntry::Guides
             | MapEntry::Options
-            | MapEntry::Restart => true,
+            | MapEntry::Restart
+            | MapEntry::DangerZone
+            | MapEntry::AutoEnd
+            | MapEntry::UnitInfo => true,
             MapEntry::Suspend => state.outcome().is_none(),
             MapEntry::EndTurn => state.phase() == Phase::Player && state.outcome().is_none(),
         }
     }
+
+    /// Whether it can be chosen in `state` with the cursor at `cursor`:
+    /// [`enabled`](Self::enabled), and for `Unit Info` a unit there.
+    pub fn available(self, state: &BattleState, cursor: Pos) -> bool {
+        match self {
+            MapEntry::UnitInfo => state.units().iter().any(|u| u.pos == cursor),
+            _ => self.enabled(state),
+        }
+    }
+}
+
+/// The shortcuts the map menu lists ([`MapEntry::SHORTCUTS`]): on a
+/// platform with no keyboard, whose only device is its buttons, those whose
+/// action has no button or button chord in `keymap` (the player's
+/// bindings); none with a keyboard, so the PC's map menu is the same as
+/// ever.
+pub fn shortcuts(keyboard: Keyboard, keymap: &Keymap) -> Vec<MapEntry> {
+    if keyboard == Keyboard::Present {
+        return Vec::new();
+    }
+    MapEntry::SHORTCUTS
+        .into_iter()
+        .filter(|e| e.action().is_some_and(|a| keymap.buttons_for(a).is_empty()))
+        .collect()
 }
 
 /// The map menu for `state`, focused on `focus` (if enabled), and what
 /// each item is.
 pub fn map_menu(state: &BattleState, words: Words<'_>, focus: MapEntry) -> (Menu, Vec<MapEntry>) {
-    let entries = MapEntry::ALL.to_vec();
+    map_menu_with(state, words, focus, &[], Pos::new(0, 0))
+}
+
+/// [`map_menu`] with the `shortcuts` the platform lists (after
+/// `Objective`), the cursor at `cursor`.
+pub fn map_menu_with(
+    state: &BattleState,
+    words: Words<'_>,
+    focus: MapEntry,
+    shortcuts: &[MapEntry],
+    cursor: Pos,
+) -> (Menu, Vec<MapEntry>) {
+    let mut entries = MapEntry::ALL.to_vec();
+    let after = entries
+        .iter()
+        .position(|&e| e == MapEntry::Objective)
+        .map_or(0, |i| i + 1);
+    entries.splice(after..after, shortcuts.iter().copied());
     let items = entries
         .iter()
-        .map(|&e| e.item(words, e.enabled(state)))
+        .map(|&e| e.item(words, e.available(state, cursor)))
         .collect();
     let index = entries.iter().position(|&e| e == focus).unwrap_or(0);
     (Menu::new(items).focused(index), entries)
@@ -207,9 +293,8 @@ pub fn end_turn_question(words: Words<'_>, ready: usize) -> String {
 
 #[cfg(test)]
 mod tests {
-    use trpg_core::Pos;
-
     use super::*;
+    use crate::screen::ShuyiCtx;
     use crate::screen::tests::ctx;
     use crate::screens::battle::quick_battle;
     use crate::screens::battle::testing::{battle_with, wait};
@@ -257,6 +342,63 @@ mod tests {
         assert!(MapEntry::Units.enabled(&s));
         assert!(MapEntry::Restart.enabled(&s));
         assert!(MapEntry::Suspend.enabled(&s));
+    }
+
+    /// Ticket 1035: with no keyboard, the shortcuts that have no button
+    /// in the bindings; with one, none.
+    #[test]
+    fn the_shortcuts_are_those_with_no_button_on_a_platform_without_a_keyboard() {
+        let mut c = ctx();
+        let pc = c.keymap.clone();
+        assert_eq!(shortcuts(Keyboard::Present, &pc), []);
+        // The PC's pad has a button for each.
+        assert_eq!(shortcuts(Keyboard::Absent, &pc), []);
+        c.use_playdate_buttons();
+        assert_eq!(shortcuts(Keyboard::Absent, &c.keymap), MapEntry::SHORTCUTS);
+        assert_eq!(shortcuts(Keyboard::Present, &c.keymap), []);
+        let actions = MapEntry::SHORTCUTS.map(MapEntry::action);
+        let expected = [Action::DangerZone, Action::ToggleAutoEnd, Action::Info].map(Some);
+        assert_eq!(actions, expected);
+        assert!(MapEntry::ALL.iter().all(|e| e.action().is_none()));
+    }
+
+    /// Ticket 1035: the shortcuts go after Objective; Unit Info needs a
+    /// unit under the cursor.
+    #[test]
+    fn the_shortcuts_follow_objective_and_unit_info_needs_a_unit() {
+        let s = quick_battle(&ctx().game.content).unwrap();
+        let on = s.units()[0].pos;
+        let (menu, entries) = map_menu_with(
+            &s,
+            Words::ENGLISH,
+            MapEntry::UnitInfo,
+            &MapEntry::SHORTCUTS,
+            on,
+        );
+        assert_eq!(
+            labels(&menu)[..6],
+            [
+                ("Units", true),
+                ("Objective", true),
+                ("Danger Zone", true),
+                ("Auto-End", true),
+                ("Unit Info", true),
+                ("Guides", true),
+            ]
+        );
+        assert_eq!(entries.len(), 10);
+        assert_eq!(menu.focus(), 4);
+        let empty = Pos::new(0, 0);
+        assert!(s.units().iter().all(|u| u.pos != empty));
+        let (menu, _) = map_menu_with(
+            &s,
+            Words::ENGLISH,
+            MapEntry::UnitInfo,
+            &[MapEntry::UnitInfo],
+            empty,
+        );
+        assert_eq!(labels(&menu)[2], ("Unit Info", false));
+        assert_eq!(menu.focus(), 0, "a dimmed entry takes no focus");
     }
 
     #[test]

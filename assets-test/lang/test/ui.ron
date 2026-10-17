@@ -916,6 +916,12 @@
     (key: "battle.map_menu.suspend", source: "Suspend", text: "SUSPEND"),
     (key: "battle.map_menu.restart", source: "Restart Battle", text: "RESTART BATTLE"),
     (key: "battle.map_menu.end_turn", source: "End Turn", text: "END TURN"),
+    (key: "battle.map_menu.danger_zone", source: "Danger Zone", text: "DANGER ZONE"),
+    (key: "battle.map_menu.auto_end", source: "Auto-End", text: "AUTO-END"),
+    (key: "battle.map_menu.unit_info", source: "Unit Info", text: "UNIT INFO"),
+    (key: "system_menu.danger_zone", source: "Danger Zone", text: "DANGER ZONE"),
+    (key: "system_menu.dialogue_log", source: "Dialogue Log", text: "DIALOGUE LOG"),
+    (key: "system_menu.options", source: "Options", text: "OPTIONS"),
     (
         key: "battle.units.line",
         source: "{name}  HP {hp}  {status}",
