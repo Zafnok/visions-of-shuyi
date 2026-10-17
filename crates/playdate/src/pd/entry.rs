@@ -30,8 +30,8 @@ use super::{
     MenuItem, add_menu_item, buttons, crank, elapsed, game_stack, log, millis, reset_elapsed,
     set_menu_item_title, set_refresh_rate, show, write_file,
 };
-use crate::menu::{self, Chosen, Titles};
 use crate::audio::Audio;
+use crate::menu::{self, Chosen, Titles};
 use crate::pads::PlaydatePad;
 use crate::report::{self, Minute, Reads};
 use crate::storage::{self, FileStorage};
