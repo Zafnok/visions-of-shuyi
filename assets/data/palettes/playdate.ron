@@ -23,8 +23,8 @@
     "panel_border": "black",
     "panel_border_focus": "black",
 
-    // Factions. The map skin (1037) draws your units white in a black tile
-    // and enemies on a grey one; these are the letters' placeholders.
+    // Factions: the names' colour in text. The map skin draws units with
+    // its own names (map_*, below).
     "player": "black",
     "enemy": "black",
     "ally": "black",
@@ -32,13 +32,14 @@
     "player_outline": "black",
 
     // Ranges: dots, diagonal lines, a dashed edge (docs/design/playdate.md).
-    // The heal range: placeholder (1037).
+    // The heal range is the attack range's lines (the design doesn't say).
     "move_range": "dots",
     "attack_range": "diagonals",
     "heal_range": "diagonals",
     "danger_zone": "dashes",
 
-    // A unit under a timed effect: placeholder (1037).
+    // A unit under a timed effect: not shown on the Playdate's map (1037;
+    // the design doesn't say), so these are unused there.
     "effect": "grey",
     "effect_bonus": "black",
     "effect_penalty": "black",
@@ -52,6 +53,26 @@
     "hp_mid": "black",
     "hp_low": "black",
     "exp_bar": "black",
+
+    // The map skin's own (1037, docs/design/playdate.md): your units white
+    // letters in a black tile; enemies white-edged letters on a grey tile;
+    // a unit that has acted black letters in an outlined white tile.
+    // Allies and neutral units (none in Chapter 1): their letters alone,
+    // until a chapter that has them decides. A terrain glyph on a tile a
+    // range fills keeps a white edge. A unit a battle note is about, and a
+    // tile flashing, is flipped. The threat arrows: black, edged in white.
+    "map_player_tile": "black",
+    "map_player_letters": "white",
+    "map_enemy_tile": "grey",
+    "map_enemy_letters": "black_edged",
+    "map_acted_tile": "white",
+    "map_acted_letters": "black",
+    "map_acted_outline": "black",
+    "map_other_letters": "black_edged",
+    "map_marked_glyph": "black_edged",
+    "map_highlight": "invert",
+    "map_threat": "black",
+    "map_threat_edge": "white",
 
     // Terrain: black glyphs on the white ground.
     "grass": "black",

@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["1032", "1033"]
 nick_input: sign-off
-completed:
+completed: 2026-10-17
 ---
 
 # 1037 — The Playdate map skin
@@ -101,14 +101,14 @@ written.
 
 ## Acceptance criteria
 
-- [ ] `frame-png --playdate` pictures of Harrowby Ford (browsing, ranges,
+- [x] `frame-png --playdate` pictures of Harrowby Ford (browsing, ranges,
       danger zone, an acted unit) are in the PR.
-- [ ] Each mark in *Context* has a look test with the skin.
-- [ ] No `MapScene` change breaks the glyph skin's tests; no PC snapshot
+- [x] Each mark in *Context* has a look test with the skin.
+- [x] No `MapScene` change breaks the glyph skin's tests; no PC snapshot
       changes.
-- [ ] Nick's sign-off comment is in the completion notes (or "no comment
+- [x] Nick's sign-off comment is in the completion notes (or "no comment
       yet": sign-off never blocks the PR).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -117,5 +117,50 @@ written.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.**
+
+- **`SkinSet`** (`Glyph` / `Playdate`) in `Ctx::game.skin_set`, and
+  `map_view::skin_for(set, look, content)`, the one place the map skin is
+  chosen: the settings' map look on the PC, the `PlaydateSkin` on the
+  Playdate whatever the look (so loading the player's settings no longer
+  swaps it out). `ShuyiCtx::use_playdate_skins` sets both; the front end
+  (`crates/playdate/src/start.rs`) and `frame-png --playdate` call it.
+  ADR-0083 records it, and how 0067's second Playdate map skin would slot
+  in.
+- **`PlaydateSkin`** (`crates/ui/src/map_view/playdate.rs`, `units.rs`,
+  `marks.rs`): 24 × 15 tiles on the 50 × 15 screen, centred with a cell
+  clear each side; terrain glyphs black on white; your units white in a
+  black tile, enemies white-edged on grey, acted units outlined; HP line;
+  move range dots, attack range lines, danger zone a 2 px dashed edge;
+  white-edged terrain glyphs on a range; the PC's corner marks as flips;
+  the shared path and threat arrows (black, white edge). Its inks are
+  new `map_*` names in `assets/data/palettes/playdate.ron`, falling back
+  to the design's ink. Nothing in `MapScene`, `core`, the bots or play
+  records changed.
+- **Look tests** with the skin, through the one-bit renderer: each mark,
+  the 50 × 15 `view_tiles`, a paints-only-its-area property test, and a
+  braille text snapshot of Harrowby Ford's opening view
+  (`map_view/playdate/snapshots/`).
+- **`cargo xtask frame-png --map`** paints the battle's map alone over the
+  whole screen (`BattleScreen::scene_of_size`, `Harness::map_scene_in`),
+  since the battle screen keeps the PC's layout until 1038. The PR's
+  pictures are `docs/design/playdate/1037-*.png`, made with it.
+
+**Deviations.** The glyph skin's cursor arms share a pixel at each corner;
+flipped twice it would vanish, so the Playdate's gives it to one arm only.
+The glyph skin's `Layout` gained `fitted` (no pixel of the PC changes).
+
+***Claude's starting rules*** (in `docs/design/playdate.md`; Nick can
+veto): the map centred with a cell each side; HP left black and HP lost
+white (a full-HP unit of yours shows no line); ranges don't show on units'
+tiles; the heal range is the attack range's lines; timed effects (buffs,
+debuffs) have no mark on the Playdate map; allies and neutral units are
+their letters alone; the danger edge is 2 px inside the zone and absent at
+the screen's edge; a battle note's unit, a struck unit and a changed tile
+are flipped for the first half of their flash; a falling unit vanishes at
+the middle of its fall; the cursor doesn't pulse, and the tile-glow cursor
+option flips the whole tile.
+
+**Follow-ups:** none.
+
+**Nick's sign-off:** no comment yet.

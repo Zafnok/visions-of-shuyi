@@ -17,7 +17,7 @@ use crate::glyph_buffer::{Cell, GlyphBuffer, PxRect, Rect};
 use crate::screen::Ctx;
 
 /// Cells per map tile, across (a tile is two glyphs wide, ADR-0018).
-const TILE_W_CELLS: i32 = 2;
+pub(super) const TILE_W_CELLS: i32 = 2;
 
 /// A map tile in console pixels, across × down: for a skin that paints its
 /// units over this skin's terrain (ADR-0049).
@@ -85,16 +85,22 @@ pub struct Layout {
 impl Layout {
     /// The layout of `scene` in `area`.
     pub fn new(scene: &MapScene, area: Rect) -> Self {
-        let (fit_w, fit_h) = GlyphSkin.view_tiles(area);
+        Self::fitted(scene, (area.x, area.y), GlyphSkin.view_tiles(area))
+    }
+
+    /// The layout of `scene` from the cell `corner`, drawing no more than
+    /// `fit` tiles: for a skin of two-cell tiles that places them its own
+    /// way (the Playdate's, centred in its area).
+    pub(super) fn fitted(scene: &MapScene, corner: (i32, i32), fit: (i32, i32)) -> Self {
         Self {
             origin: scene.origin,
-            cell: (area.x, area.y),
-            tiles: (scene.size.0.clamp(0, fit_w), scene.size.1.clamp(0, fit_h)),
+            cell: corner,
+            tiles: (scene.size.0.clamp(0, fit.0), scene.size.1.clamp(0, fit.1)),
         }
     }
 
     /// The cells the tiles cover.
-    fn cells(&self) -> Rect {
+    pub(super) fn cells(&self) -> Rect {
         let (x, y) = self.cell;
         Rect::new(x, y, TILE_W_CELLS * self.tiles.0, self.tiles.1)
     }

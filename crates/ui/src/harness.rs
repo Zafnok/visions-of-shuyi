@@ -19,6 +19,7 @@
 use crate::audio::{AudioRequest, MusicClock, MusicCommand};
 use crate::flow::FlowScreen;
 use crate::game::{Game, RawInputEvent};
+use crate::glyph_buffer::Rect;
 use crate::input::RIGHT_HANDED;
 use crate::input::{Button, Chord, Device, Layout, PadKind};
 use crate::map_view::{MapScene, RangeKind, UnitView, skin_named};
@@ -485,6 +486,14 @@ impl Harness {
         Some(self.battle()?.scene(self.game.ctx()))
     }
 
+    /// [`map_scene`](Self::map_scene) for the tiles the map skin fits in
+    /// `area` (cells) rather than in the battle's map area.
+    pub fn map_scene_in(&self, area: Rect) -> Option<MapScene> {
+        let ctx = self.game.ctx();
+        let size = ctx.game.map_skin.view_tiles(area);
+        Some(self.battle()?.scene_of_size(ctx, size))
+    }
+
     /// Paints battle maps with the skin called `name` from the next frame
     /// on (`"glyph"`, or `"sprite"` for the test tileset; ADR-0038), as
     /// the debug menu's "Map skin" does.
@@ -861,6 +870,29 @@ mod tests {
     #[should_panic(expected = "no map skin \"ascii\"")]
     fn an_unknown_map_skin_panics() {
         Harness::with_layout(RIGHT_HANDED).with_map_skin("ascii");
+    }
+
+    /// A scene of the map alone, as many tiles as the skin fits in an
+    /// area, centred on the cursor.
+    #[test]
+    fn map_scene_in_is_sized_for_the_area() {
+        let mut h = Harness::with_layout(RIGHT_HANDED);
+        assert_eq!(h.map_scene_in(Rect::new(0, 0, 10, 4)), None);
+        h.keys("Down f Left f f");
+        let lord = Pos::new(3, 5);
+        let small = h.map_scene_in(Rect::new(0, 0, 10, 4)).unwrap();
+        assert_eq!(small.size, (5, 4));
+        assert_eq!(small.cursor_tile(), Some(lord));
+        assert_eq!(small.unit_at(lord).map(|u| u.label.as_str()), Some("Lo"));
+        // The battle's own scene is unchanged.
+        let own = h.map_scene().unwrap();
+        assert_ne!(own.size, small.size);
+        let area = crate::screens::battle::layout::MAP_VIEW;
+        assert_eq!(h.map_scene_in(area), Some(own));
+        h.with_map_skin("playdate");
+        let pd = h.map_scene_in(Rect::new(0, 0, 50, 15)).unwrap();
+        assert_eq!(pd.size, (24, 15));
+        assert_eq!(pd.cursor_tile(), Some(lord));
     }
 
     #[test]

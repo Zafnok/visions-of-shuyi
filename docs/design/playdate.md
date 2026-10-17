@@ -18,6 +18,7 @@ numbers and the forecast in them are placeholders.
 | `q2-b-*.png`, `q2-c-*.png` | A strip along the bottom; info on its own screen (not chosen) |
 | `q3r2-e-grey.png` | **Chosen:** your units solid black, enemies grey, acted units outlined; the range marks |
 | `q3-*.png`, `q3r2-*.png` | The other ways offered to tell sides apart without colour |
+| `1037-*.png` | **As built** (ticket 1037, `cargo xtask frame-png --playdate --map`, shown at ×2): Harrowby Ford browsing, a unit's ranges, the danger zone, both, a path with its threat arrow, a unit that has acted |
 
 ## Nick's words
 
@@ -102,6 +103,25 @@ Like Fire Emblem on the GBA.
 - *Claude's starting rules (Nick can veto):* allies (no ally in Chapter 1)
   wait for a later chapter's decision; neutral units likewise. The threat
   arrows and their `!` marks are drawn in black with a white edge.
+- *Claude's starting rules from building the map (1037, Nick can veto):*
+  - The map is centred, one cell clear at each side: 24 tiles across, as
+    above.
+  - **HP:** the HP left is black and the HP lost white, so your unit at
+    full HP shows no line and a hurt one a white gap at the right of its
+    tile's bottom edge (as in the mockup).
+  - A range doesn't show on a unit's tile (black, grey or outlined), as in
+    the mockup. The **heal range** is the attack range's lines.
+  - A unit under a **timed effect** (a buff or a debuff) has no mark on the
+    map; the PC tints its tile. Unit info shows it.
+  - Allies and neutral units are, until then, their letters alone (with a
+    white edge) on the terrain.
+  - The **danger zone's edge** is 2 pixels thick, inside the zone's tiles,
+    and has none at the screen's edge where the zone goes on past it.
+  - What the PC fades or tints, one bit flips or cuts: a unit a battle note
+    is about, a unit just struck and a tile whose terrain just changed are
+    shown **flipped** (black for white) for the first half of their flash;
+    a falling unit is gone at the middle of its fall. The cursor doesn't
+    pulse, and the *tile glow* cursor option flips the whole tile.
 
 ### Buttons and the crank (Q4 B)
 
