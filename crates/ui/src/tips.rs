@@ -1,5 +1,6 @@
 //! One-time contextual tips (ticket 0406): which have been seen (kept in
-//! [`Storage`] under [`TIPS_SEEN_KEY`], per player profile, ADR-0069), key
+//! [`Storage`](crate::storage::Storage) under [`TIPS_SEEN_KEY`], per player
+//! profile, ADR-0069; the engine's, ticket 1112), key
 //! names in tip text, and the box
 //! that shows one. The battle screen decides when a trigger has happened.
 //!
@@ -14,62 +15,17 @@ pub mod view;
 use crate::prelude::*;
 pub use view::{FaceView, LessonItemView, LessonView, TipView};
 
-use alloc::collections::BTreeSet;
 use core::fmt::Display;
 
 use trpg_content::tip::CURSOR_PLACEHOLDER;
 
 use crate::input::Action;
 use crate::screens::battle::split_keys::help_select_action;
-use crate::storage::{Storage, StorageError};
 use crate::widgets::help::{HelpKeys, cursor_keys_name, key_name};
 
-/// [`Storage`] key under which the ids of the tips already shown are saved,
-/// one per line.
-pub const TIPS_SEEN_KEY: &str = "tips_seen";
-
-/// The tips already shown to this profile.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct TipsSeen {
-    ids: BTreeSet<String>,
-}
-
-impl TipsSeen {
-    /// The ids saved in `storage`; none if nothing is saved or it can't be
-    /// read (the tips then show again).
-    pub fn load(storage: &dyn Storage) -> Self {
-        let saved = storage.read(TIPS_SEEN_KEY).ok().flatten();
-        let ids = saved
-            .iter()
-            .flat_map(|s| s.lines())
-            .map(str::trim)
-            .filter(|l| !l.is_empty())
-            .map(str::to_owned)
-            .collect();
-        Self { ids }
-    }
-
-    /// Whether the tip `id` was shown.
-    pub fn contains(&self, id: &str) -> bool {
-        self.ids.contains(id)
-    }
-
-    /// Records that the tip `id` was shown and saves the list. The tip
-    /// counts as seen even if saving fails (it then shows again next
-    /// launch).
-    pub fn mark(&mut self, id: &str, storage: &mut dyn Storage) {
-        if self.ids.insert(id.to_owned()) {
-            let text: Vec<&str> = self.ids.iter().map(String::as_str).collect();
-            storage.write(TIPS_SEEN_KEY, &text.join("\n")).ok();
-        }
-    }
-}
-
-/// Forgets every tip seen, so they all show again (for the Options menu's
-/// "reset tips", 0805).
-pub fn reset_tips(storage: &mut dyn Storage) -> Result<(), StorageError> {
-    storage.delete(TIPS_SEEN_KEY)
-}
+/// Which tips have been shown and forgetting them: Shuyi Engine's
+/// (`shuyi_ui::tips`, ticket 1112).
+pub use shuyi_ui::tips::{TIPS_SEEN_KEY, TipsSeen, reset_tips};
 
 /// `text` with each `{Action}` replaced by the key `keys` binds to that
 /// action (its primary key, or on a controller its button), `{Cursor}` by
@@ -130,7 +86,6 @@ mod tests {
 
     use super::*;
     use crate::input::{Device, Keymap, PadKind};
-    use crate::storage::MemoryStorage;
     use crate::widgets::help::NOT_MAPPED;
 
     fn keymap(pairs: &[(&str, Action)]) -> Keymap {
@@ -138,35 +93,6 @@ mod tests {
             pairs.iter().map(|&(c, a)| (Chord::parse(c).unwrap(), a)),
             RepeatDef::default(),
         )
-    }
-
-    #[test]
-    fn seen_tips_are_saved_and_loaded() {
-        let mut storage = MemoryStorage::new();
-        let mut seen = TipsSeen::load(&storage);
-        assert!(!seen.contains("a"));
-        seen.mark("a", &mut storage);
-        seen.mark("b", &mut storage);
-        seen.mark("a", &mut storage);
-        assert_eq!(
-            storage.read(TIPS_SEEN_KEY).unwrap().as_deref(),
-            Some("a\nb")
-        );
-        let again = TipsSeen::load(&storage);
-        assert!(again.contains("a") && again.contains("b") && !again.contains("c"));
-        assert_eq!(again, seen);
-    }
-
-    #[test]
-    fn resetting_forgets_every_tip() {
-        let mut storage = MemoryStorage::new();
-        TipsSeen::default().mark("a", &mut storage);
-        let mut seen = TipsSeen::load(&storage);
-        seen.mark("b", &mut storage);
-        reset_tips(&mut storage).unwrap();
-        assert_eq!(TipsSeen::load(&storage), TipsSeen::default());
-        // Nothing to reset is fine.
-        reset_tips(&mut storage).unwrap();
     }
 
     #[test]

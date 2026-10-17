@@ -39,7 +39,7 @@ pub fn hooks() -> GameHooks<Shuyi> {
         }),
         debug: Some(ScreenHook {
             name: DebugMenuScreen::NAME,
-            open: |ctx| Box::new(DebugMenuScreen::new(ctx)),
+            open: |ctx| Box::new(debug::menu(ctx)),
         }),
         debug_screens: &debug::SCREENS,
     }

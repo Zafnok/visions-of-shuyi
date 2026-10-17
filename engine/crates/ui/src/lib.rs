@@ -36,6 +36,7 @@ mod prelude {
 
 pub mod audio;
 pub mod ctx;
+pub mod debug;
 pub mod float;
 pub mod frame;
 pub mod game;
@@ -48,6 +49,7 @@ pub mod screens;
 pub mod settings;
 pub mod storage;
 pub mod text;
+pub mod tips;
 #[cfg(any(test, feature = "toy"))]
 pub mod toy;
 pub mod widgets;
