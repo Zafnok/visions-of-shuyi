@@ -175,20 +175,20 @@ Modules that do not import `trpg_core` at all are the first set to move:
 | ------ | ---- | ---- |
 | `glyph_buffer*`, `snapshot.rs`, `console.rs`, `cinema.rs`, `onebit*`, `float.rs` | E → moved | 1108: `shuyi_ui::frame::{glyph_buffer, snapshot, console, cinema, onebit}` and `shuyi_ui::float`, with their tests on the engine's own palette. The game's files re-export them under their old names; `console.rs` keeps the game's sizes (`ConsoleSizes`), `snapshot.rs` and `onebit.rs` the tests on this game's palette and font. |
 | `portrait.rs` | M → cut | 1108: fitting a picture to an area of cells at a whole scale (`fit_whole_scale`, `dim_opacity`, `draw_fitted`) is `shuyi_ui::frame::portrait`. The 32 × 16-cell frame and drawing a `Portrait`'s expression stay the game's. |
-| `storage.rs`, `audio.rs`, `profiles.rs` | E → moved | 1109: `shuyi_ui::{storage, audio, profiles}`; `AudioRequest` and `AudioQueue` take the game's voice variant, `profiles::load` the keys a game kept before profiles. The game keeps the four menu cue ids (`MenuSound`, until 1112's `AudioConfig`) and its keys from before profiles. |
-| `widgets/` | E | `help.rs` is now the game's alias of `HelpKeys` and a re-export of `shuyi_ui::input::help_keys` (1107). |
+| `storage.rs`, `audio.rs`, `profiles.rs` | E → moved | 1109: `shuyi_ui::{storage, audio, profiles}`; `AudioRequest` and `AudioQueue` take the game's voice variant, `profiles::load` the keys a game kept before profiles. 1112: the menu sounds by meaning (`MenuSound`) and which cues they are (`AudioConfig`, from `GameData::audio_config`, held by the queue) are the engine's; the game gives its cue ids (`audio::AUDIO`) and keeps its keys from before profiles. |
+| `widgets/` | E → moved | 1112: the menu (with its view and glyph skin) and word wrap are `shuyi_ui::widgets`, re-exported. `help.rs` is the game's alias of `HelpKeys` (1107). Typing a name (`name_entry`, the lead's and a profile's) stays the game's: its letter grid and rules are this game's. |
 | `input/` (`keymap`, `state`, `frame`, `bindings`, `pad`, `fixed`, `help_keys`) | E → moved | 1107: `shuyi_ui::input`, with their tests on the sample actions. `trpg-ui::input` re-exports the submodules under their old names. |
-| `debug/sprite_test.rs`, `screens/mod.rs` | E | — |
+| `debug/sprite_test.rs`, `screens/mod.rs` | E | 1112: `centre_x`, `print_centred` and the Debug key's hint (`debug::hint`, `debug::glyph::paint_hint`) are the engine's. The sprite test stays: it draws this game's test card (the toy's gallery covers sprite items in the engine). |
 | `input.rs` | G | 1107: what's left is the game's: the aliases with `Action`, `KEY_ROWS`, the text keys and `text_keys_help`. The fixed Esc→Cancel is `Action`'s `fixed_keys` and the split keys are `screens/battle/split_keys.rs` (1106). |
 | `screen.rs` | M → cut | 1109: `Screen`, `Transition`, `FrameInput`, `ScreenStack` (`shuyi_ui::screen`) and `Ctx<G>` (`shuyi_ui::ctx`) are the engine's. The game's part (`Shuyi`), its aliases and `ShuyiCtx` stay. |
 | `game.rs` | M → cut | 1109: the frame loop is `shuyi_ui::Game<G>`. Start-up (`start`, `start_on_scene`) and the hooks (layout picker, debug menu) stay the game's. |
 | `color.rs` | M → cut | 1108: `Rgb`, `Palette`, `ColorSet` and `EngineColor` are `shuyi_ui::frame::color`. `UiColor` (this game's colors, tactics colors among them) and which of them the engine's colors are (`engine_color`) stay. |
-| `settings.rs`, `words.rs`, `tips.rs` | M | 1109: the engine's settings (text speed, fullscreen, theme, volumes, layout) are `shuyi_ui::settings`, text by key is `Ctx::text`, and `{name}` filling is `shuyi_ui::text`. The tactics settings (`ShuyiSettings`) and their saved record, the data text (`Words`), `{Cursor}`/`{Select}` and tip placement stay G or K. |
-| `dialogue.rs`, `screens/dialogue` | M | The player state machine and box are E. The lead and cast are G. |
+| `settings.rs`, `words.rs`, `tips.rs` | M | 1109: the engine's settings (text speed, fullscreen, theme, volumes, layout) are `shuyi_ui::settings`, text by key is `Ctx::text`, and `{name}` filling is `shuyi_ui::text`. 1112: the tips seen (`TipsSeen`, `reset_tips`) are `shuyi_ui::tips`, and `{Cursor}` and `{Action}` are filled by default (`text::key_text`). The tactics settings (`ShuyiSettings`) and their saved record, the data text (`Words`), `{Select}` and tip placement stay G or K. |
+| `dialogue.rs`, `screens/dialogue` | M → cut | 1112: the player is `shuyi_ui::dialogue::DialoguePlayer<H>`, with the game's `DialogueHooks` (its `@place`/`@opening` lines and what they set, and the lead's and the story's tokens); the text box (pages, typing, fast-forward, the blinking marker), its view and glyph skin are `shuyi_ui::dialogue::text_box`. The game's `DialoguePlayer` wraps the engine's with its old API. The dialogue screen (portraits, the place behind the talk, openings, the log) stays the game's until the map view (1115) and cinematics (1113) move. |
 | `cinematic*` | M | Timeline and easing are E. Map pan and action are K. Logo, talk, characters and combat shots are G. |
 | `harness.rs` | M → cut | 1111: the scripts, audio, music player stand-in and snapshots are `shuyi_ui::harness`. The start-up (embedded content, test chapter, title) and the lookups (`flow`, `battle`, `map_scene` and its shortcuts, map skin, tips, lessons) stay the game's. See coupling 10. |
-| `debug*` | M | The menu, glyph sampler, portrait viewer and backdrop camera are E. Promote/reclass, skin switch and scene preview are G. |
-| `screens/{key_bindings,layout_picker,options}` | M | Generic screens with this game's rows and layouts. |
+| `debug*` | M → cut | 1112: the debug menu (`shuyi_ui::debug::DebugMenuScreen`, with the game's `DebugEntry`s) and the glyph sampler (with the game's sample panels) are the engine's. The tools stay the game's: promote/reclass, the skin switch, the test scene and cinematic, the voice test, the scene preview; so do the portrait viewer (this game's portrait frame, `portrait.rs`) and the scene camera (the map scene, 1115). |
+| `screens/{key_bindings,layout_picker,options}` | M → moved | 1112: `shuyi_ui::screens::{key_bindings, layout_picker, options}` with their glyph skins. The game gives the Key bindings rows (`KEY_ROWS`), the picker's legend (`layout_picker::LEGEND`) and the options' rows (`options::rows`: each a label key and a `Toggle`, `Choice`, `Volume` or `Action` value; ADR-0087). |
 | `map_view.rs`, `map_view/scene.rs`, `map_view/glyph*`, `map_view/sprite*` | M | Tiles, rim, ranges, path, cursor, threat, autotiled ground and light are K. Units, HP bars, effect marks and `GAME_TILESET` are G. |
 | `map_view/{skin,grid,corners,path,threat}.rs` | K | Square grid only. `skin.rs:11` imports battle walk speeds. |
 | `screens/battle/{camera,cursor,path,walk}.rs` | K | Tile camera, virtual cursor, path steering, walk timing. |
@@ -213,6 +213,12 @@ picker, sprite items in snapshots, the scripts, audio and music clock) in
 test this game's screens (its title, its layout picker, its Key bindings
 screen, its debug tools), which are still the game's until those screens
 move.
+
+1112: the screens and widgets moved with their unit tests, ported to the
+toy game; the toy's lobby (an engine menu) opens the options, the Key
+bindings screen and a scene read in the engine's text box in the engine's
+Harness tests (`tests/it/screens.rs`). The game's integration tests of
+these screens (with their snapshots) are unchanged.
 
 ## `app` (trpg-app)
 
