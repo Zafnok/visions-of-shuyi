@@ -18,7 +18,8 @@
 //! is on the screen from the first frame while the data loads (ticket
 //! 1036). Its sounds and music are converted for the device by its build
 //! and played through the SDK's sample and file players (ticket 1047,
-//! `audio`).
+//! `audio`), and its pictures are one-bit ones made when it is built
+//! (`pictures`, ticket 1040).
 #![cfg_attr(feature = "sdk", no_std)]
 
 extern crate alloc;
@@ -28,6 +29,7 @@ pub mod card;
 pub mod heap;
 pub mod menu;
 pub mod pads;
+pub mod pictures;
 pub mod report;
 pub mod screen;
 pub mod stack;

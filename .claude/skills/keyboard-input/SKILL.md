@@ -86,7 +86,7 @@ covers it). Help text names a chord through the keymap like a button
 (`A+B`, joined by the language's `keys.chord_join`). In harness scripts
 `h.pad("South+East")` presses both in one frame.
 
-**The crank** (ticket 1035, ADR-0085) is two more buttons, `CrankBack`
+**The crank** (ticket 1035, ADR-0086) is two more buttons, `CrankBack`
 and `CrankForward`: each notch wound is a press and a release, bound only
 in the `playdate` table (to `RewindBack` / `RewindForward`, which the Key
 bindings screen leaves out: `input::CRANK_ACTIONS`). Only the front end

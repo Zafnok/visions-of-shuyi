@@ -323,10 +323,12 @@ early so every later PR is checked by them.
      map menu entries · **1036** load only what the Playdate uses, loading
      card · **1037** the one-bit map skin · **1055** the one-bit render
      fast enough on the device (1033 measured ~360 ms a frame; now ~17 ms)
-  6. **1040** one-bit images · **1047** sound and music · **1038** the
+  6. **1040** one-bit images → **1061** the bought art in the Playdate's
+     bundle · **1047** sound and music · **1038** the
      battle screen (after 0242) → **1039** forecast, unit info, level-up,
      rewind (after 0248)
-  7. **1041** the combat picture · **1042** one-bit portraits · **1045**
+  7. **1041** the combat picture · **1042** one-bit portraits (both after
+     1061) · **1045**
      New Game and Options screens (after 0247) · **1046** preparations,
      results, saves, game over
   8. **1043** the dialogue screen (after 0249) · **1044**

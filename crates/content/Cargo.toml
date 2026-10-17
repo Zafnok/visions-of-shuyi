@@ -41,6 +41,13 @@ include_dir = { workspace = true, optional = true }
 once_cell.workspace = true
 libm.workspace = true
 
+[build-dependencies]
+# `build.rs` converts the Playdate's pictures to one-bit (ticket 1040,
+# ADR-0085): the converter, which reads the PNGs, and the battler sidecars'
+# scales.
+shuyi-assets = { path = "../../engine/crates/assets", features = ["png"] }
+serde.workspace = true
+
 [dev-dependencies]
 # Turns on `test-fixtures` for this crate's own tests in any profile.
 trpg-content = { path = ".", features = ["test-fixtures"] }

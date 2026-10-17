@@ -47,8 +47,8 @@ options:
   --layout right|left  the key layout picked before (default right)
   --scale N            whole-number scale, 1 to 8 (default 2; 1 with --playdate)
   --playdate           the Playdate's screen: a 50×15 console in the Playdate's
-                       palette, drawn black and white by the one-bit renderer.
-                       Pictures are grey boxes until there are one-bit ones (1040)
+                       palette, drawn black and white by the one-bit renderer,
+                       with the one-bit pictures the Playdate's build makes (1040)
   --map                the battle's map alone over the whole screen, painted by
                        the game's map skin (with --playdate the Playdate's: its
                        battle screen keeps the PC's layout until 1038)
@@ -247,7 +247,9 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
         let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
         let font = onebit::Font::new(&ctx.game.content.font, bits)?;
         let mut frame = Box::new([0; FRAME_BYTES]);
-        onebit::render(buffer, &font, &(), &mut frame);
+        // The pictures the Playdate's build makes (ticket 1040).
+        let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
+        onebit::render(buffer, &font, &pictures, &mut frame);
         one_bit_picture(&frame, options.scale.unwrap_or(1))
     } else {
         let painter = Painter::new(

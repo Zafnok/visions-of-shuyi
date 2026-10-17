@@ -19,6 +19,9 @@ trpg-ui = { path = "../ui", features = ["harness"] }
 # Decoding the sounds and music the Playdate build converts (ticket 1047).
 hound = "3.5"
 lewton = "0.9"
+# The one-bit converter and its PNG reader, for `playdate-images` (ticket
+# 1040).
+shuyi-assets = { path = "../../engine/crates/assets", features = ["png"] }
 mutants = "0.0.4"
 png = "0.18"
 ron.workspace = true

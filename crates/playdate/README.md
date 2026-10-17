@@ -10,6 +10,14 @@ on the game's own stack and runs it (ticket 1033). The screens still
 wear the PC's skins, drawn into a 50 × 15 console, so most are cut off
 until their Playdate skins land (1037 on).
 
+Its pictures are one-bit ones (ticket 1040, ADR-0085): `trpg-content`'s
+`build.rs` converts the portraits, combat pictures and backdrops by the
+game's table (`crates/content/src/playdate_images.rs`) and puts each at
+its PNG's path in the Playdate's bundle; `src/pictures.rs` reads them
+once at start for the renderer. A picture still a PNG (the title's logo,
+the map's) is drawn as a grey box. `cargo xtask playdate-images` writes
+the same pictures as files to look at, into `target/playdate/images/`.
+
 ## The Playdate's bundle
 
 The game's data is `assets/` without what the Playdate never reads:
@@ -36,6 +44,7 @@ listed.
 | `src/storage.rs` | The game's `Storage` on the Playdate's files |
 | `src/screen.rs` | Copying the one-bit frame onto the SDK's frame buffer, changed rows only |
 | `src/card.rs` | The loading card, and the game's font read before the rest of the data |
+| `src/pictures.rs` | The one-bit pictures the renderer draws, read once from the bundle |
 | `src/start.rs` | The game's context as the Playdate starts it: console, palette, buttons, no keyboard |
 | `src/chapter_1.rs` | The test that plays Chapter 1 against the Playdate's bundle |
 | `src/{heap,stack,text,report}.rs` | The plain, tested parts: allocator arithmetic, the stack's size and high-water mark, C strings, the logged reports |
@@ -55,7 +64,7 @@ Each SDK update (`src/pd/entry.rs`):
    button pressed and let go between two updates counts as held for one
    frame, so a quick tap is never lost while a frame takes long. Then the
    crank's turn since the last update (`getCrankChange`, `isCrankDocked`)
-   becomes its notches' presses (`RawInputEvent::from_crank`, ADR-0085).
+   becomes its notches' presses (`RawInputEvent::from_crank`, ADR-0086).
 3. An entry of the system menu chosen since the last update goes to the
    game (`Game::act` with its action), then `Game::frame(&events,
    dt)` runs, both on the game's own stack, told first where the music is
@@ -87,7 +96,7 @@ binding position `South` and B as `East`, so the default `pad` table of
 Cancel. Help text names them `A`, `B` and the D-pad. Since 1034 the
 front end uses `keymap.ron`'s `playdate` table (A + B, the B chords).
 
-**The crank** (ticket 1035, ADR-0085) is two more buttons of that pad: a
+**The crank** (ticket 1035, ADR-0086) is two more buttons of that pad: a
 notch wound back (`notch_degrees` in `keymap.ron`'s `crank`, 30) presses
 and lets go of `CrankBack`, a notch forwards `CrankForward`; the
 `playdate` table binds them to stepping the rewind. A docked crank does
@@ -98,7 +107,7 @@ nothing.
 The game adds three entries to the system menu (`src/menu.rs`): Danger
 Zone, Dialogue Log and Options, named in the player's language (renamed
 when it changes). Choosing one hands the screen on top the same action
-as in the game (ADR-0085); where that screen has nothing to do with it,
+as in the game (ADR-0086); where that screen has nothing to do with it,
 nothing happens.
 
 ## Storage
