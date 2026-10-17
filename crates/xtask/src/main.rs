@@ -17,6 +17,7 @@ mod lang_status;
 mod lines;
 mod map_sprite_import;
 mod playdate;
+mod playdate_audio;
 mod playtest;
 mod portrait_import;
 mod private_assets;

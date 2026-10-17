@@ -351,6 +351,87 @@ fn the_combat_arts_lesson_opens_with_usable_arts_and_closes_when_they_open() {
     assert!(done(&h).contains(&"combat_arts".to_owned()));
 }
 
+/// Whether End turn is refused: pressed on the map, the prompt doesn't
+/// open (it is backed out of if it does).
+fn end_turn_refused(h: &mut Harness) -> bool {
+    h.keys("Space");
+    let refused = matches!(battle(h).mode(), Mode::Idle { .. });
+    if !refused {
+        h.keys("d");
+    }
+    refused
+}
+
+/// Ticket 0464, Nick's playtest at `Full`: the Sergeant, the one unit who
+/// reaches an enemy on turn 1, aims at the Brigand (Attacking opens), backs
+/// out to his menu (it has Arts: Combat Arts waits behind Attacking) and
+/// attacks. Nobody left can use an art, so Combat Arts doesn't open, and
+/// End turn isn't refused for it. It opens on a later turn when a menu
+/// with Arts does.
+#[test]
+fn the_arts_lesson_doesnt_open_after_the_only_unit_with_arts_attacks() {
+    let mut h = chapter_1(
+        TutorialLevel::Full,
+        &[
+            "cursor",
+            "keys",
+            "next_unit",
+            "moving",
+            "threat_arrows",
+            "terrain_magic",
+        ],
+    );
+    go(&mut h, SERGEANT);
+    h.keys("f");
+    assert_eq!(shown(&h), Some("attacking"));
+    go(&mut h, BRIGAND);
+    h.keys("f").wait(1.5);
+    assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
+    h.keys("d");
+    assert!(matches!(battle(&h).mode(), Mode::ActionMenu { .. }));
+    pick(&mut h, MenuEntry::Attack);
+    h.wait(1.0);
+    assert!(matches!(battle(&h).mode(), Mode::Targeting(_)));
+    h.keys("f").hold("f", 4.0);
+    assert!(done(&h).contains(&"attacking".to_owned()));
+    assert_eq!(battle(&h).state().phase(), Phase::Player);
+    assert!(!battle(&h).ready_units().is_empty(), "units left to act");
+    assert_eq!(shown(&h), None);
+    assert!(!battle(&h).lesson_open());
+    assert!(!end_turn_refused(&mut h));
+    assert!(!done(&h).contains(&"combat_arts".to_owned()));
+}
+
+/// Ticket 0464: the Attacking lesson open, the Sergeant waits instead: no
+/// unit left reaches an enemy, so it is put away at once, not done, and
+/// the turn may end with units still to act.
+#[test]
+fn the_attacking_lesson_is_put_away_when_nobody_left_can_reach_an_enemy() {
+    let mut h = chapter_1(
+        TutorialLevel::Full,
+        &[
+            "cursor",
+            "keys",
+            "next_unit",
+            "moving",
+            "threat_arrows",
+            "combat_arts",
+            "terrain_magic",
+        ],
+    );
+    go(&mut h, SERGEANT);
+    h.keys("f");
+    assert_eq!(shown(&h), Some("attacking"));
+    h.keys("f").wait(0.5);
+    pick(&mut h, MenuEntry::Wait);
+    h.wait(0.5);
+    assert!(!battle(&h).ready_units().is_empty(), "units left to act");
+    assert_eq!(shown(&h), None);
+    assert!(!battle(&h).lesson_open());
+    assert!(!done(&h).contains(&"attacking".to_owned()));
+    assert!(!end_turn_refused(&mut h));
+}
+
 /// Lesson 10, `Short`: Chapter 1 can show it on turn 1. The Heretic
 /// beside the western forest opens her spells; aiming one at the forest
 /// does it.

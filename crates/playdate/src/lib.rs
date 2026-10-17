@@ -16,11 +16,14 @@
 //! and the game's storage on the Playdate's files. Its bundle is the
 //! Playdate's, which leaves out what it does not use, and a loading card
 //! is on the screen from the first frame while the data loads (ticket
-//! 1036).
+//! 1036). Its sounds and music are converted for the device by its build
+//! and played through the SDK's sample and file players (ticket 1047,
+//! `audio`).
 #![cfg_attr(feature = "sdk", no_std)]
 
 extern crate alloc;
 
+pub mod audio;
 pub mod card;
 pub mod heap;
 pub mod menu;

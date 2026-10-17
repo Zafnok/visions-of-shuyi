@@ -8,7 +8,8 @@
 //! 1035), hands the game an entry of the system menu chosen since the last
 //! frame, calls `Game::frame` with the time since the last frame, and when
 //! the picture changed redraws what changed with `trpg_ui::onebit` (ticket
-//! 1055) and copies it to the screen. Once a minute it logs how fast that
+//! 1055) and copies it to the screen, and plays the frame's sounds and
+//! music (ticket 1047, `crate::audio`). Once a minute it logs how fast that
 //! went.
 
 use alloc::boxed::Box;
@@ -24,11 +25,13 @@ use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
 use trpg_ui::{ConsoleSizes, ConsoleSpec, Game, GlyphBuffer, RawInputEvent};
 
 use super::files::SdkFiles;
+use super::sound::Sdk;
 use super::{
     MenuItem, add_menu_item, buttons, crank, elapsed, game_stack, log, millis, reset_elapsed,
     set_menu_item_title, set_refresh_rate, show, write_file,
 };
 use crate::menu::{self, Chosen, Titles};
+use crate::audio::Audio;
 use crate::pads::PlaydatePad;
 use crate::report::{self, Minute, Reads};
 use crate::storage::{self, FileStorage};
@@ -66,6 +69,9 @@ struct Running {
     /// The game's entries in the system menu, once added, and their names.
     menu: [Option<MenuItem>; menu::ENTRIES],
     titles: Titles,
+    /// The sounds and music, and the SDK's players they play on.
+    audio: Audio<Sdk>,
+    speaker: Sdk,
     font: onebit::Font<'static>,
     /// The picture last drawn to the screen, `None` before the first.
     shown: Option<GlyphBuffer>,
@@ -221,9 +227,14 @@ fn update(step: &mut Step) -> bool {
                 for line in running.minute.lines(screen, game_stack::high_water()) {
                     log(&line);
                 }
+                log(&running.audio.report(&mut running.speaker));
                 #[cfg(feature = "bench")]
-                for line in running.bench.lines() {
-                    log(&line);
+                {
+                    for line in running.bench.lines() {
+                        log(&line);
+                    }
+                    let paused = running.bench.next_minute_paused();
+                    running.audio.pause_music(&mut running.speaker, paused);
                 }
                 running.minute = Minute::default();
             }
@@ -256,6 +267,7 @@ fn load(mut card: Box<Card>) -> Box<Running> {
     let mut lines = Vec::from([shown]);
     lines.extend(report::loaded(load_ms, game_stack::high_water()));
     lines.extend(reads.summary(end_ms));
+    lines.push(report::sounds(running.audio.samples()));
     for line in &lines {
         log(line);
     }
@@ -308,6 +320,12 @@ fn start_game(card: Box<Card>) -> Result<Box<Running>, String> {
     }
     let pad = PlaydatePad::new(ctx.game.content.keymap.stick);
     let crank = Crank::new(ctx.game.content.keymap.crank);
+    mark("the sounds");
+    let mut speaker = Sdk::new();
+    let mut audio = Audio::load(&mut speaker, &ctx.game.content.audio, u64::from(millis()));
+    for warning in audio.take_warnings() {
+        log(&alloc::format!("audio: {warning}"));
+    }
     mark("the title");
     let mut running = Box::new(Running {
         game: trpg_ui::game::start(ctx),
@@ -315,6 +333,8 @@ fn start_game(card: Box<Card>) -> Result<Box<Running>, String> {
         crank,
         menu: [None, None, None],
         titles: Titles::default(),
+        audio,
+        speaker,
         font,
         shown: None,
         frame,
@@ -346,9 +366,21 @@ impl Running {
     /// the parts that did; true if the screen changed.
     fn frame(&mut self, events: &[trpg_ui::RawInputEvent], dt: f32) -> bool {
         let start = elapsed();
-        // A game that has quit keeps its last frame: the Playdate's own
-        // Menu button leaves it.
-        let _quit = self.game.frame(events, dt).quit;
+        // What sounds now, for the screens that keep time with the music.
+        self.game
+            .set_music_playing(self.audio.music_playing(&mut self.speaker));
+        let out = self.game.frame(events, dt);
+        self.audio
+            .set_volumes(&mut self.speaker, out.music_volume, out.sound_volume);
+        self.audio.play(&mut self.speaker, out.audio, out.music);
+        // A game that has quit keeps its last frame (the Playdate's own
+        // Menu button leaves it), in silence.
+        if out.quit {
+            self.audio.stop_all(&mut self.speaker);
+        }
+        for warning in self.audio.take_warnings() {
+            log(&alloc::format!("audio: {warning}"));
+        }
         let framed = elapsed();
         self.minute.frame.add((framed - start) * 1000.0);
         let buffer = self.game.buffer();

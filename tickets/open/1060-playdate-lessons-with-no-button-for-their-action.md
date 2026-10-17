@@ -35,7 +35,7 @@ Auto-End, Unit Info; no Dialogue log, Nick 2026-10-17: it only opens in
 a conversation, where the system menu has it) and the crank for Rewind
 (`RewindBack`, which opens the rewind as `Rewind` does). It says nothing
 about lessons, but a map menu shortcut chosen replays its action through
-the battle's own path (ADR-0084), so the battle already notices
+the battle's own path (ADR-0085), so the battle already notices
 `Pressed(Info)` and the rest when one is chosen: check it with a test
 rather than assume it. Rewind's lesson item is `RewindOpened`, which the
 crank does; its label's `{Rewind}` still shows `! not mapped` there. 1058 makes the lesson box fit the screen; it
