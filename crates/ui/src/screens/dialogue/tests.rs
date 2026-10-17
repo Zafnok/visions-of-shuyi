@@ -39,12 +39,22 @@ fn place(side: Side, character: &str) -> Step {
 
 /// `scene` full-screen, with the default lead.
 fn full(scene: &Scene) -> DialogueScreen {
-    DialogueScreen::new(scene, ctx().lead, ctx().content.names, &Present::Everyone)
+    DialogueScreen::new(
+        scene,
+        ctx().game.lead,
+        ctx().game.content.names,
+        &Present::Everyone,
+    )
 }
 
 /// `scene` as an overlay, with the default lead.
 fn over(scene: &Scene) -> DialogueScreen {
-    DialogueScreen::overlay(scene, ctx().lead, ctx().content.names, &Present::Everyone)
+    DialogueScreen::overlay(
+        scene,
+        ctx().game.lead,
+        ctx().game.content.names,
+        &Present::Everyone,
+    )
 }
 
 fn scene(steps: Vec<Step>) -> Scene {
@@ -419,6 +429,7 @@ fn the_caption_is_shown() {
 fn a_speaker_who_is_not_a_unit_is_named_by_the_names_table() {
     let c = ctx();
     let name = c
+        .game
         .content
         .names
         .get("retainer")
@@ -602,7 +613,7 @@ fn the_lead_shows_the_players_name_and_gendered_portrait() {
         let s = DialogueScreen::new(
             &lead_scene(),
             LeadProfile::new("Isolde", gender),
-            c.content.names.clone(),
+            c.game.content.names.clone(),
             &Present::Everyone,
         );
         let view = s.view(&c);
@@ -895,10 +906,10 @@ fn the_view_shows_the_place_the_scene_names() {
         narrate("Black again."),
     ];
     let view = screen_tiles(&c);
-    let maps = &c.content.maps;
+    let maps = &c.game.content.maps;
     let expected = Place::of_map(&maps["ch01"]).scene(at(3, 12), view);
-    let battle = &c.content.battles["ch01"];
-    let mut field = Place::of_battle(&c.content, battle);
+    let battle = &c.game.content.battles["ch01"];
+    let mut field = Place::of_battle(&c.game.content, battle);
     field.units = vec![];
     let places = |s: &mut DialogueScreen, c: &mut Ctx| {
         let mut seen = vec![s.view(c).place];

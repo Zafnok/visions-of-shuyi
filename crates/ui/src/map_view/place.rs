@@ -19,7 +19,7 @@ use crate::screens::battle::camera::Camera;
 pub fn screen_tiles(ctx: &Ctx) -> (i32, i32) {
     let console = ctx.console;
     let screen = Rect::new(0, 0, i32::from(console.cols), i32::from(console.rows));
-    ctx.map_skin.view_tiles(screen)
+    ctx.game.map_skin.view_tiles(screen)
 }
 
 /// A whole map to show behind something: its terrain, how it looks and the

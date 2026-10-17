@@ -223,7 +223,7 @@ mod tests {
 
     #[test]
     fn end_turn_needs_the_player_phase() {
-        let mut s = quick_battle(&ctx().content).unwrap();
+        let mut s = quick_battle(&ctx().game.content).unwrap();
         let (menu, entries) = map_menu(&s, Words::ENGLISH, MapEntry::Units);
         assert_eq!(entries, MapEntry::ALL);
         assert_eq!(
@@ -262,7 +262,7 @@ mod tests {
     #[test]
     fn end_turn_is_disabled_once_the_battle_is_over() {
         let c = ctx();
-        let q = quick_battle(&c.content).unwrap();
+        let q = quick_battle(&c.game.content).unwrap();
         let players: Vec<_> = q
             .units()
             .iter()
@@ -280,7 +280,7 @@ mod tests {
 
     #[test]
     fn the_unit_list_shows_hp_and_who_is_ready() {
-        let mut s = quick_battle(&ctx().content).unwrap();
+        let mut s = quick_battle(&ctx().game.content).unwrap();
         wait(&mut s, 2);
         assert_eq!(ready_players(&s), 3);
         let (menu, ids) = unit_list(&s, Words::ENGLISH);
@@ -300,7 +300,7 @@ mod tests {
     #[test]
     fn objective_and_turn_texts() {
         let c = ctx();
-        let q = quick_battle(&c.content).unwrap();
+        let q = quick_battle(&c.game.content).unwrap();
         assert_eq!(objective_text(&q, Words::ENGLISH), "Rout the enemy");
         assert_eq!(turn_text(&q, Words::ENGLISH), "Turn 1");
         let with = |o| battle_with(&c, q.map().clone(), q.units().to_vec(), o);

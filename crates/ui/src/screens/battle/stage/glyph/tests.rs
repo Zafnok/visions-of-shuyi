@@ -13,7 +13,7 @@ const WHITE: Rgb = Rgb::new(250, 250, 250);
 fn picture(c: &Ctx, (w, h): (u32, u32), faces: Facing, scale: (u32, u32)) -> Battler {
     Battler {
         id: "t".to_owned(),
-        image: c.content.battlers.battlers["default"].image,
+        image: c.game.content.battlers.battlers["default"].image,
         size: ImageInfo {
             width: w,
             height: h,
@@ -47,7 +47,7 @@ fn stage(c: &Ctx) -> StageView {
     let lord = picture(c, (48, 72), Facing::Right, (1, 1));
     let brigand = picture(c, (64, 64), Facing::Left, (5, 4));
     StageView {
-        backdrop: c.content.battlers.backdrops.default,
+        backdrop: c.game.content.battlers.backdrops.default,
         shade: trpg_content::Light::PLAIN,
         banner: None,
         fighters: [
@@ -119,7 +119,7 @@ fn the_stage_covers_the_map_and_the_side_panel_and_the_backdrop_fits() {
 #[test]
 fn the_backdrop_is_its_window_and_its_edges_mirrored_beside_it() {
     let c = ctx();
-    let image = c.content.battlers.backdrops.default.unwrap();
+    let image = c.game.content.battlers.backdrops.default.unwrap();
     let sprites = backdrop_sprites(image);
     let places: Vec<(PxRect, PxRect)> = sprites.iter().map(|s| (s.src, s.dest)).collect();
     assert_eq!(places, BACK);
@@ -316,7 +316,7 @@ fn a_backdrop_still_to_be_shaded_is_shaded_and_the_fighters_are_not() {
     let c = ctx();
     let mut view = stage(&c);
     let plain = painted(&c, &view);
-    let dusk = c.content.lighting.get("dusk").unwrap();
+    let dusk = c.game.content.lighting.get("dusk").unwrap();
     view.shade = dusk;
     view.veil = true;
     let lit = painted(&c, &view);

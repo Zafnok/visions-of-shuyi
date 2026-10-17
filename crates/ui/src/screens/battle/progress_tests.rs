@@ -175,7 +175,7 @@ fn the_leads_level_up_page_shows_the_face_the_player_picked() {
         let (map, _) = quick_units(&c);
         state = battle(&c, map, units);
         let mut h = attacked(state);
-        h.ctx_mut().lead = LeadProfile::new("Ren", gender);
+        h.ctx_mut().game.lead = LeadProfile::new("Ren", gender);
         h.wait(EXP_S + 2.0);
         let page = level_up(&h);
         assert_eq!(page.banner, "LEVEL UP!");
@@ -222,7 +222,7 @@ fn the_screen_waits_for_the_level_up_and_leaves_the_battle_cores() {
     press(&mut s, &mut c, &[Action::Rewind, Action::CursorLeft], 0.0);
     assert!(s.rewind().is_none());
     // So do tips and banners.
-    c.tips_enabled = true;
+    c.game.tips_enabled = true;
     s.tips.fire(TipTrigger::FirstLevelUp);
     press(&mut s, &mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), None);

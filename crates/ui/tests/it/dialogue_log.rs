@@ -5,20 +5,21 @@
 
 use insta::assert_snapshot;
 use trpg_core::LeadGender;
+use trpg_ui::Ctx;
+use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, Chord, Layout};
 use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::dialogue::log::{LogView, RowKind};
-use trpg_ui::{Ctx, Game};
 
 /// `ch01_intro` from its first box, as `--scene` opens it, in `layout`.
 fn intro_in(layout: Layout) -> Harness {
     let ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_layout(layout);
-    let game =
-        Game::start_on_scene(ctx, "ch01_intro", LeadGender::Male).unwrap_or_else(|e| panic!("{e}"));
+    let game = trpg_ui::game::start_on_scene(ctx, "ch01_intro", LeadGender::Male)
+        .unwrap_or_else(|e| panic!("{e}"));
     Harness::from_game(game)
 }
 

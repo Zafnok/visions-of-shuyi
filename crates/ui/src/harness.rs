@@ -23,7 +23,7 @@ use crate::input::RIGHT_HANDED;
 use crate::input::{Button, Chord, Device, Layout, PadKind};
 use crate::map_view::{MapScene, RangeKind, UnitView, skin_named};
 use crate::profiles::ProfileId;
-use crate::screen::{Ctx, KeyPrompt, Screen};
+use crate::screen::{Ctx, KeyPrompt, Screen, Shuyi, ShuyiCtx};
 use crate::screens::BattleScreen;
 use crate::settings::{SETTINGS_KEY, Settings};
 use crate::storage::{MemoryStorage, Storage};
@@ -122,7 +122,7 @@ impl Harness {
     pub fn first_launch_and(setup: impl FnOnce(&mut Ctx)) -> Self {
         let mut ctx = embedded_ctx().with_storage(Box::new(MemoryStorage::new()));
         setup(&mut ctx);
-        Self::from_game(Game::start(ctx))
+        Self::from_game(crate::game::start(ctx))
     }
 
     /// A later launch where `layout` was picked before: at the title screen
@@ -143,7 +143,7 @@ impl Harness {
         }
         let mut ctx = embedded_ctx().with_storage(Box::new(storage));
         setup(&mut ctx);
-        Self::from_game(Game::start(ctx))
+        Self::from_game(crate::game::start(ctx))
     }
 
     /// Makes New Game start the story as the game ships it
@@ -152,7 +152,7 @@ impl Harness {
     #[must_use]
     pub fn with_shipped_story(mut self) -> Self {
         match trpg_content::load_embedded() {
-            Ok(content) => self.ctx_mut().content.new_game = content.new_game,
+            Ok(content) => self.ctx_mut().game.content.new_game = content.new_game,
             Err(e) => panic!("embedded content failed to load: {e}"),
         }
         self
@@ -186,14 +186,14 @@ impl Harness {
     /// A launch with `storage` (e.g. from [`into_storage`](Self::into_storage)
     /// of an earlier run), starting as the real game does.
     pub fn with_storage(storage: Box<dyn Storage>) -> Self {
-        Self::from_game(Game::start(embedded_ctx().with_storage(storage)))
+        Self::from_game(crate::game::start(embedded_ctx().with_storage(storage)))
     }
 
     /// The game with the embedded content and the right-handed layout,
     /// showing only `root`, for testing a screen on its own.
-    pub fn with_screen(root: Box<dyn Screen>) -> Self {
+    pub fn with_screen(root: Box<dyn Screen<Shuyi>>) -> Self {
         let ctx = embedded_ctx().with_layout(RIGHT_HANDED);
-        Self::from_game(Game::new(ctx, root))
+        Self::from_game(crate::game::new(ctx, root))
     }
 
     /// Wraps `game`. Debug screens are always on, so F2 behaves the same
@@ -487,7 +487,7 @@ impl Harness {
     /// If there is no such skin.
     pub fn with_map_skin(&mut self, name: &str) -> &mut Self {
         let ctx = self.game.ctx_mut();
-        let skin = skin_named(&ctx.content, name);
+        let skin = skin_named(&ctx.game.content, name);
         ctx.set_map_skin(skin.unwrap_or_else(|| panic!("no map skin {name:?}")));
         self
     }
@@ -495,7 +495,7 @@ impl Harness {
     /// [`map_scene`](Self::map_scene) as text ([`MapScene::to_text`]);
     /// empty with no battle.
     pub fn map_text(&self) -> String {
-        let content = &self.game.ctx().content;
+        let content = &self.game.ctx().game.content;
         self.map_scene()
             .map_or_else(String::new, |scene| scene.to_text(content))
     }
@@ -543,14 +543,14 @@ impl Harness {
 
     /// Turns the one-time tips on (they are off in tests by default).
     pub fn with_tips(&mut self) -> &mut Self {
-        self.game.ctx_mut().tips_enabled = true;
+        self.game.ctx_mut().game.tips_enabled = true;
         self
     }
 
     /// Turns the checklist lessons on (they are off in tests by default,
     /// so a test can end its turns).
     pub fn with_lessons(&mut self) -> &mut Self {
-        self.game.ctx_mut().lessons = crate::screen::Lessons::On;
+        self.game.ctx_mut().game.lessons = crate::screen::Lessons::On;
         self
     }
 
@@ -572,7 +572,7 @@ fn embedded_ctx() -> Ctx {
         Ok(mut ctx) => {
             ctx.debug_tools = true;
             // New Game plays the small test chapter, not the story.
-            ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
+            ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
             ctx
         }
         Err(e) => panic!("embedded content failed to load: {e}"),
@@ -610,7 +610,7 @@ mod tests {
     /// Records every frame's actions and dt.
     struct Recorder(Seen);
 
-    impl Screen for Recorder {
+    impl Screen<Shuyi> for Recorder {
         fn name(&self) -> &'static str {
             "recorder"
         }
@@ -823,10 +823,10 @@ mod tests {
         let battle = h.flow().and_then(FlowScreen::battle).unwrap();
         assert_eq!(scene, battle.scene(h.game().ctx()));
         assert_eq!(scene.units.len(), 8);
-        assert_eq!(h.map_text(), scene.to_text(&h.game().ctx().content));
+        assert_eq!(h.map_text(), scene.to_text(&h.game().ctx().game.content));
         assert!(h.map_text().starts_with("origin (-10,-11) size 35x30\n"));
         // A battle screen on the stack itself.
-        let state = quick_battle(&embedded_ctx().content).unwrap();
+        let state = quick_battle(&embedded_ctx().game.content).unwrap();
         let h = Harness::with_screen(Box::new(BattleScreen::new(state)));
         let bare = h.map_scene().unwrap();
         // The same map; only the cursor's pulse is a frame behind.
@@ -842,12 +842,12 @@ mod tests {
         h.keys("Down f Left f");
         assert_eq!(h.battle().map(|b| b.state().units().len()), Some(8));
         h.with_map_skin("sprite").wait(FRAME_DT);
-        assert_eq!(h.game().ctx().map_skin.name(), "sprite");
+        assert_eq!(h.game().ctx().game.map_skin.name(), "sprite");
         // The test tileset's 24 px tiles at the zoom a new player has
         // (2×, 48 px): 11 × 10 of them.
         assert!(h.map_text().contains(" size 11x10\n"), "{}", h.map_text());
         h.with_map_skin("glyph");
-        assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+        assert_eq!(h.game().ctx().game.map_skin.name(), "glyph");
     }
 
     #[test]
@@ -886,7 +886,7 @@ mod tests {
     #[test]
     fn debug_screens_are_always_on() {
         let ctx = embedded_ctx().with_layout(RIGHT_HANDED);
-        let game = Game::start(ctx).with_debug_screens(false);
+        let game = crate::game::start(ctx).with_debug_screens(false);
         let mut h = Harness::from_game(game);
         h.keys("F2");
         assert_eq!(h.top_screen(), "debug_menu");
@@ -913,7 +913,7 @@ mod tests {
     /// Plays `beep` on Confirm and music `theme` on Cancel.
     struct Beeper;
 
-    impl Screen for Beeper {
+    impl Screen<Shuyi> for Beeper {
         fn name(&self) -> &'static str {
             "beeper"
         }
@@ -932,7 +932,7 @@ mod tests {
 
     fn beeper() -> Harness {
         let ctx = crate::screen::tests::ctx_with_cues(&["beep"], &["theme"]);
-        Harness::from_game(Game::new(ctx, Box::new(Beeper)))
+        Harness::from_game(crate::game::new(ctx, Box::new(Beeper)))
     }
 
     fn beep() -> AudioRequest {
@@ -1061,7 +1061,7 @@ mod tests {
         assert_eq!(h.music_clock(), None);
         h.wait(1.0);
         assert!(title_at(&h, 1.0), "{:?}", h.music_clock());
-        let length_ms = h.game().ctx().content.audio.music["title"].length_ms;
+        let length_ms = h.game().ctx().game.content.audio.music["title"].length_ms;
         let length = Duration::from_millis(length_ms.into()).as_secs_f32();
         assert!(length > 60.0, "{length}");
         let clock_length = h.music_clock().map(|c| c.length).unwrap();
@@ -1151,7 +1151,7 @@ mod tests {
         assert!(title_at(&h, 1.0 + 4.0 * FRAME_DT), "{:?}", h.music_clock());
         h.wait(1.0);
         let (cue, position) = clock(&h).unwrap();
-        let pool = &h.game().ctx().content.audio.pools["skirmish"];
+        let pool = &h.game().ctx().game.content.audio.pools["skirmish"];
         assert!(pool.iter().any(|c| c == cue), "{cue}");
         // The fade began with the `f` press, two frames before the wait.
         let expected = 1.0 + 2.0 * FRAME_DT - 0.5;

@@ -28,7 +28,7 @@ fn p(x: i32, y: i32) -> Pos {
 }
 
 fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().content).unwrap())
+    BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
 }
 
 /// One frame of no time with `actions`.
@@ -79,7 +79,7 @@ fn browsing_shows_the_terrain_the_units_and_the_cursor() {
         assert_eq!(tile.terrain, map.get(pos).copied(), "{pos:?}");
         assert!(tile.tints.is_empty(), "{pos:?}");
     }
-    let sea = c.content.terrain.display.id_of("sea");
+    let sea = c.game.content.terrain.display.id_of("sea");
     assert!(sea.is_some());
     assert_eq!(scene.tile(p(0, 0)).unwrap().terrain, sea);
     assert_eq!(scene.tile(p(-1, 0)).unwrap().terrain, None);
@@ -120,7 +120,7 @@ fn browsing_shows_the_terrain_the_units_and_the_cursor() {
 #[test]
 fn the_cursor_has_the_players_style_and_its_pulse() {
     let mut c = ctx();
-    c.change_settings(|s| s.cursor_style = CursorStyle::TileGlow)
+    c.change_settings(|s| s.game.cursor_style = CursorStyle::TileGlow)
         .unwrap();
     let mut s = quick();
     wait(&mut s, &mut c, 0.5);
@@ -401,7 +401,7 @@ fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
     assert!(scene.rim.iter().all(Option::is_none));
     // A map bigger than the view, with a column of forest just left of
     // it and a row of water just below: the ring has them.
-    c.map_skin = Rc::new(Narrow);
+    c.game.map_skin = Rc::new(Narrow);
     let (_, mut units) = quick_units(&c);
     units[0].pos = p(30, 20);
     let (forest, water) = (TerrainId(4), TerrainId(8));
@@ -445,7 +445,7 @@ fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
 #[test]
 fn the_view_is_as_big_as_the_skin_says() {
     let mut c = ctx();
-    c.map_skin = Rc::new(Narrow);
+    c.game.map_skin = Rc::new(Narrow);
     let mut s = big_battle(&c);
     // The screen starts with the default skin's 35 × 30 tiles in mind…
     assert_eq!(s.camera().origin, p(13, 5));
@@ -480,7 +480,7 @@ fn the_view_is_as_big_as_the_skin_says() {
     assert_eq!(scene.origin, p(28, 16));
     assert_eq!(scene.units.len(), 3);
     // Back to the default skin: fitted again, around the cursor.
-    c.map_skin = Rc::new(GlyphSkin);
+    c.game.map_skin = Rc::new(GlyphSkin);
     let scene = s.scene(&c);
     assert_eq!((scene.origin, scene.size), (p(17, 5), (35, 30)));
     assert_eq!(s.camera().origin, p(28, 16));
@@ -505,7 +505,7 @@ fn a_skin_switch_refits_the_kept_camera_and_an_ai_pan() {
     let walk_start = action.walk_start();
     s.mode = Mode::AiAction(Box::new(action));
     // The debug menu switches to a skin showing 10 × 8 tiles.
-    c.map_skin = Rc::new(Narrow);
+    c.game.map_skin = Rc::new(Narrow);
     s.begin_frame(&c, 0.0);
     // The camera centres on the cursor; the kept one on the kept cursor.
     assert_eq!(s.camera().origin, p(54, 31));
@@ -529,7 +529,7 @@ fn a_skin_switch_refits_the_kept_camera_and_an_ai_pan() {
 #[test]
 fn menus_open_beside_the_tile_where_the_skin_has_it() {
     let mut c = ctx();
-    c.map_skin = Rc::new(Narrow);
+    c.game.map_skin = Rc::new(Narrow);
     let mut s = big_battle(&c);
     step(&mut s, &mut c, &[Action::Cancel]);
     assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
@@ -568,7 +568,7 @@ proptest! {
         ];
         let mut c = ctx();
         if narrow {
-            c.map_skin = Rc::new(Narrow);
+            c.game.map_skin = Rc::new(Narrow);
         }
         let (_, mut units) = quick_units(&c);
         // Each unit in its own band of six rows: no two on one tile.
@@ -612,7 +612,7 @@ fn shown(s: &BattleScreen, c: &Ctx, id: UnitId) -> (Pos, Facing, (f32, f32), u8)
 /// their own pace.
 fn sprite_ctx() -> Ctx {
     let mut c = ctx();
-    c.map_skin = crate::map_view::skin_named(&c.content, "sprite_units").unwrap();
+    c.game.map_skin = crate::map_view::skin_named(&c.game.content, "sprite_units").unwrap();
     c
 }
 
@@ -664,14 +664,14 @@ fn a_glyph_units_walk_keeps_its_pace() {
 #[test]
 fn the_walking_speeds_are_the_map_skins() {
     let speeds = |c: &Ctx| {
-        let skin = &c.map_skin;
+        let skin = &c.game.map_skin;
         (skin.walk_tiles_per_s(), skin.held_walk_tiles_per_s())
     };
     let near = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6;
     assert!(near(speeds(&ctx()), (12.0, 48.0)), "{:?}", speeds(&ctx()));
     let c = sprite_ctx();
     assert!(near(speeds(&c), (6.0, 12.0)), "{:?}", speeds(&c));
-    let own = crate::map_view::skin_named(&c.content, "sprite").unwrap();
+    let own = crate::map_view::skin_named(&c.game.content, "sprite").unwrap();
     let own = (own.walk_tiles_per_s(), own.held_walk_tiles_per_s());
     assert!(near(own, (6.0, 12.0)), "{own:?}");
     let mut s = quick();
@@ -682,7 +682,7 @@ fn the_walking_speeds_are_the_map_skins() {
     // second, still 12 at most with Confirm held; the glyph look's walk
     // doesn't change.
     let fast = |mut c: Ctx| {
-        let set = c.change_settings(|s| s.anim_speed = crate::settings::AnimSpeed::Fast);
+        let set = c.change_settings(|s| s.game.anim_speed = crate::settings::AnimSpeed::Fast);
         set.unwrap();
         c
     };

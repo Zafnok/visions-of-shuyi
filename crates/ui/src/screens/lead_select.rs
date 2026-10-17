@@ -23,7 +23,7 @@ use trpg_core::{LeadGender, LeadProfile};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, text_keys_help};
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::name_entry::{NameEvent, NameRules};
 
 /// The key of the heading in the language files ([`Ctx::text`]).
@@ -247,7 +247,7 @@ impl Default for LeadSelectScreen {
     }
 }
 
-impl Screen for LeadSelectScreen {
+impl Screen<Shuyi> for LeadSelectScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

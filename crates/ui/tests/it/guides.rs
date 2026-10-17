@@ -2,10 +2,11 @@
 //! New Game on the test chapter at `None` (no tips, no lessons), Guides
 //! from the battle's map menu, stepping through the topics, and back.
 
+use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::BattleScreen;
-use trpg_ui::{Ctx, Game, MemoryStorage, Storage};
+use trpg_ui::{Ctx, MemoryStorage, Storage};
 
 fn battle(h: &Harness) -> &BattleScreen {
     let battle = h.flow().and_then(|f| f.battle());
@@ -24,8 +25,8 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     let mut ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_storage(storage);
-    ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
-    let mut h = Harness::from_game(Game::start(ctx));
+    ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
+    let mut h = Harness::from_game(trpg_ui::game::start(ctx));
     h.with_lessons();
     // New Game in Classic, the familiarity answer two rows below "Not
     // familiar" (None), the default lead, the intro scene skipped, the

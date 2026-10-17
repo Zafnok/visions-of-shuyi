@@ -117,7 +117,7 @@ pub fn paint(ctx: &Ctx, view: &LogView, buf: &mut GlyphBuffer) {
             c(UiColor::TextHighlight)
         };
         if let Some(face) = row.and_then(|r| r.face.as_ref())
-            && let Some(art) = ctx.content.portraits.get(&face.portrait)
+            && let Some(art) = ctx.game.content.portraits.get(&face.portrait)
         {
             let dim = if ahead { AHEAD_DIM } else { 0.0 };
             draw_portrait_in(buf, (FACE_X, y), FACE, art, &face.expression, dim, false);

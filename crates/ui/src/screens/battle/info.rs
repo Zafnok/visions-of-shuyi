@@ -324,7 +324,7 @@ mod tests {
         use crate::screens::battle::quick_battle;
 
         let c = ctx();
-        let state = quick_battle(&c.content).unwrap();
+        let state = quick_battle(&c.game.content).unwrap();
         let mut lord = state.unit(UnitId(1)).unwrap().clone();
         let plain = view((&state, Words::ENGLISH), &lord);
         assert_eq!(

@@ -253,7 +253,7 @@ pub(crate) async fn read_manifest(dir: &str) -> Result<Option<String>, String> {
 #[cfg(test)]
 mod tests {
     use trpg_content::{LineId, Variant};
-    use trpg_ui::Ctx;
+    use trpg_ui::{Ctx, ShuyiCtx};
 
     use super::super::tests::{Fake, audio, block_on};
     use super::*;
@@ -575,7 +575,7 @@ mod tests {
         assert!(!ctx.has_voice(&line(3)));
         // The cast beside it is valid too.
         let cast = std::fs::read_to_string(format!("{TEST_DIR}/cast.ron")).unwrap();
-        let characters = Some(&ctx.content.characters);
+        let characters = Some(&ctx.game.content.characters);
         let cast = trpg_content::voice::cast_from_source("cast.ron", &cast, characters);
         assert_eq!(cast.map(|c| c.voices.len()), Ok(3));
     }

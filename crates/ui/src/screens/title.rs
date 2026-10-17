@@ -38,7 +38,7 @@ use crate::cinematic::{CinematicPlayer, millis};
 use crate::flow::FlowScreen;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::save;
-use crate::screen::{Ctx, FrameInput, IdleMotion, KeyPrompt, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, IdleMotion, KeyPrompt, Screen, Shuyi, Transition};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// The title screen's music cue (`audio.md`).
@@ -160,7 +160,7 @@ impl Item {
 /// the only one; a storage that can't be read rules none out). `None` if
 /// the game has no backdrops.
 fn pick_backdrop(ctx: &Ctx) -> Option<ImageId> {
-    let all = &ctx.content.title.backdrops;
+    let all = &ctx.game.content.title.backdrops;
     let last = ctx.storage.computer().read(BACKDROP_KEY).ok().flatten();
     let fresh = |b: &&ImageId| all.len() == 1 || Some(b.path()) != last.as_deref();
     let others: Vec<ImageId> = all.iter().filter(fresh).copied().collect();
@@ -308,7 +308,7 @@ impl TitleScreen {
 
     /// Opens `screen` over the title; the saves and the music may change
     /// under it, so the title looks for both again when it is back.
-    fn open(&mut self, screen: Box<dyn Screen>) -> Transition {
+    fn open(&mut self, screen: Box<dyn Screen<Shuyi>>) -> Transition {
         self.stale = true;
         self.music_on = false;
         Transition::Push(screen)
@@ -459,7 +459,7 @@ impl TitleScreen {
     }
 }
 
-impl Screen for TitleScreen {
+impl Screen<Shuyi> for TitleScreen {
     fn name(&self) -> &'static str {
         "title" // check-text: not player text (the screen's name)
     }

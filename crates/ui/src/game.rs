@@ -1,416 +1,127 @@
 //! [`Game`]: the whole UI behind one call per frame. `app` feeds it raw key
 //! and controller-button events and the frame time and blits the buffer it
 //! returns; the test `Harness` drives it the same way without a window.
+//!
+//! The frame loop is Shuyi Engine's (`shuyi_ui::Game`, ticket 1109). This
+//! module is how this game starts it: at the title ([`start`]) or on a
+//! dialogue scene ([`start_on_scene`]), with this game's [`hooks`] (the
+//! layout picker on the first key, the debug menu on the Debug key).
 
 use crate::prelude::*;
+use shuyi_ui::{GameHooks, ScreenHook};
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{LeadGender, LeadProfile};
 
-use crate::audio::{AudioRequest, MusicClock, MusicCommand, MusicState};
-use crate::color::UiColor;
 use crate::debug::{self, DebugMenuScreen, ScenePreviewScreen};
-use crate::glyph_buffer::{Cell, GlyphBuffer};
-use crate::input::{
-    Action, ActionSet, Button, Chord, InputState, Key, PadId, PadKind, PadState, Pads, UiAction,
-};
-use crate::screen::{Ctx, FrameInput, KeyPrompt, Keyboard, Screen, ScreenStack};
+use crate::screen::{Ctx, Keyboard, Screen, ScreenStack, Shuyi};
 use crate::screens::{LayoutPickerScreen, TitleScreen};
 
-/// A keyboard or controller event as `app` reports it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum RawInputEvent {
-    /// A key went down, with the Shift state at the time.
-    Down(Chord),
-    /// A key went up.
-    Up(Key),
-    /// A character was typed (the platform's text input: the keyboard's own
-    /// layout and Shift applied), for text boxes such as the lead's name.
-    /// Comes with the key's own `Down`.
-    Text(char),
-    /// A controller button went down on a pad of this kind (its binding
-    /// position, from [`Pads::update`]).
-    PadDown(Button, PadKind),
-    /// A controller button went up on every pad.
-    PadUp(Button),
-}
+pub use shuyi_ui::RawInputEvent;
 
-impl RawInputEvent {
-    /// This frame's controller events: what [`Pads::update`] reports for
-    /// the pads `connected` now, releases first, each press with the kind
-    /// of the pad that pressed it.
-    pub fn from_pads(pads: &mut Pads, connected: &[(PadId, PadKind, PadState)]) -> Vec<Self> {
-        let changes = pads.update(connected);
-        let event = |(button, pressed)| {
-            if pressed {
-                let kind = pads.kind_holding(button, connected).unwrap_or_default();
-                Self::PadDown(button, kind)
-            } else {
-                Self::PadUp(button)
-            }
-        };
-        changes.into_iter().map(event).collect()
+/// This game's UI behind one call per frame ([`shuyi_ui::Game`]).
+pub type Game = shuyi_ui::Game<Shuyi>;
+
+/// The result of one frame ([`shuyi_ui::FrameOutput`]).
+pub type FrameOutput<'a> = shuyi_ui::FrameOutput<'a, trpg_content::Variant>;
+
+/// Where this game has a say in the frame loop: until a layout is chosen
+/// the first key opens the layout picker (ticket 0226,
+/// `docs/design/controls.md`), and in builds with debug tools the Debug key
+/// opens the debug menu, except over a debug screen ([`debug::SCREENS`]).
+pub fn hooks() -> GameHooks<Shuyi> {
+    GameHooks {
+        first_key: Some(ScreenHook {
+            name: LayoutPickerScreen::NAME,
+            open: |ctx| Box::new(LayoutPickerScreen::new(ctx)),
+        }),
+        debug: Some(ScreenHook {
+            name: DebugMenuScreen::NAME,
+            open: |ctx| Box::new(DebugMenuScreen::new(ctx)),
+        }),
+        debug_screens: &debug::SCREENS,
     }
 }
 
-/// The result of one frame.
-#[derive(Debug, Clone, Copy)]
-pub struct FrameOutput<'a> {
-    /// What to show.
-    pub buffer: &'a GlyphBuffer,
-    /// Whether the game has asked to quit (it then ignores further input).
-    pub quit: bool,
-    /// Every audio request screens made this frame, in order. `app` plays
-    /// the sounds; the music requests are already turned into [`music`].
-    ///
-    /// [`music`]: Self::music
-    pub audio: &'a [AudioRequest],
-    /// What to do to the music this frame (ADR-0026).
-    pub music: &'a [MusicCommand],
-    /// The player's music volume, 0–1: `app` multiplies the music's own
-    /// volume by it, also for a track already playing.
-    pub music_volume: f32,
-    /// The player's sound volume, 0–1: `app` multiplies every sound's own
-    /// volume by it.
-    pub sound_volume: f32,
-    /// Whether the game should fill the screen (the Fullscreen setting);
-    /// `app` switches when this changes.
-    pub fullscreen: bool,
-    /// How loud voice clips play, 0–1 ([`Ctx::voice_volume`]). `app`
-    /// applies it to the voice that is playing too.
-    pub voice_volume: f32,
+/// A game showing `root`, with this game's [`hooks`]. Debug screens (F2)
+/// are on in debug builds.
+pub fn new(ctx: Ctx, root: Box<dyn Screen<Shuyi>>) -> Game {
+    Game::new(ctx, root, hooks())
 }
 
-/// Owns the screens, input state, shared context and the console buffer.
-pub struct Game {
-    stack: ScreenStack,
-    input: InputState,
-    ctx: Ctx,
-    buffer: GlyphBuffer,
-    quit: bool,
-    music: MusicState,
-    /// This frame's audio requests and music commands.
-    audio_out: Vec<AudioRequest>,
-    music_out: Vec<MusicCommand>,
+/// Uses the layout saved in `ctx.storage` (the settings') if none is in
+/// use yet.
+fn use_saved_layout(ctx: &mut Ctx) {
+    if ctx.layout().is_none()
+        && let Some(layout) = ctx.saved_layout()
+    {
+        ctx.use_layout(layout);
+    }
 }
 
-impl Game {
-    /// A game showing `root`. Debug screens (F2) are on in debug builds.
-    pub fn new(ctx: Ctx, root: Box<dyn Screen>) -> Self {
-        Self::with_stack(ctx, ScreenStack::new(root))
-    }
+/// A game starting at the title screen. If no layout is in use yet, the
+/// saved one (the settings') is loaded from `ctx.storage`; if none is
+/// saved (first launch), the first key press opens the layout picker.
+/// A platform without a keyboard ([`Keyboard::Absent`]) never opens
+/// it.
+pub fn start(mut ctx: Ctx) -> Game {
+    use_saved_layout(&mut ctx);
+    let title = if ctx.debug_tools {
+        TitleScreen::with_quick_battle(&ctx)
+    } else {
+        TitleScreen::new(&ctx)
+    };
+    // `Continue` and `Load Game` for the saves there are.
+    let title = title.refreshed(&ctx);
+    Game::with_stack(ctx, ScreenStack::new(Box::new(title)), hooks())
+}
 
-    /// A game starting at the title screen. If no layout is in use yet, the
-    /// saved one (the settings') is loaded from `ctx.storage`; if none is
-    /// saved (first launch), the first key press opens the layout picker.
-    /// A platform without a keyboard ([`Keyboard::Absent`]) never opens
-    /// it.
-    pub fn start(mut ctx: Ctx) -> Self {
-        if ctx.layout().is_none()
-            && let Some(layout) = ctx.saved_layout()
-        {
-            ctx.use_layout(layout);
-        }
-        let title = if ctx.debug_tools {
-            TitleScreen::with_quick_battle(&ctx)
-        } else {
-            TitleScreen::new(&ctx)
-        };
-        // `Continue` and `Load Game` for the saves there are.
-        let title = title.refreshed(&ctx);
-        Self::with_stack(ctx, ScreenStack::new(Box::new(title)))
-    }
-
-    /// A game opened straight on the dialogue scene `scene`, for whoever
-    /// writes scripts (ticket 0723): it plays with everyone there and the
-    /// default lead of `gender`; when it ends, the [`ScenePreviewScreen`]
-    /// plays it again or quits. The saved layout is used; if none is saved
-    /// the layout picker opens first, as in [`start`](Self::start).
-    ///
-    /// # Errors
-    ///
-    /// If there is no such scene: the error lists the scenes there are.
-    pub fn start_on_scene(mut ctx: Ctx, scene: &str, gender: LeadGender) -> Result<Self, String> {
-        let Some(found) = ctx.content.dialogue.get(scene).cloned() else {
-            let ids: Vec<&str> = ctx
-                .content
-                .dialogue
-                .scenes
-                .keys()
-                .map(String::as_str)
-                .collect();
-            // check-text: not player text (a developer's error)
-            return Err(format!(
-                "no scene \"{scene}\" in assets/dialogue/; the scenes are: {}",
-                ids.join(", ")
-            ));
-        };
-        if ctx.layout().is_none()
-            && let Some(layout) = ctx.saved_layout()
-        {
-            ctx.use_layout(layout);
-        }
-        ctx.lead = LeadProfile::new(DEFAULT_NAME, gender);
-        let preview = ScenePreviewScreen::new(found);
-        let playing = preview.play(&ctx);
-        let mut stack = ScreenStack::new(Box::new(preview));
-        stack.push(Box::new(playing));
-        if ctx.layout().is_none() && ctx.keyboard == Keyboard::Present {
-            stack.push(Box::new(LayoutPickerScreen::new(&ctx)));
-        }
-        Ok(Self::with_stack(ctx, stack))
-    }
-
-    fn with_stack(ctx: Ctx, stack: ScreenStack) -> Self {
-        let input = InputState::new(ctx.keymap.clone()).starting_on(ctx.device);
-        let console = ctx.console;
-        let blank = Cell::new(
-            ' ',
-            ctx.palette.get(UiColor::Text),
-            ctx.palette.get(UiColor::Black),
-        );
-        #[allow(clippy::cast_precision_loss)] // A fade is well under 2^24 ms.
-        let fade_secs = ctx.content.audio.music_fade_ms as f32 / 1000.0;
-        let mut game = Self {
-            stack,
-            input,
-            ctx,
-            buffer: GlyphBuffer::with_spec(console, blank),
-            quit: false,
-            music: MusicState::new(fade_secs),
-            audio_out: Vec::new(),
-            music_out: Vec::new(),
-        };
-        game.redraw();
-        game
-    }
-
-    /// Turns the debug screens (the [`Action::Debug`] key) on or off
-    /// ([`Ctx::debug_tools`]).
-    #[must_use]
-    pub fn with_debug_screens(mut self, on: bool) -> Self {
-        self.ctx.debug_tools = on;
-        self
-    }
-
-    /// Tells the game what music is sounding, for
-    /// [`Ctx::music_clock`]: the cue and the seconds since the track really
-    /// started, or `None` in silence. `app` knows (a track starts once its
-    /// file has loaded, ADR-0037) and calls this before every
-    /// [`frame`](Self::frame), so screens read a clock at most one frame
-    /// old.
-    pub fn set_music_playing(&mut self, playing: Option<(&str, f64)>) {
-        let manifest = &self.ctx.content.audio;
-        self.ctx.music_clock =
-            playing.and_then(|(cue, elapsed)| MusicClock::from_elapsed(manifest, cue, elapsed));
-    }
-
-    /// Flips the Fullscreen setting, as the window's own shortcut does
-    /// (ticket 0902). `app` then switches the window on the next frame, and
-    /// the Settings screen shows the new value.
-    pub fn toggle_fullscreen(&mut self) {
-        let _ = self.ctx.change_settings(|s| s.fullscreen = !s.fullscreen);
-    }
-
-    /// Runs one frame: applies `events` (in order), advances input by `dt`
-    /// seconds, updates the top screen with the resulting actions, collects
-    /// its audio requests and redraws. After a quit, frames do nothing.
-    pub fn frame(&mut self, events: &[RawInputEvent], dt: f32) -> FrameOutput<'_> {
-        self.audio_out.clear();
-        self.music_out.clear();
-        if !self.quit {
-            self.step(events, dt);
-            self.collect_audio(dt);
-        }
-        FrameOutput {
-            buffer: &self.buffer,
-            quit: self.quit,
-            audio: &self.audio_out,
-            music: &self.music_out,
-            music_volume: self.ctx.settings().music_factor(),
-            sound_volume: self.ctx.settings().sound_factor(),
-            fullscreen: self.ctx.settings().fullscreen,
-            voice_volume: self.ctx.voice_gain(),
-        }
-    }
-
-    /// Moves the screens' audio requests into this frame's output and runs
-    /// the music state machine. In debug builds, a cue the manifest lacks
-    /// is a bug in the screen and panics.
-    fn collect_audio(&mut self, dt: f32) {
-        self.audio_out = self.ctx.audio.take();
-        for request in &self.audio_out {
-            debug_assert!(
-                is_known(&self.ctx.content.audio, request),
-                "audio request for a cue not in assets/audio/audio.ron: {request:?}"
-            );
-            self.music.request(request, &mut self.music_out);
-        }
-        self.music.update(dt, &mut self.music_out);
-    }
-
-    fn step(&mut self, events: &[RawInputEvent], dt: f32) {
-        // Bindings changed between frames (a test rebinding keys).
-        self.sync_keymap();
-        let mut pressed = Vec::new();
-        let mut text = Vec::new();
-        let mut buttons_down = Vec::new();
-        let mut buttons_up = Vec::new();
-        // Until a layout is chosen no key acts: the first one opens "Pick
-        // your layout" over whatever is showing and does nothing else; the
-        // picker then takes the keys (`docs/design/controls.md`, *Pick
-        // your layout with a controller*). Without a keyboard, never.
-        let asks_layout = self.ctx.keyboard == Keyboard::Present
-            && self.ctx.layout().is_none()
-            && !self.stack.names().contains(&LayoutPickerScreen::NAME)
-            && events.iter().any(|e| matches!(e, RawInputEvent::Down(_)));
-        for &event in events {
-            // Any key or any controller button ends the title's wait
-            // (`docs/design/title-screen.md`).
-            let press = matches!(event, RawInputEvent::Down(_) | RawInputEvent::PadDown(..));
-            if press && self.ctx.key_prompt == KeyPrompt::Waiting {
-                self.ctx.key_prompt = KeyPrompt::Pressed;
-            }
-            match event {
-                RawInputEvent::Down(_) if asks_layout => self.input.keyboard_used(),
-                RawInputEvent::Down(chord) => {
-                    self.input.key_down(chord);
-                    pressed.push(chord);
-                }
-                RawInputEvent::Up(key) => self.input.key_up(key),
-                // Control characters (Enter, Backspace, Escape on some
-                // platforms) are keys, not text.
-                RawInputEvent::Text(c) if !c.is_control() => text.push(c),
-                RawInputEvent::Text(_) => {}
-                RawInputEvent::PadDown(button, kind) => {
-                    self.input.pad_down(button, kind);
-                    buttons_down.push(button);
-                }
-                RawInputEvent::PadUp(button) => {
-                    self.input.pad_up(button);
-                    buttons_up.push(button);
-                }
-            }
-        }
-        if dt.is_finite() {
-            self.ctx.clock_s += f64::from(dt.max(0.0));
-        }
-        self.ctx.device = self.input.device();
-        let actions = self.input.update(dt);
-        let held = Action::ALL
-            .into_iter()
-            .filter(|&a| self.input.is_held(a))
+/// A game opened straight on the dialogue scene `scene`, for whoever
+/// writes scripts (ticket 0723): it plays with everyone there and the
+/// default lead of `gender`; when it ends, the [`ScenePreviewScreen`]
+/// plays it again or quits. The saved layout is used; if none is saved
+/// the layout picker opens first, as in [`start`].
+///
+/// # Errors
+///
+/// If there is no such scene: the error lists the scenes there are.
+pub fn start_on_scene(mut ctx: Ctx, scene: &str, gender: LeadGender) -> Result<Game, String> {
+    let Some(found) = ctx.game.content.dialogue.get(scene).cloned() else {
+        let ids: Vec<&str> = ctx
+            .game
+            .content
+            .dialogue
+            .scenes
+            .keys()
+            .map(String::as_str)
             .collect();
-        let opens_debug_menu = self.ctx.debug_tools
-            && actions.iter().any(|a| a.ui() == Some(UiAction::Debug))
-            && !self
-                .stack
-                .top_name()
-                .is_some_and(|n| debug::SCREENS.contains(&n));
-        if asks_layout {
-            self.stack
-                .push(Box::new(LayoutPickerScreen::new(&self.ctx)));
-        }
-        if opens_debug_menu {
-            self.stack.push(Box::new(DebugMenuScreen::new(&self.ctx)));
-        } else {
-            let input = FrameInput::new(actions, dt, held)
-                .with_typing(pressed, text)
-                .with_buttons(buttons_down, buttons_up);
-            self.quit = self.stack.update(&mut self.ctx, &input);
-            self.sync_keymap();
-        }
-        self.redraw();
+        // check-text: not player text (a developer's error)
+        return Err(format!(
+            "no scene \"{scene}\" in assets/dialogue/; the scenes are: {}",
+            ids.join(", ")
+        ));
+    };
+    use_saved_layout(&mut ctx);
+    ctx.game.lead = LeadProfile::new(DEFAULT_NAME, gender);
+    let preview = ScenePreviewScreen::new(found);
+    let playing = preview.play(&ctx);
+    let mut stack = ScreenStack::new(Box::new(preview));
+    stack.push(Box::new(playing));
+    if ctx.layout().is_none() && ctx.keyboard == Keyboard::Present {
+        stack.push(Box::new(LayoutPickerScreen::new(&ctx)));
     }
-
-    /// Hands `ctx`'s keymap to the input if it changed (a layout was
-    /// picked, keys were rebound), so the new keys work from the next press.
-    fn sync_keymap(&mut self) {
-        if *self.input.keymap() != self.ctx.keymap {
-            self.input.set_keymap(self.ctx.keymap.clone());
-        }
-    }
-
-    /// Clears the buffer and draws the stack into it.
-    pub(crate) fn redraw(&mut self) {
-        let blank = Cell::new(
-            ' ',
-            self.ctx.palette.get(UiColor::Text),
-            self.ctx.palette.get(UiColor::Black),
-        );
-        self.buffer.fill_rect(self.buffer.bounds(), blank);
-        self.stack.draw(&self.ctx, &mut self.buffer);
-    }
-
-    /// The top-most screen of type `T` on the stack, if it opts in
-    /// ([`Screen::as_any`]).
-    pub fn screen<T: core::any::Any>(&self) -> Option<&T> {
-        self.stack.find()
-    }
-
-    /// [`screen`](Self::screen), mutable, for scripted tests.
-    pub fn screen_mut<T: core::any::Any>(&mut self) -> Option<&mut T> {
-        self.stack.find_mut()
-    }
-
-    /// The music state machine (which track plays).
-    pub fn music(&self) -> &MusicState {
-        &self.music
-    }
-
-    /// The last frame drawn.
-    pub fn buffer(&self) -> &GlyphBuffer {
-        &self.buffer
-    }
-
-    /// Whether the game has asked to quit.
-    pub fn quit_requested(&self) -> bool {
-        self.quit
-    }
-
-    /// The shared context.
-    pub fn ctx(&self) -> &Ctx {
-        &self.ctx
-    }
-
-    /// The shared context, to change settings mid-run (tests).
-    #[cfg(any(test, feature = "harness"))]
-    pub(crate) fn ctx_mut(&mut self) -> &mut Ctx {
-        &mut self.ctx
-    }
-
-    /// Ends the game, handing back the shared context (and so its storage).
-    pub fn into_ctx(self) -> Ctx {
-        self.ctx
-    }
-
-    /// Name of the top screen, or `None` once the last one has closed.
-    pub fn top_screen(&self) -> Option<&'static str> {
-        self.stack.top_name()
-    }
-
-    /// Names of the open screens, bottom first.
-    pub fn screens(&self) -> Vec<&'static str> {
-        self.stack.names()
-    }
-}
-
-/// Whether `request` names a cue of the right kind in `manifest`.
-fn is_known(manifest: &trpg_content::AudioManifest, request: &AudioRequest) -> bool {
-    match request {
-        AudioRequest::PlaySound { cue, .. } => manifest.sounds.contains_key(cue),
-        AudioRequest::PlayMusic { cue } => manifest.music.contains_key(cue),
-        AudioRequest::StopMusic
-        | AudioRequest::PlayVoice { .. }
-        | AudioRequest::StopVoice
-        | AudioRequest::PreloadVoices { .. } => true,
-    }
+    Ok(Game::with_stack(ctx, stack, hooks()))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::audio::{AudioRequest, MusicCommand};
     use crate::console::ConsoleSizes;
-    use crate::input::{LEFT_HANDED, RIGHT_HANDED};
+    use crate::glyph_buffer::GlyphBuffer;
+    use crate::input::{
+        Action, Button, Chord, Key, LEFT_HANDED, PadKind, PadState, Pads, RIGHT_HANDED,
+    };
+    use crate::screen::{FrameInput, KeyPrompt, ShuyiCtx};
 
     use crate::screen::tests::{ctx, ctx_with_cues};
     use crate::storage::Storage;
@@ -427,11 +138,11 @@ mod tests {
 
     #[test]
     fn starts_at_the_title_already_drawn() {
-        let game = Game::start(ctx());
+        let game = start(ctx());
         assert_eq!(game.top_screen(), Some("title"));
         assert!(!game.quit_requested());
         let expected = {
-            let mut g = Game::start(ctx());
+            let mut g = start(ctx());
             g.frame(&[], 0.0);
             g.buffer().clone()
         };
@@ -448,7 +159,7 @@ mod tests {
     /// picker's.
     #[test]
     fn with_no_layout_the_first_key_opens_the_picker() {
-        let mut game = Game::start(first_launch());
+        let mut game = start(first_launch());
         assert_eq!(game.screens(), ["title"]);
         assert_eq!(game.ctx().layout(), None);
         // Releases and text alone don't.
@@ -458,7 +169,7 @@ mod tests {
         game.frame(&[down(Key::S), down(Key::F)], 0.0);
         assert_eq!(game.screens(), ["title", "layout_picker"]);
         assert_eq!(game.ctx().layout(), None);
-        assert!(!game.input.is_held(Action::Confirm));
+        assert!(!game.input().is_held(Action::Confirm));
         game.frame(&[RawInputEvent::Up(Key::S), RawInputEvent::Up(Key::F)], 0.0);
         // Open already: keys reach it, and no second picker opens. (Had
         // the first `s` moved the highlight, this one would wrap it back.)
@@ -482,7 +193,7 @@ mod tests {
         let mut ctx = first_launch();
         ctx.keyboard = Keyboard::Absent;
         ctx.device = playdate;
-        let mut game = Game::start(ctx);
+        let mut game = start(ctx);
         game.frame(&[], 0.0);
         assert_eq!(game.ctx().device, playdate, "help names its buttons");
         game.frame(&[down(Key::Z)], 0.0);
@@ -500,8 +211,16 @@ mod tests {
     fn a_scene_preview_without_a_keyboard_opens_no_picker() {
         let mut ctx = first_launch();
         ctx.keyboard = Keyboard::Absent;
-        let scene = ctx.content.dialogue.scenes.keys().next().cloned().unwrap();
-        let game = Game::start_on_scene(ctx, &scene, LeadGender::Female).unwrap();
+        let scene = ctx
+            .game
+            .content
+            .dialogue
+            .scenes
+            .keys()
+            .next()
+            .cloned()
+            .unwrap();
+        let game = start_on_scene(ctx, &scene, LeadGender::Female).unwrap();
         assert!(!game.screens().contains(&LayoutPickerScreen::NAME));
     }
 
@@ -510,7 +229,7 @@ mod tests {
     #[test]
     fn the_key_that_opens_the_picker_counts_as_the_keyboard() {
         use crate::input::Device;
-        let mut game = Game::start(first_launch());
+        let mut game = start(first_launch());
         pad_tap(&mut game, Button::DpadDown);
         assert_eq!(game.ctx().device, Device::Pad(PadKind::Xbox));
         game.frame(&[down(Key::Z)], 0.0);
@@ -523,7 +242,7 @@ mod tests {
     #[test]
     fn a_pad_button_closes_the_picker_without_choosing() {
         for button in [Button::South, Button::DpadDown, Button::RightStickPress] {
-            let mut game = Game::start(first_launch());
+            let mut game = start(first_launch());
             tap(&mut game, Key::Z);
             assert_eq!(game.screens(), ["title", "layout_picker"]);
             pad_tap(&mut game, button);
@@ -539,7 +258,7 @@ mod tests {
     /// over whatever screen the first key finds.
     #[test]
     fn the_picker_opens_over_any_screen() {
-        let mut game = Game::start(first_launch());
+        let mut game = start(first_launch());
         pad_tap(&mut game, Button::South);
         assert_eq!(game.screens(), ["title", "mode_select"]);
         tap(&mut game, Key::D);
@@ -547,7 +266,7 @@ mod tests {
         tap(&mut game, Key::F);
         assert_eq!(game.screens(), ["title", "mode_select"]);
         assert_eq!(game.ctx().layout(), Some(RIGHT_HANDED));
-        assert_eq!(game.input.keymap(), &game.ctx().keymap);
+        assert_eq!(game.input().keymap(), &game.ctx().keymap);
         tap(&mut game, Key::D);
         assert_eq!(game.screens(), ["title"]);
     }
@@ -556,31 +275,31 @@ mod tests {
     fn a_saved_layout_skips_the_picker() {
         let mut ctx = first_launch();
         ctx.storage.write("layout", "LeftHanded").unwrap();
-        let game = Game::start(ctx);
+        let game = start(ctx);
         assert_eq!(game.screens(), ["title"]);
         assert_eq!(game.ctx().layout(), Some(LEFT_HANDED));
-        assert_eq!(game.input.keymap(), &game.ctx().keymap);
+        assert_eq!(game.input().keymap(), &game.ctx().keymap);
     }
 
     #[test]
     fn a_layout_in_use_beats_the_saved_one() {
         let mut ctx = ctx();
         ctx.storage.write("layout", "LeftHanded").unwrap();
-        let game = Game::start(ctx);
+        let game = start(ctx);
         assert_eq!(game.screens(), ["title"]);
         assert_eq!(game.ctx().layout(), Some(RIGHT_HANDED));
     }
 
     #[test]
     fn picking_a_layout_switches_the_input_keys() {
-        let mut game = Game::start(first_launch());
+        let mut game = start(first_launch());
         tap(&mut game, Key::Z);
         // Picker keys: `s` moves down, `j` picks.
         tap(&mut game, Key::S);
         tap(&mut game, Key::J);
         assert_eq!(game.screens(), ["title"]);
         assert_eq!(game.ctx().layout(), Some(LEFT_HANDED));
-        assert_eq!(game.input.keymap(), &game.ctx().keymap);
+        assert_eq!(game.input().keymap(), &game.ctx().keymap);
         // Left-handed: `j` confirms, `f` does nothing, `k` backs out.
         tap(&mut game, Key::F);
         assert_eq!(game.screens(), ["title"]);
@@ -596,10 +315,10 @@ mod tests {
     /// don't, and a game started without the prompt never waits.
     #[test]
     fn a_key_press_moves_the_key_prompt_on() {
-        let mut game = Game::start(ctx());
+        let mut game = start(ctx());
         game.frame(&[down(Key::Z)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Off);
-        let mut game = Game::start(waiting(ctx()));
+        let mut game = start(waiting(ctx()));
         game.frame(&[RawInputEvent::Up(Key::Z)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Waiting);
         game.frame(&[down(Key::Z)], 0.0);
@@ -617,13 +336,13 @@ mod tests {
     /// (and ends the wait); a button goes to the menu without it.
     #[test]
     fn the_first_press_at_the_prompt_decides_about_the_picker() {
-        let mut game = Game::start(waiting(first_launch()));
+        let mut game = start(waiting(first_launch()));
         assert_eq!(game.screens(), ["title"]);
         tap(&mut game, Key::F);
         assert_eq!(game.screens(), ["title", "layout_picker"]);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
         assert_eq!(game.ctx().layout(), None);
-        let mut game = Game::start(waiting(first_launch()));
+        let mut game = start(waiting(first_launch()));
         pad_tap(&mut game, Button::South);
         assert_eq!(game.screens(), ["title"]);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
@@ -692,7 +411,7 @@ mod tests {
     /// confirms and the right one cancels.
     #[test]
     fn pad_buttons_reach_the_top_screen() {
-        let mut game = Game::start(ctx());
+        let mut game = start(ctx());
         assert!(!pad_tap(&mut game, Button::South));
         assert_eq!(game.screens(), ["title", "mode_select"]);
         pad_tap(&mut game, Button::East);
@@ -711,7 +430,7 @@ mod tests {
     fn the_context_knows_the_device_pressed_last() {
         use crate::input::Device;
         let sony = PadKind::PlayStation;
-        let mut game = Game::start(ctx());
+        let mut game = start(ctx());
         assert_eq!(game.ctx().device, Device::Keyboard);
         game.frame(&[RawInputEvent::PadDown(Button::DpadDown, sony)], 0.0);
         assert_eq!(game.ctx().device, Device::Pad(sony));
@@ -731,18 +450,18 @@ mod tests {
         );
         assert_eq!(game.ctx().device, Device::Pad(PadKind::Nintendo));
         // Picking a layout (new bindings) doesn't forget it.
-        let mut game = Game::start(first_launch());
+        let mut game = start(first_launch());
         pad_tap(&mut game, Button::DpadDown);
         game.ctx_mut().choose_layout(LEFT_HANDED).unwrap();
         game.frame(&[], 0.0);
-        assert_eq!(game.input.keymap(), &game.ctx().keymap);
+        assert_eq!(game.input().keymap(), &game.ctx().keymap);
         assert_eq!(game.ctx().device, Device::Pad(PadKind::Xbox));
     }
 
     #[test]
     fn screens_see_held_buttons() {
         let seen = std::rc::Rc::default();
-        let mut game = Game::new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
+        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
         game.frame(&[RawInputEvent::PadDown(Button::South, PadKind::Xbox)], 0.0);
         game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
         let seen = seen.borrow();
@@ -756,7 +475,7 @@ mod tests {
     /// releases don't.
     #[test]
     fn a_pad_button_moves_the_key_prompt_on() {
-        let mut game = Game::start(waiting(ctx()));
+        let mut game = start(waiting(ctx()));
         game.frame(&[RawInputEvent::PadUp(Button::RightStickPress)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Waiting);
         game.frame(
@@ -768,14 +487,14 @@ mod tests {
         );
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
         // Started without the prompt, it never waits.
-        let mut game = Game::start(ctx());
+        let mut game = start(ctx());
         game.frame(&[RawInputEvent::PadDown(Button::South, PadKind::Xbox)], 0.0);
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Off);
     }
 
     #[test]
     fn rebinding_keys_reaches_the_input_before_the_next_press() {
-        let mut game = Game::start(ctx());
+        let mut game = start(ctx());
         let mut b = game.ctx().layout_bindings(RIGHT_HANDED);
         assert_eq!(b.bind(Action::Confirm, 0, Chord::plain(Key::G)), Ok(None));
         game.ctx_mut().set_layout_bindings(RIGHT_HANDED, b).unwrap();
@@ -784,15 +503,15 @@ mod tests {
         assert_eq!(game.screens(), ["title"]);
         tap(&mut game, Key::G);
         assert_eq!(game.screens(), ["title", "mode_select"]);
-        assert_eq!(game.input.keymap(), &game.ctx().keymap);
+        assert_eq!(game.input().keymap(), &game.ctx().keymap);
     }
 
     #[test]
     fn escape_is_ignored_by_the_first_launch_picker() {
-        let mut game = Game::start(first_launch());
+        let mut game = start(first_launch());
         tap(&mut game, Key::Z);
         assert_eq!(
-            game.input.keymap().action(Chord::plain(Key::Escape)),
+            game.input().keymap().action(Chord::plain(Key::Escape)),
             Some(Action::Cancel)
         );
         tap(&mut game, Key::Escape);
@@ -801,7 +520,7 @@ mod tests {
 
     #[test]
     fn events_reach_the_top_screen() {
-        let mut game = Game::start(ctx());
+        let mut game = start(ctx());
         assert!(!tap(&mut game, Key::F));
         assert_eq!(game.screens(), ["title", "mode_select"]);
         tap(&mut game, Key::D);
@@ -810,7 +529,7 @@ mod tests {
 
     #[test]
     fn quit_stops_further_frames() {
-        let mut game = Game::start(ctx());
+        let mut game = start(ctx());
         game.frame(&[down(Key::Up)], 0.0);
         let out = game.frame(&[RawInputEvent::Up(Key::Up), down(Key::F)], 0.0);
         assert!(out.quit);
@@ -827,7 +546,7 @@ mod tests {
     /// Ticket 0902: the window's shortcut flips the Fullscreen setting.
     #[test]
     fn toggling_fullscreen_flips_the_setting_and_tells_app() {
-        let mut game = Game::start(ctx());
+        let mut game = start(ctx());
         assert!(!game.frame(&[], 0.0).fullscreen);
         game.toggle_fullscreen();
         assert!(game.frame(&[], 0.0).fullscreen);
@@ -838,7 +557,7 @@ mod tests {
 
     #[test]
     fn the_clock_adds_up_frame_times() {
-        let mut game = Game::start(ctx());
+        let mut game = start(ctx());
         game.frame(&[], 0.5);
         game.frame(&[], 0.25);
         assert!((game.ctx().clock_s - 0.75).abs() < 1e-9);
@@ -851,7 +570,7 @@ mod tests {
 
     #[test]
     fn popping_the_last_screen_quits() {
-        let mut game = Game::new(
+        let mut game = new(
             ctx(),
             Box::new(crate::screens::ModeSelectScreen::new(&ctx())),
         );
@@ -862,7 +581,7 @@ mod tests {
 
     #[test]
     fn debug_key_opens_the_debug_menu_once() {
-        let mut game = Game::start(ctx()).with_debug_screens(true);
+        let mut game = start(ctx()).with_debug_screens(true);
         tap(&mut game, Key::F2);
         assert_eq!(game.screens(), ["title", "debug_menu"]);
         tap(&mut game, Key::F2);
@@ -885,17 +604,17 @@ mod tests {
 
     #[test]
     fn debug_key_does_nothing_without_debug_screens() {
-        let mut game = Game::start(ctx()).with_debug_screens(false);
+        let mut game = start(ctx()).with_debug_screens(false);
         tap(&mut game, Key::F2);
         assert_eq!(game.screens(), ["title"]);
     }
 
     #[test]
     fn debug_screens_follow_the_build() {
-        let game = Game::start(Ctx::embedded().unwrap());
-        assert_eq!(game.ctx.debug_tools, crate::screen::DEBUG_TOOLS);
+        let game = start(Ctx::embedded().unwrap());
+        assert_eq!(game.ctx().debug_tools, crate::screen::DEBUG_TOOLS);
         let names = |ctx: Ctx| {
-            let mut game = Game::start(ctx);
+            let mut game = start(ctx);
             tap(&mut game, Key::Down);
             tap(&mut game, Key::F);
             game.screens()
@@ -912,7 +631,7 @@ mod tests {
     /// Records what the screen saw.
     struct Spy(std::rc::Rc<std::cell::RefCell<Vec<FrameInput>>>);
 
-    impl Screen for Spy {
+    impl Screen<Shuyi> for Spy {
         fn name(&self) -> &'static str {
             "spy"
         }
@@ -926,7 +645,7 @@ mod tests {
     #[test]
     fn screens_see_actions_dt_and_held_keys() {
         let seen = std::rc::Rc::default();
-        let mut game = Game::new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
+        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
         assert_eq!(game.ctx().palette, ctx().palette);
         game.frame(&[down(Key::Right), down(Key::F)], 0.1);
         game.frame(&[RawInputEvent::Up(Key::F)], 0.0);
@@ -949,7 +668,7 @@ mod tests {
     #[test]
     fn screens_see_unbound_and_shifted_presses_as_chords() {
         let seen = std::rc::Rc::default();
-        let mut game = Game::new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
+        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
         let shifted = Chord::shifted(Key::Z);
         game.frame(&[down(Key::Delete), RawInputEvent::Down(shifted)], 0.0);
         let seen = seen.borrow();
@@ -963,7 +682,7 @@ mod tests {
     #[test]
     fn screens_see_the_buttons_that_went_down_and_up() {
         let seen = std::rc::Rc::default();
-        let mut game = Game::new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
+        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
         // Bound or not, in order.
         let down = |b| RawInputEvent::PadDown(b, PadKind::Xbox);
         let events = [down(Button::RightStickUp), down(Button::South)];
@@ -993,7 +712,7 @@ mod tests {
     #[test]
     fn screens_see_the_keys_pressed_and_the_text_typed() {
         let seen = std::rc::Rc::default();
-        let mut game = Game::new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
+        let mut game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
         let events = [
             down(Key::A),
             RawInputEvent::Text('a'),
@@ -1019,7 +738,7 @@ mod tests {
     #[test]
     fn the_harness_types_text_with_its_keys() {
         let seen = std::rc::Rc::default();
-        let game = Game::new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
+        let game = new(ctx(), Box::new(Spy(std::rc::Rc::clone(&seen))));
         let mut h = crate::harness::Harness::from_game(game);
         h.type_text("Ma -é");
         let seen = seen.borrow();
@@ -1048,7 +767,7 @@ mod tests {
     /// (with a quieter beep) on Up and asks for an unknown cue otherwise.
     struct Noisy;
 
-    impl Screen for Noisy {
+    impl Screen<Shuyi> for Noisy {
         fn name(&self) -> &'static str {
             "noisy"
         }
@@ -1072,9 +791,9 @@ mod tests {
     /// A game on [`Noisy`] with a 0.5 s fade, `title` asked for already.
     fn noisy() -> Game {
         let mut ctx = ctx_with_cues(&["beep"], &["title", "battle"]);
-        ctx.content.audio.music_fade_ms = 500;
+        ctx.game.content.audio.music_fade_ms = 500;
         ctx.audio.play_music("title");
-        Game::new(ctx, Box::new(Noisy))
+        new(ctx, Box::new(Noisy))
     }
 
     fn beep(volume: f32) -> AudioRequest {
@@ -1092,7 +811,7 @@ mod tests {
         MusicCommand::Load { cue }
     }
 
-    fn start(cue: String) -> MusicCommand {
+    fn begin(cue: String) -> MusicCommand {
         MusicCommand::Start { cue }
     }
 
@@ -1109,7 +828,7 @@ mod tests {
             cue: "title".into(),
         };
         assert_eq!(out.audio, [title]);
-        assert_eq!(out.music, [music("title", load), music("title", start)]);
+        assert_eq!(out.music, [music("title", load), music("title", begin)]);
         let out = game.frame(&[down(Key::F)], 0.0);
         assert_eq!(out.audio, [beep(1.0)]);
         assert!(out.music.is_empty());
@@ -1131,7 +850,7 @@ mod tests {
         assert_eq!(out.music, [music("battle", load), half]);
         assert_eq!(game.music().target(), Some("battle"));
         let out = game.frame(&[RawInputEvent::Up(Key::D)], 0.25);
-        assert_eq!(out.music, [music("title", stop), music("battle", start)]);
+        assert_eq!(out.music, [music("title", stop), music("battle", begin)]);
         assert_eq!(game.music().current(), Some("battle"));
     }
 
@@ -1148,7 +867,7 @@ mod tests {
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic(expected = "audio request for a cue not in assets/audio/audio.ron")]
+    #[should_panic(expected = "audio request for a cue not in the audio manifest")]
     fn an_unknown_cue_panics_in_debug_builds() {
         let mut game = noisy();
         game.frame(&[down(Key::Right)], 0.0);
@@ -1157,9 +876,9 @@ mod tests {
     #[test]
     fn the_fade_length_comes_from_the_manifest() {
         let mut ctx = ctx_with_cues(&[], &["title", "battle"]);
-        ctx.content.audio.music_fade_ms = 1000;
+        ctx.game.content.audio.music_fade_ms = 1000;
         ctx.audio.play_music("title");
-        let mut game = Game::new(ctx, Box::new(Noisy));
+        let mut game = new(ctx, Box::new(Noisy));
         game.frame(&[], 0.0);
         let out = game.frame(&[down(Key::D)], 0.25);
         let gain = MusicCommand::Gain {
@@ -1192,21 +911,6 @@ mod tests {
         assert_eq!(game.ctx().music_clock, None);
     }
 
-    #[test]
-    fn cues_must_be_of_the_right_kind() {
-        let audio = &ctx_with_cues(&["beep"], &["title"]).content.audio;
-        let sound = |cue: &str| AudioRequest::PlaySound {
-            cue: cue.into(),
-            volume: 1.0,
-        };
-        let play = |cue: &str| AudioRequest::PlayMusic { cue: cue.into() };
-        assert!(is_known(audio, &sound("beep")));
-        assert!(!is_known(audio, &sound("title")));
-        assert!(is_known(audio, &play("title")));
-        assert!(!is_known(audio, &play("beep")));
-        assert!(is_known(audio, &AudioRequest::StopMusic));
-    }
-
     /// A won battle asks for its victory sting once, at the banner (0809),
     /// and pops back to the title, which asks for its music again.
     #[test]
@@ -1217,11 +921,11 @@ mod tests {
 
         let c = ctx();
         // The run's first pick from the pool.
-        let sting = crate::audio::pick_from_pool(&c.content.audio, "victory", c.music_seed);
+        let sting = crate::audio::pick_from_pool(&c.game.content.audio, "victory", c.music_seed);
         let sting = AudioRequest::PlayMusic {
             cue: sting.unwrap().to_owned(),
         };
-        let quick = quick_battle(&c.content).unwrap();
+        let quick = quick_battle(&c.game.content).unwrap();
         // The lord next to a brigand on 1 HP, which one hit routs.
         let mut units = quick.units().to_vec();
         units.retain(|u| u.id == UnitId(1) || u.id == UnitId(4));
@@ -1231,7 +935,7 @@ mod tests {
         let battle = battle_with(&c, quick.map().clone(), units, rout);
         let mut stack = ScreenStack::new(Box::new(TitleScreen::with_quick_battle(&c)));
         stack.push(Box::new(BattleScreen::new(battle)));
-        let mut game = Game::with_stack(c, stack);
+        let mut game = Game::with_stack(c, stack, hooks());
         let mut music = Vec::new();
         // The battle's sounds (0424) aside.
         let music_of = |audio: &[AudioRequest]| {

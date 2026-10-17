@@ -26,7 +26,7 @@ use trpg_core::{BattleRewards, BattleState, Gold, Level};
 use super::battle::progress::{self, PROGRESS_TIMINGS, Progress, ProgressTimings, playing_help};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::words::Words;
 
 /// The key of the screen's heading, on the panel's border, in the
@@ -216,7 +216,7 @@ impl ResultsScreen {
     pub fn view(&self, ctx: &Ctx) -> ResultsView {
         let body = match &self.pages {
             Some(pages) if self.paging => {
-                let faces = (&ctx.content.portraits, &ctx.lead);
+                let faces = (&ctx.game.content.portraits, &ctx.game.lead);
                 ResultsBody::LevelUp(progress::view(ctx.words(), faces, pages).map(Box::new))
             }
             _ => ResultsBody::Tally(self.tally(ctx)),
@@ -269,7 +269,7 @@ impl ResultsScreen {
     }
 }
 
-impl Screen for ResultsScreen {
+impl Screen<Shuyi> for ResultsScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

@@ -144,7 +144,7 @@ pub(super) const fn range_color(kind: RangeKind) -> UiColor {
 /// Draws terrain `id` on the tile whose left cell is `(x, y)`: its two
 /// glyphs in its colours. Nothing for a terrain the content lacks.
 fn draw_terrain(ctx: &Ctx, buf: &mut GlyphBuffer, id: TerrainId, (x, y): (i32, i32)) {
-    let Some(t) = ctx.content.terrain.display.get(id) else {
+    let Some(t) = ctx.game.content.terrain.display.get(id) else {
         return;
     };
     let fg = named(&ctx.palette, &t.fg, UiColor::Text);
@@ -422,7 +422,7 @@ pub(crate) mod tests {
     fn paints_terrain_then_tints_then_units_path_and_cursor() {
         let c = ctx();
         let pal = &c.palette;
-        let display = &c.content.terrain.display;
+        let display = &c.game.content.terrain.display;
         let plain_id = display.id_of("plain").unwrap();
         let plain = display.get(plain_id).unwrap();
         let (fg, bg) = (
@@ -493,7 +493,7 @@ pub(crate) mod tests {
     fn a_changed_tile_flashes_and_a_tile_a_spell_would_change_shows_what_it_becomes() {
         let c = ctx();
         let pal = &c.palette;
-        let display = &c.content.terrain.display;
+        let display = &c.game.content.terrain.display;
         let look = |name: &str| {
             let t = display.get(display.id_of(name).unwrap()).unwrap();
             let (fg, bg) = (pal.lookup(&t.fg).unwrap(), pal.lookup(&t.bg).unwrap());

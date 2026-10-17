@@ -13,7 +13,7 @@ use crate::words::Words;
 
 fn campaign(c: &Ctx, name: &str, playtime_s: u64) -> Campaign {
     let lead = LeadProfile::new(name, LeadGender::Female);
-    let mut campaign = new_campaign(&c.content, GameMode::Classic, lead);
+    let mut campaign = new_campaign(&c.game.content, GameMode::Classic, lead);
     campaign.playtime_s = playtime_s;
     campaign
 }
@@ -45,7 +45,7 @@ fn saves() -> Ctx {
 /// The cue of a refused Confirm.
 const DENIED: &str = MenuSound::Denied.cue();
 
-fn press(s: &mut dyn Screen, c: &mut Ctx, actions: &[Action]) -> String {
+fn press(s: &mut dyn Screen<Shuyi>, c: &mut Ctx, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
     format!("{:?}", s.update(c, &input))
 }
@@ -250,8 +250,9 @@ fn a_slot_row_shows_chapter_mode_army_and_playtime() {
     let c = saves();
     let s = SlotPickerScreen::load(&c);
     let view = s.view(&c);
-    let army = c.content.new_game.roster.len();
-    let (title, _) = save::next_chapter_title(&c.content, Words::ENGLISH, &campaign(&c, "Mara", 0));
+    let army = c.game.content.new_game.roster.len();
+    let (title, _) =
+        save::next_chapter_title(&c.game.content, Words::ENGLISH, &campaign(&c, "Mara", 0));
     let entry = |slot: usize| &view.slots[slot - 1].entry;
     let SlotEntryView::Saved {
         chapter,
@@ -476,7 +477,7 @@ fn a_failed_save_says_so_and_stays_open() {
 fn slot_picker_snapshot() {
     let c = saves();
     let picker = SlotPickerScreen::load(&c).at(4);
-    let mut h = Harness::from_game(crate::Game::new(c, Box::new(picker)));
+    let mut h = Harness::from_game(crate::game::new(c, Box::new(picker)));
     h.wait(0.0);
     assert_snapshot!(h.snapshot());
 }
@@ -486,7 +487,7 @@ fn slot_picker_snapshot() {
 fn overwrite_question_snapshot() {
     let c = saves();
     let picker = SlotPickerScreen::save(&c, campaign(&c, "Mara", 0)).at(2);
-    let mut h = Harness::from_game(crate::Game::new(c, Box::new(picker)));
+    let mut h = Harness::from_game(crate::game::new(c, Box::new(picker)));
     h.keys("f");
     assert_snapshot!(h.snapshot());
 }

@@ -7,12 +7,13 @@
 
 use insta::assert_snapshot;
 use trpg_core::{CharacterId, LeadGender, Pos};
+use trpg_ui::Ctx;
+use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::{Facing, MapScene, UnitView};
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::dialogue::view::DialogueView;
-use trpg_ui::{Ctx, Game};
 
 fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)
@@ -23,7 +24,7 @@ fn preview(scene: &str, gender: LeadGender) -> Harness {
     let ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_layout(RIGHT_HANDED);
-    let game = Game::start_on_scene(ctx, scene, gender).unwrap_or_else(|e| panic!("{e}"));
+    let game = trpg_ui::game::start_on_scene(ctx, scene, gender).unwrap_or_else(|e| panic!("{e}"));
     Harness::from_game(game)
 }
 
@@ -187,7 +188,7 @@ fn the_lead_in_the_opening_is_the_one_the_player_made() {
     let lead = place(&h).units.into_iter().next();
     let lead = lead.unwrap_or_else(|| panic!("nobody in the yard"));
     assert_eq!(lead.character, Some(CharacterId("lead".into())));
-    assert_eq!(h.game().ctx().lead.portrait_for("lead"), "lead_f");
+    assert_eq!(h.game().ctx().game.lead.portrait_for("lead"), "lead_f");
 }
 
 /// The opening in the glyph look, a moment in: the yard bright, the two
@@ -195,7 +196,7 @@ fn the_lead_in_the_opening_is_the_one_the_player_made() {
 #[test]
 fn the_opening_in_glyphs() {
     let mut h = letter(LeadGender::Male);
-    assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+    assert_eq!(h.game().ctx().game.map_skin.name(), "glyph");
     h.wait(0.2);
     assert_snapshot!(h.snapshot());
 }

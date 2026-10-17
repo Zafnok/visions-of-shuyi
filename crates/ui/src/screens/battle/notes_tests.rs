@@ -16,9 +16,9 @@ const BRIGAND: UnitId = UnitId(3);
 /// The test battle as the flow starts it, and its start events.
 fn test_battle(c: &Ctx) -> (BattleState, Vec<Event>) {
     let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
-    let campaign = new_campaign(&c.content, GameMode::Classic, lead);
-    let def = &c.content.battles["test"];
-    BattleState::new(campaign.battle_setup(def, &c.content.tables()))
+    let campaign = new_campaign(&c.game.content, GameMode::Classic, lead);
+    let def = &c.game.content.battles["test"];
+    BattleState::new(campaign.battle_setup(def, &c.game.content.tables()))
 }
 
 fn started(c: &Ctx) -> BattleScreen {
@@ -54,7 +54,7 @@ fn the_notes_open_only_for_a_battle_just_started_that_has_some() {
     // A screen on a battle already under way (a debug view, a test).
     assert!(!BattleScreen::new(state).notes_open());
     // No notes: no box.
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     assert!(quick.battle_notes().is_empty());
     let s = BattleScreen::start(quick, &[]);
     assert!(!s.notes_open());
@@ -65,9 +65,9 @@ fn the_notes_open_only_for_a_battle_just_started_that_has_some() {
 fn a_battle_decided_at_its_start_skips_the_notes() {
     let c = ctx();
     let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
-    let campaign = new_campaign(&c.content, GameMode::Classic, lead);
-    let def = &c.content.battles["test"];
-    let mut setup = campaign.battle_setup(def, &c.content.tables());
+    let campaign = new_campaign(&c.game.content, GameMode::Classic, lead);
+    let def = &c.game.content.battles["test"];
+    let mut setup = campaign.battle_setup(def, &c.game.content.tables());
     setup.objective = trpg_core::Objective::Rout { turn_limit: None };
     setup.units.retain(|u| u.faction == Faction::Player);
     let (state, events) = BattleState::new(setup);
@@ -187,7 +187,7 @@ fn a_turn_one_scene_plays_after_the_notes_and_the_banner() {
 #[test]
 fn the_start_tip_waits_for_the_notes() {
     let mut c = ctx();
-    c.tips_enabled = true;
+    c.game.tips_enabled = true;
     let mut s = started(&c);
     frame(&mut s, &mut c, &[], 0.0);
     assert!(s.notes_open());

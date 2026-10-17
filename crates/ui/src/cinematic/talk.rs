@@ -96,7 +96,7 @@ pub fn boxes(
     count: usize,
 ) -> Vec<TalkBox> {
     let words = ctx.words();
-    let names = words.names(&ctx.content.names);
+    let names = words.names(&ctx.game.content.names);
     let scene = words.scene(scene, lead.gender);
     let mut player = DialoguePlayer::new(&scene, lead.clone(), names, &Present::Everyone);
     let mut boxes = Vec::new();

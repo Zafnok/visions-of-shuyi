@@ -95,7 +95,7 @@ impl GuidesScreen {
     pub fn view(&self, ctx: &Ctx) -> GuidesView {
         let words = ctx.words();
         let keys = ctx.help_keys();
-        let all = topics(&ctx.content);
+        let all = topics(&ctx.game.content);
         let titles = all
             .iter()
             .map(|t| match t {

@@ -48,14 +48,14 @@ pub fn cast_units(ctx: &Ctx, def: &OpeningDef, lead: &LeadProfile) -> Vec<UnitVi
 /// One of an opening's cast as [`cast_units`] has them.
 fn cast_unit(ctx: &Ctx, member: &CastMember, lead: &LeadProfile) -> UnitView {
     let id = &member.character;
-    let def = ctx.content.characters.characters.get(id);
+    let def = ctx.game.content.characters.characters.get(id);
     let label = if id.0 == LEAD_ID {
         // check-text: not a data name (the player's own)
         default_map_label(&lead.name)
     } else {
         let label = def.and_then(|d| d.map_label.clone());
         label.unwrap_or_else(|| {
-            default_map_label(ctx.words().name(&ctx.content.names, id.0.as_str()))
+            default_map_label(ctx.words().name(&ctx.game.content.names, id.0.as_str()))
         })
     };
     UnitView {

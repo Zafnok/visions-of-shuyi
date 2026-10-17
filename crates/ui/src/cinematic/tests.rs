@@ -152,7 +152,7 @@ fn a_timeline_never_divides_by_nothing() {
 #[test]
 fn the_timeline_of_a_cinematic_is_its_shots_starts_and_its_length() {
     let ctx = ctx();
-    let def = &ctx.content.cinematics["test"];
+    let def = &ctx.game.content.cinematics["test"];
     let timeline = Timeline::new(vec![0, 6000, 10_000, 16_000], 20_000);
     assert_eq!(Timeline::of(def), timeline);
     assert_eq!(player(&ctx).timeline(), &timeline);
@@ -225,12 +225,12 @@ proptest! {
 #[test]
 fn a_battles_scene_is_its_whole_map_with_its_units_where_they_start() {
     let ctx = ctx();
-    let def = &ctx.content.battles["test"];
+    let def = &ctx.game.content.battles["test"];
     let scene = battle_scene(&ctx, def);
     assert_eq!((scene.origin, scene.size), (Pos::new(0, 0), (14, 8)));
     assert_eq!(scene.tiles.len(), 14 * 8);
     assert!(scene.tiles.iter().all(|t| t.terrain.is_some()));
-    assert_eq!(scene.look, ctx.content.battle_look(def));
+    assert_eq!(scene.look, ctx.game.content.battle_look(def));
     // The lead and the test knight in their slots, and the brigand.
     let places: Vec<(i32, i32)> = scene.units.iter().map(|u| (u.pos.x, u.pos.y)).collect();
     assert_eq!(places, [(3, 5), (3, 6), (8, 3)]);
@@ -241,9 +241,9 @@ fn a_battles_scene_is_its_whole_map_with_its_units_where_they_start() {
 #[test]
 fn a_map_picture_is_the_whole_scene_as_the_skin_paints_it() {
     let mut ctx = ctx();
-    let scene = battle_scene(&ctx, &ctx.content.battles["test"]);
+    let scene = battle_scene(&ctx, &ctx.game.content.battles["test"]);
     // Glyphs: 14 × 8 tiles of two cells by one, 16 px each way.
-    let picture = MapPicture::paint(&ctx, ctx.map_skin.as_ref(), &scene).unwrap();
+    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &scene).unwrap();
     assert_eq!((picture.scene.width(), picture.scene.height()), (28, 8));
     assert_eq!(picture.tile_px, (16, 16));
     assert_eq!(picture.size_px(), (224, 128));
@@ -254,7 +254,7 @@ fn a_map_picture_is_the_whole_scene_as_the_skin_paints_it() {
     // The units are on it: the lead's tile isn't bare terrain.
     let bare = MapPicture::paint(
         &ctx,
-        ctx.map_skin.as_ref(),
+        ctx.game.map_skin.as_ref(),
         &MapScene {
             units: vec![],
             ..scene.clone()
@@ -265,22 +265,22 @@ fn a_map_picture_is_the_whole_scene_as_the_skin_paints_it() {
     assert_eq!(picture.scene.get(0, 0), bare.scene.get(0, 0));
     assert!(picture.scene.backdrop().is_none());
     // The test tileset's tiles are 24 px: 336 × 192, in whole cells.
-    ctx.map_skin = skin_named(&ctx.content, "sprite").unwrap();
-    let picture = MapPicture::paint(&ctx, ctx.map_skin.as_ref(), &scene).unwrap();
+    ctx.game.map_skin = skin_named(&ctx.game.content, "sprite").unwrap();
+    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &scene).unwrap();
     assert_eq!((picture.scene.width(), picture.scene.height()), (42, 12));
     assert_eq!(picture.tile_px, (24, 24));
     assert_eq!(picture.point_px((1.0, 2.0)), (36.0, 60.0));
     assert!(!picture.scene.sprites().is_empty());
     // A size that isn't whole cells is rounded up to them.
     let odd = MapScene::new(Pos::new(0, 0), (1, 1));
-    let picture = MapPicture::paint(&ctx, ctx.map_skin.as_ref(), &odd).unwrap();
+    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &odd).unwrap();
     assert_eq!((picture.scene.width(), picture.scene.height()), (3, 2));
     assert_eq!(picture.size_px(), (24, 32));
     // Nothing to paint.
     assert!(
         MapPicture::paint(
             &ctx,
-            ctx.map_skin.as_ref(),
+            ctx.game.map_skin.as_ref(),
             &MapScene::new(Pos::new(0, 0), (0, 0))
         )
         .is_none()
@@ -333,7 +333,7 @@ fn the_pan_moves_the_middle_of_the_screen_from_one_point_to_the_other() {
 #[test]
 fn a_pan_goes_both_ways_at_its_own_zoom() {
     let mut ctx = ctx();
-    let def = ctx.content.cinematics.get_mut("test").unwrap();
+    let def = ctx.game.content.cinematics.get_mut("test").unwrap();
     def.shots[0].shot = Shot::MapPan {
         battle: "test".to_owned(),
         from: TilePoint::new(9.5, 5.0),
@@ -395,13 +395,13 @@ fn the_pan_is_the_battles_picture_behind_the_whole_screen() {
     assert!(near(backdrop.origin_px(), (12.0, 0.0)));
     // Three seconds in the lead is on its way: the picture is of the
     // battle as the action has it then.
-    let start = battle_scene(&ctx, &ctx.content.battles["test"]);
+    let start = battle_scene(&ctx, &ctx.game.content.battles["test"]);
     let scene = player.scene(3.0).unwrap();
     assert_ne!(scene, start);
-    let picture = MapPicture::paint(&ctx, ctx.map_skin.as_ref(), &scene).unwrap();
+    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &scene).unwrap();
     assert_eq!(backdrop.scene(), &*picture.scene);
     // Before anyone has moved: the battle as it starts.
-    let picture = MapPicture::paint(&ctx, ctx.map_skin.as_ref(), &start).unwrap();
+    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &start).unwrap();
     let first = draw(&ctx, &player, 0.0, 1.0);
     assert_eq!(first.backdrop().unwrap().scene(), &*picture.scene);
     assert_ne!(first.backdrop().unwrap().scene(), backdrop.scene());
@@ -418,7 +418,7 @@ fn the_pan_is_the_battles_picture_behind_the_whole_screen() {
 #[test]
 fn the_logo_shot_is_the_titles_own_picture() {
     let mut ctx = ctx();
-    let backdrop = ctx.content.title.backdrops.get(1).copied();
+    let backdrop = ctx.game.content.title.backdrops.get(1).copied();
     assert!(backdrop.is_some());
     for (motion, sparks) in [(IdleMotion::Off, None), (IdleMotion::On, Some(17250))] {
         ctx.idle_motion = motion;
@@ -454,7 +454,7 @@ fn the_same_time_draws_the_same_frame() {
 #[test]
 fn brightness_fades_the_whole_frame_cells_and_items_alike() {
     let ctx = ctx();
-    let player = player(&ctx).with_backdrop(ctx.content.title.backdrops.first().copied());
+    let player = player(&ctx).with_backdrop(ctx.game.content.title.backdrops.first().copied());
     for t in [3.0, 8.0, 12.0, 17.0] {
         let full = draw(&ctx, &player, t, 1.0);
         let mut faded = full.clone();
@@ -488,7 +488,7 @@ fn brightness_fades_the_whole_frame_cells_and_items_alike() {
 #[test]
 fn a_pan_over_a_sprite_map_fades_its_sprites() {
     let mut ctx = ctx();
-    ctx.map_skin = skin_named(&ctx.content, "sprite").unwrap();
+    ctx.game.map_skin = skin_named(&ctx.game.content, "sprite").unwrap();
     let player = player(&ctx);
     let scene_sprites = |brightness: f32| {
         let buf = draw(&ctx, &player, 3.0, brightness);
@@ -513,7 +513,7 @@ fn a_pan_over_a_sprite_map_fades_its_sprites() {
 #[test]
 fn a_battle_is_painted_once_for_all_its_shots() {
     let mut ctx = ctx();
-    let def = ctx.content.cinematics.get_mut("test").unwrap();
+    let def = ctx.game.content.cinematics.get_mut("test").unwrap();
     // Two pans in which nobody moves.
     still(&mut def.shots[0].shot);
     let pan = def.shots[0].shot.clone();
@@ -525,7 +525,7 @@ fn a_battle_is_painted_once_for_all_its_shots() {
     };
     assert_eq!(scene(1.0), scene(7.0));
     // The scene is the battle as it starts, the whole shot long.
-    let start = battle_scene(&ctx, &ctx.content.battles["test"]);
+    let start = battle_scene(&ctx, &ctx.game.content.battles["test"]);
     assert_eq!(player.scene(1.0), Some(start.clone()));
     assert_eq!(player.scene(9.5), Some(start));
 }
@@ -549,7 +549,7 @@ const BRIGAND: UnitId = UnitId(3);
 fn the_test_cinematics_units_walk_and_fight() {
     let ctx = ctx();
     let player = player(&ctx);
-    let start = battle_scene(&ctx, &ctx.content.battles["test"]);
+    let start = battle_scene(&ctx, &ctx.game.content.battles["test"]);
     let p = Pos::new;
     assert_eq!(start.unit(LEAD).unwrap().pos, p(3, 5));
     assert_eq!(start.unit(BRIGAND).unwrap().pos, p(8, 3));
@@ -615,7 +615,7 @@ fn the_test_cinematics_units_walk_and_fight() {
 #[test]
 fn shots_of_one_action_show_the_same_moment_from_their_own_action_from() {
     let mut ctx = ctx();
-    let def = ctx.content.cinematics.get_mut("test").unwrap();
+    let def = ctx.game.content.cinematics.get_mut("test").unwrap();
     // The same list twice: from its start, then (at six seconds, from
     // another place) from 1.5 seconds into it.
     let mut second = def.shots[0].clone();
@@ -644,7 +644,7 @@ fn shots_of_one_action_show_the_same_moment_from_their_own_action_from() {
     assert_ne!(units(2.25), units(6.0));
     // The second shot never shows the walk's start, and the first never
     // shows what comes after its cut.
-    let start = battle_scene(&ctx, &ctx.content.battles["test"]).units;
+    let start = battle_scene(&ctx, &ctx.game.content.battles["test"]).units;
     assert_eq!(units(0.0), start);
     let lead = |t: f32| player.scene(t).unwrap().unit(LEAD).cloned().unwrap();
     assert_eq!(lead(6.1).pos, Pos::new(3, 3));
@@ -654,7 +654,7 @@ fn shots_of_one_action_show_the_same_moment_from_their_own_action_from() {
         player.frame(&ctx, 6.75, SCREEN)
     );
     // Past the list's end: how it all ended.
-    let def = ctx.content.cinematics.get_mut("test").unwrap();
+    let def = ctx.game.content.cinematics.get_mut("test").unwrap();
     if let Shot::MapPan {
         action: Some(action),
         ..
@@ -678,11 +678,11 @@ type Undo = fn(&mut crate::map_view::UnitView);
 fn both_skins_paint_a_moving_a_flashing_and_a_fading_unit() {
     let mut ctx = ctx();
     for skin in ["glyph", "sprite"] {
-        ctx.map_skin = skin_named(&ctx.content, skin).unwrap();
+        ctx.game.map_skin = skin_named(&ctx.game.content, skin).unwrap();
         let player = player(&ctx);
         let painter = shot_skin(&ctx);
         let paint = |scene: &MapScene| MapPicture::paint(&ctx, painter.as_ref(), scene).unwrap();
-        let start = battle_scene(&ctx, &ctx.content.battles["test"]);
+        let start = battle_scene(&ctx, &ctx.game.content.battles["test"]);
         let moments: [(&str, f32, UnitId, Undo); 4] = [
             ("walking", 2.25, LEAD, |u| u.pos = Pos::new(3, 5)),
             ("lunging", 4.2, LEAD, |u| u.offset = (0.0, 0.0)),
@@ -712,8 +712,8 @@ fn both_skins_paint_a_moving_a_flashing_and_a_fading_unit() {
 #[test]
 fn an_acted_shot_is_painted_by_the_skin_at_the_arts_own_size() {
     let mut ctx = ctx();
-    let sprite = skin_named(&ctx.content, "sprite").unwrap();
-    ctx.map_skin = sprite.at_zoom(MapZoom::X2).unwrap();
+    let sprite = skin_named(&ctx.game.content, "sprite").unwrap();
+    ctx.game.map_skin = sprite.at_zoom(MapZoom::X2).unwrap();
     let player = player(&ctx);
     // Mid-walk, as at the start: 14 × 8 tiles of 24 px, in whole cells.
     for t in [0.0, 2.25] {
@@ -740,7 +740,7 @@ fn a_cinematic_or_battle_that_is_not_there() {
     let mut ctx = ctx();
     assert!(CinematicPlayer::new(&ctx, "nope", None).is_none());
     // The battle gone after the content was checked: the shot is blank.
-    ctx.content.battles.remove("test");
+    ctx.game.content.battles.remove("test");
     let player = player(&ctx);
     assert_eq!(player.frame(&ctx, 3.0, SCREEN), Frame::Blank);
     let buf = draw(&ctx, &player, 3.0, 1.0);
@@ -763,12 +763,12 @@ fn a_shot_is_painted_at_the_arts_own_size_whatever_the_players_map_zoom() {
     let mut ctx = ctx();
     // The glyph skin can't zoom: it is used as it is.
     assert_eq!(shot_skin(&ctx).name(), "glyph");
-    let sprite = skin_named(&ctx.content, "sprite").unwrap();
+    let sprite = skin_named(&ctx.game.content, "sprite").unwrap();
     for zoom in MapZoom::ALL {
-        ctx.map_skin = sprite.at_zoom(zoom).unwrap();
-        assert_eq!(ctx.map_skin.zoom(), Some(zoom));
+        ctx.game.map_skin = sprite.at_zoom(zoom).unwrap();
+        assert_eq!(ctx.game.map_skin.zoom(), Some(zoom));
         assert_eq!(shot_skin(&ctx).zoom(), Some(MapZoom::X1));
-        assert_eq!(shot_skin(&ctx).tileset_id(), ctx.map_skin.tileset_id());
+        assert_eq!(shot_skin(&ctx).tileset_id(), ctx.game.map_skin.tileset_id());
         // 14 × 8 tiles of 24 px, in whole cells.
         let buf = draw(&ctx, &player(&ctx), 0.0, 1.0);
         let scene = buf.backdrop().unwrap().scene();
@@ -785,7 +785,7 @@ fn the_title_walks_one_unit_at_a_time_at_the_games_speed() {
     let ctx = ctx();
     // The map shots share one action list: each walk once.
     let mut walks = std::collections::BTreeSet::new();
-    for shot in &ctx.content.cinematics["title"].shots {
+    for shot in &ctx.game.content.cinematics["title"].shots {
         let Shot::MapPan {
             action: Some(action),
             ..
@@ -824,9 +824,9 @@ fn the_title_walks_one_unit_at_a_time_at_the_games_speed() {
 #[test]
 fn the_titles_fights_end_before_their_cuts() {
     let ctx = ctx();
-    let title = &ctx.content.cinematics["title"];
+    let title = &ctx.game.content.cinematics["title"];
     let lead = LeadProfile::new(
-        ctx.words().name(&ctx.content.names, LEAD_ID),
+        ctx.words().name(&ctx.game.content.names, LEAD_ID),
         LeadGender::Male,
     );
     let mut fights = 0;

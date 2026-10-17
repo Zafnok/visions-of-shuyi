@@ -405,7 +405,7 @@ fn a_dimmed_line_shows_its_reason_and_effect_and_cant_be_chosen() {
 fn lines_are_arts_then_actives_and_only_what_fits() {
     let mut c = ctx();
     let state = battle(&c, |units| {
-        assert!(units[0].learn_skill(&SkillId::new("keen_edge"), &c.content.skills));
+        assert!(units[0].learn_skill(&SkillId::new("keen_edge"), &c.game.content.skills));
     });
     let mut s = lord_menu(&mut c, state);
     choose_entry(&mut s, &mut c, MenuEntry::Arts);
@@ -429,7 +429,7 @@ fn lines_are_arts_then_actives_and_only_what_fits() {
     assert!(screen_text(&render(&s, &c)).contains("Iron Sword 20/20"));
     // The archer: bow arts, and Vault as its active.
     let state = battle(&c, |units| {
-        assert!(units[2].learn_skill(&SkillId::new("vault"), &c.content.skills));
+        assert!(units[2].learn_skill(&SkillId::new("vault"), &c.game.content.skills));
     });
     let mut s = archer_menu(&mut c, state);
     choose_entry(&mut s, &mut c, MenuEntry::Arts);
@@ -441,7 +441,7 @@ fn lines_are_arts_then_actives_and_only_what_fits() {
 fn a_chosen_active_is_used_and_paid_for() {
     let mut c = ctx();
     let state = battle(&c, |units| {
-        assert!(units[0].learn_skill(&SkillId::new("keen_edge"), &c.content.skills));
+        assert!(units[0].learn_skill(&SkillId::new("keen_edge"), &c.game.content.skills));
     });
     let mut s = lord_on_brigand(&mut c, state, "Keen Edge");
     assert_eq!(
@@ -544,7 +544,7 @@ fn the_arts_menu_describes_the_focused_line() {
     let mut c = ctx();
     let state = battle(&c, |units| {
         units[0].class = ClassId("swordsman".to_owned());
-        assert!(units[0].learn_skill(&SkillId::new("keen_edge"), &c.content.skills));
+        assert!(units[0].learn_skill(&SkillId::new("keen_edge"), &c.game.content.skills));
     });
     let mut s = lord_menu(&mut c, state);
     choose_entry(&mut s, &mut c, MenuEntry::Arts);
@@ -737,7 +737,7 @@ fn close_shot_reaches_an_adjacent_enemy_that_a_plain_shot_cant() {
 fn long_shot(c: &Ctx, brigand: Pos) -> BattleState {
     battle(c, |units| {
         units[3].pos = brigand;
-        assert!(units[2].learn_skill(&SkillId::new("long_shot"), &c.content.skills));
+        assert!(units[2].learn_skill(&SkillId::new("long_shot"), &c.game.content.skills));
     })
 }
 

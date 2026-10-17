@@ -30,7 +30,7 @@ use crate::dialogue::{DialoguePlayer, Portrait};
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Button, Chord, Keymap};
 use crate::map_view::{MapScene, Place, UnitView, screen_tiles};
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use crate::widgets::word_wrap;
@@ -154,7 +154,7 @@ impl DialogueScreen {
     /// the story as the pack has them.
     pub fn told(ctx: &Ctx, scene: &Scene, lead: LeadProfile, present: &Present) -> Self {
         let words = ctx.words();
-        let names = words.names(&ctx.content.names);
+        let names = words.names(&ctx.game.content.names);
         Self::new(&words.scene(scene, lead.gender), lead, names, present)
     }
 
@@ -326,7 +326,7 @@ fn page_len(lines: &[String]) -> f32 {
     n
 }
 
-impl Screen for DialogueScreen {
+impl Screen<Shuyi> for DialogueScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -498,7 +498,7 @@ impl DialogueScreen {
 
     /// The opening playing, if the content has it.
     fn playing_def<'c>(&self, ctx: &'c Ctx) -> Option<&'c OpeningDef> {
-        ctx.content.openings.get(&self.playing.as_ref()?.id)
+        ctx.game.content.openings.get(&self.playing.as_ref()?.id)
     }
 
     /// One key in the open log: the cursor keys move, Confirm goes to the
@@ -606,7 +606,9 @@ impl DialogueScreen {
             self.text_view(ctx, current.narration),
             self.overlay,
         );
-        let opening = current.opening.and_then(|id| ctx.content.openings.get(id));
+        let opening = current
+            .opening
+            .and_then(|id| ctx.game.content.openings.get(id));
         view.place = current
             .place
             .and_then(|line| self.place_scene(ctx, line, opening));
@@ -634,7 +636,7 @@ impl DialogueScreen {
         let view = screen_tiles(ctx);
         match line {
             PlaceLine::Map { map, at } => {
-                let def = ctx.content.maps.get(map)?;
+                let def = ctx.game.content.maps.get(map)?;
                 let mut place = Place::of_map(def);
                 if let Some(opening) = opening.filter(|o| o.map == *map) {
                     place.units = self.opening_cast(ctx, opening);
@@ -701,7 +703,7 @@ fn display_name<'a>(ctx: &'a Ctx, lead: &'a LeadProfile, portrait: Portrait<'a>)
         return &lead.name;
     }
     ctx.words()
-        .name(&ctx.content.names, portrait.character.0.as_str())
+        .name(&ctx.game.content.names, portrait.character.0.as_str())
 }
 
 #[cfg(test)]

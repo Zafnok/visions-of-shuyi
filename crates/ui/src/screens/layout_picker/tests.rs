@@ -86,7 +86,7 @@ fn help_names_the_picker_keys() {
 #[test]
 fn legend_comes_from_each_layout() {
     let c = first_launch_ctx();
-    let def = &c.content.keymap;
+    let def = &c.game.content.keymap;
     let legend = |l| {
         LayoutPickerScreen::legend(&c, &Keymap::for_layout(def, l))
             .into_iter()
@@ -133,7 +133,7 @@ fn legend_comes_from_each_layout() {
 
 #[test]
 fn key_roles() {
-    let def = &first_launch_ctx().content.keymap;
+    let def = &first_launch_ctx().game.content.keymap;
     let left = Keymap::for_layout(def, LEFT_HANDED);
     assert_eq!(key_role(&left, Key::W), KeyRole::Movement);
     assert_eq!(key_role(&left, Key::J), KeyRole::Bound);
@@ -143,7 +143,7 @@ fn key_roles() {
 #[test]
 fn only_the_cursor_keys_are_movement_in_the_legend() {
     let c = first_launch_ctx();
-    let km = Keymap::for_layout(&c.content.keymap, RIGHT_HANDED);
+    let km = Keymap::for_layout(&c.game.content.keymap, RIGHT_HANDED);
     let legend = LayoutPickerScreen::legend(&c, &km);
     assert!(legend[0].movement);
     assert_eq!(legend.iter().filter(|r| r.movement).count(), 1);

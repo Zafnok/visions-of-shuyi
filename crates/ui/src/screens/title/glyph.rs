@@ -157,7 +157,7 @@ pub fn paint_logo(
             buf.set(x, y, Cell::new(glyph, c(color), black));
         }
     }
-    if let Some((image, size)) = ctx.content.title.logo {
+    if let Some((image, size)) = ctx.game.content.title.logo {
         buf.add_sprite(logo_sprite(image, size));
     }
 }
@@ -191,7 +191,7 @@ pub fn paint_logo_over(
             buf.print_fg(x, y, glyph.encode_utf8(&mut [0; 4]), fg);
         }
     }
-    if let Some((image, size)) = ctx.content.title.logo {
+    if let Some((image, size)) = ctx.game.content.title.logo {
         buf.add_sprite(faded(logo_sprite(image, size)));
     }
 }
@@ -341,7 +341,7 @@ mod tests {
     #[test]
     fn the_logo_is_a_centred_picture_drawn_in_blocks_over_everything() {
         let c = ctx();
-        let (image, size) = c.content.title.logo.unwrap();
+        let (image, size) = c.game.content.title.logo.unwrap();
         assert_eq!(size, (52, 31), "the shipped logo");
         let logo = logo_sprite(image, size);
         assert_eq!(logo.src, px(0, 0, 52, 31));
@@ -362,7 +362,7 @@ mod tests {
     #[test]
     fn the_backdrop_fills_the_width_with_its_edges_mirrored_under_the_logo() {
         let c = ctx();
-        let image = c.content.title.backdrops[0];
+        let image = c.game.content.title.backdrops[0];
         let [middle, left, right] = backdrop_sprites(image);
         assert_eq!(
             (middle.src, middle.dest),
@@ -383,7 +383,7 @@ mod tests {
         for s in [middle, left, right] {
             assert_eq!((s.image, s.layer, s.opacity), (image, Layer::Under, 255));
         }
-        let (logo, size) = c.content.title.logo.unwrap();
+        let (logo, size) = c.game.content.title.logo.unwrap();
         assert_eq!(
             logo_painted(&c, Some(image), Some(0)).sprites(),
             [middle, left, right, logo_sprite(logo, size)]
@@ -652,7 +652,7 @@ mod tests {
         v.menu = None;
         v.help = None;
         v.menu_opacity = 0;
-        v.backdrop = Some(c.content.title.backdrops[0]);
+        v.backdrop = Some(c.game.content.title.backdrops[0]);
         v.sparks = Some(500);
         // The pan, half way; then the logo shot.
         for (t_ms, t) in [(3000, 3.0), (1500, 1.5), (17_000, 17.0)] {
@@ -672,8 +672,8 @@ mod tests {
     #[test]
     fn the_titles_picture_fades_over_the_cinematic() {
         let c = ctx();
-        let image = c.content.title.backdrops[0];
-        let (logo, size) = c.content.title.logo.unwrap();
+        let image = c.game.content.title.backdrops[0];
+        let (logo, size) = c.game.content.title.logo.unwrap();
         let mut v = view();
         v.menu = None;
         v.help = None;
@@ -736,7 +736,7 @@ mod tests {
         let c = ctx();
         let mut v = view();
         v.notice = Some("Notice".to_owned());
-        v.backdrop = Some(c.content.title.backdrops[0]);
+        v.backdrop = Some(c.game.content.title.backdrops[0]);
         let full = painted(&c, &v);
         let bottom = i32::from(ConsoleSpec::PC.rows) - 1;
         let rows = [MENU_ROW, MENU_ROW + 1, MENU_ROW + 3, MENU_ROW + 5, bottom];

@@ -1,0 +1,16 @@
+Settings(
+    version: 1,
+    text_speed: Fast,
+    anim_speed: Fast,
+    combat_animations: false,
+    enemy_phase_speed: Fast,
+    auto_end_turn: true,
+    fullscreen: true,
+    layout: Some("LeftHanded"),
+    cursor_style: TileGlow,
+    map_look: Glyphs,
+    map_zoom: 1,
+    theme: Moonlit,
+    music_volume: 35,
+    sound_volume: 64,
+)

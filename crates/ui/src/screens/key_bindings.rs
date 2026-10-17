@@ -46,7 +46,7 @@ use crate::input::{
     Keymap, Layout, LayoutBindings, PadBindings, PadKind, SLOTS, UiAction, capture_abort_key_name,
     clear_slot_key_name, is_capture_abort, is_clear_slot,
 };
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::tips::fill_text;
 use crate::widgets::help::SEPARATOR;
 
@@ -210,7 +210,8 @@ impl KeyBindingsScreen {
     /// slot, showing the side the player pressed last: the controller's
     /// buttons after a button press, else the keys.
     pub fn with_rows(ctx: &Ctx, rows: &'static [KeyRow]) -> Self {
-        let layout = ctx.shown_layout();
+        // The loader refuses a keymap without layouts.
+        let layout = ctx.shown_layout().unwrap_or(crate::input::RIGHT_HANDED);
         let side = match ctx.device {
             Device::Keyboard => Side::Keyboard,
             Device::Pad(_) => Side::Controller,
@@ -470,7 +471,7 @@ impl KeyBindingsScreen {
     fn answer_restore(&mut self, ctx: &mut Ctx, action: Action) -> bool {
         match action.ui() {
             Some(UiAction::Confirm) => {
-                let def = &ctx.content.keymap;
+                let def = &ctx.game.content.keymap;
                 match self.side {
                     Side::Keyboard => self.bindings = LayoutBindings::defaults(def, self.layout),
                     Side::Controller => self.pad = PadBindings::defaults(def),
@@ -768,7 +769,7 @@ impl KeyBindingsScreen {
     }
 }
 
-impl Screen for KeyBindingsScreen {
+impl Screen<Shuyi> for KeyBindingsScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

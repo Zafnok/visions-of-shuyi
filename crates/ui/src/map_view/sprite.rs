@@ -338,17 +338,17 @@ pub(crate) mod tests {
 
     /// The skin of the test tileset (24 × 24 tiles).
     pub(crate) fn skin(c: &Ctx) -> SpriteSkin {
-        SpriteSkin::new(c.content.tilesets["test"].clone())
+        SpriteSkin::new(c.game.content.tilesets["test"].clone())
     }
 
     /// The skin of the test unit sheets: 16 × 20 units on glyph terrain.
     pub(crate) fn sheets(c: &Ctx) -> SpriteSkin {
-        SpriteSkin::new(c.content.tilesets["test_units"].clone())
+        SpriteSkin::new(c.game.content.tilesets["test_units"].clone())
     }
 
     /// [`skin`] with `w × h` tiles.
     fn sized(c: &Ctx, w: u32, h: u32) -> SpriteSkin {
-        let mut tileset = c.content.tilesets["test"].clone();
+        let mut tileset = c.game.content.tilesets["test"].clone();
         if let Some(terrain) = &mut tileset.terrain {
             terrain.tile_px = (w, h);
         }
@@ -370,7 +370,7 @@ pub(crate) mod tests {
     /// `skin` with the brigand's picture in a walking sheet: the test unit
     /// sheets' (the test tileset's own pictures don't walk).
     fn with_walking_brigand(c: &Ctx, skin: &SpriteSkin) -> SpriteSkin {
-        let sheets = &c.content.tilesets["test_units"];
+        let sheets = &c.game.content.tilesets["test_units"];
         let brigand = ClassId("brigand".into());
         let picture = sheets.classes[&brigand];
         let mut tileset = skin.tileset.clone();
@@ -472,7 +472,7 @@ pub(crate) mod tests {
 
     /// A 3 × 2 view from (0, 0): plains, but a forest at (1, 0).
     pub(crate) fn plains(c: &Ctx) -> MapScene {
-        let display = &c.content.terrain.display;
+        let display = &c.game.content.terrain.display;
         let mut scene = MapScene::new(p(0, 0), (3, 2));
         for tile in &mut scene.tiles {
             tile.terrain = display.id_of("plain");
@@ -613,7 +613,7 @@ pub(crate) mod tests {
         let double = |r: PxRect| Rect::new(2 * r.x, 2 * r.y, 2 * r.w, 2 * r.h);
         for clock_ms in [0, units::BOUNCE_MS, units::TURN_MS] {
             let mut scene = MapScene::new(p(0, 0), (2, 2));
-            scene.set_terrain(|_| c.content.terrain.display.id_of("plain"));
+            scene.set_terrain(|_| c.game.content.terrain.display.id_of("plain"));
             scene.clock_ms = clock_ms;
             scene.tint([p(0, 0)], RangeKind::Move);
             scene.tile_mut(p(1, 0)).unwrap().flashes.push(0.5);
@@ -670,7 +670,7 @@ pub(crate) mod tests {
         let c = ctx();
         let s = skin(&c);
         let buf = painted(&c, &s, &plains(&c));
-        let display = &c.content.terrain.display;
+        let display = &c.game.content.terrain.display;
         let tile = |name| src_rect(s.tileset.tile(display.id_of(name).unwrap()).unwrap().rect);
         let sprites = buf.sprites();
         // 2 × 2 tiles fit, from (16, 24).
@@ -912,7 +912,7 @@ pub(crate) mod tests {
     /// new one doesn't compile until it is listed here too, with a feature
     /// or the reason it has none.
     fn features(c: &Ctx) -> Vec<Feature> {
-        let display = &c.content.terrain.display;
+        let display = &c.game.content.terrain.display;
         let mut base = plains(c);
         base.push_unit(brigand(p(1, 1)));
         every_field_is_listed(&base);
@@ -1016,7 +1016,7 @@ pub(crate) mod tests {
     #[test]
     fn the_ring_and_the_look_are_painted_by_a_tileset_that_has_layers_and_looks() {
         let c = ctx();
-        let water = c.content.terrain.display.id_of("water");
+        let water = c.game.content.terrain.display.id_of("water");
         let s = ground::tests::with_indoor(&ground::tests::layered(&c));
         let base = plains(&c);
         let mut ring = base.clone();
@@ -1141,7 +1141,7 @@ pub(crate) mod tests {
         assert_eq!(kinds, expect);
         // A unit picked out stands on the terrain's glyph colour; one
         // falling fades out as the glyphs come back.
-        let display = &c.content.terrain.display;
+        let display = &c.game.content.terrain.display;
         let forest = display.get(display.id_of("forest").unwrap()).unwrap();
         let fg = c.palette.lookup(&forest.fg).unwrap();
         scene.units[0].highlight = true;

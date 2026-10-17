@@ -15,7 +15,7 @@ use crate::map_view::CursorStyle;
 use crate::screen::tests::ctx;
 
 pub(super) fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().content).unwrap())
+    BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
 }
 
 pub(super) fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
@@ -27,7 +27,7 @@ pub(super) fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
 
 #[test]
 fn quick_battle_state() {
-    let state = quick_battle(&ctx().content).unwrap();
+    let state = quick_battle(&ctx().game.content).unwrap();
     assert_eq!(state.map().name, "Test Field");
     assert_eq!((state.turn(), state.phase()), (1, Phase::Player));
     assert_eq!(state.objective(), Objective::Rout { turn_limit: None });
@@ -81,7 +81,7 @@ fn quick_battle_state() {
 
 #[test]
 fn quick_battle_reports_missing_content() {
-    let mut content = ctx().content;
+    let mut content = ctx().game.content;
     content.battles.clear();
     assert_eq!(
         quick_battle(&content),
@@ -141,7 +141,7 @@ fn cancel_opens_the_map_menu_and_nothing_pops() {
 #[test]
 fn help_depends_on_what_is_hovered() {
     let mut c = ctx();
-    let mut state = quick_battle(&c.content).unwrap();
+    let mut state = quick_battle(&c.game.content).unwrap();
     // The archer waits where it stands.
     wait(&mut state, 2);
     let mut s = BattleScreen::new(state);
@@ -310,7 +310,7 @@ fn next_and_prev_unit_cycle_ready_units_in_reading_order() {
 fn cycling_does_nothing_without_ready_units_and_scrolls_the_camera() {
     let c = ctx();
     let mut ctx_ = ctx();
-    let mut units = quick_battle(&c.content).unwrap().units().to_vec();
+    let mut units = quick_battle(&c.game.content).unwrap().units().to_vec();
     for u in &mut units {
         u.acted = u.faction == Faction::Player;
     }
@@ -332,7 +332,7 @@ fn cycling_does_nothing_without_ready_units_and_scrolls_the_camera() {
 /// The Quick Battle's units on a 64 × 40 plain, in the harness.
 fn big_battle_harness() -> Harness {
     let c = ctx();
-    let units = quick_battle(&c.content).unwrap().units().to_vec();
+    let units = quick_battle(&c.game.content).unwrap().units().to_vec();
     let map = BattleMap::new("Big", Grid::filled(64, 40, TerrainId(0)));
     Harness::with_screen(Box::new(BattleScreen::new(battle(&c, map, units))))
 }
@@ -382,7 +382,7 @@ fn harness_keys_move_the_cursor() {
 #[test]
 fn harness_hold_repeats_with_the_keymap_timing_and_scrolls() {
     let c = ctx();
-    let repeat = c.content.keymap.repeat;
+    let repeat = c.game.content.keymap.repeat;
     let (delay, interval) = (repeat.delay_ms, repeat.interval_ms);
     let moves = |ms: u32| i32::try_from(1 + 1 + (ms - delay) / interval).unwrap();
     let mut h = big_battle_harness();
@@ -409,7 +409,7 @@ fn harness_hold_repeats_with_the_keymap_timing_and_scrolls() {
 /// the forest at (1, 5).
 pub(super) fn knight_in_forest() -> BattleScreen {
     let c = ctx();
-    let state = quick_battle(&c.content).unwrap();
+    let state = quick_battle(&c.game.content).unwrap();
     let mut units = state.units().to_vec();
     units[1].pos = Pos::new(1, 5);
     units[1].hp = units[1].stats.hp * 9 / 20;
@@ -465,11 +465,11 @@ fn panel_shows_the_terrain_and_unit_under_the_cursor() {
 fn panel_shows_healing_terrain_and_whole_names() {
     let mut c = ctx();
     let s = knight_in_forest();
-    let mut rules = c.content.terrain.rules.clone();
-    let forest = c.content.terrain.display.id_of("forest").unwrap();
+    let mut rules = c.game.content.terrain.rules.clone();
+    let forest = c.game.content.terrain.display.id_of("forest").unwrap();
     rules.terrains[usize::from(forest.0)].heal_percent = 20;
     rules.terrains[usize::from(forest.0)].name = "A".repeat(40);
-    c.content.terrain.rules = rules;
+    c.game.content.terrain.rules = rules;
     let mut units = s.state().units().to_vec();
     units[1].name = "B".repeat(40);
     let mut s2 = BattleScreen::new(battle(&c, s.state().map().clone(), units));
@@ -521,7 +521,7 @@ fn terrain_tiles_use_their_two_glyphs_and_colours() {
     let buf = render(&s, &c);
     let p = &c.palette;
     // Tile (0, 0) is sea, drawn at cell (20, 11).
-    let display = &c.content.terrain.display;
+    let display = &c.game.content.terrain.display;
     let sea = display.get(display.id_of("sea").unwrap()).unwrap();
     let cell = |x| *buf.get(x, 11).unwrap();
     for x in [20, 21] {
@@ -541,12 +541,12 @@ fn terrain_tiles_use_their_two_glyphs_and_colours() {
 #[test]
 fn large_map_scrolled_to_bottom_right_snapshot() {
     let c = ctx();
-    let display = &c.content.terrain.display;
+    let display = &c.game.content.terrain.display;
     let ids = ["plain", "forest", "road", "water", "mountain"].map(|t| display.id_of(t).unwrap());
     let cells = (0..40)
         .flat_map(|y: usize| (0..64).map(move |x: usize| ids[(x / 3 + y / 2) % ids.len()]))
         .collect();
-    let mut units = quick_battle(&c.content).unwrap().units().to_vec();
+    let mut units = quick_battle(&c.game.content).unwrap().units().to_vec();
     // The camera starts on the lord at (3, 5), top-left.
     units[5].pos = Pos::new(63, 39);
     let cornered = units[5].id;
@@ -712,7 +712,7 @@ fn the_path_ends_in_an_arrowhead_with_no_cursor_frame_there() {
     assert_eq!(scene.cursor, None);
     assert_eq!(scene.unit_at(lord).map(|u| u.label.as_str()), Some("Lo"));
     assert_eq!(scene.unit_at(fort), None);
-    let fort_id = c.content.terrain.display.id_of("fort");
+    let fort_id = c.game.content.terrain.display.id_of("fort");
     assert_eq!(scene.terrain_at(fort), fort_id);
     // On to the map's right edge, past the lord's reach (Mov 5): the
     // path, through the fort (cost 2), stops at (7, 5), and the cursor

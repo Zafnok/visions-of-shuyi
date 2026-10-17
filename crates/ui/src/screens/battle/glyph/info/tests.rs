@@ -15,7 +15,7 @@ use crate::words::Words;
 /// The quick battle's lord's info screen, changed by `change`, painted.
 fn painted(change: impl FnOnce(&mut InfoView)) -> GlyphBuffer {
     let c = ctx();
-    let state = quick_battle(&c.content).unwrap();
+    let state = quick_battle(&c.game.content).unwrap();
     let lord = state.unit(UnitId(1)).unwrap();
     let mut view = info::view((&state, Words::ENGLISH), lord);
     change(&mut view);

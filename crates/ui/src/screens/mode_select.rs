@@ -15,7 +15,7 @@ pub use view::{ModeLineView, ModeSelectView};
 use trpg_core::GameMode;
 
 use crate::glyph_buffer::GlyphBuffer;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// The key of the heading in the language files ([`Ctx::text`]).
@@ -95,7 +95,7 @@ impl ModeSelectScreen {
     }
 }
 
-impl Screen for ModeSelectScreen {
+impl Screen<Shuyi> for ModeSelectScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

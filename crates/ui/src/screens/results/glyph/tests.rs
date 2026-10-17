@@ -46,7 +46,7 @@ fn the_leads_level_up_page_shows_the_face_the_player_picked() {
         press(&mut s, Action::Confirm);
         press(&mut s, Action::Confirm);
         let mut c = ctx();
-        c.lead = LeadProfile::new("Ren", gender);
+        c.game.lead = LeadProfile::new("Ren", gender);
         let blank = Cell::new(
             '?',
             c.palette.get(UiColor::Text),

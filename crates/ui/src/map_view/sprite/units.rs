@@ -194,7 +194,7 @@ fn picture_ids(ctx: &Ctx, unit: &UnitView) -> Vec<CharacterId> {
     let Some(id) = &unit.character else {
         return Vec::new();
     };
-    let by_gender = ctx.lead.portrait_for(&id.0);
+    let by_gender = ctx.game.lead.portrait_for(&id.0);
     let mut ids = vec![id.clone()];
     if by_gender != id.0 {
         ids.insert(0, CharacterId(by_gender.to_owned()));
@@ -387,7 +387,7 @@ pub fn paint_pictures(
 /// tile of `grid`, over every picture, moved with it by its offset. A unit
 /// half way through its fall has neither.
 pub fn paint_marks(ctx: &Ctx, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
-    let arrows = ctx.content.images.id(EFFECT_MARKS_PATH);
+    let arrows = ctx.game.content.images.id(EFFECT_MARKS_PATH);
     let view = grid.bounds();
     for unit in &scene.units {
         let Some(place) = place(scene, grid, unit) else {
@@ -527,7 +527,7 @@ mod tests {
     #[test]
     fn a_picture_stands_on_the_hp_bar_centred() {
         let c = ctx();
-        let image = c.content.tilesets["test"].fallback.image;
+        let image = c.game.content.tilesets["test"].fallback.image;
         let picture = |w, h| Picture {
             image,
             rect: ImageRect { x: 0, y: 0, w, h },
@@ -635,8 +635,8 @@ mod tests {
         assert_eq!(Penalty.src(), Rect::new(7, 0, 7, 7));
         // The image is there, and is two boxes.
         let c = ctx();
-        let image = c.content.images.id(EFFECT_MARKS_PATH).unwrap();
-        let info = c.content.images.info(image).unwrap();
+        let image = c.game.content.images.id(EFFECT_MARKS_PATH).unwrap();
+        let info = c.game.content.images.info(image).unwrap();
         assert_eq!((info.width, info.height), (14, 7));
     }
 
@@ -644,7 +644,7 @@ mod tests {
     /// tiles; the 3 × 2 view starts at (16, 16)).
     fn arrow(c: &Ctx, scene: &MapScene) -> Option<Sprite> {
         let buf = painted(c, &sheets(c), scene);
-        let marks = c.content.images.id(EFFECT_MARKS_PATH);
+        let marks = c.game.content.images.id(EFFECT_MARKS_PATH);
         buf.sprites().into_iter().find(|s| Some(s.image) == marks)
     }
 
@@ -1057,7 +1057,7 @@ mod tests {
         scene.push_unit(unit(2, p(2, 0)));
         scene.push_unit(unit(3, p(1, 1)));
         let buf = painted(&c, &s, &scene);
-        let marks = c.content.images.id(EFFECT_MARKS_PATH);
+        let marks = c.game.content.images.id(EFFECT_MARKS_PATH);
         let order: Vec<(&str, i32)> = buf
             .items()
             .iter()
@@ -1210,7 +1210,7 @@ mod tests {
         let blue = Rgb::new(0x2a, 0x60, 0xff);
         assert_eq!(c.palette.get(UiColor::PlayerOutline), blue);
         assert_ne!(c.palette.get(UiColor::Player), blue);
-        for palette in c.content.themes.values() {
+        for palette in c.game.content.themes.values() {
             assert_eq!(palette.get("player_outline"), Some([0x2a, 0x60, 0xff]));
         }
         // Fresh and acted, on tile (0, 0) (16..40 × 24..48): the picture
@@ -1269,9 +1269,9 @@ mod tests {
         let s = SpriteSkin::new(both);
         named.character = Some(id("lead"));
         named.class = ClassId("brigand".into());
-        c.lead = LeadProfile::new("A", LeadGender::Female);
+        c.game.lead = LeadProfile::new("A", LeadGender::Female);
         assert_eq!(src(&c, &s, named.clone()).x, 24);
-        c.lead = LeadProfile::new("A", LeadGender::Male);
+        c.game.lead = LeadProfile::new("A", LeadGender::Male);
         assert_eq!(src(&c, &s, named.clone()).x, 48);
         assert_eq!(picture_ids(&c, &named), [id("lead_m"), id("lead")]);
         assert!(picture_ids(&c, &brigand(p(0, 0))).is_empty());
@@ -1297,7 +1297,7 @@ mod tests {
             };
             let (w, h) = (size(tile.w, extra.0, smaller.0), size(tile.h, extra.1, smaller.1));
             let picture = Picture {
-                image: c.content.tilesets["test"].fallback.image,
+                image: c.game.content.tilesets["test"].fallback.image,
                 rect: ImageRect { x: 0, y: 0, w, h },
             };
             let dest = unit_dest(picture, tile);

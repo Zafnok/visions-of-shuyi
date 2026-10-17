@@ -50,7 +50,7 @@ use super::battle::items::effect_text;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::words::Words;
 
 /// Text key of the question Cancel asks on the tabs, when leaving is
@@ -952,7 +952,7 @@ impl PreparationsScreen {
     }
 }
 
-impl Screen for PreparationsScreen {
+impl Screen<Shuyi> for PreparationsScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

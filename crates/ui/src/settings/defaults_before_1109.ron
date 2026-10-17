@@ -1,0 +1,16 @@
+Settings(
+    version: 1,
+    text_speed: Normal,
+    anim_speed: Normal,
+    combat_animations: true,
+    enemy_phase_speed: Normal,
+    auto_end_turn: false,
+    fullscreen: false,
+    layout: None,
+    cursor_style: Corners,
+    map_look: Pictures,
+    map_zoom: 2,
+    theme: Earthy,
+    music_volume: 80,
+    sound_volume: 80,
+)

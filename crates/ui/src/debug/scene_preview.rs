@@ -16,7 +16,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
 use crate::map_view::Place;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::{DialogueScreen, print_centred};
 use crate::widgets::help::{help_line, key_name};
 
@@ -53,10 +53,10 @@ impl ScenePreviewScreen {
     /// ([`Content::battle_of_scene`](trpg_content::Content::battle_of_scene)),
     /// with nobody on it.
     pub fn play(&self, ctx: &Ctx) -> DialogueScreen {
-        let (lead, names) = (ctx.lead.clone(), ctx.content.names.clone());
+        let (lead, names) = (ctx.game.lead.clone(), ctx.game.content.names.clone());
         let screen = DialogueScreen::new(&self.scene, lead, names, &Present::Everyone);
-        match ctx.content.battle_of_scene(&self.scene.id) {
-            Some(def) => screen.with_battle(Place::of_battle(&ctx.content, def)),
+        match ctx.game.content.battle_of_scene(&self.scene.id) {
+            Some(def) => screen.with_battle(Place::of_battle(&ctx.game.content, def)),
             None => screen,
         }
     }
@@ -84,7 +84,7 @@ pub fn paint(ctx: &Ctx, view: &ScenePreviewView, buf: &mut GlyphBuffer) {
     print_centred(buf, bottom, &view.help, c(UiColor::TextDim), black);
 }
 
-impl Screen for ScenePreviewScreen {
+impl Screen<Shuyi> for ScenePreviewScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -119,7 +119,7 @@ mod tests {
     use crate::screen::tests::ctx;
 
     fn screen(ctx: &Ctx) -> ScenePreviewScreen {
-        ScenePreviewScreen::new(ctx.content.dialogue.scenes[TEST_SCENE].clone())
+        ScenePreviewScreen::new(ctx.game.content.dialogue.scenes[TEST_SCENE].clone())
     }
 
     fn update(s: &mut ScenePreviewScreen, ctx: &mut Ctx, actions: &[Action]) -> String {
@@ -145,11 +145,11 @@ mod tests {
     #[test]
     fn the_scene_plays_with_everyone_there_and_the_lead_of_the_game() {
         let mut ctx = ctx();
-        ctx.lead.gender = trpg_core::LeadGender::Female;
+        ctx.game.lead.gender = trpg_core::LeadGender::Female;
         let played = screen(&ctx).play(&ctx);
         let everyone = &Present::Everyone;
-        let scene = &ctx.content.dialogue.scenes[TEST_SCENE];
-        let (lead, names) = (ctx.lead.clone(), ctx.content.names.clone());
+        let scene = &ctx.game.content.dialogue.scenes[TEST_SCENE];
+        let (lead, names) = (ctx.game.lead.clone(), ctx.game.content.names.clone());
         let expected = DialogueScreen::new(scene, lead, names, everyone);
         assert_eq!(played.player(), expected.player());
         assert!(played.has_text());

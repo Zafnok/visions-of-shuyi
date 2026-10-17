@@ -18,7 +18,7 @@ pub use view::{KeyCapView, KeyRole, LayoutPickerView, LayoutView, LegendRow};
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Chord, Key, Keymap, Layout};
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::help::{all_key_names, cursor_keys_name, key_name};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
@@ -32,7 +32,8 @@ const LEGEND_MOVE: &str = "layout_picker.legend.move";
 /// keymap file gives it (empty for a layout the keymap doesn't have, which
 /// is never in use).
 pub fn label(ctx: &Ctx, layout: Layout) -> &str {
-    ctx.content
+    ctx.game
+        .content
         .keymap
         .layout_text(layout)
         .map_or("", |key| ctx.text(key))
@@ -40,7 +41,7 @@ pub fn label(ctx: &Ctx, layout: Layout) -> &str {
 
 /// The layouts the picker shows, in the keymap file's order.
 fn layouts(ctx: &Ctx) -> Vec<Layout> {
-    ctx.content.keymap.layout_ids().collect()
+    ctx.game.content.keymap.layout_ids().collect()
 }
 
 /// Shows both layouts and saves the one picked. Asked for by a key press
@@ -210,7 +211,7 @@ fn key_caps(km: &Keymap) -> Vec<KeyCapView> {
         .collect()
 }
 
-impl Screen for LayoutPickerScreen {
+impl Screen<Shuyi> for LayoutPickerScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

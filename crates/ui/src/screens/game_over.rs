@@ -21,7 +21,7 @@ use view::FULL;
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// The key of Game Over's heading in the language files ([`Ctx::text`]).
@@ -135,7 +135,7 @@ impl GameOverScreen {
     }
 }
 
-impl Screen for GameOverScreen {
+impl Screen<Shuyi> for GameOverScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -193,7 +193,7 @@ impl ToBeContinuedScreen {
     }
 }
 
-impl Screen for ToBeContinuedScreen {
+impl Screen<Shuyi> for ToBeContinuedScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

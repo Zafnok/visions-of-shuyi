@@ -53,7 +53,7 @@ fn skip_scenes(h: &mut Harness) {
 fn chapter_1(level: TutorialLevel, without: &[&str]) -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     h.with_lessons();
-    let lessons = &mut h.ctx_mut().content.lessons.lessons;
+    let lessons = &mut h.ctx_mut().game.content.lessons.lessons;
     lessons.retain(|l| !without.contains(&l.id.as_str()));
     h.keys("f f").keys(downs(level)).keys("f Up f");
     skip_scenes(&mut h);

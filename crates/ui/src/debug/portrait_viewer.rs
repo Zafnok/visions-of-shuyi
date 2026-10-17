@@ -8,7 +8,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::portrait::draw_portrait;
 use crate::prelude::*;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::help::{help_line, key_name};
 
 /// Left column of the character list.
@@ -45,7 +45,7 @@ impl PortraitViewerScreen {
 
     /// The character id and expression name shown, if there are portraits.
     pub fn showing<'a>(&self, ctx: &'a Ctx) -> Option<(&'a str, &'a str)> {
-        let (id, portrait) = ctx.content.portraits.iter().nth(self.character)?;
+        let (id, portrait) = ctx.game.content.portraits.iter().nth(self.character)?;
         let expression = portrait.expressions.get(self.expression)?;
         Some((id.as_str(), expression.name.as_str()))
     }
@@ -70,13 +70,13 @@ fn wrap(i: usize, delta: isize, n: usize) -> usize {
     (i + n).wrapping_add_signed(delta) % n
 }
 
-impl Screen for PortraitViewerScreen {
+impl Screen<Shuyi> for PortraitViewerScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        let portraits = &ctx.content.portraits;
+        let portraits = &ctx.game.content.portraits;
         for &action in &input.actions {
             match action {
                 Action::Cancel => {
@@ -133,12 +133,12 @@ impl Screen for PortraitViewerScreen {
             return;
         };
 
-        for (y, name) in (TOP..).zip(ctx.content.portraits.keys()) {
+        for (y, name) in (TOP..).zip(ctx.game.content.portraits.keys()) {
             let (mark, fg) = if name == id { ("►", hi) } else { (" ", text) };
             buf.print(LIST_X, y, &format!("{mark} {name}"), fg, black);
         }
 
-        let portrait = &ctx.content.portraits[id];
+        let portrait = &ctx.game.content.portraits[id];
         let bg = c(UiColor::PanelBg);
         let frames = [
             (

@@ -17,7 +17,7 @@ pub(super) fn entry(group: CreditGroup, title: &str) -> CreditEntry {
 /// A context whose credits are `entries`.
 pub(super) fn ctx_with(entries: Vec<CreditEntry>) -> Ctx {
     let mut c = ctx();
-    c.content.credits = Credits { entries };
+    c.game.content.credits = Credits { entries };
     c
 }
 
@@ -379,8 +379,8 @@ fn the_games_credits_show_title_author_license_and_link() {
     let s = CreditsScreen::new(&c);
     // Joined, so a wrapped line reads on.
     let all = texts(&s).join(" ");
-    assert!(c.content.credits.entries.len() > 30);
-    for e in &c.content.credits.entries {
+    assert!(c.game.content.credits.entries.len() > 30);
+    for e in &c.game.content.credits.entries {
         assert!(all.contains(&format!("\"{}\" by {}", e.title, e.author)));
         // The link may be wrapped; its start follows the license.
         let start: String = e.source.chars().take(40).collect();

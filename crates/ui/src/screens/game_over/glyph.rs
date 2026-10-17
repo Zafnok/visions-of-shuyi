@@ -102,7 +102,7 @@ pub fn paint(ctx: &Ctx, view: &GameOverView, buf: &mut GlyphBuffer) {
         clear(ctx, buf);
     }
     let logo = opacity(ramp(view.progress, LOGO_IN));
-    if let Some((image, size)) = ctx.content.title.logo
+    if let Some((image, size)) = ctx.game.content.title.logo
         && logo > 0
     {
         let mut sprite = logo_sprite(image, size).painted(Paint::Dimmed);
@@ -111,7 +111,7 @@ pub fn paint(ctx: &Ctx, view: &GameOverView, buf: &mut GlyphBuffer) {
     }
     let words = ramp(view.progress, WORDS_IN);
     if words > 0.0 {
-        if let Some((image, size)) = ctx.content.title.game_over {
+        if let Some((image, size)) = ctx.game.content.title.game_over {
             let mut sprite = words_sprite(image, size);
             sprite.opacity = opacity(words);
             buf.add_sprite(sprite);
@@ -197,8 +197,8 @@ mod tests {
     /// opacity, or `None` while it isn't drawn.
     fn pictures(c: &Ctx, progress: u8) -> (Option<u8>, Option<u8>) {
         let sprites = painted(c, progress).sprites();
-        let (logo, _) = c.content.title.logo.unwrap();
-        let (words, _) = c.content.title.game_over.unwrap();
+        let (logo, _) = c.game.content.title.logo.unwrap();
+        let (words, _) = c.game.content.title.game_over.unwrap();
         let of = |image| sprites.iter().find(|s| s.image == image).map(|s| s.opacity);
         assert!(sprites.iter().all(|s| s.image == logo || s.image == words));
         (of(logo), of(words))
@@ -208,8 +208,8 @@ mod tests {
     fn the_finished_screen_is_the_logo_the_words_a_menu_and_a_help_line() {
         let c = ctx();
         let buf = painted(&c, FULL);
-        let (logo, logo_size) = c.content.title.logo.unwrap();
-        let (words, words_size) = c.content.title.game_over.unwrap();
+        let (logo, logo_size) = c.game.content.title.logo.unwrap();
+        let (words, words_size) = c.game.content.title.game_over.unwrap();
         assert_eq!(words_size, (52, 7), "the shipped words");
         // The logo where the title has it, grey; the words under it, as
         // wide and in their own colour.
@@ -304,7 +304,7 @@ mod tests {
     #[test]
     fn without_the_picture_the_heading_is_text() {
         let mut c = ctx();
-        c.content.title.game_over = None;
+        c.game.content.title.game_over = None;
         let gold = c.palette.get(UiColor::TextHighlight);
         let at = (i32::from(ConsoleSpec::PC.cols) - 4) / 2;
         let buf = painted(&c, FULL);

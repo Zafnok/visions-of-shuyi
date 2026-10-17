@@ -156,7 +156,7 @@ mod tests {
         assert!(depth(&IDLE) < depth(&INFO));
         assert!(depth(&INFO) < depth(&Mode::Objective));
         // Picking who to talk to is a step past the action menu.
-        let state = crate::screens::battle::quick_battle(&crate::screen::tests::ctx().content)
+        let state = crate::screens::battle::quick_battle(&crate::screen::tests::ctx().game.content)
             .unwrap_or_else(|e| panic!("{e}"));
         let sel = super::super::mode::Selection::new(&state, UnitId(1)).unwrap();
         let talk = Mode::TalkTarget {

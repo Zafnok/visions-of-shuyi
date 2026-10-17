@@ -157,7 +157,7 @@ fn corrupt_old_or_clashing_saved_keys_start_repaired() {
         assert_eq!(h.screens(), ["title", "mode_select"], "{saved}");
         assert_eq!(
             h.game().ctx().layout_bindings(RIGHT_HANDED),
-            LayoutBindings::defaults(&h.game().ctx().content.keymap, RIGHT_HANDED),
+            LayoutBindings::defaults(&h.game().ctx().game.content.keymap, RIGHT_HANDED),
             "{saved}"
         );
     }

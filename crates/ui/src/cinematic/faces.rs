@@ -32,7 +32,7 @@ pub struct Face {
 /// anyone else has their short name, in the player's language (their
 /// whole name if the names table has no short one).
 pub fn faces(ctx: &Ctx, who: &[CharacterId], lead: &LeadProfile) -> Vec<Face> {
-    let (words, names) = (ctx.words(), &ctx.content.names);
+    let (words, names) = (ctx.words(), &ctx.game.content.names);
     let face = |character: &CharacterId| {
         let id = character.0.as_str();
         let short = format!("{id}{SHORT_NAME}");

@@ -40,15 +40,18 @@ impl TipState {
     /// level shows none (0835), they are just forgotten.
     pub fn absorb(&mut self, ctx: &mut Ctx) {
         let fired = core::mem::take(&mut self.fired);
-        let level_shows = ctx.campaign_tutorial.is_none_or(TutorialLevel::shows_tips);
-        if !ctx.tips_enabled || !level_shows {
+        let level_shows = ctx
+            .game
+            .campaign_tutorial
+            .is_none_or(TutorialLevel::shows_tips);
+        if !ctx.game.tips_enabled || !level_shows {
             return;
         }
         let seen = self
             .seen
             .get_or_insert_with(|| TipsSeen::load(&ctx.storage));
         for trigger in fired {
-            let Some(tip) = ctx.content.tips.for_trigger(trigger) else {
+            let Some(tip) = ctx.game.content.tips.for_trigger(trigger) else {
                 continue;
             };
             if !seen.contains(&tip.id) {

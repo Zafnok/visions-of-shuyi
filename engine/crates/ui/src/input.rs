@@ -30,7 +30,7 @@ pub mod pad;
 pub mod state;
 
 #[cfg(test)]
-mod sample;
+pub(crate) mod sample;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]

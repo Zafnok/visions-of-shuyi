@@ -10,7 +10,7 @@ use crate::cinematic::CinematicPlayer;
 use crate::color::UiColor;
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::print_centred;
 use crate::widgets::help::{help_line, key_name};
 
@@ -33,7 +33,7 @@ impl CinematicScreen {
     /// The test cinematic at its start, its logo over the first of the
     /// title's backdrops, with the lead a game without a save has.
     pub fn new(ctx: &Ctx) -> Self {
-        let backdrop = ctx.content.title.backdrops.first().copied();
+        let backdrop = ctx.game.content.title.backdrops.first().copied();
         Self {
             player: CinematicPlayer::new(ctx, TEST_CINEMATIC, None)
                 .map(|p| p.with_backdrop(backdrop)),
@@ -52,7 +52,7 @@ impl CinematicScreen {
     }
 }
 
-impl Screen for CinematicScreen {
+impl Screen<Shuyi> for CinematicScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -176,7 +176,7 @@ mod tests {
         assert!(bottom(&buf).ends_with(" back"), "{}", bottom(&buf));
         assert!(!buf.get(50, last).unwrap().see_through);
         // The logo is over the title's first backdrop.
-        let first = ctx.content.title.backdrops[0];
+        let first = ctx.game.content.title.backdrops[0];
         screen.update(&mut ctx, &frame(&[], 14.0));
         let logo = draw(&ctx, &screen);
         assert!(logo.backdrop().is_none());
@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn says_so_when_the_cinematic_is_missing() {
         let mut ctx = ctx();
-        ctx.content.cinematics.clear();
+        ctx.game.content.cinematics.clear();
         let mut screen = CinematicScreen::new(&ctx);
         assert!(screen.player().is_none());
         screen.update(&mut ctx, &frame(&[], 1.0));

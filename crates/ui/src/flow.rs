@@ -64,7 +64,7 @@ use trpg_core::{
 use crate::glyph_buffer::GlyphBuffer;
 use crate::map_view::Place;
 use crate::save::{self, SUSPEND_KEY, SaveError};
-use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Shuyi, Transition};
 use crate::screens::familiarity::FamiliarityScreen;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen, ToBeContinuedScreen};
 use crate::screens::lead_select::LeadSelectScreen;
@@ -203,11 +203,11 @@ impl FlowScreen {
             return Err(SaveError::Corrupt);
         };
         // A chapter or battle the game no longer has can't be continued.
-        let chapter = ctx.content.chapters.get(&campaign.chapter);
+        let chapter = ctx.game.content.chapters.get(&campaign.chapter);
         let chapter = chapter.cloned().ok_or(SaveError::Corrupt)?;
-        let def = ctx.content.battles.get(&chapter.battle);
+        let def = ctx.game.content.battles.get(&chapter.battle);
         let def = def.cloned().ok_or(SaveError::Corrupt)?;
-        let tables = ctx.content.tables();
+        let tables = ctx.game.content.tables();
         // What Preparations set up is in the battle's first state.
         let mut setup = campaign.battle_setup(&def, &tables);
         setup.prepared_as(&history.state_at(0));
@@ -224,7 +224,7 @@ impl FlowScreen {
         flow.music = music;
         flow.adopt(ctx, campaign);
         flow.chapter = Some(chapter);
-        let look = ctx.content.battle_look(&def);
+        let look = ctx.game.content.battle_look(&def);
         let battle = BattleScreen::resume(*history)
             .with_look(look.clone())
             .in_battle(&def.id);
@@ -236,9 +236,14 @@ impl FlowScreen {
     /// The debug Quick Battle: the [`QUICK_CHAPTER`] with its battle's own
     /// characters, in Classic. `None` if the content lacks it.
     pub fn quick_battle(ctx: &mut Ctx) -> Option<Self> {
-        let chapter = ctx.content.chapters.get(QUICK_CHAPTER)?;
-        let def = ctx.content.battles.get(&chapter.battle)?;
-        let mut campaign = battle_campaign(&ctx.content, def, GameMode::Classic, ctx.lead.clone());
+        let chapter = ctx.game.content.chapters.get(QUICK_CHAPTER)?;
+        let def = ctx.game.content.battles.get(&chapter.battle)?;
+        let mut campaign = battle_campaign(
+            &ctx.game.content,
+            def,
+            GameMode::Classic,
+            ctx.game.lead.clone(),
+        );
         QUICK_CHAPTER.clone_into(&mut campaign.chapter);
         let mut flow = Self::new_game(ctx);
         flow.can_leave = true;
@@ -299,7 +304,7 @@ impl FlowScreen {
     }
 
     /// The current screen, as a [`Screen`].
-    fn screen(&self) -> &dyn Screen {
+    fn screen(&self) -> &dyn Screen<Shuyi> {
         match &self.stage {
             Stage::Mode(s) => s,
             Stage::Familiarity(_, s) => s,
@@ -315,7 +320,7 @@ impl FlowScreen {
         }
     }
 
-    fn screen_mut(&mut self) -> &mut dyn Screen {
+    fn screen_mut(&mut self) -> &mut dyn Screen<Shuyi> {
         match &mut self.stage {
             Stage::Mode(s) => s,
             Stage::Familiarity(_, s) => s,
@@ -334,10 +339,10 @@ impl FlowScreen {
     /// Makes `campaign` the flow's: dialogue from here on uses its lead,
     /// and its playtime counts on from what it had.
     fn adopt(&mut self, ctx: &mut Ctx, campaign: Campaign) {
-        ctx.lead = campaign.lead.clone();
-        ctx.campaign_mode = Some(campaign.mode);
-        ctx.campaign_tutorial = Some(campaign.tutorial);
-        ctx.campaign_lessons.clone_from(&campaign.lessons_done);
+        ctx.game.lead = campaign.lead.clone();
+        ctx.game.campaign_mode = Some(campaign.mode);
+        ctx.game.campaign_tutorial = Some(campaign.tutorial);
+        ctx.game.campaign_lessons.clone_from(&campaign.lessons_done);
         #[expect(clippy::cast_precision_loss, reason = "exact below 2^53 s")]
         let played = campaign.playtime_s as f64;
         self.started_at = ctx.clock_s - played;
@@ -354,7 +359,7 @@ impl FlowScreen {
     /// Goes on with the loaded chapter save `campaign`: the chapter after
     /// the one it cleared ("To be continued" if the game has none yet).
     fn begin_loaded(&mut self, ctx: &mut Ctx, campaign: Campaign) {
-        self.chapter = ctx.content.chapters.get(&campaign.chapter).cloned();
+        self.chapter = ctx.game.content.chapters.get(&campaign.chapter).cloned();
         self.adopt(ctx, campaign);
         self.next_chapter(ctx);
     }
@@ -363,7 +368,7 @@ impl FlowScreen {
     /// the content (validation rules it out) ends the flow at "To be
     /// continued".
     fn start_chapter(&mut self, ctx: &mut Ctx, id: &str) {
-        let Some(chapter) = ctx.content.chapters.get(id).cloned() else {
+        let Some(chapter) = ctx.game.content.chapters.get(id).cloned() else {
             self.the_end(ctx);
             return;
         };
@@ -379,7 +384,7 @@ impl FlowScreen {
     /// (every line of it was someone's who is gone, ADR-0055).
     fn next_scene(&mut self, ctx: &mut Ctx) {
         while let Some(id) = self.scenes.pop_front() {
-            if let Some(scene) = ctx.content.dialogue.get(&id)
+            if let Some(scene) = ctx.game.content.dialogue.get(&id)
                 && self.play(scene, ctx)
             {
                 return;
@@ -400,15 +405,15 @@ impl FlowScreen {
         let lead = self
             .campaign
             .as_ref()
-            .map_or_else(|| ctx.lead.clone(), |c| c.lead.clone());
+            .map_or_else(|| ctx.game.lead.clone(), |c| c.lead.clone());
         let present = self.campaign.as_ref().map_or(Present::Everyone, |c| {
             Present::only(c.roster.iter().filter_map(|u| u.character.clone()))
         });
         let mut screen = DialogueScreen::told(ctx, scene, lead, &present);
         // `@place battle` in a chapter's scenes is its battle's field.
         let battle = self.chapter.as_ref();
-        if let Some(def) = battle.and_then(|c| ctx.content.battles.get(&c.battle)) {
-            screen = screen.with_battle(Place::of_battle(&ctx.content, def));
+        if let Some(def) = battle.and_then(|c| ctx.game.content.battles.get(&c.battle)) {
+            screen = screen.with_battle(Place::of_battle(&ctx.game.content, def));
         }
         let plays = screen.has_text();
         if plays {
@@ -422,19 +427,19 @@ impl FlowScreen {
         let def = self
             .chapter
             .as_ref()
-            .and_then(|c| ctx.content.battles.get(&c.battle));
+            .and_then(|c| ctx.game.content.battles.get(&c.battle));
         let (Some(def), Some(campaign)) = (def, &self.campaign) else {
             self.the_end(ctx);
             return;
         };
         let prep = Preparations {
-            setup: campaign.battle_setup(def, &ctx.content.tables()),
+            setup: campaign.battle_setup(def, &ctx.game.content.tables()),
             bench: campaign.bench(def),
         };
         self.fight = Some(Fight {
             def: def.clone(),
             prep,
-            look: ctx.content.battle_look(def),
+            look: ctx.game.content.battle_look(def),
         });
         self.restart(ctx);
     }
@@ -592,7 +597,7 @@ impl FlowScreen {
             },
             Stage::Lead(mode, level, s) => match s.result() {
                 Some(lead) => {
-                    let mut campaign = new_campaign(&ctx.content, mode, lead.clone());
+                    let mut campaign = new_campaign(&ctx.game.content, mode, lead.clone());
                     campaign.tutorial = level;
                     self.begin(ctx, campaign);
                 }
@@ -642,13 +647,13 @@ impl FlowScreen {
     /// (0838) goes into the campaign, and so into its next save.
     fn sync_mode(&mut self, ctx: &mut Ctx) {
         let Some(campaign) = &mut self.campaign else {
-            ctx.campaign_mode = None;
-            ctx.campaign_tutorial = None;
-            ctx.campaign_lessons.clear();
-            ctx.mode_switch = ModeSwitch::Closed;
+            ctx.game.campaign_mode = None;
+            ctx.game.campaign_tutorial = None;
+            ctx.game.campaign_lessons.clear();
+            ctx.game.mode_switch = ModeSwitch::Closed;
             return;
         };
-        if ctx.campaign_mode == Some(GameMode::Casual) && campaign.downgrade_mode() {
+        if ctx.game.campaign_mode == Some(GameMode::Casual) && campaign.downgrade_mode() {
             if let Some(fight) = &mut self.fight {
                 fight.prep.setup.mode = GameMode::Casual;
             }
@@ -656,12 +661,12 @@ impl FlowScreen {
                 screen.switch_to_casual();
             }
         }
-        if let Some(level) = ctx.campaign_tutorial {
+        if let Some(level) = ctx.game.campaign_tutorial {
             campaign.tutorial = level;
         }
-        ctx.campaign_mode = Some(campaign.mode);
-        ctx.campaign_tutorial = Some(campaign.tutorial);
-        ctx.mode_switch = match self.stage {
+        ctx.game.campaign_mode = Some(campaign.mode);
+        ctx.game.campaign_tutorial = Some(campaign.tutorial);
+        ctx.game.mode_switch = match self.stage {
             Stage::Preparations(_) => ModeSwitch::Open,
             _ => ModeSwitch::Closed,
         };
@@ -672,9 +677,9 @@ impl FlowScreen {
     /// its saves keep them (0456).
     fn keep_lessons(&mut self, ctx: &Ctx) {
         if let Some(campaign) = &mut self.campaign
-            && campaign.lessons_done.len() != ctx.campaign_lessons.len()
+            && campaign.lessons_done.len() != ctx.game.campaign_lessons.len()
         {
-            campaign.lessons_done.clone_from(&ctx.campaign_lessons);
+            campaign.lessons_done.clone_from(&ctx.game.campaign_lessons);
         }
     }
 
@@ -696,7 +701,7 @@ impl FlowScreen {
 
 /// Every screen the flow hosts is opaque (a battle's scene overlays are
 /// pushed on the stack, not hosted), so the flow is too.
-impl Screen for FlowScreen {
+impl Screen<Shuyi> for FlowScreen {
     fn name(&self) -> &'static str {
         self.screen().name()
     }
@@ -717,10 +722,10 @@ impl Screen for FlowScreen {
             Transition::Pop => {
                 if self.advance(ctx) {
                     // Back to the title: no campaign.
-                    ctx.campaign_mode = None;
-                    ctx.campaign_tutorial = None;
-                    ctx.campaign_lessons.clear();
-                    ctx.mode_switch = ModeSwitch::Closed;
+                    ctx.game.campaign_mode = None;
+                    ctx.game.campaign_tutorial = None;
+                    ctx.game.campaign_lessons.clear();
+                    ctx.game.mode_switch = ModeSwitch::Closed;
                     return Transition::Pop;
                 }
                 Transition::None

@@ -32,7 +32,7 @@ pub(super) fn paint(
     buf: &mut GlyphBuffer,
 ) {
     let look = terrain.looks.get(&scene.look.tiles);
-    let light = ctx.content.lighting.get(&scene.look.light);
+    let light = ctx.game.content.lighting.get(&scene.look.light);
     let ground = Ground {
         paint: match light {
             Some(light) if !light.is_plain() => Paint::Shaded(light),
@@ -181,7 +181,7 @@ impl Ground<'_> {
 fn tints(ctx: &Ctx, tile: &TileView) -> Vec<(Rgb, f32)> {
     let mut out = Vec::new();
     if tile.becomes.is_none() {
-        let display = &ctx.content.terrain.display;
+        let display = &ctx.game.content.terrain.display;
         let fg = tile
             .terrain
             .and_then(|id| display.get(id))
@@ -281,8 +281,8 @@ pub(crate) mod tests {
     /// a bridge that has another picture with water to its left and
     /// right.
     pub(crate) fn layered(c: &Ctx) -> SpriteSkin {
-        let id = |name| c.content.terrain.display.id_of(name).unwrap();
-        let mut tileset = c.content.tilesets["test"].clone();
+        let id = |name| c.game.content.terrain.display.id_of(name).unwrap();
+        let mut tileset = c.game.content.tilesets["test"].clone();
         let terrain = tileset.terrain.as_mut().unwrap();
         let mut tiles = [None; MIXES];
         for m in 1..16 {
@@ -320,7 +320,7 @@ pub(crate) mod tests {
     /// A 3 × 3 view of `rows` (`.` plain, `~` water, `=` bridge, a space
     /// off the map), with the same terrain running on round it.
     fn view(c: &Ctx, rows: [&str; 3]) -> MapScene {
-        let id = |name| c.content.terrain.display.id_of(name);
+        let id = |name| c.game.content.terrain.display.id_of(name);
         let mut scene = MapScene::new(p(0, 0), (3, 3));
         scene.set_terrain(|pos| {
             let row = rows.get(usize::try_from(pos.y.clamp(0, 2)).ok()?)?;
@@ -354,7 +354,7 @@ pub(crate) mod tests {
         let lake = view(&c, ["...", ".~.", "..."]);
         let buf = painted(&c, &s, &lake);
         // Each tile's own picture first: nine, the water in the middle.
-        let display = &c.content.terrain.display;
+        let display = &c.game.content.terrain.display;
         let own = |name| src_rect(s.tileset().tile(display.id_of(name).unwrap()).unwrap().rect);
         let sprites = buf.sprites();
         for (i, sprite) in sprites[..9].iter().enumerate() {
@@ -449,7 +449,7 @@ pub(crate) mod tests {
     }
 
     fn display_id(c: &Ctx, name: &str) -> Option<TerrainId> {
-        c.content.terrain.display.id_of(name)
+        c.game.content.terrain.display.id_of(name)
     }
 
     #[test]
@@ -539,7 +539,7 @@ pub(crate) mod tests {
     fn a_maps_light_shades_its_ground_and_nothing_painted_over_it() {
         let c = ctx();
         let s = layered(&c);
-        let dusk = c.content.lighting.get("dusk").unwrap();
+        let dusk = c.game.content.lighting.get("dusk").unwrap();
         // A lake and a bridge (a picture on a tile), a range on the
         // first tile and another on the lake, and a unit.
         let mut scene = view(&c, ["...", ".~=", "..."]);
@@ -602,7 +602,7 @@ pub(crate) mod tests {
         assert_eq!(painted(&c, &s, &scene), noon);
         // Night is another shade.
         scene.look.light = "night".to_owned();
-        let night = c.content.lighting.get("night").unwrap();
+        let night = c.game.content.lighting.get("night").unwrap();
         let first = sprite_at(&painted(&c, &s, &scene), 0);
         assert_eq!(first.paint, Paint::Shaded(night));
         assert_ne!(night, dusk);
@@ -744,7 +744,7 @@ pub(crate) mod tests {
     fn flashes_tint_towards_the_terrain_colour_then_the_ranges() {
         let c = ctx();
         let pal = &c.palette;
-        let display = &c.content.terrain.display;
+        let display = &c.game.content.terrain.display;
         let plain = display.get(display.id_of("plain").unwrap()).unwrap();
         let fg = pal.lookup(&plain.fg).unwrap();
         let attack = pal.get(UiColor::AttackRange);
@@ -818,7 +818,7 @@ pub(crate) mod tests {
             let sprites = buf.sprites();
             let own = |sprite: &&Sprite| sprite.src.y < 96;
             // Every terrain has a tile; a made-up id past them has none.
-            let terrains = c.content.terrain.display.terrains.len();
+            let terrains = c.game.content.terrain.display.terrains.len();
             for &(dx, dy, rect) in &on_map {
                 let pictures = sprites.iter().filter(own).filter(|s| s.dest == rect);
                 // A tile wholly off the console has nothing to show.

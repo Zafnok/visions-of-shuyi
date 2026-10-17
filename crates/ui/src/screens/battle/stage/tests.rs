@@ -42,7 +42,7 @@ fn side_numbers(damage: StatValue, hit: u8, crit: u8) -> SideForecast {
 /// The Quick Battle's units: the lord is unit 1 (19 HP, at (3, 5)), the
 /// first brigand unit 4 (20 HP, at (8, 2)).
 fn units() -> Vec<Unit> {
-    quick_battle(&ctx().content).unwrap().units().to_vec()
+    quick_battle(&ctx().game.content).unwrap().units().to_vec()
 }
 
 /// `attacker` walks to `to`, then fights `defender` with `strikes`; the
@@ -285,13 +285,13 @@ fn the_backdrop_follows_the_ground_and_the_banner_is_shown() {
 fn the_backdrop_is_the_lights_own_picture_or_noons_shaded() {
     let mut c = ctx();
     let pb = kill();
-    let dusk = c.content.lighting.get("dusk").unwrap();
+    let dusk = c.game.content.lighting.get("dusk").unwrap();
     let on = |c: &Ctx, ground, light| {
         let v = view(c, &pb, ground, light).unwrap();
         (v.backdrop.map(trpg_content::ImageId::path), v.shade)
     };
     // The public backdrops are noon's only: shaded by the map's light.
-    assert!(c.content.battlers.backdrops.lights.is_empty());
+    assert!(c.game.content.battlers.backdrops.lights.is_empty());
     let fields = Some("battlebacks/fields.png");
     let mountains = Some("battlebacks/mountains.png");
     assert_eq!(on(&c, Some("plain"), "dusk"), (fields, dusk));
@@ -300,7 +300,7 @@ fn the_backdrop_is_the_lights_own_picture_or_noons_shaded() {
     // A light the content doesn't have shades nothing.
     assert_eq!(on(&c, Some("plain"), "midnight"), (fields, Light::PLAIN));
     // Pictures drawn for dusk are shown as they are.
-    let backdrops = &mut c.content.battlers.backdrops;
+    let backdrops = &mut c.game.content.battlers.backdrops;
     let own = trpg_content::battler::BackdropSet {
         default: backdrops.of("mountain"),
         terrain: [("peak".to_owned(), backdrops.default.unwrap())].into(),
@@ -310,7 +310,7 @@ fn the_backdrop_is_the_lights_own_picture_or_noons_shaded() {
     assert_eq!(on(&c, Some("peak"), "dusk"), (fields, Light::PLAIN));
     assert_eq!(on(&c, None, "dusk"), (mountains, Light::PLAIN));
     // Night has none of its own still.
-    let night = c.content.lighting.get("night").unwrap();
+    let night = c.game.content.lighting.get("night").unwrap();
     assert_eq!(on(&c, Some("plain"), "night"), (fields, night));
 }
 
@@ -403,7 +403,7 @@ fn every_kind_of_strike_is_its_own_blow() {
 #[test]
 fn a_picture_is_the_characters_then_that_of_the_class_then_the_default() {
     let mut c = ctx();
-    let table = &mut c.content.battlers.battlers;
+    let table = &mut c.game.content.battlers.battlers;
     let exile = table.get("exile").cloned().unwrap();
     let named = |id: &str| Battler {
         id: id.to_owned(),
@@ -422,7 +422,7 @@ fn a_picture_is_the_characters_then_that_of_the_class_then_the_default() {
         class: ClassId(class.to_owned()),
         pos: Pos::new(0, 0),
     };
-    let id = |f: &Fighter| picture(&c, &c.lead, f).map(|p| p.id);
+    let id = |f: &Fighter| picture(&c, &c.game.lead, f).map(|p| p.id);
     // Rue has her own, whatever her class.
     assert_eq!(
         id(&fighter(Some("heretic"), "mage")).as_deref(),

@@ -17,7 +17,7 @@ use crate::settings::SETTINGS_KEY;
 use crate::storage::Storage;
 
 fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().content).unwrap())
+    BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
 }
 
 fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
@@ -293,7 +293,7 @@ fn info_shows_plain_stats_and_the_loadout() {
 #[test]
 fn info_screen_full_loadout_snapshot() {
     let mut c = ctx();
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     let mut units = quick.units().to_vec();
     let knight = &mut units[1];
     knight.hp = knight.stats.hp / 3;
@@ -613,14 +613,14 @@ fn auto_end_is_off_by_default_and_toggles_on() {
     frame(&mut s, &mut c, &[], 1.0);
     assert_eq!(s.state().phase(), Phase::Player);
     // It is the player's setting (0805): saved, and on in the next battle.
-    assert!(c.settings().auto_end_turn);
+    assert!(c.settings().game.auto_end_turn);
     let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
     assert!(saved.contains("auto_end_turn: true"), "{saved}");
     let mut s = quick();
     press(&mut s, &mut c, &[]);
     assert!(s.auto_end());
     press(&mut s, &mut c, &[Action::ToggleAutoEnd]);
-    assert!(!s.auto_end() && !c.settings().auto_end_turn);
+    assert!(!s.auto_end() && !c.settings().game.auto_end_turn);
     assert_eq!(s.toast(), Some("Auto-end: OFF"));
     // On: a message for a moment, and the last unit's action ends the
     // phase.
@@ -683,10 +683,10 @@ fn auto_end_waits_for_the_combat_to_play() {
 
 /// The Quick Battle as the flow starts it, and its start events.
 fn quick_start(c: &Ctx) -> (BattleState, Vec<Event>) {
-    let def = &c.content.battles[QUICK_BATTLE];
+    let def = &c.game.content.battles[QUICK_BATTLE];
     let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
-    let campaign = battle_campaign(&c.content, def, GameMode::Classic, lead);
-    BattleState::new(campaign.battle_setup(def, &c.content.tables()))
+    let campaign = battle_campaign(&c.game.content, def, GameMode::Classic, lead);
+    BattleState::new(campaign.battle_setup(def, &c.game.content.tables()))
 }
 
 #[test]
@@ -778,7 +778,7 @@ fn phase_banner_snapshot() {
 #[test]
 fn victory_shows_after_the_combat_and_confirm_leaves() {
     let mut c = ctx();
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     let mut units = quick.units().to_vec();
     units.retain(|u| u.id == UnitId(1) || u.id == UnitId(4));
     units[0].pos = Pos::new(7, 2);
@@ -813,7 +813,7 @@ fn victory_shows_after_the_combat_and_confirm_leaves() {
 #[test]
 fn missing_the_turn_limit_is_a_defeat() {
     let mut c = ctx();
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     let rout = Objective::Rout {
         turn_limit: Some(1),
     };

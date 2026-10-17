@@ -56,7 +56,7 @@ fn battle(c: &Ctx, edit: impl FnOnce(&mut Vec<trpg_core::Unit>)) -> BattleState 
 
 /// `unit` learns `skill`.
 fn learn(c: &Ctx, unit: &mut trpg_core::Unit, skill: &str) {
-    assert!(unit.learn_skill(&SkillId::new(skill), &c.content.skills));
+    assert!(unit.learn_skill(&SkillId::new(skill), &c.game.content.skills));
 }
 
 /// The skirmish, with the lord knowing Keen Edge and Sword Focus 1: the

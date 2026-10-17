@@ -32,7 +32,8 @@ fn wrap_steps_within_range() {
 /// portraits, so these tests don't change as portraits are added.
 fn ctx2() -> Ctx {
     let mut ctx = ctx();
-    ctx.content
+    ctx.game
+        .content
         .portraits
         .retain(|id, _| id == "test_lord" || id == "test_knight");
     ctx
@@ -42,9 +43,12 @@ fn ctx2() -> Ctx {
 /// up and down lead to different characters.
 fn ctx3() -> Ctx {
     let mut ctx = ctx2();
-    let mut zed = ctx.content.portraits["test_lord"].clone();
+    let mut zed = ctx.game.content.portraits["test_lord"].clone();
     zed.character = "test_zed".to_owned();
-    ctx.content.portraits.insert("test_zed".to_owned(), zed);
+    ctx.game
+        .content
+        .portraits
+        .insert("test_zed".to_owned(), zed);
     ctx
 }
 
@@ -93,7 +97,7 @@ fn cancel_closes() {
 #[test]
 fn no_portraits() {
     let mut ctx = ctx();
-    ctx.content.portraits.clear();
+    ctx.game.content.portraits.clear();
     let mut v = PortraitViewerScreen::new();
     for a in [Action::CursorRight, Action::CursorLeft, Action::CursorDown] {
         v.update(&mut ctx, &frame(&[a]));

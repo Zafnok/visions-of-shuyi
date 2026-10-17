@@ -96,7 +96,7 @@ use crate::input::Action;
 use crate::map_view::{
     CursorView, GlyphSkin, MapScene, MapSkin, Place, RangeKind, ThreatView, UnitView,
 };
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{LessonView, TipView};
 use crate::widgets::help::{SEPARATOR, key_name};
@@ -729,11 +729,11 @@ impl BattleScreen {
     /// ([`refit`](Self::refit)): the cursor's tile stays in view. Never a
     /// `Command`: the zoom isn't game state.
     fn toggle_zoom(&self, ctx: &mut Ctx) {
-        if self.rewind.is_some() || !self.mode.shows_map() || ctx.map_skin.zoom().is_none() {
+        if self.rewind.is_some() || !self.mode.shows_map() || ctx.game.map_skin.zoom().is_none() {
             return;
         }
         // If saving fails it still holds for this session.
-        let _ = ctx.change_settings(|s| s.map_zoom = s.map_zoom.toggled());
+        let _ = ctx.change_settings(|s| s.game.map_zoom = s.game.map_zoom.toggled());
     }
 
     /// Flips auto-end, saves it with the other options and says so.
@@ -741,7 +741,7 @@ impl BattleScreen {
         self.auto_end = !self.auto_end;
         let on = self.auto_end;
         // If saving fails it still holds for this session.
-        let _ = ctx.change_settings(|s| s.auto_end_turn = on);
+        let _ = ctx.change_settings(|s| s.game.auto_end_turn = on);
         let text = ctx.text(if on {
             "battle.toast.auto_end_on"
         } else {
@@ -915,7 +915,7 @@ impl BattleScreen {
 
     /// The box of the tip on screen ([`Self::shown_tip`]), if any.
     pub fn tip_view(&self, ctx: &Ctx) -> Option<TipView> {
-        let tip = ctx.content.tips.for_trigger(self.shown_tip()?)?;
+        let tip = ctx.game.content.tips.for_trigger(self.shown_tip()?)?;
         Some(TipView::new(ctx, tip))
     }
 
@@ -959,7 +959,7 @@ impl BattleScreen {
     /// The box of the lesson on screen ([`Self::shown_lesson`]), if any,
     /// which never hides the cursor's tile.
     fn lesson_view(&self, ctx: &Ctx) -> Option<LessonView> {
-        let lesson = ctx.content.lessons.get(self.shown_lesson()?)?;
+        let lesson = ctx.game.content.lessons.get(self.shown_lesson()?)?;
         let ticked = self.lessons.ticked();
         Some(LessonView::new(ctx, lesson, ticked, self.cursor.pos))
     }
@@ -1084,7 +1084,7 @@ impl BattleScreen {
         {
             return;
         }
-        match next_command(&self.state, &ctx.content.ai) {
+        match next_command(&self.state, &ctx.game.content.ai) {
             Some(cmd) => self.apply_ai(&cmd),
             None => {
                 self.apply(&Command::EndPhase);
@@ -1164,9 +1164,9 @@ impl BattleScreen {
                 _ => return None,
             }
         };
-        let scene = ctx.content.dialogue.get(&cue.id)?;
+        let scene = ctx.game.content.dialogue.get(&cue.id)?;
         let present = Present::Only(cue.present);
-        let screen = DialogueScreen::told_overlay(ctx, scene, ctx.lead.clone(), &present);
+        let screen = DialogueScreen::told_overlay(ctx, scene, ctx.game.lead.clone(), &present);
         screen.has_text().then(|| screen.with_battle(self.place()))
     }
 
@@ -1290,22 +1290,25 @@ impl BattleScreen {
     /// them) and the walking speed for the walks that start this frame,
     /// and advances the cursor's pulse.
     fn begin_frame(&mut self, ctx: &Ctx, dt: f32) {
-        if !self.language.is(&ctx.content.lang, ctx.effective_lang()) {
+        if !self
+            .language
+            .is(&ctx.game.content.lang, ctx.effective_lang())
+        {
             self.language = ctx.language();
         }
-        self.auto_end = ctx.settings().auto_end_turn;
-        self.show_fights = ctx.settings().combat_animations;
-        let view = ctx.map_skin.view_tiles(MAP_VIEW);
+        self.auto_end = ctx.settings().game.auto_end_turn;
+        self.show_fights = ctx.settings().game.combat_animations;
+        let view = ctx.game.map_skin.view_tiles(MAP_VIEW);
         if view != self.view {
             self.refit(view);
         }
-        let (skin, settings) = (&ctx.map_skin, ctx.settings());
-        let walk = match settings.anim_speed {
+        let (skin, settings) = (&ctx.game.map_skin, ctx.settings());
+        let walk = match settings.game.anim_speed {
             AnimSpeed::Normal => skin.walk_tiles_per_s(),
             AnimSpeed::Fast => skin.fast_walk_tiles_per_s(),
         };
         self.pace = (walk, skin.held_walk_tiles_per_s());
-        self.ai_speed = settings.battle_speed(true);
+        self.ai_speed = settings.game.battle_speed(true);
         self.cursor.tick(dt);
     }
 
@@ -1352,7 +1355,7 @@ impl BattleScreen {
         let ground = pb
             .bout()
             .and_then(|bout| self.state.map().tiles.get(bout.defender.pos))
-            .and_then(|id| ctx.content.terrain.display.get(*id))
+            .and_then(|id| ctx.game.content.terrain.display.get(*id))
             .map(|terrain| terrain.id.as_str());
         stage::view(ctx, pb, ground, &self.look.light)
     }
@@ -1632,7 +1635,7 @@ impl BattleScreen {
             Effect::Restart => self.leaving = Some(Leaving::Restart),
             Effect::Suspend => self.leaving = Some(Leaving::Suspend),
             Effect::Options => return true,
-            Effect::Guides => self.guides = Some(GuidesScreen::new(&ctx.content)),
+            Effect::Guides => self.guides = Some(GuidesScreen::new(&ctx.game.content)),
         }
         false
     }
@@ -1717,9 +1720,9 @@ impl BattleScreen {
         let ai = self.ai_phase();
         let settings = ctx.settings();
         let scaled = if held {
-            dt * settings.battle_speed_held(ai, true) / HELD_SPEED
+            dt * settings.game.battle_speed_held(ai, true) / HELD_SPEED
         } else {
-            dt * settings.battle_speed(ai)
+            dt * settings.game.battle_speed(ai)
         };
         let own_pace = matches!(self.mode, Mode::Moving { .. } | Mode::AiAction(_));
         let dt = if own_pace { dt } else { scaled };
@@ -1954,7 +1957,7 @@ impl BattleScreen {
     /// key and `danger zone: OFF`, then the Auto-end key and
     /// `auto-end: ON`, each key named from the active keymap.
     pub fn status(&self, ctx: &Ctx) -> String {
-        let zoom = ctx.map_skin.zoom().map(|zoom| match zoom {
+        let zoom = ctx.game.map_skin.zoom().map(|zoom| match zoom {
             MapZoom::X1 => "battle.status.zoom_x1",
             MapZoom::X2 => "battle.status.zoom_x2",
         });
@@ -1983,7 +1986,7 @@ impl BattleScreen {
     /// it was just before the highlighted action (as it is now with nothing
     /// listed), with no flashes, ranges, cursor or path.
     pub fn scene(&self, ctx: &Ctx) -> MapScene {
-        let size = ctx.map_skin.view_tiles(MAP_VIEW);
+        let size = ctx.game.map_skin.view_tiles(MAP_VIEW);
         let origin = self.camera_in(size).origin;
         // Whole milliseconds of a clock that only goes forward.
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
@@ -2195,7 +2198,7 @@ impl BattleScreen {
         Some(CursorView {
             pos,
             brightness: self.cursor.brightness(),
-            style: ctx.settings().cursor_style,
+            style: ctx.settings().game.cursor_style,
         })
     }
 
@@ -2256,7 +2259,7 @@ impl BattleScreen {
             _ => None,
         };
         let forecast = self.forecast().and_then(|t| forecast::view(told, t));
-        let faces = (&ctx.content.portraits, &ctx.lead);
+        let faces = (&ctx.game.content.portraits, &ctx.game.lead);
         let progress = self
             .progress()
             .and_then(|p| progress::view(words, faces, p));
@@ -2498,7 +2501,7 @@ fn rewind_help(r: &RewindScreen, ctx: &Ctx) -> String {
     ctx.text_with(key, &[])
 }
 
-impl Screen for BattleScreen {
+impl Screen<Shuyi> for BattleScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -2635,7 +2638,7 @@ pub(crate) mod testing {
     /// The console cell of the left glyph of `tile` on `s`'s map, if it is
     /// in view.
     pub fn tile_cell(s: &super::BattleScreen, c: &Ctx, tile: Pos) -> Option<(i32, i32)> {
-        let cells = c.map_skin.tile_cells(&s.scene(c), MAP_VIEW, tile)?;
+        let cells = c.game.map_skin.tile_cells(&s.scene(c), MAP_VIEW, tile)?;
         Some((cells.x, cells.y))
     }
 
@@ -2684,13 +2687,13 @@ pub(crate) mod testing {
     pub fn setup(c: &Ctx, map: BattleMap, units: Vec<Unit>, objective: Objective) -> BattleSetup {
         BattleSetup {
             map,
-            terrain: Arc::new(c.content.terrain.rules.clone()),
-            classes: Arc::new(c.content.classes.clone()),
-            items: Arc::new(c.content.items.clone()),
-            spells: Arc::new(c.content.spells.clone()),
-            skills: Arc::new(c.content.skills.clone()),
-            arts: Arc::new(c.content.arts.clone()),
-            supports: Arc::new(c.content.supports.clone()),
+            terrain: Arc::new(c.game.content.terrain.rules.clone()),
+            classes: Arc::new(c.game.content.classes.clone()),
+            items: Arc::new(c.game.content.items.clone()),
+            spells: Arc::new(c.game.content.spells.clone()),
+            skills: Arc::new(c.game.content.skills.clone()),
+            arts: Arc::new(c.game.content.arts.clone()),
+            supports: Arc::new(c.game.content.supports.clone()),
             bonds: trpg_core::SupportBook::default(),
             pack: BattlePack::default(),
             gold: 0,
@@ -2708,7 +2711,7 @@ pub(crate) mod testing {
 
     /// The Quick Battle's map and units.
     pub fn quick_units(c: &Ctx) -> (BattleMap, Vec<Unit>) {
-        let quick = super::quick_battle(&c.content).unwrap_or_else(|e| panic!("{e}"));
+        let quick = super::quick_battle(&c.game.content).unwrap_or_else(|e| panic!("{e}"));
         (quick.map().clone(), quick.units().to_vec())
     }
 
@@ -2721,10 +2724,10 @@ pub(crate) mod testing {
     /// the first brigand (unit 4), knowing Vault, after a Vault attack on
     /// it: the archer waits to move after its attack.
     pub fn vaulted(c: &Ctx) -> BattleState {
-        let quick = super::quick_battle(&c.content).unwrap_or_else(|e| panic!("{e}"));
+        let quick = super::quick_battle(&c.game.content).unwrap_or_else(|e| panic!("{e}"));
         let mut units = quick.units().to_vec();
         units[2].pos = Pos::new(8, 4);
-        assert!(units[2].learn_skill(&SkillId::new("vault"), &c.content.skills));
+        assert!(units[2].learn_skill(&SkillId::new("vault"), &c.game.content.skills));
         let rout = Objective::Rout { turn_limit: None };
         let mut s = battle_with(c, quick.map().clone(), units, rout);
         let attack = Command::Act {
@@ -2755,7 +2758,7 @@ pub(crate) mod testing {
 
     /// [`skirmish`], with `charges` rewind charges.
     pub fn skirmish_charged(c: &Ctx, brigand_hp: StatValue, charges: u8) -> BattleState {
-        let quick = super::quick_battle(&c.content).unwrap_or_else(|e| panic!("{e}"));
+        let quick = super::quick_battle(&c.game.content).unwrap_or_else(|e| panic!("{e}"));
         let mut units = quick.units().to_vec();
         units[0].pos = Pos::new(6, 2);
         units[2].pos = Pos::new(8, 4);

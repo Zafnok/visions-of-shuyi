@@ -839,19 +839,19 @@ mod tests {
     fn the_text_names_a_look_other_than_the_usual_one() {
         let c = ctx();
         let mut s = MapScene::new(p(0, -1), (2, 1));
-        let text = s.to_text(&c.content);
+        let text = s.to_text(&c.game.content);
         assert!(text.starts_with("origin (0,-1) size 2x1\n"), "{text}");
         s.look.tiles = "indoor".to_owned();
-        let text = s.to_text(&c.content);
+        let text = s.to_text(&c.game.content);
         let first = "origin (0,-1) size 2x1 look indoor\n";
         assert!(text.starts_with(first), "{text}");
         // A light other than noon, after it or alone.
         s.look.light = "dusk".to_owned();
-        let text = s.to_text(&c.content);
+        let text = s.to_text(&c.game.content);
         let first = "origin (0,-1) size 2x1 look indoor light dusk\n";
         assert!(text.starts_with(first), "{text}");
         s.look.tiles = "outdoor".to_owned();
-        let text = s.to_text(&c.content);
+        let text = s.to_text(&c.game.content);
         assert!(
             text.starts_with("origin (0,-1) size 2x1 light dusk\n"),
             "{text}"
@@ -916,7 +916,7 @@ mod tests {
     #[test]
     fn a_unit_view_copies_what_the_map_shows_of_a_unit() {
         let c = ctx();
-        let state = crate::screens::battle::quick_battle(&c.content).unwrap();
+        let state = crate::screens::battle::quick_battle(&c.game.content).unwrap();
         let lord = &state.units()[0];
         let v = UnitView::of(lord);
         assert_eq!((v.id, v.pos, v.faction), (lord.id, lord.pos, lord.faction));
@@ -1004,7 +1004,7 @@ mod tests {
         assert!(hinders(&mixed));
         // On a unit: either kind, or both.
         let c = ctx();
-        let state = crate::screens::battle::quick_battle(&c.content).unwrap();
+        let state = crate::screens::battle::quick_battle(&c.game.content).unwrap();
         let mut unit = state.units()[0].clone();
         unit.add_effect(effect(
             "sidestep",
@@ -1026,7 +1026,7 @@ mod tests {
     #[test]
     fn to_text_lists_tiles_units_cursor_and_path() {
         let c = ctx();
-        let display = &c.content.terrain.display;
+        let display = &c.game.content.terrain.display;
         let id = |name| display.id_of(name);
         let mut s = MapScene::new(p(-1, 2), (5, 3));
         for pos in [p(0, 2), p(1, 2), p(2, 2), p(0, 3), p(1, 3)] {
@@ -1058,7 +1058,7 @@ mod tests {
         });
         s.path = vec![p(1, 3), p(1, 2)];
         assert_eq!(
-            s.to_text(&c.content),
+            s.to_text(&c.game.content),
             "origin (-1,2) size 5x3\n\
              \x20  2: - plain>forest plain+m plain+m>?998 forest+da\n\
              \x20  3: - plain+h plain! ?999 -\n\
@@ -1074,7 +1074,7 @@ mod tests {
             tile: p(1, 2),
             enemies: vec![p(0, 2), p(9, -4)],
         });
-        let text = s.to_text(&c.content);
+        let text = s.to_text(&c.game.content);
         let end = "path (1,3) (1,2)\nthreat (1,2) from (0,2) (9,-4)\n";
         assert!(text.ends_with(end), "{text}");
     }
@@ -1084,12 +1084,12 @@ mod tests {
         let c = ctx();
         let mut s = MapScene::new(p(0, -1), (2, 1));
         assert_eq!(
-            s.to_text(&c.content),
+            s.to_text(&c.game.content),
             "origin (0,-1) size 2x1\n  -1: -*2\nunits 0\ncursor -\npath -\n"
         );
         // A scene short of tiles marks them.
         s.tiles.truncate(1);
-        assert!(s.to_text(&c.content).contains("  -1: - !\n"));
+        assert!(s.to_text(&c.game.content).contains("  -1: - !\n"));
         let styles = [
             (CursorStyle::LargeCorners, "large-corners"),
             (CursorStyle::TileGlow, "glow"),
@@ -1101,7 +1101,7 @@ mod tests {
                 style,
             });
             let line = format!("cursor (1,-1) {name} 1.00\n");
-            assert!(s.to_text(&c.content).contains(&line), "{name}");
+            assert!(s.to_text(&c.game.content).contains(&line), "{name}");
         }
         let factions = [(Faction::Ally, "ally"), (Faction::Neutral, "neutral")];
         for (faction, name) in factions {
@@ -1118,7 +1118,7 @@ mod tests {
                 "penalty"
             };
             let line = format!("  #7 Br {name} brigand (0,-1) hp 20/30 {effects}\n");
-            assert!(s.to_text(&c.content).contains(&line), "{name}");
+            assert!(s.to_text(&c.game.content).contains(&line), "{name}");
         }
     }
 }

@@ -2,7 +2,6 @@ use trpg_core::{Command, LeadGender, LeadProfile, Pos, StatKind, UnitAction, Uni
 
 use super::*;
 use crate::audio::AudioRequest;
-use crate::game::Game;
 use crate::harness::Harness;
 use crate::input::Action::Cancel;
 use crate::screen::tests::ctx;
@@ -15,11 +14,11 @@ fn playtime_carries_on_from_the_campaigns() {
     let mut c = ctx();
     c.clock_s = 10.0;
     let lead = LeadProfile::new("Mara", LeadGender::Female);
-    let mut campaign = trpg_content::new_campaign(&c.content, GameMode::Casual, lead.clone());
+    let mut campaign = trpg_content::new_campaign(&c.game.content, GameMode::Casual, lead.clone());
     campaign.playtime_s = 100;
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
-    assert_eq!(c.lead, lead);
+    assert_eq!(c.game.lead, lead);
     c.clock_s = 12.5;
     flow.count_playtime(&c);
     assert_eq!(flow.campaign().map(|c| c.playtime_s), Some(102));
@@ -76,7 +75,7 @@ fn retry_goes_back_to_preparations_as_they_were_left() {
 fn a_battle_without_preparations_starts_at_once() {
     let mut c = ctx();
     let lead = LeadProfile::new("Mara", LeadGender::Female);
-    let mut campaign = trpg_content::new_campaign(&c.content, GameMode::Casual, lead);
+    let mut campaign = trpg_content::new_campaign(&c.game.content, GameMode::Casual, lead);
     campaign.chapter = "test".into();
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
@@ -107,7 +106,7 @@ fn a_battle_has_the_look_its_maps_file_names() {
     assert_eq!(look(&flow, &c).as_deref(), Some("outdoor"));
     // With one: started.
     let mut c = ctx();
-    let map = c.content.maps.get_mut("test_small").unwrap();
+    let map = c.game.content.maps.get_mut("test_small").unwrap();
     map.look.tiles = "indoor".to_owned();
     let mut flow = FlowScreen::quick_battle(&mut c).unwrap();
     fight(&mut flow, &mut c);
@@ -144,13 +143,13 @@ fn shows(h: &Harness, text: &str) -> bool {
 fn a_level_up_from_the_rewind_bonus_shows_the_level_up_screen() {
     let mut c = ctx();
     let lead = LeadProfile::new("Mara", LeadGender::Female);
-    let mut campaign = trpg_content::new_campaign(&c.content, GameMode::Classic, lead);
+    let mut campaign = trpg_content::new_campaign(&c.game.content, GameMode::Classic, lead);
     // Three unused charges (21 EXP) level her.
     campaign.roster[0].exp = 85;
     let before = campaign.roster[0].clone();
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
-    let mut h = Harness::from_game(Game::new(c, Box::new(flow)));
+    let mut h = Harness::from_game(crate::game::new(c, Box::new(flow)));
     // Skip the intro, close the battle notes and turn 1's banner; the lead
     // seizes the fort.
     h.keys("d f f f");
@@ -205,7 +204,7 @@ fn victory_line_after_the_knight_fell(mode: GameMode) -> (Option<String>, bool) 
     let knight = trpg_core::CharacterId("test_knight".into());
     let mut c = ctx();
     // The brigand (unit 3) stands next to the knight and never misses.
-    let battle = c.content.battles.get_mut("test");
+    let battle = c.game.content.battles.get_mut("test");
     let brigand = &mut battle.unwrap_or_else(|| panic!("no test battle")).enemies[0];
     brigand.pos = Pos::new(4, 6);
     for kind in [StatKind::Hp, StatKind::Str, StatKind::Dex, StatKind::Def] {
@@ -213,12 +212,12 @@ fn victory_line_after_the_knight_fell(mode: GameMode) -> (Option<String>, bool) 
     }
     brigand.hp = 60;
     let lead = LeadProfile::new("Mara", LeadGender::Female);
-    let mut campaign = trpg_content::new_campaign(&c.content, mode, lead);
+    let mut campaign = trpg_content::new_campaign(&c.game.content, mode, lead);
     assert_eq!(campaign.roster[1].character.as_ref(), Some(&knight));
     campaign.roster[1].stats.hp = 1;
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
-    let mut h = Harness::from_game(Game::new(c, Box::new(flow)));
+    let mut h = Harness::from_game(crate::game::new(c, Box::new(flow)));
     // Skip the intro, close the battle notes and turn 1's banner.
     h.keys("d f f f");
     assert_eq!(h.top_screen(), "battle");
@@ -282,10 +281,11 @@ fn a_scene_with_nothing_to_say_for_the_army_is_passed_over() {
     let src = "@scene only_knight\n@if test_knight\n> The knight nods.\n@endif\n@end\n";
     let scenes = trpg_content::dialogue::from_sources(&[("t.dlg", src)], None, None, None, None)
         .unwrap_or_else(|e| panic!("{e:?}"));
-    c.content.dialogue.scenes.extend(scenes.scenes);
+    c.game.content.dialogue.scenes.extend(scenes.scenes);
     let lead = LeadProfile::new("Mara", LeadGender::Female);
     let start = |c: &mut Ctx, with_knight: bool, scenes: &[&str]| {
-        let mut campaign = trpg_content::new_campaign(&c.content, GameMode::Classic, lead.clone());
+        let mut campaign =
+            trpg_content::new_campaign(&c.game.content, GameMode::Classic, lead.clone());
         if !with_knight {
             campaign.roster.truncate(1);
         }
@@ -320,7 +320,7 @@ fn lost_flow(c: &mut Ctx, charges: u8) -> FlowScreen {
     use crate::screens::battle::quick_battle;
     use crate::screens::battle::testing::battle_charged;
     use trpg_core::Objective;
-    let quick = quick_battle(&c.content).unwrap_or_else(|e| panic!("{e}"));
+    let quick = quick_battle(&c.game.content).unwrap_or_else(|e| panic!("{e}"));
     let rout = Objective::Rout {
         turn_limit: Some(1),
     };

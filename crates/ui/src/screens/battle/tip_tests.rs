@@ -20,12 +20,12 @@ use crate::tips::{TIPS_SEEN_KEY, reset_tips};
 /// A context with tips on.
 fn tipped() -> Ctx {
     let mut c = ctx();
-    c.tips_enabled = true;
+    c.game.tips_enabled = true;
     c
 }
 
 fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().content).unwrap())
+    BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
 }
 
 fn render(screen: &BattleScreen, c: &Ctx) -> GlyphBuffer {
@@ -96,7 +96,7 @@ fn the_tip_box_is_the_guides() {
     assert_eq!(s.tip_view(&c), None);
     press(&mut s, &mut c, &[]);
     let view = s.tip_view(&c).unwrap();
-    assert_eq!(Some(view.title.as_str()), c.content.names.get("guide"));
+    assert_eq!(Some(view.title.as_str()), c.game.content.names.get("guide"));
     assert_eq!(view.title, "Vix");
     assert_eq!(view.heading, "Your move");
     assert_eq!(view.face, None);
@@ -104,15 +104,15 @@ fn the_tip_box_is_the_guides() {
     assert!(view.lines[0].starts_with("Over to you. Steer the cursor with arrows;"));
     assert_eq!(view.close, "f close");
     // With the guide's portrait (the bought art), the face.
-    let mut guide = c.content.portraits["test_lord"].clone();
+    let mut guide = c.game.content.portraits["test_lord"].clone();
     let smile = guide.expressions[1].clone();
     guide.expressions.push(trpg_content::portrait::Expression {
         name: "smile".into(),
         ..smile
     });
-    c.content.portraits.insert("guide".into(), guide);
+    c.game.content.portraits.insert("guide".into(), guide);
     // A tip naming no expression smiles.
-    let tips = c.content.tips.tips.iter_mut();
+    let tips = c.game.content.tips.tips.iter_mut();
     tips.filter(|t| t.id == "battle_start")
         .for_each(|t| t.face = None);
     let face = s.tip_view(&c).and_then(|v| v.face).unwrap();
@@ -122,6 +122,7 @@ fn the_tip_box_is_the_guides() {
     );
     // A tip naming another expression shows it.
     let tip = c
+        .game
         .content
         .tips
         .tips
@@ -145,7 +146,7 @@ fn only_a_full_tutorial_shows_tips() {
         (Some(TutorialLevel::None), false),
     ] {
         let mut c = tipped();
-        c.campaign_tutorial = level;
+        c.game.campaign_tutorial = level;
         let mut s = quick();
         press(&mut s, &mut c, &[]);
         let tip = shown.then_some(TipTrigger::FirstBattleStart);
@@ -158,7 +159,7 @@ fn only_a_full_tutorial_shows_tips() {
 #[test]
 fn the_start_tip_waits_for_the_first_player_phase_banner() {
     let mut c = tipped();
-    let state = quick_battle(&c.content).unwrap();
+    let state = quick_battle(&c.game.content).unwrap();
     let events = [Event::PhaseStarted {
         turn: 1,
         phase: Phase::Player,
@@ -267,7 +268,7 @@ fn selecting_a_unit_shows_the_selection_tip_then_the_in_range_tip() {
 #[test]
 fn no_in_range_tip_when_no_enemy_is_near() {
     let mut c = tipped();
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     let mut units = quick.units().to_vec();
     for u in units.iter_mut().filter(|u| u.faction == Faction::Enemy) {
         u.pos = Pos::new(13, 0);
@@ -308,7 +309,7 @@ fn the_forecast_shows_its_tip() {
 #[test]
 fn a_badly_hurt_unit_shows_the_low_hp_tip() {
     let mut c = tipped();
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     let mut units = quick.units().to_vec();
     units[1].hp = 1;
     let rout = Objective::Rout { turn_limit: None };
@@ -413,7 +414,7 @@ fn tips_wait_while_the_rewind_screen_is_open() {
 
 /// A battle like the Quick Battle, with `edit` applied to its units.
 fn edited(c: &Ctx, edit: impl FnOnce(&mut Vec<Unit>)) -> BattleScreen {
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     let mut units = quick.units().to_vec();
     edit(&mut units);
     let rout = Objective::Rout { turn_limit: None };
@@ -442,7 +443,7 @@ fn low_hp_is_half_of_max_hp_or_less_of_a_unit_still_standing() {
 #[test]
 fn the_start_tip_is_for_the_first_turn_of_the_player_phase_only() {
     let mut c = tipped();
-    let mut state = quick_battle(&c.content).unwrap();
+    let mut state = quick_battle(&c.game.content).unwrap();
     state.apply(&Command::EndPhase).unwrap();
     assert_eq!((state.turn(), state.phase()), (1, Phase::Enemy));
     let mut s = BattleScreen::new(state.clone());
@@ -583,7 +584,7 @@ fn resting_on_terrain_that_is_not_plain_ground_shows_the_terrain_tip_at_full_onl
         (Some(TutorialLevel::None), false),
     ] {
         let mut c = tipped();
-        c.campaign_tutorial = level;
+        c.game.campaign_tutorial = level;
         let mut s = quick();
         dismiss_all(&mut s, &mut c);
         s.cursor.jump(empty_tile(&s, false));

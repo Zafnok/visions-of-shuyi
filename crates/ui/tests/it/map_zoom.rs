@@ -37,12 +37,12 @@ fn quick_battle(skin: &str) -> Harness {
 
 /// The zoom in the player's settings.
 fn saved_zoom(h: &Harness) -> MapZoom {
-    h.game().ctx().settings().map_zoom
+    h.game().ctx().settings().game.map_zoom
 }
 
 /// The zoom the map is painted at, if its skin can zoom.
 fn skin_zoom(h: &Harness) -> Option<MapZoom> {
-    h.game().ctx().map_skin.zoom()
+    h.game().ctx().game.map_skin.zoom()
 }
 
 /// How many tiles the map scene shows.

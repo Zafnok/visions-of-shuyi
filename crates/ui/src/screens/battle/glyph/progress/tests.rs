@@ -97,7 +97,7 @@ fn a_unit_without_a_face_gets_the_placeholder_box() {
 #[test]
 fn a_face_is_drawn_in_the_frame() {
     let c = ctx();
-    let art = &c.content.portraits["test_lord"];
+    let art = &c.game.content.portraits["test_lord"];
     let face = FaceView {
         portrait: "test_lord".into(),
         expression: art.expressions[0].name.clone(),

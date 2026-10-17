@@ -4,11 +4,14 @@
 # (ticket 1031). CI's `playdate` job builds it.
 #
 # `keymap/sample.rs` is a sample game's actions, test data for the keymap
-# format's and input's tests (ticket 1107), built only for tests.
+# format's and input's tests (ticket 1107), built only for tests; so is
+# `shuyi-ui`'s toy game (`toy.rs`, ticket 1109), which the tests of the
+# screens, the context and the frame loop run on.
 exclude_globs = [
     "crates/app/**",
     "crates/playdate/src/pd/**",
     "engine/crates/assets/src/keymap/sample.rs",
+    "engine/crates/ui/src/toy.rs",
 ]
 timeout_multiplier = 3.0
 # Mutants no test can catch (ticket 1105), each for the reason beside it:

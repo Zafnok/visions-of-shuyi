@@ -58,7 +58,7 @@ fn buttons(h: &Harness) -> PadBindings {
 }
 
 fn default_buttons(h: &Harness) -> PadBindings {
-    PadBindings::defaults(&h.game().ctx().content.keymap)
+    PadBindings::defaults(&h.game().ctx().game.content.keymap)
 }
 
 /// `action`'s button slots as names, `-` for empty.

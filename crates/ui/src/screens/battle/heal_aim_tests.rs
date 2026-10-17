@@ -114,7 +114,7 @@ fn only_a_hurt_ally_a_heal_reaches_is_healed_by_pointing() {
     // No uses left of either heal: nobody.
     let mut c = ctx();
     for id in ["heal", "vigil_light"] {
-        let spells = &mut c.content.spells.spells;
+        let spells = &mut c.game.content.spells.spells;
         spells.get_mut(&SpellId::new(id)).unwrap().uses = 0;
     }
     let spent = field(&c, 5, true, false);

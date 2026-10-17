@@ -579,7 +579,7 @@ fn the_pack_list_and_the_preview_are_told_in_the_players_language() {
     use crate::words::testing::{shout, shouting};
 
     let mut c = ctx();
-    let (lang, code) = (shouting(&c.content), shout());
+    let (lang, code) = (shouting(&c.game.content), shout());
     let words = Words::new(&lang, &code);
     let state = hurt_pair(&c, 4, 15, &["potion", "elixir"]);
     let mut s = lord_menu(&mut c, state);

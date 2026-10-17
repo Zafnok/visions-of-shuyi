@@ -12,7 +12,7 @@ mod storage;
 
 use macroquad::prelude::*;
 use trpg_content::font::ATLAS_PNG_PATH;
-use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, Game, KeyPrompt, UiColor};
+use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, KeyPrompt, ShuyiCtx, UiColor};
 
 use crate::args::Startup;
 use crate::audio::Audio;
@@ -70,8 +70,8 @@ async fn main() {
     let mut ctx = match Ctx::embedded() {
         Ok(mut ctx) => {
             ctx.console = ConsoleSpec::PC;
-            ctx.tips_enabled = true;
-            ctx.lessons = trpg_ui::screen::Lessons::On;
+            ctx.game.tips_enabled = true;
+            ctx.game.lessons = trpg_ui::screen::Lessons::On;
             ctx.idle_motion = trpg_ui::screen::IdleMotion::On;
             ctx.music_seed = miniquad::date::now().to_bits();
             ctx.key_prompt = KeyPrompt::Waiting;
@@ -94,26 +94,26 @@ async fn main() {
     storage::smoke_check(ctx.storage.computer_mut());
     let png = trpg_content::bundle::bytes(ATLAS_PNG_PATH).unwrap_or_default();
     let black = ctx.palette.get(UiColor::Black);
-    let images = &ctx.content.images;
-    let mut renderer = match Renderer::new(ctx.content.font.clone(), png, black, images) {
+    let images = &ctx.game.content.images;
+    let mut renderer = match Renderer::new(ctx.game.content.font.clone(), png, black, images) {
         Ok(renderer) => renderer,
         Err(e) => return show_errors(&e).await,
     };
     let mut speaker = Macroquad::default();
     let mut audio = Audio::load(
         &mut speaker,
-        ctx.content.audio.clone(),
+        ctx.game.content.audio.clone(),
         trpg_content::bundle::bytes,
         audio::platform_music_dir(),
         voice_dir,
         miniquad::date::now().to_bits(),
     )
     .await;
-    let mut pads = PadInput::new(ctx.content.keymap.stick);
+    let mut pads = PadInput::new(ctx.game.content.keymap.stick);
     let mut game = match startup {
-        Startup::Title => Game::start(ctx),
+        Startup::Title => trpg_ui::game::start(ctx),
         // A writer's preview of one scene (ticket 0723).
-        Startup::Scene { id, gender } => match Game::start_on_scene(ctx, &id, gender) {
+        Startup::Scene { id, gender } => match trpg_ui::game::start_on_scene(ctx, &id, gender) {
             Ok(game) => game,
             Err(e) => return show_errors(&e).await,
         },

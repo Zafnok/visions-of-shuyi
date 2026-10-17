@@ -119,7 +119,7 @@ fn shows(buf: &GlyphBuffer, s: &str) -> bool {
 fn looks(c: &Ctx, scene: &MapScene, x: i32, y: i32) -> String {
     let tile = scene.tile(p(x, y)).unwrap();
     let id = tile.becomes.or(tile.terrain).unwrap();
-    c.content.terrain.display.get(id).unwrap().id.clone()
+    c.game.content.terrain.display.get(id).unwrap().id.clone()
 }
 
 /// How strongly tile `(x, y)` flashes on the map, one entry per change.
@@ -225,7 +225,7 @@ fn uses(s: &BattleState, spell: &str) -> u8 {
 
 fn terrain(c: &Ctx, s: &BattleState, x: i32, y: i32) -> String {
     let id = *s.map().tiles.get(p(x, y)).unwrap();
-    c.content.terrain.display.get(id).unwrap().id.clone()
+    c.game.content.terrain.display.get(id).unwrap().id.clone()
 }
 
 // ---- The spell list --------------------------------------------------------------
@@ -234,7 +234,7 @@ fn terrain(c: &Ctx, s: &BattleState, x: i32, y: i32) -> String {
 fn a_spells_targets_are_what_the_core_accepts_in_reading_order() {
     let c = ctx();
     let s = field(&c, 18);
-    let spell = |id: &str| c.content.spells.get(&sid(id)).unwrap();
+    let spell = |id: &str| c.game.content.spells.get(&sid(id)).unwrap();
     let from = |dest, id| cast_targets(&s, MAGE, dest, spell(id));
     // Fire: the enemies in range (never the knight), then the forests.
     assert_eq!(
@@ -324,7 +324,7 @@ fn the_list_has_every_learned_spell_dimmed_without_a_target() {
     none[1].targets.clear();
     assert_eq!(spell_menu(&s2, Words::ENGLISH, MAGE, &none).focus(), 0);
     // Uses are the unit's, name padded to `name_w`.
-    let heal = c.content.spells.get(&sid("heal")).unwrap();
+    let heal = c.game.content.spells.get(&sid("heal")).unwrap();
     assert_eq!(
         spell_label(Words::ENGLISH, heal, &heal.name, 3, 6),
         "Heal     3/8   HP+10 Rng1"
@@ -373,7 +373,7 @@ fn magic_is_listed_for_casters_and_is_the_default_only_against_an_enemy() {
     assert!(reaches_an_enemy(&s, &spell_choices(&s, MAGE, p(0, 4))));
     // The Quick Battle's start: only a forest to burn, so Magic is enabled
     // but the menu opens on Wait.
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     assert_eq!(magic(&quick), (true, MenuEntry::Wait));
     assert!(!reaches_an_enemy(
         &quick,
@@ -586,7 +586,13 @@ fn each_spell_active_is_a_line_after_its_attack_spell() {
 fn an_active_the_spell_cant_pay_for_is_dimmed_with_the_reason() {
     let mut c = ctx();
     // One use of Fire left: enough to cast it, not for Overcast's extra one.
-    c.content.spells.spells.get_mut(&sid("fire")).unwrap().uses = 1;
+    c.game
+        .content
+        .spells
+        .spells
+        .get_mut(&sid("fire"))
+        .unwrap()
+        .uses = 1;
     let state = field(&c, 0);
     let choices = spell_choices(&state, MAGE, p(0, 4));
     assert_eq!(choices[1].active, Some(SkillId::new("overcast")));
@@ -649,7 +655,8 @@ fn forecast_of_fire_on_a_resisting_target_snapshot() {
     let mut c = ctx();
     // No class resists yet: the elemental resists Fire here.
     let class = ClassId("frost_elemental".into());
-    c.content
+    c.game
+        .content
         .classes
         .classes
         .get_mut(&class)
@@ -711,7 +718,7 @@ fn a_tile_shows_what_it_becomes_and_is_picked_on_the_map() {
     assert_eq!(looks(&c, &scene, 1, 5), "burning");
     assert_eq!(looks(&c, &scene, 0, 6), "burning");
     let changes = targeting(&s).tile_changes(s.state());
-    let burning = c.content.terrain.display.id_of("burning").unwrap();
+    let burning = c.game.content.terrain.display.id_of("burning").unwrap();
     assert_eq!(changes, [(p(1, 5), burning), (p(0, 6), burning)]);
     assert_snapshot!(buf.to_snapshot(&c.palette));
 }
@@ -724,7 +731,7 @@ fn frost_names_the_ice_and_heal_changes_no_tile() {
     assert_eq!(targeting(&s).target(), on_tile(0, 2));
     let preview = |s: &BattleScreen| targeting(s).preview(s.state(), Words::ENGLISH);
     assert_eq!(preview(&s).as_deref(), Some("Sea → Ice"));
-    let ice = c.content.terrain.display.id_of("ice").unwrap();
+    let ice = c.game.content.terrain.display.id_of("ice").unwrap();
     assert_eq!(
         targeting(&s).tile_changes(s.state()),
         [(p(0, 2), ice), (p(1, 3), ice)]
@@ -1163,7 +1170,13 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
     // Fire with a single use, spent on the forest: dimmed in both lists,
     // and with Frost alone there is nothing to choose in Equip.
     let mut c = ctx();
-    c.content.spells.spells.get_mut(&sid("fire")).unwrap().uses = 1;
+    c.game
+        .content
+        .spells
+        .spells
+        .get_mut(&sid("fire"))
+        .unwrap()
+        .uses = 1;
     let mut state = field(&c, 0);
     assert!(can_equip(&equip_choices(&state, MAGE)));
     let burn = Command::Act {
@@ -1244,7 +1257,7 @@ fn shown_tile(h: &Harness, x: i32, y: i32) -> String {
 #[test]
 fn harness_fire_on_a_forest_burns_it_and_it_is_burnt_next_turn() {
     let c = ctx();
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     let mut h = Harness::with_screen(Box::new(BattleScreen::new(quick)));
     // The cursor starts on the lord: down to the mage, select it, stay.
     h.keys("Down f f");
@@ -1329,7 +1342,7 @@ fn the_scene_marks_a_spells_targets_its_tile_changes_and_the_flash() {
     assert_eq!(units(&s), [p(1, 4), p(2, 4)]);
     assert_eq!(scene.tinted(RangeKind::Attack), units(&s));
     assert!(scene.tinted(RangeKind::Heal).is_empty());
-    let burning = c.content.terrain.display.id_of("burning");
+    let burning = c.game.content.terrain.display.id_of("burning");
     assert!(burning.is_some());
     assert_eq!(scene.tile(p(1, 5)).unwrap().becomes, burning);
     assert_eq!(scene.tile(p(0, 6)).unwrap().becomes, burning);
@@ -1376,7 +1389,7 @@ fn spell(id: &str) -> Equipped {
 #[test]
 fn a_spell_reaches_an_enemy_pointed_at_in_range_with_a_use_left() {
     let c = ctx();
-    let s = quick_battle(&c.content).unwrap();
+    let s = quick_battle(&c.game.content).unwrap();
     let sel = Selection::new(&s, MAGE).unwrap();
     let elemental = s.unit(ELEMENTAL).unwrap().pos;
     // The mage has no weapon: Fire and Frost, from two tiles away (the
@@ -1401,7 +1414,7 @@ fn a_spell_reaches_an_enemy_pointed_at_in_range_with_a_use_left() {
             &f,
             MAGE,
             p(0, 4),
-            c.content.spells.get(&sid("heal")).unwrap()
+            c.game.content.spells.get(&sid("heal")).unwrap()
         ),
         [on_unit(2)]
     );
@@ -1410,8 +1423,8 @@ fn a_spell_reaches_an_enemy_pointed_at_in_range_with_a_use_left() {
     // with.
     let mut c = ctx();
     let mut no_uses = |id: &str| {
-        c.content.spells.spells.get_mut(&sid(id)).unwrap().uses = 0;
-        quick_battle(&c.content).unwrap()
+        c.game.content.spells.spells.get_mut(&sid(id)).unwrap().uses = 0;
+        quick_battle(&c.game.content).unwrap()
     };
     let spent = no_uses("fire");
     assert_eq!(uses(&spent, "fire"), 0);
@@ -1531,7 +1544,7 @@ fn the_pointed_forecast_opens_with_what_is_equipped_and_swaps_through_sword_and_
     // With the spells out of uses only the sword reaches: nothing to swap.
     let mut c = ctx();
     for id in ["fire", "frost"] {
-        c.content.spells.spells.get_mut(&sid(id)).unwrap().uses = 0;
+        c.game.content.spells.spells.get_mut(&sid(id)).unwrap().uses = 0;
     }
     let dry = armed(&c, Equipped::Weapon(0));
     let only = pointed(&dry, ELEMENTAL);
@@ -1556,7 +1569,7 @@ fn the_pointed_forecast_opens_with_what_is_equipped_and_swaps_through_sword_and_
 #[test]
 fn harness_pointing_at_the_elemental_walks_there_and_opens_fires_forecast() {
     let c = ctx();
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     let elemental = quick.unit(ELEMENTAL).unwrap().pos;
     let mut h = Harness::with_screen(Box::new(BattleScreen::new(quick.clone())));
     // Select the mage and move the cursor round onto the elemental, over
@@ -1611,7 +1624,7 @@ fn the_spell_lists_are_told_in_the_players_language() {
     use crate::words::testing::{shout, shouting};
 
     let mut c = ctx();
-    let (lang, code) = (shouting(&c.content), shout());
+    let (lang, code) = (shouting(&c.game.content), shout());
     let words = Words::new(&lang, &code);
     let labels = |menu: &crate::widgets::menu::Menu| -> Vec<String> {
         menu.items().iter().map(|i| i.label.clone()).collect()

@@ -18,8 +18,8 @@
 use insta::assert_snapshot;
 use trpg_content::Theme;
 use trpg_core::{GameMode, TutorialLevel};
+use trpg_ui::ShuyiCtx;
 use trpg_ui::color::UiColor;
-use trpg_ui::game::Game;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::{Action, Chord};
 use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
@@ -213,19 +213,19 @@ fn text_speed_changes_how_fast_dialogue_appears() {
 fn the_battle_speed_rows_set_their_settings() {
     let mut h = options();
     h.keys("Down Right");
-    assert_eq!(settings(&h).anim_speed, AnimSpeed::Fast);
+    assert_eq!(settings(&h).game.anim_speed, AnimSpeed::Fast);
     h.keys("Down Left");
-    assert!(!settings(&h).combat_animations);
+    assert!(!settings(&h).game.combat_animations);
     h.keys("Down Right");
-    assert_eq!(settings(&h).enemy_phase_speed, EnemyPhaseSpeed::Fast);
+    assert_eq!(settings(&h).game.enemy_phase_speed, EnemyPhaseSpeed::Fast);
     assert!(shows(&h, "Combat animations"));
     h.keys(KEEP);
     let h = relaunch(h);
     let saved = settings(&h);
-    assert_eq!(saved.anim_speed, AnimSpeed::Fast);
-    assert_eq!(saved.enemy_phase_speed, EnemyPhaseSpeed::Fast);
-    assert!(!saved.combat_animations);
-    assert!((saved.battle_speed(true) - 4.0).abs() < f32::EPSILON);
+    assert_eq!(saved.game.anim_speed, AnimSpeed::Fast);
+    assert_eq!(saved.game.enemy_phase_speed, EnemyPhaseSpeed::Fast);
+    assert!(!saved.game.combat_animations);
+    assert!((saved.game.battle_speed(true) - 4.0).abs() < f32::EPSILON);
 }
 
 /// Acceptance: auto-end set in Options is on in battle; the battle's
@@ -234,19 +234,19 @@ fn the_battle_speed_rows_set_their_settings() {
 fn auto_end_is_one_setting_in_options_and_in_battle() {
     let mut h = options();
     h.keys(TO_AUTO_END).keys("Right");
-    assert!(settings(&h).auto_end_turn);
+    assert!(settings(&h).game.auto_end_turn);
     into_quick_battle(&mut h);
     assert!(shows(&h, "auto-end: ON"));
     h.keys("Shift+Space");
     assert!(shows(&h, "auto-end: OFF"));
-    assert!(!settings(&h).auto_end_turn);
+    assert!(!settings(&h).game.auto_end_turn);
     // Options over the battle shows it off, and turns it on again.
     h.keys("d Down Down Down f").keys(TO_AUTO_END);
     assert_eq!(value(&h, Row::AutoEnd), setting("Off"));
     h.keys("f").keys(KEEP).keys("d");
     assert!(shows(&h, "auto-end: ON"));
     let h = relaunch(h);
-    assert!(settings(&h).auto_end_turn);
+    assert!(settings(&h).game.auto_end_turn);
 }
 
 /// Acceptance: the Fullscreen row tells `app` to fill the screen.
@@ -503,7 +503,7 @@ fn a_casual_campaign_shows_its_mode_and_the_title_shows_none() {
     h.keys("d Down f f");
     assert_eq!(h.screens(), ["title"]);
     h.wait(FRAME_DT);
-    assert_eq!(h.game().ctx().campaign_mode, None);
+    assert_eq!(h.game().ctx().game.campaign_mode, None);
 }
 
 /// Ticket 0838: at Preparations the `Tutorial` row (three rows up from
@@ -543,7 +543,10 @@ fn a_discarded_tutorial_level_goes_back_and_the_title_has_no_row() {
     h.keys("d Left f");
     assert_eq!(h.screens(), ["title", "battle"]);
     h.wait(FRAME_DT);
-    assert_eq!(h.game().ctx().campaign_tutorial, Some(TutorialLevel::Full));
+    assert_eq!(
+        h.game().ctx().game.campaign_tutorial,
+        Some(TutorialLevel::Full)
+    );
     assert_eq!(tutorial(&h), Some(TutorialLevel::Full));
     let h = options();
     let view = h
@@ -572,7 +575,10 @@ fn the_tutorial_level_set_in_a_battle_is_saved() {
     h.keys("f");
     assert_eq!(h.screens(), ["title", "battle"]);
     assert_eq!(tutorial(&h), Some(TutorialLevel::None));
-    assert_eq!(h.game().ctx().campaign_tutorial, Some(TutorialLevel::None));
+    assert_eq!(
+        h.game().ctx().game.campaign_tutorial,
+        Some(TutorialLevel::None)
+    );
 }
 
 #[test]
@@ -691,17 +697,18 @@ fn the_help_line_fits_on_every_pad() {
 fn launch_with_pictures(storage: Option<Box<dyn Storage>>) -> Harness {
     let mut ctx = Ctx::embedded().unwrap_or_else(|e| panic!("content: {e}"));
     ctx.debug_tools = true;
-    let mut tileset = ctx.content.tilesets[TEST_UNITS_TILESET].clone();
+    let mut tileset = ctx.game.content.tilesets[TEST_UNITS_TILESET].clone();
     GAME_TILESET.clone_into(&mut tileset.id);
-    ctx.content
+    ctx.game
+        .content
         .tilesets
         .insert(GAME_TILESET.to_owned(), tileset);
-    ctx.map_skin = default_skin(&ctx.content);
+    ctx.game.map_skin = default_skin(&ctx.game.content);
     let ctx = match storage {
         Some(storage) => ctx.with_storage(storage),
         None => ctx,
     };
-    let mut h = Harness::from_game(Game::start(ctx.with_layout(RIGHT_HANDED)));
+    let mut h = Harness::from_game(trpg_ui::game::start(ctx.with_layout(RIGHT_HANDED)));
     h.wait(FRAME_DT);
     h
 }
@@ -711,7 +718,7 @@ fn launch_with_pictures(storage: Option<Box<dyn Storage>>) -> Harness {
 #[test]
 fn map_look_swaps_the_skin_at_once_and_is_remembered() {
     let mut h = launch_with_pictures(None);
-    assert_eq!(h.game().ctx().map_skin.name(), "sprite_units");
+    assert_eq!(h.game().ctx().game.map_skin.name(), "sprite_units");
     h.keys("Down Down f");
     assert_eq!(h.screens(), ["title", "options"]);
     h.keys(TO_CURSOR);
@@ -720,16 +727,16 @@ fn map_look_swaps_the_skin_at_once_and_is_remembered() {
     assert_snapshot!(h.snapshot());
     h.keys("Right");
     assert_eq!(value(&h, Row::MapLook), setting("Glyphs"));
-    assert_eq!(settings(&h).map_look, MapLook::Glyphs);
-    assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+    assert_eq!(settings(&h).game.map_look, MapLook::Glyphs);
+    assert_eq!(h.game().ctx().game.map_skin.name(), "glyph");
     h.keys(KEEP);
 
     let mut h = launch_with_pictures(Some(h.into_storage()));
-    assert_eq!(settings(&h).map_look, MapLook::Glyphs);
-    assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+    assert_eq!(settings(&h).game.map_look, MapLook::Glyphs);
+    assert_eq!(h.game().ctx().game.map_skin.name(), "glyph");
     h.keys("Down Down f");
     h.keys(&format!("{TO_CURSOR} Down Left"));
-    assert_eq!(h.game().ctx().map_skin.name(), "sprite_units");
+    assert_eq!(h.game().ctx().game.map_skin.name(), "sprite_units");
 }
 
 /// Restore defaults puts the look back to Pictures, and the skin with it.
@@ -737,13 +744,13 @@ fn map_look_swaps_the_skin_at_once_and_is_remembered() {
 fn restoring_defaults_brings_the_pictures_back() {
     let mut h = launch_with_pictures(None);
     h.ctx_mut()
-        .change_settings(|s| s.map_look = MapLook::Glyphs)
+        .change_settings(|s| s.game.map_look = MapLook::Glyphs)
         .unwrap();
-    assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+    assert_eq!(h.game().ctx().game.map_skin.name(), "glyph");
     h.keys("Down Down f");
     h.keys("Up f f");
-    assert_eq!(settings(&h).map_look, MapLook::Pictures);
-    assert_eq!(h.game().ctx().map_skin.name(), "sprite_units");
+    assert_eq!(settings(&h).game.map_look, MapLook::Pictures);
+    assert_eq!(h.game().ctx().game.map_skin.name(), "sprite_units");
 }
 
 /// Without the bought files there is no row, and whatever was saved, the
@@ -752,7 +759,7 @@ fn restoring_defaults_brings_the_pictures_back() {
 fn without_pictures_there_is_no_row_and_the_map_is_glyphs() {
     let mut h = title();
     h.ctx_mut()
-        .change_settings(|s| s.map_look = MapLook::Pictures)
+        .change_settings(|s| s.game.map_look = MapLook::Pictures)
         .unwrap();
     h.keys("Down Down f");
     let view = h
@@ -762,7 +769,7 @@ fn without_pictures_there_is_no_row_and_the_map_is_glyphs() {
         .view(h.game().ctx());
     assert!(view.row(Row::MapLook).is_none());
     assert!(!shows(&h, "Map look"));
-    assert_eq!(h.game().ctx().map_skin.name(), "glyph");
+    assert_eq!(h.game().ctx().game.map_skin.name(), "glyph");
 }
 
 /// Ticket 0806: Colors steps through the four themes, rebuilds the
@@ -789,12 +796,12 @@ fn colors_swap_the_palette_at_once_and_are_remembered() {
         assert_eq!(value(&h, Row::Theme), setting(name));
         let now = palette(&h);
         assert!(!seen.contains(&now), "{theme:?} repeats a palette");
-        let def = &h.game().ctx().content.themes[&theme];
+        let def = &h.game().ctx().game.content.themes[&theme];
         assert_eq!(now.get(UiColor::Text), def.get("text").unwrap().into());
         seen.push(now);
     }
     // Parchment is the light one: its console background is light.
-    let black = |t: Theme| h.game().ctx().content.themes[&t].get("black").unwrap();
+    let black = |t: Theme| h.game().ctx().game.content.themes[&t].get("black").unwrap();
     assert!(black(Theme::Parchment).iter().all(|&c| c >= 0xc0));
     assert!(black(Theme::Moonlit).iter().all(|&c| c < 0x20));
 
@@ -806,7 +813,7 @@ fn colors_swap_the_palette_at_once_and_are_remembered() {
     assert_ne!(palette(&h), earthy);
     assert_eq!(
         palette(&h).get(UiColor::Black),
-        h.game().ctx().content.themes[&Theme::Parchment]
+        h.game().ctx().game.content.themes[&Theme::Parchment]
             .get("black")
             .unwrap()
             .into()

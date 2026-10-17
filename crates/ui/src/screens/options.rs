@@ -39,7 +39,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, TextKey, text_key, text_keys_help};
 use crate::map_view::{CursorStyle, has_pictures};
-use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, ModeSwitch, Screen, Shuyi, Transition};
 use crate::settings::{
     AnimSpeed, EnemyPhaseSpeed, MAX_VOLUME, MapLook, MapZoom, Settings, TextSpeed,
 };
@@ -71,21 +71,23 @@ const MAX_DIGITS: usize = 3;
 pub enum Row {
     /// [`Settings::text_speed`].
     TextSpeed,
-    /// [`Settings::anim_speed`].
+    /// [`ShuyiSettings::anim_speed`](crate::ShuyiSettings::anim_speed).
     AnimSpeed,
-    /// [`Settings::combat_animations`].
+    /// [`ShuyiSettings::combat_animations`](crate::ShuyiSettings::combat_animations).
     CombatAnimations,
-    /// [`Settings::enemy_phase_speed`].
+    /// [`ShuyiSettings::enemy_phase_speed`](crate::ShuyiSettings::enemy_phase_speed).
     EnemyPhaseSpeed,
-    /// [`Settings::auto_end_turn`].
+    /// [`ShuyiSettings::auto_end_turn`](crate::ShuyiSettings::auto_end_turn).
     AutoEnd,
     /// [`Settings::fullscreen`].
     Fullscreen,
-    /// [`Settings::cursor_style`].
+    /// [`ShuyiSettings::cursor_style`](crate::ShuyiSettings::cursor_style).
     Cursor,
-    /// [`Settings::map_look`] (only when the game has pictures).
+    /// [`ShuyiSettings::map_look`](crate::ShuyiSettings::map_look) (only when
+    /// the game has pictures).
     MapLook,
-    /// [`Settings::map_zoom`] (only when the map can be zoomed).
+    /// [`ShuyiSettings::map_zoom`](crate::ShuyiSettings::map_zoom) (only when
+    /// the map can be zoomed).
     MapZoom,
     /// [`Settings::theme`].
     Theme,
@@ -188,7 +190,7 @@ const CURSOR_STYLES: [CursorStyle; 3] = [
 /// pictures paint the whole map, where a cursor never glows (Nick,
 /// 2026-10-13, ticket 0444).
 fn cursor_styles(ctx: &Ctx) -> &'static [CursorStyle] {
-    match ctx.map_skin.zoom() {
+    match ctx.game.map_skin.zoom() {
         Some(_) => &[CursorStyle::Corners, CursorStyle::LargeCorners],
         None => &CURSOR_STYLES,
     }
@@ -197,7 +199,7 @@ fn cursor_styles(ctx: &Ctx) -> &'static [CursorStyle] {
 /// The cursor style the row shows: the setting, or `Corners` (what the
 /// map draws) while the setting isn't offered.
 fn shown_cursor_style(ctx: &Ctx) -> CursorStyle {
-    let style = ctx.settings().cursor_style;
+    let style = ctx.settings().game.cursor_style;
     if cursor_styles(ctx).contains(&style) {
         style
     } else {
@@ -379,10 +381,10 @@ impl OptionsScreen {
     /// campaign loaded, `Map look` only when the game has pictures and
     /// `Map zoom` only when it has them or the map skin in use can zoom.
     pub fn rows(ctx: &Ctx) -> Vec<Row> {
-        let campaign = ctx.campaign_mode.is_some();
-        let tutorial = ctx.campaign_tutorial.is_some();
-        let pictures = has_pictures(&ctx.content);
-        let zooms = pictures || ctx.map_skin.zoom().is_some();
+        let campaign = ctx.game.campaign_mode.is_some();
+        let tutorial = ctx.game.campaign_tutorial.is_some();
+        let pictures = has_pictures(&ctx.game.content);
+        let zooms = pictures || ctx.game.map_skin.zoom().is_some();
         Row::ALL
             .into_iter()
             .filter(|&r| r != Row::GameMode || campaign)
@@ -413,9 +415,8 @@ impl OptionsScreen {
     /// picked).
     pub fn changed(&self, ctx: &Ctx) -> bool {
         self.opened_with.as_ref().is_some_and(|opened| {
-            let mut opened = opened.clone();
-            opened.layout = ctx.settings().layout;
-            opened != *ctx.settings() || self.opened_tutorial != ctx.campaign_tutorial
+            let opened = opened.clone().with_layout_of(ctx.settings());
+            opened != *ctx.settings() || self.opened_tutorial != ctx.game.campaign_tutorial
         })
     }
 
@@ -432,7 +433,8 @@ impl OptionsScreen {
     /// Whether Confirm on `Game mode` would ask to switch to Casual: a
     /// Classic campaign, at Preparations.
     fn can_switch_mode(ctx: &Ctx) -> bool {
-        ctx.campaign_mode == Some(GameMode::Classic) && ctx.mode_switch == ModeSwitch::Open
+        ctx.game.campaign_mode == Some(GameMode::Classic)
+            && ctx.game.mode_switch == ModeSwitch::Open
     }
 
     /// What `row` shows beside its name: the setting, the layout in use,
@@ -453,14 +455,14 @@ impl OptionsScreen {
         };
         let key = match row {
             Row::TextSpeed => s.text_speed.key(),
-            Row::AnimSpeed => s.anim_speed.key(),
-            Row::CombatAnimations => on_off_key(s.combat_animations),
-            Row::EnemyPhaseSpeed => s.enemy_phase_speed.key(),
-            Row::AutoEnd => on_off_key(s.auto_end_turn),
+            Row::AnimSpeed => s.game.anim_speed.key(),
+            Row::CombatAnimations => on_off_key(s.game.combat_animations),
+            Row::EnemyPhaseSpeed => s.game.enemy_phase_speed.key(),
+            Row::AutoEnd => on_off_key(s.game.auto_end_turn),
             Row::Fullscreen => on_off_key(s.fullscreen),
             Row::Cursor => cursor_key(shown_cursor_style(ctx)),
-            Row::MapLook => s.map_look.key(),
-            Row::MapZoom => s.map_zoom.key(),
+            Row::MapLook => s.game.map_look.key(),
+            Row::MapZoom => s.game.map_zoom.key(),
             Row::Theme => s.theme.key(),
             Row::MusicVolume => return volume(s.music_volume),
             Row::SoundVolume => return volume(s.sound_volume),
@@ -471,11 +473,11 @@ impl OptionsScreen {
                         .unwrap_or_default(),
                 );
             }
-            Row::GameMode => match ctx.campaign_mode {
+            Row::GameMode => match ctx.game.campaign_mode {
                 Some(mode) => mode_key(mode),
                 None => return ValueView::None,
             },
-            Row::Tutorial => match ctx.campaign_tutorial {
+            Row::Tutorial => match ctx.game.campaign_tutorial {
                 Some(level) => tutorial_key(level),
                 None => return ValueView::None,
             },
@@ -561,12 +563,12 @@ impl OptionsScreen {
     /// changes at once (tips follow it), and goes into the campaign (the
     /// game flow takes it there) unless the player discards it on leaving.
     fn step_tutorial(&mut self, ctx: &mut Ctx, forward: bool, wrap: bool) {
-        let Some(level) = ctx.campaign_tutorial else {
+        let Some(level) = ctx.game.campaign_tutorial else {
             return;
         };
         let to = stepped(&TUTORIAL_LEVELS, level, forward, wrap);
         if to != level {
-            ctx.campaign_tutorial = Some(to);
+            ctx.game.campaign_tutorial = Some(to);
             self.message = None;
             ctx.audio.menu(MenuSound::Move);
         }
@@ -676,7 +678,7 @@ impl OptionsScreen {
             // Casual never goes back to Classic, and Classic only switches
             // at Preparations: the row says so.
             Row::GameMode => {
-                if ctx.campaign_mode == Some(GameMode::Classic) {
+                if ctx.game.campaign_mode == Some(GameMode::Classic) {
                     self.message = Some(MODE_AT_PREP_MESSAGE);
                 }
                 ctx.audio.menu(MenuSound::Denied);
@@ -702,7 +704,7 @@ impl OptionsScreen {
             Action::Confirm => {
                 self.message = Some(match question {
                     Question::SwitchToCasual => {
-                        ctx.switch_to_casual();
+                        ctx.game.switch_to_casual();
                         CASUAL_MESSAGE
                     }
                     Question::ResetTips => {
@@ -780,7 +782,7 @@ impl OptionsScreen {
                     // Saves only if something else was saved meanwhile;
                     // the screen closes either way.
                     let _ = ctx.restore_settings(&opened);
-                    ctx.campaign_tutorial = self.opened_tutorial;
+                    ctx.game.campaign_tutorial = self.opened_tutorial;
                 }
                 ctx.audio.menu(MenuSound::Cancel);
                 (Transition::Pop, true)
@@ -829,20 +831,29 @@ impl OptionsScreen {
 fn step_setting(s: &mut Settings, row: Row, cursors: &[CursorStyle], forward: bool, wrap: bool) {
     match row {
         Row::TextSpeed => s.text_speed = stepped(&TextSpeed::ALL, s.text_speed, forward, wrap),
-        Row::AnimSpeed => s.anim_speed = stepped(&AnimSpeed::ALL, s.anim_speed, forward, wrap),
+        Row::AnimSpeed => {
+            s.game.anim_speed = stepped(&AnimSpeed::ALL, s.game.anim_speed, forward, wrap);
+        }
         Row::EnemyPhaseSpeed => {
-            s.enemy_phase_speed =
-                stepped(&EnemyPhaseSpeed::ALL, s.enemy_phase_speed, forward, wrap);
+            s.game.enemy_phase_speed = stepped(
+                &EnemyPhaseSpeed::ALL,
+                s.game.enemy_phase_speed,
+                forward,
+                wrap,
+            );
         }
         // On/off rows read `Off  On` left to right.
         Row::CombatAnimations => {
-            s.combat_animations = stepped(&[false, true], s.combat_animations, forward, wrap);
+            s.game.combat_animations =
+                stepped(&[false, true], s.game.combat_animations, forward, wrap);
         }
-        Row::AutoEnd => s.auto_end_turn = stepped(&[false, true], s.auto_end_turn, forward, wrap),
+        Row::AutoEnd => {
+            s.game.auto_end_turn = stepped(&[false, true], s.game.auto_end_turn, forward, wrap);
+        }
         Row::Fullscreen => s.fullscreen = stepped(&[false, true], s.fullscreen, forward, wrap),
-        Row::Cursor => s.cursor_style = stepped(cursors, s.cursor_style, forward, wrap),
-        Row::MapLook => s.map_look = stepped(&MapLook::ALL, s.map_look, forward, wrap),
-        Row::MapZoom => s.map_zoom = stepped(&MapZoom::ALL, s.map_zoom, forward, wrap),
+        Row::Cursor => s.game.cursor_style = stepped(cursors, s.game.cursor_style, forward, wrap),
+        Row::MapLook => s.game.map_look = stepped(&MapLook::ALL, s.game.map_look, forward, wrap),
+        Row::MapZoom => s.game.map_zoom = stepped(&MapZoom::ALL, s.game.map_zoom, forward, wrap),
         Row::Theme => s.theme = stepped(&Theme::ALL, s.theme, forward, wrap),
         Row::MusicVolume => s.music_volume = stepped_volume(s.music_volume, forward),
         Row::SoundVolume => s.sound_volume = stepped_volume(s.sound_volume, forward),
@@ -861,7 +872,7 @@ impl Default for OptionsScreen {
     }
 }
 
-impl Screen for OptionsScreen {
+impl Screen<Shuyi> for OptionsScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -869,7 +880,7 @@ impl Screen for OptionsScreen {
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         if self.opened_with.is_none() {
             self.opened_with = Some(ctx.settings().clone());
-            self.opened_tutorial = ctx.campaign_tutorial;
+            self.opened_tutorial = ctx.game.campaign_tutorial;
         }
         if self.typing.is_some() {
             // The game's keys do nothing while the box is open.
