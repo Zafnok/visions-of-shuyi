@@ -876,3 +876,47 @@ proptest! {
         prop_assert_eq!(Ok(total), usize::try_from(expected));
     }
 }
+
+#[test]
+fn a_frame_holds_what_the_player_did_this_frame() {
+    let held = FrameInput::new(vec![Confirm], 0.016, vec![Confirm, CursorUp]);
+    assert_eq!(held.actions, [Confirm]);
+    assert!(held.is_held(Confirm) && held.is_held(CursorUp));
+    assert!(!held.is_held(Info));
+    assert!(!held.pad_pressed());
+    assert_eq!(held.pressed_chords(), []);
+    assert_eq!(held.text(), []);
+    assert_eq!(held.pressed_buttons(), []);
+    assert_eq!(held.released_buttons(), []);
+
+    let typed = held.with_typing(vec![chord("h"), chord("Shift+h")], vec!['h', 'H']);
+    assert_eq!(typed.pressed_chords(), [chord("h"), chord("Shift+h")]);
+    assert_eq!(typed.text(), ['h', 'H']);
+
+    let pad = typed.with_buttons(vec![Button::South, Button::DpadUp], vec![Button::East]);
+    assert!(pad.pad_pressed());
+    assert_eq!(pad.pressed_buttons(), [Button::South, Button::DpadUp]);
+    assert_eq!(pad.released_buttons(), [Button::East]);
+    // Only buttons going down count as being on a controller.
+    let released =
+        FrameInput::<Action>::new(vec![], 0.0, vec![]).with_buttons(vec![], vec![Button::East]);
+    assert!(!released.pad_pressed());
+    assert!(!pad.clone().with_pad(false).pad_pressed());
+    assert!(
+        FrameInput::<Action>::new(vec![], 0.0, vec![])
+            .with_pad(true)
+            .pad_pressed()
+    );
+}
+
+#[test]
+fn the_game_can_start_on_a_pad_and_mark_the_keyboard_used() {
+    let pad = Device::Pad(PadKind::Playdate);
+    let mut s = default_state().starting_on(pad);
+    assert_eq!(s.device(), pad);
+    s.keyboard_used();
+    assert_eq!(s.device(), Device::Keyboard);
+    // Nothing else happens: no action, nothing held.
+    assert!(s.update(0.0).is_empty());
+    assert_eq!(default_state().device(), Device::Keyboard);
+}
