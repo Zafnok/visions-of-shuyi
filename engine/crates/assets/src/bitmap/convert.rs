@@ -213,8 +213,10 @@ impl Art {
     )] // small pictures
     fn bilinear(&self, x: usize, y: usize, width: usize, height: usize) -> (f32, f32) {
         let axis = |t: usize, to: usize, from: usize| {
+            // The centre of the last pixel is half a pixel inside the art,
+            // so `low` is always one of its pixels.
             let f = ((t as f32 + 0.5) * from as f32 / to as f32 - 0.5).max(0.0);
-            let low = (f.floor() as usize).min(from - 1);
+            let low = f.floor() as usize;
             (low, (low + 1).min(from - 1), f - f.floor())
         };
         let (x0, x1, wx) = axis(x, width, self.width);
