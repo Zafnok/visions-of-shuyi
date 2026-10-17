@@ -1,4 +1,4 @@
-# ADR-0079: Screens, the context and the frame loop are the engine's, generic over the game
+# ADR-0080: Screens, the context and the frame loop are the engine's, generic over the game
 
 - **Status:** Accepted
 - **Date:** 2026-10-17

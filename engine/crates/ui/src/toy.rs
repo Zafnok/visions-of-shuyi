@@ -139,9 +139,10 @@ impl GameSettings for Prefs {
 }
 
 /// The toy's English text.
-const ENGLISH: [(&str, &str); 8] = [
+const ENGLISH: [(&str, &str); 9] = [
     ("keys.not_mapped", "! not mapped"),
     ("keys.arrows", "arrows"),
+    ("keys.chord_join", "+"),
     ("profile.numbered", "Player {n}"),
     (
         "home.help",

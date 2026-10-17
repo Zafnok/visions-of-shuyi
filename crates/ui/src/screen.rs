@@ -302,6 +302,11 @@ pub trait ShuyiCtx: Sized {
     /// it can zoom (ticket 0439): the zoom is kept from one skin to the
     /// next.
     fn set_map_skin(&mut self, skin: Rc<dyn MapSkin>);
+
+    /// Makes the keymap file's `playdate` table the default buttons (ticket
+    /// 1034), for the Playdate front end, before the player's bindings are
+    /// loaded: its pad is the only one there is.
+    fn use_playdate_buttons(&mut self);
 }
 
 impl ShuyiCtx for Ctx {
@@ -324,6 +329,12 @@ impl ShuyiCtx for Ctx {
     fn set_map_skin(&mut self, skin: Rc<dyn MapSkin>) {
         let zoom = self.settings().game.map_zoom;
         self.game.map_skin = skin.at_zoom(zoom).unwrap_or(skin);
+    }
+
+    fn use_playdate_buttons(&mut self) {
+        let def = core::mem::take(&mut self.game.content.keymap);
+        self.game.content.keymap = def.for_playdate();
+        self.refresh_keymap();
     }
 }
 

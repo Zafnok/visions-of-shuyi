@@ -18,7 +18,7 @@ use crate::audio::{AudioRequest, MusicClock, MusicCommand, MusicState};
 use crate::ctx::{Ctx, GameData, KeyPrompt, Keyboard};
 use crate::frame::glyph_buffer::GlyphBuffer;
 use crate::input::pad::{PadId, PadKind, PadState, Pads};
-use crate::input::state::InputState;
+use crate::input::state::{Device, InputState};
 use crate::screen::{FrameInput, Screen, ScreenStack};
 
 /// A keyboard or controller event as the platform reports it.
@@ -259,7 +259,8 @@ impl<G: GameData> Game<G> {
         for &event in events {
             // Any key or any controller button ends the wait for one.
             let press = matches!(event, RawInputEvent::Down(_) | RawInputEvent::PadDown(..));
-            if press && self.ctx.key_prompt == KeyPrompt::Waiting {
+            let ends_wait = press && self.ctx.key_prompt == KeyPrompt::Waiting;
+            if ends_wait {
                 self.ctx.key_prompt = KeyPrompt::Pressed;
             }
             match event {
@@ -275,6 +276,11 @@ impl<G: GameData> Game<G> {
                 RawInputEvent::Text(_) => {}
                 RawInputEvent::PadDown(button, kind) => {
                     self.input.pad_down(button, kind);
+                    if ends_wait {
+                        // The wait takes it: nothing when let go either
+                        // (a chord button's action).
+                        self.input.pad_taken(button);
+                    }
                     buttons_down.push(button);
                 }
                 RawInputEvent::PadUp(button) => {
@@ -307,9 +313,14 @@ impl<G: GameData> Game<G> {
         if let Some(hook) = debug {
             self.stack.push((hook.open)(&self.ctx));
         } else {
+            // A chord button gives its own action when let go or after the
+            // chord window: that is pad input too.
+            let from_pad = !buttons_down.is_empty()
+                || (!actions.is_empty() && matches!(self.ctx.device, Device::Pad(_)));
             let input = FrameInput::new(actions, dt, held)
                 .with_typing(pressed, text)
-                .with_buttons(buttons_down, buttons_up);
+                .with_buttons(buttons_down, buttons_up)
+                .with_pad(from_pad);
             self.quit = self.stack.update(&mut self.ctx, &input);
             self.sync_keymap();
         }

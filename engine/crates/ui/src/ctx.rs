@@ -42,6 +42,10 @@ pub const NOT_MAPPED_TEXT: &str = "keys.not_mapped";
 /// ([`ARROWS`](crate::input::help_keys::ARROWS)).
 pub const ARROWS_TEXT: &str = "keys.arrows";
 
+/// The text key of what joins a button chord's two buttons in help text
+/// (`A+B`).
+pub const CHORD_JOIN_TEXT: &str = "keys.chord_join";
+
 /// The text key of a profile's name when the player hasn't named it:
 /// `Player {n}`, made on a first launch.
 pub const PROFILE_NUMBERED_TEXT: &str = "profile.numbered";
@@ -378,7 +382,10 @@ impl<G: GameData> Ctx<G> {
     pub fn help_keys(&self) -> HelpKeys<'_, G::Action> {
         let not_mapped = self.text(NOT_MAPPED_TEXT);
         let arrows = self.text(ARROWS_TEXT);
-        HelpKeys::new(&self.keymap, self.device).worded(not_mapped, arrows)
+        let join = self.text(CHORD_JOIN_TEXT);
+        HelpKeys::new(&self.keymap, self.device)
+            .worded(not_mapped, arrows)
+            .chord_joined(join)
     }
 
     /// A music cue picked at random from the audio manifest's `pool`
@@ -470,8 +477,9 @@ impl<G: GameData> Ctx<G> {
 
     /// Rebuilds [`keymap`](Self::keymap) from the layout in use (the
     /// layout picker's keys while there is none) and the player's
-    /// bindings.
-    fn refresh_keymap(&mut self) {
+    /// bindings: also after the game changed its keymap file
+    /// ([`GameData::keymap_def`]), such as a console's own buttons.
+    pub fn refresh_keymap(&mut self) {
         self.keymap = match self.layout {
             Some(layout) => self.keymap_for(layout),
             None => self

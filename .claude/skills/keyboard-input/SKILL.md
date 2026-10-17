@@ -72,6 +72,19 @@ input::{keymap,state}    Keymap + InputState: Button → Action     (engine; sam
 input::pad               PadKind::button_name: the only table of button names
 ```
 
+**Button chords and the Playdate** (ticket 1034, ADR-0079): a pad binding
+may be two buttons together, `"South+East"` (a `ButtonChord`; a plain
+`Button` converts into one). The Playdate uses `keymap.ron`'s `playdate`
+table instead of `pad` (`Ctx::use_playdate_buttons`, called by its front
+end): A + B ends the turn, hold B + left / right picks a unit. A chord
+button holds back its own action until its partner comes (B until it is
+let go, A for the `chord` window), so on the Playdate Confirm and Cancel
+can come in a frame with no button going down: never assume an action
+arrives in the frame its button went down (`pad_pressed()` already
+covers it). Help text names a chord through the keymap like a button
+(`A+B`, joined by the language's `keys.chord_join`). In harness scripts
+`h.pad("South+East")` presses both in one frame.
+
 `Button::` may be named only where `Key::` may, plus
 `crates/app/src/pads.rs` and `crates/app/src/pads/` (`check-keys` enforces
 it). In code and data buttons are named by position (`South`, not "A").

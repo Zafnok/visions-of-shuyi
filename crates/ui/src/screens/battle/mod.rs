@@ -682,10 +682,11 @@ impl BattleScreen {
 
     /// Gives `action` to the tip or the battle notes box on screen, if any:
     /// each takes the keys until it is closed (a tip by Confirm or Cancel,
-    /// the notes by Confirm). Returns whether one took it.
+    /// once it has been drawn, 0467; the notes by Confirm). Returns whether
+    /// one took it.
     fn overlay_key(&mut self, action: Action) -> bool {
         if let Some(tip) = self.shown_tip() {
-            if matches!(action, Action::Confirm | Action::Cancel) {
+            if matches!(action, Action::Confirm | Action::Cancel) && self.tips.on_screen(tip) {
                 self.tips.dismiss(tip);
             }
             return true;
@@ -2501,13 +2502,11 @@ fn rewind_help(r: &RewindScreen, ctx: &Ctx) -> String {
     ctx.text_with(key, &[])
 }
 
-impl Screen<Shuyi> for BattleScreen {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+impl BattleScreen {
+    /// [`Screen::update`]'s frame, before its tip is noted as shown.
+    fn update_frame(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         // Updated, so on top again: any scene it started is closed.
+
         self.tips.set_under_scene(false);
         self.begin_frame(ctx, input.dt);
         // A banner already up (a battle decided at its start).
@@ -2611,6 +2610,20 @@ impl Screen<Shuyi> for BattleScreen {
             self.lessons.mark_open();
         }
         Transition::None
+    }
+}
+
+impl Screen<Shuyi> for BattleScreen {
+    fn name(&self) -> &'static str {
+        Self::NAME
+    }
+
+    fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        let transition = self.update_frame(ctx, input);
+        // Still on screen: its tip, if any, is seen (0467).
+        let shown = matches!(transition, Transition::None).then(|| self.shown_tip());
+        self.tips.show(shown.flatten(), ctx);
+        transition
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

@@ -80,8 +80,9 @@ pub use font::FontAtlasDef;
 pub use image::{ImageId, ImageInfo, ImageTable};
 pub use ink::Ink;
 pub use keymap::{
-    Action, ActionSet, Bindings, Button, Chord, Key, KeyGroup, KeymapDef, LEFT_HANDED, Layout,
-    LayoutKeys, PadKeys, RIGHT_HANDED, RepeatDef, SLOTS, StickDef, UiAction, load_keymap,
+    Action, ActionSet, Bindings, Button, ButtonChord, Chord, ChordDef, Key, KeyGroup, KeymapDef,
+    LEFT_HANDED, Layout, LayoutKeys, PadKeys, RIGHT_HANDED, RepeatDef, SLOTS, StickDef, UiAction,
+    load_keymap,
 };
 pub use lang::{
     Lang, LangCode, LangInfo, LangPack, LangStatus, LineEntry, LineText, MadeBy, Orphan,

@@ -46,7 +46,7 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    `Ctx::embedded` calls `trpg_content::load_embedded` (`:448`).
    **Fix:** `Ctx<G>`, which holds the engine services and a `game: G`.
    **Done (1109):** `shuyi_ui::Ctx<G: GameData>`; the game's part is
-   `trpg_ui::screen::Shuyi` and `Ctx` its alias (ADR-0079).
+   `trpg_ui::screen::Shuyi` and `Ctx` its alias (ADR-0080).
 3. **`Game` builds this game's screens** (`ui/src/game.rs`). `start()` builds
    `TitleScreen` (`:103-118`) and `start_on_scene` opens a dialogue
    (`:128-170`). `Game` itself opens the layout picker (`:257,:304`) and the

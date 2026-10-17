@@ -471,6 +471,48 @@ mod tests {
         assert!(!seen[1].is_held(Action::Confirm));
     }
 
+    /// Ticket 1034: on the Playdate's buttons A's Confirm comes when it is
+    /// let go (or after the chord window), with no button going down that
+    /// frame: screens still see it as pad input (a letter grid, not a
+    /// typing box).
+    #[test]
+    fn a_chord_buttons_late_action_is_pad_input() {
+        let seen = std::rc::Rc::default();
+        let mut ctx = ctx();
+        ctx.use_playdate_buttons();
+        let mut game = new(ctx, Box::new(Spy(std::rc::Rc::clone(&seen))));
+        let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
+        game.frame(&[down(Button::South)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        game.frame(&[], 0.0);
+        // A key afterwards is keyboard input again.
+        game.frame(&[RawInputEvent::Down(Chord::plain(Key::F))], 0.0);
+        let seen = seen.borrow();
+        assert!(seen[0].actions.is_empty() && seen[0].pad_pressed());
+        assert_eq!(seen[1].actions, [Action::Confirm]);
+        assert!(seen[1].pad_pressed(), "Confirm, let go");
+        assert!(!seen[2].pad_pressed(), "nothing");
+        assert!(!seen[3].pad_pressed(), "a key");
+    }
+
+    /// The button that ends the title's wait does nothing else, also when
+    /// a chord makes its action wait until it is let go (ticket 1034).
+    #[test]
+    fn the_button_that_ends_the_wait_gives_nothing_when_let_go() {
+        let mut ctx = waiting(ctx());
+        ctx.use_playdate_buttons();
+        let mut game = start(ctx);
+        let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
+        game.frame(&[down(Button::South)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        game.frame(&[], 1.0);
+        assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
+        assert_eq!(game.screens(), ["title"]);
+        game.frame(&[down(Button::South)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        assert_eq!(game.screens(), ["title", "mode_select"]);
+    }
+
     /// Any controller button ends the title's wait too, bound or not;
     /// releases don't.
     #[test]

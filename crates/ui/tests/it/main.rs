@@ -6,6 +6,7 @@
 
 mod battle;
 mod ch01_lessons;
+mod ch01_tips;
 mod ch01_winnable;
 mod cinematic;
 mod class_change;

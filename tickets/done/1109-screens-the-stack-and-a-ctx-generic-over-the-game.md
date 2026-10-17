@@ -89,7 +89,7 @@ keeps its default `std` feature and stays in the `no-std` CI build, and
   `text` (`{name}` filling). `storage`, `profiles` and `audio` moved there
   with `git mv`, because `Ctx` holds them: `AudioRequest<V>` and
   `AudioQueue<V>` take the game's voice variant, `profiles::load` the keys
-  a game kept before it had profiles. ADR-0079 records the design.
+  a game kept before it had profiles. ADR-0080 records the design.
 - **`GameData`** is what the engine reads from the game's part: its
   action, color, voice and settings types, the text, keymap file, audio
   manifest, palette, console and theme palettes, and hooks with defaults

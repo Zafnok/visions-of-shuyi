@@ -12,7 +12,7 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | `cinema` | `view`: where a backdrop's window starts to look at a point at a zoom, stopping at the scene's edges (ADR-0048) |
 | `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks), the `GlyphSkin` and the `SpriteSkin` (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins), `path` (the path arrow for any tile size) and `threat` (the arrows from the enemies that could attack a tile, and the mark over each: ticket 0448). See *Map view* below |
 | `input` | `Action`s, `Layout`, `Keymap`, `InputState` (key repeat) |
-| `screen` | Shuyi Engine's `Screen` trait, `Transition`, `FrameInput`, `ScreenStack` and `Ctx` (`shuyi_ui`, ADR-0079) with this game's part, `Shuyi` (`ctx.game`: the content, the campaign's mode, tutorial level and lessons, the map skin, the lead), the aliases screens are written with (`Ctx`, `FrameInput`, `Transition`) and `ShuyiCtx` (`Ctx::embedded()`, `ctx.words()`, `ctx.set_map_skin(…)`) |
+| `screen` | Shuyi Engine's `Screen` trait, `Transition`, `FrameInput`, `ScreenStack` and `Ctx` (`shuyi_ui`, ADR-0080) with this game's part, `Shuyi` (`ctx.game`: the content, the campaign's mode, tutorial level and lessons, the map skin, the lead), the aliases screens are written with (`Ctx`, `FrameInput`, `Transition`) and `ShuyiCtx` (`Ctx::embedded()`, `ctx.words()`, `ctx.set_map_skin(…)`) |
 | `settings` | `Settings`: every player preference, saved as one RON record (ADR-0050): the engine's (text speed, fullscreen, theme, volumes, the layout picked) and this game's in `settings.game` (`ShuyiSettings`: speeds, combat animations, auto-end, cursor, map look and zoom). Read with `ctx.settings()`, changed with `ctx.change_settings(…)`, which saves, or (Options, ADR-0072) `ctx.preview_settings(…)` then `keep_settings` / `restore_settings` |
 | `game` | `Game` (the engine's frame loop: owns the stack, input state, `Ctx`, buffer and music state; `frame(events, dt)`), and how this game starts it: `game::start(ctx)`, `game::start_on_scene(…)`, `game::new(ctx, root)`, with its `hooks()` (the layout picker, the debug menu) |
 | `audio` | The engine's `AudioRequest`, the `AudioQueue` screens push to (`ctx.audio`), `MusicState` (which track plays, fades) and its `MusicCommand`s (ADR-0026), `MusicClock` (how far into its track the music is, ADR-0037); this game's `MenuSound`s (`ctx.audio.menu(…)`, `MenuSounds`). Voice clips (ADR-0046) are asked for through `ctx.play_voice(&line_id)`, `ctx.stop_voice()` and `ctx.preload_voices(&line_ids)` |
@@ -142,7 +142,14 @@ buf.fill_rect(text_box, Cell::new(' ', text, panel_bg));   // a solid box
    raw key presses also go into `FrameInput::pressed_chords()`, which text
    boxes and the Key bindings screen read (to capture a key for a slot;
    `pressed_buttons` / `released_buttons` are the same for a controller
-   button, ADR-0053).
+   button, ADR-0053). **Button chords** (ADR-0079, ticket 1034; the
+   Playdate's `A+B`, `B+←`, `B+→`): a button in a chord whose own action
+   doesn't repeat holds it back until its partner comes (B until let go,
+   since its partners the D-pad act on press; A for the `chord` window of
+   `keymap.ron`, 80 ms, or until let go), and the chord fires instead when
+   the partner goes down in time. So a pad action may come in a frame
+   with no button going down; `pad_pressed()` still says it came from a
+   pad. The rules are in the engine's `input::state` module docs.
 3. Only the **top** screen's `update(ctx, input)` runs. It returns a
    `Transition`: `None`, `Push(screen)`, `Pop`, `Replace(screen)` or `Quit`.
    Popping the last screen also quits.
@@ -459,6 +466,9 @@ fn select_opens_new_game() {
 - `keys("Down Down f")`: whitespace-separated chords as written in
   `keymap.ron` (`f`, `Left`, `Shift+Space`, `Enter`, `F2`). Each is pressed
   in one frame and released in the next; frames are `FRAME_DT` (1/60 s).
+- `pad("DpadDown South")`: the same for controller buttons;
+  `pad("South+East")` presses both in one frame (a button chord) and
+  lets both go in the next.
 - `hold("Right", 0.5)`: holds a key for 0.5 simulated seconds (so it
   repeats), then releases it. `wait(0.2)`: time passes with no input. One
   call runs at most `MAX_FRAMES` (2 000, ~33 s); longer ones panic.

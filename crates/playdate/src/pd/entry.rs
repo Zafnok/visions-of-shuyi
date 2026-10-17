@@ -154,6 +154,9 @@ fn start_game() -> Result<Box<Running>, String> {
     ctx.console = ConsoleSpec::PLAYDATE;
     ctx.keyboard = Keyboard::Absent;
     ctx.device = Device::Pad(PadKind::Playdate);
+    // Its own buttons (A + B and the B chords), before the player's are
+    // loaded with the storage.
+    ctx.use_playdate_buttons();
     // The debug tools are made of the test files, which a build without
     // `std` does not have (ADR-0057).
     ctx.debug_tools = false;
