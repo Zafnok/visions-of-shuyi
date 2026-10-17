@@ -38,3 +38,6 @@ png = { version = "0.18", optional = true }
 
 [dev-dependencies]
 proptest.workspace = true
+# Its own tests read PNGs too (`bitmap::convert::png_pixels`), whatever
+# features the test run turns on.
+shuyi-assets = { path = ".", features = ["png"] }

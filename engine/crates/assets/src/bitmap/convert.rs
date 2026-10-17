@@ -171,7 +171,7 @@ impl Art {
     /// The art pixel nearest the centre of enlarged pixel `t` of a side
     /// `to` long, the art's side being `from`.
     fn nearest(t: usize, from: usize, to: usize) -> usize {
-        ((2 * t + 1) * from / (2 * to)).min(from - 1)
+        (2 * t + 1) * from / (2 * to)
     }
 
     /// The art enlarged to `size`: by doubling pixels if `whole`, else by
@@ -204,7 +204,8 @@ impl Art {
 
     /// Enlarged pixel `(x, y)` of a `width` × `height` picture, sampled
     /// between the four art pixels around its centre: its brightness
-    /// (white if all four are see-through) and opacity.
+    /// and opacity. Where all four are see-through its brightness is 0
+    /// (it is never drawn).
     #[allow(
         clippy::cast_precision_loss,
         clippy::cast_possible_truncation,
@@ -228,8 +229,7 @@ impl Art {
             lit += self.light[i] * self.alpha[i] * w;
             alpha += self.alpha[i] * w;
         }
-        let light = if alpha > 0.0 { lit / alpha } else { 1.0 };
-        (light, alpha)
+        (lit / alpha.max(f32::MIN_POSITIVE), alpha)
     }
 
     /// Which art pixels are dark lines (see [`Lines`]).
@@ -300,10 +300,8 @@ impl Grey {
 /// One style of `grey` (the enlarged `art`) made by `method`.
 fn style(art: &Art, grey: &Grey, method: &Method) -> Vec<u8> {
     let mut light: Vec<f32> = grey.light.clone();
-    if (method.curve - 1.0).abs() > f32::EPSILON {
-        for l in &mut light {
-            *l = l.max(0.0).powf(method.curve);
-        }
+    for l in &mut light {
+        *l = l.powf(method.curve);
     }
     stretch(&mut light, &grey.opaque, method.stretch);
     if method.levels >= 2 {
@@ -364,7 +362,9 @@ fn stretch(light: &mut [f32], opaque: &[bool], share: f32) {
 #[cfg(feature = "png")]
 pub fn png_pixels(bytes: &[u8]) -> Result<(u32, u32, Vec<u8>), String> {
     let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
-    decoder.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
+    let mut wanted = png::Transformations::EXPAND;
+    wanted.insert(png::Transformations::STRIP_16);
+    decoder.set_transformations(wanted);
     let mut reader = decoder.read_info().map_err(|e| e.to_string())?;
     let size = reader
         .output_buffer_size()
@@ -655,5 +655,152 @@ mod tests {
         // A side never rounds to nothing.
         let f = convert(&image, (1, 4), &[PLAIN]).unwrap();
         assert_eq!(Bitmap::parse(&f).unwrap().width(), 1);
+    }
+
+    /// Art of opaque greys, each a brightness 0 to 1 already.
+    fn art(width: usize, light: &[f32]) -> Art {
+        Art {
+            width,
+            height: light.len() / width,
+            light: light.to_vec(),
+            alpha: vec![1.0; light.len()],
+        }
+    }
+
+    fn close(a: f32, b: f32) -> bool {
+        (a - b).abs() < 1e-5
+    }
+
+    #[test]
+    fn the_resample_weighs_the_four_pixels_around_each_centre() {
+        // 2 × 2 art enlarged to 5 × 5: column 1's centre falls a tenth of
+        // the way from art column 0 to 1, row 3's nine tenths.
+        let a = art(2, &[0.0, 1.0, 0.5, 0.25]);
+        let (light, alpha) = a.bilinear(1, 3, 5, 5);
+        let expected = 0.9 * 0.1 * 0.0 + 0.1 * 0.1 * 1.0 + 0.9 * 0.9 * 0.5 + 0.1 * 0.9 * 0.25;
+        assert!(close(light, expected), "{light}");
+        assert!(close(alpha, 1.0));
+        let (light, _) = a.bilinear(3, 1, 5, 5);
+        let expected = 0.1 * 0.9 * 0.0 + 0.9 * 0.9 * 1.0 + 0.1 * 0.1 * 0.5 + 0.9 * 0.1 * 0.25;
+        assert!(close(light, expected), "{light}");
+        // The edges hold the art's edge pixels.
+        assert!(close(a.bilinear(0, 0, 5, 5).0, 0.0));
+        assert!(close(a.bilinear(4, 4, 5, 5).0, 0.25));
+        // A half see-through neighbour: half the opacity, the opaque
+        // pixel's brightness.
+        let mut half = art(2, &[0.6, 0.0]);
+        half.alpha = vec![1.0, 0.0];
+        let (light, alpha) = half.bilinear(1, 0, 4, 1);
+        assert!(close(alpha, 0.75), "{alpha}");
+        assert!(close(light, 0.6), "{light}");
+        let (light, alpha) = half.bilinear(2, 0, 4, 1);
+        assert!(close(alpha, 0.25), "{alpha}");
+        assert!(close(light, 0.6), "{light}");
+    }
+
+    #[test]
+    fn a_pixel_less_than_half_opaque_is_see_through() {
+        let f = file(
+            2,
+            &[[255, 255, 255, 100], [255, 255, 255, 160]],
+            (1, 1),
+            &[PLAIN],
+        );
+        assert_eq!(rows(&f, 0), [" ."]);
+    }
+
+    #[test]
+    fn each_of_the_eight_neighbours_can_make_a_line() {
+        let lined = Method {
+            lines: Some(Lines {
+                contrast: 0.3,
+                dark: 0.15,
+            }),
+            ..PLAIN
+        };
+        // A middle grey centre (white undithered at its place) is a line
+        // when any one neighbour is white.
+        for n in [0, 1, 2, 3, 5, 6, 7, 8] {
+            let mut pixels = [grey(128); 9];
+            pixels[n] = grey(255);
+            let f = file(3, &pixels, (1, 1), &[PLAIN, lined]);
+            assert_eq!(rows(&f, 0)[1].chars().nth(1), Some('.'), "neighbour {n}");
+            assert_eq!(rows(&f, 1)[1].chars().nth(1), Some('#'), "neighbour {n}");
+        }
+    }
+
+    #[test]
+    fn lines_land_on_the_nearest_art_pixel_when_resampled() {
+        let lined = Method {
+            lines: Some(Lines {
+                contrast: 0.3,
+                dark: 0.15,
+            }),
+            ..PLAIN
+        };
+        // Four white columns but the third, a grey line, enlarged to five:
+        // the line covers the screen columns whose centres are in art
+        // column 2, the third and fourth of five.
+        let pixels = [grey(255), grey(255), grey(150), grey(255)];
+        let f = file(4, &pixels, (5, 4), &[lined]);
+        assert_eq!(rows(&f, 0), ["..##."]);
+        assert_eq!(Art::nearest(2, 4, 5), 2);
+        assert_eq!(Art::nearest(4, 4, 5), 3);
+        assert_eq!(Art::nearest(5, 3, 6), 2);
+    }
+
+    #[test]
+    fn rows_wider_than_a_byte_are_packed_in_order() {
+        // 5 × 2 art doubled: rows of 10 pixels, 2 bytes each.
+        let (b, w) = (grey(0), grey(255));
+        let f = file(5, &[w, b, w, b, b, b, b, b, b, w], (2, 1), &[PLAIN]);
+        assert_eq!(
+            rows(&f, 0),
+            ["..##..####", "..##..####", "########..", "########.."]
+        );
+        let bitmap = Bitmap::parse(&f).unwrap();
+        assert_eq!(
+            bitmap.style(0),
+            Some(
+                &[
+                    0b1100_1100,
+                    0b0000_0000,
+                    0b1100_1100,
+                    0,
+                    0,
+                    0b1100_0000,
+                    0,
+                    0b1100_0000
+                ][..]
+            )
+        );
+    }
+
+    #[test]
+    fn the_stretch_takes_the_share_from_each_end() {
+        let mut light: Vec<f32> = (0..100u8).map(|i| f32::from(i) / 100.0).collect();
+        let opaque = vec![true; 100];
+        stretch(&mut light, &opaque, 0.03);
+        // The 4th darkest (0.03) is black, the 4th lightest (0.96) white.
+        assert!(close(light[3], 0.0) && close(light[2], 0.0));
+        assert!(close(light[96], 1.0) && close(light[99], 1.0));
+        assert!(close(light[95], 0.92 / 0.93), "{}", light[95]);
+        assert!(close(light[50], 0.47 / 0.93), "{}", light[50]);
+        // See-through pixels don't count.
+        let mut light = vec![0.0, 0.4, 0.6, 1.0];
+        stretch(&mut light, &[false, true, true, false], 0.03);
+        assert!(close(light[1], 0.0) && close(light[2], 1.0));
+    }
+
+    #[test]
+    fn a_grey_exactly_on_a_rank_is_black_there() {
+        // 33 levels: 135 / 255 rounds to 17 / 32, and 16 × 17 / 32 is 8.5,
+        // the second pixel's rank (8) plus a half.
+        let rounded = Method {
+            levels: 33,
+            ..PLAIN
+        };
+        let f = file(1, &[grey(135)], (4, 1), &[rounded]);
+        assert_eq!(rows(&f, 0), [".#.#", "#.#.", ".#.#", "#.#."]);
     }
 }

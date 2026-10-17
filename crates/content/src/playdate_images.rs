@@ -288,6 +288,15 @@ mod tests {
         assert!(STYLE_A_LINES.lines.is_some());
         assert_eq!((STYLE_F_LINES.levels, STYLE_G.levels), (5, 4));
         assert_eq!(STYLE_G.lines, STYLE_A_LINES.lines);
+        // Backdrops: style A on a lighter picture.
+        assert_eq!(
+            BACKDROP,
+            Method {
+                curve: 0.8,
+                ..STYLE_A
+            }
+        );
+        assert_ne!(BACKDROP, STYLE_A);
     }
 
     #[test]

@@ -989,6 +989,7 @@ dependencies = [
  "proptest",
  "ron",
  "serde",
+ "shuyi-assets",
  "shuyi-core",
  "thiserror",
 ]

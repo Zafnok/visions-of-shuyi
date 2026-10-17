@@ -89,6 +89,7 @@ mod tests {
             (table, pictures)
         });
         assert!(pictures.len() >= 20, "{}", pictures.len());
+        assert!(!pictures.is_empty());
         // A portrait: 64 × 64 for a 32 × 32 image, in four styles.
         let face = "portraits/lead_f/happy.png";
         let a = image(&table, &pictures, face).unwrap();

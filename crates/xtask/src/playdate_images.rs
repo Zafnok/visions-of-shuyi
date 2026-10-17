@@ -223,6 +223,13 @@ mod tests {
         assert!(!out.join("title/logo.1bit").exists());
         let pictures = Pictures::of_the_bundle().unwrap();
         assert_eq!(pictures.0.get("portraits/lead_f/happy.png"), Some(&face));
+        // The renderer finds it by its image id, in style A.
+        let table = trpg_content::image::load().unwrap();
+        let id = table.id("portraits/lead_f/happy.png").unwrap();
+        assert_eq!(pictures.image(id), Image::from_bitmap(&bitmap, 0));
+        assert!(pictures.image(id).is_some());
+        let logo = table.id("title/logo.png").unwrap();
+        assert_eq!(pictures.image(logo), None);
         let _ = fs::remove_dir_all(&out);
     }
 

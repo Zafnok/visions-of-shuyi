@@ -230,6 +230,16 @@ mod tests {
     }
 
     #[test]
+    fn sizes_past_255_read_both_bytes() {
+        let plane = vec![0u8; Bitmap::plane_bytes(300, 1)];
+        let file = encode((300, 1), (258, 513), &[&plane], None).unwrap();
+        assert_eq!(file[8..16], [0x2c, 1, 1, 0, 2, 1, 1, 2]);
+        let bitmap = Bitmap::parse(&file).unwrap();
+        assert_eq!((bitmap.width(), bitmap.height()), (300, 1));
+        assert_eq!(bitmap.source_size(), (258, 513));
+    }
+
+    #[test]
     fn a_file_reads_back_as_written() {
         let file = sample();
         let bitmap = Bitmap::parse(&file).unwrap();
