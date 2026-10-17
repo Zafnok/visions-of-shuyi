@@ -99,8 +99,5 @@ impl TipState {
     /// Drops `trigger`'s tip from the queue.
     pub fn dismiss(&mut self, trigger: TipTrigger) {
         self.queue.retain(|&t| t != trigger);
-        if self.on_screen == Some(trigger) {
-            self.on_screen = None;
-        }
     }
 }
