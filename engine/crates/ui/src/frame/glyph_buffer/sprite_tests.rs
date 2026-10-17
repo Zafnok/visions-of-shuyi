@@ -5,10 +5,10 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use proptest::prelude::*;
-use trpg_content::{ImageInfo, ImageTable};
+use shuyi_assets::image::{ImageInfo, ImageTable};
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::frame::console::ConsoleSpec;
 
 const FG: Rgb = Rgb::new(200, 200, 200);
 const BG: Rgb = Rgb::new(0, 0, 0);
@@ -99,7 +99,7 @@ fn cells_replaced_over_a_base_take_what_stands_above_them() {
         cut(standing(0), left_half),
         [Rect::new(24, 10, 8, 6), Rect::new(24, 16, 8, 14)]
     );
-    // The copy 1 px left loses its pixel beside the tile as well.
+    // The copy 1 px left also loses its pixel beside the tile.
     assert_eq!(
         cut(standing(-1), left_half),
         [Rect::new(24, 10, 7, 6), Rect::new(24, 16, 7, 14)]
@@ -154,11 +154,14 @@ fn a_paint_colours_a_pixel_and_a_painted_sprite_is_otherwise_the_same() {
     assert_eq!(Paint::Dimmed.apply(RED), RED.dimmed());
     assert_ne!(RED.dimmed(), RED);
     // A light's own sum (ADR-0058); the plain light changes nothing.
-    let dusk = trpg_content::Light::new(0.35, [0.62, 0.56, 0.46]);
+    let dusk = shuyi_assets::lighting::Light::new(0.35, [0.62, 0.56, 0.46]);
     let shaded = Paint::Shaded(dusk).apply(RED);
     assert_eq!(shaded, dusk.apply([RED.r, RED.g, RED.b]).into());
     assert_ne!(shaded, RED);
-    assert_eq!(Paint::Shaded(trpg_content::Light::PLAIN).apply(RED), RED);
+    assert_eq!(
+        Paint::Shaded(shuyi_assets::lighting::Light::PLAIN).apply(RED),
+        RED
+    );
     let s = at(8, 8, 48, 48);
     let solid = s.painted(Paint::Solid(RED));
     assert_eq!(solid.paint, Paint::Solid(RED));
@@ -635,8 +638,8 @@ proptest! {
 /// Ticket 1030: the frame takes the console's size from a [`ConsoleSpec`].
 #[test]
 fn a_playdate_console_is_50_by_15_cells_of_400_by_240_pixels() {
-    let mut b = GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE, BLANK);
-    assert_eq!(b.spec(), ConsoleSpec::PLAYDATE);
+    let mut b = GlyphBuffer::with_spec(ConsoleSpec::text(50, 15), BLANK);
+    assert_eq!(b.spec(), ConsoleSpec::text(50, 15));
     assert_eq!((b.width(), b.height()), (50, 15));
     assert_eq!(b.bounds(), Rect::new(0, 0, 50, 15));
     assert_eq!(b.pixel_bounds(), Rect::new(0, 0, 400, 240));
@@ -652,7 +655,7 @@ fn a_playdate_console_is_50_by_15_cells_of_400_by_240_pixels() {
     assert_eq!(clips(&b), [Rect::new(392, 232, 8, 8)]);
 
     // A backdrop's window is counted in the console's cells.
-    let scene = GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE.sized(10, 4), BLANK);
+    let scene = GlyphBuffer::with_spec(ConsoleSpec::text(50, 15).sized(10, 4), BLANK);
     b.set_backdrop(Rc::new(scene), Rect::new(40, 10, 20, 20), (0.0, 0.0), 1);
     let backdrop = b.backdrop().unwrap();
     assert_eq!(backdrop.clip(), Rect::new(40, 10, 10, 5));

@@ -19,7 +19,7 @@ use super::testing::{battle_with, quick_units};
 use super::view::{ForecastView, InfoView, SkillLineView};
 use crate::FrameInput;
 use crate::color::Rgb;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
 use crate::screen::tests::ctx;

@@ -9,7 +9,7 @@ use crate::float::Float;
 use alloc::rc::Rc;
 
 use super::{GlyphBuffer, PxRect, Rect};
-use crate::console::ConsoleSpec;
+use crate::frame::console::ConsoleSpec;
 
 /// The biggest zoom: whole steps 1× to 4× only
 /// (`docs/design/title-screen.md`, *Intro cinematic*).

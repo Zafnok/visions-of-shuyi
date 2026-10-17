@@ -26,7 +26,7 @@ use super::{BattleScreen, HealPopup, PopupKind, TERRAIN_FLASH_S, TerrainFlash, q
 use crate::FrameInput;
 use crate::audio::MenuSound;
 use crate::color::{Rgb, UiColor};
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::harness::Harness;
 use crate::input::Action;

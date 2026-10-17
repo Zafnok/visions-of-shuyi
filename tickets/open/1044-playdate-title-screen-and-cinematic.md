@@ -42,7 +42,7 @@ Simulator or on his Playdate and comments.
   letters and a black shadow and rim); the Playdate bundle (1036) lists them.
 - A Playdate paint of the title view (chosen by `SkinSet`): the
   cinematic's shots framed for 400 × 240 (the cinema framing in
-  `crates/ui/src/cinema.rs` reads the console size since 1030), the
+  `engine/crates/ui/src/frame/cinema.rs` reads the console size since 1030), the
   logo, the title menu (New Game, Continue/Load, Options, …, as on the
   PC; the PC's Quit entry only if the Playdate allows quitting from a
   game, which it does through the system menu, so *Claude's starting

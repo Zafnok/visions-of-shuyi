@@ -156,7 +156,7 @@ mod tests {
     use trpg_content::ImageId;
 
     use super::*;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::screen::tests::ctx;
 
     fn draw(ctx: &Ctx) -> GlyphBuffer {

@@ -11,7 +11,7 @@ use super::testing::{battle_packed, quick_units};
 use super::{BattleScreen, HealPopup, PopupKind, TIMINGS};
 use crate::FrameInput;
 use crate::color::UiColor;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
 use crate::map_view::RangeKind;

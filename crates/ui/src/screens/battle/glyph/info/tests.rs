@@ -5,7 +5,7 @@ use trpg_core::{Faction, UnitId};
 
 use super::*;
 use crate::color::Rgb;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
 use crate::screens::battle::info;
 use crate::screens::battle::quick_battle;

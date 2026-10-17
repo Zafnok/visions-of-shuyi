@@ -8,7 +8,7 @@ use insta::assert_snapshot;
 use trpg_core::{Event, Faction, Side, UnitId};
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
 use crate::screens::battle::playback::{Playback, TIMINGS};
 

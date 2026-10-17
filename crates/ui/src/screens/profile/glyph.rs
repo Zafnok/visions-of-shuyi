@@ -190,7 +190,7 @@ fn paint_question(ctx: &Ctx, buf: &mut GlyphBuffer, question: &QuestionView) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::profiles::ProfileId;
     use crate::screen::tests::ctx;
     use crate::screens::profile::{ChoiceView, RowKind};

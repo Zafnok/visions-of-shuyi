@@ -407,7 +407,7 @@ fn texts_name_the_layout_keys() {
 /// Opaque screens must paint every cell, not rely on `Game` clearing.
 #[test]
 fn screens_cover_the_whole_buffer() {
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     let c = ctx();
     let mut naming = crate::screens::LeadSelectScreen::new();
     let typing = FrameInput::new(vec![Action::CursorDown], 0.0, vec![]);

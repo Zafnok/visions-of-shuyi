@@ -166,7 +166,7 @@ fn busy() -> GlyphBuffer {
 
 /// [`busy`], and its scene as someone else holds it.
 fn busy_sharing() -> (GlyphBuffer, Rc<GlyphBuffer>) {
-    use trpg_content::{ImageInfo, ImageTable};
+    use shuyi_assets::image::{ImageInfo, ImageTable};
     let size = ImageInfo {
         width: 16,
         height: 16,

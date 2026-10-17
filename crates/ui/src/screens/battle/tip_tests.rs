@@ -11,7 +11,7 @@ use super::banner::PHASE_BANNER_S;
 use super::testing::{battle_with, skirmish, skirmish_charged, through_ai_phases};
 use super::*;
 use crate::color::Rgb;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Cell;
 use crate::screen::tests::ctx;
 use crate::storage::Storage;

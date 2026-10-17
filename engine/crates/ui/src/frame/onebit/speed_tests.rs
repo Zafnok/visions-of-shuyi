@@ -5,11 +5,13 @@
 use alloc::rc::Rc;
 
 use proptest::prelude::*;
-use trpg_content::{FontAtlasDef, ImageId, Ink};
+use shuyi_assets::font::FontAtlasDef;
+use shuyi_assets::image::ImageId;
+use shuyi_assets::ink::Ink;
 
 use super::*;
-use crate::console::ConsoleSpec;
-use crate::glyph_buffer::{Cell, Overlay, Rect};
+use crate::frame::console::ConsoleSpec;
+use crate::frame::glyph_buffer::{Cell, Overlay, Rect};
 
 /// A font of 8 × 16 cells: `X` a block, `?` (the fallback) two corners,
 /// `[` and `]` a column at either side, `"` two dots, `#` every pixel.
@@ -53,11 +55,11 @@ const PICTURE_MASK: [u8; 4] = [u8::MAX, 0b1110_0111, 0b1100_0011, u8::MAX];
 
 /// The test picture's id.
 fn picture_id() -> ImageId {
-    let size = trpg_content::ImageInfo {
+    let size = shuyi_assets::image::ImageInfo {
         width: 8,
         height: 4,
     };
-    let table = trpg_content::ImageTable {
+    let table = shuyi_assets::image::ImageTable {
         images: [("p.png", size)].into(),
     };
     table.id("p.png").unwrap()
@@ -410,7 +412,7 @@ fn a_render_marks_each_phase_in_order() {
     let (atlas, bits) = test_font();
     let font = Font::new(&atlas, &bits).unwrap();
     let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(255, 255, 255));
-    let buf = GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE, blank);
+    let buf = GlyphBuffer::with_spec(ConsoleSpec::text(50, 15), blank);
     let mut frame = Box::new([0u8; FRAME_BYTES]);
     for slow in [false, true] {
         let mut marked = Vec::new();
@@ -482,7 +484,7 @@ fn a_new_console_size_is_drawn_whole() {
         Rgb::from(Ink::Black.code()),
         Rgb::from(Ink::Grey.code()),
     );
-    let old = GlyphBuffer::with_spec(ConsoleSpec::PLAYDATE.sized(4, 2), cell);
+    let old = GlyphBuffer::with_spec(ConsoleSpec::text(4, 2), cell);
     let small = ConsoleSpec {
         cols: 4,
         rows: 2,
@@ -492,7 +494,7 @@ fn a_new_console_size_is_drawn_whole() {
     let new = GlyphBuffer::with_spec(small, cell);
     let mut frame = fast(&old);
     render_changed(&old, &new, &font, &TestImages, &mut frame);
-    assert!(*frame == *fast(&new));
+    assert_eq!(*frame, *fast(&new));
 }
 
 /// A scene zoomed and placed away from the screen's corner: its edged
@@ -504,10 +506,8 @@ fn a_zoomed_scene_away_from_the_corner_draws_as_the_reference() {
     let edged = Rgb::from(Ink::BlackEdged.code());
     let grey = Rgb::from(Ink::Grey.code());
     for zoom in 2..=4 {
-        let mut scene = GlyphBuffer::with_spec(
-            ConsoleSpec::PLAYDATE.sized(6, 3),
-            Cell::new(' ', black, grey),
-        );
+        let mut scene =
+            GlyphBuffer::with_spec(ConsoleSpec::text(6, 3), Cell::new(' ', black, grey));
         scene.print(1, 1, "X#[", edged, grey);
         scene.print(0, 2, "]\"X", black, grey);
         for (x, paint) in [(4, Paint::Image), (20, Paint::Dimmed)] {
@@ -523,10 +523,8 @@ fn a_zoomed_scene_away_from_the_corner_draws_as_the_reference() {
                 )
             });
         }
-        let mut buf = GlyphBuffer::with_spec(
-            ConsoleSpec::PLAYDATE.sized(50, 15),
-            Cell::see_through(' ', black),
-        );
+        let mut buf =
+            GlyphBuffer::with_spec(ConsoleSpec::text(50, 15), Cell::see_through(' ', black));
         buf.set_backdrop(Rc::new(scene), Rect::new(3, 2, 40, 10), (5.0, 3.0), zoom);
         let (fast, slow) = (fast(&buf), slow(&buf));
         assert!(
@@ -604,10 +602,7 @@ fn a_cell_reaches_its_glyph_and_a_pixel_more() {
 fn a_sprite_at_the_dithers_edge_draws_as_the_reference() {
     let grey = Rgb::from(Ink::Grey.code());
     for level in [246, 247, 248] {
-        let mut buf = GlyphBuffer::with_spec(
-            ConsoleSpec::PLAYDATE.sized(4, 2),
-            Cell::new(' ', grey, grey),
-        );
+        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::text(4, 2), Cell::new(' ', grey, grey));
         buf.add_sprite(Sprite {
             opacity: level,
             brightness: level,

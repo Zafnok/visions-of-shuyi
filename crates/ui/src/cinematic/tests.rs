@@ -9,7 +9,7 @@ use trpg_content::TilePoint;
 use trpg_core::UnitId;
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::map_view::{Facing, skin_named};
 use crate::screen::tests::ctx;
 use crate::screens::title::glyph;

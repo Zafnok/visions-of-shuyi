@@ -9,7 +9,7 @@ use super::banner::{BannerKind, PHASE_BANNER_S};
 use super::testing::{battle_with, skirmish, through_ai_phases, wait};
 use super::*;
 use crate::color::Rgb;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Cell;
 use crate::map_view::RangeKind;
 use crate::screen::tests::ctx;

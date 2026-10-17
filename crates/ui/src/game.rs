@@ -409,6 +409,7 @@ fn is_known(manifest: &trpg_content::AudioManifest, request: &AudioRequest) -> b
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::console::ConsoleSizes;
     use crate::input::{LEFT_HANDED, RIGHT_HANDED};
 
     use crate::screen::tests::{ctx, ctx_with_cues};

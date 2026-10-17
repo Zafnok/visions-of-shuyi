@@ -53,7 +53,7 @@ documented in `assets/fonts/README.md`; the BDF is what is committed).
    a flag per glyph). Validation: a wide glyph's two cells fit the PNG;
    no char is both narrow and wide. The stale-atlas test passes the wide
    font too.
-4. `crates/ui/src/glyph_buffer.rs`: `print` and friends advance two cells
+4. `engine/crates/ui/src/frame/glyph_buffer.rs` (Shuyi Engine's since 1108): `print` and friends advance two cells
    for a wide char. The first cell holds the char; the second holds a
    continuation marker (a reserved `char` constant, never drawn) with the
    same colours. Overwriting either half clears the other to a space. A

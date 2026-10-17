@@ -4,9 +4,9 @@
 //! about half brightness, never off. A map skin draws it
 //! ([`crate::map_view`], ADR-0024).
 
-#[cfg(not(feature = "std"))]
-use crate::float::Float;
 use core::f32::consts::TAU;
+#[cfg(not(feature = "std"))]
+use shuyi_ui::float::Float;
 
 use trpg_core::Pos;
 

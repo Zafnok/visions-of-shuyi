@@ -186,7 +186,7 @@ fn paint_panel(ctx: &Ctx, buf: &mut GlyphBuffer, layout: &LayoutView, x: i32, y:
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::screen::tests::ctx;
     use crate::screens::layout_picker::LayoutPickerScreen;
     use crate::screens::layout_picker::view::{KeyCapView, LegendRow};

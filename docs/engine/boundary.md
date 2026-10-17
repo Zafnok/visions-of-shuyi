@@ -55,6 +55,11 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    these numbers, along with `pixel_bounds` (`glyph_buffer.rs:477`) and
    `Backdrop::clip_px`.
    **Fix:** a `ConsoleSpec` that the game passes at start-up.
+   **Done:** 1030 added `ConsoleSpec` in place; 1108 moved it to
+   `shuyi_ui::frame::console` with no sizes of its own (only
+   `ConsoleSpec::text`, 8 × 16-pixel cells). The game's two sizes are
+   `ConsoleSpec::PC` and `ConsoleSpec::PLAYDATE` through its
+   `trpg_ui::console::ConsoleSizes` trait.
 5. **The frame imports content types.** `ImageId` and `Light` come in at
    `glyph_buffer.rs:24`, and there is `Paint::Shaded(Light)` (`:172`).
    `UiColor` is a closed list that includes tactics colors
@@ -64,7 +69,12 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    **Partly done in 1104:** `ImageId`, `Light` and `PaletteDef` are
    `shuyi_assets` types (the frame still imports them through
    `trpg_content`), and the palette takes its required names from the game.
-   `UiColor` is 1108.
+   **Done in 1108:** the frame imports them from `shuyi_assets`. The
+   engine's `Palette` is built for a game's `ColorSet` (`UiColor` here) and
+   adds six `EngineColor`s for the engine's widgets (`text`, `text_dim`,
+   `panel`, `border`, `highlight`, `warning`); the game's set says which of
+   its names each one is (`panel_bg`, `panel_border`, `text_highlight`,
+   `hp_low`), so its palette files keep their names.
 6. **The map scene carries battle units.** See `UnitView`
    (`ui/src/map_view/scene.rs:131-168`). `RangeKind` is Danger, Move, Attack
    or Heal. Skins take `trpg_core::Pos` and the whole `Ctx`. Generic code
@@ -157,7 +167,8 @@ Modules that do not import `trpg_core` at all are the first set to move:
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
-| `glyph_buffer*`, `snapshot.rs`, `console.rs`, `cinema.rs`, `portrait.rs` | E | See couplings 4 and 5. |
+| `glyph_buffer*`, `snapshot.rs`, `console.rs`, `cinema.rs`, `onebit*`, `float.rs` | E → moved | 1108: `shuyi_ui::frame::{glyph_buffer, snapshot, console, cinema, onebit}` and `shuyi_ui::float`, with their tests on the engine's own palette. The game's files re-export them under their old names; `console.rs` keeps the game's sizes (`ConsoleSizes`), `snapshot.rs` and `onebit.rs` the tests on this game's palette and font. |
+| `portrait.rs` | M → cut | 1108: fitting a picture to an area of cells at a whole scale (`fit_whole_scale`, `dim_opacity`, `draw_fitted`) is `shuyi_ui::frame::portrait`. The 32 × 16-cell frame and drawing a `Portrait`'s expression stay the game's. |
 | `storage.rs`, `audio.rs` | E | `audio.rs` assumes four menu cue ids exist. Make them settings. |
 | `widgets/` | E | `help.rs` is now the game's alias of `HelpKeys` and a re-export of `shuyi_ui::input::help_keys` (1107). |
 | `input/` (`keymap`, `state`, `frame`, `bindings`, `pad`, `fixed`, `help_keys`) | E → moved | 1107: `shuyi_ui::input`, with their tests on the sample actions. `trpg-ui::input` re-exports the submodules under their old names. |
@@ -165,7 +176,8 @@ Modules that do not import `trpg_core` at all are the first set to move:
 | `input.rs` | G | 1107: what's left is the game's: the aliases with `Action`, `KEY_ROWS`, the text keys and `text_keys_help`. The fixed Esc→Cancel is `Action`'s `fixed_keys` and the split keys are `screens/battle/split_keys.rs` (1106). |
 | `screen.rs` | M | `Screen`, `Transition`, `FrameInput` and `ScreenStack` are E. `Ctx` is coupling 2. |
 | `game.rs` | M | Frame loop is E. Start-up and debug wiring are G (about 350 lines). |
-| `color.rs`, `settings.rs`, `words.rs`, `tips.rs` | M | Engine parts: `Rgb`/`Palette`, volumes/fullscreen/text speed, text by key, `{Action}` fill. The tactics colors, settings and names, and tip placement, are G or K. |
+| `color.rs` | M → cut | 1108: `Rgb`, `Palette`, `ColorSet` and `EngineColor` are `shuyi_ui::frame::color`. `UiColor` (this game's colors, tactics colors among them) and which of them the engine's colors are (`engine_color`) stay. |
+| `settings.rs`, `words.rs`, `tips.rs` | M | Engine parts: volumes/fullscreen/text speed, text by key, `{Action}` fill. The tactics settings and names, and tip placement, are G or K. |
 | `dialogue.rs`, `screens/dialogue` | M | The player state machine and box are E. The lead and cast are G. |
 | `cinematic*` | M | Timeline and easing are E. Map pan and action are K. Logo, talk, characters and combat shots are G. |
 | `harness.rs` | M | See coupling 10. |

@@ -596,6 +596,7 @@ fn parse_button(button: &str) -> Button {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::console::ConsoleSizes;
     use crate::glyph_buffer::GlyphBuffer;
     use crate::input::Action;
     use crate::input::LEFT_HANDED;

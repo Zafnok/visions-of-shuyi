@@ -33,7 +33,7 @@ use trpg_content::Present;
 
 use crate::audio::MenuSound;
 use crate::color::{Palette, UiColor};
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{MapSkin, TEST_TILESET, next_skin};

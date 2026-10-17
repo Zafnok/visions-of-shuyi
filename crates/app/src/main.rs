@@ -12,7 +12,7 @@ mod storage;
 
 use macroquad::prelude::*;
 use trpg_content::font::ATLAS_PNG_PATH;
-use trpg_ui::{ConsoleSpec, Ctx, Game, KeyPrompt, UiColor};
+use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, Game, KeyPrompt, UiColor};
 
 use crate::args::Startup;
 use crate::audio::Audio;

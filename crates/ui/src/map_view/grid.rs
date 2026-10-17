@@ -4,7 +4,7 @@
 
 use trpg_core::Pos;
 
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{PxRect, Rect};
 
 /// A console cell in pixels, across × down. The map skins lay the map out

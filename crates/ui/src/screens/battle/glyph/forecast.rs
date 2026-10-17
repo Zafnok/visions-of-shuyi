@@ -11,7 +11,7 @@ use trpg_core::{Side, StatValue};
 
 use super::TEXT_X;
 use crate::color::{Rgb, UiColor};
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, Rect};
 use crate::screen::Ctx;
 use crate::screens::battle::layout::SIDE_PANEL;

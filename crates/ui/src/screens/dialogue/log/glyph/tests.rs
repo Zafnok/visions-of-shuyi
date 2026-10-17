@@ -2,7 +2,7 @@
 //! cursor's bar go, the colours, and the scrolling.
 
 use super::*;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Item;
 use crate::portrait::dim_opacity;
 use crate::screen::tests::ctx;

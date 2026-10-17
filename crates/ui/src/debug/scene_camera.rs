@@ -13,7 +13,7 @@ use crate::audio::MenuSound;
 use crate::cinema::{self, MAX_ZOOM};
 use crate::cinematic::MapPicture;
 use crate::color::UiColor;
-use crate::console::ConsoleSpec;
+use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorStyle, CursorView, MapScene};
@@ -220,7 +220,7 @@ impl Screen for SceneCameraScreen {
 mod tests {
     use super::*;
     use crate::color::Rgb;
-    use crate::console::ConsoleSpec;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
     use crate::map_view::skin_named;
     use crate::screen::tests::ctx;
 

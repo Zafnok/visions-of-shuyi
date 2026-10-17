@@ -89,7 +89,7 @@ buf.add_sprite(sprite);
 - In a snapshot each item is one line under `--- overlays ---`; a sprite's
   is `over  sprite 16,48 80x80  images/test_card.png 0,0 16x16`, followed
   by ` flip`, ` opacity=128`, ` solid=colour` or ` dimmed`, and
-  ` clip=x,y wxh` when they apply (`snapshot.rs`).
+  ` clip=x,y wxh` when they apply (`shuyi_ui::frame::snapshot`).
 - The "Sprite test" debug tool shows each of these on the test card; look
   at it after touching how `app` draws items.
 

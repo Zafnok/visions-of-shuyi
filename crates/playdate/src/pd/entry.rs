@@ -18,7 +18,7 @@ use trpg_content::{FontAtlasDef, PaletteDef};
 use trpg_ui::input::{Device, PadKind};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
 use trpg_ui::screen::{IdleMotion, Keyboard, Lessons};
-use trpg_ui::{ConsoleSpec, Ctx, Game, GlyphBuffer, KeyPrompt, Palette};
+use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, Game, GlyphBuffer, KeyPrompt, Palette, UiColor};
 
 use super::files::SdkFiles;
 use super::{
@@ -190,7 +190,8 @@ fn playdate_palette(base: &PaletteDef) -> Result<Palette, String> {
         errors.join("; ")
     })?;
     // check-text: not player text (a build problem for the log)
-    Palette::new(&def).map_err(|missing| alloc::format!("the Playdate palette lacks {missing:?}"))
+    Palette::new::<UiColor>(&def)
+        .map_err(|missing| alloc::format!("the Playdate palette lacks {missing:?}"))
 }
 
 impl Running {

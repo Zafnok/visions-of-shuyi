@@ -5,11 +5,11 @@
 //! the two, and the Playdate's bench build (`cargo xtask playdate --bench`)
 //! times both on the device. Never drawn by the game.
 
-use trpg_content::Ink;
-use trpg_content::font::FALLBACK_GLYPH;
+use shuyi_assets::font::FALLBACK_GLYPH;
+use shuyi_assets::ink::Ink;
 
 use super::{Font, Frame, HEIGHT, Images, Phase, ROW_BYTES, WIDTH, ink_is_white, ink_of};
-use crate::glyph_buffer::{GlyphBuffer, Item, Layer, Paint, PxRect, Sprite};
+use crate::frame::glyph_buffer::{GlyphBuffer, Item, Layer, Paint, PxRect, Sprite};
 
 /// Draws `buf` into `out` exactly as [`render`](super::render) does.
 pub fn render(buf: &GlyphBuffer, font: &Font<'_>, images: &impl Images, out: &mut Frame) {
