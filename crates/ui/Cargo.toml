@@ -34,9 +34,14 @@ std = [
     "ron/std",
     "serde/std",
 ]
-# The headless test `Harness` (src/harness.rs), for integration tests. It
-# starts games in the test chapter, so it brings the test files (ADR-0057).
-harness = ["storage-conformance", "trpg-content/test-fixtures"]
+# The headless test `Harness` (src/harness.rs, over the engine's), for
+# integration tests. It starts games in the test chapter, so it brings the
+# test files (ADR-0057).
+harness = [
+    "storage-conformance",
+    "trpg-content/test-fixtures",
+    "shuyi-ui/harness",
+]
 # `storage::conformance_suite`, for a platform's `Storage` (also without
 # `std`: the Playdate's debug build runs it on the device's files).
 storage-conformance = ["shuyi-ui/storage-conformance"]

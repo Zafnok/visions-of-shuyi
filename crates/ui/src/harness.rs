@@ -2,6 +2,12 @@
 //! controller-button presses in, screen names and snapshots out. No window,
 //! no clock.
 //!
+//! The scripts, the waits, the audio recorded and the music player's
+//! stand-in are the engine's (`shuyi_ui::harness`, ticket 1111); this
+//! [`Harness`] wraps it with this game's start-up (the embedded content,
+//! the test chapter, the title) and its lookups (the game flow, the
+//! battle and its map). Every method of the engine's Harness works on it.
+//!
 //! Available to unit tests and, with the `harness` feature, to integration
 //! tests in `crates/ui/tests/`. See `crates/ui/README.md`.
 //!
@@ -16,92 +22,47 @@
 //! assert_eq!(h.top_screen(), "title");
 //! ```
 
-use crate::audio::{AudioRequest, MusicClock, MusicCommand};
+use core::ops::{Deref, DerefMut};
+
 use crate::flow::FlowScreen;
-use crate::game::{Game, RawInputEvent};
-use crate::input::RIGHT_HANDED;
-use crate::input::{Button, Chord, Device, Layout, PadKind};
+use crate::game::Game;
+use crate::input::{Layout, PadKind, RIGHT_HANDED};
 use crate::map_view::{MapScene, RangeKind, UnitView, skin_named};
 use crate::profiles::ProfileId;
-use crate::screen::{Ctx, KeyPrompt, Screen, Shuyi, ShuyiCtx};
+use crate::screen::{Ctx, Screen, Shuyi, ShuyiCtx};
 use crate::screens::BattleScreen;
 use crate::settings::{SETTINGS_KEY, Settings};
 use crate::storage::{MemoryStorage, Storage};
 use trpg_core::Pos;
 
-/// Simulated length of one frame, in seconds (60 fps).
-pub const FRAME_DT: f32 = 1.0 / 60.0;
+pub use shuyi_ui::harness::{FRAME_DT, MAX_FRAMES};
 
-/// Most frames one [`Harness::hold`] or [`Harness::wait`] may run (about
-/// half a simulated minute), so a runaway script fails instead of hanging.
-pub const MAX_FRAMES: u32 = 2_000;
+/// The engine's Harness on this game.
+pub type Core = shuyi_ui::harness::Harness<Shuyi>;
 
-/// Drives a [`Game`] with simulated key presses and time.
+/// Drives a [`Game`] with simulated key presses and time: the engine's
+/// Harness ([`Core`], which it derefs to) with this game's start-up and
+/// lookups. The scripts are forwarded, so they chain with this game's
+/// methods (`h.use_pad(kind).with_tips()`) and take arguments that read
+/// the Harness (`h.wait(2.0 - time(&h))`).
 ///
 /// Its New Game starts the small test chapter
 /// ([`NewGameDef::test_chapter`](trpg_content::NewGameDef::test_chapter)),
 /// so tests of the game flow don't depend on the story's content;
 /// [`Harness::with_shipped_story`] starts the story.
-pub struct Harness {
-    game: Game,
-    /// Every frame's audio requests, oldest first.
-    audio: Vec<Vec<AudioRequest>>,
-    /// Every music command of the run, in order.
-    music: Vec<MusicCommand>,
-    /// The simulated music player, for [`Ctx::music_clock`].
-    player: Player,
-    /// The kind of controller [`pad`](Self::pad) presses buttons on.
-    pad_kind: PadKind,
-    /// What the last frame told `app`: the music and sound volumes and
-    /// whether to fill the screen.
-    mixer: (f32, f32, bool),
+pub struct Harness(Core);
+
+impl Deref for Harness {
+    type Target = Core;
+
+    fn deref(&self) -> &Core {
+        &self.0
+    }
 }
 
-/// The Harness's stand-in for `app`'s music player (ADR-0037): which track
-/// "sounds" and for how long, worked out from the music commands and the
-/// frame times, so a screen that keeps time with the music is tested
-/// without a sound card or a clock.
-#[derive(Debug, Default)]
-struct Player {
-    /// Seconds a track takes to load: it sounds that long after its
-    /// `Start`.
-    load_delay: f64,
-    /// Whether no track ever sounds (the music files are missing).
-    silent: bool,
-    /// The track started last, and the seconds since its `Start`.
-    started: Option<(String, f64)>,
-}
-
-impl Player {
-    /// Lets `dt` seconds pass (nonsense frame times don't count, as in
-    /// [`Game`]).
-    fn advance(&mut self, dt: f32) {
-        if let Some((_, since)) = &mut self.started
-            && dt.is_finite()
-        {
-            *since += f64::from(dt.max(0.0));
-        }
-    }
-
-    /// What `app` would report: the track sounding and for how long.
-    fn playing(&self) -> Option<(&str, f64)> {
-        let (cue, since) = self.started.as_ref().filter(|_| !self.silent)?;
-        let elapsed = since - self.load_delay;
-        (elapsed >= 0.0).then_some((cue.as_str(), elapsed))
-    }
-
-    /// Follows one music command: a `Start` starts the count from 0; a
-    /// `Stop` (or a fresh `Load`) of that track ends it.
-    fn apply(&mut self, command: &MusicCommand) {
-        match command {
-            MusicCommand::Start { cue } => self.started = Some((cue.clone(), 0.0)),
-            MusicCommand::Stop { cue } | MusicCommand::Load { cue } => {
-                if self.started.as_ref().is_some_and(|(c, _)| c == cue) {
-                    self.started = None;
-                }
-            }
-            MusicCommand::Gain { .. } => {}
-        }
+impl DerefMut for Harness {
+    fn deref_mut(&mut self) -> &mut Core {
+        &mut self.0
     }
 }
 
@@ -176,11 +137,9 @@ impl Harness {
         Self::with_layout_and(layout, setup).waiting()
     }
 
-    /// Sets [`KeyPrompt::Waiting`] and redraws.
-    fn waiting(mut self) -> Self {
-        self.game.ctx_mut().key_prompt = KeyPrompt::Waiting;
-        self.game.redraw();
-        self
+    /// Waits for a key ([`Core::at_prompt`]).
+    fn waiting(self) -> Self {
+        Self(self.0.at_prompt())
     }
 
     /// A launch with `storage` (e.g. from [`into_storage`](Self::into_storage)
@@ -199,290 +158,92 @@ impl Harness {
     /// Wraps `game`. Debug screens are always on, so F2 behaves the same
     /// in debug and release test runs.
     pub fn from_game(game: Game) -> Self {
-        Self {
-            game: game.with_debug_screens(true),
-            audio: Vec::new(),
-            music: Vec::new(),
-            player: Player::default(),
-            pad_kind: PadKind::default(),
-            // Nothing told yet: as `app` starts.
-            mixer: (1.0, 1.0, false),
-        }
+        Self(Core::new(game.with_debug_screens(true)))
     }
 
-    /// Makes music take `seconds` to load: a track starts sounding, and
-    /// [`Ctx::music_clock`] starts counting, that long after the game
-    /// starts it (at once by default). Negative or NaN counts as 0.
+    /// [`Core::music_load_delay`].
     pub fn music_load_delay(&mut self, seconds: f32) -> &mut Self {
-        self.player.load_delay = f64::from(seconds.max(0.0));
+        self.0.music_load_delay(seconds);
         self
     }
 
-    /// Makes no music ever sound, as when the music files are missing:
-    /// [`Ctx::music_clock`] stays `None`.
+    /// [`Core::without_music`].
     pub fn without_music(&mut self) -> &mut Self {
-        self.player.silent = true;
+        self.0.without_music();
         self
     }
 
-    /// Where the music is in its track, as the screens saw it in the last
-    /// frame ([`Ctx::music_clock`]).
-    pub fn music_clock(&self) -> Option<&MusicClock> {
-        self.game.ctx().music_clock.as_ref()
-    }
-
-    /// From now on [`pad`](Self::pad) and [`hold_pad`](Self::hold_pad)
-    /// press buttons on a controller of `kind` (a generic one until then).
-    /// The button names in scripts stay binding positions: on a Nintendo
-    /// pad `South` is its right face button.
+    /// [`Core::use_pad`].
     pub fn use_pad(&mut self, kind: PadKind) -> &mut Self {
-        self.pad_kind = kind;
+        self.0.use_pad(kind);
         self
     }
 
-    /// Presses and releases each whitespace-separated chord in turn, e.g.
-    /// `"Down Down f"` or `"Shift+Space Enter"`: a frame with the press,
-    /// then a frame with the release, each [`FRAME_DT`] long.
-    ///
-    /// # Panics
-    ///
-    /// On a chord [`Chord::parse`] rejects.
+    /// [`Core::keys`].
     pub fn keys(&mut self, script: &str) -> &mut Self {
-        for token in script.split_whitespace() {
-            let chord = parse(token);
-            self.frame(&[RawInputEvent::Down(chord)], FRAME_DT);
-            self.frame(&[RawInputEvent::Up(chord.key)], FRAME_DT);
-        }
+        self.0.keys(script);
         self
     }
 
-    /// Types `text` one character per frame as the app reports typing: the
-    /// key's press (Shift for capitals) with the character, then its
-    /// release. A character without a key of its own is typed alone.
+    /// [`Core::type_text`].
     pub fn type_text(&mut self, text: &str) -> &mut Self {
-        for c in text.chars() {
-            let name = match c {
-                ' ' => "Space".to_owned(),
-                c if c.is_ascii_uppercase() => format!("Shift+{}", c.to_ascii_lowercase()),
-                c => c.to_string(),
-            };
-            let Ok(chord) = Chord::parse(&name) else {
-                self.frame(&[RawInputEvent::Text(c)], FRAME_DT);
-                continue;
-            };
-            self.frame(
-                &[RawInputEvent::Down(chord), RawInputEvent::Text(c)],
-                FRAME_DT,
-            );
-            self.frame(&[RawInputEvent::Up(chord.key)], FRAME_DT);
-        }
+        self.0.type_text(text);
         self
     }
 
-    /// Holds `chord` for `seconds` of frames (so held keys repeat), then
-    /// releases it in one more frame.
-    ///
-    /// # Panics
-    ///
-    /// On a chord [`Chord::parse`] rejects.
+    /// [`Core::hold`].
     pub fn hold(&mut self, chord: &str, seconds: f32) -> &mut Self {
-        let chord = parse(chord);
-        self.advance(&[RawInputEvent::Down(chord)], seconds);
-        self.frame(&[RawInputEvent::Up(chord.key)], FRAME_DT);
+        self.0.hold(chord, seconds);
         self
     }
 
-    /// Presses and releases each whitespace-separated controller button in
-    /// turn, e.g. `"DpadDown South"`, like [`keys`](Self::keys). The names
-    /// are button positions, as in `keymap.ron`. Buttons joined by `+`
-    /// (`"South+East"`, `"East+DpadRight"`) go down together in one frame,
-    /// in the order written, and up together in the next.
-    ///
-    /// # Panics
-    ///
-    /// On a button [`Button::parse`] rejects.
+    /// [`Core::pad`].
     pub fn pad(&mut self, script: &str) -> &mut Self {
-        for token in script.split_whitespace() {
-            let buttons: Vec<Button> = token.split('+').map(parse_button).collect();
-            let down: Vec<_> = buttons
-                .iter()
-                .map(|&b| RawInputEvent::PadDown(b, self.pad_kind))
-                .collect();
-            self.frame(&down, FRAME_DT);
-            let up: Vec<_> = buttons.iter().map(|&b| RawInputEvent::PadUp(b)).collect();
-            self.frame(&up, FRAME_DT);
-        }
+        self.0.pad(script);
         self
     }
 
-    /// Holds the controller button `button` for `seconds` of frames (so a
-    /// held direction repeats), then releases it in one more frame.
-    ///
-    /// # Panics
-    ///
-    /// On a button [`Button::parse`] rejects.
+    /// [`Core::hold_pad`].
     pub fn hold_pad(&mut self, button: &str, seconds: f32) -> &mut Self {
-        let button = parse_button(button);
-        self.advance(&[RawInputEvent::PadDown(button, self.pad_kind)], seconds);
-        self.frame(&[RawInputEvent::PadUp(button)], FRAME_DT);
+        self.0.hold_pad(button, seconds);
         self
     }
 
-    /// Lets `seconds` pass with no input, in frames of at most [`FRAME_DT`].
+    /// [`Core::wait`].
     pub fn wait(&mut self, seconds: f32) -> &mut Self {
-        self.advance(&[], seconds);
+        self.0.wait(seconds);
         self
     }
 
-    /// Runs frames totalling `seconds` (at least one frame); `first` goes
-    /// into the first frame.
-    ///
-    /// # Panics
-    ///
-    /// If that takes more than [`MAX_FRAMES`] frames.
-    fn advance(&mut self, first: &[RawInputEvent], seconds: f32) {
-        let mut left = if seconds.is_finite() {
-            seconds.max(0.0)
-        } else {
-            0.0
-        };
-        let mut events = first;
-        for _ in 0..MAX_FRAMES {
-            let dt = left.min(FRAME_DT);
-            self.frame(events, dt);
-            events = &[];
-            left -= dt;
-            if left <= 0.0 {
-                return;
-            }
-        }
-        panic!("Harness: more than {MAX_FRAMES} frames in one hold or wait");
-    }
-
-    /// Runs one game frame as `app` does: reports the music sounding,
-    /// runs the frame, then records and "plays" its audio.
-    fn frame(&mut self, events: &[RawInputEvent], dt: f32) {
-        self.player.advance(dt);
-        self.game.set_music_playing(self.player.playing());
-        let out = self.game.frame(events, dt);
-        self.mixer = (out.music_volume, out.sound_volume, out.fullscreen);
-        self.audio.push(out.audio.to_vec());
-        self.music.extend_from_slice(out.music);
-        for command in out.music {
-            self.player.apply(command);
-        }
-    }
-
-    /// Every audio request of the run so far, in order.
-    pub fn audio_requests(&self) -> Vec<AudioRequest> {
-        self.audio.concat()
-    }
-
-    /// The sound cues (not music) played so far, in order.
-    pub fn sounds(&self) -> Vec<String> {
-        self.audio
-            .iter()
-            .flatten()
-            .filter_map(|r| match r {
-                AudioRequest::PlaySound { cue, .. } => Some(cue.clone()),
-                _ => None,
-            })
-            .collect()
-    }
-
-    /// The lines whose voice clip was asked for so far, in order, as line
-    /// ids.
-    pub fn voices(&self) -> Vec<String> {
-        self.audio
-            .iter()
-            .flatten()
-            .filter_map(|r| match r {
-                AudioRequest::PlayVoice { line, .. } => Some(line.to_string()),
-                _ => None,
-            })
-            .collect()
-    }
-
-    /// The audio requests of the last frame run (a key press runs two
-    /// frames, press and release; this is the release).
-    pub fn last_frame_audio(&self) -> &[AudioRequest] {
-        self.audio.last().map_or(&[], Vec::as_slice)
-    }
-
-    /// The volumes the last frame told `app` to play at, 0–1: the music's
-    /// and the sounds' ([`FrameOutput`](crate::FrameOutput)).
-    pub fn volumes(&self) -> (f32, f32) {
-        (self.mixer.0, self.mixer.1)
-    }
-
-    /// Whether the last frame told `app` to fill the screen.
-    pub fn fullscreen(&self) -> bool {
-        self.mixer.2
-    }
-
-    /// Every music command of the run so far, in order.
-    pub fn music_commands(&self) -> &[MusicCommand] {
-        &self.music
-    }
-
-    /// Forgets the audio recorded so far, so the next checks see only
-    /// what comes after.
+    /// [`Core::clear_audio`].
     pub fn clear_audio(&mut self) -> &mut Self {
-        self.audio.clear();
-        self.music.clear();
+        self.0.clear_audio();
         self
-    }
-
-    /// Name of the top screen; empty once every screen has closed.
-    pub fn top_screen(&self) -> &'static str {
-        self.game.top_screen().unwrap_or("")
-    }
-
-    /// Names of the open screens, bottom first.
-    pub fn screens(&self) -> Vec<&'static str> {
-        self.game.screens()
-    }
-
-    /// The current frame in the snapshot format of [`crate::snapshot`].
-    pub fn snapshot(&self) -> String {
-        self.game.buffer().to_snapshot(&self.game.ctx().palette)
-    }
-
-    /// The current frame as it would look had the player pressed `device`
-    /// last: the same screen with that device's key or button names. For
-    /// comparing play on a controller with the same play on the keyboard.
-    pub fn snapshot_as(&mut self, device: Device) -> String {
-        let used = std::mem::replace(&mut self.game.ctx_mut().device, device);
-        self.game.redraw();
-        let snapshot = self.snapshot();
-        self.game.ctx_mut().device = used;
-        self.game.redraw();
-        snapshot
     }
 
     /// The game flow on the stack (New Game or Quick Battle), if any.
     pub fn flow(&self) -> Option<&FlowScreen> {
-        self.game.screen()
+        self.screen()
     }
 
     /// The game flow on the stack, to play its battle with scripted
     /// commands ([`FlowScreen::battle_mut`]).
     pub fn flow_mut(&mut self) -> Option<&mut FlowScreen> {
-        self.game.screen_mut()
+        self.screen_mut()
     }
 
     /// The battle on the stack: the game flow's, else a battle screen put
     /// on the stack itself. `None` with no battle.
     pub fn battle(&self) -> Option<&BattleScreen> {
         let in_flow = self.flow().and_then(FlowScreen::battle);
-        in_flow.or_else(|| self.game.screen::<BattleScreen>())
+        in_flow.or_else(|| self.screen::<BattleScreen>())
     }
 
     /// What the battle on the stack shows on its map (ADR-0038), as
     /// [`battle`](Self::battle) finds it. Assert on this (or on the
     /// battle's state), not on cells and colours, to check what happened.
     pub fn map_scene(&self) -> Option<MapScene> {
-        Some(self.battle()?.scene(self.game.ctx()))
+        Some(self.battle()?.scene(self.ctx()))
     }
 
     /// Paints battle maps with the skin called `name` from the next frame
@@ -493,7 +254,7 @@ impl Harness {
     ///
     /// If there is no such skin.
     pub fn with_map_skin(&mut self, name: &str) -> &mut Self {
-        let ctx = self.game.ctx_mut();
+        let ctx = self.ctx_mut();
         let skin = skin_named(&ctx.game.content, name);
         ctx.set_map_skin(skin.unwrap_or_else(|| panic!("no map skin {name:?}")));
         self
@@ -502,7 +263,7 @@ impl Harness {
     /// [`map_scene`](Self::map_scene) as text ([`MapScene::to_text`]);
     /// empty with no battle.
     pub fn map_text(&self) -> String {
-        let content = &self.game.ctx().game.content;
+        let content = &self.ctx().game.content;
         self.map_scene()
             .map_or_else(String::new, |scene| scene.to_text(content))
     }
@@ -531,40 +292,23 @@ impl Harness {
         self.map_scene().map(|s| s.path).unwrap_or_default()
     }
 
-    /// Whether the game has asked to quit.
-    pub fn quit_requested(&self) -> bool {
-        self.game.quit_requested()
-    }
-
-    /// The game being driven.
-    pub fn game(&self) -> &Game {
-        &self.game
-    }
-
-    /// The shared context, to change it between key presses, e.g.
-    /// `h.ctx_mut().set_layout_bindings(…)` to rebind keys as the Key
-    /// bindings screen would. The next frame uses the new keys.
-    pub fn ctx_mut(&mut self) -> &mut Ctx {
-        self.game.ctx_mut()
-    }
-
     /// Turns the one-time tips on (they are off in tests by default).
     pub fn with_tips(&mut self) -> &mut Self {
-        self.game.ctx_mut().game.tips_enabled = true;
+        self.ctx_mut().game.tips_enabled = true;
         self
     }
 
     /// Turns the checklist lessons on (they are off in tests by default,
     /// so a test can end its turns).
     pub fn with_lessons(&mut self) -> &mut Self {
-        self.game.ctx_mut().game.lessons = crate::screen::Lessons::On;
+        self.ctx_mut().game.lessons = crate::screen::Lessons::On;
         self
     }
 
     /// Ends the run, handing back its storage, to start the next launch
     /// with [`with_storage`](Self::with_storage).
     pub fn into_storage(self) -> Box<dyn Storage> {
-        self.game.into_ctx().storage.into_computer()
+        self.0.into_storage()
     }
 }
 
@@ -586,101 +330,17 @@ fn embedded_ctx() -> Ctx {
     }
 }
 
-fn parse(chord: &str) -> Chord {
-    match Chord::parse(chord) {
-        Ok(chord) => chord,
-        Err(e) => panic!("bad chord in test script: {e}"),
-    }
-}
-
-fn parse_button(button: &str) -> Button {
-    match Button::parse(button) {
-        Ok(button) => button,
-        Err(e) => panic!("bad button in test script: {e}"),
-    }
-}
-
+/// The scripts, the audio and the music clock are tested on the engine's
+/// toy game (`engine/crates/ui/tests/it`); these are this game's start-up,
+/// its lookups and its title's music through them.
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::console::ConsoleSizes;
-    use crate::glyph_buffer::GlyphBuffer;
-    use crate::input::Action;
+    use crate::input::Device;
     use crate::input::LEFT_HANDED;
-    use crate::screen::{FrameInput, Transition};
-    use std::cell::RefCell;
-    use std::rc::Rc;
+    use crate::screen::KeyPrompt;
     use std::time::Duration;
-
-    type Seen = Rc<RefCell<Vec<(Vec<Action>, f32)>>>;
-
-    /// Records every frame's actions and dt.
-    struct Recorder(Seen);
-
-    impl Screen<Shuyi> for Recorder {
-        fn name(&self) -> &'static str {
-            "recorder"
-        }
-        fn update(&mut self, _: &mut Ctx, input: &FrameInput) -> Transition {
-            self.0.borrow_mut().push((input.actions.clone(), input.dt));
-            Transition::None
-        }
-        fn draw(&self, _: &Ctx, _: &mut GlyphBuffer) {}
-    }
-
-    fn recorder() -> (Harness, Seen) {
-        let seen = Seen::default();
-        (
-            Harness::with_screen(Box::new(Recorder(Rc::clone(&seen)))),
-            seen,
-        )
-    }
-
-    fn total_time(seen: &Seen) -> f32 {
-        seen.borrow().iter().map(|(_, dt)| dt).sum()
-    }
-
-    #[test]
-    fn keys_press_and_release_each_chord_over_two_frames() {
-        let (mut h, seen) = recorder();
-        h.keys("  f\tShift+Space  Down ");
-        let seen = seen.borrow();
-        let actions: Vec<_> = seen.iter().map(|(a, _)| a.clone()).collect();
-        assert_eq!(
-            actions,
-            [
-                vec![Action::Confirm],
-                vec![],
-                vec![Action::ToggleAutoEnd],
-                vec![],
-                vec![Action::CursorDown],
-                vec![],
-            ]
-        );
-        assert!(
-            seen.iter()
-                .all(|&(_, dt)| (dt - FRAME_DT).abs() < f32::EPSILON)
-        );
-    }
-
-    #[test]
-    fn hold_repeats_then_releases() {
-        let (mut h, seen) = recorder();
-        h.hold("Down", 0.5);
-        // Press, then repeats at 300 ms and every 55 ms up to 500 ms.
-        let downs = seen
-            .borrow()
-            .iter()
-            .flat_map(|(a, _)| a.clone())
-            .filter(|&a| a == Action::CursorDown)
-            .count();
-        assert_eq!(downs, 1 + 1 + (500 - 300) / 55);
-        assert!((total_time(&seen) - (0.5 + FRAME_DT)).abs() < 1e-4);
-        // Released: waiting emits nothing more.
-        seen.borrow_mut().clear();
-        h.wait(1.0);
-        assert!(seen.borrow().iter().all(|(a, _)| a.is_empty()));
-    }
 
     #[test]
     fn use_pad_sets_the_kind_of_pad_pressed_and_snapshot_as_only_looks() {
@@ -706,70 +366,6 @@ mod tests {
         h.keys("Up");
         assert_eq!(h.game().ctx().device, Device::Keyboard);
         assert_eq!(h.snapshot(), keys);
-    }
-
-    #[test]
-    fn pad_presses_and_releases_each_button_over_two_frames() {
-        let (mut h, seen) = recorder();
-        h.pad(" South\tDpadDown  Start ");
-        let seen = seen.borrow();
-        let actions: Vec<_> = seen.iter().map(|(a, _)| a.clone()).collect();
-        assert_eq!(
-            actions,
-            [
-                vec![Action::Confirm],
-                vec![],
-                vec![Action::CursorDown],
-                vec![],
-                vec![Action::EndTurn],
-                vec![],
-            ]
-        );
-        assert!(
-            seen.iter()
-                .all(|&(_, dt)| (dt - FRAME_DT).abs() < f32::EPSILON)
-        );
-    }
-
-    #[test]
-    fn hold_pad_repeats_with_the_keyboard_timings_then_releases() {
-        let (mut h, seen) = recorder();
-        h.hold_pad("DpadDown", 0.5);
-        let downs = |seen: &Seen| {
-            let seen = seen.borrow();
-            let all = seen.iter().flat_map(|(a, _)| a.clone());
-            all.filter(|&a| a == Action::CursorDown).count()
-        };
-        // Exactly what a held Down key gives (`hold_repeats_then_releases`).
-        assert_eq!(downs(&seen), 1 + 1 + (500 - 300) / 55);
-        assert!((total_time(&seen) - (0.5 + FRAME_DT)).abs() < 1e-4);
-        let (mut keys, seen_keys) = recorder();
-        keys.hold("Down", 0.5);
-        assert_eq!(*seen.borrow(), *seen_keys.borrow());
-        // Released: waiting emits nothing more.
-        seen.borrow_mut().clear();
-        h.wait(1.0);
-        assert!(seen.borrow().iter().all(|(a, _)| a.is_empty()));
-    }
-
-    #[test]
-    #[should_panic(expected = "bad button in test script")]
-    fn bad_button_panics() {
-        Harness::with_layout(RIGHT_HANDED).pad("f");
-    }
-
-    #[test]
-    fn wait_runs_frames_of_at_most_frame_dt() {
-        let (mut h, seen) = recorder();
-        h.wait(0.1);
-        assert!((total_time(&seen) - 0.1).abs() < 1e-4);
-        assert!(seen.borrow().iter().all(|&(_, dt)| dt <= FRAME_DT));
-        seen.borrow_mut().clear();
-        h.wait(0.0).wait(-1.0).wait(f32::NAN);
-        assert_eq!(
-            *seen.borrow(),
-            [(vec![], 0.0), (vec![], 0.0), (vec![], 0.0)]
-        );
     }
 
     #[test]
@@ -899,153 +495,6 @@ mod tests {
         assert_eq!(h.top_screen(), "debug_menu");
     }
 
-    #[test]
-    fn long_waits_are_refused() {
-        let (mut h, seen) = recorder();
-        h.wait(32.0);
-        let frames = seen.borrow().len();
-        assert!(frames > 1_900 && frames <= 2_000, "{frames} frames");
-        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            h.wait(34.0);
-        }));
-        assert!(result.is_err(), "a wait over MAX_FRAMES must panic");
-    }
-
-    #[test]
-    #[should_panic(expected = "bad chord in test script")]
-    fn bad_chord_panics() {
-        Harness::with_layout(RIGHT_HANDED).keys("Ctrl+x");
-    }
-
-    /// Plays `beep` on Confirm and music `theme` on Cancel.
-    struct Beeper;
-
-    impl Screen<Shuyi> for Beeper {
-        fn name(&self) -> &'static str {
-            "beeper"
-        }
-        fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-            for action in &input.actions {
-                match action {
-                    Action::Confirm => ctx.audio.play_sound("beep"),
-                    Action::Cancel => ctx.audio.play_music("theme"),
-                    _ => {}
-                }
-            }
-            Transition::None
-        }
-        fn draw(&self, _: &Ctx, _: &mut GlyphBuffer) {}
-    }
-
-    fn beeper() -> Harness {
-        let ctx = crate::screen::tests::ctx_with_cues(&["beep"], &["theme"]);
-        Harness::from_game(crate::game::new(ctx, Box::new(Beeper)))
-    }
-
-    fn beep() -> AudioRequest {
-        AudioRequest::PlaySound {
-            cue: "beep".into(),
-            volume: 1.0,
-        }
-    }
-
-    #[test]
-    fn records_the_audio_screens_ask_for() {
-        let theme = AudioRequest::PlayMusic {
-            cue: "theme".into(),
-        };
-        let mut h = beeper();
-        assert!(h.audio_requests().is_empty());
-        assert!(h.last_frame_audio().is_empty());
-        h.keys("f");
-        assert_eq!(h.audio_requests(), [beep()]);
-        h.keys("d f");
-        assert_eq!(h.audio_requests(), [beep(), theme, beep()]);
-        let load = MusicCommand::Load {
-            cue: "theme".into(),
-        };
-        let start = MusicCommand::Start {
-            cue: "theme".into(),
-        };
-        assert_eq!(h.music_commands(), [load, start]);
-        h.clear_audio();
-        assert!(h.audio_requests().is_empty());
-        assert!(h.music_commands().is_empty());
-    }
-
-    fn command(cue: &str, command: fn(String) -> MusicCommand) -> MusicCommand {
-        command(cue.into())
-    }
-
-    fn load(cue: String) -> MusicCommand {
-        MusicCommand::Load { cue }
-    }
-
-    fn start(cue: String) -> MusicCommand {
-        MusicCommand::Start { cue }
-    }
-
-    fn stop(cue: String) -> MusicCommand {
-        MusicCommand::Stop { cue }
-    }
-
-    #[test]
-    fn the_player_counts_from_a_start_to_its_stop() {
-        let mut p = Player::default();
-        assert_eq!(p.playing(), None);
-        p.advance(1.0);
-        p.apply(&command("a", load));
-        assert_eq!(p.playing(), None, "loaded, not started");
-        p.apply(&command("a", start));
-        assert_eq!(p.playing(), Some(("a", 0.0)));
-        p.advance(0.5);
-        p.advance(0.25);
-        assert_eq!(p.playing(), Some(("a", 0.75)));
-        // Nonsense frame times don't count.
-        for dt in [-1.0, f32::NAN, f32::INFINITY] {
-            p.advance(dt);
-        }
-        assert_eq!(p.playing(), Some(("a", 0.75)));
-        // A fade and other tracks' commands leave it playing.
-        let fade = MusicCommand::Gain {
-            cue: "a".into(),
-            gain: 0.5,
-        };
-        for other in [fade, command("b", load), command("b", stop)] {
-            p.apply(&other);
-        }
-        assert_eq!(p.playing(), Some(("a", 0.75)));
-        p.apply(&command("a", stop));
-        assert_eq!(p.playing(), None);
-        p.advance(1.0);
-        assert_eq!(p.playing(), None);
-        // The next track counts from its own start; loading a track again
-        // replaces it, as in `app`.
-        p.apply(&command("b", start));
-        p.advance(0.5);
-        assert_eq!(p.playing(), Some(("b", 0.5)));
-        p.apply(&command("b", load));
-        assert_eq!(p.playing(), None);
-    }
-
-    #[test]
-    fn the_player_sounds_after_its_load_delay_or_never() {
-        let mut p = Player {
-            load_delay: 0.5,
-            ..Player::default()
-        };
-        p.apply(&command("a", start));
-        assert_eq!(p.playing(), None);
-        p.advance(0.25);
-        assert_eq!(p.playing(), None);
-        p.advance(0.25);
-        assert_eq!(p.playing(), Some(("a", 0.0)));
-        p.advance(0.25);
-        assert_eq!(p.playing(), Some(("a", 0.25)));
-        p.silent = true;
-        assert_eq!(p.playing(), None);
-    }
-
     /// The clock's cue and position, if the music sounds.
     fn clock(h: &Harness) -> Option<(&str, f32)> {
         h.music_clock().map(|c| (c.cue.as_str(), c.position))
@@ -1114,7 +563,10 @@ mod tests {
         h.wait(3.0);
         assert_eq!(h.music_clock(), None);
         // The game asked for its music all the same.
-        assert!(h.music_commands().contains(&command("title", start)));
+        let start = crate::audio::MusicCommand::Start {
+            cue: "title".into(),
+        };
+        assert!(h.music_commands().contains(&start));
     }
 
     /// Ticket 1032: the setup changes the context before the game starts,
@@ -1163,18 +615,5 @@ mod tests {
         // The fade began with the `f` press, two frames before the wait.
         let expected = 1.0 + 2.0 * FRAME_DT - 0.5;
         assert!((position - expected).abs() < 0.05, "{position}");
-    }
-
-    #[test]
-    fn last_frame_audio_is_the_last_frame_only() {
-        let mut h = beeper();
-        // `keys` presses in one frame and releases in the next.
-        h.keys("f");
-        assert!(h.last_frame_audio().is_empty());
-        h.frame(&[RawInputEvent::Down(parse("f"))], FRAME_DT);
-        assert_eq!(h.last_frame_audio(), [beep()]);
-        h.wait(0.1);
-        assert!(h.last_frame_audio().is_empty());
-        assert_eq!(h.audio_requests(), [beep(), beep()]);
     }
 }

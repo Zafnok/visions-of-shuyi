@@ -1012,6 +1012,7 @@ dependencies = [
  "ron",
  "serde",
  "shuyi-assets",
+ "shuyi-ui",
  "thiserror",
 ]
 
