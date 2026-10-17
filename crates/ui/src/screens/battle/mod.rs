@@ -916,6 +916,9 @@ impl BattleScreen {
 
     /// The box of the tip on screen ([`Self::shown_tip`]), if any.
     pub fn tip_view(&self, ctx: &Ctx) -> Option<TipView> {
+        if !TipState::shown_in(ctx) {
+            return None;
+        }
         let tip = ctx.game.content.tips.for_trigger(self.shown_tip()?)?;
         Some(TipView::new(ctx, tip))
     }
@@ -961,6 +964,9 @@ impl BattleScreen {
     /// which never hides the cursor's tile.
     fn lesson_view(&self, ctx: &Ctx) -> Option<LessonView> {
         let lesson = ctx.game.content.lessons.get(self.shown_lesson()?)?;
+        if !LessonState::shows(ctx, lesson.level) {
+            return None;
+        }
         let ticked = self.lessons.ticked();
         Some(LessonView::new(ctx, lesson, ticked, self.cursor.pos))
     }

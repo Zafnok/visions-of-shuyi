@@ -5,10 +5,10 @@ type: bug
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-17
 ---
 
 # 0841 — Tutorial None stops the queued tips and lessons
@@ -72,10 +72,10 @@ every level).
 
 ## Acceptance criteria
 
-- [ ] The repro test fails before the fix and passes after.
-- [ ] Full → Short drops Full-only lessons and tips (test).
-- [ ] After None, End turn is never refused by a lesson (test).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The repro test fails before the fix and passes after.
+- [x] Full → Short drops Full-only lessons and tips (test).
+- [x] After None, End turn is never refused by a lesson (test).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -84,4 +84,24 @@ every level).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- Cause confirmed: the level was only checked when a trigger queued a
+  tip or lesson. Now `LessonState::absorb` (run every frame) first drops
+  the waiting lessons the current level doesn't show; if the one in play
+  goes, it closes unticked and is not marked done, so it comes back with
+  its trigger if the level goes back up. With nothing in play, End turn
+  is never held.
+- Tips: queued tips are **hidden** while the level shows none, rather
+  than deleted (a tip is saved as seen only once shown, 0467, so either
+  way it isn't lost; hidden keeps the queue's order if the level is
+  raised again). For the player at None or Short it is the same: no tip
+  shows.
+- Also checked where shown: the battle's tip and lesson boxes check the
+  live level (`tip_view`, `lesson_view`), so a stale queue can't draw for
+  a frame.
+- The lessons debug switch (`Lessons::Off`, tests only) now also empties
+  the queue, by the same check.
+- Tests: `ch01_lessons::the_tutorial_set_to_none_stops_the_lessons_and_tips_already_waiting`
+  (fails before the fix: the cursor lesson stayed open; also End turn not
+  refused after None), `..._set_to_short_drops_the_full_only_lessons_and_tips`,
+  and the unit test `a_lower_level_drops_the_lessons_it_does_not_show_open_or_waiting`.
+- No new gameplay rules decided.

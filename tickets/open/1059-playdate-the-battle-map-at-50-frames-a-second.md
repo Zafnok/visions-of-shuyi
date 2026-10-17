@@ -1,5 +1,5 @@
 ---
-id: "1060"
+id: "1059"
 title: "Playdate: the battle map at 50 frames a second, the most the screen can show"
 type: feature
 milestone: Post–Chapter 1
@@ -11,7 +11,7 @@ nick_input: sign-off
 completed:
 ---
 
-# 1060 — The battle map at 50 frames a second on the Playdate
+# 1059 — The battle map at 50 frames a second on the Playdate
 
 ## Context
 

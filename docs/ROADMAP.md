@@ -332,13 +332,13 @@ early so every later PR is checked by them.
   8. **1043** the dialogue screen (after 0249) · **1044**
      the title screen and cinematic · **0066** Nick decides the guide's
      tip and lesson box on the Playdate → **1058** builds it (Nick saw
-     the PC's box run off the screen, 2026-10-16) · **1059** lessons
+     the PC's box run off the screen, 2026-10-16) · **1060** lessons
      whose action has no Playdate button can be finished (after 1035)
   9. **1050** Nick plays Chapter 1 on his Playdate (also after the
      tutorial fixes **0464**, **0467**, **0841**) → **1051** the AI plans
      once per phase (only if the enemy pauses feel long) · **1057** the
      battle's own frame time on the device (1055 measured 18 ms a frame
-     at least; either order with 1050) → **1060** the battle map at 50
+     at least; either order with 1050) → **1059** the battle map at 50
      frames a second (the screen's most; after 1038) · **0067** Nick
      decides whether the map uses the bought tiles and sprites (its build
      tickets follow, after 1037 and 1040)

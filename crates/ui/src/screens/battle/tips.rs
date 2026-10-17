@@ -29,6 +29,10 @@ pub struct TipState {
     /// Whether a scene the battle started plays over it, so no tip shows
     /// (ticket 0455).
     under_scene: bool,
+    /// Whether tips are off, or the campaign's tutorial level shows none,
+    /// as of the last [`absorb`](Self::absorb): the queue waits, hidden
+    /// (ticket 0841).
+    off: bool,
 }
 
 impl TipState {
@@ -39,16 +43,25 @@ impl TipState {
         }
     }
 
+    /// Whether tips show in `ctx`: they are on, and the campaign's
+    /// tutorial level (if any) shows them (0835).
+    pub fn shown_in(ctx: &Ctx) -> bool {
+        ctx.game.tips_enabled
+            && ctx
+                .game
+                .campaign_tutorial
+                .is_none_or(TutorialLevel::shows_tips)
+    }
+
     /// Queues the fired triggers whose tip exists and hasn't been seen
     /// (nor is queued already). With tips off, or a campaign whose tutorial
-    /// level shows none (0835), they are just forgotten.
+    /// level shows none, they are just forgotten, and the tips already
+    /// queued wait hidden until tips show again (the level may change
+    /// mid-battle in Options, 0841).
     pub fn absorb(&mut self, ctx: &mut Ctx) {
         let fired = core::mem::take(&mut self.fired);
-        let level_shows = ctx
-            .game
-            .campaign_tutorial
-            .is_none_or(TutorialLevel::shows_tips);
-        if !ctx.game.tips_enabled || !level_shows {
+        self.off = !Self::shown_in(ctx);
+        if self.off {
             return;
         }
         let seen = self
@@ -83,9 +96,10 @@ impl TipState {
         self.on_screen == Some(trigger)
     }
 
-    /// The queued tips' triggers, first to show first.
+    /// The queued tips' triggers, first to show first: none while tips
+    /// are off.
     pub fn queued(&self) -> impl Iterator<Item = TipTrigger> + '_ {
-        self.queue.iter().copied()
+        self.queue.iter().copied().filter(|_| !self.off)
     }
 
     /// Notes whether a scene plays over the battle: while one does, no

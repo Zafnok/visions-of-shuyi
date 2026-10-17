@@ -69,7 +69,7 @@ second.
 **Out (do not do):**
 - The enemy AI's planning (1051).
 - The render (1055, done) and the loading time (1036).
-- Changing the refresh rate (1060 takes the battle map to 50 after
+- Changing the refresh rate (1059 takes the battle map to 50 after
   this), any skin or what a screen shows.
 
 ## Implementation steps

@@ -51,7 +51,18 @@ fn skip_scenes(h: &mut Harness) {
 /// one it is about: turn 1, its scenes skipped and its banner closed, the
 /// cursor on the lead.
 fn chapter_1(level: TutorialLevel, without: &[&str]) -> Harness {
+    let h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
+    start_chapter_1(h, level, without)
+}
+
+/// [`chapter_1`] with the tips on too.
+fn chapter_1_with_tips(level: TutorialLevel) -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
+    h.with_tips();
+    start_chapter_1(h, level, &[])
+}
+
+fn start_chapter_1(mut h: Harness, level: TutorialLevel, without: &[&str]) -> Harness {
     h.with_lessons();
     let lessons = &mut h.ctx_mut().game.content.lessons.lessons;
     lessons.retain(|l| !without.contains(&l.id.as_str()));
@@ -397,4 +408,93 @@ fn short_shows_no_basic_controls_and_none_shows_nothing() {
             assert_eq!(seen.last().map(String::as_str), Some("rewind"));
         }
     }
+}
+
+/// Opens Options from the map menu, moves the `Tutorial` row (three up
+/// from the first) by `steps` (`Right` toward None), keeps it and closes
+/// the map menu.
+fn set_tutorial(h: &mut Harness, steps: &str) {
+    h.keys("d Down Down Down f");
+    assert_eq!(h.top_screen(), "options");
+    h.keys("Up Up Up").keys(steps).keys("d Left Left f");
+    assert_eq!(h.top_screen(), "battle");
+    h.keys("d").wait(0.1);
+    assert!(matches!(battle(h).mode(), Mode::Idle { .. }));
+}
+
+fn tip(h: &Harness) -> Option<trpg_content::TipTrigger> {
+    battle(h).shown_tip()
+}
+
+/// Ticket 0841: set to None mid-battle, with the cursor lesson open,
+/// three more waiting and a tip queued behind it, nothing shows again
+/// for the rest of the battle, and End turn is never refused.
+#[test]
+fn the_tutorial_set_to_none_stops_the_lessons_and_tips_already_waiting() {
+    let mut h = chapter_1_with_tips(TutorialLevel::Full);
+    // The start tip comes first, then the cursor lesson opens.
+    assert!(tip(&h).is_some());
+    h.keys("f").wait(0.1);
+    assert_eq!(shown(&h), Some("cursor"));
+    assert!(battle(&h).lesson_open());
+    // Selecting the lead queues its tip behind the open lesson.
+    h.keys("f").wait(0.1);
+    assert_eq!(tip(&h), None);
+    h.keys("d").wait(0.1);
+    set_tutorial(&mut h, "Right Right");
+    let campaign = h.flow().and_then(|f| f.campaign()).map(|c| c.tutorial);
+    assert_eq!(campaign, Some(TutorialLevel::None));
+    let quiet = |h: &Harness| {
+        assert_eq!(shown(h), None);
+        assert!(!battle(h).lesson_open());
+        assert_eq!(tip(h), None);
+        assert_eq!(battle(h).tip_view(h.game().ctx()), None);
+    };
+    quiet(&h);
+    // Closed, not done: it can come back if the level goes back up.
+    assert!(done(&h).is_empty());
+    go(&mut h, SERGEANT);
+    h.keys("f").wait(0.1);
+    quiet(&h);
+    go(&mut h, BRIGAND);
+    quiet(&h);
+    h.keys("d").wait(0.1);
+    // End turn is not refused: the prompt opens.
+    h.keys("Space");
+    assert!(
+        !matches!(battle(&h).mode(), Mode::Idle { .. }),
+        "End turn refused"
+    );
+    h.keys("f");
+    to_turn(&mut h, 2);
+    quiet(&h);
+    assert!(done(&h).is_empty());
+}
+
+/// Full → Short drops the `Full`-only lessons waiting (the cursor one
+/// open) and the tips; the `Short` keys lesson comes next.
+#[test]
+fn the_tutorial_set_to_short_drops_the_full_only_lessons_and_tips() {
+    let mut h = chapter_1_with_tips(TutorialLevel::Full);
+    h.keys("f").wait(0.1);
+    assert_eq!(shown(&h), Some("cursor"));
+    h.keys("f").wait(0.1);
+    h.keys("d").wait(0.1);
+    set_tutorial(&mut h, "Right");
+    assert_eq!(tip(&h), None);
+    assert_eq!(shown(&h), Some("keys"));
+    h.keys("Right Left");
+    visit_options(&mut h);
+    assert_eq!(done(&h), ["keys"]);
+    let mut seen = Vec::new();
+    for _ in 0..3 {
+        seen.extend(shown(&h).map(str::to_owned));
+        assert_eq!(tip(&h), None);
+        h.keys("s").wait(0.1);
+    }
+    let basics: Vec<&String> = seen
+        .iter()
+        .filter(|id| BASICS.contains(&id.as_str()))
+        .collect();
+    assert!(basics.is_empty(), "{basics:?}");
 }
