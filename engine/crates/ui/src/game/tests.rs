@@ -231,6 +231,31 @@ fn screens_see_the_buttons_that_went_down_and_up() {
     assert!(!seen[1].is_held(Action::Confirm));
 }
 
+/// Input is a controller's when a button went down, bound or not, or when
+/// a controller gives an action with no button going down (a held
+/// direction's repeat, a chord button's own action as it is let go); an
+/// empty frame, or a key's action, is not.
+#[test]
+fn a_frame_is_pad_input_when_a_button_went_down_or_a_pad_acted() {
+    let (mut game, seen) = spied();
+    let press = |b| RawInputEvent::PadDown(b, PadKind::Xbox);
+    // An unbound button: no action, but a button went down.
+    game.frame(&[press(Button::RightStickPress)], 0.0);
+    game.frame(&[RawInputEvent::PadUp(Button::RightStickPress)], 0.0);
+    // Held down on the D-pad: it repeats with no button going down.
+    game.frame(&[press(Button::DpadDown)], 0.0);
+    game.frame(&[], 0.5);
+    game.frame(&[RawInputEvent::PadUp(Button::DpadDown)], 0.0);
+    // Held down on the keyboard: its repeat is the keyboard's.
+    game.frame(&[down(Key::Down)], 0.0);
+    game.frame(&[], 0.5);
+    let seen = seen.borrow();
+    let pad: Vec<bool> = seen.iter().map(FrameInput::pad_pressed).collect();
+    let acted: Vec<bool> = seen.iter().map(|i| !i.actions.is_empty()).collect();
+    assert_eq!(acted, [false, false, true, true, false, true, true]);
+    assert_eq!(pad, [true, false, true, true, false, false, false]);
+}
+
 /// Screens find what was pressed last in `ctx.device`, already in the
 /// frame of the press; a game can start on a pad.
 #[test]
