@@ -14,6 +14,8 @@
 use insta::assert_snapshot;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, Chord, Device, Layout, LayoutBindings};
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
+use trpg_ui::screens::battle::split_keys::{end_turn_accept_actions, select_action};
 use trpg_ui::screens::key_bindings::{KeyBindingsScreen, KeyBindingsView, SlotView};
 use trpg_ui::screens::options::OptionsScreen;
 
@@ -106,13 +108,13 @@ fn options_question(h: &Harness) -> Option<String> {
 
 #[test]
 fn the_list_snapshot() {
-    let h = open(Layout::RightHanded);
+    let h = open(RIGHT_HANDED);
     assert_snapshot!(h.snapshot());
 }
 
 #[test]
 fn the_left_handed_list_shows_that_layouts_keys() {
-    let h = open(Layout::LeftHanded);
+    let h = open(LEFT_HANDED);
     assert_eq!(view(&h).switch.keyboard, "Keyboard · Left-handed");
     assert!(shows(&h, Action::Confirm, "j"));
     assert!(shows(&h, Action::CursorUp, "w"));
@@ -120,7 +122,7 @@ fn the_left_handed_list_shows_that_layouts_keys() {
 
 #[test]
 fn the_capture_prompt_snapshot() {
-    let mut h = open(Layout::RightHanded);
+    let mut h = open(RIGHT_HANDED);
     h.keys(TO_CONFIRM).keys("Right f");
     assert_eq!(slots(&h, Action::Confirm), ["f", "Press a key…", "-"]);
     assert_snapshot!(h.snapshot());
@@ -129,7 +131,7 @@ fn the_capture_prompt_snapshot() {
 /// Acceptance: binding `e` to Confirm's slot 2 moves it from Unit info.
 #[test]
 fn a_key_bound_twice_moves_and_the_loser_shows_not_mapped() {
-    let mut h = open(Layout::RightHanded);
+    let mut h = open(RIGHT_HANDED);
     h.keys(TO_CONFIRM).keys("Right f e");
     assert!(unmapped(&h, Action::Info));
     assert_eq!(slots(&h, Action::Confirm), ["f", "e", "-"]);
@@ -150,7 +152,7 @@ fn a_key_bound_twice_moves_and_the_loser_shows_not_mapped() {
 /// Acceptance: with Confirm's only key moved away, Cancel doesn't leave.
 #[test]
 fn leaving_is_blocked_until_confirm_has_a_key_again() {
-    let mut h = open(Layout::RightHanded);
+    let mut h = open(RIGHT_HANDED);
     // Unit info takes `f`, Confirm's only key.
     h.keys(TO_INFO).keys("f f");
     assert!(unmapped(&h, Action::Confirm));
@@ -179,7 +181,7 @@ fn leaving_is_blocked_until_confirm_has_a_key_again() {
 /// ignored, Delete on a slot empties it.
 #[test]
 fn escape_backs_out_of_capture_and_delete_empties_a_slot() {
-    let mut h = open(Layout::RightHanded);
+    let mut h = open(RIGHT_HANDED);
     let before = h.snapshot();
     h.keys(TO_CONFIRM).keys("f");
     assert!(shows(&h, Action::Confirm, "Press a key…"));
@@ -204,7 +206,7 @@ fn escape_backs_out_of_capture_and_delete_empties_a_slot() {
 /// open the debug menu over this screen.
 #[test]
 fn the_debug_key_is_refused_while_capturing() {
-    let mut h = open(Layout::RightHanded);
+    let mut h = open(RIGHT_HANDED);
     h.keys("F2");
     assert_eq!(h.top_screen(), "key_bindings");
     h.keys("f F2");
@@ -219,7 +221,7 @@ fn the_debug_key_is_refused_while_capturing() {
 /// every cursor key has been moved to other actions.
 #[test]
 fn navigation_survives_moving_every_cursor_key_away() {
-    let mut h = open(Layout::RightHanded);
+    let mut h = open(RIGHT_HANDED);
     // Unit info takes Up, Down and Left; Rewind (three rows on) takes Right.
     h.keys(TO_INFO).keys("f Up Right f Down Right f Left");
     h.keys("Down Down Down f Right");
@@ -258,19 +260,16 @@ fn navigation_survives_moving_every_cursor_key_away() {
 /// Acceptance: edits persist across a restart, per layout.
 #[test]
 fn edits_survive_a_restart_and_stay_with_their_layout() {
-    let mut h = open(Layout::RightHanded);
+    let mut h = open(RIGHT_HANDED);
     h.keys(TO_CONFIRM).keys("Right f g d d");
-    let edited = bindings(&h, Layout::RightHanded);
+    let edited = bindings(&h, RIGHT_HANDED);
     assert_eq!(
         edited.slots(Action::Confirm),
         [Some(chord("f")), Some(chord("g")), None]
     );
     let mut h = Harness::with_storage(h.into_storage());
-    assert_eq!(bindings(&h, Layout::RightHanded), edited);
-    assert_eq!(
-        bindings(&h, Layout::LeftHanded),
-        defaults(&h, Layout::LeftHanded)
-    );
+    assert_eq!(bindings(&h, RIGHT_HANDED), edited);
+    assert_eq!(bindings(&h, LEFT_HANDED), defaults(&h, LEFT_HANDED));
     h.keys("g");
     assert_eq!(h.screens(), ["title", "mode_select"]);
     h.keys("d");
@@ -282,20 +281,16 @@ fn edits_survive_a_restart_and_stay_with_their_layout() {
 /// Acceptance: Restore defaults resets only the layout in use.
 #[test]
 fn restore_defaults_leaves_the_other_layout_alone() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
-    let mut left = bindings(&h, Layout::LeftHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    let mut left = bindings(&h, LEFT_HANDED);
     assert_eq!(left.bind(Action::Confirm, 1, chord("h")), Ok(None));
     assert_eq!(
-        h.ctx_mut()
-            .set_layout_bindings(Layout::LeftHanded, left.clone()),
+        h.ctx_mut().set_layout_bindings(LEFT_HANDED, left.clone()),
         Ok(())
     );
     reopen(&mut h);
     h.keys(TO_CONFIRM).keys("Right f g d d");
-    assert_ne!(
-        bindings(&h, Layout::RightHanded),
-        defaults(&h, Layout::RightHanded)
-    );
+    assert_ne!(bindings(&h, RIGHT_HANDED), defaults(&h, RIGHT_HANDED));
     reopen_from_options(&mut h);
     // Two Ups from the first row (past the keyboard / controller switch)
     // is Restore defaults. It asks first, and Cancel there answers no
@@ -314,31 +309,25 @@ fn restore_defaults_leaves_the_other_layout_alone() {
     h.keys("f f");
     assert!(!shows(&h, Action::Confirm, "g"));
     h.keys("d d");
-    assert_eq!(
-        bindings(&h, Layout::RightHanded),
-        defaults(&h, Layout::RightHanded)
-    );
-    assert_eq!(bindings(&h, Layout::LeftHanded), left);
+    assert_eq!(bindings(&h, RIGHT_HANDED), defaults(&h, RIGHT_HANDED));
+    assert_eq!(bindings(&h, LEFT_HANDED), left);
     // And across a restart.
     let h = Harness::with_storage(h.into_storage());
-    assert_eq!(
-        bindings(&h, Layout::RightHanded),
-        defaults(&h, Layout::RightHanded)
-    );
-    assert_eq!(bindings(&h, Layout::LeftHanded), left);
+    assert_eq!(bindings(&h, RIGHT_HANDED), defaults(&h, RIGHT_HANDED));
+    assert_eq!(bindings(&h, LEFT_HANDED), left);
 }
 
 /// Sign-off: Select and Confirm end turn get their own keys.
 #[test]
 fn the_optional_split_keys_can_be_given_keys() {
-    let mut h = open(Layout::RightHanded);
+    let mut h = open(RIGHT_HANDED);
     // Select is 7 rows down, Confirm end turn the next.
     h.keys("Down Down Down Down Down Down Down f g Down f Enter d d");
     let keymap = &h.game().ctx().keymap;
-    assert_eq!(keymap.select_action(Device::Keyboard), Action::Select);
+    assert_eq!(select_action(keymap, Device::Keyboard), Action::Select);
     assert_eq!(keymap.action(chord("g")), Some(Action::Select));
     assert_eq!(
-        keymap.end_turn_accept_actions(Device::Keyboard),
+        end_turn_accept_actions(keymap, Device::Keyboard),
         [Action::ConfirmEndTurn, Action::Confirm]
     );
 }
@@ -346,7 +335,7 @@ fn the_optional_split_keys_can_be_given_keys() {
 #[test]
 fn every_glyph_drawn_is_in_the_font() {
     let font = trpg_content::font::load().unwrap_or_default();
-    let mut h = open(Layout::RightHanded);
+    let mut h = open(RIGHT_HANDED);
     h.keys("f");
     let snap = h.snapshot();
     let glyphs = snap.split("\n--- colours ---").next().unwrap_or("");

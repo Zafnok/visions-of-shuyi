@@ -427,6 +427,7 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::input::LEFT_HANDED;
 
     fn changed() -> Settings {
         Settings {
@@ -442,7 +443,7 @@ mod tests {
             theme: Theme::Parchment,
             music_volume: 0,
             sound_volume: 100,
-            layout: Some(Layout::LeftHanded),
+            layout: Some(LEFT_HANDED),
         }
     }
 
@@ -542,11 +543,15 @@ mod tests {
 
     #[test]
     fn odd_values_are_repaired() {
-        let text =
-            "Settings(version: 1, music_volume: 200, sound_volume: 101, layout: Some(\"Vim\"))";
+        let text = "Settings(version: 1, music_volume: 200, sound_volume: 101, layout: \
+                    Some(\"Two words\"))";
         let s = Settings::from_ron(text).unwrap();
         assert_eq!((s.music_volume, s.sound_volume), (100, 100));
         assert_eq!(s.layout(), None);
+        // A layout's name is read whatever the keymap lists: the keymap's
+        // owner (`Ctx::saved_layout`) drops one it doesn't have.
+        let vim = Settings::from_ron("Settings(version: 1, layout: Some(\"Vim\"))").unwrap();
+        assert_eq!(vim.layout().map(|l| l.to_string()), Some("Vim".to_owned()));
     }
 
     #[test]
@@ -617,9 +622,6 @@ mod tests {
     #[test]
     fn restoring_keeps_the_layout() {
         let restored = changed().restored();
-        assert_eq!(
-            restored,
-            Settings::default().with_layout(Layout::LeftHanded)
-        );
+        assert_eq!(restored, Settings::default().with_layout(LEFT_HANDED));
     }
 }

@@ -1,8 +1,8 @@
+use crate::input::RIGHT_HANDED;
 use insta::assert_snapshot;
 
 use super::*;
 use crate::harness::Harness;
-use crate::input::Layout;
 use crate::screen::tests::ctx;
 use crate::settings::TextSpeed;
 
@@ -289,7 +289,7 @@ fn cancel_on_an_empty_grid_closes_it_without_asking() {
 /// The screen with its profiles.
 #[test]
 fn profile_screen_snapshot() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     ok(h.ctx_mut().add_profile("Mei"));
     ok(h.ctx_mut().add_profile("Odo"));
     h.keys("Down Down Down f Down");
@@ -300,7 +300,7 @@ fn profile_screen_snapshot() {
 /// The screen with only the first profile.
 #[test]
 fn one_profile_snapshot() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down Down Down f");
     assert_eq!(h.top_screen(), "profile");
     assert_snapshot!(h.snapshot());
@@ -309,7 +309,7 @@ fn one_profile_snapshot() {
 /// Deleting Mei: the question over the list, focused on No.
 #[test]
 fn delete_question_snapshot() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     ok(h.ctx_mut().add_profile("Mei"));
     h.keys("Down Down Down f Down f Down Down f");
     assert_snapshot!(h.snapshot());

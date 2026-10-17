@@ -7,7 +7,8 @@
 use insta::assert_snapshot;
 use trpg_core::Pos;
 use trpg_ui::harness::{FRAME_DT, Harness};
-use trpg_ui::input::{Action, Chord, Layout, PadKind};
+use trpg_ui::input::{Action, Chord, PadKind};
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::settings::MapZoom;
 
 /// The tiles the test tileset shows at 1× and at 2×.
@@ -31,7 +32,7 @@ fn battle_in(h: Harness, skin: &str) -> Harness {
 
 /// A new game's Quick Battle under the skin `skin`.
 fn quick_battle(skin: &str) -> Harness {
-    battle_in(Harness::with_layout(Layout::RightHanded), skin)
+    battle_in(Harness::with_layout(RIGHT_HANDED), skin)
 }
 
 /// The zoom in the player's settings.
@@ -209,7 +210,7 @@ fn the_zoom_is_remembered_by_the_next_battle_and_the_next_launch() {
 #[test]
 fn the_key_can_be_rebound_and_left_unbound() {
     let mut h = quick_battle("sprite");
-    let layout = Layout::RightHanded;
+    let layout = RIGHT_HANDED;
     let mut keys = h.game().ctx().layout_bindings(layout);
     let z = Chord::parse("z").unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(keys.bind(Action::ZoomMap, 0, z), Ok(None));
@@ -235,7 +236,7 @@ fn the_key_can_be_rebound_and_left_unbound() {
 /// The left-handed layout's key and the controller's button.
 #[test]
 fn the_left_handed_key_and_the_right_trigger_zoom_too() {
-    let left = Harness::with_layout(Layout::LeftHanded);
+    let left = Harness::with_layout(LEFT_HANDED);
     let mut h = battle_with(left, "sprite", "s j a j j");
     h.keys("p");
     assert_eq!(skin_zoom(&h), Some(MapZoom::X1));

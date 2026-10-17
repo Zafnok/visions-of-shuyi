@@ -7,7 +7,7 @@ use trpg_content::{LineId, Variant};
 use trpg_ui::AudioRequest;
 use trpg_ui::debug::TEST_SCENE;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 
 /// `(id, text)` of the test scene's first four lines, none of which has a
 /// token.
@@ -34,7 +34,7 @@ fn manifest(clips: &[(&LineId, &str)]) -> String {
 
 /// The debug menu with "Voice test" focused (the last tool but three).
 fn on_voice_test() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("F2 Up Up Up Up");
     assert_eq!(h.top_screen(), "debug_menu");
     h

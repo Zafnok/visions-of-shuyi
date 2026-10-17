@@ -4,6 +4,7 @@
 //! battle with a Steel Bow, a stock of three weapons, three armours, three
 //! accessories, six Potions and two Elixirs, and a pack cap of 6.
 
+use crate::input::{LEFT_HANDED, RIGHT_HANDED};
 use insta::assert_snapshot;
 use trpg_content::battle_campaign;
 use trpg_core::{GameMode, WeaponRank};
@@ -11,7 +12,6 @@ use trpg_core::{GameMode, WeaponRank};
 use super::*;
 use crate::audio::AudioRequest;
 use crate::harness::Harness;
-use crate::input::Layout;
 use crate::screen::tests::ctx;
 use crate::screens::battle::QUICK_BATTLE;
 
@@ -74,7 +74,7 @@ const PUT_BACK: &str = "(put back in stock)";
 
 /// The Quick Battle's Preparations, through the title.
 fn harness() -> Harness {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f");
     assert_eq!(h.screens(), ["title", "preparations"]);
     h
@@ -434,7 +434,7 @@ fn help_names_the_players_keys() {
     update(&mut s, &mut c, &[Cancel]);
     assert_eq!(s.help(&c), "f yes / d no");
     // The left-handed layout has other keys.
-    c.use_layout(Layout::LeftHanded);
+    c.use_layout(LEFT_HANDED);
     assert_eq!(s.help(&c), "j yes / k no");
 }
 

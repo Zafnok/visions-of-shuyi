@@ -387,9 +387,9 @@ fn outcome_in(screen: &mut dyn Screen, c: &mut Ctx, actions: &[Action]) -> Strin
 fn texts_name_the_layout_keys() {
     let mut c = ctx();
     assert_eq!(TitleScreen::help(&c), "arrows move · f select · d back");
-    c.use_layout(crate::input::Layout::LeftHanded);
+    c.use_layout(crate::input::LEFT_HANDED);
     assert_eq!(TitleScreen::help(&c), "wasd move · j select · k back");
-    c.use_layout(crate::input::Layout::RightHanded);
+    c.use_layout(crate::input::RIGHT_HANDED);
     c.keymap = crate::input::Keymap::new(
         crate::input::Action::ALL
             .iter()

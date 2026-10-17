@@ -11,7 +11,7 @@ use crate::prelude::*;
 pub use view::{MenuItemView, MenuView, SuffixKind};
 
 use crate::audio::{AudioQueue, MenuSound};
-use crate::input::Action;
+use crate::input::{ActionSet, UiAction};
 
 /// One menu entry.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -144,21 +144,22 @@ impl Menu {
         self.focus
     }
 
-    /// Handles one action. Returns an event for `Confirm` on an enabled item
-    /// and for `Cancel`; moves the focus for `CursorDown`/`CursorUp`;
-    /// ignores everything else.
-    pub fn handle(&mut self, action: Action) -> Option<MenuEvent> {
-        match action {
-            Action::CursorDown => self.step(true),
-            Action::CursorUp => self.step(false),
-            Action::Confirm => {
+    /// Handles one action, by what the game [takes it for](ActionSet::ui).
+    /// Returns an event for [`UiAction::Confirm`] on an enabled item and
+    /// for [`UiAction::Cancel`]; moves the focus for [`UiAction::Down`] and
+    /// [`UiAction::Up`]; ignores everything else.
+    pub fn handle<A: ActionSet>(&mut self, action: A) -> Option<MenuEvent> {
+        match action.ui() {
+            Some(UiAction::Down) => self.step(true),
+            Some(UiAction::Up) => self.step(false),
+            Some(UiAction::Confirm) => {
                 return self
                     .items
                     .get(self.focus)
                     .filter(|i| i.enabled)
                     .map(|_| MenuEvent::Chosen(self.focus));
             }
-            Action::Cancel if self.cancellable => return Some(MenuEvent::Cancelled),
+            Some(UiAction::Cancel) if self.cancellable => return Some(MenuEvent::Cancelled),
             _ => {}
         }
         None
@@ -169,9 +170,9 @@ impl Menu {
     /// chosen, `menu_cancel` when cancelled, [`MenuSound::Denied`] for
     /// Confirm on a disabled item. Any other action that does nothing (a
     /// move with nowhere to go) plays nothing.
-    pub fn handle_with_sound(
+    pub fn handle_with_sound<A: ActionSet>(
         &mut self,
-        action: Action,
+        action: A,
         audio: &mut AudioQueue,
     ) -> Option<MenuEvent> {
         let before = self.focus;
@@ -180,7 +181,9 @@ impl Menu {
             Some(MenuEvent::Chosen(_)) => Some(MenuSound::Select),
             Some(MenuEvent::Cancelled) => Some(MenuSound::Cancel),
             None if self.focus != before => Some(MenuSound::Move),
-            None if action == Action::Confirm && !self.items.is_empty() => Some(MenuSound::Denied),
+            None if action.ui() == Some(UiAction::Confirm) && !self.items.is_empty() => {
+                Some(MenuSound::Denied)
+            }
             None => None,
         };
         if let Some(sound) = sound {
@@ -232,6 +235,7 @@ mod tests {
     use crate::color::UiColor;
     use crate::color::tests::game_palette;
     use crate::glyph_buffer::{Cell, GlyphBuffer};
+    use crate::input::Action;
     use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorUp, Info};
 
     fn menu(enabled: &[bool]) -> Menu {

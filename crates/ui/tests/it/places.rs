@@ -9,7 +9,7 @@ use trpg_core::{LeadGender, Pos};
 use trpg_ui::flow::{FlowScreen, Stage};
 use trpg_ui::glyph_buffer::Rect;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::{MapScene, Place};
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::dialogue::glyph::PLACE_BRIGHTNESS;
@@ -45,7 +45,7 @@ fn field(ctx: &Ctx, centre: Pos) -> MapScene {
 fn preview(scene: &str) -> Harness {
     let ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
-        .with_layout(Layout::RightHanded);
+        .with_layout(RIGHT_HANDED);
     let game = Game::start_on_scene(ctx, scene, LeadGender::Male).unwrap_or_else(|e| panic!("{e}"));
     Harness::from_game(game)
 }
@@ -55,7 +55,7 @@ fn preview(scene: &str) -> Harness {
 /// yet. In the glyph look.
 #[test]
 fn the_scene_before_the_battle_is_drawn_over_its_field_at_harrowby() {
-    let mut h = Harness::with_layout(Layout::RightHanded).with_shipped_story();
+    let mut h = Harness::with_layout(RIGHT_HANDED).with_shipped_story();
     h.keys("f f f Up f");
     assert_eq!(dialogue(&h).player().scene_id(), "ch01_intro");
     assert_eq!(place(&h), None);
@@ -142,7 +142,7 @@ fn the_last_scene_is_in_the_study_at_veyne_hall() {
 /// the talk is the battle's own, at [`PLACE_BRIGHTNESS`].
 #[test]
 fn the_battle_map_behind_a_battles_scene_is_darkened() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f Left f f");
     assert_eq!(h.screens(), ["title", "battle"]);
     let before = h.game().buffer().clone();

@@ -5,6 +5,7 @@
 
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{Action, Chord, Layout, LayoutBindings};
+use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screen::KEYBINDINGS_KEY;
 use trpg_ui::{MemoryStorage, Storage};
 
@@ -34,8 +35,8 @@ fn confirm_on_g(b: &mut LayoutBindings) {
 
 #[test]
 fn a_rebound_key_works_at_once_and_the_old_one_doesnt() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
-    rebind(&mut h, Layout::RightHanded, confirm_on_g);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    rebind(&mut h, RIGHT_HANDED, confirm_on_g);
     h.keys("f");
     assert_eq!(h.screens(), ["title"]);
     h.keys("g");
@@ -46,7 +47,7 @@ fn a_rebound_key_works_at_once_and_the_old_one_doesnt() {
 
 #[test]
 fn escape_cancels_in_both_layouts() {
-    for layout in Layout::ALL {
+    for layout in [RIGHT_HANDED, LEFT_HANDED] {
         let mut h = Harness::with_layout(layout);
         h.keys("Enter"); // Not bound: nothing happens.
         assert_eq!(h.screens(), ["title"]);
@@ -60,8 +61,8 @@ fn escape_cancels_in_both_layouts() {
 
 #[test]
 fn escape_cancels_even_with_cancel_unbound() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
-    rebind(&mut h, Layout::RightHanded, |b| b.clear(Action::Cancel, 0));
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    rebind(&mut h, RIGHT_HANDED, |b| b.clear(Action::Cancel, 0));
     h.keys("f d");
     assert_eq!(h.screens(), ["title", "mode_select"]);
     h.keys("Escape");
@@ -70,8 +71,8 @@ fn escape_cancels_even_with_cancel_unbound() {
 
 #[test]
 fn shift_escape_can_be_bound_and_plain_escape_still_cancels() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
-    rebind(&mut h, Layout::RightHanded, |b| {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    rebind(&mut h, RIGHT_HANDED, |b| {
         assert_eq!(b.bind(Action::Confirm, 1, chord("Shift+Escape")), Ok(None));
     });
     h.keys("Shift+Escape");
@@ -93,8 +94,8 @@ fn the_layout_picker_has_escape_as_cancel() {
 
 #[test]
 fn custom_keys_survive_a_restart() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
-    rebind(&mut h, Layout::RightHanded, confirm_on_g);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    rebind(&mut h, RIGHT_HANDED, confirm_on_g);
     let mut h = Harness::with_storage(h.into_storage());
     assert_eq!(h.screens(), ["title"]);
     h.keys("f");
@@ -105,17 +106,17 @@ fn custom_keys_survive_a_restart() {
 
 #[test]
 fn each_layout_keeps_its_own_keys() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
-    rebind(&mut h, Layout::RightHanded, confirm_on_g);
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    rebind(&mut h, RIGHT_HANDED, confirm_on_g);
     // Switch to left-handed: its own default keys.
-    h.ctx_mut().choose_layout(Layout::LeftHanded).ok();
+    h.ctx_mut().choose_layout(LEFT_HANDED).ok();
     h.keys("g");
     assert_eq!(h.screens(), ["title"]);
     h.keys("j");
     assert_eq!(h.screens(), ["title", "mode_select"]);
     h.keys("k");
     // And back: the right-handed edit is still there, across a restart too.
-    h.ctx_mut().choose_layout(Layout::RightHanded).ok();
+    h.ctx_mut().choose_layout(RIGHT_HANDED).ok();
     let mut h = Harness::with_storage(h.into_storage());
     h.keys("f");
     assert_eq!(h.screens(), ["title"]);
@@ -125,14 +126,14 @@ fn each_layout_keeps_its_own_keys() {
 
 #[test]
 fn a_left_handed_edit_leaves_right_handed_alone() {
-    let mut h = Harness::with_layout(Layout::RightHanded);
-    rebind(&mut h, Layout::LeftHanded, |b| {
+    let mut h = Harness::with_layout(RIGHT_HANDED);
+    rebind(&mut h, LEFT_HANDED, |b| {
         assert_eq!(b.bind(Action::Confirm, 0, chord("h")), Ok(None));
     });
     h.keys("f");
     assert_eq!(h.screens(), ["title", "mode_select"]);
     h.keys("d");
-    h.ctx_mut().choose_layout(Layout::LeftHanded).ok();
+    h.ctx_mut().choose_layout(LEFT_HANDED).ok();
     h.keys("j");
     assert_eq!(h.screens(), ["title"]);
     h.keys("h");
@@ -155,8 +156,8 @@ fn corrupt_old_or_clashing_saved_keys_start_repaired() {
         h.keys("f");
         assert_eq!(h.screens(), ["title", "mode_select"], "{saved}");
         assert_eq!(
-            h.game().ctx().layout_bindings(Layout::RightHanded),
-            LayoutBindings::defaults(&h.game().ctx().content.keymap, Layout::RightHanded),
+            h.game().ctx().layout_bindings(RIGHT_HANDED),
+            LayoutBindings::defaults(&h.game().ctx().content.keymap, RIGHT_HANDED),
             "{saved}"
         );
     }

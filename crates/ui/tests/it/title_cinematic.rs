@@ -17,7 +17,7 @@ use trpg_ui::audio::{AudioRequest, MusicCommand};
 use trpg_ui::cinematic::Frame;
 use trpg_ui::glyph_buffer::Rect;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::Layout;
+use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::MapScene;
 use trpg_ui::screens::TitleScreen;
 use trpg_ui::screens::title::TitleView;
@@ -30,7 +30,7 @@ const LOGO: f32 = 117.0;
 
 /// A launch after the right-handed layout was picked, at the menu.
 fn title() -> Harness {
-    Harness::with_layout(Layout::RightHanded)
+    Harness::with_layout(RIGHT_HANDED)
 }
 
 fn screen(h: &Harness) -> &TitleScreen {
@@ -147,7 +147,7 @@ fn focused(h: &Harness) -> Option<String> {
 /// menu; and it loops with the song.
 #[test]
 fn left_alone_the_cinematic_joins_the_song_shows_the_logo_and_loops() {
-    let mut h = Harness::at_prompt_with_layout(Layout::RightHanded);
+    let mut h = Harness::at_prompt_with_layout(RIGHT_HANDED);
     // Before the first press: the prompt, however long; no cinematic.
     h.wait(20.0);
     let waiting = view(&h);

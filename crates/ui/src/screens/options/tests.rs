@@ -1,6 +1,7 @@
 use super::*;
 use crate::audio::AudioRequest;
-use crate::input::{Chord, Key, Layout};
+use crate::input::LEFT_HANDED;
+use crate::input::{Chord, Key};
 use crate::screen::tests::ctx;
 use crate::settings::SETTINGS_KEY;
 use crate::storage::{Storage, StorageError};
@@ -403,7 +404,7 @@ fn rows_show_their_values() {
     })
     .unwrap();
     c.campaign_mode = Some(GameMode::Classic);
-    c.use_layout(Layout::LeftHanded);
+    c.use_layout(LEFT_HANDED);
     assert_eq!(value(&c, Row::Cursor), "Large corners*");
     assert_eq!(value(&c, Row::MusicVolume), "<0/100>");
     assert_eq!(value(&c, Row::SoundVolume), "<100/100>");
@@ -660,7 +661,7 @@ fn reset_tips_forgets_the_tips_seen() {
 #[test]
 fn restore_defaults_asks_first_and_keeps_the_layout() {
     let mut c = ctx();
-    c.choose_layout(Layout::LeftHanded).unwrap();
+    c.choose_layout(LEFT_HANDED).unwrap();
     c.change_settings(|s| {
         s.text_speed = TextSpeed::Slow;
         s.fullscreen = true;
@@ -676,12 +677,12 @@ fn restore_defaults_asks_first_and_keeps_the_layout() {
     assert_eq!(*c.settings(), changed);
     press(&mut s, &mut c, &[Action::Confirm]);
     press(&mut s, &mut c, &[Action::Confirm]);
-    let expected = Settings::default().with_layout(Layout::LeftHanded);
+    let expected = Settings::default().with_layout(LEFT_HANDED);
     assert_eq!(*c.settings(), expected);
     // A change like any other: saved only if kept on leaving.
     assert_eq!(saved(&c), changed);
     assert_eq!(s.message(), Some(RESTORED_MESSAGE));
-    assert_eq!(c.layout(), Some(Layout::LeftHanded));
+    assert_eq!(c.layout(), Some(LEFT_HANDED));
 }
 
 /// A storage that reads nothing and can't be written.
@@ -793,7 +794,7 @@ fn keep_saves_the_changes_and_leaves() {
 #[test]
 fn discard_puts_every_setting_back_and_saves_nothing() {
     let mut c = ctx();
-    c.choose_layout(Layout::LeftHanded).unwrap();
+    c.choose_layout(LEFT_HANDED).unwrap();
     let before = c.settings().clone();
     let stored = c.storage.read(SETTINGS_KEY);
     let mut s = OptionsScreen::new();
@@ -846,7 +847,7 @@ fn leaving_with_nothing_changed_asks_nothing() {
     // A layout picked meanwhile is saved at once, so it isn't a change.
     let mut s = OptionsScreen::new();
     press(&mut s, &mut c, &[]);
-    c.choose_layout(Layout::LeftHanded).unwrap();
+    c.choose_layout(LEFT_HANDED).unwrap();
     assert!(!s.changed(&c));
     assert_eq!(press(&mut s, &mut c, &[Action::Cancel]), "Pop");
 }
@@ -859,9 +860,9 @@ fn discard_after_another_save_puts_the_saved_settings_back_too() {
     // The window's shortcut and a layout picked save at once, with the
     // unkept speed left out.
     c.change_settings(|s| s.fullscreen = !s.fullscreen).unwrap();
-    c.choose_layout(Layout::LeftHanded).unwrap();
+    c.choose_layout(LEFT_HANDED).unwrap();
     press(&mut s, &mut c, &[Action::CursorUp, Action::Confirm]);
-    assert_eq!(*c.settings(), before.with_layout(Layout::LeftHanded));
+    assert_eq!(*c.settings(), before.with_layout(LEFT_HANDED));
     assert_eq!(saved(&c), *c.settings());
 }
 
