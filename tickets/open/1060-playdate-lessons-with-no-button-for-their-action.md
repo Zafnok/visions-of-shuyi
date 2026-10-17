@@ -1,5 +1,5 @@
 ---
-id: "1059"
+id: "1060"
 title: "Playdate: Chapter 1's lessons can be finished when their action has no button"
 type: bug
 milestone: Post–Chapter 1
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1059 — Playdate: lessons whose action has no button
+# 1060 — Playdate: lessons whose action has no button
 
 ## Context
 
