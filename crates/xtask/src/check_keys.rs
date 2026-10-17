@@ -40,21 +40,18 @@ const RUST_DIRS: [&str; 4] = [
 const ASSET_DIRS: [&str; 2] = ["assets", "assets-test"];
 
 /// The key pipeline: files that may name key and button types and key
-/// names. `pads.rs` is to controllers what `keys.rs` is to the keyboard;
-/// the Playdate's `pads.rs` reads its buttons (ticket 1033).
-const KEY_FILES: [&str; 5] = [
+/// names. The Playdate's `pads.rs` reads its buttons (ticket 1033). The
+/// generic keymap format, the input mechanism and the platform shell's
+/// keyboard and controllers are the engine's (`engine/`, tickets 1107 and
+/// 1110), which this check doesn't scan.
+const KEY_FILES: [&str; 3] = [
     "crates/content/src/keymap.rs",
     "crates/ui/src/input.rs",
-    "crates/app/src/keys.rs",
-    "crates/app/src/pads.rs",
     "crates/playdate/src/pads.rs",
 ];
-/// Their submodules: the per-platform controller code. The generic keymap
-/// format and input mechanism are the engine's (`engine/`, ticket 1107),
-/// which this check doesn't scan.
-const KEY_DIRS: [&str; 1] = ["crates/app/src/pads/"];
-/// The only file that may read macroquad's keyboard.
-const PLATFORM_FILE: &str = "crates/app/src/keys.rs";
+/// The only file that may read macroquad's keyboard: the engine's
+/// platform shell, so none that this check scans.
+const PLATFORM_FILE: &str = "engine/crates/app/src/keys.rs";
 /// Files only compiled for tests (`#[cfg(any(test, feature = "harness"))]`).
 const TEST_SUPPORT_FILES: [&str; 1] = ["crates/ui/src/harness.rs"];
 /// Files whose [`MARKER`] comments are honoured: the layout picker, which
@@ -164,7 +161,7 @@ pub(crate) fn is_test_file(rel: &str) -> bool {
 /// the allow-lists).
 pub fn scan_rust(rel: &str, source: &str) -> Vec<String> {
     let lines = lex(source);
-    let key_file = KEY_FILES.contains(&rel) || KEY_DIRS.iter().any(|dir| rel.starts_with(dir));
+    let key_file = KEY_FILES.contains(&rel);
     let picture_file = PICTURE_FILES.contains(&rel);
     let exempt = exempt_lines(&lines, picture_file.then_some(MARKER));
     let mut errors = Vec::new();
@@ -665,11 +662,13 @@ mod tests {
             rust("crates/content/src/keymap.rs", src),
             Vec::<String>::new()
         );
-        assert_eq!(rust("crates/app/src/keys.rs", src), Vec::<String>::new());
-        // Only keys.rs may read macroquad's keyboard.
+        // Only the engine's keys.rs may read macroquad's keyboard.
         let read = "let d = is_key_down(KeyCode::A);\n";
-        assert_eq!(rust("crates/app/src/keys.rs", read), Vec::<String>::new());
+        assert_eq!(rust(PLATFORM_FILE, read), Vec::<String>::new());
         assert_eq!(rust("crates/ui/src/input.rs", read).len(), 2);
+        let errs = rust("crates/app/src/main.rs", read);
+        assert_eq!(errs.len(), 2, "{errs:?}");
+        assert!(errs[1].contains("outside engine/crates/app/src/keys.rs"));
     }
 
     #[test]
@@ -686,22 +685,19 @@ mod tests {
             errs[0]
         );
         assert_eq!(rust("crates/app/src/main.rs", src).len(), 1);
-        // The pipeline, and where `app` reads the pads.
+        // The pipeline, and where the Playdate reads its buttons.
         let pipeline = "let a = (gilrs::Button::South, Button::South, Key::F);\n";
         for file in [
             "crates/content/src/keymap.rs",
             "crates/ui/src/input.rs",
-            "crates/app/src/keys.rs",
-            "crates/app/src/pads.rs",
-            "crates/app/src/pads/native.rs",
-            "crates/app/src/pads/web.rs",
             "crates/playdate/src/pads.rs",
         ] {
             assert_eq!(rust(file, pipeline), Vec::<String>::new(), "{file}");
         }
-        // Not just any file whose name starts the same way.
-        assert_eq!(rust("crates/app/src/pads_extra.rs", pipeline).len(), 2);
-        assert_eq!(rust("crates/app/src/padsx/native.rs", pipeline).len(), 2);
+        // Not just any file whose name starts the same way, nor the game's
+        // binary.
+        assert_eq!(rust("crates/app/src/pads.rs", pipeline).len(), 2);
+        assert_eq!(rust("crates/app/src/pads/native.rs", pipeline).len(), 2);
         assert_eq!(rust("crates/playdate/src/pd/entry.rs", pipeline).len(), 2);
         // Other things called button are not controller buttons.
         let other = "let m = MouseButton::Left;\nlet b = Button;\nfn f(b: Button) {}\n";

@@ -11,10 +11,12 @@
 use std::collections::{HashMap, HashSet};
 
 use macroquad::prelude::*;
-use trpg_content::font::{AtlasRect, FALLBACK_GLYPH};
-use trpg_content::{FontAtlasDef, ImageId, ImageTable, Light, bundle};
-use trpg_ui::console::{Layout, layout};
-use trpg_ui::{Backdrop, GlyphBuffer, Item, Layer, Paint, Rgb, Sprite};
+use shuyi_assets::font::{AtlasRect, FALLBACK_GLYPH, FontAtlasDef};
+use shuyi_assets::image::{ImageId, ImageTable};
+use shuyi_assets::lighting::Light;
+use shuyi_ui::frame::Rgb;
+use shuyi_ui::frame::console::{Layout, layout};
+use shuyi_ui::frame::glyph_buffer::{Backdrop, GlyphBuffer, Item, Layer, Paint, Sprite};
 
 /// The colour of what is missing: the fallback glyph drawn for a glyph the
 /// atlas lacks, and the rectangle drawn for a sprite whose image has no
@@ -58,23 +60,26 @@ pub struct Renderer {
     recoloured: HashMap<(ImageId, Recolour), Option<Texture2D>>,
     /// Images without a texture already logged, so each is reported once.
     warned_images: HashSet<ImageId>,
+    /// The game's embedded files by path, for the recoloured copies.
+    bytes: fn(&str) -> Option<&'static [u8]>,
 }
 
 impl Renderer {
     /// Uploads the atlas image (`png`) and every image in `images` (read
-    /// from the asset bundle). `clear` is the console background (the
-    /// palette's `black`). An image that can't be decoded is logged and
-    /// left without a texture.
+    /// with `bytes`, the game's embedded files by path). `clear` is the
+    /// console background (the palette's `black`). An image that can't be
+    /// decoded is logged and left without a texture.
     pub fn new(
         atlas: FontAtlasDef,
         png: &[u8],
         clear: Rgb,
         images: &ImageTable,
+        bytes: fn(&str) -> Option<&'static [u8]>,
     ) -> Result<Self, String> {
         let texture = upload(png).map_err(|e| format!("font atlas image: {e}"))?;
         let mut textures = HashMap::new();
         for id in images.ids() {
-            match upload(bundle::bytes(id.path()).unwrap_or_default()) {
+            match upload(bytes(id.path()).unwrap_or_default()) {
                 Ok(texture) => {
                     textures.insert(id, texture);
                 }
@@ -89,6 +94,7 @@ impl Renderer {
             images: textures,
             recoloured: HashMap::new(),
             warned_images: HashSet::new(),
+            bytes,
         })
     }
 
@@ -246,12 +252,13 @@ impl Renderer {
             Paint::Dimmed => (Some(Recolour::Dimmed), Rgb::new(255, 255, 255)),
             Paint::Shaded(light) => (Some(Recolour::Shaded(light)), Rgb::new(255, 255, 255)),
         };
+        let bytes = self.bytes;
         let texture = match recolour {
             None => self.images.get(&sprite.image),
             Some(recolour) => self
                 .recoloured
                 .entry((sprite.image, recolour))
-                .or_insert_with(|| recoloured(sprite.image, recolour))
+                .or_insert_with(|| recoloured(bytes(sprite.image.path())?, recolour))
                 .as_ref(),
         };
         let Some(texture) = texture else {
@@ -304,10 +311,9 @@ fn upload(png: &[u8]) -> Result<Texture2D, String> {
     Ok(texture)
 }
 
-/// A texture of `image` recoloured as `recolour`, or `None` if the image
+/// A texture of PNG file `png` recoloured as `recolour`, or `None` if it
 /// can't be decoded.
-fn recoloured(image: ImageId, recolour: Recolour) -> Option<Texture2D> {
-    let png = bundle::bytes(image.path())?;
+fn recoloured(png: &[u8], recolour: Recolour) -> Option<Texture2D> {
     let mut picture = Image::from_file_with_format(png, Some(ImageFormat::Png)).ok()?;
     for pixel in picture.bytes.as_chunks_mut::<4>().0 {
         let own = Rgb::new(pixel[0], pixel[1], pixel[2]);

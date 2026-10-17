@@ -1,7 +1,7 @@
 //! The Playdate's buttons (ticket 1033): the SDK's button bits become one
 //! controller of [`PadKind::Playdate`] fed through `trpg-ui`'s [`Pads`],
 //! so they reach screens as `Action`s through the player's pad bindings
-//! (ADR-0034, the `keyboard-input` skill). Like `trpg-app`'s `pads.rs` it
+//! (ADR-0034, the `keyboard-input` skill). Like `shuyi-app`'s `pads.rs` it
 //! only translates; the only file in this crate that names buttons.
 //!
 //! A is reported at the binding position `South` and B at `East`, so the

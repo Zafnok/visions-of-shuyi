@@ -277,6 +277,9 @@ fn run_wasm_opt(opt: &impl WasmOpt, wasm_path: &Path) {
 mod tests {
     use super::*;
 
+    /// The Rust side of `web/gamepad.js`: the engine's web pads.
+    const PADS_WEB: &str = "engine/crates/app/src/pads/web.rs";
+
     struct FakeWasmOpt<F>(F);
 
     impl<F: Fn(&Path, &Path) -> Result<bool, String>> WasmOpt for FakeWasmOpt<F> {
@@ -841,10 +844,10 @@ version = "1.2.3"
 
     #[test]
     fn identifiers_starting_finds_whole_names_once() {
-        let text = "a.trpg_pad_poll = f; x_trpg_pad_no(); trpg_pad_axis(trpg_pad_poll())";
+        let text = "a.shuyi_pad_poll = f; x_shuyi_pad_no(); shuyi_pad_axis(shuyi_pad_poll())";
         assert_eq!(
-            identifiers_starting(text, "trpg_pad_"),
-            ["trpg_pad_axis", "trpg_pad_poll"]
+            identifiers_starting(text, "shuyi_pad_"),
+            ["shuyi_pad_axis", "shuyi_pad_poll"]
         );
         assert!(identifiers_starting(text, "nope_").is_empty());
     }
@@ -864,12 +867,12 @@ version = "1.2.3"
         // the browser, as a warning and a pad that does nothing.
         let root = real_repo_root();
         let js = fs::read_to_string(root.join("web/gamepad.js")).unwrap();
-        let rust = fs::read_to_string(root.join("crates/app/src/pads/web.rs")).unwrap();
-        let provided: Vec<String> = identifiers_starting(&js, "importObject.env.trpg_pad_")
+        let rust = fs::read_to_string(root.join(PADS_WEB)).unwrap();
+        let provided: Vec<String> = identifiers_starting(&js, "importObject.env.shuyi_pad_")
             .iter()
             .map(|name| name.replace("importObject.env.", ""))
             .collect();
-        let imported: Vec<String> = identifiers_starting(&rust, "safe fn trpg_pad_")
+        let imported: Vec<String> = identifiers_starting(&rust, "safe fn shuyi_pad_")
             .iter()
             .map(|name| name.replace("safe fn ", ""))
             .collect();
@@ -883,17 +886,17 @@ version = "1.2.3"
     #[test]
     fn gamepad_js_version_matches_the_app() {
         // The loader logs a version-mismatch error unless the JS plugin's
-        // `version` equals what `trpg_gamepad_crate_version()` returns.
+        // `version` equals what `shuyi_gamepad_crate_version()` returns.
         let root = real_repo_root();
         let js = fs::read_to_string(root.join("web/gamepad.js")).unwrap();
-        let rust = fs::read_to_string(root.join("crates/app/src/pads/web.rs")).unwrap();
+        let rust = fs::read_to_string(root.join(PADS_WEB)).unwrap();
         assert_eq!(
             number_after(&js, "var VERSION = "),
             number_after(&rust, "const PLUGIN_VERSION: u32 = ")
         );
         assert!(js.contains("version: VERSION"));
-        assert!(js.contains(r#"name: "trpg_gamepad""#));
-        assert!(rust.contains("fn trpg_gamepad_crate_version() -> u32"));
+        assert!(js.contains(r#"name: "shuyi_gamepad""#));
+        assert!(rust.contains("fn shuyi_gamepad_crate_version() -> u32"));
     }
 
     #[test]

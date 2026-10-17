@@ -964,6 +964,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "shuyi-app"
+version = "0.3.0"
+dependencies = [
+ "gilrs",
+ "macroquad",
+ "proptest",
+ "quad-snd",
+ "quad-storage",
+ "serde",
+ "shuyi-assets",
+ "shuyi-ui",
+ "tempfile",
+]
+
+[[package]]
 name = "shuyi-assets"
 version = "0.3.0"
 dependencies = [
@@ -1125,11 +1140,8 @@ checksum = "06bdbd8cfc056b8d2e2e85f29b56a3bdbecb527cef81eb39e3e7b98af4652770"
 name = "trpg-app"
 version = "0.3.0"
 dependencies = [
- "gilrs",
  "macroquad",
- "proptest",
- "quad-snd",
- "quad-storage",
+ "shuyi-app",
  "tempfile",
  "trpg-content",
  "trpg-core",

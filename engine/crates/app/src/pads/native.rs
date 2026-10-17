@@ -4,7 +4,7 @@
 
 use gilrs::{Axis, Gilrs};
 use macroquad::prelude::warn;
-use trpg_ui::input::{Button, PadId, PadKind, PadState};
+use shuyi_ui::input::{Button, PadId, PadKind, PadState};
 
 /// The game's button for each gilrs button it reads. gilrs calls the
 /// shoulder buttons `LeftTrigger` / `RightTrigger` and the triggers

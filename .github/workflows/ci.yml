@@ -195,7 +195,7 @@ jobs:
         with:
           tool: cargo-llvm-cov
       - name: Generate coverage report
-        run: cargo llvm-cov --workspace --exclude trpg-app --lcov --output-path lcov.info
+        run: cargo llvm-cov --workspace --exclude trpg-app --exclude shuyi-app --lcov --output-path lcov.info
       - name: Generate Clippy report for SonarCloud
         run: cargo clippy --workspace --all-targets --message-format=json > clippy.json
         continue-on-error: true

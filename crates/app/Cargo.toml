@@ -7,29 +7,8 @@ publish.workspace = true
 license-file.workspace = true
 repository.workspace = true
 
-# The workspace lints (`[workspace.lints]` in the root Cargo.toml), copied
-# because one differs and Cargo can't override a single inherited lint:
-# `unsafe_code` is `deny` here instead of `forbid`, so the web build's
-# controller plugin can declare the JS functions it imports
-# (`src/pads/web.rs`, the only `#[allow(unsafe_code)]`; ADR-0034, and
-# ADR-0004 rule 5: no `unsafe` outside `app`). An xtask test keeps the rest
-# equal to the workspace's.
-[lints.rust]
-unsafe_code = "deny"
-missing_docs = "warn"
-
-[lints.clippy]
-all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
-module_name_repetitions = "allow"
-must_use_candidate = "allow"
-missing_errors_doc = "allow"
-missing_panics_doc = "allow"
-unwrap_used = "warn"
-expect_used = "warn"
-dbg_macro = "warn"
-todo = "warn"
-print_stdout = "warn"
+[lints]
+workspace = true
 
 [[bin]]
 name = "visions-of-shuyi"
@@ -49,29 +28,14 @@ private-assets = ["trpg-content/private-assets"]
 trpg-core = { path = "../core" }
 trpg-content = { path = "../content" }
 trpg-ui = { path = "../ui" }
+# The window, input devices, audio, storage and the run loop (ticket 1110).
+shuyi-app = { path = "../../engine/crates/app" }
+# The entry point: `#[macroquad::main]` has to be in the binary.
 macroquad.workspace = true
-
-# Storage backend for web (ticket 0207): `localStorage`. Native resolves its
-# data directory by hand (see storage/native.rs) rather than pulling in the
-# `directories` crate, which drags in MPL-2.0 (denied by ADR-0013).
-# Native music decodes on a worker thread into its own quad-snd context
-# (ticket 0215, ADR-0028). The same version macroquad's `audio` feature uses.
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-quad-snd = "0.2.8"
-# Controllers on Windows, Linux and macOS (ticket 0219, ADR-0034). The web
-# build reads the browser's Gamepad API through `web/gamepad.js` instead.
-gilrs = "0.11.2"
-
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-quad-storage = "0.1"
 
 # The exe's icon and version info (ticket 0902), on a Windows host only.
 [target.'cfg(windows)'.build-dependencies]
 winresource = "0.1"
 
 [dev-dependencies]
-# Turns on `harness` for `trpg-ui::storage::conformance_suite` in tests.
-trpg-ui = { path = "../ui", features = ["harness"] }
 tempfile = "3"
-# Variant picking property test (audio.rs, ticket 0212).
-proptest.workspace = true

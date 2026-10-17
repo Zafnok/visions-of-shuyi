@@ -88,6 +88,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0078](0078-input-actions-an-open-set-the-game-defines.md) | Input actions are an open set the game defines (`ActionSet`); layouts are named data | Accepted (1106); amends ADR-0015 and ADR-0031 |
 | [0079](0079-button-chords-and-the-playdates-own-buttons.md) | Button chords (two pad buttons together), and the Playdate's own buttons | Accepted (1034); extends ADR-0034 and ADR-0053 |
 | [0080](0080-screens-the-context-and-the-frame-loop-generic-over-the-game.md) | Screens, the context and the frame loop are the engine's, generic over the game (`Ctx<G>`, `GameData`, `GameHooks`) | Accepted (1109); amends ADR-0017 and ADR-0050 |
+| [0081](0081-the-platform-shell-is-the-engines-the-game-gives-an-app-config.md) | The platform shell is the engine's (`shuyi-app`); the game gives an `AppConfig` and builds its `Game` on a `Platform` | Accepted (1110); amends ADR-0004 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
