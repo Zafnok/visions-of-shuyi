@@ -42,11 +42,11 @@ pub const CURSOR_MOVE: &str = "cursor_move";
 /// be chosen should get its own warning tone (Nick, ticket 0427); until
 /// then it is `menu_cancel`.
 pub const AUDIO: AudioConfig = AudioConfig {
-    menu_move: "menu_move",
-    menu_select: "menu_select",
-    menu_cancel: "menu_cancel",
-    menu_denied: "menu_cancel",
-    cursor_move: CURSOR_MOVE,
+    move_cue: "menu_move",
+    select_cue: "menu_select",
+    cancel_cue: "menu_cancel",
+    denied_cue: "menu_cancel",
+    cursor_cue: CURSOR_MOVE,
 };
 
 #[cfg(test)]
@@ -79,7 +79,7 @@ mod tests {
                 cue("menu_cancel")
             ]
         );
-        q.cursor_move();
+        q.cursor_tick();
         assert_eq!(q.take()[0].cue(), Some(CURSOR_MOVE));
     }
 

@@ -44,7 +44,6 @@ use trpg_core::{
     Preparations, StatValue, StockItem, Unit, Unusable, WeaponKind,
 };
 
-use super::OptionsScreen;
 use super::battle::info::bonus_text;
 use super::battle::items::effect_text;
 use crate::audio::MenuSound;
@@ -969,7 +968,7 @@ impl Screen<Shuyi> for PreparationsScreen {
                 return Transition::Pop;
             }
             if core::mem::take(&mut self.open_options) {
-                return Transition::Push(Box::new(OptionsScreen::new()));
+                return Transition::Push(Box::new(super::options::screen()));
             }
         }
         Transition::None

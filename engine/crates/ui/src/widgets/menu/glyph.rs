@@ -190,10 +190,10 @@ mod tests {
     fn the_focused_items_note_shows_under_a_rule_at_the_widest_notes_width() {
         let mut brace = item("Brace", true, true);
         brace.note = Some("self: Def +5".to_owned());
-        let mut shove = item("Shove", false, false);
-        shove.note = Some("push 1 tile, 5 on impact".to_owned());
+        let mut push = item("Nudge", false, false);
+        push.note = Some("push 1 tile, 5 on impact".to_owned());
         let view = MenuView {
-            items: vec![brace, shove],
+            items: vec![brace, push],
         };
         // As wide as the longest note, whichever item has the focus.
         assert_eq!(size(&view), (28, 6));
@@ -208,11 +208,11 @@ mod tests {
     fn a_focused_disabled_item_is_a_muted_bar_with_its_note() {
         let mut brace = item("Brace", true, false);
         brace.note = Some("self".to_owned());
-        let mut shove = item("Shove", false, true);
-        shove.note = Some("push".to_owned());
-        shove.suffix = Some(("no uses left".to_owned(), SuffixKind::Warning));
+        let mut push = item("Nudge", false, true);
+        push.note = Some("push".to_owned());
+        push.suffix = Some(("no uses left".to_owned(), SuffixKind::Warning));
         let view = MenuView {
-            items: vec![brace, shove],
+            items: vec![brace, push],
         };
         let (buf, p) = painted(&view);
         let at = |x, y| *buf.get(x, y).unwrap();

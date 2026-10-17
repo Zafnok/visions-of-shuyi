@@ -31,9 +31,11 @@ use crate::frame::console::ConsoleSpec;
 use crate::frame::glyph_buffer::{Cell, GlyphBuffer, Layer, Rect, Sprite};
 use crate::game::{Game, GameHooks, ScreenHook};
 use crate::screen::{FrameInput, Screen, Transition};
+use crate::screens::key_bindings::KeyBindingsScreen;
 use crate::screens::key_bindings::KeyRow;
 use crate::screens::key_bindings::RowGroup::{self, Optional, Required};
-use crate::screens::layout_picker::LegendKeys;
+use crate::screens::layout_picker::{self, LayoutPickerScreen, LegendKeys};
+use crate::screens::options::{self, OptionRow, RowAction, RowValue};
 use crate::settings::{GameSettings, Settings, TextSpeed};
 use crate::storage::Storage;
 
@@ -201,6 +203,89 @@ pub const KEY_ROWS: [KeyRow<Action>; 18] = [
     ),
 ];
 
+/// The text keys of the toy's speeds ([`Prefs::speed`]), slowest first.
+pub const SPEEDS: [&str; 3] = ["toy.speed.calm", "toy.speed.brisk", "toy.speed.wild"];
+
+/// The options screen's rows: the engine's text speed, the toy's speed,
+/// fullscreen, the theme and the volumes; the layout and the Key bindings
+/// screen; the toy's level while it has one (not a setting), a row that
+/// refuses, and Restore defaults.
+pub fn option_rows(ctx: &ToyCtx) -> Vec<OptionRow<Toy>> {
+    let mut rows: Vec<OptionRow<Toy>> = vec![
+        OptionRow::text_speed(),
+        OptionRow::new(
+            "toy.speed",
+            RowValue::Choice {
+                values: |_| SPEEDS.to_vec(),
+                get: |ctx| usize::from(ctx.settings().game.speed),
+                set: |ctx, i| {
+                    let speed = u8::try_from(i).unwrap_or(0);
+                    ctx.preview_settings(|s| s.game.speed = speed)
+                },
+            },
+        ),
+        OptionRow::fullscreen(),
+        OptionRow::new(
+            "options.row.theme",
+            RowValue::Choice {
+                values: |_| vec!["toy.theme.day", "toy.theme.night"],
+                get: |ctx| usize::from(ctx.settings().theme == Theme::Night),
+                set: |ctx, i| {
+                    let theme = if i == 1 { Theme::Night } else { Theme::Day };
+                    ctx.preview_settings(|s| s.theme = theme)
+                },
+            },
+        ),
+        OptionRow::music_volume(),
+        OptionRow::sound_volume(),
+        OptionRow::new(
+            "options.row.layout",
+            RowValue::Action {
+                value: |ctx| {
+                    let layout = ctx.layout().map(|l| layout_picker::label(ctx, l));
+                    Some(layout.unwrap_or_default().to_owned())
+                },
+                confirm: |ctx| RowAction::Open(Box::new(LayoutPickerScreen::change(ctx, &LEGEND))),
+                help: |_| options::HELP_OPEN,
+            },
+        )
+        .starting_group(),
+        OptionRow::new(
+            "options.row.key_bindings",
+            RowValue::Action {
+                value: |_| None,
+                confirm: |ctx| RowAction::Open(Box::new(KeyBindingsScreen::new(ctx, &KEY_ROWS))),
+                help: |_| options::HELP_OPEN,
+            },
+        ),
+    ];
+    if ctx.game.level.is_some() {
+        let level = OptionRow::<Toy>::new(
+            "toy.level",
+            RowValue::Choice {
+                values: |_| SPEEDS.to_vec(),
+                get: |ctx| ctx.game.level.unwrap_or(0),
+                set: |ctx, i| {
+                    let changed = ctx.game.level != Some(i);
+                    ctx.game.level = Some(i);
+                    changed
+                },
+            },
+        );
+        rows.push(level.unsaved());
+    }
+    rows.push(OptionRow::new(
+        "toy.locked",
+        RowValue::Action {
+            value: |_| Some("-".to_owned()),
+            confirm: |_| RowAction::Refuse(Some("toy.locked.message")),
+            help: |_| "options.help.none",
+        },
+    ));
+    rows.push(OptionRow::restore_defaults().starting_group());
+    rows
+}
+
 /// The layout picker's legend: what the toy's keys do, top to bottom.
 pub const LEGEND: [(LegendKeys<Action>, &str); 10] = [
     (LegendKeys::Cursor, "layout_picker.legend.move"),
@@ -243,7 +328,16 @@ pub const LEGEND: [(LegendKeys<Action>, &str); 10] = [
 pub const CARD: &str = "card.png";
 
 /// The toy's English text.
-const ENGLISH: [(&str, &str); 10] = [
+const ENGLISH: [(&str, &str); 19] = [
+    ("toy.speed", "Speed"),
+    ("toy.speed.calm", "Calm"),
+    ("toy.speed.brisk", "Brisk"),
+    ("toy.speed.wild", "Wild"),
+    ("toy.theme.day", "Day"),
+    ("toy.theme.night", "Night"),
+    ("toy.level", "Level"),
+    ("toy.locked", "Locked"),
+    ("toy.locked.message", "Not here"),
     ("keys.not_mapped", "! not mapped"),
     ("keys.arrows", "arrows"),
     ("keys.chord_join", "+"),
@@ -327,6 +421,9 @@ pub struct Toy {
     pub old_keys: Vec<String>,
     /// The image [`CARD`].
     pub images: ImageTable,
+    /// The toy's own level, one of [`SPEEDS`]' worth: an options row that
+    /// isn't a setting, shown only while it is `Some`.
+    pub level: Option<usize>,
 }
 
 impl Toy {
@@ -401,6 +498,7 @@ impl Toy {
             images: ImageTable {
                 images: [(CARD, CARD_SIZE)].into(),
             },
+            level: None,
         }
     }
 

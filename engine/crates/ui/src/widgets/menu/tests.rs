@@ -37,11 +37,11 @@ fn sounds(m: &mut Menu, actions: &[Action]) -> Vec<String> {
 
 /// Menu sounds that aren't the default ones.
 const CUES: AudioConfig = AudioConfig {
-    menu_move: "tick",
-    menu_select: "ding",
-    menu_cancel: "dong",
-    menu_denied: "buzz",
-    cursor_move: "step",
+    move_cue: "tick",
+    select_cue: "ding",
+    cancel_cue: "dong",
+    denied_cue: "buzz",
+    cursor_cue: "step",
 };
 
 #[test]

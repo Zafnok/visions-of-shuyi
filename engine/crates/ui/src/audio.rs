@@ -46,40 +46,40 @@ pub enum MenuSound {
 
 /// Which of the game's sound cues the engine's widgets and screens play
 /// ([`MenuSound`], and the cursor's tick): the game's
-/// ([`GameData::audio_config`]). The default names the cues after what
-/// they are (`menu_move`, `menu_select`, `menu_cancel`, `cursor_move`),
-/// with Denied playing `menu_cancel`.
+/// ([`GameData::audio_config`]). The default names them after what they
+/// are (`ui_move`, `ui_select`, `ui_cancel`, `ui_cursor`), with Denied
+/// playing `ui_cancel`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AudioConfig {
     /// [`MenuSound::Move`]'s cue.
-    pub menu_move: &'static str,
+    pub move_cue: &'static str,
     /// [`MenuSound::Select`]'s cue.
-    pub menu_select: &'static str,
+    pub select_cue: &'static str,
     /// [`MenuSound::Cancel`]'s cue.
-    pub menu_cancel: &'static str,
+    pub cancel_cue: &'static str,
     /// [`MenuSound::Denied`]'s cue.
-    pub menu_denied: &'static str,
+    pub denied_cue: &'static str,
     /// The cue a cursor plays once per step it moves.
-    pub cursor_move: &'static str,
+    pub cursor_cue: &'static str,
 }
 
 impl AudioConfig {
     /// The cues named after what they are.
     pub const DEFAULT: Self = Self {
-        menu_move: "menu_move",
-        menu_select: "menu_select",
-        menu_cancel: "menu_cancel",
-        menu_denied: "menu_cancel",
-        cursor_move: "cursor_move",
+        move_cue: "ui_move",
+        select_cue: "ui_select",
+        cancel_cue: "ui_cancel",
+        denied_cue: "ui_cancel",
+        cursor_cue: "ui_cursor",
     };
 
     /// The cue of `sound`.
     pub const fn cue(&self, sound: MenuSound) -> &'static str {
         match sound {
-            MenuSound::Move => self.menu_move,
-            MenuSound::Select => self.menu_select,
-            MenuSound::Cancel => self.menu_cancel,
-            MenuSound::Denied => self.menu_denied,
+            MenuSound::Move => self.move_cue,
+            MenuSound::Select => self.select_cue,
+            MenuSound::Cancel => self.cancel_cue,
+            MenuSound::Denied => self.denied_cue,
         }
     }
 }
@@ -175,8 +175,8 @@ impl<V> AudioQueue<V> {
     }
 
     /// Plays the cursor's tick, once per step it moves.
-    pub fn cursor_move(&mut self) {
-        self.play_sound(self.config.cursor_move);
+    pub fn cursor_tick(&mut self) {
+        self.play_sound(self.config.cursor_cue);
     }
 
     /// Plays sound `cue` once at its own volume.
@@ -732,7 +732,7 @@ mod tests {
             ] {
                 q.menu(sound);
             }
-            q.cursor_move();
+            q.cursor_tick();
             let taken = q.take();
             taken
                 .iter()
@@ -744,19 +744,19 @@ mod tests {
         assert_eq!(
             cues(&mut q),
             [
-                "menu_move",
-                "menu_select",
-                "menu_cancel",
-                "menu_cancel",
-                "cursor_move"
+                "ui_move",
+                "ui_select",
+                "ui_cancel",
+                "ui_cancel",
+                "ui_cursor"
             ]
         );
         let config = AudioConfig {
-            menu_move: "tick",
-            menu_select: "ding",
-            menu_cancel: "dong",
-            menu_denied: "buzz",
-            cursor_move: "step",
+            move_cue: "tick",
+            select_cue: "ding",
+            cancel_cue: "dong",
+            denied_cue: "buzz",
+            cursor_cue: "step",
         };
         let mut q = AudioQueue::new(config);
         assert_eq!(q.config(), config);

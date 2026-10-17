@@ -5,10 +5,10 @@
 //! shows or does. Another look is another `paint` of the same view.
 
 use super::view::{LeaveView, OptionsView, QuestionView, RowView, ValueView};
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::ctx::{Ctx, GameData};
+use crate::frame::color::EngineColor;
+use crate::frame::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
-use crate::screen::Ctx;
 use crate::screens::print_centred;
 
 /// The panel, in cells, at its smallest: it grows down to fit its rows
@@ -54,16 +54,16 @@ fn panel(view: &OptionsView) -> Rect {
 }
 
 /// Paints `view` over the whole of `buf`.
-pub fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
-    let c = |u| ctx.palette.get(u);
-    let (black, bg) = (c(UiColor::Black), c(UiColor::PanelBg));
-    let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
+pub fn paint<G: GameData>(ctx: &Ctx<G>, view: &OptionsView, buf: &mut GlyphBuffer) {
+    let c = |e| ctx.palette.engine(e);
+    let (black, bg) = (c(EngineColor::Background), c(EngineColor::Panel));
+    let (text, dim) = (c(EngineColor::Text), c(EngineColor::TextDim));
     buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
     let panel = panel(view);
     buf.fill_rect(panel, Cell::new(' ', text, bg));
-    buf.draw_box(panel, BoxStyle::Single, c(UiColor::PanelBorder), bg);
+    buf.draw_box(panel, BoxStyle::Single, c(EngineColor::Border), bg);
     let title = format!(" {} ", view.title);
-    buf.print(PANEL.x + 2, PANEL.y, &title, c(UiColor::TextHighlight), bg);
+    buf.print(PANEL.x + 2, PANEL.y, &title, c(EngineColor::Highlight), bg);
 
     let mut y = PANEL.y + 2;
     for row in &view.rows {
@@ -77,7 +77,7 @@ pub fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
     if let Some(message) = &view.message {
         // The row under the panel's.
         let row = panel.y + panel.h + 1;
-        print_centred(buf, row, message, c(UiColor::TextHighlight), black);
+        print_centred(buf, row, message, c(EngineColor::Highlight), black);
     }
     if let Some(question) = &view.question {
         paint_question(ctx, buf, question);
@@ -92,10 +92,14 @@ pub fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
 /// Paints `row` on console row `y`: the focused row's label is a highlight
 /// bar; a value the cursor changes sits between two arrows; the number box
 /// is a highlight bar where the value was.
-fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, row: &RowView, y: i32) {
-    let c = |u| ctx.palette.get(u);
-    let (bg, text, dim) = (c(UiColor::PanelBg), c(UiColor::Text), c(UiColor::TextDim));
-    let bar = c(UiColor::PanelBorderFocus);
+fn paint_row<G: GameData>(ctx: &Ctx<G>, buf: &mut GlyphBuffer, row: &RowView, y: i32) {
+    let c = |e| ctx.palette.engine(e);
+    let (bg, text, dim) = (
+        c(EngineColor::Panel),
+        c(EngineColor::Text),
+        c(EngineColor::TextDim),
+    );
+    let bar = c(EngineColor::Focus);
     if row.focused {
         buf.print(LABEL_X - 1, y, &format!(" {} ", row.label), bg, bar);
     } else {
@@ -113,7 +117,7 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, row: &RowView, y: i32) {
         ValueView::Volume { level, max } => (volume_text(*level, *max), true),
     };
     let value_fg = if row.focused {
-        c(UiColor::TextHighlight)
+        c(EngineColor::Highlight)
     } else {
         text
     };
@@ -128,9 +132,9 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, row: &RowView, y: i32) {
 /// Paints `question` in a double-bordered box in the middle of the screen,
 /// with its answers under it (the look of the Key bindings screen's
 /// question).
-fn paint_question(ctx: &Ctx, buf: &mut GlyphBuffer, question: &QuestionView) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
+fn paint_question<G: GameData>(ctx: &Ctx<G>, buf: &mut GlyphBuffer, question: &QuestionView) {
+    let c = |e| ctx.palette.engine(e);
+    let bg = c(EngineColor::Panel);
     let widest = question
         .text
         .chars()
@@ -143,10 +147,16 @@ fn paint_question(ctx: &Ctx, buf: &mut GlyphBuffer, question: &QuestionView) {
         w,
         QUESTION_H,
     );
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-    buf.print(rect.x + 2, rect.y + 2, &question.text, c(UiColor::Text), bg);
-    let dim = c(UiColor::TextDim);
+    buf.fill_rect(rect, Cell::new(' ', c(EngineColor::Text), bg));
+    buf.draw_box(rect, BoxStyle::Double, c(EngineColor::Focus), bg);
+    buf.print(
+        rect.x + 2,
+        rect.y + 2,
+        &question.text,
+        c(EngineColor::Text),
+        bg,
+    );
+    let dim = c(EngineColor::TextDim);
     buf.print(rect.x + 2, rect.y + 3, &question.answers, dim, bg);
 }
 
@@ -171,9 +181,9 @@ fn choices_line(leaving: &LeaveView) -> (String, Vec<usize>) {
 /// Paints the question asked on leaving in a double-bordered box in the
 /// middle of the screen (the look of [`paint_question`]), its answers on
 /// the line under it, the one in focus as a highlight bar.
-fn paint_leave(ctx: &Ctx, buf: &mut GlyphBuffer, leaving: &LeaveView) {
-    let c = |u| ctx.palette.get(u);
-    let (bg, text) = (c(UiColor::PanelBg), c(UiColor::Text));
+fn paint_leave<G: GameData>(ctx: &Ctx<G>, buf: &mut GlyphBuffer, leaving: &LeaveView) {
+    let c = |e| ctx.palette.engine(e);
+    let (bg, text) = (c(EngineColor::Panel), c(EngineColor::Text));
     let (line, starts) = choices_line(leaving);
     let widest = leaving.text.chars().count().max(line.chars().count());
     let w = i32::try_from(widest).unwrap_or(0) + 4;
@@ -184,9 +194,9 @@ fn paint_leave(ctx: &Ctx, buf: &mut GlyphBuffer, leaving: &LeaveView) {
         QUESTION_H,
     );
     buf.fill_rect(rect, Cell::new(' ', text, bg));
-    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
+    buf.draw_box(rect, BoxStyle::Double, c(EngineColor::Focus), bg);
     buf.print(rect.x + 2, rect.y + 2, &leaving.text, text, bg);
-    let bar = c(UiColor::PanelBorderFocus);
+    let bar = c(EngineColor::Focus);
     for (choice, start) in leaving.choices.iter().zip(starts) {
         let x = rect.x + 2 + i32::try_from(start).unwrap_or(0);
         let shown = format!(" {} ", choice.label);
@@ -201,23 +211,24 @@ fn paint_leave(ctx: &Ctx, buf: &mut GlyphBuffer, leaving: &LeaveView) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::console::{ConsoleSizes, ConsoleSpec};
-    use crate::screen::tests::ctx;
-    use crate::screens::options::Row;
+    use crate::frame::console::ConsoleSpec;
+    use crate::toy::{ToyCtx, ctx};
+
+    /// The console the skin is laid out for.
+    const PC: ConsoleSpec = ConsoleSpec::text(100, 32);
 
     /// Row `y` of `view` as painted, trimmed.
-    fn painted_row(c: &Ctx, view: &OptionsView, y: i32) -> String {
-        let black = c.palette.get(UiColor::Black);
-        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+    fn painted_row(c: &ToyCtx, view: &OptionsView, y: i32) -> String {
+        let black = c.palette.engine(EngineColor::Background);
+        let mut buf = GlyphBuffer::with_spec(PC, Cell::new(' ', black, black));
         paint(c, view, &mut buf);
-        let glyphs =
-            (0..i32::from(ConsoleSpec::PC.cols)).map(|x| buf.get(x, y).map_or(' ', |c| c.glyph));
+        let glyphs = (0..i32::from(PC.cols)).map(|x| buf.get(x, y).map_or(' ', |c| c.glyph));
         glyphs.collect::<String>().trim().to_owned()
     }
 
     fn row(label: &str, value: ValueView, focused: bool) -> RowView {
         RowView {
-            row: Row::TextSpeed,
+            key: "options.row.text_speed",
             label: label.to_owned(),
             value,
             focused,
@@ -344,16 +355,16 @@ mod tests {
         assert!(boxed("", true).contains("  _ "));
         assert!(boxed("80", false).contains(" 80 ") && !boxed("80", false).contains('_'));
         // The box's highlight is as wide whatever is in it.
-        let bar = c.palette.get(UiColor::PanelBorderFocus);
+        let bar = c.palette.engine(EngineColor::Focus);
         let width = |digits: &str| {
             let value = ValueView::NumberBox {
                 digits: digits.to_owned(),
                 typing: true,
             };
-            let black = c.palette.get(UiColor::Black);
-            let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+            let black = c.palette.engine(EngineColor::Background);
+            let mut buf = GlyphBuffer::with_spec(PC, Cell::new(' ', black, black));
             paint(&c, &view(vec![row("Sound volume", value, true)]), &mut buf);
-            (VALUE_X - 1..i32::from(ConsoleSpec::PC.cols))
+            (VALUE_X - 1..i32::from(PC.cols))
                 .take_while(|&x| buf.get(x, PANEL.y + 2).is_some_and(|cell| cell.bg == bar))
                 .count()
         };
@@ -401,7 +412,7 @@ mod tests {
             text: "Show every tip again?".to_owned(),
             answers: "f yes / d no".to_owned(),
         });
-        let top = (i32::from(ConsoleSpec::PC.rows) - QUESTION_H) / 2;
+        let top = (i32::from(PC.rows) - QUESTION_H) / 2;
         assert!(painted_row(&c, &v, top).contains("╔═══════════════════════╗"));
         assert!(painted_row(&c, &v, top + 2).contains("║ Show every tip again? ║"));
         assert!(painted_row(&c, &v, top + 3).contains("║ f yes / d no          ║"));
@@ -426,17 +437,17 @@ mod tests {
                 choice(LeaveChoice::Back, "Back"),
             ],
         });
-        let top = (i32::from(ConsoleSpec::PC.rows) - QUESTION_H) / 2;
+        let top = (i32::from(PC.rows) - QUESTION_H) / 2;
         // As wide as the answers' line, the wider.
         let question = format!("║ {:<27} ║", "Keep these changes?");
         assert!(painted_row(&c, &v, top + 2).contains(&question));
         assert!(painted_row(&c, &v, top + 3).contains("║  Keep     Discard     Back  ║"));
         // Only the focused answer is lit.
-        let black = c.palette.get(UiColor::Black);
-        let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
+        let black = c.palette.engine(EngineColor::Background);
+        let mut buf = GlyphBuffer::with_spec(PC, Cell::new(' ', black, black));
         paint(&c, &v, &mut buf);
-        let bar = c.palette.get(UiColor::PanelBorderFocus);
-        let lit: String = (0..i32::from(ConsoleSpec::PC.cols))
+        let bar = c.palette.engine(EngineColor::Focus);
+        let lit: String = (0..i32::from(PC.cols))
             .filter_map(|x| buf.get(x, top + 3))
             .filter(|cell| cell.bg == bar)
             .map(|cell| cell.glyph)

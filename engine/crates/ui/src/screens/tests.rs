@@ -9,6 +9,7 @@ fn the_logic_modules_name_no_cells_or_colours() {
     let sources = [
         ("key_bindings.rs", include_str!("key_bindings.rs")),
         ("layout_picker.rs", include_str!("layout_picker.rs")),
+        ("options.rs", include_str!("options.rs")),
     ];
     for (file, source) in sources {
         for name in ["EngineColor", "Rect", "BoxStyle", "Cell", "Rgb"] {
