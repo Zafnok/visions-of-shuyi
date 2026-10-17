@@ -186,107 +186,12 @@ impl Row {
                     set: |ctx, on| ctx.preview_settings(|s| s.game.auto_end_turn = on),
                 },
             ),
-            Row::Cursor => OptionRow::new(
-                self.key(),
-                RowValue::Choice {
-                    values: |ctx| cursor_styles(ctx).iter().map(|&s| cursor_key(s)).collect(),
-                    get: |ctx| {
-                        let shown = shown_cursor_style(ctx);
-                        cursor_styles(ctx)
-                            .iter()
-                            .position(|&s| s == shown)
-                            .unwrap_or(0)
-                    },
-                    set: |ctx, i| {
-                        let Some(&style) = cursor_styles(ctx).get(i) else {
-                            return false;
-                        };
-                        ctx.preview_settings(|s| s.game.cursor_style = style)
-                    },
-                },
-            ),
-            Row::Layout => OptionRow::new(
-                self.key(),
-                RowValue::Action {
-                    value: |ctx| {
-                        let layout = ctx.layout().map(|l| layout_picker::label(ctx, l));
-                        Some(layout.unwrap_or_default().to_owned())
-                    },
-                    confirm: |ctx| RowAction::Open(Box::new(layout_picker::change(ctx))),
-                    help: |_| HELP_OPEN,
-                },
-            ),
-            Row::KeyBindings => OptionRow::new(
-                self.key(),
-                RowValue::Action {
-                    value: |_| None,
-                    confirm: |ctx| RowAction::Open(Box::new(key_bindings::screen(ctx))),
-                    help: |_| HELP_OPEN,
-                },
-            ),
-            Row::GameMode => OptionRow::new(
-                self.key(),
-                RowValue::Action {
-                    value: |ctx| {
-                        let mode = ctx.game.campaign_mode?;
-                        Some(ctx.text(mode_key(mode)).to_owned())
-                    },
-                    confirm: switch_mode,
-                    help: |ctx| {
-                        if can_switch_mode(ctx) {
-                            "options.help.switch"
-                        } else {
-                            "options.help.none"
-                        }
-                    },
-                },
-            ),
-            Row::Tutorial => OptionRow::new(
-                self.key(),
-                RowValue::Choice {
-                    // None without a campaign: the row shows nothing.
-                    values: |ctx| match ctx.game.campaign_tutorial {
-                        Some(_) => TUTORIAL_LEVELS.map(tutorial_key).to_vec(),
-                        None => Vec::new(),
-                    },
-                    get: |ctx| {
-                        let level = ctx.game.campaign_tutorial;
-                        TUTORIAL_LEVELS
-                            .iter()
-                            .position(|&l| Some(l) == level)
-                            .unwrap_or(0)
-                    },
-                    set: |ctx, i| {
-                        let to = TUTORIAL_LEVELS.get(i).copied();
-                        let changed = to.is_some() && ctx.game.campaign_tutorial != to;
-                        if changed {
-                            ctx.game.campaign_tutorial = to;
-                        }
-                        changed
-                    },
-                },
-            )
-            // The campaign's, not a setting: kept or put back with them.
-            .unsaved(),
-            Row::ResetTips => OptionRow::new(
-                self.key(),
-                RowValue::Action {
-                    value: |_| None,
-                    confirm: |_| {
-                        RowAction::Ask(options::Question {
-                            key: Question::ResetTips.key(),
-                            yes: |ctx| {
-                                if reset_tips(&mut ctx.storage).is_ok() {
-                                    TIPS_RESET_MESSAGE
-                                } else {
-                                    NOT_SAVED_MESSAGE
-                                }
-                            },
-                        })
-                    },
-                    help: |_| "options.help.reset",
-                },
-            ),
+            Row::Cursor => cursor_row(),
+            Row::Layout => layout_row(),
+            Row::KeyBindings => key_bindings_row(),
+            Row::GameMode => game_mode_row(),
+            Row::Tutorial => tutorial_row(),
+            Row::ResetTips => reset_tips_row(),
         };
         if matches!(self, Row::Layout | Row::ResetTips) {
             row.starting_group()
@@ -294,6 +199,131 @@ impl Row {
             row
         }
     }
+}
+
+/// The cursor style: one of those offered under the map skin in use.
+fn cursor_row() -> OptionRow {
+    OptionRow::new(
+        Row::Cursor.key(),
+        RowValue::Choice {
+            values: |ctx| cursor_styles(ctx).iter().map(|&s| cursor_key(s)).collect(),
+            get: |ctx| {
+                let shown = shown_cursor_style(ctx);
+                cursor_styles(ctx)
+                    .iter()
+                    .position(|&s| s == shown)
+                    .unwrap_or(0)
+            },
+            set: |ctx, i| {
+                let Some(&style) = cursor_styles(ctx).get(i) else {
+                    return false;
+                };
+                ctx.preview_settings(|s| s.game.cursor_style = style)
+            },
+        },
+    )
+}
+
+/// The layout in use: Confirm opens the layout picker.
+fn layout_row() -> OptionRow {
+    OptionRow::new(
+        Row::Layout.key(),
+        RowValue::Action {
+            value: |ctx| {
+                let layout = ctx.layout().map(|l| layout_picker::label(ctx, l));
+                Some(layout.unwrap_or_default().to_owned())
+            },
+            confirm: |ctx| RowAction::Open(Box::new(layout_picker::change(ctx))),
+            help: |_| HELP_OPEN,
+        },
+    )
+}
+
+/// Confirm opens the Key bindings screen.
+fn key_bindings_row() -> OptionRow {
+    OptionRow::new(
+        Row::KeyBindings.key(),
+        RowValue::Action {
+            value: |_| None,
+            confirm: |ctx| RowAction::Open(Box::new(key_bindings::screen(ctx))),
+            help: |_| HELP_OPEN,
+        },
+    )
+}
+
+/// The campaign's mode: at Preparations Confirm asks to switch Classic to Casual.
+fn game_mode_row() -> OptionRow {
+    OptionRow::new(
+        Row::GameMode.key(),
+        RowValue::Action {
+            value: |ctx| {
+                let mode = ctx.game.campaign_mode?;
+                Some(ctx.text(mode_key(mode)).to_owned())
+            },
+            confirm: switch_mode,
+            help: |ctx| {
+                if can_switch_mode(ctx) {
+                    "options.help.switch"
+                } else {
+                    "options.help.none"
+                }
+            },
+        },
+    )
+}
+
+/// The campaign's tutorial level, a value row like the settings.
+fn tutorial_row() -> OptionRow {
+    OptionRow::new(
+        Row::Tutorial.key(),
+        RowValue::Choice {
+            // None without a campaign: the row shows nothing.
+            values: |ctx| match ctx.game.campaign_tutorial {
+                Some(_) => TUTORIAL_LEVELS.map(tutorial_key).to_vec(),
+                None => Vec::new(),
+            },
+            get: |ctx| {
+                let level = ctx.game.campaign_tutorial;
+                TUTORIAL_LEVELS
+                    .iter()
+                    .position(|&l| Some(l) == level)
+                    .unwrap_or(0)
+            },
+            set: |ctx, i| {
+                let to = TUTORIAL_LEVELS.get(i).copied();
+                let changed = to.is_some() && ctx.game.campaign_tutorial != to;
+                if changed {
+                    ctx.game.campaign_tutorial = to;
+                }
+                changed
+            },
+        },
+    )
+    // The campaign's, not a setting: kept or put back with them.
+    .unsaved()
+}
+
+/// Asks, then shows every one-time tip again.
+fn reset_tips_row() -> OptionRow {
+    OptionRow::new(
+        Row::ResetTips.key(),
+        RowValue::Action {
+            value: |_| None,
+            confirm: |_| {
+                RowAction::Ask(options::Question {
+                    key: Question::ResetTips.key(),
+                    yes: |ctx| {
+                        if reset_tips(&mut ctx.storage).is_ok() {
+                            TIPS_RESET_MESSAGE
+                        } else {
+                            NOT_SAVED_MESSAGE
+                        }
+                    },
+                })
+            },
+            help: |_| "options.help.reset",
+        },
+    )
 }
 
 impl From<Row> for &'static str {

@@ -39,11 +39,14 @@ pub fn hint<G: GameData>(ctx: &Ctx<G>) -> Option<String> {
 /// many times it ran, say) lives in the closure.
 pub type Run<G> = Box<dyn FnMut(&mut Ctx<G>) -> Transition<G>>;
 
+/// What a debug tool is called on the menu, read from the context.
+pub type Label<G> = Box<dyn Fn(&Ctx<G>) -> String>;
+
 /// One tool on the debug menu: what the menu calls it (which may name
 /// something in `ctx`, such as a look in use) and what choosing it does.
 pub struct DebugEntry<G: GameData> {
     /// Its name on the menu.
-    label: Box<dyn Fn(&Ctx<G>) -> String>,
+    label: Label<G>,
     /// What choosing it does.
     run: Run<G>,
 }

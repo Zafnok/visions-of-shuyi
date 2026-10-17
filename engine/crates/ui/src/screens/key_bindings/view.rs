@@ -32,7 +32,7 @@ pub struct KeyBindingsView<A> {
     pub help: String,
 }
 
-impl<A: PartialEq> KeyBindingsView<A> {
+impl<A: Copy + PartialEq> KeyBindingsView<A> {
     /// Every action's row, top to bottom.
     pub fn rows(&self) -> impl Iterator<Item = &RowView<A>> {
         self.groups.iter().flat_map(|g| g.rows.iter())

@@ -858,7 +858,7 @@ fn leave_choices_and_questions_name_their_keys() {
     };
     assert_eq!(format!("{q:?}"), "Question(\"q\")");
     let copy = q;
-    assert_eq!(copy.key, q.clone().key);
+    assert_eq!(copy.key, q.key);
     let s = screen();
     assert!(format!("{s:?}").starts_with("OptionsScreen"));
     let row = OptionRow::<Toy>::fullscreen();

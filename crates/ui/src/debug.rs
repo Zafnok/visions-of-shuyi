@@ -91,8 +91,8 @@ const MAP_SKIN_TOOL: usize = TOOLS.len();
 /// The scene the "Play test scene" tools play.
 pub const TEST_SCENE: &str = "test";
 
-/// The debug menu the debug key opens, with this game's tools: each of
-/// [`TOOLS`], then "Map skin", which names the skin `ctx` uses.
+/// The debug menu the debug key opens, with this game's tools in menu
+/// order, then "Map skin", which names the skin `ctx` uses.
 pub fn menu(ctx: &Ctx) -> DebugMenuScreen {
     DebugMenuScreen::new(ctx, tools())
 }

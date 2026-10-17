@@ -47,8 +47,8 @@ fn the_hint_is_hidden_when_debug_is_unbound() {
 fn the_hint_is_right_aligned_and_skipped_over_text() {
     let c = ctx();
     let black = c.palette.engine(EngineColor::Background);
-    let blank = || GlyphBuffer::new(20, 1, Cell::new(' ', black, black));
-    let mut buf = blank();
+    let empty_row = || GlyphBuffer::new(20, 1, Cell::new(' ', black, black));
+    let mut buf = empty_row();
     buf.print(0, 0, "0123456789", black, black);
     glyph::paint_hint(&c.palette, "F2 debug", &mut buf, 0);
     assert_eq!(row(&buf, 0), "0123456789 F2 debug ");
@@ -58,13 +58,13 @@ fn the_hint_is_right_aligned_and_skipped_over_text() {
     );
     // No gap before the hint's first cell, or text under it: no hint.
     for end in ["01234567890", "0123456789 F2 debu"] {
-        let mut buf = blank();
+        let mut buf = empty_row();
         buf.print(0, 0, end, black, black);
         glyph::paint_hint(&c.palette, "F2 debug", &mut buf, 0);
         assert_eq!(row(&buf, 0).trim_end(), end);
     }
     // Text after the hint's cells (the right margin) doesn't matter.
-    let mut buf = blank();
+    let mut buf = empty_row();
     buf.print(19, 0, "x", black, black);
     glyph::paint_hint(&c.palette, "F2 debug", &mut buf, 0);
     assert_eq!(row(&buf, 0), "           F2 debugx");
