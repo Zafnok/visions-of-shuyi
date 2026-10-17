@@ -253,7 +253,8 @@ pub fn adpcm_wav(samples: &[i16]) -> Vec<u8> {
         for pair in 0..(BLOCK_BYTES - 4) {
             let low = coder.encode(sample(1 + pair * 2));
             let high = coder.encode(sample(2 + pair * 2));
-            data.push(low | (high << 4));
+            // Two 4-bit codes: the first in the low half of the byte.
+            data.push(low + (high << 4));
         }
     }
     let u32_of = |n: usize| u32::try_from(n).unwrap_or(u32::MAX);
@@ -485,6 +486,43 @@ mod tests {
         assert!(back[samples.len() + 64..].iter().all(|s| s.abs() < 64));
     }
 
+    /// The standard IMA ADPCM tables and steps, worked by hand: the step
+    /// at index 10 is 19.
+    #[test]
+    fn the_coder_follows_the_ima_standard() {
+        let at = |index| Coder {
+            predictor: 100,
+            index,
+        };
+        // Codes 0–3 step the index down one; 4–7 up 2, 4, 6, 8.
+        for (code, index) in [
+            (0, 9),
+            (1, 9),
+            (2, 9),
+            (3, 9),
+            (4, 12),
+            (5, 14),
+            (6, 16),
+            (7, 18),
+        ] {
+            let mut coder = at(10);
+            coder.decode(code);
+            assert_eq!(coder.index, index, "code {code}");
+        }
+        // 7: 19/8 + 19 + 19/2 + 19/4 = 2 + 19 + 9 + 4; 15 is its negative.
+        assert_eq!(at(10).decode(7), 134);
+        assert_eq!(at(10).decode(15), 66);
+        assert_eq!(at(10).decode(0), 102);
+        // The same sample again is code 0, not a negative 0.
+        assert_eq!(at(10).encode(100), 0);
+        assert_eq!(at(10).encode(134), 7);
+        assert_eq!(at(10).encode(66), 15);
+        // A byte holds two codes, the first in its low half.
+        let wav = adpcm_wav(&[0, 34, -34]);
+        assert_eq!(wav[64] & 0x0f, 7);
+        assert_eq!(wav[64] >> 4, 0x0f);
+    }
+
     #[test]
     fn a_block_starts_with_its_first_sample_exactly() {
         let samples = tone(BLOCK_SAMPLES * 2);
@@ -684,6 +722,21 @@ mod tests {
             fs::read(out.join("audio/beep.wav")).unwrap().len(),
             60 + BLOCK_BYTES
         );
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn the_totals_count_files_in_nested_folders() {
+        let dir = std::env::temp_dir().join(format!("xtask-audio-totals-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        write(&dir.join("audio/b.wav"), &[0; 5]).unwrap();
+        write(&dir.join("audio/sfx/a.wav"), &[0; 3]).unwrap();
+        write(&dir.join("audio/sfx/deep/c.wav"), &[0; 7]).unwrap();
+        write(&dir.join("music/t.wav"), &[0; 2]).unwrap();
+        let totals = Totals::on_disk(&dir);
+        assert_eq!(totals.sounds, (3, 15));
+        assert_eq!(totals.music, (1, 2));
+        assert_eq!(Totals::on_disk(&dir.join("nothing")), Totals::default());
         let _ = fs::remove_dir_all(&dir);
     }
 

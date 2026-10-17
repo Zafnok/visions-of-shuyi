@@ -725,9 +725,44 @@ mod tests {
             ]
         );
         speaker.calls.clear();
-        audio.set_volumes(&mut speaker, 1.0, 1.0);
-        audio.set_volumes(&mut speaker, 1.0, 0.5);
-        assert_eq!(speaker.calls, [Call::Volume("music/theme".into(), 0.4)]);
+        audio.set_volumes(&mut speaker, 0.5, 1.0);
+        audio.set_volumes(&mut speaker, 0.5, 0.5);
+        // The cue's 0.8 times the fade's 0.5 times the option's 0.5.
+        assert_eq!(speaker.calls, [Call::Volume("music/theme".into(), 0.2)]);
+    }
+
+    /// Two tracks started without a stop between (the music never does
+    /// that, but the clock must still say which sounds): the newer one.
+    #[test]
+    fn the_track_heard_is_the_one_started_last() {
+        let (mut speaker, mut audio) = loaded();
+        frame(
+            &mut speaker,
+            &mut audio,
+            &[],
+            &[load("theme"), start("theme")],
+        );
+        frame(
+            &mut speaker,
+            &mut audio,
+            &[],
+            &[load("jingle"), start("jingle")],
+        );
+        assert_eq!(audio.music_playing(&mut speaker), Some(("jingle", 0.0)));
+        assert_eq!(audio.report(&mut speaker), "Music: jingle, no gaps");
+        frame(
+            &mut speaker,
+            &mut audio,
+            &[],
+            &[stop("theme"), start("theme")],
+        );
+        frame(
+            &mut speaker,
+            &mut audio,
+            &[],
+            &[load("theme"), start("theme")],
+        );
+        assert_eq!(audio.music_playing(&mut speaker), Some(("theme", 0.0)));
     }
 
     #[test]
