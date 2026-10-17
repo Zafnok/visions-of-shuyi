@@ -13,8 +13,9 @@ until their Playdate skins land (1037 on).
 ## The Playdate's bundle
 
 The game's data is `assets/` without what the Playdate never reads:
-the notes (`README.md`, license texts), the PC's icons and, until 1047,
-the sound files. `crates/content/playdate-bundle.txt` lists what is left
+the notes (`README.md`, license texts), the PC's icons and the sound
+files, which the Playdate plays from its own converted copies in the
+`.pdx` (see *Sound and music*). `crates/content/playdate-bundle.txt` lists what is left
 out; `trpg-content`'s `build.rs` embeds the rest in the build without
 `std`, and the bundle knows what it left out, so the audio manifest's
 sounds go unchecked instead of missing (ticket 1036). `src/chapter_1.rs`
@@ -29,6 +30,7 @@ listed.
 | ---- | ---- |
 | `shim/shim.c` | The SDK's entry point (`eventHandler`) and one small C wrapper per SDK call, compiled against the installed SDK's `pd_api.h` |
 | `src/pd/` | The `sdk` feature: the Rust side of those calls, the allocator over the SDK's `realloc`, the panic handler, the game's own stack (`run`, `high_water`), the SDK's files behind `storage::Files` (`files.rs`) and the entry points the shim calls (`entry.rs`: the frame loop); with the `bench` feature, the bench build's extra renders (`bench.rs`). The only `unsafe` in the crate |
+| `src/audio.rs` | Playing the frame's sounds and music (ticket 1047, ADR-0084): the PC player's rules over a `Speaker` trait, which `src/pd/sound.rs` puts on the SDK's sample and file players |
 | `src/pads.rs` | The buttons: the SDK's button bits as a `PadKind::Playdate` controller. The only file here that names buttons (`check-keys`) |
 | `src/storage.rs` | The game's `Storage` on the Playdate's files |
 | `src/screen.rs` | Copying the one-bit frame onto the SDK's frame buffer, changed rows only |
@@ -51,7 +53,10 @@ Each SDK update (`src/pd/entry.rs`):
 2. The buttons become this frame's `RawInputEvent`s (`src/pads.rs`). A
    button pressed and let go between two updates counts as held for one
    frame, so a quick tap is never lost while a frame takes long.
-3. `Game::frame(&events, dt)` runs on the game's own stack.
+3. `Game::frame(&events, dt)` runs on the game's own stack, told first
+   where the music is (the file player's position), and its sounds and
+   music commands are played (`src/audio.rs`). The "Game::frame" time
+   counts both.
 4. Only when the frame's `GlyphBuffer` differs from the last one drawn,
    `trpg_ui::onebit` redraws the parts that differ (`render_changed`,
    ADR-0077; the first frame whole) and the rows that changed are copied
@@ -65,9 +70,8 @@ The game starts with the Playdate's console (`ConsoleSpec::PLAYDATE`) and
 palette, `Keyboard::Absent` (no layout picker) and the Playdate pad as the
 device help text names; tips, lessons and idle motion on, as on the PC.
 The debug tools are off: they are made of the test files, which a build
-without `std` does not have (ADR-0057). Sound is ignored until 1047; a
-game that quits keeps its last frame (the system's Menu button leaves
-it). Choosing a colour theme in Options would swap in that theme's PC
+without `std` does not have (ADR-0057). A game that quits keeps its
+last frame (the system's Menu button leaves it), its music stopped. Choosing a colour theme in Options would swap in that theme's PC
 palette until 1045 takes the theme out of the Playdate's Options.
 
 ## Buttons
@@ -107,13 +111,14 @@ Game data loaded in … ms
 Game stack used: … of 65,536 bytes
 Bundle: … reads of … files, 0 not in the bundle
 Slowest files, ms to the next read: dialogue/ch01.dlg …, (the title) …, …
+Sounds: 21 files loaded
 First frame of the game shown … ms after start
 ```
 
 A file's time runs from its read to the next one: the parsing and
 checking of what it holds, roughly (a loader may read several files
 before parsing them). The steps that read no file are named in brackets:
-`(the player's settings and saves)`, `(the title)`. `load-report.txt`
+`(the player's settings and saves)`, `(the sounds)`, `(the title)`. `load-report.txt`
 holds the same lines and every file read with its time; the debug build
 also logs each, and each file read once the game runs.
 
@@ -130,10 +135,14 @@ Bench, 1032's render by phase, avg / max ms: ground … / …, backdrop …
 Bench, fast render: min … / avg … / max … ms, n = …
 Bench, fast render by phase, avg / max ms: ground … / …, backdrop …
 Bench: 0 frames unlike 1032's render, 0 redrawn unlike a whole render
+Bench: the music played this minute
 ```
 
 The extra renders slow the game down, so it is for measuring only; its
-"Render and copy" line still times only what the normal build does.
+"Render and copy" line still times only what the normal build does. It
+pauses the music every other minute (ticket 1047): the fast render's
+time in a minute with music and in one without is what playing music
+costs.
 
 ## The game's own stack
 
@@ -186,3 +195,27 @@ the device's stack, so always use `--release` for the device.
   shows the game's log, and a plugged-in device's too. The load report
   is also written to `load-report.txt` in the game's data folder: the
   SDK's `Disk/Data/com.zafnok.visionsofshuyi/` for the Simulator.
+
+## Sound and music
+
+(ticket 1047, [ADR-0084](../../docs/adr/0084-playdate-audio-formats.md))
+
+`cargo xtask playdate` converts every sound file of
+`assets/audio/audio.ron` and the music listed in
+`crates/content/playdate-music.txt` (Chapter 1's) to mono IMA ADPCM WAVs
+at 44.1 kHz in `Source/audio/` and `Source/music/`; `pdc` makes them
+`.pda`s. Nothing is committed: the converted files are cached in
+`target/playdate/audio-v<n>/`. A new track for the Playdate is a line in
+`playdate-music.txt`; the Chapter 1 test fails while Chapter 1 asks for
+a track the list leaves out.
+
+The sounds are loaded into memory behind the loading card and play on 8
+sample players; each track streams from its file in a file player, at
+most two at once during a fade. Volumes are the cue's times the player's
+Sound or Music option, as on the PC. The music clock (the title
+cinematic's) is the file player's position. Once a minute the log says
+which track plays and whether it ran out of data:
+
+```
+Music: battle_bright, no gaps
+```

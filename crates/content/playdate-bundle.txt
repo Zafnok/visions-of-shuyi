@@ -24,7 +24,8 @@ fonts/Terminus-LICENSE.txt
 # 1052's, in the `.pdx`).
 icon/
 
-# The sound effects: the Playdate plays none until 1047, which decides
-# what it plays and in which format. `audio/audio.ron` stays: the game's
-# scenes and battles name its cues.
+# The sound effects: the Playdate plays its own copies, which its build
+# converts and packs in the `.pdx` beside the game (ticket 1047,
+# ADR-0084). `audio/audio.ron` stays: the game's scenes and battles name
+# its cues, and the Playdate's player reads their files and volumes.
 audio/sfx/

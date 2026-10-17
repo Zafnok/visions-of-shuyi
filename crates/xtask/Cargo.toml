@@ -16,6 +16,9 @@ trpg-content = { path = "../content" }
 trpg-core = { path = "../core" }
 # The Harness, for `frame-png` (ticket 0232).
 trpg-ui = { path = "../ui", features = ["harness"] }
+# Decoding the sounds and music the Playdate build converts (ticket 1047).
+hound = "3.5"
+lewton = "0.9"
 mutants = "0.0.4"
 png = "0.18"
 ron.workspace = true
