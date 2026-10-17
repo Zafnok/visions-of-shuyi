@@ -144,9 +144,40 @@
         // The left face button, like Danger zone: another key group.
         "DialogueLog": ["West"],
     },
+    // The Playdate's buttons (docs/design/playdate.md, Buttons and the
+    // crank), in place of `pad` on a Playdate: the D-pad, A (South) and B
+    // (East). Two buttons joined by + are pressed together: A + B ends
+    // the turn, hold B + left / right picks the previous / next unit. The
+    // shortcuts it has no button for are in the map menu (ticket 1035).
+    playdate: {
+        "CursorLeft": ["DpadLeft"],
+        "CursorDown": ["DpadDown"],
+        "CursorUp": ["DpadUp"],
+        "CursorRight": ["DpadRight"],
+
+        "Confirm": ["South"],
+        "Cancel": ["East"],
+        "EndTurn": ["South+East"],
+        "PrevUnit": ["East+DpadLeft"],
+        "NextUnit": ["East+DpadRight"],
+        "Info": [],
+        "DangerZone": [],
+        "ToggleAutoEnd": [],
+        "Menu": [],
+        "Debug": [],
+        "Rewind": [],
+        "Select": [],
+        "ConfirmEndTurn": [],
+        "ZoomMap": [],
+        "DialogueLog": [],
+    },
     // Held cursor keys and buttons, in every layout and the layout picker:
     // first repeat after delay_ms, then every interval_ms.
     repeat: (delay_ms: 300, interval_ms: 55),
+    // Two buttons pressed together (the playdate table's A + B): a button
+    // that starts a chord holds back its own action until its partner
+    // comes, at most window_ms (or until it is let go). Tunable.
+    chord: (window_ms: 80),
     // A stick counts as a held direction once pushed press_percent of the
     // way, and stops below release_percent (lower, so a stick resting near
     // the edge doesn't flicker). Tunable.

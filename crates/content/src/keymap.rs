@@ -15,7 +15,8 @@ pub use shuyi_assets::keymap as format;
 pub use shuyi_assets::keymap::action_set;
 
 pub use format::{
-    ActionSet, Button, Chord, Key, LAYOUT_NAME_MAX, Layout, RepeatDef, SLOTS, StickDef, UiAction,
+    ActionSet, Button, ButtonChord, Chord, ChordDef, Key, LAYOUT_NAME_MAX, Layout, RepeatDef,
+    SLOTS, StickDef, UiAction,
 };
 
 /// Path of the keymap inside the asset bundle.
@@ -349,6 +350,7 @@ mod tests {
             (Action::ConfirmEndTurn, vec![]),
             (Action::Debug, vec![]),
         ]
+        .map(|(a, buttons)| (a, buttons.into_iter().map(ButtonChord::from).collect()))
         .into();
         assert_eq!(design.len(), Action::ALL.len());
         assert_eq!(k.pad, design);
@@ -360,6 +362,37 @@ mod tests {
                 release_percent: 35
             }
         );
+    }
+
+    /// Ticket 1034: the Playdate's buttons are `docs/design/playdate.md`'s
+    /// (*Buttons and the crank*): the D-pad moves the cursor, A confirms,
+    /// B cancels, A + B together ends the turn and hold B + left / right
+    /// picks the previous / next ready unit. Nothing else has a button:
+    /// the map menu has those (ticket 1035), and the crank rewinds.
+    #[test]
+    fn embedded_playdate_buttons_match_the_design() {
+        use Button::{DpadDown, DpadLeft, DpadRight, DpadUp, East, South};
+        let k = load_keymap().unwrap_or_default();
+        let one = |b| vec![ButtonChord::single(b)];
+        let two = |a, b| ButtonChord::pair(a, b).into_iter().collect::<Vec<_>>();
+        let mut design: PadKeys = Action::ALL.into_iter().map(|a| (a, vec![])).collect();
+        design.extend([
+            (Action::CursorLeft, one(DpadLeft)),
+            (Action::CursorDown, one(DpadDown)),
+            (Action::CursorUp, one(DpadUp)),
+            (Action::CursorRight, one(DpadRight)),
+            (Action::Confirm, one(South)),
+            (Action::Cancel, one(East)),
+            (Action::EndTurn, two(South, East)),
+            (Action::PrevUnit, two(East, DpadLeft)),
+            (Action::NextUnit, two(East, DpadRight)),
+        ]);
+        assert_eq!(k.playdate, design);
+        // The PC's table is its own.
+        assert_ne!(k.pad, k.playdate);
+        assert_eq!(k.clone().for_playdate().pad, design);
+        // The chord window: tunable, starting at 80 ms.
+        assert_eq!(k.chord, ChordDef { window_ms: 80 });
     }
 
     #[test]

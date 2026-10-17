@@ -11,7 +11,8 @@ use crate::color::UiColor;
 use crate::debug::{self, DebugMenuScreen, ScenePreviewScreen};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::{
-    Action, ActionSet, Button, Chord, InputState, Key, PadId, PadKind, PadState, Pads, UiAction,
+    Action, ActionSet, Button, Chord, Device, InputState, Key, PadId, PadKind, PadState, Pads,
+    UiAction,
 };
 use crate::screen::{Ctx, FrameInput, KeyPrompt, Keyboard, Screen, ScreenStack};
 use crate::screens::{LayoutPickerScreen, TitleScreen};
@@ -267,7 +268,8 @@ impl Game {
             // Any key or any controller button ends the title's wait
             // (`docs/design/title-screen.md`).
             let press = matches!(event, RawInputEvent::Down(_) | RawInputEvent::PadDown(..));
-            if press && self.ctx.key_prompt == KeyPrompt::Waiting {
+            let ends_wait = press && self.ctx.key_prompt == KeyPrompt::Waiting;
+            if ends_wait {
                 self.ctx.key_prompt = KeyPrompt::Pressed;
             }
             match event {
@@ -283,6 +285,11 @@ impl Game {
                 RawInputEvent::Text(_) => {}
                 RawInputEvent::PadDown(button, kind) => {
                     self.input.pad_down(button, kind);
+                    if ends_wait {
+                        // The title's wait takes it: nothing when let go
+                        // either (a chord button's action, ticket 1034).
+                        self.input.pad_taken(button);
+                    }
                     buttons_down.push(button);
                 }
                 RawInputEvent::PadUp(button) => {
@@ -313,9 +320,14 @@ impl Game {
         if opens_debug_menu {
             self.stack.push(Box::new(DebugMenuScreen::new(&self.ctx)));
         } else {
+            // A chord button gives its own action when let go or after the
+            // chord window (ticket 1034): that is pad input too.
+            let from_pad = !buttons_down.is_empty()
+                || (!actions.is_empty() && matches!(self.ctx.device, Device::Pad(_)));
             let input = FrameInput::new(actions, dt, held)
                 .with_typing(pressed, text)
-                .with_buttons(buttons_down, buttons_up);
+                .with_buttons(buttons_down, buttons_up)
+                .with_pad(from_pad);
             self.quit = self.stack.update(&mut self.ctx, &input);
             self.sync_keymap();
         }
@@ -750,6 +762,48 @@ mod tests {
         assert!(seen[0].is_held(Action::Confirm));
         assert!(seen[1].actions.is_empty());
         assert!(!seen[1].is_held(Action::Confirm));
+    }
+
+    /// Ticket 1034: on the Playdate's buttons A's Confirm comes when it is
+    /// let go (or after the chord window), with no button going down that
+    /// frame: screens still see it as pad input (a letter grid, not a
+    /// typing box).
+    #[test]
+    fn a_chord_buttons_late_action_is_pad_input() {
+        let seen = std::rc::Rc::default();
+        let mut ctx = ctx();
+        ctx.use_playdate_buttons();
+        let mut game = Game::new(ctx, Box::new(Spy(std::rc::Rc::clone(&seen))));
+        let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
+        game.frame(&[down(Button::South)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        game.frame(&[], 0.0);
+        // A key afterwards is keyboard input again.
+        game.frame(&[RawInputEvent::Down(Chord::plain(Key::F))], 0.0);
+        let seen = seen.borrow();
+        assert!(seen[0].actions.is_empty() && seen[0].pad_pressed());
+        assert_eq!(seen[1].actions, [Action::Confirm]);
+        assert!(seen[1].pad_pressed(), "Confirm, let go");
+        assert!(!seen[2].pad_pressed(), "nothing");
+        assert!(!seen[3].pad_pressed(), "a key");
+    }
+
+    /// The button that ends the title's wait does nothing else, also when
+    /// a chord makes its action wait until it is let go (ticket 1034).
+    #[test]
+    fn the_button_that_ends_the_wait_gives_nothing_when_let_go() {
+        let mut ctx = waiting(ctx());
+        ctx.use_playdate_buttons();
+        let mut game = Game::start(ctx);
+        let down = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
+        game.frame(&[down(Button::South)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        game.frame(&[], 1.0);
+        assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
+        assert_eq!(game.screens(), ["title"]);
+        game.frame(&[down(Button::South)], 0.0);
+        game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
+        assert_eq!(game.screens(), ["title", "mode_select"]);
     }
 
     /// Any controller button ends the title's wait too, bound or not;

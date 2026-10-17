@@ -32,8 +32,8 @@ pub use help_keys::ARROWS;
 pub use pad::{ButtonSet, PadId, PadKind, PadState, Pads};
 pub use state::{Device, Input, MAX_REPEATS_PER_UPDATE};
 pub use trpg_content::keymap::{
-    Action, ActionSet, Button, Chord, Key, KeyGroup, KeymapDef, LEFT_HANDED, Layout, LayoutKeys,
-    PadKeys, RIGHT_HANDED, RepeatDef, SLOTS, StickDef, UiAction, load_keymap,
+    Action, ActionSet, Button, ButtonChord, Chord, ChordDef, Key, KeyGroup, KeymapDef, LEFT_HANDED,
+    Layout, LayoutKeys, PadKeys, RIGHT_HANDED, RepeatDef, SLOTS, StickDef, UiAction, load_keymap,
 };
 
 /// This game's chord and button lookup ([`keymap::Keymap`]).
@@ -60,6 +60,10 @@ pub type Bindings = format::Bindings<Action>;
 
 /// The text key of [`ARROWS`] in the player's language.
 pub const ARROWS_TEXT: &str = "keys.arrows";
+
+/// The text key of what joins a button chord's two buttons in help text
+/// (`A+B`, ticket 1034).
+pub const CHORD_JOIN_TEXT: &str = "keys.chord_join";
 
 /// The text key of what a slot on the Key bindings screen shows while it
 /// waits for a key (`docs/design/controls.md`, *Rebinding keys*).

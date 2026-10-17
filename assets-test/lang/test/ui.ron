@@ -698,6 +698,7 @@
     (key: "prep.armour_detail", source: "{bonus}  Wt {weight}", text: "{bonus}  WT {weight}"),
     (key: "keys.not_mapped", source: "! not mapped", text: "! NOT MAPPED"),
     (key: "keys.arrows", source: "arrows", text: "ARROWS"),
+    (key: "keys.chord_join", source: "+", text: " PLUS "),
     (key: "stat.hp", source: "HP", text: "HP"),
     (key: "stat.str", source: "Str", text: "STR"),
     (key: "stat.mag", source: "Mag", text: "MAG"),

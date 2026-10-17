@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["1033"]
 nick_input: none
-completed:
+completed: 2026-10-17
 ---
 
 # 1034 — Playdate button chords
@@ -96,13 +96,13 @@ any game can use) and keep the `playdate` table in the game's
 
 ## Acceptance criteria
 
-- [ ] A + B ends the turn (its question shows, as on the PC) and hold B +
+- [x] A + B ends the turn (its question shows, as on the PC) and hold B +
       left/right cycles ready units, in the Simulator.
-- [ ] B tapped alone cancels; A tapped alone confirms.
-- [ ] Unit and property tests for the firing rules pass.
-- [ ] PC pad and keyboard behaviour unchanged (existing input tests pass
+- [x] B tapped alone cancels; A tapped alone confirms.
+- [x] Unit and property tests for the firing rules pass.
+- [x] PC pad and keyboard behaviour unchanged (existing input tests pass
       unchanged).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -111,5 +111,60 @@ any game can use) and keep the `playdate` table in the game's
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**What was done.** Input had moved to the engine (1107), so chords are an
+engine feature, as the ticket's *Carve* note asked (ADR-0079):
+
+- `ButtonChord` (`shuyi_assets::keymap`): a pad binding is one button or
+  two, `"South+East"` in `keymap.ron` and the saved bindings (either
+  order, kept in `Button::ALL` order). `PadBindings` slots, `Keymap`, help
+  text and the saved form hold them; saved bindings without chords load
+  as before (version 2 kept).
+- A `playdate` table beside `pad` in `assets/data/keymap.ron` (D-pad,
+  A = Confirm, B = Cancel, `South+East` = End turn, `East+DpadLeft` /
+  `East+DpadRight` = Previous / Next unit, the rest `[]`), and
+  `chord: (window_ms: 80)` next to `repeat`. The Playdate front end calls
+  `Ctx::use_playdate_buttons()`; the PC's `pad` table is unchanged.
+  `embedded_playdate_buttons_match_the_design` pins it.
+- The firing rules (`shuyi_ui::input::state` module docs,
+  `Keymap::chord_wait`): which buttons wait follows from the bindings. A
+  button whose own action repeats (the D-pad) never waits, so the cursor
+  never lags; B waits until let go (its partners act on press); A waits
+  the window or until let go. 29 unit and property tests in
+  `engine/crates/ui/src/input/chord_tests.rs`.
+- Help text: `key_name` gives `A+B`, `B+←`, `B+→` with the language's
+  `keys.chord_join` (`+`), through `PadKind::chord_name`.
+- Two `Game` details the waiting needed: `FrameInput::pad_pressed` now
+  also covers a pad action that arrives with no button going down (A's
+  Confirm on release: the letter grid still opens), and the press that
+  ends the title's wait gives nothing when let go either
+  (`InputState::pad_taken`).
+- Harness: `h.pad("South+East")` presses both in one frame. Integration
+  test `a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit`
+  in Chapter 1's first battle.
+- Simulator (step 6): in Chapter 1's first battle, hold B + → / ← moved
+  the cursor between ready units, B alone opened the map menu, A + B
+  showed "End turn with 6 units ready?" and A ended the turn (enemy
+  phase). Driven by window messages and a temporary, uncommitted frame
+  log, as in 1033.
+
+**Deviations.** None in scope. The engine's own ADRs live in its
+repository; this one is recorded here as ADR-0079 while the engine code
+is still in this repository.
+
+**Follow-up tickets.** 1059: with lessons on, the "Finding your units"
+lesson asks for Unit info, which has no Playdate button (`! not
+mapped`), so on a Playdate the lesson can't be finished and the turn
+can't end. Added to 1050's `blocked_by` and the roadmap.
+
+**Claude's starting rules** (how the chords feel, where the design is
+silent; Nick can veto):
+- On the Playdate, B cancels when you **let go** of it, and A confirms a
+  split second (80 ms) after the press, or when you let go if sooner.
+- Holding B and then pressing A at any time also ends the turn, not only
+  pressing both together.
+- Pressing left or right *first* and then B moves the cursor; B then
+  cancels when let go. Only B first picks a unit.
+- While B is held, up and down still move the cursor, and B still
+  cancels when let go.
+- While B is held, left / right can be pressed again and again to keep
+  picking units; letting go of B then does nothing.
