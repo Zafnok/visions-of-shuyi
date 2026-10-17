@@ -90,6 +90,20 @@ pub enum ModeSwitch {
     Open,
 }
 
+/// Which set of skins paints the game (ADR-0038, ADR-0054): the map skin and
+/// each screen's. A screen's skin reads it in its `draw`
+/// ([`Shuyi::skin_set`]); the map skin is chosen with it
+/// ([`map_view::skin_for`](crate::map_view::skin_for)).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum SkinSet {
+    /// The PC's: coloured glyphs, and the map in the player's map look
+    /// (glyphs, or the bought art's pictures).
+    #[default]
+    Glyph,
+    /// The Playdate's one-bit look (ADR-0070 §4, `docs/design/playdate.md`).
+    Playdate,
+}
+
 /// This game's part of the context ([`Ctx::game`](shuyi_ui::Ctx::game)):
 /// its content, the campaign being played, how battle maps look and who
 /// the lead is. A plain struct: add fields as later tickets need them.
@@ -124,6 +138,10 @@ pub struct Shuyi {
     /// Change it with [`set_map_skin`](ShuyiCtx::set_map_skin), which
     /// keeps the player's zoom.
     pub map_skin: Rc<dyn MapSkin>,
+    /// Which set of skins paints the game: [`SkinSet::Glyph`] unless a
+    /// front end says otherwise
+    /// ([`use_playdate_skins`](ShuyiCtx::use_playdate_skins)).
+    pub skin_set: SkinSet,
     /// Whether battles show their one-time tips (0406). Off here, so
     /// screen tests aren't interrupted by them; `app` turns it on.
     pub tips_enabled: bool,
@@ -151,6 +169,7 @@ impl Shuyi {
             campaign_lessons: BTreeSet::new(),
             mode_switch: ModeSwitch::Closed,
             map_skin,
+            skin_set: SkinSet::Glyph,
             tips_enabled: false,
             lessons: Lessons::Off,
             lead: LeadProfile::new(DEFAULT_NAME, LeadGender::Male),
@@ -244,9 +263,9 @@ impl GameData for Shuyi {
     }
 
     /// Paints the battle map with the skin of the map look in the settings
-    /// (ticket 0824) at their zoom (ticket 0439): a new skin when the look
-    /// changed (or the settings were just loaded), the same skin at the new
-    /// zoom when only the zoom did.
+    /// (ticket 0824), in the [`skin_set`](Self::skin_set), at their zoom
+    /// (ticket 0439): a new skin when the look changed (or the settings were
+    /// just loaded), the same skin at the new zoom when only the zoom did.
     fn apply_settings(&mut self, now: &Settings, before: Option<&Settings>) {
         let zoom = now.game.map_zoom;
         let skin = match before {
@@ -256,7 +275,7 @@ impl GameData for Shuyi {
                 }
                 Rc::clone(&self.map_skin)
             }
-            _ => crate::map_view::skin_for_look(now.game.map_look, &self.content),
+            _ => crate::map_view::skin_for(self.skin_set, now.game.map_look, &self.content),
         };
         self.map_skin = skin.at_zoom(zoom).unwrap_or(skin);
     }
@@ -307,6 +326,11 @@ pub trait ShuyiCtx: Sized {
     /// 1034), for the Playdate front end, before the player's bindings are
     /// loaded: its pad is the only one there is.
     fn use_playdate_buttons(&mut self);
+
+    /// Paints the game with the Playdate's skins ([`SkinSet::Playdate`]),
+    /// for its front end and for pictures of its screen: the map in the
+    /// Playdate's map skin, whatever the map look in the settings.
+    fn use_playdate_skins(&mut self);
 }
 
 impl ShuyiCtx for Ctx {
@@ -335,6 +359,13 @@ impl ShuyiCtx for Ctx {
         let def = core::mem::take(&mut self.game.content.keymap);
         self.game.content.keymap = def.for_playdate();
         self.refresh_keymap();
+    }
+
+    fn use_playdate_skins(&mut self) {
+        self.game.skin_set = SkinSet::Playdate;
+        let look = self.settings().game.map_look;
+        let skin = crate::map_view::skin_for(SkinSet::Playdate, look, &self.game.content);
+        self.set_map_skin(skin);
     }
 }
 
@@ -822,6 +853,35 @@ pub(crate) mod tests {
 
     /// Ticket 0439: the map skin is drawn at the zoom in the settings,
     /// whichever changes: the zoom, or the skin (which keeps the zoom).
+    /// The PC paints with the glyph set; the Playdate's front end asks for
+    /// its own, and its map skin stays whatever the map look or the zoom
+    /// in the settings, and when the settings are loaded.
+    #[test]
+    fn the_playdate_skins_stay_whatever_the_settings() {
+        use crate::settings::{MapLook, MapZoom};
+        let mut c = ctx();
+        assert_eq!(c.game.skin_set, SkinSet::Glyph);
+        assert_eq!(SkinSet::default(), SkinSet::Glyph);
+        assert_eq!(c.game.map_skin.name(), "glyph");
+        c.use_playdate_skins();
+        assert_eq!(c.game.skin_set, SkinSet::Playdate);
+        assert_eq!(c.game.map_skin.name(), "playdate");
+        for look in [MapLook::Glyphs, MapLook::Pictures, MapLook::Glyphs] {
+            c.change_settings(|s| s.game.map_look = look).unwrap();
+            assert_eq!(c.game.map_skin.name(), "playdate", "{look:?}");
+        }
+        c.change_settings(|s| s.game.map_zoom = MapZoom::X1)
+            .unwrap();
+        assert_eq!(c.game.map_skin.name(), "playdate");
+        let loaded = c.with_storage(Box::new(crate::storage::MemoryStorage::new()));
+        assert_eq!(loaded.game.map_skin.name(), "playdate");
+        // On the PC the look picks the skin, as before.
+        let mut pc = ctx();
+        pc.change_settings(|s| s.game.map_look = MapLook::Glyphs)
+            .unwrap();
+        assert_eq!(pc.game.map_skin.name(), "glyph");
+    }
+
     #[test]
     fn the_map_skin_follows_the_zoom_in_the_settings() {
         use crate::map_view::{GlyphSkin, skin_named};

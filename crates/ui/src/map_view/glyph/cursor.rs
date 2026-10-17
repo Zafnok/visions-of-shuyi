@@ -11,6 +11,12 @@ use crate::map_view::scene::{CursorStyle, CursorView};
 /// at all, `1` = solid `cursor` colour). *Tunable.*
 pub const GLOW_MAX: f32 = 0.3;
 
+/// How long each arm of the corner marks is, in pixels.
+pub const CORNER_ARM: i32 = 3;
+
+/// How long each arm of the large corner marks is, in pixels.
+pub const LARGE_CORNER_ARM: i32 = 4;
+
 /// Draws `cursor` in its style on the tile whose left cell is `(x, y)`,
 /// clipped to the tiles of `layout`.
 ///
@@ -30,8 +36,8 @@ pub fn draw_cursor(
     let color = palette.get(UiColor::Cursor);
     let view = layout.cells();
     let arm = match cursor.style {
-        CursorStyle::Corners => 3,
-        CursorStyle::LargeCorners => 4,
+        CursorStyle::Corners => CORNER_ARM,
+        CursorStyle::LargeCorners => LARGE_CORNER_ARM,
         CursorStyle::TileGlow => {
             let tile = Rect::new(x, y, TILE_W_CELLS, 1);
             if let Some(tile) = tile.intersect(&view) {
@@ -52,7 +58,7 @@ pub fn draw_cursor(
 
 /// The eight 1 px arms of the corner marks around the tile whose left cell
 /// is `(x, y)`, each `arm` px long, in console pixels.
-fn corner_arms(x: i32, y: i32, arm: i32) -> [Rect; 8] {
+pub(in crate::map_view) fn corner_arms(x: i32, y: i32, arm: i32) -> [Rect; 8] {
     let (cw, ch) = CELL_PX;
     // Left arms in the left neighbour's last (always blank) pixel column,
     // right arms in this tile's last one; top arms on the tile's first row,

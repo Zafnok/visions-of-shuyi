@@ -248,7 +248,7 @@ fn a_bad_atlas_image_is_an_error() {
 fn parses_steps_in_order_and_options() {
     let parsed = parse_args(&args(&[
         "out.png", "--keys", "F2 Up", "--wait", "0.5", "--pad", "South", "--keys", "f", "--layout",
-        "left", "--scale", "3", "--prompt", "--light", "dusk", "--tips",
+        "left", "--scale", "3", "--prompt", "--light", "dusk", "--tips", "--map",
     ]))
     .unwrap();
     assert_eq!(
@@ -264,6 +264,7 @@ fn parses_steps_in_order_and_options() {
             layout: LEFT_HANDED,
             scale: Some(3),
             playdate: false,
+            shows: Shows::MapAlone,
             prompt: true,
             light: Some("dusk".into()),
             tips: true,
@@ -279,9 +280,10 @@ fn parses_steps_in_order_and_options() {
             plain.prompt,
             plain.light,
             plain.tips,
-            plain.playdate
+            plain.playdate,
+            plain.shows
         ),
-        (RIGHT_HANDED, None, false, None, false, false)
+        (RIGHT_HANDED, None, false, None, false, false, Shows::Screen)
     );
     assert!(
         parse_args(&args(&["a.png", "--playdate"]))
@@ -591,6 +593,42 @@ fn the_playdate_frame_is_400_by_240_in_black_and_white() {
     assert!(white > black && black > 0, "{white} white, {black} black");
     let options = parse_args(&args(&["p.png", "--playdate", "--scale", "2"])).unwrap();
     assert!(run(&dir, &options).unwrap().contains("(800×480)"));
+    fs::remove_dir_all(&dir).unwrap();
+}
+
+/// Ticket 1037: `--map` draws the battle's map alone over the whole
+/// screen in the map skin: on the Playdate, its own; with no battle, an
+/// error.
+#[test]
+fn the_map_alone_fills_the_screen() {
+    let dir = temp_dir("map");
+    let quick = ["m.png", "--keys", "Down f Left f f", "--map"];
+    let picture = |extra: &[&str]| {
+        let options = parse_args(&args(&[&quick[..], extra].concat())).unwrap();
+        let summary = run(&dir, &options).unwrap();
+        assert!(summary.starts_with("frame-png: battle → "), "{summary}");
+        decode_png(&fs::read(dir.join("m.png")).unwrap()).unwrap()
+    };
+    let (w, h, rgba) = picture(&["--playdate"]);
+    assert_eq!((w, h), (400, 240));
+    // The Quick Battle's small map in the middle of the screen, not where
+    // the battle screen's PC layout puts it.
+    let black = |x: usize, y: usize| rgba[(y * 400 + x) * 4] == 0;
+    let column = |x| (0..240).any(|y| black(x, y));
+    let left = (0..400).find(|&x| column(x)).unwrap();
+    let right = (0..400).rev().find(|&x| column(x)).unwrap();
+    assert!(left >= 8 && right < 392, "{left}..={right}");
+    assert!(left.abs_diff(399 - right) <= 16, "{left}..={right}");
+    let options = parse_args(&args(&[&quick[..3], &["--playdate"][..]].concat())).unwrap();
+    run(&dir, &options).unwrap();
+    let (_, _, screen) = decode_png(&fs::read(dir.join("m.png")).unwrap()).unwrap();
+    assert_ne!(screen, rgba);
+    // The PC's map alone: the glyph skin over the whole console.
+    let (w, h, _) = picture(&["--scale", "1"]);
+    assert_eq!((w, h), (800, 512));
+    let options = parse_args(&args(&["t.png", "--map"])).unwrap();
+    let error = run(&dir, &options).unwrap_err();
+    assert_eq!(error, "--map: no battle on screen (title)");
     fs::remove_dir_all(&dir).unwrap();
 }
 
