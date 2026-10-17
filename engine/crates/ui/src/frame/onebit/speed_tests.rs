@@ -494,11 +494,11 @@ fn a_new_console_size_is_drawn_whole() {
     let new = GlyphBuffer::with_spec(small, cell);
     let mut frame = fast(&old);
     render_changed(&old, &new, &font, &TestImages, &mut frame);
-    let full = fast(&new);
+    let whole = fast(&new);
     assert!(
-        *frame == *full,
+        *frame == *whole,
         "first differs at {:?}",
-        first_difference(&frame, &full)
+        first_difference(&frame, &whole)
     );
 }
 
