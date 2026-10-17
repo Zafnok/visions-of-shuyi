@@ -632,3 +632,32 @@ fn a_sprite_at_the_dithers_edge_draws_as_the_reference() {
     }
     assert!(!shows(247, 0, 3) && shows(248, 0, 3) && shows(247, 1, 0));
 }
+
+/// A window that ends inside a byte (cells 6 pixels wide) cuts the
+/// scene's glyphs there, as the reference does.
+#[test]
+fn a_window_ending_inside_a_byte_cuts_the_scene_there() {
+    let black = Rgb::from(Ink::Black.code());
+    let white = Rgb::from(Ink::White.code());
+    let mut scene = GlyphBuffer::with_spec(
+        ConsoleSpec::PLAYDATE.sized(8, 2),
+        Cell::new(' ', black, white),
+    );
+    scene.print(0, 0, "########", black, white);
+    let narrow = ConsoleSpec {
+        cols: 10,
+        rows: 4,
+        cell_w: 6,
+        cell_h: 8,
+    };
+    let mut buf = GlyphBuffer::with_spec(narrow, Cell::see_through(' ', black));
+    buf.set_backdrop(Rc::new(scene), Rect::new(0, 0, 3, 2), (0.0, 0.0), 1);
+    let (fast, slow) = (fast(&buf), slow(&buf));
+    assert!(
+        fast == slow,
+        "first differs at {:?}",
+        first_difference(&fast, &slow)
+    );
+    // Black up to the window's edge at x = 18, white past it.
+    assert!(!is_white(&fast, 17, 0) && is_white(&fast, 18, 0));
+}
