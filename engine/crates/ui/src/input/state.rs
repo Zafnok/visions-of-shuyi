@@ -1,11 +1,11 @@
 //! [`InputState`]: turns key and controller-button presses and releases
 //! plus frame time into a game's actions, with repeat for held repeatable
 //! keys and buttons (ADR-0015, ADR-0034). Generic over the game's
-//! [`ActionSet`] (ticket 1106); ticket 1107 moves it to the engine.
+//! [`ActionSet`] (ticket 1106).
 
 use crate::prelude::*;
 use core::time::Duration;
-use trpg_content::keymap::{ActionSet, Button, Chord, Key, RepeatDef};
+use shuyi_assets::keymap::{ActionSet, Button, Chord, Key, RepeatDef};
 
 use super::keymap::Keymap;
 use super::pad::PadKind;
@@ -99,7 +99,7 @@ impl<A: ActionSet> InputState<A> {
     /// Starts as if `device` had been pressed last (a platform whose only
     /// input is its pad).
     #[must_use]
-    pub(crate) fn starting_on(mut self, device: Device) -> Self {
+    pub fn starting_on(mut self, device: Device) -> Self {
         self.device = device;
         self
     }
@@ -140,7 +140,7 @@ impl<A: ActionSet> InputState<A> {
     /// A key went down that the game kept for itself (it opened the layout
     /// picker): the keyboard is the [`device`](Self::device) pressed last,
     /// and nothing else happens.
-    pub(crate) fn keyboard_used(&mut self) {
+    pub fn keyboard_used(&mut self) {
         self.device = Device::Keyboard;
     }
 

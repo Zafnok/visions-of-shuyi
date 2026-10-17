@@ -1,8 +1,8 @@
 //! [`FrameInput`]: one frame's input as a screen sees it. Generic over the
-//! game's [`ActionSet`] (ticket 1106); ticket 1107 moves it to the engine.
+//! game's [`ActionSet`] (ticket 1106).
 
 use crate::prelude::*;
-use trpg_content::keymap::{ActionSet, Button, Chord};
+use shuyi_assets::keymap::{ActionSet, Button, Chord};
 
 /// One frame's input as a screen sees it.
 #[derive(Debug, Clone, PartialEq)]

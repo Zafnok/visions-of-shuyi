@@ -1,19 +1,18 @@
 //! The input mechanism with a game of its own (ticket 1106): a three-action
-//! [`ActionSet`] that knows nothing of this game's actions or layouts,
-//! through the keymap file, [`Keymap`], [`InputState`], [`PlayerKeys`],
-//! [`HelpKeys`] and a menu.
+//! [`ActionSet`] that knows nothing of the sample game's actions or layouts,
+//! through the keymap file, [`Keymap`], [`InputState`], [`PlayerKeys`]
+//! and [`HelpKeys`].
 
 use core::time::Duration;
 
-use trpg_content::keymap::format::KeymapDef;
-use trpg_content::keymap::{ActionSet, Button, Chord, Key, Layout, UiAction};
+use shuyi_assets::keymap::KeymapDef;
+use shuyi_assets::keymap::{ActionSet, Button, Chord, Key, Layout, UiAction};
 
 use super::bindings::{LayoutBindings, PlayerKeys};
 use super::help_keys::{HelpKeys, NOT_MAPPED, all_key_names, cursor_keys_name, key_name};
 use super::keymap::Keymap;
 use super::pad::PadKind;
 use super::state::{Device, InputState};
-use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// A toy game's actions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -209,13 +208,4 @@ fn help_text_names_the_toy_keys_and_buttons() {
     let pad = HelpKeys::new(&km, Device::Pad(PadKind::Xbox));
     assert_eq!(key_name(pad, Toy::Jump), "A");
     assert_eq!(key_name(pad, Toy::Duck), "↓");
-}
-
-#[test]
-fn a_menu_reacts_to_what_the_game_takes_its_actions_for() {
-    let mut menu = Menu::new(vec![MenuItem::new("a"), MenuItem::new("b")]);
-    assert_eq!(menu.handle(Toy::Duck), None);
-    assert_eq!(menu.focus(), 1);
-    assert_eq!(menu.handle(Toy::Jump), Some(MenuEvent::Chosen(1)));
-    assert_eq!(menu.handle(Toy::Pause), Some(MenuEvent::Cancelled));
 }

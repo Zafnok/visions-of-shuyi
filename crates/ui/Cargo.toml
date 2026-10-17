@@ -13,6 +13,8 @@ workspace = true
 [dependencies]
 trpg-core = { path = "../core", default-features = false }
 trpg-content = { path = "../content", default-features = false }
+# Input: keymaps, repeat, controllers, saved bindings and help keys (1107).
+shuyi-ui = { path = "../../engine/crates/ui", default-features = false }
 thiserror.workspace = true
 # The player's saved key bindings (ticket 0217, ADR-0031).
 serde.workspace = true
@@ -25,7 +27,14 @@ hashbrown.workspace = true
 [features]
 default = ["std"]
 # Without it the crate is `no_std` + `alloc` for the Playdate (ADR-0070 §3).
-std = ["trpg-core/std", "trpg-content/std", "ron/std", "thiserror/std", "serde/std"]
+std = [
+    "trpg-core/std",
+    "trpg-content/std",
+    "shuyi-ui/std",
+    "ron/std",
+    "thiserror/std",
+    "serde/std",
+]
 # The headless test `Harness` (src/harness.rs), for integration tests. It
 # starts games in the test chapter, so it brings the test files (ADR-0057).
 harness = ["storage-conformance", "trpg-content/test-fixtures"]
@@ -35,7 +44,7 @@ storage-conformance = []
 # Debug tools (Quick Battle, glyph sampler) in a release build: the Pages
 # build only (ADR-0023). Never on in shipped builds. The Quick Battle is
 # made of the test files (ADR-0057).
-debug-tools = ["trpg-content/test-fixtures"]
+debug-tools = ["trpg-content/test-fixtures", "shuyi-ui/debug-tools"]
 # `onebit::reference`, the plain one-bit renderer the fast one must equal
 # (ticket 1055): for the Playdate's bench build, which times both on the
 # device. The tests have it anyway.
@@ -45,5 +54,7 @@ onebit-reference = []
 # Turns on `harness` for this crate's own integration tests in tests/, and
 # the one-bit reference renderer `tests/it/playdate.rs` compares with.
 trpg-ui = { path = ".", features = ["harness", "onebit-reference"] }
+# A sample game's actions, for a menu driven by another game's actions.
+shuyi-assets = { path = "../../engine/crates/assets", features = ["sample-actions"] }
 proptest.workspace = true
 insta.workspace = true

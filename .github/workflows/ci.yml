@@ -106,6 +106,7 @@ jobs:
       - run: cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p shuyi-assets --no-default-features --target thumbv7em-none-eabihf --locked
+      - run: cargo build -p shuyi-ui --no-default-features --target thumbv7em-none-eabihf --locked
 
   # The Playdate front end's device build (ADR-0070 §1, ticket 1031):
   # `pdex.elf` linked and packed by the SDK's `pdc`. The Simulator's

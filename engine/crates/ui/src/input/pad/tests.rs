@@ -1,11 +1,10 @@
 //! Tests of controller state handling: pad kinds and the Nintendo swap,
 //! sticks as 4-way buttons with hysteresis, and merging several pads.
 
-use crate::input::{RIGHT_HANDED, load_keymap};
 use proptest::prelude::*;
 
 use super::*;
-use crate::input::{Action, InputState, Keymap};
+use crate::input::sample::{Action, InputState, Keymap, RIGHT_HANDED, load_keymap};
 use Button::{
     DpadUp, East, LeftStickDown, LeftStickLeft, LeftStickRight, LeftStickUp, North, RightStickDown,
     RightStickLeft, RightStickRight, RightStickUp, South, Start, West,
@@ -42,14 +41,7 @@ fn pads() -> Pads {
     Pads::new(stick())
 }
 
-const KINDS: [PadKind; 6] = [
-    PadKind::Xbox,
-    PadKind::PlayStation,
-    PadKind::PlayStation4,
-    PadKind::Nintendo,
-    PadKind::Generic,
-    PadKind::Playdate,
-];
+const KINDS: [PadKind; 6] = PadKind::ALL;
 
 /// `docs/design/controls.md`, *Controller → Default buttons* and *Button
 /// names on screen*: each position's name on each kind of pad.
@@ -167,26 +159,6 @@ fn button_names_are_distinct_on_each_pad() {
         names.sort_unstable();
         names.dedup();
         assert_eq!(names.len(), Button::ALL.len(), "{kind:?}");
-    }
-}
-
-/// Every button name, and every name of a set of directions, can be drawn:
-/// a Sony pad's shapes are glyphs of our own in the atlas.
-#[test]
-fn every_button_name_is_in_the_font() {
-    let font = trpg_content::load_embedded().map_or_else(|e| panic!("{e:?}"), |c| c.font);
-    let names = KINDS
-        .into_iter()
-        .flat_map(|kind| Button::ALL.iter().map(move |&b| kind.button_name(b)))
-        .chain(DIRECTION_SETS.map(|(name, _)| name));
-    for name in names {
-        assert!(!name.is_empty());
-        for c in name.chars() {
-            assert!(
-                font.glyphs.contains_key(&c),
-                "{name}: {c:?} is not in the font"
-            );
-        }
     }
 }
 

@@ -22,16 +22,17 @@ player's controller buttons in the same saved config).
 ```
 app/src/keys.rs        macroquad KeyCode → Key / Chord         (only macroquad key code)
 assets/data/keymap.ron default chords per action, per layout   (Nick's keys, controls.md)
-player config          Storage key `keybindings`               (keys per layout + shared buttons, 3 slots; input/bindings.rs)
-ui/src/input.rs        Keymap + InputState: Chord → Action      (fixed Esc = Cancel: `Action`'s `fixed_keys`)
+player config          Storage key `keybindings`               (keys per layout + shared buttons, 3 slots; input::bindings)
+input::{keymap,state}  Keymap + InputState: Chord → Action      (engine; fixed Esc = Cancel: `Action`'s `fixed_keys`)
 screens                see only `FrameInput.actions` / `is_held(Action)`
 screens/key_bindings.rs  the player edits their slots (reads `pressed_chords` / `pressed_buttons` to capture)
 widgets/help.rs, tips  Action → key or button name for text     (`ctx.help_keys()`)
 ```
 
 Files allowed to name `Key::…`, `Chord::…` or key names in strings:
-`crates/app/src/keys.rs`, `crates/content/src/keymap.rs` (and its
-submodules), `crates/ui/src/input.rs` (and its submodules), test code (`#[cfg(test)]`
+`crates/app/src/keys.rs`, `crates/content/src/keymap.rs`,
+`crates/ui/src/input.rs`, the engine (`engine/`, where the generic keymap
+format and input live, ticket 1107; not scanned), test code (`#[cfg(test)]`
 items, `tests.rs`, `*_tests.rs`, `tests/`, `crates/ui/src/harness.rs`), and
 the keyboard *picture* in `crates/ui/src/screens/layout_picker.rs` (which
 keys exist and what each does) and its skin `layout_picker/glyph.rs` (where
@@ -64,11 +65,11 @@ buttons*; a test pins it).
 
 ```
 app/src/pads.rs, pads/   gilrs / browser Gamepad API → PadState   (only pad reads)
-ui/src/input/pad.rs      Pads: PadState → Button down/up          (sticks, Switch swap, merging)
+input::pad               Pads: PadState → Button down/up          (engine; sticks, Switch swap, merging)
 assets/data/keymap.ron   `pad`: default buttons per action; `stick` thresholds
-ui/src/input/bindings.rs PadBindings: the player's buttons        (one setup for both layouts; saved under `pad`)
-ui/src/input.rs          Keymap + InputState: Button → Action     (same repeat as keys)
-ui/src/input/pad.rs      PadKind::button_name: the only table of button names
+input::bindings          PadBindings: the player's buttons        (engine; one setup for both layouts; saved under `pad`)
+input::{keymap,state}    Keymap + InputState: Button → Action     (engine; same repeat as keys)
+input::pad               PadKind::button_name: the only table of button names
 ```
 
 `Button::` may be named only where `Key::` may, plus
@@ -159,10 +160,14 @@ Nintendo's `A` on the right). You get this for free by following rule 2:
 
 ## Generic input, this game's actions (ADR-0078)
 
-The mechanism is generic over a game's `ActionSet` (ticket 1106):
-`KeymapDef<A>` (`content/src/keymap/format.rs`), `Keymap<A>`,
+The mechanism is generic over a game's `ActionSet` (ticket 1106) and is
+Shuyi Engine's (ticket 1107): `KeymapDef<A>`, `ActionSet` and `UiAction`
+(`shuyi_assets::keymap`, `engine/crates/assets/src/keymap.rs`), `Keymap<A>`,
 `InputState<A>`, `FrameInput<A>`, `LayoutBindings<A>`, `PadBindings<A>`,
-`PlayerKeys<A>`, `HelpKeys<'a, A>` (`ui/src/input/`). Game code uses the
+`PlayerKeys<A>`, `HelpKeys<'a, A>` (`shuyi_ui::input`,
+`engine/crates/ui/src/input/`). `trpg-content::keymap` and `trpg-ui::input`
+re-export them under their old paths. Engine tests use the sample game's
+actions (`shuyi_assets::keymap::sample`), never this game's. Game code uses the
 aliases with `Action` (`input::Keymap`, `screen::FrameInput`,
 `widgets::help::HelpKeys`) and never names a game action in those generic
 modules. A generic widget or screen reacts to `action.ui()` (`UiAction`:

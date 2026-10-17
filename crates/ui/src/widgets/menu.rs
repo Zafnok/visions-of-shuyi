@@ -534,4 +534,17 @@ mod tests {
             prop_assert_eq!(m.focus(), start);
         }
     }
+
+    /// A menu works with another game's actions, by what that game takes
+    /// them for (ticket 1106): here the engine's sample game.
+    #[test]
+    fn a_menu_reacts_to_what_another_game_takes_its_actions_for() {
+        use shuyi_assets::keymap::sample::Action as Sample;
+        let mut menu = Menu::new(vec![MenuItem::new("a"), MenuItem::new("b")]);
+        assert_eq!(menu.handle(Sample::CursorDown), None);
+        assert_eq!(menu.focus(), 1);
+        assert_eq!(menu.handle(Sample::Info), None);
+        assert_eq!(menu.handle(Sample::Confirm), Some(MenuEvent::Chosen(1)));
+        assert_eq!(menu.handle(Sample::Cancel), Some(MenuEvent::Cancelled));
+    }
 }

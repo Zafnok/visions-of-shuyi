@@ -2,7 +2,14 @@
 # with the crate's `sdk` feature for the device and the Simulator, so no
 # host test compiles it, and every mutant there would count as missed
 # (ticket 1031). CI's `playdate` job builds it.
-exclude_globs = ["crates/app/**", "crates/playdate/src/pd/**"]
+#
+# `keymap/sample.rs` is a sample game's actions, test data for the keymap
+# format's and input's tests (ticket 1107), built only for tests.
+exclude_globs = [
+    "crates/app/**",
+    "crates/playdate/src/pd/**",
+    "engine/crates/assets/src/keymap/sample.rs",
+]
 timeout_multiplier = 3.0
 # Mutants no test can catch (ticket 1105), each for the reason beside it:
 exclude_re = [

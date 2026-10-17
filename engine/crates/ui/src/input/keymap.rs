@@ -1,13 +1,12 @@
 //! [`Keymap`]: the lookup from key chords and controller buttons to a
 //! game's actions, plus the key-repeat timings (ADR-0015, ADR-0031,
-//! ADR-0034). Generic over the game's [`ActionSet`] (ticket 1106); ticket
-//! 1107 moves it to the engine.
+//! ADR-0034). Generic over the game's [`ActionSet`] (ticket 1106).
 
 use crate::prelude::*;
 use alloc::collections::BTreeMap;
 use hashbrown::HashMap;
-use trpg_content::keymap::format::KeymapDef;
-use trpg_content::keymap::{ActionSet, Button, Chord, Key, Layout, RepeatDef, UiAction};
+use shuyi_assets::keymap::KeymapDef;
+use shuyi_assets::keymap::{ActionSet, Button, Chord, Key, Layout, RepeatDef, UiAction};
 
 use super::pad::{self, PadKind};
 use super::state::Device;

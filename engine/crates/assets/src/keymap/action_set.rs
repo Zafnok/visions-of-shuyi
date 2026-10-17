@@ -2,12 +2,11 @@
 //! [`ActionSet`], implemented by the game's own action enum, and
 //! [`UiAction`], the few actions the generic widgets and screens react to.
 //!
-//! Generic over the game: nothing here names one of this game's actions.
-//! Ticket 1107 moves it to the engine.
+//! Generic over the game: nothing here names one game's actions.
 use core::fmt::Debug;
 use core::hash::Hash;
 
-use super::format::Chord;
+use super::Chord;
 
 /// What the generic widgets (a menu), the Key bindings screen and the debug
 /// hook react to. A game maps some of its actions onto these with
