@@ -2,7 +2,7 @@
 //! *Telling things apart without colour*): its two-letter label white in a
 //! black tile (yours), with a white edge on a grey tile (an enemy), or
 //! black in an outlined tile once it has acted; the HP line along the
-//! bottom of the tile, as on the PC.
+//! bottom of the tile, as on the PC, its HP lost dithered on yours.
 
 use trpg_core::Faction;
 
@@ -102,7 +102,7 @@ pub fn draw_unit(
         }
     }
     if unit.marks {
-        for (rect, color) in hp_line(unit, tile, palette) {
+        for (rect, color) in hp_line(unit, &look, tile, palette, inks) {
             add(rect, color, Layer::Over);
         }
     }
@@ -122,21 +122,30 @@ fn outline_sides(tile: PxRect) -> [PxRect; 4] {
     ]
 }
 
-/// `unit`'s HP line on `tile`: the glyph skin's bar, a pixel in from each
-/// side along the bottom, as long as the HP left in its HP colour, the rest
-/// in the console's ground. In the Playdate's palette that is black, then
-/// white: on your black tile the HP lost shows as a white gap. A part with
-/// no width is nothing (`add_overlay` drops it).
-fn hp_line(unit: &UnitView, tile: PxRect, palette: &Palette) -> [(PxRect, Rgb); 2] {
+/// `unit`'s HP line on `tile`, along its bottom a pixel in from each side,
+/// as long as the HP left (the glyph skin's bar): on an enemy's tile (and a
+/// neutral unit's) in its HP colour with the HP lost in the console's
+/// ground, black then white in the Playdate's palette; on your unit's tile
+/// (and an ally's) in its letters' ink with the HP lost dithered grey, so
+/// the whole line shows on its black tile (Nick, 1037: "A for enemy, but C
+/// for ally"). A part with no width is nothing (`add_overlay` drops it).
+fn hp_line(
+    unit: &UnitView,
+    look: &Look,
+    tile: PxRect,
+    palette: &Palette,
+    inks: &Inks,
+) -> [(PxRect, Rgb); 2] {
     let (left, color) = hp_bar(unit.hp.0, unit.hp.1);
     let full = tile.w - 2 * HP_BAR_INSET;
     let (x, y) = (tile.x + HP_BAR_INSET, tile.y + tile.h - HP_BAR_H);
+    let (left_ink, lost_ink) = match unit.faction {
+        Faction::Player | Faction::Ally => (look.letters, inks.hp_lost),
+        Faction::Enemy | Faction::Neutral => (palette.get(color), palette.get(UiColor::Black)),
+    };
     [
-        (Rect::new(x, y, left, HP_BAR_H), palette.get(color)),
-        (
-            Rect::new(x + left, y, full - left, HP_BAR_H),
-            palette.get(UiColor::Black),
-        ),
+        (Rect::new(x, y, left, HP_BAR_H), left_ink),
+        (Rect::new(x + left, y, full - left, HP_BAR_H), lost_ink),
     ]
 }
 

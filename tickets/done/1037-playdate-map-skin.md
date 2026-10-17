@@ -151,11 +151,10 @@ flipped twice it would vanish, so the Playdate's gives it to one arm only.
 The glyph skin's `Layout` gained `fitted` (no pixel of the PC changes).
 
 ***Claude's starting rules*** (in `docs/design/playdate.md`; Nick can
-veto): the map centred with a cell each side; HP left black and HP lost
-white (a full-HP unit of yours shows no line); ranges don't show on units'
+veto): the map centred with a cell each side; ranges don't show on units'
 tiles; the heal range is the attack range's lines; timed effects (buffs,
 debuffs) have no mark on the Playdate map; allies and neutral units are
-their letters alone; the danger edge is 2 px inside the zone and absent at
+their letters alone (their HP line as yours); the danger edge is 2 px inside the zone and absent at
 the screen's edge; a battle note's unit, a struck unit and a changed tile
 are flipped for the first half of their flash; a falling unit vanishes at
 the middle of its fall; the cursor doesn't pulse, and the tile-glow cursor
@@ -163,4 +162,12 @@ option flips the whole tile.
 
 **Follow-ups:** none.
 
-**Nick's sign-off:** no comment yet.
+**Nick's sign-off (2026-10-17):** on the HP line: "lets look at the hp can
+we dither or use a box outline or smth?" Shown four options
+(`docs/design/playdate/1037-hp-options.png`): "lets have A for enemy, but C
+for ally. This gives more contrast for readability". Built: enemies keep
+the black line with the HP lost white; your units' line is in their
+letters' colour with the HP lost dithered grey (`docs/design/playdate.md`,
+*The HP line*). The Harrowby Ford snapshot now plays the real game to the
+battle (the first one built the battle's start state, before its opening
+events bring most units in).

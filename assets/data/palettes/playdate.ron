@@ -61,6 +61,8 @@
     // until a chapter that has them decides. A terrain glyph on a tile a
     // range fills keeps a white edge. A unit a battle note is about, and a
     // tile flashing, is flipped. The threat arrows: black, edged in white.
+    // The HP lost on your units' (and allies') HP line is dithered grey;
+    // on enemies' it is the ground, as hp_* and black say (Nick, 1037).
     "map_player_tile": "black",
     "map_player_letters": "white",
     "map_enemy_tile": "grey",
@@ -73,6 +75,7 @@
     "map_highlight": "invert",
     "map_threat": "black",
     "map_threat_edge": "white",
+    "map_hp_lost": "grey",
 
     // Terrain: black glyphs on the white ground.
     "grass": "black",

@@ -19,6 +19,7 @@ numbers and the forecast in them are placeholders.
 | `q3r2-e-grey.png` | **Chosen:** your units solid black, enemies grey, acted units outlined; the range marks |
 | `q3-*.png`, `q3r2-*.png` | The other ways offered to tell sides apart without colour |
 | `1037-*.png` | **As built** (ticket 1037, `cargo xtask frame-png --playdate --map`, shown at ×2): Harrowby Ford browsing, a unit's ranges, the danger zone, both, a path with its threat arrow, a unit that has acted |
+| `1037-hp-options.png` | The HP line options Nick was shown at sign-off (A today's, B a box, C the HP lost dithered, D the letters' colour); **chosen: A for enemies, C for your units** |
 
 ## Nick's words
 
@@ -106,9 +107,7 @@ Like Fire Emblem on the GBA.
 - *Claude's starting rules from building the map (1037, Nick can veto):*
   - The map is centred, one cell clear at each side: 24 tiles across, as
     above.
-  - **HP:** the HP left is black and the HP lost white, so your unit at
-    full HP shows no line and a hurt one a white gap at the right of its
-    tile's bottom edge (as in the mockup).
+  - **HP:** decided by Nick at sign-off, below (*The HP line*).
   - A range doesn't show on a unit's tile (black, grey or outlined), as in
     the mockup. The **heal range** is the attack range's lines.
   - A unit under a **timed effect** (a buff or a debuff) has no mark on the
@@ -122,6 +121,26 @@ Like Fire Emblem on the GBA.
     shown **flipped** (black for white) for the first half of their flash;
     a falling unit is gone at the middle of its fall. The cursor doesn't
     pulse, and the *tile glow* cursor option flips the whole tile.
+
+### The HP line (1037 sign-off)
+
+Decided: 2026-10-17. Source: ticket 1037's sign-off. Nick saw the first
+build's line (HP left black, HP lost white, so his own units at full HP
+showed none) and asked: "lets look at the hp can we dither or use a box
+outline or smth?" Shown four options on Harrowby Ford with some units hurt
+(`playdate/1037-hp-options.png`), he chose: "lets have A for enemy, but C
+for ally. This gives more contrast for readability".
+
+- **Enemies (A):** the line along the bottom of the tile, as long as the
+  HP left, in black; the HP lost in white.
+- **Your units (C):** the same line in the letters' colour (white in the
+  black tile; black once the unit has acted and its tile is outlined),
+  the HP lost in grey dots (a 50% checker). So the whole line always
+  shows on your tiles.
+- *Claude's starting rules (Nick can veto):* "ally" is read as your
+  units; allies proper (none in Chapter 1) follow your units and neutral
+  units follow enemies. The line is 2 pixels tall, a pixel in from each
+  side of the tile, as on the PC.
 
 ### Buttons and the crank (Q4 B)
 

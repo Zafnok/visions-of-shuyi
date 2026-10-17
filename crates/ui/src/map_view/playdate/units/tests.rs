@@ -65,8 +65,7 @@ fn each_side_has_its_look() {
     assert_eq!(look(Faction::Neutral, false), letters);
 }
 
-/// Your unit: the letters white in a solid black tile. At full HP its HP
-/// line is black on black, so it doesn't show.
+/// Your unit: the letters white in a solid black tile, its HP line white.
 #[test]
 fn your_unit_is_white_letters_in_a_black_tile() {
     let buf = on_plains(unit(Faction::Player, Pos::new(0, 0)));
@@ -77,7 +76,8 @@ fn your_unit_is_white_letters_in_a_black_tile() {
     );
     let frame = shown(&buf);
     for ((x, y), ink, _) in tile_pixels(['B', 'r'], CELL) {
-        assert_eq!(is_white(&frame, x, y), ink, "({x}, {y})");
+        let hp = y >= 30 && (25..39).contains(&x);
+        assert_eq!(is_white(&frame, x, y), ink || hp, "({x}, {y})");
     }
 }
 
@@ -157,34 +157,60 @@ fn allies_and_neutral_units_are_their_letters_alone() {
 }
 
 /// The HP line: along the bottom of the tile, a pixel in from each side, as
-/// long as the HP left in black and the rest white; none for someone who
-/// isn't fighting.
+/// long as the HP left; none for someone who isn't fighting. An enemy's is
+/// black with the HP lost white; yours is in its letters' ink with the HP
+/// lost dithered grey (Nick, 1037).
 #[test]
 fn the_hp_line_is_as_long_as_the_hp_left() {
-    let (black, white) = (c(Ink::Black), c(Ink::White));
-    let line = |hp: (i32, i32), marks: bool| {
-        let mut u = unit(Faction::Enemy, Pos::new(0, 0));
-        u.hp = hp;
-        u.marks = marks;
+    use Faction::{Ally, Enemy, Neutral, Player};
+    let (black, white, grey) = (c(Ink::Black), c(Ink::White), c(Ink::Grey));
+    let line = |faction, hp: (i32, i32), acted: bool, marks: bool| {
+        let mut u = unit(faction, Pos::new(0, 0));
+        (u.hp, u.acted, u.marks) = (hp, acted, marks);
         let buf = on_plains(u);
         buf.overlays()
             .into_iter()
-            .map(|o| (o.rect, o.color, o.layer))
+            .filter(|o| o.layer == Layer::Over)
+            .map(|o| (o.rect, o.color))
             .collect::<Vec<_>>()
     };
-    let bar = |x, w, color| (Rect::new(x, 30, w, 2), color, Layer::Over);
-    assert_eq!(line((30, 30), true), [bar(25, 14, black)]);
-    assert_eq!(line((15, 30), true), [bar(25, 7, black), bar(32, 7, white)]);
-    assert_eq!(line((0, 30), true), [bar(25, 14, white)]);
-    assert!(line((15, 30), false).is_empty());
-    // On your black tile the HP lost is a white gap.
-    let mut hurt = unit(Faction::Player, Pos::new(0, 0));
+    let bar = |x, w, color| (Rect::new(x, 30, w, 2), color);
+    for side in [Enemy, Neutral] {
+        assert_eq!(line(side, (30, 30), false, true), [bar(25, 14, black)]);
+        assert_eq!(
+            line(side, (15, 30), false, true),
+            [bar(25, 7, black), bar(32, 7, white)]
+        );
+        assert_eq!(line(side, (0, 30), false, true), [bar(25, 14, white)]);
+        assert!(line(side, (15, 30), false, false).is_empty());
+    }
+    assert_eq!(line(Player, (30, 30), false, true), [bar(25, 14, white)]);
+    assert_eq!(
+        line(Player, (15, 30), false, true),
+        [bar(25, 7, white), bar(32, 7, grey)]
+    );
+    assert_eq!(line(Player, (0, 30), false, true), [bar(25, 14, grey)]);
+    assert!(line(Player, (15, 30), false, false).is_empty());
+    // Once it has acted: black letters, so a black line.
+    assert_eq!(
+        line(Player, (15, 30), true, true),
+        [bar(25, 7, black), bar(32, 7, grey)]
+    );
+    // An ally (none in Chapter 1): as yours, in its letters' ink.
+    let edged = c(Ink::BlackEdged);
+    assert_eq!(
+        line(Ally, (15, 30), false, true),
+        [bar(25, 7, edged), bar(32, 7, grey)]
+    );
+    // On your black tile the HP lost shows as grey dots.
+    let mut hurt = unit(Player, Pos::new(0, 0));
     hurt.hp = (15, 30);
     let frame = shown(&on_plains(hurt));
-    assert!(!is_white(&frame, 31, 31));
-    assert!(is_white(&frame, 32, 31));
-    assert!(is_white(&frame, 38, 30));
-    assert!(!is_white(&frame, 39, 31));
+    assert!(is_white(&frame, 31, 31) && is_white(&frame, 25, 30));
+    for (x, y) in [(32, 30), (33, 30), (38, 31), (39, 31)] {
+        let dots = x < 39 && ink_is_white(Ink::Grey, x, y);
+        assert_eq!(is_white(&frame, x, y), dots, "({x}, {y})");
+    }
 }
 
 /// A unit a battle note is about, or one a blow just landed on, is

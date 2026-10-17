@@ -8,7 +8,6 @@ use trpg_core::{ClassId, Faction, UnitId};
 
 use super::*;
 use crate::map_view::glyph::tests::any_scene;
-use crate::map_view::place::Place;
 use crate::map_view::scene::{
     CursorStyle, CursorView, Facing, STANDING_FRAME, ThreatView, UnitEffects, UnitView,
 };
@@ -181,6 +180,7 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
         marked: c(Ink::BlackEdged),
         highlight: c(Ink::Invert),
         arrows: (c(Ink::Black), c(Ink::White)),
+        hp_lost: c(Ink::Grey),
     };
     // The Playdate's palette names them; the PC's doesn't.
     assert_eq!(Inks::of(&pd_ctx().palette), design);
@@ -201,6 +201,7 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
         "map_highlight",
         "map_threat",
         "map_threat_edge",
+        "map_hp_lost",
     ];
     for name in names {
         def.colors.insert(name.to_owned(), Ink::Dots.code());
@@ -217,6 +218,7 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
             marked: dots,
             highlight: dots,
             arrows: (dots, dots),
+            hp_lost: dots,
         }
     );
     let threat = design.threat();
@@ -408,28 +410,32 @@ fn nothing_off_the_view_is_drawn() {
     assert_eq!(painted(&ctx, &scene), blank());
 }
 
-/// Chapter 1's first battle, Harrowby Ford, as it opens on the Playdate:
-/// the view round the lead, the party and the enemies, the cursor on the
-/// lead. The frame as braille (each character 2 × 4 pixels), so the
+/// Chapter 1's first battle, Harrowby Ford, on the Playdate as a new game
+/// reaches it: its scenes skipped, turn 1, the cursor on the lead. The
+/// harness plays it in the Playdate's palette and skins.
+pub(crate) fn harrowby_ford() -> crate::harness::Harness {
+    let setup = |ctx: &mut Ctx| {
+        let def = trpg_content::ink::load_playdate(&ctx.game.content.palette).unwrap();
+        ctx.palette = Palette::new::<UiColor>(&def).unwrap();
+        ctx.console = <crate::console::ConsoleSpec as crate::console::ConsoleSizes>::PLAYDATE;
+        ctx.use_playdate_skins();
+    };
+    let mut h = crate::harness::Harness::with_layout_and(crate::input::RIGHT_HANDED, setup)
+        .with_shipped_story();
+    h.keys("f f f Up f d f d f d f d f d f d f").wait(3.0);
+    h.keys("d f").wait(3.0);
+    assert_eq!(h.screens(), ["title", "battle"]);
+    h
+}
+
+/// Harrowby Ford's opening view ([`harrowby_ford`]), the map alone over
+/// the screen. The frame as braille (each character 2 × 4 pixels), so the
 /// snapshot is the picture.
 #[test]
 fn harrowby_fords_opening_view() {
-    let ctx = pd_ctx();
-    let content = &ctx.game.content;
-    let lead = trpg_core::LeadProfile::new("Ellery", trpg_core::LeadGender::Male);
-    let campaign = trpg_content::new_campaign(content, trpg_core::GameMode::Classic, lead);
-    let setup = campaign.battle_setup(&content.battles["ch01"], &content.tables());
-    let (state, _) = trpg_core::BattleState::new(setup);
-    let mut place = Place::of_battle(content, &content.battles["ch01"]);
-    place.units = state.units().iter().map(UnitView::of).collect();
-    let lead = state.units().iter().find(|u| u.is_lord).unwrap().pos;
-    let mut scene = place.scene(lead, PlaydateSkin.view_tiles(SCREEN));
-    scene.cursor = Some(CursorView {
-        pos: lead,
-        brightness: 1.0,
-        style: CursorStyle::Corners,
-    });
-    let frame = shown(&painted(&ctx, &scene));
+    let h = harrowby_ford();
+    let scene = h.map_scene_in(SCREEN).unwrap();
+    let frame = shown(&painted(h.game().ctx(), &scene));
     insta::assert_snapshot!(braille(&frame));
 }
 

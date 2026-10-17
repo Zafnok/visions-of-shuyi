@@ -119,6 +119,8 @@ pub struct Inks {
     pub highlight: Rgb,
     /// The threat arrows and marks, and their edge.
     pub arrows: (Rgb, Rgb),
+    /// The HP lost on the HP line of your units and allies.
+    pub hp_lost: Rgb,
 }
 
 impl Inks {
@@ -150,6 +152,7 @@ impl Inks {
                 ink("map_threat", Ink::Black),
                 ink("map_threat_edge", Ink::White),
             ),
+            hp_lost: ink("map_hp_lost", Ink::Grey),
         }
     }
 
