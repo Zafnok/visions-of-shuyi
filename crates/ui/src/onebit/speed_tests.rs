@@ -492,7 +492,12 @@ fn a_new_console_size_is_drawn_whole() {
     let new = GlyphBuffer::with_spec(small, cell);
     let mut frame = fast(&old);
     render_changed(&old, &new, &font, &TestImages, &mut frame);
-    assert!(*frame == *fast(&new));
+    let whole = fast(&new);
+    assert!(
+        *frame == *whole,
+        "first differs at {:?}",
+        first_difference(&frame, &whole)
+    );
 }
 
 /// A scene zoomed and placed away from the screen's corner: its edged
