@@ -85,16 +85,6 @@ covers it). Help text names a chord through the keymap like a button
 (`A+B`, joined by the language's `keys.chord_join`). In harness scripts
 `h.pad("South+East")` presses both in one frame.
 
-**The crank** (ticket 1035, ADR-0081) is two more buttons, `CrankBack`
-and `CrankForward`: each notch wound is a press and a release, bound only
-in the `playdate` table (to `RewindBack` / `RewindForward`, which the Key
-bindings screen leaves out: `input::CRANK_ACTIONS`). Only the front end
-reads the crank, through `RawInputEvent::from_crank`; in harness scripts
-`h.crank(-30.0)` winds one notch back. A platform's own menu (the
-Playdate's system menu) sends actions with `Game::act`
-(`game::system_menu`, `h.system_menu(entry)`); `Action::Options` exists
-for it and has no key anywhere.
-
 `Button::` may be named only where `Key::` may, plus
 `crates/app/src/pads.rs` and `crates/app/src/pads/` (`check-keys` enforces
 it). In code and data buttons are named by position (`South`, not "A").
