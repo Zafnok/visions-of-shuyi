@@ -223,3 +223,48 @@ fn the_sampler_screen_draws_the_sampler_and_closes_on_cancel() {
     assert!(matches!(pop, Transition::Pop));
     assert_eq!(c.audio.take()[0].cue(), Some("ui_cancel"));
 }
+
+#[test]
+fn the_swatches_go_five_to_a_row_with_their_names_cut() {
+    use crate::frame::color::tests::def;
+    let mut names: Vec<(String, [u8; 3])> = EngineColor::ALL
+        .iter()
+        .zip(0u8..)
+        .map(|(c, i)| (c.name().to_owned(), [i, i, i]))
+        .collect();
+    names.push(("a_very_long_colour_name".to_owned(), [200, 1, 1]));
+    let pairs: Vec<(&str, [u8; 3])> = names.iter().map(|(n, c)| (n.as_str(), *c)).collect();
+    let palette = Palette::new::<EngineColor>(&def(&pairs)).unwrap();
+    let glyphs = ['a'];
+    let spec = crate::frame::console::ConsoleSpec::text(100, 32);
+    let b = glyph::sampler(spec, &palette, &glyphs, panels);
+    let top = glyph::palette_top(&glyphs) + 1;
+    let colors: Vec<_> = palette.iter().collect();
+    // Swatch `i` is at column 1 + 19 × (i mod 5), row `i / 5` under the
+    // heading.
+    // Two cells of colour, a space, then the name.
+    for (i, &(name, rgb)) in (0..).zip(&colors) {
+        let (x, y) = (1 + i % 5 * 19, top + i / 5);
+        let glyph = |dx: i32| b.get(x + dx, y).unwrap().glyph;
+        assert_ne!(glyph(-1), '█', "swatch {i} starts at {x}");
+        for dx in [0, 1] {
+            let cell = b.get(x + dx, y).unwrap();
+            assert_eq!((cell.glyph, cell.fg), ('█', rgb), "swatch {i}");
+        }
+        assert_eq!(glyph(2), ' ');
+        assert_eq!(Some(glyph(3)), name.chars().next(), "swatch {i}");
+    }
+    // Its name, after the swatch, cut at 14 characters.
+    let at = colors
+        .iter()
+        .position(|(n, _)| n.starts_with("a_very"))
+        .unwrap();
+    let at = i32::try_from(at).unwrap();
+    let (x, y) = (1 + at % 5 * 19 + 3, top + at / 5);
+    let shown: String = row(&b, y)
+        .chars()
+        .skip(usize::try_from(x).unwrap())
+        .take(16)
+        .collect();
+    assert_eq!(shown, "a_very_long_co  ");
+}

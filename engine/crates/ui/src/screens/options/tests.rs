@@ -865,3 +865,52 @@ fn leave_choices_and_questions_name_their_keys() {
     assert!(row.is_setting() && !row.starts_group && !row.unsaved);
     assert!(!OptionRow::<Toy>::restore_defaults().is_setting());
 }
+
+/// Rows that aren't settings: a toggle (debug tools) and a volume (the
+/// voices').
+fn unsaved_rows(_: &Ctx) -> Vec<OptionRow<Toy>> {
+    vec![
+        OptionRow::new(
+            "toy.speed",
+            RowValue::Toggle {
+                get: |ctx| ctx.debug_tools,
+                set: |ctx, on| {
+                    let changed = ctx.debug_tools != on;
+                    ctx.debug_tools = on;
+                    changed
+                },
+            },
+        )
+        .unsaved(),
+        OptionRow::new(
+            "toy.level",
+            RowValue::Volume {
+                get: |ctx| ctx.voice_volume,
+                set: |ctx, v| {
+                    let changed = ctx.voice_volume != v;
+                    ctx.voice_volume = v;
+                    changed
+                },
+            },
+        )
+        .unsaved(),
+    ]
+}
+
+#[test]
+fn a_toggle_and_a_volume_that_arent_settings_are_put_back_on_discard() {
+    use Action::{Cancel, Confirm, CursorDown, CursorLeft};
+    for on in [true, false] {
+        let mut c = ctx();
+        c.debug_tools = on;
+        c.voice_volume = 8;
+        let mut s = OptionsScreen::new(unsaved_rows);
+        press(&mut s, &mut c, &[Confirm, CursorDown, CursorLeft]);
+        assert_eq!((c.debug_tools, c.voice_volume), (!on, 3));
+        assert!(s.changed(&c));
+        // The key that asks isn't the answer: Discard comes after.
+        press(&mut s, &mut c, &[Cancel]);
+        press(&mut s, &mut c, &[CursorLeft, Confirm]);
+        assert_eq!((c.debug_tools, c.voice_volume), (on, 8), "on: {on}");
+    }
+}

@@ -244,3 +244,15 @@ fn the_keyboard_lists_every_key_with_its_role_in_each_layout() {
     };
     assert_eq!(none.role(Key::W), KeyRole::Unbound);
 }
+
+#[test]
+fn the_picker_says_what_it_is_and_is_found_by_type() {
+    let c = first_launch_ctx();
+    let p = picker(&c);
+    let shown = format!("{p:?}");
+    assert!(shown.starts_with("LayoutPickerScreen {"), "{shown}");
+    assert!(shown.contains("cancellable: false"), "{shown}");
+    let any = p.as_any().unwrap();
+    assert!(any.downcast_ref::<LayoutPickerScreen>().is_some());
+    assert_eq!(p.clone().focused(&c), p.focused(&c));
+}

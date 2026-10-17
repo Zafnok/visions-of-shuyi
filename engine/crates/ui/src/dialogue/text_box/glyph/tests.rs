@@ -124,6 +124,8 @@ fn the_replies_grow_the_box_upward_under_the_line_they_answer() {
     let mut view = text(&[]);
     view.choices = Some(replies(&["Yes.", "No."], 0));
     assert_eq!(box_rect(PLACE, &view), (PLACE.frame, 12));
+    view.choices = Some(replies(&["a", "b", "c", "d", "e"], 0));
+    assert_eq!(box_rect(PLACE, &view), (Rect::new(0, 9, 40, 8), 11));
     // Without replies the box is as placed.
     assert_eq!(box_rect(PLACE, &text(&["x"])), (PLACE.frame, 12));
 }

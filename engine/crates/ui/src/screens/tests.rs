@@ -45,3 +45,19 @@ fn names_word_finds_whole_identifiers_only() {
     assert!(!names_word("let cells = 3;", "Cell"));
     assert!(!names_word("BoxStyles", "BoxStyle"));
 }
+
+#[test]
+fn text_is_centred_rounding_left() {
+    use crate::frame::color::{EngineColor, tests::engine_palette};
+    use crate::frame::glyph_buffer::{Cell, GlyphBuffer};
+    let p = engine_palette();
+    let (fg, bg) = (p.engine(EngineColor::Text), p.engine(EngineColor::Panel));
+    let mut buf = GlyphBuffer::new(10, 2, Cell::new(' ', fg, bg));
+    assert_eq!(super::centre_x(&buf, 4), 3);
+    assert_eq!(super::centre_x(&buf, 3), 3);
+    assert_eq!(super::centre_x(&buf, 10), 0);
+    assert_eq!(super::centre_x(&buf, 12), -1);
+    super::print_centred(&mut buf, 1, "abcd", fg, bg);
+    let row: String = (0..10).map(|x| buf.get(x, 1).unwrap().glyph).collect();
+    assert_eq!(row, "   abcd   ");
+}

@@ -123,3 +123,13 @@ fn a_view_reveals_its_lines_from_the_start() {
     let all = TextView { shown: 99, ..view };
     assert_eq!(all.revealed(), ["abc", "defg"]);
 }
+
+#[test]
+fn the_marker_is_out_from_half_a_second_on() {
+    let mut b = TextBox::new("a", 40, 3);
+    b.reveal();
+    b.type_on(BLINK_S, Some(10.0));
+    assert!(!b.marker_lit(), "out at exactly half a second");
+    b.type_on(BLINK_S, Some(10.0));
+    assert!(b.marker_lit(), "lit again at a second");
+}

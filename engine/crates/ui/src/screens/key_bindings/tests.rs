@@ -1363,3 +1363,17 @@ fn help_follows_the_side_and_the_device() {
         }
     }
 }
+
+#[test]
+fn the_screen_says_what_it_is_and_is_found_by_type() {
+    let c = ctx();
+    let s = KeyBindingsScreen::new(&c, &KEY_ROWS);
+    let shown = format!("{s:?}");
+    assert!(shown.starts_with("KeyBindingsScreen {"), "{shown}");
+    assert!(
+        shown.contains("side: Keyboard") && shown.contains("capturing: false"),
+        "{shown}"
+    );
+    let any = s.as_any().unwrap();
+    assert!(any.downcast_ref::<KeyBindingsScreen>().is_some());
+}
