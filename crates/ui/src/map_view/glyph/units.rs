@@ -18,7 +18,7 @@ pub const HP_BAR_INSET: i32 = 1;
 
 /// Full HP bar length, in pixels: the tile's width (two 8-px cells) less
 /// the inset on each side.
-const HP_BAR_W: i32 = 14;
+pub(in crate::map_view) const HP_BAR_W: i32 = 14;
 
 /// HP bar thickness, in pixels, at the bottom of the tile.
 pub const HP_BAR_H: i32 = 2;

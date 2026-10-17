@@ -10,7 +10,7 @@ use super::{FLASH_SHOWN, Inks};
 use crate::color::{Palette, Rgb, UiColor};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, Overlay, PxRect, Rect};
 use crate::map_view::glyph::TILE_W_CELLS;
-use crate::map_view::glyph::units::{HP_BAR_H, HP_BAR_INSET, hp_bar};
+use crate::map_view::glyph::units::{HP_BAR_H, HP_BAR_INSET, HP_BAR_W, hp_bar};
 use crate::map_view::grid::CELL_PX;
 use crate::map_view::scene::UnitView;
 
@@ -137,7 +137,6 @@ fn hp_line(
     inks: &Inks,
 ) -> [(PxRect, Rgb); 2] {
     let (left, color) = hp_bar(unit.hp.0, unit.hp.1);
-    let full = tile.w - 2 * HP_BAR_INSET;
     let (x, y) = (tile.x + HP_BAR_INSET, tile.y + tile.h - HP_BAR_H);
     let (left_ink, lost_ink) = match unit.faction {
         Faction::Player | Faction::Ally => (look.letters, inks.hp_lost),
@@ -145,7 +144,7 @@ fn hp_line(
     };
     [
         (Rect::new(x, y, left, HP_BAR_H), left_ink),
-        (Rect::new(x + left, y, full - left, HP_BAR_H), lost_ink),
+        (Rect::new(x + left, y, HP_BAR_W - left, HP_BAR_H), lost_ink),
     ]
 }
 

@@ -48,7 +48,7 @@ impl MapSkin for PlaydateSkin {
     }
 
     fn view_tiles(&self, area: Rect) -> (i32, i32) {
-        let across = (area.w - 2 * SIDE_CELLS).max(0) / TILE_W_CELLS;
+        let across = (area.w - SIDE_CELLS - SIDE_CELLS).max(0) / TILE_W_CELLS;
         (across, area.h.max(0))
     }
 
