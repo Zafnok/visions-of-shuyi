@@ -57,7 +57,7 @@ on his Playdate if he wants.
   pop-ups, the menus (action, weapon, spell, skill, item, unit list, map
   menu, including 1035's extra entries), the end-turn, restart and
   suspend questions, the objective page, phase and outcome banners,
-  battle notes and tips, all as small windows over the map in the
+  battle notes, all as small windows over the map in the
   one-bit look (black frame, white inside, black text). A menu sits on
   the side of the map away from its unit, as on the PC.
 - **No help bar:** the PC's help bar has no room. Where the PC shows a
@@ -78,7 +78,8 @@ on his Playdate if he wants.
 
 **Out (do not do):**
 - Forecast, unit info, fight box, EXP and level-up, rewind screen (1039);
-  the combat picture (1041); dialogue (1043).
+  the combat picture (1041); dialogue (1043); the guide's tip and lesson
+  box (1058, decided by 0066).
 - Any change to the PC skin or what the PC shows.
 
 **Carve (1108, 1112):** either order works; follow where the frame and

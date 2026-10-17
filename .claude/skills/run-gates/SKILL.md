@@ -35,6 +35,7 @@ cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf
 cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf
 cargo build -p shuyi-assets --no-default-features --target thumbv7em-none-eabihf   # engine crates keep the no-std build (ADR-0070 §6)
 cargo clippy -p trpg-playdate --features sdk --target thumbv7em-none-eabihf -- -D warnings   # the Playdate front end's SDK glue (1031)
+cargo clippy -p trpg-playdate --features sdk,bench --target thumbv7em-none-eabihf -- -D warnings   # and its bench build (1055)
 cargo deny check                          # after ticket 0103
 cargo machete                             # after ticket 0103
 typos                                     # after ticket 0103

@@ -1,10 +1,14 @@
 //! What the front end shows and logs: while the game's data loads
 //! (ticket 1031), temporary text with the SDK's own font, replaced by the
 //! loading card of ticket 1036; then, once a minute, how fast the game
-//! runs (ticket 1033).
+//! runs (ticket 1033), and in the bench build each render phase's time
+//! (ticket 1055).
 
 use alloc::format;
 use alloc::string::String;
+use alloc::vec::Vec;
+
+use trpg_ui::onebit::Phase;
 
 use crate::stack;
 
@@ -69,20 +73,58 @@ impl Timing {
         self.count
     }
 
+    /// The average time, 0 before any.
+    pub fn avg_ms(&self) -> f32 {
+        #[allow(clippy::cast_precision_loss)] // a minute's frames
+        let count = self.count.max(1) as f32;
+        self.total_ms / count
+    }
+
     /// `name: min / avg / max ms, n = count`, or `name: none` before any.
     pub fn line(&self, name: &str) -> String {
         if self.count == 0 {
             return format!("{name}: none");
         }
-        #[allow(clippy::cast_precision_loss)] // a minute's frames
-        let avg = self.total_ms / self.count as f32;
         format!(
             "{name}: min {:.1} / avg {:.1} / max {:.1} ms, n = {}",
             self.min_ms,
-            avg,
+            self.avg_ms(),
             self.max_ms,
             grouped(self.count as usize)
         )
+    }
+}
+
+/// How long a render took, whole and phase by phase
+/// ([`trpg_ui::onebit::render_marked`]), frame after frame.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct Phases {
+    /// Each whole render.
+    pub total: Timing,
+    /// Each phase, in [`Phase::ALL`]'s order.
+    each: [Timing; Phase::ALL.len()],
+}
+
+impl Phases {
+    /// Counts `ms` milliseconds of `phase`.
+    pub fn add(&mut self, phase: Phase, ms: f32) {
+        if let Some(i) = Phase::ALL.iter().position(|&p| p == phase) {
+            self.each[i].add(ms);
+        }
+    }
+
+    /// The total's [line](Timing::line), then each phase's average and
+    /// most.
+    pub fn lines(&self, name: &str) -> [String; 2] {
+        let phases: Vec<String> = Phase::ALL
+            .iter()
+            .zip(&self.each)
+            .map(|(phase, t)| format!("{} {:.1} / {:.1}", phase.name(), t.avg_ms(), t.max_ms))
+            .collect();
+        [
+            self.total.line(name),
+            format!("{name} by phase, avg / max ms: {}", phases.join(", ")),
+        ]
     }
 }
 
@@ -206,6 +248,26 @@ mod tests {
         assert_eq!(
             Minute::default().lines("title", None)[0],
             "On title for 0 seconds: 0.0 frames a second"
+        );
+    }
+
+    #[test]
+    fn phases_are_timed_each_and_whole() {
+        let mut p = Phases::default();
+        assert_eq!(p.lines("Fast")[0], "Fast: none");
+        for ms in [1.0, 3.0] {
+            p.total.add(ms * 10.0);
+            p.add(Phase::Ground, ms);
+            p.add(Phase::Glyphs, ms * 2.0);
+        }
+        assert_eq!(
+            p.lines("Fast"),
+            [
+                "Fast: min 10.0 / avg 20.0 / max 30.0 ms, n = 2",
+                "Fast by phase, avg / max ms: ground 2.0 / 3.0, backdrop 0.0 / 0.0, \
+                 backgrounds 0.0 / 0.0, under items 0.0 / 0.0, edges 0.0 / 0.0, \
+                 glyphs 4.0 / 6.0, over items 0.0 / 0.0, invert 0.0 / 0.0",
+            ]
         );
     }
 

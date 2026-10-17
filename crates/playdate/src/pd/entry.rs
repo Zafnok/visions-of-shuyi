@@ -4,8 +4,9 @@
 //! The front end shows "Loading…", loads the game on the game's own
 //! stack, then runs it (ticket 1033): each frame reads the buttons,
 //! calls `Game::frame` with the time since the last frame, and when the
-//! picture changed renders it with `trpg_ui::onebit` and copies it to the
-//! screen. Once a minute it logs how fast that went.
+//! picture changed redraws what changed with `trpg_ui::onebit` (ticket
+//! 1055) and copies it to the screen. Once a minute it logs how fast that
+//! went.
 
 use alloc::boxed::Box;
 use alloc::string::{String, ToString};
@@ -53,6 +54,9 @@ struct Running {
     frame: Box<Frame>,
     /// How fast the game ran since the numbers were last logged.
     minute: Minute,
+    /// The bench build's extra renders.
+    #[cfg(feature = "bench")]
+    bench: super::bench::Bench,
 }
 
 /// The front end's state. The SDK calls the update callback on its only
@@ -129,6 +133,10 @@ fn update(step: &mut Step) -> bool {
                 for line in running.minute.lines(screen, game_stack::high_water()) {
                     log(&line);
                 }
+                #[cfg(feature = "bench")]
+                for line in running.bench.lines() {
+                    log(&line);
+                }
                 running.minute = Minute::default();
             }
             changed
@@ -170,6 +178,8 @@ fn start_game() -> Result<Box<Running>, String> {
         shown: None,
         frame: Box::new([0; FRAME_BYTES]),
         minute: Minute::default(),
+        #[cfg(feature = "bench")]
+        bench: super::bench::Bench::new(),
     }))
 }
 
@@ -184,8 +194,8 @@ fn playdate_palette(base: &PaletteDef) -> Result<Palette, String> {
 }
 
 impl Running {
-    /// Runs one frame of the game and draws it if its picture changed;
-    /// true if the screen did.
+    /// Runs one frame of the game and, if its picture changed, redraws
+    /// the parts that did; true if the screen changed.
     fn frame(&mut self, events: &[trpg_ui::RawInputEvent], dt: f32) -> bool {
         let start = elapsed();
         // A game that has quit keeps its last frame: the Playdate's own
@@ -197,13 +207,17 @@ impl Running {
         if self.shown.as_ref() == Some(buffer) {
             return false;
         }
-        onebit::render(buffer, &self.font, &(), &mut self.frame);
-        let changed = show(&self.frame);
-        match &mut self.shown {
-            Some(shown) => shown.clone_from(buffer),
-            None => self.shown = Some(buffer.clone()),
+        if let Some(shown) = &mut self.shown {
+            onebit::render_changed(shown, buffer, &self.font, &(), &mut self.frame);
+            shown.clone_from(buffer);
+        } else {
+            onebit::render(buffer, &self.font, &(), &mut self.frame);
+            self.shown = Some(buffer.clone());
         }
+        let changed = show(&self.frame);
         self.minute.render.add((elapsed() - framed) * 1000.0);
+        #[cfg(feature = "bench")]
+        self.bench.measure(buffer, &self.font, &self.frame);
         changed
     }
 }

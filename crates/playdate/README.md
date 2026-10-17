@@ -14,7 +14,7 @@ It shows "Loading…", loads the game on the game's own stack and runs it
 | Path | What |
 | ---- | ---- |
 | `shim/shim.c` | The SDK's entry point (`eventHandler`) and one small C wrapper per SDK call, compiled against the installed SDK's `pd_api.h` |
-| `src/pd/` | The `sdk` feature: the Rust side of those calls, the allocator over the SDK's `realloc`, the panic handler, the game's own stack (`run`, `high_water`), the SDK's files behind `storage::Files` (`files.rs`) and the entry points the shim calls (`entry.rs`: the frame loop). The only `unsafe` in the crate |
+| `src/pd/` | The `sdk` feature: the Rust side of those calls, the allocator over the SDK's `realloc`, the panic handler, the game's own stack (`run`, `high_water`), the SDK's files behind `storage::Files` (`files.rs`) and the entry points the shim calls (`entry.rs`: the frame loop); with the `bench` feature, the bench build's extra renders (`bench.rs`). The only `unsafe` in the crate |
 | `src/pads.rs` | The buttons: the SDK's button bits as a `PadKind::Playdate` controller. The only file here that names buttons (`check-keys`) |
 | `src/storage.rs` | The game's `Storage` on the Playdate's files |
 | `src/screen.rs` | Copying the one-bit frame onto the SDK's frame buffer, changed rows only |
@@ -36,12 +36,12 @@ Each SDK update (`src/pd/entry.rs`):
    frame, so a quick tap is never lost while a frame takes long.
 3. `Game::frame(&events, dt)` runs on the game's own stack.
 4. Only when the frame's `GlyphBuffer` differs from the last one drawn,
-   `trpg_ui::onebit` renders it and the rows that changed are copied into
-   the SDK's frame buffer (`getFrame`, `markUpdatedRows`).
+   `trpg_ui::onebit` redraws the parts that differ (`render_changed`,
+   ADR-0077; the first frame whole) and the rows that changed are copied
+   into the SDK's frame buffer (`getFrame`, `markUpdatedRows`).
 
 **Frame rate: 30.** `setRefreshRate(30)`, the SDK's own default, to
-start: the game's animations are timed by `dt`, not by frames, and on the
-device a frame that renders costs the full 400 × 240 one-bit draw. The
+start: the game's animations are timed by `dt`, not by frames. The
 device numbers (below) say whether to change it.
 
 The game starts with the Playdate's console (`ConsoleSpec::PLAYDATE`) and
@@ -79,6 +79,24 @@ Once a minute the front end logs the screen on top, the frames a second,
 and the game stack's high-water mark (device only), in every build: the
 device needs the release build. On start it logs, and writes to
 `load-report.txt`, how long loading the game took.
+
+**The bench build** (`cargo xtask playdate --release --bench`, ticket
+1055) packs `target/playdate/VisionsOfShuyi-bench.pdx`: after each frame
+drawn it also renders the frame whole with the fast one-bit renderer and
+with 1032's (`onebit::reference`), times every phase of both (ground,
+backdrop, backgrounds, under items, edges, glyphs, over items, invert)
+and checks all three frames are the same. Its minute report adds:
+
+```
+Bench, 1032's render: min … / avg … / max … ms, n = …
+Bench, 1032's render by phase, avg / max ms: ground … / …, backdrop …
+Bench, fast render: min … / avg … / max … ms, n = …
+Bench, fast render by phase, avg / max ms: ground … / …, backdrop …
+Bench: 0 frames unlike 1032's render, 0 redrawn unlike a whole render
+```
+
+The extra renders slow the game down, so it is for measuring only; its
+"Render and copy" line still times only what the normal build does.
 
 ## The game's own stack
 

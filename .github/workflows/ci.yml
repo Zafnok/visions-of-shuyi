@@ -145,6 +145,8 @@ jobs:
             | tar -xz -C "$PLAYDATE_SDK_PATH" --strip-components=1
       - name: Clippy with the SDK glue
         run: cargo clippy -p trpg-playdate --features sdk --target thumbv7em-none-eabihf --locked -- -D warnings
+      - name: Clippy with the bench build (1055)
+        run: cargo clippy -p trpg-playdate --features sdk,bench --target thumbv7em-none-eabihf --locked -- -D warnings
       - name: Build the device game
         run: cargo xtask playdate --release --device
       - name: Check pdex.elf was linked and pdc packed the game

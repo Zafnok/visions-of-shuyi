@@ -46,6 +46,10 @@ doctest = false
 # plain, tested part, so `cargo test --workspace` and `clippy --workspace`
 # build it on any machine.
 sdk = []
+# With `sdk`, the bench build (`cargo xtask playdate --bench`, ticket 1055):
+# it also renders each frame drawn whole with the fast one-bit renderer and
+# with 1032's, and logs each phase's time once a minute (`src/pd/bench.rs`).
+bench = ["trpg-ui/onebit-reference"]
 
 [dependencies]
 trpg-content = { path = "../content", default-features = false }
