@@ -4,9 +4,8 @@
 //! ([`LayoutBindings`]); the buttons are one setup shared by both layouts
 //! ([`PadBindings`]); the lot is saved as [`PlayerKeys`]. Rules from
 //! `docs/design/controls.md`, *Rebinding keys* and *Rebinding buttons*.
-//! Pure: [`Ctx`](crate::screen::Ctx) reads and writes the saved text through
-//! `Storage`. Generic over the game's [`ActionSet`] (ticket 1106); ticket
-//! 1107 moves it to the engine.
+//! Pure: the game reads and writes the saved text. Generic over the game's
+//! [`ActionSet`] (ticket 1106).
 //!
 //! Invariants: a chord is in at most one slot of a [`LayoutBindings`]'s
 //! actions of each [group](ActionSet::Group), and no
@@ -21,11 +20,11 @@ use core::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use trpg_content::keymap::format::KeymapDef;
-use trpg_content::keymap::{ActionSet, Button, Chord, Layout, RepeatDef, SLOTS};
+use shuyi_assets::keymap::KeymapDef;
+use shuyi_assets::keymap::{ActionSet, Button, Chord, Layout, RepeatDef, SLOTS};
 
 use super::keymap::Keymap;
-use crate::screen::DEBUG_TOOLS;
+use crate::DEBUG_TOOLS;
 
 /// One action's key slots; `None` is an empty slot.
 pub type Slots = [Option<Chord>; SLOTS];
@@ -192,7 +191,7 @@ impl<A: ActionSet> LayoutBindings<A> {
 
     /// [`defaults`](Self::defaults), with the chords of the actions that
     /// can't be rebound reserved or not.
-    pub(crate) fn from_def(def: &KeymapDef<A>, layout: Layout, fixed_reserved: bool) -> Self {
+    pub fn from_def(def: &KeymapDef<A>, layout: Layout, fixed_reserved: bool) -> Self {
         let fixed = A::ALL.iter().filter(|a| !a.is_rebindable());
         let mut bindings = Self {
             table: SlotTable::empty(),
@@ -376,7 +375,7 @@ const OLDEST_READABLE_VERSION: u32 = 1;
 const PAD_WARNING: &str = "controller";
 
 /// Every layout's player bindings and the controller buttons, saved under
-/// the `Storage` key [`KEYBINDINGS_KEY`](crate::screen::KEYBINDINGS_KEY). A
+/// whatever name the game stores them under. A
 /// layout the player hasn't changed has no entry and uses its defaults, and
 /// so do the buttons. **Each layout keeps its own keys; the buttons are
 /// shared by every layout.**

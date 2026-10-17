@@ -39,7 +39,8 @@ These are the things ADR-0063 §6 makes generic before moving anything.
    rebinding screen's `ROWS` (`ui/src/screens/key_bindings.rs:56-77`). `Layout`
    is a closed 2-variant enum (`keymap.rs:518-548`).
    **Fix:** an `ActionSet` trait, plus engine-owned `UiAction`s for widgets.
-   Layouts become named data.
+   Layouts become named data. **Done:** 1106 made input generic over
+   `ActionSet`; 1107 moved it to `shuyi_assets::keymap` and `shuyi_ui::input`.
 2. **`Ctx` is wired to the game** (`ui/src/screen.rs:224-327`). It holds
    `Content`, `campaign_mode`, `mode_switch`, `map_skin` and `lead`.
    `Ctx::embedded` calls `trpg_content::load_embedded` (`:448`).
@@ -130,7 +131,7 @@ Modules that do not import `trpg_core` at all are the first set to move:
 `title`. `bundle`, `error` and `ron_loader` moved in 1103; `audio`,
 `credits`, `font`, `image`, `lighting` and `palette`'s generic part
 (with `ink`) in 1104; `lang`, `names`, the dialogue format, `voice` and
-`tip`'s generic parts in 1105.
+`tip`'s generic parts in 1105; `keymap`'s file format in 1107.
 
 | Module | Side | Note |
 | ------ | ---- | ---- |
@@ -141,7 +142,7 @@ Modules that do not import `trpg_core` at all are the first set to move:
 | `dialogue/parse.rs`, `dialogue/line_id.rs` | E → moved | 1105: `shuyi_assets::dialogue` (the parser, line ids, captions' keys). A game adds directives with the `Directive` trait (`Step::Directive`). |
 | `portrait.rs`, `title.rs`, `tileset/look.rs` | E | The five required expressions and the 256 px frame become parameters. |
 | `palette.rs`, `ink.rs` | M → cut | 1104: `PaletteDef`, hex, `theme_problems` (a theme has the default's names) and the Playdate's `Ink`s are `shuyi_assets::{palette, ink}`; `PaletteDef::from_source` takes the required names. `Theme`, `REQUIRED_COLORS`, `load_themes` and the palette files' paths stay. |
-| `keymap.rs` | M | Keys, chords, buttons, repeat and sticks are E (about 740 lines). `Action` and `Layout` are G. |
+| `keymap.rs` | M → cut | 1107: the file format (keys, chords, buttons, named layouts, repeat, sticks, validation; `KeymapDef<A>`) and `ActionSet`/`UiAction` are `shuyi_assets::keymap`, re-exported here (`keymap::format` is the engine's module). `Action`, `KeyGroup`, `RIGHT_HANDED`/`LEFT_HANDED`, `load_keymap` and the game's `keymap.ron` stay, with the tests of this game's keys. The format's tests run on the engine's sample actions (`keymap::sample`). |
 | `lang/lines.rs`, `lang/data.rs` | M → cut | 1105: per-line translation is `shuyi_assets::lang`, with `LineText::Variants` (by variant name) for the old `ByGender`; the game names its variants `m` and `f` (`lang::RULES`). `data.rs` keeps the keys of classes, items, tips, lessons, chapters and battle notes (`from_tables`, `Tables`), the tip and lesson limits, and the lookups (`class_name`…). |
 | `dialogue.rs`, `dialogue/check.rs`, `dialogue/presence.rs` | M → cut | 1105: scenes, steps, choices, music lines, `@if` (`Present`, `Scene::resolved`) and the on-screen checks are `shuyi_assets::dialogue`, checked against a game's `SceneRules` (limits as `DialogueLimits`, its `Tokens`, cast, expressions, music). Content keeps `@place` and `@opening` (`Stage`, `PlaceLine`, `check_places`, where an opening goes), the lead's rules and tokens (`LeadTokens`), the box sizes, `Cast`/`check_presence`, `load()` and aliases (`Step = Step<Stage>`…). |
 | `voice.rs`, `tip.rs` | M → cut | 1105: the clip manifest, cast and staleness are `shuyi_assets::voice` over a game's `ClipVariant`; the tip schema and `{Action}` placeholders are `shuyi_assets::tip` over a game's trigger type. Content keeps `Variant` (M/F) and what a line says of the lead (`spoken_text`), the voice folders, `TipTrigger`, the tip box, the guide and `load()`. |
@@ -158,10 +159,10 @@ Modules that do not import `trpg_core` at all are the first set to move:
 | ------ | ---- | ---- |
 | `glyph_buffer*`, `snapshot.rs`, `console.rs`, `cinema.rs`, `portrait.rs` | E | See couplings 4 and 5. |
 | `storage.rs`, `audio.rs` | E | `audio.rs` assumes four menu cue ids exist. Make them settings. |
-| `widgets/` | E | `help.rs:82-90` (select and end-turn helpers) is G. |
-| `input/pad.rs` | E | — |
+| `widgets/` | E | `help.rs` is now the game's alias of `HelpKeys` and a re-export of `shuyi_ui::input::help_keys` (1107). |
+| `input/` (`keymap`, `state`, `frame`, `bindings`, `pad`, `fixed`, `help_keys`) | E → moved | 1107: `shuyi_ui::input`, with their tests on the sample actions. `trpg-ui::input` re-exports the submodules under their old names. |
 | `debug/sprite_test.rs`, `screens/mod.rs` | E | — |
-| `input.rs`, `input/bindings` | M | The fixed Esc→Cancel (`:33`) and `select_action`/`end_turn_accept_actions` (`:319-339`) are G. |
+| `input.rs` | G | 1107: what's left is the game's: the aliases with `Action`, `KEY_ROWS`, the text keys and `text_keys_help`. The fixed Esc→Cancel is `Action`'s `fixed_keys` and the split keys are `screens/battle/split_keys.rs` (1106). |
 | `screen.rs` | M | `Screen`, `Transition`, `FrameInput` and `ScreenStack` are E. `Ctx` is coupling 2. |
 | `game.rs` | M | Frame loop is E. Start-up and debug wiring are G (about 350 lines). |
 | `color.rs`, `settings.rs`, `words.rs`, `tips.rs` | M | Engine parts: `Rgb`/`Palette`, volumes/fullscreen/text speed, text by key, `{Action}` fill. The tactics colors, settings and names, and tip placement, are G or K. |

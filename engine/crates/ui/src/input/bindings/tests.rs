@@ -4,8 +4,9 @@
 use proptest::prelude::*;
 
 use super::*;
-use crate::input::{
-    Action, Key, KeyGroup, KeymapDef, LEFT_HANDED, LayoutBindings, PadBindings, PlayerKeys,
+use crate::input::Key;
+use crate::input::sample::{
+    Action, KeyGroup, KeymapDef, LEFT_HANDED, LayoutBindings, PadBindings, PlayerKeys,
     RIGHT_HANDED, load_keymap,
 };
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp, Debug, Info};

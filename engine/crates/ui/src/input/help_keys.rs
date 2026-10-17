@@ -5,13 +5,11 @@
 //! (`docs/design/controls.md`, *Controller*): keys on the keyboard, the
 //! pad's own button names on a controller.
 //!
-//! Generic over the game's [`ActionSet`] (ticket 1106); ticket 1107 moves
-//! it to the engine. Screens use it through
-//! [`widgets::help`](crate::widgets::help).
+//! Generic over the game's [`ActionSet`] (ticket 1106).
 
 use crate::prelude::*;
 use core::ops::Deref;
-use trpg_content::keymap::ActionSet;
+use shuyi_assets::keymap::ActionSet;
 
 use super::keymap::Keymap;
 use super::state::Device;
@@ -20,14 +18,14 @@ use super::state::Device;
 /// [`HelpKeys::new`] starts with, and what tests compare with. The game
 /// shows the language file's word. Lives here because it names keys (only
 /// `input` may).
-// check-text: not player text (the default of `HelpKeys::new`; `Ctx::help_keys` gives the language's)
+// check-text: not player text (the default of `HelpKeys::new`; a game gives the language's)
 pub const ARROWS: &str = "arrows";
 
 /// What help text names keys from: the bindings, the device whose keys
 /// or buttons to name, and the two words a key's name can be
-/// (`! not mapped`, `arrows`). Screens get it from
-/// [`Ctx::help_keys`](crate::screen::Ctx::help_keys), with the words in the
-/// player's language. Dereferences to the [`Keymap`].
+/// (`! not mapped`, `arrows`). A game gives its screens one with the words
+/// in the player's language ([`worded`](Self::worded)). Dereferences to the
+/// [`Keymap`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct HelpKeys<'a, A: ActionSet> {
     keymap: &'a Keymap<A>,
@@ -107,7 +105,7 @@ pub const SEPARATOR: &str = " · ";
 /// The English of [`HelpKeys::not_mapped`]: what [`HelpKeys::new`] starts
 /// with, and what tests compare with. The game shows
 /// `keys.not_mapped` of the language file.
-// check-text: not player text (the default of `HelpKeys::new`; `Ctx::help_keys` gives the language's)
+// check-text: not player text (the default of `HelpKeys::new`; a game gives the language's)
 pub const NOT_MAPPED: &str = "! not mapped";
 
 /// The name of the key for `action` (its [`Keymap::primary`] chord), e.g.
@@ -175,3 +173,6 @@ pub fn help_line(hints: &[(Option<String>, &str)]) -> String {
         .collect::<Vec<_>>()
         .join(SEPARATOR)
 }
+
+#[cfg(test)]
+mod tests;

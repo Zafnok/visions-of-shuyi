@@ -55,6 +55,16 @@ pub enum PadKind {
 }
 
 impl PadKind {
+    /// Every kind.
+    pub const ALL: [PadKind; 6] = [
+        Self::Xbox,
+        Self::PlayStation,
+        Self::PlayStation4,
+        Self::Nintendo,
+        Self::Generic,
+        Self::Playdate,
+    ];
+
     /// The kind of a pad from its USB vendor and product ids; unknown
     /// vendors (and 0, "not reported") are [`Generic`](Self::Generic). The
     /// product only matters for Sony, to tell a PS4 pad apart.
@@ -223,7 +233,7 @@ impl PadState {
 }
 
 /// A stick's direction buttons: up, down, left, right.
-type StickButtons = [Button; 4];
+pub type StickButtons = [Button; 4];
 
 const DPAD: StickButtons = [
     Button::DpadUp,
@@ -247,7 +257,7 @@ const RIGHT_STICK: StickButtons = [
 /// A pad's three sets of direction buttons, each with the name help text
 /// gives the whole set.
 // check-text: not player text
-const DIRECTION_SETS: [(&str, StickButtons); 3] = [
+pub const DIRECTION_SETS: [(&str, StickButtons); 3] = [
     ("D-pad", DPAD),
     ("L-stick", LEFT_STICK),
     ("R-stick", RIGHT_STICK),
