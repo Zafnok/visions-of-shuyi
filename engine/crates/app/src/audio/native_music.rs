@@ -90,7 +90,7 @@ impl Music {
     /// Reads and decodes the music file at `path`. Runs on a worker thread.
     pub(crate) fn load(path: &str, contexts: Contexts) -> Result<Self, String> {
         let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
-        let length_ms = trpg_content::audio::ogg_length_ms(&bytes);
+        let length_ms = shuyi_assets::audio::ogg_length_ms(&bytes);
         let ctx = contexts.take();
         // quad-snd `unwrap`s the decode; a corrupt file must not cost the
         // context (its mixer thread would idle forever unused).
@@ -211,17 +211,17 @@ mod tests {
     }
 
     /// The before/after timings in ticket 0215: how long the calling
-    /// thread is blocked starting each track in `music/`, synchronously
-    /// (quad-snd's own `Sound::load`, as before) and through `Pending`.
-    /// Opens the real sound device, so it only runs when asked:
-    /// `cargo test --release -p trpg-app -- --ignored --nocapture music_load_timings`
-    /// (from the repo root).
+    /// thread is blocked starting each track in the folder named by
+    /// `MUSIC_DIR`, synchronously (quad-snd's own `Sound::load`, as before)
+    /// and through `Pending`. Opens the real sound device, so it only runs
+    /// when asked:
+    /// `MUSIC_DIR=<folder> cargo test --release -p shuyi-app -- --ignored --nocapture music_load_timings`
     #[test]
-    #[ignore = "needs a sound device and the music/ folder"]
+    #[ignore = "needs a sound device and a folder of music"]
     fn music_load_timings() {
         use std::time::Instant;
 
-        let root = concat!(env!("CARGO_MANIFEST_DIR"), "/../../music");
+        let root = std::env::var("MUSIC_DIR").unwrap_or_default();
         let mut files: Vec<_> = std::fs::read_dir(root)
             .into_iter()
             .flatten()
@@ -288,19 +288,14 @@ mod tests {
     }
 
     /// The measurement in ticket 0238: the memory 20 loaded voice clips
-    /// take. Loads the clip named by `VOICE_CLIP` (default: a test clip)
-    /// 20 times, as the voice player would 20 different clips. Opens the
-    /// real sound device and reads `tasklist`, so it only runs when asked,
-    /// on Windows:
-    /// `cargo test --release -p trpg-app -- --ignored --nocapture voice_memory`
+    /// take. Loads the clip named by `VOICE_CLIP` 20 times, as the voice
+    /// player would 20 different clips. Opens the real sound device and
+    /// reads `tasklist`, so it only runs when asked, on Windows:
+    /// `VOICE_CLIP=<file.ogg> cargo test --release -p shuyi-app -- --ignored --nocapture voice_memory`
     #[test]
-    #[ignore = "needs a sound device and Windows' tasklist"]
+    #[ignore = "needs a sound device, a voice clip and Windows' tasklist"]
     fn voice_memory_with_20_clips() {
-        let default = concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/tests/voice/en/test/test_21833604.ogg"
-        );
-        let path = std::env::var("VOICE_CLIP").unwrap_or_else(|_| default.to_owned());
+        let path = std::env::var("VOICE_CLIP").unwrap_or_default();
         let contexts = Contexts::default();
         // The device and one clip first, so only the clips are counted.
         let first = Music::load(&path, contexts.clone());

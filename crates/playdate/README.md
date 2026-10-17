@@ -1,7 +1,7 @@
 # `trpg-playdate`: the Playdate front end
 
 The game on the Playdate ([ADR-0070](../../docs/adr/0070-playdate-front-end.md)).
-A platform crate like `trpg-app`: it owns the SDK's update callback, the
+A platform crate like the engine's `shuyi-app`: it owns the SDK's update callback, the
 clock, files and the allocator, and holds no game or screen logic.
 
 From its first frame it shows the loading card, the game's name centred

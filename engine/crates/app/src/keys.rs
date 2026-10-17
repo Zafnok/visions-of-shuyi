@@ -1,11 +1,11 @@
-//! Translation from macroquad key codes to `trpg-ui`'s hardware-agnostic
+//! Translation from macroquad key codes to `shuyi-ui`'s hardware-agnostic
 //! [`Key`], and collecting a frame's keyboard events as [`RawInputEvent`]s.
 
 use macroquad::prelude::{
     KeyCode, get_char_pressed, get_keys_pressed, get_keys_released, is_key_down,
 };
-use trpg_ui::RawInputEvent;
-use trpg_ui::input::{Chord, Key};
+use shuyi_ui::RawInputEvent;
+use shuyi_ui::input::{Chord, Key};
 
 /// The game key for a macroquad key code; `None` for keys the game ignores
 /// (bare modifiers, which only form `Shift+` chords, and rare keys).

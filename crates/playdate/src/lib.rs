@@ -1,5 +1,5 @@
-//! The Playdate front end (ADR-0070): a second platform crate beside
-//! `trpg-app`. Like `app` it owns the platform (the SDK's update callback,
+//! The Playdate front end (ADR-0070): a second platform crate beside the
+//! engine's `shuyi-app`. Like it, it owns the platform (the SDK's update callback,
 //! the clock, files, the allocator) and holds no game or screen logic.
 //!
 //! `cargo xtask playdate` builds it as a static library with the `sdk`

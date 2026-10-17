@@ -1,24 +1,21 @@
-//! Window, main loop and platform glue. See ADR-0004.
+//! The game's binary: macroquad's entry point, which must be here, and what
+//! the engine's platform shell (`shuyi-app`) needs to know about the game.
+//! See ADR-0004.
 
 // A release build on Windows is a GUI program: no console window (ticket 0902).
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 mod args;
-mod audio;
-mod keys;
-mod pads;
-mod render;
-mod storage;
+#[cfg(test)]
+mod tests;
 
-use macroquad::prelude::*;
-use trpg_content::font::ATLAS_PNG_PATH;
-use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, KeyPrompt, ShuyiCtx, UiColor};
+use macroquad::window::Conf;
+use shuyi_app::{AppConfig, Icon, Platform, VoiceFiles, Window};
+use trpg_content::{FontAtlasDef, ImageTable, bundle, font, voice};
+use trpg_ui::screen::{Lessons, Shuyi};
+use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, Game, ShuyiCtx};
 
 use crate::args::Startup;
-use crate::audio::Audio;
-use crate::audio::device::Macroquad;
-use crate::pads::PadInput;
-use crate::render::Renderer;
 
 // A build that ships has none of the test files (ADR-0057): only a debug
 // build and a `debug-tools` build embed them. Features are shared across a
@@ -31,162 +28,71 @@ const _: () = assert!(
      alone, with `-p trpg-app` (ADR-0057)"
 );
 
-fn window_conf() -> Conf {
-    Conf {
-        window_title: "Visions of Shuyi".to_owned(),
-        // The console at 2x (1600x1024) plus a small margin: the framebuffer
-        // can come out a pixel smaller than asked, which would drop to 1x.
-        window_width: 1640,
-        window_height: 1064,
-        window_resizable: true,
-        // Full-resolution framebuffer on scaled displays, so the console's
-        // integer scale is in real pixels (see render.rs).
-        high_dpi: true,
-        icon: window_icon(),
-        ..Default::default()
+/// The window: the console at 2x (1600x1024) plus a small margin, since the
+/// framebuffer can come out a pixel smaller than asked, which would drop
+/// to 1x. The icon is from `assets/icon/` (ticket 0902, `cargo xtask icon`).
+const WINDOW: Window = Window {
+    title: "Visions of Shuyi",
+    width: 1640,
+    height: 1064,
+    icon: Some(Icon {
+        small: include_bytes!("../../../assets/icon/icon-16.png"),
+        medium: include_bytes!("../../../assets/icon/icon-32.png"),
+        big: include_bytes!("../../../assets/icon/icon-64.png"),
+    }),
+};
+
+/// Where saves and settings are kept: never change it, or every player's
+/// saves are lost (`%APPDATA%/tactical-rpg`, `localStorage` keys under
+/// `tactical-rpg/`).
+const STORAGE_NAME: &str = "tactical-rpg";
+
+/// What the platform shell needs to know about the game.
+fn config() -> AppConfig<Shuyi> {
+    AppConfig {
+        window: WINDOW,
+        storage_name: STORAGE_NAME,
+        files: bundle::bytes,
+        font: font_atlas,
+        font_png: font::ATLAS_PNG_PATH,
+        images,
+        sounds: trpg_content::audio::files(None),
+        voices: Some(VoiceFiles {
+            folder: voice::VOICE_DIR,
+            lang: voice::SOURCE_LANG,
+            manifest: voice::MANIFEST_FILE,
+        }),
     }
 }
 
-/// The window's icon (ticket 0902), from `assets/icon/` (`cargo xtask icon`).
-/// `None` if a file doesn't decode, which the content tests rule out.
-fn window_icon() -> Option<miniquad::conf::Icon> {
-    fn pixels<const N: usize>(png: &[u8]) -> Option<[u8; N]> {
-        let image = Image::from_file_with_format(png, None).ok()?;
-        image.bytes.try_into().ok()
+fn font_atlas(game: &Shuyi) -> &FontAtlasDef {
+    &game.content.font
+}
+
+fn images(game: &Shuyi) -> &ImageTable {
+    &game.content.images
+}
+
+/// The game on `platform`: at the title, or on the scene the command line
+/// asks for (ticket 0723).
+fn start(platform: &Platform) -> Result<Game, String> {
+    let startup = args::startup()?;
+    let mut ctx = Ctx::embedded().map_err(|e| e.to_string())?;
+    ctx.console = ConsoleSpec::PC;
+    ctx.game.tips_enabled = true;
+    ctx.game.lessons = Lessons::On;
+    let ctx = platform.setup(ctx);
+    match startup {
+        Startup::Title => Ok(trpg_ui::game::start(ctx)),
+        Startup::Scene { id, gender } => trpg_ui::game::start_on_scene(ctx, &id, gender),
     }
-    Some(miniquad::conf::Icon {
-        small: pixels(include_bytes!("../../../assets/icon/icon-16.png"))?,
-        medium: pixels(include_bytes!("../../../assets/icon/icon-32.png"))?,
-        big: pixels(include_bytes!("../../../assets/icon/icon-64.png"))?,
-    })
+}
+
+fn window_conf() -> Conf {
+    shuyi_app::window_conf(&WINDOW)
 }
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let startup = match args::startup() {
-        Ok(startup) => startup,
-        Err(e) => return show_errors(&e).await,
-    };
-    let mut ctx = match Ctx::embedded() {
-        Ok(mut ctx) => {
-            ctx.console = ConsoleSpec::PC;
-            ctx.game.tips_enabled = true;
-            ctx.game.lessons = trpg_ui::screen::Lessons::On;
-            ctx.idle_motion = trpg_ui::screen::IdleMotion::On;
-            ctx.music_seed = miniquad::date::now().to_bits();
-            ctx.key_prompt = KeyPrompt::Waiting;
-            ctx.with_storage(storage::platform())
-        }
-        Err(e) => return show_errors(&e.to_string()).await,
-    };
-    // Voices (ADR-0046): none, and nothing said, without the folder.
-    let voice_dir = audio::voice::platform_voice_dir();
-    match audio::voice::read_manifest(&voice_dir).await {
-        Ok(Some(manifest)) => ctx.set_voice_manifest(&manifest),
-        Ok(None) => {}
-        Err(e) => warn!("no voices: {}", e),
-    }
-    // E.g. saved key bindings that had to be repaired (ADR-0031).
-    for warning in ctx.take_warnings() {
-        warn!("{}", warning);
-    }
-    #[cfg(debug_assertions)]
-    storage::smoke_check(ctx.storage.computer_mut());
-    let png = trpg_content::bundle::bytes(ATLAS_PNG_PATH).unwrap_or_default();
-    let black = ctx.palette.get(UiColor::Black);
-    let images = &ctx.game.content.images;
-    let mut renderer = match Renderer::new(ctx.game.content.font.clone(), png, black, images) {
-        Ok(renderer) => renderer,
-        Err(e) => return show_errors(&e).await,
-    };
-    let mut speaker = Macroquad::default();
-    let mut audio = Audio::load(
-        &mut speaker,
-        ctx.game.content.audio.clone(),
-        trpg_content::bundle::bytes,
-        audio::platform_music_dir(),
-        voice_dir,
-        miniquad::date::now().to_bits(),
-    )
-    .await;
-    let mut pads = PadInput::new(ctx.game.content.keymap.stick);
-    let mut game = match startup {
-        Startup::Title => trpg_ui::game::start(ctx),
-        // A writer's preview of one scene (ticket 0723).
-        Startup::Scene { id, gender } => match trpg_ui::game::start_on_scene(ctx, &id, gender) {
-            Ok(game) => game,
-            Err(e) => return show_errors(&e).await,
-        },
-    };
-    let mut running = true;
-    // The window starts windowed; the Fullscreen option switches it.
-    let mut fullscreen = false;
-    loop {
-        if keys::fullscreen_shortcut() {
-            game.toggle_fullscreen();
-        }
-        // A colour theme changes the console background.
-        renderer.set_clear(game.ctx().palette.get(UiColor::Black));
-        let mut events = keys::poll();
-        events.extend(pads.poll());
-        if running {
-            // The music clock (ADR-0037): wall-clock time, which keeps
-            // counting while a web tab is hidden and no frames run.
-            let now = miniquad::date::now();
-            game.set_music_playing(audio.music_playing(now));
-            let out = game.frame(&events, get_frame_time());
-            if out.fullscreen != fullscreen {
-                fullscreen = out.fullscreen;
-                set_fullscreen(fullscreen);
-            }
-            audio.set_volumes(&mut speaker, out.music_volume, out.sound_volume);
-            audio.set_voice_volume(&mut speaker, out.voice_volume);
-            audio.play(&mut speaker, out.audio, out.music, now);
-            for warning in audio.take_warnings() {
-                warn!("audio: {}", warning);
-            }
-            renderer.draw(out.buffer);
-            if out.quit {
-                audio.stop_all(&mut speaker);
-                // Native: leaving main closes the window. The web page can't
-                // be closed, so it stops updating and keeps the last frame.
-                if cfg!(target_arch = "wasm32") {
-                    running = false;
-                } else {
-                    break;
-                }
-            }
-        } else {
-            renderer.draw(game.buffer());
-        }
-        next_frame().await;
-    }
-}
-
-/// The most characters of an error shown on one line.
-const ERROR_WIDTH: usize = 150;
-
-/// Shows errors instead of the game (with macroquad's built-in font, since
-/// ours may be what failed): asset errors, only reachable if a broken asset
-/// slipped past the content tests, or a wrong command line.
-async fn show_errors(text: &str) {
-    error!("{}", text);
-    let text = args::wrap(text, ERROR_WIDTH);
-    loop {
-        clear_background(BLACK);
-        let mut y = 40.0;
-        for line in text.lines() {
-            draw_text(line, 20.0, y, 22.0, RED);
-            y += 24.0;
-        }
-        next_frame().await;
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn the_window_has_an_icon() {
-        assert!(super::window_icon().is_some());
-    }
+    shuyi_app::run(config(), start).await;
 }
