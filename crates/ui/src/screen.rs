@@ -1,123 +1,75 @@
 //! Screens and the screen stack: the UI architecture every screen uses.
 //! See `crates/ui/README.md` for how to add a screen.
 //!
-//! A [`Screen`] reads the frame's [`Action`]s in [`update`](Screen::update)
-//! and answers with a [`Transition`]; it paints itself into a
-//! [`GlyphBuffer`] in [`draw`](Screen::draw). The [`ScreenStack`] routes
-//! input to the top screen only and draws from the top-most opaque screen up,
-//! so overlays (menus, dialogs) show the screen below them.
+//! The mechanism is Shuyi Engine's (`shuyi_ui::screen`, `shuyi_ui::Ctx`,
+//! ticket 1109): a [`Screen`] reads the frame's [`Action`]s in
+//! [`update`](Screen::update) and answers with a [`Transition`]; it paints
+//! itself into a [`GlyphBuffer`](crate::GlyphBuffer) in
+//! [`draw`](Screen::draw). The [`ScreenStack`] routes input to the top
+//! screen only and draws from the top-most opaque screen up, so overlays
+//! (menus, dialogs) show the screen below them.
+//!
+//! This module is the game's part: [`Shuyi`], what this game's screens
+//! share besides the engine's services (its content, the campaign being
+//! played, the map's skin, the lead), the aliases its screens are written
+//! with ([`Ctx`], [`FrameInput`], [`Transition`]), and [`ShuyiCtx`], the
+//! lookups that need both. A screen is `impl Screen<Shuyi> for …`.
 
 use crate::prelude::*;
 use alloc::collections::BTreeSet;
 use alloc::rc::Rc;
-use core::any::Any;
-use core::fmt::{self, Display};
-use once_cell::race::OnceBox;
+use core::fmt;
 
+use shuyi_ui::GameData;
+use shuyi_ui::frame::color::Palette;
+use shuyi_ui::input::help_keys::HelpKeys;
 use trpg_content::lang::TEST;
 use trpg_content::voice::{self, SOURCE_LANG};
-use trpg_content::{Content, ContentErrors, LangCode, LineId, Playable, Variant};
+use trpg_content::{
+    AudioManifest, Content, ContentErrors, KeymapDef, PaletteDef, Playable, Theme, Variant,
+};
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{GameMode, LeadGender, LeadProfile, TutorialLevel};
 
-use crate::audio::{AudioQueue, MusicClock, pick_from_pool};
-use crate::color::{Palette, UiColor};
+use crate::color::UiColor;
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::GlyphBuffer;
-use crate::input::{Action, Device, Keymap, Layout, LayoutBindings, PadBindings, PlayerKeys};
+use crate::glyph_buffer::Cell;
+use crate::input::Action;
 use crate::map_view::MapSkin;
-use crate::profiles::{self, ProfileError, ProfileId, ProfileStore, Profiles};
-use crate::settings::{SETTINGS_KEY, Settings};
-use crate::storage::{Storage, StorageError};
-use crate::tips::fill_text;
-use crate::widgets::help::HelpKeys;
+use crate::settings::{Settings, ShuyiSettings};
 use crate::words::{Language, Words};
 
-/// [`Storage`] key under which the chosen [`Layout`] was saved (its name,
-/// e.g. `LeftHanded`) before the settings held it (ticket 0805). Still
-/// read, for a player who picked a layout back then
-/// ([`Ctx::saved_layout`]); never written.
-pub const LAYOUT_KEY: &str = "layout";
+pub use shuyi_ui::ctx::{
+    DEFAULT_MUSIC_SEED, DEFAULT_VOICE_VOLUME, IdleMotion, KEYBINDINGS_KEY, KeyPrompt, Keyboard,
+    MAX_VOICE_VOLUME,
+};
+pub use shuyi_ui::screen::Screen;
 
-/// [`Storage`] key under which the player's key and controller-button
-/// bindings are saved ([`PlayerKeys::to_ron`], ADR-0031, ADR-0053).
-pub const KEYBINDINGS_KEY: &str = "keybindings";
+/// What every screen shares: Shuyi Engine's services and this game's part,
+/// [`Ctx::game`](shuyi_ui::Ctx::game) ([`Shuyi`]).
+pub type Ctx = shuyi_ui::Ctx<Shuyi>;
+
+/// One frame's input as this game's screens see it.
+pub type FrameInput = shuyi_ui::FrameInput<Action>;
+
+/// What a screen asks the stack to do after an update.
+pub type Transition = shuyi_ui::Transition<Shuyi>;
+
+/// The stack of open screens.
+pub type ScreenStack = shuyi_ui::ScreenStack<Shuyi>;
+
+/// [`Storage`](crate::storage::Storage) key under which the chosen
+/// [`Layout`](crate::input::Layout) was saved (its name, e.g.
+/// `LeftHanded`) before the settings held it (ticket 0805). Still read,
+/// for a player who picked a layout back then
+/// ([`Ctx::saved_layout`](shuyi_ui::Ctx::saved_layout)); never written.
+pub const LAYOUT_KEY: &str = "layout";
 
 /// Whether this build offers debug tools: debug builds, and release builds
 /// with the `debug-tools` feature (ADR-0023).
 pub const DEBUG_TOOLS: bool = cfg!(any(debug_assertions, feature = "debug-tools"));
 
-/// One screen of the game: title, battle map, a menu overlay, …
-pub trait Screen {
-    /// A stable, unique `snake_case` name, for tests and debugging.
-    fn name(&self) -> &'static str;
-
-    /// Handles one frame: `input` holds this frame's actions (often none)
-    /// and elapsed time. Called only while this screen is on top.
-    fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition;
-
-    /// Paints the screen. An opaque screen must cover the whole buffer.
-    fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer);
-
-    /// Whether the screen below shows through (drawn first, then this one).
-    fn is_overlay(&self) -> bool {
-        false
-    }
-
-    /// This screen as [`Any`], for tests that look inside a screen on the
-    /// stack ([`ScreenStack::find`]). `None` unless the screen opts in.
-    fn as_any(&self) -> Option<&dyn Any> {
-        None
-    }
-
-    /// [`as_any`](Self::as_any), mutable ([`ScreenStack::find_mut`]).
-    fn as_any_mut(&mut self) -> Option<&mut dyn Any> {
-        None
-    }
-}
-
-/// What a screen asks the stack to do after an update.
-pub enum Transition {
-    /// Stay on this screen.
-    None,
-    /// Put a new screen on top of this one.
-    Push(Box<dyn Screen>),
-    /// Remove this screen, returning to the one below (or quitting if it was
-    /// the last).
-    Pop,
-    /// Swap this screen for another.
-    Replace(Box<dyn Screen>),
-    /// Quit the game.
-    Quit,
-}
-
-// check-text: not player text (debug output)
-impl fmt::Debug for Transition {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::None => f.write_str("None"),
-            Self::Push(s) => write!(f, "Push({})", s.name()),
-            Self::Pop => f.write_str("Pop"),
-            Self::Replace(s) => write!(f, "Replace({})", s.name()),
-            Self::Quit => f.write_str("Quit"),
-        }
-    }
-}
-
-/// One frame's input as this game's screens see it.
-pub type FrameInput = crate::input::frame::FrameInput<Action>;
-
-/// Whether screens show their idle motion ([`Ctx::idle_motion`]).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum IdleMotion {
-    /// Nothing moves while a screen is left alone.
-    #[default]
-    Off,
-    /// Decoration moves (the title's sparks).
-    On,
-}
-
-/// Whether battles open their checklist lessons ([`Ctx::lessons`], 0456).
+/// Whether battles open their checklist lessons ([`Shuyi::lessons`], 0456).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Lessons {
     /// No lesson opens, so a test can end its turns.
@@ -127,78 +79,24 @@ pub enum Lessons {
     On,
 }
 
-/// Whether the platform has a keyboard ([`Ctx::keyboard`]).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum Keyboard {
-    /// It does (the PC, the web): a first key press opens the layout
-    /// picker until a layout is chosen.
+/// Whether the Options screen may switch the campaign's mode
+/// ([`Shuyi::mode_switch`]).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum ModeSwitch {
+    /// Not now: no campaign, or a battle is under way.
     #[default]
-    Present,
-    /// It has only its own buttons (the Playdate): the layout picker
-    /// never opens.
-    Absent,
+    Closed,
+    /// At Preparations, before a battle.
+    Open,
 }
 
-/// Resources shared by every screen. A plain struct: add fields as later
-/// tickets need them (settings, …).
+/// This game's part of the context ([`Ctx::game`](shuyi_ui::Ctx::game)):
+/// its content, the campaign being played, how battle maps look and who
+/// the lead is. A plain struct: add fields as later tickets need them.
 #[derive(Debug)]
-pub struct Ctx {
+pub struct Shuyi {
     /// All validated game content.
     pub content: Content,
-    /// Named colours, from `content.palette`.
-    pub palette: Palette,
-    /// The console the frame is drawn on (ADR-0070 §6):
-    /// [`ConsoleSpec::PC`] here; a front end sets its own before the
-    /// [`Game`](crate::Game) starts.
-    pub console: ConsoleSpec,
-    /// The active key bindings, for help text that names keys: the chosen
-    /// layout's with the player's changes, or [`Keymap::layout_picker`]
-    /// until one is chosen. Change it with [`use_layout`](Self::use_layout),
-    /// [`choose_layout`](Self::choose_layout) or
-    /// [`set_layout_bindings`](Self::set_layout_bindings), never directly.
-    pub keymap: Keymap,
-    /// What the player pressed last, the keyboard or a controller, so help
-    /// text names keys or that pad's buttons ([`help_keys`]). `Game` keeps
-    /// it up to date from the input, starting from the one set here when
-    /// it starts (the keyboard, unless a front end without one sets its
-    /// pad).
-    ///
-    /// [`help_keys`]: Self::help_keys
-    pub device: Device,
-    /// The layout in use; `None` until the player has picked one.
-    layout: Option<Layout>,
-    /// The player's key bindings for every layout and their controller
-    /// buttons, loaded from `storage`.
-    player_keys: PlayerKeys,
-    /// Problems found while loading saved data, for `app` to log.
-    warnings: Vec<String>,
-    /// Where saves and settings persist (0207): files on native,
-    /// `localStorage` on web. Defaults to [`MemoryStorage`](crate::storage::MemoryStorage); `app` swaps in
-    /// the platform implementation with [`Ctx::with_storage`].
-    ///
-    /// It reads and writes the keys of the profile in use (ADR-0069): its
-    /// settings, key bindings, tips seen and saves.
-    /// [`computer`](ProfileStore::computer) is the storage of what stays
-    /// with the computer (the title's backdrop).
-    pub storage: ProfileStore,
-    /// The player profiles and the one in use (0836), loaded from the
-    /// computer's storage. Change them with
-    /// [`switch_profile`](Self::switch_profile),
-    /// [`add_profile`](Self::add_profile),
-    /// [`rename_profile`](Self::rename_profile) and
-    /// [`delete_profile`](Self::delete_profile), which save them.
-    profiles: Profiles,
-    /// The player's settings (0805), loaded from `storage`. Change them
-    /// with [`change_settings`](Self::change_settings), which saves them,
-    /// or (the Options screen, 0839) with
-    /// [`preview_settings`](Self::preview_settings), which doesn't, then
-    /// [`keep_settings`](Self::keep_settings) or
-    /// [`restore_settings`](Self::restore_settings).
-    settings: Settings,
-    /// The settings as `storage` holds them: what was loaded or last
-    /// written. [`settings`](Self::settings) differs from it while a
-    /// previewed change is neither kept nor put back.
-    stored_settings: Settings,
     /// The mode of the campaign being played, for the Options screen:
     /// `None` with no campaign (the title). The game flow keeps it up to
     /// date, and takes a change to Casual here
@@ -221,15 +119,10 @@ pub struct Ctx {
     /// Preparations, before a battle (`death-and-difficulty.md`). The game
     /// flow keeps it up to date.
     pub mode_switch: ModeSwitch,
-    /// Whether debug tools are offered: the debug menu key and the title
-    /// screen's Quick Battle. On in debug builds and with the `debug-tools`
-    /// feature (the Pages build, ADR-0023); the test harness turns it on
-    /// everywhere so tests don't depend on the build profile.
-    pub debug_tools: bool,
     /// How battle maps look (ADR-0038): the glyph skin, unless a debug tool
     /// swaps in another. Screens build a `MapScene` and this paints it.
-    /// Change it with [`set_map_skin`](Self::set_map_skin), which keeps
-    /// the player's zoom.
+    /// Change it with [`set_map_skin`](ShuyiCtx::set_map_skin), which
+    /// keeps the player's zoom.
     pub map_skin: Rc<dyn MapSkin>,
     /// Whether battles show their one-time tips (0406). Off here, so
     /// screen tests aren't interrupted by them; `app` turns it on.
@@ -237,576 +130,31 @@ pub struct Ctx {
     /// Whether battles open their checklist lessons (0456). Off here, so
     /// screen tests can end their turns; `app` turns it on.
     pub lessons: Lessons,
-    /// Whether screens show their idle motion (the title's drifting
-    /// sparks, 0811). Off here, so a screen left alone in a test looks the
-    /// same a moment later; `app` turns it on.
-    pub idle_motion: IdleMotion,
-    /// Sounds and music screens ask for this frame (ADR-0026), e.g.
-    /// `ctx.audio.play_sound("menu_move")`. `Game` passes them to `app`.
-    pub audio: AudioQueue,
-    /// Where the music that is sounding is in its track, for a screen that
-    /// keeps time with it (ADR-0037). `None` in silence: nothing asked
-    /// for, the track still loading (a fraction of a second to several
-    /// seconds), its file missing, or a track played once that has ended.
-    /// During a fade it is the track fading out. `app` (or the test
-    /// `Harness`) reports it each frame through
-    /// [`Game::set_music_playing`](crate::Game::set_music_playing).
-    pub music_clock: Option<MusicClock>,
-    /// Whether voice clips play (ADR-0046). Lives here, like
-    /// [`voice_volume`](Self::voice_volume), until the Options menu (0826)
-    /// moves both into the saved settings.
-    pub voices_on: bool,
-    /// How loud voice clips play, 0 to [`MAX_VOICE_VOLUME`].
-    pub voice_volume: u8,
-    /// The voice clips that may be played: none until `app` hands over a
-    /// manifest ([`Ctx::set_voice_manifest`]).
-    voices: Playable,
-    /// Seeds random music picks (e.g. a track from a pool), kept apart
-    /// from core's simulation RNG (ADR-0019). A fixed
-    /// [`DEFAULT_MUSIC_SEED`] here, so tests are repeatable; `app` sets it
-    /// from the clock at startup so each launch picks differently.
-    pub music_seed: u64,
-    /// Random music picks made so far, mixed into
-    /// [`music_seed`](Self::music_seed) so each pick rolls afresh
-    /// ([`Ctx::pick_music`]).
-    music_picks: u64,
     /// Who the player made the lead, for dialogue's name and pronoun
     /// tokens and the lead's portrait: a placeholder until a campaign
     /// starts (New Game asks the player), then the campaign's
     /// ([`crate::flow`]).
     pub lead: LeadProfile,
-    /// Seconds the game has been running: the sum of every frame's time
-    /// (`Game` adds it), for the campaign's playtime.
-    pub clock_s: f64,
-    /// Whether the title waits for a key press before showing its menu
-    /// and playing its music (`docs/design/title-screen.md`). Off here;
-    /// `app` sets [`KeyPrompt::Waiting`] on every build, and `Game` moves
-    /// it on to [`KeyPrompt::Pressed`] at the first key or button press.
-    pub key_prompt: KeyPrompt,
-    /// Whether the platform has a keyboard. [`Keyboard::Present`] here; a
-    /// front end without one (the Playdate) sets [`Keyboard::Absent`]
-    /// before the [`Game`](crate::Game) starts, along with the
-    /// [`device`](Self::device) it has.
-    pub keyboard: Keyboard,
-    /// The language screen text is shown in (ADR-0045): English until the
-    /// player picks another (0825). The test pack counts only with
-    /// [`debug_tools`](Self::debug_tools) on; anywhere else it is English.
-    pub lang: LangCode,
 }
 
-/// Whether the Options screen may switch the campaign's mode
-/// ([`Ctx::mode_switch`]).
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub enum ModeSwitch {
-    /// Not now: no campaign, or a battle is under way.
-    #[default]
-    Closed,
-    /// At Preparations, before a battle.
-    Open,
-}
-
-/// The title's "press any key or button" prompt ([`Ctx::key_prompt`]), on
-/// every build: browsers block sound until the player presses a key.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub enum KeyPrompt {
-    /// No prompt (tests that start at the menu).
-    #[default]
-    Off,
-    /// Nothing pressed yet: the title shows the prompt.
-    Waiting,
-    /// A key or a controller button has been pressed (on any screen).
-    Pressed,
-}
-
-/// The loudest [`Ctx::voice_volume`].
-pub const MAX_VOICE_VOLUME: u8 = 10;
-/// [`Ctx::voice_volume`] until the player changes it (*tunable*).
-pub const DEFAULT_VOICE_VOLUME: u8 = 8;
-
-/// [`Ctx::music_seed`] until `app` sets it.
-pub const DEFAULT_MUSIC_SEED: u64 = 0;
-
-impl Ctx {
-    /// Builds the shared context from loaded content. Fails with the names
-    /// of any UI colours the palette lacks. Starts with [`MemoryStorage`](crate::storage::MemoryStorage)
-    /// and no layout chosen (so [`Keymap::layout_picker`] is active).
-    pub fn new(content: Content) -> Result<Self, LoadError> {
-        let palette = Palette::new::<UiColor>(&content.palette).map_err(LoadError::Palette)?;
-        let keymap = Keymap::layout_picker(&content.keymap);
-        let settings = Settings::default();
+impl Shuyi {
+    /// This game's part of a new context over `content`: no campaign, the
+    /// default map skin at a new player's zoom, a placeholder lead.
+    pub fn new(content: Content) -> Self {
         let map_skin = crate::map_view::default_skin(&content);
-        let map_skin = map_skin.at_zoom(settings.map_zoom).unwrap_or(map_skin);
-        let profiles = Profiles::first(&numbered_profile(&content, ProfileId::FIRST.get()));
-        Ok(Self {
+        let zoom = ShuyiSettings::default().map_zoom;
+        let map_skin = map_skin.at_zoom(zoom).unwrap_or(map_skin);
+        Self {
             content,
-            palette,
-            console: ConsoleSpec::PC,
-            keymap,
-            device: Device::default(),
-            layout: None,
-            player_keys: PlayerKeys::default(),
-            warnings: Vec::new(),
-            storage: ProfileStore::default(),
-            profiles,
-            stored_settings: settings.clone(),
-            settings,
             campaign_mode: None,
             campaign_tutorial: None,
             campaign_lessons: BTreeSet::new(),
             mode_switch: ModeSwitch::Closed,
-            debug_tools: DEBUG_TOOLS,
             map_skin,
             tips_enabled: false,
             lessons: Lessons::Off,
-            idle_motion: IdleMotion::Off,
-            audio: AudioQueue::default(),
-            music_clock: None,
-            voices_on: true,
-            voice_volume: DEFAULT_VOICE_VOLUME,
-            voices: Playable::default(),
-            music_seed: DEFAULT_MUSIC_SEED,
-            music_picks: 0,
             lead: LeadProfile::new(DEFAULT_NAME, LeadGender::Male),
-            clock_s: 0.0,
-            key_prompt: KeyPrompt::Off,
-            keyboard: Keyboard::Present,
-            lang: LangCode::english(),
-        })
-    }
-
-    /// The screen text for `key` (`title.new_game`) in the player's
-    /// language, as written in `assets/lang/`, placeholders and all: the
-    /// pack's text if it has one made from today's English, else English.
-    ///
-    /// A key English lacks is a bug in the screen: it panics in debug
-    /// builds, and shows as the key itself in release builds.
-    pub fn text<'a>(&'a self, key: &'a str) -> &'a str {
-        let lang = &self.content.lang;
-        debug_assert!(
-            lang.has(key),
-            "text key not in assets/lang/en/ui.ron: {key:?}"
-        );
-        lang.text(self.effective_lang(), key)
-    }
-
-    /// [`text`](Self::text) with its placeholders filled in: each `{name}`
-    /// that `args` names by its value, and each `{Action}` (and `{Cursor}`)
-    /// by the key the player has for it ([`help_keys`](Self::help_keys)).
-    pub fn text_with(&self, key: &str, args: &[(&str, &dyn Display)]) -> String {
-        fill_text(self.text(key), self.help_keys(), args)
-    }
-
-    /// The data's text (names, tips, titles, dialogue) in the player's
-    /// language: what a screen shows any of it through. Like
-    /// [`text`](Self::text), the test pack counts only with
-    /// [`debug_tools`](Self::debug_tools) on.
-    pub fn words(&self) -> Words<'_> {
-        Words::new(&self.content.lang, self.effective_lang())
-    }
-
-    /// [`words`](Self::words), to keep: for a screen that names things
-    /// where it has no context.
-    pub fn language(&self) -> Language {
-        Language::new(&self.content.lang, self.effective_lang())
-    }
-
-    /// The language text is shown in: [`lang`](Self::lang), but English
-    /// for the test pack without [`debug_tools`](Self::debug_tools).
-    pub fn effective_lang(&self) -> &LangCode {
-        static ENGLISH: OnceBox<LangCode> = OnceBox::new();
-        if self.lang.as_str() == TEST && !self.debug_tools {
-            return ENGLISH.get_or_init(|| Box::new(LangCode::english()));
         }
-        &self.lang
-    }
-
-    /// The context for the content embedded in the binary.
-    pub fn embedded() -> Result<Self, LoadError> {
-        Self::new(trpg_content::load_embedded().map_err(LoadError::Content)?)
-    }
-
-    /// A music cue picked at random from the audio manifest's `pool`
-    /// ([`pick_from_pool`]): the n-th pick of this run uses
-    /// [`music_seed`](Self::music_seed) mixed with n, so a battle started
-    /// again may get another track. `None` if there is no such pool or it
-    /// is empty.
-    pub fn pick_music(&mut self, pool: &str) -> Option<String> {
-        let seed = self.music_seed ^ self.music_picks;
-        self.music_picks = self.music_picks.wrapping_add(1);
-        pick_from_pool(&self.content.audio, pool, seed).map(str::to_owned)
-    }
-
-    /// Takes the text of the voice manifest `app` read
-    /// (`voice/<lang>/voice.ron`, ADR-0046), validates it against the
-    /// dialogue and keeps the clips that may be played: those that still
-    /// say what their line says with today's names. An invalid manifest
-    /// leaves no voices and a warning ([`take_warnings`]).
-    ///
-    /// [`take_warnings`]: Self::take_warnings
-    pub fn set_voice_manifest(&mut self, source: &str) {
-        let file = format!(
-            "{}/{SOURCE_LANG}/{}",
-            voice::VOICE_DIR,
-            voice::MANIFEST_FILE
-        );
-        let content = &self.content;
-        self.voices = match voice::from_source(&file, source, &content.dialogue) {
-            Ok(manifest) => voice::playable(&manifest, &content.dialogue, &content.names),
-            Err(errors) => {
-                let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
-                // check-text: not player text (a warning for the log)
-                self.warnings
-                    .push(format!("no voices: {}", errors.join("; ")));
-                Playable::default()
-            }
-        };
-    }
-
-    /// Whether `line` has a voice clip that would play now: voices are on
-    /// and the line has a clip that isn't stale.
-    pub fn has_voice(&self, line: &LineId) -> bool {
-        self.voices_on
-            && self
-                .voices
-                .variant_for(line, Variant::of(self.lead.gender))
-                .is_some()
-    }
-
-    /// Says `line`: plays its voice clip (the one for the lead's gender,
-    /// where the words differ), stopping the voice that is playing. Does
-    /// nothing when voices are off or the line has no clip that may be
-    /// played.
-    pub fn play_voice(&mut self, line: &LineId) {
-        if !self.voices_on {
-            return;
-        }
-        if let Some(variant) = self.voices.variant_for(line, Variant::of(self.lead.gender)) {
-            self.audio.play_voice(line, variant);
-        }
-    }
-
-    /// Stops the voice that is playing, if any.
-    pub fn stop_voice(&mut self) {
-        self.audio.stop_voice();
-    }
-
-    /// Tells `app` the lines a scene is about to say, in script order, so
-    /// it loads their clips a few ahead. Lines without a playable clip are
-    /// left out; nothing is sent when voices are off or none has one.
-    pub fn preload_voices(&mut self, lines: &[LineId]) {
-        if !self.voices_on {
-            return;
-        }
-        let gender = self.lead.gender;
-        let clips: Vec<_> = lines
-            .iter()
-            .filter_map(|line| {
-                Some((
-                    line.clone(),
-                    self.voices.variant_for(line, Variant::of(gender))?,
-                ))
-            })
-            .collect();
-        if !clips.is_empty() {
-            self.audio.preload_voices(clips);
-        }
-    }
-
-    /// [`voice_volume`](Self::voice_volume) as a 0–1 factor.
-    pub fn voice_gain(&self) -> f32 {
-        f32::from(self.voice_volume.min(MAX_VOICE_VOLUME)) / f32::from(MAX_VOICE_VOLUME)
-    }
-
-    /// What help text names keys from: the active bindings on the device
-    /// the player pressed last, and the words of a key's name in the
-    /// player's language.
-    pub fn help_keys(&self) -> HelpKeys<'_> {
-        let not_mapped = self.text("keys.not_mapped");
-        let arrows = self.text(crate::input::ARROWS_TEXT);
-        let join = self.text(crate::input::CHORD_JOIN_TEXT);
-        HelpKeys::new(&self.keymap, self.device)
-            .worded(not_mapped, arrows)
-            .chord_joined(join)
-    }
-
-    /// The layout in use, or `None` if the player hasn't picked one yet.
-    pub fn layout(&self) -> Option<Layout> {
-        self.layout
-    }
-
-    /// Switches to `layout`'s bindings (the player's own for that layout,
-    /// else its defaults) for this session, without saving the choice.
-    pub fn use_layout(&mut self, layout: Layout) {
-        self.layout = Some(layout);
-        self.refresh_keymap();
-    }
-
-    /// Makes the keymap file's `playdate` table the default buttons (ticket
-    /// 1034), for the Playdate front end, before the player's bindings are
-    /// loaded: its pad is the only one there is.
-    pub fn use_playdate_buttons(&mut self) {
-        let def = core::mem::take(&mut self.content.keymap);
-        self.content.keymap = def.for_playdate();
-        self.refresh_keymap();
-    }
-
-    /// Rebuilds [`keymap`](Self::keymap) from the layout in use (the
-    /// layout picker's keys while there is none) and the player's
-    /// bindings.
-    fn refresh_keymap(&mut self) {
-        self.keymap = match self.layout {
-            Some(layout) => self.keymap_for(layout),
-            None => self.player_keys.layout_picker_keymap(&self.content.keymap),
-        };
-    }
-
-    /// The keymap `layout` would have: the player's bindings for it, else
-    /// its defaults. (The layout picker draws both layouts with this.)
-    pub fn keymap_for(&self, layout: Layout) -> Keymap {
-        self.player_keys.keymap(&self.content.keymap, layout)
-    }
-
-    /// The player's key bindings for every layout.
-    pub fn player_keys(&self) -> &PlayerKeys {
-        &self.player_keys
-    }
-
-    /// `layout`'s current bindings, for the Key bindings screen (0815) to
-    /// edit and hand back to [`set_layout_bindings`](Self::set_layout_bindings).
-    pub fn layout_bindings(&self, layout: Layout) -> LayoutBindings {
-        self.player_keys.bindings(&self.content.keymap, layout)
-    }
-
-    /// Replaces `layout`'s bindings and saves every layout's under
-    /// [`KEYBINDINGS_KEY`]. If `layout` is in use, its keys work from the
-    /// next key press (`Game` hands the new keymap to its input at once).
-    /// The change applies even if saving fails (it is then lost on quit).
-    pub fn set_layout_bindings(
-        &mut self,
-        layout: Layout,
-        bindings: LayoutBindings,
-    ) -> Result<(), StorageError> {
-        self.player_keys.set(&self.content.keymap, layout, bindings);
-        if self.layout == Some(layout) {
-            self.use_layout(layout);
-        }
-        self.storage
-            .write(KEYBINDINGS_KEY, &self.player_keys.to_ron())
-    }
-
-    /// The player's controller buttons (the defaults until they change
-    /// them), for the Key bindings screen (0816) to edit and hand back to
-    /// [`set_pad_bindings`](Self::set_pad_bindings). The same in both
-    /// layouts.
-    pub fn pad_bindings(&self) -> PadBindings {
-        self.player_keys.pad_bindings(&self.content.keymap)
-    }
-
-    /// Replaces the controller buttons and saves them under
-    /// [`KEYBINDINGS_KEY`]. They work from the next press, whatever the
-    /// layout (and before one is chosen). The change applies even if
-    /// saving fails (it is then lost on quit).
-    pub fn set_pad_bindings(&mut self, bindings: PadBindings) -> Result<(), StorageError> {
-        self.player_keys.set_pad(&self.content.keymap, bindings);
-        self.refresh_keymap();
-        self.storage
-            .write(KEYBINDINGS_KEY, &self.player_keys.to_ron())
-    }
-
-    /// Loads the player's key bindings from `storage` (repairing what it
-    /// must, with a warning per fix) and re-applies the layout in use.
-    fn load_player_keys(&mut self) {
-        let (keys, warnings) = match self.storage.read(KEYBINDINGS_KEY) {
-            Ok(Some(text)) => PlayerKeys::from_ron(&text, &self.content.keymap),
-            Ok(None) => (PlayerKeys::default(), Vec::new()),
-            Err(e) => (
-                PlayerKeys::default(),
-                // check-text: not player text (a warning for the log)
-                vec![format!("can't be read, using the default keys: {e}")],
-            ),
-        };
-        self.player_keys = keys;
-        self.warnings.extend(
-            warnings
-                .into_iter()
-                .map(|w| format!("{KEYBINDINGS_KEY}: {w}")),
-        );
-        self.refresh_keymap();
-    }
-
-    /// Takes the warnings gathered while loading saved data (e.g. repaired
-    /// key bindings), for `app` to log.
-    pub fn take_warnings(&mut self) -> Vec<String> {
-        core::mem::take(&mut self.warnings)
-    }
-
-    /// Builder form of [`use_layout`](Self::use_layout).
-    #[must_use]
-    pub fn with_layout(mut self, layout: Layout) -> Self {
-        self.use_layout(layout);
-        self
-    }
-
-    /// The player picked `layout`: switches to it (its own keys if the
-    /// player changed them, else its defaults) and saves it in the
-    /// settings. The switch happens even if saving fails (the player is
-    /// then asked again next launch).
-    pub fn choose_layout(&mut self, layout: Layout) -> Result<(), StorageError> {
-        self.use_layout(layout);
-        self.settings.layout = Some(layout);
-        // Only the layout is saved: a change the Options screen hasn't
-        // kept yet stays unsaved.
-        let mut stored = self.stored_settings.clone();
-        stored.layout = Some(layout);
-        self.write_settings(stored)
-    }
-
-    /// The layout saved by an earlier [`choose_layout`](Self::choose_layout):
-    /// the saved settings', else the one under the old [`LAYOUT_KEY`].
-    /// `None` if nothing is saved, or if the saved value can't be read or
-    /// isn't a layout the keymap file lists (the player is simply asked
-    /// again).
-    pub fn saved_layout(&self) -> Option<Layout> {
-        let read = |key| self.storage.read(key).ok().flatten();
-        let known = |l: &Layout| self.content.keymap.has_layout(*l);
-        let in_settings = read(SETTINGS_KEY)
-            .and_then(|text| Settings::from_ron(&text).ok())
-            .and_then(|s| s.layout())
-            .filter(known);
-        in_settings.or_else(|| Layout::from_name(read(LAYOUT_KEY)?.trim()).filter(known))
-    }
-
-    /// The layout a screen about the keys shows: the one in use, else the
-    /// keymap file's first (before a layout is chosen).
-    pub fn shown_layout(&self) -> Layout {
-        let first = || self.content.keymap.first_layout();
-        // The loader refuses a keymap without layouts.
-        self.layout
-            .or_else(first)
-            .unwrap_or(crate::input::RIGHT_HANDED)
-    }
-
-    /// The player's settings.
-    pub fn settings(&self) -> &Settings {
-        &self.settings
-    }
-
-    /// Lets `change` edit the settings and, if it changed anything, saves
-    /// them under [`SETTINGS_KEY`]. The change applies even if saving
-    /// fails (it is then lost on quit).
-    pub fn change_settings(
-        &mut self,
-        change: impl FnOnce(&mut Settings),
-    ) -> Result<(), StorageError> {
-        if !self.preview_settings(change) {
-            return Ok(());
-        }
-        self.write_settings(self.settings.clone())
-    }
-
-    /// Lets `change` edit the settings without saving them (ticket 0839):
-    /// the change applies at once (the look, the sound), and is saved only
-    /// by [`keep_settings`](Self::keep_settings) or the next
-    /// [`change_settings`](Self::change_settings). Returns whether it
-    /// changed anything. The layout changes only with the keys
-    /// ([`choose_layout`](Self::choose_layout)).
-    pub fn preview_settings(&mut self, change: impl FnOnce(&mut Settings)) -> bool {
-        let before = self.settings.clone();
-        change(&mut self.settings);
-        self.settings.layout = before.layout;
-        if self.settings == before {
-            return false;
-        }
-        self.apply_changed(&before);
-        true
-    }
-
-    /// Saves the settings if they differ from what `storage` holds (a
-    /// previewed change, [`preview_settings`](Self::preview_settings)).
-    pub fn keep_settings(&mut self) -> Result<(), StorageError> {
-        if self.settings == self.stored_settings {
-            return Ok(());
-        }
-        self.write_settings(self.settings.clone())
-    }
-
-    /// Puts the settings back to `to` (all but the layout, which only the
-    /// keys change), as a previewed change thrown away (ticket 0839). It
-    /// saves only if `storage` holds something else, which is so only if
-    /// another change was saved meanwhile (the window's fullscreen
-    /// shortcut, a layout picked).
-    pub fn restore_settings(&mut self, to: &Settings) -> Result<(), StorageError> {
-        let to = to.clone();
-        self.preview_settings(|s| *s = to);
-        self.keep_settings()
-    }
-
-    /// Applies what changed in the settings since `before`: the map's
-    /// skin or zoom, the colour theme. (Volumes and fullscreen are read
-    /// from the settings every frame.)
-    fn apply_changed(&mut self, before: &Settings) {
-        if self.settings.map_look != before.map_look {
-            self.apply_map_look();
-        } else if self.settings.map_zoom != before.map_zoom {
-            self.set_map_skin(Rc::clone(&self.map_skin));
-        }
-        if self.settings.theme != before.theme {
-            self.apply_theme();
-        }
-    }
-
-    /// Builds [`palette`](Self::palette) from the colour theme in the
-    /// settings (ticket 0806). Keeps the palette if the theme's is
-    /// missing, which content validation rules out.
-    fn apply_theme(&mut self) {
-        let def = self.content.themes.get(&self.settings.theme);
-        if let Some(palette) = def.and_then(|d| Palette::new::<UiColor>(d).ok()) {
-            self.palette = palette;
-        }
-    }
-
-    /// Paints the battle map with the skin of the map look in the
-    /// settings (ticket 0824).
-    fn apply_map_look(&mut self) {
-        let skin = crate::map_view::skin_for_look(self.settings.map_look, &self.content);
-        self.set_map_skin(skin);
-    }
-
-    /// Paints the battle map with `skin`, at the zoom in the settings if
-    /// it can zoom (ticket 0439): the zoom is kept from one skin to the
-    /// next.
-    pub fn set_map_skin(&mut self, skin: Rc<dyn MapSkin>) {
-        self.map_skin = skin.at_zoom(self.settings.map_zoom).unwrap_or(skin);
-    }
-
-    /// Writes `settings` under [`SETTINGS_KEY`]; once written they are
-    /// what `storage` holds.
-    fn write_settings(&mut self, settings: Settings) -> Result<(), StorageError> {
-        self.storage.write(SETTINGS_KEY, &settings.to_ron())?;
-        self.stored_settings = settings;
-        Ok(())
-    }
-
-    /// Loads the settings from `storage`: the defaults if none are saved,
-    /// or (with a warning) if they can't be read. A layout picked before
-    /// the settings held it ([`LAYOUT_KEY`]) is taken over.
-    fn load_settings(&mut self) {
-        let loaded = match self.storage.read(SETTINGS_KEY) {
-            Ok(Some(text)) => Settings::from_ron(&text),
-            Ok(None) => Ok(Settings::default()),
-            // check-text: not player text (a warning for the log)
-            Err(e) => Err(format!("can't be read: {e}")),
-        };
-        self.settings = loaded.unwrap_or_else(|why| {
-            // check-text: not player text (a warning for the log)
-            self.warnings
-                .push(format!("{SETTINGS_KEY}: {why}, using the defaults"));
-            Settings::default()
-        });
-        self.settings.layout = self.saved_layout();
-        self.stored_settings = self.settings.clone();
-        self.apply_map_look();
-        self.apply_theme();
     }
 
     /// The Options screen's switch to Casual: one way, only from a Classic
@@ -822,106 +170,172 @@ impl Ctx {
         }
         classic
     }
+}
 
-    /// Replaces the storage backend (the harness and tests keep
-    /// [`MemoryStorage`](crate::storage::MemoryStorage); `app` installs the platform implementation),
-    /// loads the profiles from it ([`profiles::load`]: the last one used,
-    /// `Player 1` made on a first launch, a player's keys from before
-    /// profiles moved into it) and that profile's key bindings and
-    /// settings.
-    #[must_use]
-    pub fn with_storage(mut self, mut storage: Box<dyn Storage>) -> Self {
+impl GameData for Shuyi {
+    type Action = Action;
+    type Colors = UiColor;
+    type Voice = Variant;
+    type Settings = ShuyiSettings;
+
+    fn lang(&self) -> &shuyi_assets::lang::Lang {
+        &self.content.lang
+    }
+
+    fn keymap_def(&self) -> &KeymapDef {
+        &self.content.keymap
+    }
+
+    fn audio_manifest(&self) -> &AudioManifest {
+        &self.content.audio
+    }
+
+    fn palette_def(&self) -> &PaletteDef {
+        &self.content.palette
+    }
+
+    fn console(&self) -> ConsoleSpec {
+        ConsoleSpec::PC
+    }
+
+    /// The colour theme's palette (ticket 0806); content validation makes
+    /// sure every theme has one.
+    fn theme_def(&self, theme: Theme) -> Option<&PaletteDef> {
+        self.content.themes.get(&theme)
+    }
+
+    /// The test pack (ADR-0057) counts only with debug tools on.
+    fn debug_lang(&self) -> Option<&str> {
+        Some(TEST)
+    }
+
+    /// `{Cursor}` the cursor keys, `{Select}` the key that picks on the
+    /// map, `{Action}` that action's key ([`crate::tips::fill_text`]).
+    fn key_text(&self, name: &str, keys: HelpKeys<'_, Action>) -> Option<String> {
+        crate::tips::key_text(name, keys)
+    }
+
+    /// The clip for the lead's gender, where the words differ.
+    fn voice_variant(&self) -> Variant {
+        Variant::of(self.lead.gender)
+    }
+
+    /// Validates the voice manifest `app` read (`voice/<lang>/voice.ron`,
+    /// ADR-0046) against the dialogue, and keeps the clips that still say
+    /// what their line says with today's names.
+    fn voices(&self, source: &str) -> Result<Playable, String> {
+        let file = format!(
+            "{}/{SOURCE_LANG}/{}",
+            voice::VOICE_DIR,
+            voice::MANIFEST_FILE
+        );
         let content = &self.content;
-        let (profiles, warnings) = profiles::load(&mut *storage, |n| numbered_profile(content, n));
-        self.warnings.extend(warnings);
-        self.storage = ProfileStore::new(storage, profiles.current());
-        self.profiles = profiles;
-        self.load_player_keys();
-        self.load_settings();
-        self
-    }
-
-    /// The player profiles and the one in use.
-    pub fn profiles(&self) -> &Profiles {
-        &self.profiles
-    }
-
-    /// Makes `id` the profile in use (for the title's Profile screen,
-    /// 0837): its settings, key bindings and layout replace these
-    /// (`None` if it has none yet: the layout picker's keys), and the tips
-    /// seen and the saves are its own from the next read
-    /// ([`storage`](Self::storage)). It is the one the next launch opens
-    /// on. The switch happens even if the list can't be saved (the next
-    /// launch then opens on the profile used before).
-    pub fn switch_profile(&mut self, id: ProfileId) -> Result<(), ProfileError> {
-        self.profiles.set_current(id)?;
-        self.load_profile();
-        self.profiles
-            .save(self.storage.computer_mut())
-            .map_err(ProfileError::Storage)
-    }
-
-    /// Loads everything the profile in use holds.
-    fn load_profile(&mut self) {
-        self.storage.set_profile(self.profiles.current());
-        self.load_player_keys();
-        self.load_settings();
-        self.layout = self.settings.layout();
-        self.refresh_keymap();
-    }
-
-    /// Adds a profile called `name`, starting from the default options and
-    /// keys, and returns its id; the one in use stays. Refused (and
-    /// nothing changes) for a name that's empty, too long or taken, past
-    /// [`MAX_PROFILES`](profiles::MAX_PROFILES), or if the list can't be
-    /// saved.
-    pub fn add_profile(&mut self, name: &str) -> Result<ProfileId, ProfileError> {
-        let mut changed = self.profiles.clone();
-        let id = changed.add(name)?;
-        self.keep_profiles(changed)?;
-        Ok(id)
-    }
-
-    /// Renames the profile `id`. Refused (and nothing changes) as
-    /// [`add_profile`](Self::add_profile) is.
-    pub fn rename_profile(&mut self, id: ProfileId, name: &str) -> Result<(), ProfileError> {
-        let mut changed = self.profiles.clone();
-        changed.rename(id, name)?;
-        self.keep_profiles(changed)
-    }
-
-    /// Deletes the profile `id` and every key it holds (its options, keys,
-    /// tips seen and saves), and no other profile's. If it was in use, the
-    /// first profile left is ([`switch_profile`](Self::switch_profile)).
-    /// Refused (and nothing changes) for the only profile, or if the list
-    /// can't be saved; once the list is saved, an error deleting its keys
-    /// is returned with the profile gone (they are never read again).
-    pub fn delete_profile(&mut self, id: ProfileId) -> Result<(), ProfileError> {
-        let mut changed = self.profiles.clone();
-        changed.remove(id)?;
-        let was_current = self.profiles.current() == id;
-        self.keep_profiles(changed)?;
-        if was_current {
-            self.load_profile();
+        match voice::from_source(&file, source, &content.dialogue) {
+            Ok(manifest) => Ok(voice::playable(
+                &manifest,
+                &content.dialogue,
+                &content.names,
+            )),
+            Err(errors) => {
+                let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
+                Err(errors.join("; "))
+            }
         }
-        profiles::delete_keys(self.storage.computer_mut(), id).map_err(ProfileError::Storage)
     }
 
-    /// Saves `changed` and, once it is saved, takes it as the list.
-    fn keep_profiles(&mut self, changed: Profiles) -> Result<(), ProfileError> {
-        changed
-            .save(self.storage.computer_mut())
-            .map_err(ProfileError::Storage)?;
-        self.profiles = changed;
-        Ok(())
+    /// Paints the battle map with the skin of the map look in the settings
+    /// (ticket 0824) at their zoom (ticket 0439): a new skin when the look
+    /// changed (or the settings were just loaded), the same skin at the new
+    /// zoom when only the zoom did.
+    fn apply_settings(&mut self, now: &Settings, before: Option<&Settings>) {
+        let zoom = now.game.map_zoom;
+        let skin = match before {
+            Some(b) if b.game.map_look == now.game.map_look => {
+                if b.game.map_zoom == zoom {
+                    return;
+                }
+                Rc::clone(&self.map_skin)
+            }
+            _ => crate::map_view::skin_for_look(now.game.map_look, &self.content),
+        };
+        self.map_skin = skin.at_zoom(zoom).unwrap_or(skin);
+    }
+
+    /// Text on black.
+    fn blank_cell(&self, palette: &Palette) -> Cell {
+        let text = palette.get(UiColor::Text);
+        Cell::new(' ', text, palette.get(UiColor::Black))
+    }
+
+    fn keys_before_profiles(&self) -> Vec<String> {
+        crate::profiles::keys_from_before_profiles()
+    }
+
+    fn old_layout_key(&self) -> Option<&'static str> {
+        Some(LAYOUT_KEY)
     }
 }
 
-/// The name of the profile numbered `n` when the player hasn't named it:
-/// `Player 1` for the first one, made on a first launch.
-fn numbered_profile(content: &Content, n: u32) -> String {
-    let text = content.lang.text(&LangCode::english(), "profile.numbered");
-    crate::tips::fill_values(text, &[("n", &n)])
+/// What this game's screens ask of the [`Ctx`] that needs its part and the
+/// engine's together. It is in the crate's prelude; elsewhere, import it.
+pub trait ShuyiCtx: Sized {
+    /// The context for the content embedded in the binary.
+    fn embedded() -> Result<Self, LoadError>;
+
+    /// The context over loaded `content`. Fails with the names of any UI
+    /// colours the palette lacks. Starts with a
+    /// [`MemoryStorage`](crate::storage::MemoryStorage) and no layout
+    /// chosen (so the layout picker's keys are active).
+    fn from_content(content: Content) -> Result<Self, LoadError>;
+
+    /// The data's text (names, tips, titles, dialogue) in the player's
+    /// language: what a screen shows any of it through. Like
+    /// [`text`](shuyi_ui::Ctx::text), the test pack counts only with
+    /// [`debug_tools`](shuyi_ui::Ctx::debug_tools) on.
+    fn words(&self) -> Words<'_>;
+
+    /// [`words`](Self::words), to keep: for a screen that names things
+    /// where it has no context.
+    fn language(&self) -> Language;
+
+    /// Paints the battle map with `skin`, at the zoom in the settings if
+    /// it can zoom (ticket 0439): the zoom is kept from one skin to the
+    /// next.
+    fn set_map_skin(&mut self, skin: Rc<dyn MapSkin>);
+
+    /// Makes the keymap file's `playdate` table the default buttons (ticket
+    /// 1034), for the Playdate front end, before the player's bindings are
+    /// loaded: its pad is the only one there is.
+    fn use_playdate_buttons(&mut self);
+}
+
+impl ShuyiCtx for Ctx {
+    fn embedded() -> Result<Self, LoadError> {
+        Self::from_content(trpg_content::load_embedded().map_err(LoadError::Content)?)
+    }
+
+    fn from_content(content: Content) -> Result<Self, LoadError> {
+        Self::new(Shuyi::new(content)).map_err(LoadError::Palette)
+    }
+
+    fn words(&self) -> Words<'_> {
+        Words::new(&self.game.content.lang, self.effective_lang())
+    }
+
+    fn language(&self) -> Language {
+        Language::new(&self.game.content.lang, self.effective_lang())
+    }
+
+    fn set_map_skin(&mut self, skin: Rc<dyn MapSkin>) {
+        let zoom = self.settings().game.map_zoom;
+        self.game.map_skin = skin.at_zoom(zoom).unwrap_or(skin);
+    }
+
+    fn use_playdate_buttons(&mut self) {
+        let def = core::mem::take(&mut self.game.content.keymap);
+        self.game.content.keymap = def.for_playdate();
+        self.refresh_keymap();
+    }
 }
 
 /// Why the game's content could not be loaded.
@@ -945,116 +359,23 @@ impl fmt::Display for LoadError {
 
 impl core::error::Error for LoadError {}
 
-/// The stack of open screens. Only the top screen is updated; drawing starts
-/// at the top-most opaque screen and goes up through the overlays above it.
-#[derive(Default)]
-pub struct ScreenStack {
-    screens: Vec<Box<dyn Screen>>,
-}
-
-impl ScreenStack {
-    /// A stack holding just `root`.
-    pub fn new(root: Box<dyn Screen>) -> Self {
-        Self {
-            screens: vec![root],
-        }
-    }
-
-    /// Whether no screen is open (the game should quit).
-    pub fn is_empty(&self) -> bool {
-        self.screens.is_empty()
-    }
-
-    /// Names of the open screens, bottom first.
-    pub fn names(&self) -> Vec<&'static str> {
-        self.screens.iter().map(|s| s.name()).collect()
-    }
-
-    /// Name of the top screen.
-    pub fn top_name(&self) -> Option<&'static str> {
-        self.screens.last().map(|s| s.name())
-    }
-
-    /// Puts `screen` on top.
-    pub fn push(&mut self, screen: Box<dyn Screen>) {
-        self.screens.push(screen);
-    }
-
-    /// The top-most screen of type `T` (one that opts in with
-    /// [`Screen::as_any`]).
-    pub fn find<T: Any>(&self) -> Option<&T> {
-        self.screens
-            .iter()
-            .rev()
-            .find_map(|s| s.as_any()?.downcast_ref())
-    }
-
-    /// The top-most screen of type `T`, mutable ([`Screen::as_any_mut`]).
-    pub fn find_mut<T: Any>(&mut self) -> Option<&mut T> {
-        self.screens
-            .iter_mut()
-            .rev()
-            .find_map(|s| s.as_any_mut()?.downcast_mut())
-    }
-
-    /// Updates the top screen and applies its transition. Returns `true`
-    /// if the game should quit ([`Transition::Quit`], or the last screen
-    /// popped). Does nothing and returns `true` on an empty stack.
-    pub fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> bool {
-        let Some(top) = self.screens.last_mut() else {
-            return true;
-        };
-        let transition = top.update(ctx, input);
-        self.apply(transition)
-    }
-
-    /// Applies a transition as if the top screen had returned it. Returns
-    /// `true` if the game should quit.
-    pub fn apply(&mut self, transition: Transition) -> bool {
-        match transition {
-            Transition::None => {}
-            Transition::Push(screen) => self.screens.push(screen),
-            Transition::Pop => {
-                self.screens.pop();
-            }
-            Transition::Replace(screen) => {
-                self.screens.pop();
-                self.screens.push(screen);
-            }
-            Transition::Quit => return true,
-        }
-        self.screens.is_empty()
-    }
-
-    /// Draws the top-most opaque screen and every overlay above it, bottom
-    /// up. If every screen is an overlay, all are drawn.
-    pub fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let base = self
-            .screens
-            .iter()
-            .rposition(|s| !s.is_overlay())
-            .unwrap_or(0);
-        for screen in &self.screens[base..] {
-            screen.draw(ctx, buf);
-        }
-    }
-}
-
 #[cfg(test)]
 pub(crate) mod tests {
-    use crate::input::{Button, LEFT_HANDED, RIGHT_HANDED};
-    use std::cell::RefCell;
+    use crate::input::{
+        Button, Keymap, LEFT_HANDED, Layout, LayoutBindings, PadBindings, PlayerKeys, RIGHT_HANDED,
+    };
     use std::rc::Rc;
 
     use super::*;
-    use crate::glyph_buffer::Cell;
-    use crate::storage::MemoryStorage;
-    use crate::{AudioRequest, Rgb, UiColor};
+    use crate::settings::SETTINGS_KEY;
+    use crate::storage::{MemoryStorage, Storage, StorageError};
+    use crate::{AudioRequest, Rgb};
+    use trpg_content::{LangCode, LineId};
 
     /// A voice manifest with a clip for each of the test scene's lines
     /// numbered `picks` (in script order), and those lines' ids.
     pub(crate) fn test_voices(ctx: &Ctx, picks: &[usize]) -> (String, Vec<LineId>) {
-        let lines = ctx.content.dialogue.scenes[crate::debug::TEST_SCENE].lines();
+        let lines = ctx.game.content.dialogue.scenes[crate::debug::TEST_SCENE].lines();
         let picked: Vec<_> = picks.iter().map(|&i| lines[i]).collect();
         let clip = |line: &trpg_content::dialogue::Line| {
             format!(
@@ -1081,7 +402,7 @@ pub(crate) mod tests {
     fn play_voice_asks_only_for_lines_with_a_playable_clip() {
         let mut c = ctx();
         let (manifest, lines) = test_voices(&c, &[0, 1]);
-        let all = c.content.dialogue.scenes[crate::debug::TEST_SCENE].lines();
+        let all = c.game.content.dialogue.scenes[crate::debug::TEST_SCENE].lines();
         let unvoiced = all[2].id.clone();
         // No manifest yet: nothing has a voice.
         c.play_voice(&lines[0]);
@@ -1116,7 +437,7 @@ pub(crate) mod tests {
     /// that says `spoken`.
     fn narration_clip(c: &Ctx, spoken: &str) -> (String, LineId) {
         let (manifest, lines) = test_voices(c, &[0]);
-        let text = c.content.dialogue.scenes[crate::debug::TEST_SCENE].lines()[0].text;
+        let text = c.game.content.dialogue.scenes[crate::debug::TEST_SCENE].lines()[0].text;
         (manifest.replace(text, spoken), lines[0].clone())
     }
 
@@ -1159,7 +480,7 @@ pub(crate) mod tests {
         let mut c = ctx();
         let (manifest, lines) = test_voices(&c, &[3, 1]);
         c.set_voice_manifest(&manifest);
-        let all: Vec<LineId> = c.content.dialogue.scenes[crate::debug::TEST_SCENE]
+        let all: Vec<LineId> = c.game.content.dialogue.scenes[crate::debug::TEST_SCENE]
             .lines()
             .iter()
             .map(|l| l.id.clone())
@@ -1187,8 +508,8 @@ pub(crate) mod tests {
         let script = "@scene g\n> {They} left {their} sword.\n@end\n";
         let table =
             trpg_content::dialogue::from_sources(&[("g.dlg", script)], None, None, None, None);
-        c.content.dialogue = table.unwrap();
-        let line = c.content.dialogue.scenes["g"].lines()[0].id.clone();
+        c.game.content.dialogue = table.unwrap();
+        let line = c.game.content.dialogue.scenes["g"].lines()[0].id.clone();
         let clip = |variant: &str, spoken: &str| {
             format!(
                 "(line: \"{line}\", variant: {variant}, spoken: \"{spoken}\", voice: \"v\", \
@@ -1203,7 +524,7 @@ pub(crate) mod tests {
         c.set_voice_manifest(&manifest);
         assert_eq!(c.take_warnings(), [] as [&str; 0]);
         c.play_voice(&line);
-        c.lead.gender = LeadGender::Female;
+        c.game.lead.gender = LeadGender::Female;
         c.play_voice(&line);
         assert_eq!(
             c.audio.take(),
@@ -1230,7 +551,7 @@ pub(crate) mod tests {
         let mut ctx = Ctx::embedded().unwrap().with_layout(RIGHT_HANDED);
         ctx.debug_tools = true;
         // New Game plays the small test chapter, as in the harness.
-        ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
+        ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
         ctx
     }
 
@@ -1240,7 +561,7 @@ pub(crate) mod tests {
     pub(crate) fn ctx_with_cues(sounds: &[&str], music: &[&str]) -> Ctx {
         use trpg_content::{CreditRef, MusicCue, SoundCue};
         let mut ctx = ctx();
-        let audio = &mut ctx.content.audio;
+        let audio = &mut ctx.game.content.audio;
         for &cue in sounds {
             let files = vec![format!("sfx/{cue}.wav")];
             let sound = SoundCue {
@@ -1263,210 +584,16 @@ pub(crate) mod tests {
         ctx
     }
 
-    type Log = Rc<RefCell<Vec<String>>>;
-
-    /// A test screen that logs calls, answers updates from a script and
-    /// draws its tag in the top-left cell.
-    struct Probe {
-        name: &'static str,
-        overlay: bool,
-        log: Log,
-        next: RefCell<Vec<Transition>>,
-    }
-
-    impl Probe {
-        fn boxed(name: &'static str, overlay: bool, log: &Log) -> Box<dyn Screen> {
-            Box::new(Self::with(name, overlay, log, vec![]))
-        }
-
-        fn with(name: &'static str, overlay: bool, log: &Log, next: Vec<Transition>) -> Self {
-            Self {
-                name,
-                overlay,
-                log: Rc::clone(log),
-                next: RefCell::new(next),
-            }
-        }
-    }
-
-    impl Screen for Probe {
-        fn name(&self) -> &'static str {
-            self.name
-        }
-
-        fn update(&mut self, _: &mut Ctx, input: &FrameInput) -> Transition {
-            self.log
-                .borrow_mut()
-                .push(format!("update {} {:?}", self.name, input.actions));
-            let mut next = self.next.borrow_mut();
-            if next.is_empty() {
-                Transition::None
-            } else {
-                next.remove(0)
-            }
-        }
-
-        fn draw(&self, _: &Ctx, buf: &mut GlyphBuffer) {
-            self.log.borrow_mut().push(format!("draw {}", self.name));
-            let black = Rgb::new(0, 0, 0);
-            let glyph = self.name.chars().next().unwrap_or('?');
-            buf.set(0, 0, Cell::new(glyph, black, black));
-        }
-
-        fn is_overlay(&self) -> bool {
-            self.overlay
-        }
-    }
-
-    fn input(actions: &[Action]) -> FrameInput {
-        FrameInput::new(actions.to_vec(), 0.0, vec![])
-    }
-
-    fn draws(stack: &ScreenStack, log: &Log) -> Vec<String> {
-        log.borrow_mut().clear();
-        let ctx = ctx();
-        let mut buf = GlyphBuffer::new(1, 1, Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0)));
-        stack.draw(&ctx, &mut buf);
-        log.borrow().clone()
-    }
-
-    #[test]
-    fn only_the_top_screen_updates() {
-        let log = Log::default();
-        let mut stack = ScreenStack::new(Probe::boxed("a", false, &log));
-        stack.push(Probe::boxed("b", false, &log));
-        assert!(!stack.update(&mut ctx(), &input(&[Action::Confirm])));
-        assert_eq!(*log.borrow(), ["update b [Confirm]"]);
-        assert_eq!(stack.names(), ["a", "b"]);
-        assert_eq!(stack.top_name(), Some("b"));
-    }
-
-    #[test]
-    fn transitions_change_the_stack() {
-        let log = Log::default();
-        let mut stack = ScreenStack::new(Probe::boxed("a", false, &log));
-        assert!(!stack.apply(Transition::None));
-        assert_eq!(stack.names(), ["a"]);
-        assert!(!stack.apply(Transition::Push(Probe::boxed("b", false, &log))));
-        assert_eq!(stack.names(), ["a", "b"]);
-        assert!(!stack.apply(Transition::Replace(Probe::boxed("c", false, &log))));
-        assert_eq!(stack.names(), ["a", "c"]);
-        assert!(!stack.apply(Transition::Pop));
-        assert_eq!(stack.names(), ["a"]);
-        assert!(!stack.is_empty());
-        assert!(
-            stack.apply(Transition::Pop),
-            "popping the last screen quits"
-        );
-        assert!(stack.is_empty());
-        assert_eq!(stack.top_name(), None);
-    }
-
-    #[test]
-    fn quit_keeps_the_stack() {
-        let log = Log::default();
-        let mut stack = ScreenStack::new(Probe::boxed("a", false, &log));
-        assert!(stack.apply(Transition::Quit));
-        assert_eq!(stack.names(), ["a"]);
-    }
-
-    #[test]
-    fn update_applies_the_returned_transition() {
-        let log = Log::default();
-        let root = Probe::with(
-            "a",
-            false,
-            &log,
-            vec![Transition::Push(Probe::boxed("b", false, &log))],
-        );
-        let mut stack = ScreenStack::new(Box::new(root));
-        assert!(!stack.update(&mut ctx(), &input(&[])));
-        assert_eq!(stack.names(), ["a", "b"]);
-        let quitter = Probe::with("q", false, &log, vec![Transition::Quit]);
-        stack.push(Box::new(quitter));
-        assert!(stack.update(&mut ctx(), &input(&[])));
-    }
-
-    #[test]
-    fn empty_stack_quits_and_draws_nothing() {
-        let log = Log::default();
-        let mut stack = ScreenStack::default();
-        assert!(stack.is_empty());
-        assert!(stack.update(&mut ctx(), &input(&[])));
-        assert!(draws(&stack, &log).is_empty());
-    }
-
-    #[test]
-    fn draw_starts_at_the_top_most_opaque_screen() {
-        let log = Log::default();
-        let mut stack = ScreenStack::new(Probe::boxed("a", false, &log));
-        stack.push(Probe::boxed("b", false, &log));
-        assert_eq!(draws(&stack, &log), ["draw b"]);
-        stack.push(Probe::boxed("o", true, &log));
-        stack.push(Probe::boxed("p", true, &log));
-        assert_eq!(draws(&stack, &log), ["draw b", "draw o", "draw p"]);
-    }
-
-    #[test]
-    fn all_overlays_draw_everything() {
-        let log = Log::default();
-        let mut stack = ScreenStack::new(Probe::boxed("o", true, &log));
-        stack.push(Probe::boxed("p", true, &log));
-        assert_eq!(draws(&stack, &log), ["draw o", "draw p"]);
-    }
-
-    #[test]
-    fn frame_input_held_query() {
-        let i = FrameInput::new(vec![Action::Confirm], 0.5, vec![Action::CursorUp]);
-        assert!(i.is_held(Action::CursorUp));
-        assert!(!i.is_held(Action::Confirm));
-        assert_eq!(i.actions, [Action::Confirm]);
-        assert!((i.dt - 0.5).abs() < f32::EPSILON);
-        assert!(i.pressed_chords().is_empty());
-        assert!(i.pressed_buttons().is_empty() && i.released_buttons().is_empty());
-        assert!(!i.pad_pressed());
-    }
-
-    #[test]
-    fn frame_input_carries_the_buttons_that_went_down_and_up() {
-        use crate::input::Button::{East, South, West};
-        let i = FrameInput::new(vec![], 0.0, vec![]).with_buttons(vec![South, West], vec![East]);
-        assert_eq!(i.pressed_buttons(), [South, West]);
-        assert_eq!(i.released_buttons(), [East]);
-        assert!(i.pad_pressed());
-        // A release alone isn't a press.
-        let i = FrameInput::new(vec![], 0.0, vec![]).with_buttons(vec![], vec![East]);
-        assert!(!i.pad_pressed());
-        assert_eq!(i.released_buttons(), [East]);
-    }
-
-    #[test]
-    fn transition_debug_names_screens() {
-        let log = Log::default();
-        let dbg = |t: Transition| format!("{t:?}");
-        assert_eq!(dbg(Transition::None), "None");
-        assert_eq!(
-            dbg(Transition::Push(Probe::boxed("a", false, &log))),
-            "Push(a)"
-        );
-        assert_eq!(dbg(Transition::Pop), "Pop");
-        assert_eq!(
-            dbg(Transition::Replace(Probe::boxed("b", false, &log))),
-            "Replace(b)"
-        );
-        assert_eq!(dbg(Transition::Quit), "Quit");
-    }
-
     #[test]
     fn ctx_uses_the_content_palette_and_keymap() {
         let c = ctx();
         assert_eq!(
             c.palette,
-            Palette::new::<UiColor>(&c.content.palette).unwrap()
+            Palette::new::<UiColor>(&c.game.content.palette).unwrap()
         );
         assert_eq!(
             c.keymap,
-            Keymap::for_layout(&c.content.keymap, RIGHT_HANDED)
+            Keymap::for_layout(&c.game.content.keymap, RIGHT_HANDED)
         );
         assert_eq!(c.layout(), Some(RIGHT_HANDED));
         assert_eq!(c.palette.get(UiColor::Black), Rgb::new(0, 0, 0));
@@ -1533,7 +660,7 @@ pub(crate) mod tests {
 
     #[test]
     #[cfg(debug_assertions)]
-    #[should_panic(expected = "text key not in assets/lang/en/ui.ron: \"title.nope\"")]
+    #[should_panic(expected = "text key not in the English text: \"title.nope\"")]
     fn an_unknown_text_key_panics_in_debug_builds() {
         let c = ctx();
         let _ = c.text("title.nope");
@@ -1543,7 +670,7 @@ pub(crate) mod tests {
     fn a_new_ctx_has_no_layout_and_the_picker_keys() {
         let c = Ctx::embedded().unwrap();
         assert_eq!(c.layout(), None);
-        assert_eq!(c.keymap, Keymap::layout_picker(&c.content.keymap));
+        assert_eq!(c.keymap, Keymap::layout_picker(&c.game.content.keymap));
         assert_eq!(c.saved_layout(), None);
     }
 
@@ -1552,7 +679,10 @@ pub(crate) mod tests {
         let mut c = ctx();
         c.use_layout(LEFT_HANDED);
         assert_eq!(c.layout(), Some(LEFT_HANDED));
-        assert_eq!(c.keymap, Keymap::for_layout(&c.content.keymap, LEFT_HANDED));
+        assert_eq!(
+            c.keymap,
+            Keymap::for_layout(&c.game.content.keymap, LEFT_HANDED)
+        );
         assert_eq!(c.storage.read(LAYOUT_KEY), Ok(None));
     }
 
@@ -1580,7 +710,7 @@ pub(crate) mod tests {
         let c = Ctx::embedded().unwrap().with_storage(Box::new(storage));
         assert_eq!(c.saved_layout(), None);
         assert_eq!(c.settings().layout(), None);
-        assert_eq!(c.shown_layout(), RIGHT_HANDED);
+        assert_eq!(c.shown_layout(), Some(RIGHT_HANDED));
         // The old key still counts when the settings name an unknown one.
         let mut storage = MemoryStorage::new();
         storage.write(SETTINGS_KEY, settings).unwrap();
@@ -1588,7 +718,7 @@ pub(crate) mod tests {
         let c = Ctx::embedded().unwrap().with_storage(Box::new(storage));
         assert_eq!(c.saved_layout(), Some(LEFT_HANDED));
         assert_eq!(c.settings().layout(), Some(LEFT_HANDED));
-        assert_eq!(c.with_layout(LEFT_HANDED).shown_layout(), LEFT_HANDED);
+        assert_eq!(c.with_layout(LEFT_HANDED).shown_layout(), Some(LEFT_HANDED));
     }
 
     #[test]
@@ -1596,7 +726,7 @@ pub(crate) mod tests {
         let mut c = ctx();
         for lang in [LangCode::new("en").unwrap(), LangCode::new(TEST).unwrap()] {
             c.lang = lang;
-            for (layout, key) in &c.content.keymap.layout_names {
+            for (layout, key) in &c.game.content.keymap.layout_names {
                 assert_ne!(c.text(key), key.as_str(), "{layout}");
                 assert_eq!(
                     crate::screens::layout_picker::label(&c, *layout),
@@ -1632,7 +762,7 @@ pub(crate) mod tests {
         assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
         c.change_settings(|s| {
             s.music_volume = 3;
-            s.combat_animations = false;
+            s.game.combat_animations = false;
         })
         .unwrap();
         assert_eq!(c.settings().music_volume, 3);
@@ -1654,10 +784,10 @@ pub(crate) mod tests {
         let before = c.settings().clone();
         assert!(c.preview_settings(|s| {
             s.theme = Theme::Moonlit;
-            s.map_look = MapLook::Glyphs;
+            s.game.map_look = MapLook::Glyphs;
             s.fullscreen = true;
         }));
-        let moonlit = Palette::new::<UiColor>(&c.content.themes[&Theme::Moonlit]).unwrap();
+        let moonlit = Palette::new::<UiColor>(&c.game.content.themes[&Theme::Moonlit]).unwrap();
         assert_eq!(c.palette.get(UiColor::Text), moonlit.get(UiColor::Text));
         assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
         // Put back: as before, nothing written.
@@ -1698,45 +828,54 @@ pub(crate) mod tests {
         use crate::screens::battle::layout::MAP_VIEW;
         use crate::settings::MapZoom;
         let mut c = ctx();
-        let sprite = |c: &Ctx| skin_named(&c.content, "sprite").unwrap();
+        let sprite = |c: &Ctx| skin_named(&c.game.content, "sprite").unwrap();
         // A skin that zooms starts at the player's zoom (2× for a new one).
         assert_eq!(sprite(&c).zoom(), Some(MapZoom::X1));
         c.set_map_skin(sprite(&c));
-        assert_eq!(c.map_skin.zoom(), Some(MapZoom::X2));
-        assert_eq!(c.map_skin.view_tiles(MAP_VIEW), (11, 10));
+        assert_eq!(c.game.map_skin.zoom(), Some(MapZoom::X2));
+        assert_eq!(c.game.map_skin.view_tiles(MAP_VIEW), (11, 10));
         // Changing the zoom redraws the same skin at it, and saves it.
-        c.change_settings(|s| s.map_zoom = MapZoom::X1).unwrap();
-        assert_eq!(c.map_skin.zoom(), Some(MapZoom::X1));
-        assert_eq!(c.map_skin.tileset_id(), Some("test"));
-        assert_eq!(c.map_skin.view_tiles(MAP_VIEW), (23, 20));
+        c.change_settings(|s| s.game.map_zoom = MapZoom::X1)
+            .unwrap();
+        assert_eq!(c.game.map_skin.zoom(), Some(MapZoom::X1));
+        assert_eq!(c.game.map_skin.tileset_id(), Some("test"));
+        assert_eq!(c.game.map_skin.view_tiles(MAP_VIEW), (23, 20));
         let saved = c.storage.read(SETTINGS_KEY).unwrap().unwrap();
-        assert_eq!(Settings::from_ron(&saved).unwrap().map_zoom, MapZoom::X1);
+        assert_eq!(
+            Settings::from_ron(&saved).unwrap().game.map_zoom,
+            MapZoom::X1
+        );
         // Another setting leaves the skin as it is.
         c.change_settings(|s| s.fullscreen = true).unwrap();
-        assert_eq!(c.map_skin.zoom(), Some(MapZoom::X1));
+        assert_eq!(c.game.map_skin.zoom(), Some(MapZoom::X1));
         // A skin that can't zoom is taken as it is, and the zoom is kept
         // for the next that can.
         c.set_map_skin(Rc::new(GlyphSkin));
-        assert_eq!((c.map_skin.name(), c.map_skin.zoom()), ("glyph", None));
-        c.change_settings(|s| s.map_zoom = MapZoom::X2).unwrap();
-        assert_eq!(c.map_skin.name(), "glyph");
-        c.set_map_skin(skin_named(&c.content, "test_auto").unwrap());
-        assert_eq!(c.map_skin.zoom(), Some(MapZoom::X2));
-        assert_eq!(c.map_skin.tileset_id(), Some("test_auto"));
+        assert_eq!(
+            (c.game.map_skin.name(), c.game.map_skin.zoom()),
+            ("glyph", None)
+        );
+        c.change_settings(|s| s.game.map_zoom = MapZoom::X2)
+            .unwrap();
+        assert_eq!(c.game.map_skin.name(), "glyph");
+        c.set_map_skin(skin_named(&c.game.content, "test_auto").unwrap());
+        assert_eq!(c.game.map_skin.zoom(), Some(MapZoom::X2));
+        assert_eq!(c.game.map_skin.tileset_id(), Some("test_auto"));
         // The next launch reads the zoom back with the settings, and a
         // game that starts with a picture skin starts at it.
-        c.change_settings(|s| s.map_zoom = MapZoom::X1).unwrap();
-        let mut content = Ctx::embedded().unwrap().content;
+        c.change_settings(|s| s.game.map_zoom = MapZoom::X1)
+            .unwrap();
+        let mut content = Ctx::embedded().unwrap().game.content;
         let mut tileset = content.tilesets["test"].clone();
         tileset.id = crate::map_view::GAME_TILESET.to_owned();
         content.tilesets.insert(tileset.id.clone(), tileset);
-        let fresh = Ctx::new(content.clone()).unwrap();
-        assert_eq!(fresh.map_skin.zoom(), Some(MapZoom::X2));
-        let again = Ctx::new(content)
+        let fresh = Ctx::from_content(content.clone()).unwrap();
+        assert_eq!(fresh.game.map_skin.zoom(), Some(MapZoom::X2));
+        let again = Ctx::from_content(content)
             .unwrap()
             .with_storage(c.storage.into_computer());
-        assert_eq!(again.settings().map_zoom, MapZoom::X1);
-        assert_eq!(again.map_skin.zoom(), Some(MapZoom::X1));
+        assert_eq!(again.settings().game.map_zoom, MapZoom::X1);
+        assert_eq!(again.game.map_skin.zoom(), Some(MapZoom::X1));
     }
 
     #[test]
@@ -1764,17 +903,17 @@ pub(crate) mod tests {
     #[test]
     fn only_a_classic_campaign_switches_to_casual() {
         let mut c = ctx();
-        assert!(!c.switch_to_casual());
-        assert_eq!(c.campaign_mode, None);
-        c.campaign_mode = Some(GameMode::Classic);
+        assert!(!c.game.switch_to_casual());
+        assert_eq!(c.game.campaign_mode, None);
+        c.game.campaign_mode = Some(GameMode::Classic);
         // Not in the middle of a battle: only at Preparations.
-        assert!(!c.switch_to_casual());
-        assert_eq!(c.campaign_mode, Some(GameMode::Classic));
-        c.mode_switch = ModeSwitch::Open;
-        assert!(c.switch_to_casual());
-        assert_eq!(c.campaign_mode, Some(GameMode::Casual));
-        assert!(!c.switch_to_casual());
-        assert_eq!(c.campaign_mode, Some(GameMode::Casual));
+        assert!(!c.game.switch_to_casual());
+        assert_eq!(c.game.campaign_mode, Some(GameMode::Classic));
+        c.game.mode_switch = ModeSwitch::Open;
+        assert!(c.game.switch_to_casual());
+        assert_eq!(c.game.campaign_mode, Some(GameMode::Casual));
+        assert!(!c.game.switch_to_casual());
+        assert_eq!(c.game.campaign_mode, Some(GameMode::Casual));
     }
 
     #[test]
@@ -1850,8 +989,8 @@ pub(crate) mod tests {
         assert_eq!(c.set_layout_bindings(RIGHT_HANDED, b.clone()), Ok(()));
         assert_eq!(
             c.keymap,
-            b.keymap(c.content.keymap.repeat)
-                .with_default_pad(&c.content.keymap)
+            b.keymap(c.game.content.keymap.repeat)
+                .with_default_pad(&c.game.content.keymap)
         );
         assert_eq!(c.layout_bindings(RIGHT_HANDED), b);
         let saved = c.storage.read(KEYBINDINGS_KEY).unwrap().unwrap();
@@ -1864,8 +1003,8 @@ pub(crate) mod tests {
         c.use_layout(LEFT_HANDED);
         assert_eq!(
             c.keymap,
-            left.keymap(c.content.keymap.repeat)
-                .with_default_pad(&c.content.keymap)
+            left.keymap(c.game.content.keymap.repeat)
+                .with_default_pad(&c.game.content.keymap)
         );
         assert_eq!(c.keymap_for(RIGHT_HANDED), before);
     }
@@ -1880,7 +1019,10 @@ pub(crate) mod tests {
     #[test]
     fn set_pad_bindings_saves_and_applies_in_every_layout_and_before_one_is_chosen() {
         let mut c = ctx();
-        assert_eq!(c.pad_bindings(), PadBindings::defaults(&c.content.keymap));
+        assert_eq!(
+            c.pad_bindings(),
+            PadBindings::defaults(&c.game.content.keymap)
+        );
         let b = info_on_right_trigger(&c);
         assert_eq!(c.set_pad_bindings(b.clone()), Ok(()));
         assert_eq!(c.pad_bindings(), b);
@@ -1894,7 +1036,7 @@ pub(crate) mod tests {
         assert_eq!(c.keymap, c.keymap_for(RIGHT_HANDED));
         assert_eq!(
             c.keymap.chords_for(Action::Info),
-            Keymap::for_layout(&c.content.keymap, RIGHT_HANDED).chords_for(Action::Info)
+            Keymap::for_layout(&c.game.content.keymap, RIGHT_HANDED).chords_for(Action::Info)
         );
         c.use_layout(LEFT_HANDED);
         assert_eq!(
@@ -1907,7 +1049,7 @@ pub(crate) mod tests {
         assert_eq!(none.layout(), None);
         assert_eq!(
             none.keymap,
-            Keymap::layout_picker(&none.content.keymap).with_pad(b.pairs())
+            Keymap::layout_picker(&none.game.content.keymap).with_pad(b.pairs())
         );
         // They load with the storage, with or without a layout.
         let storage = std::mem::take(&mut none.storage).into_computer();
@@ -1938,8 +1080,8 @@ pub(crate) mod tests {
         assert_eq!(again.layout_bindings(RIGHT_HANDED), b);
         assert_eq!(
             again.keymap,
-            b.keymap(again.content.keymap.repeat)
-                .with_default_pad(&again.content.keymap)
+            b.keymap(again.game.content.keymap.repeat)
+                .with_default_pad(&again.game.content.keymap)
         );
         assert!(again.take_warnings().is_empty());
     }
@@ -1967,16 +1109,16 @@ pub(crate) mod tests {
         assert!(c.set_layout_bindings(LEFT_HANDED, b.clone()).is_err());
         assert_eq!(
             c.keymap,
-            b.keymap(c.content.keymap.repeat)
-                .with_default_pad(&c.content.keymap)
+            b.keymap(c.game.content.keymap.repeat)
+                .with_default_pad(&c.game.content.keymap)
         );
     }
 
     #[test]
     fn ctx_rejects_an_incomplete_palette() {
-        let mut content = ctx().content;
+        let mut content = ctx().game.content;
         content.palette.colors.remove("text");
-        let err = Ctx::new(content).unwrap_err();
+        let err = Ctx::from_content(content).unwrap_err();
         assert_eq!(err, LoadError::Palette(vec!["text"]));
         assert_eq!(err.to_string(), "palette lacks text");
     }

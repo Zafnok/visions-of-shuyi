@@ -47,7 +47,8 @@ fn picture(ctx: &Ctx, lead: &LeadProfile, fighter: &Fighter) -> Option<Battler> 
     let character = fighter.character.as_ref().map(|c| c.0.as_str());
     let by_gender = character.map(|c| lead.portrait_for(c));
     let ids = [by_gender, character, Some(fighter.class.0.as_str())];
-    ctx.content
+    ctx.game
+        .content
         .battlers
         .pick(ids.into_iter().flatten())
         .cloned()
@@ -95,7 +96,7 @@ fn poses(bout: &Bout, beat: Beat, local: f32, len: f32) -> ([Pose; 2], Option<us
 /// they pick the backdrop, the light's own picture if the backdrops have
 /// one, else noon's shaded by the light.
 pub fn view(ctx: &Ctx, pb: &Playback, ground: Option<&str>, light: &str) -> Option<StageView> {
-    view_for(ctx, &ctx.lead, pb, ground, light)
+    view_for(ctx, &ctx.game.lead, pb, ground, light)
 }
 
 /// [`view()`] with `lead` as the lead, for its picture: a cinematic's
@@ -138,9 +139,9 @@ pub fn view_for(
             ..pose
         },
     };
-    let backdrop = ctx.content.battlers.backdrops.in_light(ground, light);
+    let backdrop = ctx.game.content.battlers.backdrops.in_light(ground, light);
     let shade = match backdrop {
-        Some((_, false)) => ctx.content.lighting.get(light).unwrap_or_default(),
+        Some((_, false)) => ctx.game.content.lighting.get(light).unwrap_or_default(),
         _ => Light::PLAIN,
     };
     Some(StageView {

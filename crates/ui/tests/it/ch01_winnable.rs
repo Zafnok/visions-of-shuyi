@@ -114,7 +114,7 @@ fn chapter_1_plays_from_new_game_to_to_be_continued() {
         .filter(|u| u.faction == Faction::Player);
     assert_eq!(players.count(), 6);
     assert_eq!(start.units().len(), 20);
-    let ai = h.game().ctx().content.ai;
+    let ai = h.game().ctx().game.content.ai;
     for command in winning_commands() {
         loop {
             skip_scenes(&mut h);

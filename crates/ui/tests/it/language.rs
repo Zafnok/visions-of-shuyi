@@ -7,6 +7,7 @@ use insta::assert_snapshot;
 use trpg_content::LangCode;
 use trpg_content::lang::TEST;
 use trpg_core::{LeadGender, LeadProfile};
+use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::BattleScreen;
@@ -41,7 +42,7 @@ fn shows(h: &Harness, text: &str) -> bool {
 /// after each press.
 fn test_scene(lead: LeadProfile) -> String {
     let mut h = title();
-    h.ctx_mut().lead = lead;
+    h.ctx_mut().game.lead = lead;
     h.keys("F2 Down Down f");
     assert_eq!(h.screens(), ["title", "debug_menu", "dialogue"]);
     let mut shown = h.snapshot();

@@ -105,7 +105,8 @@ fn paint_gains(ctx: &Ctx, page: &GainsView, buf: &mut GlyphBuffer) {
     let border = c(UiColor::PanelBorder);
     buf.draw_box(PORTRAIT_FRAME, BoxStyle::Single, border, bg);
     let drawn = page.face.as_ref().is_some_and(|face| {
-        ctx.content
+        ctx.game
+            .content
             .portraits
             .get(&face.portrait)
             .is_some_and(|art| {
@@ -177,7 +178,7 @@ fn paint_class(ctx: &Ctx, page: &ClassProgressView, buf: &mut GlyphBuffer) {
 /// expressions): for tests of whose face a page shows.
 #[cfg(test)]
 pub(crate) fn shows_face_of(buf: &GlyphBuffer, ctx: &Ctx, id: &str) -> bool {
-    let portrait = &ctx.content.portraits[id];
+    let portrait = &ctx.game.content.portraits[id];
     buf.sprites()
         .iter()
         .any(|s| portrait.expressions.iter().any(|e| e.image == s.image))

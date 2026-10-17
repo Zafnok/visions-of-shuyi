@@ -8,11 +8,12 @@ use insta::assert_snapshot;
 use trpg_core::{
     BattleState, Campaign, Command, GameMode, Pos, SAVE_VERSION, SaveFile, UnitAction, UnitId,
 };
+use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::profiles::ProfileId;
 use trpg_ui::save::{SUSPEND_KEY, SaveError, slot_key};
-use trpg_ui::{Ctx, Game, MemoryStorage, Storage};
+use trpg_ui::{Ctx, MemoryStorage, Storage};
 
 /// The lead's unit in the test battle (its first slot).
 const LEAD: UnitId = UnitId(1);
@@ -29,11 +30,11 @@ fn launch(storage: Box<dyn Storage>, chained: bool) -> Harness {
     let mut ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_storage(storage);
-    ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
-    if chained && let Some(test) = ctx.content.chapters.get_mut("test") {
+    ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
+    if chained && let Some(test) = ctx.game.content.chapters.get_mut("test") {
         test.next = Some("quick".into());
     }
-    Harness::from_game(Game::start(ctx))
+    Harness::from_game(trpg_ui::game::start(ctx))
 }
 
 fn first_launch(chained: bool) -> Harness {
@@ -214,7 +215,7 @@ fn suspend_then_continue_restores_the_battle_exactly() {
     let played = campaign(&h);
     assert_eq!(played.chapter, "test");
     assert_eq!(played.playtime_s, 3, "playtime carries on");
-    assert_eq!(h.game().ctx().lead, played.lead);
+    assert_eq!(h.game().ctx().game.lead, played.lead);
     // Both moves can still be rewound.
     assert_eq!(moves(&h), 2);
     h.keys("r f f");
@@ -329,7 +330,7 @@ fn save_after_victory_then_load_starts_the_next_chapter() {
     assert_eq!(loaded.mode, GameMode::Classic);
     assert_eq!(loaded.stock, won.stock);
     assert_eq!(loaded.playtime_s, 5, "playtime carries on");
-    assert_eq!(h.game().ctx().lead, won.lead);
+    assert_eq!(h.game().ctx().game.lead, won.lead);
     let chapter = h.flow().and_then(|f| f.chapter()).map(|c| c.id.clone());
     assert_eq!(chapter.as_deref(), Some("quick"));
     // Fight! (Left wraps to it). Only the knight has a slot in the Quick
@@ -623,7 +624,7 @@ fn continue_goes_on_even_if_the_save_cant_be_deleted() {
 #[test]
 fn the_music_follows_suspend_and_continue() {
     let mut h = first_launch(false);
-    if let Some(test) = h.ctx_mut().content.battles.get_mut("test") {
+    if let Some(test) = h.ctx_mut().game.content.battles.get_mut("test") {
         test.music = trpg_core::BattleMusic::Cue("battle_easy".into());
     }
     let music = |h: &Harness| -> Vec<String> {

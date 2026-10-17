@@ -213,7 +213,7 @@ impl MapPicture {
 /// `ctx`'s map skin at the art's own size, whatever zoom the player has
 /// the battle map at ([`MapZoom`]): a shot's zoom is then the only one.
 pub fn shot_skin(ctx: &Ctx) -> Rc<dyn MapSkin> {
-    let skin = &ctx.map_skin;
+    let skin = &ctx.game.map_skin;
     skin.at_zoom(MapZoom::X1).unwrap_or_else(|| Rc::clone(skin))
 }
 
@@ -225,9 +225,14 @@ pub fn battle_scene(ctx: &Ctx, def: &BattleDef) -> MapScene {
     let size = (i32::from(tiles.width()), i32::from(tiles.height()));
     let mut scene = MapScene::new(Pos::new(0, 0), size);
     scene.set_terrain(|pos| tiles.get(pos).copied());
-    scene.look = ctx.content.battle_look(def);
-    let campaign = battle_campaign(&ctx.content, def, GameMode::Classic, ctx.lead.clone());
-    for unit in &campaign.battle_setup(def, &ctx.content.tables()).units {
+    scene.look = ctx.game.content.battle_look(def);
+    let campaign = battle_campaign(
+        &ctx.game.content,
+        def,
+        GameMode::Classic,
+        ctx.game.lead.clone(),
+    );
+    for unit in &campaign.battle_setup(def, &ctx.game.content.tables()).units {
         scene.push_unit(UnitView::of(unit));
     }
     scene
@@ -344,9 +349,9 @@ impl CinematicPlayer {
     /// it is now. Each combat shot's fight is worked out by the rules
     /// once, here.
     pub fn new(ctx: &Ctx, id: &str, lead: Option<LeadProfile>) -> Option<Self> {
-        let def = ctx.content.cinematics.get(id)?;
+        let def = ctx.game.content.cinematics.get(id)?;
         let lead = lead.unwrap_or_else(|| {
-            let name = ctx.words().name(&ctx.content.names, LEAD_ID);
+            let name = ctx.words().name(&ctx.game.content.names, LEAD_ID);
             LeadProfile::new(name, LeadGender::Male)
         });
         let skin = shot_skin(ctx);
@@ -360,7 +365,7 @@ impl CinematicPlayer {
                 action,
             } => {
                 let stage = stages.entry(battle).or_insert_with(|| {
-                    let scene = battle_scene(ctx, ctx.content.battles.get(battle)?);
+                    let scene = battle_scene(ctx, ctx.game.content.battles.get(battle)?);
                     let picture = MapPicture::paint(ctx, skin.as_ref(), &scene)?;
                     let scene = Rc::new(scene);
                     Some(Stage { scene, picture })
@@ -381,7 +386,7 @@ impl CinematicPlayer {
                 first,
                 count,
             } => {
-                let scene = ctx.content.dialogue.get(scene);
+                let scene = ctx.game.content.dialogue.get(scene);
                 let boxes = scene.map(|s| talk::boxes(ctx, s, &lead, *first, *count));
                 Built::Talk {
                     boxes: boxes.unwrap_or_default(),

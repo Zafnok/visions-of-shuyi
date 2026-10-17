@@ -34,14 +34,18 @@ const CURSORS: [Action; 4] = [
 /// story's lessons, 0457, start in any battle: they have their own tests).
 fn lessoned() -> Ctx {
     let mut c = ctx();
-    c.lessons = crate::screen::Lessons::On;
-    c.content.lessons.lessons.retain(|l| l.id == TEST_LESSON);
+    c.game.lessons = crate::screen::Lessons::On;
+    c.game
+        .content
+        .lessons
+        .lessons
+        .retain(|l| l.id == TEST_LESSON);
     c
 }
 
 /// The Quick Battle at its start, as the game flow names it.
 fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().content).unwrap()).in_battle(QUICK_BATTLE)
+    BattleScreen::new(quick_battle(&ctx().game.content).unwrap()).in_battle(QUICK_BATTLE)
 }
 
 /// One instant frame with `actions`.
@@ -127,7 +131,7 @@ fn the_test_lesson_opens_on_the_first_turn_and_the_four_directions_close_it() {
     press(&mut s, &mut c, &[Action::CursorUp]);
     assert_eq!(s.shown_lesson(), None);
     assert!(!s.lesson_open());
-    assert!(c.campaign_lessons.contains(TEST_LESSON));
+    assert!(c.game.campaign_lessons.contains(TEST_LESSON));
     assert_eq!(s.view(&c).lesson, None);
     // The first turn goes on: it doesn't come back.
     press(&mut s, &mut c, &[Action::CursorUp]);
@@ -164,7 +168,7 @@ proptest! {
                 seen.insert(i);
             }
             prop_assert_eq!(s.shown_lesson().is_none(), seen.len() == 4);
-            prop_assert_eq!(c.campaign_lessons.contains(TEST_LESSON), seen.len() == 4);
+            prop_assert_eq!(c.game.campaign_lessons.contains(TEST_LESSON), seen.len() == 4);
             // Back to browsing for the next key.
             press(&mut s, &mut c, &[Action::Cancel, Action::Cancel]);
         }
@@ -206,7 +210,7 @@ fn the_turn_waits_for_the_open_lesson() {
 #[test]
 fn auto_end_waits_for_the_open_lesson() {
     let mut c = lessoned();
-    let _ = c.change_settings(|s| s.auto_end_turn = true);
+    let _ = c.change_settings(|s| s.game.auto_end_turn = true);
     let mut s = quick();
     press(&mut s, &mut c, &[]);
     let ready: Vec<Unit> = s
@@ -248,36 +252,36 @@ fn levels_battles_and_the_switch_gate_the_lessons() {
         (TutorialLevel::Short, false),
         (TutorialLevel::None, false),
     ] {
-        c.campaign_tutorial = Some(level);
+        c.game.campaign_tutorial = Some(level);
         let open = shown(&mut c, quick());
         assert_eq!(open.as_deref() == Some(TEST_LESSON), test, "{level:?}");
     }
     // A `Short` lesson (no battle named: any) at Short and Full, not None.
     let short = lesson("short", LessonLevel::Short, &[DoneWhen::Attacked]);
-    c.content.lessons.lessons.insert(0, short);
+    c.game.content.lessons.lessons.insert(0, short);
     for (level, open) in [
         (TutorialLevel::Full, Some("short")),
         (TutorialLevel::Short, Some("short")),
         (TutorialLevel::None, None),
     ] {
-        c.campaign_tutorial = Some(level);
+        c.game.campaign_tutorial = Some(level);
         assert_eq!(shown(&mut c, quick()).as_deref(), open, "{level:?}");
     }
-    c.content.lessons.lessons.remove(0);
+    c.game.content.lessons.lessons.remove(0);
     // The test lesson is the test and Quick battles' only.
-    c.campaign_tutorial = Some(TutorialLevel::Full);
-    let plain = BattleScreen::new(quick_battle(&c.content).unwrap());
+    c.game.campaign_tutorial = Some(TutorialLevel::Full);
+    let plain = BattleScreen::new(quick_battle(&c.game.content).unwrap());
     assert_eq!(shown(&mut c, plain), None);
     let other = quick().in_battle("ch01");
     assert_eq!(shown(&mut c, other), None);
-    c.lessons = crate::screen::Lessons::Off;
+    c.game.lessons = crate::screen::Lessons::Off;
     assert_eq!(shown(&mut c, quick()), None);
 }
 
 /// A screen on `state` whose only lesson, `only`, asks for `items`, open
 /// after its first frame.
 fn only(c: &mut Ctx, state: BattleState, items: &[DoneWhen]) -> BattleScreen {
-    c.content.lessons.lessons = vec![lesson("only", LessonLevel::Full, items)];
+    c.game.content.lessons.lessons = vec![lesson("only", LessonLevel::Full, items)];
     let mut s = BattleScreen::new(state);
     press(&mut s, c, &[]);
     assert!(s.lesson_open());
@@ -308,7 +312,8 @@ fn a_selection_from_before_the_lesson_doesnt_count() {
     let mut s = quick();
     let lord = s.state().units()[0].id;
     s.mode = Mode::Selected(Selection::new(s.state(), lord).expect("the lord can act"));
-    c.content.lessons.lessons = vec![lesson("only", LessonLevel::Full, &[DoneWhen::UnitSelected])];
+    c.game.content.lessons.lessons =
+        vec![lesson("only", LessonLevel::Full, &[DoneWhen::UnitSelected])];
     press(&mut s, &mut c, &[]);
     assert!(s.lesson_open());
     press(&mut s, &mut c, &[]);
@@ -331,7 +336,7 @@ fn the_forecast_that_starts_a_lesson_doesnt_count() {
     h.with_lessons();
     let mut at = lesson("forecast", LessonLevel::Full, &[DoneWhen::ForecastOpened]);
     at.trigger = TipTrigger::FirstForecast;
-    h.ctx_mut().content.lessons.lessons = vec![at];
+    h.ctx_mut().game.content.lessons.lessons = vec![at];
     let battle = |h: &Harness| h.battle().expect("a battle").clone();
     // The lord moved one step right, `Attack`: the forecast.
     h.keys("f Right f").wait(0.5).keys("f").wait(0.2);
@@ -350,10 +355,10 @@ fn the_forecast_that_starts_a_lesson_doesnt_count() {
 #[test]
 fn the_lesson_waits_for_the_notes_and_the_banner() {
     let mut c = lessoned();
-    let def = &c.content.battles["test"];
+    let def = &c.game.content.battles["test"];
     let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
-    let campaign = battle_campaign(&c.content, def, GameMode::Classic, lead);
-    let setup = campaign.battle_setup(def, &c.content.tables());
+    let campaign = battle_campaign(&c.game.content, def, GameMode::Classic, lead);
+    let setup = campaign.battle_setup(def, &c.game.content.tables());
     let (state, events) = BattleState::new(setup);
     let mut s = BattleScreen::start(state, &events).in_battle("test");
     press(&mut s, &mut c, &[]);
@@ -378,7 +383,7 @@ fn the_lesson_waits_for_the_notes_and_the_banner() {
 #[test]
 fn a_tip_comes_first_then_tips_wait_for_the_open_lesson() {
     let mut c = lessoned();
-    c.tips_enabled = true;
+    c.game.tips_enabled = true;
     let mut s = quick();
     press(&mut s, &mut c, &[]);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstBattleStart));
@@ -418,7 +423,7 @@ fn each_condition_ticks_where_it_happens() {
     ];
     let mut h = Harness::with_screen(Box::new(BattleScreen::new(skirmish_charged(&ctx(), 30, 2))));
     h.with_lessons();
-    h.ctx_mut().content.lessons.lessons = vec![lesson("all", LessonLevel::Full, &items)];
+    h.ctx_mut().game.content.lessons.lessons = vec![lesson("all", LessonLevel::Full, &items)];
     let ticks = |h: &Harness| {
         h.battle()
             .map(|b| b.lesson_ticks().to_vec())
@@ -455,7 +460,7 @@ fn each_condition_ticks_where_it_happens() {
     // End turn isn't held, and ends the lesson.
     h.keys("Space f");
     assert_eq!(h.battle().map(|b| b.state().phase()), Some(Phase::Enemy));
-    assert!(h.game().ctx().campaign_lessons.contains("all"));
+    assert!(h.game().ctx().game.campaign_lessons.contains("all"));
 }
 
 /// Rewinding never un-ticks an item nor reopens a lesson that is done.
@@ -485,7 +490,7 @@ fn rewinding_keeps_the_ticks_and_the_lessons_done() {
     assert_eq!(s.lesson_ticks(), [true, false, true, false]);
     assert!(s.lesson_open());
     press(&mut s, &mut c, &[Action::CursorDown, Action::CursorRight]);
-    assert!(c.campaign_lessons.contains(TEST_LESSON));
+    assert!(c.game.campaign_lessons.contains(TEST_LESSON));
     // Done, then a rewind back to the first turn: it stays done.
     s.send(&Command::Act {
         unit,
@@ -516,7 +521,10 @@ fn the_box_never_hides_the_cursor() {
             s.follow(Pos::new(x, y));
             let view = s.view(&c);
             let rect = lesson_rect(&c, &view).expect("the lesson's box");
-            let cell = c.map_skin.tile_cells(&view.scene, MAP_VIEW, Pos::new(x, y));
+            let cell = c
+                .game
+                .map_skin
+                .tile_cells(&view.scene, MAP_VIEW, Pos::new(x, y));
             let cell = cell.expect("the cursor's tile in view");
             let apart = cell.y + cell.h <= rect.y || rect.y + rect.h <= cell.y;
             assert!(apart, "({x}, {y}): {cell:?} under {rect:?}");
@@ -531,6 +539,7 @@ fn the_box_never_hides_the_cursor() {
     }
     let middle = MAP_VIEW.y + MAP_VIEW.h / 2;
     let top_row = c
+        .game
         .map_skin
         .tile_cells(&s.scene(&c), MAP_VIEW, Pos::new(0, 0))
         .map(|r| r.y);
@@ -559,7 +568,7 @@ fn a_tile_is_high_by_its_middle_row() {
 fn the_lesson_box_snapshot() {
     let mut h = Harness::with_screen(Box::new(quick()));
     h.with_lessons();
-    h.ctx_mut().content.lessons = lessoned().content.lessons;
+    h.ctx_mut().game.content.lessons = lessoned().game.content.lessons;
     // Up from its first frame, when the box comes up.
     h.wait(0.1).keys("Left Up");
     let battle = h.battle().expect("a battle");
@@ -572,7 +581,7 @@ fn the_lesson_box_snapshot() {
 fn harness_only(state: BattleState, items: &[DoneWhen]) -> Harness {
     let mut h = Harness::with_screen(Box::new(BattleScreen::new(state)));
     h.with_lessons();
-    h.ctx_mut().content.lessons.lessons = vec![lesson("only", LessonLevel::Full, items)];
+    h.ctx_mut().game.content.lessons.lessons = vec![lesson("only", LessonLevel::Full, items)];
     h.wait(0.1);
     assert!(h.battle().is_some_and(BattleScreen::lesson_open));
     h
@@ -626,7 +635,7 @@ fn picking_an_action_after_the_move_is_no_move() {
         LessonLevel::Full,
         &[DoneWhen::UnitMoved, DoneWhen::Attacked],
     );
-    h.ctx_mut().content.lessons.lessons = vec![menu, moved];
+    h.ctx_mut().game.content.lessons.lessons = vec![menu, moved];
     h.wait(0.1);
     h.keys("f Right f").wait(0.5);
     assert_eq!(
@@ -648,7 +657,7 @@ fn picking_an_action_after_the_move_is_no_move() {
 #[test]
 fn threat_arrows_while_browsing_dont_tick_the_path_items() {
     let mut c = lessoned();
-    let state = quick_battle(&c.content).unwrap();
+    let state = quick_battle(&c.game.content).unwrap();
     let mut s = only(
         &mut c,
         state,
@@ -668,7 +677,7 @@ fn threat_arrows_while_browsing_dont_tick_the_path_items() {
 #[test]
 fn the_second_turn_starts_in_its_player_phase_only() {
     let c = ctx();
-    let mut state = quick_battle(&c.content).unwrap();
+    let mut state = quick_battle(&c.game.content).unwrap();
     let mut seen = Vec::new();
     while !(state.turn() == 2 && state.phase() == Phase::Enemy) {
         let fired = BattleScreen::new(state.clone()).lesson_triggers_now();

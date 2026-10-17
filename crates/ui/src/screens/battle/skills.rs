@@ -604,7 +604,7 @@ mod tests {
     #[test]
     fn effects_read_as_one_line() {
         let c = ctx();
-        let skills = &c.content.skills;
+        let skills = &c.game.content.skills;
         assert_eq!(
             effect_text(Words::ENGLISH, def(skills, "keen_edge")),
             "Sword: +30 hit +10 crit"
@@ -633,7 +633,7 @@ mod tests {
         let c = ctx();
         let (map, mut units) = quick_units(&c);
         for skill in ["shove", "keen_edge"] {
-            assert!(units[0].learn_skill(&SkillId::new(skill), &c.content.skills));
+            assert!(units[0].learn_skill(&SkillId::new(skill), &c.game.content.skills));
         }
         let rout = trpg_core::Objective::Rout { turn_limit: None };
         let state = battle_with(&c, map, units, rout);
@@ -660,7 +660,7 @@ mod tests {
     #[test]
     fn range_and_moves_after_show_only_when_set() {
         let c = ctx();
-        let skills = &c.content.skills;
+        let skills = &c.game.content.skills;
         assert_eq!(
             effect_text(Words::ENGLISH, def(skills, "long_shot")),
             "Bow: +2 range"
@@ -712,7 +712,7 @@ mod tests {
     #[test]
     fn every_skill_has_a_short_effect_line() {
         let c = ctx();
-        for skill in c.content.skills.skills.values() {
+        for skill in c.game.content.skills.skills.values() {
             let text = effect_text(Words::ENGLISH, skill);
             assert!(!text.is_empty(), "{} has no text", skill.id.0);
             // Short enough for the line under a menu (ticket 0429).

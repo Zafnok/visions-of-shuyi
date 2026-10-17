@@ -56,7 +56,7 @@ fn tip_seen(h: &Harness, id: &str) -> bool {
 /// in use.
 fn save_at(h: &mut Harness, key: &str, name: &str) {
     let lead = LeadProfile::new(name, LeadGender::Female);
-    let campaign = new_campaign(&h.game().ctx().content, GameMode::Classic, lead);
+    let campaign = new_campaign(&h.game().ctx().game.content, GameMode::Classic, lead);
     let file = SaveFile::chapter_cleared(campaign);
     ok(save::write(&mut h.ctx_mut().storage, key, &file));
 }

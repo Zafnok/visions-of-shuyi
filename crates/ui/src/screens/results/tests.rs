@@ -13,7 +13,7 @@ use crate::screens::battle::quick_battle;
 use crate::screens::battle::view::ProgressView;
 
 pub(super) fn state() -> BattleState {
-    quick_battle(&ctx().content).unwrap()
+    quick_battle(&ctx().game.content).unwrap()
 }
 
 /// The Quick Battle's first three units: the lord with 90 EXP, the knight with

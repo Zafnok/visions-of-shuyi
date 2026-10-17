@@ -199,7 +199,7 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
         h.with_tips().with_lessons();
     }
     if let Some(light) = &options.light {
-        let content = &mut h.ctx_mut().content;
+        let content = &mut h.ctx_mut().game.content;
         if content.lighting.get(light).is_none() {
             let known = content.lighting.names();
             return Err(format!(
@@ -221,15 +221,15 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     let ctx = h.game().ctx();
     let frame = if options.playdate {
         let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
-        let font = onebit::Font::new(&ctx.content.font, bits)?;
+        let font = onebit::Font::new(&ctx.game.content.font, bits)?;
         let mut frame = Box::new([0; FRAME_BYTES]);
         onebit::render(h.game().buffer(), &font, &(), &mut frame);
         one_bit_picture(&frame, options.scale.unwrap_or(1))
     } else {
         let painter = Painter::new(
-            ctx.content.font.clone(),
+            ctx.game.content.font.clone(),
             trpg_content::bundle::bytes(trpg_content::font::ATLAS_PNG_PATH).unwrap_or_default(),
-            &ctx.content.images,
+            &ctx.game.content.images,
             trpg_content::bundle::bytes,
             ctx.palette.get(UiColor::Black),
         )?;

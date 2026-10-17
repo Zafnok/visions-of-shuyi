@@ -58,12 +58,10 @@ pub type BindError = bindings::BindError<Action>;
 /// One layout's default chord lookup ([`format::Bindings`]).
 pub type Bindings = format::Bindings<Action>;
 
-/// The text key of [`ARROWS`] in the player's language.
-pub const ARROWS_TEXT: &str = "keys.arrows";
-
-/// The text key of what joins a button chord's two buttons in help text
-/// (`A+B`, ticket 1034).
-pub const CHORD_JOIN_TEXT: &str = "keys.chord_join";
+/// The text keys of [`ARROWS`] and of what joins a button chord's two
+/// buttons in help text (`A+B`, ticket 1034), in the player's language:
+/// the engine's ([`shuyi_ui::Ctx::help_keys`]).
+pub use shuyi_ui::ctx::{ARROWS_TEXT, CHORD_JOIN_TEXT};
 
 /// The text key of what a slot on the Key bindings screen shows while it
 /// waits for a key (`docs/design/controls.md`, *Rebinding keys*).

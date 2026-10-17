@@ -83,7 +83,7 @@ fn quick_battle_in_every_theme() {
         let legend = snapshot.split("--- overlays ---").next().unwrap_or("");
         assert!(!legend.contains('#'), "{theme:?} has a colour with no name");
         // The terrain is painted in this theme's colours.
-        let def = &h.game().ctx().content.themes[&theme];
+        let def = &h.game().ctx().game.content.themes[&theme];
         let buf = h.game().buffer();
         let bg = |x, y| buf.get(x, y).map(|c| c.bg.to_hex());
         let grass = trpg_ui::color::Rgb::from(def.get("grass_bg").unwrap()).to_hex();
@@ -755,7 +755,7 @@ fn quick_battle_keeps_one_skirmish_track() {
 #[test]
 fn a_battle_keeps_the_cue_its_file_names() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
-    let quick = h.ctx_mut().content.battles.get_mut("quick").unwrap();
+    let quick = h.ctx_mut().game.content.battles.get_mut("quick").unwrap();
     quick.music = trpg_core::BattleMusic::Cue("battle_bright".into());
     // The track starts on the Preparations screen and stays on.
     h.keys("Down f");

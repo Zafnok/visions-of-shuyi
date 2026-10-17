@@ -25,7 +25,7 @@ fn standing(units: &[UnitView]) -> Vec<(UnitId, Pos, Facing)> {
 #[test]
 fn the_cast_stand_as_characters_without_marks() {
     let c = ctx();
-    let def = &c.content.openings["ch01_sparring"];
+    let def = &c.game.content.openings["ch01_sparring"];
     let cast = cast_units(&c, def, &lead());
     assert_eq!(
         standing(&cast),
@@ -46,14 +46,14 @@ fn the_cast_stand_as_characters_without_marks() {
     assert_eq!(lead_unit.class.0, "exile");
     // Dace has no class (he never fights in Chapter 1): his picture is the
     // skin's for his character.
-    let dace = &cast_units(&c, &c.content.openings["ch01_pacing"], &lead())[0];
+    let dace = &cast_units(&c, &c.game.content.openings["ch01_pacing"], &lead())[0];
     assert_eq!((dace.class.0.as_str(), dace.label.as_str()), ("", "Da"));
 }
 
 #[test]
 fn sparring_partners_step_in_and_back_facing_each_other() {
     let c = ctx();
-    let def = &c.content.openings["ch01_sparring"];
+    let def = &c.game.content.openings["ch01_sparring"];
     let start = cast_units(&c, def, &lead());
     let at = |ms| standing(&opening_units(&start, def, ms));
     let (lead_at, hollis_at) = (
@@ -87,7 +87,7 @@ fn sparring_partners_step_in_and_back_facing_each_other() {
 #[test]
 fn a_walker_faces_the_way_it_goes_and_keeps_it() {
     let c = ctx();
-    let def = &c.content.openings["ch01_pacing"];
+    let def = &c.game.content.openings["ch01_pacing"];
     let start = cast_units(&c, def, &lead());
     let at = |ms| opening_units(&start, def, ms)[0].clone();
     let across = at(400);
@@ -107,7 +107,7 @@ fn a_walker_faces_the_way_it_goes_and_keeps_it() {
 #[test]
 fn the_place_darkens_after_the_movement() {
     let c = ctx();
-    let def = &c.content.openings["ch01_sparring"];
+    let def = &c.game.content.openings["ch01_sparring"];
     let length = u64::from(def.length_ms);
     assert_eq!(opening_ms(def), def.length_ms + DARKEN_MS);
     assert!(darkened(def, 0) == 0.0 && darkened(def, length) == 0.0);

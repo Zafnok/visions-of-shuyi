@@ -193,7 +193,7 @@ fn text_rows() {
     let c = ctx();
     let mut unit = demo(&c, ChangeKind::Promote).unit().clone();
     unit.weapon_ranks.insert(WeaponKind::Spear, WeaponRank::A);
-    let class = |id: &str| c.content.classes.get(&ClassId(id.into())).unwrap();
+    let class = |id: &str| c.game.content.classes.get(&ClassId(id.into())).unwrap();
     // A rank at or above the start rank stays.
     assert_eq!(
         weapon_lines(Words::ENGLISH, &unit, class("iron_rider")),
@@ -275,7 +275,7 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     assert_eq!(s.help(&c), "f skip · hold f fast");
     // The view holds the page on screen, and nothing else.
     let view = s.view(&c);
-    let faces = (&c.content.portraits, &c.lead);
+    let faces = (&c.game.content.portraits, &c.game.lead);
     let page = progress::view(c.words(), faces, s.progress().unwrap());
     assert_eq!(
         view.body,
@@ -585,7 +585,7 @@ fn opts_into_as_any() {
 #[test]
 fn the_demo_needs_its_test_character() {
     let mut c = ctx();
-    c.content.characters.characters.clear();
+    c.game.content.characters.characters.clear();
     assert!(ClassChangeScreen::demo(&c, ChangeKind::Promote).is_none());
 }
 

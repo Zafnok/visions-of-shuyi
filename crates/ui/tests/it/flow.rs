@@ -11,6 +11,7 @@ use trpg_core::{
     BattleState, Command, GameMode, LeadGender, LeadProfile, Outcome, Pos, TutorialLevel,
     UnitAction, UnitId,
 };
+use trpg_ui::ShuyiCtx;
 use trpg_ui::audio::{AudioRequest, pick_from_pool};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
@@ -178,7 +179,7 @@ fn the_intro_speaks_of_the_lead_the_player_made() {
     assert_eq!(campaign.mode, GameMode::Casual);
     assert_eq!(campaign.lead, LeadProfile::new("Ma", LeadGender::Female));
     assert_eq!(campaign.roster[0].name, "Ma");
-    assert_eq!(h.game().ctx().lead, campaign.lead);
+    assert_eq!(h.game().ctx().game.lead, campaign.lead);
     assert_eq!(h.top_screen(), "dialogue");
     // First box: the knight names her. Second: narration with her
     // pronoun.
@@ -573,7 +574,7 @@ fn music(h: &Harness) -> Vec<String> {
 /// music seed.
 fn pool_pick(h: &mut Harness, pool: &str, n: u64) -> String {
     let ctx = h.ctx_mut();
-    pick_from_pool(&ctx.content.audio, pool, ctx.music_seed ^ n)
+    pick_from_pool(&ctx.game.content.audio, pool, ctx.music_seed ^ n)
         .unwrap_or_else(|| panic!("no {pool} pool"))
         .to_owned()
 }
@@ -607,7 +608,7 @@ fn confirm_until_banner(h: &mut Harness, text: &str) {
 #[test]
 fn the_battles_music_plays_from_its_start_to_the_end_of_the_chapter() {
     let mut h = title();
-    if let Some(test) = h.ctx_mut().content.battles.get_mut("test") {
+    if let Some(test) = h.ctx_mut().game.content.battles.get_mut("test") {
         test.music = trpg_core::BattleMusic::Cue("battle_easy".into());
     }
     h.keys("f f f Up f");
@@ -700,7 +701,7 @@ fn restart_battle_asks_for_the_battles_music_again() {
     assert_eq!(music(&h), [skirmish_pick(&mut h, 1)]);
 
     let mut h = title();
-    if let Some(test) = h.ctx_mut().content.battles.get_mut("test") {
+    if let Some(test) = h.ctx_mut().game.content.battles.get_mut("test") {
         test.music = trpg_core::BattleMusic::Cue("battle_easy".into());
     }
     h.keys("f f f Up f");
@@ -829,11 +830,11 @@ fn the_next_chapter_follows_a_victory() {
     let mut ctx = trpg_ui::Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_layout(RIGHT_HANDED);
-    ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
-    if let Some(test) = ctx.content.chapters.get_mut("test") {
+    ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
+    if let Some(test) = ctx.game.content.chapters.get_mut("test") {
         test.next = Some("quick".into());
     }
-    let mut h = Harness::from_game(trpg_ui::Game::start(ctx));
+    let mut h = Harness::from_game(trpg_ui::game::start(ctx));
     // New Game, Classic, Not familiar, Start.
     h.keys("f f f Up f");
     skip_scene(&mut h);

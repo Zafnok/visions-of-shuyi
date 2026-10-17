@@ -268,7 +268,7 @@ fn skipping_the_playback_plays_none_of_its_sounds_left() {
 /// lord at `lord`, the knight at `knight` missing `hurt` HP, and potions.
 fn pair(lord: Pos, knight: Pos, hurt: StatValue) -> BattleState {
     let c = ctx();
-    let quick = quick_battle(&c.content).unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
     let mut units = quick.units()[..2].to_vec();
     units[0].pos = lord;
     units[1].pos = knight;

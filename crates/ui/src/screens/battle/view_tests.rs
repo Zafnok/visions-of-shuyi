@@ -187,10 +187,10 @@ fn restart_and_suspend_ask_first() {
 
 /// The Quick Battle as the flow starts it, and its start events.
 fn quick_start(c: &Ctx) -> BattleScreen {
-    let def = &c.content.battles[QUICK_BATTLE];
+    let def = &c.game.content.battles[QUICK_BATTLE];
     let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
-    let campaign = battle_campaign(&c.content, def, GameMode::Classic, lead);
-    let (state, events) = BattleState::new(campaign.battle_setup(def, &c.content.tables()));
+    let campaign = battle_campaign(&c.game.content, def, GameMode::Classic, lead);
+    let (state, events) = BattleState::new(campaign.battle_setup(def, &c.game.content.tables()));
     BattleScreen::start(state, &events)
 }
 
@@ -283,9 +283,9 @@ fn the_rewind_screen_shows_only_the_map_its_list_and_the_help() {
 fn the_battle_notes_show_at_the_start_with_their_units_and_close() {
     let mut c = ctx();
     let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
-    let campaign = trpg_content::new_campaign(&c.content, GameMode::Classic, lead);
-    let def = &c.content.battles["test"];
-    let (state, events) = BattleState::new(campaign.battle_setup(def, &c.content.tables()));
+    let campaign = trpg_content::new_campaign(&c.game.content, GameMode::Classic, lead);
+    let def = &c.game.content.battles["test"];
+    let (state, events) = BattleState::new(campaign.battle_setup(def, &c.game.content.tables()));
     let mut s = BattleScreen::start(state, &events);
     let view = s.view(&c);
     let Some(NotesView { title, lines }) = view.notes else {
@@ -321,7 +321,7 @@ fn without_the_stage_the_fight_box_plays_then_the_exp_bar_and_both_go() {
     // mid-fight here, as the playback isn't skipped then), the box.
     let (fight_box, _, stage) = parts(&s, &c);
     assert_eq!((fight_box, stage), (None, true));
-    c.change_settings(|set| set.combat_animations = false)
+    c.change_settings(|set| set.game.combat_animations = false)
         .unwrap();
     s.show_fights = false;
     let (fight_box, progress, stage) = parts(&s, &c);

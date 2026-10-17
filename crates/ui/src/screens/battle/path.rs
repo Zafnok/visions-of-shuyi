@@ -43,12 +43,12 @@ mod tests {
     /// The Quick Battle's units on `map`: the lord is unit 1, Mov 5.
     fn battle(map: BattleMap) -> BattleState {
         let c = ctx();
-        let units = quick_battle(&c.content).unwrap().units().to_vec();
+        let units = quick_battle(&c.game.content).unwrap().units().to_vec();
         testing::battle(&c, map, units)
     }
 
     fn quick_map() -> BattleMap {
-        quick_battle(&ctx().content).unwrap().map().clone()
+        quick_battle(&ctx().game.content).unwrap().map().clone()
     }
 
     /// `path` steered to each of `cursor` in turn, for unit 1 of `s`.
@@ -67,7 +67,7 @@ mod tests {
 
     #[test]
     fn steering_appends_cuts_back_and_falls_back_to_the_cheapest_path() {
-        let plain = ctx().content.terrain.display.id_of("plain").unwrap();
+        let plain = ctx().game.content.terrain.display.id_of("plain").unwrap();
         let s = battle(BattleMap::new("Open", Grid::filled(14, 8, plain)));
         let lord = p(3, 5);
         // Down, right, right, up: a detour the cheapest path wouldn't take.

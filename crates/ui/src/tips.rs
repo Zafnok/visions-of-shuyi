@@ -87,54 +87,30 @@ pub fn fill_placeholders(text: &str, keys: HelpKeys<'_>) -> String {
 /// its value first (`("count", &3)` fills `{count}`). What is filled in is
 /// not looked at again, so a value may hold braces.
 pub fn fill_text(text: &str, keys: HelpKeys<'_>, args: &[(&str, &dyn Display)]) -> String {
-    fill_by(text, args, |name| {
-        if name == CURSOR_PLACEHOLDER {
-            Some(cursor_keys_name(keys))
-        } else if name == Action::Select.name() {
-            Some(key_name(keys, help_select_action(keys)))
-        } else {
-            Action::from_name(name).map(|action| key_name(keys, action))
-        }
-    })
+    shuyi_ui::text::fill(text, args, |name| key_text(name, keys))
+}
+
+/// What a `{name}` placeholder that names a key says ([`fill_text`]):
+/// `{Cursor}` the cursor keys, `{Select}` the key that picks on the map
+/// ([`select_action`]: Confirm's while Select has no key), `{Action}` the
+/// key of that action. `None` for any other name.
+///
+/// [`select_action`]: crate::screens::battle::split_keys::select_action
+pub fn key_text(name: &str, keys: HelpKeys<'_>) -> Option<String> {
+    if name == CURSOR_PLACEHOLDER {
+        Some(cursor_keys_name(keys))
+    } else if name == Action::Select.name() {
+        Some(key_name(keys, help_select_action(keys)))
+    } else {
+        Action::from_name(name).map(|action| key_name(keys, action))
+    }
 }
 
 /// `text` with each `{name}` that `args` names replaced by its value, and
 /// no key named: for text built where there are no keys to name (a line
 /// of a list, a label). Anything else in braces is left alone.
 pub fn fill_values(text: &str, args: &[(&str, &dyn Display)]) -> String {
-    fill_by(text, args, |_| None)
-}
-
-/// `text` with each `{name}` replaced by its value in `args`, else by
-/// what `key` gives for it, else left as written.
-fn fill_by(
-    text: &str,
-    args: &[(&str, &dyn Display)],
-    key: impl Fn(&str) -> Option<String>,
-) -> String {
-    let mut out = String::with_capacity(text.len());
-    let mut rest = text;
-    while let Some((before, after)) = rest.split_once('{') {
-        out.push_str(before);
-        let Some((name, tail)) = after.split_once('}') else {
-            // An unclosed `{`: the rest is plain text.
-            out.push('{');
-            rest = after;
-            break;
-        };
-        if let Some((_, value)) = args.iter().find(|(arg, _)| *arg == name) {
-            out.push_str(&value.to_string());
-        } else if let Some(key) = key(name) {
-            out.push_str(&key);
-        } else {
-            out.push('{');
-            out.push_str(name);
-            out.push('}');
-        }
-        rest = tail;
-    }
-    out.push_str(rest);
-    out
+    shuyi_ui::text::fill_values(text, args)
 }
 
 #[cfg(test)]

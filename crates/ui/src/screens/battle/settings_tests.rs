@@ -47,7 +47,7 @@ fn fast_animations_play_a_fight_twice_as_fast() {
     assert!(in_combat(&normal));
     let slow = frames_of_fight(&mut normal);
     assert!(slow > 60, "{slow} frames");
-    let mut fast = fight(|s| s.anim_speed = AnimSpeed::Fast);
+    let mut fast = fight(|s| s.game.anim_speed = AnimSpeed::Fast);
     let quick = frames_of_fight(&mut fast);
     assert!(quick.abs_diff(slow / 2) <= 3, "{quick} against {slow}");
     // The same battle either way.
@@ -57,7 +57,7 @@ fn fast_animations_play_a_fight_twice_as_fast() {
 #[test]
 fn the_enemy_phase_speed_leaves_the_players_fights_alone() {
     let slow = frames_of_fight(&mut fight(|_| {}));
-    let mut h = fight(|s| s.enemy_phase_speed = EnemyPhaseSpeed::Fast);
+    let mut h = fight(|s| s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast);
     assert_eq!(frames_of_fight(&mut h), slow);
 }
 
@@ -65,7 +65,7 @@ fn the_enemy_phase_speed_leaves_the_players_fights_alone() {
 fn with_combat_animations_off_a_fight_is_over_at_once() {
     let mut normal = fight(|_| {});
     frames_of_fight(&mut normal);
-    let h = fight(|s| s.combat_animations = false);
+    let h = fight(|s| s.game.combat_animations = false);
     // The frame that confirmed the attack skipped its playback.
     assert!(!in_combat(&h), "{:?}", battle(&h).mode());
     assert_eq!(battle(&h).state(), battle(&normal).state());
@@ -77,7 +77,7 @@ fn with_combat_animations_off_a_fight_is_over_at_once() {
 fn ai_phases(change: impl FnOnce(&mut Settings)) -> (usize, BattleScreen) {
     let mut c = ctx();
     c.change_settings(change).unwrap();
-    let mut s = BattleScreen::new(quick_battle(&c.content).unwrap());
+    let mut s = BattleScreen::new(quick_battle(&c.game.content).unwrap());
     let frame = |s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]| {
         s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
     };
@@ -92,12 +92,12 @@ fn ai_phases(change: impl FnOnce(&mut Settings)) -> (usize, BattleScreen) {
 #[test]
 fn the_enemy_phase_plays_faster_at_fast_and_faster_still_with_fast_animations() {
     let (normal, at_normal) = ai_phases(|_| {});
-    let (fast, at_fast) = ai_phases(|s| s.enemy_phase_speed = EnemyPhaseSpeed::Fast);
+    let (fast, at_fast) = ai_phases(|s| s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast);
     let (both, at_both) = ai_phases(|s| {
-        s.enemy_phase_speed = EnemyPhaseSpeed::Fast;
-        s.anim_speed = AnimSpeed::Fast;
+        s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast;
+        s.game.anim_speed = AnimSpeed::Fast;
     });
-    let (anim, _) = ai_phases(|s| s.anim_speed = AnimSpeed::Fast);
+    let (anim, _) = ai_phases(|s| s.game.anim_speed = AnimSpeed::Fast);
     // Banners between the phases keep their time, so not quite half.
     assert!(fast * 10 < normal * 7, "{fast} against {normal}");
     assert!(both * 10 < fast * 8, "{both} against {fast}");
@@ -110,7 +110,7 @@ fn the_enemy_phase_plays_faster_at_fast_and_faster_still_with_fast_animations() 
 #[test]
 fn with_combat_animations_off_the_enemies_fights_are_skipped_too() {
     let (normal, at_normal) = ai_phases(|_| {});
-    let (off, at_off) = ai_phases(|s| s.combat_animations = false);
+    let (off, at_off) = ai_phases(|s| s.game.combat_animations = false);
     assert!(off < normal, "{off} against {normal}");
     assert_eq!(at_off.state(), at_normal.state());
 }
@@ -120,11 +120,11 @@ fn with_combat_animations_off_the_enemies_fights_are_skipped_too() {
 #[test]
 fn a_setting_changed_mid_battle_holds_from_the_next_frame() {
     let mut c = ctx();
-    let mut s = BattleScreen::new(quick_battle(&c.content).unwrap());
+    let mut s = BattleScreen::new(quick_battle(&c.game.content).unwrap());
     let idle = FrameInput::new(vec![], 0.0, vec![]);
     s.update(&mut c, &idle);
     assert!(!s.auto_end());
-    c.change_settings(|s| s.auto_end_turn = true).unwrap();
+    c.change_settings(|s| s.game.auto_end_turn = true).unwrap();
     s.update(&mut c, &idle);
     assert!(s.auto_end());
     assert!(s.status(&c).ends_with("auto-end: ON"));
@@ -138,7 +138,7 @@ fn holding_confirm_plays_a_fast_fight_four_times_as_fast_not_eight() {
     #[expect(clippy::cast_precision_loss, reason = "a few hundred frames")]
     let seconds = normal as f32 * FRAME_DT;
     // Between an eighth and a quarter of the fight: still playing at ×4.
-    let mut h = fight(|s| s.anim_speed = AnimSpeed::Fast);
+    let mut h = fight(|s| s.game.anim_speed = AnimSpeed::Fast);
     h.hold("f", seconds * 3.0 / 16.0);
     assert!(in_combat(&h), "played faster than ×4");
     // A little over a quarter in all: over.
@@ -184,7 +184,7 @@ fn the_enemys_actions_get_the_pacing_of_the_players_speeds() {
     let first_pan = |change: fn(&mut Settings)| {
         let mut c = ctx();
         c.change_settings(change).unwrap();
-        let mut s = BattleScreen::new(quick_battle(&c.content).unwrap());
+        let mut s = BattleScreen::new(quick_battle(&c.game.content).unwrap());
         let frame = |s: &mut BattleScreen, c: &mut Ctx, actions: &[Action]| {
             s.update(c, &FrameInput::new(actions.to_vec(), 0.0, vec![]));
         };
@@ -197,11 +197,11 @@ fn the_enemys_actions_get_the_pacing_of_the_players_speeds() {
     };
     let normal = first_pan(|_| {});
     assert_eq!(normal, super::ai_phase::PACING);
-    let fast = first_pan(|s| s.enemy_phase_speed = EnemyPhaseSpeed::Fast);
+    let fast = first_pan(|s| s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast);
     assert_eq!(fast, super::ai_phase::PACING.at_speed(2.0, (12.0, 48.0)));
     let both = first_pan(|s| {
-        s.enemy_phase_speed = EnemyPhaseSpeed::Fast;
-        s.anim_speed = AnimSpeed::Fast;
+        s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast;
+        s.game.anim_speed = AnimSpeed::Fast;
     });
     assert_eq!(both, super::ai_phase::PACING.at_speed(4.0, (12.0, 48.0)));
 }
@@ -243,8 +243,8 @@ fn a_fight_plays_on_the_stage_with_both_fighters() {
 #[test]
 fn the_backdrop_is_the_one_of_the_ground_the_defender_stands_on() {
     let c = ctx();
-    let quick = quick_battle(&c.content).unwrap();
-    let mountain = c.content.terrain.display.id_of("mountain").unwrap();
+    let quick = quick_battle(&c.game.content).unwrap();
+    let mountain = c.game.content.terrain.display.id_of("mountain").unwrap();
     let mut map = quick.map().clone();
     // Under the brigand (8, 2), not under the lord.
     *map.tiles.get_mut(Pos::new(8, 2)).unwrap() = mountain;

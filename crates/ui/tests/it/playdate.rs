@@ -16,7 +16,9 @@ use trpg_ui::save::SUSPEND_KEY;
 use trpg_ui::screen::Keyboard;
 use trpg_ui::screens::battle::mode::Mode;
 use trpg_ui::widgets::help::key_name;
-use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, Storage, UiColor};
+use trpg_ui::{
+    ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, ShuyiCtx, Storage, UiColor,
+};
 
 /// The context as `crates/playdate` sets it up (the tips and lessons
 /// are turned on below), with the Playdate's own buttons (ticket 1034).
@@ -68,7 +70,7 @@ fn the_d_pad_a_and_b_play_from_the_title_into_chapter_ones_first_battle() {
     let mut name = DEFAULT_NAME.to_owned();
     name.pop();
     name.push('A');
-    assert_eq!(h.game().ctx().lead.name, name);
+    assert_eq!(h.game().ctx().game.lead.name, name);
     // A closes the first guide; A on the empty tile above the lead opens
     // the map menu, whose fifth entry is Suspend; A on it and A on
     // "Suspend the battle?" write the suspend save and go back to the
@@ -106,7 +108,7 @@ struct OneBit {
 impl OneBit {
     fn new(h: &Harness) -> Self {
         Self {
-            atlas: h.game().ctx().content.font.clone(),
+            atlas: h.game().ctx().game.content.font.clone(),
             shown: None,
             frame: Box::new([0; FRAME_BYTES]),
             checked: 0,

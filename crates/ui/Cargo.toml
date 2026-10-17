@@ -13,15 +13,15 @@ workspace = true
 [dependencies]
 trpg-core = { path = "../core", default-features = false }
 trpg-content = { path = "../content", default-features = false }
-# The frame (1108) and input: keymaps, repeat, controllers, saved bindings
-# and help keys (1107).
+# The frame (1108), input: keymaps, repeat, controllers, saved bindings
+# and help keys (1107), and screens, the context and the frame loop (1109).
 shuyi-ui = { path = "../../engine/crates/ui", default-features = false }
-thiserror.workspace = true
-# The player's saved key bindings (ticket 0217, ADR-0031).
+# The engine's asset types the context reads through this game's data
+# (1109): the text by key.
+shuyi-assets = { path = "../../engine/crates/assets", default-features = false }
+# The player's saved settings (ADR-0050) and the game's saves.
 serde.workspace = true
 ron.workspace = true
-# `LazyLock` without `std` (ADR-0070 §3); float maths are `shuyi_ui::float`.
-once_cell.workspace = true
 
 [features]
 default = ["std"]
@@ -30,8 +30,8 @@ std = [
     "trpg-core/std",
     "trpg-content/std",
     "shuyi-ui/std",
+    "shuyi-assets/std",
     "ron/std",
-    "thiserror/std",
     "serde/std",
 ]
 # The headless test `Harness` (src/harness.rs), for integration tests. It
@@ -39,7 +39,7 @@ std = [
 harness = ["storage-conformance", "trpg-content/test-fixtures"]
 # `storage::conformance_suite`, for a platform's `Storage` (also without
 # `std`: the Playdate's debug build runs it on the device's files).
-storage-conformance = []
+storage-conformance = ["shuyi-ui/storage-conformance"]
 # Debug tools (Quick Battle, glyph sampler) in a release build: the Pages
 # build only (ADR-0023). Never on in shipped builds. The Quick Battle is
 # made of the test files (ADR-0057).

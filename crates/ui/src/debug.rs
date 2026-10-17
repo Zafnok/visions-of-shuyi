@@ -37,7 +37,7 @@ use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{MapSkin, TEST_TILESET, next_skin};
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::{
     ChangeKind, ClassChangeScreen, DialogueScreen, KeyBindingsScreen, centre_x, print_centred,
 };
@@ -115,7 +115,7 @@ impl DebugMenuScreen {
     /// clip, starting over after the last. Each time round it first tells
     /// `app` the lines that are coming, as a scene would.
     fn say_next_voice(&mut self, ctx: &mut Ctx) {
-        let Some(scene) = ctx.content.dialogue.get(TEST_SCENE) else {
+        let Some(scene) = ctx.game.content.dialogue.get(TEST_SCENE) else {
             return;
         };
         let lines: Vec<_> = scene.lines().iter().map(|l| l.id.clone()).collect();
@@ -134,7 +134,7 @@ impl DebugMenuScreen {
 
 /// The menu of tools, "Map skin" naming the skin `ctx` uses.
 fn tools_menu(ctx: &Ctx) -> Menu {
-    let skin = format!("Map skin: {}", skin_label(ctx.map_skin.as_ref()));
+    let skin = format!("Map skin: {}", skin_label(ctx.game.map_skin.as_ref()));
     let items = TOOLS.iter().map(|&t| MenuItem::new(t));
     Menu::new(items.chain([MenuItem::new(skin)]).collect())
 }
@@ -152,10 +152,10 @@ fn skin_label(skin: &dyn MapSkin) -> &str {
 /// Swaps `ctx`'s map skin for the next in the round: the glyph skin, each
 /// tileset the content has, then the glyph skin again.
 fn switch_skin(ctx: &mut Ctx) {
-    ctx.set_map_skin(next_skin(&ctx.content, ctx.map_skin.as_ref()));
+    ctx.set_map_skin(next_skin(&ctx.game.content, ctx.game.map_skin.as_ref()));
 }
 
-impl Screen for DebugMenuScreen {
+impl Screen<Shuyi> for DebugMenuScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -196,13 +196,13 @@ impl Screen for DebugMenuScreen {
                     return Transition::Push(Box::new(screen));
                 }
                 Some(MenuEvent::Chosen(tool)) => {
-                    let Some(scene) = ctx.content.dialogue.get(TEST_SCENE).cloned() else {
+                    let Some(scene) = ctx.game.content.dialogue.get(TEST_SCENE).cloned() else {
                         continue;
                     };
                     // The overlay replaces this menu so it plays over the
                     // screen the menu was opened from (e.g. the battle map).
                     // The viewer plays a scene with everyone there (ADR-0055).
-                    let lead = ctx.lead.clone();
+                    let lead = ctx.game.lead.clone();
                     let everyone = &Present::Everyone;
                     return if tool == 2 {
                         let screen = DialogueScreen::told(ctx, &scene, lead, everyone);
@@ -252,14 +252,14 @@ impl GlyphSamplerScreen {
 
     /// The sampler for the font and palette in `ctx`.
     pub fn new(ctx: &Ctx) -> Self {
-        let glyphs: Vec<char> = ctx.content.font.glyphs.keys().copied().collect();
+        let glyphs: Vec<char> = ctx.game.content.font.glyphs.keys().copied().collect();
         Self {
             sampler: glyph_sampler(&ctx.palette, &glyphs),
         }
     }
 }
 
-impl Screen for GlyphSamplerScreen {
+impl Screen<Shuyi> for GlyphSamplerScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -553,8 +553,8 @@ mod tests {
         assert_eq!(outcome(&mut menu, &[Cancel, Confirm]), "Pop");
         // Without the test scene, its tools do nothing; nor do the class
         // change tools without their test character.
-        ctx.content.dialogue.scenes.clear();
-        ctx.content.characters.characters.clear();
+        ctx.game.content.dialogue.scenes.clear();
+        ctx.game.content.characters.characters.clear();
         for downs in [2, 3, PROMOTE_TOOL, RECLASS_TOOL] {
             let mut menu = DebugMenuScreen::new(&ctx);
             let mut a = vec![CursorDown; downs];
@@ -616,7 +616,7 @@ mod tests {
         assert_eq!(choose(&mut ctx, &mut menu), [play(1)]);
         assert_eq!(choose(&mut ctx, &mut menu), [preload, play(0)]);
         // Without the test scene it does nothing.
-        ctx.content.dialogue.scenes.clear();
+        ctx.game.content.dialogue.scenes.clear();
         assert_eq!(choose(&mut ctx, &mut menu), []);
     }
 
@@ -643,29 +643,29 @@ mod tests {
         let frame = |a: &[Action]| FrameInput::new(a.to_vec(), 0.0, vec![]);
         let stay = menu.update(&mut ctx, &frame(&[CursorUp, Confirm]));
         assert!(matches!(stay, Transition::None));
-        assert_eq!(ctx.map_skin.name(), "sprite");
+        assert_eq!(ctx.game.map_skin.name(), "sprite");
         assert_eq!(label(&menu), "Map skin: test tileset");
         // Still on it: again for the tileset with layers, again for the
         // unit sheets on glyph terrain, and again for glyphs.
         assert_eq!(menu.menu.focus(), MAP_SKIN_TOOL);
         menu.update(&mut ctx, &frame(&[Confirm]));
-        assert_eq!(ctx.map_skin.name(), "sprite");
+        assert_eq!(ctx.game.map_skin.name(), "sprite");
         assert_eq!(label(&menu), "Map skin: test_auto");
         menu.update(&mut ctx, &frame(&[Confirm]));
-        assert_eq!(ctx.map_skin.name(), "sprite_units");
+        assert_eq!(ctx.game.map_skin.name(), "sprite_units");
         assert_eq!(label(&menu), "Map skin: test_units");
         menu.update(&mut ctx, &frame(&[Confirm]));
-        assert_eq!(ctx.map_skin.name(), "glyph");
+        assert_eq!(ctx.game.map_skin.name(), "glyph");
         assert_eq!(label(&menu), "Map skin: glyph");
         // A menu opened later names the skin in use.
         menu.update(&mut ctx, &frame(&[Confirm]));
         assert_eq!(label(&DebugMenuScreen::new(&ctx)), "Map skin: test tileset");
         // Without any tileset, the glyph skin stays.
-        ctx.content.tilesets.clear();
+        ctx.game.content.tilesets.clear();
         menu.update(&mut ctx, &frame(&[Confirm]));
-        assert_eq!(ctx.map_skin.name(), "glyph");
+        assert_eq!(ctx.game.map_skin.name(), "glyph");
         menu.update(&mut ctx, &frame(&[Confirm]));
-        assert_eq!(ctx.map_skin.name(), "glyph");
+        assert_eq!(ctx.game.map_skin.name(), "glyph");
         assert_eq!(label(&menu), "Map skin: glyph");
         let down = menu.update(&mut ctx, &frame(&[CursorDown]));
         assert!(matches!(down, Transition::None));

@@ -25,7 +25,7 @@ use super::title::TITLE_MUSIC;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::help::SEPARATOR;
 use crate::widgets::wrap::word_wrap;
 
@@ -70,7 +70,7 @@ fn width(kind: CreditRowKind) -> usize {
 /// (`"Title" by Author`, then `License · link`) with a blank row after
 /// each. No blank row at the end. In `ctx`'s language.
 fn rows(ctx: &Ctx) -> Vec<(CreditRowKind, String)> {
-    let credits: &Credits = &ctx.content.credits;
+    let credits: &Credits = &ctx.game.content.credits;
     let mut rows = Vec::new();
     let mut add = |kind: CreditRowKind, text: &str| {
         if text.is_empty() {
@@ -246,7 +246,7 @@ impl CreditsScreen {
     }
 }
 
-impl Screen for CreditsScreen {
+impl Screen<Shuyi> for CreditsScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

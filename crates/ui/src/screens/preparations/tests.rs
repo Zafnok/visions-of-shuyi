@@ -19,10 +19,10 @@ use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
 
 /// The Quick Battle's setup and bench, before Preparations.
 pub(super) fn setup(c: &Ctx) -> Preparations {
-    let def = &c.content.battles[QUICK_BATTLE];
-    let campaign = battle_campaign(&c.content, def, GameMode::Classic, c.lead.clone());
+    let def = &c.game.content.battles[QUICK_BATTLE];
+    let campaign = battle_campaign(&c.game.content, def, GameMode::Classic, c.game.lead.clone());
     Preparations {
-        setup: campaign.battle_setup(def, &c.content.tables()),
+        setup: campaign.battle_setup(def, &c.game.content.tables()),
         bench: campaign.bench(def),
     }
 }

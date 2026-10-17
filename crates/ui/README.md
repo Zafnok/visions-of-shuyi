@@ -12,10 +12,10 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | `cinema` | `view`: where a backdrop's window starts to look at a point at a zoom, stopping at the scene's edges (ADR-0048) |
 | `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks), the `GlyphSkin` and the `SpriteSkin` (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins), `path` (the path arrow for any tile size) and `threat` (the arrows from the enemies that could attack a tile, and the mark over each: ticket 0448). See *Map view* below |
 | `input` | `Action`s, `Layout`, `Keymap`, `InputState` (key repeat) |
-| `screen` | `Screen` trait, `Transition`, `FrameInput`, `Ctx` (shared resources, active layout, the player's settings), `ScreenStack` |
-| `settings` | `Settings`: every player preference (speeds, combat animations, auto-end, fullscreen, cursor, volumes, the layout picked), saved as one RON record (ADR-0050). Read with `ctx.settings()`, changed with `ctx.change_settings(…)`, which saves, or (Options, ADR-0072) `ctx.preview_settings(…)` then `keep_settings` / `restore_settings` |
-| `game` | `Game`: owns the stack, input state, `Ctx`, buffer and music state; `frame(events, dt)` |
-| `audio` | `AudioRequest`, the `AudioQueue` screens push to (`ctx.audio`), `MusicState` (which track plays, fades) and its `MusicCommand`s (ADR-0026), `MusicClock` (how far into its track the music is, ADR-0037). Voice clips (ADR-0046) are asked for through `ctx.play_voice(&line_id)`, `ctx.stop_voice()` and `ctx.preload_voices(&line_ids)` |
+| `screen` | Shuyi Engine's `Screen` trait, `Transition`, `FrameInput`, `ScreenStack` and `Ctx` (`shuyi_ui`, ADR-0080) with this game's part, `Shuyi` (`ctx.game`: the content, the campaign's mode, tutorial level and lessons, the map skin, the lead), the aliases screens are written with (`Ctx`, `FrameInput`, `Transition`) and `ShuyiCtx` (`Ctx::embedded()`, `ctx.words()`, `ctx.set_map_skin(…)`) |
+| `settings` | `Settings`: every player preference, saved as one RON record (ADR-0050): the engine's (text speed, fullscreen, theme, volumes, the layout picked) and this game's in `settings.game` (`ShuyiSettings`: speeds, combat animations, auto-end, cursor, map look and zoom). Read with `ctx.settings()`, changed with `ctx.change_settings(…)`, which saves, or (Options, ADR-0072) `ctx.preview_settings(…)` then `keep_settings` / `restore_settings` |
+| `game` | `Game` (the engine's frame loop: owns the stack, input state, `Ctx`, buffer and music state; `frame(events, dt)`), and how this game starts it: `game::start(ctx)`, `game::start_on_scene(…)`, `game::new(ctx, root)`, with its `hooks()` (the layout picker, the debug menu) |
+| `audio` | The engine's `AudioRequest`, the `AudioQueue` screens push to (`ctx.audio`), `MusicState` (which track plays, fades) and its `MusicCommand`s (ADR-0026), `MusicClock` (how far into its track the music is, ADR-0037); this game's `MenuSound`s (`ctx.audio.menu(…)`, `MenuSounds`). Voice clips (ADR-0046) are asked for through `ctx.play_voice(&line_id)`, `ctx.stop_voice()` and `ctx.preload_voices(&line_ids)` |
 | `widgets` | `Menu` (vertical list in a box), `help` (help text that names keys, or controller buttons when a pad was pressed last) |
 | `flow` | `FlowScreen`: the game flow (ADR-0035). One screen on the stack that owns the `Campaign` and hosts the flow's screens itself: mode, lead, a chapter's scenes, Preparations, its battle, the results of a won battle, Game Over, "To be continued" |
 | `screens` | Game screens: `TitleScreen` (`screens/title`: left alone it plays the intro cinematic in time with the title song, 0819; `song` is where the cinematic's time comes from), `ModeSelectScreen`, `FamiliarityScreen` (the tutorial level, 0835; painted by the mode screen's skin), `LeadSelectScreen` (with the name grid), `PreparationsScreen` (loadouts and the pack before a battle, 0408; its Options tab is where a Classic campaign can switch to Casual), `GameOverScreen`, `ToBeContinuedScreen`, `ResultsScreen` (a won battle's gold, rewind bonus and EXP bars, then its level-up pages, 0810), `LayoutPickerScreen` (first launch, and from Options to switch layout), `OptionsScreen` (0805: from the title, the map menu and Preparations), `KeyBindingsScreen` (rebinding, 0815; opened from Options), `CreditsScreen` (0808), `DialogueScreen` (full-screen or over the map), `ClassChangeScreen` (`screens/class_change`: promotion and reclass between battles, 0603), `BattleScreen` (`screens/battle`: its `mode` state machine, `attack` targeting, `forecast` panel and combat `playback`, which runs as a mode of the battle screen, ADR-0025) |
@@ -54,7 +54,7 @@ Rectangles and sprites are the frame's **items** (`Item`, `buf.items()`;
 A sprite:
 
 ```rust
-let card = ctx.content.images.id("images/test_card.png")?;   // an ImageId
+let card = ctx.game.content.images.id("images/test_card.png")?;   // an ImageId
 let mut sprite = Sprite::new(
     card,
     Rect::new(0, 0, 16, 16),     // src: the part of the image, in image pixels
@@ -67,7 +67,7 @@ sprite.paint = Paint::Dimmed;    // or Paint::Solid(colour); Paint::Image by def
 buf.add_sprite(sprite);
 ```
 
-- The image table (`ctx.content.images`, `trpg_content::image`) lists every
+- The image table (`ctx.game.content.images`, `trpg_content::image`) lists every
   PNG under `assets/` by path, with its size. `ui` never reads pixels; `app`
   decodes the files into textures.
 - Clipping and cutting never move or rescale the picture: they only shrink
@@ -170,14 +170,16 @@ settings, key bindings, tips seen and saves, under the keys they always had
 computer (the list of profiles, the title's backdrop). `Ctx::with_storage`
 opens on the last profile used, making `Player 1` on a first launch.
 
-`Game::start` loads the saved layout from the profile's settings; on
+`game::start` loads the saved layout from the profile's settings; on
 first launch there is none, and the first key pressed (at the title's prompt
 or anywhere later) opens the layout picker over whatever is showing and does
 nothing else; a controller button closes it again without choosing (ticket
 0226). Until a layout is picked, `Keymap::layout_picker` is active (`Up`/`w`,
 `Down`/`s`, and `f`/`j`/`Enter`/`Space` to pick), so either hand works.
 
-In debug builds `Game` handles the `Debug` action (F2) itself and pushes the
+Both are this game's hooks into the engine's frame loop (`game::hooks()`,
+`GameHooks`): the layout picker is the screen the first key opens while no
+layout is chosen, and in debug builds the `Debug` action (F2) pushes the
 debug menu (unless a debug screen is already on top).
 
 ## Map view
@@ -197,7 +199,7 @@ The battle map is not drawn by the battle screen (ADR-0038). Each frame:
    its walk), the cursor
    (if shown), the selected unit's path, and the animation clock. Plain
    data: no colours, glyphs, cells or pixels.
-2. `ctx.map_skin.paint(ctx, &scene, MAP_VIEW, buf)` paints it. The
+2. `ctx.game.map_skin.paint(ctx, &scene, MAP_VIEW, buf)` paints it. The
    `GlyphSkin` (`map_view/glyph`) is coloured letters; the `SpriteSkin`
    (`map_view/sprite`) paints from a tileset (`assets/tilesets/`): the
    whole map if the tileset has terrain tiles, else only the units, over
@@ -226,8 +228,8 @@ Rules:
 - **The zoom is the skin's too** (ticket 0439): a skin that paints the
   whole map from pictures says `zoom()` and gives itself at another one
   with `at_zoom(…)`; the glyph skins say `None`. The player's choice is
-  `Settings::map_zoom`. Swap the skin with `ctx.set_map_skin(…)`, never by
-  assigning `ctx.map_skin`, so the new skin is drawn at that zoom. A skin
+  `ShuyiSettings::map_zoom`. Swap the skin with `ctx.set_map_skin(…)`, never
+  by assigning `ctx.game.map_skin`, so the new skin is drawn at that zoom. A skin
   works out every mark on a tile at the art's own size and places it with
   `Grid::zoomed`, so nothing needs a second set of sizes.
 - **A new thing on the map** (a village, a spell's flash on a tile) is a new
@@ -321,12 +323,14 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
 
 1. Create `src/screens/<name>.rs` (or a sub-module for a big screen) and add it
    to `src/screens/mod.rs`.
-2. Implement `Screen`:
+2. Implement `Screen<Shuyi>` (the engine's trait over this game's part of
+   the context; `Ctx`, `FrameInput` and `Transition` are this game's
+   aliases):
 
    ```rust
    pub struct InfoScreen { menu: Menu }
 
-   impl Screen for InfoScreen {
+   impl Screen<Shuyi> for InfoScreen {
        fn name(&self) -> &'static str { "info" }   // unique, snake_case
 
        fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
@@ -491,7 +495,7 @@ fn select_opens_new_game() {
 - Audio: `audio_requests()` (every request of the run), `last_frame_audio()`
   (the last frame's; a `keys` press is the frame *before* the last),
   `music_commands()`, `clear_audio()`, `sounds()` (the sound cues played,
-  without music). A test of a made-up cue adds it to `ctx.content.audio`
+  without music). A test of a made-up cue adds it to `ctx.game.content.audio`
   and builds the Harness with `Harness::from_game`.
 - Music clock: the Harness plays the part of `app`. A track sounds from
   the frame after the game starts it and `music_clock()` counts up with

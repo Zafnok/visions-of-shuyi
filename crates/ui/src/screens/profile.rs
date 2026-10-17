@@ -29,7 +29,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, text_keys_help};
 use crate::profiles::{MAX_NAME_CHARS, MAX_PROFILES, ProfileError, ProfileId};
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::name_entry::{NameBox, NameEntry, NameEvent, NameRules, finished};
 
 /// Text key ([`Ctx::text`]) of the screen title.
@@ -645,7 +645,7 @@ fn stepped<T: Copy + PartialEq>(all: &[T], current: T, forward: bool) -> T {
     all.get(to).copied().unwrap_or(current)
 }
 
-impl Screen for ProfileScreen {
+impl Screen<Shuyi> for ProfileScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

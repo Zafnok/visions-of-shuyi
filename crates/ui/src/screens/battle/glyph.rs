@@ -67,7 +67,7 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let black = c(UiColor::Black);
     buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-    ctx.map_skin.paint(ctx, &view.scene, MAP_VIEW, buf);
+    ctx.game.map_skin.paint(ctx, &view.scene, MAP_VIEW, buf);
     if let Some(g) = &view.guides {
         // The list over the map and the side panel, and the help line.
         guides::paint(ctx, g, buf);
@@ -126,6 +126,7 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
 /// view) against the top edge.
 pub fn lesson_at_bottom(ctx: &Ctx, view: &BattleView, lesson: &LessonView) -> bool {
     let tile = ctx
+        .game
         .map_skin
         .tile_cells(&view.scene, MAP_VIEW, lesson.clear_of);
     tile.is_some_and(in_top_half)
@@ -177,7 +178,7 @@ fn paint_menu_beside(
     tile: trpg_core::Pos,
     buf: &mut GlyphBuffer,
 ) {
-    let Some(cells) = ctx.map_skin.tile_cells(&view.scene, MAP_VIEW, tile) else {
+    let Some(cells) = ctx.game.map_skin.tile_cells(&view.scene, MAP_VIEW, tile) else {
         return;
     };
     let (x, y) = menu_origin(cells, menu::glyph::size(&m.menu));
@@ -220,7 +221,7 @@ pub const fn popup_color(kind: PopupKind) -> UiColor {
 fn paint_popups(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     for p in &view.popups {
         let fg = ctx.palette.get(popup_color(p.kind));
-        let Some(tile) = ctx.map_skin.tile_cells(&view.scene, MAP_VIEW, p.pos) else {
+        let Some(tile) = ctx.game.map_skin.tile_cells(&view.scene, MAP_VIEW, p.pos) else {
             continue;
         };
         let y = (tile.y - 1).max(MAP_VIEW.y);
@@ -348,7 +349,7 @@ fn notes_top(ctx: &Ctx, view: &BattleView, h: i32) -> i32 {
     let rows: Vec<i32> = view
         .noted
         .iter()
-        .filter_map(|&pos| ctx.map_skin.tile_cells(&view.scene, MAP_VIEW, pos))
+        .filter_map(|&pos| ctx.game.map_skin.tile_cells(&view.scene, MAP_VIEW, pos))
         .map(|cells| cells.y)
         .collect();
     box_top(h, &rows)

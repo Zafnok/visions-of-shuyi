@@ -60,7 +60,7 @@ fn bindings(h: &Harness, layout: Layout) -> LayoutBindings {
 }
 
 fn defaults(h: &Harness, layout: Layout) -> LayoutBindings {
-    LayoutBindings::defaults(&h.game().ctx().content.keymap, layout)
+    LayoutBindings::defaults(&h.game().ctx().game.content.keymap, layout)
 }
 
 /// The Key bindings screen on the stack, as it shows itself now.

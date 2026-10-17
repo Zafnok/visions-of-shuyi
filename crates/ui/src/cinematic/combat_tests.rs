@@ -22,7 +22,7 @@ fn player(ctx: &Ctx) -> CinematicPlayer {
 
 /// The shot's combat, as loaded.
 fn shot(ctx: &Ctx) -> trpg_content::CombatShot {
-    match &ctx.content.cinematics["combat"].shots[0].shot {
+    match &ctx.game.content.cinematics["combat"].shots[0].shot {
         Shot::Combat(shot) => shot.clone(),
         other => panic!("not a combat: {other:?}"),
     }
@@ -32,10 +32,10 @@ fn shot(ctx: &Ctx) -> trpg_content::CombatShot {
 /// plays it.
 fn playback(ctx: &Ctx) -> Playback {
     let lead = LeadProfile::new(
-        ctx.words().name(&ctx.content.names, LEAD_ID),
+        ctx.words().name(&ctx.game.content.names, LEAD_ID),
         LeadGender::Male,
     );
-    let fight = trpg_content::cinematic::fight(&ctx.content, &shot(ctx), lead).unwrap();
+    let fight = trpg_content::cinematic::fight(&ctx.game.content, &shot(ctx), lead).unwrap();
     let words = ctx.words();
     let before = &fight.before;
     let played = Playback::new(words, &fight.events, before, fight.after.fallen(), TIMINGS);
@@ -76,16 +76,17 @@ fn the_fight_is_the_rules_own_played_as_a_battle_plays_it() {
     assert_eq!((bout.attacker.unit, bout.defender.unit), (LEAD, BRIGAND));
     // Each moment is the battle's stage at that moment of the playback,
     // over the ground the brigand stands on, in the battle's light.
-    let def = &ctx.content.battles["test"];
+    let def = &ctx.game.content.battles["test"];
     let tile = def.map.tiles.get(Pos::new(8, 3)).unwrap();
     let ground = ctx
+        .game
         .content
         .terrain
         .display
         .get(*tile)
         .map(|t| t.id.as_str());
     assert_eq!(ground, Some("plain"));
-    let light = ctx.content.battle_look(def).light;
+    let light = ctx.game.content.battle_look(def).light;
     for t in [0.0, 0.2, 0.45, 0.7, 1.0, 1.6, 2.4, 3.3] {
         let mut now = pb.clone();
         now.tick(t, false);
@@ -124,7 +125,8 @@ fn it_plays_at_the_fights_own_speed_and_holds_its_end() {
 #[test]
 fn the_scenes_an_attack_sets_off_are_left_out() {
     let ctx = ctx();
-    let fight = trpg_content::cinematic::fight(&ctx.content, &shot(&ctx), ctx.lead.clone());
+    let fight =
+        trpg_content::cinematic::fight(&ctx.game.content, &shot(&ctx), ctx.game.lead.clone());
     let scenes = fight.unwrap().events;
     let scenes = scenes
         .iter()
@@ -141,7 +143,7 @@ fn the_lead_is_the_cinematics() {
     let player = CinematicPlayer::new(&ctx, "combat", Some(mara)).unwrap();
     let lead = player.stage(&ctx, 0.5).unwrap().fighters[0].clone();
     assert_eq!(lead.name, "Mara");
-    let female = ctx.content.battlers.pick(["lead_f", "lead", "exile"]);
+    let female = ctx.game.content.battlers.pick(["lead_f", "lead", "exile"]);
     assert_eq!(lead.picture.as_ref(), female);
 }
 
@@ -153,7 +155,7 @@ fn a_fight_the_rules_no_longer_allow_is_blank() {
         from: None,
         ..shot(&ctx)
     });
-    let def = ctx.content.cinematics.get_mut("combat").unwrap();
+    let def = ctx.game.content.cinematics.get_mut("combat").unwrap();
     def.shots[0].shot = unreachable;
     let player = player(&ctx);
     assert_eq!(player.frame(&ctx, 0.5, SCREEN), Frame::Blank);

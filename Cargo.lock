@@ -1183,13 +1183,11 @@ name = "trpg-ui"
 version = "0.3.0"
 dependencies = [
  "insta",
- "once_cell",
  "proptest",
  "ron",
  "serde",
  "shuyi-assets",
  "shuyi-ui",
- "thiserror",
  "trpg-content",
  "trpg-core",
  "trpg-ui",

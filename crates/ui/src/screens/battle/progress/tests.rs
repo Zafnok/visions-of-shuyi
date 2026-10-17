@@ -39,7 +39,7 @@ fn the_leads_pages_show_the_portrait_of_their_gender() {
 }
 
 fn state() -> BattleState {
-    quick_battle(&ctx().content).unwrap()
+    quick_battle(&ctx().game.content).unwrap()
 }
 
 fn gains(g: [StatValue; 7]) -> StatGains {
@@ -303,7 +303,11 @@ fn a_class_level_alone_closes_by_itself() {
 /// What the page on screen of `pb` shows, the lead a man.
 fn shown(pb: &Progress) -> Option<ProgressView> {
     let c = ctx();
-    view(Words::ENGLISH, (&c.content.portraits, &c.lead), pb)
+    view(
+        Words::ENGLISH,
+        (&c.game.content.portraits, &c.game.lead),
+        pb,
+    )
 }
 
 #[test]
@@ -368,7 +372,7 @@ fn a_level_up_shows_the_face_of_its_portrait_or_none() {
     // The test lord's portrait, its level-up expression (or its first).
     let f = face(&pb).expect("the test lord has a portrait");
     assert_eq!(f.portrait, "test_lord");
-    let art = &c.content.portraits["test_lord"];
+    let art = &c.game.content.portraits["test_lord"];
     assert!(art.expression(&f.expression).is_some());
     let wanted = LEVEL_UP_EXPRESSIONS
         .iter()
@@ -379,7 +383,7 @@ fn a_level_up_shows_the_face_of_its_portrait_or_none() {
     let none = BTreeMap::new();
     let lead = LeadProfile::new("Ren", trpg_core::lead::LeadGender::Male);
     assert_eq!(face_of((&none, &lead), Some("test_lord")), None);
-    assert_eq!(face_of((&c.content.portraits, &lead), None), None);
+    assert_eq!(face_of((&c.game.content.portraits, &lead), None), None);
     // A portrait without any expression: none.
     let blank: BTreeMap<String, Portrait> = [(
         "test_lord".to_owned(),

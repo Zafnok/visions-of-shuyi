@@ -2,11 +2,12 @@
 //! straight on one scene, as `app` does for `--scene <id>`.
 
 use trpg_core::LeadGender;
+use trpg_ui::Ctx;
+use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::DialogueScreen;
-use trpg_ui::{Ctx, Game};
 
 /// The embedded content, with a layout saved or (a first launch) none.
 fn ctx(layout: Option<Layout>) -> Ctx {
@@ -20,7 +21,7 @@ fn ctx(layout: Option<Layout>) -> Ctx {
 /// The game opened on `scene` with the right-handed layout.
 fn preview(scene: &str, gender: LeadGender) -> Harness {
     let ctx = ctx(Some(RIGHT_HANDED));
-    let game = Game::start_on_scene(ctx, scene, gender).unwrap_or_else(|e| panic!("{e}"));
+    let game = trpg_ui::game::start_on_scene(ctx, scene, gender).unwrap_or_else(|e| panic!("{e}"));
     Harness::from_game(game)
 }
 
@@ -60,7 +61,7 @@ fn the_other_lead_can_be_asked_for() {
     let player = dialogue(&h).player();
     assert_eq!(player.lead().name, "Ellery");
     assert_eq!(player.lead().gender, LeadGender::Female);
-    assert_eq!(h.game().ctx().lead.gender, LeadGender::Female);
+    assert_eq!(h.game().ctx().game.lead.gender, LeadGender::Female);
 }
 
 #[test]
@@ -84,7 +85,7 @@ fn when_the_scene_ends_confirm_plays_it_again_and_cancel_quits() {
 
 #[test]
 fn a_first_launch_picks_a_layout_before_the_scene() {
-    let game = Game::start_on_scene(ctx(None), "ch01_intro", LeadGender::Male)
+    let game = trpg_ui::game::start_on_scene(ctx(None), "ch01_intro", LeadGender::Male)
         .unwrap_or_else(|e| panic!("{e}"));
     let mut h = Harness::from_game(game);
     assert_eq!(h.screens(), ["scene_preview", "dialogue", "layout_picker"]);
@@ -95,7 +96,7 @@ fn a_first_launch_picks_a_layout_before_the_scene() {
 
 #[test]
 fn an_unknown_scene_is_an_error_that_lists_the_scenes() {
-    let Err(error) = Game::start_on_scene(ctx(None), "ch01_intr", LeadGender::Male) else {
+    let Err(error) = trpg_ui::game::start_on_scene(ctx(None), "ch01_intr", LeadGender::Male) else {
         panic!("there is no such scene");
     };
     assert!(

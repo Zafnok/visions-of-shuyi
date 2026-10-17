@@ -16,7 +16,7 @@ use crate::harness::{FRAME_DT, Harness};
 use crate::screen::tests::ctx;
 
 fn quick() -> BattleScreen {
-    BattleScreen::new(quick_battle(&ctx().content).unwrap())
+    BattleScreen::new(quick_battle(&ctx().game.content).unwrap())
 }
 
 /// One frame of `dt` seconds with `actions`, Confirm held if `held`.
@@ -53,7 +53,7 @@ fn glyphs(buf: &GlyphBuffer) -> Vec<String> {
 fn played_directly(c: &Ctx, mut state: BattleState) -> (BattleState, Vec<Command>) {
     let mut sent = Vec::new();
     while state.phase() != Phase::Player && state.outcome().is_none() {
-        let cmd = next_command(&state, &c.content.ai).unwrap_or(Command::EndPhase);
+        let cmd = next_command(&state, &c.game.content.ai).unwrap_or(Command::EndPhase);
         state.apply(&cmd).unwrap();
         sent.push(cmd);
     }

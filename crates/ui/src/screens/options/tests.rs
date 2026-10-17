@@ -58,8 +58,8 @@ fn game_mode_and_tutorial_show_only_with_a_campaign() {
     let rows = OptionsScreen::rows(&c);
     assert_eq!(rows.len(), Row::ALL.len() - 4);
     assert!(!rows.contains(&Row::GameMode) && !rows.contains(&Row::Tutorial));
-    c.campaign_mode = Some(GameMode::Casual);
-    c.campaign_tutorial = Some(TutorialLevel::Full);
+    c.game.campaign_mode = Some(GameMode::Casual);
+    c.game.campaign_tutorial = Some(TutorialLevel::Full);
     let without_pictures: Vec<Row> = Row::ALL
         .into_iter()
         .filter(|&r| r != Row::MapLook && r != Row::MapZoom)
@@ -71,14 +71,14 @@ fn game_mode_and_tutorial_show_only_with_a_campaign() {
         .into_iter()
         .filter(|&r| r != Row::MapLook)
         .collect();
-    c.set_map_skin(crate::map_view::skin_named(&c.content, "sprite").unwrap());
+    c.set_map_skin(crate::map_view::skin_named(&c.game.content, "sprite").unwrap());
     assert_eq!(OptionsScreen::rows(&c), with_zoom);
-    c.set_map_skin(crate::map_view::skin_named(&c.content, "sprite_units").unwrap());
+    c.set_map_skin(crate::map_view::skin_named(&c.game.content, "sprite_units").unwrap());
     assert_eq!(OptionsScreen::rows(&c), without_pictures);
     // Map look and Map zoom show when the game has pictures.
-    let mut tileset = c.content.tilesets["test_units"].clone();
+    let mut tileset = c.game.content.tilesets["test_units"].clone();
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
-    c.content.tilesets.insert(tileset.id.clone(), tileset);
+    c.game.content.tilesets.insert(tileset.id.clone(), tileset);
     assert_eq!(OptionsScreen::rows(&c), Row::ALL);
 }
 
@@ -127,7 +127,7 @@ fn confirm_steps_a_setting_and_goes_round() {
     let styles: Vec<_> = (0..3)
         .map(|_| {
             press(&mut s, &mut c, &[Action::Confirm]);
-            c.settings().cursor_style
+            c.settings().game.cursor_style
         })
         .collect();
     assert_eq!(
@@ -154,17 +154,17 @@ fn the_cursor_row_offers_no_tile_glow_while_the_map_is_pictures() {
         other => panic!("{other:?}"),
     };
     let mut c = ctx();
-    c.change_settings(|s| s.cursor_style = CursorStyle::TileGlow)
+    c.change_settings(|s| s.game.cursor_style = CursorStyle::TileGlow)
         .unwrap();
     assert_eq!(value(&c, Row::Cursor), "Tile glow*");
-    c.set_map_skin(skin_named(&c.content, "sprite").unwrap());
+    c.set_map_skin(skin_named(&c.game.content, "sprite").unwrap());
     assert_eq!(value(&c, Row::Cursor), "Corners*");
-    assert_eq!(c.settings().cursor_style, CursorStyle::TileGlow);
+    assert_eq!(c.settings().game.cursor_style, CursorStyle::TileGlow);
     let mut s = on(Row::Cursor);
     let styles: Vec<_> = (0..3)
         .map(|_| {
             press(&mut s, &mut c, &[Action::Confirm]);
-            c.settings().cursor_style
+            c.settings().game.cursor_style
         })
         .collect();
     let (corners, large) = (CursorStyle::Corners, CursorStyle::LargeCorners);
@@ -172,16 +172,16 @@ fn the_cursor_row_offers_no_tile_glow_while_the_map_is_pictures() {
     assert_eq!(value(&c, Row::Cursor), "Large corners*");
     // Left and Right stop at the ends.
     press(&mut s, &mut c, &[Action::CursorRight]);
-    assert_eq!(c.settings().cursor_style, large);
+    assert_eq!(c.settings().game.cursor_style, large);
     press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
-    assert_eq!(c.settings().cursor_style, corners);
+    assert_eq!(c.settings().game.cursor_style, corners);
     // Unit pictures on glyph terrain, and glyphs: the glow is offered.
     let glyphs: Rc<dyn MapSkin> = Rc::new(GlyphSkin);
-    for skin in [skin_named(&c.content, "sprite_units").unwrap(), glyphs] {
+    for skin in [skin_named(&c.game.content, "sprite_units").unwrap(), glyphs] {
         c.set_map_skin(skin);
-        c.change_settings(|s| s.cursor_style = large).unwrap();
+        c.change_settings(|s| s.game.cursor_style = large).unwrap();
         press(&mut s, &mut c, &[Action::Confirm]);
-        assert_eq!(c.settings().cursor_style, CursorStyle::TileGlow);
+        assert_eq!(c.settings().game.cursor_style, CursorStyle::TileGlow);
         assert_eq!(value(&c, Row::Cursor), "Tile glow*");
     }
 }
@@ -335,20 +335,23 @@ fn every_setting_row_changes_its_own_setting() {
         let s = c.settings().clone();
         let changed = [
             (Row::TextSpeed, s.text_speed != before.text_speed),
-            (Row::AnimSpeed, s.anim_speed != before.anim_speed),
+            (Row::AnimSpeed, s.game.anim_speed != before.game.anim_speed),
             (
                 Row::CombatAnimations,
-                s.combat_animations != before.combat_animations,
+                s.game.combat_animations != before.game.combat_animations,
             ),
             (
                 Row::EnemyPhaseSpeed,
-                s.enemy_phase_speed != before.enemy_phase_speed,
+                s.game.enemy_phase_speed != before.game.enemy_phase_speed,
             ),
-            (Row::AutoEnd, s.auto_end_turn != before.auto_end_turn),
+            (
+                Row::AutoEnd,
+                s.game.auto_end_turn != before.game.auto_end_turn,
+            ),
             (Row::Fullscreen, s.fullscreen != before.fullscreen),
-            (Row::Cursor, s.cursor_style != before.cursor_style),
-            (Row::MapLook, s.map_look != before.map_look),
-            (Row::MapZoom, s.map_zoom != before.map_zoom),
+            (Row::Cursor, s.game.cursor_style != before.game.cursor_style),
+            (Row::MapLook, s.game.map_look != before.game.map_look),
+            (Row::MapZoom, s.game.map_zoom != before.game.map_zoom),
             (Row::Theme, s.theme != before.theme),
             (Row::MusicVolume, s.music_volume != before.music_volume),
             (Row::SoundVolume, s.sound_volume != before.sound_volume),
@@ -397,13 +400,13 @@ fn rows_show_their_values() {
         ]
     );
     c.change_settings(|s| {
-        s.cursor_style = CursorStyle::LargeCorners;
+        s.game.cursor_style = CursorStyle::LargeCorners;
         s.music_volume = 0;
         s.sound_volume = 100;
-        s.auto_end_turn = true;
+        s.game.auto_end_turn = true;
     })
     .unwrap();
-    c.campaign_mode = Some(GameMode::Classic);
+    c.game.campaign_mode = Some(GameMode::Classic);
     c.use_layout(LEFT_HANDED);
     assert_eq!(value(&c, Row::Cursor), "Large corners*");
     assert_eq!(value(&c, Row::MusicVolume), "<0/100>");
@@ -412,14 +415,14 @@ fn rows_show_their_values() {
     assert_eq!(value(&c, Row::GameMode), "Classic");
     assert_eq!(value(&c, Row::Layout), "Left-handed");
     assert_eq!(c.text(cursor_key(CursorStyle::TileGlow)), "Tile glow");
-    c.campaign_mode = Some(GameMode::Casual);
+    c.game.campaign_mode = Some(GameMode::Casual);
     assert_eq!(value(&c, Row::GameMode), "Casual");
     for (level, shown) in [
         (TutorialLevel::Full, "Full*"),
         (TutorialLevel::Short, "Short*"),
         (TutorialLevel::None, "None*"),
     ] {
-        c.campaign_tutorial = Some(level);
+        c.game.campaign_tutorial = Some(level);
         assert_eq!(value(&c, Row::Tutorial), shown);
     }
 }
@@ -429,39 +432,39 @@ fn rows_show_their_values() {
 #[test]
 fn the_tutorial_row_steps_the_level_and_leaving_keeps_or_discards_it() {
     let mut c = ctx();
-    c.campaign_mode = Some(GameMode::Classic);
-    c.campaign_tutorial = Some(TutorialLevel::Full);
+    c.game.campaign_mode = Some(GameMode::Classic);
+    c.game.campaign_tutorial = Some(TutorialLevel::Full);
     let mut s = on(Row::Tutorial);
     assert_eq!(s.help(&c), "arrows move · f change · d back");
     // Left stops at Full; right steps to Short, then None, and stops.
     press(&mut s, &mut c, &[Action::CursorLeft]);
-    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Full));
+    assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::Full));
     assert!(sounds(&mut c).is_empty());
     assert!(!s.changed(&c));
     press(&mut s, &mut c, &[Action::CursorRight]);
-    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Short));
+    assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::Short));
     assert_eq!(sounds(&mut c), ["menu_move"]);
     assert!(s.changed(&c));
     press(&mut s, &mut c, &[Action::CursorRight, Action::CursorRight]);
-    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::None));
+    assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::None));
     // Confirm goes round, like the other value rows.
     press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Full));
+    assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::Full));
     press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Short));
+    assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::Short));
     // No setting changed, but leaving still asks. Discard puts it back.
     press(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!(s.leaving(), Some(LeaveChoice::Back));
     press(&mut s, &mut c, &[Action::CursorLeft]);
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
-    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::Full));
+    assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::Full));
     // Keep keeps it.
     let mut s = on(Row::Tutorial);
     press(&mut s, &mut c, &[Action::CursorRight, Action::CursorRight]);
     press(&mut s, &mut c, &[Action::Cancel]);
     let keep = [Action::CursorLeft, Action::CursorLeft, Action::Confirm];
     assert_eq!(press(&mut s, &mut c, &keep), "Pop");
-    assert_eq!(c.campaign_tutorial, Some(TutorialLevel::None));
+    assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::None));
 }
 
 /// The view is the whole screen as data: what a skin paints.
@@ -528,7 +531,7 @@ fn the_view_says_what_the_screen_shows() {
     assert_eq!(view.question, None);
     assert_eq!(view.message.as_deref(), Some("Tips will show again"));
     // With a campaign, its mode is a row.
-    c.campaign_mode = Some(GameMode::Classic);
+    c.game.campaign_mode = Some(GameMode::Classic);
     let mode = s.view(&c).row(Row::GameMode).map(|r| r.value.clone());
     assert_eq!(mode.as_ref().and_then(ValueView::text), Some("Classic"));
 }
@@ -583,14 +586,14 @@ fn cancel_closes_the_screen() {
 #[test]
 fn classic_switches_to_casual_after_a_confirm_and_never_back() {
     let mut c = ctx();
-    c.campaign_mode = Some(GameMode::Classic);
-    c.mode_switch = ModeSwitch::Open;
+    c.game.campaign_mode = Some(GameMode::Classic);
+    c.game.mode_switch = ModeSwitch::Open;
     let mut s = on(Row::GameMode);
     assert_eq!(s.help(&c), "arrows move · f switch to Casual · d back");
     press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     // The key that asked isn't the answer.
     assert_eq!(s.asking(), Some(Question::SwitchToCasual));
-    assert_eq!(c.campaign_mode, Some(GameMode::Classic));
+    assert_eq!(c.game.campaign_mode, Some(GameMode::Classic));
     assert_eq!(s.help(&c), "f yes · d no");
     // Nothing but the answers does anything.
     press(&mut s, &mut c, &[Action::CursorDown, Action::CursorRight]);
@@ -598,19 +601,19 @@ fn classic_switches_to_casual_after_a_confirm_and_never_back() {
     // No: still Classic.
     assert_eq!(press(&mut s, &mut c, &[Action::Cancel]), "None");
     assert_eq!((s.asking(), s.message()), (None, None));
-    assert_eq!(c.campaign_mode, Some(GameMode::Classic));
+    assert_eq!(c.game.campaign_mode, Some(GameMode::Classic));
     // Yes.
     press(&mut s, &mut c, &[Action::Confirm]);
     sounds(&mut c);
     press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(c.campaign_mode, Some(GameMode::Casual));
+    assert_eq!(c.game.campaign_mode, Some(GameMode::Casual));
     assert_eq!(s.message(), Some(CASUAL_MESSAGE));
     assert_eq!(sounds(&mut c), ["menu_select"]);
     // Casual offers nothing.
     assert_eq!(s.help(&c), "arrows move · d back");
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.asking(), None);
-    assert_eq!(c.campaign_mode, Some(GameMode::Casual));
+    assert_eq!(c.game.campaign_mode, Some(GameMode::Casual));
     assert_eq!(sounds(&mut c), ["menu_cancel"]);
 }
 
@@ -618,17 +621,17 @@ fn classic_switches_to_casual_after_a_confirm_and_never_back() {
 #[test]
 fn classic_cant_switch_where_the_switch_is_closed() {
     let mut c = ctx();
-    c.campaign_mode = Some(GameMode::Classic);
+    c.game.campaign_mode = Some(GameMode::Classic);
     let mut s = on(Row::GameMode);
     assert_eq!(s.help(&c), "arrows move · d back");
     press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     assert_eq!(s.asking(), None);
-    assert_eq!(c.campaign_mode, Some(GameMode::Classic));
+    assert_eq!(c.game.campaign_mode, Some(GameMode::Classic));
     assert_eq!(s.message(), Some(MODE_AT_PREP_MESSAGE));
     assert_eq!(sounds(&mut c), ["menu_cancel", "menu_cancel"]);
     // A Casual campaign gets no such message: there is nothing to switch.
-    c.campaign_mode = Some(GameMode::Casual);
-    c.mode_switch = ModeSwitch::Open;
+    c.game.campaign_mode = Some(GameMode::Casual);
+    c.game.mode_switch = ModeSwitch::Open;
     let mut s = on(Row::GameMode);
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!((s.asking(), s.message()), (None, None));

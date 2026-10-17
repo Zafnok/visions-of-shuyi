@@ -135,6 +135,7 @@ fn long_text_is_cut_inside_the_column() {
     assert_eq!(i32::try_from(TEXT_W).unwrap() + 4, COLUMN_W);
     let mut c = ctx();
     if let Some(class) = c
+        .game
         .content
         .classes
         .classes
@@ -216,7 +217,7 @@ fn the_leads_promotion_page_shows_the_face_the_player_picked() {
     use trpg_core::lead::{LEAD_ID, LeadGender, LeadProfile};
     for (gender, face) in [(LeadGender::Male, "lead_m"), (LeadGender::Female, "lead_f")] {
         let mut c = ctx();
-        c.lead = LeadProfile::new("Ren", gender);
+        c.game.lead = LeadProfile::new("Ren", gender);
         let mut s = demo(&c, ChangeKind::Promote);
         s.unit.character = Some(CharacterId(LEAD_ID.into()));
         step(&mut s, &mut c, &[Confirm, Confirm]);

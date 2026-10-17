@@ -65,7 +65,7 @@ pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
     if let Some(opening) = &view.opening {
         buf.fill_rect(buf.bounds(), blank);
         if let Some(place) = &view.place {
-            ctx.map_skin.paint(ctx, place, buf.bounds(), buf);
+            ctx.game.map_skin.paint(ctx, place, buf.bounds(), buf);
         }
         let darkened = opening.darkened.clamp(0.0, 1.0);
         buf.fade(1.0 + (PLACE_BRIGHTNESS - 1.0) * darkened);
@@ -74,7 +74,7 @@ pub fn paint(ctx: &Ctx, view: &DialogueView, buf: &mut GlyphBuffer) {
     }
     if let Some(place) = &view.place {
         buf.fill_rect(buf.bounds(), blank);
-        ctx.map_skin.paint(ctx, place, buf.bounds(), buf);
+        ctx.game.map_skin.paint(ctx, place, buf.bounds(), buf);
         buf.fade(PLACE_BRIGHTNESS);
     } else if view.overlay {
         buf.fade(PLACE_BRIGHTNESS);
@@ -169,7 +169,7 @@ pub fn draw_face(ctx: &Ctx, buf: &mut GlyphBuffer, face: &FaceFrame) {
         )
     };
     buf.draw_box(frame, style, c(border), bg);
-    if let Some(art) = ctx.content.portraits.get(face.portrait) {
+    if let Some(art) = ctx.game.content.portraits.get(face.portrait) {
         let at = (x + 1, y + 1);
         draw_portrait(buf, at, art, face.expression, dim, face.mirror);
     }

@@ -37,7 +37,7 @@ fn plant(s: &BattleScreen, unit: UnitId, tile: Pos, enemies: &[Pos]) {
 /// The Quick Battle as it starts: the cursor on the lord at (3, 5), whom
 /// the brigand at (7, 4) can attack.
 fn quick(c: &Ctx) -> BattleScreen {
-    let state = quick_battle(&c.content).unwrap_or_else(|e| panic!("{e}"));
+    let state = quick_battle(&c.game.content).unwrap_or_else(|e| panic!("{e}"));
     BattleScreen::new(state)
 }
 

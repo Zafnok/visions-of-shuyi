@@ -150,7 +150,7 @@ fn scrolling_stops_at_both_ends() {
 #[test]
 fn every_credit_can_be_scrolled_to() {
     let mut h = credits();
-    let entries = h.game().ctx().content.credits.entries.clone();
+    let entries = h.game().ctx().game.content.credits.entries.clone();
     assert!(entries.len() > 30);
     let mut seen = String::new();
     let mut last = String::new();

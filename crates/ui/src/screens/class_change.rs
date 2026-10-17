@@ -49,7 +49,7 @@ use super::battle::skills::kind_name;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::Words;
 
@@ -124,9 +124,9 @@ pub struct ClassChangeScreen {
 /// The tables a class change reads, from the game's content.
 fn tables(ctx: &Ctx) -> ChangeTables<'_> {
     ChangeTables {
-        classes: &ctx.content.classes,
-        items: &ctx.content.items,
-        spells: &ctx.content.spells,
+        classes: &ctx.game.content.classes,
+        items: &ctx.game.content.items,
+        spells: &ctx.game.content.spells,
     }
 }
 
@@ -235,7 +235,7 @@ impl ClassChangeScreen {
     /// `MAX` shows), and a stock with one of every seal. `None` if the
     /// content has no such character.
     pub fn demo(ctx: &Ctx, kind: ChangeKind) -> Option<Self> {
-        let content = &ctx.content;
+        let content = &ctx.game.content;
         let classes = &content.classes;
         let def = content
             .characters
@@ -349,7 +349,7 @@ impl ClassChangeScreen {
         );
         self.stage = match made {
             Ok(events) => {
-                let content = &ctx.content;
+                let content = &ctx.game.content;
                 let names = ProgressTables {
                     classes: &content.classes,
                     skills: &content.skills,
@@ -394,7 +394,7 @@ impl ClassChangeScreen {
     /// stock holds: the seal's item name, or the kind if no item is one.
     fn seal_of(&self, ctx: &Ctx, class: &ClassDef) -> (String, u32) {
         let kind = self.kind.seal(class);
-        let items = &ctx.content.items;
+        let items = &ctx.game.content.items;
         let held: u32 = self
             .stock
             .items
@@ -477,7 +477,7 @@ impl ClassChangeScreen {
             Stage::Choosing => ClassChangeBody::Columns(Box::new(self.columns_view(ctx, false))),
             Stage::Confirming => ClassChangeBody::Columns(Box::new(self.columns_view(ctx, true))),
             Stage::Result(pages) => {
-                let faces = (&ctx.content.portraits, &ctx.lead);
+                let faces = (&ctx.game.content.portraits, &ctx.game.lead);
                 ClassChangeBody::Result(progress::view(ctx.words(), faces, pages).map(Box::new))
             }
             Stage::Done => ClassChangeBody::Done,
@@ -493,7 +493,7 @@ impl ClassChangeScreen {
     /// with the question if `asking`.
     fn columns_view(&self, ctx: &Ctx, asking: bool) -> ColumnsView {
         let words = ctx.words();
-        let classes = &ctx.content.classes;
+        let classes = &ctx.game.content.classes;
         let class = words.class_of(&self.unit.class, classes);
         let focused = self.focused().and_then(|o| classes.get(&o.class));
         let seal = focused.map(|class| {
@@ -541,7 +541,7 @@ impl ClassChangeScreen {
         option: &ClassOption,
         focused: bool,
     ) -> ColumnView {
-        let content = &ctx.content;
+        let content = &ctx.game.content;
         let words = ctx.words();
         let record = match (self.kind, self.unit.class_records.get(&class.id)) {
             (ChangeKind::Promote, _) => None,
@@ -589,7 +589,7 @@ impl ClassChangeScreen {
     }
 }
 
-impl Screen for ClassChangeScreen {
+impl Screen<Shuyi> for ClassChangeScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

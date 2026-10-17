@@ -64,7 +64,7 @@ fn chapter_1_with_tips(level: TutorialLevel) -> Harness {
 
 fn start_chapter_1(mut h: Harness, level: TutorialLevel, without: &[&str]) -> Harness {
     h.with_lessons();
-    let lessons = &mut h.ctx_mut().content.lessons.lessons;
+    let lessons = &mut h.ctx_mut().game.content.lessons.lessons;
     lessons.retain(|l| !without.contains(&l.id.as_str()));
     h.keys("f f").keys(downs(level)).keys("f Up f");
     skip_scenes(&mut h);

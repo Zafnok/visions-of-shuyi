@@ -180,7 +180,7 @@ proptest! {
 #[test]
 fn the_boxes_of_a_talk_shot_are_the_scenes_as_the_lead_reads_them() {
     let ctx = ctx();
-    let scene = &ctx.content.dialogue.scenes["test"];
+    let scene = &ctx.game.content.dialogue.scenes["test"];
     let got = boxes(&ctx, scene, &mara(), 6, 2);
     let lines: Vec<_> = got.iter().map(|b| b.lines().to_vec()).collect();
     assert_eq!(
@@ -200,7 +200,7 @@ fn the_boxes_of_a_talk_shot_are_the_scenes_as_the_lead_reads_them() {
     assert_eq!(boxes(&ctx, scene, &mara(), 8, 3), []);
     assert_eq!(boxes(&ctx, scene, &mara(), usize::MAX, 3), []);
     assert_eq!(boxes(&ctx, scene, &mara(), 3, 0), []);
-    let intro = &ctx.content.dialogue.scenes["test_intro"];
+    let intro = &ctx.game.content.dialogue.scenes["test_intro"];
     let all = boxes(&ctx, intro, &mara(), 0, 99);
     assert!(!all.is_empty() && all.len() < 99);
     // In the player's language.
@@ -213,7 +213,7 @@ fn the_boxes_of_a_talk_shot_are_the_scenes_as_the_lead_reads_them() {
 #[test]
 fn a_narration_box_is_drawn_as_the_dialogue_screen_draws_narration() {
     let ctx = ctx();
-    let scene = &ctx.content.dialogue.scenes["test"];
+    let scene = &ctx.game.content.dialogue.scenes["test"];
     let narration = &boxes(&ctx, scene, &mara(), 0, 1)[0];
     let p = &ctx.palette;
     let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
@@ -268,8 +268,8 @@ fn a_talk_shot_shows_the_box_and_the_text_typed_so_far() {
 fn a_talk_shot_looks_like_the_dialogue_screen_without_what_waits_for_a_key() {
     // Instant text: every Confirm is the next box.
     let mut ctx = with_speed(TextSpeed::Instant);
-    let scene = ctx.content.dialogue.scenes["test"].clone();
-    let lead = ctx.lead.clone();
+    let scene = ctx.game.content.dialogue.scenes["test"].clone();
+    let lead = ctx.game.lead.clone();
     let mut screen = DialogueScreen::told(&ctx, &scene, lead.clone(), &Present::Everyone);
     let confirm = FrameInput::new(vec![Action::Confirm], 0.0, vec![]);
     let player = CinematicPlayer::new(&ctx, "test", Some(lead)).unwrap();
@@ -310,7 +310,7 @@ fn a_talk_shot_looks_like_the_dialogue_screen_without_what_waits_for_a_key() {
 fn a_talk_shot_shows_the_lead_it_was_given() {
     let ctx = ctx();
     let portrait = |id: &str| {
-        ctx.content.portraits[id]
+        ctx.game.content.portraits[id]
             .expression("neutral")
             .unwrap()
             .image
@@ -338,7 +338,7 @@ fn a_talk_shot_shows_the_lead_it_was_given() {
 #[test]
 fn a_talk_shot_without_its_scene_or_its_boxes_is_blank() {
     let mut ctx = ctx();
-    ctx.content.dialogue.scenes.remove("test");
+    ctx.game.content.dialogue.scenes.remove("test");
     let player = player(&ctx);
     assert_eq!(player.talk_boxes(1), Some(&[][..]));
     assert_eq!(player.frame(&ctx, 7.0, SCREEN), Frame::Blank);
@@ -396,7 +396,7 @@ fn a_face_has_the_short_name_and_the_lead_the_one_given() {
     let pair = |portrait: &str, name: &str| (portrait.to_owned(), name.to_owned());
     // "Hollis Marr" is Hollis; a name without a short form is whole; an
     // id the names table lacks is shown as it is.
-    assert_eq!(ctx.content.names.get("retainer"), Some("Hollis Marr"));
+    assert_eq!(ctx.game.content.names.get("retainer"), Some("Hollis Marr"));
     assert_eq!(
         named(&mara()),
         [
@@ -443,7 +443,7 @@ fn a_characters_shot_draws_each_face_in_its_frame_over_its_name() {
     let ctx = ctx();
     let player = player(&ctx);
     let image = |id: &str| {
-        ctx.content.portraits[id]
+        ctx.game.content.portraits[id]
             .expression("neutral")
             .unwrap()
             .image
@@ -499,7 +499,7 @@ fn a_characters_shot_draws_each_face_in_its_frame_over_its_name() {
 #[test]
 fn a_characters_shot_shows_the_lead_it_was_given_and_comes_from_its_side() {
     let mut ctx = ctx();
-    let def = ctx.content.cinematics.get_mut("test").unwrap();
+    let def = ctx.game.content.cinematics.get_mut("test").unwrap();
     let Shot::Characters { from, .. } = &mut def.shots[2].shot else {
         panic!("not the characters shot");
     };
@@ -513,7 +513,7 @@ fn a_characters_shot_shows_the_lead_it_was_given_and_comes_from_its_side() {
     );
     let buf = draw(&ctx, &player, 11.73);
     let image = |id: &str| {
-        ctx.content.portraits[id]
+        ctx.game.content.portraits[id]
             .expression("neutral")
             .unwrap()
             .image
@@ -533,7 +533,7 @@ fn a_characters_shot_shows_the_lead_it_was_given_and_comes_from_its_side() {
 #[test]
 fn a_characters_shot_with_nobody_is_blank() {
     let mut ctx = ctx();
-    let def = ctx.content.cinematics.get_mut("test").unwrap();
+    let def = ctx.game.content.cinematics.get_mut("test").unwrap();
     let Shot::Characters { who, .. } = &mut def.shots[2].shot else {
         panic!("not the characters shot");
     };

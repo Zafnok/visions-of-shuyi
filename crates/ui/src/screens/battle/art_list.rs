@@ -519,7 +519,7 @@ mod tests {
     #[test]
     fn every_art_says_what_it_does() {
         let c = crate::screen::tests::ctx();
-        let arts = &c.content.arts;
+        let arts = &c.game.content.arts;
         for art in arts.arts.values() {
             let text = art_effect_text(Words::ENGLISH, art);
             assert!(!text.is_empty(), "{} has no text", art.id.0);

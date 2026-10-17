@@ -78,7 +78,7 @@ fn paint_gender(ctx: &Ctx, buf: &mut GlyphBuffer, gender: &GenderView, focused: 
     let frame = Rect::new(x, FRAME_Y, FRAME.0, FRAME.1);
     buf.fill_rect(frame, Cell::new(' ', c(UiColor::Text), bg));
     buf.draw_box(frame, style, c(border), bg);
-    if let Some(art) = ctx.content.portraits.get(gender.portrait) {
+    if let Some(art) = ctx.game.content.portraits.get(gender.portrait) {
         let dim = if gender.chosen { 0.0 } else { DIM_NOT_CHOSEN };
         let at = (x + 1, FRAME_Y + 1);
         draw_portrait(buf, at, art, gender.expression, dim, false);

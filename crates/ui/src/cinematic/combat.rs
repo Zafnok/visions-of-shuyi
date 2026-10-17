@@ -34,8 +34,8 @@ impl Duel {
     /// allow) or its battle isn't there. The scenes the attack may set off
     /// are left out: a cinematic plays only its own shots.
     pub fn new(ctx: &Ctx, shot: &CombatShot, lead: &LeadProfile) -> Option<Self> {
-        let def = ctx.content.battles.get(&shot.battle)?;
-        let fight = trpg_content::cinematic::fight(&ctx.content, shot, lead.clone()).ok()?;
+        let def = ctx.game.content.battles.get(&shot.battle)?;
+        let fight = trpg_content::cinematic::fight(&ctx.game.content, shot, lead.clone()).ok()?;
         let events: Vec<Event> = fight
             .events
             .into_iter()
@@ -47,12 +47,12 @@ impl Duel {
             .bouts()
             .first()
             .and_then(|bout| fight.after.map().tiles.get(bout.defender.pos))
-            .and_then(|id| ctx.content.terrain.display.get(*id))
+            .and_then(|id| ctx.game.content.terrain.display.get(*id))
             .map(|terrain| terrain.id.clone());
         Some(Self {
             playback,
             ground,
-            light: ctx.content.battle_look(def).light,
+            light: ctx.game.content.battle_look(def).light,
         })
     }
 

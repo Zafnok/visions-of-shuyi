@@ -14,7 +14,7 @@ fn input(actions: &[Action]) -> FrameInput {
     FrameInput::new(actions.to_vec(), 0.0, vec![])
 }
 
-fn outcome(screen: &mut dyn Screen, actions: &[Action]) -> String {
+fn outcome(screen: &mut dyn Screen<Shuyi>, actions: &[Action]) -> String {
     format!("{:?}", screen.update(&mut ctx(), &input(actions)))
 }
 
@@ -72,7 +72,7 @@ fn debug_title_offers_quick_battle() {
     );
     // Without its chapter, Quick Battle does nothing.
     let mut c = ctx();
-    c.content.chapters.clear();
+    c.game.content.chapters.clear();
     t.menu = TitleScreen::with_quick_battle(&ctx()).menu;
     let input = FrameInput::new(vec![CursorDown, Confirm], 0.0, vec![]);
     assert_eq!(format!("{:?}", t.update(&mut c, &input)), "None");
@@ -94,7 +94,7 @@ fn music_of(t: &mut TitleScreen, c: &mut Ctx, actions: &[Action]) -> Vec<String>
 }
 
 /// The sounds (not music) each update plays, as cue names.
-fn sounds_of(s: &mut dyn Screen, c: &mut Ctx, actions: &[Action]) -> Vec<String> {
+fn sounds_of(s: &mut dyn Screen<Shuyi>, c: &mut Ctx, actions: &[Action]) -> Vec<String> {
     s.update(c, &input(actions));
     c.audio
         .take()
@@ -125,7 +125,7 @@ fn title_music_plays_on_show_and_again_after_a_quick_battle() {
     let mut t = TitleScreen::with_quick_battle(&ctx());
     assert_eq!(music_of(&mut t, &mut c, &[]), [TITLE_MUSIC]);
     assert!(music_of(&mut t, &mut c, &[CursorDown]).is_empty());
-    let pool = c.content.audio.pools[QUICK_BATTLE_MUSIC_POOL].clone();
+    let pool = c.game.content.audio.pools[QUICK_BATTLE_MUSIC_POOL].clone();
     let first = music_of(&mut t, &mut c, &[Confirm]);
     assert_eq!(first.len(), 1);
     assert!(pool.contains(&first[0]), "{first:?}");
@@ -151,7 +151,7 @@ fn title_music_plays_again_after_new_game() {
 fn each_quick_battle_rolls_its_track_afresh() {
     let mut c = ctx();
     let mut t = TitleScreen::with_quick_battle(&ctx());
-    let pool = c.content.audio.pools[QUICK_BATTLE_MUSIC_POOL].clone();
+    let pool = c.game.content.audio.pools[QUICK_BATTLE_MUSIC_POOL].clone();
     let mut picked = std::collections::BTreeSet::new();
     for _ in 0..100 {
         // Down from New Game, then Confirm: Quick Battle.
@@ -171,7 +171,7 @@ fn quick_battle_tracks_follow_the_seed_and_the_count() {
     let mut t = TitleScreen::with_quick_battle(&ctx());
     for n in 0..16 {
         let cues = music_of(&mut t, &mut c, &[Action::CursorDown, Action::Confirm]);
-        let want = pick_from_pool(&c.content.audio, QUICK_BATTLE_MUSIC_POOL, 0xA5A5 ^ n);
+        let want = pick_from_pool(&c.game.content.audio, QUICK_BATTLE_MUSIC_POOL, 0xA5A5 ^ n);
         assert_eq!(cues.last().map(String::as_str), want, "battle {n}");
         t.menu = TitleScreen::with_quick_battle(&ctx()).menu;
     }
@@ -379,7 +379,7 @@ fn continue_with_a_save_that_cant_be_read_says_why() {
     );
 }
 
-fn outcome_in(screen: &mut dyn Screen, c: &mut Ctx, actions: &[Action]) -> String {
+fn outcome_in(screen: &mut dyn Screen<Shuyi>, c: &mut Ctx, actions: &[Action]) -> String {
     format!("{:?}", screen.update(c, &input(actions)))
 }
 
@@ -417,7 +417,7 @@ fn screens_cover_the_whole_buffer() {
     // its animation is over (0830).
     let mut game_over = crate::screens::GameOverScreen::new(&c, false);
     game_over.skip();
-    let screens: [&dyn Screen; 8] = [
+    let screens: [&dyn Screen<Shuyi>; 8] = [
         &TitleScreen::new(&ctx()),
         &TitleScreen::with_quick_battle(&ctx()),
         &crate::screens::ModeSelectScreen::new(&c),
@@ -457,7 +457,13 @@ fn the_first_frame_shows_the_names_the_menu_and_the_help() {
     let c = ctx();
     let t = TitleScreen::new(&c);
     let view = t.view(&c);
-    assert!(c.content.title.backdrops.contains(&view.backdrop.unwrap()));
+    assert!(
+        c.game
+            .content
+            .title
+            .backdrops
+            .contains(&view.backdrop.unwrap())
+    );
     assert_eq!(view.sparks, None);
     assert_eq!(view.prompt, None);
     assert_eq!(view.notice, None);
@@ -652,7 +658,7 @@ fn launch(c: &mut Ctx) -> Option<ImageId> {
 #[test]
 fn the_backdrop_is_picked_at_the_start_and_kept_for_the_launch() {
     let mut c = ctx();
-    let all = c.content.title.backdrops.clone();
+    let all = c.game.content.title.backdrops.clone();
     assert!(all.len() >= 2);
     let mut t = TitleScreen::new(&c);
     let picked = t.view(&c).backdrop.unwrap();
@@ -695,7 +701,7 @@ fn the_backdrop_is_picked_at_the_start_and_kept_for_the_launch() {
 #[test]
 fn the_next_launch_never_shows_the_same_backdrop() {
     let mut c = ctx();
-    let all = c.content.title.backdrops.clone();
+    let all = c.game.content.title.backdrops.clone();
     let mut seen = std::collections::BTreeSet::new();
     let mut last = None;
     for seed in 0..200 {
@@ -730,14 +736,14 @@ fn the_next_launch_never_shows_the_same_backdrop() {
 #[test]
 fn one_backdrop_is_shown_every_launch_and_none_is_none() {
     let mut c = ctx();
-    c.content.title.backdrops.truncate(1);
-    let only = c.content.title.backdrops[0];
+    c.game.content.title.backdrops.truncate(1);
+    let only = c.game.content.title.backdrops[0];
     for seed in 0..5 {
         c.music_seed = seed;
         assert_eq!(launch(&mut c), Some(only));
     }
     let mut c = ctx();
-    c.content.title.backdrops.clear();
+    c.game.content.title.backdrops.clear();
     assert_eq!(launch(&mut c), None);
     assert_eq!(c.storage.computer().read(BACKDROP_KEY), Ok(None));
 }
@@ -1040,7 +1046,7 @@ fn the_title_starts_over_when_it_is_shown_again() {
 #[test]
 fn without_a_cinematic_the_menu_stays() {
     let mut c = ctx();
-    c.content.cinematics.remove(TITLE_CINEMATIC);
+    c.game.content.cinematics.remove(TITLE_CINEMATIC);
     let mut t = TitleScreen::new(&c);
     for _ in 0..3 {
         song_tick(&mut t, &mut c, 50.0, 100.0);
@@ -1055,7 +1061,7 @@ fn without_a_cinematic_the_menu_stays() {
     // One that goes away under a playing title leaves the menu.
     let mut c = ctx();
     let mut t = in_cinematic(&mut c, 30.0);
-    c.content.cinematics.remove(TITLE_CINEMATIC);
+    c.game.content.cinematics.remove(TITLE_CINEMATIC);
     t.refresh(&c);
     song_tick(&mut t, &mut c, 31.0, 1.0);
     assert_eq!(t.phase, Phase::MENU);
@@ -1082,7 +1088,8 @@ fn the_cinematic_is_made_again_when_the_title_is_shown_again() {
         outcome_in(&mut t, &mut c, &[CursorDown, Confirm]),
         "Push(options)"
     );
-    c.content
+    c.game
+        .content
         .cinematics
         .get_mut(TITLE_CINEMATIC)
         .unwrap()
@@ -1094,7 +1101,8 @@ fn the_cinematic_is_made_again_when_the_title_is_shown_again() {
         outcome_in(&mut t, &mut c, &[CursorUp, Confirm]),
         "Push(mode_select)"
     );
-    c.content
+    c.game
+        .content
         .cinematics
         .get_mut(TITLE_CINEMATIC)
         .unwrap()

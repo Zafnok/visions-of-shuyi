@@ -25,7 +25,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::save::{self, Slot, playtime_text, slot_key};
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// The key of the question after a chapter's victory in the language
@@ -86,7 +86,7 @@ impl SavePromptScreen {
     }
 }
 
-impl Screen for SavePromptScreen {
+impl Screen<Shuyi> for SavePromptScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -157,14 +157,14 @@ impl SlotPickerScreen {
     /// the first empty slot (Nick, PR #141), so that Confirm never
     /// overwrites a save by reflex; the first slot if none is empty.
     pub fn save(ctx: &Ctx, campaign: Campaign) -> Self {
-        let slots = save::slots(&ctx.storage, &ctx.content, ctx.words());
+        let slots = save::slots(&ctx.storage, &ctx.game.content, ctx.words());
         let empty = slots.iter().position(|s| *s == Slot::Empty);
         Self::new(Purpose::Save(Box::new(campaign)), slots, empty)
     }
 
     /// The picker for loading, focused on the first slot with a save.
     pub fn load(ctx: &Ctx) -> Self {
-        let slots = save::slots(&ctx.storage, &ctx.content, ctx.words());
+        let slots = save::slots(&ctx.storage, &ctx.game.content, ctx.words());
         let saved = slots.iter().position(|s| matches!(s, Slot::Saved(_)));
         Self::new(Purpose::Load, slots, saved)
     }
@@ -424,7 +424,7 @@ pub fn army_text(ctx: &Ctx, n: usize) -> String {
     ctx.text_with(key, &[("count", &n)])
 }
 
-impl Screen for SlotPickerScreen {
+impl Screen<Shuyi> for SlotPickerScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

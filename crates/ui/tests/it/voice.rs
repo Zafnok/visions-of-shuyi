@@ -5,6 +5,7 @@
 
 use trpg_content::{LineId, Variant};
 use trpg_ui::AudioRequest;
+use trpg_ui::ShuyiCtx;
 use trpg_ui::debug::TEST_SCENE;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
@@ -12,7 +13,7 @@ use trpg_ui::input::RIGHT_HANDED;
 /// `(id, text)` of the test scene's first four lines, none of which has a
 /// token.
 fn lines(h: &Harness) -> Vec<(LineId, String)> {
-    let scene = &h.game().ctx().content.dialogue.scenes[TEST_SCENE];
+    let scene = &h.game().ctx().game.content.dialogue.scenes[TEST_SCENE];
     let lines = scene.lines();
     let pair = |l: &trpg_content::dialogue::Line| (l.id.clone(), l.text.to_owned());
     lines.iter().take(4).map(pair).collect()
@@ -117,7 +118,7 @@ fn stop_voice_reaches_the_frame_output() {
 fn frames_carry_the_voice_volume() {
     let mut ctx = trpg_ui::Ctx::embedded().unwrap();
     ctx.voice_volume = 5;
-    let mut game = trpg_ui::Game::start(ctx);
+    let mut game = trpg_ui::game::start(ctx);
     let volume = game.frame(&[], 0.0).voice_volume;
     assert!((volume - 0.5).abs() < f32::EPSILON, "{volume}");
 }

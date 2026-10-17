@@ -12,7 +12,7 @@ use crate::color::UiColor;
 use crate::console::ConsoleSpec;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, PxRect, Rect, Sprite};
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::help::{help_line, key_name};
 
 /// Left column of the title, the help line and the first picture.
@@ -50,7 +50,7 @@ fn cell_px(spec: ConsoleSpec, col: i32, row: i32) -> (i32, i32) {
     (col * cw, row * ch)
 }
 
-impl Screen for SpriteTestScreen {
+impl Screen<Shuyi> for SpriteTestScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -77,7 +77,7 @@ impl Screen for SpriteTestScreen {
         let help = help_line(&[(Some(key_name(ctx.help_keys(), Action::Cancel)), "back")]);
         buf.print(LEFT, i32::from(buf.height()) - 1, &help, dim, black);
 
-        let images = &ctx.content.images;
+        let images = &ctx.game.content.images;
         let card = images.id(TEST_CARD_PATH);
         let Some((card, info)) = card.and_then(|id| Some((id, images.info(id)?))) else {
             let missing = format!("No {}", display_path(TEST_CARD_PATH));
@@ -170,7 +170,7 @@ mod tests {
     }
 
     fn card(ctx: &Ctx) -> ImageId {
-        ctx.content.images.id(TEST_CARD_PATH).unwrap()
+        ctx.game.content.images.id(TEST_CARD_PATH).unwrap()
     }
 
     #[test]
@@ -240,7 +240,7 @@ mod tests {
     #[test]
     fn says_so_when_the_card_is_missing() {
         let mut ctx = ctx();
-        ctx.content.images.images.clear();
+        ctx.game.content.images.images.clear();
         let buf = draw(&ctx);
         assert_eq!(buf.items(), []);
         let row: String = (0..40).map(|x| buf.get(x, 2).unwrap().glyph).collect();

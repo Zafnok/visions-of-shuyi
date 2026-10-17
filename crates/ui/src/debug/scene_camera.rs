@@ -17,7 +17,7 @@ use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::input::Action;
 use crate::map_view::{CursorStyle, CursorView, MapScene};
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::help::{cursor_keys_name, help_line, key_name};
 
 /// The map shown: `assets-test/maps/test_small.map`.
@@ -119,7 +119,7 @@ fn pixel_size(buf: &GlyphBuffer) -> (u32, u32) {
 /// rectangles, to see them scale), painted by `ctx`'s map skin into a
 /// buffer just big enough. `None` without the map.
 fn map_picture(ctx: &Ctx) -> Option<Rc<GlyphBuffer>> {
-    let map = ctx.content.maps.get(MAP)?;
+    let map = ctx.game.content.maps.get(MAP)?;
     let tiles = &map.map.tiles;
     let size = (i32::from(tiles.width()), i32::from(tiles.height()));
     let mut scene = MapScene::new(Pos::new(0, 0), size);
@@ -133,10 +133,10 @@ fn map_picture(ctx: &Ctx) -> Option<Rc<GlyphBuffer>> {
         brightness: 1.0,
         style: CursorStyle::Corners,
     });
-    MapPicture::paint(ctx, ctx.map_skin.as_ref(), &scene).map(|picture| picture.scene)
+    MapPicture::paint(ctx, ctx.game.map_skin.as_ref(), &scene).map(|picture| picture.scene)
 }
 
-impl Screen for SceneCameraScreen {
+impl Screen<Shuyi> for SceneCameraScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }
@@ -268,7 +268,7 @@ mod tests {
         assert!(near(screen.centre, (112.0, 64.0)));
         assert_eq!(screen.zoom(), 1);
         // The test tileset's tiles are 24 px: 336 × 192, in whole cells.
-        ctx.map_skin = skin_named(&ctx.content, "sprite").unwrap();
+        ctx.game.map_skin = skin_named(&ctx.game.content, "sprite").unwrap();
         let screen = SceneCameraScreen::new(&ctx);
         let scene = screen.scene.as_deref().unwrap();
         assert_eq!((scene.width(), scene.height()), (42, 12));
@@ -424,7 +424,7 @@ mod tests {
     #[test]
     fn says_so_when_the_map_is_missing() {
         let mut ctx = ctx();
-        ctx.content.maps.clear();
+        ctx.game.content.maps.clear();
         let mut screen = SceneCameraScreen::new(&ctx);
         assert!(screen.scene.is_none());
         screen.update(

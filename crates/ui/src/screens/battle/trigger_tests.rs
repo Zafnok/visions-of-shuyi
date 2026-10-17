@@ -29,13 +29,13 @@ const ROGUE_AT: Pos = Pos::new(4, 5);
 fn rogue_setup(c: &Ctx, rogue_hp: StatValue) -> BattleSetup {
     let (map, mut units) = quick_units(c);
     units.truncate(6);
-    let def = &c.content.characters.characters[&CharacterId(ROGUE.into())];
-    let classes = &c.content.classes;
+    let def = &c.game.content.characters.characters[&CharacterId(ROGUE.into())];
+    let classes = &c.game.content.classes;
     let mut rogue = character_unit(
         def,
         UnitId(7),
         classes,
-        &c.content.items,
+        &c.game.content.items,
         Faction::Enemy,
         ROGUE_AT,
     )
@@ -43,7 +43,7 @@ fn rogue_setup(c: &Ctx, rogue_hp: StatValue) -> BattleSetup {
     rogue.hp = rogue_hp;
     units.push(rogue);
     BattleSetup {
-        triggers: c.content.battles[QUICK_BATTLE].triggers.clone(),
+        triggers: c.game.content.battles[QUICK_BATTLE].triggers.clone(),
 
         ..setup(c, map, units, Objective::Rout { turn_limit: None })
     }
@@ -98,7 +98,7 @@ fn a_scene_at_the_battles_start_plays_after_the_banner_and_tips_wait() {
     assert_eq!(s.queued_scene(), None);
     assert_eq!(frame(&mut s, &mut c, &[], 0.0), "None");
     // Without events, `start` is `new`.
-    let q = quick_battle(&c.content).unwrap();
+    let q = quick_battle(&c.game.content).unwrap();
     let s = BattleScreen::start(q, &[]);
     assert_eq!(s.queued_scene(), None);
     assert_eq!(s.banner(), None);
@@ -348,7 +348,7 @@ fn a_scene_in_a_combat_plays_over_the_stage_or_the_plain_box() {
     let c = ctx();
     let mut off = Harness::with_screen(Box::new(BattleScreen::new(rogue_battle(&c, 22))));
     off.ctx_mut()
-        .change_settings(|s| s.combat_animations = false)
+        .change_settings(|s| s.game.combat_animations = false)
         .unwrap();
     off.keys("f f f f f");
     assert_eq!(off.screens(), ["battle", "dialogue"]);
@@ -524,7 +524,7 @@ fn a_scene_plays_for_those_on_the_map_when_it_fired() {
     let mut c = ctx();
     let scenes = trpg_content::dialogue::from_sources(&[("t.dlg", WHO)], None, None, None, None)
         .unwrap_or_else(|e| panic!("{e:?}"));
-    c.content.dialogue.scenes.extend(scenes.scenes);
+    c.game.content.dialogue.scenes.extend(scenes.scenes);
     let trigger = |when, scene: &str| Trigger {
         when,
         scene: scene.into(),

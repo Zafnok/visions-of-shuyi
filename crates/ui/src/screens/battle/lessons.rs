@@ -6,7 +6,8 @@
 //! The battle screen decides when a lesson shows and when an item's thing
 //! was done ([`DoneWhen`]); this keeps the list. Ticks live here, not in
 //! the battle's state, so a rewind never un-ticks an item, and a finished
-//! lesson is kept with the campaign ([`Ctx::campaign_lessons`]), so it
+//! lesson is kept with the campaign
+//! ([`Shuyi::campaign_lessons`](crate::Shuyi::campaign_lessons)), so it
 //! never opens again.
 
 use crate::prelude::*;
@@ -68,8 +69,8 @@ impl LessonState {
     /// campaign's tutorial level shows it (a battle with no campaign
     /// counts as [`TutorialLevel::Full`]).
     pub fn shows(ctx: &Ctx, level: LessonLevel) -> bool {
-        ctx.lessons == Lessons::On
-            && level.shows_at(ctx.campaign_tutorial.unwrap_or(TutorialLevel::Full))
+        ctx.game.lessons == Lessons::On
+            && level.shows_at(ctx.game.campaign_tutorial.unwrap_or(TutorialLevel::Full))
     }
 
     /// Queues the lessons the fired triggers start in battle `battle`:
@@ -85,15 +86,15 @@ impl LessonState {
         if self.current() != front.as_deref() {
             self.open = false;
         }
-        if ctx.lessons == Lessons::Off {
+        if ctx.game.lessons == Lessons::Off {
             return;
         }
         self.away.retain(|(_, t)| *t == turn);
         for trigger in fired {
-            for lesson in ctx.content.lessons.for_trigger(trigger) {
+            for lesson in ctx.game.content.lessons.for_trigger(trigger) {
                 let due = Self::shows(ctx, lesson.level)
                     && lesson.starts_in(battle)
-                    && !ctx.campaign_lessons.contains(&lesson.id)
+                    && !ctx.game.campaign_lessons.contains(&lesson.id)
                     && !self.queue.iter().any(|w| w.id == lesson.id)
                     && !self.away.iter().any(|(id, _)| *id == lesson.id);
                 if due {
@@ -190,7 +191,7 @@ impl LessonState {
             return false;
         }
         if front.ticked.iter().all(|&t| t) {
-            ctx.campaign_lessons.insert(front.id.clone());
+            ctx.game.campaign_lessons.insert(front.id.clone());
             self.queue.pop_front();
             self.open = false;
         }
@@ -231,8 +232,8 @@ mod tests {
     /// A context with lessons on and `lessons` as the only ones.
     fn with(lessons: Vec<Lesson>) -> Ctx {
         let mut c = ctx();
-        c.lessons = Lessons::On;
-        c.content.lessons.lessons = lessons;
+        c.game.lessons = Lessons::On;
+        c.game.content.lessons.lessons = lessons;
         c
     }
 
@@ -280,17 +281,17 @@ mod tests {
         // No campaign: Full.
         assert_eq!(queued(&c, None), ["full", "short"]);
         assert_eq!(queued(&c, Some("test")), ["full", "short", "test"]);
-        c.campaign_tutorial = Some(TutorialLevel::Full);
+        c.game.campaign_tutorial = Some(TutorialLevel::Full);
         assert_eq!(queued(&c, Some("ch01")), ["full", "short"]);
-        c.campaign_tutorial = Some(TutorialLevel::Short);
+        c.game.campaign_tutorial = Some(TutorialLevel::Short);
         assert_eq!(queued(&c, Some("test")), ["short"]);
-        c.campaign_tutorial = Some(TutorialLevel::None);
+        c.game.campaign_tutorial = Some(TutorialLevel::None);
         assert!(queued(&c, Some("test")).is_empty());
         // Done in this campaign: never again.
-        c.campaign_tutorial = Some(TutorialLevel::Full);
-        c.campaign_lessons.insert("full".into());
+        c.game.campaign_tutorial = Some(TutorialLevel::Full);
+        c.game.campaign_lessons.insert("full".into());
         assert_eq!(queued(&c, None), ["short"]);
-        c.lessons = Lessons::Off;
+        c.game.lessons = Lessons::Off;
         assert!(queued(&c, None).is_empty());
     }
 
@@ -302,28 +303,28 @@ mod tests {
             lesson("b", LessonLevel::Short, first, &[UP]),
             lesson("c", LessonLevel::Full, first, &[UP]),
         ]);
-        c.campaign_tutorial = Some(TutorialLevel::Full);
+        c.game.campaign_tutorial = Some(TutorialLevel::Full);
         let mut s = start(&c);
         s.mark_open();
         assert!(s.tick(&mut c, UP));
         assert!(s.holds_turn());
         // Short: the open Full lesson closes unticked and not done.
-        c.campaign_tutorial = Some(TutorialLevel::Short);
+        c.game.campaign_tutorial = Some(TutorialLevel::Short);
         s.absorb(&c, None, 1);
         assert_eq!(s.current(), Some("b"));
         assert!(!s.is_open() && !s.holds_turn());
         assert_eq!(s.ticked(), [false]);
-        assert!(c.campaign_lessons.is_empty());
+        assert!(c.game.campaign_lessons.is_empty());
         // A lesson still shown stays open.
         s.mark_open();
         s.absorb(&c, None, 1);
         assert!(s.is_open());
         // None: nothing left, nothing holds the turn.
-        c.campaign_tutorial = Some(TutorialLevel::None);
+        c.game.campaign_tutorial = Some(TutorialLevel::None);
         s.absorb(&c, None, 1);
         assert!(!s.in_play() && !s.holds_turn());
         // Back up to Full: it comes back with its trigger.
-        c.campaign_tutorial = Some(TutorialLevel::Full);
+        c.game.campaign_tutorial = Some(TutorialLevel::Full);
         s.fire(first);
         s.absorb(&c, None, 1);
         assert_eq!(s.current(), Some("a"));
@@ -350,7 +351,7 @@ mod tests {
         assert_eq!(s.ticked(), [true, false]);
         assert!(s.tick(&mut c, down));
         // Done: kept with the campaign, and the next waits to be shown.
-        assert!(c.campaign_lessons.contains("a"));
+        assert!(c.game.campaign_lessons.contains("a"));
         assert_eq!(s.current(), Some("b"));
         assert!(!s.is_open() && s.ticked() == [false]);
         // A lesson with a TurnEnded item lets the turn end.
@@ -384,12 +385,12 @@ mod tests {
         assert!(s.put_away(1));
         assert!(!s.in_play());
         // Not done, and not again this turn.
-        assert!(!c.campaign_lessons.contains("unit"));
+        assert!(!c.game.campaign_lessons.contains("unit"));
         s.fire(first);
         s.absorb(&c, None, 1);
         assert!(!s.in_play());
         // A lesson that wasn't put away still comes this turn.
-        c.content.lessons.lessons.push(lesson(
+        c.game.content.lessons.lessons.push(lesson(
             "later",
             LessonLevel::Full,
             TipTrigger::FirstLowHp,
@@ -453,7 +454,7 @@ mod tests {
                 let fresh = i < n && done.len() < n && done.insert(i);
                 prop_assert_eq!(ticked, fresh);
                 prop_assert_eq!(s.current().is_none(), done.len() == n);
-                prop_assert_eq!(c.campaign_lessons.contains("a"), done.len() == n);
+                prop_assert_eq!(c.game.campaign_lessons.contains("a"), done.len() == n);
             }
         }
     }

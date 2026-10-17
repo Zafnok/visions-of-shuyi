@@ -14,7 +14,7 @@ use crate::prelude::*;
 use trpg_core::TutorialLevel;
 
 use crate::glyph_buffer::GlyphBuffer;
-use crate::screen::{Ctx, FrameInput, Screen, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::mode_select::glyph;
 use crate::screens::mode_select::view::{ModeLineView, ModeSelectView};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
@@ -102,7 +102,7 @@ impl FamiliarityScreen {
     }
 }
 
-impl Screen for FamiliarityScreen {
+impl Screen<Shuyi> for FamiliarityScreen {
     fn name(&self) -> &'static str {
         Self::NAME
     }

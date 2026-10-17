@@ -18,14 +18,20 @@ use crate::screens::battle::{BattleScreen, quick_battle};
 
 /// Every topic's title, as listed.
 fn titles(c: &Ctx) -> Vec<String> {
-    GuidesScreen::new(&c.content).view(c).topics
+    GuidesScreen::new(&c.game.content).view(c).topics
 }
 
 #[test]
 fn lessons_come_first_then_the_tips_in_their_order() {
     let c = ctx();
-    let lessons = c.content.lessons.lessons.iter().map(|l| l.title.clone());
-    let tips = c.content.tips.tips.iter().map(|t| t.title.clone());
+    let lessons = c
+        .game
+        .content
+        .lessons
+        .lessons
+        .iter()
+        .map(|l| l.title.clone());
+    let tips = c.game.content.tips.tips.iter().map(|t| t.title.clone());
     let want: Vec<String> = lessons.chain(tips).collect();
     assert_eq!(titles(&c), want);
     // The story's lessons (0457) first; the new tips are listed too.
@@ -39,7 +45,7 @@ fn lessons_come_first_then_the_tips_in_their_order() {
 #[test]
 fn a_lessons_checklist_shows_as_plain_lines_with_the_keys() {
     let c = ctx();
-    let view = GuidesScreen::new(&c.content).view(&c);
+    let view = GuidesScreen::new(&c.game.content).view(&c);
     assert_eq!(view.title, "Guides");
     assert_eq!(view.focus, 0);
     assert_eq!(view.heading, "Moving the cursor");
@@ -61,7 +67,7 @@ fn a_lessons_checklist_shows_as_plain_lines_with_the_keys() {
 fn up_and_down_move_through_the_topics_and_wrap() {
     let c = ctx();
     let n = titles(&c).len();
-    let mut g = GuidesScreen::new(&c.content);
+    let mut g = GuidesScreen::new(&c.game.content);
     assert_eq!(g.step(Action::CursorUp), GuidesEffect::Moved);
     assert_eq!(g.focus(), n - 1);
     let view = g.view(&c);
@@ -112,7 +118,7 @@ fn render(s: &BattleScreen, c: &Ctx) -> GlyphBuffer {
 
 /// The Quick Battle with the Guides list opened from the map menu.
 fn opened(c: &mut Ctx) -> BattleScreen {
-    let mut s = BattleScreen::new(quick_battle(&c.content).unwrap());
+    let mut s = BattleScreen::new(quick_battle(&c.game.content).unwrap());
     // Out of the way first: the tips on screen.
     press(&mut s, c, &[]);
     while s.shown_tip().is_some() {
@@ -135,8 +141,8 @@ fn the_map_menu_opens_it_at_every_level_and_cancel_goes_back() {
         Some(TutorialLevel::None),
     ] {
         let mut c = ctx();
-        c.tips_enabled = true;
-        c.campaign_tutorial = level;
+        c.game.tips_enabled = true;
+        c.game.campaign_tutorial = level;
         let mut s = opened(&mut c);
         let view = s.view(&c);
         let guides = view.guides.as_ref().expect("the list is open");

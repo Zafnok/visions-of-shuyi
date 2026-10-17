@@ -7,6 +7,22 @@ fn numbered(n: u32) -> String {
     format!("Player {n}")
 }
 
+/// A sample game's keys from before it had profiles: its settings, keys,
+/// a list of what the player has seen and two save slots.
+const SETTINGS_KEY: &str = "settings";
+const SEEN_KEY: &str = "tips_seen";
+
+fn keys_from_before_profiles() -> Vec<String> {
+    [SETTINGS_KEY, "keybindings", SEEN_KEY, "slot_01", "slot_30"]
+        .map(str::to_owned)
+        .to_vec()
+}
+
+/// [`load`] with the sample game's keys from before profiles.
+fn load(storage: &mut dyn Storage, numbered: impl Fn(u32) -> String) -> (Profiles, Vec<String>) {
+    super::load(storage, &keys_from_before_profiles(), numbered)
+}
+
 fn two() -> Profiles {
     let mut p = Profiles::first("Player 1");
     p.add("Mei").unwrap();
@@ -31,6 +47,16 @@ fn a_profile_key_is_a_valid_storage_key() {
         assert!(is_valid_key(&longest.key(&key)), "{key}");
         assert_eq!(ProfileId::of_key(&longest.key(&key)), Some(longest));
     }
+}
+
+#[test]
+fn a_key_fits_every_profile_only_if_its_largest_key_is_valid() {
+    // `p4294967295-` is 12 bytes: 52 are left of the 64.
+    assert!(fits_every_profile("settings"));
+    assert!(fits_every_profile(&"k".repeat(MAX_KEY_LEN - 12)));
+    assert!(!fits_every_profile(&"k".repeat(MAX_KEY_LEN - 11)));
+    assert!(!fits_every_profile("Upper"));
+    assert!(!fits_every_profile(""));
 }
 
 #[test]
@@ -262,11 +288,8 @@ fn an_unreadable_list_with_no_profile_keys_moves_the_old_ones() {
     storage.write(PROFILES_KEY, "nonsense").unwrap();
     let (p, _) = load(&mut storage, numbered);
     assert_eq!(p, Profiles::first("Player 1"));
-    let first = ProfileId::FIRST.key(TIPS_SEEN_KEY);
-    assert_eq!(
-        storage.read(&first),
-        Ok(Some(format!("old {TIPS_SEEN_KEY}")))
-    );
+    let first = ProfileId::FIRST.key(SEEN_KEY);
+    assert_eq!(storage.read(&first), Ok(Some(format!("old {SEEN_KEY}"))));
 }
 
 #[test]

@@ -246,7 +246,7 @@ fn drawn(h: &Harness, player: &CinematicPlayer, t: f32) -> GlyphBuffer {
 fn the_lead_is_the_most_recent_saves_and_the_default_without_one() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     let face = |h: &Harness, id: &str| {
-        let portrait = &h.game().ctx().content.portraits[id];
+        let portrait = &h.game().ctx().game.content.portraits[id];
         portrait.expression("neutral").unwrap().image
     };
     // What the second text box (9.5 s) and the faces with the lead in the
@@ -272,7 +272,7 @@ fn the_lead_is_the_most_recent_saves_and_the_default_without_one() {
     assert_eq!(in_faces, [face(&h, "lead_m"), face(&h, "test_lord")]);
     // A save whose lead was renamed and has the other look.
     let lead = LeadProfile::new("Mara", LeadGender::Female);
-    let campaign = new_campaign(&h.game().ctx().content, GameMode::Classic, lead);
+    let campaign = new_campaign(&h.game().ctx().game.content, GameMode::Classic, lead);
     let file = SaveFile::chapter_cleared(campaign);
     save::write(&mut h.ctx_mut().storage, &save::slot_key(4), &file).unwrap();
     let ([talk, faces], in_talk, in_faces) = shown(&h);

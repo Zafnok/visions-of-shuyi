@@ -11,7 +11,7 @@ use trpg_ui::settings::MapZoom;
 
 /// Sets the player's map zoom, as the Options screen does.
 fn at_zoom(h: &mut Harness, zoom: MapZoom) {
-    let saved = h.ctx_mut().change_settings(|s| s.map_zoom = zoom);
+    let saved = h.ctx_mut().change_settings(|s| s.game.map_zoom = zoom);
     assert_eq!(saved, Ok(()));
 }
 
@@ -57,7 +57,7 @@ const QUICK: &str = "quick";
 /// Has the Quick Battle fought in the light `light`, as its battle file's
 /// `light:` would (ticket 0438).
 fn light_quick_battle(h: &mut Harness, light: &str) {
-    let lights = &mut h.ctx_mut().content.battle_lights;
+    let lights = &mut h.ctx_mut().game.content.battle_lights;
     lights.insert(QUICK.to_owned(), light.to_owned());
 }
 

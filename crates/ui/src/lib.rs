@@ -14,6 +14,10 @@ mod prelude {
 
     #[cfg(not(feature = "std"))]
     pub use shuyi_ui::float::{Float, Round};
+
+    // The lookups every screen makes on the context, and the menu sounds.
+    pub use crate::audio::MenuSounds as _;
+    pub use crate::screen::ShuyiCtx as _;
 }
 
 pub mod audio;
@@ -51,8 +55,11 @@ pub use game::{FrameOutput, Game, RawInputEvent};
 pub use glyph_buffer::{
     Backdrop, BoxStyle, Cell, GlyphBuffer, Item, Layer, Overlay, Paint, PxRect, Rect, Sprite,
 };
-pub use screen::{Ctx, FrameInput, KeyPrompt, LoadError, Screen, ScreenStack, Transition};
-pub use settings::Settings;
+pub use screen::{
+    Ctx, FrameInput, KeyPrompt, LoadError, Screen, ScreenStack, Shuyi, ShuyiCtx, Transition,
+};
+pub use settings::{Settings, ShuyiSettings};
+pub use shuyi_ui::{GameHooks, ScreenHook};
 pub use storage::{MemoryStorage, Storage, StorageError};
 pub use trpg_content::ImageId;
 pub use words::{Language, Words};

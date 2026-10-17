@@ -11,7 +11,7 @@ use crate::storage::MemoryStorage;
 
 fn campaign(c: &Ctx) -> Campaign {
     let lead = LeadProfile::new("Mara", LeadGender::Female);
-    let mut campaign = new_campaign(&c.content, GameMode::Casual, lead);
+    let mut campaign = new_campaign(&c.game.content, GameMode::Casual, lead);
     campaign.playtime_s = 3725;
     campaign
 }
@@ -19,8 +19,8 @@ fn campaign(c: &Ctx) -> Campaign {
 /// A suspend save of the test chapter's battle, just started.
 fn suspended(c: &Ctx) -> SaveFile {
     let campaign = campaign(c);
-    let def = &c.content.battles[&c.content.chapters[&campaign.chapter].battle];
-    let (state, _) = BattleState::new(campaign.battle_setup(def, &c.content.tables()));
+    let def = &c.game.content.battles[&c.game.content.chapters[&campaign.chapter].battle];
+    let (state, _) = BattleState::new(campaign.battle_setup(def, &c.game.content.tables()));
     SaveFile::suspended(campaign, BattleHistory::new(state))
 }
 
@@ -61,7 +61,7 @@ fn a_save_round_trips_through_text() {
 #[test]
 fn support_state_survives_a_save_and_a_load() {
     let c = ctx();
-    let table = &c.content.supports;
+    let table = &c.game.content.supports;
     let id = |s: &str| CharacterId(s.into());
     let knight = SupportPair::new(id("test_lord"), id("test_knight"));
     let mage = SupportPair::new(id("test_mage"), id("test_lord"));
@@ -84,8 +84,8 @@ fn support_state_survives_a_save_and_a_load() {
     assert_eq!(points, Some(7));
     // A suspended battle holds them too, in the campaign and in the
     // battle's own state.
-    let def = &c.content.battles[&c.content.chapters[&game.chapter].battle];
-    let (state, _) = BattleState::new(game.battle_setup(def, &c.content.tables()));
+    let def = &c.game.content.battles[&c.game.content.chapters[&game.chapter].battle];
+    let (state, _) = BattleState::new(game.battle_setup(def, &c.game.content.tables()));
     let save = SaveFile::suspended(game, BattleHistory::new(state));
     let back = decode(&encode(&save).unwrap()).unwrap();
     assert_eq!(back.campaign.supports, supports);
@@ -159,31 +159,31 @@ fn a_slot_shows_the_chapter_it_goes_on_with() {
     let mut c = ctx();
     let game = campaign(&c);
     assert_eq!(game.chapter, "test");
-    let title = c.content.chapters["test"].title.clone();
+    let title = c.game.content.chapters["test"].title.clone();
     // No chapter after it yet.
     assert_eq!(
-        next_chapter_title(&c.content, Words::ENGLISH, &game),
+        next_chapter_title(&c.game.content, Words::ENGLISH, &game),
         (title.clone(), true)
     );
     // The chapter after it.
-    c.content.chapters.get_mut("test").unwrap().next = Some("quick".into());
-    let next = c.content.chapters["quick"].title.clone();
+    c.game.content.chapters.get_mut("test").unwrap().next = Some("quick".into());
+    let next = c.game.content.chapters["quick"].title.clone();
     assert_ne!(next, title);
     assert_eq!(
-        next_chapter_title(&c.content, Words::ENGLISH, &game),
+        next_chapter_title(&c.game.content, Words::ENGLISH, &game),
         (next, false)
     );
     // A next chapter the game doesn't have: as if there were none.
-    c.content.chapters.get_mut("test").unwrap().next = Some("gone".into());
+    c.game.content.chapters.get_mut("test").unwrap().next = Some("gone".into());
     assert_eq!(
-        next_chapter_title(&c.content, Words::ENGLISH, &game),
+        next_chapter_title(&c.game.content, Words::ENGLISH, &game),
         (title.clone(), true)
     );
     // A cleared chapter the game no longer has: its id.
     let mut lost = game;
     lost.chapter = "old_ch".into();
     assert_eq!(
-        next_chapter_title(&c.content, Words::ENGLISH, &lost),
+        next_chapter_title(&c.game.content, Words::ENGLISH, &lost),
         ("old_ch".to_owned(), false)
     );
 }
@@ -195,32 +195,32 @@ fn a_slots_chapter_is_titled_in_the_players_language() {
     let game = campaign(&c);
     c.lang = trpg_content::LangCode::new(trpg_content::lang::TEST).unwrap();
     assert_eq!(
-        next_chapter_title(&c.content, c.words(), &game),
+        next_chapter_title(&c.game.content, c.words(), &game),
         ("TEST CHAPTER".to_owned(), true)
     );
     // The chapter after it is one the test pack doesn't title.
-    c.content.chapters.get_mut("quick").unwrap().next = Some("test".into());
+    c.game.content.chapters.get_mut("quick").unwrap().next = Some("test".into());
     let mut quick = game.clone();
     quick.chapter = "quick".into();
     assert_eq!(
-        next_chapter_title(&c.content, c.words(), &quick),
+        next_chapter_title(&c.game.content, c.words(), &quick),
         ("TEST CHAPTER".to_owned(), false)
     );
     quick.chapter = "test".into();
-    c.content.chapters.get_mut("test").unwrap().next = Some("quick".into());
+    c.game.content.chapters.get_mut("test").unwrap().next = Some("quick".into());
     assert_eq!(
-        next_chapter_title(&c.content, c.words(), &quick),
+        next_chapter_title(&c.game.content, c.words(), &quick),
         ("Quick Battle".to_owned(), false)
     );
     // A slot read from storage is titled the same way.
     let mut storage = MemoryStorage::new();
     let save = SaveFile::chapter_cleared(game);
     write(&mut storage, &slot_key(1), &save).unwrap();
-    let Slot::Saved(summary) = slot(&storage, &c.content, c.words(), 1) else {
+    let Slot::Saved(summary) = slot(&storage, &c.game.content, c.words(), 1) else {
         panic!("no save in slot 1");
     };
     assert_eq!(summary.chapter, "Quick Battle");
-    let all = slots(&storage, &c.content, c.words());
+    let all = slots(&storage, &c.game.content, c.words());
     assert_eq!(all[0], Slot::Saved(summary));
 }
 
@@ -237,7 +237,7 @@ fn slots_are_empty_saved_or_unreadable() {
     // A battle save is never written to a slot.
     write(&mut storage, &slot_key(5), &suspended(&c)).unwrap();
 
-    let all = slots(&storage, &c.content, Words::ENGLISH);
+    let all = slots(&storage, &c.game.content, Words::ENGLISH);
     assert_eq!(all.len(), SLOTS);
     assert_eq!(all[0], Slot::Empty);
     let Slot::Saved(summary) = &all[1] else {
@@ -245,7 +245,7 @@ fn slots_are_empty_saved_or_unreadable() {
     };
     assert_eq!(
         (summary.chapter.clone(), summary.cleared),
-        next_chapter_title(&c.content, Words::ENGLISH, &game)
+        next_chapter_title(&c.game.content, Words::ENGLISH, &game)
     );
     // No chapter follows the test chapter: the slot says it is cleared.
     assert!(summary.cleared);
@@ -262,7 +262,7 @@ fn slots_are_empty_saved_or_unreadable() {
     assert_eq!(all[3], Slot::Unreadable(SaveError::Incompatible));
     assert_eq!(all[4], Slot::Unreadable(SaveError::Corrupt));
     assert!(all[5..].iter().all(|s| *s == Slot::Empty));
-    assert_eq!(slot(&storage, &c.content, Words::ENGLISH, 2), all[1]);
+    assert_eq!(slot(&storage, &c.game.content, Words::ENGLISH, 2), all[1]);
 }
 
 #[test]

@@ -18,7 +18,9 @@ use trpg_content::{FontAtlasDef, PaletteDef};
 use trpg_ui::input::{Device, PadKind};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
 use trpg_ui::screen::{IdleMotion, Keyboard, Lessons};
-use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, Game, GlyphBuffer, KeyPrompt, Palette, UiColor};
+use trpg_ui::{
+    ConsoleSizes, ConsoleSpec, Ctx, Game, GlyphBuffer, KeyPrompt, Palette, ShuyiCtx, UiColor,
+};
 
 use super::files::SdkFiles;
 use super::{
@@ -158,24 +160,24 @@ fn start_game() -> Result<Box<Running>, String> {
     // The debug tools are made of the test files, which a build without
     // `std` does not have (ADR-0057).
     ctx.debug_tools = false;
-    ctx.tips_enabled = true;
-    ctx.lessons = Lessons::On;
+    ctx.game.tips_enabled = true;
+    ctx.game.lessons = Lessons::On;
     ctx.idle_motion = IdleMotion::On;
     ctx.music_seed = u64::from(millis());
     ctx.key_prompt = KeyPrompt::Waiting;
     let mut ctx = ctx.with_storage(Box::new(FileStorage::new(SdkFiles)));
     // After the storage: loading the settings applies their colour theme.
-    ctx.palette = playdate_palette(&ctx.content.palette)?;
+    ctx.palette = playdate_palette(&ctx.game.content.palette)?;
     for warning in ctx.take_warnings() {
         log(&warning);
     }
     // The font lives as long as the game.
-    let atlas: &'static FontAtlasDef = Box::leak(Box::new(ctx.content.font.clone()));
+    let atlas: &'static FontAtlasDef = Box::leak(Box::new(ctx.game.content.font.clone()));
     let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
     let font = onebit::Font::new(atlas, bits)?;
-    let pad = PlaydatePad::new(ctx.content.keymap.stick);
+    let pad = PlaydatePad::new(ctx.game.content.keymap.stick);
     Ok(Box::new(Running {
-        game: Game::start(ctx),
+        game: trpg_ui::game::start(ctx),
         pad,
         font,
         shown: None,

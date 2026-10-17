@@ -315,7 +315,7 @@ mod tests {
     fn screen_text_is_asked_by_key_in_either_language() {
         let c = ctx();
         let code = test();
-        let words = Words::new(&c.content.lang, &code);
+        let words = Words::new(&c.game.content.lang, &code);
         assert_eq!(Words::ENGLISH.text("battle.menu.attack"), "Attack");
         assert_eq!(words.text("battle.menu.attack"), "ATTACK");
         // What the pack lacks is English.
@@ -350,7 +350,7 @@ mod tests {
     #[test]
     fn english_is_the_text_of_the_data() {
         let c = ctx();
-        let content = &c.content;
+        let content = &c.game.content;
         let english = Words::ENGLISH;
         assert!(english.is_english());
         assert!(Words::new(&content.lang, &LangCode::english()).is_english());
@@ -392,7 +392,7 @@ mod tests {
     #[test]
     fn the_test_pack_names_what_it_has_and_english_names_the_rest() {
         let c = ctx();
-        let content = &c.content;
+        let content = &c.game.content;
         let code = test();
         let words = Words::new(&content.lang, &code);
         let class = |id: &str| &content.classes.classes[&ClassId(id.to_owned())];
@@ -453,8 +453,8 @@ mod tests {
     fn people_are_named_by_the_names_table_of_the_language() {
         let c = ctx();
         let code = test();
-        let words = Words::new(&c.content.lang, &code);
-        let names = &c.content.names;
+        let words = Words::new(&c.game.content.lang, &code);
+        let names = &c.game.content.names;
         assert_eq!(words.name(names, "test_knight"), "TEST KNIGHT");
         assert_eq!(words.name(names, "test_lord"), "Test Lord");
         // Someone the table lacks shows as their id, in any language.
@@ -470,9 +470,9 @@ mod tests {
     #[test]
     fn a_unit_is_named_by_who_it_is() {
         let c = ctx();
-        let state = quick_battle(&c.content).unwrap();
+        let state = quick_battle(&c.game.content).unwrap();
         let code = test();
-        let words = Words::new(&c.content.lang, &code);
+        let words = Words::new(&c.game.content.lang, &code);
         let unit = |name: &str| state.units().iter().find(|u| u.name == name).unwrap();
         // A named character: the names table's entry for their id.
         assert_eq!(words.unit(unit("Test Knight")), "TEST KNIGHT");
@@ -492,7 +492,7 @@ mod tests {
         knight.name = "Brigand".to_owned();
         assert_eq!(words.unit(&knight), "Brigand");
         // The lead's name is the player's, whatever the pack calls anyone.
-        let lang = shouting(&c.content);
+        let lang = shouting(&c.game.content);
         let code = shout();
         let shouted = Words::new(&lang, &code);
         assert_eq!(shouted.unit(unit("Test Lord")), "TEST LORD");
@@ -507,8 +507,8 @@ mod tests {
     fn a_scene_is_told_in_the_language_for_the_leads_gender() {
         let c = ctx();
         let code = test();
-        let words = Words::new(&c.content.lang, &code);
-        let scene = c.content.dialogue.get("test").unwrap();
+        let words = Words::new(&c.game.content.lang, &code);
+        let scene = c.game.content.dialogue.get("test").unwrap();
         let last = |gender| {
             let told = words.scene(scene, gender);
             let lines = told.lines();
@@ -525,14 +525,14 @@ mod tests {
     #[test]
     fn a_kept_language_gives_the_same_words() {
         let c = ctx();
-        let lang = &c.content.lang;
+        let lang = &c.game.content.lang;
         let english = Language::default();
         assert!(english.words().is_english());
         assert_eq!(Language::new(lang, &LangCode::english()), english);
         assert_eq!(Language::new(lang, &LangCode::new("zz").unwrap()), english);
         let kept = Language::new(lang, &test());
         assert_ne!(kept, english);
-        let guard = &c.content.classes.classes[&ClassId("guard".to_owned())];
+        let guard = &c.game.content.classes.classes[&ClassId("guard".to_owned())];
         assert_eq!(kept.words().class(guard), "GUARD");
         assert_eq!(kept.clone().words().class(guard), "GUARD");
         // Whether it is already the language asked for.
@@ -543,7 +543,7 @@ mod tests {
         assert!(english.is(lang, &LangCode::new("zz").unwrap()));
         assert!(!english.is(lang, &test()));
         // The same code of other languages is another language.
-        let other = Arc::new(shouting(&c.content));
+        let other = Arc::new(shouting(&c.game.content));
         assert!(!Language::new(&other, &shout()).is(lang, &shout()));
         assert!(Language::new(&other, &shout()).is(&other, &shout()));
         assert!(!kept.is(&other, &test()));
@@ -552,7 +552,7 @@ mod tests {
     #[test]
     fn the_context_gives_the_words_of_the_language_in_use() {
         let mut c = ctx();
-        let guard = c.content.classes.classes[&ClassId("guard".to_owned())].clone();
+        let guard = c.game.content.classes.classes[&ClassId("guard".to_owned())].clone();
         assert!(c.words().is_english());
         assert_eq!(c.language(), Language::default());
         assert_eq!(c.effective_lang(), &LangCode::english());
@@ -565,7 +565,7 @@ mod tests {
         assert_eq!(c.effective_lang(), &LangCode::english());
         assert_eq!(c.words().class(&guard), "Guard");
         assert_eq!(c.language(), Language::default());
-        c.lead = LeadProfile::new("Mara", LeadGender::Female);
+        c.game.lead = LeadProfile::new("Mara", LeadGender::Female);
         assert_eq!(c.text("title.new_game"), "New Game");
     }
 }

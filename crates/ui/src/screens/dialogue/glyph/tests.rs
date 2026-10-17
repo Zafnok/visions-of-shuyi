@@ -250,15 +250,15 @@ fn the_overlay_leaves_the_rest_of_the_screen() {
 /// Chapter 1's map centred on Harrowby, as the screen's place: the whole
 /// map fits the glyph look's screen, in its middle.
 fn harrowby(c: &Ctx) -> crate::map_view::MapScene {
-    let place = crate::map_view::Place::of_map(&c.content.maps["ch01"]);
-    let view = c.map_skin.view_tiles(Rect::new(0, 0, 100, 32));
+    let place = crate::map_view::Place::of_map(&c.game.content.maps["ch01"]);
+    let view = c.game.map_skin.view_tiles(Rect::new(0, 0, 100, 32));
     place.scene(trpg_core::Pos::new(3, 12), view)
 }
 
 #[test]
 fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
     let c = ctx();
-    assert_eq!(c.map_skin.name(), "glyph");
+    assert_eq!(c.game.map_skin.name(), "glyph");
     let scene = harrowby(&c);
     let view = DialogueView {
         place: Some(scene.clone()),
@@ -271,7 +271,9 @@ fn the_place_is_painted_by_the_map_skin_darkened_under_the_talk() {
     let black = c.palette.get(UiColor::Black);
     let empty = Cell::new(' ', c.palette.get(UiColor::Text), black);
     let mut place = GlyphBuffer::new(100, 32, empty);
-    c.map_skin.paint(&c, &scene, place.bounds(), &mut place);
+    c.game
+        .map_skin
+        .paint(&c, &scene, place.bounds(), &mut place);
     place.fade(PLACE_BRIGHTNESS);
     for (x, y) in [(40, 10), (50, 20), (60, 3), (36, 16)] {
         assert_eq!(buf.get(x, y), place.get(x, y), "cell {x},{y}");
@@ -320,7 +322,9 @@ fn an_opening_shows_the_place_bright_then_darkening_without_the_talk() {
     };
     let black = c.palette.get(UiColor::Black);
     let mut place = GlyphBuffer::new(100, 32, Cell::new(' ', c.palette.get(UiColor::Text), black));
-    c.map_skin.paint(&c, &scene, place.bounds(), &mut place);
+    c.game
+        .map_skin
+        .paint(&c, &scene, place.bounds(), &mut place);
     let bright = at(0.0);
     // The place as the map skin paints it, where the frames and the text
     // box would be too: no portraits, plates or box.

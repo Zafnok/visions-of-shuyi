@@ -4,7 +4,7 @@ use super::*;
 use crate::harness::Harness;
 use crate::screen::tests::ctx;
 
-fn update(s: &mut dyn Screen, actions: &[Action]) -> String {
+fn update(s: &mut dyn Screen<Shuyi>, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
     format!("{:?}", s.update(&mut ctx(), &input))
 }

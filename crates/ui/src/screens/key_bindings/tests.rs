@@ -22,7 +22,7 @@ fn press(c: &str) -> FrameInput {
 
 /// The screen with the Debug key reserved whatever the build profile.
 fn screen(c: &Ctx) -> KeyBindingsScreen {
-    let reserved = LayoutBindings::from_def(&c.content.keymap, RIGHT_HANDED, true);
+    let reserved = LayoutBindings::from_def(&c.game.content.keymap, RIGHT_HANDED, true);
     KeyBindingsScreen::new(c).with_bindings(reserved)
 }
 
@@ -578,7 +578,7 @@ fn restore_defaults_resets_only_this_layout() {
     assert!(!s.is_asking_restore());
     assert_eq!(s.moved, None);
     assert_eq!(sounds(&mut c), [cue(MenuSound::Select)]);
-    let defaults = LayoutBindings::defaults(&c.content.keymap, RIGHT_HANDED);
+    let defaults = LayoutBindings::defaults(&c.game.content.keymap, RIGHT_HANDED);
     assert_eq!(s.bindings(), &defaults);
     let t = s.update(&mut c, &act(&[Cancel]));
     assert_eq!(format!("{t:?}"), "Pop");
@@ -1193,7 +1193,10 @@ fn leaving_is_blocked_while_a_required_action_has_no_button() {
     // The one listed higher on the screen is named.
     assert_eq!(s.message(), Some("Give Confirm a button first"));
     assert_eq!(sounds(&mut c), [cue(MenuSound::Denied)]);
-    assert_eq!(c.pad_bindings(), PadBindings::defaults(&c.content.keymap));
+    assert_eq!(
+        c.pad_bindings(),
+        PadBindings::defaults(&c.game.content.keymap)
+    );
     // From the keyboard side too: the screen shows the side that lacks one.
     s.update(&mut c, &act(&[CursorDown]));
     assert_eq!(s.message(), None);
@@ -1270,7 +1273,10 @@ fn restore_defaults_on_the_controller_side_resets_only_the_buttons() {
     assert_eq!(question.text, "Restore the default buttons?");
     assert_eq!(question.answers, "A yes / B no");
     s.update(&mut c, &act(&[Confirm]));
-    assert_eq!(s.pad_bindings(), &PadBindings::defaults(&c.content.keymap));
+    assert_eq!(
+        s.pad_bindings(),
+        &PadBindings::defaults(&c.game.content.keymap)
+    );
     assert_eq!(s.bindings(), &keys);
     assert_eq!(s.moved, None);
     // And on the keyboard side, only the keys.

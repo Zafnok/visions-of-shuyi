@@ -49,7 +49,7 @@ impl TipView {
     /// has the portrait).
     pub fn new(ctx: &Ctx, tip: &Tip) -> Self {
         let words = ctx.words();
-        let guide = ctx.content.portraits.get(GUIDE_PORTRAIT);
+        let guide = ctx.game.content.portraits.get(GUIDE_PORTRAIT);
         let face = guide
             .is_some_and(|p| p.expression(tip::face(tip)).is_some())
             .then(|| FaceView {
@@ -58,7 +58,7 @@ impl TipView {
             });
         let text = fill_placeholders(words.tip_text(tip), ctx.help_keys());
         Self {
-            title: words.name(&ctx.content.names, GUIDE_NAME).to_owned(),
+            title: words.name(&ctx.game.content.names, GUIDE_NAME).to_owned(),
             face,
             heading: words.tip_title(tip).to_owned(),
             lines: text.lines().map(str::to_owned).collect(),
@@ -105,7 +105,7 @@ impl LessonView {
     pub fn new(ctx: &Ctx, lesson: &Lesson, ticked: &[bool], clear_of: Pos) -> Self {
         let words = ctx.words();
         let keys = ctx.help_keys();
-        let guide = ctx.content.portraits.get(GUIDE_PORTRAIT);
+        let guide = ctx.game.content.portraits.get(GUIDE_PORTRAIT);
         let face = guide
             .is_some_and(|p| p.expression(lesson.face()).is_some())
             .then(|| FaceView {
@@ -122,7 +122,7 @@ impl LessonView {
         let done = items.iter().filter(|i| i.done).count();
         let progress = ctx.text_with(LESSON_PROGRESS, &[("n", &done), ("m", &items.len())]);
         Self {
-            title: words.name(&ctx.content.names, GUIDE_NAME).to_owned(),
+            title: words.name(&ctx.game.content.names, GUIDE_NAME).to_owned(),
             face,
             heading: words.lesson_title(lesson).to_owned(),
             lines: text.lines().map(str::to_owned).collect(),

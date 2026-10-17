@@ -723,7 +723,7 @@ mod tests {
 
     /// The Quick Battle's units: lord 1 (19 HP), brigand 4 (20 HP), ...
     fn units() -> Vec<Unit> {
-        quick_battle(&ctx().content).unwrap().units().to_vec()
+        quick_battle(&ctx().game.content).unwrap().units().to_vec()
     }
 
     /// The lord (19 HP) attacks brigand 4 (20 HP): hits for 8, the brigand

@@ -46,7 +46,11 @@ impl TipState {
     /// Whether tips show in `ctx`: they are on, and the campaign's
     /// tutorial level (if any) shows them (0835).
     pub fn shown_in(ctx: &Ctx) -> bool {
-        ctx.tips_enabled && ctx.campaign_tutorial.is_none_or(TutorialLevel::shows_tips)
+        ctx.game.tips_enabled
+            && ctx
+                .game
+                .campaign_tutorial
+                .is_none_or(TutorialLevel::shows_tips)
     }
 
     /// Queues the fired triggers whose tip exists and hasn't been seen
@@ -64,7 +68,7 @@ impl TipState {
             .seen
             .get_or_insert_with(|| TipsSeen::load(&ctx.storage));
         for trigger in fired {
-            let Some(tip) = ctx.content.tips.for_trigger(trigger) else {
+            let Some(tip) = ctx.game.content.tips.for_trigger(trigger) else {
                 continue;
             };
             if !seen.contains(&tip.id) && !self.queue.contains(&trigger) {
@@ -77,7 +81,7 @@ impl TipState {
     /// and saves it as seen.
     pub fn show(&mut self, trigger: Option<TipTrigger>, ctx: &mut Ctx) {
         self.on_screen = trigger;
-        let Some(tip) = trigger.and_then(|t| ctx.content.tips.for_trigger(t)) else {
+        let Some(tip) = trigger.and_then(|t| ctx.game.content.tips.for_trigger(t)) else {
             return;
         };
         let seen = self

@@ -5,11 +5,12 @@
 //! done after the battle is suspended and continued.
 
 use trpg_core::{Phase, TutorialLevel};
+use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::save::SUSPEND_KEY;
 use trpg_ui::screens::battle::BattleScreen;
-use trpg_ui::{Ctx, Game, MemoryStorage, Storage};
+use trpg_ui::{Ctx, MemoryStorage, Storage};
 
 /// The test lesson.
 const TEST_LESSON: &str = "test_cursor";
@@ -24,10 +25,14 @@ fn launch(storage: Box<dyn Storage>) -> Harness {
     let mut ctx = Ctx::embedded()
         .unwrap_or_else(|e| panic!("{e}"))
         .with_storage(storage);
-    ctx.content.new_game = trpg_content::NewGameDef::test_chapter();
+    ctx.game.content.new_game = trpg_content::NewGameDef::test_chapter();
     // The story's lessons start in any battle; theirs are in `ch01_lessons`.
-    ctx.content.lessons.lessons.retain(|l| l.id == TEST_LESSON);
-    let mut h = Harness::from_game(Game::start(ctx));
+    ctx.game
+        .content
+        .lessons
+        .lessons
+        .retain(|l| l.id == TEST_LESSON);
+    let mut h = Harness::from_game(trpg_ui::game::start(ctx));
     h.with_lessons();
     h
 }

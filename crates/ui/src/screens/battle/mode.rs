@@ -1665,7 +1665,7 @@ mod tests {
             menu,
             Select,
             p(0, 0),
-            &quick_battle(&ctx().content).unwrap(),
+            &quick_battle(&ctx().game.content).unwrap(),
         );
         assert_eq!(menu, Mode::Objective);
         // The end-turn prompt.
@@ -1698,7 +1698,7 @@ mod tests {
     /// The Quick Battle: lord 1 at (3, 5), knight 2 at (4, 6), archer 3 at
     /// (2, 4); brigands 4 at (8, 2) and 5 at (7, 4), raider 6 at (7, 1).
     fn quick() -> BattleState {
-        quick_battle(&ctx().content).unwrap()
+        quick_battle(&ctx().game.content).unwrap()
     }
 
     /// The Quick Battle with `objective`.
@@ -2662,7 +2662,7 @@ mod tests {
         let c = ctx();
         let s = skirmish(&c, 20);
         let code = trpg_content::LangCode::new(trpg_content::lang::TEST).unwrap();
-        let words = Words::new(&c.content.lang, &code);
+        let words = Words::new(&c.game.content.lang, &code);
         let menu_of = |mode: &Mode| match mode {
             Mode::ActionMenu { menu, .. } | Mode::MapMenu { menu, .. } => menu.clone(),
             _ => panic!("{mode:?}"),
@@ -2701,7 +2701,7 @@ mod tests {
 
         let c = ctx();
         let s = skirmish(&c, 20);
-        let (lang, code) = (shouting(&c.content), shout());
+        let (lang, code) = (shouting(&c.game.content), shout());
         let words = Words::new(&lang, &code);
         let Mode::ActionMenu { sel, .. } = skirmish_menu(&s) else {
             panic!("no action menu");
