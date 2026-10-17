@@ -212,6 +212,11 @@ fn rows_show_their_values() {
         s.music_volume = 0;
         s.sound_volume = 100;
         s.game.auto_end_turn = true;
+        s.game.anim_speed = AnimSpeed::Fast;
+        s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast;
+        s.game.map_look = MapLook::Glyphs;
+        s.game.map_zoom = MapZoom::X1;
+        s.theme = Theme::ALL[2];
     })
     .unwrap();
     c.game.campaign_mode = Some(GameMode::Classic);
@@ -220,6 +225,14 @@ fn rows_show_their_values() {
     assert_eq!(value(&c, Row::MusicVolume), "<0/100>");
     assert_eq!(value(&c, Row::SoundVolume), "<100/100>");
     assert_eq!(value(&c, Row::AutoEnd), "On*");
+    // Each named setting shows the value it has, not its default.
+    let named = |key: &str| format!("{}*", c.text(key));
+    assert_eq!(value(&c, Row::AnimSpeed), named(AnimSpeed::Fast.key()));
+    let fast = EnemyPhaseSpeed::Fast.key();
+    assert_eq!(value(&c, Row::EnemyPhaseSpeed), named(fast));
+    assert_eq!(value(&c, Row::MapLook), named(MapLook::Glyphs.key()));
+    assert_eq!(value(&c, Row::MapZoom), "1×*");
+    assert_eq!(value(&c, Row::Theme), named(Theme::ALL[2].key()));
     assert_eq!(value(&c, Row::GameMode), "Classic");
     assert_eq!(value(&c, Row::Layout), "Left-handed");
     assert_eq!(c.text(cursor_key(CursorStyle::TileGlow)), "Tile glow");

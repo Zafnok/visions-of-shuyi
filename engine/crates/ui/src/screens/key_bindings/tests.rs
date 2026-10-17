@@ -1377,3 +1377,18 @@ fn the_screen_says_what_it_is_and_is_found_by_type() {
     let any = s.as_any().unwrap();
     assert!(any.downcast_ref::<KeyBindingsScreen>().is_some());
 }
+
+#[test]
+fn only_the_row_after_the_actions_is_restore_defaults() {
+    let mut c = ctx();
+    let mut s = KeyBindingsScreen::new(&c, &KEY_ROWS);
+    // On an action, the second say: not Restore defaults.
+    s.update(&mut c, &act(&[CursorDown]));
+    assert_eq!(s.focus(), Some((CursorDown, 0)));
+    assert!(!s.view(&c).restore.focused);
+    // Up from the first action is the switch, up again Restore defaults.
+    s.update(&mut c, &act(&[CursorUp, CursorUp, CursorUp]));
+    assert_eq!(s.focus(), None);
+    assert!(!s.is_on_switch());
+    assert!(s.view(&c).restore.focused);
+}

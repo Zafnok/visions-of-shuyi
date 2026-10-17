@@ -31,4 +31,7 @@ exclude_re = [
     # `AudioConfig::default()`: its only mutant is the same function
     # (ticket 1112).
     "GameData::audio_config",
+    # `Plain` has no lines of its own (`NoDirective` has no values), so its
+    # `direct` can never run (ticket 1112).
+    "<impl DialogueHooks for Plain>::direct",
 ]
