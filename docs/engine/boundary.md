@@ -120,6 +120,8 @@ These are the things ADR-0063 §6 makes generic before moving anything.
     (`ui/src/harness.rs:20-28,542`). Its driver core is generic: about 750
     lines of key, pad and wait scripts, the audio and music simulation, and
     snapshots.
+    **Done in 1111:** `shuyi_ui::harness::Harness<G>` drives any game; the
+    game's `Harness` wraps it with its start-up and lookups.
 
 ## `core` (trpg-core)
 
@@ -184,7 +186,7 @@ Modules that do not import `trpg_core` at all are the first set to move:
 | `settings.rs`, `words.rs`, `tips.rs` | M | 1109: the engine's settings (text speed, fullscreen, theme, volumes, layout) are `shuyi_ui::settings`, text by key is `Ctx::text`, and `{name}` filling is `shuyi_ui::text`. The tactics settings (`ShuyiSettings`) and their saved record, the data text (`Words`), `{Cursor}`/`{Select}` and tip placement stay G or K. |
 | `dialogue.rs`, `screens/dialogue` | M | The player state machine and box are E. The lead and cast are G. |
 | `cinematic*` | M | Timeline and easing are E. Map pan and action are K. Logo, talk, characters and combat shots are G. |
-| `harness.rs` | M | See coupling 10. |
+| `harness.rs` | M → cut | 1111: the scripts, audio, music player stand-in and snapshots are `shuyi_ui::harness`. The start-up (embedded content, test chapter, title) and the lookups (`flow`, `battle`, `map_scene` and its shortcuts, map skin, tips, lessons) stay the game's. See coupling 10. |
 | `debug*` | M | The menu, glyph sampler, portrait viewer and backdrop camera are E. Promote/reclass, skin switch and scene preview are G. |
 | `screens/{key_bindings,layout_picker,options}` | M | Generic screens with this game's rows and layouts. |
 | `map_view.rs`, `map_view/scene.rs`, `map_view/glyph*`, `map_view/sprite*` | M | Tiles, rim, ranges, path, cursor, threat, autotiled ground and light are K. Units, HP bars, effect marks and `GAME_TILESET` are G. |
@@ -202,6 +204,15 @@ Modules that do not import `trpg_core` at all are the first set to move:
 
 Every one of these runs through the game's Harness. The E and K tests move
 only once the Harness can drive a toy game (1111).
+
+1111: the engine's Harness drives the toy game, and the engine has its own
+tests of what the E tests check of the engine (key bindings and fixed
+keys, controllers and help text naming the device, the first-key layout
+picker, sprite items in snapshots, the scripts, audio and music clock) in
+`engine/crates/ui/tests/it`. The game keeps its E tests unchanged: they
+test this game's screens (its title, its layout picker, its Key bindings
+screen, its debug tools), which are still the game's until those screens
+move.
 
 ## `app` (trpg-app)
 
