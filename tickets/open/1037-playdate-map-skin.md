@@ -82,6 +82,14 @@ and, if he has time, the Simulator or his Playdate. He compares them to the
 and skins to the engine, the Playdate skin is the game's skin over the
 engine's scene, as the glyph skin is.
 
+**Bought tiles and sprites (0067):** either order works. 0067 asks Nick
+whether the Playdate map uses the bought tiles and unit sprites in
+one-bit instead of glyphs. If it does, they come as a second Playdate
+map skin in their own ticket, and this glyph skin stays for builds
+without the bought art; so keep `SkinSet` and the front end's choice of
+map skin open to a second Playdate map skin, and build this one as
+written.
+
 ## Implementation steps
 
 1. Read `docs/design/playdate.md`, ADR-0038, 1032's ADR,
