@@ -447,6 +447,16 @@ Integration tests live in `crates/ui/tests/it/`, one module per file listed in
 dev-dependency on itself turns on the `harness` feature for them). Unit tests inside the crate
 can use `crate::harness::Harness` directly.
 
+The scripts, waits, audio and music clock below are the engine's Harness
+(`shuyi_ui::harness::Harness<G>`, ticket 1111), tested on the engine's toy
+game in `engine/crates/ui/tests/it/`. This game's `Harness` wraps it with
+the start-up (the embedded content, the test chapter, the title) and the
+lookups of this game (`flow()`, `battle()`, `map_scene()` and its
+shortcuts, `with_map_skin`, `with_tips`, `with_lessons`). A test of the
+engine's own behavior (key repeat, the music player's stand-in, how a
+first key opens the layout picker) goes in the engine's tests; this
+crate's tests are of this game's screens.
+
 ```rust
 use insta::assert_snapshot;
 use trpg_ui::harness::Harness;
