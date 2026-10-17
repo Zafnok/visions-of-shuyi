@@ -19,12 +19,13 @@ use shuyi_ui::toy::{self, Action, Toy, ToyCtx};
 use shuyi_ui::{FrameInput, Game, GameHooks, Screen, Transition};
 
 /// What a [`Recorder`] saw in each frame: the actions, the frame time, the
-/// buttons that went down and the text typed.
+/// buttons and the chords that went down, and the text typed.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Seen {
     actions: Vec<Action>,
     dt: f32,
     buttons: Vec<Button>,
+    chords: Vec<String>,
     text: String,
 }
 
@@ -44,6 +45,11 @@ impl Screen<Toy> for Recorder {
             actions: input.actions.clone(),
             dt: input.dt,
             buttons: input.pressed_buttons().to_vec(),
+            chords: input
+                .pressed_chords()
+                .iter()
+                .map(ToString::to_string)
+                .collect(),
             text: input.text().iter().collect(),
         });
         Transition::None

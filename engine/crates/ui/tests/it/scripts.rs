@@ -58,6 +58,21 @@ fn type_text_types_each_character_with_its_key() {
     // `H` with Shift and its release, `i` and its release, Space and its
     // release, and `é`, which has no key, alone.
     assert_eq!(text, ["H", "", "i", "", " ", "", "é"]);
+    // Shift only for the capital.
+    let chords: Vec<&[String]> = log.iter().map(|s| s.chords.as_slice()).collect();
+    let none: &[String] = &[];
+    assert_eq!(
+        chords,
+        [
+            &["Shift+h".to_owned()][..],
+            none,
+            &["i".to_owned()][..],
+            none,
+            &["Space".to_owned()][..],
+            none,
+            none,
+        ]
+    );
     // Space is a key too: the sample game's End turn.
     assert_eq!(log[4].actions, [Action::EndTurn]);
 }
