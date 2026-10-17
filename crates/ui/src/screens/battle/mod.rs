@@ -2008,7 +2008,14 @@ impl BattleScreen {
     /// it was just before the highlighted action (as it is now with nothing
     /// listed), with no flashes, ranges, cursor or path.
     pub fn scene(&self, ctx: &Ctx) -> MapScene {
-        let size = ctx.game.map_skin.view_tiles(MAP_VIEW);
+        self.scene_of_size(ctx, ctx.game.map_skin.view_tiles(MAP_VIEW))
+    }
+
+    /// [`scene`](Self::scene) for a view of `size` tiles instead of the
+    /// map area's: the screen's camera if it is that size, else one
+    /// centred on the cursor. For a picture of the map alone
+    /// (`cargo xtask frame-png --map`).
+    pub fn scene_of_size(&self, ctx: &Ctx, size: (i32, i32)) -> MapScene {
         let origin = self.camera_in(size).origin;
         // Whole milliseconds of a clock that only goes forward.
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]

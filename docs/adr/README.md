@@ -90,7 +90,8 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0080](0080-screens-the-context-and-the-frame-loop-generic-over-the-game.md) | Screens, the context and the frame loop are the engine's, generic over the game (`Ctx<G>`, `GameData`, `GameHooks`) | Accepted (1109); amends ADR-0017 and ADR-0050 |
 | [0081](0081-the-platform-shell-is-the-engines-the-game-gives-an-app-config.md) | The platform shell is the engine's (`shuyi-app`); the game gives an `AppConfig` and builds its `Game` on a `Platform` | Accepted (1110); amends ADR-0004 |
 | [0082](0082-the-playdates-bundle-leaves-out-what-it-never-reads.md) | The Playdate's bundle leaves out what it never reads (`playdate-bundle.txt`), its layer says what it left out, and a Chapter 1 test proves the list | Accepted (1036) |
-| [0083](0083-the-crank-as-buttons-and-actions-from-a-platform-menu.md) | The crank as two buttons (notches through the bindings), and actions from a platform's own menu (`Game::act`) | Accepted (1035); extends ADR-0034 and ADR-0079 |
+| [0083](0083-a-skin-set-in-the-context-picks-the-playdates-skins.md) | A skin set in the context (`SkinSet`) picks the Playdate's skins; its map skin paints the shared scene in one-bit inks | Accepted (1037); extends ADR-0038, ADR-0054, ADR-0070 §4 and ADR-0074 |
+| [0084](0084-the-crank-as-buttons-and-actions-from-a-platform-menu.md) | The crank as two buttons (notches through the bindings), and actions from a platform's own menu (`Game::act`) | Accepted (1035); extends ADR-0034 and ADR-0079 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

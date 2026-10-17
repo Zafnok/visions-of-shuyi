@@ -53,7 +53,7 @@ Each SDK update (`src/pd/entry.rs`):
    button pressed and let go between two updates counts as held for one
    frame, so a quick tap is never lost while a frame takes long. Then the
    crank's turn since the last update (`getCrankChange`, `isCrankDocked`)
-   becomes its notches' presses (`RawInputEvent::from_crank`, ADR-0083).
+   becomes its notches' presses (`RawInputEvent::from_crank`, ADR-0084).
 3. An entry of the system menu chosen since the last update goes to the
    game (`trpg_ui::game::system_menu::choose`), then `Game::frame(&events,
    dt)` runs, both on the game's own stack.
@@ -84,7 +84,7 @@ binding position `South` and B as `East`, so the default `pad` table of
 Cancel. Help text names them `A`, `B` and the D-pad. Since 1034 the
 front end uses `keymap.ron`'s `playdate` table (A + B, the B chords).
 
-**The crank** (ticket 1035, ADR-0083) is two more buttons of that pad: a
+**The crank** (ticket 1035, ADR-0084) is two more buttons of that pad: a
 notch wound back (`notch_degrees` in `keymap.ron`'s `crank`, 30) presses
 and lets go of `CrankBack`, a notch forwards `CrankForward`; the
 `playdate` table binds them to stepping the rewind. A docked crank does
@@ -95,7 +95,7 @@ nothing.
 The game adds three entries to the system menu (`src/menu.rs`): Danger
 Zone, Dialogue Log and Options, named in the player's language (renamed
 when it changes). Choosing one hands the screen on top the same action
-as in the game (ADR-0083); where that screen has nothing to do with it,
+as in the game (ADR-0084); where that screen has nothing to do with it,
 nothing happens.
 
 ## Storage
