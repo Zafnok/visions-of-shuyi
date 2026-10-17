@@ -151,7 +151,7 @@ engine feature, as the ticket's *Carve* note asked (ADR-0079):
 repository; this one is recorded here as ADR-0079 while the engine code
 is still in this repository.
 
-**Follow-up tickets.** 1059: with lessons on, the "Finding your units"
+**Follow-up tickets.** 1060 (filed as 1059, renumbered: 1059 was taken the same minute): with lessons on, the "Finding your units"
 lesson asks for Unit info, which has no Playdate button (`! not
 mapped`), so on a Playdate the lesson can't be finished and the turn
 can't end. Added to 1050's `blocked_by` and the roadmap.
