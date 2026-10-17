@@ -1,0 +1,26 @@
+# The music the Playdate build ships (ticket 1047, ADR-0083): Chapter 1's.
+#
+# `cargo xtask playdate` converts these tracks from `music/` and packs them
+# in the `.pdx`; a track not listed is not on the Playdate, and asking for
+# it plays silence. Every sound cue of `assets/audio/audio.ron` ships, so
+# sounds are not listed. A line is a music cue or a pool of
+# `assets/audio/audio.ron` (a pool ships all its tracks), with `#`
+# comments. An id that is neither stops the build.
+#
+# A test plays Chapter 1 through the front end
+# (`crates/playdate/src/chapter_1.rs`): every track it asks for must be
+# here. It does not lose, so `defeat` is listed by hand.
+
+# The title screen and its cinematic (also the credits').
+title
+
+# Chapter 1's scenes (`@music` in `assets/dialogue/ch01.dlg`).
+village_home
+dungeon_tense
+scene_sad
+talk_antagonist
+
+# Harrowby Ford (`assets/battles/ch01.ron`), its win and its loss.
+battle_bright
+victory
+defeat

@@ -1,6 +1,6 @@
 //! The platform glue (the `sdk` feature): the SDK calls through
-//! `shim/shim.c`, the allocator, the panic handler, the game's own stack
-//! and the entry points the shim calls. The only place in this crate with
+//! `shim/shim.c`, the allocator, the panic handler, the game's own stack,
+//! the sound (`sound.rs`) and the entry points the shim calls. The only place in this crate with
 //! `unsafe` (ADR-0004 rule 5).
 #![allow(unsafe_code)]
 
@@ -11,6 +11,7 @@ mod entry;
 mod files;
 mod game_stack;
 mod panic;
+mod sound;
 
 use core::ffi::{c_char, c_float, c_int, c_uint, c_void};
 

@@ -156,6 +156,10 @@ jobs:
           test -s target/playdate/VisionsOfShuyi.pdx/pdex.bin
           test -s target/playdate/VisionsOfShuyi.pdx/pdxinfo
           ls -l target/playdate/VisionsOfShuyi.pdx
+      - name: Check pdc packed the converted sounds and music (1047)
+        run: |
+          test -s target/playdate/VisionsOfShuyi.pdx/audio/sfx/menu_move.pda
+          test -s target/playdate/VisionsOfShuyi.pdx/music/new_sunrise_v1.pda
 
   docs:
     name: docs

@@ -81,6 +81,61 @@ int pd_file_mkdir(const char* path) { return pd->file->mkdir(path); }
 int pd_file_unlink(const char* name) { return pd->file->unlink(name, 0); }
 int pd_file_rename(const char* from, const char* to) { return pd->file->rename(from, to); }
 
+// --- sound (`src/pd/sound.rs`) ------------------------------------------------
+
+// A sound from the `.pdx`, loaded into memory; NULL if there is none.
+void* pd_sample_load(const char* path) { return pd->sound->sample->load(path); }
+void* pd_sampleplayer_new(void) { return pd->sound->sampleplayer->newPlayer(); }
+// Plays `sample` once at `volume` on `player`, stopping what it played.
+void pd_sampleplayer_play(void* player, void* sample, float volume)
+{
+	SamplePlayer* p = (SamplePlayer*)player;
+	pd->sound->sampleplayer->stop(p);
+	pd->sound->sampleplayer->setSample(p, (AudioSample*)sample);
+	pd->sound->sampleplayer->setVolume(p, volume, volume);
+	pd->sound->sampleplayer->play(p, 1, 1.0f);
+}
+int pd_sampleplayer_is_playing(void* player)
+{
+	return pd->sound->sampleplayer->isPlaying((SamplePlayer*)player);
+}
+
+// A file player streaming the music file at `path` in the `.pdx`; NULL if
+// there is none.
+void* pd_fileplayer_open(const char* path)
+{
+	FilePlayer* p = pd->sound->fileplayer->newPlayer();
+	if (p != NULL && !pd->sound->fileplayer->loadIntoPlayer(p, path)) {
+		pd->sound->fileplayer->freePlayer(p);
+		return NULL;
+	}
+	return p;
+}
+// Plays (or, once paused, resumes) `player`: looped for ever, or once.
+int pd_fileplayer_play(void* player, int looped)
+{
+	return pd->sound->fileplayer->play((FilePlayer*)player, looped ? 0 : 1);
+}
+void pd_fileplayer_set_volume(void* player, float volume)
+{
+	pd->sound->fileplayer->setVolume((FilePlayer*)player, volume, volume);
+}
+void pd_fileplayer_pause(void* player) { pd->sound->fileplayer->pause((FilePlayer*)player); }
+int pd_fileplayer_is_playing(void* player)
+{
+	return pd->sound->fileplayer->isPlaying((FilePlayer*)player);
+}
+float pd_fileplayer_offset(void* player) { return pd->sound->fileplayer->getOffset((FilePlayer*)player); }
+int pd_fileplayer_did_underrun(void* player)
+{
+	return pd->sound->fileplayer->didUnderrun((FilePlayer*)player);
+}
+void pd_fileplayer_close(void* player)
+{
+	pd->sound->fileplayer->stop((FilePlayer*)player);
+	pd->sound->fileplayer->freePlayer((FilePlayer*)player);
+}
+
 // --- the entry point ----------------------------------------------------------
 
 static int update(void* userdata)

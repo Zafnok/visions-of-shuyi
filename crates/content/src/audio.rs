@@ -7,14 +7,17 @@
 //! the bundle can't check them. [`load`] checks the embedded sounds only;
 //! a test checks the music folder with [`from_source`], including each
 //! track's `length_ms` against its file ([`ogg_length_ms`], ADR-0037). The
-//! Playdate's bundle leaves the sound files out until 1047 (ticket 1036):
-//! there the manifest is read, its sounds unchecked.
+//! Playdate's bundle leaves the sound files out (ticket 1036): there the
+//! manifest is read, its sounds unchecked, and the Playdate plays its own
+//! copies of the files, which its build converts and packs in the `.pdx`
+//! with the music it lists ([`playdate_music`], ticket 1047, ADR-0083).
 //!
 //! The manifest is Shuyi Engine's (`shuyi_assets::audio`, ticket 1104);
 //! this module names the game's files and folders.
 use crate::prelude::*;
 
 use alloc::borrow::Cow;
+use alloc::collections::BTreeSet;
 
 pub use shuyi_assets::audio::{
     AudioManifest, Bytes, Credit, CreditRef, Files, LENGTH_TOLERANCE_MS, LICENSES, MAX_VOLUME,
@@ -67,6 +70,59 @@ fn left_out_sound(file: &str) -> bool {
     bundle::left_out(&sound_path(file))
 }
 
+/// The music the Playdate build ships: `crates/content/playdate-music.txt`
+/// (ticket 1047, ADR-0083).
+const PLAYDATE_MUSIC: &str = include_str!("../playdate-music.txt");
+
+/// The music cues the Playdate build ships (`playdate-music.txt`,
+/// Chapter 1's): each line of the list is a music cue or a pool of
+/// `manifest`, which ships all its tracks. An id that is neither, or a
+/// sound's, is an error naming it.
+pub fn playdate_music(manifest: &AudioManifest) -> Result<BTreeSet<String>, String> {
+    let mut cues = BTreeSet::new();
+    let ids = PLAYDATE_MUSIC
+        .lines()
+        .map(|line| line.split('#').next().unwrap_or_default().trim())
+        .filter(|id| !id.is_empty());
+    for id in ids {
+        if manifest.music.contains_key(id) {
+            cues.insert(id.to_owned());
+        } else if let Some(pool) = manifest.pools.get(id) {
+            cues.extend(pool.iter().cloned());
+        } else {
+            // check-text: not player text (a build problem)
+            return Err(format!(
+                "playdate-music.txt: {id:?} is not a music cue or pool of {AUDIO_PATH}"
+            ));
+        }
+    }
+    Ok(cues)
+}
+
+/// Where the Playdate build puts the sound file named `file` in the
+/// manifest, as the SDK opens it: `audio/sfx/menu_move` for
+/// `sfx/menu_move.wav`. The SDK's `pdc` packs it as `.pda` and the SDK
+/// finds it without the extension (ADR-0083).
+pub fn playdate_sound_path(file: &str) -> String {
+    format!("{SOUND_DIR}/{}", without_extension(file))
+}
+
+/// Where the Playdate build puts the music file named `file` in the
+/// manifest, as the SDK opens it: `music/new_sunrise_v1` for
+/// `new_sunrise_v1.ogg` (as [`playdate_sound_path`]).
+pub fn playdate_music_path(file: &str) -> String {
+    format!("{MUSIC_DIR}/{}", without_extension(file))
+}
+
+/// `file` without its extension, if its last part has one.
+fn without_extension(file: &str) -> &str {
+    let name = file.rfind('/').map_or(0, |slash| slash + 1);
+    match file[name..].rfind('.') {
+        Some(dot) if dot > 0 => &file[..name + dot],
+        _ => file,
+    }
+}
+
 /// Loads and validates the embedded manifest. Music files aren't checked
 /// (see the module docs).
 pub fn load() -> Result<AudioManifest, Vec<ContentError>> {
@@ -107,6 +163,51 @@ mod tests {
             assert!(m.is_ok(), "{m:?}");
             assert!(m.is_ok_and(|m| m.sounds.values().any(|s| s.files.iter().any(|f| f == heal))));
         });
+    }
+
+    /// Chapter 1's tracks, a pool as all its tracks, and nothing else.
+    #[test]
+    fn the_playdates_music_is_chapter_1s() {
+        let m = load().unwrap_or_default();
+        let cues = playdate_music(&m).unwrap_or_else(|e| panic!("{e}"));
+        for cue in ["title", "battle_bright", "defeat", "village_home"] {
+            assert!(cues.contains(cue), "{cue}: {cues:?}");
+        }
+        assert!(m.pools["victory"].iter().all(|cue| cues.contains(cue)));
+        assert!(!cues.contains("victory"), "a pool is its tracks");
+        assert!(!cues.contains("battle_epic_a"), "not Chapter 1's");
+        assert!(cues.iter().all(|cue| m.music.contains_key(cue)));
+    }
+
+    #[test]
+    fn an_id_the_playdates_list_does_not_know_is_an_error() {
+        let mut m = load().unwrap_or_default();
+        m.music.remove("title");
+        assert_eq!(
+            playdate_music(&m),
+            Err(
+                "playdate-music.txt: \"title\" is not a music cue or pool of audio/audio.ron"
+                    .to_owned()
+            )
+        );
+    }
+
+    #[test]
+    fn the_playdates_paths_drop_the_extension() {
+        assert_eq!(
+            playdate_sound_path("sfx/menu_move.wav"),
+            "audio/sfx/menu_move"
+        );
+        assert_eq!(playdate_sound_path("sfx/a.b.ogg"), "audio/sfx/a.b");
+        assert_eq!(
+            playdate_music_path("new_sunrise_v1.ogg"),
+            "music/new_sunrise_v1"
+        );
+        // Nothing to drop: no extension, a dot only in a folder, a name
+        // that starts with its dot.
+        assert_eq!(playdate_music_path("theme"), "music/theme");
+        assert_eq!(playdate_sound_path("v1.2/hit"), "audio/v1.2/hit");
+        assert_eq!(playdate_sound_path("sfx/.hidden"), "audio/sfx/.hidden");
     }
 
     #[test]

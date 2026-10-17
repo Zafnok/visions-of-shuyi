@@ -4,7 +4,9 @@
 //! reading the bundle the Playdate embeds (`trpg_content::bundle::
 //! playdate_layers`). Every file the game reads must be in that bundle,
 //! and every file in it must be read: the bundle holds what the Playdate
-//! uses and nothing more (`crates/content/playdate-bundle.txt`).
+//! uses and nothing more (`crates/content/playdate-bundle.txt`). Every
+//! track it asks for must be one the Playdate's build ships
+//! (`crates/content/playdate-music.txt`, ticket 1047).
 //!
 //! The battle is won with the commands of the PC's playthrough test
 //! (`crates/ui/tests/it/ch01_winnable.rs`); the screens around it are
@@ -12,9 +14,12 @@
 
 use std::cell::RefCell;
 
+use trpg_content::audio;
 use trpg_content::bundle::{self, Bundle};
+use trpg_content::{MusicLine, Step};
 use trpg_core::{BattleState, Command, Outcome, Phase, next_command};
 use trpg_ui::MemoryStorage;
+use trpg_ui::audio::MusicCommand;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::PadKind;
 use trpg_ui::screen::Lessons;
@@ -62,8 +67,9 @@ fn send(h: &mut Harness, command: &Command) {
     battle.unwrap_or_else(|| panic!("no battle")).send(command);
 }
 
-/// The front end's start, then Chapter 1 from New Game to the title.
-fn play_chapter_1() {
+/// The front end's start, then Chapter 1 from New Game to the title;
+/// returns the music cues it started and those its scenes name.
+fn play_chapter_1() -> Vec<String> {
     // The card's font comes first, as on the device.
     card::font().unwrap_or_else(|e| panic!("{e}"));
     let mut ctx = start::context(Box::new(MemoryStorage::new()), 1)
@@ -123,6 +129,23 @@ fn play_chapter_1() {
     assert_eq!(h.screens(), ["title", "to_be_continued"]);
     h.pad("South");
     assert_eq!(h.screens(), ["title"]);
+    // What it started, and what the scenes it skipped would have: every
+    // `@music` of the Playdate's scenes.
+    let started = h
+        .music_commands()
+        .iter()
+        .filter_map(|command| match command {
+            MusicCommand::Start { cue } => Some(cue.clone()),
+            _ => None,
+        });
+    let scenes = h.game().ctx().game.content.dialogue.scenes.values();
+    let in_scenes = scenes
+        .flat_map(|scene| &scene.steps)
+        .filter_map(|step| match step {
+            Step::Music(MusicLine::Cue(cue)) => Some(cue.clone()),
+            _ => None,
+        });
+    started.chain(in_scenes).collect()
 }
 
 /// The only test here that sets the bundle's watcher: it is process-wide.
@@ -131,7 +154,7 @@ fn chapter_1_plays_through_on_the_playdates_bundle_which_holds_only_what_it_read
     assert!(bundle::watch(note).is_ok());
     let playdate: &'static Bundle = Box::leak(Box::new(Bundle::new(bundle::playdate_layers())));
     SEEN.set(Some(Vec::new()));
-    bundle::reading(playdate, play_chapter_1);
+    let tracks = bundle::reading(playdate, play_chapter_1);
     let seen = SEEN.take().unwrap_or_default();
     // The story's files, as a build that ships has them.
     let story = Bundle::new(bundle::layers());
@@ -154,5 +177,19 @@ fn chapter_1_plays_through_on_the_playdates_bundle_which_holds_only_what_it_read
         unread.is_empty(),
         "the Playdate's bundle holds files it never reads; list them in \
          crates/content/playdate-bundle.txt: {unread:?}"
+    );
+    let manifest = audio::load().unwrap_or_else(|e| panic!("{e:?}"));
+    let shipped = audio::playdate_music(&manifest).unwrap_or_else(|e| panic!("{e}"));
+    for cue in ["title", "battle_bright", "village_home"] {
+        assert!(tracks.iter().any(|t| t == cue), "{cue}: {tracks:?}");
+    }
+    let silent: Vec<&String> = tracks
+        .iter()
+        .filter(|cue| !shipped.contains(*cue))
+        .collect();
+    assert!(
+        silent.is_empty(),
+        "Chapter 1 plays these tracks, which the Playdate's build does not \
+         ship (crates/content/playdate-music.txt): {silent:?}"
     );
 }
