@@ -255,8 +255,8 @@ analog sticks (today they are four digital directions).
 
 | Subcommand | Side | Ship with the engine? |
 | ---------- | ---- | --------------------- |
-| `frame-png` | E | **Yes, first.** Headless screenshots of any scripted frame, for agents. |
-| `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets` | E | Yes. Paths become arguments or a config file. |
+| `frame-png` | E | **Done (1117):** `shuyi-cli`, with the game's Harness from its tool program (`GameTools`). |
+| `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets` | E | **Done (1117):** `shuyi-cli`; paths and settings in the game's `shuyi.ron`. The old `cargo xtask` names forward to it. |
 | `lines`, `check-script` | E | Yes, with the dialogue format. |
 | `test-card`, `voice-test-clips` | E | Fixtures for the engine's own tests. |
 | `ticket-lint`, `clean-merged-targets` | E | No. These are our repository's workflow. |

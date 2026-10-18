@@ -80,7 +80,7 @@ jobs:
           persist-credentials: false
       - run: rustup show
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - run: cargo xtask web --release
+      - run: cargo shuyi web --release
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: web
@@ -233,13 +233,13 @@ jobs:
           fi
       # No key hard-coded in game code or player text (keyboard-input skill).
       - name: Check for hard-coded keys
-        run: cargo xtask check-keys
+        run: cargo shuyi check-keys
       # Nothing of the game in engine/ (ADR-0063 §4).
       - name: Check the engine boundary
         run: cargo xtask check-engine-boundary
       # No new screen text written as a string literal (ADR-0045).
       - name: Check for screen text written as literals
-        run: cargo xtask check-text
+        run: cargo shuyi check-text
 
   # Single required check for this workflow. Matrix jobs skipped by `if:`
   # report one check with an unexpanded name, never the per-leg names, so

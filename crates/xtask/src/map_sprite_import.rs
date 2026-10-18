@@ -25,9 +25,9 @@ pub const USAGE: &str = "usage: cargo xtask map-sprite-import [--list]\n\n\
 Copies each bought map sprite the game uses from\n\
 assets-private/library/tiny-tales/characters/ to assets-private/game/units/<name>.png.\n\
 --list  print which sprite each class and character gets, and copy nothing\n\n\
-Run `cargo xtask private-assets --library` first. Afterwards run\n\
+Run `cargo shuyi private-assets --library` first. Afterwards run\n\
 `cargo xtask tileset-import`, which writes the tileset that names them; commit and\n\
-push in assets-private/; then run `cargo xtask private-assets --pin`.";
+push in assets-private/; then run `cargo shuyi private-assets --pin`.";
 
 /// The sorted bought characters, relative to the repo root.
 pub const LIBRARY_DIR: &str = "assets-private/library/tiny-tales/characters";
@@ -198,7 +198,7 @@ pub fn run(root: &Path, sprites: &[MapSprite]) -> Result<String, String> {
     let library = root.join(LIBRARY_DIR);
     if !library.is_dir() || !root.join(GAME_DIR).is_dir() {
         return Err(format!(
-            "{LIBRARY_DIR}/ or {GAME_DIR}/ is missing: run `cargo xtask private-assets --library` first"
+            "{LIBRARY_DIR}/ or {GAME_DIR}/ is missing: run `cargo shuyi private-assets --library` first"
         ));
     }
     let mut files: Vec<(&str, Vec<u8>)> = Vec::new();
@@ -352,7 +352,7 @@ mod tests {
         let bare = std::env::temp_dir().join(format!("xtask-msi-bare-{}", std::process::id()));
         let err = run(&bare, &TWO).unwrap_err();
         assert!(
-            err.contains("cargo xtask private-assets --library"),
+            err.contains("cargo shuyi private-assets --library"),
             "{err}"
         );
         let root = root("map-sprite-import-bad");

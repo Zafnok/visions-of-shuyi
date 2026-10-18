@@ -17,7 +17,7 @@ use trpg_content::bundle::{self, test_display_path};
 use trpg_content::font::ATLAS_PNG_PATH;
 use trpg_content::{FontAtlasDef, TerrainDef, class};
 
-use crate::font_atlas::{decode_png, encode_png};
+use shuyi_cli::codec::{decode_png, encode_png};
 
 /// The tileset's id.
 pub const ID: &str = "test";

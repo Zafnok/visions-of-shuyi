@@ -42,7 +42,7 @@ What the game shows:
 | has a key English doesn't have (`ui.ron`, `data.ron`) | | **yes** |
 | is for a dialogue line English no longer has (**orphan**) | nothing | no |
 
-So editing English never blocks a PR. `cargo xtask lang-status <code>`
+So editing English never blocks a PR. `cargo shuyi lang-status <code>`
 lists what is missing, stale and orphaned; it pairs each orphan with the
 untranslated line of its scene whose English is nearest, with the old
 translation, so a reworded line is quick to redo.

@@ -1,19 +1,20 @@
 //! Repo tooling commands. See CLAUDE.md.
 //!
+//! The generic tools moved to Shuyi Engine's `shuyi-cli` (ticket 1117):
+//! `cargo shuyi <command>`. Their old names here forward to it, with this
+//! game's tools ([`game_tools::Trpg`]); xtask is also the game's tool
+//! program `cargo shuyi` runs for `frame-png` and `lang-status`.
+//!
 //! A CLI tool prints to stdout by design, so `print_stdout` is allowed here.
 #![allow(clippy::print_stdout)]
 
 mod battler_import;
-mod check_keys;
 mod check_script;
-mod check_text;
 mod clean_targets;
 mod effect_marks;
 mod engine_boundary;
-mod font_atlas;
-mod frame_png;
+mod game_tools;
 mod icon;
-mod lang_status;
 mod lines;
 mod map_sprite_import;
 mod playdate;
@@ -21,7 +22,6 @@ mod playdate_audio;
 mod playdate_images;
 mod playtest;
 mod portrait_import;
-mod private_assets;
 mod sfx;
 mod test_auto;
 mod test_card;
@@ -32,7 +32,6 @@ mod tileset_import;
 mod tileset_ron;
 mod title_art;
 mod voice_test;
-mod web;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -42,16 +41,9 @@ use std::time::SystemTime;
 const USAGE: &str = "usage: cargo xtask <command>\n\n\
 available commands:\n  \
 ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n  \
-check-keys                         fail on keys hard-coded in game code or text\n  \
-check-text                         count screen text still written as literals in crates/ui,\n  \
-                                   and fail on a screen that reads a data name itself\n  \
 check-engine-boundary              fail when engine/ names or depends on the game (ADR-0063)\n  \
-lang-status <code> [--only ui|data|dialogue] [--file <dlg>]\n  \
-                                   list a language pack's missing, stale and orphaned text\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
-font-atlas <font.bdf>... <out-dir> build the font atlas from BDF fonts\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
-frame-png <out.png> [steps]        render a scripted game frame to a PNG (frame-png --help)\n  \
 test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
 effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
@@ -60,14 +52,15 @@ map-sprite-import [--list]         copy the bought map sprites the game uses int
 battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \
 tileset-import [--list]            pack the bought terrain tiles and write the game's tileset there\n  \
 playtest <battle-id> [options]     a bot plays a battle many times and reports (playtest --help)\n  \
-private-assets [--library | --pin] fetch the bought art into assets-private/ (ADR-0040)\n  \
 portrait-import <busts> <id>       cut bought busts into portraits (portrait-import --help)\n  \
 lines [scene]                      list every dialogue line with its line id (lines --help)\n  \
 voice-test-clips                   make the tone clips that test voice playback (needs ffmpeg)\n  \
-web [--release] [--debug-tools] [--private-assets]\n                                     build and package the web (WASM) shell into dist/web/\n  \
 playdate [--release] [--bench] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx\n                                     (--bench: the build that times the renderer, its own .pdx)
   playdate-images                    write the Playdate's one-bit pictures to look at, into
-                                     target/playdate/images/ (and the bought ones' into assets-private/)";
+                                     target/playdate/images/ (and the bought ones' into assets-private/)
+
+moved to Shuyi's tools, `cargo shuyi <command>` (these names still run them):
+  check-keys, check-text, lang-status, font-atlas, frame-png, web, private-assets";
 
 fn main() -> ExitCode {
     ExitCode::from(dispatch(env::args().skip(1)))
@@ -77,19 +70,17 @@ fn main() -> ExitCode {
 /// `ExitCode` so it's directly comparable in tests.
 fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
     match args.next().as_deref() {
+        Some(
+            name @ ("check-keys" | "check-text" | "lang-status" | "font-atlas" | "frame-png"
+            | "web" | "private-assets"),
+        ) => shuyi(name, args),
         Some("ticket-lint") => ticket_lint(&args.collect::<Vec<_>>()),
-        Some("check-keys") => check_keys(&args.collect::<Vec<_>>()),
-        Some("check-text") => check_text(&args.collect::<Vec<_>>()),
         Some("check-engine-boundary") => check_engine_boundary(&args.collect::<Vec<_>>()),
-        Some("lang-status") => lang_status(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
-        Some("font-atlas") => font_atlas(&args.collect::<Vec<_>>()),
         Some("icon") => icon(&args.collect::<Vec<_>>()),
-        Some("web") => web(&args.collect::<Vec<_>>()),
         Some("playdate") => playdate(&args.collect::<Vec<_>>()),
         Some("playdate-images") => playdate_images_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("sfx") => sfx(&args.collect::<Vec<_>>()),
-        Some("frame-png") => frame_png(&args.collect::<Vec<_>>()),
         Some("test-card") => test_card(&args.collect::<Vec<_>>()),
         Some("test-tileset") => test_tileset(&args.collect::<Vec<_>>()),
         Some("effect-marks") => effect_marks(&args.collect::<Vec<_>>()),
@@ -98,7 +89,6 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("battler-import") => battler_import_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("tileset-import") => tileset_import(&args.collect::<Vec<_>>()),
         Some("playtest") => playtest(&args.collect::<Vec<_>>()),
-        Some("private-assets") => private_assets(&args.collect::<Vec<_>>()),
         Some("portrait-import") => portrait_import(&args.collect::<Vec<_>>()),
         Some("lines") => lines(&args.collect::<Vec<_>>()),
         Some("check-script") => check_script(&args.collect::<Vec<_>>()),
@@ -113,6 +103,20 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
             2
         }
     }
+}
+
+/// Runs `command` of Shuyi's tools (ticket 1117) with `args` on this
+/// repository, with the game's tools.
+fn shuyi(command: &str, args: impl Iterator<Item = String>) -> u8 {
+    let project = match shuyi_cli::Project::load(&repo_root()) {
+        Ok(project) => project,
+        Err(e) => {
+            eprintln!("{e}");
+            return 2;
+        }
+    };
+    let args: Vec<String> = std::iter::once(command.to_owned()).chain(args).collect();
+    shuyi_cli::run(&project, &args, Some(&game_tools::Trpg))
 }
 
 fn ticket_lint(args: &[String]) -> u8 {
@@ -139,23 +143,6 @@ fn ticket_lint(args: &[String]) -> u8 {
     1
 }
 
-fn check_keys(args: &[String]) -> u8 {
-    if !args.is_empty() {
-        eprintln!("usage: cargo xtask check-keys");
-        return 2;
-    }
-    let errors = check_keys::run(&repo_root());
-    if errors.is_empty() {
-        println!("check-keys: OK");
-        return 0;
-    }
-    eprintln!("check-keys: {} hard-coded key(s)", errors.len());
-    for error in &errors {
-        eprintln!("  {error}");
-    }
-    1
-}
-
 fn check_engine_boundary(args: &[String]) -> u8 {
     if !args.is_empty() {
         eprintln!("usage: cargo xtask check-engine-boundary");
@@ -171,64 +158,6 @@ fn check_engine_boundary(args: &[String]) -> u8 {
         eprintln!("{error}");
     }
     1
-}
-
-fn check_text(args: &[String]) -> u8 {
-    if !args.is_empty() {
-        eprintln!("usage: cargo xtask check-text");
-        return 2;
-    }
-    let (hits, mut errors) = check_text::run(&repo_root());
-    print!("{}", check_text::report(&hits, check_text::MAX_LITERALS));
-    errors.extend(check_text::run_names(&repo_root()));
-    for error in &errors {
-        eprintln!("check-text: {error}");
-    }
-    match check_text::verdict(hits.len(), check_text::MAX_LITERALS) {
-        Ok(note) => {
-            if let Some(note) = note {
-                println!("{note}");
-            }
-            u8::from(!errors.is_empty())
-        }
-        Err(e) => {
-            eprintln!("{e}");
-            1
-        }
-    }
-}
-
-/// Prints what a language pack lacks. Missing and stale keys are not a
-/// failure (ADR-0045): the exit code is 0 unless the content doesn't load
-/// (1) or there is no such pack (2).
-fn lang_status(args: &[String]) -> u8 {
-    let (code, options) = match lang_status::parse_args(args) {
-        Ok(parsed) => parsed,
-        Err(e) => {
-            eprintln!("lang-status: {e}");
-            eprintln!(
-                "usage: cargo xtask lang-status <code> [--only ui|data|dialogue] [--file <dlg>]"
-            );
-            return 2;
-        }
-    };
-    let content = match trpg_content::load_embedded() {
-        Ok(content) => content,
-        Err(e) => {
-            eprintln!("lang-status: {e}");
-            return 1;
-        }
-    };
-    match lang_status::report(&content.lang, &code, &options) {
-        Ok(report) => {
-            print!("{report}");
-            0
-        }
-        Err(e) => {
-            eprintln!("lang-status: {e}");
-            2
-        }
-    }
 }
 
 fn clean_merged_targets(args: &[String]) -> u8 {
@@ -262,24 +191,6 @@ fn icon(args: &[String]) -> u8 {
         Err(e) => {
             eprintln!("icon: {e}");
             2
-        }
-    }
-}
-
-fn font_atlas(args: &[String]) -> u8 {
-    let Some((out_dir, fonts @ [_, ..])) = args.split_last() else {
-        eprintln!("usage: cargo xtask font-atlas <font.bdf>... <out-dir>");
-        return 2;
-    };
-    let fonts: Vec<PathBuf> = fonts.iter().map(PathBuf::from).collect();
-    match font_atlas::run(&fonts, Path::new(out_dir)) {
-        Ok(summary) => {
-            println!("{summary}");
-            0
-        }
-        Err(e) => {
-            eprintln!("font-atlas: {e}");
-            1
         }
     }
 }
@@ -500,55 +411,6 @@ fn effect_marks(args: &[String]) -> u8 {
     }
 }
 
-fn frame_png(args: &[String]) -> u8 {
-    if args.iter().any(|a| a == "--help") {
-        println!("{}", frame_png::USAGE);
-        return 0;
-    }
-    let options = match frame_png::parse_args(args) {
-        Ok(options) => options,
-        Err(e) => {
-            eprintln!(
-                "{e}
-
-{}",
-                frame_png::USAGE
-            );
-            return 2;
-        }
-    };
-    match frame_png::run(&repo_root(), &options) {
-        Ok(summary) => {
-            println!("{summary}");
-            0
-        }
-        Err(e) => {
-            eprintln!("frame-png: {e}");
-            1
-        }
-    }
-}
-
-fn web(args: &[String]) -> u8 {
-    let options = match web::parse_args(args) {
-        Ok(options) => options,
-        Err(e) => {
-            eprintln!("{e}");
-            return 2;
-        }
-    };
-    match web::run(&repo_root(), options) {
-        Ok(summary) => {
-            println!("{summary}");
-            0
-        }
-        Err(e) => {
-            eprintln!("web: {e}");
-            1
-        }
-    }
-}
-
 fn playdate(args: &[String]) -> u8 {
     let options = match playdate::parse_args(args) {
         Ok(options) => options,
@@ -612,26 +474,6 @@ fn playtest(args: &[String]) -> u8 {
         }
         Err(e) => {
             eprintln!("playtest: {e}");
-            1
-        }
-    }
-}
-
-fn private_assets(args: &[String]) -> u8 {
-    let mode = match private_assets::parse_args(args) {
-        Ok(mode) => mode,
-        Err(e) => {
-            eprintln!("{e}");
-            return 2;
-        }
-    };
-    match private_assets::run(&repo_root(), private_assets::REPO_URL, mode) {
-        Ok(summary) => {
-            println!("{summary}");
-            0
-        }
-        Err(e) => {
-            eprintln!("private-assets: {e}");
             1
         }
     }
@@ -790,7 +632,7 @@ mod tests {
                 std::fs::read_to_string(root.join(format!("crates/{other}/Cargo.toml"))).unwrap();
             assert_eq!(table(&manifest, "[lints]"), ["workspace = true"], "{other}");
         }
-        for other in ["assets", "core", "ui"] {
+        for other in ["assets", "cli", "core", "ui"] {
             let path = format!("engine/crates/{other}/Cargo.toml");
             let manifest = std::fs::read_to_string(root.join(&path)).unwrap();
             assert_eq!(table(&manifest, "[lints]"), ["workspace = true"], "{path}");
@@ -934,6 +776,7 @@ mod tests {
 
     #[test]
     fn frame_png_help_bad_args_and_a_run() {
+        let frame_png = |items: &[String]| shuyi("frame-png", items.iter().cloned());
         assert_eq!(frame_png(&args(&["--help"])), 0);
         assert_eq!(frame_png(&[]), 2);
         assert_eq!(
@@ -1051,6 +894,10 @@ mod tests {
         assert_eq!(dispatch(args(&["bogus"]).into_iter()), 2);
     }
 
+    fn font_atlas(items: &[String]) -> u8 {
+        shuyi("font-atlas", items.iter().cloned())
+    }
+
     #[test]
     fn font_atlas_needs_two_args() {
         assert_eq!(font_atlas(&args(&["only-one"])), 2);
@@ -1091,7 +938,7 @@ mod tests {
         // Only checks argument parsing: a real `--release`/no-args run
         // spawns `cargo build`, which is exercised by `web::tests` and
         // manually, not here.
-        assert_eq!(web(&args(&["--bogus"])), 2);
+        assert_eq!(shuyi("web", args(&["--bogus"]).into_iter()), 2);
         assert_eq!(dispatch(args(&["web", "--bogus"]).into_iter()), 2);
     }
 
@@ -1099,7 +946,7 @@ mod tests {
     fn private_assets_fails_fast_on_bad_args() {
         // Only the argument check: a real run needs the private repository
         // and would move this checkout's `assets-private/`.
-        assert_eq!(private_assets(&args(&["--bogus"])), 2);
+        assert_eq!(shuyi("private-assets", args(&["--bogus"]).into_iter()), 2);
         assert_eq!(
             dispatch(args(&["private-assets", "--pin", "--library"]).into_iter()),
             2
@@ -1223,6 +1070,18 @@ mod tests {
     fn test_tileset_rejects_args() {
         assert_eq!(test_tileset(&args(&["--bogus"])), 2);
         assert_eq!(dispatch(args(&["test-tileset", "x"]).into_iter()), 2);
+    }
+
+    fn check_keys(items: &[String]) -> u8 {
+        shuyi("check-keys", items.iter().cloned())
+    }
+
+    fn check_text(items: &[String]) -> u8 {
+        shuyi("check-text", items.iter().cloned())
+    }
+
+    fn lang_status(items: &[String]) -> u8 {
+        shuyi("lang-status", items.iter().cloned())
     }
 
     #[test]

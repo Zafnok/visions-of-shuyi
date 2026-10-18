@@ -445,7 +445,7 @@ cargo xtask lines ch01_intro
 
 Each row is an id, the speaker and the text. A row whose id is gone
 after your edit is a line whose translation and voice are now out of
-date. For a language, `cargo xtask lang-status <code>` lists the entries
+date. For a language, `cargo shuyi lang-status <code>` lists the entries
 that have gone out of date since they were translated. (Dialogue isn't
 translated or voiced yet; when it is, that command and the voice tool
 will list the lines to redo.)

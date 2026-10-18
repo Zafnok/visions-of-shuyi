@@ -1,5 +1,8 @@
 [alias]
 xtask = "run -q -p xtask --"
+# Shuyi Engine's tools (engine/crates/cli, ticket 1117), on the project of
+# the `shuyi.ron` in the working folder or above it.
+shuyi = "run -q -p shuyi-cli --"
 
 # rustup's self-contained x86_64-pc-windows-gnu linker ships without a full
 # mingw-w64 import library set (e.g. no libimm32.a, which macroquad needs for

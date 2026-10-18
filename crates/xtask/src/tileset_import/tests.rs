@@ -709,7 +709,7 @@ fn run_writes_the_image_and_the_tileset_into_the_private_checkout() {
     // Without the checkout's game folder, or the mapping: nothing.
     let err = run(root, &UNITS).unwrap_err();
     assert!(
-        err.contains("cargo xtask private-assets --library"),
+        err.contains("cargo shuyi private-assets --library"),
         "{err}"
     );
     fs::create_dir_all(root.join(GAME_DIR)).unwrap();

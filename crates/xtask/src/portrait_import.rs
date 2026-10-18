@@ -13,7 +13,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::font_atlas::{decode_png, encode_png};
+use shuyi_cli::codec::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask portrait-import <bust-folder-or-sheet> <character-id> [--shift-x <pixels>] [--generator]\n\n\
@@ -27,7 +27,7 @@ gives its face_ files, or else all its PNGs; 48×48 faces and a\n               
 expressions are in another order than a bought hero's sheet\n\n\
 Writes assets-private/game/portraits/<character-id>/<expression>.png (64×64) and, if it\n\
 isn't there yet, the sidecar assets-private/game/portraits/<character-id>.ron to fill in.\n\
-Run `cargo xtask private-assets --library` first.";
+Run `cargo shuyi private-assets --library` first.";
 
 /// Side of a bought bust in pixels.
 pub const BUST: u32 = 80;
@@ -313,7 +313,7 @@ pub fn run(root: &Path, options: &Options) -> Result<String, String> {
     } = options;
     if !root.join(OUT_DIR).parent().is_some_and(Path::is_dir) {
         return Err(
-            "assets-private/game/ is missing: run `cargo xtask private-assets --library` first"
+            "assets-private/game/ is missing: run `cargo shuyi private-assets --library` first"
                 .to_owned(),
         );
     }

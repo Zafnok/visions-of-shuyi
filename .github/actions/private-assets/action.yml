@@ -27,7 +27,7 @@ outputs:
   web-flag:
     description: >-
       '--private-assets' when the art was checked out, otherwise empty. Pass
-      it to cargo xtask web.
+      it to cargo shuyi web.
     value: ${{ steps.plan.outputs.web-flag }}
 
 runs:

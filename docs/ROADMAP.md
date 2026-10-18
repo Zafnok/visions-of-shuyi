@@ -135,7 +135,7 @@ shots, **0064** a story role for Vix, **0065** naming Vix and the lead,
 sprites from image files must be a small job; ADR-0038): **0231** pictures
 in the frame as sprite items (no open dependencies; 0711 and 0413 now draw
 bought art with it, so it is on the Chapter 1 critical path) → **0232**
-`cargo xtask frame-png`, a picture of any scripted frame without a window.
+`cargo shuyi frame-png`, a picture of any scripted frame without a window.
 **0432** the battle map is painted by a map skin from a plain-data map
 scene, look unchanged (no open dependencies) → **0433** a sprite skin read
 from a tileset file, behind the debug menu, and **0434** battle tests read

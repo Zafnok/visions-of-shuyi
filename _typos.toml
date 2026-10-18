@@ -40,11 +40,11 @@ extend-exclude = [
     "assets/fonts/Terminus-LICENSE.txt",
     # Vendored macroquad JS loader (ticket 0206): minified third-party code,
     # never edited by hand.
-    "web/mq_js_bundle.js",
+    "engine/crates/cli/web/mq_js_bundle.js",
     # Vendored quad-storage/sapp-jsutils JS plugins (ticket 0207): third-party
     # code, never edited by hand.
-    "web/quad-storage.js",
-    "web/sapp_jsutils.js",
+    "engine/crates/cli/web/quad-storage.js",
+    "engine/crates/cli/web/sapp_jsutils.js",
     # Creative Commons' legal text, verbatim (ticket 0809): its own
     # spelling ("MERCHANTIBILITY") stays.
     "assets/audio/licenses/CC-BY-3.0.txt",

@@ -18,14 +18,18 @@ locally, install it with `cargo install --locked <tool>`.
 - The `no_std` build needs the Playdate's target once:
   `rustup target add thumbv7em-none-eabihf`.
 
+`cargo shuyi <command>` is Shuyi Engine's tools (`engine/crates/cli`,
+ADR-0089), run on this repository's `shuyi.ron`; `cargo xtask` keeps the
+repository's own commands (and still takes the old names of the moved ones).
+
 ## Order (fast → slow; stop at first failure and fix)
 
 ```bash
 cargo fmt --all
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-cargo xtask check-keys                    # no hard-coded keys (keyboard-input skill)
-cargo xtask check-text                    # no new screen text written as a literal (ADR-0045)
+cargo shuyi check-keys                    # no hard-coded keys (keyboard-input skill)
+cargo shuyi check-text                    # no new screen text written as a literal (ADR-0045)
 cargo xtask check-engine-boundary         # nothing of the game in engine/ (ADR-0063)
 cargo doc --workspace --no-deps          # with RUSTDOCFLAGS="-D warnings"
 cargo build -p trpg-app --target wasm32-unknown-unknown

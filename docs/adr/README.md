@@ -96,6 +96,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0086](0086-the-crank-as-buttons-and-actions-from-a-platform-menu.md) | The crank as two buttons (notches through the bindings), and actions from a platform's own menu (`Game::act`) | Accepted (1035); extends ADR-0034 and ADR-0079 |
 | [0087](0087-engine-screens-take-the-games-rows-entries-and-hooks.md) | The engine's screens and widgets take the game's rows, entries and hooks (Key bindings rows, the picker's legend, `OptionRow`s, `DebugEntry`s, `DialogueHooks`, `AudioConfig`) | Accepted (1112); extends ADR-0054 and ADR-0080 |
 | [0088](0088-the-grid-map-kit-a-scene-generic-over-the-games-units-skins-and-unit-painters.md) | The grid map kit: `MapScene<U>` of the game's units, ranges as named layers, `GridSkin`s that paint the ground with the game's `UnitPainter`, skin settings for colours and walk speeds, a `Projection` hook | Accepted (1115); extends ADR-0038, ADR-0049, ADR-0052, ADR-0058 |
+| [0089](0089-shuyi-cli-a-project-file-and-the-games-tool-program.md) | Shuyi's tools: `shuyi-cli` (`cargo shuyi`), a project file (`shuyi.ron`) for the paths and settings, and the game's tool program (`GameTools`, here xtask) for the commands that run the game; the web shell is the engine's | Accepted (1117); extends ADR-0063, ADR-0038 §4, ADR-0081 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

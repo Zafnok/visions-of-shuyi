@@ -23,7 +23,7 @@ use trpg_content::playdate_images::{Job, jobs};
 use trpg_ui::ImageId;
 use trpg_ui::onebit::{Image, Images};
 
-use crate::font_atlas::encode_png;
+use shuyi_cli::codec::encode_png;
 
 /// Where the pictures of `assets/` go, under the repository's root.
 pub const OUT: &str = "target/playdate/images";

@@ -23,7 +23,7 @@ use trpg_content::battler::BACKDROP_PX;
 use trpg_content::image::png_size;
 use trpg_content::title::{LOGO_MAX_PX, TITLE_DIR};
 
-use crate::font_atlas::encode_png;
+use shuyi_cli::codec::encode_png;
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask title-art [--bought]\n\n\
@@ -31,9 +31,9 @@ Writes assets/title/logo.png from assets-src/title/logo.txt and the palette,\n\
 assets/title/game_over.png from assets-src/title/game_over.txt, and the placeholder\n\
 backdrops beside them.\n\
 --bought  instead copy the bought backdrops from assets-private/library/ to\n\
-          assets-private/game/title/ (run `cargo xtask private-assets --library` first;\n\
+          assets-private/game/title/ (run `cargo shuyi private-assets --library` first;\n\
           afterwards commit and push in assets-private/, then run\n\
-          `cargo xtask private-assets --pin`)";
+          `cargo shuyi private-assets --pin`)";
 
 /// The logo's source, relative to the repo root.
 pub const LOGO_SOURCE: &str = "assets-src/title/logo.txt";
@@ -243,7 +243,7 @@ pub fn run_bought(root: &Path, backdrops: &[Backdrop]) -> Result<String, String>
     let game = root.join(GAME_DIR);
     if !library.is_dir() || !game.is_dir() {
         return Err(format!(
-            "{LIBRARY_DIR}/ or {GAME_DIR}/ is missing: run `cargo xtask private-assets --library` first"
+            "{LIBRARY_DIR}/ or {GAME_DIR}/ is missing: run `cargo shuyi private-assets --library` first"
         ));
     }
     let mut files = Vec::new();
@@ -270,7 +270,7 @@ pub fn run_bought(root: &Path, backdrops: &[Backdrop]) -> Result<String, String>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::font_atlas::decode_png;
+    use shuyi_cli::codec::decode_png;
 
     fn repo() -> std::path::PathBuf {
         Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")

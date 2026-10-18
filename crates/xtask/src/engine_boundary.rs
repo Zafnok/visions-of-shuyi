@@ -25,7 +25,7 @@ use std::process::Command;
 
 use serde_json::Value;
 
-use crate::check_keys::{files_under, relative};
+use shuyi_cli::check_keys::{files_under, relative};
 
 /// The engine's folder, relative to the repository root.
 const ENGINE_DIR: &str = "engine";

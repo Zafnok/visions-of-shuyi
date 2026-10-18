@@ -2028,7 +2028,7 @@ impl BattleScreen {
     /// [`scene`](Self::scene) for a view of `size` tiles instead of the
     /// map area's: the screen's camera if it is that size, else one
     /// centred on the cursor. For a picture of the map alone
-    /// (`cargo xtask frame-png --map`).
+    /// (`cargo shuyi frame-png --map`).
     pub fn scene_of_size(&self, ctx: &Ctx, size: (i32, i32)) -> MapScene {
         let origin = self.camera_in(size).origin;
         // Whole milliseconds of a clock that only goes forward.

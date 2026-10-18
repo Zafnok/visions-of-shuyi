@@ -1,10 +1,10 @@
 //! `cargo xtask test-card`: writes `assets-test/images/test_card.png`, the
 //! public test image for sprite items (ticket 0231, ADR-0038).
 //!
-//! 16×16: a one-pixel white border around four coloured quadrants (red and
-//! green above blue and yellow), so a flip, a crop and a scale each show.
-//! It is generated, not art, and the same code always writes the same
-//! pixels.
+//! The card is Shuyi's (`shuyi_cli::test_card`, ticket 1117): 16×16, a
+//! one-pixel white border around four coloured quadrants, so a flip, a
+//! crop and a scale each show. It is generated, not art, and the same code
+//! always writes the same pixels.
 
 use std::fs;
 use std::path::Path;
@@ -12,37 +12,8 @@ use std::path::Path;
 use trpg_content::bundle::test_display_path;
 use trpg_content::image::TEST_CARD_PATH;
 
-use crate::font_atlas::encode_png;
-
-/// Width and height of the card in pixels.
-pub const SIZE: u32 = 16;
-/// The border colour (RGBA).
-pub const BORDER: [u8; 4] = [255, 255, 255, 255];
-/// The quadrants' colours (RGBA): top-left, top-right, bottom-left,
-/// bottom-right.
-pub const QUADRANTS: [[u8; 4]; 4] = [
-    [204, 51, 51, 255],
-    [51, 170, 68, 255],
-    [51, 102, 204, 255],
-    [230, 190, 50, 255],
-];
-
-/// The colour of pixel `(x, y)`.
-fn pixel(x: u32, y: u32) -> [u8; 4] {
-    let edge = |v: u32| v == 0 || v == SIZE - 1;
-    if edge(x) || edge(y) {
-        return BORDER;
-    }
-    let half = SIZE / 2;
-    QUADRANTS[usize::from(y >= half) * 2 + usize::from(x >= half)]
-}
-
-/// The card's RGBA8 pixels, row-major.
-pub fn pixels() -> Vec<u8> {
-    (0..SIZE)
-        .flat_map(|y| (0..SIZE).flat_map(move |x| pixel(x, y)))
-        .collect()
-}
+use shuyi_cli::codec::encode_png;
+use shuyi_cli::test_card::{SIZE, pixels};
 
 /// Runs the command: writes the card under repo root `root`.
 pub fn run(root: &Path) -> Result<String, String> {
@@ -59,45 +30,7 @@ pub fn run(root: &Path) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::font_atlas::decode_png;
-
-    #[test]
-    fn border_and_quadrants() {
-        let [red, green, blue, yellow] = QUADRANTS;
-        for i in 0..SIZE {
-            for edge in [(i, 0), (i, 15), (0, i), (15, i)] {
-                assert_eq!(pixel(edge.0, edge.1), BORDER, "{edge:?}");
-            }
-        }
-        // Each quadrant's corners: just inside the border and at the middle.
-        for (colour, xs, ys) in [
-            (red, [1, 7], [1, 7]),
-            (green, [8, 14], [1, 7]),
-            (blue, [1, 7], [8, 14]),
-            (yellow, [8, 14], [8, 14]),
-        ] {
-            for x in xs {
-                for y in ys {
-                    assert_eq!(pixel(x, y), colour, "({x}, {y})");
-                }
-            }
-        }
-        let mut distinct = QUADRANTS.to_vec();
-        distinct.push(BORDER);
-        distinct.sort_unstable();
-        distinct.dedup();
-        assert_eq!(distinct.len(), 5);
-    }
-
-    #[test]
-    fn pixels_are_row_major() {
-        let rgba = pixels();
-        assert_eq!(rgba.len(), 16 * 16 * 4);
-        let at = |x: usize, y: usize| &rgba[(y * 16 + x) * 4..][..4];
-        assert_eq!(at(0, 0), BORDER);
-        assert_eq!(at(14, 1), QUADRANTS[1]);
-        assert_eq!(at(1, 14), QUADRANTS[2]);
-    }
+    use shuyi_cli::codec::decode_png;
 
     #[test]
     fn committed_card_is_what_the_tool_makes() {

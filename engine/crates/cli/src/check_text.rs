@@ -1,8 +1,7 @@
-//! `cargo xtask check-text`: counts the player-facing text still written
-//! as string literals in `crates/ui/src`, instead of asked for by key with
-//! `ctx.text("screen.thing")` from `assets/lang/en/ui.ron` (ticket 0233,
-//! ADR-0045). It fails when the count is above [`MAX_LITERALS`], which is
-//! zero since ticket 0243: every screen asks for its text by key.
+//! `check-text`: counts the player-facing text still written as string
+//! literals in the screens' source ([`CheckText::dir`]), instead of asked
+//! for by key with `ctx.text("screen.thing")` from the game's language
+//! file. It fails when the count is above [`CheckText::max_literals`].
 //!
 //! Like `check-keys` it is a line-based scanner, not a parser, built on
 //! the same lexer. A string literal counts when it holds a word (letters
@@ -14,7 +13,7 @@
 //! - prose, wherever it stands: it has a capital letter or a space
 //!   (`format!("Turn {n}")` kept in a variable, `"out of range".to_owned()`,
 //!   a `&str` constant). Cue names, storage keys and screen names
-//!   (`"menu_move"`) don't; or
+//!   (`"menu_tick"`) don't; or
 //! - one lowercase word (`"acted"`, `"info"`) that is the value of a
 //!   `let`, a `match` arm or an `if`, or stands in a tuple or an array: a
 //!   label. As a constant, a call's own argument (`Some("heal")`), a
@@ -28,10 +27,9 @@
 //! `// check-text: not player text` comment, with the reason, on its line
 //! or the line above its item.
 //!
-//! It also fails on a screen that reads a `name` field itself (ticket
-//! 0235): the data's names are English, and a screen shows one through
-//! `ctx.words()` (`crates/ui/src/words.rs`), which gives it in the
-//! player's language. Reading `.name` (not calling `.name()`) on anything
+//! It also fails on a screen that reads a `name` field itself: the data's
+//! names are English, and a screen shows one through the game's helpers
+//! ([`CheckText::words_file`]), which give it in the player's language. Reading `.name` (not calling `.name()`) on anything
 //! but `self` counts; a view's own field is let through with a
 //! `// check-text: not a data name` comment.
 
@@ -43,34 +41,14 @@ use std::path::Path;
 use crate::check_keys::{
     Line, exempt_lines, files_under, has_ext, is_ident, is_test_file, lex, mark_item, relative,
 };
-
-/// The most literals allowed: none. Tickets 0233, 0234 and 0243 moved
-/// every screen's text into the language file.
-pub const MAX_LITERALS: usize = 0;
+use crate::project::CheckText;
 
 /// The comment that lets the next item (or its own line) through.
 pub const MARKER: &str = "check-text: not player text";
 
-/// What every failure says to do about it.
-pub const HINT: &str =
-    "put the text in assets/lang/en/ui.ron and ask for it with `ctx.text(\"screen.thing\")`";
-
 /// The comment that lets a `.name` read on its line (or the item below
 /// it) through.
 pub const NAME_MARKER: &str = "check-text: not a data name";
-
-/// What a `.name` read is told to do about it.
-pub const NAME_HINT: &str = "show the name through `ctx.words()` (crates/ui/src/words.rs), or mark a      view's own field with `// check-text: not a data name`";
-
-/// Where the names are read on purpose: the helpers every screen uses.
-const WORDS_FILE: &str = "crates/ui/src/words.rs";
-
-/// The Rust source tree scanned.
-const DIR: &str = "crates/ui/src";
-
-/// The debug screens: for developers, in English only.
-const DEBUG_FILE: &str = "crates/ui/src/debug.rs";
-const DEBUG_DIR: &str = "crates/ui/src/debug/";
 
 /// One literal found.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -83,14 +61,14 @@ pub struct Hit {
     pub text: String,
 }
 
-/// Scans `repo_root` and returns every literal found, by file then line,
-/// and every file that couldn't be read.
-pub fn run(repo_root: &Path) -> (Vec<Hit>, Vec<String>) {
+/// Scans the project at `root` and returns every literal found, by file
+/// then line, and every file that couldn't be read.
+pub fn run(rules: &CheckText, root: &Path) -> (Vec<Hit>, Vec<String>) {
     let mut errors = Vec::new();
     let mut hits = Vec::new();
-    for file in files_under(&repo_root.join(DIR), &mut errors) {
-        let rel = relative(repo_root, &file);
-        if !has_ext(&file, "rs") || is_skipped(&rel) {
+    for file in files_under(&root.join(&rules.dir), &mut errors) {
+        let rel = relative(root, &file);
+        if !has_ext(&file, "rs") || is_skipped(rules, &rel) {
             continue;
         }
         match fs::read_to_string(&file) {
@@ -101,19 +79,20 @@ pub fn run(repo_root: &Path) -> (Vec<Hit>, Vec<String>) {
     (hits, errors)
 }
 
-/// Scans `repo_root` and returns what is wrong, one line each: every
-/// `.name` field read found ([`scan_names`]), by file then line, and every
-/// file that couldn't be read. Empty when the screens read none.
-pub fn run_names(repo_root: &Path) -> Vec<String> {
+/// Scans the project at `root` and returns what is wrong, one line each:
+/// every `.name` field read found ([`scan_names`]), by file then line, and
+/// every file that couldn't be read. Empty when the screens read none.
+pub fn run_names(rules: &CheckText, root: &Path) -> Vec<String> {
     let mut errors = Vec::new();
     let mut found = Vec::new();
-    for file in files_under(&repo_root.join(DIR), &mut errors) {
-        let rel = relative(repo_root, &file);
-        if !has_ext(&file, "rs") || is_skipped(&rel) || rel == WORDS_FILE {
+    for file in files_under(&root.join(&rules.dir), &mut errors) {
+        let rel = relative(root, &file);
+        if !has_ext(&file, "rs") || is_skipped(rules, &rel) || rel == rules.words_file {
             continue;
         }
+        let error = |hit: &Hit| name_error(&rules.name_hint, hit);
         match fs::read_to_string(&file) {
-            Ok(source) => found.extend(scan_names(&rel, &source).iter().map(name_error)),
+            Ok(source) => found.extend(scan_names(&rel, &source).iter().map(error)),
             Err(e) => errors.push(format!("{rel}: cannot read: {e}")),
         }
     }
@@ -122,9 +101,9 @@ pub fn run_names(repo_root: &Path) -> Vec<String> {
 }
 
 /// What the `.name` read `hit` is told.
-fn name_error(hit: &Hit) -> String {
+fn name_error(told: &str, hit: &Hit) -> String {
     format!(
-        "{}:{}: `{}` is read here — {NAME_HINT}",
+        "{}:{}: `{}` is read here — {told}",
         hit.file, hit.line, hit.text
     )
 }
@@ -167,13 +146,17 @@ pub fn scan_names(rel: &str, source: &str) -> Vec<Hit> {
     hits
 }
 
-/// A frame written as text for the snapshot tests: never on screen.
-const SNAPSHOT_FILE: &str = "crates/ui/src/snapshot.rs";
-
-/// Whether the file `rel` is left out: tests, the debug screens and the
-/// snapshots' text form.
-fn is_skipped(rel: &str) -> bool {
-    is_test_file(rel) || rel == DEBUG_FILE || rel.starts_with(DEBUG_DIR) || rel == SNAPSHOT_FILE
+/// Whether the file `rel` is left out: tests and the files the rules
+/// skip (a path ending in `/` skips a folder).
+fn is_skipped(rules: &CheckText, rel: &str) -> bool {
+    is_test_file(rel, &rules.test_support)
+        || rules.skip.iter().any(|skip| {
+            if skip.ends_with('/') {
+                rel.starts_with(skip.as_str())
+            } else {
+                rel == skip
+            }
+        })
 }
 
 /// What an open bracket belongs to.
@@ -380,10 +363,11 @@ pub fn scan(rel: &str, source: &str) -> Vec<Hit> {
     hits
 }
 
-/// The report: the count against `max`, then the literals by file.
-pub fn report(hits: &[Hit], max: usize) -> String {
+/// The report: the count in the folder `dir` against `max`, then the
+/// literals by file.
+pub fn report(dir: &str, hits: &[Hit], max: usize) -> String {
     let mut out = format!(
-        "check-text: {} player-facing string literal(s) in {DIR} (at most {max} allowed)\n",
+        "check-text: {} player-facing string literal(s) in {dir} (at most {max} allowed)\n",
         hits.len()
     );
     let mut file = "";
@@ -400,15 +384,16 @@ pub fn report(hits: &[Hit], max: usize) -> String {
 }
 
 /// What the count means against `max`: an error when above it, a note
-/// when below it (the number in the tool should come down too).
-pub fn verdict(count: usize, max: usize) -> Result<Option<String>, String> {
+/// when below it (the number in the project file should come down too).
+/// `hint` says what to do about a literal.
+pub fn verdict(hint: &str, count: usize, max: usize) -> Result<Option<String>, String> {
     match count.cmp(&max) {
         Ordering::Greater => Err(format!(
-            "check-text: {count} literals, over the {max} allowed — {HINT}"
+            "check-text: {count} literals, over the {max} allowed — {hint}"
         )),
         Ordering::Less => Ok(Some(format!(
-            "check-text: {count} literals, under the {max} allowed: lower MAX_LITERALS in \
-             crates/xtask/src/check_text.rs to {count}"
+            "check-text: {count} literals, under the {max} allowed: lower \
+             `check_text.max_literals` in shuyi.ron to {count}"
         ))),
         Ordering::Equal => Ok(None),
     }
@@ -419,6 +404,23 @@ mod tests {
     use super::*;
 
     const SCREEN: &str = "crates/ui/src/screens/foo.rs";
+
+    const HINT: &str = "put the text in the language file";
+    const NAME_HINT: &str = "show the name through the words helpers";
+
+    /// A game's rules, laid out as Shuyi's first game's are.
+    fn rules() -> CheckText {
+        let ui = |file: &str| format!("crates/ui/src/{file}");
+        CheckText {
+            dir: "crates/ui/src".to_owned(),
+            max_literals: 0,
+            words_file: ui("words.rs"),
+            skip: vec![ui("debug.rs"), ui("debug/"), ui("snapshot.rs")],
+            test_support: vec![ui("harness.rs")],
+            hint: HINT.to_owned(),
+            name_hint: NAME_HINT.to_owned(),
+        }
+    }
 
     /// The `.name` reads found in `source`, as `line: text`.
     fn names(source: &str) -> Vec<String> {
@@ -459,20 +461,14 @@ mod tests {
     fn a_name_read_is_told_where_it_is_and_what_to_do() {
         let hits = scan_names(SCREEN, "fn f() { a.name }\n");
         assert_eq!(
-            name_error(&hits[0]),
+            name_error(NAME_HINT, &hits[0]),
             format!("{SCREEN}:1: `a.name` is read here — {NAME_HINT}")
         );
     }
 
     #[test]
-    fn the_real_screens_read_no_name_field() {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        assert_eq!(run_names(&root), Vec::<String>::new());
-    }
-
-    #[test]
     fn name_reads_are_looked_for_in_screens_but_not_tests_debug_or_the_helpers() {
-        let root = std::env::temp_dir().join(format!("xtask-check-names-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("shuyi-check-names-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         let src = root.join("crates/ui/src");
         fs::create_dir_all(src.join("screens")).unwrap();
@@ -489,7 +485,7 @@ mod tests {
         ] {
             fs::write(src.join(file), read).unwrap();
         }
-        let found = run_names(&root);
+        let found = run_names(&rules(), &root);
         let _ = fs::remove_dir_all(&root);
         assert_eq!(
             found,
@@ -498,7 +494,7 @@ mod tests {
             )]
         );
         // A missing tree is reported, not passed over.
-        assert_eq!(run_names(&root).len(), 1);
+        assert_eq!(run_names(&rules(), &root).len(), 1);
     }
 
     /// The literals found in `source`, as `line: text`.
@@ -566,7 +562,7 @@ fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
     print_centred(buf, 4, ctx.text(\"title.new_game\"), fg, bg);
     buf.print(1, 2, &ctx.text_with(\"battle.turn\", &[(\"count\", &n)]), fg, bg);
     let label = ctx.text(\"title.quit\");
-    ctx.audio.play_sound(\"menu_move\");
+    ctx.audio.play_sound(\"menu_tick\");
     let s = format!(\"{a}/{b} {c:>3}\");
     buf.print(1, 2, &format!(\"{}/{}\", a, b), fg, bg);
     buf.print(1, 2, \" · \", fg, bg);
@@ -652,8 +648,8 @@ fn ids(&self, movement: &str) -> Option<&'static str> {
     let cue = Some(\"heal\");
     let id = ItemId::new(\"potion\");
     let step = match movement {
-        \"foot\" => \"step_foot\",
-        \"horse\" | \"wyvern\" => \"step_mounted\",
+        \"foot\" => \"step_walk\",
+        \"horse\" | \"wyvern\" => \"step_ride\",
         _ => return None,
     };
     let values = [(\"count\", &n as &dyn Display), (\"name\", &name)];
@@ -728,7 +724,7 @@ fn f(x: Option<u8>) -> u8 {
         let code = "(\"count\", &n, \"word\")";
         assert!(!is_name(code, code.rfind("\"word").unwrap()));
         assert!(is_bare_word("acted"));
-        for text in ["", "Acted", "two words", "menu_move", "a1", "x.y"] {
+        for text in ["", "Acted", "two words", "menu_tick", "a1", "x.y"] {
             assert!(!is_bare_word(text), "{text}");
         }
     }
@@ -743,7 +739,7 @@ static NAMES: [&str; 2] = [
     \"New Game\",
     \"load\",
 ];
-const CUE: &str = \"menu_move\";
+const CUE: &str = \"menu_tick\";
 pub const LAYOUT_KEY: &str = \"layout\";
 const ROW: i32 = 9;
 const SEPARATOR: &str = \" · \";
@@ -811,7 +807,7 @@ mod tests {
         }
         assert!(is_prose("New"));
         assert!(is_prose("no saves"));
-        assert!(!is_prose("menu_move"));
+        assert!(!is_prose("menu_tick"));
     }
 
     #[test]
@@ -864,6 +860,28 @@ mod tests {
     }
 
     #[test]
+    fn a_skipped_file_is_that_file_and_a_skipped_folder_all_below_it() {
+        let rules = rules();
+        for skipped in [
+            "crates/ui/src/debug.rs",
+            "crates/ui/src/debug/menu.rs",
+            "crates/ui/src/snapshot.rs",
+            "crates/ui/src/harness.rs",
+            "crates/ui/src/screens/tests.rs",
+        ] {
+            assert!(is_skipped(&rules, skipped), "{skipped}");
+        }
+        for scanned in [
+            "crates/ui/src/debug.rs.rs",
+            "crates/ui/src/debugger.rs",
+            "crates/ui/src/snapshot.rs/view.rs",
+            "crates/ui/src/screens/title.rs",
+        ] {
+            assert!(!is_skipped(&rules, scanned), "{scanned}");
+        }
+    }
+
+    #[test]
     fn the_report_lists_the_literals_by_file() {
         let hit = |file: &str, line, text: &str| Hit {
             file: file.to_owned(),
@@ -876,7 +894,7 @@ mod tests {
             hit("b.rs", 1, "x y"),
         ];
         assert_eq!(
-            report(&hits, 5),
+            report("crates/ui/src", &hits, 5),
             "check-text: 3 player-facing string literal(s) in crates/ui/src (at most 5 allowed)\n\
              a.rs: 2\n  3: \"One\"\n  9: \"Two\"\nb.rs: 1\n  1: \"x y\"\n"
         );
@@ -887,22 +905,22 @@ mod tests {
         let before = "fn f(b: &mut GlyphBuffer) {\n    b.print(0, 0, \"Old\", fg, bg);\n}\n";
         let max = scan(SCREEN, before).len();
         assert_eq!(max, 1);
-        assert_eq!(verdict(max, max), Ok(None));
+        assert_eq!(verdict(HINT, max, max), Ok(None));
         let after = format!("{before}const NEW: &str = \"New Game\";\n");
         let count = scan(SCREEN, &after).len();
         assert_eq!(count, 2);
-        let error = verdict(count, max).unwrap_err();
+        let error = verdict(HINT, count, max).unwrap_err();
         assert!(error.contains("2 literals, over the 1 allowed"), "{error}");
         assert!(error.contains(HINT), "{error}");
         // Fewer than allowed passes, with a note to lower the number.
-        let note = verdict(0, max).unwrap().unwrap();
-        assert!(note.contains("lower MAX_LITERALS"), "{note}");
+        let note = verdict(HINT, 0, max).unwrap().unwrap();
+        assert!(note.contains("lower `check_text.max_literals`"), "{note}");
         assert!(note.contains("to 0"), "{note}");
     }
 
     #[test]
     fn run_scans_ui_sources_but_not_tests_or_debug_screens() {
-        let root = std::env::temp_dir().join(format!("xtask-check-text-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("shuyi-check-text-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         let src = root.join("crates/ui/src");
         fs::create_dir_all(src.join("screens")).unwrap();
@@ -919,40 +937,14 @@ mod tests {
         ] {
             fs::write(src.join(file), literal).unwrap();
         }
-        let (hits, errors) = run(&root);
+        let (hits, errors) = run(&rules(), &root);
         let _ = fs::remove_dir_all(&root);
         assert_eq!(errors, Vec::<String>::new());
         assert_eq!(hits.len(), 1, "{hits:?}");
         assert_eq!(hits[0].file, "crates/ui/src/screens/foo.rs");
         // A missing tree is reported, not passed over.
-        let (hits, errors) = run(&root);
+        let (hits, errors) = run(&rules(), &root);
         assert!(hits.is_empty());
         assert_eq!(errors.len(), 1, "{errors:?}");
-    }
-
-    fn repo_root() -> &'static Path {
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .and_then(Path::parent)
-            .expect("xtask is at <repo>/crates/xtask")
-    }
-
-    #[test]
-    fn the_real_repo_is_within_the_allowed_count() {
-        let (hits, errors) = run(repo_root());
-        assert_eq!(errors, Vec::<String>::new());
-        assert_eq!(hits.len(), MAX_LITERALS, "{}", report(&hits, MAX_LITERALS));
-        assert_eq!(MAX_LITERALS, 0);
-    }
-
-    /// Ticket 0233: the title screen is the first one converted.
-    #[test]
-    fn the_title_screen_has_no_literal_left() {
-        let (hits, _) = run(repo_root());
-        let title: Vec<&Hit> = hits
-            .iter()
-            .filter(|h| h.file == "crates/ui/src/screens/title.rs")
-            .collect();
-        assert!(title.is_empty(), "{title:?}");
     }
 }

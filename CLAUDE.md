@@ -61,15 +61,16 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 | `docs/design/` | Nick's game-design decisions (filled by `00xx` tickets) |
 | `docs/story/` | Story beats, bible, characters, outline, ledger (ADR-0011) |
 | `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix` |
-| `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `xtask` (repo tooling) |
+| `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `xtask` (the repository's own tooling, and the game's tool program for `cargo shuyi`) |
+| `shuyi.ron` | The project file of Shuyi's tools (`cargo shuyi <command>`: `frame-png`, `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets`; ADR-0089): the paths each check scans, the web build, the private repository |
 | `crates/playdate` | `trpg-playdate`, the Playdate front end (ADR-0070): a second platform crate beside `app`, a `staticlib` linked with `shim/shim.c` by `cargo xtask playdate` into `target/playdate/VisionsOfShuyi.pdx`. Needs the Playdate SDK and MSYS2's ARM compiler (its `README.md`) |
 | `assets/` | Everything embedded in the game: `data/`, `fonts/` (later: maps, dialogue, portraits) |
 | `assets-test/` | The **test files**: test characters, the test chapter, the debug Quick Battle, test tilesets, the `test` language pack. Laid out like `assets/`, embedded only in debug builds and builds with the debug tools, never in a build that ships (ADR-0057) |
 | `tools/sonar-triage/` | Files SonarCloud's backlog as batched `sonar` GitHub issues, weekly (ADR-0071); `policy.jsonc` is where a finding is accepted |
-| `assets-src/` | Inputs to asset tools (e.g. the font BDF for `cargo xtask font-atlas`); not embedded |
+| `assets-src/` | Inputs to asset tools (e.g. the font BDF for `cargo shuyi font-atlas`); not embedded |
 | `assets-private/` | **Git-ignored**: the checkout of the private repository with the bought art (ADR-0040). `game/` is embedded over `assets/` by the `private-assets` feature; `library/tiny-tales/` is the bought bundle, sorted. `assets-private.rev` (tracked) names the commit to build with |
-| `engine/` | Shuyi Engine's code while it is carved out of the game (ADR-0063, tickets 1102–1118 and 1154); moves to the engine's own repository, [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine) (public, MIT OR Apache-2.0), with 1131. That repository holds the engine's ADRs, tickets and plans |
-| `voice/` | **Git-ignored**: voice clips by dialogue line id, shipped beside the game, never embedded (ADR-0046, `docs/voice.md`). Copied from the private repository's `voice/` by `cargo xtask private-assets`. Test clips: `crates/app/tests/voice/` |
+| `engine/` | Shuyi Engine's code (its tools, `shuyi-cli`, in `engine/crates/cli`) while it is carved out of the game (ADR-0063, tickets 1102–1118 and 1154); moves to the engine's own repository, [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine) (public, MIT OR Apache-2.0), with 1131. That repository holds the engine's ADRs, tickets and plans |
+| `voice/` | **Git-ignored**: voice clips by dialogue line id, shipped beside the game, never embedded (ADR-0046, `docs/voice.md`). Copied from the private repository's `voice/` by `cargo shuyi private-assets`. Test clips: `crates/app/tests/voice/` |
 
 ## Environment
 
@@ -88,11 +89,11 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
   mockup pasted together from the files). A screenshot of the running game
   that shows the art may be committed (Nick, 2026-10-05: the README and the
   store pages need them; "we just don't distribute the raw files").
-  `cargo xtask private-assets` checks the private repository out into
+  `cargo shuyi private-assets` checks the private repository out into
   `assets-private/` (only `game/`; add `--library` for the bought packs in
   `assets-private/library/`). Gates never read it. To see it in a build:
   `cargo run -p trpg-app --features private-assets`. After pushing a change
-  to it, run `cargo xtask private-assets --pin` and commit
+  to it, run `cargo shuyi private-assets --pin` and commit
   `assets-private.rev` in the same PR. On Nick's machine the full copy
   (with the character generators and the original zips) is
   `D:\tactical-rpg\assets-private\`.

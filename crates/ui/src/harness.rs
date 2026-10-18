@@ -96,7 +96,7 @@ impl Harness {
 
     /// [`with_layout`](Self::with_layout), with `setup` changing the
     /// context once the settings are read, before the game starts: e.g.
-    /// the Playdate's console and palette (`cargo xtask frame-png
+    /// the Playdate's console and palette (`cargo shuyi frame-png
     /// --playdate`).
     pub fn with_layout_and(layout: Layout, setup: impl FnOnce(&mut Ctx)) -> Self {
         let mut storage = MemoryStorage::new();

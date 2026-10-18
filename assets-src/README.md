@@ -5,7 +5,7 @@ write their output into `assets/`.
 
 | Path | What | Tool |
 | ---- | ---- | ---- |
-| `fonts/ter-u16n.bdf` | Terminus Font 4.49.1, 8×16 medium (OFL-1.1, see `assets/fonts/Terminus-LICENSE.txt`), unmodified | `cargo xtask font-atlas` → `assets/fonts/atlas.{png,ron}` |
+| `fonts/ter-u16n.bdf` | Terminus Font 4.49.1, 8×16 medium (OFL-1.1, see `assets/fonts/Terminus-LICENSE.txt`), unmodified | `cargo shuyi font-atlas` → `assets/fonts/atlas.{png,ron}` |
 | `fonts/pad-shapes.bdf` | Our own glyphs added to the atlas: the PlayStation buttons' shapes `✕ ◯ □ △` (ticket 0220, `assets/fonts/README.md`) | the same command, passed after the font |
 | `audio/import.py` | Downloads and converts the chosen third-party music and sounds (ticket 0214, ADR-0027; originals git-ignored, see `audio/README.md`) | `python assets-src/audio/import.py` → `music/*.ogg`, `assets/audio/sfx/*.ogg` |
 | *(none: made in code)* | The sprite test image, 16×16 (ticket 0231, `assets/images/README.md`) | `cargo xtask test-card` → `assets-test/images/test_card.png` |
