@@ -4,20 +4,32 @@
 //! [`SpriteSkin`] paints from a tileset file, and the game starts with the
 //! one of the bought art when it has it (ADR-0049).
 //!
+//! The scene, the ground, the ranges, the path, the cursor and the threat
+//! arrows are the tactics kit's (`shuyi_ui::grid`, ticket 1115, ADR-0088):
+//! this game's skins pair the kit's with the painters of its units (their
+//! letters, HP bars, effect marks and pictures) and its ranges and colors.
+//! The Playdate's skin is the game's own, over the kit's scene.
+//!
 //! Anything new shown on the map (a village, a spell's flash) is added to
 //! the scene and painted by every skin; it is never drawn straight into the
 //! buffer by a screen.
 
-pub mod corners;
 pub mod glyph;
-pub mod grid;
-pub mod path;
 pub mod place;
 pub mod playdate;
 pub mod scene;
 pub mod skin;
 pub mod sprite;
-pub mod threat;
+
+/// The kit's corner rule (ticket 1115: `shuyi_ui::grid::corners`).
+pub use shuyi_ui::grid::corners;
+/// Where a scene's tiles go in pixels (ticket 1115:
+/// `shuyi_ui::grid::layout`).
+pub use shuyi_ui::grid::layout as grid;
+/// The path's arrow (ticket 1115: `shuyi_ui::grid::path`).
+pub use shuyi_ui::grid::path;
+/// The threat arrows (ticket 1115: `shuyi_ui::grid::threat`).
+pub use shuyi_ui::grid::threat;
 
 use alloc::rc::Rc;
 
@@ -30,8 +42,8 @@ pub use glyph::GlyphSkin;
 pub use place::{Place, screen_tiles};
 pub use playdate::PlaydateSkin;
 pub use scene::{
-    CursorStyle, CursorView, Facing, MapScene, RangeKind, STANDING_FRAME, ThreatView, TileView,
-    UnitEffects, UnitView,
+    CursorStyle, CursorView, Facing, MapScene, RangeKind, STANDING_FRAME, TerrainLooks, ThreatView,
+    TileView, UnitEffects, UnitView,
 };
 pub use skin::MapSkin;
 pub use sprite::SpriteSkin;

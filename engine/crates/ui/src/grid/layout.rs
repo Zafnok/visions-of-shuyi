@@ -1,20 +1,47 @@
-//! Where a scene's tiles go on the console, in pixels: what every map skin
-//! works out from its own tile size, and the shared drawing (the path)
-//! works from.
+//! Where a scene's tiles go on the console, in pixels: what every grid
+//! skin works out from its own tile size, and the shared drawing (the path,
+//! the threat arrows) works from. The tiles are laid out by a
+//! [`Projection`]: today top-down squares only (engine ADR-0003 §6; the
+//! isometric one is ticket 1126).
 
-use trpg_core::Pos;
+use shuyi_core::Pos;
 
-use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::{PxRect, Rect};
+use crate::frame::console::ConsoleSpec;
+use crate::frame::glyph_buffer::{PxRect, Rect};
 
-/// A console cell in pixels, across × down. The map skins lay the map out
-/// in [`ConsoleSpec::PC`]'s cells: the battle screen's layout is the PC's.
-pub const CELL_PX: (i32, i32) = (ConsoleSpec::PC.cell_w as i32, ConsoleSpec::PC.cell_h as i32);
+/// A console cell in pixels, across × down. The grid skins lay a map out
+/// in a text console's cells ([`ConsoleSpec::text`]): 8 × 16 pixels.
+pub const CELL_PX: (i32, i32) = (
+    ConsoleSpec::text(0, 0).cell_w as i32,
+    ConsoleSpec::text(0, 0).cell_h as i32,
+);
 
 /// `cells` in console pixels.
 pub fn px_rect(cells: Rect) -> PxRect {
     let (cw, ch) = CELL_PX;
     Rect::new(cells.x * cw, cells.y * ch, cells.w * cw, cells.h * ch)
+}
+
+/// How map tiles are laid on the screen: where a tile goes, from where it
+/// is in the view. Every skin and every drawing across tiles asks it,
+/// rather than assume squares in rows (engine ADR-0003 §6).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Projection {
+    /// Seen from above: tiles in rows and columns, each the tile's size
+    /// right of and below the one before.
+    #[default]
+    TopDown,
+}
+
+impl Projection {
+    /// The top-left pixel of the tile `dx` right of and `dy` below the
+    /// view's first, whose top-left pixel is `corner`, on tiles of `tile`
+    /// pixels.
+    pub const fn place(self, corner: (i32, i32), tile: (i32, i32), dx: i32, dy: i32) -> (i32, i32) {
+        match self {
+            Projection::TopDown => (corner.0 + tile.0 * dx, corner.1 + tile.1 * dy),
+        }
+    }
 }
 
 /// The tiles of a scene laid out on the console.
@@ -31,9 +58,30 @@ pub struct Grid {
     /// Console pixels per pixel of the art (the skin's zoom): 1 unless
     /// everything on the map is drawn bigger. `tile` already counts it.
     pub scale: i32,
+    /// How the tiles are laid.
+    pub projection: Projection,
 }
 
 impl Grid {
+    /// `tiles` tiles of `tile` pixels from the map tile `origin`, whose
+    /// top-left pixel is `corner`, laid top-down at the zoom `scale`.
+    pub const fn top_down(
+        origin: Pos,
+        corner: (i32, i32),
+        tile: (i32, i32),
+        tiles: (i32, i32),
+        scale: i32,
+    ) -> Self {
+        Self {
+            origin,
+            corner,
+            tile,
+            tiles,
+            scale,
+            projection: Projection::TopDown,
+        }
+    }
+
     /// Where `tile` is, as tiles right of and below the origin, if drawn.
     pub fn offset(&self, tile: Pos) -> Option<(i32, i32)> {
         let dx = tile.x.checked_sub(self.origin.x)?;
@@ -46,16 +94,14 @@ impl Grid {
     /// grid).
     pub fn tile_px(&self, tile: Pos) -> (i32, i32) {
         let (dx, dy) = (tile.x - self.origin.x, tile.y - self.origin.y);
-        (
-            self.corner.0 + self.tile.0 * dx,
-            self.corner.1 + self.tile.1 * dy,
-        )
+        self.projection.place(self.corner, self.tile, dx, dy)
     }
 
     /// The pixels of the tile `dx` right of and `dy` below the origin.
     pub fn rect_at(&self, dx: i32, dy: i32) -> PxRect {
         let (w, h) = self.tile;
-        Rect::new(self.corner.0 + w * dx, self.corner.1 + h * dy, w, h)
+        let (x, y) = self.projection.place(self.corner, self.tile, dx, dy);
+        Rect::new(x, y, w, h)
     }
 
     /// The pixels of `tile`, or `None` if it isn't drawn.
@@ -123,13 +169,8 @@ mod tests {
 
     #[test]
     fn tiles_are_laid_from_the_corner_in_their_size() {
-        let g = Grid {
-            origin: p(5, -2),
-            corner: (4, 8),
-            tile: (24, 20),
-            tiles: (3, 2),
-            scale: 1,
-        };
+        let g = Grid::top_down(p(5, -2), (4, 8), (24, 20), (3, 2), 1);
+        assert_eq!(g.projection, Projection::TopDown);
         assert_eq!(g.offset(p(5, -2)), Some((0, 0)));
         assert_eq!(g.offset(p(7, -1)), Some((2, 1)));
         for out in [
@@ -157,14 +198,24 @@ mod tests {
     }
 
     #[test]
+    fn a_cell_is_a_text_consoles_and_cells_scale_to_pixels() {
+        assert_eq!(CELL_PX, (8, 16));
+        assert_eq!(px_rect(Rect::new(3, 2, 5, 4)), Rect::new(24, 32, 40, 64));
+        assert_eq!(px_rect(Rect::new(-1, -2, 0, 1)), Rect::new(-8, -32, 0, 16));
+    }
+
+    #[test]
+    fn top_down_tiles_go_in_rows_and_columns() {
+        let top = Projection::default();
+        assert_eq!(top, Projection::TopDown);
+        assert_eq!(top.place((4, 8), (24, 20), 0, 0), (4, 8));
+        assert_eq!(top.place((4, 8), (24, 20), 2, 1), (52, 28));
+        assert_eq!(top.place((4, 8), (24, 20), -1, -3), (-20, -52));
+    }
+
+    #[test]
     fn a_zoomed_grid_draws_every_art_pixel_as_a_square() {
-        let g = Grid {
-            origin: p(0, 0),
-            corner: (8, 0),
-            tile: (48, 40),
-            tiles: (3, 2),
-            scale: 2,
-        };
+        let g = Grid::top_down(p(0, 0), (8, 0), (48, 40), (3, 2), 2);
         assert_eq!(g.art_tile(), Rect::new(0, 0, 24, 20));
         // From the tile's corner: twice as far, twice as big.
         let mark = Rect::new(3, -2, 5, 7);

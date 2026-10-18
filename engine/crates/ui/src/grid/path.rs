@@ -1,15 +1,15 @@
-//! The movement path arrow, as every map skin draws it (ADR-0018,
-//! `docs/design/look-and-feel.md`): a 3-px line through tile centres, under
-//! the glyphs, from the edge of the unit's tile, ending in a single
-//! arrowhead over the destination tile. Worked out from the skin's tile
-//! size: on the glyph skin's 16 px tiles the line is pixels 7..=9.
+//! The movement path arrow, as every grid skin draws it (game ADR-0018): a
+//! 3-px line through tile centres, under the glyphs, from the edge of the
+//! unit's tile, ending in a single arrowhead over the destination tile.
+//! Worked out from the skin's tile size: on the glyph skin's 16 px tiles
+//! the line is pixels 7..=9.
 
 use crate::prelude::*;
-use trpg_core::Pos;
+use shuyi_core::Pos;
 
-use super::grid::Grid;
-use crate::color::Rgb;
-use crate::glyph_buffer::{Layer, Overlay, PxRect, Rect};
+use super::layout::Grid;
+use crate::frame::color::Rgb;
+use crate::frame::glyph_buffer::{Layer, Overlay, PxRect, Rect};
 
 /// The path line's thickness, in pixels.
 pub const LINE_W: i32 = 3;
@@ -108,9 +108,6 @@ pub fn path_overlays(path: &[Pos], grid: &Grid, color: Rgb) -> Vec<Overlay> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::map_view::glyph::tests::layout_at;
-    use crate::map_view::grid::CELL_PX;
-    use crate::screens::battle::layout::MAP_VIEW;
 
     const RED: Rgb = Rgb::new(255, 0, 0);
 
@@ -118,10 +115,16 @@ mod tests {
         Pos::new(x, y)
     }
 
+    /// The glyph skin's 16 px tiles in a 70 × 30-cell map area (560 ×
+    /// 480 px): 35 × 30 tiles from the map's corner.
+    fn view() -> Grid {
+        Grid::top_down(p(0, 0), (0, 0), (16, 16), (35, 30), 1)
+    }
+
     /// The overlays of `path` with the camera at the origin, as
     /// `(layer, x, y, w, h)`.
     fn rects(path: &[Pos]) -> Vec<(Layer, i32, i32, i32, i32)> {
-        path_overlays(path, &layout_at(p(0, 0)).grid(), RED)
+        path_overlays(path, &view(), RED)
             .iter()
             .map(|o| (o.layer, o.rect.x, o.rect.y, o.rect.w, o.rect.h))
             .collect()
@@ -198,13 +201,7 @@ mod tests {
     #[test]
     fn the_geometry_follows_the_tile_size() {
         // 24 × 20 tiles: tile (1, 1) spans pixels 24..48 × 20..40.
-        let grid = Grid {
-            origin: p(0, 0),
-            corner: (0, 0),
-            tile: (24, 20),
-            tiles: (10, 10),
-            scale: 1,
-        };
+        let grid = Grid::top_down(p(0, 0), (0, 0), (24, 20), (10, 10), 1);
         let r: Vec<_> = path_overlays(&[p(1, 1), p(2, 1), p(2, 2)], &grid, RED)
             .iter()
             .map(|o| (o.layer, o.rect.x, o.rect.y, o.rect.w, o.rect.h))
@@ -261,9 +258,10 @@ mod tests {
 
     #[test]
     fn overlays_are_clipped_to_the_map_view() {
-        // The viewport is 35 tiles wide: tile 35 is under the side panel.
+        // The view is 35 tiles wide: tile 35 is past its edge.
         let r = rects(&[p(33, 0), p(34, 0), p(35, 0)]);
-        let right = MAP_VIEW.w * CELL_PX.0;
+        let right = view().bounds().w;
+        assert_eq!(right, 560);
         assert!(r.iter().all(|o| o.1 + o.3 <= right), "{r:?}");
         assert_eq!(r.len(), 2, "no arrowhead off the view: {r:?}");
     }

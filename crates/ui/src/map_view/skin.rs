@@ -1,15 +1,29 @@
-//! A map skin: how a [`MapScene`] looks (ADR-0038).
+//! A map skin: how a [`MapScene`] looks (ADR-0038). This game's skins
+//! pair a skin of the tactics kit (`shuyi_ui::grid`, ticket 1115) with the
+//! painters of this game's units; [`with_looks`] gives the kit's skins
+//! this game's palette, terrains and lights.
 
 use alloc::rc::Rc;
 
+use shuyi_ui::grid::skin::{Looks, cells_of};
 use trpg_core::Pos;
 
-use super::grid::CELL_PX;
-use super::scene::MapScene;
+use super::scene::{MapScene, TerrainLooks};
 use crate::glyph_buffer::{GlyphBuffer, PxRect, Rect};
 use crate::screen::Ctx;
 use crate::screens::battle::walk::{HELD_WALK_TILES_PER_S, WALK_TILES_PER_S};
 use crate::settings::MapZoom;
+
+/// Calls `paint` with what the kit's skins paint with in `ctx`: its
+/// palette, this game's terrains and its lights.
+pub fn with_looks<R>(ctx: &Ctx, paint: impl FnOnce(&Looks) -> R) -> R {
+    let terrains = TerrainLooks(&ctx.game.content.terrain.display);
+    paint(&Looks {
+        palette: &ctx.palette,
+        terrains: &terrains,
+        lights: &ctx.game.content.lighting,
+    })
+}
 
 /// Paints battle maps. The tile size is the skin's: screens ask it how many
 /// tiles fit and where a tile is. A skin never changes the game: only the
@@ -66,12 +80,7 @@ pub trait MapSkin: core::fmt::Debug {
 
     /// The cells [`tile_px`](Self::tile_px) touches.
     fn tile_cells(&self, scene: &MapScene, area: Rect, tile: Pos) -> Option<Rect> {
-        let px = self.tile_px(scene, area, tile)?;
-        let (cw, ch) = CELL_PX;
-        let (x, y) = (px.x.div_euclid(cw), px.y.div_euclid(ch));
-        let right = (px.x + px.w + cw - 1).div_euclid(cw);
-        let bottom = (px.y + px.h + ch - 1).div_euclid(ch);
-        Some(Rect::new(x, y, right - x, bottom - y))
+        self.tile_px(scene, area, tile).map(cells_of)
     }
 }
 

@@ -275,7 +275,9 @@ fn ranges_fill_their_tiles_with_dots_and_lines_and_edge_the_glyphs() {
         (&[Danger], None),
     ];
     for (x, (kinds, _)) in (0..).zip(&tiles) {
-        scene.tile_mut(p(x, 0)).unwrap().tints = kinds.to_vec();
+        for &kind in *kinds {
+            scene.tint([p(x, 0)], kind);
+        }
     }
     let buf = painted(&ctx, &scene);
     let frame = shown(&buf);

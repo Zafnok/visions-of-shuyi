@@ -10,7 +10,7 @@ under MIT OR Apache-2.0: [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi
 | [`feasibility.md`](feasibility.md) | The report: can we, what it costs the game, what I recommend (ticket 1101) |
 | [`boundary.md`](boundary.md) | Every module of the game: engine, tactics kit, game, or mixed; the couplings to cut |
 | [ADR-0063](../adr/0063-an-engine-and-a-game-one-boundary-now-two-repositories-later.md) | The split: one boundary here now, the code moves to the engine's repository after the carve |
-| Tickets 1102–1118, 1131, 1151–1153 | The carve, the move, then living with two repositories (`tickets/open/`) |
+| Tickets 1102–1118, 1154, 1131, 1151–1153 | The carve, the move, then living with two repositories (`tickets/open/`) |
 
 | In the engine's repository | What |
 | -------------------------- | ---- |

@@ -20,12 +20,13 @@ use trpg_core::{Pos, TerrainId};
 use super::glyph::{self, Layout, TILE_W_CELLS, named, tile_to_cell};
 use super::grid::px_rect;
 use super::path;
-use super::scene::{MapScene, RangeKind, TileView};
+use super::scene::{MapScene, RangeKind};
 use super::skin::MapSkin;
 use super::threat;
 use crate::color::{Palette, Rgb, UiColor};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, Overlay, PxRect, Rect};
 use crate::screen::Ctx;
+use shuyi_ui::grid::RangeName;
 
 /// Cells left clear at each side of the map area: on the Playdate's 50
 /// cells, 24 tiles across (`docs/design/playdate.md`: 24 × 15 tiles at
@@ -175,6 +176,7 @@ impl Inks {
 /// flash is strong.
 fn draw_tiles(ctx: &Ctx, inks: &Inks, buf: &mut GlyphBuffer, scene: &MapScene, layout: &Layout) {
     let grid = layout.grid();
+    let tints = scene.tints();
     for dy in 0..grid.tiles.1 {
         for dx in 0..grid.tiles.0 {
             let Some(tile) = scene.tile_at(dx, dy) else {
@@ -184,7 +186,7 @@ fn draw_tiles(ctx: &Ctx, inks: &Inks, buf: &mut GlyphBuffer, scene: &MapScene, l
             if let Some(id) = tile.terrain {
                 draw_terrain(ctx, buf, id, at);
             }
-            if let Some(fill) = fill(tile) {
+            if let Some(fill) = fill(tints.at(dx, dy)) {
                 let fill = ctx.palette.get(glyph::range_color(fill));
                 for x in at.0..at.0 + TILE_W_CELLS {
                     if let Some(&cell) = buf.get(x, at.1) {
@@ -206,13 +208,13 @@ fn draw_tiles(ctx: &Ctx, inks: &Inks, buf: &mut GlyphBuffer, scene: &MapScene, l
     }
 }
 
-/// The range whose fill `tile` shows: the last one laid on, the danger
-/// zone aside.
-fn fill(tile: &TileView) -> Option<RangeKind> {
-    tile.tints
+/// The range whose fill a tile in `ranges` shows: the last one laid on,
+/// the danger zone aside.
+fn fill(ranges: &[RangeName]) -> Option<RangeKind> {
+    ranges
         .iter()
         .rev()
-        .copied()
+        .filter_map(|&name| RangeKind::named(name))
         .find(|&kind| kind != RangeKind::Danger)
 }
 
