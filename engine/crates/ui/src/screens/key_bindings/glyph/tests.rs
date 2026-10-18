@@ -21,6 +21,19 @@ type KeyRow = crate::screens::key_bindings::KeyRow<Action>;
 
 /// The console the skin is laid out for.
 const PC: ConsoleSpec = ConsoleSpec::text(100, 32);
+/// A small console, which the skin fits.
+const SMALL: ConsoleSpec = ConsoleSpec::text(48, 24);
+/// Column of the action labels on [`PC`].
+const LABEL_X: i32 = PANEL.x + LABEL_DX;
+/// Column of the first slot's bar on [`PC`].
+const SLOTS_X: i32 = LABEL_X + LABEL_W;
+/// Row of the message on [`PC`].
+const MESSAGE_ROW: i32 = PANEL.y + PANEL.h;
+
+/// Left edge of slot `i`'s highlight bar on [`PC`].
+fn slot_x(i: usize) -> i32 {
+    Layout::new(&view(Side::Keyboard), PC.cols, PC.rows).slot_x(i)
+}
 
 /// The row of `view` for `action`, mutable.
 fn row_mut(view: &mut KeyBindingsView, action: Action) -> &mut RowView {
@@ -85,12 +98,16 @@ fn view(side: Side) -> KeyBindingsView {
 }
 
 fn painted(c: &Ctx, view: &KeyBindingsView) -> GlyphBuffer {
+    painted_on(c, view, PC)
+}
+
+fn painted_on(c: &Ctx, view: &KeyBindingsView, spec: ConsoleSpec) -> GlyphBuffer {
     let stale = Cell::new(
         'x',
         c.palette.engine(EngineColor::Warning),
         c.palette.engine(EngineColor::Warning),
     );
-    let mut buf = GlyphBuffer::with_spec(PC, stale);
+    let mut buf = GlyphBuffer::with_spec(spec, stale);
     paint(c, view, &mut buf);
     buf
 }
@@ -473,4 +490,97 @@ fn every_button_name_fits_a_slot() {
     for choice in CHOICES.map(|key| ctx().text(key).to_owned()) {
         assert!(i32::try_from(choice.chars().count()).unwrap() <= CHOICE_W - 4);
     }
+}
+
+/// On a 100 × 32 console the layout is the one the skin was drawn for,
+/// whatever the labels.
+#[test]
+fn on_the_pc_console_nothing_moves() {
+    let mut v = view(Side::Keyboard);
+    row_mut(&mut v, Action::Confirm).label = "A".to_owned();
+    let at = Layout::new(&v, PC.cols, PC.rows);
+    let expected = Layout {
+        panel: PANEL,
+        label_x: 6,
+        slots_x: 29,
+        pitch: SLOT_PITCH,
+        name_w: SLOT_W,
+    };
+    assert_eq!(at, expected);
+    assert_eq!(at.message_row(), 30);
+    // Wider, the panel keeps its width, centred.
+    let wide = Layout::new(&v, 120, 32);
+    assert_eq!(wide.panel, Rect::new(12, 1, 96, 29));
+    assert_eq!(wide.slots_x - wide.panel.x, SLOTS_X - PANEL.x);
+}
+
+#[test]
+fn a_name_too_long_for_its_cells_is_cut_with_an_ellipsis() {
+    assert_eq!(cut("Enter", 5), "Enter");
+    assert_eq!(cut("Backspace", 5), "Back…");
+    assert_eq!(cut("Backspace", 1), "…");
+    assert_eq!(cut("Backspace", 0), "");
+}
+
+/// The required actions only: what fits the height of [`SMALL`]. A
+/// row with a long key, one with a fixed key, an unmapped one the cursor
+/// is on and one that blocks leaving.
+fn small_view() -> KeyBindingsView {
+    let mut v = view(Side::Keyboard);
+    v.groups.truncate(1);
+    row_mut(&mut v, Action::CursorUp).slots[1] = SlotView::Bound("Ctrl+Backspace".to_owned());
+    row_mut(&mut v, Action::Cancel).fixed = vec!["Escape".to_owned()];
+    let confirm = row_mut(&mut v, Action::Confirm);
+    confirm.slots[0] = SlotView::Empty;
+    confirm.unmapped = true;
+    confirm.focus = Some(0);
+    let end = row_mut(&mut v, Action::EndTurn);
+    end.slots[0] = SlotView::Empty;
+    end.unmapped = true;
+    end.blocks_leaving = true;
+    v.message = Some("Give End turn a key first".to_owned());
+    v
+}
+
+/// On a 48-cell console every slot, label and note is inside the panel:
+/// names that don't fit are cut, and the note goes over the empty slots.
+#[test]
+fn on_a_small_console_every_slot_is_inside_the_panel() {
+    let c = ctx();
+    let v = small_view();
+    let buf = painted_on(&c, &v, SMALL);
+    let at = Layout::new(&v, SMALL.cols, SMALL.rows);
+    assert_eq!(at.panel, Rect::new(2, 1, 44, 21));
+    assert_eq!(at.message_row(), 22);
+    // The widest label, "Cursor right", and two cells: with Cancel's
+    // fixed key, the slots would be too narrow.
+    assert_eq!(at.slots_x, at.label_x + 14);
+    assert!(at.slot_x(SLOTS) <= right(at.panel) + 1);
+    for y in 0..i32::from(SMALL.rows) - 2 {
+        let row = text(&buf, y);
+        let inside: String = row.chars().skip(2).take(44).collect();
+        assert_eq!(row.trim(), inside.trim(), "row {y}: {row}");
+    }
+    let up = text(&buf, y_of(&v, Action::CursorUp));
+    assert!(up.contains("Cursor up") && up.contains(" Ctrl… "), "{up}");
+    assert!(text(&buf, y_of(&v, Action::Cancel)).contains("Cancel  + Es…  f"));
+    // The note after the focused slot's bar, or over the first slot.
+    let confirm = y_of(&v, Action::Confirm);
+    assert_eq!(x_of(&buf, confirm, "! not"), at.slot_x(1) - 1);
+    assert_eq!(
+        buf.get(at.slots_x, confirm).unwrap().bg,
+        c.palette.engine(EngineColor::Focus)
+    );
+    let end = y_of(&v, Action::EndTurn);
+    assert_eq!(x_of(&buf, end, "! not"), at.slots_x + 1);
+    assert!(!text(&buf, end).contains(EMPTY_SLOT));
+    assert_eq!(text(&buf, 22).trim(), "Give End turn a key first");
+    assert_eq!(text(&buf, 23).trim(), "help");
+}
+
+#[test]
+fn the_small_console_snapshot() {
+    let c = ctx();
+    let buf = painted_on(&c, &small_view(), SMALL);
+    insta::assert_snapshot!(buf.to_snapshot(&c.palette));
 }

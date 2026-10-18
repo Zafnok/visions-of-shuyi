@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-18
 ---
 
 # 1155 — The engine's screens fit the game's console
@@ -78,13 +78,13 @@ None.
 
 ## Acceptance criteria
 
-- [ ] Every existing snapshot of the options and Key bindings screens is
+- [x] Every existing snapshot of the options and Key bindings screens is
       unchanged.
-- [ ] New 48 × 24 snapshots show every row's label and value inside the
+- [x] New 48 × 24 snapshots show every row's label and value inside the
       panel.
-- [ ] Hello, Grid runs on a 48 × 24 console, its options and Key bindings
+- [x] Hello, Grid runs on a 48 × 24 console, its options and Key bindings
       screens readable (`cargo shuyi frame-png` from its folder).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -93,5 +93,34 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Options skin** (`options/glyph.rs`): the panel is centred on the
+  buffer's width, `min(60, width)` wide; labels and values are placed from
+  its left edge. On a 100-cell console it is where it was (x = 20).
+- **Key bindings skin** (`key_bindings/glyph.rs`): a `Layout` computed
+  from the buffer's size. The panel keeps its 2-cell margin, at most 96
+  wide and centred. Chosen of the ticket's two options: **every slot stays
+  shown and names that don't fit are cut with `…`** (hiding slots would
+  leave the cursor able to sit on one the player can't see). On a narrower
+  panel the label column is as wide as the longest label (with its fixed
+  keys only if each slot still gets 9 cells, enough for "Backspace"; else
+  the fixed keys are cut), and the slots share the rest. The not-mapped
+  note, with no room after the slots, is written over them (they are all
+  empty then), clear of the focused slot's bar. The choices box is kept
+  inside the panel's right edge. On 100 × 32 nothing moves (a test pins
+  the layout to the old constants).
+- **Deviation:** both panels also fit the console's **height** (the
+  ticket only named the width): the options panel's smallest height
+  leaves room for its message under it, and the Key bindings panel reaches
+  down to the row over the message (`height - 3`, i.e. 29 on 32 rows as
+  before). Without it the message fell off a 24-row console.
+- New snapshots at 48 × 24 in `engine/crates/ui/src/screens/*/snapshots/`;
+  the game's own (`crates/ui`) snapshots are unchanged.
+- **Hello, Grid** at 48 × 24: `CONSOLE`, `stage::AREA` (0, 1, 48, 22),
+  `skin::TALK_BOX` (bottom 7 rows), the window (784 × 784), `map::ZOOM` 1,
+  and also `Talk::WIDTH` 90 → 42 (the scene's text ran past the box) with
+  its long-line test now 200 characters. Snapshots re-accepted after
+  looking at each (stage in glyphs and tiles, title, end); the options and
+  Key bindings screens checked with `cargo shuyi frame-png`.
+- **Follow-up:** 1156 — a help line wider than the console loses both
+  ends (`print_centred`); Hello, Grid's Key bindings help shows it.
+- Nothing for Nick to play: the game's screens don't change.
