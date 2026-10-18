@@ -99,7 +99,7 @@ pub const PRIVATE_TEST_DISPLAY_ROOT: &str = "assets-private/test";
 /// The game's embedded directories, in the order a file is read from them:
 /// the bought art, `assets/`, then the test files' bought art and the test
 /// files, each when this build has it. Without `std`, the Playdate's
-/// ([`playdate_layers`]).
+/// (`playdate_layers`).
 pub fn layers() -> Vec<Layer> {
     vec![
         #[cfg(all(feature = "std", feature = "private-assets"))]
