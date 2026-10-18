@@ -149,6 +149,10 @@ mod tests {
         assert_eq!(&bytes[4..8], &(36u32 + 882).to_le_bytes());
         assert_eq!(&bytes[22..24], &1u16.to_le_bytes());
         assert_eq!(&bytes[24..28], &44_100u32.to_le_bytes());
+        // Bytes a second, a frame, bits a sample.
+        assert_eq!(&bytes[28..32], &88_200u32.to_le_bytes());
+        assert_eq!(&bytes[32..34], &2u16.to_le_bytes());
+        assert_eq!(&bytes[34..36], &16u16.to_le_bytes());
         assert_eq!(&bytes[40..44], &882u32.to_le_bytes());
         let sample = |i: usize| i16::from_le_bytes([bytes[44 + 2 * i], bytes[45 + 2 * i]]);
         // It starts at 0, swings to near its peak a quarter wave in (25

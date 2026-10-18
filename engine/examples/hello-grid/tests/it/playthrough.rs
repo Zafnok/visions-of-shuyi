@@ -2,11 +2,16 @@
 //! the scene read, the stage walked to the goal, the end screen and back
 //! to the title; caught by the foe; and leaving the stage.
 
+use std::collections::BTreeMap;
+
 use hello_grid::map::MOVE;
-use hello_grid::rules::{Outcome, Side};
-use hello_grid::screens::{End, StageScreen, Talk};
-use shuyi_core::{Pos, Sides};
+use hello_grid::rules::{Outcome, Side, TRIP_PERCENT};
+use hello_grid::screens::{End, StageScreen, Talk, Title};
+use shuyi_assets::dialogue::{DialogueTable, NoDirective, parse_dlg};
+use shuyi_core::{Pos, Sides, SimRng};
 use shuyi_ui::grid::MapUnit;
+use shuyi_ui::harness::Harness;
+use shuyi_ui::{Game, GameHooks};
 
 use crate::{play_out, stage, title, to_the_foe, to_the_goal, walk_to};
 
@@ -29,7 +34,10 @@ fn the_title_opens_the_stage_with_its_scene_read_over_it() {
     let first = talk.player.current().text.clone().unwrap();
     assert!(first.starts_with("A small grid"), "{first}");
     assert_eq!(talk.speaker(h.ctx()), None);
-    assert!(h.snapshot().contains("A small grid"), "{}", h.snapshot());
+    // Over the stage, which shows under the text box.
+    let snapshot = h.snapshot();
+    assert!(snapshot.contains("A small grid"), "{snapshot}");
+    assert!(snapshot.contains("Turn 1"), "{snapshot}");
     h.keys("Enter");
     let talk = h.screen::<Talk>().unwrap();
     assert!(!talk.text.is_revealed());
@@ -45,9 +53,57 @@ fn the_title_opens_the_stage_with_its_scene_read_over_it() {
 fn quit_on_the_title_quits() {
     let mut h = title(1);
     h.keys("Down Down");
+    assert_eq!(h.screen::<Title>().map(|t| t.focus), Some(2));
     assert!(!h.quit_requested());
     h.keys("Enter");
     assert!(h.quit_requested());
+}
+
+#[test]
+fn a_long_line_is_read_a_page_at_a_time() {
+    // A line of 400 characters: two pages of the box's three lines of 90.
+    let long = "word ".repeat(80);
+    let source = format!(
+        "@scene long
+> {long}
+> Short.
+@end
+"
+    );
+    let (parsed, errors) = parse_dlg::<NoDirective>("long.dlg", &source);
+    assert!(errors.is_empty(), "{errors:?}");
+    let mut ctx = hello_grid::ctx(0);
+    ctx.game.dialogue = DialogueTable {
+        scenes: parsed
+            .into_iter()
+            .map(|p| (p.scene.id.clone(), p.scene))
+            .collect(),
+        files: BTreeMap::new(),
+    };
+    let talk = Talk::new(&ctx, "long");
+    let mut h = Harness::new(Game::new(ctx, Box::new(talk), GameHooks::default()));
+    let line = |h: &Harness<hello_grid::Hello>| {
+        let talk = h.screen::<Talk>().unwrap();
+        let text = talk.player.current().text.unwrap_or_default();
+        (text.into_owned(), talk.text.clone())
+    };
+    let (first, page) = line(&h);
+    assert!(!page.is_revealed());
+    // Confirm shows the whole page, still the first.
+    h.keys("Enter");
+    let (text, shown) = line(&h);
+    assert_eq!(text, first);
+    assert!(shown.is_revealed());
+    assert_eq!(shown.page_lines(), page.page_lines());
+    // Confirm again: the line's next page, typing out.
+    h.keys("Enter");
+    let (text, next) = line(&h);
+    assert_eq!(text, first);
+    assert!(!next.is_revealed());
+    assert_ne!(next.page_lines(), page.page_lines());
+    // Shown whole, then on to the next line.
+    h.keys("Enter Enter");
+    assert_eq!(line(&h).0, "Short.");
 }
 
 #[test]
@@ -148,37 +204,83 @@ fn a_picked_up_piece_shows_its_reach_and_the_path_follows_the_cursor() {
     assert_eq!(h.screens(), ["title", "stage"]);
 }
 
+/// A seed whose foe doesn't trip on its first step.
+fn steady() -> u64 {
+    (0..1000)
+        .find(|&seed| SimRng::new(seed).roll_percent() >= TRIP_PERCENT)
+        .unwrap_or_else(|| panic!("no steady seed"))
+}
+
+fn p(x: i32, y: i32) -> Pos {
+    Pos::new(x, y)
+}
+
 #[test]
-fn a_walk_is_shown_a_tile_at_a_time_and_nothing_is_asked_meanwhile() {
-    let mut h = title(1);
+fn the_path_is_the_one_steered_whichever_way_round() {
+    for (keys, path) in [
+        (
+            "Up Right Right Right",
+            [p(1, 8), p(1, 7), p(2, 7), p(3, 7), p(4, 7)],
+        ),
+        (
+            "Right Up Right Right",
+            [p(1, 8), p(2, 8), p(2, 7), p(3, 7), p(4, 7)],
+        ),
+    ] {
+        let mut h = title(1);
+        h.keys("Enter Backspace Enter");
+        h.keys(keys);
+        assert_eq!(stage(&h).selected.as_ref().unwrap().1, path, "{keys}");
+    }
+}
+
+#[test]
+fn a_walk_is_shown_a_tile_at_a_time_then_the_foes_step() {
+    let mut h = title(steady());
     h.keys("Enter Backspace Enter Up Right Right Right Enter");
     let s = stage(&h);
-    // The rules moved your piece at once; the map shows it on its way,
-    // along the path as steered (up first, though the cheapest goes right
-    // first), four tiles: as far as it goes.
-    assert_eq!(s.stage.hero(), Pos::new(4, 7));
+    // The rules moved your piece at once; the map shows it setting off,
+    // and the foe where it stands.
+    assert_eq!(s.stage.hero(), p(4, 7));
     let walk = s.walk.clone().unwrap();
     assert_eq!(walk.side, Side::Hero);
-    assert_eq!(
-        walk.path,
-        [(1, 8), (1, 7), (2, 7), (3, 7), (4, 7)].map(|(x, y)| Pos::new(x, y))
-    );
-    let shown = s.scene(StageScreen::view_tiles(h.ctx()));
-    let hero = shown.unit(Side::Hero).unwrap().pos;
-    assert!(walk.path[..walk.path.len() - 1].contains(&hero), "{hero:?}");
-    assert!(shown.cursor.is_none());
+    assert_eq!(walk.path, [p(1, 8), p(1, 7), p(2, 7), p(3, 7), p(4, 7)]);
+    let shown = |h: &Harness<_>, side| {
+        let s = stage(h);
+        let scene = s.scene(StageScreen::view_tiles(h.ctx()));
+        scene.unit(side).map(|u| u.pos)
+    };
+    assert_eq!(shown(&h, Side::Hero), Some(p(1, 8)));
+    assert_eq!(shown(&h, Side::Foe), Some(p(9, 7)));
+    let scene = s.scene(StageScreen::view_tiles(h.ctx()));
+    assert!(scene.cursor.is_none());
     assert_eq!(s.view(h.ctx()).help, "");
+    // Eight tiles a second: two tiles on a quarter of a second later.
+    h.wait(0.25);
+    assert_eq!(shown(&h, Side::Hero), Some(p(2, 7)));
     // Keys do nothing while it walks.
     h.keys("Backspace");
     assert!(!stage(&h).leaving);
+    // Then the foe's step is shown, your piece on its new tile.
+    let mut foe = None;
+    for _ in 0..120 {
+        h.wait(1.0 / 60.0);
+        foe = stage(&h).walk.clone().filter(|w| w.side == Side::Foe);
+        if foe.is_some() {
+            break;
+        }
+    }
+    let foe = foe.unwrap_or_else(|| panic!("the foe never walked"));
+    assert_eq!(foe.path, [p(9, 7), stage(&h).stage.foe()]);
+    assert_eq!(shown(&h, Side::Hero), Some(p(4, 7)));
     h.wait(1.0);
     let s = stage(&h);
     assert!(s.walk.is_none());
     assert_eq!(s.stage.side_to_move(), Side::Hero);
     assert_eq!(s.commands.len(), 2);
-    let shown = s.scene(StageScreen::view_tiles(h.ctx()));
-    assert_eq!(shown.unit(Side::Hero).unwrap().pos, Pos::new(4, 7));
-    assert_eq!(shown.cursor_tile(), Some(Pos::new(4, 7)));
+    assert_eq!(shown(&h, Side::Foe), Some(s.stage.foe()));
+    let scene = s.scene(StageScreen::view_tiles(h.ctx()));
+    assert_eq!(scene.cursor_tile(), Some(p(4, 7)));
 }
 
 #[test]

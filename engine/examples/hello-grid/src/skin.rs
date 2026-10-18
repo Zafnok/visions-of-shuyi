@@ -120,10 +120,7 @@ pub fn paint_talk(
 pub fn paint_stage(palette: &Palette, view: &StageView, buf: &mut GlyphBuffer) {
     let c = |e| palette.engine(e);
     let bg = c(EngineColor::Panel);
-    let width = buf.width();
-    for y in [0, i32::from(buf.height()) - 1] {
-        buf.fill_rect(Rect::new(0, y, i32::from(width), 1), Cell::new(' ', bg, bg));
-    }
+    // The top and bottom rows are the cleared frame's: the panel's color.
     let shown = buf.print(1, 0, &view.turn, c(EngineColor::Highlight), bg);
     let x = 1 + i32::from(shown) + 3;
     buf.print(x, 0, &view.message, c(EngineColor::Text), bg);

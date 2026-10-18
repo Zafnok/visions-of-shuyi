@@ -44,4 +44,9 @@ exclude_re = [
     # `web`'s real `wasm-opt` is an optional tool no test machine is sure
     # to have; the logic around it runs on a fake (ticket 1117).
     "<impl WasmOpt for RealWasmOpt>::optimize",
+    # Hello, Grid has no voices (ticket 1118): `OnlyClip` has one value,
+    # which is its default, and no split variants, so `voice_variant`'s
+    # and `split`'s only mutants are the same functions.
+    "<impl GameData for Hello>::voice_variant",
+    "<impl ClipVariant for OnlyClip>::split",
 ]

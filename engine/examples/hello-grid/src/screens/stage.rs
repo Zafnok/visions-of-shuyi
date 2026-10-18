@@ -341,8 +341,4 @@ impl Screen<Hello> for StageScreen {
     fn as_any(&self) -> Option<&dyn Any> {
         Some(self)
     }
-
-    fn as_any_mut(&mut self) -> Option<&mut dyn Any> {
-        Some(self)
-    }
 }

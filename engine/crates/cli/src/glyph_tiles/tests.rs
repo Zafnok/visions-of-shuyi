@@ -84,6 +84,27 @@ fn a_tiles_glyphs_are_centred_on_its_square() {
 }
 
 #[test]
+fn glyphs_that_just_fit_are_drawn_and_an_odd_tile_rounds_down() {
+    // Three glyphs of 2 px fill a 6 px tile; a 3 px glyph fills a 3 px one.
+    assert!(draw(&rules(1, vec![tile("aaa", None)])).is_ok());
+    let mut tall = rules(1, vec![tile("a", None)]);
+    tall.tile = 3;
+    assert!(draw(&tall).is_ok());
+    // In a 7 px tile, `a` (2 × 3) goes at (2, 2): the 5 and 4 px left over
+    // halved, rounded down.
+    let mut odd = rules(1, vec![tile("a", Some("paper"))]);
+    odd.tile = 7;
+    let tiles = draw(&odd).unwrap();
+    for y in 0..7 {
+        for x in 0..7 {
+            let on = (2..4).contains(&x) && (2..5).contains(&y);
+            let want = if on { INK } else { PAPER };
+            assert_eq!(tiles.pixel(x, y), want, "({x}, {y})");
+        }
+    }
+}
+
+#[test]
 fn a_tile_with_no_background_is_clear_but_for_its_glyphs() {
     let tiles = draw(&rules(2, vec![tile("a", Some("paper")), tile("b", None)])).unwrap();
     // The second tile, at x 6: one glyph of 2 × 3, from (2, 1).
