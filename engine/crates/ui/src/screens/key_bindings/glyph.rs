@@ -30,7 +30,7 @@ const PANEL: Rect = Rect::new(2, 1, 96, 29);
 const LABEL_DX: i32 = 4;
 /// Column of the title and the group headings, from the panel's left edge:
 /// two cells left of the labels.
-const HEADING_DX: i32 = LABEL_DX - 2;
+const HEADING_DX: i32 = 2;
 /// Cells from the labels' column to the first slot's highlight bar, on a
 /// panel as wide as [`PANEL`].
 const LABEL_W: i32 = 23;
@@ -339,7 +339,7 @@ fn paint_row<G: GameData>(
             buf.print(x, y, &bar, bg, c(EngineColor::Focus));
         } else if let SlotView::Bound(name) = slot {
             buf.print(x + 1, y, &cut(name, at.name_w), text, bg);
-        } else if note_x.is_none_or(|n| n > at.slot_x(row.slots.len())) {
+        } else if note_x.is_none_or(|n| n == after_slots(row, at)) {
             buf.print(x + 1, y, EMPTY_SLOT, dim, bg);
         }
     }
@@ -360,7 +360,7 @@ fn paint_row<G: GameData>(
 /// it would cover the note.
 fn note_x<A>(view: &KeyBindingsView<A>, row: &RowView<A>, at: &Layout) -> i32 {
     let len = to_i32(view.not_mapped.chars().count());
-    let after = at.slot_x(row.slots.len()) + 1;
+    let after = after_slots(row, at);
     if after + len <= at.right() {
         return after;
     }
@@ -369,6 +369,11 @@ fn note_x<A>(view: &KeyBindingsView<A>, row: &RowView<A>, at: &Layout) -> i32 {
         Some(j) if at.slot_x(j) < first + len => at.slot_x(j) + at.pitch - 1,
         _ => first,
     }
+}
+
+/// The column a cell after `row`'s last slot.
+fn after_slots<A>(row: &RowView<A>, at: &Layout) -> i32 {
+    at.slot_x(row.slots.len()) + 1
 }
 
 /// Paints `question` in a double-bordered box in the middle of the screen,
