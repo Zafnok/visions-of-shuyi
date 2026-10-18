@@ -26,7 +26,7 @@ mod sprite_test;
 use crate::prelude::*;
 pub use cinematic::{CinematicScreen, TEST_CINEMATIC};
 pub use portrait_viewer::PortraitViewerScreen;
-pub use scene_camera::SceneCameraScreen;
+pub use scene_camera::{SceneCameraScreen, scene_camera};
 pub use scene_preview::{ScenePreviewScreen, ScenePreviewView};
 pub use shuyi_ui::debug::{DebugEntry, GlyphSamplerScreen};
 pub use sprite_test::SpriteTestScreen;
@@ -120,7 +120,7 @@ fn tools() -> Vec<DebugEntry<Shuyi>> {
                 Transition::None
             }
             8 => Transition::Push(Box::new(CinematicScreen::new(ctx))),
-            _ => Transition::Push(Box::new(SceneCameraScreen::new(ctx))),
+            _ => Transition::Push(Box::new(scene_camera(ctx))),
         })
     });
     let skin = DebugEntry::named(
