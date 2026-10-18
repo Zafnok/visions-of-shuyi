@@ -86,6 +86,77 @@ Like Fire Emblem on the GBA.
   and rewinds) is on the Unit info screen and in the map menu
   (*Claude's starting rule*).
 
+#### The guide's box (0066)
+
+Decided: 2026-10-18. Source: ticket 0066 (built by 1058). Nick played
+the 1055 build on his Playdate: the PC's lesson box covered the top of
+the screen and ran off its right edge (`playdate/0066-today.png`). He
+was shown Chapter 1's first battle on the Playdate's map skin with the
+"Moving the cursor" lesson and the "Your move" tip, each option drawn at
+the device's size (the grey box stands in for the guide's one-bit face,
+ADR-0040; the button names are the Playdate's):
+
+| Picture | Shows |
+| ------- | ----- |
+| [`playdate/0066-lesson.png`](playdate/0066-lesson.png) | **Chosen:** the lesson in a window down the side away from the cursor, the 1× face, the text and checklist at once |
+| [`playdate/0066-tip.png`](playdate/0066-tip.png) | **Chosen:** an ordinary tip in the same window |
+| `playdate/0066-q1-options.png` | Q1 at ×2: today's box, a strip along the top or bottom, the side window, a full page |
+| `playdate/0066-q2-options.png` | Q2 at ×2: the face at 2× (full page only), 1×, half size, none |
+| `playdate/0066-q3-options.png` | Q3 at ×2: all at once; the text first and then a small checklist window, or only a count |
+
+##### Nick's words
+
+> **Q1, where the box sits** (A a strip along the top or bottom, B a
+> window down the side away from the cursor, C a full page over the
+> map): "B. Side window"
+>
+> **Q2, the guide's face** (A 2×, B 1×, C half size, D the name only):
+> "B. 1× face"
+>
+> **Q3, a lesson's text and checklist** (A all at once, B the text and
+> then a checklist window, C the text and then a count): "A. All at
+> once"
+
+##### Rules
+
+- **A window down the side of the screen away from the cursor**, like
+  the forecast and Advance Wars' info windows: on the right when the
+  cursor is in the left half of the screen, on the left otherwise. It
+  moves when the cursor crosses over, as the PC's lesson box moves out
+  of the cursor's way. Tips and lessons both use it.
+- **The guide's face at 1×** (the 64 × 64 bust, 8 × 4 cells) in its
+  top corner, the tip's or lesson's title beside it, the text under the
+  face.
+- **A lesson shows its text and its checklist at once**, as on the PC:
+  the items (`[ ]` / `[x]`) under the text, ticked as they are done. The
+  lesson takes no buttons; the map works under it as on the PC.
+- *Claude's starting rules (Nick can veto):*
+  - The window is **24 cells wide and the screen's full height** (15
+    rows), so it covers half the map's width (*tunable*).
+  - Its look is the one-bit look of the battle's windows: a white
+    inside, a double black frame, black letters. The guide's name is in
+    the top of the frame, as on the PC.
+  - What the PC writes under the text goes **in the bottom of the
+    frame**, to save rows: a lesson's "0 of 4 done", a tip's close hint
+    ("A close").
+  - The text **wraps at the window's width** (22 letters), by words:
+    the line breaks the text has are the PC's. A checklist item too
+    long for a line goes on under its own words, past the `[ ] `. A
+    blank row parts the text from the checklist when there is room for
+    it. Counted on 2026-10-18, every one of Chapter 1's tips and lessons
+    fits this way.
+  - **Every lesson fits the window at once.** A lesson whose text and
+    items don't fit is a writing fix (its text made shorter), never a
+    second page: a lesson can't turn pages with A, since A is one of
+    its steps ("Select a unit: A").
+  - **A tip too long for the window turns pages with A**, as dialogue
+    does (a tip already takes A to close): "A more" in the frame until
+    the last page, then "A close". None of Chapter 1's tips needs it.
+  - With no face (a build without the bought art), the title takes the
+    face's place and the text moves up, as in `0066-q2-options.png`'s D.
+  - The window goes over the corner pop-ups (1038) on its side while it
+    is up.
+
 ### Telling things apart without colour (Q3 E)
 
 - **Your units:** the two letters **white in a solid black tile**.

@@ -5,7 +5,7 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: blocked
+status: todo
 blocked_by: ["0066", "1037"]
 nick_input: sign-off
 completed:
@@ -22,8 +22,13 @@ sized for 100 × 32 cells (`crates/ui/src/tips/glyph.rs`: `paint`,
 `paint_lesson`, `rect`, `lesson_rect`; called from
 `crates/ui/src/screens/battle/glyph.rs`). Tips and lessons are on for
 the Playdate (1033), and Nick plays Chapter 1's tutorial there (1050),
-so the box must fit. **0066** decides how it looks; this ticket builds
-it.
+so the box must fit. **0066** decided how it looks
+(`docs/design/playdate.md`, *The guide's box*): a window down the side
+of the screen away from the cursor, 24 cells wide and the screen's full
+height, the guide's face at 1× (64 × 64) in its top corner with the
+title beside it, the text under the face wrapped at 22 letters, and a
+lesson's checklist under its text, all at once as on the PC. The chosen
+mockups are `docs/design/playdate/0066-lesson.png` and `0066-tip.png`.
 
 The view is already split from the look (ADR-0054): `TipView` and
 `LessonView` (`crates/ui/src/tips/view.rs`) say what the guide says, the
@@ -40,14 +45,26 @@ checklist ticks, nothing runs off the screen.
 
 **In:**
 - A Playdate paint of `TipView` and `LessonView`, chosen by `SkinSet`,
-  as 0066 decided (where the box sits, the face, how text and checklist
-  fit), in the one-bit look (black frame, white inside, black text, as
-  1038's windows).
-- If 0066's answer needs something the views lack (a page of the text,
-  a short checklist line), add it to the view for both skins, the PC's
-  look unchanged.
-- The battle's choice of where the lesson box goes (`lesson_at_bottom`
-  in `screens/battle/glyph.rs`) follows the Playdate skin's rule.
+  as 0066 decided: the side window (24 × 15 cells, double black frame,
+  white inside, black letters, the guide's name in the top of the
+  frame), the 1× face (8 × 4 cells) in its top corner and the title
+  beside it, the text under it.
+- What the PC writes under the text goes in the bottom of the frame: a
+  lesson's progress (`0 of 4 done`), a tip's close hint.
+- Word wrapping at the window's width (22 letters), the text's own line
+  breaks ignored; a checklist item too long for a line goes on under its
+  own words, past the `[ ] `; the blank row between the text and the
+  checklist only when there is room.
+- A tip too long for the window turns pages with A ("A more" in the
+  frame until the last page): the view gains the page, for both skins,
+  the PC's look unchanged. A lesson never pages (A is one of its steps).
+- No face (no guide portrait, or no picture yet): the title takes the
+  face's place and the text moves up.
+- The battle's choice of where the box goes (`lesson_at_bottom` in
+  `screens/battle/glyph.rs`) follows the Playdate skin's rule: the
+  window on the right when the cursor is in the left half of the
+  screen, on the left otherwise, for tips and lessons alike. It goes
+  over 1038's corner pop-ups on its side.
 
 **Out (do not do):**
 - What the guide says or when (`docs/design/tutorial.md`).
@@ -61,8 +78,9 @@ checklist ticks, nothing runs off the screen.
 1. Read 0066's section of `docs/design/playdate.md`, ADR-0054, ADR-0074,
    `crates/ui/src/tips/`, and 1037's `SkinSet`.
 2. The Playdate paint, with look tests (cells and pixels through
-   `onebit::render`) for a tip, a lesson with its checklist, and a long
-   text.
+   `onebit::render`) for a tip, a lesson with its checklist, a long
+   checklist item that wraps, a tip that pages, no face, and the window
+   on each side of the cursor.
 3. Behaviour tests read the view: a lesson's items tick the same on both
    skins.
 4. `frame-png --playdate` pictures of a tip and a lesson for the PR.
@@ -73,7 +91,11 @@ checklist ticks, nothing runs off the screen.
 
 - [ ] On `ConsoleSpec::PLAYDATE` with the Playdate skins, every tip and
       lesson of Chapter 1 fits inside 50 × 15 cells (a test walks them).
-- [ ] The look matches 0066's chosen mockup.
+- [ ] The look matches 0066's chosen mockups (`0066-lesson.png`,
+      `0066-tip.png`): the side window away from the cursor, the 1×
+      face, a lesson's text and checklist at once.
+- [ ] Every lesson of Chapter 1 shows whole without paging; a tip too
+      long for the window pages with A.
 - [ ] No PC snapshot changes.
 - [ ] All gates in the `run-gates` skill pass, and the CI `playdate` job.
 
