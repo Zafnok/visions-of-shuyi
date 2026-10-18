@@ -98,14 +98,18 @@ pub const PRIVATE_TEST_DISPLAY_ROOT: &str = "assets-private/test";
 
 /// The game's embedded directories, in the order a file is read from them:
 /// the bought art, `assets/`, then the test files' bought art and the test
-/// files, each when this build has it.
-#[cfg(feature = "std")]
+/// files, each when this build has it. Without `std`, the Playdate's
+/// ([`playdate_layers`]).
 pub fn layers() -> Vec<Layer> {
     vec![
         #[cfg(all(feature = "std", feature = "private-assets"))]
         Layer::dir(PRIVATE_DISPLAY_ROOT, &PRIVATE).private(),
         #[cfg(feature = "std")]
         Layer::dir(DISPLAY_ROOT, &ASSETS),
+        #[cfg(all(not(feature = "std"), feature = "private-assets"))]
+        Layer::table(PRIVATE_DISPLAY_ROOT, PLAYDATE_PRIVATE).private(),
+        #[cfg(not(feature = "std"))]
+        playdate_layer(),
         #[cfg(all(
             feature = "std",
             feature = "private-assets",
@@ -117,12 +121,6 @@ pub fn layers() -> Vec<Layer> {
         #[cfg(all(feature = "std", any(debug_assertions, feature = "test-fixtures")))]
         Layer::dir(TEST_DISPLAY_ROOT, &TEST).test(),
     ]
-}
-
-/// The game's layers without `std`: the Playdate's.
-#[cfg(not(feature = "std"))]
-pub fn layers() -> Vec<Layer> {
-    playdate_layers()
 }
 
 /// `assets/` as the Playdate embeds it: without the files
