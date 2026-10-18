@@ -47,10 +47,8 @@ pub struct GameLang {
 
 /// What a game gives the commands that run it.
 pub trait GameTools {
-    /// The options the game adds to `frame-png`.
-    fn frame_options(&self) -> &[GameOption] {
-        &[]
-    }
+    /// The options the game adds to `frame-png` (none: `&[]`).
+    fn frame_options(&self) -> &[GameOption];
 
     /// What else `frame-png --help` says about the game's pictures.
     fn frame_notes(&self) -> &'static str {
@@ -106,6 +104,10 @@ mod tests {
     struct Plain;
 
     impl GameTools for Plain {
+        fn frame_options(&self) -> &[GameOption] {
+            &[]
+        }
+
         fn frame(&self, _: &[GameArg], _: &Script, _: Option<u32>) -> Result<Shot, String> {
             Err("no frame".to_owned())
         }

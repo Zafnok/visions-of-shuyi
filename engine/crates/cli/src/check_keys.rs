@@ -1013,7 +1013,9 @@ let d = is_key_down_fast(x);
         fs::write(screens.join("foo.rs"), "fn f() { g(Key::F); }\n").unwrap();
         fs::write(screens.join("tests.rs"), "fn f() { g(Key::F); }\n").unwrap();
         fs::write(root.join("story/data/tips.ron"), "[\"press f\"]\n").unwrap();
-        fs::write(root.join("story/data/keymap.ron"), "(\"Space\")\n").unwrap();
+        // Neither the keymap file nor a file that isn't RON is player text.
+        fs::write(root.join("story/data/keymap.ron"), "(\"press f\")\n").unwrap();
+        fs::write(root.join("story/data/notes.md"), "\"press f\"\n").unwrap();
         fs::create_dir_all(root.join("test-files/dialogue")).unwrap();
         let script = "@scene s\nlord: Press Space to end your turn.\n";
         fs::write(root.join("test-files/dialogue/x.dlg"), script).unwrap();
