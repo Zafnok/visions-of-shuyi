@@ -1784,7 +1784,7 @@ impl BattleScreen {
     fn move_cursor(&mut self, action: Action) -> bool {
         let tiles = &self.state.map().tiles;
         let (w, h) = (tiles.width(), tiles.height());
-        let moved = self.cursor.step(action, w, h);
+        let moved = cursor::dir(action).is_some_and(|dir| self.cursor.step(dir, w, h));
         if moved {
             let to = self.cursor.pos;
             self.follow(to);

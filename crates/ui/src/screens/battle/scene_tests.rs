@@ -77,7 +77,7 @@ fn browsing_shows_the_terrain_the_units_and_the_cursor() {
     for pos in (-11..19).flat_map(|y| (-10..25).map(move |x| p(x, y))) {
         let tile = scene.tile(pos).unwrap();
         assert_eq!(tile.terrain, map.get(pos).copied(), "{pos:?}");
-        assert!(tile.tints.is_empty(), "{pos:?}");
+        assert!(scene.tints_at(pos).is_empty(), "{pos:?}");
     }
     let sea = c.game.content.terrain.display.id_of("sea");
     assert!(sea.is_some());
@@ -174,10 +174,7 @@ fn the_danger_zone_lies_under_the_modes_ranges() {
     };
     let both = sel.moves.iter().find(|&p| zone.contains(p)).unwrap();
     let scene = s.scene(&c);
-    assert_eq!(
-        scene.tile(both).unwrap().tints,
-        [RangeKind::Danger, RangeKind::Move]
-    );
+    assert_eq!(scene.tints_at(both), [RangeKind::Danger, RangeKind::Move]);
     assert_eq!(scene.tinted(RangeKind::Danger), rows(zone.iter()));
 }
 

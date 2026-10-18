@@ -154,7 +154,12 @@ fn each_pixel_of_the_corner_marks_is_flipped_once() {
             all.sort_unstable();
             all
         };
-        let mut theirs = pixels(&corner_arms(5, 2, arm));
+        let mut theirs = pixels(&corner_arms(
+            5,
+            2,
+            arm,
+            crate::map_view::glyph::units::HP_BAR_H,
+        ));
         theirs.dedup();
         assert_eq!(pixels(&ours), theirs, "{arm}");
         assert_eq!(ours.len(), 8);

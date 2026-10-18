@@ -29,7 +29,7 @@ use crate::game::Game;
 use crate::game::system_menu::SystemMenuEntry;
 use crate::glyph_buffer::Rect;
 use crate::input::{Layout, PadKind, RIGHT_HANDED};
-use crate::map_view::{MapScene, RangeKind, UnitView, skin_named};
+use crate::map_view::{MapScene, RangeKind, TerrainLooks, UnitView, skin_named};
 use crate::profiles::ProfileId;
 use crate::screen::{Ctx, Screen, Shuyi, ShuyiCtx};
 use crate::screens::BattleScreen;
@@ -284,9 +284,9 @@ impl Harness {
     /// [`map_scene`](Self::map_scene) as text ([`MapScene::to_text`]);
     /// empty with no battle.
     pub fn map_text(&self) -> String {
-        let content = &self.ctx().game.content;
+        let terrains = TerrainLooks(&self.ctx().game.content.terrain.display);
         self.map_scene()
-            .map_or_else(String::new, |scene| scene.to_text(content))
+            .map_or_else(String::new, |scene| scene.to_text(&terrains))
     }
 
     /// The tile under the battle map's cursor, if one is shown
@@ -302,9 +302,9 @@ impl Harness {
 
     /// The ranges the battle map shows on `pos` ([`MapScene::tints_at`]).
     pub fn tints_at(&self, pos: Pos) -> Vec<RangeKind> {
-        self.map_scene()
-            .map(|s| s.tints_at(pos))
-            .unwrap_or_default()
+        let scene = self.map_scene();
+        let names = scene.map(|s| s.tints_at(pos)).unwrap_or_default();
+        names.into_iter().filter_map(RangeKind::named).collect()
     }
 
     /// The selected unit's path on the battle map, its own tile first;
@@ -447,7 +447,8 @@ mod tests {
         let battle = h.flow().and_then(FlowScreen::battle).unwrap();
         assert_eq!(scene, battle.scene(h.game().ctx()));
         assert_eq!(scene.units.len(), 8);
-        assert_eq!(h.map_text(), scene.to_text(&h.game().ctx().game.content));
+        let terrains = TerrainLooks(&h.game().ctx().game.content.terrain.display);
+        assert_eq!(h.map_text(), scene.to_text(&terrains));
         assert!(h.map_text().starts_with("origin (-10,-11) size 35x30\n"));
         // A battle screen on the stack itself.
         let state = quick_battle(&embedded_ctx().game.content).unwrap();

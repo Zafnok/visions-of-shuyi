@@ -1,38 +1,39 @@
-//! The ground a sprite skin paints from its tileset's own tiles
-//! (ADR-0052): each tile's own picture, then the look's layers over them
-//! (pictures between tiles by the [corner rule](crate::map_view::corners),
+//! The ground a sprite skin paints from its terrain tiles (game
+//! ADR-0052): each tile's own picture, then the look's layers over them
+//! (pictures between tiles by the [corner rule](crate::grid::corners),
 //! and pictures on tiles), then what tints a tile. The pictures are
-//! shaded by the light the scene's map is in (ADR-0058); the tints are
-//! not.
+//! shaded by the light the scene's map is in (game ADR-0058); the tints
+//! are not.
 //!
 //! A tile off the map gets no picture, and no part of one: a picture
 //! between tiles is drawn only inside the tiles of the map it covers.
 
 use crate::prelude::*;
-use trpg_content::tileset::{CornerLayer, Layer, Look, TileLayer};
-use trpg_content::{ImageId, ImageRect, Picture, TerrainTiles};
+use shuyi_assets::image::{ImageId, ImageRect, Picture};
+use shuyi_assets::tileset::{CornerLayer, Layer, Look, TerrainTiles, TileLayer};
 
 use super::tile_sprite;
-use crate::color::{Rgb, UiColor, to_channel};
-use crate::glyph_buffer::{GlyphBuffer, Layer as Depth, Overlay, Paint, PxRect, Rect, Sprite};
-use crate::map_view::corners::{Shown, mix_of};
-use crate::map_view::glyph::{OVERLAY_BLEND, named, range_color};
-use crate::map_view::grid::Grid;
-use crate::map_view::scene::{MapScene, TileView};
-use crate::screen::Ctx;
+use crate::frame::color::{EngineColor, Rgb, to_channel};
+use crate::frame::glyph_buffer::{
+    GlyphBuffer, Layer as Depth, Overlay, Paint, PxRect, Rect, Sprite,
+};
+use crate::grid::corners::{Shown, mix_of};
+use crate::grid::glyph::OVERLAY_BLEND;
+use crate::grid::layout::Grid;
+use crate::grid::scene::{MapScene, RangeName, TileView, Tints};
+use crate::grid::skin::Looks;
 
 /// Paints `scene`'s ground in `grid` from `terrain`'s tiles, in the look
-/// the scene's map asks for (the tileset's own if it lacks that one) and
-/// in its light (as the pictures are, if the content has no such light).
-pub(super) fn paint(
-    ctx: &Ctx,
+/// the scene's map asks for (the tiles' own if they lack that one) and in
+/// its light (as the pictures are, if `looks` has no such light).
+pub(super) fn paint<U>(
+    looks: &Looks,
     terrain: &TerrainTiles,
-    scene: &MapScene,
+    scene: &MapScene<U>,
     grid: &Grid,
     buf: &mut GlyphBuffer,
 ) {
-    let look = terrain.looks.get(&scene.look.tiles);
-    let light = ctx.game.content.lighting.get(&scene.look.light);
+    let light = looks.lights.get(&scene.look.light);
     let ground = Ground {
         paint: match light {
             Some(light) if !light.is_plain() => Paint::Shaded(light),
@@ -41,8 +42,9 @@ pub(super) fn paint(
         scene,
         grid,
         image: terrain.image,
-        look: look.unwrap_or(&terrain.look),
+        look: terrain.look(&scene.look.tiles),
         shown: Shown::of(scene),
+        tints: scene.tints(),
     };
     ground.paint_tiles(buf);
     for layer in &ground.look.layers {
@@ -51,12 +53,12 @@ pub(super) fn paint(
             Layer::Tiles(layer) => ground.paint_singles(layer, buf),
         }
     }
-    ground.paint_tints(ctx, buf);
+    ground.paint_tints(looks, buf);
 }
 
 /// One scene's ground being painted.
-struct Ground<'a> {
-    scene: &'a MapScene,
+struct Ground<'a, U> {
+    scene: &'a MapScene<U>,
     grid: &'a Grid,
     /// The image every picture is in.
     image: ImageId,
@@ -65,9 +67,11 @@ struct Ground<'a> {
     shown: Shown,
     /// How the pictures are coloured: by the map's light.
     paint: Paint,
+    /// The ranges on each tile.
+    tints: Tints,
 }
 
-impl Ground<'_> {
+impl<U> Ground<'_, U> {
     /// The pixels of the tile `dx` right of and `dy` below the view's
     /// first, if it is drawn and on the map.
     fn tile(&self, dx: i32, dy: i32) -> Option<PxRect> {
@@ -160,8 +164,8 @@ impl Ground<'_> {
     }
 
     /// What tints each tile, over its pictures.
-    fn paint_tints(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let black = ctx.palette.get(UiColor::Black);
+    fn paint_tints(&self, looks: &Looks, buf: &mut GlyphBuffer) {
+        let black = looks.dark();
         let (across, down) = self.grid.tiles;
         for (dx, dy) in (0..down).flat_map(|dy| (0..across).map(move |dx| (dx, dy))) {
             let Some(tile) = self.scene.tile_at(dx, dy) else {
@@ -169,28 +173,29 @@ impl Ground<'_> {
             };
             let own = self.tile(dx, dy).and_then(|_| self.own(dx, dy));
             let rect = self.grid.rect_at(dx, dy);
-            paint_tinted(buf, rect, own, &tints(ctx, tile), black);
+            let tints = tints(looks, tile, self.tints.at(dx, dy));
+            paint_tinted(buf, rect, own, &tints, black);
         }
     }
 }
 
-/// What tints `tile`, in order, as colours and strengths: its flashes
-/// (towards its terrain's glyph colour, as on the glyph skin), then its
-/// ranges. A tile a spell would change is drawn as what it would become,
-/// so nothing tints it. (The cursor never tints a picture: ticket 0444.)
-fn tints(ctx: &Ctx, tile: &TileView) -> Vec<(Rgb, f32)> {
+/// What tints `tile`, in `ranges`, in order, as colors and strengths: its
+/// flashes (towards its terrain's glyph color, as on the glyph skin), then
+/// its ranges. A tile that would change is drawn as what it would become,
+/// so nothing tints it. (The cursor never tints a picture: game ticket
+/// 0444.)
+fn tints(looks: &Looks, tile: &TileView, ranges: &[RangeName]) -> Vec<(Rgb, f32)> {
     let mut out = Vec::new();
     if tile.becomes.is_none() {
-        let display = &ctx.game.content.terrain.display;
         let fg = tile
             .terrain
-            .and_then(|id| display.get(id))
-            .map(|t| named(&ctx.palette, &t.fg, UiColor::Text));
+            .and_then(|id| looks.terrains.glyphs(id))
+            .map(|t| looks.named(t.fg, EngineColor::Text));
         if let Some(fg) = fg {
             out.extend(tile.flashes.iter().map(|&s| (fg, OVERLAY_BLEND * s)));
         }
-        for &kind in &tile.tints {
-            out.push((ctx.palette.get(range_color(kind)), OVERLAY_BLEND));
+        for &kind in ranges {
+            out.push((looks.range(kind), OVERLAY_BLEND));
         }
     }
     out
@@ -246,97 +251,58 @@ fn paint_tinted(
 }
 
 #[cfg(test)]
-pub(crate) mod tests {
-    use std::collections::BTreeSet;
-
+mod tests {
     use proptest::prelude::*;
-    use trpg_content::tileset::MIXES;
-    use trpg_core::TerrainId;
+    use shuyi_core::{Pos, TerrainId};
 
     use super::*;
-    use crate::map_view::glyph::tests::any_scene;
-    use crate::map_view::scene::RangeKind;
-    use crate::map_view::skin::MapSkin;
-    use crate::map_view::sprite::tests::{any_area, blank, p, plains, rect_at, skin, sprite_at};
-    use crate::map_view::sprite::{SpriteSkin, src_rect};
-    use crate::screen::tests::ctx;
+    use crate::frame::glyph_buffer::Item;
+    use crate::grid::layout::px_rect;
+    use crate::grid::skin::GridSkin;
+    use crate::grid::sprite::SpriteSkin;
+    use crate::grid::sprite::src_rect;
+    use crate::grid::sprite::tests::{blank, p, plains, rect_at, sprite_at};
+    use crate::grid::testing::{any_area, any_scene};
+    use crate::toy::grid::{
+        BRIDGE, Cards, GRASS, Kit, Piece, WATER, layered, mix_rect, sprite, tiles, with_indoor,
+    };
 
     /// 9 × 5 cells: 72 × 80 px, so 3 × 3 tiles of 24 px with 4 px to
     /// spare above and below. The first tile's corner is (0, 4).
     const AREA: Rect = Rect::new(0, 0, 9, 5);
 
-    /// The picture of mix `m` in a test layer: one rectangle of the test
-    /// tileset's image for each.
-    fn mix_rect(m: u8) -> ImageRect {
-        ImageRect {
-            x: 24 * u32::from(m % 8),
-            y: 96 + 24 * u32::from(m / 8),
-            w: 24,
-            h: 24,
-        }
+    const MOVE: RangeName = RangeName("move");
+    const DANGER: RangeName = RangeName("danger");
+    const ATTACK: RangeName = RangeName("attack");
+    const HEAL: RangeName = RangeName("heal");
+
+    /// The skin of the toy's tiles with layers: a shore between the water
+    /// (and the bridge) and the rest, a picture for every mix; then a
+    /// bridge that has another picture with water to its left and right.
+    fn shore(kit: &Kit) -> SpriteSkin {
+        sprite(Some(layered(kit.tiles_image())))
     }
 
-    /// The test tileset's skin with layers: a shore between the water (and
-    /// the sea and the bridge) and the rest, a picture for every mix; then
-    /// a bridge that has another picture with water to its left and
-    /// right.
-    pub(crate) fn layered(c: &Ctx) -> SpriteSkin {
-        let id = |name| c.game.content.terrain.display.id_of(name).unwrap();
-        let mut tileset = c.game.content.tilesets["test"].clone();
-        let terrain = tileset.terrain.as_mut().unwrap();
-        let mut tiles = [None; MIXES];
-        for m in 1..16 {
-            tiles[usize::from(m)] = Some(mix_rect(m));
-        }
-        let shore = CornerLayer {
-            of: BTreeSet::from([id("water"), id("sea"), id("bridge")]),
-            tiles,
-        };
-        let mut sides = [None; MIXES];
-        sides[0b0101] = Some(mix_rect(0));
-        let bridge = TileLayer {
-            of: BTreeSet::from([id("bridge")]),
-            tile: mix_rect(15),
-            beside: BTreeSet::from([id("water")]),
-            sides,
-        };
-        terrain.look.layers = vec![Layer::Corners(shore), Layer::Tiles(bridge)];
-        SpriteSkin::new(tileset)
-    }
-
-    /// `skin` with an indoor look: every terrain's tile another one of
-    /// the image's, and no layers.
-    pub(crate) fn with_indoor(skin: &SpriteSkin) -> SpriteSkin {
-        let mut tileset = skin.tileset().clone();
-        let terrain = tileset.terrain.as_mut().unwrap();
-        let mut indoor = Look::default();
-        for (&id, rect) in &terrain.look.tiles {
-            indoor.tiles.insert(id, ImageRect { y: 72, ..*rect });
-        }
-        terrain.looks.insert("indoor".to_owned(), indoor);
-        SpriteSkin::new(tileset)
-    }
-
-    /// A 3 × 3 view of `rows` (`.` plain, `~` water, `=` bridge, a space
+    /// A 3 × 3 view of `rows` (`.` grass, `~` water, `=` bridge, a space
     /// off the map), with the same terrain running on round it.
-    fn view(c: &Ctx, rows: [&str; 3]) -> MapScene {
-        let id = |name| c.game.content.terrain.display.id_of(name);
+    fn view(rows: [&str; 3]) -> MapScene<Piece> {
         let mut scene = MapScene::new(p(0, 0), (3, 3));
         scene.set_terrain(|pos| {
             let row = rows.get(usize::try_from(pos.y.clamp(0, 2)).ok()?)?;
             match row.chars().nth(usize::try_from(pos.x.clamp(0, 2)).ok()?)? {
-                '.' => id("plain"),
-                '~' => id("water"),
-                '=' => id("bridge"),
+                '.' => Some(GRASS),
+                '~' => Some(WATER),
+                '=' => Some(BRIDGE),
                 _ => None,
             }
         });
         scene
     }
 
-    fn painted(c: &Ctx, skin: &SpriteSkin, scene: &MapScene) -> GlyphBuffer {
+    fn painted(kit: &Kit, skin: &SpriteSkin, scene: &MapScene<Piece>) -> GlyphBuffer {
         let mut buf = blank();
-        skin.paint(c, scene, AREA, &mut buf);
+        let cards = Cards { card: kit.card() };
+        skin.paint(&kit.looks(), scene, AREA, &cards, &mut buf);
         buf
     }
 
@@ -347,23 +313,26 @@ pub(crate) mod tests {
         sprites[from..].iter().map(|s| (s.src, s.clip)).collect()
     }
 
+    /// The own tile of `id` in the toy's tiles.
+    fn own(kit: &Kit, id: TerrainId) -> PxRect {
+        src_rect(tiles(kit.tiles_image()).look.tiles[&id])
+    }
+
     #[test]
     fn a_layer_draws_a_picture_round_each_point_where_its_tiles_meet_others() {
-        let c = ctx();
-        let s = layered(&c);
-        let lake = view(&c, ["...", ".~.", "..."]);
-        let buf = painted(&c, &s, &lake);
+        let kit = Kit::new();
+        let s = shore(&kit);
+        let lake = view(["...", ".~.", "..."]);
+        let buf = painted(&kit, &s, &lake);
         // Each tile's own picture first: nine, the water in the middle.
-        let display = &c.game.content.terrain.display;
-        let own = |name| src_rect(s.tileset().tile(display.id_of(name).unwrap()).unwrap().rect);
         let sprites = buf.sprites();
         for (i, sprite) in sprites[..9].iter().enumerate() {
-            let name = if i == 4 { "water" } else { "plain" };
+            let id = if i == 4 { WATER } else { GRASS };
             let (dx, dy) = (i32::try_from(i % 3).unwrap(), i32::try_from(i / 3).unwrap());
             let tile = Rect::new(24 * dx, 4 + 24 * dy, 24, 24);
             assert_eq!(
                 (sprite.src, sprite.dest, sprite.clip),
-                (own(name), tile, tile)
+                (own(&kit, id), tile, tile)
             );
             assert_eq!(sprite.layer, Depth::Under);
         }
@@ -382,20 +351,21 @@ pub(crate) mod tests {
         for sprite in &sprites[9..] {
             assert_eq!((sprite.dest, sprite.layer), (sprite.clip, Depth::Under));
             assert_eq!((sprite.opacity, sprite.paint), (255, Paint::Image));
-            assert_eq!(sprite.image.path(), "tilesets/test.png");
+            assert_eq!(sprite.image, kit.tiles_image());
         }
         assert_eq!(buf.items().len(), 13);
         // No layer, no pictures between tiles.
-        assert_eq!(painted(&c, &skin(&c), &lake).items().len(), 9);
+        let plain = sprite(Some(tiles(kit.tiles_image())));
+        assert_eq!(painted(&kit, &plain, &lake).items().len(), 9);
     }
 
     #[test]
     fn a_picture_between_tiles_is_drawn_only_inside_the_tiles_of_the_map() {
-        let c = ctx();
-        let s = layered(&c);
+        let kit = Kit::new();
+        let s = shore(&kit);
         // Water down the left column, running on past the view.
-        let river = view(&c, ["~..", "~..", "~.."]);
-        let buf = painted(&c, &s, &river);
+        let river = view(["~..", "~..", "~.."]);
+        let buf = painted(&kit, &s, &river);
         let full = src_rect(mix_rect(0b1111));
         let bank = src_rect(mix_rect(0b1010));
         let r = Rect::new;
@@ -425,9 +395,9 @@ pub(crate) mod tests {
         assert_eq!(top.dest, r(12, -8, 24, 24));
         // A tile off the map has no picture and no part of one: of a map
         // of one tile, only the quarters inside it.
-        let mut gap = MapScene::new(p(0, 0), (3, 3));
-        gap.tiles[0].terrain = display_id(&c, "water");
-        let buf = painted(&c, &s, &gap);
+        let mut gap = MapScene::<Piece>::new(p(0, 0), (3, 3));
+        gap.tiles[0].terrain = Some(WATER);
+        let buf = painted(&kit, &s, &gap);
         assert_eq!(buf.sprites().len(), 1 + 4);
         assert_eq!(drawn(&buf, 0)[0].1, r(0, 4, 24, 24));
         for (src, clip) in drawn(&buf, 1) {
@@ -436,33 +406,35 @@ pub(crate) mod tests {
             assert_eq!((clip.w, clip.h), (12, 12));
         }
         // A view wider than the area: the tiles that don't fit get none.
-        let mut wide = MapScene::new(p(0, 0), (5, 1));
-        wide.set_terrain(|_| display_id(&c, "water"));
-        let buf = painted(&c, &s, &wide);
+        let mut wide = MapScene::<Piece>::new(p(0, 0), (5, 1));
+        wide.set_terrain(|_| Some(WATER));
+        let buf = painted(&kit, &s, &wide);
         // Three tiles; above and below each, a half of the picture on
         // each of its upper and lower corners.
         assert_eq!(buf.sprites().len(), 3 + 2 * 6);
-        let px = crate::map_view::grid::px_rect(AREA);
+        let px = px_rect(AREA);
         for sprite in buf.sprites() {
             assert_eq!(sprite.clip.intersect(&px), Some(sprite.clip));
         }
     }
 
-    fn display_id(c: &Ctx, name: &str) -> Option<TerrainId> {
-        c.game.content.terrain.display.id_of(name)
-    }
-
     #[test]
     fn an_odd_tile_is_cut_where_its_pictures_meet() {
-        let c = ctx();
-        let mut tileset = layered(&c).tileset().clone();
-        tileset.terrain.as_mut().unwrap().tile_px = (9, 13);
-        let s = SpriteSkin::new(tileset);
-        let mut scene = MapScene::new(p(0, 0), (2, 2));
-        scene.set_terrain(|pos| display_id(&c, if pos.x <= 0 { "water" } else { "plain" }));
+        let kit = Kit::new();
+        let mut terrain = layered(kit.tiles_image());
+        terrain.tile_px = (9, 13);
+        let s = sprite(Some(terrain));
+        let mut scene = MapScene::<Piece>::new(p(0, 0), (2, 2));
+        scene.set_terrain(|pos| Some(if pos.x <= 0 { WATER } else { GRASS }));
         let mut buf = blank();
         // 3 × 2 cells: 24 × 32 px, so 2 × 2 tiles of 9 × 13 px from (3, 3).
-        s.paint(&c, &scene, Rect::new(0, 0, 3, 2), &mut buf);
+        s.paint(
+            &kit.looks(),
+            &scene,
+            Rect::new(0, 0, 3, 2),
+            &crate::grid::NoUnits,
+            &mut buf,
+        );
         let r = Rect::new;
         let clips: Vec<PxRect> = drawn(&buf, 4).into_iter().map(|(_, clip)| clip).collect();
         // Each picture starts 4 px left of and 6 px above its point.
@@ -485,84 +457,82 @@ pub(crate) mod tests {
 
     #[test]
     fn a_tile_layers_picture_goes_by_the_neighbours_it_looks_for() {
-        let c = ctx();
-        let s = layered(&c);
+        let kit = Kit::new();
+        let s = shore(&kit);
         let plain = src_rect(mix_rect(15));
         let across = src_rect(mix_rect(0));
         let tile = |dx, dy| Rect::new(24 * dx, 4 + 24 * dy, 24, 24);
         // Water left and right of the bridge: its other picture.
-        let buf = painted(&c, &s, &view(&c, ["...", "~=~", "..."]));
+        let buf = painted(&kit, &s, &view(["...", "~=~", "..."]));
         let last = *buf.sprites().last().unwrap();
         assert_eq!(
             (last.src, last.dest, last.clip),
             (across, tile(1, 1), tile(1, 1))
         );
         // Water above and below: its plain one.
-        let buf = painted(&c, &s, &view(&c, [".~.", ".=.", ".~."]));
+        let buf = painted(&kit, &s, &view([".~.", ".=.", ".~."]));
         assert_eq!(buf.sprites().last().unwrap().src, plain);
         // At the view's edge the neighbour is the tile outside it: here
         // the bridge's own terrain, which isn't water.
-        let buf = painted(&c, &s, &view(&c, ["...", "=~.", "..."]));
+        let buf = painted(&kit, &s, &view(["...", "=~.", "..."]));
         let last = *buf.sprites().last().unwrap();
         assert_eq!((last.src, last.dest), (plain, tile(0, 1)));
         // One picture for each bridge, after the shore's.
-        let buf = painted(&c, &s, &view(&c, ["=.=", "...", ".=."]));
+        let buf = painted(&kit, &s, &view(["=.=", "...", ".=."]));
         let bridges: Vec<PxRect> = buf.sprites().iter().rev().take(3).map(|s| s.dest).collect();
         assert_eq!(bridges, [tile(1, 2), tile(2, 0), tile(0, 0)]);
         // A tile off the map gets nothing, whatever it would become.
-        let mut scene = view(&c, ["...", "~.~", "..."]);
+        let mut scene = view(["...", "~.~", "..."]);
         scene.tiles[4].terrain = None;
-        scene.tiles[4].becomes = display_id(&c, "bridge");
-        for (src, clip) in drawn(&painted(&c, &s, &scene), 0) {
+        scene.tiles[4].becomes = Some(BRIDGE);
+        for (src, clip) in drawn(&painted(&kit, &s, &scene), 0) {
             assert_eq!(clip.intersect(&tile(1, 1)), None, "{src:?} at {clip:?}");
             assert!(src != across && src != plain);
         }
     }
 
     #[test]
-    fn a_map_is_painted_in_the_look_it_names_if_the_tileset_has_it() {
-        let c = ctx();
-        let s = with_indoor(&layered(&c));
-        let mut lake = view(&c, ["...", ".~.", "..."]);
-        let outdoor = painted(&c, &s, &lake);
-        assert_eq!(outdoor, painted(&c, &layered(&c), &lake));
+    fn a_map_is_painted_in_the_look_it_names_if_the_tiles_have_it() {
+        let kit = Kit::new();
+        let s = sprite(Some(with_indoor(layered(kit.tiles_image()))));
+        let mut lake = view(["...", ".~.", "..."]);
+        let outdoor = painted(&kit, &s, &lake);
+        assert_eq!(outdoor, painted(&kit, &shore(&kit), &lake));
         lake.look.tiles = "indoor".to_owned();
-        let buf = painted(&c, &s, &lake);
+        let buf = painted(&kit, &s, &lake);
         assert_eq!(buf.sprites().len(), 9);
         assert!(buf.sprites().iter().all(|s| s.src.y == 72));
-        // A look the tileset lacks: its own.
+        // A look the tiles lack: their own.
         lake.look.tiles = "cave".to_owned();
-        assert_eq!(painted(&c, &s, &lake), outdoor);
+        assert_eq!(painted(&kit, &s, &lake), outdoor);
     }
 
     #[test]
     fn a_maps_light_shades_its_ground_and_nothing_painted_over_it() {
-        let c = ctx();
-        let s = layered(&c);
-        let dusk = c.game.content.lighting.get("dusk").unwrap();
+        let kit = Kit::new();
+        let s = shore(&kit);
+        let dusk = kit.lights.get("dusk").unwrap();
         // A lake and a bridge (a picture on a tile), a range on the
-        // first tile and another on the lake, and a unit.
-        let mut scene = view(&c, ["...", ".~=", "..."]);
-        scene.tint([p(0, 0)], RangeKind::Move);
-        scene.tint([p(1, 1)], RangeKind::Attack);
-        scene
-            .units
-            .push(crate::map_view::sprite::tests::brigand(p(2, 0)));
-        let noon = painted(&c, &s, &scene);
+        // first tile and another on the lake, and a piece.
+        let mut scene = view(["...", ".~=", "..."]);
+        scene.tint([p(0, 0)], MOVE);
+        scene.tint([p(1, 1)], ATTACK);
+        scene.units.push(Piece::new(4, 'f', p(2, 0)));
+        let noon = painted(&kit, &s, &scene);
         assert!(
             noon.sprites()
                 .iter()
                 .all(|s| s.paint != Paint::Shaded(dusk))
         );
         scene.look.light = "dusk".to_owned();
-        let lit = painted(&c, &s, &scene);
+        let lit = painted(&kit, &s, &scene);
         // The same items in the same places: only the paint differs, and
-        // only on the ground's pictures (the tileset's image, in its own
-        // colours).
+        // only on the ground's pictures (the tiles' image, in its own
+        // colors).
         assert_eq!(noon.items().len(), lit.items().len());
         let (mut ground, mut washes, mut others) = (0, 0, 0);
         for (before, after) in noon.sprites().iter().zip(lit.sprites()) {
-            let terrain = before.image.path() == "tilesets/test.png";
+            let terrain = before.image == kit.tiles_image();
             match before.paint {
                 Paint::Image if terrain && before.layer == Depth::Under => {
                     assert_eq!(after, before.painted(Paint::Shaded(dusk)));
@@ -579,52 +549,48 @@ pub(crate) mod tests {
             }
         }
         // Nine tiles, the pictures between them, the bridge's own; the
-        // ranges' washes; the unit's picture, over the glyphs.
+        // ranges' washes; the piece's card.
         assert!(ground > 9 + 1, "{ground}");
-        // (The test tileset keeps its units in the same image: their
-        // outlines are one colour too.)
-        assert!(washes >= 2, "{washes}");
-        assert!(others >= 1, "{others}");
+        assert_eq!(washes, 2);
+        assert_eq!(others, 1);
         let rects = |buf: &GlyphBuffer| -> Vec<Overlay> {
             let items = buf.items().iter();
             items
                 .filter_map(|item| match item {
-                    crate::glyph_buffer::Item::Rect(r) => Some(*r),
-                    crate::glyph_buffer::Item::Sprite(_) => None,
+                    Item::Rect(r) => Some(*r),
+                    Item::Sprite(_) => None,
                 })
                 .collect()
         };
         assert_eq!(rects(&noon), rects(&lit));
-        // Noon by name, and a light the content doesn't have: as before.
+        // Noon by name, and a light the game doesn't have: as before.
         scene.look.light = "noon".to_owned();
-        assert_eq!(painted(&c, &s, &scene), noon);
+        assert_eq!(painted(&kit, &s, &scene), noon);
         scene.look.light = "midnight".to_owned();
-        assert_eq!(painted(&c, &s, &scene), noon);
-        // Night is another shade.
-        scene.look.light = "night".to_owned();
-        let night = c.game.content.lighting.get("night").unwrap();
-        let first = sprite_at(&painted(&c, &s, &scene), 0);
-        assert_eq!(first.paint, Paint::Shaded(night));
-        assert_ne!(night, dusk);
+        assert_eq!(painted(&kit, &s, &scene), noon);
+        // Dusk's shade is on the very first tile.
+        scene.look.light = "dusk".to_owned();
+        let first = sprite_at(&painted(&kit, &s, &scene), 0);
+        assert_eq!(first.paint, Paint::Shaded(dusk));
     }
 
     #[test]
-    fn a_tile_a_spell_would_change_is_painted_as_what_it_would_become() {
-        let c = ctx();
-        let s = layered(&c);
-        let mut scene = view(&c, ["...", "...", "..."]);
-        scene.tiles[4].becomes = display_id(&c, "water");
+    fn a_tile_that_would_change_is_painted_as_what_it_would_become() {
+        let kit = Kit::new();
+        let s = shore(&kit);
+        let mut scene = view(["...", "...", "..."]);
+        scene.tiles[4].becomes = Some(WATER);
         // As the lake it would be: its neighbours' pictures join it.
-        let lake = view(&c, ["...", ".~.", "..."]);
-        assert_eq!(painted(&c, &s, &scene), painted(&c, &s, &lake));
+        let lake = view(["...", ".~.", "..."]);
+        assert_eq!(painted(&kit, &s, &scene), painted(&kit, &s, &lake));
         // Its ranges and flashes don't tint it.
-        scene.tint([p(1, 1)], RangeKind::Danger);
+        scene.tint([p(1, 1)], DANGER);
         scene.tiles[4].flashes.push(1.0);
-        assert_eq!(painted(&c, &s, &scene), painted(&c, &s, &lake));
-        // What the tileset lacks becomes nothing: the tile has no picture.
-        let mut scene = view(&c, ["...", "...", "..."]);
+        assert_eq!(painted(&kit, &s, &scene), painted(&kit, &s, &lake));
+        // What the tiles lack becomes nothing: the tile has no picture.
+        let mut scene = view(["...", "...", "..."]);
         scene.tiles[4].becomes = Some(TerrainId(999));
-        assert_eq!(painted(&c, &s, &scene).sprites().len(), 8);
+        assert_eq!(painted(&kit, &s, &scene).sprites().len(), 8);
     }
 
     #[test]
@@ -639,7 +605,7 @@ pub(crate) mod tests {
         assert_eq!(blend(&[(red, f32::NAN)]), (1.0, [0.0; 3]));
         assert_eq!(blend(&[(red, -1.0)]), (1.0, [0.0; 3]));
         assert_eq!(blend(&[(red, 2.0)]), blend(&[(red, 1.0)]));
-        // Whatever the tile's colour, `kept × tile + added` is the tile
+        // Whatever the tile's color, `kept × tile + added` is the tile
         // lerped towards each tint in turn.
         let tints = [(red, 0.75), (blue, 0.75), (Rgb::new(9, 200, 9), 0.3)];
         let (kept, added) = blend(&tints);
@@ -661,50 +627,52 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn a_tinted_tile_has_its_own_shape_over_it_in_the_tints_colour() {
-        let c = ctx();
-        let s = layered(&c);
-        let pal = &c.palette;
-        let mut scene = view(&c, ["...", ".~.", "..."]);
-        scene.tint([p(0, 0)], RangeKind::Move);
-        scene.tint([p(1, 1)], RangeKind::Danger);
-        scene.tint([p(1, 1)], RangeKind::Attack);
-        let buf = painted(&c, &s, &scene);
-        // After the tiles and the shore: the plain tile's own shape in
-        // the range's colour, three quarters strong.
-        let own = |name| {
-            src_rect(
-                s.tileset()
-                    .tile(display_id(&c, name).unwrap())
-                    .unwrap()
-                    .rect,
-            )
-        };
+    fn a_tinted_tile_has_its_own_shape_over_it_in_the_tints_color() {
+        let kit = Kit::new();
+        let looks = kit.looks();
+        let s = shore(&kit);
+        let mut scene = view(["...", ".~.", "..."]);
+        scene.tint([p(0, 0)], MOVE);
+        scene.tint([p(1, 1)], DANGER);
+        scene.tint([p(1, 1)], ATTACK);
+        let buf = painted(&kit, &s, &scene);
+        // After the tiles and the shore: the grass tile's own shape in the
+        // range's color, three quarters strong.
         let wash = sprite_at(&buf, 13);
-        let move_range = pal.get(UiColor::MoveRange);
         assert_eq!(
             (wash.src, wash.dest),
-            (own("plain"), Rect::new(0, 4, 24, 24))
+            (own(&kit, GRASS), Rect::new(0, 4, 24, 24))
         );
-        assert_eq!((wash.paint, wash.opacity), (Paint::Solid(move_range), 191));
+        assert_eq!(
+            (wash.paint, wash.opacity),
+            (Paint::Solid(looks.range(MOVE)), 191)
+        );
         assert_eq!((wash.clip, wash.layer), (wash.dest, Depth::Under));
         // Two ranges: their mix, fifteen sixteenths strong.
         let both = sprite_at(&buf, 14);
-        let (danger, attack) = (pal.get(UiColor::DangerZone), pal.get(UiColor::AttackRange));
+        let (danger, attack) = (looks.range(DANGER), looks.range(ATTACK));
         assert_eq!(both.paint, Paint::Solid(danger.lerp(attack, 0.8)));
-        assert_eq!((both.src, both.opacity), (own("water"), 239));
+        assert_eq!((both.src, both.opacity), (own(&kit, WATER), 239));
         assert_eq!(both.dest, Rect::new(24, 28, 24, 24));
         assert_eq!(buf.items().len(), 15);
-        // Off the map, a range tints the black under it.
-        let mut scene = plains(&c);
+        // Off the map, a range tints the dark under it.
+        let mut scene = plains();
         scene.tiles[0].terrain = None;
-        scene.tint([p(0, 0)], RangeKind::Heal);
-        let buf = painted(&c, &s, &scene);
-        // After the five tiles on the map.
-        let off = rect_at(&buf, 5);
-        let black = pal.get(UiColor::Black);
-        let heal = pal.get(UiColor::HealRange);
-        assert_eq!(off.color, black.lerp(heal, OVERLAY_BLEND));
+        scene.tint([p(0, 0)], HEAL);
+        let buf = painted(&kit, &s, &scene);
+        // After the five tiles on the map, and the shore round the water.
+        let off = buf
+            .items()
+            .iter()
+            .find_map(|item| match item {
+                Item::Rect(o) => Some(*o),
+                Item::Sprite(_) => None,
+            })
+            .unwrap();
+        assert_eq!(
+            off.color,
+            looks.dark().lerp(looks.range(HEAL), OVERLAY_BLEND)
+        );
         assert_eq!(
             (off.rect, off.layer),
             (Rect::new(0, 4, 24, 24), Depth::Under)
@@ -714,9 +682,11 @@ pub(crate) mod tests {
     #[test]
     fn a_tile_is_tinted_only_as_strongly_as_its_tints_are() {
         let rect = Rect::new(8, 16, 24, 24);
-        let c = ctx();
-        let own = skin(&c).tileset().tile(TerrainId(0));
-        assert!(own.is_some());
+        let kit = Kit::new();
+        let own = Some(Picture {
+            image: kit.tiles_image(),
+            rect: tiles(kit.tiles_image()).look.tiles[&GRASS],
+        });
         let base = Rgb::new(200, 100, 40);
         let red = Rgb::new(250, 0, 0);
         // Whatever is under a tile with no picture: here not black.
@@ -741,44 +711,46 @@ pub(crate) mod tests {
     }
 
     #[test]
-    fn flashes_tint_towards_the_terrain_colour_then_the_ranges() {
-        let c = ctx();
-        let pal = &c.palette;
-        let display = &c.game.content.terrain.display;
-        let plain = display.get(display.id_of("plain").unwrap()).unwrap();
-        let fg = pal.lookup(&plain.fg).unwrap();
-        let attack = pal.get(UiColor::AttackRange);
+    fn flashes_tint_towards_the_terrain_color_then_the_ranges() {
+        let kit = Kit::new();
+        let looks = kit.looks();
+        let fg = kit.palette.lookup("grass_fg").unwrap();
+        let attack = looks.range(ATTACK);
         let mut tile = TileView {
-            terrain: display.id_of("plain"),
+            terrain: Some(GRASS),
             flashes: vec![1.0, 0.5],
-            tints: vec![RangeKind::Attack],
             becomes: None,
         };
         assert_eq!(
-            tints(&c, &tile),
+            tints(&looks, &tile, &[ATTACK]),
             [
                 (fg, OVERLAY_BLEND),
                 (fg, OVERLAY_BLEND * 0.5),
                 (attack, OVERLAY_BLEND),
             ]
         );
-        // A tile a spell would change: nothing.
-        tile.becomes = display.id_of("forest");
-        assert!(tints(&c, &tile).is_empty());
-        // Off the map, a flash has no colour to go towards.
+        // A tile that would change: nothing.
+        tile.becomes = Some(WATER);
+        assert!(tints(&looks, &tile, &[ATTACK]).is_empty());
+        // Off the map, a flash has no color to go towards.
         let off = TileView {
             terrain: None,
             flashes: vec![1.0],
-            tints: vec![RangeKind::Attack],
             becomes: None,
         };
-        assert_eq!(tints(&c, &off), [(attack, OVERLAY_BLEND)]);
+        assert_eq!(tints(&looks, &off, &[ATTACK]), [(attack, OVERLAY_BLEND)]);
+        // A terrain the game lacks: no color either.
+        let unknown = TileView {
+            terrain: Some(TerrainId(999)),
+            ..off
+        };
+        assert_eq!(tints(&looks, &unknown, &[]), []);
     }
 
     proptest! {
         /// Whatever the scene, the area and the tile size: every tile of
         /// the map that is drawn has exactly one picture of its own, on
-        /// its own pixels (none if the tileset has no tile for what it
+        /// its own pixels (none if the tiles have none for what it
         /// shows); and every picture, or part of one, lies inside drawn
         /// tiles of the map.
         #[test]
@@ -787,22 +759,22 @@ pub(crate) mod tests {
             area in any_area(),
             tile in (8..=64u32, 8..=64u32),
         ) {
-            let c = ctx();
-            let mut tileset = with_indoor(&layered(&c)).tileset().clone();
-            tileset.terrain.as_mut().unwrap().tile_px = tile;
-            let s = SpriteSkin::new(tileset);
+            let kit = Kit::new();
+            let mut terrain = with_indoor(layered(kit.tiles_image()));
+            terrain.tile_px = tile;
+            let s = sprite(Some(terrain));
             // The ground alone: nothing on it, nothing tinting it.
             let mut scene = scene;
             scene.units.clear();
             scene.cursor = None;
             scene.path.clear();
             scene.threat = None;
+            scene.ranges.clear();
             for tile in &mut scene.tiles {
                 tile.flashes.clear();
-                tile.tints.clear();
             }
             let mut buf = blank();
-            s.paint(&c, &scene, area, &mut buf);
+            s.paint(&kit.looks(), &scene, area, &crate::grid::NoUnits, &mut buf);
             prop_assert!(buf.overlays().is_empty());
             let grid = s.grid(&scene, area);
             let shown = Shown::of(&scene);
@@ -812,18 +784,17 @@ pub(crate) mod tests {
                 .filter(|&(dx, dy)| scene.tile_at(dx, dy).is_some_and(|t| t.terrain.is_some()))
                 .map(|(dx, dy)| (dx, dy, grid.rect_at(dx, dy)))
                 .collect();
-            // A terrain's own tile is in the image's first two rows (the
+            // A terrain's own tile is on the image's first row (the
             // outdoor look) or its fourth (the indoor one); the layers'
             // pictures are below them.
             let sprites = buf.sprites();
             let own = |sprite: &&Sprite| sprite.src.y < 96;
             // Every terrain has a tile; a made-up id past them has none.
-            let terrains = c.game.content.terrain.display.terrains.len();
             for &(dx, dy, rect) in &on_map {
                 let pictures = sprites.iter().filter(own).filter(|s| s.dest == rect);
                 // A tile wholly off the console has nothing to show.
                 let seen = rect.intersect(&buf.pixel_bounds()).is_some();
-                let has = seen && shown.at(dx, dy).is_some_and(|id| usize::from(id.0) < terrains);
+                let has = seen && shown.at(dx, dy).is_some_and(|id| id.0 < 4);
                 prop_assert_eq!(pictures.count(), usize::from(has), "tile ({}, {})", dx, dy);
             }
             let area_of = |r: PxRect| i64::from(r.w) * i64::from(r.h);
@@ -833,5 +804,14 @@ pub(crate) mod tests {
                 prop_assert_eq!(covered, area_of(sprite.clip), "{:?}", sprite);
             }
         }
+    }
+
+    #[test]
+    fn an_empty_place_is_drawn_nowhere() {
+        // Not a map at all: nothing.
+        let kit = Kit::new();
+        let s = shore(&kit);
+        let empty = MapScene::<Piece>::new(Pos::new(0, 0), (3, 3));
+        assert!(painted(&kit, &s, &empty).items().is_empty());
     }
 }

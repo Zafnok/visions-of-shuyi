@@ -3,17 +3,13 @@
 
 use crate::prelude::*;
 
-use serde::{Deserialize, Serialize};
-
 /// Index of a movement type (`foot`, `mounted`, …) in [`TerrainTable`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct MovementTypeId(pub u8);
 
-/// Index of a terrain in [`TerrainTable`].
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
-)]
-pub struct TerrainId(pub u16);
+/// Index of a terrain in [`TerrainTable`]: the tactics kit's terrain id
+/// (`shuyi_core::TerrainId`, ticket 1115).
+pub use shuyi_core::TerrainId;
 
 /// The game rules of one terrain type.
 #[derive(Debug, Clone, PartialEq, Eq)]

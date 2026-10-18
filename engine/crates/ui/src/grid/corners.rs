@@ -1,5 +1,5 @@
-//! The corner rule (ADR-0052): which tiles a picture drawn *between* tiles
-//! joins.
+//! The corner rule (game ADR-0052): which tiles a picture drawn *between*
+//! tiles joins.
 //!
 //! A sprite skin's layers draw one picture at every point where four tiles
 //! meet, chosen by which of those four are in the layer. Two pictures side
@@ -14,8 +14,8 @@
 use crate::prelude::*;
 use alloc::collections::BTreeSet;
 
-use trpg_content::tileset::mix;
-use trpg_core::TerrainId;
+use shuyi_assets::tileset::mix;
+use shuyi_core::TerrainId;
 
 use super::scene::MapScene;
 
@@ -34,7 +34,7 @@ impl Shown {
     /// What `scene` shows: each tile's terrain, or what a spell being
     /// aimed would turn it into; a tile off the map (or one the scene
     /// doesn't say) as the nearest tile that has terrain.
-    pub fn of(scene: &MapScene) -> Self {
+    pub fn of<U>(scene: &MapScene<U>) -> Self {
         let (w, h) = scene.size;
         let raw = |dx: i32, dy: i32| {
             let tile = scene.tile_at(dx, dy).filter(|t| t.terrain.is_some());
@@ -108,19 +108,17 @@ pub fn mix_of(tiles: [Option<TerrainId>; 4], of: &BTreeSet<TerrainId>) -> u8 {
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;
-    use trpg_core::Pos;
+    use shuyi_assets::tileset::mix_name;
+    use shuyi_core::Pos;
 
     use super::*;
-    use crate::map_view::glyph::tests::any_scene;
-
-    const GRASS: TerrainId = TerrainId(0);
-    const WATER: TerrainId = TerrainId(1);
-    const BRIDGE: TerrainId = TerrainId(2);
+    use crate::grid::testing::any_scene;
+    use crate::toy::grid::{BRIDGE, GRASS, Piece, WATER};
 
     /// A scene showing `rows` (`.` grass, `~` water, `=` bridge, a space
     /// off the map), its ring included: the view is the rows without
     /// their first and last, and each without its first and last tile.
-    fn scene(rows: &[&str]) -> MapScene {
+    fn scene(rows: &[&str]) -> MapScene<Piece> {
         let at = |pos: Pos| {
             let row = rows.get(usize::try_from(pos.y + 1).ok()?)?;
             match row.chars().nth(usize::try_from(pos.x + 1).ok()?)? {
@@ -139,14 +137,14 @@ mod tests {
 
     /// The mixes of `of` at every corner point of `scene`'s view, row by
     /// row, each as its four places written out.
-    fn mixes(scene: &MapScene, of: &[TerrainId]) -> Vec<String> {
+    fn mixes(scene: &MapScene<Piece>, of: &[TerrainId]) -> Vec<String> {
         let shown = Shown::of(scene);
         let of: BTreeSet<TerrainId> = of.iter().copied().collect();
         let (w, h) = scene.size;
         (0..=h)
             .map(|j| {
                 let row: Vec<String> = (0..=w)
-                    .map(|i| trpg_content::tileset::mix_name(mix_of(shown.corners(i, j), &of)))
+                    .map(|i| mix_name(mix_of(shown.corners(i, j), &of)))
                     .collect();
                 row.join(" ")
             })
@@ -256,12 +254,12 @@ mod tests {
             ]
         );
         // No terrain anywhere: nothing shown, nothing in any layer.
-        let empty = MapScene::new(Pos::new(0, 0), (2, 2));
+        let empty = MapScene::<Piece>::new(Pos::new(0, 0), (2, 2));
         let shown = Shown::of(&empty);
         assert_eq!(shown.at(0, 0), None);
         assert_eq!(mix_of(shown.corners(1, 1), &BTreeSet::from([GRASS])), 0);
         // A view of no tiles still has its ring.
-        let none = Shown::of(&MapScene::new(Pos::new(0, 0), (0, 0)));
+        let none = Shown::of(&MapScene::<Piece>::new(Pos::new(0, 0), (0, 0)));
         assert_eq!(none.terrain.len(), 4);
         assert_eq!(none.at(0, 0), None);
     }

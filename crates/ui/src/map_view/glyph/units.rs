@@ -6,9 +6,10 @@
 
 use trpg_core::StatValue;
 
-use super::{CELL_PX, TILE_W_CELLS};
+use super::TILE_W_CELLS;
 use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::{Cell, GlyphBuffer, Layer, Overlay, Rect};
+use crate::map_view::grid::CELL_PX;
 use crate::map_view::scene::UnitView;
 use crate::screens::battle::units::{faction_color, hp_fill};
 

@@ -28,6 +28,11 @@ use crate::ron_loader::parse_ron;
 use crate::terrain::TerrainDisplayTable;
 
 pub use look::{CornerLayer, Layer, Look, MIXES, TileLayer, mix, mix_name, parse_mix};
+/// Rectangles of images and pictures (ticket 1115: the engine's).
+pub use shuyi_assets::image::{ImageRect, Picture};
+/// A tileset's terrain tiles: its image, tile size and looks (ticket
+/// 1115: the engine's, painted by its sprite skin).
+pub use shuyi_assets::tileset::TerrainTiles;
 
 /// The directory of tileset files inside the bundle.
 pub const TILESETS_DIR: &str = "tilesets";
@@ -48,45 +53,6 @@ pub const LEAD_PICTURES: [&str; 2] = [PORTRAIT_MALE, PORTRAIT_FEMALE];
 /// an image of a unit's own with a frame for each, as the bought map
 /// sprites have.
 pub const WALK_FRAMES: (u32, u32) = (3, 4);
-
-/// A rectangle of an image, in image pixels.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ImageRect {
-    /// Left edge.
-    pub x: u32,
-    /// Top edge.
-    pub y: u32,
-    /// Width.
-    pub w: u32,
-    /// Height.
-    pub h: u32,
-}
-
-/// A picture: a rectangle of an image. A unit's picture need not come from
-/// its tileset's image, nor be as wide as it is tall.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Picture {
-    /// The image.
-    pub image: ImageId,
-    /// Where in it.
-    pub rect: ImageRect,
-}
-
-/// A tileset's terrain tiles.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TerrainTiles {
-    /// The image the tiles are in.
-    pub image: ImageId,
-    /// A map tile's size, across × down, in pixels: in the image, and on
-    /// screen.
-    pub tile_px: (u32, u32),
-    /// The tileset's own look: what a map is painted as unless
-    /// [`looks`](Self::looks) has the look it names.
-    pub look: Look,
-    /// Its other looks, by the name a map file gives
-    /// ([`crate::map::TILE_LOOKS`]).
-    pub looks: BTreeMap<String, Look>,
-}
 
 /// A validated tileset.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -123,8 +89,7 @@ impl Tileset {
     /// The look a map naming `name` is painted as: that look if the
     /// tileset has it, else its own. `None` without terrain tiles.
     pub fn look(&self, name: &str) -> Option<&Look> {
-        let terrain = self.terrain.as_ref()?;
-        Some(terrain.looks.get(name).unwrap_or(&terrain.look))
+        Some(self.terrain.as_ref()?.look(name))
     }
 
     /// The picture of a unit of `class`, the named `character` if any: the

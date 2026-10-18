@@ -761,7 +761,7 @@ fn the_menu_opens_beside_the_unit_drawn_at_its_new_tile() {
     );
     // No cursor, no ranges, the panel shows the lord.
     assert_eq!(scene.cursor, None);
-    assert!(scene.tiles.iter().all(|t| t.tints.is_empty()));
+    assert!(scene.ranges.is_empty());
     let unit = view.panel.and_then(|p| p.unit).unwrap();
     assert_eq!(unit.name, "Test Lord");
 }

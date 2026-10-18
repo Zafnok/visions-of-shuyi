@@ -1,5 +1,7 @@
 //! The movement path (ADR-0018, `docs/design/look-and-feel.md`): how it
-//! follows the cursor. A map skin draws it ([`crate::map_view`]).
+//! follows the cursor: the tactics kit's steering (`shuyi_ui::grid::steer`,
+//! ticket 1115) over this game's movement rules. A map skin draws it
+//! ([`crate::map_view`]).
 
 use crate::prelude::*;
 use trpg_core::{Pos, Reach};
@@ -14,17 +16,7 @@ use trpg_core::{Pos, Reach};
 /// - Otherwise the cheapest path to `to` ([`Reach::path_to`]), or the path
 ///   unchanged if `to` can't be reached.
 pub fn steer(path: &[Pos], to: Pos, reach: &Reach, valid: impl Fn(&[Pos]) -> bool) -> Vec<Pos> {
-    if let Some(i) = path.iter().position(|&p| p == to) {
-        return path[..=i].to_vec();
-    }
-    if path.last().is_some_and(|&end| Pos::manhattan(end, to) == 1) {
-        let mut longer = path.to_vec();
-        longer.push(to);
-        if valid(&longer) {
-            return longer;
-        }
-    }
-    reach.path_to(to).unwrap_or_else(|| path.to_vec())
+    shuyi_ui::grid::steer(path, to, |to| reach.path_to(to), valid)
 }
 
 #[cfg(test)]

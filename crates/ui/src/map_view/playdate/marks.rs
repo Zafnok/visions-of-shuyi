@@ -8,6 +8,7 @@ use crate::color::{Palette, UiColor};
 use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect};
 use crate::map_view::glyph::TILE_W_CELLS;
 use crate::map_view::glyph::cursor::{CORNER_ARM, LARGE_CORNER_ARM, corner_arms};
+use crate::map_view::glyph::units::HP_BAR_H;
 use crate::map_view::grid::{CELL_PX, Grid};
 use crate::map_view::scene::{CursorStyle, CursorView, MapScene, RangeKind};
 
@@ -21,10 +22,12 @@ pub const DANGER_EDGE: i32 = 2;
 /// visible tile outside it. Where the zone goes on past the view's edge
 /// nothing is drawn: the edge is where it ends, not where the screen does.
 pub fn danger_edges(scene: &MapScene, grid: &Grid) -> Vec<PxRect> {
+    let tints = scene.tints();
     let danger = |dx: i32, dy: i32| {
+        let zone = RangeKind::Danger.name();
         scene
             .tile_at(dx, dy)
-            .map(|t| t.tints.contains(&RangeKind::Danger))
+            .map(|_| tints.at(dx, dy).contains(&zone))
     };
     let (tw, th) = grid.tile;
     let mut out = Vec::new();
@@ -57,11 +60,12 @@ pub fn danger_edges(scene: &MapScene, grid: &Grid) -> Vec<PxRect> {
 }
 
 /// The glyph skin's corner marks round the tile whose left cell is
-/// `(x, y)`, each `arm` pixels long, with no pixel in two arms: flipped
-/// twice, the corner would show as if not flipped at all. Each corner's
-/// upright arm gives its flat one the pixel they share.
+/// `(x, y)`, each `arm` pixels long (the lower ones above the HP bar), with
+/// no pixel in two arms: flipped twice, the corner would show as if not
+/// flipped at all. Each corner's upright arm gives its flat one the pixel
+/// they share.
 fn flipped_arms(x: i32, y: i32, arm: i32) -> Vec<Rect> {
-    let arms = corner_arms(x, y, arm);
+    let arms = corner_arms(x, y, arm, HP_BAR_H);
     let mut out = Vec::with_capacity(arms.len());
     for &[flat, upright] in arms.as_chunks::<2>().0 {
         let from = i32::from(upright.y == flat.y);

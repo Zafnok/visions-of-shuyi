@@ -1,8 +1,8 @@
-//! The threat arrows, as every map skin draws them (ticket 0448,
-//! `docs/design/look-and-feel.md`, *Threat arrows*): a slim straight arrow
-//! from each enemy that could attack a tile to that tile, and a `!` above
-//! each of those enemies. Over units and terrain, so never hidden. Worked
-//! out from the skin's tile size, in the art's own pixels.
+//! The threat arrows, as every grid skin draws them (game ticket 0448): a
+//! slim straight arrow from each enemy that could attack a tile to that
+//! tile, and a `!` above each of those enemies. Over units and terrain, so
+//! never hidden. Worked out from the skin's tile size, in the art's own
+//! pixels.
 //!
 //! An arrow is a 1-pixel line from the enemy's tile (its middle, or its
 //! edge for a skin whose units are letters: [`Start`]) to just short of the
@@ -12,13 +12,12 @@
 //! arrow cut at the view's edge and no mark.
 
 use crate::prelude::*;
-use trpg_core::Pos;
+use shuyi_core::Pos;
 
-use super::grid::Grid;
+use super::layout::Grid;
 use super::scene::{MapScene, ThreatView};
-use crate::color::{Rgb, UiColor};
-use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect};
-use crate::screen::Ctx;
+use crate::frame::color::Rgb;
+use crate::frame::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect};
 
 /// How far short of the tile's middle an arrow's tip stops, in pixels.
 /// *Tunable.*
@@ -223,23 +222,20 @@ pub fn threat_overlays(
     out
 }
 
-/// The palette's colours for the arrows and marks: the arrows in the
-/// enemy's colour, the marks in the highlight colour, both edged in black.
-pub fn colors(ctx: &Ctx) -> Colors {
-    Colors {
-        arrow: ctx.palette.get(UiColor::Enemy),
-        mark: ctx.palette.get(UiColor::TextHighlight),
-        edge: ctx.palette.get(UiColor::Black),
-    }
-}
-
 /// Paints `scene`'s threat arrows and marks, if it has any, on `grid`, in
-/// [`colors`], each arrow from its enemy's tile at `start`.
-pub fn paint(ctx: &Ctx, scene: &MapScene, grid: &Grid, start: Start, buf: &mut GlyphBuffer) {
+/// `colors` ([`Looks::threat`](super::Looks::threat)), each arrow from its
+/// enemy's tile at `start`.
+pub fn paint<U>(
+    scene: &MapScene<U>,
+    grid: &Grid,
+    start: Start,
+    colors: Colors,
+    buf: &mut GlyphBuffer,
+) {
     let Some(threat) = &scene.threat else {
         return;
     };
-    for overlay in threat_overlays(threat, grid, start, colors(ctx)) {
+    for overlay in threat_overlays(threat, grid, start, colors) {
         buf.add_overlay(overlay);
     }
 }
@@ -260,13 +256,7 @@ mod tests {
 
     /// A 10 × 10 view from tile (0, 0) at pixel (0, 0), 16 px tiles.
     fn grid() -> Grid {
-        Grid {
-            origin: p(0, 0),
-            corner: (0, 0),
-            tile: (16, 16),
-            tiles: (10, 10),
-            scale: 1,
-        }
+        Grid::top_down(p(0, 0), (0, 0), (16, 16), (10, 10), 1)
     }
 
     fn threat(tile: Pos, enemies: &[Pos]) -> ThreatView {
@@ -515,13 +505,7 @@ mod tests {
     #[test]
     fn an_enemy_outside_the_view_has_its_arrow_cut_at_the_edge_and_no_mark() {
         // A 4 × 4 view of 16 px tiles from tile (2, 2), at pixel (8, 4).
-        let view = Grid {
-            origin: p(2, 2),
-            corner: (8, 4),
-            tile: (16, 16),
-            tiles: (4, 4),
-            scale: 1,
-        };
+        let view = Grid::top_down(p(2, 2), (8, 4), (16, 16), (4, 4), 1);
         // The enemy is on the tile's row, three tiles past the right edge.
         let t = threat(p(3, 3), &[p(8, 3)]);
         assert!(rects(&t, &view, COLORS.mark).is_empty());
@@ -582,5 +566,25 @@ mod tests {
         assert_eq!(rects(&t, &big, COLORS.arrow)[0], (39, 30, 46, 1));
         // The mark in the middle of tile (3, 1): x 72..96.
         assert_eq!(rects(&t, &big, COLORS.mark)[0], (82, 8, 3, 6));
+    }
+
+    #[test]
+    fn paint_adds_the_scenes_threat_over_everything_and_nothing_without_one() {
+        let mut scene = MapScene::<crate::toy::grid::Piece>::new(p(0, 0), (10, 10));
+        let blank = || {
+            let c = crate::frame::glyph_buffer::Cell::new('.', COLORS.edge, COLORS.edge);
+            GlyphBuffer::new(20, 10, c)
+        };
+        let mut buf = blank();
+        paint(&scene, &grid(), Start::Middle, COLORS, &mut buf);
+        assert_eq!(buf, blank());
+        let t = threat(p(1, 1), &[p(4, 2), p(0, 5)]);
+        scene.threat = Some(t.clone());
+        paint(&scene, &grid(), Start::Edge, COLORS, &mut buf);
+        assert_eq!(
+            buf.overlays(),
+            threat_overlays(&t, &grid(), Start::Edge, COLORS)
+        );
+        assert!(!buf.overlays().is_empty());
     }
 }
