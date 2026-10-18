@@ -85,6 +85,15 @@ jobs:
         with:
           name: web
           path: dist/web
+      # Shuyi Engine's first example (ticket 1118), built for the web as
+      # Pages publishes it; natively, `test` builds and plays it.
+      - name: Build Hello, Grid for the web
+        working-directory: engine/examples/hello-grid
+        run: cargo shuyi web --release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: hello-grid-web
+          path: engine/examples/hello-grid/dist/web
 
   # the rules build without `std` for the Playdate (ADR-0070 §3); 1028
   # added `trpg-content`; 1029 adds `trpg-ui`; 1103 and 1114 add the

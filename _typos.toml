@@ -38,6 +38,10 @@ extend-exclude = [
     "assets-src/fonts/*.bdf",
     "assets/fonts/atlas.ron",
     "assets/fonts/Terminus-LICENSE.txt",
+    # Shuyi Engine's first example's copy of the same font (ticket 1118).
+    "engine/examples/hello-grid/files-src/*.bdf",
+    "engine/examples/hello-grid/files/font/atlas.ron",
+    "engine/examples/hello-grid/files/font/Terminus-LICENSE.txt",
     # Vendored macroquad JS loader (ticket 0206): minified third-party code,
     # never edited by hand.
     "engine/crates/cli/web/mq_js_bundle.js",

@@ -1,7 +1,8 @@
 # The platform shells, the game's binary (`crates/app`) and the engine's
 # (`engine/crates/app`, ticket 1110), drive a window, a sound device and
 # controllers, which no test has; like coverage and Sonar, mutants leave
-# them out.
+# them out, and the engine examples' binaries (`src/main.rs`, which hand
+# the example to the shell; ticket 1118).
 #
 # `crates/playdate/src/pd/` is the Playdate front end's SDK glue: built only
 # with the crate's `sdk` feature for the device and the Simulator, so no
@@ -18,6 +19,7 @@
 exclude_globs = [
     "crates/app/**",
     "engine/crates/app/**",
+    "engine/examples/*/src/main.rs",
     "crates/playdate/src/pd/**",
     "engine/crates/assets/src/keymap/sample.rs",
     "engine/crates/ui/src/toy.rs",
@@ -42,4 +44,9 @@ exclude_re = [
     # `web`'s real `wasm-opt` is an optional tool no test machine is sure
     # to have; the logic around it runs on a fake (ticket 1117).
     "<impl WasmOpt for RealWasmOpt>::optimize",
+    # Hello, Grid has no voices (ticket 1118): `OnlyClip` has one value,
+    # which is its default, and no split variants, so `voice_variant`'s
+    # and `split`'s only mutants are the same functions.
+    "<impl GameData for Hello>::voice_variant",
+    "<impl ClipVariant for OnlyClip>::split",
 ]
