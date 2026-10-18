@@ -90,9 +90,8 @@ use self::view::{
     NotesView, ObjectiveView, PanelView, QuestionView,
 };
 use self::walk::Gait;
-use super::OptionsScreen;
 use super::dialogue::DialogueScreen;
-use crate::audio::{CURSOR_MOVE, MenuSound};
+use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{
@@ -1727,14 +1726,14 @@ impl BattleScreen {
                 let from = self.cursor.pos;
                 self.cycle(action == Action::NextUnit);
                 if self.cursor.pos != from {
-                    ctx.audio.play_sound(CURSOR_MOVE);
+                    ctx.audio.cursor_tick();
                 }
             }
             Action::CursorLeft | Action::CursorRight | Action::CursorUp | Action::CursorDown
                 if self.mode.cursor_free() =>
             {
                 if self.move_cursor(action) {
-                    ctx.audio.play_sound(CURSOR_MOVE);
+                    ctx.audio.cursor_tick();
                     self.notice(DoneWhen::CursorMoved);
                 }
             }
@@ -2604,7 +2603,7 @@ impl BattleScreen {
                 // The map menu's Options: over the battle.
                 self.notice(DoneWhen::OptionsOpened);
                 self.tick_lessons(ctx);
-                return Transition::Push(Box::new(OptionsScreen::new()));
+                return Transition::Push(Box::new(crate::screens::options::screen()));
             }
             // A map menu shortcut: its key, next.
             if let Some(pressed) = self.pressed.take() {

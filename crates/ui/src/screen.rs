@@ -205,6 +205,10 @@ impl GameData for Shuyi {
         &self.content.keymap
     }
 
+    fn audio_config(&self) -> shuyi_ui::audio::AudioConfig {
+        crate::audio::AUDIO
+    }
+
     fn audio_manifest(&self) -> &AudioManifest {
         &self.content.audio
     }

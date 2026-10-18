@@ -33,23 +33,19 @@ use crate::map_view::{MapScene, Place, UnitView, screen_tiles};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
-use crate::widgets::word_wrap;
 use history::History;
 use log::LogView;
+use shuyi_ui::dialogue::TextBox;
 use view::{DialogueView, OpeningView, SkipView, TextView, WaitView};
 
 /// Characters per text line: the box less a 3-cell margin each side.
 pub const TEXT_W: usize = trpg_content::dialogue::BOX_WIDTH;
 /// Text lines per box; longer text pages.
 pub const TEXT_LINES: usize = trpg_content::dialogue::BOX_LINES;
-/// Reveal speed multiplier while Confirm is held.
-pub const FAST_FORWARD: f32 = 6.0;
-/// Seconds Confirm must be held on a page before it reveals faster, so the
-/// tap that turned the page doesn't speed the next one up.
-pub const FAST_FORWARD_DELAY: f32 = 0.3;
-/// The marker that says "press to go on" is lit for this long, then out
-/// for as long, while a page waits.
-const BLINK_S: f32 = 0.5;
+/// Reveal speed multiplier while Confirm is held, and the seconds it must
+/// be held on a page before it reveals faster (so the tap that turned the
+/// page doesn't speed the next one up): the engine's text box's.
+pub use shuyi_ui::dialogue::text_box::{FAST_FORWARD, FAST_FORWARD_DELAY};
 
 /// An opening playing (0734): which, and for how long so far.
 #[derive(Debug, Clone, PartialEq)]
@@ -91,17 +87,9 @@ impl Playing {
 pub struct DialogueScreen {
     player: DialoguePlayer,
     overlay: bool,
-    /// The current text box, word-wrapped.
-    lines: Vec<String>,
-    /// Which page of `lines` is shown ([`TEXT_LINES`] lines each).
-    page: usize,
-    /// Characters of the page revealed so far (fractional between frames).
-    shown: f32,
-    /// Seconds an advance key has been held on this page, for the
-    /// fast-forward ([`FAST_FORWARD_DELAY`]).
-    held_s: f32,
-    /// Seconds since the page was fully revealed, for the blinking `▼`.
-    waiting: f32,
+    /// The current text box: its pages ([`TEXT_LINES`] lines each) and how
+    /// much is revealed.
+    text: TextBox,
     /// Whether the "Skip scene?" question is open.
     asking_skip: bool,
     /// The lead's replies, while a choice is open.
@@ -131,11 +119,7 @@ impl DialogueScreen {
         let mut screen = Self {
             player: DialoguePlayer::new(scene, lead, names, present),
             overlay: false,
-            lines: Vec::new(),
-            page: 0,
-            shown: 0.0,
-            held_s: 0.0,
-            waiting: 0.0,
+            text: TextBox::new("", TEXT_W, TEXT_LINES),
             asking_skip: false,
             menu: None,
             history: History::new(),
@@ -204,14 +188,12 @@ impl DialogueScreen {
 
     /// The lines of the page on screen, in full.
     pub fn page_lines(&self) -> &[String] {
-        let start = (self.page * TEXT_LINES).min(self.lines.len());
-        let end = (start + TEXT_LINES).min(self.lines.len());
-        &self.lines[start..end]
+        self.text.page_lines()
     }
 
     /// Whether the whole page is revealed.
     pub fn is_revealed(&self) -> bool {
-        self.shown >= page_len(self.page_lines())
+        self.text.is_revealed()
     }
 
     /// Whether the "Skip scene?" question is open.
@@ -270,33 +252,21 @@ impl DialogueScreen {
     /// page), under the replies menu.
     fn show_box(&mut self) {
         let view = self.player.current();
-        let lines = word_wrap(view.text.as_deref().unwrap_or(""), TEXT_W);
+        let text = TextBox::new(view.text.as_deref().unwrap_or(""), TEXT_W, TEXT_LINES);
         let menu = view.choices.map(|choices| {
             Menu::new(choices.into_iter().map(MenuItem::new).collect()).without_cancel()
         });
-        self.lines = lines;
+        self.text = text;
         self.menu = menu;
-        self.page = 0;
-        self.start_page();
         if self.menu.is_some() {
-            self.page = self.lines.len().saturating_sub(1) / TEXT_LINES;
-            self.shown = page_len(self.page_lines());
+            self.text.to_last_page();
         }
-    }
-
-    fn start_page(&mut self) {
-        self.shown = 0.0;
-        self.held_s = 0.0;
-        self.waiting = 0.0;
     }
 
     /// Confirm with everything shown: the next page, else the next box.
     /// Returns `true` once the scene is over.
     fn next(&mut self) -> bool {
-        if (self.page + 1) * TEXT_LINES < self.lines.len() {
-            self.page += 1;
-            self.start_page();
-        } else {
+        if !self.text.next_page() {
             self.player.advance();
             self.start_box();
         }
@@ -315,15 +285,6 @@ fn advance_key(action: Action) -> Action {
     } else {
         action
     }
-}
-
-/// Characters on a page.
-fn page_len(lines: &[String]) -> f32 {
-    let n: usize = lines.iter().map(|l| l.chars().count()).sum();
-    // Pages are at most 3 × 92 characters, so this is exact.
-    #[expect(clippy::cast_precision_loss, reason = "at most a few hundred")]
-    let n = n as f32;
-    n
 }
 
 impl Screen<Shuyi> for DialogueScreen {
@@ -425,9 +386,7 @@ impl DialogueScreen {
                     ctx.audio.menu(MenuSound::Select);
                     self.asking_skip = true;
                 }
-                (false, Action::Confirm) if !self.is_revealed() => {
-                    self.shown = page_len(self.page_lines());
-                }
+                (false, Action::Confirm) if !self.is_revealed() => self.text.reveal(),
                 (false, Action::Confirm) if self.next() => return Transition::Pop,
                 // A choice just opened: the rest of this frame's keys
                 // can't pick a reply.
@@ -441,28 +400,15 @@ impl DialogueScreen {
         if self.log.is_some() || self.playing.is_some() {
             // The scene waits while the log is open, and the next text box
             // while the opening a key just reached plays.
-            self.held_s = 0.0;
+            self.text.release();
             return Transition::None;
         }
-        if ADVANCE_KEYS.iter().any(|&a| input.is_held(a)) {
-            self.held_s += input.dt;
-        } else {
-            self.held_s = 0.0;
-        }
+        let held = ADVANCE_KEYS.iter().any(|&a| input.is_held(a));
+        self.text.hold(held, input.dt);
         if !self.asking_skip {
-            if self.is_revealed() {
-                self.waiting += input.dt;
-            } else {
-                // The part of this frame past the delay goes faster.
-                let fast_dt = (self.held_s - FAST_FORWARD_DELAY).clamp(0.0, input.dt);
-                let dt = input.dt + fast_dt * (FAST_FORWARD - 1.0);
-                let len = page_len(self.page_lines());
-                self.shown = match ctx.settings().text_speed.chars_per_s() {
-                    Some(speed) => (self.shown + dt * speed).min(len),
-                    // Instant: the whole page at once.
-                    None => len,
-                };
-            }
+            // Instant text speed: the whole page at once.
+            let speed = ctx.settings().text_speed.chars_per_s();
+            self.text.type_on(input.dt, speed);
         }
         Transition::None
     }
@@ -661,12 +607,7 @@ impl DialogueScreen {
     /// question; the replies while a choice is open; what shows while the
     /// page waits for a key. `narration`: whether the text is narration.
     fn text_view(&self, ctx: &Ctx, narration: bool) -> TextView {
-        #[expect(
-            clippy::cast_possible_truncation,
-            clippy::cast_sign_loss,
-            reason = "shown is between 0 and the page length"
-        )]
-        let shown = self.shown as usize;
+        let shown = self.text.shown();
         let skip = self.asking_skip.then(|| SkipView {
             question: ctx.text("dialogue.skip_question").to_owned(),
             answers: ctx.text_with("dialogue.skip_answers", &[]),
@@ -690,7 +631,7 @@ impl DialogueScreen {
         WaitView {
             key: key_name(km, Action::Confirm),
             log_hint: log_mapped.then(|| ctx.text_with("dialogue.log_hint", &[])),
-            marker: self.waiting % (2.0 * BLINK_S) < BLINK_S,
+            marker: self.text.marker_lit(),
         }
     }
 }

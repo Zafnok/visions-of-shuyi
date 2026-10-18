@@ -5,8 +5,8 @@
 //! Another look is another `paint` of the same view (ADR-0054).
 
 use super::view::{MenuItemView, MenuView, SuffixKind};
-use crate::color::{Palette, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::frame::color::{EngineColor, Palette};
+use crate::frame::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 
 /// Cells the label and suffix of `item` take.
 fn width(item: &MenuItemView) -> usize {
@@ -48,32 +48,33 @@ pub fn size(view: &MenuView) -> (i32, i32) {
 
 /// The colour of the text after a label: the warning colour for a
 /// warning, dim for an aside.
-pub const fn suffix_color(kind: SuffixKind) -> UiColor {
+pub const fn suffix_color(kind: SuffixKind) -> EngineColor {
     match kind {
-        SuffixKind::Warning => UiColor::HpLow,
-        SuffixKind::Aside => UiColor::TextDim,
+        SuffixKind::Warning => EngineColor::Warning,
+        SuffixKind::Aside => EngineColor::TextDim,
     }
 }
 
-/// Paints `view` with its top-left corner at `(x, y)`: a `panel_bg` box
-/// with a `panel_border` single line, items in `text`, disabled ones in
-/// `text_dim`, and the focused one as a bar of `panel_bg` text on
-/// `panel_border_focus` (on `panel_border` for a disabled one: a menu that
-/// browses disabled items). Under the items, if any has a note: a
-/// `panel_border` rule and the focused item's note in `text`.
+/// Paints `view` with its top-left corner at `(x, y)`: a
+/// [`Panel`](EngineColor::Panel) box with a [`Border`](EngineColor::Border)
+/// single line, items in [`Text`](EngineColor::Text), disabled ones in
+/// [`TextDim`](EngineColor::TextDim), and the focused one as a bar of panel
+/// text on [`Focus`](EngineColor::Focus) (on the border's color for a
+/// disabled one: a menu that browses disabled items). Under the items, if
+/// any has a note: a border rule and the focused item's note in text.
 pub fn paint(palette: &Palette, view: &MenuView, buf: &mut GlyphBuffer, x: i32, y: i32) {
-    let color = |u| palette.get(u);
-    let bg = color(UiColor::PanelBg);
+    let color = |e| palette.engine(e);
+    let bg = color(EngineColor::Panel);
     let (w, h) = size(view);
     let rect = Rect::new(x, y, w, h);
-    buf.fill_rect(rect, Cell::new(' ', color(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Single, color(UiColor::PanelBorder), bg);
+    buf.fill_rect(rect, Cell::new(' ', color(EngineColor::Text), bg));
+    buf.draw_box(rect, BoxStyle::Single, color(EngineColor::Border), bg);
     for (row, item) in (y + 1..).zip(&view.items) {
         let (fg, row_bg) = match (item.focused, item.enabled) {
-            (true, false) => (bg, color(UiColor::PanelBorder)),
-            (false, false) => (color(UiColor::TextDim), bg),
-            (true, true) => (bg, color(UiColor::PanelBorderFocus)),
-            (false, true) => (color(UiColor::Text), bg),
+            (true, false) => (bg, color(EngineColor::Border)),
+            (false, false) => (color(EngineColor::TextDim), bg),
+            (true, true) => (bg, color(EngineColor::Focus)),
+            (false, true) => (color(EngineColor::Text), bg),
         };
         buf.fill_rect(Rect::new(x + 1, row, w - 2, 1), Cell::new(' ', fg, row_bg));
         buf.print(x + 2, row, &item.label, fg, row_bg);
@@ -90,12 +91,12 @@ pub fn paint(palette: &Palette, view: &MenuView, buf: &mut GlyphBuffer, x: i32, 
     }
     if has_notes(view) {
         let rule = y + h - 3;
-        let border = color(UiColor::PanelBorder);
+        let border = color(EngineColor::Border);
         buf.fill_rect(Rect::new(x + 1, rule, w - 2, 1), Cell::new('─', border, bg));
         buf.set(x, rule, Cell::new('├', border, bg));
         buf.set(x + w - 1, rule, Cell::new('┤', border, bg));
         if let Some(note) = view.focused().and_then(|i| i.note.as_ref()) {
-            buf.print(x + 2, rule + 1, note, color(UiColor::Text), bg);
+            buf.print(x + 2, rule + 1, note, color(EngineColor::Text), bg);
         }
     }
 }
@@ -103,7 +104,7 @@ pub fn paint(palette: &Palette, view: &MenuView, buf: &mut GlyphBuffer, x: i32, 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::color::tests::game_palette;
+    use crate::frame::color::tests::engine_palette;
 
     fn item(label: &str, enabled: bool, focused: bool) -> MenuItemView {
         MenuItemView {
@@ -116,9 +117,13 @@ mod tests {
     }
 
     fn painted(view: &MenuView) -> (GlyphBuffer, Palette) {
-        let p = game_palette();
+        let p = engine_palette();
         let (w, h) = size(view);
-        let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
+        let blank = Cell::new(
+            ' ',
+            p.engine(EngineColor::Text),
+            p.engine(EngineColor::Background),
+        );
         let mut buf = GlyphBuffer::new(
             u16::try_from(w + 2).unwrap(),
             u16::try_from(h + 2).unwrap(),
@@ -169,15 +174,15 @@ mod tests {
             ],
         };
         let (buf, p) = painted(&view);
-        let bar = p.get(UiColor::PanelBorderFocus);
+        let bar = p.engine(EngineColor::Focus);
         let at = |x, y| *buf.get(x, y).unwrap();
         // The bar fills the row inside the border, in the panel's colour.
         assert_eq!(at(2, 4).bg, bar);
-        assert_eq!(at(2, 4).fg, p.get(UiColor::PanelBg));
+        assert_eq!(at(2, 4).fg, p.engine(EngineColor::Panel));
         assert_eq!(at(8, 4).bg, bar);
         assert_ne!(at(2, 2).bg, bar);
-        assert_eq!(at(3, 2).fg, p.get(UiColor::Text));
-        assert_eq!(at(3, 3).fg, p.get(UiColor::TextDim));
+        assert_eq!(at(3, 2).fg, p.engine(EngineColor::Text));
+        assert_eq!(at(3, 3).fg, p.engine(EngineColor::TextDim));
         assert_ne!(at(3, 3).bg, bar);
     }
 
@@ -185,10 +190,10 @@ mod tests {
     fn the_focused_items_note_shows_under_a_rule_at_the_widest_notes_width() {
         let mut brace = item("Brace", true, true);
         brace.note = Some("self: Def +5".to_owned());
-        let mut shove = item("Shove", false, false);
-        shove.note = Some("push 1 tile, 5 on impact".to_owned());
+        let mut push = item("Nudge", false, false);
+        push.note = Some("push 1 tile, 5 on impact".to_owned());
         let view = MenuView {
-            items: vec![brace, shove],
+            items: vec![brace, push],
         };
         // As wide as the longest note, whichever item has the focus.
         assert_eq!(size(&view), (28, 6));
@@ -196,25 +201,25 @@ mod tests {
         assert_eq!(row(&buf, 4).trim(), "├──────────────────────────┤");
         assert_eq!(row(&buf, 5).trim(), "│ self: Def +5             │");
         assert_eq!(row(&buf, 6).trim(), "└──────────────────────────┘");
-        assert_eq!(buf.get(3, 5).unwrap().fg, p.get(UiColor::Text));
+        assert_eq!(buf.get(3, 5).unwrap().fg, p.engine(EngineColor::Text));
     }
 
     #[test]
     fn a_focused_disabled_item_is_a_muted_bar_with_its_note() {
         let mut brace = item("Brace", true, false);
         brace.note = Some("self".to_owned());
-        let mut shove = item("Shove", false, true);
-        shove.note = Some("push".to_owned());
-        shove.suffix = Some(("no uses left".to_owned(), SuffixKind::Warning));
+        let mut push = item("Nudge", false, true);
+        push.note = Some("push".to_owned());
+        push.suffix = Some(("no uses left".to_owned(), SuffixKind::Warning));
         let view = MenuView {
-            items: vec![brace, shove],
+            items: vec![brace, push],
         };
         let (buf, p) = painted(&view);
         let at = |x, y| *buf.get(x, y).unwrap();
-        assert_eq!(at(2, 3).bg, p.get(UiColor::PanelBorder));
-        assert_eq!(at(3, 3).fg, p.get(UiColor::PanelBg));
+        assert_eq!(at(2, 3).bg, p.engine(EngineColor::Border));
+        assert_eq!(at(3, 3).fg, p.engine(EngineColor::Panel));
         // The reason takes the bar's colour too.
-        assert_eq!(at(9, 3).fg, p.get(UiColor::PanelBg));
+        assert_eq!(at(9, 3).fg, p.engine(EngineColor::Panel));
         assert_eq!(row(&buf, 5).trim(), "│ push               │");
     }
 
@@ -240,8 +245,8 @@ mod tests {
         // After the label and a space: column 3 + 5 on the first row.
         assert_eq!(row(&buf, 2).trim(), "│ Sword (broken) │");
         assert_eq!(at(9, 2).glyph, '(');
-        assert_eq!(at(9, 2).fg, p.get(UiColor::HpLow));
+        assert_eq!(at(9, 2).fg, p.engine(EngineColor::Warning));
         assert_eq!(at(7, 3).glyph, '(');
-        assert_eq!(at(7, 3).fg, p.get(UiColor::PanelBg));
+        assert_eq!(at(7, 3).fg, p.engine(EngineColor::Panel));
     }
 }

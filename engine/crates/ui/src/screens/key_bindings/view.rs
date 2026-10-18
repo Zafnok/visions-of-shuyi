@@ -1,15 +1,14 @@
 //! What the Key bindings screen shows, as plain data: no cells, glyphs,
 //! colours or positions. The screen builds a [`KeyBindingsView`] each frame
 //! ([`KeyBindingsScreen::view`](super::KeyBindingsScreen::view)) and a skin
-//! paints it ([`super::glyph::paint`] today); see ADR-0054.
+//! paints it ([`super::glyph::paint`] today).
 
 use super::Side;
-use crate::input::Action;
 use crate::prelude::*;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct KeyBindingsView {
+pub struct KeyBindingsView<A> {
     /// The screen's title.
     pub title: String,
     /// The keyboard / controller switch.
@@ -17,7 +16,7 @@ pub struct KeyBindingsView {
     /// The headings over the slot columns, left to right.
     pub columns: Vec<String>,
     /// The actions, grouped: the required ones, then the optional ones.
-    pub groups: Vec<GroupView>,
+    pub groups: Vec<GroupView<A>>,
     /// The row under the actions that puts the shown side's defaults back.
     pub restore: RestoreView,
     /// The note on a row with nothing in any slot (`! not mapped`).
@@ -33,19 +32,19 @@ pub struct KeyBindingsView {
     pub help: String,
 }
 
-impl KeyBindingsView {
+impl<A: Copy + PartialEq> KeyBindingsView<A> {
     /// Every action's row, top to bottom.
-    pub fn rows(&self) -> impl Iterator<Item = &RowView> {
+    pub fn rows(&self) -> impl Iterator<Item = &RowView<A>> {
         self.groups.iter().flat_map(|g| g.rows.iter())
     }
 
     /// The row of `action`, if it is shown.
-    pub fn row(&self, action: Action) -> Option<&RowView> {
+    pub fn row(&self, action: A) -> Option<&RowView<A>> {
         self.rows().find(|r| r.action == action)
     }
 
     /// The focused row, if the focus is on an action.
-    pub fn focused(&self) -> Option<&RowView> {
+    pub fn focused(&self) -> Option<&RowView<A>> {
         self.rows().find(|r| r.focus.is_some())
     }
 }
@@ -65,21 +64,21 @@ pub struct SwitchView {
 
 /// A heading and the actions under it.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct GroupView {
+pub struct GroupView<A> {
     /// What the group is.
     pub heading: String,
     /// Whether these are the required actions (each must have a key or a
     /// button before the screen can be left).
     pub required: bool,
     /// Its actions, top to bottom.
-    pub rows: Vec<RowView>,
+    pub rows: Vec<RowView<A>>,
 }
 
 /// One action.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RowView {
+pub struct RowView<A> {
     /// Which action it is.
-    pub action: Action,
+    pub action: A,
     /// Its name.
     pub label: String,
     /// The keys it also has that can't be changed (keyboard side only).
@@ -98,7 +97,7 @@ pub struct RowView {
     pub lost_key: bool,
 }
 
-impl RowView {
+impl<A> RowView<A> {
     /// Whether the cursor is on this row.
     pub fn focused(&self) -> bool {
         self.focus.is_some()

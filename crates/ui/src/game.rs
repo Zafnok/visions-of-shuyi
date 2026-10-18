@@ -15,7 +15,7 @@ use trpg_core::{LeadGender, LeadProfile};
 
 use crate::debug::{self, DebugMenuScreen, ScenePreviewScreen};
 use crate::screen::{Ctx, Keyboard, Screen, ScreenStack, Shuyi};
-use crate::screens::{LayoutPickerScreen, TitleScreen};
+use crate::screens::{LayoutPickerScreen, TitleScreen, layout_picker};
 
 pub use shuyi_ui::RawInputEvent;
 
@@ -35,11 +35,11 @@ pub fn hooks() -> GameHooks<Shuyi> {
     GameHooks {
         first_key: Some(ScreenHook {
             name: LayoutPickerScreen::NAME,
-            open: |ctx| Box::new(LayoutPickerScreen::new(ctx)),
+            open: |ctx| Box::new(layout_picker::first(ctx)),
         }),
         debug: Some(ScreenHook {
             name: DebugMenuScreen::NAME,
-            open: |ctx| Box::new(DebugMenuScreen::new(ctx)),
+            open: |ctx| Box::new(debug::menu(ctx)),
         }),
         debug_screens: &debug::SCREENS,
     }
@@ -110,7 +110,7 @@ pub fn start_on_scene(mut ctx: Ctx, scene: &str, gender: LeadGender) -> Result<G
     let mut stack = ScreenStack::new(Box::new(preview));
     stack.push(Box::new(playing));
     if ctx.layout().is_none() && ctx.keyboard == Keyboard::Present {
-        stack.push(Box::new(LayoutPickerScreen::new(&ctx)));
+        stack.push(Box::new(layout_picker::first(&ctx)));
     }
     Ok(Game::with_stack(ctx, stack, hooks()))
 }

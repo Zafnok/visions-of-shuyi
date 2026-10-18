@@ -9,8 +9,13 @@ use crate::glyph_buffer::Sprite;
 use crate::portrait::dim_opacity;
 use crate::screen::tests::ctx;
 use crate::screens::dialogue::log::LogView;
-use crate::screens::dialogue::view::{OpeningView, SkipView};
-use crate::widgets::menu::MenuItemView;
+use crate::screens::dialogue::view::{OpeningView, SkipView, TextView, WaitView};
+use crate::widgets::menu::{MenuItemView, MenuView};
+
+/// The text box `text` is painted in, and its first text row.
+fn text_box(text: &TextView) -> (Rect, i32) {
+    text_box::glyph::box_rect(BOX_PLACE, text)
+}
 
 /// Row of the name plates: the one under the portrait frames.
 const PLATE_Y: i32 = 19;

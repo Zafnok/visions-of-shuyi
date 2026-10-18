@@ -7,6 +7,7 @@ use trpg_core::{BattleMap, Grid, Objective, Phase, TerrainId, Unit};
 use super::testing::{battle, vaulted, wait};
 use super::view::{MenuPlace, PanelUnitView, PanelView, TerrainView};
 use super::*;
+use crate::audio::CURSOR_MOVE;
 use crate::color::{Rgb, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Cell;

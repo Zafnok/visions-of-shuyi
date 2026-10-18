@@ -1,11 +1,17 @@
+//! This game's rows on the engine's options screen: which show, what
+//! each changes and shows, and what the rows that do something do. The
+//! screen itself (the focus, the volume box, leaving) is tested in the
+//! engine, on its toy game.
+
 use super::*;
 use crate::audio::AudioRequest;
-use crate::input::LEFT_HANDED;
-use crate::input::{Chord, Key};
+use crate::input::{Action, LEFT_HANDED};
 use crate::screen::tests::ctx;
-use crate::settings::SETTINGS_KEY;
+use crate::screen::{FrameInput, ShuyiCtx};
+use crate::settings::{SETTINGS_KEY, TextSpeed};
 use crate::storage::{Storage, StorageError};
 use crate::tips::{TIPS_SEEN_KEY, TipsSeen};
+use shuyi_ui::Screen;
 
 fn press(s: &mut OptionsScreen, c: &mut Ctx, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
@@ -14,30 +20,18 @@ fn press(s: &mut OptionsScreen, c: &mut Ctx, actions: &[Action]) -> String {
 
 /// The screen focused on `row`.
 fn on(row: Row) -> OptionsScreen {
-    let mut s = OptionsScreen::new();
-    s.row = row;
-    s
+    screen().focused_on(row.key())
+}
+
+/// The focused row.
+fn focus(s: &OptionsScreen, c: &Ctx) -> Row {
+    Row::from_key(s.focus(c)).unwrap()
 }
 
 /// The sounds asked for since the last call.
 fn sounds(c: &mut Ctx) -> Vec<String> {
     let cue = |r: AudioRequest| r.cue().map(str::to_owned);
     c.audio.take().into_iter().filter_map(cue).collect()
-}
-
-/// What the focused row shows beside its name.
-fn focused_value(s: &OptionsScreen, c: &Ctx) -> ValueView {
-    let view = s.view(c);
-    view.focused().map(|r| r.value.clone()).unwrap()
-}
-
-/// The volume box as the view shows it: its digits, and whether it is
-/// typed in.
-fn boxed(digits: &str, typing: bool) -> ValueView {
-    ValueView::NumberBox {
-        digits: digits.to_owned(),
-        typing,
-    }
 }
 
 fn saved(c: &Ctx) -> Settings {
@@ -55,7 +49,7 @@ fn unsaved(c: &Ctx) -> bool {
 #[test]
 fn game_mode_and_tutorial_show_only_with_a_campaign() {
     let mut c = ctx();
-    let rows = OptionsScreen::rows(&c);
+    let rows = shown_rows(&c);
     assert_eq!(rows.len(), Row::ALL.len() - 4);
     assert!(!rows.contains(&Row::GameMode) && !rows.contains(&Row::Tutorial));
     c.game.campaign_mode = Some(GameMode::Casual);
@@ -64,7 +58,7 @@ fn game_mode_and_tutorial_show_only_with_a_campaign() {
         .into_iter()
         .filter(|&r| r != Row::MapLook && r != Row::MapZoom)
         .collect();
-    assert_eq!(OptionsScreen::rows(&c), without_pictures);
+    assert_eq!(shown_rows(&c), without_pictures);
     // Map zoom shows under a skin that can zoom (a debug tool's), even
     // without the game's pictures; not under one that can't.
     let with_zoom: Vec<Row> = Row::ALL
@@ -72,72 +66,14 @@ fn game_mode_and_tutorial_show_only_with_a_campaign() {
         .filter(|&r| r != Row::MapLook)
         .collect();
     c.set_map_skin(crate::map_view::skin_named(&c.game.content, "sprite").unwrap());
-    assert_eq!(OptionsScreen::rows(&c), with_zoom);
+    assert_eq!(shown_rows(&c), with_zoom);
     c.set_map_skin(crate::map_view::skin_named(&c.game.content, "sprite_units").unwrap());
-    assert_eq!(OptionsScreen::rows(&c), without_pictures);
+    assert_eq!(shown_rows(&c), without_pictures);
     // Map look and Map zoom show when the game has pictures.
     let mut tileset = c.game.content.tilesets["test_units"].clone();
     tileset.id = crate::map_view::GAME_TILESET.to_owned();
     c.game.content.tilesets.insert(tileset.id.clone(), tileset);
-    assert_eq!(OptionsScreen::rows(&c), Row::ALL);
-}
-
-#[test]
-fn up_and_down_move_the_focus_and_wrap() {
-    use Action::{CursorDown, CursorUp};
-    let mut c = ctx();
-    let mut s = OptionsScreen::new();
-    assert_eq!(s.name(), "options");
-    assert!(!s.is_overlay());
-    assert_eq!(s.focus(), Row::TextSpeed);
-    press(&mut s, &mut c, &[CursorDown]);
-    assert_eq!(s.focus(), Row::AnimSpeed);
-    assert_eq!(sounds(&mut c), ["menu_move"]);
-    press(&mut s, &mut c, &[CursorUp, CursorUp]);
-    assert_eq!(s.focus(), Row::RestoreDefaults);
-    press(&mut s, &mut c, &[CursorUp, CursorUp]);
-    // No campaign: Game mode is skipped.
-    assert_eq!(s.focus(), Row::KeyBindings);
-    press(&mut s, &mut c, &[CursorDown, CursorDown, CursorDown]);
-    assert_eq!(s.focus(), Row::TextSpeed);
-}
-
-#[test]
-fn left_and_right_step_a_setting_and_stop_at_the_ends() {
-    use Action::{CursorLeft, CursorRight};
-    let mut c = ctx();
-    let mut s = OptionsScreen::new();
-    press(&mut s, &mut c, &[CursorRight]);
-    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
-    assert!(unsaved(&c));
-    assert_eq!(sounds(&mut c), ["menu_move"]);
-    press(&mut s, &mut c, &[CursorRight, CursorRight, CursorRight]);
-    assert_eq!(c.settings().text_speed, TextSpeed::Instant);
-    // Only the step that changed something sounds.
-    assert_eq!(sounds(&mut c), ["menu_move"]);
-    press(&mut s, &mut c, &[CursorLeft; 5]);
-    assert_eq!(c.settings().text_speed, TextSpeed::Slow);
-    assert_eq!(sounds(&mut c).len(), 3);
-}
-
-#[test]
-fn confirm_steps_a_setting_and_goes_round() {
-    let mut c = ctx();
-    let mut s = on(Row::Cursor);
-    let styles: Vec<_> = (0..3)
-        .map(|_| {
-            press(&mut s, &mut c, &[Action::Confirm]);
-            c.settings().game.cursor_style
-        })
-        .collect();
-    assert_eq!(
-        styles,
-        [
-            CursorStyle::LargeCorners,
-            CursorStyle::TileGlow,
-            CursorStyle::Corners
-        ]
-    );
+    assert_eq!(shown_rows(&c), Row::ALL);
 }
 
 /// Ticket 0444: while pictures paint the whole map the cursor never
@@ -147,7 +83,7 @@ fn confirm_steps_a_setting_and_goes_round() {
 fn the_cursor_row_offers_no_tile_glow_while_the_map_is_pictures() {
     use crate::map_view::{GlyphSkin, MapSkin, skin_named};
     use std::rc::Rc;
-    let value = |c: &Ctx, row| match OptionsScreen::value(c, row) {
+    let value = |c: &Ctx, row| match value(c, row) {
         ValueView::Text { text, adjustable } => {
             format!("{text}{}", if adjustable { "*" } else { "" })
         }
@@ -186,141 +122,13 @@ fn the_cursor_row_offers_no_tile_glow_while_the_map_is_pictures() {
     }
 }
 
-/// One frame of typing: the characters `text`, then the keys `keys`.
-fn type_in(s: &mut OptionsScreen, c: &mut Ctx, text: &str, keys: &[Key]) {
-    let chords = keys.iter().map(|&k| Chord::plain(k)).collect();
-    let input = FrameInput::new(vec![], 0.0, vec![]).with_typing(chords, text.chars().collect());
-    s.update(c, &input);
-}
-
-/// Nick: a volume is 0 to 100, with a slider.
-#[test]
-fn left_and_right_move_a_volumes_slider_five_at_a_time() {
-    use Action::{CursorLeft, CursorRight};
-    let mut c = ctx();
-    let mut s = on(Row::MusicVolume);
-    assert_eq!(s.help(&c), "arrows move · f type a number · d back");
-    press(&mut s, &mut c, &[CursorLeft]);
-    assert_eq!(c.settings().music_volume, 75);
-    assert!(unsaved(&c));
-    press(&mut s, &mut c, &[CursorRight; 6]);
-    assert_eq!(c.settings().music_volume, 100);
-    // Five steps changed it; the sixth did nothing.
-    assert_eq!(sounds(&mut c).len(), 6);
-    c.change_settings(|s| s.music_volume = 3).unwrap();
-    press(&mut s, &mut c, &[CursorLeft]);
-    assert_eq!(c.settings().music_volume, 0);
-    press(&mut s, &mut c, &[CursorLeft]);
-    assert_eq!(c.settings().music_volume, 0);
-    assert_eq!(c.settings().sound_volume, 80);
-}
-
-/// Nick: and an input box for the exact number.
-#[test]
-fn confirm_on_a_volume_opens_a_box_to_type_the_number() {
-    let mut c = ctx();
-    let mut s = on(Row::SoundVolume);
-    // The key that opens the box types nothing, nor do the keys after it.
-    press(&mut s, &mut c, &[Action::Confirm, Action::CursorDown]);
-    assert_eq!(s.typing().map(NumberBox::value), Some(None));
-    assert_eq!(s.focus(), Row::SoundVolume);
-    assert_eq!(sounds(&mut c), ["menu_select"]);
-    assert_eq!(s.help(&c), "Enter done · Backspace delete · Escape cancel");
-    assert_eq!(focused_value(&s, &c), boxed("", true));
-    // The game's keys do nothing while it is open.
-    press(&mut s, &mut c, &[Action::CursorDown, Action::Cancel]);
-    assert!(s.typing().is_some());
-    // Digits only, three at most.
-    type_in(&mut s, &mut c, "3x7", &[]);
-    assert_eq!(s.typing().and_then(NumberBox::value), Some(37));
-    assert_eq!(sounds(&mut c), ["menu_cancel"], "the x is refused");
-    assert_eq!(focused_value(&s, &c), boxed("37", true));
-    // The other rows show their values as ever.
-    let music = s.view(&c).row(Row::MusicVolume).map(|r| r.value.clone());
-    assert_eq!(
-        music,
-        Some(ValueView::Volume {
-            level: 80,
-            max: 100
-        })
-    );
-    type_in(&mut s, &mut c, "55", &[]);
-    assert_eq!(s.typing().map(NumberBox::digits), Some("375"));
-    // Backspace deletes; nothing changes until Enter.
-    type_in(&mut s, &mut c, "", &[Key::Backspace, Key::Backspace]);
-    assert_eq!(s.typing().and_then(NumberBox::value), Some(3));
-    assert_eq!(c.settings().sound_volume, 80);
-    type_in(&mut s, &mut c, "7", &[Key::Enter]);
-    assert!(s.typing().is_none());
-    assert_eq!(c.settings().sound_volume, 37);
-    assert!(unsaved(&c));
-    assert_eq!(c.settings().music_volume, 80);
-    // More than 100 is 100.
-    press(&mut s, &mut c, &[Action::Confirm]);
-    type_in(&mut s, &mut c, "250", &[Key::Enter]);
-    assert_eq!(c.settings().sound_volume, 100);
-    // Escape, or Enter on an empty box, leaves the volume alone.
-    press(&mut s, &mut c, &[Action::Confirm]);
-    type_in(&mut s, &mut c, "12", &[Key::Escape]);
-    assert!(s.typing().is_none());
-    press(&mut s, &mut c, &[Action::Confirm]);
-    type_in(&mut s, &mut c, "", &[Key::Enter]);
-    assert!(s.typing().is_none());
-    press(&mut s, &mut c, &[Action::Confirm]);
-    type_in(&mut s, &mut c, "", &[Key::Backspace, Key::Enter]);
-    assert_eq!(c.settings().sound_volume, 100);
-    // The music row's box sets the music.
-    let mut s = on(Row::MusicVolume);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    type_in(&mut s, &mut c, "0", &[Key::Enter]);
-    assert_eq!(c.settings().music_volume, 0);
-    assert_eq!(c.settings().sound_volume, 100);
-}
-
-/// On a controller there is nothing to type with: the box holds the
-/// volume and the cursor steps it by one.
-#[test]
-fn the_volume_box_steps_by_one_on_a_controller() {
-    let pad = |actions: &[Action]| FrameInput::new(actions.to_vec(), 0.0, vec![]).with_pad(true);
-    let mut c = ctx();
-    let mut s = on(Row::MusicVolume);
-    s.update(&mut c, &pad(&[Action::Confirm]));
-    assert_eq!(s.typing().and_then(NumberBox::value), Some(80));
-    assert_eq!(s.help(&c), "arrows change · f done · d cancel");
-    assert_eq!(focused_value(&s, &c), boxed("80", false));
-    sounds(&mut c);
-    let steps = [Action::CursorUp, Action::CursorRight, Action::CursorUp];
-    s.update(&mut c, &pad(&steps));
-    assert_eq!(s.typing().and_then(NumberBox::value), Some(83));
-    assert_eq!(sounds(&mut c).len(), 3);
-    s.update(&mut c, &pad(&[Action::CursorDown, Action::Info]));
-    assert_eq!(s.typing().and_then(NumberBox::value), Some(82));
-    // Not until Confirm.
-    assert_eq!(c.settings().music_volume, 80);
-    s.update(&mut c, &pad(&[Action::Confirm, Action::CursorDown]));
-    assert!(s.typing().is_none());
-    assert_eq!(c.settings().music_volume, 82);
-    assert_eq!(s.focus(), Row::MusicVolume);
-    // Cancel keeps the old volume; the ends hold.
-    s.update(&mut c, &pad(&[Action::Confirm]));
-    s.update(&mut c, &pad(&[Action::CursorLeft, Action::Cancel]));
-    assert_eq!(c.settings().music_volume, 82);
-    c.change_settings(|s| s.music_volume = 100).unwrap();
-    s.update(&mut c, &pad(&[Action::Confirm]));
-    sounds(&mut c);
-    s.update(&mut c, &pad(&[Action::CursorUp]));
-    assert_eq!(s.typing().and_then(NumberBox::value), Some(100));
-    assert!(sounds(&mut c).is_empty());
-    c.change_settings(|s| s.music_volume = 0).unwrap();
-    s.update(&mut c, &pad(&[Action::Cancel]));
-    s.update(&mut c, &pad(&[Action::Confirm]));
-    s.update(&mut c, &pad(&[Action::CursorDown, Action::Confirm]));
-    assert_eq!(c.settings().music_volume, 0);
-}
-
 #[test]
 fn every_setting_row_changes_its_own_setting() {
     let mut c = ctx();
+    // With the game's pictures, so Map look and Map zoom are rows too.
+    let mut tileset = c.game.content.tilesets["test_units"].clone();
+    tileset.id = crate::map_view::GAME_TILESET.to_owned();
+    c.game.content.tilesets.insert(tileset.id.clone(), tileset);
     // The tutorial level is the campaign's, not a setting (below).
     let rows = Row::ALL
         .into_iter()
@@ -367,7 +175,7 @@ fn rows_show_their_values() {
     let mut c = ctx();
     // What each row shows, as the view says it: the words, or `<level>`
     // for a volume, and `*` if left and right change it.
-    let value = |c: &Ctx, row| match OptionsScreen::value(c, row) {
+    let value = |c: &Ctx, row| match value(c, row) {
         ValueView::None => String::new(),
         ValueView::Text { text, adjustable } => {
             format!("{text}{}", if adjustable { "*" } else { "" })
@@ -404,6 +212,11 @@ fn rows_show_their_values() {
         s.music_volume = 0;
         s.sound_volume = 100;
         s.game.auto_end_turn = true;
+        s.game.anim_speed = AnimSpeed::Fast;
+        s.game.enemy_phase_speed = EnemyPhaseSpeed::Fast;
+        s.game.map_look = MapLook::Glyphs;
+        s.game.map_zoom = MapZoom::X1;
+        s.theme = Theme::ALL[2];
     })
     .unwrap();
     c.game.campaign_mode = Some(GameMode::Classic);
@@ -412,6 +225,14 @@ fn rows_show_their_values() {
     assert_eq!(value(&c, Row::MusicVolume), "<0/100>");
     assert_eq!(value(&c, Row::SoundVolume), "<100/100>");
     assert_eq!(value(&c, Row::AutoEnd), "On*");
+    // Each named setting shows the value it has, not its default.
+    let named = |key: &str| format!("{}*", c.text(key));
+    assert_eq!(value(&c, Row::AnimSpeed), named(AnimSpeed::Fast.key()));
+    let fast = EnemyPhaseSpeed::Fast.key();
+    assert_eq!(value(&c, Row::EnemyPhaseSpeed), named(fast));
+    assert_eq!(value(&c, Row::MapLook), named(MapLook::Glyphs.key()));
+    assert_eq!(value(&c, Row::MapZoom), "1×*");
+    assert_eq!(value(&c, Row::Theme), named(Theme::ALL[2].key()));
     assert_eq!(value(&c, Row::GameMode), "Classic");
     assert_eq!(value(&c, Row::Layout), "Left-handed");
     assert_eq!(c.text(cursor_key(CursorStyle::TileGlow)), "Tile glow");
@@ -467,92 +288,6 @@ fn the_tutorial_row_steps_the_level_and_leaving_keeps_or_discards_it() {
     assert_eq!(c.game.campaign_tutorial, Some(TutorialLevel::None));
 }
 
-/// The view is the whole screen as data: what a skin paints.
-#[test]
-fn the_view_says_what_the_screen_shows() {
-    let mut c = ctx();
-    let s = on(Row::Layout);
-    let view = s.view(&c);
-    assert_eq!(view.title, "Options");
-    assert_eq!(view.help, s.help(&c));
-    assert_eq!((view.message.clone(), view.question.clone()), (None, None));
-    let rows: Vec<Row> = view.rows.iter().map(|r| r.row).collect();
-    assert_eq!(rows, OptionsScreen::rows(&c));
-    let labels: Vec<&str> = view.rows.iter().map(|r| r.label.as_str()).collect();
-    assert_eq!(labels[0], "Text speed");
-    assert_eq!(labels[rows.len() - 1], "Restore defaults");
-    // One row in focus; the groups start at Layout and Reset tips.
-    let focused: Vec<Row> = view
-        .rows
-        .iter()
-        .filter(|r| r.focused)
-        .map(|r| r.row)
-        .collect();
-    assert_eq!(focused, [Row::Layout]);
-    assert_eq!(view.focused().map(|r| r.row), Some(Row::Layout));
-    let groups: Vec<Row> = view
-        .rows
-        .iter()
-        .filter(|r| r.starts_group)
-        .map(|r| r.row)
-        .collect();
-    assert_eq!(groups, [Row::Layout, Row::ResetTips]);
-    for row in &view.rows {
-        assert_eq!(
-            row.value,
-            OptionsScreen::value(&c, row.row),
-            "{:?}",
-            row.row
-        );
-    }
-    assert_eq!(view.row(Row::GameMode), None);
-    assert_eq!(view.row(Row::Tutorial), None);
-    assert_eq!(
-        view.row(Row::Layout).and_then(|r| r.value.text()),
-        Some("Right-handed")
-    );
-    assert_eq!(
-        view.row(Row::MusicVolume).and_then(|r| r.value.text()),
-        None
-    );
-    // A question and a message, in the player's words and keys.
-    let mut s = on(Row::ResetTips);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    let question = s.view(&c).question;
-    assert_eq!(
-        question,
-        Some(QuestionView {
-            text: "Show every tip again?".to_owned(),
-            answers: "f yes / d no".to_owned(),
-        })
-    );
-    press(&mut s, &mut c, &[Action::Confirm]);
-    let view = s.view(&c);
-    assert_eq!(view.question, None);
-    assert_eq!(view.message.as_deref(), Some("Tips will show again"));
-    // With a campaign, its mode is a row.
-    c.game.campaign_mode = Some(GameMode::Classic);
-    let mode = s.view(&c).row(Row::GameMode).map(|r| r.value.clone());
-    assert_eq!(mode.as_ref().and_then(ValueView::text), Some("Classic"));
-}
-
-/// Drawing is the glyph skin painting the view, nothing more.
-#[test]
-fn draw_paints_the_view_with_the_glyph_skin() {
-    use crate::console::{ConsoleSizes, ConsoleSpec};
-    let mut c = ctx();
-    let mut s = on(Row::SoundVolume);
-    press(&mut s, &mut c, &[Action::CursorLeft]);
-    let bg = c.palette.get(crate::color::UiColor::Black);
-    let blank = crate::glyph_buffer::Cell::new(' ', bg, bg);
-    let mut drawn = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
-    s.draw(&c, &mut drawn);
-    let mut painted = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
-    glyph::paint(&c, &s.view(&c), &mut painted);
-    assert_eq!(drawn, painted);
-    assert!(s.as_any().is_some());
-}
-
 #[test]
 fn layout_and_key_bindings_open_their_screens() {
     let mut c = ctx();
@@ -565,7 +300,8 @@ fn layout_and_key_bindings_open_their_screens() {
         "Push(key_bindings)"
     );
     assert_eq!(sounds(&mut c), ["menu_select", "menu_select"]);
-    // Left and right do nothing on them.
+    // Left and right do nothing on them (Game mode shows with a campaign).
+    c.game.campaign_mode = Some(GameMode::Classic);
     let before = c.settings().clone();
     for row in [Row::Layout, Row::KeyBindings, Row::GameMode, Row::ResetTips] {
         let keys = [Action::CursorLeft, Action::CursorRight];
@@ -573,14 +309,6 @@ fn layout_and_key_bindings_open_their_screens() {
     }
     assert_eq!(*c.settings(), before);
     assert!(sounds(&mut c).is_empty());
-}
-
-#[test]
-fn cancel_closes_the_screen() {
-    let mut c = ctx();
-    let mut s = OptionsScreen::new();
-    assert_eq!(press(&mut s, &mut c, &[Action::Cancel]), "Pop");
-    assert_eq!(sounds(&mut c), ["menu_cancel"]);
 }
 
 #[test]
@@ -592,12 +320,12 @@ fn classic_switches_to_casual_after_a_confirm_and_never_back() {
     assert_eq!(s.help(&c), "arrows move · f switch to Casual · d back");
     press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     // The key that asked isn't the answer.
-    assert_eq!(s.asking(), Some(Question::SwitchToCasual));
+    assert_eq!(s.asking(), Some(Question::SwitchToCasual.key()));
     assert_eq!(c.game.campaign_mode, Some(GameMode::Classic));
     assert_eq!(s.help(&c), "f yes · d no");
     // Nothing but the answers does anything.
     press(&mut s, &mut c, &[Action::CursorDown, Action::CursorRight]);
-    assert_eq!((s.focus(), s.asking().is_some()), (Row::GameMode, true));
+    assert_eq!((focus(&s, &c), s.asking().is_some()), (Row::GameMode, true));
     // No: still Classic.
     assert_eq!(press(&mut s, &mut c, &[Action::Cancel]), "None");
     assert_eq!((s.asking(), s.message()), (None, None));
@@ -647,7 +375,7 @@ fn reset_tips_forgets_the_tips_seen() {
     assert_eq!(s.help(&c), "arrows move · f reset · d back");
     // Nick: it asks first.
     press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
-    assert_eq!(s.asking(), Some(Question::ResetTips));
+    assert_eq!(s.asking(), Some(Question::ResetTips.key()));
     assert!(TipsSeen::load(&c.storage).contains("first_move"));
     press(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!((s.asking(), s.message()), (None, None));
@@ -675,7 +403,7 @@ fn restore_defaults_asks_first_and_keeps_the_layout() {
     let mut s = on(Row::RestoreDefaults);
     assert_eq!(s.help(&c), "wasd move · j restore · k back");
     press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(s.asking(), Some(Question::RestoreDefaults));
+    assert_eq!(s.asking(), Some(Question::RestoreDefaults.key()));
     press(&mut s, &mut c, &[Action::Cancel]);
     assert_eq!(*c.settings(), changed);
     press(&mut s, &mut c, &[Action::Confirm]);
@@ -715,7 +443,7 @@ fn a_failed_save_keeps_the_change_says_so_and_stays() {
     press(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(s.message(), Some(NOT_SAVED_MESSAGE));
     // A change isn't saved yet, so it says nothing.
-    let mut s = OptionsScreen::new();
+    let mut s = screen();
     press(&mut s, &mut c, &[Action::CursorRight]);
     assert_eq!(c.settings().text_speed, TextSpeed::Fast);
     assert_eq!(s.message(), None);
@@ -728,82 +456,16 @@ fn a_failed_save_keeps_the_change_says_so_and_stays() {
     assert_eq!(c.settings().text_speed, TextSpeed::Fast);
 }
 
-/// The screen with Text speed one step on, its question on leaving open.
-fn asking_to_leave(c: &mut Ctx) -> OptionsScreen {
-    let mut s = OptionsScreen::new();
-    press(&mut s, c, &[Action::CursorRight]);
-    sounds(c);
-    assert_eq!(press(&mut s, c, &[Action::Cancel]), "None");
-    s
-}
-
-#[test]
-fn leaving_with_a_change_asks_with_the_cursor_on_back() {
-    let mut c = ctx();
-    let mut s = asking_to_leave(&mut c);
-    assert!(s.changed(&c));
-    assert_eq!(s.leaving(), Some(LeaveChoice::Back));
-    assert_eq!(sounds(&mut c), ["menu_select"]);
-    let view = s.view(&c);
-    let leaving = view.leaving.as_ref().unwrap();
-    assert_eq!(leaving.text, "Keep these changes?");
-    let labels: Vec<&str> = leaving.choices.iter().map(|c| c.label.as_str()).collect();
-    assert_eq!(labels, ["Keep", "Discard", "Back"]);
-    assert_eq!(leaving.focused(), Some(LeaveChoice::Back));
-    assert_eq!(view.help, "arrows choose · f pick · d back");
-    // The cursor moves between the answers and stops at the ends; the
-    // rows stay as they are.
-    press(&mut s, &mut c, &[Action::CursorRight]);
-    assert_eq!(s.leaving(), Some(LeaveChoice::Back));
-    press(&mut s, &mut c, &[Action::CursorUp]);
-    assert_eq!(s.leaving(), Some(LeaveChoice::Discard));
-    press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
-    assert_eq!(s.leaving(), Some(LeaveChoice::Keep));
-    press(&mut s, &mut c, &[Action::CursorDown]);
-    assert_eq!(s.leaving(), Some(LeaveChoice::Discard));
-    assert_eq!(
-        (s.focus(), c.settings().text_speed),
-        (Row::TextSpeed, TextSpeed::Fast)
-    );
-}
-
-#[test]
-fn back_or_cancel_stays_on_the_screen_with_the_change() {
-    let mut c = ctx();
-    let mut s = asking_to_leave(&mut c);
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
-    assert_eq!(s.leaving(), None);
-    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
-    // Cancel is Back; the key that answers doesn't go on to leave.
-    press(&mut s, &mut c, &[Action::Cancel]);
-    assert_eq!(
-        press(&mut s, &mut c, &[Action::Cancel, Action::Cancel]),
-        "None"
-    );
-    assert_eq!(s.leaving(), None);
-    assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
-}
-
-#[test]
-fn keep_saves_the_changes_and_leaves() {
-    let mut c = ctx();
-    let mut s = asking_to_leave(&mut c);
-    press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
-    assert_eq!(saved(&c).text_speed, TextSpeed::Fast);
-    assert_eq!(c.settings().text_speed, TextSpeed::Fast);
-}
-
 #[test]
 fn discard_puts_every_setting_back_and_saves_nothing() {
     let mut c = ctx();
     c.choose_layout(LEFT_HANDED).unwrap();
     let before = c.settings().clone();
     let stored = c.storage.read(SETTINGS_KEY);
-    let mut s = OptionsScreen::new();
-    for row in OptionsScreen::rows(&c) {
+    let mut s = screen();
+    for row in shown_rows(&c) {
         if row.is_setting() {
-            s.row = row;
+            s = s.focused_on(row.key());
             press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorRight]);
             press(&mut s, &mut c, &[Action::CursorRight]);
         }
@@ -822,80 +484,12 @@ fn discard_puts_every_setting_back_and_saves_nothing() {
 }
 
 #[test]
-fn restored_defaults_are_a_change_kept_or_discarded_on_leaving() {
-    let mut c = ctx();
-    c.change_settings(|s| s.music_volume = 2).unwrap();
-    let mut s = on(Row::RestoreDefaults);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(c.settings().music_volume, Settings::default().music_volume);
-    press(&mut s, &mut c, &[Action::Cancel]);
-    assert_eq!(s.leaving(), Some(LeaveChoice::Back));
-    press(&mut s, &mut c, &[Action::CursorLeft, Action::Confirm]);
-    assert_eq!(c.settings().music_volume, 2);
-    assert_eq!(saved(&c).music_volume, 2);
-}
-
-#[test]
-fn leaving_with_nothing_changed_asks_nothing() {
-    let mut c = ctx();
-    let mut s = OptionsScreen::new();
-    // A change taken back is no change.
-    press(&mut s, &mut c, &[Action::CursorRight, Action::CursorLeft]);
-    sounds(&mut c);
-    assert!(!s.changed(&c));
-    assert_eq!(press(&mut s, &mut c, &[Action::Cancel]), "Pop");
-    assert_eq!(sounds(&mut c), ["menu_cancel"]);
-    assert_eq!(c.storage.read(SETTINGS_KEY), Ok(None));
-    // A layout picked meanwhile is saved at once, so it isn't a change.
-    let mut s = OptionsScreen::new();
-    press(&mut s, &mut c, &[]);
-    c.choose_layout(LEFT_HANDED).unwrap();
-    assert!(!s.changed(&c));
-    assert_eq!(press(&mut s, &mut c, &[Action::Cancel]), "Pop");
-}
-
-#[test]
-fn discard_after_another_save_puts_the_saved_settings_back_too() {
-    let mut c = ctx();
-    let before = c.settings().clone();
-    let mut s = asking_to_leave(&mut c);
-    // The window's shortcut and a layout picked save at once, with the
-    // unkept speed left out.
-    c.change_settings(|s| s.fullscreen = !s.fullscreen).unwrap();
-    c.choose_layout(LEFT_HANDED).unwrap();
-    press(&mut s, &mut c, &[Action::CursorUp, Action::Confirm]);
-    assert_eq!(*c.settings(), before.with_layout(LEFT_HANDED));
-    assert_eq!(saved(&c), *c.settings());
-}
-
-#[test]
 fn help_names_what_confirm_does_on_each_kind_of_row() {
     let c = ctx();
-    assert_eq!(
-        OptionsScreen::new().help(&c),
-        "arrows move · f change · d back"
-    );
+    assert_eq!(screen().help(&c), "arrows move · f change · d back");
     assert_eq!(on(Row::Layout).help(&c), "arrows move · f open · d back");
     assert_eq!(
         on(Row::KeyBindings).help(&c),
         "arrows move · f open · d back"
     );
-}
-
-#[test]
-fn stepping_helpers_stop_or_wrap() {
-    let all = [1, 2, 3];
-    assert_eq!(stepped(&all, 3, true, false), 3);
-    assert_eq!(stepped(&all, 3, true, true), 1);
-    assert_eq!(stepped(&all, 1, false, false), 1);
-    assert_eq!(stepped(&all, 1, false, true), 3);
-    assert_eq!(stepped(&all, 2, true, false), 3);
-    assert_eq!(stepped(&all, 2, false, false), 1);
-    assert_eq!(stepped_volume(100, true), 100);
-    assert_eq!(stepped_volume(97, true), 100);
-    assert_eq!(stepped_volume(50, true), 55);
-    assert_eq!(stepped_volume(50, false), 45);
-    assert_eq!(stepped_volume(3, false), 0);
-    assert_eq!(stepped_volume(0, false), 0);
 }

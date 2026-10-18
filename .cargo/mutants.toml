@@ -27,4 +27,11 @@ exclude_re = [
     # The default `scene_problems` is `Vec::new()`: its only viable mutant,
     # `vec![]`, is the same function.
     "SceneRules::scene_problems",
+    # The default `audio_config` is `AudioConfig::DEFAULT`, which is also
+    # `AudioConfig::default()`: its only mutant is the same function
+    # (ticket 1112).
+    "GameData::audio_config",
+    # `Plain` has no lines of its own (`NoDirective` has no values), so its
+    # `direct` can never run (ticket 1112).
+    "<impl DialogueHooks for Plain>::direct",
 ]

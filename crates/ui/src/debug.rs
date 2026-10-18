@@ -1,20 +1,21 @@
-//! Debug screens (F2 in debug builds): a menu of tools. The glyph sampler
-//! shows every font glyph and palette colour, for judging the look (ticket
-//! 0011); the portrait viewer shows every portrait (ticket 0703); the test
-//! scene plays `assets-test/dialogue/test.dlg` full-screen or over the screen the
-//! menu was opened from (ticket 0704). The sprite test
-//! draws the test card as sprite items (ticket 0231). The class-choice
-//! screen opens on a test unit, to promote or reclass it (ticket 0603),
-//! until the between-battle menus exist. "Map skin" switches how battle
-//! maps look between the glyph skin and the test tileset (ticket 0433);
-//! the choice isn't saved. The scene camera pans and zooms the test map
-//! as a backdrop behind a window (ticket 0228, ADR-0048). "Voice test"
-//! says the test scene's lines that have a voice clip, one per press
-//! (ticket 0238), until the dialogue screen plays voices (0720). "Play
-//! test cinematic" plays `assets-test/cinematics/test.ron` in a loop
-//! (ticket 0817, ADR-0060). The scene
-//! preview isn't in the menu: `app` opens the game on it for `--scene`
-//! (ticket 0723).
+//! Debug screens (F2 in debug builds): Shuyi Engine's debug menu
+//! (`shuyi_ui::debug`, ticket 1112) with this game's tools ([`menu`]). The
+//! glyph sampler shows every font glyph and palette colour, for judging the
+//! look (ticket 0011), with this game's sample panels; the portrait viewer
+//! shows every portrait (ticket 0703); the test scene plays
+//! `assets-test/dialogue/test.dlg` full-screen or over the screen the menu
+//! was opened from (ticket 0704). The sprite test draws the test card as
+//! sprite items (ticket 0231). The class-choice screen opens on a test
+//! unit, to promote or reclass it (ticket 0603), until the between-battle
+//! menus exist. "Map skin" switches how battle maps look between the glyph
+//! skin and the test tileset (ticket 0433); the choice isn't saved. The
+//! scene camera pans and zooms the test map as a backdrop behind a window
+//! (ticket 0228, ADR-0048). "Voice test" says the test scene's lines that
+//! have a voice clip, one per press (ticket 0238), until the dialogue
+//! screen plays voices (0720). "Play test cinematic" plays
+//! `assets-test/cinematics/test.ron` in a loop (ticket 0817, ADR-0060).
+//! The scene preview isn't in the menu: `app` opens the game on it for
+//! `--scene` (ticket 0723).
 
 mod cinematic;
 mod portrait_viewer;
@@ -27,23 +28,20 @@ pub use cinematic::{CinematicScreen, TEST_CINEMATIC};
 pub use portrait_viewer::PortraitViewerScreen;
 pub use scene_camera::SceneCameraScreen;
 pub use scene_preview::{ScenePreviewScreen, ScenePreviewView};
+pub use shuyi_ui::debug::{DebugEntry, GlyphSamplerScreen};
 pub use sprite_test::SpriteTestScreen;
 
 use trpg_content::Present;
 
-use crate::audio::MenuSound;
 use crate::color::{Palette, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
-use crate::input::Action;
 use crate::map_view::{MapSkin, TEST_TILESET, next_skin};
-use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::screens::{
-    ChangeKind, ClassChangeScreen, DialogueScreen, KeyBindingsScreen, centre_x, print_centred,
-};
-use crate::widgets::help::{cursor_keys_name, help_line, key_name};
-use crate::widgets::menu;
-use crate::widgets::{Menu, MenuEvent, MenuItem};
+use crate::screen::{Ctx, Shuyi, Transition};
+use crate::screens::{ChangeKind, ClassChangeScreen, DialogueScreen, KeyBindingsScreen};
+
+/// The debug menu for this game ([`shuyi_ui::debug::DebugMenuScreen`]).
+pub type DebugMenuScreen = shuyi_ui::debug::DebugMenuScreen<Shuyi>;
 
 /// Names of every screen the debug key does nothing on: the debug screens,
 /// and the Key bindings screen (the Debug key is a key like any other while
@@ -73,70 +71,106 @@ const TOOLS: [&str; 10] = [
     "Scene camera",
 ];
 /// Index of "Sprite test" in [`TOOLS`].
+#[cfg(test)]
 const SPRITE_TEST_TOOL: usize = 4;
 /// Index of "Class change: promote" in [`TOOLS`].
 const PROMOTE_TOOL: usize = 5;
 /// Index of "Class change: reclass" in [`TOOLS`].
 const RECLASS_TOOL: usize = 6;
 /// Index of "Scene camera" in [`TOOLS`].
+#[cfg(test)]
 const SCENE_CAMERA_TOOL: usize = 9;
 /// Index of "Play test cinematic" in [`TOOLS`].
+#[cfg(test)]
 const CINEMATIC_TOOL: usize = 8;
 /// Index of "Voice test" in [`TOOLS`].
 const VOICE_TEST_TOOL: usize = 7;
 /// Index of "Map skin" in the menu: after [`TOOLS`].
+#[cfg(test)]
 const MAP_SKIN_TOOL: usize = TOOLS.len();
 /// The scene the "Play test scene" tools play.
 pub const TEST_SCENE: &str = "test";
-/// Row of the debug menu's title.
-const MENU_TITLE_ROW: i32 = 9;
 
-/// The debug menu the debug key opens; Cancel closes it.
-#[derive(Debug, Clone)]
-pub struct DebugMenuScreen {
-    menu: Menu,
-    /// How many lines "Voice test" has said.
-    voices_said: usize,
+/// The debug menu the debug key opens, with this game's tools in menu
+/// order, then "Map skin", which names the skin `ctx` uses.
+pub fn menu(ctx: &Ctx) -> DebugMenuScreen {
+    DebugMenuScreen::new(ctx, tools())
 }
 
-impl DebugMenuScreen {
-    /// Name reported by [`Screen::name`].
-    pub const NAME: &'static str = "debug_menu";
+/// This game's tools, in menu order.
+fn tools() -> Vec<DebugEntry<Shuyi>> {
+    let entries = TOOLS.iter().enumerate().map(|(i, &label)| {
+        let mut said = 0;
+        DebugEntry::new(label, move |ctx: &mut Ctx| match i {
+            0 => Transition::Push(Box::new(sampler(ctx))),
+            1 => Transition::Push(Box::new(PortraitViewerScreen::new())),
+            2 | 3 => play_test_scene(ctx, i == 3),
+            4 => Transition::Push(Box::new(SpriteTestScreen)),
+            PROMOTE_TOOL | RECLASS_TOOL => {
+                let kind = if i == PROMOTE_TOOL {
+                    ChangeKind::Promote
+                } else {
+                    ChangeKind::Reclass
+                };
+                ClassChangeScreen::demo(ctx, kind)
+                    .map_or(Transition::None, |s| Transition::Push(Box::new(s)))
+            }
+            VOICE_TEST_TOOL => {
+                say_next_voice(ctx, &mut said);
+                Transition::None
+            }
+            8 => Transition::Push(Box::new(CinematicScreen::new(ctx))),
+            _ => Transition::Push(Box::new(SceneCameraScreen::new(ctx))),
+        })
+    });
+    let skin = DebugEntry::named(
+        |ctx: &Ctx| format!("Map skin: {}", skin_label(ctx.game.map_skin.as_ref())),
+        |ctx: &mut Ctx| {
+            switch_skin(ctx);
+            Transition::None
+        },
+    );
+    entries.chain([skin]).collect()
+}
 
-    /// The menu with its first tool focused; "Map skin" names `ctx`'s.
-    pub fn new(ctx: &Ctx) -> Self {
-        Self {
-            menu: tools_menu(ctx),
-            voices_said: 0,
-        }
-    }
-
-    /// "Voice test": says the next line of the test scene that has a voice
-    /// clip, starting over after the last. Each time round it first tells
-    /// `app` the lines that are coming, as a scene would.
-    fn say_next_voice(&mut self, ctx: &mut Ctx) {
-        let Some(scene) = ctx.game.content.dialogue.get(TEST_SCENE) else {
-            return;
-        };
-        let lines: Vec<_> = scene.lines().iter().map(|l| l.id.clone()).collect();
-        let voiced: Vec<_> = lines.into_iter().filter(|l| ctx.has_voice(l)).collect();
-        if voiced.is_empty() {
-            return;
-        }
-        let next = self.voices_said % voiced.len();
-        if next == 0 {
-            ctx.preload_voices(&voiced);
-        }
-        ctx.play_voice(&voiced[next]);
-        self.voices_said += 1;
+/// "Play test scene": the test scene full-screen, or (`overlay`) in place
+/// of the menu so it plays over the screen the menu was opened from (e.g.
+/// the battle map). The viewer plays a scene with everyone there
+/// (ADR-0055). Nothing without the test scene.
+fn play_test_scene(ctx: &mut Ctx, overlay: bool) -> Transition {
+    let Some(scene) = ctx.game.content.dialogue.get(TEST_SCENE).cloned() else {
+        return Transition::None;
+    };
+    let lead = ctx.game.lead.clone();
+    let everyone = &Present::Everyone;
+    if overlay {
+        let screen = DialogueScreen::told_overlay(ctx, &scene, lead, everyone);
+        Transition::Replace(Box::new(screen))
+    } else {
+        let screen = DialogueScreen::told(ctx, &scene, lead, everyone);
+        Transition::Push(Box::new(screen))
     }
 }
 
-/// The menu of tools, "Map skin" naming the skin `ctx` uses.
-fn tools_menu(ctx: &Ctx) -> Menu {
-    let skin = format!("Map skin: {}", skin_label(ctx.game.map_skin.as_ref()));
-    let items = TOOLS.iter().map(|&t| MenuItem::new(t));
-    Menu::new(items.chain([MenuItem::new(skin)]).collect())
+/// "Voice test": says the next line of the test scene that has a voice
+/// clip (`said` of them said so far), starting over after the last. Each
+/// time round it first tells `app` the lines that are coming, as a scene
+/// would.
+fn say_next_voice(ctx: &mut Ctx, said: &mut usize) {
+    let Some(scene) = ctx.game.content.dialogue.get(TEST_SCENE) else {
+        return;
+    };
+    let lines: Vec<_> = scene.lines().iter().map(|l| l.id.clone()).collect();
+    let voiced: Vec<_> = lines.into_iter().filter(|l| ctx.has_voice(l)).collect();
+    if voiced.is_empty() {
+        return;
+    }
+    let next = *said % voiced.len();
+    if next == 0 {
+        ctx.preload_voices(&voiced);
+    }
+    ctx.play_voice(&voiced[next]);
+    *said += 1;
 }
 
 /// How the "Map skin" item names `skin`: its tileset's id ("test
@@ -155,213 +189,24 @@ fn switch_skin(ctx: &mut Ctx) {
     ctx.set_map_skin(next_skin(&ctx.game.content, ctx.game.map_skin.as_ref()));
 }
 
-impl Screen<Shuyi> for DebugMenuScreen {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        for &action in &input.actions {
-            match self.menu.handle_with_sound(action, &mut ctx.audio) {
-                Some(MenuEvent::Cancelled) => return Transition::Pop,
-                Some(MenuEvent::Chosen(0)) => {
-                    return Transition::Push(Box::new(GlyphSamplerScreen::new(ctx)));
-                }
-                Some(MenuEvent::Chosen(1)) => {
-                    return Transition::Push(Box::new(PortraitViewerScreen::new()));
-                }
-                Some(MenuEvent::Chosen(SPRITE_TEST_TOOL)) => {
-                    return Transition::Push(Box::new(SpriteTestScreen));
-                }
-                Some(MenuEvent::Chosen(SCENE_CAMERA_TOOL)) => {
-                    return Transition::Push(Box::new(SceneCameraScreen::new(ctx)));
-                }
-                Some(MenuEvent::Chosen(CINEMATIC_TOOL)) => {
-                    return Transition::Push(Box::new(CinematicScreen::new(ctx)));
-                }
-                Some(MenuEvent::Chosen(MAP_SKIN_TOOL)) => {
-                    switch_skin(ctx);
-                    self.menu = tools_menu(ctx).focused(MAP_SKIN_TOOL);
-                }
-                Some(MenuEvent::Chosen(VOICE_TEST_TOOL)) => self.say_next_voice(ctx),
-                Some(MenuEvent::Chosen(tool @ (PROMOTE_TOOL | RECLASS_TOOL))) => {
-                    let kind = if tool == PROMOTE_TOOL {
-                        ChangeKind::Promote
-                    } else {
-                        ChangeKind::Reclass
-                    };
-                    let Some(screen) = ClassChangeScreen::demo(ctx, kind) else {
-                        continue;
-                    };
-                    return Transition::Push(Box::new(screen));
-                }
-                Some(MenuEvent::Chosen(tool)) => {
-                    let Some(scene) = ctx.game.content.dialogue.get(TEST_SCENE).cloned() else {
-                        continue;
-                    };
-                    // The overlay replaces this menu so it plays over the
-                    // screen the menu was opened from (e.g. the battle map).
-                    // The viewer plays a scene with everyone there (ADR-0055).
-                    let lead = ctx.game.lead.clone();
-                    let everyone = &Present::Everyone;
-                    return if tool == 2 {
-                        let screen = DialogueScreen::told(ctx, &scene, lead, everyone);
-                        Transition::Push(Box::new(screen))
-                    } else {
-                        let screen = DialogueScreen::told_overlay(ctx, &scene, lead, everyone);
-                        Transition::Replace(Box::new(screen))
-                    };
-                }
-                None => {}
-            }
-        }
-        Transition::None
-    }
-
-    fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let black = c(UiColor::Black);
-        buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
-        let hi = c(UiColor::TextHighlight);
-        print_centred(buf, MENU_TITLE_ROW, "Debug tools", hi, black);
-        let menu = self.menu.view();
-        let (w, _) = menu::glyph::size(&menu);
-        let x = centre_x(buf, usize::try_from(w).unwrap_or(0));
-        menu::glyph::paint(&ctx.palette, &menu, buf, x, MENU_TITLE_ROW + 2);
-        let km = ctx.help_keys();
-        let help = help_line(&[
-            (Some(cursor_keys_name(km)), "move"),
-            (Some(key_name(km, Action::Confirm)), "choose"),
-            (Some(key_name(km, Action::Cancel)), "back"),
-        ]);
-        let bottom = i32::from(buf.height()) - 1;
-        print_centred(buf, bottom, &help, c(UiColor::TextDim), black);
-    }
+/// The glyph sampler of the font and palette in `ctx`, with this game's
+/// sample panels, laid out for the PC console.
+pub fn sampler(ctx: &Ctx) -> GlyphSamplerScreen {
+    let glyphs: Vec<char> = ctx.game.content.font.glyphs.keys().copied().collect();
+    GlyphSamplerScreen::new(ctx, ConsoleSpec::PC, &glyphs, sample_panels)
 }
 
-/// The [`glyph_sampler`] as a screen; Cancel closes it.
-#[derive(Debug, Clone)]
-pub struct GlyphSamplerScreen {
-    /// Drawn once on creation; the sampler never changes.
-    sampler: GlyphBuffer,
-}
-
-impl GlyphSamplerScreen {
-    /// Name reported by [`Screen::name`].
-    pub const NAME: &'static str = "glyph_sampler";
-
-    /// The sampler for the font and palette in `ctx`.
-    pub fn new(ctx: &Ctx) -> Self {
-        let glyphs: Vec<char> = ctx.game.content.font.glyphs.keys().copied().collect();
-        Self {
-            sampler: glyph_sampler(&ctx.palette, &glyphs),
-        }
-    }
-}
-
-impl Screen<Shuyi> for GlyphSamplerScreen {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        if input.actions.contains(&Action::Cancel) {
-            ctx.audio.menu(MenuSound::Cancel);
-            Transition::Pop
-        } else {
-            Transition::None
-        }
-    }
-
-    fn draw(&self, _ctx: &Ctx, buf: &mut GlyphBuffer) {
-        buf.blit(&self.sampler, 0, 0);
-    }
-}
-
-/// Glyphs per sampler row; each glyph is followed by a blank cell.
-const GLYPHS_PER_ROW: usize = 48;
-/// Width of one palette swatch column (`██ name`).
-const SWATCH_W: i32 = 19;
-/// Longest colour name shown in a swatch column; longer names are cut.
-const SWATCH_NAME_W: usize = SWATCH_W as usize - 5;
-/// Swatch columns across the console.
-const SWATCH_COLUMNS: i32 = 5;
 /// Palette size the layout must still fit, so adding colours doesn't clip the
 /// demo panels again (tickets 0209, 0210).
 #[cfg(test)]
 const PALETTE_HEADROOM: usize = 60;
 
-/// Row of the "Palette" heading: right after the glyph grid's own title and
-/// rows, no blank row between. Computed from `glyphs` (rather than a fixed
-/// constant) so the bottom half doesn't waste rows the top half didn't use,
-/// however many glyphs the font ends up with.
-fn palette_top(glyphs: &[char]) -> i32 {
-    let glyph_rows: i32 = glyphs
-        .chunks(GLYPHS_PER_ROW)
-        .count()
-        .try_into()
-        .unwrap_or(i32::MAX);
-    1 + glyph_rows
-}
-
-/// Row where [`sample_panels`] starts, for `palette`'s size and `glyphs`'
-/// row count: the palette title, its swatch rows, then the sample sentence,
-/// with no blank rows between (every row here is scarce once the palette is
-/// large).
-fn panels_top(palette: &Palette, glyphs: &[char]) -> i32 {
-    panels_top_for(palette.iter().count(), glyphs)
-}
-
-/// [`panels_top`] for a palette of `colours` colours.
-fn panels_top_for(colours: usize, glyphs: &[char]) -> i32 {
-    let swatch_rows: i32 = colours
-        .div_ceil(SWATCH_COLUMNS as usize)
-        .try_into()
-        .unwrap_or(i32::MAX);
-    palette_top(glyphs) + 2 + swatch_rows
-}
-
 /// A buffer the size of the PC console (its layout is the PC's): the top
-/// half shows every glyph in `glyphs` in a
-/// grid; the bottom half shows every palette colour as a swatch plus its
-/// name, a line of sample text and two sample panels.
+/// half shows every glyph in `glyphs` in a grid; the bottom half shows
+/// every palette colour as a swatch plus its name, a line of sample text
+/// and this game's two sample panels.
 pub fn glyph_sampler(palette: &Palette, glyphs: &[char]) -> GlyphBuffer {
-    let c = |u| palette.get(u);
-    let (text, dim, black) = (c(UiColor::Text), c(UiColor::TextDim), c(UiColor::Black));
-    let mut b = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', text, black));
-
-    let title = format!("Glyphs ({})", glyphs.len());
-    b.print(1, 0, &title, c(UiColor::TextHighlight), black);
-    for (row, chunk) in (1..).zip(glyphs.chunks(GLYPHS_PER_ROW)) {
-        for (col, &g) in (0..).zip(chunk) {
-            b.print(2 + col * 2, row, &g.to_string(), text, black);
-        }
-    }
-
-    let bottom = palette_top(glyphs);
-    let colors: Vec<_> = palette.iter().collect();
-    let title = format!("Palette ({})", colors.len());
-    b.print(1, bottom, &title, c(UiColor::TextHighlight), black);
-    for (i, &(name, rgb)) in (0..).zip(&colors) {
-        let (x, y) = (
-            1 + i % SWATCH_COLUMNS * SWATCH_W,
-            bottom + 1 + i / SWATCH_COLUMNS,
-        );
-        b.print(x, y, "██", rgb, black);
-        let name: String = name.chars().take(SWATCH_NAME_W).collect();
-        b.print(x + 3, y, &name, dim, black);
-    }
-
-    let panels_top = panels_top(palette, glyphs);
-    b.print(
-        1,
-        panels_top - 1,
-        "The quick brown fox jumps over the lazy dog. 0123456789 ÀÉÎÕÜ àéîõü ß ¿¡ «» ← ↑ → ↓",
-        text,
-        black,
-    );
-    sample_panels(&mut b, palette, panels_top);
-    b
+    shuyi_ui::debug::glyph::sampler(ConsoleSpec::PC, palette, glyphs, sample_panels)
 }
 
 /// A single-line info panel and a double-line (focused) panel from row `top`.
@@ -417,6 +262,12 @@ mod tests {
 
     use super::*;
     use crate::color::tests::game_palette;
+    use crate::input::Action;
+    use crate::screen::FrameInput;
+    use shuyi_ui::Screen;
+    use shuyi_ui::debug::glyph::{
+        GLYPHS_PER_ROW, SWATCH_COLUMNS, SWATCH_W, palette_top, panels_top, panels_top_for,
+    };
 
     fn atlas_glyphs() -> Vec<char> {
         trpg_content::font::load()
@@ -486,8 +337,8 @@ mod tests {
     #[test]
     fn sampler_screen_draws_the_sampler_and_closes_on_cancel() {
         let mut ctx = crate::screen::tests::ctx();
-        let mut screen = GlyphSamplerScreen::new(&ctx);
-        assert_eq!(screen.name(), "glyph_sampler");
+        let mut screen = sampler(&ctx);
+        assert_eq!(Screen::<Shuyi>::name(&screen), "glyph_sampler");
         let p = &ctx.palette;
         let mut buf = GlyphBuffer::with_spec(
             ConsoleSpec::PC,
@@ -506,7 +357,7 @@ mod tests {
     fn debug_menu_opens_each_tool() {
         use Action::{Cancel, Confirm, CursorDown, CursorUp};
         let mut ctx = crate::screen::tests::ctx();
-        let mut menu = DebugMenuScreen::new(&ctx);
+        let mut menu = super::menu(&ctx);
         assert_eq!(menu.name(), "debug_menu");
         let mut outcome = |m: &mut DebugMenuScreen, a: &[Action]| {
             format!(
@@ -556,7 +407,7 @@ mod tests {
         ctx.game.content.dialogue.scenes.clear();
         ctx.game.content.characters.characters.clear();
         for downs in [2, 3, PROMOTE_TOOL, RECLASS_TOOL] {
-            let mut menu = DebugMenuScreen::new(&ctx);
+            let mut menu = super::menu(&ctx);
             let mut a = vec![CursorDown; downs];
             a.push(Confirm);
             let frame = FrameInput::new(a, 0.0, vec![]);
@@ -590,9 +441,9 @@ mod tests {
         use trpg_content::Variant;
         let mut ctx = crate::screen::tests::ctx();
         let (manifest, lines) = crate::screen::tests::test_voices(&ctx, &[0, 2]);
-        let mut menu = DebugMenuScreen::new(&ctx);
+        let mut menu = super::menu(&ctx);
         let choose = |ctx: &mut Ctx, menu: &mut DebugMenuScreen| {
-            menu.menu = tools_menu(ctx).focused(VOICE_TEST_TOOL);
+            *menu = std::mem::replace(menu, super::menu(ctx)).focused(VOICE_TEST_TOOL);
             let frame = FrameInput::new(vec![Action::Confirm], 0.0, vec![]);
             assert!(matches!(menu.update(ctx, &frame), Transition::None));
             let voice = |r: &AudioRequest| !matches!(r, AudioRequest::PlaySound { .. });
@@ -628,7 +479,7 @@ mod tests {
             ConsoleSpec::PC,
             Cell::new('x', p.get(UiColor::Text), p.get(UiColor::PanelBg)),
         );
-        DebugMenuScreen::new(&ctx).draw(&ctx, &mut buf);
+        super::menu(&ctx).draw(&ctx, &mut buf);
         assert_snapshot!(buf.to_snapshot(p));
     }
 
@@ -636,8 +487,8 @@ mod tests {
     fn map_skin_switches_between_the_glyph_skin_and_the_test_tileset() {
         use Action::{Confirm, CursorDown, CursorUp};
         let mut ctx = crate::screen::tests::ctx();
-        let mut menu = DebugMenuScreen::new(&ctx);
-        let label = |m: &DebugMenuScreen| m.menu.items()[MAP_SKIN_TOOL].label.clone();
+        let mut menu = super::menu(&ctx);
+        let label = |m: &DebugMenuScreen| m.menu().items()[MAP_SKIN_TOOL].label.clone();
         assert_eq!(label(&menu), "Map skin: glyph");
         // Up from the first tool wraps round to it.
         let frame = |a: &[Action]| FrameInput::new(a.to_vec(), 0.0, vec![]);
@@ -647,7 +498,7 @@ mod tests {
         assert_eq!(label(&menu), "Map skin: test tileset");
         // Still on it: again for the tileset with layers, again for the
         // unit sheets on glyph terrain, and again for glyphs.
-        assert_eq!(menu.menu.focus(), MAP_SKIN_TOOL);
+        assert_eq!(menu.menu().focus(), MAP_SKIN_TOOL);
         menu.update(&mut ctx, &frame(&[Confirm]));
         assert_eq!(ctx.game.map_skin.name(), "sprite");
         assert_eq!(label(&menu), "Map skin: test_auto");
@@ -659,7 +510,7 @@ mod tests {
         assert_eq!(label(&menu), "Map skin: glyph");
         // A menu opened later names the skin in use.
         menu.update(&mut ctx, &frame(&[Confirm]));
-        assert_eq!(label(&DebugMenuScreen::new(&ctx)), "Map skin: test tileset");
+        assert_eq!(label(&super::menu(&ctx)), "Map skin: test tileset");
         // Without any tileset, the glyph skin stays.
         ctx.game.content.tilesets.clear();
         menu.update(&mut ctx, &frame(&[Confirm]));

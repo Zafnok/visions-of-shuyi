@@ -94,6 +94,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0084](0084-playdate-audio-formats.md) | Playdate audio: mono IMA ADPCM at 44.1 kHz, converted by `cargo xtask playdate` (sounds in memory, Chapter 1's music streamed, `playdate-music.txt`); the music clock is the file player's position | Accepted (1047) |
 | [0085](0085-one-bit-pictures-made-when-the-playdate-build-is-built.md) | One-bit pictures: a `.1bit` format (engine), converted by the game's table when the Playdate's bundle is built and put at the PNG's path; the renderer maps the PNG's pixels onto the bigger picture | Accepted (1040) |
 | [0086](0086-the-crank-as-buttons-and-actions-from-a-platform-menu.md) | The crank as two buttons (notches through the bindings), and actions from a platform's own menu (`Game::act`) | Accepted (1035); extends ADR-0034 and ADR-0079 |
+| [0087](0087-engine-screens-take-the-games-rows-entries-and-hooks.md) | The engine's screens and widgets take the game's rows, entries and hooks (Key bindings rows, the picker's legend, `OptionRow`s, `DebugEntry`s, `DialogueHooks`, `AudioConfig`) | Accepted (1112); extends ADR-0054 and ADR-0080 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

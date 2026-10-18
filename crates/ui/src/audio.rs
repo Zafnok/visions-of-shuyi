@@ -4,15 +4,16 @@
 //! [`FrameOutput`](crate::FrameOutput). Nothing here plays anything, so
 //! screens stay testable in the headless `Harness`. The mechanism is Shuyi
 //! Engine's (`shuyi_ui::audio`, ticket 1109), with this game's voice clip
-//! [`Variant`]s; the menu sounds are this game's.
+//! [`Variant`]s; which cues the menu sounds are is this game's
+//! ([`AUDIO`]).
 //!
 //! Voice clips (ADR-0046) are asked for by dialogue line id, through
 //! [`Ctx::play_voice`](shuyi_ui::Ctx::play_voice), which knows which lines
 //! have a clip that may be played.
 //!
 //! ```
-//! # use trpg_ui::audio::{AudioQueue, AudioRequest, MenuSound, MenuSounds};
-//! let mut audio = AudioQueue::default();
+//! # use trpg_ui::audio::{AUDIO, AudioQueue, AudioRequest, MenuSound};
+//! let mut audio = AudioQueue::new(AUDIO);
 //! audio.menu(MenuSound::Move);
 //! audio.play_music("title");
 //! assert_eq!(audio.pending()[1], AudioRequest::PlayMusic { cue: "title".into() });
@@ -30,48 +31,23 @@ pub type AudioRequest = shuyi_ui::audio::AudioRequest<Variant>;
 /// ([`shuyi_ui::audio::AudioQueue`]).
 pub type AudioQueue = shuyi_ui::audio::AudioQueue<Variant>;
 
-/// The menu sounds (`docs/design/audio.md`): the same three cues mean the
-/// same thing on every screen.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MenuSound {
-    /// The highlight moved (`menu_move`).
-    Move,
-    /// Something was confirmed or opened (`menu_select`).
-    Select,
-    /// Something was backed out of or closed (`menu_cancel`).
-    Cancel,
-    /// Confirm on something that can't be chosen, e.g. a greyed-out item.
-    /// Nick wants its own warning tone (ticket 0427); until then it is
-    /// `menu_cancel`.
-    Denied,
-}
-
-impl MenuSound {
-    /// The sound cue.
-    pub const fn cue(self) -> &'static str {
-        match self {
-            Self::Move => "menu_move",
-            Self::Select => "menu_select",
-            Self::Cancel | Self::Denied => "menu_cancel",
-        }
-    }
-}
+pub use shuyi_ui::audio::{AudioConfig, MenuSound};
 
 /// The map cursor's tick, once per tile it moves (the manifest plays it
 /// quieter than `menu_move`).
 pub const CURSOR_MOVE: &str = "cursor_move";
 
-/// Plays [`MenuSound`]s on an [`AudioQueue`].
-pub trait MenuSounds {
-    /// Plays a menu sound.
-    fn menu(&mut self, sound: MenuSound);
-}
-
-impl MenuSounds for AudioQueue {
-    fn menu(&mut self, sound: MenuSound) {
-        self.play_sound(sound.cue());
-    }
-}
+/// This game's menu sounds (`docs/design/audio.md`): the same three cues
+/// mean the same thing on every screen. Confirm on something that can't
+/// be chosen should get its own warning tone (Nick, ticket 0427); until
+/// then it is `menu_cancel`.
+pub const AUDIO: AudioConfig = AudioConfig {
+    move_cue: "menu_move",
+    select_cue: "menu_select",
+    cancel_cue: "menu_cancel",
+    denied_cue: "menu_cancel",
+    cursor_cue: CURSOR_MOVE,
+};
 
 #[cfg(test)]
 mod tests {
@@ -79,7 +55,7 @@ mod tests {
 
     #[test]
     fn menu_sounds_are_their_cues() {
-        let mut q = AudioQueue::default();
+        let mut q = AudioQueue::new(AUDIO);
         for sound in [
             MenuSound::Move,
             MenuSound::Select,
@@ -103,6 +79,8 @@ mod tests {
                 cue("menu_cancel")
             ]
         );
+        q.cursor_tick();
+        assert_eq!(q.take()[0].cue(), Some(CURSOR_MOVE));
     }
 
     /// The embedded audio manifest (with the real `skirmish` pool).

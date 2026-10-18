@@ -15,8 +15,7 @@ mod prelude {
     #[cfg(not(feature = "std"))]
     pub use shuyi_ui::float::{Float, Round};
 
-    // The lookups every screen makes on the context, and the menu sounds.
-    pub use crate::audio::MenuSounds as _;
+    // The lookups every screen makes on the context.
     pub use crate::screen::ShuyiCtx as _;
 }
 

@@ -5,7 +5,8 @@ use proptest::prelude::*;
 
 use std::borrow::Cow;
 
-use trpg_content::{ChoiceOption, Names};
+use trpg_content::{ChoiceOption, Names, Step};
+use trpg_core::CharacterId;
 
 use super::*;
 
@@ -586,7 +587,7 @@ fn tokens_follow_the_lead() {
     assert_eq!(v.caption.as_deref(), Some("Isolde's camp"));
     assert_eq!(v.text.as_deref(), Some("She fed herself."));
     // The scene itself is unchanged.
-    assert_eq!(*player.scene, scene);
+    assert_eq!(*player.scene(), scene);
 }
 
 #[test]
@@ -632,7 +633,7 @@ fn name_tokens_are_filled_in() {
         player.current().text.as_deref(),
         Some("Osric rode out, and Osric rode home. He waited.")
     );
-    assert_eq!(*player.scene, scene);
+    assert_eq!(*player.scene(), scene);
 }
 
 fn arb_step() -> impl Strategy<Value = Step> {

@@ -56,7 +56,10 @@ const PLATFORM_FILE: &str = "engine/crates/app/src/keys.rs";
 const TEST_SUPPORT_FILES: [&str; 1] = ["crates/ui/src/harness.rs"];
 /// Files whose [`MARKER`] comments are honoured: the layout picker, which
 /// says which keys the keyboard has and what each does, and its skin, which
-/// says where each sits (ADR-0054).
+/// says where each sits (ADR-0054). Since ticket 1112 both are the engine's
+/// (`engine/crates/ui/src/screens/layout_picker*`, which this check doesn't
+/// scan) and the game's `layout_picker.rs` names no key; the paths keep the
+/// game's own picture, should it draw one again, to these two files.
 const PICTURE_FILES: [&str; 2] = [
     "crates/ui/src/screens/layout_picker.rs",
     "crates/ui/src/screens/layout_picker/glyph.rs",

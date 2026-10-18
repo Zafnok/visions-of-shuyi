@@ -43,7 +43,7 @@ fn saves() -> Ctx {
 }
 
 /// The cue of a refused Confirm.
-const DENIED: &str = MenuSound::Denied.cue();
+const DENIED: &str = crate::audio::AUDIO.cue(MenuSound::Denied);
 
 fn press(s: &mut dyn Screen<Shuyi>, c: &mut Ctx, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);

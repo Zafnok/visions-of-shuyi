@@ -1,12 +1,11 @@
 //! What the Options screen shows, as plain data: no cells, glyphs, colours
 //! or positions. The screen builds an [`OptionsView`] each frame
 //! ([`OptionsScreen::view`](super::OptionsScreen::view)) and a skin paints
-//! it ([`super::glyph::paint`] today), the way the battle map's `MapScene`
-//! is painted by a `MapSkin` (ADR-0038). Swapping the look (a bought UI
+//! it ([`super::glyph::paint`] today). Swapping the look (a bought UI
 //! pack) means another painter of the same view; the screen's logic and
 //! its tests of what happened don't change.
 
-use super::{LeaveChoice, Row};
+use super::LeaveChoice;
 use crate::prelude::*;
 
 /// The whole screen, as it is this frame.
@@ -32,17 +31,19 @@ impl OptionsView {
         self.rows.iter().find(|r| r.focused)
     }
 
-    /// The view of `row`, if it is shown.
-    pub fn row(&self, row: Row) -> Option<&RowView> {
-        self.rows.iter().find(|r| r.row == row)
+    /// The view of the row whose key is `key`, if it is shown. A game may
+    /// name its rows by its own type, turned into their keys.
+    pub fn row(&self, key: impl Into<&'static str>) -> Option<&RowView> {
+        let key = key.into();
+        self.rows.iter().find(|r| r.key == key)
     }
 }
 
 /// One row.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RowView {
-    /// Which row it is.
-    pub row: Row,
+    /// Which row it is: the text key of its label.
+    pub key: &'static str,
     /// Its name.
     pub label: String,
     /// What it shows beside its name.

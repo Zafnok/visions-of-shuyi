@@ -2,7 +2,7 @@
 //! ticket 0801); `Continue` (shown only while there is a suspend save)
 //! carries on the suspended battle and `Load Game` opens the save slots
 //! (0802); debug builds add `Quick Battle`, a test battle through the same
-//! flow; `Options` opens the [`OptionsScreen`] (0805); `Profile` the
+//! flow; `Options` opens the [`OptionsScreen`](super::OptionsScreen) (0805); `Profile` the
 //! [`ProfileScreen`] (0837); `Credits` opens the [`CreditsScreen`] (0808).
 //!
 //! **The look is a skin** (ADR-0054). This module decides what the screen
@@ -31,7 +31,7 @@ use trpg_content::ImageId;
 use song::SongTime;
 use view::FULL;
 
-use super::{CreditsScreen, OptionsScreen, ProfileScreen, debug_hint};
+use super::{CreditsScreen, ProfileScreen, debug_hint};
 use crate::audio::MenuSound;
 use crate::audio::splitmix64;
 use crate::cinematic::{CinematicPlayer, millis};
@@ -530,7 +530,7 @@ impl Screen<Shuyi> for TitleScreen {
                 // options may change the colours the cinematic is in.
                 Some(Item::Options) => {
                     self.stale = true;
-                    return Transition::Push(Box::new(OptionsScreen::new()));
+                    return Transition::Push(Box::new(super::options::screen()));
                 }
                 // The profile in use may change, and with it the options,
                 // the saves and the lead the cinematic shows.

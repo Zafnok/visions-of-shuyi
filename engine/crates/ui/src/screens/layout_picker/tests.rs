@@ -1,20 +1,30 @@
-use super::*;
-use crate::input::{LEFT_HANDED, RIGHT_HANDED};
-use crate::screen::tests::ctx;
-use crate::widgets::help::NOT_MAPPED;
+//! The layout picker on the toy game, whose keymap file has a
+//! right-handed and a left-handed layout.
 
-fn input(actions: &[Action]) -> FrameInput {
+use shuyi_assets::keymap::KeymapDef;
+
+use super::*;
+use crate::input::help_keys::NOT_MAPPED;
+use crate::toy::{Action, LEFT_HANDED, LEGEND, RIGHT_HANDED, Toy, ToyCtx, ctx};
+
+type LayoutPickerScreen = super::LayoutPickerScreen<Toy>;
+
+fn input(actions: &[Action]) -> FrameInput<Action> {
     FrameInput::new(actions.to_vec(), 0.0, vec![])
 }
 
-fn first_launch_ctx() -> Ctx {
-    Ctx::embedded().unwrap()
+fn first_launch_ctx() -> ToyCtx {
+    crate::toy::first_launch()
+}
+
+fn picker(c: &ToyCtx) -> LayoutPickerScreen {
+    LayoutPickerScreen::new(c, &LEGEND)
 }
 
 #[test]
 fn down_and_confirm_pick_left_handed_and_save_it() {
     let mut c = first_launch_ctx();
-    let mut p = LayoutPickerScreen::new(&c);
+    let mut p = picker(&c);
     assert_eq!(p.name(), "layout_picker");
     assert_eq!(p.focused(&c), Some(RIGHT_HANDED));
     let t = p.update(&mut c, &input(&[Action::CursorDown]));
@@ -30,7 +40,7 @@ fn down_and_confirm_pick_left_handed_and_save_it() {
 #[test]
 fn confirm_picks_the_focused_layout() {
     let mut c = first_launch_ctx();
-    let mut p = LayoutPickerScreen::new(&c);
+    let mut p = picker(&c);
     let t = p.update(
         &mut c,
         &input(&[Action::CursorUp, Action::CursorUp, Action::Confirm]),
@@ -42,7 +52,7 @@ fn confirm_picks_the_focused_layout() {
 #[test]
 fn cancel_and_other_actions_do_nothing() {
     let mut c = first_launch_ctx();
-    let mut p = LayoutPickerScreen::new(&c);
+    let mut p = picker(&c);
     let t = p.update(
         &mut c,
         &input(&[Action::Cancel, Action::Info, Action::CursorLeft]),
@@ -56,11 +66,11 @@ fn cancel_and_other_actions_do_nothing() {
 /// without choosing; opened from Options, the pad steers it.
 #[test]
 fn a_pad_press_closes_only_the_asked_for_picker() {
-    use crate::input::Button;
+    use shuyi_assets::keymap::Button;
     let pad = input(&[Action::CursorDown, Action::Confirm])
         .with_buttons(vec![Button::DpadDown, Button::South], vec![]);
     let mut c = first_launch_ctx();
-    let mut p = LayoutPickerScreen::new(&c);
+    let mut p = picker(&c);
     assert_eq!(format!("{:?}", p.update(&mut c, &pad)), "Pop");
     assert_eq!(c.layout(), None);
     assert_eq!(p.focused(&c), Some(RIGHT_HANDED));
@@ -68,7 +78,7 @@ fn a_pad_press_closes_only_the_asked_for_picker() {
     let up = input(&[]).with_buttons(vec![], vec![Button::South]);
     assert_eq!(format!("{:?}", p.update(&mut c, &up)), "None");
     let mut c = ctx();
-    let mut p = LayoutPickerScreen::change(&c);
+    let mut p = LayoutPickerScreen::change(&c, &LEGEND);
     assert_eq!(format!("{:?}", p.update(&mut c, &pad)), "Pop");
     assert_eq!(c.layout(), Some(LEFT_HANDED));
 }
@@ -86,9 +96,10 @@ fn help_names_the_picker_keys() {
 #[test]
 fn legend_comes_from_each_layout() {
     let c = first_launch_ctx();
-    let def = &c.game.content.keymap;
+    let def = c.game.keymap_def();
     let legend = |l| {
-        LayoutPickerScreen::legend(&c, &Keymap::for_layout(def, l))
+        picker(&c)
+            .legend(&c, &Keymap::for_layout(def, l))
             .into_iter()
             .map(|row| format!("{} {}", row.keys, row.what))
             .collect::<Vec<_>>()
@@ -123,9 +134,9 @@ fn legend_comes_from_each_layout() {
             "u rewind",
         ]
     );
-    let unbound = LayoutPickerScreen::legend(
+    let unbound = picker(&c).legend(
         &c,
-        &Keymap::for_layout(&trpg_content::KeymapDef::default(), LEFT_HANDED),
+        &Keymap::for_layout(&KeymapDef::<Action>::default(), LEFT_HANDED),
     );
     assert_eq!(unbound.len(), 10);
     assert!(unbound.iter().all(|r| r.keys == NOT_MAPPED), "{unbound:?}");
@@ -133,8 +144,8 @@ fn legend_comes_from_each_layout() {
 
 #[test]
 fn key_roles() {
-    let def = &first_launch_ctx().game.content.keymap;
-    let left = Keymap::for_layout(def, LEFT_HANDED);
+    let c = first_launch_ctx();
+    let left = Keymap::for_layout(c.game.keymap_def(), LEFT_HANDED);
     assert_eq!(key_role(&left, Key::W), KeyRole::Movement);
     assert_eq!(key_role(&left, Key::J), KeyRole::Bound);
     assert_eq!(key_role(&left, Key::Up), KeyRole::Unbound);
@@ -143,8 +154,8 @@ fn key_roles() {
 #[test]
 fn only_the_cursor_keys_are_movement_in_the_legend() {
     let c = first_launch_ctx();
-    let km = Keymap::for_layout(&c.game.content.keymap, RIGHT_HANDED);
-    let legend = LayoutPickerScreen::legend(&c, &km);
+    let km = Keymap::for_layout(c.game.keymap_def(), RIGHT_HANDED);
+    let legend = picker(&c).legend(&c, &km);
     assert!(legend[0].movement);
     assert_eq!(legend.iter().filter(|r| r.movement).count(), 1);
 }
@@ -161,7 +172,7 @@ fn labels() {
 #[test]
 fn the_first_frame_offers_both_layouts_with_the_first_focused() {
     let c = first_launch_ctx();
-    let view = LayoutPickerScreen::new(&c).view(&c);
+    let view = picker(&c).view(&c);
     assert_eq!(view.title, "Pick your layout");
     let names: Vec<_> = view
         .layouts
@@ -187,7 +198,7 @@ fn the_first_frame_offers_both_layouts_with_the_first_focused() {
 #[test]
 fn moving_the_cursor_moves_the_focus_in_the_view() {
     let mut c = first_launch_ctx();
-    let mut p = LayoutPickerScreen::new(&c);
+    let mut p = picker(&c);
     p.update(&mut c, &input(&[Action::CursorDown]));
     let view = p.view(&c);
     assert_eq!(view.focused().map(|l| l.layout), Some(LEFT_HANDED));
@@ -205,16 +216,16 @@ fn moving_the_cursor_moves_the_focus_in_the_view() {
 #[test]
 fn opened_from_options_it_focuses_the_layout_in_use() {
     let c = ctx().with_layout(LEFT_HANDED);
-    let view = LayoutPickerScreen::change(&c).view(&c);
+    let view = LayoutPickerScreen::change(&c, &LEGEND).view(&c);
     assert_eq!(view.focused().map(|l| l.layout), Some(LEFT_HANDED));
     assert_eq!(view.help, c.text_with("layout_picker.help_change", &[]));
-    assert_ne!(view.help, LayoutPickerScreen::new(&c).view(&c).help);
+    assert_ne!(view.help, picker(&c).view(&c).help);
 }
 
 #[test]
 fn the_keyboard_lists_every_key_with_its_role_in_each_layout() {
     let c = first_launch_ctx();
-    let view = LayoutPickerScreen::new(&c).view(&c);
+    let view = picker(&c).view(&c);
     let (right, left) = (&view.layouts[0], &view.layouts[1]);
     assert_eq!(right.keys.len(), Key::ALL.len());
     // Right-handed: the arrows move, `f` selects, `w` does the danger zone.
@@ -232,4 +243,16 @@ fn the_keyboard_lists_every_key_with_its_role_in_each_layout() {
         ..left.clone()
     };
     assert_eq!(none.role(Key::W), KeyRole::Unbound);
+}
+
+#[test]
+fn the_picker_says_what_it_is_and_is_found_by_type() {
+    let c = first_launch_ctx();
+    let p = picker(&c);
+    let shown = format!("{p:?}");
+    assert!(shown.starts_with("LayoutPickerScreen {"), "{shown}");
+    assert!(shown.contains("cancellable: false"), "{shown}");
+    let any = p.as_any().unwrap();
+    assert!(any.downcast_ref::<LayoutPickerScreen>().is_some());
+    assert_eq!(p.clone().focused(&c), p.focused(&c));
 }

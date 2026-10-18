@@ -1,10 +1,10 @@
 //! What the layout picker shows, as plain data: no cells, glyphs, colours
 //! or positions. The screen builds a [`LayoutPickerView`] each frame
 //! ([`LayoutPickerScreen::view`](super::LayoutPickerScreen::view)) and a
-//! skin paints it ([`super::glyph::paint`] today); see ADR-0054.
+//! skin paints it ([`super::glyph::paint`] today).
 
-use crate::input::{Key, Layout};
 use crate::prelude::*;
+use shuyi_assets::keymap::{Key, Layout};
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]

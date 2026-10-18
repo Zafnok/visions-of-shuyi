@@ -1,41 +1,69 @@
-//! Playing a dialogue [`Scene`] one text box at a time. [`DialoguePlayer`]
-//! is the state machine only (who stands where, what is said, which reply
-//! choice is open, which music and which opening the script asked for);
-//! the dialogue screen (ticket 0704) draws its [`View`], asks for the
-//! music and plays the opening (0734).
+//! Playing a dialogue [`Scene`] one text box at a time: Shuyi Engine's
+//! player (`shuyi_ui::dialogue`, ticket 1112) with this game's lines and
+//! tokens ([`Hooks`]): the lead's name and pronouns and the story's names
+//! fill the text, and `@place` and `@opening` set the place behind the
+//! talk and the opening played on it. [`DialoguePlayer`] is the state
+//! machine only (who stands where, what is said, which reply choice is
+//! open, which music and which opening the script asked for); the dialogue
+//! screen (ticket 0704) draws its [`View`], asks for the music and plays
+//! the opening (0734).
 
 use crate::prelude::*;
 use alloc::borrow::Cow;
-use alloc::sync::Arc;
 
-use trpg_content::{
-    ChoiceOption, LineId, MusicLine, Names, PlaceLine, Present, Scene, Side, Stage, Step,
-};
-use trpg_core::{CharacterId, LeadProfile};
+use shuyi_ui::dialogue::DialogueHooks;
+use trpg_content::{LineId, MusicLine, Names, PlaceLine, Present, Scene, Side, Stage};
+use trpg_core::LeadProfile;
 
-/// A character standing on one side of the screen.
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Placed {
-    character: CharacterId,
-    expression: String,
+pub use shuyi_ui::dialogue::Portrait;
+
+/// What this game's own lines have set: the place behind the talk and the
+/// opening played on it.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Setting {
+    /// The place the last `@place` line named; `None` before one, or after
+    /// `@place none`.
+    place: Option<PlaceLine>,
+    /// The opening of the place in force: the last `@opening` line since
+    /// the last `@place` line.
+    opening: Option<String>,
+    /// The last `@opening` line reached and not yet taken.
+    opening_due: Option<String>,
 }
 
-impl Placed {
-    fn portrait(&self) -> Portrait<'_> {
-        Portrait {
-            character: &self.character,
-            expression: &self.expression,
+/// This game's part in playing a scene: the lead and the story's names
+/// fill the text; `@place` and `@opening` set the [`Setting`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Hooks {
+    /// Fills in the lead's name and pronouns.
+    lead: LeadProfile,
+    /// Fills in name tokens (`{n:king}`).
+    names: Names,
+}
+
+impl DialogueHooks for Hooks {
+    type Directive = Stage;
+    type Stage = Setting;
+
+    fn fill<'a>(&self, text: &'a str) -> Cow<'a, str> {
+        match self.names.substitute(text) {
+            Cow::Borrowed(text) => self.lead.substitute(text),
+            Cow::Owned(text) => Cow::Owned(self.lead.substitute(&text).into_owned()),
         }
     }
-}
 
-/// A portrait on screen: who, with which expression.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Portrait<'a> {
-    /// The character.
-    pub character: &'a CharacterId,
-    /// Their current expression.
-    pub expression: &'a str,
+    fn direct(&self, stage: &mut Setting, directive: &Stage) {
+        match directive {
+            Stage::Setting(place) => {
+                stage.place = (*place != PlaceLine::None).then(|| place.clone());
+                stage.opening = None;
+            }
+            Stage::Opening(id) => {
+                stage.opening = Some(id.clone());
+                stage.opening_due = Some(id.clone());
+            }
+        }
+    }
 }
 
 /// What the screen shows for the current text box, with the lead's name
@@ -66,253 +94,102 @@ pub struct View<'a> {
     pub choices: Option<Vec<Cow<'a, str>>>,
 }
 
-/// Where a step is: in the scene, or in a reply's reaction.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct At {
-    /// Index in the scene's steps (for a reaction: of its `Choice`).
-    step: usize,
-    /// For a reaction: the option and the step's index in it.
-    reaction: Option<(usize, usize)>,
-}
-
-/// What is on screen.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Showing {
-    /// A text box: the speech or narration step at `At`.
-    Text(At),
-    /// The choice at this scene step, answering the text box `At` (if any).
-    Choice(usize, Option<At>),
-    /// The scene is over.
-    Finished,
-}
-
-/// A reply being played: its reaction. When the reaction ends the scene
-/// goes on after the choice, with the portraits as the reaction left them
-/// (the script sets any expression change for the rejoin).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Reaction {
-    /// The scene step of the `Choice`.
-    choice: usize,
-    /// The option picked.
-    option: usize,
-    /// The next reaction step.
-    next: usize,
-}
-
-/// Plays a scene: each [`advance`](Self::advance) moves to the next text
-/// box (speech or narration), applying the portrait and caption steps in
-/// between. At a reply choice it waits for [`choose`](Self::choose), plays
-/// that reply's reaction, then rejoins the scene after the choice. The
-/// `@music` lines passed on the way are kept for [`take_music`](Self::take_music).
-/// It plays the scene as it is for those present when it starts
-/// (ADR-0055): the lines of an `@if` block whose character isn't there are
-/// no part of it, read or skipped.
-/// Pure: no drawing, no clock, no sound. Cheap to clone (the scene is
-/// shared), so a copy can be kept as the scene was at a line (the dialogue
-/// log, ticket 0729).
+/// Plays a scene ([`shuyi_ui::dialogue::DialoguePlayer`]): each
+/// [`advance`](Self::advance) moves to the next text box, applying the
+/// portrait, caption, place and opening steps in between. At a reply
+/// choice it waits for [`choose`](Self::choose), plays that reply's
+/// reaction, then rejoins the scene after the choice. It plays the scene
+/// as it is for those present when it starts (ADR-0055). Cheap to clone,
+/// so a copy can be kept as the scene was at a line (the dialogue log,
+/// ticket 0729).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DialoguePlayer {
-    /// The scene for those present: it has no `@if` blocks.
-    scene: Arc<Scene>,
-    /// Fills in the lead's name and pronouns.
-    lead: LeadProfile,
-    /// Fills in name tokens (`{n:king}`).
-    names: Names,
-    /// Index of the next scene step (after the text box on screen, or the
-    /// open choice's).
-    next: usize,
-    /// The reply being played, if any.
-    reaction: Option<Reaction>,
-    showing: Showing,
-    /// The last text box shown, for an open choice.
-    last_text: Option<At>,
-    left: Option<Placed>,
-    right: Option<Placed>,
-    caption: Option<String>,
-    /// The place the last `@place` line named; `None` before one, or after
-    /// `@place none`.
-    place: Option<PlaceLine>,
-    /// The last `@music` line reached and not yet taken.
-    music: Option<MusicLine>,
-    /// The opening of the place in force: the last `@opening` line since
-    /// the last `@place` line.
-    opening: Option<String>,
-    /// The last `@opening` line reached and not yet taken.
-    opening_due: Option<String>,
-}
+pub struct DialoguePlayer(shuyi_ui::dialogue::DialoguePlayer<Hooks>);
 
 impl DialoguePlayer {
     /// Starts `scene` as it plays for those `present`, at its first text
     /// box, with `lead`'s name and pronouns and the names from `names` in
     /// its text. A scene with nothing to say for them is finished at once.
     pub fn new(scene: &Scene, lead: LeadProfile, names: Names, present: &Present) -> Self {
-        let mut player = Self {
-            scene: Arc::new(scene.resolved(present)),
-            lead,
-            names,
-            next: 0,
-            reaction: None,
-            showing: Showing::Finished,
-            last_text: None,
-            left: None,
-            right: None,
-            caption: None,
-            place: None,
-            music: None,
-            opening: None,
-            opening_due: None,
-        };
-        player.step_on();
-        player
+        let hooks = Hooks { lead, names };
+        Self(shuyi_ui::dialogue::DialoguePlayer::new(
+            scene, hooks, present,
+        ))
     }
 
     /// The lead whose name and pronouns fill the text.
     pub fn lead(&self) -> &LeadProfile {
-        &self.lead
-    }
-
-    /// `text` as shown: name tokens and the lead's tokens filled in. The
-    /// scene keeps the tokens.
-    fn fill<'a>(&self, text: &'a str) -> Cow<'a, str> {
-        match self.names.substitute(text) {
-            Cow::Borrowed(text) => self.lead.substitute(text),
-            Cow::Owned(text) => Cow::Owned(self.lead.substitute(&text).into_owned()),
-        }
+        &self.0.hooks().lead
     }
 
     /// The id of the scene being played.
     pub fn scene_id(&self) -> &str {
-        &self.scene.id
+        self.0.scene_id()
     }
 
     /// The scene being played: the one it was started with, as it is for
     /// those present.
     pub fn scene(&self) -> &Scene {
-        &self.scene
-    }
-
-    /// The step at `at`.
-    fn step(&self, at: At) -> Option<&Step> {
-        let step = self.scene.steps.get(at.step)?;
-        match (step, at.reaction) {
-            (_, None) => Some(step),
-            (Step::Choice { options }, Some((option, i))) => options.get(option)?.steps.get(i),
-            _ => None,
-        }
-    }
-
-    /// The options of the choice at scene step `index`.
-    fn options(&self, index: usize) -> &[ChoiceOption] {
-        match self.scene.steps.get(index) {
-            Some(Step::Choice { options }) => options,
-            _ => &[],
-        }
+        self.0.scene()
     }
 
     /// What to show now.
     pub fn current(&self) -> View<'_> {
-        let (text_at, choices) = match self.showing {
-            Showing::Text(at) => (Some(at), None),
-            Showing::Choice(index, before) => {
-                let options = self.options(index);
-                let texts = options.iter().map(|o| self.fill(&o.text));
-                (before, Some(texts.collect()))
-            }
-            Showing::Finished => (None, None),
-        };
-        let step = text_at.and_then(|at| self.step(at));
-        let speaker = match step {
-            Some(Step::Say { speaker, .. }) => self.side_of(speaker),
-            _ => None,
-        };
+        let view = self.0.current();
         View {
-            left: self.left.as_ref().map(Placed::portrait),
-            right: self.right.as_ref().map(Placed::portrait),
-            speaker,
-            text: step.and_then(Step::text).map(|t| self.fill(t)),
-            caption: self.caption.as_deref().map(|c| self.fill(c)),
-            place: self.place.as_ref(),
-            opening: self.opening.as_deref(),
-            narration: matches!(step, Some(Step::Narrate { .. })),
-            choices,
+            left: view.left,
+            right: view.right,
+            speaker: view.speaker,
+            text: view.text,
+            caption: view.caption,
+            place: view.stage.place.as_ref(),
+            opening: view.stage.opening.as_deref(),
+            narration: view.narration,
+            choices: view.choices,
         }
     }
 
     /// The id of the line in the text box (while a choice is open, of the
     /// line being answered); `None` once the scene is finished.
     pub fn line(&self) -> Option<&LineId> {
-        let at = match self.showing {
-            Showing::Text(at) => Some(at),
-            Showing::Choice(_, before) => before,
-            Showing::Finished => None,
-        };
-        match at.and_then(|at| self.step(at)) {
-            Some(Step::Say { line, .. } | Step::Narrate { line, .. }) => Some(line),
-            _ => None,
-        }
+        self.0.line()
     }
 
     /// The id of reply `option` of the open choice, if a choice is open and
     /// has it.
     pub fn reply_line(&self, option: usize) -> Option<&LineId> {
-        let Showing::Choice(index, _) = self.showing else {
-            return None;
-        };
-        self.options(index).get(option).map(|o| &o.line)
+        self.0.reply_line(option)
     }
 
     /// The music the scene has asked for and [`take_music`](Self::take_music)
     /// hasn't taken yet, without taking it.
     pub fn pending_music(&self) -> Option<&MusicLine> {
-        self.music.as_ref()
+        self.0.pending_music()
     }
 
-    /// Moves to the next text box, applying every portrait, caption and
-    /// place step before it. After the last one the scene is finished; advancing a
-    /// finished scene does nothing. While a choice is open this does
-    /// nothing either: [`choose`](Self::choose) a reply.
+    /// Moves to the next text box. Advancing a finished scene, or one
+    /// waiting at a choice, does nothing.
     pub fn advance(&mut self) {
-        if matches!(self.showing, Showing::Text(_)) {
-            self.step_on();
-        }
+        self.0.advance();
     }
 
     /// Picks reply `option` of the open choice: plays its reaction, then
     /// the scene after the choice. Does nothing if no choice is open or
     /// there is no such option.
     pub fn choose(&mut self, option: usize) {
-        let Showing::Choice(index, _) = self.showing else {
-            return;
-        };
-        if option >= self.options(index).len() {
-            return;
-        }
-        self.reaction = Some(Reaction {
-            choice: index,
-            option,
-            next: 0,
-        });
-        self.step_on();
+        self.0.choose(option);
     }
 
     /// Advances until a choice is open or the scene is over (skipping a
     /// scene stops at each choice).
     pub fn skip_to_choice(&mut self) {
-        while matches!(self.showing, Showing::Text(_)) {
-            let before = (self.next, self.reaction);
-            self.step_on();
-            // Each text box moves the position on; never spin in place.
-            if (self.next, self.reaction) == before {
-                break;
-            }
-        }
+        self.0.skip_to_choice();
     }
 
     /// The music the scene has asked for since the last call: the last
     /// `@music` line reached, whether the lines before it were read or
-    /// skipped. `None` if no `@music` line was reached since.
+    /// skipped.
     pub fn take_music(&mut self) -> Option<MusicLine> {
-        self.music.take()
+        self.0.take_music()
     }
 
     /// The opening the scene has asked for since the last call, to play
@@ -320,135 +197,17 @@ impl DialoguePlayer {
     /// whether the lines before it were read or skipped. `None` if no
     /// `@opening` line was reached since.
     pub fn take_opening(&mut self) -> Option<String> {
-        self.opening_due.take()
+        self.0.stage_mut().opening_due.take()
     }
 
     /// Whether a reply choice is waiting for [`choose`](Self::choose).
     pub fn is_choosing(&self) -> bool {
-        matches!(self.showing, Showing::Choice(..))
+        self.0.is_choosing()
     }
 
     /// Whether every text box has been shown and advanced past.
     pub fn is_finished(&self) -> bool {
-        self.showing == Showing::Finished
-    }
-
-    /// Applies steps up to the next text box or choice.
-    fn step_on(&mut self) {
-        if let Some(r) = self.reaction {
-            let steps = self
-                .options(r.choice)
-                .get(r.option)
-                .map_or(&[][..], |o| &o.steps[..]);
-            let rest: Vec<Step> = steps.iter().skip(r.next).cloned().collect();
-            for (i, step) in (r.next..).zip(rest) {
-                let at = At {
-                    step: r.choice,
-                    reaction: Some((r.option, i)),
-                };
-                if self.apply(&step, at) {
-                    self.reaction = Some(Reaction { next: i + 1, ..r });
-                    return;
-                }
-            }
-            // The reaction is over: on with the scene.
-            self.reaction = None;
-        }
-        let rest: Vec<(usize, Step)> = self
-            .scene
-            .steps
-            .iter()
-            .cloned()
-            .enumerate()
-            .skip(self.next)
-            .collect();
-        for (index, step) in rest {
-            if let Step::Choice { options } = &step {
-                // A choice without replies (which the validator rejects)
-                // is passed over rather than waiting forever.
-                if !options.is_empty() {
-                    self.showing = Showing::Choice(index, self.last_text);
-                    self.next = index + 1;
-                    return;
-                }
-                continue;
-            }
-            let at = At {
-                step: index,
-                reaction: None,
-            };
-            if self.apply(&step, at) {
-                self.next = index + 1;
-                return;
-            }
-        }
-        self.showing = Showing::Finished;
-    }
-
-    /// Applies `step` (found at `at`). Returns whether it is a text box,
-    /// which is now shown.
-    fn apply(&mut self, step: &Step, at: At) -> bool {
-        match step {
-            Step::Caption { text } => self.caption = Some(text.clone()),
-            Step::Place {
-                side,
-                character,
-                expression,
-            } => {
-                let placed = Some(Placed {
-                    character: character.clone(),
-                    expression: expression.clone(),
-                });
-                match side {
-                    Side::Left => self.left = placed,
-                    Side::Right => self.right = placed,
-                }
-            }
-            Step::Clear { side: Side::Left } => self.left = None,
-            Step::Clear { side: Side::Right } => self.right = None,
-            Step::Say {
-                speaker,
-                expression,
-                ..
-            } => {
-                if let Some(expression) = expression {
-                    for p in [&mut self.left, &mut self.right].into_iter().flatten() {
-                        if &p.character == speaker {
-                            p.expression.clone_from(expression);
-                        }
-                    }
-                }
-            }
-            Step::Music(music) => self.music = Some(music.clone()),
-            Step::Directive(Stage::Setting(place)) => {
-                self.place = (*place != PlaceLine::None).then(|| place.clone());
-                self.opening = None;
-            }
-            Step::Directive(Stage::Opening(id)) => {
-                self.opening = Some(id.clone());
-                self.opening_due = Some(id.clone());
-            }
-            // The scene was resolved for those present: it has no blocks.
-            Step::Narrate { .. } | Step::Choice { .. } | Step::If { .. } => {}
-        }
-        if step.text().is_some() {
-            self.showing = Showing::Text(at);
-            self.last_text = Some(at);
-            return true;
-        }
-        false
-    }
-
-    /// The side `character` stands on.
-    fn side_of(&self, character: &CharacterId) -> Option<Side> {
-        let on = |p: &Option<Placed>| p.as_ref().is_some_and(|p| &p.character == character);
-        if on(&self.left) {
-            Some(Side::Left)
-        } else if on(&self.right) {
-            Some(Side::Right)
-        } else {
-            None
-        }
+        self.0.is_finished()
     }
 }
 

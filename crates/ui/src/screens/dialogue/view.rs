@@ -14,7 +14,6 @@ use super::{TEXT_LINES, display_name};
 use crate::dialogue::{Portrait, View};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
-use crate::widgets::menu::MenuView;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq)]
@@ -81,57 +80,9 @@ pub struct FaceView {
     pub name: String,
 }
 
-/// The text box.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TextView {
-    /// Whether the text is narration (nobody says it).
-    pub narration: bool,
-    /// The page on screen, word-wrapped, in full: at most [`TEXT_LINES`]
-    /// lines. At a choice, the last page of the line being answered.
-    pub lines: Vec<String>,
-    /// How many of the page's characters are revealed, from its start.
-    pub shown: usize,
-    /// The lead's replies, while a choice is open.
-    pub choices: Option<MenuView>,
-    /// The "Skip scene?" question, while it is open: shown instead of the
-    /// text.
-    pub skip: Option<SkipView>,
-    /// The page, all shown, waiting for the key that goes on.
-    pub waiting: Option<WaitView>,
-}
-
-impl TextView {
-    /// The revealed part of each line of the page.
-    pub fn revealed(&self) -> Vec<String> {
-        let mut budget = self.shown;
-        let mut revealed = Vec::new();
-        for line in &self.lines {
-            revealed.push(line.chars().take(budget).collect());
-            budget = budget.saturating_sub(line.chars().count());
-        }
-        revealed
-    }
-}
-
-/// The question asked before skipping the scene.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SkipView {
-    /// The question.
-    pub question: String,
-    /// How to answer, with the keys.
-    pub answers: String,
-}
-
-/// What shows while a page waits for the key that goes on.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct WaitView {
-    /// The name of the key that goes on.
-    pub key: String,
-    /// How to open the log, if its action has a key.
-    pub log_hint: Option<String>,
-    /// Whether the marker that says "press to go on" is lit: it blinks.
-    pub marker: bool,
-}
+/// The text box, the question before skipping and what shows while a page
+/// waits: the engine's ([`shuyi_ui::dialogue::text_box`]).
+pub use shuyi_ui::dialogue::{SkipView, TextView, WaitView};
 
 /// A character on screen as `lead` and the player's language name them.
 fn face(ctx: &Ctx, lead: &LeadProfile, portrait: Portrait) -> FaceView {

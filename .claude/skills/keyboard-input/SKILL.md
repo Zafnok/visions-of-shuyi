@@ -25,7 +25,7 @@ assets/data/keymap.ron default chords per action, per layout   (Nick's keys, con
 player config          Storage key `keybindings`               (keys per layout + shared buttons, 3 slots; input::bindings)
 input::{keymap,state}  Keymap + InputState: Chord → Action      (engine; fixed Esc = Cancel: `Action`'s `fixed_keys`)
 screens                see only `FrameInput.actions` / `is_held(Action)`
-screens/key_bindings.rs  the player edits their slots (reads `pressed_chords` / `pressed_buttons` to capture)
+screens::key_bindings  the player edits their slots (engine; reads `pressed_chords` / `pressed_buttons` to capture)
 widgets/help.rs, tips  Action → key or button name for text     (`ctx.help_keys()`)
 ```
 
@@ -35,10 +35,12 @@ Files allowed to name `Key::…`, `Chord::…` or key names in strings:
 and the platform shell's keyboard and controllers, 1110; not scanned),
 test code (`#[cfg(test)]`
 items, `tests.rs`, `*_tests.rs`, `tests/`, `crates/ui/src/harness.rs`), and
-the keyboard *picture* in `crates/ui/src/screens/layout_picker.rs` (which
-keys exist and what each does) and its skin `layout_picker/glyph.rs` (where
-each sits): each picture item there sits under a `// check-keys: keyboard
-picture` comment (the marker is an error in any other file). Only the
+the keyboard *picture* of the layout picker (which keys exist and what each
+does) and its skin (where each sits), the engine's since ticket 1112
+(`engine/crates/ui/src/screens/layout_picker*`): each picture item there
+sits under a `// check-keys: keyboard picture` comment (in the game the
+marker is only allowed in `crates/ui/src/screens/layout_picker.rs` and its
+`glyph.rs`, an error in any other file). Only the
 engine's `engine/crates/app/src/keys.rs` may use `KeyCode` or macroquad's
 key reads. Anywhere else is a bug.
 
@@ -146,7 +148,7 @@ Nintendo's `A` on the right). You get this for free by following rule 2:
 1. **React to `Action`s, not keys.** Match on `Action::Confirm`, never on
    `Key::F`. Need a new kind of input? Add an `Action` (below); don't read
    raw keys. The exceptions: the Key bindings screen
-   (`screens/key_bindings.rs`, 0815, 0816), which reads
+   (the engine's `screens/key_bindings.rs`, 0815, 0816, 1112), which reads
    `FrameInput::pressed_chords()` to capture a key and to see the
    clear-slot key, and `pressed_buttons()` / `released_buttons()` to
    capture a button, and asks `input.rs` helpers (`is_capture_abort`,

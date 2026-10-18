@@ -2,14 +2,14 @@
 //! as a panel of text rows, a column per slot, with the focused slot as a
 //! bar. Everything about the look lives here (where things go, the box
 //! characters, the colours); nothing here decides what the screen shows or
-//! does. Another look is another `paint` of the same view (ADR-0054).
+//! does. Another look is another `paint` of the same view.
 
 use super::Side;
 use super::view::{ChoicesView, KeyBindingsView, QuestionView, RowView, SlotView, SwitchView};
-use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::ctx::{Ctx, GameData};
+use crate::frame::color::EngineColor;
+use crate::frame::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
-use crate::screen::Ctx;
 use crate::screens::print_centred;
 
 /// The panel, in cells: down to the row over the message.
@@ -60,7 +60,7 @@ struct Rows {
 
 /// Places the groups one under the other: a heading, then its actions; a
 /// blank row between groups and before Restore defaults.
-fn place(view: &KeyBindingsView) -> Rows {
+fn place<A>(view: &KeyBindingsView<A>) -> Rows {
     let mut y = COLUMNS_Y + 1;
     let (mut headings, mut actions) = (Vec::new(), Vec::new());
     for (i, group) in view.groups.iter().enumerate() {
@@ -82,16 +82,16 @@ fn place(view: &KeyBindingsView) -> Rows {
 }
 
 /// Paints `view` over the whole of `buf`.
-pub fn paint(ctx: &Ctx, view: &KeyBindingsView, buf: &mut GlyphBuffer) {
-    let c = |u| ctx.palette.get(u);
-    let (black, bg) = (c(UiColor::Black), c(UiColor::PanelBg));
-    let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
-    let bar = c(UiColor::PanelBorderFocus);
+pub fn paint<G: GameData>(ctx: &Ctx<G>, view: &KeyBindingsView<G::Action>, buf: &mut GlyphBuffer) {
+    let c = |e| ctx.palette.engine(e);
+    let (black, bg) = (c(EngineColor::Background), c(EngineColor::Panel));
+    let (text, dim) = (c(EngineColor::Text), c(EngineColor::TextDim));
+    let bar = c(EngineColor::Focus);
     buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
     buf.fill_rect(PANEL, Cell::new(' ', text, bg));
-    buf.draw_box(PANEL, BoxStyle::Single, c(UiColor::PanelBorder), bg);
+    buf.draw_box(PANEL, BoxStyle::Single, c(EngineColor::Border), bg);
     let title = format!(" {} ", view.title);
-    buf.print(HEADING_X, PANEL.y, &title, c(UiColor::TextHighlight), bg);
+    buf.print(HEADING_X, PANEL.y, &title, c(EngineColor::Highlight), bg);
     paint_switch(ctx, buf, &view.switch);
 
     for (j, heading) in view.columns.iter().enumerate() {
@@ -115,7 +115,7 @@ pub fn paint(ctx: &Ctx, view: &KeyBindingsView, buf: &mut GlyphBuffer) {
     }
 
     if let Some(message) = &view.message {
-        print_centred(buf, MESSAGE_ROW, message, c(UiColor::HpLow), black);
+        print_centred(buf, MESSAGE_ROW, message, c(EngineColor::Warning), black);
     }
     if let Some(question) = &view.question {
         paint_question(ctx, buf, question);
@@ -135,20 +135,20 @@ pub fn paint(ctx: &Ctx, view: &KeyBindingsView, buf: &mut GlyphBuffer) {
 
 /// Paints the keyboard / controller switch: the shown side highlighted
 /// (as a bar while the focus is on the switch), the other dim.
-fn paint_switch(ctx: &Ctx, buf: &mut GlyphBuffer, switch: &SwitchView) {
-    let c = |u| ctx.palette.get(u);
-    let (bg, bar) = (c(UiColor::PanelBg), c(UiColor::PanelBorderFocus));
+fn paint_switch<G: GameData>(ctx: &Ctx<G>, buf: &mut GlyphBuffer, switch: &SwitchView) {
+    let c = |e| ctx.palette.engine(e);
+    let (bg, bar) = (c(EngineColor::Panel), c(EngineColor::Focus));
     let mut x = LABEL_X;
     for (side, name) in [
         (Side::Keyboard, switch.keyboard.as_str()),
         (Side::Controller, switch.controller.as_str()),
     ] {
         if side != switch.shown {
-            buf.print(x, SWITCH_Y, name, c(UiColor::TextDim), bg);
+            buf.print(x, SWITCH_Y, name, c(EngineColor::TextDim), bg);
         } else if switch.focused {
             buf.print(x - 1, SWITCH_Y, &format!(" {name} "), bg, bar);
         } else {
-            buf.print(x, SWITCH_Y, name, c(UiColor::TextHighlight), bg);
+            buf.print(x, SWITCH_Y, name, c(EngineColor::Highlight), bg);
         }
         x += i32::try_from(name.chars().count()).unwrap_or(0) + 4;
     }
@@ -158,13 +158,23 @@ fn paint_switch(ctx: &Ctx, buf: &mut GlyphBuffer, switch: &SwitchView) {
 /// cursor is on it, white if it just lost its key), the keys it has that
 /// can't change, its slots (the one the cursor is on a bar) and, if
 /// nothing is in any, the note.
-fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, view: &KeyBindingsView, row: &RowView, y: i32) {
-    let c = |u| ctx.palette.get(u);
-    let (bg, text, dim) = (c(UiColor::PanelBg), c(UiColor::Text), c(UiColor::TextDim));
+fn paint_row<G: GameData>(
+    ctx: &Ctx<G>,
+    buf: &mut GlyphBuffer,
+    view: &KeyBindingsView<G::Action>,
+    row: &RowView<G::Action>,
+    y: i32,
+) {
+    let c = |e| ctx.palette.engine(e);
+    let (bg, text, dim) = (
+        c(EngineColor::Panel),
+        c(EngineColor::Text),
+        c(EngineColor::TextDim),
+    );
     let label_fg = if row.focused() {
-        c(UiColor::TextHighlight)
+        c(EngineColor::Highlight)
     } else if row.lost_key {
-        c(UiColor::White)
+        c(EngineColor::Bright)
     } else {
         text
     };
@@ -182,7 +192,7 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, view: &KeyBindingsView, row: &Row
                 SlotView::Empty => "",
             };
             let bar = format!(" {shown:<SLOT_W$}");
-            buf.print(x, y, &bar, bg, c(UiColor::PanelBorderFocus));
+            buf.print(x, y, &bar, bg, c(EngineColor::Focus));
         } else if let SlotView::Bound(name) = slot {
             buf.print(x + 1, y, name, text, bg);
         } else {
@@ -191,7 +201,7 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, view: &KeyBindingsView, row: &Row
     }
     if row.unmapped {
         let fg = if row.blocks_leaving {
-            c(UiColor::HpLow)
+            c(EngineColor::Warning)
         } else {
             dim
         };
@@ -201,9 +211,9 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, view: &KeyBindingsView, row: &Row
 
 /// Paints `question` in a double-bordered box in the middle of the screen,
 /// with its answers under it (the look of the battle's end-turn question).
-fn paint_question(ctx: &Ctx, buf: &mut GlyphBuffer, question: &QuestionView) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
+fn paint_question<G: GameData>(ctx: &Ctx<G>, buf: &mut GlyphBuffer, question: &QuestionView) {
+    let c = |e| ctx.palette.engine(e);
+    let bg = c(EngineColor::Panel);
     let widest = question
         .text
         .chars()
@@ -216,14 +226,20 @@ fn paint_question(ctx: &Ctx, buf: &mut GlyphBuffer, question: &QuestionView) {
         w,
         QUESTION_H,
     );
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-    buf.print(rect.x + 2, rect.y + 2, &question.text, c(UiColor::Text), bg);
+    buf.fill_rect(rect, Cell::new(' ', c(EngineColor::Text), bg));
+    buf.draw_box(rect, BoxStyle::Double, c(EngineColor::Focus), bg);
+    buf.print(
+        rect.x + 2,
+        rect.y + 2,
+        &question.text,
+        c(EngineColor::Text),
+        bg,
+    );
     buf.print(
         rect.x + 2,
         rect.y + 3,
         &question.answers,
-        c(UiColor::TextDim),
+        c(EngineColor::TextDim),
         bg,
     );
 }
@@ -231,9 +247,14 @@ fn paint_question(ctx: &Ctx, buf: &mut GlyphBuffer, question: &QuestionView) {
 /// Paints `choices` in a double-bordered box under the slot on console row
 /// `slot_y` (over it on the last rows, where it wouldn't fit), the focused
 /// line as a bar.
-fn paint_choices(ctx: &Ctx, buf: &mut GlyphBuffer, choices: &ChoicesView, slot_y: i32) {
-    let c = |u| ctx.palette.get(u);
-    let (bg, bar) = (c(UiColor::PanelBg), c(UiColor::PanelBorderFocus));
+fn paint_choices<G: GameData>(
+    ctx: &Ctx<G>,
+    buf: &mut GlyphBuffer,
+    choices: &ChoicesView,
+    slot_y: i32,
+) {
+    let c = |e| ctx.palette.engine(e);
+    let (bg, bar) = (c(EngineColor::Panel), c(EngineColor::Focus));
     let below = slot_y + 1;
     let y = if below + CHOICE_H < PANEL.y + PANEL.h {
         below
@@ -241,7 +262,7 @@ fn paint_choices(ctx: &Ctx, buf: &mut GlyphBuffer, choices: &ChoicesView, slot_y
         slot_y - CHOICE_H
     };
     let rect = Rect::new(slot_x(choices.slot), y, CHOICE_W, CHOICE_H);
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
+    buf.fill_rect(rect, Cell::new(' ', c(EngineColor::Text), bg));
     buf.draw_box(rect, BoxStyle::Double, bar, bg);
     let inner = usize::try_from(CHOICE_W - 3).unwrap_or(0);
     for (i, choice) in (0..).zip(&choices.lines) {
@@ -249,7 +270,7 @@ fn paint_choices(ctx: &Ctx, buf: &mut GlyphBuffer, choices: &ChoicesView, slot_y
         if usize::try_from(i).is_ok_and(|i| i == choices.focused) {
             buf.print(x, y, &format!(" {choice:<inner$}"), bg, bar);
         } else {
-            buf.print(x + 1, y, choice, c(UiColor::Text), bg);
+            buf.print(x + 1, y, choice, c(EngineColor::Text), bg);
         }
     }
 }
