@@ -646,9 +646,9 @@ fn on_a_small_console_the_note_keeps_clear_of_the_cursor() {
 fn on_a_small_console_headings_and_choices_fit_the_panel() {
     let c = ctx();
     let mut v = small_view();
-    v.columns = (1..=SLOTS).map(|n| format!("Button {n}")).collect();
+    v.columns = (1..=SLOTS).map(|n| format!("Keys no. {n}")).collect();
     let buf = painted_on(&c, &v, SMALL);
-    assert!(text(&buf, COLUMNS_Y).contains("Butto…  Butto…  Butto…"));
+    assert!(text(&buf, COLUMNS_Y).contains("Keys …  Keys …  Keys …"));
     let choices = ChoicesView {
         lines: CHOICES.map(|key| c.text(key).to_owned()).to_vec(),
         focused: 0,
