@@ -35,10 +35,25 @@ pub fn centre_x(buf: &GlyphBuffer, width: usize) -> i32 {
     (i32::from(buf.width()) - width) / 2
 }
 
-/// Prints `text` centred on row `y`.
+/// Prints `text` centred on row `y`. A text wider than `buf` starts at
+/// column 0, [`cut`] to the buffer's width.
 pub fn print_centred(buf: &mut GlyphBuffer, y: i32, text: &str, fg: Rgb, bg: Rgb) {
+    let width = usize::from(buf.width());
+    if text.chars().count() > width {
+        buf.print(0, y, &cut(text, width), fg, bg);
+        return;
+    }
     let x = centre_x(buf, text.chars().count());
     buf.print(x, y, text, fg, bg);
+}
+
+/// `text` in at most `w` cells: cut, its last cell a `…`, if it is longer.
+pub fn cut(text: &str, w: usize) -> String {
+    if text.chars().count() <= w {
+        return text.to_owned();
+    }
+    let kept: String = text.chars().take(w.saturating_sub(1)).collect();
+    if w == 0 { kept } else { kept + "…" }
 }
 
 #[cfg(test)]
