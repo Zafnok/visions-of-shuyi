@@ -116,9 +116,7 @@ pub trait ShotCheck<S> {
 
     /// Adds the problems found once every shot is checked (say, a shared
     /// list that no shot uses). None by default.
-    fn finish(&mut self, problems: &mut Vec<String>) {
-        let _ = problems;
-    }
+    fn finish(&mut self, _problems: &mut Vec<String>) {}
 }
 
 /// Reads cinematic `source` (errors attributed to `file`) without

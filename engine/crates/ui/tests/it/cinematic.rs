@@ -160,6 +160,11 @@ fn a_toy_cinematic_is_read_with_the_games_own_shots() {
 fn each_moment_shows_the_shot_it_falls_in() {
     let ctx = toy::ctx();
     let player = player(&ctx);
+    // Each shot is built once, in the file's order.
+    assert_eq!(player.shot(0), Some(&Shot::Letter('A')));
+    assert_eq!(player.shot(1), Some(&Shot::Sweep));
+    assert_eq!(player.shot(2), Some(&Shot::Letter('Z')));
+    assert_eq!(player.shot(3), None);
     let screen = Rect::new(0, 0, 40, 20);
     let frame = |t: f32| player.frame(&ctx, &'|', t, screen).unwrap();
     assert_eq!(frame(0.0), Shown::Letter('A'));
