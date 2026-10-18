@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-18
 ---
 
 # 0066 — Decide: the guide's box on the Playdate
@@ -85,10 +85,10 @@ Questions:
 
 ## Acceptance criteria
 
-- [ ] `docs/design/playdate.md` has the guide's box section with Nick's
+- [x] `docs/design/playdate.md` has the guide's box section with Nick's
       words and the rules, and the chosen mockup is committed.
-- [ ] 1058's text matches the answers.
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] 1058's text matches the answers.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -96,5 +96,30 @@ Questions:
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- Mockups: Chapter 1's first battle rendered with `cargo xtask frame-png
+  --playdate --map` (the 1037 map skin; 1038 isn't built, so no corner
+  pop-ups), with the boxes drawn over it at the device's size in the
+  game's font, and today's box (`frame-png --playdate --tips`) for
+  comparison. The face is a grey box (ADR-0040). Shown at ×2 in one
+  round: Nick chose **B side window, B 1× face, A all at once** (the
+  recommended set).
+- Recorded in `docs/design/playdate.md`, *The guide's box (0066)*,
+  with the pictures `docs/design/playdate/0066-*.png`; the design
+  index row updated; 1058's scope, steps and criteria rewritten to the
+  answers (and set to `todo`: 0066 and 1037 are done).
+- Counted every Chapter 1 tip and lesson at 22 letters a line: all fit
+  the window at once, given that long checklist items wrap and the blank
+  row before the checklist goes when there's no room.
+- **Claude's starting rules** (Nick can veto): the window is 24 cells
+  wide and the screen's full height, on the right when the cursor is in
+  the left half; double black frame, the guide's name in its top; the
+  progress and the close hint in its bottom frame; text wrapped by words
+  at 22 letters; every lesson fits at once (if one doesn't, its text is
+  shortened, never paged, since A is one of its steps); a tip too long
+  pages with A ("A more"), none in Chapter 1 does; with no face the
+  title takes its place; the window goes over the corner pop-ups on its
+  side.
+- Follow-up: **1062** the guide's words that are untrue on the Playdate
+  ("Blue is where it can go", "red tile", the "Played on the keys"
+  lesson about a mouse and keys); needs one question to Nick. Added to
+  1050's `blocked_by` and the roadmap.

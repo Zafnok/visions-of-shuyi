@@ -335,7 +335,9 @@ early so every later PR is checked by them.
      the title screen and cinematic · **0066** Nick decides the guide's
      tip and lesson box on the Playdate → **1058** builds it (Nick saw
      the PC's box run off the screen, 2026-10-16) · **1060** lessons
-     whose action has no Playdate button can be finished (after 1035)
+     whose action has no Playdate button can be finished (after 1035) →
+     **1062** the guide's words without colours or keys (Nick decides
+     the keys lesson on the Playdate)
   9. **1050** Nick plays Chapter 1 on his Playdate (also after the
      tutorial fixes **0464**, **0467**, **0841**) → **1051** the AI plans
      once per phase (only if the enemy pauses feel long) · **1057** the
