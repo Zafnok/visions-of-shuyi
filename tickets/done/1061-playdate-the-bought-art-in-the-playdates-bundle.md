@@ -127,6 +127,6 @@ None.
 - **Deviation**: the unoptimized build (`cargo xtask playdate` without
   `--release`) does not pack: the SDK's `pdc` crashes on its 80 MB
   `pdex.elf`, with or without the bought art, so it is not this ticket's.
-  Follow-up: **1062**.
+  Follow-up: **1063**.
 - No gameplay rules decided.
 

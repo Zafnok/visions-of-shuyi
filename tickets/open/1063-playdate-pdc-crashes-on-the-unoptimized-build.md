@@ -1,5 +1,5 @@
 ---
-id: "1062"
+id: "1063"
 title: "Playdate: pdc crashes packing the unoptimized build's pdex.elf"
 type: bug
 milestone: Post–Chapter 1
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1062 — pdc crashes on the unoptimized build
+# 1063 — pdc crashes on the unoptimized build
 
 ## Context
 
