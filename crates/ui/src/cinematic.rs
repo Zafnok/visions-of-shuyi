@@ -2,6 +2,10 @@
 //! [`Timeline`] says which shot a time falls in and how far through it,
 //! and a [`CinematicPlayer`] draws that shot.
 //!
+//! The timeline, the easing, the pan and the player's skeleton are the
+//! engine's (`shuyi_ui::cinematic`, ticket 1113); this game's shot kinds,
+//! and how each is drawn ([`ShotPainter`]), are here.
+//!
 //! **Every frame is drawn from the time alone**: nothing is carried from
 //! one frame to the next. So whoever owns the clock can follow the music,
 //! jump or loop (the title, 0819), and a test can draw any moment.
@@ -18,14 +22,14 @@ use crate::prelude::*;
 use alloc::collections::BTreeMap;
 use alloc::rc::Rc;
 
-use trpg_content::{CinematicDef, ImageId, Shot, ShotAction, Side, battle_campaign};
+use shuyi_ui::cinematic::ShotPainter;
+use trpg_content::{ImageId, Shot, ShotAction, Side, battle_campaign};
 use trpg_core::{BattleDef, GameMode, LEAD_ID, LeadGender, LeadProfile, Pos};
 
-use crate::cinema;
 use crate::color::UiColor;
 use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::{MapScene, MapSkin, UnitView};
-use crate::screen::{Ctx, IdleMotion};
+use crate::screen::{Ctx, IdleMotion, Shuyi};
 use crate::screens::battle::stage::{self, view::StageView};
 use crate::screens::title::glyph::paint_logo;
 use crate::settings::MapZoom;
@@ -39,122 +43,11 @@ pub mod talk;
 pub use action::{FALL_MS, FLASH_MS, LUNGE_MS, LUNGE_TILES, action_state, facing_of};
 use combat::Duel;
 use faces::{Face, draw_faces, first_x};
+pub use shuyi_ui::cinematic::{Moment, Pan, ShotAt, Timeline, ease_in_out, millis};
 use talk::{TalkBox, talk_at};
 
 /// An area surely big enough for one tile of any skin, to ask its size.
 const ROOMY: Rect = Rect::new(0, 0, 64, 64);
-
-/// Where a time falls in a [`Timeline`].
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct ShotAt {
-    /// Which shot, counted from 0.
-    pub index: usize,
-    /// How far through the shot: 0 at its start, up to (never reaching) 1
-    /// at the next shot's start.
-    pub progress: f32,
-}
-
-/// When each shot of a cinematic starts, and when the cinematic ends.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Timeline {
-    /// Each shot's start, in milliseconds, in order.
-    starts_ms: Vec<u32>,
-    /// The length, in milliseconds; at least 1.
-    length_ms: u32,
-}
-
-impl Timeline {
-    /// A timeline of shots starting at `starts_ms` (in order, the first at
-    /// 0, as a loaded cinematic has them) over `length_ms` (0 counts as 1).
-    pub fn new(starts_ms: Vec<u32>, length_ms: u32) -> Self {
-        Self {
-            starts_ms,
-            length_ms: length_ms.max(1),
-        }
-    }
-
-    /// The timeline of `def`'s shots.
-    pub fn of(def: &CinematicDef) -> Self {
-        Self::new(def.shots.iter().map(|s| s.at_ms).collect(), def.length_ms)
-    }
-
-    /// The length, in milliseconds.
-    pub fn length_ms(&self) -> u32 {
-        self.length_ms
-    }
-
-    /// When the last shot starts, in milliseconds (0 with no shots).
-    pub fn last_start_ms(&self) -> u32 {
-        self.starts_ms.last().copied().unwrap_or(0)
-    }
-
-    /// Whether `t_ms` (wrapped at the length) falls in the last shot.
-    pub fn in_last_shot(&self, t_ms: u64) -> bool {
-        self.wrapped_ms(t_ms) >= self.last_start_ms()
-    }
-
-    /// How long shot `index` lasts, in milliseconds: until the next one
-    /// starts, the last until the end. 0 for a shot there isn't.
-    pub fn shot_ms(&self, index: usize) -> u32 {
-        let Some(&start) = self.starts_ms.get(index) else {
-            return 0;
-        };
-        let end = self.starts_ms.get(index + 1).copied();
-        end.unwrap_or(self.length_ms).saturating_sub(start)
-    }
-
-    /// `t_ms` wrapped at the length: the cinematic loops.
-    pub fn wrapped_ms(&self, t_ms: u64) -> u32 {
-        u32::try_from(t_ms % u64::from(self.length_ms)).unwrap_or(0)
-    }
-
-    /// The shot `t_ms` milliseconds after the start falls in, wrapped at
-    /// the length. A shot lasts until the next one starts, the last until
-    /// the end; time before the first shot's start is the first shot's.
-    pub fn at_ms(&self, t_ms: u64) -> ShotAt {
-        let (index, into) = self.into_shot(t_ms);
-        let start = self.wrapped_ms(t_ms) - into;
-        let end = self.starts_ms.get(index + 1).map_or(self.length_ms, |&s| s);
-        let span = end.saturating_sub(start).max(1);
-        #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
-        let progress = (into as f32 / span as f32).clamp(0.0, 1.0);
-        ShotAt { index, progress }
-    }
-
-    /// The shot `t_ms` falls in ([`at_ms`](Self::at_ms)), counted from 0,
-    /// and how many milliseconds into it that is.
-    pub fn into_shot(&self, t_ms: u64) -> (usize, u32) {
-        let t = self.wrapped_ms(t_ms);
-        let index = self.starts_ms.iter().rposition(|&s| s <= t).unwrap_or(0);
-        let start = self.starts_ms.get(index).map_or(0, |&s| s.min(t));
-        (index, t - start)
-    }
-
-    /// [`at_ms`](Self::at_ms) for `t` seconds ([`millis`]).
-    pub fn at(&self, t: f32) -> ShotAt {
-        self.at_ms(millis(t))
-    }
-}
-
-/// `t` seconds in whole milliseconds. A time below 0, or one that isn't a
-/// number, counts as 0.
-pub fn millis(t: f32) -> u64 {
-    let ms = (f64::from(t) * 1000.0).round();
-    // The cast stops at 0 and at the biggest number by itself.
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    if ms.is_finite() { ms as u64 } else { 0 }
-}
-
-/// `p` (0 to 1; clamped, not a number counts as 0) eased in and out: slow
-/// at both ends, fastest in the middle.
-pub fn ease_in_out(p: f32) -> f32 {
-    let p = if p.is_finite() {
-        p.clamp(0.0, 1.0)
-    } else {
-        0.0
-    };
-    p * p * (3.0 - 2.0 * p)
-}
 
 /// A whole map as the map skin painted it, to pan over.
 #[derive(Debug, Clone, PartialEq)]
@@ -251,15 +144,12 @@ struct Stage {
 #[derive(Debug, Clone, PartialEq)]
 enum Built {
     /// A pan over `stage`'s picture (`None`: the battle couldn't be
-    /// painted, and the shot is blank), the middle of the screen going
-    /// from the picture's pixel `from` to `to`. With an `action`, the
-    /// units are as it has them at each moment, and the scene is painted
-    /// anew each frame.
+    /// painted, and the shot is blank), in the picture's pixels. With an
+    /// `action`, the units are as it has them at each moment, and the
+    /// scene is painted anew each frame.
     MapPan {
         stage: Option<Stage>,
-        from: (f32, f32),
-        to: (f32, f32),
-        zoom: u8,
+        pan: Pan,
         action: Option<ShotAction>,
     },
     /// The title's logo.
@@ -283,7 +173,7 @@ enum Built {
 pub enum Frame {
     /// A map behind the whole screen.
     MapPan {
-        /// The picture's pixel at the screen's top-left ([`cinema::view`]).
+        /// The picture's pixel at the screen's top-left ([`Pan::origin_px`]).
         origin_px: (f32, f32),
         /// Screen pixels per picture pixel.
         zoom: u8,
@@ -320,15 +210,131 @@ pub enum Frame {
     Blank,
 }
 
-/// Draws a cinematic at any time.
+/// What every shot of a [`CinematicPlayer`] is drawn with.
 #[derive(Debug, Clone, PartialEq)]
-pub struct CinematicPlayer {
-    timeline: Timeline,
-    shots: Vec<Built>,
+struct Cast {
     /// The picture behind the logo.
     backdrop: Option<ImageId>,
     /// The lead the talk, characters and combat shots show.
     lead: LeadProfile,
+}
+
+impl Built {
+    /// The map scene of a map shot `into_ms` milliseconds after it
+    /// started ([`CinematicPlayer::scene`]); `None` for another shot.
+    fn scene(&self, into_ms: u32) -> Option<MapScene> {
+        let Built::MapPan {
+            stage: Some(stage),
+            action,
+            ..
+        } = self
+        else {
+            return None;
+        };
+        let mut scene = MapScene::clone(&stage.scene);
+        if let Some(action) = action {
+            let clock_ms = u64::from(action.from_ms) + u64::from(into_ms);
+            scene.units = action_state(&scene.units, &action.actions, clock_ms);
+        }
+        Some(scene)
+    }
+}
+
+impl ShotPainter for Built {
+    type Game = Shuyi;
+    type Shared = Cast;
+    type Frame = Frame;
+
+    fn frame(&self, ctx: &Ctx, _: &Cast, moment: Moment, screen: Rect) -> Frame {
+        match self {
+            Built::MapPan {
+                stage: Some(Stage { picture, .. }),
+                pan,
+                ..
+            } => Frame::MapPan {
+                origin_px: pan.origin_px(ctx.console, picture.size_px(), screen, moment.progress),
+                zoom: pan.zoom,
+            },
+            Built::Logo => Frame::Logo {
+                sparks: (ctx.idle_motion == IdleMotion::On).then_some(moment.t_ms),
+            },
+            Built::Talk { boxes } => {
+                #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
+                let shot_s = moment.shot_ms as f32 / 1000.0;
+                let lens: Vec<usize> = boxes.iter().map(TalkBox::chars).collect();
+                let speed = ctx.settings().text_speed.chars_per_s();
+                match talk_at(moment.progress, shot_s, &lens, speed) {
+                    Some((index, shown)) => Frame::Talk { index, shown },
+                    None => Frame::Blank,
+                }
+            }
+            Built::Characters { faces, from, .. } if !faces.is_empty() => {
+                let (x, step) = first_x(moment.progress, faces.len(), *from, screen.w);
+                Frame::Characters { x, step }
+            }
+            Built::Combat { duel: Some(duel) } => {
+                #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
+                let into = moment.into_ms as f32 / 1000.0;
+                Frame::Combat {
+                    seconds: into.min(duel.seconds()),
+                }
+            }
+            Built::MapPan { stage: None, .. }
+            | Built::Characters { .. }
+            | Built::Combat { duel: None } => Frame::Blank,
+        }
+    }
+
+    fn paint(&self, ctx: &Ctx, cast: &Cast, moment: Moment, frame: Frame, buf: &mut GlyphBuffer) {
+        match (frame, self) {
+            (
+                Frame::MapPan { origin_px, zoom },
+                Built::MapPan {
+                    stage: Some(stage),
+                    action,
+                    ..
+                },
+            ) => {
+                // Units that stand were painted once; units that act are
+                // painted as they are now.
+                let acted = action.as_ref().and_then(|_| self.scene(moment.into_ms));
+                let skin = shot_skin(ctx);
+                let now = acted.and_then(|scene| MapPicture::paint(ctx, skin.as_ref(), &scene));
+                let picture = now.map_or_else(|| Rc::clone(&stage.picture.scene), |p| p.scene);
+                let text = ctx.palette.get(UiColor::Text);
+                buf.fill_rect(buf.bounds(), Cell::see_through(' ', text));
+                buf.set_backdrop(picture, buf.bounds(), origin_px, zoom);
+            }
+            (Frame::Logo { sparks }, _) => paint_logo(ctx, cast.backdrop, sparks, buf),
+            (Frame::Talk { index, shown }, Built::Talk { boxes }) => {
+                if let Some(talk) = boxes.get(index) {
+                    talk.draw(ctx, &cast.lead, shown, buf);
+                }
+            }
+            (
+                Frame::Characters { x, step },
+                Built::Characters {
+                    faces, expression, ..
+                },
+            ) => {
+                draw_faces(ctx, buf, faces, expression, (x, step));
+            }
+            (Frame::Combat { seconds }, Built::Combat { duel: Some(duel) }) => {
+                if let Some(view) = duel.view(ctx, &cast.lead, seconds) {
+                    stage::glyph::paint(ctx, &view, buf);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Draws a cinematic at any time: the engine's player of this game's
+/// shots, with the backdrop behind its logo and the lead its shots show.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CinematicPlayer {
+    player: shuyi_ui::cinematic::CinematicPlayer<Built>,
+    cast: Cast,
 }
 
 impl CinematicPlayer {
@@ -356,7 +362,7 @@ impl CinematicPlayer {
         });
         let skin = shot_skin(ctx);
         let mut stages: BTreeMap<&str, Option<Stage>> = BTreeMap::new();
-        let shots = def.shots.iter().map(|s| match &s.shot {
+        let player = shuyi_ui::cinematic::CinematicPlayer::of(def, |shot| match shot {
             Shot::MapPan {
                 battle,
                 from,
@@ -373,9 +379,11 @@ impl CinematicPlayer {
                 let picture = stage.as_ref().map(|s| &s.picture);
                 let px = |point: (f32, f32)| picture.map_or(point, |p| p.point_px(point));
                 Built::MapPan {
-                    from: px(from.tiles()),
-                    to: px(to.tiles()),
-                    zoom: *zoom,
+                    pan: Pan {
+                        from: px(from.tiles()),
+                        to: px(to.tiles()),
+                        zoom: *zoom,
+                    },
                     stage: stage.clone(),
                     action: action.clone(),
                 }
@@ -406,28 +414,30 @@ impl CinematicPlayer {
             },
         });
         Some(Self {
-            shots: shots.collect(),
-            timeline: Timeline::of(def),
-            backdrop: None,
-            lead,
+            player,
+            cast: Cast {
+                backdrop: None,
+                lead,
+            },
         })
     }
 
     /// The same player with `backdrop` behind the logo: the picture the
     /// title picked for this launch, so both show the same one.
     #[must_use]
-    pub fn with_backdrop(self, backdrop: Option<ImageId>) -> Self {
-        Self { backdrop, ..self }
+    pub fn with_backdrop(mut self, backdrop: Option<ImageId>) -> Self {
+        self.cast.backdrop = backdrop;
+        self
     }
 
     /// The lead its talk and characters shots show.
     pub fn lead(&self) -> &LeadProfile {
-        &self.lead
+        &self.cast.lead
     }
 
     /// The text boxes of shot `index`, if it is a talk shot.
     pub fn talk_boxes(&self, index: usize) -> Option<&[TalkBox]> {
-        match self.shots.get(index) {
+        match self.player.shot(index) {
             Some(Built::Talk { boxes }) => Some(boxes),
             _ => None,
         }
@@ -435,7 +445,7 @@ impl CinematicPlayer {
 
     /// The faces of shot `index`, if it is a characters shot.
     pub fn faces(&self, index: usize) -> Option<&[Face]> {
-        match self.shots.get(index) {
+        match self.player.shot(index) {
             Some(Built::Characters { faces, .. }) => Some(faces),
             _ => None,
         }
@@ -443,70 +453,14 @@ impl CinematicPlayer {
 
     /// When its shots start and how long it is.
     pub fn timeline(&self) -> &Timeline {
-        &self.timeline
+        self.player.timeline()
     }
 
     /// What is shown `t` seconds after the start (wrapped at the length),
     /// on a screen of `screen` cells.
     pub fn frame(&self, ctx: &Ctx, t: f32, screen: Rect) -> Frame {
-        let at = self.timeline.at(t);
-        match self.shots.get(at.index) {
-            Some(Built::MapPan {
-                stage: Some(Stage { picture, .. }),
-                from,
-                to,
-                zoom,
-                ..
-            }) => {
-                let eased = ease_in_out(at.progress);
-                let centre = (
-                    from.0 + (to.0 - from.0) * eased,
-                    from.1 + (to.1 - from.1) * eased,
-                );
-                let px =
-                    |cells: i32, cell: u16| u32::try_from(cells).unwrap_or(0) * u32::from(cell);
-                let clip = (
-                    px(screen.w, ctx.console.cell_w),
-                    px(screen.h, ctx.console.cell_h),
-                );
-                Frame::MapPan {
-                    origin_px: cinema::view(picture.size_px(), clip, centre, *zoom),
-                    zoom: *zoom,
-                }
-            }
-            Some(Built::Logo) => Frame::Logo {
-                sparks: (ctx.idle_motion == IdleMotion::On)
-                    .then(|| self.timeline.wrapped_ms(millis(t))),
-            },
-            Some(Built::Talk { boxes }) => {
-                #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
-                let shot_s = self.timeline.shot_ms(at.index) as f32 / 1000.0;
-                let lens: Vec<usize> = boxes.iter().map(TalkBox::chars).collect();
-                let speed = ctx.settings().text_speed.chars_per_s();
-                match talk_at(at.progress, shot_s, &lens, speed) {
-                    Some((index, shown)) => Frame::Talk { index, shown },
-                    None => Frame::Blank,
-                }
-            }
-            Some(Built::Characters { faces, from, .. }) if !faces.is_empty() => {
-                let (x, step) = first_x(at.progress, faces.len(), *from, screen.w);
-                Frame::Characters { x, step }
-            }
-            Some(Built::Combat { duel: Some(duel) }) => {
-                let (_, into_ms) = self.timeline.into_shot(millis(t));
-                #[allow(clippy::cast_precision_loss)] // a shot is far below 2^24 ms
-                let into = into_ms as f32 / 1000.0;
-                Frame::Combat {
-                    seconds: into.min(duel.seconds()),
-                }
-            }
-            Some(
-                Built::MapPan { stage: None, .. }
-                | Built::Characters { .. }
-                | Built::Combat { duel: None },
-            )
-            | None => Frame::Blank,
-        }
+        let frame = self.player.frame(ctx, &self.cast, t, screen);
+        frame.unwrap_or(Frame::Blank)
     }
 
     /// The map scene shown `t` seconds after the start (wrapped at the
@@ -516,21 +470,8 @@ impl CinematicPlayer {
     /// started), or where it starts in a shot with no action. `None` when
     /// the shot isn't of a map.
     pub fn scene(&self, t: f32) -> Option<MapScene> {
-        let (index, into_ms) = self.timeline.into_shot(millis(t));
-        let Some(Built::MapPan {
-            stage: Some(stage),
-            action,
-            ..
-        }) = self.shots.get(index)
-        else {
-            return None;
-        };
-        let mut scene = MapScene::clone(&stage.scene);
-        if let Some(action) = action {
-            let clock_ms = u64::from(action.from_ms) + u64::from(into_ms);
-            scene.units = action_state(&scene.units, &action.actions, clock_ms);
-        }
-        Some(scene)
+        let (shot, moment) = self.player.at(t)?;
+        shot.scene(moment.into_ms)
     }
 
     /// The combat stage shown `t` seconds after the start (wrapped at the
@@ -541,11 +482,10 @@ impl CinematicPlayer {
         let Frame::Combat { seconds } = self.frame(ctx, t, Rect::new(0, 0, 0, 0)) else {
             return None;
         };
-        let index = self.timeline.at(t).index;
-        let Some(Built::Combat { duel: Some(duel) }) = self.shots.get(index) else {
+        let Some((Built::Combat { duel: Some(duel) }, _)) = self.player.at(t) else {
             return None;
         };
-        duel.view(ctx, &self.lead, seconds)
+        duel.view(ctx, &self.cast.lead, seconds)
     }
 
     /// Draws the cinematic as it is `t` seconds after its start (wrapped
@@ -553,50 +493,7 @@ impl CinematicPlayer {
     /// is, 0 = black: [`GlyphBuffer::fade`]). The same `t` always draws
     /// the same frame.
     pub fn draw(&self, ctx: &Ctx, t: f32, brightness: f32, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let (text, black) = (c(UiColor::Text), c(UiColor::Black));
-        buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
-        let shot = self.shots.get(self.timeline.at(t).index);
-        match (self.frame(ctx, t, buf.bounds()), shot) {
-            (
-                Frame::MapPan { origin_px, zoom },
-                Some(Built::MapPan {
-                    stage: Some(stage),
-                    action,
-                    ..
-                }),
-            ) => {
-                // Units that stand were painted once; units that act are
-                // painted as they are now.
-                let acted = action.as_ref().and_then(|_| self.scene(t));
-                let skin = shot_skin(ctx);
-                let now = acted.and_then(|scene| MapPicture::paint(ctx, skin.as_ref(), &scene));
-                let picture = now.map_or_else(|| Rc::clone(&stage.picture.scene), |p| p.scene);
-                buf.fill_rect(buf.bounds(), Cell::see_through(' ', text));
-                buf.set_backdrop(picture, buf.bounds(), origin_px, zoom);
-            }
-            (Frame::Logo { sparks }, _) => paint_logo(ctx, self.backdrop, sparks, buf),
-            (Frame::Talk { index, shown }, Some(Built::Talk { boxes })) => {
-                if let Some(talk) = boxes.get(index) {
-                    talk.draw(ctx, &self.lead, shown, buf);
-                }
-            }
-            (
-                Frame::Characters { x, step },
-                Some(Built::Characters {
-                    faces, expression, ..
-                }),
-            ) => {
-                draw_faces(ctx, buf, faces, expression, (x, step));
-            }
-            (Frame::Combat { .. }, _) => {
-                if let Some(view) = self.stage(ctx, t) {
-                    stage::glyph::paint(ctx, &view, buf);
-                }
-            }
-            _ => {}
-        }
-        buf.fade(brightness);
+        self.player.draw(ctx, &self.cast, t, brightness, buf);
     }
 }
 

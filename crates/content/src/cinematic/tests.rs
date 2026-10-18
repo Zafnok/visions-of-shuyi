@@ -129,82 +129,8 @@ fn a_cinematic_on_a_music_cue_is_as_long_as_the_cue() {
     assert_eq!(problems(&c, &src), ["length: no music cue \"nope\""]);
 }
 
-#[test]
-fn the_id_is_the_file_name() {
-    let c = content();
-    let src = source("Seconds(1)", PAN).replace("\"t\"", "\"x\"");
-    assert_eq!(
-        problems(&c, &src),
-        ["id \"x\" must match the file name \"t\""]
-    );
-}
-
-#[test]
-fn a_stated_length_is_above_zero_and_not_too_long() {
-    let c = content();
-    let stated = |length: &str| load(&c, &source(length, PAN));
-    assert_eq!(stated("Seconds(0.001)").unwrap().length_ms, 1);
-    assert_eq!(stated("Seconds(3600)").unwrap().length_ms, 3_600_000);
-    assert_eq!(stated("Seconds(2.5)").unwrap().music, None);
-    for length in ["0", "0.0004", "-1", "3600.5", "inf", "NaN"] {
-        assert_eq!(
-            problems(&c, &source(&format!("Seconds({length})"), PAN)),
-            [format!(
-                "length: {length} seconds; it must be above 0 and at most 3600"
-            )],
-        );
-    }
-}
-
-#[test]
-fn shots_are_in_order_from_zero_to_before_the_end() {
-    let c = content();
-    let check = |shots: &str| problems(&c, &source("Seconds(10)", shots));
-    assert_eq!(check(""), ["shots: a cinematic needs at least one shot"]);
-    assert_eq!(
-        check("(at: 0.5, shot: Logo)"),
-        ["shot 1: the first shot must be at 0.0, not 0.5"]
-    );
-    assert_eq!(
-        check("(at: 0, shot: Logo), (at: 4, shot: Logo), (at: 4, shot: Logo)"),
-        ["shot 3: at 4 must be after the shot before it; shots are in order of time"]
-    );
-    assert_eq!(
-        check("(at: 0, shot: Logo), (at: 4, shot: Logo), (at: 3.999, shot: Logo)"),
-        ["shot 3: at 3.999 must be after the shot before it; shots are in order of time"]
-    );
-    assert_eq!(
-        check("(at: 0, shot: Logo), (at: 10, shot: Logo)"),
-        ["shot 2: at 10 is not before the end (10 seconds)"]
-    );
-    assert_eq!(
-        check("(at: 0, shot: Logo), (at: 9.999, shot: Logo), (at: 11, shot: Logo)"),
-        ["shot 3: at 11 is not before the end (10 seconds)"]
-    );
-    for at in ["-1", "NaN", "inf", "5000000"] {
-        assert_eq!(
-            check(&format!("(at: 0, shot: Logo), (at: {at}, shot: Logo)")),
-            [format!("shot 2: at {at} is not a time")]
-        );
-    }
-    // A first shot that is no time is only that.
-    assert_eq!(
-        check("(at: -1, shot: Logo)"),
-        ["shot 1: at -1 is not a time"]
-    );
-    // In order, to the millisecond.
-    let ok = source(
-        "Seconds(10)",
-        "(at: 0, shot: Logo), (at: 0.001, shot: Logo)",
-    );
-    let starts: Vec<u32> = load(&c, &ok)
-        .unwrap()
-        .shots
-        .iter()
-        .map(|s| s.at_ms)
-        .collect();
-    assert_eq!(starts, [0, 1]);
-}
+// The file's frame (its id, its length and the order of its shots) is the
+// engine's, tested there: `shuyi_assets::cinematic`'s tests.
 
 #[test]
 fn a_map_pan_names_a_battle_points_on_its_map_and_a_whole_zoom() {

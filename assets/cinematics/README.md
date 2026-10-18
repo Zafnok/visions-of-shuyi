@@ -8,6 +8,9 @@ A cinematic is a list of **shots** and when each starts (tickets 0817, 0818,
 `docs/design/title-screen.md`, *Intro cinematic*). Each `*.ron` file here is
 one cinematic, loaded by `trpg_content::cinematic` and validated by the
 all-assets test. The file stem is its id. `trpg_ui::cinematic` plays it.
+The file's frame (`id`, `length`, the shots' times and `actions`) and the
+timeline are Shuyi Engine's (`shuyi_assets::cinematic`,
+`shuyi_ui::cinematic`, ticket 1113); the shot kinds below are the game's.
 
 `title.ron` is the title screen's intro cinematic, which the title plays
 in time with its song (ticket 0819): Nick's storyboard (tickets 0820 and
