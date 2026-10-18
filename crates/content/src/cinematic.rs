@@ -2,12 +2,17 @@
 //! list of shots and when each starts, played by `trpg_ui::cinematic`. The
 //! format is described in `assets/cinematics/README.md`; the loader checks
 //! every rule listed there.
+//!
+//! The file's frame (its id, length and the shots' times) is the engine's
+//! (`shuyi_assets::cinematic`, ticket 1113); the shot kinds, their checks
+//! and the `actions` they share are this game's ([`Shot`]).
 use crate::prelude::*;
 
 use alloc::collections::btree_map::Entry;
 use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
+use shuyi_assets::cinematic::{self as frame, CinematicFile, ShotCheck};
 use trpg_core::lead::{self, LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE, Part};
 use trpg_core::{BattleDef, CharacterId, ClassTable, TerrainTable};
 
@@ -22,7 +27,6 @@ use crate::error::ContentError;
 use crate::lang::text_width;
 use crate::names::{Names, name_token};
 use crate::portrait::PortraitTable;
-use crate::ron_loader::parse_ron;
 
 mod action;
 mod combat;
@@ -32,6 +36,8 @@ pub use action::{Act, ActionDef, Heading, ShotAction};
 use action::{RawAction, RawActionRef, Stage};
 pub use combat::{CombatShot, Fight, check_fights, fight};
 pub use opening::{CastMember, OPENINGS_DIR, OpeningDef, OpeningRefs, load_all as load_openings};
+pub use shuyi_assets::cinematic::MAX_SECONDS;
+use shuyi_assets::cinematic::{millis, seconds};
 
 /// Directory of the cinematic files inside the asset bundle.
 pub const CINEMATICS_DIR: &str = "cinematics";
@@ -43,35 +49,15 @@ const EXTENSION: &str = ".ron";
 /// (`docs/design/title-screen.md`, *Intro cinematic*).
 pub const MAX_ZOOM: u8 = 4;
 
-/// The longest a cinematic that states its own length may be, in seconds.
-pub const MAX_SECONDS: f32 = 3600.0;
-
 /// How many parts of a tile a [`TilePoint`] counts in.
 const TILE_PARTS: f32 = 1000.0;
 
-/// One cinematic: its shots, in order, over a length of time.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CinematicDef {
-    /// The cinematic's id (its file stem).
-    pub id: String,
-    /// The music cue whose length is the cinematic's, if it follows one.
-    pub music: Option<String>,
-    /// How long it is, in milliseconds (never 0): the music cue's
-    /// `length_ms`, or the length the file states.
-    pub length_ms: u32,
-    /// The shots, by start time; never empty, the first at 0. A shot lasts
-    /// until the next one starts, the last until the end.
-    pub shots: Vec<ShotDef>,
-}
+/// One cinematic: its shots, in order, over a length of time
+/// (`shuyi_assets::cinematic`, with this game's [`Shot`]s).
+pub type CinematicDef = frame::CinematicDef<Shot>;
 
 /// A shot and when it starts.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ShotDef {
-    /// Milliseconds from the cinematic's start.
-    pub at_ms: u32,
-    /// What is shown.
-    pub shot: Shot,
-}
+pub type ShotDef = frame::ShotDef<Shot>;
 
 /// What a shot shows.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -212,29 +198,9 @@ impl TilePoint {
     }
 }
 
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawCinematic {
-    id: String,
-    length: RawLength,
-    /// Action lists by name, for shots to share.
-    #[serde(default)]
-    actions: BTreeMap<String, Vec<RawAction>>,
-    shots: Vec<RawShotAt>,
-}
-
-#[derive(Deserialize)]
-enum RawLength {
-    Music(String),
-    Seconds(f32),
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct RawShotAt {
-    at: f32,
-    shot: RawShot,
-}
+/// A cinematic file as written: the engine's frame over this game's shots
+/// and their action lists by name.
+type RawCinematic = CinematicFile<RawShot, Vec<RawAction>>;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -352,88 +318,14 @@ pub fn from_source(
     source: &str,
     refs: Refs<'_>,
 ) -> Result<CinematicDef, Vec<ContentError>> {
-    let raw: RawCinematic = parse_ron(file, source).map_err(|e| vec![e])?;
-    let mut errors = Vec::new();
-    let mut err = |m: String| errors.push(ContentError::new(file, m));
-    if raw.id != stem {
-        err(format!(
-            "id \"{}\" must match the file name \"{stem}\"",
-            raw.id
-        ));
-    }
-    let (music, length_ms) = match &raw.length {
-        RawLength::Music(cue) => {
-            let length = refs.audio.music.get(cue).map(|m| m.length_ms);
-            if length.is_none() {
-                err(format!("length: no music cue \"{cue}\""));
-            }
-            (Some(cue.clone()), length)
-        }
-        RawLength::Seconds(seconds) => {
-            let length = millis(*seconds).filter(|&ms| ms > 0 && *seconds <= MAX_SECONDS);
-            if length.is_none() {
-                err(format!(
-                    "length: {seconds} seconds; it must be above 0 and at most {MAX_SECONDS}"
-                ));
-            }
-            (None, length)
-        }
-    };
-    if raw.shots.is_empty() {
-        err("shots: a cinematic needs at least one shot".to_owned());
-    }
-    let mut shots = Vec::new();
-    let mut lists = ActionLists {
+    let raw: RawCinematic = frame::parse(file, source).map_err(|e| vec![e])?;
+    let lists = ActionLists {
         table: &raw.actions,
         refs,
         named: BTreeMap::new(),
         used: BTreeSet::new(),
     };
-    for (i, RawShotAt { at, shot }) in raw.shots.iter().enumerate() {
-        let n = i + 1;
-        let at_ms = millis(*at);
-        match (at_ms, shots.last().map(|s: &ShotDef| s.at_ms)) {
-            (None, _) => err(format!("shot {n}: at {at} is not a time")),
-            (Some(ms), None) if ms != 0 => {
-                err(format!("shot {n}: the first shot must be at 0.0, not {at}"));
-            }
-            (Some(ms), Some(before)) if ms <= before => err(format!(
-                "shot {n}: at {at} must be after the shot before it; shots are in order of time"
-            )),
-            _ => {}
-        }
-        if let (Some(ms), Some(length)) = (at_ms, length_ms)
-            && ms >= length
-        {
-            err(format!(
-                "shot {n}: at {at} is not before the end ({} seconds)",
-                seconds(length)
-            ));
-        }
-        for problem in shot_problems(shot, refs) {
-            err(format!("shot {n}: {problem}"));
-        }
-        let mut checked = shot.checked(refs);
-        if let Shot::MapPan { action, .. } = &mut checked {
-            let mut problems = Vec::new();
-            *action = lists.of_shot(n, shot, &mut problems);
-            problems.into_iter().for_each(&mut err);
-        }
-        shots.push(ShotDef {
-            at_ms: at_ms.unwrap_or(0),
-            shot: checked,
-        });
-    }
-    lists.unused().into_iter().for_each(&mut err);
-    match length_ms {
-        Some(length_ms) if errors.is_empty() => Ok(CinematicDef {
-            id: raw.id,
-            music,
-            length_ms,
-            shots,
-        }),
-        _ => Err(errors),
-    }
+    frame::check(file, stem, &raw, refs.audio, lists)
 }
 
 /// The action lists of one cinematic file, as its shots use them.
@@ -443,12 +335,12 @@ struct ActionLists<'a, 'r> {
     refs: Refs<'r>,
     /// Each named list as checked against each battle it is used on, by
     /// (name, battle).
-    named: BTreeMap<(&'a str, &'a str), Vec<ActionDef>>,
+    named: BTreeMap<(&'a str, String), Vec<ActionDef>>,
     /// The named lists a shot has used.
     used: BTreeSet<&'a str>,
 }
 
-impl<'a> ActionLists<'a, '_> {
+impl ActionLists<'_, '_> {
     /// The action of `shot` (shot `n` of the file, counted from 1), if it
     /// is a map pan with one, adding what is wrong with it to `problems`.
     /// A named list's own problems are added the first time a shot uses it
@@ -456,7 +348,7 @@ impl<'a> ActionLists<'a, '_> {
     fn of_shot(
         &mut self,
         n: usize,
-        shot: &'a RawShot,
+        shot: &RawShot,
         problems: &mut Vec<String>,
     ) -> Option<ShotAction> {
         let RawShot::MapPan {
@@ -490,8 +382,8 @@ impl<'a> ActionLists<'a, '_> {
                     return None;
                 };
                 self.used.insert(name);
-                let key = (name.as_str(), battle.as_str());
-                if let Entry::Vacant(unchecked) = self.named.entry(key) {
+                let key = (name.as_str(), battle.clone());
+                if let Entry::Vacant(unchecked) = self.named.entry(key.clone()) {
                     let stage = Stage::battle(def?, refs);
                     let (actions, wrong) = action::check(list, &stage, refs.terrain);
                     let on = format!("actions \"{name}\" (on battle \"{battle}\")");
@@ -520,17 +412,25 @@ impl<'a> ActionLists<'a, '_> {
     }
 }
 
-/// `seconds` in whole milliseconds, or `None` if it isn't a time: not a
-/// number, or below 0.
-fn millis(seconds: f32) -> Option<u32> {
-    let ms = libm::round(f64::from(seconds) * 1000.0);
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)] // checked
-    (ms.is_finite() && (0.0..=f64::from(u32::MAX)).contains(&ms)).then_some(ms as u32)
-}
+/// The game's checks of each shot: its own problems, then its action's.
+impl ShotCheck<RawShot> for ActionLists<'_, '_> {
+    type Shot = Shot;
 
-/// `ms` in seconds, for a message.
-fn seconds(ms: u32) -> f64 {
-    f64::from(ms) / 1000.0
+    fn check(&mut self, n: usize, shot: &RawShot, problems: &mut Vec<String>) -> Shot {
+        let refs = self.refs;
+        for problem in shot_problems(shot, refs) {
+            problems.push(format!("shot {n}: {problem}"));
+        }
+        let mut checked = shot.checked(refs);
+        if let Shot::MapPan { action, .. } = &mut checked {
+            *action = self.of_shot(n, shot, problems);
+        }
+        checked
+    }
+
+    fn finish(&mut self, problems: &mut Vec<String>) {
+        problems.extend(self.unused());
+    }
 }
 
 /// Every problem with `shot` on its own, in plain words.
