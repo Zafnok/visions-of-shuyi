@@ -2,6 +2,10 @@
 //! backdrop (ADR-0048) behind a window of the console, panned by the pixel
 //! and zoomed in whole steps, with a caption and a text box over it. For
 //! checking by eye that a renderer keeps the scene sharp and seamless.
+//!
+//! The screen is the engine's (`shuyi_ui::debug::camera`, ticket 1154);
+//! this game gives it the test map as its map skin paints it, where the
+//! window and the box go, and what to say without the map.
 
 use crate::prelude::*;
 use alloc::rc::Rc;
@@ -9,110 +13,29 @@ use alloc::rc::Rc;
 use trpg_content::bundle::display_path;
 use trpg_core::Pos;
 
-use crate::audio::MenuSound;
-use crate::cinema::{self, MAX_ZOOM};
+use shuyi_ui::debug::CameraLayout;
+pub use shuyi_ui::debug::SceneCameraScreen;
+
 use crate::cinematic::MapPicture;
-use crate::color::UiColor;
-use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
-use crate::input::Action;
+use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::map_view::{CursorStyle, CursorView, MapScene};
-use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::widgets::help::{cursor_keys_name, help_line, key_name};
+use crate::screen::Ctx;
 
 /// The map shown: `assets-test/maps/test_small.map`.
 const MAP: &str = "test_small";
-/// Left column of the title and the lines under it.
-const LEFT: i32 = 2;
 /// The window the scene shows through: 384 × 224 console pixels, so the
 /// test map in glyphs (224 × 128) is smaller than it at 1× and bigger from
-/// 2× up.
-const WINDOW: Rect = Rect::new(26, 4, 48, 14);
-/// The text box drawn over the window's bottom-right corner.
-const TEXT_BOX: Rect = Rect::new(62, 15, 24, 5);
-/// The lines in the text box.
-const BOX_TEXT: [&str; 3] = ["A text box drawn", "over the scene", "hides it."];
-/// How fast a held cursor key pans, in scene pixels a second.
-const PAN_SPEED: f32 = 60.0;
+/// 2× up; and the text box drawn over its bottom-right corner.
+const LAYOUT: CameraLayout = CameraLayout {
+    window: Rect::new(26, 4, 48, 14),
+    text_box: Rect::new(62, 15, 24, 5),
+};
 
-/// Shows the test map through a window: the cursor actions pan (held),
-/// `Confirm` steps the zoom 1× to 4× and round again, `Cancel` closes.
-#[derive(Debug, Clone)]
-pub struct SceneCameraScreen {
-    /// The whole map, painted once by the map skin in use; `None` if the
-    /// content has no test map.
-    scene: Option<Rc<GlyphBuffer>>,
-    /// The scene pixel in the middle of the window.
-    centre: (f32, f32),
-    /// Console pixels per scene pixel.
-    zoom: u8,
-}
-
-impl SceneCameraScreen {
-    /// Name reported by [`Screen::name`].
-    pub const NAME: &'static str = "scene_camera";
-
-    /// The camera at 1× over the middle of the test map, as `ctx`'s map
-    /// skin paints it.
-    pub fn new(ctx: &Ctx) -> Self {
-        let scene = map_picture(ctx);
-        let (w, h) = scene.as_deref().map_or((0, 0), pixel_size);
-        #[allow(clippy::cast_precision_loss)] // pixel sizes are small
-        let centre = (w as f32 / 2.0, h as f32 / 2.0);
-        Self {
-            scene,
-            centre,
-            zoom: 1,
-        }
-    }
-
-    /// Console pixels per scene pixel: 1 to [`MAX_ZOOM`].
-    pub fn zoom(&self) -> u8 {
-        self.zoom
-    }
-
-    /// The scene pixel at the window's top-left ([`cinema::view`]).
-    pub fn origin_px(&self) -> (f32, f32) {
-        let scene = self.scene.as_deref().map_or((0, 0), pixel_size);
-        cinema::view(scene, window_px(), self.centre, self.zoom)
-    }
-
-    /// Moves the centre by `(dx, dy)` scene pixels, kept to the middle of
-    /// what the window can show: holding a key at an edge doesn't run the
-    /// centre away from it. Along an axis the whole scene fits in, that is
-    /// the scene's middle.
-    fn pan(&mut self, dx: f32, dy: f32) {
-        let scene = self.scene.as_deref().map_or((0, 0), pixel_size);
-        let clip = window_px();
-        let zoom = f32::from(self.zoom);
-        #[allow(clippy::cast_precision_loss)] // pixel sizes are small
-        let axis = |centre: f32, scene: u32, clip: u32| {
-            let (half, middle) = (clip as f32 / zoom / 2.0, scene as f32 / 2.0);
-            centre.clamp(half.min(middle), (scene as f32 - half).max(middle))
-        };
-        self.centre = (
-            axis(self.centre.0 + dx, scene.0, clip.0),
-            axis(self.centre.1 + dy, scene.1, clip.1),
-        );
-    }
-}
-
-/// The window's size in console pixels.
-fn window_px() -> (u32, u32) {
-    let px = |cells: i32, cell: u16| u32::try_from(cells).unwrap_or(0) * u32::from(cell);
-    (
-        px(WINDOW.w, ConsoleSpec::PC.cell_w),
-        px(WINDOW.h, ConsoleSpec::PC.cell_h),
-    )
-}
-
-/// `buf`'s size in its own pixels.
-fn pixel_size(buf: &GlyphBuffer) -> (u32, u32) {
-    let px = buf.pixel_bounds();
-    (
-        u32::try_from(px.w).unwrap_or(0),
-        u32::try_from(px.h).unwrap_or(0),
-    )
+/// The camera at 1× over the middle of the test map, as `ctx`'s map skin
+/// paints it.
+pub fn scene_camera(ctx: &Ctx) -> SceneCameraScreen {
+    let missing = format!("No {}", display_path(&format!("maps/{MAP}.map")));
+    SceneCameraScreen::new(ctx.console, map_picture(ctx), LAYOUT, missing)
 }
 
 /// The whole test map with a path and the cursor on it (pixel-placed
@@ -133,96 +56,45 @@ fn map_picture(ctx: &Ctx) -> Option<Rc<GlyphBuffer>> {
         brightness: 1.0,
         style: CursorStyle::Corners,
     });
-    MapPicture::paint(ctx, ctx.game.map_skin.as_ref(), &scene).map(|picture| picture.scene)
-}
-
-impl Screen<Shuyi> for SceneCameraScreen {
-    fn name(&self) -> &'static str {
-        Self::NAME
-    }
-
-    fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        for &action in &input.actions {
-            match action {
-                Action::Cancel => {
-                    ctx.audio.menu(MenuSound::Cancel);
-                    return Transition::Pop;
-                }
-                Action::Confirm => {
-                    ctx.audio.menu(MenuSound::Select);
-                    self.zoom = self.zoom % MAX_ZOOM + 1;
-                    self.pan(0.0, 0.0);
-                }
-                _ => {}
-            }
-        }
-        let step = if input.dt.is_finite() {
-            PAN_SPEED * input.dt.max(0.0)
-        } else {
-            0.0
-        };
-        let held = |action| f32::from(u8::from(input.is_held(action)));
-        let dx = held(Action::CursorRight) - held(Action::CursorLeft);
-        let dy = held(Action::CursorDown) - held(Action::CursorUp);
-        self.pan(dx * step, dy * step);
-        Transition::None
-    }
-
-    fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        let c = |u| ctx.palette.get(u);
-        let (black, text, dim, hi) = (
-            c(UiColor::Black),
-            c(UiColor::Text),
-            c(UiColor::TextDim),
-            c(UiColor::TextHighlight),
-        );
-        buf.fill_rect(buf.bounds(), Cell::new(' ', text, black));
-        buf.print(LEFT, 0, "Scene camera (debug)", hi, black);
-        let km = ctx.help_keys();
-        let help = help_line(&[
-            (Some(cursor_keys_name(km)), "pan (hold)"),
-            (Some(key_name(km, Action::Confirm)), "zoom"),
-            (Some(key_name(km, Action::Cancel)), "back"),
-        ]);
-        buf.print(LEFT, i32::from(buf.height()) - 1, &help, dim, black);
-
-        let Some(scene) = &self.scene else {
-            let missing = format!("No {}", display_path(&format!("maps/{MAP}.map")));
-            buf.print(LEFT, 2, &missing, text, black);
-            return;
-        };
-        let (x, y) = self.origin_px();
-        let info = format!("zoom {}x   window starts at {x:.1},{y:.1}", self.zoom);
-        buf.print(LEFT, 2, &info, text, black);
-
-        let frame = Rect::new(WINDOW.x - 1, WINDOW.y - 1, WINDOW.w + 2, WINDOW.h + 2);
-        buf.draw_box(frame, BoxStyle::Single, c(UiColor::PanelBorder), black);
-        buf.fill_rect(WINDOW, Cell::see_through(' ', text));
-        buf.set_backdrop(Rc::clone(scene), WINDOW, (x, y), self.zoom);
-        // Glyphs over the scene, with no box behind them.
-        buf.print_fg(WINDOW.x + 1, WINDOW.y, "Text over the scene", hi);
-
-        let panel_bg = c(UiColor::PanelBg);
-        buf.fill_rect(TEXT_BOX, Cell::new(' ', text, panel_bg));
-        buf.draw_box(
-            TEXT_BOX,
-            BoxStyle::Double,
-            c(UiColor::PanelBorderFocus),
-            panel_bg,
-        );
-        for (row, line) in (TEXT_BOX.y + 1..).zip(BOX_TEXT) {
-            buf.print(TEXT_BOX.x + 2, row, line, text, panel_bg);
-        }
-    }
+    MapPicture::paint(ctx, ctx.game.map_skin.as_ref(), &scene).map(|picture| picture.0.scene)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::color::Rgb;
+    use crate::color::UiColor;
     use crate::console::{ConsoleSizes, ConsoleSpec};
+    use crate::glyph_buffer::Cell;
+    use crate::input::Action;
     use crate::map_view::skin_named;
     use crate::screen::tests::ctx;
+    use crate::screen::{FrameInput, Screen, Shuyi, Transition};
+
+    const WINDOW: Rect = LAYOUT.window;
+    const TEXT_BOX: Rect = LAYOUT.text_box;
+    const LEFT: i32 = 2;
+
+    fn update(screen: &mut SceneCameraScreen, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        Screen::<Shuyi>::update(screen, ctx, input)
+    }
+
+    /// Steps the zoom to `zoom` with Confirm, from whatever it is.
+    fn zoom_to(screen: &mut SceneCameraScreen, ctx: &mut Ctx, zoom: u8) {
+        while screen.zoom() != zoom {
+            update(screen, ctx, &frame(&[Action::Confirm], 0.0, &[]));
+        }
+    }
+
+    /// Pans by `(dx, dy)` scene pixels, holding the cursor keys that long.
+    fn pan(screen: &mut SceneCameraScreen, ctx: &mut Ctx, dx: f32, dy: f32) {
+        use Action::{CursorDown, CursorLeft, CursorRight, CursorUp};
+        let (x, y) = (
+            if dx < 0.0 { CursorLeft } else { CursorRight },
+            if dy < 0.0 { CursorUp } else { CursorDown },
+        );
+        update(screen, ctx, &frame(&[], dx.abs() / 60.0, &[x]));
+        update(screen, ctx, &frame(&[], dy.abs() / 60.0, &[y]));
+    }
 
     fn draw(ctx: &Ctx, screen: &SceneCameraScreen) -> GlyphBuffer {
         let p = &ctx.palette;
@@ -230,7 +102,7 @@ mod tests {
             ConsoleSpec::PC,
             Cell::new('x', p.get(UiColor::Text), p.get(UiColor::PanelBg)),
         );
-        screen.draw(ctx, &mut buf);
+        Screen::<Shuyi>::draw(screen, ctx, &mut buf);
         buf
     }
 
@@ -245,9 +117,7 @@ mod tests {
 
     #[test]
     fn the_sizes_are_the_windows_and_the_buffers_pixels() {
-        assert_eq!(window_px(), (384, 224));
-        let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
-        assert_eq!(pixel_size(&GlyphBuffer::new(3, 2, blank)), (24, 32));
+        assert_eq!(scene_camera(&ctx()).window_px(), (384, 224));
         // The text box overlaps the window's corner and sticks out of it.
         let overlap = WINDOW.intersect(&TEXT_BOX).unwrap();
         assert_eq!(overlap, Rect::new(62, 15, 12, 3));
@@ -256,37 +126,37 @@ mod tests {
     #[test]
     fn the_scene_is_the_whole_test_map_as_the_skin_paints_it() {
         let mut ctx = ctx();
-        let screen = SceneCameraScreen::new(&ctx);
-        assert_eq!(screen.name(), "scene_camera");
+        let screen = scene_camera(&ctx);
+        assert_eq!(Screen::<Shuyi>::name(&screen), "scene_camera");
         // 14 × 8 tiles of two cells by one.
-        let scene = screen.scene.as_deref().unwrap();
+        let scene = screen.picture().unwrap();
         assert_eq!((scene.width(), scene.height()), (28, 8));
         assert_ne!(scene.get(0, 0).unwrap().glyph, ' ');
         assert!(scene.backdrop().is_none());
         // The path and the cursor are rectangles on it.
         assert!(!scene.overlays().is_empty());
-        assert!(near(screen.centre, (112.0, 64.0)));
+        assert!(near(screen.centre(), (112.0, 64.0)));
         assert_eq!(screen.zoom(), 1);
         // The test tileset's tiles are 24 px: 336 × 192, in whole cells.
         ctx.game.map_skin = skin_named(&ctx.game.content, "sprite").unwrap();
-        let screen = SceneCameraScreen::new(&ctx);
-        let scene = screen.scene.as_deref().unwrap();
+        let screen = scene_camera(&ctx);
+        let scene = screen.picture().unwrap();
         assert_eq!((scene.width(), scene.height()), (42, 12));
         assert!(!scene.sprites().is_empty());
-        assert!(near(screen.centre, (168.0, 96.0)));
+        assert!(near(screen.centre(), (168.0, 96.0)));
     }
 
     #[test]
     fn the_scene_shows_only_through_the_windows_see_through_cells() {
         let ctx = ctx();
-        let screen = SceneCameraScreen::new(&ctx);
+        let screen = scene_camera(&ctx);
         let buf = draw(&ctx, &screen);
         let backdrop = buf.backdrop().unwrap();
         assert_eq!(backdrop.clip(), WINDOW);
         assert_eq!(backdrop.zoom(), 1);
         // A scene smaller than the window is centred in it.
         assert!(near(backdrop.origin_px(), (-80.0, -48.0)));
-        assert_eq!(backdrop.scene(), screen.scene.as_deref().unwrap());
+        assert_eq!(backdrop.scene(), &**screen.picture().unwrap());
         for y in 0..i32::from(ConsoleSpec::PC.rows) {
             for x in 0..i32::from(ConsoleSpec::PC.cols) {
                 let hole = WINDOW.contains(x, y) && !TEXT_BOX.contains(x, y);
@@ -307,10 +177,10 @@ mod tests {
     #[test]
     fn confirm_steps_the_zoom_through_the_whole_steps_and_round() {
         let mut ctx = ctx();
-        let mut screen = SceneCameraScreen::new(&ctx);
+        let mut screen = scene_camera(&ctx);
         let mut zooms = Vec::new();
         for _ in 0..5 {
-            let stay = screen.update(&mut ctx, &frame(&[Action::Confirm], 0.0, &[]));
+            let stay = update(&mut screen, &mut ctx, &frame(&[Action::Confirm], 0.0, &[]));
             assert!(matches!(stay, Transition::None));
             zooms.push(screen.zoom());
             assert_eq!(
@@ -323,7 +193,8 @@ mod tests {
         let cues: Vec<_> = sounds.iter().map(|s| s.cue()).collect();
         assert_eq!(cues, [Some("menu_select"); 5]);
         // Two presses in one frame are two steps.
-        screen.update(
+        update(
+            &mut screen,
             &mut ctx,
             &frame(&[Action::Confirm, Action::Confirm], 0.0, &[]),
         );
@@ -334,43 +205,67 @@ mod tests {
     fn held_cursor_keys_pan_by_the_pixel_and_stop_at_the_edges() {
         use Action::{CursorDown, CursorLeft, CursorRight, CursorUp};
         let mut ctx = ctx();
-        let mut screen = SceneCameraScreen::new(&ctx);
+        let mut screen = scene_camera(&ctx);
         // At 1× the scene is smaller than the window: nothing to pan.
-        screen.update(&mut ctx, &frame(&[], 1.0, &[CursorRight, CursorDown]));
+        update(
+            &mut screen,
+            &mut ctx,
+            &frame(&[], 1.0, &[CursorRight, CursorDown]),
+        );
         assert!(near(screen.origin_px(), (-80.0, -48.0)));
         // At 4× the window shows 96 × 56 of 224 × 128, from the middle.
-        screen.zoom = 4;
-        screen.pan(0.0, 0.0);
+        zoom_to(&mut screen, &mut ctx, 4);
         assert!(near(screen.origin_px(), (64.0, 36.0)));
         // 60 px a second: a tenth of a second is 6 px, half a frame less.
-        screen.update(&mut ctx, &frame(&[], 0.1, &[CursorRight]));
+        update(&mut screen, &mut ctx, &frame(&[], 0.1, &[CursorRight]));
         assert!(near(screen.origin_px(), (70.0, 36.0)));
-        screen.update(&mut ctx, &frame(&[], 0.0125, &[CursorDown]));
+        update(&mut screen, &mut ctx, &frame(&[], 0.0125, &[CursorDown]));
         assert!(near(screen.origin_px(), (70.0, 36.75)));
-        screen.update(&mut ctx, &frame(&[], 0.1, &[CursorLeft, CursorUp]));
+        update(
+            &mut screen,
+            &mut ctx,
+            &frame(&[], 0.1, &[CursorLeft, CursorUp]),
+        );
         assert!(near(screen.origin_px(), (64.0, 30.75)));
         // Opposite keys cancel; a pressed key that isn't held does nothing.
-        screen.update(
+        update(
+            &mut screen,
             &mut ctx,
             &frame(&[CursorRight], 0.1, &[CursorLeft, CursorRight]),
         );
         assert!(near(screen.origin_px(), (64.0, 30.75)));
         // Not held: no pan, however long the frame.
-        screen.update(&mut ctx, &frame(&[], 5.0, &[]));
+        update(&mut screen, &mut ctx, &frame(&[], 5.0, &[]));
         assert!(near(screen.origin_px(), (64.0, 30.75)));
         // Each edge stops the window, and the centre with it: one step
         // back moves at once.
-        screen.update(&mut ctx, &frame(&[], 60.0, &[CursorRight, CursorDown]));
+        update(
+            &mut screen,
+            &mut ctx,
+            &frame(&[], 60.0, &[CursorRight, CursorDown]),
+        );
         assert!(near(screen.origin_px(), (128.0, 72.0)));
-        assert!(near(screen.centre, (176.0, 100.0)));
-        screen.update(&mut ctx, &frame(&[], 0.1, &[CursorLeft, CursorUp]));
+        assert!(near(screen.centre(), (176.0, 100.0)));
+        update(
+            &mut screen,
+            &mut ctx,
+            &frame(&[], 0.1, &[CursorLeft, CursorUp]),
+        );
         assert!(near(screen.origin_px(), (122.0, 66.0)));
-        screen.update(&mut ctx, &frame(&[], 60.0, &[CursorLeft, CursorUp]));
+        update(
+            &mut screen,
+            &mut ctx,
+            &frame(&[], 60.0, &[CursorLeft, CursorUp]),
+        );
         assert!(near(screen.origin_px(), (0.0, 0.0)));
-        assert!(near(screen.centre, (48.0, 28.0)));
+        assert!(near(screen.centre(), (48.0, 28.0)));
         // A bad frame time moves nothing.
         for dt in [f32::NAN, f32::INFINITY, -1.0] {
-            screen.update(&mut ctx, &frame(&[], dt, &[CursorRight, CursorDown]));
+            update(
+                &mut screen,
+                &mut ctx,
+                &frame(&[], dt, &[CursorRight, CursorDown]),
+            );
             assert!(near(screen.origin_px(), (0.0, 0.0)), "{dt}");
         }
         // The frame shows where the window is.
@@ -381,36 +276,41 @@ mod tests {
     #[test]
     fn zooming_keeps_the_point_where_the_window_can_show_it() {
         let mut ctx = ctx();
-        let mut screen = SceneCameraScreen::new(&ctx);
-        screen.zoom = 4;
-        screen.pan(-20.0, 10.0);
-        assert!(near(screen.centre, (92.0, 74.0)));
+        let mut screen = scene_camera(&ctx);
+        zoom_to(&mut screen, &mut ctx, 4);
+        pan(&mut screen, &mut ctx, -20.0, 10.0);
+        assert!(near(screen.centre(), (92.0, 74.0)));
         // 4× → 1×: the whole scene fits, so the centre is its middle.
-        screen.update(&mut ctx, &frame(&[Action::Confirm], 0.0, &[]));
+        update(&mut screen, &mut ctx, &frame(&[Action::Confirm], 0.0, &[]));
         assert!(near(screen.origin_px(), (-80.0, -48.0)));
-        assert!(near(screen.centre, (112.0, 64.0)));
+        assert!(near(screen.centre(), (112.0, 64.0)));
         // → 2× → 3×: 128 × 74.67 shown, still from the middle.
-        screen.update(&mut ctx, &frame(&[Action::Confirm; 2], 0.0, &[]));
-        assert!(near(screen.centre, (112.0, 64.0)));
+        update(
+            &mut screen,
+            &mut ctx,
+            &frame(&[Action::Confirm; 2], 0.0, &[]),
+        );
+        assert!(near(screen.centre(), (112.0, 64.0)));
         // 3× → 4× near the top-left corner: the point is kept.
-        screen.pan(-60.0, -20.0);
-        assert!(near(screen.centre, (64.0, 44.0)));
-        screen.update(&mut ctx, &frame(&[Action::Confirm], 0.0, &[]));
-        assert!(near(screen.centre, (64.0, 44.0)));
+        pan(&mut screen, &mut ctx, -60.0, -20.0);
+        assert!(near(screen.centre(), (64.0, 44.0)));
+        update(&mut screen, &mut ctx, &frame(&[Action::Confirm], 0.0, &[]));
+        assert!(near(screen.centre(), (64.0, 44.0)));
         assert!(near(screen.origin_px(), (16.0, 16.0)));
         // At 3× the window's middle can't be nearer the edge than half of
         // what it shows: 64 and 37.33.
-        screen.zoom = 3;
-        screen.pan(-500.0, -500.0);
-        assert!(near(screen.centre, (64.0, 112.0 / 3.0)));
+        zoom_to(&mut screen, &mut ctx, 3);
+        pan(&mut screen, &mut ctx, -500.0, -500.0);
+        assert!(near(screen.centre(), (64.0, 112.0 / 3.0)));
         assert!(near(screen.origin_px(), (0.0, 0.0)));
     }
 
     #[test]
     fn cancel_closes_with_the_cancel_sound() {
         let mut ctx = ctx();
-        let mut screen = SceneCameraScreen::new(&ctx);
-        let pop = screen.update(
+        let mut screen = scene_camera(&ctx);
+        let pop = update(
+            &mut screen,
             &mut ctx,
             &frame(&[Action::Cancel, Action::Confirm], 0.0, &[]),
         );
@@ -425,9 +325,10 @@ mod tests {
     fn says_so_when_the_map_is_missing() {
         let mut ctx = ctx();
         ctx.game.content.maps.clear();
-        let mut screen = SceneCameraScreen::new(&ctx);
-        assert!(screen.scene.is_none());
-        screen.update(
+        let mut screen = scene_camera(&ctx);
+        assert!(screen.picture().is_none());
+        update(
+            &mut screen,
             &mut ctx,
             &frame(&[Action::Confirm], 0.5, &[Action::CursorRight]),
         );

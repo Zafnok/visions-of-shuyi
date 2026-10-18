@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5
 effort: high
-status: todo
+status: done
 blocked_by: ["1115"]
 nick_input: none
-completed:
+completed: 2026-10-18
 ---
 
 # 1154 — The map picture and the map pan move to the engine
@@ -93,14 +93,14 @@ None. Nothing a player sees changes.
 
 ## Acceptance criteria
 
-- [ ] `shuyi_ui::grid::picture::MapPicture` paints the toy's field in both
+- [x] `shuyi_ui::grid::picture::MapPicture` paints the toy's field in both
       skins in a test in `shuyi-ui` alone.
-- [ ] The game's `MapPicture` and `MapPan` shot use the engine's; the
+- [x] The game's `MapPicture` and `MapPan` shot use the engine's; the
       title's frames are byte-identical before and after (`frame-png`).
-- [ ] The scene camera is the engine's; the toy opens it in a Harness test;
+- [x] The scene camera is the engine's; the toy opens it in a Harness test;
       the game's scene camera tests and snapshots are unchanged.
-- [ ] `cargo xtask check-engine-boundary` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo xtask check-engine-boundary` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -110,3 +110,39 @@ None. Nothing a player sees changes.
   Completion notes.
 
 ## Completion notes
+
+- **Engine**: `shuyi_ui::grid::picture` has `MapPicture` (`paint` by a
+  `GridSkin` and a `UnitPainter`, and `painted`, the same for any painter
+  given a tile size), `ROOMY` and `pixel_size`; its tests paint the toy's
+  field in both skins. `shuyi_ui::cinematic` has `PanFrame`, `Pan::frame`
+  and `paint_pan`. `shuyi_ui::debug::camera` has the scene camera
+  (`SceneCameraScreen`, `CameraLayout`, `SceneCameraView`), painted by
+  `debug::glyph::paint_camera` (ADR-0054's view and skin). The toy gives
+  its field a `whole()` scene, a `picture()` and a `camera()` in a
+  `CAMERA` layout; `tests/it/scene_camera.rs` opens it through the
+  Harness, with two new snapshots.
+- **Game**: `cinematic::MapPicture` is a newtype over the engine's (it
+  derefs to it, so `picture.scene`, `tile_px`, `size_px()` and
+  `point_px()` read as before) and keeps `paint(ctx, skin, scene)`,
+  painting through `MapSkin::paint` into the buffer `painted` makes
+  (`MapSkin::paint` was enough: no new method). The `MapPan` shot takes
+  its frame from `Pan::frame` and paints with `paint_pan`; its `Frame`
+  variant is unchanged. `debug::scene_camera` is now `scene_camera(ctx)`
+  giving the engine's screen the test map's picture, its window and box,
+  and the "No assets-test/maps/test_small.map" line.
+- **Deviation**: the camera's other texts (the title, the caption over
+  the scene, the box's three lines, the help labels) are the engine's,
+  as the debug menu's title and help are: debug tools are English only,
+  so a game has nothing to give there. The game gives the layout and
+  the missing-map line.
+- **Tests**: the game's scene camera unit tests keep every number; the
+  ones that set the zoom or panned through private fields now press
+  Confirm or hold the cursor keys (helpers `zoom_to`, `pan`). The pan and
+  zoom logic is also tested on the toy in the engine. The game's
+  integration tests and snapshots are untouched and pass.
+- **Frames**: `cargo xtask frame-png` before and after, byte-identical,
+  44 pictures: the PC title at 15.5, 16–20, 21.5, 23, 25, 27.5, 30, 33,
+  36, 40 s and every 5 s to 140 s; `--playdate` at 15.5, 20, 30, 45, 60,
+  90, 120 s; and the scene camera at 1×, 3× (after half a second) and
+  4×.
+- No gameplay rules decided. Nothing a player sees changes.

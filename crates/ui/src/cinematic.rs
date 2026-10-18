@@ -3,8 +3,10 @@
 //! and a [`CinematicPlayer`] draws that shot.
 //!
 //! The timeline, the easing, the pan and the player's skeleton are the
-//! engine's (`shuyi_ui::cinematic`, ticket 1113); this game's shot kinds,
-//! and how each is drawn ([`ShotPainter`]), are here.
+//! engine's (`shuyi_ui::cinematic`, ticket 1113), and so are the map's
+//! picture and the pan's frame and paint (`shuyi_ui::grid::MapPicture`,
+//! `PanFrame`, ticket 1154); this game's shot kinds, and how each is drawn
+//! ([`ShotPainter`]), are here.
 //!
 //! **Every frame is drawn from the time alone**: nothing is carried from
 //! one frame to the next. So whoever owns the clock can follow the music,
@@ -22,7 +24,8 @@ use crate::prelude::*;
 use alloc::collections::BTreeMap;
 use alloc::rc::Rc;
 
-use shuyi_ui::cinematic::ShotPainter;
+use shuyi_ui::cinematic::{PanFrame, ShotPainter, paint_pan};
+use shuyi_ui::grid::picture::ROOMY;
 use trpg_content::{ImageId, Shot, ShotAction, Side, battle_campaign};
 use trpg_core::{BattleDef, GameMode, LEAD_ID, LeadGender, LeadProfile, Pos};
 
@@ -46,17 +49,11 @@ use faces::{Face, draw_faces, first_x};
 pub use shuyi_ui::cinematic::{Moment, Pan, ShotAt, Timeline, ease_in_out, millis};
 use talk::{TalkBox, talk_at};
 
-/// An area surely big enough for one tile of any skin, to ask its size.
-const ROOMY: Rect = Rect::new(0, 0, 64, 64);
-
-/// A whole map as the map skin painted it, to pan over.
+/// A whole map as the map skin painted it, to pan over: the engine's
+/// picture ([`shuyi_ui::grid::MapPicture`], ticket 1154), painted by this
+/// game's [`MapSkin`].
 #[derive(Debug, Clone, PartialEq)]
-pub struct MapPicture {
-    /// The picture: just big enough for the map.
-    pub scene: Rc<GlyphBuffer>,
-    /// One tile's size in the picture, in pixels.
-    pub tile_px: (i32, i32),
-}
+pub struct MapPicture(pub shuyi_ui::grid::MapPicture);
 
 impl MapPicture {
     /// All of `scene` (a view of a whole map, from its first tile) painted
@@ -64,42 +61,21 @@ impl MapPicture {
     /// place the scene's first tile (a scene of no tiles).
     pub fn paint(ctx: &Ctx, skin: &dyn MapSkin, scene: &MapScene) -> Option<Self> {
         let tile = skin.tile_px(scene, ROOMY, scene.origin)?;
-        let cells = |tiles: i32, tile_px: i32, cell_px: u16| {
-            let cell_px = i32::from(cell_px);
-            u16::try_from((tiles * tile_px + cell_px - 1) / cell_px).unwrap_or(0)
-        };
-        let console = ctx.console;
-        let (w, h) = (
-            cells(scene.size.0, tile.w, console.cell_w),
-            cells(scene.size.1, tile.h, console.cell_h),
-        );
         let c = |u| ctx.palette.get(u);
         let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
-        let mut buf = GlyphBuffer::with_spec(console.sized(w, h), blank);
-        skin.paint(ctx, scene, buf.bounds(), &mut buf);
-        Some(Self {
-            scene: Rc::new(buf),
-            tile_px: (tile.w, tile.h),
-        })
+        let paint = |buf: &mut GlyphBuffer| skin.paint(ctx, scene, buf.bounds(), buf);
+        let tile = (tile.w, tile.h);
+        let picture =
+            shuyi_ui::grid::MapPicture::painted(tile, scene.size, ctx.console, blank, paint);
+        Some(Self(picture))
     }
+}
 
-    /// The picture's size in its own pixels.
-    pub fn size_px(&self) -> (u32, u32) {
-        let px = self.scene.pixel_bounds();
-        (
-            u32::try_from(px.w).unwrap_or(0),
-            u32::try_from(px.h).unwrap_or(0),
-        )
-    }
+impl core::ops::Deref for MapPicture {
+    type Target = shuyi_ui::grid::MapPicture;
 
-    /// The picture's pixel at the map point `tiles` (a whole number is the
-    /// middle of that tile, [`trpg_content::TilePoint`]).
-    #[allow(clippy::cast_precision_loss)] // a tile is a few pixels
-    pub fn point_px(&self, tiles: (f32, f32)) -> (f32, f32) {
-        (
-            (tiles.0 + 0.5) * self.tile_px.0 as f32,
-            (tiles.1 + 0.5) * self.tile_px.1 as f32,
-        )
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -173,7 +149,7 @@ enum Built {
 pub enum Frame {
     /// A map behind the whole screen.
     MapPan {
-        /// The picture's pixel at the screen's top-left ([`Pan::origin_px`]).
+        /// The picture's pixel at the screen's top-left ([`PanFrame`]).
         origin_px: (f32, f32),
         /// Screen pixels per picture pixel.
         zoom: u8,
@@ -251,10 +227,11 @@ impl ShotPainter for Built {
                 stage: Some(Stage { picture, .. }),
                 pan,
                 ..
-            } => Frame::MapPan {
-                origin_px: pan.origin_px(ctx.console, picture.size_px(), screen, moment.progress),
-                zoom: pan.zoom,
-            },
+            } => {
+                let PanFrame { origin_px, zoom } =
+                    pan.frame(ctx.console, picture.size_px(), screen, moment.progress);
+                Frame::MapPan { origin_px, zoom }
+            }
             Built::Logo => Frame::Logo {
                 sparks: (ctx.idle_motion == IdleMotion::On).then_some(moment.t_ms),
             },
@@ -300,10 +277,8 @@ impl ShotPainter for Built {
                 let acted = action.as_ref().and_then(|_| self.scene(moment.into_ms));
                 let skin = shot_skin(ctx);
                 let now = acted.and_then(|scene| MapPicture::paint(ctx, skin.as_ref(), &scene));
-                let picture = now.map_or_else(|| Rc::clone(&stage.picture.scene), |p| p.scene);
-                let text = ctx.palette.get(UiColor::Text);
-                buf.fill_rect(buf.bounds(), Cell::see_through(' ', text));
-                buf.set_backdrop(picture, buf.bounds(), origin_px, zoom);
+                let picture = now.map_or_else(|| Rc::clone(&stage.picture.scene), |p| p.0.scene);
+                paint_pan(&ctx.palette, picture, PanFrame { origin_px, zoom }, buf);
             }
             (Frame::Logo { sparks }, _) => paint_logo(ctx, cast.backdrop, sparks, buf),
             (Frame::Talk { index, shown }, Built::Talk { boxes }) => {
