@@ -55,7 +55,7 @@ playtest <battle-id> [options]     a bot plays a battle many times and reports (
 portrait-import <busts> <id>       cut bought busts into portraits (portrait-import --help)\n  \
 lines [scene]                      list every dialogue line with its line id (lines --help)\n  \
 voice-test-clips                   make the tone clips that test voice playback (needs ffmpeg)\n  \
-playdate [--release] [--bench] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx\n                                     (--bench: the build that times the renderer, its own .pdx)
+playdate [--release] [--bench] [--private-assets] [--device|--simulator|--both]\n                                     build the Playdate game into target/playdate/VisionsOfShuyi.pdx\n                                     (--bench: the build that times the renderer, its own .pdx;\n                                     --private-assets: with the bought art)
   playdate-images                    write the Playdate's one-bit pictures to look at, into
                                      target/playdate/images/ (and the bought ones' into assets-private/)
 

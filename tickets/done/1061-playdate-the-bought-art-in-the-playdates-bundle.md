@@ -5,10 +5,10 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["1040"]
 nick_input: none
-completed:
+completed: 2026-10-18
 ---
 
 # 1061 — The bought art in the Playdate's bundle
@@ -82,15 +82,15 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask playdate --private-assets` builds a `.pdx` whose
+- [x] `cargo xtask playdate --private-assets` builds a `.pdx` whose
       portraits are the bought faces in one-bit (seen in the Simulator).
-- [ ] Without the feature the Playdate's bundle is as before (the
+- [x] Without the feature the Playdate's bundle is as before (the
       Chapter 1 test passes unchanged).
-- [ ] A `.1bit` file beside a PNG in the private layer is embedded as it
+- [x] A `.1bit` file beside a PNG in the private layer is embedded as it
       is (a `build.rs`-level or xtask test on a scratch folder, not the
       bought art).
-- [ ] Nothing made from the bought art is committed.
-- [ ] All gates in the `run-gates` skill pass, and the CI `playdate` job.
+- [x] Nothing made from the bought art is committed.
+- [x] All gates in the `run-gates` skill pass, and the CI `playdate` job.
 
 ## Tests required
 
@@ -100,5 +100,33 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Private layer** (ADR-0090): with `private-assets`, `build.rs` writes
+  `playdate_private_files.rs` from `assets-private/game/` (the
+  `playdate-bundle.txt` rules that match a bought file leave it out; a
+  rule matching none is fine there), converting its pictures into
+  `OUT_DIR/onebit-private/`. A fighter's scale comes from the private
+  sidecar, else the public one. Without the feature the table is `&[]`
+  and never included. `playdate_layers()` lays it over the public layer
+  with `.private()`; without `std`, `layers()` is `playdate_layers()`.
+- **Touch-ups**: `playdate_images::touch_ups` / `touched_up` find a
+  `<stem>.1bit` beside a one-bit-kind PNG. `build.rs` embeds it at the
+  PNG's path as it is and drops it at its own path; `playdate-images`
+  copies it and draws only the styles it holds. Tested on path lists
+  (content) and a scratch folder (xtask).
+- **`cargo xtask playdate --private-assets`**: an `Art` field on the
+  options (clippy refuses a fourth bool), adding `private-assets` to
+  `trpg-playdate`'s features (which forwards to `trpg-content`'s), for
+  the game and the bench build, into the same `.pdx`.
+- **Seen in the Simulator**: `cargo xtask playdate --release
+  --private-assets` built; the title showed the bought backdrop and
+  "Choose your lead" showed the bought lead's face in one-bit (style A).
+  The face runs off the bottom of the 240-pixel screen: that layout is
+  1042/1043's. No screenshot or file from the art is committed.
+- `cargo test -p trpg-playdate --features private-assets` (the Chapter 1
+  test on the Playdate's bundle with the bought art) passes too.
+- **Deviation**: the unoptimized build (`cargo xtask playdate` without
+  `--release`) does not pack: the SDK's `pdc` crashes on its 80 MB
+  `pdex.elf`, with or without the bought art, so it is not this ticket's.
+  Follow-up: **1062**.
+- No gameplay rules decided.
+
