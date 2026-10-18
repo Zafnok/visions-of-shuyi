@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-18
 ---
 
 # 1156 — The engine's help lines fit a narrow console
@@ -53,11 +53,11 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo shuyi frame-png keys.png --keys "Down Enter Down Down Down Down Down Down Enter"`
+- [x] `cargo shuyi frame-png keys.png --keys "Down Enter Down Down Down Down Down Down Enter"`
       from `engine/examples/hello-grid/` shows the help line from its
       first word, cut at the right with `…`.
-- [ ] No snapshot of the game (`crates/`) changes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] No snapshot of the game (`crates/`) changes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -65,5 +65,13 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- `cut` moved from the Key bindings skin to `engine/crates/ui/src/screens.rs`
+  (public, beside `print_centred`); the skin imports it from there.
+- `print_centred` prints a text wider than the buffer at column 0, cut to
+  the buffer's width with a `…` as its last cell. A text that fits is
+  placed as before, so no snapshot changed.
+- Tests: the ticket's 10-cell buffer / 14-character text case, and `cut`'s
+  own cases (fits, cut, 1 cell, 0 cells).
+- Hello, Grid's Key bindings frame now reads
+  `arrows move · Enter bind · Delete clear · Backs…`.
+- No follow-up tickets. No gameplay rules decided.
