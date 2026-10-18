@@ -334,6 +334,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "hello-grid"
+version = "0.3.0"
+dependencies = [
+ "hello-grid",
+ "include_dir",
+ "insta",
+ "macroquad",
+ "ron",
+ "serde",
+ "shuyi-app",
+ "shuyi-assets",
+ "shuyi-cli",
+ "shuyi-core",
+ "shuyi-ui",
+]
+
+[[package]]
 name = "hound"
 version = "3.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
