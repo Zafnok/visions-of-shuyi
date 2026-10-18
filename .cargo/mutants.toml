@@ -12,7 +12,9 @@
 # format's and input's tests (ticket 1107), built only for tests; so is
 # `shuyi-ui`'s toy game (`toy.rs`, ticket 1109, and its grid map in
 # `toy/`, ticket 1115), which the tests of the screens, the context, the
-# frame loop and the grid run on.
+# frame loop and the grid run on. `shuyi-cli`'s toy tools (`toy.rs`,
+# ticket 1117) are that toy's `frame-png` and `lang-status`, for the
+# tool's own tests.
 exclude_globs = [
     "crates/app/**",
     "engine/crates/app/**",
@@ -20,6 +22,7 @@ exclude_globs = [
     "engine/crates/assets/src/keymap/sample.rs",
     "engine/crates/ui/src/toy.rs",
     "engine/crates/ui/src/toy/**",
+    "engine/crates/cli/src/toy.rs",
 ]
 timeout_multiplier = 3.0
 # Mutants no test can catch (ticket 1105), each for the reason beside it:
@@ -36,4 +39,7 @@ exclude_re = [
     # `Plain` has no lines of its own (`NoDirective` has no values), so its
     # `direct` can never run (ticket 1112).
     "<impl DialogueHooks for Plain>::direct",
+    # `web`'s real `wasm-opt` is an optional tool no test machine is sure
+    # to have; the logic around it runs on a fake (ticket 1117).
+    "<impl WasmOpt for RealWasmOpt>::optimize",
 ]

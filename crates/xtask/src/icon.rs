@@ -12,7 +12,7 @@ use std::path::Path;
 
 use trpg_content::FontAtlasDef;
 
-use crate::font_atlas::{decode_png, encode_png};
+use shuyi_cli::codec::{decode_png, encode_png};
 
 /// One design: a glyph in a colour on a background with a border.
 struct Option_ {

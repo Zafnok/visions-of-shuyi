@@ -1,42 +1,53 @@
-//! `cargo xtask frame-png`: renders a Harness frame to a PNG without a
-//! window (ticket 0232, ADR-0038 rule 4), for looking at a skin, a picture
-//! or a mockup. Never a gate: snapshots stay text (ADR-0007).
+//! `frame-png`: renders a frame of a game in the test Harness to a PNG
+//! without a window, for looking at a skin, a picture or a mockup. Never a
+//! gate: snapshots stay text.
 //!
-//! [`Painter`] is a software copy of `app`'s `Renderer::draw`, pixel for
+//! The command plays a [`Script`] of keys, controller buttons and waits in
+//! the game's Harness, which the game's [`GameTools::frame`] starts with
+//! the game's own options, and writes the picture the game paints of it.
+//! A game paints a frame with [`Painter`], or, for a one-bit screen, with
+//! the one-bit renderer and [`one_bit_picture`].
+//!
+//! [`Painter`] is a software copy of `shuyi-app`'s renderer, pixel for
 //! pixel at whole scales: the clear colour, cell backgrounds, `Under`
 //! items in order, glyphs tinted with their fg, `Over` items in order;
-//! and before all that, a backdrop's scene in its window (ADR-0048).
-//! Textures are sampled at the nearest pixel and blended over what is
-//! beneath with their alpha, as the GPU does.
-//!
-//! With `--playdate` the game runs on the Playdate's console and palette,
-//! and the frame goes through the one-bit renderer (`trpg_ui::onebit`,
-//! ADR-0074) instead: the picture is the Playdate's screen.
+//! and before all that, a backdrop's scene in its window. Textures are
+//! sampled at the nearest pixel and blended over what is beneath with
+//! their alpha, as the GPU does.
 
 use std::collections::HashMap;
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
-use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 
-use trpg_content::font::{ATLAS_1BIT_PATH, AtlasRect, FALLBACK_GLYPH};
-use trpg_content::{FontAtlasDef, ImageId, ImageTable};
-use trpg_ui::harness::Harness;
-use trpg_ui::input::{Button, Chord, Layout};
-use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
-use trpg_ui::screen::{Ctx, ShuyiCtx};
-use trpg_ui::{
-    Backdrop, Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Item, Layer, Paint, Palette, PxRect,
-    Rect, Rgb, Sprite, UiColor,
-};
+use shuyi_assets::font::{AtlasRect, FALLBACK_GLYPH, FontAtlasDef};
+use shuyi_assets::image::{ImageId, ImageTable};
+use shuyi_ui::GameData;
+use shuyi_ui::frame::onebit::{self, Frame};
+use shuyi_ui::frame::{Backdrop, GlyphBuffer, Item, Layer, Paint, PxRect, Rgb, Sprite};
+use shuyi_ui::harness::Harness;
+use shuyi_ui::input::{Button, Chord};
 
-use crate::font_atlas::{decode_png, encode_png};
+use crate::codec::{decode_png, encode_png};
+use crate::game::{GameArg, GameOption, GameTools};
 
-pub const USAGE: &str = "\
-usage: cargo xtask frame-png <out.png> [steps] [options]
+/// Largest `--scale`.
+pub const MAX_SCALE: u32 = 8;
+
+/// The colour of what is missing, as in `shuyi-app` (macroquad's
+/// `MAGENTA`).
+const MISSING_COLOR: Rgb = Rgb::new(255, 0, 255);
+
+/// The usage text, with `command` as the tool's name and the game's own
+/// options and notes.
+pub fn usage(command: &str, options: &[GameOption], notes: &str) -> String {
+    let mut out = format!(
+        "\
+usage: {command} frame-png <out.png> [steps] [options]
 
 Starts the game in the test Harness, runs the steps in the order given,
-and writes the frame to <out.png> (800×512 times the scale, or 400×240
-with --playdate; a relative path is from the repo root).
+and writes the frame to <out.png> (a relative path is from the project's
+root).
 
 steps (each may repeat):
   --keys \"F2 Up f\"   press and release each key chord in turn
@@ -44,31 +55,33 @@ steps (each may repeat):
   --wait 0.5         let that many seconds pass
 
 options:
-  --layout right|left  the key layout picked before (default right)
-  --scale N            whole-number scale, 1 to 8 (default 2; 1 with --playdate)
-  --playdate           the Playdate's screen: a 50×15 console in the Playdate's
-                       palette, drawn black and white by the one-bit renderer,
-                       with the one-bit pictures the Playdate's build makes (1040)
-  --map                the battle's map alone over the whole screen, painted by
-                       the game's map skin (with --playdate the Playdate's: its
-                       battle screen keeps the PC's layout until 1038)
-  --prompt             start as the game does (the title waits for a key or button)
-  --tips               show the guide's tips and lessons, as the game does
-  --light NAME         fight every battle in this light of assets/data/lighting.ron,
-                       whatever its map and its battle file say
-
+  --scale N            whole-number scale, 1 to {MAX_SCALE} (the game says what by default)
+"
+    );
+    for option in options {
+        let name = match option.value {
+            Some(value) => format!("{} {value}", option.flag),
+            None => option.flag.to_owned(),
+        };
+        let mut lines = option.help.lines();
+        // Writing to a `String` can't fail.
+        let _ = writeln!(out, "  {name:<20} {}", lines.next().unwrap_or_default());
+        for line in lines {
+            let _ = writeln!(out, "  {:<20} {line}", "");
+        }
+    }
+    out.push_str(
+        "
 Key and button names are the Harness's test-script names (Chord::parse,
-Button::parse), as in crates/ui/tests: input to a test script, not game
-code, so the never-hard-code-a-key rule doesn't apply to them.
-
-With the private-assets feature the picture shows the bought art: commit
-it only as a screenshot of the game (CLAUDE.md, Bought art).";
-
-/// Largest `--scale`.
-const MAX_SCALE: u32 = 8;
-
-/// The colour of what is missing, as in `app` (macroquad's `MAGENTA`).
-const MISSING_COLOR: Rgb = Rgb::new(255, 0, 255);
+Button::parse): input to a test script, not game code, so the
+never-hard-code-a-key rule doesn't apply to them.",
+    );
+    if !notes.is_empty() {
+        out.push_str("\n\n");
+        out.push_str(notes);
+    }
+    out
+}
 
 /// One step of the script, run in the order given.
 #[derive(Debug, Clone, PartialEq)]
@@ -81,13 +94,24 @@ pub enum Step {
     Wait(f32),
 }
 
-/// What a picture shows.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Shows {
-    /// The game's screen.
-    Screen,
-    /// The battle's map alone, over the whole screen (`--map`).
-    MapAlone,
+/// What to do in the game before taking the frame.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Script {
+    /// The steps, in order.
+    pub steps: Vec<Step>,
+}
+
+impl Script {
+    /// Plays the steps in `h`.
+    pub fn play<G: GameData>(&self, h: &mut Harness<G>) {
+        for step in &self.steps {
+            match step {
+                Step::Keys(script) => h.keys(script),
+                Step::Pad(script) => h.pad(script),
+                Step::Wait(seconds) => h.wait(*seconds),
+            };
+        }
+    }
 }
 
 /// The command's arguments.
@@ -96,39 +120,25 @@ pub struct Options {
     /// Where the PNG goes.
     pub out: PathBuf,
     /// What to do before taking the frame.
-    pub steps: Vec<Step>,
-    /// The layout picked before.
-    pub layout: Layout,
+    pub script: Script,
     /// Pixels per console pixel, if given.
     pub scale: Option<u32>,
-    /// The Playdate's console, palette and one-bit renderer.
-    pub playdate: bool,
-    /// What the picture shows.
-    pub shows: Shows,
-    /// Start as the game does: the title waits for a key or button.
-    pub prompt: bool,
-    /// The light every battle is fought in, instead of its own.
-    pub light: Option<String>,
-    /// Show the guide's one-time tips and checklist lessons, as `app`
-    /// does.
-    pub tips: bool,
+    /// The game's own options, in the order given.
+    pub game: Vec<GameArg>,
 }
 
-/// Parses `frame-png`'s arguments, checking key and button names up front
-/// so a typo is an error, not a Harness panic.
-pub fn parse_args(args: &[String]) -> Result<Options, String> {
+/// Parses `frame-png`'s arguments, the game's `options` among them,
+/// checking key and button names up front so a typo is an error, not a
+/// Harness panic.
+pub fn parse_args(args: &[String], options: &[GameOption]) -> Result<Options, String> {
     let mut out = None;
-    let mut options = Options {
+    let mut parsed = Options {
         out: PathBuf::new(),
-        steps: Vec::new(),
-        layout: RIGHT_HANDED,
+        script: Script::default(),
         scale: None,
-        playdate: false,
-        shows: Shows::Screen,
-        prompt: false,
-        light: None,
-        tips: false,
+        game: Vec::new(),
     };
+    let steps = &mut parsed.script.steps;
     let mut iter = args.iter();
     while let Some(arg) = iter.next() {
         let mut value = || {
@@ -142,14 +152,14 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
                 for token in script.split_whitespace() {
                     Chord::parse(token).map_err(|e| format!("--keys: {e}"))?;
                 }
-                options.steps.push(Step::Keys(script));
+                steps.push(Step::Keys(script));
             }
             "--pad" => {
                 let script = value()?;
                 for token in script.split_whitespace() {
                     Button::parse(token).map_err(|e| format!("--pad: {e}"))?;
                 }
-                options.steps.push(Step::Pad(script));
+                steps.push(Step::Pad(script));
             }
             "--wait" => {
                 let text = value()?;
@@ -158,18 +168,11 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
                     .ok()
                     .filter(|s| s.is_finite() && *s >= 0.0)
                     .ok_or_else(|| format!("--wait: not a number of seconds: {text}"))?;
-                options.steps.push(Step::Wait(seconds));
-            }
-            "--layout" => {
-                options.layout = match value()?.as_str() {
-                    "right" => RIGHT_HANDED,
-                    "left" => LEFT_HANDED,
-                    other => return Err(format!("--layout: right or left, not {other}")),
-                };
+                steps.push(Step::Wait(seconds));
             }
             "--scale" => {
                 let text = value()?;
-                options.scale = Some(
+                parsed.scale = Some(
                     text.parse()
                         .ok()
                         .filter(|s| (1..=MAX_SCALE).contains(s))
@@ -178,128 +181,50 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
                         })?,
                 );
             }
-            "--prompt" => options.prompt = true,
-            "--playdate" => options.playdate = true,
-            "--map" => options.shows = Shows::MapAlone,
-            "--tips" => options.tips = true,
-            "--light" => options.light = Some(value()?),
-            flag if flag.starts_with("--") => return Err(format!("unknown option: {flag}")),
+            flag if flag.starts_with("--") => {
+                let option = options
+                    .iter()
+                    .find(|option| option.flag == flag)
+                    .ok_or_else(|| format!("unknown option: {flag}"))?;
+                let value = option.value.map(|_| value()).transpose()?;
+                parsed.game.push(GameArg {
+                    flag: flag.to_owned(),
+                    value,
+                });
+            }
             path if out.is_none() => out = Some(PathBuf::from(path)),
             extra => return Err(format!("one output path only, not also {extra}")),
         }
     }
-    options.out = out.ok_or("missing <out.png>")?;
-    Ok(options)
+    parsed.out = out.ok_or("missing <out.png>")?;
+    Ok(parsed)
 }
 
-/// Runs the command: plays the steps in a Harness, writes the frame under
-/// `root` (if `out` is relative) and returns what to print.
-pub fn run(root: &Path, options: &Options) -> Result<String, String> {
-    let playdate = options.playdate.then(playdate_palette).transpose()?;
-    let setup = |ctx: &mut Ctx| {
-        if let Some(palette) = playdate {
-            ctx.console = ConsoleSpec::PLAYDATE;
-            ctx.palette = palette;
-            ctx.use_playdate_skins();
-        }
-    };
-    let h = if options.prompt {
-        Harness::at_prompt_with_layout_and(options.layout, setup)
-    } else {
-        Harness::with_layout_and(options.layout, setup)
-    };
-    // The game as players get it: New Game starts the story.
-    let mut h = h.with_shipped_story();
-    // And as `app` shows it: with the idle motion on.
-    h.ctx_mut().idle_motion = trpg_ui::screen::IdleMotion::On;
-    if options.tips {
-        h.with_tips().with_lessons();
-    }
-    if let Some(light) = &options.light {
-        let content = &mut h.ctx_mut().game.content;
-        if content.lighting.get(light).is_none() {
-            let known = content.lighting.names();
-            return Err(format!(
-                "--light: no light \"{light}\"; the lights are {known}"
-            ));
-        }
-        let battles: Vec<String> = content.battles.keys().cloned().collect();
-        content
-            .battle_lights
-            .extend(battles.into_iter().map(|id| (id, light.clone())));
-    }
-    for step in &options.steps {
-        match step {
-            Step::Keys(script) => h.keys(script),
-            Step::Pad(script) => h.pad(script),
-            Step::Wait(seconds) => h.wait(*seconds),
-        };
-    }
-    let ctx = h.game().ctx();
-    let map;
-    let buffer = if options.shows == Shows::MapAlone {
-        map = map_alone(&h)?;
-        &map
-    } else {
-        h.game().buffer()
-    };
-    let frame = if options.playdate {
-        let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
-        let font = onebit::Font::new(&ctx.game.content.font, bits)?;
-        let mut frame = Box::new([0; FRAME_BYTES]);
-        // The pictures the Playdate's build makes (ticket 1040).
-        let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
-        onebit::render(buffer, &font, &pictures, &mut frame);
-        one_bit_picture(&frame, options.scale.unwrap_or(1))
-    } else {
-        let painter = Painter::new(
-            ctx.game.content.font.clone(),
-            trpg_content::bundle::bytes(trpg_content::font::ATLAS_PNG_PATH).unwrap_or_default(),
-            &ctx.game.content.images,
-            trpg_content::bundle::bytes,
-            ctx.palette.get(UiColor::Black),
-        )?;
-        painter.render(buffer, options.scale.unwrap_or(2))
-    };
-    let png = encode_png(frame.width, frame.height, &frame.rgba)?;
+/// What a game shows of a frame.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Shot {
+    /// The picture.
+    pub image: Image,
+    /// What it shows, for the summary: the top screen's name.
+    pub shows: String,
+    /// What the summary warns about it, if anything (a picture of art the
+    /// game may not hand out).
+    pub warning: Option<String>,
+}
+
+/// Runs the command: the game plays the script and paints the frame,
+/// which is written under `root` (if `out` is relative); returns what to
+/// print.
+pub fn run(root: &Path, options: &Options, game: &dyn GameTools) -> Result<String, String> {
+    let shot = game.frame(&options.game, &options.script, options.scale)?;
+    let png = encode_png(shot.image.width, shot.image.height, &shot.image.rgba)?;
     let path = root.join(&options.out);
     if let Some(dir) = path.parent() {
         fs::create_dir_all(dir).map_err(|e| format!("creating {}: {e}", dir.display()))?;
     }
     fs::write(&path, png).map_err(|e| format!("writing {}: {e}", path.display()))?;
-    let shown = format!("{} → {}", h.top_screen(), options.out.display());
-    Ok(summary(&shown, &frame, cfg!(feature = "private-assets")))
-}
-
-/// The battle on `h`'s screen, its map alone over the whole console as the
-/// game's map skin paints it, the view centred on the cursor (`--map`).
-fn map_alone(h: &Harness) -> Result<GlyphBuffer, String> {
-    let ctx = h.game().ctx();
-    let console = ctx.console;
-    let screen = Rect::new(0, 0, i32::from(console.cols), i32::from(console.rows));
-    let scene = h
-        .map_scene_in(screen)
-        .ok_or_else(|| format!("--map: no battle on screen ({})", h.top_screen()))?;
-    let blank = Cell::new(
-        ' ',
-        ctx.palette.get(UiColor::Text),
-        ctx.palette.get(UiColor::Black),
-    );
-    let mut buf = GlyphBuffer::with_spec(console, blank);
-    ctx.game.map_skin.paint(ctx, &scene, screen, &mut buf);
-    Ok(buf)
-}
-
-/// The Playdate's palette (ADR-0074), over the default theme's names.
-fn playdate_palette() -> Result<Palette, String> {
-    let shown = |errors: Vec<trpg_content::ContentError>| {
-        let errors: Vec<String> = errors.iter().map(ToString::to_string).collect();
-        errors.join("; ")
-    };
-    let base = trpg_content::palette::load().map_err(shown)?;
-    let def = trpg_content::ink::load_playdate(&base).map_err(shown)?;
-    Palette::new::<UiColor>(&def)
-        .map_err(|missing| format!("the Playdate palette lacks {missing:?}"))
+    let shown = format!("{} → {}", shot.shows, options.out.display());
+    Ok(summary(&shown, &shot.image, shot.warning.as_deref()))
 }
 
 /// `frame` as a black and white picture, each pixel `scale` × `scale`.
@@ -321,15 +246,13 @@ pub fn one_bit_picture(frame: &Frame, scale: u32) -> Image {
     image
 }
 
-/// What `run` prints for frame `frame` of `shown` (screen → path), with a
-/// warning if it was built with the bought art.
-fn summary(shown: &str, frame: &Image, private_assets: bool) -> String {
+/// What `run` prints for frame `frame` of `shown` (screen → path), with
+/// the game's `warning` about it, if any.
+fn summary(shown: &str, frame: &Image, warning: Option<&str>) -> String {
     let mut out = format!("frame-png: {shown} ({}×{})", frame.width, frame.height);
-    if private_assets {
-        out.push_str(
-            "
-warning: built with private-assets: the picture shows bought art;              commit it only as a screenshot of the game (CLAUDE.md, Bought art)",
-        );
+    if let Some(warning) = warning {
+        out.push_str("\nwarning: ");
+        out.push_str(warning);
     }
     out
 }
@@ -358,7 +281,7 @@ impl Image {
     }
 
     /// Decodes PNG file `png`.
-    fn decode(png: &[u8]) -> Result<Self, String> {
+    pub fn decode(png: &[u8]) -> Result<Self, String> {
         let (width, height, rgba) = decode_png(png)?;
         Ok(Self {
             width,
@@ -385,7 +308,6 @@ impl Image {
     }
 
     /// The pixel at `(x, y)`, or `None` outside the picture.
-    #[cfg(test)]
     pub fn pixel(&self, x: u32, y: u32) -> Option<[u8; 4]> {
         (x < self.width && y < self.height).then(|| self.texel(i64::from(x), i64::from(y)))
     }
@@ -434,14 +356,14 @@ pub struct Painter {
     /// Background drawn behind the console; cells with this bg skip their
     /// fill, as in `app`.
     clear: Rgb,
-    /// The images that decoded; the others draw as [`MISSING_COLOR`].
+    /// The images that decoded; the others draw as `MISSING_COLOR`.
     images: HashMap<ImageId, Image>,
 }
 
 impl Painter {
     /// Decodes atlas image `atlas_png` and every image in `images`, whose
     /// files `read` returns (an image `read` lacks, or that doesn't decode,
-    /// draws as a [`MISSING_COLOR`] rectangle). `clear` is the console
+    /// draws as a `MISSING_COLOR` rectangle). `clear` is the console
     /// background (the palette's `black`).
     pub fn new<'a>(
         atlas: FontAtlasDef,
@@ -590,7 +512,7 @@ impl Painter {
     }
 
     /// Draws the visible part of `sprite` into `dest`: the matching part
-    /// of its image, or a [`MISSING_COLOR`] rectangle.
+    /// of its image, or a `MISSING_COLOR` rectangle.
     fn draw_sprite(&self, out: &mut Image, sprite: &Sprite, dest: (i64, i64, i64, i64)) {
         let Some(image) = self.images.get(&sprite.image) else {
             out.fill(dest, MISSING_COLOR);
@@ -612,7 +534,7 @@ impl Painter {
     }
 
     /// Where to find `glyph` in the atlas and what colour to tint it:
-    /// `fg`, or the fallback glyph in [`MISSING_COLOR`].
+    /// `fg`, or the fallback glyph in `MISSING_COLOR`.
     fn atlas_cell(&self, glyph: char, fg: Rgb) -> Option<(AtlasRect, Rgb)> {
         if let Some(rect) = self.atlas.glyph_rect(glyph) {
             return Some((rect, fg));

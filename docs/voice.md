@@ -131,14 +131,14 @@ cargo run -p trpg-app
 ```
 
 Open the debug menu and choose "Voice test". For the web build, run
-`cargo xtask web` after the copy: it puts `voice/` in `dist/web/voice/`.
+`cargo shuyi web` after the copy: it puts `voice/` in `dist/web/voice/`.
 
 The test clips are tones made by `cargo xtask voice-test-clips` (it needs
 `ffmpeg`), one per entry of `crates/app/tests/voice/en/voice.ron`.
 
 ## Shipping
 
-- `cargo xtask web` copies `voice/` (its `.ron` and `.ogg` files) into
+- `cargo shuyi web` copies `voice/` (its `.ron` and `.ogg` files) into
   `dist/web/voice/` when the folder exists.
 - `release.yml` copies `voice/` into each package when the folder exists.
 - CI builds get the folder from the private repository

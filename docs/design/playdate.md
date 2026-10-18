@@ -18,7 +18,7 @@ numbers and the forecast in them are placeholders.
 | `q2-b-*.png`, `q2-c-*.png` | A strip along the bottom; info on its own screen (not chosen) |
 | `q3r2-e-grey.png` | **Chosen:** your units solid black, enemies grey, acted units outlined; the range marks |
 | `q3-*.png`, `q3r2-*.png` | The other ways offered to tell sides apart without colour |
-| `1037-*.png` | **As built** (ticket 1037, `cargo xtask frame-png --playdate --map`, shown at ×2): Harrowby Ford browsing, a unit's ranges, the danger zone, both, a path with its threat arrow, a unit that has acted |
+| `1037-*.png` | **As built** (ticket 1037, `cargo shuyi frame-png --playdate --map`, shown at ×2): Harrowby Ford browsing, a unit's ranges, the danger zone, both, a path with its threat arrow, a unit that has acted |
 | `1037-hp-options.png` | The HP line options Nick was shown at sign-off (A today's, B a box, C the HP lost dithered, D the letters' colour); **chosen: A for enemies, C for your units** |
 
 ## Nick's words

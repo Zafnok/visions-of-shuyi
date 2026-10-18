@@ -62,12 +62,12 @@ conversation) is the sprite's opacity; mirroring is its left-right flip.
 
 To look at a portrait, run a debug build, press **F2** and pick
 **Portraits**: left/right switch expression, up/down switch character. Or
-render a frame without a window: `cargo xtask frame-png --help`.
+render a frame without a window: `cargo shuyi frame-png --help`.
 
 ## Importing bought busts
 
 ```bash
-cargo xtask private-assets --library
+cargo shuyi private-assets --library
 cargo xtask portrait-import assets-private/library/tiny-tales/characters/heroes/<Name> <id>
 ```
 

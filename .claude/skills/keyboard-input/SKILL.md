@@ -44,7 +44,7 @@ marker is only allowed in `crates/ui/src/screens/layout_picker.rs` and its
 engine's `engine/crates/app/src/keys.rs` may use `KeyCode` or macroquad's
 key reads. Anywhere else is a bug.
 
-`cargo xtask check-keys` enforces this (CI `tickets` job and `run-gates`).
+`cargo shuyi check-keys` enforces this (CI `tickets` job and `run-gates`).
 It scans `crates/{ui,app,content}/src` for key and button types, macroquad key
 reads, and string literals naming a key (`"f select"`, `"press f"`,
 `"[F]"`, `Space`, `Esc`, `Escape`, `Enter`, `Shift`, `arrows`, `WASD`).
@@ -242,4 +242,4 @@ Layouts are named in `keymap.ron` (`id`, the text key of its `name`,
 - [ ] Unbound optional actions don't panic and show `! not mapped`.
 - [ ] Text that names a key uses `ctx.help_keys()`, reads right on a pad
       (Harness: `h.pad(…)` then look), and still fits its row.
-- [ ] `cargo xtask check-keys` passes.
+- [ ] `cargo shuyi check-keys` passes.

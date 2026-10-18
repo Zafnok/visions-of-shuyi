@@ -1,0 +1,100 @@
+// Shuyi Engine's project file (ticket 1117): what `cargo shuyi <command>`
+// (the engine's tools, engine/crates/cli) scans and builds in this
+// repository. Paths are from this folder. `cargo xtask` still takes the
+// old names of these commands and runs them with this file.
+(
+    command: "cargo shuyi",
+
+    // The game's tool program: `frame-png` and `lang-status` run the game,
+    // so `cargo shuyi` runs them in xtask, which has the game's tools
+    // (crates/xtask/src/game_tools.rs). For a picture of the bought art:
+    // `cargo run -p xtask --features private-assets -- frame-png …`.
+    game: (package: "xtask"),
+
+    // Keys hard-coded in game code or text (ticket 0216, the
+    // keyboard-input skill).
+    check_keys: (
+        rust: ["crates/ui/src", "crates/app/src", "crates/content/src", "crates/playdate/src"],
+        // The story's files and the test files (ADR-0057).
+        assets: ["assets", "assets-test"],
+        not_text: ["assets/data/keymap.ron"],
+        // The key pipeline. The Playdate's `pads.rs` reads its buttons
+        // (ticket 1033). The engine's keymap format, input and platform
+        // shell are in engine/, which this check doesn't scan.
+        key_files: [
+            "crates/content/src/keymap.rs",
+            "crates/ui/src/input.rs",
+            "crates/playdate/src/pads.rs",
+        ],
+        // The only file that may read macroquad's keyboard: the engine's
+        // platform shell, so none that this check scans.
+        platform_file: "engine/crates/app/src/keys.rs",
+        test_support: ["crates/ui/src/harness.rs"],
+        // The layout picker and its skin may draw a keyboard. Since ticket
+        // 1112 both are the engine's and the game's `layout_picker.rs`
+        // names no key; these keep the game's own picture, should it draw
+        // one again, to these two files.
+        picture_files: [
+            "crates/ui/src/screens/layout_picker.rs",
+            "crates/ui/src/screens/layout_picker/glyph.rs",
+        ],
+        hint: "use an Action and `widgets::help::key_name`; see the keyboard-input skill",
+    ),
+
+    // Screen text written as literals, and screens reading a data name
+    // (tickets 0233, 0235, ADR-0045).
+    check_text: (
+        dir: "crates/ui/src",
+        // None since ticket 0243: every screen asks for its text by key.
+        max_literals: 0,
+        words_file: "crates/ui/src/words.rs",
+        // The debug screens (developers', English only) and the snapshots'
+        // text form.
+        skip: ["crates/ui/src/debug.rs", "crates/ui/src/debug/", "crates/ui/src/snapshot.rs"],
+        test_support: ["crates/ui/src/harness.rs"],
+        hint: "put the text in assets/lang/en/ui.ron and ask for it with `ctx.text(\"screen.thing\")`",
+        name_hint: "show the name through `ctx.words()` (crates/ui/src/words.rs), or mark a view's own field with `// check-text: not a data name`",
+    ),
+
+    // The glyphs the game's content requires (trpg_content::font::
+    // REQUIRED_GLYPHS; an xtask test keeps the two equal).
+    font_atlas: (
+        required_glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~¡¢£¤¥¦§¨©ª«¬\u{ad}®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ─│┌┐└┘├┤┬┴┼═║╔╗╚╝╠╣╦╩╬░▒▓█▀▄▌▐■♣♠♥♦≈•ˇ▲▼◄►←↑→↓☺☻♪†╱╲╤╫∩≡◊",
+        readme: "assets/fonts/README.md",
+    ),
+
+    // The web build (tickets 0206, 0207, 0219): `--debug-tools` for the
+    // Pages build (ADR-0023), `--private-assets` for the bought art
+    // (ADR-0040). Music (ADR-0026) and voices (ADR-0046) ship beside it.
+    web: (
+        package: "trpg-app",
+        bin: "visions-of-shuyi",
+        title: "Visions of Shuyi",
+        features: ["debug-tools", "private-assets"],
+        music: "music",
+        voice: "voice",
+        dist: "dist/web",
+    ),
+
+    // The bought art (ticket 0110, ADR-0040): `game/` is embedded over
+    // `assets/` with the `private-assets` feature, `test/` over
+    // `assets-test/` (ADR-0057), `voice/` is copied to `voice/` (ADR-0046),
+    // `library/` is the bought packs the importers read. Every file of
+    // `game/` and `test/` needs a credit (ADR-0051).
+    private_assets: (
+        url: "https://github.com/Zafnok/visions-of-shuyi-assets.git",
+        checkout: "assets-private",
+        pin_file: "assets-private.rev",
+        folders: ["game", "test", "voice"],
+        library: "library",
+        copies: [(from: "voice", to: "voice")],
+        credits: (
+            file: "assets/data/credits.ron",
+            folders: ["game", "test"],
+            audio_manifest: "assets/audio/audio.ron",
+            private_root: "assets-private/game",
+            hint: "a new pack also needs a row in THIRD_PARTY_ASSETS.md",
+        ),
+        no_access: "The bought art is in a private repository that only Nick's GitHub account and the build key can read. Without it the game still builds and runs, with the public placeholders: leave out `--features private-assets`.",
+    ),
+)

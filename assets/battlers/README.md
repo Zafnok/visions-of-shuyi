@@ -101,7 +101,7 @@ battler-import` writes the file that names them into the private assets.
 ## Seeing one
 
 ```bash
-cargo xtask frame-png target/fight.png --keys "Down f Left f" --wait 0.5 --keys "f" --wait 0.5 --keys "f Right Right Right Up f" --wait 1.5 --keys "f f f" --wait 0.75
+cargo shuyi frame-png target/fight.png --keys "Down f Left f" --wait 0.5 --keys "f" --wait 0.5 --keys "f Right Right Right Up f" --wait 1.5 --keys "f f f" --wait 0.75
 ```
 
 renders the Quick Battle's lord striking a brigand. Add `--features

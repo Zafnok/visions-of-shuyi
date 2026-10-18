@@ -1,95 +1,93 @@
-//! `cargo xtask web [--release] [--debug-tools] [--private-assets]`: builds
-//! `trpg-app` for
-//! `wasm32-unknown-unknown` and packages the resulting binary with the web
-//! shell (`web/index.html`), the vendored JS loaders (`web/mq_js_bundle.js`,
-//! and `web/sapp_jsutils.js` + `web/quad-storage.js` for `localStorage`,
-//! ticket 0207) and our own controller plugin (`web/gamepad.js`, ticket
-//! 0219) into `dist/web/` (ticket 0206). `--debug-tools` turns on the
-//! app's `debug-tools` feature (Quick Battle, glyph sampler) for the Pages
-//! build (ADR-0023); shipped builds never pass it. `--private-assets` turns
-//! on its `private-assets` feature, which embeds the bought art in
-//! `assets-private/game/` (ADR-0040). The game's music tracks
-//! (`music/*.ogg`, not embedded: ADR-0026) are copied to `dist/web/music/`,
-//! which exists even when there are none. The voice clips (`voice/`, not
-//! embedded either: ADR-0046) are copied to `dist/web/voice/` when there
-//! is such a folder.
+//! `web [--release] [--<feature>...]`: builds the game's binary
+//! ([`crate::project::Web`]) for `wasm32-unknown-unknown` and packages it
+//! with the web shell into the project's `web.dist` folder: the page
+//! (`web/index.html`, with the game's title and binary written in), the
+//! vendored JS loaders (`web/mq_js_bundle.js`, and `web/sapp_jsutils.js`
+//! with `web/quad-storage.js` for `localStorage`) and the engine's controller
+//! plugin (`web/gamepad.js`). The shell is built into this tool; see
+//! `web/README.md`, which also says how a game's binary gets the link
+//! argument these plugins need. Each `--<feature>` turns on a feature of
+//! the game's package that `web.features` lists (a debug build's tools,
+//! say). The game's music tracks (`.ogg` in `web.music`, not embedded) are
+//! copied beside the page into a folder of the same name, which exists
+//! even when there are none; its voice clips (`web.voice`, `.ogg` and
+//! `.ron`) are copied the same way when there is such a folder.
 
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-/// The `[[bin]]` name in `crates/app/Cargo.toml`.
-const BIN_NAME: &str = "visions-of-shuyi";
+use crate::project::Web;
 
-/// Files copied from `web/` into `dist/web/` unchanged.
-const SHELL_FILES: &[&str] = &[
-    "index.html",
-    "mq_js_bundle.js",
-    "sapp_jsutils.js",
-    "quad-storage.js",
-    "gamepad.js",
+/// The shell's files: name and contents. `index.html` has `%TITLE%` and
+/// `%WASM%` in it, for the game's title and binary.
+const SHELL: [(&str, &str); 5] = [
+    ("index.html", include_str!("../web/index.html")),
+    ("mq_js_bundle.js", include_str!("../web/mq_js_bundle.js")),
+    ("sapp_jsutils.js", include_str!("../web/sapp_jsutils.js")),
+    ("quad-storage.js", include_str!("../web/quad-storage.js")),
+    ("gamepad.js", include_str!("../web/gamepad.js")),
 ];
 
-/// The music folder, at the repo root and in `dist/web/` (ADR-0026).
-const MUSIC_DIR: &str = "music";
+/// The target the game is built for.
+const TARGET: &str = "wasm32-unknown-unknown";
 
-/// The voice folder, at the repo root and in `dist/web/` (ADR-0046).
-const VOICE_DIR: &str = "voice";
-
-/// Parsed `cargo xtask web` arguments.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Parsed `web` arguments.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Options {
     /// Whether to build with `--release` (and run `wasm-opt` afterwards).
     pub release: bool,
-    /// Whether to turn on the `debug-tools` feature (ADR-0023).
-    pub debug_tools: bool,
-    /// Whether to turn on the `private-assets` feature (ADR-0040).
-    pub private_assets: bool,
+    /// The features to turn on, in the order given.
+    pub features: Vec<String>,
 }
 
-/// Parses the arguments after `web`: `--release`, `--debug-tools` and
-/// `--private-assets`, each at most once, in any order.
-pub fn parse_args(args: &[String]) -> Result<Options, String> {
-    let mut options = Options {
-        release: false,
-        debug_tools: false,
-        private_assets: false,
-    };
+/// The usage line, with `command` as the tool's name.
+pub fn usage(rules: &Web, command: &str) -> String {
+    let mut out = format!("usage: {command} web [--release]");
+    for feature in &rules.features {
+        // Writing to a `String` can't fail.
+        let _ = write!(out, " [--{feature}]");
+    }
+    out
+}
+
+/// Parses the arguments after `web`: `--release` and a `--<feature>` for
+/// each feature `rules` list, each at most once, in any order. The error
+/// is the usage line.
+pub fn parse_args(rules: &Web, command: &str, args: &[String]) -> Result<Options, String> {
+    let mut options = Options::default();
     for arg in args {
-        let flag = match arg.as_str() {
-            "--release" => &mut options.release,
-            "--debug-tools" => &mut options.debug_tools,
-            "--private-assets" => &mut options.private_assets,
-            _ => return Err(USAGE.to_string()),
-        };
-        if *flag {
-            return Err(USAGE.to_string());
+        let bad = || usage(rules, command);
+        if arg == "--release" {
+            if options.release {
+                return Err(bad());
+            }
+            options.release = true;
+            continue;
         }
-        *flag = true;
+        let feature = arg
+            .strip_prefix("--")
+            .filter(|name| rules.features.iter().any(|f| f == name))
+            .ok_or_else(bad)?;
+        if options.features.iter().any(|f| f == feature) {
+            return Err(bad());
+        }
+        options.features.push(feature.to_owned());
     }
     Ok(options)
 }
 
-/// Usage line for bad arguments.
-const USAGE: &str = "usage: cargo xtask web [--release] [--debug-tools] [--private-assets]";
-
 /// The `cargo` arguments that build the wasm binary for `options`.
-fn cargo_args(options: Options) -> Vec<&'static str> {
-    let mut args = vec![
-        "build",
-        "-p",
-        "trpg-app",
-        "--target",
-        "wasm32-unknown-unknown",
-    ];
+fn cargo_args(rules: &Web, options: &Options) -> Vec<String> {
+    let mut args: Vec<String> = ["build", "-p", &rules.package, "--target", TARGET]
+        .map(str::to_owned)
+        .to_vec();
     if options.release {
-        args.push("--release");
+        args.push("--release".to_owned());
     }
-    if options.debug_tools {
-        args.extend(["--features", "debug-tools"]);
-    }
-    if options.private_assets {
-        args.extend(["--features", "private-assets"]);
+    for feature in &options.features {
+        args.extend(["--features".to_owned(), feature.clone()]);
     }
     args
 }
@@ -100,58 +98,63 @@ fn profile_dir(release: bool) -> &'static str {
 }
 
 /// Where cargo places the wasm binary for the given options.
-fn wasm_artifact_path(repo_root: &Path, options: Options) -> PathBuf {
-    repo_root
-        .join("target/wasm32-unknown-unknown")
+fn wasm_artifact_path(rules: &Web, root: &Path, options: &Options) -> PathBuf {
+    root.join("target")
+        .join(TARGET)
         .join(profile_dir(options.release))
-        .join(format!("{BIN_NAME}.wasm"))
-}
-
-/// The packaged output directory.
-fn dist_dir(repo_root: &Path) -> PathBuf {
-    repo_root.join("dist/web")
+        .join(format!("{}.wasm", rules.bin))
 }
 
 /// Builds and packages the web build, returning a one-line summary on success.
-pub fn run(repo_root: &Path, options: Options) -> Result<String, String> {
-    let status = Command::new("cargo")
-        .args(cargo_args(options))
-        .current_dir(repo_root)
+pub fn run(rules: &Web, root: &Path, options: &Options) -> Result<String, String> {
+    let cargo = std::env::var("CARGO").unwrap_or_else(|_| "cargo".to_owned());
+    let status = Command::new(cargo)
+        .args(cargo_args(rules, options))
+        .current_dir(root)
         .status()
         .map_err(|e| format!("spawn cargo build: {e}"))?;
     if !status.success() {
         return Err(format!("cargo build exited with {status}"));
     }
-    package(&RealWasmOpt, repo_root, options)
+    package(&RealWasmOpt, rules, root, options)
 }
 
-/// Copies the wasm artifact and web shell into `dist/web/`, optimizing the
-/// wasm binary with `opt` first if `options.release`. Split out from [`run`]
-/// so tests can exercise it (with a fake [`WasmOpt`]) without needing a real
-/// `cargo build`.
-fn package(opt: &impl WasmOpt, repo_root: &Path, options: Options) -> Result<String, String> {
-    let dist = dist_dir(repo_root);
+/// Copies the wasm artifact and writes the web shell into the dist folder,
+/// optimizing the wasm binary with `opt` first if `options.release`. Split
+/// out from [`run`] so tests can exercise it (with a fake [`WasmOpt`])
+/// without needing a real `cargo build`.
+fn package(
+    opt: &impl WasmOpt,
+    rules: &Web,
+    root: &Path,
+    options: &Options,
+) -> Result<String, String> {
+    let dist = root.join(&rules.dist);
     fs::create_dir_all(&dist).map_err(|e| format!("create {}: {e}", dist.display()))?;
 
-    let wasm_src = wasm_artifact_path(repo_root, options);
-    let wasm_dst = dist.join(format!("{BIN_NAME}.wasm"));
+    let wasm_name = format!("{}.wasm", rules.bin);
+    let wasm_src = wasm_artifact_path(rules, root, options);
+    let wasm_dst = dist.join(&wasm_name);
     fs::copy(&wasm_src, &wasm_dst)
         .map_err(|e| format!("copy {} to {}: {e}", wasm_src.display(), wasm_dst.display()))?;
 
-    for name in SHELL_FILES {
-        let shell_src = repo_root.join("web").join(name);
+    for (name, text) in SHELL {
+        let text = if name == "index.html" {
+            text.replace("%TITLE%", &rules.title)
+                .replace("%WASM%", &wasm_name)
+        } else {
+            text.to_owned()
+        };
         let shell_dst = dist.join(name);
-        fs::copy(&shell_src, &shell_dst).map_err(|e| {
-            format!(
-                "copy {} to {}: {e}",
-                shell_src.display(),
-                shell_dst.display()
-            )
-        })?;
+        fs::write(&shell_dst, text).map_err(|e| format!("write {}: {e}", shell_dst.display()))?;
     }
 
-    copy_music(&repo_root.join(MUSIC_DIR), &dist.join(MUSIC_DIR))?;
-    copy_voice(&repo_root.join(VOICE_DIR), &dist.join(VOICE_DIR))?;
+    if let Some(music) = &rules.music {
+        copy_music(&root.join(music), &dist.join(music))?;
+    }
+    if let Some(voice) = &rules.voice {
+        copy_voice(&root.join(voice), &dist.join(voice))?;
+    }
 
     if options.release {
         run_wasm_opt(opt, &wasm_dst);
@@ -164,7 +167,7 @@ fn package(opt: &impl WasmOpt, repo_root: &Path, options: Options) -> Result<Str
 }
 
 /// Replaces `dst` with a folder holding every `.ogg` file in `src` (none
-/// if `src` is missing), so the web build fetches tracks from `music/`.
+/// if `src` is missing), so the web build fetches tracks from it.
 fn copy_music(src: &Path, dst: &Path) -> Result<(), String> {
     if dst.exists() {
         fs::remove_dir_all(dst).map_err(|e| format!("clear {}: {e}", dst.display()))?;
@@ -187,8 +190,8 @@ fn copy_music(src: &Path, dst: &Path) -> Result<(), String> {
 
 /// Replaces `dst` with a copy of the voice folder `src`: its manifests
 /// (`.ron`) and clips (`.ogg`), in the same folders, so the web build
-/// fetches them from `voice/`. With no `src` there is no `dst` either: a
-/// build without voices.
+/// fetches them from it. With no `src` there is no `dst` either: a build
+/// without voices.
 fn copy_voice(src: &Path, dst: &Path) -> Result<(), String> {
     if dst.exists() {
         fs::remove_dir_all(dst).map_err(|e| format!("clear {}: {e}", dst.display()))?;
@@ -240,12 +243,11 @@ trait WasmOpt {
 struct RealWasmOpt;
 
 impl WasmOpt for RealWasmOpt {
-    /// Not covered by mutation testing (`#[mutants::skip]`): its only job is
-    /// spawning an optional external tool that isn't guaranteed to be
-    /// installed anywhere tests run, so there's no way to exercise it
-    /// without one; [`package`]'s tests cover every branch of the logic that
-    /// consumes its result via a fake [`WasmOpt`] instead.
-    #[mutants::skip]
+    /// Not covered by mutation testing (`.cargo/mutants.toml` leaves it
+    /// out): its only job is spawning an optional external tool that isn't
+    /// guaranteed to be installed anywhere tests run, so there's no way to
+    /// exercise it without one; [`package`]'s tests cover every branch of
+    /// the logic that consumes its result via a fake [`WasmOpt`] instead.
     fn optimize(&self, input: &Path, output: &Path) -> Result<bool, String> {
         Command::new("wasm-opt")
             .args(["-Oz", "-o"])
@@ -259,7 +261,7 @@ impl WasmOpt for RealWasmOpt {
 
 /// Runs `opt` on `wasm_path` in place, replacing it with the optimized
 /// output on success. Does nothing (silently) if `opt` reports the tool
-/// isn't available, per the ticket's spec.
+/// isn't available.
 fn run_wasm_opt(opt: &impl WasmOpt, wasm_path: &Path) {
     let optimized = wasm_path.with_extension("wasm.opt");
     match opt.optimize(wasm_path, &optimized) {
@@ -278,7 +280,7 @@ mod tests {
     use super::*;
 
     /// The Rust side of `web/gamepad.js`: the engine's web pads.
-    const PADS_WEB: &str = "engine/crates/app/src/pads/web.rs";
+    const PADS_WEB: &str = include_str!("../../app/src/pads/web.rs");
 
     struct FakeWasmOpt<F>(F);
 
@@ -288,13 +290,47 @@ mod tests {
         }
     }
 
+    /// A game's web build: two features, a music and a voice folder.
+    fn rules() -> Web {
+        Web {
+            package: "game-app".to_owned(),
+            bin: "the-game".to_owned(),
+            title: "The Game".to_owned(),
+            features: vec!["debug-tools".to_owned(), "bought-art".to_owned()],
+            music: Some("music".to_owned()),
+            voice: Some("voice".to_owned()),
+            dist: "dist/web".to_owned(),
+        }
+    }
+
+    fn args(items: &[&str]) -> Vec<String> {
+        items.iter().map(|s| (*s).to_owned()).collect()
+    }
+
+    fn parse(items: &[&str]) -> Result<Options, String> {
+        parse_args(&rules(), "shuyi", &args(items))
+    }
+
+    fn debug() -> Options {
+        Options::default()
+    }
+
+    fn release() -> Options {
+        Options {
+            release: true,
+            features: Vec::new(),
+        }
+    }
+
+    fn shell(name: &str) -> &'static str {
+        SHELL.iter().find(|(n, _)| *n == name).unwrap().1
+    }
+
     #[test]
     fn index_html_keeps_resuming_audio_until_it_runs() {
-        // Ticket 0224: the shim must wrap `AudioContext` before the bundle
-        // creates one, and retry on every key press.
-        let html =
-            fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../web/index.html"))
-                .unwrap();
+        // The shim must wrap `AudioContext` before the bundle creates one,
+        // and retry on every key press.
+        let html = shell("index.html");
         let shim = html
             .find("class TrackedAudioContext extends Base")
             .expect("index.html wraps AudioContext");
@@ -305,106 +341,51 @@ mod tests {
         assert!(html.contains(r#"for (const type of ["keydown", "mousedown", "touchend"])"#));
     }
 
-    /// A fresh scratch repo root under `env::temp_dir()`, with `web/`
-    /// populated like the real one, per the pattern in `font_atlas::tests`.
+    /// A fresh scratch project root under `env::temp_dir()`.
     fn fixture(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("xtask-web-{name}-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("shuyi-web-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(dir.join("web")).unwrap();
-        fs::write(dir.join("web/index.html"), "<html></html>").unwrap();
-        fs::write(dir.join("web/mq_js_bundle.js"), "// bundle").unwrap();
-        fs::write(dir.join("web/sapp_jsutils.js"), "// sapp_jsutils").unwrap();
-        fs::write(dir.join("web/quad-storage.js"), "// quad-storage").unwrap();
-        fs::write(dir.join("web/gamepad.js"), "// gamepad").unwrap();
+        fs::create_dir_all(&dir).unwrap();
         dir
     }
 
-    fn write_wasm(repo_root: &Path, options: Options, content: &[u8]) {
-        let path = wasm_artifact_path(repo_root, options);
+    fn write_wasm(root: &Path, options: &Options, content: &[u8]) {
+        let path = wasm_artifact_path(&rules(), root, options);
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         fs::write(path, content).unwrap();
     }
 
     #[test]
     fn parse_args_with_no_args_is_debug() {
-        assert_eq!(
-            parse_args(&[]),
-            Ok(Options {
-                release: false,
-                debug_tools: false,
-                private_assets: false,
-            })
-        );
+        assert_eq!(parse(&[]), Ok(debug()));
+        assert_eq!(parse(&["--release"]), Ok(release()));
     }
 
     #[test]
-    fn parse_args_with_release_flag() {
-        let args = vec!["--release".to_string()];
-        assert_eq!(
-            parse_args(&args),
-            Ok(Options {
-                release: true,
-                debug_tools: false,
-                private_assets: false,
-            })
-        );
-    }
-
-    #[test]
-    fn parse_args_rejects_unknown_flags() {
-        let args = vec!["--bogus".to_string()];
-        assert!(parse_args(&args).is_err());
-    }
-
-    #[test]
-    fn parse_args_takes_debug_tools_in_any_order_once() {
-        let args = |a: &[&str]| parse_args(&a.iter().map(ToString::to_string).collect::<Vec<_>>());
-        let both = Options {
+    fn parse_args_takes_the_listed_features_in_any_order_once() {
+        let usage = "usage: shuyi web [--release] [--debug-tools] [--bought-art]";
+        assert_eq!(usage, super::usage(&rules(), "shuyi"));
+        let both = |features: &[&str]| Options {
             release: true,
-            debug_tools: true,
-            private_assets: false,
-        };
-        assert_eq!(args(&["--release", "--debug-tools"]), Ok(both));
-        assert_eq!(args(&["--debug-tools", "--release"]), Ok(both));
-        assert_eq!(
-            args(&["--debug-tools"]),
-            Ok(Options {
-                release: false,
-                debug_tools: true,
-                private_assets: false,
-            })
-        );
-        assert_eq!(args(&["--release", "--release"]), Err(USAGE.to_string()));
-        assert_eq!(
-            args(&["--debug-tools", "--debug-tools"]),
-            Err(USAGE.to_string())
-        );
-    }
-
-    #[test]
-    fn parse_args_takes_private_assets_with_the_other_flags() {
-        let args = |a: &[&str]| parse_args(&a.iter().map(ToString::to_string).collect::<Vec<_>>());
-        let all = Options {
-            release: true,
-            debug_tools: true,
-            private_assets: true,
+            features: args(features),
         };
         assert_eq!(
-            args(&["--private-assets", "--release", "--debug-tools"]),
-            Ok(all)
+            parse(&["--release", "--debug-tools"]),
+            Ok(both(&["debug-tools"]))
         );
         assert_eq!(
-            args(&["--private-assets"]),
-            Ok(Options {
-                release: false,
-                debug_tools: false,
-                private_assets: true,
-            })
+            parse(&["--bought-art", "--release", "--debug-tools"]),
+            Ok(both(&["bought-art", "debug-tools"]))
         );
-        assert_eq!(
-            args(&["--private-assets", "--private-assets"]),
-            Err(USAGE.to_string())
-        );
+        for bad in [
+            &["--release", "--release"][..],
+            &["--debug-tools", "--debug-tools"],
+            &["--bogus"],
+            &["--release", "extra"],
+            &["--features"],
+        ] {
+            assert_eq!(parse(bad), Err(usage.to_owned()), "{bad:?}");
+        }
     }
 
     #[test]
@@ -412,148 +393,95 @@ mod tests {
         let base = [
             "build",
             "-p",
-            "trpg-app",
+            "game-app",
             "--target",
             "wasm32-unknown-unknown",
         ];
-        let opts = |release, debug_tools, private_assets| Options {
-            release,
-            debug_tools,
-            private_assets,
+        assert_eq!(cargo_args(&rules(), &debug()), base);
+        assert_eq!(cargo_args(&rules(), &release())[5..], ["--release"]);
+        let all = Options {
+            release: true,
+            features: args(&["debug-tools", "bought-art"]),
         };
-        assert_eq!(cargo_args(opts(false, false, false)), base);
-        assert_eq!(cargo_args(opts(true, false, false))[5..], ["--release"]);
         assert_eq!(
-            cargo_args(opts(false, true, false))[5..],
-            ["--features", "debug-tools"]
-        );
-        assert_eq!(
-            cargo_args(opts(false, false, true))[5..],
-            ["--features", "private-assets"]
-        );
-        assert_eq!(
-            cargo_args(opts(true, true, true))[5..],
+            cargo_args(&rules(), &all)[5..],
             [
                 "--release",
                 "--features",
                 "debug-tools",
                 "--features",
-                "private-assets"
+                "bought-art"
             ]
         );
     }
 
     #[test]
-    fn parse_args_rejects_extra_args() {
-        let args = vec!["--release".to_string(), "extra".to_string()];
-        assert!(parse_args(&args).is_err());
-    }
-
-    #[test]
-    fn wasm_artifact_path_uses_debug_profile_by_default() {
+    fn wasm_artifact_path_uses_the_profile() {
         let root = Path::new("/repo");
-        let path = wasm_artifact_path(
-            root,
-            Options {
-                release: false,
-                debug_tools: false,
-                private_assets: false,
-            },
+        assert_eq!(
+            wasm_artifact_path(&rules(), root, &debug()),
+            Path::new("/repo/target/wasm32-unknown-unknown/debug/the-game.wasm")
         );
         assert_eq!(
-            path,
-            Path::new("/repo/target/wasm32-unknown-unknown/debug/visions-of-shuyi.wasm")
+            wasm_artifact_path(&rules(), root, &release()),
+            Path::new("/repo/target/wasm32-unknown-unknown/release/the-game.wasm")
         );
     }
 
     #[test]
-    fn wasm_artifact_path_uses_release_profile() {
-        let root = Path::new("/repo");
-        let path = wasm_artifact_path(
-            root,
-            Options {
-                release: true,
-                debug_tools: false,
-                private_assets: false,
-            },
-        );
-        assert_eq!(
-            path,
-            Path::new("/repo/target/wasm32-unknown-unknown/release/visions-of-shuyi.wasm")
-        );
-    }
-
-    #[test]
-    fn dist_dir_is_under_repo_root() {
-        let root = Path::new("/repo");
-        assert_eq!(dist_dir(root), Path::new("/repo/dist/web"));
-    }
-
-    #[test]
-    fn package_copies_wasm_and_shell_files() {
+    fn package_copies_wasm_and_writes_the_shell() {
         let root = fixture("package-basic");
-        write_wasm(
-            &root,
-            Options {
-                release: false,
-                debug_tools: false,
-                private_assets: false,
-            },
-            b"wasm-bytes",
-        );
+        write_wasm(&root, &debug(), b"wasm-bytes");
         let opt = FakeWasmOpt(|_: &Path, _: &Path| -> Result<bool, String> {
             panic!("wasm-opt should not run for a debug build")
         });
-        let summary = package(
-            &opt,
-            &root,
-            Options {
-                release: false,
-                debug_tools: false,
-                private_assets: false,
-            },
-        )
-        .unwrap();
+        let summary = package(&opt, &rules(), &root, &debug()).unwrap();
         assert!(summary.contains("10 bytes"), "{summary}");
-        assert_eq!(
-            fs::read(root.join("dist/web/visions-of-shuyi.wasm")).unwrap(),
-            b"wasm-bytes"
-        );
-        assert_eq!(
-            fs::read_to_string(root.join("dist/web/index.html")).unwrap(),
-            "<html></html>"
-        );
-        assert_eq!(
-            fs::read_to_string(root.join("dist/web/mq_js_bundle.js")).unwrap(),
-            "// bundle"
-        );
-        assert_eq!(
-            fs::read_to_string(root.join("dist/web/sapp_jsutils.js")).unwrap(),
-            "// sapp_jsutils"
-        );
-        assert_eq!(
-            fs::read_to_string(root.join("dist/web/quad-storage.js")).unwrap(),
-            "// quad-storage"
-        );
-        assert_eq!(
-            fs::read_to_string(root.join("dist/web/gamepad.js")).unwrap(),
-            "// gamepad"
-        );
+        let dist = root.join("dist/web");
+        assert_eq!(fs::read(dist.join("the-game.wasm")).unwrap(), b"wasm-bytes");
+        let html = fs::read_to_string(dist.join("index.html")).unwrap();
+        assert!(html.contains("<title>The Game</title>"), "{html}");
+        assert!(html.contains(r#"load("the-game.wasm");"#), "{html}");
+        assert!(!html.contains("%TITLE%") && !html.contains("%WASM%"));
+        for name in [
+            "mq_js_bundle.js",
+            "sapp_jsutils.js",
+            "quad-storage.js",
+            "gamepad.js",
+        ] {
+            assert_eq!(
+                fs::read_to_string(dist.join(name)).unwrap(),
+                shell(name),
+                "{name}"
+            );
+        }
+        fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn a_game_without_music_or_voices_gets_no_folders() {
+        let root = fixture("package-bare");
+        write_wasm(&root, &debug(), b"w");
+        let bare = Web {
+            music: None,
+            voice: None,
+            ..rules()
+        };
+        fs::create_dir_all(root.join("music")).unwrap();
+        let opt = FakeWasmOpt(|_: &Path, _: &Path| Ok(false));
+        package(&opt, &bare, &root, &debug()).unwrap();
+        assert!(!root.join("dist/web/music").exists());
+        assert!(!root.join("dist/web/voice").exists());
         fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]
     fn package_copies_the_music_tracks_only() {
         let root = fixture("package-music");
-        let debug = Options {
-            release: false,
-            debug_tools: false,
-            private_assets: false,
-        };
-        write_wasm(&root, debug, b"w");
+        write_wasm(&root, &debug(), b"w");
         let opt = FakeWasmOpt(|_: &Path, _: &Path| Ok(false));
         // No music folder: an empty one is still made.
-        package(&opt, &root, debug).unwrap();
+        package(&opt, &rules(), &root, &debug()).unwrap();
         let music = root.join("dist/web/music");
         assert!(music.is_dir());
         assert_eq!(fs::read_dir(&music).unwrap().count(), 0);
@@ -562,7 +490,7 @@ mod tests {
         fs::write(root.join("music/README.md"), "doc").unwrap();
         fs::write(root.join("music/sub/x.ogg"), "nested").unwrap();
         fs::write(music.join("stale.ogg"), "old").unwrap();
-        package(&opt, &root, debug).unwrap();
+        package(&opt, &rules(), &root, &debug()).unwrap();
         let mut names: Vec<_> = fs::read_dir(&music)
             .unwrap()
             .map(|e| e.unwrap().file_name().into_string().unwrap())
@@ -573,23 +501,18 @@ mod tests {
         fs::remove_dir_all(&root).unwrap();
     }
 
-    /// Ticket 0238: the voice folder goes along whole, manifests and
-    /// clips only; without one the package has none.
+    /// The voice folder goes along whole, manifests and clips only;
+    /// without one the package has none.
     #[test]
     fn package_copies_the_voice_folder_if_there_is_one() {
         let root = fixture("package-voice");
-        let debug = Options {
-            release: false,
-            debug_tools: false,
-            private_assets: false,
-        };
-        write_wasm(&root, debug, b"w");
+        write_wasm(&root, &debug(), b"w");
         let opt = FakeWasmOpt(|_: &Path, _: &Path| Ok(false));
         let voice = root.join("dist/web/voice");
         // A stale copy from an earlier build goes when the source is gone.
         fs::create_dir_all(voice.join("en")).unwrap();
         fs::write(voice.join("en/stale.ogg"), "old").unwrap();
-        package(&opt, &root, debug).unwrap();
+        package(&opt, &rules(), &root, &debug()).unwrap();
         assert!(!voice.exists());
         fs::create_dir_all(root.join("voice/en/scene")).unwrap();
         fs::write(root.join("voice/en/voice.ron"), "manifest").unwrap();
@@ -599,7 +522,7 @@ mod tests {
         fs::write(root.join("voice/en/scene/take.wav"), "source").unwrap();
         fs::write(root.join("voice/notes.md"), "doc").unwrap();
         fs::write(root.join("voice/ogg"), "no extension").unwrap();
-        package(&opt, &root, debug).unwrap();
+        package(&opt, &rules(), &root, &debug()).unwrap();
         let read = |path: &str| fs::read_to_string(voice.join(path)).ok();
         assert_eq!(read("en/voice.ron").as_deref(), Some("manifest"));
         assert_eq!(read("en/cast.ron").as_deref(), Some("cast"));
@@ -611,7 +534,7 @@ mod tests {
         // A file named `voice` is not a voice folder.
         fs::remove_dir_all(root.join("voice")).unwrap();
         fs::write(root.join("voice"), "a file").unwrap();
-        package(&opt, &root, debug).unwrap();
+        package(&opt, &rules(), &root, &debug()).unwrap();
         assert!(!voice.exists());
         fs::remove_dir_all(&root).unwrap();
     }
@@ -638,113 +561,44 @@ mod tests {
     #[test]
     fn package_runs_wasm_opt_on_release_and_uses_its_output() {
         let root = fixture("package-release-ok");
-        write_wasm(
-            &root,
-            Options {
-                release: true,
-                debug_tools: false,
-                private_assets: false,
-            },
-            b"unoptimized-bytes",
-        );
+        write_wasm(&root, &release(), b"unoptimized-bytes");
         let opt = FakeWasmOpt(|_input: &Path, output: &Path| {
             fs::write(output, b"opt").unwrap();
             Ok(true)
         });
-        let summary = package(
-            &opt,
-            &root,
-            Options {
-                release: true,
-                debug_tools: false,
-                private_assets: false,
-            },
-        )
-        .unwrap();
+        let summary = package(&opt, &rules(), &root, &release()).unwrap();
         assert!(summary.contains("3 bytes"), "{summary}");
         assert_eq!(
-            fs::read(root.join("dist/web/visions-of-shuyi.wasm")).unwrap(),
+            fs::read(root.join("dist/web/the-game.wasm")).unwrap(),
             b"opt"
         );
         fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]
-    fn package_keeps_original_when_wasm_opt_is_not_installed() {
-        let root = fixture("package-release-missing");
-        write_wasm(
-            &root,
-            Options {
-                release: true,
-                debug_tools: false,
-                private_assets: false,
-            },
-            b"unoptimized",
-        );
-        let opt = FakeWasmOpt(|_: &Path, _: &Path| Err("not found".to_string()));
-        let summary = package(
-            &opt,
-            &root,
-            Options {
-                release: true,
-                debug_tools: false,
-                private_assets: false,
-            },
-        )
-        .unwrap();
-        assert!(summary.contains("11 bytes"), "{summary}");
-        assert_eq!(
-            fs::read(root.join("dist/web/visions-of-shuyi.wasm")).unwrap(),
-            b"unoptimized"
-        );
-        fs::remove_dir_all(&root).unwrap();
-    }
-
-    #[test]
-    fn package_keeps_original_when_wasm_opt_fails() {
-        let root = fixture("package-release-fails");
-        write_wasm(
-            &root,
-            Options {
-                release: true,
-                debug_tools: false,
-                private_assets: false,
-            },
-            b"unoptimized",
-        );
-        let opt = FakeWasmOpt(|_: &Path, _: &Path| Ok(false));
-        let summary = package(
-            &opt,
-            &root,
-            Options {
-                release: true,
-                debug_tools: false,
-                private_assets: false,
-            },
-        )
-        .unwrap();
-        assert!(summary.contains("11 bytes"), "{summary}");
-        assert_eq!(
-            fs::read(root.join("dist/web/visions-of-shuyi.wasm")).unwrap(),
-            b"unoptimized"
-        );
-        fs::remove_dir_all(&root).unwrap();
+    fn package_keeps_original_when_wasm_opt_is_not_installed_or_fails() {
+        for (name, outcome) in [
+            ("missing", Err("not found".to_owned())),
+            ("fails", Ok(false)),
+        ] {
+            let root = fixture(&format!("package-release-{name}"));
+            write_wasm(&root, &release(), b"unoptimized");
+            let opt = FakeWasmOpt(|_: &Path, _: &Path| outcome.clone());
+            let summary = package(&opt, &rules(), &root, &release()).unwrap();
+            assert!(summary.contains("11 bytes"), "{summary}");
+            assert_eq!(
+                fs::read(root.join("dist/web/the-game.wasm")).unwrap(),
+                b"unoptimized"
+            );
+            fs::remove_dir_all(&root).unwrap();
+        }
     }
 
     #[test]
     fn package_reports_a_missing_wasm_artifact() {
         let root = fixture("package-missing-wasm");
         let opt = FakeWasmOpt(|_: &Path, _: &Path| panic!("not reached"));
-        let err = package(
-            &opt,
-            &root,
-            Options {
-                release: false,
-                debug_tools: false,
-                private_assets: false,
-            },
-        )
-        .unwrap_err();
+        let err = package(&opt, &rules(), &root, &debug()).unwrap_err();
         assert!(err.contains("copy"), "{err}");
         fs::remove_dir_all(&root).unwrap();
     }
@@ -755,25 +609,9 @@ mod tests {
         // (no compilation), without needing a real broken build to test the
         // failure path.
         let root = fixture("run-no-manifest");
-        let err = run(
-            &root,
-            Options {
-                release: false,
-                debug_tools: false,
-                private_assets: false,
-            },
-        )
-        .unwrap_err();
+        let err = run(&rules(), &root, &debug()).unwrap_err();
         assert!(err.contains("cargo build"), "{err}");
         fs::remove_dir_all(&root).unwrap();
-    }
-
-    /// The real repo root (`xtask` lives at `<repo>/crates/xtask`).
-    fn real_repo_root() -> &'static Path {
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .and_then(Path::parent)
-            .expect("xtask is at <repo>/crates/xtask")
     }
 
     /// The version `quad_storage_crate_version()` reports for the
@@ -809,9 +647,9 @@ version = "1.2.3"
 
     #[test]
     fn index_html_declares_register_plugin_before_the_bundle() {
-        // Ticket 0225: the strict-mode bundle assigns to `register_plugin`,
-        // which throws unless the global already exists.
-        let html = fs::read_to_string(real_repo_root().join("web/index.html")).unwrap();
+        // The strict-mode bundle assigns to `register_plugin`, which throws
+        // unless the global already exists.
+        let html = shell("index.html");
         let declared = html
             .find("var register_plugin;")
             .expect("index.html declares `var register_plugin;`");
@@ -863,16 +701,14 @@ version = "1.2.3"
 
     #[test]
     fn gamepad_js_provides_exactly_the_functions_the_app_imports() {
-        // Ticket 0219: a function missing on either side only shows up in
-        // the browser, as a warning and a pad that does nothing.
-        let root = real_repo_root();
-        let js = fs::read_to_string(root.join("web/gamepad.js")).unwrap();
-        let rust = fs::read_to_string(root.join(PADS_WEB)).unwrap();
-        let provided: Vec<String> = identifiers_starting(&js, "importObject.env.shuyi_pad_")
+        // A function missing on either side only shows up in the browser,
+        // as a warning and a pad that does nothing.
+        let js = shell("gamepad.js");
+        let provided: Vec<String> = identifiers_starting(js, "importObject.env.shuyi_pad_")
             .iter()
             .map(|name| name.replace("importObject.env.", ""))
             .collect();
-        let imported: Vec<String> = identifiers_starting(&rust, "safe fn shuyi_pad_")
+        let imported: Vec<String> = identifiers_starting(PADS_WEB, "safe fn shuyi_pad_")
             .iter()
             .map(|name| name.replace("safe fn ", ""))
             .collect();
@@ -887,43 +723,46 @@ version = "1.2.3"
     fn gamepad_js_version_matches_the_app() {
         // The loader logs a version-mismatch error unless the JS plugin's
         // `version` equals what `shuyi_gamepad_crate_version()` returns.
-        let root = real_repo_root();
-        let js = fs::read_to_string(root.join("web/gamepad.js")).unwrap();
-        let rust = fs::read_to_string(root.join(PADS_WEB)).unwrap();
+        let js = shell("gamepad.js");
         assert_eq!(
-            number_after(&js, "var VERSION = "),
-            number_after(&rust, "const PLUGIN_VERSION: u32 = ")
+            number_after(js, "var VERSION = "),
+            number_after(PADS_WEB, "const PLUGIN_VERSION: u32 = ")
         );
         assert!(js.contains("version: VERSION"));
         assert!(js.contains(r#"name: "shuyi_gamepad""#));
-        assert!(rust.contains("fn shuyi_gamepad_crate_version() -> u32"));
+        assert!(PADS_WEB.contains("fn shuyi_gamepad_crate_version() -> u32"));
     }
 
     #[test]
     fn index_html_loads_gamepad_js_between_the_bundle_and_the_game() {
         // The plugin registers itself with the bundle's
         // `miniquad_add_plugin`, and must have done so before `load(...)`.
-        let html = fs::read_to_string(real_repo_root().join("web/index.html")).unwrap();
+        let html = shell("index.html");
         let at = |needle: &str| {
             html.find(needle)
                 .unwrap_or_else(|| panic!("index.html has `{needle}`"))
         };
         let bundle = at(r#"<script src="mq_js_bundle.js">"#);
         let gamepad = at(r#"<script src="gamepad.js">"#);
-        let load = at(r#"load("visions-of-shuyi.wasm")"#);
+        let load = at(r#"load("%WASM%")"#);
         assert!(bundle < gamepad && gamepad < load);
     }
 
     #[test]
     fn quad_storage_js_version_matches_the_locked_crate() {
-        // Ticket 0225: the loader logs a version-mismatch error unless the JS
-        // plugin's `version` equals `quad_storage_crate_version()`.
-        let root = real_repo_root();
-        let lock = fs::read_to_string(root.join("Cargo.lock")).unwrap();
-        let js = fs::read_to_string(root.join("web/quad-storage.js")).unwrap();
+        // The loader logs a version-mismatch error unless the JS plugin's
+        // `version` equals `quad_storage_crate_version()`.
+        let lock = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .ancestors()
+            .map(|dir| dir.join("Cargo.lock"))
+            .find(|lock| lock.is_file())
+            .expect("the workspace has a Cargo.lock");
+        let lock = fs::read_to_string(lock).unwrap();
         let expected = format!("version: {}", locked_quad_storage_sys_version(&lock));
         assert!(
-            js.lines().any(|line| line.trim() == expected),
+            shell("quad-storage.js")
+                .lines()
+                .any(|line| line.trim() == expected),
             "web/quad-storage.js must declare `{}`",
             expected.trim_end()
         );

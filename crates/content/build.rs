@@ -49,7 +49,7 @@ fn main() {
         assert!(
             Path::new(PRIVATE).is_dir(),
             "the `private-assets` feature needs the bought art in assets-private/game/, \
-             which isn't there. Fetch it with `cargo xtask private-assets` (it needs \
+             which isn't there. Fetch it with `cargo shuyi private-assets` (it needs \
              access to the private repository), or build without the feature to use \
              the public placeholders."
         );

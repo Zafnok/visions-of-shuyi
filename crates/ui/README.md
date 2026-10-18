@@ -403,7 +403,7 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      `words.text("battle.menu.attack")`, `words.text_with(key, &[…])`
      (which names no key: a help line is `ctx.text_with`'s). A function
      that returns text takes `Words`, and its tests compare the words the
-     player sees, never the key. `cargo xtask check-text` fails on any
+     player sees, never the key. `cargo shuyi check-text` fails on any
      literal that reads like text (a capital or a space, a `format!` with
      a word, a lowercase label in a `let` or a `match` arm); an id it
      takes for one gets `// check-text: not player text (why)`.
@@ -533,7 +533,7 @@ A snapshot is text, so a sprite is one line. To look at a frame, run a
 script and render it to a PNG, exactly as `app` draws it (ticket 0232):
 
 ```bash
-cargo xtask frame-png target/battle.png --keys "Down f Left f" --wait 1.5
+cargo shuyi frame-png target/battle.png --keys "Down f Left f" --wait 1.5
 ```
 
 Steps (`--keys`, `--pad`, `--wait`) run in the order given, from a later

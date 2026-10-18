@@ -1,18 +1,17 @@
-//! `cargo xtask check-keys`: fails when game code or player text names a
-//! key directly instead of going through an `Action` and the player's
-//! keymap (ticket 0216, the `keyboard-input` skill, ADR-0015). Controller
-//! buttons are treated like keys (ticket 0219, ADR-0034).
+//! `check-keys`: fails when game code or player text names a key directly
+//! instead of going through an `Action` and the player's keymap.
+//! Controller buttons are treated like keys.
 //!
-//! It scans the non-test Rust in `crates/{ui,app,content,playdate}/src` for key and
-//! button types (`Key::`, `Chord::`, `Button::`) and macroquad key reads
-//! (`KeyCode`, `is_key_down`, …) outside the files that make up the key
-//! pipeline, and scans string
+//! It scans the non-test Rust in the project's source folders
+//! ([`CheckKeys::rust`]) for key and button types (`Key::`, `Chord::`,
+//! `Button::`) and macroquad key reads (`KeyCode`, `is_key_down`, …)
+//! outside the files that make up the key pipeline, and scans string
 //! literals there for key names shown to the player (`"f select"`,
-//! `"press f"`, `"[F]"`, `"Space"`, `"arrows"`, …). Text in `assets/` (`.ron`
-//! strings: tips, item and skill descriptions; `.dlg` dialogue) is prose, so
-//! there only an instruction to press a key (`press f`, `hold Shift`), a
-//! `Shift+` chord, `WASD` or `[F]` counts; "Escape!" or "fires arrows" as
-//! plain words are fine.
+//! `"press f"`, `"[F]"`, `"Space"`, `"arrows"`, …). Text in the asset
+//! folders (`.ron` strings: tips, item and skill descriptions; `.dlg`
+//! dialogue) is prose, so there only an instruction to press a key
+//! (`press f`, `hold Shift`), a `Shift+` chord, `WASD` or `[F]` counts;
+//! "Escape!" or "fires arrows" as plain words are fine.
 //!
 //! It is a line-based scanner, not a parser: comments are ignored, and a
 //! `#[cfg(test)]` item (usually `mod tests { … }`) is skipped by bracket
@@ -21,49 +20,12 @@
 use std::fs;
 use std::path::Path;
 
-/// What every error says to do about it.
-pub const HINT: &str = "use an Action and `widgets::help::key_name`; see the keyboard-input skill";
+use crate::project::CheckKeys;
 
 /// The comment that allows the next item (or its own line) to name keys, for
-/// drawing a picture of a keyboard. Only honoured in [`PICTURE_FILES`].
+/// drawing a picture of a keyboard. Only honoured in
+/// [`CheckKeys::picture_files`].
 pub const MARKER: &str = "check-keys: keyboard picture";
-
-/// Rust source trees scanned.
-const RUST_DIRS: [&str; 4] = [
-    "crates/ui/src",
-    "crates/app/src",
-    "crates/content/src",
-    "crates/playdate/src",
-];
-
-/// Asset trees scanned: the story's files and the test files (ADR-0057).
-const ASSET_DIRS: [&str; 2] = ["assets", "assets-test"];
-
-/// The key pipeline: files that may name key and button types and key
-/// names. The Playdate's `pads.rs` reads its buttons (ticket 1033). The
-/// generic keymap format, the input mechanism and the platform shell's
-/// keyboard and controllers are the engine's (`engine/`, tickets 1107 and
-/// 1110), which this check doesn't scan.
-const KEY_FILES: [&str; 3] = [
-    "crates/content/src/keymap.rs",
-    "crates/ui/src/input.rs",
-    "crates/playdate/src/pads.rs",
-];
-/// The only file that may read macroquad's keyboard: the engine's
-/// platform shell, so none that this check scans.
-const PLATFORM_FILE: &str = "engine/crates/app/src/keys.rs";
-/// Files only compiled for tests (`#[cfg(any(test, feature = "harness"))]`).
-const TEST_SUPPORT_FILES: [&str; 1] = ["crates/ui/src/harness.rs"];
-/// Files whose [`MARKER`] comments are honoured: the layout picker, which
-/// says which keys the keyboard has and what each does, and its skin, which
-/// says where each sits (ADR-0054). Since ticket 1112 both are the engine's
-/// (`engine/crates/ui/src/screens/layout_picker*`, which this check doesn't
-/// scan) and the game's `layout_picker.rs` names no key; the paths keep the
-/// game's own picture, should it draw one again, to these two files.
-const PICTURE_FILES: [&str; 2] = [
-    "crates/ui/src/screens/layout_picker.rs",
-    "crates/ui/src/screens/layout_picker/glyph.rs",
-];
 
 /// Key and controller-button types: only the key pipeline names them.
 const KEY_TYPES: [&str; 3] = ["Key::", "Chord::", "Button::"];
@@ -81,24 +43,31 @@ const KEY_WORDS: [&str; 8] = [
     "Space", "Esc", "Escape", "Enter", "Shift", "arrows", "WASD", "wasd",
 ];
 
-/// Runs the scan over `repo_root` and returns every error (empty = clean).
-pub fn run(repo_root: &Path) -> Vec<String> {
+/// Runs the scan over the project at `root` and returns every error
+/// (empty = clean).
+pub fn run(rules: &CheckKeys, root: &Path) -> Vec<String> {
     let mut errors = Vec::new();
-    for dir in RUST_DIRS {
-        for file in files_under(&repo_root.join(dir), &mut errors) {
-            let rel = relative(repo_root, &file);
-            if has_ext(&file, "rs") && !is_test_file(&rel) {
-                read_and(&file, &rel, &mut errors, scan_rust);
+    for dir in &rules.rust {
+        for file in files_under(&root.join(dir), &mut errors) {
+            let rel = relative(root, &file);
+            if has_ext(&file, "rs") && !is_test_file(&rel, &rules.test_support) {
+                read_and(&file, &rel, &mut errors, |rel, source| {
+                    scan_rust(rules, rel, source)
+                });
             }
         }
     }
-    for assets in ASSET_DIRS {
-        for file in files_under(&repo_root.join(assets), &mut errors) {
-            let rel = relative(repo_root, &file);
+    for assets in &rules.assets {
+        for file in files_under(&root.join(assets), &mut errors) {
+            let rel = relative(root, &file);
             if has_ext(&file, "dlg") {
-                read_and(&file, &rel, &mut errors, scan_dlg);
-            } else if has_ext(&file, "ron") && rel != "assets/data/keymap.ron" {
-                read_and(&file, &rel, &mut errors, scan_ron);
+                read_and(&file, &rel, &mut errors, |rel, source| {
+                    scan_dlg(&rules.hint, rel, source)
+                });
+            } else if has_ext(&file, "ron") && !rules.not_text.contains(&rel) {
+                read_and(&file, &rel, &mut errors, |rel, source| {
+                    scan_ron(&rules.hint, rel, source)
+                });
             }
         }
     }
@@ -112,7 +81,12 @@ pub(crate) fn has_ext(file: &Path, ext: &str) -> bool {
 }
 
 /// Reads `file` and appends what `scan` finds in it, or the read error.
-fn read_and(file: &Path, rel: &str, errors: &mut Vec<String>, scan: fn(&str, &str) -> Vec<String>) {
+fn read_and(
+    file: &Path,
+    rel: &str,
+    errors: &mut Vec<String>,
+    scan: impl Fn(&str, &str) -> Vec<String>,
+) {
     match fs::read_to_string(file) {
         Ok(source) => errors.extend(scan(rel, &source)),
         Err(e) => errors.push(format!("{rel}: cannot read: {e}")),
@@ -120,7 +94,7 @@ fn read_and(file: &Path, rel: &str, errors: &mut Vec<String>, scan: fn(&str, &st
 }
 
 /// Every file under `dir`, recursively, sorted so output is stable.
-pub(crate) fn files_under(dir: &Path, errors: &mut Vec<String>) -> Vec<std::path::PathBuf> {
+pub fn files_under(dir: &Path, errors: &mut Vec<String>) -> Vec<std::path::PathBuf> {
     let mut out = Vec::new();
     let mut stack = vec![dir.to_path_buf()];
     while let Some(d) = stack.pop() {
@@ -145,27 +119,30 @@ pub(crate) fn files_under(dir: &Path, errors: &mut Vec<String>) -> Vec<std::path
 }
 
 /// `file` relative to `root`, with `/` separators.
-pub(crate) fn relative(root: &Path, file: &Path) -> String {
+pub fn relative(root: &Path, file: &Path) -> String {
     let rel = file.strip_prefix(root).unwrap_or(file);
     rel.to_string_lossy().replace('\\', "/")
 }
 
 /// Test-only Rust files: `tests.rs`, `*_tests.rs`, anything in a `tests/`
-/// directory, and the test harness.
-pub(crate) fn is_test_file(rel: &str) -> bool {
+/// directory, and the files in `support` (compiled only for tests).
+pub(crate) fn is_test_file(rel: &str, support: &[String]) -> bool {
     let name = rel.rsplit('/').next().unwrap_or(rel);
     name == "tests.rs"
         || name.ends_with("_tests.rs")
         || rel.split('/').any(|part| part == "tests")
-        || TEST_SUPPORT_FILES.contains(&rel)
+        || support.iter().any(|file| file == rel)
 }
 
-/// Scans one Rust file (`rel` is its repo-relative path, for messages and
-/// the allow-lists).
-pub fn scan_rust(rel: &str, source: &str) -> Vec<String> {
+/// Scans one Rust file (`rel` is its project-relative path, for messages
+/// and the allow-lists).
+pub fn scan_rust(rules: &CheckKeys, rel: &str, source: &str) -> Vec<String> {
     let lines = lex(source);
-    let key_file = KEY_FILES.contains(&rel);
-    let picture_file = PICTURE_FILES.contains(&rel);
+    let listed = |files: &[String]| files.iter().any(|file| file == rel);
+    let key_file = listed(&rules.key_files);
+    let picture_file = listed(&rules.picture_files);
+    let hint = &rules.hint;
+    let platform_file = &rules.platform_file;
     let exempt = exempt_lines(&lines, picture_file.then_some(MARKER));
     let mut errors = Vec::new();
     for (i, line) in lines.iter().enumerate() {
@@ -173,7 +150,7 @@ pub fn scan_rust(rel: &str, source: &str) -> Vec<String> {
         if line.comment.contains(MARKER) && !picture_file {
             errors.push(format!(
                 "{rel}:{n}: `// {MARKER}` is only allowed in {}",
-                PICTURE_FILES.join(", ")
+                rules.picture_files.join(", ")
             ));
         }
         if exempt.get(i).copied().unwrap_or(false) {
@@ -183,17 +160,17 @@ pub fn scan_rust(rel: &str, source: &str) -> Vec<String> {
             for pattern in KEY_TYPES {
                 if contains_token(&line.code, pattern) {
                     errors.push(format!(
-                        "{rel}:{n}: names a key or button with `{pattern}` — {HINT}"
+                        "{rel}:{n}: names a key or button with `{pattern}` — {hint}"
                     ));
                 }
             }
         }
-        if rel != PLATFORM_FILE {
+        if rel != platform_file {
             for pattern in PLATFORM_READS {
                 if contains_token(&line.code, pattern) {
                     errors.push(format!(
-                        "{rel}:{n}: reads the keyboard with `{pattern}` outside {PLATFORM_FILE} — \
-                         {HINT}"
+                        "{rel}:{n}: reads the keyboard with `{pattern}` outside {platform_file} — \
+                         {hint}"
                     ));
                 }
             }
@@ -201,7 +178,7 @@ pub fn scan_rust(rel: &str, source: &str) -> Vec<String> {
         if !key_file {
             for text in &line.strings {
                 if let Some(why) = names_key(text) {
-                    errors.push(format!("{rel}:{n}: text {why}: {text:?} — {HINT}"));
+                    errors.push(format!("{rel}:{n}: text {why}: {text:?} — {hint}"));
                 }
             }
         }
@@ -209,15 +186,15 @@ pub fn scan_rust(rel: &str, source: &str) -> Vec<String> {
     errors
 }
 
-/// Scans one RON data file's string literals with the [`prose_names_key`]
+/// Scans one RON data file's string literals with the `prose_names_key`
 /// rule: they are player-facing prose (tips, item and skill descriptions),
 /// where "fires arrows" or "Shift the odds" are just words.
-pub fn scan_ron(rel: &str, source: &str) -> Vec<String> {
+pub fn scan_ron(hint: &str, rel: &str, source: &str) -> Vec<String> {
     let mut errors = Vec::new();
     for (i, line) in lex(source).iter().enumerate() {
         for text in &line.strings {
             if let Some(why) = prose_names_key(text) {
-                errors.push(format!("{rel}:{}: text {why}: {text:?} — {HINT}", i + 1));
+                errors.push(format!("{rel}:{}: text {why}: {text:?} — {hint}", i + 1));
             }
         }
     }
@@ -225,15 +202,15 @@ pub fn scan_ron(rel: &str, source: &str) -> Vec<String> {
 }
 
 /// Scans one `.dlg` dialogue script: every line but `#` comments, with the
-/// [`prose_names_key`] rule like `.ron` text.
-pub fn scan_dlg(rel: &str, source: &str) -> Vec<String> {
+/// `prose_names_key` rule like `.ron` text.
+pub fn scan_dlg(hint: &str, rel: &str, source: &str) -> Vec<String> {
     let mut errors = Vec::new();
     for (i, line) in source.lines().enumerate() {
         if line.trim_start().starts_with('#') {
             continue;
         }
         if let Some(why) = prose_names_key(line) {
-            errors.push(format!("{rel}:{}: text {why}: {line:?} — {HINT}", i + 1));
+            errors.push(format!("{rel}:{}: text {why}: {line:?} — {hint}", i + 1));
         }
     }
     errors
@@ -612,11 +589,41 @@ impl Lexer {
 mod tests {
     use super::*;
 
+    /// A game's rules, laid out as Shuyi's first game's are.
+    pub(crate) fn rules() -> CheckKeys {
+        let strings = |items: &[&str]| items.iter().map(|s| (*s).to_owned()).collect();
+        CheckKeys {
+            rust: strings(&[
+                "crates/ui/src",
+                "crates/app/src",
+                "crates/content/src",
+                "crates/playdate/src",
+            ]),
+            assets: strings(&["story", "test-files"]),
+            not_text: strings(&["story/data/keymap.ron"]),
+            key_files: strings(&[
+                "crates/content/src/keymap.rs",
+                "crates/ui/src/input.rs",
+                "crates/playdate/src/pads.rs",
+            ]),
+            platform_file: "engine/crates/app/src/keys.rs".to_owned(),
+            test_support: strings(&["crates/ui/src/harness.rs"]),
+            picture_files: strings(&[
+                "crates/ui/src/screens/layout_picker.rs",
+                "crates/ui/src/screens/layout_picker/glyph.rs",
+            ]),
+            hint: "use an Action and `widgets::help::key_name`; see the keyboard-input skill"
+                .to_owned(),
+        }
+    }
+
     fn rust(rel: &str, src: &str) -> Vec<String> {
-        scan_rust(rel, src)
+        scan_rust(&rules(), rel, src)
     }
 
     const SCREEN: &str = "crates/ui/src/screens/foo.rs";
+
+    const HINT: &str = "use an Action";
 
     #[test]
     fn key_in_screen_code_is_an_error_naming_file_line_and_fix() {
@@ -667,7 +674,7 @@ mod tests {
         );
         // Only the engine's keys.rs may read macroquad's keyboard.
         let read = "let d = is_key_down(KeyCode::A);\n";
-        assert_eq!(rust(PLATFORM_FILE, read), Vec::<String>::new());
+        assert_eq!(rust(&rules().platform_file, read), Vec::<String>::new());
         assert_eq!(rust("crates/ui/src/input.rs", read).len(), 2);
         let errs = rust("crates/app/src/main.rs", read);
         assert_eq!(errs.len(), 2, "{errs:?}");
@@ -709,12 +716,23 @@ mod tests {
 
     #[test]
     fn test_files_are_skipped() {
-        assert!(is_test_file("crates/ui/src/screens/battle/tests.rs"));
-        assert!(is_test_file("crates/ui/src/screens/battle/mode_tests.rs"));
-        assert!(is_test_file("crates/ui/src/tests/helpers.rs"));
-        assert!(is_test_file("crates/ui/src/harness.rs"));
-        assert!(!is_test_file("crates/ui/src/screens/battle/mod.rs"));
-        assert!(!is_test_file("crates/ui/src/contests.rs"));
+        let support = rules().test_support;
+        let is_test_file = |support: &[String], rel: &str| is_test_file(rel, support);
+        assert!(is_test_file(
+            &support,
+            "crates/ui/src/screens/battle/tests.rs"
+        ));
+        assert!(is_test_file(
+            &support,
+            "crates/ui/src/screens/battle/mode_tests.rs"
+        ));
+        assert!(is_test_file(&support, "crates/ui/src/tests/helpers.rs"));
+        assert!(is_test_file(&support, "crates/ui/src/harness.rs"));
+        assert!(!is_test_file(
+            &support,
+            "crates/ui/src/screens/battle/mod.rs"
+        ));
+        assert!(!is_test_file(&support, "crates/ui/src/contests.rs"));
     }
 
     #[test]
@@ -748,7 +766,7 @@ fn after() { let _ = Key::D; }
     fn cfg_test_single_items_and_extra_attributes_are_skipped() {
         let src = "\
 #[cfg(test)]
-use trpg_content::Key;
+use game_content::Key;
 #[cfg(test)]
 #[allow(dead_code)]
 const K: Key = Key::F;
@@ -780,7 +798,7 @@ const ROW: [Key; 2] = [
 const UP: Key = Key::Up; // check-keys: keyboard picture
 const DOWN: Key = Key::Down;
 ";
-        for picture in PICTURE_FILES {
+        for picture in &rules().picture_files {
             let errs = rust(picture, src);
             assert_eq!(errs.len(), 1, "{picture}: {errs:?}");
             assert!(
@@ -849,11 +867,11 @@ let d = is_key_down_fast(x);
     #[test]
     fn ron_strings_and_dlg_lines_are_scanned() {
         let ron = "(\n  // press f here is a comment\n  text: \"Press {Confirm} to go on\",\n  bad: \"Press f to go on\",\n  bow: \"Fires arrows. Escape is harder.\",\n  art: \"Shift the odds: Enter a stance.\",\n)";
-        let errs = scan_ron("assets/data/tips.ron", ron);
+        let errs = scan_ron(HINT, "story/data/tips.ron", ron);
         // Only the instruction to press a key; key words as prose pass.
         assert_eq!(errs.len(), 1, "{errs:?}");
         assert!(
-            errs[0].starts_with("assets/data/tips.ron:4: "),
+            errs[0].starts_with("story/data/tips.ron:4: "),
             "{}",
             errs[0]
         );
@@ -861,7 +879,11 @@ let d = is_key_down_fast(x);
         // "a key" and "a button" are not the `a` key; `a` alone is, and so
         // is the A button.
         for ok in ["Press a key…", "Hold a button.", "PRESS a KEY…"] {
-            assert_eq!(scan_ron("x.ron", &format!("[\"{ok}\"]")), [""; 0], "{ok}");
+            assert_eq!(
+                scan_ron(HINT, "x.ron", &format!("[\"{ok}\"]")),
+                [""; 0],
+                "{ok}"
+            );
         }
         for bad in [
             "Press a",
@@ -871,16 +893,16 @@ let d = is_key_down_fast(x);
             "Press a keyhole",
             "Press b key",
         ] {
-            let errs = scan_ron("x.ron", &format!("[\"{bad}\"]"));
+            let errs = scan_ron(HINT, "x.ron", &format!("[\"{bad}\"]"));
             assert_eq!(errs.len(), 1, "{bad}: {errs:?}");
         }
 
         let dlg =
             "# press f is a comment\n@scene s\nlord: Press Space to end your turn.\nlord: Fine.\n";
-        let errs = scan_dlg("assets/dialogue/x.dlg", dlg);
+        let errs = scan_dlg(HINT, "story/dialogue/x.dlg", dlg);
         assert_eq!(errs.len(), 1, "{errs:?}");
         assert!(
-            errs[0].starts_with("assets/dialogue/x.dlg:3: "),
+            errs[0].starts_with("story/dialogue/x.dlg:3: "),
             "{}",
             errs[0]
         );
@@ -890,13 +912,13 @@ let d = is_key_down_fast(x);
     fn dialogue_prose_may_use_key_words_as_words() {
         for line in [
             "knight: Escape while you can!",
-            "archer: A volley of arrows, then we Enter the keep.",
+            "bowman: A rain of arrows, then we Enter the keep.",
             "> The wind began to Shift.",
             "lord: Space enough for all of us.",
             "lord: I think so. Hold fast!",
             "lord: Press on, press forward.",
             "lord: Plan B, then.",
-            "test_lord[happy]: Better late than never.",
+            "test_hero[happy]: Better late than never.",
             "lord: Hit it with an F1 car? No.",
         ] {
             assert_eq!(prose_names_key(line), None, "{line}");
@@ -983,22 +1005,25 @@ let d = is_key_down_fast(x);
 
     #[test]
     fn run_reports_hits_in_a_repo_tree() {
-        let root = std::env::temp_dir().join(format!("xtask-check-keys-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("shuyi-check-keys-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         let screens = root.join("crates/ui/src/screens");
         fs::create_dir_all(&screens).unwrap();
-        fs::create_dir_all(root.join("assets/data")).unwrap();
+        fs::create_dir_all(root.join("story/data")).unwrap();
         fs::write(screens.join("foo.rs"), "fn f() { g(Key::F); }\n").unwrap();
         fs::write(screens.join("tests.rs"), "fn f() { g(Key::F); }\n").unwrap();
-        fs::write(root.join("assets/data/tips.ron"), "[\"press f\"]\n").unwrap();
-        fs::write(root.join("assets/data/keymap.ron"), "(\"Space\")\n").unwrap();
-        fs::create_dir_all(root.join("assets-test/dialogue")).unwrap();
+        fs::write(root.join("story/data/tips.ron"), "[\"press f\"]\n").unwrap();
+        // Neither the keymap file nor a file that isn't RON is player text.
+        fs::write(root.join("story/data/keymap.ron"), "(\"press f\")\n").unwrap();
+        fs::write(root.join("story/data/notes.md"), "\"press f\"\n").unwrap();
+        fs::create_dir_all(root.join("test-files/dialogue")).unwrap();
         let script = "@scene s\nlord: Press Space to end your turn.\n";
-        fs::write(root.join("assets-test/dialogue/x.dlg"), script).unwrap();
-        let errs = run(&root);
+        fs::write(root.join("test-files/dialogue/x.dlg"), script).unwrap();
+        let rules = rules();
+        let errs = run(&rules, &root);
         let _ = fs::remove_dir_all(&root);
         // Missing crates/{app,content,playdate}/src are reported too.
-        let hits: Vec<&String> = errs.iter().filter(|e| e.contains(HINT)).collect();
+        let hits: Vec<&String> = errs.iter().filter(|e| e.contains(&rules.hint)).collect();
         assert_eq!(hits.len(), 3, "{errs:?}");
         assert!(
             hits[0].starts_with("crates/ui/src/screens/foo.rs:1: "),
@@ -1006,25 +1031,15 @@ let d = is_key_down_fast(x);
             hits[0]
         );
         assert!(
-            hits[1].starts_with("assets/data/tips.ron:1: "),
+            hits[1].starts_with("story/data/tips.ron:1: "),
             "{}",
             hits[1]
         );
         assert!(
-            hits[2].starts_with("assets-test/dialogue/x.dlg:2: "),
+            hits[2].starts_with("test-files/dialogue/x.dlg:2: "),
             "{}",
             hits[2]
         );
         assert_eq!(errs.len(), 6, "{errs:?}");
-    }
-
-    #[test]
-    fn real_repo_has_no_hard_coded_keys() {
-        let repo_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .and_then(Path::parent)
-            .expect("xtask is at <repo>/crates/xtask");
-        let errors = run(repo_root);
-        assert!(errors.is_empty(), "check-keys errors: {errors:#?}");
     }
 }

@@ -34,7 +34,7 @@ game): `ter-u16n.bdf`, the font, and `pad-shapes.bdf`, our own extra glyphs
 (below). To regenerate:
 
 ```bash
-cargo xtask font-atlas assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf assets/fonts
+cargo shuyi font-atlas assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf assets/fonts
 ```
 
 A test in `xtask` fails if the committed atlas differs from what the tool

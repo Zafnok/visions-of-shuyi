@@ -22,7 +22,7 @@ cargo xtask title-art
 A test in `xtask` fails if a committed file differs from what the tool
 makes. `cargo xtask title-art --bought` copies the bought backdrops from
 `assets-private/library/` into `assets-private/game/title/`; commit and
-push there, then `cargo xtask private-assets --pin`.
+push there, then `cargo shuyi private-assets --pin`.
 
 ## `title.ron`
 
@@ -58,7 +58,7 @@ palette names are used.
 ## Seeing it
 
 ```bash
-cargo xtask frame-png target/title.png
+cargo shuyi frame-png target/title.png
 ```
 
 Add `--prompt` for the "Press any key or button" state, and `--features

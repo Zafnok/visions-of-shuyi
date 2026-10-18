@@ -455,7 +455,7 @@ fn run_needs_the_private_assets_checkout() {
     assert_eq!(
         run(&root, &options(Path::new("busts"), "k", 0)),
         Err(
-            "assets-private/game/ is missing: run `cargo xtask private-assets --library` first"
+            "assets-private/game/ is missing: run `cargo shuyi private-assets --library` first"
                 .to_owned()
         )
     );

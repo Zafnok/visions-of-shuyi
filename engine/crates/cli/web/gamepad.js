@@ -1,10 +1,10 @@
-// Controller support for the web build (ticket 0219, ADR-0034): a miniquad
-// plugin over the browser's Gamepad API. This file is the game's own code
-// (see LICENSE), unlike the vendored plugins next to it.
+// Controller support for the web build: a miniquad plugin over the
+// browser's Gamepad API. This file is Shuyi Engine's own code, unlike the
+// vendored plugins next to it.
 //
 // The Rust side is engine/crates/app/src/pads/web.rs, which declares exactly the
-// `shuyi_pad_*` functions below (an xtask test compares the two lists) and
-// turns what they return into the game's buttons. All the rules (sticks as
+// `shuyi_pad_*` functions below (a test of shuyi-cli compares the two lists)
+// and turns what they return into the game's buttons. All the rules (sticks as
 // directions, the Switch-style swap, several pads as one) live in Rust.
 //
 // Only pads the browser reports with `mapping === "standard"` are listed, so

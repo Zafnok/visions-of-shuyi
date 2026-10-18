@@ -1,10 +1,14 @@
 use std::collections::BTreeMap;
-use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 
-use trpg_content::image::TEST_CARD_PATH;
-use trpg_ui::{Cell, Overlay, Rect};
+use shuyi_assets::image::ImageInfo;
+use shuyi_assets::lighting::Light;
+use shuyi_ui::frame::{Cell, Overlay, Rect};
 
 use super::*;
+use crate::test_card;
+
+/// The test card's path in the image table.
+const TEST_CARD_PATH: &str = "images/test_card.png";
 
 /// The console background in these tests.
 const CLEAR: Rgb = Rgb::new(16, 16, 16);
@@ -35,15 +39,24 @@ fn tiny_atlas() -> (FontAtlasDef, Vec<u8>) {
     (def, encode_png(24, 16, &rgba).unwrap())
 }
 
-fn test_card() -> &'static [u8] {
-    trpg_content::bundle::bytes(TEST_CARD_PATH).unwrap()
+/// The test card as a PNG file.
+fn card_png() -> Vec<u8> {
+    let size = test_card::SIZE;
+    encode_png(size, size, &test_card::pixels()).unwrap()
 }
 
 /// A painter with the tiny atlas and the test card, if `with_card`.
 fn painter(with_card: bool) -> (Painter, ImageTable) {
     let (atlas, png) = tiny_atlas();
-    let table = trpg_content::image::from_files([(TEST_CARD_PATH, test_card())]).unwrap();
-    let read = |path: &str| (with_card && path == TEST_CARD_PATH).then(test_card);
+    let size = ImageInfo {
+        width: test_card::SIZE,
+        height: test_card::SIZE,
+    };
+    let table = ImageTable {
+        images: [(TEST_CARD_PATH, size)].into(),
+    };
+    let card = card_png();
+    let read = |path: &str| (with_card && path == TEST_CARD_PATH).then_some(card.as_slice());
     (
         Painter::new(atlas, &png, &table, read, CLEAR).unwrap(),
         table,
@@ -149,7 +162,7 @@ fn an_unflipped_solid_sprite_shows_the_card_as_is() {
     let image = painter.render(&buf, 1);
     for y in 0..16 {
         for x in 0..16 {
-            let want = crate::test_card::pixels()[((y * 16 + x) * 4) as usize..][..4].to_vec();
+            let want = test_card::pixels()[((y * 16 + x) * 4) as usize..][..4].to_vec();
             assert_eq!(image.pixel(x, y).unwrap().to_vec(), want, "({x}, {y})");
         }
     }
@@ -157,7 +170,6 @@ fn an_unflipped_solid_sprite_shows_the_card_as_is() {
 
 #[test]
 fn a_painted_sprite_is_one_colour_or_dimmed_where_the_image_is_solid() {
-    use trpg_ui::Paint;
     let (painter, table) = painter(true);
     let card = table.id(TEST_CARD_PATH).unwrap();
     let full = Rect::new(0, 0, 16, 16);
@@ -169,7 +181,7 @@ fn a_painted_sprite_is_one_colour_or_dimmed_where_the_image_is_solid() {
         painter.render(&buf, 1)
     };
     // The card: a white border, then a red quadrant from (1, 1).
-    let [red, ..] = crate::test_card::QUADRANTS;
+    let [red, ..] = test_card::QUADRANTS;
     let red = Rgb::new(red[0], red[1], red[2]);
     let white = Rgb::new(255, 255, 255);
     let rgba = |c: Rgb| Some([c.r, c.g, c.b, 255]);
@@ -188,7 +200,7 @@ fn a_painted_sprite_is_one_colour_or_dimmed_where_the_image_is_solid() {
     assert_eq!(dimmed.pixel(1, 1), rgba(red.dimmed()));
     assert_ne!(red.dimmed(), red);
     // Shaded: each pixel as it is in the light (ADR-0058).
-    let dusk = trpg_content::Light::new(0.35, [0.62, 0.56, 0.46]);
+    let dusk = Light::new(0.35, [0.62, 0.56, 0.46]);
     let shaded = render(Paint::Shaded(dusk), 255);
     assert_eq!(shaded.pixel(0, 0), Some([158, 143, 117, 255]));
     assert_eq!(shaded.pixel(1, 1), rgba(Paint::Shaded(dusk).apply(red)));
@@ -202,7 +214,6 @@ fn a_painted_sprite_is_one_colour_or_dimmed_where_the_image_is_solid() {
 /// its paint, and as solid as before: nothing under it shows through.
 #[test]
 fn a_darkened_sprite_is_darker_not_see_through() {
-    use trpg_ui::Paint;
     let (painter, table) = painter(true);
     let card = table.id(TEST_CARD_PATH).unwrap();
     let full = Rect::new(0, 0, 16, 16);
@@ -213,7 +224,7 @@ fn a_darkened_sprite_is_darker_not_see_through() {
         buf.add_sprite(sprite);
         painter.render(&buf, 1)
     };
-    let [red, ..] = crate::test_card::QUADRANTS;
+    let [red, ..] = test_card::QUADRANTS;
     let red = Rgb::new(red[0], red[1], red[2]);
     let rgba = |c: Rgb| Some([c.r, c.g, c.b, 255]);
     let dark = render(Paint::Image, 102);
@@ -244,53 +255,58 @@ fn a_bad_atlas_image_is_an_error() {
     assert!(err.unwrap().starts_with("font atlas image"));
 }
 
+/// A game's options: one flag, one with a value.
+const GAME: [GameOption; 2] = [
+    GameOption {
+        flag: "--map",
+        value: None,
+        help: "the map alone",
+    },
+    GameOption {
+        flag: "--light",
+        value: Some("NAME"),
+        help: "fight in this light\nwhatever the battle says",
+    },
+];
+
 #[test]
-fn parses_steps_in_order_and_options() {
-    let parsed = parse_args(&args(&[
-        "out.png", "--keys", "F2 Up", "--wait", "0.5", "--pad", "South", "--keys", "f", "--layout",
-        "left", "--scale", "3", "--prompt", "--light", "dusk", "--tips", "--map",
-    ]))
+fn parses_steps_in_order_and_the_games_options() {
+    let parsed = parse_args(
+        &args(&[
+            "out.png", "--keys", "F2 Up", "--wait", "0.5", "--pad", "South", "--light", "dusk",
+            "--keys", "f", "--scale", "3", "--map",
+        ]),
+        &GAME,
+    )
     .unwrap();
+    let game = |flag: &str, value: Option<&str>| GameArg {
+        flag: flag.to_owned(),
+        value: value.map(str::to_owned),
+    };
     assert_eq!(
         parsed,
         Options {
             out: PathBuf::from("out.png"),
-            steps: vec![
-                Step::Keys("F2 Up".into()),
-                Step::Wait(0.5),
-                Step::Pad("South".into()),
-                Step::Keys("f".into()),
-            ],
-            layout: LEFT_HANDED,
+            script: Script {
+                steps: vec![
+                    Step::Keys("F2 Up".into()),
+                    Step::Wait(0.5),
+                    Step::Pad("South".into()),
+                    Step::Keys("f".into()),
+                ],
+            },
             scale: Some(3),
-            playdate: false,
-            shows: Shows::MapAlone,
-            prompt: true,
-            light: Some("dusk".into()),
-            tips: true,
+            game: vec![game("--light", Some("dusk")), game("--map", None)],
         }
     );
-    let zero = parse_args(&args(&["a.png", "--wait", "0", "--scale", "8"])).unwrap();
-    assert_eq!((zero.steps, zero.scale), (vec![Step::Wait(0.0)], Some(8)));
-    let plain = parse_args(&args(&["a.png"])).unwrap();
+    let zero = parse_args(&args(&["a.png", "--wait", "0", "--scale", "8"]), &[]).unwrap();
     assert_eq!(
-        (
-            plain.layout,
-            plain.scale,
-            plain.prompt,
-            plain.light,
-            plain.tips,
-            plain.playdate,
-            plain.shows
-        ),
-        (RIGHT_HANDED, None, false, None, false, false, Shows::Screen)
+        (zero.script.steps, zero.scale),
+        (vec![Step::Wait(0.0)], Some(8))
     );
-    assert!(
-        parse_args(&args(&["a.png", "--playdate"]))
-            .unwrap()
-            .playdate
-    );
-    assert!(plain.steps.is_empty());
+    let plain = parse_args(&args(&["a.png"]), &GAME).unwrap();
+    assert_eq!((plain.scale, plain.game), (None, Vec::new()));
+    assert!(plain.script.steps.is_empty());
 }
 
 #[test]
@@ -303,92 +319,112 @@ fn rejects_bad_arguments() {
         &["a.png", "--pad", "Nope"],
         &["a.png", "--wait", "-1"],
         &["a.png", "--wait", "soon"],
-        &["a.png", "--layout", "middle"],
         &["a.png", "--scale", "0"],
         &["a.png", "--scale", "9"],
         &["a.png", "--light"],
         &["a.png", "--bogus"],
         &["--bogus"],
     ] {
-        assert!(parse_args(&args(bad)).is_err(), "{bad:?}");
+        assert!(parse_args(&args(bad), &GAME).is_err(), "{bad:?}");
     }
+    // An option of no game's is unknown.
+    let error = parse_args(&args(&["a.png", "--map"]), &[]).unwrap_err();
+    assert_eq!(error, "unknown option: --map");
 }
 
 #[test]
-fn a_light_must_be_one_of_the_lights() {
-    let dir = temp_dir("light");
-    let options = |light| parse_args(&args(&["out.png", "--scale", "1", "--light", light]));
-    let err = run(&dir, &options("midnight").unwrap()).unwrap_err();
-    assert_eq!(
-        err,
-        "--light: no light \"midnight\"; the lights are \"dawn\", \"dusk\", \"night\", \"noon\""
+fn the_usage_lists_the_games_options_and_notes() {
+    let usage = usage("tools", &GAME, "Pictures of bought art stay private.");
+    assert!(usage.starts_with("usage: tools frame-png <out.png> [steps] [options]\n"));
+    assert!(usage.contains("  --scale N            whole-number scale, 1 to 8"));
+    assert!(
+        usage.contains("\n  --map                the map alone\n"),
+        "{usage}"
     );
-    assert!(!dir.join("out.png").exists());
-    assert!(run(&dir, &options("night").unwrap()).is_ok());
-    let _ = fs::remove_dir_all(&dir);
+    assert!(
+        usage.contains(
+            "\n  --light NAME         fight in this light\n                       \
+             whatever the battle says\n"
+        ),
+        "{usage}"
+    );
+    assert!(usage.ends_with("\n\nPictures of bought art stay private."));
+    assert!(super::usage("shuyi", &[], "").ends_with("doesn't apply to them."));
+}
+
+/// A game that shows a 2 × 1 picture and says what it was given.
+struct Snapshot;
+
+impl GameTools for Snapshot {
+    fn frame_options(&self) -> &[GameOption] {
+        &GAME
+    }
+
+    fn frame(
+        &self,
+        options: &[GameArg],
+        script: &Script,
+        scale: Option<u32>,
+    ) -> Result<Shot, String> {
+        if options.iter().any(|o| o.flag == "--map") {
+            return Err("--map: no battle on screen (title)".to_owned());
+        }
+        let width = scale.unwrap_or(2);
+        Ok(Shot {
+            image: Image::filled(width, 1, Rgb::new(1, 2, 3)),
+            shows: format!("{} steps", script.steps.len()),
+            warning: options.first().map(|o| format!("{o:?}")),
+        })
+    }
+
+    fn lang(&self) -> Result<crate::GameLang, String> {
+        Err("no languages".to_owned())
+    }
 }
 
 /// A fresh empty directory under the system temp directory.
 fn temp_dir(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("xtask-frame-png-{name}-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("shuyi-frame-png-{name}-{}", std::process::id()));
     let _ = fs::remove_dir_all(&dir);
     fs::create_dir_all(&dir).unwrap();
     dir
 }
 
 #[test]
-fn writes_the_title_screen_and_the_same_bytes_twice() {
-    let dir = temp_dir("title");
-    let options = parse_args(&args(&["out/title.png", "--scale", "1"])).unwrap();
-    let summary = run(&dir, &options).unwrap();
-    assert!(summary.starts_with("frame-png: title → "), "{summary}");
-    let first = fs::read(dir.join("out/title.png")).unwrap();
-    let (w, h, rgba) = decode_png(&first).unwrap();
-    assert_eq!((w, h), (800, 512));
-    // The console background, opaque, in the bottom corner (the help
-    // line's row: the title's backdrop ends above it).
-    let corner = 511 * 800 * 4;
-    assert_eq!(&rgba[corner..corner + 4], &[0, 0, 0, 255]);
-    // Something is drawn.
-    assert!(rgba.chunks(4).any(|p| p[..3] != [0, 0, 0]));
-    run(&dir, &options).unwrap();
-    assert_eq!(fs::read(dir.join("out/title.png")).unwrap(), first);
-    fs::remove_dir_all(&dir).unwrap();
-}
-
-#[test]
-fn keys_reach_the_quick_battle_map() {
-    let dir = temp_dir("battle");
-    let options = parse_args(&args(&["b.png", "--keys", "Down f Left f", "--scale", "1"])).unwrap();
-    let summary = run(&dir, &options).unwrap();
-    assert!(summary.starts_with("frame-png: battle → "), "{summary}");
-    fs::remove_dir_all(&dir).unwrap();
-}
-
-#[test]
-fn the_prompt_start_draws_another_title() {
-    let dir = temp_dir("prompt");
-    let render = |extra: &[&str]| {
-        let mut all = vec!["t.png", "--scale", "1"];
-        all.extend_from_slice(extra);
-        run(&dir, &parse_args(&args(&all)).unwrap()).unwrap();
-        fs::read(dir.join("t.png")).unwrap()
-    };
-    assert_ne!(render(&["--prompt"]), render(&[]));
-    fs::remove_dir_all(&dir).unwrap();
-}
-
-/// Ticket 0455: `--tips` shows the start tip over the Quick Battle.
-#[test]
-fn tips_show_with_the_tips_option() {
-    let dir = temp_dir("tips");
-    let render = |extra: &[&str]| {
-        let mut all = vec!["t.png", "--keys", "Down f Left f f", "--scale", "1"];
-        all.extend_from_slice(extra);
-        run(&dir, &parse_args(&args(&all)).unwrap()).unwrap();
-        fs::read(dir.join("t.png")).unwrap()
-    };
-    assert_ne!(render(&["--tips"]), render(&[]));
+fn run_writes_the_games_picture_and_says_what_it_shows() {
+    let dir = temp_dir("run");
+    let options = parse_args(&args(&["out/a.png", "--keys", "f", "--scale", "3"]), &GAME).unwrap();
+    let said = run(&dir, &options, &Snapshot).unwrap();
+    assert_eq!(said, "frame-png: 1 steps → out/a.png (3×1)");
+    let (w, h, rgba) = decode_png(&fs::read(dir.join("out/a.png")).unwrap()).unwrap();
+    assert_eq!((w, h), (3, 1));
+    assert_eq!(&rgba[..4], &[1, 2, 3, 255]);
+    // The game's warning follows; its error is the command's.
+    let options = parse_args(&args(&["b.png", "--light", "dusk"]), &GAME).unwrap();
+    let said = run(&dir, &options, &Snapshot).unwrap();
+    assert!(
+        said.starts_with("frame-png: 0 steps → b.png (2×1)\nwarning: "),
+        "{said}"
+    );
+    let options = parse_args(&args(&["c.png", "--map"]), &GAME).unwrap();
+    let error = run(&dir, &options, &Snapshot).unwrap_err();
+    assert_eq!(error, "--map: no battle on screen (title)");
+    assert!(!dir.join("c.png").exists());
+    // A folder that can't be made, or a file that can't be written.
+    fs::write(dir.join("file"), "x").unwrap();
+    let options = parse_args(&args(&["file/d.png"]), &GAME).unwrap();
+    assert!(
+        run(&dir, &options, &Snapshot)
+            .unwrap_err()
+            .starts_with("creating ")
+    );
+    fs::create_dir_all(dir.join("e.png")).unwrap();
+    let options = parse_args(&args(&["e.png"]), &GAME).unwrap();
+    assert!(
+        run(&dir, &options, &Snapshot)
+            .unwrap_err()
+            .starts_with("writing ")
+    );
     fs::remove_dir_all(&dir).unwrap();
 }
 
@@ -400,17 +436,12 @@ fn the_summary_warns_about_bought_art() {
         rgba: vec![0; 8],
     };
     assert_eq!(
-        summary("title → a.png", &frame, false),
+        summary("title → a.png", &frame, None),
         "frame-png: title → a.png (2×1)"
     );
-    let warned = summary("title → a.png", &frame, true);
-    assert!(warned.starts_with(
-        "frame-png: title → a.png (2×1)
-warning: "
-    ));
-    assert!(
-        warned.contains("only as a screenshot of the game"),
-        "{warned}"
+    assert_eq!(
+        summary("title → a.png", &frame, Some("bought art")),
+        "frame-png: title → a.png (2×1)\nwarning: bought art"
     );
 }
 
@@ -562,79 +593,8 @@ fn half_a_scene_pixel_pans_by_one_window_pixel() {
 }
 
 #[test]
-fn the_scene_camera_frame_shows_the_map_in_its_window() {
-    let dir = temp_dir("frame-png-backdrop");
-    let mut options = parse_args(&args(&["camera.png", "--keys", "F2 Up Up f f"])).unwrap();
-    options.scale = Some(1);
-    let printed = run(&dir, &options).unwrap();
-    assert!(printed.contains("scene_camera"), "{printed}");
-    let frame = Image::decode(&fs::read(dir.join("camera.png")).unwrap()).unwrap();
-    // The middle of the window (cells 26..74 × 4..18) isn't the clear
-    // colour: the map is there.
-    let middle = frame.pixel(50 * 8, 11 * 16).unwrap();
-    assert_ne!(middle, [0, 0, 0, 255]);
-    let _ = fs::remove_dir_all(&dir);
-}
-
-/// Ticket 1032: `--playdate` draws the Playdate's screen, black and white.
-#[test]
-fn the_playdate_frame_is_400_by_240_in_black_and_white() {
-    let dir = temp_dir("playdate");
-    // The debug menu: no pictures, which are grey boxes until 1040.
-    let options = parse_args(&args(&["p.png", "--playdate", "--keys", "F2"])).unwrap();
-    let summary = run(&dir, &options).unwrap();
-    assert!(summary.contains("(400×240)"), "{summary}");
-    let (w, h, rgba) = decode_png(&fs::read(dir.join("p.png")).unwrap()).unwrap();
-    assert_eq!((w, h), (400, 240));
-    let black = rgba.chunks(4).filter(|p| *p == [0, 0, 0, 255]).count();
-    let white = rgba.chunks(4).filter(|p| *p == [255; 4]).count();
-    assert_eq!(black + white, 400 * 240);
-    // Mostly the white ground, and something drawn on it.
-    assert!(white > black && black > 0, "{white} white, {black} black");
-    let options = parse_args(&args(&["p.png", "--playdate", "--scale", "2"])).unwrap();
-    assert!(run(&dir, &options).unwrap().contains("(800×480)"));
-    fs::remove_dir_all(&dir).unwrap();
-}
-
-/// Ticket 1037: `--map` draws the battle's map alone over the whole
-/// screen in the map skin: on the Playdate, its own; with no battle, an
-/// error.
-#[test]
-fn the_map_alone_fills_the_screen() {
-    let dir = temp_dir("map");
-    let quick = ["m.png", "--keys", "Down f Left f f", "--map"];
-    let picture = |extra: &[&str]| {
-        let options = parse_args(&args(&[&quick[..], extra].concat())).unwrap();
-        let summary = run(&dir, &options).unwrap();
-        assert!(summary.starts_with("frame-png: battle → "), "{summary}");
-        decode_png(&fs::read(dir.join("m.png")).unwrap()).unwrap()
-    };
-    let (w, h, rgba) = picture(&["--playdate"]);
-    assert_eq!((w, h), (400, 240));
-    // The Quick Battle's small map in the middle of the screen, not where
-    // the battle screen's PC layout puts it.
-    let black = |x: usize, y: usize| rgba[(y * 400 + x) * 4] == 0;
-    let column = |x| (0..240).any(|y| black(x, y));
-    let left = (0..400).find(|&x| column(x)).unwrap();
-    let right = (0..400).rev().find(|&x| column(x)).unwrap();
-    assert!(left >= 8 && right < 392, "{left}..={right}");
-    assert!(left.abs_diff(399 - right) <= 16, "{left}..={right}");
-    let options = parse_args(&args(&[&quick[..3], &["--playdate"][..]].concat())).unwrap();
-    run(&dir, &options).unwrap();
-    let (_, _, screen) = decode_png(&fs::read(dir.join("m.png")).unwrap()).unwrap();
-    assert_ne!(screen, rgba);
-    // The PC's map alone: the glyph skin over the whole console.
-    let (w, h, _) = picture(&["--scale", "1"]);
-    assert_eq!((w, h), (800, 512));
-    let options = parse_args(&args(&["t.png", "--map"])).unwrap();
-    let error = run(&dir, &options).unwrap_err();
-    assert_eq!(error, "--map: no battle on screen (title)");
-    fs::remove_dir_all(&dir).unwrap();
-}
-
-#[test]
 fn a_one_bit_frame_becomes_a_black_and_white_picture() {
-    let mut frame = Box::new([0u8; FRAME_BYTES]);
+    let mut frame = Box::new([0u8; onebit::FRAME_BYTES]);
     frame[0] = 0b0100_0000;
     let picture = one_bit_picture(&frame, 2);
     assert_eq!((picture.width, picture.height), (800, 480));

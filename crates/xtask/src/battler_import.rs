@@ -22,7 +22,7 @@ use std::path::Path;
 use trpg_content::battler::{BACKDROP_PX, BACKDROPS_DIR, BACKDROPS_PATH, BATTLERS_DIR};
 use trpg_content::image::png_size;
 
-use crate::font_atlas::{decode_png, encode_png};
+use shuyi_cli::codec::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask battler-import [--list]\n\n\
@@ -30,8 +30,8 @@ Copies each bought combat picture the game uses from assets-private/library/ to\
 assets-private/game/battlers/<id>.png with its sidecar <id>.ron, and each backdrop\n\
 to assets-private/game/battlebacks/, with the file that names the dusk and night ones.\n\
 --list  print which picture each class and character gets, and copy nothing\n\n\
-Run `cargo xtask private-assets --library` first. Afterwards commit and push in\n\
-assets-private/, then run `cargo xtask private-assets --pin`.";
+Run `cargo shuyi private-assets --library` first. Afterwards commit and push in\n\
+assets-private/, then run `cargo shuyi private-assets --pin`.";
 
 /// The sorted bought packs, relative to the repo root.
 pub const LIBRARY_DIR: &str = "assets-private/library";
@@ -420,7 +420,7 @@ pub fn run(
     let game = root.join(GAME_DIR);
     if !library.is_dir() || !game.is_dir() {
         return Err(format!(
-            "{LIBRARY_DIR}/ or {GAME_DIR}/ is missing: run `cargo xtask private-assets --library` first"
+            "{LIBRARY_DIR}/ or {GAME_DIR}/ is missing: run `cargo shuyi private-assets --library` first"
         ));
     }
     let read = |source: &str| {
@@ -467,7 +467,7 @@ pub fn run(
     Ok(format!(
         "battler-import: wrote {} pictures to {GAME_DIR}/{BATTLERS_DIR}/ and {} backdrops to \
          {GAME_DIR}/{BACKDROPS_DIR}/; commit and push in assets-private/, then run \
-         `cargo xtask private-assets --pin`",
+         `cargo shuyi private-assets --pin`",
         pictures.len(),
         backdrops.len()
     ))
@@ -710,15 +710,15 @@ mod tests {
             std::env::temp_dir().join(format!("xtask-battlers-none-{}", std::process::id()));
         let _ = fs::remove_dir_all(&empty);
         let e = run(&empty, &TWO, &BACK).unwrap_err();
-        assert!(e.contains("cargo xtask private-assets --library"), "{e}");
+        assert!(e.contains("cargo shuyi private-assets --library"), "{e}");
         // Only the library, or only the game's files: the same.
         fs::create_dir_all(empty.join(LIBRARY_DIR)).unwrap();
         let e = run(&empty, &TWO, &BACK).unwrap_err();
-        assert!(e.contains("cargo xtask private-assets --library"), "{e}");
+        assert!(e.contains("cargo shuyi private-assets --library"), "{e}");
         fs::remove_dir_all(empty.join(LIBRARY_DIR)).unwrap();
         fs::create_dir_all(empty.join(GAME_DIR)).unwrap();
         let e = run(&empty, &TWO, &BACK).unwrap_err();
-        assert!(e.contains("cargo xtask private-assets --library"), "{e}");
+        assert!(e.contains("cargo shuyi private-assets --library"), "{e}");
         let _ = fs::remove_dir_all(&empty);
 
         let root = root("battlers-bad");

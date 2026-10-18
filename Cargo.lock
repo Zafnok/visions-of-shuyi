@@ -995,6 +995,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "shuyi-cli"
+version = "0.3.0"
+dependencies = [
+ "png 0.18.1",
+ "ron",
+ "serde",
+ "shuyi-assets",
+ "shuyi-cli",
+ "shuyi-ui",
+]
+
+[[package]]
 name = "shuyi-core"
 version = "0.3.0"
 dependencies = [
@@ -1509,12 +1521,12 @@ dependencies = [
  "hound",
  "lewton",
  "mutants",
- "png 0.18.1",
  "ron",
  "serde",
  "serde_json",
  "serde_norway",
  "shuyi-assets",
+ "shuyi-cli",
  "trpg-bots",
  "trpg-content",
  "trpg-core",

@@ -35,7 +35,7 @@ ADR-0032). Claude **never draws** a portrait, a face or a battle image.
   bought and its licence allows it), then small edits (0706). Anything else
   goes to Nick.
 - **Bought files never go in this repo** (ADR-0040): they are in the
-  git-ignored `assets-private/` (`cargo xtask private-assets --library`).
+  git-ignored `assets-private/` (`cargo shuyi private-assets --library`).
   Mockups made from them or from store previews stay in the scratchpad.
 - Required expressions stay `neutral`, `happy`, `angry`, `sad`,
   `surprised`, mapped from the pack's 8 per character.
@@ -70,7 +70,7 @@ doesn't change these files.
 ## Mockups for Nick
 
 Nick judges **rendered images**, not ASCII in chat. Render mockups with
-`cargo xtask frame-png <out.png> [--keys "…"] [--scale 2]` (ticket 0232;
+`cargo shuyi frame-png <out.png> [--keys "…"] [--scale 2]` (ticket 0232;
 `--help` lists the steps): it starts the game in the Harness, presses the
 scripted keys and writes the frame exactly as `app` draws it, sprites
 included. Don't write a throwaway renderer. For a screen that doesn't exist

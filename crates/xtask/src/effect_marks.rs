@@ -14,7 +14,7 @@ use std::path::Path;
 use trpg_content::bundle::display_path;
 use trpg_content::image::EFFECT_MARKS_PATH;
 
-use crate::font_atlas::encode_png;
+use shuyi_cli::codec::encode_png;
 
 /// The side of one arrow's box in pixels: the arrow and its edge.
 pub const BOX: u32 = 7;
@@ -99,7 +99,7 @@ pub fn run(root: &Path) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::font_atlas::decode_png;
+    use shuyi_cli::codec::decode_png;
 
     const COLORS: Colors = Colors {
         arrows: [[1, 2, 3], [4, 5, 6]],

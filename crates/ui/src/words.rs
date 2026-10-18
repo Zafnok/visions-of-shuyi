@@ -3,7 +3,7 @@
 //! tips, chapter titles, battle notes and dialogue. The data and `core`
 //! hold English; a screen shows any of it through [`Words`]
 //! ([`Ctx::words`](crate::Ctx::words)), never by reading a `name` field
-//! itself (`cargo xtask check-text` fails on one).
+//! itself (`cargo shuyi check-text` fails on one).
 
 use crate::prelude::*;
 use alloc::sync::Arc;

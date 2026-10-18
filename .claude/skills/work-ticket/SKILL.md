@@ -99,7 +99,7 @@ Set `status: in-progress` in the ticket frontmatter.
   `assets/data/credits.ron`, with the row's source link. **Bought art**
   (ADR-0051): add the new files' path in `assets-private/game/` to its
   credit's `private` list, the pack to its row and the artist to the
-  credit's `author`. `cargo xtask private-assets --pin` refuses files
+  credit's `author`. `cargo shuyi private-assets --pin` refuses files
   without a credit; don't widen an old path just to get past it.
 - A new architectural choice (new dependency with wide impact, new pattern,
   new file format) needs an ADR in the same PR (`write-adr` skill). Adding a

@@ -1,4 +1,4 @@
-//! `cargo xtask lang-status <code>`: what a language pack lacks (ADR-0045):
+//! `lang-status <code>`: what a language pack of the game lacks:
 //! the **missing** keys (no entry), the **stale** ones (an entry made
 //! from English that has since changed) and the **orphaned** dialogue
 //! entries (their line was reworded or cut, so it has a new id or none),
@@ -7,12 +7,16 @@
 //! lists them for whoever translates. Screen text comes first, then the
 //! data's, then the dialogue's, each with its counts. Test text (the
 //! `test*.dlg` scenes, data ids starting with `test`) is left out, and
-//! counted, except in the test pack's report; `--only` and `--file`
-//! narrow the report (ticket 0244).
+//! counted, except in the report of the test pack (code `test`); `--only`
+//! and `--file` narrow the report. The game gives its languages
+//! ([`crate::GameTools::lang`]).
 
 use std::fmt::Write as _;
 
-use trpg_content::{Lang, LangCode, LineText, MadeBy, Orphan};
+use shuyi_assets::lang::{Lang, LangCode, LineText, MadeBy, Orphan};
+
+/// The code of the pack whose report keeps the test text.
+pub const TEST_PACK: &str = "test";
 
 /// The three parts of a pack's text, in the order the report gives them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -121,7 +125,7 @@ impl Scope<'_> {
             return false;
         }
         // Test text is the `test*.dlg` scenes' and the data whose id
-        // starts with `test` (`names.test_knight`, `chapters.test.title`).
+        // starts with `test` (`names.test_guide`, `chapters.test.title`).
         let test = match (part, line) {
             (Part::Dialogue, Some(line)) => line.file.starts_with("test"),
             (Part::Data, _) => key
@@ -153,7 +157,13 @@ impl Scope<'_> {
 }
 
 /// The report for the pack `code` of `lang`, or why there is none.
-pub fn report(lang: &Lang, code: &str, options: &Options) -> Result<String, String> {
+/// `variants` are a line's variants, in the pack files' order.
+pub fn report<S: AsRef<str>>(
+    lang: &Lang,
+    variants: &[S],
+    code: &str,
+    options: &Options,
+) -> Result<String, String> {
     let known = || {
         let codes: Vec<&str> = lang.codes().map(LangCode::as_str).collect();
         format!("the packs are: {}", codes.join(", "))
@@ -169,7 +179,7 @@ pub fn report(lang: &Lang, code: &str, options: &Options) -> Result<String, Stri
     let mut scope = Scope {
         lang,
         options,
-        tests: code.as_str() == "test",
+        tests: code.as_str() == TEST_PACK,
         left_out: 0,
     };
     let missing: Vec<&String> = status.missing.iter().filter(|k| scope.keeps(k)).collect();
@@ -236,22 +246,23 @@ pub fn report(lang: &Lang, code: &str, options: &Options) -> Result<String, Stri
             out.push_str("orphaned:\n");
         }
         for orphan in orphans {
-            write_orphan(&mut out, lang, orphan);
+            write_orphan(&mut out, lang, variants, orphan);
         }
     }
     Ok(out)
 }
 
-fn write_orphan(out: &mut String, lang: &Lang, orphan: &Orphan) {
+fn write_orphan<S: AsRef<str>>(out: &mut String, lang: &Lang, variants: &[S], orphan: &Orphan) {
     let _ = writeln!(out, "  {}\n    was: {:?}", orphan.key, orphan.source);
     match &orphan.text {
         LineText::One(text) => {
             let _ = writeln!(out, "    text: {text:?}");
         }
         LineText::Variants(texts) => {
-            // In the pack files' order: `text_m`, then `text_f`.
-            for variant in trpg_content::lang::RULES.variants {
-                let text = texts.get(*variant).map_or("", String::as_str);
+            // In the pack files' order.
+            for variant in variants {
+                let variant = variant.as_ref();
+                let text = texts.get(variant).map_or("", String::as_str);
                 let _ = writeln!(out, "    text_{variant}: {text:?}");
             }
         }
@@ -269,14 +280,45 @@ fn write_orphan(out: &mut String, lang: &Lang, orphan: &Orphan) {
 mod tests {
     use std::collections::BTreeMap;
 
-    use trpg_content::lang::{english_from_source, pack_from_sources};
+    use shuyi_assets::dialogue::{DialogueLimits, DialogueTable, NoTokens, parse_dlg};
+    use shuyi_assets::lang::{
+        LangFile, PackRules, SourceText, english_from_source, from_files, pack_from_sources,
+    };
 
     use super::*;
+
+    /// A data text the rules never refuse.
+    fn no_problem(_: &str, _: &str) -> Option<String> {
+        None
+    }
+
+    /// A game's pack rules: no tokens, no variants.
+    const RULES: PackRules<'static> = PackRules {
+        data_problem: no_problem,
+        tokens: &NoTokens,
+        limits: DialogueLimits {
+            box_width: 40,
+            box_lines: 3,
+            max_text: 200,
+            max_option: 30,
+            min_options: 2,
+            max_options: 4,
+            max_reaction_texts: 3,
+        },
+        variants: &[],
+    };
+
+    /// No variants: one text per line.
+    const ONE_TEXT: [&str; 0] = [];
+
+    fn report(lang: &Lang, code: &str, options: &Options) -> Result<String, String> {
+        super::report(lang, &ONE_TEXT, code, options)
+    }
 
     fn lang(info: &str, ui: &str) -> Lang {
         let english = r#"{"a.one": "One", "a.two": "Two", "a.three": "Three"}"#;
         let english = english_from_source("en/ui.ron", english).unwrap();
-        let pack = pack_from_sources(("l", info), ("u", ui), &english).unwrap();
+        let pack = pack_from_sources(("l", info), ("u", ui), &english, &RULES).unwrap();
         let packs = BTreeMap::from([(LangCode::new("xx").unwrap(), pack)]);
         Lang::new(english, packs)
     }
@@ -331,53 +373,29 @@ mod tests {
         );
     }
 
-    /// The test pack keeps one of each on purpose (tickets 0233, 0235),
-    /// and translates only a little of the data and one scene.
-    #[test]
-    fn the_test_pack_has_stale_missing_and_orphaned_text() {
-        let content = trpg_content::load_embedded().unwrap();
-        let report = report(&content.lang, "test", &Options::default()).unwrap();
-        let first = report.lines().next().unwrap_or_default();
-        assert!(
-            first.starts_with("lang-status test (TEST, machine-made): "),
-            "{first}"
-        );
-        assert!(first.ends_with(" missing, 2 stale, 1 orphaned"), "{first}");
-        assert!(report.contains("missing:\n  title.credits\n"), "{report}");
-        // A data name and a dialogue line nobody translated.
-        assert!(
-            report.contains("  items.iron_spear.name\n    english: \"Iron Spear\"\n"),
-            "{report}"
-        );
-        assert!(
-            report.contains("  test_36a692b7\n    english: \"Let's move.\"\n"),
-            "{report}"
-        );
-        assert!(report.contains("stale:\n  title.continue\n"), "{report}");
-        let axe = "  items.iron_axe.name\n    was: \"Old Axe\"\n    now: \"Iron Axe\"\n";
-        assert!(report.contains(axe), "{report}");
-        // The orphan is paired with the reworded line.
-        assert!(
-            report.ends_with(
-                "orphaned:\n  test_00000000\n    was: \"It is always about you.\"\n    \
-                 text: \"IT IS ALWAYS ABOUT YOU.\"\n    nearest: test_92dc3bd5\n    \
-                 now: \"It's always about you.\"\n"
-            ),
-            "{report}"
-        );
+    /// The scenes of `files` (path and text), each knowing its file.
+    fn table(files: &[(&str, &str)]) -> DialogueTable {
+        let mut table = DialogueTable::default();
+        for &(path, text) in files {
+            let (parsed, errors) = parse_dlg(path, text);
+            assert!(errors.is_empty(), "{errors:?}");
+            for scene in parsed.into_iter().map(|p| p.scene) {
+                table.files.insert(scene.id.clone(), path.to_owned());
+                table.scenes.insert(scene.id.clone(), scene);
+            }
+        }
+        table
     }
 
     /// The English of the lines of `dlg`, by line id.
-    fn lines_of(dlg: &str) -> trpg_content::lang::DataText {
-        let table = trpg_content::dialogue::from_sources(&[("t.dlg", dlg)], None, None, None, None)
-            .unwrap();
-        let mut data = trpg_content::lang::DataText::default();
-        data.add_dialogue(&table);
+    fn lines_of(dlg: &str) -> SourceText {
+        let mut data = SourceText::default();
+        data.add_dialogue(&table(&[("t.dlg", dlg)]));
         data
     }
 
     /// The id of the line of `data` that says `text`.
-    fn id_of(data: &trpg_content::lang::DataText, text: &str) -> String {
+    fn id_of(data: &SourceText, text: &str) -> String {
         let line = data.lines.iter().find(|(_, line)| line.text == text);
         line.map(|(id, _)| id.clone()).unwrap()
     }
@@ -387,8 +405,6 @@ mod tests {
     /// has no pair.
     #[test]
     fn a_reworded_line_is_an_orphan_paired_with_the_new_line() {
-        use trpg_content::lang::{DataText, LangFile, from_files};
-
         let before = lines_of(
             "@scene gate\n> The gate is shut.\n> Nobody answers.\n@end\n\
              @scene road\n> Dust.\n@end\n",
@@ -403,7 +419,7 @@ mod tests {
             })
             .collect();
         let pack = format!("[{}]", entries.join(","));
-        let lang = |data: DataText| {
+        let lang = |data: SourceText| {
             let files = [
                 ("en/ui.ron", "{}"),
                 ("xx/lang.ron", r#"(name: "Xx", made_by: Machine)"#),
@@ -414,7 +430,7 @@ mod tests {
                 path,
                 source: Some(source),
             });
-            from_files(&files, Some(data), str::to_owned).unwrap()
+            from_files(&files, Some(data), str::to_owned, &RULES).unwrap()
         };
         assert_eq!(
             report(&lang(before.clone()), "xx", &Options::default()).unwrap(),
@@ -467,27 +483,18 @@ mod tests {
     /// English with two `.dlg` files (a real one and a test one) and some
     /// data, and a pack that translates all of it but the test text.
     fn two_files(pack_ui: &str) -> Lang {
-        use trpg_content::lang::{LangFile, from_files};
-
-        let table = trpg_content::dialogue::from_sources(
-            &[
-                (
-                    "assets/dialogue/ch01.dlg",
-                    "@scene gate\n> The gate is shut.\n@end\n",
-                ),
-                ("assets/dialogue/test.dlg", "@scene t\n> Test line.\n@end\n"),
-            ],
-            None,
-            None,
-            None,
-            None,
-        )
-        .unwrap();
-        let mut data = trpg_content::lang::DataText::default();
+        let table = table(&[
+            (
+                "story/dialogue/ch01.dlg",
+                "@scene gate\n> The gate is shut.\n@end\n",
+            ),
+            ("story/dialogue/test.dlg", "@scene t\n> Test line.\n@end\n"),
+        ]);
+        let mut data = SourceText::default();
         data.add_dialogue(&table);
         for (key, text) in [
             ("names.king", "the King"),
-            ("names.test_knight", "Test Knight"),
+            ("names.test_guide", "Test Guide"),
         ] {
             data.data.insert(key.to_owned(), text.to_owned());
         }
@@ -508,7 +515,7 @@ mod tests {
             path,
             source: Some(source),
         });
-        from_files(&files, Some(data), str::to_owned).unwrap()
+        from_files(&files, Some(data), str::to_owned, &RULES).unwrap()
     }
 
     const ONE: &str = r#"[(key: "a.one", source: "One", text: "Un")]"#;
@@ -552,18 +559,6 @@ mod tests {
     }
 
     #[test]
-    fn the_test_pack_keeps_the_test_text() {
-        let content = trpg_content::load_embedded().unwrap();
-        let options = Options {
-            only: Some(Part::Dialogue),
-            ..Options::default()
-        };
-        let report = report(&content.lang, "test", &options).unwrap();
-        assert!(!report.contains("left out"), "{report}");
-        assert!(report.contains("  test_36a692b7\n    english:"), "{report}");
-    }
-
-    #[test]
     fn file_lists_only_that_dlg_files_lines() {
         let lang = two_files("[]");
         let file = |stem: &str| Options {
@@ -576,19 +571,47 @@ mod tests {
             "lang-status xx (Xx, machine-made): 0 missing, 0 stale, 0 orphaned\n\
              dialogue: 0 missing, 0 stale, 0 orphaned\n"
         );
-        // The test pack lists the test scene, and only the file asked for.
-        let content = trpg_content::load_embedded().unwrap();
-        let test = report(&content.lang, "test", &file("test")).unwrap();
-        assert!(test.contains("  test_36a692b7\n    english:"), "{test}");
-        assert!(!test.contains("screen text"), "{test}");
-        let lines = &content.lang.source().lines;
-        for (key, line) in lines.iter().filter(|(_, line)| line.file != "test") {
-            assert!(
-                !test.contains(&format!("  {key}\n    english:")),
-                "{key} is from {}",
-                line.file
-            );
-        }
+        assert_eq!(
+            report(&lang, "xx", &file("test")).unwrap(),
+            "lang-status xx (Xx, machine-made): 0 missing, 0 stale, 0 orphaned; \
+             1 test texts left out\n\
+             dialogue: 0 missing, 0 stale, 0 orphaned\n"
+        );
+    }
+
+    /// The test pack's report keeps the test text, and lists a line's
+    /// variants in the order given.
+    #[test]
+    fn the_test_pack_keeps_the_test_text_and_variants_are_listed_in_order() {
+        let before = lines_of("@scene test_s\n> Old words.\n> Kept.\n@end\n");
+        let after = lines_of("@scene test_s\n> New words.\n> Kept.\n@end\n");
+        let old = id_of(&before, "Old words.");
+        let entry = format!(r#"[(key: {old:?}, source: "Old words.", text_f: "F", text_m: "M")]"#);
+        let rules = PackRules {
+            variants: &["m", "f"],
+            ..RULES
+        };
+        let files = [
+            ("en/ui.ron", r#"{"names.test_guide": "Test"}"#),
+            ("test/lang.ron", r#"(name: "TEST", made_by: Machine)"#),
+            ("test/ui.ron", "[]"),
+            ("test/dialogue/t.ron", entry.as_str()),
+        ]
+        .map(|(path, source)| LangFile {
+            path,
+            source: Some(source),
+        });
+        let lang = from_files(&files, Some(after.clone()), str::to_owned, &rules).unwrap();
+        let said = super::report(&lang, &["m", "f"], TEST_PACK, &Options::default()).unwrap();
+        assert!(!said.contains("left out"), "{said}");
+        assert!(said.contains("  names.test_guide\n"), "{said}");
+        assert!(
+            said.contains(&format!(
+                "orphaned:\n  {old}\n    was: \"Old words.\"\n    text_m: \"M\"\n    \
+                 text_f: \"F\"\n    nearest: "
+            )),
+            "{said}"
+        );
     }
 
     #[test]

@@ -39,7 +39,7 @@ fn private_assets_with_bad_arguments_prints_usage_and_exits_2() {
         assert_eq!(output.status.code(), Some(2), "{bad:?}");
         assert_eq!(
             String::from_utf8_lossy(&output.stderr).trim(),
-            "usage: cargo xtask private-assets [--library | --pin]"
+            "usage: cargo shuyi private-assets [--library | --pin]"
         );
     }
 }

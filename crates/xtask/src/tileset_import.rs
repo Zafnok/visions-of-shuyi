@@ -28,9 +28,9 @@ use trpg_content::TerrainDef;
 use trpg_content::map::{DEFAULT_TILES, TILE_LOOKS};
 use trpg_content::tileset::parse_mix;
 
-use crate::font_atlas::{decode_png, encode_png};
 use crate::map_sprite_import::{self, GAME_DIR, MapSprite, TILESET_ID};
 use crate::tileset_ron::{self, At, LayerText, LookText};
+use shuyi_cli::codec::{decode_png, encode_png};
 
 /// Shown for `--help` and after a bad argument.
 pub const USAGE: &str = "usage: cargo xtask tileset-import [--list]\n\n\
@@ -39,8 +39,8 @@ assets-private/library/tiny-tales/tilesets/, into\n\
 assets-private/game/tilesets/tiny_tales.png, and writes tiny_tales.ron beside it:\n\
 the terrain looks, and the unit pictures of `map-sprite-import`'s table.\n\
 --list  print which bought tiles each terrain and layer uses, and write nothing\n\n\
-Run `cargo xtask private-assets --library` first. Afterwards commit and push in\n\
-assets-private/, then run `cargo xtask private-assets --pin`.";
+Run `cargo shuyi private-assets --library` first. Afterwards commit and push in\n\
+assets-private/, then run `cargo shuyi private-assets --pin`.";
 
 /// The sorted bought tilesets, relative to the repo root.
 pub const LIBRARY_DIR: &str = "assets-private/library/tiny-tales/tilesets";
@@ -782,7 +782,7 @@ pub fn run(root: &Path, sprites: &[MapSprite]) -> Result<String, String> {
     let game = root.join(GAME_DIR);
     if !library.is_dir() || !game.is_dir() {
         return Err(format!(
-            "{LIBRARY_DIR}/ or {GAME_DIR}/ is missing: run `cargo xtask private-assets --library` first"
+            "{LIBRARY_DIR}/ or {GAME_DIR}/ is missing: run `cargo shuyi private-assets --library` first"
         ));
     }
     let mapping = read_mapping(root)?;
