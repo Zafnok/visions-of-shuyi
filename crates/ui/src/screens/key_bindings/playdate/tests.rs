@@ -235,6 +235,13 @@ fn long_words_stay_inside_their_columns_and_the_frame() {
     assert_eq!(cell(&buf, 47, log).glyph, '…');
     assert_eq!(cell(&buf, 48, log).glyph, ' ');
     assert_eq!(cell(&buf, 49, log).glyph, '║');
+    // A long name in a narrow slot ends a cell before the next one.
+    let (c, mut view) = opened();
+    row_mut(&mut view, Action::Confirm).slots[1] = SlotView::Bound("Crank forward".to_owned());
+    let buf = painted(&c, &view);
+    let confirm = line_of(&buf, "Confirm");
+    assert_eq!(find(&buf, confirm, "Crank …"), Some(SLOTS[1].0 + 1));
+    assert_eq!(cell(&buf, SLOTS[2].0, confirm).glyph, ' ');
 }
 
 #[test]
