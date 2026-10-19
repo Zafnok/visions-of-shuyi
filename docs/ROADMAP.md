@@ -30,7 +30,7 @@ folders: `tickets/open/` vs `tickets/done/`.
 | `07xx` | M6 Story & dialogue | Story bible, dialogue engine, two-portrait scenes, Chapter 1 art + script, lead reply choices | 0701–0708 |
 | `08xx` | M7 Chapter 1 | Full flow, saves, Chapter 1 content, **Nick's playtest**, options, colour themes, music, credits, end-of-battle music, results, title art, chapter card, transitions | 0801–0813 |
 | `09xx` | M8 Release | itch.io, Windows polish, Steam readiness | 0901–0903 |
-| `11xx` | The engine | Shuyi Engine, an open-source 2D engine carved out of this codebase; the game built on it ([`docs/engine/`](engine/README.md), [its repository](https://github.com/Zafnok/shuyi-engine)) | 1101–1118, 1131, 1151–1153 (the rest moved to the engine's repository) |
+| `11xx` | The engine | Shuyi Engine, an open-source 2D engine carved out of this codebase; the game built on it ([`docs/engine/`](engine/README.md), [its repository](https://github.com/Zafnok/shuyi-engine)) | 1101–1118, 1131, 1151–1153, 1157 (the rest moved to the engine's repository) |
 
 **Audio** (decided in 0020, [`docs/design/audio.md`](design/audio.md)) runs
 across the blocks: **0212** playback plumbing → **0213** our own sounds and
@@ -214,8 +214,9 @@ The order:
    the first example. **1151** (the engine-friction rule: game code far
    bigger than the job triggers a review) can start once 1118 is done.
    Then **1131**, the code moves to the engine repository, then
-   **1152** (the engine-change skill for two repositories) → **1153**
-   (the first friction sweep of the game).
+   **1152** (the engine-change skill for two repositories) → **1157**
+   (the engine parts of open game tickets move to the engine repository)
+   → **1153** (the first friction sweep of the game).
 3. **Then the engine's own tickets, in its repository:** its MVP
    (parity), then what comes after, and the parked tickets. Our game's
    own multiplayer stays **0053**'s decision, after launch.
