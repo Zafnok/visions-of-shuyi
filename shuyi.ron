@@ -1,6 +1,6 @@
 // Shuyi Engine's project file (ticket 1117): what `cargo shuyi <command>`
-// (the engine's tools, engine/crates/cli) scans and builds in this
-// repository. Paths are from this folder. `cargo xtask` still takes the
+// (the engine's tools, `shuyi-cli`, run by xtask with this game's; ticket
+// 1131) scans and builds in this repository. Paths are from this folder. `cargo xtask` still takes the
 // old names of these commands and runs them with this file.
 (
     command: "cargo shuyi",
@@ -20,15 +20,16 @@
         not_text: ["assets/data/keymap.ron"],
         // The key pipeline. The Playdate's `pads.rs` reads its buttons
         // (ticket 1033). The engine's keymap format, input and platform
-        // shell are in engine/, which this check doesn't scan.
+        // shell are in the engine's repository (ticket 1131).
         key_files: [
             "crates/content/src/keymap.rs",
             "crates/ui/src/input.rs",
             "crates/playdate/src/pads.rs",
         ],
         // The only file that may read macroquad's keyboard: the engine's
-        // platform shell, so none that this check scans.
-        platform_file: "engine/crates/app/src/keys.rs",
+        // platform shell, so none that this check scans (it names no file
+        // here).
+        platform_file: "shuyi-app's src/keys.rs (Shuyi Engine)",
         test_support: ["crates/ui/src/harness.rs"],
         // The layout picker and its skin may draw a keyboard. Since ticket
         // 1112 both are the engine's and the game's `layout_picker.rs`

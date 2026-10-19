@@ -1,52 +1,15 @@
-# The platform shells, the game's binary (`crates/app`) and the engine's
-# (`engine/crates/app`, ticket 1110), drive a window, a sound device and
-# controllers, which no test has; like coverage and Sonar, mutants leave
-# them out, and the engine examples' binaries (`src/main.rs`, which hand
-# the example to the shell; ticket 1118).
+# The game's binary (`crates/app`) drives a window, a sound device and
+# controllers through the engine's platform shell, which no test has; like
+# coverage and Sonar, mutants leave it out. The engine's own code is a
+# dependency (ticket 1131), never mutated here: its repository runs this
+# gate on it.
 #
 # `crates/playdate/src/pd/` is the Playdate front end's SDK glue: built only
 # with the crate's `sdk` feature for the device and the Simulator, so no
 # host test compiles it, and every mutant there would count as missed
 # (ticket 1031). CI's `playdate` job builds it.
-#
-# `keymap/sample.rs` is a sample game's actions, test data for the keymap
-# format's and input's tests (ticket 1107), built only for tests; so is
-# `shuyi-ui`'s toy game (`toy.rs`, ticket 1109, and its grid map in
-# `toy/`, ticket 1115), which the tests of the screens, the context, the
-# frame loop and the grid run on. `shuyi-cli`'s toy tools (`toy.rs`,
-# ticket 1117) are that toy's `frame-png` and `lang-status`, for the
-# tool's own tests.
 exclude_globs = [
     "crates/app/**",
-    "engine/crates/app/**",
-    "engine/examples/*/src/main.rs",
     "crates/playdate/src/pd/**",
-    "engine/crates/assets/src/keymap/sample.rs",
-    "engine/crates/ui/src/toy.rs",
-    "engine/crates/ui/src/toy/**",
-    "engine/crates/cli/src/toy.rs",
 ]
 timeout_multiplier = 3.0
-# Mutants no test can catch (ticket 1105), each for the reason beside it:
-exclude_re = [
-    # `NoDirective` has no values, so its `print` can never run.
-    "<impl Directive for NoDirective>::print",
-    # The default `scene_problems` is `Vec::new()`: its only viable mutant,
-    # `vec![]`, is the same function.
-    "SceneRules::scene_problems",
-    # The default `audio_config` is `AudioConfig::DEFAULT`, which is also
-    # `AudioConfig::default()`: its only mutant is the same function
-    # (ticket 1112).
-    "GameData::audio_config",
-    # `Plain` has no lines of its own (`NoDirective` has no values), so its
-    # `direct` can never run (ticket 1112).
-    "<impl DialogueHooks for Plain>::direct",
-    # `web`'s real `wasm-opt` is an optional tool no test machine is sure
-    # to have; the logic around it runs on a fake (ticket 1117).
-    "<impl WasmOpt for RealWasmOpt>::optimize",
-    # Hello, Grid has no voices (ticket 1118): `OnlyClip` has one value,
-    # which is its default, and no split variants, so `voice_variant`'s
-    # and `split`'s only mutants are the same functions.
-    "<impl GameData for Hello>::voice_variant",
-    "<impl ClipVariant for OnlyClip>::split",
-]

@@ -31,17 +31,17 @@ widgets/help.rs, tips  Action → key or button name for text     (`ctx.help_key
 
 Files allowed to name `Key::…`, `Chord::…` or key names in strings:
 `crates/content/src/keymap.rs`, `crates/ui/src/input.rs`, the engine
-(`engine/`, where the generic keymap format and input live, ticket 1107,
+(Shuyi Engine's repository, where the generic keymap format and input live, ticket 1107,
 and the platform shell's keyboard and controllers, 1110; not scanned),
 test code (`#[cfg(test)]`
 items, `tests.rs`, `*_tests.rs`, `tests/`, `crates/ui/src/harness.rs`), and
 the keyboard *picture* of the layout picker (which keys exist and what each
 does) and its skin (where each sits), the engine's since ticket 1112
-(`engine/crates/ui/src/screens/layout_picker*`): each picture item there
+(its `crates/ui/src/screens/layout_picker*`): each picture item there
 sits under a `// check-keys: keyboard picture` comment (in the game the
 marker is only allowed in `crates/ui/src/screens/layout_picker.rs` and its
 `glyph.rs`, an error in any other file). Only the
-engine's `engine/crates/app/src/keys.rs` may use `KeyCode` or macroquad's
+engine's `crates/app/src/keys.rs` (`shuyi-app`) may use `KeyCode` or macroquad's
 key reads. Anywhere else is a bug.
 
 `cargo shuyi check-keys` enforces this (CI `tickets` job and `run-gates`).
@@ -100,7 +100,7 @@ for it and has no key anywhere.
 
 `Button::` may be named only where `Key::` may, plus the Playdate's
 `crates/playdate/src/pads.rs` (`check-keys` enforces it); the PC's and the
-web's controllers are read in the engine (`engine/crates/app/src/pads.rs`
+web's controllers are read in the engine (its `crates/app/src/pads.rs`
 and `pads/`). In code and data buttons are named by position (`South`, not "A").
 Players rebind them on the Key bindings screen's controller side (ticket
 0816, ADR-0053): `PadBindings`, edited like `LayoutBindings` and handed
@@ -189,10 +189,10 @@ Nintendo's `A` on the right). You get this for free by following rule 2:
 
 The mechanism is generic over a game's `ActionSet` (ticket 1106) and is
 Shuyi Engine's (ticket 1107): `KeymapDef<A>`, `ActionSet` and `UiAction`
-(`shuyi_assets::keymap`, `engine/crates/assets/src/keymap.rs`), `Keymap<A>`,
+(`shuyi_assets::keymap`, the engine's `crates/assets/src/keymap.rs`), `Keymap<A>`,
 `InputState<A>`, `FrameInput<A>`, `LayoutBindings<A>`, `PadBindings<A>`,
 `PlayerKeys<A>`, `HelpKeys<'a, A>` (`shuyi_ui::input`,
-`engine/crates/ui/src/input/`). `trpg-content::keymap` and `trpg-ui::input`
+its `crates/ui/src/input/`). `trpg-content::keymap` and `trpg-ui::input`
 re-export them under their old paths. Engine tests use the sample game's
 actions (`shuyi_assets::keymap::sample`), never this game's. Game code uses the
 aliases with `Action` (`input::Keymap`, `screen::FrameInput`,

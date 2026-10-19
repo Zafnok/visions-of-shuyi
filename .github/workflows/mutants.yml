@@ -94,7 +94,7 @@ jobs:
         with:
           tool: cargo-nextest
       - name: Run the tests unmutated
-        run: cargo nextest run --workspace --exclude trpg-app --exclude shuyi-app --profile mutants
+        run: cargo nextest run --workspace --exclude trpg-app --profile mutants
 
   pr:
     needs: [changes, plan]

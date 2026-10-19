@@ -15,10 +15,10 @@ trpg-core = { path = "../core", default-features = false }
 trpg-content = { path = "../content", default-features = false }
 # The frame (1108), input: keymaps, repeat, controllers, saved bindings
 # and help keys (1107), and screens, the context and the frame loop (1109).
-shuyi-ui = { path = "../../engine/crates/ui", default-features = false }
+shuyi-ui.workspace = true
 # The engine's asset types the context reads through this game's data
 # (1109): the text by key.
-shuyi-assets = { path = "../../engine/crates/assets", default-features = false }
+shuyi-assets.workspace = true
 # The player's saved settings (ADR-0050) and the game's saves.
 serde.workspace = true
 ron.workspace = true
@@ -59,6 +59,6 @@ onebit-reference = ["shuyi-ui/onebit-reference"]
 # the one-bit reference renderer `tests/it/playdate.rs` compares with.
 trpg-ui = { path = ".", features = ["harness", "onebit-reference"] }
 # A sample game's actions, for a menu driven by another game's actions.
-shuyi-assets = { path = "../../engine/crates/assets", features = ["sample-actions"] }
+shuyi-assets = { workspace = true, features = ["std", "sample-actions"] }
 proptest.workspace = true
 insta.workspace = true

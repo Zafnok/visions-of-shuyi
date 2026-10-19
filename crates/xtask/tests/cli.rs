@@ -67,9 +67,9 @@ fn playtest_prints_the_report_and_exits_0() {
 }
 
 #[test]
-fn check_engine_boundary_on_the_real_repo_exits_0() {
+fn engine_pin_check_on_the_real_repo_exits_0() {
     let output = xtask()
-        .arg("check-engine-boundary")
+        .args(["engine-pin", "--check"])
         .output()
         .unwrap_or_else(|e| panic!("spawn xtask: {e}"));
     assert_eq!(
@@ -78,5 +78,19 @@ fn check_engine_boundary_on_the_real_repo_exits_0() {
         "{}",
         String::from_utf8_lossy(&output.stderr)
     );
-    assert!(String::from_utf8_lossy(&output.stdout).contains("check-engine-boundary: OK"));
+    assert!(String::from_utf8_lossy(&output.stdout).starts_with("engine-pin: OK, at "));
+}
+
+#[test]
+fn shuyi_runs_the_engine_s_tools_with_the_game_s() {
+    // `cargo shuyi` is `cargo xtask shuyi` (ticket 1131): with no command,
+    // the tools' usage, named after the project's `command`.
+    let output = xtask()
+        .arg("shuyi")
+        .output()
+        .unwrap_or_else(|e| panic!("spawn xtask: {e}"));
+    assert_eq!(output.status.code(), Some(2));
+    let said = String::from_utf8_lossy(&output.stdout);
+    assert!(said.contains("cargo shuyi"), "{said}");
+    assert!(said.contains("frame-png"), "{said}");
 }

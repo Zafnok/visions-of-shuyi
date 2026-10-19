@@ -26,7 +26,7 @@ with.
 - References: the same job in another engine or framework (Ren'Py's
   `say` for a dialogue line, an egui window, a Godot scene), or a piece
   of this repository that does something similar (the engine's
-  `engine/crates/ui/src/screens/options.rs` for a screen with a view and
+  `crates/ui/src/screens/options.rs` for a screen with a view and
   a skin, ADR-0054).
 - Count production code only: no tests, snapshots, data files or docs.
 
@@ -117,12 +117,11 @@ Never wait. For each outcome 1–3 finding, exactly one of:
 - **Fix first**: the fix is one PR's worth or less and cuts the game
   change sharply. Do it now, in this session, then finish the game
   ticket on it.
-  - Before ticket 1131 (the engine is in `engine/`): the engine change
-    goes in this PR. If it is big enough to deserve its own review,
-    write it as a ticket (`write-ticket`), do that ticket first on its
-    own branch, then come back.
-  - After 1131 (the engine has its own repository): see 1152 (the
-    `engine-change` skill).
+  - The engine has its own repository (since ticket 1131): the engine
+    change is an engine PR first (made in the local checkout, `cargo
+    xtask engine`), merged with a merge commit, then this ticket's PR
+    moves the pin (`cargo xtask engine-pin`; `docs/engine/README.md`).
+    1152 turns this into the `engine-change` skill.
   - A game-side structure (outcome 3) that is small goes in this PR.
 - **Ship and follow up**: otherwise. The game ticket lands with the
   workaround, each workaround marked with a comment
@@ -178,9 +177,9 @@ M (R×), <outcome>".
      name game concepts: **outcome 3, game-side structure**, a small
      dialogue box builder in the game over the new panel.
 - **Decision**: the panel is one PR's worth and cuts the game change to
-  about 90 lines, so **fix first**: before 1131, the panel goes into
-  `engine/crates/ui` in this PR, the builder into the game, and the
-  copied wrapping code is deleted.
+  about 90 lines, so **fix first**: the panel goes into the engine's
+  `crates/ui` in an engine PR, then this PR moves the pin, puts the
+  builder into the game, and deletes the copied wrapping code.
 - **Log row**: `| 2026-10-18 | NNNN | one line of dialogue in a box with a
   portrait, paged | 60 | 420 | 7× | 1: text panel with portrait slot and
   paging (engine); 3: game dialogue box builder; fixed first | — |`

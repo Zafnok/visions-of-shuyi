@@ -13,7 +13,7 @@ mod check_script;
 mod clean_targets;
 mod code_lines;
 mod effect_marks;
-mod engine_boundary;
+mod engine;
 mod game_tools;
 mod icon;
 mod lines;
@@ -42,7 +42,8 @@ use std::time::SystemTime;
 const USAGE: &str = "usage: cargo xtask <command>\n\n\
 available commands:\n  \
 ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n  \
-check-engine-boundary              fail when engine/ names or depends on the game (ADR-0063)\n  \
+engine [--off]                     build the game on Shuyi Engine checked out in shuyi-engine/\n  \
+engine-pin [<commit> | --check]    move the engine's pinned commit, or check it (ADR-0063 §8)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
 code-lines [--base <ref>]          production Rust lines added and removed per crate (ADR-0092)\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
@@ -62,7 +63,8 @@ playdate [--release] [--bench] [--private-assets] [--device|--simulator|--both]\
                                      target/playdate/images/ (and the bought ones' into assets-private/)
 
 moved to Shuyi's tools, `cargo shuyi <command>` (these names still run them):
-  check-keys, check-text, lang-status, font-atlas, frame-png, web, private-assets";
+  check-keys, check-text, lang-status, font-atlas, frame-png, web, private-assets
+  (`cargo shuyi` is `cargo xtask shuyi`: Shuyi's tools with this game's)";
 
 fn main() -> ExitCode {
     ExitCode::from(dispatch(env::args().skip(1)))
@@ -76,8 +78,10 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
             name @ ("check-keys" | "check-text" | "lang-status" | "font-atlas" | "frame-png"
             | "web" | "private-assets"),
         ) => shuyi(name, args),
+        Some("shuyi") => shuyi_cli::main_with(args, Some(&game_tools::Trpg)),
         Some("ticket-lint") => ticket_lint(&args.collect::<Vec<_>>()),
-        Some("check-engine-boundary") => check_engine_boundary(&args.collect::<Vec<_>>()),
+        Some("engine") => engine(&args.collect::<Vec<_>>()),
+        Some("engine-pin") => engine_pin(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
         Some("code-lines") => code_lines(&args.collect::<Vec<_>>()),
         Some("icon") => icon(&args.collect::<Vec<_>>()),
@@ -146,21 +150,56 @@ fn ticket_lint(args: &[String]) -> u8 {
     1
 }
 
-fn check_engine_boundary(args: &[String]) -> u8 {
-    if !args.is_empty() {
-        eprintln!("usage: cargo xtask check-engine-boundary");
-        return 2;
+/// `engine [--off]`: the local checkout of Shuyi Engine (ticket 1131).
+fn engine(args: &[String]) -> u8 {
+    let off = match args {
+        [] => false,
+        [flag] if flag == "--off" => true,
+        _ => {
+            eprintln!("{}", engine::USAGE);
+            return 2;
+        }
+    };
+    report(engine::checkout(&repo_root(), off))
+}
+
+/// `engine-pin [<commit> | --check]`: the engine's pinned commit.
+fn engine_pin(args: &[String]) -> u8 {
+    match args {
+        [flag] if flag == "--check" => match engine::check(&repo_root()) {
+            Ok(said) => {
+                println!("{said}");
+                0
+            }
+            Err(problems) => {
+                eprintln!("engine-pin: {} problem(s)", problems.len());
+                for problem in &problems {
+                    eprintln!("  {problem}");
+                }
+                1
+            }
+        },
+        [commit] if !commit.starts_with('-') => report(engine::pin(&repo_root(), Some(commit))),
+        [] => report(engine::pin(&repo_root(), None)),
+        _ => {
+            eprintln!("{}", engine::USAGE);
+            2
+        }
     }
-    let errors = engine_boundary::run(&repo_root());
-    if errors.is_empty() {
-        println!("check-engine-boundary: OK");
-        return 0;
+}
+
+/// Prints what a command did, or why it failed.
+fn report(outcome: Result<String, String>) -> u8 {
+    match outcome {
+        Ok(said) => {
+            println!("{said}");
+            0
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            1
+        }
     }
-    eprintln!("check-engine-boundary: {} finding(s)", errors.len());
-    for error in &errors {
-        eprintln!("{error}");
-    }
-    1
 }
 
 fn clean_merged_targets(args: &[String]) -> u8 {
@@ -630,9 +669,9 @@ mod tests {
             .collect()
     }
 
-    /// The platform crates, `shuyi-app` and `trpg-playdate`, copy the
-    /// workspace lints because one of them differs (`unsafe_code`,
-    /// ADR-0034, ADR-0070 §4); the copies must not drift.
+    /// The platform crate here, `trpg-playdate`, copies the workspace lints
+    /// because one of them differs (`unsafe_code`, ADR-0070 §4); the copy
+    /// must not drift.
     #[test]
     fn platform_lints_are_the_workspace_lints_except_unsafe_code() {
         let root = repo_root();
@@ -647,23 +686,17 @@ mod tests {
             rust.contains(&"unsafe_code = \"deny\"".to_owned()),
             "{rust:?}"
         );
-        for platform in ["engine/crates/app", "crates/playdate"] {
-            let manifest =
-                std::fs::read_to_string(root.join(format!("{platform}/Cargo.toml"))).unwrap();
-            assert_eq!(table(&manifest, "[lints.clippy]"), clippy, "{platform}");
-            assert_eq!(table(&manifest, "[lints.rust]"), rust, "{platform}");
-        }
+        // `shuyi-app`'s copy is checked by a test in the engine's
+        // repository (ticket 1131).
+        let manifest = std::fs::read_to_string(root.join("crates/playdate/Cargo.toml")).unwrap();
+        assert_eq!(table(&manifest, "[lints.clippy]"), clippy);
+        assert_eq!(table(&manifest, "[lints.rust]"), rust);
         // Every other crate inherits the workspace's `forbid`, the game's
         // binary too: its platform code is the engine's (ticket 1110).
         for other in ["app", "bots", "core", "content", "ui", "xtask"] {
             let manifest =
                 std::fs::read_to_string(root.join(format!("crates/{other}/Cargo.toml"))).unwrap();
             assert_eq!(table(&manifest, "[lints]"), ["workspace = true"], "{other}");
-        }
-        for other in ["assets", "cli", "core", "ui"] {
-            let path = format!("engine/crates/{other}/Cargo.toml");
-            let manifest = std::fs::read_to_string(root.join(&path)).unwrap();
-            assert_eq!(table(&manifest, "[lints]"), ["workspace = true"], "{path}");
         }
     }
 
@@ -1130,9 +1163,12 @@ mod tests {
     }
 
     #[test]
-    fn check_engine_boundary_passes_on_the_real_repo() {
-        assert_eq!(check_engine_boundary(&[]), 0);
-        assert_eq!(check_engine_boundary(&args(&["--bogus"])), 2);
+    fn engine_pin_check_passes_on_the_real_repo() {
+        assert_eq!(engine_pin(&args(&["--check"])), 0);
+        assert_eq!(engine_pin(&args(&["--bogus"])), 2);
+        assert_eq!(engine_pin(&args(&["a", "b"])), 2);
+        assert_eq!(engine(&args(&["--bogus"])), 2);
+        assert_eq!(engine(&args(&["--off", "x"])), 2);
     }
 
     #[test]

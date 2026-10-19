@@ -1,5 +1,7 @@
 [workspace]
-members = ["crates/*", "engine/crates/*", "engine/examples/*"]
+members = ["crates/*"]
+# The engine's checkout (`cargo xtask engine`) is a workspace of its own.
+exclude = ["shuyi-engine"]
 resolver = "3"
 
 [workspace.package]
@@ -24,6 +26,15 @@ libm = "0.2"
 hashbrown = "0.17"
 proptest = "1"
 insta = "1"
+# Shuyi Engine (ADR-0063 §8, ticket 1131), at the revision in
+# `shuyi-engine.rev`: `cargo xtask engine-pin <commit>` moves both. The
+# crates the Playdate builds without `std` have their default features off
+# here; a crate that needs `std` turns it on.
+shuyi-core = { git = "https://github.com/Zafnok/shuyi-engine", rev = "5aa0f666216b05db22b90776a60e608abc3c31ad", default-features = false }
+shuyi-assets = { git = "https://github.com/Zafnok/shuyi-engine", rev = "5aa0f666216b05db22b90776a60e608abc3c31ad", default-features = false }
+shuyi-ui = { git = "https://github.com/Zafnok/shuyi-engine", rev = "5aa0f666216b05db22b90776a60e608abc3c31ad", default-features = false }
+shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "5aa0f666216b05db22b90776a60e608abc3c31ad" }
+shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "5aa0f666216b05db22b90776a60e608abc3c31ad" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -352,7 +352,7 @@ fn embedded_ctx() -> Ctx {
 }
 
 /// The scripts, the audio and the music clock are tested on the engine's
-/// toy game (`engine/crates/ui/tests/it`); these are this game's start-up,
+/// toy game (Shuyi Engine's `crates/ui/tests/it`); these are this game's start-up,
 /// its lookups and its title's music through them.
 #[cfg(test)]
 mod tests {

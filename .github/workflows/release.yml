@@ -338,7 +338,13 @@ jobs:
           cp THIRD_PARTY_ASSETS.md "$pkg/"
           mkdir -p "$pkg/audio-licenses"
           cp assets/audio/licenses/*.txt "$pkg/audio-licenses/"
-          cp engine/crates/cli/web/mq_js_bundle-LICENSE-MIT.txt "$pkg/"
+          # The web shell's JavaScript is Shuyi Engine's (ticket 1131): its
+          # license texts, from the engine at the pinned commit.
+          rev="$(cat shuyi-engine.rev)"
+          for js in mq_js_bundle quad-storage sapp_jsutils; do
+            curl -fsSL -o "$pkg/$js-LICENSE-MIT.txt" \
+              "https://raw.githubusercontent.com/Zafnok/shuyi-engine/$rev/crates/cli/web/$js-LICENSE-MIT.txt"
+          done
           cat > "$pkg/README.txt" <<EOF
           Visions of Shuyi $VERSION (web)
 
