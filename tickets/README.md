@@ -45,16 +45,26 @@ milestone: M2 Core rules
 model: opus-5.5      # haiku-4.5 | sonnet-5 | opus-5.5 | fable-5.1
 effort: high         # low | medium | high | xhigh | max
 status: todo         # todo | in-progress | blocked | done
-blocked_by: ["0302"] # ticket ids that must be in done/ first
+blocked_by: ["0302"] # ticket ids that must be in done/ first; engine#NNNN for the engine's
 nick_input: none     # none | decision | answer-first | setup | sign-off
 completed:           # YYYY-MM-DD when done
 ---
 ```
 
+A ticket of Shuyi Engine's repository is written `engine#NNNN` in
+`blocked_by` (for example `["0302", "engine#2007"]`), the mirror of the
+engine's `game#NNNN`. It is done when it is in the engine's
+`tickets/done/` and the game's pin is at or past the commit that closed it
+(`work-ticket` §1). `cargo xtask ticket-lint` checks only its form (four
+digits) so the gates never need the network; `cargo xtask ticket-lint
+--check-engine` also looks it up, in `shuyi-engine/tickets/` when the local
+checkout is there and on GitHub otherwise. How such tickets come about:
+the `engine-change` skill.
+
 ## Picking the next ticket
 
 A ticket is **ready** when `status: todo` and every id in `blocked_by` has a
-file in `done/`. Prefer tickets on the Chapter 1 critical path in
+file in `done/` (an `engine#NNNN`: as above). Prefer tickets on the Chapter 1 critical path in
 [`docs/ROADMAP.md`](../docs/ROADMAP.md). Tickets without dependencies on each
 other can run in parallel sessions (use separate git worktrees).
 

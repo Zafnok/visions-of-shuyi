@@ -22,6 +22,22 @@ discipline here is the whole quality system.
   every `blocked_by` id exists in `tickets/done/`. Prefer the lowest number on
   the Chapter 1 critical path in `docs/ROADMAP.md`. Tell the user which one you
   picked and why in one sentence.
+- **An `engine#NNNN` in `blocked_by`** is a Shuyi Engine ticket. It is done
+  only when it is in the engine's `tickets/done/` **and** the game's pin is
+  at or past the commit that closed it. Check both, for a ticket you picked
+  or one you were given:
+
+  ```bash
+  gh api repos/Zafnok/shuyi-engine/contents/tickets/done --jq '.[].name' | grep '^NNNN-'
+  gh api "repos/Zafnok/shuyi-engine/commits?path=tickets/done/<that file>" --jq '.[-1].sha'
+  gh api "repos/Zafnok/shuyi-engine/compare/<that sha>...$(cat shuyi-engine.rev)" --jq .status
+  ```
+
+  `ahead` or `identical`: the pin has it. `behind` or `diverged`: the
+  engine ticket is done but the pin is not past it, so the ticket is ready
+  and its first step moves the pin (`engine-change` skill, step 7). Not in
+  `done/`: blocked. `cargo xtask ticket-lint --check-engine` reports an
+  `engine#NNNN` that doesn't exist at all.
 - If the ticket's **Nick input** says *Answer first* and the design doc it needs
   doesn't exist yet in `docs/design/`, stop and tell the user which `00xx`
   ticket must be answered first. Do not guess game-design answers.
@@ -90,11 +106,10 @@ Set `status: in-progress` in the ticket frontmatter.
 - New integration tests go in the crate's `tests/it/` as a module listed in
   `main.rs`; never add a file directly under `tests/` (each one is a
   separate ~100 MB test program; an `xtask` test fails on a second one).
-- **The ticket needs an engine change:** an engine PR first, in
-  `Zafnok/shuyi-engine` (edit it in the local checkout, `cargo xtask
-  engine`), merged with a merge commit; then this ticket's PR moves the pin
-  (`cargo xtask engine --off`, then `cargo xtask engine-pin`;
-  `docs/engine/README.md`).
+- **The ticket needs an engine change:** follow the `engine-change` skill:
+  an engine PR first, in `Zafnok/shuyi-engine`, then this ticket's PR moves
+  the pin; or, when the change is bigger than one PR, an engine ticket, a
+  marked workaround here and a follow-up game ticket.
 - **Scope creep rule:** if you notice something else worth doing (a bug,
   refactor, missing feature), do NOT do it. Create a new ticket with the
   `write-ticket` skill and mention it in the PR description.

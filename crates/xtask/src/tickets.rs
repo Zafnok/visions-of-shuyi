@@ -1,11 +1,21 @@
 //! `cargo xtask ticket-lint`: validates ticket files under `tickets/{open,done}`
 //! against the conventions in `tickets/README.md`.
+//!
+//! A `blocked_by` id of the form `engine#NNNN` is a ticket of Shuyi Engine's
+//! repository (ticket 1152). Only its form is checked by default, so the
+//! gates never reach the network; `--check-engine` also looks it up.
 
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 use serde_norway::Value;
+
+use crate::engine;
+
+/// The prefix of an engine ticket's id in `blocked_by`: `engine#2007`.
+const ENGINE_PREFIX: &str = "engine#";
 
 const REQUIRED_KEYS: &[&str] = &[
     "id",
@@ -70,8 +80,9 @@ struct Ticket {
 }
 
 /// Runs every ticket-lint rule against `repo_root` and returns every error
-/// found (empty means clean). `pr_branch` is the `--pr-branch` value, if any.
-pub fn run(repo_root: &Path, pr_branch: Option<&str>) -> Vec<String> {
+/// found (empty means clean). `pr_branch` is the `--pr-branch` value, if any;
+/// `check_engine` is `--check-engine`.
+pub fn run(repo_root: &Path, pr_branch: Option<&str>, check_engine: bool) -> Vec<String> {
     let mut tickets = Vec::new();
     let mut errors = Vec::new();
 
@@ -101,7 +112,83 @@ pub fn run(repo_root: &Path, pr_branch: Option<&str>) -> Vec<String> {
         errors.extend(check_pr_branch(&tickets, branch));
     }
 
+    if check_engine {
+        match engine_ticket_ids(repo_root) {
+            Ok((ids, source)) => errors.extend(check_engine_ids(&tickets, &ids, &source)),
+            Err(e) => errors.push(format!("--check-engine: {e}")),
+        }
+    }
+
     errors
+}
+
+/// The ticket numbers in the engine's `tickets/open` and `tickets/done`, and
+/// where they were read: the local checkout's working tree when there is one
+/// (`cargo xtask engine`), else the engine's `main` through `gh api`.
+fn engine_ticket_ids(repo_root: &Path) -> Result<(HashSet<String>, String), String> {
+    let checkout = repo_root.join(engine::CHECKOUT).join("tickets");
+    let mut names = Vec::new();
+    if checkout.is_dir() {
+        for folder in [Folder::Open, Folder::Done] {
+            let dir = checkout.join(folder.dirname());
+            let files = read_ticket_files(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+            names.extend(files.into_iter().map(|(name, _)| name));
+        }
+        let source = format!("the local checkout's {}/tickets/", engine::CHECKOUT);
+        return Ok((ticket_numbers(&names), source));
+    }
+    let repo = engine::URL.trim_start_matches("https://github.com/");
+    for folder in [Folder::Open, Folder::Done] {
+        let path = format!("repos/{repo}/contents/tickets/{}", folder.dirname());
+        let output = Command::new("gh")
+            .args(["api", &path, "--jq", ".[].name"])
+            .output()
+            .map_err(|e| format!("spawn gh: {e}"))?;
+        if !output.status.success() {
+            let said = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("gh api {path}: {}", said.trim()));
+        }
+        names.extend(
+            String::from_utf8_lossy(&output.stdout)
+                .lines()
+                .map(str::to_owned),
+        );
+    }
+    Ok((ticket_numbers(&names), format!("{}'s main", engine::URL)))
+}
+
+/// The ids of the ticket files among `names`.
+fn ticket_numbers(names: &[String]) -> HashSet<String> {
+    names
+        .iter()
+        .filter(|name| is_valid_ticket_filename(name))
+        .map(|name| name[..4].to_owned())
+        .collect()
+}
+
+/// With `--check-engine`: each `engine#NNNN` in a `blocked_by` must be one of
+/// the engine's tickets, `engine_ids`, read from `source`.
+fn check_engine_ids(tickets: &[Ticket], engine_ids: &HashSet<String>, source: &str) -> Vec<String> {
+    let mut errors = Vec::new();
+    for ticket in tickets {
+        for dep in ticket.fields.blocked_by.iter().flatten() {
+            let Some(number) = dep.strip_prefix(ENGINE_PREFIX) else {
+                continue;
+            };
+            if is_ticket_number(number) && !engine_ids.contains(number) {
+                errors.push(format!(
+                    "{}: `blocked_by` names `{dep}`, which is not an engine ticket (looked in {source})",
+                    ticket.display_path
+                ));
+            }
+        }
+    }
+    errors
+}
+
+/// Exactly four ASCII digits.
+fn is_ticket_number(text: &str) -> bool {
+    text.len() == 4 && text.bytes().all(|b| b.is_ascii_digit())
 }
 
 fn read_ticket_files(dir: &Path) -> std::io::Result<Vec<(String, String)>> {
@@ -310,7 +397,14 @@ fn check_blocked_by_exists(tickets: &[Ticket]) -> Vec<String> {
             continue;
         };
         for dep in blocked_by {
-            if !known_ids.contains(dep.as_str()) {
+            if let Some(number) = dep.strip_prefix(ENGINE_PREFIX) {
+                if !is_ticket_number(number) {
+                    errors.push(format!(
+                        "{}: `blocked_by` id `{dep}` is not of the form `engine#NNNN` (four digits)",
+                        ticket.display_path
+                    ));
+                }
+            } else if !known_ids.contains(dep.as_str()) {
                 errors.push(format!(
                     "{}: `blocked_by` references unknown ticket id `{dep}`",
                     ticket.display_path
@@ -346,7 +440,7 @@ fn check_pr_branch(tickets: &[Ticket], branch: &str) -> Vec<String> {
 fn ticket_id_from_branch(branch: &str) -> Option<&str> {
     let rest = branch.strip_prefix('t')?;
     let (id, _slug) = rest.split_once('-')?;
-    (id.len() == 4 && id.bytes().all(|b| b.is_ascii_digit())).then_some(id)
+    is_ticket_number(id).then_some(id)
 }
 
 #[cfg(test)]
@@ -567,6 +661,71 @@ completed:
         assert!(check_blocked_by_exists(&tickets).is_empty());
     }
 
+    #[test]
+    fn an_engine_id_is_accepted_without_a_lookup() {
+        let tickets = vec![ticket("0101", Folder::Open, "todo", &["engine#1234"])];
+        assert!(check_blocked_by_exists(&tickets).is_empty());
+    }
+
+    #[test]
+    fn a_malformed_engine_id_is_rejected() {
+        for bad in ["engine#12", "engine#abcd", "engine#12345", "engine#"] {
+            let tickets = vec![ticket("0101", Folder::Open, "todo", &[bad])];
+            let errors = check_blocked_by_exists(&tickets);
+            assert_eq!(errors.len(), 1, "{bad}: {errors:?}");
+            assert!(
+                errors[0].contains("not of the form `engine#NNNN`"),
+                "{errors:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_unknown_plain_id_is_still_rejected_beside_an_engine_id() {
+        let tickets = vec![ticket(
+            "0101",
+            Folder::Open,
+            "todo",
+            &["engine#1234", "0099"],
+        )];
+        let errors = check_blocked_by_exists(&tickets);
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].contains("unknown ticket id `0099`"));
+    }
+
+    #[test]
+    fn ticket_numbers_come_from_ticket_file_names_only() {
+        let names = [
+            "2001-set-up.md",
+            "README.md",
+            "TEMPLATE.md",
+            "1119-tick.md",
+            "2002.md",
+        ]
+        .map(str::to_owned);
+        let mut found: Vec<_> = ticket_numbers(&names).into_iter().collect();
+        found.sort();
+        assert_eq!(found, ["1119", "2001"]);
+    }
+
+    #[test]
+    fn check_engine_reports_an_engine_id_the_engine_does_not_have() {
+        let tickets = vec![
+            ticket(
+                "0101",
+                Folder::Open,
+                "todo",
+                &["engine#2001", "engine#2999", "0100"],
+            ),
+            ticket("0100", Folder::Done, "done", &[]),
+        ];
+        let engine_ids = HashSet::from(["2001".to_owned()]);
+        let errors = check_engine_ids(&tickets, &engine_ids, "a fake listing");
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].contains("`engine#2999`"), "{errors:?}");
+        assert!(errors[0].contains("a fake listing"), "{errors:?}");
+    }
+
     // -- pr-branch --
 
     #[test]
@@ -614,7 +773,7 @@ completed:
             .parent()
             .and_then(Path::parent)
             .expect("xtask is at <repo>/crates/xtask");
-        let errors = run(repo_root, None);
+        let errors = run(repo_root, None, false);
         assert!(errors.is_empty(), "ticket-lint errors: {errors:#?}");
     }
 
@@ -659,7 +818,7 @@ completed:
         )
         .unwrap();
 
-        let errors = run(&root, None);
+        let errors = run(&root, None, false);
 
         assert!(!errors.is_empty());
         assert!(
@@ -672,6 +831,30 @@ completed:
             !errors.iter().any(|e| e.contains("notes.txt")),
             "notes.txt should have been skipped, not linted: {errors:#?}"
         );
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn check_engine_looks_in_the_local_checkout() {
+        let root = make_temp_tickets_dir("check-engine-checkout");
+        let blocked = r#"blocked_by: ["engine#2001", "engine#2999"]"#;
+        fs::write(
+            root.join("tickets/open/0106-x.md"),
+            VALID_FRONTMATTER.replace(r#"blocked_by: ["0102"]"#, blocked),
+        )
+        .unwrap();
+        let engine_tickets = root.join(engine::CHECKOUT).join("tickets");
+        for (folder, file) in [("open", "2002-gates.md"), ("done", "2001-set-up.md")] {
+            fs::create_dir_all(engine_tickets.join(folder)).unwrap();
+            fs::write(engine_tickets.join(folder).join(file), "an engine ticket").unwrap();
+        }
+
+        assert_eq!(run(&root, None, false), Vec::<String>::new());
+        let errors = run(&root, None, true);
+
+        assert_eq!(errors.len(), 1, "{errors:#?}");
+        assert!(errors[0].contains("`engine#2999`"), "{errors:#?}");
+        assert!(errors[0].contains("local checkout"), "{errors:#?}");
         let _ = fs::remove_dir_all(&root);
     }
 
