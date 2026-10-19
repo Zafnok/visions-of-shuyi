@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["1152"]
+blocked_by: ["1152", "1157"]
 nick_input: none
 completed:
 ---
@@ -25,7 +25,9 @@ when they happen to touch them.
 
 This ticket sweeps the existing game once, right after the engine
 moves to its own repository (1131) and the two-repository flow exists
-(1152). It files what it finds as engine tickets, game-structure
+(1152), and after the engine parts of open game tickets have moved
+there (1157), so it does not file engine work those tickets already
+hold. It files what it finds as engine tickets, game-structure
 tickets, or "accept" rows. It also sets how later sweeps happen, so
 this is not a one-off.
 
