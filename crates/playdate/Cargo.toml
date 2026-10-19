@@ -50,6 +50,10 @@ sdk = []
 # it also renders each frame drawn whole with the fast one-bit renderer and
 # with 1032's, and logs each phase's time once a minute (`src/pd/bench.rs`).
 bench = ["trpg-ui/onebit-reference"]
+# The bought art in the bundle, over the placeholders (ADR-0040, ticket
+# 1061): `cargo xtask playdate --private-assets`. Needs
+# `assets-private/game/`; never on in a gate.
+private-assets = ["trpg-content/private-assets"]
 
 [dependencies]
 trpg-content = { path = "../content", default-features = false }

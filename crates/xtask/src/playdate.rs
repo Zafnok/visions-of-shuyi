@@ -1,4 +1,5 @@
-//! `cargo xtask playdate [--release] [--bench] [--device|--simulator|--both]`:
+//! `cargo xtask playdate [--release] [--bench] [--private-assets]
+//! [--device|--simulator|--both]`:
 //! builds the Playdate front end (`crates/playdate`, ADR-0070) into
 //! `target/playdate/VisionsOfShuyi.pdx` (ticket 1031).
 //!
@@ -18,7 +19,9 @@
 //! (what goes on a device), otherwise `playdate-dev`. `--bench` builds the
 //! bench build instead (the `bench` feature, ticket 1055), into
 //! `VisionsOfShuyi-bench.pdx`: it times the one-bit renderer on the
-//! device. The SDK comes from
+//! device. `--private-assets` builds with the bought art in
+//! `assets-private/game/` over the placeholders (its feature, ADR-0040,
+//! ticket 1061). The SDK comes from
 //! `PLAYDATE_SDK_PATH`, else `~/Documents/PlaydateSDK`; the compilers from
 //! `PATH`, else MSYS2's default places. GNU tools only: no MSVC, no
 //! nightly, no `CMake`.
@@ -63,13 +66,22 @@ impl Build {
         }
     }
 
-    /// `trpg-playdate`'s features.
+    /// `trpg-playdate`'s features for this build.
     fn features(self) -> &'static str {
         match self {
             Build::Game => "sdk",
             Build::Bench => "sdk,bench",
         }
     }
+}
+
+/// Which pictures the build holds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Art {
+    /// The public placeholders in `assets/`.
+    Placeholders,
+    /// The bought art over them (`--private-assets`, ADR-0090).
+    Bought,
 }
 
 /// The device's Rust target (ADR-0070 §1).
@@ -123,8 +135,7 @@ const MSYS2_ARM_GCC: &str = r"C:\msys64\ucrt64\bin\arm-none-eabi-gcc.exe";
 const MSYS2_GCC: &str = r"C:\msys64\mingw64\bin\gcc.exe";
 
 /// Usage line for bad arguments.
-const USAGE: &str =
-    "usage: cargo xtask playdate [--release] [--bench] [--device|--simulator|--both]";
+const USAGE: &str = "usage: cargo xtask playdate [--release] [--bench] [--private-assets]      [--device|--simulator|--both]";
 
 /// Parsed `cargo xtask playdate` arguments.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -133,17 +144,19 @@ pub struct Options {
     pub release: bool,
     /// The game, or the bench build.
     pub build: Build,
+    /// The placeholders, or the bought art (`--private-assets`).
+    pub art: Art,
     /// Build `pdex.elf`, for the device.
     pub device: bool,
     /// Build `pdex.dll`, for the Simulator.
     pub simulator: bool,
 }
 
-/// Parses the arguments after `playdate`: `--release`, `--bench`, and at
-/// most one of `--device`, `--simulator` and `--both` (the default), each
-/// at most once.
+/// Parses the arguments after `playdate`: `--release`, `--bench`,
+/// `--private-assets`, and at most one of `--device`, `--simulator` and
+/// `--both` (the default), each at most once.
 pub fn parse_args(args: &[String]) -> Result<Options, String> {
-    let (mut release, mut build) = (false, Build::Game);
+    let (mut release, mut build, mut art) = (false, Build::Game, Art::Placeholders);
     let mut which: Option<(bool, bool)> = None;
     for arg in args {
         let targets = match arg.as_str() {
@@ -153,6 +166,10 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
             }
             "--bench" if build == Build::Game => {
                 build = Build::Bench;
+                continue;
+            }
+            "--private-assets" if art == Art::Placeholders => {
+                art = Art::Bought;
                 continue;
             }
             "--device" => (true, false),
@@ -168,6 +185,7 @@ pub fn parse_args(args: &[String]) -> Result<Options, String> {
     Ok(Options {
         release,
         build,
+        art,
         device,
         simulator,
     })
@@ -196,15 +214,26 @@ fn device_rustflags(existing: Option<&str>) -> String {
     }
 }
 
+/// `trpg-playdate`'s features for `options`.
+fn features(options: Options) -> String {
+    let features = options.build.features();
+    if options.art == Art::Bought {
+        format!("{features},private-assets")
+    } else {
+        features.to_string()
+    }
+}
+
 /// The `cargo` arguments that build the static library for `target`.
 fn cargo_args(target: &str, options: Options) -> Vec<OsString> {
+    let features = features(options);
     [
         "build",
         "-p",
         "trpg-playdate",
         "--lib",
         "--features",
-        options.build.features(),
+        &features,
         "--target",
         target,
         "--profile",
@@ -715,6 +744,7 @@ mod tests {
     const BOTH: Options = Options {
         release: true,
         build: Build::Game,
+        art: Art::Placeholders,
         device: true,
         simulator: true,
     };
@@ -749,6 +779,7 @@ mod tests {
             Ok(Options {
                 release: false,
                 build: Build::Game,
+                art: Art::Placeholders,
                 device: true,
                 simulator: true
             })
@@ -774,6 +805,11 @@ mod tests {
         assert_eq!(bench.build, Build::Bench);
         assert!(bench.release && bench.device && !bench.simulator);
         assert_eq!(parsed(&["--release"]).build, Build::Game);
+        assert_eq!(parsed(&["--release"]).art, Art::Placeholders);
+        let bought = parsed(&["--private-assets", "--bench", "--simulator"]);
+        assert_eq!(bought.art, Art::Bought);
+        assert!(bought.simulator && !bought.device);
+        assert_eq!(bought.build, Build::Bench);
     }
 
     #[test]
@@ -782,6 +818,7 @@ mod tests {
             &["--bogus"][..],
             &["--release", "--release"],
             &["--bench", "--bench"],
+            &["--private-assets", "--private-assets"],
             &["--device", "--simulator"],
             &["--both", "--both"],
             &["--device", "--device"],
@@ -993,6 +1030,32 @@ mod tests {
         let root = scratch("bench-summary");
         assert!(summary(&root, bench).contains("VisionsOfShuyi-bench.pdx"));
         fs::remove_dir_all(&root).unwrap();
+    }
+
+    /// `--private-assets` adds its feature to every Rust build, of the
+    /// game or the bench build, and packs the same `.pdx`.
+    #[test]
+    fn the_bought_art_build_has_its_feature() {
+        for (build, features) in [
+            (Build::Game, "sdk,private-assets"),
+            (Build::Bench, "sdk,bench,private-assets"),
+        ] {
+            let bought = Options {
+                build,
+                art: Art::Bought,
+                ..BOTH
+            };
+            let built = runs(&plan(Path::new("/repo"), bought, &tools(), "0.2.0").unwrap());
+            for cargo in [&built[0], &built[4]] {
+                assert_eq!(cargo.1, "cargo");
+                assert_eq!(cargo.2[4..6], ["--features", features]);
+            }
+            let pdc = built.last().unwrap();
+            assert_eq!(
+                pdc.2[3],
+                format!("/repo/target/playdate/{}", build.pdx_name())
+            );
+        }
     }
 
     #[test]
