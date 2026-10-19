@@ -94,6 +94,8 @@ fn a_menu_is_a_window_an_item_a_row_the_focus_a_bar_across_it() {
             item("Second", true, true),
             item("Off", false, false),
         ],
+        first_shown: 0,
+        shown: 3,
     };
     assert_eq!(menu_size(&view), (10, 5));
     super::menu(&ctx, &mut buf, (1, 0), &view);

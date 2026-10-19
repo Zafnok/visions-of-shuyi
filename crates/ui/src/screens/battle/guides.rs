@@ -17,6 +17,7 @@ use super::view::GuidesView;
 use crate::input::Action;
 use crate::screen::Ctx;
 use crate::tips::fill_placeholders;
+use crate::widgets::ListCursor;
 
 /// Text key of the screen's title.
 pub const TITLE: &str = "battle.guides.title";
@@ -55,36 +56,32 @@ pub enum GuidesEffect {
 /// The open Guides list: which topic is highlighted.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GuidesScreen {
-    focus: usize,
-    count: usize,
+    cursor: ListCursor,
 }
 
 impl GuidesScreen {
     /// The list of `content`'s topics, on the first.
     pub fn new(content: &Content) -> Self {
         Self {
-            focus: 0,
-            count: topics(content).len(),
+            cursor: ListCursor::new(topics(content).len()),
         }
     }
 
     /// The highlighted topic's place in the list.
     pub fn focus(&self) -> usize {
-        self.focus
+        self.cursor.focus()
     }
 
     /// Handles one action: up and down move the highlight (wrapping),
     /// Cancel closes; anything else does nothing.
     pub fn step(&mut self, action: Action) -> GuidesEffect {
-        let n = self.count;
         match action {
             Action::Cancel => GuidesEffect::Close,
-            Action::CursorDown if n > 1 => {
-                self.focus = (self.focus + 1) % n;
-                GuidesEffect::Moved
-            }
-            Action::CursorUp if n > 1 => {
-                self.focus = (self.focus + n - 1) % n;
+            Action::CursorDown | Action::CursorUp
+                if self
+                    .cursor
+                    .step(action == Action::CursorDown, true, |_| true) =>
+            {
                 GuidesEffect::Moved
             }
             _ => GuidesEffect::None,
@@ -103,7 +100,7 @@ impl GuidesScreen {
                 Topic::Tip(t) => words.tip_title(t).to_owned(),
             })
             .collect();
-        let (heading, lines) = match all.get(self.focus) {
+        let (heading, lines) = match all.get(self.cursor.focus()) {
             Some(Topic::Lesson(l)) => {
                 let text = fill_placeholders(words.lesson_text(l), keys);
                 let mut lines: Vec<String> = text.lines().map(str::to_owned).collect();
@@ -124,7 +121,7 @@ impl GuidesScreen {
         GuidesView {
             title: ctx.text(TITLE).to_owned(),
             topics: titles,
-            focus: self.focus,
+            focus: self.cursor.focus(),
             heading,
             lines,
         }

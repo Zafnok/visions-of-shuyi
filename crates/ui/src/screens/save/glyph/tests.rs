@@ -88,6 +88,8 @@ fn the_prompt_is_a_question_a_menu_and_a_help_line() {
         question: "SAVE?".to_owned(),
         menu: MenuView {
             items: vec![item("Yes", true), item("No", false)],
+            first_shown: 0,
+            shown: 2,
         },
         help: "help".to_owned(),
     };

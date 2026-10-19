@@ -27,7 +27,7 @@ use crate::input::Action;
 use crate::save::{self, Slot, playtime_text, slot_key};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::pick_one;
-use crate::widgets::{Menu, MenuItem};
+use crate::widgets::{ListCursor, Menu, MenuItem};
 
 /// The key of the question after a chapter's victory in the language
 /// files ([`Ctx::text`]).
@@ -126,10 +126,8 @@ pub enum SlotOutcome {
 pub struct SlotPickerScreen {
     purpose: Purpose,
     slots: Vec<Slot>,
-    /// Index of the focused slot (slot number − 1).
-    focus: usize,
-    /// Index of the first slot shown.
-    top: usize,
+    /// The focused slot (slot number − 1) and the slots shown.
+    cursor: ListCursor,
     /// Whether "Overwrite slot N?" is open.
     asking: bool,
     /// The message under the panel, if any.
@@ -157,23 +155,22 @@ impl SlotPickerScreen {
     }
 
     fn new(purpose: Purpose, slots: Vec<Slot>, focus: Option<usize>) -> Self {
-        let mut picker = Self {
+        let mut cursor = ListCursor::new(slots.len()).at(focus.unwrap_or(0));
+        cursor.window(VISIBLE);
+        Self {
             purpose,
             slots,
-            focus: focus.unwrap_or(0),
-            top: 0,
+            cursor,
             asking: false,
             message: None,
-        };
-        picker.scroll();
-        picker
+        }
     }
 
     /// The same picker focused on slot `slot` (1 to the number of slots).
     #[cfg(test)]
     fn at(mut self, slot: usize) -> Self {
-        self.focus = slot - 1;
-        self.scroll();
+        self.cursor = self.cursor.at(slot - 1);
+        self.cursor.window(VISIBLE);
         self
     }
 
@@ -183,13 +180,13 @@ impl SlotPickerScreen {
         self.is_saving()
             && self
                 .slots
-                .get(self.focus)
+                .get(self.cursor.focus())
                 .is_some_and(|s| *s != Slot::Empty)
     }
 
     /// The focused slot's number (1 to [`SLOTS`](crate::save::SLOTS)).
     pub fn focused_slot(&self) -> usize {
-        self.focus + 1
+        self.cursor.focus() + 1
     }
 
     /// Whether the picker saves (rather than loads).
@@ -213,26 +210,12 @@ impl SlotPickerScreen {
         ctx.text_with("save.overwrite_question", &[("slot", &slot)])
     }
 
-    /// Keeps the focused slot among those shown.
-    fn scroll(&mut self) {
-        self.top = self.top.min(self.focus);
-        if self.focus >= self.top + VISIBLE {
-            self.top = self.focus + 1 - VISIBLE;
-        }
-    }
-
     /// Moves the focus one slot down or up, wrapping.
     fn step(&mut self, ctx: &mut Ctx, down: bool) {
-        let n = self.slots.len();
-        if n < 2 {
+        if !self.cursor.step(down, true, |_| true) {
             return;
         }
-        self.focus = if down {
-            (self.focus + 1) % n
-        } else {
-            (self.focus + n - 1) % n
-        };
-        self.scroll();
+        self.cursor.window(VISIBLE);
         self.message = None;
         ctx.audio.menu(MenuSound::Move);
     }
@@ -271,7 +254,7 @@ impl SlotPickerScreen {
             ctx.audio.menu(MenuSound::Select);
             return None;
         }
-        match self.slots.get(self.focus) {
+        match self.slots.get(self.cursor.focus()) {
             Some(Slot::Saved(summary)) => {
                 let save = Box::new(summary.save.clone());
                 ctx.audio.menu(MenuSound::Select);
@@ -327,7 +310,8 @@ impl SlotPickerScreen {
     /// the message, the overwrite question if it is open, and the help
     /// line.
     pub fn view(&self, ctx: &Ctx) -> SlotPickerView {
-        let shown = self.top..(self.top + VISIBLE).min(self.slots.len());
+        let top = self.cursor.first_shown();
+        let shown = top..(top + VISIBLE).min(self.slots.len());
         // Which slots are on screen.
         let (first, count) = (shown.start + 1, self.slots.len());
         let range = ctx.text_with(
@@ -376,7 +360,7 @@ impl SlotPickerScreen {
         };
         SlotView {
             number: index + 1,
-            focused: index == self.focus,
+            focused: index == self.cursor.focus(),
             entry,
         }
     }

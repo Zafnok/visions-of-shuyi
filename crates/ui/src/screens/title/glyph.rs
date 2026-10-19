@@ -307,6 +307,8 @@ mod tests {
             prompt: None,
             menu: Some(MenuView {
                 items: vec![item("New Game", true), item("Quit", false)],
+                first_shown: 0,
+                shown: 2,
             }),
             notice: None,
             help: Some("help".to_owned()),

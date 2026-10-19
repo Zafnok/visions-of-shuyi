@@ -9,6 +9,7 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
 use crate::screens::battle::view::GuidesView;
+use crate::widgets::ListCursor;
 
 /// The box: the map view and the side panel together.
 pub const AREA: Rect = Rect::new(
@@ -84,8 +85,9 @@ pub fn paint(ctx: &Ctx, view: &GuidesView, buf: &mut GlyphBuffer) {
 
 /// The first topic shown so that `focus` is within `rows` rows.
 fn first_shown(focus: usize, rows: i32) -> usize {
-    let rows = usize::try_from(rows).unwrap_or(1).max(1);
-    focus.saturating_sub(rows - 1)
+    // The topics after the focus never move the window.
+    let rows = usize::try_from(rows).unwrap_or(1);
+    ListCursor::new(focus + 1).at(focus).window(rows).start
 }
 
 #[cfg(test)]

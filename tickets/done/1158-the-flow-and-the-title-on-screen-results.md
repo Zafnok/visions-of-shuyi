@@ -96,7 +96,8 @@ None.
 **What was done.**
 
 - **Pin:** moved to the engine's `main` at `8c07b5c` (the merge of
-  engine 2306).
+  engine 2306). Ticket 1160 then landed first with the pin at `ed61c0e`,
+  4 commits further on, and the merge of `main` kept it.
 - **The flow** (`crates/ui/src/flow.rs`) pushes its screens over itself
   instead of hosting them. `show(stage, screen)` queues the next one; the
   flow pushes it on its first update, or from `uncovered` in the frame
