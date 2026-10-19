@@ -19,7 +19,9 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
    skill. One ticket = one branch = one PR. The PR moves the ticket to
    `tickets/done/`. One exception: a GitHub issue labelled `sonar` is its
    own ticket, filed weekly from SonarCloud and fixed with the `sonar-fix`
-   skill (ADR-0071).
+   skill (ADR-0071). A ticket that needs an engine change is an engine PR
+   first (in `Zafnok/shuyi-engine`), then the game's PR that moves the pin
+   (`cargo xtask engine-pin`; `docs/engine/README.md`).
 2. **No unticketed work.** Don't write game code "to get a head start". Found
    something else to do? Create a ticket (`write-ticket` skill).
 3. **Never invent game-design answers.** They come from `docs/design/` (decided
@@ -75,7 +77,8 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 | `tools/sonar-triage/` | Files SonarCloud's backlog as batched `sonar` GitHub issues, weekly (ADR-0071); `policy.jsonc` is where a finding is accepted |
 | `assets-src/` | Inputs to asset tools (e.g. the font BDF for `cargo shuyi font-atlas`); not embedded |
 | `assets-private/` | **Git-ignored**: the checkout of the private repository with the bought art (ADR-0040). `game/` is embedded over `assets/` by the `private-assets` feature; `library/tiny-tales/` is the bought bundle, sorted. `assets-private.rev` (tracked) names the commit to build with |
-| `engine/` | Shuyi Engine's code (its tools, `shuyi-cli`, in `engine/crates/cli`) while it is carved out of the game (ADR-0063, tickets 1102–1118 and 1154); moves to the engine's own repository, [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine) (public, MIT OR Apache-2.0), with 1131. That repository holds the engine's ADRs, tickets and plans |
+| `shuyi-engine.rev` | The commit of Shuyi Engine the game builds with ([`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine), public, MIT OR Apache-2.0: the engine's code, carved out of the game by tickets 1102–1118 and 1154 and moved there by 1131, with its ADRs, tickets and plans). The game's crates depend on it by git URL and this revision; `cargo xtask engine-pin` moves it (ADR-0063 §8) |
+| `shuyi-engine/` | **Git-ignored**: a checkout of the engine, made by `cargo xtask engine`, which also points the build at it (`.cargo/engine-patch.toml`) so one working copy edits both; `cargo xtask engine --off` before committing the game (`docs/engine/README.md`) |
 | `voice/` | **Git-ignored**: voice clips by dialogue line id, shipped beside the game, never embedded (ADR-0046, `docs/voice.md`). Copied from the private repository's `voice/` by `cargo shuyi private-assets`. Test clips: `crates/app/tests/voice/` |
 
 ## Environment

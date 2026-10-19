@@ -38,3 +38,9 @@ desktop.ini
 # Voice clips (ADR-0046): kept in the private repository; `cargo xtask
 # private-assets` copies them here. The test clips are in crates/app/tests/voice/.
 /voice/
+
+# Shuyi Engine's checkout at the pinned revision (ADR-0063 §8, ticket 1131):
+# `cargo xtask engine` clones it here, and `.cargo/engine-patch.toml` (written
+# by the same command) points the build at it. Never committed.
+/shuyi-engine/
+/.cargo/engine-patch.toml

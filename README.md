@@ -221,15 +221,17 @@ Nick's choices.</sub>
 It shares the game's code, and nothing in the Windows or browser game
 waits for it.
 
-### Later: Shuyi Engine
+### Shuyi Engine
 
 The parts of this code that aren't about this game (drawing, input,
-audio, screens, cinematics, the testing tools) will become **Shuyi Engine**, a separate, open-source 2D
-engine under MIT or Apache-2.0, at
-[`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine). The game
-stays paid and is built on it. The move starts after Nick's next playtest,
-one piece at a time, and ends with a small example game made from the
-engine alone. The plan is in [`docs/engine/`](docs/engine/README.md).
+audio, screens, cinematics, the testing tools) are now **Shuyi Engine**, a
+separate, open-source 2D engine under MIT or Apache-2.0, at
+[`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine). They were
+carved out here one piece at a time, with a small example game made from
+the engine alone, and moved there with their history on 2026-10-19. The
+game stays paid and is built on it, pinned to one of its commits
+(`shuyi-engine.rev`). How the two work together is in
+[`docs/engine/`](docs/engine/README.md).
 
 ### Planned after Chapter 1
 
@@ -272,7 +274,7 @@ Playdate version possible.
 | [`docs/design/`](docs/design/README.md) | Game-design decisions, made by Nick |
 | [`docs/story/`](docs/story/README.md) | Story beats, bible and characters (spoilers!) |
 | [`docs/adr/`](docs/adr/README.md) | Technical decisions |
-| [`docs/engine/`](docs/engine/README.md) | Shuyi Engine: the study and the plan for carving it out |
+| [`docs/engine/`](docs/engine/README.md) | Shuyi Engine: the study, the plan for carving it out, and how the game works with it now |
 | [`docs/releasing.md`](docs/releasing.md) | How a release is cut |
 | [`crates/`](crates) | The code |
 | [`CLAUDE.md`](CLAUDE.md) + [`.claude/skills/`](.claude/skills) | Instructions for the AI sessions that build the game |
@@ -285,5 +287,5 @@ non-commercial teaching, make free non-commercial mods, and stream or post
 videos of the game (monetized is fine). You may not redistribute or sell it or
 games made from it. See [`LICENSE`](LICENSE) for the exact terms, and
 [`THIRD_PARTY_ASSETS.md`](THIRD_PARTY_ASSETS.md) for third-party material.
-Shuyi Engine, once it moves to its own repository, is open source under
-its own license.
+Shuyi Engine, in its own repository, is open source under its own license
+(MIT or Apache-2.0).

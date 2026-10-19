@@ -34,7 +34,7 @@ playdate-bundle = []
 [dependencies]
 trpg-core = { path = "../core", default-features = false }
 # The bundle's layering, content errors and RON loading (ticket 1103).
-shuyi-assets = { path = "../../engine/crates/assets", default-features = false }
+shuyi-assets.workspace = true
 serde.workspace = true
 include_dir = { workspace = true, optional = true }
 # `LazyLock` and float rounding without `std` (ADR-0070 §3).
@@ -45,7 +45,7 @@ libm.workspace = true
 # `build.rs` converts the Playdate's pictures to one-bit (ticket 1040,
 # ADR-0085): the converter, which reads the PNGs, and the battler sidecars'
 # scales.
-shuyi-assets = { path = "../../engine/crates/assets", features = ["png"] }
+shuyi-assets = { workspace = true, features = ["png"] }
 serde.workspace = true
 
 [dev-dependencies]

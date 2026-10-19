@@ -1,8 +1,16 @@
+# The local checkout of Shuyi Engine (ticket 1131): `cargo xtask engine`
+# writes this file, a `[patch]` that builds the game on `shuyi-engine/`,
+# and `cargo xtask engine --off` removes it. Both are git-ignored, so CI
+# never has them.
+include = [{ path = "engine-patch.toml", optional = true }]
+
 [alias]
 xtask = "run -q -p xtask --"
-# Shuyi Engine's tools (engine/crates/cli, ticket 1117), on the project of
-# the `shuyi.ron` in the working folder or above it.
-shuyi = "run -q -p shuyi-cli --"
+# Shuyi Engine's tools (`shuyi-cli`, ticket 1117), on the project of the
+# `shuyi.ron` in the working folder or above it, with this game's tools
+# (`frame-png`, `lang-status`): the engine is a dependency, so xtask runs
+# them (ticket 1131).
+shuyi = "xtask shuyi"
 
 # rustup's self-contained x86_64-pc-windows-gnu linker ships without a full
 # mingw-w64 import library set (e.g. no libimm32.a, which macroquad needs for

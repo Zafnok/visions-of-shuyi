@@ -18,9 +18,17 @@ locally, install it with `cargo install --locked <tool>`.
 - The `no_std` build needs the Playdate's target once:
   `rustup target add thumbv7em-none-eabihf`.
 
-`cargo shuyi <command>` is Shuyi Engine's tools (`engine/crates/cli`,
-ADR-0089), run on this repository's `shuyi.ron`; `cargo xtask` keeps the
-repository's own commands (and still takes the old names of the moved ones).
+`cargo shuyi <command>` is Shuyi Engine's tools (`shuyi-cli`, ADR-0089,
+run through `cargo xtask shuyi` with this game's), on this repository's
+`shuyi.ron`; `cargo xtask` keeps the repository's own commands (and still
+takes the old names of the moved ones).
+
+The engine is a dependency pinned by revision (ticket 1131,
+`docs/engine/README.md`). With the local checkout on (`cargo xtask
+engine`), the gates build the game on `shuyi-engine/`, and `--locked`
+fails because `Cargo.lock` names the checkout: run `cargo xtask engine
+--off` before the gates you push on. The engine's own gates are its
+repository's `run-gates` skill, run inside `shuyi-engine/`.
 
 ## Order (fast → slow; stop at first failure and fix)
 
@@ -30,15 +38,12 @@ cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cargo shuyi check-keys                    # no hard-coded keys (keyboard-input skill)
 cargo shuyi check-text                    # no new screen text written as a literal (ADR-0045)
-cargo xtask check-engine-boundary         # nothing of the game in engine/ (ADR-0063)
+cargo xtask engine-pin --check           # the engine's pin agrees in shuyi-engine.rev, Cargo.toml, Cargo.lock (ADR-0063 §8)
 cargo doc --workspace --no-deps          # with RUSTDOCFLAGS="-D warnings"
 cargo build -p trpg-app --target wasm32-unknown-unknown
-cargo build -p shuyi-core --no-default-features --target thumbv7em-none-eabihf  # Playdate, no std (ADR-0070)
-cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf
+cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf  # Playdate, no std (ADR-0070), with the engine crates under it
 cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf
 cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf
-cargo build -p shuyi-assets --no-default-features --target thumbv7em-none-eabihf   # engine crates keep the no-std build (ADR-0070 §6)
-cargo build -p shuyi-ui --no-default-features --target thumbv7em-none-eabihf
 cargo clippy -p trpg-playdate --features sdk --target thumbv7em-none-eabihf -- -D warnings   # the Playdate front end's SDK glue (1031)
 cargo clippy -p trpg-playdate --features sdk,bench --target thumbv7em-none-eabihf -- -D warnings   # and its bench build (1055)
 cargo deny check                          # after ticket 0103

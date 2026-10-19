@@ -14,7 +14,7 @@ workspace = true
 # of `trpg-ui` or `trpg-app`, and never depends on them (ADR-0038).
 [dependencies]
 # The play loop and the `Bot` trait (ticket 1116).
-shuyi-core = { path = "../../engine/crates/core" }
+shuyi-core = { workspace = true, features = ["std"] }
 trpg-core = { path = "../core" }
 
 [dev-dependencies]

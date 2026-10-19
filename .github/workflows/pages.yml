@@ -44,14 +44,6 @@ jobs:
       - env:
           PRIVATE_ASSETS_FLAG: ${{ steps.private.outputs.web-flag }}
         run: cargo shuyi web --release --debug-tools $PRIVATE_ASSETS_FLAG
-      # Shuyi Engine's first example (ticket 1118), published at
-      # /engine/hello-grid/.
-      - name: Build Hello, Grid for the web
-        working-directory: engine/examples/hello-grid
-        run: cargo shuyi web --release
-      - run: |
-          mkdir -p dist/web/engine
-          cp -r engine/examples/hello-grid/dist/web dist/web/engine/hello-grid
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist/web

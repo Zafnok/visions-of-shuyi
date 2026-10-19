@@ -375,7 +375,7 @@ terrain changed; `>` then the terrain a spell would turn it into; `*n` =
      and snapshots read cells. A screen with a `widgets::Menu` puts
      `menu.view()` in its own view, and its skin paints it with
      `widgets::menu::glyph::paint`. The engine's options screen
-     (`engine/crates/ui/src/screens/options.rs`) is the example;
+     (`crates/ui/src/screens/options.rs` in Shuyi Engine) is the example;
      the title, Key bindings and layout picker (0240), the other menu
      screens (0241), Preparations (0245), lead select (0247: its view
      names each portrait and its expression, and the skin places it with
@@ -450,7 +450,7 @@ can use `crate::harness::Harness` directly.
 
 The scripts, waits, audio and music clock below are the engine's Harness
 (`shuyi_ui::harness::Harness<G>`, ticket 1111), tested on the engine's toy
-game in `engine/crates/ui/tests/it/`. This game's `Harness` wraps it with
+game in its `crates/ui/tests/it/`. This game's `Harness` wraps it with
 the start-up (the embedded content, the test chapter, the title) and the
 lookups of this game (`flow()`, `battle()`, `map_scene()` and its
 shortcuts, `with_map_skin`, `with_tips`, `with_lessons`). A test of the

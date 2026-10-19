@@ -213,7 +213,8 @@ The order:
    runs beside them. Then **1115** and **1116** → **1117** → **1118**,
    the first example. **1151** (the engine-friction rule: game code far
    bigger than the job triggers a review) can start once 1118 is done.
-   Then **1131**, the code moves to the engine repository, then
+   Then ~~**1131**, the code moves to the engine repository~~ (done
+   2026-10-19: the game pins it, `shuyi-engine.rev`), then
    **1152** (the engine-change skill for two repositories) → **1157**
    (the engine parts of open game tickets move to the engine repository)
    → **1153** (the first friction sweep of the game).

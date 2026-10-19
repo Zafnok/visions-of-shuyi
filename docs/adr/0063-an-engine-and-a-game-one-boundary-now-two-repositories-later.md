@@ -3,7 +3,10 @@
 - **Status:** Accepted (Nick chose plan B, 2026-10-14). The same day the
   engine got its own repository for its plans, tickets and skills,
   [Shuyi Engine](https://github.com/Zafnok/shuyi-engine); §3 and §8 say
-  how that fits.
+  how that fits. **Code moved on 2026-10-19** (1131): the game pins the
+  engine by revision (`shuyi-engine.rev`, `cargo xtask engine-pin`), with
+  the local checkout of §8 (`cargo xtask engine`); §4's gate retired, as
+  the boundary is the repository wall now.
 - **Date:** 2026-10-14
 - **Related tickets:** 1101 (the study), 0059 (license, name, going
   public), 0060 (free movement in the game), 1102 (the boundary gate),

@@ -85,19 +85,11 @@ jobs:
         with:
           name: web
           path: dist/web
-      # Shuyi Engine's first example (ticket 1118), built for the web as
-      # Pages publishes it; natively, `test` builds and plays it.
-      - name: Build Hello, Grid for the web
-        working-directory: engine/examples/hello-grid
-        run: cargo shuyi web --release
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: hello-grid-web
-          path: engine/examples/hello-grid/dist/web
 
   # the rules build without `std` for the Playdate (ADR-0070 §3); 1028
-  # added `trpg-content`; 1029 adds `trpg-ui`; 1103 and 1114 add the
-  # engine's `shuyi-assets` and `shuyi-core` (ADR-0070 §6).
+  # added `trpg-content`; 1029 adds `trpg-ui`. The engine's crates build
+  # without it in their own repository's CI (ADR-0070 §6, ticket 1131),
+  # and here as these crates' dependencies.
   no-std:
     name: no-std
     needs: changes
@@ -110,12 +102,9 @@ jobs:
       - run: rustup show
       - run: rustup target add thumbv7em-none-eabihf
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-      - run: cargo build -p shuyi-core --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-core --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-content --no-default-features --target thumbv7em-none-eabihf --locked
       - run: cargo build -p trpg-ui --no-default-features --target thumbv7em-none-eabihf --locked
-      - run: cargo build -p shuyi-assets --no-default-features --target thumbv7em-none-eabihf --locked
-      - run: cargo build -p shuyi-ui --no-default-features --target thumbv7em-none-eabihf --locked
 
   # The Playdate front end's device build (ADR-0070 §1, ticket 1031):
   # `pdex.elf` linked and packed by the SDK's `pdc`. The Simulator's
@@ -208,7 +197,7 @@ jobs:
         with:
           tool: cargo-llvm-cov
       - name: Generate coverage report
-        run: cargo llvm-cov --workspace --exclude trpg-app --exclude shuyi-app --lcov --output-path lcov.info
+        run: cargo llvm-cov --workspace --exclude trpg-app --lcov --output-path lcov.info
       - name: Generate Clippy report for SonarCloud
         run: cargo clippy --workspace --all-targets --message-format=json > clippy.json
         continue-on-error: true
@@ -243,9 +232,11 @@ jobs:
       # No key hard-coded in game code or player text (keyboard-input skill).
       - name: Check for hard-coded keys
         run: cargo shuyi check-keys
-      # Nothing of the game in engine/ (ADR-0063 §4).
-      - name: Check the engine boundary
-        run: cargo xtask check-engine-boundary
+      # The engine's pinned commit is the same in shuyi-engine.rev,
+      # Cargo.toml and Cargo.lock, and the lock isn't the local checkout's
+      # (ADR-0063 §8, ticket 1131).
+      - name: Check the engine's pin
+        run: cargo xtask engine-pin --check
       # No new screen text written as a string literal (ADR-0045).
       - name: Check for screen text written as literals
         run: cargo shuyi check-text

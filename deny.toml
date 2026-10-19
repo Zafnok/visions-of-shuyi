@@ -71,7 +71,9 @@ skip-tree = []
 unknown-registry = "deny"
 unknown-git = "deny"
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
-allow-git = []
+# Shuyi Engine, pinned by revision until its first release (ADR-0063 §8,
+# ticket 1131). Its crates are MIT OR Apache-2.0.
+allow-git = ["https://github.com/Zafnok/shuyi-engine"]
 
 [sources.allow-org]
 github = []
