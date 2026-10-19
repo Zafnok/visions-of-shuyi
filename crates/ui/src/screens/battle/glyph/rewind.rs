@@ -11,6 +11,7 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::SIDE_PANEL;
 use crate::screens::battle::view::RewindView;
+use crate::widgets::ListCursor;
 
 /// Row of the title.
 pub const TITLE_ROW: i32 = SIDE_PANEL.y + 1;
@@ -101,10 +102,10 @@ fn wrap(line: &str) -> Vec<String> {
 /// The first block to show so that blocks `first..=focus` fit in `rows`.
 /// (`focus` itself if even it alone doesn't fit).
 fn first_shown(blocks: &[Vec<String>], focus: usize, rows: i32) -> usize {
-    let height = |b: &Vec<String>| i32::try_from(b.len()).unwrap_or(i32::MAX);
-    (0..focus)
-        .find(|&first| blocks[first..=focus].iter().map(height).sum::<i32>() <= rows)
-        .unwrap_or(focus)
+    let heights: Vec<usize> = blocks.iter().map(Vec::len).collect();
+    let room = usize::try_from(rows).unwrap_or(0);
+    let mut cursor = ListCursor::new(blocks.len()).at(focus);
+    cursor.window_by_heights(&heights, room).start
 }
 
 #[cfg(test)]

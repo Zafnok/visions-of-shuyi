@@ -7,5 +7,29 @@ pub mod menu;
 pub mod name_entry;
 
 pub use menu::{Menu, MenuEvent, MenuItem, MenuItemView, MenuView};
-pub use shuyi_ui::widgets::wrap;
+pub use shuyi_ui::widgets::{ListCursor, wrap};
 pub use wrap::word_wrap;
+
+/// The row after `index` (`forward`) or before it in a list of `len`,
+/// wrapping: a [`ListCursor`] step, for a list that keeps its focus as a
+/// plain index. 0 with no rows.
+pub fn wrap_step(index: usize, len: usize, forward: bool) -> usize {
+    let mut cursor = ListCursor::new(len).at(index);
+    cursor.step(forward, true, |_| true);
+    cursor.focus()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wrap_step;
+
+    #[test]
+    fn a_step_wraps_round_the_ends() {
+        assert_eq!(wrap_step(0, 3, true), 1);
+        assert_eq!(wrap_step(2, 3, true), 0);
+        assert_eq!(wrap_step(0, 3, false), 2);
+        assert_eq!(wrap_step(1, 3, false), 0);
+        assert_eq!(wrap_step(0, 0, true), 0);
+        assert_eq!(wrap_step(0, 1, false), 0);
+    }
+}

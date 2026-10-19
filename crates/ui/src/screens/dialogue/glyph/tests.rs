@@ -67,6 +67,8 @@ fn replies(labels: &[&str], focus: usize) -> MenuView {
     };
     MenuView {
         items: labels.iter().enumerate().map(item).collect(),
+        first_shown: 0,
+        shown: labels.len(),
     }
 }
 

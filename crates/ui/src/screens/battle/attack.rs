@@ -15,6 +15,7 @@ use trpg_core::{
 use super::art_list::{ArtLine, Technique};
 use super::mode::Selection;
 use crate::widgets::menu::Menu;
+use crate::widgets::wrap_step;
 use crate::words::Words;
 
 /// The weapon attack with the weapon in `slot` on `target`: no art, no
@@ -307,12 +308,7 @@ impl Targeting {
         let Some(i) = self.options.iter().position(|o| *o == self.with) else {
             return;
         };
-        let to = if forward {
-            (i + 1) % n
-        } else {
-            (i + n - 1) % n
-        };
-        let with = self.options[to].clone();
+        let with = self.options[wrap_step(i, n, forward)].clone();
         let keep = [self.target()];
         let targets = Self::targets_from(state, &self.sel, &with, &self.technique, &keep);
         let technique = self.technique.clone();
@@ -358,15 +354,10 @@ impl Targeting {
     /// Moves to the next target (or the previous one), wrapping, and
     /// updates the forecast.
     pub fn cycle(&mut self, forward: bool, state: &BattleState) {
-        let n = self.targets.len();
-        if n == 0 {
+        if self.targets.is_empty() {
             return;
         }
-        let index = if forward {
-            (self.index + 1) % n
-        } else {
-            (self.index + n - 1) % n
-        };
+        let index = wrap_step(self.index, self.targets.len(), forward);
         self.retarget(index, state);
     }
 

@@ -30,6 +30,7 @@ use crate::input::{Action, text_keys_help};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::Skins;
 use crate::widgets::name_entry::{NameEvent, NameRules};
+use crate::widgets::wrap_step;
 
 /// The screen's skins: the PC's and the Playdate's.
 pub const SKINS: Skins<LeadSelectView> = Skins {
@@ -150,10 +151,8 @@ impl LeadSelectScreen {
 
     /// Moves the focus one row down (`down`) or up, wrapping.
     fn step_row(&mut self, down: bool, ctx: &mut Ctx) {
-        let n = Row::ALL.len();
         let i = Row::ALL.iter().position(|&r| r == self.row).unwrap_or(0);
-        let next = if down { (i + 1) % n } else { (i + n - 1) % n };
-        self.row = Row::ALL[next];
+        self.row = Row::ALL[wrap_step(i, Row::ALL.len(), down)];
         ctx.audio.menu(MenuSound::Move);
     }
 

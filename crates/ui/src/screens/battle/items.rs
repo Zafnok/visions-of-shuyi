@@ -14,6 +14,7 @@ use super::attack::{spell_uses, weapon_name};
 use super::info::range_text;
 use super::mode::Selection;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
+use crate::widgets::wrap_step;
 use crate::words::Words;
 
 /// One line of the pack list: every copy of one consumable.
@@ -187,12 +188,7 @@ impl ItemTargeting {
 
     /// Moves to the next target (or the previous one), wrapping.
     pub fn cycle(&mut self, forward: bool) {
-        let n = self.used().targets.len();
-        self.index = if forward {
-            (self.index + 1) % n
-        } else {
-            (self.index + n - 1) % n
-        };
+        self.index = wrap_step(self.index, self.used().targets.len(), forward);
     }
 
     /// The command that uses the item.
