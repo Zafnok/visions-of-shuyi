@@ -55,7 +55,7 @@ engine ticket, a marked workaround and a game follow-up `blocked_by:
 | [`boundary.md`](boundary.md) | Every module of the game: engine, tactics kit, game, or mixed; the couplings to cut (written before the carve; paths under `engine/` are now the engine repository's) |
 | [`friction.md`](friction.md) | The engine-friction log: every time game code came out far bigger than the job, and what we did about it ([ADR-0092](../adr/0092-engine-friction-game-code-far-bigger-than-the-job-triggers-a-review.md), the `engine-friction` skill) |
 | [ADR-0063](../adr/0063-an-engine-and-a-game-one-boundary-now-two-repositories-later.md) | The split: one boundary here, then the code moves to the engine's repository after the carve (done, 1131) |
-| Tickets 1102–1118, 1154, 1131, 1151–1153 | The carve, the move, then living with two repositories (`tickets/`) |
+| Tickets 1102–1118, 1154, 1131, 1151–1153, 1157–1172 | The carve, the move, then living with two repositories, and what the first friction sweep filed (`tickets/`) |
 
 | In the engine's repository | What |
 | -------------------------- | ---- |

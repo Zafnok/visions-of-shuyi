@@ -1,6 +1,6 @@
 ---
 name: engine-friction
-description: Judge whether game code is far bigger than the job, and if so whether the fix is an engine feature, engine ergonomics, a game-side structure, or nothing (ADR-0092). Use when a ticket's measured production lines reach 3× its estimate, when you write a workaround for an engine assumption, when the same boilerplate appears a third time, when a performance budget is missed because of the engine, or when the friction log shows three "accept" rows on one engine area.
+description: Judge whether game code is far bigger than the job, and if so whether the fix is an engine feature, engine ergonomics, a game-side structure, or nothing (ADR-0092). Use when a ticket's measured production lines reach 3× its estimate, when you write a workaround for an engine assumption, when the same boilerplate appears a third time, when a performance budget is missed because of the engine, when the friction log shows three "accept" rows on one engine area, or to run a sweep of the whole game (after a roadmap milestone closes, or three accept or 2×–3× rows on one engine area).
 ---
 
 # Engine friction review
@@ -70,7 +70,8 @@ Any of these triggers the review at any ratio:
 - **A performance budget missed** because of how the engine does
   something (the Playdate is about 700× slower than a PC; ADR-0070).
 - **Three or more rows in `docs/engine/friction.md` on the same engine
-  area with outcome "accept"**.
+  area with outcome "accept"**. Since the last sweep, that (or three
+  2×–3× rows there) also starts a sweep: see *Sweep* below.
 
 No trigger: stop here.
 
@@ -146,6 +147,62 @@ separated by `;`. Follow-up names the tickets written in step 6, or `—`.
 
 Then put the line in the PR body: "Engine friction: estimate N, measured
 M (R×), <outcome>".
+
+## Sweep
+
+Tickets only find friction in the code they touch. A **sweep** measures
+the whole game once against the log, and files what it finds. Ticket
+1153 was the first; its section in `docs/engine/friction.md` is the
+baseline and the model.
+
+### When a sweep runs
+
+Either of these starts one:
+
+1. **A milestone in `docs/ROADMAP.md` closes**: the last open ticket of
+   its block moves to `tickets/done/`.
+2. **The log has three rows on the same engine area since the last
+   sweep** with outcome "accept" (4) or a ratio from 2× to 3×. An
+   "engine area" is a module of the engine the rows' jobs lean on (the
+   menu, the text box, the grid skin, the bundle, the screen stack).
+
+The session that sees the trigger (closing the milestone, or writing
+the third row) writes the sweep ticket with `write-ticket`, in the
+`11xx` block, titled like 1153: "The Nth engine-friction sweep:
+measure the game's biggest jobs against what they should take, and
+file the fixes". It copies 1153's Scope, steps and acceptance criteria,
+with two changes: it names the trigger in its Context, and its
+candidates add every row of the last sweep that was filed and not yet
+done. It is never on the Chapter 1 critical path.
+
+### How a sweep runs
+
+1. **Measure.** `cargo xtask code-lines --tree` (ticket 1172; until it
+   exists, count per file with the same rules as `code-lines` and sum
+   per screen: its logic, view and skins). Candidates: the 15 largest
+   screens, skins, scenes and flows, plus the ones the sweep ticket
+   names, plus the last sweep's rows still open.
+2. **Read each candidate** for its job (one sentence), an estimate with
+   a reference (step 1 above), and the signals (step 3). Parallel
+   readers help: one per group of related screens, each told the
+   signals and asked for file and line evidence. Check what they report
+   before you file it.
+3. **Review** every candidate at 3× or more, or with a signal (steps
+   4–5), and **check the engine's open tickets first**: a finding an
+   engine ticket already holds gets a note on that ticket, not a new
+   one.
+4. **Log**: a row per candidate in the table, `(sweep)` after the
+   ticket id, including those under 2× (they are the next sweep's
+   baseline); then a section for the sweep under *Sweeps* with the
+   findings ranked by ratio × how many screens would shrink.
+5. **File** (step 6, "ship and follow up", since a sweep fixes
+   nothing): grouped by engine fix, each engine ticket with its leak
+   test passed and the friction numbers in its Context
+   (`engine-change` skill, "ticket and follow-up"; one engine PR may
+   carry all of a sweep's tickets, titled `Game NNNN: …`), and a game
+   ticket per engine ticket that deletes the workaround,
+   `blocked_by: ["engine#NNNN"]`. Game-side structures get game tickets
+   with no engine blocker.
 
 ## Worked example 1: a dialogue box that needed hacks
 
