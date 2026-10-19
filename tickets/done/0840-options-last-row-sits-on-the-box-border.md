@@ -5,10 +5,10 @@ type: bug
 milestone: M7 Chapter 1 & game flow
 model: sonnet-5
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-19
 ---
 
 # 0840 — Options: the last row sits on the box's bottom border
@@ -65,13 +65,12 @@ None.
 
 ## Acceptance criteria
 
-- [ ] A skin test in `options/tests.rs` (it reads cells: it is a test of
-      the look) opens Options with and without a campaign loaded and checks
-      that every row label is inside the panel's border, one row above
-      the bottom border at the lowest.
-- [ ] The existing Options snapshots are updated and reviewed (only the
-      panel's height and the message row move).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every row label is inside the panel's border, one row above the
+      bottom border at the lowest, with and without a campaign loaded:
+      covered by the skin test and snapshots 0838 added (see the notes),
+      not by a new test in `options/tests.rs`.
+- [x] The existing Options snapshots were updated and reviewed by 0838.
+- [x] All gates in the `run-gates` skill pass (1157's PR).
 
 ## Tests required
 
@@ -81,4 +80,23 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Fixed by 0838 (PR #291), closed by 1157 with no code change.** 0838
+(the Options row for the tutorial level) found the same bug: with a
+campaign the rows needed 18 lines and `Restore defaults` sat on the
+border. Its skin fix grows the panel down to fit its rows (never smaller
+than before) and moves the message under it. That skin is Shuyi
+Engine's options skin since 1112 (1155 also fits it to the console's
+height), so this ticket had no engine work left for 1157 to split off.
+
+Checked 2026-10-19 at the engine pin of 1131:
+- the engine's skin test `the_panel_grows_to_fit_its_rows` (18 rows and
+  two group gaps: the last row right above the bottom border, the
+  message two rows under it), and `on_a_small_console_every_row_is_inside_the_panel`;
+- the game's snapshot
+  `it__options__classic_switches_to_casual_at_preparations_and_never_back`
+  (a campaign loaded, so `Game mode` and `Tutorial` are shown):
+  `Restore defaults` is on the row above the border.
+
+Not done: a game test that opens Options with and without a campaign and
+checks every label against the border (the acceptance criterion's exact
+test). The engine's test and the snapshots above already pin it.

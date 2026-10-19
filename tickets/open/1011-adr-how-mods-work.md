@@ -27,7 +27,8 @@ other ADRs set.
 - **All content is embedded** (ADR-0005). `trpg_content::bundle` reads only
   from `include_dir!` directories, laid in **layers** (the private art over
   `assets/`, ADR-0040), and returns `&'static` data. `content` does no file
-  I/O; only `app` touches files (ADR-0004).
+  I/O; only `app` touches files (ADR-0004). The layering itself is Shuyi
+  Engine's since the carve (1103).
 - **Skill effects are a closed set of data variants, "no scripting, no
   per-skill code"** (ADR-0021). Scripting changes that, so the new ADR
   amends ADR-0021.
@@ -37,14 +38,21 @@ other ADRs set.
 - **The bots are dev tooling, never in the game** (`CLAUDE.md`). A
   modder's balance report (1021) runs them in a separate tool, never in the
   game binary.
-- **The engine split (ADR-0063, 1101).** If 1103 is done, the bundle is
-  `shuyi_assets::Bundle::new(Vec<Layer>)` and runtime layers belong
-  there (engine ADR-0004 §1 plans disk layers for hot reload in 1124; a mod is
-  one more disk layer). If 1103 isn't done, design the layers in
-  `trpg_content::bundle` as step 2.3 says, and 1103 moves them. Either
-  way, the modder's tool (step 2.9) should be built on `shuyi-cli`'s
-  contract (engine ADR-0005) if 1129 exists, so a modder's checks are the same
-  as a game developer's.
+- **The engine's parts (ADR-0063, 1157).** Three pieces of modding are
+  general engine work, each an engine ticket the game's tickets wait for
+  (in [Shuyi Engine's tickets](https://github.com/Zafnok/shuyi-engine/tree/main/tickets)):
+  - **engine#2207**: bundle layers of files handed in at run time, and the
+    platform shell reading a folder on disk into one (engine ADR-0004 §1:
+    a mod is one more layer). 1012 and 1014 use them.
+  - **engine#2101**: the script runtime, the engine module `shuyi-script`,
+    with an engine ADR that picks the language. 1017 uses it.
+  - **engine#1129**: the engine's tool contract (engine ADR-0005); the
+    modder's tool (step 2.9) should be built on it if it exists, so a
+    modder's checks are the same as a game developer's.
+
+  This ADR decides the game's side of each and follows the engine's
+  choices where those tickets are done; where they aren't, it takes the
+  defaults below and says so.
 
 ## Nick input
 
@@ -77,11 +85,13 @@ the Workshop's details (1024); the mod policy (0054).
       in the player's settings names the enabled mods in order. The web
       build: per 0054 (default: not supported yet).
    3. **How `content` reads them without file I/O.** Default: `app` reads
-      the enabled mods' files once at startup and hands `content` a list of
-      runtime layers (path → bytes), laid over the embedded layers in load
-      order (last mod wins), then over the private art and `assets/`.
-      The bytes are leaked once (`Box::leak`) so `bundle`'s `&'static` API
-      stays. Changing the enabled mods takes effect at the next launch.
+      the enabled mods' folders once at startup (engine#2207's
+      `read_folder`) and hands `content` a list of runtime layers (path →
+      bytes, engine#2207), laid over the embedded layers in load order
+      (last mod wins), then over the private art and `assets/`. The
+      engine keeps the bytes for the program's life, so `bundle`'s
+      `&'static` API stays. Changing the enabled mods takes effect at the
+      next launch.
    4. **Replacing a file versus merging entries.** A mod's `.map`, `.dlg`,
       image or sound file replaces the file at the same path. A mod's
       `data/*.ron` table **adds and replaces entries by id** instead of
@@ -96,27 +106,26 @@ the Workshop's details (1024); the mod policy (0054).
    7. **Saves.** A `SaveFile` records the enabled mods' ids and versions.
       Loading a save whose mods are missing or changed warns first. Whether
       a modded save is kept apart: 0054.
-   8. **Scripting.** Compare at least: Rhai (pure Rust, MIT/Apache-2.0,
-      sandboxed, operation limits, can drop floating point); Lua through
-      `mlua` (MIT, but a C library: check the Windows GNU toolchain and
-      the WASM build); WebAssembly modules (`wasmi`, pure Rust); our own
-      small expression language. For each: licence (ADR-0013), size added
-      to the binary and the WASM build, determinism (no clock, no host
-      randomness, integer maths only, bounded run time), and how a modder
-      would write it. Default: Rhai, integer-only, with an operation limit.
-      Say **where** scripts may run: inside `core` as pure functions over
-      a read-only view of the battle that return data `core` already
-      understands (effects, events, a win or a loss), never touching state
-      directly. Say what this amends in ADR-0021.
+   8. **Scripting.** The language and the runtime are the engine's
+      (engine#2101: its ADR compares Rhai, Lua through `mlua`, WebAssembly
+      modules through `wasmi` and a small language of our own, for
+      licence, size on native and WASM, determinism and how a modder
+      writes a rule; default Rhai, integer-only, with an operation limit).
+      Take its choice, or its default if it isn't done yet, and check the
+      licence against ADR-0013. Say **where** scripts may run in this
+      game: inside `core` as pure functions over a read-only view of the
+      battle that return data `core` already understands (effects,
+      events, a win or a loss), never touching state directly. Say what
+      this amends in ADR-0021.
    9. **The modder's tool.** Default: a separate binary, `vos-modkit`, in a
       new `crates/modkit` crate, shipped beside the game: `check`, `new`,
       later `playtest` (with `trpg-bots`; it's never linked into the game).
    10. **What tools never do**: export, copy or re-save bought art
        (ADR-0040, 0054).
-3. Do a short spike to prove the riskiest default (runtime layers in
-   `bundle`, and Rhai compiled for `wasm32-unknown-unknown` with the
-   integer-only features), and record what it showed. Don't commit the
-   spike.
+3. Do a short spike to prove the riskiest default this game decides
+   (where scripts run in `core`, and laying mod layers over the game's;
+   engine#2101 and engine#2207 prove the engine's parts), and record
+   what it showed. Don't commit the spike.
 4. Write the ADR, add the index row, set ADR-0021's status line to
    "amended by ADR-NNNN" if scripting is accepted.
 5. Re-read 1012–1024 and change any step the ADR contradicts.
@@ -125,8 +134,10 @@ the Workshop's details (1024); the mod policy (0054).
 
 - [ ] The ADR answers every point in step 2, with options turned down and
       why.
-- [ ] The scripting choice's licence is quoted from its source and passes
-      ADR-0013; its size cost on native and WASM is measured, not guessed.
+- [ ] The scripting choice is engine#2101's (or its default, said so);
+      its licence passes ADR-0013, and its size cost on native and WASM
+      is the measured one from engine#2101's ADR, or measured here if
+      that isn't done.
 - [ ] The ADR index lists it; ADR-0021's status line is updated if needed.
 - [ ] 1012–1024 agree with the ADR; `cargo xtask ticket-lint` passes.
 

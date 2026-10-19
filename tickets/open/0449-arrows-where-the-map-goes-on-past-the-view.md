@@ -6,7 +6,7 @@ milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
+blocked_by: ["1118", "1050", "engine#2304"]
 nick_input: decision
 completed:
 ---
@@ -44,6 +44,18 @@ Rules this must follow:
   battle map, so they go in the map scene and every map skin paints them.
   The battle screen never draws them into the buffer.
 - ADR-0018 and `docs/design/look-and-feel.md` for the glyph look.
+
+**The scene and the skins' order are the engine's: engine#2304** (in
+[Shuyi Engine's tickets](https://github.com/Zafnok/shuyi-engine/tree/main/tickets)).
+Since the carve (1115) `MapScene` is the tactics kit's generic scene
+(the game's `MapScene` is it with the game's units), and the glyph and
+sprite skins are the kit's, which call the game's `UnitPainter` between
+their layers. 2304 gives the scene the sides the map goes on past
+(`more: MapEdges`, set by a helper from the view's origin and size
+against the map's), lists it in `to_text`, and adds
+`UnitPainter::paint_over`, painted over the units and under the cursor.
+This ticket is the game's half: Nick's decision, setting the sides on
+the battle screen, and painting the arrows he picks in that layer.
 
 ## Nick input
 
@@ -94,23 +106,20 @@ view).
 
 ## Implementation steps
 
-1. **Scene** (`crates/ui/src/map_view/scene.rs`): add a field to
-   `MapScene` for the sides the map continues past, e.g.
-   `more: MapEdges` with four `bool`s (`left`, `right`, `up`, `down`),
-   all `false` from `MapScene::new`. Add it to `MapScene::to_text` (one
-   line, only when some side is set, so existing text snapshots of maps
-   that fit don't change) and to every place that lists the scene's
+1. **Pin**: move the pin to an engine `main` that has engine#2304
+   (`cargo xtask engine-pin <commit>`, the `engine-change` skill §7).
+   Add the new field to every place in the game that lists the scene's
    fields: `every_field_is_listed` and `features` in
-   `crates/ui/src/map_view/sprite.rs` tests and the glyph skin's
-   equivalent (`crates/ui/src/map_view/glyph.rs` tests).
+   `crates/ui/src/map_view/sprite.rs` tests, the glyph skin's equivalent
+   (`crates/ui/src/map_view/glyph/tests.rs`) and `any_scene`.
 2. **Battle screen** (`BattleScreen::scene`,
-   `crates/ui/src/screens/battle/mod.rs`): set it from the scene's
-   origin and size against the map's width and height: `left` when
-   `origin.x > 0`, `right` when `origin.x + size.0 < map width`, and the
-   same for up and down. A map smaller than the view (negative origin,
-   centred) has none. If Nick answered "only while browsing", clear it in
-   the other modes (`Mode::cursor_free` is the browsing test).
-3. **Skins**: paint the arrows inside the area they are given, on top of
+   `crates/ui/src/screens/battle/mod.rs`): set the scene's `more` with
+   engine#2304's helper from the scene's origin and size against the
+   map's width and height. A map smaller than the view has none. If Nick
+   answered "only while browsing", clear it in the other modes
+   (`Mode::cursor_free` is the browsing test).
+3. **Skins**: paint the arrows in the game's unit painters'
+   `paint_over` (engine#2304), inside the area they are given, on top of
    the tiles and units, under the cursor.
    - Sprite skin (`crates/ui/src/map_view/sprite.rs`): as sprite items
      from an asset file (ADR-0038: never per-pixel rectangles). Add the

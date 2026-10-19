@@ -32,7 +32,7 @@ build, seconds:
 | `screens::battle::path::tests::steered_paths_are_legal_and_follow_the_cursor` | 38 |
 | `it`: `title_cinematic::a_press_in_the_silence_keeps_the_menu_past_the_loop` | 26 |
 | `dialogue::tests::no_embedded_scene_shows_someone_who_is_gone` | 20 |
-| `map_view::sprite::ground::tests::every_tile_of_the_map_has_one_picture_of_its_own_and_none_spills` | 19 |
+| `map_view::sprite::ground::tests::every_tile_of_the_map_has_one_picture_of_its_own_and_none_spills` (now Shuyi Engine's, see *Out*) | 19 |
 | `map_view::sprite::tests::sprite_skin_paints_only_the_area` | 19 |
 | `map_view::sprite::tests::sprite_units_skin_paints_only_the_area` | 19 |
 | `map_view::glyph::tests::glyph_skin_paints_only_the_area` | 19 |
@@ -67,6 +67,9 @@ its 256 cases.
 - Turning on optimisation for the workspace crates in the `dev`/`test`
   profiles: it slows every mutant's build (ADR-0073).
 - The mutation workflow (ticket 0127).
+- `every_tile_of_the_map_has_one_picture_of_its_own_and_none_spills`:
+  it moved to Shuyi Engine with the tactics kit's sprite ground (1115),
+  so it runs in the engine's suite, not this one.
 
 ## Implementation steps
 

@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: sonnet-5
 effort: low
 status: todo
-blocked_by: ["1118", "1050"]
+blocked_by: ["1118", "1050", "engine#2305"]
 nick_input: sign-off
 completed:
 ---
@@ -21,14 +21,20 @@ Chapter 1 playtest round 3 (0804, 2026-10-16):
 > while talking dialogue boxes have their text left aligned. Make it
 > consistent, pref left alignment."
 
-Today (checked 2026-10-16), `paint_lines` in
-`crates/ui/src/screens/dialogue/glyph.rs:252-270` centres a narration
-box's lines (`TEXT_BOX.x + (TEXT_BOX.w - len) / 2`, lines 263–266) and a
-single line vertically (line 261), in `TextDim`; speech starts at
-`TEXT_X = 4` (line 267). The caption on the top row (`paint_caption`,
-lines 95–100) is a different thing (a place line, `@caption`) and stays
-centred unless Nick says otherwise. The title cinematic's talk shots use
-the same painter (`crates/ui/src/cinematic/talk.rs:67-83`).
+Since the carve (1112) the text box's painter is the engine's: its glyph
+skin's `paint_lines` centres a narration box's lines across the box and
+a single line vertically, in `TextDim`; speech starts at the box
+place's `text_x` (`TEXT_X = 4` in the game's `BOX_PLACE`,
+`crates/ui/src/screens/dialogue/glyph.rs`). The caption on the top row
+(`paint_caption` there) is a different thing (a place line, `@caption`)
+and stays centred unless Nick says otherwise. The title cinematic's talk
+shots use the same painter (`crates/ui/src/cinematic/talk.rs`).
+
+**The engine makes it a choice: engine#2305** (in
+[Shuyi Engine's tickets](https://github.com/Zafnok/shuyi-engine/tree/main/tickets)):
+the text box's `BoxPlace` gains how narration is aligned, `Centred` as
+today or `Left` like speech. This ticket is the game's half: picking
+`Left` everywhere the game places a text box.
 
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
@@ -40,14 +46,19 @@ so `blocked_by` has 1118 and 1050.
 ## Scope
 
 **In:**
+- Move the pin to an engine `main` that has engine#2305 (`cargo xtask
+  engine-pin <commit>`, the `engine-change` skill §7).
 - Narration lines start at `TEXT_X` like speech, from the box's first
   text row (no vertical centring), keeping their `TextDim` colour
-  (*Claude's starting rule*: the colour still tells narration apart).
-- The same in the title cinematic's talk shots (same painter).
+  (*Claude's starting rule*: the colour still tells narration apart):
+  `Left` in the game's `BOX_PLACE`.
+- The same in the title cinematic's talk shots (they paint with the
+  dialogue screen's skin, so `BOX_PLACE` covers them: check it).
 - The Playdate dialogue screen (1043) if it centres narration: same rule.
 - `look-and-feel.md` (the dialogue screen's layout) updated.
 
-**Out (do not do):** the top-row caption; narration's colour.
+**Out (do not do):** the engine's half (engine#2305); the top-row caption;
+narration's colour.
 
 ## Acceptance criteria
 

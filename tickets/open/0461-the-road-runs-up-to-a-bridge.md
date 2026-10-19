@@ -25,9 +25,11 @@ Cause (read 2026-10-16): the road is a corner layer, `"road":
 Corners(of: ["road", "well", "rack"], ...)` in `assets-src/tilesets/
 tiny_tales.ron:76-79` (generated into the private repository's
 `game/tilesets/tiny_tales.ron`). "bridge" isn't in that set, so under the
-corner rule (`crates/ui/src/map_view/corners.rs`, ADR-0052: one picture
-per four-tile corner) the road draws its edge at the seam with a bridge
-tile and narrows or ends there. The bridge is a `Tiles` layer
+corner rule (ADR-0052: one picture per four-tile corner; the tactics
+kit's in Shuyi Engine since 1115, re-exported as `map_view::corners` in
+`crates/ui/src/map_view.rs`) the road draws its edge at the seam with a
+bridge tile and narrows or ends there. The fix is the game's tileset
+data; the rule itself doesn't change. The bridge is a `Tiles` layer
 (`tiny_tales.ron:109-120`).
 
 The bought files never go in this repository (ADR-0040); the source
@@ -61,8 +63,9 @@ after.
 
 - [ ] The road keeps its width up to each Chapter 1 bridge (screenshot in
       the PR, from the running game).
-- [ ] A unit test of the corner picking: a road tile next to a bridge
-      tile picks the "inside" corner, not an edge.
+- [ ] A unit test of the corner picking with the game's tileset (through
+      `map_view::corners`): a road tile next to a bridge tile picks the
+      "inside" corner, not an edge.
 - [ ] `cargo test -p trpg-content --features private-assets --test it private_assets::`
       passes.
 - [ ] All gates in the `run-gates` skill pass.

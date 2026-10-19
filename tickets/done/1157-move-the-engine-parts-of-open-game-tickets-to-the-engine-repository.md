@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: opus-5.5
 effort: xhigh
-status: todo
+status: done
 blocked_by: ["1131", "1152"]
 nick_input: none
-completed:
+completed: 2026-10-19
 ---
 
 # 1157 — Move the engine parts of open game tickets to the engine repository
@@ -172,24 +172,24 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask ticket-lint` passes, and `cargo xtask ticket-lint
+- [x] `cargo xtask ticket-lint` passes, and `cargo xtask ticket-lint
       --check-engine` finds every `engine#NNNN` id.
-- [ ] `grep -rnE "\bengine/crates|shuyi[-_](assets|core|ui|app|cli)" tickets/open`
+- [x] `grep -rnE "\bengine/crates|shuyi[-_](assets|core|ui|app|cli)" tickets/open`
       finds nothing except in 1131, 1152 and 1153, and no open game
       ticket names a `crates/...` path that does not exist in this
       repository.
-- [ ] Every split pair links both ways: the game ticket has
+- [x] Every split pair links both ways: the game ticket has
       `engine#NNNN` in `blocked_by`, and the engine ticket names
       `game#NNNN`.
-- [ ] Every engine ticket written here names no game concept (1151's
+- [x] Every engine ticket written here names no game concept (1151's
       leak test).
-- [ ] `cargo shuyi frame-png` (or the command `CLAUDE.md` now documents)
+- [x] `cargo shuyi frame-png` (or the command `CLAUDE.md` now documents)
       runs, and each `cargo xtask` tool command listed in Scope runs.
-- [ ] The engine repository's PR with the new tickets is open or
+- [x] The engine repository's PR with the new tickets is open or
       merged, and linked from this PR.
-- [ ] The Completion notes list each game ticket moved or split, with
+- [x] The Completion notes list each game ticket moved or split, with
       its engine id.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -198,4 +198,87 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Engine PR:** [Zafnok/shuyi-engine#11](https://github.com/Zafnok/shuyi-engine/pull/11)
+(branch `game-1157-tickets-from-open-game-tickets`, tickets and the
+roadmap only; merge with a merge commit). Engine checkout by `cargo
+xtask engine` at the pin `8ce963a`, then switched to the engine's
+`main` (`a1edc79`, two PRs past the pin) for the branch; `cargo xtask
+engine --off` before the tool runs and the gates.
+
+**How the list was found.** The three searches of the Scope, plus two
+more, because a game path that still exists can be a re-export of code
+that moved: every backticked identifier in an open ticket that is
+defined only in the engine, and paths written without `crates/`. The
+starting list was right about the paths; reading the tickets added
+0237, 0449, 0740 and 1012, and showed that 0840, 0461 and 1044 have no
+engine work left.
+
+**Split** (the game ticket keeps the game's half, `engine#NNNN` in its
+`blocked_by` and a step that moves the pin; the engine ticket names
+`game#NNNN`):
+
+| Game ticket | Engine ticket |
+| ----------- | ------------- |
+| 0236 Wide glyphs | engine#2301 wide glyphs: two cells in the glyph buffer, from a wide font in the atlas |
+| 0237 Japanese line breaking | engine#2302 line breaking for text without spaces; `lang-status` overflow (`max_cells`) |
+| 0239 Chinese glyphs | engine#2303 wide glyph sets per language, widths by language, Chinese line breaking |
+| 0449 Map-edge arrows | engine#2304 `MapScene` says where the map goes on past the view; `UnitPainter::paint_over` |
+| 0740 Narration left-aligned | engine#2305 the text box paints narration from the left when the game asks |
+| 1012 Mod layers in the bundle | engine#2207 bundle layers from outside the binary (run time, a folder on disk) |
+| 1014 Mods folder | engine#2207 (its `read_folder`) |
+| 1017 Scripting | engine#2101 the `shuyi-script` module and an engine ADR choosing the language (engine#2102: its example, engine ADR-0009 §4) |
+
+**Rewritten, no engine ticket of its own:**
+- **1011** (mods ADR): its engine parts are engine#2207, engine#2101
+  and engine#1129 (the existing tool contract, for the modder's tool).
+  It names them and takes their choices, or their defaults if they
+  aren't done ("either order works"), so its `blocked_by` is unchanged.
+- **1044**, **0461**: the engine paths were references only (the cinema
+  framing already reads the console size; the road's fix is the game's
+  tileset data). The paths now name the game's re-exports.
+- **0453**, **0427**, **0123**, **0128**: stale paths to code that moved
+  (the menu widget and `MenuSound`, the bundle's reads, the credits
+  check, one slow test now in the engine's suite). 0427's cue is the
+  game's `AUDIO.denied_cue`; a change to the menu widget, if 0031's
+  answer needs one, goes through the `engine-change` skill.
+
+**Archived:** **0840** to `done/` with no change: 0838 (#291) already
+grows the Options panel to fit its rows, now in the engine's options
+skin. Its notes say what checks it and which test wasn't added.
+
+**Moved whole:** none, so `tickets/README.md` gains no "Moved to the
+engine" line, and no `blocked_by` pointed at a moved ticket.
+
+**Engine tickets changed** (linked to game tickets, so in scope): 1124
+(parked) loses its disk layers to 2207 and waits for it; 1135 (parked)
+waits for 2101 instead of `game#1017`. The engine's `docs/ROADMAP.md`
+lists the new tickets under "Requests from the game", 2304 and 2305
+first (they hold up Chapter 1 playtest fixes).
+
+**`docs/ROADMAP.md`** names the engine ticket beside 0236, 0237, 0239,
+0449, 0740, 1011, 1012 and 1017. 0461 and 1044 have none.
+
+**Tool commands**, run once against the pinned engine (patch off):
+- `cargo xtask check-keys`: OK. `cargo xtask check-text`: 0 literals.
+- `cargo xtask lang-status test`: runs (lists the test pack's orphaned
+  entry, as it should).
+- `cargo xtask font-atlas` on the two BDFs into a scratch folder: the
+  same 551 glyphs; `atlas.ron` and `atlas_1bit.bin` identical to the
+  committed ones, `atlas.png` the same pixels (only the PNG compression
+  differs).
+- `cargo xtask frame-png` (Options from the title) and `cargo shuyi
+  frame-png` (the title): both write their frame.
+- `cargo xtask web`: builds `dist/web`.
+- `cargo xtask private-assets`: checks the private repository out.
+
+**`cargo shuyi`:** 1131 already made the alias `xtask shuyi`, so it
+works and needed no fix. `CLAUDE.md`'s `shuyi.ron` row now says what it
+runs.
+
+**`--check-engine`:** passes with the local checkout on the engine
+branch. Until the engine PR merges, the engine's `main` lacks
+2101–2305, so the check fails without the checkout; CI runs
+`ticket-lint` without it.
+
+Engine friction: none: no Rust code. Nothing for Nick to play, and no
+gameplay rule decided.
