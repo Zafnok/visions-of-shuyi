@@ -49,6 +49,12 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
    view (plain data) and a skin paints it, as the engine's
    `screens/options.rs` does;
    a new screen never decides its look in `draw`.
+9. **Code far bigger than the job is a signal** (ADR-0092): write how
+   many lines a change should take before coding, measure it with
+   `cargo xtask code-lines`, and at 3× or more run the `engine-friction`
+   skill (engine feature, engine ergonomics, game-side structure, or
+   accept); the engine never names a game concept, and the game never
+   waits on the engine.
 
 ## Map of the repo
 
@@ -60,7 +66,7 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 | `LICENSE`, `THIRD_PARTY_ASSETS.md` | Proprietary source-available license; registry of shipped third-party assets |
 | `docs/design/` | Nick's game-design decisions (filled by `00xx` tickets) |
 | `docs/story/` | Story beats, bible, characters, outline, ledger (ADR-0011) |
-| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix` |
+| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix`, `engine-friction` |
 | `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `xtask` (the repository's own tooling, and the game's tool program for `cargo shuyi`) |
 | `shuyi.ron` | The project file of Shuyi's tools (`cargo shuyi <command>`: `frame-png`, `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets`; ADR-0089): the paths each check scans, the web build, the private repository |
 | `crates/playdate` | `trpg-playdate`, the Playdate front end (ADR-0070): a second platform crate beside `app`, a `staticlib` linked with `shim/shim.c` by `cargo xtask playdate` into `target/playdate/VisionsOfShuyi.pdx`. Needs the Playdate SDK and MSYS2's ARM compiler (its `README.md`) |

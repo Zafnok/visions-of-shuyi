@@ -29,6 +29,10 @@ without asking questions.
    - **Scope — in / out:** be explicit about what NOT to do.
    - **Implementation steps:** numbered, concrete, naming files, types and
      functions. Assume the reader knows Rust but not this codebase.
+     A ticket that adds a screen or a scene states its **expected size**
+     there: production lines, and the comparable code it is judged by
+     ("about 80 lines: one list view and its skin"). The session's
+     engine-friction estimate starts from it (ADR-0092).
    - **Acceptance criteria:** checkboxes, each objectively verifiable (a test
      name, a command's output, a visible behaviour).
    - **Tests required:** which layers from ADR-0007.

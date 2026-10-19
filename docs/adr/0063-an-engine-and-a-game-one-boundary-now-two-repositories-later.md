@@ -9,7 +9,8 @@
   public), 0060 (free movement in the game), 1102 (the boundary gate),
   1103–1117 (the carve), 1118 (the first example), 1131 (the code moves
   to the engine's repository); the engine-only tickets moved to Shuyi
-  Engine with their numbers (1119–1129, 1132–1135, 1140–1150)
+  Engine with their numbers (1119–1129, 1132–1135, 1140–1150); 1151
+  (engine friction: when game code says the engine needs work, ADR-0092)
 - **Extends:** ADR-0004 (crate layering), ADR-0013 (licensing),
   ADR-0038 and ADR-0054 (a view, a skin)
 
