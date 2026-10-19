@@ -267,6 +267,9 @@
     "key_bindings.action.rewind": "Rewind",
     "key_bindings.action.menu": "Map menu",
     "key_bindings.action.zoom_map": "Zoom map",
+    // The crank's two (only the Playdate has one, ticket 1045).
+    "key_bindings.action.rewind_back": "Rewind back",
+    "key_bindings.action.rewind_forward": "Rewind forward",
     "key_bindings.action.dialogue_log": "Open the log",
     "key_bindings.restore_defaults": "Restore defaults",
     "key_bindings.press_a_key": "Press a key…",

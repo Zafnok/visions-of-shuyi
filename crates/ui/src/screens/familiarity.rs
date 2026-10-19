@@ -8,14 +8,14 @@
 //! shows and does, and says it as a [`FamiliarityView`]
 //! ([`FamiliarityScreen::view`]); the screen has the mode screen's shape (a
 //! heading, a menu and a line explaining each choice), so the mode screen's
-//! skin, [`glyph::paint`], draws it.
+//! skins ([`SKINS`]) draw it.
 
 use crate::prelude::*;
 use trpg_core::TutorialLevel;
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::screens::mode_select::glyph;
+use crate::screens::mode_select::SKINS;
 use crate::screens::mode_select::view::{ModeLineView, ModeSelectView};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
@@ -82,7 +82,7 @@ impl FamiliarityScreen {
     }
 
     /// The screen as it is now, as plain data for a skin to paint
-    /// ([`glyph::paint`]): the heading, the menu, the line explaining each
+    /// ([`SKINS`]): the heading, the menu, the line explaining each
     /// answer (the focused answer's is the one to read) and the help line.
     pub fn view(&self, ctx: &Ctx) -> FamiliarityView {
         let focus = self.menu.focus();
@@ -122,7 +122,7 @@ impl Screen<Shuyi> for FamiliarityScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        glyph::paint(ctx, &self.view(ctx), buf);
+        SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {

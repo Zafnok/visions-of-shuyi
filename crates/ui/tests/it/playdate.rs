@@ -5,6 +5,7 @@
 //! lead, not how it looks; and that the one-bit renderer draws those
 //! frames as 1032's did, whole or only what changed (ticket 1055).
 
+use insta::assert_snapshot;
 use trpg_content::FontAtlasDef;
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_core::lead::DEFAULT_NAME;
@@ -12,7 +13,9 @@ use trpg_core::{Faction, Phase};
 use trpg_ui::flow::{FlowScreen, Stage};
 use trpg_ui::game::system_menu::SystemMenuEntry;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{Action, Button, ButtonChord, Device, PadKind, RIGHT_HANDED};
+use trpg_ui::input::{
+    Action, Button, ButtonChord, Device, PLAYDATE_KEY_ROWS, PadKind, RIGHT_HANDED,
+};
 use trpg_ui::onebit::{self, FRAME_BYTES, Frame};
 use trpg_ui::save::SUSPEND_KEY;
 use trpg_ui::screen::Keyboard;
@@ -20,9 +23,12 @@ use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::map_menu::MapEntry;
 use trpg_ui::screens::battle::mode::Mode;
 use trpg_ui::screens::battle::rewind::RewindScreen;
+use trpg_ui::screens::key_bindings::view::SlotView;
+use trpg_ui::screens::{KeyBindingsScreen, OptionsScreen};
 use trpg_ui::widgets::help::key_name;
 use trpg_ui::{
-    ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, ShuyiCtx, Storage, UiColor,
+    ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, RawInputEvent, ShuyiCtx,
+    Storage, UiColor,
 };
 
 /// The context as `crates/playdate` sets it up (the tips and lessons
@@ -103,6 +109,155 @@ fn playdate_with_inks(ctx: &mut Ctx) {
         panic!("the Playdate palette does not load");
     };
     ctx.palette = palette;
+}
+
+/// The context as `crates/playdate` sets it up, with its inks and its
+/// screens' skins (ticket 1045).
+fn playdate_skins(ctx: &mut Ctx) {
+    playdate_with_inks(ctx);
+    ctx.use_playdate_skins();
+}
+
+/// The top screen's view, of a screen of type `S`.
+fn view_of<S: 'static, V>(h: &Harness, view: impl Fn(&S, &Ctx) -> V) -> V {
+    let Some(screen) = h.screen::<S>() else {
+        panic!("not on that screen: {:?}", h.screens());
+    };
+    view(screen, h.game().ctx())
+}
+
+/// Ticket 1045: New Game to the first scene on the Playdate's skins: the
+/// mode, the familiarity, the lead (the name spelled on the letter grid),
+/// each screen as the Playdate shows it, then Chapter 1's opening scene.
+#[test]
+fn new_game_to_the_first_scene_on_the_playdates_skins() {
+    let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
+    h.use_pad(PadKind::Playdate);
+    let mut one_bit = OneBit::new(&h);
+    // A ends the title's wait, then picks New Game.
+    h.pad("South South");
+    let Some(Stage::Mode(mode)) = h.flow().map(FlowScreen::stage) else {
+        panic!("no game mode screen: {:?}", h.screens());
+    };
+    let view = mode.view(h.game().ctx());
+    assert_eq!(
+        view.menu.focused().map(|i| i.label.as_str()),
+        Some("Classic")
+    );
+    assert_snapshot!("playdate_mode_select", h.snapshot());
+    one_bit.check(&h);
+    h.pad("South");
+    let Some(Stage::Familiarity(_, familiarity)) = h.flow().map(FlowScreen::stage) else {
+        panic!("no familiarity screen: {:?}", h.screens());
+    };
+    assert_eq!(familiarity.view(h.game().ctx()).menu.items.len(), 3);
+    assert_snapshot!("playdate_familiarity", h.snapshot());
+    one_bit.check(&h);
+    h.pad("South");
+    assert_eq!(h.top_screen(), "lead_select");
+    assert_snapshot!("playdate_lead_select", h.snapshot());
+    one_bit.check(&h);
+    // A on the name opens the grid; B deletes a letter, A types the first.
+    h.pad("DpadDown South East South");
+    let Some(Stage::Lead(_, _, lead)) = h.flow().map(FlowScreen::stage) else {
+        panic!("no lead screen: {:?}", h.screens());
+    };
+    let view = lead.view(h.game().ctx());
+    let mut name = DEFAULT_NAME.to_owned();
+    name.pop();
+    name.push('A');
+    assert_eq!(view.grid.map(|g| g.spelled), Some(name.clone()));
+    assert_snapshot!("playdate_letter_grid", h.snapshot());
+    one_bit.check(&h);
+    // Done (up, then left), down to Start, A: the opening scene.
+    h.pad("DpadUp DpadLeft South DpadDown South");
+    for _ in 0..40 {
+        if h.top_screen() == "dialogue" {
+            break;
+        }
+        h.wait(0.25);
+    }
+    assert_eq!(h.top_screen(), "dialogue");
+    assert_eq!(h.game().ctx().game.lead.name, name);
+}
+
+/// Ticket 1045: Options from the title and from the system menu, as the
+/// Playdate shows it (no layout, window, colour theme or map look); its
+/// Key bindings has the controller side alone, a slot takes a button chord
+/// (B + down) and Restore defaults puts the buttons back.
+#[test]
+fn options_and_a_chord_rebound_and_restored_on_the_playdate() {
+    use trpg_ui::screens::options::Row;
+    let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
+    h.use_pad(PadKind::Playdate);
+    // The title's Options: third in its menu.
+    h.pad("South DpadDown DpadDown South");
+    assert_eq!(h.screens(), ["title", "options"]);
+    let rows = |h: &Harness| -> Vec<&'static str> {
+        let view = view_of(h, |s: &OptionsScreen, c| s.view(c));
+        view.rows.iter().map(|r| r.key).collect()
+    };
+    let shown = rows(&h);
+    for hidden in [Row::Layout, Row::Fullscreen, Row::Theme, Row::MapLook] {
+        assert!(!shown.contains(&hidden.key()), "{hidden:?} shown");
+    }
+    assert!(shown.contains(&Row::KeyBindings.key()));
+    assert_snapshot!("playdate_options", h.snapshot());
+    // B leaves; the system menu's Options opens the same screen.
+    h.pad("East");
+    h.system_menu(SystemMenuEntry::Options);
+    assert_eq!(h.screens(), ["title", "options"]);
+    assert_eq!(rows(&h), shown);
+    // Key bindings: up from the first row, past Restore defaults and Reset
+    // tips.
+    h.pad("DpadUp DpadUp DpadUp South");
+    let kb = |h: &Harness| {
+        view_of(h, |s: &KeyBindingsScreen, c| {
+            (s.is_controller_only(), s.view(c))
+        })
+    };
+    let (controller_only, view) = kb(&h);
+    assert!(controller_only && view.switch.is_none());
+    assert!(view.row(Action::RewindBack).is_some());
+    assert_snapshot!("playdate_key_bindings", h.snapshot());
+    one_bit_frame(&h);
+    // Danger zone's first slot: Change, then B and down together.
+    let rows_down = PLAYDATE_KEY_ROWS
+        .iter()
+        .position(|r| r.0 == Action::DangerZone);
+    for _ in 0..rows_down.unwrap_or(0) {
+        h.pad("DpadDown");
+    }
+    h.pad("South South");
+    assert!(view_of(&h, |s: &KeyBindingsScreen, _| s.is_capturing()));
+    // Hold B, press down, let go of down, then of B (B is Cancel when let
+    // go: not here, after the capture).
+    let frame = |h: &mut Harness, event: RawInputEvent| {
+        h.frame(&[event], 1.0 / 30.0);
+    };
+    let pad = PadKind::Playdate;
+    frame(&mut h, RawInputEvent::PadDown(Button::East, pad));
+    frame(&mut h, RawInputEvent::PadDown(Button::DpadDown, pad));
+    frame(&mut h, RawInputEvent::PadUp(Button::DpadDown));
+    frame(&mut h, RawInputEvent::PadUp(Button::East));
+    assert_eq!(h.top_screen(), "key_bindings");
+    let (_, view) = kb(&h);
+    let chord = |h: &Harness| h.game().ctx().pad_bindings().slots(Action::DangerZone)[0];
+    let named = view.row(Action::DangerZone).map(|r| r.slots[0].clone());
+    assert_eq!(named, Some(SlotView::Bound("B+↓".to_owned())));
+    // B leaves Key bindings: saved.
+    h.pad("East");
+    assert_eq!(h.top_screen(), "options");
+    assert_eq!(chord(&h), ButtonChord::pair(Button::East, Button::DpadDown));
+    // Again, and Restore defaults (up from the first row): A, then A.
+    h.pad("South DpadUp South South East");
+    assert_eq!(h.top_screen(), "options");
+    assert_eq!(chord(&h), None);
+}
+
+/// Checks the frame on screen draws as 1032's reference renderer does.
+fn one_bit_frame(h: &Harness) {
+    OneBit::new(h).check(h);
 }
 
 /// Draws each frame it is shown as the Playdate's front end does: whole

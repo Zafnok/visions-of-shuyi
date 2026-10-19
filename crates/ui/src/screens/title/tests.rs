@@ -605,11 +605,15 @@ fn the_logic_modules_name_no_cells_or_colours() {
     }
     for (file, source) in sources {
         // Their `draw` is one call to the skin (a file with two screens,
-        // one for each; the save screens' skin has a painter for each).
+        // one for each; the save screens' skin has a painter for each), or
+        // to the skin of the skin set (`SKINS`, ticket 1045).
         let draws = source.matches("fn draw(").count();
         let paints = source
             .lines()
-            .filter(|l| l.contains("glyph::paint") && l.contains("(ctx, &self.view(ctx), buf);"))
+            .filter(|l| {
+                let skin = l.contains("glyph::paint") || l.contains("SKINS.paint");
+                skin && l.contains("(ctx, &self.view(ctx), buf);")
+            })
             .count();
         assert!(
             draws > 0 && paints == draws,

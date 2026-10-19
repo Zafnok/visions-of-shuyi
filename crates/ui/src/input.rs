@@ -124,9 +124,47 @@ pub const KEY_ROWS: [KeyRow; 18] = [
     ),
 ];
 
-/// The rebindable actions the Key bindings screen doesn't list: only the
-/// Playdate's crank binds them (ticket 1035), which no PC device has.
+/// The rebindable actions the PC's Key bindings screen doesn't list: only
+/// the Playdate's crank binds them (ticket 1035), which no PC device has.
+/// The Playdate's lists them ([`PLAYDATE_KEY_ROWS`]).
 pub const CRANK_ACTIONS: [Action; 2] = [Action::RewindBack, Action::RewindForward];
+
+/// The rebindable action the Playdate's Key bindings screen doesn't list:
+/// its map has one skin, which doesn't zoom (ticket 1045).
+pub const NOT_ON_THE_PLAYDATE: [Action; 1] = [Action::ZoomMap];
+
+/// The rows of the Key bindings screen on the Playdate (no keyboard,
+/// ticket 1045): [`KEY_ROWS`] with the crank's two after Rewind, less
+/// [`NOT_ON_THE_PLAYDATE`].
+pub const PLAYDATE_KEY_ROWS: [KeyRow; 19] = [
+    KEY_ROWS[0],
+    KEY_ROWS[1],
+    KEY_ROWS[2],
+    KEY_ROWS[3],
+    KEY_ROWS[4],
+    KEY_ROWS[5],
+    KEY_ROWS[6],
+    KEY_ROWS[7],
+    KEY_ROWS[8],
+    KEY_ROWS[9],
+    KEY_ROWS[10],
+    KEY_ROWS[11],
+    KEY_ROWS[12],
+    KEY_ROWS[13],
+    KEY_ROWS[14],
+    (
+        Action::RewindBack,
+        "key_bindings.action.rewind_back",
+        Optional,
+    ),
+    (
+        Action::RewindForward,
+        "key_bindings.action.rewind_forward",
+        Optional,
+    ),
+    KEY_ROWS[16],
+    KEY_ROWS[17],
+];
 
 /// Text key of the heading over the actions of the dialogue log's
 /// [`KeyGroup`], which may share keys with the rest.

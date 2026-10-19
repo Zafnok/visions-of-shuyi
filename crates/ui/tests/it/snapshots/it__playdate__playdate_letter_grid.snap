@@ -1,0 +1,41 @@
+---
+source: crates/ui/tests/it/playdate.rs
+expression: h.snapshot()
+---
+                 Choose your lead                 
+     ╔════════════════╗    ┌────────────────┐     
+     ║                ║    │                │     
+  ╔═ First name ═══════════════════════════════╗  
+  ║                  EllerA_                   ║  
+  ║                                            ║  
+  ║   A  B  C  D  E  F  G  H  I  J  K  L  M    ║  
+  ║   N  O  P  Q  R  S  T  U  V  W  X  Y  Z    ║  
+  ║   a  b  c  d  e  f  g  h  i  j  k  l  m    ║  
+  ║   n  o  p  q  r  s  t  u  v  w  x  y  z    ║  
+  ║         -  '  Blank  Delete  Done          ║  
+  ╚════════════════════════════════════════════╝  
+               Name   EllerA Veyne                
+                    [ Start ]                     
+         D-pad choose · A type · B delete         
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaabbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:white bg:black
+b = fg:black bg:white
+--- overlays ---
+under sprite 48,32 128x128  portraits/lead_m/neutral.png 0,0 32x32 clip=48,32 128x16
+under sprite 224,32 128x128  portraits/lead_f/neutral.png 0,0 32x32 opacity=140 clip=224,32 128x16

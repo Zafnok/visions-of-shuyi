@@ -76,6 +76,47 @@ fn game_mode_and_tutorial_show_only_with_a_campaign() {
     assert_eq!(shown_rows(&c), Row::ALL);
 }
 
+/// Ticket 1045: with no keyboard there is no layout to pick; on the
+/// Playdate's skins the window, the colour theme and the map's look and
+/// zoom go too, even with the game's pictures. The PC keeps every row.
+#[test]
+fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
+    let mut c = ctx();
+    c.game.campaign_mode = Some(GameMode::Casual);
+    c.game.campaign_tutorial = Some(TutorialLevel::Full);
+    let mut tileset = c.game.content.tilesets["test_units"].clone();
+    tileset.id = crate::map_view::GAME_TILESET.to_owned();
+    c.game.content.tilesets.insert(tileset.id.clone(), tileset);
+    assert_eq!(shown_rows(&c), Row::ALL);
+    c.keyboard = Keyboard::Absent;
+    let no_layout: Vec<Row> = Row::ALL.into_iter().filter(|&r| r != Row::Layout).collect();
+    assert_eq!(shown_rows(&c), no_layout);
+    c.use_playdate_skins();
+    let playdate = [
+        Row::TextSpeed,
+        Row::AnimSpeed,
+        Row::CombatAnimations,
+        Row::EnemyPhaseSpeed,
+        Row::AutoEnd,
+        Row::Cursor,
+        Row::MusicVolume,
+        Row::SoundVolume,
+        Row::KeyBindings,
+        Row::GameMode,
+        Row::Tutorial,
+        Row::ResetTips,
+        Row::RestoreDefaults,
+    ];
+    assert_eq!(shown_rows(&c), playdate);
+    let view = screen().view(&c);
+    let keys: Vec<_> = view.rows.iter().map(|r| r.key).collect();
+    assert_eq!(keys, playdate.map(Row::key));
+    // The Playdate's skins with a keyboard (a test's): its layout shows.
+    c.keyboard = Keyboard::Present;
+    assert!(shown_rows(&c).contains(&Row::Layout));
+    assert!(!shown_rows(&c).contains(&Row::Theme));
+}
+
 /// Ticket 0444: while pictures paint the whole map the cursor never
 /// glows, so the row doesn't offer `Tile glow`; a player who had picked it
 /// is shown `Corners` and steps on from there. On glyphs it is back.

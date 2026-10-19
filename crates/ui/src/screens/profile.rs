@@ -15,9 +15,11 @@
 //!
 //! **The look is a skin** (ADR-0054): this module says what the screen
 //! shows as a [`ProfileView`] ([`ProfileScreen::view`]); [`glyph::paint`]
-//! draws it. Tests of what happened read the view or the profiles.
+//! draws it, or on the Playdate [`playdate::paint`] ([`SKINS`], ADR-0083).
+//! Tests of what happened read the view or the profiles.
 
 pub mod glyph;
+pub mod playdate;
 pub mod view;
 
 use crate::prelude::*;
@@ -29,7 +31,14 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, text_keys_help};
 use crate::profiles::{MAX_NAME_CHARS, MAX_PROFILES, ProfileError, ProfileId};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screens::Skins;
 use crate::widgets::name_entry::{NameBox, NameEntry, NameEvent, NameRules, finished};
+
+/// The screen's skins: the PC's and the Playdate's.
+pub const SKINS: Skins<ProfileView> = Skins {
+    glyph: glyph::paint,
+    playdate: playdate::paint,
+};
 
 /// Text key ([`Ctx::text`]) of the screen title.
 pub const TITLE: &str = "profile.title";
@@ -703,7 +712,7 @@ impl Screen<Shuyi> for ProfileScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        glyph::paint(ctx, &self.view(ctx), buf);
+        SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {

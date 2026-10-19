@@ -77,6 +77,10 @@
     "map_threat_edge": "white",
     "map_hp_lost": "grey",
 
+    // The screens' own (1045, crates/ui/src/screens/playdate.rs): what the
+    // PC dims because it can't be chosen is grey dots in a window.
+    "window_text_off": "grey",
+
     // Terrain: black glyphs on the white ground.
     "grass": "black",
     "grass_bg": "white",

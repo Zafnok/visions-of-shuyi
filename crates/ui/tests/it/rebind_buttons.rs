@@ -264,7 +264,7 @@ fn switching_layout_leaves_the_buttons_unchanged() {
     // The screen shows the same buttons under the other layout.
     assert_eq!(h.ctx_mut().choose_layout(LEFT_HANDED), Ok(()));
     reopen_from_options(&mut h);
-    assert_eq!(view(&h).switch.keyboard, "Keyboard · Left-handed");
+    assert_eq!(view(&h).switch.unwrap().keyboard, "Keyboard · Left-handed");
     assert_eq!(shown(&h, Action::Info), ["Y", "RS", "-"]);
 }
 

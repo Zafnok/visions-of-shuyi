@@ -641,6 +641,8 @@
     (key: "key_bindings.action.rewind", source: "Rewind", text: "REWIND"),
     (key: "key_bindings.action.menu", source: "Map menu", text: "MAP MENU"),
     (key: "key_bindings.action.zoom_map", source: "Zoom map", text: "ZOOM MAP"),
+    (key: "key_bindings.action.rewind_back", source: "Rewind back", text: "REWIND BACK"),
+    (key: "key_bindings.action.rewind_forward", source: "Rewind forward", text: "REWIND FORWARD"),
     (key: "key_bindings.action.dialogue_log", source: "Open the log", text: "OPEN THE LOG"),
     (key: "key_bindings.restore_defaults", source: "Restore defaults", text: "RESTORE DEFAULTS"),
     // `PRESS A KEY` would name the A key to `check-keys`: the article stays
