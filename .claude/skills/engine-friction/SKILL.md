@@ -118,10 +118,8 @@ Never wait. For each outcome 1–3 finding, exactly one of:
   change sharply. Do it now, in this session, then finish the game
   ticket on it.
   - The engine has its own repository (since ticket 1131): the engine
-    change is an engine PR first (made in the local checkout, `cargo
-    xtask engine`), merged with a merge commit, then this ticket's PR
-    moves the pin (`cargo xtask engine-pin`; `docs/engine/README.md`).
-    1152 turns this into the `engine-change` skill.
+    change is an engine PR first, then this ticket's PR moves the pin.
+    Follow the [`engine-change`](../engine-change/SKILL.md) skill.
   - A game-side structure (outcome 3) that is small goes in this PR.
 - **Ship and follow up**: otherwise. The game ticket lands with the
   workaround, each workaround marked with a comment

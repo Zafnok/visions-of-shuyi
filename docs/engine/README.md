@@ -18,9 +18,6 @@ code now: the game depends on the engine's crates by a git revision.
   `Cargo.lock`. `cargo xtask engine-pin <commit>` moves all three (and
   with no commit, pins the commit the local checkout is at, once it is
   pushed). CI's `cargo xtask engine-pin --check` fails when they disagree.
-- **A game ticket that needs an engine change** is an engine PR first,
-  merged into the engine's `main` with a merge commit, then a game PR that
-  moves the pin (ADR-0063 §8).
 - **The local checkout.** Over the 30 days before the move, 24 of the 83
   game PRs merged since `engine/` existed changed it (29%; 24 of all 332
   merged PRs in those 30 days), so the engine's API is still moving and
@@ -42,6 +39,15 @@ code now: the game depends on the engine's crates by a git revision.
 - **The boundary** is the repository wall now: the engine can't name a
   game crate it can't see. `check-engine-boundary` (1102) retired with the
   move.
+
+## Changing the engine from the game
+
+A game ticket that needs the engine changed follows the
+[`engine-change`](../../.claude/skills/engine-change/SKILL.md) skill: first check it is
+really engine work (ADR-0063 §5 and the leak test), then either an engine PR
+now (merged with a merge commit) and a game PR that moves the pin, or an
+engine ticket, a marked workaround and a game follow-up `blocked_by:
+["engine#NNNN"]` (ticket 1152). Engine work never makes the game wait.
 
 | Here | What |
 | ---- | ---- |

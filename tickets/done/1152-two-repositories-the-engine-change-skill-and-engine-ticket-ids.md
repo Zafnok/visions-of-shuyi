@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["1131", "1151"]
 nick_input: none
-completed:
+completed: 2026-10-19
 ---
 
 # 1152 — Two repositories: the engine-change skill
@@ -133,17 +133,17 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask ticket-lint` passes with an `engine#NNNN` id in a
+- [x] `cargo xtask ticket-lint` passes with an `engine#NNNN` id in a
       `blocked_by` (unit test with a fixture ticket), and still fails on
       an unknown plain id.
-- [ ] `cargo xtask ticket-lint --check-engine` reports an `engine#NNNN`
+- [x] `cargo xtask ticket-lint --check-engine` reports an `engine#NNNN`
       that does not exist in the engine repository.
-- [ ] `.claude/skills/engine-change/SKILL.md` exists. It covers the
+- [x] `.claude/skills/engine-change/SKILL.md` exists. It covers the
       leak test, fix-now vs ticket-and-follow-up, the local checkout,
       the pin, the cross-links and parallel sessions.
-- [ ] The engine repository's intake PR is open or merged, and linked.
-- [ ] The no-op walk-through's two PRs are named in the Completion notes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The engine repository's intake PR is open or merged, and linked.
+- [x] The no-op walk-through's two PRs are named in the Completion notes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -156,4 +156,58 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+Done 2026-10-19 (Opus 5.5, high).
+
+- **`engine#NNNN` in `blocked_by`** (`crates/xtask/src/tickets.rs`):
+  `ticket-lint` accepts `engine#` plus four digits without a lookup and
+  rejects any other `engine#…` form; a plain id still has to exist here.
+  `cargo xtask ticket-lint --check-engine` looks each one up in the local
+  checkout's `shuyi-engine/tickets/{open,done}` (its working tree, so a
+  ticket written on an engine branch counts) or, without a checkout,
+  through `gh api` on the engine's `main`. CI doesn't pass the flag. Tried
+  for real on both paths with a temporary `engine#2999`: both report it.
+- **The skill** `.claude/skills/engine-change/SKILL.md`: the two tests
+  (ADR-0063 §5 and the leak test), now vs. ticket-and-follow-up, the
+  checkout and branch, both sides against the patch, the engine's gates,
+  the engine PR, moving the pin to the engine's `main` after the merge,
+  breaking changes, cross-links, a session of its own, and a game ticket
+  blocked by an engine ticket.
+- **`work-ticket` §1** has the readiness check for `engine#NNNN` (in the
+  engine's `done/` and the pin at or past the commit that closed it, with
+  three `gh api` commands; tried on engine ticket 2001: `ahead`). Its §3
+  line and `CLAUDE.md` rule 1 point at the skill; the skill is in
+  `CLAUDE.md`'s skill list; `tickets/README.md` has the `engine#NNNN`
+  form; `docs/engine/README.md` has "Changing the engine from the game";
+  `engine-friction` links the skill instead of "1152".
+- **The engine side's intake:** [Zafnok/shuyi-engine#7](https://github.com/Zafnok/shuyi-engine/pull/7)
+  (merged): `write-ticket`'s "A request from the game", `work-ticket`'s
+  Completion notes name the game PR that moves the pin, and `AGENTS.md`
+  names `engine#NNNN` and this skill.
+- **The no-op walk-through:** engine PR
+  [Zafnok/shuyi-engine#9](https://github.com/Zafnok/shuyi-engine/pull/9)
+  (the README's map names `CONTRIBUTING.md`; merged), and this ticket's
+  game PR, which moves the pin from `5aa0f666` to `8ce963aa` (the
+  engine's `main` after #9 and #7). The game built on the checkout
+  before the merge (`cargo check --workspace --all-targets`) and passes
+  its gates on the new pin.
+
+**What the walk-through changed in the skill:**
+
+1. Writing an engine ticket for a one-line fix is all overhead: a change
+   of a few lines with nothing to decide uses the game ticket instead
+   (branch `game-NNNN-<slug>`, PR `Game NNNN: …`, as the engine's PRs 6, 7
+   and 9 did). Added to the skill and, in #7, to the engine's
+   `write-ticket`.
+2. `cd shuyi-engine && gh pr create` moves the session's working folder:
+   the skill now runs `gh pr create --repo … --head …` from the game's
+   folder, and the engine's gates in a subshell (`(cd shuyi-engine &&
+   …)`), which also makes Cargo read the engine's `.cargo/`, not the
+   game's.
+3. #7 was merged with "Squash and merge", not a merge commit. Nothing
+   pinned its branch, so no harm, and the skill pins the engine's `main`
+   after the merge, which works either way. The engine repository allows
+   all three merge buttons; turning off squash and rebase there
+   (Settings → General → Pull Requests) would make the rule automatic.
+   That is Nick's setting, so it is only a suggestion.
+
+No gameplay rules decided. No follow-up tickets.

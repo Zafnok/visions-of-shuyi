@@ -19,9 +19,9 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
    skill. One ticket = one branch = one PR. The PR moves the ticket to
    `tickets/done/`. One exception: a GitHub issue labelled `sonar` is its
    own ticket, filed weekly from SonarCloud and fixed with the `sonar-fix`
-   skill (ADR-0071). A ticket that needs an engine change is an engine PR
-   first (in `Zafnok/shuyi-engine`), then the game's PR that moves the pin
-   (`cargo xtask engine-pin`; `docs/engine/README.md`).
+   skill (ADR-0071). A ticket that needs an engine change follows the
+   `engine-change` skill (an engine PR in `Zafnok/shuyi-engine` first,
+   then the game's PR that moves the pin).
 2. **No unticketed work.** Don't write game code "to get a head start". Found
    something else to do? Create a ticket (`write-ticket` skill).
 3. **Never invent game-design answers.** They come from `docs/design/` (decided
@@ -68,7 +68,7 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 | `LICENSE`, `THIRD_PARTY_ASSETS.md` | Proprietary source-available license; registry of shipped third-party assets |
 | `docs/design/` | Nick's game-design decisions (filled by `00xx` tickets) |
 | `docs/story/` | Story beats, bible, characters, outline, ledger (ADR-0011) |
-| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix`, `engine-friction` |
+| `.claude/skills/` | `work-ticket`, `write-ticket`, `write-adr`, `ask-nick`, `story-writing`, `ascii-art`, `run-gates`, `keyboard-input`, `sonar-triage`, `sonar-fix`, `engine-friction`, `engine-change` |
 | `crates/` | `core` (`trpg-core`), `content` (`trpg-content`), `ui` (`trpg-ui`), `app` (`trpg-app`, binary `visions-of-shuyi`), `bots` (`trpg-bots`, playtest bots: dev tooling, never in the game), `xtask` (the repository's own tooling, and the game's tool program for `cargo shuyi`) |
 | `shuyi.ron` | The project file of Shuyi's tools (`cargo shuyi <command>`: `frame-png`, `font-atlas`, `check-keys`, `check-text`, `lang-status`, `web`, `private-assets`; ADR-0089): the paths each check scans, the web build, the private repository |
 | `crates/playdate` | `trpg-playdate`, the Playdate front end (ADR-0070): a second platform crate beside `app`, a `staticlib` linked with `shim/shim.c` by `cargo xtask playdate` into `target/playdate/VisionsOfShuyi.pdx`. Needs the Playdate SDK and MSYS2's ARM compiler (its `README.md`) |

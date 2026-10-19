@@ -41,7 +41,8 @@ use std::time::SystemTime;
 
 const USAGE: &str = "usage: cargo xtask <command>\n\n\
 available commands:\n  \
-ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n  \
+ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n    \
+[--check-engine]                 and look up each engine#NNNN in the engine's tickets\n  \
 engine [--off]                     build the game on Shuyi Engine checked out in shuyi-engine/\n  \
 engine-pin [<commit> | --check]    move the engine's pinned commit, or check it (ADR-0063 §8)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
@@ -127,8 +128,8 @@ fn shuyi(command: &str, args: impl Iterator<Item = String>) -> u8 {
 }
 
 fn ticket_lint(args: &[String]) -> u8 {
-    let pr_branch = match parse_pr_branch(args) {
-        Ok(branch) => branch,
+    let (pr_branch, check_engine) = match parse_ticket_lint_args(args) {
+        Ok(parsed) => parsed,
         Err(e) => {
             eprintln!("{e}");
             return 2;
@@ -136,7 +137,7 @@ fn ticket_lint(args: &[String]) -> u8 {
     };
 
     let repo_root = repo_root();
-    let errors = tickets::run(&repo_root, pr_branch.as_deref());
+    let errors = tickets::run(&repo_root, pr_branch.as_deref(), check_engine);
 
     if errors.is_empty() {
         println!("ticket-lint: OK");
@@ -545,16 +546,23 @@ fn portrait_import(args: &[String]) -> u8 {
     }
 }
 
-fn parse_pr_branch(args: &[String]) -> Result<Option<String>, String> {
+/// `ticket-lint`'s arguments: the `--pr-branch` value, and whether
+/// `--check-engine` was given.
+fn parse_ticket_lint_args(args: &[String]) -> Result<(Option<String>, bool), String> {
+    let mut pr_branch = None;
+    let mut check_engine = false;
     let mut iter = args.iter();
-    match iter.next() {
-        None => Ok(None),
-        Some(flag) if flag == "--pr-branch" => match iter.next() {
-            Some(branch) => Ok(Some(branch.clone())),
-            None => Err("--pr-branch requires a value".to_string()),
-        },
-        Some(other) => Err(format!("unknown argument to ticket-lint: {other}")),
+    while let Some(arg) = iter.next() {
+        match arg.as_str() {
+            "--pr-branch" => match iter.next() {
+                Some(branch) => pr_branch = Some(branch.clone()),
+                None => return Err("--pr-branch requires a value".to_string()),
+            },
+            "--check-engine" => check_engine = true,
+            other => return Err(format!("unknown argument to ticket-lint: {other}")),
+        }
     }
+    Ok((pr_branch, check_engine))
 }
 
 fn code_lines(args: &[String]) -> u8 {
@@ -909,30 +917,43 @@ mod tests {
     }
 
     #[test]
-    fn parse_pr_branch_with_no_args_is_none() {
-        assert_eq!(parse_pr_branch(&[]), Ok(None));
+    fn parse_ticket_lint_args_with_no_args_is_none() {
+        assert_eq!(parse_ticket_lint_args(&[]), Ok((None, false)));
     }
 
     #[test]
-    fn parse_pr_branch_reads_the_flag_value() {
+    fn parse_ticket_lint_args_reads_the_pr_branch_value() {
         assert_eq!(
-            parse_pr_branch(&args(&["--pr-branch", "t0106-x"])),
-            Ok(Some("t0106-x".to_string()))
+            parse_ticket_lint_args(&args(&["--pr-branch", "t0106-x"])),
+            Ok((Some("t0106-x".to_string()), false))
         );
     }
 
     #[test]
-    fn parse_pr_branch_requires_a_value() {
+    fn parse_ticket_lint_args_reads_check_engine_in_any_order() {
+        let want = Ok((Some("t0106-x".to_string()), true));
         assert_eq!(
-            parse_pr_branch(&args(&["--pr-branch"])),
+            parse_ticket_lint_args(&args(&["--check-engine", "--pr-branch", "t0106-x"])),
+            want
+        );
+        assert_eq!(
+            parse_ticket_lint_args(&args(&["--pr-branch", "t0106-x", "--check-engine"])),
+            want
+        );
+    }
+
+    #[test]
+    fn parse_ticket_lint_args_requires_a_pr_branch_value() {
+        assert_eq!(
+            parse_ticket_lint_args(&args(&["--pr-branch"])),
             Err("--pr-branch requires a value".to_string())
         );
     }
 
     #[test]
-    fn parse_pr_branch_rejects_unknown_flags() {
+    fn parse_ticket_lint_args_rejects_unknown_flags() {
         assert_eq!(
-            parse_pr_branch(&args(&["--bogus"])),
+            parse_ticket_lint_args(&args(&["--bogus"])),
             Err("unknown argument to ticket-lint: --bogus".to_string())
         );
     }
