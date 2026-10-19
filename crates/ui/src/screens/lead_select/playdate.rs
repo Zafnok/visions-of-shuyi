@@ -109,6 +109,8 @@ fn paint_rows(ctx: &Ctx, view: &LeadSelectView, buf: &mut GlyphBuffer) {
     let x = (i32::from(buf.width()) - cells(&full)) / 2;
     buf.print(x, NAME_ROW, &name.label, ink.text, ink.ground);
     let first_x = x + cells(&name.label) + 3;
+    let family_x = first_x + cells(&name.first) + 1;
+    buf.print(family_x, NAME_ROW, &name.family, ink.text, ink.ground);
     if view.cursor == Some(Row::Name) {
         bar(
             ctx,
@@ -121,8 +123,6 @@ fn paint_rows(ctx: &Ctx, view: &LeadSelectView, buf: &mut GlyphBuffer) {
     } else {
         buf.print(first_x, NAME_ROW, &name.first, ink.text, ink.ground);
     }
-    let family_x = first_x + cells(&name.first) + 1;
-    buf.print(family_x, NAME_ROW, &name.family, ink.text, ink.ground);
     let start = format!("[ {} ]", view.start);
     let x = (i32::from(buf.width()) - cells(&start)) / 2;
     if view.cursor == Some(Row::Start) {

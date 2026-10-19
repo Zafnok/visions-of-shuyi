@@ -231,4 +231,11 @@ fn a_list_is_a_window_in_the_middle_its_title_in_the_frame() {
     assert_eq!(find(&buf, 6, "Rename"), Some(22));
     assert!(!bar_at(&buf, 20, 6) && bar_at(&buf, 21, 6) && bar_at(&buf, 28, 6));
     assert!(!bar_at(&buf, 29, 6) && !bar_at(&buf, 22, 7));
+    // A title wider than the items, and a third item: the window grows.
+    let mut buf = blank();
+    let items = [("Rename", false), ("Delete", false), ("Use", true)];
+    let rect = list(&ctx, &mut buf, "Player 12", &items);
+    assert_eq!(rect, Rect::new(16, 5, 17, 5));
+    assert_eq!(rows(&buf)[5], "╔═ Player 12 ═══╗");
+    assert!(rows(&buf)[9].starts_with('╚'));
 }

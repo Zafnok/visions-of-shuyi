@@ -1,7 +1,7 @@
 //! The Playdate's look of the lead screen, on the screen's own views.
 
 use super::*;
-use crate::input::Action::{CursorDown, CursorRight};
+use crate::input::Action::{CursorDown, CursorRight, CursorUp};
 use crate::screens::lead_select::LeadSelectScreen;
 use crate::screens::lead_select::tests::{spelling, update};
 use crate::screens::playdate::tests::{blank, cell, find, is_bar, pd_ctx, rows};
@@ -88,9 +88,19 @@ fn the_start_bar_is_its_button_and_a_cell_either_side() {
     let mut s = LeadSelectScreen::new();
     update(&mut s, &mut c, &[CursorDown, CursorDown]);
     let buf = painted(&c, &s);
+    let black = crate::screens::playdate::tests::c(trpg_content::Ink::Black);
     let x = find(&buf, START_ROW, "[ Start ]").unwrap();
-    let bar = |x| {
-        cell(&buf, x, START_ROW).bg == crate::screens::playdate::tests::c(trpg_content::Ink::Black)
-    };
+    // Centred: nine cells on fifty.
+    assert_eq!(x, 20);
+    let bar = |x| cell(&buf, x, START_ROW).bg == black;
     assert!(!bar(x - 2) && bar(x - 1) && bar(x + 9) && !bar(x + 10));
+    // On the name: the first name and a cell either side, not the family
+    // name.
+    update(&mut s, &mut c, &[CursorUp]);
+    let buf = painted(&c, &s);
+    let first = find(&buf, NAME_ROW, "Ellery").unwrap();
+    let family = find(&buf, NAME_ROW, "Veyne").unwrap();
+    let bar = |x| cell(&buf, x, NAME_ROW).bg == black;
+    assert_eq!(family, first + 7);
+    assert!(!bar(first - 2) && bar(first - 1) && bar(first + 6) && !bar(family));
 }

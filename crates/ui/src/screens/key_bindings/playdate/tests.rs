@@ -198,22 +198,24 @@ fn choices_near_the_bottom_open_over_the_slot_and_stay_in_the_window() {
     row_mut(&mut view, Action::CursorUp).focus = None;
     row_mut(&mut view, Action::DialogueLog).focus = Some(2);
     view.choices = Some(ChoicesView {
-        lines: vec!["Change".to_owned(), "Clear".to_owned()],
+        lines: vec!["Change".to_owned(), "Clear".to_owned(), "Swap".to_owned()],
         focused: 1,
         slot: 2,
     });
     let buf = painted(&c, &view);
     let log = line_of(&buf, "Open the log");
-    // Four rows tall, over the slot; at the window's right edge.
+    // A row a choice and the frame, over the slot; at the window's right
+    // edge.
     let shown = rows(&buf);
-    let top = usize::try_from(log - 4).unwrap();
+    let top = usize::try_from(log - 5).unwrap();
     let x = 50 - CHOICES_W;
-    assert_eq!(find(&buf, log - 4, "╔"), Some(x), "{shown:#?}");
-    assert!(shown[top + 3].contains('╚'));
-    assert!(is_bar(&buf, log - 2, " Clear"));
+    assert_eq!(find(&buf, log - 5, "╔"), Some(x), "{shown:#?}");
+    assert!(shown[top + 4].contains('╚'));
+    assert!(is_bar(&buf, log - 3, " Clear"));
     // Restore defaults, under it, in full.
     assert!(shown[12].contains("Restore defaults"), "{shown:#?}");
-    assert_eq!(find(&buf, log - 3, "Change"), Some(x + 2));
+    assert_eq!(find(&buf, log - 4, "Change"), Some(x + 2));
+    assert_eq!(find(&buf, log - 2, "Swap"), Some(x + 2));
 }
 
 #[test]
@@ -253,6 +255,9 @@ fn the_switch_names_the_shown_side_plainly_and_the_other_in_grey() {
     let controller = find(&buf, 1, "Controller").unwrap();
     assert_eq!(cell(&buf, keyboard, 1).fg, ink(trpg_content::Ink::Black));
     assert_eq!(cell(&buf, controller, 1).fg, ink(trpg_content::Ink::Grey));
+    // Three cells apart.
+    let switch = screen(&c).view(&c).switch.unwrap();
+    assert_eq!(controller, keyboard + cells(&switch.keyboard) + 3);
 }
 
 #[test]
