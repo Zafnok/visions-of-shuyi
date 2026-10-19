@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: ["1118"]
 nick_input: none
-completed:
+completed: 2026-10-18
 ---
 
 # 1151 — Engine friction: when game code says the engine needs work
@@ -195,21 +195,21 @@ None. Nick set the rule (quoted above); the rest is technical.
 
 ## Acceptance criteria
 
-- [ ] The ADR exists, is in the index, and states the estimate, the
+- [x] The ADR exists, is in the index, and states the estimate, the
       measure, the threshold table, the signals, the four outcomes, the
       leak test and the never-wait rule.
-- [ ] `cargo xtask code-lines --base HEAD~1` on this ticket's own branch
+- [x] `cargo xtask code-lines --base HEAD~1` on this ticket's own branch
       prints per-crate rows. Its count for `crates/xtask` leaves out
       `code_lines.rs`'s test module (unit test).
-- [ ] `.claude/skills/engine-friction/SKILL.md` exists with frontmatter
+- [x] `.claude/skills/engine-friction/SKILL.md` exists with frontmatter
       (`name`, `description` saying when to use it), the steps and both
       worked examples.
-- [ ] `work-ticket` asks for the estimate before code and the
+- [x] `work-ticket` asks for the estimate before code and the
       measurement in Verify. The PR body template has the friction line.
-- [ ] `CLAUDE.md` has the rule and lists the skill.
-- [ ] `docs/engine/friction.md` exists. This ticket's own PR adds its
+- [x] `CLAUDE.md` has the rule and lists the skill.
+- [x] `docs/engine/friction.md` exists. This ticket's own PR adds its
       first row (estimate vs measured for `code_lines.rs`).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -223,4 +223,48 @@ None. Nick set the rule (quoted above); the rest is technical.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- **ADR-0091** (*Engine friction: game code far bigger than the job
+  triggers a review*), in the index and on ADR-0063's Related line. It
+  holds the estimate, the measure, the thresholds, the signals, the four
+  outcomes, the leak test, never-wait (fix first, or ship and follow up)
+  and the trail (log, PR line, skill).
+- **`cargo xtask code-lines [--base <ref>]`** (`crates/xtask/src/code_lines.rs`).
+  It diffs the base's merge base with `HEAD` against the working tree
+  and counts untracked files too, so a new file counts before its first
+  commit. A file's `#[cfg(test)]` ranges are read from its text on each
+  side (`git show base:path` for removed lines). It prints one row per
+  crate, `total (game)` and, when `engine/` changed, `total (engine)`.
+  `--base 4b825dc…` (git's empty tree) counts the whole tree, which 1153
+  can use: today that is about 49,500 game lines and 27,000 engine lines.
+- **The skill** `.claude/skills/engine-friction/SKILL.md` has the seven
+  steps and both worked examples. In the after-1131 places it says "see
+  1152".
+- **The log** `docs/engine/friction.md`, linked from `docs/engine/README.md`.
+  Its first row is this ticket's own estimate against the measurement.
+- **Hooks**: `work-ticket` (the estimate in Implement, the measurement
+  and thresholds in Verify, the `Engine friction:` line in the PR body),
+  `write-ticket` (the expected size of a screen or scene goes in the
+  Implementation steps), `CLAUDE.md` rule 9 and the skill table.
+
+Choices the ticket left open:
+- Besides `tests/`, the count also leaves out `tests.rs` and `*_tests.rs`
+  files. The repository has about 150 of them, each declared
+  `#[cfg(test)] mod tests;` by its parent, so they are test code.
+- A `#[cfg(test)]` *item* of any kind is skipped, not only a module
+  (a test helper `fn` under the attribute too).
+- Three or more "accept" rows on one engine area are listed among the
+  ADR's signals, as the ticket's log paragraph says.
+- In `work-ticket`, a ticket with no Rust code skips the estimate. Its
+  PR line says "none: no Rust code".
+
+Engine friction (this ticket's own): estimate 180 (a diff parser, a
+brace-counting test-range scanner, a crate key and a table, comparable
+to the git-driven `clean_targets.rs` command); measured 311 in
+`crates/xtask`; 1.7×, under 2×.
+
+Gates: fmt, clippy, the whole workspace's tests (`--no-fail-fast`, 0
+failures), check-keys, check-text, check-engine-boundary, `cargo doc -p
+xtask`, deny, machete and typos pass. The WASM and Playdate builds were
+not run: this ticket changes no crate they build (`xtask` only).
+
+No gameplay rules were decided. Nothing for Nick to play.

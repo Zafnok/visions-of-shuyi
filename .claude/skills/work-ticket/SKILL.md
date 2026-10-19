@@ -62,6 +62,13 @@ Set `status: in-progress` in the ticket frontmatter.
 
 ## 3. Implement
 
+- **Before the first code, write the estimate** (ADR-0091; the
+  `engine-friction` skill, step 1): one sentence and a number, how many
+  production lines this change *should* take with a good engine, and the
+  comparable code you judged it by (another engine doing the same job, or
+  a similar piece of this repository). Start from the size the ticket
+  states, if it states one. A ticket with no Rust code (docs, data, a
+  decision) skips this.
 - Follow the ticket's **Implementation steps** in order. If a step turns out to
   be wrong, deviate minimally and explain it in the Completion notes.
 - Respect crate boundaries (ADR-0004): no I/O, clock or macroquad outside `app`;
@@ -108,6 +115,20 @@ Set `status: in-progress` in the ticket frontmatter.
 ## 4. Verify
 
 Run the `run-gates` skill. Everything must pass locally before you push.
+
+Measure the change against the estimate: `cargo xtask code-lines`, the
+**added** column of `total (game)` (ADR-0091). Ratio = measured ÷
+estimate:
+
+- under 2×: nothing;
+- 2× to 3×: one line in the Completion notes ("friction: 2.4×, accepted
+  because …") and a row in `docs/engine/friction.md`;
+- 3× or more, or any signal (a workaround for an engine assumption, the
+  third copy of the same boilerplate, a performance budget missed because
+  of the engine): run the `engine-friction` skill before opening the PR.
+  At 10× or more the fix comes first unless the review says why not.
+
+A finding never blocks the ticket: fix first, or ship and follow up.
 Walk the ticket's **Acceptance criteria** and tick each box honestly. If one
 cannot be met, say so in the Completion notes and in the PR; don't hide it.
 
@@ -135,7 +156,9 @@ cannot be met, say so in the Completion notes and in the PR; don't hide it.
     (`` `@music` ``) or leave the `@` out ("the music directive"). If the
     ticket's own title has one, change it for the PR title.
   - Body: summary bullets, list of acceptance criteria (checked), follow-up
-    tickets created, and `Nick input:` line (e.g. "Sign-off: please play the
+    tickets created, an `Engine friction:` line ("Engine friction:
+    estimate N, measured M (R×), <outcome or 'under 2×'>"; "none: no Rust
+    code" when there is none), and `Nick input:` line (e.g. "Sign-off: please play the
     build from the Pages link and try X").
 - Don't run mutation testing locally before pushing: CI runs it on the PR
   (see `run-gates`). Push, open the PR, and watch CI once.

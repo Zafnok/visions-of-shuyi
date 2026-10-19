@@ -98,6 +98,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0088](0088-the-grid-map-kit-a-scene-generic-over-the-games-units-skins-and-unit-painters.md) | The grid map kit: `MapScene<U>` of the game's units, ranges as named layers, `GridSkin`s that paint the ground with the game's `UnitPainter`, skin settings for colours and walk speeds, a `Projection` hook | Accepted (1115); extends ADR-0038, ADR-0049, ADR-0052, ADR-0058 |
 | [0089](0089-shuyi-cli-a-project-file-and-the-games-tool-program.md) | Shuyi's tools: `shuyi-cli` (`cargo shuyi`), a project file (`shuyi.ron`) for the paths and settings, and the game's tool program (`GameTools`, here xtask) for the commands that run the game; the web shell is the engine's | Accepted (1117); extends ADR-0063, ADR-0038 §4, ADR-0081 |
 | [0090](0090-the-playdates-bundle-has-a-private-layer.md) | The Playdate's bundle has a private layer with the `private-assets` feature (`cargo xtask playdate --private-assets`), and a touched-up `.1bit` beside a bought PNG is embedded as it is | Accepted (1061); extends ADR-0070 §3, ADR-0082, ADR-0085 |
+| [0091](0091-engine-friction-game-code-far-bigger-than-the-job-triggers-a-review.md) | Engine friction: game code far bigger than the job (3× an estimate written first, measured by `cargo xtask code-lines`) triggers a review with one of four outcomes; the engine never names a game concept, and the game never waits on the engine | Accepted (1151); extends ADR-0063 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 
