@@ -45,6 +45,18 @@ fn to_be_continued_can_be_found_by_its_type() {
     assert!(any.downcast_ref::<ToBeContinuedScreen>().is_some());
 }
 
+/// Game Over is an overlay over the lost battle while the battle still
+/// shows through its opening animation, and covers it once it is black.
+#[test]
+fn game_over_shows_the_battle_only_while_it_fades() {
+    let s = GameOverScreen::new(&ctx(), false);
+    assert!(s.shows_battle());
+    assert!(s.is_overlay());
+    let s = settled(false);
+    assert!(!s.shows_battle());
+    assert!(!s.is_overlay());
+}
+
 #[test]
 fn game_over_offers_retry_and_title() {
     let mut s = settled(false);

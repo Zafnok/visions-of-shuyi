@@ -63,6 +63,24 @@ fn the_flow_pushes_its_first_screen() {
     assert_eq!(stack.names(), ["game_flow", "mode_select"]);
 }
 
+/// On the frame it is pushed, before its first screen is, the flow looks
+/// like that screen.
+#[test]
+fn the_flow_draws_its_first_screen_until_it_pushes_it() {
+    use crate::color::UiColor;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
+    use crate::glyph_buffer::Cell;
+    let c = ctx();
+    let p = &c.palette;
+    let stale = Cell::new('x', p.get(UiColor::Enemy), p.get(UiColor::PanelBg));
+    let mut flow = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
+    FlowScreen::new_game(&c).draw(&c, &mut flow);
+    let mut mode = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
+    ModeSelectScreen::new(&c).draw(&c, &mut mode);
+    assert_eq!(flow, mode);
+    assert_ne!(flow, GlyphBuffer::with_spec(ConsoleSpec::PC, stale));
+}
+
 /// Each screen of New Game pops with its answer, and the flow pushes the
 /// next; going back pops with nothing, and the flow pushes the one before.
 #[test]
