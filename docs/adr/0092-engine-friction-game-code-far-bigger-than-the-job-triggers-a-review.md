@@ -1,4 +1,4 @@
-# ADR-0091: Engine friction: game code far bigger than the job triggers a review
+# ADR-0092: Engine friction: game code far bigger than the job triggers a review
 
 - **Status:** Accepted
 - **Date:** 2026-10-18

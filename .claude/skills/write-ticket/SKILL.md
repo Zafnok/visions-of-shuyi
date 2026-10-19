@@ -32,7 +32,7 @@ without asking questions.
      A ticket that adds a screen or a scene states its **expected size**
      there: production lines, and the comparable code it is judged by
      ("about 80 lines: one list view and its skin"). The session's
-     engine-friction estimate starts from it (ADR-0091).
+     engine-friction estimate starts from it (ADR-0092).
    - **Acceptance criteria:** checkboxes, each objectively verifiable (a test
      name, a command's output, a visible behaviour).
    - **Tests required:** which layers from ADR-0007.

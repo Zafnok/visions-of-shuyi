@@ -49,7 +49,7 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
    view (plain data) and a skin paints it, as the engine's
    `screens/options.rs` does;
    a new screen never decides its look in `draw`.
-9. **Code far bigger than the job is a signal** (ADR-0091): write how
+9. **Code far bigger than the job is a signal** (ADR-0092): write how
    many lines a change should take before coding, measure it with
    `cargo xtask code-lines`, and at 3× or more run the `engine-friction`
    skill (engine feature, engine ergonomics, game-side structure, or

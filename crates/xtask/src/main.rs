@@ -44,6 +44,7 @@ available commands:\n  \
 ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n  \
 check-engine-boundary              fail when engine/ names or depends on the game (ADR-0063)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
+code-lines [--base <ref>]          production Rust lines added and removed per crate (ADR-0092)\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
 test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \

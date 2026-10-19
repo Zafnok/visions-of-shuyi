@@ -62,7 +62,7 @@ Set `status: in-progress` in the ticket frontmatter.
 
 ## 3. Implement
 
-- **Before the first code, write the estimate** (ADR-0091; the
+- **Before the first code, write the estimate** (ADR-0092; the
   `engine-friction` skill, step 1): one sentence and a number, how many
   production lines this change *should* take with a good engine, and the
   comparable code you judged it by (another engine doing the same job, or
@@ -117,7 +117,7 @@ Set `status: in-progress` in the ticket frontmatter.
 Run the `run-gates` skill. Everything must pass locally before you push.
 
 Measure the change against the estimate: `cargo xtask code-lines`, the
-**added** column of `total (game)` (ADR-0091). Ratio = measured ÷
+**added** column of `total (game)` (ADR-0092). Ratio = measured ÷
 estimate:
 
 - under 2×: nothing;

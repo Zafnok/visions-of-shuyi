@@ -1,6 +1,6 @@
 //! `cargo xtask code-lines [--base <ref>]`: production Rust lines added and
 //! removed per crate since a base, the measure of the engine-friction rule
-//! (ADR-0091). It informs; it never fails a build.
+//! (ADR-0092). It informs; it never fails a build.
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -12,7 +12,7 @@ counts production Rust lines added and removed per crate between the base\n\
 untracked files included. Left out: files under tests/, tests.rs and\n\
 *_tests.rs, #[cfg(test)] items, blank lines and comment-only lines.\n\
 A changed line counts once as removed and once as added, so \"added\" is\n\
-the measure the engine-friction rule compares with its estimate (ADR-0091).\n\
+the measure the engine-friction rule compares with its estimate (ADR-0092).\n\
 --base 4b825dc642cb6eb9a060e54bf8d69288fbee4904 (git's empty tree) counts\n\
 the whole working tree.";
 

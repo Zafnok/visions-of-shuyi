@@ -223,7 +223,7 @@ None. Nick set the rule (quoted above); the rest is technical.
 
 ## Completion notes
 
-- **ADR-0091** (*Engine friction: game code far bigger than the job
+- **ADR-0092** (*Engine friction: game code far bigger than the job
   triggers a review*), in the index and on ADR-0063's Related line. It
   holds the estimate, the measure, the thresholds, the signals, the four
   outcomes, the leak test, never-wait (fix first, or ship and follow up)
@@ -259,7 +259,7 @@ Choices the ticket left open:
 
 Engine friction (this ticket's own): estimate 180 (a diff parser, a
 brace-counting test-range scanner, a crate key and a table, comparable
-to the git-driven `clean_targets.rs` command); measured 311 in
+to the git-driven `clean_targets.rs` command); measured 312 in
 `crates/xtask`; 1.7×, under 2×.
 
 Gates: fmt, clippy, the whole workspace's tests (`--no-fail-fast`, 0

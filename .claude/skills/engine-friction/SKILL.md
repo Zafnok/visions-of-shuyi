@@ -1,11 +1,11 @@
 ---
 name: engine-friction
-description: Judge whether game code is far bigger than the job, and if so whether the fix is an engine feature, engine ergonomics, a game-side structure, or nothing (ADR-0091). Use when a ticket's measured production lines reach 3× its estimate, when you write a workaround for an engine assumption, when the same boilerplate appears a third time, when a performance budget is missed because of the engine, or when the friction log shows three "accept" rows on one engine area.
+description: Judge whether game code is far bigger than the job, and if so whether the fix is an engine feature, engine ergonomics, a game-side structure, or nothing (ADR-0092). Use when a ticket's measured production lines reach 3× its estimate, when you write a workaround for an engine assumption, when the same boilerplate appears a third time, when a performance budget is missed because of the engine, or when the friction log shows three "accept" rows on one engine area.
 ---
 
 # Engine friction review
 
-The rule is ADR-0091; read it once. The engine and the game are both
+The rule is ADR-0092; read it once. The engine and the game are both
 ours: a missing engine piece is normal work, never a reason to wait.
 The numbers only decide *when to look*. What to do is a judgment, and
 this skill makes it the same way every time.
