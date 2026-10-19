@@ -215,3 +215,49 @@ fn choices_near_the_bottom_open_over_the_slot_and_stay_in_the_window() {
     assert!(shown[12].contains("Restore defaults"), "{shown:#?}");
     assert_eq!(find(&buf, log - 3, "Change"), Some(x + 2));
 }
+
+#[test]
+fn long_words_stay_inside_their_columns_and_the_frame() {
+    let (c, mut view) = opened();
+    view.restore.label = "Put every button back as it was".to_owned();
+    view.not_mapped = "! no button for this one yet, give it one".to_owned();
+    row_mut(&mut view, Action::CursorUp).focus = None;
+    row_mut(&mut view, Action::DialogueLog).focus = Some(1);
+    let buf = painted(&c, &view);
+    // Restore defaults across the names' and the first slot's columns.
+    let shown = rows(&buf);
+    assert!(
+        shown[12].contains("Put every button back as it w…"),
+        "{shown:#?}"
+    );
+    // The note cut a cell before the frame's right side.
+    let log = line_of(&buf, "Open the log");
+    assert_eq!(cell(&buf, 47, log).glyph, '…');
+    assert_eq!(cell(&buf, 48, log).glyph, ' ');
+    assert_eq!(cell(&buf, 49, log).glyph, '║');
+}
+
+#[test]
+fn the_switch_names_the_shown_side_plainly_and_the_other_in_grey() {
+    let c = pd_ctx();
+    let buf = drawn(&screen(&c), &c);
+    let ink = |i| crate::screens::playdate::tests::c(i);
+    let keyboard = find(&buf, 1, "Keyboard").unwrap();
+    let controller = find(&buf, 1, "Controller").unwrap();
+    assert_eq!(cell(&buf, keyboard, 1).fg, ink(trpg_content::Ink::Black));
+    assert_eq!(cell(&buf, controller, 1).fg, ink(trpg_content::Ink::Grey));
+}
+
+#[test]
+fn the_choices_window_keeps_its_frame_round_the_bar() {
+    let mut c = playdate();
+    let mut s = screen(&c);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    let buf = drawn(&s, &c);
+    // Under Cursor up's first slot: from its column, twelve cells wide.
+    let (x, y) = (SLOTS[0].0, 4);
+    assert_eq!(cell(&buf, x, y).glyph, '║');
+    assert_eq!(cell(&buf, x + CHOICES_W - 1, y).glyph, '║');
+    assert_eq!(cell(&buf, x + CHOICES_W - 2, y).glyph, ' ');
+    assert!(is_bar(&buf, y, " Change"));
+}

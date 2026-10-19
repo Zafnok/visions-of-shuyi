@@ -203,8 +203,8 @@ pub fn first_shown(len: usize, room: usize, focus: Option<usize>) -> usize {
     if len <= room {
         return 0;
     }
-    let focus = focus.unwrap_or(0).min(len - 1);
-    focus.saturating_sub(room / 2).min(len - room)
+    // A focus past the end shows the end, as the last line does.
+    focus.unwrap_or(0).saturating_sub(room / 2).min(len - room)
 }
 
 /// The size, in cells, of `menu`'s window: its longest item with a cell

@@ -149,3 +149,86 @@ fn the_more_marks_sit_at_the_frames_right_end() {
     more_marks(&ctx, &mut buf, rect, false, true);
     assert_eq!(row(&buf, 3), "╚══════▼═╝");
 }
+
+/// Whether the cell at `(x, y)` is the bar's.
+fn bar_at(buf: &GlyphBuffer, x: i32, y: i32) -> bool {
+    cell(buf, x, y).bg == c(Ink::Black)
+}
+
+#[test]
+fn a_question_is_a_window_in_the_middle_its_answers_under_a_blank_row() {
+    let ctx = pd_ctx();
+    let mut buf = blank();
+    let answers = [("Yes", false), ("No", true)];
+    let rect = ask(&ctx, &mut buf, "Delete it?", Answers::Choices(&answers));
+    assert_eq!(rect, Rect::new(17, 5, 15, 5));
+    let shown = rows(&buf);
+    assert_eq!(
+        shown[5..10],
+        [
+            "╔═════════════╗",
+            "║ Delete it?  ║",
+            "║             ║",
+            "║  Yes    No  ║",
+            "╚═════════════╝"
+        ]
+    );
+    // The answer in focus is the bar, a cell either side of it.
+    assert!(!bar_at(&buf, 25, 8) && bar_at(&buf, 26, 8) && bar_at(&buf, 29, 8));
+    assert!(!bar_at(&buf, 30, 8) && !bar_at(&buf, 20, 8));
+    // Focus on the first: its bar is five cells.
+    let mut buf = blank();
+    let answers = [("Yes", true), ("No", false)];
+    ask(&ctx, &mut buf, "Delete it?", Answers::Choices(&answers));
+    assert!(bar_at(&buf, 19, 8) && bar_at(&buf, 23, 8) && !bar_at(&buf, 24, 8));
+}
+
+#[test]
+fn a_questions_hint_too_long_for_the_screen_is_cut_inside_the_frame() {
+    let ctx = pd_ctx();
+    let mut buf = blank();
+    let hint = "a hint far longer than the fifty cells the Playdate has";
+    let rect = ask(&ctx, &mut buf, "Sure?", Answers::Hint(hint));
+    assert_eq!((rect.x, rect.w), (0, 50));
+    let y = rect.y + rect.h - 2;
+    assert_eq!(cell(&buf, 0, y).glyph, '║');
+    assert_eq!(cell(&buf, 1, y).glyph, 'a');
+    assert_eq!(cell(&buf, 48, y).glyph, '…');
+    assert_eq!(cell(&buf, 49, y).glyph, '║');
+    // A short one sits in the middle.
+    let mut buf = blank();
+    let rect = ask(
+        &ctx,
+        &mut buf,
+        "Restore every option?",
+        Answers::Hint("A yes / B no"),
+    );
+    assert_eq!(rect, Rect::new(12, 5, 25, 5));
+    assert_eq!(rows(&buf)[8], "║     A yes / B no      ║");
+}
+
+#[test]
+fn a_list_is_a_window_in_the_middle_its_title_in_the_frame() {
+    let ctx = pd_ctx();
+    let mut buf = blank();
+    let rect = list(
+        &ctx,
+        &mut buf,
+        "Mei",
+        &[("Rename", true), ("Delete", false)],
+    );
+    assert_eq!(rect, Rect::new(19, 5, 12, 4));
+    let shown = rows(&buf);
+    assert_eq!(
+        shown[5..9],
+        [
+            "╔═ Mei ════╗",
+            "║  Rename  ║",
+            "║  Delete  ║",
+            "╚══════════╝"
+        ]
+    );
+    assert_eq!(find(&buf, 6, "Rename"), Some(22));
+    assert!(!bar_at(&buf, 20, 6) && bar_at(&buf, 21, 6) && bar_at(&buf, 28, 6));
+    assert!(!bar_at(&buf, 29, 6) && !bar_at(&buf, 22, 7));
+}

@@ -109,7 +109,7 @@ fn paint_row(ctx: &Ctx, buf: &mut GlyphBuffer, row: &RowView, mark: &str, (x, y)
 mod tests {
     use super::*;
     use crate::profiles::ProfileId;
-    use crate::screens::playdate::tests::{blank, cell, is_bar, pd_ctx, rows};
+    use crate::screens::playdate::tests::{blank, cell, find, is_bar, pd_ctx, rows};
     use crate::screens::profile::{ActionsView, ChoiceView, QuestionView};
     use trpg_content::Ink;
 
@@ -178,6 +178,38 @@ mod tests {
         assert!(shown[8].starts_with('╚'));
         assert_eq!(shown[9], "No more profiles");
         assert_eq!(shown[14], "help");
+    }
+
+    #[test]
+    fn the_mark_of_the_profile_in_use_sits_clear_of_the_bar() {
+        let v = view(vec![profile("Player 1", true, true), add(true)]);
+        let buf = painted(&v);
+        let bar = |x| cell(&buf, x, 3).bg == crate::screens::playdate::tests::c(Ink::Black);
+        let label = PANEL_X.0 + LABEL_DX;
+        assert!(bar(label - 1) && bar(PANEL_X.0 + MARK_DX - 2));
+        assert!(!bar(PANEL_X.0 + MARK_DX - 1) && !bar(PANEL_X.0 + MARK_DX));
+        assert_eq!(find(&buf, 3, "in use"), Some(PANEL_X.0 + MARK_DX));
+    }
+
+    #[test]
+    fn a_name_grid_opens_in_the_middle_of_the_screen() {
+        let mut v = view(vec![profile("Player 1", true, false), add(true)]);
+        let row = |s: &str| s.chars().map(String::from).collect::<Vec<_>>();
+        let mut letters: Vec<Vec<String>> = ["ABCDEFGHIJKLM", "NOPQRSTUVWXYZ", "abcdefghijklm"]
+            .into_iter()
+            .map(row)
+            .collect();
+        letters.extend([row("nopqrstuvwxyz"), row("0123456789"), row("-'")]);
+        v.grid = Some(crate::widgets::name_entry::GridView {
+            title: "Profile name".to_owned(),
+            spelled: String::new(),
+            rows: letters,
+            focus: (0, 0),
+        });
+        let shown = rows(&painted(&v));
+        // Ten rows tall, from row 2.
+        assert!(shown[2].starts_with("╔═ Profile name"), "{shown:#?}");
+        assert!(shown[11].starts_with('╚'));
     }
 
     #[test]

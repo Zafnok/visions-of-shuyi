@@ -81,3 +81,16 @@ fn the_letter_grid_opens_in_a_window_over_the_screen() {
     // The help is still on the bottom row.
     assert!(!shown[14].is_empty());
 }
+
+#[test]
+fn the_start_bar_is_its_button_and_a_cell_either_side() {
+    let mut c = pd_ctx();
+    let mut s = LeadSelectScreen::new();
+    update(&mut s, &mut c, &[CursorDown, CursorDown]);
+    let buf = painted(&c, &s);
+    let x = find(&buf, START_ROW, "[ Start ]").unwrap();
+    let bar = |x| {
+        cell(&buf, x, START_ROW).bg == crate::screens::playdate::tests::c(trpg_content::Ink::Black)
+    };
+    assert!(!bar(x - 2) && bar(x - 1) && bar(x + 9) && !bar(x + 10));
+}

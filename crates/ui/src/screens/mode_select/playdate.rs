@@ -99,4 +99,20 @@ mod tests {
         assert!(shown[9].is_empty());
         assert!(is_bar(&buf, 5, "Casual"));
     }
+
+    #[test]
+    fn a_long_explanation_stops_a_row_above_the_help() {
+        let ctx = pd_ctx();
+        let mut buf = blank();
+        let mut v = view(0);
+        v.lines[0].text = "word ".repeat(60);
+        paint(&ctx, &v, &mut buf);
+        let shown = rows(&buf);
+        assert!(
+            shown[8..13].iter().all(|r| r.starts_with("word")),
+            "{shown:#?}"
+        );
+        assert!(shown[13].is_empty());
+        assert_eq!(shown[14], v.help);
+    }
 }
