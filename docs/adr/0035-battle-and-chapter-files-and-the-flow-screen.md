@@ -1,6 +1,6 @@
 # ADR-0035: Battle and chapter files, a core `Campaign`, and one flow screen that hosts the others
 
-- **Status:** Accepted
+- **Status:** Accepted; §3 (the flow hosts its screens) superseded by ADR-0093
 - **Date:** 2026-09-30
 - **Related tickets:** 0801, 0802, 0803, 0408, 0810, 1007, 1008
 

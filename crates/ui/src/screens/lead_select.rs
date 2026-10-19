@@ -68,8 +68,8 @@ impl Row {
 }
 
 /// Gender and first name of the lead. Confirm on `Start` pops with the
-/// profile ([`result`](Self::result)); Cancel pops without one (back to the
-/// mode).
+/// [`LeadProfile`]; Cancel pops without one (back to the familiarity
+/// screen).
 #[derive(Debug, Clone)]
 pub struct LeadSelectScreen {
     gender: LeadGender,
@@ -79,7 +79,6 @@ pub struct LeadSelectScreen {
     typing: Option<NameBox>,
     /// The letter grid, while open (controller players).
     entry: Option<NameEntry>,
-    result: Option<LeadProfile>,
 }
 
 impl LeadSelectScreen {
@@ -95,14 +94,7 @@ impl LeadSelectScreen {
             row: Row::Gender,
             typing: None,
             entry: None,
-            result: None,
         }
-    }
-
-    /// The lead the player made, once the screen has popped; `None` if they
-    /// went back.
-    pub fn result(&self) -> Option<&LeadProfile> {
-        self.result.as_ref()
     }
 
     /// The gender picked so far.
@@ -159,8 +151,8 @@ impl LeadSelectScreen {
 
     /// Handles one action outside the grid. `pad`: it came from a
     /// controller, so the name opens the letter grid, not the typing box.
-    /// Returns whether the screen is done (chose Start or went back).
-    fn step(&mut self, action: Action, pad: bool, ctx: &mut Ctx) -> bool {
+    /// Returns the pop, if the screen is done (chose Start or went back).
+    fn step(&mut self, action: Action, pad: bool, ctx: &mut Ctx) -> Option<Transition> {
         match (self.row, action) {
             (_, Action::CursorDown) => self.step_row(true, ctx),
             (_, Action::CursorUp) => self.step_row(false, ctx),
@@ -185,16 +177,16 @@ impl LeadSelectScreen {
             }
             (Row::Start, Action::Confirm) => {
                 ctx.audio.menu(MenuSound::Select);
-                self.result = Some(LeadProfile::new(self.name.clone(), self.gender));
-                return true;
+                let lead = LeadProfile::new(self.name.clone(), self.gender);
+                return Some(Transition::pop_with(lead));
             }
             (_, Action::Cancel) => {
                 ctx.audio.menu(MenuSound::Cancel);
-                return true;
+                return Some(Transition::Pop);
             }
             _ => {}
         }
-        false
+        None
     }
 
     /// The typing box or the grid closed with `event`: Done takes `name`,
@@ -284,8 +276,8 @@ impl Screen<Shuyi> for LeadSelectScreen {
                 }
                 continue;
             }
-            if self.step(action, input.pad_pressed(), ctx) {
-                return Transition::Pop;
+            if let Some(pop) = self.step(action, input.pad_pressed(), ctx) {
+                return pop;
             }
             // The key that opened the typing box types nothing, and the
             // rest of this frame's keys wait for the box.

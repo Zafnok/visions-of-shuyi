@@ -207,10 +207,9 @@ fn the_menu_follows_the_saves() {
         ("Quit", true),
     ];
     assert_eq!(labels(&TitleScreen::new(&ctx())), none);
-    assert_eq!(labels(&TitleScreen::new(&ctx()).refreshed(&ctx())), none);
     // A slot with anything in it: Load Game.
     let c = ctx_with_saves(None, Some("junk"));
-    let t = TitleScreen::new(&c).refreshed(&c);
+    let t = TitleScreen::new(&c);
     let saved = [
         ("New Game", true),
         ("Load Game", true),
@@ -227,7 +226,7 @@ fn the_menu_follows_the_saves() {
     assert_eq!(t.menu.focus(), 0);
     // A suspend save: Continue, first and focused.
     let c = ctx_with_saves(Some("junk"), None);
-    let t = TitleScreen::with_quick_battle(&c).refreshed(&c);
+    let t = TitleScreen::with_quick_battle(&c);
     assert_eq!(
         labels(&t),
         [
@@ -319,18 +318,18 @@ fn every_item_has_its_own_text() {
 }
 
 #[test]
-fn the_first_update_and_every_return_look_for_saves() {
+fn a_new_title_and_every_return_look_for_saves() {
     use Action::{Confirm, CursorDown};
+    assert!(!TitleScreen::new(&ctx()).menu.items()[1].enabled);
     let mut c = ctx_with_saves(None, Some("junk"));
-    let mut t = TitleScreen::new(&ctx());
-    assert!(!t.menu.items()[1].enabled);
-    // The first update finds the save; the focus moves onto Load Game.
+    let mut t = TitleScreen::new(&c);
+    // Made, it finds the save: the focus moves onto Load Game.
     assert_eq!(
         format!("{:?}", t.update(&mut c, &input(&[CursorDown, Confirm]))),
         "Push(save_slots)"
     );
     // Nothing changed while it was open: the focus stays.
-    t.update(&mut c, &input(&[]));
+    t.uncovered(&mut c, None);
     assert_eq!(t.menu.focus(), 1);
     // The saves don't change under the title itself: no look.
     c.storage.write(save::SUSPEND_KEY, "junk").unwrap();
@@ -342,7 +341,7 @@ fn the_first_update_and_every_return_look_for_saves() {
     // Back from another screen with a battle suspended: Continue,
     // focused.
     t.update(&mut c, &input(&[Confirm]));
-    t.update(&mut c, &input(&[]));
+    t.uncovered(&mut c, None);
     assert_eq!(
         t.items,
         [Continue, NewGame, LoadGame, Options, Profile, Credits, Quit]
@@ -354,7 +353,7 @@ fn the_first_update_and_every_return_look_for_saves() {
 fn continue_with_a_save_that_cant_be_read_says_why() {
     use Action::{Confirm, CursorDown};
     let mut c = ctx_with_saves(Some("junk"), None);
-    let mut t = TitleScreen::new(&c).refreshed(&c);
+    let mut t = TitleScreen::new(&c);
     assert_eq!(t.notice(), None);
     assert_eq!(outcome_in(&mut t, &mut c, &[Confirm]), "None");
     assert_eq!(t.notice(), Some("This save can't be read"));
@@ -372,7 +371,7 @@ fn continue_with_a_save_that_cant_be_read_says_why() {
     assert_eq!(t.notice(), None);
     c.audio.take();
     // Chosen: the select sound, then the refusal.
-    t.menu = TitleScreen::new(&c).refreshed(&c).menu;
+    t.menu = TitleScreen::new(&c).menu;
     assert_eq!(
         sounds_of(&mut t, &mut c, &[Confirm]),
         ["menu_select", crate::audio::AUDIO.cue(MenuSound::Denied)]
@@ -490,7 +489,7 @@ fn the_first_frame_shows_the_names_the_menu_and_the_help() {
 fn the_view_follows_the_focus_the_saves_and_the_debug_tools() {
     use Action::CursorDown;
     let mut c = ctx_with_saves(Some("junk"), Some("junk"));
-    let mut t = TitleScreen::with_quick_battle(&c).refreshed(&c);
+    let mut t = TitleScreen::with_quick_battle(&c);
     let focused = |t: &TitleScreen, c: &Ctx| {
         let view = t.view(c);
         let menu = view.menu.unwrap();
@@ -525,7 +524,7 @@ fn the_view_follows_the_focus_the_saves_and_the_debug_tools() {
 fn the_notice_shows_until_the_next_key() {
     use Action::{Confirm, CursorDown};
     let mut c = ctx_with_saves(Some("junk"), None);
-    let mut t = TitleScreen::new(&c).refreshed(&c);
+    let mut t = TitleScreen::new(&c);
     assert_eq!(t.view(&c).notice, None);
     t.update(&mut c, &input(&[Confirm]));
     let view = t.view(&c);
@@ -1077,9 +1076,7 @@ fn the_cinematic_is_made_again_when_the_title_is_shown_again() {
     use Action::{Confirm, CursorDown, CursorUp};
     let mut c = ctx();
     let mut t = TitleScreen::new(&c);
-    assert!(t.player.is_none(), "made by the first update");
-    t.update(&mut c, &input(&[]));
-    let first = t.player.clone().unwrap();
+    let first = t.player.clone().expect("made with the title");
     assert_eq!(first.timeline().length_ms(), 133_743);
     assert_eq!(first.timeline().last_start_ms(), 117_000);
     // Nothing changed under the title itself: the same one.
@@ -1096,7 +1093,7 @@ fn the_cinematic_is_made_again_when_the_title_is_shown_again() {
         .get_mut(TITLE_CINEMATIC)
         .unwrap()
         .length_ms = 120_000;
-    t.update(&mut c, &input(&[]));
+    t.uncovered(&mut c, None);
     assert_eq!(t.player.as_ref().unwrap().timeline().length_ms(), 120_000);
     // New Game, and back.
     assert_eq!(
@@ -1109,10 +1106,8 @@ fn the_cinematic_is_made_again_when_the_title_is_shown_again() {
         .get_mut(TITLE_CINEMATIC)
         .unwrap()
         .length_ms = 125_000;
-    t.update(&mut c, &input(&[]));
+    t.uncovered(&mut c, None);
     assert_eq!(t.player.as_ref().unwrap().timeline().length_ms(), 125_000);
-    // `refreshed` makes it at once.
-    assert!(TitleScreen::new(&c).refreshed(&c).player.is_some());
 }
 
 /// The cinematic's lead is the lead of the most recent save, looked up
@@ -1123,7 +1118,6 @@ fn the_cinematics_lead_follows_the_latest_save() {
     use trpg_core::{LeadGender, LeadProfile};
     let mut c = ctx();
     let mut t = TitleScreen::new(&c);
-    t.update(&mut c, &input(&[]));
     let nobody = CinematicPlayer::new(&c, TITLE_CINEMATIC, None).unwrap();
     assert_eq!(t.player.as_ref().unwrap().lead(), nobody.lead());
     let mara = save_of(&c, "Mara", LeadGender::Female);
@@ -1132,7 +1126,7 @@ fn the_cinematics_lead_follows_the_latest_save() {
     t.update(&mut c, &input(&[]));
     assert_eq!(t.player.as_ref().unwrap().lead(), nobody.lead());
     t.update(&mut c, &input(&[Action::Confirm]));
-    t.update(&mut c, &input(&[]));
+    t.uncovered(&mut c, None);
     let lead = LeadProfile::new("Mara", LeadGender::Female);
     assert_eq!(t.player.as_ref().unwrap().lead(), &lead);
     assert_ne!(&lead, nobody.lead());

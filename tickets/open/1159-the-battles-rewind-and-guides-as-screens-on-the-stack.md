@@ -35,6 +35,13 @@ the real job, but about 130 lines exist because the engine's
 Engine ticket 2306 adds `Transition::PopWith`, `Screen::uncovered` and
 `Screen::covered`. 1158 moves the pin past it first.
 
+1158 (done) left the battle with Game Over: a defeat's banner pushes it
+over the battle, the battle reads `GameOverChoice` in `uncovered`
+(`Rewind` calls `rewind_from_defeat`), and backing out of the rewind
+screen pushes it again, skipped. The getters went: the battle pops with
+`BattleEnd`. Keep that behavior when the rewind screen moves onto the
+stack (ADR-0093).
+
 ## Nick input
 
 None.
@@ -50,8 +57,6 @@ None.
   `Menu::handle_with_sound` (or the list cursor, if 1160 is done).
 - The tips' under-scene flag is set in `covered` and cleared in
   `uncovered`.
-- The battle's `*_requested()` getters, if 1158 left them, become
-  `PopWith` values the flow reads.
 
 **Out (do not do):**
 - Any change the player sees: the same keys open, move and close the

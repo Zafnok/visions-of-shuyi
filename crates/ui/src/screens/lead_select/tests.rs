@@ -4,6 +4,7 @@ use super::*;
 use crate::audio::AudioRequest;
 use crate::harness::Harness;
 use crate::screen::tests::ctx;
+use crate::screens::popped_with;
 
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
 
@@ -11,6 +12,12 @@ use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
 pub(super) fn update(s: &mut LeadSelectScreen, c: &mut Ctx, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
     format!("{:?}", s.update(c, &input))
+}
+
+/// What one update with `actions` pops with: the lead made, if it does.
+fn started(s: &mut LeadSelectScreen, c: &mut Ctx, actions: &[Action]) -> Option<LeadProfile> {
+    let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
+    popped_with(s.update(c, &input))
 }
 
 /// The sounds `actions` play.
@@ -33,7 +40,6 @@ fn starts_with_the_male_lead_and_the_default_name() {
     assert_eq!(s.first_name(), "Ellery");
     assert_eq!(s.row(), Row::Gender);
     assert!(s.entry().is_none());
-    assert!(s.result().is_none());
 }
 
 #[test]
@@ -52,10 +58,9 @@ fn pick_the_female_lead_and_start() {
     // Left and Right only pick the gender on the portraits' row.
     update(&mut s, &mut c, &[CursorLeft]);
     assert_eq!(s.gender(), LeadGender::Female);
-    assert_eq!(update(&mut s, &mut c, &[Confirm, CursorUp]), "Pop");
     assert_eq!(
-        s.result(),
-        Some(&LeadProfile::new("Ellery", LeadGender::Female))
+        started(&mut s, &mut c, &[Confirm, CursorUp]),
+        Some(LeadProfile::new("Ellery", LeadGender::Female))
     );
 }
 
@@ -68,7 +73,6 @@ fn rows_wrap_and_cancel_goes_back() {
     update(&mut s, &mut c, &[CursorDown]);
     assert_eq!(s.row(), Row::Gender);
     assert_eq!(update(&mut s, &mut c, &[Cancel]), "Pop");
-    assert!(s.result().is_none());
 }
 
 /// The screen with the name grid (controller players) open on "Ellery".
@@ -152,10 +156,9 @@ fn type_a_new_name() {
     assert!(s.typing().is_none());
     assert_eq!(s.first_name(), "Mara");
     update(&mut s, &mut c, &[CursorDown]);
-    assert_eq!(update(&mut s, &mut c, &[Confirm]), "Pop");
     assert_eq!(
-        s.result(),
-        Some(&LeadProfile::new("Mara", LeadGender::Male))
+        started(&mut s, &mut c, &[Confirm]),
+        Some(LeadProfile::new("Mara", LeadGender::Male))
     );
 }
 
@@ -251,8 +254,8 @@ fn spell_a_new_name() {
     assert!(s.entry().is_none());
     assert_eq!(s.first_name(), "Ma");
     update(&mut s, &mut c, &[CursorDown]);
-    assert_eq!(update(&mut s, &mut c, &[Confirm]), "Pop");
-    assert_eq!(s.result(), Some(&LeadProfile::new("Ma", LeadGender::Male)));
+    let lead = started(&mut s, &mut c, &[Confirm]);
+    assert_eq!(lead, Some(LeadProfile::new("Ma", LeadGender::Male)));
 }
 
 #[test]

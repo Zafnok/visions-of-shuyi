@@ -49,9 +49,11 @@ None.
   its doc comment brought up to date.
 
 **Out (do not do):**
-- The flow hosting its child screens (1158). Either order works: if
-  1158 is done first, the `Stage::Preparations` check in `sync_mode`
-  is already a stack lookup; carry it over.
+- The flow hosting its child screens (1158, done): the flow now copies
+  the settings into the campaign when a screen over it pops
+  (`FlowScreen::sync` and `take_in`), opens the switch to Casual when it
+  pushes Preparations (`push_next`), and Preparations switches its own
+  battle in its `uncovered`; tests read `FlowScreen::campaign_now`.
 - Any change the player sees: switching to Casual in Preparations, the
   tutorial level from Options, and lessons kept in saves behave as now.
 

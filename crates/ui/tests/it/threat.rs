@@ -59,7 +59,7 @@ fn chapter_1() -> Harness {
     skip_scenes(&mut h);
     h.keys("f");
     skip_scenes(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.cursor_tile(), Some(p(4, 12)));
     h
 }
@@ -69,7 +69,7 @@ fn chapter_1() -> Harness {
 fn quick_battle() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f Left f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.cursor_tile(), Some(p(3, 5)));
     h
 }

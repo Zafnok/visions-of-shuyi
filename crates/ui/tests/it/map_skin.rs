@@ -109,7 +109,7 @@ fn the_skin_never_changes_the_game() {
     // was rewound, and the enemy phase came and went.
     let state = |i: usize| glyph[i].battle.clone().unwrap();
     let lord = |s: &BattleState| s.units()[0].pos;
-    assert_eq!(glyph[0].screens, ["title", "battle"]);
+    assert_eq!(glyph[0].screens, ["title", "game_flow", "battle"]);
     assert_eq!(lord(&state(6)), Pos::new(6, 4));
     assert_ne!(state(6), state(1));
     assert_eq!(lord(&state(10)), Pos::new(3, 5), "rewound");
@@ -156,7 +156,7 @@ fn quick_battle_at_dusk_shades_the_ground_only() {
             light_quick_battle(&mut h, light);
         }
         h.keys("Down f Left f f f");
-        assert_eq!(h.screens(), ["title", "battle"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
         h
     };
     let noon = start("test_auto", None);
@@ -216,7 +216,7 @@ fn quick_battle_with_layers_between_tiles() {
     h.with_map_skin("test_auto");
     // Past Preparations (Fight!) and the battle's notes; then the lord.
     h.keys("Down f Left f f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let mut glyphs = Harness::with_layout(RIGHT_HANDED);
     glyphs.keys("Down f Left f f f");
     // What is shown is what the glyph skin shows.
@@ -236,7 +236,7 @@ fn quick_battle_with_sprite_units_on_glyph_terrain() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.with_map_skin("sprite_units");
     h.keys("Down f Left f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let mut glyphs = Harness::with_layout(RIGHT_HANDED);
     glyphs.keys("Down f Left f f");
     // What is shown is what the glyph skin shows.

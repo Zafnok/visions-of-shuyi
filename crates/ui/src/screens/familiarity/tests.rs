@@ -4,10 +4,11 @@ use super::*;
 use crate::harness::Harness;
 use crate::input::Action;
 use crate::screen::tests::ctx;
+use crate::screens::popped_with;
 
-fn update(s: &mut FamiliarityScreen, actions: &[Action]) -> String {
+fn update(s: &mut FamiliarityScreen, actions: &[Action]) -> Transition {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
-    format!("{:?}", s.update(&mut ctx(), &input))
+    s.update(&mut ctx(), &input)
 }
 
 /// The tests (and the game flow) reach the screen through `as_any`.
@@ -18,34 +19,30 @@ fn it_can_be_found_by_its_type() {
     assert!(any.downcast_ref::<FamiliarityScreen>().is_some());
 }
 
+/// Confirm pops with the focused level, for the game flow below.
 #[test]
-fn confirm_picks_the_focused_level() {
+fn confirm_pops_with_the_focused_level() {
     let picked = |downs: usize| {
         let mut s = FamiliarityScreen::new(&ctx());
         for _ in 0..downs {
-            assert_eq!(update(&mut s, &[Action::CursorDown]), "None");
+            let moved = update(&mut s, &[Action::CursorDown]);
+            assert!(matches!(moved, Transition::None));
         }
-        assert_eq!(s.result(), None);
-        assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
-        s.result()
+        popped_with(update(&mut s, &[Action::Confirm]))
     };
     assert_eq!(picked(0), Some(TutorialLevel::Full));
     assert_eq!(picked(1), Some(TutorialLevel::Short));
     assert_eq!(picked(2), Some(TutorialLevel::None));
     let mut s = FamiliarityScreen::new(&ctx());
     assert_eq!(s.name(), "familiarity");
-    assert_eq!(
-        update(&mut s, &[Action::Confirm, Action::CursorDown]),
-        "Pop"
-    );
-    assert_eq!(s.result(), Some(TutorialLevel::Full));
+    let picked = update(&mut s, &[Action::Confirm, Action::CursorDown]);
+    assert_eq!(popped_with(picked), Some(TutorialLevel::Full));
 }
 
 #[test]
 fn cancel_goes_back_without_a_level() {
     let mut s = FamiliarityScreen::new(&ctx());
-    assert_eq!(update(&mut s, &[Action::Cancel]), "Pop");
-    assert_eq!(s.result(), None);
+    assert!(matches!(update(&mut s, &[Action::Cancel]), Transition::Pop));
 }
 
 /// The view on the first frame: the heading, the three answers ("Not

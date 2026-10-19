@@ -200,7 +200,7 @@ fn each_profile_keeps_its_own_options_keys_tips_and_saves() {
         assert!(!save::has_suspend(&h.game().ctx().storage));
         // The keys work at once.
         h.keys("g");
-        assert_eq!(h.screens(), ["title", "mode_select"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
         h.keys("d");
 
         switch(&mut h, mei);

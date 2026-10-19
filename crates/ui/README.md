@@ -17,7 +17,7 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | `game` | `Game` (the engine's frame loop: owns the stack, input state, `Ctx`, buffer and music state; `frame(events, dt)`), and how this game starts it: `game::start(ctx)`, `game::start_on_scene(…)`, `game::new(ctx, root)`, with its `hooks()` (the layout picker, the debug menu) |
 | `audio` | The engine's `AudioRequest`, the `AudioQueue` screens push to (`ctx.audio`), `MusicState` (which track plays, fades) and its `MusicCommand`s (ADR-0026), `MusicClock` (how far into its track the music is, ADR-0037); the engine's `MenuSound`s (`ctx.audio.menu(…)`) with this game's cues (`AUDIO`). Voice clips (ADR-0046) are asked for through `ctx.play_voice(&line_id)`, `ctx.stop_voice()` and `ctx.preload_voices(&line_ids)` |
 | `widgets` | The engine's `Menu` (vertical list in a box) and word wrap (`shuyi_ui::widgets`, 1112), `help` (help text that names keys, or controller buttons when a pad was pressed last), and typing a name (`name_entry`) |
-| `flow` | `FlowScreen`: the game flow (ADR-0035). One screen on the stack that owns the `Campaign` and hosts the flow's screens itself: mode, lead, a chapter's scenes, Preparations, its battle, the results of a won battle, Game Over, "To be continued" |
+| `flow` | `FlowScreen`: the game flow (ADR-0035, ADR-0093). One screen on the stack that owns the `Campaign` and pushes the flow's screens over itself, one at a time, reading what each pops with: mode, lead, a chapter's scenes, Preparations, its battle (with its Game Over), the results of a won battle, "To be continued" |
 | `screens` | Game screens: `TitleScreen` (`screens/title`: left alone it plays the intro cinematic in time with the title song, 0819; `song` is where the cinematic's time comes from), `ModeSelectScreen`, `FamiliarityScreen` (the tutorial level, 0835; painted by the mode screen's skin), `LeadSelectScreen` (with the name grid), `PreparationsScreen` (loadouts and the pack before a battle, 0408; its Options tab is where a Classic campaign can switch to Casual), `GameOverScreen`, `ToBeContinuedScreen`, `ResultsScreen` (a won battle's gold, rewind bonus and EXP bars, then its level-up pages, 0810), `LayoutPickerScreen` (first launch, and from Options to switch layout), `OptionsScreen` (0805: from the title, the map menu and Preparations), `KeyBindingsScreen` (rebinding, 0815; opened from Options), `CreditsScreen` (0808), `DialogueScreen` (full-screen or over the map), `ClassChangeScreen` (`screens/class_change`: promotion and reclass between battles, 0603), `BattleScreen` (`screens/battle`: its `mode` state machine, `attack` targeting, `forecast` panel and combat `playback`, which runs as a mode of the battle screen, ADR-0025) |
 | `portrait` | `draw_portrait`: a portrait's PNG as one sprite item at the largest whole scale that fits the 32×16-cell frame, dimmed and/or mirrored (ADR-0043); `fit_whole_scale` for any picture in any frame |
 | `debug` | Debug menu (F2 in debug builds; the engine's menu with this game's tools, `debug::menu`): glyph sampler, portrait viewer, test scene (full-screen or overlay), sprite test, class change on a test unit (promote, reclass), test cinematic (plays `assets-test/cinematics/test.ron` in a loop: a map pan, text boxes of the test scene, faces crossing, the logo), scene camera (the test map as a backdrop: pan, zoom 1× to 4×), Map skin (the glyph skin, then every tileset in turn; not saved) |
@@ -500,9 +500,10 @@ fn select_opens_new_game() {
   "(8, 7) is in the brigand's range" is `h.tints_at(..)`, not a cell's
   background. Panel, menu and help-bar text is the same in every skin, so
   reading it from the buffer is fine.
-- `flow()` / `flow_mut()`: the game flow on the stack; `flow_mut()` →
-  `battle_mut()` → `send(&Command)` plays its battle with scripted
-  commands (`crates/ui/tests/it/flow.rs`).
+- `flow()`: the game flow on the stack; `battle()` / `battle_mut()`: the
+  battle on it (the flow's, or one put there itself); `battle_mut()` →
+  `send(&Command)` plays it with scripted commands
+  (`crates/ui/tests/it/flow.rs`).
 - Audio: `audio_requests()` (every request of the run), `last_frame_audio()`
   (the last frame's; a `keys` press is the frame *before* the last),
   `music_commands()`, `clear_audio()`, `sounds()` (the sound cues played,

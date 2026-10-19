@@ -43,7 +43,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0032](0032-bought-art.md) | Bought art is allowed; audio stays free | Accepted |
 | [0033](0033-playtest-bots.md) | Playtest bots play through `core`'s commands, on reseeded copies, outside the game | Accepted |
 | [0034](0034-controller-input.md) | Controller input: gilrs on native, a Gamepad API plugin on web | Accepted; buttons rebindable by ADR-0053 |
-| [0035](0035-battle-and-chapter-files-and-the-flow-screen.md) | Battle and chapter files, a core `Campaign`, and one flow screen that hosts the others | Accepted |
+| [0035](0035-battle-and-chapter-files-and-the-flow-screen.md) | Battle and chapter files, a core `Campaign`, and one flow screen that hosts the others | Accepted; the flow hosting its screens (§3) superseded by ADR-0093 |
 | [0036](0036-help-text-follows-the-device-and-own-font-glyphs.md) | Help text follows the device pressed last; our own glyphs join the font from a second BDF | Accepted |
 | [0037](0037-music-clock.md) | A music clock: `app` reports what is sounding, `ui` wraps it at the track's length | Accepted |
 | [0038](0038-graphics-are-a-skin.md) | Graphics are a skin: screens say what to show, a skin says how it looks | Accepted |
@@ -100,6 +100,7 @@ decision, write a new ADR that supersedes it and set the old one's status to
 | [0090](0090-the-playdates-bundle-has-a-private-layer.md) | The Playdate's bundle has a private layer with the `private-assets` feature (`cargo xtask playdate --private-assets`), and a touched-up `.1bit` beside a bought PNG is embedded as it is | Accepted (1061); extends ADR-0070 §3, ADR-0082, ADR-0085 |
 | [0091](0091-the-playdates-screen-skins-and-what-its-options-leave-out.md) | The Playdate's screen skins: `Skins` picks a screen's painter by the skin set; the engine's Options and Key bindings take the game's (`painted_by`); with no keyboard Key bindings is the controller side alone and captures chords; the Playdate's Options leave out Layout, Fullscreen, Colors, Map look and zoom | Accepted (1045); extends ADR-0054, ADR-0083, ADR-0087 and ADR-0079 |
 | [0092](0092-engine-friction-game-code-far-bigger-than-the-job-triggers-a-review.md) | Engine friction: game code far bigger than the job (3× an estimate written first, measured by `cargo xtask code-lines`) triggers a review with one of four outcomes; the engine never names a game concept, and the game never waits on the engine | Accepted (1151); extends ADR-0063 |
+| [0093](0093-the-game-flow-pushes-its-screens-and-reads-what-they-pop-with.md) | The game flow pushes its screens over itself and reads what each pops with (engine 2306); Game Over is the battle's; the title refreshes when uncovered | Accepted (1158); supersedes ADR-0035 §3 |
 
 Numbers 0044, 0050 and 0054 are taken by PRs open on 2026-10-04.
 

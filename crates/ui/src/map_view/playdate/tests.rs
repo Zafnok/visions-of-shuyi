@@ -426,7 +426,7 @@ pub(crate) fn harrowby_ford() -> crate::harness::Harness {
         .with_shipped_story();
     h.keys("f f f Up f d f d f d f d f d f d f").wait(3.0);
     h.keys("d f").wait(3.0);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
 

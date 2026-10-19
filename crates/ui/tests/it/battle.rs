@@ -16,7 +16,7 @@ fn quick_battle_banner() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     // Quick Battle, then Preparations: Left wraps to `Fight!`.
     h.keys("Down f Left f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
 
@@ -65,7 +65,7 @@ fn quick_battle_opens_on_the_player_phase_banner() {
 #[test]
 fn quick_battle_renders() {
     let h = quick_battle();
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_snapshot!(h.snapshot());
 }
 
@@ -78,7 +78,7 @@ fn quick_battle_in_every_theme() {
         let mut h = Harness::with_layout(RIGHT_HANDED);
         h.ctx_mut().change_settings(|s| s.theme = theme).unwrap();
         h.keys("Down f Left f f");
-        assert_eq!(h.screens(), ["title", "battle"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
         let snapshot = h.snapshot();
         let legend = snapshot.split("--- overlays ---").next().unwrap_or("");
         assert!(!legend.contains('#'), "{theme:?} has a colour with no name");
@@ -137,7 +137,7 @@ fn back_opens_the_map_menu() {
     h.keys("d");
     assert_eq!(help(&h), "arrows choose · f confirm · d back");
     h.keys("d");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(
         help(&h),
         "f select · e info · s next unit · r rewind · d menu · Space end turn"
@@ -643,17 +643,17 @@ fn the_start_tip_waits_for_the_first_turn_scene() {
     // skipped.
     h.keys("f f f Up f");
     skip_scenes(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert!(shows(&h, "PLAYER PHASE"));
     // Closing the banner starts the scene: no tip under it.
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle", "dialogue"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "dialogue"]);
     h.wait(1.0);
     let tip = |h: &Harness| h.battle().and_then(BattleScreen::shown_tip);
     assert_eq!(tip(&h), None);
     assert!(!shows(&h, "Your move"));
     skip_scenes(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(tip(&h), Some(TipTrigger::FirstBattleStart));
     assert!(shows(&h, "Your move"));
     assert!(shows(&h, " Vix "));
@@ -689,17 +689,17 @@ fn the_rogue_arrives_and_turn_three_opens_with_a_scene() {
     h.keys("f");
     wait_for(&mut h, "PLAYER PHASE", 30.0);
     assert!(shows(&h, "Turn 3"));
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     // Closing the banner plays the scene over the map.
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle", "dialogue"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "dialogue"]);
     h.wait(2.0);
     assert!(shows(
         &h,
         "Turn 3. A rogue has slipped into the fort to the east."
     ));
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(
         help(&h),
         "f select · e info · s next unit · r rewind · d menu · Space end turn"
@@ -792,7 +792,7 @@ fn play_into_turn_two(h: &mut Harness) {
     assert!(!shows(h, "PHASE"));
     h.keys("d Down f");
     assert!(shows(h, "Turn 2"));
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }
 
 /// The move loop's menus sound like every other menu (ticket 0425).

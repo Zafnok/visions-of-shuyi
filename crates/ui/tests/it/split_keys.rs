@@ -19,7 +19,7 @@ fn quick_battle_with(action: Action, key: &str) -> Harness {
         panic!("saving key bindings: {e}");
     }
     h.keys("Down f Left f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
 

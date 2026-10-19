@@ -44,17 +44,17 @@ fn to_battle(h: &mut Harness, downs: &str) {
     h.keys("f f").keys(downs).keys("f Up f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.keys("f").wait(0.1).keys("f").wait(0.1);
 }
 
 fn battle(h: &Harness) -> &BattleScreen {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle.unwrap_or_else(|| panic!("no battle"))
 }
 
 fn lessons_done(h: &Harness) -> Vec<String> {
-    let campaign = h.flow().and_then(|f| f.campaign());
+    let campaign = h.flow().and_then(|f| f.campaign_now(h.game().ctx()));
     let campaign = campaign.unwrap_or_else(|| panic!("no campaign"));
     campaign.lessons_done.iter().cloned().collect()
 }
@@ -94,7 +94,10 @@ fn at_short_and_none_the_full_lesson_never_opens() {
     ] {
         let mut h = launch(Box::new(MemoryStorage::new()));
         to_battle(&mut h, downs);
-        let campaign = h.flow().and_then(|f| f.campaign()).map(|c| c.tutorial);
+        let campaign = h
+            .flow()
+            .and_then(|f| f.campaign_now(h.game().ctx()))
+            .map(|c| c.tutorial);
         assert_eq!(campaign, Some(level));
         h.wait(1.0);
         assert_eq!(battle(&h).shown_lesson(), None, "{level:?}");
@@ -125,7 +128,7 @@ fn a_done_lesson_stays_done_after_suspend_and_continue() {
     // The next launch: Continue.
     let mut h = launch(h.into_storage());
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.wait(1.0);
     assert_eq!(battle(&h).state().turn(), 1);
     assert_eq!(battle(&h).shown_lesson(), None);

@@ -30,7 +30,7 @@ fn title() -> Harness {
 fn new_game(casual: bool, lead_keys: &str) -> Harness {
     let mut h = title();
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
     h.keys(if casual { "Down f" } else { "f" });
     assert_eq!(h.top_screen(), "familiarity");
     h.keys("f");
@@ -50,7 +50,7 @@ fn skip_scene(h: &mut Harness) {
 fn to_notes() -> Harness {
     let mut h = new_game(false, "Up f");
     skip_scene(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert!(notes_open(&h));
     h
 }
@@ -70,19 +70,19 @@ fn to_battle() -> Harness {
 
 /// Whether the battle on screen shows its notes box.
 fn notes_open(h: &Harness) -> bool {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle.is_some_and(trpg_ui::screens::battle::BattleScreen::notes_open)
 }
 
 /// Sends `cmd` to the battle on screen.
 fn send(h: &mut Harness, cmd: &Command) {
-    let battle = h.flow_mut().and_then(|f| f.battle_mut());
+    let battle = h.battle_mut();
     battle.unwrap_or_else(|| panic!("no battle")).send(cmd);
 }
 
 /// The battle on screen.
 fn battle(h: &Harness) -> BattleState {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle
         .unwrap_or_else(|| panic!("no battle"))
         .state()
@@ -91,7 +91,7 @@ fn battle(h: &Harness) -> BattleState {
 
 /// Rewind charges left in the battle on screen.
 fn charges(h: &Harness) -> u8 {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle.map_or(0, |b| b.history().charges_left())
 }
 
@@ -122,13 +122,13 @@ fn confirm_until(h: &mut Harness, name: &str) {
 /// fills the bars, a press goes on), to the victory scene.
 fn past_results(h: &mut Harness) {
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "results"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "results"]);
     h.keys("f f");
 }
 
 /// Answers "Save your progress?" with No.
 fn decline_save(h: &mut Harness) {
-    assert_eq!(h.screens(), ["title", "save_prompt"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_prompt"]);
     h.keys("Down f");
 }
 
@@ -146,7 +146,7 @@ fn new_game_plays_the_test_chapter_to_the_end() {
     assert_eq!(battle(&h).outcome(), Some(Outcome::Victory));
     // The VICTORY banner, the results, then the victory scene.
     past_results(&mut h);
-    assert_eq!(h.screens(), ["title", "dialogue"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
     assert_eq!(campaign.gold, 500, "the battle's clear gold");
@@ -157,7 +157,7 @@ fn new_game_plays_the_test_chapter_to_the_end() {
     assert_eq!(rewards.bonus_exp, 21);
     skip_scene(&mut h);
     decline_save(&mut h);
-    assert_eq!(h.screens(), ["title", "to_be_continued"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
     assert_snapshot!(h.snapshot());
     h.keys("f");
     assert_eq!(h.screens(), ["title"]);
@@ -202,7 +202,7 @@ fn a_won_battle_shows_its_gold_and_the_rewind_bonus() {
     let mut h = to_battle();
     seize(&mut h);
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "results"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "results"]);
     assert!(shows(&h, "Gold for clearing the map"), "{}", h.snapshot());
     assert!(shows(&h, "+500 (now 500)"), "{}", h.snapshot());
     assert!(shows(&h, "3 of 3"));
@@ -219,7 +219,7 @@ fn a_won_battle_shows_its_gold_and_the_rewind_bonus() {
     assert!(shows(&h, &bar("Test Knight", "Guard", "", 0)));
     // They fill by themselves, and then wait.
     h.wait(3.0);
-    assert_eq!(h.screens(), ["title", "results"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "results"]);
     assert!(
         shows(&h, &bar("Ellery", "Exile", "████", 21)),
         "{}",
@@ -235,7 +235,7 @@ fn a_won_battle_shows_its_gold_and_the_rewind_bonus() {
     assert_eq!(exp[..2], [21, 21]);
     // Nobody levelled: one press goes on to the victory scene.
     h.keys("d");
-    assert_eq!(h.screens(), ["title", "dialogue"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);
 }
 
 /// Acceptance (0810): with a rewind charge used the bonus is smaller, and
@@ -269,13 +269,13 @@ fn used_rewind_charges_shrink_the_bonus_to_nothing() {
     assert_eq!(charges(&h), 0);
     seize(&mut h);
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "results"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "results"]);
     assert!(shows(&h, "+500 (now 500)"), "{}", h.snapshot());
     assert!(shows(&h, "0 of 3"));
     assert!(!shows(&h, "Bonus EXP"));
     assert!(!shows(&h, "EXP"));
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "dialogue"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);
 }
 
 /// Whether some row of the screen contains `text`.
@@ -311,13 +311,13 @@ fn retry_after_a_defeat_restarts_the_battle() {
     }
     assert_eq!(battle(&h).outcome(), Some(Outcome::Defeat));
     confirm_until(&mut h, "game_over");
-    assert_eq!(h.screens(), ["title", "game_over"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "game_over"]);
     // Past its opening animation (0830).
     h.wait(2.1);
     assert_snapshot!(h.snapshot());
     // Retry (below Rewind): the battle from its start, its notes first.
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(battle(&h), start);
     assert_eq!(charges(&h), 3);
     assert!(notes_open(&h));
@@ -348,10 +348,8 @@ fn lost() -> Harness {
 
 /// Game Over as it is this frame.
 fn game_over(h: &Harness) -> trpg_ui::screens::game_over::GameOverView {
-    let screen = h
-        .flow()
-        .and_then(|f| f.game_over())
-        .unwrap_or_else(|| panic!("no game over"));
+    let screen = h.screen::<trpg_ui::screens::GameOverScreen>();
+    let screen = screen.unwrap_or_else(|| panic!("no game over"));
     screen.view(h.game().ctx())
 }
 
@@ -390,9 +388,9 @@ fn game_over_opens_with_its_animation() {
     assert!(last.help.is_some());
     assert_snapshot!("game_over_last_frame", h.snapshot());
     // Waiting picked nothing, and the menu works as before: Retry.
-    assert_eq!(h.screens(), ["title", "game_over"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "game_over"]);
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(charges(&h), 3);
 }
 
@@ -406,7 +404,11 @@ fn a_press_ends_game_overs_animation_and_picks_nothing() {
         assert_eq!(game_over(&h).menu, None);
         h.clear_audio();
         h.keys(skip);
-        assert_eq!(h.screens(), ["title", "game_over"], "{skip}");
+        assert_eq!(
+            h.screens(),
+            ["title", "game_flow", "battle", "game_over"],
+            "{skip}"
+        );
         let view = game_over(&h);
         assert_eq!(view.progress, 255, "{skip}");
         let menu = view.menu.unwrap_or_else(|| panic!("no menu"));
@@ -414,11 +416,15 @@ fn a_press_ends_game_overs_animation_and_picks_nothing() {
         assert_eq!(h.sounds(), [""; 0], "{skip}");
         // The next press is the menu's: the rewind screen, on the battle.
         h.keys("f");
-        assert_eq!(h.screens(), ["title", "battle"], "{skip}");
+        assert_eq!(h.screens(), ["title", "game_flow", "battle"], "{skip}");
         assert_eq!(battle(&h).outcome(), Some(Outcome::Defeat));
         // Backed out of, Game Over is as it was left: no animation again.
         h.keys("d");
-        assert_eq!(h.screens(), ["title", "game_over"], "{skip}");
+        assert_eq!(
+            h.screens(),
+            ["title", "game_flow", "battle", "game_over"],
+            "{skip}"
+        );
         assert_eq!(game_over(&h).progress, 255, "{skip}");
     }
 }
@@ -458,7 +464,7 @@ fn restart_battle_from_the_map_menu() {
     h.keys("d");
     assert!(!shows(&h, "Restart the battle"));
     h.keys("f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(battle(&h), start);
     assert_eq!(charges(&h), 3);
     assert!(notes_open(&h));
@@ -483,7 +489,7 @@ fn battle_notes_show_at_the_start_and_on_the_objective_page() {
     assert_snapshot!(h.snapshot());
     // No key but Confirm does anything: no map menu, no cursor move, no
     // end of turn.
-    let cursor = |h: &Harness| h.flow().and_then(|f| f.battle()).map(|b| b.cursor().pos);
+    let cursor = |h: &Harness| h.battle().map(|b| b.cursor().pos);
     let at = cursor(&h);
     h.keys("d Right e Space Space r");
     assert!(notes_open(&h));
@@ -519,7 +525,7 @@ fn battle_notes_show_at_the_start_and_on_the_objective_page() {
 #[test]
 fn the_phase_banner_waits_for_the_battle_notes() {
     let banner = |h: &Harness| {
-        let battle = h.flow().and_then(|f| f.battle());
+        let battle = h.battle();
         battle.is_some_and(|b| b.banner().is_some())
     };
     let mut h = to_notes();
@@ -548,7 +554,7 @@ fn no_notes_box_for_a_battle_without_notes() {
     let mut h = title();
     // Quick Battle, then Preparations: Left wraps to `Fight!`.
     h.keys("Down f Left f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert!(battle(&h).battle_notes().is_empty());
     assert!(!notes_open(&h));
     assert!(!shows(&h, "BATTLE NOTES"));
@@ -615,7 +621,7 @@ fn the_battles_music_plays_from_its_start_to_the_end_of_the_chapter() {
     assert_eq!(h.top_screen(), "dialogue");
     assert_eq!(music(&h), ["title"]);
     skip_scene(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(music(&h), ["title", "battle_easy"]);
     // The battle notes closed, and the banner after them. A move, rewound;
     // then a whole turn: enemy phase, player phase.
@@ -641,11 +647,11 @@ fn the_battles_music_plays_from_its_start_to_the_end_of_the_chapter() {
     assert_eq!(music(&h), ["title", "battle_easy", sting.as_str()]);
     h.wait(2.0);
     confirm_until(&mut h, "dialogue");
-    assert_eq!(h.screens(), ["title", "dialogue"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "dialogue"]);
     assert_eq!(music(&h), ["title", "battle_easy", sting.as_str()]);
     skip_scene(&mut h);
     decline_save(&mut h);
-    assert_eq!(h.screens(), ["title", "to_be_continued"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
     assert_eq!(music(&h), ["title", "battle_easy", sting.as_str(), "-"]);
     h.keys("f").wait(0.1);
     assert_eq!(h.screens(), ["title"]);
@@ -674,7 +680,7 @@ fn defeat_plays_through_game_over_and_retry_plays_the_battles_music_again() {
     assert_eq!(music(&h), ["title", first.as_str(), "defeat"]);
     h.clear_audio();
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(music(&h), [skirmish_pick(&mut h, 1)]);
     for _ in 0..6 {
         send(&mut h, &Command::EndPhase);
@@ -696,7 +702,7 @@ fn restart_battle_asks_for_the_battles_music_again() {
     let mut h = to_battle();
     h.clear_audio();
     h.keys("d Down Down Down Down Down f f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(battle(&h).turn(), 1);
     assert_eq!(music(&h), [skirmish_pick(&mut h, 1)]);
 
@@ -710,7 +716,7 @@ fn restart_battle_asks_for_the_battles_music_again() {
     h.keys("f");
     h.wait(2.0).clear_audio();
     h.keys("d Down Down Down Down Down f f f").wait(2.0);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(music(&h), ["battle_easy"]);
     assert!(h.music_commands().is_empty(), "{:?}", h.music_commands());
 }
@@ -728,19 +734,19 @@ fn each_familiarity_answer_sets_the_level_and_gates_the_tips() {
         let mut h = title();
         h.with_tips();
         h.keys("f");
-        assert_eq!(h.screens(), ["title", "mode_select"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
         h.keys("f");
-        assert_eq!(h.screens(), ["title", "familiarity"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "familiarity"]);
         h.keys(downs).keys("f");
-        assert_eq!(h.screens(), ["title", "lead_select"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "lead_select"]);
         h.keys("Up f");
         skip_scene(&mut h);
-        let campaign = h.flow().and_then(|f| f.campaign());
+        let campaign = h.flow().and_then(|f| f.campaign_now(h.game().ctx()));
         let campaign = campaign.unwrap_or_else(|| panic!("no campaign"));
         assert_eq!(campaign.tutorial, level);
         // The battle notes closed, then past the turn's banner.
         h.keys("f").wait(2.0);
-        let screen = h.flow().and_then(|f| f.battle());
+        let screen = h.battle();
         let shown = screen.and_then(trpg_ui::screens::battle::BattleScreen::shown_tip);
         assert_eq!(shown, tip, "{level:?}");
     }
@@ -757,7 +763,7 @@ fn a_tip_not_shown_before_a_retry_shows_after_it() {
     skip_scene(&mut h);
     assert!(notes_open(&h));
     let shown = |h: &Harness| {
-        let screen = h.flow().and_then(|f| f.battle());
+        let screen = h.battle();
         screen.and_then(trpg_ui::screens::battle::BattleScreen::shown_tip)
     };
     assert_eq!(shown(&h), None, "the notes go first");
@@ -775,7 +781,7 @@ fn a_tip_not_shown_before_a_retry_shows_after_it() {
     assert_eq!(h.top_screen(), "game_over");
     // Retry: the notes, the banner, then the tip.
     h.wait(2.1).keys("Down f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.keys("f f").wait(0.1);
     assert_eq!(shown(&h), Some(TipTrigger::FirstBattleStart));
 }
@@ -785,9 +791,9 @@ fn a_tip_not_shown_before_a_retry_shows_after_it() {
 #[test]
 fn back_out_of_new_game() {
     let mut h = new_game(false, "d");
-    assert_eq!(h.screens(), ["title", "familiarity"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "familiarity"]);
     h.keys("d");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
     h.keys("d");
     assert_eq!(h.screens(), ["title"]);
 }
@@ -799,9 +805,9 @@ fn quick_battle_runs_through_the_flow() {
     let mut h = title();
     // Preparations first; Left wraps to `Fight!`.
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h.keys("Left f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
     assert_eq!(campaign.chapter, "quick");
@@ -818,7 +824,7 @@ fn playtime_counts_while_playing() {
     h.wait(2.0);
     let played = h
         .flow()
-        .and_then(|f| f.campaign())
+        .and_then(|f| f.campaign_now(h.game().ctx()))
         .map_or(0, |c| c.playtime_s);
     assert_eq!(played, 2);
 }
@@ -846,15 +852,15 @@ fn the_next_chapter_follows_a_victory() {
     decline_save(&mut h);
     // The Quick Battle has Preparations, with the army's own stock: the
     // two Potions left over from the test battle.
-    assert_eq!(h.screens(), ["title", "preparations"]);
-    let prep = h.flow().and_then(|f| f.preparations());
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
+    let prep = h.screen::<trpg_ui::screens::PreparationsScreen>();
     let prep = prep.unwrap_or_else(|| panic!("no preparations"));
     assert_eq!(prep.spare(), [(trpg_core::ItemId::new("potion"), 2)]);
     // A story battle's Preparations can't be left.
     h.keys("d");
     assert!(!shows(&h, "Leave preparations?"), "{}", h.snapshot());
     h.keys("Left f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
     assert_eq!(flow.chapter().map(|c| c.id.as_str()), Some("quick"));
     let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));

@@ -55,7 +55,7 @@ fn skip_scenes(h: &mut Harness) {
 }
 
 fn battle(h: &Harness) -> BattleState {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle
         .unwrap_or_else(|| panic!("no battle: {:?}", h.screens()))
         .state()
@@ -63,7 +63,7 @@ fn battle(h: &Harness) -> BattleState {
 }
 
 fn send(h: &mut Harness, command: &Command) {
-    let battle = h.flow_mut().and_then(|f| f.battle_mut());
+    let battle = h.battle_mut();
     battle.unwrap_or_else(|| panic!("no battle")).send(command);
 }
 
@@ -95,7 +95,7 @@ fn play_chapter_1() -> Vec<String> {
     // The battle's banner, then its opening scene.
     h.pad("South");
     skip_scenes(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let commands: Vec<Command> =
         ron::from_str(PLAYTHROUGH).unwrap_or_else(|e| panic!("ch01_winning.ron: {e}"));
     let ai = h.game().ctx().game.content.ai;
@@ -124,9 +124,14 @@ fn play_chapter_1() -> Vec<String> {
             }
         }
     }
-    assert_eq!(h.screens(), ["title", "save_prompt"], "{}", h.snapshot());
+    assert_eq!(
+        h.screens(),
+        ["title", "game_flow", "save_prompt"],
+        "{}",
+        h.snapshot()
+    );
     h.pad("DpadDown South");
-    assert_eq!(h.screens(), ["title", "to_be_continued"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
     h.pad("South");
     assert_eq!(h.screens(), ["title"]);
     // What it started, and what the scenes it skipped would have: every

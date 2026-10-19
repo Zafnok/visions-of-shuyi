@@ -332,7 +332,7 @@ fn after_a_skip_the_menu_works_and_a_second_skip_is_another_press() {
     let mut h = title();
     wait_until(&mut h, 20.0);
     h.keys("f f");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
     // Back on the title its music is asked for again, from its start
     // (the skip had stopped it), and the 15 seconds start over.
     h.wait(1.0);
@@ -420,9 +420,9 @@ fn the_timer_does_not_run_under_load_game_or_options() {
     h.wait(10.0);
     assert_eq!(focused(&h).as_deref(), Some("New Game"));
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "save_slots"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
     wait(&mut h, 40.0);
-    assert_eq!(h.screens(), ["title", "save_slots"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
     h.keys("d");
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(shows(&h), Shows::Menu(255));
@@ -456,7 +456,7 @@ fn back_from_a_battle_the_menu_shows_and_the_song_starts_over() {
     assert_alone_at(&h, 20.0);
     // Skip, then Quick Battle: `Fight!`, the banner.
     h.keys("z Down f Left f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     wait(&mut h, 40.0);
     assert!(song(&h).is_nan(), "the battle's music");
     // The map menu's Suspend, confirmed: the title.

@@ -8,7 +8,6 @@ use insta::assert_snapshot;
 use trpg_core::{LeadGender, Pos};
 use trpg_ui::Ctx;
 use trpg_ui::ShuyiCtx;
-use trpg_ui::flow::{FlowScreen, Stage};
 use trpg_ui::glyph_buffer::Rect;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
@@ -16,14 +15,9 @@ use trpg_ui::map_view::{MapScene, Place};
 use trpg_ui::screens::DialogueScreen;
 use trpg_ui::screens::dialogue::glyph::PLACE_BRIGHTNESS;
 
-/// The dialogue screen playing: on the stack, or the game flow's scene.
+/// The dialogue screen playing (a battle's, or the game flow's).
 fn dialogue(h: &Harness) -> &DialogueScreen {
-    let flow = h.flow().map(FlowScreen::stage);
-    let in_flow = match flow {
-        Some(Stage::Scene(screen)) => Some(&**screen),
-        _ => None,
-    };
-    let Some(screen) = h.game().screen::<DialogueScreen>().or(in_flow) else {
+    let Some(screen) = h.game().screen::<DialogueScreen>() else {
         panic!("no scene is playing: {:?}", h.screens());
     };
     screen
@@ -146,10 +140,10 @@ fn the_last_scene_is_in_the_study_at_veyne_hall() {
 fn the_battle_map_behind_a_battles_scene_is_darkened() {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f Left f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let before = h.game().buffer().clone();
     h.keys("F2 Down Down Down f");
-    assert_eq!(h.screens(), ["title", "battle", "dialogue"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "dialogue"]);
     assert!(dialogue(&h).view(h.game().ctx()).overlay);
     let during = h.game().buffer();
     let mut terrain = 0;

@@ -70,10 +70,13 @@ fn start_chapter_1(mut h: Harness, level: TutorialLevel, without: &[&str]) -> Ha
     skip_scenes(&mut h);
     h.keys("f");
     skip_scenes(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.wait(0.1);
     assert_eq!(h.cursor_tile(), Some(LEAD));
-    let campaign = h.flow().and_then(|f| f.campaign()).map(|c| c.tutorial);
+    let campaign = h
+        .flow()
+        .and_then(|f| f.campaign_now(h.game().ctx()))
+        .map(|c| c.tutorial);
     assert_eq!(campaign, Some(level));
     h
 }
@@ -87,7 +90,7 @@ fn shown(h: &Harness) -> Option<&str> {
 }
 
 fn done(h: &Harness) -> Vec<String> {
-    let campaign = h.flow().and_then(|f| f.campaign());
+    let campaign = h.flow().and_then(|f| f.campaign_now(h.game().ctx()));
     let campaign = campaign.unwrap_or_else(|| panic!("no campaign"));
     campaign.lessons_done.iter().cloned().collect()
 }
@@ -523,7 +526,10 @@ fn the_tutorial_set_to_none_stops_the_lessons_and_tips_already_waiting() {
     assert_eq!(tip(&h), None);
     h.keys("d").wait(0.1);
     set_tutorial(&mut h, "Right Right");
-    let campaign = h.flow().and_then(|f| f.campaign()).map(|c| c.tutorial);
+    let campaign = h
+        .flow()
+        .and_then(|f| f.campaign_now(h.game().ctx()))
+        .map(|c| c.tutorial);
     assert_eq!(campaign, Some(TutorialLevel::None));
     let quiet = |h: &Harness| {
         assert_eq!(shown(h), None);

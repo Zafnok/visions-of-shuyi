@@ -33,7 +33,7 @@ fn full_screen() -> Harness {
 fn over_the_map() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f Left f f F2 Down Down Down f");
-    assert_eq!(h.screens(), ["title", "battle", "dialogue"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "dialogue"]);
     h
 }
 
@@ -78,7 +78,7 @@ fn the_full_screen_scene_plays_to_the_end() {
 fn the_overlay_scene_plays_to_the_end() {
     let mut h = over_the_map();
     assert_eq!(play_to_the_end(&mut h), TEST_PRESSES);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }
 
 #[test]
