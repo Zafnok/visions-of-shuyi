@@ -11,6 +11,7 @@ pub mod layout_picker;
 pub mod lead_select;
 pub mod mode_select;
 pub mod options;
+pub mod playdate;
 pub mod preparations;
 pub mod profile;
 pub mod results;
@@ -35,7 +36,36 @@ pub use results::ResultsScreen;
 pub use save::{SavePromptScreen, SlotPickerScreen};
 pub use title::TitleScreen;
 
-use crate::screen::Ctx;
+use crate::glyph_buffer::GlyphBuffer;
+use crate::screen::{Ctx, SkinSet};
+
+/// What paints a view.
+pub type Paint<V> = fn(&Ctx, &V, &mut GlyphBuffer);
+
+/// A screen's skins, one for each [`SkinSet`] (ADR-0083): the glyph skin
+/// on the PC, the one-bit skin on the Playdate (ticket 1045). A screen's
+/// `draw` is `SKINS.paint(ctx, &self.view(ctx), buf);`.
+pub struct Skins<V> {
+    /// The PC's (`<screen>/glyph.rs`).
+    pub glyph: Paint<V>,
+    /// The Playdate's (`<screen>/playdate.rs`).
+    pub playdate: Paint<V>,
+}
+
+impl<V> Skins<V> {
+    /// The skin of `ctx`'s skin set.
+    pub fn of(&self, ctx: &Ctx) -> Paint<V> {
+        match ctx.game.skin_set {
+            SkinSet::Glyph => self.glyph,
+            SkinSet::Playdate => self.playdate,
+        }
+    }
+
+    /// Paints `view` over `buf` with the skin of `ctx`'s skin set.
+    pub fn paint(&self, ctx: &Ctx, view: &V, buf: &mut GlyphBuffer) {
+        (self.of(ctx))(ctx, view, buf);
+    }
+}
 
 pub(crate) use shuyi_ui::screens::{centre_x, print_centred};
 

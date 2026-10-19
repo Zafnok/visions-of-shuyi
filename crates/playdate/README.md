@@ -6,9 +6,10 @@ clock, files and the allocator, and holds no game or screen logic.
 
 From its first frame it shows the loading card, the game's name centred
 in the game's font (ticket 1036, `src/card.rs`); then it loads the game
-on the game's own stack and runs it (ticket 1033). The screens still
-wear the PC's skins, drawn into a 50 × 15 console, so most are cut off
-until their Playdate skins land (1037 on).
+on the game's own stack and runs it (ticket 1033). The screens are drawn
+into a 50 × 15 console, each in its Playdate skin where it has one (the
+map, 1037; New Game, Options, Key bindings and Profile, 1045); the others
+still wear the PC's skins and are cut off until theirs land (1038 on).
 
 Its pictures are one-bit ones (ticket 1040, ADR-0085): `trpg-content`'s
 `build.rs` converts the portraits, combat pictures and backdrops by the
@@ -84,8 +85,10 @@ palette, `Keyboard::Absent` (no layout picker) and the Playdate pad as the
 device help text names; tips, lessons and idle motion on, as on the PC.
 The debug tools are off: they are made of the test files, which a build
 without `std` does not have (ADR-0057). A game that quits keeps its
-last frame (the system's Menu button leaves it), its music stopped. Choosing a colour theme in Options would swap in that theme's PC
-palette until 1045 takes the theme out of the Playdate's Options.
+last frame (the system's Menu button leaves it), its music stopped.
+Its Options have no colour theme, window, map look or layout to choose,
+and its Key bindings show the Playdate's buttons alone (ticket 1045,
+ADR-0091).
 
 ## Buttons
 

@@ -12,9 +12,9 @@ use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
 use shuyi_cli::{GameArg, GameLang, GameOption, GameTools};
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_ui::harness::Harness;
-use trpg_ui::input::{LEFT_HANDED, Layout, RIGHT_HANDED};
+use trpg_ui::input::{Device, LEFT_HANDED, Layout, PadKind, RIGHT_HANDED};
 use trpg_ui::onebit::{self, FRAME_BYTES};
-use trpg_ui::screen::{Ctx, ShuyiCtx};
+use trpg_ui::screen::{Ctx, Keyboard, ShuyiCtx};
 use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Palette, Rect, UiColor};
 
 /// The game's `frame-png` options.
@@ -29,7 +29,9 @@ const OPTIONS: [GameOption; 6] = [
         value: None,
         help: "the Playdate's screen: a 50×15 console in the Playdate's\n\
                palette, drawn black and white by the one-bit renderer,\n\
-               with the one-bit pictures the Playdate's build makes (1040)",
+               with the one-bit pictures the Playdate's build makes (1040);\n\
+               no keyboard and the Playdate's buttons, as on the device\n\
+               (steer it with --pad)",
     },
     GameOption {
         flag: "--map",
@@ -169,8 +171,12 @@ fn frame(start: &Start, script: &Script, scale: Option<u32>) -> Result<Shot, Str
     let playdate = start.playdate.then(playdate_palette).transpose()?;
     let setup = |ctx: &mut Ctx| {
         if let Some(palette) = playdate {
+            // As `crates/playdate/src/start.rs` starts the game.
             ctx.console = ConsoleSpec::PLAYDATE;
             ctx.palette = palette;
+            ctx.keyboard = Keyboard::Absent;
+            ctx.device = Device::Pad(PadKind::Playdate);
+            ctx.use_playdate_buttons();
             ctx.use_playdate_skins();
         }
     };

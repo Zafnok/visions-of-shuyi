@@ -9,8 +9,12 @@
 //! [`crate::widgets::name_entry`]'s, with [`NAME_RULES`]: letters, `-`,
 //! `'` and single spaces between words, at most [`MAX_NAME_LEN`]
 //! characters, not blank. Cancel leaves the name as it was.
+//!
+//! **The look is a skin** (ADR-0054): [`glyph::paint`] on the PC,
+//! [`playdate::paint`] on the Playdate ([`SKINS`], ADR-0083).
 
 pub mod glyph;
+pub mod playdate;
 pub mod view;
 
 use crate::prelude::*;
@@ -24,7 +28,14 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, text_keys_help};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screens::Skins;
 use crate::widgets::name_entry::{NameEvent, NameRules};
+
+/// The screen's skins: the PC's and the Playdate's.
+pub const SKINS: Skins<LeadSelectView> = Skins {
+    glyph: glyph::paint,
+    playdate: playdate::paint,
+};
 
 /// The key of the heading in the language files ([`Ctx::text`]).
 pub const HEADING: &str = "lead_select.heading";
@@ -286,7 +297,7 @@ impl Screen<Shuyi> for LeadSelectScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        glyph::paint(ctx, &self.view(ctx), buf);
+        SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {

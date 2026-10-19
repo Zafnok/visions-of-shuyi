@@ -251,6 +251,63 @@ for ally. This gives more contrast for readability".
   way starts a fresh notch, so after a step back the next step forwards
   takes a whole notch, and a hand resting on the crank never steps.
 
+### New Game, Options, Key bindings and Profile (1045)
+
+As built by ticket 1045 (`cargo shuyi frame-png --playdate`, shown at ×2):
+[`1045-mode.png`](playdate/1045-mode.png),
+[`1045-familiarity.png`](playdate/1045-familiarity.png),
+[`1045-lead.png`](playdate/1045-lead.png),
+[`1045-letter-grid.png`](playdate/1045-letter-grid.png),
+[`1045-options.png`](playdate/1045-options.png),
+[`1045-key-bindings.png`](playdate/1045-key-bindings.png) (and
+[`-crank`](playdate/1045-key-bindings-crank.png),
+[`-capture`](playdate/1045-key-bindings-capture.png),
+[`-chord`](playdate/1045-key-bindings-chord.png)),
+[`1045-profile.png`](playdate/1045-profile.png). The portraits in them are
+the game's own placeholder faces (a build without the bought art).
+
+*Claude's starting rules (Nick signs off in 1045, and can veto):*
+
+- **The look of every window**: white inside a double black frame, its
+  title in the top of the frame (as the guide's box), black letters on
+  the white ground.
+- **The focus is a bar**, white letters on black, wherever the PC lights
+  up the focused line. What the PC dims because it can't be chosen is
+  **grey dots**.
+- **Game mode and familiarity:** the heading, the choices in a window,
+  and **only the focused choice's explaining line** under them, wrapped
+  to the screen (the PC shows every line, the others dimmed; one bit has
+  no dimming).
+- **The lead:** the two faces side by side **at 2×** (as in dialogue),
+  the chosen one in a double frame, the other in a single frame and
+  faded; the chosen one's name is the bar while the cursor is on the
+  faces. The name and `[ Start ]` under them.
+- **The letter grid** has a row of letters per row, with no blank row
+  between them (the PC has one), so a grid with digits (a profile's
+  name) fits the screen.
+- **Options leaves out** what means nothing on the Playdate: **Layout**
+  (no keyboard), **Fullscreen** (no window), **Colors** (the one-bit
+  screen's inks), **Map look** and **Map zoom** (the Playdate's map has
+  one look and doesn't zoom). Language has no row yet on either machine
+  (0825; one build per language on the Playdate, 0061), nor the portrait
+  style (1042).
+- **A list too long for its window scrolls**, the focused line kept in
+  the middle where it can be; a `▲` or `▼` in the frame says there is
+  more. A message (`Tips will show again`) goes in the bottom of the
+  frame; the help line is the screen's bottom row.
+- **Key bindings** has only the Playdate's buttons (no keyboard side, no
+  switch), and lists the crank's two actions as **Rewind back** and
+  **Rewind forward**, after Rewind; it leaves out **Zoom map**. The
+  first slot is wide enough for every Playdate name (`Crank forward`),
+  the second and third cut a longer one; there is no room for the
+  slots' headings (`Button 1`…). An action that just lost its button to
+  another has a `*` before its name for a moment.
+- **A chord is captured** by holding one button and pressing another
+  (hold B, press ↓: `B+↓`), or pressing two together (A + B); it goes in
+  when either is let go (the other then does nothing when it is let go).
+  One button held alone for a second still backs out, as on the PC's
+  controller side.
+
 ### What the first version keeps (Q5)
 
 Everything Chapter 1 has on the PC, made for the device:

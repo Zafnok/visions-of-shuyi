@@ -19,8 +19,14 @@
 //! keys are reset on the Key bindings screen, and the layout stays).
 //! Whatever does something big asks first (`docs/design/options.md`).
 //!
+//! On the Playdate (ticket 1045) the rows that mean nothing there are
+//! left out ([`PC_ONLY`], and `Layout` with no keyboard).
+//!
 //! **The look is a skin** (ADR-0054): the engine's [`glyph::paint`] draws
-//! the screen's [`OptionsView`].
+//! the screen's [`OptionsView`], or on the Playdate [`playdate::paint`]
+//! ([`SKINS`], ADR-0083).
+
+pub mod playdate;
 
 use crate::prelude::*;
 pub use shuyi_ui::screens::options::*;
@@ -30,8 +36,10 @@ use trpg_content::Theme;
 use trpg_core::{GameMode, TutorialLevel};
 
 use super::{key_bindings, layout_picker};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::map_view::{CursorStyle, has_pictures};
-use crate::screen::{Ctx, ModeSwitch, Shuyi};
+use crate::screen::{Ctx, Keyboard, ModeSwitch, Shuyi, SkinSet};
+use crate::screens::Skins;
 use crate::settings::{AnimSpeed, EnemyPhaseSpeed, MapLook, MapZoom, Settings};
 use crate::tips::reset_tips;
 
@@ -49,10 +57,30 @@ pub const CASUAL_MESSAGE: &str = "options.message.casual";
 /// Text key of the message when the mode can't be switched here.
 pub const MODE_AT_PREP_MESSAGE: &str = "options.message.mode_at_prep";
 
-/// The Options screen with this game's rows, its first row focused.
+/// The Options screen with this game's rows, its first row focused,
+/// painted by the skin of the context's skin set.
 pub fn screen() -> OptionsScreen {
-    OptionsScreen::new(rows)
+    OptionsScreen::new(rows).painted_by(paint)
 }
+
+/// The screen's skins: the engine's glyph skin on the PC, and the
+/// Playdate's.
+pub const SKINS: Skins<OptionsView> = Skins {
+    glyph: glyph::paint::<Shuyi>,
+    playdate: playdate::paint,
+};
+
+/// Paints `view` with the skin of `ctx`'s skin set ([`SKINS`]).
+fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
+    SKINS.paint(ctx, view, buf);
+}
+
+/// The rows only the PC's screen shows (ticket 1045): what each does means
+/// nothing on the Playdate's skins (`SkinSet::Playdate`). `Fullscreen`: its
+/// screen is the device's, with no window. `Theme`: one bit has the
+/// Playdate palette's inks, not a colour theme. `Map look` and `Map
+/// zoom`: its map has one skin, which doesn't zoom, whatever the look.
+pub const PC_ONLY: [Row; 4] = [Row::Fullscreen, Row::Theme, Row::MapLook, Row::MapZoom];
 
 /// One row of the screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -335,7 +363,8 @@ impl From<Row> for &'static str {
 /// The rows shown, as the engine's screen takes them: every one, `Game
 /// mode` and `Tutorial` only with a campaign loaded, `Map look` only when
 /// the game has pictures and `Map zoom` only when it has them or the map
-/// skin in use can zoom.
+/// skin in use can zoom; `Layout` only with a keyboard, and none of
+/// [`PC_ONLY`] on the Playdate.
 pub fn rows(ctx: &Ctx) -> Vec<OptionRow> {
     shown_rows(ctx).into_iter().map(Row::option).collect()
 }
@@ -346,12 +375,16 @@ pub fn shown_rows(ctx: &Ctx) -> Vec<Row> {
     let tutorial = ctx.game.campaign_tutorial.is_some();
     let pictures = has_pictures(&ctx.game.content);
     let zooms = pictures || ctx.game.map_skin.zoom().is_some();
+    let keyboard = ctx.keyboard == Keyboard::Present;
+    let pc = ctx.game.skin_set == SkinSet::Glyph;
     Row::ALL
         .into_iter()
         .filter(|&r| r != Row::GameMode || campaign)
         .filter(|&r| r != Row::Tutorial || tutorial)
         .filter(|&r| r != Row::MapLook || pictures)
         .filter(|&r| r != Row::MapZoom || zooms)
+        .filter(|&r| r != Row::Layout || keyboard)
+        .filter(|r| pc || !PC_ONLY.contains(r))
         .collect()
 }
 

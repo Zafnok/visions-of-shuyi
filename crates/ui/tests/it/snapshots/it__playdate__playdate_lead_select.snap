@@ -1,0 +1,41 @@
+---
+source: crates/ui/tests/it/playdate.rs
+expression: h.snapshot()
+---
+                 Choose your lead                 
+     ╔════════════════╗    ┌────────────────┐     
+     ║                ║    │                │     
+     ║                ║    │                │     
+     ║                ║    │                │     
+     ║                ║    │                │     
+     ║                ║    │                │     
+     ║                ║    │                │     
+     ║                ║    │                │     
+     ║                ║    │                │     
+     ╚════════════════╝    └────────────────┘     
+            Male                 Female           
+               Name   Ellery Veyne                
+                    [ Start ]                     
+          D-pad choose · A next · B back          
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaabbbbbbaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:white bg:black
+b = fg:black bg:white
+--- overlays ---
+under sprite 48,32 128x128  portraits/lead_m/neutral.png 0,0 32x32
+under sprite 224,32 128x128  portraits/lead_f/neutral.png 0,0 32x32 opacity=140

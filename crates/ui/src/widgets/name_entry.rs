@@ -17,9 +17,11 @@
 //! to take only on [`NameEvent::Done`].
 //!
 //! **The look is a skin** (ADR-0054): [`TypingView`] and [`GridView`] say
-//! what a box shows; [`glyph`] paints them.
+//! what a box shows; [`glyph`] paints them, and [`playdate`] on the
+//! Playdate.
 
 pub mod glyph;
+pub mod playdate;
 
 use crate::prelude::*;
 

@@ -4,9 +4,11 @@
 //!
 //! **The look is a skin** (ADR-0054): this module decides what the screen
 //! shows and does, and says it as a [`ModeSelectView`]
-//! ([`ModeSelectScreen::view`]); [`glyph::paint`] draws that view.
+//! ([`ModeSelectScreen::view`]); [`glyph::paint`] draws that view, or on
+//! the Playdate [`playdate::paint`] ([`SKINS`], ADR-0083).
 
 pub mod glyph;
+pub mod playdate;
 pub mod view;
 
 use crate::prelude::*;
@@ -16,7 +18,15 @@ use trpg_core::GameMode;
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screens::Skins;
 use crate::widgets::{Menu, MenuEvent, MenuItem};
+
+/// The screen's skins: the PC's and the Playdate's (also the familiarity
+/// screen's).
+pub const SKINS: Skins<ModeSelectView> = Skins {
+    glyph: glyph::paint,
+    playdate: playdate::paint,
+};
 
 /// The key of the heading in the language files ([`Ctx::text`]).
 pub const HEADING: &str = "mode_select.heading";
@@ -115,7 +125,7 @@ impl Screen<Shuyi> for ModeSelectScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        glyph::paint(ctx, &self.view(ctx), buf);
+        SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {

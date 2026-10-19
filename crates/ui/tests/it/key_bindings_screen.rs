@@ -115,7 +115,7 @@ fn the_list_snapshot() {
 #[test]
 fn the_left_handed_list_shows_that_layouts_keys() {
     let h = open(LEFT_HANDED);
-    assert_eq!(view(&h).switch.keyboard, "Keyboard · Left-handed");
+    assert_eq!(view(&h).switch.unwrap().keyboard, "Keyboard · Left-handed");
     assert!(shows(&h, Action::Confirm, "j"));
     assert!(shows(&h, Action::CursorUp, "w"));
 }
