@@ -50,6 +50,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::widgets::wrap_step;
 use crate::words::Words;
 
 /// Text key of the question Cancel asks on the tabs, when leaving is
@@ -168,15 +169,6 @@ const fn weight_key(weight: ArmourWeight) -> &'static str {
         ArmourWeight::Light => "prep.reason.armour.light",
         ArmourWeight::Medium => "prep.reason.armour.medium",
         ArmourWeight::Heavy => "prep.reason.armour.heavy",
-    }
-}
-
-/// The index after `i` (`down`) or before it in a list of `len`, wrapping.
-fn step(i: usize, len: usize, down: bool) -> usize {
-    match (len, down) {
-        (0, _) => 0,
-        (_, true) => (i + 1) % len,
-        (_, false) => (i + len - 1) % len,
     }
 }
 
@@ -626,7 +618,7 @@ impl PreparationsScreen {
     /// Moves a list cursor from `i` in a list of `len`, with the move sound
     /// if it moved.
     fn moved(i: usize, len: usize, down: bool, ctx: &mut Ctx) -> usize {
-        let next = step(i, len, down);
+        let next = wrap_step(i, len, down);
         if next != i {
             ctx.audio.menu(MenuSound::Move);
         }
@@ -747,7 +739,7 @@ impl PreparationsScreen {
             (Focus::Tabs, CursorLeft | CursorRight) => {
                 let n = Tab::ALL.len();
                 let i = Tab::ALL.iter().position(|&t| t == self.tab).unwrap_or(0);
-                self.tab = Tab::ALL[step(i, n, action == CursorRight)];
+                self.tab = Tab::ALL[wrap_step(i, n, action == CursorRight)];
                 ctx.audio.menu(MenuSound::Move);
             }
             (Focus::Tabs, Confirm) => return self.open_tab(ctx),

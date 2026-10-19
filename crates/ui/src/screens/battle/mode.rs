@@ -62,6 +62,7 @@ use super::split_keys;
 use super::walk::{self, Gait};
 use crate::input::{Action, Device, Keymap};
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
+use crate::widgets::wrap_step;
 use crate::words::Words;
 
 pub use super::walk::WALK_TILES_PER_S;
@@ -1184,15 +1185,10 @@ fn step_info(unit: UnitId, action: Action, state: &BattleState) -> (Mode, Effect
         _ => return (Mode::Info { unit }, Effect::None),
     };
     let units = same_faction(state, unit);
-    let n = units.len();
-    let next = units.iter().position(|&u| u == unit).map_or(unit, |i| {
-        let j = if forward {
-            (i + 1) % n
-        } else {
-            (i + n - 1) % n
-        };
-        units[j]
-    });
+    let next = units
+        .iter()
+        .position(|&u| u == unit)
+        .map_or(unit, |i| units[wrap_step(i, units.len(), forward)]);
     (Mode::Info { unit: next }, Effect::None)
 }
 
@@ -1334,10 +1330,13 @@ fn step_talk_target(
     action: Action,
     state: &BattleState,
 ) -> (Mode, Effect) {
-    let n = targets.len().max(1);
     let index = match action {
-        Action::CursorRight | Action::CursorDown | Action::NextUnit => (index + 1) % n,
-        Action::CursorLeft | Action::CursorUp | Action::PrevUnit => (index + n - 1) % n,
+        Action::CursorRight | Action::CursorDown | Action::NextUnit => {
+            wrap_step(index, targets.len(), true)
+        }
+        Action::CursorLeft | Action::CursorUp | Action::PrevUnit => {
+            wrap_step(index, targets.len(), false)
+        }
         Action::Confirm => {
             let Some(&target) = targets.get(index) else {
                 return (back_to_entry(sel, state, MenuEntry::Talk), Effect::None);

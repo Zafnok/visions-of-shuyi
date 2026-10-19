@@ -439,16 +439,6 @@ fn help_names_the_players_keys() {
 }
 
 #[test]
-fn lists_wrap() {
-    assert_eq!(step(0, 3, true), 1);
-    assert_eq!(step(2, 3, true), 0);
-    assert_eq!(step(0, 3, false), 2);
-    assert_eq!(step(1, 3, false), 0);
-    assert_eq!(step(0, 0, true), 0);
-    assert_eq!(step(0, 1, false), 0);
-}
-
-#[test]
 fn loadouts_tab_snapshot() {
     let mut h = harness();
     // The lord's third weapon slot, on the Iron Sword he can take.

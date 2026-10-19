@@ -17,6 +17,7 @@ use super::art_list::reason_text;
 use super::info::stat_name;
 use super::mode::Selection;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
+use crate::widgets::wrap_step;
 use crate::words::Words;
 
 /// A skill's cost as text: `3 dur` (weapon durability), `+1 use` (one more
@@ -475,12 +476,7 @@ impl SkillTargeting {
 
     /// Moves to the next target (or the previous one), wrapping.
     pub fn cycle(&mut self, forward: bool) {
-        let n = self.used().targets.len();
-        self.index = if forward {
-            (self.index + 1) % n
-        } else {
-            (self.index + n - 1) % n
-        };
+        self.index = wrap_step(self.index, self.used().targets.len(), forward);
     }
 
     /// The command that uses the skill.

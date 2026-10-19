@@ -22,6 +22,7 @@ use super::items::heal_preview;
 use super::mode::Selection;
 use super::skills::skill_name;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
+use crate::widgets::wrap_step;
 use crate::words::Words;
 use core::fmt::Display;
 
@@ -401,12 +402,7 @@ impl CastTargeting {
     /// Moves to the next target (or the previous one), wrapping; on an
     /// enemy, the forecast follows.
     pub fn cycle(&mut self, forward: bool, state: &BattleState) {
-        let n = self.used().targets.len();
-        self.index = if forward {
-            (self.index + 1) % n
-        } else {
-            (self.index + n - 1) % n
-        };
+        self.index = wrap_step(self.index, self.used().targets.len(), forward);
         if let (CastTarget::Unit(id), Some(attack)) = (self.target(), &mut self.attack) {
             attack.aim(id, state);
         }

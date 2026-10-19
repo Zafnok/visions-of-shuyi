@@ -89,14 +89,20 @@ fn up_and_down_move_through_the_topics_and_wrap() {
 
 #[test]
 fn an_empty_list_does_not_move() {
-    let mut g = GuidesScreen { focus: 0, count: 0 };
+    let mut g = GuidesScreen {
+        cursor: ListCursor::new(0),
+    };
     assert_eq!(g.step(Action::CursorDown), GuidesEffect::None);
     assert_eq!(g.step(Action::CursorUp), GuidesEffect::None);
-    let mut one = GuidesScreen { focus: 0, count: 1 };
+    let mut one = GuidesScreen {
+        cursor: ListCursor::new(1),
+    };
     assert_eq!(one.step(Action::CursorDown), GuidesEffect::None);
     assert_eq!(one.step(Action::CursorUp), GuidesEffect::None);
     // Two topics: both ways move.
-    let mut two = GuidesScreen { focus: 0, count: 2 };
+    let mut two = GuidesScreen {
+        cursor: ListCursor::new(2),
+    };
     assert_eq!(two.step(Action::CursorUp), GuidesEffect::Moved);
     assert_eq!(two.focus(), 1);
     assert_eq!(two.step(Action::CursorDown), GuidesEffect::Moved);

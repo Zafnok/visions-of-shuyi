@@ -15,6 +15,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
+use crate::widgets::ListCursor;
 
 /// Shown for an empty slot.
 const EMPTY: &str = "-";
@@ -41,9 +42,7 @@ const MESSAGE_ROW: i32 = 29;
 /// The first row shown of a list of `len` in a window of `rows` rows, so
 /// that row `focus` is in it.
 fn window_start(focus: usize, len: usize, rows: usize) -> usize {
-    (focus + 1)
-        .saturating_sub(rows)
-        .min(len.saturating_sub(rows))
+    ListCursor::new(len).at(focus).window(rows).start
 }
 
 /// Paints the Preparations screen over the whole of `buf`.

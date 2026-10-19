@@ -50,6 +50,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::widgets::ListCursor;
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::Words;
 
@@ -115,9 +116,8 @@ pub struct ClassChangeScreen {
     unit: Unit,
     stock: Stock,
     options: Vec<ClassOption>,
-    focus: usize,
-    /// The leftmost column shown.
-    first: usize,
+    /// The column the cursor is on, and the columns shown.
+    cursor: ListCursor,
     stage: Stage,
 }
 
@@ -207,7 +207,7 @@ impl ClassChangeScreen {
             ChangeKind::Promote => promotion_targets(&unit, tables.classes),
             ChangeKind::Reclass => reclass_targets(&unit, tables.classes),
         };
-        let options = targets
+        let options: Vec<ClassOption> = targets
             .into_iter()
             .map(|class| {
                 let (mut after, mut stock) = (unit.clone(), stock.clone());
@@ -222,9 +222,8 @@ impl ClassChangeScreen {
             kind,
             unit,
             stock,
+            cursor: ListCursor::new(options.len()),
             options,
-            focus: 0,
-            first: 0,
             stage: Stage::Choosing,
         }
     }
@@ -294,7 +293,7 @@ impl ClassChangeScreen {
 
     /// The column the cursor is on.
     pub fn focus(&self) -> usize {
-        self.focus
+        self.cursor.focus()
     }
 
     /// Whether the `Promote … ?` question is up.
@@ -312,25 +311,16 @@ impl ClassChangeScreen {
 
     /// The option the cursor is on.
     fn focused(&self) -> Option<&ClassOption> {
-        self.options.get(self.focus)
+        self.options.get(self.cursor.focus())
     }
 
     /// Moves the cursor one column (wrapping) and scrolls it into view.
     /// Returns whether it moved.
     fn move_focus(&mut self, forward: bool) -> bool {
-        let n = self.options.len();
-        if n < 2 {
-            return false;
-        }
-        self.focus = if forward {
-            (self.focus + 1) % n
-        } else {
-            (self.focus + n - 1) % n
-        };
+        let moved = self.cursor.step(forward, true, |_| true);
         // The window of `COLUMNS` columns moves just far enough to hold it.
-        let leftmost = (self.focus + 1).saturating_sub(COLUMNS);
-        self.first = self.first.min(self.focus).max(leftmost);
-        true
+        self.cursor.window(COLUMNS);
+        moved
     }
 
     /// Makes the change into the focused class and starts its pages.
@@ -505,13 +495,14 @@ impl ClassChangeScreen {
             let keys = ctx.text_with("class_change.yes_no", &[]);
             QuestionView { ask, cost, keys }
         });
-        let shown = self.options.iter().enumerate().skip(self.first);
+        let first = self.cursor.first_shown();
+        let shown = self.options.iter().enumerate().skip(first);
         // Every option is a class of the content: the targets come from it.
         let columns = shown
             .take(COLUMNS)
             .filter_map(|(index, option)| {
                 let class = classes.get(&option.class)?;
-                Some(self.column_view(ctx, class, option, index == self.focus))
+                Some(self.column_view(ctx, class, option, index == self.cursor.focus()))
             })
             .collect();
         let more = |key| ctx.text(key).to_owned();
@@ -523,8 +514,8 @@ impl ClassChangeScreen {
             seal,
             none: (!some).then(|| ctx.text("class_change.none").to_owned()),
             columns,
-            more_left: (self.first > 0).then(|| more("class_change.more_left")),
-            more_right: (self.first + COLUMNS < self.options.len())
+            more_left: (first > 0).then(|| more("class_change.more_left")),
+            more_right: (first + COLUMNS < self.options.len())
                 .then(|| more("class_change.more_right")),
             weapons_heading: ctx.text("class_change.weapons").to_owned(),
             active_heading: ctx.text("class_change.active").to_owned(),
