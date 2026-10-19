@@ -22,12 +22,13 @@ Nick made it the rule for every list where you choose what a unit does
 yet. 0429's *Scope* said to add the requirement to 0410, or write this
 ticket if 0410 was already done.
 
-What exists after 0429 (all in `crates/ui`):
+What exists after 0429 (in `crates/ui`, apart from the menu widget):
 
-- `MenuItem::with_note(text)` and `Menu::browsing_disabled()` in
-  `src/widgets/menu.rs`; the glyph skin (`src/widgets/menu/glyph.rs`) paints
-  the focused item's note under a rule, in white, the box as wide as the
-  widest note.
+- `MenuItem::with_note(text)` and `Menu::browsing_disabled()`: Shuyi
+  Engine's menu widget since 1112, re-exported by the game's
+  `src/widgets/menu.rs`. Its glyph skin (also the engine's) paints the
+  focused item's note under a rule, in white, the box as wide as the
+  widest note. Nothing here changes it.
 - `Technique::effect_text(state, words)` in
   `src/screens/battle/art_list.rs`: `plain attack`, an art's text, or an
   active's `effect_text` (`skills.rs`).

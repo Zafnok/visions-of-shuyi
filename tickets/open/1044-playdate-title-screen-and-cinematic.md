@@ -41,11 +41,12 @@ Simulator or on his Playdate and comments.
   cinematic*: backdrops lightened and Bayer-dithered, the logo with white
   letters and a black shadow and rim); the Playdate bundle (1036) lists them.
 - A Playdate paint of the title view (chosen by `SkinSet`): the
-  cinematic's shots framed for 400 × 240 (the cinema framing in
-  `engine/crates/ui/src/frame/cinema.rs` reads the console size since 1030), the
-  logo, the title menu (New Game, Continue/Load, Options, …, as on the
-  PC; the PC's Quit entry only if the Playdate allows quitting from a
-  game, which it does through the system menu, so *Claude's starting
+  cinematic's shots framed for 400 × 240 (the cinema framing, Shuyi
+  Engine's since 1108 and re-exported as `crates/ui/src/cinema.rs`,
+  reads the console size since 1030), the logo, the title menu (New
+  Game, Continue/Load, Options, …, as on the PC; the PC's Quit entry
+  only if the Playdate allows quitting from a game, which it does
+  through the system menu, so *Claude's starting
   rule (Nick can veto)*: no Quit entry on the Playdate).
 - Light effects the PC cinematic uses (`assets/data/lighting.ron`,
   times of day) become the different one-bit pictures (day, dusk,

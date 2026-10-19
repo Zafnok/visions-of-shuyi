@@ -19,9 +19,11 @@ Ticket 0031 decides two new in-house sounds (`docs/design/audio.md`): the
 "can't do that" tone and, if Nick keeps it, a whoosh when a message closes.
 Ticket 0425 left placeholders:
 
-- `MenuSound::Denied` (`crates/ui/src/audio.rs`) plays `menu_cancel`. The
-  menu widget plays it on Confirm on a disabled item
-  (`Menu::handle_with_sound`, `crates/ui/src/widgets/menu.rs`).
+- `MenuSound::Denied` plays `menu_cancel`: the game's `AUDIO` config in
+  `crates/ui/src/audio.rs` sets `denied_cue: "menu_cancel"`. The menu
+  widget plays it on Confirm on a disabled item (`Menu::handle_with_sound`;
+  the widget and `MenuSound` are Shuyi Engine's since 1112, re-exported by
+  `crates/ui/src/widgets/menu.rs` and `crates/ui/src/audio.rs`).
 - Closing tips, banners, the EXP bar and the level-up page is silent
   (`BattleScreen::update` in `crates/ui/src/screens/battle/mod.rs`: the
   `shown_tip`, `progress_key` and `banner` branches).
@@ -38,9 +40,11 @@ phase banner and a level-up page. Does each sound right?
   `cargo xtask sfx`, add the cues to `assets/audio/audio.ron` with
   `credit: Own`.
 - `MenuSound::Denied` → the new cue.
-- Wherever 0031's Q2 says the tone plays. If that changes the menu widget
-  (the highlight landing on greyed-out items) or battle input (Confirm on
-  an acted unit), do that here.
+- Wherever 0031's Q2 says the tone plays. If that changes battle input
+  (Confirm on an acted unit), do that here. If it changes the menu widget
+  (the highlight landing on greyed-out items), that is the engine's
+  widget: follow the `engine-change` skill (an engine PR first, then this
+  ticket moves the pin).
 - The close whoosh on the closings 0031 lists (skip if Nick dropped it).
 
 **Out (do not do):**
@@ -52,8 +56,8 @@ phase banner and a level-up page. Does each sound right?
    notes (how `sfx.rs` ports a page recipe).
 2. Add the recipes to `sfx.rs`; run `cargo xtask sfx`; commit the WAVs; add
    the manifest entries.
-3. Change `MenuSound::cue()` for `Denied`; update the widget test
-   `a_disabled_item_is_denied`.
+3. Set `AUDIO.denied_cue` to the new cue; update the game's test
+   `menu_sounds_are_their_cues` (same file).
 4. Play the whoosh in the battle screen's close branches.
 5. Make the Q2 changes, if any, with Harness tests.
 

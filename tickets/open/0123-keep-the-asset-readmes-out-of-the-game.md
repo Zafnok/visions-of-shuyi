@@ -47,18 +47,19 @@ should hold only what it reads.
 1. Read `crates/content/src/bundle.rs` and ADR-0005, ADR-0040, ADR-0057.
 2. `include_dir!` has no filter. Pick one way and write it down in a short
    ADR (`write-adr` skill) or as an amendment note in ADR-0057's style:
-   - `bundle::find` and `bundle::list` skip files named `README.md` (the
-     bytes stay in the binary, so this alone does **not** meet the
-     acceptance criterion); or
+   - the bundle's reads and listings skip files named `README.md` (the
+     layering is Shuyi Engine's since 1103, so this is an engine change:
+     the `engine-change` skill; and the bytes stay in the binary, so this
+     alone does **not** meet the acceptance criterion); or
    - embed from a filtered copy that `crates/content/build.rs` writes to
      `OUT_DIR` (ADR-0040 rejected a *merging* build script; a filter is
      simpler, but read its reasons first); or
    - move the READMEs out of the embedded directories (e.g. to
      `docs/assets/<kind>.md`). This is under **Out**: if it turns out to
      be the best way, stop and rewrite this ticket's scope first.
-3. Private `game/README.md` is named in
-   `trpg_content::credits::PRIVATE_README` (it needs no credit): keep that
-   rule working.
+3. Private `game/README.md` needs no credit: the engine's credits check
+   (Shuyi Engine's since 1104) excuses a file of that name. Keep that
+   working for whatever still reads the README.
 4. Update `crates/content/README.md`.
 
 ## Acceptance criteria

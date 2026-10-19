@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1012"]
+blocked_by: ["1012", "engine#2207"]
 nick_input: none
 completed:
 ---
@@ -20,6 +20,16 @@ files (ADR-0004), so `app` finds the mods, reads them and hands them over
 before content loads. Where mods live, the manifest's fields and the load
 order file are 1011's ADR; the defaults below are its defaults.
 
+**Reading a folder into a layer is the engine's: engine#2207** (in
+[Shuyi Engine's tickets](https://github.com/Zafnok/shuyi-engine/tree/main/tickets)):
+the platform shell's `read_folder` reads every file under a folder into
+one bundle layer, with a size limit, on native builds only. Since the
+carve (1109, 1110) the player's data folder is the engine's too: its
+file storage keeps saves under `storage::data_dir(<the game's storage
+name>)` (`STORAGE_NAME` in `crates/app/src/main.rs`). This ticket is the
+game's half: where the game looks, the manifests, the order and the
+problems.
+
 ## Nick input
 
 None.
@@ -32,32 +42,35 @@ None.
   parsed and validated there (it's data; `content` gets the text from
   `app`).
 - In `app` (native only): find mod folders in `mods/` beside the executable
-  and in the player's data folder (the same base folder
-  `crates/app/src/storage/native.rs` uses), read each manifest, read the
-  enabled list and order from storage key `mods` (a RON list of ids; none
-  enabled when it is missing), read every file of each enabled mod, call
-  `bundle::install_mod_layers` before content loads.
+  and in the player's data folder (the same base folder the engine's file
+  storage uses), read each manifest, read the enabled list and order from
+  storage key `mods` (a RON list of ids; none enabled when it is missing),
+  read every file of each enabled mod with engine#2207's `read_folder`,
+  call `bundle::install_mod_layers` before content loads.
 - Problems (bad manifest, missing requirement, conflict, unreadable file,
   a mod for another game version) disable that mod for this launch and are
   kept in a list the game can show (1015 shows it; until then, log it).
 
-**Out (do not do):** the mods screen (1015); zips (the ADR may add them
-later; folders only here); the web build (`#[cfg(not(target_arch =
-"wasm32"))]`; the web build starts unmodded); Workshop (1024).
+**Out (do not do):** the engine's half (engine#2207); the mods screen
+(1015); zips (the ADR may add them later; folders only here); the web
+build (`#[cfg(not(target_arch = "wasm32"))]`; the web build starts
+unmodded); Workshop (1024).
 
 ## Implementation steps
 
-1. Read 1011's ADR, 1012's `install_mod_layers`, `crates/app/src/main.rs`
-   and `crates/app/src/storage/native.rs`. Find where content first loads
+1. Move the pin to an engine `main` that has engine#2207 if 1012 hasn't
+   (`cargo xtask engine-pin <commit>`). Read 1011's ADR, 1012's
+   `install_mod_layers`, `crates/app/src/main.rs`, and the engine's
+   `read_folder` and `storage::data_dir`. Find where content first loads
    (`grep -rn load_embedded crates/app crates/ui/src`).
 2. `crates/content/src/modding.rs`: `ModManifest`, `parse_manifest(text) ->
    Result<ModManifest, ContentError>`, and `resolve_order(manifests,
    enabled_ids) -> (Vec<id>, Vec<ModProblem>)` (pure: requirements before
    the mods that need them, conflicts refused, unknown ids reported).
-3. `crates/app/src/mods.rs`: scanning the folders, reading files (sizes
-   capped at a value the ADR sets), building `ModLayer`s in the resolved
-   order, installing them. Keep this the only file in `app` that knows the
-   folder layout.
+3. `crates/app/src/mods.rs`: scanning the folders, reading each enabled
+   mod's files with `read_folder` (sizes capped at a value the ADR sets),
+   building `ModLayer`s in the resolved order, installing them. Keep this
+   the only file in `app` that knows the folder layout.
 4. Make the list of problems reachable from `ui` (a field the flow screen
    or the title can read later), per the existing way `app` passes data to
    `ui`.

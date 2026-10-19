@@ -113,11 +113,11 @@ fantasy dialogue compelling → **0737** the Chapter 1 script written again
 from the beats (0719, 0722 and 0726 now wait for it) → **0742** other music
 for three scenes · **0738** the places' round 3 notes (longer openings, no
 outline on actors, a lighter study, the party at the toll-fort) · **0739**
-how much faces dim over a place · **0740** narration left-aligned · **0741**
+how much faces dim over a place · **0740** narration left-aligned (after engine#2305) · **0741**
 the pre-battle place reads as the chapel green · **0843** the intro's fixes
 (longer news, shorter fight hold, hit sounds, the logo on the chord, a
 start through black) · **0844** a setting to turn the intro off · **0446**
-Tamsin's combat picture · **0449** arrows where the map goes past the view
+Tamsin's combat picture · **0449** arrows where the map goes past the view (after engine#2304)
 · **0466** a zoom tip · **0464** lessons only when they can be done →
 **0465** the end of the lessons points at Guides and offers a fresh start ·
 **0467** tips lost before they show · **0841** Tutorial None stops what's
@@ -169,13 +169,13 @@ open dependencies).
 *Japanese* (ADR-0045): **0042** Nick picks the font and how a language is
 chosen → **0233** screen text by key (no open dependencies) → **0234** the
 rest of the screens (the battle and class change screens: **0243**) and **0235** data names, tips and dialogue (also needs
-0717); **0236** wide glyphs (after 0042) → **0237** Japanese line
-breaking; **0825** the Options row (after 0805); **0718** the translation
+0717); **0236** wide glyphs (after 0042 and engine#2301) → **0237**
+Japanese line breaking (after engine#2302); **0825** the Options row (after 0805); **0718** the translation
 pipeline → **0719** Chapter 1 and the screens in Japanese (after 0716).
 *Chinese (Simplified)*, on the same engine work: **0045** Nick gives the
 characters for "Shuyi", the Chinese title and font, and says who checks
 it (after 0042) → **0239** a wide font per language and Chinese line
-breaking (after 0236, 0237); **0725** the translation pipeline (after
+breaking (after 0236, 0237 and engine#2303); **0725** the translation pipeline (after
 0235) → **0726** Chapter 1 and the screens in Chinese (after 0716, 0825).
 *Voices* (ADR-0046): **0043** Nick picks the tool, what is voiced and each
 voice by ear; **0238** playback plumbing (after 0717) → **0720** the
@@ -383,9 +383,12 @@ early so every later PR is checked by them.
   after the single-player launch (0053). Modding and dev tools (a mod
   folder, a map editor, a small scripting language, the bots as a balance
   tester): Nick said yes. 0054 the mod policy (Nick) → 1011 ADR on how
-  mods work → 1012 mod layers in the asset bundle → 1013 data entries
-  merged by id and 1014 the mods folder → 1015 Mods screen and modded
-  saves, 1016 `vos-modkit check`/`new` → 1017 scripting runtime → 1018
+  mods work (its engine parts: engine#2207, engine#2101, engine#1129) →
+  1012 mod layers in the asset bundle (after engine#2207) → 1013 data
+  entries merged by id and 1014 the mods folder (also after engine#2207)
+  → 1015 Mods screen and modded saves, 1016 `vos-modkit check`/`new` →
+  1017 scripted skill effects on the engine's script runtime (after
+  engine#2101) → 1018
   scripted events and objectives; 1019 → 1020 the map editor; 1021
   `vos-modkit playtest` (after 0506); 1022 mod campaigns; 1023 guide and
   example mod; 1024 Steam Workshop (after 0903).

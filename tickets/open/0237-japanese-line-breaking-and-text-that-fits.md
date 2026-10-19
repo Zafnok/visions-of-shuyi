@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0235", "0236"]
+blocked_by: ["0235", "0236", "engine#2302"]
 nick_input: none
 completed:
 ---
@@ -21,57 +21,67 @@ English word. [ADR-0045 §4](../../docs/adr/0045-languages-text-by-key-and-line-
 sets the rule: break between any two characters, except before closing
 punctuation and after opening brackets.
 
+**The engine does the breaking: engine#2302** (in
+[Shuyi Engine's tickets](https://github.com/Zafnok/shuyi-engine/tree/main/tickets)).
+Since the carve (1109, 1112) the one wrapping function (`word_wrap`, the
+game's `crate::widgets::word_wrap`), the dialogue text box's paging and
+`lang-status` are the engine's. 2302 gives `word_wrap` the Japanese
+breaking rules (measured in cells), keeps a key name filled into a
+placeholder in one piece, lets the source language's `ui.ron` give a
+key the width of its place (`max_cells`), and adds an **overflow** list
+to `lang-status`. This ticket is the game's half: the game's own
+wrapping routines, the widths of its places and its layouts.
+
 ## Nick input
 
 None.
 
 ## Scope
 
-**In:** one wrapping function used everywhere text wraps; the dialogue
-box, tips, descriptions and the rewind notes using it; a check that no
-pack text overflows its place.
+**In:** every place the game wraps text using the engine's `word_wrap`;
+the widths of the game's fixed-width places in `en/ui.ron`; the game's
+length limits for pack text in cells; layouts sized for one English
+word; moving the engine pin to a commit with engine#2302.
 
-**Out (do not do):** translating (0719); new layouts for Japanese (if a
-place can't fit, report it; a redesign is its own ticket); furigana;
-vertical text; Chinese punctuation and its wide quotes (0239).
+**Out (do not do):** the engine's half (engine#2302); translating
+(0719); new layouts for Japanese (if a place can't fit, report it; a
+redesign is its own ticket); furigana; vertical text; Chinese
+punctuation and its wide quotes (0239).
 
 ## Implementation steps
 
-1. Find every wrapping routine in `crates/ui/src` (the dialogue screen's
-   paging, tips, `screens/battle/rewind.rs`'s `wrap`, description
-   panels). Replace them with one `wrap(text, width_cells) -> Vec<String>`
-   in a `ui` text module, measuring with 0236's `text_width`.
-2. Breaking rules: Latin words break at spaces as today. Between two wide
-   characters a break is allowed anywhere, except: never start a line
-   with `、。，．・：；？！）」』】〕ー` or a small kana (`ぁぃぅぇぉっゃゅょ`
-   and their katakana); never end a line with `（「『【〔`. Keep a run of
-   Latin letters or digits inside Japanese text together. A key name
-   filled into a placeholder is never split.
-3. The dialogue box's "3 lines" paging uses the same function; a
-   Japanese line pages at the same 3 lines.
-4. `content`'s length limits for pack text (0235 step 7) use cells with
-   the real widths: a dialogue line at most 200 cells, a reply 60, a
-   `lead:` line 40, tips 3 lines of 60.
-5. `cargo xtask lang-status <code>` gains an **overflow** list: for every
-   `ui.ron` key that is drawn in a fixed-width place, whether the pack's
-   text fits. Give such keys a width in `en/ui.ron` (an optional
-   `max_cells` per key, set from the layout); the tool compares.
-6. Fix any layout 0234 or 0243 noted as sized for one English word, where the fix
-   is measuring instead of a constant.
+1. Move the pin to an engine `main` that has engine#2302 (`cargo xtask
+   engine-pin <commit>`, the `engine-change` skill §7).
+2. Find every wrapping routine the game still has of its own in
+   `crates/ui/src` (`screens/battle/glyph/rewind.rs`'s `wrap`,
+   `screens/playdate.rs`'s `wrap`, and any other) and replace each with
+   `word_wrap`, keeping what it does beyond wrapping (an indent, the
+   text's own line breaks).
+3. The game's length limits for pack text (0235 step 7) in cells, with
+   `text_width`: a dialogue line at most 200 cells, a reply 60, a `lead:`
+   line 40, tips 3 lines of 60 (the game's `LIMITS` in
+   `crates/content/src/dialogue.rs`, and its tip and lesson limits).
+4. Give every `assets/lang/en/ui.ron` key that is drawn in a fixed-width
+   place its `max_cells`, set from the layout, so `cargo shuyi
+   lang-status <code>` lists the pack entries that overflow.
+5. Fix any layout 0234 or 0243 noted as sized for one English word,
+   where the fix is measuring instead of a constant.
 
 ## Acceptance criteria
 
-- [ ] A Japanese paragraph wraps within the width, with no line starting with `。` or `、` and none ending with `「` (unit tests with real sentences).
+- [ ] A Japanese line from the test pack pages in the dialogue box at
+      the same 3 lines, with no line starting with `。` or `、` (Harness
+      test reading the view).
 - [ ] English wrapping is unchanged (existing snapshots).
-- [ ] A property test: every wrapped line is at most the width, and joining the lines gives back the text (apart from break spaces).
-- [ ] `lang-status test` reports an entry made too long on purpose as overflow.
+- [ ] No wrapping routine of the game's own is left in `crates/ui/src`.
+- [ ] `cargo shuyi lang-status test` reports an entry made too long on
+      purpose as overflow (test).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: each breaking rule; mixed Latin and Japanese; placeholders.
-- Property: width and round trip.
-- Snapshot / integration: the dialogue screen showing a Japanese line from the test pack.
+- Unit: the replaced routines keep their indents and line breaks.
+- Snapshot / integration: the dialogue screen showing a Japanese line
+  from the test pack.
 
 ## Completion notes
-
