@@ -11,6 +11,7 @@
 mod battler_import;
 mod check_script;
 mod clean_targets;
+mod code_lines;
 mod effect_marks;
 mod engine_boundary;
 mod game_tools;
@@ -43,6 +44,7 @@ available commands:\n  \
 ticket-lint [--pr-branch <name>]   check tickets/{open,done} against tickets/README.md\n  \
 check-engine-boundary              fail when engine/ names or depends on the game (ADR-0063)\n  \
 clean-merged-targets [--dry-run]   delete target/ in worktrees whose PR has merged\n  \
+code-lines [--base <ref>]          production Rust lines added and removed per crate (ADR-0092)\n  \
 sfx [--check]                      render our own sounds into assets/audio/sfx/\n  \
 test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
@@ -77,6 +79,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("ticket-lint") => ticket_lint(&args.collect::<Vec<_>>()),
         Some("check-engine-boundary") => check_engine_boundary(&args.collect::<Vec<_>>()),
         Some("clean-merged-targets") => clean_merged_targets(&args.collect::<Vec<_>>()),
+        Some("code-lines") => code_lines(&args.collect::<Vec<_>>()),
         Some("icon") => icon(&args.collect::<Vec<_>>()),
         Some("playdate") => playdate(&args.collect::<Vec<_>>()),
         Some("playdate-images") => playdate_images_in(&repo_root(), &args.collect::<Vec<_>>()),
@@ -515,6 +518,31 @@ fn parse_pr_branch(args: &[String]) -> Result<Option<String>, String> {
     }
 }
 
+fn code_lines(args: &[String]) -> u8 {
+    let base = match args {
+        [] => "origin/main",
+        [flag, base] if flag == "--base" => base.as_str(),
+        [help] if help == "--help" => {
+            println!("{}", code_lines::USAGE);
+            return 0;
+        }
+        _ => {
+            eprintln!("{}", code_lines::USAGE);
+            return 2;
+        }
+    };
+    match code_lines::run(&repo_root(), base) {
+        Ok(report) => {
+            print!("{report}");
+            0
+        }
+        Err(e) => {
+            eprintln!("code-lines: {e}");
+            1
+        }
+    }
+}
+
 fn lines(args: &[String]) -> u8 {
     if args.iter().any(|a| a == "--help") {
         println!("{}", lines::USAGE);
@@ -809,6 +837,17 @@ mod tests {
         let code = check_script(&args(&[&draft.to_string_lossy()]));
         std::fs::remove_file(&draft).unwrap();
         assert_eq!(code, 1);
+    }
+
+    #[test]
+    fn code_lines_reports_and_rejects_bad_arguments() {
+        assert_eq!(
+            dispatch(args(&["code-lines", "--base", "HEAD"]).into_iter()),
+            0
+        );
+        assert_eq!(code_lines(&args(&["--help"])), 0);
+        assert_eq!(code_lines(&args(&["--base"])), 2);
+        assert_eq!(code_lines(&args(&["--base", "no-such-ref-1151"])), 1);
     }
 
     #[test]
