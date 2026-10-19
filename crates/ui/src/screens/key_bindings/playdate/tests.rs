@@ -82,6 +82,9 @@ fn the_crank_and_the_not_mapped_actions_further_down() {
     assert_eq!(find(&buf, back, "Crank back"), Some(SLOTS[0].0 + 1));
     let forward = line_of(&buf, "Rewind forward");
     assert!(is_bar(&buf, forward, " Crank forward"));
+    // In the middle of the list: more above and below.
+    let shown = rows(&buf);
+    assert!(shown[0].contains(MORE_ABOVE) && shown[13].contains(MORE_BELOW));
     // An action with no button: the note over its slots.
     let menu = line_of(&buf, "Map menu");
     let note = c.help_keys().not_mapped().to_owned();
@@ -234,6 +237,8 @@ fn long_words_stay_inside_their_columns_and_the_frame() {
     );
     // The note cut a cell before the frame's right side.
     let log = line_of(&buf, "Open the log");
+    // Over the slots from the first's column: the cursor is on the second.
+    assert_eq!(cell(&buf, SLOTS[0].0 + 1, log).glyph, '!');
     assert_eq!(cell(&buf, 47, log).glyph, '…');
     assert_eq!(cell(&buf, 48, log).glyph, ' ');
     assert_eq!(cell(&buf, 49, log).glyph, '║');
@@ -258,6 +263,19 @@ fn the_switch_names_the_shown_side_plainly_and_the_other_in_grey() {
     // Three cells apart.
     let switch = screen(&c).view(&c).switch.unwrap();
     assert_eq!(controller, keyboard + cells(&switch.keyboard) + 3);
+}
+
+#[test]
+fn the_choices_open_under_the_slot_where_they_fit() {
+    let mut c = playdate();
+    let mut s = screen(&c);
+    press(&mut s, &mut c, &[Action::CursorDown, Action::CursorDown]);
+    press(&mut s, &mut c, &[Action::Confirm]);
+    let buf = drawn(&s, &c);
+    // Cursor left, on row 4: the window from row 5, its last at row 8.
+    assert!(rows(&buf)[4].contains("Cursor left"));
+    assert_eq!(cell(&buf, SLOTS[0].0, 5).glyph, '╔');
+    assert_eq!(cell(&buf, SLOTS[0].0, 8).glyph, '╚');
 }
 
 #[test]

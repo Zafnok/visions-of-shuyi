@@ -213,6 +213,22 @@ mod tests {
     }
 
     #[test]
+    fn seven_profiles_leave_out_the_blank_rows_to_keep_the_message_row() {
+        let mut list: Vec<RowView> = (1..=7)
+            .map(|n| profile(&format!("P{n}"), n == 1, false))
+            .collect();
+        list.push(add(true));
+        let mut v = view(list);
+        v.message = Some("No more profiles".to_owned());
+        let shown = rows(&painted(&v));
+        assert!(shown[0].starts_with("╔═ Profile ═"), "{shown:#?}");
+        assert!(shown[1].starts_with("║   P1"));
+        assert!(shown[10].starts_with('╚'));
+        assert_eq!(shown[11], "No more profiles");
+        assert_eq!(shown[14], "help");
+    }
+
+    #[test]
     fn the_most_profiles_fit_the_window_without_its_blank_rows() {
         let mut list: Vec<RowView> = (1..=8)
             .map(|n| profile(&format!("P{n}"), n == 1, n == 8))
