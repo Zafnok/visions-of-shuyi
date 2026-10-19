@@ -213,6 +213,11 @@ on Windows only). Without `--release` the Rust code is built unoptimized
 (`playdate-dev` profile): fine in the Simulator, too slow and too deep for
 the device's stack, so always use `--release` for the device.
 
+`--private-assets` builds with the bought art in `assets-private/game/`
+over the placeholders (fetch it with `cargo shuyi private-assets`;
+ADR-0040, ADR-0090): its portraits, fighters and backdrops converted to
+one-bit, or a touched-up `<stem>.1bit` beside a PNG taken as it is.
+
 ## Run it
 
 - **Simulator:** open `target/playdate/VisionsOfShuyi.pdx` with

@@ -14,6 +14,11 @@
 //! The Playdate's table holds a one-bit picture in place of each PNG it
 //! draws one-bit (ticket 1040, ADR-0085): `src/playdate_images.rs` says
 //! which and how, and this converts them into `OUT_DIR/onebit/`.
+//!
+//! With the `private-assets` feature, `playdate_private_files.rs` is the
+//! Playdate's private layer (ticket 1061): `assets-private/game/` the same
+//! way, its pictures in `OUT_DIR/onebit-private/`, a touched-up `.1bit`
+//! beside a PNG taken as it is. Without the feature it is empty.
 
 use std::collections::BTreeSet;
 use std::fmt::Write as _;
@@ -44,8 +49,8 @@ fn main() {
     println!("cargo:rerun-if-changed={ASSETS}");
     println!("cargo:rerun-if-changed=../../assets-test");
     println!("cargo:rerun-if-changed={PLAYDATE_LIST}");
-    write_file_tables();
-    if std::env::var_os("CARGO_FEATURE_PRIVATE_ASSETS").is_some() {
+    let private = std::env::var_os("CARGO_FEATURE_PRIVATE_ASSETS").is_some();
+    if private {
         assert!(
             Path::new(PRIVATE).is_dir(),
             "the `private-assets` feature needs the bought art in assets-private/game/, \
@@ -56,14 +61,20 @@ fn main() {
         println!("cargo:rerun-if-changed={PRIVATE}");
         println!("cargo:rerun-if-changed={PRIVATE_TEST}");
     }
+    write_file_tables(private);
 }
+
+/// Where a table's entry is read from: the environment variable naming a
+/// folder (`CARGO_MANIFEST_DIR` or `OUT_DIR`) and the file's path in it.
+type Source = (&'static str, String);
 
 /// Writes the tables (see the top of this file). Each is a `&[(path,
 /// bytes)]` expression with one `(path, include_bytes!(…))` per file,
 /// sorted by path (`/`-separated, relative to `assets/`), so the bundle can
 /// binary-search it. Every file `include_dir` embeds is in
-/// `bundle_files.rs`; a test keeps them equal.
-fn write_file_tables() {
+/// `bundle_files.rs`; a test keeps them equal. With `private`, the
+/// Playdate's private layer too ([`private_table`]); without, it is empty.
+fn write_file_tables(private: bool) {
     let mut files = Vec::new();
     walk(Path::new(ASSETS), "", &mut files);
     files.sort_unstable();
@@ -75,9 +86,24 @@ fn write_file_tables() {
         .filter(|f| !left_out.contains(f))
         .cloned()
         .collect();
-    let one_bit = convert_pictures(&kept);
-    write_out("bundle_files.rs", &table(files.iter(), &BTreeSet::new()));
-    write_out("playdate_files.rs", &table(kept.iter(), &one_bit));
+    let read = |path: &str| std::fs::read_to_string(Path::new(ASSETS).join(path)).ok();
+    let one_bit = convert_pictures(ASSETS, "onebit", &kept, read);
+    let as_is = |path: &String| -> Source { ("CARGO_MANIFEST_DIR", format!("/{ASSETS}/{path}")) };
+    let playdate = |path: &String| -> Source {
+        if one_bit.contains(path) {
+            ("OUT_DIR", format!("/{}", one_bit_file("onebit", path)))
+        } else {
+            as_is(path)
+        }
+    };
+    write_out("bundle_files.rs", &table(files.iter(), as_is));
+    write_out("playdate_files.rs", &table(kept.iter(), playdate));
+    let private = if private {
+        private_table(&list, &files)
+    } else {
+        String::from("&[]\n")
+    };
+    write_out("playdate_private_files.rs", &private);
     let mut paths = String::from("&[\n");
     for path in &left_out {
         writeln!(paths, "    {path:?},").unwrap_or_else(|e| panic!("writing to a String: {e}"));
@@ -86,16 +112,68 @@ fn write_file_tables() {
     write_out("playdate_left_out.rs", &paths);
 }
 
-/// The table expression of `files`, each of `one_bit` being its one-bit
-/// picture in `OUT_DIR` ([`convert_pictures`]).
-fn table<'a>(files: impl Iterator<Item = &'a String>, one_bit: &BTreeSet<String>) -> String {
+/// The Playdate's table of the bought art in `assets-private/game/`
+/// (ticket 1061): every file but those `list` leaves out, each picture the
+/// Playdate draws one-bit converted into `OUT_DIR/onebit-private/`, or,
+/// when a touched-up `<stem>.1bit` lies beside the PNG (ticket 1042), that
+/// file as it is. A fighter's scale is its sidecar's here, else the one in
+/// `assets/` (`public`, its files), as the layered bundle reads it.
+fn private_table(list: &str, public: &[String]) -> String {
+    let mut files = Vec::new();
+    walk(Path::new(PRIVATE), "", &mut files);
+    files.sort_unstable();
+    let rules = rules(list);
+    files.retain(|path| !rules.iter().any(|rule| matches(rule, path)));
+    let touched = playdate_images::touch_ups(&files);
+    files.retain(|path| !touched.values().any(|file| file == path));
+    let mut to_convert: Vec<String> = files
+        .iter()
+        .filter(|path| !touched.contains_key(*path))
+        .cloned()
+        .collect();
+    to_convert.extend(
+        public
+            .iter()
+            .filter(|path| is_sidecar(path) && files.binary_search(path).is_err())
+            .cloned(),
+    );
+    let read = |path: &str| {
+        std::fs::read_to_string(Path::new(PRIVATE).join(path))
+            .or_else(|_| std::fs::read_to_string(Path::new(ASSETS).join(path)))
+            .ok()
+    };
+    let one_bit = convert_pictures(PRIVATE, "onebit-private", &to_convert, read);
+    let source = |path: &String| -> Source {
+        if let Some(file) = touched.get(path) {
+            ("CARGO_MANIFEST_DIR", format!("/{PRIVATE}/{file}"))
+        } else if one_bit.contains(path) {
+            (
+                "OUT_DIR",
+                format!("/{}", one_bit_file("onebit-private", path)),
+            )
+        } else {
+            ("CARGO_MANIFEST_DIR", format!("/{PRIVATE}/{path}"))
+        }
+    };
+    table(files.iter(), source)
+}
+
+/// Whether `path` is a battler sidecar (`battlers/<name>.ron`), which sets
+/// a fighter's scale.
+fn is_sidecar(path: &str) -> bool {
+    path.strip_prefix("battlers/")
+        .and_then(|name| name.rsplit_once('.'))
+        .is_some_and(|(name, ext)| !name.contains('/') && ext.eq_ignore_ascii_case("ron"))
+}
+
+/// The table expression of `files`, each read from its `source`.
+fn table<'a>(
+    files: impl Iterator<Item = &'a String>,
+    source: impl Fn(&String) -> Source,
+) -> String {
     let mut table = String::from("&[\n");
     for path in files {
-        let (root, file) = if one_bit.contains(path) {
-            ("OUT_DIR", format!("/{}", one_bit_file(path)))
-        } else {
-            ("CARGO_MANIFEST_DIR", format!("/{ASSETS}/{path}"))
-        };
+        let (root, file) = source(path);
         writeln!(
             table,
             "    ({path:?}, include_bytes!(concat!(env!({root:?}), {file:?}))),"
@@ -106,26 +184,33 @@ fn table<'a>(files: impl Iterator<Item = &'a String>, one_bit: &BTreeSet<String>
     table
 }
 
-/// Where in `OUT_DIR` the one-bit picture of the PNG at `path` goes.
-fn one_bit_file(path: &str) -> String {
+/// Where in `OUT_DIR`, below its folder `dir`, the one-bit picture of the
+/// PNG at `path` goes.
+fn one_bit_file(dir: &str, path: &str) -> String {
     let stem = path.rsplit_once('.').map_or(path, |(stem, _)| stem);
-    format!("onebit/{stem}.{EXTENSION}")
+    format!("{dir}/{stem}.{EXTENSION}")
 }
 
-/// Converts each picture of `files` the Playdate draws one-bit into
-/// `OUT_DIR` ([`one_bit_file`]), returning their paths.
-fn convert_pictures(files: &[String]) -> BTreeSet<String> {
-    let read = |path: &str| std::fs::read_to_string(Path::new(ASSETS).join(path)).ok();
-    let jobs = playdate_images::jobs(files, read).unwrap_or_else(|e| panic!("assets/{e}"));
+/// Converts each picture of `files` (in the folder `folder`) the Playdate
+/// draws one-bit into `OUT_DIR`'s folder `dir` ([`one_bit_file`]),
+/// returning their paths. `read` gives a battler sidecar's text.
+fn convert_pictures(
+    folder: &str,
+    dir: &str,
+    files: &[String],
+    read: impl Fn(&str) -> Option<String>,
+) -> BTreeSet<String> {
+    let shown = folder.trim_start_matches("../../");
+    let jobs = playdate_images::jobs(files, read).unwrap_or_else(|e| panic!("{shown}/{e}"));
     for job in &jobs {
-        let fail = |e: String| -> ! { panic!("assets/{}: {e}", job.path) };
+        let fail = |e: String| -> ! { panic!("{shown}/{}: {e}", job.path) };
         let png =
-            std::fs::read(Path::new(ASSETS).join(job.path)).unwrap_or_else(|e| fail(e.to_string()));
+            std::fs::read(Path::new(folder).join(job.path)).unwrap_or_else(|e| fail(e.to_string()));
         let (width, height, rgba) = png_pixels(&png).unwrap_or_else(|e| fail(e));
         let image = Rgba::new(width, height, &rgba)
             .unwrap_or_else(|| fail("decoded to the wrong number of pixels".into()));
         let file = convert(&image, job.scale, &job.kind.methods()).unwrap_or_else(|e| fail(e));
-        let out = out_dir().join(one_bit_file(job.path));
+        let out = out_dir().join(one_bit_file(dir, job.path));
         if let Some(folder) = out.parent() {
             std::fs::create_dir_all(folder)
                 .unwrap_or_else(|e| panic!("making {}: {e}", folder.display()));
@@ -146,30 +231,41 @@ fn write_out(name: &str, contents: &str) {
     std::fs::write(&out, contents).unwrap_or_else(|e| panic!("writing {}: {e}", out.display()));
 }
 
-/// The paths of `files` (sorted) that `list` leaves out: each of its lines
-/// but blank ones and `#` comments is a file's path, a folder's
-/// (`audio/sfx/`, everything below it) or `**/` and a file name (every file
-/// of that name). A line that matches no file is an error.
+/// The rules of `list` with their line numbers: each line but blank ones
+/// and `#` comments.
+fn rules(list: &str) -> Vec<(usize, &str)> {
+    list.lines()
+        .enumerate()
+        .map(|(n, line)| (n + 1, line.trim()))
+        .filter(|(_, line)| !line.is_empty() && !line.starts_with('#'))
+        .collect()
+}
+
+/// Whether a rule of `playdate-bundle.txt` leaves out the file at `path`:
+/// the rule is a file's path, a folder's (`audio/sfx/`, everything below
+/// it) or `**/` and a file name (every file of that name).
+fn matches(&(_, rule): &(usize, &str), path: &str) -> bool {
+    if let Some(name) = rule.strip_prefix("**/") {
+        path.rsplit('/').next() == Some(name)
+    } else if rule.ends_with('/') {
+        path.starts_with(rule)
+    } else {
+        path == rule
+    }
+}
+
+/// The paths of `files` (sorted) that `list` leaves out ([`matches`]). A
+/// rule that matches no file of `assets/` is an error.
 fn left_out(list: &str, files: &[String]) -> Result<Vec<String>, String> {
     let mut out = Vec::new();
-    for (n, line) in list.lines().enumerate() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        let matches = |path: &&String| {
-            if let Some(name) = line.strip_prefix("**/") {
-                path.rsplit('/').next() == Some(name)
-            } else if line.ends_with('/') {
-                path.starts_with(line)
-            } else {
-                path.as_str() == line
-            }
-        };
+    for rule in rules(list) {
         let before = out.len();
-        out.extend(files.iter().filter(matches).cloned());
+        out.extend(files.iter().filter(|path| matches(&rule, path)).cloned());
         if out.len() == before {
-            return Err(format!("line {}: `{line}` is no file under assets/", n + 1));
+            return Err(format!(
+                "line {}: `{}` is no file under assets/",
+                rule.0, rule.1
+            ));
         }
     }
     out.sort_unstable();

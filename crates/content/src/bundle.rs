@@ -20,10 +20,11 @@
 //!
 //! Without `std` (the Playdate, ADR-0070 §3) `include_dir` does not build:
 //! `assets/` is the table of files `build.rs` writes, and there are no test
-//! files and no private layer. It is the **Playdate's bundle**
-//! (`playdate_layers`, ticket 1036): `assets/` without the files
-//! `crates/content/playdate-bundle.txt` lists, which it leaves out on
-//! purpose ([`left_out`]).
+//! files. It is the **Playdate's bundle** (`playdate_layers`, ticket 1036):
+//! `assets/` without the files `crates/content/playdate-bundle.txt` lists,
+//! which it leaves out on purpose ([`left_out`]). With the
+//! `private-assets` feature the bought art is a table too, laid over it
+//! (ticket 1061).
 use crate::prelude::*;
 
 #[cfg(feature = "std")]
@@ -50,6 +51,15 @@ static PLAYDATE: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/playdate
 /// The paths (sorted) of the files of `assets/` the Playdate leaves out.
 #[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
 static PLAYDATE_LEFT_OUT: &[&str] = include!(concat!(env!("OUT_DIR"), "/playdate_left_out.rs"));
+
+/// The Playdate's table of the bought art (ticket 1061): `build.rs` makes
+/// it as [`PLAYDATE`], from `assets-private/game/`.
+#[cfg(all(
+    feature = "private-assets",
+    any(not(feature = "std"), feature = "playdate-bundle")
+))]
+static PLAYDATE_PRIVATE: &[(&str, &[u8])] =
+    include!(concat!(env!("OUT_DIR"), "/playdate_private_files.rs"));
 
 #[cfg(all(feature = "std", feature = "private-assets"))]
 static PRIVATE: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/../../assets-private/game");
@@ -88,13 +98,16 @@ pub const PRIVATE_TEST_DISPLAY_ROOT: &str = "assets-private/test";
 
 /// The game's embedded directories, in the order a file is read from them:
 /// the bought art, `assets/`, then the test files' bought art and the test
-/// files, each when this build has it.
+/// files, each when this build has it. Without `std`, the Playdate's
+/// (`playdate_layers`).
 pub fn layers() -> Vec<Layer> {
     vec![
         #[cfg(all(feature = "std", feature = "private-assets"))]
         Layer::dir(PRIVATE_DISPLAY_ROOT, &PRIVATE).private(),
         #[cfg(feature = "std")]
         Layer::dir(DISPLAY_ROOT, &ASSETS),
+        #[cfg(all(not(feature = "std"), feature = "private-assets"))]
+        Layer::table(PRIVATE_DISPLAY_ROOT, PLAYDATE_PRIVATE).private(),
         #[cfg(not(feature = "std"))]
         playdate_layer(),
         #[cfg(all(
@@ -119,10 +132,18 @@ const fn playdate_layer() -> Layer {
 
 /// The Playdate build's layers (ticket 1036): [`layers`] without `std`.
 /// With it (the `playdate-bundle` feature), for the test that plays
-/// Chapter 1 against them ([`reading`]).
+/// Chapter 1 against them ([`reading`]). With the `private-assets`
+/// feature the bought art lies over `assets/`, as on the PC (ticket 1061).
 #[cfg(any(not(feature = "std"), feature = "playdate-bundle", test))]
 pub fn playdate_layers() -> Vec<Layer> {
-    vec![playdate_layer()]
+    vec![
+        #[cfg(all(
+            feature = "private-assets",
+            any(not(feature = "std"), feature = "playdate-bundle")
+        ))]
+        Layer::table(PRIVATE_DISPLAY_ROOT, PLAYDATE_PRIVATE).private(),
+        playdate_layer(),
+    ]
 }
 
 /// The game's bundle, the process-wide one: installed from [`layers`] the

@@ -170,6 +170,26 @@ pub fn kind_of(path: &str) -> Option<&'static Kind> {
     })
 }
 
+/// The touched-up one-bit picture of the PNG at `path` (ticket 1042): a
+/// `<stem>.1bit` file beside it among `files` (sorted), which the
+/// Playdate uses as it is instead of converting the PNG. `None` if there
+/// is none, or `path` is no picture the Playdate draws one-bit.
+pub fn touched_up(path: &str, files: &[String]) -> Option<String> {
+    kind_of(path)?;
+    let (stem, _) = path.rsplit_once('.')?;
+    let file = format!("{stem}.{}", shuyi_assets::bitmap::EXTENSION);
+    files.binary_search(&file).is_ok().then_some(file)
+}
+
+/// The touched-up pictures among `files` (sorted): each PNG's path and
+/// its [`touched_up`] file's.
+pub fn touch_ups(files: &[String]) -> BTreeMap<String, String> {
+    files
+        .iter()
+        .filter_map(|path| Some((path.clone(), touched_up(path, files)?)))
+        .collect()
+}
+
 /// A picture to convert: its path, how much it is enlarged and its kind.
 #[derive(Debug, PartialEq)]
 pub struct Job<'a> {
@@ -297,6 +317,35 @@ mod tests {
             }
         );
         assert_ne!(BACKDROP, STYLE_A);
+    }
+
+    #[test]
+    fn a_touched_up_picture_is_the_1bit_file_beside_its_png() {
+        let files = paths(&[
+            "battlers/brigand.png",
+            "portraits/a/happy.1bit",
+            "portraits/a/happy.png",
+            "portraits/a/sad.png",
+            "title/logo.1bit",
+            "title/logo.png",
+        ]);
+        assert_eq!(
+            touched_up("portraits/a/happy.png", &files).as_deref(),
+            Some("portraits/a/happy.1bit")
+        );
+        assert_eq!(touched_up("portraits/a/sad.png", &files), None);
+        assert_eq!(touched_up("battlers/brigand.png", &files), None);
+        // Only a picture the Playdate draws one-bit.
+        assert_eq!(touched_up("title/logo.png", &files), None);
+        assert_eq!(touched_up("portraits/a/happy.1bit", &files), None);
+        let all = touch_ups(&files);
+        assert_eq!(
+            all.into_iter().collect::<Vec<_>>(),
+            [(
+                "portraits/a/happy.png".to_string(),
+                "portraits/a/happy.1bit".to_string()
+            )]
+        );
     }
 
     #[test]

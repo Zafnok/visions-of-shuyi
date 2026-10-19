@@ -10,6 +10,9 @@
 //!
 //! Each picture is a `.1bit` file at its PNG's path and, to look at, a
 //! black and white PNG of each style beside it (`neutral.a-lines.png`).
+//! A touched-up picture (ticket 1042), a `<stem>.1bit` beside the PNG, is
+//! copied as it is instead of converted, as the Playdate's build embeds it
+//! (ticket 1061): what this shows is what ships.
 //!
 //! `frame-png --playdate` draws its pictures the same way ([`Pictures`]).
 
@@ -19,7 +22,7 @@ use std::path::Path;
 
 use shuyi_assets::bitmap::convert::{Rgba, convert, png_pixels};
 use shuyi_assets::bitmap::{Bitmap, EXTENSION};
-use trpg_content::playdate_images::{Job, jobs};
+use trpg_content::playdate_images::{Job, jobs, touch_ups};
 use trpg_ui::ImageId;
 use trpg_ui::onebit::{Image, Images};
 
@@ -101,19 +104,27 @@ fn files_under(dir: &Path) -> Result<Vec<String>, String> {
 }
 
 /// Converts the pictures of the folder `from` (laid out as `assets/`)
-/// into `to`; returns how many.
+/// into `to`, copying the touched-up ones; returns how many.
 pub fn convert_folder(from: &Path, to: &Path) -> Result<usize, String> {
     let files = files_under(from)?;
     let read = |path: &str| fs::read_to_string(from.join(path)).ok();
     let jobs = jobs(&files, read).map_err(|e| format!("{}/{e}", from.display()))?;
+    let touched = touch_ups(&files);
     for job in &jobs {
+        let file = if let Some(touched) = touched.get(job.path) {
+            let shown = from.join(touched);
+            fs::read(&shown).map_err(|e| format!("reading {}: {e}", shown.display()))?
+        } else {
+            let shown = from.join(job.path);
+            let png = fs::read(&shown).map_err(|e| format!("reading {}: {e}", shown.display()))?;
+            convert_png(&png, job).map_err(|e| format!("{}: {e}", shown.display()))?
+        };
         let shown = from.join(job.path);
-        let png = fs::read(&shown).map_err(|e| format!("reading {}: {e}", shown.display()))?;
-        let file = convert_png(&png, job).map_err(|e| format!("{}: {e}", shown.display()))?;
         let bitmap = Bitmap::parse(&file).map_err(|e| format!("{}: {e}", shown.display()))?;
         let (bits, styles) = file_names(job);
         let mut outputs = vec![(bits, file.clone())];
-        for (n, name) in styles.into_iter().enumerate() {
+        // A touched-up picture may hold fewer styles than its kind.
+        for (n, name) in styles.into_iter().take(bitmap.styles()).enumerate() {
             outputs.push((name, style_png(&bitmap, n)?));
         }
         for (name, bytes) in outputs {
@@ -243,6 +254,39 @@ mod tests {
         let (w, h, rgba) = png_pixels(&png).unwrap();
         assert_eq!((w, h), (2, 2));
         assert_eq!(rgba, [[255; 4], [0, 0, 0, 255], [0; 4], [255; 4]].concat());
+    }
+
+    /// A `<stem>.1bit` beside a PNG is the picture, copied as it is, and
+    /// its styles are drawn from it, not from the PNG.
+    #[test]
+    fn a_touched_up_picture_is_copied_not_converted() {
+        let from = scratch("touched-from");
+        let face = repo().join("assets/portraits/lead_m/neutral.png");
+        let portraits = from.join("portraits/x");
+        fs::create_dir_all(&portraits).unwrap();
+        fs::copy(&face, portraits.join("neutral.png")).unwrap();
+        fs::copy(&face, portraits.join("sad.png")).unwrap();
+        let touched =
+            shuyi_assets::bitmap::encode((2, 2), (1, 1), &[&[0x80, 0x40]], Some(&[0xc0, 0x40]))
+                .unwrap();
+        fs::write(portraits.join("neutral.1bit"), &touched).unwrap();
+        let to = scratch("touched-to");
+        assert_eq!(convert_folder(&from, &to).unwrap(), 2);
+        assert_eq!(
+            fs::read(to.join("portraits/x/neutral.1bit")).unwrap(),
+            touched
+        );
+        let (w, h, _) =
+            png_pixels(&fs::read(to.join("portraits/x/neutral.a.png")).unwrap()).unwrap();
+        assert_eq!((w, h), (2, 2));
+        assert!(!to.join("portraits/x/neutral.a-lines.png").exists());
+        // The one beside no touch-up is converted.
+        let sad = Bitmap::parse(&fs::read(to.join("portraits/x/sad.1bit")).unwrap())
+            .map(|b| (b.width(), b.height()))
+            .unwrap();
+        assert_eq!(sad, (64, 64));
+        let _ = fs::remove_dir_all(&from);
+        let _ = fs::remove_dir_all(&to);
     }
 
     #[test]
