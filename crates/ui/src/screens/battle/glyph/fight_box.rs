@@ -4,11 +4,11 @@
 //! while it flashes), HP with a bar, and the result under the target.
 
 use crate::color::UiColor;
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, GlyphBuffer, PanelLook, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
-use crate::screens::battle::units::{faction_color, hp_fill};
+use crate::screens::battle::units::{faction_color, paint_hp_bar};
 use crate::screens::battle::view::FightBoxView;
 
 /// The playback box's size, in cells.
@@ -32,13 +32,12 @@ pub const BOX_COLUMNS: [i32; 2] = [BOX.x + 2, BOX.x + 2 + BOX_W / 2];
 pub fn paint(ctx: &Ctx, view: &FightBoxView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    buf.fill_rect(BOX, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(BOX, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
+    buf.panel(BOX, &look.border(c(UiColor::PanelBorderFocus)), None);
     if let Some(name) = &view.banner {
-        let text = format!(" {name} ");
-        let w = i32::try_from(text.chars().count()).unwrap_or(0);
-        let x = BOX.x + ((BOX.w - w) / 2).max(1);
-        buf.print(x, BOX.y, &text, c(UiColor::TextHighlight), bg);
+        // Between the corners.
+        let top = Rect::new(BOX.x + 1, BOX.y, BOX.w - 2, 1);
+        buf.print_centred(top, &format!(" {name} "), c(UiColor::TextHighlight));
     }
     for (f, x) in view.sides.iter().zip(BOX_COLUMNS) {
         let color = c(faction_color(f.faction));
@@ -47,15 +46,8 @@ pub fn paint(ctx: &Ctx, view: &FightBoxView, buf: &mut GlyphBuffer) {
         buf.print(x, BOX.y + 1, &f.name, fg, name_bg);
         let hp_text = format!("{} {:>2}", view.hp_name, f.hp);
         buf.print(x, BOX.y + 2, &hp_text, c(UiColor::Text), bg);
-        let (filled, bar) = hp_fill(f.hp, f.max, BOX_BAR_CELLS);
-        for i in 0..BOX_BAR_CELLS {
-            let (glyph, fg) = if i < filled {
-                ('█', c(bar))
-            } else {
-                ('░', c(UiColor::TextDim))
-            };
-            buf.set(x + 6 + i, BOX.y + 2, Cell::new(glyph, fg, bg));
-        }
+        let bar = Rect::new(x + 6, BOX.y + 2, BOX_BAR_CELLS, 1);
+        paint_hp_bar(buf, &ctx.palette, bar, (f.hp, f.max), bg);
         if let Some(result) = &f.result {
             let hi = c(UiColor::TextHighlight);
             buf.print(x, BOX.y + 3, result, hi, bg);
@@ -68,6 +60,7 @@ mod tests {
     use trpg_core::Faction;
 
     use super::*;
+    use crate::glyph_buffer::Cell;
     use crate::screen::tests::ctx;
     use crate::screens::battle::view::BoxFighterView;
 

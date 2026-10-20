@@ -9,7 +9,7 @@ use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
-use crate::screens::battle::units::{faction_color, hp_fill};
+use crate::screens::battle::units::{faction_color, paint_hp_bar};
 use crate::screens::battle::view::{GearView, InfoView, InfoWeaponView};
 
 /// The whole screen above the help bar.
@@ -148,15 +148,8 @@ fn paint_middle(pen: &mut Pen<'_>, view: &InfoView) {
     let hx = pen.text(x, 4, &label, UiColor::TextDim);
     let hp = format!("{}/{}", view.hp, view.max);
     pen.text(hx, 4, &hp, UiColor::Text);
-    let (filled, color) = hp_fill(view.hp, view.max, HP_BAR_CELLS);
-    for i in 0..HP_BAR_CELLS {
-        let (glyph, fg) = if i < filled {
-            ('█', color)
-        } else {
-            ('░', UiColor::TextDim)
-        };
-        pen.text(x + 11 + i, 4, &glyph.to_string(), fg);
-    }
+    let bar = Rect::new(x + 11, 4, HP_BAR_CELLS, 1);
+    paint_hp_bar(pen.buf, pen.palette, bar, (view.hp, view.max), pen.bg);
     pen.text(x, 6, &view.stats_title, UiColor::TextHighlight);
     // A raised or lowered stat shows in the effect colour.
     for (y, stat) in (7..).zip(&view.stats) {

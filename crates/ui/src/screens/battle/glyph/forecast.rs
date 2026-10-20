@@ -9,13 +9,13 @@
 use crate::prelude::*;
 use trpg_core::{Side, StatValue};
 
-use super::TEXT_X;
+use super::{TEXT_X, print_clipped};
 use crate::color::{Rgb, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Overlay, PanelLook, Rect};
 use crate::screen::Ctx;
 use crate::screens::battle::layout::SIDE_PANEL;
-use crate::screens::battle::units::{faction_color, hp_fill};
+use crate::screens::battle::units::{faction_color, hp_fill, meter_cells};
 use crate::screens::battle::view::{ForecastSideView, ForecastView, LeftView, SkillLineView};
 
 /// Left column (the attacker).
@@ -90,24 +90,15 @@ pub fn skull(x: i32, y: i32, color: Rgb) -> Vec<Overlay> {
     runs
 }
 
-/// Prints `text` at `(x, y)` on the cells' background, cut to `w` chars.
-fn put(buf: &mut GlyphBuffer, x: i32, y: i32, text: &str, fg: Rgb, w: usize) {
-    let bg = buf.get(x, y).map_or(fg, |c| c.bg);
-    let cut: String = text.chars().take(w).collect();
-    buf.print(x, y, &cut, fg, bg);
-}
-
 /// Paints the forecast `view` over the side panel.
 pub fn paint(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
-    buf.fill_rect(SIDE_PANEL, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(SIDE_PANEL, BoxStyle::Double, c(UiColor::PanelBorder), bg);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
+    buf.panel(SIDE_PANEL, &look.border(c(UiColor::PanelBorder)), None);
+    let top = Rect::new(SIDE_PANEL.x, SIDE_PANEL.y, SIDE_PANEL.w, 1);
     let title = format!(" {} ", view.title);
-    let title_w = i32::try_from(title.chars().count()).unwrap_or(0);
-    let title_x = SIDE_PANEL.x + (SIDE_PANEL.w - title_w) / 2;
-    let hi = c(UiColor::TextHighlight);
-    put(buf, title_x, SIDE_PANEL.y, &title, hi, title.len());
+    buf.print_centred(top, &title, c(UiColor::TextHighlight));
     for (side, x) in view.sides.iter().zip([LEFT_X, RIGHT_X]) {
         paint_side(ctx, view, side, x, buf);
     }
@@ -123,7 +114,7 @@ fn paint_notes(ctx: &Ctx, notes: &[String], row: i32, buf: &mut GlyphBuffer) {
     let bottom = SIDE_PANEL.y + SIDE_PANEL.h - 1;
     let fg = ctx.palette.get(UiColor::Effect);
     for (y, note) in (row..bottom).zip(notes) {
-        put(buf, LEFT_X, y, note, fg, SKILL_W);
+        print_clipped(buf, (LEFT_X, y), SKILL_W, note, fg);
     }
 }
 
@@ -135,7 +126,7 @@ fn paint_skill(ctx: &Ctx, skill: &SkillLineView, buf: &mut GlyphBuffer) {
     // check-text: not a data name (the view's own)
     let text = format!("{}{cost}", skill.name);
     let fg = ctx.palette.get(UiColor::TextHighlight);
-    put(buf, LEFT_X, SKILL_ROW, &text, fg, SKILL_W);
+    print_clipped(buf, (LEFT_X, SKILL_ROW), SKILL_W, &text, fg);
 }
 
 /// One side's block at column `x`: name, weapon, what is left of it, HP
@@ -151,30 +142,36 @@ fn paint_side(
     let (text, dim) = (c(UiColor::Text), c(UiColor::TextDim));
     let name_fg = c(faction_color(side.faction));
     // check-text: not a data name (the view's own)
-    put(buf, x, NAME_ROW, &side.name, name_fg, COLUMN_W);
-    put(buf, x, NAME_ROW + 1, &side.weapon, dim, COLUMN_W);
+    print_clipped(buf, (x, NAME_ROW), COLUMN_W, &side.name, name_fg);
+    print_clipped(buf, (x, NAME_ROW + 1), COLUMN_W, &side.weapon, dim);
     match &side.left {
         Some(LeftView::Broken(broken)) => {
-            put(buf, x, BROKEN_ROW, broken, c(UiColor::HpLow), COLUMN_W);
+            print_clipped(buf, (x, BROKEN_ROW), COLUMN_W, broken, c(UiColor::HpLow));
         }
         Some(LeftView::Count { left, max }) => {
-            put(buf, x, BROKEN_ROW, &format!("{left}/{max}"), dim, COLUMN_W);
+            print_clipped(
+                buf,
+                (x, BROKEN_ROW),
+                COLUMN_W,
+                &format!("{left}/{max}"),
+                dim,
+            );
         }
         None => {}
     }
     if let Some(marker) = &side.affinity {
         let hi = c(UiColor::TextHighlight);
-        put(buf, x, AFFINITY_ROW, marker, hi, COLUMN_W);
+        print_clipped(buf, (x, AFFINITY_ROW), COLUMN_W, marker, hi);
     }
     let hp = side.hp;
-    put(buf, x, HP_ROW, &view.hp_name, dim, 2);
-    put(buf, x + 3, HP_ROW, &format!("{:>2}", hp.now), text, 3);
+    print_clipped(buf, (x, HP_ROW), 2, &view.hp_name, dim);
+    print_clipped(buf, (x + 3, HP_ROW), 3, &format!("{:>2}", hp.now), text);
     paint_bar(ctx, buf, x + 6, (hp.now, hp.after, hp.max));
     let shown = |v: Option<u8>| v.map_or_else(|| "--".to_owned(), |v| v.to_string());
-    put(buf, x, HP_ROW + 1, &view.hit_name, dim, 3);
-    put(buf, x + 5, HP_ROW + 1, &shown(side.hit), text, 3);
-    put(buf, x, HP_ROW + 2, &view.crit_name, dim, 4);
-    put(buf, x + 5, HP_ROW + 2, &shown(side.crit), text, 3);
+    print_clipped(buf, (x, HP_ROW + 1), 3, &view.hit_name, dim);
+    print_clipped(buf, (x + 5, HP_ROW + 1), 3, &shown(side.hit), text);
+    print_clipped(buf, (x, HP_ROW + 2), 4, &view.crit_name, dim);
+    print_clipped(buf, (x + 5, HP_ROW + 2), 3, &shown(side.crit), text);
 }
 
 /// The HP bar at `(x, HP_ROW)`: `after` HP filled in its HP colour, the HP
@@ -189,16 +186,11 @@ fn paint_bar(
     let (kept, color) = hp_fill(after, max, HP_BAR_CELLS);
     let (now, _) = hp_fill(hp.max(after), max, HP_BAR_CELLS);
     let bg = c(UiColor::PanelBg);
-    for i in 0..HP_BAR_CELLS {
-        let (glyph, fg) = if i < kept {
-            ('█', c(color))
-        } else if i < now {
-            ('▒', c(UiColor::HpLow))
-        } else {
-            ('░', c(UiColor::TextDim))
-        };
-        buf.set(x + i, HP_ROW, Cell::new(glyph, fg, bg));
-    }
+    let lost = Cell::new('▒', c(UiColor::HpLow), bg);
+    let empty = Cell::new('░', c(UiColor::TextDim), bg);
+    meter_cells(buf, Rect::new(x, HP_ROW, HP_BAR_CELLS, 1), now, lost, empty);
+    let full = Cell::new('█', c(color), bg);
+    meter_cells(buf, Rect::new(x, HP_ROW, now, 1), kept, full, lost);
 }
 
 /// The strike list and the totals under it. Returns the totals' row.
@@ -208,18 +200,18 @@ fn paint_strikes(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) -> i32 {
     let rule = c(UiColor::PanelBorder);
     let rule_w = usize::try_from(SIDE_PANEL.w - 4).unwrap_or(0);
     let line = "─".repeat(rule_w);
-    put(buf, LEFT_X, RULE_ROW, &line, rule, rule_w);
+    print_clipped(buf, (LEFT_X, RULE_ROW), rule_w, &line, rule);
     for (y, (n, s)) in (STRIKE_ROW..).zip(view.strikes.iter().enumerate()) {
-        put(buf, NUMBER_X, y, &(n + 1).to_string(), dim, 1);
+        print_clipped(buf, (NUMBER_X, y), 1, &(n + 1).to_string(), dim);
         let fg = if s.after_a_fall { dim } else { text };
         let (dmg_x, arrow_x, arrow) = match s.by {
             Side::Attacker => (LEFT_X, LEFT_X + 9, "→"),
             Side::Defender => (RIGHT_X + 2, RIGHT_X, "←"),
         };
-        put(buf, dmg_x, y, &s.text, fg, 7);
-        put(buf, arrow_x, y, arrow, dim, 1);
+        print_clipped(buf, (dmg_x, y), 7, &s.text, fg);
+        print_clipped(buf, (arrow_x, y), 1, arrow, dim);
         if s.effective {
-            put(buf, dmg_x + 6, y, "!", c(UiColor::TextHighlight), 1);
+            print_clipped(buf, (dmg_x + 6, y), 1, "!", c(UiColor::TextHighlight));
         }
         if s.kills {
             for o in skull(dmg_x + 7, y, c(UiColor::HpLow)) {
@@ -228,16 +220,16 @@ fn paint_strikes(ctx: &Ctx, view: &ForecastView, buf: &mut GlyphBuffer) -> i32 {
         }
     }
     if let Some(none) = &view.no_counter {
-        put(buf, RIGHT_X + 2, STRIKE_ROW, none, dim, 11);
+        print_clipped(buf, (RIGHT_X + 2, STRIKE_ROW), 11, none, dim);
     }
     let rows = i32::try_from(view.strikes.len()).unwrap_or(0);
     let total_row = STRIKE_ROW + rows + 1;
-    put(buf, LEFT_X, total_row - 1, &line, rule, rule_w);
-    put(buf, NUMBER_X - 2, total_row, &view.total_name, dim, 5);
+    print_clipped(buf, (LEFT_X, total_row - 1), rule_w, &line, rule);
+    print_clipped(buf, (NUMBER_X - 2, total_row), 5, &view.total_name, dim);
     for (side, x) in view.sides.iter().zip([LEFT_X, RIGHT_X + 2]) {
         if let Some(total) = side.total {
             let shown = format!("{:>2} ×{}", total.damage, total.strikes);
-            put(buf, x, total_row, &shown, text, 7);
+            print_clipped(buf, (x, total_row), 7, &shown, text);
         }
     }
     total_row

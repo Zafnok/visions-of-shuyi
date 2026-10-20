@@ -4,7 +4,7 @@
 use super::*;
 use crate::input::Action;
 use crate::screen::{Screen, tests::ctx};
-use crate::screens::battle::glyph::progress::{LEVEL_BANNER_ROW, LEVEL_TEXT_X};
+use crate::screens::battle::glyph::progress::{LEVEL_BANNER_ROW, LEVEL_TEXT_X, bar_cells};
 use crate::screens::results::tests::{deployed, press, rewards, screen, state, wait};
 use crate::screens::results::{FILL_S, INTRO_S, ResultsScreen};
 use crate::words::Words;
