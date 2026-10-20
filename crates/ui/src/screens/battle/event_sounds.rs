@@ -7,6 +7,7 @@
 
 use crate::prelude::*;
 use alloc::collections::BTreeMap;
+use shuyi_ui::input::frame_seconds;
 
 use trpg_core::{BattleState, Element, Equipped, Event, Strike, Unit, UnitId, WeaponKind};
 
@@ -194,7 +195,7 @@ impl CueQueue {
     /// Lets `dt` seconds pass (a bad `dt` counts as 0) and returns the
     /// cues now due, in the order queued.
     pub fn tick(&mut self, dt: f32) -> Vec<&'static str> {
-        let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
+        let dt = frame_seconds(dt);
         let mut due = Vec::new();
         self.cues.retain_mut(|(left, cue)| {
             *left -= dt;

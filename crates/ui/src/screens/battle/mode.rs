@@ -34,6 +34,7 @@
 //! cursor and applies the [`Effect`]s.
 
 use crate::prelude::*;
+use shuyi_ui::input::frame_seconds;
 
 use trpg_core::{
     BattleState, Command, Equipped, Faction, Phase, Pos, Reach, TileSet, UnitAction, UnitId,
@@ -653,7 +654,7 @@ impl Mode {
         let Mode::Moving { sel, t, held, pace } = self else {
             return None;
         };
-        let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
+        let dt = frame_seconds(dt);
         let (to, held) = (t + dt, if confirm_held { held + dt } else { 0.0 });
         let skipped = held >= HOLD_SKIP_S && !walk_done(sel, to * pace);
         let entered = if skipped {
@@ -691,7 +692,7 @@ impl Mode {
         let Mode::Moving { sel, t, held, pace } = self else {
             return self;
         };
-        let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
+        let dt = frame_seconds(dt);
         let (t, held) = (t + dt, if confirm_held { held + dt } else { 0.0 });
         if held >= HOLD_SKIP_S || walk_done(&sel, t * pace) {
             walk_ended(sel, state, words).0

@@ -26,6 +26,7 @@
 
 use crate::prelude::*;
 use alloc::collections::{BTreeMap, BTreeSet};
+use shuyi_ui::HurryClock;
 
 use trpg_core::{
     CharacterId, ClassId, Event, Faction, Pos, Side, SideForecast, StatKind, StatValue, Strike,
@@ -483,9 +484,8 @@ impl Playback {
 
     /// The time [`tick`](Self::tick) would advance the clock to.
     fn advanced(&self, dt: f32, confirm_held: bool) -> f32 {
-        let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
-        let speed = if confirm_held { self.timings.fast } else { 1.0 };
-        (self.t + dt * speed).min(self.limit())
+        let passing = HurryClock::new(0.0, self.timings.fast).tick(dt, confirm_held);
+        (self.t + passing).min(self.limit())
     }
 
     /// The combat the box shows now: the current one, or the last during

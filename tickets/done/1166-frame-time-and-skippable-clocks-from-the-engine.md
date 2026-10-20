@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["engine#2312"]
 nick_input: none
-completed:
+completed: 2026-10-20
 ---
 
 # 1166 — Frame time and hurried clocks from the engine
@@ -57,11 +57,11 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `grep -rn "dt.is_finite()" crates/ui/src` finds nothing outside
+- [x] `grep -rn "dt.is_finite()" crates/ui/src` finds nothing outside
       tests.
-- [ ] The progress, playback, AI phase and conversation tests pass
+- [x] The progress, playback, AI phase and conversation tests pass
       unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -69,5 +69,22 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- The pin was already past engine 2312 (moved by 1167).
+- The frame-time cleanups: 8 were left in `crates/ui/src`, not 13 (the
+  others went with earlier carve tickets). The cue queue, the walk in
+  `mode.rs` (twice) and the title song's clock use the engine's
+  `frame_seconds`, since their own tests hand them a NaN frame time; the
+  credits roll only ever gets `FrameInput::dt()`, so its check just goes.
+- The three clocks: the progress pages and the fight playback each pass
+  time through a `HurryClock` with no delay and their `fast` factor
+  (they hurried from the first held frame, as they still do). The AI
+  action uses two: the pan and highlight at `fast`, the walk at its held
+  speed, split where the walk starts, as before. Their own "a press
+  finishes" logic stays (the progress page's `confirm`, the playback's
+  Cancel): it already sits in one place each.
+- The conversation screen's Confirm is `TextBox::confirm`: reveal, else
+  next page, else the next box.
+- No timing or speed changed; every existing test passes unchanged.
+- Friction: estimate 20 added, measured 34 (1.7×), under 2×. Fewer lines
+  went than the estimate's 90 because only 8 cleanups were left.
+- No gameplay rules decided.

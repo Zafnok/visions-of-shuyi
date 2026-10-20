@@ -36,7 +36,7 @@ use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use history::History;
 use log::LogView;
-use shuyi_ui::dialogue::TextBox;
+use shuyi_ui::dialogue::{Step, TextBox};
 use view::{DialogueView, OpeningView, SkipView, TextView, WaitView};
 
 /// Characters per text line: the box less a 3-cell margin each side.
@@ -275,10 +275,10 @@ impl DialogueScreen {
         }
     }
 
-    /// Confirm with everything shown: the next page, else the next box.
+    /// Confirm: reveals the page, else the next page, else the next box.
     /// Returns `true` once the scene is over.
-    fn next(&mut self) -> bool {
-        if !self.text.next_page() {
+    fn confirm(&mut self) -> bool {
+        if self.text.confirm() == Step::Done {
             self.player.advance();
             self.start_box();
         }
@@ -400,8 +400,7 @@ impl DialogueScreen {
             }
             match action {
                 Action::Cancel => self.ask_skip(ctx),
-                Action::Confirm if !self.is_revealed() => self.text.reveal(),
-                Action::Confirm if self.next() => return Transition::Pop,
+                Action::Confirm if self.confirm() => return Transition::Pop,
                 // A choice just opened: the rest of this frame's keys
                 // can't pick a reply.
                 Action::Confirm if self.menu.is_some() => break,
