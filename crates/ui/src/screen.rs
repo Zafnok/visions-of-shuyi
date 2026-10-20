@@ -111,22 +111,25 @@ pub struct Shuyi {
     /// All validated game content.
     pub content: Content,
     /// The mode of the campaign being played, for the Options screen:
-    /// `None` with no campaign (the title). The game flow keeps it up to
-    /// date, and takes a change to Casual here
-    /// ([`switch_to_casual`](Self::switch_to_casual)) into its campaign.
+    /// `None` with no campaign (the title). This, with
+    /// [`campaign_tutorial`](Self::campaign_tutorial) and
+    /// [`campaign_lessons`](Self::campaign_lessons), is the one copy while
+    /// a campaign runs: the game flow fills them when it begins or loads
+    /// one, takes them into its campaign when a screen over it pops (so a
+    /// change to Casual here,
+    /// [`switch_to_casual`](Self::switch_to_casual), goes into its saves)
+    /// and clears them when it ends.
     pub campaign_mode: Option<GameMode>,
     /// The tutorial level of the campaign being played (0835): `None` with
-    /// no campaign. The game flow keeps it up to date, and takes a change
-    /// made here (the Options screen's `Tutorial` row, 0838) into its
-    /// campaign. Battle tips show
+    /// no campaign. The Options screen's `Tutorial` row changes it (0838).
+    /// Battle tips show
     /// only at [`TutorialLevel::Full`] (or with no campaign, as in screen
     /// tests).
     pub campaign_tutorial: Option<TutorialLevel>,
     /// The checklist lessons the campaign being played has finished, by id
-    /// (0456): a battle opens none of them. The game flow fills it from
-    /// the campaign and keeps the campaign up to date with what a battle
-    /// adds; empty with no campaign (a battle then keeps what it finishes
-    /// here, as in screen tests).
+    /// (0456): a battle opens none of them, and adds those it finishes.
+    /// Empty with no campaign (a battle then keeps what it finishes here,
+    /// as in screen tests).
     pub campaign_lessons: BTreeSet<String>,
     /// Whether the campaign's mode may be switched now: only at
     /// Preparations, before a battle (`death-and-difficulty.md`). The game

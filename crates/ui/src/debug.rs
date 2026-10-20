@@ -6,9 +6,10 @@
 //! `assets-test/dialogue/test.dlg` full-screen or over the screen the menu
 //! was opened from (ticket 0704). The sprite test draws the test card as
 //! sprite items (ticket 0231). The class-choice screen opens on a test
-//! unit, to promote or reclass it (ticket 0603), until the between-battle
-//! menus exist. "Map skin" switches how battle maps look between the glyph
-//! skin and the test tileset (ticket 0433); the choice isn't saved. The
+//! unit, to promote or reclass it (ticket 0603; [`class_change_demo`]):
+//! no between-battle menu opens it yet. "Map skin" switches how battle
+//! maps look between the glyph skin and the test tileset (ticket 0433);
+//! the choice isn't saved. The
 //! scene camera pans and zooms the test map as a backdrop behind a window
 //! (ticket 0228, ADR-0048). "Voice test" says the test scene's lines that
 //! have a voice clip, one per press (ticket 0238), until the dialogue
@@ -32,6 +33,7 @@ pub use shuyi_ui::debug::{DebugEntry, GlyphSamplerScreen};
 pub use sprite_test::SpriteTestScreen;
 
 use trpg_content::Present;
+use trpg_core::{CharacterId, ClassId, ClassRecord, Faction, ItemDef, Pos, Stock, UnitId};
 
 use crate::color::{Palette, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
@@ -112,7 +114,7 @@ fn tools() -> Vec<DebugEntry<Shuyi>> {
                 } else {
                     ChangeKind::Reclass
                 };
-                ClassChangeScreen::demo(ctx, kind)
+                class_change_demo(ctx, kind)
                     .map_or(Transition::None, |s| Transition::Push(Box::new(s)))
             }
             VOICE_TEST_TOOL => {
@@ -131,6 +133,55 @@ fn tools() -> Vec<DebugEntry<Shuyi>> {
         },
     );
     entries.chain([skin]).collect()
+}
+
+/// The class-choice screen (ticket 0603) on a test unit, for the debug
+/// menu's "Class change" tools: the placeholder
+/// knight (a Guard) at level 12, its Guard mastered and a Rider record
+/// saved at class level 6, Def one short of its hard ceiling (so a
+/// `MAX` shows), and a stock with one of every seal. `None` if the
+/// content has no such character.
+pub fn class_change_demo(ctx: &Ctx, kind: ChangeKind) -> Option<ClassChangeScreen> {
+    let content = &ctx.game.content;
+    let classes = &content.classes;
+    let def = content
+        .characters
+        .characters
+        .get(&CharacterId("test_knight".into()))?;
+    let mut unit = trpg_content::character_unit(
+        def,
+        UnitId(1),
+        classes,
+        &content.items,
+        Faction::Player,
+        Pos::new(0, 0),
+    )
+    .ok()?;
+    unit.level = 12;
+    unit.exp = 40;
+    unit.stats.hp += 8;
+    unit.stats.str += 4;
+    unit.stats.dex += 3;
+    unit.stats.spd += 3;
+    unit.stats.def = classes.hard_ceilings.def - 1;
+    unit.hp = unit.stats.hp;
+    let mastered = ClassRecord {
+        class_level: classes.class_level_cap,
+        class_points: 0,
+    };
+    unit.class_records.insert(unit.class.clone(), mastered);
+    let saved = ClassRecord {
+        class_level: 6,
+        class_points: 0,
+    };
+    unit.class_records.insert(ClassId("rider".into()), saved);
+    let mut stock = Stock::default();
+    for (id, item) in &content.items.items {
+        if matches!(item, ItemDef::Seal(_)) {
+            stock.add(id.clone());
+        }
+    }
+    Some(ClassChangeScreen::new(ctx, kind, unit, stock))
 }
 
 /// "Play test scene": the test scene full-screen, or (`overlay`) in place

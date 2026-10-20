@@ -181,27 +181,16 @@ pub fn load_all(
     terrain: Option<&TerrainDisplayTable>,
     lighting: Option<&Lighting>,
 ) -> Result<BattlerTable, Vec<ContentError>> {
-    let mut battlers = BTreeMap::new();
+    // The battlers that parsed are checked for the default even when
+    // others didn't, so each file's errors go to `errors` here.
     let mut errors = Vec::new();
-    for path in bundle::files_in(BATTLERS_DIR) {
-        let Some(stem) = path
-            .strip_prefix(BATTLERS_DIR)
-            .and_then(|p| p.strip_prefix('/'))
-            .and_then(|p| p.strip_suffix(SIDECAR_EXTENSION))
-        else {
-            continue;
-        };
-        let file = bundle::display_path(path);
-        let result = bundle::file(path)
-            .ok_or_else(|| vec![ContentError::new(&file, "file is not valid UTF-8")])
-            .and_then(|source| parse_battler(&file, stem, source, images));
-        match result {
-            Ok(b) => {
-                battlers.insert(stem.to_owned(), b);
-            }
-            Err(e) => errors.extend(e),
-        }
-    }
+    let ext = SIDECAR_EXTENSION.trim_start_matches('.');
+    let loaded = bundle::load_each(BATTLERS_DIR, ext, |file| {
+        Ok(parse_battler(file.path, file.stem, file.text, images)
+            .map_err(|e| errors.extend(e))
+            .ok())
+    });
+    let battlers = bundle::parsed(loaded, &mut errors);
     if let Some(e) = missing_default(&battlers) {
         errors.push(e);
     }

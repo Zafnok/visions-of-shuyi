@@ -21,9 +21,9 @@
 //! the battle map). Then the screen closes. Cancel backs out of the
 //! question, or closes the screen with nothing changed.
 //!
-//! Until the between-battle menus exist (Preparations, 0408; camp), the
-//! screen is reached from the debug menu with a test unit
-//! ([`ClassChangeScreen::demo`]).
+//! No between-battle menu opens it yet (which one does is still open,
+//! `progression.md`); the debug menu opens it on a test unit
+//! ([`class_change_demo`](crate::debug::class_change_demo)).
 //!
 //! The screen says what it shows as a [`ClassChangeView`]
 //! ([`ClassChangeScreen::view`]); [`glyph::paint`] draws that view.
@@ -39,9 +39,8 @@ pub use view::{
 
 use trpg_core::progression::class_change::ChangeTables;
 use trpg_core::{
-    CharacterId, ClassChangeError, ClassDef, ClassId, ClassRecord, Event, Faction, ItemDef, Pos,
-    SealKind, StatKind, StatValue, Stock, Unit, UnitId, promote, promotion_targets, reclass,
-    reclass_targets,
+    ClassChangeError, ClassDef, ClassId, Event, ItemDef, SealKind, StatKind, StatValue, Stock,
+    Unit, promote, promotion_targets, reclass, reclass_targets,
 };
 
 use super::battle::info::{class_level, stat_name, tag_names};
@@ -227,54 +226,6 @@ impl ClassChangeScreen {
             options,
             stage: Stage::Choosing,
         }
-    }
-
-    /// The screen on a test unit, for the debug menu: the placeholder
-    /// knight (a Guard) at level 12, its Guard mastered and a Rider record
-    /// saved at class level 6, Def one short of its hard ceiling (so a
-    /// `MAX` shows), and a stock with one of every seal. `None` if the
-    /// content has no such character.
-    pub fn demo(ctx: &Ctx, kind: ChangeKind) -> Option<Self> {
-        let content = &ctx.game.content;
-        let classes = &content.classes;
-        let def = content
-            .characters
-            .characters
-            .get(&CharacterId("test_knight".into()))?;
-        let mut unit = trpg_content::character_unit(
-            def,
-            UnitId(1),
-            classes,
-            &content.items,
-            Faction::Player,
-            Pos::new(0, 0),
-        )
-        .ok()?;
-        unit.level = 12;
-        unit.exp = 40;
-        unit.stats.hp += 8;
-        unit.stats.str += 4;
-        unit.stats.dex += 3;
-        unit.stats.spd += 3;
-        unit.stats.def = classes.hard_ceilings.def - 1;
-        unit.hp = unit.stats.hp;
-        let mastered = ClassRecord {
-            class_level: classes.class_level_cap,
-            class_points: 0,
-        };
-        unit.class_records.insert(unit.class.clone(), mastered);
-        let saved = ClassRecord {
-            class_level: 6,
-            class_points: 0,
-        };
-        unit.class_records.insert(ClassId("rider".into()), saved);
-        let mut stock = Stock::default();
-        for (id, item) in &content.items.items {
-            if matches!(item, ItemDef::Seal(_)) {
-                stock.add(id.clone());
-            }
-        }
-        Some(Self::new(ctx, kind, unit, stock))
     }
 
     /// The unit, as it is now (changed once a change was confirmed).

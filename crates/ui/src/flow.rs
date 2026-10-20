@@ -307,7 +307,9 @@ impl FlowScreen {
     }
 
     /// Makes `campaign` the flow's: dialogue from here on uses its lead,
-    /// and its playtime counts on from what it had.
+    /// [`Ctx`] owns its mode, tutorial level and lessons from here on
+    /// ([`sync`](Self::sync) reads them back), and its playtime counts on
+    /// from what it had.
     fn adopt(&mut self, ctx: &mut Ctx, campaign: Campaign) {
         ctx.game.lead = campaign.lead.clone();
         ctx.game.campaign_mode = Some(campaign.mode);
@@ -608,22 +610,15 @@ impl FlowScreen {
 
     /// The screen over the flow popped: the campaign takes in what changed
     /// ([`take_in`](Self::take_in); a switch to Casual goes into the
-    /// battle being prepared too), and [`Ctx`] gets its mode and tutorial
-    /// level back.
-    fn sync(&mut self, ctx: &mut Ctx) {
-        let Some(campaign) = &mut self.campaign else {
-            ctx.game.campaign_mode = None;
-            ctx.game.campaign_tutorial = None;
-            ctx.game.campaign_lessons.clear();
-            return;
-        };
-        if Self::take_in(campaign, ctx, self.started_at)
+    /// battle being prepared too). Only this way: while the campaign runs,
+    /// [`Ctx`] owns its mode, tutorial level and lessons.
+    fn sync(&mut self, ctx: &Ctx) {
+        if let Some(campaign) = &mut self.campaign
+            && Self::take_in(campaign, ctx, self.started_at)
             && let Some(fight) = &mut self.fight
         {
             fight.prep.setup.mode = GameMode::Casual;
         }
-        ctx.game.campaign_mode = Some(campaign.mode);
-        ctx.game.campaign_tutorial = Some(campaign.tutorial);
     }
 
     /// The campaign as a save made now would hold it: with the mode,

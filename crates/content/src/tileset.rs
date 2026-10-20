@@ -226,32 +226,11 @@ pub struct TilesetRefs<'a> {
 /// Loads every tileset in the bundle by id, reporting every problem in
 /// every file.
 pub fn load_all(refs: &TilesetRefs) -> Result<BTreeMap<String, Tileset>, Vec<ContentError>> {
-    let mut tilesets = BTreeMap::new();
-    let mut errors = Vec::new();
-    for path in bundle::files_in(TILESETS_DIR) {
-        let Some(stem) = path
-            .strip_prefix(TILESETS_DIR)
-            .and_then(|p| p.strip_prefix('/'))
-            .and_then(|p| p.strip_suffix(TILESET_EXTENSION))
-        else {
-            continue;
-        };
-        let file = bundle::display_path(path);
-        let result = bundle::file(path)
-            .ok_or_else(|| vec![ContentError::new(&file, "file is not valid UTF-8")])
-            .and_then(|source| parse_tileset(&file, stem, source, refs));
-        match result {
-            Ok(tileset) => {
-                tilesets.insert(stem.to_owned(), tileset);
-            }
-            Err(e) => errors.extend(e),
-        }
-    }
-    if errors.is_empty() {
-        Ok(tilesets)
-    } else {
-        Err(errors)
-    }
+    bundle::load_each(
+        TILESETS_DIR,
+        TILESET_EXTENSION.trim_start_matches('.'),
+        |file| parse_tileset(file.path, file.stem, file.text, refs),
+    )
 }
 
 /// A tileset file being checked: its own image (if it names one that
