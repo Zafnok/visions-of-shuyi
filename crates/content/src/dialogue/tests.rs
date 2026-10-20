@@ -6,6 +6,7 @@ use proptest::prelude::*;
 use trpg_core::CharacterId;
 
 use super::*;
+use crate::bundle;
 
 /// Loads files given as `(file name, source)`, a `None` source being a
 /// file that isn't valid UTF-8, as [`load_scripts`] does the bundle's.
@@ -967,4 +968,41 @@ proptest! {
         let parsed: Vec<Scene> = parsed.into_iter().map(|p| p.scene).collect();
         prop_assert_eq!(parsed, scenes);
     }
+}
+
+/// What [`load_scripts`] reports on the files of `files` (bundle path and
+/// text), shown.
+fn load_errors(files: &'static [(&'static str, &'static [u8])]) -> Vec<String> {
+    // The registry is built from the game's own files first.
+    crate::formats::install();
+    let layer = bundle::Layer::table("fixture", files);
+    let fixture: &'static bundle::Bundle = Box::leak(Box::new(bundle::Bundle::new(vec![layer])));
+    let result = bundle::reading(fixture, || load_scripts(None, None, None, None));
+    let errors = result.err().unwrap_or_default();
+    errors.iter().map(ToString::to_string).collect()
+}
+
+/// A file that fails to read is reported, and the files that read are
+/// still checked: every problem, by file and line.
+#[test]
+fn load_scripts_reports_a_broken_file_and_the_checks_of_the_others() {
+    static BROKEN: &[(&str, &[u8])] = &[
+        ("dialogue/a.dlg", b"@scene a\n> One.\n@end\n"),
+        ("dialogue/b.dlg", b"@scene b\nnot a line\n@end\n"),
+    ];
+    static BOTH: &[(&str, &[u8])] = &[
+        (
+            "dialogue/a.dlg",
+            b"@scene a\n> One.\n@end\n@scene a\n> Two.\n@end\n",
+        ),
+        ("dialogue/b.dlg", b"@scene b\nnot a line\n@end\n"),
+    ];
+    let unrecognised = "fixture/dialogue/b.dlg:2: unrecognised line; expected \"@directive\", \
+                        \"> narration\", \"speaker: text\" or \"# comment\"";
+    assert_eq!(load_errors(BROKEN), [unrecognised]);
+    // The duplicate in the file that read comes first: it is the first
+    // file's.
+    let duplicate = "fixture/dialogue/a.dlg:4: duplicate scene id \"a\"; first used at \
+                     fixture/dialogue/a.dlg:1";
+    assert_eq!(load_errors(BOTH), [duplicate, unrecognised]);
 }

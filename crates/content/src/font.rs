@@ -12,6 +12,7 @@ pub use shuyi_assets::image::png_size;
 
 use crate::bundle;
 use crate::error::ContentError;
+use crate::formats;
 
 /// Path of the glyph map inside the asset bundle.
 pub const ATLAS_PATH: &str = "fonts/atlas.ron";
@@ -47,14 +48,7 @@ pub const REQUIRED_GLYPHS: &str = concat!(
 
 /// Loads and validates the embedded glyph map against the embedded image.
 pub fn load() -> Result<FontAtlasDef, Vec<ContentError>> {
-    let display = bundle::display_path(ATLAS_PATH);
-    let source = bundle::file(ATLAS_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    from_source(&display, source, bundle::bytes(ATLAS_PNG_PATH))
+    formats::load(ATLAS_PATH)
 }
 
 /// Parses glyph map `source` (errors attributed to `file`) and validates

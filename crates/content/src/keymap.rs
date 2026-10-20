@@ -8,8 +8,8 @@ use crate::prelude::*;
 
 use core::fmt;
 
-use crate::bundle;
 use crate::error::ContentError;
+use crate::formats;
 
 pub use shuyi_assets::keymap as format;
 pub use shuyi_assets::keymap::action_set;
@@ -44,14 +44,7 @@ pub const LEFT_HANDED: Layout = Layout::named("LeftHanded");
 
 /// Loads and validates the embedded keymap.
 pub fn load_keymap() -> Result<KeymapDef, Vec<ContentError>> {
-    let display = bundle::display_path(KEYMAP_PATH);
-    let source = bundle::file(KEYMAP_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    KeymapDef::from_source(&display, source)
+    formats::load(KEYMAP_PATH)
 }
 
 /// The keys every keymap has on top of its own bindings, whatever the

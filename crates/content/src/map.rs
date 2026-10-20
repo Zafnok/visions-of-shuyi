@@ -13,7 +13,8 @@ use crate::prelude::*;
 use alloc::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
-use shuyi_assets::grid_map::{self, GridMap, Legend, MapFeature, MapFormat};
+use shuyi_assets::format::RegisterError;
+use shuyi_assets::grid_map::{self, GridMap, Legend, MapFeature, MapFormat, MapText};
 use trpg_core::{
     BattleMap, ItemId, ItemTable, Loot, Shop, ShopKind, TerrainId, TerrainTable, TileFeature,
 };
@@ -23,6 +24,7 @@ pub(crate) use shuyi_assets::grid_map::{column_number, line_number};
 
 use crate::bundle;
 use crate::error::ContentError;
+use crate::formats::{self, AssetPath, Formats};
 use crate::lighting::Lighting;
 use crate::terrain::TerrainDisplayTable;
 
@@ -116,29 +118,30 @@ impl MapFeature for FeatureDef {
     }
 }
 
+/// A map as the game's format reads it ([`register`]).
+type GameMap = GridMap<TerrainId, FeatureDef>;
+
+/// Registers the game's map format, its legends' terrain ids resolved in
+/// `terrain`.
+pub(crate) fn register(
+    formats: &mut Formats,
+    terrain: TerrainDisplayTable,
+) -> Result<(), RegisterError> {
+    formats.register(MapText::<TerrainId, FeatureDef>::new(FORMAT, move |id| {
+        terrain.id_of(id)
+    }))
+}
+
 /// Loads every `*.map` file in the bundle, keyed by file stem
-/// (`maps/test_small.map` → `"test_small"`). Reports every error of every
-/// file.
-pub fn load_all(
-    display: &TerrainDisplayTable,
-) -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {
+/// (`maps/test_small.map` → `"test_small"`), its legend's terrain ids
+/// resolved in the terrain file's. Reports every error of every file.
+pub fn load_all() -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {
     let mut maps = BTreeMap::new();
     let mut errors = Vec::new();
-    for path in bundle::files_in(MAPS_DIR) {
-        let Some(stem) = path
-            .strip_prefix(MAPS_DIR)
-            .and_then(|p| p.strip_prefix('/'))
-            .and_then(|p| p.strip_suffix(MAP_EXTENSION))
-        else {
-            continue;
-        };
-        let file = bundle::display_path(path);
-        let result = bundle::file(path)
-            .ok_or_else(|| vec![ContentError::new(&file, "file is not valid UTF-8")])
-            .and_then(|source| parse_map(&file, source, display));
+    for (path, result) in formats::load_in::<GameMap>(MAPS_DIR) {
         match result {
-            Ok(def) => {
-                maps.insert(stem.to_owned(), def);
+            Ok(parsed) => {
+                maps.insert(AssetPath::new(path).stem().to_owned(), def(parsed));
             }
             Err(e) => errors.extend(e),
         }
@@ -190,21 +193,24 @@ pub fn parse_map(
     source: &str,
     display: &TerrainDisplayTable,
 ) -> Result<MapDef, Vec<ContentError>> {
-    let parsed: GridMap<TerrainId, FeatureDef> =
-        grid_map::parse(file, source, &FORMAT, |id| display.id_of(id))?;
+    grid_map::parse(file, source, &FORMAT, |id| display.id_of(id)).map(def)
+}
+
+/// The game's map of `parsed`.
+fn def(parsed: GameMap) -> MapDef {
     let features = parsed
         .features
         .iter()
         .map(|(&pos, def)| (pos, def.to_core()))
         .collect();
-    Ok(MapDef {
+    MapDef {
         map: BattleMap {
             features,
             ..BattleMap::new(parsed.name, parsed.tiles)
         },
         legend: parsed.legend,
         look: parsed.look,
-    })
+    }
 }
 
 /// Prints `map` in `.map` format using `legend`, with `look` if it isn't
@@ -318,8 +324,7 @@ mod tests {
         let error = light_error("m.map", below, "midnight", &lighting);
         assert_eq!((error.line, error.column), (Some(1), Some(1)));
         // Every shipped map names a light that exists.
-        let terrain = crate::TerrainDef::load(None).unwrap_or_default();
-        let maps = load_all(&terrain.display).unwrap();
+        let maps = load_all().unwrap();
         assert_eq!(check_lights(&maps, &lighting), []);
         let mut odd = maps;
         for def in odd.values_mut() {
@@ -332,8 +337,7 @@ mod tests {
 
     #[test]
     fn embedded_maps_load() {
-        let terrain = crate::terrain::TerrainDef::load(None).unwrap_or_default();
-        let maps = load_all(&terrain.display);
+        let maps = load_all();
         assert!(maps.is_ok(), "{maps:?}");
         let maps = maps.unwrap_or_default();
         let small = maps.get("test_small");
@@ -552,7 +556,7 @@ mod tests {
     #[test]
     fn every_map_round_trips() {
         let terrain = crate::TerrainDef::load(None).unwrap_or_default();
-        let maps = load_all(&terrain.display).unwrap();
+        let maps = load_all().unwrap();
         assert!(maps.contains_key("ch01") && maps.contains_key("test_small"));
         for (id, def) in &maps {
             let printed = print_map(&def.map, &def.legend, &def.look);

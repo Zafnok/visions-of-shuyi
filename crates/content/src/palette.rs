@@ -11,6 +11,7 @@ pub use shuyi_assets::palette::{PaletteDef, format_hex, line_of_key, parse_hex, 
 
 use crate::bundle;
 use crate::error::ContentError;
+use crate::formats;
 
 /// Path of the default theme's palette inside the asset bundle.
 pub const PALETTE_PATH: &str = "data/palette.ron";
@@ -99,15 +100,7 @@ pub fn load() -> Result<PaletteDef, Vec<ContentError>> {
 
 /// Loads and validates the embedded palette of `theme`.
 pub fn load_theme(theme: Theme) -> Result<PaletteDef, Vec<ContentError>> {
-    let path = theme.path();
-    let display = bundle::display_path(path);
-    let source = bundle::file(path).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    from_source(&display, source)
+    formats::load(theme.path())
 }
 
 /// Parses and validates palette `source`, attributing errors to `file`.

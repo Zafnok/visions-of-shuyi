@@ -27,9 +27,9 @@ pub use shuyi_assets::dialogue::{
 };
 
 use crate::audio::AudioManifest;
-use crate::bundle;
 use crate::character::CharacterTable;
 use crate::error::ContentError;
+use crate::formats;
 use crate::names::Names;
 use crate::portrait::PortraitTable;
 
@@ -272,18 +272,28 @@ pub fn load_scripts(
     names: Option<&Names>,
     audio: Option<&AudioManifest>,
 ) -> Result<Scripts, Vec<ContentError>> {
-    let files: Vec<(String, Option<&str>)> = bundle::files_in(DIALOGUE_DIR)
-        .into_iter()
-        .filter(|path| path.ends_with(DIALOGUE_EXTENSION))
-        .map(|path| (bundle::display_path(path), bundle::file(path)))
-        .collect();
+    let mut files = Vec::new();
+    let mut errors = Vec::new();
+    for result in formats::load_in::<engine::DialogueFile<Stage>>(DIALOGUE_DIR).into_values() {
+        match result {
+            Ok(file) => files.push(file),
+            Err(e) => errors.extend(e),
+        }
+    }
     let rules = rules::Rules {
         characters,
         portraits,
         names,
         audio,
     };
-    engine::scripts_from_files(&files, &rules)
+    match engine::scripts_from_parsed(files, &rules) {
+        Ok(scripts) if errors.is_empty() => Ok(scripts),
+        result => {
+            errors.extend(result.err().unwrap_or_default());
+            errors.sort_by(|a, b| (&a.file, a.line).cmp(&(&b.file, b.line)));
+            Err(errors)
+        }
+    }
 }
 
 /// Parses and validates dialogue files given as `(file name, source)`

@@ -14,6 +14,7 @@ use trpg_core::{
 use crate::bundle;
 use crate::enums::RawArmourWeight;
 use crate::error::ContentError;
+use crate::formats::{self, DataTable};
 use crate::ron_loader::parse_ron;
 use crate::terrain::line_of;
 
@@ -150,14 +151,15 @@ struct RawSeal {
 
 /// Loads and validates the embedded item file.
 pub fn load() -> Result<ItemTable, Vec<ContentError>> {
-    let display = bundle::display_path(ITEMS_PATH);
-    let source = bundle::file(ITEMS_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    from_source(&display, source)
+    formats::table(ITEMS_PATH)
+}
+
+impl DataTable for ItemTable {
+    const NAME: &'static str = "item table";
+
+    fn from_source(file: &str, source: &str) -> Result<Self, Vec<ContentError>> {
+        from_source(file, source)
+    }
 }
 
 /// Parses and validates item `source`, attributing errors to `file`.

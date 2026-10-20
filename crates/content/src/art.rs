@@ -9,6 +9,7 @@ use trpg_core::{ArtDef, ArtEffect, ArtId, ArtTable, ItemDef, ItemTable, WeaponKi
 
 use crate::bundle;
 use crate::error::ContentError;
+use crate::formats::{self, DataTable};
 use crate::item::ITEMS_PATH;
 use crate::ron_loader::parse_ron;
 use crate::terrain::line_of;
@@ -36,14 +37,15 @@ struct RawArt {
 
 /// Loads and validates the embedded art file.
 pub fn load() -> Result<ArtTable, Vec<ContentError>> {
-    let display = bundle::display_path(ARTS_PATH);
-    let source = bundle::file(ARTS_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    from_source(&display, source)
+    formats::table(ARTS_PATH)
+}
+
+impl DataTable for ArtTable {
+    const NAME: &'static str = "art table";
+
+    fn from_source(file: &str, source: &str) -> Result<Self, Vec<ContentError>> {
+        from_source(file, source)
+    }
 }
 
 /// Parses and validates art `source`, attributing errors to `file`. Reports

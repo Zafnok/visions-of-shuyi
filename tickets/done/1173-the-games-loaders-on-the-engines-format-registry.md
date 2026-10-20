@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5
 effort: high
-status: todo
+status: done
 blocked_by: ["engine#2201"]
 nick_input: none
-completed:
+completed: 2026-10-20
 ---
 
 # 1173 — The game's loaders on the engine's format registry
@@ -133,14 +133,14 @@ None. Nothing a player sees changes.
 
 ## Acceptance criteria
 
-- [ ] `shuyi-engine.rev` is at or past the merge of engine 2201.
-- [ ] `grep -rn "from_source(&display" crates/content/src` finds only
+- [x] `shuyi-engine.rev` is at or past the merge of engine 2201.
+- [x] `grep -rn "from_source(&display" crates/content/src` finds only
       the tables listed under **Out**.
-- [ ] A test lists the registry's kinds and their formats.
-- [ ] The content checks (`cargo xtask` content checks, and `cargo test
+- [x] A test lists the registry's kinds and their formats.
+- [x] The content checks (`cargo xtask` content checks, and `cargo test
       -p trpg-content`) report the same on the real and test files.
 - [ ] `cargo xtask ticket-lint --check-engine` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -151,5 +151,65 @@ None. Nothing a player sees changes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+**Done.** `crates/content/src/formats.rs`: `install()` builds the
+game's registry once (a `OnceBox`, as the bundle), from
+`Formats::standard()` with `PaletteRon::requiring`,
+`FontAtlasRon::requiring`, `LightingRon::new(NOON)` and `CreditsRon::new`
+put in place of the standard ones, then `Dlg::<Stage>`,
+`KeymapRon::<Action>`, the map format (`map::register`, a `MapText` whose
+terrain resolver owns the terrain file's ids), the cinematic format
+(`cinematic::register`, its raw shots and action lists) and the four data
+tables. Every loader the ticket lists reads through it: font, palette and
+its themes, lighting, names (its test part still merged after), credits,
+audio, keymap, the image table (`ImageTable::load_with`), dialogue, maps,
+cinematics, `ai`, `art`, `item` and `skill`. The checks across assets
+stay where they were and run after the decode.
+
+**Deviations.**
+- **The pin did not move.** It was already past engine 2201 (moved by an
+  earlier ticket), so the first criterion was met on arrival.
+- **The data tables are `formats::Table<T>`**, not their own types:
+  `AiWeights`, `ArtTable`, `ItemTable` and `SkillTable` are `trpg_core`'s
+  and `AssetKind` is the engine's, so Rust's orphan rule forbids the impl.
+  Each table implements the game's `DataTable` trait (its name and its
+  `from_source`), read by one format, `TableRon<T>`.
+- **Folders are read with `formats::load_in`, not `Formats::load_under`**:
+  `load_under` returns nothing when one file fails, so the checks after
+  (cinematics, dialogue) would stop reporting on the files that read, and
+  it reads subfolders where the loaders read one folder. `load_in` is
+  each file of the kind directly in the folder, read or with its errors.
+  It is a workaround marked `// engine-friction: engine#2219`; engine
+  ticket 2219 (`Formats::load_each`, its PR
+  [Zafnok/shuyi-engine#32](https://github.com/Zafnok/shuyi-engine/pull/32))
+  and game ticket 1176 replace it.
+- **`map::load_all()` takes no terrain table**: the map format resolves
+  terrain ids itself, from the terrain file read without its colour check
+  when the registry is built. `load_embedded` still loads maps only when
+  the terrain loaded, so the ids are the same.
+- **`class` and `terrain` keep their loaders** (the criterion's grep finds
+  them beside the listed tables): their parsers check against other
+  tables too (movement types, the palette), which puts them under **Out**.
+- **What the loaders report is the same on every real and test file.**
+  Two small differences on broken files only: a missing file is still
+  "file not found in asset bundle" (the registry would add "nor
+  ….ron.ron"; `formats::load` keeps the old message), but a file that
+  isn't UTF-8 now says so instead of "not found"; and a `.dlg` file with a
+  syntax error is no longer rule-checked itself (the `.dlg` format gives
+  its errors, not its half-read scenes), though every other file still
+  is (a test checks it).
+
+**Tests.** `formats::tests`: the registry's kinds and their formats, the
+game's formats registered on the standard ones without a conflict, each
+table equal to its parser on the real file, a table's errors, the old
+missing-file message, and `load_in` on a fixture bundle.
+`dialogue::tests::load_scripts_reports_a_broken_file_and_the_checks_of_the_others`.
+Every loader's existing tests pass unchanged.
+
+**Engine friction:** estimate 150, measured 208 (1.4×), under 2×; one
+workaround signal, outcome 2 (engine ergonomics), shipped with the
+marker. Row in `docs/engine/friction.md`.
+
+**Follow-ups:** engine ticket 2219; game ticket 1176 (`blocked_by`
+`engine#2219`).
+
+**Nick:** nothing changes in the game; no rules decided.

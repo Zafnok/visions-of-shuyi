@@ -9,8 +9,8 @@ use crate::prelude::*;
 
 pub use shuyi_assets::lighting::{Light, Lighting};
 
-use crate::bundle;
 use crate::error::ContentError;
+use crate::formats;
 
 /// Path of the lights' file inside the asset bundle.
 pub const LIGHTING_PATH: &str = "data/lighting.ron";
@@ -19,14 +19,7 @@ pub const NOON: &str = shuyi_assets::grid_map::DEFAULT_LIGHT;
 
 /// Loads the embedded lights' file.
 pub fn load() -> Result<Lighting, Vec<ContentError>> {
-    let display = bundle::display_path(LIGHTING_PATH);
-    let source = bundle::file(LIGHTING_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    from_source(&display, source)
+    formats::load(LIGHTING_PATH)
 }
 
 /// Parses lights' file `source`, attributing errors to `file`. Every

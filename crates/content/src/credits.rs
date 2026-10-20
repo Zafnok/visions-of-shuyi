@@ -19,20 +19,14 @@ pub use shuyi_assets::credits::{
 use crate::audio::{self, AudioManifest};
 use crate::bundle;
 use crate::error::ContentError;
+use crate::formats;
 
 /// Path of the credits file inside the asset bundle.
 pub const CREDITS_PATH: &str = "data/credits.ron";
 
 /// Loads and validates the embedded credits file.
 pub fn load_file() -> Result<CreditsFile, Vec<ContentError>> {
-    let display = bundle::display_path(CREDITS_PATH);
-    let source = bundle::file(CREDITS_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    from_source(&display, source)
+    formats::load(CREDITS_PATH)
 }
 
 /// Loads the embedded credits file and merges it with `audio`'s credits

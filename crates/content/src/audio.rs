@@ -26,6 +26,7 @@ pub use shuyi_assets::audio::{
 
 use crate::bundle;
 use crate::error::ContentError;
+use crate::formats;
 
 /// Path of the manifest inside the asset bundle.
 pub const AUDIO_PATH: &str = "audio/audio.ron";
@@ -126,14 +127,7 @@ fn without_extension(file: &str) -> &str {
 /// Loads and validates the embedded manifest. Music files aren't checked
 /// (see the module docs).
 pub fn load() -> Result<AudioManifest, Vec<ContentError>> {
-    let display = bundle::display_path(AUDIO_PATH);
-    let source = bundle::file(AUDIO_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    from_source(&display, source, &files(None))
+    formats::load(AUDIO_PATH)
 }
 
 #[cfg(test)]

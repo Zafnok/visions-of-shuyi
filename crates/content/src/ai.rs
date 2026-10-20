@@ -4,8 +4,8 @@ use crate::prelude::*;
 
 use trpg_core::AiWeights;
 
-use crate::bundle;
 use crate::error::ContentError;
+use crate::formats::{self, DataTable};
 use crate::ron_loader::parse_ron;
 
 /// Path of the AI file inside the asset bundle.
@@ -13,14 +13,15 @@ pub const AI_PATH: &str = "data/ai.ron";
 
 /// Loads the embedded AI file.
 pub fn load() -> Result<AiWeights, Vec<ContentError>> {
-    let display = bundle::display_path(AI_PATH);
-    let source = bundle::file(AI_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    from_source(&display, source)
+    formats::table(AI_PATH)
+}
+
+impl DataTable for AiWeights {
+    const NAME: &'static str = "AI weights";
+
+    fn from_source(file: &str, source: &str) -> Result<Self, Vec<ContentError>> {
+        from_source(file, source)
+    }
 }
 
 /// Parses AI `source`, attributing errors to `file`. Every weight must be

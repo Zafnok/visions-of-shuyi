@@ -11,6 +11,7 @@ use crate::prelude::*;
 
 use crate::bundle;
 use crate::error::ContentError;
+use crate::formats;
 
 pub use shuyi_assets::names::{
     NameToken, Names, from_source, is_name_id, literal_form, name_token, with_part,
@@ -21,14 +22,8 @@ pub const NAMES_PATH: &str = "data/names.ron";
 
 /// Loads and validates the embedded names table.
 pub fn load() -> Result<Names, Vec<ContentError>> {
+    let names = formats::load(NAMES_PATH)?;
     let display = bundle::display_path(NAMES_PATH);
-    let source = bundle::file(NAMES_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    let names = from_source(&display, source)?;
     match bundle::test_part(NAMES_PATH) {
         Some((file, part)) => with_part(names, &display, &file, part),
         None => Ok(names),
