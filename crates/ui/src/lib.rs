@@ -17,8 +17,6 @@ mod prelude {
 
     // The lookups every screen makes on the context.
     pub use crate::screen::ShuyiCtx as _;
-    // A menu label's text (until the game's menus hold text keys, 1162).
-    pub use crate::widgets::menu::LabelText as _;
 }
 
 pub mod audio;

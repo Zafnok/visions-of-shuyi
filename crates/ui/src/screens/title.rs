@@ -3,7 +3,8 @@
 //! carries on the suspended battle and `Load Game` opens the save slots
 //! (0802); debug builds add `Quick Battle`, a test battle through the same
 //! flow; `Options` opens the [`OptionsScreen`](super::OptionsScreen) (0805); `Profile` the
-//! [`ProfileScreen`] (0837); `Credits` opens the [`CreditsScreen`] (0808).
+//! [`ProfileScreen`](profile::ProfileScreen) (0837); `Credits` opens the
+//! [`CreditsScreen`] (0808).
 //!
 //! **The look is a skin** (ADR-0054). This module decides what the screen
 //! shows and does, and says it as plain data: a [`TitleView`]
@@ -31,7 +32,7 @@ use trpg_content::ImageId;
 use song::SongTime;
 use view::FULL;
 
-use super::{CreditsScreen, ProfileScreen, debug_hint};
+use super::{CreditsScreen, debug_hint, profile};
 use crate::audio::MenuSound;
 use crate::audio::splitmix64;
 use crate::cinematic::{CinematicPlayer, millis};
@@ -177,9 +178,8 @@ fn pick_backdrop(ctx: &Ctx) -> Option<ImageId> {
 /// a help line naming the keys of the active layout.
 #[derive(Debug, Clone)]
 pub struct TitleScreen {
-    menu: Menu,
-    /// What each menu line is, in menu order.
-    items: Vec<Item>,
+    /// The menu; each line stands for its [`Item`].
+    menu: Menu<Item>,
     /// Why `Continue` couldn't, shown under the menu until the next key.
     notice: Option<String>,
     /// Whether the title music was asked for since this screen was last
@@ -223,10 +223,8 @@ impl TitleScreen {
     }
 
     fn with_debug(ctx: &Ctx, quick_battle: bool) -> Self {
-        let (menu, items) = Self::build(ctx, quick_battle, false, false);
         let mut title = Self {
-            menu,
-            items,
+            menu: Self::build(ctx, quick_battle, false, false),
             notice: None,
             music_on: false,
             prompt_done: false,
@@ -241,10 +239,10 @@ impl TitleScreen {
         title
     }
 
-    /// The menu and what its lines are: `Continue` first if a battle is
-    /// `suspended`; `Load Game` disabled unless a slot is `saved`. Nothing
-    /// to back out of on the title screen.
-    fn build(ctx: &Ctx, quick_battle: bool, suspended: bool, saved: bool) -> (Menu, Vec<Item>) {
+    /// The menu: `Continue` first if a battle is `suspended`; `Load Game`
+    /// disabled unless a slot is `saved`. Nothing to back out of on the
+    /// title screen.
+    fn build(ctx: &Ctx, quick_battle: bool, suspended: bool, saved: bool) -> Menu<Item> {
         let mut items = vec![Item::NewGame, Item::LoadGame];
         if suspended {
             items.insert(0, Item::Continue);
@@ -256,15 +254,18 @@ impl TitleScreen {
         items.push(Item::Profile);
         items.push(Item::Credits);
         items.push(Item::Quit);
-        let entries = items.iter().map(|&item| {
-            let label = ctx.text(item.key());
-            if item == Item::LoadGame && !saved {
-                MenuItem::disabled(label)
-            } else {
-                MenuItem::new(label)
-            }
+        let entries = items.into_iter().map(|item| {
+            let enabled = item != Item::LoadGame || saved;
+            MenuItem::new(ctx.text(item.key()))
+                .with_value(item)
+                .with_enabled(enabled)
         });
-        (Menu::new(entries.collect()).without_cancel(), items)
+        Menu::new(entries.collect()).without_cancel()
+    }
+
+    /// What the menu's lines are, in order.
+    fn items(&self) -> Vec<Item> {
+        self.menu.items().iter().map(|i| i.value).collect()
     }
 
     /// Builds the menu for the saves in `ctx`'s storage, in `ctx`'s
@@ -281,14 +282,16 @@ impl TitleScreen {
         let storage = &ctx.storage;
         let suspended = save::has_suspend(storage);
         let saved = save::any_slot(storage);
-        let quick_battle = self.items.contains(&Item::QuickBattle);
-        let (mut menu, items) = Self::build(ctx, quick_battle, suspended, saved);
-        let enabled = |m: &Menu| m.items().iter().map(|i| i.enabled).collect::<Vec<_>>();
-        if items == self.items && enabled(&menu) == enabled(&self.menu) {
+        let quick_battle = self.items().contains(&Item::QuickBattle);
+        let mut menu = Self::build(ctx, quick_battle, suspended, saved);
+        let lines = |m: &Menu<Item>| {
+            let lines = m.items().iter().map(|i| (i.value, i.enabled));
+            lines.collect::<Vec<_>>()
+        };
+        if lines(&menu) == lines(&self.menu) {
             menu = menu.focused(self.menu.focus());
         }
         self.menu = menu;
-        self.items = items;
     }
 
     /// The notice under the menu, if any.
@@ -483,10 +486,10 @@ impl Screen<Shuyi> for TitleScreen {
         for &action in &input.actions {
             self.notice = None;
             let chosen = match self.menu.handle_with_sound(action, &mut ctx.audio) {
-                Some(MenuEvent::Chosen(())) => self.items.get(self.menu.focus()).copied(),
+                Some(MenuEvent::Chosen(item)) => Some(item),
                 // The Playdate's system menu (ticket 1035): as the menu's
                 // own Options.
-                _ if action == Action::Options && self.items.contains(&Item::Options) => {
+                _ if action == Action::Options && self.items().contains(&Item::Options) => {
                     ctx.audio.menu(MenuSound::Select);
                     Some(Item::Options)
                 }
@@ -516,7 +519,7 @@ impl Screen<Shuyi> for TitleScreen {
                     return Transition::Push(Box::new(super::options::screen()));
                 }
                 Some(Item::Profile) => {
-                    return Transition::Push(Box::new(ProfileScreen::new(ctx)));
+                    return Transition::Push(Box::new(profile::screen(ctx)));
                 }
                 Some(Item::Credits) => return Transition::Push(Box::new(CreditsScreen::new(ctx))),
                 Some(Item::Quit) => return Transition::Quit,

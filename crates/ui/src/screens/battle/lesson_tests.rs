@@ -188,8 +188,8 @@ fn the_turn_waits_for_the_open_lesson() {
     assert_eq!(s.mode(), &Mode::default(), "no End turn prompt");
     assert_eq!(sounds(&mut c), [crate::audio::AUDIO.cue(MenuSound::Denied)]);
     // The map menu's End turn: the menu stays open.
-    let (menu, entries) = map_menu::map_menu(&s.state, Words::ENGLISH, map_menu::MapEntry::EndTurn);
-    s.mode = Mode::MapMenu { menu, entries };
+    let menu = map_menu::map_menu(&s.state, map_menu::MapEntry::EndTurn);
+    s.mode = Mode::MapMenu { menu };
     press(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
     assert_eq!(sounds(&mut c), [crate::audio::AUDIO.cue(MenuSound::Denied)]);
@@ -706,4 +706,32 @@ fn the_enemy_phase_keeps_a_lesson_waiting_for_a_unit() {
     s.lessons.absorb(&c, None, s.state().turn());
     s.settle_lessons();
     assert_eq!(s.lessons.current(), Some("unit"));
+}
+
+/// Only the arts list counts as the arts menu opening (0457): another
+/// list (the lord's weapons to equip) marks nothing.
+#[test]
+fn only_the_arts_list_marks_the_arts_menu_open() {
+    let c = ctx();
+    let s = super::testing::skirmish(&c, 20);
+    let sel = Selection::new(&s, UnitId(1)).unwrap();
+    let list = |line: super::mode::Line| Mode::List {
+        sel: sel.clone(),
+        menu: crate::widgets::menu::Menu::new(vec![
+            crate::widgets::menu::MenuItem::new("x").with_value(line),
+        ]),
+    };
+    let arts = super::art_list::art_lines(&s, UnitId(1), sel.dest());
+    let equip = super::items::EquipChoice {
+        what: trpg_core::Equipped::Weapon(0),
+        usable: true,
+    };
+    assert_eq!(
+        Marks::of(&list(super::mode::Line::Art(arts[0].clone()))),
+        Marks::Arts
+    );
+    assert_eq!(
+        Marks::of(&list(super::mode::Line::Equip(equip))),
+        Marks::None
+    );
 }

@@ -16,6 +16,7 @@ use trpg_core::{
 
 use super::attack::{spell_uses, weapon_durability};
 use super::info::stat_name;
+use super::mode::Line;
 use super::skills::{effect_text, mods_text, skill_cost, skill_name, timed_text};
 use super::view::{MenuHeader, UsesView};
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
@@ -325,7 +326,7 @@ const NAME_W: usize = 14;
 /// reason after it, focused on the first line that can be chosen. The
 /// focused line's effect shows under the list (ticket 0429), dimmed lines
 /// too: the focus stops on them.
-pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Menu {
+pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Menu<Line> {
     let items = lines
         .iter()
         .map(|c| {
@@ -333,11 +334,13 @@ pub fn arts_menu(state: &BattleState, words: Words<'_>, lines: &[ArtLine]) -> Me
             let cost = cost_label(state, words, &c.technique);
             let source = source_label(state, words, &c.technique);
             let label = format!("{name:<NAME_W$}  {cost:>6}  {source:<6}");
+            let item = MenuItem::new(label).with_value(Line::Art(c.clone()));
             let item = match &c.blocked {
-                None => MenuItem::new(label),
+                None => item,
                 Some(why) => {
                     let why = format!(" {}", blocked_text(words, why));
-                    MenuItem::disabled(label).with_suffix(why, SuffixKind::Warning)
+                    item.with_enabled(false)
+                        .with_suffix(why, SuffixKind::Warning)
                 }
             };
             item.with_note(c.technique.effect_text(state, words))

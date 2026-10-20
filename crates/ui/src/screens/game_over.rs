@@ -55,9 +55,7 @@ pub enum GameOverChoice {
 /// out of.
 #[derive(Debug, Clone)]
 pub struct GameOverScreen {
-    menu: Menu,
-    /// The choice each menu item stands for.
-    choices: Vec<GameOverChoice>,
+    menu: Menu<GameOverChoice>,
     /// Seconds of the opening animation played, up to
     /// [`ANIMATION_SECONDS`].
     elapsed: f32,
@@ -71,18 +69,16 @@ impl GameOverScreen {
     /// focused when `can_rewind` (the lost battle has a charge left), else
     /// `Retry Battle` focused.
     pub fn new(ctx: &Ctx, can_rewind: bool) -> Self {
-        let mut keys = Vec::new();
-        let mut choices = Vec::new();
-        if can_rewind {
-            keys.push(REWIND);
-            choices.push(GameOverChoice::Rewind);
-        }
-        keys.extend(ITEMS);
-        choices.extend([GameOverChoice::Retry, GameOverChoice::Title]);
-        let items = keys.iter().map(|k| MenuItem::new(ctx.text(k))).collect();
+        let rewind = can_rewind.then_some((REWIND, GameOverChoice::Rewind));
+        let [retry, title] = ITEMS;
+        let all = [
+            (retry, GameOverChoice::Retry),
+            (title, GameOverChoice::Title),
+        ];
+        let items = rewind.into_iter().chain(all);
+        let items = items.map(|(k, c)| MenuItem::new(ctx.text(k)).with_value(c));
         Self {
-            menu: Menu::new(items).without_cancel(),
-            choices,
+            menu: Menu::new(items.collect()).without_cancel(),
             elapsed: 0.0,
         }
     }
@@ -145,7 +141,7 @@ impl Screen<Shuyi> for GameOverScreen {
             }
             return Transition::None;
         }
-        pick_one(&mut self.menu, ctx, input, &self.choices)
+        pick_one(&mut self.menu, ctx, input)
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

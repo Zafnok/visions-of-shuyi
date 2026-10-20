@@ -73,14 +73,11 @@ None.
 
 Estimate (step 1): about 120 lines removed and 30 added, from the ticket.
 
-- **The pin** moved to the engine's `main` at `939f023` (past 2309, and
-  also 2308, 2310 and 2311). 2308 changed the menu widget (an item
-  carries a value; its label is a `Label`; the menu skin takes the
-  context), so the pin move adapted the game the smallest way: where a
-  menu's `Chosen` carried an index, the game now reads `menu.focus()`;
-  `LabelText::as_str` (in the prelude) reads a text label back. Ticket
-  1162 still does the real move to values and text keys (the label
-  helper names it).
+- **The pin:** this branch first moved it to `939f023` itself and
+  patched the game for engine 2308's menu change. Then 1162 and 1164
+  landed on `main` with the same pin and the real 2308 work, so the
+  merge kept `main`'s side and dropped the patch. The pin step was
+  already done on `main`.
 - **Save** (overwrite a slot): holds an `Ask::yes_no` and paints it with
   the engine's `ask::glyph`, the same box as before. `OverwriteView` and
   the screen's `paint_question` are gone.
@@ -93,14 +90,14 @@ Estimate (step 1): about 120 lines removed and 30 added, from the ticket.
   from the widget's view.
 - **Preparations** (leave): holds an `Ask::yes_no`; the skin still shows
   the question in the message row and its keys on the help line.
-- **One-bit skins:** `screens/playdate.rs` gained `ask_view`, which feeds
-  its `ask` from the widget's view; the engine's options and Key bindings
-  screens' Playdate skins use it. None of the four screens has a one-bit
-  skin.
+- **One-bit skins:** `screens/playdate.rs`'s `ask_view` (added by 1164)
+  feeds its `ask` from the widget's view. The engine's options and Key
+  bindings screens' Playdate skins now use it too, instead of their own
+  copies. None of the four screens has a one-bit skin.
 
-Friction: estimate 30, measured 201 added (187 removed), 6.7×, accept
-(row in `docs/engine/friction.md`): 89 lines are the 2308 adaptation the
-estimate left out, the rest rewritten lines; three of the four questions
-keep their look, so only one painter could go.
+Friction: estimate 30, measured 154 added (178 removed), 5.1×, accept
+(row in `docs/engine/friction.md`). Most added lines are rewritten
+ones, such as the dialogue's skip block moving out one level. Three of
+the four questions keep their look, so only one painter could go.
 
 Nothing the player sees changed; no gameplay rules decided.

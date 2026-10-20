@@ -47,7 +47,7 @@ const VISIBLE: usize = 20;
 /// out of.
 #[derive(Debug, Clone)]
 pub struct SavePromptScreen {
-    menu: Menu,
+    menu: Menu<bool>,
 }
 
 impl SavePromptScreen {
@@ -56,8 +56,8 @@ impl SavePromptScreen {
 
     /// The question with `Yes` focused, labelled in `ctx`'s language.
     pub fn new(ctx: &Ctx) -> Self {
-        let items = ["save_prompt.yes", "save_prompt.no"]
-            .map(|key| MenuItem::new(ctx.text(key)))
+        let items = [("save_prompt.yes", true), ("save_prompt.no", false)]
+            .map(|(key, yes)| MenuItem::new(ctx.text(key)).with_value(yes))
             .to_vec();
         Self {
             menu: Menu::new(items).without_cancel(),
@@ -87,7 +87,7 @@ impl Screen<Shuyi> for SavePromptScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        pick_one(&mut self.menu, ctx, input, &[true, false])
+        pick_one(&mut self.menu, ctx, input)
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

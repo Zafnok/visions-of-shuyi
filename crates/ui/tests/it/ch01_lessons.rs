@@ -9,7 +9,7 @@ use trpg_core::{Phase, Pos, TutorialLevel};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::BattleScreen;
-use trpg_ui::screens::battle::mode::{ListKind, MenuEntry, Mode};
+use trpg_ui::screens::battle::mode::{MenuEntry, Mode, list_entry};
 use trpg_ui::screens::battle::rewind::RewindScreen;
 
 fn p(x: i32, y: i32) -> Pos {
@@ -111,7 +111,7 @@ fn go(h: &mut Harness, to: Pos) {
 /// The entry the open action menu is on, if one is open.
 fn menu_entry(h: &Harness) -> Option<MenuEntry> {
     match battle(h).mode() {
-        Mode::ActionMenu { menu, entries, .. } => entries.get(menu.focus()).copied(),
+        Mode::ActionMenu { menu, .. } => menu.value(menu.focus()).copied(),
         _ => None,
     }
 }
@@ -353,10 +353,7 @@ fn the_combat_arts_lesson_opens_with_usable_arts_and_closes_when_they_open() {
     pick(&mut h, MenuEntry::Arts);
     assert!(matches!(
         battle(&h).mode(),
-        Mode::List {
-            kind: ListKind::Arts(_),
-            ..
-        }
+        Mode::List { menu, .. } if list_entry(menu) == MenuEntry::Arts
     ));
     assert!(done(&h).contains(&"combat_arts".to_owned()));
 }
@@ -456,10 +453,7 @@ fn the_terrain_magic_lesson_opens_with_a_spell_for_a_tile_and_closes_when_one_is
     assert_eq!(shown(&h), Some("terrain_magic"));
     assert!(matches!(
         battle(&h).mode(),
-        Mode::List {
-            kind: ListKind::Spells(_),
-            ..
-        }
+        Mode::List { menu, .. } if list_entry(menu) == MenuEntry::Magic
     ));
     h.keys("f").wait(0.1);
     assert!(done(&h).contains(&"terrain_magic".to_owned()));

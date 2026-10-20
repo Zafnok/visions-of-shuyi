@@ -1,10 +1,18 @@
 //! Reusable pieces screens are built from. The menu and word wrap are
 //! Shuyi Engine's (`shuyi_ui::widgets`, ticket 1112), re-exported here
-//! under their old names; typing a name is this game's.
+//! under their old names. Typing a name is the engine's too
+//! (`shuyi_ui::widgets::name_entry`, ticket 1164), with this game's
+//! one-bit skin ([`name_entry::playdate`]).
 
 pub mod help;
 pub mod menu;
-pub mod name_entry;
+
+/// Typing a name: Shuyi Engine's name boxes, and their Playdate look.
+pub mod name_entry {
+    pub use shuyi_ui::widgets::name_entry::*;
+
+    pub mod playdate;
+}
 
 pub use menu::{Menu, MenuEvent, MenuItem, MenuItemView, MenuView};
 pub use shuyi_ui::widgets::{AnswerView, Ask, AskView, ListCursor, ask, wrap};

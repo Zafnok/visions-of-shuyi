@@ -21,8 +21,9 @@ use crate::color::{Palette, Rgb, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
-use crate::widgets::{AskView, MenuView, word_wrap};
+use crate::widgets::{MenuView, word_wrap};
 pub use shuyi_ui::screens::cut;
+use shuyi_ui::widgets::AskView;
 
 /// The mark in a list's frame that more lines are above.
 pub const MORE_ABOVE: &str = "▲";
@@ -210,11 +211,13 @@ pub fn first_shown(len: usize, room: usize, focus: Option<usize>) -> usize {
 /// The size, in cells, of `menu`'s window: its longest item with a cell
 /// either side, inside the frame; a row per item.
 pub fn menu_size(ctx: &Ctx, menu: &MenuView) -> (i32, i32) {
-    let widest = menu.items.iter().map(|it| cells(&menu_text(ctx, it))).max();
+    let text = |item| menu_text(ctx, item);
+    let widest = menu.items.iter().map(text).map(|t| cells(&t)).max();
     (widest.unwrap_or(0) + 4, to_i32(menu.items.len()) + 2)
 }
 
-/// An item's text: its label and what follows it.
+/// An item's text, in the player's language: its label and what follows
+/// it.
 fn menu_text(ctx: &Ctx, item: &crate::widgets::MenuItemView) -> String {
     let label = ctx.label(&item.label);
     match &item.suffix {
@@ -253,6 +256,20 @@ pub enum Answers<'a> {
     Hint(&'a str),
     /// The answers, on one line, the one in focus the bar.
     Choices(&'a [(&'a str, bool)]),
+}
+
+/// `question` in a window ([`ask`]): the line naming its keys if it has
+/// one, its answers otherwise.
+pub fn ask_view<T>(ctx: &Ctx, buf: &mut GlyphBuffer, question: &AskView<T>) -> Rect {
+    if let Some(keys) = &question.keys {
+        return ask(ctx, buf, &question.text, Answers::Hint(keys));
+    }
+    let choices: Vec<_> = question
+        .answers
+        .iter()
+        .map(|a| (a.label.as_str(), a.focused))
+        .collect();
+    ask(ctx, buf, &question.text, Answers::Choices(&choices))
 }
 
 /// The answers' line, each answer with a cell either side and two cells
@@ -315,20 +332,6 @@ pub fn ask(ctx: &Ctx, buf: &mut GlyphBuffer, text: &str, answers: Answers<'_>) -
         }
     }
     rect
-}
-
-/// [`ask`] fed from the question widget's view (`shuyi_ui`'s `Ask`): its
-/// answers as the choices, or the line naming its keys as the hint.
-pub fn ask_view<T>(ctx: &Ctx, buf: &mut GlyphBuffer, view: &AskView<T>) -> Rect {
-    if let Some(keys) = &view.keys {
-        return ask(ctx, buf, &view.text, Answers::Hint(keys));
-    }
-    let choices: Vec<_> = view
-        .answers
-        .iter()
-        .map(|a| (a.label.as_str(), a.focused))
-        .collect();
-    ask(ctx, buf, &view.text, Answers::Choices(&choices))
 }
 
 /// A list of `items` (each its text and whether it is focused) in a

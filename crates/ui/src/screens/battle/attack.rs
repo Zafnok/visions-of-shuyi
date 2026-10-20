@@ -13,7 +13,7 @@ use trpg_core::{
 };
 
 use super::art_list::{ArtLine, Technique};
-use super::mode::Selection;
+use super::mode::{Line, Selection};
 use crate::widgets::menu::Menu;
 use crate::widgets::wrap_step;
 use crate::words::Words;
@@ -215,7 +215,7 @@ pub struct Targeting {
     /// The forecast against the target.
     pub preview: AttackPreview,
     /// The arts menu it was opened from (Cancel goes back to it).
-    pub arts: Option<(Menu, Vec<ArtLine>)>,
+    pub arts: Option<Menu<Line>>,
     /// The weapons and attack spells left and right swap between: those
     /// that reach the enemy the unit was pointed at (0430), the weapons
     /// that reach someone (`Attack`), or those the chosen art can be used
@@ -242,20 +242,21 @@ impl Targeting {
         Self::open(state, sel, with, Technique::Attack, options)
     }
 
-    /// The forecast of line `chosen` of the arts menu `menu` (0442), with
+    /// The forecast of `line`, a line of the arts menu `menu` (0442), with
     /// the weapon the line opens with. `None` for a dimmed line.
     pub fn art(
         state: &BattleState,
         sel: Selection,
-        menu: Menu,
-        lines: Vec<ArtLine>,
-        chosen: usize,
+        menu: Menu<Line>,
+        line: &ArtLine,
     ) -> Option<Self> {
-        let line = lines.get(chosen).filter(|l| l.usable())?;
+        if !line.usable() {
+            return None;
+        }
         let options = line.slots.iter().map(|&s| Equipped::Weapon(s)).collect();
         let (with, technique) = (Equipped::Weapon(line.slot), line.technique.clone());
         let mut t = Self::open(state, sel, with, technique, options)?;
-        t.arts = Some((menu, lines));
+        t.arts = Some(menu);
         Some(t)
     }
 

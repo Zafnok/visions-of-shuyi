@@ -12,7 +12,7 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::BattleScreen;
 use trpg_ui::screens::battle::map_menu::MapEntry;
-use trpg_ui::screens::battle::mode::{ListKind, MenuEntry, Mode};
+use trpg_ui::screens::battle::mode::{MenuEntry, Mode, list_entry};
 
 /// At the title in the test language, with the right-handed layout.
 fn title() -> Harness {
@@ -238,9 +238,7 @@ fn a_tip_in_the_test_language() {
 /// Whether the action menu is open with `Equip` focused.
 fn on_equip(h: &Harness) -> bool {
     match h.battle().map(BattleScreen::mode) {
-        Some(Mode::ActionMenu { menu, entries, .. }) => {
-            entries.get(menu.focus()) == Some(&MenuEntry::Equip)
-        }
+        Some(Mode::ActionMenu { menu, .. }) => menu.value(menu.focus()) == Some(&MenuEntry::Equip),
         _ => false,
     }
 }
@@ -271,16 +269,17 @@ fn a_weapon_list_is_painted_in_the_test_language() {
     assert!(!shows(&test, "Iron Sword"));
     // A weapon the pack lacks.
     assert!(shows(&test, "Steel Sword"));
-    // What is played is the same in both: the list and its focus.
-    let mode = |h: &Harness| h.battle().map(|b| b.mode().clone());
-    assert!(matches!(
-        mode(&test),
-        Some(Mode::List {
-            kind: ListKind::Equip(_),
-            ..
-        })
-    ));
-    assert_eq!(mode(&test), mode(&english));
+    // What is played is the same in both: the list's lines, which can be
+    // chosen, and its focus.
+    let played = |h: &Harness| match h.battle().map(BattleScreen::mode) {
+        Some(Mode::List { sel, menu }) => {
+            assert_eq!(list_entry(menu), MenuEntry::Equip);
+            let lines = menu.items().iter().map(|i| (i.value.clone(), i.enabled));
+            (sel.clone(), menu.focus(), lines.collect::<Vec<_>>())
+        }
+        m => panic!("{m:?}"),
+    };
+    assert_eq!(played(&test), played(&english));
 }
 
 /// A fight: the arts menu, the forecast with its weapons, the combat's
@@ -325,9 +324,7 @@ fn the_unit_list_is_painted_in_the_test_language() {
     let mut h = quick_battle();
     h.keys("d");
     let on_units = |h: &Harness| match h.battle().map(BattleScreen::mode) {
-        Some(Mode::MapMenu { menu, entries }) => {
-            entries.get(menu.focus()) == Some(&MapEntry::Units)
-        }
+        Some(Mode::MapMenu { menu }) => menu.value(menu.focus()) == Some(&MapEntry::Units),
         _ => false,
     };
     for _ in 0..8 {

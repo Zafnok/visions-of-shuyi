@@ -3,6 +3,7 @@
 //! menu at every tutorial level, closed by Cancel.
 
 use crate::input::LEFT_HANDED;
+use crate::screens::battle::testing::Values as _;
 use insta::assert_snapshot;
 use trpg_core::TutorialLevel;
 
@@ -174,9 +175,10 @@ fn the_map_menu_opens_it_at_every_level_and_cancel_goes_back() {
         // Cancel goes back to the map menu, still on Guides.
         press(&mut s, &mut c, &[Action::Cancel]);
         assert!(s.guides().is_none());
-        let Mode::MapMenu { menu, entries } = s.mode() else {
+        let Mode::MapMenu { menu } = s.mode() else {
             panic!("{:?}", s.mode());
         };
+        let entries = menu.values();
         assert_eq!(entries[menu.focus()], MapEntry::Guides);
     }
 }

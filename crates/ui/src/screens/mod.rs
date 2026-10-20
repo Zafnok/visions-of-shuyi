@@ -71,21 +71,16 @@ impl<V> Skins<V> {
 pub(crate) use shuyi_ui::screens::{centre_x, print_centred};
 
 /// A pick-one screen's frame: `input` goes to `menu`, and the item chosen
-/// pops the screen with its value (`values[i]`) for the screen below;
-/// Cancel pops it with nothing.
-pub(crate) fn pick_one<T: Copy + 'static>(
-    menu: &mut Menu,
+/// pops the screen with its value for the screen below; Cancel pops it
+/// with nothing.
+pub(crate) fn pick_one<T: Clone + 'static>(
+    menu: &mut Menu<T>,
     ctx: &mut Ctx,
     input: &FrameInput,
-    values: &[T],
 ) -> Transition {
     for &action in &input.actions {
         match menu.handle_with_sound(action, &mut ctx.audio) {
-            Some(MenuEvent::Chosen(())) => {
-                return values
-                    .get(menu.focus())
-                    .map_or(Transition::Pop, |&v| Transition::pop_with(v));
-            }
+            Some(MenuEvent::Chosen(v)) => return Transition::pop_with(v),
             Some(MenuEvent::Cancelled) => return Transition::Pop,
             None => {}
         }

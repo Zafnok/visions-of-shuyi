@@ -85,7 +85,7 @@ fn a_question_and_the_leaving_question_open_in_a_window() {
     let shown = rows(&buf);
     let at = shown
         .iter()
-        .position(|r| r.contains(question.keys.as_deref().unwrap()))
+        .position(|r| r.contains(question.keys.as_deref().unwrap_or_default()))
         .unwrap();
     assert!(shown[at + 1].starts_with('╚') || shown[at + 1].contains('╚'));
     assert!(shown[..at].iter().any(|r| r.contains("Restore")));

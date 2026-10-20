@@ -4,13 +4,14 @@
 //! opens there, the heal's preview on that ally, and that an ally at full
 //! HP is no target.
 
+use crate::screens::battle::testing::{Lines as _, Values as _};
 use insta::assert_snapshot;
 use trpg_core::{BattleState, CastTarget, Objective, Pos, SpellId, StatValue, UnitId};
 
 use super::BattleScreen;
 use super::attack::aim_tile;
 use super::magic::{can_heal, heal_choices, heal_tile};
-use super::mode::{ListKind, MenuEntry, Mode, Selection, step};
+use super::mode::{Line, MenuEntry, Mode, Selection, step};
 use super::testing::{battle_with, quick_units};
 use crate::console::ConsoleSizes;
 use crate::harness::Harness;
@@ -61,14 +62,13 @@ fn help(h: &Harness) -> String {
 /// The lines of the open spell list and whether each can be picked.
 fn heal_list(h: &Harness) -> Vec<(SpellId, bool)> {
     match h.battle().unwrap().mode() {
-        Mode::List {
-            kind: ListKind::Spells(choices),
-            menu,
-            ..
-        } => choices
+        Mode::List { menu, .. } => menu
+            .items()
             .iter()
-            .zip(menu.items())
-            .map(|(c, item)| (c.spell.clone(), item.enabled))
+            .map(|item| match &item.value {
+                Line::Spell(c) => (c.spell.clone(), item.enabled),
+                line => panic!("{line:?}"),
+            })
             .collect(),
         m => panic!("{m:?}"),
     }
@@ -213,9 +213,10 @@ fn harness_up_and_down_step_to_the_other_hurt_ally_and_cancel_backs_out() {
     h.keys("d");
     assert_eq!(heal_list(&h), [(SpellId::new("heal"), true)]);
     h.keys("d");
-    let Mode::ActionMenu { menu, entries, .. } = h.battle().unwrap().mode() else {
+    let Mode::ActionMenu { menu, .. } = h.battle().unwrap().mode() else {
         panic!("{:?}", h.battle().unwrap().mode());
     };
+    let entries = menu.values();
     assert_eq!(entries[menu.focus()], MenuEntry::Magic);
     h.keys("d");
     assert!(matches!(h.battle().unwrap().mode(), Mode::Selected(_)));
@@ -245,14 +246,10 @@ fn harness_the_list_offers_heal_and_vigil_light() {
     let mut sel = Selection::new(&state, MAGE).unwrap();
     sel.target = Some(ARCHER);
     let (mode, _) = step(Mode::Selected(sel), Action::Confirm, p(1, 6), &state);
-    let Mode::List {
-        menu,
-        kind: ListKind::Spells(choices),
-        ..
-    } = mode
-    else {
+    let Mode::List { menu, .. } = mode else {
         panic!("{mode:?}");
     };
+    let choices = menu.spells();
     let lines: Vec<(SpellId, bool)> = choices
         .iter()
         .zip(menu.items())

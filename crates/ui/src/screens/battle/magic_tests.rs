@@ -4,7 +4,7 @@
 //! and its flash), spells in the `Equip` menu and on the info screen, and
 //! that cancelling at each level leaves the battle unchanged.
 
-use crate::widgets::menu::LabelText as _;
+use crate::screens::battle::testing::{Lines as _, Values as _};
 use insta::assert_snapshot;
 use trpg_core::{
     Affinity, BattleSetup, BattleState, CastTarget, ClassId, Command, Element, Equipped, Objective,
@@ -18,7 +18,7 @@ use super::magic::{
     CastTargeting, SpellChoice, can_cast, cast, cast_targets, knows_spells, reaches_an_enemy,
     spell_choices, spell_label, spell_menu, target_pos,
 };
-use super::mode::{Effect, ListKind, MenuEntry, Mode, Selection, menu_entries, open_menu};
+use super::mode::{Effect, MenuEntry, Mode, Selection, menu_entries, open_menu};
 use super::playback::TIMINGS;
 use super::sounds::step_sound;
 use super::testing::{battle_with, quick_units, setup, through_ai_phases, tile_cell};
@@ -145,9 +145,10 @@ fn mage_menu(c: &mut Ctx, state: BattleState) -> BattleScreen {
 /// Chooses `entry` in the open action menu.
 fn choose(s: &mut BattleScreen, c: &mut Ctx, entry: MenuEntry) {
     for _ in 0..8 {
-        let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+        let Mode::ActionMenu { menu, .. } = s.mode() else {
             panic!("{:?}", s.mode());
         };
+        let entries = menu.values();
         if entries.get(menu.focus()) == Some(&entry) {
             step(s, c, &[Action::Confirm]);
             return;
@@ -164,10 +165,7 @@ fn spell_list(c: &mut Ctx, state: BattleState) -> BattleScreen {
     assert!(
         matches!(
             s.mode(),
-            Mode::List {
-                kind: ListKind::Spells(_),
-                ..
-            }
+            Mode::List { menu, .. } if !menu.spells().is_empty()
         ),
         "{:?}",
         s.mode()
@@ -189,13 +187,10 @@ fn casting_with(
     active: Option<&str>,
 ) -> BattleScreen {
     let mut s = spell_list(c, state);
-    let Mode::List {
-        kind: ListKind::Spells(choices),
-        ..
-    } = s.mode()
-    else {
+    let Mode::List { menu, .. } = s.mode() else {
         unreachable!()
     };
+    let choices = menu.spells();
     let spell = &plain(choices.clone())[line].spell;
     let active = active.map(SkillId::new);
     let at = choices
@@ -204,14 +199,10 @@ fn casting_with(
         .unwrap_or_else(|| panic!("no line {line} with {active:?}: {choices:?}"));
     // The list opens on Fire, the equipped spell; Down skips dimmed lines.
     for _ in 0..choices.len() {
-        let Mode::List {
-            menu,
-            kind: ListKind::Spells(_),
-            ..
-        } = s.mode()
-        else {
+        let Mode::List { menu, .. } = s.mode() else {
             unreachable!()
         };
+        assert!(!menu.spells().is_empty());
         if menu.focus() == at {
             break;
         }
@@ -312,7 +303,7 @@ fn the_list_has_every_learned_spell_dimmed_without_a_target() {
     let lines: Vec<(&str, bool)> = menu
         .items()
         .iter()
-        .map(|i| (i.label.as_str(), i.enabled))
+        .map(|i| (crate::widgets::menu::text_of(&i.label), i.enabled))
         .collect();
     assert_eq!(
         lines,
@@ -366,7 +357,10 @@ fn magic_is_listed_for_casters_and_is_the_default_only_against_an_enemy() {
     let menu = |s: &BattleState, unit: UnitId| {
         let sel = Selection::new(s, unit).unwrap();
         match open_menu(sel, s) {
-            Mode::ActionMenu { menu, entries, .. } => (menu, entries),
+            Mode::ActionMenu { menu, .. } => {
+                let entries = menu.values();
+                (menu, entries)
+            }
             m => panic!("{m:?}"),
         }
     };
@@ -388,7 +382,9 @@ fn magic_is_listed_for_casters_and_is_the_default_only_against_an_enemy() {
             MenuEntry::Wait
         ]
     );
-    assert_eq!(MenuEntry::Magic.label(Words::ENGLISH), "Magic");
+    let (menu_of_mage, _) = menu(&s, MAGE);
+    let label = &menu_of_mage.items()[1].label;
+    assert_eq!(crate::widgets::menu::english(label), "Magic");
     assert_eq!(magic(&s), (true, MenuEntry::Magic));
     assert!(reaches_an_enemy(&s, &spell_choices(&s, MAGE, p(0, 4))));
     // The Quick Battle's start: only a forest to burn, so Magic is enabled
@@ -526,14 +522,10 @@ fn an_active_chosen_in_the_list_is_cast_with_the_spell() {
     // Cancel goes back to the spell list, on that line.
     let mut back = casting_with(&mut c, s.state().clone(), 0, Some("overcast"));
     step(&mut back, &mut c, &[Action::Cancel]);
-    let Mode::List {
-        menu,
-        kind: ListKind::Spells(choices),
-        ..
-    } = back.mode()
-    else {
+    let Mode::List { menu, .. } = back.mode() else {
         panic!("{:?}", back.mode());
     };
+    let choices = menu.spells();
     assert_eq!(choices[menu.focus()].active, Some(SkillId::new("overcast")));
     // Overcast costs an extra use.
     step(&mut s, &mut c, &[Action::Confirm]);
@@ -574,7 +566,11 @@ fn each_spell_active_is_a_line_after_its_attack_spell() {
     assert!(choices[0].targets.len() > 2);
     assert!(choices.iter().all(|c| c.blocked.is_none()));
     let menu = spell_menu(&state, Words::ENGLISH, MAGE, &choices);
-    let labels: Vec<&str> = menu.items().iter().map(|i| i.label.as_str()).collect();
+    let labels: Vec<&str> = menu
+        .items()
+        .iter()
+        .map(|i| crate::widgets::menu::text_of(&i.label))
+        .collect();
     assert_eq!(
         labels[..3],
         [
@@ -637,15 +633,14 @@ fn an_active_the_spell_cant_pay_for_is_dimmed_with_the_reason() {
     step(&mut s, &mut c, &[Action::CursorDown, Action::Confirm]);
     assert_eq!(targeting(&s).spell(), &sid("frost"));
     // Chosen anyway, it has nothing to be cast on.
-    let Mode::List {
-        sel,
-        menu,
-        kind: ListKind::Spells(choices),
-    } = spell_list(&mut c, s.state().clone()).mode().clone()
-    else {
+    let Mode::List { sel, menu } = spell_list(&mut c, s.state().clone()).mode().clone() else {
         unreachable!()
     };
-    assert_eq!(CastTargeting::new(s.state(), sel, menu, choices, 1), None);
+    let choices = menu.spells();
+    assert_eq!(
+        CastTargeting::new(s.state(), sel, menu, choices[1].clone()),
+        None
+    );
 }
 
 /// The forecast panel's text and colours, with the affinity marker.
@@ -1056,21 +1051,18 @@ fn cancelling_at_each_level_leaves_the_battle_unchanged() {
         step(&mut s, &mut c, &[Action::NextUnit]);
         // Back to the spell list, on the spell, the cursor on the mage.
         step(&mut s, &mut c, &[Action::Cancel]);
-        let Mode::List {
-            menu,
-            kind: ListKind::Spells(choices),
-            ..
-        } = s.mode()
-        else {
+        let Mode::List { menu, .. } = s.mode() else {
             panic!("{:?}", s.mode());
         };
+        let choices = menu.spells();
         assert_eq!(choices[menu.focus()], plain(choices.clone())[line]);
         assert_eq!(s.cursor().pos, p(0, 4));
         // Back to the action menu, on Magic.
         step(&mut s, &mut c, &[Action::Cancel]);
-        let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+        let Mode::ActionMenu { menu, .. } = s.mode() else {
             panic!("{:?}", s.mode());
         };
+        let entries = menu.values();
         assert_eq!(entries[menu.focus()], MenuEntry::Magic);
         // Back to the selection, then to browsing.
         step(&mut s, &mut c, &[Action::Cancel]);
@@ -1094,9 +1086,8 @@ fn the_menus_sound_like_the_others() {
     let list = Mode::List {
         sel: sel.clone(),
         menu: menu.clone(),
-        kind: ListKind::Spells(choices.clone()),
     };
-    let t = CastTargeting::new(&s, sel.clone(), menu.clone(), choices.clone(), 0).unwrap();
+    let t = CastTargeting::new(&s, sel.clone(), menu.clone(), choices[0].clone()).unwrap();
     let aim = Mode::CastTarget(Box::new(t));
     // Any key that goes deeper sounds as Select, back out as Cancel.
     let sound = |from: &Mode, to: &Mode| step_sound(Action::Info, from, to, &Effect::None);
@@ -1105,13 +1096,9 @@ fn the_menus_sound_like_the_others() {
     assert_eq!(sound(&aim, &list), Some(MenuSound::Cancel));
     assert_eq!(sound(&list, &action_menu), Some(MenuSound::Cancel));
     // A list without targets can't be aimed.
-    let mut none = choices;
-    none[0].targets.clear();
-    assert_eq!(
-        CastTargeting::new(&s, sel.clone(), menu.clone(), none, 0),
-        None
-    );
-    assert_eq!(CastTargeting::new(&s, sel, menu, vec![], 0), None);
+    let mut none = choices[0].clone();
+    none.targets.clear();
+    assert_eq!(CastTargeting::new(&s, sel, menu, none), None);
 }
 
 // ---- Equip and the info screen ---------------------------------------------------
@@ -1133,7 +1120,11 @@ fn the_equip_menu_lists_attack_spells_after_the_weapons() {
     );
     assert!(can_equip(&choices));
     let menu = equip_menu(&state, Words::ENGLISH, MAGE, &choices);
-    let lines: Vec<&str> = menu.items().iter().map(|i| i.label.as_str()).collect();
+    let lines: Vec<&str> = menu
+        .items()
+        .iter()
+        .map(|i| crate::widgets::menu::text_of(&i.label))
+        .collect();
     assert_eq!(
         lines,
         [
@@ -1150,16 +1141,17 @@ fn the_equip_menu_lists_attack_spells_after_the_weapons() {
     let mage = s.state().unit(MAGE).unwrap();
     assert_eq!(mage.loadout.equipped, Some(Equipped::Spell(sid("frost"))));
     assert!(!mage.acted);
-    let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let entries = menu.values();
     assert_eq!(entries[menu.focus()], MenuEntry::Equip);
     // Now Frost is marked and focused.
     let again = equip_choices(s.state(), MAGE);
     let menu = equip_menu(s.state(), Words::ENGLISH, MAGE, &again);
     assert_eq!(menu.focus(), 1);
-    assert!(menu.items()[1].label.as_str().starts_with("* Frost"));
-    assert!(menu.items()[0].label.as_str().starts_with("  Fire"));
+    assert!(crate::widgets::menu::text_of(&menu.items()[1].label).starts_with("* Frost"));
+    assert!(crate::widgets::menu::text_of(&menu.items()[0].label).starts_with("  Fire"));
 }
 
 #[test]
@@ -1184,7 +1176,11 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
         ]
     );
     let menu = equip_menu(&state, Words::ENGLISH, MAGE, &choices);
-    let lines: Vec<&str> = menu.items().iter().map(|i| i.label.as_str()).collect();
+    let lines: Vec<&str> = menu
+        .items()
+        .iter()
+        .map(|i| crate::widgets::menu::text_of(&i.label))
+        .collect();
     // Names are padded to the longest, the sword's; Fire is still what it
     // has equipped, so the list opens there.
     assert_eq!(
@@ -1198,7 +1194,12 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
     assert_eq!(menu.focus(), 1);
     // A unit that isn't there has no lines to show.
     let ghost = equip_menu(&state, Words::ENGLISH, UnitId(99), &choices);
-    assert!(ghost.items().iter().all(|i| i.label.as_str().is_empty()));
+    assert!(
+        ghost
+            .items()
+            .iter()
+            .all(|i| crate::widgets::menu::text_of(&i.label).is_empty())
+    );
     assert!(equip_choices(&state, UnitId(99)).is_empty());
     // Fire with a single use, spent on the forest: dimmed in both lists,
     // and with Frost alone there is nothing to choose in Equip.
@@ -1226,7 +1227,7 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
     assert!(!can_equip(&choices));
     let menu = equip_menu(&state, Words::ENGLISH, MAGE, &choices);
     assert_eq!(
-        menu.items()[0].label.as_str(),
+        crate::widgets::menu::text_of(&menu.items()[0].label),
         "* Fire   Mt 5 Hit 90 Crit 0 Wt 0 Rng1-2  0/1"
     );
     assert!(!menu.items()[0].enabled);
@@ -1234,7 +1235,7 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
     assert!(spells[0].targets.is_empty());
     let list = spell_menu(&state, Words::ENGLISH, MAGE, &spells);
     assert_eq!(
-        list.items()[0].label.as_str(),
+        crate::widgets::menu::text_of(&list.items()[0].label),
         "Fire    0/1   Mt5 Hit90 Rng1-2"
     );
     assert!(!list.items()[0].enabled);
@@ -1640,9 +1641,10 @@ fn harness_pointing_at_the_elemental_walks_there_and_opens_fires_forecast() {
     assert_eq!(with(&h).0, spell("frost"));
     // Cancel: the action menu on Magic, then the selection; nothing cast.
     h.keys("d");
-    let Mode::ActionMenu { menu, entries, .. } = h.battle().unwrap().mode() else {
+    let Mode::ActionMenu { menu, .. } = h.battle().unwrap().mode() else {
         panic!("{:?}", h.battle().unwrap().mode());
     };
+    let entries = menu.values();
     assert_eq!(entries[menu.focus()], MenuEntry::Magic);
     h.keys("d");
     let Mode::Selected(sel) = h.battle().unwrap().mode() else {
@@ -1662,32 +1664,22 @@ fn the_spell_lists_are_told_in_the_players_language() {
     let mut c = ctx();
     let (lang, code) = (shouting(&c.game.content), shout());
     let words = Words::new(&lang, &code);
-    let labels = |menu: &crate::widgets::menu::Menu| -> Vec<String> {
-        menu.items()
+    let labels = |menu: &crate::widgets::menu::Menu<super::mode::Line>| -> Vec<String> {
+        let labels = menu
+            .items()
             .iter()
-            .map(|i| i.label.as_str().to_owned())
-            .collect()
+            .map(|i| crate::widgets::menu::text_of(&i.label));
+        labels.map(str::to_owned).collect()
     };
     let state = field(&c, 0);
     let mut s = spell_list(&mut c, state);
     step(&mut s, &mut c, &[Action::CursorDown]);
-    let Mode::List {
-        menu,
-        kind: ListKind::Spells(_),
-        ..
-    } = s.mode()
-    else {
+    let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    let told = s.mode().told(s.state(), words).into_owned();
-    let Mode::List {
-        menu: theirs,
-        kind: ListKind::Spells(_),
-        ..
-    } = &told
-    else {
-        panic!("{told:?}");
-    };
+    // The same list, opened in the player's language.
+    let theirs = &spell_menu(s.state(), words, MAGE, &menu.spells()).focused(menu.focus());
+    assert_eq!(theirs.values(), menu.values());
     assert!(labels(menu)[0].starts_with("Fire "), "{:?}", labels(menu));
     assert!(
         labels(theirs)[0].starts_with("FIRE "),
@@ -1697,29 +1689,14 @@ fn the_spell_lists_are_told_in_the_players_language() {
     assert!(labels(theirs)[2].starts_with("FROST "));
     assert_eq!(theirs.focus(), menu.focus());
     assert_eq!(theirs.focus(), 1);
-    assert!(matches!(
-        s.mode().told(s.state(), Words::ENGLISH),
-        std::borrow::Cow::Borrowed(_)
-    ));
     // The line of the Mage's Overcast, and what it costs.
     assert_eq!(labels(menu)[1], "Fire + Overcast");
     assert_eq!(labels(theirs)[1], "FIRE + OVERCAST");
-    let cost = |menu: &crate::widgets::menu::Menu| menu.items()[1].suffix.clone().unwrap().0;
+    let cost = |menu: &crate::widgets::menu::Menu<super::mode::Line>| {
+        menu.items()[1].suffix.clone().unwrap().0
+    };
     assert_eq!(cost(menu), " +1 use");
     assert_eq!(cost(theirs), cost(menu));
-    // A forecast has no list: it is told as it is.
-    let state = field(&c, 0);
-    let s = casting_with(&mut c, state, 0, Some("overcast"));
-    let told = s.mode().told(s.state(), words).into_owned();
-    assert_eq!(&told, s.mode());
-    // On a tile there is no forecast, and nothing to tell.
-    let state = field(&c, 0);
-    let mut s = casting(&mut c, state, 0);
-    step(&mut s, &mut c, &[Action::NextUnit]);
-    if targeting(&s).forecast().is_none() {
-        let told = s.mode().told(s.state(), words).into_owned();
-        assert_eq!(&told, s.mode());
-    }
     // The forecast names the fighters and the spell in the language.
     let state = field(&c, 0);
     let s = casting(&mut c, state, 0);
@@ -1775,26 +1752,19 @@ fn cinder_oath_shows_no_counter_in_chapter_1() {
     s.cursor.jump(at);
     step(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     choose(&mut s, &mut c, MenuEntry::Magic);
-    let Mode::List {
-        kind: ListKind::Spells(choices),
-        ..
-    } = s.mode()
-    else {
+    let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let choices = menu.spells();
     let oath = choices
         .iter()
         .position(|ch| ch.spell == sid("cinder_oath") && ch.active.is_none())
         .expect("Cinder Oath in Rue's spell list");
     for _ in 0..choices.len() {
-        let Mode::List {
-            menu,
-            kind: ListKind::Spells(_),
-            ..
-        } = s.mode()
-        else {
+        let Mode::List { menu, .. } = s.mode() else {
             unreachable!()
         };
+        assert!(!menu.spells().is_empty());
         if menu.focus() == oath {
             break;
         }

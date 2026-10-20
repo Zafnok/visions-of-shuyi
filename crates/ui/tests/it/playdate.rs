@@ -27,7 +27,6 @@ use trpg_ui::screens::{
     FamiliarityScreen, KeyBindingsScreen, LeadSelectScreen, ModeSelectScreen, OptionsScreen,
 };
 use trpg_ui::widgets::help::key_name;
-use trpg_ui::widgets::menu::LabelText as _;
 use trpg_ui::{
     ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, RawInputEvent, ShuyiCtx,
     Storage, UiColor,
@@ -144,7 +143,10 @@ fn new_game_to_the_first_scene_on_the_playdates_skins() {
     };
     let view = mode.view(h.game().ctx());
     assert_eq!(
-        view.menu.focused().map(|i| i.label.as_str()),
+        view.menu
+            .focused()
+            .map(|i| h.game().ctx().label(&i.label))
+            .as_deref(),
         Some("Classic")
     );
     assert_snapshot!("playdate_mode_select", h.snapshot());
@@ -537,11 +539,10 @@ fn a_notch_is_the_keymaps() {
 
 /// The map menu's entries, with whether each can be chosen.
 fn map_menu_entries(h: &Harness) -> Vec<(MapEntry, bool)> {
-    let Mode::MapMenu { menu, entries } = battle(h).mode() else {
+    let Mode::MapMenu { menu } = battle(h).mode() else {
         panic!("no map menu: {:?}", battle(h).mode());
     };
-    let items = menu.items().iter().map(|i| i.enabled);
-    entries.iter().copied().zip(items).collect()
+    menu.items().iter().map(|i| (i.value, i.enabled)).collect()
 }
 
 /// The entries alone.

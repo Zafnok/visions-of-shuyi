@@ -546,7 +546,7 @@ fn replies(s: &DialogueScreen, c: &Ctx) -> Option<(Vec<String>, Option<usize>)> 
         choices
             .items
             .into_iter()
-            .map(|i| i.label.as_str().to_owned())
+            .map(|i| crate::widgets::menu::text_of(&i.label).to_owned())
             .collect(),
         focus,
     ))

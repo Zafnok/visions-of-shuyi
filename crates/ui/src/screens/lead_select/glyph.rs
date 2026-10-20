@@ -55,10 +55,10 @@ pub fn paint(ctx: &Ctx, view: &LeadSelectView, buf: &mut GlyphBuffer) {
     }
     paint_rows(ctx, view, buf);
     if let Some(grid) = &view.grid {
-        paint_grid(ctx, buf, GRID_BOX, grid);
+        paint_grid(&ctx.palette, buf, GRID_BOX, grid);
     }
     if let Some(typing) = &view.typing {
-        paint_typing(ctx, buf, TYPE_BOX, typing);
+        paint_typing(&ctx.palette, buf, TYPE_BOX, typing);
     }
     let bottom = i32::from(buf.height()) - 1;
     print_centred(buf, bottom, &view.help, c(UiColor::TextDim), black);
