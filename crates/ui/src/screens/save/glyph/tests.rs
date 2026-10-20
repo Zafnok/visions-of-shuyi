@@ -29,7 +29,7 @@ fn assert_all_painted(buf: &GlyphBuffer) {
 
 fn item(label: &str, focused: bool) -> MenuItemView {
     MenuItemView {
-        label: label.to_owned(),
+        label: label.into(),
         suffix: None,
         note: None,
         enabled: true,

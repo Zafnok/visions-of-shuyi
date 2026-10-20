@@ -542,7 +542,14 @@ fn sounds(c: &mut Ctx) -> Vec<String> {
 fn replies(s: &DialogueScreen, c: &Ctx) -> Option<(Vec<String>, Option<usize>)> {
     let choices = s.view(c).text.choices?;
     let focus = choices.items.iter().position(|i| i.focused);
-    Some((choices.items.into_iter().map(|i| i.label).collect(), focus))
+    Some((
+        choices
+            .items
+            .into_iter()
+            .map(|i| crate::widgets::menu::text_of(&i.label).to_owned())
+            .collect(),
+        focus,
+    ))
 }
 
 #[test]

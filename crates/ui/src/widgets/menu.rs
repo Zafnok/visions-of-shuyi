@@ -5,6 +5,31 @@
 
 pub use shuyi_ui::widgets::menu::*;
 
+/// The text of `label`, a label of text as it is: for the tests of a menu
+/// built with text. Panics on a text key.
+#[cfg(test)]
+pub(crate) fn text_of(label: &Label) -> &str {
+    match label {
+        Label::Text(text) => text,
+        Label::Key { key, .. } => panic!("{key:?} is a text key"),
+    }
+}
+
+/// What `label` says in English: for the tests of a menu.
+#[cfg(test)]
+pub(crate) fn english(label: &Label) -> String {
+    match label {
+        Label::Text(text) => text.clone(),
+        Label::Key { key, args } => {
+            let args: Vec<(&str, &dyn core::fmt::Display)> = args
+                .iter()
+                .map(|(name, value)| (name.as_str(), value as &dyn core::fmt::Display))
+                .collect();
+            crate::words::Words::ENGLISH.text_with(key, &args)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use insta::assert_snapshot;
@@ -20,9 +45,9 @@ mod tests {
     #[test]
     fn this_games_keys_drive_it_with_its_sounds() {
         let mut m = Menu::new(vec![
-            MenuItem::new("a"),
-            MenuItem::disabled("b"),
-            MenuItem::new("c"),
+            MenuItem::new("a").with_value('a'),
+            MenuItem::disabled("b").with_value('b'),
+            MenuItem::new("c").with_value('c'),
         ]);
         let mut audio = AudioQueue::new(AUDIO);
         let mut events = Vec::new();
@@ -35,7 +60,7 @@ mod tests {
                 None,
                 None,
                 None,
-                Some(MenuEvent::Chosen(2)),
+                Some(MenuEvent::Chosen('c')),
                 Some(MenuEvent::Cancelled)
             ]
         );
@@ -63,15 +88,15 @@ mod tests {
     }
 
     fn render(m: &Menu) -> String {
-        let p = game_palette();
+        let (ctx, p) = (crate::screen::tests::ctx(), game_palette());
         let view = m.view();
-        let (w, h) = glyph::size(&view);
+        let (w, h) = glyph::size(&ctx, &view);
         let mut buf = GlyphBuffer::new(
             u16::try_from(w + 2).unwrap(),
             u16::try_from(h + 2).unwrap(),
             Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black)),
         );
-        glyph::paint(&p, &view, &mut buf, 1, 1);
+        glyph::paint(&ctx, &view, &mut buf, 1, 1);
         buf.to_snapshot(&p)
     }
 

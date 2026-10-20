@@ -51,7 +51,7 @@ pub const LEVELS: [(TutorialLevel, &str, &str); 3] = [
 /// [`TutorialLevel`], Cancel pops with nothing (back).
 #[derive(Debug, Clone)]
 pub struct FamiliarityScreen {
-    menu: Menu,
+    menu: Menu<TutorialLevel>,
 }
 
 impl FamiliarityScreen {
@@ -63,7 +63,7 @@ impl FamiliarityScreen {
     pub fn new(ctx: &Ctx) -> Self {
         let items = LEVELS
             .iter()
-            .map(|&(_, name, _)| MenuItem::new(ctx.text(name)));
+            .map(|&(level, name, _)| MenuItem::new(ctx.text(name)).with_value(level));
         Self {
             menu: Menu::new(items.collect()),
         }
@@ -101,7 +101,7 @@ impl Screen<Shuyi> for FamiliarityScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        pick_one(&mut self.menu, ctx, input, &LEVELS.map(|(level, ..)| level))
+        pick_one(&mut self.menu, ctx, input)
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

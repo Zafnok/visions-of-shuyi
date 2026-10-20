@@ -209,16 +209,19 @@ pub fn first_shown(len: usize, room: usize, focus: Option<usize>) -> usize {
 
 /// The size, in cells, of `menu`'s window: its longest item with a cell
 /// either side, inside the frame; a row per item.
-pub fn menu_size(menu: &MenuView) -> (i32, i32) {
-    let widest = menu.items.iter().map(menu_text).map(|t| cells(&t)).max();
+pub fn menu_size(ctx: &Ctx, menu: &MenuView) -> (i32, i32) {
+    let text = |item| menu_text(ctx, item);
+    let widest = menu.items.iter().map(text).map(|t| cells(&t)).max();
     (widest.unwrap_or(0) + 4, to_i32(menu.items.len()) + 2)
 }
 
-/// An item's text: its label and what follows it.
-fn menu_text(item: &crate::widgets::MenuItemView) -> String {
+/// An item's text, in the player's language: its label and what follows
+/// it.
+fn menu_text(ctx: &Ctx, item: &crate::widgets::MenuItemView) -> String {
+    let label = ctx.label(&item.label);
     match &item.suffix {
-        Some((suffix, _)) => format!("{} {suffix}", item.label),
-        None => item.label.clone(),
+        Some((suffix, _)) => format!("{label} {suffix}"),
+        None => label,
     }
 }
 
@@ -226,12 +229,19 @@ fn menu_text(item: &crate::widgets::MenuItemView) -> String {
 /// focused one a bar across the window, one that can't be chosen in grey
 /// dots.
 pub fn menu(ctx: &Ctx, buf: &mut GlyphBuffer, at: (i32, i32), menu: &MenuView) {
-    let (w, h) = menu_size(menu);
+    let (w, h) = menu_size(ctx, menu);
     let rect = Rect::new(at.0, at.1, w, h);
     window(ctx, buf, rect, "");
     for (row, it) in (rect.y + 1..).zip(&menu.items) {
         let state = Item::of(it.focused, it.enabled);
-        item(ctx, buf, (rect.x + 2, row), w - 4, &menu_text(it), state);
+        item(
+            ctx,
+            buf,
+            (rect.x + 2, row),
+            w - 4,
+            &menu_text(ctx, it),
+            state,
+        );
     }
 }
 

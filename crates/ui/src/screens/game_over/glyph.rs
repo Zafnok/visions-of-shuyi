@@ -122,9 +122,9 @@ pub fn paint(ctx: &Ctx, view: &GameOverView, buf: &mut GlyphBuffer) {
         }
     }
     if let Some(menu) = &view.menu {
-        let (w, _) = menu_glyph::size(menu);
+        let (w, _) = menu_glyph::size(ctx, menu);
         let x = centre_x(buf, usize::try_from(w).unwrap_or(0));
-        menu_glyph::paint(&ctx.palette, menu, buf, x, MENU_ROW);
+        menu_glyph::paint(ctx, menu, buf, x, MENU_ROW);
     }
     if let Some(help) = &view.help {
         paint_help(ctx, help, buf);
@@ -170,7 +170,7 @@ mod tests {
     /// Game Over at `progress`, with its menu and help once it is over.
     fn view(progress: u8) -> GameOverView {
         let item = |label: &str, focused| MenuItemView {
-            label: label.to_owned(),
+            label: label.into(),
             suffix: None,
             note: None,
             enabled: true,

@@ -52,7 +52,12 @@ fn the_view_names_the_three_answers_with_not_familiar_focused() {
     let c = ctx();
     let view = FamiliarityScreen::new(&c).view(&c);
     assert_eq!(view.heading, c.text(HEADING));
-    let labels: Vec<_> = view.menu.items.iter().map(|i| i.label.as_str()).collect();
+    let labels: Vec<_> = view
+        .menu
+        .items
+        .iter()
+        .map(|i| crate::widgets::menu::text_of(&i.label))
+        .collect();
     assert_eq!(
         labels,
         [
@@ -61,7 +66,10 @@ fn the_view_names_the_three_answers_with_not_familiar_focused() {
             "Familiar with this game"
         ]
     );
-    assert_eq!(view.menu.focused().unwrap().label, "Not familiar");
+    assert_eq!(
+        crate::widgets::menu::text_of(&view.menu.focused().unwrap().label),
+        "Not familiar"
+    );
     let lines: Vec<_> = view.lines.iter().map(|l| l.text.as_str()).collect();
     assert_eq!(
         lines,
@@ -84,7 +92,7 @@ fn the_focused_line_follows_the_menu() {
     s.update(&mut c, &input);
     let view = s.view(&c);
     assert_eq!(
-        view.menu.focused().unwrap().label,
+        crate::widgets::menu::text_of(&view.menu.focused().unwrap().label),
         "Familiar with other strategy RPGs"
     );
     assert_eq!(

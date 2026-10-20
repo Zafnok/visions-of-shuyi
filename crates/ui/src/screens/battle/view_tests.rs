@@ -17,12 +17,12 @@ use super::view::{
 use super::*;
 use crate::harness::Harness;
 use crate::screen::tests::ctx;
-use crate::widgets::menu::Menu;
+use crate::widgets::menu::{Menu, MenuItem, english};
 
 /// The labels of the menu open, if any.
 fn menu_labels(view: &BattleView) -> Option<Vec<String>> {
     let menu = view.menu.as_ref()?;
-    Some(menu.menu.items.iter().map(|i| i.label.clone()).collect())
+    Some(menu.menu.items.iter().map(|i| english(&i.label)).collect())
 }
 
 #[test]
@@ -113,10 +113,16 @@ fn the_item_list_has_the_packs_size_in_its_header() {
         panic!("{:?}", s.mode());
     };
     // The list `Item` opens (disabled for the lord here, so set directly).
+    let group = items::PackGroup {
+        item: trpg_core::ItemId::new("potion"),
+        index: 0,
+        count: 1,
+        targets: vec![],
+    };
+    let line = MenuItem::new("Potion").with_value(super::mode::Line::Item(group));
     s.mode = Mode::List {
         sel,
-        menu: Menu::new(vec![]),
-        kind: ListKind::Pack(vec![]),
+        menu: Menu::new(vec![line]),
     };
     let header = s.view(&c).menu.unwrap().header.unwrap();
     assert_eq!(header.name, items::pack_header(s.state(), Words::ENGLISH));

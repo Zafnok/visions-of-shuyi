@@ -326,7 +326,10 @@ fn title_items(h: &Harness) -> Vec<String> {
     let title = title.unwrap_or_else(|| panic!("no title"));
     let menu = title.view(h.game().ctx()).menu;
     let items = menu.map(|m| m.items).unwrap_or_default();
-    items.into_iter().map(|i| i.label).collect()
+    items
+        .into_iter()
+        .map(|i| h.game().ctx().label(&i.label))
+        .collect()
 }
 
 fn current(h: &Harness) -> String {

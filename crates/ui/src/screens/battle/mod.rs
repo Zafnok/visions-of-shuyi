@@ -81,7 +81,7 @@ use self::event_sounds::CueQueue;
 use self::guides::GuidesScreen;
 use self::layout::MAP_VIEW;
 use self::lessons::LessonState;
-use self::mode::{Effect, ListKind, MenuEntry, Mode, Selection};
+use self::mode::{Effect, Line, MenuEntry, Mode, Selection, list_entry};
 use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{MapFrame, RewindEffect, RewindScreen};
@@ -440,10 +440,7 @@ impl Marks {
             Mode::Selected(_) => Self::Selected,
             _ if forecast_of(mode).is_some() => Self::Forecast,
             Mode::ActionMenu { .. } => Self::ActionMenu,
-            Mode::List {
-                kind: ListKind::Arts(_),
-                ..
-            } => Self::Arts,
+            Mode::List { menu, .. } if list_entry(menu) == MenuEntry::Arts => Self::Arts,
             Mode::CastTarget(t) if matches!(t.target(), CastTarget::Tile(_)) => Self::TileAimed,
             _ => Self::None,
         }
@@ -832,20 +829,21 @@ impl BattleScreen {
                     fired.push(TipTrigger::FirstTerrain);
                 }
             }
-            Mode::ActionMenu { sel, entries, .. } => {
-                if entries.contains(&MenuEntry::Magic) {
+            Mode::ActionMenu { sel, menu, .. } => {
+                if menu.items().iter().any(|i| i.value == MenuEntry::Magic) {
                     fired.push(TipTrigger::FirstCaster);
                 }
                 if art_list::can_use_art(&art_list::art_lines(state, sel.unit, sel.dest())) {
                     fired.push(TipTrigger::ArtsAvailable);
                 }
             }
-            Mode::List {
-                kind: ListKind::Spells(choices),
-                ..
-            } => {
+            Mode::List { menu, .. } => {
                 let on_tile = |t: &CastTarget| matches!(t, CastTarget::Tile(_));
-                if choices.iter().any(|c| c.targets.iter().any(on_tile)) {
+                let tile_spell = |line: &Line| match line {
+                    Line::Spell(c) => c.targets.iter().any(on_tile),
+                    _ => false,
+                };
+                if menu.items().iter().any(|i| tile_spell(&i.value)) {
                     fired.push(TipTrigger::TileSpellAvailable);
                 }
             }
@@ -1657,8 +1655,8 @@ impl BattleScreen {
         let before = self.mode.clone();
         let mode = core::mem::take(&mut self.mode);
         let shortcuts = map_menu::shortcuts(ctx.keyboard, &ctx.keymap);
-        let (mode, effect) =
-            mode::step_with(mode, action, self.cursor.pos, &self.state, &shortcuts);
+        let here = (&self.state, ctx.words());
+        let (mode, effect) = mode::step_with(mode, action, self.cursor.pos, here, &shortcuts);
         if self.lessons.holds_turn() && ends_turn(&before, &mode, &effect) {
             // An open lesson holds the turn (0456): nothing happens.
             self.mode = before;
@@ -1767,7 +1765,7 @@ impl BattleScreen {
         let dt = if own_pace { dt } else { scaled };
         self.play_sounds(ctx, dt, held);
         let mode = core::mem::take(&mut self.mode);
-        self.mode = mode.tick(dt, held, &self.state);
+        self.mode = mode.tick(dt, held, &self.state, self.language.words());
         self.follow_ai_action();
         // A walk aimed at an enemy (0428) ends in its forecast: the cursor
         // goes onto the target.
@@ -1899,10 +1897,10 @@ impl BattleScreen {
                 }
             }
             Mode::Moving { .. } => "battle.help.skip",
-            Mode::List { kind, .. } => match kind {
-                ListKind::Spells(_) => "battle.help.spells",
-                ListKind::Equip(_) => "battle.help.equip",
-                ListKind::Arts(_) | ListKind::Skills(_) | ListKind::Pack(_) => "battle.help.menu",
+            Mode::List { menu, .. } => match list_entry(menu) {
+                MenuEntry::Magic => "battle.help.spells",
+                MenuEntry::Equip => "battle.help.equip",
+                _ => "battle.help.menu",
             },
             Mode::ActionMenu { .. } | Mode::MapMenu { .. } | Mode::UnitList { .. } => {
                 "battle.help.menu"
@@ -2268,36 +2266,34 @@ impl BattleScreen {
 
     /// The menu open, if any: the action menu or a list it opened, beside
     /// its unit (where it will stand); the map menu beside the cursor; the
-    /// unit list in the middle. Written in `words`.
+    /// unit list in the middle. Its headers are written in `words`.
     fn menu_view(&self, words: Words<'_>) -> Option<BattleMenuView> {
-        let mode = self.mode.told(&self.state, words);
-        let (place, menu) = match &*mode {
-            Mode::ActionMenu { sel, menu, .. } | Mode::List { sel, menu, .. } => {
-                (MenuPlace::Beside(sel.dest()), menu)
-            }
-            Mode::MapMenu { menu, .. } => (MenuPlace::Beside(self.cursor.pos), menu),
-            Mode::UnitList { menu, .. } => (MenuPlace::Centred, menu),
+        let (place, menu) = match &self.mode {
+            Mode::ActionMenu { sel, menu, .. } => (MenuPlace::Beside(sel.dest()), menu.view()),
+            Mode::List { sel, menu } => (MenuPlace::Beside(sel.dest()), menu.view()),
+            Mode::MapMenu { menu } => (MenuPlace::Beside(self.cursor.pos), menu.view()),
+            Mode::UnitList { menu } => (MenuPlace::Centred, menu.view()),
             _ => return None,
         };
-        let header = match &*mode {
-            Mode::List { sel, kind, .. } => match kind {
+        let header = match &self.mode {
+            Mode::List { sel, menu } => match menu.value(menu.focus()) {
                 // The weapon the focused art would be used with, and its
                 // durability.
-                ListKind::Arts(lines) => lines.get(menu.focus()).and_then(|line| {
+                Some(Line::Art(line)) => {
                     let weapon = (sel.unit, &Equipped::Weapon(line.slot));
                     art_list::header((&self.state, words), weapon)
-                }),
+                }
                 // The pack's size.
-                ListKind::Pack(_) => Some(MenuHeader {
+                Some(Line::Item(_)) => Some(MenuHeader {
                     name: items::pack_header(&self.state, words),
                     uses: None,
                 }),
-                ListKind::Spells(_) | ListKind::Skills(_) | ListKind::Equip(_) => None,
+                _ => None,
             },
             _ => None,
         };
         Some(BattleMenuView {
-            menu: menu.view(),
+            menu,
             place,
             header,
         })
@@ -2662,6 +2658,108 @@ pub(crate) mod testing {
     use crate::glyph_buffer::GlyphBuffer;
     use crate::input::Action;
     use crate::screen::{Ctx, FrameInput, Screen, ScreenStack};
+    use crate::widgets::menu::Menu;
+
+    use super::art_list::ArtLine;
+    use super::items::{EquipChoice, PackGroup};
+    use super::magic::SpellChoice;
+    use super::mode::Line;
+    use super::skills::SkillChoice;
+
+    /// What a menu's items stand for, in order.
+    pub trait Values<T> {
+        /// The items' values.
+        fn values(&self) -> Vec<T>;
+    }
+
+    impl<T: Clone> Values<T> for Menu<T> {
+        fn values(&self) -> Vec<T> {
+            self.items().iter().map(|i| i.value.clone()).collect()
+        }
+    }
+
+    /// A list's lines of each kind, in order.
+    pub trait Lines {
+        /// Its arts.
+        fn arts(&self) -> Vec<ArtLine>;
+        /// Its spells.
+        fn spells(&self) -> Vec<SpellChoice>;
+        /// Its skills.
+        fn skills(&self) -> Vec<SkillChoice>;
+        /// Its pack's groups.
+        fn groups(&self) -> Vec<PackGroup>;
+        /// Its weapons and spells to equip.
+        fn equips(&self) -> Vec<EquipChoice>;
+    }
+
+    impl Lines for Menu<Line> {
+        fn arts(&self) -> Vec<ArtLine> {
+            let art = |l: &Line| {
+                if let Line::Art(a) = l {
+                    Some(a.clone())
+                } else {
+                    None
+                }
+            };
+            self.items().iter().filter_map(|i| art(&i.value)).collect()
+        }
+
+        fn spells(&self) -> Vec<SpellChoice> {
+            let spell = |l: &Line| {
+                if let Line::Spell(c) = l {
+                    Some(c.clone())
+                } else {
+                    None
+                }
+            };
+            self.items()
+                .iter()
+                .filter_map(|i| spell(&i.value))
+                .collect()
+        }
+
+        fn skills(&self) -> Vec<SkillChoice> {
+            let skill = |l: &Line| {
+                if let Line::Skill(c) = l {
+                    Some(c.clone())
+                } else {
+                    None
+                }
+            };
+            self.items()
+                .iter()
+                .filter_map(|i| skill(&i.value))
+                .collect()
+        }
+
+        fn groups(&self) -> Vec<PackGroup> {
+            let group = |l: &Line| {
+                if let Line::Item(g) = l {
+                    Some(g.clone())
+                } else {
+                    None
+                }
+            };
+            self.items()
+                .iter()
+                .filter_map(|i| group(&i.value))
+                .collect()
+        }
+
+        fn equips(&self) -> Vec<EquipChoice> {
+            let equip = |l: &Line| {
+                if let Line::Equip(c) = l {
+                    Some(c.clone())
+                } else {
+                    None
+                }
+            };
+            self.items()
+                .iter()
+                .filter_map(|i| equip(&i.value))
+                .collect()
+        }
+    }
 
     /// A battle screen on a screen stack, as the game has it: what it opens
     /// over itself (the rewind screen, the Guides list, a scene) goes on

@@ -188,8 +188,8 @@ fn the_turn_waits_for_the_open_lesson() {
     assert_eq!(s.mode(), &Mode::default(), "no End turn prompt");
     assert_eq!(sounds(&mut c), [crate::audio::AUDIO.cue(MenuSound::Denied)]);
     // The map menu's End turn: the menu stays open.
-    let (menu, entries) = map_menu::map_menu(&s.state, Words::ENGLISH, map_menu::MapEntry::EndTurn);
-    s.mode = Mode::MapMenu { menu, entries };
+    let menu = map_menu::map_menu(&s.state, map_menu::MapEntry::EndTurn);
+    s.mode = Mode::MapMenu { menu };
     press(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
     assert_eq!(sounds(&mut c), [crate::audio::AUDIO.cue(MenuSound::Denied)]);
