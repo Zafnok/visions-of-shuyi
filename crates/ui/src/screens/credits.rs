@@ -180,7 +180,7 @@ impl CreditsScreen {
     /// jump back to the top), so a huge frame time can't keep it busy; a
     /// frame longer than that puts the list back at its top, resting.
     fn roll(&mut self, dt: f32) {
-        if !self.rolling || self.max_top() == 0 || !dt.is_finite() {
+        if !self.rolling || self.max_top() == 0 {
             return;
         }
         self.wait -= dt;

@@ -24,6 +24,7 @@
 
 use crate::prelude::*;
 use alloc::collections::BTreeMap;
+use shuyi_ui::HurryClock;
 
 use trpg_content::Portrait;
 use trpg_core::lead::LeadProfile;
@@ -482,9 +483,8 @@ impl Progress {
         };
         let len = page.len(&self.timings);
         let waits = page.waits();
-        let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
-        let speed = if confirm_held { self.timings.fast } else { 1.0 };
-        self.t = (self.t + dt * speed).min(len);
+        let passing = HurryClock::new(0.0, self.timings.fast).tick(dt, confirm_held);
+        self.t = (self.t + passing).min(len);
         if !waits && self.t >= len {
             self.next();
         }

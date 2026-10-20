@@ -6,6 +6,8 @@
 //! ends in silence, so "jump to the silence" is "stop the song, wait the
 //! silence out, start it again".
 
+use shuyi_ui::input::frame_seconds;
+
 /// Seconds the cinematic waits at its start for the music to sound before
 /// it runs on the frame clock instead (*tunable*).
 pub const MUSIC_WAIT_SECS: f32 = 3.0;
@@ -57,7 +59,7 @@ impl SongTime {
     /// Returns whether a skip's silence just ended: the caller asks for
     /// the title song again.
     pub fn advance(&mut self, music: Option<f32>, dt: f32, length: f32) -> bool {
-        let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
+        let dt = frame_seconds(dt);
         if self.silence {
             self.t += dt;
             if self.t < length {

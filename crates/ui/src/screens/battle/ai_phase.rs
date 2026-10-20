@@ -11,6 +11,7 @@
 //! from it each frame.
 
 use crate::prelude::*;
+use shuyi_ui::HurryClock;
 use trpg_core::{Pos, Unit, UnitId};
 
 use super::mode::Mode;
@@ -165,17 +166,23 @@ impl AiAction {
 
     /// The time [`tick`](Self::tick) would advance the clock to.
     fn advanced(&self, dt: f32, confirm_held: bool) -> f32 {
-        let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
-        if !confirm_held {
-            return (self.t + dt).min(self.total());
-        }
-        // Held: the pan and the highlight play `fast` times faster; the
-        // walk goes at its held speed, whatever is left of the frame.
-        let start = self.walk_start();
-        let before = ((start - self.t).max(0.0) / self.pacing.fast).min(dt);
-        let rest = dt - before;
-        let walk = self.pacing.held_walk_tiles_per_s / self.pacing.walk_tiles_per_s;
-        (self.t + before * self.pacing.fast + rest * walk).min(self.total())
+        let mut pan = HurryClock::new(0.0, self.pacing.fast);
+        let mut walk = HurryClock::new(
+            0.0,
+            self.pacing.held_walk_tiles_per_s / self.pacing.walk_tiles_per_s,
+        );
+        pan.hold(confirm_held, dt);
+        walk.hold(confirm_held, dt);
+        // The pan and the highlight hurry until the walk starts; the walk
+        // hurries whatever is left of the frame.
+        let to_walk = (self.walk_start() - self.t).max(0.0);
+        let panned = pan.passing(dt);
+        let t = if panned <= to_walk {
+            self.t + panned
+        } else {
+            self.t + to_walk + walk.passing(dt - dt * to_walk / panned)
+        };
+        t.min(self.total())
     }
 
     /// Advances the clock by `dt` seconds (`confirm_held`: Confirm is down
