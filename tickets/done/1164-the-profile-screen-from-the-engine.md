@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["engine#2310"]
 nick_input: none
-completed:
+completed: 2026-10-19
 ---
 
 # 1164 — The profile screen from the engine
@@ -54,12 +54,13 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `crates/ui/src/screens/profile.rs` is under 60 production lines
-      and `crates/ui/src/widgets/name_entry.rs` is gone.
-- [ ] The profile and name entry snapshots, PC and Playdate, are
+- [x] `crates/ui/src/screens/profile.rs` is under 60 production lines
+      (25) and `crates/ui/src/widgets/name_entry.rs` is gone.
+- [x] The profile and name entry snapshots, PC and Playdate, are
       unchanged.
-- [ ] `cargo xtask code-lines` shows `trpg-ui` fell by at least 600.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo xtask code-lines` shows `trpg-ui` fell by at least 600
+      (51 added, 1050 removed: 999 down).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -68,5 +69,28 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- **Done:** the pin is at engine `main` 939f023 (2310), as 1162 left it.
+  `screens/profile.rs` is a 25-line opener: `profile::screen(ctx)` is the
+  engine's `ProfilesScreen`, opening the first-launch layout picker after
+  an add (`opening_after_add`) and painted through `SKINS`
+  (`painted_by`). Its view, glyph skin and unit tests are gone (the
+  engine holds them); its three snapshots stay, unchanged.
+  `widgets/name_entry.rs` and its glyph skin are gone: `widgets::name_entry`
+  re-exports the engine's, with the game's one-bit skin
+  (`widgets/name_entry/playdate.rs`) kept; the lead screen uses it.
+  The profile one-bit skin paints the engine's `ProfilesView`
+  (`actions.menu`, `leaving` and `deleting`).
+- **Deviations:**
+  - **The pin:** 1162 (merged first) already moved it to 939f023 and
+    adopted engine 2308; this PR merged main and kept only its own
+    changes. One Playdate helper, `ask_view`, paints an engine `AskView`
+    (the profile skin's two questions).
+  - The screen's name is now the engine's `profiles` (was `profile`):
+    tests only, the player sees no change.
+  - Text keys: the engine ships no text table for games (its `en.ron`
+    is its toy's), so the game's `profile.*` and `name_entry.*` keys stay
+    in `assets/lang/*/ui.ron`, as the options and Key bindings keys do.
+- **Friction:** estimate 40 added, measured 51 (1.3×), under 2×.
+- **Follow-up tickets:** none.
+- **For Nick:** nothing changes on screen; the Profile screen and the
+  lead's name box look and work as before, on the PC and the Playdate.

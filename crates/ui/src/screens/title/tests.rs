@@ -28,7 +28,7 @@ fn title_menu_transitions() {
     assert_eq!(outcome(&mut t, &[Cancel]), "None");
     assert_eq!(outcome(&mut t, &[Confirm]), "Push(mode_select)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(options)");
-    assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(profile)");
+    assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(profiles)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(credits)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Quit");
     let up = [CursorUp, CursorUp, CursorUp, CursorUp];
@@ -60,7 +60,7 @@ fn debug_title_offers_quick_battle() {
         "Push(preparations)"
     );
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(options)");
-    assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(profile)");
+    assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(profiles)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(credits)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Quit");
     assert_eq!(

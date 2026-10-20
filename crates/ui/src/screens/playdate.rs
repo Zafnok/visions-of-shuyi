@@ -23,6 +23,7 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::widgets::{MenuView, word_wrap};
 pub use shuyi_ui::screens::cut;
+use shuyi_ui::widgets::AskView;
 
 /// The mark in a list's frame that more lines are above.
 pub const MORE_ABOVE: &str = "▲";
@@ -255,6 +256,20 @@ pub enum Answers<'a> {
     Hint(&'a str),
     /// The answers, on one line, the one in focus the bar.
     Choices(&'a [(&'a str, bool)]),
+}
+
+/// `question` in a window ([`ask`]): the line naming its keys if it has
+/// one, its answers otherwise.
+pub fn ask_view<T>(ctx: &Ctx, buf: &mut GlyphBuffer, question: &AskView<T>) -> Rect {
+    if let Some(keys) = &question.keys {
+        return ask(ctx, buf, &question.text, Answers::Hint(keys));
+    }
+    let choices: Vec<_> = question
+        .answers
+        .iter()
+        .map(|a| (a.label.as_str(), a.focused))
+        .collect();
+    ask(ctx, buf, &question.text, Answers::Choices(&choices))
 }
 
 /// The answers' line, each answer with a cell either side and two cells

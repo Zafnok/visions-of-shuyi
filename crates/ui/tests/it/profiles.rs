@@ -304,7 +304,7 @@ fn a_refused_change_leaves_the_list_as_it_was() {
 fn profile_screen() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down Down Down f");
-    assert_eq!(h.screens(), ["title", "profile"]);
+    assert_eq!(h.screens(), ["title", "profiles"]);
     h
 }
 
@@ -315,9 +315,16 @@ fn screen(h: &Harness) -> &ProfileScreen {
 
 /// The question open on the Profile screen and its answer in focus.
 fn question(h: &Harness) -> Option<(String, String)> {
-    let q = screen(h).view(h.game().ctx()).question?;
-    let focused = q.focused().unwrap_or_default().to_owned();
-    Some((q.text, focused))
+    fn focused<T>(answers: &[shuyi_ui::widgets::AnswerView<T>]) -> String {
+        let a = answers.iter().find(|a| a.focused);
+        a.map(|a| a.label.clone()).unwrap_or_default()
+    }
+    let view = screen(h).view(h.game().ctx());
+    if let Some(q) = view.leaving {
+        return Some((q.text, focused(&q.answers)));
+    }
+    let q = view.deleting?;
+    Some((q.text, focused(&q.answers)))
 }
 
 /// The labels of the title's menu.
@@ -445,7 +452,8 @@ fn deleting_on_the_screen_asks_first_and_takes_the_saves() {
     h.keys("f");
     let view = screen(&h).view(h.game().ctx());
     let actions = view.actions.unwrap_or_else(|| panic!("no menu"));
-    let items: Vec<String> = actions.items.into_iter().map(|i| i.label).collect();
+    let items = actions.menu.items.iter();
+    let items: Vec<String> = items.map(|i| h.game().ctx().label(&i.label)).collect();
     assert_eq!(items, ["Rename"]);
 }
 
