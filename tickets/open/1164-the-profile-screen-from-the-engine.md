@@ -30,7 +30,8 @@ None.
 ## Scope
 
 **In:**
-- Move the pin past 2310 (`engine-change` skill, step 7).
+- Move the pin past 2310 (`engine-change` skill, step 7). *Done by
+  1163* (pin at `939f023`).
 - `screens/profile.rs` becomes a short opener over the engine's screen,
   like `screens/key_bindings.rs` (27 lines) over the engine's Key
   bindings; its view and glyph skin go.

@@ -41,7 +41,8 @@ None.
 ## Scope
 
 **In:**
-- Move the pin past 2311 (`engine-change` skill, step 7).
+- Move the pin past 2311 (`engine-change` skill, step 7). *Done by
+  1163* (pin at `939f023`).
 - Every copy above on the engine's helper, **keeping each look**: if a
   meter rounds differently from the engine's, find out which is right
   from its tests and design doc; if they really differ on purpose, keep

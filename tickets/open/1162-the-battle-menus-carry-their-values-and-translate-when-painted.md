@@ -41,7 +41,11 @@ None.
 
 **In:**
 - Move the pin past 2308 (`engine-change` skill, step 7) and fix what
-  its breaking change touches in the game.
+  its breaking change touches in the game. *Done by 1163*: the pin is at
+  `939f023` and the build was adapted the smallest way, which this
+  ticket undoes: `MenuEvent::Chosen(())` read through `menu.focus()`,
+  and `LabelText::as_str` (`widgets/menu.rs`, in the prelude) reading a
+  label back as text.
 - The battle's menus are `Menu<T>` with keyed labels; `told()`,
   `IN_PLAY` and the parallel lists go; Confirm reads the chosen value.
 - Other menus in the game that keep a parallel list
