@@ -281,8 +281,8 @@ impl Screen<Shuyi> for ResultsScreen {
             }
         }
         let held = input.is_held(Action::Confirm);
-        let dt = if input.dt.is_finite() {
-            input.dt.max(0.0)
+        let dt = if input.dt().is_finite() {
+            input.dt().max(0.0)
         } else {
             0.0
         };

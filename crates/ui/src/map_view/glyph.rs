@@ -6,16 +6,13 @@
 
 pub mod units;
 
-use shuyi_ui::grid::glyph::GlyphSkin as KitGlyphSkin;
-use shuyi_ui::grid::skin::{GridSkin, MapColors, UnitPainter};
-use trpg_core::Pos;
+use shuyi_ui::grid::glyph::GlyphSkin;
+use shuyi_ui::grid::skin::{MapColors, UnitPainter};
 
 use super::grid::Grid;
-use super::scene::{MapScene, RangeKind, UnitView};
-use super::skin::{MapSkin, with_looks};
-use crate::color::{Palette, Rgb, UiColor};
-use crate::glyph_buffer::{GlyphBuffer, PxRect, Rect};
-use crate::screen::Ctx;
+use super::scene::{MapScene, UnitView};
+use crate::color::{Palette, UiColor};
+use crate::glyph_buffer::GlyphBuffer;
 use crate::screens::battle::walk::GLYPH_WALK;
 
 pub use shuyi_ui::grid::glyph::{
@@ -31,16 +28,11 @@ pub const MAP_COLORS: MapColors = MapColors {
 };
 
 /// The kit's glyph skin as this game paints it: its colours, its walk
-/// speeds, and the cursor's lower arms above the 2 px HP bar.
-pub const GLYPH: KitGlyphSkin = KitGlyphSkin {
-    colors: MAP_COLORS,
-    walk: GLYPH_WALK,
-    foot_px: units::HP_BAR_H,
-};
-
-/// The battle map as coloured glyphs: today's look (ADR-0038).
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct GlyphSkin;
+/// speeds, and the cursor's lower arms above the 2 px HP bar. Terrain,
+/// then the ranges tinting it, then the units (a highlighted one with its
+/// tile's colours swapped), the path and the cursor; over them all, the
+/// threat arrows and marks.
+pub const GLYPH: GlyphSkin = GlyphSkin::new(MAP_COLORS, GLYPH_WALK, units::HP_BAR_H);
 
 /// This game's units as the glyph skin shows them ([`units::draw_unit`]),
 /// a highlighted one with its tile's colours swapped.
@@ -61,43 +53,6 @@ impl UnitPainter<UnitView> for GlyphUnits<'_> {
             }
         }
     }
-}
-
-impl MapSkin for GlyphSkin {
-    fn name(&self) -> &'static str {
-        "glyph" // check-text: not player text (the skin's id)
-    }
-
-    fn view_tiles(&self, area: Rect) -> (i32, i32) {
-        GridSkin::<UnitView>::view_tiles(&GLYPH, area)
-    }
-
-    /// Terrain, then the ranges tinting it, then the units (a highlighted
-    /// one with its tile's colours swapped), the path and the cursor; over
-    /// them all, the threat arrows and marks.
-    fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer) {
-        let units = GlyphUnits {
-            palette: &ctx.palette,
-        };
-        with_looks(ctx, |looks| GLYPH.paint(looks, scene, area, &units, buf));
-    }
-
-    fn tile_px(&self, scene: &MapScene, area: Rect, tile: Pos) -> Option<PxRect> {
-        GLYPH.tile_px(scene, area, tile)
-    }
-}
-
-/// The palette colour of a range.
-pub(super) const fn range_color(kind: RangeKind) -> UiColor {
-    kind.color()
-}
-
-/// The palette colour called `name`, or `fallback` (content validation
-/// makes sure terrain colours exist, so this only guards against a bug).
-pub(super) fn named(palette: &Palette, name: &str, fallback: UiColor) -> Rgb {
-    palette
-        .lookup(name)
-        .unwrap_or_else(|| palette.get(fallback))
 }
 
 #[cfg(test)]

@@ -1,6 +1,6 @@
 # ADR-0088: The grid map kit: a scene generic over the game's units, skins that paint the ground, and the game's unit painters
 
-- **Status:** Accepted
+- **Status:** Accepted; §6 (the game's `MapSkin` façade trait) and §2's `RangeKind` superseded by ADR-0094
 - **Date:** 2026-10-17
 - **Related tickets:** 1115
 - **Extends:** ADR-0038 (a scene, a skin), ADR-0049 (unit pictures on

@@ -4,9 +4,16 @@ use trpg_core::{ClassId, Faction, TerrainId, UnitId};
 use super::*;
 use crate::glyph_buffer::Cell;
 use crate::map_view::grid::px_rect;
+use shuyi_ui::grid::skin::GridSkin;
+use trpg_core::Pos;
+
+use crate::color::Rgb;
+use crate::glyph_buffer::Rect;
 use crate::map_view::scene::{
-    CursorStyle, CursorView, Facing, RangeLayer, STANDING_FRAME, ThreatView, TileView, UnitEffects,
+    CursorStyle, CursorView, Facing, RangeLayer, RangeName, STANDING_FRAME, ThreatView, TileView,
+    UnitEffects, range,
 };
+use crate::map_view::skin::{MapSkin, with_looks};
 use crate::map_view::threat;
 use crate::screen::tests::ctx;
 use crate::screens::battle::layout::MAP_VIEW;
@@ -17,34 +24,34 @@ fn p(x: i32, y: i32) -> Pos {
 
 #[test]
 fn the_battle_map_area_shows_35_by_30_tiles() {
-    assert_eq!(GlyphSkin.name(), "glyph");
-    assert_eq!(GlyphSkin.view_tiles(MAP_VIEW), (35, 30));
+    assert_eq!(MapSkin::glyph().name(), "glyph");
+    assert_eq!(MapSkin::glyph().view_tiles(MAP_VIEW), (35, 30));
     // Where a tile is: the kit's glyph skin's.
     let scene = MapScene::new(Pos::new(-10, -11), (35, 30));
-    let tile = GlyphSkin.tile_px(&scene, MAP_VIEW, Pos::new(0, 0));
+    let tile = MapSkin::glyph().tile_px(&scene, MAP_VIEW, Pos::new(0, 0));
     assert_eq!(tile, Some(Rect::new(160, 176, 16, 16)));
-    assert_eq!(GlyphSkin.tile_px(&scene, MAP_VIEW, Pos::new(25, 18)), None);
+    assert_eq!(
+        MapSkin::glyph().tile_px(&scene, MAP_VIEW, Pos::new(25, 18)),
+        None
+    );
     assert_eq!(px_rect(MAP_VIEW), Rect::new(0, 0, 560, 480));
     // An odd cell is left over; an empty area shows nothing.
-    assert_eq!(GlyphSkin.view_tiles(Rect::new(3, 4, 7, 5)), (3, 5));
-    assert_eq!(GlyphSkin.view_tiles(Rect::new(0, 0, -4, -1)), (0, 0));
+    assert_eq!(MapSkin::glyph().view_tiles(Rect::new(3, 4, 7, 5)), (3, 5));
+    assert_eq!(MapSkin::glyph().view_tiles(Rect::new(0, 0, -4, -1)), (0, 0));
 }
 
 #[test]
-fn ranges_have_their_palette_colours_and_unknown_names_fall_back() {
+fn ranges_have_their_palette_colours() {
     // The kit's skin walks at this game's glyph pace, and its cursor stays
     // above the HP bar.
     assert_eq!(GridSkin::<UnitView>::walk(&GLYPH), GLYPH_WALK);
     assert_eq!(GLYPH.foot_px, units::HP_BAR_H);
-    assert_eq!(range_color(RangeKind::Danger), UiColor::DangerZone);
-    assert_eq!(range_color(RangeKind::Move), UiColor::MoveRange);
-    assert_eq!(range_color(RangeKind::Attack), UiColor::AttackRange);
-    assert_eq!(range_color(RangeKind::Heal), UiColor::HealRange);
     let p = &ctx().palette;
-    assert_eq!(
-        named(p, "no_such_colour", UiColor::Cursor),
-        p.get(UiColor::Cursor)
-    );
+    let colour = |kind: RangeName| p.lookup(kind.0);
+    assert_eq!(colour(range::DANGER), Some(p.get(UiColor::DangerZone)));
+    assert_eq!(colour(range::MOVE), Some(p.get(UiColor::MoveRange)));
+    assert_eq!(colour(range::ATTACK), Some(p.get(UiColor::AttackRange)));
+    assert_eq!(colour(range::HEAL), Some(p.get(UiColor::HealRange)));
 }
 
 /// A buffer the size of the console, every cell `fill()`.
@@ -86,7 +93,7 @@ fn a_units_facing_frame_and_offset_change_nothing() {
     scene.push_unit(brigand(Pos::new(1, 1)));
     let paint = |scene: &MapScene| {
         let mut buf = blank();
-        GlyphSkin.paint(&c, scene, Rect::new(2, 1, 6, 4), &mut buf);
+        MapSkin::glyph().paint(&c, scene, Rect::new(2, 1, 6, 4), &mut buf);
         buf
     };
     let still = paint(&scene);
@@ -118,7 +125,7 @@ fn threat_arrows_and_marks_are_painted_last_over_everything() {
         style: CursorStyle::Corners,
     });
     let mut buf = blank();
-    GlyphSkin.paint(&c, &scene, area, &mut buf);
+    MapSkin::glyph().paint(&c, &scene, area, &mut buf);
     let before = buf.overlays();
     let threat = ThreatView {
         tile: p(3, 2),
@@ -126,7 +133,7 @@ fn threat_arrows_and_marks_are_painted_last_over_everything() {
     };
     scene.threat = Some(threat.clone());
     let mut with = blank();
-    GlyphSkin.paint(&c, &scene, area, &mut with);
+    MapSkin::glyph().paint(&c, &scene, area, &mut with);
     // No cell changes: the arrows are drawn over the glyphs.
     for y in 0..32 {
         for x in 0..100 {
@@ -178,10 +185,10 @@ fn paints_terrain_then_tints_then_units_path_and_cursor() {
     }
     // A terrain the content lacks is left blank, as off the map.
     scene.tile_mut(p(3, 3)).unwrap().terrain = Some(TerrainId(999));
-    scene.tint([p(3, 2)], RangeKind::Danger);
-    scene.tint([p(3, 2), p(4, 2)], RangeKind::Move);
+    scene.tint([p(3, 2)], range::DANGER);
+    scene.tint([p(3, 2), p(4, 2)], range::MOVE);
     // A range off the map still tints.
-    scene.tint([p(4, 4)], RangeKind::Heal);
+    scene.tint([p(4, 4)], range::HEAL);
     scene.push_unit(brigand(p(4, 2)));
     // A highlighted unit: its tile's colours swapped.
     scene.push_unit(brigand(p(2, 3)).highlighted(true));
@@ -192,18 +199,18 @@ fn paints_terrain_then_tints_then_units_path_and_cursor() {
         style: CursorStyle::Corners,
     });
     let mut buf = blank();
-    GlyphSkin.paint(&c, &scene, area, &mut buf);
+    MapSkin::glyph().paint(&c, &scene, area, &mut buf);
     let cell = |x, y| *buf.get(x, y).unwrap();
     // Tile (2, 2) at cells (10, 5) and (11, 5): plain.
     assert_eq!(cell(10, 5), Cell::new(plain.glyphs[0], fg, bg));
     assert_eq!(cell(11, 5), Cell::new(plain.glyphs[1], fg, bg));
     // (3, 2): danger under move.
-    let blend = |bg: Rgb, kind| bg.lerp(pal.get(range_color(kind)), OVERLAY_BLEND);
-    let both = blend(blend(bg, RangeKind::Danger), RangeKind::Move);
+    let blend = |bg: Rgb, kind: RangeName| bg.lerp(pal.lookup(kind.0).unwrap(), OVERLAY_BLEND);
+    let both = blend(blend(bg, range::DANGER), range::MOVE);
     assert_eq!(cell(12, 5), Cell::new(plain.glyphs[0], fg, both));
     assert_eq!(cell(13, 5).bg, both);
     // (4, 2): the unit's letters on the tinted tile.
-    let moved = blend(bg, RangeKind::Move);
+    let moved = blend(bg, range::MOVE);
     assert_eq!(cell(14, 5), Cell::new('B', pal.get(UiColor::Enemy), moved));
     assert_eq!(cell(15, 5), Cell::new('r', pal.get(UiColor::Enemy), moved));
     // (2, 3) plain; (3, 3) unknown and (4, 3) off the map: untouched;
@@ -213,7 +220,7 @@ fn paints_terrain_then_tints_then_units_path_and_cursor() {
     assert_eq!(cell(12, 6), fill());
     assert_eq!(cell(14, 6), fill());
     let healed = Cell {
-        bg: blend(fill().bg, RangeKind::Heal),
+        bg: blend(fill().bg, range::HEAL),
         ..fill()
     };
     assert_eq!((cell(14, 7), cell(15, 7)), (healed, healed));
@@ -250,12 +257,12 @@ fn a_changed_tile_flashes_and_a_tile_a_spell_would_change_shows_what_it_becomes(
     scene.tile_mut(p(0, 0)).unwrap().flashes = vec![0.5];
     scene.tile_mut(p(1, 0)).unwrap().flashes = vec![1.0];
     scene.tile_mut(p(4, 0)).unwrap().flashes = vec![1.0, 0.5];
-    scene.tint([p(1, 0), p(2, 0), p(3, 0)], RangeKind::Attack);
+    scene.tint([p(1, 0), p(2, 0), p(3, 0)], range::ATTACK);
     // A forest-to-be, and a terrain the content lacks.
     scene.tile_mut(p(2, 0)).unwrap().becomes = display.id_of("forest");
     scene.tile_mut(p(3, 0)).unwrap().becomes = Some(TerrainId(999));
     let mut buf = blank();
-    GlyphSkin.paint(&c, &scene, Rect::new(0, 0, 10, 1), &mut buf);
+    MapSkin::glyph().paint(&c, &scene, Rect::new(0, 0, 10, 1), &mut buf);
     let cell = |x| *buf.get(x, 0).unwrap();
     let (glyphs, fg, bg) = plain;
     let attack = pal.get(UiColor::AttackRange);
@@ -292,7 +299,7 @@ fn units_and_the_cursor_off_the_view_are_not_drawn() {
         style: CursorStyle::TileGlow,
     });
     let mut buf = blank();
-    GlyphSkin.paint(&c, &scene, area, &mut buf);
+    MapSkin::glyph().paint(&c, &scene, area, &mut buf);
     assert_eq!(buf, blank());
 }
 
@@ -319,10 +326,10 @@ prop_compose! {
 
 prop_compose! {
     pub(crate) fn any_range()(
-        kind in prop::sample::select(RangeKind::ALL.to_vec()),
+        kind in prop::sample::select(range::ALL.to_vec()),
         tiles in prop::collection::vec(any_pos(), 0..30),
     ) -> RangeLayer {
-        RangeLayer { kind: kind.name(), tiles }
+        RangeLayer { kind, tiles }
     }
 }
 
@@ -408,7 +415,7 @@ proptest! {
         let c = ctx();
         let area = Rect::new(area.0, area.1, area.2, area.3);
         let mut buf = blank();
-        GlyphSkin.paint(&c, &scene, area, &mut buf);
+        MapSkin::glyph().paint(&c, &scene, area, &mut buf);
         for y in 0..32 {
             for x in 0..100 {
                 if !area.contains(x, y) {

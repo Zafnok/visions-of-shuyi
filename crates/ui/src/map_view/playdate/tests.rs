@@ -4,13 +4,17 @@
 
 use proptest::prelude::*;
 use trpg_content::Ink;
-use trpg_core::{ClassId, Faction, UnitId};
+use trpg_core::{ClassId, Faction, Pos, TerrainId, UnitId};
 
 use super::*;
+use crate::glyph_buffer::Cell;
 use crate::map_view::glyph::tests::any_scene;
 use crate::map_view::scene::{
     CursorStyle, CursorView, Facing, STANDING_FRAME, ThreatView, UnitEffects, UnitView,
 };
+use crate::map_view::scene::{RangeName, range};
+use crate::map_view::skin::{MapSkin, with_looks};
+use crate::map_view::{path, threat};
 use crate::onebit::{FRAME_BYTES, Font, Frame, ink_is_white, is_white, render};
 use crate::prelude::*;
 use crate::screen::ShuyiCtx;
@@ -46,7 +50,7 @@ pub(crate) fn blank() -> GlyphBuffer {
 /// `scene` painted on the whole screen.
 pub(crate) fn painted(ctx: &Ctx, scene: &MapScene) -> GlyphBuffer {
     let mut buf = blank();
-    PlaydateSkin.paint(ctx, scene, SCREEN, &mut buf);
+    MapSkin::playdate().paint(ctx, scene, SCREEN, &mut buf);
     buf
 }
 
@@ -129,7 +133,7 @@ pub(crate) fn plains(ctx: &Ctx) -> MapScene {
 
 #[test]
 fn the_playdate_screen_shows_24_by_15_tiles() {
-    let s = PlaydateSkin;
+    let s = MapSkin::playdate();
     assert_eq!(s.name(), "playdate");
     assert_eq!(s.view_tiles(SCREEN), (24, 15));
     // A cell kept at each side: 3 cells hold no tile, 4 hold one.
@@ -148,7 +152,7 @@ fn the_playdate_screen_shows_24_by_15_tiles() {
 #[test]
 fn the_tiles_are_16_px_squares_in_the_middle_of_the_area() {
     let scene = MapScene::new(p(0, 0), (24, 15));
-    let px = |area, tile| PlaydateSkin.tile_px(&scene, area, tile);
+    let px = |area, tile| MapSkin::playdate().tile_px(&scene, area, tile);
     // One cell (8 px) clear at each side of the screen.
     assert_eq!(px(SCREEN, p(0, 0)), Some(Rect::new(8, 0, 16, 16)));
     assert_eq!(px(SCREEN, p(23, 14)), Some(Rect::new(376, 224, 16, 16)));
@@ -165,7 +169,7 @@ fn the_tiles_are_16_px_squares_in_the_middle_of_the_area() {
     assert_eq!(px(area, p(2, 1)), Some(Rect::new(72, 64, 16, 16)));
     assert_eq!(px(area, p(3, 0)), None);
     assert_eq!(
-        PlaydateSkin.tile_cells(&scene, area, p(1, 1)),
+        MapSkin::playdate().tile_cells(&scene, area, p(1, 1)),
         Some(Rect::new(7, 4, 2, 1))
     );
 }
@@ -177,9 +181,7 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
         enemy: (c(Ink::Grey), c(Ink::BlackEdged)),
         acted: (c(Ink::White), c(Ink::Black), c(Ink::Black)),
         other: c(Ink::BlackEdged),
-        marked: c(Ink::BlackEdged),
         highlight: c(Ink::Invert),
-        arrows: (c(Ink::Black), c(Ink::White)),
         hp_lost: c(Ink::Grey),
     };
     // The Playdate's palette names them; the PC's doesn't.
@@ -197,10 +199,7 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
         "map_acted_letters",
         "map_acted_outline",
         "map_other_letters",
-        "map_marked_glyph",
         "map_highlight",
-        "map_threat",
-        "map_threat_edge",
         "map_hp_lost",
     ];
     for name in names {
@@ -215,13 +214,15 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
             enemy: (dots, dots),
             acted: (dots, dots, dots),
             other: dots,
-            marked: dots,
             highlight: dots,
-            arrows: (dots, dots),
             hp_lost: dots,
         }
     );
-    let threat = design.threat();
+    // The threat arrows and marks are the skin's, by name: black, edged
+    // in white.
+    let threat = with_looks(&pd_ctx(), |looks| {
+        ONE_BIT.style.threat_colors(looks, &ONE_BIT.colors)
+    });
     assert_eq!(
         (threat.arrow, threat.mark, threat.edge),
         (c(Ink::Black), c(Ink::Black), c(Ink::White))
@@ -263,16 +264,16 @@ fn terrain_is_its_glyphs_black_on_white() {
 /// danger zone fills nothing. A filled tile's glyphs keep a white edge.
 #[test]
 fn ranges_fill_their_tiles_with_dots_and_lines_and_edge_the_glyphs() {
-    use RangeKind::{Attack, Danger, Heal, Move};
+    use range::{ATTACK, DANGER, HEAL, MOVE};
     let ctx = pd_ctx();
     let mut scene = plains(&ctx);
-    let tiles: [(&[RangeKind], Option<Ink>); 6] = [
-        (&[Move], Some(Ink::Dots)),
-        (&[Attack], Some(Ink::Diagonals)),
-        (&[Heal], Some(Ink::Diagonals)),
-        (&[Move, Attack], Some(Ink::Diagonals)),
-        (&[Attack, Move, Danger], Some(Ink::Dots)),
-        (&[Danger], None),
+    let tiles: [(&[RangeName], Option<Ink>); 6] = [
+        (&[MOVE], Some(Ink::Dots)),
+        (&[ATTACK], Some(Ink::Diagonals)),
+        (&[HEAL], Some(Ink::Diagonals)),
+        (&[MOVE, ATTACK], Some(Ink::Diagonals)),
+        (&[ATTACK, MOVE, DANGER], Some(Ink::Dots)),
+        (&[DANGER], None),
     ];
     for (x, (kinds, _)) in (0..).zip(&tiles) {
         for &kind in *kinds {
@@ -306,7 +307,7 @@ fn ranges_fill_their_tiles_with_dots_and_lines_and_edge_the_glyphs() {
             // The danger zone's edge (dashes) is checked with the marks.
             let tile_x = px - (8 + 16 * x);
             let edge =
-                kinds.contains(&Danger) && !((2..14).contains(&py) && (2..14).contains(&tile_x));
+                kinds.contains(&DANGER) && !((2..14).contains(&py) && (2..14).contains(&tile_x));
             if fill.is_some() && !edge {
                 assert_eq!(is_white(&frame, px, py), white, "{kinds:?} ({px}, {py})");
             }
@@ -314,7 +315,7 @@ fn ranges_fill_their_tiles_with_dots_and_lines_and_edge_the_glyphs() {
     }
     // A range off the map fills its tile too.
     let mut off = MapScene::new(p(0, 0), (24, 15));
-    off.tint([p(3, 2)], Move);
+    off.tint([p(3, 2)], MOVE);
     let buf = painted(&ctx, &off);
     assert_eq!(buf.get(7, 2).unwrap().bg, c(Ink::Dots));
     assert_eq!(buf.get(8, 2).unwrap().bg, c(Ink::Dots));
@@ -330,7 +331,7 @@ fn a_tile_shows_what_it_becomes_and_flips_while_it_flashes() {
     let display = &ctx.game.content.terrain.display;
     let forest = display.get(display.id_of("forest").unwrap()).unwrap();
     let mut scene = plains(&ctx);
-    scene.tint([p(0, 0), p(1, 0)], RangeKind::Attack);
+    scene.tint([p(0, 0), p(1, 0)], range::ATTACK);
     scene.tile_mut(p(0, 0)).unwrap().becomes = display.id_of("forest");
     // Unknown: the tile as it is.
     scene.tile_mut(p(1, 0)).unwrap().becomes = Some(TerrainId(999));
@@ -376,9 +377,11 @@ fn threat_arrows_are_black_edged_in_white_over_everything() {
     scene.threat = Some(threat.clone());
     let after = painted(&ctx, &scene).overlays();
     assert_eq!(&after[..before.len()], before);
-    let grid = layout(&scene, SCREEN).grid();
-    let inks = Inks::of(&ctx.palette);
-    let expect = threat::threat_overlays(&threat, &grid, threat::Start::Edge, inks.threat());
+    let grid = MapSkin::playdate().grid(&scene, SCREEN);
+    let colors = with_looks(&ctx, |looks| {
+        ONE_BIT.style.threat_colors(looks, &ONE_BIT.colors)
+    });
+    let expect = threat::threat_overlays(&threat, &grid, threat::Start::Edge, colors);
     assert_eq!(&after[before.len()..], expect);
     assert!(!expect.is_empty());
     let colors: Vec<Rgb> = expect.iter().map(|o| o.color).collect();
@@ -392,7 +395,7 @@ fn the_path_is_the_shared_arrow_in_black() {
     let mut scene = plains(&ctx);
     scene.path = vec![p(1, 1), p(2, 1), p(2, 2)];
     let buf = painted(&ctx, &scene);
-    let grid = layout(&scene, SCREEN).grid();
+    let grid = MapSkin::playdate().grid(&scene, SCREEN);
     let expect = path::path_overlays(&scene.path, &grid, c(Ink::Black));
     assert_eq!(buf.overlays(), expect);
     assert!(!expect.is_empty());
@@ -476,7 +479,7 @@ proptest! {
         let ctx = pd_ctx();
         let area = Rect::new(area.0, area.1, area.2, area.3);
         let (mut buf, empty) = (blank(), blank());
-        PlaydateSkin.paint(&ctx, &scene, area, &mut buf);
+        MapSkin::playdate().paint(&ctx, &scene, area, &mut buf);
         for y in 0..15 {
             for x in 0..50 {
                 if !area.contains(x, y) {

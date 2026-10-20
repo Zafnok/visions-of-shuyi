@@ -145,7 +145,7 @@ fn allies_and_neutral_units_are_their_letters_alone() {
     let ctx = pd_ctx();
     for faction in [Faction::Ally, Faction::Neutral] {
         let mut scene = plains(&ctx);
-        scene.tint([p(1, 1)], crate::map_view::RangeKind::Move);
+        scene.tint([p(1, 1)], crate::map_view::range::MOVE);
         scene.push_unit(unit(faction, p(1, 1)));
         let buf = painted(&ctx, &scene);
         let (edged, dots) = (c(Ink::BlackEdged), c(Ink::Dots));

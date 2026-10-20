@@ -124,7 +124,7 @@ fn tools() -> Vec<DebugEntry<Shuyi>> {
         })
     });
     let skin = DebugEntry::named(
-        |ctx: &Ctx| format!("Map skin: {}", skin_label(ctx.game.map_skin.as_ref())),
+        |ctx: &Ctx| format!("Map skin: {}", skin_label(&ctx.game.map_skin)),
         |ctx: &mut Ctx| {
             switch_skin(ctx);
             Transition::None
@@ -175,7 +175,7 @@ fn say_next_voice(ctx: &mut Ctx, said: &mut usize) {
 
 /// How the "Map skin" item names `skin`: its tileset's id ("test
 /// tileset" for the test one), or its own name.
-fn skin_label(skin: &dyn MapSkin) -> &str {
+fn skin_label(skin: &MapSkin) -> &str {
     match skin.tileset_id() {
         Some(TEST_TILESET) => "test tileset",
         Some(id) => id,
@@ -186,7 +186,7 @@ fn skin_label(skin: &dyn MapSkin) -> &str {
 /// Swaps `ctx`'s map skin for the next in the round: the glyph skin, each
 /// tileset the content has, then the glyph skin again.
 fn switch_skin(ctx: &mut Ctx) {
-    ctx.set_map_skin(next_skin(&ctx.game.content, ctx.game.map_skin.as_ref()));
+    ctx.set_map_skin(next_skin(&ctx.game.content, &ctx.game.map_skin));
 }
 
 /// The glyph sampler of the font and palette in `ctx`, with this game's

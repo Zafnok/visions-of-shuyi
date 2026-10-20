@@ -65,7 +65,7 @@ fn a_map_picture_is_the_whole_scene_as_the_skin_paints_it() {
     let mut ctx = ctx();
     let scene = battle_scene(&ctx, &ctx.game.content.battles["test"]);
     // Glyphs: 14 × 8 tiles of two cells by one, 16 px each way.
-    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &scene).unwrap();
+    let picture = MapPicture::paint(&ctx, &ctx.game.map_skin, &scene).unwrap();
     assert_eq!((picture.scene.width(), picture.scene.height()), (28, 8));
     assert_eq!(picture.tile_px, (16, 16));
     assert_eq!(picture.size_px(), (224, 128));
@@ -76,7 +76,7 @@ fn a_map_picture_is_the_whole_scene_as_the_skin_paints_it() {
     // The units are on it: the lead's tile isn't bare terrain.
     let bare = MapPicture::paint(
         &ctx,
-        ctx.game.map_skin.as_ref(),
+        &ctx.game.map_skin,
         &MapScene {
             units: vec![],
             ..scene.clone()
@@ -88,21 +88,21 @@ fn a_map_picture_is_the_whole_scene_as_the_skin_paints_it() {
     assert!(picture.scene.backdrop().is_none());
     // The test tileset's tiles are 24 px: 336 × 192, in whole cells.
     ctx.game.map_skin = skin_named(&ctx.game.content, "sprite").unwrap();
-    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &scene).unwrap();
+    let picture = MapPicture::paint(&ctx, &ctx.game.map_skin, &scene).unwrap();
     assert_eq!((picture.scene.width(), picture.scene.height()), (42, 12));
     assert_eq!(picture.tile_px, (24, 24));
     assert_eq!(picture.point_px((1.0, 2.0)), (36.0, 60.0));
     assert!(!picture.scene.sprites().is_empty());
     // A size that isn't whole cells is rounded up to them.
     let odd = MapScene::new(Pos::new(0, 0), (1, 1));
-    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &odd).unwrap();
+    let picture = MapPicture::paint(&ctx, &ctx.game.map_skin, &odd).unwrap();
     assert_eq!((picture.scene.width(), picture.scene.height()), (3, 2));
     assert_eq!(picture.size_px(), (24, 32));
     // Nothing to paint.
     assert!(
         MapPicture::paint(
             &ctx,
-            ctx.game.map_skin.as_ref(),
+            &ctx.game.map_skin,
             &MapScene::new(Pos::new(0, 0), (0, 0))
         )
         .is_none()
@@ -220,10 +220,10 @@ fn the_pan_is_the_battles_picture_behind_the_whole_screen() {
     let start = battle_scene(&ctx, &ctx.game.content.battles["test"]);
     let scene = player.scene(3.0).unwrap();
     assert_ne!(scene, start);
-    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &scene).unwrap();
+    let picture = MapPicture::paint(&ctx, &ctx.game.map_skin, &scene).unwrap();
     assert_eq!(backdrop.scene(), &*picture.scene);
     // Before anyone has moved: the battle as it starts.
-    let picture = MapPicture::paint(&ctx, ctx.game.map_skin.as_ref(), &start).unwrap();
+    let picture = MapPicture::paint(&ctx, &ctx.game.map_skin, &start).unwrap();
     let first = draw(&ctx, &player, 0.0, 1.0);
     assert_eq!(first.backdrop().unwrap().scene(), &*picture.scene);
     assert_ne!(first.backdrop().unwrap().scene(), backdrop.scene());
@@ -503,7 +503,7 @@ fn both_skins_paint_a_moving_a_flashing_and_a_fading_unit() {
         ctx.game.map_skin = skin_named(&ctx.game.content, skin).unwrap();
         let player = player(&ctx);
         let painter = shot_skin(&ctx);
-        let paint = |scene: &MapScene| MapPicture::paint(&ctx, painter.as_ref(), scene).unwrap();
+        let paint = |scene: &MapScene| MapPicture::paint(&ctx, &painter, scene).unwrap();
         let start = battle_scene(&ctx, &ctx.game.content.battles["test"]);
         let moments: [(&str, f32, UnitId, Undo); 4] = [
             ("walking", 2.25, LEAD, |u| u.pos = Pos::new(3, 5)),

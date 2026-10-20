@@ -618,7 +618,7 @@ impl Screen<Shuyi> for ClassChangeScreen {
             }
         }
         if let Stage::Result(pages) = &mut self.stage {
-            pages.tick(input.dt, input.is_held(Action::Confirm));
+            pages.tick(input.dt(), input.is_held(Action::Confirm));
             if pages.done() {
                 self.stage = Stage::Done;
             }

@@ -17,7 +17,6 @@
 
 use crate::prelude::*;
 use alloc::collections::BTreeSet;
-use alloc::rc::Rc;
 use core::fmt;
 
 use shuyi_ui::GameData;
@@ -137,7 +136,7 @@ pub struct Shuyi {
     /// swaps in another. Screens build a `MapScene` and this paints it.
     /// Change it with [`set_map_skin`](ShuyiCtx::set_map_skin), which
     /// keeps the player's zoom.
-    pub map_skin: Rc<dyn MapSkin>,
+    pub map_skin: MapSkin,
     /// Which set of skins paints the game: [`SkinSet::Glyph`] unless a
     /// front end says otherwise
     /// ([`use_playdate_skins`](ShuyiCtx::use_playdate_skins)).
@@ -277,7 +276,7 @@ impl GameData for Shuyi {
                 if b.game.map_zoom == zoom {
                     return;
                 }
-                Rc::clone(&self.map_skin)
+                self.map_skin.clone()
             }
             _ => crate::map_view::skin_for(self.skin_set, now.game.map_look, &self.content),
         };
@@ -324,7 +323,7 @@ pub trait ShuyiCtx: Sized {
     /// Paints the battle map with `skin`, at the zoom in the settings if
     /// it can zoom (ticket 0439): the zoom is kept from one skin to the
     /// next.
-    fn set_map_skin(&mut self, skin: Rc<dyn MapSkin>);
+    fn set_map_skin(&mut self, skin: MapSkin);
 
     /// Makes the keymap file's `playdate` table the default buttons (ticket
     /// 1034), for the Playdate front end, before the player's bindings are
@@ -354,7 +353,7 @@ impl ShuyiCtx for Ctx {
         Language::new(&self.game.content.lang, self.effective_lang())
     }
 
-    fn set_map_skin(&mut self, skin: Rc<dyn MapSkin>) {
+    fn set_map_skin(&mut self, skin: MapSkin) {
         let zoom = self.settings().game.map_zoom;
         self.game.map_skin = skin.at_zoom(zoom).unwrap_or(skin);
     }
@@ -399,7 +398,6 @@ pub(crate) mod tests {
     use crate::input::{
         Button, Keymap, LEFT_HANDED, Layout, LayoutBindings, PadBindings, PlayerKeys, RIGHT_HANDED,
     };
-    use std::rc::Rc;
 
     use super::*;
     use crate::settings::SETTINGS_KEY;
@@ -888,7 +886,7 @@ pub(crate) mod tests {
 
     #[test]
     fn the_map_skin_follows_the_zoom_in_the_settings() {
-        use crate::map_view::{GlyphSkin, skin_named};
+        use crate::map_view::{MapSkin, skin_named};
         use crate::screens::battle::layout::MAP_VIEW;
         use crate::settings::MapZoom;
         let mut c = ctx();
@@ -914,7 +912,7 @@ pub(crate) mod tests {
         assert_eq!(c.game.map_skin.zoom(), Some(MapZoom::X1));
         // A skin that can't zoom is taken as it is, and the zoom is kept
         // for the next that can.
-        c.set_map_skin(Rc::new(GlyphSkin));
+        c.set_map_skin(MapSkin::glyph());
         assert_eq!(
             (c.game.map_skin.name(), c.game.map_skin.zoom()),
             ("glyph", None)

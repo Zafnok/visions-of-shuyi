@@ -1,17 +1,20 @@
-//! A map skin: how a [`MapScene`] looks (ADR-0038). This game's skins
-//! pair a skin of the tactics kit (`shuyi_ui::grid`, ticket 1115) with the
-//! painters of this game's units; [`with_looks`] gives the kit's skins
+//! A map skin: how a [`MapScene`] looks (ADR-0038). Each is one of the
+//! tactics kit's grid skins (`shuyi_ui::grid`, tickets 1115 and 2313) and
+//! which of this game's unit painters goes with it ([`Units`]), built each
+//! frame from the frame's context; [`with_looks`] gives the kit's skins
 //! this game's palette, terrains and lights.
 
 use alloc::rc::Rc;
 
-use shuyi_ui::grid::skin::{Looks, cells_of};
-use trpg_core::Pos;
+use shuyi_ui::grid::skin::{GridSkin, Looks, UnitPainter};
+use trpg_content::Tileset;
 
-use super::scene::{MapScene, TerrainLooks};
-use crate::glyph_buffer::{GlyphBuffer, PxRect, Rect};
+use super::glyph::{GLYPH, GlyphUnits};
+use super::playdate::{ONE_BIT, OneBitUnits};
+use super::scene::{MapScene, TerrainLooks, UnitView};
+use super::sprite::SpriteUnits;
+use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::screen::Ctx;
-use crate::screens::battle::walk::{HELD_WALK_TILES_PER_S, WALK_TILES_PER_S};
 use crate::settings::MapZoom;
 
 /// Calls `paint` with what the kit's skins paint with in `ctx`: its
@@ -25,62 +28,101 @@ pub fn with_looks<R>(ctx: &Ctx, paint: impl FnOnce(&Looks) -> R) -> R {
     })
 }
 
-/// Paints battle maps. The tile size is the skin's: screens ask it how many
-/// tiles fit and where a tile is. A skin never changes the game: only the
-/// frame, how many tiles are on screen, and how fast a walk is shown.
-pub trait MapSkin: core::fmt::Debug {
-    /// A stable `snake_case` name for the kind of skin, e.g. `"glyph"`.
-    fn name(&self) -> &'static str;
+/// Paints battle maps: a kit skin and the painter of this game's units
+/// that goes with it. Its tile size, its view, where its tiles are and its
+/// walk speeds are the kit skin's (it derefs to it). A skin never changes
+/// the game: only the frame, how many tiles are on screen, and how fast a
+/// walk is shown.
+#[derive(Debug, Clone)]
+pub struct MapSkin {
+    grid: Rc<dyn GridSkin<UnitView>>,
+    units: Units,
+}
 
-    /// The id of the tileset it paints from, if it paints from one.
-    fn tileset_id(&self) -> Option<&str> {
-        None
+/// Which of this game's painters paints the units on a skin.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Units {
+    /// Two-letter labels and HP bars ([`GlyphUnits`]).
+    Glyph,
+    /// The pictures of a tileset ([`SpriteUnits`]).
+    Sprite(Rc<Tileset>),
+    /// The Playdate's labels in one bit, and the danger zone's edge
+    /// ([`OneBitUnits`]).
+    OneBit,
+}
+
+impl MapSkin {
+    /// The kit's skin `grid`, its units painted by `units`.
+    pub fn new(grid: Rc<dyn GridSkin<UnitView>>, units: Units) -> Self {
+        Self { grid, units }
     }
 
-    /// The zoom it draws the map at, or `None` if it can't zoom (the
-    /// glyph skin: its tile is two font cells).
-    fn zoom(&self) -> Option<MapZoom> {
-        None
+    /// The battle map as coloured glyphs: today's look.
+    pub fn glyph() -> Self {
+        Self::new(Rc::new(GLYPH), Units::Glyph)
+    }
+
+    /// The battle map for the Playdate's one-bit screen.
+    pub fn playdate() -> Self {
+        Self::new(Rc::new(ONE_BIT), Units::OneBit)
+    }
+
+    /// A stable `snake_case` name for the kind of skin: the kit skin's, or
+    /// `"playdate"` for the one-bit one (the kit's glyph skin, styled).
+    pub fn name(&self) -> &'static str {
+        match self.units {
+            Units::OneBit => "playdate", // check-text: not player text (the skin's id)
+            _ => self.grid.name(),
+        }
+    }
+
+    /// The tileset it paints from, if it paints from one.
+    pub fn tileset(&self) -> Option<&Tileset> {
+        match &self.units {
+            Units::Sprite(tileset) => Some(tileset),
+            Units::Glyph | Units::OneBit => None,
+        }
+    }
+
+    /// The id of the tileset it paints from, if it paints from one.
+    pub fn tileset_id(&self) -> Option<&str> {
+        self.tileset().map(|t| t.id.as_str())
+    }
+
+    /// The zoom it draws the map at, or `None` if it can't zoom.
+    pub fn zoom(&self) -> Option<MapZoom> {
+        self.grid.zoom().and_then(MapZoom::from_factor)
     }
 
     /// The same skin drawing at `zoom`, or `None` if it can't zoom.
-    fn at_zoom(&self, _zoom: MapZoom) -> Option<Rc<dyn MapSkin>> {
-        None
+    pub fn at_zoom(&self, zoom: MapZoom) -> Option<Self> {
+        let grid = self.grid.at_zoom(zoom.factor())?;
+        Some(Self::new(grid, self.units.clone()))
     }
 
-    /// How many tiles, across × down, fit in a map area of `area` cells.
-    fn view_tiles(&self, area: Rect) -> (i32, i32);
-
-    /// How fast a unit's walk is shown, in tiles per second: how long the
-    /// player watches a move, never what the move does. The glyph skin's
-    /// unless the skin says otherwise.
-    fn walk_tiles_per_s(&self) -> f32 {
-        WALK_TILES_PER_S
+    /// Paints `scene` into the cells of `area`, its units by the painter of
+    /// this frame's `ctx`. Touches nothing outside it.
+    pub fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer) {
+        with_looks(ctx, |looks| {
+            let mut paint = |units: &dyn UnitPainter<UnitView>| {
+                self.grid.paint(looks, scene, area, units, buf);
+            };
+            match &self.units {
+                Units::Glyph => paint(&GlyphUnits {
+                    palette: &ctx.palette,
+                }),
+                Units::Sprite(tileset) => paint(&SpriteUnits { ctx, tileset }),
+                Units::OneBit => paint(&OneBitUnits::new(ctx, area)),
+            }
+        });
     }
+}
 
-    /// [`walk_tiles_per_s`](Self::walk_tiles_per_s) with the Options
-    /// screen's Fast animations (0805). The same unless the skin says
-    /// otherwise: the glyph skin's walk doesn't change.
-    fn fast_walk_tiles_per_s(&self) -> f32 {
-        self.walk_tiles_per_s()
-    }
+impl core::ops::Deref for MapSkin {
+    type Target = dyn GridSkin<UnitView>;
 
-    /// How fast an AI unit's walk is shown while the player holds Confirm
-    /// to speed its phase up, in tiles per second.
-    fn held_walk_tiles_per_s(&self) -> f32 {
-        HELD_WALK_TILES_PER_S
-    }
-
-    /// Paints `scene` into the cells of `area`. Touches nothing outside it.
-    fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer);
-
-    /// The console pixels of `tile` when `scene` is painted into `area`, or
-    /// `None` if it isn't visible. Menus and popups go beside it.
-    fn tile_px(&self, scene: &MapScene, area: Rect, tile: Pos) -> Option<PxRect>;
-
-    /// The cells [`tile_px`](Self::tile_px) touches.
-    fn tile_cells(&self, scene: &MapScene, area: Rect, tile: Pos) -> Option<Rect> {
-        self.tile_px(scene, area, tile).map(cells_of)
+    fn deref(&self) -> &Self::Target {
+        self.grid.as_ref()
     }
 }
 
@@ -88,45 +130,15 @@ pub trait MapSkin: core::fmt::Debug {
 mod tests {
     use super::*;
 
-    /// A skin whose every tile is the pixel rectangle it was built with.
-    #[derive(Debug)]
-    struct Fixed(Option<PxRect>);
-
-    impl MapSkin for Fixed {
-        fn name(&self) -> &'static str {
-            "fixed"
-        }
-        fn view_tiles(&self, _: Rect) -> (i32, i32) {
-            (1, 1)
-        }
-        fn paint(&self, _: &Ctx, _: &MapScene, _: Rect, _: &mut GlyphBuffer) {}
-        fn tile_px(&self, _: &MapScene, _: Rect, _: Pos) -> Option<PxRect> {
-            self.0
-        }
-    }
-
-    fn cells(px: Option<PxRect>) -> Option<Rect> {
-        let scene = MapScene::new(Pos::new(0, 0), (1, 1));
-        Fixed(px).tile_cells(&scene, Rect::new(0, 0, 2, 1), Pos::new(0, 0))
-    }
-
     #[test]
-    fn tile_cells_are_the_cells_the_tile_touches() {
-        let r = Rect::new;
-        // Cells are 8 × 16 px. A glyph tile: two whole cells.
-        assert_eq!(cells(Some(r(160, 176, 16, 16))), Some(r(20, 11, 2, 1)));
-        // One pixel into the next cell, each way.
-        assert_eq!(cells(Some(r(160, 176, 17, 17))), Some(r(20, 11, 3, 2)));
-        assert_eq!(cells(Some(r(159, 175, 16, 16))), Some(r(19, 10, 3, 2)));
-        // A 32 px tile: four cells by two.
-        assert_eq!(cells(Some(r(32, 32, 32, 32))), Some(r(4, 2, 4, 2)));
-        // Left of and above the console.
-        assert_eq!(cells(Some(r(-16, -16, 16, 16))), Some(r(-2, -1, 2, 1)));
-        assert_eq!(cells(Some(r(-1, -1, 2, 2))), Some(r(-1, -1, 2, 2)));
-        assert_eq!(cells(None), None);
-        assert_eq!(Fixed(None).tileset_id(), None);
-        // A skin can't zoom unless it says it can.
-        assert_eq!(Fixed(None).zoom(), None);
-        assert!(Fixed(None).at_zoom(MapZoom::X2).is_none());
+    fn only_a_sprite_skin_has_a_tileset_and_only_its_terrain_zooms() {
+        for skin in [MapSkin::glyph(), MapSkin::playdate()] {
+            assert_eq!(skin.tileset_id(), None);
+            // A skin can't zoom unless it says it can.
+            assert_eq!(skin.zoom(), None);
+            assert!(skin.at_zoom(MapZoom::X2).is_none());
+        }
+        assert_eq!(MapSkin::glyph().name(), "glyph");
+        assert_eq!(MapSkin::playdate().name(), "playdate");
     }
 }

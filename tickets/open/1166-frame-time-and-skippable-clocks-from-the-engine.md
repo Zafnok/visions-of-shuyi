@@ -38,7 +38,9 @@ None.
 
 **In:**
 - Move the pin past 2312 (`engine-change` skill, step 7); if `dt`
-  became private, `input.dt` becomes `input.dt()`.
+  became private, `input.dt` becomes `input.dt()`. (Done by 1167, whose
+  pin move to engine 2313 included 2312: the pin is past it and every
+  `input.dt` is `input.dt()`.)
 - The 13 cleanups go.
 - The three clocks use the engine's hurry clock, each with its own
   speed-up and delay as today.

@@ -4,8 +4,11 @@
 use trpg_content::Ink;
 
 use super::*;
-use crate::map_view::glyph::cursor::corner_arms;
-use crate::map_view::playdate::tests::{blank, c, p, painted, pd_ctx, plains, shown, unit};
+use crate::glyph_buffer::Layer;
+use crate::map_view::glyph::cursor::{CORNER_ARM, LARGE_CORNER_ARM, corner_arms};
+use crate::map_view::glyph::units::HP_BAR_H;
+use crate::map_view::playdate::tests::{c, p, painted, pd_ctx, plains, shown, unit};
+use crate::map_view::scene::{CursorStyle, CursorView};
 use crate::onebit::{ink_is_white, is_white};
 use trpg_core::Faction;
 
@@ -13,7 +16,7 @@ use trpg_core::Faction;
 fn edges(danger: &[(i32, i32)]) -> Vec<Rect> {
     let ctx = pd_ctx();
     let mut scene = plains(&ctx);
-    scene.tint(danger.iter().map(|&(x, y)| p(x, y)), RangeKind::Danger);
+    scene.tint(danger.iter().map(|&(x, y)| p(x, y)), range::DANGER);
     let buf = painted(&ctx, &scene);
     for o in buf.overlays() {
         assert_eq!((o.color, o.layer), (c(Ink::Dashes), Layer::Under));
@@ -60,7 +63,7 @@ fn the_danger_zone_has_no_edge_at_the_views_edge() {
     // The bottom-right one: only its top and left sides.
     assert_eq!(edges(&[(23, 14)]), [r(376, 224, 16, 2), r(376, 224, 2, 16)]);
     let mut scene = MapScene::new(p(0, 0), (2, 1));
-    scene.tint([p(0, 0)], RangeKind::Danger);
+    scene.tint([p(0, 0)], range::DANGER);
     let rects = danger_edges(
         &scene,
         &crate::map_view::glyph::Layout::new(&scene, Rect::new(0, 0, 4, 1)).grid(),
@@ -75,8 +78,8 @@ fn the_danger_zone_has_no_edge_at_the_views_edge() {
 fn the_danger_edge_shows_as_dashes_over_ranges_and_units() {
     let ctx = pd_ctx();
     let mut scene = plains(&ctx);
-    scene.tint([p(2, 1), p(3, 1)], RangeKind::Move);
-    scene.tint([p(2, 1), p(3, 1)], RangeKind::Danger);
+    scene.tint([p(2, 1), p(3, 1)], range::MOVE);
+    scene.tint([p(2, 1), p(3, 1)], range::DANGER);
     scene.push_unit(unit(Faction::Player, p(3, 1)));
     let frame = shown(&painted(&ctx, &scene));
     for x in 40..72 {
@@ -117,12 +120,9 @@ fn the_cursor_is_the_pcs_corner_marks_flipping_what_they_cover() {
     };
     // Tile (1, 1): its left cell is (3, 1).
     let (flips, frame) = cursor(CursorStyle::Corners, 1.0);
-    assert_eq!(flips, flipped_arms(3, 1, CORNER_ARM));
+    assert_flipped_once(&flips, CORNER_ARM);
     assert_eq!(cursor(CursorStyle::Corners, 0.5).0, flips);
-    assert_eq!(
-        cursor(CursorStyle::LargeCorners, 1.0).0,
-        flipped_arms(3, 1, LARGE_CORNER_ARM)
-    );
+    assert_flipped_once(&cursor(CursorStyle::LargeCorners, 1.0).0, LARGE_CORNER_ARM);
     assert_eq!(
         cursor(CursorStyle::TileGlow, 1.0).0,
         [Rect::new(24, 16, 16, 16)]
@@ -138,63 +138,20 @@ fn the_cursor_is_the_pcs_corner_marks_flipping_what_they_cover() {
     assert!(!is_white(&plain, 39, 16) && is_white(&plain, 23, 16));
 }
 
-/// Every pixel of the glyph skin's corner marks is in one arm only, so
+/// `flips` are the glyph skin's corner marks, `arm` pixels long, round
+/// tile (1, 1) (its left cell (3, 1)), with every pixel in one arm only:
 /// each corner flips once.
-#[test]
-fn each_pixel_of_the_corner_marks_is_flipped_once() {
-    for arm in [CORNER_ARM, LARGE_CORNER_ARM] {
-        let ours = flipped_arms(5, 2, arm);
-        let pixels = |rects: &[Rect]| {
-            let mut all: Vec<(i32, i32)> = rects
-                .iter()
-                .flat_map(|r| {
-                    (r.y..r.y + r.h).flat_map(move |y| (r.x..r.x + r.w).map(move |x| (x, y)))
-                })
-                .collect();
-            all.sort_unstable();
-            all
-        };
-        let mut theirs = pixels(&corner_arms(
-            5,
-            2,
-            arm,
-            crate::map_view::glyph::units::HP_BAR_H,
-        ));
-        theirs.dedup();
-        assert_eq!(pixels(&ours), theirs, "{arm}");
-        assert_eq!(ours.len(), 8);
-    }
-}
-
-/// The cursor's marks are cut at the area's edge: the left arms of the
-/// first tile of an area with no cell beside it go.
-#[test]
-fn the_cursor_is_clipped_to_the_area() {
-    let ctx = pd_ctx();
-    let view = CursorView {
-        pos: p(0, 0),
-        brightness: 1.0,
-        style: CursorStyle::Corners,
+fn assert_flipped_once(flips: &[Rect], arm: i32) {
+    let pixels = |rects: &[Rect]| {
+        let mut all: Vec<(i32, i32)> = rects
+            .iter()
+            .flat_map(|r| (r.y..r.y + r.h).flat_map(move |y| (r.x..r.x + r.w).map(move |x| (x, y))))
+            .collect();
+        all.sort_unstable();
+        all
     };
-    let mut buf = blank();
-    draw_cursor(
-        &mut buf,
-        &ctx.palette,
-        &view,
-        (0, 0),
-        Rect::new(0, 0, 16, 16),
-    );
-    let rects: Vec<Rect> = buf.overlays().iter().map(|o| o.rect).collect();
-    let r = Rect::new;
-    assert_eq!(
-        rects,
-        [
-            r(0, 0, 2, 1),
-            r(13, 0, 3, 1),
-            r(15, 1, 1, 2),
-            r(0, 13, 2, 1),
-            r(13, 13, 3, 1),
-            r(15, 11, 1, 2),
-        ]
-    );
+    let mut theirs = pixels(&corner_arms(3, 1, arm, HP_BAR_H));
+    theirs.dedup();
+    assert_eq!(pixels(flips), theirs, "{arm}");
+    assert_eq!(flips.len(), 8);
 }

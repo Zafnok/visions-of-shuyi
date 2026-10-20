@@ -1,16 +1,13 @@
 //! The Playdate's marks over the map (`docs/design/playdate.md`): the
-//! danger zone's dashed edge and the cursor's corner marks, which flip the
-//! pixels they cover so they show on white, grey and black tiles alike.
+//! danger zone's dashed edge. (The cursor's corner marks, which flip the
+//! pixels they cover so they show on white, grey and black tiles alike,
+//! are the kit's flat cursor: [`ONE_BIT`](super::ONE_BIT).)
 
 use crate::prelude::*;
 
-use crate::color::{Palette, UiColor};
-use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect};
-use crate::map_view::glyph::TILE_W_CELLS;
-use crate::map_view::glyph::cursor::{CORNER_ARM, LARGE_CORNER_ARM, corner_arms};
-use crate::map_view::glyph::units::HP_BAR_H;
-use crate::map_view::grid::{CELL_PX, Grid};
-use crate::map_view::scene::{CursorStyle, CursorView, MapScene, RangeKind};
+use crate::glyph_buffer::{PxRect, Rect};
+use crate::map_view::grid::Grid;
+use crate::map_view::scene::{MapScene, range};
 
 /// How thick the danger zone's edge is, in pixels: as in the mockup Nick
 /// chose (`docs/design/playdate/q3r2-e-grey.png`). Two rows of the dashes'
@@ -24,7 +21,7 @@ pub const DANGER_EDGE: i32 = 2;
 pub fn danger_edges(scene: &MapScene, grid: &Grid) -> Vec<PxRect> {
     let tints = scene.tints();
     let danger = |dx: i32, dy: i32| {
-        let zone = RangeKind::Danger.name();
+        let zone = range::DANGER;
         scene
             .tile_at(dx, dy)
             .map(|_| tints.at(dx, dy).contains(&zone))
@@ -57,49 +54,6 @@ pub fn danger_edges(scene: &MapScene, grid: &Grid) -> Vec<PxRect> {
         }
     }
     out
-}
-
-/// The glyph skin's corner marks round the tile whose left cell is
-/// `(x, y)`, each `arm` pixels long (the lower ones above the HP bar), with
-/// no pixel in two arms: flipped twice, the corner would show as if not
-/// flipped at all. Each corner's upright arm gives its flat one the pixel
-/// they share.
-fn flipped_arms(x: i32, y: i32, arm: i32) -> Vec<Rect> {
-    let arms = corner_arms(x, y, arm, HP_BAR_H);
-    let mut out = Vec::with_capacity(arms.len());
-    for &[flat, upright] in arms.as_chunks::<2>().0 {
-        let from = i32::from(upright.y == flat.y);
-        out.push(flat);
-        out.push(Rect::new(upright.x, upright.y + from, 1, upright.h - 1));
-    }
-    out
-}
-
-/// Draws `cursor` on the tile whose left cell is `(x, y)`, clipped to
-/// `clip`, in the palette's cursor ink (which flips what it covers): the
-/// glyph skin's corner marks (`flipped_arms`), or for the tile glow the
-/// whole tile. Its pulse isn't shown: one bit has no dimming.
-pub fn draw_cursor(
-    buf: &mut GlyphBuffer,
-    palette: &Palette,
-    cursor: &CursorView,
-    (x, y): (i32, i32),
-    clip: PxRect,
-) {
-    let ink = palette.get(UiColor::Cursor);
-    let rects = match cursor.style {
-        CursorStyle::Corners => flipped_arms(x, y, CORNER_ARM),
-        CursorStyle::LargeCorners => flipped_arms(x, y, LARGE_CORNER_ARM),
-        CursorStyle::TileGlow => {
-            let (cw, ch) = CELL_PX;
-            vec![Rect::new(x * cw, y * ch, TILE_W_CELLS * cw, ch)]
-        }
-    };
-    for rect in rects {
-        if let Some(rect) = rect.intersect(&clip) {
-            buf.add_overlay(Overlay::new(rect, ink, Layer::Over));
-        }
-    }
 }
 
 #[cfg(test)]
