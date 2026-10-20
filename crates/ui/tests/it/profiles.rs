@@ -4,6 +4,7 @@
 //! screen (0837) switches, adds, renames and deletes them.
 
 use std::collections::BTreeMap;
+use trpg_ui::widgets::menu::LabelText as _;
 use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 
 use trpg_content::new_campaign;
@@ -326,7 +327,7 @@ fn title_items(h: &Harness) -> Vec<String> {
     let title = title.unwrap_or_else(|| panic!("no title"));
     let menu = title.view(h.game().ctx()).menu;
     let items = menu.map(|m| m.items).unwrap_or_default();
-    items.into_iter().map(|i| i.label).collect()
+    items.into_iter().map(|i| i.label.as_str().to_owned()).collect()
 }
 
 fn current(h: &Harness) -> String {
@@ -442,7 +443,7 @@ fn deleting_on_the_screen_asks_first_and_takes_the_saves() {
     h.keys("f");
     let view = screen(&h).view(h.game().ctx());
     let actions = view.actions.unwrap_or_else(|| panic!("no menu"));
-    let items: Vec<String> = actions.items.into_iter().map(|i| i.label).collect();
+    let items: Vec<String> = actions.items.into_iter().map(|i| i.label.as_str().to_owned()).collect();
     assert_eq!(items, ["Rename"]);
 }
 

@@ -493,7 +493,7 @@ fn the_view_follows_the_focus_the_saves_and_the_debug_tools() {
     let focused = |t: &TitleScreen, c: &Ctx| {
         let view = t.view(c);
         let menu = view.menu.unwrap();
-        menu.focused().map(|i| i.label.clone())
+        menu.focused().map(|i| i.label.as_str().to_owned())
     };
     assert_eq!(focused(&t, &c).as_deref(), Some("Continue"));
     t.update(&mut c, &input(&[CursorDown, CursorDown]));

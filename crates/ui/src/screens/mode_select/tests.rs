@@ -48,7 +48,7 @@ fn the_view_names_both_modes_with_classic_focused() {
     assert_eq!(view.heading, c.text(HEADING));
     let labels: Vec<_> = view.menu.items.iter().map(|i| i.label.as_str()).collect();
     assert_eq!(labels, ["Classic", "Casual"]);
-    assert_eq!(view.menu.focused().unwrap().label, "Classic");
+    assert_eq!(view.menu.focused().unwrap().label.as_str(), "Classic");
     let lines: Vec<_> = view.lines.iter().map(|l| l.text.as_str()).collect();
     assert_eq!(
         lines,
@@ -72,7 +72,7 @@ fn the_focused_line_follows_the_menu() {
     let input = FrameInput::new(vec![Action::CursorDown], 0.0, vec![]);
     s.update(&mut c, &input);
     let view = s.view(&c);
-    assert_eq!(view.menu.focused().unwrap().label, "Casual");
+    assert_eq!(view.menu.focused().unwrap().label.as_str(), "Casual");
     assert_eq!(
         view.lines.iter().map(|l| l.focused).collect::<Vec<_>>(),
         [false, true]

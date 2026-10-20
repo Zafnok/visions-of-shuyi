@@ -233,9 +233,9 @@ pub fn paint(ctx: &Ctx, view: &TitleView, buf: &mut GlyphBuffer) {
         buf.dim(band, solid);
     }
     if let Some(menu) = &view.menu {
-        let (w, h) = menu_glyph::size(menu);
+        let (w, h) = menu_glyph::size(ctx, menu);
         let x = centre_x(buf, usize::try_from(w).unwrap_or(0));
-        menu_glyph::paint(&ctx.palette, menu, buf, x, MENU_ROW);
+        menu_glyph::paint(ctx, menu, buf, x, MENU_ROW);
         buf.dim(Rect::new(x, MENU_ROW, w, h), solid);
         if let Some(notice) = &view.notice {
             // On a band of its own, a blank cell wider on each side.
@@ -290,7 +290,7 @@ mod tests {
 
     fn item(label: &str, focused: bool) -> MenuItemView {
         MenuItemView {
-            label: label.to_owned(),
+            label: label.into(),
             suffix: None,
             note: None,
             enabled: true,

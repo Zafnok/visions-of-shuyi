@@ -488,7 +488,7 @@ mod tests {
         use Action::{Confirm, CursorDown, CursorUp};
         let mut ctx = crate::screen::tests::ctx();
         let mut menu = super::menu(&ctx);
-        let label = |m: &DebugMenuScreen| m.menu().items()[MAP_SKIN_TOOL].label.clone();
+        let label = |m: &DebugMenuScreen| m.menu().items()[MAP_SKIN_TOOL].label.as_str().to_owned();
         assert_eq!(label(&menu), "Map skin: glyph");
         // Up from the first tool wraps round to it.
         let frame = |a: &[Action]| FrameInput::new(a.to_vec(), 0.0, vec![]);

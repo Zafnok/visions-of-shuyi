@@ -21,7 +21,7 @@ use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::playdate::{
-    Answers, Item, ask, bar, cells, centred, clear, cut, first_shown, footer, inks, item,
+    Item, ask_view, bar, cells, centred, clear, cut, first_shown, footer, inks, item,
     more_marks, to_i32, to_usize, window,
 };
 
@@ -120,7 +120,7 @@ pub fn paint(ctx: &Ctx, view: &KeyBindingsView, buf: &mut GlyphBuffer) {
         paint_choices(ctx, buf, choices, rect, y);
     }
     if let Some(question) = &view.question {
-        ask(ctx, buf, &question.text, Answers::Hint(&question.answers));
+        ask_view(ctx, buf, question);
     }
 }
 

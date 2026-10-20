@@ -85,7 +85,7 @@ fn a_question_and_the_leaving_question_open_in_a_window() {
     let shown = rows(&buf);
     let at = shown
         .iter()
-        .position(|r| r.contains(&question.answers))
+        .position(|r| r.contains(question.keys.as_deref().unwrap()))
         .unwrap();
     assert!(shown[at + 1].starts_with('╚') || shown[at + 1].contains('╚'));
     assert!(shown[..at].iter().any(|r| r.contains("Restore")));
@@ -94,7 +94,7 @@ fn a_question_and_the_leaving_question_open_in_a_window() {
     let mut s = screen();
     press(&mut s, &mut c, &[Action::CursorRight, Action::Cancel]);
     let leaving = s.view(&c).leaving.unwrap();
-    let focused = leaving.choices.iter().find(|c| c.focused).unwrap();
+    let focused = leaving.answers.iter().find(|c| c.focused).unwrap();
     let buf = drawn(&s, &c);
     let shown = rows(&buf);
     let line = shown
@@ -102,7 +102,7 @@ fn a_question_and_the_leaving_question_open_in_a_window() {
         .position(|r| r.contains(&focused.label))
         .unwrap();
     assert!(is_bar(&buf, to_i32(line), &format!(" {} ", focused.label)));
-    for choice in &leaving.choices {
+    for choice in &leaving.answers {
         assert!(shown[line].contains(&choice.label));
     }
 }

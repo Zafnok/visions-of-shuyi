@@ -11,6 +11,7 @@ use trpg_core::{
     BattleState, Command, GameMode, LeadGender, LeadProfile, Outcome, Pos, TutorialLevel,
     UnitAction, UnitId,
 };
+use trpg_ui::widgets::menu::LabelText as _;
 use trpg_ui::ShuyiCtx;
 use trpg_ui::audio::{AudioRequest, pick_from_pool};
 use trpg_ui::harness::Harness;

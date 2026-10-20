@@ -1008,7 +1008,8 @@ fn step_around(mode: Mode, action: Action, at: MenuAt<'_>) -> (Mode, Effect) {
     match mode {
         Mode::MapMenu { menu, entries } => step_map_menu(menu, entries, action, state),
         Mode::UnitList { mut menu, units } => match menu.handle(action) {
-            Some(MenuEvent::Chosen(i)) => {
+            Some(MenuEvent::Chosen(())) => {
+                let i = menu.focus();
                 let at = units.get(i).and_then(|&id| state.unit(id)).map(|u| u.pos);
                 (Mode::default(), at.map_or(Effect::None, Effect::Cursor))
             }
@@ -1061,8 +1062,8 @@ fn step_action_menu(
     state: &BattleState,
 ) -> (Mode, Effect) {
     match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) if i < entries.len() => {
-            let action = match entries[i] {
+        Some(MenuEvent::Chosen(())) if menu.focus() < entries.len() => {
+            let action = match entries[menu.focus()] {
                 MenuEntry::Wait => UnitAction::Wait,
                 MenuEntry::Seize => UnitAction::Seize,
                 MenuEntry::Talk => return choose_talk(sel, state),
@@ -1101,7 +1102,7 @@ fn step_map_menu(
     state: &BattleState,
 ) -> (Mode, Effect) {
     match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) => match entries.get(i) {
+        Some(MenuEvent::Chosen(())) => match entries.get(menu.focus()) {
             Some(MapEntry::Units) => {
                 let (menu, units) = unit_list(state, IN_PLAY);
                 (Mode::UnitList { menu, units }, Effect::None)
@@ -1191,7 +1192,10 @@ fn step_list(
     state: &BattleState,
 ) -> (Mode, Effect) {
     match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) => choose_line(sel, menu, kind, i, state),
+        Some(MenuEvent::Chosen(())) => {
+            let i = menu.focus();
+            choose_line(sel, menu, kind, i, state)
+        }
         Some(MenuEvent::Cancelled) => (back_to_entry(sel, state, kind.entry()), Effect::None),
         None => (Mode::List { sel, menu, kind }, Effect::None),
     }
@@ -2580,7 +2584,7 @@ mod tests {
 
     /// The labels of `menu`'s lines.
     fn labels(menu: &Menu) -> Vec<String> {
-        menu.items().iter().map(|i| i.label.clone()).collect()
+        menu.items().iter().map(|i| i.label.as_str().to_owned()).collect()
     }
 
     /// The list `mode` shows.

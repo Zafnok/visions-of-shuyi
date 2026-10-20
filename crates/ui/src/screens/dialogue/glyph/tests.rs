@@ -59,7 +59,7 @@ fn two_speakers() -> DialogueView {
 /// Replies labelled `labels`, the `focus`th focused.
 fn replies(labels: &[&str], focus: usize) -> MenuView {
     let item = |(i, &label): (usize, &&str)| MenuItemView {
-        label: label.to_owned(),
+        label: label.into(),
         suffix: None,
         note: None,
         enabled: true,

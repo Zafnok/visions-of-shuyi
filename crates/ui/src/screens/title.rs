@@ -483,7 +483,7 @@ impl Screen<Shuyi> for TitleScreen {
         for &action in &input.actions {
             self.notice = None;
             let chosen = match self.menu.handle_with_sound(action, &mut ctx.audio) {
-                Some(MenuEvent::Chosen(i)) => self.items.get(i).copied(),
+                Some(MenuEvent::Chosen(())) => self.items.get(self.menu.focus()).copied(),
                 // The Playdate's system menu (ticket 1035): as the menu's
                 // own Options.
                 _ if action == Action::Options && self.items.contains(&Item::Options) => {

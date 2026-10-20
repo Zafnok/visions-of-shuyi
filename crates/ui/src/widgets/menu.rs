@@ -5,6 +5,23 @@
 
 pub use shuyi_ui::widgets::menu::*;
 
+/// The text of a menu label the game built from text ([`MenuItem::new`]):
+/// the game's menus hold their text until they hold text keys (ticket
+/// 1162); a key label reads as its key.
+pub trait LabelText {
+    /// The label's text.
+    fn as_str(&self) -> &str;
+}
+
+impl LabelText for Label {
+    fn as_str(&self) -> &str {
+        match self {
+            Label::Text(text) => text,
+            Label::Key { key, .. } => key,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use insta::assert_snapshot;
@@ -12,7 +29,6 @@ mod tests {
     use super::*;
     use crate::audio::{AUDIO, AudioQueue};
     use crate::color::UiColor;
-    use crate::color::tests::game_palette;
     use crate::glyph_buffer::{Cell, GlyphBuffer};
     use crate::input::Action::{self, Cancel, Confirm, CursorDown, CursorUp};
 
@@ -35,10 +51,11 @@ mod tests {
                 None,
                 None,
                 None,
-                Some(MenuEvent::Chosen(2)),
+                Some(MenuEvent::Chosen(())),
                 Some(MenuEvent::Cancelled)
             ]
         );
+        assert_eq!(m.focus(), 2);
         let cues: Vec<_> = audio
             .take()
             .iter()
@@ -63,16 +80,17 @@ mod tests {
     }
 
     fn render(m: &Menu) -> String {
-        let p = game_palette();
+        let c = crate::screen::tests::ctx();
+        let p = &c.palette;
         let view = m.view();
-        let (w, h) = glyph::size(&view);
+        let (w, h) = glyph::size(&c, &view);
         let mut buf = GlyphBuffer::new(
             u16::try_from(w + 2).unwrap(),
             u16::try_from(h + 2).unwrap(),
             Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black)),
         );
-        glyph::paint(&p, &view, &mut buf, 1, 1);
-        buf.to_snapshot(&p)
+        glyph::paint(&c, &view, &mut buf, 1, 1);
+        buf.to_snapshot(p)
     }
 
     #[test]

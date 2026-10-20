@@ -2,6 +2,7 @@
 //! targeting and the heal it does, the heal popup, the equip list, and that
 //! cancelling at each level leaves the battle unchanged.
 
+use crate::widgets::menu::LabelText as _;
 use insta::assert_snapshot;
 use trpg_core::{BattlePack, BattleState, Equipped, ItemId, Objective, Pos, StatValue, UnitId};
 
@@ -640,7 +641,7 @@ fn the_pack_list_and_the_preview_are_told_in_the_players_language() {
         panic!("{:?}", s.mode());
     };
     let labels = |menu: &crate::widgets::menu::Menu| -> Vec<String> {
-        menu.items().iter().map(|i| i.label.clone()).collect()
+        menu.items().iter().map(|i| i.label.as_str().to_owned()).collect()
     };
     assert!(labels(menu)[0].starts_with("Potion"), "{:?}", labels(menu));
     let told = s.mode().told(s.state(), words).into_owned();

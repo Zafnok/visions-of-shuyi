@@ -12,6 +12,7 @@
 
 use insta::assert_snapshot;
 use trpg_core::{Faction, Pos, UnitId};
+use trpg_ui::widgets::menu::LabelText as _;
 use trpg_ui::Storage;
 use trpg_ui::audio::{AudioRequest, MusicCommand};
 use trpg_ui::cinematic::Frame;
@@ -139,7 +140,7 @@ fn music(h: &Harness) -> Vec<String> {
 /// The focused menu line.
 fn focused(h: &Harness) -> Option<String> {
     let menu = view(h).menu?;
-    menu.focused().map(|i| i.label.clone())
+    menu.focused().map(|i| i.label.as_str().to_owned())
 }
 
 /// Acceptance: after the first press the menu shows; left alone, the

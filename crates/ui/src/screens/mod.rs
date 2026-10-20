@@ -81,9 +81,9 @@ pub(crate) fn pick_one<T: Copy + 'static>(
 ) -> Transition {
     for &action in &input.actions {
         match menu.handle_with_sound(action, &mut ctx.audio) {
-            Some(MenuEvent::Chosen(i)) => {
+            Some(MenuEvent::Chosen(())) => {
                 return values
-                    .get(i)
+                    .get(menu.focus())
                     .map_or(Transition::Pop, |&v| Transition::pop_with(v));
             }
             Some(MenuEvent::Cancelled) => return Transition::Pop,

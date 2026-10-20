@@ -5,7 +5,7 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: in-progress
 blocked_by: ["engine#2309"]
 nick_input: none
 completed:

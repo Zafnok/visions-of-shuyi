@@ -121,7 +121,7 @@ fn a_press_ends_the_animation_and_does_nothing_else() {
         assert_eq!(update(&mut s, &actions), "None");
         assert!(s.finished());
         let menu = s.view(&c).menu.unwrap();
-        assert_eq!(menu.focused().unwrap().label, c.text("game_over.rewind"));
+        assert_eq!(menu.focused().unwrap().label.as_str(), c.text("game_over.rewind"));
         // The next one is the menu's.
         let rewind = chosen(&mut s, &[Action::Confirm]);
         assert_eq!(rewind, Some(GameOverChoice::Rewind));
@@ -179,7 +179,7 @@ fn the_game_over_view_offers_retry_focused_and_title() {
         labels,
         [c.text("game_over.retry"), c.text("game_over.title")]
     );
-    assert_eq!(menu.focused().unwrap().label, c.text("game_over.retry"));
+    assert_eq!(menu.focused().unwrap().label.as_str(), c.text("game_over.retry"));
     assert_eq!(view.help, Some(GameOverScreen::help(&c)));
 }
 
@@ -190,7 +190,7 @@ fn the_game_over_focus_moves_in_the_view() {
     let input = FrameInput::new(vec![Action::CursorDown], 0.0, vec![]);
     s.update(&mut c, &input);
     let menu = s.view(&c).menu.unwrap();
-    assert_eq!(menu.focused().unwrap().label, c.text("game_over.title"));
+    assert_eq!(menu.focused().unwrap().label.as_str(), c.text("game_over.title"));
 }
 
 #[test]
@@ -228,7 +228,7 @@ fn game_over_offers_rewind_first_while_charges_are_left() {
             c.text("game_over.title")
         ]
     );
-    assert_eq!(menu.focused().unwrap().label, c.text("game_over.rewind"));
+    assert_eq!(menu.focused().unwrap().label.as_str(), c.text("game_over.rewind"));
     let mut s = settled(true);
     let rewind = chosen(&mut s, &[Action::Confirm]);
     assert_eq!(rewind, Some(GameOverChoice::Rewind));

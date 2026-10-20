@@ -181,8 +181,8 @@ fn paint_menu_beside(
     let Some(cells) = ctx.game.map_skin.tile_cells(&view.scene, MAP_VIEW, tile) else {
         return;
     };
-    let (x, y) = menu_origin(cells, menu::glyph::size(&m.menu));
-    menu::glyph::paint(&ctx.palette, &m.menu, buf, x, y);
+    let (x, y) = menu_origin(cells, menu::glyph::size(ctx, &m.menu));
+    menu::glyph::paint(ctx, &m.menu, buf, x, y);
     if let Some(header) = &m.header {
         paint_header(ctx, header, buf, (x, y));
     }
@@ -429,10 +429,10 @@ fn draw_dialog_at(
 
 /// Paints `menu` centred on the map view.
 fn paint_centred_menu(ctx: &Ctx, menu: &MenuView, buf: &mut GlyphBuffer) {
-    let (w, h) = menu::glyph::size(menu);
+    let (w, h) = menu::glyph::size(ctx, menu);
     let x = MAP_VIEW.x + (MAP_VIEW.w - w) / 2;
     let y = MAP_VIEW.y + (MAP_VIEW.h - h) / 2;
-    menu::glyph::paint(&ctx.palette, menu, buf, x, y);
+    menu::glyph::paint(ctx, menu, buf, x, y);
 }
 
 /// The colour of a banner announcing `kind`: the phase's faction's, or
