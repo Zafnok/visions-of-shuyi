@@ -707,3 +707,31 @@ fn the_enemy_phase_keeps_a_lesson_waiting_for_a_unit() {
     s.settle_lessons();
     assert_eq!(s.lessons.current(), Some("unit"));
 }
+
+/// Only the arts list counts as the arts menu opening (0457): another
+/// list (the lord's weapons to equip) marks nothing.
+#[test]
+fn only_the_arts_list_marks_the_arts_menu_open() {
+    let c = ctx();
+    let s = super::testing::skirmish(&c, 20);
+    let sel = Selection::new(&s, UnitId(1)).unwrap();
+    let list = |line: super::mode::Line| Mode::List {
+        sel: sel.clone(),
+        menu: crate::widgets::menu::Menu::new(vec![
+            crate::widgets::menu::MenuItem::new("x").with_value(line),
+        ]),
+    };
+    let arts = super::art_list::art_lines(&s, UnitId(1), sel.dest());
+    let equip = super::items::EquipChoice {
+        what: trpg_core::Equipped::Weapon(0),
+        usable: true,
+    };
+    assert_eq!(
+        Marks::of(&list(super::mode::Line::Art(arts[0].clone()))),
+        Marks::Arts
+    );
+    assert_eq!(
+        Marks::of(&list(super::mode::Line::Equip(equip))),
+        Marks::None
+    );
+}

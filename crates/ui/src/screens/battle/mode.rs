@@ -1178,7 +1178,7 @@ fn choose_line(
     let chosen = match line {
         Line::Art(art) => Targeting::art(state, s, m, art).map(|t| show_forecast(t, state)),
         Line::Spell(c) => CastTargeting::new(state, s, m, c.clone()).map(|t| aim(t, state)),
-        Line::Skill(c) if !c.usable => None,
+        // (The menu never chooses a dimmed, unusable skill.)
         Line::Skill(c) if !c.needs_target => Some(apply(use_command(&sel, &c.skill, None))),
         Line::Skill(c) => SkillTargeting::new(s, m, c.clone()).map(|t| aim(t, state)),
         Line::Item(group) => ItemTargeting::new(s, m, group.clone()).map(|t| aim(t, state)),
