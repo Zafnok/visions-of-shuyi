@@ -6,6 +6,7 @@ use trpg_ui::ShuyiCtx;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::BattleScreen;
+use trpg_ui::screens::battle::guides::GuidesScreen;
 use trpg_ui::{Ctx, MemoryStorage, Storage};
 
 fn battle(h: &Harness) -> &BattleScreen {
@@ -44,7 +45,7 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     assert_eq!(battle(&h).shown_lesson(), None);
     // The map menu: Units, Objective, Guides.
     h.keys("d Down Down f");
-    assert!(battle(&h).guides().is_some());
+    assert!(h.screen::<GuidesScreen>().is_some());
     let screen = h.snapshot();
     for text in [
         "Guides",
@@ -67,7 +68,7 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     assert!(screen.contains("Mind the ground."), "{screen}");
     // Back to the map menu, then to the map.
     h.keys("d");
-    assert!(battle(&h).guides().is_none());
+    assert!(h.screen::<GuidesScreen>().is_none());
     assert!(h.snapshot().contains("Restart Battle"));
     h.keys("d");
     assert!(!h.snapshot().contains("Restart Battle"));

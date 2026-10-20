@@ -5,17 +5,20 @@
 //! checklist shows as plain lines. Every topic can be read, seen or not,
 //! at every tutorial level. Back closes it.
 //!
-//! Like the rewind screen it lives inside the battle screen, over the
-//! battle, which goes on under it untouched. [`GuidesScreen::view`] says
-//! what it shows; the battle skin paints it (ADR-0054).
+//! Like the rewind screen it is pushed over the battle, which waits under
+//! it untouched, its map menu open. [`GuidesScreen::view`] says what it
+//! shows; the battle skin paints it (ADR-0054).
 
 use crate::prelude::*;
 
 use trpg_content::{Content, Lesson, Tip};
 
-use super::view::GuidesView;
+use super::glyph::guides as glyph;
+use super::view::{GuidesScreenView, GuidesView};
+use crate::audio::MenuSound;
+use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::Ctx;
+use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::tips::fill_placeholders;
 use crate::widgets::ListCursor;
 
@@ -42,7 +45,7 @@ fn topics(content: &Content) -> Vec<Topic<'_>> {
     lessons.chain(tips).collect()
 }
 
-/// What the battle screen should do after an input.
+/// What an input did on the list.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GuidesEffect {
     /// Nothing.
@@ -60,6 +63,9 @@ pub struct GuidesScreen {
 }
 
 impl GuidesScreen {
+    /// Name reported by [`Screen::name`].
+    pub const NAME: &'static str = "guides";
+
     /// The list of `content`'s topics, on the first.
     pub fn new(content: &Content) -> Self {
         Self {
@@ -89,7 +95,7 @@ impl GuidesScreen {
     }
 
     /// What the list shows, in the player's language and with their keys.
-    pub fn view(&self, ctx: &Ctx) -> GuidesView {
+    pub fn list_view(&self, ctx: &Ctx) -> GuidesView {
         let words = ctx.words();
         let keys = ctx.help_keys();
         let all = topics(&ctx.game.content);
@@ -125,6 +131,46 @@ impl GuidesScreen {
             heading,
             lines,
         }
+    }
+
+    /// The whole screen (ADR-0054): the list, the help and the debug hint.
+    pub fn view(&self, ctx: &Ctx) -> GuidesScreenView {
+        GuidesScreenView {
+            list: self.list_view(ctx),
+            help: ctx.text_with(HELP, &[]),
+            debug_hint: crate::screens::debug_hint(ctx),
+        }
+    }
+}
+
+impl Screen<Shuyi> for GuidesScreen {
+    fn name(&self) -> &'static str {
+        Self::NAME
+    }
+
+    /// Steps the list for each action, with its menu sound; Cancel pops
+    /// back to the battle's map menu, which nothing else changes.
+    fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
+        for &action in &input.actions {
+            match self.step(action) {
+                GuidesEffect::None => {}
+                GuidesEffect::Moved => ctx.audio.menu(MenuSound::Move),
+                GuidesEffect::Close => {
+                    ctx.audio.menu(MenuSound::Cancel);
+                    return Transition::Pop;
+                }
+            }
+        }
+        Transition::None
+    }
+
+    /// Paints the whole screen: the battle under it isn't drawn.
+    fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
+        glyph::paint(ctx, &self.view(ctx), buf);
+    }
+
+    fn as_any(&self) -> Option<&dyn core::any::Any> {
+        Some(self)
     }
 }
 

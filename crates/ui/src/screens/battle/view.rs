@@ -5,9 +5,10 @@
 //! ([`super::glyph::paint`] today). Nothing here says where a thing goes or
 //! how it looks.
 //!
-//! The forecast, the unit info screen, the fight box, the EXP and level-up
-//! pages, the rewind screen and the Guides list have views of their own, in
-//! this module's children (ticket 0248).
+//! The forecast, the unit info screen, the fight box and the EXP and
+//! level-up pages have views of their own, in this module's children
+//! (ticket 0248), and so do the rewind screen and the Guides list, which
+//! are screens of their own over the battle (ticket 1159).
 
 mod fight_box;
 mod forecast;
@@ -24,12 +25,12 @@ pub use self::fight_box::{BoxFighterView, FightBoxView};
 pub use self::forecast::{
     ForecastHp, ForecastSideView, ForecastView, LeftView, SkillLineView, StrikeView, TotalView,
 };
-pub use self::guides::GuidesView;
+pub use self::guides::{GuidesScreenView, GuidesView};
 pub use self::info::{
     GearView, InfoEffectView, InfoSkillView, InfoSpellView, InfoStatView, InfoView, InfoWeaponView,
 };
 pub use self::progress::{ClassProgressView, ExpView, GainsView, ProgressView, StatGainView};
-pub use self::rewind::RewindView;
+pub use self::rewind::{RewindScreenView, RewindView};
 use super::HealPopup;
 use super::banner::BannerKind;
 use super::stage::view::StageView;
@@ -48,8 +49,7 @@ pub struct BattleView {
     /// The heal and burn numbers floating over units.
     pub popups: Vec<HealPopup>,
     /// The side panel: the terrain and unit under the cursor. `None` while
-    /// the forecast fills it ([`forecast`](Self::forecast)) and on the
-    /// rewind screen.
+    /// the forecast fills it ([`forecast`](Self::forecast)).
     pub panel: Option<PanelView>,
     /// The combat stage (ticket 0413): a fight playing back with combat
     /// animations on. It covers the map and the side panel.
@@ -66,14 +66,13 @@ pub struct BattleView {
     pub banner: Option<BannerView>,
     /// The one-time tip on screen (ticket 0406).
     pub tip: Option<TipView>,
-    /// The checklist lesson on screen (ticket 0456): over the map, and on
-    /// the rewind screen too when it is about rewinding.
+    /// The checklist lesson on screen (ticket 0456), over the map.
     pub lesson: Option<LessonView>,
     /// The line over the help: a combat's message, the preview of what is
     /// being aimed, or the toast.
     pub message: Option<MessageView>,
     /// The toggles' state (zoom, danger zone, auto-end), each with its
-    /// key. Empty on the rewind screen, which has no such line.
+    /// key.
     pub status: String,
     /// The help line: what the keys do now.
     pub help: String,
@@ -88,13 +87,6 @@ pub struct BattleView {
     pub fight_box: Option<FightBoxView>,
     /// The EXP bar or level-up page on screen.
     pub progress: Option<ProgressView>,
-    /// The rewind screen, while it is open: it replaces everything but the
-    /// map (as it was before the action it is on), the help and the debug
-    /// hint.
-    pub rewind: Option<RewindView>,
-    /// The Guides list, while it is open (ticket 0458): it covers the map
-    /// and the side panel; the help and the debug hint stay.
-    pub guides: Option<GuidesView>,
 }
 
 /// A menu and where it opens.
@@ -264,7 +256,6 @@ impl BattleView {
             }
         }
         texts.extend(self.progress.iter().flat_map(ProgressView::texts));
-        texts.extend(self.rewind.iter().flat_map(RewindView::texts));
         texts
     }
 

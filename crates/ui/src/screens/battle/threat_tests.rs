@@ -5,13 +5,13 @@
 
 use trpg_core::{Command, Pos, UnitAction, UnitId};
 
-use super::testing::skirmish_charged;
+use super::testing::{Stacked, skirmish_charged};
 use super::{BattleScreen, KeptThreat, quick_battle, threat_enemies};
 use crate::harness::FRAME_DT;
 use crate::input::Action;
 use crate::map_view::ThreatView;
+use crate::screen::Ctx;
 use crate::screen::tests::ctx;
-use crate::screen::{Ctx, FrameInput, Screen};
 
 const LORD: UnitId = UnitId(1);
 
@@ -103,7 +103,7 @@ fn a_command_drops_the_kept_list() {
 fn a_rewind_drops_the_kept_list() {
     let mut c = ctx();
     // The lord at (6, 2), between the raider and a brigand.
-    let mut s = BattleScreen::new(skirmish_charged(&c, 20, 3));
+    let mut s = Stacked::new(BattleScreen::new(skirmish_charged(&c, 20, 3)));
     let real = threat_enemies(s.state(), LORD, p(6, 2));
     assert!(
         real.contains(&p(7, 1)) && real.contains(&p(8, 2)),
@@ -112,14 +112,14 @@ fn a_rewind_drops_the_kept_list() {
     assert_eq!(shown(&s, &c), Some((p(6, 2), real.clone())));
     // The archer (at (8, 4) here) waits; then the battle is rewound to
     // before that.
-    s.send(&Command::Act {
+    s.battle_mut().send(&Command::Act {
         unit: UnitId(3),
         dest: p(8, 4),
         action: UnitAction::Wait,
     });
     plant(&s, LORD, p(6, 2), &[p(0, 0)]);
     for action in [Action::Rewind, Action::Confirm, Action::Confirm] {
-        s.update(&mut c, &FrameInput::new(vec![action], FRAME_DT, vec![]));
+        s.frame(&mut c, &[action], FRAME_DT);
     }
     assert!(s.rewind().is_none());
     assert!(s.history().is_empty());

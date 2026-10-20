@@ -14,18 +14,26 @@ fn screen(lines: usize, focus: usize) -> RewindScreen {
         })
         .collect();
     RewindScreen {
+        cursor: ListCursor::new(lines).at(focus),
         entries,
-        focus,
         confirming: false,
         charges_left: 3,
         charges: 3,
+        frame: MapFrame {
+            camera: Camera::default(),
+            view: (10, 8),
+            cursor: Pos::new(0, 0),
+            look: MapLook::default(),
+        },
+        now: before,
+        lesson: None,
     }
 }
 
 #[test]
 fn the_view_lists_the_entries_and_asks_before_a_rewind() {
     let mut r = screen(3, 0);
-    let v = r.view(Words::ENGLISH);
+    let v = r.list_view(Words::ENGLISH);
     assert_eq!(v.title, "Rewind");
     assert_eq!(
         (v.charges.as_str(), v.spent),
@@ -38,18 +46,18 @@ fn the_view_lists_the_entries_and_asks_before_a_rewind() {
     assert_eq!((v.nothing, v.prompt), (None, None));
     r.step(Action::CursorDown);
     r.step(Action::Confirm);
-    let v = r.view(Words::ENGLISH);
+    let v = r.list_view(Words::ENGLISH);
     assert_eq!(v.focus, 1);
     assert_eq!(v.prompt.as_deref(), Some("Use 1 of 3 charges?"));
     // One charge left; then none.
     r.charges_left = 1;
-    let v = r.view(Words::ENGLISH);
+    let v = r.list_view(Words::ENGLISH);
     assert_eq!(v.prompt.as_deref(), Some("Use 1 of 1 charge?"));
     r.charges_left = 0;
-    let v = r.view(Words::ENGLISH);
+    let v = r.list_view(Words::ENGLISH);
     assert_eq!((v.charges.as_str(), v.spent), ("No charges left", true));
     // Nothing to go back to.
-    let empty = screen(0, 0).view(Words::ENGLISH);
+    let empty = screen(0, 0).list_view(Words::ENGLISH);
     assert_eq!(empty.nothing.as_deref(), Some("Nothing to rewind yet"));
     assert!(empty.entries.is_empty());
 }

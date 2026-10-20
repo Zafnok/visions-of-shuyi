@@ -12,7 +12,7 @@ use super::cursor::Cursor;
 use super::glyph::{in_top_half, lesson_rect};
 use super::layout::MAP_VIEW;
 use super::mode::Selection;
-use super::testing::{skirmish_charged, vaulted, wait};
+use super::testing::{Stacked, skirmish_charged, vaulted, wait};
 use super::*;
 use crate::audio::AudioRequest;
 use crate::glyph_buffer::Rect;
@@ -452,9 +452,8 @@ fn each_condition_ticks_where_it_happens() {
     assert_eq!(ticks(&h), [true, true, true, true, false, false]);
     // The rewind screen: the lesson stays over the map there.
     h.keys("r");
-    let battle = h.battle().expect("a battle");
-    assert!(battle.rewind().is_some());
-    assert!(battle.view(h.game().ctx()).lesson.is_some());
+    let rewind = h.screen::<RewindScreen>().expect("the rewind screen");
+    assert!(rewind.view(h.game().ctx()).lesson.is_some());
     assert_eq!(ticks(&h), [true, true, true, true, true, false]);
     h.keys("d");
     // End turn isn't held, and ends the lesson.
@@ -468,39 +467,37 @@ fn each_condition_ticks_where_it_happens() {
 fn rewinding_keeps_the_ticks_and_the_lessons_done() {
     let mut c = lessoned();
     let state = skirmish_charged(&c, 30, 3);
-    let mut s = BattleScreen::new(state).in_battle(QUICK_BATTLE);
-    press(&mut s, &mut c, &[]);
-    press(&mut s, &mut c, &[Action::CursorUp, Action::CursorLeft]);
+    let mut s = Stacked::new(BattleScreen::new(state).in_battle(QUICK_BATTLE));
+    s.frame(&mut c, &[], 0.0);
+    s.frame(&mut c, &[Action::CursorUp, Action::CursorLeft], 0.0);
     let mut waited = s.state().clone();
     wait(&mut waited, 1);
     let knight = &s.state().units()[1];
     let (unit, dest) = (knight.id, knight.pos);
-    s.send(&Command::Act {
+    s.battle_mut().send(&Command::Act {
         unit,
         dest,
         action: UnitAction::Wait,
     });
     assert_eq!(s.state(), &waited);
     // Rewind, the one point, yes.
-    press(&mut s, &mut c, &[Action::Rewind]);
-    press(&mut s, &mut c, &[Action::Confirm]);
-    press(&mut s, &mut c, &[Action::Confirm]);
+    s.press(&mut c, &[Action::Rewind, Action::Confirm, Action::Confirm]);
     assert!(s.rewind().is_none());
     assert_eq!(s.history().len(), 0);
     assert_eq!(s.lesson_ticks(), [true, false, true, false]);
     assert!(s.lesson_open());
-    press(&mut s, &mut c, &[Action::CursorDown, Action::CursorRight]);
+    s.frame(&mut c, &[Action::CursorDown, Action::CursorRight], 0.0);
     assert!(c.game.campaign_lessons.contains(TEST_LESSON));
     // Done, then a rewind back to the first turn: it stays done.
-    s.send(&Command::Act {
+    s.battle_mut().send(&Command::Act {
         unit,
         dest,
         action: UnitAction::Wait,
     });
-    press(&mut s, &mut c, &[Action::Rewind]);
-    press(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
+    s.press(&mut c, &[Action::Rewind]);
+    s.frame(&mut c, &[Action::Confirm, Action::Confirm], 0.0);
     assert_eq!(s.history().len(), 0);
-    press(&mut s, &mut c, &[]);
+    s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_lesson(), None);
 }
 
