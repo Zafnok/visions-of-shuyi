@@ -17,7 +17,8 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::mode_select::SKINS;
 use crate::screens::mode_select::view::{ModeLineView, ModeSelectView};
-use crate::widgets::{Menu, MenuEvent, MenuItem};
+use crate::screens::pick_one;
+use crate::widgets::{Menu, MenuItem};
 
 /// What the familiarity screen shows: the mode screen's view (a heading,
 /// the menu, a line explaining each choice and the help line).
@@ -46,12 +47,11 @@ pub const LEVELS: [(TutorialLevel, &str, &str); 3] = [
     ),
 ];
 
-/// How familiar the player is: Confirm picks the focused answer, Cancel
-/// goes back. Pops either way; [`result`](Self::result) says which.
+/// How familiar the player is: Confirm pops with the focused answer's
+/// [`TutorialLevel`], Cancel pops with nothing (back).
 #[derive(Debug, Clone)]
 pub struct FamiliarityScreen {
     menu: Menu,
-    chosen: Option<TutorialLevel>,
 }
 
 impl FamiliarityScreen {
@@ -66,14 +66,7 @@ impl FamiliarityScreen {
             .map(|&(_, name, _)| MenuItem::new(ctx.text(name)));
         Self {
             menu: Menu::new(items.collect()),
-            chosen: None,
         }
-    }
-
-    /// The level picked, once the screen has popped; `None` if the player
-    /// went back.
-    pub fn result(&self) -> Option<TutorialLevel> {
-        self.chosen
     }
 
     /// The bottom help line.
@@ -108,17 +101,7 @@ impl Screen<Shuyi> for FamiliarityScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        for &action in &input.actions {
-            match self.menu.handle_with_sound(action, &mut ctx.audio) {
-                Some(MenuEvent::Chosen(i)) => {
-                    self.chosen = LEVELS.get(i).map(|&(level, ..)| level);
-                    return Transition::Pop;
-                }
-                Some(MenuEvent::Cancelled) => return Transition::Pop,
-                None => {}
-            }
-        }
-        Transition::None
+        pick_one(&mut self.menu, ctx, input, &LEVELS.map(|(level, ..)| level))
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

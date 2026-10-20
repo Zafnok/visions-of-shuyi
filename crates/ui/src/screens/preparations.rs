@@ -49,7 +49,7 @@ use super::battle::items::effect_text;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
 use crate::widgets::wrap_step;
 use crate::words::Words;
 
@@ -109,15 +109,6 @@ pub enum Focus {
     Pack,
 }
 
-/// How the screen closed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PrepOutcome {
-    /// `Fight!`: start the battle with [`PreparationsScreen::prep`].
-    Fight,
-    /// The player left Preparations.
-    Leave,
-}
-
 /// Where a row of the stock list takes its item from.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Source {
@@ -172,8 +163,8 @@ const fn weight_key(weight: ArmourWeight) -> &'static str {
     }
 }
 
-/// Before a battle: loadouts and the pack. See the module docs. Pops with
-/// an [`outcome`](Self::outcome).
+/// Before a battle: loadouts and the pack. See the module docs. `Fight!`
+/// pops with the [`Preparations`] made; leaving pops with nothing.
 #[derive(Debug, Clone)]
 pub struct PreparationsScreen {
     prep: Preparations,
@@ -197,7 +188,6 @@ pub struct PreparationsScreen {
     leaving: bool,
     /// The `Options` tab was opened: the frame opens the Options screen.
     open_options: bool,
-    outcome: Option<PrepOutcome>,
 }
 
 impl PreparationsScreen {
@@ -220,7 +210,6 @@ impl PreparationsScreen {
             message: None,
             leaving: false,
             open_options: false,
-            outcome: None,
         }
     }
 
@@ -238,11 +227,6 @@ impl PreparationsScreen {
     /// The battle and the units left out of it, as prepared so far.
     pub fn prep(&self) -> &Preparations {
         &self.prep
-    }
-
-    /// How the screen closed, once it has popped.
-    pub fn outcome(&self) -> Option<PrepOutcome> {
-        self.outcome
     }
 
     /// The tab shown.
@@ -589,7 +573,7 @@ impl PreparationsScreen {
 
     /// Opens the shown tab (Confirm or Down on the tabs). Returns whether
     /// the screen is done (`Fight!`).
-    fn open_tab(&mut self, ctx: &mut Ctx) -> bool {
+    fn open_tab(&mut self, ctx: &mut Ctx) -> Option<Transition> {
         let focus = match self.tab {
             Tab::Loadouts => (!self.units().is_empty()).then_some(Focus::Units),
             Tab::Pack if !self.spare().is_empty() => Some(Focus::Spare),
@@ -597,12 +581,11 @@ impl PreparationsScreen {
             Tab::Options => {
                 ctx.audio.menu(MenuSound::Select);
                 self.open_options = true;
-                return false;
+                return None;
             }
             Tab::Fight => {
                 ctx.audio.menu(MenuSound::Select);
-                self.outcome = Some(PrepOutcome::Fight);
-                return true;
+                return Some(Transition::pop_with(self.prep.clone()));
             }
         };
         match focus {
@@ -612,7 +595,7 @@ impl PreparationsScreen {
             }
             None => ctx.audio.menu(MenuSound::Denied),
         }
-        false
+        None
     }
 
     /// Moves a list cursor from `i` in a list of `len`, with the move sound
@@ -704,15 +687,14 @@ impl PreparationsScreen {
         }
     }
 
-    /// Handles one action. Returns whether the screen is done.
-    fn handle(&mut self, action: Action, ctx: &mut Ctx) -> bool {
+    /// Handles one action. Returns the pop, if the screen is done.
+    fn handle(&mut self, action: Action, ctx: &mut Ctx) -> Option<Transition> {
         use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
         if self.leaving {
             match action {
                 Confirm => {
                     ctx.audio.menu(MenuSound::Select);
-                    self.outcome = Some(PrepOutcome::Leave);
-                    return true;
+                    return Some(Transition::Pop);
                 }
                 Cancel => {
                     self.leaving = false;
@@ -720,13 +702,13 @@ impl PreparationsScreen {
                 }
                 _ => {}
             }
-            return false;
+            return None;
         }
         // The Playdate's system menu (ticket 1035): as the Options tab.
         if action == Action::Options {
             ctx.audio.menu(MenuSound::Select);
             self.open_options = true;
-            return false;
+            return None;
         }
         if matches!(
             action,
@@ -795,7 +777,7 @@ impl PreparationsScreen {
             (Focus::Spare | Focus::Pack, CursorLeft | CursorRight) => self.switch_side(ctx),
             _ => {}
         }
-        false
+        None
     }
 
     /// The screen as it is now, as plain data for a skin to paint
@@ -956,8 +938,8 @@ impl Screen<Shuyi> for PreparationsScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         for &action in &input.actions {
-            if self.handle(action, ctx) {
-                return Transition::Pop;
+            if let Some(pop) = self.handle(action, ctx) {
+                return pop;
             }
             if core::mem::take(&mut self.open_options) {
                 return Transition::Push(Box::new(super::options::screen()));
@@ -972,6 +954,15 @@ impl Screen<Shuyi> for PreparationsScreen {
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
+    }
+
+    /// Back from the Options screen, where the campaign may have switched
+    /// to Casual (0805): the battle being prepared does too.
+    fn uncovered(&mut self, ctx: &mut Ctx, _result: Option<ScreenResult>) -> Transition {
+        if ctx.game.campaign_mode == Some(trpg_core::GameMode::Casual) {
+            self.switch_to_casual();
+        }
+        Transition::None
     }
 }
 

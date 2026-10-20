@@ -21,7 +21,7 @@ const VIEW_X2: (i32, i32) = (11, 10);
 fn battle_with(mut h: Harness, skin: &str, keys: &str) -> Harness {
     h.with_map_skin(skin);
     h.keys(keys);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
 
@@ -148,7 +148,7 @@ fn it_works_with_a_unit_selected_and_not_in_a_menu() {
     let mut h = quick_battle("sprite");
     // The lord selected: its range shown.
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.keys("q");
     assert_eq!(skin_zoom(&h), Some(MapZoom::X1));
     assert_eq!(view(&h), VIEW_X1);
@@ -195,7 +195,7 @@ fn the_zoom_is_remembered_by_the_next_battle_and_the_next_launch() {
     // Restart the battle from the map menu: a new battle screen.
     h.keys("Right Right Right d Up Up f f");
     h.keys("Left f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.battle().map(|b| b.state().turn()), Some(1));
     assert_eq!((skin_zoom(&h), view(&h)), (Some(MapZoom::X1), VIEW_X1));
     // The next launch, with what this one saved.

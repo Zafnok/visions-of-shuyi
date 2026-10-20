@@ -43,7 +43,7 @@ pub use shuyi_ui::ctx::{
     DEFAULT_MUSIC_SEED, DEFAULT_VOICE_VOLUME, IdleMotion, KEYBINDINGS_KEY, KeyPrompt, Keyboard,
     MAX_VOICE_VOLUME,
 };
-pub use shuyi_ui::screen::Screen;
+pub use shuyi_ui::screen::{Screen, ScreenResult};
 
 /// What every screen shares: Shuyi Engine's services and this game's part,
 /// [`Ctx::game`](shuyi_ui::Ctx::game) ([`Shuyi`]).

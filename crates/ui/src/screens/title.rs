@@ -39,7 +39,9 @@ use crate::flow::FlowScreen;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::save;
-use crate::screen::{Ctx, FrameInput, IdleMotion, KeyPrompt, Screen, Shuyi, Transition};
+use crate::screen::{
+    Ctx, FrameInput, IdleMotion, KeyPrompt, Screen, ScreenResult, Shuyi, Transition,
+};
 use crate::widgets::{Menu, MenuEvent, MenuItem};
 
 /// The title screen's music cue (`audio.md`).
@@ -178,16 +180,11 @@ pub struct TitleScreen {
     menu: Menu,
     /// What each menu line is, in menu order.
     items: Vec<Item>,
-    /// Whether the saves may have changed since the menu was built (the
-    /// screen has no "shown" hook): set when another screen is opened, and
-    /// the next update builds the menu again ([`refresh`](Self::refresh)).
-    stale: bool,
     /// Why `Continue` couldn't, shown under the menu until the next key.
     notice: Option<String>,
     /// Whether the title music was asked for since this screen was last
-    /// shown. The screen has no "shown" hook, so starting the game flow
-    /// (whose battles play their own music) clears it and the next update
-    /// asks again.
+    /// shown: starting the game flow (whose battles play their own music)
+    /// clears it, and the next update asks again.
     music_on: bool,
     /// Whether the "press any key or button" prompt ([`Ctx::key_prompt`])
     /// is over. It shows once per launch.
@@ -212,9 +209,9 @@ pub struct TitleScreen {
 }
 
 impl TitleScreen {
-    /// The title screen with `New Game` focused, as it is with no saves
-    /// (the first update looks for them; [`refreshed`](Self::refreshed)
-    /// does at once), labelled in `ctx`'s language.
+    /// The title screen with its menu built for the saves in `ctx`'s
+    /// storage ([`refresh`](Self::refresh)), `New Game` focused unless a
+    /// battle is suspended, labelled in `ctx`'s language.
     pub fn new(ctx: &Ctx) -> Self {
         Self::with_debug(ctx, false)
     }
@@ -227,10 +224,9 @@ impl TitleScreen {
 
     fn with_debug(ctx: &Ctx, quick_battle: bool) -> Self {
         let (menu, items) = Self::build(ctx, quick_battle, false, false);
-        Self {
+        let mut title = Self {
             menu,
             items,
-            stale: true,
             notice: None,
             music_on: false,
             prompt_done: false,
@@ -240,7 +236,9 @@ impl TitleScreen {
             player: None,
             song: SongTime::default(),
             phase: Phase::MENU,
-        }
+        };
+        title.refresh(ctx);
+        title
     }
 
     /// The menu and what its lines are: `Continue` first if a battle is
@@ -277,7 +275,6 @@ impl TitleScreen {
     /// Makes the cinematic again too, as `ctx` paints it now, with the
     /// lead of the most recent save ([`save::latest_lead`]).
     pub fn refresh(&mut self, ctx: &Ctx) {
-        self.stale = false;
         let lead = save::latest_lead(&ctx.storage);
         let player = CinematicPlayer::new(ctx, TITLE_CINEMATIC, lead);
         self.player = player.map(|p| Rc::new(p.with_backdrop(self.backdrop)));
@@ -294,23 +291,14 @@ impl TitleScreen {
         self.items = items;
     }
 
-    /// The same screen with its menu built for `ctx`'s saves
-    /// ([`refresh`](Self::refresh)).
-    #[must_use]
-    pub fn refreshed(mut self, ctx: &Ctx) -> Self {
-        self.refresh(ctx);
-        self
-    }
-
     /// The notice under the menu, if any.
     pub fn notice(&self) -> Option<&str> {
         self.notice.as_deref()
     }
 
-    /// Opens `screen` over the title; the saves and the music may change
-    /// under it, so the title looks for both again when it is back.
+    /// Opens the game flow over the title; the music changes under it, so
+    /// the title asks for its own again when it is back.
     fn open(&mut self, screen: Box<dyn Screen<Shuyi>>) -> Transition {
-        self.stale = true;
         self.music_on = false;
         Transition::Push(screen)
     }
@@ -489,9 +477,6 @@ impl Screen<Shuyi> for TitleScreen {
         if !self.music_on {
             self.start_song(ctx);
         }
-        if self.stale {
-            self.refresh(ctx);
-        }
         if !self.play(ctx, input) {
             return Transition::None;
         }
@@ -525,17 +510,12 @@ impl Screen<Shuyi> for TitleScreen {
                         return self.open(Box::new(flow));
                     }
                 }
-                // Not `open`: the options and the credits change neither
-                // the saves nor the music (they play the title's). The
-                // options may change the colours the cinematic is in.
+                // Not `open`: the options, the profile and the credits
+                // leave the music alone (they play the title's).
                 Some(Item::Options) => {
-                    self.stale = true;
                     return Transition::Push(Box::new(super::options::screen()));
                 }
-                // The profile in use may change, and with it the options,
-                // the saves and the lead the cinematic shows.
                 Some(Item::Profile) => {
-                    self.stale = true;
                     return Transition::Push(Box::new(ProfileScreen::new(ctx)));
                 }
                 Some(Item::Credits) => return Transition::Push(Box::new(CreditsScreen::new(ctx))),
@@ -552,6 +532,15 @@ impl Screen<Shuyi> for TitleScreen {
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
+    }
+
+    /// Back on top: the screen that was over the title may have changed
+    /// the saves (a game played, a profile picked), the options (the
+    /// colours the cinematic is in) or the lead the cinematic shows, so it
+    /// is built again ([`refresh`](Self::refresh)).
+    fn uncovered(&mut self, ctx: &mut Ctx, _result: Option<ScreenResult>) -> Transition {
+        self.refresh(ctx);
+        Transition::None
     }
 }
 

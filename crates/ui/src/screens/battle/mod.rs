@@ -97,7 +97,8 @@ use crate::input::Action;
 use crate::map_view::{
     CursorView, GlyphSkin, MapScene, MapSkin, Place, RangeKind, ThreatView, UnitView,
 };
-use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
+use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{LessonView, TipView};
 use crate::widgets::help::{SEPARATOR, key_name};
@@ -147,9 +148,22 @@ enum OutcomeMusic {
     Unheard,
     /// Asked for, at the outcome's banner.
     Heard,
-    /// Asked for, then a rewind undid the ending: the battle's own music
-    /// is due again ([`BattleScreen::take_music_back`]).
-    Undone,
+}
+
+/// How the battle screen closed: it pops with this, for the game flow
+/// below it.
+#[derive(Debug)]
+pub enum BattleEnd {
+    /// Won: the battle as it ended, and the rewind charges left unused.
+    Won(Box<BattleState>, u8),
+    /// `Restart Battle` (the map menu) or `Retry Battle` (Game Over): the
+    /// battle again.
+    Restart,
+    /// `Suspend`: the screen as it was, for the flow to save its battle,
+    /// and to put back if it can't ([`BattleScreen::suspend_failed`]).
+    Suspend(Box<BattleScreen>),
+    /// `Title` on Game Over.
+    Title,
 }
 
 /// The music pool a won battle picks its sting from (`audio.md`, 0022).
@@ -341,6 +355,9 @@ pub struct BattleScreen {
     rewind_from: RewindFrom,
     /// Where the outcome's music (0809) is.
     outcome_music: OutcomeMusic,
+    /// The battle's own music cue, asked for again when a rewind undoes
+    /// its ending ([`with_music`](Self::with_music)).
+    music: Option<String>,
     /// One-time tips waiting to show (0406).
     tips: TipState,
     /// Checklist lessons waiting or open (0456).
@@ -487,6 +504,7 @@ impl BattleScreen {
             pressed: None,
             rewind_from: RewindFrom::Browsing,
             outcome_music: OutcomeMusic::Unheard,
+            music: None,
             state,
             danger: None,
             threats: RefCell::new(None),
@@ -527,6 +545,14 @@ impl BattleScreen {
     #[must_use]
     pub fn in_battle(mut self, id: &str) -> Self {
         self.battle_id = Some(id.to_owned());
+        self
+    }
+
+    /// This screen with the battle's music `cue`, as the game flow asked
+    /// for it: a rewind that undoes the ending asks for it again (0809).
+    #[must_use]
+    pub fn with_music(mut self, cue: Option<String>) -> Self {
+        self.music = cue;
         self
     }
 
@@ -665,16 +691,6 @@ impl BattleScreen {
         if let Some(cue) = cue {
             ctx.audio.play_music(&cue);
         }
-    }
-
-    /// Whether a rewind undid an ending whose music was asked for, so the
-    /// battle's own music is due again. Asked once: the next call says no.
-    pub fn take_music_back(&mut self) -> bool {
-        let back = self.outcome_music == OutcomeMusic::Undone;
-        if back {
-            self.outcome_music = OutcomeMusic::Unheard;
-        }
-        back
     }
 
     /// Whether the battle's notes are on screen in their box (at the start
@@ -1070,16 +1086,34 @@ impl BattleScreen {
         }
     }
 
-    /// Closes the banner on screen. An outcome's leaves the battle.
-    fn close_banner(&mut self) -> Transition {
+    /// Closes the banner on screen. A victory's leaves the battle; a
+    /// defeat's opens Game Over over it.
+    fn close_banner(&mut self, ctx: &Ctx) -> Transition {
         let Some(&banner) = self.banner() else {
             return Transition::None;
         };
         self.queue.pop_front();
         match banner.kind {
-            BannerKind::Outcome(_) => Transition::Pop,
+            BannerKind::Outcome(Outcome::Victory) => {
+                let state = Box::new(self.state.clone());
+                Transition::pop_with(BattleEnd::Won(state, self.history.charges_left()))
+            }
+            BannerKind::Outcome(Outcome::Defeat) => self.game_over(ctx, false),
             BannerKind::Phase { .. } => Transition::None,
         }
+    }
+
+    /// Game Over over the lost battle, with `Rewind` while a charge is
+    /// left (0822). `again`: back from the rewind screen with no charge
+    /// spent, it is as it was left, without its opening animation (0830).
+    /// Game Over asks for no music: `defeat`, on since the banner, plays on
+    /// (0809).
+    fn game_over(&self, ctx: &Ctx, again: bool) -> Transition {
+        let mut screen = GameOverScreen::new(ctx, self.history.charges_left() > 0);
+        if again {
+            screen.skip();
+        }
+        Transition::Push(Box::new(screen))
     }
 
     /// Whether the AI is playing its phase (Enemy or Other): the player
@@ -1232,16 +1266,13 @@ impl BattleScreen {
         }
     }
 
-    /// Whether the player chose `Restart Battle` (the screen then pops,
-    /// and the game flow starts the battle again).
-    pub fn restart_requested(&self) -> bool {
-        self.leaving == Some(Leaving::Restart)
-    }
-
-    /// Whether the player chose `Suspend` (the screen then pops, and the
-    /// game flow saves the battle and goes back to the title).
-    pub fn suspend_requested(&self) -> bool {
-        self.leaving == Some(Leaving::Suspend)
+    /// The pop for `Restart Battle` or `Suspend` (the game flow restarts
+    /// the battle, or saves it and goes back to the title).
+    fn leave(&self, leaving: Leaving) -> Transition {
+        match leaving {
+            Leaving::Restart => Transition::pop_with(BattleEnd::Restart),
+            Leaving::Suspend => Transition::pop_with(BattleEnd::Suspend(Box::new(self.clone()))),
+        }
     }
 
     /// The suspend save couldn't be written: the battle goes on, showing
@@ -1564,7 +1595,7 @@ impl BattleScreen {
 
     /// Opens the rewind screen on a battle that was lost (0822), clearing
     /// what the defeat left pending. Rewinding plays on from the point
-    /// picked; closing the screen pops this one again.
+    /// picked; closing the screen opens Game Over again.
     pub fn rewind_from_defeat(&mut self, ctx: &Ctx) {
         self.queue.clear();
         self.progress = None;
@@ -1611,8 +1642,12 @@ impl BattleScreen {
                     self.queue.clear();
                     self.progress = None;
                     self.end_armed = false;
+                    // The ending is undone: the battle's own track again.
                     if self.outcome_music == OutcomeMusic::Heard {
-                        self.outcome_music = OutcomeMusic::Undone;
+                        self.outcome_music = OutcomeMusic::Unheard;
+                        if let Some(cue) = &self.music {
+                            ctx.audio.play_music(cue);
+                        }
                     }
                     if self.danger.is_some() {
                         self.danger = Some(danger_tiles(&self.state));
@@ -2589,7 +2624,7 @@ impl BattleScreen {
             }
             if self.banner().is_some() {
                 if action == Action::Confirm {
-                    let t = self.close_banner();
+                    let t = self.close_banner(ctx);
                     if !matches!(t, Transition::None) {
                         return t;
                     }
@@ -2609,12 +2644,13 @@ impl BattleScreen {
             if let Some(pressed) = self.pressed.take() {
                 actions.push_front(pressed);
             }
-            if self.leaving.is_some() {
-                return Transition::Pop;
+            if let Some(leaving) = self.leaving {
+                return self.leave(leaving);
             }
             if self.rewind_from == RewindFrom::Defeat && self.rewind.is_none() {
+                // Backed out of the rewind screen: Game Over again.
                 if self.state.outcome().is_some() {
-                    return Transition::Pop;
+                    return self.game_over(ctx, true);
                 }
                 self.rewind_from = RewindFrom::Browsing;
             }
@@ -2634,7 +2670,7 @@ impl BattleScreen {
             banner.t += dt;
             if banner.expired() {
                 // Only phase banners expire, and closing one never leaves.
-                self.close_banner();
+                self.close_banner(ctx);
             }
         }
         self.play_outcome_music(ctx);
@@ -2675,11 +2711,30 @@ impl Screen<Shuyi> for BattleScreen {
         transition
     }
 
+    /// Back from Game Over (0822) with the player's choice: `Rewind` opens
+    /// the rewind screen on the lost battle; `Retry Battle` and `Title`
+    /// leave. A scene or the Options screen hands nothing back.
+    fn uncovered(&mut self, ctx: &mut Ctx, result: Option<ScreenResult>) -> Transition {
+        match result.and_then(ScreenResult::take::<GameOverChoice>) {
+            Some(GameOverChoice::Rewind) => {
+                self.rewind_from_defeat(ctx);
+                Transition::None
+            }
+            Some(GameOverChoice::Retry) => Transition::pop_with(BattleEnd::Restart),
+            Some(GameOverChoice::Title) => Transition::pop_with(BattleEnd::Title),
+            None => Transition::None,
+        }
+    }
+
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
         glyph::paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {
+        Some(self)
+    }
+
+    fn as_any_mut(&mut self) -> Option<&mut dyn core::any::Any> {
         Some(self)
     }
 }

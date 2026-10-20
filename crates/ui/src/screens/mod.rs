@@ -37,7 +37,8 @@ pub use save::{SavePromptScreen, SlotPickerScreen};
 pub use title::TitleScreen;
 
 use crate::glyph_buffer::GlyphBuffer;
-use crate::screen::{Ctx, SkinSet};
+use crate::screen::{Ctx, FrameInput, SkinSet, Transition};
+use crate::widgets::{Menu, MenuEvent};
 
 /// What paints a view.
 pub type Paint<V> = fn(&Ctx, &V, &mut GlyphBuffer);
@@ -68,6 +69,39 @@ impl<V> Skins<V> {
 }
 
 pub(crate) use shuyi_ui::screens::{centre_x, print_centred};
+
+/// A pick-one screen's frame: `input` goes to `menu`, and the item chosen
+/// pops the screen with its value (`values[i]`) for the screen below;
+/// Cancel pops it with nothing.
+pub(crate) fn pick_one<T: Copy + 'static>(
+    menu: &mut Menu,
+    ctx: &mut Ctx,
+    input: &FrameInput,
+    values: &[T],
+) -> Transition {
+    for &action in &input.actions {
+        match menu.handle_with_sound(action, &mut ctx.audio) {
+            Some(MenuEvent::Chosen(i)) => {
+                return values
+                    .get(i)
+                    .map_or(Transition::Pop, |&v| Transition::pop_with(v));
+            }
+            Some(MenuEvent::Cancelled) => return Transition::Pop,
+            None => {}
+        }
+    }
+    Transition::None
+}
+
+/// What `transition` pops with, as a `T`: for the tests of a screen that
+/// pops with its answer.
+#[cfg(test)]
+pub(crate) fn popped_with<T: 'static>(transition: Transition) -> Option<T> {
+    match transition {
+        Transition::PopWith(result) => result.take(),
+        _ => None,
+    }
+}
 
 /// The debug-menu hint, e.g. `F2 debug`: `None` unless debug tools are on
 /// and the Debug action has a key ([`shuyi_ui::debug::hint`]).

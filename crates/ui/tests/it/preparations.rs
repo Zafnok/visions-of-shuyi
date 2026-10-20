@@ -14,13 +14,13 @@ const LORD: UnitId = UnitId(1);
 fn preparations() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h
 }
 
 /// The battle on screen.
 fn battle(h: &Harness) -> BattleState {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle
         .unwrap_or_else(|| panic!("no battle"))
         .state()
@@ -63,7 +63,7 @@ fn the_battle_starts_with_the_loadout_and_pack_set_up() {
     assert!(shows(&h, "Pack 2/6"), "{}", h.snapshot());
     // From the Pack tab, Right is `Fight!`.
     h.keys("Right Right f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let state = battle(&h);
     assert_eq!(
         lord_weapons(&state),
@@ -115,19 +115,19 @@ fn restart_battle_goes_back_to_preparations_as_they_were_left() {
         h.snapshot()
     );
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
-    let prep = h.flow().and_then(|f| f.preparations());
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
+    let prep = h.screen::<trpg_ui::screens::PreparationsScreen>();
     let prep = prep.unwrap_or_else(|| panic!("no preparations"));
     assert_eq!(prep.packed(), [(potion(), 2)]);
     assert_eq!(prep.setup().stock.weapons.len(), 2);
     // One more Potion this time.
     h.keys("Right f Down f d Right Right f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let again = battle(&h);
     assert_eq!(again.pack().items, [potion(), potion(), potion()]);
     assert_eq!(lord_weapons(&again), lord_weapons(&start));
     assert_eq!(again.turn(), 1);
-    let charges = h.flow().and_then(|f| f.battle());
+    let charges = h.battle();
     assert_eq!(charges.map(|b| b.history().charges_left()), Some(3));
 }
 
@@ -139,7 +139,7 @@ fn leaving_the_quick_battles_preparations_returns_to_the_title() {
     assert!(shows(&h, "Leave preparations?"), "{}", h.snapshot());
     h.keys("d");
     assert!(!shows(&h, "Leave preparations?"));
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h.keys("d f");
     assert_eq!(h.screens(), ["title"]);
 }
@@ -150,7 +150,7 @@ fn rebound_keys_and_a_controller_work() {
     let mut h = Harness::with_layout(LEFT_HANDED);
     // Left-handed: `s` is down, `j` confirms, `a` is left.
     h.keys("s j");
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     assert!(
         shows(&h, "wasd choose · j open · k leave"),
         "{}",
@@ -160,12 +160,12 @@ fn rebound_keys_and_a_controller_work() {
     // After a button press the help names the controller's buttons.
     assert!(shows(&h, "D-pad/L-stick choose · "), "{}", h.snapshot());
     assert!(!shows(&h, "wasd choose"));
-    let prep = h.flow().and_then(|f| f.preparations());
+    let prep = h.screen::<trpg_ui::screens::PreparationsScreen>();
     let prep = prep.unwrap_or_else(|| panic!("no preparations"));
     assert_eq!(prep.packed(), [(ItemId::new("elixir"), 1)]);
     // Past the Options tab to `Fight!`.
     h.keys("d d j");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }
 
 /// Nick (0408): two archers, only one in the battle, and the other has the
@@ -185,7 +185,7 @@ fn the_benched_scouts_bow_goes_to_the_archer() {
         h.snapshot()
     );
     h.keys("d d Left f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let state = battle(&h);
     let archer = state.unit(UnitId(3)).unwrap_or_else(|| panic!("no archer"));
     let bows: Vec<&str> = archer
@@ -199,7 +199,7 @@ fn the_benched_scouts_bow_goes_to_the_archer() {
     // The scout isn't in the battle, and in the army she has no bow now.
     assert_eq!(state.units().len(), 8);
     let scout = |h: &Harness| {
-        let campaign = h.flow().and_then(|f| f.campaign());
+        let campaign = h.flow().and_then(|f| f.campaign_now(h.game().ctx()));
         let roster = &campaign.unwrap_or_else(|| panic!("no campaign")).roster;
         roster[4].clone()
     };
@@ -208,8 +208,8 @@ fn the_benched_scouts_bow_goes_to_the_archer() {
     // Past the banner, Restart Battle: Preparations again, the trade as it
     // was left.
     h.keys("f f f f d Down Down Down Down Down f f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
-    let prep = h.flow().and_then(|f| f.preparations());
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
+    let prep = h.screen::<trpg_ui::screens::PreparationsScreen>();
     let prep = prep.unwrap_or_else(|| panic!("no preparations")).prep();
     assert_eq!(prep.bench[0].loadout.weapon_count(), 0);
     assert_eq!(prep.setup.units[2].loadout.weapon_count(), 2);
@@ -230,13 +230,13 @@ fn a_continued_battle_keeps_its_preparations() {
     // The next launch: Continue is on top of the title menu.
     let mut h = Harness::with_storage(h.into_storage());
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(battle(&h), start);
     assert_eq!(battle(&h).pack().items, [potion(), potion()]);
     // Restart Battle: Preparations, with the sword and the Potions.
     h.keys("d Down Down Down Down Down f f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
-    let prep = h.flow().and_then(|f| f.preparations());
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
+    let prep = h.screen::<trpg_ui::screens::PreparationsScreen>();
     let prep = prep.unwrap_or_else(|| panic!("no preparations")).prep();
     assert_eq!(prep.setup.pack.items, [potion(), potion()]);
     assert_eq!(prep.setup.stock, *start.stock());
@@ -263,14 +263,14 @@ fn the_archer_swaps_bows_with_the_benched_scout() {
         h.snapshot()
     );
     h.keys("f d d Left f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let state = battle(&h);
     let archer = state.unit(UnitId(3)).unwrap_or_else(|| panic!("no archer"));
     assert_eq!(
         archer.loadout.weapon(0).map(|w| w.def.0.as_str()),
         Some("steel_bow")
     );
-    let campaign = h.flow().and_then(|f| f.campaign());
+    let campaign = h.flow().and_then(|f| f.campaign_now(h.game().ctx()));
     let roster = &campaign.unwrap_or_else(|| panic!("no campaign")).roster;
     assert_eq!(roster[4].name, "Test Scout");
     assert_eq!(

@@ -9,7 +9,7 @@ use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::{Ctx, MemoryStorage, Storage};
 
 fn battle(h: &Harness) -> &BattleScreen {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle.unwrap_or_else(|| panic!("no battle"))
 }
 
@@ -34,9 +34,12 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     h.keys("f f Down Down f Up f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.keys("f").wait(0.1).keys("f").wait(0.1);
-    let level = h.flow().and_then(|f| f.campaign()).map(|c| c.tutorial);
+    let level = h
+        .flow()
+        .and_then(|f| f.campaign_now(h.game().ctx()))
+        .map(|c| c.tutorial);
     assert_eq!(level, Some(trpg_core::TutorialLevel::None));
     assert_eq!(battle(&h).shown_lesson(), None);
     // The map menu: Units, Objective, Guides.

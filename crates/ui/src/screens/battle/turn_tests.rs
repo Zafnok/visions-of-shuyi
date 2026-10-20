@@ -13,6 +13,7 @@ use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Cell;
 use crate::map_view::RangeKind;
 use crate::screen::tests::ctx;
+use crate::screens::popped_with;
 use crate::settings::SETTINGS_KEY;
 use crate::storage::Storage;
 
@@ -484,7 +485,6 @@ fn suspend_asks_first() {
     ];
     assert_eq!(press(&mut s, &mut c, &to_suspend), "None");
     assert_eq!(s.mode(), &Mode::SuspendPrompt);
-    assert!(!s.suspend_requested());
     assert_eq!(s.help(&c), "f suspend · d back");
     assert!(
         s.view(&c)
@@ -498,16 +498,17 @@ fn suspend_asks_first() {
         panic!("{:?}", s.mode());
     };
     assert_eq!(menu.focus(), 4);
-    assert!(!s.suspend_requested());
     assert!(!s.view(&c).shows("Suspend the battle"));
-    // Asked again and confirmed: the screen closes, for the flow to save.
+    // Asked again and confirmed: the screen pops with itself, for the
+    // flow to save.
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
-    assert!(s.suspend_requested());
-    assert!(!s.restart_requested());
+    let input = FrameInput::new(vec![Action::Confirm], 0.0, vec![]);
+    let ended = popped_with::<BattleEnd>(s.update(&mut c, &input));
+    let Some(BattleEnd::Suspend(mut s)) = ended else {
+        panic!("{ended:?}");
+    };
     // A failed save puts the battle back, saying why.
     s.suspend_failed("no room".into());
-    assert!(!s.suspend_requested());
     assert_eq!(s.toast(), Some("no room"));
     assert_eq!(press(&mut s, &mut c, &[]), "None");
 }
@@ -807,7 +808,14 @@ fn victory_shows_after_the_combat_and_confirm_leaves() {
     let buf = render(&s, &c);
     assert!(s.view(&c).shows("VICTORY"));
     assert_in_font(&buf);
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    // Confirm pops with the battle won, for the flow.
+    let input = FrameInput::new(vec![Action::Confirm], 0.0, vec![]);
+    let ended = popped_with::<BattleEnd>(s.update(&mut c, &input));
+    let Some(BattleEnd::Won(state, unused)) = ended else {
+        panic!("{ended:?}");
+    };
+    assert_eq!(state.outcome(), Some(Outcome::Victory));
+    assert_eq!(unused, s.history().charges_left());
 }
 
 #[test]
@@ -834,7 +842,8 @@ fn missing_the_turn_limit_is_a_defeat() {
     let lost = s.banner().map(|b| b.kind);
     assert_eq!(lost, Some(BannerKind::Outcome(Outcome::Defeat)));
     assert!(s.view(&c).shows("DEFEAT"));
-    // The map menu can't end a turn any more; Confirm leaves.
+    // The map menu can't end a turn any more; Confirm opens Game Over
+    // over the battle.
     assert!(!map_menu::MapEntry::EndTurn.enabled(s.state()));
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Push(game_over)");
 }

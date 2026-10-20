@@ -72,14 +72,14 @@ fn the_title_menu_works_with_a_pad() {
     let mut h = title();
     // The bottom button confirms, the right one backs out.
     h.pad("South");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
     h.pad("East");
     assert_eq!(h.screens(), ["title"]);
     // The D-pad and the left stick both move the menu.
     h.pad("DpadDown South");
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h.pad("DpadLeft South");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let mut h = title();
     h.pad("LeftStickDown LeftStickDown LeftStickDown LeftStickDown LeftStickDown South");
     assert!(h.quit_requested());
@@ -198,7 +198,7 @@ fn holding_confirm_on_the_pad_fast_forwards_like_the_key() {
 fn keys_and_buttons_work_side_by_side() {
     let mut mixed = title();
     mixed.pad("DpadDown").keys("f").pad("DpadLeft").keys("f");
-    assert_eq!(mixed.screens(), ["title", "battle"]);
+    assert_eq!(mixed.screens(), ["title", "game_flow", "battle"]);
     // The `PLAYER PHASE` banner.
     mixed.pad("South");
     // Select the lord, move, drop the selection, open the map menu.
@@ -217,7 +217,7 @@ fn keys_and_buttons_work_side_by_side() {
 fn a_first_launch_plays_with_a_pad_and_no_layout() {
     let mut h = Harness::new();
     h.pad("East South");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
     h.pad("East");
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(h.game().ctx().layout(), None);
@@ -323,7 +323,7 @@ fn a_tip_names_the_buttons_of_the_pad_in_use() {
             Some(kind) => h.use_pad(kind).pad("DpadDown South DpadLeft South South"),
             None => h.keys("Down f Left f f"),
         };
-        assert_eq!(h.screens(), ["title", "battle"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
         h.wait(0.5);
         h
     };

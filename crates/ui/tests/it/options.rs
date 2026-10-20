@@ -61,7 +61,7 @@ fn options() -> Harness {
 /// PHASE` banner closed.
 fn into_quick_battle(h: &mut Harness) {
     h.keys(KEEP).keys("Up f Left f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }
 
 /// The Quick Battle, then Options from its map menu (Units, Objective,
@@ -69,7 +69,7 @@ fn into_quick_battle(h: &mut Harness) {
 fn options_in_battle() -> Harness {
     let mut h = title();
     h.keys("Down f Left f f d Down Down Down f");
-    assert_eq!(h.screens(), ["title", "battle", "options"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
     h
 }
 
@@ -78,7 +78,10 @@ fn options_in_battle() -> Harness {
 fn options_at_preparations() -> Harness {
     let mut h = title();
     h.keys("Down f Right Right f");
-    assert_eq!(h.screens(), ["title", "preparations", "options"]);
+    assert_eq!(
+        h.screens(),
+        ["title", "game_flow", "preparations", "options"]
+    );
     h
 }
 
@@ -122,12 +125,16 @@ fn shows(h: &Harness, text: &str) -> bool {
 }
 
 fn mode(h: &Harness) -> Option<GameMode> {
-    h.flow().and_then(|f| f.campaign()).map(|c| c.mode)
+    h.flow()
+        .and_then(|f| f.campaign_now(h.game().ctx()))
+        .map(|c| c.mode)
 }
 
 /// The tutorial level of the flow's campaign.
 fn tutorial(h: &Harness) -> Option<TutorialLevel> {
-    h.flow().and_then(|f| f.campaign()).map(|c| c.tutorial)
+    h.flow()
+        .and_then(|f| f.campaign_now(h.game().ctx()))
+        .map(|c| c.tutorial)
 }
 
 /// The tip the battle on the stack shows, if any.
@@ -165,10 +172,10 @@ fn the_map_menu_opens_options_over_the_battle() {
     assert_snapshot!(h.snapshot());
     h.keys("d");
     // Back in the map menu, still on Options.
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert!(shows(&h, "Restart Battle"));
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle", "options"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
 }
 
 /// The glyphs on screen that aren't blank.
@@ -379,7 +386,7 @@ fn the_layout_switches_from_options_both_ways_and_persists() {
     assert_eq!(h.screens(), ["title"], "no picker: the layout was saved");
     assert_eq!(layout(&h), Some(LEFT_HANDED));
     h.keys("j");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
 }
 
 /// Acceptance: switching layout loads that layout's own custom keys.
@@ -435,9 +442,12 @@ fn classic_switches_to_casual_at_preparations_and_never_back() {
     // The map menu is still open on Options: Restart Battle is two down,
     // and goes back to Preparations. Its Options tab is two to the right.
     h.keys("Down Down f f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h.keys("Right Right f Up Up Up Up");
-    assert_eq!(h.screens(), ["title", "preparations", "options"]);
+    assert_eq!(
+        h.screens(),
+        ["title", "game_flow", "preparations", "options"]
+    );
     assert!(shows(&h, "f switch to Casual"));
     h.keys("f");
     assert!(shows(&h, "Switch to Casual? This can't be undone."));
@@ -445,7 +455,10 @@ fn classic_switches_to_casual_at_preparations_and_never_back() {
     assert_snapshot!(h.snapshot());
     // No: still Classic, still in Options.
     h.keys("d");
-    assert_eq!(h.screens(), ["title", "preparations", "options"]);
+    assert_eq!(
+        h.screens(),
+        ["title", "game_flow", "preparations", "options"]
+    );
     assert!(shows(&h, "Classic"));
     // Yes.
     h.keys("f f");
@@ -460,12 +473,12 @@ fn classic_switches_to_casual_at_preparations_and_never_back() {
     h.keys("d");
     assert_eq!(mode(&h), Some(GameMode::Casual));
     h.keys("Right f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let battle = h.battle().map(|b| b.state().mode());
     assert_eq!(battle, Some(GameMode::Casual));
     // Options in the battle: Casual, and no message about Preparations.
     h.keys("f d Down Down Down f Up Up Up Up f");
-    assert_eq!(h.screens(), ["title", "battle", "options"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
     assert!(shows(&h, "Casual") && !shows(&h, "Preparations"));
     assert_eq!(mode(&h), Some(GameMode::Casual));
 }
@@ -476,7 +489,7 @@ fn a_switch_at_the_first_preparations_starts_the_battle_in_casual() {
     let mut h = options_at_preparations();
     assert!(shows(&h, "Game mode") && shows(&h, "Classic"));
     h.keys("Up Up Up Up f f d Right f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(mode(&h), Some(GameMode::Casual));
     let battle = h.battle().map(|b| b.state().mode());
     assert_eq!(battle, Some(GameMode::Casual));
@@ -492,10 +505,10 @@ fn a_casual_campaign_shows_its_mode_and_the_title_shows_none() {
     h.keys("f Down f f Up f");
     assert_eq!(h.top_screen(), "dialogue");
     h.keys("d f f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(mode(&h), Some(GameMode::Casual));
     h.keys("d Down Down Down f Up Up Up Up");
-    assert_eq!(h.screens(), ["title", "battle", "options"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
     assert!(shows(&h, "Game mode") && shows(&h, "Casual"));
     h.keys("f");
     assert!(!shows(&h, "Switch to Casual?"));
@@ -513,7 +526,10 @@ fn a_casual_campaign_shows_its_mode_and_the_title_shows_none() {
 fn the_tutorial_set_to_none_at_preparations_stops_the_tips() {
     let mut h = title();
     h.with_tips().keys("Down f Right Right f");
-    assert_eq!(h.screens(), ["title", "preparations", "options"]);
+    assert_eq!(
+        h.screens(),
+        ["title", "game_flow", "preparations", "options"]
+    );
     assert_eq!(tutorial(&h), Some(TutorialLevel::Full));
     h.keys("Up Up Up");
     assert_eq!(value(&h, Row::Tutorial), setting("Full"));
@@ -521,12 +537,12 @@ fn the_tutorial_set_to_none_at_preparations_stops_the_tips() {
     assert_eq!(value(&h, Row::Tutorial), setting("None"));
     assert_snapshot!(h.snapshot());
     h.keys(KEEP);
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     assert_eq!(tutorial(&h), Some(TutorialLevel::None));
     // `Fight!` (the next tab), then the `PLAYER PHASE` banner closed: at
     // Full the start tip would show now.
     h.keys("Right f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.wait(1.0);
     assert_eq!(tip(&h), None);
     assert!(!shows(&h, "Your move"));
@@ -541,7 +557,7 @@ fn a_discarded_tutorial_level_goes_back_and_the_title_has_no_row() {
     assert_eq!(value(&h, Row::Tutorial), setting("Short"));
     // Cancel asks, on Back; one left is Discard.
     h.keys("d Left f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.wait(FRAME_DT);
     assert_eq!(
         h.game().ctx().game.campaign_tutorial,
@@ -562,7 +578,7 @@ fn a_discarded_tutorial_level_goes_back_and_the_title_has_no_row() {
 fn the_tutorial_level_set_in_a_battle_is_saved() {
     let mut h = options_in_battle();
     h.keys("Up Up Up Right Right").keys(KEEP);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.wait(FRAME_DT);
     assert_eq!(tutorial(&h), Some(TutorialLevel::None));
     // The map menu is still open on Options: Suspend is the next row.
@@ -573,7 +589,7 @@ fn the_tutorial_level_set_in_a_battle_is_saved() {
     assert!(saved.contains("tutorial:r#None"), "{saved}");
     let mut h = relaunch(h);
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(tutorial(&h), Some(TutorialLevel::None));
     assert_eq!(
         h.game().ctx().game.campaign_tutorial,
@@ -897,12 +913,18 @@ fn leaving_options_from_the_title_asks_whether_to_keep_the_changes() {
 
 #[test]
 fn leaving_options_from_the_map_menu_asks_whether_to_keep_the_changes() {
-    leaving_asks_and_each_answer_does_its_part(options_in_battle, &["title", "battle"]);
+    leaving_asks_and_each_answer_does_its_part(
+        options_in_battle,
+        &["title", "game_flow", "battle"],
+    );
 }
 
 #[test]
 fn leaving_options_at_preparations_asks_whether_to_keep_the_changes() {
-    leaving_asks_and_each_answer_does_its_part(options_at_preparations, &["title", "preparations"]);
+    leaving_asks_and_each_answer_does_its_part(
+        options_at_preparations,
+        &["title", "game_flow", "preparations"],
+    );
 }
 
 /// The question's look.

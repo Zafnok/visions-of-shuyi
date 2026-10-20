@@ -4,10 +4,11 @@ use super::*;
 use crate::harness::Harness;
 use crate::input::Action;
 use crate::screen::tests::ctx;
+use crate::screens::popped_with;
 
-fn update(s: &mut ModeSelectScreen, actions: &[Action]) -> String {
+fn update(s: &mut ModeSelectScreen, actions: &[Action]) -> Transition {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
-    format!("{:?}", s.update(&mut ctx(), &input))
+    s.update(&mut ctx(), &input)
 }
 
 /// The tests (and the game flow) reach the screen through `as_any`.
@@ -18,27 +19,24 @@ fn it_can_be_found_by_its_type() {
     assert!(any.downcast_ref::<ModeSelectScreen>().is_some());
 }
 
+/// Confirm pops with the focused mode, for the game flow below.
 #[test]
-fn confirm_picks_the_focused_mode() {
+fn confirm_pops_with_the_focused_mode() {
     let mut s = ModeSelectScreen::new(&ctx());
     assert_eq!(s.name(), "mode_select");
-    assert_eq!(update(&mut s, &[Action::CursorDown]), "None");
-    assert_eq!(s.result(), None);
-    assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
-    assert_eq!(s.result(), Some(GameMode::Casual));
+    let moved = update(&mut s, &[Action::CursorDown]);
+    assert!(matches!(moved, Transition::None));
+    let picked = update(&mut s, &[Action::Confirm]);
+    assert_eq!(popped_with(picked), Some(GameMode::Casual));
     let mut s = ModeSelectScreen::new(&ctx());
-    assert_eq!(
-        update(&mut s, &[Action::Confirm, Action::CursorDown]),
-        "Pop"
-    );
-    assert_eq!(s.result(), Some(GameMode::Classic));
+    let picked = update(&mut s, &[Action::Confirm, Action::CursorDown]);
+    assert_eq!(popped_with(picked), Some(GameMode::Classic));
 }
 
 #[test]
 fn cancel_goes_back_without_a_mode() {
     let mut s = ModeSelectScreen::new(&ctx());
-    assert_eq!(update(&mut s, &[Action::Cancel]), "Pop");
-    assert_eq!(s.result(), None);
+    assert!(matches!(update(&mut s, &[Action::Cancel]), Transition::Pop));
 }
 
 /// The view on the first frame: the heading, both modes (Classic focused),

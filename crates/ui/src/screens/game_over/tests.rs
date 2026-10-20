@@ -3,10 +3,17 @@ use insta::assert_snapshot;
 use super::*;
 use crate::harness::Harness;
 use crate::screen::tests::ctx;
+use crate::screens::popped_with;
 
 fn update(s: &mut dyn Screen<Shuyi>, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
     format!("{:?}", s.update(&mut ctx(), &input))
+}
+
+/// What one update with `actions` pops with: the choice, if it does.
+fn chosen(s: &mut GameOverScreen, actions: &[Action]) -> Option<GameOverChoice> {
+    let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
+    popped_with(s.update(&mut ctx(), &input))
 }
 
 /// A frame of `dt` seconds with nothing pressed.
@@ -38,21 +45,29 @@ fn to_be_continued_can_be_found_by_its_type() {
     assert!(any.downcast_ref::<ToBeContinuedScreen>().is_some());
 }
 
+/// Game Over is an overlay over the lost battle while the battle still
+/// shows through its opening animation, and covers it once it is black.
+#[test]
+fn game_over_shows_the_battle_only_while_it_fades() {
+    let s = GameOverScreen::new(&ctx(), false);
+    assert!(s.shows_battle());
+    assert!(s.is_overlay());
+    let s = settled(false);
+    assert!(!s.shows_battle());
+    assert!(!s.is_overlay());
+}
+
 #[test]
 fn game_over_offers_retry_and_title() {
     let mut s = settled(false);
     assert_eq!(s.name(), "game_over");
     // Nothing to back out of.
     assert_eq!(update(&mut s, &[Action::Cancel]), "None");
-    assert_eq!(s.result(), None);
-    assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
-    assert_eq!(s.result(), Some(GameOverChoice::Retry));
+    let retry = chosen(&mut s, &[Action::Confirm]);
+    assert_eq!(retry, Some(GameOverChoice::Retry));
     let mut s = settled(false);
-    assert_eq!(
-        update(&mut s, &[Action::CursorDown, Action::Confirm]),
-        "Pop"
-    );
-    assert_eq!(s.result(), Some(GameOverChoice::Title));
+    let title = chosen(&mut s, &[Action::CursorDown, Action::Confirm]);
+    assert_eq!(title, Some(GameOverChoice::Title));
 }
 
 /// The animation runs on the frames' time alone: two seconds from the
@@ -105,12 +120,11 @@ fn a_press_ends_the_animation_and_does_nothing_else() {
         wait(&mut s, 0.5);
         assert_eq!(update(&mut s, &actions), "None");
         assert!(s.finished());
-        assert_eq!(s.result(), None);
         let menu = s.view(&c).menu.unwrap();
         assert_eq!(menu.focused().unwrap().label, c.text("game_over.rewind"));
         // The next one is the menu's.
-        assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
-        assert_eq!(s.result(), Some(GameOverChoice::Rewind));
+        let rewind = chosen(&mut s, &[Action::Confirm]);
+        assert_eq!(rewind, Some(GameOverChoice::Rewind));
     }
     // A key bound to nothing, and a controller button, end it too.
     let chord = crate::input::Chord::parse("F9").unwrap();
@@ -120,7 +134,6 @@ fn a_press_ends_the_animation_and_does_nothing_else() {
         let mut s = GameOverScreen::new(&c, false);
         assert_eq!(format!("{:?}", s.update(&mut c, &input)), "None");
         assert!(s.finished());
-        assert_eq!(s.result(), None);
     }
     // The press's own frame adds no time of its own: it is the end.
     let mut s = GameOverScreen::new(&c, false);
@@ -217,17 +230,14 @@ fn game_over_offers_rewind_first_while_charges_are_left() {
     );
     assert_eq!(menu.focused().unwrap().label, c.text("game_over.rewind"));
     let mut s = settled(true);
-    assert_eq!(update(&mut s, &[Action::Confirm]), "Pop");
-    assert_eq!(s.result(), Some(GameOverChoice::Rewind));
+    let rewind = chosen(&mut s, &[Action::Confirm]);
+    assert_eq!(rewind, Some(GameOverChoice::Rewind));
     let mut s = settled(true);
-    update(&mut s, &[Action::CursorDown, Action::Confirm]);
-    assert_eq!(s.result(), Some(GameOverChoice::Retry));
+    let retry = chosen(&mut s, &[Action::CursorDown, Action::Confirm]);
+    assert_eq!(retry, Some(GameOverChoice::Retry));
     let mut s = settled(true);
-    update(
-        &mut s,
-        &[Action::CursorDown, Action::CursorDown, Action::Confirm],
-    );
-    assert_eq!(s.result(), Some(GameOverChoice::Title));
+    let down_twice = [Action::CursorDown, Action::CursorDown, Action::Confirm];
+    assert_eq!(chosen(&mut s, &down_twice), Some(GameOverChoice::Title));
 }
 
 #[test]

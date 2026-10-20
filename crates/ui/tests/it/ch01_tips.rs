@@ -39,9 +39,12 @@ fn chapter_1() -> Harness {
     skip_scenes(&mut h);
     h.keys("f");
     skip_scenes(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.wait(0.1);
-    let campaign = h.flow().and_then(|f| f.campaign()).map(|c| c.tutorial);
+    let campaign = h
+        .flow()
+        .and_then(|f| f.campaign_now(h.game().ctx()))
+        .map(|c| c.tutorial);
     assert_eq!(campaign, Some(TutorialLevel::Full));
     assert_eq!(close_tips(&mut h), [TipTrigger::FirstBattleStart]);
     assert_eq!(h.cursor_tile(), Some(LEAD));

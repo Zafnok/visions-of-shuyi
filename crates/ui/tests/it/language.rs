@@ -28,7 +28,7 @@ fn title() -> Harness {
 fn quick_battle() -> Harness {
     let mut h = title();
     h.keys("Down f Left f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
 
@@ -347,7 +347,7 @@ fn the_unit_list_is_painted_in_the_test_language() {
 fn a_scene_over_the_map_is_in_the_test_language() {
     let mut h = quick_battle();
     h.keys("F2 Down Down Down f");
-    assert_eq!(h.screens(), ["title", "battle", "dialogue"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "dialogue"]);
     h.keys("f");
     assert!(shows(&h, "VILLAGE OF HETH, DUSK"));
     assert!(shows(&h, "THE RAIN HAD NOT STOPPED FOR THREE DAYS."));

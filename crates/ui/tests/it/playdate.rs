@@ -10,7 +10,6 @@ use trpg_content::FontAtlasDef;
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{Faction, Phase};
-use trpg_ui::flow::{FlowScreen, Stage};
 use trpg_ui::game::system_menu::SystemMenuEntry;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{
@@ -24,7 +23,9 @@ use trpg_ui::screens::battle::map_menu::MapEntry;
 use trpg_ui::screens::battle::mode::Mode;
 use trpg_ui::screens::battle::rewind::RewindScreen;
 use trpg_ui::screens::key_bindings::view::SlotView;
-use trpg_ui::screens::{KeyBindingsScreen, OptionsScreen};
+use trpg_ui::screens::{
+    FamiliarityScreen, KeyBindingsScreen, LeadSelectScreen, ModeSelectScreen, OptionsScreen,
+};
 use trpg_ui::widgets::help::key_name;
 use trpg_ui::{
     ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, RawInputEvent, ShuyiCtx,
@@ -75,7 +76,7 @@ fn the_d_pad_a_and_b_play_from_the_title_into_chapter_ones_first_battle() {
     // The battle's banner (A), then its opening scene.
     h.pad("South");
     skip_scenes(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.game().ctx().layout(), None);
     assert_eq!(h.game().ctx().device, Device::Pad(PadKind::Playdate));
     let mut name = DEFAULT_NAME.to_owned();
@@ -134,9 +135,10 @@ fn new_game_to_the_first_scene_on_the_playdates_skins() {
     let mut h = Harness::first_launch_and(playdate_skins).with_shipped_story();
     h.use_pad(PadKind::Playdate);
     let mut one_bit = OneBit::new(&h);
-    // A ends the title's wait, then picks New Game.
-    h.pad("South South");
-    let Some(Stage::Mode(mode)) = h.flow().map(FlowScreen::stage) else {
+    // A ends the title's wait, then picks New Game (on its release: the
+    // game flow pushes its first screen on the next frame).
+    h.pad("South South").wait(trpg_ui::harness::FRAME_DT);
+    let Some(mode) = h.screen::<ModeSelectScreen>() else {
         panic!("no game mode screen: {:?}", h.screens());
     };
     let view = mode.view(h.game().ctx());
@@ -147,7 +149,7 @@ fn new_game_to_the_first_scene_on_the_playdates_skins() {
     assert_snapshot!("playdate_mode_select", h.snapshot());
     one_bit.check(&h);
     h.pad("South");
-    let Some(Stage::Familiarity(_, familiarity)) = h.flow().map(FlowScreen::stage) else {
+    let Some(familiarity) = h.screen::<FamiliarityScreen>() else {
         panic!("no familiarity screen: {:?}", h.screens());
     };
     assert_eq!(familiarity.view(h.game().ctx()).menu.items.len(), 3);
@@ -159,7 +161,7 @@ fn new_game_to_the_first_scene_on_the_playdates_skins() {
     one_bit.check(&h);
     // A on the name opens the grid; B deletes a letter, A types the first.
     h.pad("DpadDown South East South");
-    let Some(Stage::Lead(_, _, lead)) = h.flow().map(FlowScreen::stage) else {
+    let Some(lead) = h.screen::<LeadSelectScreen>() else {
         panic!("no lead screen: {:?}", h.screens());
     };
     let view = lead.view(h.game().ctx());
@@ -341,7 +343,7 @@ fn the_one_bit_frames_are_the_references_whole_or_changed() {
     one_bit.check(&h);
     skip_scenes(&mut h);
     one_bit.frames(&mut h, 3, 0.4);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     // The guide closed, the cursor around the lead.
     for step in [
         "South",
@@ -372,7 +374,7 @@ fn a_and_b_end_the_turn_and_hold_b_with_left_or_right_picks_a_unit() {
     h.pad("South");
     skip_scenes(&mut h);
     h.wait(1.0);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let battle = |h: &Harness| h.battle().map(|b| b.mode().clone());
     let idle = |h: &Harness| matches!(battle(h), Some(Mode::Idle { .. }));
     let on_a_ready_unit = |h: &Harness| {
@@ -425,7 +427,7 @@ fn first_battle_and(setup: impl FnOnce(&mut Ctx)) -> Harness {
     h.pad("South");
     skip_scenes(&mut h);
     h.wait(1.0);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h
 }
 
@@ -627,7 +629,7 @@ fn the_pcs_map_menu_has_no_shortcut_entries() {
         }
     }
     h.wait(1.0);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
     h.keys("d");
     assert_eq!(map_menu_shown(&h), MapEntry::ALL);
@@ -665,11 +667,10 @@ fn the_system_menu_entries_work_where_they_can() {
         h.wait(0.25);
     }
     assert_eq!(h.top_screen(), "dialogue");
-    // The chapter's scene is the flow's (a battle's scenes are on the
-    // stack).
-    let log_open = |h: &Harness| match h.flow().map(FlowScreen::stage) {
-        Some(Stage::Scene(scene)) => scene.is_log_open(),
-        _ => false,
+    // The chapter's scene, over the game flow.
+    let log_open = |h: &Harness| {
+        let scene = h.screen::<trpg_ui::screens::DialogueScreen>();
+        scene.is_some_and(trpg_ui::screens::DialogueScreen::is_log_open)
     };
     h.wait(3.0);
     h.system_menu(SystemMenuEntry::DialogueLog);
@@ -683,27 +684,27 @@ fn the_system_menu_entries_work_where_they_can() {
     h.pad("South");
     skip_scenes(&mut h);
     h.wait(1.0);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     // The battle map: the danger zone toggles; no log.
     h.system_menu(SystemMenuEntry::DangerZone);
     assert!(battle(&h).danger().is_some());
     h.system_menu(SystemMenuEntry::DangerZone);
     assert!(battle(&h).danger().is_none());
     h.system_menu(SystemMenuEntry::DialogueLog);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     // Options over the map, and over the open map menu.
     h.system_menu(SystemMenuEntry::Options);
-    assert_eq!(h.screens(), ["title", "battle", "options"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
     h.pad("East");
     h.pad("East");
     assert!(matches!(battle(&h).mode(), Mode::MapMenu { .. }));
     h.system_menu(SystemMenuEntry::Options);
-    assert_eq!(h.screens(), ["title", "battle", "options"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "options"]);
     h.pad("East");
     assert!(matches!(battle(&h).mode(), Mode::MapMenu { .. }));
     // A unit selected: Options waits for the map.
     h.pad("East South");
     assert!(matches!(battle(&h).mode(), Mode::Selected(_)));
     h.system_menu(SystemMenuEntry::Options);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }

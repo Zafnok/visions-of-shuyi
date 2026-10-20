@@ -14,6 +14,7 @@ use crate::audio::AudioRequest;
 use crate::harness::Harness;
 use crate::screen::tests::ctx;
 use crate::screens::battle::QUICK_BATTLE;
+use crate::screens::popped_with;
 
 use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
 
@@ -76,7 +77,7 @@ const PUT_BACK: &str = "(put back in stock)";
 fn harness() -> Harness {
     let mut h = Harness::with_layout(RIGHT_HANDED);
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     h
 }
 
@@ -87,7 +88,6 @@ fn opens_on_the_loadouts_tab_with_an_empty_pack() {
     assert_eq!(s.name(), "preparations");
     assert!(!s.is_overlay());
     assert_eq!((s.tab(), s.focus()), (Tab::Loadouts, Focus::Tabs));
-    assert_eq!(s.outcome(), None);
     assert_eq!(s.message(), None);
     assert!(!s.is_asking_leave());
     assert_eq!(s.pack_header(&c), "Pack 0/6");
@@ -119,7 +119,6 @@ fn left_and_right_pick_a_tab_and_fight_starts_the_battle() {
     );
     assert_eq!((s.tab(), s.focus()), (Tab::Options, Focus::Tabs));
     assert_eq!(update(&mut s, &mut c, &[]), "None");
-    assert_eq!(s.outcome(), None);
     update(&mut s, &mut c, &[CursorRight]);
     assert_eq!(s.tab(), Tab::Fight);
     // Down opens a tab, but never starts the battle.
@@ -129,8 +128,10 @@ fn left_and_right_pick_a_tab_and_fight_starts_the_battle() {
     assert_eq!(s.tab(), Tab::Loadouts, "wraps");
     update(&mut s, &mut c, &[CursorLeft]);
     assert_eq!(s.tab(), Tab::Fight);
-    assert_eq!(update(&mut s, &mut c, &[Confirm]), "Pop");
-    assert_eq!(s.outcome(), Some(PrepOutcome::Fight));
+    // Fight! pops with what was prepared, for the game flow below.
+    let input = FrameInput::new(vec![Confirm], 0.0, vec![]);
+    let prepared = popped_with::<Preparations>(s.update(&mut c, &input));
+    assert_eq!(prepared.as_ref(), Some(s.prep()));
 }
 
 #[test]
@@ -398,8 +399,8 @@ fn leaving_asks_first_and_only_when_allowed() {
     assert_eq!((s.tab(), s.focus()), (Tab::Loadouts, Focus::Tabs));
     assert_eq!(sounds(&mut s, &mut c, &[Cancel]), ["menu_cancel"]);
     assert!(!s.is_asking_leave());
+    // Leaving pops with nothing.
     assert_eq!(update(&mut s, &mut c, &[Cancel, Confirm]), "Pop");
-    assert_eq!(s.outcome(), Some(PrepOutcome::Leave));
 
     let mut s = PreparationsScreen::new(setup(&c), false);
     assert_eq!(s.prep().bench.len(), 1);
@@ -931,15 +932,13 @@ fn the_view_of_an_empty_army_has_no_gear() {
     assert_eq!(loadouts(&view).gear, None);
 }
 
-/// The running game's Preparations says the same through the game flow
-/// that hosts it (ADR-0054: a behaviour test reads the view).
+/// The running game's Preparations, over the game flow, says the same
+/// (ADR-0054: a behaviour test reads the view).
 #[test]
-fn the_hosted_screen_gives_its_view() {
-    use crate::flow::FlowScreen;
+fn the_flows_screen_gives_its_view() {
     let mut h = harness();
     h.keys("Right f");
-    let flow = h.game().screen::<FlowScreen>();
-    let screen = flow.and_then(FlowScreen::preparations);
+    let screen = h.game().screen::<PreparationsScreen>();
     let view = screen.expect("Preparations is open").view(h.game().ctx());
     assert!(!view.on_tabs);
     assert_eq!(pack(&view).spare.state, ListState::Focused);

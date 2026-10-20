@@ -2,9 +2,11 @@ use trpg_core::{Command, LeadGender, LeadProfile, Pos, StatKind, UnitAction, Uni
 
 use super::*;
 use crate::audio::AudioRequest;
-use crate::harness::Harness;
+use crate::harness::{FRAME_DT, Harness};
 use crate::input::Action::Cancel;
+use crate::screen::ScreenStack;
 use crate::screen::tests::ctx;
+use crate::screens::GameOverScreen;
 use crate::screens::battle::progress::stat_row;
 
 /// Playtime counts the seconds since the campaign began, carrying on
@@ -20,13 +22,94 @@ fn playtime_carries_on_from_the_campaigns() {
     flow.begin(&mut c, campaign);
     assert_eq!(c.game.lead, lead);
     c.clock_s = 12.5;
-    flow.count_playtime(&c);
-    assert_eq!(flow.campaign().map(|c| c.playtime_s), Some(102));
+    let campaign = flow.campaign_now(&c);
+    assert_eq!(campaign.map(|c| c.playtime_s), Some(102));
 }
 
-fn update(flow: &mut FlowScreen, c: &mut Ctx, actions: &[crate::input::Action]) {
+/// One frame of the stack with `actions`.
+fn update(stack: &mut ScreenStack, c: &mut Ctx, actions: &[crate::input::Action]) {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
-    flow.update(c, &input);
+    stack.update(c, &input);
+}
+
+/// `flow` on a stack of its own, after the frame that pushes its first
+/// screen.
+fn stacked(c: &mut Ctx, flow: FlowScreen) -> ScreenStack {
+    let mut stack = ScreenStack::new(Box::new(flow));
+    update(&mut stack, c, &[]);
+    stack
+}
+
+/// The name of the screen on top.
+fn top(stack: &ScreenStack) -> &'static str {
+    stack.top_name().unwrap_or_default()
+}
+
+/// The flow as the root of a running game, its first screen pushed.
+fn harness(c: Ctx, flow: FlowScreen) -> Harness {
+    let mut h = Harness::from_game(crate::game::new(c, Box::new(flow)));
+    h.frame(&[], FRAME_DT);
+    h
+}
+
+/// The flow pushes its first screen over itself on its first update; until
+/// then it is named, and drawn, as that screen.
+#[test]
+fn the_flow_pushes_its_first_screen() {
+    let mut c = ctx();
+    let flow = FlowScreen::new_game(&c);
+    assert_eq!(flow.name(), "mode_select");
+    let stack = stacked(&mut c, flow);
+    assert_eq!(stack.names(), ["game_flow", "mode_select"]);
+}
+
+/// On the frame it is pushed, before its first screen is, the flow looks
+/// like that screen.
+#[test]
+fn the_flow_draws_its_first_screen_until_it_pushes_it() {
+    use crate::color::UiColor;
+    use crate::console::{ConsoleSizes, ConsoleSpec};
+    use crate::glyph_buffer::Cell;
+    let c = ctx();
+    let p = &c.palette;
+    let stale = Cell::new('x', p.get(UiColor::Enemy), p.get(UiColor::PanelBg));
+    let mut flow = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
+    FlowScreen::new_game(&c).draw(&c, &mut flow);
+    let mut mode = GlyphBuffer::with_spec(ConsoleSpec::PC, stale);
+    ModeSelectScreen::new(&c).draw(&c, &mut mode);
+    assert_eq!(flow, mode);
+    assert_ne!(flow, GlyphBuffer::with_spec(ConsoleSpec::PC, stale));
+}
+
+/// Each screen of New Game pops with its answer, and the flow pushes the
+/// next; going back pops with nothing, and the flow pushes the one before.
+#[test]
+fn new_game_reads_what_each_screen_pops_with() {
+    use crate::input::Action::{Confirm, CursorDown};
+    let mut c = ctx();
+    let flow = FlowScreen::new_game(&c);
+    let mut stack = stacked(&mut c, flow);
+    // Casual, then back from the familiarity screen: the mode again.
+    update(&mut stack, &mut c, &[CursorDown, Confirm]);
+    assert_eq!(stack.names(), ["game_flow", "familiarity"]);
+    update(&mut stack, &mut c, &[Cancel]);
+    assert_eq!(top(&stack), "mode_select");
+    // Casual, familiar with other strategy RPGs, the default lead.
+    update(&mut stack, &mut c, &[CursorDown, Confirm]);
+    update(&mut stack, &mut c, &[CursorDown, Confirm]);
+    assert_eq!(top(&stack), "lead_select");
+    update(&mut stack, &mut c, &[CursorDown, CursorDown, Confirm]);
+    let flow = stack.find::<FlowScreen>();
+    let campaign = flow.and_then(FlowScreen::campaign);
+    let campaign = campaign.unwrap_or_else(|| panic!("no campaign"));
+    assert_eq!(campaign.mode, GameMode::Casual);
+    assert_eq!(campaign.tutorial, TutorialLevel::Short);
+    assert_eq!(top(&stack), "dialogue");
+    // Back from the mode screen: the flow is over.
+    let flow = FlowScreen::new_game(&c);
+    let mut stack = stacked(&mut c, flow);
+    update(&mut stack, &mut c, &[Cancel]);
+    assert!(stack.is_empty());
 }
 
 /// Nick (0408): after a defeat, `Retry Battle` goes back to Preparations
@@ -35,38 +118,39 @@ fn update(flow: &mut FlowScreen, c: &mut Ctx, actions: &[crate::input::Action]) 
 fn retry_goes_back_to_preparations_as_they_were_left() {
     use crate::input::Action::{Confirm, CursorLeft, CursorRight};
     let mut c = ctx();
-    let mut flow = FlowScreen::quick_battle(&mut c).unwrap_or_else(|| panic!("no quick battle"));
-    assert_eq!(flow.name(), "preparations");
-    assert!(flow.battle().is_none());
+    let flow = FlowScreen::quick_battle(&mut c).unwrap_or_else(|| panic!("no quick battle"));
+    let mut stack = stacked(&mut c, flow);
+    assert_eq!(top(&stack), "preparations");
+    assert!(stack.find::<BattleScreen>().is_none());
     // Pack an Elixir, then Fight!.
-    update(&mut flow, &mut c, &[CursorRight, Confirm, Confirm]);
+    update(&mut stack, &mut c, &[CursorRight, Confirm, Confirm]);
     // Past the Options tab.
     update(
-        &mut flow,
+        &mut stack,
         &mut c,
         &[Cancel, CursorRight, CursorRight, Confirm],
     );
-    assert_eq!(flow.name(), "battle");
-    assert!(flow.preparations().is_none());
+    assert_eq!(stack.names(), ["game_flow", "battle"]);
     let elixir = [trpg_core::ItemId::new("elixir")];
-    let pack = |f: &FlowScreen| f.battle().map(|b| b.state().pack().items.clone());
-    assert_eq!(pack(&flow).as_deref(), Some(&elixir[..]));
-    // A defeat's Game Over, then Retry.
-    let Stage::Battle(lost) = flow.stage.clone() else {
-        panic!("no battle");
+    let pack = |s: &ScreenStack| {
+        let battle = s.find::<BattleScreen>();
+        battle.map(|b| b.state().pack().items.clone())
     };
-    flow.stage = Stage::GameOver(GameOverScreen::new(&c, false), lost);
+    assert_eq!(pack(&stack).as_deref(), Some(&elixir[..]));
+    // A defeat's Game Over, over the battle, then Retry.
+    stack.push(Box::new(GameOverScreen::new(&c, false)));
     // The first press ends Game Over's animation, the second picks.
-    update(&mut flow, &mut c, &[Confirm]);
-    assert_eq!(flow.name(), "game_over");
-    update(&mut flow, &mut c, &[Confirm]);
-    assert_eq!(flow.name(), "preparations");
-    let prep = flow.preparations().unwrap_or_else(|| panic!("no prep"));
+    update(&mut stack, &mut c, &[Confirm]);
+    assert_eq!(top(&stack), "game_over");
+    update(&mut stack, &mut c, &[Confirm]);
+    assert_eq!(stack.names(), ["game_flow", "preparations"]);
+    let prep = stack.find::<PreparationsScreen>();
+    let prep = prep.unwrap_or_else(|| panic!("no prep"));
     assert_eq!(prep.setup().pack.items, elixir);
     assert_eq!(prep.setup().stock.count(&elixir[0]), 1);
     // Fight! again: the same battle.
-    update(&mut flow, &mut c, &[CursorLeft, Confirm]);
-    assert_eq!(pack(&flow).as_deref(), Some(&elixir[..]));
+    update(&mut stack, &mut c, &[CursorLeft, Confirm]);
+    assert_eq!(pack(&stack).as_deref(), Some(&elixir[..]));
 }
 
 /// A battle without Preparations starts straight away, with its default
@@ -79,11 +163,13 @@ fn a_battle_without_preparations_starts_at_once() {
     campaign.chapter = "test".into();
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
+    let mut stack = stacked(&mut c, flow);
     // Skip the intro scene: Cancel, then Confirm.
-    update(&mut flow, &mut c, &[Cancel]);
-    update(&mut flow, &mut c, &[crate::input::Action::Confirm]);
-    assert_eq!(flow.name(), "battle");
-    let pack = flow.battle().map(|b| b.state().pack().items.len());
+    update(&mut stack, &mut c, &[Cancel]);
+    update(&mut stack, &mut c, &[crate::input::Action::Confirm]);
+    assert_eq!(top(&stack), "battle");
+    let pack = stack.find::<BattleScreen>();
+    let pack = pack.map(|b| b.state().pack().items.len());
     assert_eq!(pack, Some(2));
 }
 
@@ -93,36 +179,40 @@ fn a_battle_without_preparations_starts_at_once() {
 #[test]
 fn a_battle_has_the_look_its_maps_file_names() {
     use crate::input::Action::{Confirm, CursorLeft};
-    let look = |flow: &FlowScreen, c: &Ctx| flow.battle().map(|b| b.scene(c).look.tiles);
+    let look = |s: &ScreenStack, c: &Ctx| {
+        let battle = s.find::<BattleScreen>();
+        battle.map(|b| b.scene(c).look.tiles)
+    };
     // The Quick Battle opens on Preparations: Fight!.
-    let fight = |flow: &mut FlowScreen, c: &mut Ctx| {
-        assert_eq!(flow.name(), "preparations");
-        update(flow, c, &[CursorLeft, Confirm]);
+    let fight = |s: &mut ScreenStack, c: &mut Ctx| {
+        assert_eq!(top(s), "preparations");
+        update(s, c, &[CursorLeft, Confirm]);
     };
     // The Quick Battle's map names no look: a map outdoors.
     let mut c = ctx();
-    let mut flow = FlowScreen::quick_battle(&mut c).unwrap();
-    fight(&mut flow, &mut c);
-    assert_eq!(look(&flow, &c).as_deref(), Some("outdoor"));
+    let flow = FlowScreen::quick_battle(&mut c).unwrap();
+    let mut stack = stacked(&mut c, flow);
+    fight(&mut stack, &mut c);
+    assert_eq!(look(&stack, &c).as_deref(), Some("outdoor"));
     // With one: started.
     let mut c = ctx();
     let map = c.game.content.maps.get_mut("test_small").unwrap();
     map.look.tiles = "indoor".to_owned();
-    let mut flow = FlowScreen::quick_battle(&mut c).unwrap();
-    fight(&mut flow, &mut c);
-    assert_eq!(look(&flow, &c).as_deref(), Some("indoor"));
+    let flow = FlowScreen::quick_battle(&mut c).unwrap();
+    let mut stack = stacked(&mut c, flow);
+    fight(&mut stack, &mut c);
+    assert_eq!(look(&stack, &c).as_deref(), Some("indoor"));
     // Restarted: Preparations again, then the same look.
-    flow.restart(&mut c);
-    fight(&mut flow, &mut c);
-    assert_eq!(look(&flow, &c).as_deref(), Some("indoor"));
-    // Suspended, then continued.
-    let stage = std::mem::replace(&mut flow.stage, Stage::ToBeContinued(ToBeContinuedScreen));
-    let Stage::Battle(battle) = stage else {
-        panic!("no battle");
-    };
-    assert!(flow.suspend(&mut c, battle));
+    stack.apply_in(&mut c, Transition::pop_with(BattleEnd::Restart));
+    fight(&mut stack, &mut c);
+    assert_eq!(look(&stack, &c).as_deref(), Some("indoor"));
+    // Suspended (the flow is over), then continued.
+    let battle = stack.find::<BattleScreen>().cloned().unwrap();
+    let suspend = BattleEnd::Suspend(Box::new(battle));
+    assert!(stack.apply_in(&mut c, Transition::pop_with(suspend)));
     let continued = FlowScreen::resume(&mut c).unwrap();
-    assert_eq!(look(&continued, &c).as_deref(), Some("indoor"));
+    let stack = stacked(&mut c, continued);
+    assert_eq!(look(&stack, &c).as_deref(), Some("indoor"));
 }
 
 /// Whether some row of the screen contains `text`.
@@ -149,7 +239,7 @@ fn a_level_up_from_the_rewind_bonus_shows_the_level_up_screen() {
     let before = campaign.roster[0].clone();
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
-    let mut h = Harness::from_game(crate::game::new(c, Box::new(flow)));
+    let mut h = harness(c, flow);
     // Skip the intro, close the battle notes and turn 1's banner; the lead
     // seizes the fort.
     h.keys("d f f f");
@@ -159,12 +249,10 @@ fn a_level_up_from_the_rewind_bonus_shows_the_level_up_screen() {
         dest: Pos::new(5, 5),
         action: UnitAction::Seize,
     };
-    let battle = h.flow_mut().and_then(FlowScreen::battle_mut);
+    let battle = h.battle_mut();
     battle.unwrap_or_else(|| panic!("no battle")).send(&seize);
     h.keys("f");
-    assert_eq!(h.top_screen(), "results");
-    let stage = h.flow().map(FlowScreen::stage);
-    assert!(matches!(stage, Some(Stage::Results(_))));
+    assert_eq!(h.screens(), ["game_flow", "results"]);
     let row = "Mara          Exile    Lv 1  EXP █████████████████░░░ 85";
     assert!(shows(&h, row), "{}", h.snapshot());
     // A press fills the bars: she is level 2, and marked.
@@ -217,12 +305,12 @@ fn victory_line_after_the_knight_fell(mode: GameMode) -> (Option<String>, bool) 
     campaign.roster[1].stats.hp = 1;
     let mut flow = FlowScreen::new_game(&c);
     flow.begin(&mut c, campaign);
-    let mut h = Harness::from_game(crate::game::new(c, Box::new(flow)));
+    let mut h = harness(c, flow);
     // Skip the intro, close the battle notes and turn 1's banner.
     h.keys("d f f f");
     assert_eq!(h.top_screen(), "battle");
     let act = |h: &mut Harness, unit, dest, action| {
-        let battle = h.flow_mut().and_then(FlowScreen::battle_mut);
+        let battle = h.battle_mut();
         let battle = battle.unwrap_or_else(|| panic!("no battle"));
         battle.send(&Command::Act { unit, dest, action });
     };
@@ -234,8 +322,7 @@ fn victory_line_after_the_knight_fell(mode: GameMode) -> (Option<String>, bool) 
         art: None,
     };
     act(&mut h, UnitId(2), Pos::new(3, 6), attack);
-    let battle = h.flow().and_then(FlowScreen::battle);
-    let fallen = battle.map(|b| b.state().fallen().len());
+    let fallen = h.battle().map(|b| b.state().fallen().len());
     assert_eq!(fallen, Some(1), "the knight fell");
     h.wait(30.0);
     // The lead seizes the fort.
@@ -247,13 +334,12 @@ fn victory_line_after_the_knight_fell(mode: GameMode) -> (Option<String>, bool) 
         h.keys("f");
     }
     assert_eq!(h.top_screen(), "dialogue");
-    let flow = h.flow().unwrap_or_else(|| panic!("no flow"));
-    let Stage::Scene(scene) = flow.stage() else {
-        panic!("no scene");
-    };
+    let scene = h.screen::<DialogueScreen>();
+    let scene = scene.unwrap_or_else(|| panic!("no scene"));
     assert_eq!(scene.player().scene_id(), "test_victory");
     let text = scene.player().current().text.map(String::from);
-    let campaign = flow.campaign().unwrap_or_else(|| panic!("no campaign"));
+    let campaign = h.flow().and_then(FlowScreen::campaign);
+    let campaign = campaign.unwrap_or_else(|| panic!("no campaign"));
     (text, campaign.member(&knight).is_some())
 }
 
@@ -296,9 +382,10 @@ fn a_scene_with_nothing_to_say_for_the_army_is_passed_over() {
         flow.next_scene(c);
         flow
     };
-    let playing = |flow: &FlowScreen| match flow.stage() {
-        Stage::Scene(scene) => Some(scene.player().scene_id().to_owned()),
-        _ => None,
+    let playing = |flow: &FlowScreen| {
+        let next = flow.next.as_ref().and_then(|s| s.as_any());
+        let scene = next.and_then(|s| s.downcast_ref::<DialogueScreen>());
+        scene.map(|s| s.player().scene_id().to_owned())
     };
     // With the knight: played.
     let flow = start(&mut c, true, &["only_knight", "test_victory"]);
@@ -310,12 +397,14 @@ fn a_scene_with_nothing_to_say_for_the_army_is_passed_over() {
     assert!(flow.scenes.is_empty());
     // With no scene left: what follows them.
     let flow = start(&mut c, false, &["only_knight"]);
-    assert!(matches!(flow.stage(), Stage::SavePrompt(_)));
+    assert_eq!(flow.stage, Stage::SavePrompt);
+    assert_eq!(flow.name(), "save_prompt");
 }
 
 /// A battle lost on the turn limit with `charges` rewind charges, after
-/// the lord waited once: on Game Over.
-fn lost_flow(c: &mut Ctx, charges: u8) -> FlowScreen {
+/// the lord waited once, its music `battle_easy`: on Game Over, past its
+/// opening animation (0830).
+fn lost_flow(c: &mut Ctx, charges: u8) -> ScreenStack {
     use crate::input::Action::Confirm;
     use crate::screens::battle::quick_battle;
     use crate::screens::battle::testing::battle_charged;
@@ -331,7 +420,7 @@ fn lost_flow(c: &mut Ctx, charges: u8) -> FlowScreen {
         rout,
         charges,
     );
-    let mut battle = BattleScreen::new(state);
+    let mut battle = BattleScreen::new(state).with_music(Some("battle_easy".to_owned()));
     let lord = battle.state().units()[0].clone();
     battle.send(&Command::Act {
         unit: lord.id,
@@ -340,17 +429,29 @@ fn lost_flow(c: &mut Ctx, charges: u8) -> FlowScreen {
     });
     battle.send(&Command::EndPhase);
     let mut flow = FlowScreen::new_game(c);
-    flow.stage = Stage::Battle(Box::new(battle));
+    flow.show(Stage::Battle, Box::new(battle));
+    let mut stack = stacked(c, flow);
     for _ in 0..3000 {
-        if let Stage::GameOver(screen, _) = &mut flow.stage {
-            // Past its opening animation (0830).
-            screen.skip();
-            return flow;
-        }
+        // A press ends Game Over's opening animation.
+        let on_game_over = top(&stack) == "game_over";
         let input = FrameInput::new(vec![Confirm], 0.25, vec![]);
-        flow.update(c, &input);
+        stack.update(c, &input);
+        if on_game_over {
+            return stack;
+        }
     }
-    panic!("never lost: {}", flow.name());
+    panic!("never lost: {:?}", stack.names());
+}
+
+/// The labels of Game Over's menu, on top of `stack`.
+fn game_over_items(stack: &ScreenStack, c: &Ctx) -> Vec<String> {
+    let screen = stack.find::<GameOverScreen>();
+    let menu = screen
+        .unwrap_or_else(|| panic!("no game over"))
+        .view(c)
+        .menu;
+    let menu = menu.unwrap_or_else(|| panic!("no menu"));
+    menu.items.iter().map(|i| i.label.clone()).collect()
 }
 
 /// Acceptance (0822): Game Over lists `Rewind` while charges are left;
@@ -359,7 +460,9 @@ fn lost_flow(c: &mut Ctx, charges: u8) -> FlowScreen {
 fn game_over_rewinds_a_lost_battle() {
     use crate::input::Action::{Cancel, Confirm};
     let mut c = ctx();
-    let mut flow = lost_flow(&mut c, 2);
+    let mut stack = lost_flow(&mut c, 2);
+    // Over the lost battle.
+    assert_eq!(stack.names(), ["game_flow", "battle", "game_over"]);
     // 0809: `defeat` was asked for once, at the banner.
     let music = |c: &mut Ctx| -> Vec<String> {
         let cue = |r: AudioRequest| match r {
@@ -370,14 +473,8 @@ fn game_over_rewinds_a_lost_battle() {
         c.audio.take().into_iter().filter_map(cue).collect()
     };
     assert_eq!(music(&mut c), ["defeat"]);
-    flow.music = Some("battle_easy".to_owned());
-    let Stage::GameOver(screen, _) = flow.stage() else {
-        panic!("no game over");
-    };
-    let menu = screen.view(&c).menu.unwrap();
-    let labels: Vec<_> = menu.items.iter().map(|i| i.label.as_str()).collect();
     assert_eq!(
-        labels,
+        game_over_items(&stack, &c),
         [
             c.text("game_over.rewind"),
             c.text("game_over.retry"),
@@ -385,28 +482,29 @@ fn game_over_rewinds_a_lost_battle() {
         ]
     );
     // Backing out of the rewind screen returns to Game Over.
-    update(&mut flow, &mut c, &[Confirm]);
-    assert_eq!(flow.name(), "battle");
-    assert!(flow.battle().is_some_and(|b| b.rewind().is_some()));
-    update(&mut flow, &mut c, &[Cancel]);
-    assert_eq!(flow.name(), "game_over");
+    update(&mut stack, &mut c, &[Confirm]);
+    assert_eq!(top(&stack), "battle");
+    let battle = stack.find::<BattleScreen>();
+    assert!(battle.is_some_and(|b| b.rewind().is_some()));
+    update(&mut stack, &mut c, &[Cancel]);
+    assert_eq!(top(&stack), "game_over");
     // As it was left: its opening animation doesn't play again (0830).
-    let Stage::GameOver(screen, _) = flow.stage() else {
-        panic!("no game over");
-    };
+    let screen = stack.find::<GameOverScreen>();
+    let screen = screen.unwrap_or_else(|| panic!("no game over"));
     assert!(screen.finished());
     assert!(!screen.shows_battle());
     // `defeat` plays on all the while (0809).
-    update(&mut flow, &mut c, &[]);
+    update(&mut stack, &mut c, &[]);
     assert_eq!(music(&mut c), [""; 0]);
     // Rewind again and pick the point: the battle is on again.
-    update(&mut flow, &mut c, &[Confirm]);
+    update(&mut stack, &mut c, &[Confirm]);
     // The oldest point: before the lord's first action.
     let down = [crate::input::Action::CursorDown; 10];
-    update(&mut flow, &mut c, &down);
-    update(&mut flow, &mut c, &[Confirm, Confirm]);
-    assert_eq!(flow.name(), "battle");
-    let b = flow.battle().unwrap_or_else(|| panic!("no battle"));
+    update(&mut stack, &mut c, &down);
+    update(&mut stack, &mut c, &[Confirm, Confirm]);
+    assert_eq!(stack.names(), ["game_flow", "battle"]);
+    let b = stack.find::<BattleScreen>();
+    let b = b.unwrap_or_else(|| panic!("no battle"));
     assert!(b.state().outcome().is_none());
     assert!(b.rewind().is_none());
     assert_eq!(b.history().charges_left(), 1);
@@ -414,8 +512,8 @@ fn game_over_rewinds_a_lost_battle() {
     // The battle's own track again (0809), asked for once.
     assert_eq!(music(&mut c), ["battle_easy"]);
     // And it carries on: it is not sent back to Game Over.
-    update(&mut flow, &mut c, &[]);
-    assert_eq!(flow.name(), "battle");
+    update(&mut stack, &mut c, &[]);
+    assert_eq!(top(&stack), "battle");
     assert_eq!(music(&mut c), [""; 0]);
 }
 
@@ -423,14 +521,22 @@ fn game_over_rewinds_a_lost_battle() {
 #[test]
 fn game_over_without_charges_has_no_rewind() {
     let mut c = ctx();
-    let flow = lost_flow(&mut c, 0);
-    let Stage::GameOver(screen, _) = flow.stage() else {
-        panic!("no game over");
-    };
-    let menu = screen.view(&c).menu.unwrap();
-    let labels: Vec<_> = menu.items.iter().map(|i| i.label.as_str()).collect();
+    let stack = lost_flow(&mut c, 0);
     assert_eq!(
-        labels,
+        game_over_items(&stack, &c),
         [c.text("game_over.retry"), c.text("game_over.title")]
     );
+}
+
+/// `Title` on Game Over pops the battle and the flow: back to the title,
+/// with no campaign.
+#[test]
+fn title_on_game_over_ends_the_flow() {
+    use crate::input::Action::{Confirm, CursorDown};
+    let mut c = ctx();
+    let mut stack = lost_flow(&mut c, 0);
+    c.game.campaign_mode = Some(GameMode::Classic);
+    update(&mut stack, &mut c, &[CursorDown, Confirm]);
+    assert!(stack.is_empty());
+    assert_eq!(c.game.campaign_mode, None);
 }

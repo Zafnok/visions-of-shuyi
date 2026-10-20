@@ -3,8 +3,8 @@
 //! and the slot picker ([`SlotPickerScreen`]), which saves the campaign into
 //! one of the [`SLOTS`](crate::save::SLOTS) slots (asking before it overwrites one) or loads one.
 //!
-//! Both pop when they are done and say what happened through `result`; the
-//! game flow hosts them ([`crate::flow`]). The slot picker is made to be
+//! Both pop with what happened, for the screen below (the game flow,
+//! [`crate::flow`]). The slot picker is made to be
 //! opened from other menus too (the world map's `Save`, 1007).
 //!
 //! **The look is a skin** (ADR-0054): this module decides what the screens
@@ -26,7 +26,8 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::save::{self, Slot, playtime_text, slot_key};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::widgets::{ListCursor, Menu, MenuEvent, MenuItem};
+use crate::screens::pick_one;
+use crate::widgets::{ListCursor, Menu, MenuItem};
 
 /// The key of the question after a chapter's victory in the language
 /// files ([`Ctx::text`]).
@@ -41,12 +42,12 @@ pub const EMPTY_SLOT: &str = "save.empty";
 /// Slots shown at once.
 const VISIBLE: usize = 20;
 
-/// "Save your progress?" with `Yes` / `No`. Pops once one is chosen
-/// ([`result`](Self::result)); there is nothing to back out of.
+/// "Save your progress?" with `Yes` / `No`. Pops with the answer (a
+/// `bool`, `true` for `Yes`) once one is chosen; there is nothing to back
+/// out of.
 #[derive(Debug, Clone)]
 pub struct SavePromptScreen {
     menu: Menu,
-    chosen: Option<bool>,
 }
 
 impl SavePromptScreen {
@@ -60,13 +61,7 @@ impl SavePromptScreen {
             .to_vec();
         Self {
             menu: Menu::new(items).without_cancel(),
-            chosen: None,
         }
-    }
-
-    /// Whether the player wants to save, once the screen has popped.
-    pub fn result(&self) -> Option<bool> {
-        self.chosen
     }
 
     /// The bottom help line.
@@ -92,14 +87,7 @@ impl Screen<Shuyi> for SavePromptScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        for &action in &input.actions {
-            if let Some(MenuEvent::Chosen(i)) = self.menu.handle_with_sound(action, &mut ctx.audio)
-            {
-                self.chosen = Some(i == 0);
-                return Transition::Pop;
-            }
-        }
-        Transition::None
+        pick_one(&mut self.menu, ctx, input, &[true, false])
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
@@ -132,8 +120,8 @@ pub enum SlotOutcome {
 /// The [`SLOTS`](crate::save::SLOTS) save slots, 20 at a time: each with its chapter,
 /// game mode, army size and playtime. Confirm saves into the focused slot
 /// (the help line reads `overwrite` and "Overwrite slot N?" is asked if it
-/// holds something) or loads it; Cancel
-/// goes back. Pops either way; [`result`](Self::result) says which.
+/// holds something) or loads it, and pops with what it did (a
+/// [`SlotOutcome`]); Cancel pops with nothing (back).
 #[derive(Debug, Clone)]
 pub struct SlotPickerScreen {
     purpose: Purpose,
@@ -144,7 +132,6 @@ pub struct SlotPickerScreen {
     asking: bool,
     /// The message under the panel, if any.
     message: Option<String>,
-    outcome: Option<SlotOutcome>,
 }
 
 impl SlotPickerScreen {
@@ -176,7 +163,6 @@ impl SlotPickerScreen {
             cursor,
             asking: false,
             message: None,
-            outcome: None,
         }
     }
 
@@ -196,17 +182,6 @@ impl SlotPickerScreen {
                 .slots
                 .get(self.cursor.focus())
                 .is_some_and(|s| *s != Slot::Empty)
-    }
-
-    /// What the player did, once the screen has popped; `None` if they
-    /// went back.
-    pub fn result(&self) -> Option<&SlotOutcome> {
-        self.outcome.as_ref()
-    }
-
-    /// [`result`](Self::result), taking it.
-    pub fn into_result(self) -> Option<SlotOutcome> {
-        self.outcome
     }
 
     /// The focused slot's number (1 to [`SLOTS`](crate::save::SLOTS)).
@@ -245,30 +220,31 @@ impl SlotPickerScreen {
         ctx.audio.menu(MenuSound::Move);
     }
 
-    /// Writes the campaign into the focused slot. Returns whether it was
-    /// saved; a failure shows as the message.
-    fn write(&mut self, ctx: &mut Ctx) -> bool {
+    /// Writes the campaign into the focused slot. Returns the pop with
+    /// [`SlotOutcome::Saved`] if it was saved; a failure shows as the
+    /// message.
+    fn write(&mut self, ctx: &mut Ctx) -> Option<Transition> {
         let Purpose::Save(campaign) = &self.purpose else {
-            return false;
+            return None;
         };
         let file = SaveFile::chapter_cleared(campaign.as_ref().clone());
         let slot = self.focused_slot();
         match save::write(&mut ctx.storage, &slot_key(slot), &file) {
             Ok(()) => {
-                self.outcome = Some(SlotOutcome::Saved(slot));
                 ctx.audio.menu(MenuSound::Select);
-                true
+                Some(Transition::pop_with(SlotOutcome::Saved(slot)))
             }
             Err(e) => {
                 self.message = Some(e.text(ctx));
                 ctx.audio.menu(MenuSound::Denied);
-                false
+                None
             }
         }
     }
 
-    /// Confirm on the focused slot. Returns whether the picker is done.
-    fn confirm(&mut self, ctx: &mut Ctx) -> bool {
+    /// Confirm on the focused slot. Returns the pop, if the picker is
+    /// done.
+    fn confirm(&mut self, ctx: &mut Ctx) -> Option<Transition> {
         self.message = None;
         if self.is_saving() {
             if !self.would_overwrite() {
@@ -276,30 +252,30 @@ impl SlotPickerScreen {
             }
             self.asking = true;
             ctx.audio.menu(MenuSound::Select);
-            return false;
+            return None;
         }
         match self.slots.get(self.cursor.focus()) {
             Some(Slot::Saved(summary)) => {
                 let save = Box::new(summary.save.clone());
-                self.outcome = Some(SlotOutcome::Loaded(self.focused_slot(), save));
                 ctx.audio.menu(MenuSound::Select);
-                true
+                let loaded = SlotOutcome::Loaded(self.focused_slot(), save);
+                Some(Transition::pop_with(loaded))
             }
             Some(Slot::Unreadable(e)) => {
                 self.message = Some(e.text(ctx));
                 ctx.audio.menu(MenuSound::Denied);
-                false
+                None
             }
             Some(Slot::Empty) | None => {
                 ctx.audio.menu(MenuSound::Denied);
-                false
+                None
             }
         }
     }
 
-    /// An action while the overwrite question is open. Returns whether the
-    /// picker is done.
-    fn answer(&mut self, ctx: &mut Ctx, action: Action) -> bool {
+    /// An action while the overwrite question is open. Returns the pop, if
+    /// the picker is done.
+    fn answer(&mut self, ctx: &mut Ctx, action: Action) -> Option<Transition> {
         match action {
             Action::Confirm => {
                 self.asking = false;
@@ -308,9 +284,9 @@ impl SlotPickerScreen {
             Action::Cancel => {
                 self.asking = false;
                 ctx.audio.menu(MenuSound::Cancel);
-                false
+                None
             }
-            _ => false,
+            _ => None,
         }
     }
 
@@ -421,22 +397,22 @@ impl Screen<Shuyi> for SlotPickerScreen {
                 match action {
                     Action::CursorDown => {
                         self.step(ctx, true);
-                        false
+                        None
                     }
                     Action::CursorUp => {
                         self.step(ctx, false);
-                        false
+                        None
                     }
                     Action::Confirm => self.confirm(ctx),
                     Action::Cancel => {
                         ctx.audio.menu(MenuSound::Cancel);
-                        true
+                        Some(Transition::Pop)
                     }
-                    _ => false,
+                    _ => None,
                 }
             };
-            if done {
-                return Transition::Pop;
+            if let Some(pop) = done {
+                return pop;
             }
             if self.asking && action == Action::Confirm {
                 // The key that opened the question isn't its answer.

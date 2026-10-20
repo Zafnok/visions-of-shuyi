@@ -73,8 +73,6 @@ pub fn start(mut ctx: Ctx) -> Game {
     } else {
         TitleScreen::new(&ctx)
     };
-    // `Continue` and `Load Game` for the saves there are.
-    let title = title.refreshed(&ctx);
     Game::with_stack(ctx, ScreenStack::new(Box::new(title)), hooks())
 }
 
@@ -183,7 +181,7 @@ mod tests {
         assert_eq!(game.ctx().layout(), Some(LEFT_HANDED));
         // Chosen: keys act again and the picker stays away.
         tap(&mut game, Key::J);
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
     }
 
     /// Ticket 1033: a platform without a keyboard (the Playdate) starts on
@@ -204,7 +202,7 @@ mod tests {
         let press = |b| RawInputEvent::PadDown(b, PadKind::Playdate);
         game.frame(&[press(Button::South)], 0.0);
         game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
         assert_eq!(game.ctx().layout(), None);
         assert_eq!(game.ctx().device, playdate);
     }
@@ -263,11 +261,14 @@ mod tests {
     fn the_picker_opens_over_any_screen() {
         let mut game = start(first_launch());
         pad_tap(&mut game, Button::South);
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
         tap(&mut game, Key::D);
-        assert_eq!(game.screens(), ["title", "mode_select", "layout_picker"]);
+        assert_eq!(
+            game.screens(),
+            ["title", "game_flow", "mode_select", "layout_picker"]
+        );
         tap(&mut game, Key::F);
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
         assert_eq!(game.ctx().layout(), Some(RIGHT_HANDED));
         assert_eq!(game.input().keymap(), &game.ctx().keymap);
         tap(&mut game, Key::D);
@@ -307,7 +308,7 @@ mod tests {
         tap(&mut game, Key::F);
         assert_eq!(game.screens(), ["title"]);
         tap(&mut game, Key::J);
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
         tap(&mut game, Key::K);
         assert_eq!(game.screens(), ["title"]);
         let ctx = game.into_ctx();
@@ -351,7 +352,7 @@ mod tests {
         assert_eq!(game.ctx().key_prompt, KeyPrompt::Pressed);
         // The menu now: the same button chooses New Game.
         pad_tap(&mut game, Button::South);
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
     }
 
     fn pad_tap(game: &mut Game, button: Button) -> bool {
@@ -416,7 +417,7 @@ mod tests {
     fn pad_buttons_reach_the_top_screen() {
         let mut game = start(ctx());
         assert!(!pad_tap(&mut game, Button::South));
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
         pad_tap(&mut game, Button::East);
         assert_eq!(game.screens(), ["title"]);
         // Unbound buttons do nothing.
@@ -513,7 +514,9 @@ mod tests {
         assert_eq!(game.screens(), ["title"]);
         game.frame(&[down(Button::South)], 0.0);
         game.frame(&[RawInputEvent::PadUp(Button::South)], 0.0);
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        // The flow pushes its first screen on its first frame.
+        game.frame(&[], 0.0);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
     }
 
     /// Any controller button ends the title's wait too, bound or not;
@@ -547,7 +550,7 @@ mod tests {
         tap(&mut game, Key::F);
         assert_eq!(game.screens(), ["title"]);
         tap(&mut game, Key::G);
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
         assert_eq!(game.input().keymap(), &game.ctx().keymap);
     }
 
@@ -567,7 +570,7 @@ mod tests {
     fn events_reach_the_top_screen() {
         let mut game = start(ctx());
         assert!(!tap(&mut game, Key::F));
-        assert_eq!(game.screens(), ["title", "mode_select"]);
+        assert_eq!(game.screens(), ["title", "game_flow", "mode_select"]);
         tap(&mut game, Key::D);
         assert_eq!(game.screens(), ["title"]);
     }
@@ -670,7 +673,7 @@ mod tests {
         assert_eq!(names(release), ["title", "options"]);
         let mut debug = ctx();
         debug.debug_tools = true;
-        assert_eq!(names(debug), ["title", "preparations"]);
+        assert_eq!(names(debug), ["title", "game_flow", "preparations"]);
     }
 
     /// Records what the screen saw.

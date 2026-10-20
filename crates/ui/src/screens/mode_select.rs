@@ -18,8 +18,8 @@ use trpg_core::GameMode;
 
 use crate::glyph_buffer::GlyphBuffer;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::screens::Skins;
-use crate::widgets::{Menu, MenuEvent, MenuItem};
+use crate::screens::{Skins, pick_one};
+use crate::widgets::{Menu, MenuItem};
 
 /// The screen's skins: the PC's and the Playdate's (also the familiarity
 /// screen's).
@@ -45,12 +45,11 @@ pub const MODES: [(GameMode, &str, &str); 2] = [
     ),
 ];
 
-/// Classic or Casual: Confirm picks the focused mode, Cancel goes back.
-/// Pops either way; [`result`](Self::result) says which.
+/// Classic or Casual: Confirm pops with the focused mode (a
+/// [`GameMode`]), Cancel pops with nothing (back).
 #[derive(Debug, Clone)]
 pub struct ModeSelectScreen {
     menu: Menu,
-    chosen: Option<GameMode>,
 }
 
 impl ModeSelectScreen {
@@ -64,14 +63,7 @@ impl ModeSelectScreen {
             .map(|&(_, name, _)| MenuItem::new(ctx.text(name)));
         Self {
             menu: Menu::new(items.collect()),
-            chosen: None,
         }
-    }
-
-    /// The mode picked, once the screen has popped; `None` if the player
-    /// went back.
-    pub fn result(&self) -> Option<GameMode> {
-        self.chosen
     }
 
     /// The menu.
@@ -111,17 +103,7 @@ impl Screen<Shuyi> for ModeSelectScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        for &action in &input.actions {
-            match self.menu.handle_with_sound(action, &mut ctx.audio) {
-                Some(MenuEvent::Chosen(i)) => {
-                    self.chosen = MODES.get(i).map(|&(mode, ..)| mode);
-                    return Transition::Pop;
-                }
-                Some(MenuEvent::Cancelled) => return Transition::Pop,
-                None => {}
-            }
-        }
-        Transition::None
+        pick_one(&mut self.menu, ctx, input, &MODES.map(|(mode, ..)| mode))
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

@@ -55,14 +55,14 @@ fn to_battle(h: &mut Harness) {
     assert!(!shows(h, "Continue"));
     h.keys("f f f Up f");
     skip_scene(h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     close_notes(h);
     close_banner(h);
 }
 
 /// Whether the battle on screen shows its notes box.
 fn notes_open(h: &Harness) -> bool {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle.is_some_and(trpg_ui::screens::battle::BattleScreen::notes_open)
 }
 
@@ -99,14 +99,14 @@ fn win(h: &mut Harness) {
     // The VICTORY banner, the results (0810: a press fills the bars, a
     // press goes on), then the victory scene.
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "results"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "results"]);
     h.keys("f f");
     skip_scene(h);
-    assert_eq!(h.screens(), ["title", "save_prompt"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_prompt"]);
 }
 
 fn send(h: &mut Harness, cmd: &Command) {
-    let battle = h.flow_mut().and_then(|f| f.battle_mut());
+    let battle = h.battle_mut();
     battle.unwrap_or_else(|| panic!("no battle")).send(cmd);
 }
 
@@ -117,7 +117,7 @@ fn wait_at(h: &mut Harness, unit: UnitId, dest: Pos) {
 
 /// The battle on screen.
 fn battle(h: &Harness) -> BattleState {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle
         .unwrap_or_else(|| panic!("no battle"))
         .state()
@@ -126,7 +126,7 @@ fn battle(h: &Harness) -> BattleState {
 
 /// The battle on screen and its history, serialised.
 fn battle_text(h: &Harness) -> (String, String) {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     let battle = battle.unwrap_or_else(|| panic!("no battle"));
     let state = ron::to_string(battle.state());
     let history = ron::to_string(battle.history());
@@ -138,18 +138,18 @@ fn battle_text(h: &Harness) -> (String, String) {
 
 /// How many commands the battle on screen has in its history.
 fn moves(h: &Harness) -> usize {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle.map_or(0, |b| b.history().len())
 }
 
 /// Rewind charges left in the battle on screen.
 fn charges(h: &Harness) -> u8 {
-    let battle = h.flow().and_then(|f| f.battle());
+    let battle = h.battle();
     battle.map_or(0, |b| b.history().charges_left())
 }
 
 fn campaign(h: &Harness) -> Campaign {
-    let campaign = h.flow().and_then(|f| f.campaign());
+    let campaign = h.flow().and_then(|f| f.campaign_now(h.game().ctx()));
     campaign.unwrap_or_else(|| panic!("no campaign")).clone()
 }
 
@@ -174,7 +174,11 @@ fn shows(h: &Harness, text: &str) -> bool {
 fn suspend(h: &mut Harness) {
     h.keys("d Down Down Down Down f");
     assert!(shows(h, "Suspend the battle and return to the title?"));
-    assert_eq!(h.screens(), ["title", "battle"], "not before the answer");
+    assert_eq!(
+        h.screens(),
+        ["title", "game_flow", "battle"],
+        "not before the answer"
+    );
     h.keys("f");
 }
 
@@ -206,7 +210,7 @@ fn suspend_then_continue_restores_the_battle_exactly() {
     assert!(shows(&h, "Continue"));
     assert_snapshot!(h.snapshot());
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(battle_text(&h), before);
     assert_eq!(charges(&h), 2);
     // The battle carries on: its start-of-battle notes don't come up again.
@@ -232,7 +236,7 @@ fn continue_works_in_the_next_launch() {
     assert_eq!(h.screens(), ["title"]);
     assert!(shows(&h, "Continue"));
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(battle_text(&h), before);
     assert_eq!(charges(&h), 2);
     assert_eq!(stored(&h, SUSPEND_KEY), None);
@@ -271,7 +275,7 @@ fn a_continued_battle_restarts_from_its_first_turn() {
     assert_ne!(battle(&h), start);
     // The map menu: Units, Objective, Guides, Options, Suspend, Restart Battle.
     h.keys("d Down Down Down Down Down f f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(battle(&h), start);
     assert_eq!(charges(&h), 3);
     // From its start, so with its notes and turn 1's banner; and it is won
@@ -288,7 +292,11 @@ fn save_after_victory_then_load_starts_the_next_chapter() {
     let mut h = first_launch(true);
     // Nothing saved yet: Load Game can't be chosen (Down skips it).
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "preparations"], "Quick Battle");
+    assert_eq!(
+        h.screens(),
+        ["title", "game_flow", "preparations"],
+        "Quick Battle"
+    );
     let mut h = relaunch(h, true);
     to_battle(&mut h);
     h.wait(5.0);
@@ -299,11 +307,15 @@ fn save_after_victory_then_load_starts_the_next_chapter() {
     assert_eq!(won.gold, 500);
     // Yes → the slots, on the first empty one → saved there.
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "save_slots"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
     assert_snapshot!("save_slots_empty", h.snapshot());
     h.keys("f");
     // The next chapter: the Quick Battle, which has Preparations.
-    assert_eq!(h.screens(), ["title", "preparations"], "the next chapter");
+    assert_eq!(
+        h.screens(),
+        ["title", "game_flow", "preparations"],
+        "the next chapter"
+    );
     assert_eq!(campaign(&h).chapter, "quick");
     let saved = stored(&h, &slot_key(1)).unwrap_or_else(|| panic!("slot 1 is empty"));
     let mut saved: SaveFile = ron::from_str(&saved).unwrap_or_else(|e| panic!("{e}"));
@@ -317,12 +329,12 @@ fn save_after_victory_then_load_starts_the_next_chapter() {
     let mut h = relaunch(h, true);
     assert!(!shows(&h, "Continue"));
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "save_slots"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
     assert!(shows(&h, "Quick Battle"), "the chapter it goes on with");
     assert!(shows(&h, "0:00:05"));
     assert_snapshot!("load_slots", h.snapshot());
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     let loaded = campaign(&h);
     assert_eq!(loaded.chapter, "quick");
     assert_eq!(loaded.roster, won.roster);
@@ -355,11 +367,11 @@ fn the_save_prompt_can_be_declined_and_the_slots_backed_out_of() {
     h.keys("f");
     assert_eq!(h.top_screen(), "save_slots");
     h.keys("d");
-    assert_eq!(h.screens(), ["title", "save_prompt"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_prompt"]);
     assert_eq!(stored(&h, &slot_key(1)), None);
     // No: on with the game (the last chapter: "To be continued").
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "to_be_continued"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
     assert_eq!(stored(&h, &slot_key(1)), None);
     h.keys("f");
     assert_eq!(h.screens(), ["title"]);
@@ -368,16 +380,16 @@ fn the_save_prompt_can_be_declined_and_the_slots_backed_out_of() {
     to_battle(&mut h);
     win(&mut h);
     h.keys("f Down f");
-    assert_eq!(h.screens(), ["title", "to_be_continued"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
     assert_eq!(stored(&h, &slot_key(1)), None);
     assert!(stored(&h, &slot_key(2)).is_some());
     h.keys("f");
     // Loading it goes on after the cleared chapter: nothing yet.
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "save_slots"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
     assert!(shows(&h, "Test Chapter (cleared)"));
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "to_be_continued"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
     assert_eq!(campaign(&h).chapter, "test");
     h.keys("f");
     assert_eq!(h.screens(), ["title"]);
@@ -394,11 +406,11 @@ fn saving_again_opens_on_an_empty_slot_and_asks_before_overwriting() {
     // Yes, the first empty slot (1).
     h.keys("f f");
     assert!(stored(&h, &slot_key(1)).is_some());
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     // The next launch: Load Game opens on that save; back to the title.
     let mut h = relaunch(h, true);
     h.keys("Down f");
-    assert_eq!(h.screens(), ["title", "save_slots"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
     assert!(shows(&h, "arrows choose · f load · d back"));
     h.keys("d");
     assert_eq!(h.screens(), ["title"]);
@@ -417,7 +429,7 @@ fn saving_again_opens_on_an_empty_slot_and_asks_before_overwriting() {
     assert_eq!(stored(&h, &slot_key(1)), first);
     // No: back to the list. Down to the empty slot and save there.
     h.keys("d Down f");
-    assert_eq!(h.screens(), ["title", "preparations"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
     assert_eq!(stored(&h, &slot_key(1)), first);
     assert!(stored(&h, &slot_key(2)).is_some());
 }
@@ -466,10 +478,10 @@ fn saves_that_cant_be_read_show_a_message() {
         assert!(!shows(&h, &message));
         // Load Game: the slot says why too, and can't be loaded.
         h.keys("Down f");
-        assert_eq!(h.screens(), ["title", "save_slots"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
         assert!(shows(&h, &message), "{}", h.snapshot());
         h.keys("Up Down f");
-        assert_eq!(h.screens(), ["title", "save_slots"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
         assert_eq!(stored(&h, &slot_key(1)).as_deref(), Some(text));
         h.keys("d");
         assert_eq!(h.screens(), ["title"]);
@@ -508,9 +520,9 @@ fn a_suspend_save_of_an_unknown_chapter_cant_be_continued() {
     assert!(shows(&h, &SaveError::Corrupt.to_string()));
     // In a slot it is a save like any other.
     h.keys("Down Down f");
-    assert_eq!(h.screens(), ["title", "save_slots"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "save_slots"]);
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "to_be_continued"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "to_be_continued"]);
 }
 
 /// The debug Quick Battle suspends and continues like any battle.
@@ -519,7 +531,7 @@ fn the_quick_battle_suspends_too() {
     let mut h = first_launch(false);
     // Through Preparations (Left wraps to `Fight!`).
     h.keys("Down f Left f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     close_banner(&mut h);
     let archer = battle(&h).unit(UnitId(3)).map(|u| u.pos);
     wait_at(
@@ -532,7 +544,7 @@ fn the_quick_battle_suspends_too() {
     suspend(&mut h);
     assert_eq!(h.screens(), ["title"]);
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(battle_text(&h), before);
     assert_eq!(campaign(&h).chapter, "quick");
 }
@@ -580,7 +592,7 @@ fn a_failed_suspend_stays_in_the_battle() {
     assert_eq!(moves(&h), 1);
     let before = battle_text(&h);
     suspend(&mut h);
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert!(
         shows(&h, "Save storage error: disk full"),
         "{}",
@@ -615,7 +627,7 @@ fn continue_goes_on_even_if_the_save_cant_be_deleted() {
     }
     let mut h = launch(Box::new(storage), false);
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(battle_text(&h), before);
 }
 
@@ -641,6 +653,6 @@ fn the_music_follows_suspend_and_continue() {
     assert_eq!(h.screens(), ["title"]);
     assert_eq!(music(&h), ["title", "battle_easy", "title"]);
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(music(&h), ["title", "battle_easy", "title", "battle_easy"]);
 }

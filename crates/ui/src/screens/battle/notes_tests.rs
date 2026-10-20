@@ -87,7 +87,7 @@ fn a_battle_decided_at_its_start_skips_the_notes() {
         answer = frame(&mut s, &mut c, &[Action::Confirm], 0.0);
     }
     assert_eq!(last, outcome);
-    assert_eq!(answer, "Pop");
+    assert_eq!(answer, "PopWith(trpg_ui::screens::battle::BattleEnd)");
 }
 
 /// Whether the banner on screen is turn 1's `PLAYER PHASE`.

@@ -84,7 +84,7 @@ fn select_opens_new_game() {
     let mut h = title();
     h.keys("f");
     assert_eq!(h.top_screen(), "mode_select");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
     assert!(!h.quit_requested());
     assert_snapshot!(h.snapshot());
 }
@@ -342,7 +342,7 @@ fn first_launch_a_button_at_the_prompt_skips_the_layout_picker() {
     assert_eq!(h.game().ctx().layout(), None);
     // The controller plays on: New Game.
     h.pad("South");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
 }
 
 /// Rule 2: a button while the picker is open closes it without choosing.
@@ -369,17 +369,20 @@ fn a_key_mid_battle_opens_the_layout_picker_until_one_is_picked() {
     let mut h = Harness::at_prompt();
     // The prompt, then Quick Battle, `Fight!` and the phase banner.
     h.pad("South DpadDown South DpadLeft South South");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     h.pad("DpadRight");
     let cursor = h.cursor_tile();
     // `Down` is a picker key, so it is bound already: it must not move
     // the battle's cursor.
     h.keys("Down");
-    assert_eq!(h.screens(), ["title", "battle", "layout_picker"]);
+    assert_eq!(
+        h.screens(),
+        ["title", "game_flow", "battle", "layout_picker"]
+    );
     assert_eq!(picker_focus(&h), Some(RIGHT_HANDED));
     // Back to the controller: the picker closes and the battle goes on.
     h.pad("DpadRight");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.cursor_tile(), cursor);
     h.pad("DpadLeft DpadRight");
     assert_eq!(h.cursor_tile(), cursor);
@@ -387,15 +390,15 @@ fn a_key_mid_battle_opens_the_layout_picker_until_one_is_picked() {
     h.keys("Down");
     assert_eq!(h.top_screen(), "layout_picker");
     h.keys("f");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.game().ctx().layout(), Some(RIGHT_HANDED));
     assert_eq!(h.cursor_tile(), cursor);
     // Keys act now, and switching back and forth never opens it again.
     h.keys("Down");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_ne!(h.cursor_tile(), cursor);
     h.pad("DpadUp").keys("Down").pad("DpadUp").keys("z");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     assert_eq!(h.cursor_tile(), cursor);
 }
 

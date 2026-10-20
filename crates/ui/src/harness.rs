@@ -239,17 +239,16 @@ impl Harness {
         self.screen()
     }
 
-    /// The game flow on the stack, to play its battle with scripted
-    /// commands ([`FlowScreen::battle_mut`]).
-    pub fn flow_mut(&mut self) -> Option<&mut FlowScreen> {
-        self.screen_mut()
+    /// The battle on the stack (the game flow's, or one put there itself);
+    /// `None` with no battle.
+    pub fn battle(&self) -> Option<&BattleScreen> {
+        self.screen()
     }
 
-    /// The battle on the stack: the game flow's, else a battle screen put
-    /// on the stack itself. `None` with no battle.
-    pub fn battle(&self) -> Option<&BattleScreen> {
-        let in_flow = self.flow().and_then(FlowScreen::battle);
-        in_flow.or_else(|| self.screen::<BattleScreen>())
+    /// The battle on the stack, to play it with scripted commands
+    /// ([`BattleScreen::send`]).
+    pub fn battle_mut(&mut self) -> Option<&mut BattleScreen> {
+        self.screen_mut()
     }
 
     /// What the battle on the stack shows on its map (ADR-0038), as
@@ -439,12 +438,12 @@ mod tests {
         // The Quick Battle, inside the game flow: no map on its
         // Preparations, then the battle's (Left wraps to `Fight!`).
         h.keys("Down f");
-        assert_eq!(h.screens(), ["title", "preparations"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
         assert_eq!(h.map_scene(), None);
         h.keys("Left f");
-        assert_eq!(h.screens(), ["title", "battle"]);
+        assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
         let scene = h.map_scene().unwrap();
-        let battle = h.flow().and_then(FlowScreen::battle).unwrap();
+        let battle = h.battle().unwrap();
         assert_eq!(scene, battle.scene(h.game().ctx()));
         assert_eq!(scene.units.len(), 8);
         let terrains = TerrainLooks(&h.game().ctx().game.content.terrain.display);

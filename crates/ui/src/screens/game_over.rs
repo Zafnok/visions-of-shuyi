@@ -22,7 +22,8 @@ use view::FULL;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::widgets::{Menu, MenuEvent, MenuItem};
+use crate::screens::pick_one;
+use crate::widgets::{Menu, MenuItem};
 
 /// The key of Game Over's heading in the language files ([`Ctx::text`]).
 pub const GAME_OVER: &str = "game_over.heading";
@@ -49,12 +50,12 @@ pub enum GameOverChoice {
 }
 
 /// `GAME OVER` and a `Rewind` (while a charge is left) / `Retry Battle` /
-/// `Title` menu, after the opening animation. Pops once one is chosen
-/// ([`result`](Self::result)); there is nothing to back out of.
+/// `Title` menu, after the opening animation, over the lost battle. Pops
+/// with the [`GameOverChoice`] once one is chosen; there is nothing to back
+/// out of.
 #[derive(Debug, Clone)]
 pub struct GameOverScreen {
     menu: Menu,
-    chosen: Option<GameOverChoice>,
     /// The choice each menu item stands for.
     choices: Vec<GameOverChoice>,
     /// Seconds of the opening animation played, up to
@@ -81,7 +82,6 @@ impl GameOverScreen {
         let items = keys.iter().map(|k| MenuItem::new(ctx.text(k))).collect();
         Self {
             menu: Menu::new(items).without_cancel(),
-            chosen: None,
             choices,
             elapsed: 0.0,
         }
@@ -105,15 +105,10 @@ impl GameOverScreen {
         progress
     }
 
-    /// Whether the lost battle still shows behind the screen: the flow
-    /// draws it under this screen while it does.
+    /// Whether the lost battle still shows behind the screen: the screen
+    /// is an overlay over it while it does.
     pub fn shows_battle(&self) -> bool {
         glyph::battle_brightness(self.progress()) > 0.0
-    }
-
-    /// The choice, once the screen has popped.
-    pub fn result(&self) -> Option<GameOverChoice> {
-        self.chosen
     }
 
     /// The bottom help line.
@@ -150,18 +145,15 @@ impl Screen<Shuyi> for GameOverScreen {
             }
             return Transition::None;
         }
-        for &action in &input.actions {
-            if let Some(MenuEvent::Chosen(i)) = self.menu.handle_with_sound(action, &mut ctx.audio)
-            {
-                self.chosen = self.choices.get(i).copied();
-                return Transition::Pop;
-            }
-        }
-        Transition::None
+        pick_one(&mut self.menu, ctx, input, &self.choices)
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
         glyph::paint(ctx, &self.view(ctx), buf);
+    }
+
+    fn is_overlay(&self) -> bool {
+        self.shows_battle()
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {

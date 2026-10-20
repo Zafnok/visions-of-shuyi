@@ -271,7 +271,7 @@ fn edits_survive_a_restart_and_stay_with_their_layout() {
     assert_eq!(bindings(&h, RIGHT_HANDED), edited);
     assert_eq!(bindings(&h, LEFT_HANDED), defaults(&h, LEFT_HANDED));
     h.keys("g");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
     h.keys("d");
     // The screen shows the saved keys when opened again.
     reopen(&mut h);

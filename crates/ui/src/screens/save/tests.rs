@@ -7,6 +7,7 @@ use crate::audio::AudioRequest;
 use crate::harness::Harness;
 use crate::save::{SLOTS, SaveError, read};
 use crate::screen::tests::ctx;
+use crate::screens::popped_with;
 use crate::screens::save::SlotEntryView;
 use crate::storage::{Storage, StorageError};
 use crate::words::Words;
@@ -48,6 +49,13 @@ const DENIED: &str = crate::audio::AUDIO.cue(MenuSound::Denied);
 fn press(s: &mut dyn Screen<Shuyi>, c: &mut Ctx, actions: &[Action]) -> String {
     let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
     format!("{:?}", s.update(c, &input))
+}
+
+/// What the screen pops with after `actions`, as a `T`; `None` if it
+/// doesn't pop with one.
+fn popped<T: 'static>(s: &mut dyn Screen<Shuyi>, c: &mut Ctx, actions: &[Action]) -> Option<T> {
+    let input = FrameInput::new(actions.to_vec(), 0.0, vec![]);
+    popped_with(s.update(c, &input))
 }
 
 /// The sounds played since the last call, as cue names.
@@ -93,13 +101,10 @@ fn the_prompt_asks_yes_or_no() {
     assert!(!s.is_overlay());
     // Nothing to back out of.
     assert_eq!(press(&mut s, &mut c, &[Action::Cancel]), "None");
-    assert_eq!(s.result(), None);
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
-    assert_eq!(s.result(), Some(true));
+    assert_eq!(popped(&mut s, &mut c, &[Action::Confirm]), Some(true));
     let mut s = SavePromptScreen::new(&c);
     let no = [Action::CursorDown, Action::Confirm, Action::CursorUp];
-    assert_eq!(press(&mut s, &mut c, &no), "Pop");
-    assert_eq!(s.result(), Some(false));
+    assert_eq!(popped(&mut s, &mut c, &no), Some(false));
     assert_eq!(SavePromptScreen::help(&c), "arrows choose · f select");
 }
 
@@ -337,12 +342,11 @@ fn saving_into_an_empty_slot_writes_it_at_once() {
     let mut s = SlotPickerScreen::save(&c, game.clone());
     assert_eq!(s.view(&c).title, "Save");
     assert_eq!(s.help(&c), "arrows choose · f save here · d back");
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    let saved = popped(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(saved, Some(SlotOutcome::Saved(1)));
     assert_eq!(sounds(&mut c), ["menu_select"]);
-    assert_eq!(s.result(), Some(&SlotOutcome::Saved(1)));
     let written = read(&c.storage, &slot_key(1)).unwrap();
     assert_eq!(written, Some(SaveFile::chapter_cleared(game)));
-    assert_eq!(s.into_result(), Some(SlotOutcome::Saved(1)));
 }
 
 #[test]
@@ -370,18 +374,18 @@ fn saving_over_a_slot_asks_first() {
     assert_eq!(s.focused_slot(), 2);
     assert_eq!(s.view(&c).question, None);
     assert_eq!(read(&c.storage, &slot_key(2)).unwrap(), before);
-    assert_eq!(s.result(), None);
     // Asked again and confirmed: written.
     press(&mut s, &mut c, &[Action::Confirm]);
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
-    assert_eq!(s.result(), Some(&SlotOutcome::Saved(2)));
+    let saved = popped(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(saved, Some(SlotOutcome::Saved(2)));
     let written = read(&c.storage, &slot_key(2)).unwrap();
     assert_eq!(written, Some(SaveFile::chapter_cleared(game.clone())));
     // A slot that can't be read is asked about too, and can be replaced.
     let mut s = SlotPickerScreen::save(&c, game.clone()).at(5);
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
     assert!(s.is_asking());
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    let saved = popped(&mut s, &mut c, &[Action::Confirm]);
+    assert_eq!(saved, Some(SlotOutcome::Saved(5)));
     let written = read(&c.storage, &slot_key(5)).unwrap();
     assert_eq!(written, Some(SaveFile::chapter_cleared(game)));
 }
@@ -403,7 +407,6 @@ fn loading_takes_only_a_slot_that_can_be_read() {
         assert_eq!(sounds(&mut c), [DENIED]);
         assert_eq!(s.message(), Some(error.to_string().as_str()));
         assert_eq!(s.view(&c).message, Some(error.to_string()));
-        assert_eq!(s.result(), None);
         // Moving on clears the message.
         press(&mut s, &mut c, &[Action::CursorUp]);
         assert_eq!(s.message(), None);
@@ -411,13 +414,10 @@ fn loading_takes_only_a_slot_that_can_be_read() {
     }
     // A save.
     let mut s = SlotPickerScreen::load(&c);
-    assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "Pop");
+    let loaded = popped(&mut s, &mut c, &[Action::Confirm]);
     assert_eq!(sounds(&mut c), ["menu_select"]);
     let expected = SaveFile::chapter_cleared(campaign(&c, "Mara", 3725));
-    assert_eq!(
-        s.into_result(),
-        Some(SlotOutcome::Loaded(2, Box::new(expected)))
-    );
+    assert_eq!(loaded, Some(SlotOutcome::Loaded(2, Box::new(expected))));
 }
 
 #[test]
@@ -431,7 +431,6 @@ fn cancel_goes_back_without_a_result() {
         let back = [Action::Cancel, Action::Confirm];
         assert_eq!(press(&mut s, &mut c, &back), "Pop");
         assert_eq!(sounds(&mut c), ["menu_cancel"]);
-        assert_eq!(s.result(), None);
     }
     assert_eq!(read(&c.storage, &slot_key(1)), Ok(None));
 }
@@ -464,7 +463,6 @@ fn a_failed_save_says_so_and_stays_open() {
     assert_eq!(press(&mut s, &mut c, &[Action::Confirm]), "None");
     assert_eq!(sounds(&mut c), [DENIED]);
     assert_eq!(s.message(), Some("Save storage error: disk full"));
-    assert_eq!(s.result(), None);
     assert_eq!(
         s.view(&c).message.as_deref(),
         Some("Save storage error: disk full")

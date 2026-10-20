@@ -202,7 +202,7 @@ fn a_rebound_button_plays_a_battle() {
     // Preparations: left wraps to `Fight!`), and the same with the
     // keyboard.
     h.pad("DpadUp RightStickPress DpadLeft RightStickPress RightStickPress");
-    assert_eq!(h.screens(), ["title", "battle"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
     let mut keys = Harness::with_layout(RIGHT_HANDED);
     keys.keys("Down f Left f f");
     assert_eq!(h.cursor_tile(), keys.cursor_tile());
@@ -282,7 +282,7 @@ fn edited_buttons_survive_a_restart() {
     let mut h = Harness::with_storage(h.into_storage());
     assert_eq!(buttons(&h), edited);
     h.pad("RightStickPress");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
     h.pad("East");
     // The screen shows the saved buttons when opened again, and Restore
     // defaults (one down from the last row) puts the defaults back.
@@ -312,7 +312,7 @@ fn a_version_1_config_keeps_its_keys_and_gets_the_default_buttons() {
     assert_eq!(info.as_deref(), Some("g"));
     // The default buttons work.
     h.pad("South");
-    assert_eq!(h.screens(), ["title", "mode_select"]);
+    assert_eq!(h.screens(), ["title", "game_flow", "mode_select"]);
 }
 
 /// With the keyboard, the controller side is one move away, and the
