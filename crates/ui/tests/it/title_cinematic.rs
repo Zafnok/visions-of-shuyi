@@ -139,7 +139,7 @@ fn music(h: &Harness) -> Vec<String> {
 /// The focused menu line.
 fn focused(h: &Harness) -> Option<String> {
     let menu = view(h).menu?;
-    menu.focused().map(|i| i.label.clone())
+    menu.focused().map(|i| h.game().ctx().label(&i.label))
 }
 
 /// Acceptance: after the first press the menu shows; left alone, the

@@ -32,8 +32,9 @@ fn view(h: &Harness) -> TitleView {
 /// The labels of the title's menu, and the focused one.
 fn menu(h: &Harness) -> (Vec<String>, Option<String>) {
     let menu = view(h).menu.unwrap_or_else(|| panic!("no menu"));
-    let labels = menu.items.iter().map(|i| i.label.clone()).collect();
-    (labels, menu.focused().map(|i| i.label.clone()))
+    let label = |i: &trpg_ui::widgets::MenuItemView| h.game().ctx().label(&i.label);
+    let labels = menu.items.iter().map(label).collect();
+    (labels, menu.focused().map(label))
 }
 
 /// The layout the picker on the stack has the cursor on.

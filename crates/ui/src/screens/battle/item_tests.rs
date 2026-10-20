@@ -2,11 +2,12 @@
 //! targeting and the heal it does, the heal popup, the equip list, and that
 //! cancelling at each level leaves the battle unchanged.
 
+use crate::screens::battle::testing::{Lines as _, Values as _};
 use insta::assert_snapshot;
 use trpg_core::{BattlePack, BattleState, Equipped, ItemId, Objective, Pos, StatValue, UnitId};
 
 use super::items::{ItemTargeting, item_targets, pack_groups};
-use super::mode::{ListKind, MenuEntry, Mode};
+use super::mode::{MenuEntry, Mode};
 use super::testing::{battle_packed, quick_units};
 use super::{BattleScreen, HealPopup, PopupKind, TIMINGS};
 use crate::FrameInput;
@@ -84,9 +85,10 @@ fn text(buf: &GlyphBuffer, x: i32, y: i32, w: i32) -> String {
 fn item_is_enabled_only_with_a_usable_item_and_someone_hurt() {
     let mut c = ctx();
     let enabled = |s: &BattleScreen| {
-        let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+        let Mode::ActionMenu { menu, .. } = s.mode() else {
             panic!("{:?}", s.mode());
         };
+        let entries = menu.values();
         let i = entries.iter().position(|&e| e == MenuEntry::Item).unwrap();
         menu.items()[i].enabled
     };
@@ -147,10 +149,7 @@ fn select_move_item_potion_ally_heals_the_ally_and_ends_the_action() {
     assert!(
         matches!(
             s.mode(),
-            Mode::List {
-                kind: ListKind::Pack(_),
-                ..
-            }
+            Mode::List { menu, .. } if !menu.groups().is_empty()
         ),
         "{:?}",
         s.mode()
@@ -226,7 +225,7 @@ fn the_preview_line_shows_hp_before_and_after_capped_at_max() {
         (sel, groups)
     };
     let menu = super::items::pack_menu(&state, Words::ENGLISH, &groups);
-    let mut t = ItemTargeting::new(sel.clone(), menu.clone(), groups.clone(), 0).unwrap();
+    let mut t = ItemTargeting::new(sel.clone(), menu.clone(), groups[0].clone()).unwrap();
     // The potion on the lord, 4 down: only 4 restored.
     let line = t.preview(&state, Words::ENGLISH);
     assert_eq!(
@@ -247,7 +246,7 @@ fn the_preview_line_shows_hp_before_and_after_capped_at_max() {
         )
     );
     // The elixir restores all.
-    let elixir = ItemTargeting::new(sel, menu, groups, 1).unwrap();
+    let elixir = ItemTargeting::new(sel, menu, groups[1].clone()).unwrap();
     assert!(
         elixir
             .preview(&state, Words::ENGLISH)
@@ -269,19 +268,17 @@ fn cancelling_at_each_level_leaves_the_battle_unchanged() {
     assert!(
         matches!(
             s.mode(),
-            Mode::List {
-                kind: ListKind::Pack(_),
-                ..
-            }
+            Mode::List { menu, .. } if !menu.groups().is_empty()
         ),
         "{:?}",
         s.mode()
     );
     assert_eq!(s.cursor().pos, p(3, 5));
     step(&mut s, &mut c, &[Action::Cancel]);
-    let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let entries = menu.values();
     assert_eq!(entries[menu.focus()], MenuEntry::Item);
     assert_eq!(s.state(), &before);
     // Equip list → action menu, on Equip.
@@ -289,18 +286,16 @@ fn cancelling_at_each_level_leaves_the_battle_unchanged() {
     assert!(
         matches!(
             s.mode(),
-            Mode::List {
-                kind: ListKind::Equip(_),
-                ..
-            }
+            Mode::List { menu, .. } if !menu.equips().is_empty()
         ),
         "{:?}",
         s.mode()
     );
     step(&mut s, &mut c, &[Action::Cancel]);
-    let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let entries = menu.values();
     assert_eq!(entries[menu.focus()], MenuEntry::Equip);
     assert_eq!(s.state(), &before);
     assert!(s.popups().is_empty());
@@ -314,14 +309,10 @@ fn equip_swaps_the_weapon_and_the_unit_can_still_act() {
     assert_eq!(lord.loadout.equipped, Some(Equipped::Weapon(0)));
     let mut s = lord_menu(&mut c, state);
     step(&mut s, &mut c, &EQUIP);
-    let Mode::List {
-        menu,
-        kind: ListKind::Equip(choices),
-        ..
-    } = s.mode()
-    else {
+    let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let choices = menu.equips();
     // The equipped weapon is focused; the next one is chosen.
     assert_eq!((menu.focus(), choices.len()), (0, 2));
     step(&mut s, &mut c, &[Action::CursorDown, Action::Confirm]);
@@ -329,12 +320,10 @@ fn equip_swaps_the_weapon_and_the_unit_can_still_act() {
     assert_eq!(lord.loadout.equipped, Some(Equipped::Weapon(1)));
     assert!(!lord.acted, "equipping is free");
     // Back at the action menu, at the same tile, on Equip.
-    let Mode::ActionMenu {
-        menu, entries, sel, ..
-    } = s.mode()
-    else {
+    let Mode::ActionMenu { menu, sel, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let entries = menu.values();
     assert_eq!(entries[menu.focus()], MenuEntry::Equip);
     assert_eq!(sel.dest(), p(3, 5));
     // It can still act: Wait.
@@ -351,9 +340,10 @@ fn equip_needs_two_usable_weapons() {
     let rout = Objective::Rout { turn_limit: None };
     let state = battle_packed(&c, map, units, rout, 0, BattlePack::default());
     let s = lord_menu(&mut c, state);
-    let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let entries = menu.values();
     let i = entries.iter().position(|&e| e == MenuEntry::Equip).unwrap();
     assert!(!menu.items()[i].enabled);
 }
@@ -471,7 +461,7 @@ fn cycling_back_wraps_over_three_targets() {
     let sel = super::mode::Selection::new(&s, UnitId(1)).unwrap();
     let groups = pack_groups(&s, UnitId(1), p(3, 5));
     let menu = super::items::pack_menu(&s, Words::ENGLISH, &groups);
-    let mut t = ItemTargeting::new(sel, menu, groups, 0).unwrap();
+    let mut t = ItemTargeting::new(sel, menu, groups[0].clone()).unwrap();
     // Row order: the lord (3, 5), the knight (4, 5), the archer (3, 6).
     assert_eq!(t.targets(), [UnitId(1), UnitId(2), UnitId(3)]);
     assert_eq!(t.target(), UnitId(1));
@@ -619,9 +609,10 @@ fn the_pack_list_and_the_preview_are_told_in_the_players_language() {
     let state = hurt_pair(&c, 4, 15, &["potion", "elixir"]);
     let mut s = lord_menu(&mut c, state);
     for _ in 0..8 {
-        let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+        let Mode::ActionMenu { menu, .. } = s.mode() else {
             break;
         };
+        let entries = menu.values();
         let on_item = entries.get(menu.focus()) == Some(&MenuEntry::Item);
         let action = if on_item {
             Action::Confirm
@@ -631,34 +622,28 @@ fn the_pack_list_and_the_preview_are_told_in_the_players_language() {
         step(&mut s, &mut c, &[action]);
     }
     step(&mut s, &mut c, &[Action::CursorDown]);
-    let Mode::List {
-        menu,
-        kind: ListKind::Pack(_),
-        ..
-    } = s.mode()
-    else {
+    let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
-    let labels = |menu: &crate::widgets::menu::Menu| -> Vec<String> {
-        menu.items().iter().map(|i| i.label.clone()).collect()
+    assert!(!menu.groups().is_empty());
+    let labels = |menu: &crate::widgets::menu::Menu<super::mode::Line>| -> Vec<String> {
+        let labels = menu
+            .items()
+            .iter()
+            .map(|i| crate::widgets::menu::text_of(&i.label));
+        labels.map(str::to_owned).collect()
     };
     assert!(labels(menu)[0].starts_with("Potion"), "{:?}", labels(menu));
-    let told = s.mode().told(s.state(), words).into_owned();
-    let Mode::List {
-        menu: theirs,
-        kind: ListKind::Pack(_),
-        ..
-    } = &told
-    else {
-        panic!("{told:?}");
-    };
+    // The same list, opened in the player's language.
+    let theirs = &super::items::pack_menu(s.state(), words, &menu.groups());
     assert!(
         labels(theirs)[0].starts_with("POTION"),
         "{:?}",
         labels(theirs)
     );
     assert!(labels(theirs)[1].starts_with("ELIXIR"));
-    assert_eq!((theirs.focus(), menu.focus()), (1, 1));
+    assert_eq!(theirs.values(), menu.values());
+    assert_eq!(menu.focus(), 1);
     // Using it: the preview names the item and who it is used on.
     step(&mut s, &mut c, &[Action::CursorUp, Action::Confirm]);
     let Mode::ItemTarget(t) = s.mode() else {

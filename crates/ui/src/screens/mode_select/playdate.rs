@@ -23,7 +23,7 @@ const TEXT_W: usize = 46;
 pub fn paint(ctx: &Ctx, view: &ModeSelectView, buf: &mut GlyphBuffer) {
     clear(ctx, buf);
     centred(ctx, buf, HEADING_ROW, &view.heading);
-    let (w, h) = menu_size(&view.menu);
+    let (w, h) = menu_size(ctx, &view.menu);
     let x = (i32::from(buf.width()) - w) / 2;
     menu(ctx, buf, (x, MENU_ROW), &view.menu);
     let bottom = i32::from(buf.height()) - 1;
@@ -45,7 +45,7 @@ mod tests {
 
     fn view(focus: usize) -> ModeSelectView {
         let item = |label: &str, i| MenuItemView {
-            label: label.to_owned(),
+            label: label.into(),
             suffix: None,
             note: None,
             enabled: true,

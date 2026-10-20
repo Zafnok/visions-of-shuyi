@@ -382,9 +382,10 @@ fn game_over_opens_with_its_animation() {
     let last = game_over(&h);
     assert_eq!(last.progress, 255);
     let menu = last.menu.unwrap_or_else(|| panic!("no menu"));
-    let labels: Vec<_> = menu.items.iter().map(|i| i.label.as_str()).collect();
+    let label = |i: &trpg_ui::widgets::MenuItemView| h.game().ctx().label(&i.label);
+    let labels: Vec<_> = menu.items.iter().map(label).collect();
     assert_eq!(labels, ["Rewind", "Retry Battle", "Title"]);
-    assert_eq!(menu.focused().map(|i| i.label.as_str()), Some("Rewind"));
+    assert_eq!(menu.focused().map(label).as_deref(), Some("Rewind"));
     assert!(last.help.is_some());
     assert_snapshot!("game_over_last_frame", h.snapshot());
     // Waiting picked nothing, and the menu works as before: Retry.
@@ -412,7 +413,8 @@ fn a_press_ends_game_overs_animation_and_picks_nothing() {
         let view = game_over(&h);
         assert_eq!(view.progress, 255, "{skip}");
         let menu = view.menu.unwrap_or_else(|| panic!("no menu"));
-        assert_eq!(menu.focused().map(|i| i.label.as_str()), Some("Rewind"));
+        let focused = menu.focused().map(|i| h.game().ctx().label(&i.label));
+        assert_eq!(focused.as_deref(), Some("Rewind"));
         assert_eq!(h.sounds(), [""; 0], "{skip}");
         // The next press is the menu's: the rewind screen, on the battle.
         h.keys("f");

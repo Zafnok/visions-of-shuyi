@@ -191,7 +191,7 @@ pub const BOX_PLACE: BoxPlace = BoxPlace {
 fn paint_text_box(ctx: &Ctx, buf: &mut GlyphBuffer, view: &DialogueView) {
     // check-text: not a data name (the view's own)
     let speaker = view.speaking().map(|face| face.name.as_str());
-    text_box::glyph::paint(&ctx.palette, buf, BOX_PLACE, &view.text, speaker);
+    text_box::glyph::paint(ctx, buf, BOX_PLACE, &view.text, speaker);
 }
 
 #[cfg(test)]

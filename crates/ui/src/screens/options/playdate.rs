@@ -62,11 +62,12 @@ pub fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
     }
     centred(ctx, buf, bottom, &view.help);
     if let Some(question) = &view.question {
-        ask(ctx, buf, &question.text, Answers::Hint(&question.answers));
+        let keys = question.keys.as_deref().unwrap_or_default();
+        ask(ctx, buf, &question.text, Answers::Hint(keys));
     }
     if let Some(leaving) = &view.leaving {
         let choices: Vec<_> = leaving
-            .choices
+            .answers
             .iter()
             .map(|c| (c.label.as_str(), c.focused))
             .collect();

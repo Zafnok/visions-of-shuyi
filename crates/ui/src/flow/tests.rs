@@ -451,7 +451,10 @@ fn game_over_items(stack: &ScreenStack, c: &Ctx) -> Vec<String> {
         .view(c)
         .menu;
     let menu = menu.unwrap_or_else(|| panic!("no menu"));
-    menu.items.iter().map(|i| i.label.clone()).collect()
+    menu.items
+        .iter()
+        .map(|i| crate::widgets::menu::text_of(&i.label).to_owned())
+        .collect()
 }
 
 /// Acceptance (0822): Game Over lists `Rewind` while charges are left;

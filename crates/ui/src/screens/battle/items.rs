@@ -12,7 +12,7 @@ use trpg_core::{
 
 use super::attack::{spell_uses, weapon_name};
 use super::info::range_text;
-use super::mode::Selection;
+use super::mode::{Line, Selection};
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::widgets::wrap_step;
 use crate::words::Words;
@@ -110,7 +110,7 @@ fn item_name(state: &BattleState, words: Words<'_>, id: &ItemId) -> String {
 }
 
 /// The pack list: `Potion ×3  Restore 10 HP` per group.
-pub fn pack_menu(state: &BattleState, words: Words<'_>, groups: &[PackGroup]) -> Menu {
+pub fn pack_menu(state: &BattleState, words: Words<'_>, groups: &[PackGroup]) -> Menu<Line> {
     let name = |g: &PackGroup| item_name(state, words, &g.item);
     let name_w = groups.iter().map(|g| name(g).chars().count()).max();
     let items = groups
@@ -127,11 +127,9 @@ pub fn pack_menu(state: &BattleState, words: Words<'_>, groups: &[PackGroup]) ->
                 g.count,
                 w = name_w.unwrap_or(0)
             );
-            if g.targets.is_empty() {
-                MenuItem::disabled(text)
-            } else {
-                MenuItem::new(text)
-            }
+            MenuItem::new(text)
+                .with_value(Line::Item(g.clone()))
+                .with_enabled(!g.targets.is_empty())
         })
         .collect();
     Menu::new(items)
@@ -143,28 +141,28 @@ pub struct ItemTargeting {
     /// The unit using the item and its path (it stands at the path's end).
     pub sel: Selection,
     /// The pack list it was opened from (Cancel goes back to it).
-    pub menu: Menu,
-    /// The pack's groups, as listed.
-    pub groups: Vec<PackGroup>,
-    /// Which group is being used.
-    pub group: usize,
+    pub menu: Menu<Line>,
+    /// The group being used.
+    pub group: PackGroup,
     /// The target under the cursor, an index of the group's targets.
     pub index: usize,
 }
 
 impl ItemTargeting {
-    /// Targeting for `groups[group]`, starting on the user if it is a
-    /// target. `None` if the group has no target.
-    pub fn new(sel: Selection, menu: Menu, groups: Vec<PackGroup>, group: usize) -> Option<Self> {
-        let g = groups.get(group)?;
-        if g.targets.is_empty() {
+    /// Targeting for `group`, a line of `menu`, starting on the user if
+    /// it is a target. `None` if the group has no target.
+    pub fn new(sel: Selection, menu: Menu<Line>, group: PackGroup) -> Option<Self> {
+        if group.targets.is_empty() {
             return None;
         }
-        let index = g.targets.iter().position(|&t| t == sel.unit).unwrap_or(0);
+        let index = group
+            .targets
+            .iter()
+            .position(|&t| t == sel.unit)
+            .unwrap_or(0);
         Some(Self {
             sel,
             menu,
-            groups,
             group,
             index,
         })
@@ -172,8 +170,8 @@ impl ItemTargeting {
 
     /// The group being used.
     fn used(&self) -> &PackGroup {
-        // `group` is valid and its targets are never empty ([`Self::new`]).
-        &self.groups[self.group]
+        // Its targets are never empty ([`Self::new`]).
+        &self.group
     }
 
     /// The target under the cursor.
@@ -345,7 +343,7 @@ pub fn equip_menu(
     words: Words<'_>,
     unit: UnitId,
     choices: &[EquipChoice],
-) -> Menu {
+) -> Menu<Line> {
     let name_w = choices
         .iter()
         .map(|c| equip_name(state, words, unit, &c.what).chars().count())
@@ -362,11 +360,9 @@ pub fn equip_menu(
         .iter()
         .map(|c| {
             let label = equip_label((state, words), unit, &c.what, name_w);
-            let item = if c.usable {
-                MenuItem::new(label)
-            } else {
-                MenuItem::disabled(label)
-            };
+            let item = MenuItem::new(label)
+                .with_value(Line::Equip(c.clone()))
+                .with_enabled(c.usable);
             if broken(&c.what) {
                 item.with_suffix(words.text("battle.equip.broken"), SuffixKind::Warning)
             } else {

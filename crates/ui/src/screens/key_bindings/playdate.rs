@@ -120,7 +120,8 @@ pub fn paint(ctx: &Ctx, view: &KeyBindingsView, buf: &mut GlyphBuffer) {
         paint_choices(ctx, buf, choices, rect, y);
     }
     if let Some(question) = &view.question {
-        ask(ctx, buf, &question.text, Answers::Hint(&question.answers));
+        let keys = question.keys.as_deref().unwrap_or_default();
+        ask(ctx, buf, &question.text, Answers::Hint(keys));
     }
 }
 

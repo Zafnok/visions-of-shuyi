@@ -49,7 +49,7 @@ pub const MODES: [(GameMode, &str, &str); 2] = [
 /// [`GameMode`]), Cancel pops with nothing (back).
 #[derive(Debug, Clone)]
 pub struct ModeSelectScreen {
-    menu: Menu,
+    menu: Menu<GameMode>,
 }
 
 impl ModeSelectScreen {
@@ -60,14 +60,14 @@ impl ModeSelectScreen {
     pub fn new(ctx: &Ctx) -> Self {
         let items = MODES
             .iter()
-            .map(|&(_, name, _)| MenuItem::new(ctx.text(name)));
+            .map(|&(mode, name, _)| MenuItem::new(ctx.text(name)).with_value(mode));
         Self {
             menu: Menu::new(items.collect()),
         }
     }
 
     /// The menu.
-    pub fn menu(&self) -> &Menu {
+    pub fn menu(&self) -> &Menu<GameMode> {
         &self.menu
     }
 
@@ -103,7 +103,7 @@ impl Screen<Shuyi> for ModeSelectScreen {
     }
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        pick_one(&mut self.menu, ctx, input, &MODES.map(|(mode, ..)| mode))
+        pick_one(&mut self.menu, ctx, input)
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {

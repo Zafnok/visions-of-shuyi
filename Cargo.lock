@@ -966,7 +966,7 @@ dependencies = [
 [[package]]
 name = "shuyi-app"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=ed61c0e03712b834be93abf3aba5089c8252af7c#ed61c0e03712b834be93abf3aba5089c8252af7c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=939f02348f151d53ccde3f0bf50467233b8a9631#939f02348f151d53ccde3f0bf50467233b8a9631"
 dependencies = [
  "gilrs",
  "macroquad",
@@ -979,7 +979,7 @@ dependencies = [
 [[package]]
 name = "shuyi-assets"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=ed61c0e03712b834be93abf3aba5089c8252af7c#ed61c0e03712b834be93abf3aba5089c8252af7c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=939f02348f151d53ccde3f0bf50467233b8a9631#939f02348f151d53ccde3f0bf50467233b8a9631"
 dependencies = [
  "include_dir",
  "libm",
@@ -994,7 +994,7 @@ dependencies = [
 [[package]]
 name = "shuyi-cli"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=ed61c0e03712b834be93abf3aba5089c8252af7c#ed61c0e03712b834be93abf3aba5089c8252af7c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=939f02348f151d53ccde3f0bf50467233b8a9631#939f02348f151d53ccde3f0bf50467233b8a9631"
 dependencies = [
  "png 0.18.1",
  "ron",
@@ -1006,7 +1006,7 @@ dependencies = [
 [[package]]
 name = "shuyi-core"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=ed61c0e03712b834be93abf3aba5089c8252af7c#ed61c0e03712b834be93abf3aba5089c8252af7c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=939f02348f151d53ccde3f0bf50467233b8a9631#939f02348f151d53ccde3f0bf50467233b8a9631"
 dependencies = [
  "serde",
 ]
@@ -1014,7 +1014,7 @@ dependencies = [
 [[package]]
 name = "shuyi-ui"
 version = "0.1.0"
-source = "git+https://github.com/Zafnok/shuyi-engine?rev=ed61c0e03712b834be93abf3aba5089c8252af7c#ed61c0e03712b834be93abf3aba5089c8252af7c"
+source = "git+https://github.com/Zafnok/shuyi-engine?rev=939f02348f151d53ccde3f0bf50467233b8a9631#939f02348f151d53ccde3f0bf50467233b8a9631"
 dependencies = [
  "hashbrown 0.17.1",
  "libm",

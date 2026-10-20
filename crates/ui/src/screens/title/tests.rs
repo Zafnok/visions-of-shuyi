@@ -43,7 +43,7 @@ fn debug_title_offers_quick_battle() {
     use Action::{Confirm, CursorDown, CursorUp};
     let mut t = TitleScreen::with_quick_battle(&ctx());
     assert_eq!(
-        t.items,
+        t.items(),
         [
             NewGame,
             LoadGame,
@@ -77,7 +77,7 @@ fn debug_title_offers_quick_battle() {
     let input = FrameInput::new(vec![CursorDown, Confirm], 0.0, vec![]);
     assert_eq!(format!("{:?}", t.update(&mut c, &input)), "None");
     assert_eq!(
-        TitleScreen::new(&ctx()).items,
+        TitleScreen::new(&ctx()).items(),
         [NewGame, LoadGame, Options, Profile, Credits, Quit]
     );
 }
@@ -192,7 +192,9 @@ fn ctx_with_saves(suspend: Option<&str>, slot: Option<&str>) -> Ctx {
 
 fn labels(t: &TitleScreen) -> Vec<(&str, bool)> {
     let items = t.menu.items().iter();
-    items.map(|i| (i.label.as_str(), i.enabled)).collect()
+    items
+        .map(|i| (crate::widgets::menu::text_of(&i.label), i.enabled))
+        .collect()
 }
 
 #[test]
@@ -220,7 +222,7 @@ fn the_menu_follows_the_saves() {
     ];
     assert_eq!(labels(&t), saved);
     assert_eq!(
-        t.items,
+        t.items(),
         [NewGame, LoadGame, Options, Profile, Credits, Quit]
     );
     assert_eq!(t.menu.focus(), 0);
@@ -241,7 +243,7 @@ fn the_menu_follows_the_saves() {
         ]
     );
     assert_eq!(
-        t.items,
+        t.items(),
         [
             Continue,
             NewGame,
@@ -335,7 +337,7 @@ fn a_new_title_and_every_return_look_for_saves() {
     c.storage.write(save::SUSPEND_KEY, "junk").unwrap();
     t.update(&mut c, &input(&[]));
     assert_eq!(
-        t.items,
+        t.items(),
         [NewGame, LoadGame, Options, Profile, Credits, Quit]
     );
     // Back from another screen with a battle suspended: Continue,
@@ -343,7 +345,7 @@ fn a_new_title_and_every_return_look_for_saves() {
     t.update(&mut c, &input(&[Confirm]));
     t.uncovered(&mut c, None);
     assert_eq!(
-        t.items,
+        t.items(),
         [Continue, NewGame, LoadGame, Options, Profile, Credits, Quit]
     );
     assert_eq!(t.menu.focus(), 0);
@@ -363,7 +365,7 @@ fn continue_with_a_save_that_cant_be_read_says_why() {
         c.storage.read(save::SUSPEND_KEY),
         Ok(Some("junk".to_owned()))
     );
-    assert_eq!(t.items[0], Continue);
+    assert_eq!(t.items()[0], Continue);
     // No key, no change; the next key clears the notice.
     t.update(&mut c, &input(&[]));
     assert!(t.notice().is_some());
@@ -447,7 +449,13 @@ fn shown(view: &TitleView) -> Vec<(&str, bool, bool)> {
     let items = view.menu.as_ref().map_or(&[][..], |m| &m.items[..]);
     items
         .iter()
-        .map(|i| (i.label.as_str(), i.enabled, i.focused))
+        .map(|i| {
+            (
+                crate::widgets::menu::text_of(&i.label),
+                i.enabled,
+                i.focused,
+            )
+        })
         .collect()
 }
 
@@ -493,7 +501,8 @@ fn the_view_follows_the_focus_the_saves_and_the_debug_tools() {
     let focused = |t: &TitleScreen, c: &Ctx| {
         let view = t.view(c);
         let menu = view.menu.unwrap();
-        menu.focused().map(|i| i.label.clone())
+        menu.focused()
+            .map(|i| crate::widgets::menu::text_of(&i.label).to_owned())
     };
     assert_eq!(focused(&t, &c).as_deref(), Some("Continue"));
     t.update(&mut c, &input(&[CursorDown, CursorDown]));

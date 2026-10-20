@@ -2,6 +2,7 @@
 //! queued with the banners, scenes inside a combat's playback (the rogue's
 //! line before the combat, its last words before it fades) and `Talk`.
 
+use crate::screens::battle::testing::Values as _;
 use insta::assert_snapshot;
 use trpg_content::character_unit;
 use trpg_core::{
@@ -149,9 +150,10 @@ fn talk_is_offered_next_to_someone_to_talk_to_and_picks_a_target() {
     let c = ctx();
     let s = rogue_battle(&c, 22);
     let menu = lord_menu(&s);
-    let Mode::ActionMenu { entries, menu, .. } = &menu else {
+    let Mode::ActionMenu { menu, .. } = &menu else {
         panic!("{menu:?}");
     };
+    let entries = menu.values();
     assert_eq!(
         entries,
         &[
@@ -165,7 +167,10 @@ fn talk_is_offered_next_to_someone_to_talk_to_and_picks_a_target() {
         ]
     );
     assert_eq!(menu.focus(), 0, "Attack stays the default");
-    assert_eq!(MenuEntry::Talk.label(Words::ENGLISH), "Talk");
+    assert_eq!(
+        crate::widgets::menu::english(&menu.items()[2].label),
+        "Talk"
+    );
     // Talk (past the dimmed Arts): the rogue, the cursor on it.
     let (mode, _) = step(lord_menu(&s), Action::CursorDown, Pos::new(3, 5), &s);
     let (mode, effect) = step(mode, Action::CursorDown, Pos::new(3, 5), &s);
@@ -182,9 +187,10 @@ fn talk_is_offered_next_to_someone_to_talk_to_and_picks_a_target() {
     // Cancel: the menu, on Talk, the cursor back on the lord.
     let (back, effect) = step(mode.clone(), Action::Cancel, ROGUE_AT, &s);
     assert_eq!(effect, Effect::Cursor(Pos::new(3, 5)));
-    let Mode::ActionMenu { entries, menu, .. } = &back else {
+    let Mode::ActionMenu { menu, .. } = &back else {
         panic!("{back:?}");
     };
+    let entries = menu.values();
     assert_eq!(entries[menu.focus()], MenuEntry::Talk);
     // Confirm: the talk, which keeps the unit's move and action open.
     let sel = mode.selection().cloned().unwrap();
@@ -276,9 +282,10 @@ fn talking_plays_the_scene_and_keeps_the_units_turn() {
     assert!(s.state().recruited().is_empty());
     assert!(!s.state().unit(UnitId(1)).unwrap().acted);
     assert_eq!(s.history().len(), 1);
-    let Mode::ActionMenu { entries, menu, .. } = s.mode() else {
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let entries = menu.values();
     assert!(!entries.contains(&MenuEntry::Talk));
     assert_eq!(entries[menu.focus()], MenuEntry::Attack);
     // Then it acts as usual.
