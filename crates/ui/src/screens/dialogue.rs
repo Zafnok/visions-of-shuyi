@@ -93,7 +93,7 @@ pub struct DialogueScreen {
     /// Whether the "Skip scene?" question is open.
     asking_skip: bool,
     /// The lead's replies, while a choice is open.
-    menu: Option<Menu>,
+    menu: Option<Menu<usize>>,
     /// Every line seen, for the log.
     history: History,
     /// The log's cursor (a row of [`log::row_count`]), while it is open.
@@ -202,7 +202,7 @@ impl DialogueScreen {
     }
 
     /// The replies menu, while a choice is open.
-    pub fn menu(&self) -> Option<&Menu> {
+    pub fn menu(&self) -> Option<&Menu<usize>> {
         self.menu.as_ref()
     }
 
@@ -254,7 +254,9 @@ impl DialogueScreen {
         let view = self.player.current();
         let text = TextBox::new(view.text.as_deref().unwrap_or(""), TEXT_W, TEXT_LINES);
         let menu = view.choices.map(|choices| {
-            Menu::new(choices.into_iter().map(MenuItem::new).collect()).without_cancel()
+            let items = choices.into_iter().enumerate();
+            let items = items.map(|(i, c)| MenuItem::new(c).with_value(i));
+            Menu::new(items.collect()).without_cancel()
         });
         self.text = text;
         self.menu = menu;
@@ -351,9 +353,7 @@ impl DialogueScreen {
                 continue;
             }
             if let Some(menu) = self.menu.as_mut() {
-                if let Some(MenuEvent::Chosen(())) = menu.handle_with_sound(action, &mut ctx.audio)
-                {
-                    let i = menu.focus();
+                if let Some(MenuEvent::Chosen(i)) = menu.handle_with_sound(action, &mut ctx.audio) {
                     let music = self.music_here();
                     self.history.replied(&self.player, i, music);
                     self.player.choose(i);

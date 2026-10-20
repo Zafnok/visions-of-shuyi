@@ -21,8 +21,8 @@ use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::playdate::{
-    Item, ask_view, bar, cells, centred, clear, cut, first_shown, footer, inks, item, more_marks,
-    to_i32, to_usize, window,
+    Answers, Item, ask, bar, cells, centred, clear, cut, first_shown, footer, inks, item,
+    more_marks, to_i32, to_usize, window,
 };
 
 /// Column of the group headings.
@@ -120,7 +120,8 @@ pub fn paint(ctx: &Ctx, view: &KeyBindingsView, buf: &mut GlyphBuffer) {
         paint_choices(ctx, buf, choices, rect, y);
     }
     if let Some(question) = &view.question {
-        ask_view(ctx, buf, question);
+        let keys = question.keys.as_deref().unwrap_or_default();
+        ask(ctx, buf, &question.text, Answers::Hint(keys));
     }
 }
 

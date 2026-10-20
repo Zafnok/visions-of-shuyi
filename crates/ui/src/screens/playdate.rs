@@ -211,11 +211,13 @@ pub fn first_shown(len: usize, room: usize, focus: Option<usize>) -> usize {
 /// The size, in cells, of `menu`'s window: its longest item with a cell
 /// either side, inside the frame; a row per item.
 pub fn menu_size(ctx: &Ctx, menu: &MenuView) -> (i32, i32) {
-    let widest = menu.items.iter().map(|i| cells(&menu_text(ctx, i))).max();
+    let text = |item| menu_text(ctx, item);
+    let widest = menu.items.iter().map(text).map(|t| cells(&t)).max();
     (widest.unwrap_or(0) + 4, to_i32(menu.items.len()) + 2)
 }
 
-/// An item's text: its label and what follows it.
+/// An item's text, in the player's language: its label and what follows
+/// it.
 fn menu_text(ctx: &Ctx, item: &crate::widgets::MenuItemView) -> String {
     let label = ctx.label(&item.label);
     match &item.suffix {

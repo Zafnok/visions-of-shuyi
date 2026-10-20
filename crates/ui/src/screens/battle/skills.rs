@@ -8,14 +8,14 @@
 
 use crate::prelude::*;
 use trpg_core::{
-    ActiveEffect, Area, BattleState, CombatMods, Command, CommandError, Condition, PassiveEffect,
-    Phase, Pos, SkillCost, SkillDef, SkillId, SkillKind, StatKind, StatValue, TimedEffect,
-    TimedMods, UnitAction, UnitId, WeaponKind, WeaponReq,
+    ActiveEffect, Area, BattleState, CombatMods, Command, CommandError, Condition, CostError,
+    PassiveEffect, Phase, Pos, SkillCost, SkillDef, SkillId, SkillKind, StatKind, StatValue,
+    TimedEffect, TimedMods, UnitAction, UnitId, WeaponKind, WeaponReq,
 };
 
 use super::art_list::reason_text;
 use super::info::stat_name;
-use super::mode::Selection;
+use super::mode::{Line, Selection};
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::widgets::wrap_step;
 use crate::words::Words;
@@ -272,9 +272,9 @@ pub struct SkillChoice {
     pub targets: Vec<UnitId>,
     /// Whether the core would accept it now; if not, the line is dimmed.
     pub usable: bool,
-    /// Why it can't be paid for (`no uses left`), when that is what stops
+    /// Why it can't be paid for (no uses left), when that is what stops
     /// it: shown after its dimmed line.
-    pub reason: Option<String>,
+    pub reason: Option<CostError>,
 }
 
 /// The command that uses `skill` from `sel`'s path end on `target`.
@@ -295,7 +295,7 @@ fn accepted(state: &BattleState, cmd: &Command) -> bool {
 }
 
 /// The `Skill` menu's lines for `sel`'s unit.
-pub fn skill_choices(state: &BattleState, words: Words<'_>, sel: &Selection) -> Vec<SkillChoice> {
+pub fn skill_choices(state: &BattleState, sel: &Selection) -> Vec<SkillChoice> {
     known_non_combat(state, sel.unit)
         .into_iter()
         .map(|def| {
@@ -324,7 +324,7 @@ pub fn skill_choices(state: &BattleState, words: Words<'_>, sel: &Selection) -> 
             };
             // The cost is the core's first check, whoever the target is.
             let reason = match state.check(&use_command(sel, &def.id, None)) {
-                Err(CommandError::CannotPay { error, .. }) => Some(reason_text(words, &error)),
+                Err(CommandError::CannotPay { error, .. }) => Some(error),
                 _ => None,
             };
             SkillChoice {
@@ -386,7 +386,7 @@ pub fn skill_menu(
     words: Words<'_>,
     unit: UnitId,
     choices: &[SkillChoice],
-) -> Menu {
+) -> Menu<Line> {
     let name_w = choices
         .iter()
         .map(|c| skill_name(state, words, &c.skill).chars().count())
@@ -404,15 +404,17 @@ pub fn skill_menu(
                 uses_left(state, unit, &c.skill),
                 weapon,
             );
+            let item = MenuItem::new(text).with_enabled(c.usable);
             let item = match (&c.reason, c.usable) {
-                (_, true) => MenuItem::new(text),
                 (Some(why), false) => {
-                    MenuItem::disabled(text).with_suffix(format!(" {why}"), SuffixKind::Warning)
+                    let why = format!(" {}", reason_text(words, why));
+                    item.with_suffix(why, SuffixKind::Warning)
                 }
-                (None, false) => MenuItem::disabled(text),
+                _ => item,
             };
             let skill = state.skills().get(&c.skill);
-            item.with_note(skill.map(|s| effect_text(words, s)).unwrap_or_default())
+            let note = skill.map(|s| effect_text(words, s)).unwrap_or_default();
+            item.with_note(note).with_value(Line::Skill(c.clone()))
         })
         .collect();
     Menu::new(items).browsing_disabled()
@@ -424,30 +426,23 @@ pub struct SkillTargeting {
     /// The unit using the skill and its path (it stands at the path's end).
     pub sel: Selection,
     /// The `Skill` menu it was opened from (Cancel goes back to it).
-    pub menu: Menu,
-    /// The menu's lines.
-    pub choices: Vec<SkillChoice>,
-    /// Which line is being used.
-    pub choice: usize,
+    pub menu: Menu<Line>,
+    /// The line being used.
+    pub choice: SkillChoice,
     /// The target under the cursor, an index of the line's targets.
     pub index: usize,
 }
 
 impl SkillTargeting {
-    /// Targeting for `choices[choice]`. `None` if it has no target.
-    pub fn new(
-        sel: Selection,
-        menu: Menu,
-        choices: Vec<SkillChoice>,
-        choice: usize,
-    ) -> Option<Self> {
-        if choices.get(choice)?.targets.is_empty() {
+    /// Targeting for `choice`, a line of `menu`. `None` if it has no
+    /// target.
+    pub fn new(sel: Selection, menu: Menu<Line>, choice: SkillChoice) -> Option<Self> {
+        if choice.targets.is_empty() {
             return None;
         }
         Some(Self {
             sel,
             menu,
-            choices,
             choice,
             index: 0,
         })
@@ -455,8 +450,8 @@ impl SkillTargeting {
 
     /// The line being used.
     fn used(&self) -> &SkillChoice {
-        // `choice` is valid and its targets are never empty ([`Self::new`]).
-        &self.choices[self.choice]
+        // Its targets are never empty ([`Self::new`]).
+        &self.choice
     }
 
     /// The skill being used.
@@ -687,7 +682,7 @@ mod tests {
             reason: None,
         };
         let menu = Menu::new(vec![]);
-        let mut t = SkillTargeting::new(sel, menu, vec![choice], 0).unwrap();
+        let mut t = SkillTargeting::new(sel, menu, choice).unwrap();
         assert_eq!(t.targets(), [UnitId(4), UnitId(5), UnitId(6)]);
         let mut seen = vec![t.target()];
         for _ in 0..3 {

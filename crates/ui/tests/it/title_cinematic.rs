@@ -21,7 +21,6 @@ use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::MapScene;
 use trpg_ui::screens::TitleScreen;
 use trpg_ui::screens::title::TitleView;
-use trpg_ui::widgets::menu::LabelText;
 
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);
 /// The title song's length, in seconds (`assets/audio/audio.ron`).
@@ -140,7 +139,7 @@ fn music(h: &Harness) -> Vec<String> {
 /// The focused menu line.
 fn focused(h: &Harness) -> Option<String> {
     let menu = view(h).menu?;
-    menu.focused().map(|i| i.label.as_str().to_owned())
+    menu.focused().map(|i| h.game().ctx().label(&i.label))
 }
 
 /// Acceptance: after the first press the menu shows; left alone, the

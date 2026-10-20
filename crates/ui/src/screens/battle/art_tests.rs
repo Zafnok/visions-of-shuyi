@@ -4,7 +4,7 @@
 //! the info screen, and the playback banner for a boss's or a green unit's
 //! art. The numbers are always `core`'s.
 
-use crate::widgets::menu::LabelText;
+use crate::screens::battle::testing::{Lines as _, Values as _};
 use insta::assert_snapshot;
 use trpg_core::{
     ArtId, BattleState, ClassId, Command, EffectSource, Equipped, Event, Faction, Objective, Pos,
@@ -14,7 +14,7 @@ use trpg_core::{
 use super::BattleScreen;
 use super::art_list::{Technique, art_lines, arts_menu, playback_banner};
 use super::attack::reach;
-use super::mode::{ListKind, MenuEntry, Mode};
+use super::mode::{Line, MenuEntry, Mode};
 use super::playback::{Playback, TIMINGS, box_view};
 use super::testing::{battle_with, quick_units};
 use super::view::{ForecastView, InfoView, SkillLineView};
@@ -26,6 +26,7 @@ use crate::input::Action;
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 use crate::widgets::menu::SuffixKind;
+use crate::widgets::menu::{Menu, text_of};
 use crate::words::Words;
 
 fn p(x: i32, y: i32) -> Pos {
@@ -97,9 +98,10 @@ fn targeting(s: &BattleScreen) -> &super::attack::Targeting {
 
 /// Chooses `entry` in the action menu that is open.
 fn choose_entry(s: &mut BattleScreen, c: &mut Ctx, entry: MenuEntry) {
-    let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let entries = menu.values();
     let to = entries.iter().position(|&e| e == entry).unwrap();
     let from = menu.focus();
     let key = if to > from {
@@ -152,14 +154,10 @@ fn use_art(s: &mut BattleScreen, c: &mut Ctx, name: &str, target: UnitId) {
     let at = at.unwrap_or_else(|| panic!("{name} isn't listed: {:?}", lines(s)));
     // Down to the line (it opened on the first one that can be chosen).
     for _ in 0..at {
-        let Mode::List {
-            menu,
-            kind: ListKind::Arts(_),
-            ..
-        } = s.mode()
-        else {
+        let Mode::List { menu, .. } = s.mode() else {
             unreachable!()
         };
+        assert!(!menu.arts().is_empty());
         if menu.focus() == at {
             break;
         }
@@ -188,23 +186,23 @@ fn archer_on_brigand(c: &mut Ctx, state: BattleState, name: &str) -> BattleScree
 /// The lines of the arts menu that is open: name as shown, enabled, dimmed
 /// reason.
 fn lines(s: &BattleScreen) -> Vec<(String, bool, Option<String>)> {
-    let Mode::List {
-        menu,
-        kind: ListKind::Arts(_),
-        ..
-    } = s.mode()
-    else {
+    let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    assert!(!menu.arts().is_empty());
     shown(menu)
 }
 
 /// The lines of `menu`: name as shown, enabled, dimmed reason.
-fn shown(menu: &crate::widgets::menu::Menu) -> Vec<(String, bool, Option<String>)> {
+fn shown(menu: &Menu<Line>) -> Vec<(String, bool, Option<String>)> {
     menu.items()
         .iter()
         .map(|i| {
-            let name = i.label.as_str().split("  ").next().unwrap_or("").to_owned();
+            let name = text_of(&i.label)
+                .split("  ")
+                .next()
+                .unwrap_or("")
+                .to_owned();
             (
                 name,
                 i.enabled,
@@ -344,9 +342,10 @@ fn a_broken_weapon_dims_every_art_with_the_reason() {
     // Nothing to choose: `Arts` is listed, dimmed. The broken sword still
     // attacks plainly.
     let s = lord_menu(&mut c, state);
-    let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let entries = menu.values();
     let enabled = |e| menu.items()[entries.iter().position(|&x| x == e).unwrap()].enabled;
     assert!(enabled(MenuEntry::Attack));
     assert!(!enabled(MenuEntry::Arts));
@@ -400,10 +399,7 @@ fn a_dimmed_line_shows_its_reason_and_effect_and_cant_be_chosen() {
     assert!(
         matches!(
             s.mode(),
-            Mode::List {
-                kind: ListKind::Arts(_),
-                ..
-            }
+            Mode::List { menu, .. } if !menu.arts().is_empty()
         ),
         "{:?}",
         s.mode()
@@ -434,18 +430,14 @@ fn lines_are_arts_then_actives_and_only_what_fits() {
     // No `Attack` line, no bow or axe arts, and not the lord's Inspire (not
     // a combat active).
     assert_eq!(names, ["Flowing Cut", "Guard Break", "Keen Edge"]);
-    let Mode::List {
-        menu,
-        kind: ListKind::Arts(_),
-        ..
-    } = s.mode()
-    else {
+    let Mode::List { menu, .. } = s.mode() else {
         unreachable!()
     };
+    assert!(!menu.arts().is_empty());
     let labels: Vec<&str> = menu
         .items()
         .iter()
-        .map(|i| i.label.as_str().trim_end())
+        .map(|i| text_of(&i.label).trim_end())
         .collect();
     assert_eq!(
         labels,
@@ -561,14 +553,10 @@ fn archer_arts_menu_snapshot() {
 
 /// What the focused line of the arts menu says it does (ticket 0429).
 fn focused_note(s: &BattleScreen) -> Option<String> {
-    let Mode::List {
-        menu,
-        kind: ListKind::Arts(_),
-        ..
-    } = s.mode()
-    else {
+    let Mode::List { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    assert!(!menu.arts().is_empty());
     menu.view().focused().and_then(|i| i.note.clone())
 }
 
@@ -635,14 +623,7 @@ fn broken_weapon_lines_snapshot() {
     let menu = arts_menu(s.state(), Words::ENGLISH, &lines);
     let (text, color) = menu.items()[0].suffix.clone().unwrap();
     assert_eq!((text.trim(), color), ("broken", SuffixKind::Warning));
-    let action_menu = std::mem::replace(
-        &mut s.mode,
-        Mode::List {
-            sel,
-            menu,
-            kind: ListKind::Arts(lines),
-        },
-    );
+    let action_menu = std::mem::replace(&mut s.mode, Mode::List { sel, menu });
     let list = render(&s, &c).to_snapshot(&c.palette);
     s.mode = action_menu;
     choose_entry(&mut s, &mut c, MenuEntry::Attack);
@@ -790,9 +771,10 @@ fn long_shot_reaches_a_target_just_beyond_the_bows_range() {
     let state = long_shot(&c, p(8, 1));
     let mut s = archer_menu(&mut c, state);
     // A plain shot reaches nobody: the menu opens on `Arts`.
-    let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
+    let Mode::ActionMenu { menu, .. } = s.mode() else {
         panic!("{:?}", s.mode());
     };
+    let entries = menu.values();
     assert!(!menu.items()[0].enabled);
     assert_eq!(entries[menu.focus()], MenuEntry::Arts);
     use_art(&mut s, &mut c, "Long Shot", UnitId(4));

@@ -17,7 +17,6 @@ use trpg_ui::screens::profile::ProfileScreen;
 use trpg_ui::screens::title::BACKDROP_KEY;
 use trpg_ui::settings::TextSpeed;
 use trpg_ui::tips::TipsSeen;
-use trpg_ui::widgets::menu::LabelText;
 use trpg_ui::{MemoryStorage, Storage};
 
 fn chord(s: &str) -> Chord {
@@ -336,7 +335,7 @@ fn title_items(h: &Harness) -> Vec<String> {
     let items = menu.map(|m| m.items).unwrap_or_default();
     items
         .into_iter()
-        .map(|i| i.label.as_str().to_owned())
+        .map(|i| h.game().ctx().label(&i.label))
         .collect()
 }
 

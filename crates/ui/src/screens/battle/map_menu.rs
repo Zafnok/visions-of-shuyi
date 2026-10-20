@@ -87,9 +87,10 @@ impl MapEntry {
         }
     }
 
-    /// The text shown.
-    pub fn label(self, words: Words<'_>) -> &str {
-        words.text(match self {
+    /// The menu item, disabled if not `enabled`: its text in the player's
+    /// language when it is painted.
+    pub fn item(self, enabled: bool) -> MenuItem<MapEntry> {
+        let key = match self {
             MapEntry::Units => "battle.map_menu.units",
             MapEntry::Objective => "battle.map_menu.objective",
             MapEntry::Guides => "battle.map_menu.guides",
@@ -100,16 +101,8 @@ impl MapEntry {
             MapEntry::DangerZone => "battle.map_menu.danger_zone",
             MapEntry::AutoEnd => "battle.map_menu.auto_end",
             MapEntry::UnitInfo => "battle.map_menu.unit_info",
-        })
-    }
-
-    /// The menu item, disabled if not `enabled`.
-    pub fn item(self, words: Words<'_>, enabled: bool) -> MenuItem {
-        if enabled {
-            MenuItem::new(self.label(words))
-        } else {
-            MenuItem::disabled(self.label(words))
-        }
+        };
+        MenuItem::keyed(key).with_value(self).with_enabled(enabled)
     }
 
     /// Whether it can be chosen in `state`: `Suspend` while the battle is
@@ -156,33 +149,30 @@ pub fn shortcuts(keyboard: Keyboard, keymap: &Keymap) -> Vec<MapEntry> {
         .collect()
 }
 
-/// The map menu for `state`, focused on `focus` (if enabled), and what
-/// each item is.
-pub fn map_menu(state: &BattleState, words: Words<'_>, focus: MapEntry) -> (Menu, Vec<MapEntry>) {
-    map_menu_with(state, words, focus, &[], Pos::new(0, 0))
+/// The map menu for `state`, focused on `focus` (if enabled).
+pub fn map_menu(state: &BattleState, focus: MapEntry) -> Menu<MapEntry> {
+    map_menu_with(state, focus, &[], Pos::new(0, 0))
 }
 
 /// [`map_menu`] with the `shortcuts` the platform lists (after
 /// `Objective`), the cursor at `cursor`.
 pub fn map_menu_with(
     state: &BattleState,
-    words: Words<'_>,
     focus: MapEntry,
     shortcuts: &[MapEntry],
     cursor: Pos,
-) -> (Menu, Vec<MapEntry>) {
+) -> Menu<MapEntry> {
     let mut entries = MapEntry::ALL.to_vec();
     let after = entries
         .iter()
         .position(|&e| e == MapEntry::Objective)
         .map_or(0, |i| i + 1);
     entries.splice(after..after, shortcuts.iter().copied());
-    let items = entries
-        .iter()
-        .map(|&e| e.item(words, e.available(state, cursor)))
-        .collect();
     let index = entries.iter().position(|&e| e == focus).unwrap_or(0);
-    (Menu::new(items).focused(index), entries)
+    let items = entries
+        .into_iter()
+        .map(|e| e.item(e.available(state, cursor)));
+    Menu::new(items.collect()).focused(index)
 }
 
 /// How many player units can still act this phase.
@@ -196,8 +186,8 @@ pub fn ready_players(state: &BattleState) -> usize {
 }
 
 /// The `Units` list: every player unit, as `name  HP hp/max  ready` (or
-/// `acted`), in the battle's unit order, and their ids.
-pub fn unit_list(state: &BattleState, words: Words<'_>) -> (Menu, Vec<UnitId>) {
+/// `acted`), in the battle's unit order, each standing for its unit.
+pub fn unit_list(state: &BattleState, words: Words<'_>) -> Menu<UnitId> {
     let players: Vec<_> = state
         .units()
         .iter()
@@ -223,10 +213,10 @@ pub fn unit_list(state: &BattleState, words: Words<'_>) -> (Menu, Vec<UnitId>) {
                 ("hp", &hp),
                 ("status", &status),
             ];
-            MenuItem::new(words.text_with("battle.units.line", &line))
+            MenuItem::new(words.text_with("battle.units.line", &line)).with_value(u.id)
         })
         .collect();
-    (Menu::new(items), players.iter().map(|u| u.id).collect())
+    Menu::new(items)
 }
 
 /// What the objective asks, e.g. `Rout the enemy` or `Seize the Fort`.
@@ -298,20 +288,25 @@ mod tests {
     use crate::screen::tests::ctx;
     use crate::screens::battle::quick_battle;
     use crate::screens::battle::testing::{battle_with, wait};
-    use crate::widgets::menu::LabelText;
+    use crate::widgets::menu::{english, text_of};
 
-    fn labels(menu: &Menu) -> Vec<(&str, bool)> {
+    fn labels(menu: &Menu<MapEntry>) -> Vec<(String, bool)> {
         menu.items()
             .iter()
-            .map(|i| (i.label.as_str(), i.enabled))
+            .map(|i| (english(&i.label), i.enabled))
             .collect()
+    }
+
+    /// What each item of `menu` is.
+    fn entries(menu: &Menu<MapEntry>) -> Vec<MapEntry> {
+        menu.items().iter().map(|i| i.value).collect()
     }
 
     #[test]
     fn end_turn_needs_the_player_phase() {
         let mut s = quick_battle(&ctx().game.content).unwrap();
-        let (menu, entries) = map_menu(&s, Words::ENGLISH, MapEntry::Units);
-        assert_eq!(entries, MapEntry::ALL);
+        let menu = map_menu(&s, MapEntry::Units);
+        assert_eq!(entries(&menu), MapEntry::ALL);
         assert_eq!(
             labels(&menu),
             [
@@ -323,19 +318,20 @@ mod tests {
                 ("Restart Battle", true),
                 ("End Turn", true),
             ]
+            .map(|(l, e)| (l.to_owned(), e))
         );
         assert_eq!(menu.focus(), 0);
-        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::Guides).0.focus(), 2);
-        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::Restart).0.focus(), 5);
-        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::EndTurn).0.focus(), 6);
-        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::Options).0.focus(), 3);
-        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::Suspend).0.focus(), 4);
+        assert_eq!(map_menu(&s, MapEntry::Guides).focus(), 2);
+        assert_eq!(map_menu(&s, MapEntry::Restart).focus(), 5);
+        assert_eq!(map_menu(&s, MapEntry::EndTurn).focus(), 6);
+        assert_eq!(map_menu(&s, MapEntry::Options).focus(), 3);
+        assert_eq!(map_menu(&s, MapEntry::Suspend).focus(), 4);
         // In the enemy phase, End Turn is disabled.
         s.apply(&trpg_core::Command::EndPhase).unwrap();
         assert_eq!(s.phase(), Phase::Enemy);
         assert!(!MapEntry::EndTurn.enabled(&s));
         // A disabled entry can't take the focus.
-        assert_eq!(map_menu(&s, Words::ENGLISH, MapEntry::EndTurn).0.focus(), 0);
+        assert_eq!(map_menu(&s, MapEntry::EndTurn).focus(), 0);
         assert!(MapEntry::Options.enabled(&s));
         assert!(MapEntry::Guides.enabled(&s));
         // Nobody acted, but it isn't the player's phase: none ready.
@@ -369,13 +365,7 @@ mod tests {
     fn the_shortcuts_follow_objective_and_unit_info_needs_a_unit() {
         let s = quick_battle(&ctx().game.content).unwrap();
         let on = s.units()[0].pos;
-        let (menu, entries) = map_menu_with(
-            &s,
-            Words::ENGLISH,
-            MapEntry::UnitInfo,
-            &MapEntry::SHORTCUTS,
-            on,
-        );
+        let menu = map_menu_with(&s, MapEntry::UnitInfo, &MapEntry::SHORTCUTS, on);
         assert_eq!(
             labels(&menu)[..6],
             [
@@ -386,19 +376,14 @@ mod tests {
                 ("Unit Info", true),
                 ("Guides", true),
             ]
+            .map(|(l, e)| (l.to_owned(), e))
         );
-        assert_eq!(entries.len(), 10);
+        assert_eq!(entries(&menu).len(), 10);
         assert_eq!(menu.focus(), 4);
         let empty = Pos::new(0, 0);
         assert!(s.units().iter().all(|u| u.pos != empty));
-        let (menu, _) = map_menu_with(
-            &s,
-            Words::ENGLISH,
-            MapEntry::UnitInfo,
-            &[MapEntry::UnitInfo],
-            empty,
-        );
-        assert_eq!(labels(&menu)[2], ("Unit Info", false));
+        let menu = map_menu_with(&s, MapEntry::UnitInfo, &[MapEntry::UnitInfo], empty);
+        assert_eq!(labels(&menu)[2], ("Unit Info".to_owned(), false));
         assert_eq!(menu.focus(), 0, "a dimmed entry takes no focus");
     }
 
@@ -426,9 +411,10 @@ mod tests {
         let mut s = quick_battle(&ctx().game.content).unwrap();
         wait(&mut s, 2);
         assert_eq!(ready_players(&s), 3);
-        let (menu, ids) = unit_list(&s, Words::ENGLISH);
+        let menu = unit_list(&s, Words::ENGLISH);
+        let ids: Vec<UnitId> = menu.items().iter().map(|i| i.value).collect();
         assert_eq!(ids, [UnitId(1), UnitId(2), UnitId(3), UnitId(8)]);
-        let rows: Vec<&str> = menu.items().iter().map(|i| i.label.as_str()).collect();
+        let rows: Vec<&str> = menu.items().iter().map(|i| text_of(&i.label)).collect();
         assert_eq!(
             rows,
             [

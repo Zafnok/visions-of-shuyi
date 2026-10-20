@@ -2,7 +2,6 @@
 //! it shows (its view). The look is tested in `glyph/tests.rs`; scripted
 //! runs and snapshots are in `crates/ui/tests/it/dialogue.rs`.
 
-use crate::widgets::menu::LabelText;
 use trpg_content::{Side, Stage, Step};
 use trpg_core::CharacterId;
 
@@ -547,7 +546,7 @@ fn replies(s: &DialogueScreen, c: &Ctx) -> Option<(Vec<String>, Option<usize>)> 
         choices
             .items
             .into_iter()
-            .map(|i| i.label.as_str().to_owned())
+            .map(|i| crate::widgets::menu::text_of(&i.label).to_owned())
             .collect(),
         focus,
     ))

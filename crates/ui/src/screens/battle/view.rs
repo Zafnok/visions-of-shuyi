@@ -246,6 +246,9 @@ impl BattleView {
     /// screen shows something.
     pub fn texts(&self) -> Vec<String> {
         let mut texts: Vec<String> = self.own_texts().into_iter().map(str::to_owned).collect();
+        // The menu's lines, in English.
+        let menu = self.menu.iter().flat_map(|m| &m.menu.items);
+        texts.extend(menu.map(|i| crate::widgets::menu::english(&i.label)));
         texts.extend(self.forecast.iter().flat_map(ForecastView::texts));
         texts.extend(self.info.iter().flat_map(InfoView::texts));
         if let Some(b) = &self.fight_box {
@@ -262,13 +265,9 @@ impl BattleView {
     /// The lines of text of the parts with no view type of their own.
     fn own_texts(&self) -> Vec<&str> {
         let mut texts: Vec<&str> = vec![&self.status, &self.help];
-        if let Some(m) = &self.menu {
-            use crate::widgets::menu::LabelText;
-            texts.extend(m.menu.items.iter().map(|i| i.label.as_str()));
-            if let Some(h) = &m.header {
-                texts.push(&h.name);
-                texts.extend(h.uses.as_ref().map(|u| u.text.as_str()));
-            }
+        if let Some(h) = self.menu.as_ref().and_then(|m| m.header.as_ref()) {
+            texts.push(&h.name);
+            texts.extend(h.uses.as_ref().map(|u| u.text.as_str()));
         }
         if let Some(p) = &self.panel {
             if let Some(t) = &p.terrain {

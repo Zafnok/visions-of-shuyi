@@ -1,4 +1,3 @@
-use crate::widgets::menu::LabelText;
 use insta::assert_snapshot;
 use trpg_content::new_campaign;
 use trpg_core::{LeadGender, LeadProfile, SAVE_VERSION};
@@ -115,12 +114,23 @@ fn the_prompt_view_asks_with_yes_focused() {
     let mut s = SavePromptScreen::new(&c);
     let view = s.view(&c);
     assert_eq!(view.question, c.text(SAVE_QUESTION));
-    let labels: Vec<_> = view.menu.items.iter().map(|i| i.label.as_str()).collect();
+    let labels: Vec<_> = view
+        .menu
+        .items
+        .iter()
+        .map(|i| crate::widgets::menu::text_of(&i.label))
+        .collect();
     assert_eq!(labels, ["Yes", "No"]);
-    assert_eq!(view.menu.focused().unwrap().label.as_str(), "Yes");
+    assert_eq!(
+        crate::widgets::menu::text_of(&view.menu.focused().unwrap().label),
+        "Yes"
+    );
     assert_eq!(view.help, SavePromptScreen::help(&c));
     press(&mut s, &mut ctx(), &[Action::CursorDown]);
-    assert_eq!(s.view(&c).menu.focused().unwrap().label.as_str(), "No");
+    assert_eq!(
+        crate::widgets::menu::text_of(&s.view(&c).menu.focused().unwrap().label),
+        "No"
+    );
 }
 
 #[test]

@@ -19,7 +19,7 @@ use super::art_list::{Fit, Technique, cost_label, fit, reason_text};
 use super::attack::{Targeting, aim_tile, reach};
 use super::info::range_text;
 use super::items::heal_preview;
-use super::mode::Selection;
+use super::mode::{Line, Selection};
 use super::skills::skill_name;
 use crate::widgets::menu::{Menu, MenuItem, SuffixKind};
 use crate::widgets::wrap_step;
@@ -261,7 +261,7 @@ pub fn spell_menu(
     words: Words<'_>,
     unit: UnitId,
     choices: &[SpellChoice],
-) -> Menu {
+) -> Menu<Line> {
     let defs = || {
         choices
             .iter()
@@ -285,11 +285,9 @@ pub fn spell_menu(
                     words.text_with("battle.spell.with_active", &keys)
                 }
             };
-            let item = if c.targets.is_empty() {
-                MenuItem::disabled(label)
-            } else {
-                MenuItem::new(label)
-            };
+            let item = MenuItem::new(label)
+                .with_value(Line::Spell(c.clone()))
+                .with_enabled(!c.targets.is_empty());
             match (&c.blocked, &c.active) {
                 (Some(error), _) => item.with_suffix(
                     format!(" {}", reason_text(words, error)),
@@ -304,10 +302,11 @@ pub fn spell_menu(
         })
         .collect();
     let equipped = caster.and_then(|u| u.loadout.equipped_spell());
-    let focus = choices
-        .iter()
-        .position(|c| Some(&c.spell) == equipped && c.active.is_none());
     let menu = Menu::new(items);
+    let focus = menu.items().iter().position(|i| match &i.value {
+        Line::Spell(c) => Some(&c.spell) == equipped && c.active.is_none(),
+        _ => false,
+    });
     match focus {
         Some(i) => menu.focused(i),
         None => menu,
@@ -320,11 +319,9 @@ pub struct CastTargeting {
     /// The caster and its path (it stands at the path's end).
     pub sel: Selection,
     /// The spell list it was opened from (Cancel goes back to it).
-    pub menu: Menu,
-    /// The spell list's lines.
-    pub choices: Vec<SpellChoice>,
-    /// Which line is being cast.
-    pub chosen: usize,
+    pub menu: Menu<Line>,
+    /// The line being cast.
+    pub chosen: SpellChoice,
     /// The target under the cursor, an index of the line's targets.
     pub index: usize,
     /// The forecast against the units an attack spell reaches (with the
@@ -334,16 +331,15 @@ pub struct CastTargeting {
 }
 
 impl CastTargeting {
-    /// Targeting for `choices[chosen]`, on its first target. `None` if it
-    /// has none.
+    /// Targeting for `chosen`, a line of `menu`, on its first target.
+    /// `None` if it has none.
     pub fn new(
         state: &BattleState,
         sel: Selection,
-        menu: Menu,
-        choices: Vec<SpellChoice>,
-        chosen: usize,
+        menu: Menu<Line>,
+        chosen: SpellChoice,
     ) -> Option<Self> {
-        let choice = choices.get(chosen)?;
+        let choice = &chosen;
         let first = *choice.targets.first()?;
         let enemies: Vec<UnitId> = choice
             .targets
@@ -362,7 +358,6 @@ impl CastTargeting {
         Some(Self {
             sel,
             menu,
-            choices,
             chosen,
             index: 0,
             attack,
@@ -371,8 +366,8 @@ impl CastTargeting {
 
     /// The line being cast.
     fn used(&self) -> &SpellChoice {
-        // `chosen` is valid and its targets are never empty ([`Self::new`]).
-        &self.choices[self.chosen]
+        // Its targets are never empty ([`Self::new`]).
+        &self.chosen
     }
 
     /// The spell being cast.

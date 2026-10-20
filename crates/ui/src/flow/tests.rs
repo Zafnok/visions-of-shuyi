@@ -1,4 +1,3 @@
-use crate::widgets::menu::LabelText;
 use trpg_core::{Command, LeadGender, LeadProfile, Pos, StatKind, UnitAction, UnitId};
 
 use super::*;
@@ -454,7 +453,7 @@ fn game_over_items(stack: &ScreenStack, c: &Ctx) -> Vec<String> {
     let menu = menu.unwrap_or_else(|| panic!("no menu"));
     menu.items
         .iter()
-        .map(|i| i.label.as_str().to_owned())
+        .map(|i| crate::widgets::menu::text_of(&i.label).to_owned())
         .collect()
 }
 

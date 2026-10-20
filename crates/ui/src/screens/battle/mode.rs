@@ -34,7 +34,6 @@
 //! cursor and applies the [`Effect`]s.
 
 use crate::prelude::*;
-use alloc::borrow::Cow;
 
 use trpg_core::{
     BattleState, Command, Equipped, Faction, Phase, Pos, Reach, TileSet, UnitAction, UnitId,
@@ -178,9 +177,10 @@ pub enum MenuEntry {
 }
 
 impl MenuEntry {
-    /// The text shown.
-    pub fn label(self, words: Words<'_>) -> &str {
-        words.text(match self {
+    /// The menu item, disabled if not `enabled`: its text in the player's
+    /// language when it is painted.
+    fn item(self, enabled: bool) -> MenuItem<MenuEntry> {
+        let key = match self {
             MenuEntry::Attack => "battle.menu.attack",
             MenuEntry::Arts => "battle.menu.arts",
             MenuEntry::Magic => "battle.menu.magic",
@@ -190,16 +190,8 @@ impl MenuEntry {
             MenuEntry::Item => "battle.menu.item",
             MenuEntry::Equip => "battle.menu.equip",
             MenuEntry::Wait => "battle.menu.wait",
-        })
-    }
-
-    /// The menu item, disabled if not `enabled`.
-    fn item(self, words: Words<'_>, enabled: bool) -> MenuItem {
-        if enabled {
-            MenuItem::new(self.label(words))
-        } else {
-            MenuItem::disabled(self.label(words))
-        }
+        };
+        MenuItem::keyed(key).with_value(self).with_enabled(enabled)
     }
 
     /// Whether the entry can be chosen for `sel`'s unit: `Attack` if a
@@ -238,23 +230,12 @@ impl ListKind {
         Some(match entry {
             MenuEntry::Arts => ListKind::Arts(art_lines(state, unit, dest)),
             MenuEntry::Magic => ListKind::Spells(spell_choices(state, unit, dest)),
-            MenuEntry::Skill => ListKind::Skills(skill_choices(state, IN_PLAY, sel)),
+            MenuEntry::Skill => ListKind::Skills(skill_choices(state, sel)),
             MenuEntry::Item => ListKind::Pack(pack_groups(state, unit, dest)),
             MenuEntry::Equip => ListKind::Equip(equip_choices(state, unit)),
             // Attack, Seize, Talk and Wait.
             _ => return None,
         })
-    }
-
-    /// The action menu's entry that opens it (Cancel goes back to it).
-    pub fn entry(&self) -> MenuEntry {
-        match self {
-            ListKind::Arts(_) => MenuEntry::Arts,
-            ListKind::Spells(_) => MenuEntry::Magic,
-            ListKind::Skills(_) => MenuEntry::Skill,
-            ListKind::Pack(_) => MenuEntry::Item,
-            ListKind::Equip(_) => MenuEntry::Equip,
-        }
     }
 
     /// Whether a line can be chosen: an art or active usable on someone, a
@@ -271,7 +252,7 @@ impl ListKind {
     }
 
     /// The list's menu for `unit`, written in `words`.
-    fn menu(&self, state: &BattleState, words: Words<'_>, unit: UnitId) -> Menu {
+    fn menu(&self, state: &BattleState, words: Words<'_>, unit: UnitId) -> Menu<Line> {
         match self {
             ListKind::Arts(lines) => arts_menu(state, words, lines),
             ListKind::Spells(choices) => spell_menu(state, words, unit, choices),
@@ -281,11 +262,46 @@ impl ListKind {
         }
     }
 
-    /// The list open for `sel`.
-    fn open(self, sel: Selection, state: &BattleState) -> Mode {
-        let (menu, kind) = (self.menu(state, IN_PLAY, sel.unit), self);
-        Mode::List { sel, menu, kind }
+    /// The list open for `sel`, written in `words`.
+    fn open(self, sel: Selection, state: &BattleState, words: Words<'_>) -> Mode {
+        let menu = self.menu(state, words, sel.unit);
+        Mode::List { sel, menu }
     }
+}
+
+/// A line of a list the action menu opens: what its menu item stands for.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Line {
+    /// A Combat Art or a combat active, with the weapons it is used with.
+    Art(ArtLine),
+    /// A spell, maybe with an active, and what it can be cast on.
+    Spell(SpellChoice),
+    /// A non-combat active skill.
+    Skill(SkillChoice),
+    /// A group of the pack's items.
+    Item(PackGroup),
+    /// A weapon or attack spell to equip.
+    Equip(EquipChoice),
+}
+
+impl Line {
+    /// The action menu's entry whose list it is in (Cancel goes back to
+    /// it).
+    pub fn entry(&self) -> MenuEntry {
+        match self {
+            Line::Art(_) => MenuEntry::Arts,
+            Line::Spell(_) => MenuEntry::Magic,
+            Line::Skill(_) => MenuEntry::Skill,
+            Line::Item(_) => MenuEntry::Item,
+            Line::Equip(_) => MenuEntry::Equip,
+        }
+    }
+}
+
+/// The action menu's entry that opened the list `menu` (`Wait` for an
+/// empty one, which no entry opens).
+pub fn list_entry(menu: &Menu<Line>) -> MenuEntry {
+    menu.value(0).map_or(MenuEntry::Wait, Line::entry)
 }
 
 /// The action menu for `sel`'s unit at its path's end: `Attack` (enabled if
@@ -351,10 +367,8 @@ pub enum Mode {
     ActionMenu {
         /// The selection (restored by Cancel).
         sel: Selection,
-        /// The menu widget.
-        menu: Menu,
-        /// What each menu item does.
-        entries: Vec<MenuEntry>,
+        /// The menu widget; each item stands for what it does.
+        menu: Menu<MenuEntry>,
         /// The weapons that can attack from there (`Attack` is enabled if
         /// there are any).
         weapons: Vec<WeaponChoice>,
@@ -364,10 +378,9 @@ pub enum Mode {
     List {
         /// The selection.
         sel: Selection,
-        /// The list.
-        menu: Menu,
-        /// What it lists, and each line.
-        kind: ListKind,
+        /// The list, written in the player's language when it opened; each
+        /// item stands for its line.
+        menu: Menu<Line>,
     },
     /// The player picks a target and reads the forecast.
     Targeting(Box<Targeting>),
@@ -395,17 +408,14 @@ pub enum Mode {
     },
     /// The map menu is open.
     MapMenu {
-        /// The menu widget.
-        menu: Menu,
-        /// What each item is.
-        entries: Vec<MapEntry>,
+        /// The menu widget; each item stands for what it is.
+        menu: Menu<MapEntry>,
     },
     /// The map menu's list of player units.
     UnitList {
-        /// The list.
-        menu: Menu,
-        /// Which unit each item is.
-        units: Vec<UnitId>,
+        /// The list, written in the player's language when it opened; each
+        /// item stands for its unit.
+        menu: Menu<UnitId>,
     },
     /// The objective and turn are shown.
     Objective,
@@ -427,47 +437,6 @@ pub enum Mode {
         /// The unit shown.
         unit: UnitId,
     },
-}
-
-/// The language the mode's own lists are built in. Playing only needs a
-/// list's focus and which of its lines can be picked, so it never depends
-/// on the player's language; the screen paints the lists in that
-/// ([`Mode::told`]).
-pub(super) const IN_PLAY: Words<'static> = Words::ENGLISH;
-
-impl Mode {
-    /// The mode as the screen paints it: its lists of arts,
-    /// spells, skills, items and units written in `words`, each focused
-    /// where it is. In English that is the mode itself.
-    pub fn told(&self, state: &BattleState, words: Words<'_>) -> Cow<'_, Mode> {
-        if words.is_english() {
-            return Cow::Borrowed(self);
-        }
-        let mut mode = self.clone();
-        match &mut mode {
-            Mode::ActionMenu { menu, entries, .. } => {
-                let lines = entries.iter().zip(menu.items());
-                let items = lines.map(|(e, item)| e.item(words, item.enabled));
-                *menu = Menu::new(items.collect()).focused(menu.focus());
-            }
-            Mode::MapMenu { menu, entries } => {
-                let lines = entries.iter().zip(menu.items());
-                let items = lines.map(|(e, item)| e.item(words, item.enabled));
-                *menu = Menu::new(items.collect()).focused(menu.focus());
-            }
-            Mode::List { sel, menu, kind } => {
-                if let ListKind::Skills(choices) = kind {
-                    *choices = skill_choices(state, words, sel);
-                }
-                *menu = kind.menu(state, words, sel.unit).focused(menu.focus());
-            }
-            Mode::UnitList { menu, .. } => {
-                *menu = unit_list(state, words).0.focused(menu.focus());
-            }
-            _ => {}
-        }
-        Cow::Owned(mode)
-    }
 }
 
 impl Default for Mode {
@@ -699,9 +668,10 @@ impl Mode {
     /// frame). The walk ends, opening the action menu, once the unit
     /// reaches the path's end or Confirm has been held [`HOLD_SKIP_S`].
     /// A combat's playback and an AI action play on (the AI action then
-    /// goes on to its combat). Other modes are unchanged.
+    /// goes on to its combat). Other modes are unchanged. A list the walk
+    /// ends on (an aimed heal's) is written in `words`.
     #[must_use]
-    pub fn tick(self, dt: f32, confirm_held: bool, state: &BattleState) -> Mode {
+    pub fn tick(self, dt: f32, confirm_held: bool, state: &BattleState, words: Words<'_>) -> Mode {
         if let Mode::Combat(mut playback) = self {
             playback.tick(dt, confirm_held);
             return if playback.done() {
@@ -724,7 +694,7 @@ impl Mode {
         let dt = if dt.is_finite() { dt.max(0.0) } else { 0.0 };
         let (t, held) = (t + dt, if confirm_held { held + dt } else { 0.0 });
         if held >= HOLD_SKIP_S || walk_done(&sel, t * pace) {
-            walk_ended(sel, state).0
+            walk_ended(sel, state, words).0
         } else {
             Mode::Moving { sel, t, held, pace }
         }
@@ -761,9 +731,9 @@ fn aimed_at(sel: &Selection, cursor: Pos, state: &BattleState) -> Option<UnitId>
 
 /// A walk ended: the attack on the aimed enemy (0428) or the heal of the
 /// aimed ally (0451), else the action menu.
-fn walk_ended(sel: Selection, state: &BattleState) -> (Mode, Effect) {
+fn walk_ended(sel: Selection, state: &BattleState, words: Words<'_>) -> (Mode, Effect) {
     if sel.target.is_some() {
-        open_aimed(sel, state)
+        open_aimed(sel, state, words)
     } else {
         (open_menu(sel, state), Effect::None)
     }
@@ -774,11 +744,11 @@ fn walk_ended(sel: Selection, state: &BattleState) -> (Mode, Effect) {
 /// reaches it, else the first that does; left and right swap between those
 /// that do. A hurt ally (0451): the list of the unit's heals. The action
 /// menu if nothing reaches it.
-fn open_aimed(sel: Selection, state: &BattleState) -> (Mode, Effect) {
+fn open_aimed(sel: Selection, state: &BattleState, words: Words<'_>) -> (Mode, Effect) {
     if let Some(t) = Targeting::aimed(state, sel.clone()) {
         return show_forecast(t, state);
     }
-    match open_heals(&sel, state) {
+    match open_heals(&sel, state, words) {
         Some(mode) => (mode, Effect::None),
         None => (open_menu(sel, state), Effect::None),
     }
@@ -788,18 +758,20 @@ fn open_aimed(sel: Selection, state: &BattleState) -> (Mode, Effect) {
 /// its heal spells, those that can't reach that ally dimmed. Choosing one
 /// opens its preview on that ally; Cancel goes to the action menu, on
 /// `Magic`. `None` if no heal reaches it.
-fn open_heals(sel: &Selection, state: &BattleState) -> Option<Mode> {
+fn open_heals(sel: &Selection, state: &BattleState, words: Words<'_>) -> Option<Mode> {
     let heals = ListKind::Spells(heal_choices(state, sel.unit, sel.dest(), sel.target?));
-    heals.can_choose().then(|| heals.open(sel.clone(), state))
+    heals
+        .can_choose()
+        .then(|| heals.open(sel.clone(), state, words))
 }
 
 /// The action menu for `sel`.
 pub(super) fn open_menu(sel: Selection, state: &BattleState) -> Mode {
     let entries = menu_entries(&sel, state);
     let weapons = weapon_choices(state, &sel);
-    let items: Vec<MenuItem> = entries
+    let items: Vec<_> = entries
         .iter()
-        .map(|e| e.item(IN_PLAY, e.enabled(&sel, &weapons, state)))
+        .map(|e| e.item(e.enabled(&sel, &weapons, state)))
         .collect();
     // It opens on the first of Attack, Arts, Magic and Seize that is enabled
     // (Magic only when a spell reaches an enemy: a forest to burn or an ally
@@ -817,19 +789,14 @@ pub(super) fn open_menu(sel: Selection, state: &BattleState) -> Mode {
         })
         .or_else(|| entries.iter().position(|&e| e == MenuEntry::Wait));
     let menu = Menu::new(items).focused(first.unwrap_or(0));
-    Mode::ActionMenu {
-        sel,
-        menu,
-        entries,
-        weapons,
-    }
+    Mode::ActionMenu { sel, menu, weapons }
 }
 
 /// The action menu for `sel`, focused on `entry` (back from what it opened).
 pub(super) fn back_to_entry(sel: Selection, state: &BattleState, entry: MenuEntry) -> Mode {
     let mut mode = open_menu(sel, state);
-    if let Mode::ActionMenu { menu, entries, .. } = &mut mode
-        && let Some(at) = entries.iter().position(|&e| e == entry)
+    if let Mode::ActionMenu { menu, .. } = &mut mode
+        && let Some(at) = menu.items().iter().position(|i| i.value == entry)
     {
         *menu = menu.clone().focused(at);
     }
@@ -868,22 +835,25 @@ fn threat_of(state: &BattleState, id: UnitId) -> Option<Threat> {
 /// One non-cursor action in `mode`, with the cursor on `cursor`. Cursor
 /// movement and unit cycling are the screen's; see [`Mode::cursor_moved`].
 /// The map menu lists none of the [shortcuts](MapEntry::SHORTCUTS) (as on
-/// the PC); [`step_with`] gives it some.
+/// the PC); [`step_with`] gives it some. The lists it opens are written in
+/// English.
 pub fn step(mode: Mode, action: Action, cursor: Pos, state: &BattleState) -> (Mode, Effect) {
-    step_with(mode, action, cursor, state, &[])
+    step_with(mode, action, cursor, (state, Words::ENGLISH), &[])
 }
 
-/// [`step`], with the map menu listing `shortcuts` (ticket 1035: those
-/// with no button on a platform without a keyboard, `map_menu::shortcuts`).
+/// [`step`], with the lists it opens written in `words` and the map menu
+/// listing `shortcuts` (ticket 1035: those with no button on a platform
+/// without a keyboard, `map_menu::shortcuts`).
 pub fn step_with(
     mode: Mode,
     action: Action,
     cursor: Pos,
-    state: &BattleState,
+    (state, words): (&BattleState, Words<'_>),
     shortcuts: &[MapEntry],
 ) -> (Mode, Effect) {
     let menu = MenuAt {
         state,
+        words,
         cursor,
         shortcuts,
     };
@@ -892,7 +862,7 @@ pub fn step_with(
         Mode::Selected(sel) => match action {
             Action::Confirm if aimed_at(&sel, cursor, state).is_some() => {
                 if sel.path.len() == 1 {
-                    open_aimed(sel, state)
+                    open_aimed(sel, state, words)
                 } else {
                     let walk = Mode::Moving {
                         sel,
@@ -922,15 +892,12 @@ pub fn step_with(
             }
             _ => (Mode::Selected(sel), Effect::None),
         },
-        Mode::Moving { sel, .. } if action == Action::Confirm => walk_ended(sel, state),
+        Mode::Moving { sel, .. } if action == Action::Confirm => walk_ended(sel, state, words),
         moving @ Mode::Moving { .. } => (moving, Effect::None),
-        Mode::ActionMenu {
-            sel,
-            menu,
-            entries,
-            weapons,
-        } => step_action_menu(sel, menu, entries, weapons, action, state),
-        Mode::List { sel, menu, kind } => step_list(sel, menu, kind, action, state),
+        Mode::ActionMenu { sel, menu, weapons } => {
+            step_action_menu(sel, menu, weapons, action, (state, words))
+        }
+        Mode::List { sel, menu } => step_list(sel, menu, action, state),
         // When several weapons or spells can make the attack, left and
         // right swap between them instead of changing the target (0430,
         // 0442).
@@ -957,11 +924,13 @@ pub fn step_with(
     }
 }
 
-/// Where the map menu opens: in `state`, with the cursor on `cursor` (for
-/// `Unit Info`) and the `shortcuts` the platform lists.
+/// Where the map menu opens: in `state`, its unit list written in
+/// `words`, with the cursor on `cursor` (for `Unit Info`) and the
+/// `shortcuts` the platform lists.
 #[derive(Clone, Copy)]
 struct MenuAt<'a> {
     state: &'a BattleState,
+    words: Words<'a>,
     cursor: Pos,
     shortcuts: &'a [MapEntry],
 }
@@ -969,9 +938,8 @@ struct MenuAt<'a> {
 impl MenuAt<'_> {
     /// The map menu, focused on `focus`.
     fn open(self, focus: MapEntry) -> Mode {
-        let (menu, entries) =
-            map_menu_with(self.state, IN_PLAY, focus, self.shortcuts, self.cursor);
-        Mode::MapMenu { menu, entries }
+        let menu = map_menu_with(self.state, focus, self.shortcuts, self.cursor);
+        Mode::MapMenu { menu }
     }
 }
 
@@ -1006,17 +974,14 @@ fn step_move_after(
 fn step_around(mode: Mode, action: Action, at: MenuAt<'_>) -> (Mode, Effect) {
     let state = at.state;
     match mode {
-        Mode::MapMenu { menu, entries } => step_map_menu(menu, entries, action, state),
-        Mode::UnitList { mut menu, units } => match menu.handle(action) {
-            Some(MenuEvent::Chosen(())) => {
-                let at = units
-                    .get(menu.focus())
-                    .and_then(|&id| state.unit(id))
-                    .map(|u| u.pos);
+        Mode::MapMenu { menu } => step_map_menu(menu, action, (state, at.words)),
+        Mode::UnitList { mut menu } => match menu.handle(action) {
+            Some(MenuEvent::Chosen(id)) => {
+                let at = state.unit(id).map(|u| u.pos);
                 (Mode::default(), at.map_or(Effect::None, Effect::Cursor))
             }
             Some(MenuEvent::Cancelled) => (at.open(MapEntry::Units), Effect::None),
-            None => (Mode::UnitList { menu, units }, Effect::None),
+            None => (Mode::UnitList { menu }, Effect::None),
         },
         Mode::Objective => match action {
             Action::Confirm | Action::Cancel => (at.open(MapEntry::Objective), Effect::None),
@@ -1057,20 +1022,19 @@ fn end_turn(state: &BattleState) -> (Mode, Effect) {
 /// it needs (a target, a list); Cancel goes back to steering the path.
 fn step_action_menu(
     sel: Selection,
-    mut menu: Menu,
-    entries: Vec<MenuEntry>,
+    mut menu: Menu<MenuEntry>,
     weapons: Vec<WeaponChoice>,
     action: Action,
-    state: &BattleState,
+    (state, words): (&BattleState, Words<'_>),
 ) -> (Mode, Effect) {
     match menu.handle(action) {
-        Some(MenuEvent::Chosen(())) if menu.focus() < entries.len() => {
-            let action = match entries[menu.focus()] {
+        Some(MenuEvent::Chosen(entry)) => {
+            let action = match entry {
                 MenuEntry::Wait => UnitAction::Wait,
                 MenuEntry::Seize => UnitAction::Seize,
                 MenuEntry::Talk => return choose_talk(sel, state),
                 MenuEntry::Attack => return choose_attack(sel, &weapons, state),
-                list => return open_list(list, sel, state),
+                list => return open_list(list, sel, (state, words)),
             };
             let cmd = Command::Act {
                 unit: sel.unit,
@@ -1084,46 +1048,37 @@ fn step_action_menu(
             sel.target = None;
             (Mode::Selected(sel), Effect::None)
         }
-        _ => {
-            let menu = Mode::ActionMenu {
-                sel,
-                menu,
-                entries,
-                weapons,
-            };
-            (menu, Effect::None)
-        }
+        None => (Mode::ActionMenu { sel, menu, weapons }, Effect::None),
     }
 }
 
-/// [`step`] in the map menu.
+/// [`step`] in the map menu; the unit list it opens is written in
+/// `words`.
 fn step_map_menu(
-    mut menu: Menu,
-    entries: Vec<MapEntry>,
+    mut menu: Menu<MapEntry>,
     action: Action,
-    state: &BattleState,
+    (state, words): (&BattleState, Words<'_>),
 ) -> (Mode, Effect) {
     match menu.handle(action) {
-        Some(MenuEvent::Chosen(())) => match entries.get(menu.focus()) {
-            Some(MapEntry::Units) => {
-                let (menu, units) = unit_list(state, IN_PLAY);
-                (Mode::UnitList { menu, units }, Effect::None)
+        Some(MenuEvent::Chosen(entry)) => match entry {
+            MapEntry::Units => {
+                let menu = unit_list(state, words);
+                (Mode::UnitList { menu }, Effect::None)
             }
-            Some(MapEntry::Objective) => (Mode::Objective, Effect::None),
-            Some(MapEntry::Restart) => (Mode::RestartPrompt, Effect::None),
-            Some(MapEntry::Suspend) => (Mode::SuspendPrompt, Effect::None),
-            Some(MapEntry::EndTurn) => end_turn(state),
-            Some(MapEntry::Options) => (Mode::MapMenu { menu, entries }, Effect::Options),
-            Some(MapEntry::Guides) => (Mode::MapMenu { menu, entries }, Effect::Guides),
+            MapEntry::Objective => (Mode::Objective, Effect::None),
+            MapEntry::Restart => (Mode::RestartPrompt, Effect::None),
+            MapEntry::Suspend => (Mode::SuspendPrompt, Effect::None),
+            MapEntry::EndTurn => end_turn(state),
+            MapEntry::Options => (Mode::MapMenu { menu }, Effect::Options),
+            MapEntry::Guides => (Mode::MapMenu { menu }, Effect::Guides),
             // A shortcut (ticket 1035): the menu closes and its key acts.
-            Some(&shortcut @ (MapEntry::DangerZone | MapEntry::AutoEnd | MapEntry::UnitInfo)) => (
+            shortcut @ (MapEntry::DangerZone | MapEntry::AutoEnd | MapEntry::UnitInfo) => (
                 Mode::default(),
                 shortcut.action().map_or(Effect::None, Effect::Press),
             ),
-            None => (Mode::MapMenu { menu, entries }, Effect::None),
         },
         Some(MenuEvent::Cancelled) => (Mode::default(), Effect::None),
-        None => (Mode::MapMenu { menu, entries }, Effect::None),
+        None => (Mode::MapMenu { menu }, Effect::None),
     }
 }
 
@@ -1175,10 +1130,15 @@ fn choose_attack(sel: Selection, weapons: &[WeaponChoice], state: &BattleState) 
 
 /// A list chosen in the action menu (`Arts`, `Magic`, `Skill`, `Item`,
 /// `Equip`): the list, or the action menu again, on `entry`, if no line of
-/// it can be chosen (which the enabled entry rules out).
-fn open_list(entry: MenuEntry, sel: Selection, state: &BattleState) -> (Mode, Effect) {
+/// it can be chosen (which the enabled entry rules out). The list is
+/// written in `words`.
+fn open_list(
+    entry: MenuEntry,
+    sel: Selection,
+    (state, words): (&BattleState, Words<'_>),
+) -> (Mode, Effect) {
     let mode = match ListKind::of(entry, &sel, state) {
-        Some(kind) if kind.can_choose() => kind.open(sel, state),
+        Some(kind) if kind.can_choose() => kind.open(sel, state, words),
         _ => back_to_entry(sel, state, entry),
     };
     (mode, Effect::None)
@@ -1188,56 +1148,47 @@ fn open_list(entry: MenuEntry, sel: Selection, state: &BattleState) -> (Mode, Ef
 /// Cancel goes back to the action menu, on the entry that opened it.
 fn step_list(
     sel: Selection,
-    mut menu: Menu,
-    kind: ListKind,
+    mut menu: Menu<Line>,
     action: Action,
     state: &BattleState,
 ) -> (Mode, Effect) {
     match menu.handle(action) {
-        Some(MenuEvent::Chosen(())) => {
-            let i = menu.focus();
-            choose_line(sel, menu, kind, i, state)
+        Some(MenuEvent::Chosen(line)) => choose_line(sel, menu, &line, state),
+        Some(MenuEvent::Cancelled) => {
+            let entry = list_entry(&menu);
+            (back_to_entry(sel, state, entry), Effect::None)
         }
-        Some(MenuEvent::Cancelled) => (back_to_entry(sel, state, kind.entry()), Effect::None),
-        None => (Mode::List { sel, menu, kind }, Effect::None),
+        None => (Mode::List { sel, menu }, Effect::None),
     }
 }
 
-/// Line `i` of a list chosen: an art opens its forecast; a spell picks
-/// what it is cast on, an item who it is used on, the cursor on the first;
-/// a skill that needs no target is used at once, Shove picks who it is used
-/// on; a weapon or spell is equipped and the action menu reopens (the unit
-/// hasn't acted). The list stays as it is if the line can't be chosen.
+/// `line` of the list `menu` chosen: an art opens its forecast; a spell
+/// picks what it is cast on, an item who it is used on, the cursor on the
+/// first; a skill that needs no target is used at once, Shove picks who it
+/// is used on; a weapon or spell is equipped and the action menu reopens
+/// (the unit hasn't acted). The list stays as it is if the line can't be
+/// chosen.
 fn choose_line(
     sel: Selection,
-    menu: Menu,
-    kind: ListKind,
-    i: usize,
+    menu: Menu<Line>,
+    line: &Line,
     state: &BattleState,
 ) -> (Mode, Effect) {
     let (s, m) = (sel.clone(), menu.clone());
-    let chosen = match &kind {
-        ListKind::Arts(lines) => {
-            Targeting::art(state, s, m, lines.clone(), i).map(|t| show_forecast(t, state))
-        }
-        ListKind::Spells(choices) => {
-            CastTargeting::new(state, s, m, choices.clone(), i).map(|t| aim(t, state))
-        }
-        ListKind::Skills(choices) => match choices.get(i).filter(|c| c.usable) {
-            Some(c) if !c.needs_target => Some(apply(use_command(&sel, &c.skill, None))),
-            Some(_) => SkillTargeting::new(s, m, choices.clone(), i).map(|t| aim(t, state)),
-            None => None,
-        },
-        ListKind::Pack(groups) => {
-            ItemTargeting::new(s, m, groups.clone(), i).map(|t| aim(t, state))
-        }
+    let chosen = match line {
+        Line::Art(art) => Targeting::art(state, s, m, art).map(|t| show_forecast(t, state)),
+        Line::Spell(c) => CastTargeting::new(state, s, m, c.clone()).map(|t| aim(t, state)),
+        // (The menu never chooses a dimmed, unusable skill.)
+        Line::Skill(c) if !c.needs_target => Some(apply(use_command(&sel, &c.skill, None))),
+        Line::Skill(c) => SkillTargeting::new(s, m, c.clone()).map(|t| aim(t, state)),
+        Line::Item(group) => ItemTargeting::new(s, m, group.clone()).map(|t| aim(t, state)),
         // (The menu never chooses a dimmed, unusable weapon.)
-        ListKind::Equip(choices) => choices.get(i).map(|c| {
+        Line::Equip(c) => {
             let cmd = equip_command(sel.unit, c.what.clone());
-            (Mode::default(), Effect::ApplyStay(cmd, Box::new(s)))
-        }),
+            Some((Mode::default(), Effect::ApplyStay(cmd, Box::new(s))))
+        }
     };
-    chosen.unwrap_or((Mode::List { sel, menu, kind }, Effect::None))
+    chosen.unwrap_or((Mode::List { sel, menu }, Effect::None))
 }
 
 /// Sending `cmd`, which ends the unit's action.
@@ -1342,10 +1293,9 @@ impl Picker for Targeting {
             Equipped::Spell(_) => MenuEntry::Magic,
         };
         match self.arts {
-            Some((menu, lines)) => Mode::List {
+            Some(menu) => Mode::List {
                 sel: self.sel,
                 menu,
-                kind: ListKind::Arts(lines),
             },
             None => back_to_entry(self.sel, state, entry),
         }
@@ -1370,9 +1320,8 @@ impl Picker for CastTargeting {
     }
 
     fn back(self, _: &BattleState) -> Mode {
-        let kind = ListKind::Spells(self.choices);
         let (sel, menu) = (self.sel, self.menu);
-        Mode::List { sel, menu, kind }
+        Mode::List { sel, menu }
     }
 
     fn into_mode(self) -> Mode {
@@ -1394,9 +1343,8 @@ impl Picker for SkillTargeting {
     }
 
     fn back(self, _: &BattleState) -> Mode {
-        let kind = ListKind::Skills(self.choices);
         let (sel, menu) = (self.sel, self.menu);
-        Mode::List { sel, menu, kind }
+        Mode::List { sel, menu }
     }
 
     fn into_mode(self) -> Mode {
@@ -1418,9 +1366,8 @@ impl Picker for ItemTargeting {
     }
 
     fn back(self, _: &BattleState) -> Mode {
-        let kind = ListKind::Pack(self.groups);
         let (sel, menu) = (self.sel, self.menu);
-        Mode::List { sel, menu, kind }
+        Mode::List { sel, menu }
     }
 
     fn into_mode(self) -> Mode {
@@ -1519,7 +1466,6 @@ fn step_idle(threat: Option<Threat>, action: Action, at: MenuAt<'_>) -> (Mode, E
 
 #[cfg(test)]
 mod tests {
-    use crate::widgets::menu::LabelText;
     use trpg_core::Objective;
 
     use super::*;
@@ -1528,7 +1474,9 @@ mod tests {
     use crate::screens::battle::attack::can_hit;
     use crate::screens::battle::playback::TIMINGS;
     use crate::screens::battle::quick_battle;
+    use crate::screens::battle::testing::{Lines as _, Values as _};
     use crate::screens::battle::testing::{battle_with, skirmish, vaulted, wait};
+    use crate::widgets::menu::{Label, english};
 
     fn p(x: i32, y: i32) -> Pos {
         Pos::new(x, y)
@@ -1740,20 +1688,20 @@ mod tests {
         assert_eq!(mode.drawn_pos(UnitId(2)), None);
         assert!(!mode.cursor_free());
         let tick = 1.0 / WALK_TILES_PER_S;
-        mode = mode.tick(tick * 1.01, false, &s);
+        mode = mode.tick(tick * 1.01, false, &s, Words::ENGLISH);
         assert_eq!(mode.drawn_pos(lord), Some(p(4, 5)));
-        mode = mode.tick(tick, false, &s);
+        mode = mode.tick(tick, false, &s, Words::ENGLISH);
         assert_eq!(mode.drawn_pos(lord), Some(p(5, 5)));
         // A bad frame time changes nothing.
-        mode = mode.tick(f32::NAN, false, &s);
-        mode = mode.tick(-1.0, false, &s);
+        mode = mode.tick(f32::NAN, false, &s, Words::ENGLISH);
+        mode = mode.tick(-1.0, false, &s, Words::ENGLISH);
         assert_eq!(mode.drawn_pos(lord), Some(p(5, 5)));
         // Keys other than Confirm are ignored while walking.
         for a in [Action::Cancel, Action::CursorLeft, Action::Info] {
             let (m, effect) = step(mode.clone(), a, p(6, 5), &s);
             assert_eq!((&m, effect), (&mode, Effect::None));
         }
-        mode = mode.tick(tick, false, &s);
+        mode = mode.tick(tick, false, &s, Words::ENGLISH);
         // At the end: the menu, the unit drawn there.
         assert!(matches!(mode, Mode::ActionMenu { .. }), "{mode:?}");
         assert_eq!(mode.drawn_pos(lord), Some(p(6, 5)));
@@ -1763,7 +1711,10 @@ mod tests {
         // Browsing: nothing is drawn elsewhere, nothing is selected.
         assert_eq!(Mode::default().drawn_pos(lord), None);
         assert_eq!(Mode::default().selection(), None);
-        assert_eq!(Mode::default().tick(1.0, true, &s), Mode::default());
+        assert_eq!(
+            Mode::default().tick(1.0, true, &s, Words::ENGLISH),
+            Mode::default()
+        );
     }
 
     #[test]
@@ -1779,11 +1730,13 @@ mod tests {
         let menu = |m: &Mode| matches!(m, Mode::ActionMenu { .. });
         // Held, but not long enough; released; held again long enough.
         let short = HOLD_SKIP_S * 0.6;
-        let mut mode = walk.clone().tick(short, true, &s);
+        let mut mode = walk.clone().tick(short, true, &s, Words::ENGLISH);
         assert!(!menu(&mode));
-        mode = mode.tick(0.0, false, &s).tick(short, true, &s);
+        mode = mode
+            .tick(0.0, false, &s, Words::ENGLISH)
+            .tick(short, true, &s, Words::ENGLISH);
         assert!(!menu(&mode), "the hold restarted when released");
-        mode = mode.tick(short, true, &s);
+        mode = mode.tick(short, true, &s, Words::ENGLISH);
         assert!(menu(&mode));
         // The hold alone skips: early in the walk, held just past the limit.
         let Mode::Moving { sel, .. } = walk.clone() else {
@@ -1795,8 +1748,8 @@ mod tests {
             held: short,
             pace: WALK_TILES_PER_S,
         };
-        assert!(menu(&nearly.clone().tick(short, true, &s)));
-        assert!(!menu(&nearly.tick(short, false, &s)));
+        assert!(menu(&nearly.clone().tick(short, true, &s, Words::ENGLISH)));
+        assert!(!menu(&nearly.tick(short, false, &s, Words::ENGLISH)));
         // A new press skips at once.
         let (mode, _) = step(walk, Action::Confirm, p(7, 5), &s);
         assert!(menu(&mode));
@@ -1811,16 +1764,17 @@ mod tests {
             held: 0.0,
             pace: WALK_TILES_PER_S,
         };
-        walk.tick(1.0, false, s)
+        walk.tick(1.0, false, s, Words::ENGLISH)
     }
 
     #[test]
     fn the_menu_offers_a_disabled_attack_and_wait_then_waits() {
         let s = quick();
         let mode = lord_menu(&s);
-        let Mode::ActionMenu { menu, entries, .. } = &mode else {
+        let Mode::ActionMenu { menu, .. } = &mode else {
             panic!("{mode:?}");
         };
+        let entries = menu.values();
         assert_eq!(
             entries,
             &[
@@ -1832,11 +1786,12 @@ mod tests {
                 MenuEntry::Wait
             ]
         );
-        let labels: Vec<(&str, bool)> = menu
+        let labels: Vec<(String, bool)> = menu
             .items()
             .iter()
-            .map(|i| (i.label.as_str(), i.enabled))
+            .map(|i| (english(&i.label), i.enabled))
             .collect();
+        let labels: Vec<(&str, bool)> = labels.iter().map(|(l, e)| (l.as_str(), *e)).collect();
         // Nobody is hurt (no item to use) and nobody is in reach of a sword
         // or its arts, but the lord has two weapons and its Inspire has
         // allies near to inspire.
@@ -1880,32 +1835,6 @@ mod tests {
     }
 
     #[test]
-    fn a_menu_line_with_no_entry_behind_it_does_nothing() {
-        let s = quick();
-        let Mode::ActionMenu {
-            sel,
-            menu,
-            entries,
-            weapons,
-        } = lord_menu(&s)
-        else {
-            panic!("no action menu");
-        };
-        // One line more than there are entries, focused.
-        let mut items = menu.items().to_vec();
-        items.push(MenuItem::new("Extra"));
-        let menu = Menu::new(items).focused(entries.len());
-        let mode = Mode::ActionMenu {
-            sel,
-            menu,
-            entries,
-            weapons,
-        };
-        let (same, effect) = step(mode.clone(), Action::Confirm, p(5, 5), &s);
-        assert_eq!((same, effect), (mode, Effect::None));
-    }
-
-    #[test]
     fn seize_is_offered_only_where_it_is_legal() {
         let seize = |by_lord| Objective::Seize {
             pos: p(5, 5),
@@ -1913,9 +1842,10 @@ mod tests {
             turn_limit: None,
         };
         let s = with_objective(seize(true));
-        let Mode::ActionMenu { entries, menu, .. } = lord_menu(&s) else {
+        let Mode::ActionMenu { menu, .. } = lord_menu(&s) else {
             panic!("no menu");
         };
+        let entries = menu.values();
         let all = [
             MenuEntry::Attack,
             MenuEntry::Arts,
@@ -1954,7 +1884,7 @@ mod tests {
         let s = with_objective(seize(false));
         assert_eq!(menu_entries(&knight, &s), all);
         assert_eq!(
-            all.map(|entry| entry.label(Words::ENGLISH)),
+            all.map(|entry| english(&entry.item(true).label)),
             ["Attack", "Arts", "Seize", "Skill", "Item", "Equip", "Wait"]
         );
     }
@@ -2067,7 +1997,7 @@ mod tests {
         };
         sel.steer(p(7, 2), s);
         let (walk, _) = step(Mode::Selected(sel), Action::Confirm, p(7, 2), s);
-        walk.tick(1.0, false, s)
+        walk.tick(1.0, false, s, Words::ENGLISH)
     }
 
     /// The targeting state of `mode`.
@@ -2118,9 +2048,10 @@ mod tests {
         // Cancel: back to the menu, on Attack, the cursor on the lord.
         let (back, effect) = step(steel, Action::Cancel, p(7, 1), &s);
         assert_eq!(effect, Effect::Cursor(p(7, 2)));
-        let Mode::ActionMenu { menu, entries, .. } = &back else {
+        let Mode::ActionMenu { menu, .. } = &back else {
             panic!("{back:?}");
         };
+        let entries = menu.values();
         assert_eq!(entries[menu.focus()], MenuEntry::Attack);
     }
 
@@ -2194,25 +2125,19 @@ mod tests {
 
         let s = skirmish(&ctx(), 20);
         let menu = skirmish_menu(&s);
-        let Mode::ActionMenu {
-            entries, menu: m, ..
-        } = &menu
-        else {
+        let Mode::ActionMenu { menu: m, .. } = &menu else {
             panic!("{menu:?}");
         };
+        let entries = m.values();
         assert_eq!(entries[..2], [MenuEntry::Attack, MenuEntry::Arts]);
         assert!(m.items()[1].enabled);
         let (on_arts, _) = step(menu, Action::CursorDown, p(7, 2), &s);
         let (arts, effect) = step(on_arts, Action::Confirm, p(7, 2), &s);
         assert_eq!(effect, Effect::None);
-        let Mode::List {
-            menu: m,
-            kind: ListKind::Arts(lines),
-            ..
-        } = &arts
-        else {
+        let Mode::List { menu: m, .. } = &arts else {
             panic!("{arts:?}");
         };
+        let lines = m.arts();
         let names: Vec<String> = lines
             .iter()
             .map(|l| l.technique.name(&s, Words::ENGLISH))
@@ -2264,9 +2189,10 @@ mod tests {
         assert_eq!(back, on_break);
         let (back, effect) = step(back, Action::Cancel, p(7, 2), &s);
         assert_eq!(effect, Effect::None);
-        let Mode::ActionMenu { menu, entries, .. } = &back else {
+        let Mode::ActionMenu { menu, .. } = &back else {
             panic!("{back:?}");
         };
+        let entries = menu.values();
         assert_eq!(entries[menu.focus()], MenuEntry::Arts);
     }
 
@@ -2283,13 +2209,10 @@ mod tests {
         let (menu, _) = step(Mode::Selected(sel.clone()), Action::Confirm, p(8, 4), &s);
         let (on_arts, _) = step(menu, Action::CursorDown, p(8, 4), &s);
         let (arts, _) = step(on_arts, Action::Confirm, p(8, 4), &s);
-        let Mode::List {
-            kind: ListKind::Arts(lines),
-            ..
-        } = &arts
-        else {
+        let Mode::List { menu, .. } = &arts else {
             panic!("{arts:?}");
         };
+        let lines = menu.arts();
         let names: Vec<String> = lines
             .iter()
             .map(|l| l.technique.name(&s, Words::ENGLISH))
@@ -2307,9 +2230,10 @@ mod tests {
         let rout = Objective::Rout { turn_limit: None };
         let s = battle_with(&ctx(), s.map().clone(), units, rout);
         let (menu, _) = step(Mode::Selected(sel), Action::Confirm, p(8, 4), &s);
-        let Mode::ActionMenu { menu, entries, .. } = &menu else {
+        let Mode::ActionMenu { menu, .. } = &menu else {
             panic!("{menu:?}");
         };
+        let entries = menu.values();
         assert!(!menu.items()[0].enabled);
         assert_eq!(entries[menu.focus()], MenuEntry::Arts);
     }
@@ -2322,19 +2246,18 @@ mod tests {
         let lines = art_lines(&s, sel.unit, sel.dest());
         assert_eq!(lines.len(), 2);
         assert!(!can_use_art(&lines));
-        let (mode, effect) = open_list(MenuEntry::Arts, sel.clone(), &s);
+        let (mode, effect) = open_list(MenuEntry::Arts, sel.clone(), (&s, Words::ENGLISH));
         assert_eq!(effect, Effect::None);
         assert!(matches!(mode, Mode::ActionMenu { .. }), "{mode:?}");
         // A dimmed line is never chosen.
-        let menu = arts_menu(&s, IN_PLAY, &lines);
+        let menu = arts_menu(&s, Words::ENGLISH, &lines);
         let arts = Mode::List {
             sel: sel.clone(),
             menu: menu.clone(),
-            kind: ListKind::Arts(lines.clone()),
         };
         let (same, effect) = step(arts.clone(), Action::Confirm, p(6, 2), &s);
         assert_eq!((same, effect), (arts, Effect::None));
-        assert_eq!(Targeting::art(&s, sel, menu, lines, 0), None);
+        assert_eq!(Targeting::art(&s, sel, menu, &lines[0]), None);
     }
 
     #[test]
@@ -2343,9 +2266,10 @@ mod tests {
         let sel = Selection::new(&s, UnitId(1)).unwrap();
         let (mode, effect) = choose_attack(sel, &[], &s);
         assert_eq!(effect, Effect::None);
-        let Mode::ActionMenu { menu, entries, .. } = &mode else {
+        let Mode::ActionMenu { menu, .. } = &mode else {
             panic!("{mode:?}");
         };
+        let entries = menu.values();
         assert_eq!(entries[menu.focus()], MenuEntry::Wait, "Attack is disabled");
     }
 
@@ -2366,9 +2290,10 @@ mod tests {
         assert_eq!((t.targets.clone(), t.can_swap()), (vec![UnitId(4)], false));
         let (back, effect) = step(mode, Action::Cancel, p(8, 2), &s);
         assert_eq!(effect, Effect::Cursor(p(8, 4)));
-        let Mode::ActionMenu { menu, entries, .. } = &back else {
+        let Mode::ActionMenu { menu, .. } = &back else {
             panic!("{back:?}");
         };
+        let entries = menu.values();
         assert_eq!(entries[menu.focus()], MenuEntry::Attack);
     }
 
@@ -2408,13 +2333,21 @@ mod tests {
             assert_eq!((&m, effect), (&combat, Effect::None));
         }
         // Halfway, still playing; at the end, browsing.
-        let half = combat.clone().tick(total / 2.0, false, &after);
+        let half = combat
+            .clone()
+            .tick(total / 2.0, false, &after, Words::ENGLISH);
         assert!(matches!(half, Mode::Combat(_)));
-        assert_eq!(half.tick(total, false, &after), Mode::default());
+        assert_eq!(
+            half.tick(total, false, &after, Words::ENGLISH),
+            Mode::default()
+        );
         // Cancel skips: the frame's tick ends it.
         let (skipped, effect) = step(combat, Action::Cancel, p(8, 2), &after);
         assert_eq!(effect, Effect::None);
-        assert_eq!(skipped.tick(1.0 / 60.0, false, &after), Mode::default());
+        assert_eq!(
+            skipped.tick(1.0 / 60.0, false, &after, Words::ENGLISH),
+            Mode::default()
+        );
     }
 
     /// The unit at `at` selected, its path at its origin.
@@ -2483,7 +2416,7 @@ mod tests {
         let (walk, effect) = step(Mode::Selected(sel), Action::Confirm, p(7, 1), &s);
         assert_eq!(effect, Effect::None);
         assert!(matches!(walk, Mode::Moving { .. }), "{walk:?}");
-        let mut mode = walk.tick(1.0, false, &s);
+        let mut mode = walk.tick(1.0, false, &s, Words::ENGLISH);
         // Two swords reach the raider: the forecast with the equipped one
         // (0430); right and left swap between them, wrapping.
         let with = |mode: &Mode| match mode {
@@ -2505,15 +2438,10 @@ mod tests {
         // Cancel: the action menu at the tile, on Attack, then the path.
         let (menu, effect) = step(mode, Action::Cancel, p(7, 1), &s);
         assert_eq!(effect, Effect::Cursor(dest));
-        let Mode::ActionMenu {
-            sel,
-            menu: m,
-            entries,
-            ..
-        } = &menu
-        else {
+        let Mode::ActionMenu { sel, menu: m, .. } = &menu else {
             panic!("{menu:?}");
         };
+        let entries = m.values();
         assert_eq!(sel.dest(), dest);
         assert_eq!(entries[m.focus()], MenuEntry::Attack);
         let (back, _) = step(menu, Action::Cancel, dest, &s);
@@ -2552,7 +2480,7 @@ mod tests {
         // Aimed at the raider but still standing at (6, 2), out of reach.
         let mut sel = pick(&s, p(6, 2));
         sel.target = Some(UnitId(6));
-        let (mode, effect) = open_aimed(sel, &s);
+        let (mode, effect) = open_aimed(sel, &s, Words::ENGLISH);
         assert_eq!(effect, Effect::None);
         assert!(matches!(mode, Mode::ActionMenu { .. }), "{mode:?}");
     }
@@ -2566,7 +2494,7 @@ mod tests {
         start.steer(p(7, 2), &s);
         let sel = aim(start, p(8, 2), &s);
         let (mode, _) = step(Mode::Selected(sel), Action::Confirm, p(8, 2), &s);
-        let targeting = mode.tick(1.0, false, &s);
+        let targeting = mode.tick(1.0, false, &s, Words::ENGLISH);
         let Mode::Targeting(t) = &targeting else {
             panic!("{targeting:?}");
         };
@@ -2585,36 +2513,30 @@ mod tests {
         );
     }
 
-    /// The labels of `menu`'s lines.
-    fn labels(menu: &Menu) -> Vec<String> {
-        menu.items()
-            .iter()
-            .map(|i| i.label.as_str().to_owned())
-            .collect()
-    }
-
-    /// The list `mode` shows.
-    fn list(mode: &Mode) -> &Menu {
-        match mode {
-            Mode::List { menu, .. } | Mode::UnitList { menu, .. } => menu,
+    /// What the menu `mode` shows: each line's text in English (a list's
+    /// text as it was written), the focus and the lines that can be chosen.
+    fn menu_shown(mode: &Mode) -> (Vec<String>, usize, Vec<bool>) {
+        let view = match mode {
+            Mode::ActionMenu { menu, .. } => menu.view(),
+            Mode::MapMenu { menu } => menu.view(),
+            Mode::List { menu, .. } => menu.view(),
+            Mode::UnitList { menu } => menu.view(),
             _ => panic!("{mode:?}"),
-        }
+        };
+        let labels = view.items.iter().map(|i| english(&i.label)).collect();
+        let focus = view.items.iter().position(|i| i.focused);
+        let enabled = view.items.iter().map(|i| i.enabled).collect();
+        (labels, focus.unwrap_or(usize::MAX), enabled)
     }
 
-    /// Ticket 0243: the action menu and the map menu are painted in the
-    /// player's language too, with their focus and dimmed lines kept.
+    /// Ticket 0243: the action menu and the map menu hold text keys, which
+    /// the skin puts in the player's language when it paints them (1162).
     #[test]
-    fn the_action_and_map_menus_are_told_in_the_players_language() {
+    fn the_action_and_map_menus_hold_keys_the_skin_tells() {
         let c = ctx();
         let s = skirmish(&c, 20);
         let code = trpg_content::LangCode::new(trpg_content::lang::TEST).unwrap();
         let words = Words::new(&c.game.content.lang, &code);
-        let menu_of = |mode: &Mode| match mode {
-            Mode::ActionMenu { menu, .. } | Mode::MapMenu { menu, .. } => menu.clone(),
-            _ => panic!("{mode:?}"),
-        };
-        let enabled =
-            |menu: &Menu| -> Vec<bool> { menu.items().iter().map(|i| i.enabled).collect() };
         // In the enemy's phase `End Turn` is dimmed.
         let mut theirs = s.clone();
         theirs.apply(&Command::EndPhase).unwrap();
@@ -2623,6 +2545,7 @@ mod tests {
             let cursor = Pos::new(0, 0);
             MenuAt {
                 state,
+                words: Words::ENGLISH,
                 cursor,
                 shortcuts,
             }
@@ -2630,29 +2553,38 @@ mod tests {
         };
         let end_turn = open_map_menu(&s, MapEntry::EndTurn);
         let dimmed = open_map_menu(&theirs, MapEntry::Units);
-        assert_ne!(enabled(&menu_of(&end_turn)), enabled(&menu_of(&dimmed)));
+        assert_ne!(menu_shown(&end_turn).2, menu_shown(&dimmed).2);
         let menus = [
-            (skirmish_menu(&s), &s, "Attack", "ATTACK"),
-            (end_turn, &s, "End Turn", "END TURN"),
-            (dimmed, &theirs, "Units", "UNITS"),
+            (skirmish_menu(&s), "Attack", "ATTACK"),
+            (end_turn, "End Turn", "END TURN"),
+            (dimmed, "Units", "UNITS"),
         ];
-        for (mode, state, english, shouted) in menus {
-            let (ours, told) = (menu_of(&mode), mode.told(state, words).into_owned());
-            let theirs = menu_of(&told);
-            assert!(labels(&ours).iter().any(|l| l == english), "{english}");
-            assert!(labels(&theirs).iter().any(|l| l == shouted), "{shouted}");
-            assert!(!labels(&theirs).iter().any(|l| l == english), "{english}");
-            assert_eq!(theirs.focus(), ours.focus(), "{english}");
-            assert_eq!(enabled(&theirs), enabled(&ours), "{english}");
-            assert_eq!(told.selection(), mode.selection());
-            assert!(matches!(mode.told(state, IN_PLAY), Cow::Borrowed(_)));
+        for (mode, english, shouted) in menus {
+            assert!(
+                menu_shown(&mode).0.iter().any(|l| l == english),
+                "{english}"
+            );
+            let labels = match &mode {
+                Mode::ActionMenu { menu, .. } => menu.view().items,
+                Mode::MapMenu { menu } => menu.view().items,
+                _ => panic!("{mode:?}"),
+            };
+            let told: Vec<&str> = labels
+                .iter()
+                .map(|i| match &i.label {
+                    Label::Key { key, .. } => words.text(key),
+                    Label::Text(text) => panic!("{text:?} is not a key"),
+                })
+                .collect();
+            assert!(told.contains(&shouted), "{shouted}");
+            assert!(!told.contains(&english), "{english}");
         }
     }
 
-    /// The screen paints the mode's lists in the player's language
-    /// (ticket 0235); what is played stays as it is.
+    /// The lists are written in the player's language when they open
+    /// (ticket 0235, 1162); what is played is the same in any language.
     #[test]
-    fn a_mode_is_told_in_the_players_language_with_its_focus_kept() {
+    fn a_list_is_written_in_the_language_it_opens_in() {
         use crate::words::testing::{shout, shouting};
 
         let c = ctx();
@@ -2662,53 +2594,50 @@ mod tests {
         let Mode::ActionMenu { sel, .. } = skirmish_menu(&s) else {
             panic!("no action menu");
         };
-        let (units, ids) = unit_list(&s, IN_PLAY);
-        let skills = skill_choices(&s, Words::ENGLISH, &sel);
         // Each list, with a name it shows in English.
-        let lists = [
-            (open_list(MenuEntry::Arts, sel.clone(), &s).0, "Guard Break"),
-            (
+        let lists = |words| {
+            let skills = ListKind::Skills(skill_choices(&s, &sel));
+            [
+                (
+                    open_list(MenuEntry::Arts, sel.clone(), (&s, words)).0,
+                    "Guard Break",
+                ),
                 // No ally is near enough to inspire: the list, unopened.
-                Mode::List {
-                    menu: skill_menu(&s, IN_PLAY, sel.unit, &skills),
-                    sel: sel.clone(),
-                    kind: ListKind::Skills(skills),
-                },
-                "Inspire",
-            ),
-            (open_list(MenuEntry::Equip, sel.clone(), &s).0, "Iron Sword"),
-            (
-                Mode::UnitList {
-                    menu: units,
-                    units: ids,
-                },
-                "Test Knight",
-            ),
-        ];
-        for (mode, name) in lists {
+                (skills.open(sel.clone(), &s, words), "Inspire"),
+                (
+                    open_list(MenuEntry::Equip, sel.clone(), (&s, words)).0,
+                    "Iron Sword",
+                ),
+                (
+                    Mode::UnitList {
+                        menu: unit_list(&s, words),
+                    },
+                    "Test Knight",
+                ),
+            ]
+        };
+        for ((ours, name), (told, _)) in lists(Words::ENGLISH).into_iter().zip(lists(words)) {
             // Move the focus off where a list opens, if it can move.
-            let (mode, _) = step(mode, Action::CursorDown, p(7, 2), &s);
-            let has = |mode: &Mode, name: &str| labels(list(mode)).join("\n").contains(name);
-            assert!(has(&mode, name), "{name}: {:?}", labels(list(&mode)));
-            // English is the mode itself.
-            assert!(matches!(mode.told(&s, Words::ENGLISH), Cow::Borrowed(_)));
-            assert!(matches!(mode.told(&s, IN_PLAY), Cow::Borrowed(_)));
-            let told = mode.told(&s, words).into_owned();
+            let (ours, _) = step(ours, Action::CursorDown, p(7, 2), &s);
+            let (told, _) = step(told, Action::CursorDown, p(7, 2), &s);
+            let has = |mode: &Mode, name: &str| menu_shown(mode).0.join("\n").contains(name);
+            assert!(has(&ours, name), "{name}: {:?}", menu_shown(&ours).0);
             assert!(has(&told, &name.to_uppercase()), "{name}");
             assert!(!has(&told, name), "{name}");
-            let (ours, theirs) = (list(&mode), list(&told));
-            assert_eq!(theirs.focus(), ours.focus(), "{name}");
-            assert_eq!(theirs.items().len(), ours.items().len(), "{name}");
-            let enabled =
-                |menu: &Menu| -> Vec<bool> { menu.items().iter().map(|i| i.enabled).collect() };
-            assert_eq!(enabled(theirs), enabled(ours), "{name}");
-            // Only the words differ: playing on from either is the same.
-            assert_eq!(std::mem::discriminant(&told), std::mem::discriminant(&mode));
-            assert_eq!(told.selection(), mode.selection());
-        }
-        // A mode without a list is told as it is.
-        for mode in [Mode::default(), Mode::Objective, skirmish_menu(&s)] {
-            assert_eq!(mode.told(&s, words).into_owned(), mode);
+            let ((_, focus, enabled), (_, told_focus, told_enabled)) =
+                (menu_shown(&ours), menu_shown(&told));
+            assert_eq!((told_focus, told_enabled), (focus, enabled), "{name}");
+            // Only the words differ: what each line stands for is the same.
+            match (&ours, &told) {
+                (Mode::List { menu, .. }, Mode::List { menu: theirs, .. }) => {
+                    assert_eq!(theirs.values(), menu.values(), "{name}");
+                }
+                (Mode::UnitList { menu }, Mode::UnitList { menu: theirs }) => {
+                    assert_eq!(theirs.values(), menu.values(), "{name}");
+                }
+                _ => panic!("{ours:?}"),
+            }
+            assert_eq!(told.selection(), ours.selection());
         }
     }
 }

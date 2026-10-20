@@ -1,6 +1,5 @@
 //! The battle screen's own tests.
 
-use crate::widgets::menu::LabelText;
 use insta::assert_snapshot;
 
 use trpg_core::{BattleMap, Grid, Objective, Phase, TerrainId, Unit};
@@ -747,8 +746,16 @@ fn the_menu_opens_beside_the_unit_drawn_at_its_new_tile() {
         .menu
         .items
         .iter()
-        .map(|i| (i.label.as_str(), i.enabled, i.focused))
+        .map(|i| {
+            (
+                crate::widgets::menu::english(&i.label),
+                i.enabled,
+                i.focused,
+            )
+        })
         .collect();
+    let items: Vec<(&str, bool, bool)> =
+        items.iter().map(|(l, e, f)| (l.as_str(), *e, *f)).collect();
     assert_eq!(
         items,
         [
