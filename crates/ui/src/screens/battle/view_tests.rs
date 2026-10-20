@@ -8,7 +8,7 @@ use trpg_core::{GameMode, LeadGender, LeadProfile, Phase, Pos, UnitId};
 
 use super::banner::{BannerKind, PHASE_BANNER_S};
 use super::info;
-use super::testing::wait;
+use super::testing::{Stacked, wait};
 use super::tests::{frame, lord_menu, quick, step};
 use super::view::{
     BannerView, BattleMenuView, DialogView, MenuPlace, MessageKind, MessageView, NotesView,
@@ -44,7 +44,7 @@ fn browsing_shows_the_panel_the_toggles_and_the_help_and_nothing_over_the_map() 
     assert_eq!(view.banner, None);
     assert_eq!(view.tip, None);
     assert_eq!(view.message, None);
-    assert!(view.forecast.is_none() && view.info.is_none() && view.rewind.is_none());
+    assert!(view.forecast.is_none() && view.info.is_none());
     assert!(view.fight_box.is_none() && view.progress.is_none());
 }
 
@@ -265,18 +265,15 @@ fn the_forecast_takes_the_panels_place_while_an_attack_is_aimed() {
 #[test]
 fn the_rewind_screen_shows_only_the_map_its_list_and_the_help() {
     let mut c = ctx();
-    let mut s = quick();
-    step(&mut s, &mut c, &[Action::Rewind]);
-    let view = s.view(&c);
-    let rewind = view.rewind.as_ref().expect("the rewind screen");
-    assert_eq!(rewind.title, "Rewind");
-    assert_eq!(view.help, s.help(&c));
-    assert_eq!((view.panel, view.status.as_str()), (None, ""));
-    assert_eq!((view.menu, view.message), (None, None));
-    step(&mut s, &mut c, &[Action::Cancel]);
-    let view = s.view(&c);
-    assert!(view.rewind.is_none());
-    assert!(view.panel.is_some());
+    let mut s = Stacked::new(quick());
+    s.press(&mut c, &[Action::Rewind]);
+    let view = s.rewind().expect("the rewind screen").view(&c);
+    assert_eq!(view.list.title, "Rewind");
+    assert_eq!(view.help, "d close");
+    assert_eq!(view.lesson, None);
+    s.press(&mut c, &[Action::Cancel]);
+    assert!(s.rewind().is_none());
+    assert!(s.view(&c).panel.is_some());
 }
 
 #[test]

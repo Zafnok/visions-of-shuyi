@@ -584,6 +584,8 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("lead_select.rs", include_str!("../lead_select.rs")),
         ("class_change.rs", include_str!("../class_change.rs")),
         ("battle/mod.rs", include_str!("../battle/mod.rs")),
+        ("battle/rewind.rs", include_str!("../battle/rewind.rs")),
+        ("battle/guides.rs", include_str!("../battle/guides.rs")),
         ("dialogue.rs", include_str!("../dialogue.rs")),
     ];
     // Logic with no screen of its own to draw: the battle screen's modes
@@ -594,7 +596,6 @@ fn the_logic_modules_name_no_cells_or_colours() {
         ("battle/info.rs", include_str!("../battle/info.rs")),
         ("battle/playback.rs", include_str!("../battle/playback.rs")),
         ("battle/progress.rs", include_str!("../battle/progress.rs")),
-        ("battle/rewind.rs", include_str!("../battle/rewind.rs")),
     ];
     for (file, source) in sources.iter().chain(&drawless) {
         // A picture is placed by the skin too (the view names it).

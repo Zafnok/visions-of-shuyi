@@ -7,7 +7,7 @@ use insta::assert_snapshot;
 use trpg_core::{BattleState, Command, Phase, UnitId, next_command};
 
 use super::ai_phase::PACING;
-use super::testing::through_ai_phases;
+use super::testing::{answer, through_ai_phases};
 use super::*;
 use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
@@ -252,7 +252,7 @@ fn only_confirm_and_cancel_do_anything_while_the_ai_plays() {
     assert_eq!(s.danger(), None);
     assert_eq!(s.auto_end(), auto_end);
     assert_eq!(s.toast(), None);
-    assert!(s.rewind().is_none());
+    assert_eq!(answer(&mut s, &mut c, Action::Rewind), "None");
     // Confirm and Cancel don't skip the walk either.
     press(&mut s, &mut c, &[Action::Confirm, Action::Cancel]);
     assert_eq!(s.mode(), &mode);

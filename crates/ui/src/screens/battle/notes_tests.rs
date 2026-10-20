@@ -138,12 +138,12 @@ fn only_confirm_closes_the_notes() {
         Action::ToggleAutoEnd,
         Action::NextUnit,
     ] {
-        frame(&mut s, &mut c, &[action], 0.0);
+        assert_eq!(frame(&mut s, &mut c, &[action], 0.0), "None", "{action:?}");
         assert!(s.notes_open(), "{action:?}");
         assert_eq!(s.mode(), &Mode::default(), "{action:?}");
     }
     assert_eq!(s.cursor().pos, cursor);
-    assert!(s.danger().is_none() && !s.auto_end() && s.rewind().is_none());
+    assert!(s.danger().is_none() && !s.auto_end());
     // Confirm closes the box and does nothing else: the `PLAYER PHASE`
     // banner is next, and a second Confirm closes that (the cursor is on
     // the lead: a third selects it).

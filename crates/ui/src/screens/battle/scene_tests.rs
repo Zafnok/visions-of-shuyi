@@ -12,7 +12,7 @@ use trpg_core::{BattleMap, Grid, Pos, TerrainId, UnitId};
 use super::ai_phase::{AiAction, PACING, Pacing};
 use super::layout::MAP_VIEW;
 use super::mode::Mode;
-use super::testing::{battle, quick_units, skirmish, vaulted};
+use super::testing::{Stacked, battle, quick_units, skirmish, vaulted};
 use super::walk::{SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S};
 use super::{BattleScreen, quick_battle};
 use crate::color::{Rgb, UiColor};
@@ -414,7 +414,7 @@ fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
         light: "dusk".to_owned(),
     };
     let map = BattleMap::new("Big", tiles);
-    let mut s = BattleScreen::new(battle(&c, map, units)).with_look(indoor.clone());
+    let s = BattleScreen::new(battle(&c, map, units)).with_look(indoor.clone());
     let scene = s.scene(&c);
     assert_eq!((scene.origin, scene.size), (p(25, 16), (10, 8)));
     assert_eq!(scene.look, indoor);
@@ -431,9 +431,9 @@ fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
         );
     }
     // The rewind screen's map: the same terrain round it, the same look.
-    step(&mut s, &mut c, &[Action::Rewind]);
-    assert!(s.rewind().is_some());
-    let rewinding = s.scene(&c);
+    let mut s = Stacked::new(s);
+    s.press(&mut c, &[Action::Rewind]);
+    let rewinding = s.rewind().expect("open").scene(&c);
     assert_eq!(rewinding.look, indoor);
     assert_eq!(rewinding.rim, scene.rim);
     assert_eq!(rewinding.terrain_near(-1, 3), Some(forest));
@@ -588,7 +588,7 @@ proptest! {
             if let Some(cursor) = scene.cursor {
                 prop_assert!(scene.contains(cursor.pos), "{:?}", s.mode());
             }
-            if !s.playing() && s.rewind().is_none() {
+            if !s.playing() {
                 let drawn = s.state().units().iter().map(|u| s.drawn_pos(u));
                 let visible = drawn.filter(|&pos| scene.contains(pos)).count();
                 prop_assert_eq!(scene.units.len(), visible, "{:?}", s.mode());
@@ -827,11 +827,11 @@ fn a_unit_that_can_act_steps_on_the_spot_and_an_acted_one_stands_still() {
     assert_eq!(frames, expect);
     assert!(scene.units.iter().all(|u| !u.between_tiles()));
     // The rewind screen's map steps too.
-    let mut s = quick();
+    let mut s = Stacked::new(quick());
     c.clock_s = 0.25;
-    step(&mut s, &mut c, &[Action::Rewind]);
-    assert!(s.rewind().is_some());
-    assert!(s.scene(&c).units.iter().all(|u| u.frame == 2));
+    s.press(&mut c, &[Action::Rewind]);
+    let rewinding = s.rewind().expect("open").scene(&c);
+    assert!(rewinding.units.iter().all(|u| u.frame == 2));
 }
 
 /// Ticket 0440: an AI unit's walk looks the same, after its pan and its

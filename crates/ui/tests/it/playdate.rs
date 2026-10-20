@@ -460,7 +460,7 @@ fn to_turn_two(h: &mut Harness) {
 /// The rewind screen's past actions (their points), newest first, and the
 /// one highlighted.
 fn rewind_points(h: &Harness) -> Option<(Vec<usize>, Option<usize>)> {
-    let r = battle(h).rewind()?;
+    let r = h.screen::<RewindScreen>()?;
     let points = r.entries().iter().map(|e| e.point).collect();
     Some((points, r.focused().map(|e| e.point)))
 }
@@ -474,7 +474,7 @@ fn winding_the_crank_back_rewinds_one_action_per_notch() {
     let mut h = first_battle();
     // Wound forwards on the map: nothing.
     h.crank(30.0);
-    assert!(battle(&h).rewind().is_none());
+    assert!(h.screen::<RewindScreen>().is_none());
     assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
     to_turn_two(&mut h);
     let charges = battle(&h).history().charges_left();
@@ -501,20 +501,23 @@ fn winding_the_crank_back_rewinds_one_action_per_notch() {
     assert_eq!(rewind_points(&h), Some((points.clone(), oldest)));
     // B closes it, the battle as it was.
     h.pad("East");
-    assert!(battle(&h).rewind().is_none());
+    assert!(h.screen::<RewindScreen>().is_none());
     assert_eq!(battle(&h).history().len(), points.len());
     // Again: the newest. A asks, and the crank does nothing meanwhile.
     h.crank(-30.0).pad("South");
-    let asking = |h: &Harness| battle(h).rewind().is_some_and(RewindScreen::is_confirming);
+    let asking = |h: &Harness| {
+        h.screen::<RewindScreen>()
+            .is_some_and(RewindScreen::is_confirming)
+    };
     assert!(asking(&h));
     h.crank(-30.0);
     assert_eq!(rewind_points(&h), Some((points.clone(), Some(points[0]))));
     // B backs out of the question; A, A rewinds for one charge (to the
     // enemy's phase, which plays on).
     h.pad("East");
-    assert!(!asking(&h) && battle(&h).rewind().is_some());
+    assert!(!asking(&h) && h.screen::<RewindScreen>().is_some());
     h.pad("South South");
-    assert!(battle(&h).rewind().is_none());
+    assert!(h.screen::<RewindScreen>().is_none());
     assert_eq!(battle(&h).history().charges_left(), charges - 1);
 }
 
@@ -524,11 +527,11 @@ fn a_notch_is_the_keymaps() {
     let mut h = first_battle_and(|ctx| ctx.game.content.keymap.crank.notch_degrees = 90);
     h.crank(-60.0);
     assert!(
-        battle(&h).rewind().is_none(),
+        h.screen::<RewindScreen>().is_none(),
         "60 of 90 degrees: no notch yet"
     );
     h.crank(-30.0);
-    assert!(battle(&h).rewind().is_some());
+    assert!(h.screen::<RewindScreen>().is_some());
 }
 
 /// The map menu's entries, with whether each can be chosen.

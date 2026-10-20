@@ -13,7 +13,7 @@ use trpg_core::{
 use super::banner::Banner;
 use super::mode::Mode;
 use super::progress::{PROGRESS_TIMINGS, Page};
-use super::testing::{battle, quick_units, wait};
+use super::testing::{answer, battle, quick_units, wait};
 use super::view::{ExpView, GainsView, ProgressView, StatGainView};
 use super::{BattleScreen, Queued};
 use crate::harness::{FRAME_DT, Harness};
@@ -219,8 +219,8 @@ fn the_screen_waits_for_the_level_up_and_leaves_the_battle_cores() {
     let p = s.progress().expect("the level-up page waits");
     assert!(matches!(p.page(), Some(Page::LevelUp(_))));
     // Rewind and the map keys wait too.
-    press(&mut s, &mut c, &[Action::Rewind, Action::CursorLeft], 0.0);
-    assert!(s.rewind().is_none());
+    assert_eq!(answer(&mut s, &mut c, Action::Rewind), "None");
+    press(&mut s, &mut c, &[Action::CursorLeft], 0.0);
     // So do tips and banners.
     c.game.tips_enabled = true;
     s.tips.fire(TipTrigger::FirstLevelUp);

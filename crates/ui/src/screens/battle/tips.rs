@@ -26,9 +26,9 @@ pub struct TipState {
     queue: VecDeque<TipTrigger>,
     /// The tip on screen as the last frame ended, if any.
     on_screen: Option<TipTrigger>,
-    /// Whether a scene the battle started plays over it, so no tip shows
-    /// (ticket 0455).
-    under_scene: bool,
+    /// Whether a screen is over the battle (a scene it started, ticket
+    /// 0455; the rewind screen), so no tip shows.
+    covered: bool,
     /// Whether tips are off, or the campaign's tutorial level shows none,
     /// as of the last [`absorb`](Self::absorb): the queue waits, hidden
     /// (ticket 0841).
@@ -102,15 +102,15 @@ impl TipState {
         self.queue.iter().copied().filter(|_| !self.off)
     }
 
-    /// Notes whether a scene plays over the battle: while one does, no
-    /// tip shows.
-    pub fn set_under_scene(&mut self, under: bool) {
-        self.under_scene = under;
+    /// Notes whether a screen is over the battle: while one is, no tip
+    /// shows.
+    pub fn set_covered(&mut self, covered: bool) {
+        self.covered = covered;
     }
 
-    /// Whether a scene plays over the battle.
-    pub fn under_scene(&self) -> bool {
-        self.under_scene
+    /// Whether a screen is over the battle.
+    pub fn covered(&self) -> bool {
+        self.covered
     }
 
     /// Drops `trigger`'s tip from the queue.

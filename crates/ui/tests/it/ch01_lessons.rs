@@ -10,6 +10,7 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::mode::{ListKind, MenuEntry, Mode};
+use trpg_ui::screens::battle::rewind::RewindScreen;
 
 fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)
@@ -307,12 +308,12 @@ fn the_rewind_lesson_opens_on_turn_two_and_spends_no_charge() {
     assert_eq!(battle(&h).state().phase(), Phase::Player, "the turn waits");
     assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
     h.keys("r");
-    assert!(battle(&h).rewind().is_some());
+    let rewind = h.screen::<RewindScreen>().expect("the rewind screen");
     assert_eq!(battle(&h).lesson_ticks(), [true, false]);
     // The box stays up over the rewind screen.
-    assert_eq!(shown(&h), Some("rewind"));
+    assert!(rewind.view(h.game().ctx()).lesson.is_some());
     h.keys("d");
-    assert!(battle(&h).rewind().is_none());
+    assert!(h.screen::<RewindScreen>().is_none());
     assert!(done(&h).contains(&"rewind".to_owned()));
     assert_eq!(battle(&h).state().rewind_charges(), charges);
     assert_eq!(battle(&h).state().turn(), 2);

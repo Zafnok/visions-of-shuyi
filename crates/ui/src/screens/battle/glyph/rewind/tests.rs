@@ -67,7 +67,7 @@ fn painted(view: &RewindView) -> GlyphBuffer {
     let c = ctx();
     let black = c.palette.get(UiColor::Black);
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, Cell::new(' ', black, black));
-    paint(&c, view, &mut buf);
+    paint_list(&c, view, &mut buf);
     buf
 }
 
