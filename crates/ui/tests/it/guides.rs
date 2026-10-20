@@ -46,6 +46,7 @@ fn guides_opens_from_the_map_menu_at_none_and_steps_through_the_topics() {
     // The map menu: Units, Objective, Guides.
     h.keys("d Down Down f");
     assert!(h.screen::<GuidesScreen>().is_some());
+    assert_eq!(h.screens(), ["title", "game_flow", "battle", "guides"]);
     let screen = h.snapshot();
     for text in [
         "Guides",
