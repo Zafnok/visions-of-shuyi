@@ -60,7 +60,8 @@ pub fn paint(ctx: &Ctx, view: &PreparationsView, buf: &mut GlyphBuffer) {
         }
     }
     // The question takes the message's place.
-    if let Some(message) = view.leave_question.as_ref().or(view.message.as_ref()) {
+    let question = view.leave_question.as_ref().map(|ask| &ask.text);
+    if let Some(message) = question.or(view.message.as_ref()) {
         print_centred(buf, MESSAGE_ROW, message, c(UiColor::TextHighlight), black);
     }
     let bottom = i32::from(buf.height()) - 1;

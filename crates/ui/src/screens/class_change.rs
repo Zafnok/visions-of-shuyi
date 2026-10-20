@@ -32,6 +32,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
+use core::fmt::Display;
 pub use view::{
     ClassChangeBody, ClassChangeView, ColumnView, ColumnsView, QuestionView, SealView, StatRowView,
 };
@@ -50,8 +51,8 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
-use crate::widgets::ListCursor;
 use crate::widgets::help::{SEPARATOR, key_name};
+use crate::widgets::{Ask, ListCursor};
 use crate::words::Words;
 
 /// Columns shown at once.
@@ -102,7 +103,7 @@ enum Stage {
     /// Picking a column.
     Choosing,
     /// `Promote … ?`
-    Confirming,
+    Confirming(Ask<bool>),
     /// The change was made: its pages play.
     Result(Progress),
     /// Nothing left to show: the screen closes.
@@ -298,7 +299,7 @@ impl ClassChangeScreen {
 
     /// Whether the `Promote … ?` question is up.
     pub fn is_confirming(&self) -> bool {
-        self.stage == Stage::Confirming
+        matches!(self.stage, Stage::Confirming(_))
     }
 
     /// The result's pages, once a change was made.
@@ -365,7 +366,11 @@ impl ClassChangeScreen {
             }
             Action::Confirm => {
                 if self.focused().is_some_and(|o| o.after.is_ok()) {
-                    self.stage = Stage::Confirming;
+                    let key = match self.kind {
+                        ChangeKind::Promote => "class_change.question.promote",
+                        ChangeKind::Reclass => "class_change.question.reclass",
+                    };
+                    self.stage = Stage::Confirming(Ask::yes_no(key, "class_change.yes_no"));
                     ctx.audio.menu(MenuSound::Select);
                 } else {
                     ctx.audio.menu(MenuSound::Denied);
@@ -421,18 +426,17 @@ impl ClassChangeScreen {
         }
     }
 
-    /// The question asked before the change, and what it costs.
-    fn question(&self, ctx: &Ctx, class: &ClassDef) -> [String; 2] {
+    /// `ask`, the question asked before the change to `class`, and what
+    /// it costs.
+    fn question(&self, ctx: &Ctx, ask: &Ask<bool>, class: &ClassDef) -> QuestionView {
         let words = ctx.words();
         let (unit, class_name) = (words.unit(&self.unit), words.class(class));
-        let key = match self.kind {
-            ChangeKind::Promote => "class_change.question.promote",
-            ChangeKind::Reclass => "class_change.question.reclass",
-        };
-        let ask = ctx.text_with(key, &[("unit", &unit), ("class", &class_name)]);
+        let args: [(&str, &dyn Display); 2] = [("unit", &unit), ("class", &class_name)];
         let (seal, held) = self.seal_of(ctx, class);
-        let cost = ctx.text_with("class_change.cost", &[("seal", &seal), ("held", &held)]);
-        [ask, cost]
+        QuestionView {
+            ask: ask.view_with_keys(ctx, ctx.help_keys(), &args),
+            cost: ctx.text_with("class_change.cost", &[("seal", &seal), ("held", &held)]),
+        }
     }
 
     /// The help line for the stage.
@@ -453,7 +457,7 @@ impl ClassChangeScreen {
                 let hints: Vec<String> = [many, choose, back].into_iter().flatten().collect();
                 hints.join(SEPARATOR)
             }
-            Stage::Confirming => ctx.text_with("class_change.help.confirming", &[]),
+            Stage::Confirming(_) => ctx.text_with("class_change.help.confirming", &[]),
             Stage::Result(p) => progress::help(ctx, p),
             Stage::Done => String::new(),
         }
@@ -464,8 +468,10 @@ impl ClassChangeScreen {
     /// open), or the change's pages, and the help line.
     pub fn view(&self, ctx: &Ctx) -> ClassChangeView {
         let body = match &self.stage {
-            Stage::Choosing => ClassChangeBody::Columns(Box::new(self.columns_view(ctx, false))),
-            Stage::Confirming => ClassChangeBody::Columns(Box::new(self.columns_view(ctx, true))),
+            Stage::Choosing => ClassChangeBody::Columns(Box::new(self.columns_view(ctx, None))),
+            Stage::Confirming(ask) => {
+                ClassChangeBody::Columns(Box::new(self.columns_view(ctx, Some(ask))))
+            }
             Stage::Result(pages) => {
                 let faces = (&ctx.game.content.portraits, &ctx.game.lead);
                 ClassChangeBody::Result(progress::view(ctx.words(), faces, pages).map(Box::new))
@@ -480,8 +486,8 @@ impl ClassChangeScreen {
 
     /// The title, the unit's line, the seals in stock for the focused
     /// class, the columns on show and the marks for those scrolled away;
-    /// with the question if `asking`.
-    fn columns_view(&self, ctx: &Ctx, asking: bool) -> ColumnsView {
+    /// with the question `asking`, if any.
+    fn columns_view(&self, ctx: &Ctx, asking: Option<&Ask<bool>>) -> ColumnsView {
         let words = ctx.words();
         let classes = &ctx.game.content.classes;
         let class = words.class_of(&self.unit.class, classes);
@@ -490,11 +496,9 @@ impl ClassChangeScreen {
             let (name, held) = self.seal_of(ctx, class);
             SealView { name, held }
         });
-        let question = focused.filter(|_| asking).map(|class| {
-            let [ask, cost] = self.question(ctx, class);
-            let keys = ctx.text_with("class_change.yes_no", &[]);
-            QuestionView { ask, cost, keys }
-        });
+        let question = asking
+            .zip(focused)
+            .map(|(ask, class)| self.question(ctx, ask, class));
         let first = self.cursor.first_shown();
         let shown = self.options.iter().enumerate().skip(first);
         // Every option is a class of the content: the targets come from it.
@@ -593,16 +597,16 @@ impl Screen<Shuyi> for ClassChangeScreen {
                         return Transition::Pop;
                     }
                 }
-                Stage::Confirming => match action {
-                    Action::Confirm => {
+                Stage::Confirming(ask) => match ask.handle(action, &mut ctx.audio) {
+                    Some(true) => {
                         ctx.audio.menu(MenuSound::Select);
                         self.apply(ctx);
                     }
-                    Action::Cancel => {
+                    Some(false) => {
                         ctx.audio.menu(MenuSound::Cancel);
                         self.stage = Stage::Choosing;
                     }
-                    _ => {}
+                    None => {}
                 },
                 // Confirm or Cancel finishes or closes a page, as in battle.
                 Stage::Result(pages) => {

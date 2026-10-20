@@ -50,7 +50,7 @@ use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
-use crate::widgets::wrap_step;
+use crate::widgets::{Ask, wrap_step};
 use crate::words::Words;
 
 /// Text key of the question Cancel asks on the tabs, when leaving is
@@ -184,8 +184,8 @@ pub struct PreparationsScreen {
     pack: usize,
     /// Why the last Confirm did nothing.
     message: Option<String>,
-    /// Whether [`LEAVE_QUESTION`] is open.
-    leaving: bool,
+    /// [`LEAVE_QUESTION`], while it is open.
+    leaving: Option<Ask<bool>>,
     /// The `Options` tab was opened: the frame opens the Options screen.
     open_options: bool,
 }
@@ -208,7 +208,7 @@ impl PreparationsScreen {
             spare: 0,
             pack: 0,
             message: None,
-            leaving: false,
+            leaving: None,
             open_options: false,
         }
     }
@@ -246,7 +246,7 @@ impl PreparationsScreen {
 
     /// Whether [`LEAVE_QUESTION`] is open.
     pub fn is_asking_leave(&self) -> bool {
-        self.leaving
+        self.leaving.is_some()
     }
 
     /// The army's units: the deployed ones, then the ones left out.
@@ -556,7 +556,7 @@ impl PreparationsScreen {
 
     /// The bottom help line.
     pub fn help(&self, ctx: &Ctx) -> String {
-        let key = match (self.leaving, self.focus, self.tab, self.can_leave) {
+        let key = match (self.is_asking_leave(), self.focus, self.tab, self.can_leave) {
             (true, ..) => "prep.help.leaving",
             (_, Focus::Tabs, Tab::Fight, true) => "prep.help.fight_leave",
             (_, Focus::Tabs, Tab::Fight, false) => "prep.help.fight",
@@ -690,18 +690,13 @@ impl PreparationsScreen {
     /// Handles one action. Returns the pop, if the screen is done.
     fn handle(&mut self, action: Action, ctx: &mut Ctx) -> Option<Transition> {
         use Action::{Cancel, Confirm, CursorDown, CursorLeft, CursorRight, CursorUp};
-        if self.leaving {
-            match action {
-                Confirm => {
-                    ctx.audio.menu(MenuSound::Select);
-                    return Some(Transition::Pop);
-                }
-                Cancel => {
-                    self.leaving = false;
-                    ctx.audio.menu(MenuSound::Cancel);
-                }
-                _ => {}
+        if let Some(ask) = self.leaving.as_mut() {
+            if ask.handle(action, &mut ctx.audio)? {
+                ctx.audio.menu(MenuSound::Select);
+                return Some(Transition::Pop);
             }
+            self.leaving = None;
+            ctx.audio.menu(MenuSound::Cancel);
             return None;
         }
         // The Playdate's system menu (ticket 1035): as the Options tab.
@@ -729,7 +724,8 @@ impl PreparationsScreen {
                 return self.open_tab(ctx);
             }
             (Focus::Tabs, Cancel) if self.can_leave => {
-                self.leaving = true;
+                // Its keys are on the help line.
+                self.leaving = Some(Ask::yes_no(LEAVE_QUESTION, "prep.help.leaving"));
                 ctx.audio.menu(MenuSound::Select);
             }
 
@@ -806,7 +802,7 @@ impl PreparationsScreen {
             on_tabs: self.focus == Focus::Tabs,
             body,
             message: self.message.clone(),
-            leave_question: self.leaving.then(|| ctx.text(LEAVE_QUESTION).to_owned()),
+            leave_question: self.leaving.as_ref().map(|ask| ask.view(ctx)),
             help: self.help(ctx),
         }
     }

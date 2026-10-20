@@ -5,6 +5,7 @@
 
 use super::Tab;
 use crate::prelude::*;
+use crate::widgets::AskView;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -21,8 +22,8 @@ pub struct PreparationsView {
     /// Why the last Confirm did nothing, until the next key.
     pub message: Option<String>,
     /// The "leave Preparations?" question, while it is open. It is shown
-    /// in the message's place.
-    pub leave_question: Option<String>,
+    /// in the message's place, its keys on the help line.
+    pub leave_question: Option<AskView<bool>>,
     /// The help line: what the keys do here.
     pub help: String,
 }

@@ -1,7 +1,7 @@
 use super::*;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::screen::tests::ctx;
-use crate::widgets::{MenuItemView, MenuView};
+use crate::widgets::{AskView, MenuItemView, MenuView};
 use trpg_core::GameMode;
 
 /// A buffer full of a colour no screen uses, to see what is left unpainted.
@@ -221,9 +221,10 @@ fn a_message_goes_under_the_panel() {
 fn the_overwrite_question_is_a_double_box_in_the_middle() {
     let c = ctx();
     let mut asking = view();
-    asking.question = Some(OverwriteView {
-        question: "Overwrite slot 02?".to_owned(),
-        answers: "f yes / d no".to_owned(),
+    asking.question = Some(AskView {
+        text: "Overwrite slot 02?".to_owned(),
+        answers: Vec::new(),
+        keys: Some("f yes / d no".to_owned()),
     });
     let mut buf = stale(&c);
     paint_slots(&c, &asking, &mut buf);
@@ -231,11 +232,13 @@ fn the_overwrite_question_is_a_double_box_in_the_middle() {
     assert!(shows(&buf, "f yes / d no"));
     // Centred, with a double border: its width is the question plus 4.
     let w = i32::try_from("Overwrite slot 02?".chars().count()).unwrap() + 4;
-    let top = (i32::from(ConsoleSpec::PC.rows) - OVERWRITE_H) / 2;
+    let top = (i32::from(ConsoleSpec::PC.rows) - ask_glyph::HEIGHT) / 2;
     let left = (i32::from(ConsoleSpec::PC.cols) - w) / 2;
     assert_eq!(buf.get(left, top).unwrap().glyph, '╔');
     assert_eq!(
-        buf.get(left + w - 1, top + OVERWRITE_H - 1).unwrap().glyph,
+        buf.get(left + w - 1, top + ask_glyph::HEIGHT - 1)
+            .unwrap()
+            .glyph,
         '╝'
     );
     assert_eq!(

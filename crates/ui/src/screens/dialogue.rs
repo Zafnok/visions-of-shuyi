@@ -31,6 +31,7 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::{Action, Button, Chord, Keymap};
 use crate::map_view::{MapScene, Place, UnitView, screen_tiles};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::widgets::Ask;
 use crate::widgets::help::key_name;
 use crate::widgets::menu::{Menu, MenuEvent, MenuItem};
 use history::History;
@@ -90,8 +91,8 @@ pub struct DialogueScreen {
     /// The current text box: its pages ([`TEXT_LINES`] lines each) and how
     /// much is revealed.
     text: TextBox,
-    /// Whether the "Skip scene?" question is open.
-    asking_skip: bool,
+    /// "Skip scene?", while it is open.
+    asking_skip: Option<Ask<bool>>,
     /// The lead's replies, while a choice is open.
     menu: Option<Menu<usize>>,
     /// Every line seen, for the log.
@@ -120,7 +121,7 @@ impl DialogueScreen {
             player: DialoguePlayer::new(scene, lead, names, present),
             overlay: false,
             text: TextBox::new("", TEXT_W, TEXT_LINES),
-            asking_skip: false,
+            asking_skip: None,
             menu: None,
             history: History::new(),
             log: None,
@@ -198,7 +199,16 @@ impl DialogueScreen {
 
     /// Whether the "Skip scene?" question is open.
     pub fn is_asking_skip(&self) -> bool {
-        self.asking_skip
+        self.asking_skip.is_some()
+    }
+
+    /// Opens "Skip scene?", with the sound of opening a menu.
+    fn ask_skip(&mut self, ctx: &mut Ctx) {
+        ctx.audio.menu(MenuSound::Select);
+        self.asking_skip = Some(Ask::yes_no(
+            "dialogue.skip_question",
+            "dialogue.skip_answers",
+        ));
     }
 
     /// The replies menu, while a choice is open.
@@ -346,7 +356,10 @@ impl DialogueScreen {
                 continue;
             }
             if action == Action::DialogueLog {
-                if !self.asking_skip && !self.history.is_empty() && self.log_key_free(ctx, input) {
+                if !self.is_asking_skip()
+                    && !self.history.is_empty()
+                    && self.log_key_free(ctx, input)
+                {
                     ctx.audio.menu(MenuSound::Select);
                     self.log = Some(self.history.at());
                 }
@@ -365,37 +378,36 @@ impl DialogueScreen {
                 continue;
             }
             // Only the skip prompt sounds; reading on plays nothing.
-            match (self.asking_skip, action) {
-                (true, Action::Confirm) => {
-                    ctx.audio.menu(MenuSound::Select);
-                    self.asking_skip = false;
-                    self.player.skip_to_choice();
-                    if self.player.is_finished() {
-                        return Transition::Pop;
-                    }
-                    // An opening passed on the way doesn't play.
-                    self.player.take_opening();
-                    self.start_box();
-                    // The rest of this frame's keys can't pick a reply.
-                    break;
-                }
-                (true, Action::Cancel) => {
+            if let Some(ask) = self.asking_skip.as_mut() {
+                let Some(yes) = ask.handle(action, &mut ctx.audio) else {
+                    continue;
+                };
+                self.asking_skip = None;
+                if !yes {
                     ctx.audio.menu(MenuSound::Cancel);
-                    self.asking_skip = false;
+                    continue;
                 }
-                // Opening the skip prompt sounds like opening a menu.
-                (false, Action::Cancel) => {
-                    ctx.audio.menu(MenuSound::Select);
-                    self.asking_skip = true;
+                ctx.audio.menu(MenuSound::Select);
+                self.player.skip_to_choice();
+                if self.player.is_finished() {
+                    return Transition::Pop;
                 }
-                (false, Action::Confirm) if !self.is_revealed() => self.text.reveal(),
-                (false, Action::Confirm) if self.next() => return Transition::Pop,
+                // An opening passed on the way doesn't play.
+                self.player.take_opening();
+                self.start_box();
+                // The rest of this frame's keys can't pick a reply.
+                break;
+            }
+            match action {
+                Action::Cancel => self.ask_skip(ctx),
+                Action::Confirm if !self.is_revealed() => self.text.reveal(),
+                Action::Confirm if self.next() => return Transition::Pop,
                 // A choice just opened: the rest of this frame's keys
                 // can't pick a reply.
-                (false, Action::Confirm) if self.menu.is_some() => break,
+                Action::Confirm if self.menu.is_some() => break,
                 // An opening started: the rest of this frame's keys can't
                 // skip it.
-                (false, Action::Confirm) if self.playing.is_some() => break,
+                Action::Confirm if self.playing.is_some() => break,
                 _ => {}
             }
         }
@@ -407,7 +419,7 @@ impl DialogueScreen {
         }
         let held = ADVANCE_KEYS.iter().any(|&a| input.is_held(a));
         self.text.hold(held, input.dt);
-        if !self.asking_skip {
+        if !self.is_asking_skip() {
             // Instant text speed: the whole page at once.
             let speed = ctx.settings().text_speed.chars_per_s();
             self.text.type_on(input.dt, speed);
@@ -426,9 +438,8 @@ impl DialogueScreen {
                     return Transition::None;
                 }
                 Action::Cancel => {
-                    ctx.audio.menu(MenuSound::Select);
                     self.playing = None;
-                    self.asking_skip = true;
+                    self.ask_skip(ctx);
                     return Transition::None;
                 }
                 _ => {}
@@ -505,7 +516,7 @@ impl DialogueScreen {
         if seen.music.is_some() && seen.music != self.music {
             self.jumped_music = seen.music;
         }
-        self.asking_skip = false;
+        self.asking_skip = None;
         self.show_box();
     }
 
@@ -610,11 +621,15 @@ impl DialogueScreen {
     /// page waits for a key. `narration`: whether the text is narration.
     fn text_view(&self, ctx: &Ctx, narration: bool) -> TextView {
         let shown = self.text.shown();
-        let skip = self.asking_skip.then(|| SkipView {
-            question: ctx.text("dialogue.skip_question").to_owned(),
-            answers: ctx.text_with("dialogue.skip_answers", &[]),
+        // The text box asks in its own place (the engine's text box skin).
+        let skip = self.asking_skip.as_ref().map(|ask| {
+            let view = ask.view(ctx);
+            SkipView {
+                question: view.text,
+                answers: view.keys.unwrap_or_default(),
+            }
         });
-        let waits = !self.asking_skip && self.menu.is_none() && self.is_revealed();
+        let waits = !self.is_asking_skip() && self.menu.is_none() && self.is_revealed();
         TextView {
             narration,
             lines: self.page_lines().to_vec(),

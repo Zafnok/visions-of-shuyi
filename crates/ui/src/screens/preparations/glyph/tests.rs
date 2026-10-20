@@ -7,6 +7,7 @@ use crate::input::Action::{Confirm, CursorDown, CursorUp};
 use crate::screen::{Screen, tests::ctx};
 use crate::screens::preparations::tests::{screen, update};
 use crate::screens::preparations::{Tab, TabView, UnitRowView};
+use crate::widgets::AskView;
 
 /// A buffer full of a colour the screen doesn't use, to see what is left
 /// unpainted.
@@ -232,7 +233,11 @@ fn the_cursors_row_is_a_bar_the_chosen_rows_are_lit_and_the_rest_dim_or_plain() 
 fn the_leave_question_takes_the_messages_place() {
     let c = ctx();
     let mut view = view();
-    view.leave_question = Some("Leave?".to_owned());
+    view.leave_question = Some(AskView {
+        text: "Leave?".to_owned(),
+        answers: Vec::new(),
+        keys: None,
+    });
     let buf = painted(&c, &view);
     assert_eq!(row(&buf, 29).trim(), "Leave?");
     let at = row(&buf, 29).find("Leave?").unwrap_or(0);

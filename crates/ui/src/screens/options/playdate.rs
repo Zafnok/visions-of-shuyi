@@ -14,8 +14,8 @@ use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::playdate::{
-    Answers, Item, ask, bar, cells, centred, clear, cut, first_shown, footer, inks, item,
-    more_marks, to_i32, to_usize, window,
+    Item, ask_view, bar, cells, centred, clear, cut, first_shown, footer, inks, item, more_marks,
+    to_i32, to_usize, window,
 };
 
 /// Column of the rows' names.
@@ -62,16 +62,10 @@ pub fn paint(ctx: &Ctx, view: &OptionsView, buf: &mut GlyphBuffer) {
     }
     centred(ctx, buf, bottom, &view.help);
     if let Some(question) = &view.question {
-        let keys = question.keys.as_deref().unwrap_or_default();
-        ask(ctx, buf, &question.text, Answers::Hint(keys));
+        ask_view(ctx, buf, question);
     }
     if let Some(leaving) = &view.leaving {
-        let choices: Vec<_> = leaving
-            .answers
-            .iter()
-            .map(|c| (c.label.as_str(), c.focused))
-            .collect();
-        ask(ctx, buf, &leaving.text, Answers::Choices(&choices));
+        ask_view(ctx, buf, leaving);
     }
 }
 
