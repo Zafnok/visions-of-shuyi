@@ -10,8 +10,9 @@ mod args;
 mod tests;
 
 use macroquad::window::Conf;
-use shuyi_app::{AppConfig, Icon, Platform, VoiceFiles, Window};
-use trpg_content::{FontAtlasDef, ImageTable, bundle, font, voice};
+use shuyi_app::{AppConfig, Icon, VoiceFiles, Window};
+use shuyi_platform::{Card, Look, Setup, Start};
+use trpg_content::{bundle, font, voice};
 use trpg_ui::screen::{Lessons, Shuyi};
 use trpg_ui::{ConsoleSizes, ConsoleSpec, Ctx, Game, ShuyiCtx};
 
@@ -48,40 +49,39 @@ const WINDOW: Window = Window {
 const STORAGE_NAME: &str = "tactical-rpg";
 
 /// What the platform shell needs to know about the game.
-fn config() -> AppConfig<Shuyi> {
+fn config() -> AppConfig {
     AppConfig {
         window: WINDOW,
         storage_name: STORAGE_NAME,
         files: bundle::bytes,
-        font: font_atlas,
         font_png: font::ATLAS_PNG_PATH,
-        images,
         sounds: trpg_content::audio::files(None),
         voices: Some(VoiceFiles {
             folder: voice::VOICE_DIR,
             lang: voice::SOURCE_LANG,
             manifest: voice::MANIFEST_FILE,
         }),
+        text_input: None,
     }
 }
 
-fn font_atlas(game: &Shuyi) -> &FontAtlasDef {
-    &game.content.font
+/// What the game's frames are painted with: its font atlas and pictures.
+fn look(game: &Shuyi) -> Look<'_> {
+    Look {
+        font: &game.content.font,
+        images: &game.content.images,
+    }
 }
 
-fn images(game: &Shuyi) -> &ImageTable {
-    &game.content.images
-}
-
-/// The game on `platform`: at the title, or on the scene the command line
-/// asks for (ticket 0723).
-fn start(platform: &Platform) -> Result<Game, String> {
+/// The game on the platform `setup` describes: at the title, or on the
+/// scene the command line asks for (ticket 0723).
+fn start(setup: Setup) -> Result<Game, String> {
     let startup = args::startup()?;
     let mut ctx = Ctx::embedded().map_err(|e| e.to_string())?;
     ctx.console = ConsoleSpec::PC;
     ctx.game.tips_enabled = true;
     ctx.game.lessons = Lessons::On;
-    let ctx = platform.setup(ctx);
+    let ctx = setup.ctx(ctx);
     match startup {
         Startup::Title => Ok(trpg_ui::game::start(ctx)),
         Startup::Scene { id, gender } => trpg_ui::game::start_on_scene(ctx, &id, gender),
@@ -94,5 +94,8 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    // The game's name in white on black while it loads, as on the
+    // Playdate (ticket 1036).
+    let start = Start::new(Card::text(WINDOW.title), look, start);
     shuyi_app::run(config(), start).await;
 }

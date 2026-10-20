@@ -3,7 +3,8 @@
 //! no clock.
 //!
 //! The scripts, the waits, the audio recorded and the music player's
-//! stand-in are the engine's (`shuyi_ui::harness`, ticket 1111); this
+//! stand-in are the engine's (`shuyi_platform::harness`, ticket 1111,
+//! moved by engine ticket 3003); this
 //! [`Harness`] wraps it with this game's start-up (the embedded content,
 //! the test chapter, the title) and its lookups (the game flow, the
 //! battle and its map). Every method of the engine's Harness works on it.
@@ -37,10 +38,10 @@ use crate::settings::{SETTINGS_KEY, Settings};
 use crate::storage::{MemoryStorage, Storage};
 use trpg_core::Pos;
 
-pub use shuyi_ui::harness::{FRAME_DT, MAX_FRAMES};
+pub use shuyi_platform::harness::{FRAME_DT, MAX_FRAMES};
 
 /// The engine's Harness on this game.
-pub type Core = shuyi_ui::harness::Harness<Shuyi>;
+pub type Core = shuyi_platform::harness::Harness<Shuyi>;
 
 /// Drives a [`Game`] with simulated key presses and time: the engine's
 /// Harness ([`Core`], which it derefs to) with this game's start-up and

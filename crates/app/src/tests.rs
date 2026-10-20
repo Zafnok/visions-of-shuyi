@@ -12,7 +12,7 @@ use trpg_content::voice::{MANIFEST_FILE, clip_file};
 use trpg_content::{LineId, Variant};
 use trpg_ui::{Ctx, ShuyiCtx};
 
-use super::{STORAGE_NAME, WINDOW, config};
+use super::{STORAGE_NAME, WINDOW, config, look};
 
 /// Runs a future that never waits on anything external.
 fn block_on<F: Future>(future: F) -> F::Output {
@@ -113,13 +113,8 @@ fn the_font_and_images_are_the_contents() {
     let ctx = Ctx::embedded().unwrap();
     let config = config();
     let content = &ctx.game.content;
-    assert!(std::ptr::eq(
-        (config.font)(&ctx.game),
-        &raw const content.font
-    ));
-    assert!(std::ptr::eq(
-        (config.images)(&ctx.game),
-        &raw const content.images
-    ));
+    let look = look(&ctx.game);
+    assert!(std::ptr::eq(look.font, &raw const content.font));
+    assert!(std::ptr::eq(look.images, &raw const content.images));
     assert!((config.files)(config.font_png).is_some());
 }

@@ -19,6 +19,8 @@ shuyi-ui.workspace = true
 # The engine's asset types the context reads through this game's data
 # (1109): the text by key.
 shuyi-assets.workspace = true
+# The engine's test Harness, for the `harness` feature (engine ADR-0024).
+shuyi-platform = { workspace = true, optional = true }
 # The player's saved settings (ADR-0050) and the game's saves.
 serde.workspace = true
 ron.workspace = true
@@ -40,7 +42,7 @@ std = [
 harness = [
     "storage-conformance",
     "trpg-content/test-fixtures",
-    "shuyi-ui/harness",
+    "shuyi-platform/harness",
 ]
 # `storage::conformance_suite`, for a platform's `Storage` (also without
 # `std`: the Playdate's debug build runs it on the device's files).

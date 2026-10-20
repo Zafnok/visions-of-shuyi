@@ -30,6 +30,9 @@ trpg-content = { path = "../content" }
 trpg-ui = { path = "../ui" }
 # The window, input devices, audio, storage and the run loop (ticket 1110).
 shuyi-app.workspace = true
+# The game's start on it: the loading card, the load and the look (engine
+# ADR-0024, ticket 1175).
+shuyi-platform.workspace = true
 # The entry point: `#[macroquad::main]` has to be in the binary.
 macroquad.workspace = true
 
