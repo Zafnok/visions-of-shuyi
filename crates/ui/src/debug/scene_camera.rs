@@ -56,7 +56,7 @@ fn map_picture(ctx: &Ctx) -> Option<Rc<GlyphBuffer>> {
         brightness: 1.0,
         style: CursorStyle::Corners,
     });
-    MapPicture::paint(ctx, ctx.game.map_skin.as_ref(), &scene).map(|picture| picture.0.scene)
+    MapPicture::paint(ctx, &ctx.game.map_skin, &scene).map(|picture| picture.0.scene)
 }
 
 #[cfg(test)]

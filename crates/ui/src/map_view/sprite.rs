@@ -5,8 +5,8 @@
 //! tileset's pictures ([`units`]).
 //!
 //! - A tileset **with terrain tiles** paints the whole map: a tile is the
-//!   tileset's `tile_px`, a size known only here, behind
-//!   [`SpriteSkin::tile_size`]. The ground is each tile's own picture and
+//!   tileset's `tile_px` times the zoom, a size known only to the kit's
+//!   skin (its `tile_size`). The ground is each tile's own picture and
 //!   the tileset's layers over them, in the look the map asks for. The
 //!   cursor is corner marks with a dark edge, inside its tile (ticket
 //!   0444). A unit a battle note picks out stands on a light square
@@ -21,69 +21,31 @@ pub mod units;
 
 use alloc::rc::Rc;
 
-use shuyi_ui::grid::skin::{GridSkin, UnitPainter};
-use shuyi_ui::grid::sprite::SpriteSkin as KitSpriteSkin;
+use shuyi_ui::grid::skin::UnitPainter;
+use shuyi_ui::grid::sprite::SpriteSkin;
 use trpg_content::Tileset;
-use trpg_core::Pos;
 
 use super::glyph::{GLYPH, cell_of};
 use super::grid::Grid;
 use super::scene::{MapScene, UnitView};
-use super::skin::{MapSkin, with_looks};
+use super::skin::{MapSkin, Units};
 use crate::color::UiColor;
-use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect};
+use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay};
 use crate::screen::Ctx;
 use crate::screens::battle::walk::SPRITE_WALK;
 use crate::settings::MapZoom;
 
 pub use shuyi_ui::grid::sprite::{side, src_rect, tile_sprite};
 
-/// The battle map painted from a tileset.
-#[derive(Debug, Clone, PartialEq)]
-pub struct SpriteSkin {
-    tileset: Tileset,
-    /// How big the art is drawn, when the tileset paints the whole map.
-    zoom: MapZoom,
-    /// The kit's skin of the tileset's terrain tiles, at that zoom.
-    kit: KitSpriteSkin,
-}
-
-impl SpriteSkin {
-    /// The skin of `tileset`, at the art's own size.
-    pub fn new(tileset: Tileset) -> Self {
-        let kit = KitSpriteSkin::new(tileset.terrain.clone(), GLYPH, SPRITE_WALK);
-        Self {
-            tileset,
-            zoom: MapZoom::X1,
-            kit,
-        }
-    }
-
-    /// The same skin drawn at `zoom`.
-    #[must_use]
-    pub fn zoomed(mut self, zoom: MapZoom) -> Self {
-        self.zoom = zoom;
-        self.kit = self.kit.zoomed(zoom.factor());
-        self
-    }
-
-    /// Its tileset.
-    pub const fn tileset(&self) -> &Tileset {
-        &self.tileset
-    }
-
-    /// A map tile's size on screen, across × down, in console pixels: the
-    /// tileset's times the zoom, or the glyph skin's when it has no
-    /// terrain tiles.
-    pub fn tile_size(&self) -> (i32, i32) {
-        self.kit.tile_size()
-    }
-
-    /// Where `scene`'s tiles go in `area`: as many as fit, the pixels left
-    /// over split evenly around them; with no terrain tiles, where the
-    /// glyph skin puts them.
-    pub fn grid(&self, scene: &MapScene, area: Rect) -> Grid {
-        self.kit.grid(scene, area)
+impl MapSkin {
+    /// The battle map painted from `tileset`, at the art's own size: named
+    /// `"sprite"` when the tileset paints the whole map (and then it zooms
+    /// to every [`MapZoom`]), `"sprite_units"` when only the units. Its
+    /// walk is slower than the glyph skin's: a sprite is seen to walk.
+    pub fn sprite(tileset: Tileset) -> Self {
+        let zooms = MapZoom::ALL.map(MapZoom::factor);
+        let grid = SpriteSkin::new(tileset.terrain.clone(), GLYPH, SPRITE_WALK).with_zooms(&zooms);
+        Self::new(Rc::new(grid), Units::Sprite(Rc::new(tileset)))
     }
 }
 
@@ -125,65 +87,6 @@ impl UnitPainter<UnitView> for SpriteUnits<'_> {
     }
 }
 
-impl MapSkin for SpriteSkin {
-    /// `"sprite"` when the tileset paints the whole map, `"sprite_units"`
-    /// when only the units.
-    fn name(&self) -> &'static str {
-        GridSkin::<UnitView>::name(&self.kit)
-    }
-
-    fn tileset_id(&self) -> Option<&str> {
-        Some(&self.tileset.id)
-    }
-
-    /// Only a tileset that paints the whole map zooms.
-    fn zoom(&self) -> Option<MapZoom> {
-        self.tileset.terrain.as_ref().map(|_| self.zoom)
-    }
-
-    fn at_zoom(&self, zoom: MapZoom) -> Option<Rc<dyn MapSkin>> {
-        self.zoom()?;
-        Some(Rc::new(self.clone().zoomed(zoom)))
-    }
-
-    /// Slower than the glyph skin's: a sprite is seen to walk.
-    fn walk_tiles_per_s(&self) -> f32 {
-        GridSkin::<UnitView>::walk(&self.kit).normal
-    }
-
-    /// A little quicker with Fast animations.
-    fn fast_walk_tiles_per_s(&self) -> f32 {
-        GridSkin::<UnitView>::walk(&self.kit).fast
-    }
-
-    /// The fastest a sprite walks.
-    fn held_walk_tiles_per_s(&self) -> f32 {
-        GridSkin::<UnitView>::walk(&self.kit).held
-    }
-
-    /// The area's pixels divided by the tile size, rounded down; with no
-    /// terrain tiles, what the glyph skin fits.
-    fn view_tiles(&self, area: Rect) -> (i32, i32) {
-        self.kit.view_tiles(area)
-    }
-
-    /// The ground (terrain tinted by flashes and ranges), the path line,
-    /// the units' outlines and pictures, their HP bars and marks, the
-    /// path's arrowhead, then the cursor; over them all, the threat arrows
-    /// and marks.
-    fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer) {
-        let units = SpriteUnits {
-            ctx,
-            tileset: &self.tileset,
-        };
-        with_looks(ctx, |looks| self.kit.paint(looks, scene, area, &units, buf));
-    }
-
-    fn tile_px(&self, scene: &MapScene, area: Rect, tile: Pos) -> Option<PxRect> {
-        self.grid(scene, area).rect(tile)
-    }
-}
-
 #[cfg(test)]
 pub(crate) mod tests {
     use std::collections::BTreeSet;
@@ -192,18 +95,18 @@ pub(crate) mod tests {
     use proptest::prelude::*;
     use trpg_content::ImageRect;
     use trpg_content::tileset::{CornerLayer, Layer as TileLayerKind, Look, MIXES, TileLayer};
-    use trpg_core::{CharacterId, ClassId, Faction, TerrainId, UnitId};
+    use trpg_core::{CharacterId, ClassId, Faction, Pos, TerrainId, UnitId};
 
     use super::*;
     use crate::color::Rgb;
-    use crate::glyph_buffer::{Cell, Item, Sprite};
-    use crate::map_view::glyph::GlyphSkin;
+    use crate::glyph_buffer::{Cell, Item, PxRect, Rect, Sprite};
     use crate::map_view::glyph::tests::any_scene;
     use crate::map_view::grid::px_rect;
     use crate::map_view::scene::{
-        CursorStyle, CursorView, Facing, RangeKind, STANDING_FRAME, ThreatView, TileView,
-        UnitEffects, UnitView,
+        CursorStyle, CursorView, Facing, STANDING_FRAME, ThreatView, TileView, UnitEffects,
+        UnitView, range,
     };
+    use crate::map_view::skin::with_looks;
     use crate::map_view::threat;
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
@@ -223,7 +126,7 @@ pub(crate) mod tests {
     /// the sea and the bridge) and the rest, a picture for every mix; then
     /// a bridge that has another picture with water to its left and
     /// right.
-    pub(crate) fn layered(c: &Ctx) -> SpriteSkin {
+    pub(crate) fn layered(c: &Ctx) -> MapSkin {
         let id = |name| c.game.content.terrain.display.id_of(name).unwrap();
         let mut tileset = c.game.content.tilesets["test"].clone();
         let terrain = tileset.terrain.as_mut().unwrap();
@@ -244,20 +147,20 @@ pub(crate) mod tests {
             sides,
         };
         terrain.look.layers = vec![TileLayerKind::Corners(shore), TileLayerKind::Tiles(bridge)];
-        SpriteSkin::new(tileset)
+        MapSkin::sprite(tileset)
     }
 
     /// `skin` with an indoor look: every terrain's tile another one of
     /// the image's, and no layers.
-    pub(crate) fn with_indoor(skin: &SpriteSkin) -> SpriteSkin {
-        let mut tileset = skin.tileset().clone();
+    pub(crate) fn with_indoor(skin: &MapSkin) -> MapSkin {
+        let mut tileset = skin.tileset().unwrap().clone();
         let terrain = tileset.terrain.as_mut().unwrap();
         let mut indoor = Look::default();
         for (&id, rect) in &terrain.look.tiles {
             indoor.tiles.insert(id, ImageRect { y: 72, ..*rect });
         }
         terrain.looks.insert("indoor".to_owned(), indoor);
-        SpriteSkin::new(tileset)
+        MapSkin::sprite(tileset)
     }
 
     pub(crate) fn p(x: i32, y: i32) -> Pos {
@@ -265,46 +168,52 @@ pub(crate) mod tests {
     }
 
     /// The skin of the test tileset (24 × 24 tiles).
-    pub(crate) fn skin(c: &Ctx) -> SpriteSkin {
-        SpriteSkin::new(c.game.content.tilesets["test"].clone())
+    pub(crate) fn skin(c: &Ctx) -> MapSkin {
+        MapSkin::sprite(c.game.content.tilesets["test"].clone())
     }
 
     /// The skin of the test unit sheets: 16 × 20 units on glyph terrain.
-    pub(crate) fn sheets(c: &Ctx) -> SpriteSkin {
-        SpriteSkin::new(c.game.content.tilesets["test_units"].clone())
+    pub(crate) fn sheets(c: &Ctx) -> MapSkin {
+        MapSkin::sprite(c.game.content.tilesets["test_units"].clone())
     }
 
     /// [`skin`] with `w × h` tiles.
-    fn sized(c: &Ctx, w: u32, h: u32) -> SpriteSkin {
+    fn sized(c: &Ctx, w: u32, h: u32) -> MapSkin {
         let mut tileset = c.game.content.tilesets["test"].clone();
         if let Some(terrain) = &mut tileset.terrain {
             terrain.tile_px = (w, h);
         }
-        SpriteSkin::new(tileset)
+        MapSkin::sprite(tileset)
+    }
+
+    /// `skin` drawn at `zoom`, or as it is if it can't zoom (only the
+    /// units painted from the tileset).
+    pub(crate) fn zoomed(skin: MapSkin, zoom: MapZoom) -> MapSkin {
+        skin.at_zoom(zoom).unwrap_or(skin)
     }
 
     /// `skin` with a picture for the test lord: the fallback's, moved to
     /// the left edge of its image.
-    pub(crate) fn with_lord(skin: &SpriteSkin) -> SpriteSkin {
-        let mut tileset = skin.tileset.clone();
+    pub(crate) fn with_lord(skin: &MapSkin) -> MapSkin {
+        let mut tileset = skin.tileset().unwrap().clone();
         let mut lord = tileset.fallback;
         lord.rect.x = 0;
         tileset
             .characters
             .insert(CharacterId("test_lord".into()), lord);
-        SpriteSkin::new(tileset)
+        MapSkin::sprite(tileset)
     }
 
     /// `skin` with the brigand's picture in a walking sheet: the test unit
     /// sheets' (the test tileset's own pictures don't walk).
-    fn with_walking_brigand(c: &Ctx, skin: &SpriteSkin) -> SpriteSkin {
+    fn with_walking_brigand(c: &Ctx, skin: &MapSkin) -> MapSkin {
         let sheets = &c.game.content.tilesets["test_units"];
         let brigand = ClassId("brigand".into());
         let picture = sheets.classes[&brigand];
-        let mut tileset = skin.tileset.clone();
+        let mut tileset = skin.tileset().unwrap().clone();
         tileset.classes.insert(brigand, picture);
         tileset.walking.insert(picture.image);
-        SpriteSkin::new(tileset)
+        MapSkin::sprite(tileset)
     }
 
     /// A buffer the size of the console, every cell `fill()`.
@@ -357,9 +266,9 @@ pub(crate) mod tests {
         let area = Rect::new(2, 1, 24, 8);
         let skins = [
             skin(&c),
-            skin(&c).zoomed(MapZoom::X2),
+            zoomed(skin(&c), MapZoom::X2),
             sheets(&c),
-            sheets(&c).zoomed(MapZoom::X2),
+            zoomed(sheets(&c), MapZoom::X2),
         ];
         for skin in skins {
             let mut scene = plains(&c);
@@ -414,7 +323,7 @@ pub(crate) mod tests {
     /// `scene` painted by `skin` into a blank console, in the 6 × 4 cells
     /// from (2, 1): 48 × 64 px from (16, 16), so 2 × 2 tiles of 24 px with
     /// 8 px to spare above and below.
-    pub(crate) fn painted(c: &Ctx, skin: &SpriteSkin, scene: &MapScene) -> GlyphBuffer {
+    pub(crate) fn painted(c: &Ctx, skin: &MapSkin, scene: &MapScene) -> GlyphBuffer {
         let mut buf = blank();
         skin.paint(c, scene, Rect::new(2, 1, 6, 4), &mut buf);
         buf
@@ -433,7 +342,7 @@ pub(crate) mod tests {
         let c = ctx();
         let s = skin(&c);
         assert_eq!((s.name(), s.tile_size()), ("sprite", (24, 24)));
-        assert_eq!(s.tileset().id, "test");
+        assert_eq!(s.tileset().unwrap().id, "test");
         // The map area is 560 × 480 px.
         let fit = |w, h, area| {
             let s = sized(&c, w, h);
@@ -473,7 +382,7 @@ pub(crate) mod tests {
         let c = ctx();
         let s = skin(&c);
         assert_eq!(s.zoom(), Some(MapZoom::X1));
-        let twice = s.clone().zoomed(MapZoom::X2);
+        let twice = zoomed(s.clone(), MapZoom::X2);
         assert_eq!(
             (twice.zoom(), twice.tile_size()),
             (Some(MapZoom::X2), (48, 48))
@@ -497,7 +406,7 @@ pub(crate) mod tests {
         // 16 px tiles, the bought art's size: 35 × 30 and 17 × 15.
         let small = sized(&c, 16, 16);
         assert_eq!(small.view_tiles(MAP_VIEW), (35, 30));
-        assert_eq!(small.zoomed(MapZoom::X2).view_tiles(MAP_VIEW), (17, 15));
+        assert_eq!(zoomed(small, MapZoom::X2).view_tiles(MAP_VIEW), (17, 15));
         // The trait's way: the same skin at another zoom, and back.
         let dynamic = s.at_zoom(MapZoom::X2).unwrap();
         assert_eq!(dynamic.zoom(), Some(MapZoom::X2));
@@ -511,13 +420,13 @@ pub(crate) mod tests {
         let mixed = sheets(&c);
         assert_eq!(mixed.zoom(), None);
         assert!(mixed.at_zoom(MapZoom::X2).is_none());
-        let forced = mixed.clone().zoomed(MapZoom::X2);
+        let forced = zoomed(mixed.clone(), MapZoom::X2);
         assert_eq!((forced.zoom(), forced.tile_size()), (None, (16, 16)));
         assert_eq!(forced.view_tiles(MAP_VIEW), mixed.view_tiles(MAP_VIEW));
         assert_eq!(forced.grid(&scene, MAP_VIEW).scale, 1);
         // The glyph skin never zooms.
-        assert_eq!(GlyphSkin.zoom(), None);
-        assert!(GlyphSkin.at_zoom(MapZoom::X2).is_none());
+        assert_eq!(MapSkin::glyph().zoom(), None);
+        assert!(MapSkin::glyph().at_zoom(MapZoom::X2).is_none());
     }
 
     /// A scene with one of everything, painted at 1× into 2 × 2 tiles from
@@ -531,13 +440,13 @@ pub(crate) mod tests {
     fn at_twice_the_zoom_everything_is_twice_the_size() {
         let c = ctx();
         let s = with_walking_brigand(&c, &with_lord(&skin(&c)));
-        let twice = s.clone().zoomed(MapZoom::X2);
+        let twice = zoomed(s.clone(), MapZoom::X2);
         let double = |r: PxRect| Rect::new(2 * r.x, 2 * r.y, 2 * r.w, 2 * r.h);
         for clock_ms in [0, units::BOUNCE_MS, units::TURN_MS] {
             let mut scene = MapScene::new(p(0, 0), (2, 2));
             scene.set_terrain(|_| c.game.content.terrain.display.id_of("plain"));
             scene.clock_ms = clock_ms;
-            scene.tint([p(0, 0)], RangeKind::Move);
+            scene.tint([p(0, 0)], range::MOVE);
             scene.tile_mut(p(1, 0)).unwrap().flashes.push(0.5);
             let mut lord = brigand(p(0, 1));
             lord.faction = Faction::Player;
@@ -559,7 +468,7 @@ pub(crate) mod tests {
             scene.push_unit(enemy);
             scene.push_unit(brigand(p(1, 0)).fading(0.25));
             scene.path = vec![p(0, 0), p(0, 1), p(1, 1)];
-            let paint = |skin: &SpriteSkin, area| {
+            let paint = |skin: &MapSkin, area| {
                 let mut buf = blank();
                 skin.paint(&c, &scene, area, &mut buf);
                 buf
@@ -593,7 +502,15 @@ pub(crate) mod tests {
         let s = skin(&c);
         let buf = painted(&c, &s, &plains(&c));
         let display = &c.game.content.terrain.display;
-        let tile = |name| src_rect(s.tileset.tile(display.id_of(name).unwrap()).unwrap().rect);
+        let tile = |name| {
+            src_rect(
+                s.tileset()
+                    .unwrap()
+                    .tile(display.id_of(name).unwrap())
+                    .unwrap()
+                    .rect,
+            )
+        };
         let sprites = buf.sprites();
         // 2 × 2 tiles fit, from (16, 24).
         assert_eq!(sprites.len(), 4);
@@ -633,7 +550,7 @@ pub(crate) mod tests {
         let s = skin(&c);
         let cursor = c.palette.get(UiColor::Cursor);
         let black = c.palette.get(UiColor::Black);
-        let painted_with = |skin: &SpriteSkin, pos, style, brightness| {
+        let painted_with = |skin: &MapSkin, pos, style, brightness| {
             let mut scene = plains(&c);
             scene.cursor = Some(CursorView {
                 pos,
@@ -687,7 +604,7 @@ pub(crate) mod tests {
         assert_eq!(glow, buf);
         // At 2×, one 48 px tile from (16, 24): thin marks, 1 px of the
         // art thick and 3 long, their edge 1 px of the art.
-        let twice = s.clone().zoomed(MapZoom::X2);
+        let twice = zoomed(s.clone(), MapZoom::X2);
         let zoomed = painted_with(&twice, p(0, 0), CursorStyle::Corners, 1.0);
         let all = rects(&zoomed);
         assert_eq!(all.len(), 16);
@@ -742,7 +659,7 @@ pub(crate) mod tests {
         let c = ctx();
         let s = skin(&c);
         let mut scene = plains(&c);
-        scene.tint([p(0, 0)], RangeKind::Move);
+        scene.tint([p(0, 0)], range::MOVE);
         scene.tile_mut(p(1, 0)).unwrap().flashes.push(0.5);
         let mut lord = brigand(p(0, 0));
         lord.faction = Faction::Player;
@@ -878,17 +795,7 @@ pub(crate) mod tests {
         clock.without.units[0].effects.bonus = true;
         clock.with.units[0].effects.bonus = true;
         out.push(clock);
-        let ranges = [
-            RangeKind::Danger,
-            RangeKind::Move,
-            RangeKind::Attack,
-            RangeKind::Heal,
-        ];
-        for kind in ranges {
-            // Doesn't compile once a range is added: list it above.
-            match kind {
-                RangeKind::Danger | RangeKind::Move | RangeKind::Attack | RangeKind::Heal => {}
-            }
+        for kind in range::ALL {
             out.push(feature("range", &move |s| s.tint([p(0, 0)], kind)));
         }
         let styles = [
@@ -974,7 +881,7 @@ pub(crate) mod tests {
         assert_eq!(painted(&c, &s, &base), painted(&c, &s, &dusk));
         let glyphs = |scene: &MapScene| {
             let mut buf = blank();
-            GlyphSkin.paint(&c, scene, MAP_VIEW, &mut buf);
+            MapSkin::glyph().paint(&c, scene, MAP_VIEW, &mut buf);
             buf
         };
         assert_eq!(glyphs(&base), glyphs(&dusk));
@@ -991,10 +898,13 @@ pub(crate) mod tests {
         assert_eq!(skin(&c).tileset_id(), Some("test"));
         // The glyph skin's tiles: 16 × 16 px, 35 × 30 in the map area.
         assert_eq!(s.tile_size(), (16, 16));
-        assert_eq!(s.view_tiles(MAP_VIEW), GlyphSkin.view_tiles(MAP_VIEW));
+        assert_eq!(
+            s.view_tiles(MAP_VIEW),
+            MapSkin::glyph().view_tiles(MAP_VIEW)
+        );
         let area = Rect::new(2, 1, 6, 2);
         let mut scene = plains(&c);
-        scene.tint([p(1, 0)], RangeKind::Move);
+        scene.tint([p(1, 0)], range::MOVE);
         scene.path = vec![p(0, 0), p(1, 0)];
         scene.cursor = Some(CursorView {
             pos: p(2, 1),
@@ -1003,22 +913,22 @@ pub(crate) mod tests {
         });
         assert_eq!(
             s.tile_px(&scene, area, p(1, 1)),
-            GlyphSkin.tile_px(&scene, area, p(1, 1))
+            MapSkin::glyph().tile_px(&scene, area, p(1, 1))
         );
         assert_eq!(
             s.tile_px(&scene, area, p(1, 1)),
             Some(Rect::new(32, 32, 16, 16))
         );
         // With no unit, the frame is the glyph skin's.
-        let paint = |skin: &dyn MapSkin, scene: &MapScene| {
+        let paint = |skin: &MapSkin, scene: &MapScene| {
             let mut buf = blank();
             skin.paint(&c, scene, area, &mut buf);
             buf
         };
-        assert_eq!(paint(&s, &scene), paint(&GlyphSkin, &scene));
+        assert_eq!(paint(&s, &scene), paint(&MapSkin::glyph(), &scene));
         // With one: its tile keeps its background and loses its glyphs,
         // and nothing else of the ground changes.
-        let ground = paint(&GlyphSkin, &scene);
+        let ground = paint(&MapSkin::glyph(), &scene);
         scene.push_unit(brigand(p(1, 0)));
         let buf = paint(&s, &scene);
         for y in 0..32 {
@@ -1082,7 +992,7 @@ pub(crate) mod tests {
         let c = ctx();
         let s = sheets(&c);
         let mut scene = plains(&c);
-        scene.tint([p(0, 0)], RangeKind::Move);
+        scene.tint([p(0, 0)], range::MOVE);
         let mut lord = brigand(p(0, 0));
         lord.faction = Faction::Player;
         lord.class = ClassId("exile".into());
@@ -1125,7 +1035,7 @@ pub(crate) mod tests {
         ) {
             let c = ctx();
             let mut buf = blank();
-            let skin = sized(&c, tile.0, tile.1).zoomed(zoom);
+            let skin = zoomed(sized(&c, tile.0, tile.1), zoom);
             skin.paint(&c, &scene, area, &mut buf);
             for y in 0..32 {
                 for x in 0..100 {
@@ -1172,7 +1082,7 @@ pub(crate) mod tests {
             zoom in prop::sample::select(MapZoom::ALL.to_vec()),
         ) {
             let c = ctx();
-            let s = sized(&c, tile.0, tile.1).zoomed(zoom);
+            let s = zoomed(sized(&c, tile.0, tile.1), zoom);
             let (w, h) = (side(tile.0) * zoom.factor(), side(tile.1) * zoom.factor());
             let all = px_rect(area);
             prop_assert_eq!(s.view_tiles(area), (all.w.max(0) / w, all.h.max(0) / h));

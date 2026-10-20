@@ -10,7 +10,7 @@ the buffer it returns; tests drive the same `Game` headlessly with the
 | `glyph_buffer`, `color`, `snapshot`, `console` | The 100×32 `GlyphBuffer` virtual console (cells, plus rectangles and sprites placed in pixels, and a backdrop behind see-through cells; see *What a frame holds*), palette colours, the text snapshot format |
 | `onebit` | The Playdate's one-bit renderer (ADR-0074): `render` draws a frame made with `ConsoleSpec::PLAYDATE` into a 400 × 240 one-bit `Frame` in the Playdate's layout. Colours that are an `Ink`'s reserved code (the Playdate's palette, `assets/data/palettes/playdate.ron`) draw in that ink: white, black, a white-edged black glyph, grey, dots, diagonals, dashes, or an invert rectangle. `render_changed` redraws only where a frame differs from the last one drawn (ADR-0077); `reference` (tests and the `onebit-reference` feature only) is 1032's plain renderer the fast one must equal |
 | `cinema` | `view`: where a backdrop's window starts to look at a point at a zoom, stopping at the scene's edges (ADR-0048) |
-| `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks), the `GlyphSkin` and the `SpriteSkin` (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins), `path` (the path arrow for any tile size) and `threat` (the arrows from the enemies that could attack a tile, and the mark over each: ticket 0448). See *Map view* below |
+| `map_view` | The battle map (ADR-0038): `MapScene` (what is on the visible map, plain data), `MapSkin` (how it looks: one of the tactics kit's grid skins and the painter of this game's units, ADR-0094), the glyph skin, the one-bit Playdate skin and the sprite skin (from a tileset file: the whole map, or only the units on glyph terrain, ADR-0049; its ground is each tile's own picture and layers of pictures between tiles, ADR-0052), and what skins share: `Grid` (where tiles go in pixels), `corners` (which tiles a picture between tiles joins), `path` (the path arrow for any tile size) and `threat` (the arrows from the enemies that could attack a tile, and the mark over each: ticket 0448). See *Map view* below |
 | `input` | `Action`s, `Layout`, `Keymap`, `InputState` (key repeat) |
 | `screen` | Shuyi Engine's `Screen` trait, `Transition`, `FrameInput`, `ScreenStack` and `Ctx` (`shuyi_ui`, ADR-0080) with this game's part, `Shuyi` (`ctx.game`: the content, the campaign's mode, tutorial level and lessons, the map skin, the lead), the aliases screens are written with (`Ctx`, `FrameInput`, `Transition`) and `ShuyiCtx` (`Ctx::embedded()`, `ctx.words()`, `ctx.set_map_skin(…)`) |
 | `settings` | `Settings`: every player preference, saved as one RON record (ADR-0050): the engine's (text speed, fullscreen, theme, volumes, the layout picked) and this game's in `settings.game` (`ShuyiSettings`: speeds, combat animations, auto-end, cursor, map look and zoom). Read with `ctx.settings()`, changed with `ctx.change_settings(…)`, which saves, or (Options, ADR-0072) `ctx.preview_settings(…)` then `keep_settings` / `restore_settings` |
@@ -199,9 +199,14 @@ The battle map is not drawn by the battle screen (ADR-0038). Each frame:
    its walk), the cursor
    (if shown), the selected unit's path, and the animation clock. Plain
    data: no colours, glyphs, cells or pixels.
-2. `ctx.game.map_skin.paint(ctx, &scene, MAP_VIEW, buf)` paints it. The
-   `GlyphSkin` (`map_view/glyph`) is coloured letters; the `SpriteSkin`
-   (`map_view/sprite`) paints from a tileset (`assets/tilesets/`): the
+2. `ctx.game.map_skin.paint(ctx, &scene, MAP_VIEW, buf)` paints it: the
+   kit skin it holds paints the ground, ranges, path, cursor and threat
+   arrows, and the painter of this game's units it builds from `ctx` that
+   frame paints the units (ADR-0094). The glyph skin
+   (`MapSkin::glyph`, `map_view/glyph`) is coloured letters; the Playdate's
+   (`MapSkin::playdate`, `map_view/playdate`) is the kit's glyph skin in a
+   one-bit style; the sprite skin (`MapSkin::sprite`, `map_view/sprite`)
+   paints from a tileset (`assets/tilesets/`): the
    whole map if the tileset has terrain tiles, else only the units, over
    the glyph skin's terrain (`sprite/units.rs` paints units either way).
    Its own ground (`sprite/ground.rs`) is each tile's own picture, then
@@ -237,9 +242,9 @@ Rules:
   skin. Never draw it into the buffer from the battle screen.
 - **How units move is a look** (ticket 0440; timings in
   `screens/battle/walk.rs`), and so is **how fast a walk is shown**:
-  `MapSkin::walk_tiles_per_s` (12 under the glyph skin, 6 under a sprite
-  skin) and `held_walk_tiles_per_s` (an AI unit's with Confirm held: 48
-  and 12). The battle screen takes it each frame and gives it
+  the skin's `walk()`: `normal` (12 under the glyph skin, 6 under a
+  sprite skin), `fast` (with Fast animations) and `held` (an AI unit's
+  with Confirm held: 48 and 12). The battle screen takes it each frame and gives it
   to the walk that starts (`Mode::Moving`'s `pace`, an AI action's
   `Pacing`). It changes how long the player watches, never what happens:
   the same tiles, the same step sounds in the same order.
@@ -265,13 +270,14 @@ Rules:
 
 ### Adding a skin
 
-1. A type in `map_view/<name>.rs` implementing `MapSkin`: `view_tiles`
-   (how many tiles fit in an area), `paint` and `tile_px` (where a tile
-   is, for menus beside it). Work out where tiles go as a `Grid` from your
-   tile size, and draw the path with `path::path_overlays(&scene.path,
-   &grid, colour)`; share colours and fills with the glyph skin
-   (`range_color`, `OVERLAY_BLEND`, `hp_fill`, `ACTED_DIM`, …) rather than
-   copying them.
+1. A `MapSkin` (ADR-0094): one of the kit's grid skins (another
+   `GlyphStyle` of the glyph skin, as the Playdate's `ONE_BIT` is, or a
+   `GridSkin` of the game's own: `view_tiles`, `grid` (where tiles go),
+   `paint`) and the `Units` that paint this game's units on it, with a
+   constructor in `map_view/<name>.rs`. A new way to paint units is a
+   `Units` variant and its `UnitPainter`, built in `MapSkin::paint` from
+   that frame's context; share colours and fills with the glyph skin
+   (`OVERLAY_BLEND`, `hp_fill`, `ACTED_DIM`, …) rather than copying them.
 2. Paint nothing outside the area: copy the `…_paints_only_the_area`
    property test.
 3. Paint every feature of the scene: copy `every_scene_feature_is_painted`

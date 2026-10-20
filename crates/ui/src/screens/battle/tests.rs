@@ -683,12 +683,12 @@ fn selecting_shows_ranges_and_marks_the_panel() {
     let lord = Pos::new(3, 5);
     assert_eq!((cursor.pos, cursor.style), (lord, CursorStyle::Corners));
     // (6, 5), reachable, is in the move range.
-    assert_eq!(scene.tints_at(Pos::new(6, 5)), [RangeKind::Move]);
+    assert_eq!(scene.tints_at(Pos::new(6, 5)), [range::MOVE]);
     let Mode::Selected(sel) = s.mode() else {
         panic!()
     };
     let attack = sel.attack.iter().next().unwrap();
-    assert_eq!(scene.tints_at(attack), [RangeKind::Attack]);
+    assert_eq!(scene.tints_at(attack), [range::ATTACK]);
     // The panel is marked while a unit is selected.
     assert!(panel(&s, &c).selected);
     // No path yet: only the lord's own tile.
@@ -804,7 +804,7 @@ fn an_enemys_threat_area_is_tinted_until_hidden() {
     // The brigand's tile and one it can reach.
     let shown = s.scene(&c);
     for pos in [brigand, Pos::new(8, 7)] {
-        assert_eq!(shown.tints_at(pos), [RangeKind::Attack], "{pos:?}");
+        assert_eq!(shown.tints_at(pos), [range::ATTACK], "{pos:?}");
     }
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(s.scene(&c).tints_at(brigand).is_empty());
@@ -821,7 +821,7 @@ fn a_pending_move_after_an_attack_is_chosen_on_the_map() {
     };
     assert_eq!(*unit, UnitId(3));
     // Its tiles are in a move range.
-    assert_eq!(s.scene(&c).tints_at(tiles[0]), [RangeKind::Move]);
+    assert_eq!(s.scene(&c).tints_at(tiles[0]), [range::MOVE]);
     assert!(quick().scene(&c).tints_at(tiles[0]).is_empty());
     s.cursor.jump(Pos::new(8, 4));
     assert_eq!(s.help(&c), "arrows move · f stay");

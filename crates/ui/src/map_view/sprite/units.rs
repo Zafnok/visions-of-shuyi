@@ -429,11 +429,11 @@ mod tests {
     use trpg_content::ImageRect;
     use trpg_core::{ClassId, Faction, LeadGender, LeadProfile, UnitId};
 
-    use super::super::SpriteSkin;
     use super::super::tests::{brigand, p, painted, plains, sheets, skin, with_lord};
     use super::*;
     use crate::color::Rgb;
     use crate::glyph_buffer::Item;
+    use crate::map_view::MapSkin;
     use crate::screen::tests::ctx;
 
     /// The brigand `id` on `pos`.
@@ -475,7 +475,7 @@ mod tests {
         u.hp = (20, 30);
         scene.push_unit(u);
         let items = items(&c, &scene);
-        let class = skin(&c).tileset().classes[&ClassId("brigand".into())];
+        let class = skin(&c).tileset().unwrap().classes[&ClassId("brigand".into())];
         // Tile (1, 1) is 40..64 × 48..72; the 24 × 24 picture stands 2 px
         // above its bottom edge.
         let dest = Rect::new(40, 46, 24, 24);
@@ -792,10 +792,10 @@ mod tests {
         assert_eq!(drawn[4].src, Rect::new(16, 0, 16, 20));
         // A picture that isn't in a walking sheet doesn't turn or step.
         let s = skin(&c);
-        let class = s.tileset().classes[&ClassId("brigand".into())];
+        let class = s.tileset().unwrap().classes[&ClassId("brigand".into())];
         for (facing, _) in facings {
             let turned = walking(brigand(p(1, 1)), facing, 2, (0.0, 0.0));
-            assert_eq!(unit_frame(s.tileset(), class, &turned), class);
+            assert_eq!(unit_frame(s.tileset().unwrap(), class, &turned), class);
             let mut scene = plains(&c);
             scene.push_unit(turned);
             let drawn = sprites(&items(&c, &scene));
@@ -1236,8 +1236,8 @@ mod tests {
     fn a_picture_is_the_characters_else_its_class_else_the_fallback() {
         let mut c = ctx();
         let s = with_lord(&skin(&c));
-        let tileset = s.tileset().clone();
-        let src = |c: &Ctx, s: &SpriteSkin, unit: UnitView| {
+        let tileset = s.tileset().unwrap().clone();
+        let src = |c: &Ctx, s: &MapSkin, unit: UnitView| {
             let mut scene = plains(c);
             scene.push_unit(unit);
             painted(c, s, &scene).sprites()[8].src
@@ -1266,7 +1266,7 @@ mod tests {
         let id = |s: &str| CharacterId(s.to_owned());
         both.characters.insert(id("lead_f"), picture(24));
         both.characters.insert(id("lead"), picture(48));
-        let s = SpriteSkin::new(both);
+        let s = MapSkin::sprite(both);
         named.character = Some(id("lead"));
         named.class = ClassId("brigand".into());
         c.game.lead = LeadProfile::new("A", LeadGender::Female);

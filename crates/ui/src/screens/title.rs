@@ -383,8 +383,8 @@ impl TitleScreen {
             return true;
         };
         let timeline = player.timeline();
-        let dt = if input.dt.is_finite() {
-            input.dt.max(0.0)
+        let dt = if input.dt().is_finite() {
+            input.dt().max(0.0)
         } else {
             0.0
         };
@@ -464,8 +464,8 @@ impl Screen<Shuyi> for TitleScreen {
                 .computer_mut()
                 .write(BACKDROP_KEY, backdrop.path());
         }
-        if input.dt.is_finite() {
-            self.time += input.dt.max(0.0);
+        if input.dt().is_finite() {
+            self.time += input.dt().max(0.0);
         }
         if self.waiting(ctx) {
             // The key or button that ends the wait does nothing else (a

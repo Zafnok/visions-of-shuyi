@@ -137,7 +137,7 @@ impl Screen<Shuyi> for GameOverScreen {
             if super::title::pressed(input) {
                 self.skip();
             } else {
-                self.elapsed = (self.elapsed + input.dt).min(ANIMATION_SECONDS);
+                self.elapsed = (self.elapsed + input.dt()).min(ANIMATION_SECONDS);
             }
             return Transition::None;
         }

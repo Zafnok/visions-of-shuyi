@@ -418,11 +418,11 @@ impl DialogueScreen {
             return Transition::None;
         }
         let held = ADVANCE_KEYS.iter().any(|&a| input.is_held(a));
-        self.text.hold(held, input.dt);
+        self.text.hold(held, input.dt());
         if !self.is_asking_skip() {
             // Instant text speed: the whole page at once.
             let speed = ctx.settings().text_speed.chars_per_s();
-            self.text.type_on(input.dt, speed);
+            self.text.type_on(input.dt(), speed);
         }
         Transition::None
     }
@@ -447,7 +447,7 @@ impl DialogueScreen {
         }
         let length = self.playing_def(ctx).map_or(0, opening_ms);
         if let Some(playing) = &mut self.playing {
-            playing.elapsed_s += input.dt;
+            playing.elapsed_s += input.dt();
             if playing.clock_ms() >= u64::from(length) {
                 self.playing = None;
             }

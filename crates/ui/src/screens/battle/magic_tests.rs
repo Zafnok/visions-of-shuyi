@@ -31,7 +31,7 @@ use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::harness::Harness;
 use crate::input::Action;
-use crate::map_view::{MapScene, RangeKind};
+use crate::map_view::{MapScene, range};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 use crate::widgets::menu::SuffixKind;
@@ -466,7 +466,7 @@ fn fire_on_the_elemental_shows_the_forecast_and_casts() {
     let plain = BattleScreen::new(s.state().clone()).scene(&c);
     for (x, y) in [(1, 4), (2, 4)] {
         assert!(plain.tints_at(p(x, y)).is_empty());
-        assert_eq!(scene.tints_at(p(x, y)), [RangeKind::Attack]);
+        assert_eq!(scene.tints_at(p(x, y)), [range::ATTACK]);
     }
     for (x, y) in [(1, 5), (0, 6)] {
         assert_eq!(looks(&c, &plain, x, y), "forest");
@@ -1017,7 +1017,7 @@ fn heal_previews_the_hp_and_restores_it_with_a_popup() {
     // The ally is tinted as a heal target.
     let plain = BattleScreen::new(s.state().clone()).scene(&c);
     assert!(plain.tints_at(p(0, 5)).is_empty());
-    assert_eq!(s.scene(&c).tints_at(p(0, 5)), [RangeKind::Heal]);
+    assert_eq!(s.scene(&c).tints_at(p(0, 5)), [range::HEAL]);
     step(&mut s, &mut c, &[Action::Confirm]);
     let state = s.state();
     assert_eq!(state.unit(UnitId(2)).unwrap().hp, 18);
@@ -1377,8 +1377,8 @@ fn the_scene_marks_a_spells_targets_its_tile_changes_and_the_flash() {
     let mut s = casting(&mut c, state.clone(), 0);
     let scene = s.scene(&c);
     assert_eq!(units(&s), [p(1, 4), p(2, 4)]);
-    assert_eq!(scene.tinted(RangeKind::Attack), units(&s));
-    assert!(scene.tinted(RangeKind::Heal).is_empty());
+    assert_eq!(scene.tinted(range::ATTACK), units(&s));
+    assert!(scene.tinted(range::HEAL).is_empty());
     let burning = c.game.content.terrain.display.id_of("burning");
     assert!(burning.is_some());
     assert_eq!(scene.tile(p(1, 5)).unwrap().becomes, burning);
@@ -1391,8 +1391,8 @@ fn the_scene_marks_a_spells_targets_its_tile_changes_and_the_flash() {
     let heal = casting(&mut c, state, 2);
     let scene = heal.scene(&c);
     assert_eq!(units(&heal), [p(0, 5)]);
-    assert_eq!(scene.tinted(RangeKind::Heal), units(&heal));
-    assert!(scene.tinted(RangeKind::Attack).is_empty());
+    assert_eq!(scene.tinted(range::HEAL), units(&heal));
+    assert!(scene.tinted(range::ATTACK).is_empty());
     assert_eq!(changing(&scene), 0);
     // Fire cast on the forest at (1, 5): it burns, and flashes for a while.
     step(&mut s, &mut c, &[Action::NextUnit, Action::NextUnit]);

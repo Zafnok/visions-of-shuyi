@@ -90,36 +90,31 @@ fn a_struck_unit_has_its_flash_in_the_text() {
 #[test]
 fn ranges_are_named_by_their_colours() {
     let names = [
-        (RangeKind::Danger, "danger_zone"),
-        (RangeKind::Move, "move_range"),
-        (RangeKind::Attack, "attack_range"),
-        (RangeKind::Heal, "heal_range"),
+        (range::DANGER, "danger_zone"),
+        (range::MOVE, "move_range"),
+        (range::ATTACK, "attack_range"),
+        (range::HEAL, "heal_range"),
     ];
     for (kind, name) in names {
-        assert_eq!(kind.name(), RangeName(name));
-        assert_eq!(kind.color().name(), name);
-        assert_eq!(RangeName::from(kind), kind.name());
-        assert_eq!(RangeKind::named(RangeName(name)), Some(kind));
-        assert_eq!(kind.name(), kind);
+        assert_eq!(kind, RangeName(name));
     }
-    assert_eq!(RangeKind::named(RangeName("move")), None);
-    assert_ne!(RangeKind::Move.name(), RangeKind::Heal);
-    assert_eq!(RangeKind::ALL.len(), names.len());
+    assert_ne!(range::MOVE, range::HEAL);
+    assert_eq!(range::ALL.len(), names.len());
     // Their letters in the scene's text.
-    let marks: String = RangeKind::ALL.iter().map(|k| k.name().mark()).collect();
+    let marks: String = range::ALL.iter().map(|k| k.mark()).collect();
     assert_eq!(marks, "dmah");
 }
 
 #[test]
 fn tints_go_on_visible_tiles_in_the_order_laid_on() {
     let mut s = MapScene::new(p(1, 1), (3, 2));
-    s.tint([p(1, 1), p(3, 2), p(0, 0), p(4, 1)], RangeKind::Danger);
-    s.tint([p(3, 2), p(2, 1)], RangeKind::Move);
-    assert_eq!(s.tints_at(p(1, 1)), [RangeKind::Danger]);
-    assert_eq!(s.tints_at(p(3, 2)), [RangeKind::Danger, RangeKind::Move]);
-    assert_eq!(s.tinted(RangeKind::Danger), [p(1, 1), p(3, 2)]);
-    assert_eq!(s.tinted(RangeKind::Move), [p(2, 1), p(3, 2)]);
-    assert!(s.tinted(RangeKind::Attack).is_empty());
+    s.tint([p(1, 1), p(3, 2), p(0, 0), p(4, 1)], range::DANGER);
+    s.tint([p(3, 2), p(2, 1)], range::MOVE);
+    assert_eq!(s.tints_at(p(1, 1)), [range::DANGER]);
+    assert_eq!(s.tints_at(p(3, 2)), [range::DANGER, range::MOVE]);
+    assert_eq!(s.tinted(range::DANGER), [p(1, 1), p(3, 2)]);
+    assert_eq!(s.tinted(range::MOVE), [p(2, 1), p(3, 2)]);
+    assert!(s.tinted(range::ATTACK).is_empty());
 }
 
 #[test]
@@ -273,10 +268,10 @@ fn to_text_lists_tiles_units_cursor_and_path() {
     }
     s.tile_mut(p(3, 2)).unwrap().terrain = id("forest");
     s.tile_mut(p(2, 3)).unwrap().terrain = Some(TerrainId(999));
-    s.tint([p(1, 2), p(2, 2)], RangeKind::Move);
-    s.tint([p(3, 2)], RangeKind::Danger);
-    s.tint([p(3, 2)], RangeKind::Attack);
-    s.tint([p(0, 3)], RangeKind::Heal);
+    s.tint([p(1, 2), p(2, 2)], range::MOVE);
+    s.tint([p(3, 2)], range::DANGER);
+    s.tint([p(3, 2)], range::ATTACK);
+    s.tint([p(0, 3)], range::HEAL);
     s.tile_mut(p(1, 3)).unwrap().flashes.push(0.5);
     s.tile_mut(p(0, 2)).unwrap().becomes = id("forest");
     s.tile_mut(p(2, 2)).unwrap().becomes = Some(TerrainId(998));

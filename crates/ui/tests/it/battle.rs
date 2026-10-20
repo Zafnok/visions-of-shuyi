@@ -7,7 +7,7 @@ use trpg_core::{Faction, Pos};
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::{FRAME_DT, Harness};
 use trpg_ui::input::RIGHT_HANDED;
-use trpg_ui::map_view::RangeKind;
+use trpg_ui::map_view::range;
 use trpg_ui::screens::BattleScreen;
 
 /// At the title with the right-handed layout, then Quick Battle, still
@@ -465,11 +465,7 @@ fn confirm_on_an_enemy_toggles_its_range() {
     let reach = Pos::new(8, 7);
     assert!(h.tints_at(reach).is_empty());
     h.keys("f");
-    assert_eq!(
-        h.tints_at(reach),
-        [RangeKind::Attack],
-        "(8, 7) is in its range"
-    );
+    assert_eq!(h.tints_at(reach), [range::ATTACK], "(8, 7) is in its range");
     assert!(
         help(&h).ends_with("d hide range · Space end turn"),
         "{}",

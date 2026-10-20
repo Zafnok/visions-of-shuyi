@@ -63,11 +63,11 @@ impl Screen<Shuyi> for CinematicScreen {
             return Transition::Pop;
         }
         if let Some(player) = &self.player
-            && input.dt.is_finite()
+            && input.dt().is_finite()
         {
             #[allow(clippy::cast_precision_loss)] // a length is far below 2^24 ms
             let length = player.timeline().length_ms() as f32 / 1000.0;
-            self.time = (self.time + input.dt.max(0.0)) % length;
+            self.time = (self.time + input.dt().max(0.0)) % length;
         }
         Transition::None
     }

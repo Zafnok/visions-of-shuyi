@@ -95,9 +95,7 @@ use super::dialogue::DialogueScreen;
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
-use crate::map_view::{
-    CursorView, GlyphSkin, MapScene, MapSkin, Place, RangeKind, ThreatView, UnitView,
-};
+use crate::map_view::{CursorView, MapScene, MapSkin, Place, ThreatView, UnitView, range};
 use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
@@ -383,9 +381,9 @@ pub struct BattleScreen {
     /// steps have been heard.
     walked: Option<UnitId>,
     /// Walking speed, in tiles per second, and an AI unit's while Confirm
-    /// is held: the map skin's ([`MapSkin::walk_tiles_per_s`], or
-    /// [`MapSkin::fast_walk_tiles_per_s`] with Fast animations, and
-    /// [`MapSkin::held_walk_tiles_per_s`]), as of the frame's start.
+    /// is held: the map skin's
+    /// ([`walk`](shuyi_ui::grid::GridSkin::walk): its `normal` speed, or
+    /// `fast` with Fast animations, and `held`), as of the frame's start.
     pace: (f32, f32),
     /// How much faster the rest of an AI unit's action plays (the camera's
     /// pan, the mark on the unit): the player's speeds for the AI's phases
@@ -489,7 +487,7 @@ impl BattleScreen {
             .or_else(|| units.iter().find(player))
             .map_or_else(|| Pos::new(i32::from(w) / 2, i32::from(h) / 2), |u| u.pos);
         // Refitted on the first frame if the game's skin shows another.
-        let view = GlyphSkin.view_tiles(MAP_VIEW);
+        let view = MapSkin::glyph().view_tiles(MAP_VIEW);
         Self {
             camera: Camera::centred_on(start, w, h, view),
             view,
@@ -1344,11 +1342,12 @@ impl BattleScreen {
             self.refit(view);
         }
         let (skin, settings) = (&ctx.game.map_skin, ctx.settings());
-        let walk = match settings.game.anim_speed {
-            AnimSpeed::Normal => skin.walk_tiles_per_s(),
-            AnimSpeed::Fast => skin.fast_walk_tiles_per_s(),
+        let walk = skin.walk();
+        let normal = match settings.game.anim_speed {
+            AnimSpeed::Normal => walk.normal,
+            AnimSpeed::Fast => walk.fast,
         };
-        self.pace = (walk, skin.held_walk_tiles_per_s());
+        self.pace = (normal, walk.held);
         self.ai_speed = settings.game.battle_speed(true);
         self.cursor.tick(dt);
     }
@@ -2108,20 +2107,20 @@ impl BattleScreen {
     fn add_ranges(&self, scene: &mut MapScene) {
         let all = |set: &TileSet| -> Vec<Pos> { set.iter().collect() };
         if let Some(zone) = &self.danger {
-            scene.tint(all(zone), RangeKind::Danger);
+            scene.tint(all(zone), range::DANGER);
         }
         match &self.mode {
             Mode::Selected(sel) => {
-                scene.tint(all(&sel.moves), RangeKind::Move);
-                scene.tint(all(&sel.attack), RangeKind::Attack);
+                scene.tint(all(&sel.moves), range::MOVE);
+                scene.tint(all(&sel.attack), range::ATTACK);
             }
             Mode::Idle {
                 threat: Some(threat),
-            } => scene.tint(all(&threat.area), RangeKind::Attack),
-            Mode::MoveAfter { tiles, .. } => scene.tint(tiles.clone(), RangeKind::Move),
+            } => scene.tint(all(&threat.area), range::ATTACK),
+            Mode::MoveAfter { tiles, .. } => scene.tint(tiles.clone(), range::MOVE),
             Mode::Targeting(t) => {
                 let at = t.targets.iter().filter_map(|&id| self.state.unit(id));
-                scene.tint(at.map(|u| u.pos), RangeKind::Attack);
+                scene.tint(at.map(|u| u.pos), range::ATTACK);
             }
             Mode::CastTarget(t) => {
                 let units = t.targets().iter().filter_map(|target| match target {
@@ -2133,11 +2132,7 @@ impl BattleScreen {
                     .spells()
                     .get(t.spell())
                     .is_some_and(trpg_core::SpellDef::is_attack);
-                let kind = if attack {
-                    RangeKind::Attack
-                } else {
-                    RangeKind::Heal
-                };
+                let kind = if attack { range::ATTACK } else { range::HEAL };
                 scene.tint(units, kind);
                 for (pos, becomes) in t.tile_changes(&self.state) {
                     if let Some(tile) = scene.tile_mut(pos) {
@@ -2147,13 +2142,13 @@ impl BattleScreen {
             }
             Mode::SkillTarget(t) => {
                 let at = t.targets().iter().filter_map(|&id| self.state.unit(id));
-                scene.tint(at.map(|u| u.pos), RangeKind::Attack);
+                scene.tint(at.map(|u| u.pos), range::ATTACK);
             }
             Mode::ItemTarget(t) => {
                 let at = t.targets().iter().filter_map(|&id| self.state.unit(id));
                 let dest = t.sel.dest();
                 let tiles = at.map(|u| if u.id == t.sel.unit { dest } else { u.pos });
-                scene.tint(tiles, RangeKind::Heal);
+                scene.tint(tiles, range::HEAL);
             }
             _ => {}
         }
@@ -2484,11 +2479,11 @@ fn not_plain(t: &TerrainRules) -> bool {
 impl BattleScreen {
     /// [`Screen::update`]'s frame, before its tip is noted as shown.
     fn update_frame(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        self.begin_frame(ctx, input.dt);
+        self.begin_frame(ctx, input.dt());
         // A banner already up (a battle decided at its start).
         self.play_outcome_music(ctx);
-        let dt = if input.dt.is_finite() {
-            input.dt.max(0.0)
+        let dt = if input.dt().is_finite() {
+            input.dt().max(0.0)
         } else {
             0.0
         };

@@ -258,7 +258,7 @@ impl Screen<Shuyi> for CreditsScreen {
             ctx.audio.play_music(TITLE_MUSIC);
             self.music_on = true;
         }
-        self.roll(input.dt);
+        self.roll(input.dt());
         for &action in &input.actions {
             match action {
                 Action::CursorUp | Action::CursorDown => {

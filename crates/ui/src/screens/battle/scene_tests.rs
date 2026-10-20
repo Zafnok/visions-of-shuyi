@@ -17,11 +17,13 @@ use super::walk::{SPRITE_HELD_WALK_TILES_PER_S, SPRITE_WALK_TILES_PER_S};
 use super::{BattleScreen, quick_battle};
 use crate::color::{Rgb, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
-use crate::glyph_buffer::{Cell, GlyphBuffer, PxRect, Rect};
+use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::input::Action;
-use crate::map_view::{CursorStyle, Facing, GlyphSkin, MapScene, MapSkin, RangeKind};
+use crate::map_view::glyph::GLYPH;
+use crate::map_view::{CursorStyle, Facing, MapScene, MapSkin, RangeName, UnitView, Units, range};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, FrameInput, Screen};
+use shuyi_ui::grid::skin::{GridSkin, Looks, UnitPainter, WalkSpeeds};
 
 fn p(x: i32, y: i32) -> Pos {
     Pos::new(x, y)
@@ -49,9 +51,8 @@ fn rows(tiles: impl IntoIterator<Item = Pos>) -> Vec<Pos> {
 }
 
 /// Every range on the scene, as `(kind, how many tiles)`.
-fn ranges(scene: &MapScene) -> Vec<(RangeKind, usize)> {
-    use RangeKind::{Attack, Danger, Heal, Move};
-    [Danger, Move, Attack, Heal]
+fn ranges(scene: &MapScene) -> Vec<(RangeName, usize)> {
+    range::ALL
         .into_iter()
         .map(|k| (k, scene.tinted(k).len()))
         .filter(|&(_, n)| n > 0)
@@ -139,8 +140,8 @@ fn a_selected_unit_shows_its_ranges_and_its_path() {
         panic!("{:?}", s.mode());
     };
     let scene = s.scene(&c);
-    assert_eq!(scene.tinted(RangeKind::Move), rows(sel.moves.iter()));
-    assert_eq!(scene.tinted(RangeKind::Attack), rows(sel.attack.iter()));
+    assert_eq!(scene.tinted(range::MOVE), rows(sel.moves.iter()));
+    assert_eq!(scene.tinted(range::ATTACK), rows(sel.attack.iter()));
     assert!(!sel.moves.is_empty() && !sel.attack.is_empty());
     assert_eq!(ranges(&scene).len(), 2);
     // On the unit: the cursor, and a path of its own tile only.
@@ -166,16 +167,16 @@ fn the_danger_zone_lies_under_the_modes_ranges() {
     step(&mut s, &mut c, &[Action::DangerZone]);
     let zone = s.danger().unwrap().clone();
     let scene = s.scene(&c);
-    assert_eq!(scene.tinted(RangeKind::Danger), rows(zone.iter()));
-    assert_eq!(ranges(&scene), [(RangeKind::Danger, zone.iter().count())]);
+    assert_eq!(scene.tinted(range::DANGER), rows(zone.iter()));
+    assert_eq!(ranges(&scene), [(range::DANGER, zone.iter().count())]);
     step(&mut s, &mut c, &[Action::Confirm]);
     let Mode::Selected(sel) = s.mode() else {
         panic!("{:?}", s.mode());
     };
     let both = sel.moves.iter().find(|&p| zone.contains(p)).unwrap();
     let scene = s.scene(&c);
-    assert_eq!(scene.tints_at(both), [RangeKind::Danger, RangeKind::Move]);
-    assert_eq!(scene.tinted(RangeKind::Danger), rows(zone.iter()));
+    assert_eq!(scene.tints_at(both), [range::DANGER, range::MOVE]);
+    assert_eq!(scene.tinted(range::DANGER), rows(zone.iter()));
 }
 
 #[test]
@@ -193,8 +194,8 @@ fn an_enemys_threat_area_is_an_attack_range() {
     let scene = s.scene(&c);
     let area = rows(threat.area.iter());
     assert!(area.contains(&p(8, 2)));
-    assert_eq!(scene.tinted(RangeKind::Attack), area);
-    assert_eq!(ranges(&scene), [(RangeKind::Attack, area.len())]);
+    assert_eq!(scene.tinted(range::ATTACK), area);
+    assert_eq!(ranges(&scene), [(range::ATTACK, area.len())]);
     assert_eq!(scene.cursor.map(|c| c.pos), Some(p(8, 2)));
     // Hidden again: no range.
     step(&mut s, &mut c, &[Action::Confirm]);
@@ -210,8 +211,8 @@ fn where_a_unit_may_move_after_its_attack_is_a_move_range() {
     assert!(matches!(s.mode(), Mode::MoveAfter { .. }), "{:?}", s.mode());
     let scene = s.scene(&c);
     assert!(!tiles.is_empty());
-    assert_eq!(scene.tinted(RangeKind::Move), rows(tiles.iter().copied()));
-    assert_eq!(ranges(&scene), [(RangeKind::Move, tiles.len())]);
+    assert_eq!(scene.tinted(range::MOVE), rows(tiles.iter().copied()));
+    assert_eq!(ranges(&scene), [(range::MOVE, tiles.len())]);
     assert_eq!(scene.cursor.map(|c| c.pos), Some(s.cursor().pos));
 }
 
@@ -248,8 +249,8 @@ fn the_targets_of_an_attack_are_an_attack_range() {
     // The raider above and the brigand to the right.
     assert_eq!(rows(targets.clone()), [p(7, 1), p(8, 2)]);
     let scene = s.scene(&c);
-    assert_eq!(scene.tinted(RangeKind::Attack), rows(targets));
-    assert_eq!(ranges(&scene), [(RangeKind::Attack, 2)]);
+    assert_eq!(scene.tinted(range::ATTACK), rows(targets));
+    assert_eq!(ranges(&scene), [(range::ATTACK, 2)]);
     // The attacker where it will stand, the cursor on the target.
     assert_eq!(scene.unit(UnitId(1)).map(|u| u.pos), Some(p(7, 2)));
     assert_eq!(s.state().unit(UnitId(1)).unwrap().pos, p(6, 2));
@@ -355,22 +356,42 @@ fn a_combat_shows_its_units_as_the_playback_has_them() {
 #[derive(Debug)]
 struct Narrow;
 
-impl MapSkin for Narrow {
+impl GridSkin<UnitView> for Narrow {
     fn name(&self) -> &'static str {
         "narrow"
+    }
+
+    fn tile_size(&self) -> (i32, i32) {
+        GridSkin::<UnitView>::tile_size(&GLYPH)
     }
 
     fn view_tiles(&self, _: Rect) -> (i32, i32) {
         (10, 8)
     }
 
-    fn paint(&self, ctx: &Ctx, scene: &MapScene, area: Rect, buf: &mut GlyphBuffer) {
-        GlyphSkin.paint(ctx, scene, area, buf);
+    fn grid(&self, scene: &MapScene, area: Rect) -> crate::map_view::grid::Grid {
+        GLYPH.grid(scene, area)
     }
 
-    fn tile_px(&self, scene: &MapScene, area: Rect, tile: Pos) -> Option<PxRect> {
-        GlyphSkin.tile_px(scene, area, tile)
+    fn walk(&self) -> WalkSpeeds {
+        GridSkin::<UnitView>::walk(&GLYPH)
     }
+
+    fn paint(
+        &self,
+        looks: &Looks,
+        scene: &MapScene,
+        area: Rect,
+        units: &dyn UnitPainter<UnitView>,
+        buf: &mut GlyphBuffer,
+    ) {
+        GLYPH.paint(looks, scene, area, units, buf);
+    }
+}
+
+/// [`Narrow`] with the glyph skin's units.
+fn narrow_skin() -> MapSkin {
+    MapSkin::new(Rc::new(Narrow), Units::Glyph)
 }
 
 /// The Quick Battle's units on a 64 × 40 plain, the lord at (30, 20), the
@@ -398,7 +419,7 @@ fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
     assert!(scene.rim.iter().all(Option::is_none));
     // A map bigger than the view, with a column of forest just left of
     // it and a row of water just below: the ring has them.
-    c.game.map_skin = Rc::new(Narrow);
+    c.game.map_skin = narrow_skin();
     let (_, mut units) = quick_units(&c);
     units[0].pos = p(30, 20);
     let (forest, water) = (TerrainId(4), TerrainId(8));
@@ -442,7 +463,7 @@ fn the_scene_has_the_terrain_round_the_view_and_the_maps_look() {
 #[test]
 fn the_view_is_as_big_as_the_skin_says() {
     let mut c = ctx();
-    c.game.map_skin = Rc::new(Narrow);
+    c.game.map_skin = narrow_skin();
     let mut s = big_battle(&c);
     // The screen starts with the default skin's 35 × 30 tiles in mind…
     assert_eq!(s.camera().origin, p(13, 5));
@@ -477,7 +498,7 @@ fn the_view_is_as_big_as_the_skin_says() {
     assert_eq!(scene.origin, p(28, 16));
     assert_eq!(scene.units.len(), 3);
     // Back to the default skin: fitted again, around the cursor.
-    c.game.map_skin = Rc::new(GlyphSkin);
+    c.game.map_skin = MapSkin::glyph();
     let scene = s.scene(&c);
     assert_eq!((scene.origin, scene.size), (p(17, 5), (35, 30)));
     assert_eq!(s.camera().origin, p(28, 16));
@@ -502,7 +523,7 @@ fn a_skin_switch_refits_the_kept_camera_and_an_ai_pan() {
     let walk_start = action.walk_start();
     s.mode = Mode::AiAction(Box::new(action));
     // The debug menu switches to a skin showing 10 × 8 tiles.
-    c.game.map_skin = Rc::new(Narrow);
+    c.game.map_skin = narrow_skin();
     s.begin_frame(&c, 0.0);
     // The camera centres on the cursor; the kept one on the kept cursor.
     assert_eq!(s.camera().origin, p(54, 31));
@@ -526,7 +547,7 @@ fn a_skin_switch_refits_the_kept_camera_and_an_ai_pan() {
 #[test]
 fn menus_open_beside_the_tile_where_the_skin_has_it() {
     let mut c = ctx();
-    c.game.map_skin = Rc::new(Narrow);
+    c.game.map_skin = narrow_skin();
     let mut s = big_battle(&c);
     step(&mut s, &mut c, &[Action::Cancel]);
     assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
@@ -565,7 +586,7 @@ proptest! {
         ];
         let mut c = ctx();
         if narrow {
-            c.game.map_skin = Rc::new(Narrow);
+            c.game.map_skin = narrow_skin();
         }
         let (_, mut units) = quick_units(&c);
         // Each unit in its own band of six rows: no two on one tile.
@@ -661,15 +682,15 @@ fn a_glyph_units_walk_keeps_its_pace() {
 #[test]
 fn the_walking_speeds_are_the_map_skins() {
     let speeds = |c: &Ctx| {
-        let skin = &c.game.map_skin;
-        (skin.walk_tiles_per_s(), skin.held_walk_tiles_per_s())
+        let walk = c.game.map_skin.walk();
+        (walk.normal, walk.held)
     };
     let near = |a: (f32, f32), b: (f32, f32)| (a.0 - b.0).abs() < 1e-6 && (a.1 - b.1).abs() < 1e-6;
     assert!(near(speeds(&ctx()), (12.0, 48.0)), "{:?}", speeds(&ctx()));
     let c = sprite_ctx();
     assert!(near(speeds(&c), (6.0, 12.0)), "{:?}", speeds(&c));
     let own = crate::map_view::skin_named(&c.game.content, "sprite").unwrap();
-    let own = (own.walk_tiles_per_s(), own.held_walk_tiles_per_s());
+    let own = (own.walk().normal, own.walk().held);
     assert!(near(own, (6.0, 12.0)), "{own:?}");
     let mut s = quick();
     assert!(near(s.pace, (12.0, 48.0)), "{:?}", s.pace);

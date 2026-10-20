@@ -1,14 +1,16 @@
 //! The battle map's view (ADR-0038): a screen says *what* is on the visible
 //! map as a [`MapScene`] (plain data), and a [`MapSkin`] says how it looks.
-//! The [`GlyphSkin`] is what a build without the bought art shows; a
-//! [`SpriteSkin`] paints from a tileset file, and the game starts with the
-//! one of the bought art when it has it (ADR-0049).
+//! The [glyph skin](MapSkin::glyph) is what a build without the bought art
+//! shows; a [sprite skin](MapSkin::sprite) paints from a tileset file, and
+//! the game starts with the one of the bought art when it has it
+//! (ADR-0049).
 //!
 //! The scene, the ground, the ranges, the path, the cursor and the threat
-//! arrows are the tactics kit's (`shuyi_ui::grid`, ticket 1115, ADR-0088):
-//! this game's skins pair the kit's with the painters of its units (their
-//! letters, HP bars, effect marks and pictures) and its ranges and colors.
-//! The Playdate's skin is the game's own, over the kit's scene.
+//! arrows are the tactics kit's (`shuyi_ui::grid`, tickets 1115 and 2313,
+//! ADR-0088): this game's skins pair the kit's with the painters of its
+//! units (their letters, HP bars, effect marks and pictures) and its ranges
+//! and colors. The Playdate's skin is the kit's glyph skin in a one-bit
+//! style.
 //!
 //! Anything new shown on the map (a village, a spell's flash) is added to
 //! the scene and painted by every skin; it is never drawn straight into the
@@ -31,22 +33,17 @@ pub use shuyi_ui::grid::path;
 /// The threat arrows (ticket 1115: `shuyi_ui::grid::threat`).
 pub use shuyi_ui::grid::threat;
 
-use alloc::rc::Rc;
-
 use trpg_content::Content;
 
 use crate::screen::SkinSet;
 use crate::settings::MapLook;
 
-pub use glyph::GlyphSkin;
 pub use place::{Place, screen_tiles};
-pub use playdate::PlaydateSkin;
 pub use scene::{
-    CursorStyle, CursorView, Facing, MapScene, RangeKind, STANDING_FRAME, TerrainLooks, ThreatView,
-    TileView, UnitEffects, UnitView,
+    CursorStyle, CursorView, Facing, MapScene, RangeName, STANDING_FRAME, TerrainLooks, ThreatView,
+    TileView, UnitEffects, UnitView, range,
 };
-pub use skin::MapSkin;
-pub use sprite::SpriteSkin;
+pub use skin::{MapSkin, Units};
 
 /// The tileset the game paints its battle maps with when it has it: the
 /// bought art's, which only a build with the private assets has
@@ -61,31 +58,32 @@ pub const TEST_TILESET: &str = "test";
 /// (`cargo xtask test-tileset`).
 pub const TEST_UNITS_TILESET: &str = "test_units";
 
-/// The skin the game starts with: the [`SpriteSkin`] of the
-/// [`GAME_TILESET`] if `content` has it, else the [`GlyphSkin`].
-pub fn default_skin(content: &Content) -> Rc<dyn MapSkin> {
-    skin_named(content, GAME_TILESET).unwrap_or_else(|| Rc::new(GlyphSkin))
+/// The skin the game starts with: the [sprite skin](MapSkin::sprite) of
+/// the [`GAME_TILESET`] if `content` has it, else the
+/// [glyph skin](MapSkin::glyph).
+pub fn default_skin(content: &Content) -> MapSkin {
+    skin_named(content, GAME_TILESET).unwrap_or_else(MapSkin::glyph)
 }
 
 /// The skin for the player's map look (ticket 0824): with
 /// [`MapLook::Pictures`] and the [`GAME_TILESET`] in `content`, its picture
-/// skin ([`default_skin`]); otherwise the [`GlyphSkin`], whatever the
-/// look.
-pub fn skin_for_look(look: MapLook, content: &Content) -> Rc<dyn MapSkin> {
+/// skin ([`default_skin`]); otherwise the [glyph skin](MapSkin::glyph),
+/// whatever the look.
+pub fn skin_for_look(look: MapLook, content: &Content) -> MapSkin {
     match look {
         MapLook::Pictures => default_skin(content),
-        MapLook::Glyphs => Rc::new(GlyphSkin),
+        MapLook::Glyphs => MapSkin::glyph(),
     }
 }
 
 /// The map skin of skin set `set` for the player's map look: on the PC
 /// ([`SkinSet::Glyph`]) [`skin_for_look`]'s; on the Playdate its
-/// [`PlaydateSkin`], whatever the look (its bought art in one bit is
-/// ticket 0067's question).
-pub fn skin_for(set: SkinSet, look: MapLook, content: &Content) -> Rc<dyn MapSkin> {
+/// [one-bit skin](MapSkin::playdate), whatever the look (its bought art
+/// in one bit is ticket 0067's question).
+pub fn skin_for(set: SkinSet, look: MapLook, content: &Content) -> MapSkin {
     match set {
         SkinSet::Glyph => skin_for_look(look, content),
-        SkinSet::Playdate => Rc::new(PlaydateSkin),
+        SkinSet::Playdate => MapSkin::playdate(),
     }
 }
 
@@ -99,21 +97,21 @@ pub fn has_pictures(content: &Content) -> bool {
 /// painting with the [`TEST_TILESET`] and the [`TEST_UNITS_TILESET`]; or
 /// the id of any tileset of `content`. `None` for any other name, or
 /// without that tileset. For the debug menu and tests.
-pub fn skin_named(content: &Content, name: &str) -> Option<Rc<dyn MapSkin>> {
+pub fn skin_named(content: &Content, name: &str) -> Option<MapSkin> {
     let id = match name {
-        "glyph" => return Some(Rc::new(GlyphSkin)),
-        "playdate" => return Some(Rc::new(PlaydateSkin)),
+        "glyph" => return Some(MapSkin::glyph()),
+        "playdate" => return Some(MapSkin::playdate()),
         "sprite" => TEST_TILESET,
         "sprite_units" => TEST_UNITS_TILESET,
         id => id,
     };
     let tileset = content.tilesets.get(id)?.clone();
-    Some(Rc::new(SpriteSkin::new(tileset)))
+    Some(MapSkin::sprite(tileset))
 }
 
 /// The skin after `current` in the debug menu's round: the glyph skin,
 /// then each tileset of `content` by id, then the glyph skin again.
-pub fn next_skin(content: &Content, current: &dyn MapSkin) -> Rc<dyn MapSkin> {
+pub fn next_skin(content: &Content, current: &MapSkin) -> MapSkin {
     let mut ids = content.tilesets.keys();
     if let Some(id) = current.tileset_id() {
         // Past the current one (all of them, if the content lacks it).
@@ -121,7 +119,7 @@ pub fn next_skin(content: &Content, current: &dyn MapSkin) -> Rc<dyn MapSkin> {
     }
     ids.next()
         .and_then(|id| skin_named(content, id))
-        .unwrap_or_else(|| Rc::new(GlyphSkin))
+        .unwrap_or_else(MapSkin::glyph)
 }
 
 #[cfg(test)]
@@ -203,10 +201,10 @@ mod tests {
     #[test]
     fn the_debug_round_goes_through_every_tileset_and_back_to_glyphs() {
         let mut content = trpg_content::load_embedded().unwrap();
-        let mut skin: Rc<dyn MapSkin> = Rc::new(GlyphSkin);
+        let mut skin = MapSkin::glyph();
         let mut round = Vec::new();
         for _ in 0..5 {
-            skin = next_skin(&content, skin.as_ref());
+            skin = next_skin(&content, &skin);
             round.push(skin.tileset_id().map(str::to_owned));
         }
         let id = |s: &str| Some(s.to_owned());
@@ -215,7 +213,7 @@ mod tests {
         assert_eq!(round[3..], [None, id("test")]);
         // A skin whose tileset is gone: back to glyphs.
         content.tilesets.clear();
-        assert_eq!(next_skin(&content, skin.as_ref()).name(), "glyph");
-        assert_eq!(next_skin(&content, &GlyphSkin).name(), "glyph");
+        assert_eq!(next_skin(&content, &skin).name(), "glyph");
+        assert_eq!(next_skin(&content, &MapSkin::glyph()).name(), "glyph");
     }
 }

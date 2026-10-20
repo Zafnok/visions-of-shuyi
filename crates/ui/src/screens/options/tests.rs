@@ -122,8 +122,8 @@ fn the_playdate_leaves_out_the_rows_that_mean_nothing_there() {
 /// is shown `Corners` and steps on from there. On glyphs it is back.
 #[test]
 fn the_cursor_row_offers_no_tile_glow_while_the_map_is_pictures() {
-    use crate::map_view::{GlyphSkin, MapSkin, skin_named};
-    use std::rc::Rc;
+    use crate::map_view::{MapSkin, skin_named};
+
     let value = |c: &Ctx, row| match value(c, row) {
         ValueView::Text { text, adjustable } => {
             format!("{text}{}", if adjustable { "*" } else { "" })
@@ -153,7 +153,7 @@ fn the_cursor_row_offers_no_tile_glow_while_the_map_is_pictures() {
     press(&mut s, &mut c, &[Action::CursorLeft, Action::CursorLeft]);
     assert_eq!(c.settings().game.cursor_style, corners);
     // Unit pictures on glyph terrain, and glyphs: the glow is offered.
-    let glyphs: Rc<dyn MapSkin> = Rc::new(GlyphSkin);
+    let glyphs: MapSkin = MapSkin::glyph();
     for skin in [skin_named(&c.game.content, "sprite_units").unwrap(), glyphs] {
         c.set_map_skin(skin);
         c.change_settings(|s| s.game.cursor_style = large).unwrap();

@@ -11,7 +11,7 @@ use super::*;
 use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Cell;
-use crate::map_view::RangeKind;
+use crate::map_view::{RangeName, range};
 use crate::screen::tests::ctx;
 use crate::screens::popped_with;
 use crate::settings::SETTINGS_KEY;
@@ -95,7 +95,7 @@ fn the_danger_zone_is_the_cores_danger_zone_tinted_under_the_ranges() {
     let mut c = ctx();
     let mut s = quick();
     assert_eq!(s.danger(), None);
-    assert!(s.scene(&c).tinted(RangeKind::Danger).is_empty());
+    assert!(s.scene(&c).tinted(range::DANGER).is_empty());
     press(&mut s, &mut c, &[Action::DangerZone]);
     let state = s.state();
     let expected = danger_zone(
@@ -117,8 +117,8 @@ fn the_danger_zone_is_the_cores_danger_zone_tinted_under_the_ranges() {
         for x in 0..i32::from(tiles.width()) {
             let pos = Pos::new(x, y);
             assert!(scene.contains(pos), "{pos:?}");
-            let want: &[RangeKind] = if expected.contains(pos) {
-                &[RangeKind::Danger]
+            let want: &[RangeName] = if expected.contains(pos) {
+                &[range::DANGER]
             } else {
                 &[]
             };
@@ -136,7 +136,7 @@ fn the_danger_zone_is_the_cores_danger_zone_tinted_under_the_ranges() {
         panic!("{:?}", s.mode());
     };
     let both = sel.moves.iter().find(|&p| expected.contains(p)).unwrap();
-    let laid = [RangeKind::Danger, RangeKind::Move];
+    let laid = [range::DANGER, range::MOVE];
     assert_eq!(s.scene(&c).tints_at(both), laid);
     // Not in a menu.
     let mut menu = quick();

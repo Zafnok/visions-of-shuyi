@@ -15,7 +15,7 @@ use crate::color::UiColor;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
-use crate::map_view::RangeKind;
+use crate::map_view::range;
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 use crate::words::Words;
@@ -569,12 +569,12 @@ fn the_scene_marks_who_an_item_can_target() {
     // The pack: no cursor, no range.
     let scene = s.scene(&c);
     assert_eq!(scene.cursor, None);
-    assert!(scene.tinted(RangeKind::Heal).is_empty());
+    assert!(scene.tinted(range::HEAL).is_empty());
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::ItemTarget(_)), "{:?}", s.mode());
     let scene = s.scene(&c);
-    assert_eq!(scene.tinted(RangeKind::Heal), [p(3, 5), p(4, 5)]);
-    for kind in [RangeKind::Danger, RangeKind::Move, RangeKind::Attack] {
+    assert_eq!(scene.tinted(range::HEAL), [p(3, 5), p(4, 5)]);
+    for kind in [range::DANGER, range::MOVE, range::ATTACK] {
         assert!(scene.tinted(kind).is_empty(), "{kind:?}");
     }
     assert_eq!(scene.cursor.map(|c| c.pos), Some(s.cursor().pos));
@@ -592,7 +592,7 @@ fn the_scene_marks_who_an_item_can_target() {
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::ItemTarget(_)), "{:?}", s.mode());
     let scene = s.scene(&c);
-    assert_eq!(scene.tinted(RangeKind::Heal), [p(3, 4)]);
+    assert_eq!(scene.tinted(range::HEAL), [p(3, 4)]);
     assert_eq!(scene.unit(UnitId(1)).map(|u| u.pos), Some(p(3, 4)));
     assert_eq!(scene.cursor.map(|c| c.pos), Some(p(3, 4)));
 }

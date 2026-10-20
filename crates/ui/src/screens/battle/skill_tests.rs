@@ -16,7 +16,7 @@ use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{Cell, GlyphBuffer};
 use crate::input::Action;
-use crate::map_view::{RangeKind, UnitView};
+use crate::map_view::{UnitView, range};
 use crate::screen::tests::ctx;
 use crate::screen::{Ctx, Screen};
 
@@ -535,7 +535,7 @@ fn shove_picks_an_adjacent_enemy_and_pushes_it() {
     assert_eq!(s.mode().drawn_pos(UnitId(1)), Some(p(7, 2)));
     assert_eq!(s.mode().drawn_pos(UnitId(4)), None);
     // Whoever can be shoved is tinted as in an attack.
-    assert_eq!(raider_tints(&s, &c), [RangeKind::Attack]);
+    assert_eq!(raider_tints(&s, &c), [range::ATTACK]);
     // Left goes back around to the brigand, and right to the raider.
     step(&mut s, &mut c, &[Action::CursorLeft]);
     let Mode::SkillTarget(t) = s.mode() else {
@@ -646,14 +646,14 @@ fn the_scene_marks_who_a_skill_can_target() {
     // The skill list: no cursor, no range.
     let scene = s.scene(&c);
     assert_eq!(scene.cursor, None);
-    assert!(scene.tinted(RangeKind::Attack).is_empty());
+    assert!(scene.tinted(range::ATTACK).is_empty());
     focus_line(&mut s, &mut c, i);
     step(&mut s, &mut c, &[Action::Confirm]);
     assert!(matches!(s.mode(), Mode::SkillTarget(_)), "{:?}", s.mode());
     let scene = s.scene(&c);
     // The raider above and the brigand to the right of (7, 2).
-    assert_eq!(scene.tinted(RangeKind::Attack), [p(7, 1), p(8, 2)]);
-    for kind in [RangeKind::Danger, RangeKind::Move, RangeKind::Heal] {
+    assert_eq!(scene.tinted(range::ATTACK), [p(7, 1), p(8, 2)]);
+    for kind in [range::DANGER, range::MOVE, range::HEAL] {
         assert!(scene.tinted(kind).is_empty(), "{kind:?}");
     }
     assert_eq!(scene.unit(UnitId(1)).map(|u| u.pos), Some(p(7, 2)));

@@ -1,76 +1,45 @@
 //! What is on the visible battle map, as plain data (ADR-0038): the
 //! tactics kit's scene (`shuyi_ui::grid::scene`, ticket 1115) of this
-//! game's units ([`UnitView`]), with its ranges ([`RangeKind`]) and its
+//! game's units ([`UnitView`]), with its ranges ([`range`]) and its
 //! terrains' names ([`TerrainLooks`]). No colours, glyphs, cells or pixels:
 //! a [`MapSkin`](super::MapSkin) turns a scene into those.
 
 use crate::prelude::*;
 use core::fmt::Write as _;
 
-use shuyi_ui::grid::scene::{MapUnit, RangeName};
+use shuyi_ui::grid::scene::MapUnit;
 use shuyi_ui::grid::skin::{TerrainGlyphs, Terrains};
 use trpg_content::terrain::TerrainDisplayTable;
 use trpg_core::skill::TimedMods;
 use trpg_core::{CharacterId, ClassId, Faction, Pos, StatValue, TerrainId, Unit, UnitId};
 
-pub use shuyi_ui::grid::scene::{CursorStyle, CursorView, RangeLayer, ThreatView, TileView};
+pub use shuyi_ui::grid::scene::{
+    CursorStyle, CursorView, RangeLayer, RangeName, ThreatView, TileView,
+};
 pub use shuyi_ui::grid::walk::{Facing, STANDING_FRAME};
-
-use crate::color::UiColor;
 
 /// The visible part of a battle map: the kit's scene of this game's units.
 pub type MapScene = shuyi_ui::grid::MapScene<UnitView>;
 
-/// A range shown on the battle map.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum RangeKind {
+/// The ranges shown on the battle map: the kit's range names, each its
+/// colour's, so a skin tints it with that colour, and the scene's text
+/// marks it with its first letter (`d`, `m`, `a`, `h`).
+pub mod range {
+    use shuyi_ui::grid::scene::RangeName;
+
+    use crate::color::UiColor;
+
     /// Tiles the enemy could attack this turn (the danger zone).
-    Danger,
+    pub const DANGER: RangeName = RangeName(UiColor::DangerZone.name());
     /// Tiles a unit can move to.
-    Move,
+    pub const MOVE: RangeName = RangeName(UiColor::MoveRange.name());
     /// Tiles a unit can attack, or the targets of an attack or a skill.
-    Attack,
+    pub const ATTACK: RangeName = RangeName(UiColor::AttackRange.name());
     /// The targets of a heal.
-    Heal,
-}
+    pub const HEAL: RangeName = RangeName(UiColor::HealRange.name());
 
-impl RangeKind {
     /// Every range.
-    pub const ALL: [Self; 4] = [Self::Danger, Self::Move, Self::Attack, Self::Heal];
-
-    /// The palette colour its tiles are tinted with.
-    pub const fn color(self) -> UiColor {
-        match self {
-            RangeKind::Danger => UiColor::DangerZone,
-            RangeKind::Move => UiColor::MoveRange,
-            RangeKind::Attack => UiColor::AttackRange,
-            RangeKind::Heal => UiColor::HealRange,
-        }
-    }
-
-    /// Its name in the scene: its colour's, so a skin tints it with that
-    /// colour, and the scene's text marks it with its first letter (`d`,
-    /// `m`, `a`, `h`).
-    pub const fn name(self) -> RangeName {
-        RangeName(self.color().name())
-    }
-
-    /// The range of the name `name`, if it is one of this game's.
-    pub fn named(name: RangeName) -> Option<Self> {
-        Self::ALL.into_iter().find(|kind| kind.name() == name)
-    }
-}
-
-impl From<RangeKind> for RangeName {
-    fn from(kind: RangeKind) -> Self {
-        kind.name()
-    }
-}
-
-impl PartialEq<RangeKind> for RangeName {
-    fn eq(&self, kind: &RangeKind) -> bool {
-        *self == kind.name()
-    }
+    pub const ALL: [RangeName; 4] = [DANGER, MOVE, ATTACK, HEAL];
 }
 
 /// This game's terrains, as the kit's skins and the scene's text look them

@@ -29,7 +29,7 @@ use crate::game::Game;
 use crate::game::system_menu::SystemMenuEntry;
 use crate::glyph_buffer::Rect;
 use crate::input::{Layout, PadKind, RIGHT_HANDED};
-use crate::map_view::{MapScene, RangeKind, TerrainLooks, UnitView, skin_named};
+use crate::map_view::{MapScene, RangeName, TerrainLooks, UnitView, skin_named};
 use crate::profiles::ProfileId;
 use crate::screen::{Ctx, Screen, Shuyi, ShuyiCtx};
 use crate::screens::BattleScreen;
@@ -300,10 +300,9 @@ impl Harness {
     }
 
     /// The ranges the battle map shows on `pos` ([`MapScene::tints_at`]).
-    pub fn tints_at(&self, pos: Pos) -> Vec<RangeKind> {
+    pub fn tints_at(&self, pos: Pos) -> Vec<RangeName> {
         let scene = self.map_scene();
-        let names = scene.map(|s| s.tints_at(pos)).unwrap_or_default();
-        names.into_iter().filter_map(RangeKind::named).collect()
+        scene.map(|s| s.tints_at(pos)).unwrap_or_default()
     }
 
     /// The selected unit's path on the battle map, its own tile first;
@@ -359,6 +358,7 @@ mod tests {
     use crate::console::ConsoleSizes;
     use crate::input::Device;
     use crate::input::LEFT_HANDED;
+    use crate::map_view::range;
     use crate::screen::KeyPrompt;
     use std::time::Duration;
 
@@ -522,7 +522,7 @@ mod tests {
         assert!(h.path().len() <= 1, "{:?}", h.path());
         // The lord selected and steered to the fort: its ranges and path.
         h.keys("f Right Right");
-        assert_eq!(h.tints_at(plain), [RangeKind::Move]);
+        assert_eq!(h.tints_at(plain), [range::MOVE]);
         assert_eq!(h.path(), [lord, plain, fort]);
         assert_eq!(h.cursor_tile(), None, "no cursor on the path's end");
         // Back on its own tile: the cursor shows again.

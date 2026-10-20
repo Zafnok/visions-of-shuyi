@@ -59,7 +59,7 @@ impl MapPicture {
     /// All of `scene` (a view of a whole map, from its first tile) painted
     /// by `skin` into a buffer just big enough. `None` if the skin can't
     /// place the scene's first tile (a scene of no tiles).
-    pub fn paint(ctx: &Ctx, skin: &dyn MapSkin, scene: &MapScene) -> Option<Self> {
+    pub fn paint(ctx: &Ctx, skin: &MapSkin, scene: &MapScene) -> Option<Self> {
         let tile = skin.tile_px(scene, ROOMY, scene.origin)?;
         let c = |u| ctx.palette.get(u);
         let blank = Cell::new(' ', c(UiColor::Text), c(UiColor::Black));
@@ -81,9 +81,9 @@ impl core::ops::Deref for MapPicture {
 
 /// `ctx`'s map skin at the art's own size, whatever zoom the player has
 /// the battle map at ([`MapZoom`]): a shot's zoom is then the only one.
-pub fn shot_skin(ctx: &Ctx) -> Rc<dyn MapSkin> {
+pub fn shot_skin(ctx: &Ctx) -> MapSkin {
     let skin = &ctx.game.map_skin;
-    skin.at_zoom(MapZoom::X1).unwrap_or_else(|| Rc::clone(skin))
+    skin.at_zoom(MapZoom::X1).unwrap_or_else(|| skin.clone())
 }
 
 /// The whole map of battle `def` with its units where they start: the
@@ -276,7 +276,7 @@ impl ShotPainter for Built {
                 // painted as they are now.
                 let acted = action.as_ref().and_then(|_| self.scene(moment.into_ms));
                 let skin = shot_skin(ctx);
-                let now = acted.and_then(|scene| MapPicture::paint(ctx, skin.as_ref(), &scene));
+                let now = acted.and_then(|scene| MapPicture::paint(ctx, &skin, &scene));
                 let picture = now.map_or_else(|| Rc::clone(&stage.picture.scene), |p| p.0.scene);
                 paint_pan(&ctx.palette, picture, PanFrame { origin_px, zoom }, buf);
             }
@@ -347,7 +347,7 @@ impl CinematicPlayer {
             } => {
                 let stage = stages.entry(battle).or_insert_with(|| {
                     let scene = battle_scene(ctx, ctx.game.content.battles.get(battle)?);
-                    let picture = MapPicture::paint(ctx, skin.as_ref(), &scene)?;
+                    let picture = MapPicture::paint(ctx, &skin, &scene)?;
                     let scene = Rc::new(scene);
                     Some(Stage { scene, picture })
                 });
