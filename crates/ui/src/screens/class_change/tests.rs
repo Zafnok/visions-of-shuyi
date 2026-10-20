@@ -15,7 +15,7 @@ use crate::widgets::AskView;
 use Action::{Cancel, Confirm, CursorLeft, CursorRight};
 
 pub(super) fn demo(c: &Ctx, kind: ChangeKind) -> ClassChangeScreen {
-    ClassChangeScreen::demo(c, kind).expect("the test knight")
+    crate::debug::class_change_demo(c, kind).expect("the test knight")
 }
 
 pub(super) fn step(s: &mut ClassChangeScreen, c: &mut Ctx, actions: &[Action]) -> Transition {
@@ -373,7 +373,7 @@ fn a_refused_class_says_why_and_cannot_be_chosen() {
     let mut fresh = knight;
     fresh
         .class_records
-        .insert(ClassId("guard".into()), ClassRecord::UNLOCKED);
+        .insert(ClassId("guard".into()), trpg_core::ClassRecord::UNLOCKED);
     let mut stock = Stock::default();
     stock.add(item("tier_2_seal"));
     let s = ClassChangeScreen::new(&c, ChangeKind::Promote, fresh, stock);
@@ -590,7 +590,7 @@ fn opts_into_as_any() {
 fn the_demo_needs_its_test_character() {
     let mut c = ctx();
     c.game.content.characters.characters.clear();
-    assert!(ClassChangeScreen::demo(&c, ChangeKind::Promote).is_none());
+    assert!(crate::debug::class_change_demo(&c, ChangeKind::Promote).is_none());
 }
 
 #[test]

@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-20
 ---
 
 # 1171 — One owner for the campaign settings, and the debug unit moves
@@ -67,12 +67,12 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `grep -n "fn sync_mode\|fn keep_lessons" crates/ui/src/flow.rs`
+- [x] `grep -n "fn sync_mode\|fn keep_lessons" crates/ui/src/flow.rs`
       finds nothing, or the Completion notes say why one stays.
-- [ ] `grep -n "fn demo" crates/ui/src/screens/class_change.rs` finds
+- [x] `grep -n "fn demo" crates/ui/src/screens/class_change.rs` finds
       nothing.
-- [ ] Every flow and save test passes unchanged.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every flow and save test passes unchanged.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -81,5 +81,27 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- **One owner.** 1158 had already removed `sync_mode` and `keep_lessons`
+  (the first criterion was met before this ticket started); what was left
+  was the flow writing the mode and tutorial level back into `ctx` every
+  time a screen over it popped, and the block that clears the three
+  settings written twice (`sync` and `push_next`). Now `ctx.game`'s
+  `campaign_mode`, `campaign_tutorial` and `campaign_lessons` are the one
+  copy while a campaign runs: `adopt` fills them when a campaign begins or
+  loads, `sync` only reads them into the campaign (`take_in`, as before,
+  so saves and the battle being prepared get them), and `push_next` alone
+  clears them when the flow ends.
+- **Shape kept:** three fields, not a `CampaignSettings` struct in
+  `ctx.game`. The struct would make "no campaign" one `None`, but saves
+  two lines of production code against about 60 test lines rewritten in
+  the Options, lessons, tips and flow tests, which the ticket wants
+  unchanged; the copying it was meant to remove is gone either way. The
+  flow's `Campaign` keeps its own `mode`, `tutorial` and `lessons_done`
+  because they are the save format (`trpg-core`).
+- **The debug unit** is `debug::class_change_demo`; its doc comment and
+  the class-change screen's module docs now say no between-battle menu
+  opens the screen yet (which one does is still open in
+  `progression.md`), rather than that Preparations doesn't exist.
+- Engine friction: estimate 15, measured 49 (3.3×), accepted: 42 of
+  the 49 are the debug unit moved verbatim (production lines fell by 7).
+- Nothing the player sees changed. No gameplay rules decided.
