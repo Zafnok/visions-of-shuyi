@@ -227,6 +227,21 @@ fn the_inks_are_the_palettes_names_or_the_designs() {
         (threat.arrow, threat.mark, threat.edge),
         (c(Ink::Black), c(Ink::Black), c(Ink::White))
     );
+    // Its own names, not the enemy's colour: a palette that says
+    // otherwise for them wins.
+    def.colors.insert("map_threat".to_owned(), Ink::Dots.code());
+    def.colors
+        .insert("map_threat_edge".to_owned(), Ink::Diagonals.code());
+    let mut ctx = pd_ctx();
+    ctx.palette = Palette::new::<UiColor>(&def).unwrap();
+    assert_ne!(ctx.palette.get(UiColor::Enemy), dots);
+    let threat = with_looks(&ctx, |looks| {
+        ONE_BIT.style.threat_colors(looks, &ONE_BIT.colors)
+    });
+    assert_eq!(
+        (threat.arrow, threat.mark, threat.edge),
+        (dots, dots, c(Ink::Diagonals))
+    );
 }
 
 /// Terrain is its PC glyphs, black on the white ground; off the map is
