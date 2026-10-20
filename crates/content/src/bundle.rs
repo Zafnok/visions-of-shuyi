@@ -27,8 +27,12 @@
 //! (ticket 1061).
 use crate::prelude::*;
 
+use alloc::collections::BTreeMap;
 #[cfg(feature = "std")]
 use include_dir::{Dir, include_dir};
+pub use shuyi_assets::bundle::LoadFile;
+
+use crate::error::ContentError;
 use shuyi_assets::bundle as engine;
 #[cfg(feature = "std")]
 pub use shuyi_assets::bundle::reading;
@@ -185,6 +189,36 @@ pub fn bytes(path: &str) -> Option<&'static [u8]> {
 /// list. Use `""` for the bundle root.
 pub fn files_in(dir: &str) -> Vec<&'static str> {
     install().files_in(dir)
+}
+
+/// Parses every file of extension `ext` (without the dot) directly inside
+/// `dir` with `parse`, into a map by file stem: the whole map, or every
+/// error of every file (a file that is not UTF-8 is one).
+pub fn load_each<T>(
+    dir: &str,
+    ext: &str,
+    parse: impl FnMut(&LoadFile<'_>) -> Result<T, Vec<ContentError>>,
+) -> Result<BTreeMap<String, T>, Vec<ContentError>> {
+    install().load_each(dir, ext, parse)
+}
+
+/// The files of a [`load_each`] whose parse gave `Some`, for a loader that
+/// reports each file's problems itself and then checks the files together;
+/// the files that are not UTF-8 go to `errors` (and then none are kept).
+pub fn parsed<T>(
+    loaded: Result<BTreeMap<String, Option<T>>, Vec<ContentError>>,
+    errors: &mut Vec<ContentError>,
+) -> BTreeMap<String, T> {
+    match loaded {
+        Ok(files) => files
+            .into_iter()
+            .filter_map(|(stem, value)| Some((stem, value?)))
+            .collect(),
+        Err(not_text) => {
+            errors.extend(not_text);
+            BTreeMap::new()
+        }
+    }
 }
 
 /// Lists the paths (relative to `assets/`, `/`-separated, sorted) of every

@@ -15,8 +15,7 @@ pub mod name_entry {
 }
 
 pub use menu::{Menu, MenuEvent, MenuItem, MenuItemView, MenuView};
-pub use shuyi_ui::widgets::{AnswerView, Ask, AskView, ListCursor, ask, wrap};
-pub use wrap::word_wrap;
+pub use shuyi_ui::widgets::{AnswerView, Ask, AskView, ListCursor, ask, word_wrap};
 
 /// The row after `index` (`forward`) or before it in a list of `len`,
 /// wrapping: a [`ListCursor`] step, for a list that keeps its focus as a

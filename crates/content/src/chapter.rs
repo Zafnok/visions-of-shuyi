@@ -100,29 +100,22 @@ pub fn load_all(
     battles: &BTreeMap<String, BattleDef>,
     dialogue: &DialogueTable,
 ) -> Result<BTreeMap<String, ChapterDef>, Vec<ContentError>> {
-    let mut chapters = BTreeMap::new();
+    // A chapter with problems still counts for `check_next`, so the
+    // problems go to `errors` here and the file to the map.
     let mut errors = Vec::new();
-    for path in bundle::files_in(CHAPTERS_DIR) {
-        let Some(stem) = path
-            .strip_prefix(CHAPTERS_DIR)
-            .and_then(|p| p.strip_prefix('/'))
-            .and_then(|p| p.strip_suffix(EXTENSION))
-        else {
-            continue;
-        };
-        let file = bundle::display_path(path);
-        let Some(source) = bundle::file(path) else {
-            errors.push(ContentError::new(&file, "file is not valid UTF-8"));
-            continue;
-        };
-        match parse_ron::<ChapterDef>(&file, source) {
+    let loaded = bundle::load_each(CHAPTERS_DIR, EXTENSION.trim_start_matches('.'), |file| {
+        Ok(match parse_ron::<ChapterDef>(file.path, file.text) {
             Ok(def) => {
-                errors.extend(check_chapter(&file, stem, &def, battles, dialogue));
-                chapters.insert(stem.to_owned(), def);
+                errors.extend(check_chapter(file.path, file.stem, &def, battles, dialogue));
+                Some(def)
             }
-            Err(e) => errors.push(e),
-        }
-    }
+            Err(e) => {
+                errors.push(e);
+                None
+            }
+        })
+    });
+    let chapters = bundle::parsed(loaded, &mut errors);
     errors.extend(check_next(&chapters));
     if errors.is_empty() {
         Ok(chapters)

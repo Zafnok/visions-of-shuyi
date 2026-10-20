@@ -91,33 +91,9 @@ struct RawCast {
 /// Loads every opening file in the bundle, keyed by id (the file stem),
 /// checking it against `refs`. Reports every error of every file.
 pub fn load_all(refs: OpeningRefs<'_>) -> Result<BTreeMap<String, OpeningDef>, Vec<ContentError>> {
-    let mut openings = BTreeMap::new();
-    let mut errors = Vec::new();
-    for path in bundle::files_in(OPENINGS_DIR) {
-        let Some(stem) = path
-            .strip_prefix(OPENINGS_DIR)
-            .and_then(|p| p.strip_prefix('/'))
-            .and_then(|p| p.strip_suffix(EXTENSION))
-        else {
-            continue;
-        };
-        let file = bundle::display_path(path);
-        let Some(source) = bundle::file(path) else {
-            errors.push(ContentError::new(&file, "file is not valid UTF-8"));
-            continue;
-        };
-        match from_source(&file, stem, source, refs) {
-            Ok(def) => {
-                openings.insert(stem.to_owned(), def);
-            }
-            Err(e) => errors.extend(e),
-        }
-    }
-    if errors.is_empty() {
-        Ok(openings)
-    } else {
-        Err(errors)
-    }
+    bundle::load_each(OPENINGS_DIR, EXTENSION.trim_start_matches('.'), |file| {
+        from_source(file.path, file.stem, file.text, refs)
+    })
 }
 
 /// Parses and checks opening `source` (errors attributed to `file`, whose

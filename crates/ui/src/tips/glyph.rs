@@ -20,7 +20,7 @@ use crate::portrait::draw_portrait_in;
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
-use crate::widgets::wrap::word_wrap;
+use crate::widgets::word_wrap;
 
 /// The face's area, in cells: 128×128 console pixels, a 64×64 bust at 2×
 /// (ADR-0043: the largest whole scale that fits).

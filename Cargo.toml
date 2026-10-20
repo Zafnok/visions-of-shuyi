@@ -30,11 +30,11 @@ insta = "1"
 # `shuyi-engine.rev`: `cargo xtask engine-pin <commit>` moves both. The
 # crates the Playdate builds without `std` have their default features off
 # here; a crate that needs `std` turns it on.
-shuyi-core = { git = "https://github.com/Zafnok/shuyi-engine", rev = "a435c0eaf898365c89975c24ff585f5bddb323b8", default-features = false }
-shuyi-assets = { git = "https://github.com/Zafnok/shuyi-engine", rev = "a435c0eaf898365c89975c24ff585f5bddb323b8", default-features = false }
-shuyi-ui = { git = "https://github.com/Zafnok/shuyi-engine", rev = "a435c0eaf898365c89975c24ff585f5bddb323b8", default-features = false }
-shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "a435c0eaf898365c89975c24ff585f5bddb323b8" }
-shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "a435c0eaf898365c89975c24ff585f5bddb323b8" }
+shuyi-core = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1d3da5dccdfd96a79de94dc6d80dd2cbfc22cc48", default-features = false }
+shuyi-assets = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1d3da5dccdfd96a79de94dc6d80dd2cbfc22cc48", default-features = false }
+shuyi-ui = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1d3da5dccdfd96a79de94dc6d80dd2cbfc22cc48", default-features = false }
+shuyi-app = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1d3da5dccdfd96a79de94dc6d80dd2cbfc22cc48" }
+shuyi-cli = { git = "https://github.com/Zafnok/shuyi-engine", rev = "1d3da5dccdfd96a79de94dc6d80dd2cbfc22cc48" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
