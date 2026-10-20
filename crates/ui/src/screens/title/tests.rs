@@ -5,6 +5,7 @@ use crate::glyph_buffer::Cell;
 use crate::input::Action;
 use crate::screen::tests::ctx;
 use crate::storage::Storage;
+use crate::widgets::menu::LabelText;
 use Item::{Continue, Credits, LoadGame, NewGame, Options, Profile, QuickBattle, Quit};
 
 /// The pool the Quick Battle's file names (`assets-test/battles/quick.ron`).
@@ -28,7 +29,7 @@ fn title_menu_transitions() {
     assert_eq!(outcome(&mut t, &[Cancel]), "None");
     assert_eq!(outcome(&mut t, &[Confirm]), "Push(mode_select)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(options)");
-    assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(profile)");
+    assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(profiles)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(credits)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Quit");
     let up = [CursorUp, CursorUp, CursorUp, CursorUp];
@@ -60,7 +61,7 @@ fn debug_title_offers_quick_battle() {
         "Push(preparations)"
     );
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(options)");
-    assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(profile)");
+    assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(profiles)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Push(credits)");
     assert_eq!(outcome(&mut t, &[CursorDown, Confirm]), "Quit");
     assert_eq!(
@@ -493,7 +494,7 @@ fn the_view_follows_the_focus_the_saves_and_the_debug_tools() {
     let focused = |t: &TitleScreen, c: &Ctx| {
         let view = t.view(c);
         let menu = view.menu.unwrap();
-        menu.focused().map(|i| i.label.clone())
+        menu.focused().map(|i| i.label.as_str().to_owned())
     };
     assert_eq!(focused(&t, &c).as_deref(), Some("Continue"));
     t.update(&mut c, &input(&[CursorDown, CursorDown]));

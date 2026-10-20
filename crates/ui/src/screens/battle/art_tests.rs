@@ -4,6 +4,7 @@
 //! the info screen, and the playback banner for a boss's or a green unit's
 //! art. The numbers are always `core`'s.
 
+use crate::widgets::menu::LabelText;
 use insta::assert_snapshot;
 use trpg_core::{
     ArtId, BattleState, ClassId, Command, EffectSource, Equipped, Event, Faction, Objective, Pos,
@@ -203,7 +204,7 @@ fn shown(menu: &crate::widgets::menu::Menu) -> Vec<(String, bool, Option<String>
     menu.items()
         .iter()
         .map(|i| {
-            let name = i.label.split("  ").next().unwrap_or("").to_owned();
+            let name = i.label.as_str().split("  ").next().unwrap_or("").to_owned();
             (
                 name,
                 i.enabled,
@@ -441,7 +442,11 @@ fn lines_are_arts_then_actives_and_only_what_fits() {
     else {
         unreachable!()
     };
-    let labels: Vec<&str> = menu.items().iter().map(|i| i.label.trim_end()).collect();
+    let labels: Vec<&str> = menu
+        .items()
+        .iter()
+        .map(|i| i.label.as_str().trim_end())
+        .collect();
     assert_eq!(
         labels,
         [

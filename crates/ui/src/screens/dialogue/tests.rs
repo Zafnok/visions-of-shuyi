@@ -2,6 +2,7 @@
 //! it shows (its view). The look is tested in `glyph/tests.rs`; scripted
 //! runs and snapshots are in `crates/ui/tests/it/dialogue.rs`.
 
+use crate::widgets::menu::LabelText;
 use trpg_content::{Side, Stage, Step};
 use trpg_core::CharacterId;
 
@@ -542,7 +543,14 @@ fn sounds(c: &mut Ctx) -> Vec<String> {
 fn replies(s: &DialogueScreen, c: &Ctx) -> Option<(Vec<String>, Option<usize>)> {
     let choices = s.view(c).text.choices?;
     let focus = choices.items.iter().position(|i| i.focused);
-    Some((choices.items.into_iter().map(|i| i.label).collect(), focus))
+    Some((
+        choices
+            .items
+            .into_iter()
+            .map(|i| i.label.as_str().to_owned())
+            .collect(),
+        focus,
+    ))
 }
 
 #[test]

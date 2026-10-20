@@ -133,7 +133,7 @@ impl LeadSelectScreen {
             return text_keys_help(ctx);
         }
         let key = match (&self.entry, self.row) {
-            (Some(_), _) => "name_entry.help.grid",
+            (Some(_), _) => crate::widgets::name_entry::HELP_GRID,
             (None, Row::Gender) => "lead_select.help.gender",
             (None, Row::Name) => "lead_select.help.name",
             (None, Row::Start) => "lead_select.help.start",

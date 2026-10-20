@@ -3,7 +3,8 @@
 //! carries on the suspended battle and `Load Game` opens the save slots
 //! (0802); debug builds add `Quick Battle`, a test battle through the same
 //! flow; `Options` opens the [`OptionsScreen`](super::OptionsScreen) (0805); `Profile` the
-//! [`ProfileScreen`] (0837); `Credits` opens the [`CreditsScreen`] (0808).
+//! [`ProfileScreen`](profile::ProfileScreen) (0837); `Credits` opens the
+//! [`CreditsScreen`] (0808).
 //!
 //! **The look is a skin** (ADR-0054). This module decides what the screen
 //! shows and does, and says it as plain data: a [`TitleView`]
@@ -31,7 +32,7 @@ use trpg_content::ImageId;
 use song::SongTime;
 use view::FULL;
 
-use super::{CreditsScreen, ProfileScreen, debug_hint};
+use super::{CreditsScreen, debug_hint, profile};
 use crate::audio::MenuSound;
 use crate::audio::splitmix64;
 use crate::cinematic::{CinematicPlayer, millis};
@@ -483,7 +484,7 @@ impl Screen<Shuyi> for TitleScreen {
         for &action in &input.actions {
             self.notice = None;
             let chosen = match self.menu.handle_with_sound(action, &mut ctx.audio) {
-                Some(MenuEvent::Chosen(i)) => self.items.get(i).copied(),
+                Some(MenuEvent::Chosen(())) => self.items.get(self.menu.focus()).copied(),
                 // The Playdate's system menu (ticket 1035): as the menu's
                 // own Options.
                 _ if action == Action::Options && self.items.contains(&Item::Options) => {
@@ -516,7 +517,7 @@ impl Screen<Shuyi> for TitleScreen {
                     return Transition::Push(Box::new(super::options::screen()));
                 }
                 Some(Item::Profile) => {
-                    return Transition::Push(Box::new(ProfileScreen::new(ctx)));
+                    return Transition::Push(Box::new(profile::screen(ctx)));
                 }
                 Some(Item::Credits) => return Transition::Push(Box::new(CreditsScreen::new(ctx))),
                 Some(Item::Quit) => return Transition::Quit,

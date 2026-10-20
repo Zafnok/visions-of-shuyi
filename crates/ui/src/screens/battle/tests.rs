@@ -1,5 +1,6 @@
 //! The battle screen's own tests.
 
+use crate::widgets::menu::LabelText;
 use insta::assert_snapshot;
 
 use trpg_core::{BattleMap, Grid, Objective, Phase, TerrainId, Unit};

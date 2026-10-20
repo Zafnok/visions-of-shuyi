@@ -1,3 +1,4 @@
+use crate::widgets::menu::LabelText;
 use trpg_core::{Command, LeadGender, LeadProfile, Pos, StatKind, UnitAction, UnitId};
 
 use super::*;
@@ -451,7 +452,10 @@ fn game_over_items(stack: &ScreenStack, c: &Ctx) -> Vec<String> {
         .view(c)
         .menu;
     let menu = menu.unwrap_or_else(|| panic!("no menu"));
-    menu.items.iter().map(|i| i.label.clone()).collect()
+    menu.items
+        .iter()
+        .map(|i| i.label.as_str().to_owned())
+        .collect()
 }
 
 /// Acceptance (0822): Game Over lists `Rewind` while charges are left;

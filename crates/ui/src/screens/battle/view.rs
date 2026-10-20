@@ -263,6 +263,7 @@ impl BattleView {
     fn own_texts(&self) -> Vec<&str> {
         let mut texts: Vec<&str> = vec![&self.status, &self.help];
         if let Some(m) = &self.menu {
+            use crate::widgets::menu::LabelText;
             texts.extend(m.menu.items.iter().map(|i| i.label.as_str()));
             if let Some(h) = &m.header {
                 texts.push(&h.name);

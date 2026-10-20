@@ -23,6 +23,7 @@ use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::widgets::{MenuView, word_wrap};
 pub use shuyi_ui::screens::cut;
+use shuyi_ui::widgets::AskView;
 
 /// The mark in a list's frame that more lines are above.
 pub const MORE_ABOVE: &str = "▲";
@@ -209,16 +210,17 @@ pub fn first_shown(len: usize, room: usize, focus: Option<usize>) -> usize {
 
 /// The size, in cells, of `menu`'s window: its longest item with a cell
 /// either side, inside the frame; a row per item.
-pub fn menu_size(menu: &MenuView) -> (i32, i32) {
-    let widest = menu.items.iter().map(menu_text).map(|t| cells(&t)).max();
+pub fn menu_size(ctx: &Ctx, menu: &MenuView) -> (i32, i32) {
+    let widest = menu.items.iter().map(|i| cells(&menu_text(ctx, i))).max();
     (widest.unwrap_or(0) + 4, to_i32(menu.items.len()) + 2)
 }
 
 /// An item's text: its label and what follows it.
-fn menu_text(item: &crate::widgets::MenuItemView) -> String {
+fn menu_text(ctx: &Ctx, item: &crate::widgets::MenuItemView) -> String {
+    let label = ctx.label(&item.label);
     match &item.suffix {
-        Some((suffix, _)) => format!("{} {suffix}", item.label),
-        None => item.label.clone(),
+        Some((suffix, _)) => format!("{label} {suffix}"),
+        None => label,
     }
 }
 
@@ -226,12 +228,19 @@ fn menu_text(item: &crate::widgets::MenuItemView) -> String {
 /// focused one a bar across the window, one that can't be chosen in grey
 /// dots.
 pub fn menu(ctx: &Ctx, buf: &mut GlyphBuffer, at: (i32, i32), menu: &MenuView) {
-    let (w, h) = menu_size(menu);
+    let (w, h) = menu_size(ctx, menu);
     let rect = Rect::new(at.0, at.1, w, h);
     window(ctx, buf, rect, "");
     for (row, it) in (rect.y + 1..).zip(&menu.items) {
         let state = Item::of(it.focused, it.enabled);
-        item(ctx, buf, (rect.x + 2, row), w - 4, &menu_text(it), state);
+        item(
+            ctx,
+            buf,
+            (rect.x + 2, row),
+            w - 4,
+            &menu_text(ctx, it),
+            state,
+        );
     }
 }
 
@@ -245,6 +254,20 @@ pub enum Answers<'a> {
     Hint(&'a str),
     /// The answers, on one line, the one in focus the bar.
     Choices(&'a [(&'a str, bool)]),
+}
+
+/// `question` in a window ([`ask`]): the line naming its keys if it has
+/// one, its answers otherwise.
+pub fn ask_view<T>(ctx: &Ctx, buf: &mut GlyphBuffer, question: &AskView<T>) -> Rect {
+    if let Some(keys) = &question.keys {
+        return ask(ctx, buf, &question.text, Answers::Hint(keys));
+    }
+    let choices: Vec<_> = question
+        .answers
+        .iter()
+        .map(|a| (a.label.as_str(), a.focused))
+        .collect();
+    ask(ctx, buf, &question.text, Answers::Choices(&choices))
 }
 
 /// The answers' line, each answer with a cell either side and two cells

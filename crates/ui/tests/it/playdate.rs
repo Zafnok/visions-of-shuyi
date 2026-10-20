@@ -27,6 +27,7 @@ use trpg_ui::screens::{
     FamiliarityScreen, KeyBindingsScreen, LeadSelectScreen, ModeSelectScreen, OptionsScreen,
 };
 use trpg_ui::widgets::help::key_name;
+use trpg_ui::widgets::menu::LabelText;
 use trpg_ui::{
     ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, RawInputEvent, ShuyiCtx,
     Storage, UiColor,

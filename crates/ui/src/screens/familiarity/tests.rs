@@ -1,3 +1,4 @@
+use crate::widgets::menu::LabelText;
 use insta::assert_snapshot;
 
 use super::*;
@@ -61,7 +62,7 @@ fn the_view_names_the_three_answers_with_not_familiar_focused() {
             "Familiar with this game"
         ]
     );
-    assert_eq!(view.menu.focused().unwrap().label, "Not familiar");
+    assert_eq!(view.menu.focused().unwrap().label.as_str(), "Not familiar");
     let lines: Vec<_> = view.lines.iter().map(|l| l.text.as_str()).collect();
     assert_eq!(
         lines,
@@ -84,7 +85,7 @@ fn the_focused_line_follows_the_menu() {
     s.update(&mut c, &input);
     let view = s.view(&c);
     assert_eq!(
-        view.menu.focused().unwrap().label,
+        view.menu.focused().unwrap().label.as_str(),
         "Familiar with other strategy RPGs"
     );
     assert_eq!(

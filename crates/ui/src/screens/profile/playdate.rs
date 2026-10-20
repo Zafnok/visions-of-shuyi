@@ -6,13 +6,11 @@
 //! focus is the bar; the add row that does nothing is grey.
 
 use super::RowKind;
-use super::view::{ProfileView, RowView};
+use super::view::{ProfilesView, RowView};
 use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
-use crate::screens::playdate::{
-    Answers, Item, ask, centred, clear, inks, item, list, to_i32, window,
-};
+use crate::screens::playdate::{Item, ask_view, centred, clear, inks, item, list, to_i32, window};
 use crate::widgets::name_entry::playdate::{grid_height, paint_grid, paint_typing};
 
 /// The window's left column and width.
@@ -44,7 +42,7 @@ fn panel(rows: usize) -> (Rect, i32) {
 }
 
 /// Paints `view` over the whole of `buf`.
-pub fn paint(ctx: &Ctx, view: &ProfileView, buf: &mut GlyphBuffer) {
+pub fn paint(ctx: &Ctx, view: &ProfilesView, buf: &mut GlyphBuffer) {
     clear(ctx, buf);
     let (rect, first) = panel(view.rows.len());
     window(ctx, buf, rect, &view.title);
@@ -61,10 +59,14 @@ pub fn paint(ctx: &Ctx, view: &ProfileView, buf: &mut GlyphBuffer) {
     }
     let height = i32::from(buf.height());
     if let Some(actions) = &view.actions {
-        let items: Vec<_> = actions
+        let labels: Vec<_> = actions
+            .menu
             .items
             .iter()
-            .map(|i| (i.label.as_str(), i.focused))
+            .map(|i| ctx.label(&i.label))
+            .collect();
+        let items: Vec<_> = (actions.menu.items.iter().zip(&labels))
+            .map(|(i, label)| (label.as_str(), i.focused))
             .collect();
         list(ctx, buf, &actions.title, &items);
     }
@@ -76,13 +78,11 @@ pub fn paint(ctx: &Ctx, view: &ProfileView, buf: &mut GlyphBuffer) {
         let rect = Rect::new(BOX_X.0, TYPE_BOX.0, BOX_X.1, TYPE_BOX.1);
         paint_typing(ctx, buf, rect, typing);
     }
-    if let Some(question) = &view.question {
-        let choices: Vec<_> = question
-            .choices
-            .iter()
-            .map(|c| (c.label.as_str(), c.focused))
-            .collect();
-        ask(ctx, buf, &question.text, Answers::Choices(&choices));
+    if let Some(question) = &view.leaving {
+        ask_view(ctx, buf, question);
+    }
+    if let Some(question) = &view.deleting {
+        ask_view(ctx, buf, question);
     }
     centred(ctx, buf, height - 1, &view.help);
 }
@@ -110,7 +110,8 @@ mod tests {
     use super::*;
     use crate::profiles::ProfileId;
     use crate::screens::playdate::tests::{blank, cell, find, is_bar, pd_ctx, rows};
-    use crate::screens::profile::{ActionsView, ChoiceView, QuestionView};
+    use crate::screens::profile::{ActionsView, DeleteChoice};
+    use shuyi_ui::widgets::{AnswerView, AskView, Menu, MenuItem};
     use trpg_content::Ink;
 
     fn profile(label: &str, current: bool, focused: bool) -> RowView {
@@ -133,21 +134,22 @@ mod tests {
         }
     }
 
-    fn view(rows: Vec<RowView>) -> ProfileView {
-        ProfileView {
+    fn view(rows: Vec<RowView>) -> ProfilesView {
+        ProfilesView {
             title: "Profile".to_owned(),
             rows,
             current_mark: "in use".to_owned(),
             actions: None,
             typing: None,
             grid: None,
-            question: None,
+            leaving: None,
+            deleting: None,
             message: None,
             help: "help".to_owned(),
         }
     }
 
-    fn painted(v: &ProfileView) -> GlyphBuffer {
+    fn painted(v: &ProfilesView) -> GlyphBuffer {
         let mut buf = blank();
         paint(&pd_ctx(), v, &mut buf);
         buf
@@ -247,13 +249,10 @@ mod tests {
     #[test]
     fn the_actions_and_the_question_are_windows_over_the_list() {
         let mut v = view(vec![profile("Player 1", true, true), add(true)]);
-        let choice = |label: &str, focused| ChoiceView {
-            label: label.to_owned(),
-            focused,
-        };
+        let menu = Menu::new(vec![MenuItem::new("Rename"), MenuItem::new("Delete")]);
         v.actions = Some(ActionsView {
             title: "Player 1".to_owned(),
-            items: vec![choice("Rename", true), choice("Delete", false)],
+            menu: menu.view(),
         });
         let buf = painted(&v);
         let shown = rows(&buf);
@@ -265,9 +264,18 @@ mod tests {
         assert!(is_bar(&buf, to_i32(top) + 1, "Rename"));
         assert!(shown[top + 2].contains("Delete"));
         v.actions = None;
-        v.question = Some(QuestionView {
+        let answer = |answer, label: &str, focused| AnswerView {
+            answer,
+            label: label.to_owned(),
+            focused,
+        };
+        v.deleting = Some(AskView {
             text: "Delete Player 1? Its saves and options go with it.".to_owned(),
-            choices: vec![choice("Yes", false), choice("No", true)],
+            answers: vec![
+                answer(DeleteChoice::Yes, "Yes", false),
+                answer(DeleteChoice::No, "No", true),
+            ],
+            keys: None,
         });
         let buf = painted(&v);
         let shown = rows(&buf);

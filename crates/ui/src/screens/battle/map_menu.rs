@@ -298,6 +298,7 @@ mod tests {
     use crate::screen::tests::ctx;
     use crate::screens::battle::quick_battle;
     use crate::screens::battle::testing::{battle_with, wait};
+    use crate::widgets::menu::LabelText;
 
     fn labels(menu: &Menu) -> Vec<(&str, bool)> {
         menu.items()

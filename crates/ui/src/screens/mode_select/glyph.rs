@@ -31,9 +31,9 @@ pub fn paint(ctx: &Ctx, view: &ModeSelectView, buf: &mut GlyphBuffer) {
         c(UiColor::TextHighlight),
         black,
     );
-    let (w, _) = menu_glyph::size(&view.menu);
+    let (w, _) = menu_glyph::size(ctx, &view.menu);
     let x = centre_x(buf, usize::try_from(w).unwrap_or(0));
-    menu_glyph::paint(&ctx.palette, &view.menu, buf, x, MENU_ROW);
+    menu_glyph::paint(ctx, &view.menu, buf, x, MENU_ROW);
     for (y, line) in (TEXT_ROW..).step_by(2).zip(&view.lines) {
         let fg = if line.focused {
             UiColor::Text
@@ -64,7 +64,7 @@ mod tests {
 
     fn view() -> ModeSelectView {
         let item = |label: &str, focused| MenuItemView {
-            label: label.to_owned(),
+            label: label.into(),
             suffix: None,
             note: None,
             enabled: true,

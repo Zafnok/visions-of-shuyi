@@ -55,9 +55,9 @@ pub fn paint_prompt(ctx: &Ctx, view: &SavePromptView, buf: &mut GlyphBuffer) {
     buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
     let highlight = c(UiColor::TextHighlight);
     print_centred(buf, QUESTION_ROW, &view.question, highlight, black);
-    let (w, _) = menu_glyph::size(&view.menu);
+    let (w, _) = menu_glyph::size(ctx, &view.menu);
     let x = centre_x(buf, usize::try_from(w).unwrap_or(0));
-    menu_glyph::paint(&ctx.palette, &view.menu, buf, x, MENU_ROW);
+    menu_glyph::paint(ctx, &view.menu, buf, x, MENU_ROW);
     let bottom = i32::from(buf.height()) - 1;
     print_centred(buf, bottom, &view.help, c(UiColor::TextDim), black);
 }

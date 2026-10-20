@@ -15,6 +15,7 @@ use trpg_ui::ShuyiCtx;
 use trpg_ui::audio::{AudioRequest, pick_from_pool};
 use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
+use trpg_ui::widgets::menu::LabelText;
 
 /// The lead's unit in the test battle (its first slot).
 const LEAD: UnitId = UnitId(1);

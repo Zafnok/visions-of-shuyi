@@ -351,7 +351,9 @@ impl DialogueScreen {
                 continue;
             }
             if let Some(menu) = self.menu.as_mut() {
-                if let Some(MenuEvent::Chosen(i)) = menu.handle_with_sound(action, &mut ctx.audio) {
+                if let Some(MenuEvent::Chosen(())) = menu.handle_with_sound(action, &mut ctx.audio)
+                {
+                    let i = menu.focus();
                     let music = self.music_here();
                     self.history.replied(&self.player, i, music);
                     self.player.choose(i);

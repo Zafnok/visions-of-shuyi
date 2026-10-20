@@ -2,6 +2,7 @@
 //! goes with the battle and the mode. Where and how they are painted is
 //! the skin's (`glyph/tests.rs`).
 
+use crate::widgets::menu::LabelText;
 use trpg_content::battle_campaign;
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{GameMode, LeadGender, LeadProfile, Phase, Pos, UnitId};
@@ -22,7 +23,13 @@ use crate::widgets::menu::Menu;
 /// The labels of the menu open, if any.
 fn menu_labels(view: &BattleView) -> Option<Vec<String>> {
     let menu = view.menu.as_ref()?;
-    Some(menu.menu.items.iter().map(|i| i.label.clone()).collect())
+    Some(
+        menu.menu
+            .items
+            .iter()
+            .map(|i| i.label.as_str().to_owned())
+            .collect(),
+    )
 }
 
 #[test]
