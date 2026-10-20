@@ -59,7 +59,7 @@ None.
 - [x] The profile and name entry snapshots, PC and Playdate, are
       unchanged.
 - [x] `cargo xtask code-lines` shows `trpg-ui` fell by at least 600
-      (116 added, 1093 removed: 977 down).
+      (51 added, 1050 removed: 999 down).
 - [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
@@ -69,7 +69,7 @@ None.
 
 ## Completion notes
 
-- **Done:** the pin is at engine `main` 939f023 (2310).
+- **Done:** the pin is at engine `main` 939f023 (2310), as 1162 left it.
   `screens/profile.rs` is a 25-line opener: `profile::screen(ctx)` is the
   engine's `ProfilesScreen`, opening the first-launch layout picker after
   an add (`opening_after_add`) and painted through `SKINS`
@@ -81,25 +81,16 @@ None.
   The profile one-bit skin paints the engine's `ProfilesView`
   (`actions.menu`, `leaving` and `deleting`).
 - **Deviations:**
-  - **The pin move brought four other engine changes** (2201, 2308,
-    2309, 2311, all merged before 2310), and 2308 and 2309 break the
-    game. The smallest fix to compile, not those tickets' work: a menu's
-    choice is read from its focus (`MenuEvent::Chosen(())`), the engine's
-    menu and text box skins take `ctx`, the Playdate's menu helpers word
-    `Label`s, one Playdate helper `ask_view` paints an engine `AskView`
-    (options, Key bindings, profiles), and tests read menu labels through
-    a `LabelText` trait (`widgets/menu.rs`) until 1162 keys the game's
-    menus. 1162, 1163, 1165 and 1173 no longer need to move the pin; the
-    rest of each is unchanged.
+  - **The pin:** 1162 (merged first) already moved it to 939f023 and
+    adopted engine 2308; this PR merged main and kept only its own
+    changes. One Playdate helper, `ask_view`, paints an engine `AskView`
+    (the profile skin's two questions).
   - The screen's name is now the engine's `profiles` (was `profile`):
     tests only, the player sees no change.
   - Text keys: the engine ships no text table for games (its `en.ron`
     is its toy's), so the game's `profile.*` and `name_entry.*` keys stay
     in `assets/lang/*/ui.ron`, as the options and Key bindings keys do.
-- **Friction:** estimate 40 added, measured 116 (2.9×), accepted: about
-  80 of the 116 are the 2308/2309 adaptation above, which this ticket
-  had to carry because the pin moves forward only; the profile work
-  itself is about 35.
+- **Friction:** estimate 40 added, measured 51 (1.3×), under 2×.
 - **Follow-up tickets:** none.
 - **For Nick:** nothing changes on screen; the Profile screen and the
   lead's name box look and work as before, on the PC and the Playdate.
