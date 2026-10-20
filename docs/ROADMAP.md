@@ -232,6 +232,10 @@ The order:
      settings), **1172** (`code-lines --tree` for sweeps), and **0470**
      (the forecast's kill mark as a sprite). None is on the Chapter 1
      critical path.
+   - **What the engine's own tickets need of the game:** **1175** (the
+     game's `main` and tests on the engine's platform boundary, engine
+     3003), done by whichever PR first moves the pin past 3003. 1170
+     builds on it.
    - **Then the second friction sweep**, when the `11xx` block closes:
      **1174** (an area column in the friction log, `cargo xtask
      friction-check` in the gates, net lines for refactors) writes the
