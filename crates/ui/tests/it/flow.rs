@@ -416,7 +416,8 @@ fn a_press_ends_game_overs_animation_and_picks_nothing() {
         assert_eq!(h.sounds(), [""; 0], "{skip}");
         // The next press is the menu's: the rewind screen, on the battle.
         h.keys("f");
-        assert_eq!(h.screens(), ["title", "game_flow", "battle"], "{skip}");
+        let rewinding = ["title", "game_flow", "battle", "rewind"];
+        assert_eq!(h.screens(), rewinding, "{skip}");
         assert_eq!(battle(&h).outcome(), Some(Outcome::Defeat));
         // Backed out of, Game Over is as it was left: no animation again.
         h.keys("d");

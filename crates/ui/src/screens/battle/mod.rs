@@ -9,8 +9,9 @@
 //! [`info`] screen, the danger zone, the [`map_menu`], ending the turn (and
 //! auto-end), and the phase and outcome [`banner`]s. Every command sent is
 //! kept in a [`BattleHistory`], and Rewind opens the [`rewind`] screen
-//! (0307). One-time [`tips`] pop up over it the first time something new
-//! happens (0406), and checklist [`lessons`] (0456) wait, the turn with
+//! over the battle (0307), which pops with the point to go back to.
+//! One-time [`tips`] pop up over it the first time something new happens
+//! (0406), and checklist [`lessons`] (0456) wait, the turn with
 //! them, until the player has done what they ask. The battle's [`notes`] (0411) show in a box at its start
 //! and on the map menu's `Objective` page. Scenes the battle's triggers fire (0705) play as a
 //! [`DialogueScreen`] overlay over the map, in order with the banners, or
@@ -77,13 +78,13 @@ use self::camera::Camera;
 use self::cursor::Cursor;
 use self::doable::Doable;
 use self::event_sounds::CueQueue;
-use self::guides::{GuidesEffect, GuidesScreen};
+use self::guides::GuidesScreen;
 use self::layout::MAP_VIEW;
 use self::lessons::LessonState;
 use self::mode::{Effect, MenuEntry, Mode, Selection};
 use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
-use self::rewind::{RewindEffect, RewindScreen};
+use self::rewind::{MapFrame, RewindEffect, RewindScreen};
 use self::tips::TipState;
 use self::view::{
     BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, MessageView,
@@ -292,21 +293,22 @@ enum Leaving {
     Suspend,
 }
 
-/// Where the rewind screen was opened from.
+/// A screen the battle opens over itself.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum RewindFrom {
-    /// The player's Rewind key, mid-battle.
-    Browsing,
-    /// Game Over's `Rewind`, on a lost battle: closing the screen without
-    /// rewinding pops the battle screen again.
-    Defeat,
+enum Opened {
+    /// The Options screen, from the map menu or the Playdate's system menu.
+    Options,
+    /// The Guides list, from the map menu (0458).
+    Guides,
+    /// The rewind screen (0307).
+    Rewind,
 }
 
 /// The battle screen: the player browses the map with the cursor, selects
 /// and moves units ([`Mode`]), opens the map menu, ends the turn; phase and
 /// outcome banners show as the battle goes on, and the outcome's closes the
 /// screen. Rewind while browsing in the player phase opens the
-/// [`RewindScreen`]. In the Enemy and Other phases, once their banner has
+/// [`RewindScreen`] over it. In the Enemy and Other phases, once their banner has
 /// closed, the AI's actions play one by one ([`AiAction`]), then the phase
 /// ends.
 #[derive(Debug, Clone)]
@@ -345,14 +347,9 @@ pub struct BattleScreen {
     /// Banners and scenes waiting to be shown, in the order of their
     /// events, the first on screen (after a combat's playback).
     queue: VecDeque<Queued>,
-    rewind: Option<RewindScreen>,
-    /// The Guides list, while it is open (0458).
-    guides: Option<GuidesScreen>,
     /// A map menu shortcut just chosen (ticket 1035): its action, handled
     /// next as if its key had been pressed.
     pressed: Option<Action>,
-    /// Where the rewind screen was opened from (0822).
-    rewind_from: RewindFrom,
     /// Where the outcome's music (0809) is.
     outcome_music: OutcomeMusic,
     /// The battle's own music cue, asked for again when a rewind undoes
@@ -499,10 +496,7 @@ impl BattleScreen {
             cursor: Cursor::new(start),
             mode: Mode::after_command(&state),
             history: BattleHistory::new(state.clone()),
-            rewind: None,
-            guides: None,
             pressed: None,
-            rewind_from: RewindFrom::Browsing,
             outcome_music: OutcomeMusic::Unheard,
             music: None,
             state,
@@ -750,12 +744,12 @@ impl BattleScreen {
 
     /// Switches the map between its two zooms and saves the choice with
     /// the other options, if the map skin can zoom and the map is what
-    /// the player is looking at ([`Mode::shows_map`], no rewind open). The
+    /// the player is looking at ([`Mode::shows_map`]). The
     /// next frame fits the cameras to the tiles the skin now shows
     /// ([`refit`](Self::refit)): the cursor's tile stays in view. Never a
     /// `Command`: the zoom isn't game state.
     fn toggle_zoom(&self, ctx: &mut Ctx) {
-        if self.rewind.is_some() || !self.mode.shows_map() || ctx.game.map_skin.zoom().is_none() {
+        if !self.mode.shows_map() || ctx.game.map_skin.zoom().is_none() {
             return;
         }
         // If saving fails it still holds for this session.
@@ -914,17 +908,16 @@ impl BattleScreen {
     }
 
     /// The first queued tip whose moment has come, if any. Tips wait out a
-    /// combat's playback, a scene (queued or playing over the battle), the
-    /// battle notes and the rewind screen; the enemy-phase tip shows as
+    /// combat's playback, a scene queued, a screen over the battle (a
+    /// scene playing, the rewind screen) and the battle notes; the
+    /// enemy-phase tip shows as
     /// that phase begins (over its banner), the others once a player phase
     /// is browsing without a banner.
     fn due_tip(&self) -> Option<TipTrigger> {
-        if self.rewind.is_some()
-            || self.guides.is_some()
-            || self.playing()
+        if self.playing()
             || self.progress.is_some()
             || self.queued_scene().is_some()
-            || self.tips.under_scene()
+            || self.tips.covered()
             || self.notes_open()
         {
             return None;
@@ -946,15 +939,14 @@ impl BattleScreen {
 
     /// Whether a lesson may be on screen now: the player's phase of a
     /// battle still on, with no combat or AI action playing, no EXP or
-    /// level up, scene, banner or battle notes over the map, and no rewind
-    /// screen unless the lesson needs it. Lessons wait as tips do.
+    /// level up, scene, banner or battle notes over the map, and no screen
+    /// over the battle. Lessons wait as tips do; the rewind screen shows
+    /// one that needs it ([`rewind_screen`](Self::rewind_screen)).
     fn lesson_moment(&self) -> bool {
-        (self.rewind.is_none() || self.lessons.needs_rewind())
-            && self.guides.is_none()
-            && !self.playing()
+        !self.playing()
             && self.progress.is_none()
             && self.queued_scene().is_none()
-            && !self.tips.under_scene()
+            && !self.tips.covered()
             && !self.notes_open()
             && self.state.phase() == Phase::Player
             && self.state.outcome().is_none()
@@ -1294,11 +1286,6 @@ impl BattleScreen {
         &self.history
     }
 
-    /// The rewind screen, if open.
-    pub fn rewind(&self) -> Option<&RewindScreen> {
-        self.rewind.as_ref()
-    }
-
     /// What the player is doing.
     pub fn mode(&self) -> &Mode {
         &self.mode
@@ -1331,11 +1318,7 @@ impl BattleScreen {
     /// that was kept for another size (the map skin changed), one centred on
     /// the cursor.
     fn camera_in(&self, view: (i32, i32)) -> Camera {
-        if view == self.view {
-            return self.camera;
-        }
-        let tiles = &self.state.map().tiles;
-        Camera::centred_on(self.cursor.pos, tiles.width(), tiles.height(), view)
+        fit_camera(self.camera, self.view, self.cursor.pos, &self.state, view)
     }
 
     /// Starts a frame of `dt` seconds: keeps the cameras for as many tiles
@@ -1593,44 +1576,43 @@ impl BattleScreen {
             && self.state.outcome().is_none()
     }
 
+    /// The rewind screen on this battle, with the lesson on screen if it
+    /// is about rewinding: it stays over the map there.
+    fn rewind_screen(&self, ctx: &Ctx) -> RewindScreen {
+        let frame = MapFrame {
+            camera: self.camera,
+            view: self.view,
+            cursor: self.cursor.pos,
+            look: self.look.clone(),
+        };
+        let lesson = self.lessons.needs_rewind().then(|| self.lesson_view(ctx));
+        RewindScreen::new(&self.history, &self.state, frame, ctx.words())
+            .with_lesson(lesson.flatten())
+    }
+
     /// Opens the rewind screen on a battle that was lost (0822), clearing
     /// what the defeat left pending. Rewinding plays on from the point
     /// picked; closing the screen opens Game Over again.
-    pub fn rewind_from_defeat(&mut self, ctx: &Ctx) {
+    fn rewind_from_defeat(&mut self, ctx: &Ctx) -> Transition {
         self.queue.clear();
         self.progress = None;
         self.mode = Mode::default();
         self.end_armed = false;
-        self.rewind_from = RewindFrom::Defeat;
-        let charges = self.state.rewind_charges();
-        self.rewind = Some(RewindScreen::new(&self.history, charges, ctx.words()));
+        Transition::Push(Box::new(self.rewind_screen(ctx)))
     }
 
-    /// Handles one action on the open rewind screen.
-    fn rewind_step(&mut self, ctx: &mut Ctx, action: Action) {
-        let Some(screen) = self.rewind.as_mut() else {
-            return;
-        };
-        let before = (screen.focused().map(|e| e.point), screen.is_confirming());
-        let effect = screen.step(action);
-        let after = (screen.focused().map(|e| e.point), screen.is_confirming());
-        let sound = match effect {
-            RewindEffect::None if before == after => None,
-            // Up and down move the highlight; Confirm and Cancel open and
-            // close the prompt.
-            RewindEffect::None if before.1 == after.1 => Some(MenuSound::Move),
-            RewindEffect::None if after.1 => Some(MenuSound::Select),
-            RewindEffect::None | RewindEffect::Close => Some(MenuSound::Cancel),
-            RewindEffect::Rewind(_) => Some(MenuSound::Select),
-        };
-        if let Some(sound) = sound {
-            ctx.audio.menu(sound);
-        }
+    /// Carries out what the rewind screen popped with: closed, or a point
+    /// to go back to. Closed on a battle still decided, it came from Game
+    /// Over (0822), which opens again.
+    fn rewound(&mut self, ctx: &mut Ctx, effect: RewindEffect) -> Transition {
         match effect {
             RewindEffect::None => {}
             RewindEffect::Close => {
-                self.rewind = None;
                 self.notice(DoneWhen::RewindClosed);
+                self.tick_lessons(ctx);
+                if self.state.outcome().is_some() {
+                    return self.game_over(ctx, true);
+                }
             }
             RewindEffect::Rewind(point) => {
                 // The screen only confirms a listed point with a charge left.
@@ -1653,21 +1635,19 @@ impl BattleScreen {
                         self.danger = Some(danger_tiles(&self.state));
                     }
                 }
-                self.rewind = None;
             }
         }
+        Transition::None
     }
 
     /// Gives `action` to the mode ([`mode::step`], after [`Mode::route`]
     /// applies the optional split keys), plays its menu sound and carries
-    /// out its effect. Returns whether the map menu's `Options` was chosen:
-    /// the frame then opens the Options screen.
-    fn step_mode(&mut self, ctx: &mut Ctx, action: Action) -> bool {
+    /// out its effect. Returns the screen the map menu opens, if any:
+    /// `Options` or `Guides`.
+    fn step_mode(&mut self, ctx: &mut Ctx, action: Action) -> Option<Opened> {
         // One device per frame: a key and a button pressed in the same frame
         // are both routed by the device pressed last (ADR-0036).
-        let Some(action) = self.mode.route(action, &ctx.keymap, ctx.device) else {
-            return false;
-        };
+        let action = self.mode.route(action, &ctx.keymap, ctx.device)?;
         let before = self.mode.clone();
         let mode = core::mem::take(&mut self.mode);
         let shortcuts = map_menu::shortcuts(ctx.keyboard, &ctx.keymap);
@@ -1677,7 +1657,7 @@ impl BattleScreen {
             // An open lesson holds the turn (0456): nothing happens.
             self.mode = before;
             ctx.audio.menu(MenuSound::Denied);
-            return false;
+            return None;
         }
         let mode = mode.at_pace(self.pace.0);
         if let Some(sound) = sounds::step_sound(action, &before, &mode, &effect) {
@@ -1696,66 +1676,34 @@ impl BattleScreen {
             }
             Effect::Restart => self.leaving = Some(Leaving::Restart),
             Effect::Suspend => self.leaving = Some(Leaving::Suspend),
-            Effect::Options => return true,
-            Effect::Guides => self.guides = Some(GuidesScreen::new(&ctx.game.content)),
+            Effect::Options => return Some(Opened::Options),
+            Effect::Guides => return Some(Opened::Guides),
             Effect::Press(action) => self.pressed = Some(action),
         }
-        false
+        None
     }
 
-    /// The Guides list, if open (0458).
-    pub fn guides(&self) -> Option<&GuidesScreen> {
-        self.guides.as_ref()
-    }
-
-    /// Handles one action on the open Guides list.
-    fn guides_step(&mut self, ctx: &mut Ctx, action: Action) {
-        let Some(screen) = self.guides.as_mut() else {
-            return;
-        };
-        match screen.step(action) {
-            GuidesEffect::None => {}
-            GuidesEffect::Moved => ctx.audio.menu(MenuSound::Move),
-            GuidesEffect::Close => {
-                ctx.audio.menu(MenuSound::Cancel);
-                self.guides = None;
-            }
-        }
-    }
-
-    /// Gives `action` to the rewind screen if open, else to the map: opens
-    /// the rewind screen, toggles the danger zone, cycles the units, moves
-    /// the cursor, or steps the mode ([`step_mode`](Self::step_mode)).
-    /// Notes what the player did for the lessons (0456). Returns whether
-    /// the map menu's `Options` was chosen.
-    fn play_key(&mut self, ctx: &mut Ctx, action: Action) -> bool {
-        if self.rewind.is_some() {
-            // On the rewind screen a key is the list's, not the map's.
-            self.rewind_step(ctx, action);
-            return false;
-        }
-        if self.guides.is_some() {
-            // So on the Guides list.
-            self.guides_step(ctx, action);
-            return false;
-        }
+    /// Gives `action` to the map: opens the rewind screen, toggles the
+    /// danger zone, cycles the units, moves the cursor, or steps the mode
+    /// ([`step_mode`](Self::step_mode)). Notes what the player did for the
+    /// lessons (0456). Returns the screen to open over the battle, if any.
+    fn play_key(&mut self, ctx: &mut Ctx, action: Action) -> Option<Opened> {
         let was = Marks::of(&self.mode);
-        let mut options = false;
+        let mut opened = None;
         match action {
             // The crank wound back (ticket 1035) opens it on the newest
             // action; its next notches step the open screen.
             Action::Rewind | Action::RewindBack if self.can_open_rewind() => {
-                let charges = self.state.rewind_charges();
-                self.rewind = Some(RewindScreen::new(&self.history, charges, ctx.words()));
                 ctx.audio.menu(MenuSound::Select);
                 self.notice(DoneWhen::RewindOpened);
+                opened = Some(Opened::Rewind);
             }
             Action::DangerZone if self.mode.cursor_free() => self.toggle_danger(),
             // The Playdate's system menu (ticket 1035): where the map menu
             // and its Options are a press away.
             Action::Options if matches!(self.mode, Mode::Idle { .. } | Mode::MapMenu { .. }) => {
                 ctx.audio.menu(MenuSound::Select);
-                options = true;
+                opened = Some(Opened::Options);
             }
             Action::NextUnit | Action::PrevUnit if matches!(self.mode, Mode::Idle { .. }) => {
                 let from = self.cursor.pos;
@@ -1772,11 +1720,25 @@ impl BattleScreen {
                     self.notice(DoneWhen::CursorMoved);
                 }
             }
-            _ => options = self.step_mode(ctx, action),
+            _ => opened = self.step_mode(ctx, action),
         }
         self.notice_mode(was);
         self.notice_pressed(action);
-        options
+        opened
+    }
+
+    /// Opens `opened` over the battle, once the lessons have ticked what
+    /// the player did.
+    fn open(&mut self, ctx: &mut Ctx, opened: Opened) -> Transition {
+        if opened == Opened::Options {
+            self.notice(DoneWhen::OptionsOpened);
+        }
+        self.tick_lessons(ctx);
+        Transition::Push(match opened {
+            Opened::Options => Box::new(crate::screens::options::screen()),
+            Opened::Guides => Box::new(GuidesScreen::new(&ctx.game.content)),
+            Opened::Rewind => Box::new(self.rewind_screen(ctx)),
+        })
     }
 
     /// Plays the frame's sounds and advances what is animated by `dt`
@@ -1885,12 +1847,6 @@ impl BattleScreen {
     /// select · e info · s next unit · r rewind · d back` over a ready unit while
     /// browsing. Key names come from the keymap.
     pub fn help(&self, ctx: &Ctx) -> String {
-        if let Some(r) = &self.rewind {
-            return rewind_help(r, ctx);
-        }
-        if self.guides.is_some() {
-            return ctx.text_with(guides::HELP, &[]);
-        }
         if let Some(line) = self.overlay_help(ctx) {
             return line;
         }
@@ -2053,9 +2009,7 @@ impl BattleScreen {
     /// What is on the visible map (ADR-0038), for the map skin to paint and
     /// for tests to read: the terrain, the tiles flashing after their
     /// terrain changed, the ranges the mode shows, the units as drawn, the
-    /// cursor and a selected unit's path. On the rewind screen: the map as
-    /// it was just before the highlighted action (as it is now with nothing
-    /// listed), with no flashes, ranges, cursor or path.
+    /// cursor and a selected unit's path.
     pub fn scene(&self, ctx: &Ctx) -> MapScene {
         self.scene_of_size(ctx, ctx.game.map_skin.view_tiles(MAP_VIEW))
     }
@@ -2066,22 +2020,8 @@ impl BattleScreen {
     /// (`cargo shuyi frame-png --map`).
     pub fn scene_of_size(&self, ctx: &Ctx, size: (i32, i32)) -> MapScene {
         let origin = self.camera_in(size).origin;
-        // Whole milliseconds of a clock that only goes forward.
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let clock_ms = (ctx.clock_s.max(0.0) * 1000.0) as u64;
-        if let Some(r) = &self.rewind {
-            let shown = r.focused().map_or(&self.state, |e| &e.before);
-            let mut scene = terrain_scene(shown, origin, size);
-            scene.clock_ms = clock_ms;
-            scene.look.clone_from(&self.look);
-            for unit in shown.units() {
-                scene.push_unit(UnitView::of(unit));
-            }
-            animate(&mut scene, None);
-            return scene;
-        }
         let mut scene = terrain_scene(&self.state, origin, size);
-        scene.clock_ms = clock_ms;
+        scene.clock_ms = clock_ms(ctx);
         scene.look.clone_from(&self.look);
         for flash in &self.flashes {
             if let Some(tile) = scene.tile_mut(flash.pos) {
@@ -2282,50 +2222,9 @@ impl BattleScreen {
 
     /// What the screen shows this frame (ADR-0054): the map's
     /// [`scene`](Self::scene) and everything around and over it, for the
-    /// skin to paint and for tests to read. On the rewind screen: the map,
-    /// the rewind list, the help and the debug hint; on the Guides list
-    /// (0458), the same with the list.
+    /// skin to paint and for tests to read.
     pub fn view(&self, ctx: &Ctx) -> BattleView {
-        let scene = self.scene(ctx);
-        let help = self.help(ctx);
-        let debug_hint = super::debug_hint(ctx);
         let words = ctx.words();
-        let bare = || BattleView {
-            lesson: None,
-            scene: scene.clone(),
-            menu: None,
-            popups: Vec::new(),
-            panel: None,
-            stage: None,
-            dialog: None,
-            notes: None,
-            noted: Vec::new(),
-            banner: None,
-            tip: None,
-            message: None,
-            status: String::new(),
-            help: help.clone(),
-            debug_hint: debug_hint.clone(),
-            forecast: None,
-            info: None,
-            fight_box: None,
-            progress: None,
-            rewind: None,
-            guides: None,
-        };
-        if let Some(rewind) = &self.rewind {
-            return BattleView {
-                lesson: self.lesson_view(ctx),
-                rewind: Some(rewind.view(words)),
-                ..bare()
-            };
-        }
-        if let Some(guides) = &self.guides {
-            return BattleView {
-                guides: Some(guides.view(ctx)),
-                ..bare()
-            };
-        }
         let told = (&self.state, words);
         let stage = self.stage_view(ctx);
         let fight_box = match (&self.mode, &stage) {
@@ -2359,15 +2258,13 @@ impl BattleScreen {
             lesson: self.lesson_view(ctx),
             message: self.message(),
             status: self.status(ctx),
-            scene,
-            help,
-            debug_hint,
+            scene: self.scene(ctx),
+            help: self.help(ctx),
+            debug_hint: super::debug_hint(ctx),
             forecast,
             info,
             fight_box,
             progress,
-            rewind: None,
-            guides: None,
         }
     }
 
@@ -2545,6 +2442,31 @@ fn animate(scene: &mut MapScene, gait: Option<(UnitId, Gait)>) {
     }
 }
 
+/// The camera for a viewport of `view` tiles on `state`'s map: `camera`,
+/// if it was kept for that size, else (the map skin changed) one centred
+/// on the `cursor`'s tile.
+fn fit_camera(
+    camera: Camera,
+    kept_for: (i32, i32),
+    cursor: Pos,
+    state: &BattleState,
+    view: (i32, i32),
+) -> Camera {
+    if view == kept_for {
+        return camera;
+    }
+    let tiles = &state.map().tiles;
+    Camera::centred_on(cursor, tiles.width(), tiles.height(), view)
+}
+
+/// Whole milliseconds of `ctx`'s clock, which only goes forward: a map
+/// scene's clock.
+fn clock_ms(ctx: &Ctx) -> u64 {
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    let ms = (ctx.clock_s.max(0.0) * 1000.0) as u64;
+    ms
+}
+
 /// A view of `size` tiles from `origin` showing `state`'s terrain (and
 /// the terrain one tile outside the view, for a skin to join pictures to)
 /// and nothing else.
@@ -2555,7 +2477,6 @@ fn terrain_scene(state: &BattleState, origin: Pos, size: (i32, i32)) -> MapScene
     scene
 }
 
-/// The help line on the rewind screen `r`.
 /// Whether terrain `t` is not plain ground: it gives a Def, Avoid or
 /// healing bonus, or costs a movement type other than 1 to enter (more, or
 /// impassable).
@@ -2566,25 +2487,9 @@ fn not_plain(t: &TerrainRules) -> bool {
         || t.move_cost.iter().any(|&c| c != Some(1))
 }
 
-fn rewind_help(r: &RewindScreen, ctx: &Ctx) -> String {
-    let key = if r.is_confirming() {
-        "battle.rewind.help.confirm"
-    } else if r.can_rewind() {
-        "battle.rewind.help.pick"
-    } else if r.entries().is_empty() {
-        "battle.rewind.help.empty"
-    } else {
-        "battle.rewind.help.browse"
-    };
-    ctx.text_with(key, &[])
-}
-
 impl BattleScreen {
     /// [`Screen::update`]'s frame, before its tip is noted as shown.
     fn update_frame(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
-        // Updated, so on top again: any scene it started is closed.
-
-        self.tips.set_under_scene(false);
         self.begin_frame(ctx, input.dt);
         // A banner already up (a battle decided at its start).
         self.play_outcome_music(ctx);
@@ -2634,11 +2539,8 @@ impl BattleScreen {
             if self.ai_phase() && !self.playing() {
                 continue;
             }
-            if self.play_key(ctx, action) {
-                // The map menu's Options: over the battle.
-                self.notice(DoneWhen::OptionsOpened);
-                self.tick_lessons(ctx);
-                return Transition::Push(Box::new(crate::screens::options::screen()));
+            if let Some(opened) = self.play_key(ctx, action) {
+                return self.open(ctx, opened);
             }
             // A map menu shortcut: its key, next.
             if let Some(pressed) = self.pressed.take() {
@@ -2646,13 +2548,6 @@ impl BattleScreen {
             }
             if let Some(leaving) = self.leaving {
                 return self.leave(leaving);
-            }
-            if self.rewind_from == RewindFrom::Defeat && self.rewind.is_none() {
-                // Backed out of the rewind screen: Game Over again.
-                if self.state.outcome().is_some() {
-                    return self.game_over(ctx, true);
-                }
-                self.rewind_from = RewindFrom::Browsing;
             }
         }
 
@@ -2675,7 +2570,6 @@ impl BattleScreen {
         }
         self.play_outcome_music(ctx);
         if let Some(scene) = self.next_scene(ctx) {
-            self.tips.set_under_scene(true);
             return Transition::Push(Box::new(scene));
         }
         // What the frame did may start a lesson auto-end must wait for
@@ -2711,15 +2605,28 @@ impl Screen<Shuyi> for BattleScreen {
         transition
     }
 
-    /// Back from Game Over (0822) with the player's choice: `Rewind` opens
-    /// the rewind screen on the lost battle; `Retry Battle` and `Title`
-    /// leave. A scene or the Options screen hands nothing back.
+    /// A screen over the battle (a scene, the rewind screen, …): no tip or
+    /// lesson shows until it goes.
+    fn covered(&mut self, _ctx: &mut Ctx) {
+        self.tips.set_covered(true);
+    }
+
+    /// On top again, with what the screen above popped with: the rewind
+    /// screen's [`RewindEffect`], carried out; or Game Over's choice (0822),
+    /// where `Rewind` opens the rewind screen on the lost battle and
+    /// `Retry Battle` and `Title` leave. A scene, the Options screen and the
+    /// Guides list hand nothing back.
     fn uncovered(&mut self, ctx: &mut Ctx, result: Option<ScreenResult>) -> Transition {
-        match result.and_then(ScreenResult::take::<GameOverChoice>) {
-            Some(GameOverChoice::Rewind) => {
-                self.rewind_from_defeat(ctx);
-                Transition::None
-            }
+        self.tips.set_covered(false);
+        let Some(result) = result else {
+            return Transition::None;
+        };
+        let result = match result.downcast::<RewindEffect>() {
+            Ok(effect) => return self.rewound(ctx, effect),
+            Err(other) => other,
+        };
+        match result.take::<GameOverChoice>() {
+            Some(GameOverChoice::Rewind) => self.rewind_from_defeat(ctx),
             Some(GameOverChoice::Retry) => Transition::pop_with(BattleEnd::Restart),
             Some(GameOverChoice::Title) => Transition::pop_with(BattleEnd::Title),
             None => Transition::None,
@@ -2749,8 +2656,82 @@ pub(crate) mod testing {
         StatValue, Stock, Unit, UnitAction, UnitId,
     };
 
+    use core::ops::Deref;
+
+    use super::guides::GuidesScreen;
     use super::layout::MAP_VIEW;
-    use crate::screen::Ctx;
+    use super::rewind::RewindScreen;
+    use crate::glyph_buffer::GlyphBuffer;
+    use crate::input::Action;
+    use crate::screen::{Ctx, FrameInput, Screen, ScreenStack};
+
+    /// A battle screen on a screen stack, as the game has it: what it opens
+    /// over itself (the rewind screen, the Guides list, a scene) goes on
+    /// top, and the battle hears what each pops with. It derefs to the
+    /// battle under them; [`battle_mut`](Self::battle_mut) changes it
+    /// (never a `DerefMut`, which would let a helper update the battle
+    /// past the screens over it).
+    pub struct Stacked(ScreenStack);
+
+    impl Stacked {
+        /// `battle`, alone on the stack.
+        pub fn new(battle: super::BattleScreen) -> Self {
+            Self(ScreenStack::new(Box::new(battle)))
+        }
+
+        /// One frame of `input` for the screen on top, its transition
+        /// applied.
+        pub fn update(&mut self, c: &mut Ctx, input: &FrameInput) {
+            self.0.update(c, input);
+        }
+
+        /// One frame of `dt` seconds with `actions`.
+        pub fn frame(&mut self, c: &mut Ctx, actions: &[Action], dt: f32) {
+            self.update(c, &FrameInput::new(actions.to_vec(), dt, vec![]));
+        }
+
+        /// Each of `actions` in an instant frame of its own.
+        pub fn press(&mut self, c: &mut Ctx, actions: &[Action]) {
+            for &action in actions {
+                self.frame(c, &[action], 0.0);
+            }
+        }
+
+        /// The battle under the screens, to change.
+        pub fn battle_mut(&mut self) -> &mut super::BattleScreen {
+            self.0.find_mut().unwrap_or_else(|| panic!("no battle"))
+        }
+
+        /// The rewind screen, while it is open.
+        pub fn rewind(&self) -> Option<&RewindScreen> {
+            self.0.find()
+        }
+
+        /// The Guides list, while it is open.
+        pub fn guides(&self) -> Option<&GuidesScreen> {
+            self.0.find()
+        }
+
+        /// Paints the stack as the game does.
+        pub fn paint(&self, c: &Ctx, buf: &mut GlyphBuffer) {
+            self.0.draw(c, buf);
+        }
+    }
+
+    impl Deref for Stacked {
+        type Target = super::BattleScreen;
+
+        fn deref(&self) -> &super::BattleScreen {
+            self.0.find().unwrap_or_else(|| panic!("no battle"))
+        }
+    }
+
+    /// The transition the battle `s` answers one frame of `action` with,
+    /// as it prints (`None`, `Push(rewind)`): whether it opens a screen.
+    pub fn answer(s: &mut super::BattleScreen, c: &mut Ctx, action: Action) -> String {
+        let input = FrameInput::new(vec![action], 0.0, vec![]);
+        format!("{:?}", s.update(c, &input))
+    }
 
     /// The console cell of the left glyph of `tile` on `s`'s map, if it is
     /// in view.

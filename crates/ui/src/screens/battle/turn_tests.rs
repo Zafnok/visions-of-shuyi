@@ -6,7 +6,7 @@ use insta::assert_snapshot;
 use trpg_core::{ItemId, Objective, Outcome, UnitAction};
 
 use super::banner::{BannerKind, PHASE_BANNER_S};
-use super::testing::{battle_with, skirmish, through_ai_phases, wait};
+use super::testing::{Stacked, battle_with, skirmish, through_ai_phases, wait};
 use super::*;
 use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
@@ -196,11 +196,8 @@ fn a_rewind_brings_the_danger_zone_back_with_the_battle() {
     frame(&mut s, &mut c, &[], 30.0);
     assert_ne!(s.danger(), Some(&before));
     // Rewind to before the attack: the brigand, and its threat, are back.
-    press(
-        &mut s,
-        &mut c,
-        &[Action::Rewind, Action::Confirm, Action::Confirm],
-    );
+    let mut s = Stacked::new(s);
+    s.press(&mut c, &[Action::Rewind, Action::Confirm, Action::Confirm]);
     assert!(s.rewind().is_none());
     assert!(s.state().unit(UnitId(4)).is_some());
     assert_eq!(s.danger(), Some(&before));

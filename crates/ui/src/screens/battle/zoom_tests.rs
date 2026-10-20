@@ -167,13 +167,14 @@ fn the_rewind_screen_keeps_the_zoom() {
     h.keys("f Right f").wait(0.5);
     h.keys("Up f").wait(0.5);
     h.keys("r");
-    assert!(battle(&h).rewind().is_some(), "{:?}", battle(&h).mode());
+    let open = |h: &Harness| h.screen::<RewindScreen>().is_some();
+    assert!(open(&h), "{:?}", battle(&h).mode());
     h.keys("q");
     assert_eq!(zoom(&h), Some(MapZoom::X2));
     assert_eq!(h.game().ctx().settings().game.map_zoom, MapZoom::X2);
     // Closed again, it works.
     h.keys("d q");
-    assert!(battle(&h).rewind().is_none());
+    assert!(!open(&h));
     assert_eq!(zoom(&h), Some(MapZoom::X1));
 }
 

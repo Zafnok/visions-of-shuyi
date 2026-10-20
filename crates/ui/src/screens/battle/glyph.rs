@@ -3,8 +3,8 @@
 //! side panel in a box on the right (double-bordered while a unit is
 //! selected), the message and help rows at the bottom, menus beside their
 //! tile, and boxes and banners centred on the map. The forecast, the info
-//! screen, the fight box, the EXP and level-up pages, the rewind screen
-//! and the Guides list have a module each. Everything about the look lives here; nothing here
+//! screen, the fight box, the EXP and level-up pages, and the rewind and
+//! Guides screens over the battle have a module each. Everything about the look lives here; nothing here
 //! decides what the screen shows. Another look is another `paint` of the
 //! same view (ADR-0054).
 
@@ -28,6 +28,7 @@ use super::view::{
 use super::{PopupKind, stage};
 use crate::color::{Rgb, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::map_view::MapScene;
 use crate::screen::Ctx;
 use crate::screens::paint_debug_hint;
 use crate::tips as tip_box;
@@ -64,28 +65,8 @@ pub const BANNER_H: i32 = 6;
 
 /// Paints `view`: the map, then what is over it, then the bars.
 pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
-    let c = |u| ctx.palette.get(u);
-    let black = c(UiColor::Black);
-    buf.fill_rect(buf.bounds(), Cell::new(' ', c(UiColor::Text), black));
+    clear(ctx, buf);
     ctx.game.map_skin.paint(ctx, &view.scene, MAP_VIEW, buf);
-    if let Some(g) = &view.guides {
-        // The list over the map and the side panel, and the help line.
-        guides::paint(ctx, g, buf);
-        buf.print(1, HELP_ROW, &view.help, c(UiColor::TextDim), black);
-        paint_hint(ctx, view, buf);
-        return;
-    }
-    if let Some(r) = &view.rewind {
-        // The list in the side panel, and the help line.
-        rewind::paint(ctx, r, buf);
-        if let Some(lesson) = &view.lesson {
-            let at_bottom = lesson_at_bottom(ctx, view, lesson);
-            tip_box::glyph::paint_lesson(ctx, lesson, at_bottom, buf);
-        }
-        buf.print(1, HELP_ROW, &view.help, c(UiColor::TextDim), black);
-        paint_hint(ctx, view, buf);
-        return;
-    }
     if let Some(m) = &view.menu
         && let MenuPlace::Beside(tile) = m.place
     {
@@ -111,8 +92,7 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     }
     paint_dialogs(ctx, view, buf);
     if let Some(lesson) = &view.lesson {
-        let at_bottom = lesson_at_bottom(ctx, view, lesson);
-        tip_box::glyph::paint_lesson(ctx, lesson, at_bottom, buf);
+        paint_lesson(ctx, &view.scene, lesson, buf);
     }
     if let Some(tip) = &view.tip {
         tip_box::glyph::paint(ctx, tip, buf);
@@ -122,20 +102,27 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
 
 /// Whether `lesson`'s box goes against the bottom edge of the map view:
 /// while the tile it must not hide is in the map view's top half, as the
-/// map skin draws `view`'s scene (0456). Else (or with that tile out of
-/// view) against the top edge.
-pub fn lesson_at_bottom(ctx: &Ctx, view: &BattleView, lesson: &LessonView) -> bool {
+/// map skin draws `scene` (0456). Else (or with that tile out of view)
+/// against the top edge.
+pub fn lesson_at_bottom(ctx: &Ctx, scene: &MapScene, lesson: &LessonView) -> bool {
     let tile = ctx
         .game
         .map_skin
-        .tile_cells(&view.scene, MAP_VIEW, lesson.clear_of);
+        .tile_cells(scene, MAP_VIEW, lesson.clear_of);
     tile.is_some_and(in_top_half)
+}
+
+/// Paints `lesson`'s box over the map that shows `scene`, clear of the
+/// cursor's tile.
+fn paint_lesson(ctx: &Ctx, scene: &MapScene, lesson: &LessonView, buf: &mut GlyphBuffer) {
+    let at_bottom = lesson_at_bottom(ctx, scene, lesson);
+    tip_box::glyph::paint_lesson(ctx, lesson, at_bottom, buf);
 }
 
 /// Where `view`'s lesson box is painted, if it has one.
 pub fn lesson_rect(ctx: &Ctx, view: &BattleView) -> Option<Rect> {
     let lesson = view.lesson.as_ref()?;
-    let at_bottom = lesson_at_bottom(ctx, view, lesson);
+    let at_bottom = lesson_at_bottom(ctx, &view.scene, lesson);
     Some(tip_box::glyph::lesson_rect(lesson, at_bottom))
 }
 
@@ -145,11 +132,24 @@ pub fn in_top_half(tile: Rect) -> bool {
     tile.y + tile.h / 2 < MAP_VIEW.y + MAP_VIEW.h / 2
 }
 
-/// Paints the debug hint at the right of the help row.
-fn paint_hint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
-    if let Some(hint) = &view.debug_hint {
+/// Paints the help line `help` and the debug hint `hint`, if any, at the
+/// right of the help row.
+fn paint_help(ctx: &Ctx, help: &str, hint: Option<&String>, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    buf.print(1, HELP_ROW, help, c(UiColor::TextDim), c(UiColor::Black));
+    if let Some(hint) = hint {
         paint_debug_hint(&ctx.palette, hint, buf, HELP_ROW);
     }
+}
+
+/// Clears the whole of `buf` to the blank black cell, for a screen that
+/// paints all of it.
+fn clear(ctx: &Ctx, buf: &mut GlyphBuffer) {
+    let c = |u| ctx.palette.get(u);
+    buf.fill_rect(
+        buf.bounds(),
+        Cell::new(' ', c(UiColor::Text), c(UiColor::Black)),
+    );
 }
 
 /// Where a menu of `(w, h)` cells goes beside the tile covering the cells
@@ -494,8 +494,7 @@ fn paint_bar(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
         };
         buf.print(1, HELP_BAR.y, &m.text, c(color), black);
     }
-    buf.print(1, HELP_ROW, &view.help, c(UiColor::TextDim), black);
-    paint_hint(ctx, view, buf);
+    paint_help(ctx, &view.help, view.debug_hint.as_ref(), buf);
 }
 
 #[cfg(test)]

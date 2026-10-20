@@ -1,8 +1,29 @@
 //! What the rewind screen shows (ticket 0307, ADR-0054): the past actions,
 //! newest first, the charges left and the question before a rewind. Built
-//! by [`RewindScreen::view`](super::super::rewind::RewindScreen::view).
+//! by [`RewindScreen::list_view`](super::super::rewind::RewindScreen::list_view).
 
 use crate::prelude::*;
+
+use crate::map_view::MapScene;
+use crate::tips::LessonView;
+
+/// The whole rewind screen: the map as it was just before the highlighted
+/// action, the list over the side panel, the lesson about rewinding, the
+/// help and the debug hint. Built by
+/// [`RewindScreen::view`](super::super::rewind::RewindScreen::view).
+#[derive(Debug, Clone)]
+pub struct RewindScreenView {
+    /// What is on the visible map (ADR-0038): the map skin paints it.
+    pub scene: MapScene,
+    /// The list.
+    pub list: RewindView,
+    /// The lesson about rewinding, while one is on screen.
+    pub lesson: Option<LessonView>,
+    /// The help line: what the keys do now.
+    pub help: String,
+    /// The debug tools' key, when they are on.
+    pub debug_hint: Option<String>,
+}
 
 /// The rewind screen's list.
 #[derive(Debug, Clone, PartialEq, Eq)]

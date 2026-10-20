@@ -8,7 +8,7 @@ use trpg_content::TipTrigger;
 use trpg_core::{Command, Event, Objective, Phase, StatGains, UnitId};
 
 use super::banner::PHASE_BANNER_S;
-use super::testing::{battle_with, skirmish, skirmish_charged, through_ai_phases};
+use super::testing::{Stacked, battle_with, skirmish, skirmish_charged, through_ai_phases};
 use super::*;
 use crate::color::Rgb;
 use crate::console::{ConsoleSizes, ConsoleSpec};
@@ -456,12 +456,15 @@ fn tips_wait_while_the_rewind_screen_is_open() {
     let mut c = tipped();
     let mut s = BattleScreen::new(skirmish_charged(&c, 100, 3));
     dismiss_all(&mut s, &mut c);
-    press(&mut s, &mut c, &[Action::Rewind]);
+    let mut s = Stacked::new(s);
+    s.press(&mut c, &[Action::Rewind]);
     assert!(s.rewind().is_some());
-    s.tips.fire(TipTrigger::FirstLowHp);
-    press(&mut s, &mut c, &[]);
+    s.battle_mut().tips.fire(TipTrigger::FirstLowHp);
+    s.press(&mut c, &[]);
     assert_eq!(s.shown_tip(), None);
-    press(&mut s, &mut c, &[Action::Cancel]);
+    // Closed: the battle's next frame takes in the tip fired by hand.
+    s.press(&mut c, &[Action::Cancel]);
+    s.frame(&mut c, &[], 0.0);
     assert_eq!(s.shown_tip(), Some(TipTrigger::FirstLowHp));
 }
 

@@ -1,8 +1,21 @@
 //! What the Guides list shows (ticket 0458, ADR-0054): every topic by
 //! title, which is highlighted, and that one's text. Built by
-//! [`GuidesScreen::view`](super::super::guides::GuidesScreen::view).
+//! [`GuidesScreen::list_view`](super::super::guides::GuidesScreen::list_view).
 
 use crate::prelude::*;
+
+/// The whole Guides screen: the list over the map and the side panel, the
+/// help and the debug hint. Built by
+/// [`GuidesScreen::view`](super::super::guides::GuidesScreen::view).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GuidesScreenView {
+    /// The list.
+    pub list: GuidesView,
+    /// The help line: what the keys do.
+    pub help: String,
+    /// The debug tools' key, when they are on.
+    pub debug_hint: Option<String>,
+}
 
 /// The Guides list.
 #[derive(Debug, Clone, PartialEq, Eq)]

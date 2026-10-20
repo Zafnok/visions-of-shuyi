@@ -1,14 +1,16 @@
 //! The glyph look of the Guides list (ticket 0458): a double box over the
 //! map and the side panel, its title over the top border; the topics down
 //! the left, the highlighted one inverted and scrolled into view; a line
-//! between; the highlighted topic's title (lit) and text on the right.
+//! between; the highlighted topic's title (lit) and text on the right. The
+//! help row under it, as on the battle screen.
 
+use super::{clear, paint_help};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
-use crate::screens::battle::view::GuidesView;
+use crate::screens::battle::view::{GuidesScreenView, GuidesView};
 use crate::widgets::ListCursor;
 
 /// The box: the map view and the side panel together.
@@ -37,8 +39,15 @@ pub const TOP_ROW: i32 = AREA.y + 2;
 /// Rows the list has, above the bottom border and a blank row.
 pub const LIST_ROWS: i32 = AREA.h - 4;
 
+/// Paints the whole Guides screen `view`: the list and the help row.
+pub fn paint(ctx: &Ctx, view: &GuidesScreenView, buf: &mut GlyphBuffer) {
+    clear(ctx, buf);
+    paint_list(ctx, &view.list, buf);
+    paint_help(ctx, &view.help, view.debug_hint.as_ref(), buf);
+}
+
 /// Paints `view` over the map and the side panel.
-pub fn paint(ctx: &Ctx, view: &GuidesView, buf: &mut GlyphBuffer) {
+pub fn paint_list(ctx: &Ctx, view: &GuidesView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
     let border = c(UiColor::PanelBorder);
@@ -131,7 +140,7 @@ mod tests {
             };
             let blank = Cell::new(' ', Rgb::new(0, 0, 0), Rgb::new(0, 0, 0));
             let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
-            paint(&c, &view, &mut buf);
+            paint_list(&c, &view, &mut buf);
             buf
         };
         let last = TOP_ROW + LIST_ROWS - 1;

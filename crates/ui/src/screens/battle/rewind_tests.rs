@@ -8,12 +8,12 @@ use trpg_core::{BattleState, Command, UnitAction, UnitId};
 use super::BattleScreen;
 use super::progress::PROGRESS_TIMINGS;
 use super::rewind::RewindScreen;
-use super::testing::skirmish_charged;
+use super::testing::{Stacked, skirmish_charged};
 use super::view::RewindView;
 use crate::harness::{FRAME_DT, Harness};
 use crate::input::Action;
 use crate::screen::tests::ctx;
-use crate::screen::{Ctx, FrameInput, Screen};
+use crate::screen::{Ctx, FrameInput};
 
 use Action::{Cancel, Confirm, CursorDown, CursorRight, CursorUp, Rewind};
 
@@ -22,7 +22,7 @@ fn ron(state: &BattleState) -> String {
 }
 
 /// Presses each action in its own frame, then lets `wait` seconds pass.
-fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action], wait: f32) {
+fn press(s: &mut Stacked, c: &mut Ctx, actions: &[Action], wait: f32) {
     for &a in actions {
         s.update(c, &FrameInput::new(vec![a], FRAME_DT, vec![]));
     }
@@ -36,9 +36,9 @@ fn press(s: &mut BattleScreen, c: &mut Ctx, actions: &[Action], wait: f32) {
 /// The skirmish with `charges`, after the lord's sword attack on the
 /// brigand (played out) and the archer's wait: the screen and the battle
 /// before the attack.
-fn attacked(c: &mut Ctx, charges: u8) -> (BattleScreen, BattleState) {
+fn attacked(c: &mut Ctx, charges: u8) -> (Stacked, BattleState) {
     let start = skirmish_charged(c, 20, charges);
-    let mut s = BattleScreen::new(start.clone());
+    let mut s = Stacked::new(BattleScreen::new(start.clone()));
     // Select the lord, one step right, move there.
     press(&mut s, c, &[Confirm, CursorRight, Confirm], 0.5);
     // Attack (the iron sword), the brigand, attack, skip the playback
@@ -65,13 +65,18 @@ fn attacked(c: &mut Ctx, charges: u8) -> (BattleScreen, BattleState) {
 
 /// The rewind screen on `h` (ADR-0054: read from its view).
 fn shown(h: &Harness) -> RewindView {
-    let view = h.battle().expect("a battle").view(h.game().ctx());
-    view.rewind.expect("the rewind screen")
+    open(h).view(h.game().ctx()).list
 }
 
-/// The help line of the battle on `h` (ADR-0054: read from its view).
+/// The help line of the rewind screen on `h` (ADR-0054: read from its
+/// view).
 fn help(h: &Harness) -> String {
-    h.battle().expect("a battle").view(h.game().ctx()).help
+    open(h).view(h.game().ctx()).help
+}
+
+/// The rewind screen open on `h`.
+fn open(h: &Harness) -> &RewindScreen {
+    h.screen().expect("the rewind screen")
 }
 
 #[test]
@@ -137,7 +142,7 @@ fn with_no_charges_the_screen_says_so_and_cant_confirm() {
     press(&mut s, &mut c, &[Rewind], 0.0);
     assert!(s.rewind().is_none());
 
-    let mut h = Harness::with_screen(Box::new(attacked(&mut c, 0).0));
+    let mut h = Harness::with_screen(Box::new(BattleScreen::clone(&attacked(&mut c, 0).0)));
     h.keys("r");
     let r = shown(&h);
     assert_eq!((r.charges.as_str(), r.spent), ("No charges left", true));
@@ -149,7 +154,7 @@ fn with_no_charges_the_screen_says_so_and_cant_confirm() {
 #[test]
 fn rewind_opens_only_while_browsing() {
     let mut c = ctx();
-    let mut s = BattleScreen::new(skirmish_charged(&c, 20, 3));
+    let mut s = Stacked::new(BattleScreen::new(skirmish_charged(&c, 20, 3)));
     // Browsing: the help bar shows the Rewind key.
     assert!(s.help(&c).contains("r rewind"), "{}", s.help(&c));
     // A unit selected: Rewind does nothing, and the help bar leaves it out.
@@ -215,7 +220,7 @@ fn the_list_is_newest_first_and_the_map_shows_the_highlighted_point() {
 #[test]
 fn rewind_screen_snapshot() {
     let mut c = ctx();
-    let mut h = Harness::with_screen(Box::new(attacked(&mut c, 3).0));
+    let mut h = Harness::with_screen(Box::new(BattleScreen::clone(&attacked(&mut c, 3).0)));
     h.keys("r");
     let r = shown(&h);
     assert_eq!(
@@ -249,7 +254,7 @@ fn cues(c: &mut Ctx) -> Vec<String> {
 #[test]
 fn rewind_screen_sounds() {
     let mut c = ctx();
-    let mut s = BattleScreen::new(skirmish_charged(&c, 20, 3));
+    let mut s = Stacked::new(BattleScreen::new(skirmish_charged(&c, 20, 3)));
     cues(&mut c);
     press(&mut s, &mut c, &[Rewind, Confirm, CursorDown, Cancel], 0.0);
     assert_eq!(cues(&mut c), ["menu_select", "menu_cancel"]);
@@ -280,7 +285,7 @@ fn rewind_screen_sounds() {
 #[test]
 fn skipping_is_silent() {
     let mut c = ctx();
-    let mut s = BattleScreen::new(skirmish_charged(&c, 20, 3));
+    let mut s = Stacked::new(BattleScreen::new(skirmish_charged(&c, 20, 3)));
     // Select the lord, one step right, start the walk; Confirm skips it.
     press(&mut s, &mut c, &[Confirm, CursorRight, Confirm], 0.0);
     assert_eq!(cues(&mut c), ["menu_select", "cursor_move", "menu_select"]);
@@ -311,9 +316,8 @@ fn the_scene_is_the_map_before_the_highlighted_action() {
     );
     assert!(now.cursor.is_some());
     press(&mut s, &mut c, &[Rewind], 0.0);
-    assert!(s.rewind().is_some());
     c.clock_s = 2.25;
-    let scene = s.scene(&c);
+    let scene = s.rewind().expect("open").scene(&c);
     assert_eq!(scene.clock_ms, 2250);
     assert_eq!((scene.origin, scene.size), (now.origin, now.size));
     let before: Vec<_> = start

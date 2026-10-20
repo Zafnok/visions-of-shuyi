@@ -483,9 +483,7 @@ fn game_over_rewinds_a_lost_battle() {
     );
     // Backing out of the rewind screen returns to Game Over.
     update(&mut stack, &mut c, &[Confirm]);
-    assert_eq!(top(&stack), "battle");
-    let battle = stack.find::<BattleScreen>();
-    assert!(battle.is_some_and(|b| b.rewind().is_some()));
+    assert_eq!(stack.names(), ["game_flow", "battle", "rewind"]);
     update(&mut stack, &mut c, &[Cancel]);
     assert_eq!(top(&stack), "game_over");
     // As it was left: its opening animation doesn't play again (0830).
@@ -506,7 +504,6 @@ fn game_over_rewinds_a_lost_battle() {
     let b = stack.find::<BattleScreen>();
     let b = b.unwrap_or_else(|| panic!("no battle"));
     assert!(b.state().outcome().is_none());
-    assert!(b.rewind().is_none());
     assert_eq!(b.history().charges_left(), 1);
     assert_eq!(b.history().len(), 0);
     // The battle's own track again (0809), asked for once.
