@@ -139,7 +139,7 @@ None. Nothing a player sees changes.
 - [x] A test lists the registry's kinds and their formats.
 - [x] The content checks (`cargo xtask` content checks, and `cargo test
       -p trpg-content`) report the same on the real and test files.
-- [ ] `cargo xtask ticket-lint --check-engine` passes.
+- [x] `cargo xtask ticket-lint --check-engine` passes (after engine PR #32, the ticket of engine 2219, merged).
 - [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
