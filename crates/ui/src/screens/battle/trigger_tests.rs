@@ -171,7 +171,7 @@ fn talk_is_offered_next_to_someone_to_talk_to_and_picks_a_target() {
     let (mode, effect) = step(mode, Action::CursorDown, Pos::new(3, 5), &s);
     let (mode, effect2) = step(mode, Action::Confirm, Pos::new(3, 5), &s);
     assert_eq!((effect, effect2), (Effect::None, Effect::Cursor(ROGUE_AT)));
-    assert!(matches!(&mode, Mode::TalkTarget { targets, index: 0, .. } if targets == &[UnitId(7)]));
+    assert!(matches!(&mode, Mode::TalkTarget(t) if t.targets == [UnitId(7)] && t.index == 0));
     assert_eq!(mode.drawn_pos(UnitId(1)), Some(Pos::new(3, 5)));
     assert_eq!(mode.selection().map(|s| s.unit), Some(UnitId(1)));
     // Cycling one target stays on it; other keys do nothing.
@@ -264,11 +264,7 @@ fn talking_plays_the_scene_and_keeps_the_units_turn() {
         frame(&mut s, &mut c, &[a], 0.0);
     }
     frame(&mut s, &mut c, &[Action::Confirm], 0.0);
-    assert!(
-        matches!(s.mode(), Mode::TalkTarget { .. }),
-        "{:?}",
-        s.mode()
-    );
+    assert!(matches!(s.mode(), Mode::TalkTarget(_)), "{:?}", s.mode());
     assert_eq!(s.help(&c), "arrows next target · f talk · d back");
     assert_eq!(
         frame(&mut s, &mut c, &[Action::Confirm], 0.0),

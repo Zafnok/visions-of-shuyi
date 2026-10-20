@@ -6,7 +6,7 @@ use insta::assert_snapshot;
 use trpg_core::{BattlePack, BattleState, Equipped, ItemId, Objective, Pos, StatValue, UnitId};
 
 use super::items::{ItemTargeting, item_targets, pack_groups};
-use super::mode::{MenuEntry, Mode};
+use super::mode::{ListKind, MenuEntry, Mode};
 use super::testing::{battle_packed, quick_units};
 use super::{BattleScreen, HealPopup, PopupKind, TIMINGS};
 use crate::FrameInput;
@@ -144,7 +144,17 @@ fn select_move_item_potion_ally_heals_the_ally_and_ends_the_action() {
     let max = state.unit(UnitId(2)).unwrap().stats.hp;
     let mut s = lord_menu(&mut c, state);
     step(&mut s, &mut c, &ITEM);
-    assert!(matches!(s.mode(), Mode::ItemMenu { .. }), "{:?}", s.mode());
+    assert!(
+        matches!(
+            s.mode(),
+            Mode::List {
+                kind: ListKind::Pack(_),
+                ..
+            }
+        ),
+        "{:?}",
+        s.mode()
+    );
     step(&mut s, &mut c, &[Action::Confirm]);
     let Mode::ItemTarget(t) = s.mode() else {
         panic!("{:?}", s.mode());
@@ -256,7 +266,17 @@ fn cancelling_at_each_level_leaves_the_battle_unchanged() {
     assert!(matches!(s.mode(), Mode::ItemTarget(_)));
     // Target → pack list (cursor back on the unit) → action menu, on Item.
     step(&mut s, &mut c, &[Action::CursorRight, Action::Cancel]);
-    assert!(matches!(s.mode(), Mode::ItemMenu { .. }), "{:?}", s.mode());
+    assert!(
+        matches!(
+            s.mode(),
+            Mode::List {
+                kind: ListKind::Pack(_),
+                ..
+            }
+        ),
+        "{:?}",
+        s.mode()
+    );
     assert_eq!(s.cursor().pos, p(3, 5));
     step(&mut s, &mut c, &[Action::Cancel]);
     let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
@@ -266,7 +286,17 @@ fn cancelling_at_each_level_leaves_the_battle_unchanged() {
     assert_eq!(s.state(), &before);
     // Equip list → action menu, on Equip.
     step(&mut s, &mut c, &[Action::CursorDown, Action::Confirm]);
-    assert!(matches!(s.mode(), Mode::EquipMenu { .. }), "{:?}", s.mode());
+    assert!(
+        matches!(
+            s.mode(),
+            Mode::List {
+                kind: ListKind::Equip(_),
+                ..
+            }
+        ),
+        "{:?}",
+        s.mode()
+    );
     step(&mut s, &mut c, &[Action::Cancel]);
     let Mode::ActionMenu { menu, entries, .. } = s.mode() else {
         panic!("{:?}", s.mode());
@@ -284,7 +314,12 @@ fn equip_swaps_the_weapon_and_the_unit_can_still_act() {
     assert_eq!(lord.loadout.equipped, Some(Equipped::Weapon(0)));
     let mut s = lord_menu(&mut c, state);
     step(&mut s, &mut c, &EQUIP);
-    let Mode::EquipMenu { menu, choices, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Equip(choices),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     // The equipped weapon is focused; the next one is chosen.
@@ -596,7 +631,12 @@ fn the_pack_list_and_the_preview_are_told_in_the_players_language() {
         step(&mut s, &mut c, &[action]);
     }
     step(&mut s, &mut c, &[Action::CursorDown]);
-    let Mode::ItemMenu { menu, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Pack(_),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     let labels = |menu: &crate::widgets::menu::Menu| -> Vec<String> {
@@ -604,7 +644,12 @@ fn the_pack_list_and_the_preview_are_told_in_the_players_language() {
     };
     assert!(labels(menu)[0].starts_with("Potion"), "{:?}", labels(menu));
     let told = s.mode().told(s.state(), words).into_owned();
-    let Mode::ItemMenu { menu: theirs, .. } = &told else {
+    let Mode::List {
+        menu: theirs,
+        kind: ListKind::Pack(_),
+        ..
+    } = &told
+    else {
         panic!("{told:?}");
     };
     assert!(

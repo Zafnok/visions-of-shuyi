@@ -59,12 +59,7 @@ fn depth(mode: &Mode) -> u8 {
         | Mode::RestartPrompt
         | Mode::SuspendPrompt => 2,
 
-        Mode::ArtsMenu { .. }
-        | Mode::SpellMenu { .. }
-        | Mode::SkillMenu { .. }
-        | Mode::ItemMenu { .. }
-        | Mode::EquipMenu { .. }
-        | Mode::TalkTarget { .. } => 3,
+        Mode::List { .. } | Mode::TalkTarget(_) => 3,
         Mode::Targeting(_) | Mode::CastTarget(_) | Mode::SkillTarget(_) | Mode::ItemTarget(_) => 4,
     }
 }
@@ -159,11 +154,11 @@ mod tests {
         let state = crate::screens::battle::quick_battle(&crate::screen::tests::ctx().game.content)
             .unwrap_or_else(|e| panic!("{e}"));
         let sel = super::super::mode::Selection::new(&state, UnitId(1)).unwrap();
-        let talk = Mode::TalkTarget {
+        let talk = Mode::TalkTarget(super::super::mode::TalkTargeting {
             sel,
             targets: vec![UnitId(7)],
             index: 0,
-        };
+        });
         assert_eq!(depth(&talk), depth(&Mode::Objective) + 1);
     }
 }

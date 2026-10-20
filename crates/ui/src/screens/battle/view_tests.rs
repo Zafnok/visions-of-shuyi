@@ -113,10 +113,10 @@ fn the_item_list_has_the_packs_size_in_its_header() {
         panic!("{:?}", s.mode());
     };
     // The list `Item` opens (disabled for the lord here, so set directly).
-    s.mode = Mode::ItemMenu {
+    s.mode = Mode::List {
         sel,
         menu: Menu::new(vec![]),
-        groups: vec![],
+        kind: ListKind::Pack(vec![]),
     };
     let header = s.view(&c).menu.unwrap().header.unwrap();
     assert_eq!(header.name, items::pack_header(s.state(), Words::ENGLISH));

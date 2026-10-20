@@ -13,7 +13,7 @@ use trpg_core::{
 use super::BattleScreen;
 use super::art_list::{Technique, art_lines, arts_menu, playback_banner};
 use super::attack::reach;
-use super::mode::{MenuEntry, Mode};
+use super::mode::{ListKind, MenuEntry, Mode};
 use super::playback::{Playback, TIMINGS, box_view};
 use super::testing::{battle_with, quick_units};
 use super::view::{ForecastView, InfoView, SkillLineView};
@@ -151,7 +151,12 @@ fn use_art(s: &mut BattleScreen, c: &mut Ctx, name: &str, target: UnitId) {
     let at = at.unwrap_or_else(|| panic!("{name} isn't listed: {:?}", lines(s)));
     // Down to the line (it opened on the first one that can be chosen).
     for _ in 0..at {
-        let Mode::ArtsMenu { menu, .. } = s.mode() else {
+        let Mode::List {
+            menu,
+            kind: ListKind::Arts(_),
+            ..
+        } = s.mode()
+        else {
             unreachable!()
         };
         if menu.focus() == at {
@@ -182,7 +187,12 @@ fn archer_on_brigand(c: &mut Ctx, state: BattleState, name: &str) -> BattleScree
 /// The lines of the arts menu that is open: name as shown, enabled, dimmed
 /// reason.
 fn lines(s: &BattleScreen) -> Vec<(String, bool, Option<String>)> {
-    let Mode::ArtsMenu { menu, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Arts(_),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     shown(menu)
@@ -386,7 +396,17 @@ fn a_dimmed_line_shows_its_reason_and_effect_and_cant_be_chosen() {
     assert!(all.contains("pins: Mov −3"), "{all}");
     assert!(!all.contains("min range 1"), "{all}");
     step(&mut s, &mut c, &[Action::Confirm]);
-    assert!(matches!(s.mode(), Mode::ArtsMenu { .. }), "{:?}", s.mode());
+    assert!(
+        matches!(
+            s.mode(),
+            Mode::List {
+                kind: ListKind::Arts(_),
+                ..
+            }
+        ),
+        "{:?}",
+        s.mode()
+    );
     step(&mut s, &mut c, &[Action::CursorDown]);
     let all = screen_text(&render(&s, &c));
     assert!(all.contains("Bow: move 1 after"), "{all}");
@@ -413,7 +433,12 @@ fn lines_are_arts_then_actives_and_only_what_fits() {
     // No `Attack` line, no bow or axe arts, and not the lord's Inspire (not
     // a combat active).
     assert_eq!(names, ["Flowing Cut", "Guard Break", "Keen Edge"]);
-    let Mode::ArtsMenu { menu, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Arts(_),
+        ..
+    } = s.mode()
+    else {
         unreachable!()
     };
     let labels: Vec<&str> = menu.items().iter().map(|i| i.label.trim_end()).collect();
@@ -531,7 +556,12 @@ fn archer_arts_menu_snapshot() {
 
 /// What the focused line of the arts menu says it does (ticket 0429).
 fn focused_note(s: &BattleScreen) -> Option<String> {
-    let Mode::ArtsMenu { menu, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Arts(_),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     menu.view().focused().and_then(|i| i.note.clone())
@@ -600,7 +630,14 @@ fn broken_weapon_lines_snapshot() {
     let menu = arts_menu(s.state(), Words::ENGLISH, &lines);
     let (text, color) = menu.items()[0].suffix.clone().unwrap();
     assert_eq!((text.trim(), color), ("broken", SuffixKind::Warning));
-    let action_menu = std::mem::replace(&mut s.mode, Mode::ArtsMenu { sel, menu, lines });
+    let action_menu = std::mem::replace(
+        &mut s.mode,
+        Mode::List {
+            sel,
+            menu,
+            kind: ListKind::Arts(lines),
+        },
+    );
     let list = render(&s, &c).to_snapshot(&c.palette);
     s.mode = action_menu;
     choose_entry(&mut s, &mut c, MenuEntry::Attack);
