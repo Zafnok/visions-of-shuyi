@@ -13,11 +13,12 @@ use super::view::{FighterView, StageView};
 use crate::color::{Rgb, UiColor};
 use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Layer, Paint, PxRect, Rect, Sprite};
+use crate::map_view::grid::px_rect;
 use crate::portrait::dim_opacity;
 use crate::screen::Ctx;
 use crate::screens::battle::info::stat_name;
 use crate::screens::battle::layout::{MAP_VIEW, SIDE_PANEL};
-use crate::screens::battle::units::{faction_color, hp_fill};
+use crate::screens::battle::units::{faction_color, paint_hp_bar};
 
 /// Console pixels per picture pixel.
 pub const ZOOM: u32 = 2;
@@ -66,23 +67,13 @@ pub const PLATE: (i32, i32) = (STAGE.w / 2, STAGE.h - SCENE_ROWS);
 pub const BAR_CELLS: i32 = 20;
 
 /// A cell's size in console pixels: the battle screen is laid out on the
-/// PC console.
+/// PC console, whose cells are the grid's.
 const CELL_W: i32 = ConsoleSpec::PC.cell_w as i32;
 const CELL_H: i32 = ConsoleSpec::PC.cell_h as i32;
 
-/// The cells `cells` in console pixels.
-fn cells_px(cells: Rect) -> PxRect {
-    PxRect::new(
-        cells.x * CELL_W,
-        cells.y * CELL_H,
-        cells.w * CELL_W,
-        cells.h * CELL_H,
-    )
-}
-
 /// The scene in console pixels.
 fn scene_px() -> PxRect {
-    cells_px(SCENE)
+    px_rect(SCENE)
 }
 
 /// The backdrop `image` across the scene: its window in the middle, and
@@ -230,15 +221,8 @@ fn plate(ctx: &Ctx, buf: &mut GlyphBuffer, slot: i32, fighter: &FighterView) {
     buf.print(x, y, &cut(&fighter.name), fg, name_bg);
     let hp = format!("{} {:>2}", stat_name(words, StatKind::Hp), fighter.hp);
     buf.print(x, y + 1, &hp, c(UiColor::Text), bg);
-    let (filled, bar) = hp_fill(fighter.hp, fighter.max, BAR_CELLS);
-    for i in 0..BAR_CELLS {
-        let (glyph, fg) = if i < filled {
-            ('█', c(bar))
-        } else {
-            ('░', dim)
-        };
-        buf.set(x + 6 + i, y + 1, Cell::new(glyph, fg, bg));
-    }
+    let bar = Rect::new(x + 6, y + 1, BAR_CELLS, 1);
+    paint_hp_bar(buf, &ctx.palette, bar, (fighter.hp, fighter.max), bg);
     buf.print(
         x + 7 + BAR_CELLS,
         y + 1,

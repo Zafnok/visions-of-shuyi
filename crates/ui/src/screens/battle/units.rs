@@ -3,7 +3,8 @@
 
 use trpg_core::{Faction, StatValue};
 
-use crate::color::UiColor;
+use crate::color::{Palette, Rgb, UiColor};
+use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 
 /// The colour of `faction`: player blue, enemy red, ally green, neutral
 /// yellow.
@@ -36,6 +37,31 @@ pub fn hp_fill(hp: StatValue, max: StatValue, full: i32) -> (i32, UiColor) {
         UiColor::HpLow
     };
     (i32::try_from(width).unwrap_or(0), color)
+}
+
+/// A bar across `rect` with its first `filled` cells `full` and the rest
+/// `empty`: the engine's [`GlyphBuffer::meter`] given cells already
+/// rounded, so each bar keeps its own rule (an HP bar, [`hp_fill`], rounds
+/// half up and shows 0.4 of a cell as empty; an EXP bar rounds down, so
+/// 99 of 100 is never full).
+pub fn meter_cells(buf: &mut GlyphBuffer, rect: Rect, filled: i32, full: Cell, empty: Cell) {
+    let n = |cells: i32| u32::try_from(cells).unwrap_or(0);
+    buf.meter(rect, n(filled), n(rect.w), full, empty);
+}
+
+/// The HP bar of `hp` of `max` across `rect` on `bg`: `█` in its HP
+/// colour ([`hp_fill`]), the rest `░` dim.
+pub fn paint_hp_bar(
+    buf: &mut GlyphBuffer,
+    palette: &Palette,
+    rect: Rect,
+    (hp, max): (StatValue, StatValue),
+    bg: Rgb,
+) {
+    let (filled, color) = hp_fill(hp, max, rect.w);
+    let full = Cell::new('█', palette.get(color), bg);
+    let empty = Cell::new('░', palette.get(UiColor::TextDim), bg);
+    meter_cells(buf, rect, filled, full, empty);
 }
 
 #[cfg(test)]

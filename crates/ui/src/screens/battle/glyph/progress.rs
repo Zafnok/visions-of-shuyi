@@ -6,13 +6,14 @@
 //! pages.
 
 use super::fight_box::BOX;
-use crate::color::UiColor;
+use crate::color::{Rgb, UiColor};
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::portrait::draw_portrait;
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::battle::layout::MAP_VIEW;
 use crate::screens::battle::progress::stat_row_parts;
+use crate::screens::battle::units::meter_cells;
 use crate::screens::battle::view::{ClassProgressView, ExpView, GainsView, ProgressView};
 
 /// The EXP box: where the combat playback's box was.
@@ -59,6 +60,21 @@ pub fn bar_cells(exp: u32, max: u32) -> i32 {
     i32::try_from(filled).unwrap_or(EXP_BAR_CELLS)
 }
 
+/// The EXP bar of `exp` of `max` across `rect` on `bg` ([`bar_cells`]):
+/// `█` in the EXP colour, the rest `░` dim.
+pub fn paint_exp_bar(
+    ctx: &Ctx,
+    buf: &mut GlyphBuffer,
+    rect: Rect,
+    (exp, max): (u32, u32),
+    bg: Rgb,
+) {
+    let c = |u| ctx.palette.get(u);
+    let full = Cell::new('█', c(UiColor::ExpBar), bg);
+    let empty = Cell::new('░', c(UiColor::TextDim), bg);
+    meter_cells(buf, rect, bar_cells(exp, max), full, empty);
+}
+
 /// Paints the page `view`.
 pub fn paint(ctx: &Ctx, view: &ProgressView, buf: &mut GlyphBuffer) {
     match view {
@@ -81,15 +97,8 @@ fn paint_exp(ctx: &Ctx, page: &ExpView, buf: &mut GlyphBuffer) {
     buf.print(x, y, &name, c(UiColor::Player), bg);
     let bar_x = x + NAME_COL;
     buf.print(bar_x, y, &page.exp_name, c(UiColor::TextDim), bg);
-    let filled = bar_cells(page.exp, page.max);
-    for i in 0..EXP_BAR_CELLS {
-        let (glyph, fg) = if i < filled {
-            ('█', c(UiColor::ExpBar))
-        } else {
-            ('░', c(UiColor::TextDim))
-        };
-        buf.set(bar_x + 4 + i, y, Cell::new(glyph, fg, bg));
-    }
+    let bar = Rect::new(bar_x + 4, y, EXP_BAR_CELLS, 1);
+    paint_exp_bar(ctx, buf, bar, (page.exp, page.max), bg);
     let n = format!("{:>2}", page.exp);
     buf.print(bar_x + 5 + EXP_BAR_CELLS, y, &n, c(UiColor::Text), bg);
 }

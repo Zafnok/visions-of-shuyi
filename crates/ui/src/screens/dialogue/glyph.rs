@@ -174,9 +174,7 @@ pub fn draw_face(ctx: &Ctx, buf: &mut GlyphBuffer, face: &FaceFrame) {
     let plate = Rect::new(x, y + FRAME.1, FRAME.0, 1);
     buf.fill_rect(plate, Cell::new(' ', c(UiColor::Text), bg));
     // check-text: not a data name (the view's own)
-    let name = face.name;
-    let w = i32::try_from(name.chars().count()).unwrap_or(0);
-    buf.print(x + (FRAME.0 - w) / 2, plate.y, name, c(name_fg), bg);
+    buf.print_centred(plate, face.name, c(name_fg));
 }
 
 /// Where the text box goes: rows 21–27, the text from column 4 of row 23.

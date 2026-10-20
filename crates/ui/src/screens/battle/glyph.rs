@@ -20,14 +20,14 @@ use trpg_core::Phase;
 
 use super::banner::BannerKind;
 use super::layout::{HELP_BAR, HELP_ROW, MAP_VIEW, SIDE_PANEL};
-use super::units::{faction_color, hp_fill};
+use super::units::{faction_color, paint_hp_bar};
 use super::view::{
     BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, NotesView,
     PanelUnitView, PanelView,
 };
 use super::{PopupKind, stage};
 use crate::color::{Rgb, UiColor};
-use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
+use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, PanelLook, Rect};
 use crate::map_view::MapScene;
 use crate::screen::Ctx;
 use crate::screens::paint_debug_hint;
@@ -230,32 +230,50 @@ fn paint_popups(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     }
 }
 
-/// Prints `text` at the panel's text column on row `y`, cut to
-/// [`TEXT_W`].
-fn panel_line(buf: &mut GlyphBuffer, y: i32, text: &str, fg: Rgb) {
-    let bg = buf.get(TEXT_X, y).map_or(fg, |c| c.bg);
-    let cut: String = text.chars().take(TEXT_W).collect();
-    buf.print(TEXT_X, y, &cut, fg, bg);
+/// Prints `text` in `fg` from `(x, y)` in at most `width` cells, keeping
+/// the cells' background. The glyph skins cut a long line hard, with no
+/// `…` (the panel's and the forecast's tests), which is why this is not
+/// the engine's `print_cut`.
+pub fn print_clipped(buf: &mut GlyphBuffer, (x, y): (i32, i32), width: usize, text: &str, fg: Rgb) {
+    let shown: String = text.chars().take(width).collect();
+    buf.print_fg(x, y, &shown, fg);
 }
 
 /// Paints the side panel: its box, the terrain, then the unit.
 fn paint_panel(ctx: &Ctx, panel: &PanelView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
-    let panel_bg = c(UiColor::PanelBg);
-    buf.fill_rect(SIDE_PANEL, Cell::new(' ', c(UiColor::Text), panel_bg));
     // Double-line while a unit is selected (`look-and-feel.md`).
     let style = if panel.selected {
         BoxStyle::Double
     } else {
         BoxStyle::Single
     };
-    buf.draw_box(SIDE_PANEL, style, c(UiColor::PanelBorder), panel_bg);
+    let look = PanelLook::new(style, c(UiColor::Text), c(UiColor::PanelBg));
+    buf.panel(SIDE_PANEL, &look.border(c(UiColor::PanelBorder)), None);
     if let Some(t) = &panel.terrain {
         // check-text: not a data name (the view's own)
-        panel_line(buf, TERRAIN_ROW, &t.name, c(UiColor::TextHighlight));
-        panel_line(buf, TERRAIN_ROW + 1, &t.bonuses, c(UiColor::Text));
+        print_clipped(
+            buf,
+            (TEXT_X, TERRAIN_ROW),
+            TEXT_W,
+            &t.name,
+            c(UiColor::TextHighlight),
+        );
+        print_clipped(
+            buf,
+            (TEXT_X, TERRAIN_ROW + 1),
+            TEXT_W,
+            &t.bonuses,
+            c(UiColor::Text),
+        );
         if let Some(heals) = &t.heals {
-            panel_line(buf, TERRAIN_ROW + 2, heals, c(UiColor::Text));
+            print_clipped(
+                buf,
+                (TEXT_X, TERRAIN_ROW + 2),
+                TEXT_W,
+                heals,
+                c(UiColor::Text),
+            );
         }
     }
     if let Some(unit) = &panel.unit {
@@ -269,21 +287,32 @@ fn paint_panel_unit(ctx: &Ctx, unit: &PanelUnitView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let y = UNIT_ROW;
     // check-text: not a data name (the view's own)
-    panel_line(buf, y, &unit.name, c(faction_color(unit.faction)));
-    panel_line(buf, y + 1, &unit.class_level, c(UiColor::Text));
+    print_clipped(
+        buf,
+        (TEXT_X, y),
+        TEXT_W,
+        &unit.name,
+        c(faction_color(unit.faction)),
+    );
+    print_clipped(
+        buf,
+        (TEXT_X, y + 1),
+        TEXT_W,
+        &unit.class_level,
+        c(UiColor::Text),
+    );
     let hp = format!("{} {}/{}", unit.hp_name, unit.hp, unit.max);
-    panel_line(buf, y + 2, &hp, c(UiColor::Text));
-    let (filled, color) = hp_fill(unit.hp, unit.max, HP_BAR_CELLS);
-    for i in 0..HP_BAR_CELLS {
-        let (glyph, fg) = if i < filled {
-            ('█', c(color))
-        } else {
-            ('░', c(UiColor::TextDim))
-        };
-        let bg = c(UiColor::PanelBg);
-        buf.set(HP_BAR_X + i, y + 2, Cell::new(glyph, fg, bg));
-    }
-    panel_line(buf, y + 3, &unit.faction_name, c(UiColor::TextDim));
+    print_clipped(buf, (TEXT_X, y + 2), TEXT_W, &hp, c(UiColor::Text));
+    let bar = Rect::new(HP_BAR_X, y + 2, HP_BAR_CELLS, 1);
+    let bg = c(UiColor::PanelBg);
+    paint_hp_bar(buf, &ctx.palette, bar, (unit.hp, unit.max), bg);
+    print_clipped(
+        buf,
+        (TEXT_X, y + 3),
+        TEXT_W,
+        &unit.faction_name,
+        c(UiColor::TextDim),
+    );
 }
 
 /// Paints the boxes over the map: the unit list, the objective page (the
@@ -411,17 +440,10 @@ fn draw_dialog_at(
     let bg = c(UiColor::PanelBg);
     let (w, h) = dialog_size(title, lines);
     let rect = Rect::new(MAP_VIEW.x + (MAP_VIEW.w - w) / 2, top, w, h);
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorder), bg);
-    if !title.is_empty() {
-        buf.print(
-            rect.x + 2,
-            rect.y,
-            &format!(" {title} "),
-            c(UiColor::TextHighlight),
-            bg,
-        );
-    }
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg)
+        .border(c(UiColor::PanelBorder))
+        .title(c(UiColor::TextHighlight));
+    buf.panel(rect, &look, Some(title).filter(|t| !t.is_empty()));
     for (y, (line, color)) in (rect.y + 2..).zip(lines) {
         buf.print(rect.x + 2, y, line, c(*color), bg);
     }
@@ -461,16 +483,11 @@ fn paint_banner(ctx: &Ctx, banner: &super::view::BannerView, buf: &mut GlyphBuff
         BANNER_H,
     );
     let color = banner_color(banner.kind);
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Double, c(color), bg);
-    let centred = |text: &str| {
-        let w = i32::try_from(text.chars().count()).unwrap_or(0);
-        rect.x + (rect.w - w) / 2
-    };
-    let title = &banner.title;
-    buf.print(centred(title), rect.y + 2, title, c(color), bg);
-    let sub = &banner.subtitle;
-    buf.print(centred(sub), rect.y + 3, sub, c(UiColor::Text), bg);
+    let look = PanelLook::new(BoxStyle::Double, c(UiColor::Text), bg);
+    buf.panel(rect, &look.border(c(color)), None);
+    let row = |dy| Rect::new(rect.x, rect.y + dy, rect.w, 1);
+    buf.print_centred(row(2), &banner.title, c(color));
+    buf.print_centred(row(3), &banner.subtitle, c(UiColor::Text));
 }
 
 /// Paints the bar under the map and panel: the toggles' state at the right

@@ -10,7 +10,7 @@ use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
-use crate::screens::battle::glyph::progress::{self, EXP_BAR_CELLS, bar_cells};
+use crate::screens::battle::glyph::progress::{self, EXP_BAR_CELLS};
 use crate::screens::battle::layout::MAP_VIEW;
 use crate::screens::{centre_x, print_centred};
 
@@ -112,15 +112,8 @@ fn paint_unit(ctx: &Ctx, unit: &UnitView, buf: &mut GlyphBuffer, y: i32) {
     buf.print(X + COLS[0], y, &class, dim, bg);
     buf.print(X + COLS[1], y, &unit.level, text, bg);
     buf.print(X + COLS[2], y, &unit.exp_label, dim, bg);
-    let filled = bar_cells(unit.exp, unit.exp_max);
-    for i in 0..EXP_BAR_CELLS {
-        let (glyph, fg) = if i < filled {
-            ('█', c(UiColor::ExpBar))
-        } else {
-            ('░', dim)
-        };
-        buf.set(X + COLS[3] + i, y, Cell::new(glyph, fg, bg));
-    }
+    let bar = Rect::new(X + COLS[3], y, EXP_BAR_CELLS, 1);
+    progress::paint_exp_bar(ctx, buf, bar, (unit.exp, unit.exp_max), bg);
     buf.print(X + COLS[4], y, &format!("{:>2}", unit.exp), text, bg);
     if let Some(mark) = &unit.level_up {
         buf.print(X + COLS[5], y, mark, hi, bg);
