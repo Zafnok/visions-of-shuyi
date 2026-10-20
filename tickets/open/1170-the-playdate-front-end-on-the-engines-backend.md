@@ -6,7 +6,7 @@ milestone: "Engine: carve"
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["engine#3010", "engine#3028", "engine#3029"]
+blocked_by: ["engine#3010", "engine#3028", "engine#3029", "1175"]
 nick_input: sign-off
 completed:
 ---
@@ -52,8 +52,10 @@ sound, saves, the system menu.
   replaced it.
 - `cargo xtask playdate` becomes a call to `shuyi export playdate`, or
   goes, with `docs` and `crates/playdate/README.md` updated.
-- Reconcile the engine's `crates/app` and the game's `crates/app` the
-  same way if 3003 changed how a backend starts.
+- Start the Playdate build the way 1175 started the desktop one: a
+  `shuyi_platform::Start` with the game's loading card, its load and its
+  look, which the engine's Playdate backend runs (3003 changed how a
+  backend starts; 1175 moved the desktop `main` and the Harness onto it).
 
 **Out (do not do):**
 - The one-bit skins in `crates/ui` (the game's look,
