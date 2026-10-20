@@ -59,9 +59,8 @@ None.
 ## Acceptance criteria
 
 - [ ] `grep -rn "fn paint_question" crates/ui/src` finds at most the
-      one-bit kit's. **Not met, on purpose:** it finds two. The class
-      change screen's stays (see below), and the profile screen's is out
-      of scope (1164 replaces the screen whole).
+      one-bit kit's. **Not met, on purpose:** it finds the class
+      change screen's, which stays (see below).
 - [x] Every snapshot is unchanged.
 - [x] All gates in the `run-gates` skill pass.
 
