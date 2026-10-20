@@ -1873,6 +1873,32 @@ mod tests {
     }
 
     #[test]
+    fn a_menu_line_with_no_entry_behind_it_does_nothing() {
+        let s = quick();
+        let Mode::ActionMenu {
+            sel,
+            menu,
+            entries,
+            weapons,
+        } = lord_menu(&s)
+        else {
+            panic!("no action menu");
+        };
+        // One line more than there are entries, focused.
+        let mut items = menu.items().to_vec();
+        items.push(MenuItem::new("Extra"));
+        let menu = Menu::new(items).focused(entries.len());
+        let mode = Mode::ActionMenu {
+            sel,
+            menu,
+            entries,
+            weapons,
+        };
+        let (same, effect) = step(mode.clone(), Action::Confirm, p(5, 5), &s);
+        assert_eq!((same, effect), (mode, Effect::None));
+    }
+
+    #[test]
     fn seize_is_offered_only_where_it_is_legal() {
         let seize = |by_lord| Objective::Seize {
             pos: p(5, 5),
