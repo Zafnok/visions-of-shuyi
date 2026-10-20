@@ -4,9 +4,9 @@
 //! action ([`Mode::ActionMenu`]); to attack (0404), pick a target with the
 //! forecast ([`Mode::Targeting`]), where left and right swap the weapon, and
 //! watch the combat ([`Mode::Combat`]); to attack with a Combat Art or a
-//! combat active (0442), pick it in the arts menu ([`Mode::ArtsMenu`])
-//! first; to cast (0410), pick a spell ([`Mode::SpellMenu`]) and what to
-//! cast it on ([`Mode::CastTarget`]). The move
+//! combat active (0442), pick it in the arts list ([`Mode::List`])
+//! first; to cast (0410), pick a spell (the same, [`ListKind::Spells`]) and
+//! what to cast it on ([`Mode::CastTarget`]). The move
 //! is only sent, as one
 //! [`Command::Act`], when an action is chosen, so cancelling is free: until
 //! then the unit's new tile is a drawing override ([`Mode::drawn_pos`]) and
@@ -57,6 +57,7 @@ use super::path::steer;
 use super::playback::Playback;
 use super::skills::{
     SkillChoice, SkillTargeting, can_use_skill, has_skill_menu, skill_choices, skill_menu,
+    use_command,
 };
 use super::split_keys;
 use super::walk::{self, Gait};
@@ -202,20 +203,88 @@ impl MenuEntry {
     }
 
     /// Whether the entry can be chosen for `sel`'s unit: `Attack` if a
-    /// weapon reaches someone, `Arts` if an art or active can be used on
-    /// someone, `Magic` if a spell has a target, `Item` if
-    /// the pack has an item usable on someone, `Equip` with two usable
-    /// weapons or attack spells.
+    /// weapon reaches someone, a list if a line of it can be chosen
+    /// ([`ListKind::can_choose`]).
     fn enabled(self, sel: &Selection, weapons: &[WeaponChoice], state: &BattleState) -> bool {
         match self {
             MenuEntry::Attack => !weapons.is_empty(),
-            MenuEntry::Arts => can_use_art(&art_lines(state, sel.unit, sel.dest())),
-            MenuEntry::Magic => can_cast(&spell_choices(state, sel.unit, sel.dest())),
-            MenuEntry::Skill => can_use_skill(&skill_choices(state, IN_PLAY, sel)),
-            MenuEntry::Item => can_use_item(&pack_groups(state, sel.unit, sel.dest())),
-            MenuEntry::Equip => can_equip(&equip_choices(state, sel.unit)),
             MenuEntry::Seize | MenuEntry::Talk | MenuEntry::Wait => true,
+            list => ListKind::of(list, sel, state).is_some_and(|kind| kind.can_choose()),
         }
+    }
+}
+
+/// What a list the action menu opens lists (ticket 1161), with its lines.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ListKind {
+    /// The unit's Combat Arts and combat actives (0442).
+    Arts(Vec<ArtLine>),
+    /// The unit's spells (0410), or its heals for the ally it is aimed at
+    /// (0451).
+    Spells(Vec<SpellChoice>),
+    /// The unit's non-combat active skills (0412).
+    Skills(Vec<SkillChoice>),
+    /// The battle pack's items, grouped (0407).
+    Pack(Vec<PackGroup>),
+    /// The unit's weapons and attack spells, to equip one (0407).
+    Equip(Vec<EquipChoice>),
+}
+
+impl ListKind {
+    /// The list `entry` opens for `sel`'s unit at its path's end; `None`
+    /// for an entry that opens no list.
+    fn of(entry: MenuEntry, sel: &Selection, state: &BattleState) -> Option<Self> {
+        let (unit, dest) = (sel.unit, sel.dest());
+        Some(match entry {
+            MenuEntry::Arts => ListKind::Arts(art_lines(state, unit, dest)),
+            MenuEntry::Magic => ListKind::Spells(spell_choices(state, unit, dest)),
+            MenuEntry::Skill => ListKind::Skills(skill_choices(state, IN_PLAY, sel)),
+            MenuEntry::Item => ListKind::Pack(pack_groups(state, unit, dest)),
+            MenuEntry::Equip => ListKind::Equip(equip_choices(state, unit)),
+            // Attack, Seize, Talk and Wait.
+            _ => return None,
+        })
+    }
+
+    /// The action menu's entry that opens it (Cancel goes back to it).
+    pub fn entry(&self) -> MenuEntry {
+        match self {
+            ListKind::Arts(_) => MenuEntry::Arts,
+            ListKind::Spells(_) => MenuEntry::Magic,
+            ListKind::Skills(_) => MenuEntry::Skill,
+            ListKind::Pack(_) => MenuEntry::Item,
+            ListKind::Equip(_) => MenuEntry::Equip,
+        }
+    }
+
+    /// Whether a line can be chosen: an art or active usable on someone, a
+    /// spell with a target, a usable skill, an item usable on someone, two
+    /// usable weapons or attack spells.
+    fn can_choose(&self) -> bool {
+        match self {
+            ListKind::Arts(lines) => can_use_art(lines),
+            ListKind::Spells(choices) => can_cast(choices),
+            ListKind::Skills(choices) => can_use_skill(choices),
+            ListKind::Pack(groups) => can_use_item(groups),
+            ListKind::Equip(choices) => can_equip(choices),
+        }
+    }
+
+    /// The list's menu for `unit`, written in `words`.
+    fn menu(&self, state: &BattleState, words: Words<'_>, unit: UnitId) -> Menu {
+        match self {
+            ListKind::Arts(lines) => arts_menu(state, words, lines),
+            ListKind::Spells(choices) => spell_menu(state, words, unit, choices),
+            ListKind::Skills(choices) => skill_menu(state, words, unit, choices),
+            ListKind::Pack(groups) => pack_menu(state, words, groups),
+            ListKind::Equip(choices) => equip_menu(state, words, unit, choices),
+        }
+    }
+
+    /// The list open for `sel`.
+    fn open(self, sel: Selection, state: &BattleState) -> Mode {
+        let (menu, kind) = (self.menu(state, IN_PLAY, sel.unit), self);
+        Mode::List { sel, menu, kind }
     }
 }
 
@@ -290,70 +359,27 @@ pub enum Mode {
         /// there are any).
         weapons: Vec<WeaponChoice>,
     },
-    /// The unit's Combat Arts and combat actives (0442).
-    ArtsMenu {
+    /// A list the action menu opened: the unit's arts (0442), spells
+    /// (0410), skills (0412), pack (0407) or weapons to equip (0407).
+    List {
         /// The selection.
         sel: Selection,
-        /// The arts menu.
+        /// The list.
         menu: Menu,
-        /// What each line is.
-        lines: Vec<ArtLine>,
+        /// What it lists, and each line.
+        kind: ListKind,
     },
     /// The player picks a target and reads the forecast.
     Targeting(Box<Targeting>),
-    /// The unit's spells (0410).
-    SpellMenu {
-        /// The selection.
-        sel: Selection,
-        /// The spell list.
-        menu: Menu,
-        /// What each line is.
-        choices: Vec<SpellChoice>,
-    },
     /// The player picks what a spell is cast on: an enemy (with the
     /// forecast), a hurt ally or a tile.
     CastTarget(Box<CastTargeting>),
-    /// The unit's non-combat active skills (0412).
-    SkillMenu {
-        /// The selection.
-        sel: Selection,
-        /// The skill list.
-        menu: Menu,
-        /// What each line is.
-        choices: Vec<SkillChoice>,
-    },
     /// The player picks who a skill (Shove) is used on.
     SkillTarget(Box<SkillTargeting>),
-    /// The battle pack's items, grouped (0407).
-    ItemMenu {
-        /// The selection.
-        sel: Selection,
-        /// The pack list.
-        menu: Menu,
-        /// What each line is.
-        groups: Vec<PackGroup>,
-    },
     /// The player picks who an item is used on.
     ItemTarget(Box<ItemTargeting>),
-    /// The player picks who to talk to (0705): the cursor keys and
-    /// `NextUnit`/`PrevUnit` cycle `targets`, Confirm talks.
-    TalkTarget {
-        /// The selection.
-        sel: Selection,
-        /// The units it can talk to ([`BattleState::talk_targets`]).
-        targets: Vec<UnitId>,
-        /// The one under the cursor.
-        index: usize,
-    },
-    /// The unit's weapons, to equip one (0407).
-    EquipMenu {
-        /// The selection.
-        sel: Selection,
-        /// The weapon list.
-        menu: Menu,
-        /// What each line is.
-        choices: Vec<EquipChoice>,
-    },
+    /// The player picks who to talk to (0705).
+    TalkTarget(TalkTargeting),
     /// An attack's combat plays out.
     Combat(Box<Playback>),
     /// An AI unit's action is shown (0502): the camera pans to it, it
@@ -429,21 +455,11 @@ impl Mode {
                 let items = lines.map(|(e, item)| e.item(words, item.enabled));
                 *menu = Menu::new(items.collect()).focused(menu.focus());
             }
-            Mode::ArtsMenu { menu, lines, .. } => {
-                *menu = arts_menu(state, words, lines).focused(menu.focus());
-            }
-            Mode::SpellMenu { sel, menu, choices } => {
-                *menu = spell_menu(state, words, sel.unit, choices).focused(menu.focus());
-            }
-            Mode::SkillMenu { sel, menu, choices } => {
-                *choices = skill_choices(state, words, sel);
-                *menu = skill_menu(state, words, sel.unit, choices).focused(menu.focus());
-            }
-            Mode::ItemMenu { menu, groups, .. } => {
-                *menu = pack_menu(state, words, groups).focused(menu.focus());
-            }
-            Mode::EquipMenu { sel, menu, choices } => {
-                *menu = equip_menu(state, words, sel.unit, choices).focused(menu.focus());
+            Mode::List { sel, menu, kind } => {
+                if let ListKind::Skills(choices) = kind {
+                    *choices = skill_choices(state, words, sel);
+                }
+                *menu = kind.menu(state, words, sel.unit).focused(menu.focus());
             }
             Mode::UnitList { menu, .. } => {
                 *menu = unit_list(state, words).0.focused(menu.focus());
@@ -527,7 +543,7 @@ impl Mode {
                 | Mode::CastTarget(_)
                 | Mode::SkillTarget(_)
                 | Mode::ItemTarget(_)
-                | Mode::TalkTarget { .. }
+                | Mode::TalkTarget(_)
                 | Mode::AiAction(_)
         )
     }
@@ -543,7 +559,7 @@ impl Mode {
             || self.cursor_free()
             || matches!(
                 self,
-                Mode::SkillTarget(_) | Mode::ItemTarget(_) | Mode::TalkTarget { .. }
+                Mode::SkillTarget(_) | Mode::ItemTarget(_) | Mode::TalkTarget(_)
             )
     }
 
@@ -600,12 +616,8 @@ impl Mode {
             Mode::Selected(sel)
             | Mode::Moving { sel, .. }
             | Mode::ActionMenu { sel, .. }
-            | Mode::ArtsMenu { sel, .. }
-            | Mode::SpellMenu { sel, .. }
-            | Mode::SkillMenu { sel, .. }
-            | Mode::ItemMenu { sel, .. }
-            | Mode::EquipMenu { sel, .. }
-            | Mode::TalkTarget { sel, .. } => Some(sel),
+            | Mode::List { sel, .. } => Some(sel),
+            Mode::TalkTarget(t) => Some(&t.sel),
             Mode::Targeting(t) => Some(&t.sel),
             Mode::CastTarget(t) => Some(&t.sel),
             Mode::SkillTarget(t) => Some(&t.sel),
@@ -630,22 +642,11 @@ impl Mode {
     pub fn drawn_pos(&self, id: UnitId) -> Option<Pos> {
         match self {
             Mode::Moving { sel, t, pace, .. } if sel.unit == id => Some(walk_pos(sel, t * pace)),
-            Mode::ActionMenu { sel, .. }
-            | Mode::ArtsMenu { sel, .. }
-            | Mode::SpellMenu { sel, .. }
-            | Mode::SkillMenu { sel, .. }
-            | Mode::ItemMenu { sel, .. }
-            | Mode::EquipMenu { sel, .. }
-            | Mode::TalkTarget { sel, .. }
-                if sel.unit == id =>
-            {
-                Some(sel.dest())
-            }
-            Mode::Targeting(t) if t.sel.unit == id => Some(t.sel.dest()),
-            Mode::CastTarget(t) if t.sel.unit == id => Some(t.sel.dest()),
-            Mode::SkillTarget(t) if t.sel.unit == id => Some(t.sel.dest()),
-            Mode::ItemTarget(t) if t.sel.unit == id => Some(t.sel.dest()),
-            _ => None,
+            Mode::Selected(_) | Mode::Moving { .. } => None,
+            _ => self
+                .selection()
+                .filter(|s| s.unit == id)
+                .map(Selection::dest),
         }
     }
 
@@ -788,13 +789,8 @@ fn open_aimed(sel: Selection, state: &BattleState) -> (Mode, Effect) {
 /// opens its preview on that ally; Cancel goes to the action menu, on
 /// `Magic`. `None` if no heal reaches it.
 fn open_heals(sel: &Selection, state: &BattleState) -> Option<Mode> {
-    let choices = heal_choices(state, sel.unit, sel.dest(), sel.target?);
-    if !can_cast(&choices) {
-        return None;
-    }
-    let menu = spell_menu(state, IN_PLAY, sel.unit, &choices);
-    let sel = sel.clone();
-    Some(Mode::SpellMenu { sel, menu, choices })
+    let heals = ListKind::Spells(heal_choices(state, sel.unit, sel.dest(), sel.target?));
+    heals.can_choose().then(|| heals.open(sel.clone(), state))
 }
 
 /// The action menu for `sel`.
@@ -829,31 +825,15 @@ pub(super) fn open_menu(sel: Selection, state: &BattleState) -> Mode {
     }
 }
 
-/// The action menu for `sel`, focused on `Attack` (back from choosing an
-/// attack).
-fn back_to_menu(sel: Selection, state: &BattleState) -> Mode {
-    back_to_entry(sel, state, MenuEntry::Attack)
-}
-
 /// The action menu for `sel`, focused on `entry` (back from what it opened).
 pub(super) fn back_to_entry(sel: Selection, state: &BattleState, entry: MenuEntry) -> Mode {
-    let mode = open_menu(sel, state);
-    let Mode::ActionMenu {
-        sel,
-        menu,
-        entries,
-        weapons,
-    } = mode
-    else {
-        return mode;
-    };
-    let at = entries.iter().position(|&e| e == entry);
-    Mode::ActionMenu {
-        sel,
-        menu: at.map_or(menu.clone(), |i| menu.focused(i)),
-        entries,
-        weapons,
+    let mut mode = open_menu(sel, state);
+    if let Mode::ActionMenu { menu, entries, .. } = &mut mode
+        && let Some(at) = entries.iter().position(|&e| e == entry)
+    {
+        *menu = menu.clone().focused(at);
     }
+    mode
 }
 
 /// The forecast `t`, with the cursor on its target.
@@ -950,20 +930,21 @@ pub fn step_with(
             entries,
             weapons,
         } => step_action_menu(sel, menu, entries, weapons, action, state),
-        Mode::ArtsMenu { sel, menu, lines } => step_arts(sel, menu, lines, action, state),
-        Mode::Targeting(t) => step_targeting(*t, action, state),
-        Mode::SpellMenu { sel, menu, choices } => step_spells(sel, menu, choices, action, state),
-        Mode::CastTarget(t) => step_cast_target(*t, action, state),
-        Mode::SkillMenu { sel, menu, choices } => step_skills(sel, menu, choices, action, state),
-        Mode::SkillTarget(t) => step_skill_target(*t, action, state),
-        Mode::ItemMenu { sel, menu, groups } => step_pack(sel, menu, groups, action, state),
-        Mode::ItemTarget(t) => step_item_target(*t, action, state),
-        Mode::TalkTarget {
-            sel,
-            targets,
-            index,
-        } => step_talk_target(sel, targets, index, action, state),
-        Mode::EquipMenu { sel, menu, choices } => step_equip(sel, menu, choices, action, state),
+        Mode::List { sel, menu, kind } => step_list(sel, menu, kind, action, state),
+        // When several weapons or spells can make the attack, left and
+        // right swap between them instead of changing the target (0430,
+        // 0442).
+        Mode::Targeting(mut t) => match action {
+            Action::CursorLeft | Action::CursorRight if t.can_swap() => {
+                t.swap(action == Action::CursorRight, state);
+                aim(*t, state)
+            }
+            _ => step_target(*t, action, state),
+        },
+        Mode::CastTarget(t) => step_target(*t, action, state),
+        Mode::SkillTarget(t) => step_target(*t, action, state),
+        Mode::ItemTarget(t) => step_target(*t, action, state),
+        Mode::TalkTarget(t) => step_target(t, action, state),
         Mode::Combat(mut playback) => {
             if action == Action::Cancel {
                 playback.skip();
@@ -1080,40 +1061,27 @@ fn step_action_menu(
     state: &BattleState,
 ) -> (Mode, Effect) {
     match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) => {
-            let action = match entries.get(i) {
-                Some(MenuEntry::Wait) => UnitAction::Wait,
-                Some(MenuEntry::Seize) => UnitAction::Seize,
-                Some(MenuEntry::Talk) => return choose_talk(sel, state),
-                Some(MenuEntry::Attack) => return choose_attack(sel, &weapons, state),
-                Some(MenuEntry::Arts) => return open_arts(sel, state),
-                Some(MenuEntry::Magic) => return open_spells(sel, state),
-                Some(MenuEntry::Skill) => return open_skills(sel, state),
-                Some(MenuEntry::Item) => return open_pack(sel, state),
-                Some(MenuEntry::Equip) => return open_equip(sel, state),
-                None => {
-                    let menu = Mode::ActionMenu {
-                        sel,
-                        menu,
-                        entries,
-                        weapons,
-                    };
-                    return (menu, Effect::None);
-                }
+        Some(MenuEvent::Chosen(i)) if i < entries.len() => {
+            let action = match entries[i] {
+                MenuEntry::Wait => UnitAction::Wait,
+                MenuEntry::Seize => UnitAction::Seize,
+                MenuEntry::Talk => return choose_talk(sel, state),
+                MenuEntry::Attack => return choose_attack(sel, &weapons, state),
+                list => return open_list(list, sel, state),
             };
             let cmd = Command::Act {
                 unit: sel.unit,
                 dest: sel.dest(),
                 action,
             };
-            (Mode::default(), Effect::Apply(cmd))
+            apply(cmd)
         }
         Some(MenuEvent::Cancelled) => {
             let mut sel = sel;
             sel.target = None;
             (Mode::Selected(sel), Effect::None)
         }
-        None => {
+        _ => {
             let menu = Mode::ActionMenu {
                 sel,
                 menu,
@@ -1198,106 +1166,77 @@ fn step_info(unit: UnitId, action: Action, state: &BattleState) -> (Mode, Effect
 fn choose_attack(sel: Selection, weapons: &[WeaponChoice], state: &BattleState) -> (Mode, Effect) {
     match Targeting::attack(state, sel.clone(), weapons) {
         Some(t) => show_forecast(t, state),
-        None => (back_to_menu(sel, state), Effect::None),
+        None => (back_to_entry(sel, state, MenuEntry::Attack), Effect::None),
     }
 }
 
-/// `Arts` chosen: the arts menu (the action menu again if no line can be
-/// chosen, which the enabled entry rules out).
-fn open_arts(sel: Selection, state: &BattleState) -> (Mode, Effect) {
-    let lines = art_lines(state, sel.unit, sel.dest());
-    if !can_use_art(&lines) {
-        return (back_to_entry(sel, state, MenuEntry::Arts), Effect::None);
-    }
-    let menu = arts_menu(state, IN_PLAY, &lines);
-    (Mode::ArtsMenu { sel, menu, lines }, Effect::None)
-}
-
-/// [`step`] in the arts menu: Confirm opens the forecast of the chosen art
-/// or active, Cancel goes back to the action menu (on `Arts`).
-fn step_arts(
-    sel: Selection,
-    mut menu: Menu,
-    lines: Vec<ArtLine>,
-    action: Action,
-    state: &BattleState,
-) -> (Mode, Effect) {
-    match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) => {
-            match Targeting::art(state, sel.clone(), menu.clone(), lines.clone(), i) {
-                Some(t) => show_forecast(t, state),
-                None => (Mode::ArtsMenu { sel, menu, lines }, Effect::None),
-            }
-        }
-        Some(MenuEvent::Cancelled) => (back_to_entry(sel, state, MenuEntry::Arts), Effect::None),
-        None => (Mode::ArtsMenu { sel, menu, lines }, Effect::None),
-    }
-}
-
-/// `Magic` chosen: the spell list (the action menu again if no spell has a
-/// target, which the enabled entry rules out).
-fn open_spells(sel: Selection, state: &BattleState) -> (Mode, Effect) {
-    let choices = spell_choices(state, sel.unit, sel.dest());
-    if !can_cast(&choices) {
-        return (back_to_entry(sel, state, MenuEntry::Magic), Effect::None);
-    }
-    let menu = spell_menu(state, IN_PLAY, sel.unit, &choices);
-    (Mode::SpellMenu { sel, menu, choices }, Effect::None)
-}
-
-/// [`step`] in the spell list: Confirm picks what the spell is cast on, the
-/// cursor on its first target; Cancel goes back to the action menu.
-fn step_spells(
-    sel: Selection,
-    mut menu: Menu,
-    choices: Vec<SpellChoice>,
-    action: Action,
-    state: &BattleState,
-) -> (Mode, Effect) {
-    match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) => {
-            match CastTargeting::new(state, sel.clone(), menu.clone(), choices.clone(), i) {
-                Some(t) => {
-                    let at = target_pos(state, t.target());
-                    (
-                        Mode::CastTarget(Box::new(t)),
-                        at.map_or(Effect::None, Effect::Cursor),
-                    )
-                }
-                None => (Mode::SpellMenu { sel, menu, choices }, Effect::None),
-            }
-        }
-        Some(MenuEvent::Cancelled) => (back_to_entry(sel, state, MenuEntry::Magic), Effect::None),
-        None => (Mode::SpellMenu { sel, menu, choices }, Effect::None),
-    }
-}
-
-/// [`step`] while picking a spell's target: the cursor keys and
-/// `NextUnit`/`PrevUnit` step through the targets (enemies or allies, and
-/// tiles) in reading order. Confirm casts, Cancel goes back to the spell list with the cursor on the
-/// unit.
-fn step_cast_target(mut t: CastTargeting, action: Action, state: &BattleState) -> (Mode, Effect) {
-    let forward = match action {
-        Action::CursorRight | Action::CursorDown | Action::NextUnit => true,
-        Action::CursorLeft | Action::CursorUp | Action::PrevUnit => false,
-        Action::Confirm => return (Mode::default(), Effect::Apply(t.command())),
-        Action::Cancel => {
-            let dest = t.sel.dest();
-            let back = Mode::SpellMenu {
-                sel: t.sel,
-                menu: t.menu,
-                choices: t.choices,
-            };
-            return (back, Effect::Cursor(dest));
-        }
-        _ => return (Mode::CastTarget(Box::new(t)), Effect::None),
+/// A list chosen in the action menu (`Arts`, `Magic`, `Skill`, `Item`,
+/// `Equip`): the list, or the action menu again, on `entry`, if no line of
+/// it can be chosen (which the enabled entry rules out).
+fn open_list(entry: MenuEntry, sel: Selection, state: &BattleState) -> (Mode, Effect) {
+    let mode = match ListKind::of(entry, &sel, state) {
+        Some(kind) if kind.can_choose() => kind.open(sel, state),
+        _ => back_to_entry(sel, state, entry),
     };
-    t.cycle(forward, state);
-    let at = target_pos(state, t.target());
-    (
-        Mode::CastTarget(Box::new(t)),
-        at.map_or(Effect::None, Effect::Cursor),
-    )
+    (mode, Effect::None)
+}
+
+/// [`step`] in a list: Confirm does what the line does ([`choose_line`]),
+/// Cancel goes back to the action menu, on the entry that opened it.
+fn step_list(
+    sel: Selection,
+    mut menu: Menu,
+    kind: ListKind,
+    action: Action,
+    state: &BattleState,
+) -> (Mode, Effect) {
+    match menu.handle(action) {
+        Some(MenuEvent::Chosen(i)) => choose_line(sel, menu, kind, i, state),
+        Some(MenuEvent::Cancelled) => (back_to_entry(sel, state, kind.entry()), Effect::None),
+        None => (Mode::List { sel, menu, kind }, Effect::None),
+    }
+}
+
+/// Line `i` of a list chosen: an art opens its forecast; a spell picks
+/// what it is cast on, an item who it is used on, the cursor on the first;
+/// a skill that needs no target is used at once, Shove picks who it is used
+/// on; a weapon or spell is equipped and the action menu reopens (the unit
+/// hasn't acted). The list stays as it is if the line can't be chosen.
+fn choose_line(
+    sel: Selection,
+    menu: Menu,
+    kind: ListKind,
+    i: usize,
+    state: &BattleState,
+) -> (Mode, Effect) {
+    let (s, m) = (sel.clone(), menu.clone());
+    let chosen = match &kind {
+        ListKind::Arts(lines) => {
+            Targeting::art(state, s, m, lines.clone(), i).map(|t| show_forecast(t, state))
+        }
+        ListKind::Spells(choices) => {
+            CastTargeting::new(state, s, m, choices.clone(), i).map(|t| aim(t, state))
+        }
+        ListKind::Skills(choices) => match choices.get(i).filter(|c| c.usable) {
+            Some(c) if !c.needs_target => Some(apply(use_command(&sel, &c.skill, None))),
+            Some(_) => SkillTargeting::new(s, m, choices.clone(), i).map(|t| aim(t, state)),
+            None => None,
+        },
+        ListKind::Pack(groups) => {
+            ItemTargeting::new(s, m, groups.clone(), i).map(|t| aim(t, state))
+        }
+        // (The menu never chooses a dimmed, unusable weapon.)
+        ListKind::Equip(choices) => choices.get(i).map(|c| {
+            let cmd = equip_command(sel.unit, c.what.clone());
+            (Mode::default(), Effect::ApplyStay(cmd, Box::new(s)))
+        }),
+    };
+    chosen.unwrap_or((Mode::List { sel, menu, kind }, Effect::None))
+}
+
+/// Sending `cmd`, which ends the unit's action.
+fn apply(cmd: Command) -> (Mode, Effect) {
+    (Mode::default(), Effect::Apply(cmd))
 }
 
 /// `Talk` chosen: pick who to talk to, the cursor on the first (the action
@@ -1311,163 +1250,12 @@ fn choose_talk(sel: Selection, state: &BattleState) -> (Mode, Effect) {
     else {
         return (back_to_entry(sel, state, MenuEntry::Talk), Effect::None);
     };
-    let mode = Mode::TalkTarget {
+    let mode = Mode::TalkTarget(TalkTargeting {
         sel,
         targets,
         index: 0,
-    };
+    });
     (mode, Effect::Cursor(at))
-}
-
-/// [`step`] while picking who to talk to: the cursor keys and
-/// `NextUnit`/`PrevUnit` cycle the units, Confirm talks (free: the action
-/// menu opens again after the scene), Cancel goes back to the action menu
-/// (on `Talk`) with the cursor on the unit.
-fn step_talk_target(
-    sel: Selection,
-    targets: Vec<UnitId>,
-    index: usize,
-    action: Action,
-    state: &BattleState,
-) -> (Mode, Effect) {
-    let index = match action {
-        Action::CursorRight | Action::CursorDown | Action::NextUnit => {
-            wrap_step(index, targets.len(), true)
-        }
-        Action::CursorLeft | Action::CursorUp | Action::PrevUnit => {
-            wrap_step(index, targets.len(), false)
-        }
-        Action::Confirm => {
-            let Some(&target) = targets.get(index) else {
-                return (back_to_entry(sel, state, MenuEntry::Talk), Effect::None);
-            };
-            let cmd = Command::Talk {
-                unit: sel.unit,
-                dest: sel.dest(),
-                target,
-            };
-            return (Mode::default(), Effect::ApplyStay(cmd, Box::new(sel)));
-        }
-        Action::Cancel => {
-            let dest = sel.dest();
-            return (
-                back_to_entry(sel, state, MenuEntry::Talk),
-                Effect::Cursor(dest),
-            );
-        }
-        _ => index,
-    };
-    let at = targets
-        .get(index)
-        .and_then(|&id| state.unit(id))
-        .map(|u| u.pos);
-    let mode = Mode::TalkTarget {
-        sel,
-        targets,
-        index,
-    };
-    (mode, at.map_or(Effect::None, Effect::Cursor))
-}
-
-/// `Skill` chosen: the list of non-combat actives (the action menu again if
-/// none can be used, which the enabled entry rules out).
-fn open_skills(sel: Selection, state: &BattleState) -> (Mode, Effect) {
-    let choices = skill_choices(state, IN_PLAY, &sel);
-    if !can_use_skill(&choices) {
-        return (back_to_entry(sel, state, MenuEntry::Skill), Effect::None);
-    }
-    let menu = skill_menu(state, IN_PLAY, sel.unit, &choices);
-    (Mode::SkillMenu { sel, menu, choices }, Effect::None)
-}
-
-/// [`step`] in the skill list: Confirm uses a skill that needs no target
-/// at once and picks who to use Shove on otherwise, Cancel goes back to the
-/// action menu.
-fn step_skills(
-    sel: Selection,
-    mut menu: Menu,
-    choices: Vec<SkillChoice>,
-    action: Action,
-    state: &BattleState,
-) -> (Mode, Effect) {
-    match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) => {
-            let Some(choice) = choices.get(i).filter(|c| c.usable) else {
-                return (Mode::SkillMenu { sel, menu, choices }, Effect::None);
-            };
-            if !choice.needs_target {
-                let cmd = Command::Act {
-                    unit: sel.unit,
-                    dest: sel.dest(),
-                    action: UnitAction::UseSkill {
-                        skill: choice.skill.clone(),
-                        target: None,
-                    },
-                };
-                return (Mode::default(), Effect::Apply(cmd));
-            }
-            match SkillTargeting::new(sel.clone(), menu.clone(), choices.clone(), i) {
-                Some(t) => {
-                    let at = state.unit(t.target()).map(|u| u.pos);
-                    (
-                        Mode::SkillTarget(Box::new(t)),
-                        at.map_or(Effect::None, Effect::Cursor),
-                    )
-                }
-                None => (Mode::SkillMenu { sel, menu, choices }, Effect::None),
-            }
-        }
-        Some(MenuEvent::Cancelled) => (back_to_entry(sel, state, MenuEntry::Skill), Effect::None),
-        None => (Mode::SkillMenu { sel, menu, choices }, Effect::None),
-    }
-}
-
-/// [`step`] while picking a skill's target: the cursor keys and
-/// `NextUnit`/`PrevUnit` cycle the targets, Confirm uses the skill, Cancel
-/// goes back to the skill list with the cursor on the unit.
-fn step_skill_target(mut t: SkillTargeting, action: Action, state: &BattleState) -> (Mode, Effect) {
-    let forward = match action {
-        Action::CursorRight | Action::CursorDown | Action::NextUnit => true,
-        Action::CursorLeft | Action::CursorUp | Action::PrevUnit => false,
-        Action::Confirm => return (Mode::default(), Effect::Apply(t.command())),
-        Action::Cancel => {
-            let dest = t.sel.dest();
-            let back = Mode::SkillMenu {
-                sel: t.sel,
-                menu: t.menu,
-                choices: t.choices,
-            };
-            return (back, Effect::Cursor(dest));
-        }
-        _ => return (Mode::SkillTarget(Box::new(t)), Effect::None),
-    };
-    t.cycle(forward);
-    let at = state.unit(t.target()).map(|u| u.pos);
-    (
-        Mode::SkillTarget(Box::new(t)),
-        at.map_or(Effect::None, Effect::Cursor),
-    )
-}
-
-/// `Item` chosen: the pack list (the action menu again if it has nothing
-/// usable, which the enabled entry rules out).
-fn open_pack(sel: Selection, state: &BattleState) -> (Mode, Effect) {
-    let groups = pack_groups(state, sel.unit, sel.dest());
-    if !can_use_item(&groups) {
-        return (back_to_entry(sel, state, MenuEntry::Item), Effect::None);
-    }
-    let menu = pack_menu(state, IN_PLAY, &groups);
-    (Mode::ItemMenu { sel, menu, groups }, Effect::None)
-}
-
-/// `Equip` chosen: the weapon list.
-fn open_equip(sel: Selection, state: &BattleState) -> (Mode, Effect) {
-    let choices = equip_choices(state, sel.unit);
-    if !can_equip(&choices) {
-        return (back_to_entry(sel, state, MenuEntry::Equip), Effect::None);
-    }
-    let menu = equip_menu(state, IN_PLAY, sel.unit, &choices);
-    (Mode::EquipMenu { sel, menu, choices }, Effect::None)
 }
 
 /// Where the cursor goes to show `target`, the user of an item at `sel`'s
@@ -1480,125 +1268,208 @@ fn target_tile(state: &BattleState, sel: &Selection, target: UnitId) -> Option<P
     }
 }
 
-/// [`step`] in the pack list: Confirm picks who to use the item on, Cancel
-/// goes back to the action menu.
-fn step_pack(
-    sel: Selection,
-    mut menu: Menu,
-    groups: Vec<PackGroup>,
-    action: Action,
-    state: &BattleState,
-) -> (Mode, Effect) {
-    match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) => {
-            match ItemTargeting::new(sel.clone(), menu.clone(), groups.clone(), i) {
-                Some(t) => {
-                    let at = target_tile(state, &sel, t.target());
-                    (
-                        Mode::ItemTarget(Box::new(t)),
-                        at.map_or(Effect::None, Effect::Cursor),
-                    )
-                }
-                None => (Mode::ItemMenu { sel, menu, groups }, Effect::None),
-            }
-        }
-        Some(MenuEvent::Cancelled) => (back_to_entry(sel, state, MenuEntry::Item), Effect::None),
-        None => (Mode::ItemMenu { sel, menu, groups }, Effect::None),
+/// Picking on the map what a chosen action is used on (ticket 1161): an
+/// attack's target, with the forecast; a spell's, a skill's or an item's;
+/// who to talk to. [`step_target`] steps them all.
+trait Picker: Sized {
+    /// Moves to the next target (or the previous one), wrapping.
+    fn cycle_target(&mut self, forward: bool, state: &BattleState);
+    /// The tile the cursor shows the target on.
+    fn tile(&self, state: &BattleState) -> Option<Pos>;
+    /// What Confirm does: the command it sends, and the mode after it.
+    fn confirm(self, state: &BattleState) -> (Mode, Effect);
+    /// What Cancel goes back to: the list or menu it was opened from.
+    fn back(self, state: &BattleState) -> Mode;
+    /// The mode that picks with it.
+    fn into_mode(self) -> Mode;
+    /// What any other key does: nothing.
+    fn other_key(self, _: &BattleState) -> (Mode, Effect) {
+        (self.into_mode(), Effect::None)
     }
 }
 
-/// [`step`] while picking an item's target: the cursor keys and
-/// `NextUnit`/`PrevUnit` cycle the targets, Confirm uses the item, Cancel
-/// goes back to the pack list with the cursor on the unit.
-fn step_item_target(mut t: ItemTargeting, action: Action, state: &BattleState) -> (Mode, Effect) {
+/// [`step`] while picking a target: the cursor keys and
+/// `NextUnit`/`PrevUnit` cycle the targets (right, down and next go
+/// forward; left, up and previous go back), the cursor on the one picked.
+/// Confirm does what the picker does ([`Picker::confirm`]); Cancel goes
+/// back to what it was opened from with the cursor on the unit.
+fn step_target<P: Picker>(mut p: P, action: Action, state: &BattleState) -> (Mode, Effect) {
     let forward = match action {
         Action::CursorRight | Action::CursorDown | Action::NextUnit => true,
         Action::CursorLeft | Action::CursorUp | Action::PrevUnit => false,
-        Action::Confirm => return (Mode::default(), Effect::Apply(t.command())),
+        Action::Confirm => return p.confirm(state),
         Action::Cancel => {
-            let dest = t.sel.dest();
-            let back = Mode::ItemMenu {
-                sel: t.sel,
-                menu: t.menu,
-                groups: t.groups,
-            };
-            return (back, Effect::Cursor(dest));
+            let back = p.back(state);
+            let at = back.selection().map(Selection::dest);
+            return (back, at.map_or(Effect::None, Effect::Cursor));
         }
-        _ => return (Mode::ItemTarget(Box::new(t)), Effect::None),
+        _ => return p.other_key(state),
     };
-    t.cycle(forward);
-    let at = target_tile(state, &t.sel, t.target());
-    (
-        Mode::ItemTarget(Box::new(t)),
-        at.map_or(Effect::None, Effect::Cursor),
-    )
+    p.cycle_target(forward, state);
+    aim(p, state)
 }
 
-/// [`step`] in the equip list: Confirm equips the weapon or spell and
-/// reopens the action menu (the unit hasn't acted), Cancel goes back
-/// without changing anything.
-fn step_equip(
-    sel: Selection,
-    mut menu: Menu,
-    choices: Vec<EquipChoice>,
-    action: Action,
-    state: &BattleState,
-) -> (Mode, Effect) {
-    match menu.handle(action) {
-        Some(MenuEvent::Chosen(i)) => match choices.get(i) {
-            // (The menu never chooses a dimmed, unusable weapon.)
-            Some(c) => {
-                let cmd = equip_command(sel.unit, c.what.clone());
-                (Mode::default(), Effect::ApplyStay(cmd, Box::new(sel)))
-            }
-            None => (Mode::EquipMenu { sel, menu, choices }, Effect::None),
-        },
-        Some(MenuEvent::Cancelled) => (back_to_entry(sel, state, MenuEntry::Equip), Effect::None),
-        None => (Mode::EquipMenu { sel, menu, choices }, Effect::None),
+/// Picking with `p`, the cursor on its target.
+fn aim<P: Picker>(p: P, state: &BattleState) -> (Mode, Effect) {
+    let at = p.tile(state);
+    (p.into_mode(), at.map_or(Effect::None, Effect::Cursor))
+}
+
+impl Picker for Targeting {
+    fn cycle_target(&mut self, forward: bool, state: &BattleState) {
+        self.cycle(forward, state);
+    }
+
+    fn tile(&self, state: &BattleState) -> Option<Pos> {
+        state.unit(self.target()).map(|u| u.pos)
+    }
+
+    fn confirm(self, _: &BattleState) -> (Mode, Effect) {
+        apply(self.command())
+    }
+
+    /// The arts list the forecast was opened from, else the action menu,
+    /// on `Attack` (`Magic` for a spell).
+    fn back(self, state: &BattleState) -> Mode {
+        let entry = match self.with {
+            Equipped::Weapon(_) => MenuEntry::Attack,
+            Equipped::Spell(_) => MenuEntry::Magic,
+        };
+        match self.arts {
+            Some((menu, lines)) => Mode::List {
+                sel: self.sel,
+                menu,
+                kind: ListKind::Arts(lines),
+            },
+            None => back_to_entry(self.sel, state, entry),
+        }
+    }
+
+    fn into_mode(self) -> Mode {
+        Mode::Targeting(Box::new(self))
     }
 }
 
-/// [`step`] while targeting: the cursor keys and `NextUnit`/`PrevUnit` cycle
-/// the targets (right, down and next go forward; left, up and previous go
-/// back); when several weapons or spells can make the attack, left and right
-/// swap between them instead (0430, 0442). Confirm attacks, Cancel goes back
-/// to the arts menu the forecast was opened from, else to the action menu
-/// (on `Attack`, or `Magic` for a spell), with the cursor on the unit.
-fn step_targeting(mut t: Targeting, action: Action, state: &BattleState) -> (Mode, Effect) {
-    let forward = match action {
-        Action::CursorLeft | Action::CursorRight if t.can_swap() => {
-            t.swap(action == Action::CursorRight, state);
-            let effect = state
-                .unit(t.target())
-                .map_or(Effect::None, |u| Effect::Cursor(u.pos));
-            return (Mode::Targeting(Box::new(t)), effect);
-        }
-        Action::CursorRight | Action::CursorDown | Action::NextUnit => true,
-        Action::CursorLeft | Action::CursorUp | Action::PrevUnit => false,
-        Action::Confirm => return (Mode::default(), Effect::Apply(t.command())),
-        Action::Cancel => {
-            let dest = t.sel.dest();
-            let entry = match t.with {
-                Equipped::Weapon(_) => MenuEntry::Attack,
-                Equipped::Spell(_) => MenuEntry::Magic,
-            };
-            let back = match t.arts {
-                Some((menu, lines)) => Mode::ArtsMenu {
-                    sel: t.sel,
-                    menu,
-                    lines,
-                },
-                None => back_to_entry(t.sel, state, entry),
-            };
-            return (back, Effect::Cursor(dest));
-        }
-        _ => return (Mode::Targeting(Box::new(t)), Effect::None),
-    };
-    t.cycle(forward, state);
-    let effect = state
-        .unit(t.target())
-        .map_or(Effect::None, |u| Effect::Cursor(u.pos));
-    (Mode::Targeting(Box::new(t)), effect)
+impl Picker for CastTargeting {
+    fn cycle_target(&mut self, forward: bool, state: &BattleState) {
+        self.cycle(forward, state);
+    }
+
+    fn tile(&self, state: &BattleState) -> Option<Pos> {
+        target_pos(state, self.target())
+    }
+
+    fn confirm(self, _: &BattleState) -> (Mode, Effect) {
+        apply(self.command())
+    }
+
+    fn back(self, _: &BattleState) -> Mode {
+        let kind = ListKind::Spells(self.choices);
+        let (sel, menu) = (self.sel, self.menu);
+        Mode::List { sel, menu, kind }
+    }
+
+    fn into_mode(self) -> Mode {
+        Mode::CastTarget(Box::new(self))
+    }
+}
+
+impl Picker for SkillTargeting {
+    fn cycle_target(&mut self, forward: bool, _: &BattleState) {
+        self.cycle(forward);
+    }
+
+    fn tile(&self, state: &BattleState) -> Option<Pos> {
+        state.unit(self.target()).map(|u| u.pos)
+    }
+
+    fn confirm(self, _: &BattleState) -> (Mode, Effect) {
+        apply(self.command())
+    }
+
+    fn back(self, _: &BattleState) -> Mode {
+        let kind = ListKind::Skills(self.choices);
+        let (sel, menu) = (self.sel, self.menu);
+        Mode::List { sel, menu, kind }
+    }
+
+    fn into_mode(self) -> Mode {
+        Mode::SkillTarget(Box::new(self))
+    }
+}
+
+impl Picker for ItemTargeting {
+    fn cycle_target(&mut self, forward: bool, _: &BattleState) {
+        self.cycle(forward);
+    }
+
+    fn tile(&self, state: &BattleState) -> Option<Pos> {
+        target_tile(state, &self.sel, self.target())
+    }
+
+    fn confirm(self, _: &BattleState) -> (Mode, Effect) {
+        apply(self.command())
+    }
+
+    fn back(self, _: &BattleState) -> Mode {
+        let kind = ListKind::Pack(self.groups);
+        let (sel, menu) = (self.sel, self.menu);
+        Mode::List { sel, menu, kind }
+    }
+
+    fn into_mode(self) -> Mode {
+        Mode::ItemTarget(Box::new(self))
+    }
+}
+
+/// Picking who to talk to (0705): the cursor keys and
+/// `NextUnit`/`PrevUnit` cycle `targets`, Confirm talks.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TalkTargeting {
+    /// The unit talking and its path (it stands at the path's end).
+    pub sel: Selection,
+    /// The units it can talk to ([`BattleState::talk_targets`]).
+    pub targets: Vec<UnitId>,
+    /// The one under the cursor.
+    pub index: usize,
+}
+
+impl Picker for TalkTargeting {
+    fn cycle_target(&mut self, forward: bool, _: &BattleState) {
+        self.index = wrap_step(self.index, self.targets.len(), forward);
+    }
+
+    fn tile(&self, state: &BattleState) -> Option<Pos> {
+        let id = *self.targets.get(self.index)?;
+        state.unit(id).map(|u| u.pos)
+    }
+
+    /// Talks: free, so the action menu opens again after the scene.
+    fn confirm(self, state: &BattleState) -> (Mode, Effect) {
+        let Some(&target) = self.targets.get(self.index) else {
+            return (self.back(state), Effect::None);
+        };
+        let cmd = Command::Talk {
+            unit: self.sel.unit,
+            dest: self.sel.dest(),
+            target,
+        };
+        (Mode::default(), Effect::ApplyStay(cmd, Box::new(self.sel)))
+    }
+
+    /// The action menu, on `Talk`.
+    fn back(self, state: &BattleState) -> Mode {
+        back_to_entry(self.sel, state, MenuEntry::Talk)
+    }
+
+    /// Puts the cursor back on the target.
+    fn other_key(self, state: &BattleState) -> (Mode, Effect) {
+        aim(self, state)
+    }
+
+    fn into_mode(self) -> Mode {
+        Mode::TalkTarget(self)
+    }
 }
 
 /// [`step`] while browsing: Confirm selects a ready player unit or toggles
@@ -2301,7 +2172,12 @@ mod tests {
         let (on_arts, _) = step(menu, Action::CursorDown, p(7, 2), &s);
         let (arts, effect) = step(on_arts, Action::Confirm, p(7, 2), &s);
         assert_eq!(effect, Effect::None);
-        let Mode::ArtsMenu { menu: m, lines, .. } = &arts else {
+        let Mode::List {
+            menu: m,
+            kind: ListKind::Arts(lines),
+            ..
+        } = &arts
+        else {
             panic!("{arts:?}");
         };
         let names: Vec<String> = lines
@@ -2374,7 +2250,11 @@ mod tests {
         let (menu, _) = step(Mode::Selected(sel.clone()), Action::Confirm, p(8, 4), &s);
         let (on_arts, _) = step(menu, Action::CursorDown, p(8, 4), &s);
         let (arts, _) = step(on_arts, Action::Confirm, p(8, 4), &s);
-        let Mode::ArtsMenu { lines, .. } = &arts else {
+        let Mode::List {
+            kind: ListKind::Arts(lines),
+            ..
+        } = &arts
+        else {
             panic!("{arts:?}");
         };
         let names: Vec<String> = lines
@@ -2409,15 +2289,15 @@ mod tests {
         let lines = art_lines(&s, sel.unit, sel.dest());
         assert_eq!(lines.len(), 2);
         assert!(!can_use_art(&lines));
-        let (mode, effect) = open_arts(sel.clone(), &s);
+        let (mode, effect) = open_list(MenuEntry::Arts, sel.clone(), &s);
         assert_eq!(effect, Effect::None);
         assert!(matches!(mode, Mode::ActionMenu { .. }), "{mode:?}");
         // A dimmed line is never chosen.
         let menu = arts_menu(&s, IN_PLAY, &lines);
-        let arts = Mode::ArtsMenu {
+        let arts = Mode::List {
             sel: sel.clone(),
             menu: menu.clone(),
-            lines: lines.clone(),
+            kind: ListKind::Arts(lines.clone()),
         };
         let (same, effect) = step(arts.clone(), Action::Confirm, p(6, 2), &s);
         assert_eq!((same, effect), (arts, Effect::None));
@@ -2680,10 +2560,7 @@ mod tests {
     /// The list `mode` shows.
     fn list(mode: &Mode) -> &Menu {
         match mode {
-            Mode::ArtsMenu { menu, .. }
-            | Mode::SkillMenu { menu, .. }
-            | Mode::EquipMenu { menu, .. }
-            | Mode::UnitList { menu, .. } => menu,
+            Mode::List { menu, .. } | Mode::UnitList { menu, .. } => menu,
             _ => panic!("{mode:?}"),
         }
     }
@@ -2753,17 +2630,17 @@ mod tests {
         let skills = skill_choices(&s, Words::ENGLISH, &sel);
         // Each list, with a name it shows in English.
         let lists = [
-            (open_arts(sel.clone(), &s).0, "Guard Break"),
+            (open_list(MenuEntry::Arts, sel.clone(), &s).0, "Guard Break"),
             (
                 // No ally is near enough to inspire: the list, unopened.
-                Mode::SkillMenu {
+                Mode::List {
                     menu: skill_menu(&s, IN_PLAY, sel.unit, &skills),
                     sel: sel.clone(),
-                    choices: skills,
+                    kind: ListKind::Skills(skills),
                 },
                 "Inspire",
             ),
-            (open_equip(sel.clone(), &s).0, "Iron Sword"),
+            (open_list(MenuEntry::Equip, sel.clone(), &s).0, "Iron Sword"),
             (
                 Mode::UnitList {
                     menu: units,

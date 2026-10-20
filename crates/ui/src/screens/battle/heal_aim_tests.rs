@@ -10,7 +10,7 @@ use trpg_core::{BattleState, CastTarget, Objective, Pos, SpellId, StatValue, Uni
 use super::BattleScreen;
 use super::attack::aim_tile;
 use super::magic::{can_heal, heal_choices, heal_tile};
-use super::mode::{MenuEntry, Mode, Selection, step};
+use super::mode::{ListKind, MenuEntry, Mode, Selection, step};
 use super::testing::{battle_with, quick_units};
 use crate::console::ConsoleSizes;
 use crate::harness::Harness;
@@ -61,7 +61,11 @@ fn help(h: &Harness) -> String {
 /// The lines of the open spell list and whether each can be picked.
 fn heal_list(h: &Harness) -> Vec<(SpellId, bool)> {
     match h.battle().unwrap().mode() {
-        Mode::SpellMenu { choices, menu, .. } => choices
+        Mode::List {
+            kind: ListKind::Spells(choices),
+            menu,
+            ..
+        } => choices
             .iter()
             .zip(menu.items())
             .map(|(c, item)| (c.spell.clone(), item.enabled))
@@ -241,7 +245,12 @@ fn harness_the_list_offers_heal_and_vigil_light() {
     let mut sel = Selection::new(&state, MAGE).unwrap();
     sel.target = Some(ARCHER);
     let (mode, _) = step(Mode::Selected(sel), Action::Confirm, p(1, 6), &state);
-    let Mode::SpellMenu { menu, choices, .. } = mode else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Spells(choices),
+        ..
+    } = mode
+    else {
         panic!("{mode:?}");
     };
     let lines: Vec<(SpellId, bool)> = choices

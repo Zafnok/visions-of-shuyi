@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: opus-5.5
 effort: high
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-19
 ---
 
 # 1161 — One list mode and one target picker in the battle's modes
@@ -71,13 +71,13 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `grep -n "ArtsMenu\|SpellMenu\|SkillMenu\|ItemMenu\|EquipMenu" crates/ui/src`
+- [x] `grep -n "ArtsMenu\|SpellMenu\|SkillMenu\|ItemMenu\|EquipMenu" crates/ui/src`
       finds nothing outside tests' names.
-- [ ] `grep -c "Action::CursorRight | Action::CursorDown | Action::NextUnit" crates/ui/src/screens/battle/mode.rs`
+- [x] `grep -c "Action::CursorRight | Action::CursorDown | Action::NextUnit" crates/ui/src/screens/battle/mode.rs`
       is 1.
-- [ ] Every battle test, snapshot and bot playtest passes unchanged.
-- [ ] `cargo xtask code-lines` shows `trpg-ui` fell by at least 150.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] Every battle test, snapshot and bot playtest passes unchanged.
+- [x] `cargo xtask code-lines` shows `trpg-ui` fell by at least 150.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,5 +86,37 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- **One list mode.** `Mode::ArtsMenu`, `SpellMenu`, `SkillMenu`,
+  `ItemMenu` and `EquipMenu` are now `Mode::List { sel, menu, kind }`,
+  with `ListKind::{Arts, Spells, Skills, Pack, Equip}` carrying each
+  list's lines. `ListKind::of` (the list an action-menu entry opens),
+  `entry`, `can_choose` and `menu` are the only places the five differ,
+  besides `choose_line` (what Confirm does). One `open_list` and one
+  `step_list` replace the ten `open_*`/`step_*` functions, and
+  `MenuEntry::enabled` and `told()` use `ListKind` too.
+- **One target picker.** A private `Picker` trait (cycle, the cursor's
+  tile, Confirm, Cancel's way back, the mode) is implemented by
+  `Targeting`, `CastTargeting`, `SkillTargeting`, `ItemTargeting` and a
+  new `TalkTargeting`. One `step_target` steps all five. The attack
+  forecast's left/right weapon swap stays a guard in front of it.
+  `Mode::TalkTarget` now holds a `TalkTargeting`, the same shape as the
+  other pickers.
+- **The hand-listed variants** in `mod.rs` (help, tips, lesson marks,
+  threat arrows, cursor, menu view and header) and `sounds.rs` match
+  `Mode::List` once. `drawn_pos` now reuses `selection()`, and
+  `back_to_entry` is shorter.
+- **Deviation, no change the player can see:** the talk picker re-aims
+  the cursor at its target on any key it doesn't use, and plays the move
+  sound. The other pickers do nothing on such a key. A test pins that
+  difference, so `Picker::other_key` keeps it (a default that does
+  nothing, overridden by talk).
+- **Tests:** only patterns and constructions changed (to
+  `Mode::List { kind: ListKind::…, .. }` and `Mode::TalkTarget(_)`). Each
+  test still checks which list is open.
+- **Measured:** `cargo xtask code-lines` shows `crates/ui` +313 / −464
+  (production lines fell by 151). Estimate written before coding: 100
+  added. 3.1×, reviewed with `engine-friction`: outcome 4 (accept). No
+  engine glue; a changed line counts as added, and most added lines are
+  match arms rewritten for `Mode::List`. Row in `docs/engine/friction.md`.
+- No follow-up tickets. No gameplay rules decided (nothing the player
+  sees changed).

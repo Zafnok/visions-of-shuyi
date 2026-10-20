@@ -12,7 +12,7 @@ use trpg_ui::harness::Harness;
 use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::screens::BattleScreen;
 use trpg_ui::screens::battle::map_menu::MapEntry;
-use trpg_ui::screens::battle::mode::{MenuEntry, Mode};
+use trpg_ui::screens::battle::mode::{ListKind, MenuEntry, Mode};
 
 /// At the title in the test language, with the right-handed layout.
 fn title() -> Harness {
@@ -273,7 +273,13 @@ fn a_weapon_list_is_painted_in_the_test_language() {
     assert!(shows(&test, "Steel Sword"));
     // What is played is the same in both: the list and its focus.
     let mode = |h: &Harness| h.battle().map(|b| b.mode().clone());
-    assert!(matches!(mode(&test), Some(Mode::EquipMenu { .. })));
+    assert!(matches!(
+        mode(&test),
+        Some(Mode::List {
+            kind: ListKind::Equip(_),
+            ..
+        })
+    ));
     assert_eq!(mode(&test), mode(&english));
 }
 

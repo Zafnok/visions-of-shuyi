@@ -278,7 +278,7 @@ pub struct SkillChoice {
 }
 
 /// The command that uses `skill` from `sel`'s path end on `target`.
-fn use_command(sel: &Selection, skill: &SkillId, target: Option<UnitId>) -> Command {
+pub(super) fn use_command(sel: &Selection, skill: &SkillId, target: Option<UnitId>) -> Command {
     Command::Act {
         unit: sel.unit,
         dest: sel.dest(),

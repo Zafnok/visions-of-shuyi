@@ -80,7 +80,7 @@ use self::event_sounds::CueQueue;
 use self::guides::{GuidesEffect, GuidesScreen};
 use self::layout::MAP_VIEW;
 use self::lessons::LessonState;
-use self::mode::{Effect, MenuEntry, Mode, Selection};
+use self::mode::{Effect, ListKind, MenuEntry, Mode, Selection};
 use self::playback::{Playback, SceneCue, TIMINGS};
 use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{RewindEffect, RewindScreen};
@@ -443,7 +443,10 @@ impl Marks {
             Mode::Selected(_) => Self::Selected,
             _ if forecast_of(mode).is_some() => Self::Forecast,
             Mode::ActionMenu { .. } => Self::ActionMenu,
-            Mode::ArtsMenu { .. } => Self::Arts,
+            Mode::List {
+                kind: ListKind::Arts(_),
+                ..
+            } => Self::Arts,
             Mode::CastTarget(t) if matches!(t.target(), CastTarget::Tile(_)) => Self::TileAimed,
             _ => Self::None,
         }
@@ -843,7 +846,10 @@ impl BattleScreen {
                     fired.push(TipTrigger::ArtsAvailable);
                 }
             }
-            Mode::SpellMenu { choices, .. } => {
+            Mode::List {
+                kind: ListKind::Spells(choices),
+                ..
+            } => {
                 let on_tile = |t: &CastTarget| matches!(t, CastTarget::Tile(_));
                 if choices.iter().any(|c| c.targets.iter().any(on_tile)) {
                     fired.push(TipTrigger::TileSpellAvailable);
@@ -1937,20 +1943,20 @@ impl BattleScreen {
                 }
             }
             Mode::Moving { .. } => "battle.help.skip",
-            Mode::ActionMenu { .. }
-            | Mode::ArtsMenu { .. }
-            | Mode::SkillMenu { .. }
-            | Mode::ItemMenu { .. }
-            | Mode::MapMenu { .. }
-            | Mode::UnitList { .. } => "battle.help.menu",
-            Mode::SpellMenu { .. } => "battle.help.spells",
+            Mode::List { kind, .. } => match kind {
+                ListKind::Spells(_) => "battle.help.spells",
+                ListKind::Equip(_) => "battle.help.equip",
+                ListKind::Arts(_) | ListKind::Skills(_) | ListKind::Pack(_) => "battle.help.menu",
+            },
+            Mode::ActionMenu { .. } | Mode::MapMenu { .. } | Mode::UnitList { .. } => {
+                "battle.help.menu"
+            }
             Mode::CastTarget(t) => match t.forecast() {
                 Some(forecast) => return Self::help_targeting(ctx, forecast),
                 None => "battle.help.cast_target",
             },
-            Mode::EquipMenu { .. } => "battle.help.equip",
             Mode::ItemTarget(_) | Mode::SkillTarget(_) => "battle.help.use_target",
-            Mode::TalkTarget { .. } => "battle.help.talk_target",
+            Mode::TalkTarget(_) => "battle.help.talk_target",
             Mode::Targeting(t) => return Self::help_targeting(ctx, t),
             Mode::Combat(_) => "battle.help.combat",
             Mode::AiAction(_) => "battle.help.ai",
@@ -2123,13 +2129,9 @@ impl BattleScreen {
                 let pointed = self.cursor.pos == dest || sel.target.is_some();
                 (pointed && sel.reach.is_stoppable(dest)).then_some((sel.unit, dest))
             }
-            Mode::Moving { sel, .. }
-            | Mode::ActionMenu { sel, .. }
-            | Mode::ArtsMenu { sel, .. }
-            | Mode::SpellMenu { sel, .. }
-            | Mode::SkillMenu { sel, .. }
-            | Mode::ItemMenu { sel, .. }
-            | Mode::EquipMenu { sel, .. } => Some((sel.unit, sel.dest())),
+            Mode::Moving { sel, .. } | Mode::ActionMenu { sel, .. } | Mode::List { sel, .. } => {
+                Some((sel.unit, sel.dest()))
+            }
             _ => None,
         }
     }
@@ -2248,11 +2250,7 @@ impl BattleScreen {
         match &self.mode {
             Mode::Moving { .. }
             | Mode::ActionMenu { .. }
-            | Mode::ArtsMenu { .. }
-            | Mode::SpellMenu { .. }
-            | Mode::SkillMenu { .. }
-            | Mode::ItemMenu { .. }
-            | Mode::EquipMenu { .. }
+            | Mode::List { .. }
             | Mode::Combat(_)
             | Mode::UnitList { .. }
             | Mode::Objective
@@ -2269,7 +2267,7 @@ impl BattleScreen {
             | Mode::CastTarget(_)
             | Mode::SkillTarget(_)
             | Mode::ItemTarget(_)
-            | Mode::TalkTarget { .. }
+            | Mode::TalkTarget(_)
             | Mode::AiAction(_)
             | Mode::MapMenu { .. } => {}
         }
@@ -2377,28 +2375,28 @@ impl BattleScreen {
     fn menu_view(&self, words: Words<'_>) -> Option<BattleMenuView> {
         let mode = self.mode.told(&self.state, words);
         let (place, menu) = match &*mode {
-            Mode::ActionMenu { sel, menu, .. }
-            | Mode::ArtsMenu { sel, menu, .. }
-            | Mode::SpellMenu { sel, menu, .. }
-            | Mode::SkillMenu { sel, menu, .. }
-            | Mode::ItemMenu { sel, menu, .. }
-            | Mode::EquipMenu { sel, menu, .. } => (MenuPlace::Beside(sel.dest()), menu),
+            Mode::ActionMenu { sel, menu, .. } | Mode::List { sel, menu, .. } => {
+                (MenuPlace::Beside(sel.dest()), menu)
+            }
             Mode::MapMenu { menu, .. } => (MenuPlace::Beside(self.cursor.pos), menu),
             Mode::UnitList { menu, .. } => (MenuPlace::Centred, menu),
             _ => return None,
         };
         let header = match &*mode {
-            // The weapon the focused art would be used with, and its
-            // durability.
-            Mode::ArtsMenu { sel, lines, .. } => lines.get(menu.focus()).and_then(|line| {
-                let weapon = (sel.unit, &Equipped::Weapon(line.slot));
-                art_list::header((&self.state, words), weapon)
-            }),
-            // The pack's size.
-            Mode::ItemMenu { .. } => Some(MenuHeader {
-                name: items::pack_header(&self.state, words),
-                uses: None,
-            }),
+            Mode::List { sel, kind, .. } => match kind {
+                // The weapon the focused art would be used with, and its
+                // durability.
+                ListKind::Arts(lines) => lines.get(menu.focus()).and_then(|line| {
+                    let weapon = (sel.unit, &Equipped::Weapon(line.slot));
+                    art_list::header((&self.state, words), weapon)
+                }),
+                // The pack's size.
+                ListKind::Pack(_) => Some(MenuHeader {
+                    name: items::pack_header(&self.state, words),
+                    uses: None,
+                }),
+                ListKind::Spells(_) | ListKind::Skills(_) | ListKind::Equip(_) => None,
+            },
             _ => None,
         };
         Some(BattleMenuView {

@@ -17,7 +17,7 @@ use super::magic::{
     CastTargeting, SpellChoice, can_cast, cast, cast_targets, knows_spells, reaches_an_enemy,
     spell_choices, spell_label, spell_menu, target_pos,
 };
-use super::mode::{Effect, MenuEntry, Mode, Selection, menu_entries, open_menu};
+use super::mode::{Effect, ListKind, MenuEntry, Mode, Selection, menu_entries, open_menu};
 use super::playback::TIMINGS;
 use super::sounds::step_sound;
 use super::testing::{battle_with, quick_units, setup, through_ai_phases, tile_cell};
@@ -160,7 +160,17 @@ fn choose(s: &mut BattleScreen, c: &mut Ctx, entry: MenuEntry) {
 fn spell_list(c: &mut Ctx, state: BattleState) -> BattleScreen {
     let mut s = mage_menu(c, state);
     choose(&mut s, c, MenuEntry::Magic);
-    assert!(matches!(s.mode(), Mode::SpellMenu { .. }), "{:?}", s.mode());
+    assert!(
+        matches!(
+            s.mode(),
+            Mode::List {
+                kind: ListKind::Spells(_),
+                ..
+            }
+        ),
+        "{:?}",
+        s.mode()
+    );
     s
 }
 
@@ -178,7 +188,11 @@ fn casting_with(
     active: Option<&str>,
 ) -> BattleScreen {
     let mut s = spell_list(c, state);
-    let Mode::SpellMenu { choices, .. } = s.mode() else {
+    let Mode::List {
+        kind: ListKind::Spells(choices),
+        ..
+    } = s.mode()
+    else {
         unreachable!()
     };
     let spell = &plain(choices.clone())[line].spell;
@@ -189,7 +203,12 @@ fn casting_with(
         .unwrap_or_else(|| panic!("no line {line} with {active:?}: {choices:?}"));
     // The list opens on Fire, the equipped spell; Down skips dimmed lines.
     for _ in 0..choices.len() {
-        let Mode::SpellMenu { menu, .. } = s.mode() else {
+        let Mode::List {
+            menu,
+            kind: ListKind::Spells(_),
+            ..
+        } = s.mode()
+        else {
             unreachable!()
         };
         if menu.focus() == at {
@@ -506,7 +525,12 @@ fn an_active_chosen_in_the_list_is_cast_with_the_spell() {
     // Cancel goes back to the spell list, on that line.
     let mut back = casting_with(&mut c, s.state().clone(), 0, Some("overcast"));
     step(&mut back, &mut c, &[Action::Cancel]);
-    let Mode::SpellMenu { menu, choices, .. } = back.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Spells(choices),
+        ..
+    } = back.mode()
+    else {
         panic!("{:?}", back.mode());
     };
     assert_eq!(choices[menu.focus()].active, Some(SkillId::new("overcast")));
@@ -612,8 +636,11 @@ fn an_active_the_spell_cant_pay_for_is_dimmed_with_the_reason() {
     step(&mut s, &mut c, &[Action::CursorDown, Action::Confirm]);
     assert_eq!(targeting(&s).spell(), &sid("frost"));
     // Chosen anyway, it has nothing to be cast on.
-    let Mode::SpellMenu { sel, menu, choices } =
-        spell_list(&mut c, s.state().clone()).mode().clone()
+    let Mode::List {
+        sel,
+        menu,
+        kind: ListKind::Spells(choices),
+    } = spell_list(&mut c, s.state().clone()).mode().clone()
     else {
         unreachable!()
     };
@@ -1028,7 +1055,12 @@ fn cancelling_at_each_level_leaves_the_battle_unchanged() {
         step(&mut s, &mut c, &[Action::NextUnit]);
         // Back to the spell list, on the spell, the cursor on the mage.
         step(&mut s, &mut c, &[Action::Cancel]);
-        let Mode::SpellMenu { menu, choices, .. } = s.mode() else {
+        let Mode::List {
+            menu,
+            kind: ListKind::Spells(choices),
+            ..
+        } = s.mode()
+        else {
             panic!("{:?}", s.mode());
         };
         assert_eq!(choices[menu.focus()], plain(choices.clone())[line]);
@@ -1058,10 +1090,10 @@ fn the_menus_sound_like_the_others() {
     let action_menu = open_menu(sel.clone(), &s);
     let choices = spell_choices(&s, MAGE, p(0, 4));
     let menu = spell_menu(&s, Words::ENGLISH, MAGE, &choices);
-    let list = Mode::SpellMenu {
+    let list = Mode::List {
         sel: sel.clone(),
         menu: menu.clone(),
-        choices: choices.clone(),
+        kind: ListKind::Spells(choices.clone()),
     };
     let t = CastTargeting::new(&s, sel.clone(), menu.clone(), choices.clone(), 0).unwrap();
     let aim = Mode::CastTarget(Box::new(t));
@@ -1632,11 +1664,21 @@ fn the_spell_lists_are_told_in_the_players_language() {
     let state = field(&c, 0);
     let mut s = spell_list(&mut c, state);
     step(&mut s, &mut c, &[Action::CursorDown]);
-    let Mode::SpellMenu { menu, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Spells(_),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     let told = s.mode().told(s.state(), words).into_owned();
-    let Mode::SpellMenu { menu: theirs, .. } = &told else {
+    let Mode::List {
+        menu: theirs,
+        kind: ListKind::Spells(_),
+        ..
+    } = &told
+    else {
         panic!("{told:?}");
     };
     assert!(labels(menu)[0].starts_with("Fire "), "{:?}", labels(menu));
@@ -1726,7 +1768,11 @@ fn cinder_oath_shows_no_counter_in_chapter_1() {
     s.cursor.jump(at);
     step(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     choose(&mut s, &mut c, MenuEntry::Magic);
-    let Mode::SpellMenu { choices, .. } = s.mode() else {
+    let Mode::List {
+        kind: ListKind::Spells(choices),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     let oath = choices
@@ -1734,7 +1780,12 @@ fn cinder_oath_shows_no_counter_in_chapter_1() {
         .position(|ch| ch.spell == sid("cinder_oath") && ch.active.is_none())
         .expect("Cinder Oath in Rue's spell list");
     for _ in 0..choices.len() {
-        let Mode::SpellMenu { menu, .. } = s.mode() else {
+        let Mode::List {
+            menu,
+            kind: ListKind::Spells(_),
+            ..
+        } = s.mode()
+        else {
             unreachable!()
         };
         if menu.focus() == oath {

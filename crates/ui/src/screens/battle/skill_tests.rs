@@ -8,7 +8,7 @@ use insta::assert_snapshot;
 use trpg_core::{BattleState, Command, Objective, Phase, Pos, SkillId, UnitAction, UnitId};
 
 use super::BattleScreen;
-use super::mode::{MenuEntry, Mode};
+use super::mode::{ListKind, MenuEntry, Mode};
 use super::testing::{battle_with, quick_units};
 use crate::FrameInput;
 use crate::color::Rgb;
@@ -114,7 +114,12 @@ fn focus_entry(s: &mut BattleScreen, c: &mut Ctx, entry: MenuEntry) {
 /// The `Skill` menu's focus moved down to line `i`.
 fn focus_line(s: &mut BattleScreen, c: &mut Ctx, i: usize) {
     for _ in 0..8 {
-        let Mode::SkillMenu { menu, .. } = s.mode() else {
+        let Mode::List {
+            menu,
+            kind: ListKind::Skills(_),
+            ..
+        } = s.mode()
+        else {
             panic!("{:?}", s.mode());
         };
         if menu.focus() == i {
@@ -210,7 +215,12 @@ fn brace_from_the_menu_raises_def_on_the_info_screen_until_the_next_own_phase() 
     focus_entry(&mut s, &mut c, MenuEntry::Skill);
     // Skill list: Brace, with its 3 uses a battle all left.
     step(&mut s, &mut c, &[Action::Confirm]);
-    let Mode::SkillMenu { menu, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Skills(_),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     assert_eq!(menu.items().len(), 1);
@@ -364,7 +374,12 @@ fn skill_menu_left_handed_snapshot() {
 
 /// What the focused line of the `Skill` menu says it does (ticket 0429).
 fn focused_note(s: &BattleScreen) -> Option<String> {
-    let Mode::SkillMenu { menu, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Skills(_),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     menu.view().focused().and_then(|i| i.note.clone())
@@ -384,7 +399,17 @@ fn the_skill_menu_describes_the_focused_line_dimmed_or_not() {
     // Confirm on it uses nothing.
     let before = s.state().clone();
     step(&mut s, &mut c, &[Action::Confirm]);
-    assert!(matches!(s.mode(), Mode::SkillMenu { .. }), "{:?}", s.mode());
+    assert!(
+        matches!(
+            s.mode(),
+            Mode::List {
+                kind: ListKind::Skills(_),
+                ..
+            }
+        ),
+        "{:?}",
+        s.mode()
+    );
     assert_eq!(s.state(), &before);
     step(&mut s, &mut c, &[Action::CursorDown]);
     assert_eq!(focused_note(&s).as_deref(), Some("self: Def +8 Res +8"));
@@ -404,7 +429,12 @@ fn spent_brace_menu(c: &mut Ctx) -> BattleScreen {
 fn a_skill_with_no_uses_left_is_dimmed_with_the_reason() {
     let mut c = ctx();
     let mut s = spent_brace_menu(&mut c);
-    let Mode::SkillMenu { menu, choices, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Skills(choices),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     let lines: Vec<(&str, bool, Option<&str>)> = choices
@@ -458,7 +488,12 @@ fn a_skill_that_only_lacks_someone_to_use_it_on_is_dimmed_without_a_reason() {
     step(&mut s, &mut c, &[Action::Confirm, Action::Confirm]);
     focus_entry(&mut s, &mut c, MenuEntry::Skill);
     step(&mut s, &mut c, &[Action::Confirm]);
-    let Mode::SkillMenu { menu, choices, .. } = s.mode() else {
+    let Mode::List {
+        menu,
+        kind: ListKind::Skills(choices),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     let shove = choices.iter().position(|c| c.skill.0 == "shove").unwrap();
@@ -488,7 +523,11 @@ fn shove_picks_an_adjacent_enemy_and_pushes_it() {
     let before = s.state().clone();
     focus_entry(&mut s, &mut c, MenuEntry::Skill);
     step(&mut s, &mut c, &[Action::Confirm]);
-    let Mode::SkillMenu { choices, .. } = s.mode() else {
+    let Mode::List {
+        kind: ListKind::Skills(choices),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     // Shove needs an enemy beside: the raider at (7, 1) above and the
@@ -529,7 +568,17 @@ fn shove_picks_an_adjacent_enemy_and_pushes_it() {
     );
     // Cancel goes back to the list; choose again, pick the brigand, confirm.
     step(&mut s, &mut c, &[Action::Cancel]);
-    assert!(matches!(s.mode(), Mode::SkillMenu { .. }), "{:?}", s.mode());
+    assert!(
+        matches!(
+            s.mode(),
+            Mode::List {
+                kind: ListKind::Skills(_),
+                ..
+            }
+        ),
+        "{:?}",
+        s.mode()
+    );
     step(&mut s, &mut c, &[Action::Confirm, Action::CursorRight]);
     let Mode::SkillTarget(t) = s.mode() else {
         panic!("{:?}", s.mode());
@@ -608,7 +657,11 @@ fn the_scene_marks_who_a_skill_can_target() {
     let mut s = lord_menu(&mut c, state);
     focus_entry(&mut s, &mut c, MenuEntry::Skill);
     step(&mut s, &mut c, &[Action::Confirm]);
-    let Mode::SkillMenu { choices, .. } = s.mode() else {
+    let Mode::List {
+        kind: ListKind::Skills(choices),
+        ..
+    } = s.mode()
+    else {
         panic!("{:?}", s.mode());
     };
     let i = choices.iter().position(|c| c.skill.0 == "shove").unwrap();
