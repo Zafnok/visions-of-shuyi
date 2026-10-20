@@ -49,6 +49,9 @@ None.
 **Out (do not do):**
 - Changing what any loader accepts or reports: the content
   validation's output (`cargo xtask` content checks) stays the same.
+- The engine's format registry (1173): either order works. If 1173
+  landed first, a loader it moved to `Formats::load_under` stays there;
+  only the game's own folder loops move to `load_each`.
 
 ## Implementation steps
 
