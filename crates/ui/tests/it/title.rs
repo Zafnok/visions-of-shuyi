@@ -9,13 +9,13 @@
 use insta::assert_snapshot;
 use trpg_content::LangCode;
 use trpg_content::lang::TEST;
-use trpg_ui::widgets::menu::LabelText as _;
 use trpg_ui::audio::AudioRequest;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::Layout;
 use trpg_ui::input::{LEFT_HANDED, RIGHT_HANDED};
 use trpg_ui::screens::title::TitleView;
 use trpg_ui::screens::{LayoutPickerScreen, TitleScreen};
+use trpg_ui::widgets::menu::LabelText as _;
 
 /// A launch after the right-handed layout was picked.
 fn title() -> Harness {
@@ -33,7 +33,11 @@ fn view(h: &Harness) -> TitleView {
 /// The labels of the title's menu, and the focused one.
 fn menu(h: &Harness) -> (Vec<String>, Option<String>) {
     let menu = view(h).menu.unwrap_or_else(|| panic!("no menu"));
-    let labels = menu.items.iter().map(|i| i.label.as_str().to_owned()).collect();
+    let labels = menu
+        .items
+        .iter()
+        .map(|i| i.label.as_str().to_owned())
+        .collect();
     (labels, menu.focused().map(|i| i.label.as_str().to_owned()))
 }
 

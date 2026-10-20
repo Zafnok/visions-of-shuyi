@@ -7,6 +7,7 @@ use crate::prelude::*;
 use trpg_core::StatValue;
 
 use crate::screens::battle::view::ProgressView;
+use crate::widgets::AskView;
 
 /// The whole screen, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -119,10 +120,9 @@ pub struct StatRowView {
 /// The question asked before the change.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QuestionView {
-    /// The question, e.g. `Promote Test Knight to Iron Rider?`.
-    pub ask: String,
+    /// The question, e.g. `Promote Test Knight to Iron Rider?`, and the
+    /// keys that answer it.
+    pub ask: AskView<bool>,
     /// What it costs, e.g. `Uses 1 Tier 2 Seal (1 in stock).`.
     pub cost: String,
-    /// The keys that answer it.
-    pub keys: String,
 }

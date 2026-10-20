@@ -1233,7 +1233,10 @@ fn the_equip_menu_pads_names_and_dims_a_spell_out_of_uses() {
     let spells = plain_choices(&state, MAGE, p(0, 4));
     assert!(spells[0].targets.is_empty());
     let list = spell_menu(&state, Words::ENGLISH, MAGE, &spells);
-    assert_eq!(list.items()[0].label.as_str(), "Fire    0/1   Mt5 Hit90 Rng1-2");
+    assert_eq!(
+        list.items()[0].label.as_str(),
+        "Fire    0/1   Mt5 Hit90 Rng1-2"
+    );
     assert!(!list.items()[0].enabled);
     assert_eq!(list.focus(), 1, "the equipped spell can't be cast");
 }
@@ -1660,7 +1663,10 @@ fn the_spell_lists_are_told_in_the_players_language() {
     let (lang, code) = (shouting(&c.game.content), shout());
     let words = Words::new(&lang, &code);
     let labels = |menu: &crate::widgets::menu::Menu| -> Vec<String> {
-        menu.items().iter().map(|i| i.label.as_str().to_owned()).collect()
+        menu.items()
+            .iter()
+            .map(|i| i.label.as_str().to_owned())
+            .collect()
     };
     let state = field(&c, 0);
     let mut s = spell_list(&mut c, state);

@@ -5,14 +5,13 @@
 //! about the look lives here; nothing here decides what the screens show.
 //! Another look is another `paint` of the same view (ADR-0054).
 
-use super::view::{
-    OverwriteView, SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView,
-};
+use super::view::{SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView};
 use crate::color::UiColor;
 use crate::glyph_buffer::{BoxStyle, Cell, GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::{centre_x, print_centred};
+use crate::widgets::ask::glyph as ask_glyph;
 use crate::widgets::menu::glyph as menu_glyph;
 
 /// Row of the question.
@@ -40,8 +39,6 @@ const ARMY_X: i32 = MODE_X + 10;
 const TIME_END_X: i32 = PANEL.x + PANEL.w - 3;
 /// Row of the message under the panel.
 const MESSAGE_ROW: i32 = PANEL.y + PANEL.h + 1;
-/// Height of the overwrite question's box.
-const OVERWRITE_H: i32 = 6;
 
 /// Cells `text` takes, as a coordinate.
 fn cells(text: &str) -> i32 {
@@ -85,7 +82,7 @@ pub fn paint_slots(ctx: &Ctx, view: &SlotPickerView, buf: &mut GlyphBuffer) {
         print_centred(buf, MESSAGE_ROW, message, c(UiColor::HpLow), black);
     }
     if let Some(question) = &view.question {
-        paint_question(ctx, question, buf);
+        ask_glyph::paint(&ctx.palette, question, buf);
     }
     let bottom = i32::from(buf.height()) - 1;
     print_centred(buf, bottom, &view.help, dim, black);
@@ -145,30 +142,6 @@ fn paint_slot(ctx: &Ctx, slot: &SlotView, buf: &mut GlyphBuffer, y: i32) {
             buf.print(CHAPTER_X, y, label, dim, bg);
         }
     }
-}
-
-/// The overwrite question in a double-bordered box in the middle of the
-/// screen, with its answers' keys under it.
-fn paint_question(ctx: &Ctx, question: &OverwriteView, buf: &mut GlyphBuffer) {
-    let c = |u| ctx.palette.get(u);
-    let bg = c(UiColor::PanelBg);
-    let widest = question
-        .question
-        .chars()
-        .count()
-        .max(question.answers.chars().count());
-    let w = i32::try_from(widest).unwrap_or(0) + 4;
-    let rect = Rect::new(
-        (i32::from(buf.width()) - w) / 2,
-        (i32::from(buf.height()) - OVERWRITE_H) / 2,
-        w,
-        OVERWRITE_H,
-    );
-    buf.fill_rect(rect, Cell::new(' ', c(UiColor::Text), bg));
-    buf.draw_box(rect, BoxStyle::Double, c(UiColor::PanelBorderFocus), bg);
-    let (x, y) = (rect.x + 2, rect.y + 2);
-    buf.print(x, y, &question.question, c(UiColor::Text), bg);
-    buf.print(x, y + 1, &question.answers, c(UiColor::TextDim), bg);
 }
 
 #[cfg(test)]

@@ -2584,7 +2584,10 @@ mod tests {
 
     /// The labels of `menu`'s lines.
     fn labels(menu: &Menu) -> Vec<String> {
-        menu.items().iter().map(|i| i.label.as_str().to_owned()).collect()
+        menu.items()
+            .iter()
+            .map(|i| i.label.as_str().to_owned())
+            .collect()
     }
 
     /// The list `mode` shows.

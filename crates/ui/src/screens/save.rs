@@ -15,9 +15,7 @@ pub mod glyph;
 pub mod view;
 
 use crate::prelude::*;
-pub use view::{
-    OverwriteView, SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView,
-};
+pub use view::{SavePromptView, SlotColumnsView, SlotEntryView, SlotPickerView, SlotView};
 
 use trpg_core::{Campaign, GameMode, SaveFile};
 
@@ -27,11 +25,13 @@ use crate::input::Action;
 use crate::save::{self, Slot, playtime_text, slot_key};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::screens::pick_one;
-use crate::widgets::{ListCursor, Menu, MenuItem};
+use crate::widgets::{Ask, ListCursor, Menu, MenuItem};
 
 /// The key of the question after a chapter's victory in the language
 /// files ([`Ctx::text`]).
 pub const SAVE_QUESTION: &str = "save_prompt.question";
+/// The key of "Overwrite slot N?".
+const OVERWRITE_QUESTION: &str = "save.overwrite_question";
 /// The key of the slot picker's title when saving.
 pub const SAVE_TITLE: &str = "save.title.save";
 /// The key of the slot picker's title when loading.
@@ -128,8 +128,8 @@ pub struct SlotPickerScreen {
     slots: Vec<Slot>,
     /// The focused slot (slot number − 1) and the slots shown.
     cursor: ListCursor,
-    /// Whether "Overwrite slot N?" is open.
-    asking: bool,
+    /// "Overwrite slot N?", while it is open.
+    asking: Option<Ask<bool>>,
     /// The message under the panel, if any.
     message: Option<String>,
 }
@@ -161,7 +161,7 @@ impl SlotPickerScreen {
             purpose,
             slots,
             cursor,
-            asking: false,
+            asking: None,
             message: None,
         }
     }
@@ -196,7 +196,7 @@ impl SlotPickerScreen {
 
     /// Whether "Overwrite slot N?" is open.
     pub fn is_asking(&self) -> bool {
-        self.asking
+        self.asking.is_some()
     }
 
     /// The message under the panel, if any.
@@ -206,8 +206,12 @@ impl SlotPickerScreen {
 
     /// The overwrite question for the focused slot.
     pub fn overwrite_question(&self, ctx: &Ctx) -> String {
-        let slot = format!("{:02}", self.focused_slot());
-        ctx.text_with("save.overwrite_question", &[("slot", &slot)])
+        ctx.text_with(OVERWRITE_QUESTION, &[("slot", &self.slot_text())])
+    }
+
+    /// The focused slot's number as the overwrite question shows it.
+    fn slot_text(&self) -> String {
+        format!("{:02}", self.focused_slot())
     }
 
     /// Moves the focus one slot down or up, wrapping.
@@ -250,7 +254,7 @@ impl SlotPickerScreen {
             if !self.would_overwrite() {
                 return self.write(ctx);
             }
-            self.asking = true;
+            self.asking = Some(Ask::yes_no(OVERWRITE_QUESTION, "save.overwrite_answers"));
             ctx.audio.menu(MenuSound::Select);
             return None;
         }
@@ -276,24 +280,19 @@ impl SlotPickerScreen {
     /// An action while the overwrite question is open. Returns the pop, if
     /// the picker is done.
     fn answer(&mut self, ctx: &mut Ctx, action: Action) -> Option<Transition> {
-        match action {
-            Action::Confirm => {
-                self.asking = false;
-                self.write(ctx)
-            }
-            Action::Cancel => {
-                self.asking = false;
-                ctx.audio.menu(MenuSound::Cancel);
-                None
-            }
-            _ => None,
+        let yes = self.asking.as_mut()?.handle(action, &mut ctx.audio)?;
+        self.asking = None;
+        if yes {
+            return self.write(ctx);
         }
+        ctx.audio.menu(MenuSound::Cancel);
+        None
     }
 
     /// The bottom help line.
     pub fn help(&self, ctx: &Ctx) -> String {
         // A slot with something in it says so before it is chosen.
-        let key = if self.asking {
+        let key = if self.is_asking() {
             "save.help.asking"
         } else if self.would_overwrite() {
             "save.help.overwrite"
@@ -337,9 +336,9 @@ impl SlotPickerScreen {
             slots,
             range,
             message: self.message.clone(),
-            question: self.asking.then(|| OverwriteView {
-                question: self.overwrite_question(ctx),
-                answers: ctx.text_with("save.overwrite_answers", &[]),
+            question: self.asking.as_ref().map(|ask| {
+                let slot = self.slot_text();
+                ask.view_with_keys(ctx, ctx.help_keys(), &[("slot", &slot)])
             }),
             help: self.help(ctx),
         }
@@ -391,7 +390,7 @@ impl Screen<Shuyi> for SlotPickerScreen {
 
     fn update(&mut self, ctx: &mut Ctx, input: &FrameInput) -> Transition {
         for &action in &input.actions {
-            let done = if self.asking {
+            let done = if self.is_asking() {
                 self.answer(ctx, action)
             } else {
                 match action {
@@ -414,7 +413,7 @@ impl Screen<Shuyi> for SlotPickerScreen {
             if let Some(pop) = done {
                 return pop;
             }
-            if self.asking && action == Action::Confirm {
+            if self.is_asking() && action == Action::Confirm {
                 // The key that opened the question isn't its answer.
                 break;
             }

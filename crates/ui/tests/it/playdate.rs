@@ -10,7 +10,6 @@ use trpg_content::FontAtlasDef;
 use trpg_content::font::ATLAS_1BIT_PATH;
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{Faction, Phase};
-use trpg_ui::widgets::menu::LabelText as _;
 use trpg_ui::game::system_menu::SystemMenuEntry;
 use trpg_ui::harness::Harness;
 use trpg_ui::input::{
@@ -28,6 +27,7 @@ use trpg_ui::screens::{
     FamiliarityScreen, KeyBindingsScreen, LeadSelectScreen, ModeSelectScreen, OptionsScreen,
 };
 use trpg_ui::widgets::help::key_name;
+use trpg_ui::widgets::menu::LabelText as _;
 use trpg_ui::{
     ConsoleSizes, ConsoleSpec, Ctx, GlyphBuffer, KeyPrompt, Palette, RawInputEvent, ShuyiCtx,
     Storage, UiColor,

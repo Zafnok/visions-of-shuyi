@@ -12,7 +12,6 @@
 
 use insta::assert_snapshot;
 use trpg_core::{Faction, Pos, UnitId};
-use trpg_ui::widgets::menu::LabelText as _;
 use trpg_ui::Storage;
 use trpg_ui::audio::{AudioRequest, MusicCommand};
 use trpg_ui::cinematic::Frame;
@@ -22,6 +21,7 @@ use trpg_ui::input::RIGHT_HANDED;
 use trpg_ui::map_view::MapScene;
 use trpg_ui::screens::TitleScreen;
 use trpg_ui::screens::title::TitleView;
+use trpg_ui::widgets::menu::LabelText as _;
 
 const SCREEN: Rect = Rect::new(0, 0, 100, 32);
 /// The title song's length, in seconds (`assets/audio/audio.ron`).

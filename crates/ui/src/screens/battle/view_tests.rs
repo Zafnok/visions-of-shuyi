@@ -22,7 +22,13 @@ use crate::widgets::menu::Menu;
 /// The labels of the menu open, if any.
 fn menu_labels(view: &BattleView) -> Option<Vec<String>> {
     let menu = view.menu.as_ref()?;
-    Some(menu.menu.items.iter().map(|i| i.label.as_str().to_owned()).collect())
+    Some(
+        menu.menu
+            .items
+            .iter()
+            .map(|i| i.label.as_str().to_owned())
+            .collect(),
+    )
 }
 
 #[test]

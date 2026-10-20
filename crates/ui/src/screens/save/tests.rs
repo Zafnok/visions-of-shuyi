@@ -362,8 +362,8 @@ fn saving_over_a_slot_asks_first() {
     assert_eq!(s.overwrite_question(&c), "Overwrite slot 02?");
     assert_eq!(s.help(&c), "f yes · d no");
     let question = s.view(&c).question.unwrap();
-    assert_eq!(question.question, "Overwrite slot 02?");
-    assert_eq!(question.answers, "f yes / d no");
+    assert_eq!(question.text, "Overwrite slot 02?");
+    assert_eq!(question.keys.as_deref(), Some("f yes / d no"));
     assert_eq!(read(&c.storage, &slot_key(2)).unwrap(), before);
     // The cursor keys do nothing while it asks; Cancel backs out.
     sounds(&mut c);

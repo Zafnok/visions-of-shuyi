@@ -221,14 +221,17 @@ fn paint_column(ctx: &Ctx, view: &ColumnsView, column: &ColumnView, buf: &mut Gl
     }
 }
 
-/// The question box, centred.
+/// The question box, centred: the question widget's box (the engine's
+/// `ask::glyph`) with the cost on a line of its own between the question
+/// and its keys.
 fn paint_question(ctx: &Ctx, question: &QuestionView, buf: &mut GlyphBuffer) {
     let c = |u| ctx.palette.get(u);
     let bg = c(UiColor::PanelBg);
+    let keys = question.ask.keys.as_deref().unwrap_or_default();
     let lines = [
-        (&question.ask, UiColor::Text),
-        (&question.cost, UiColor::Text),
-        (&question.keys, UiColor::TextDim),
+        (question.ask.text.as_str(), UiColor::Text),
+        (question.cost.as_str(), UiColor::Text),
+        (keys, UiColor::TextDim),
     ];
     let widest = lines.iter().map(|(l, _)| l.chars().count()).max();
     let w = i32::try_from(widest.unwrap_or(0)).unwrap_or(0) + 4;

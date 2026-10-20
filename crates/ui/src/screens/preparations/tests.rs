@@ -910,7 +910,10 @@ fn the_view_of_the_options_and_fight_tabs_and_the_leave_question() {
 
     update(&mut s, &mut c, &[Cancel]);
     let view = s.view(&c);
-    assert_eq!(view.leave_question.as_deref(), Some("Leave preparations?"));
+    assert_eq!(
+        view.leave_question.map(|q| q.text).as_deref(),
+        Some("Leave preparations?")
+    );
     assert_eq!(view.message, None);
     assert_eq!(view.help, "f yes / d no");
     update(&mut s, &mut c, &[Cancel]);

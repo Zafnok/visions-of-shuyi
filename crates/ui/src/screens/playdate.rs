@@ -232,7 +232,14 @@ pub fn menu(ctx: &Ctx, buf: &mut GlyphBuffer, at: (i32, i32), menu: &MenuView) {
     window(ctx, buf, rect, "");
     for (row, it) in (rect.y + 1..).zip(&menu.items) {
         let state = Item::of(it.focused, it.enabled);
-        item(ctx, buf, (rect.x + 2, row), w - 4, &menu_text(ctx, it), state);
+        item(
+            ctx,
+            buf,
+            (rect.x + 2, row),
+            w - 4,
+            &menu_text(ctx, it),
+            state,
+        );
     }
 }
 

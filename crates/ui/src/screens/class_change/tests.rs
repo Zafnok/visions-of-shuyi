@@ -11,6 +11,7 @@ use crate::console::{ConsoleSizes, ConsoleSpec};
 use crate::glyph_buffer::Cell;
 use crate::screen::tests::ctx;
 use crate::screens::battle::view::ProgressView;
+use crate::widgets::AskView;
 use Action::{Cancel, Confirm, CursorLeft, CursorRight};
 
 pub(super) fn demo(c: &Ctx, kind: ChangeKind) -> ClassChangeScreen {
@@ -235,9 +236,12 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
     assert_eq!(
         view.question,
         Some(QuestionView {
-            ask: "Promote Test Knight to Iron Rider?".into(),
+            ask: AskView {
+                text: "Promote Test Knight to Iron Rider?".into(),
+                answers: Vec::new(),
+                keys: Some("f yes / d no".into()),
+            },
             cost: "Uses 1 Tier 2 Seal (1 in stock).".into(),
-            keys: "f yes / d no".into(),
         })
     );
     // The columns stay under it.
@@ -504,7 +508,7 @@ fn a_reclass_keeps_stats_and_shows_what_was_learned_and_stowed() {
     step(&mut s, &mut c, &[CursorRight, CursorRight, CursorRight]);
     step(&mut s, &mut c, &[Confirm]);
     let question = columns(&s, &c).question.expect("the question");
-    assert_eq!(question.ask, "Change Test Knight to Mage?");
+    assert_eq!(question.ask.text, "Change Test Knight to Mage?");
     assert_eq!(question.cost, "Uses 1 Reclass Seal (1 in stock).");
     step(&mut s, &mut c, &[Confirm]);
     assert_eq!(s.unit().class, ClassId("mage".into()));

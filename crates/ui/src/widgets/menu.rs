@@ -80,16 +80,16 @@ mod tests {
     }
 
     fn render(m: &Menu) -> String {
-        let c = crate::screen::tests::ctx();
-        let p = &c.palette;
+        let ctx = crate::screen::tests::ctx();
+        let p = &ctx.palette;
         let view = m.view();
-        let (w, h) = glyph::size(&c, &view);
+        let (w, h) = glyph::size(&ctx, &view);
         let mut buf = GlyphBuffer::new(
             u16::try_from(w + 2).unwrap(),
             u16::try_from(h + 2).unwrap(),
             Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black)),
         );
-        glyph::paint(&c, &view, &mut buf, 1, 1);
+        glyph::paint(&ctx, &view, &mut buf, 1, 1);
         buf.to_snapshot(p)
     }
 

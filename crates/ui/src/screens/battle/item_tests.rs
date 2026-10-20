@@ -641,7 +641,10 @@ fn the_pack_list_and_the_preview_are_told_in_the_players_language() {
         panic!("{:?}", s.mode());
     };
     let labels = |menu: &crate::widgets::menu::Menu| -> Vec<String> {
-        menu.items().iter().map(|i| i.label.as_str().to_owned()).collect()
+        menu.items()
+            .iter()
+            .map(|i| i.label.as_str().to_owned())
+            .collect()
     };
     assert!(labels(menu)[0].starts_with("Potion"), "{:?}", labels(menu));
     let told = s.mode().told(s.state(), words).into_owned();

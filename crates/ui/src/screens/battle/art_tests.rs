@@ -442,7 +442,11 @@ fn lines_are_arts_then_actives_and_only_what_fits() {
     else {
         unreachable!()
     };
-    let labels: Vec<&str> = menu.items().iter().map(|i| i.label.as_str().trim_end()).collect();
+    let labels: Vec<&str> = menu
+        .items()
+        .iter()
+        .map(|i| i.label.as_str().trim_end())
+        .collect();
     assert_eq!(
         labels,
         [

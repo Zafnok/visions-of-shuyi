@@ -21,8 +21,8 @@ use crate::glyph_buffer::{GlyphBuffer, Rect};
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::playdate::{
-    Item, ask_view, bar, cells, centred, clear, cut, first_shown, footer, inks, item,
-    more_marks, to_i32, to_usize, window,
+    Item, ask_view, bar, cells, centred, clear, cut, first_shown, footer, inks, item, more_marks,
+    to_i32, to_usize, window,
 };
 
 /// Column of the group headings.

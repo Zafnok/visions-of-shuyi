@@ -7,7 +7,7 @@
 use crate::prelude::*;
 use trpg_core::GameMode;
 
-use crate::widgets::MenuView;
+use crate::widgets::{AskView, MenuView};
 
 /// "Save your progress?" with its answers, as it is this frame.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -35,7 +35,7 @@ pub struct SlotPickerView {
     /// Why something didn't work, until the next key.
     pub message: Option<String>,
     /// The "Overwrite slot N?" question, while it is open.
-    pub question: Option<OverwriteView>,
+    pub question: Option<AskView<bool>>,
     /// The help line: what the keys do here.
     pub help: String,
 }
@@ -86,13 +86,4 @@ pub enum SlotEntryView {
     },
     /// A save that can't be read; the text says why.
     Unreadable(String),
-}
-
-/// "Overwrite slot N?" with the keys that answer it.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct OverwriteView {
-    /// The question.
-    pub question: String,
-    /// What the keys answer, e.g. `f yes / d no`.
-    pub answers: String,
 }
