@@ -12,7 +12,8 @@ use alloc::collections::btree_map::Entry;
 use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
-use shuyi_assets::cinematic::{self as frame, CinematicFile, ShotCheck};
+use shuyi_assets::cinematic::{self as frame, CinematicFile, CinematicRon, ShotCheck};
+use shuyi_assets::format::RegisterError;
 use trpg_core::lead::{self, LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE, Part};
 use trpg_core::{BattleDef, CharacterId, ClassTable, TerrainTable};
 
@@ -24,6 +25,7 @@ use crate::dialogue::{
     BOX_LINES, BOX_WIDTH, DialogueTable, Present, STANDARD_EXPRESSIONS, Scene, Side, Step,
 };
 use crate::error::ContentError;
+use crate::formats::{self, AssetPath, Formats};
 use crate::lang::text_width;
 use crate::names::{Names, name_token};
 use crate::portrait::PortraitTable;
@@ -257,20 +259,10 @@ enum RawSide {
 pub fn load_all(refs: Refs<'_>) -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
     let mut cinematics = BTreeMap::new();
     let mut errors = Vec::new();
-    for path in bundle::files_in(CINEMATICS_DIR) {
-        let Some(stem) = path
-            .strip_prefix(CINEMATICS_DIR)
-            .and_then(|p| p.strip_prefix('/'))
-            .and_then(|p| p.strip_suffix(EXTENSION))
-        else {
-            continue;
-        };
-        let file = bundle::display_path(path);
-        let Some(source) = bundle::file(path) else {
-            errors.push(ContentError::new(&file, "file is not valid UTF-8"));
-            continue;
-        };
-        match from_source(&file, stem, source, refs) {
+    for (path, raw) in formats::load_in::<RawCinematic>(CINEMATICS_DIR) {
+        let file = AssetPath::in_bundle(bundle::install(), path);
+        let stem = file.stem();
+        match raw.and_then(|raw| check(file.shown(), stem, &raw, refs)) {
             Ok(def) => {
                 cinematics.insert(stem.to_owned(), def);
             }
@@ -319,13 +311,29 @@ pub fn from_source(
     refs: Refs<'_>,
 ) -> Result<CinematicDef, Vec<ContentError>> {
     let raw: RawCinematic = frame::parse(file, source).map_err(|e| vec![e])?;
+    check(file, stem, &raw, refs)
+}
+
+/// Checks cinematic file `raw` as [`from_source`] says.
+fn check(
+    file: &str,
+    stem: &str,
+    raw: &RawCinematic,
+    refs: Refs<'_>,
+) -> Result<CinematicDef, Vec<ContentError>> {
     let lists = ActionLists {
         table: &raw.actions,
         refs,
         named: BTreeMap::new(),
         used: BTreeSet::new(),
     };
-    frame::check(file, stem, &raw, refs.audio, lists)
+    frame::check(file, stem, raw, refs.audio, lists)
+}
+
+/// Registers the game's cinematic format: its shots and their action
+/// lists as written.
+pub(crate) fn register(formats: &mut Formats) -> Result<(), RegisterError> {
+    formats.register(CinematicRon::<RawShot, Vec<RawAction>>::new())
 }
 
 /// The action lists of one cinematic file, as its shots use them.

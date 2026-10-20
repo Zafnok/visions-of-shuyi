@@ -30,6 +30,7 @@ pub mod dialogue;
 mod enums;
 pub mod error;
 pub mod font;
+pub mod formats;
 pub mod image;
 pub mod ink;
 pub mod item;
@@ -694,7 +695,7 @@ fn check_map_lights(
 
 /// The maps ([`map::load_all`]): none if the terrain failed to load.
 fn load_maps(terrain: Option<&TerrainDef>) -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {
-    terrain.map_or_else(|| Ok(BTreeMap::new()), |t| map::load_all(&t.display))
+    terrain.map_or_else(|| Ok(BTreeMap::new()), |_| map::load_all())
 }
 
 /// The light each battle names instead of its map's
@@ -1002,7 +1003,7 @@ mod tests {
     }
 
     fn ok_maps() -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {
-        map::load_all(&ok_terrain().unwrap_or_default().display)
+        map::load_all()
     }
 
     fn ok_classes() -> Result<ClassTable, Vec<ContentError>> {

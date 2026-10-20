@@ -11,6 +11,7 @@ pub use shuyi_assets::image::{ImageId, ImageInfo, ImageTable, MAX_SIDE, png_size
 use crate::bundle;
 use crate::error::ContentError;
 use crate::font::ATLAS_PNG_PATH;
+use crate::formats;
 
 /// Path of the test card inside the bundle: a generated 16×16 image
 /// (`cargo xtask test-card`) for tests and the "Sprite test" debug tool.
@@ -25,7 +26,7 @@ pub const EFFECT_MARKS_PATH: &str = "images/effect_marks.png";
 /// Reads the size of every PNG in the embedded bundle (the font atlas
 /// aside, which [`crate::font`] checks), reporting every bad file.
 pub fn load() -> Result<ImageTable, Vec<ContentError>> {
-    ImageTable::load(bundle::install(), &[ATLAS_PNG_PATH])
+    ImageTable::load_with(bundle::install(), formats::install(), &[ATLAS_PNG_PATH])
 }
 
 /// The table of `files` (bundle path and contents), or every problem

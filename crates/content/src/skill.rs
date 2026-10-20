@@ -18,6 +18,7 @@ use trpg_core::{
 use crate::bundle;
 use crate::class::CLASSES_PATH;
 use crate::error::ContentError;
+use crate::formats::{self, DataTable};
 use crate::ron_loader::parse_ron;
 use crate::terrain::line_of;
 
@@ -49,14 +50,15 @@ fn first_rank() -> u8 {
 
 /// Loads and validates the embedded skill file.
 pub fn load() -> Result<SkillTable, Vec<ContentError>> {
-    let display = bundle::display_path(SKILLS_PATH);
-    let source = bundle::file(SKILLS_PATH).ok_or_else(|| {
-        vec![ContentError::new(
-            &display,
-            "file not found in asset bundle",
-        )]
-    })?;
-    from_source(&display, source)
+    formats::table(SKILLS_PATH)
+}
+
+impl DataTable for SkillTable {
+    const NAME: &'static str = "skill table";
+
+    fn from_source(file: &str, source: &str) -> Result<Self, Vec<ContentError>> {
+        from_source(file, source)
+    }
 }
 
 /// Parses and validates skill `source`, attributing errors to `file`.
