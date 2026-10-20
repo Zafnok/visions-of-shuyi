@@ -13,8 +13,9 @@ use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use shuyi_assets::cinematic::{self as frame, CinematicFile, CinematicRon, ShotCheck};
+use shuyi_assets::dialogue::lines_at_longest;
 use shuyi_assets::format::RegisterError;
-use trpg_core::lead::{self, LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE, Part};
+use trpg_core::lead::{LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE};
 use trpg_core::{BattleDef, CharacterId, ClassTable, TerrainTable};
 
 use crate::audio::AudioManifest;
@@ -22,12 +23,12 @@ use crate::battle::bare;
 use crate::bundle;
 use crate::character::CharacterTable;
 use crate::dialogue::{
-    BOX_LINES, BOX_WIDTH, DialogueTable, Present, STANDARD_EXPRESSIONS, Scene, Side, Step,
+    BOX_LINES, BOX_WIDTH, DialogueTable, LeadTokens, Present, STANDARD_EXPRESSIONS, Scene, Side,
+    Step,
 };
 use crate::error::ContentError;
 use crate::formats::{self, AssetPath, Formats};
-use crate::lang::text_width;
-use crate::names::{Names, name_token};
+use crate::names::Names;
 use crate::portrait::PortraitTable;
 
 mod action;
@@ -525,7 +526,9 @@ fn talk_problems(refs: Refs<'_>, scene: &str, first: usize, count: usize) -> Vec
     let longest_name = refs.names.longest();
     let numbered = (first..end).zip(&boxes[first..end]);
     numbered
-        .filter(|(_, text)| page_lines(text, longest_name) > BOX_LINES)
+        .filter(|(_, text)| {
+            lines_at_longest(text, &LeadTokens, Some(longest_name), BOX_WIDTH) > BOX_LINES
+        })
         .map(|(n, _)| {
             format!(
                 "text box {n} of scene \"{scene}\" may not fit one page \
@@ -533,40 +536,6 @@ fn talk_problems(refs: Refs<'_>, scene: &str, first: usize, count: usize) -> Vec
             )
         })
         .collect()
-}
-
-/// How many lines of the text box `text` can take: wrapped at
-/// [`BOX_WIDTH`] as the dialogue screen wraps it, with every token at its
-/// longest (the lead's as [`lead::longest`], a name token as
-/// `longest_name`).
-fn page_lines(text: &str, longest_name: usize) -> usize {
-    let mut filled = String::new();
-    for part in lead::split_tokens(text) {
-        match part {
-            Part::Text(t) | Part::Unclosed(t) => filled.push_str(t),
-            Part::Token(t) => {
-                let len = match name_token(t) {
-                    Some(_) => longest_name,
-                    None => lead::longest(t).unwrap_or(text_width(t) + 2),
-                };
-                filled.push_str(&"x".repeat(len));
-            }
-        }
-    }
-    let (mut lines, mut used) = (0, 0);
-    for word in filled.split_whitespace() {
-        let len = word.chars().count();
-        if used > 0 && used + 1 + len <= BOX_WIDTH {
-            used += 1 + len;
-        } else {
-            // A word longer than a line is cut into lines; the last piece
-            // starts the line the next word may join.
-            let pieces = len.div_ceil(BOX_WIDTH);
-            lines += pieces;
-            used = len - (pieces - 1) * BOX_WIDTH;
-        }
-    }
-    lines
 }
 
 /// Every problem with a characters shot of `who` wearing `expression`.

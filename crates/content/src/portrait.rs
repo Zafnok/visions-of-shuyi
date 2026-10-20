@@ -68,32 +68,11 @@ struct Sidecar {
 /// stem, checking each image it names against `images`. Reports every error
 /// of every file.
 pub fn load_all(images: &ImageTable) -> Result<PortraitTable, Vec<ContentError>> {
-    let mut portraits = BTreeMap::new();
-    let mut errors = Vec::new();
-    for path in bundle::files_in(PORTRAITS_DIR) {
-        let Some(stem) = path
-            .strip_prefix(PORTRAITS_DIR)
-            .and_then(|p| p.strip_prefix('/'))
-            .and_then(|p| p.strip_suffix(SIDECAR_EXTENSION))
-        else {
-            continue;
-        };
-        let file = bundle::display_path(path);
-        let result = bundle::file(path)
-            .ok_or_else(|| vec![ContentError::new(&file, "file is not valid UTF-8")])
-            .and_then(|source| parse_portrait(&file, stem, source, images));
-        match result {
-            Ok(p) => {
-                portraits.insert(stem.to_owned(), p);
-            }
-            Err(e) => errors.extend(e),
-        }
-    }
-    if errors.is_empty() {
-        Ok(portraits)
-    } else {
-        Err(errors)
-    }
+    bundle::load_each(
+        PORTRAITS_DIR,
+        SIDECAR_EXTENSION.trim_start_matches('.'),
+        |file| parse_portrait(file.path, file.stem, file.text, images),
+    )
 }
 
 /// Parses sidecar `source` of the file with stem `stem` (errors attributed

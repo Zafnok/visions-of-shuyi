@@ -7,7 +7,7 @@
 use crate::prelude::*;
 use trpg_core::{BattleNote, UnitId};
 
-use crate::widgets::wrap::word_wrap;
+use crate::widgets::word_wrap;
 use crate::words::Words;
 
 /// The key of the notes box's title (`BATTLE NOTES`).

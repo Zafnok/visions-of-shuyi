@@ -27,7 +27,7 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
 use crate::widgets::help::SEPARATOR;
-use crate::widgets::wrap::word_wrap;
+use crate::widgets::word_wrap;
 
 /// The key of the screen's title, on the panel's border, in the language
 /// files ([`Ctx::text`]).

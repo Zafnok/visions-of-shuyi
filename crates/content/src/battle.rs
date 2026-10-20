@@ -186,32 +186,9 @@ enum RawObjective {
 /// Loads every battle file in the bundle, keyed by id (the file stem).
 /// Reports every error of every file.
 pub fn load_all(refs: &BattleRefs<'_>) -> Result<BTreeMap<String, BattleDef>, Vec<ContentError>> {
-    let mut battles = BTreeMap::new();
-    let mut errors = Vec::new();
-    for path in bundle::files_in(BATTLES_DIR) {
-        let Some(stem) = path
-            .strip_prefix(BATTLES_DIR)
-            .and_then(|p| p.strip_prefix('/'))
-            .and_then(|p| p.strip_suffix(EXTENSION))
-        else {
-            continue;
-        };
-        let file = bundle::display_path(path);
-        let result = bundle::file(path)
-            .ok_or_else(|| vec![ContentError::new(&file, "file is not valid UTF-8")])
-            .and_then(|source| from_source(&file, stem, source, refs));
-        match result {
-            Ok(def) => {
-                battles.insert(stem.to_owned(), def);
-            }
-            Err(e) => errors.extend(e),
-        }
-    }
-    if errors.is_empty() {
-        Ok(battles)
-    } else {
-        Err(errors)
-    }
+    bundle::load_each(BATTLES_DIR, EXTENSION.trim_start_matches('.'), |file| {
+        from_source(file.path, file.stem, file.text, refs)
+    })
 }
 
 /// The light each battle file of the bundle names instead of its map's
