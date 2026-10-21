@@ -62,7 +62,7 @@ impl Way {
         };
         let row = along - 1;
         let half = (i64::from(BASE) - 1) / 2;
-        (0..i64::from(BASE)).contains(&row) && out >= 1 && out <= deep - (row - half).abs() - 1
+        (0..i64::from(BASE)).contains(&row) && out >= 1 && out < deep - (row - half).abs()
     }
 }
 

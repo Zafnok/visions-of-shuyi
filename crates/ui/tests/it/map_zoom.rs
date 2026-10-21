@@ -275,3 +275,44 @@ fn a_menu_opens_beside_its_unit_at_twice_the_size() {
     h.keys("f f");
     assert_snapshot!(h.snapshot());
 }
+
+/// The sides the map goes on past in the map scene: left, right, up, down.
+fn more(h: &Harness) -> [bool; 4] {
+    let m = h.map_scene().map(|s| s.more).unwrap_or_default();
+    [m.left(), m.right(), m.up(), m.down()]
+}
+
+/// The arrows at the map's edges (ticket 0449): at 1× the Quick Battle's
+/// 14 × 8 map fits the test tileset's view and has none; at 2× it is wider
+/// than the 11-tile view, so the scene says the map goes on to the right
+/// at its left edge, both ways in the middle and to the left at its right
+/// edge, as the cursor scrolls across it; never up or down.
+#[test]
+fn the_scene_says_where_the_map_goes_on_past_the_view_at_each_zoom() {
+    let mut h = quick_battle("sprite");
+    h.keys(&presses("Left", 14));
+    assert_eq!(more(&h), [false, true, false, false]);
+    let mut seen = vec![more(&h)];
+    for _ in 0..13 {
+        h.keys("Right");
+        let sides = more(&h);
+        let origin = h.map_scene().map_or(0, |s| s.origin.x);
+        assert_eq!(sides, [origin > 0, origin < 3, false, false], "{origin}");
+        if seen.last() != Some(&sides) {
+            seen.push(sides);
+        }
+    }
+    let both = [true, true, false, false];
+    let ends = [
+        [false, true, false, false],
+        both,
+        [true, false, false, false],
+    ];
+    assert_eq!(seen, ends);
+    // At 1× the map fits: none, wherever the cursor is.
+    h.keys("q");
+    assert_eq!(skin_zoom(&h), Some(MapZoom::X1));
+    assert_eq!(more(&h), [false; 4]);
+    h.keys(&presses("Left", 13));
+    assert_eq!(more(&h), [false; 4]);
+}

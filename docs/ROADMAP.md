@@ -119,7 +119,7 @@ how much faces dim over a place · **0740** narration left-aligned (after engine
 the pre-battle place reads as the chapel green · **0843** the intro's fixes
 (longer news, shorter fight hold, hit sounds, the logo on the chord, a
 start through black) · **0844** a setting to turn the intro off · **0446**
-Tamsin's combat picture · **0449** arrows where the map goes past the view (after engine#2304)
+Tamsin's combat picture · **0449** arrows where the map goes past the view (done)
 · **0466** a zoom tip · **0464** lessons only when they can be done →
 **0465** the end of the lessons points at Guides and offers a fresh start ·
 **0467** tips lost before they show · **0841** Tutorial None stops what's
@@ -305,7 +305,8 @@ Candle joins outside battle.
   debuff and stance arts.
 - **C. Bots:** **0506** Casual / Normal / Hardcore → **0509**
   autobalance → **0510** skirmishes to order.
-- **D. Playdate, Chapter 1's base:** **1038** → **1039** → **1041** →
+- **D. Playdate, Chapter 1's base:** **1038** → **1178** arrows at the
+  map's edges · **1038** → **1039** → **1041** →
   **1044** · **1042** → **1043** · **1046** · **1058** · **1060** →
   **1062** · **1051** the AI plans once per phase · **1057** → **1059**
   · **1056** · **1063**.
@@ -319,7 +320,7 @@ Candle joins outside battle.
   engine#3043, engine#3052, engine#3008 → engine#3009.
 - **G. Chapter 1's round 4 fixes:** **0736** first, because its craft
   research governs every Act 1 script → **0737** the Chapter 1 script
-  → **0742** · **1177** the engine pin → **0449**, **0740** · **0845** →
+  → **0742** · **1177** the engine pin (moved by 0740) · **0449** (done) · **0845** →
   **0846** · the rest of round 3's tickets: **0250**, **0318**,
   **0446**, **0461**, **0462**, **0463**, **0465**, **0466**, **0468**,
   **0738**, **0739**, **0741**, **0842**, **0843**, **0844**, **0847**.

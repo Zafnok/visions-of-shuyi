@@ -405,6 +405,42 @@ fn big_battle(c: &Ctx) -> BattleScreen {
     BattleScreen::new(battle(c, map, units))
 }
 
+/// The sides the map goes on past in `s`'s scene: left, right, up, down.
+fn more(s: &BattleScreen, c: &Ctx) -> [bool; 4] {
+    let m = s.scene(c).more;
+    [m.left(), m.right(), m.up(), m.down()]
+}
+
+/// On a map bigger than the view (64 × 40 under the glyph skin's 35 × 30),
+/// the scene says which sides the map goes on past (ticket 0449): at the
+/// left edge, in the middle and at the right edge, and the same down the
+/// map; only while the player browses. The Quick Battle's map fits: none.
+#[test]
+fn the_scene_says_where_the_map_goes_on_past_the_view_while_browsing() {
+    let mut c = ctx();
+    assert_eq!(more(&quick(), &c), [false; 4]);
+    let mut s = big_battle(&c);
+    let mut go = |s: &mut BattleScreen, key, times| {
+        for _ in 0..times {
+            step(s, &mut c, &[key]);
+        }
+    };
+    // The lord at (30, 20), the view round it.
+    assert_eq!(more(&s, &ctx()), [true; 4]);
+    go(&mut s, Action::CursorLeft, 30);
+    assert_eq!(more(&s, &ctx()), [false, true, true, true]);
+    go(&mut s, Action::CursorRight, 63);
+    assert_eq!(more(&s, &ctx()), [true, false, true, true]);
+    go(&mut s, Action::CursorUp, 20);
+    assert_eq!(more(&s, &ctx()), [true, false, false, true]);
+    go(&mut s, Action::CursorDown, 39);
+    assert_eq!(more(&s, &ctx()), [true, false, true, false]);
+    // The map menu: the arrows go.
+    go(&mut s, Action::Cancel, 1);
+    assert!(matches!(s.mode(), Mode::MapMenu { .. }), "{:?}", s.mode());
+    assert_eq!(more(&s, &ctx()), [false; 4]);
+}
+
 /// The scene holds what a skin with pictures joins tiles by: the terrain
 /// of the ring of tiles just outside the view, and the look the map's file
 /// names (which the game flow gives the screen), on the rewind screen too.
@@ -609,6 +645,9 @@ proptest! {
             if let Some(cursor) = scene.cursor {
                 prop_assert!(scene.contains(cursor.pos), "{:?}", s.mode());
             }
+            // The arrows at the map's edges only while the player browses.
+            let browsing = s.mode().cursor_free() && !s.ai_phase();
+            prop_assert_eq!(scene.more.any(), browsing, "{:?}", s.mode());
             if !s.playing() {
                 let drawn = s.state().units().iter().map(|u| s.drawn_pos(u));
                 let visible = drawn.filter(|&pos| scene.contains(pos)).count();

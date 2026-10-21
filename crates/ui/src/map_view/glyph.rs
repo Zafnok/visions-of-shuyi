@@ -3,7 +3,7 @@
 //! glyph skin (`shuyi_ui::grid::glyph`, ticket 1115), whose tile is two
 //! 8 × 16 cells, with this game's units as two-letter labels and HP bars
 //! ([`units`]), and an arrow glyph at each edge the map goes on past
-//! ([`edges`](super::edges)).
+//! ([`edges`]).
 
 pub mod units;
 

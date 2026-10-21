@@ -16,7 +16,7 @@
 //!   unit's tile loses its terrain glyphs under the picture.
 //!
 //! Units look the same either way: see [`units`]. Over them, the arrows
-//! at the edges the map goes on past ([`edges`](super::edges)): the
+//! at the edges the map goes on past ([`edges`]): the
 //! pictures of [`EDGE_MARKS_PATH`] with terrain tiles, the glyph skin's
 //! arrows on glyph terrain.
 
