@@ -17,7 +17,7 @@ code now: the game depends on the engine's crates by a git revision.
   `Cargo.toml`'s `[workspace.dependencies]`, and the source of each in
   `Cargo.lock`. `cargo xtask engine-pin <commit>` moves all three (and
   with no commit, pins the commit the local checkout is at, once it is
-  pushed). CI's `cargo xtask engine-pin --check` fails when they disagree.
+  on the engine's `main`). CI's `cargo xtask engine-pin --check` fails when they disagree.
 - **The local checkout.** Over the 30 days before the move, 24 of the 83
   game PRs merged since `engine/` existed changed it (29%; 24 of all 332
   merged PRs in those 30 days), so the engine's API is still moving and
@@ -45,7 +45,7 @@ code now: the game depends on the engine's crates by a git revision.
 A game ticket that needs the engine changed follows the
 [`engine-change`](../../.claude/skills/engine-change/SKILL.md) skill: first check it is
 really engine work (ADR-0063 §5 and the leak test), then either an engine PR
-now (merged with a merge commit) and a game PR that moves the pin, or an
+now (squash-merged) and a game PR that moves the pin, or an
 engine ticket, a marked workaround and a game follow-up `blocked_by:
 ["engine#NNNN"]` (ticket 1152). Engine work never makes the game wait.
 

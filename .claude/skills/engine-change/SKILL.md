@@ -137,8 +137,9 @@ this order:
    Run both from the game's folder: don't `cd` into `shuyi-engine/`
    (the session's working folder would move with it). The body follows the engine's `work-ticket` §6 and step 5 below: it
    names the game ticket (`game#NNNN`) and says the engine PR merges
-   first. It merges with a **merge commit**, never squash or rebase (the
-   history, and the pin must be a commit on the engine's `main`).
+   first. It is **squash-merged**, the only merge the engine's repository
+   allows: one commit on the engine's `main` per PR, and step 6 pins
+   that commit, never the branch's.
 
 6. **When the engine PR has merged**, move the pin to the engine's
    `main`, not to the branch commit:
@@ -198,9 +199,8 @@ with `start_session`:
   and works in `shuyi-engine/`.
 - **The brief:** the engine ticket's id, or the one-sentence change from
   step 1 and the facts for "A request from the game" if there is no
-  ticket yet; the game ticket it is for (`game#NNNN`); "merge with a
-  merge commit"; "don't move the game's pin: the game's follow-up ticket
-  does".
+  ticket yet; the game ticket it is for (`game#NNNN`); "don't move the
+  game's pin: the game's follow-up ticket does".
 
 This game session does not wait for it. It carries on with the marked
 workaround and the follow-up ticket of step 2, exactly as for "ticket
