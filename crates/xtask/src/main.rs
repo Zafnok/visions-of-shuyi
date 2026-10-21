@@ -12,6 +12,7 @@ mod battler_import;
 mod check_script;
 mod clean_targets;
 mod code_lines;
+mod edge_marks;
 mod effect_marks;
 mod engine;
 mod game_tools;
@@ -51,6 +52,7 @@ sfx [--check]                      render our own sounds into assets/audio/sfx/\
 test-card                          write the sprite test image, assets-test/images/test_card.png\n  \
 test-tileset                       write the sprite map skins' test tilesets, assets-test/tilesets/test*\n  \
 effect-marks                       write the effect arrows, assets/images/effect_marks.png\n  \
+edge-marks                         write the map's edge arrows, assets/images/edge_marks.png\n  \
 title-art [--bought]               write the title logo and placeholder backdrops, assets/title/\n  \
 map-sprite-import [--list]         copy the bought map sprites the game uses into assets-private/game/\n  \
 battler-import [--list]            copy the bought combat pictures and backdrops into assets-private/game/\n  \
@@ -91,6 +93,7 @@ fn dispatch(mut args: impl Iterator<Item = String>) -> u8 {
         Some("sfx") => sfx(&args.collect::<Vec<_>>()),
         Some("test-card") => test_card(&args.collect::<Vec<_>>()),
         Some("test-tileset") => test_tileset(&args.collect::<Vec<_>>()),
+        Some("edge-marks") => edge_marks(&args.collect::<Vec<_>>()),
         Some("effect-marks") => effect_marks(&args.collect::<Vec<_>>()),
         Some("title-art") => title_art_in(&repo_root(), &args.collect::<Vec<_>>()),
         Some("map-sprite-import") => map_sprite_import(&args.collect::<Vec<_>>()),
@@ -432,6 +435,23 @@ fn tileset_import_in(root: &Path, args: &[String]) -> u8 {
         }
         Err(e) => {
             eprintln!("tileset-import: {e}");
+            1
+        }
+    }
+}
+
+fn edge_marks(args: &[String]) -> u8 {
+    if !args.is_empty() {
+        eprintln!("usage: cargo xtask edge-marks");
+        return 2;
+    }
+    match edge_marks::run(&repo_root()) {
+        Ok(summary) => {
+            println!("{summary}");
+            0
+        }
+        Err(e) => {
+            eprintln!("edge-marks: {e}");
             1
         }
     }
@@ -1151,6 +1171,12 @@ mod tests {
         let bare = std::env::temp_dir().join(format!("xtask-ta-none-{}", std::process::id()));
         assert_eq!(title_art_in(&bare, &[]), 1);
         assert_eq!(title_art_in(&bare, &args(&["--bought"])), 1);
+    }
+
+    #[test]
+    fn edge_marks_rejects_args() {
+        assert_eq!(edge_marks(&args(&["--bogus"])), 2);
+        assert_eq!(dispatch(args(&["edge-marks", "x"]).into_iter()), 2);
     }
 
     #[test]

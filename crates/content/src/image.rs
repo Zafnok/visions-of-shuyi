@@ -23,6 +23,12 @@ pub const TEST_CARD_PATH: &str = "images/test_card.png";
 /// timed effect (ADR-0049).
 pub const EFFECT_MARKS_PATH: &str = "images/effect_marks.png";
 
+/// Path of the edge arrows inside the bundle: a generated 42×13 image
+/// (`cargo xtask edge-marks`), a right, a left, a down and an up arrow,
+/// which a sprite map skin puts at the edges of the map's view where the
+/// map goes on past it (ticket 0449).
+pub const EDGE_MARKS_PATH: &str = "images/edge_marks.png";
+
 /// Reads the size of every PNG in the embedded bundle (the font atlas
 /// aside, which [`crate::font`] checks), reporting every bad file.
 pub fn load() -> Result<ImageTable, Vec<ContentError>> {
