@@ -695,6 +695,7 @@ pub(crate) mod tests {
         let MapScene {
             origin: _, // where the tiles are: every feature moves with it
             size: _,   // how many tiles: likewise
+            more: _,   // the game sets none (no edge marks)
             tiles: _,
             ranges: _,
             // Painted only by a tileset with layers, and one with other

@@ -219,14 +219,13 @@ fn a_narration_box_is_drawn_as_the_dialogue_screen_draws_narration() {
     let blank = Cell::new(' ', p.get(UiColor::Text), p.get(UiColor::Black));
     let mut buf = GlyphBuffer::with_spec(ConsoleSpec::PC, blank);
     narration.draw(&ctx, &mara(), 12, &mut buf);
-    // Under the caption; one line of narration is dim, in the middle row
-    // of the text box and centred across it (40 characters: from 30).
+    // Under the caption; one line of narration is dim, on the first row
+    // of the text box from the speech column.
     assert_eq!(row(&buf, 0).trim(), "Village of Heth, dusk");
-    assert_eq!(text_row(&buf), "");
-    let typed = row(&buf, 24);
-    assert_eq!(typed.chars().position(|c| c == 'T'), Some(30));
-    assert_eq!(typed.trim_matches(|c| c == '│' || c == ' '), "The rain had");
-    assert_eq!(buf.get(30, 24).unwrap().fg, p.get(UiColor::TextDim));
+    let typed = row(&buf, 23);
+    assert_eq!(typed.chars().position(|c| c == 'T'), Some(4));
+    assert_eq!(text_row(&buf), "The rain had");
+    assert_eq!(buf.get(4, 23).unwrap().fg, p.get(UiColor::TextDim));
     // Nobody is up yet.
     assert!(buf.sprites().is_empty());
     assert_eq!(row(&buf, 19).trim(), "");

@@ -31,7 +31,7 @@ fn parse(items: &[&str]) -> Result<Options, String> {
 
 /// Runs `frame-png` with `options`, writing under `dir`.
 fn run(dir: &Path, options: &Options) -> Result<String, String> {
-    frame_png::run(dir, options, &Trpg)
+    frame_png::run(dir, options, &Trpg, None)
 }
 
 /// A fresh empty directory under the system temp directory.

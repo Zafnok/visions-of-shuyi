@@ -5,10 +5,10 @@ type: feature
 milestone: M6 Story & dialogue
 model: sonnet-5
 effort: low
-status: todo
+status: done
 blocked_by: ["1177"]
 nick_input: none
-completed:
+completed: 2026-10-21
 ---
 
 # 0740 — Narration boxes are left-aligned like speech
@@ -74,9 +74,9 @@ narration's colour.
 
 ## Acceptance criteria
 
-- [ ] A narration box's lines start at the speech column (test on the
+- [x] A narration box's lines start at the speech column (test on the
       dialogue view's line positions, plus one snapshot).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -85,4 +85,16 @@ narration's colour.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+- Moved the pin to the engine's `main` (8617026), which has engine#2305, and
+  set `narration: NarrationAlign::Left` in the game's `BOX_PLACE`. Narration
+  now starts at column 4 on the first text row, still `TextDim`. The title
+  cinematic's talk shots and the log use the same painter, so they follow.
+  The Playdate front end has no separate dialogue painter, so nothing to change.
+- The new pin needed small fixes to build: `MapScene` gained a `more` field
+  (two sites), `frame_png::run` takes a target, and the engine's standard
+  formats list gained `pattern map`. Tests only, plus one pattern in a test.
+- Tests: the dialogue glyph test and the cinematic shot test now check
+  narration at the speech column; five snapshots re-reviewed (only the
+  narration line moved). `look-and-feel.md` updated.
+- Engine friction: estimate 5, measured 5 (1x), under 2x.
+- No gameplay rules decided. Caption on the top row stays centred.

@@ -25,7 +25,10 @@ use crate::portrait::draw_portrait;
 use crate::prelude::*;
 use crate::screen::Ctx;
 use crate::screens::print_centred;
-use shuyi_ui::dialogue::text_box::{self, glyph::BoxPlace};
+use shuyi_ui::dialogue::text_box::{
+    self,
+    glyph::{BoxPlace, NarrationAlign},
+};
 
 /// Top row of the portrait frames.
 const FRAME_Y: i32 = 1;
@@ -177,11 +180,13 @@ pub fn draw_face(ctx: &Ctx, buf: &mut GlyphBuffer, face: &FaceFrame) {
     buf.print_centred(plate, face.name, c(name_fg));
 }
 
-/// Where the text box goes: rows 21–27, the text from column 4 of row 23.
+/// Where the text box goes: rows 21–27, the text from column 4 of row 23,
+/// narration from there too, like speech.
 pub const BOX_PLACE: BoxPlace = BoxPlace {
     frame: TEXT_BOX,
     text_x: TEXT_X,
     text_y: TEXT_Y,
+    narration: NarrationAlign::Left,
 };
 
 /// The text box ([`shuyi_ui::dialogue::text_box::glyph::paint`]), with the
