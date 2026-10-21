@@ -58,6 +58,16 @@ in 1026.
 **Carve (1114):** either order works. If the AI moved with the tactics
 kit to the engine, change it there.
 
+**Slicing (engine#3009):** either order works; don't wait for it. The
+enemy AI is engine#3009's first real user (noted there 2026-10-21):
+its `Think` trait spreads a decision over frames in work units. If
+engine#3009 is done and the pin is past it, the phase planner
+implements `Think` here (a unit is one enemy's move scored), and the
+Playdate front end steps it a slice per frame. If not, plan as above
+and leave the planner's state in a value of its own so that
+`impl Think` is a few lines in the game PR that moves the pin past
+engine#3009.
+
 ## Implementation steps
 
 1. Read ADR-0004, `docs/design/` AI docs, `crates/core/src/ai*`, the
