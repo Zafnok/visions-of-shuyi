@@ -257,8 +257,9 @@ Chapter 1 playtest gates onto 1064). Only Chapter 1 exists as content
 (`assets/chapters/ch01.ron`); the chapter flow already chains chapters
 with `next`. Phases run in order, but Phase 1's questions and Phase 2's
 lanes overlap: a lane starts as soon as its own tickets are ready.
-Within a lane, → is order and · is "side by side". No engine ticket
-blocks Act 1.
+Within a lane, → is order and · is "side by side". The only engine
+tickets Act 1 waits for are the playtest bots' (engine#2125–2127, Lane
+C; re-gated 2026-10-21 by 0130).
 
 **Phase 1: Nick's design queue**, in this order (each unblocks the
 tickets in brackets):
@@ -303,8 +304,14 @@ Candle joins outside battle.
 - **B. Battle rules:** **0319** escape, a fleeing boss, a boss who
   can't die, a scripted death (after 0069) · **0511** bosses use their
   debuff and stance arts.
-- **C. Bots:** **0506** Casual / Normal / Hardcore → **0509**
-  autobalance → **0510** skirmishes to order.
+- **C. Bots**, engine first (0130): each step is an engine PR in
+  `Zafnok/shuyi-engine`, then the game PR that moves the pin and adds
+  the game's parts. engine#2125 the rollout bot (`Determinize`, flat
+  Monte Carlo) · engine#2126 the playtest runner with pass bands (both
+  ready, side by side) → **0506** Casual / Normal / Hardcore (the
+  personas' scoring, the battle's `Determinize`, measures and targets)
+  · engine#2127 the autobalance search (after engine#2126) → **0509**
+  autobalance (the battle's knobs) → **0510** skirmishes to order.
 - **D. Playdate, Chapter 1's base:** **1038** → **1178** arrows at the
   map's edges · **1038** → **1039** → **1041** →
   **1044** · **1042** → **1043** · **1046** · **1058** · **1060** →
@@ -317,7 +324,11 @@ Candle joins outside battle.
   faces and pictures of the new cast (after 0070, 1042, 1041).
 - **F. Optional engine work** (in the engine's repository; nothing
   waits for it): engine#2305 (done; **1177** picks it up), engine#3045,
-  engine#3043, engine#3052, engine#3008 → engine#3009.
+  engine#3043, engine#3052, engine#3008 → engine#3009. The bots'
+  engine tickets aren't here: Lane C waits for them. engine#3009
+  (slicing a bot's thinking over frames) isn't the bots': they run on
+  a PC. Its first user is the enemy AI on the Playdate (**1051**,
+  which doesn't wait for it).
 - **G. Chapter 1's round 4 fixes:** **0736** first, because its craft
   research governs every Act 1 script → **0737** the Chapter 1 script
   → **0742** · **1177** the engine pin (moved by 0740) · **0449** (done) · **0845** →
@@ -501,12 +512,14 @@ early so every later PR is checked by them.
 - Automated playtesting bots (Nick, 2026-09-30): 0033 decide the player
   types and targets → 0504 legal moves and luck reseeding in `core` → 0505
   `cargo xtask playtest` runner (after 0801) → 0506 Casual/Normal/Hardcore
-  bots (after 0803) → 0507 trained AlphaZero-style bot (research) and 0508
-  recording Nick's play to calibrate the bots (after 0802) → 0509
-  autobalancing battles with the bots → 0510 generating skirmishes to order
-  (after 1007, 1008). Targets: `docs/design/playtest-bots.md`; how to run
-  them and read the report: [`docs/playtesting.md`](playtesting.md). Not on
-  the Chapter 1 critical path; 0504 can start any time.
+  bots (after 0803, engine#2125 and engine#2126) → 0507 trained
+  AlphaZero-style bot (research) and 0508 recording Nick's play to
+  calibrate the bots (after 0802) → 0509 autobalancing battles with the
+  bots (after engine#2127) → 0510 generating skirmishes to order (after
+  1007, 1008). Targets: `docs/design/playtest-bots.md`; how to run them
+  and read the report: [`docs/playtesting.md`](playtesting.md). 0506,
+  0509 and 0510 are on the Act 1 critical path (Lane C), engine first
+  since 0130.
 - Replayability (Nick, 2026-10-04/05, `docs/design/replayability.md`):
   fixed stars on story battles and fixed skirmishes, with Replay and a
   "Move on?" question after a win (0046); Visions, an opt-in pick of three
