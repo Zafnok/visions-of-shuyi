@@ -1,4 +1,3 @@
-use crate::bundle::{Bundle, Layer};
 use shuyi_assets::dialogue::DialogueFile;
 use trpg_core::{AiWeights, ArtTable, ItemTable, SkillTable};
 
@@ -95,37 +94,4 @@ fn a_missing_file_is_not_found_as_the_loaders_always_said() {
         shown,
         ["assets/data/nope.ron: file not found in asset bundle"]
     );
-}
-
-static DIALOGUE: &[(&str, &[u8])] = &[
-    ("dialogue/a.dlg", b"@scene a\nnot a line\n@end\n"),
-    ("dialogue/b.dlg", b"@scene b\n> It rains.\n@end\n"),
-    ("dialogue/deeper/c.dlg", b"@scene c\n> Not read.\n@end\n"),
-    ("dialogue/README.md", b"# Not dialogue\n"),
-];
-
-/// `load_in` reads each file of the kind in the folder (not below it), and
-/// a file that fails to read leaves the others read.
-#[test]
-fn load_in_keeps_the_files_that_read_when_one_fails() {
-    // The registry is built from the game's own files first.
-    install();
-    let fixture: &'static Bundle = Box::leak(Box::new(Bundle::new(vec![Layer::table(
-        "fixture", DIALOGUE,
-    )])));
-    let read = bundle::reading(fixture, || load_in::<DialogueFile<Stage>>("dialogue"));
-    let paths: Vec<&str> = read.keys().copied().collect();
-    assert_eq!(paths, ["dialogue/a.dlg", "dialogue/b.dlg"]);
-    let errors = read["dialogue/a.dlg"]
-        .as_ref()
-        .err()
-        .cloned()
-        .unwrap_or_default();
-    assert!(
-        errors.iter().all(|e| e.file == "fixture/dialogue/a.dlg"),
-        "{errors:?}"
-    );
-    assert!(!errors.is_empty());
-    let scenes = read["dialogue/b.dlg"].as_ref().map(|f| f.scenes.len());
-    assert_eq!(scenes, Ok(1));
 }

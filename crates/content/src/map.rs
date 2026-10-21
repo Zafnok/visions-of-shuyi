@@ -138,7 +138,7 @@ pub(crate) fn register(
 pub fn load_all() -> Result<BTreeMap<String, MapDef>, Vec<ContentError>> {
     let mut maps = BTreeMap::new();
     let mut errors = Vec::new();
-    for (path, result) in formats::load_in::<GameMap>(MAPS_DIR) {
+    for (path, result) in formats::install().load_each::<GameMap>(bundle::install(), MAPS_DIR) {
         match result {
             Ok(parsed) => {
                 maps.insert(AssetPath::new(path).stem().to_owned(), def(parsed));

@@ -260,7 +260,9 @@ enum RawSide {
 pub fn load_all(refs: Refs<'_>) -> Result<BTreeMap<String, CinematicDef>, Vec<ContentError>> {
     let mut cinematics = BTreeMap::new();
     let mut errors = Vec::new();
-    for (path, raw) in formats::load_in::<RawCinematic>(CINEMATICS_DIR) {
+    for (path, raw) in
+        formats::install().load_each::<RawCinematic>(bundle::install(), CINEMATICS_DIR)
+    {
         let file = AssetPath::in_bundle(bundle::install(), path);
         let stem = file.stem();
         match raw.and_then(|raw| check(file.shown(), stem, &raw, refs)) {
