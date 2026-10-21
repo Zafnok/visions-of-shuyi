@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804"]
+blocked_by: ["1064"]
 nick_input: decision
 completed:
 ---
@@ -28,6 +28,10 @@ class line (`progression.md`, *The lord's line*); fliers are tier 3+
 (0017); magic classes drop weapons at tier 3 (`magic.md`); recruitment is by
 defeating marked enemies or by quests (`battle-scenes-and-recruitment.md`);
 portraits and battle art belong to characters (`look-and-feel.md`).
+
+**After the Act 1 playtest** (re-gated 2026-10-21, 0129): this waited
+for the Chapter 1 playtest (0804), which was folded into the Act 1
+playtest; it now waits for 1064.
 
 ## Nick input
 

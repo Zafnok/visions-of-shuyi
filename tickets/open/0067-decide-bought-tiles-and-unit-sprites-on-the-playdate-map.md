@@ -99,7 +99,7 @@ Questions:
   kind in its method table), blocked by 1037 and 1040, with the carve's
   map ticket (1115) as "either order works" as 1037 says. Builds without
   the bought art keep 1037's glyph skin, as the PC falls back.
-  Update 1037, 1038, 1040 and 1050 where the answer changes them.
+  Update 1037, 1038, 1040 and 1064 where the answer changes them.
 - **If A wins:** record it in the design doc; nothing else changes.
 
 **Out (do not do):**
@@ -134,7 +134,7 @@ Questions:
       words and the rules.
 - [ ] No committed picture contains bought art.
 - [ ] If B, C or D won: the build ticket(s) exist with their `blocked_by`,
-      and 1037, 1038, 1040 and 1050 match the answer.
+      and 1037, 1038, 1040 and 1064 match the answer.
 - [ ] `cargo xtask ticket-lint` passes.
 
 ## Tests required

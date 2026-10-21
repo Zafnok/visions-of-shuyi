@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: ["0066", "1037"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -21,7 +21,7 @@ right edge, with the map in two rows under it: the box is the PC's,
 sized for 100 × 32 cells (`crates/ui/src/tips/glyph.rs`: `paint`,
 `paint_lesson`, `rect`, `lesson_rect`; called from
 `crates/ui/src/screens/battle/glyph.rs`). Tips and lessons are on for
-the Playdate (1033), and Nick plays Chapter 1's tutorial there (1050),
+the Playdate (1033), and Nick plays the tutorial there in the Act 1 playtest (1064),
 so the box must fit. **0066** decided how it looks
 (`docs/design/playdate.md`, *The guide's box*): a window down the side
 of the screen away from the cursor, 24 cells wide and the screen's full
@@ -37,9 +37,17 @@ glyph paint decides the look. The Playdate's skins are chosen by
 
 ## Nick input
 
-**Sign-off:** in the Simulator or on his Playdate, play Chapter 1's first
-battle with tips and lessons on: the lessons and a tip read in full, the
-checklist ticks, nothing runs off the screen.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> In the Simulator or on his Playdate, play Chapter 1's first
+> battle with tips and lessons on: the lessons and a tip read in full, the
+> checklist ticks, nothing runs off the screen.
 
 ## Scope
 
@@ -104,7 +112,7 @@ checklist ticks, nothing runs off the screen.
 - Unit (look, with the skin): a tip, a lesson, a long text.
 - Integration: Chapter 1's first battle on the Playdate's console with
   lessons on; each lesson box inside the screen and completable.
-- Manual: Nick's sign-off.
+- Manual: none (left-overs go to 1064).
 
 ## Completion notes
 

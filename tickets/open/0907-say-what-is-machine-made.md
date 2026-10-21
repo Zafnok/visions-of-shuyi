@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: ["0042", "0043", "0045"]
-nick_input: sign-off
+nick_input: decision
 completed:
 ---
 
@@ -27,8 +27,8 @@ themselves when a human replaces something.
 
 ## Nick input
 
-**Sign-off** on the wording: the credits lines and the store-page
-paragraph are shown to him in the PR description. 0042 (question 3),
+**Decision** on the wording (`ask-nick`, before merging): the credits
+lines and the store-page paragraph. 0042 (question 3),
 0045 (questions 3 and 7: whether anyone checked the Chinese, and how
 that is credited) and
 0043 (question 6) already fixed the in-game labels; this ticket doesn't

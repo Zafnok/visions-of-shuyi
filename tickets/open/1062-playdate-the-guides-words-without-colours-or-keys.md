@@ -43,8 +43,9 @@ lesson, shown at Full and Short) A) go away, B) become a lesson about the
 Playdate's own controls (A + B ends the turn, the crank rewinds, the
 system menu holds Options), or C) describe your own. Record the answer in
 `docs/design/tutorial.md` (a *On the Playdate* paragraph under *The
-lessons*). Then **Sign-off** in the Simulator: the tips and lessons of
-Chapter 1's first battle read true on the Playdate.
+lessons*). No check after merge (Nick, 2026-10-21): `cargo shuyi
+frame-png --playdate` pictures of the tips and lessons of Chapter 1's
+first battle go in the PR, and the rest goes on 1064's checklist.
 
 ## Scope
 
@@ -94,7 +95,7 @@ Chapter 1's first battle read true on the Playdate.
   PC's elsewhere.
 - Integration: the walk over every tip and lesson on the Playdate's
   context.
-- Manual: Nick's sign-off in the Simulator.
+- Manual: none (left-overs go to 1064).
 
 ## Completion notes
 

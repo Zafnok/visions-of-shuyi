@@ -21,7 +21,9 @@ Why this ticket exists. Link the ADRs (`docs/adr/…`), design docs
 ## Nick input
 
 `None.` — or — **Answer first:** ticket 00xx. — or — **Setup:** exact steps.
-— or — **Sign-off:** what Nick should look at/play and what to comment on.
+— or — **Decision** (asked before building, with mockups if he judges
+pictures). Never a check after merge on a gameplay ticket
+(`tickets/README.md`, *No checks after merge on gameplay tickets*).
 
 ## Scope
 

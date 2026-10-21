@@ -1,0 +1,103 @@
+---
+id: "0512"
+title: "The bots play all of Act 1: softlocks, balance bands, saves at every node, and a Playdate run"
+type: feature
+milestone: M4 Enemy AI
+model: opus-5.5
+effort: high
+status: todo
+blocked_by: ["0506", "0509", "0319", "1051", "1065", "0743", "0744", "0745", "0746", "0747", "0748", "0749", "0750", "0848", "0849", "0850", "0851", "0852", "0853", "0854", "1070", "1071", "1072", "1073", "1066", "1067", "1068", "1069"]
+nick_input: setup
+completed:
+---
+
+# 0512 — The bots play all of Act 1
+
+## Context
+
+Nick no longer checks gameplay tickets one by one (2026-10-21); he plays
+Act 1 once, in 1064. Before he does, the bots check the whole act the
+way he would hit problems: every chapter played in order, as a
+campaign, with the army carried from battle to battle, on the PC and on
+the Playdate.
+
+Each chapter ticket already balanced its own battle against a fresh
+army (0509's `cargo xtask autobalance`). What none of them checks:
+
+- **The campaign as a whole:** a Casual, Normal and Hardcore bot
+  (0506) playing Chapters 1–8 in a row, with the levels, losses and
+  stock they really have by then, visiting towns, fixed skirmishes and
+  side quests by a simple route.
+- **Softlocks:** a battle no bot can finish, a node that can't be
+  entered, a scene that never ends.
+- **Saves:** a save and load at every world-map node and after every
+  chapter gives the same game (the same state, the same next choice).
+- **The Playdate:** memory (1068's margin) and timing (the slowest enemy
+  phase, frame times) over Act 1's biggest battles, on the device.
+
+## Nick input
+
+**Setup** (a measurement, not a check): Nick sideloads the measuring
+`.pdx` and pastes the Simulator console, as for 1036 and 1055.
+
+## Scope
+
+**In:**
+- `cargo xtask playtest --campaign act1 --bot all` (or the name that
+  fits 0505's runner): plays New Game to "Act 1 ends" (1065) with each
+  persona, choosing a route on the world map (story battles, the
+  guarding skirmishes, and the optional nodes by a fixed rule), with
+  the persona's usual rewinds.
+- The report: per chapter and persona, win rate, turns, units lost,
+  levels and gold on arrival, against the bands in
+  `docs/design/playtest-bots.md`; every softlock with its seed and a
+  replay; the act's total time per persona.
+- **Saves:** at every node visit and every chapter end, save, load, and
+  check the loaded state equals the saved one and the next command
+  gives the same result (a property-style run over the campaign).
+- **The Playdate run:** the slowest phases and frames of Act 1's
+  battles in a device build (a debug entry or a bench, as 1026 and 1051
+  did), plus the heap per chapter (1068's numbers).
+- Fixing what the run finds is **not** in this ticket: each finding
+  becomes a ticket (`write-ticket`), added to 1064's `blocked_by` when
+  it would spoil the playtest.
+
+**Out (do not do):**
+- Tuning battles (the chapter tickets, or new tuning tickets).
+- New bot personas, the trained bot (0507), calibrating against Nick's
+  play (0508).
+
+## Implementation steps
+
+1. Read 0505/0506/0509's runner and reports, `playtest-bots.md`, 1007's
+   campaign state, 0802's save format, 1068's measurements.
+2. The campaign runner and its route rule; the report.
+3. The save/load check.
+4. The Playdate run; sideload (Nick); record the numbers.
+5. File tickets for the findings; put the report in the PR and
+   `docs/playtesting.md`.
+
+## Acceptance criteria
+
+- [ ] All three personas reach "Act 1 ends", or each failure is a filed
+      ticket in 1064's `blocked_by`.
+- [ ] No softlock left unfiled.
+- [ ] Save → load at every node and chapter end gives the same state
+      (the run's check passes).
+- [ ] Device numbers for Act 1 (heap per chapter, slowest phase, frame
+      times) are in the PR.
+- [ ] The command and how to read its report are in
+      `docs/playtesting.md`.
+- [ ] All gates in the `run-gates` skill pass.
+
+## Tests required
+
+- Integration: the campaign runner on a two-chapter test act in
+  `assets-test/` (fast, in the gates); the full Act 1 run is a command,
+  not a gate.
+- Property: save/load equality over the test act.
+
+## Completion notes
+
+*(Filled in by the session that completes the ticket: what was done, deviations,
+follow-up tickets created, notes for Nick.)*

@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
+blocked_by: []
 nick_input: decision
 completed:
 ---
@@ -59,6 +59,10 @@ this work til after engine carve and playdate"), so `blocked_by` has 1118
 and 1050. The Playdate's own cinematic (1044) is built before this; this
 ticket's answers say whether the Playdate version changes too.
 
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
+
 ## Nick input
 
 **Decision**, with the `ask-nick` skill and real frames or short recorded
@@ -93,8 +97,8 @@ honestly when unsure.
 5. **The Playdate:** do the answers apply to its cinematic too (1044)?
 
 Then write the build ticket(s) the answers need (0843's file is the
-model), blocked by this one, and add them to 0804's `blocked_by` if Nick
-wants them before playtest round 4.
+model), blocked by this one, and add them to 1064's `blocked_by` if Nick
+wants them before the Act 1 playtest.
 
 ## Scope
 

@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: ["1014"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -28,8 +28,16 @@ ADR-0004).
 
 ## Nick input
 
-**Sign-off:** Nick paints a small map, saves it, and says whether the
-controls feel like the battle map's.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick paints a small map, saves it, and says whether the
+> controls feel like the battle map's.
 
 ## Scope
 

@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: ["0031"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -30,8 +30,16 @@ Ticket 0425 left placeholders:
 
 ## Nick input
 
-**Sign-off:** press Confirm on something you can't do, and close a tip, a
-phase banner and a level-up page. Does each sound right?
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Press Confirm on something you can't do, and close a tip, a
+> phase banner and a level-up page. Does each sound right?
 
 ## Scope
 
@@ -67,7 +75,8 @@ phase banner and a level-up page. Does each sound right?
 - [ ] Unit test: Confirm on a disabled item plays the new cue.
 - [ ] Harness test: closing a tip, a banner and a level-up page each plays
       the whoosh once (if kept); reading on in dialogue plays nothing.
-- [ ] Nick signed off.
+- [ ] Starting rules and anything left to judge by playing are in the
+      Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

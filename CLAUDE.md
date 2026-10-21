@@ -63,7 +63,7 @@ Rust. Windows exe first, plus web (WASM); itch.io then Steam.
 | Path | What |
 | ---- | ---- |
 | `tickets/` | Backlog. `README.md` explains numbering & lifecycle. `open/` → `done/` |
-| `docs/ROADMAP.md` | Milestones and the Chapter 1 critical path |
+| `docs/ROADMAP.md` | Milestones and the Act 1 critical path |
 | `docs/adr/` | Technical decisions (read the index) |
 | `LICENSE`, `THIRD_PARTY_ASSETS.md` | Proprietary source-available license; registry of shipped third-party assets |
 | `docs/design/` | Nick's game-design decisions (filled by `00xx` tickets) |

@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: ["1002", "0008", "0408", "0704", "0801", "0027"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -26,9 +26,17 @@ before each story battle's Preparations, and, from the world map on, as
 
 ## Nick input
 
-**Sign-off:** Nick plays a few battles, opens Supports and Camp,
-reads a conversation of each kind, and says whether it's easy to see what's
-new.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick plays a few battles, opens Supports and Camp,
+> reads a conversation of each kind, and says whether it's easy to see what's
+> new.
 
 ## Scope
 
@@ -71,7 +79,8 @@ new.
 - [ ] Viewing a support conversation raises the rank (1002 rules).
 - [ ] The Camp list shows only events whose conditions are met; seen state is saved.
 - [ ] Unit info lists supports and ranks.
-- [ ] Nick signed off.
+- [ ] Starting rules and anything left to judge by playing are in the
+      Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

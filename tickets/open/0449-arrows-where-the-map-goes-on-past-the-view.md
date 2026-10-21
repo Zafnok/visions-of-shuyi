@@ -6,7 +6,7 @@ milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050", "engine#2304"]
+blocked_by: ["1177"]
 nick_input: decision
 completed:
 ---
@@ -30,6 +30,10 @@ need the map scroll arrows to ensure players know when it's cut off from
 the whole picture. Otherwise 2x is ok to start on." 0804's round 4 waits
 for this ticket; like the rest of round 3's tickets it waits for the
 engine carve (1118) and the Playdate port (1050), Nick's priority.
+
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
 
 **The second half of his sentence is how the game already works.** The
 camera follows the cursor (`Camera::follow`, `crates/ui/src/screens/battle/
@@ -82,9 +86,11 @@ Record the answers in `docs/design/look-and-feel.md` (a new bullet under
 *Battle map: bought tiles and unit sprites*, after *Zoom*, and the glyph
 look's version where the glyph map is described).
 
-**Sign-off:** Nick plays it on Pages after merge (the debug menu's test
-tileset at 2×, where Quick Battle's 14-tile map is wider than the 11-tile
-view).
+No check after merge (Nick, 2026-10-21: he checks only design and the
+full Act 1 playtest, 1064). Verification is by tests and `cargo shuyi
+frame-png` pictures in the PR; what is left to judge by playing goes
+on 1064's checklist (the debug menu's test tileset at 2×,
+where Quick Battle's 14-tile map is wider than the 11-tile view).
 
 ## Scope
 
@@ -106,8 +112,9 @@ view).
 
 ## Implementation steps
 
-1. **Pin**: move the pin to an engine `main` that has engine#2304
-   (`cargo xtask engine-pin <commit>`, the `engine-change` skill §7).
+1. **Pin**: 1177 moves the pin past engine#2304 (and adapts whatever
+   the build needed); check `shuyi-engine.rev` has it, and do only what
+   1177 left of the rest of this step.
    Add the new field to every place in the game that lists the scene's
    fields: `every_field_is_listed` and `features` in
    `crates/ui/src/map_view/sprite.rs` tests, the glyph skin's equivalent

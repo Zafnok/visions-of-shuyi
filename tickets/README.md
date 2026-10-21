@@ -28,7 +28,7 @@ tickets/
 | `08xx` | M7 Chapter 1 & game flow | Flow, save/load, Chapter 1 map, playtest, options |
 | `09xx` | M8 Release | itch.io, Windows polish, Steam |
 | `10xx` | Post–Chapter 1 | Created as needed |
-| `11xx` | **The engine** | Shuyi Engine, the open-source engine split from the game ([ADR-0063](../docs/adr/0063-an-engine-and-a-game-one-boundary-now-two-repositories-later.md), [`docs/engine/`](../docs/engine/README.md)). Here: 1101 (the study), 1102–1118 and 1154 (the carve), 1131 (the code moves), 1151–1153 and 1157 (living with two repositories: engine friction, the engine-change skill, the first sweep, moving the engine parts of open game tickets), 1158–1172 (what the first sweep filed). 1119–1129, 1132–1135 and 1140–1150 moved to the [engine's repository](https://github.com/Zafnok/shuyi-engine/tree/main/tickets) with their numbers. Never on the Chapter 1 critical path |
+| `11xx` | **The engine** | Shuyi Engine, the open-source engine split from the game ([ADR-0063](../docs/adr/0063-an-engine-and-a-game-one-boundary-now-two-repositories-later.md), [`docs/engine/`](../docs/engine/README.md)). Here: 1101 (the study), 1102–1118 and 1154 (the carve), 1131 (the code moves), 1151–1153 and 1157 (living with two repositories: engine friction, the engine-change skill, the first sweep, moving the engine parts of open game tickets), 1158–1172 (what the first sweep filed). 1119–1129, 1132–1135 and 1140–1150 moved to the [engine's repository](https://github.com/Zafnok/shuyi-engine/tree/main/tickets) with their numbers. Not on the Act 1 critical path, except 1177 (the pin move 0449 and 0740 wait for) |
 | `12xx`+ | Later | Created as needed |
 
 New tickets (including bugs) take the next free number in their block. Numbers
@@ -64,8 +64,8 @@ the `engine-change` skill.
 ## Picking the next ticket
 
 A ticket is **ready** when `status: todo` and every id in `blocked_by` has a
-file in `done/` (an `engine#NNNN`: as above). Prefer tickets on the Chapter 1 critical path in
-[`docs/ROADMAP.md`](../docs/ROADMAP.md). Tickets without dependencies on each
+file in `done/` (an `engine#NNNN`: as above). Prefer tickets on the Act 1 critical path in
+[`docs/ROADMAP.md`](../docs/ROADMAP.md) (*Act 1 critical path*). Tickets without dependencies on each
 other can run in parallel sessions (use separate git worktrees).
 
 ## Working a ticket
@@ -86,4 +86,29 @@ week; each is fixed in one PR on a `sonar/<slug>` branch with the
 - `decision`: this ticket *is* a question for Nick (the `00xx` block, run with the `ask-nick` skill).
 - `answer-first`: blocked on a `00xx` design decision.
 - `setup`: Nick must create an account or secret; the ticket lists exact steps.
-- `sign-off`: Nick looks at or plays the result and approves or comments.
+- `sign-off`: Nick plays or judges the result himself. Since 2026-10-21
+  only for playtests (1064, the Act 1 playtest) and non-gameplay
+  calls that are his (0906, the title's trademark), never for a
+  gameplay ticket (below).
+
+### No checks after merge on gameplay tickets
+
+Nick, 2026-10-21: "any tickets that say 'check after merge' aren't gonna happen -- I
+will save all my checking for either design (i.e. 00 tickets) or for
+the full act 1 playtest itself. I don't wanna spot verify any gameplay
+tickets anymore."
+
+So a `feature`, `bug`, `tuning` or `content` ticket never asks Nick to
+look at or play its result. It is verified by tests, `cargo shuyi
+frame-png` pictures in the PR and the playtest bots (0506, 0509, and
+for all of Act 1, 0512). Its *Claude's starting rules* and anything
+left to judge by playing go in its Completion notes, and the Act 1
+playtest (1064) collects them into its checklist.
+
+What Nick still answers: design questions, which are `decision`
+(a `00xx` ticket, or a question inside a ticket asked **before**
+building, with mockups when he judges pictures: a node-glyph mockup,
+a pick from bought art, a listening page), `answer-first` and
+`setup` (an account, a purchase, sideloading a build to measure it
+on his Playdate). Story: Claude writes every script; only story
+decisions (a beat, a new named character) go to him.

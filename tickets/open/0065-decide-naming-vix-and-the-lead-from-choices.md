@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
+blocked_by: []
 nick_input: decision
 completed:
 ---
@@ -28,10 +28,14 @@ to keep the name Vix:
 In the Pokémon games (Red/Blue onward) the rival's name is picked from a
 short list of suggestions or typed (check the details before citing).
 
-Not needed before the next playtest, so not in 0804's `blocked_by`.
+Not needed before the next playtest, so not in the Act 1 playtest's `blocked_by` (1064).
 
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
+
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
 
 ## Nick input
 

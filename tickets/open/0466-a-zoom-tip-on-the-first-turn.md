@@ -6,8 +6,8 @@ milestone: M3 Battle UI
 model: sonnet-5
 effort: low
 status: todo
-blocked_by: ["1118", "1050"]
-nick_input: sign-off
+blocked_by: []
+nick_input: none
 completed:
 ---
 
@@ -31,10 +31,22 @@ Tips: `assets/data/tips.ron` (0458's three are the model), Vix's voice
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
 
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
+
 ## Nick input
 
-**Sign-off:** does the tip come on turn 1 at a good moment, and read in
-Vix's voice?
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Does the tip come on turn 1 at a good moment, and read in
+> Vix's voice?
 
 ## Scope
 
