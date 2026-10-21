@@ -15,7 +15,10 @@
 //!   the path and the cursor are the glyph skin's, on its tiles, and each
 //!   unit's tile loses its terrain glyphs under the picture.
 //!
-//! Units look the same either way: see [`units`].
+//! Units look the same either way: see [`units`]. Over them, the arrows
+//! at the edges the map goes on past ([`edges`]): the
+//! pictures of [`EDGE_MARKS_PATH`] with terrain tiles, the glyph skin's
+//! arrows on glyph terrain.
 
 pub mod units;
 
@@ -24,13 +27,16 @@ use alloc::rc::Rc;
 use shuyi_ui::grid::skin::UnitPainter;
 use shuyi_ui::grid::sprite::SpriteSkin;
 use trpg_content::Tileset;
+use trpg_content::image::EDGE_MARKS_PATH;
 
-use super::glyph::{GLYPH, cell_of};
+use super::edges::{self, Side};
+use super::glyph::units::HP_BAR_H;
+use super::glyph::{GLYPH, GlyphUnits, cell_of};
 use super::grid::Grid;
 use super::scene::{MapScene, UnitView};
 use super::skin::{MapSkin, Units};
-use crate::color::UiColor;
-use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay};
+use crate::color::{UiColor, to_channel};
+use crate::glyph_buffer::{GlyphBuffer, Layer, Overlay, PxRect, Rect, Sprite};
 use crate::screen::Ctx;
 use crate::screens::battle::walk::SPRITE_WALK;
 use crate::settings::MapZoom;
@@ -85,6 +91,64 @@ impl UnitPainter<UnitView> for SpriteUnits<'_> {
         units::paint_pictures(self.ctx, self.tileset, scene, grid, buf);
         units::paint_marks(self.ctx, scene, grid, buf);
     }
+
+    fn paint_over(&self, scene: &MapScene, grid: &Grid, buf: &mut GlyphBuffer) {
+        if self.tileset.terrain.is_none() {
+            GlyphUnits {
+                palette: &self.ctx.palette,
+            }
+            .paint_over(scene, grid, buf);
+            return;
+        }
+        let Some(image) = self.ctx.game.content.images.id(EDGE_MARKS_PATH) else {
+            return;
+        };
+        let opacity = to_channel(255.0 * edges::brightness(scene.clock_ms));
+        for (side, tile) in edges::arrows(scene) {
+            let Some(at) = grid.rect(tile) else {
+                continue;
+            };
+            let dest = grid.zoomed((at.x, at.y), edge_dest(side, grid.art_tile()));
+            let mut sprite = Sprite::new(image, edge_src(side), dest, Layer::Over);
+            sprite.opacity = opacity;
+            if let Some(clip) = dest.intersect(&grid.bounds()) {
+                sprite.clip = clip;
+                buf.add_sprite(sprite);
+            }
+        }
+    }
+}
+
+/// How far an edge arrow's box sits in from the view's edge, in pixels of
+/// the art.
+pub const EDGE_GAP: i32 = 1;
+
+/// The box of the `side` edge's arrow in [`EDGE_MARKS_PATH`]: the right
+/// and the left arrow 8 × 13, then the down and the up arrow 13 × 8.
+pub const fn edge_src(side: Side) -> PxRect {
+    match side {
+        Side::Right => Rect::new(0, 0, 8, 13),
+        Side::Left => Rect::new(8, 0, 8, 13),
+        Side::Down => Rect::new(16, 0, 13, 8),
+        Side::Up => Rect::new(29, 0, 13, 8),
+    }
+}
+
+/// Where the `side` edge's arrow goes on its tile `tile` (at the art's
+/// size): [`EDGE_GAP`] in from the view's edge, centred along it, and
+/// above the HP bar, so it never covers a unit's bar.
+pub fn edge_dest(side: Side, tile: PxRect) -> PxRect {
+    let src = edge_src(side);
+    let (w, h) = (src.w, src.h);
+    let across = tile.x + (tile.w - w) / 2;
+    let down = tile.y + (tile.h - HP_BAR_H - h) / 2;
+    let (x, y) = match side {
+        Side::Right => (tile.x + tile.w - EDGE_GAP - w, down),
+        Side::Left => (tile.x + EDGE_GAP, down),
+        Side::Down => (across, tile.y + tile.h - HP_BAR_H - h),
+        Side::Up => (across, tile.y + EDGE_GAP),
+    };
+    Rect::new(x, y, w, h)
 }
 
 #[cfg(test)]
@@ -110,6 +174,7 @@ pub(crate) mod tests {
     use crate::map_view::threat;
     use crate::screen::tests::ctx;
     use crate::screens::battle::layout::MAP_VIEW;
+    use shuyi_ui::grid::{Ends, MapEdges};
 
     /// The picture of mix `m` in a test layer: one rectangle of the test
     /// tileset's image for each.
@@ -468,6 +533,7 @@ pub(crate) mod tests {
             scene.push_unit(enemy);
             scene.push_unit(brigand(p(1, 0)).fading(0.25));
             scene.path = vec![p(0, 0), p(0, 1), p(1, 1)];
+            scene.more = every_edge();
             let paint = |skin: &MapSkin, area| {
                 let mut buf = blank();
                 skin.paint(&c, &scene, area, &mut buf);
@@ -681,6 +747,79 @@ pub(crate) mod tests {
         assert_snapshot!(items);
     }
 
+    /// The map goes on past every side.
+    fn every_edge() -> MapEdges {
+        let both = Ends {
+            before: true,
+            after: true,
+        };
+        MapEdges { x: both, y: both }
+    }
+
+    /// The edge arrows a skin paints for `scene` in `area`: the sprites of
+    /// [`EDGE_MARKS_PATH`].
+    fn edge_arrows(c: &Ctx, skin: &MapSkin, scene: &MapScene, area: Rect) -> Vec<Sprite> {
+        let marks = c.game.content.images.id(EDGE_MARKS_PATH);
+        let mut buf = blank();
+        skin.paint(c, scene, area, &mut buf);
+        let sprites = buf.sprites().into_iter();
+        sprites.filter(|s| Some(s.image) == marks).collect()
+    }
+
+    #[test]
+    fn an_edge_arrow_sits_on_its_middle_tile_above_the_hp_bar_and_fades() {
+        let c = ctx();
+        let s = skin(&c);
+        let area = Rect::new(0, 0, 9, 5);
+        let mut scene = MapScene::new(p(0, 0), (3, 3));
+        scene.set_terrain(|_| c.game.content.terrain.display.id_of("plain"));
+        assert_eq!(edge_arrows(&c, &s, &scene, area), []);
+        scene.more = every_edge();
+        // 24-px tiles from (0, 4) (72 px centred in 80): the right arrow
+        // on (2, 1), the left on (0, 1), the down arrow on (1, 2) and the
+        // up arrow on (1, 0).
+        let expected = [
+            (Rect::new(0, 0, 8, 13), Rect::new(63, 32, 8, 13)),
+            (Rect::new(8, 0, 8, 13), Rect::new(1, 32, 8, 13)),
+            (Rect::new(16, 0, 13, 8), Rect::new(29, 66, 13, 8)),
+            (Rect::new(29, 0, 13, 8), Rect::new(29, 5, 13, 8)),
+        ];
+        for (clock_ms, opacity) in [(0, 255), (500, 89)] {
+            scene.clock_ms = clock_ms;
+            let got = edge_arrows(&c, &s, &scene, area);
+            let placed: Vec<_> = got.iter().map(|a| (a.src, a.dest)).collect();
+            assert_eq!(placed, expected);
+            for arrow in got {
+                assert_eq!(
+                    (arrow.opacity, arrow.clip, arrow.layer),
+                    (opacity, arrow.dest, Layer::Over)
+                );
+                // Never on a tile's HP bar: its bottom 2 px.
+                let bottom = ((arrow.dest.y - 4) / 24 + 1) * 24 + 4 - HP_BAR_H;
+                assert!(arrow.dest.y + arrow.dest.h <= bottom, "{arrow:?}");
+            }
+        }
+        // Only the sides the map goes on past.
+        scene.more = MapEdges::of_view(scene.origin, scene.size, (5, 3));
+        let got = edge_arrows(&c, &s, &scene, area);
+        assert_eq!(
+            got.iter().map(|a| a.src).collect::<Vec<_>>(),
+            [expected[0].0]
+        );
+    }
+
+    #[test]
+    fn on_glyph_terrain_the_edge_arrows_are_the_glyph_skins() {
+        let c = ctx();
+        let mut scene = plains(&c);
+        scene.more.x.after = true;
+        let s = sheets(&c);
+        assert_eq!(edge_arrows(&c, &s, &scene, Rect::new(2, 1, 6, 4)), []);
+        let buf = painted(&c, &s, &scene);
+        // The view's right column, its middle row: tile (2, 0).
+        assert_eq!(buf.get(7, 1).map(|cell| cell.glyph), Some('→'));
+    }
+
     /// One change to a scene the skin must show.
     struct Feature {
         name: &'static str,
@@ -695,7 +834,7 @@ pub(crate) mod tests {
         let MapScene {
             origin: _, // where the tiles are: every feature moves with it
             size: _,   // how many tiles: likewise
-            more: _,   // the game sets none (no edge marks)
+            more: _,
             tiles: _,
             ranges: _,
             // Painted only by a tileset with layers, and one with other
@@ -790,6 +929,7 @@ pub(crate) mod tests {
             feature("marks", &unit(|u| u.marks = false)),
             feature("path", &|s| s.path = vec![p(0, 0), p(1, 0)]),
             feature("threat", &|s| s.threat = Some(threat(p(0, 0), &[p(1, 1)]))),
+            feature("more", &|s| s.more.x.before = true),
         ];
         // The clock moves the marks: an arrow rests, then is bounced.
         let mut clock = feature("clock", &|s| s.clock_ms = units::BOUNCE_MS);
@@ -831,7 +971,7 @@ pub(crate) mod tests {
         let own = with_walking_brigand(&c, &with_lord(&skin(&c)));
         for s in [own, with_lord(&sheets(&c))] {
             let features = features(&c);
-            assert_eq!(features.len(), 21 + 4 + 6);
+            assert_eq!(features.len(), 22 + 4 + 6);
             for f in features {
                 assert_ne!(f.without, f.with, "{}: no change", f.name);
                 let (without, with) = (painted(&c, &s, &f.without), painted(&c, &s, &f.with));

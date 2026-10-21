@@ -5,6 +5,7 @@ use super::*;
 use crate::glyph_buffer::Cell;
 use crate::map_view::grid::px_rect;
 use shuyi_ui::grid::skin::GridSkin;
+use shuyi_ui::grid::{Ends, MapEdges};
 use trpg_core::Pos;
 
 use crate::color::Rgb;
@@ -239,6 +240,55 @@ fn paints_terrain_then_tints_then_units_path_and_cursor() {
 }
 
 #[test]
+fn an_arrow_in_the_cursors_colour_on_each_edge_the_map_goes_on_past() {
+    let c = ctx();
+    let pal = &c.palette;
+    let plain_id = c.game.content.terrain.display.id_of("plain").unwrap();
+    let plain = c.game.content.terrain.display.get(plain_id).unwrap();
+    let bg = pal.lookup(&plain.bg).unwrap();
+    let area = Rect::new(10, 5, 8, 3);
+    let mut scene = MapScene::new(p(2, 2), (4, 3));
+    scene.set_terrain(|_| Some(plain_id));
+    // On the right edge's tile: the second letter of its label gives way.
+    scene.push_unit(brigand(p(5, 3)));
+    let paint = |scene: &MapScene| {
+        let mut buf = blank();
+        MapSkin::glyph().paint(&c, scene, area, &mut buf);
+        buf
+    };
+    let none = paint(&scene);
+    let all = Ends {
+        before: true,
+        after: true,
+    };
+    scene.more = MapEdges { x: all, y: all };
+    let arrows = [
+        ((17, 6), '→'),
+        ((10, 6), '←'),
+        ((12, 7), '↓'),
+        ((12, 5), '↑'),
+    ];
+    for (clock_ms, k) in [(0, 1.0), (500, edges::FAINTEST)] {
+        scene.clock_ms = clock_ms;
+        let buf = paint(&scene);
+        let fg = bg.lerp(pal.get(UiColor::Cursor), k);
+        for ((x, y), glyph) in arrows {
+            assert_eq!(buf.get(x, y), Some(&Cell::new(glyph, fg, bg)), "{glyph}");
+        }
+        // Every other cell is as without the arrows; the overlays too.
+        for y in 5..8 {
+            for x in 10..18 {
+                if !arrows.iter().any(|&(at, _)| at == (x, y)) {
+                    assert_eq!(buf.get(x, y), none.get(x, y), "({x}, {y})");
+                }
+            }
+        }
+        assert_eq!(buf.overlays(), none.overlays());
+    }
+    assert_eq!(none.get(16, 6).map(|c| c.glyph), Some('B'));
+}
+
+#[test]
 fn a_changed_tile_flashes_and_a_tile_a_spell_would_change_shows_what_it_becomes() {
     let c = ctx();
     let pal = &c.palette;
@@ -395,11 +445,17 @@ prop_compose! {
         path in prop::collection::vec(any_pos(), 0..6),
         threat in prop::option::of((any_pos(), prop::collection::vec(any_pos(), 1..4))),
         clock_ms in 0u64..5000,
+        more in any::<[bool; 4]>(),
     ) -> MapScene {
         let rim = rim.into_iter().map(|id| id.map(TerrainId)).collect();
         let look = trpg_content::MapLook { tiles: look.to_owned(), light: light.to_owned() };
         let threat = threat.map(|(tile, enemies)| ThreatView { tile, enemies });
-        MapScene { origin, size, more: shuyi_ui::grid::MapEdges::default(), tiles, ranges, rim, look, units, cursor, path, threat, clock_ms }
+        let [left, right, up, down] = more;
+        let more = MapEdges {
+            x: Ends { before: left, after: right },
+            y: Ends { before: up, after: down },
+        };
+        MapScene { origin, size, more, tiles, ranges, rim, look, units, cursor, path, threat, clock_ms }
     }
 }
 

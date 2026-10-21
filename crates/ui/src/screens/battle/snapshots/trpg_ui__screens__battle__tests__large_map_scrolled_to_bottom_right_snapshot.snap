@@ -1,8 +1,8 @@
 ---
-source: crates/ui/src/screens/battle/mod.rs
+source: crates/ui/src/screens/battle/tests.rs
 expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
-^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣┌────────────────────────────┐
+^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^..↑...♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣┌────────────────────────────┐
 ^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣│ Plain                      │
 ..Br♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│ DEF +0  AVO +0             │
 ..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│                            │
@@ -16,7 +16,7 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
 ^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣│                            │
 ..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│                            │
 ..♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣··│                            │
-♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈│                            │
+←♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈│                            │
 ♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈│                            │
 ··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^│                            │
 ··≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^^^^^......♣♣♣♣♣♣······≈≈≈≈≈≈^^│                            │
@@ -35,54 +35,56 @@ expression: "render(&s, &c).to_snapshot(&c.palette)"
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  arrows move · f range · e info · s next unit · r rewind · d menu · Space end turn         F2 debug 
 --- colours ---
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccffffffffffffffffffffffffffffff
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccfghhhhhggggggggggggggggggggggf
-bbiiccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddfggggggggggggggggggggggggggggf
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddfggggggggggggggggggggggggggggf
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeefggggggggggggggggggggggggggggf
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeefgjjjjjjgggggggggggggggggggggf
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaafggggggggggggggggggggggggggggf
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaafggggggggggggkkkkkkkkkkggggggf
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbfglllllggggggggggggggggggggggf
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbfggggggggggggggggggggggggggggf
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccfggggggggggggggggggggggggggggf
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccfggggggggggggggggggggggggggggf
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddfggggggggggggggggggggggggggggf
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddfggggggggggggggggggggggggggggf
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeefggggggggggggggggggggggggggggf
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeefggggggggggggggggggggggggggggf
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaafggggggggggggggggggggggggggggf
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaafggggggggggggggggggggggggggggf
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbfggggggggggggggggggggggggggggf
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbfggggggggggggggggggggggggggggf
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccfggggggggggggggggggggggggggggf
-aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccfggggggggggggggggggggggggggggf
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddfggggggggggggggggggggggggggggf
-bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddfggggggggggggggggggggggggggggf
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeefggggggggggggggggggggggggggggf
-ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeefggggggggggggggggggggggggggggf
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaafggggggggggggggggggggggggggggf
-ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaafggggggggggggggggggggggggggggf
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbfggggggggggggggggggggggggggggf
-eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaammffffffffffffffffffffffffffffff
-nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnoooooooooooooooooooooooooooooooooooooooooooooon
-nooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooonnnnnnnnnoooooooon
+aabbbbbbccccccddddddeeeeeeaaaaaabbfbbbccccccddddddeeeeeeaaaaaabbbbbbccgggggggggggggggggggggggggggggg
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghiiiiihhhhhhhhhhhhhhhhhhhhhhg
+bbjjccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghkkkkkkhhhhhhhhhhhhhhhhhhhhhg
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhllllllllllhhhhhhg
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghmmmmmhhhhhhhhhhhhhhhhhhhhhhg
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ncddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+aabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+bbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+ddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbghhhhhhhhhhhhhhhhhhhhhhhhhhhhg
+eeaaaaaabbbbbbccccccddddddeeeeeeaaaaaabbbbbbccccccddddddeeeeeeaaaaaaoogggggggggggggggggggggggggggggg
+pppppppppppppppppppppppppppppppppppppppppppppppppppppqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqp
+pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpppppppppqqqqqqqqp
 --- legend ---
 a = fg:mountain bg:mountain_bg
 b = fg:grass bg:grass_bg
 c = fg:forest bg:forest_bg
 d = fg:road bg:road_bg
 e = fg:water bg:water_bg
-f = fg:panel_border bg:panel_bg
-g = fg:text bg:panel_bg
-h = fg:text_highlight bg:panel_bg
-i = fg:enemy bg:forest_bg
-j = fg:enemy bg:panel_bg
-k = fg:hp_high bg:panel_bg
-l = fg:text_dim bg:panel_bg
-m = fg:enemy bg:grass_bg
-n = fg:text bg:black
-o = fg:text_dim bg:black
+f = fg:cursor bg:grass_bg
+g = fg:panel_border bg:panel_bg
+h = fg:text bg:panel_bg
+i = fg:text_highlight bg:panel_bg
+j = fg:enemy bg:forest_bg
+k = fg:enemy bg:panel_bg
+l = fg:hp_high bg:panel_bg
+m = fg:text_dim bg:panel_bg
+n = fg:cursor bg:forest_bg
+o = fg:enemy bg:grass_bg
+p = fg:text bg:black
+q = fg:text_dim bg:black
 --- overlays ---
 over  17,46 14x2  hp_high
 over  545,478 14x2  hp_high

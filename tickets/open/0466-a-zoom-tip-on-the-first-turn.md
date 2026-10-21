@@ -24,7 +24,7 @@ start:
 > map scroll arrows to ensure players know when it's cut off from the
 > whole picture. Otherwise 2x is ok to start on."
 
-The scroll arrows are open ticket **0449**; this ticket is the tip.
+The scroll arrows are ticket **0449** (done); this ticket is the tip.
 Tips: `assets/data/tips.ron` (0458's three are the model), Vix's voice
 `docs/story/characters/guide.md`, `docs/design/tutorial.md`.
 

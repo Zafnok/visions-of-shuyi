@@ -6,7 +6,7 @@ Source: ticket 0011 (attack forecast: 0404; bought portraits and battle art:
 effect marks, the glyph look as an option, busts in dialogue: 0039; which
 bought tiles each terrain is: 0437; threat arrows: 0055; the title
 screen: 0811; descriptions in lists: 0429; places behind conversations:
-0029)
+0029; arrows at the map's edges: 0449)
 
 Nick judged real renders, not descriptions. Every mockup was drawn with the
 game's own font atlas at in-game size. The final ones are in
@@ -169,6 +169,22 @@ Names, stats, weapons and the sample face in the screenshots are placeholders.
 > the glyph look too:] "I think glyph look should also have 14px hp bar
 > otherwise rest is good"
 
+Arrows at the map's edges (ticket 0449, 2026-10-21; Nick had asked on
+2026-10-12: "when the map overflows the viewport, there should be little
+arrows that show you can move the map, and I guess it would just happen
+when you move the cursor past the viewport it moves"; shown Chapter 1's
+first turn at 2× and the view scrolled to the fort, with A a small arrow
+in the middle of each edge the map goes on past, A2 a bigger one, B the
+arrow fading in and out, C a thin bright line along the edge):
+
+> [which marks:] "can we try flashing big?" … [shown B2, the big arrow
+> fading smoothly, and B3, blinking fully on and off:] "B2 smooth fade"
+> … [when they show:] "Only while browsing" … [whether the view already
+> scrolling once the cursor is 3 tiles from the edge is what he meant:]
+> "we might revisit the threshold for when it moves but that should be a
+> followup / 00 ticket rather than in this ticket" … [the glyph look's
+> arrow:] "Cursor yellow"
+
 Descriptions in lists (ticket 0429, 2026-10-14; shown four renders of the
 knight's `Skill` menu and the lord's `Arts` menu: A a strip inside the menu
 box, B a window under the list with the name in its border, C the help bar,
@@ -261,6 +277,21 @@ so they aren't in this repository (ADR-0032).
     Options screen, `Map zoom` (`options.md`).
   - **Only pictures zoom.** The glyph look's tile is two font cells: with
     it the key does nothing and the help doesn't list it.
+- **Arrows at the map's edges** (decided 2026-10-21, ticket 0449; render
+  [`0449-map-edge-arrows.png`](../screenshots/0449-map-edge-arrows.png)):
+  where the map goes on past the view, a **big arrow** (a triangle 6 px
+  deep and 11 px across, in the cursor's colour with a 1 px dark edge;
+  twice that at 2×) on the **middle tile of that edge**, pointing out,
+  1 px in from the edge and above the HP bar. It **fades smoothly** from
+  full to 35% and back once a second *(both tunable)*.
+  - **Only while browsing:** shown while the cursor moves freely (browsing,
+    a unit selected, choosing where to move after an attack); hidden during
+    the enemy's turn, a unit's walk, menus, target picking and a fight.
+  - It sits over the units and under the cursor: a unit on that tile is
+    partly covered (Nick was told).
+  - A map that fits the view has none. The view still scrolls once the
+    cursor comes within 3 tiles of its edge; when it starts moving may be
+    revisited (ticket 0072).
 - **A sprite unit's side** (decided 2026-10-02): a **1-pixel outline in
   its side's colour** (player blue, enemy red, ally green, neutral yellow)
   around the sprite, as in renders B, C, C2 and C3. **The outline alone,
@@ -473,6 +504,13 @@ so they aren't in this repository (ADR-0032).
   `hp_mid` above 1/3 and `hp_low` at or below 1/3 *(thresholds tunable)*. The
   unfilled part is dark. The bar's length carries the information, not only its
   colour.
+- **Arrows at the map's edges** (ticket 0449, as for the bought tiles
+  above): an arrow glyph (`→ ← ↓ ↑`) in the **cursor's yellow** in one cell
+  of the middle tile of each edge the map goes on past (the tile's outer
+  cell on the right, its left cell elsewhere), fading into the cell's
+  background and back once a second; the terrain glyph or unit letter in
+  that cell gives way to it. Only while browsing. The glyph look's view is
+  35 × 30 tiles, so no map the game has today shows them.
 - The **side panel shows the unit under the cursor** (name, class, level, HP,
   stats, weapon, terrain). That's where class and full numbers are read.
 - Class symbols (`†`, `»`, `}`, …) were tried and rejected: the font's symbols

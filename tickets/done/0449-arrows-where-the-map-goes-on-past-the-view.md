@@ -5,10 +5,10 @@ type: feature
 milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
-status: todo
-blocked_by: ["1177"]
+status: done
+blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-21
 ---
 
 # 0449 — Arrows where the map goes on past the view
@@ -88,9 +88,10 @@ look's version where the glyph map is described).
 
 No check after merge (Nick, 2026-10-21: he checks only design and the
 full Act 1 playtest, 1064). Verification is by tests and `cargo shuyi
-frame-png` pictures in the PR; what is left to judge by playing goes
-on 1064's checklist (the debug menu's test tileset at 2×,
-where Quick Battle's 14-tile map is wider than the 11-tile view).
+frame-png` pictures in the PR. What the old sign-off asked goes on
+1064's checklist: on Chapter 1 at 2×, do the arrows show where the map
+goes on, and does the fade read well (the debug menu's test tileset at
+2× too, where Quick Battle's 14-tile map is wider than the 11-tile view).
 
 ## Scope
 
@@ -174,5 +175,72 @@ where Quick Battle's 14-tile map is wider than the 11-tile view).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Nick's answers (2026-10-21, asked before building, with Chapter 1's
+first turn at 2× and the view scrolled to the fort, each option drawn
+in):** the **big arrow, fading smoothly** (he asked to see A2 flashing,
+then picked B2 over a hard blink); **only while browsing**; the glyph
+look's arrow in **cursor yellow**; the scrolling as it is, with when it
+starts to move a follow-up decision (0072). Recorded in
+`look-and-feel.md` (*Arrows at the map's edges*, under the bought tiles
+after *Zoom*, and under *Units on the map (the glyph look)*), with the
+render `docs/screenshots/0449-map-edge-arrows.png`.
+
+**What was done**
+
+- **Pin:** engine#2304 came with 0740 (#380), which moved the pin to
+  `8617026c` (past 2304, 2305 and 3006). 1177's work is therefore done;
+  0449 no longer waits on it (1177 itself is still open, for its own
+  bookkeeping PR). `any_scene` sets `more` at random; the sprite skin's
+  `every_field_is_listed` lists it with a feature.
+- **Battle screen:** `BattleScreen::scene_of_size` sets `scene.more` with
+  `MapEdges::of_view` against the map's size while the player browses
+  (`Mode::cursor_free` and not the enemy's turn).
+- **`map_view/edges.rs`:** which sides have an arrow and its tile (the
+  middle tile of that edge; the first of two middle ones), and the fade
+  (`brightness`: 1 → 0.35 → 1 over 1000 ms, from the scene's
+  `clock_ms`).
+- **Glyph skin** (`GlyphUnits::paint_over`): `→ ← ↓ ↑` in the cursor's
+  colour, faded toward the cell's background, in the tile's outer cell on
+  the right and its left cell elsewhere.
+- **Sprite skin** (`SpriteUnits::paint_over`): sprites from
+  `images/edge_marks.png` (new `cargo xtask edge-marks`, our own drawing
+  from the palette's `cursor` and `black`, like `effect-marks`): 8 × 13
+  and 13 × 8 boxes, placed with `Grid::zoomed` so they double at 2×,
+  1 px in from the view's edge and above the HP bar, opacity from the
+  fade. On glyph terrain (`sprite_units`) the glyph skin's arrows.
+- Tests: the placement and the fade; each skin's arrows (cells, sprites,
+  size at 2× in `at_twice_the_zoom_everything_is_twice_the_size`, the HP
+  bar never covered); `every_scene_feature_is_painted` with `more` under
+  both sprite skins; the scene's sides on a 64 × 40 glyph map at each
+  edge and corner, gone in the map menu, and a property that they show
+  exactly while browsing; a Harness test scrolling across Quick Battle
+  on the test tileset at 2× (left/both/right) and none at 1×.
+- Snapshots changed, read before accepting: the 2× Quick Battle (one
+  right arrow sprite) and the large glyph map scrolled to the bottom
+  right (`↑` and `←`). Quick Battle under the glyph skin is unchanged.
+
+**Deviations**
+
+- The Playdate's map skin (`OneBitUnits`) paints no arrows: the ticket
+  named the three PC skins. Chapter 1 is a row taller than the Playdate's
+  24 × 15 view, so follow-up **1178** (after 1038) adds them there.
+
+**Follow-up tickets**
+
+- **0072** Decide: when the battle map scrolls (Nick's "revisit the
+  threshold").
+- **1178** Arrows at the map's edges on the Playdate (in 1064's
+  `blocked_by` and the roadmap's lane D).
+
+**Claude's starting rules (Nick can veto):**
+
+- The arrow sits on the *middle* tile of its edge; with an even number of
+  tiles, the first of the two middle ones.
+- "Browsing" is when the cursor moves freely: browsing, a unit selected,
+  choosing where to move after an attack. Hidden during a unit's walk,
+  menus, target picking, fights and the enemy's turn.
+- The fade dips to 35% once a second (as in the B2 picture he picked).
+- In the glyph look the arrow replaces the glyph in its cell (a terrain
+  mark or one letter of a unit's label).
+
+Engine friction: estimate 165, measured 227 (1.4×), under 2×.

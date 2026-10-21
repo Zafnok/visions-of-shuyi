@@ -267,6 +267,7 @@ over  354,284 44x4  hp_high
 over  354,140 44x4  hp_high
 over  402,428 44x4  hp_high
 over  162,380 44x4  hp_high
+over  sprite 526,200 16x26  images/edge_marks.png 0,0 8x13 opacity=189
 over  160,288 10x6  black
 over  160,288 6x10  black
 over  198,288 10x6  black

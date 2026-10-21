@@ -102,6 +102,7 @@ use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{LessonView, TipView};
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::{Language, Words};
+use shuyi_ui::grid::MapEdges;
 
 /// Battle id of the debug Quick Battle (`assets-test/battles/quick.ron`).
 pub const QUICK_BATTLE: &str = "quick";
@@ -2012,7 +2013,8 @@ impl BattleScreen {
     /// What is on the visible map (ADR-0038), for the map skin to paint and
     /// for tests to read: the terrain, the tiles flashing after their
     /// terrain changed, the ranges the mode shows, the units as drawn, the
-    /// cursor and a selected unit's path.
+    /// cursor, a selected unit's path and, while the player browses, the
+    /// sides the map goes on past.
     pub fn scene(&self, ctx: &Ctx) -> MapScene {
         self.scene_of_size(ctx, ctx.game.map_skin.view_tiles(MAP_VIEW))
     }
@@ -2039,6 +2041,13 @@ impl BattleScreen {
             scene.path.clone_from(&sel.path);
         }
         scene.threat = self.threat_view();
+        // The arrows at the edges the map goes on past: only while the
+        // player browses (ticket 0449).
+        if self.mode.cursor_free() && !self.ai_phase() {
+            let tiles = &self.state.map().tiles;
+            let map = (i32::from(tiles.width()), i32::from(tiles.height()));
+            scene.more = MapEdges::of_view(origin, size, map);
+        }
         scene
     }
 

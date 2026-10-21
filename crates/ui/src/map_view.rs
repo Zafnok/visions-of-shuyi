@@ -16,6 +16,7 @@
 //! the scene and painted by every skin; it is never drawn straight into the
 //! buffer by a screen.
 
+pub mod edges;
 pub mod glyph;
 pub mod place;
 pub mod playdate;
