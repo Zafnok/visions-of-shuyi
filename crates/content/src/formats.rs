@@ -2,11 +2,10 @@
 //! the engine's standard formats, those configured with the game's rules
 //! in their place, and the formats of the game's own kinds, registered
 //! once ([`install`]) as the bundle is. A loader asks it for one asset by
-//! path ([`load`], [`table`]) or for a folder's ([`load_in`]); the checks
-//! against other assets run after, in the loader.
+//! path ([`load`], [`table`]) or for a folder's ([`Formats::load_each`]);
+//! the checks against other assets run after, in the loader.
 use crate::prelude::*;
 
-use alloc::collections::BTreeMap;
 use core::marker::PhantomData;
 
 use once_cell::race::OnceBox;
@@ -79,23 +78,6 @@ pub fn load<K: AssetKind>(path: &str) -> Result<K, Vec<ContentError>> {
 /// The data table `T` in the file at `path` in the game's bundle.
 pub fn table<T: DataTable>(path: &str) -> Result<T, Vec<ContentError>> {
     load::<Table<T>>(path).map(|table| table.0)
-}
-
-/// Each file of kind `K` directly inside directory `dir` of the game's
-/// bundle, by path, read or with its problems. Unlike
-/// [`Formats::load_under`], a file that fails to read leaves the others,
-/// so a loader whose checks run after still reports every problem of every
-/// file, in file order.
-// engine-friction: engine#2219
-pub fn load_in<K: AssetKind>(dir: &str) -> BTreeMap<&'static str, Result<K, Vec<ContentError>>> {
-    let bundle = bundle::install();
-    let formats = install();
-    bundle
-        .files_in(dir)
-        .into_iter()
-        .filter(|path| formats.claims::<K>(path))
-        .map(|path| (path, formats.load(bundle, path)))
-        .collect()
 }
 
 /// A data table of `trpg_core` read from its file alone: a kind as

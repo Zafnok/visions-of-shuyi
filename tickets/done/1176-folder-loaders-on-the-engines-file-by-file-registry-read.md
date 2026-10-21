@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5
 effort: low
-status: todo
+status: done
 blocked_by: ["engine#2219"]
 nick_input: none
-completed:
+completed: 2026-10-20
 ---
 
 # 1176 — The folder loaders on the engine's file-by-file registry read
@@ -52,12 +52,12 @@ None. Nothing a player sees changes.
 
 ## Acceptance criteria
 
-- [ ] `shuyi-engine.rev` is at or past the merge of engine 2219.
-- [ ] `grep -rn "engine-friction: engine#2219" crates/` finds nothing.
-- [ ] `cargo test -p trpg-content` passes unchanged, including
+- [x] `shuyi-engine.rev` is at or past the merge of engine 2219.
+- [x] `grep -rn "engine-friction: engine#2219" crates/` finds nothing.
+- [x] `cargo test -p trpg-content` passes unchanged, including
       `load_scripts_reports_a_broken_file_and_the_checks_of_the_others`.
-- [ ] `cargo xtask ticket-lint --check-engine` passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `cargo xtask ticket-lint --check-engine` passes.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -65,5 +65,16 @@ None. Nothing a player sees changes.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done,
-deviations, follow-up tickets created, notes for Nick.)*
+- Pin moved to the engine's `main` at `6d96109`, the merge of engine
+  2219 (`Formats::load_each`). It also takes engine 3005, 3002 and 3038
+  (merged after 3003, which 1175 pinned); the game builds on them with no
+  change.
+- `map::load_all`, `cinematic::load_all` and `dialogue::load_scripts`
+  read their folders with `formats::install().load_each::<Kind>(bundle::install(), DIR)`.
+- `formats::load_in`, its `engine-friction: engine#2219` marker and its
+  test are gone; the engine tests `load_each` the same way.
+- Friction: estimate 3, measured 9 (3×): accepted, the three call sites
+  split over lines by rustfmt and one import (14 removed); a row in
+  `docs/engine/friction.md`.
+- Deviation: none. Follow-up tickets: none. Nothing for Nick to check:
+  no player-facing change.

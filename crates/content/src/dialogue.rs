@@ -27,6 +27,7 @@ pub use shuyi_assets::dialogue::{
 };
 
 use crate::audio::AudioManifest;
+use crate::bundle;
 use crate::character::CharacterTable;
 use crate::error::ContentError;
 use crate::formats;
@@ -274,7 +275,10 @@ pub fn load_scripts(
 ) -> Result<Scripts, Vec<ContentError>> {
     let mut files = Vec::new();
     let mut errors = Vec::new();
-    for result in formats::load_in::<engine::DialogueFile<Stage>>(DIALOGUE_DIR).into_values() {
+    for result in formats::install()
+        .load_each::<engine::DialogueFile<Stage>>(bundle::install(), DIALOGUE_DIR)
+        .into_values()
+    {
         match result {
             Ok(file) => files.push(file),
             Err(e) => errors.extend(e),
