@@ -5,10 +5,10 @@ type: feature
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["engine#3003"]
 nick_input: none
-completed:
+completed: 2026-10-20
 ---
 
 # 1175 — The game's binary and tests on the engine's platform boundary
@@ -116,5 +116,35 @@ that PR (which then closes this ticket in its completion notes).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **The pin** moved to engine `9cfbc740` (engine#3003's merge), not the
+  engine's `main`: the commits after it (3005 `no_std` platform, 3002
+  controls fit, 2219, 3038) are other game tickets' to take. It also
+  brings 2208, 2209, 3001 and 2204, all additive except 2209.
+- **2209 fallout:** `shuyi_ui::widgets::wrap` is gone (`word_wrap` comes
+  from `shuyi_assets::text` now, re-exported as
+  `shuyi_ui::widgets::word_wrap`). `crates/ui/src/widgets/mod.rs`
+  re-exports it under the same name and the three callers import
+  `crate::widgets::word_wrap`. 1169 still does the real work (the
+  loaders on `load_each`, `page_lines` on `lines_at_longest`).
+- **Pin moved by hand:** `cargo xtask engine-pin <commit>` builds xtask,
+  which can't build on either side of this move without this ticket's
+  changes (the old engine has no `shuyi-platform`, the new one no
+  `shuyi-ui/harness`). The revisions in `Cargo.toml` and
+  `shuyi-engine.rev` were edited and `cargo update -p …` moved
+  `Cargo.lock`; `cargo xtask engine-pin --check` passes.
+- `main.rs`: `config()` without `font`/`images` and with
+  `text_input: None`; `look()` gives both; `start(setup: Setup)` with
+  `setup.ctx(ctx)`; `main` builds
+  `Start::new(Card::text(WINDOW.title), look, start)` (`WINDOW.title` is
+  "Visions of Shuyi"). `trpg-app` depends on `shuyi-platform` for these
+  types, since `shuyi-app` doesn't re-export them.
+- **One test changed beyond its imports:**
+  `the_font_and_images_are_the_contents` (`crates/app/src/tests.rs`) read
+  `config.font` and `config.images`; it reads `look(&game)` now and
+  checks the same two pointers.
+- **3001 fallout:** the engine's standard formats gained a
+  "target profile" kind (`target-ron`), so the registry listing test in
+  `crates/content/src/formats/tests.rs` lists it.
+- No follow-up tickets. No gameplay rules decided.
+- **For Nick:** the game shows its name on a black screen for a moment
+  while it loads, then the title. Closing the window quits as before.

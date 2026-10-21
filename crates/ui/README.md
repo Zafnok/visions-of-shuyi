@@ -455,8 +455,9 @@ dev-dependency on itself turns on the `harness` feature for them). Unit tests in
 can use `crate::harness::Harness` directly.
 
 The scripts, waits, audio and music clock below are the engine's Harness
-(`shuyi_ui::harness::Harness<G>`, ticket 1111), tested on the engine's toy
-game in its `crates/ui/tests/it/`. This game's `Harness` wraps it with
+(`shuyi_platform::harness::Harness<G>`, ticket 1111, moved there by engine
+ticket 3003), run on the engine's headless backend and tested on its toy
+game in its `crates/platform/`. This game's `Harness` wraps it with
 the start-up (the embedded content, the test chapter, the title) and the
 lookups of this game (`flow()`, `battle()`, `map_scene()` and its
 shortcuts, `with_map_skin`, `with_tips`, `with_lessons`). A test of the

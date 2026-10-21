@@ -28,10 +28,11 @@ pub const CHECKOUT: &str = "shuyi-engine";
 /// The `[patch]` that points the build at the checkout.
 pub const PATCH_FILE: &str = ".cargo/engine-patch.toml";
 /// The engine's crates the game uses, with their folders in its repository.
-pub const CRATES: [(&str, &str); 5] = [
+pub const CRATES: [(&str, &str); 6] = [
     ("shuyi-core", "crates/core"),
     ("shuyi-assets", "crates/assets"),
     ("shuyi-ui", "crates/ui"),
+    ("shuyi-platform", "crates/platform"),
     ("shuyi-app", "crates/app"),
     ("shuyi-cli", "crates/cli"),
 ];
