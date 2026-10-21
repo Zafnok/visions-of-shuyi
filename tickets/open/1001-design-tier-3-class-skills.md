@@ -7,7 +7,7 @@ model: opus-5.5
 effort: medium
 status: todo
 blocked_by: ["0005", "0311"]
-nick_input: sign-off
+nick_input: decision
 completed:
 ---
 
@@ -25,8 +25,8 @@ rank.
 
 ## Nick input
 
-**Sign-off:** Nick reads the proposed list and approves it or vetoes
-entries. Design questions go through the `ask-nick` skill.
+**Decision** (`ask-nick`, before the data is written): Nick reads the
+proposed list and approves it or vetoes entries.
 
 ## Scope
 
@@ -49,15 +49,15 @@ entries. Design questions go through the `ask-nick` skill.
 1. Draft the list, using higher ranks of tier 1–2 families where they fit
    (Sword Focus 3, Light Feet 3, White Magic 3 …). Keep "+1 strike" skills
    rare, since 3x/4x must stay rare (`stats-and-combat.md`).
-2. Ask Nick for sign-off (with the `ask-nick` skill if a real design choice
-   comes up). Record the list in `progression.md`.
+2. Ask Nick with the `ask-nick` skill. Record the list in
+   `progression.md`.
 3. Add the skills to `skills.ron` and the class data, with tests like
    0311's.
 
 ## Acceptance criteria
 
 - [ ] Every tier-3 class has passives and an active in `progression.md` and the data.
-- [ ] Nick signed off.
+- [ ] Nick approved the list (`ask-nick`).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

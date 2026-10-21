@@ -7,7 +7,7 @@ model: opus-5.5
 effort: medium
 status: todo
 blocked_by: ["1040", "1061", "0062"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -32,10 +32,18 @@ Portraits today: the leads' faces are in `assets/portraits/lead_f`,
 
 ## Nick input
 
-**Sign-off:** Nick looks at every Chapter 1 face in one-bit, at the
-device's size, in the Simulator or on his Playdate (screenshots of the
-running game may be shared; the files may not), and names any face that
-needs another pass.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick looks at every Chapter 1 face in one-bit, at the
+> device's size, in the Simulator or on his Playdate (screenshots of the
+> running game may be shared; the files may not), and names any face that
+> needs another pass.
 
 ## Scope
 
@@ -84,8 +92,8 @@ build shows and the PC doesn't, saved with the other options.
       repository; `assets-private.rev` is pinned to it.
 - [ ] `cargo xtask private-assets --pin` passes (credits list the paths).
 - [ ] Nothing derived from the bought art is committed here.
-- [ ] Nick's sign-off comment is in the completion notes (or "no comment
-      yet").
+- [ ] Starting rules and anything left to judge by playing are in the
+      Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

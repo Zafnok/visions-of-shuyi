@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804"]
+blocked_by: ["1064"]
 nick_input: decision
 completed:
 ---
@@ -30,6 +30,10 @@ labelled unofficial, and is taken down on request. The bought art (Tiny
 Tales and other packs, ADR-0032, ADR-0040) has its own licences; a mod that
 **uses** the game's art by name inside the game doesn't redistribute it,
 but a tool that **exported** it would.
+
+**After the Act 1 playtest** (re-gated 2026-10-21, 0129): this waited
+for the Chapter 1 playtest (0804), which was folded into the Act 1
+playtest; it now waits for 1064.
 
 ## Nick input
 

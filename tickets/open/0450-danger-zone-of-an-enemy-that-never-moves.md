@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: []
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -36,9 +36,17 @@ In Fire Emblem a boss that doesn't move shows only its attack range.
 
 ## Nick input
 
-**Sign-off** after merge: in Chapter 1, switch the danger zone on and look
-at the keep; pick Harl to see his own range. Both should be the few tiles
-round him, not a wide area.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> In Chapter 1, switch the danger zone on and look
+> at the keep; pick Harl to see his own range. Both should be the few tiles
+> round him, not a wide area.
 
 ## Scope
 

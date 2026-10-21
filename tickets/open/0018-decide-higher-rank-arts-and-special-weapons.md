@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0014", "0804"]
+blocked_by: ["0014"]
 nick_input: decision
 completed:
 ---
@@ -22,10 +22,11 @@ for ranks **C, B, A and S**. Nick also chose **special weapons** that carry
 their own art (his example: a unique blade, like Dark Souls' Moonlight
 Greatsword, whose art makes the combat hit Res). None exist yet, since Chapter
 1 has no loot. Until this is decided, reaching rank C teaches nothing new.
-Run with the `ask-nick` skill after the Chapter 1 playtest (0804), so the
-starter arts have been felt first and question 3 can be answered (0804 was
-added to `blocked_by` on 2026-10-01; the design README already said "after
-playtest 0804").
+Run with the `ask-nick` skill now. It waited for the Chapter 1 playtest
+(0804) so the starter arts were felt first and question 3 could be
+answered; Nick has played three rounds of it, and Act 1's side quests
+give unique rewards (1072), so it is asked before them (re-gated
+2026-10-21, 0129).
 
 ## Nick input
 
@@ -39,7 +40,7 @@ playtest 0804").
    "should make sense and be rare"). Show a forecast mockup.
 2. **Special weapons:** the first few (for Chapters 2–3), their stats and
    their own arts, including Nick's Res-hitting blade.
-3. **Playtest follow-ups:** after 0804, does any tier 1–2 active need a new
+3. **Playtest follow-ups:** after 0804's rounds 1–3, does any tier 1–2 active need a new
    flavour so it overlaps arts less (Heavy Blow, Lance Rush, Dive are "might
    +N")?
 

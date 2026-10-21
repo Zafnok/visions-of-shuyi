@@ -6,8 +6,8 @@ milestone: M4 Enemy AI
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0506", "0802"]
-nick_input: sign-off
+blocked_by: ["0506", "0802", "1064"]
+nick_input: setup
 completed:
 ---
 
@@ -31,10 +31,11 @@ ADR-0023). The shipped game records nothing.
 
 ## Nick input
 
-**Sign-off:** Nick plays Chapter 1 on the Pages build (a few tries if he
-likes), exports the recordings from the debug menu, and answers one
-question: which of Casual / Normal / Hardcore he played as. He then reads
-the comparison table. Sign-off never blocks the PR.
+**Setup:** the recordings come from Nick's Act 1 playtest (1064), so
+this ticket waits for it: Nick plays on the Pages build, exports the
+recordings from the debug menu, and says which of Casual / Normal /
+Hardcore he played as. No separate play-through is asked for this
+ticket (Nick, 2026-10-21: no spot checks of gameplay tickets).
 
 ## Scope
 

@@ -6,8 +6,8 @@ milestone: M6 Story & dialogue
 model: sonnet-5
 effort: low
 status: todo
-blocked_by: ["1118", "1050", "engine#2305"]
-nick_input: sign-off
+blocked_by: ["1177"]
+nick_input: none
 completed:
 ---
 
@@ -39,15 +39,27 @@ today or `Left` like speech. This ticket is the game's half: picking
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
 
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
+
 ## Nick input
 
-**Sign-off:** the opening's narration reads left-aligned, like speech.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> The opening's narration reads left-aligned, like speech.
 
 ## Scope
 
 **In:**
-- Move the pin to an engine `main` that has engine#2305 (`cargo xtask
-  engine-pin <commit>`, the `engine-change` skill §7).
+- Nothing for the pin: 1177 moves it past engine#2305 (check
+  `shuyi-engine.rev` has it).
 - Narration lines start at `TEXT_X` like speech, from the box's first
   text row (no vertical centring), keeping their `TextDim` colour
   (*Claude's starting rule*: the colour still tells narration apart):

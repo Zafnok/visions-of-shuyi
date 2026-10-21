@@ -6,7 +6,7 @@ milestone: M6 Story & dialogue
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
+blocked_by: []
 nick_input: decision
 completed:
 ---
@@ -43,6 +43,10 @@ What the code does (checked 2026-10-16):
 
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
+
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
 
 ## Nick input
 

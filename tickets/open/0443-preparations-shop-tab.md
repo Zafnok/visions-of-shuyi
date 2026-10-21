@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: ["0409", "0044"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -35,8 +35,16 @@ Builds on:
 
 ## Nick input
 
-**Sign-off:** Nick buys Potions on the Quick Battle's Preparations, packs
-them, and comments.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick buys Potions on the Quick Battle's Preparations, packs
+> them, and comments.
 
 ## Scope
 

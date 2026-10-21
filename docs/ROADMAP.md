@@ -6,15 +6,17 @@ in the browser, then publish to itch.io, then Steam.
 All work is in [`tickets/`](../tickets/README.md). Status is read from the
 folders: `tickets/open/` vs `tickets/done/`.
 
-> **The critical path now is the engine carve** (Nick, 2026-10-16, after
-> Chapter 1 playtest round 3 scored 8/10: "we should prio engine carve.
-> Make it obvious engine carve is now the critical path."). Pick carve
-> tickets first: **1103** → … → **1118**, with **1114** beside them (see
-> *The engine* below). Next comes the Playdate port (to **1050**, Nick
-> plays Chapter 1 on his Playdate), then Chapter 1 playtest round 4
-> (**0804**), which waits for both. Every round 3 ticket waits for 1118 and
-> 1050 too, except three small tutorial fixes (**0464**, **0467**,
-> **0841**) that 1050 waits for and that can be done any time.
+> **The critical path now is Act 1** (2026-10-21, ticket 0129): Chapters
+> 1–8 (`docs/story/outline.md`) playable on the web and on the Playdate,
+> then **one** playtest of the whole act by Nick (**1064**). It replaces
+> Chapter 1 playtest round 4 (0804) and the Chapter 1 play-through on the
+> Playdate (1050), both folded into 1064. Nick, the same day: "any tickets
+> that say 'check after merge' aren't gonna happen -- I will save all my
+> checking for either design (i.e. 00 tickets) or for the full act 1
+> playtest itself." So he answers design questions, does setup steps, and
+> plays once at the end; the bots (0506, 0509, 0512) check balance. The
+> engine carve is done (1118); the plan, in phases, is *Act 1 critical
+> path* below.
 
 ## Milestones
 
@@ -130,6 +132,10 @@ a little stronger. Parked, not before round 4: **0063** rework the intro's
 shots, **0064** a story role for Vix, **0065** naming Vix and the lead,
 **0469** pictures in Guides, **0908** polish before the Steam release
 (sparks, arrows; 0903 waits for it).
+**Folded into the Act 1 playtest (2026-10-21, ticket 0129):** round 4
+was never played; 0804 and 1050 closed into **1064**, which waits for
+every round 4 ticket above, and none of them waits for 1118 or 1050 any
+more (Lane G of *Act 1 critical path*).
 
 **Replaceable graphics** (Nick, 2026-10-01: swapping the map's glyphs for
 sprites from image files must be a small job; ADR-0038): **0231** pictures
@@ -195,10 +201,9 @@ turns out feasible without jeopardizing our own velocity").
   [`Zafnok/shuyi-engine`](https://github.com/Zafnok/shuyi-engine), is public under MIT OR Apache-2.0 and
   holds its ADRs, tickets, decisions and roadmap. The extra game styles
   and networking are parked until the engine reaches parity with the game.
-- **The critical path.** Since 2026-10-16 the carve **is** the critical
-  path (the note at the top). It used to wait for 0804; Chapter 1 playtest
-  round 4 now waits for the carve instead (1103 and 1114 no longer wait
-  for 0804).
+- **The critical path.** From 2026-10-16 the carve was the critical
+  path; it is done (1118). Since 2026-10-21 the critical path is Act 1
+  (the note at the top, *Act 1 critical path*).
 
 The order:
 
@@ -245,6 +250,109 @@ The order:
    (parity), then what comes after, and the parked tickets. Our game's
    own multiplayer stays **0053**'s decision, after launch.
 
+## Act 1 critical path
+
+Written 2026-10-21 (ticket 0129, Phase 0: the backlog moved off the
+Chapter 1 playtest gates onto 1064). Only Chapter 1 exists as content
+(`assets/chapters/ch01.ron`); the chapter flow already chains chapters
+with `next`. Phases run in order, but Phase 1's questions and Phase 2's
+lanes overlap: a lane starts as soon as its own tickets are ready.
+Within a lane, → is order and · is "side by side". No engine ticket
+blocks Act 1.
+
+**Phase 1: Nick's design queue**, in this order (each unblocks the
+tickets in brackets):
+
+1. **0037** building tiles, capturing, healing tiles (0313, Chapter 3's
+   map 0849)
+2. **0044** the Preparations shop's basics and tiers (0443, 1070)
+3. **0028** shop music (0409)
+4. **0069** Act 1's battle rules: the escape objective, Dace fleeing,
+   a boss who can't die, Hollis's death and its Classic fallback, the
+   kinds of side-quest reward, what each early chapter introduces
+   (0319, 0848, 0849, 0750, 1072)
+5. **0025** world map, **0026** capital and **0027** camp music (1007,
+   1003) · **0071** story-battle themes and scene music for Chapters
+   2–8 (0848–0854)
+6. **0070** faces and combat pictures for the new cast (0848–0854,
+   1069)
+7. **0606**'s question, where to promote and reclass (asked inside 0606
+   before it is built)
+8. **0013** the number scale, decided before Act 1 is balanced
+   (0848–0854, 1070–1072)
+9. **0018** higher-rank arts and special weapons (1072)
+10. **1007**'s world-map glyph mockup (asked inside 1007 before it is
+    built)
+
+Optional, any time: **0812** chapter title card, **0813** screen
+transitions, **0067** the bought tiles and sprites on the Playdate's
+map, **0063**–**0065** (the intro's shots, a story role for Vix, naming
+Vix and the lead). Asked when their ticket is picked up: the questions
+inside Lane G's tickets (0250, 0449, 0463, 0739, 0741, 0742, 0846,
+0847) and 1062's; **1009** (quest recruitment) only if 1072's runaway
+Candle joins outside battle.
+
+**Phase 2: systems**, in lanes that run side by side:
+
+- **A. World map:** **0313** villages (after 0037) · **0409** the shop
+  screen (after 0028) → **0443** the Preparations shop tab (after
+  0044) · **0606** promote and reclass · **1003** supports and camp
+  screens (after 0027) → **1007** the world map (after 0409, 0025,
+  0026; mockup first) → **1008** skirmishes → **1065** the act ends
+  (closing scene, "Act 1 ends", the army carried over).
+- **B. Battle rules:** **0319** escape, a fleeing boss, a boss who
+  can't die, a scripted death (after 0069) · **0511** bosses use their
+  debuff and stance arts.
+- **C. Bots:** **0506** Casual / Normal / Hardcore → **0509**
+  autobalance → **0510** skirmishes to order.
+- **D. Playdate, Chapter 1's base:** **1038** → **1039** → **1041** →
+  **1044** · **1042** → **1043** · **1046** · **1058** · **1060** →
+  **1062** · **1051** the AI plans once per phase · **1057** → **1059**
+  · **1056** · **1063**.
+- **E. Playdate, Act 1:** **1068** one chapter's assets at a time
+  (ready; measure first) · **1066** world map, towns and shop (after
+  1007, 1008, 0409, 1038) · **1067** camp, supports, promotion and the
+  Preparations shop (after 1003, 0606, 0443, 1046) · **1069** one-bit
+  faces and pictures of the new cast (after 0070, 1042, 1041).
+- **F. Optional engine work** (in the engine's repository; nothing
+  waits for it): engine#2305 (done; **1177** picks it up), engine#3045,
+  engine#3043, engine#3052, engine#3008 → engine#3009.
+- **G. Chapter 1's round 4 fixes:** **0736** first, because its craft
+  research governs every Act 1 script → **0737** the Chapter 1 script
+  → **0742** · **1177** the engine pin → **0449**, **0740** · **0845** →
+  **0846** · the rest of round 3's tickets: **0250**, **0318**,
+  **0446**, **0461**, **0462**, **0463**, **0465**, **0466**, **0468**,
+  **0738**, **0739**, **0741**, **0842**, **0843**, **0844**, **0847**.
+  Cheap Chapter 1 gaps, any time: **0450**, **0453**, **0454**,
+  **0470**, **0735**.
+
+**Phase 3: content.** **0743** the new cast's character sheets (after
+0736) → the scripts, one chapter at a time because the ledger makes
+them sequential: **0744** (Chapter 2, after 0737) → **0745** → **0746**
+→ **0747** → **0748** → **0749** → **0750** (Chapter 8, also after
+0069). Each chapter's battle after its script, 0509, 0013, 0070 and
+0071: **0848** Chapter 2 (also 0313, 0409, 0443, 0069), **0849**
+Chapter 3 (also 0037, 0069), **0850**–**0854** Chapters 4–8 (also
+1007, 1008, 0319, 1070). The world map's content: **1070** nodes,
+towns and the random pool (after 1007, 1008, 0044, 0013) → **1071** the
+eight fixed skirmishes, with Gil (after 0746–0749) and **1072** the five
+side quests (after 0018, 0069 and their chapters' scripts); **1073**
+supports and camp events (after 1003, 0743, 0750).
+
+**Phase 4: proof.** **0512** the bots play all of Act 1 (softlocks,
+balance bands, save and load at every node, a Playdate memory and
+timing run; after Phases 2 and 3) → **1064** Nick plays Act 1 on the
+web and on his Playdate.
+
+**Off the path** (nothing in Act 1 waits for them): engine 3010, 3028,
+3029 and game **1170** (the Playdate front end on the engine's
+backend: cleanup, the game's own front end already runs on the
+device); languages and voices (0042, 0043, 0045, 0236, 0237, 0239,
+0718–0726, 0825, 0826, 0907, 1048, 1049); mods (0054, 1011–1024);
+replayability decisions **0046**–**0052** and **0060** (after 1064) and
+**0053**; release work (0901, 0903, 0906, 0908, 1052–1054); and the
+rest of the `01xx` and `11xx` tooling tickets.
+
 ## Nick's queue (answer these first; any order within a row)
 
 Design answers unblock most of the rules work. Suggested order:
@@ -256,23 +364,24 @@ Design answers unblock most of the rules work. Suggested order:
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0812** chapter card · **0813** transitions
    · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
-6. After the Chapter 1 playtest: **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers
-   · **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
-7. After the Chapter 1 playtest, replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
+6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces · **0071** Chapters 2–8's music
+   · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
+7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)
 9. After the single-player launch: **0053** multiplayer (modes, armies, fairness, servers)
 
-Sign-offs come later as screens land (0402 cursor feel, 0404 combat, 0408
-preparations, 0409 shops, 0410 spells, 0411 battle notes, 0502 enemy
-phase, 0602 level up, 0701 story gates, 0704 dialogue, 0706 portraits, 0707
-script, 0804 playtest). Setup steps (accounts/secrets): 0103, 0104, 0106,
+No sign-offs after merge any more (Nick, 2026-10-21): he checks design
+(the `00xx` tickets and questions asked before building) and plays the
+Act 1 playtest (1064); `tickets/README.md`, *No checks after merge on
+gameplay tickets*. Setup steps (accounts/secrets): 0103, 0104, 0106,
 0108, 0116, 0901, later 0903.
 
 ## Chapter 1 critical path
 
-**Parked since 2026-10-16:** the engine carve is the critical path now
-(the note at the top). What's below is the history of what led up to
-playtest rounds 1 to 3; round 4's list is *Playtest round 4* above.
+**History.** Since 2026-10-21 the critical path is *Act 1 critical
+path* above. What's below is the history of what led up to Chapter 1
+playtest rounds 1 to 3; round 4 was folded into the Act 1 playtest
+(1064).
 
 What's still open between now and Nick's playtest (0804), by dependency depth
 (tickets on the same row can run in parallel sessions/worktrees). Updated
@@ -363,16 +472,16 @@ early so every later PR is checked by them.
      whose action has no Playdate button can be finished (after 1035) →
      **1062** the guide's words without colours or keys (Nick decides
      the keys lesson on the Playdate)
-  9. **1050** Nick plays Chapter 1 on his Playdate (also after the
-     tutorial fixes **0464**, **0467**, **0841**) → **1051** the AI plans
-     once per phase (only if the enemy pauses feel long) · **1057** the
+  9. ~~**1050** Nick plays Chapter 1 on his Playdate~~ (folded into
+     **1064**, the Act 1 playtest, on 2026-10-21) · **1051** the AI plans
+     once per phase (done before 1064: Act 1's battles are bigger) · **1057** the
      battle's own frame time on the device (1055 measured 18 ms a frame
      at least; either order with 1050) → **1059** the battle map at 50
      frames a second (the screen's most; after 1038) · **0067** Nick
      decides whether the map uses the bought tiles and sprites (its build
      tickets follow, after 1037 and 1040)
-  10. **1052** package and sell on itch.io (after 0901) → **1053** the
-      Catalog application
+  10. **1052** package and sell on itch.io (after 0901 and 1064) →
+      **1053** the Catalog application
   11. When their inputs exist: **1048** voices (after 0722) · **1049** one
       build per language (after 0719, 0726)
 - Controller support on every build (web, Windows, Linux, macOS; needed for

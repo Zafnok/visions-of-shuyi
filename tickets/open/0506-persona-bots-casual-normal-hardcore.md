@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: ["0033", "0505", "0803"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -45,9 +45,16 @@ from the persona descriptions here, fixed, and recorded; only 0508
 
 ## Nick input
 
-**Sign-off:** Nick reads the Chapter 1 report (one table per bot, target met
-or missed) and says whether it matches how Chapter 1 felt when he played it.
-Sign-off never blocks the PR.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick reads the Chapter 1 report (one table per bot, target met
+> or missed) and says whether it matches how Chapter 1 felt when he played it.
 
 ## Scope
 

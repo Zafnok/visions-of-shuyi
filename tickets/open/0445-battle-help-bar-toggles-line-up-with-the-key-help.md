@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: []
-nick_input: sign-off
+nick_input: decision
 completed:
 ---
 
@@ -74,10 +74,13 @@ text each frame**, never constants.
 
 ## Nick input
 
-**Sign-off, with options first.** Before building, render the options of
+**Decision, before building.** Before building, render the options of
 step 1 and ask Nick to pick (`ask-nick`; frames from
 `cargo xtask frame-png`, which need no bought art: the bar is the same on
-the glyph look). After the build he looks at it on Pages.
+the glyph look). No check after merge (Nick, 2026-10-21: he checks only design and the
+full Act 1 playtest, 1064). Verification is by tests and `cargo shuyi
+frame-png` pictures in the PR; what is left to judge by playing goes
+on 1064's checklist.
 
 ## Scope
 

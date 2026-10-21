@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: ["1047", "1043", "0722"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -29,8 +29,16 @@ Playdate; 1043 is the Playdate dialogue screen.
 
 ## Nick input
 
-**Sign-off:** Nick listens to Chapter 1's opening scene on his Playdate
-and says whether the voices sound good enough.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick listens to Chapter 1's opening scene on his Playdate
+> and says whether the voices sound good enough.
 
 ## Scope
 
@@ -64,7 +72,8 @@ and says whether the voices sound good enough.
 - [ ] Chapter 1's scenes play their voices in the Simulator and on the
       device.
 - [ ] The `.pdx` size with voices is in the PR.
-- [ ] Nick's comment in the completion notes (or "no comment yet").
+- [ ] Starting rules and anything left to judge by playing are in the
+      Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

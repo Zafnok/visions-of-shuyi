@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: ["0734"]
-nick_input: sign-off
+nick_input: decision
 completed:
 ---
 
@@ -34,7 +34,7 @@ units already used (`fighter_male.png`, `church_knight.png`…).
 
 ## Nick input
 
-**Sign-off:** pick Dace's map picture from three to five candidates out
+**Decision** (`ask-nick`, before building): pick Dace's map picture from three to five candidates out
 of the bought bundle, shown as frames of the opening (`ch01_tbc`'s first
 second, picture look), each with the sheet's name. "Describe your own"
 is an option (another sheet from the bundle). Never a commission, never

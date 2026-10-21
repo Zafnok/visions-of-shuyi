@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804"]
+blocked_by: ["1064"]
 nick_input: decision
 completed:
 ---
@@ -38,6 +38,10 @@ appear on cleared world-map nodes, are small (4–6 enemies, 3–6 turns), are
 Easy tier, and are autobalanced for the bots with **no** card taken
 (`playtest-bots.md`; 0509). The story bible has vows, echoes and the Door;
 Shuyi is the Jade Reach's unseen guardian (`docs/story/bible.md`, `title.md`).
+
+**After the Act 1 playtest** (re-gated 2026-10-21, 0129): this waited
+for the Chapter 1 playtest (0804), which was folded into the Act 1
+playtest; it now waits for 1064.
 
 ## Nick input
 
