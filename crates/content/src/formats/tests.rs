@@ -19,6 +19,7 @@ fn the_registry_lists_its_kinds_and_their_formats() {
         r#"("credits", ["credits"])"#,
         r#"("font atlas", ["font-atlas"])"#,
         r#"("palette", ["palette"])"#,
+        r#"("pattern map", ["pattern-map"])"#,
         r#"("lights", ["lights"])"#,
         r#"("names table", ["names"])"#,
         r#"("dialogue", ["dlg"])"#,

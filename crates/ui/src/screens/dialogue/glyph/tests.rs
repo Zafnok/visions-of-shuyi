@@ -158,7 +158,7 @@ fn the_portrait_is_the_one_the_view_names() {
 }
 
 #[test]
-fn narration_dims_both_and_centres_the_text() {
+fn narration_dims_both_and_starts_at_the_speech_column() {
     let c = ctx();
     let view = DialogueView {
         speaker: None,
@@ -171,13 +171,13 @@ fn narration_dims_both_and_centres_the_text() {
     let buf = painted(&view);
     assert_eq!(glyph(&buf, LEFT_X, FRAME_Y), Some('┌'));
     assert_eq!(glyph(&buf, RIGHT_X, FRAME_Y), Some('┌'));
-    // No name on the border; one line, centred in the middle row.
+    // No name on the border; one line, at the speech column of the first row.
     assert!(row(&buf, TEXT_BOX.y).starts_with("┌────"));
-    let middle = row(&buf, TEXT_Y + 1);
-    let x = middle.find("Rain.").map(|b| middle[..b].chars().count());
-    assert_eq!(x, Some(47));
+    let first = row(&buf, TEXT_Y);
+    let x = first.find("Rain.").map(|b| first[..b].chars().count());
+    assert_eq!(x, Some(TEXT_X as usize));
     assert_eq!(
-        buf.get(47, TEXT_Y + 1).map(|c| c.fg),
+        buf.get(TEXT_X, TEXT_Y).map(|c| c.fg),
         Some(c.palette.get(UiColor::TextDim))
     );
 }

@@ -726,6 +726,9 @@ sprites.
   - **Conversations:** two full portraits, speaker on the left at full
     brightness with a double-line frame, listener dimmed on the right, name
     plates underneath, 3-line text box below.
+    Narration (no face, no name) sits in the same box from the same
+    column as speech, on the first text row, in the dim narration colour
+    (ticket 0740; it was centred before).
   - **Not** in the battle side panel or hover. That panel shows stats only
     (Nick dropped the mini portrait).
 

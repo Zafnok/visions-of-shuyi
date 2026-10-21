@@ -399,7 +399,7 @@ prop_compose! {
         let rim = rim.into_iter().map(|id| id.map(TerrainId)).collect();
         let look = trpg_content::MapLook { tiles: look.to_owned(), light: light.to_owned() };
         let threat = threat.map(|(tile, enemies)| ThreatView { tile, enemies });
-        MapScene { origin, size, tiles, ranges, rim, look, units, cursor, path, threat, clock_ms }
+        MapScene { origin, size, more: shuyi_ui::grid::MapEdges::default(), tiles, ranges, rim, look, units, cursor, path, threat, clock_ms }
     }
 }
 
