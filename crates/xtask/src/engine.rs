@@ -42,7 +42,7 @@ cargo xtask engine-pin [<commit> | --check]\n\n\
 engine        clone Shuyi Engine at the pinned commit into shuyi-engine/ (a checkout that\n              \
 is there already is fetched and left where it is) and build the game on it\n\
 engine --off  build the game on the pinned commit again; do this before committing\n\
-engine-pin    pin the commit the checkout is at (it must be pushed), or <commit>\n\
+engine-pin    pin the commit the checkout is at (it must be on the engine's main), or <commit>\n\
 engine-pin --check  fail when shuyi-engine.rev, Cargo.toml and Cargo.lock disagree";
 
 /// The commit `text` names: 40 lower-case hex digits.
@@ -255,9 +255,20 @@ pub fn pin(root: &Path, commit: Option<&str>) -> Result<String, String> {
         }
         git(&checkout, &["fetch", "--quiet", "origin"])?;
         let head = git(&checkout, &["rev-parse", "HEAD"])?;
-        if git(&checkout, &["branch", "--remotes", "--contains", &head])?.is_empty() {
+        // A squash merge leaves the PR branch's commits off `main`, and the
+        // branch may be deleted: only a commit on `main` stays fetchable.
+        let on_main = &[
+            "branch",
+            "--remotes",
+            "--list",
+            "origin/main",
+            "--contains",
+            &head,
+        ];
+        if git(&checkout, on_main)?.is_empty() {
             return Err(format!(
-                "commit {head} isn't pushed: push it (an engine PR), then run this again"
+                "commit {head} isn't on the engine's main: merge its PR, then \
+                 `git -C {CHECKOUT} switch main` and `git -C {CHECKOUT} pull --ff-only`, and run this again"
             ));
         }
         head
@@ -276,8 +287,7 @@ pub fn pin(root: &Path, commit: Option<&str>) -> Result<String, String> {
         ));
     }
     Ok(format!(
-        "{REV_FILE}, Cargo.toml and Cargo.lock now name {rev}: commit them with your change \
-         (merge the engine's PR first, with a merge commit, so the pin stays on its main)"
+        "{REV_FILE}, Cargo.toml and Cargo.lock now name {rev}: commit them with your change"
     ))
 }
 
