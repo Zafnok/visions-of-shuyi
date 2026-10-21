@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: ["1037", "1035", "0242"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -42,10 +42,18 @@ change the test to accept the choice.
 
 ## Nick input
 
-**Sign-off:** Nick looks at the PR's `frame-png --playdate` pictures
-(browsing with the pop-ups, the action menu, the map menu, the end-turn
-question, a phase banner) and plays the first turns in the Simulator or
-on his Playdate if he wants.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick looks at the PR's `frame-png --playdate` pictures
+> (browsing with the pop-ups, the action menu, the map menu, the end-turn
+> question, a phase banner) and plays the first turns in the Simulator or
+> on his Playdate if he wants.
 
 ## Scope
 
@@ -101,8 +109,8 @@ widgets went.
       near the top, and every menu and question opens and works.
 - [ ] Pictures in the PR; look tests for each window.
 - [ ] No PC snapshot changes.
-- [ ] Nick's sign-off comment is in the completion notes (or "no comment
-      yet").
+- [ ] Starting rules and anything left to judge by playing are in the
+      Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

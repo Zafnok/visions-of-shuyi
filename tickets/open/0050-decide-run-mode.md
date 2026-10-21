@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0804", "0047"]
+blocked_by: ["0047", "1064"]
 nick_input: decision
 completed:
 ---
@@ -31,6 +31,10 @@ Visions (0047, which comes first so this ticket reuses its answers); the
 whole class tree, arts and spells (`progression.md`, `combat-arts.md`,
 `magic.md`). The bible's Ashfields are full of echoes (elementals,
 `docs/story/bible.md`), which is one possible setting.
+
+**After the Act 1 playtest** (re-gated 2026-10-21, 0129): this waited
+for the Chapter 1 playtest (0804), which was folded into the Act 1
+playtest; it now waits for 1064.
 
 ## Nick input
 

@@ -6,7 +6,7 @@ milestone: M3 Battle UI
 model: sonnet-5
 effort: low
 status: todo
-blocked_by: ["0413", "1118", "1050"]
+blocked_by: ["0413"]
 nick_input: setup
 completed:
 ---
@@ -31,6 +31,10 @@ combat scenes: "we need the battler for tamsin". So 0804's round 4 now
 waits for this ticket, and like the rest of round 3's tickets it waits
 for the engine carve (1118) and the Playdate port (1050), Nick's
 priority.
+
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
 
 ## Nick input
 

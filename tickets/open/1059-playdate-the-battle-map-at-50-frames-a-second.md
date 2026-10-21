@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: ["1057", "1038"]
-nick_input: sign-off
+nick_input: setup
 completed:
 ---
 
@@ -43,11 +43,12 @@ changed, so a still screen costs the game's own work, not the screen's.
 
 ## Nick input
 
-**Sign-off:** Nick sideloads the release build at 50 and the same build
-at 30 (both handed to him), plays a few minutes of Chapter 1's first
-battle on each, moving the cursor around, walking units and opening
-menus, and says whether 50 feels better and whether the battery drain is
-acceptable. He pastes the Simulator console of the 50 run.
+**Setup** (a measurement, not a check): Nick sideloads the release
+build at 50, plays a minute of Chapter 1's first battle (moving the
+cursor, walking units, opening menus) and pastes the Simulator
+console. Whether 50 feels better than 30 and whether the battery
+drain is acceptable go on the Act 1 playtest's checklist (1064; Nick,
+2026-10-21: no spot checks of gameplay tickets).
 
 ## Scope
 
@@ -95,8 +96,8 @@ acceptable. He pastes the Simulator console of the 50 run.
    through the Harness on `ConsoleSpec::PLAYDATE`) to find what to cut.
 4. Cut the biggest parts; keep every test and snapshot as it is.
 5. Choose the rate (one for the game, or per screen) and wire it.
-6. Hand Nick the 50 and 30 builds for the sign-off; record his words and
-   the before / after numbers in the completion notes and the PR.
+6. Hand Nick the 50 build for the measurement; record the before /
+   after numbers in the completion notes and the PR.
 
 ## Acceptance criteria
 
@@ -107,8 +108,8 @@ acceptable. He pastes the Simulator console of the 50 run.
       30, and a follow-up ticket names what is left.
 - [ ] `crates/playdate/README.md` names the rate chosen.
 - [ ] No snapshot, play record or bot result changes.
-- [ ] Nick's sign-off comment is in the completion notes (or "no comment
-      yet": sign-off never blocks the PR).
+- [ ] The 50-or-30 and battery questions are in the Completion notes
+      (1064's checklist).
 - [ ] All gates in the `run-gates` skill pass, and the CI `playdate` job.
 
 ## Tests required

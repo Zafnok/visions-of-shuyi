@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804"]
+blocked_by: []
 nick_input: decision
 completed:
 ---
@@ -23,14 +23,17 @@ who knows... figure out the scaling algorithm once I have a playtest and see if
 big numbers or low numbers or even medium numbers look nicer to me."
 
 Chapter 1 ships with FE-sized placeholder numbers (stats ~0–50, HP ≤ 80,
-strike thresholds `[4, 14, 24]`). This ticket asks Nick, after the Chapter 1
-playtest (0804), which scale he wants, and derives the strike-threshold rule
-from it.
+strike thresholds `[4, 14, 24]`). This ticket asks Nick which scale he wants, and derives the
+strike-threshold rule from it. It is decided **before Act 1 is
+balanced**: a new scale changes every number the chapters' autobalance
+passes tune, so 0848–0854, 1070, 1071 and 1072 wait for it (re-gated
+2026-10-21, 0129).
 
 ## Nick input
 
-**Decision.** Run with the `ask-nick` skill after Nick has played the 0804
-build. Show real numbers from the build next to mock-ups at other scales.
+**Decision.** Run with the `ask-nick` skill now: Nick has played Chapter 1
+three times (0804, rounds 1–3). Show real numbers from the current build
+next to mock-ups at other scales.
 
 ## Questions to ask
 

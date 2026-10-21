@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804"]
+blocked_by: ["1064"]
 nick_input: decision
 completed:
 ---
@@ -38,6 +38,10 @@ Battle, and fallen units die as in Classic.
 Where it is kept (0058, `docs/design/options.md`, *Where options are
 kept*): like the game mode, Ironman belongs to the campaign (its saves),
 not to the player profile.
+
+**After the Act 1 playtest** (re-gated 2026-10-21, 0129): this waited
+for the Chapter 1 playtest (0804), which was folded into the Act 1
+playtest; it now waits for 1064.
 
 ## Nick input
 

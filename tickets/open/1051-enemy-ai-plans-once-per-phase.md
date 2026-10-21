@@ -5,9 +5,9 @@ type: feature
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
-status: blocked
-blocked_by: ["1050"]
-nick_input: none
+status: todo
+blocked_by: []
+nick_input: setup
 completed:
 ---
 
@@ -15,9 +15,12 @@ completed:
 
 ## Context
 
-**Optional:** only if Nick finds the enemy's pauses too long when he
-plays Chapter 1 on his Playdate (1050 decides; if he doesn't, 1050
-closes this ticket as not needed).
+**Done before the Act 1 playtest** (re-gated 2026-10-21, 0129). It was
+optional, decided by whether Nick found the enemy's pauses long when
+he played Chapter 1 on his Playdate (1050). 1050 was folded into the
+Act 1 playtest (1064), and Act 1's later battles field more enemies
+than Chapter 1's, so it is done now; the bots' Playdate timing run
+(0512) checks the result.
 
 1026 measured on Nick's Playdate (ADR-0070 §5): a 14-enemy phase thinks
 for 1.2 s in all, 80 ms per enemy on average and 0.23 s at worst, as a
@@ -30,7 +33,9 @@ stay identical** (the bots, play records and replays depend on it).
 
 ## Nick input
 
-None to decide (1050 records whether it is needed).
+**Setup** (a measurement, not a check): Nick sideloads the before and
+after builds and pastes the Simulator console of the same phases, as
+in 1026.
 
 ## Scope
 

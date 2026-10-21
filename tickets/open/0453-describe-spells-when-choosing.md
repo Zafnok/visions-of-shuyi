@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: []
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -37,9 +37,17 @@ What exists after 0429 (in `crates/ui`, apart from the menu widget):
 
 ## Nick input
 
-**Sign-off:** in Quick Battle, open the mage's `Magic` list and move through
-the lines (`Fire`, `Fire + Overcast`, a dimmed one). Can you tell what each
-does without leaving the menu?
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> In Quick Battle, open the mage's `Magic` list and move through
+> the lines (`Fire`, `Fire + Overcast`, a dimmed one). Can you tell what each
+> does without leaving the menu?
 
 ## Scope
 

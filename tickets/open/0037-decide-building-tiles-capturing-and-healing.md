@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804"]
+blocked_by: []
 nick_input: decision
 completed:
 ---
@@ -55,8 +55,10 @@ bought picture.
 
 ## Nick input
 
-**Decision**, with the `ask-nick` skill, after the Chapter 1 playtest
-(0804), as he asked. Show map mockups (`ascii-art` skill) of each new tile
+**Decision**, with the `ask-nick` skill, now. He asked for it after the
+Chapter 1 playtest (0804), which he has played three times; Chapter
+2's villages (0313) and Chapter 3's map (0849) need the answer
+(re-gated 2026-10-21, 0129). Show map mockups (`ascii-art` skill) of each new tile
 next to `fort` (`╦╦`); a terrain glyph must never look like the cursor
 (`look-and-feel.md`). At most three questions per message:
 

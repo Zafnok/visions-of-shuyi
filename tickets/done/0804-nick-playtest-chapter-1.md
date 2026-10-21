@@ -5,10 +5,10 @@ type: playtest
 milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
-status: in-progress
+status: done
 blocked_by: ["0803", "0802", "0602", "0307", "0406", "0107", "0108", "0414", "0417", "0424", "0425", "0710", "0807", "0814", "0215", "0809", "0810", "0413", "0035", "0316", "0231", "0435", "0714", "0715", "0716", "0436", "0437", "0440", "0116", "0822", "0727", "0724", "0447", "0444", "0055", "0448", "0442", "0439", "0811", "0819", "0820", "0830", "0607", "0451", "0452", "0056", "0317", "0057", "0058", "0029", "0429", "0728", "0729", "0730", "0832", "0833", "0834", "0455", "0456", "0457", "0458", "0731", "0835", "0836", "0837", "0838", "0839", "0732", "0733", "0734", "0250", "0318", "0446", "0449", "0461", "0462", "0463", "0464", "0465", "0466", "0467", "0468", "0736", "0737", "0738", "0739", "0740", "0741", "0742", "0841", "0842", "0843", "0844", "0845", "0846", "0847", "1118", "1050"]
 nick_input: sign-off
-completed:
+completed: 2026-10-21
 ---
 
 # 0804 — Chapter 1 playtest
@@ -350,3 +350,17 @@ study ("Right"); Veyne Hall's music ("Fits"); the keep-changes prompt
 ("Right"); profile switching ("Yes"); Game Over ("Good"); the rebuilt
 screens ("Everything looked normal").
 
+### Folded into the Act 1 playtest (2026-10-21, ticket 0129)
+
+**Closed without round 4.** Nick decided on 2026-10-21 that he no longer
+spot-checks gameplay tickets: "any tickets that say 'check after merge'
+aren't gonna happen -- I will save all my checking for either design
+(i.e. 00 tickets) or for the full act 1 playtest itself. I don't wanna
+spot verify any gameplay tickets anymore." So Chapter 1's round 4 and
+the Playdate play-through (1050) became one playtest of all of Act 1
+(Chapters 1–8) on the web and on his Playdate: **1064**. Its
+`blocked_by` carries this ticket's still-open blockers (round 3's
+tickets) over, minus 1118 (done) and 1050 (folded in too); every open
+ticket that waited for 0804 now waits for 1064 or for nothing (0129's
+PR lists which). Round 4's first question, the new script (0737), is
+1064's first question.

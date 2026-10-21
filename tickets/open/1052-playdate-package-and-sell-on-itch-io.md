@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1050", "0901", "0062"]
+blocked_by: ["0901", "0062", "1064"]
 nick_input: setup
 completed:
 ---
@@ -25,6 +25,10 @@ also needs launcher pictures (a card and an icon, shown in the device's
 game list); 0062 decided how they look. The Playdate SDK licence lets us
 sell the game anywhere but forbids "Playdate" or "Panic" in the game's
 name without permission (ADR-0070, *Context*).
+
+**After the Act 1 playtest** (re-gated 2026-10-21, 0129): this waited
+for Nick to play Chapter 1 on his Playdate (1050), which was folded
+into the Act 1 playtest; it now waits for 1064.
 
 ## Nick input
 

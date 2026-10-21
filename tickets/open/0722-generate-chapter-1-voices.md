@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: ["0716", "0720", "0721", "0826", "0728", "0737"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -23,10 +23,18 @@ waits for it. Not on the Chapter 1 playtest's critical path.
 
 ## Nick input
 
-**Sign-off.** After the merge, Nick plays Chapter 1 on Pages with voices
-on and says which lines or characters sound wrong (a misread name, a flat
-or odd reading, a voice that doesn't fit). His comments become a
-follow-up ticket; they don't block this PR.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick plays Chapter 1 on Pages with voices
+> on and says which lines or characters sound wrong (a misread name, a flat
+> or odd reading, a voice that doesn't fit). His comments become a
+> follow-up ticket; they don't block this PR.
 
 ## Scope
 

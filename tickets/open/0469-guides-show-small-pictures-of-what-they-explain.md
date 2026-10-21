@@ -6,7 +6,7 @@ milestone: M3 Battle UI
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["1118", "1050"]
+blocked_by: []
 nick_input: decision
 completed:
 ---
@@ -24,7 +24,7 @@ Chapter 1 playtest round 3 (0804, 2026-10-16):
 
 Fire Emblem Engage's and Three Houses' tutorial lists show a still image
 per topic (check before citing). Nick didn't ask for this before the next
-playtest, so it's not in 0804's `blocked_by`.
+playtest, so it's not in the Act 1 playtest's `blocked_by` (1064).
 
 Pictures must follow ADR-0038: a picture is a rendered frame of the real
 game's screen (made from a scene by the skins), not hand-drawn cells; and
@@ -32,6 +32,10 @@ bought art shows only in builds that have it (ADR-0040).
 
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
+
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
 
 ## Nick input
 

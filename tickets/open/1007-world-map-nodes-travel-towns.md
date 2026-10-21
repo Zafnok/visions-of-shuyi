@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: ["0801", "0802", "0409", "0805", "1003", "0025", "0026"]
-nick_input: sign-off
+nick_input: decision
 completed:
 ---
 
@@ -31,13 +31,16 @@ Options screen from 0805 (the world map menu opens it; added to
 
 ## Nick input
 
-**Sign-off:** before any code, show Nick an ASCII mockup of a world map
+**Decision, before any code:** show Nick an ASCII mockup of a world map
 (`ascii-art` skill) with every node kind and its symbol and level marker. Nick
 asked for random and fixed battles to be "clearly delineated… Some symbol
 above them or a level marker or both", and the design says both. Offer a few
-glyph/colour options and expect several rounds. When the ticket is done, Nick
-plays a test map: travels, visits a town, saves and loads on the map, opens
-camp, and starts a story battle.
+glyph/colour options and expect several rounds. No check after merge (Nick, 2026-10-21: he checks only design and the
+full Act 1 playtest, 1064). Verification is by tests and `cargo shuyi
+frame-png` pictures in the PR; what is left to judge by playing goes
+on 1064's checklist (travel, a
+town, save and load on the map, camp, a story battle; the
+integration tests below play the same).
 
 ## Scope
 
@@ -91,7 +94,7 @@ camp, and starts a story battle.
 1. Read `world-structure.md`, `chapter-1.md`, `death-and-difficulty.md`
    (*Saving*), `supports.md` (*Viewing support conversations*), and the code
    from 0801, 0802, 0409 and 1003.
-2. Get Nick's sign-off on the node-glyph mockup first (see Nick input). Record
+2. Get Nick's answer on the node-glyph mockup first (see Nick input). Record
    the chosen glyphs/colours in `docs/design/look-and-feel.md`.
 3. `core::worldmap`: data types, loader + content validation (every path
    joins existing nodes, every node is reachable once all its unlock
@@ -109,14 +112,15 @@ camp, and starts a story battle.
 
 ## Acceptance criteria
 
-- [ ] Nick signed off on the node glyph mockup; the choice is in `look-and-feel.md`.
+- [ ] Nick picked the node glyphs from the mockup; the choice is in `look-and-feel.md`.
 - [ ] Travel only follows open paths; locked nodes can't be entered (tests).
 - [ ] Winning a story battle opens its paths and marks the node cleared.
 - [ ] `Save` on the world map → `Load Game` → same act, node and cleared nodes (harness test).
 - [ ] `Camp` and towns open from the world map.
 - [ ] Winning an act's final story battle loads the next act's map; the old one is gone.
 - [ ] Linear chapters (Chapter 1) still play exactly as before (existing tests pass).
-- [ ] Nick played the test map and signed off.
+- [ ] Starting rules and anything left to judge by playing are in the
+      Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

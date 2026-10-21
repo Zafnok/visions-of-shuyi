@@ -7,7 +7,7 @@ model: opus-5.5
 effort: medium
 status: todo
 blocked_by: ["1014", "0054"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -22,8 +22,16 @@ didn't load. 1011's ADR says a save records the mods it was made with, and
 
 ## Nick input
 
-**Sign-off:** Nick installs the example mod (1023) or a test mod, turns it
-on from the Mods screen, restarts, and says whether the screen is clear.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick installs the example mod (1023) or a test mod, turns it
+> on from the Mods screen, restarts, and says whether the screen is clear.
 
 ## Scope
 

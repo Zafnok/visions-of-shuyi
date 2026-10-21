@@ -6,8 +6,8 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
-nick_input: sign-off
+blocked_by: []
+nick_input: none
 completed:
 ---
 
@@ -33,10 +33,22 @@ Core already has the kind: `Objective::DefeatUnit { unit, turn_limit }`
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
 
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
+
 ## Nick input
 
-**Sign-off:** win by defeating Harl with enemies left; does what the
-leftovers do feel right? Also confirm the starting rules below.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Win by defeating Harl with enemies left; does what the
+> leftovers do feel right? Also confirm the starting rules below.
 
 ## Scope
 
@@ -44,7 +56,7 @@ leftovers do feel right? Also confirm the starting rules below.
 - `ch01.ron`: `objective: DefeatUnit(unit: "red_captain")`. The
   objective page and the battle's opening objective line say so (text
   ids, ADR-0045).
-- **The rest run** (*Claude's starting rules*, flag at sign-off):
+- **The rest run** (*Claude's starting rules*, listed in the Completion notes):
   - when Harl falls, the battle is won at once; the enemies left on the
     map are shown leaving: each walks toward the nearest map edge at map
     speed and fades out, one short moment (≤ 2 s together; Confirm skips),

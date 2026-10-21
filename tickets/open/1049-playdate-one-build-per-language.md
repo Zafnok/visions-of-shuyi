@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: ["1036", "1045", "0719", "0726"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -26,11 +26,19 @@ the 1-bit font from the atlas.
 
 ## Nick input
 
-**Sign-off:** Nick opens the Japanese and Chinese builds on his Playdate
-and checks the text shows (no missing-glyph boxes) and fits, especially
-the battle pop-ups and the dialogue box at 50 × 15 cells. Checking the
-wording is the translation tickets' job (0719, 0726; who checks the
-Chinese is 0045's question), not this one's.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick opens the Japanese and Chinese builds on his Playdate
+> and checks the text shows (no missing-glyph boxes) and fits, especially
+> the battle pop-ups and the dialogue box at 50 × 15 cells. Checking the
+> wording is the translation tickets' job (0719, 0726; who checks the
+> Chinese is 0045's question), not this one's.
 
 ## Scope
 
@@ -79,7 +87,8 @@ the per-language bundle uses the engine's language layers.
 - [ ] Each starts in its language; Chapter 1 plays through in the
       Simulator in each.
 - [ ] Look tests for wide glyphs pass.
-- [ ] Nick's comment in the completion notes (or "no comment yet").
+- [ ] Starting rules and anything left to judge by playing are in the
+      Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass, and the CI `playdate` job.
 
 ## Tests required

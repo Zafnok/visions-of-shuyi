@@ -6,8 +6,8 @@ milestone: M7 Chapter 1 & game flow
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
-nick_input: sign-off
+blocked_by: []
+nick_input: none
 completed:
 ---
 
@@ -31,10 +31,22 @@ Vix: face and box from 0455/0459, voice `docs/story/characters/guide.md`
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
 
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
+
 ## Nick input
 
-**Sign-off:** launch with a fresh browser profile (a private window):
-does the message sit well beside the title, and go away when it should?
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Launch with a fresh browser profile (a private window):
+> does the message sit well beside the title, and go away when it should?
 
 ## Scope
 
@@ -49,7 +61,7 @@ does the message sit well beside the title, and go away when it should?
 - It doesn't take input or block the menu; it hides while the cinematic
   plays.
 - *Claude's starting rule:* it doesn't depend on the tutorial level
-  (there's no campaign yet on the title). Ask Nick at sign-off.
+  (there's no campaign yet on the title). List it in the Completion notes (1064's checklist).
 - Profiles keep a "set up" flag (or derive it from the profile's data;
   say which).
 

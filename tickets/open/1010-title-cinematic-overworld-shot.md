@@ -44,7 +44,10 @@ menu hides on launch anyway); it takes the second half of the faces shot;
 it replaces the whole-field shot before the logo. Say for each what is
 lost. Record his answer and the new table in `title-screen.md`.
 
-**Sign-off** after merge: watch the title through one loop. Is the
+No check after merge (Nick, 2026-10-21: he checks only design and the
+full Act 1 playtest, 1064). Verification is by tests and `cargo shuyi
+frame-png` pictures in the PR; what is left to judge by playing goes
+on 1064's checklist: is the
 overworld shot long enough, and does it show anything the player shouldn't
 know yet (places or paths from later in the story)?
 

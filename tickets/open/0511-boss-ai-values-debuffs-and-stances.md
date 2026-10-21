@@ -6,7 +6,7 @@ milestone: M4 Enemy AI
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0503", "0804"]
+blocked_by: ["0503"]
 nick_input: none
 completed:
 ---
@@ -31,9 +31,11 @@ never picks an art or active **for** it:
 - **drain** (`ActiveEffect::Strike::drain`).
 
 So a boss archer never uses Pinning Shot, and a gauntlet boss uses Sidestep
-only when its avoid already pays off in the combat itself. Whether that
-makes bosses feel flat is judged in the Chapter 1 playtest (0804); do this
-ticket only if Nick's playtest notes ask for it (hence `blocked_by` 0804).
+only when its avoid already pays off in the combat itself. It was to be
+done only if the Chapter 1 playtest (0804) found bosses flat. Act 1 has
+a boss in every chapter, several with arts (`docs/story/outline.md`),
+and Nick no longer spot-checks gameplay (2026-10-21), so it is done
+before the Act 1 playtest (1064) instead (re-gated 2026-10-21, 0129).
 
 Design: `docs/design/combat-arts.md` (the arts and what they do; *Enemies:
 bosses only; combat green units too*).

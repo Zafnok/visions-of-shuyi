@@ -6,8 +6,8 @@ milestone: M6 Story & dialogue
 model: fable-5.1
 effort: high
 status: todo
-blocked_by: ["0736", "1118", "1050"]
-nick_input: sign-off
+blocked_by: ["0736"]
+nick_input: none
 completed:
 ---
 
@@ -42,14 +42,27 @@ story-writing skill, with the rule that a rewrite starts on a blank page.
 "ch1 playtest 4 come after those milestones with update script"), so
 `blocked_by` has 1118 and 1050.
 
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
+
 The ticket's `model` follows ADR-0010 (creative writing → fable-5.1).
 Nick named Fable as the writer of 0728's rewrite; if he runs this one on
 another model, that's his call.
 
 ## Nick input
 
-**Sign-off** in playtest round 4 (0804): does the chapter sound like a
-game he wants to play, and do the conversations still drag?
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Does the chapter sound like a
+> game he wants to play, and do the conversations still drag? (Asked first
+> in 1064, as round 4 of the Chapter 1 playtest would have.)
 
 ## Scope
 

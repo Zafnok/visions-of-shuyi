@@ -6,8 +6,8 @@ milestone: M2 Core rules
 model: sonnet-5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
-nick_input: sign-off
+blocked_by: []
+nick_input: none
 completed:
 ---
 
@@ -29,10 +29,22 @@ turn, never a counter.
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
 
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
+
 ## Nick input
 
-**Sign-off:** have an enemy attack Rue next to her while Cinder Oath is
-her equipped attack; the forecast shows she doesn't strike back.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Have an enemy attack Rue next to her while Cinder Oath is
+> her equipped attack; the forecast shows she doesn't strike back.
 
 ## Scope
 
@@ -46,7 +58,7 @@ her equipped attack; the forecast shows she doesn't strike back.
   rule:* if it's the defender's equipped attack and the defender has
   another attack that could counter (a weapon or another spell in
   range), she doesn't switch to it; the defender just doesn't counter,
-  as with a broken weapon. Flag this rule to Nick at sign-off.
+  as with a broken weapon. List this rule in the Completion notes (1064's checklist).
 - The enemy-attack forecast shows "no counter" on Rue's side.
 - The enemy AI sees this too (it scores attacks with the same forecast).
 - `docs/design/magic.md`: replace the starting rule with Nick's answer.

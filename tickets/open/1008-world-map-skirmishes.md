@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: ["1007", "0501", "0807"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -36,9 +36,17 @@ adds to battle files (added to `blocked_by` 2026-10-01).
 
 ## Nick input
 
-**Sign-off:** Nick plays the test world map, wins a few random skirmishes and
-a fixed one, and says whether (1) he can tell at a glance which fights matter,
-and (2) the random fights feel like useful training without being grindy.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick plays the test world map, wins a few random skirmishes and
+> a fixed one, and says whether (1) he can tell at a glance which fights matter,
+> and (2) the random fights feel like useful training without being grindy.
 
 ## Scope
 
@@ -95,7 +103,8 @@ and (2) the random fights feel like useful training without being grindy.
 - [ ] A guarding fixed skirmish blocks travel until it's won; others don't (tests).
 - [ ] The same save + same actions spawns the same groups (determinism test).
 - [ ] Fixed and random nodes use different symbols and both show a level marker (snapshot).
-- [ ] Nick signed off.
+- [ ] Starting rules and anything left to judge by playing are in the
+      Completion notes (they go on 1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

@@ -7,7 +7,7 @@ model: sonnet-5
 effort: medium
 status: todo
 blocked_by: ["0308", "0403", "0028"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -25,7 +25,15 @@ the village UI only if 0313 is done; this ticket doesn't wait for it.
 
 ## Nick input
 
-**Sign-off:** Nick buys, sells and repairs on a test map and comments.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Nick buys, sells and repairs on a test map and comments.
 
 ## Scope
 

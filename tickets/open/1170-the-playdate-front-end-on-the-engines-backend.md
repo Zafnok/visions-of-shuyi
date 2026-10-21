@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: ["engine#3010", "engine#3028", "engine#3029", "1175"]
-nick_input: sign-off
+nick_input: none
 completed:
 ---
 
@@ -33,9 +33,17 @@ crate. This ticket moves the game onto them once they land.
 
 ## Nick input
 
-**Sign-off:** play the Playdate build on the device after this lands
-(sideload as usual) and say if anything feels different: start-up,
-sound, saves, the system menu.
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Play the Playdate build on the device after this lands
+> (sideload as usual) and say if anything feels different: start-up,
+> sound, saves, the system menu.
 
 ## Scope
 

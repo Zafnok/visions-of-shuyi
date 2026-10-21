@@ -6,7 +6,7 @@ milestone: M8 Release
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804", "0816", "0902", "0906", "0908"]
+blocked_by: ["0816", "0902", "0906", "0908", "1064"]
 nick_input: setup
 completed:
 ---
@@ -35,6 +35,10 @@ describe them (pre-generated AI content) and the store page's language
 boxes must match what ships. If 0907 is done, paste its
 `docs/release/store-disclosure.md`; if not, write that paragraph here from
 ADR-0045 and ADR-0046 and add a line to 0907.
+
+**After the Act 1 playtest** (re-gated 2026-10-21, 0129): this waited
+for the Chapter 1 playtest (0804), which was folded into the Act 1
+playtest; it now waits for 1064.
 
 ## Nick input
 

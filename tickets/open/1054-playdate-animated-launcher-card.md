@@ -44,7 +44,8 @@ never committed (ADR-0040). Options to show, e.g.:
 - or describe his own.
 
 Plus whether `card-pressed.png` and an animated list icon are wanted.
-Then **sign-off**: Nick sees the card animate in his Playdate's launcher.
+No check after merge (Nick, 2026-10-21); the card in his launcher
+goes on 1064's checklist.
 
 ## Scope
 
@@ -83,8 +84,8 @@ Then **sign-off**: Nick sees the card animate in his Playdate's launcher.
       the card.
 - [ ] No picture made from the bought art is committed.
 - [ ] The `.pdx` size before and after is in the PR.
-- [ ] Nick's sign-off comment is in the completion notes (or "no comment
-      yet").
+- [ ] Anything left to judge on the device is in the Completion notes
+      (1064's checklist).
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required

@@ -20,7 +20,7 @@ discipline here is the whole quality system.
 - If the user named a ticket, use it.
 - Otherwise list candidates: tickets in `tickets/open/` with `status: todo` whose
   every `blocked_by` id exists in `tickets/done/`. Prefer the lowest number on
-  the Chapter 1 critical path in `docs/ROADMAP.md`. Tell the user which one you
+  the Act 1 critical path in `docs/ROADMAP.md`. Tell the user which one you
   picked and why in one sentence.
 - **An `engine#NNNN` in `blocked_by`** is a Shuyi Engine ticket. It is done
   only when it is in the engine's `tickets/done/` **and** the game's pin is
@@ -163,6 +163,24 @@ cannot be met, say so in the Completion notes and in the PR; don't hide it.
 2. Set `status: done` and `completed: YYYY-MM-DD` in frontmatter.
 3. `git mv tickets/open/<file>.md tickets/done/<file>.md`
 
+## 5b. No checks after merge on gameplay tickets
+
+Nick, 2026-10-21: "any tickets that say 'check after merge' aren't gonna happen -- I
+will save all my checking for either design (i.e. 00 tickets) or for
+the full act 1 playtest itself. I don't wanna spot verify any gameplay
+tickets anymore."
+
+- A `feature`, `bug`, `tuning` or `content` ticket is verified by its
+  tests, `cargo shuyi frame-png` pictures in the PR and, where it
+  touches play, the bots (`cargo xtask playtest`, `autobalance`).
+- Whatever is still left to judge by playing (a starting rule, a feel,
+  a look) goes in the Completion notes; the Act 1 playtest (1064)
+  collects it. Don't send it to Nick.
+- If an older ticket still says "Sign-off" after merge, treat it
+  this way and say so in the PR.
+- Design questions are still asked, **before** building (§1b), with
+  mockups when Nick judges pictures.
+
 ## 6. Commit and PR
 
 - Commit messages: `[NNNN] imperative summary`.
@@ -178,8 +196,10 @@ cannot be met, say so in the Completion notes and in the PR; don't hide it.
   - Body: summary bullets, list of acceptance criteria (checked), follow-up
     tickets created, an `Engine friction:` line ("Engine friction:
     estimate N, measured M (R×), <outcome or 'under 2×'>"; "none: no Rust
-    code" when there is none), and `Nick input:` line (e.g. "Sign-off: please play the
-    build from the Pages link and try X").
+    code" when there is none), and `Nick input:` line (e.g. "None: verified by tests and the
+    pictures above; starting rules listed for the Act 1 playtest
+    (1064)"). Never ask Nick to check a gameplay ticket after merge
+    (§5b).
 - Don't run mutation testing locally before pushing: CI runs it on the PR
   (see `run-gates`). Push, open the PR, and watch CI once.
 - Wait for CI. If a check fails, fix it on the same branch. Never disable a

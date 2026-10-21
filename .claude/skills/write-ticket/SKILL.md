@@ -25,7 +25,13 @@ without asking questions.
    - **Context:** why this exists; link ADRs, design docs, the ticket/PR that
      discovered it.
    - **Nick input:** `None.` / *Answer first* (name the `00xx` ticket) /
-     *Setup* (exact clicks) / *Sign-off* (what to look at).
+     *Setup* (exact clicks) / *Decision* (a design question asked
+     before building). **Never a check after merge** on a feature,
+     bug, tuning or content ticket (Nick, 2026-10-21; `tickets/README.md`,
+     *No checks after merge on gameplay tickets*): say how it is
+     verified instead (tests, `cargo shuyi frame-png` pictures, the
+     bots) and that what is left to judge by playing goes on the Act 1
+     playtest's checklist (1064). `sign-off` is for playtests only.
    - **Scope — in / out:** be explicit about what NOT to do.
    - **Implementation steps:** numbered, concrete, naming files, types and
      functions. Assume the reader knows Rust but not this codebase.
@@ -68,10 +74,13 @@ ticket you write or change:
   reason that names who unblocks it.
 - **"Before X" and "after X" are dependencies.** "Do this before the Steam
   page" means X's ticket is blocked by this one; "after the playtest" means
-  this one is blocked by 0804.
-- If the ticket is needed for Nick's Chapter 1 playtest, add it to 0804's
-  `blocked_by` and to the critical path in `docs/ROADMAP.md`. If you can't
-  tell whether Nick wants it before the playtest, ask him.
+  this one is blocked by 1064 (the Act 1 playtest; 0804 and 1050 were
+  folded into it on 2026-10-21).
+- If the ticket is needed for Act 1 (its chapters, its systems, the
+  Playdate build Nick plays it on), add it to 1064's `blocked_by` and to
+  *Act 1 critical path* in `docs/ROADMAP.md`. When unsure, add it: the
+  playtest covers all of Act 1, and Nick no longer checks tickets one by
+  one.
 - Run `cargo xtask ticket-lint`.
 
 ## Turning Nick's playtest feedback into tickets

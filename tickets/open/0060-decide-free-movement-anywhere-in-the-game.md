@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804"]
+blocked_by: ["1064"]
 nick_input: decision
 completed:
 ---
@@ -41,8 +41,10 @@ the engine reaches parity with the game (plan B).
 
 ## Nick input
 
-**Decision**, with the `ask-nick` skill. Ask after the Chapter 1 playtest
-(0804), because round 3's feel work is his top priority (2026-10-14).
+**Decision**, with the `ask-nick` skill. Ask after the Act 1 playtest
+(1064). It said "after the Chapter 1 playtest" (0804), because round 3's
+feel work was his top priority (2026-10-14); 0804 was folded into 1064
+on 2026-10-21.
 
 ## Scope
 

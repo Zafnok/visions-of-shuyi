@@ -6,8 +6,8 @@ milestone: M3 Battle UI
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0464", "1118", "1050"]
-nick_input: sign-off
+blocked_by: ["0464"]
+nick_input: none
 completed:
 ---
 
@@ -40,11 +40,23 @@ After 0464, so a lesson that can't be done doesn't hold things up first.
 **Waits for the engine carve and the Playdate port** (Nick, 2026-10-16),
 so `blocked_by` has 1118 and 1050.
 
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
+
 ## Nick input
 
-**Sign-off:** finish the lessons at Not familiar and at Familiar with
-other strategy RPGs; is the moment right, the wording right, and do the
-three answers do what he meant?
+None. Nick no longer checks gameplay tickets after merge (Nick,
+2026-10-21: "I will save all my checking for either design (i.e. 00
+tickets) or for the full act 1 playtest itself"). Verification is by
+tests, `cargo shuyi frame-png` pictures in the PR and the playtest bots
+(0506, 0509). What the old sign-off asked goes on the checklist of
+Nick's next playtest (1064, the Act 1 playtest, if this lands before
+it):
+
+> Finish the lessons at Not familiar and at Familiar with
+> other strategy RPGs; is the moment right, the wording right, and do the
+> three answers do what he meant?
 
 ## Scope
 
@@ -52,7 +64,7 @@ three answers do what he meant?
 - **When:** the moment the last lesson the campaign's tutorial level
   shows is done (*Claude's starting rule*). At Full that may be a later
   turn (spells on tiles, Combat Arts); if Nick wanted it straight after
-  turn 1–2's lessons, that's his call at sign-off. At None, never.
+  turn 1–2's lessons, that's his call in the Act 1 playtest (1064). At None, never.
 - **What:** one guide box, in Vix's voice and with her face, wrapping as
   0459 does. It says she's done, that Guides in the map menu (named with
   the player's key, `{Cancel}`) has everything, and asks with three

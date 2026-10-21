@@ -7,7 +7,7 @@ model: opus-5.5
 effort: high
 status: todo
 blocked_by: []
-nick_input: sign-off
+nick_input: setup
 completed:
 ---
 
@@ -40,7 +40,7 @@ in the player's phase, and spikes that aren't the AI.
 
 ## Nick input
 
-**Sign-off:** sideload the release build as in 1033/1055 and paste the
+**Setup** (a measurement, not a check): sideload the release build as in 1033/1055 and paste the
 Simulator console after a minute in Chapter 1's first battle, moving the
 cursor around and opening a menu. The battle should run near 30 frames a
 second.

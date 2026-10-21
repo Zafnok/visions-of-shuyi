@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804"]
+blocked_by: []
 nick_input: decision
 completed:
 ---
@@ -34,8 +34,10 @@ inventories grow with the story; shop rules (gold, buying, selling) are in
 What is not decided: which items are "basics", what the tiers are, and what
 unlocks a tier. Ticket 0443 (the shop tab) waits for this.
 
-Chapter 1 has no Preparations and no shop (`chapter-1.md`), so this waits
-for the Chapter 1 playtest (0804), like the other post-playtest decisions.
+Chapter 1 has no Preparations and no shop (`chapter-1.md`), so it waited
+for the Chapter 1 playtest (0804). Chapter 2 brings Preparations and
+its shop (`docs/story/outline.md`), so it is asked now, in the Act 1
+design queue (re-gated 2026-10-21, 0129).
 
 ## Nick input
 

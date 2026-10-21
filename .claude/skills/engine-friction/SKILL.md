@@ -173,7 +173,7 @@ measure the game's biggest jobs against what they should take, and
 file the fixes". It copies 1153's Scope, steps and acceptance criteria,
 with two changes: it names the trigger in its Context, and its
 candidates add every row of the last sweep that was filed and not yet
-done. It is never on the Chapter 1 critical path.
+done. It is never on the Act 1 critical path.
 
 ### How a sweep runs
 

@@ -6,7 +6,7 @@ milestone: M1 Engine
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["1118", "1050"]
+blocked_by: []
 nick_input: decision
 completed:
 ---
@@ -41,6 +41,10 @@ so `blocked_by` has 1118 and 1050. After the carve, key-name text may sit
 in engine code (1106/1107 move input to the engine): style it where the
 game paints it, through a skin (ADR-0054), not in the engine's text
 helper unless the engine already owns hints.
+
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
 
 ## Nick input
 

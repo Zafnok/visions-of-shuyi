@@ -42,8 +42,11 @@ whether Chapter 1's "between battles" (after the victory scenes, before the
 next chapter) needs the entry, or whether nobody can promote that early
 anyway (no unit masters a class in Chapter 1, `progression.md`).
 
-**Sign-off:** Nick promotes and reclasses a unit from the menu and checks
-the change is still there in the next battle.
+No check after merge (Nick, 2026-10-21: he checks only design and the
+full Act 1 playtest, 1064). Verification is by tests and `cargo shuyi
+frame-png` pictures in the PR; what is left to judge by playing goes
+on 1064's checklist. The PR's integration test promotes and reclasses a unit
+and checks the change is still there in the next battle.
 
 ## Scope
 

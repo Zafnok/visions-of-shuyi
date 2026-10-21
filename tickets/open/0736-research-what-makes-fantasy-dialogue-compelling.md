@@ -6,8 +6,8 @@ milestone: M6 Story & dialogue
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["1118", "1050"]
-nick_input: sign-off
+blocked_by: []
+nick_input: decision
 completed:
 ---
 
@@ -39,9 +39,14 @@ ch1 playtest 4 come after those milestones with update script." So
 `blocked_by` has 1118 (the carve's last ticket) and 1050 (Nick plays
 Chapter 1 on his Playdate).
 
+**Re-gated 2026-10-21 (0129):** the carve is done and 1050 was folded
+into the Act 1 playtest (1064), so neither 1118 nor 1050 is in
+`blocked_by` any more.
+
 ## Nick input
 
-**Sign-off:** Nick reads the new craft section's before/after examples
+**Decision** (a story-direction question, `ask-nick`): Nick reads the
+new craft section's before/after examples
 (step 4) and says whether they read like a game he'd want to play. If he
 wants a different direction, he says which of the studied games is
 closest to what he wants.

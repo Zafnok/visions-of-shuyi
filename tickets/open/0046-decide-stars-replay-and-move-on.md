@@ -6,7 +6,7 @@ milestone: Design decisions
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0804"]
+blocked_by: ["1064"]
 nick_input: decision
 completed:
 ---
@@ -39,8 +39,9 @@ Preparations if it has one, and refund the rewind charges (0408). The
 Hardcore bot already measures each map's median turns (`playtest-bots.md`),
 and Nick didn't want to set turn targets by hand.
 
-This waits for the Chapter 1 playtest, like the other post-playtest
-decisions.
+**After the Act 1 playtest** (re-gated 2026-10-21, 0129): this waited
+for the Chapter 1 playtest (0804), which was folded into the Act 1
+playtest; it now waits for 1064.
 
 ## Nick input
 

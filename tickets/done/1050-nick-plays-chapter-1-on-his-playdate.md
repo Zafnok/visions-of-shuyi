@@ -5,10 +5,10 @@ type: playtest
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: ["1036", "1039", "1041", "1043", "1044", "1045", "1046", "1047", "1055", "1058", "1060", "1062", "0464", "0467", "0841"]
 nick_input: sign-off
-completed:
+completed: 2026-10-21
 ---
 
 # 1050 — Nick plays Chapter 1 on his Playdate
@@ -79,5 +79,15 @@ doing something unexpected, pauses that feel long, sounds.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Folded into the Act 1 playtest (2026-10-21, ticket 0129), not played.**
+Nick no longer spot-checks gameplay tickets (2026-10-21: "I will save all
+my checking for either design (i.e. 00 tickets) or for the full act 1
+playtest itself"), so this play-through of Chapter 1 on his Playdate
+became part of one playtest of all of Act 1 on the web and the Playdate:
+**1064**. Its still-open blockers (1039, 1041, 1043, 1044, 1046, 1058,
+1060, 1062) carry over to 1064. What this ticket was to record goes there
+too: the device numbers (start-up, the slowest enemy phase, frame
+times; measured by the bots' Playdate run, 0512) and whether the enemy's
+pauses feel long. 1051 no longer waits for that answer: Act 1's bigger
+battles make it worth doing before the playtest. 1052 (selling it on
+itch.io) now waits for 1064.
