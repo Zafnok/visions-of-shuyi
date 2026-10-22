@@ -163,7 +163,7 @@ game's `--crank` / `--then-pad` frame-png options work around the
 engine's frame-png script having no crank step (outcome 1, engine
 feature; leak test passed). Shipped with the workaround marked
 `// engine-friction: engine#2540`; engine ticket 2540
-([Zafnok/shuyi-engine#65](https://github.com/Zafnok/shuyi-engine/pull/65))
+([Zafnok/shuyi-engine#66](https://github.com/Zafnok/shuyi-engine/pull/66))
 and game ticket 1181 (deletes it, moves the pin). Row in
 `docs/engine/friction.md`.
 
