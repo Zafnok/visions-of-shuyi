@@ -258,8 +258,8 @@ Chapter 1 playtest gates onto 1064). Only Chapter 1 exists as content
 with `next`. Phases run in order, but Phase 1's questions and Phase 2's
 lanes overlap: a lane starts as soon as its own tickets are ready.
 Within a lane, → is order and · is "side by side". The only engine
-tickets Act 1 waits for are the playtest bots' (engine#2125–2127, Lane
-C; re-gated 2026-10-21 by 0130).
+tickets Act 1 waits for are the playtest bots' (engine#2125–2128, Lane
+C; re-gated 2026-10-21 by 0130; engine#2128 added by 0506).
 
 **Phase 1: Nick's design queue**, in this order (each unblocks the
 tickets in brackets):
@@ -310,7 +310,9 @@ Candle joins outside battle.
   `Zafnok/shuyi-engine`, then the game PR that moves the pin and adds
   the game's parts. engine#2125 the rollout bot (`Determinize`, flat
   Monte Carlo) · engine#2126 the playtest runner with pass bands (both
-  ready, side by side) → **0506** Casual / Normal / Hardcore (the
+  done) → engine#2128 the turn planner (whole-turn plans; one command at
+  a time the personas stalled on Chapter 1) → **0506** Casual / Normal /
+  Hardcore (its first build is on the branch `t0506-persona-bots`; the
   personas' scoring, the battle's `Determinize`, measures and targets)
   · engine#2127 the autobalance search (after engine#2126) → **0509**
   autobalance (the battle's knobs) → **0510** skirmishes to order.
@@ -514,7 +516,7 @@ early so every later PR is checked by them.
 - Automated playtesting bots (Nick, 2026-09-30): 0033 decide the player
   types and targets → 0504 legal moves and luck reseeding in `core` → 0505
   `cargo xtask playtest` runner (after 0801) → 0506 Casual/Normal/Hardcore
-  bots (after 0803, engine#2125 and engine#2126) → 0507 trained
+  bots (after 0803, engine#2125, engine#2126 and engine#2128) → 0507 trained
   AlphaZero-style bot (research) and 0508 recording Nick's play to
   calibrate the bots (after 0802) → 0509 autobalancing battles with the
   bots (after engine#2127) → 0510 generating skirmishes to order (after
