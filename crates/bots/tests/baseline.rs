@@ -150,3 +150,64 @@ fn the_act_1_rule_battles_finish_and_replay_identically() {
         assert!(happened(id, &tries), "{id}: its rule never came up");
     }
 }
+
+/// Chapter 1 is won the moment Red Harl falls, with his company still on
+/// the map, and the rest of it runs (ticket 0845): the lead, unable to
+/// miss, strikes Harl at 1 HP from a tile next to him on turn 1.
+#[test]
+fn chapter_1_is_won_when_harl_falls_first_and_the_rest_flee() {
+    use trpg_core::{CharacterId, Command, Event, Faction, Objective, Outcome, Pos, UnitAction};
+    let content = trpg_content::load_embedded().unwrap();
+    let def = &content.battles["ch01"];
+    let lead = LeadProfile::new("Bot", LeadGender::Male);
+    let campaign = battle_campaign(&content, def, GameMode::Classic, lead);
+    let base = campaign.battle_setup(def, &content.tables());
+    let harl_id = Some(CharacterId("red_captain".into()));
+    let harl = base.units.iter().find(|u| u.character == harl_id).unwrap();
+    let (harl, at) = (harl.id, harl.pos);
+    assert!(matches!(base.objective, Objective::DefeatUnit { unit, .. } if unit == harl));
+    let enemies = base
+        .units
+        .iter()
+        .filter(|u| u.faction == Faction::Enemy)
+        .count();
+    // The first tile next to Harl the lead can stand on and strike from.
+    let next_to = [(0, 1), (-1, 0), (1, 0), (0, -1)].map(|(dx, dy)| Pos::new(at.x + dx, at.y + dy));
+    let won = next_to.into_iter().find_map(|pos| {
+        if base.units.iter().any(|u| u.pos == pos) {
+            return None;
+        }
+        let mut setup = base.clone();
+        for u in &mut setup.units {
+            if u.id == harl {
+                u.hp = 1;
+            }
+            if u.id == trpg_core::UnitId(1) {
+                (u.pos, u.stats.dex, u.stats.str) = (pos, 99, 99);
+            }
+        }
+        let (mut state, _) = BattleState::new(setup);
+        let action = UnitAction::Attack {
+            target: harl,
+            slot: 0,
+            active: None,
+            art: None,
+        };
+        let unit = trpg_core::UnitId(1);
+        let events = state
+            .apply(&Command::Act {
+                unit,
+                dest: pos,
+                action,
+            })
+            .ok()?;
+        Some((state, events))
+    });
+    let (state, events) = won.expect("no tile next to Harl to strike from");
+    assert_eq!(state.outcome(), Some(Outcome::Victory));
+    assert_eq!(state.turn(), 1);
+    // Everyone else ran: none defeated, none left on the map.
+    assert_eq!(state.fled().len(), enemies - 1);
+    assert!(state.units().iter().all(|u| u.faction != Faction::Enemy));
+    assert!(events.iter().any(|e| matches!(e, Event::Fled { .. })));
+}

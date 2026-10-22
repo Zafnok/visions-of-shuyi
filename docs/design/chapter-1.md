@@ -43,13 +43,17 @@ is decided in [`world-structure.md`](world-structure.md) (0008): chapters 1–2
 
 ### Objective and loss
 
-- **Objective: Rout**: defeat every enemy unit on the map. The boss is one of
-  them and counts like any other enemy.
-- **Changing to: defeat Red Harl** (Nick, playtest round 3, 2026-10-16):
+- **Objective: defeat Red Harl** (Nick, playtest round 3, 2026-10-16):
   "for this first ch1 fight probably the obj should be changed to just kill
   harl rather than all enemies cuz a straggler guard is not that important
-  he should just run away after harl dies". Built by ticket 0845 (until
-  then the battle is still Rout).
+  he should just run away after harl dies". Built by ticket 0845; until
+  then it was Rout (Nick, Q1: "Let's pick Rout").
+- **The rest of the Red Company runs** when Harl falls (ticket 0845,
+  *Claude's starting rules*, to confirm in the Act 1 playtest, 1064): the
+  battle is won at once; the enemies still on the map each walk toward
+  their nearest map edge and fade out (one short moment, under 2 seconds,
+  Confirm skips it), then the victory scenes play. They give no EXP and
+  drop nothing, and count as fled, not defeated.
 - **No turn limit.**
 - **Loss:** the lord falls → game over (`death-and-difficulty.md`, both modes).
   No other loss conditions (no ally or neutral units to protect).

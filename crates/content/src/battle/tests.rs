@@ -115,7 +115,8 @@ fn a_valid_battle_loads() {
         def.objective,
         Objective::DefeatUnit {
             unit: UnitId(4),
-            turn_limit: Some(9)
+            turn_limit: Some(9),
+            leftovers: trpg_core::Leftovers::Stay
         }
     );
     assert_eq!(
@@ -540,7 +541,8 @@ fn reinforcements_are_numbered_in_order() {
         def.objective,
         Objective::DefeatUnit {
             unit: UnitId(5),
-            turn_limit: Some(9)
+            turn_limit: Some(9),
+            leftovers: trpg_core::Leftovers::Stay
         }
     );
 }
@@ -766,6 +768,36 @@ fn embedded_battles_load() {
     let skirmish = BattleMusic::Pool("skirmish".into());
     assert_eq!(quick.music, skirmish);
     assert_eq!(c.battles["test"].music, skirmish);
+}
+
+/// Chapter 1 is won by defeating Red Harl; the rest run (Nick, 0845).
+#[test]
+fn chapter_1_is_won_by_defeating_harl_and_the_rest_flee() {
+    let c = content();
+    let ch01 = &c.battles["ch01"];
+    let harl = ch01
+        .enemies
+        .iter()
+        .find(|u| u.character == Some(CharacterId("red_captain".into())))
+        .map(|u| u.id);
+    assert_eq!(
+        Some(ch01.objective),
+        harl.map(|unit| Objective::DefeatUnit {
+            unit,
+            turn_limit: None,
+            leftovers: trpg_core::Leftovers::Flee,
+        })
+    );
+}
+
+#[test]
+fn leftovers_default_to_staying() {
+    let raw: RawObjective =
+        crate::ron_loader::parse_ron("test", r#"DefeatUnit(unit: "x")"#).unwrap();
+    let RawObjective::DefeatUnit { leftovers, .. } = raw else {
+        panic!("not DefeatUnit");
+    };
+    assert_eq!(leftovers, trpg_core::Leftovers::Stay);
 }
 
 /// A battle may name the light it is fought in (ticket 0438); the name is

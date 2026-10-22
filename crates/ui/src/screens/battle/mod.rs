@@ -34,6 +34,7 @@ pub mod camera;
 pub mod cursor;
 pub mod doable;
 pub mod event_sounds;
+pub mod flight;
 pub mod forecast;
 pub mod glyph;
 pub mod guides;
@@ -81,6 +82,7 @@ use self::camera::Camera;
 use self::cursor::Cursor;
 use self::doable::Doable;
 use self::event_sounds::CueQueue;
+use self::flight::Flight;
 use self::guides::GuidesScreen;
 use self::layout::{MAP_VIEW, map_area};
 use self::lessons::LessonState;
@@ -292,6 +294,9 @@ pub enum Queued {
     /// A scene a trigger fired: played as a [`DialogueScreen`] overlay,
     /// for those on the map when it fired.
     Scene(SceneCue),
+    /// The enemies left on the map running as the battle is won (0845):
+    /// closed by Confirm, or once they are gone.
+    Flight(Flight),
 }
 
 /// Why the battle screen closes before the battle is over.
@@ -688,6 +693,43 @@ impl BattleScreen {
             Some(Queued::Banner(b)) => Some(b),
             _ => None,
         }
+    }
+
+    /// The leftovers running (0845), while on screen: the first waiting,
+    /// once no combat or AI action is playing and no EXP or level up is
+    /// shown.
+    pub fn flight(&self) -> Option<&Flight> {
+        if self.playing() || self.progress.is_some() {
+            return None;
+        }
+        match self.queue.front() {
+            Some(Queued::Flight(f)) => Some(f),
+            _ => None,
+        }
+    }
+
+    /// Plays the leftovers' running on screen (0845) for `dt` seconds; it
+    /// closes once they are gone.
+    fn tick_flight(&mut self, dt: f32) {
+        if self.flight().is_none() {
+            return;
+        }
+        if let Some(Queued::Flight(flight)) = self.queue.front_mut() {
+            flight.tick(dt);
+            if flight.done() {
+                self.queue.pop_front();
+            }
+        }
+    }
+
+    /// The leftovers as drawn (0845): running while their moment is on
+    /// screen, standing where they were while it waits.
+    fn flight_views(&self) -> Vec<UnitView> {
+        let waiting = self.queue.iter().find_map(|q| match q {
+            Queued::Flight(f) => Some(f),
+            _ => None,
+        });
+        waiting.map(|f| f.views(self.pace.0)).unwrap_or_default()
     }
 
     /// Asks for the outcome's music as its banner comes on screen (0809,
@@ -1451,6 +1493,7 @@ impl BattleScreen {
             let in_playback = playback.is_some();
             self.queue.extend(events.iter().filter_map(|e| match e {
                 Event::SceneTriggered { .. } if !in_playback => SceneCue::of(e).map(Queued::Scene),
+                Event::Fled { units } => Flight::new(&self.state, units).map(Queued::Flight),
                 _ => Banner::for_event(e).map(Queued::Banner),
             }));
             self.popups.extend(events.iter().filter_map(|e| match *e {
@@ -2203,10 +2246,20 @@ impl BattleScreen {
                 let view = UnitView::of(unit).at(self.drawn_pos(unit));
                 scene.push_unit(view.highlighted(noted));
             }
+            for view in self.flight_views() {
+                scene.push_unit(view);
+            }
             return;
         }
         for (unit, fade) in self.shown_units() {
             scene.push_unit(UnitView::of(&unit).fading(fade));
+        }
+        // An AI action shows the units as they were before it, the
+        // leftovers among them.
+        if !matches!(self.mode, Mode::AiAction(_)) {
+            for view in self.flight_views() {
+                scene.push_unit(view);
+            }
         }
     }
 
@@ -2557,6 +2610,12 @@ impl BattleScreen {
             if self.progress_key(action) {
                 continue;
             }
+            if self.flight().is_some() {
+                if action == Action::Confirm {
+                    self.queue.pop_front();
+                }
+                continue;
+            }
             if self.banner().is_some() {
                 if action == Action::Confirm {
                     let t = self.close_banner(ctx);
@@ -2589,6 +2648,9 @@ impl BattleScreen {
         self.notice_threat();
         self.tick_lessons(ctx);
         let waiting = self.shown_tip().is_some() || self.playing();
+        if !waiting {
+            self.tick_flight(dt);
+        }
         if let Some(Queued::Banner(banner)) = self.queue.front_mut()
             && !waiting
         {

@@ -317,6 +317,7 @@ fn progress_follows_the_objective() {
     let boss = with(Objective::DefeatUnit {
         unit: UnitId(3),
         turn_limit: None,
+        leftovers: trpg_core::Leftovers::Stay,
     });
     assert_eq!(progress(&boss, &fell_3(&boss)), 1);
     // Unit 2 is a tile closer to the boss once it has fallen: no boss, no
@@ -325,6 +326,7 @@ fn progress_follows_the_objective() {
     let other_boss = with(Objective::DefeatUnit {
         unit: UnitId(4),
         turn_limit: None,
+        leftovers: trpg_core::Leftovers::Stay,
     });
     assert_eq!(progress(&other_boss, &fell_3(&other_boss)), 0);
     // Unit 2 walked from x 4 to 5, a tile closer to boss 4 at x 8.

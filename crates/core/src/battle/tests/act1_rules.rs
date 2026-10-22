@@ -177,6 +177,7 @@ fn a_boss_who_retreats_at_the_killing_blow_wins_defeat_unit_with_kill_exp() {
     let objective = Objective::DefeatUnit {
         unit: UnitId(4),
         turn_limit: None,
+        leftovers: Leftovers::Stay,
     };
     let mut s = leveled(units, objective);
     let events = act(&mut s, 2, p(1, 2), attack(4));
@@ -273,6 +274,7 @@ fn a_down_unit_counts_as_defeated_for_the_objective() {
     let objective = Objective::DefeatUnit {
         unit: UnitId(4),
         turn_limit: None,
+        leftovers: Leftovers::Stay,
     };
     let mut s = with_objective(unkillable(), objective);
     let events = act(&mut s, 2, p(1, 2), attack(4));

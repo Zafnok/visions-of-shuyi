@@ -461,11 +461,13 @@ mod tests {
         let s = with(Objective::DefeatUnit {
             unit: UnitId(6),
             turn_limit: None,
+            leftovers: trpg_core::Leftovers::Stay,
         });
         assert_eq!(objective_text(&s, None, Words::ENGLISH), "Defeat Raider");
         let s = with(Objective::DefeatUnit {
             unit: UnitId(99),
             turn_limit: None,
+            leftovers: trpg_core::Leftovers::Stay,
         });
         assert_eq!(objective_text(&s, None, Words::ENGLISH), "Defeat the boss");
         // A boss that has fallen keeps its name.
@@ -476,6 +478,7 @@ mod tests {
             Objective::DefeatUnit {
                 unit: UnitId(4),
                 turn_limit: None,
+                leftovers: trpg_core::Leftovers::Stay,
             },
         );
         let mut units = s.units().to_vec();

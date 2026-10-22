@@ -1,15 +1,17 @@
 //! The battle screen and Act 1's battle rules (ticket 0319): an escape
 //! map's objective line, its `Escape` entry and its exit area on the map;
 //! the forecast against a unit that can't be killed, and that unit drawn
-//! down on its tile once beaten.
+//! down on its tile once beaten; and the enemies left running when a
+//! boss falls (0845).
 
 use insta::assert_snapshot;
 use trpg_core::{
-    BattleState, Command, Defeat, GameMode, LeadGender, LeadProfile, Objective, Pos, TileRect,
-    UnitAction, UnitId,
+    BattleState, Command, Defeat, Faction, GameMode, LeadGender, LeadProfile, Leftovers, Objective,
+    Pos, TileRect, UnitAction, UnitId,
 };
 
 use super::BattleScreen;
+use super::flight::FLEE_S;
 use super::map_menu::objective_text;
 use super::mode::{MenuEntry, Mode};
 use super::testing::{Values, battle_with};
@@ -159,4 +161,100 @@ fn a_unit_that_cant_be_killed_is_drawn_down_on_its_tile() {
     let unit = h.unit_at(at).expect("still drawn");
     assert!(unit.is_down());
     assert_eq!(unit.hp.0, 0);
+}
+
+/// The attack skirmish won by felling its brigand at 1 HP (unit 4), the
+/// rest fleeing (0845): the lord aiming at it, under map skin `skin`.
+fn boss_fight(skin: &str) -> Harness {
+    let mut state = skirmish(1, Defeat::Falls);
+    let objective = Objective::DefeatUnit {
+        unit: UnitId(4),
+        turn_limit: None,
+        leftovers: Leftovers::Flee,
+    };
+    let c = ctx();
+    state = battle_with(&c, state.map().clone(), state.units().to_vec(), objective);
+    let mut h = Harness::with_screen(Box::new(BattleScreen::new(state)));
+    h.with_map_skin(skin);
+    h.keys("f Right f").wait(0.5);
+    h.keys("f Down");
+    h
+}
+
+/// Strikes the brigand, then waits for the leftovers' moment to start,
+/// checking that the leftovers are drawn standing until it does.
+fn fell_the_boss(h: &mut Harness) -> Vec<(UnitId, Pos)> {
+    h.keys("f");
+    let fled: Vec<(UnitId, Pos)> = {
+        let s = h.battle().expect("a battle").state();
+        s.fled().iter().map(|u| (u.id, u.pos)).collect()
+    };
+    assert_eq!(fled.len(), 3, "the other enemies flee");
+    for _ in 0..200 {
+        if h.battle().and_then(BattleScreen::flight).is_some() {
+            return fled;
+        }
+        let scene = h.map_scene().expect("a map");
+        for &(id, pos) in &fled {
+            let unit = scene
+                .units
+                .iter()
+                .find(|u| u.id == id)
+                .expect("still drawn");
+            assert_eq!((unit.pos, unit.fade), (pos, 0.0));
+        }
+        h.wait(0.05);
+    }
+    panic!("the leftovers never left");
+}
+
+#[test]
+fn the_leftovers_walk_off_and_fade_in_both_skins() {
+    for skin in ["glyph", "sprite"] {
+        let mut h = boss_fight(skin);
+        let fled = fell_the_boss(&mut h);
+        h.wait(0.6 * FLEE_S);
+        let scene = h.map_scene().expect("a map");
+        let (w, ht) = {
+            let tiles = &h.battle().expect("a battle").state().map().tiles;
+            (i32::from(tiles.width()), i32::from(tiles.height()))
+        };
+        let to_edge = |p: Pos| p.x.min(w - 1 - p.x).min(p.y).min(ht - 1 - p.y);
+        for (id, from) in fled {
+            let unit = scene.units.iter().find(|u| u.id == id).expect("leaving");
+            assert!(unit.fade > 0.0 && unit.fade < 1.0, "{skin}: {unit:?}");
+            assert!(
+                to_edge(unit.pos) < to_edge(from) || unit.between_tiles() || to_edge(from) == 0,
+                "{skin}: {id:?} from {from:?}: {unit:?}"
+            );
+        }
+        // Gone, and the victory banner up.
+        h.wait(FLEE_S);
+        let battle = h.battle().expect("a battle");
+        assert!(battle.flight().is_none(), "{skin}");
+        assert!(battle.banner().is_some(), "{skin}");
+        let scene = h.map_scene().expect("a map");
+        assert!(
+            scene.units.iter().all(|u| u.faction != Faction::Enemy),
+            "{skin}"
+        );
+    }
+}
+
+#[test]
+fn confirm_skips_the_leftovers_leaving() {
+    let mut h = boss_fight("glyph");
+    fell_the_boss(&mut h);
+    h.keys("f");
+    let battle = h.battle().expect("a battle");
+    assert!(battle.flight().is_none());
+    assert!(battle.banner().is_some());
+}
+
+#[test]
+fn the_leftovers_leaving() {
+    let mut h = boss_fight("glyph");
+    fell_the_boss(&mut h);
+    h.wait(0.4 * FLEE_S);
+    assert_snapshot!(h.snapshot());
 }
