@@ -77,7 +77,7 @@
             base: (17, 1, 6, 4, 5, 1, 8),
             weapon_ranks: [(Gauntlet, E)],
             personal_spells: [(1, "vigil_light")],
-            loadout: (weapons: ["iron_gauntlets"], armour: Some("leather_vest")),
+            loadout: (weapons: ["iron_gauntlets"], armour: Some("linen_robe")),
         ),
         // Rue: Fire from the class, and the vow she swore at the
         // Ashfields, Cinder Oath (heretic.md). No sword: she fights with
@@ -88,7 +88,7 @@
             base: (16, 1, 7, 5, 6, 1, 5),
             weapon_ranks: [],
             personal_spells: [(1, "cinder_oath")],
-            loadout: (armour: Some("leather_vest")),
+            loadout: (armour: Some("linen_robe")),
         ),
         // Red Harl Coster, the Chapter 1 boss (red_captain.md).
         (

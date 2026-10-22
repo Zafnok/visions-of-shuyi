@@ -25,7 +25,7 @@ macro_rules! mirror {
 mirror!(RawStatKind => trpg_core::StatKind { Hp, Str, Mag, Dex, Spd, Def, Res, Mov });
 mirror!(RawWeaponKind => trpg_core::WeaponKind { Sword, Spear, Axe, Bow, Gauntlet });
 mirror!(RawWeaponRank => trpg_core::WeaponRank { E, D, C, B, A, S });
-mirror!(RawArmourWeight => trpg_core::ArmourWeight { Light, Medium, Heavy });
+mirror!(RawArmourWeight => trpg_core::ArmourWeight { Cloth, Leather, Chain, Plate });
 mirror!(RawUnitTag => trpg_core::UnitTag { Mounted, Flying, Armored });
 mirror!(RawElement => trpg_core::Element { Fire, Ice, None });
 mirror!(RawAffinity => trpg_core::Affinity { Weak, Resist, Absorb });

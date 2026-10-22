@@ -14,9 +14,11 @@
 //   SwordFollowUp | Effective(tag, multiplier) | AxeMinDamage(n) | GauntletAvoid(n) | None
 // weapons: range is (min, max) in tiles; damage_type defaults to Physical;
 //   effective: extra (tag, multiplier) pairs beyond the kind's trait.
-// armour: weight_class Light | Medium | Heavy; bonus lists only the stats it
-//   raises, e.g. (def: 3).
-// accessories: bonus as for armour.
+// armour: weight_class Cloth | Leather | Chain | Plate (lightest first; a
+//   class wears its max_armour and every lighter one, classes.ron); bonus
+//   lists only the stats it changes, e.g. (def: 3); a negative one is a
+//   penalty (plate's Res), and a stat never drops below 0.
+// accessories: bonus lists only the stats it raises.
 // consumables: effect Heal(n) | HealFull.
 // seals (progression.md, ticket 0603): kind Tier(n) promotes a unit into a
 //   class of tier n (n >= 2); Reclass is a full class change. One seal per
@@ -57,10 +59,11 @@
         (id: "steel_gauntlets", name: "Steel Gauntlets", kind: Gauntlet, rank: D, might: 5, hit: 85, crit: 5, weight: 2, range: (1, 1), durability: 25, price: 560),
     ],
     armour: [
-        (id: "leather_vest", name: "Leather Vest", weight_class: Light, bonus: (def: 1), weight: 0, price: 300),
-        (id: "chain_mail", name: "Chain Mail", weight_class: Medium, bonus: (def: 3), weight: 2, price: 800),
-        (id: "iron_plate", name: "Iron Plate", weight_class: Heavy, bonus: (def: 5), weight: 5, price: 1500),
-        (id: "warded_robe", name: "Warded Robe", weight_class: Light, bonus: (res: 2), weight: 0, price: 700),
+        // The starter piece of each weight (weapons-and-items.md, Armour, 0073).
+        (id: "linen_robe", name: "Linen Robe", weight_class: Cloth, bonus: (res: 4), weight: 0, price: 300),
+        (id: "leather_vest", name: "Leather Vest", weight_class: Leather, bonus: (def: 2, res: 2), weight: 1, price: 400),
+        (id: "chain_mail", name: "Chain Mail", weight_class: Chain, bonus: (def: 4, res: 1), weight: 3, price: 800),
+        (id: "iron_plate", name: "Iron Plate", weight_class: Plate, bonus: (def: 8, res: -3), weight: 6, price: 1500),
     ],
     accessories: [
         (id: "speed_ring", name: "Speed Ring", bonus: (spd: 2), price: 2000),

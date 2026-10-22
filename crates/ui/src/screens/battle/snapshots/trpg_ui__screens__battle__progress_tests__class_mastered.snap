@@ -96,8 +96,8 @@ y = fg:floor bg:floor_bg
 z = fg:wood bg:stone_bg
 A = fg:text_dim bg:black
 --- overlays ---
-over  273,222 7x2  hp_mid
-over  280,222 7x2  black
+over  273,222 8x2  hp_mid
+over  281,222 6x2  black
 over  225,286 14x2  hp_high
 over  289,254 14x2  hp_high
 over  289,222 2x2  hp_low

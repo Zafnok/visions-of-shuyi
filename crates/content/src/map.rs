@@ -390,7 +390,7 @@ mod tests {
             ItemId::new("vest"),
             trpg_core::ItemDef::Armour(trpg_core::ArmourDef {
                 name: "Vest".into(),
-                weight_class: trpg_core::ArmourWeight::Light,
+                weight_class: trpg_core::ArmourWeight::Leather,
                 bonus: trpg_core::Stats::default(),
                 weight: 0,
                 price: 10,

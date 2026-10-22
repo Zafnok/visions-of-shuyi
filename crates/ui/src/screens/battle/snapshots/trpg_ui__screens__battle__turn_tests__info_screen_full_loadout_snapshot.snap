@@ -1,6 +1,6 @@
 ---
 source: crates/ui/src/screens/battle/turn_tests.rs
-expression: buf.to_snapshot(&c.palette)
+expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
 ╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
 ║ ┌──────────────────────┐   Test Knight                Weapons                                    ║
@@ -13,7 +13,7 @@ expression: buf.to_snapshot(&c.palette)
 ║ │                      │   Mag   0                                                               ║
 ║ │                      │   Dex   4                    Armor                                      ║
 ║ │                      │   Spd   2                      Chain Mail                               ║
-║ │                      │   Def   9                      Def +3                                   ║
+║ │                      │   Def   9                      Def +4  Res +1                           ║
 ║ └──────────────────────┘   Res   0                                                               ║
 ║                                                       Accessory                                  ║
 ║  Mov 4  armored                                         Power Ring                               ║
@@ -46,7 +46,7 @@ abcbbbbbbbccccccccbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
-abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
+abcbbbbbbbbbbbbbbbbbbbbbbcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abccccccccccccccccccccccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbeeeeeeeeebbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba
 abbccccbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbba

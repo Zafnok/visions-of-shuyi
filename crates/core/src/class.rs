@@ -70,15 +70,18 @@ impl UnitTags {
     }
 }
 
-/// An armour weight a class may wear.
+/// An armour weight, lightest first (`weapons-and-items.md`, *Armour*,
+/// ticket 0073). A class wears its max weight and every lighter one.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ArmourWeight {
-    /// Light armour.
-    Light,
-    /// Medium armour.
-    Medium,
-    /// Heavy armour.
-    Heavy,
+    /// Cloth armour (robes).
+    Cloth,
+    /// Leather armour.
+    Leather,
+    /// Chain armour.
+    Chain,
+    /// Plate armour.
+    Plate,
 }
 
 /// A weapon kind a class can use, with the rank a unit is raised to on
@@ -113,8 +116,8 @@ pub struct ClassDef {
     pub growths: Growths,
     /// Weapon kinds this class can use.
     pub weapons: Vec<WeaponProficiency>,
-    /// Armour weights this class can wear.
-    pub armour: Vec<ArmourWeight>,
+    /// The heaviest armour weight this class wears; `None` wears no armour.
+    pub max_armour: Option<ArmourWeight>,
     /// Tags for weapon effectiveness.
     pub tags: UnitTags,
     /// Classes one tier up this class promotes to.
@@ -139,6 +142,12 @@ impl ClassDef {
     /// The proficiency for `kind`, if this class can use it.
     pub fn weapon(&self, kind: WeaponKind) -> Option<&WeaponProficiency> {
         self.weapons.iter().find(|w| w.kind == kind)
+    }
+
+    /// Whether this class wears armour of `weight`: its max weight and every
+    /// lighter one; nothing when it has no max.
+    pub fn can_wear(&self, weight: ArmourWeight) -> bool {
+        self.max_armour.is_some_and(|max| weight <= max)
     }
 }
 
@@ -237,7 +246,7 @@ mod tests {
             base: Stats::default(),
             growths: Growths::default(),
             weapons: vec![prof(WeaponKind::Sword), prof(WeaponKind::Spear)],
-            armour: vec![],
+            max_armour: None,
             tags: UnitTags::default(),
             promotes_to: vec![],
             active: None,
@@ -253,5 +262,36 @@ mod tests {
             Some(WeaponKind::Spear)
         );
         assert_eq!(class.weapon(WeaponKind::Axe), None);
+    }
+
+    #[test]
+    fn can_wear_its_max_and_every_lighter_weight() {
+        use ArmourWeight::{Chain, Cloth, Leather, Plate};
+        let wears = |max_armour| {
+            let class = ClassDef {
+                id: ClassId("c".into()),
+                name: "C".into(),
+                tier: 1,
+                movement_type: MovementTypeId(1),
+                move_points: 5,
+                base: Stats::default(),
+                growths: Growths::default(),
+                weapons: vec![],
+                max_armour,
+                tags: UnitTags::default(),
+                promotes_to: vec![],
+                active: None,
+                passives: vec![],
+                enemy_only: false,
+                lord_only: false,
+                weapon_slots: 3,
+                spells: vec![],
+                affinities: vec![],
+            };
+            [Cloth, Leather, Chain, Plate].map(|w| class.can_wear(w))
+        };
+        assert_eq!(wears(Some(Plate)), [true; 4]);
+        assert_eq!(wears(Some(Leather)), [true, true, false, false]);
+        assert_eq!(wears(None), [false; 4]);
     }
 }

@@ -304,19 +304,24 @@
     (key: "prep.reason.kind.gauntlet", source: "can't use gauntlets", text: "CAN'T USE GAUNTLETS"),
     (key: "prep.reason.rank", source: "needs rank {rank}", text: "NEEDS RANK {rank}"),
     (
-        key: "prep.reason.armour.light",
-        source: "can't wear light armor",
-        text: "CAN'T WEAR LIGHT ARMOR",
+        key: "prep.reason.armour.cloth",
+        source: "can't wear cloth armor",
+        text: "CAN'T WEAR CLOTH ARMOR",
     ),
     (
-        key: "prep.reason.armour.medium",
-        source: "can't wear medium armor",
-        text: "CAN'T WEAR MEDIUM ARMOR",
+        key: "prep.reason.armour.leather",
+        source: "can't wear leather armor",
+        text: "CAN'T WEAR LEATHER ARMOR",
     ),
     (
-        key: "prep.reason.armour.heavy",
-        source: "can't wear heavy armor",
-        text: "CAN'T WEAR HEAVY ARMOR",
+        key: "prep.reason.armour.chain",
+        source: "can't wear chain armor",
+        text: "CAN'T WEAR CHAIN ARMOR",
+    ),
+    (
+        key: "prep.reason.armour.plate",
+        source: "can't wear plate armor",
+        text: "CAN'T WEAR PLATE ARMOR",
     ),
     (key: "prep.cant", source: "{unit} {reason}.", text: "{unit} {reason}."),
     (

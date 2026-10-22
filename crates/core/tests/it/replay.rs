@@ -64,7 +64,7 @@ pub(super) fn classes() -> Arc<ClassTable> {
             start: WeaponRank::E,
             max: WeaponRank::S,
         }],
-        armour: vec![],
+        max_armour: None,
         tags: UnitTags::default(),
         promotes_to: vec![],
         active: Some(SkillId::new("guard_strike")),

@@ -5,10 +5,10 @@ type: feature
 milestone: M2 Core rules
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0073"]
 nick_input: none
-completed:
+completed: 2026-10-22
 ---
 
 # 0321 — Four armour weights in the data
@@ -114,14 +114,14 @@ the data and tests.
 
 ## Acceptance criteria
 
-- [ ] `ArmourWeight` has exactly `Cloth, Leather, Chain, Plate`, ordered lightest first.
-- [ ] Unit test: a Plate-max class can wear all four; a Leather-max class can wear cloth and leather but not chain; a class with no max wears nothing.
-- [ ] Unit test: a unit with Res 2 wearing Iron Plate has effective Res 0, not −1.
-- [ ] `items.ron` has the four starter pieces with 0073's numbers and no `warded_robe`.
-- [ ] Every class's `max_armour` in `classes.ron` matches `progression.md` (content test, or checked by hand and listed in the Completion notes).
-- [ ] Maud and Rue start Chapter 1 in Linen Robes.
-- [ ] The Preparations list shows `can't wear plate armor` on Iron Plate for a chain-max unit (snapshot or text test).
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `ArmourWeight` has exactly `Cloth, Leather, Chain, Plate`, ordered lightest first.
+- [x] Unit test: a Plate-max class can wear all four; a Leather-max class can wear cloth and leather but not chain; a class with no max wears nothing.
+- [x] Unit test: a unit with Res 2 wearing Iron Plate has effective Res 0, not −1.
+- [x] `items.ron` has the four starter pieces with 0073's numbers and no `warded_robe`.
+- [x] Every class's `max_armour` in `classes.ron` matches `progression.md` (content test, or checked by hand and listed in the Completion notes).
+- [x] Maud and Rue start Chapter 1 in Linen Robes.
+- [x] The Preparations list shows `can't wear plate armor` on Iron Plate for a chain-max unit (snapshot or text test).
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -131,5 +131,45 @@ the data and tests.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Done.** `ArmourWeight { Cloth, Leather, Chain, Plate }` (lightest first)
+in `core` and the content mirror; `ClassDef::max_armour: Option<ArmourWeight>`
+and `ClassDef::can_wear`, used by the four checks (two in `item.rs`, `prep.rs`,
+`battle.rs`); `effective_stats` floors every stat at 0. `classes.ron` gives
+each class its max from `progression.md` (the elementals have none), checked
+by the content test `embedded_max_armour_matches_design_doc`. `items.ron` has
+the four starter pieces with 0073's numbers; the Warded Robe is gone. Maud and
+Rue start Chapter 1 in Linen Robes. Preparations says `can't wear cloth /
+leather / chain / plate armor` (both language packs).
+
+**Deviations:**
+- `classes.ron` writes `max_armour: Some(Leather)`, not `max_armour: Leather`:
+  the class file is read without RON's implicit `Some`, like its
+  `active: Some(..)`.
+- The Preparations text test checks Iron Plate's `can't wear plate armor` on
+  the Quick Battle's lord, who is a **leather**-max Exile (the Quick Battle
+  has no chain-max player unit); the text doesn't depend on the class's max,
+  and the reason-text table test covers all four weights.
+- The test files: the Quick Battle's test mage wears a Linen Robe (a Mage
+  can't wear leather now), its spare stock has a Linen Robe for the Warded
+  Robe, and two Preparations tests swap the lord's vest for the mage's robe
+  instead of the knight's Chain Mail (the Exile can't wear chain).
+- 0443 isn't done, so no shop rows changed (0443 already says to sell these
+  four pieces).
+- There is no `cargo xtask autobalance` yet (0509); only `playtest` ran.
+
+**Bots, `cargo xtask playtest ch01 --bot all`, seeds 1–100** (main → this branch):
+Casual 44 → 51/100 succeed (band 30–55 ✓), Normal 59 → 47 (band 50–75,
+✗ too hard), Hardcore 51 → 25 (✗ too hard; wins 83 → 46, the lead is now
+Hardcore's most-fallen unit, 47 tries). The Leather Vest's new weight 1 costs
+its wearers a point of attack speed (the lead loses his double on a Brigand);
+the robes make Rue and Maud far tougher against Fire (7 damage → 3).
+Chapter 1's recorded playthrough was re-recorded: still a turn-12 win with
+nobody lost. Retuning Chapter 1 is follow-up **0855** (armour numbers stay
+as Nick decided them).
+
+**Follow-up tickets:** 0855 (Chapter 1 back in its playtest bands).
+
+**For the Act 1 playtest (1064):** whether Chapter 1 feels right after 0855's
+retune; that the robes' Res and the vest's weight feel right.
+
+**Gameplay rules decided where the docs were silent:** none.

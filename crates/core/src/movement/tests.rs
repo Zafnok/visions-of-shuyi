@@ -55,7 +55,7 @@ fn classes() -> ClassTable {
         base: Stats::from_growable([10; 7], 5),
         growths: Growths([0; 7]),
         weapons: vec![],
-        armour: vec![],
+        max_armour: None,
         tags: UnitTags::default(),
         promotes_to: vec![],
         active: None,

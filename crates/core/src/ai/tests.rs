@@ -77,7 +77,7 @@ fn classes() -> ClassTable {
                 max: WeaponRank::S,
             })
             .to_vec(),
-        armour: vec![],
+        max_armour: None,
         tags: UnitTags::default(),
         promotes_to: vec![],
         active: None,

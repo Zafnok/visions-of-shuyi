@@ -312,7 +312,8 @@ Candle joins outside battle.
   objective names its exit · **0511** bosses use their
   debuff and stance arts · **0513** green units carry their own
   consumables (0044) · **0321** the four armour weights in the data
-  (after 0073) → **0320** specialty stores · **0323** extra strikes need
+  (after 0073) → **0320** specialty stores and **0855** Chapter 1
+  back in its playtest bands · **0323** extra strikes need
   a gap or a share of the enemy's speed, ceilings HP 200 / stats 100
   (0013) · **0608** the level pace, fast early and slow late (0013).
 - **C. Bots**, engine first (0130): each step is an engine PR in

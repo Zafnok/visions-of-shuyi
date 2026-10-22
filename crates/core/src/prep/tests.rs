@@ -139,7 +139,7 @@ fn unusable_gear_is_refused_with_the_reason() {
     );
     assert_eq!(
         s.unusable(U, &id("mail")),
-        Some(Unusable::Armour(ArmourWeight::Medium))
+        Some(Unusable::Armour(ArmourWeight::Chain))
     );
     for ok in ["sword", "vest", "ring", "potion", "nothing"] {
         assert_eq!(s.unusable(U, &id(ok)), None, "{ok}");
@@ -156,7 +156,7 @@ fn unusable_gear_is_refused_with_the_reason() {
     }
     assert_eq!(
         s.gear_from_stock(U, GearSlot::Armour, &StockItem::Item(id("mail"))),
-        Err(PrepError::Unusable(Unusable::Armour(ArmourWeight::Medium)))
+        Err(PrepError::Unusable(Unusable::Armour(ArmourWeight::Chain)))
     );
     assert_eq!(s, before);
     // With the rank, the steel sword is fine.

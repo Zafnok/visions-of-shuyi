@@ -59,7 +59,7 @@
             base: (16, 1, 6, 5, 5, 1, 5),
             weapon_ranks: [],
             personal_spells: [(1, "frost"), (1, "heal")],
-            loadout: (armour: Some("leather_vest")),
+            loadout: (armour: Some("linen_robe")),
         ),
     ],
     generics: [

@@ -105,7 +105,7 @@ fn class(id: &str, tags: UnitTags) -> ClassDef {
             max: WeaponRank::S,
         })
         .to_vec(),
-        armour: vec![ArmourWeight::Light],
+        max_armour: Some(ArmourWeight::Leather),
         tags,
         promotes_to: vec![],
         active: None,
@@ -755,9 +755,9 @@ fn seal() -> ItemDef {
 /// Items every test table has: `flier_bow` (range 1–2, might 3, ×3 against
 /// fliers), `master_sword` (rank S), `axe`, `pike` (spear, might 3),
 /// `knuckles` (gauntlet, might 2), `vest` (Def +1), `mail`
-/// (Medium, Def +2), `potion` (heals 4), `elixir` (heals all). Priced for
-/// shops: `iron` (sword, 400 gold), `leather` (Light armour, 200), `plate`
-/// (Medium armour, 500), `charm` (accessory, 100), `tonic` (heals 2, 50);
+/// (Chain, Def +2), `potion` (heals 4), `elixir` (heals all). Priced for
+/// shops: `iron` (sword, 400 gold), `leather` (Leather armour, 200), `plate`
+/// (Chain armour, 500), `charm` (accessory, 100), `tonic` (heals 2, 50);
 /// and `seal`.
 fn fixed_items() -> ItemTable {
     let flier_bow = WeaponDef {
@@ -806,11 +806,11 @@ fn fixed_items() -> ItemTable {
         ("knuckles", typed(WeaponKind::Gauntlet, 2, "Knuckles")),
         (
             "vest",
-            ItemDef::Armour(armour("Vest", ArmourWeight::Light, 1)),
+            ItemDef::Armour(armour("Vest", ArmourWeight::Leather, 1)),
         ),
         (
             "mail",
-            ItemDef::Armour(armour("Mail", ArmourWeight::Medium, 2)),
+            ItemDef::Armour(armour("Mail", ArmourWeight::Chain, 2)),
         ),
         (
             "potion",
@@ -830,11 +830,11 @@ fn fixed_items() -> ItemTable {
         ),
         (
             "leather",
-            ItemDef::Armour(priced_armour("Leather", ArmourWeight::Light, 200)),
+            ItemDef::Armour(priced_armour("Leather", ArmourWeight::Leather, 200)),
         ),
         (
             "plate",
-            ItemDef::Armour(priced_armour("Plate", ArmourWeight::Medium, 500)),
+            ItemDef::Armour(priced_armour("Plate", ArmourWeight::Chain, 500)),
         ),
         (
             "charm",

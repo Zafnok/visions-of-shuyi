@@ -7,15 +7,15 @@ expression: h.snapshot()
                                                                       ║ Test Archer   Brigand      ║
                                                                       ║ Iron Bow      Iron Axe     ║
                                                                       ║ 20/20         20/20        ║
-                                                                      ║ HP 17 █████   HP 12 ▒▒▒░░  ║
+                                                                      ║ HP 17 █████   HP 12 █▒▒░░  ║
                                                                       ║ Hit  91       Hit  --      ║
                                                                       ║ Crit 3        Crit --      ║
                                                                       ║                            ║
                                                                       ║ ────────────────────────── ║
                                                                       ║  8 dmg   →  1   no counter ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║  8 dmg   →  2              ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ ────────────────────────── ║
-                    ≈≈≈≈≈≈====··Lo··Br..♣♣♣♣....                      ║ 16 ×2     Total            ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ ────────────────────────── ║
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║  8 ×1     Total            ║
+                    ≈≈≈≈≈≈====··Lo··Br..♣♣♣♣....                      ║                            ║
                     ..≈≈≈≈..··..............╦╦..                      ║                            ║
                     ....······....BrAr▓▓▓▓▓▓▓▓..                      ║                            ║
                     ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║                            ║
@@ -46,9 +46,9 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggdddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
-aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaajjkkkkssssqqttqquullmmmmllllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjkkkkssssqqttqquullmmmmllllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaallkkkkllqqllllllllllllllvvllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaallllqqqqqqllllwwxxyyyyyyyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaallmmqqllllvvllllllyyzzvvyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -114,19 +114,3 @@ over  287,221 3x1  cursor
 over  287,219 1x3  cursor
 over  301,221 3x1  cursor
 over  303,219 1x3  cursor
-over  634,180 4x1  hp_low
-over  633,181 6x1  hp_low
-over  632,182 8x1  hp_low
-over  632,183 1x1  hp_low
-over  635,183 2x1  hp_low
-over  639,183 1x1  hp_low
-over  632,184 1x1  hp_low
-over  635,184 2x1  hp_low
-over  639,184 1x1  hp_low
-over  632,185 3x1  hp_low
-over  637,185 3x1  hp_low
-over  633,186 6x1  hp_low
-over  633,187 1x1  hp_low
-over  635,187 2x1  hp_low
-over  638,187 1x1  hp_low
-over  634,188 4x1  hp_low

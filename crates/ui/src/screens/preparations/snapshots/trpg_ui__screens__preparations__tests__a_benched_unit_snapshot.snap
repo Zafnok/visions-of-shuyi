@@ -12,7 +12,7 @@ expression: h.snapshot()
 │ Test Mage    ││ Armor      Leather Vest          ││ Iron Sword      can't use swords             │
 │ Test Scout   ││ Accessory  -                     ││ Iron Bow        20/20  from Test Archer      │
 │              ││                                  ││                                              │
-│              ││ AS 2 → 4 with Iron Bow           ││                                              │
+│              ││ AS 1 → 3 with Iron Bow           ││                                              │
 │              ││                                  ││                                              │
 │              ││ Not in this battle               ││                                              │
 │              ││                                  ││                                              │

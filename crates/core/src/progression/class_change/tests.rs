@@ -19,7 +19,7 @@ use crate::terrain::MovementTypeId;
 use crate::unit::{Faction, UnitId};
 use crate::weapon::{WeaponKind, WeaponRank};
 
-use ArmourWeight::{Heavy, Light, Medium};
+use ArmourWeight::{Chain, Leather, Plate};
 use ClassChangeError as Refused;
 use WeaponKind::{Axe, Spear, Sword};
 use WeaponRank::{A, B, C, D, E};
@@ -38,7 +38,7 @@ struct Spec {
     mov: StatValue,
     base: [StatValue; 7],
     weapons: &'static [(WeaponKind, WeaponRank, WeaponRank)],
-    armour: &'static [ArmourWeight],
+    max_armour: Option<ArmourWeight>,
     promotes_to: &'static [&'static str],
     spells: &'static [(ClassLevel, &'static str)],
 }
@@ -57,7 +57,7 @@ fn def(s: &Spec) -> ClassDef {
             .iter()
             .map(|&(kind, start, max)| WeaponProficiency { kind, start, max })
             .collect(),
-        armour: s.armour.to_vec(),
+        max_armour: s.max_armour,
         tags: UnitTags::default(),
         promotes_to: s.promotes_to.iter().map(|c| cid(c)).collect(),
         active: Some(SkillId::new(&format!("{}_active", s.id))),
@@ -81,7 +81,7 @@ const SPECS: [Spec; 10] = [
         mov: 4,
         base: [20, 7, 0, 4, 2, 9, 0],
         weapons: &[(Spear, D, C)],
-        armour: &[Medium, Heavy],
+        max_armour: Some(Plate),
         promotes_to: &["bulwark", "iron_rider"],
         spells: &[],
     },
@@ -91,7 +91,7 @@ const SPECS: [Spec; 10] = [
         mov: 7,
         base: [20, 6, 0, 5, 5, 5, 1],
         weapons: &[(Sword, E, C), (Spear, D, C)],
-        armour: &[Light, Medium],
+        max_armour: Some(Chain),
         // The Lancer isn't in this table: an unknown class is never offered.
         promotes_to: &["iron_rider", "lancer"],
         spells: &[],
@@ -102,7 +102,7 @@ const SPECS: [Spec; 10] = [
         mov: 4,
         base: [28, 11, 0, 6, 4, 14, 2],
         weapons: &[(Spear, C, A), (Axe, D, B)],
-        armour: &[Medium, Heavy],
+        max_armour: Some(Plate),
         promotes_to: &[],
         spells: &[],
     },
@@ -112,7 +112,7 @@ const SPECS: [Spec; 10] = [
         mov: 6,
         base: [27, 10, 0, 6, 6, 11, 2],
         weapons: &[(Spear, C, A), (Axe, D, B), (Sword, D, B)],
-        armour: &[Medium, Heavy],
+        max_armour: Some(Plate),
         promotes_to: &[],
         spells: &[],
     },
@@ -122,7 +122,7 @@ const SPECS: [Spec; 10] = [
         mov: 5,
         base: [16, 1, 6, 5, 5, 1, 5],
         weapons: &[(Sword, E, D)],
-        armour: &[Light],
+        max_armour: Some(Leather),
         promotes_to: &["sorcerer"],
         spells: &[(1, "fire"), (5, "frost")],
     },
@@ -132,7 +132,7 @@ const SPECS: [Spec; 10] = [
         mov: 5,
         base: [20, 2, 10, 7, 7, 2, 8],
         weapons: &[(Sword, D, C)],
-        armour: &[Light],
+        max_armour: Some(Leather),
         promotes_to: &["archmage"],
         spells: &[(1, "force")],
     },
@@ -142,7 +142,7 @@ const SPECS: [Spec; 10] = [
         mov: 5,
         base: [25, 3, 14, 9, 9, 3, 11],
         weapons: &[],
-        armour: &[Light],
+        max_armour: Some(Leather),
         promotes_to: &[],
         spells: &[(1, "fire"), (1, "frost"), (1, "force")],
     },
@@ -152,7 +152,7 @@ const SPECS: [Spec; 10] = [
         mov: 5,
         base: [20, 6, 0, 2, 4, 3, 0],
         weapons: &[(Axe, D, C)],
-        armour: &[Light],
+        max_armour: Some(Leather),
         promotes_to: &[],
         spells: &[],
     },
@@ -162,7 +162,7 @@ const SPECS: [Spec; 10] = [
         mov: 5,
         base: [19, 6, 1, 7, 7, 4, 3],
         weapons: &[(Sword, D, C)],
-        armour: &[Light, Medium],
+        max_armour: Some(Chain),
         promotes_to: &["blade_heir"],
         spells: &[],
     },
@@ -172,7 +172,7 @@ const SPECS: [Spec; 10] = [
         mov: 6,
         base: [25, 9, 1, 11, 12, 6, 5],
         weapons: &[(Sword, C, A)],
-        armour: &[Light],
+        max_armour: Some(Leather),
         promotes_to: &[],
         spells: &[],
     },
@@ -237,8 +237,8 @@ fn items() -> ItemTable {
     let entries = [
         ("iron_spear", weapon("Iron Spear", Spear)),
         ("iron_sword", weapon("Iron Sword", Sword)),
-        ("chain_mail", armour("Chain Mail", Medium)),
-        ("leather_vest", armour("Leather Vest", Light)),
+        ("chain_mail", armour("Chain Mail", Chain)),
+        ("leather_vest", armour("Leather Vest", Leather)),
         (
             "potion",
             ItemDef::Consumable(ConsumableDef {
@@ -671,7 +671,7 @@ fn reclass_keeps_stats_and_progress_and_always_costs_a_seal() {
                 unit: UnitId(1),
                 spell: SpellId::new("fire"),
             },
-            // The Mage wears light armour only.
+            // The Mage wears leather at most.
             Event::ItemStowed {
                 unit: UnitId(1),
                 item: item("chain_mail"),

@@ -78,7 +78,7 @@ fn class(id: &str, spells: &[(u8, &str)]) -> ClassDef {
         base: Stats::default(),
         growths: Growths::default(),
         weapons: vec![],
-        armour: vec![],
+        max_armour: None,
         tags: UnitTags::default(),
         promotes_to: vec![],
         active: None,
