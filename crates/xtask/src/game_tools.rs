@@ -37,8 +37,8 @@ const OPTIONS: [GameOption; 6] = [
         flag: "--map",
         value: None,
         help: "the battle's map alone over the whole screen, painted by\n\
-               the game's map skin (with --playdate the Playdate's: its\n\
-               battle screen keeps the PC's layout until 1038)",
+               the game's map skin (with --playdate the Playdate's), with\n\
+               no windows over it",
     },
     GameOption {
         flag: "--prompt",

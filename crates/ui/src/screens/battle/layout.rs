@@ -1,11 +1,29 @@
 //! Where the parts of the battle screen go on the 100 × 32 console
-//! (ADR-0018, `docs/design/look-and-feel.md`).
+//! (ADR-0018, `docs/design/look-and-feel.md`), and where its map goes on
+//! the Playdate's (ticket 1038).
 
 use crate::glyph_buffer::Rect;
+use crate::screen::{Ctx, SkinSet};
 
 /// The map viewport, in cells: the left 70 columns, rows `0..30`. How many
 /// tiles it shows is the map skin's to say (ADR-0038).
 pub const MAP_VIEW: Rect = Rect::new(0, 0, 70, 30);
+
+/// The map area of `ctx`'s skin set, in cells: [`MAP_VIEW`] on the PC,
+/// the whole console on the Playdate, whose map fills the screen
+/// (`docs/design/playdate.md`, *Layout*). The camera shows as many tiles
+/// as the map skin fits in it.
+pub fn map_area(ctx: &Ctx) -> Rect {
+    match ctx.game.skin_set {
+        SkinSet::Glyph => MAP_VIEW,
+        SkinSet::Playdate => Rect::new(
+            0,
+            0,
+            i32::from(ctx.console.cols),
+            i32::from(ctx.console.rows),
+        ),
+    }
+}
 
 /// The side panel (single-line box), right of the map.
 pub const SIDE_PANEL: Rect = Rect::new(70, 0, 30, 30);

@@ -142,7 +142,8 @@ fn the_playdate_screen_shows_24_by_15_tiles() {
     assert_eq!(s.view_tiles(Rect::new(0, 0, 51, 15)), (24, 15));
     assert_eq!(s.view_tiles(Rect::new(0, 0, 52, 15)), (25, 15));
     assert_eq!(s.view_tiles(Rect::new(0, 0, -4, -1)), (0, 0));
-    // The PC's battle map area, until 1038 lays the battle out.
+    // The PC's battle map area (the Playdate's battle uses its whole
+    // screen, 1038).
     assert_eq!(s.view_tiles(MAP_VIEW), (34, 30));
     // It can't zoom.
     assert_eq!(s.zoom(), None);

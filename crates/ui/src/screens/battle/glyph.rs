@@ -114,7 +114,7 @@ pub fn lesson_at_bottom(ctx: &Ctx, scene: &MapScene, lesson: &LessonView) -> boo
 
 /// Paints `lesson`'s box over the map that shows `scene`, clear of the
 /// cursor's tile.
-fn paint_lesson(ctx: &Ctx, scene: &MapScene, lesson: &LessonView, buf: &mut GlyphBuffer) {
+pub fn paint_lesson(ctx: &Ctx, scene: &MapScene, lesson: &LessonView, buf: &mut GlyphBuffer) {
     let at_bottom = lesson_at_bottom(ctx, scene, lesson);
     tip_box::glyph::paint_lesson(ctx, lesson, at_bottom, buf);
 }
@@ -156,16 +156,20 @@ fn clear(ctx: &Ctx, buf: &mut GlyphBuffer) {
 /// `tile`: one cell right of the tile (clear of the cursor's marks), or
 /// left of it if it would run past the map view; its first item level with
 /// the tile's top row, moved to fit the view.
-pub fn menu_origin(tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
+pub fn menu_origin(tile: Rect, size: (i32, i32)) -> (i32, i32) {
+    menu_origin_in(MAP_VIEW, tile, size)
+}
+
+/// [`menu_origin`] in the map area `area` (the Playdate's whole screen,
+/// ticket 1038).
+pub fn menu_origin_in(area: Rect, tile: Rect, (w, h): (i32, i32)) -> (i32, i32) {
     let right = tile.x + tile.w + 1;
-    let mx = if right + w <= MAP_VIEW.x + MAP_VIEW.w {
+    let mx = if right + w <= area.x + area.w {
         right
     } else {
-        (tile.x - 1 - w).max(MAP_VIEW.x)
+        (tile.x - 1 - w).max(area.x)
     };
-    let my = (tile.y - 1)
-        .min(MAP_VIEW.y + MAP_VIEW.h - h)
-        .max(MAP_VIEW.y);
+    let my = (tile.y - 1).min(area.y + area.h - h).max(area.y);
     (mx, my)
 }
 
@@ -395,9 +399,15 @@ pub const fn centred_top(h: i32) -> i32 {
 /// or one row from its bottom, whichever covers none of them. Centred if
 /// every place covers one.
 pub fn box_top(h: i32, rows: &[i32]) -> i32 {
-    let centred = centred_top(h);
-    let top = MAP_VIEW.y + 1;
-    let bottom = MAP_VIEW.y + MAP_VIEW.h - h - 1;
+    box_top_in(MAP_VIEW, h, rows)
+}
+
+/// [`box_top`] in the map area `area` (the Playdate's whole screen,
+/// ticket 1038).
+pub fn box_top_in(area: Rect, h: i32, rows: &[i32]) -> i32 {
+    let centred = area.y + (area.h - h) / 2;
+    let top = area.y + 1;
+    let bottom = area.y + area.h - h - 1;
     let clear = |y: i32| !rows.iter().any(|&r| r >= y && r < y + h);
     [centred, top, bottom]
         .into_iter()
