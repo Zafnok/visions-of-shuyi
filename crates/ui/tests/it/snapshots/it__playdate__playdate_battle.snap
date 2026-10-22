@@ -35,7 +35,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 --- legend ---
 a = fg:white bg:black
-b = fg:map_enemy_letters bg:effect
+b = fg:map_enemy_letters bg:exit_area
 c = fg:black bg:white
 --- overlays ---
 over  73,190 14x2  black

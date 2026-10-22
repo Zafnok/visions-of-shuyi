@@ -200,8 +200,13 @@ estimate, nothing to record.
 - The objective line says `Get everyone to the exit (2/6 out)`: maps
   don't carry their own text yet, so the exit isn't named. Follow-up
   **0324** (in 0852's and 1064's `blocked_by`).
-- `cargo xtask playtest <battle> --bot all` doesn't exist: the baseline
-  bot is the only one xtask has; it played each test battle.
+- The bots: the baseline bot played each test battle 20 times when this
+  was written. After main brought the persona bots (0506), `cargo xtask
+  playtest <battle> --bot all --runs 5` played each with all of them:
+  every try ended (Hardcore loses `test_escape`: its lead falls by turn
+  5; a test map, not tuned). Their scoring got the
+  escape objective: units out count as progress, the exit area is the
+  goal they walk to.
 - The retreat has no event of its own: in the battle it is a fall
   (`UnitFell`); only the story differs.
 - The forced deployment of Hollis needs no code: a battle's player slots

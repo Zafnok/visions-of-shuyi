@@ -2,9 +2,9 @@
 //! engine's playtest runner (ticket 0506).
 
 use shuyi_core::bots::playtest::play_tries;
-use trpg_bots::{BattleEntrant, BattleStage, Player};
+use trpg_bots::{BaselineBot, BattleEntrant, BattleStage, Player};
 use trpg_content::{Content, battle_campaign};
-use trpg_core::{BattleDef, GameMode, LeadGender, LeadProfile};
+use trpg_core::{BattleDef, BattleState, GameMode, LeadGender, LeadProfile};
 
 /// `def` as the playtest fields it: the characters of its player slots.
 fn stage(content: &Content, def: &BattleDef) -> BattleStage {
