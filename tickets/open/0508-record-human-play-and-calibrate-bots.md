@@ -29,6 +29,11 @@ numbers as the bots (0505's `BattleMeasures`).
 This ticket records play in the **Pages build only** (debug tools on,
 ADR-0023). The shipped game records nothing.
 
+**Either order with 1180:** if 1180 is done, the personas file is
+read through the engine's `Persona` (engine#2130) and the comparison
+runs beside `cargo shuyi playtest`; if not, as written here, and 1180
+moves it.
+
 ## Nick input
 
 **Setup:** the recordings come from Nick's Act 1 playtest (1064), so
