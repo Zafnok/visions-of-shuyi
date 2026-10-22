@@ -26,6 +26,12 @@ proposed replacing today's three armour weights (Light / Medium / Heavy,
 
 (Full quote in `weapons-and-items.md`, *Nick's words*.)
 
+A first lead on question 2 (Nick, PR #385, 2026-10-21): "it doesn't make
+sense a cleric would wear leather armor rather than robes... martial/agile
+classes, like swordsman brawler should be wearing leather most likely".
+So casters in cloth (robes), martial and agile classes in leather. Start
+the class table from that and confirm it.
+
 Today's data (`assets/data/items.ron`, `assets/data/classes.ron`):
 
 - Armour: Leather Vest (Light, Def +1, wt 0), Chain Mail (Medium, Def +3,
