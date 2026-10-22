@@ -287,6 +287,11 @@
 //!   (arrivals can't create a victory or a defeat). Loss is checked first.
 //!   Once decided ([`Event::BattleEnded`]) every command fails with
 //!   [`CommandError::BattleOver`] and the outcome never changes.
+//! - **Defeat one unit** with [`Leftovers::Flee`] (ticket 0845): as it
+//!   is won, the enemies still on the map run ([`Event::Fled`], just
+//!   before [`Event::BattleEnded`]): they leave it, into
+//!   [`BattleState::fled`], neither defeated nor standing. They give no
+//!   EXP and drop nothing. Green units and units that are down stay.
 //! - **Escape** wins when no player unit is left on the map and at least
 //!   one escaped: every unit still standing is out (a lead who escaped
 //!   can't fall, so it can't lose the battle after that). It has no turn
@@ -494,6 +499,9 @@ pub enum Objective {
         unit: UnitId,
         /// Last turn to do it in.
         turn_limit: Option<Turn>,
+        /// What the enemies still on the map do once it is won.
+        #[serde(default)]
+        leftovers: Leftovers,
     },
     /// Move a player unit onto a tile and choose [`UnitAction::Seize`].
     Seize {
@@ -515,6 +523,18 @@ pub enum Objective {
         /// The exit area.
         area: TileRect,
     },
+}
+
+/// What the enemies still on the map do when a [`Objective::DefeatUnit`]
+/// is won (ticket 0845).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Leftovers {
+    /// They stay where they are.
+    #[default]
+    Stay,
+    /// They run ([`Event::Fled`]): off the map, into
+    /// [`BattleState::fled`]. They give no EXP and drop nothing.
+    Flee,
 }
 
 impl Objective {
@@ -1185,6 +1205,13 @@ pub enum Event {
         /// The unit.
         unit: UnitId,
     },
+    /// The battle was won and the enemies still on the map ran
+    /// ([`Leftovers::Flee`]): they left it, into [`BattleState::fled`].
+    /// Just before [`Event::BattleEnded`].
+    Fled {
+        /// The units, in unit order.
+        units: Vec<UnitId>,
+    },
     /// The battle is over.
     BattleEnded {
         /// How it ended.
@@ -1554,6 +1581,10 @@ pub struct BattleState {
     /// Player units that escaped. Left out of a save while empty.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     escaped: Vec<Unit>,
+    /// Enemies that ran when the battle was won ([`Leftovers::Flee`]).
+    /// Left out of a save while empty.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    fled: Vec<Unit>,
     pending: Vec<Reinforcement>,
     objective: Objective,
     rewind_charges: u8,
@@ -1865,6 +1896,7 @@ impl BattleState {
             fallen: Vec::new(),
             down: Vec::new(),
             escaped: Vec::new(),
+            fled: Vec::new(),
             pending,
             objective: setup.objective,
             rewind_charges: setup.rewind_charges,
@@ -2004,6 +2036,12 @@ impl BattleState {
     /// left.
     pub fn escaped(&self) -> &[Unit] {
         &self.escaped
+    }
+
+    /// Enemies that ran when the battle was won ([`Leftovers::Flee`]), in
+    /// unit order: off the map, neither defeated nor standing.
+    pub fn fled(&self) -> &[Unit] {
+        &self.fled
     }
 
     /// Reinforcements that haven't arrived yet.
@@ -3326,9 +3364,31 @@ impl BattleState {
     fn finish(&mut self, outcome: Outcome, events: &mut Vec<Event>) {
         if outcome == Outcome::Victory {
             self.share_exp_pool(events);
+            self.flee(events);
         }
         self.outcome = Some(outcome);
         events.push(Event::BattleEnded { outcome });
+    }
+
+    /// On a won [`Objective::DefeatUnit`] whose leftovers flee: the enemies
+    /// still on the map leave it, into [`Self::fled`].
+    fn flee(&mut self, events: &mut Vec<Event>) {
+        let Objective::DefeatUnit {
+            leftovers: Leftovers::Flee,
+            ..
+        } = self.objective
+        else {
+            return;
+        };
+        let (fled, stay) = core::mem::take(&mut self.units)
+            .into_iter()
+            .partition(|u: &Unit| u.faction == Faction::Enemy);
+        self.units = stay;
+        self.fled = fled;
+        if !self.fled.is_empty() {
+            let units = self.fled.iter().map(|u| u.id).collect();
+            events.push(Event::Fled { units });
+        }
     }
 
     /// Gives unit `id`, if on the map (the fallen are gone by now), `exp`
@@ -3404,10 +3464,11 @@ impl BattleState {
         self.award(id, exp, progression::ACTION_CP + kill_cp, events);
     }
 
-    /// The unit `id`: on the map, fallen, down or escaped.
+    /// The unit `id`: on the map, fallen, down, escaped or fled.
     fn any_unit(&self, id: UnitId) -> Option<&Unit> {
         self.unit(id).or_else(|| {
-            let mut gone = self.fallen.iter().chain(&self.down).chain(&self.escaped);
+            let gone = self.fallen.iter().chain(&self.down).chain(&self.escaped);
+            let mut gone = gone.chain(&self.fled);
             gone.find(|u| u.id == id)
         })
     }

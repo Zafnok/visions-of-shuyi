@@ -1,6 +1,6 @@
 // Chapter 1's battle (ticket 0803; rules in docs/design/chapter-1.md):
-// rout the Red Company. No Preparations, a pack of 3 Potions, 1000 gold
-// for the win. Every number here is *tunable* and judged in the playtest
+// defeat Red Harl; the rest of the Red Company runs when he falls (0845).
+// No Preparations, a pack of 3 Potions, 1000 gold for the win. Every number here is *tunable* and judged in the playtest
 // (0804); the difficulty sim that set the levels is
 // crates/bots/tests/ch01_difficulty.rs.
 //
@@ -46,7 +46,7 @@
     pack_cap: 3,
     default_pack: ["potion", "potion", "potion"],
     clear_gold: 1000,
-    objective: Rout(),
+    objective: DefeatUnit(unit: "red_captain", leftovers: Flee),
     // Scene ids and what each is written for: the top of dialogue/ch01.dlg.
     triggers: [
         (when: TurnStart(turn: 1, phase: Player), scene: "ch01_first_turn", once: true),

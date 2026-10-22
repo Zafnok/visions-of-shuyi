@@ -8,7 +8,7 @@ use alloc::collections::{BTreeMap, BTreeSet};
 use serde::Deserialize;
 use trpg_core::{
     AiBehavior, BattleDef, BattleMap, BattleMusic, BattleNote, CharacterId, ClassTable, Defeat,
-    Difficulty, Faction, ItemDef, ItemId, ItemTable, Level, Objective, PlayerSlot, Pos,
+    Difficulty, Faction, ItemDef, ItemId, ItemTable, Leftovers, Level, Objective, PlayerSlot, Pos,
     Reinforcement, Role, TerrainTable, TileRect, Trigger, Turn, Unit, UnitId, default_map_label,
 };
 
@@ -187,6 +187,8 @@ enum RawObjective {
         unit: String,
         #[serde(default)]
         turn_limit: Option<Turn>,
+        #[serde(default)]
+        leftovers: Leftovers,
     },
     Seize {
         pos: (i32, i32),
@@ -639,6 +641,7 @@ impl<'a, 'r> Checker<'a, 'r> {
             RawObjective::DefeatUnit {
                 ref unit,
                 turn_limit,
+                leftovers,
             } => {
                 let target = everyone.iter().find(|u| {
                     u.faction == Faction::Enemy
@@ -653,6 +656,7 @@ impl<'a, 'r> Checker<'a, 'r> {
                 Objective::DefeatUnit {
                     unit: target.id,
                     turn_limit,
+                    leftovers,
                 }
             }
             RawObjective::Seize {

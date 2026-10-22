@@ -1712,7 +1712,8 @@ fn turn_limits_by_objective() {
     assert_eq!(
         Objective::DefeatUnit {
             unit: UnitId(1),
-            turn_limit: limit
+            turn_limit: limit,
+            leftovers: Leftovers::Stay
         }
         .turn_limit(),
         limit
@@ -1784,6 +1785,7 @@ fn defeat_unit_needs_that_unit() {
     let objective = Objective::DefeatUnit {
         unit: UnitId(4),
         turn_limit: None,
+        leftovers: Leftovers::Stay,
     };
     let mut units = skirmish();
     units.push(unit(5, Faction::Enemy, p(7, 4)));
@@ -1792,6 +1794,65 @@ fn defeat_unit_needs_that_unit() {
     assert_eq!(s.outcome(), None);
     let events = act(&mut s, 2, p(1, 2), attack(4));
     assert_eq!(events.last(), Some(&ended(Outcome::Victory)));
+}
+
+/// [`defeat_unit_needs_that_unit`]'s battle, its leftovers doing
+/// `leftovers`, played to the win: the state and the winning events.
+fn won_with_leftovers(leftovers: Leftovers) -> (BattleState, Vec<Event>) {
+    let objective = Objective::DefeatUnit {
+        unit: UnitId(4),
+        turn_limit: None,
+        leftovers,
+    };
+    let mut units = skirmish();
+    units.push(unit(5, Faction::Enemy, p(7, 4)));
+    let mut s = with_objective(units, objective);
+    act(&mut s, 1, p(1, 0), attack(3));
+    let events = act(&mut s, 2, p(1, 2), attack(4));
+    (s, events)
+}
+
+#[test]
+fn defeat_unit_is_won_with_enemies_left_and_they_stay_by_default() {
+    let (s, events) = won_with_leftovers(Leftovers::Stay);
+    assert_eq!(s.outcome(), Some(Outcome::Victory));
+    assert!(s.unit(UnitId(5)).is_some());
+    assert!(s.fled().is_empty());
+    assert!(!events.iter().any(|e| matches!(e, Event::Fled { .. })));
+}
+
+#[test]
+fn defeat_unit_with_fleeing_leftovers_sends_them_off_the_map() {
+    let (s, events) = won_with_leftovers(Leftovers::Flee);
+    assert_eq!(s.outcome(), Some(Outcome::Victory));
+    let left: Vec<UnitId> = s.fled().iter().map(|u| u.id).collect();
+    assert!(left.contains(&UnitId(5)), "{left:?}");
+    assert!(s.units().iter().all(|u| u.faction != Faction::Enemy));
+    // Not defeated: not among the fallen.
+    assert!(s.fallen().iter().all(|u| !left.contains(&u.id)));
+    let n = events.len();
+    assert_eq!(events[n - 2], Event::Fled { units: left });
+    assert_eq!(events[n - 1], ended(Outcome::Victory));
+}
+
+#[test]
+fn leftovers_that_flee_give_no_exp() {
+    let exp = |s: &BattleState| -> Vec<_> {
+        let players = s.units().iter().filter(|u| u.faction == Faction::Player);
+        players.map(|u| (u.id, u.level, u.exp)).collect()
+    };
+    let (stay, _) = won_with_leftovers(Leftovers::Stay);
+    let (flee, events) = won_with_leftovers(Leftovers::Flee);
+    assert_eq!(exp(&flee), exp(&stay));
+    let after_fled = events
+        .iter()
+        .skip_while(|e| !matches!(e, Event::Fled { .. }));
+    assert!(
+        !after_fled
+            .into_iter()
+            .any(|e| matches!(e, Event::ExpGained { .. })),
+        "{events:?}"
+    );
 }
 
 #[test]
@@ -3089,7 +3150,7 @@ prop_compose! {
         let objective = match objective_kind {
             0 => Objective::Rout { turn_limit: limit },
             1 => Objective::Survive { turns: limit.unwrap_or(3) },
-            2 => Objective::DefeatUnit { unit: units[players].id, turn_limit: limit },
+            2 => Objective::DefeatUnit { unit: units[players].id, turn_limit: limit, leftovers: Leftovers::Stay},
             _ => Objective::Seize { pos: tiles.next().unwrap(), by_lord, turn_limit: limit },
         };
         let items = Arc::new(items_for(
