@@ -76,9 +76,20 @@ checklist (1064).
   unit, items median and max, turns median).
 - The bots on the engine's pieces (the table above).
 - `.github/workflows/playtest.yml` calls engine#2021's workflow with the
-  game's paths (`assets/*`, `crates/core/*`, `crates/bots/*`,
-  `shuyi-engine.rev`, the workflow file itself) and the macroquad
-  packages.
+  game's lever script as its `levers` input (`bash
+  .github/playtest-levers.sh`, 0514), never a broad path list such as
+  `assets/*` or `crates/core/*` (that would play on every dialogue,
+  art and test change again, which 0514 stopped at Nick's request), with
+  the concurrency engine#2021 documents (a push's run is never
+  cancelled, 0515), and the macroquad packages. The script names
+  `crates/xtask/src/playtest.rs`, which this ticket deletes: replace that
+  line with the files the playtest plan now lives in.
+- The enemy AI's walking distance (`flow` and `flow_field` in
+  `crates/core/src/ai.rs`: a flow field per faction and movement type,
+  the targets' tiles free to enter, the exit area in an escape) on the
+  kit's `GoalDistance` too, so the bots and the AI share one, as
+  `persona.rs`'s `Goals` does after step 4. The AI's tests and step 9's
+  comparison stay unchanged.
 - `trpg_core::threat_area` (`crates/core/src/movement.rs`) builds on the
   kit's `strike_area`, its tests unchanged.
 - `docs/playtesting.md`, ADR-0095 (a line under *Decision* 6 and 3:
@@ -91,6 +102,14 @@ checklist (1064).
   (ADR-0095 §5: only 0508's comparison with Nick's play changes them).
 - Changing the measures or their names (0508 and 1021 read them).
 - New playtest features (a campaign run is 0512's).
+
+**Either order with 0450 and 0516:** 0450 gives one function for the
+tiles a unit threatens, a stationary enemy's included; if it is done,
+step 4's `Threats` takes stationary enemies from it rather than from
+`persona.rs`'s own copy of the rule; if not, keep the rule as it is and
+0450 moves it. 0516 fixes what `approach` and `enemy_fell` count in
+`Tally::between`, which stays the game's here: either order, the fix
+lives in `Tally::between`.
 
 **Either order with 0507, 0508, 0509, 0512 and 1021:** each names
 `cargo xtask playtest` or reads `crates/bots/personas.ron`. If one of
@@ -153,7 +172,8 @@ this ticket's PR.
    and usage line of `crates/xtask/src/main.rs` (its CLI tests move to
    `cargo shuyi playtest`, through `crates/xtask/tests/cli.rs`).
 8. **The workflow**: `.github/workflows/playtest.yml` becomes a caller of
-   engine#2021's workflow, pinned to the engine commit in
+   engine#2021's workflow (its `levers` input set to the game's script,
+   its concurrency as above), pinned to the engine commit in
    `shuyi-engine.rev` (the pin move also moves this line; add it to
    `engine-pin`'s list of files if that command keeps such a list).
 9. **Compare**: run step 1's commands with `cargo shuyi playtest --stage

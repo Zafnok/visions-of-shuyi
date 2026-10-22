@@ -37,7 +37,13 @@ army (0509's `cargo xtask autobalance`). What none of them checks:
 
 **Either order with 1180:** if 1180 is done, the campaign run is
 a stage or an option of `cargo shuyi playtest`; if not, of `cargo
-xtask playtest`, and 1180 moves it.
+xtask playtest`, and 1180 moves it. Either way, write the campaign as
+engine#2532's shape already allows (2026-10-22, from the retro of the
+last 50 PRs): one try of an entrant is one whole campaign from one seed,
+the per-chapter numbers are named measures (engine#2533's summary
+lines), and the runner's options, threads and history are not
+touched. Then 1180's move is mechanical and the engine needs nothing
+new for a campaign.
 
 ## Nick input
 

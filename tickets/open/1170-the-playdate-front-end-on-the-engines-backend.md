@@ -70,9 +70,11 @@ it):
   `docs/design/playdate.md`).
 - The AI's speed on the device (1051) and the battle frame's time
   (1057).
-- The other open Playdate tickets (1056 and 1063, `pdc` and the debug
-  build; 1057; 1059, the battle map at 50 frames a second) touch
-  `crates/playdate` too. **Either order works:** if one lands first and
+- The other Playdate tickets (1057; 1059, the battle map at 50 frames a
+  second) touch `crates/playdate` too; 1056 (done) strips the debug
+  ELF's unwind sections in `crates/xtask/src/playdate.rs` so `pdc`
+  packs it, which engine 3010's exporter now also knows (1063 was its
+  duplicate, closed). **Either order works:** if one lands first and
   changes a file this ticket deletes, check the engine's backend does
   the same thing and, if it doesn't, add it there (a small engine PR,
   `engine-change` skill) before deleting the game's copy.

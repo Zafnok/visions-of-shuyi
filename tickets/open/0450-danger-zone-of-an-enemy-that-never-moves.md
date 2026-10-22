@@ -54,6 +54,12 @@ it):
 - `core`: one place that says which tiles a unit threatens, respecting
   `AiBehavior::Stationary`, used by `danger_zone`, by the range shown for a
   picked enemy, and by `threats_at`.
+- The persona bots' copy of the rule (`crates/bots/src/persona.rs`,
+  `threats`: "an enemy that never moves threatens only from its tile",
+  added by 0506 after this ticket was written) calls the same place, so
+  the bots and the danger zone agree. **Either order with 1180:** if 1180
+  is done, the bots build the engine's `Threats` and take stationary
+  enemies from this place; if not, `persona.rs`'s `threats` calls it.
 - The tests and snapshots that change.
 
 **Out (do not do):**

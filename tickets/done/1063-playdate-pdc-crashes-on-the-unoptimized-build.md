@@ -5,10 +5,10 @@ type: bug
 milestone: Post–Chapter 1
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-22
 ---
 
 # 1063 — pdc crashes on the unoptimized build
@@ -59,4 +59,12 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket.)*
+**Closed as a duplicate of 1056, not worked (2026-10-22).** 1056 (#400)
+fixed this very crash: not the size or the debug info, but the
+per-function `.ARM.exidx.*` sections of an unoptimized build pushing the
+ELF past 65,280 sections, which `pdc` 3.1.2 can't read; the debug device
+build now strips them after the link (`crates/xtask/src/playdate.rs`,
+`device_steps`), and `crates/playdate/README.md` says so. Found by the
+retro of the last 50 PRs: 1056's notes said "no follow-up tickets", and
+this ticket stayed open in 1064's `blocked_by`, in the roadmap's Lane D
+and in 1170. Removed from all three in the same PR.

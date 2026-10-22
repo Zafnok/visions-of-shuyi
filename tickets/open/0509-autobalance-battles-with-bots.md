@@ -50,6 +50,19 @@ changes. The engine's search has no way to reach the bots' settings.
 search judges with the engine's `Targets` (engine#2129) and the game's
 playtest plan; if not, with `trpg_bots::Targets`, and 1180 moves it.
 
+**The command is the engine's when it can be** (2026-10-22, from the
+retro of the last 50 PRs: 0506 wrote its own playtest command, threads
+and history, and 1180 now moves them out). engine#2127 left out a
+`shuyi autobalance` operation and threads; engine#2541 adds them (the
+search on every core, a time limit, `--apply` through the game's
+`write`). **Either order with engine#2541:** if it is done and pinned,
+this ticket implements its plan hooks in `crates/xtask/src/game_tools.rs`
+instead of a `cargo xtask autobalance` wrapper, and moves 1183 to
+`done/` in its PR ("done by 0509"); if not, the wrapper stays as thin
+as below, writes no thread pool, options parser or report format of its
+own beyond what the table names, and marks its command module
+`// engine-friction: engine#2541`, and 1183 moves it.
+
 ## Nick input
 
 None. Nick no longer checks gameplay tickets after merge (Nick,

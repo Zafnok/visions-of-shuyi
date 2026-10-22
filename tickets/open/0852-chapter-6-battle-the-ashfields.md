@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0748", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "0324", "1070", "0323", "0608"]
+blocked_by: ["0748", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "0324", "1070", "0323", "0608", "0516"]
 nick_input: none
 completed:
 ---
@@ -27,7 +27,9 @@ replay, a difficulty run); this ticket does it for Chapter 6, from its
 beat sheet and script (0748). The balance comes from the bots: 0509's
 `cargo xtask autobalance` tunes the enemies until the persona bots land
 in their bands (`docs/design/playtest-bots.md`), and 0013 has settled
-the number scale first. As a world-map chapter it needs the world map (1007) and its skirmishes (1008), the new battle rules (0319), and the Act 1 world map's data (1070), whose story-battle node it fills in.
+the number scale first. It is the first escape map the personas play, so
+it waits for 0516, which makes their scoring prefer leaving by the exit
+to standing on it. As a world-map chapter it needs the world map (1007) and its skirmishes (1008), the new battle rules (0319), and the Act 1 world map's data (1070), whose story-battle node it fills in.
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
