@@ -47,9 +47,17 @@ fn a_death_never_hangs_on_a_reply() {
           reaction"
         ]
     );
-    // In an @if block it is fine.
+    // In an @if block it is fine, and checked there too.
     let src = scene("> x\n@if test_knight\n@dies test_knight\n@endif");
     assert_eq!(errors(&src), [] as [&str; 0]);
+    let src = scene("> x\n@if test_knight\n@dies nobody\n@else\n@dies lead\n@endif");
+    assert_eq!(
+        errors(&src),
+        [
+            "t.dlg:6: @dies: no character \"nobody\"",
+            "t.dlg:8: the lead never dies in a scene",
+        ]
+    );
 }
 
 /// The deaths of a scene as it plays for those present: only the `@if`

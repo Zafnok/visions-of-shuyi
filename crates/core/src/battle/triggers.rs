@@ -347,10 +347,6 @@ impl BattleState {
                     self.fall_scenes(*unit, &on_map, &mut out);
                     out.push(event);
                 }
-                Event::UnitEscaped { unit } => {
-                    on_map.remove(unit);
-                    out.push(event);
-                }
                 Event::PhaseStarted { turn, phase } => {
                     let (turn, phase) = (*turn, *phase);
                     out.push(event);

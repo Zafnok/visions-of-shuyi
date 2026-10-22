@@ -440,3 +440,44 @@ proptest! {
         })?;
     }
 }
+
+/// A unit escaping is still on the map for a scene of its move into the
+/// exit area: it leaves after it.
+#[test]
+fn a_unit_escaping_is_there_for_the_scene_of_its_move() {
+    let mut units = cast();
+    units[0].character = Some(CharacterId("c1".into()));
+    let when = TriggerWhen::UnitEntersArea {
+        who: Who::Faction(Faction::Player),
+        area: EXIT,
+    };
+    let trigger = Trigger {
+        when,
+        scene: "out".into(),
+        once: true,
+    };
+    let mut s = start(BattleSetup {
+        objective: escape(),
+        triggers: vec![trigger],
+        ..setup(units)
+    });
+    let events = act(&mut s, 1, p(3, 0), UnitAction::Escape);
+    let c1 = CharacterId("c1".into());
+    assert!(matches!(&events[1],
+        Event::SceneTriggered { scene, present } if scene == "out" && present.contains(&c1)));
+    assert_eq!(events[2], Event::UnitEscaped { unit: UnitId(1) });
+}
+
+/// A unit's [`Defeat`] is saved, but for the default (every roster unit),
+/// which a save leaves out.
+#[test]
+fn a_units_defeat_is_saved_unless_it_falls() {
+    for kind in [Defeat::Retreats, Defeat::GoesDown] {
+        let u = defeat(unit(4, Faction::Enemy, p(0, 0)), kind);
+        let text = ron::to_string(&u).unwrap();
+        assert!(text.contains(&format!("{kind:?}")), "{text}");
+        assert_eq!(ron::from_str::<Unit>(&text).unwrap(), u);
+    }
+    let falls = ron::to_string(&unit(4, Faction::Enemy, p(0, 0))).unwrap();
+    assert!(!falls.contains("defeat"), "{falls}");
+}

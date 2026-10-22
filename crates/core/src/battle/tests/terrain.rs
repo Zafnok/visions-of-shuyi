@@ -482,3 +482,18 @@ fn terrain_events_and_burning_state_round_trip_through_ron() {
     });
     assert_eq!(loaded, s);
 }
+
+/// A downed unit's tile (0319) is held: no tile cast changes it.
+#[test]
+fn a_downed_units_tile_cant_be_cast_on() {
+    let mut units = burn_cast();
+    // Enemy 3 on the forest at 1 HP, unkillable.
+    units[2].pos = WOOD;
+    units[2].hp = 1;
+    units[2].defeat = crate::unit::Defeat::GoesDown;
+    let mut s = start(setup(units));
+    act(&mut s, 2, p(2, 1), attack(3));
+    assert_eq!(s.down().len(), 1);
+    let fire = on_tile("fire", WOOD);
+    refused_act(&mut s, 1, p(1, 2), fire, CommandError::TileOccupied(WOOD));
+}
