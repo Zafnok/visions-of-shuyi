@@ -72,6 +72,7 @@ Keys chosen by hand, `screen.thing` (`title.new_game`), listed in
 | A lesson's title, text and items | `lessons.<id>.title`, `lessons.<id>.text`, `lessons.<id>.item_<n>` (n from 1, in file order) | `data/lessons.ron` |
 | A chapter's title | `chapters.<id>.title` | `chapters/<id>.ron` |
 | A battle note | `battles.<id>.note_<n>` (n from 1, in file order) | `battles/<id>.ron` |
+| An escape map's exit name | `battles.<id>.exit` | `battles/<id>.ron` |
 
 Rules beyond the same placeholders as the `source`:
 
