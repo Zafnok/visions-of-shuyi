@@ -266,7 +266,8 @@ tickets in brackets):
 
 1. **0037** building tiles, capturing, healing tiles (0313, Chapter 3's
    map 0849)
-2. **0044** the Preparations shop's basics and tiers (0443, 1070)
+2. **0044** the Preparations shop's basics and tiers (0443, 1070) →
+   **0073** four armour weights (0320, Chapter 1's loadouts)
 3. **0028** shop music (0409)
 4. **0069** Act 1's battle rules: the escape objective, Dace fleeing,
    a boss who can't die, Hollis's death and its Classic fallback, the
@@ -303,7 +304,8 @@ Candle joins outside battle.
   (closing scene, "Act 1 ends", the army carried over).
 - **B. Battle rules:** **0319** escape, a fleeing boss, a boss who
   can't die, a scripted death (after 0069) · **0511** bosses use their
-  debuff and stance arts.
+  debuff and stance arts · **0513** green units carry their own
+  consumables (0044) · **0320** specialty stores (after 0073).
 - **C. Bots**, engine first (0130): each step is an engine PR in
   `Zafnok/shuyi-engine`, then the game PR that moves the pin and adds
   the game's parts. engine#2125 the rollout bot (`Determinize`, flat
