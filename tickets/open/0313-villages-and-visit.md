@@ -6,8 +6,8 @@ milestone: M2 Core rules
 model: opus-5.5
 effort: medium
 status: todo
-blocked_by: ["0308", "0037"]
-nick_input: answer-first
+blocked_by: ["0308", "0037", "0322"]
+nick_input: none
 completed:
 ---
 
@@ -32,23 +32,27 @@ when the battle is won counts as saved. The battle is lost the moment the
 minimum can no longer be met; each house standing past the minimum adds a
 reward at the end.
 
-**Blocked** until `docs/design/terrain.md` defines the house (village) tile:
-ticket **0037**. Don't invent the tile. The UI half (the action menu entry,
-the objective line, the house's look on every map skin) is ticket 0409.
+The house tile is decided (0037, 2026-10-22, `docs/design/terrain.md`,
+*Building tiles*): a one-tile `house` terrain (cost 1, +10 Avoid, no
+healing), drawn as a lean-to shack; "the house's door" in the rule is
+that tile. Ticket **0322** adds it to `terrain.ron` and draws it on every
+map skin. The UI half (the action menu entry, the objective line) is
+ticket 0409.
 
 ## Nick input
 
-**Answer first:** ticket 0037 (the house tile: its glyph, costs and bonuses
-come from that decision, not from this ticket). The rule itself is decided
-(0069).
+None: the rule (0069) and the tile (0037) are decided. Verified by tests
+and the bots; what is left to judge by playing goes on the Act 1
+playtest's checklist (1064).
 
 ## Scope
 
 **In:**
-- A house map feature (`TileFeature::House` or as 0037 names the tile) in
-  `crates/core/src/map.rs`, and the `.map` header syntax for it
-  (`crates/content/src/map.rs`, `assets/maps/README.md`), validated like
-  chests (tile passable).
+- Houses on the map: every `house` terrain tile (0322) is a house. Keep
+  its saved / burned state in the battle (a burned house may turn into
+  `burnt` terrain or keep a flag: your choice, recorded in the module
+  docs). Map validation: a battle with a village goal has at least as
+  many `house` tiles as its minimum.
 - The battle's village goal: a minimum to save and the extra reward per
   house past it, in the battle file (`assets/battles/README.md`), validated
   (minimum ≤ number of houses, rewards' item ids known, `Gold(0)` refused).
@@ -77,8 +81,9 @@ come from that decision, not from this ticket). The rule itself is decided
 
 ## Implementation steps
 
-1. Read `turn-structure.md` (*Save the village*) and 0037's tile.
-2. Map: the house feature, a lookup, the header syntax and its checks.
+1. Read `turn-structure.md` (*Save the village*) and `terrain.md`
+   (*Building tiles*, the `house` tile).
+2. Map: a lookup of the `house` tiles and their state, and its checks.
 3. Battle: `Evacuate`, burning, the loss check (after every action, with the
    other loss conditions), the rewards on a win, through `Command` →
    `Event` (ADR-0004). Document the rule in the `battle.rs` module docs.

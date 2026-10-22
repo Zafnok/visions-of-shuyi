@@ -1,7 +1,9 @@
 # Stats and combat maths
 
 Decided: 2026-09-25
-Source: ticket 0001 (per-class stat caps removed by ticket 0019, 2026-09-28)
+Source: ticket 0001 (per-class stat caps removed by ticket 0019, 2026-09-28;
+number scale, ceilings, strike rule and level cap decided by ticket 0013,
+2026-10-22)
 
 ## Nick's words
 
@@ -27,16 +29,36 @@ Follow-up, on the strike thresholds and number sizes:
 > and you can figure out the scaling algorithm once I have a playtest and see
 > if big numbers or low numbers or even medium numbers look nicer to me"
 
+The number scale, after three Chapter 1 playtests (ticket 0013, 2026-10-22;
+asked with the real Chapter 1 forecast, Lead vs a Red Company brigand, at
+four scales, and the strike counts of every Chapter 1 match-up under three
+strike rules):
+
+> **Q1. How big should the numbers be?** "B. FE-sized, grows" (stats 5–40
+> early and HP 20–60, like Fire Emblem; what Chapter 1 already has).
+>
+> **Q2. When do 3 and 4 strikes happen?** "gap or share, but probably tuning
+> numbers more" (the strike needs a fixed Speed gap or a share of the
+> enemy's speed, whichever is bigger).
+>
+> **Q3. Stat ceilings: fixed for the whole game, or rising with class
+> tier?** "Fixed all game" (the option showed HP 200, every other stat 100).
+>
+> **Q4. Level cap?** "up til act 1 is complete, placeholder lv cap can be
+> 99, and if act 2 and act 3 add a significant amount to the game the lv cap
+> might be extended to lets say 300 or something. 999 is too high. Also, 99
+> after 50 battles seems too easy it should probably avg 1 level per battle,
+> with early lvs easier to hit (maybe 2 per battle) and higher lvs harder to
+> hit (2 battles per lv)"
+
 So: streamlined Fire Emblem stats (no Luck, no Constitution/Build), FE "true
 hit" (2RN) hit rolls, and FE doubling extended to up to **4 strikes**, where
 3 and 4 need very large Speed gaps. Level itself never enters combat maths.
 
-**The number scale is not decided.** How big stats get (single digits, FE-ish
-tens, or huge "Dragon Ball" numbers) and therefore the exact strike thresholds
-are placeholders until Nick has played (ticket 0013, after the Chapter 1
-playtest 0804). The ranges, caps and thresholds below are FE-sized starting
-values so the game can be built and played; the *rules* (which stats, how they
-combine, 2RN, up to 4 strikes, 3x/4x rare) are Nick's and stay.
+**The number scale is FE-sized** (Nick, 0013): numbers stay the size
+Chapter 1 has (stats in the single digits and tens, HP in the tens) and grow
+over the game towards the low hundreds, never into "Dragon Ball" millions.
+Numbers are shown in full; no `1.2M`-style shortening is needed.
 
 Everything below marked *tunable* is a starting value Claude chose; balance
 tickets may change it without asking Nick. Unmarked rules are Nick's choices.
@@ -52,19 +74,25 @@ on a stat, and no level up, gear or bonus may exceed them.
 
 | Stat | Meaning | Range |
 | ---- | ------- | ----- |
-| `HP`  | Max hit points. The unit is defeated at 0 current HP. | `1..=80` hard ceiling *(tunable)* |
-| `Str` | Physical attack power (added to physical weapon might). | `0..=50` hard ceiling *(tunable)* |
-| `Mag` | Magical attack power (added to magical weapon/tome might). | `0..=50` hard ceiling *(tunable)* |
-| `Dex` | Precision: raises hit and crit, and lowers the crits taken. | `0..=50` hard ceiling *(tunable)* |
-| `Spd` | Quickness: raises avoid and decides extra strikes. | `0..=50` hard ceiling *(tunable)* |
-| `Def` | Reduces physical damage taken. | `0..=50` hard ceiling *(tunable)* |
-| `Res` | Reduces magical damage taken. | `0..=50` hard ceiling *(tunable)* |
+| `HP`  | Max hit points. The unit is defeated at 0 current HP. | `1..=200` hard ceiling |
+| `Str` | Physical attack power (added to physical weapon might). | `0..=100` hard ceiling |
+| `Mag` | Magical attack power (added to magical weapon/tome might). | `0..=100` hard ceiling |
+| `Dex` | Precision: raises hit and crit, and lowers the crits taken. | `0..=100` hard ceiling |
+| `Spd` | Quickness: raises avoid and decides extra strikes. | `0..=100` hard ceiling |
+| `Def` | Reduces physical damage taken. | `0..=100` hard ceiling |
+| `Res` | Reduces magical damage taken. | `0..=100` hard ceiling |
 | `Mov` | Movement points per turn (see movement/pathfinding). Set by class; does not grow on level up. | `0..=15`, set per class, typically 4–8 *(tunable)* |
 
-All ranges above are *placeholders* for the FE-sized first build (see
-ticket 0013). Ticket 0013 also decides the ceiling numbers and whether they
-stay fixed or rise with class tier (Nick, ticket 0019: "3C"). The strike
-thresholds below are sized for these numbers.
+**The hard ceilings are fixed for the whole game** (Nick, 0013: "Fixed all
+game"): **HP 200, every other stat 100**, the same for every unit, class and
+tier, like Final Fantasy Tactics' one ceiling for everyone. They don't rise
+with class tier. Early units are far below them; they only bite late. Mov's
+ceiling (15) is unchanged. The numbers are the ones Nick picked; changing
+them is a question for him, not a balance ticket.
+
+**Level cap** (Nick, 0013): **99** through Act 1. If Acts 2 and 3 add a lot
+to the game it may be raised later ("lets say 300 or something"); 999 is too
+high. The pace of levels (about one per battle) is in `progression.md`.
 
 No Luck, no Constitution/Build/weight stat. Whether weapons have weight (and
 what it would subtract from) is ticket 0003's decision; see *Attack speed*.
@@ -113,22 +141,43 @@ crit = clamp(weapon.crit + A.Dex / 2 - B.Dex / 4, 0, 100)      (tunable)
 AS_A = A.Spd + A.as_bonus
 diff = AS_A - AS_B
 
-strikes_A = 1  if diff < 4
-            2  if 4  <= diff < 14
-            3  if 14 <= diff < 24
-            4  if diff >= 24
+need(k) = max(gap[k], max(0, AS_B) * share[k] / 100)    for k = 2, 3, 4
+
+strikes_A = 1 + the number of k with diff >= need(k)
+
+gap   = [4, 14, 24]       (tunable)
+share = [25, 75, 150]     (percent, tunable)
 ```
 
-- Thresholds `4 / 14 / 24` are *placeholders*, stored as data (a list
-  `[4, 14, 24]`), so the maximum number of strikes is `1 + len(list)` = 4.
-  Nick fixed only that 3x and 4x are possible but rare; the actual thresholds
-  (and whether they are fixed gaps, percentages of the enemy's Speed, or
-  something else) are set with the number scale in ticket 0013.
+- **The rule is Nick's** (0013: "gap or share"): an extra strike needs a
+  fixed Speed gap **or** a share of the slower side's attack speed,
+  **whichever is bigger**. Early on the fixed gap is bigger, so Chapter 1
+  plays exactly as it did with fixed gaps; late in the game, when attack
+  speeds reach 50+, the share is bigger, so 3x and 4x stay rare instead of
+  becoming common. Example: against an enemy with attack speed 60, a double
+  needs +15, a triple +45 and a quadruple +90.
+- **The numbers are tunable** (Nick: "probably tuning numbers more"): the
+  gaps `4 / 14 / 24` and shares `25% / 75% / 150%` are starting values that
+  balance tickets may change. They are data (a list of `(gap, share)`
+  pairs), so the maximum number of strikes is `1 + len(list)` = 4.
+- A slower side with attack speed 0 or below needs only the gaps (its share
+  is 0).
 - At most one side gets more than 1 strike (diff is positive for only one).
 - Sizing (what Nick asked for): a speed specialist a bit ahead of an equal
   enemy (+4..+13) strikes 2x; ten levels of heavy Spd growth plus best gear
-  (+14..+23) gives 3x; a capped Spd-40 unit with gear against an ordinary
-  Spd-16..20 enemy (+24) gives 4x. 3x and 4x should be rare.
+  (+14..+23) gives 3x; a unit at Spd 40 with gear against an ordinary
+  Spd-16 enemy (+24) gives 4x. 3x and 4x should be rare.
+- How often each count happens with the Chapter 1 cast and the Red
+  Company's soldiers (all 36 pairings of a player unit and an enemy type,
+  at the expected stats for the level; 0013):
+
+  | Levels | 1x | 2x | 3x | 4x |
+  | ------ | -- | -- | -- | -- |
+  | Chapter 1 as shipped | 15 | 21 | 0 | 0 |
+  | Both sides level 20 | 11 | 24 | 1 | 0 |
+  | Both sides level 100 | 7 | 16 | 11 | 2 |
+
+  With fixed gaps alone, level 100 would have been 7 / 5 / 11 / 13.
 - `as_bonus` is defined in `weapons-and-items.md` (0003): weapon rank bonus
   minus the burden of weapon + armour weight not carried by Str; gear adds to
   Spd itself. Class skills (0005) may add more. Level never adds to it
@@ -253,12 +302,21 @@ Distance 1.
 Strike order: attacker, defender, attacker, attacker.
 
 Boundaries: defender Spd 17 (diff 13) → attacker 2 strikes; attacker Spd 40
-vs. defender Spd 16 (diff 24) → 4 strikes.
+vs. defender Spd 16 (diff 24) → 4 strikes. (Against attack speed 16 the
+shares ask for 4 / 12 / 24, so the needs stay `4 / 14 / 24`.)
+
+### Example 4 — the share decides (late game)
+
+Attacker attack speed 75, defender attack speed 40: diff 35. Needs:
+2x `max(4, 10) = 10`, 3x `max(14, 30) = 30`, 4x `max(24, 60) = 60`.
+35 reaches the first two → **3 strikes**. With fixed gaps alone it would
+have been 4.
 
 ## Open sub-questions (deferred)
 
-- **Number scale and strike thresholds:** ticket 0013, decided after Nick's
-  Chapter 1 playtest. Small, FE-sized or huge numbers; thresholds follow.
+- **Level cap after Act 1:** 99 for now; Nick may raise it (to about 300) if
+  Acts 2 and 3 add a lot of game. At that cap the fixed ceilings (HP 200,
+  stats 100) would be reached by many units; revisit both together.
 
 - **Attack-speed modifiers:** decided in `weapons-and-items.md` (0003);
   class skills that add more: 0005.

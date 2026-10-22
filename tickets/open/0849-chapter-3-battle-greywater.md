@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0745", "0509", "0013", "0070", "0071", "0037", "0069"]
+blocked_by: ["0745", "0509", "0013", "0070", "0071", "0037", "0322", "0069", "0323", "0608"]
 nick_input: none
 completed:
 ---
@@ -27,7 +27,7 @@ replay, a difficulty run); this ticket does it for Chapter 3, from its
 beat sheet and script (0745). The balance comes from the bots: 0509's
 `cargo xtask autobalance` tunes the enemies until the persona bots land
 in their bands (`docs/design/playtest-bots.md`), and 0013 has settled
-the number scale first. It also needs 0037's building tiles (the abbey's gate, the scriptorium's tile, healing tiles if Nick picks them) and 0069's confirmation of what Chapter 3 introduces.
+the number scale first. It also needs 0037's building tiles (decided: `gate` and `throne`, built by 0322, for the abbey's gate and the scriptorium's Seize point; no tile heals) and 0069's confirmation of what Chapter 3 introduces.
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
