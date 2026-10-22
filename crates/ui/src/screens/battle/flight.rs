@@ -70,13 +70,8 @@ impl Flight {
             .map(|(unit, way)| {
                 let view = UnitView::of(unit).fading(fade);
                 let Some(gait) = walk::gait(way, tiles, pace) else {
-                    // At the edge (or not started): standing at its end.
-                    let at = if self.t > 0.0 {
-                        way.last()
-                    } else {
-                        way.first()
-                    };
-                    return view.at(at.copied().unwrap_or(unit.pos));
+                    // At the edge: standing there.
+                    return view.at(way.last().copied().unwrap_or(unit.pos));
                 };
                 let at = way[walk::steps(way.len(), tiles)];
                 UnitView {
@@ -111,6 +106,49 @@ fn way_out(pos: Pos, (w, h): (i32, i32)) -> Vec<Pos> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::map_view::scene::{Facing, STANDING_FRAME};
+    use crate::screen::tests::ctx;
+    use crate::screens::battle::testing::quick_units;
+
+    /// A flight `t` seconds in of one unit three tiles from the right edge
+    /// of a 10 × 8 map.
+    fn flight_at(t: f32) -> (Flight, Vec<Pos>) {
+        let (_, units) = quick_units(&ctx());
+        let mut unit = units[3].clone();
+        unit.pos = Pos::new(6, 3);
+        let way = way_out(unit.pos, (10, 8));
+        let flight = Flight {
+            units: vec![(unit, way.clone())],
+            t,
+        };
+        (flight, way)
+    }
+
+    #[test]
+    fn a_leftover_walks_its_way_out_at_the_pace_as_it_fades() {
+        let pace = 5.0;
+        // 0.25 s at 5 tiles a second: a quarter of the way from its second
+        // tile to its third.
+        let (flight, way) = flight_at(0.25);
+        let gait = walk::gait(&way, 1.25, pace).expect("still walking");
+        assert_ne!(gait.frame, STANDING_FRAME, "a frame with a foot forward");
+        let views = flight.views(pace);
+        let view = &views[0];
+        assert_eq!(view.pos, way[1]);
+        assert_eq!(view.offset, gait.offset);
+        assert!(view.offset.0 > 0.0, "{view:?}");
+        assert_eq!((view.facing, view.frame), (Facing::Right, gait.frame));
+        assert!((view.fade - 0.25 / FLEE_S).abs() < 1e-6);
+    }
+
+    #[test]
+    fn a_leftover_at_the_edge_stands_there_fading() {
+        let (flight, way) = flight_at(1.0);
+        let view = &flight.views(5.0)[0];
+        assert_eq!((view.pos, view.offset), (way[way.len() - 1], (0.0, 0.0)));
+        assert!(view.fade > 0.0 && view.fade < 1.0);
+        assert!(!flight.done());
+    }
 
     #[test]
     fn the_way_out_is_straight_to_the_nearest_edge() {
