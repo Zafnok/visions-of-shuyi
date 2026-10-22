@@ -426,7 +426,8 @@ ends, so it still stands. A raider reaches the third and it burns (lost).
 At the end, four houses stand: three meet the minimum, the fourth adds an
 extra reward.
 
-- The map marks **houses** (each a tile with a door) and a **minimum** to
+- The map marks **houses** (each one `house` tile, `terrain.md`, *Building
+  tiles*; "the house's door" below is that tile) and a **minimum** to
   save. The objective line shows both, e.g. `Save at least 3 of 5 houses
   (1 saved, 1 lost)`, next to the battle's main objective (Defeat the boss,
   Rout, ...).

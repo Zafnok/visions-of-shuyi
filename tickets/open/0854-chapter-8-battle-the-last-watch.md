@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0750", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "1070", "0322", "0608"]
+blocked_by: ["0750", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "1070", "0323", "0608"]
 nick_input: none
 completed:
 ---

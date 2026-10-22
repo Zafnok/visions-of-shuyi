@@ -1,5 +1,5 @@
 ---
-id: "0322"
+id: "0323"
 title: "Extra strikes need a gap or a share of the enemy's speed; ceilings HP 200 / stats 100"
 type: feature
 milestone: M2 Core rules
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 0322 — Extra strikes need a gap or a share of the enemy's speed; ceilings HP 200 / stats 100
+# 0323 — Extra strikes need a gap or a share of the enemy's speed; ceilings HP 200 / stats 100
 
 ## Context
 

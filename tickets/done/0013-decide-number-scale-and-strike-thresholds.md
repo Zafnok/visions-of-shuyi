@@ -106,7 +106,7 @@ Found while asking: a pure percent-of-speed rule can't work with today's
 weight rules (many enemies have attack speed 0 or below, so Chapter 1
 would be full of 4x); the hybrid avoids it.
 
-Follow-up tickets: **0322** the gap-or-share strike rule and the new
+Follow-up tickets: **0323** the gap-or-share strike rule and the new
 ceilings; **0608** the level pace curve. Both added to `blocked_by` of
 0848–0854, 1070–1072 and 1064, and to the roadmap. No rebalance ticket for
 classes, weapons or terrain and no display ticket: the scale didn't change.
