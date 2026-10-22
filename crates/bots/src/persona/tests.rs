@@ -351,6 +351,28 @@ fn progress_follows_the_objective() {
     // nearest enemy, unit 2 from 2 to 3.
     let rout = with(Objective::Rout { turn_limit: None });
     assert_eq!(approach(&rout, &fell_3(&rout)), (6 - 8) + (2 - 3));
+    // An escape (0319): each unit that got out, from where it started.
+    let area = trpg_core::TileRect {
+        x: 0,
+        y: 4,
+        w: 2,
+        h: 1,
+    };
+    let mut one_out = with(Objective::Escape { area });
+    let out = |s: &mut BattleState, unit, x| {
+        let dest = tile(x);
+        let action = UnitAction::Escape;
+        s.apply(&Command::Act {
+            unit: UnitId(unit),
+            dest,
+            action,
+        })
+        .unwrap();
+    };
+    out(&mut one_out, 1, 0);
+    let mut two_out = one_out.clone();
+    out(&mut two_out, 2, 1);
+    assert_eq!(progress(&one_out, &two_out), 1);
     // No one who may seize: no distance.
     let empty = start(vec![enemy(4, 8)]);
     assert_eq!(seize_distance(&empty, tile(0), false), 0);
