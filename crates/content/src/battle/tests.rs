@@ -884,6 +884,35 @@ fn an_escape_area_must_be_on_the_map() {
     );
 }
 
+/// An escape map names its exit (0324): one line, and only on an escape
+/// map.
+#[test]
+fn an_exit_name_is_one_line_on_an_escape_map() {
+    let c = content();
+    let objective = "DefeatUnit(unit: \"test_rogue\", turn_limit: Some(9))";
+    let escape = |name: &str| format!("Escape(area: (x: 13, y: 2, w: 1, h: 6)), exit_name: {name}");
+    let src = OK.replacen(objective, &escape("\" the east road \""), 1);
+    let def = load(&c, &src).unwrap_or_else(|e| panic!("{e:?}"));
+    assert_eq!(def.exit_name.as_deref(), Some("the east road"));
+    assert_eq!(load(&c, OK).map(|d| d.exit_name), Ok(None));
+    assert_eq!(
+        errors(&c, objective, &escape("\" \"")),
+        ["exit_name: no text"]
+    );
+    assert_eq!(
+        errors(&c, objective, &escape("\"the\nroad\"")),
+        ["exit_name: the name must be one line"]
+    );
+    assert_eq!(
+        errors(
+            &c,
+            objective,
+            &format!("{objective}, exit_name: \"the road\"")
+        ),
+        ["exit_name: only an escape map names its exit"]
+    );
+}
+
 #[test]
 fn a_unit_that_cant_be_killed_is_never_recruited() {
     let c = content();

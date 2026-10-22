@@ -1,5 +1,5 @@
 // The test pack's data text (ticket 0235): a few names, a tip, a lesson's
-// title and first item (0456), a chapter title and a battle note, each the English in capitals. Everything else
+// title and first item (0456), a chapter title, a battle note and an exit name (0324), each the English in capitals. Everything else
 // in the data is missing here, so it shows in English.
 // Kept on purpose: `items.iron_axe.name` is stale (its `source` is not
 // today's English), so the axe shows in English too.
@@ -31,4 +31,5 @@
         source: "Seize the fort within 3 turns: send your lead straight there.",
         text: "SEIZE THE FORT WITHIN 3 TURNS: SEND YOUR LEAD STRAIGHT THERE.",
     ),
+    (key: "battles.test_escape.exit", source: "the east road", text: "THE EAST ROAD"),
 ]

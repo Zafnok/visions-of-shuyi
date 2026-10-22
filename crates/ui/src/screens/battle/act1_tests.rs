@@ -6,7 +6,8 @@
 
 use insta::assert_snapshot;
 use trpg_core::{
-    BattleState, Command, Defeat, Faction, Leftovers, Objective, Pos, TileRect, UnitAction, UnitId,
+    BattleState, Command, Defeat, Faction, GameMode, LeadGender, LeadProfile, Leftovers, Objective,
+    Pos, TileRect, UnitAction, UnitId,
 };
 
 use super::BattleScreen;
@@ -19,6 +20,8 @@ use crate::harness::Harness;
 use crate::map_view::scene::range;
 use crate::screen::tests::ctx;
 use crate::words::Words;
+use trpg_content::{LangCode, battle_campaign};
+use trpg_core::lead::DEFAULT_NAME;
 
 /// The Quick Battle as an escape map whose exit is the lord's own tile
 /// (3, 5) and the one right of it.
@@ -38,7 +41,7 @@ fn escape() -> BattleState {
 #[test]
 fn the_escape_objective_counts_who_is_out() {
     let mut s = escape();
-    let text = |s: &BattleState| objective_text(s, Words::ENGLISH);
+    let text = |s: &BattleState| objective_text(s, None, Words::ENGLISH);
     assert_eq!(text(&s), "Get everyone to the exit (0/4 out)");
     let out = Command::Act {
         unit: UnitId(1),
@@ -47,6 +50,33 @@ fn the_escape_objective_counts_who_is_out() {
     };
     s.apply(&out).unwrap_or_else(|e| panic!("{e}"));
     assert_eq!(text(&s), "Get everyone to the exit (1/4 out)");
+}
+
+/// An escape map whose battle file names its exit (0324) says where to
+/// go, in English and in the test pack; one without keeps `the exit`.
+#[test]
+fn an_escape_map_names_its_exit() {
+    let c = ctx();
+    let content = &c.game.content;
+    let def = &content.battles["test_escape"];
+    let exit = def.exit_name.as_deref();
+    let lead = LeadProfile::new(DEFAULT_NAME, LeadGender::Male);
+    let campaign = battle_campaign(content, def, GameMode::Classic, lead);
+    let (s, _) = BattleState::new(campaign.battle_setup(def, &content.tables()));
+    assert_eq!(
+        objective_text(&s, exit, Words::ENGLISH),
+        "Get everyone to the east road (0/3 out)"
+    );
+    let test = LangCode::new("test").unwrap();
+    let words = Words::new(&content.lang, &test);
+    assert_eq!(
+        objective_text(&s, exit, words),
+        "GET EVERYONE TO THE EAST ROAD (0/3 OUT)"
+    );
+    assert_eq!(
+        objective_text(&s, None, words),
+        "GET EVERYONE TO THE EXIT (0/3 OUT)"
+    );
 }
 
 #[test]
