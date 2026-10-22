@@ -1,28 +1,42 @@
-//! The baseline bot plays every shipped battle file (ticket 0505).
+//! The baseline bot plays every shipped battle file (ticket 0505), on the
+//! engine's playtest runner (ticket 0506).
 
-use trpg_bots::{BaselineBot, play_battle};
-use trpg_content::battle_campaign;
-use trpg_core::{BattleState, GameMode, LeadGender, LeadProfile};
+use shuyi_core::bots::playtest::play_tries;
+use trpg_bots::{BattleEntrant, BattleStage, Player};
+use trpg_content::{Content, battle_campaign};
+use trpg_core::{BattleDef, GameMode, LeadGender, LeadProfile};
+
+/// `def` as the playtest fields it: the characters of its player slots.
+fn stage(content: &Content, def: &BattleDef) -> BattleStage {
+    let setup = |mode| {
+        let lead = LeadProfile::new("Bot", LeadGender::Male);
+        battle_campaign(content, def, mode, lead).battle_setup(def, &content.tables())
+    };
+    BattleStage {
+        classic: setup(GameMode::Classic),
+        casual: setup(GameMode::Casual),
+    }
+}
+
+fn baseline(content: &Content, stage: &BattleStage) -> BattleEntrant {
+    BattleEntrant::new(
+        "baseline",
+        GameMode::Classic,
+        Player::Baseline,
+        content.ai,
+        stage,
+    )
+}
 
 #[test]
 fn baseline_bot_plays_a_battle_to_the_end() {
     let content = trpg_content::load_embedded().unwrap();
-    let tables = content.tables();
     assert!(!content.battles.is_empty());
     for (id, def) in &content.battles {
-        let lead = LeadProfile::new("Bot", LeadGender::Male);
-        let campaign = battle_campaign(&content, def, GameMode::Classic, lead);
-        let mut finished = 0;
-        for seed in 1..=5 {
-            let mut setup = campaign.battle_setup(def, &tables);
-            setup.seed = seed;
-            let (state, _) = BattleState::new(setup);
-            let mut bot = BaselineBot::new(content.ai);
-            let measures = play_battle(state, &mut bot, &content.ai, 60)
-                .unwrap_or_else(|e| panic!("{id}, seed {seed}: {e}"));
-            assert!(measures.player_commands > 0, "{id}, seed {seed}");
-            finished += u32::from(measures.outcome.is_some());
-        }
+        let stage = stage(&content, def);
+        let tries = play_tries(&stage, &baseline(&content, &stage), 1..6, 60)
+            .unwrap_or_else(|e| panic!("{id}: {e}"));
+        let finished = tries.iter().filter(|t| t.outcome.is_some()).count();
         assert!(finished > 0, "{id}: no try ended in 60 turns");
     }
 }
@@ -36,29 +50,19 @@ fn baseline_bot_plays_a_battle_to_the_end() {
 /// cargo test -p trpg-bots --test baseline -- --ignored
 /// ```
 ///
-/// `cargo xtask playtest ch01 --runs 200` plays the same tries and prints
-/// the win rate, the units lost per try and every try.
+/// `cargo xtask playtest ch01 --bot baseline --runs 200` plays the same
+/// tries and prints every try; `--bot all` has the personas play it too.
 #[test]
 #[ignore = "a manual measurement: 200 battles"]
 fn chapter_1_difficulty() {
-    const TRIES: u32 = 200;
+    const TRIES: u64 = 200;
     let content = trpg_content::load_embedded().unwrap();
-    let tables = content.tables();
-    let def = &content.battles["ch01"];
-    let lead = LeadProfile::new("Bot", LeadGender::Male);
-    let campaign = trpg_content::new_campaign(&content, GameMode::Classic, lead);
-    let (mut won, mut fallen) = (0, 0);
-    for seed in 1..=u64::from(TRIES) {
-        let mut setup = campaign.battle_setup(def, &tables);
-        setup.seed = seed;
-        let (state, _) = BattleState::new(setup);
-        let mut bot = BaselineBot::new(content.ai);
-        let measures = play_battle(state, &mut bot, &content.ai, 60)
-            .unwrap_or_else(|e| panic!("seed {seed}: {e}"));
-        won += u32::from(measures.outcome == Some(trpg_core::Outcome::Victory));
-        fallen += measures.player_fallen.len();
-    }
-    let rate = won * 100 / TRIES;
+    let stage = stage(&content, &content.battles["ch01"]);
+    let tries = play_tries(&stage, &baseline(&content, &stage), 1..TRIES + 1, 60)
+        .unwrap_or_else(|e| panic!("{e}"));
+    let won: i64 = tries.iter().map(|t| t.measures["won"]).sum();
+    let fallen: i64 = tries.iter().map(|t| t.measures["deaths"]).sum();
+    let rate = won * 100 / 200;
     assert!(
         (30..=70).contains(&rate),
         "won {won} of {TRIES} ({rate}%), outside 30-70%; {fallen} player units lost in all"

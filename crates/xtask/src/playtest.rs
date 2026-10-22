@@ -1,11 +1,14 @@
-//! `cargo xtask playtest` (ticket 0505, ADR-0033): a bot plays a battle
-//! file many times, each try with fresh luck, and the report says how the
-//! tries went (`docs/playtesting.md`, `docs/design/playtest-bots.md`).
+//! `cargo xtask playtest` (tickets 0505 and 0506, ADR-0033): bots play a
+//! battle file many times, each try with fresh luck, and the report says
+//! how the tries went and whether each persona met its target
+//! (`docs/playtesting.md`, `docs/design/playtest-bots.md`).
 //!
-//! `trpg-bots` is pure; the files, the clock and the threads are here. A
-//! report depends only on the arguments: the tries are sorted by seed
-//! before anything is counted, so the thread count changes nothing but the
-//! speed line.
+//! The tries, the checks and the table are the engine's playtest runner
+//! (`shuyi_core::bots::playtest`), with the game's bots, measures and
+//! targets from `trpg-bots`. This wrapper keeps the options, the threads,
+//! the clock, the history and the game's own report lines. A report
+//! depends only on the arguments: every seed range is judged once, sorted
+//! by seed, so the thread count changes nothing but the speed lines.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -14,22 +17,27 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
-use trpg_bots::{BaselineBot, BattleMeasures, PlayerBot, play_battle};
-use trpg_content::{Content, battle_campaign};
-use trpg_core::{
-    BattleSetup, BattleState, GameMode, LeadGender, LeadProfile, Outcome, Turn, UnitId,
+use shuyi_core::bots::playtest::{
+    Check, Entrant as _, Found, PlaytestReport, Tried, judge, play_tries,
 };
+use trpg_bots::{BattleEntrant, BattleStage, Player, Targets, personas_from_ron};
+use trpg_content::{Content, battle_campaign};
+use trpg_core::{GameMode, LeadGender, LeadProfile, Turn};
 
 /// The command's usage text.
 pub const USAGE: &str = "usage: cargo xtask playtest <battle-id> [options]\n\n\
-A bot plays the battle assets/battles/<battle-id>.ron many times, each try\n\
-with fresh luck, and reports how the tries went (docs/playtesting.md).\n\n\
+Bots play the battle assets/battles/<battle-id>.ron many times, each try\n\
+with fresh luck, and report how the tries went and whether each persona\n\
+met its target (docs/playtesting.md). Exits with 1 when the battle is\n\
+blocked: Casual succeeds in under 20% of tries.\n\n\
 options:\n  \
---runs <n>         tries to play (default 100)\n  \
+--bot <bot>        who plays the player's side: baseline (default), casual,\n                     \
+normal, hardcore, or all (the three personas)\n  \
+--runs <n>         tries per bot (default 100)\n  \
 --seed <n>         seed of the first try; try i plays seed + i (default 1)\n  \
---mode <mode>      classic or casual (default classic)\n  \
+--mode <mode>      the baseline's mode: classic or casual (default classic);\n                     \
+a persona plays its own\n  \
 --turn-cap <n>     stop a try after this many turns (default 60)\n  \
---bot <bot>        who plays the player's side: baseline (default)\n  \
 --json <path>      also write the report as JSON\n  \
 --history <dir>    where every run is kept, to compare the next one with\n                     \
 (default target/playtest-history/)\n  \
@@ -38,34 +46,57 @@ options:\n  \
 /// Where runs are kept, from the repo root. Not committed.
 const DEFAULT_HISTORY: &str = "target/playtest-history";
 
+/// The personas' settings and the targets, from the repo root (dev
+/// tooling, not game content: ticket 0506).
+const PERSONAS_FILE: &str = "crates/bots/personas.ron";
+const TARGETS_FILE: &str = "crates/bots/targets.ron";
+
 /// The lead's name in a playtest.
 const LEAD_NAME: &str = "Lead";
 
 /// Who plays the player's side.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Bot {
-    /// The enemy AI on the player's side ([`BaselineBot`]).
+    /// The enemy AI on the player's side.
     Baseline,
+    /// The Casual persona.
+    Casual,
+    /// The Normal persona.
+    Normal,
+    /// The Hardcore persona.
+    Hardcore,
+    /// The three personas.
+    All,
 }
 
 impl Bot {
     fn parse(name: &str) -> Option<Bot> {
         match name {
             "baseline" => Some(Bot::Baseline),
+            "casual" => Some(Bot::Casual),
+            "normal" => Some(Bot::Normal),
+            "hardcore" => Some(Bot::Hardcore),
+            "all" => Some(Bot::All),
             _ => None,
         }
     }
 
-    fn name(self) -> &'static str {
+    /// Its name, as `--bot` takes it.
+    pub fn name(self) -> &'static str {
         match self {
             Bot::Baseline => "baseline",
+            Bot::Casual => "casual",
+            Bot::Normal => "normal",
+            Bot::Hardcore => "hardcore",
+            Bot::All => "all",
         }
     }
 
-    /// The bot for one try, seeded with the try's seed.
-    fn build(self, content: &Content, _seed: u64) -> Box<dyn PlayerBot> {
+    /// The entrants it stands for, by name.
+    fn entrants(self) -> Vec<&'static str> {
         match self {
-            Bot::Baseline => Box::new(BaselineBot::new(content.ai)),
+            Bot::All => vec!["casual", "normal", "hardcore"],
+            one => vec![one.name()],
         }
     }
 }
@@ -75,11 +106,11 @@ impl Bot {
 pub struct Options {
     /// The battle's id (its file stem).
     pub battle: String,
-    /// Tries to play.
+    /// Tries per bot.
     pub runs: u32,
     /// Seed of the first try.
     pub seed: u64,
-    /// Classic or Casual.
+    /// The baseline's mode.
     pub mode: GameMode,
     /// A try stops when this turn has passed.
     pub turn_cap: Turn,
@@ -168,201 +199,87 @@ fn mode_name(mode: GameMode) -> &'static str {
     }
 }
 
-/// How a try ended.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum TryResult {
-    /// The battle was won.
-    Won,
-    /// The battle was lost.
-    Lost,
-    /// The battle was still on when the turn cap passed.
-    TurnCap,
-}
-
-/// A player unit that fell in a try.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Fall {
-    /// The unit's name.
-    pub unit: String,
-    /// The turn it fell on.
-    pub turn: Turn,
-    /// Whether it is the lord (whose fall loses the battle).
-    pub lord: bool,
-}
-
-/// One try of the battle.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Try {
-    /// The battle seed it played; `--seed <this> --runs 1` plays it again.
-    pub seed: u64,
-    /// How it ended.
-    pub result: TryResult,
-    /// Turns it took (the turn cap if that stopped it).
-    pub turns: Turn,
-    /// The player units that fell, in order.
-    pub fallen: Vec<Fall>,
-    /// Consumables the player units used, by item id.
-    pub items: BTreeMap<String, u32>,
-    /// Commands applied, every side's.
-    pub commands: u32,
-}
-
-impl Try {
-    fn items_total(&self) -> u32 {
-        self.items.values().sum()
-    }
-
-    fn fallen_count(&self) -> u32 {
-        u32::try_from(self.fallen.len()).unwrap_or(u32::MAX)
-    }
-}
-
-/// The numbers over every try of a run.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
-pub struct Stats {
-    /// Tries won.
-    pub won: u32,
-    /// Tries lost.
-    pub lost: u32,
-    /// Tries stopped by the turn cap.
-    pub turn_cap: u32,
-    /// Tries won, in percent of all tries (rounded).
-    pub win_percent: u32,
-    /// Median turns (the lower of the two middle tries of an even count).
-    pub turns_median: Turn,
-    /// Fewest turns.
-    pub turns_min: Turn,
-    /// Most turns.
-    pub turns_max: Turn,
-    /// Player units fallen, over all tries.
-    pub fallen_total: u32,
-    /// Most player units fallen in one try.
-    pub fallen_max: u32,
-    /// Tries in which 0, 1, 2, and 3 or more player units fell.
-    pub fallen_per_try: [u32; 4],
-    /// How many tries each unit fell in, most often first (then by name).
-    pub fell_most: Vec<(String, u32)>,
-    /// Consumables used, over all tries.
-    pub items_total: u32,
-    /// Consumables used over all tries, by item id.
-    pub items: BTreeMap<String, u32>,
-}
-
-impl Stats {
-    /// The numbers of `tries`.
-    pub fn of(tries: &[Try]) -> Stats {
-        let count = |result| count(tries.iter().filter(|t| t.result == result));
-        let runs = count(TryResult::Won) + count(TryResult::Lost) + count(TryResult::TurnCap);
-        let won = count(TryResult::Won);
-        let mut turns: Vec<Turn> = tries.iter().map(|t| t.turns).collect();
-        turns.sort_unstable();
-        let mut stats = Stats {
-            won,
-            lost: count(TryResult::Lost),
-            turn_cap: count(TryResult::TurnCap),
-            win_percent: (won * 100 + runs / 2).checked_div(runs).unwrap_or(0),
-            turns_median: turns
-                .get(turns.len().saturating_sub(1) / 2)
-                .map_or(0, |&t| t),
-            turns_min: turns.first().map_or(0, |&t| t),
-            turns_max: turns.last().map_or(0, |&t| t),
-            ..Stats::default()
-        };
-        let mut fell: BTreeMap<&str, u32> = BTreeMap::new();
-        for t in tries {
-            let fallen = t.fallen_count();
-            stats.fallen_total += fallen;
-            stats.fallen_max = stats.fallen_max.max(fallen);
-            stats.fallen_per_try[t.fallen.len().min(3)] += 1;
-            for fall in &t.fallen {
-                *fell.entry(&fall.unit).or_default() += 1;
-            }
-            stats.items_total += t.items_total();
-            for (item, n) in &t.items {
-                *stats.items.entry(item.clone()).or_default() += n;
-            }
-        }
-        stats.fell_most = most_first(fell.into_iter().map(|(name, n)| (name.to_owned(), n)));
-        stats
-    }
-}
-
-fn count<T>(items: impl Iterator<Item = T>) -> u32 {
-    u32::try_from(items.count()).unwrap_or(u32::MAX)
-}
-
-/// `counts`, highest first, then by name.
-fn most_first(counts: impl Iterator<Item = (String, u32)>) -> Vec<(String, u32)> {
-    let mut counts: Vec<(String, u32)> = counts.collect();
-    counts.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
-    counts
-}
-
-/// A run's report: the same for the same arguments.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Report {
-    /// The battle's id.
-    pub battle: String,
+/// One entrant of a run as the report shows it.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Played {
+    /// Its name.
+    pub name: String,
     /// `Classic` or `Casual`.
     pub mode: String,
-    /// The bot's name.
-    pub bot: String,
-    /// Seed of the first try.
-    pub seed: u64,
-    /// Tries played.
-    pub runs: u32,
-    /// The turn cap.
-    pub turn_cap: Turn,
-    /// The numbers over every try.
-    pub stats: Stats,
-    /// Every try, by seed.
-    pub tries: Vec<Try>,
+    /// Wall time per try, in seconds (the speed line; it differs between
+    /// two runs with the same arguments).
+    pub seconds_per_try: f64,
 }
 
 /// A run as kept in the history and written by `--json`.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Record {
     /// When it ran, e.g. `2026-10-01 14:05 UTC`.
     pub date: String,
     /// The git commit it ran on (short hash), or `unknown`.
     pub commit: String,
-    /// Commands applied per second of play.
-    pub commands_per_second: u64,
-    /// The report.
-    #[serde(flatten)]
-    pub report: Report,
+    /// The battle's id.
+    pub battle: String,
+    /// The battle's tier (its `difficulty`).
+    pub tier: String,
+    /// The turn cap.
+    pub turn_cap: Turn,
+    /// Who played, in order.
+    pub played: Vec<Played>,
+    /// The engine's report: every try's measures and the checks.
+    pub report: PlaytestReport,
+}
+
+/// What a run found: the report's text, and whether the battle is blocked.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Ran {
+    /// The report's text.
+    pub text: String,
+    /// Whether a persona fell under its floor (the exit code is 1).
+    pub blocked: bool,
 }
 
 /// Runs the command: plays the tries, keeps the run in the history, writes
-/// the JSON file if asked, and returns the report's text.
-pub fn run(repo_root: &Path, options: &Options) -> Result<String, String> {
+/// the JSON file if asked, and returns the report.
+pub fn run(repo_root: &Path, options: &Options) -> Result<Ran, String> {
     let content = trpg_content::load_embedded().map_err(|e| format!("content: {e}"))?;
-    let (report, commands_per_second) = play(&content, options)?;
+    let read = |file: &str| {
+        std::fs::read_to_string(repo_root.join(file)).map_err(|e| format!("{file}: {e}"))
+    };
     let record = Record {
         date: utc_stamp(now()),
         commit: git_commit(repo_root),
-        commands_per_second,
-        report,
+        ..play(
+            &content,
+            &read(PERSONAS_FILE)?,
+            &read(TARGETS_FILE)?,
+            options,
+        )?
     };
     let default_history = repo_root.join(DEFAULT_HISTORY);
     let history = options.history.as_deref().unwrap_or(&default_history);
-    let file = history_file(history, &record.report);
+    let file = history_file(history, options);
     let previous = last_record(&file);
     append(&file, &record).map_err(|e| format!("{}: {e}", file.display()))?;
     if let Some(path) = &options.json {
         let json = serde_json::to_string_pretty(&record).map_err(|e| e.to_string())?;
         std::fs::write(path, json + "\n").map_err(|e| format!("{}: {e}", path.display()))?;
     }
-    Ok(render(&record, previous.as_ref()))
+    Ok(Ran {
+        text: render(&record, previous.as_ref()),
+        blocked: record.report.blocked,
+    })
 }
 
-/// A try and how long it took to play, or why it stopped.
-type Played = Result<(Try, Duration), String>;
-
-/// Plays every try of `options`' battle. Returns the report and the speed
-/// (commands per second of play).
-pub fn play(content: &Content, options: &Options) -> Result<(Report, u64), String> {
+/// Plays every try of `options` with the personas of `personas` (the text
+/// of `personas.ron`) and judges them with `targets` (`targets.ron`'s):
+/// the record, but for its date and commit.
+pub fn play(
+    content: &Content,
+    personas: &str,
+    targets: &str,
+    options: &Options,
+) -> Result<Record, String> {
     let Some(def) = content.battles.get(&options.battle) else {
         let known: Vec<&str> = content.battles.keys().map(String::as_str).collect();
         return Err(format!(
@@ -373,278 +290,289 @@ pub fn play(content: &Content, options: &Options) -> Result<(Report, u64), Strin
     };
     // The army: the characters of the battle's player slots, fresh from the
     // character data (as the debug Quick Battle fields them).
-    let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
-    let campaign = battle_campaign(content, def, options.mode, lead);
-    let setup = campaign.battle_setup(def, &content.tables());
+    let setup = |mode| {
+        let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
+        battle_campaign(content, def, mode, lead).battle_setup(def, &content.tables())
+    };
+    let stage = BattleStage {
+        classic: setup(GameMode::Classic),
+        casual: setup(GameMode::Casual),
+    };
+    let personas = personas_from_ron(personas)?;
+    let targets = Targets::from_ron(targets)?;
+    let entrants = options
+        .bot
+        .entrants()
+        .into_iter()
+        .map(|name| match personas.get(name) {
+            Some(persona) => Ok(BattleEntrant::persona(name, *persona, content.ai, &stage)),
+            None if name == "baseline" => Ok(BattleEntrant::new(
+                name,
+                options.mode,
+                Player::Baseline,
+                content.ai,
+                &stage,
+            )),
+            None => Err(format!("no persona \"{name}\" in {PERSONAS_FILE}")),
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+    let names: Vec<&str> = entrants.iter().map(|e| e.name()).collect();
+    let checks = targets.checks(def.difficulty, &names);
 
+    let (tries, took) = play_on_threads(&stage, &entrants, options)?;
+    let report = judge(tries, &checks).map_err(|e| e.to_string())?;
+    let runs = f64::from(options.runs);
+    let played = entrants
+        .iter()
+        .zip(took)
+        .map(|(entrant, took)| Played {
+            name: entrant.name().to_owned(),
+            mode: mode_name(entrant.mode()).to_owned(),
+            seconds_per_try: took.as_secs_f64() / runs,
+        })
+        .collect();
+    Ok(Record {
+        date: String::new(),
+        commit: String::new(),
+        battle: options.battle.clone(),
+        tier: format!("{:?}", def.difficulty),
+        turn_cap: options.turn_cap,
+        played,
+        report,
+    })
+}
+
+/// Every entrant's tries, played try by try on the threads (each try is
+/// timed), with the time each entrant's tries took in all.
+fn play_on_threads(
+    stage: &BattleStage,
+    entrants: &[BattleEntrant],
+    options: &Options,
+) -> Result<(Vec<(String, Vec<Tried>)>, Vec<Duration>), String> {
     let cores = std::thread::available_parallelism().map_or(1, std::num::NonZero::get);
     let threads = options.threads.unwrap_or(cores).max(1);
-    let (setup, runs) = (&setup, options.runs);
-    let mut played: Vec<(u32, Played)> = std::thread::scope(|scope| {
+    let work: Vec<(usize, u64)> = (0..entrants.len())
+        .flat_map(|e| (0..options.runs).map(move |i| (e, u64::from(i))))
+        .collect();
+    let work = &work;
+    type Done = Result<(usize, Vec<Tried>, Duration), String>;
+    let done: Vec<Done> = std::thread::scope(|scope| {
         let workers: Vec<_> = (0..threads)
             .map(|worker| {
                 scope.spawn(move || {
-                    (0..runs)
-                        .filter(|&i| usize::try_from(i).is_ok_and(|i| i % threads == worker))
-                        .map(|i| (i, play_try(content, setup, options, i)))
-                        .collect::<Vec<_>>()
+                    work.iter()
+                        .skip(worker)
+                        .step_by(threads)
+                        .map(|&(e, i)| {
+                            let entrant = &entrants[e];
+                            let seed = options.seed.wrapping_add(i);
+                            let started = Instant::now();
+                            let tried =
+                                play_tries(stage, entrant, seed..seed + 1, options.turn_cap)
+                                    .map_err(|err| {
+                                        format!("{}: try {seed}: {err}", entrant.name())
+                                    })?;
+                            Ok((e, tried, started.elapsed()))
+                        })
+                        .collect::<Vec<Done>>()
                 })
             })
             .collect();
         let joined = workers.into_iter().flat_map(|worker| match worker.join() {
-            Ok(tries) => tries,
+            Ok(done) => done,
             Err(panic) => std::panic::resume_unwind(panic),
         });
         joined.collect()
     });
-    played.sort_by_key(|&(i, _)| i);
-
-    let mut tries = Vec::new();
-    let mut elapsed = Duration::ZERO;
-    for (_, result) in played {
-        let (one, took) = result?;
-        tries.push(one);
-        elapsed += took;
-    }
-    let commands: u64 = tries.iter().map(|t| u64::from(t.commands)).sum();
-    let report = Report {
-        battle: options.battle.clone(),
-        mode: mode_name(options.mode).to_owned(),
-        bot: options.bot.name().to_owned(),
-        seed: options.seed,
-        runs,
-        turn_cap: options.turn_cap,
-        stats: Stats::of(&tries),
-        tries,
-    };
-    Ok((report, per_second(commands, elapsed)))
-}
-
-/// Plays try `index` of `setup`: the battle with seed `options.seed + index`.
-fn play_try(content: &Content, setup: &BattleSetup, options: &Options, index: u32) -> Played {
-    let seed = options.seed.wrapping_add(u64::from(index));
-    let mut setup = setup.clone();
-    setup.seed = seed;
-    let (state, _) = BattleState::new(setup);
-    let cast = cast(&state);
-    let mut bot = options.bot.build(content, seed);
-    let started = Instant::now();
-    let measures = play_battle(state, bot.as_mut(), &content.ai, options.turn_cap)
-        .map_err(|e| format!("try {seed}: {e}"))?;
-    let took = started.elapsed();
-    Ok((to_try(seed, &measures, &cast, options.turn_cap), took))
-}
-
-/// Name and whether it is the lord, for every unit of the battle
-/// (reinforcements included).
-fn cast(state: &BattleState) -> BTreeMap<UnitId, (String, bool)> {
-    let waiting = state.reinforcements().iter().map(|r| &r.unit);
-    state
-        .units()
+    let mut tries: Vec<(String, Vec<Tried>)> = entrants
         .iter()
-        .chain(waiting)
-        .map(|u| (u.id, (u.name.clone(), u.is_lord)))
-        .collect()
-}
-
-/// The try with seed `seed` whose measures are `measures`.
-fn to_try(
-    seed: u64,
-    measures: &BattleMeasures,
-    cast: &BTreeMap<UnitId, (String, bool)>,
-    turn_cap: Turn,
-) -> Try {
-    let fallen = measures.player_fallen.iter().map(|&(id, turn)| {
-        let (unit, lord) = cast
-            .get(&id)
-            .cloned()
-            .unwrap_or_else(|| (format!("unit {}", id.0), false));
-        Fall { unit, turn, lord }
-    });
-    let items = measures.items_used.iter();
-    Try {
-        seed,
-        result: match measures.outcome {
-            Some(Outcome::Victory) => TryResult::Won,
-            Some(Outcome::Defeat) => TryResult::Lost,
-            None => TryResult::TurnCap,
-        },
-        turns: measures.turns.min(turn_cap),
-        fallen: fallen.collect(),
-        items: items.map(|(item, &n)| (item.0.clone(), n)).collect(),
-        commands: measures.commands,
+        .map(|e| (e.name().to_owned(), Vec::new()))
+        .collect();
+    let mut took = vec![Duration::ZERO; entrants.len()];
+    for one in done {
+        let (e, mut tried, elapsed) = one?;
+        tries[e].1.append(&mut tried);
+        took[e] += elapsed;
     }
+    Ok((tries, took))
 }
 
-/// `commands` per second over `elapsed`; 0 if no time passed.
-fn per_second(commands: u64, elapsed: Duration) -> u64 {
-    let per_second = (u128::from(commands) * 1_000_000_000).checked_div(elapsed.as_nanos());
-    u64::try_from(per_second.unwrap_or(0)).unwrap_or(u64::MAX)
-}
-
-/// The report's text: the numbers, with `previous`' headline numbers next
-/// to them if there was a run before, then one line per try.
+/// The report's text: a header, the engine's table (the checks and every
+/// try), then the game's own lines per entrant, with `previous`' numbers
+/// as `was …` if there was a run before.
 pub fn render(record: &Record, previous: Option<&Record>) -> String {
-    let report = &record.report;
-    let stats = &report.stats;
-    let before = previous.map(|p| (&p.report.stats, p.report.runs));
-    let was = |number: &dyn Fn(&Stats, u32) -> String| {
-        before.map_or_else(String::new, |(stats, runs)| {
-            format!(" (was {})", number(stats, runs))
-        })
-    };
     let mut out = String::new();
+    let names: Vec<&str> = record.played.iter().map(|p| p.name.as_str()).collect();
     // Writing to a `String` can't fail.
     let _ = writeln!(
         out,
-        "{} · {} · {} · {}",
-        report.battle,
-        report.mode,
-        report.bot,
-        tries_and_seeds(report)
+        "{} · {} tier · {} · turn cap {}",
+        record.battle,
+        record.tier,
+        names.join(", "),
+        record.turn_cap
     );
-    let _ = writeln!(
-        out,
-        "won {}  lost {}  turn cap {}   ({}%{})",
-        stats.won,
-        stats.lost,
-        stats.turn_cap,
-        stats.win_percent,
-        before.map_or_else(String::new, |(s, _)| format!(", was {}%", s.win_percent)),
-    );
-    let _ = writeln!(
-        out,
-        "turns     median {}{}  min {}  max {}",
-        stats.turns_median,
-        was(&|s, _| s.turns_median.to_string()),
-        stats.turns_min,
-        stats.turns_max
-    );
-    let _ = writeln!(
-        out,
-        "fallen    mean {}{}   max {}",
-        mean(stats.fallen_total, report.runs),
-        was(&|s, runs| mean(s.fallen_total, runs)),
-        stats.fallen_max
-    );
-    let per_item: Vec<String> = most_first(stats.items.clone().into_iter())
-        .iter()
-        .map(|(item, n)| format!("{item} {}", mean(*n, report.runs)))
-        .collect();
-    let _ = write!(
-        out,
-        "items     mean {}{}",
-        mean(stats.items_total, report.runs),
-        was(&|s, runs| mean(s.items_total, runs))
-    );
-    if !per_item.is_empty() {
-        let _ = write!(out, "   ({})", per_item.join(", "));
-    }
+    let _ = write!(out, "{}", record.report);
     out.push('\n');
-    let [none, one, two, more] = stats.fallen_per_try;
-    let most: Vec<String> = stats.fell_most.iter().take(3).map(times).collect();
-    let _ = writeln!(
-        out,
-        "fallen/try 0: {none}  1: {one}  2: {two}  3+: {more}   most: {}",
-        if most.is_empty() {
-            "nobody".to_owned()
-        } else {
-            most.join(", ")
-        }
-    );
-    let _ = writeln!(
-        out,
-        "speed     {} commands/s",
-        grouped(record.commands_per_second)
-    );
-    if let Some(p) = previous {
+    let width = names.iter().map(|n| n.chars().count()).max().unwrap_or(0);
+    for played in &record.played {
+        let Some(entrant) = record
+            .report
+            .entrants
+            .iter()
+            .find(|e| e.name == played.name)
+        else {
+            continue;
+        };
+        let lines = Lines::of(&played.mode, &entrant.tries);
+        let pad = " ".repeat(width + 13);
         let _ = writeln!(
             out,
-            "previous  {} · commit {} · {}",
-            p.date,
-            p.commit,
-            tries_and_seeds(&p.report)
+            "{:<width$} · {:<7} · won {}/{} · {} per try  {} · most: {}",
+            played.name,
+            played.mode,
+            lines.won,
+            lines.count,
+            lines.falls_name,
+            lines.falls_per_try(),
+            lines.fell_most.as_deref().unwrap_or("nobody"),
+        );
+        let _ = writeln!(
+            out,
+            "{pad}items per try  median {}  max {} · turns median {} · {:.2} s per try{}",
+            lines.items_median,
+            lines.items_max,
+            lines.turns_median,
+            played.seconds_per_try,
+            was(&record.report, previous, &played.name),
         );
     }
-    out.push('\n');
-    for one in &report.tries {
-        out.push_str(&try_line(one));
-        out.push('\n');
+    if let Some(p) = previous {
+        let _ = writeln!(out, "previous  {} · commit {}", p.date, p.commit);
     }
     out
 }
 
-/// `100 tries (seeds 1–100)`.
-fn tries_and_seeds(report: &Report) -> String {
-    let last = u64::from(report.runs.saturating_sub(1));
-    format!(
-        "{} tries (seeds {}–{})",
-        report.runs,
-        report.seed,
-        report.seed.wrapping_add(last)
-    )
+/// The game's numbers of one entrant's tries.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Lines {
+    count: usize,
+    won: i64,
+    /// `deaths` in Classic, `retreats` in Casual.
+    falls_name: &'static str,
+    /// Tries in which 0, 1, 2, and 3 or more player units fell.
+    falls: [u32; 4],
+    /// The unit that fell in the most tries, and how many (`Kael 41×`).
+    fell_most: Option<String>,
+    items_median: i64,
+    items_max: i64,
+    turns_median: i64,
 }
 
-/// `Mira 22×`.
-fn times((name, n): &(String, u32)) -> String {
-    format!("{name} {n}×")
-}
-
-/// `total / runs` to one decimal.
-fn mean(total: u32, runs: u32) -> String {
-    format!("{:.1}", f64::from(total) / f64::from(runs.max(1)))
-}
-
-/// `n` with a space between each three digits: `41 200`.
-fn grouped(n: u64) -> String {
-    let digits = n.to_string();
-    let mut out = String::new();
-    for (i, digit) in digits.chars().enumerate() {
-        if i > 0 && (digits.len() - i).is_multiple_of(3) {
-            out.push(' ');
-        }
-        out.push(digit);
-    }
-    out
-}
-
-/// `try 17 · lost (lord fell T9) · fell: Mira T6, Kael T8 · items 2 · turns 9`.
-fn try_line(one: &Try) -> String {
-    let result = match one.result {
-        TryResult::Won => "won".to_owned(),
-        TryResult::TurnCap => "turn cap".to_owned(),
-        TryResult::Lost => match one.fallen.iter().find(|f| f.lord) {
-            Some(lord) => format!("lost (lord fell T{})", lord.turn),
-            None => "lost".to_owned(),
-        },
-    };
-    let fell: Vec<String> = one
-        .fallen
-        .iter()
-        .map(|f| format!("{} T{}", f.unit, f.turn))
-        .collect();
-    format!(
-        "try {} · {result} · fell: {} · items {} · turns {}",
-        one.seed,
-        if fell.is_empty() {
-            "nobody".to_owned()
+impl Lines {
+    fn of(mode: &str, tries: &[Tried]) -> Lines {
+        let falls_name = if mode == "Casual" {
+            "retreats"
         } else {
-            fell.join(", ")
-        },
-        one.items_total(),
-        one.turns
-    )
+            "deaths"
+        };
+        let measure = |name: &str| -> Vec<i64> {
+            tries
+                .iter()
+                .map(|t| t.measures.get(name).copied().unwrap_or(0))
+                .collect()
+        };
+        let mut falls = [0; 4];
+        for n in measure(falls_name) {
+            falls[usize::try_from(n.clamp(0, 3)).unwrap_or(3)] += 1;
+        }
+        let mut fell: BTreeMap<&str, u32> = BTreeMap::new();
+        for t in tries {
+            let units = t.measures.keys().filter_map(|k| k.strip_prefix("fell "));
+            for unit in units.filter(|u| !u.ends_with(" turn")) {
+                *fell.entry(unit).or_default() += 1;
+            }
+        }
+        // Most often first, then by name.
+        let most = fell
+            .iter()
+            .max_by(|a, b| a.1.cmp(b.1).then_with(|| b.0.cmp(a.0)));
+        let items = measure("items");
+        Lines {
+            count: tries.len(),
+            won: measure("won").iter().sum(),
+            falls_name,
+            falls,
+            fell_most: most.map(|(unit, n)| format!("{unit} {n}×")),
+            items_median: median(items.clone()),
+            items_max: items.into_iter().max().unwrap_or(0),
+            turns_median: median(measure("turns")),
+        }
+    }
+
+    /// `0: 30  1: 21  2: 25  3+: 24`.
+    fn falls_per_try(&self) -> String {
+        let [none, one, two, more] = self.falls;
+        format!("0: {none}  1: {one}  2: {two}  3+: {more}")
+    }
 }
 
-/// The history file of `report`'s battle, mode and bot in `dir`: one run
-/// per line, oldest first.
-fn history_file(dir: &Path, report: &Report) -> PathBuf {
-    let name = format!(
-        "{}-{}-{}.jsonl",
-        report.battle,
-        report.mode.to_lowercase(),
-        report.bot
-    );
+/// The median of `values`, the lower middle one of an even count; 0 for
+/// none.
+fn median(mut values: Vec<i64>) -> i64 {
+    values.sort_unstable();
+    values
+        .get(values.len().saturating_sub(1) / 2)
+        .copied()
+        .unwrap_or(0)
+}
+
+/// ` · was 47/100 succeed` (or ` · was won 63/100` for an entrant with no
+/// check): `name`'s headline number in `previous`, if it played there.
+fn was(report: &PlaytestReport, previous: Option<&Record>, name: &str) -> String {
+    let Some(previous) = previous else {
+        return String::new();
+    };
+    let rate = |report: &PlaytestReport| {
+        report
+            .checks
+            .iter()
+            .find_map(|j| match (&j.check, &j.found) {
+                (
+                    Check::Rate { entrant, .. },
+                    Found::Rate {
+                        successes, count, ..
+                    },
+                ) if entrant == name => Some((*successes, *count)),
+                _ => None,
+            })
+    };
+    if rate(report).is_some() {
+        return rate(&previous.report)
+            .map_or_else(String::new, |(s, n)| format!(" · was {s}/{n} succeed"));
+    }
+    let Some(entrant) = previous.report.entrants.iter().find(|e| e.name == name) else {
+        return String::new();
+    };
+    let won: i64 = entrant
+        .tries
+        .iter()
+        .filter_map(|t| t.measures.get("won"))
+        .sum();
+    format!(" · was won {won}/{}", entrant.tries.len())
+}
+
+/// The history file of `options`' battle and bot in `dir` (and mode, for
+/// the baseline): one run per line, oldest first.
+fn history_file(dir: &Path, options: &Options) -> PathBuf {
+    let name = match options.bot {
+        Bot::Baseline => format!(
+            "{}-baseline-{}.jsonl",
+            options.battle,
+            mode_name(options.mode).to_lowercase()
+        ),
+        bot => format!("{}-{}.jsonl", options.battle, bot.name()),
+    };
     dir.join(name)
 }
 

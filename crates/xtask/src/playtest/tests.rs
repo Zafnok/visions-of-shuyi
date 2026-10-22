@@ -9,88 +9,24 @@ fn args(items: &[&str]) -> Vec<String> {
     items.iter().map(|s| (*s).to_string()).collect()
 }
 
+fn root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
+}
+
+fn personas() -> String {
+    std::fs::read_to_string(root().join(PERSONAS_FILE)).unwrap()
+}
+
+fn targets() -> String {
+    std::fs::read_to_string(root().join(TARGETS_FILE)).unwrap()
+}
+
 /// A fresh, empty folder for test `name`.
 fn temp_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("xtask-playtest-{name}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     dir
-}
-
-fn fall(unit: &str, turn: Turn) -> Fall {
-    Fall {
-        unit: unit.to_owned(),
-        turn,
-        lord: false,
-    }
-}
-
-fn a_try(
-    seed: u64,
-    result: TryResult,
-    turns: Turn,
-    fallen: Vec<Fall>,
-    items: &[(&str, u32)],
-) -> Try {
-    Try {
-        seed,
-        result,
-        turns,
-        fallen,
-        items: items.iter().map(|&(i, n)| (i.to_owned(), n)).collect(),
-        commands: 10,
-    }
-}
-
-/// Five tries: three won, one lost with the lord fallen, one at the cap.
-fn five_tries() -> Vec<Try> {
-    let lord = Fall {
-        unit: "Shuyi".to_owned(),
-        turn: 9,
-        lord: true,
-    };
-    vec![
-        a_try(1, TryResult::Won, 14, vec![], &[("vulnerary", 2)]),
-        a_try(2, TryResult::Won, 11, vec![fall("Mira", 6)], &[]),
-        a_try(
-            3,
-            TryResult::Lost,
-            9,
-            vec![fall("Mira", 6), fall("Kael", 8), lord],
-            &[("vulnerary", 1), ("antidote", 1)],
-        ),
-        a_try(4, TryResult::TurnCap, 60, vec![fall("Kael", 3)], &[]),
-        a_try(
-            5,
-            TryResult::Won,
-            22,
-            vec![
-                fall("Mira", 2),
-                fall("Kael", 4),
-                fall("Bors", 5),
-                fall("Anna", 5),
-            ],
-            &[("vulnerary", 4)],
-        ),
-    ]
-}
-
-fn record(tries: Vec<Try>) -> Record {
-    Record {
-        date: "2026-10-01 14:05 UTC".to_owned(),
-        commit: "abc1234".to_owned(),
-        commands_per_second: 41_200,
-        report: Report {
-            battle: "ch01".to_owned(),
-            mode: "Classic".to_owned(),
-            bot: "baseline".to_owned(),
-            seed: 1,
-            runs: u32::try_from(tries.len()).unwrap(),
-            turn_cap: 60,
-            stats: Stats::of(&tries),
-            tries,
-        },
-    }
 }
 
 #[test]
@@ -120,7 +56,7 @@ fn parse_args_reads_every_option() {
         "--turn-cap",
         "30",
         "--bot",
-        "baseline",
+        "all",
         "--json",
         "out.json",
         "--history",
@@ -135,7 +71,7 @@ fn parse_args_reads_every_option() {
         seed: 7,
         mode: GameMode::Casual,
         turn_cap: 30,
-        bot: Bot::Baseline,
+        bot: Bot::All,
         json: Some(PathBuf::from("out.json")),
         history: Some(PathBuf::from("runs")),
         threads: Some(2),
@@ -143,6 +79,16 @@ fn parse_args_reads_every_option() {
     assert_eq!(options, expected);
     let classic = parse_args(&args(&["ch01", "--mode", "classic", "--seed", "0"])).unwrap();
     assert_eq!((classic.mode, classic.seed), (GameMode::Classic, 0));
+    for bot in [
+        Bot::Baseline,
+        Bot::Casual,
+        Bot::Normal,
+        Bot::Hardcore,
+        Bot::All,
+    ] {
+        let parsed = parse_args(&args(&["ch01", "--bot", bot.name()])).unwrap();
+        assert_eq!(parsed.bot, bot);
+    }
 }
 
 #[test]
@@ -165,8 +111,8 @@ fn parse_args_refuses_bad_arguments() {
         "--turn-cap: bad value \"0\""
     );
     assert_eq!(
-        error(&["a", "--bot", "casual"]),
-        "--bot: bad value \"casual\""
+        error(&["a", "--bot", "veteran"]),
+        "--bot: bad value \"veteran\""
     );
     assert_eq!(
         error(&["a", "--threads", "0"]),
@@ -175,194 +121,223 @@ fn parse_args_refuses_bad_arguments() {
 }
 
 #[test]
-fn stats_count_the_tries() {
-    let stats = Stats::of(&five_tries());
-    let expected = Stats {
-        won: 3,
-        lost: 1,
-        turn_cap: 1,
-        win_percent: 60,
-        turns_median: 14,
-        turns_min: 9,
-        turns_max: 60,
-        fallen_total: 9,
-        fallen_max: 4,
-        fallen_per_try: [1, 2, 0, 2],
-        fell_most: vec![
-            ("Kael".to_owned(), 3),
-            ("Mira".to_owned(), 3),
-            ("Anna".to_owned(), 1),
-            ("Bors".to_owned(), 1),
-            ("Shuyi".to_owned(), 1),
+fn all_is_the_three_personas() {
+    assert_eq!(Bot::All.entrants(), ["casual", "normal", "hardcore"]);
+    assert_eq!(Bot::Normal.entrants(), ["normal"]);
+    assert_eq!(Bot::Baseline.entrants(), ["baseline"]);
+}
+
+// ---- The game's report lines --------------------------------------------------
+
+/// A try of seed `seed`.
+fn tried(seed: u64, measures: &[(&str, i64)]) -> Tried {
+    Tried {
+        seed,
+        outcome: Some("Victory".to_owned()),
+        turns: 9,
+        measures: measures.iter().map(|&(n, v)| (n.to_owned(), v)).collect(),
+    }
+}
+
+/// Five tries of a Classic persona.
+fn five_tries() -> Vec<Tried> {
+    vec![
+        tried(1, &[("won", 1), ("deaths", 0), ("items", 2), ("turns", 14)]),
+        tried(
+            2,
+            &[
+                ("won", 1),
+                ("deaths", 1),
+                ("fell Mira", 1),
+                ("fell Mira turn", 6),
+                ("items", 0),
+                ("turns", 11),
+            ],
+        ),
+        tried(
+            3,
+            &[
+                ("won", 0),
+                ("deaths", 3),
+                ("fell Mira", 1),
+                ("fell Mira turn", 6),
+                ("fell Kael", 1),
+                ("fell Kael turn", 8),
+                ("fell Shuyi", 1),
+                ("fell Shuyi turn", 9),
+                ("items", 2),
+                ("turns", 9),
+            ],
+        ),
+        tried(
+            4,
+            &[
+                ("won", 0),
+                ("deaths", 1),
+                ("fell Kael", 1),
+                ("items", 0),
+                ("turns", 60),
+            ],
+        ),
+        tried(5, &[("won", 1), ("deaths", 5), ("items", 4), ("turns", 22)]),
+    ]
+}
+
+#[test]
+fn lines_count_the_tries() {
+    let lines = Lines::of("Classic", &five_tries());
+    assert_eq!(
+        lines,
+        Lines {
+            count: 5,
+            won: 3,
+            falls_name: "deaths",
+            falls: [1, 2, 0, 2],
+            fell_most: Some("Kael 2×".to_owned()),
+            items_median: 2,
+            items_max: 4,
+            turns_median: 14,
+        }
+    );
+    assert_eq!(lines.falls_per_try(), "0: 1  1: 2  2: 0  3+: 2");
+    // In Casual the falls are retreats.
+    let casual = vec![tried(1, &[("retreats", 2), ("deaths", 0)])];
+    let lines = Lines::of("Casual", &casual);
+    assert_eq!((lines.falls_name, lines.falls), ("retreats", [0, 0, 1, 0]));
+    // Nothing at all.
+    let none = Lines::of("Classic", &[]);
+    assert_eq!((none.won, none.fell_most, none.turns_median), (0, None, 0));
+}
+
+#[test]
+fn the_unit_that_fell_most_ties_go_by_name() {
+    let tries = vec![
+        tried(1, &[("fell Bors", 1), ("fell Anna", 1)]),
+        tried(2, &[("fell Bors", 1), ("fell Anna", 1)]),
+    ];
+    assert_eq!(
+        Lines::of("Classic", &tries).fell_most.as_deref(),
+        Some("Anna 2×")
+    );
+}
+
+#[test]
+fn median_is_the_lower_middle() {
+    assert_eq!(median(vec![]), 0);
+    assert_eq!(median(vec![5]), 5);
+    assert_eq!(median(vec![9, 1]), 1);
+    assert_eq!(median(vec![3, 9, 1]), 3);
+    assert_eq!(median(vec![4, 3, 9, 1]), 3);
+}
+
+/// A run of Normal's `five_tries` on a Normal-tier `ch01`, judged by the
+/// real targets.
+fn record() -> Record {
+    let checks = Targets::from_ron(&targets())
+        .unwrap()
+        .checks(trpg_core::Difficulty::Normal, &["normal", "baseline"]);
+    let report = judge(
+        vec![
+            ("normal".to_owned(), five_tries()),
+            ("baseline".to_owned(), five_tries()[..2].to_vec()),
         ],
-        items_total: 8,
-        items: [("antidote".to_owned(), 1), ("vulnerary".to_owned(), 7)].into(),
-    };
-    assert_eq!(stats, expected);
-}
-
-#[test]
-fn stats_of_no_tries_are_zero() {
-    assert_eq!(Stats::of(&[]), Stats::default());
-}
-
-#[test]
-fn stats_median_is_the_lower_middle_try() {
-    let turns = |turns: &[Turn]| {
-        let tries: Vec<Try> = turns
-            .iter()
-            .map(|&t| a_try(1, TryResult::Won, t, vec![], &[]))
-            .collect();
-        Stats::of(&tries).turns_median
-    };
-    assert_eq!(turns(&[4]), 4);
-    assert_eq!(turns(&[9, 3]), 3);
-    assert_eq!(turns(&[9, 3, 5]), 5);
-    assert_eq!(turns(&[9, 3, 7, 5]), 5);
-    assert_eq!(turns(&[9, 3, 7, 5, 11]), 7);
-}
-
-#[test]
-fn stats_win_percent_is_rounded() {
-    let percent = |won: usize, lost: usize| {
-        let mut tries = vec![a_try(1, TryResult::Won, 1, vec![], &[]); won];
-        tries.extend(vec![a_try(1, TryResult::Lost, 1, vec![], &[]); lost]);
-        Stats::of(&tries).win_percent
-    };
-    assert_eq!(percent(1, 2), 33);
-    assert_eq!(percent(2, 1), 67);
-    assert_eq!(percent(1, 7), 13);
-    assert_eq!(percent(3, 0), 100);
-    assert_eq!(percent(0, 3), 0);
-}
-
-#[test]
-fn stats_two_fallen_go_in_their_own_column() {
-    let tries = [a_try(
-        1,
-        TryResult::Won,
-        1,
-        vec![fall("Mira", 1), fall("Kael", 1)],
-        &[],
-    )];
-    assert_eq!(Stats::of(&tries).fallen_per_try, [0, 0, 1, 0]);
+        &checks,
+    )
+    .unwrap();
+    Record {
+        date: "2026-10-01 14:05 UTC".to_owned(),
+        commit: "abc1234".to_owned(),
+        battle: "ch01".to_owned(),
+        tier: "Normal".to_owned(),
+        turn_cap: 60,
+        played: vec![
+            Played {
+                name: "normal".to_owned(),
+                mode: "Classic".to_owned(),
+                seconds_per_try: 1.234,
+            },
+            Played {
+                name: "baseline".to_owned(),
+                mode: "Classic".to_owned(),
+                seconds_per_try: 0.01,
+            },
+        ],
+        report,
+    }
 }
 
 #[test]
 fn render_matches_the_layout() {
-    let text = render(&record(five_tries()), None);
-    let expected = "\
-ch01 · Classic · baseline · 5 tries (seeds 1–5)
-won 3  lost 1  turn cap 1   (60%)
-turns     median 14  min 9  max 60
-fallen    mean 1.8   max 4
-items     mean 1.6   (vulnerary 1.4, antidote 0.2)
-fallen/try 0: 1  1: 2  2: 0  3+: 2   most: Kael 3×, Mira 3×, Anna 1×
-speed     41 200 commands/s
-
-try 1 · won · fell: nobody · items 2 · turns 14
-try 2 · won · fell: Mira T6 · items 0 · turns 11
-try 3 · lost (lord fell T9) · fell: Mira T6, Kael T8, Shuyi T9 · items 2 · turns 9
-try 4 · turn cap · fell: Kael T3 · items 0 · turns 60
-try 5 · won · fell: Mira T2, Kael T4, Bors T5, Anna T5 · items 4 · turns 22
-";
+    let record = record();
+    let text = render(&record, None);
+    let table = record.report.to_string();
+    let expected = format!(
+        "ch01 · Normal tier · normal, baseline · turn cap 60\n\
+         {table}\n\
+         normal   · Classic · won 3/5 · deaths per try  0: 1  1: 2  2: 0  3+: 2 · most: Kael 2×\n\
+         \x20                    items per try  median 2  max 4 · turns median 14 · 1.23 s per try\n\
+         baseline · Classic · won 2/2 · deaths per try  0: 1  1: 1  2: 0  3+: 0 · most: Mira 1×\n\
+         \x20                    items per try  median 0  max 2 · turns median 11 · 0.01 s per try\n"
+    );
     assert_eq!(text, expected);
+    // The engine's table has the band check.
+    assert!(table.contains("normal · 1/5 succeed"), "{table}");
+    assert!(table.contains("band 50–75%   ✗ too hard"), "{table}");
 }
 
 #[test]
 fn render_shows_the_previous_runs_numbers() {
-    let mut previous = record(vec![
-        a_try(
-            11,
-            TryResult::Lost,
-            8,
-            vec![fall("Mira", 6)],
-            &[("vulnerary", 1)],
-        ),
-        a_try(12, TryResult::Won, 12, vec![], &[]),
-        a_try(13, TryResult::Lost, 30, vec![], &[]),
-        a_try(14, TryResult::Lost, 4, vec![], &[("vulnerary", 2)]),
-    ]);
-    previous.date = "2026-09-30 08:00 UTC".to_owned();
+    let mut previous = record();
     previous.commit = "fd6920d".to_owned();
-    previous.report.seed = 11;
-    let text = render(&record(five_tries()), Some(&previous));
-    let head: Vec<&str> = text.lines().take(9).collect();
-    let expected = [
-        "ch01 · Classic · baseline · 5 tries (seeds 1–5)",
-        "won 3  lost 1  turn cap 1   (60%, was 25%)",
-        "turns     median 14 (was 8)  min 9  max 60",
-        "fallen    mean 1.8 (was 0.2)   max 4",
-        "items     mean 1.6 (was 0.8)   (vulnerary 1.4, antidote 0.2)",
-        "fallen/try 0: 1  1: 2  2: 0  3+: 2   most: Kael 3×, Mira 3×, Anna 1×",
-        "speed     41 200 commands/s",
-        "previous  2026-09-30 08:00 UTC · commit fd6920d · 4 tries (seeds 11–14)",
-        "",
-    ];
-    assert_eq!(head, expected);
-    assert_eq!(text.lines().count(), 9 + 5);
+    previous.report.entrants[1].tries.truncate(1);
+    let mut now = record();
+    now.report.entrants[0].tries[3]
+        .measures
+        .insert("deaths".to_owned(), 0);
+    now.report = judge(
+        now.report
+            .entrants
+            .iter()
+            .map(|e| (e.name.clone(), e.tries.clone()))
+            .collect(),
+        &now.report
+            .checks
+            .iter()
+            .map(|j| j.check.clone())
+            .collect::<Vec<_>>(),
+    )
+    .unwrap();
+    let text = render(&now, Some(&previous));
+    assert!(
+        text.contains("1.23 s per try · was 1/5 succeed\n"),
+        "{text}"
+    );
+    assert!(text.contains("0.01 s per try · was won 1/1\n"), "{text}");
+    assert!(
+        text.ends_with("previous  2026-10-01 14:05 UTC · commit fd6920d\n"),
+        "{text}"
+    );
+    // An entrant the previous run didn't have: no `was`.
+    let mut other = record();
+    other.report.entrants.retain(|e| e.name == "normal");
+    other.report.checks.clear();
+    let text = render(&record(), Some(&other));
+    assert!(text.contains("0.01 s per try\n"), "{text}");
 }
 
 #[test]
-fn render_with_nothing_fallen_or_used() {
-    let text = render(
-        &record(vec![a_try(1, TryResult::Won, 3, vec![], &[])]),
-        None,
-    );
-    let lines: Vec<&str> = text.lines().collect();
-    assert_eq!(lines[3], "fallen    mean 0.0   max 0");
-    assert_eq!(lines[4], "items     mean 0.0");
+fn was_reads_the_previous_rate_or_wins() {
+    let record = record();
+    assert_eq!(was(&record.report, None, "normal"), "");
     assert_eq!(
-        lines[5],
-        "fallen/try 0: 1  1: 0  2: 0  3+: 0   most: nobody"
-    );
-}
-
-#[test]
-fn try_line_says_how_a_loss_came() {
-    let lost = |fallen| try_line(&a_try(17, TryResult::Lost, 9, fallen, &[("vulnerary", 2)]));
-    let lord = Fall {
-        unit: "Kael".to_owned(),
-        turn: 9,
-        lord: true,
-    };
-    assert_eq!(
-        lost(vec![fall("Mira", 6), lord]),
-        "try 17 · lost (lord fell T9) · fell: Mira T6, Kael T9 · items 2 · turns 9"
-    );
-    assert_eq!(
-        lost(vec![fall("Mira", 6)]),
-        "try 17 · lost · fell: Mira T6 · items 2 · turns 9"
+        was(&record.report, Some(&record), "normal"),
+        " · was 1/5 succeed"
     );
     assert_eq!(
-        lost(vec![]),
-        "try 17 · lost · fell: nobody · items 2 · turns 9"
+        was(&record.report, Some(&record), "baseline"),
+        " · was won 2/2"
     );
-}
-
-#[test]
-fn mean_has_one_decimal() {
-    assert_eq!(mean(9, 5), "1.8");
-    assert_eq!(mean(0, 3), "0.0");
-    assert_eq!(mean(31, 10), "3.1");
-    assert_eq!(mean(5, 0), "5.0");
-}
-
-#[test]
-fn grouped_puts_a_space_every_three_digits() {
-    assert_eq!(grouped(0), "0");
-    assert_eq!(grouped(999), "999");
-    assert_eq!(grouped(1000), "1 000");
-    assert_eq!(grouped(41_200), "41 200");
-    assert_eq!(grouped(1_234_567), "1 234 567");
-}
-
-#[test]
-fn per_second_divides_by_the_time_played() {
-    assert_eq!(per_second(300, Duration::from_secs(2)), 150);
-    assert_eq!(per_second(7, Duration::from_millis(500)), 14);
-    assert_eq!(per_second(1, Duration::from_secs(3)), 0);
-    assert_eq!(per_second(5, Duration::ZERO), 0);
+    assert_eq!(was(&record.report, Some(&record), "casual"), "");
 }
 
 #[test]
@@ -396,7 +371,7 @@ fn now_is_after_2023() {
 
 #[test]
 fn git_commit_is_the_short_hash_or_unknown() {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let root = root();
     let commit = git_commit(&root);
     // A copy of the sources without their history (cargo-mutants makes
     // one) has no commit.
@@ -414,14 +389,14 @@ fn git_commit_is_the_short_hash_or_unknown() {
 #[test]
 fn history_keeps_every_run_and_gives_the_last() {
     let dir = temp_dir("history");
-    let first = record(five_tries());
-    let file = history_file(&dir.join("kept"), &first.report);
-    assert_eq!(file, dir.join("kept").join("ch01-classic-baseline.jsonl"));
+    let first = record();
+    let file = history_file(&dir.join("kept"), &Options::new("ch01"));
+    assert_eq!(file, dir.join("kept").join("ch01-baseline-classic.jsonl"));
     assert_eq!(last_record(&file), None);
 
     append(&file, &first).unwrap();
     assert_eq!(last_record(&file), Some(first.clone()));
-    let mut second = record(vec![a_try(1, TryResult::Won, 3, vec![], &[])]);
+    let mut second = record();
     second.commit = "second".to_owned();
     append(&file, &second).unwrap();
     assert_eq!(last_record(&file), Some(second));
@@ -440,84 +415,41 @@ fn history_keeps_every_run_and_gives_the_last() {
 }
 
 #[test]
-fn history_has_a_file_per_battle_mode_and_bot() {
-    let mut report = record(vec![]).report;
-    report.battle = "quick".to_owned();
-    report.mode = "Casual".to_owned();
-    let file = history_file(Path::new("h"), &report);
-    assert_eq!(file, Path::new("h").join("quick-casual-baseline.jsonl"));
-}
-
-/// The Quick Battle, before its first command.
-fn quick_state() -> BattleState {
-    let def = &CONTENT.battles["quick"];
-    let lead = LeadProfile::new(LEAD_NAME, LeadGender::Male);
-    let campaign = battle_campaign(&CONTENT, def, GameMode::Classic, lead);
-    BattleState::new(campaign.battle_setup(def, &CONTENT.tables())).0
-}
-
-#[test]
-fn cast_names_every_unit_and_the_lord() {
-    let state = quick_state();
-    let cast = cast(&state);
-    assert!(!state.reinforcements().is_empty());
+fn history_has_a_file_per_battle_and_bot() {
+    let file = |bot, mode| {
+        let options = Options {
+            bot,
+            mode,
+            ..Options::new("quick")
+        };
+        history_file(Path::new("h"), &options)
+    };
+    let h = Path::new("h");
     assert_eq!(
-        cast.len(),
-        state.units().len() + state.reinforcements().len()
+        file(Bot::Baseline, GameMode::Casual),
+        h.join("quick-baseline-casual.jsonl")
     );
-    for unit in state.units() {
-        assert_eq!(cast[&unit.id], (unit.name.clone(), unit.is_lord));
-    }
-    assert_eq!(cast.values().filter(|(_, lord)| *lord).count(), 1);
+    assert_eq!(file(Bot::All, GameMode::Casual), h.join("quick-all.jsonl"));
+    assert_eq!(
+        file(Bot::Normal, GameMode::Classic),
+        h.join("quick-normal.jsonl")
+    );
 }
 
-#[test]
-fn to_try_reads_the_measures() {
-    let state = quick_state();
-    let cast = cast(&state);
-    let lord = state.units().iter().find(|u| u.is_lord).unwrap();
-    let other = state.units().iter().find(|u| !u.is_lord).unwrap();
+// ---- Playing ------------------------------------------------------------------
 
-    let mut measures = BattleMeasures::new(&state);
-    measures.outcome = Some(Outcome::Defeat);
-    measures.turns = 9;
-    measures.commands = 123;
-    measures.player_fallen = vec![(other.id, 6), (UnitId(999), 7), (lord.id, 9)];
-    measures.items_used = [(trpg_core::ItemId::new("potion"), 2)].into();
-    let lost = to_try(17, &measures, &cast, 60);
-    let fell = |unit: &str, turn, lord| Fall {
-        unit: unit.to_owned(),
-        turn,
-        lord,
-    };
-    let expected = Try {
-        seed: 17,
-        result: TryResult::Lost,
-        turns: 9,
-        fallen: vec![
-            fell(&other.name, 6, false),
-            fell("unit 999", 7, false),
-            fell(&lord.name, 9, true),
-        ],
-        items: [("potion".to_owned(), 2)].into(),
-        commands: 123,
-    };
-    assert_eq!(lost, expected);
-
-    measures.outcome = Some(Outcome::Victory);
-    assert_eq!(to_try(1, &measures, &cast, 60).result, TryResult::Won);
-    // A try stopped by the cap saw the next turn start; it took the cap.
-    measures.outcome = None;
-    measures.turns = 61;
-    let capped = to_try(1, &measures, &cast, 60);
-    assert_eq!((capped.result, capped.turns), (TryResult::TurnCap, 60));
-}
-
-fn quick(runs: u32) -> Options {
+/// `runs` tries of `bot` on the Quick Battle, two turns each.
+fn quick(bot: Bot, runs: u32) -> Options {
     Options {
         runs,
+        bot,
+        turn_cap: 2,
         ..Options::new("quick")
     }
+}
+
+fn play_quick(options: &Options) -> Record {
+    play(&CONTENT, &personas(), &targets(), options).unwrap()
 }
 
 #[test]
@@ -526,68 +458,123 @@ fn play_reports_every_try_by_seed() {
         seed: 5,
         mode: GameMode::Casual,
         turn_cap: 40,
-        ..quick(6)
+        ..quick(Bot::Baseline, 6)
     };
-    let (report, speed) = play(&CONTENT, &options).unwrap();
-    assert_eq!(report.battle, "quick");
-    assert_eq!(report.mode, "Casual");
-    assert_eq!(report.bot, "baseline");
-    assert_eq!((report.seed, report.runs, report.turn_cap), (5, 6, 40));
-    let seeds: Vec<u64> = report.tries.iter().map(|t| t.seed).collect();
+    let record = play_quick(&options);
+    assert_eq!(record.battle, "quick");
+    assert_eq!(record.tier, "Normal");
+    assert_eq!(record.turn_cap, 40);
+    assert_eq!(record.played.len(), 1);
+    assert_eq!(
+        (
+            record.played[0].name.as_str(),
+            record.played[0].mode.as_str()
+        ),
+        ("baseline", "Casual")
+    );
+    assert!(record.played[0].seconds_per_try > 0.0);
+    let seeds: Vec<u64> = record.report.entrants[0]
+        .tries
+        .iter()
+        .map(|t| t.seed)
+        .collect();
     assert_eq!(seeds, [5, 6, 7, 8, 9, 10]);
-    assert_eq!(report.stats, Stats::of(&report.tries));
-    assert!(report.tries.iter().all(|t| t.commands > 0));
-    assert!(speed > 0);
+    // The baseline has no target.
+    assert!(record.report.checks.is_empty());
+    assert!(!record.report.blocked);
 }
 
 #[test]
-fn play_gives_the_same_report_for_the_same_arguments() {
-    let (first, _) = play(&CONTENT, &quick(20)).unwrap();
-    let (second, _) = play(&CONTENT, &quick(20)).unwrap();
-    assert_eq!(first, second);
-    // Luck is fresh each try: the Quick Battle goes both ways.
-    assert!(
-        first.stats.won > 0 && first.stats.lost > 0,
-        "{:?}",
-        first.stats
+fn all_plays_the_three_personas_in_their_modes_with_their_checks() {
+    let record = play_quick(&quick(Bot::All, 1));
+    let played: Vec<(&str, &str)> = record
+        .played
+        .iter()
+        .map(|p| (p.name.as_str(), p.mode.as_str()))
+        .collect();
+    assert_eq!(
+        played,
+        [
+            ("casual", "Casual"),
+            ("normal", "Classic"),
+            ("hardcore", "Classic")
+        ]
     );
+    let checked: Vec<&Check> = record.report.checks.iter().map(|j| &j.check).collect();
+    assert_eq!(checked.len(), 4);
+    assert!(
+        matches!(checked[0], Check::Rate { entrant, floor: Some(20), .. } if entrant == "casual")
+    );
+    assert!(
+        matches!(checked[3], Check::Median { entrant, than, .. } if entrant == "hardcore" && than == "normal")
+    );
+    let text = render(&record, None);
+    for line in [
+        "casual   · 0/1 succeed",
+        "normal   · 0/1 succeed",
+        "hardcore · 0/1 succeed",
+    ] {
+        assert!(text.contains(line), "{line}\n{text}");
+    }
 }
 
+/// Every persona's report from the same arguments is the same, on any
+/// thread count (only the speed differs).
 #[test]
 fn play_gives_the_same_report_on_any_thread_count() {
     let on = |threads| Options {
         threads: Some(threads),
-        ..quick(20)
+        ..quick(Bot::All, 2)
     };
-    let (one, _) = play(&CONTENT, &on(1)).unwrap();
-    assert_eq!(one.tries.len(), 20);
-    for threads in [2, 3, 32] {
-        let (many, _) = play(&CONTENT, &on(threads)).unwrap();
-        assert_eq!(many, one, "{threads} threads");
+    let one = play_quick(&on(1));
+    assert_eq!(one.report.entrants.len(), 3);
+    assert!(one.report.entrants.iter().all(|e| e.tries.len() == 2));
+    for threads in [1, 4] {
+        assert_eq!(
+            play_quick(&on(threads)).report,
+            one.report,
+            "{threads} threads"
+        );
     }
-    let (every_core, _) = play(&CONTENT, &quick(20)).unwrap();
-    assert_eq!(every_core, one);
 }
 
 #[test]
 fn a_try_depends_only_on_its_seed() {
-    let (batch, _) = play(&CONTENT, &quick(6)).unwrap();
-    let alone = Options {
+    let batch = play_quick(&quick(Bot::Baseline, 6));
+    let alone = play_quick(&Options {
         seed: 5,
-        ..quick(1)
-    };
-    let (alone, _) = play(&CONTENT, &alone).unwrap();
-    assert_eq!(alone.tries, [batch.tries[4].clone()]);
+        ..quick(Bot::Baseline, 1)
+    });
+    assert_eq!(
+        alone.report.entrants[0].tries,
+        [batch.report.entrants[0].tries[4].clone()]
+    );
 }
 
 #[test]
-fn play_refuses_an_unknown_battle() {
-    let error = play(&CONTENT, &Options::new("nope")).unwrap_err();
+fn play_refuses_an_unknown_battle_or_persona() {
+    let error = play(&CONTENT, &personas(), &targets(), &Options::new("nope")).unwrap_err();
     assert!(
         error.starts_with("no battle \"nope\" in assets/battles (there: "),
         "{error}"
     );
     assert!(error.contains("quick"), "{error}");
+    let error = play(&CONTENT, "{}", &targets(), &quick(Bot::Normal, 1)).unwrap_err();
+    assert_eq!(error, "no persona \"normal\" in crates/bots/personas.ron");
+    assert!(play(&CONTENT, "nonsense", &targets(), &quick(Bot::Normal, 1)).is_err());
+    assert!(play(&CONTENT, &personas(), "nonsense", &quick(Bot::Normal, 1)).is_err());
+}
+
+#[test]
+fn a_rate_under_its_floor_blocks_the_run() {
+    // Nobody wins the Quick Battle in two turns: under any floor.
+    let floors = "floors: {\"casual\": 20}";
+    assert!(targets().contains(floors));
+    let targets = targets().replace(floors, "floors: {\"casual\": 20, \"normal\": 1}");
+    let record = play(&CONTENT, &personas(), &targets, &quick(Bot::Normal, 1)).unwrap();
+    assert!(record.report.blocked);
+    let unblocked = play_quick(&quick(Bot::Normal, 1));
+    assert!(!unblocked.report.blocked);
 }
 
 #[test]
@@ -597,27 +584,27 @@ fn run_keeps_the_run_and_compares_the_next_with_it() {
     let options = Options {
         json: Some(json.clone()),
         history: Some(dir.join("history")),
-        ..quick(4)
+        ..quick(Bot::Baseline, 4)
     };
-    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let first = run(&root, &options).unwrap();
+    let first = run(&root(), &options).unwrap();
     let written = std::fs::read_to_string(&json).unwrap();
     assert!(written.ends_with("}\n"));
     let record: Record = serde_json::from_str(&written).unwrap();
-    assert_eq!(first, render(&record, None));
-    assert_eq!(record.report, play(&CONTENT, &options).unwrap().0);
-    assert_eq!(record.commit, git_commit(&root));
+    assert_eq!(first.text, render(&record, None));
+    assert!(!first.blocked);
+    assert_eq!(record.report, play_quick(&options).report);
+    assert_eq!(record.commit, git_commit(&root()));
     assert!(record.date.starts_with("20") && record.date.ends_with(" UTC"));
     assert_eq!(record.date.len(), "2026-10-01 14:05 UTC".len());
-    let kept = dir.join("history").join("quick-classic-baseline.jsonl");
+    let kept = dir.join("history").join("quick-baseline-classic.jsonl");
     assert_eq!(last_record(&kept), Some(record.clone()));
 
-    let second = run(&root, &options).unwrap();
+    let second = run(&root(), &options).unwrap();
     let again: Record = serde_json::from_str(&std::fs::read_to_string(&json).unwrap()).unwrap();
-    assert_eq!(second, render(&again, Some(&record)));
+    assert_eq!(second.text, render(&again, Some(&record)));
     assert_eq!(again.report, record.report);
-    assert!(second.contains("%, was "), "{second}");
-    assert!(second.contains("\nprevious  20"), "{second}");
+    assert!(second.text.contains(" · was won "), "{}", second.text);
+    assert!(second.text.contains("\nprevious  20"), "{}", second.text);
     assert_eq!(std::fs::read_to_string(&kept).unwrap().lines().count(), 2);
     std::fs::remove_dir_all(&dir).unwrap();
 }
@@ -626,18 +613,23 @@ fn run_keeps_the_run_and_compares_the_next_with_it() {
 fn run_keeps_history_under_target_by_default() {
     // A stand-in repo root, so the real history isn't touched.
     let root = temp_dir("default-history");
-    run(&root, &quick(2)).unwrap();
-    let kept = root.join("target/playtest-history/quick-classic-baseline.jsonl");
+    std::fs::create_dir_all(root.join("crates/bots")).unwrap();
+    std::fs::write(root.join(PERSONAS_FILE), personas()).unwrap();
+    std::fs::write(root.join(TARGETS_FILE), targets()).unwrap();
+    run(&root, &quick(Bot::Baseline, 2)).unwrap();
+    let kept = root.join("target/playtest-history/quick-baseline-classic.jsonl");
     let record = last_record(&kept).unwrap();
-    assert_eq!(record.report.runs, 2);
+    assert_eq!(record.report.entrants[0].tries.len(), 2);
     assert_eq!(record.commit, "unknown");
     std::fs::remove_dir_all(&root).unwrap();
 }
 
 #[test]
-fn run_fails_on_an_unknown_battle() {
+fn run_fails_on_an_unknown_battle_or_a_missing_file() {
     let root = temp_dir("unknown-battle");
-    assert!(run(&root, &Options::new("nope")).is_err());
+    let error = run(&root, &Options::new("quick")).unwrap_err();
+    assert!(error.starts_with("crates/bots/personas.ron: "), "{error}");
+    assert!(run(&self::root(), &Options::new("nope")).is_err());
     assert!(!root.join("target").exists());
     std::fs::remove_dir_all(&root).unwrap();
 }

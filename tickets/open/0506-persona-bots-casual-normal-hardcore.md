@@ -5,7 +5,7 @@ type: feature
 milestone: M4 Enemy AI
 model: opus-5.5
 effort: high
-status: todo
+status: in-progress
 blocked_by: ["0033", "0505", "0803", "engine#2125", "engine#2126"]
 nick_input: none
 completed:

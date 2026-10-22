@@ -271,11 +271,16 @@ analog sticks (today they are four digital directions).
 
 ## `bots`
 
-Done (1116): the bot trait and the play loop are the kit's
-(`shuyi_core::bots`: `Bot<R>`, `play` and `play_observed`, `RandomBot`),
-over `TurnRules` and `Sides`. `trpg-bots` keeps the game's bots
-(`BaselineBot`; `PlayerBot` is any `Bot<BattleState>`), `play_battle`
-(the engine loop with the AI on the other phases) and the measures.
+Done (1116, engine#2125, engine#2126, game 0506): the bot trait, the
+play loop, the rollout bot and the playtest runner are the kit's
+(`shuyi_core::bots`: `Bot<R>`, `play` and `play_observed`, `RandomBot`;
+`Determinize`, `Evaluate`, `Order`, `Playout`, `Rollout`; `Entrant`,
+`Measure`, `Check`, `play_tries`, `judge`, `run` and the report's
+table), over `TurnRules` and `Sides`. The game keeps `Determinize` for
+`BattleState` (in `trpg-core`), and in `trpg-bots` its bots
+(`BaselineBot`, `PersonaBot`; `PlayerBot` is any `Bot<BattleState>`), the
+personas' order and scoring, the battle's `Measure` and `Entrant`s, and
+`targets.ron` turned into the engine's checks.
 
 ## What other game styles would break (for engine ADR-0003)
 

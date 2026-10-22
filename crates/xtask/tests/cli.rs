@@ -54,11 +54,11 @@ fn playtest_prints_the_report_and_exits_0() {
         .unwrap_or_else(|e| panic!("spawn xtask: {e}"));
     assert_eq!(output.status.code(), Some(0));
     let stdout = String::from_utf8_lossy(&output.stdout);
-    let first = "quick · Classic · baseline · 3 tries (seeds 1–3)\nwon ";
+    let first = "quick · Normal tier · baseline · turn cap 60\n3 tries (seeds 1–3)\n";
     assert!(stdout.starts_with(first), "{stdout}");
-    assert!(stdout.contains("\nfallen/try 0: "), "{stdout}");
-    assert!(stdout.contains("\n\ntry 1 · "), "{stdout}");
-    assert!(stdout.contains("\ntry 3 · "), "{stdout}");
+    assert!(stdout.contains("\nbaseline · Classic · won "), "{stdout}");
+    assert!(stdout.contains("\n\ntry 1 · baseline · "), "{stdout}");
+    assert!(stdout.contains("\ntry 3 · baseline · "), "{stdout}");
     assert!(
         stdout.ends_with('\n') && !stdout.ends_with("\n\n"),
         "{stdout}"

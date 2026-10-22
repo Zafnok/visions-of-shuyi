@@ -1,0 +1,138 @@
+// The playtest personas (ticket 0506, docs/playtesting.md, ADR-0095): dev
+// tooling, not game content. Each is the engine's rollout bot with these
+// settings, read by `cargo xtask playtest`.
+//
+// Chosen from the persona descriptions in docs/design/playtest-bots.md and
+// FIXED: never tuned to make a battle pass. Only the comparison with
+// Nick's own play (ticket 0508) may change them, and never per battle.
+//
+// A persona weighs one command at a time: each candidate is played on a
+// few copies of the battle with fresh luck, its turn ends there, and the
+// copy is scored. It never plays the enemy's turn out: like a player, it
+// knows the danger zone and the forecasts, not whom the enemy will choose
+// (Nick, 2026-10-21).
+//
+// settings (how it thinks; skill = thinking budget + mistakes):
+//   candidates   commands weighed per decision (attacks first, see
+//                trpg_bots::order)
+//   samples      copies each is played on (fresh luck each)
+//   horizon      Sides(1): the copy stops when its own turn ends
+//   commands     the most commands a copy plays after the candidate
+//   temperature  how far its pick may stray, in points: a candidate this
+//                many points below the best is half as likely; 0 = always
+//                the best
+//
+// weights (what it cares about): points per thing counted, added up; a
+// cost is negative.
+//   won, lost             the battle won or lost
+//   lord_fell, unit_fell  a lord, another player unit fallen
+//   hp_lost, lord_hp_lost HP lost in the candidate's own fight (a heal
+//                         counts back)
+//   enemy_fell            an enemy fallen
+//   progress              enemy HP taken in a rout (the boss's in a boss
+//                         fight, a tile closer in a seize)
+//   approach              a tile the units came closer to the nearest
+//                         enemy (the boss, the tile to seize), walking
+//   exposed, lord_exposed HP the enemies that can reach a unit are
+//                         expected to take from it next phase, by the
+//                         forecast
+//   at_risk, lord_at_risk a unit that falls if every enemy that can reach
+//                         it strikes and hits
+//   turns                 a turn that began
+//   items                 a pack item used
+{
+    // Plays in Casual mode and only cares about winning and the lord
+    // ("the # of deaths does not influence bot at all"): only the lord's
+    // danger counts. A small budget, and it strays: a casual player.
+    "casual": (
+        mode: Casual,
+        settings: (
+            candidates: 8,
+            samples: 4,
+            horizon: Sides(1),
+            commands: 10,
+            temperature: 100,
+        ),
+        weights: (
+            won: 10000,
+            lost: -10000,
+            lord_fell: -10000,
+            unit_fell: 0,
+            hp_lost: 0,
+            lord_hp_lost: -20,
+            enemy_fell: 100,
+            progress: 10,
+            approach: 2,
+            exposed: 0,
+            lord_exposed: -20,
+            at_risk: 0,
+            lord_at_risk: -5000,
+            turns: 0,
+            items: 0,
+        ),
+    ),
+    // Plays Classic and wants nobody dead: a fallen unit costs more than a
+    // win is worth, and so does leaving one where it could fall. HP costs
+    // half of what the enemy's HP is worth (a heal brings it back; an
+    // enemy's HP is gone for good). Spends items when that helps (a heal of
+    // 10 HP is worth an item), doesn't hurry. A medium budget, strays a
+    // little.
+    "normal": (
+        mode: Classic,
+        settings: (
+            candidates: 12,
+            samples: 8,
+            horizon: Sides(1),
+            commands: 10,
+            temperature: 25,
+        ),
+        weights: (
+            won: 10000,
+            lost: -10000,
+            lord_fell: -10000,
+            unit_fell: -15000,
+            hp_lost: -5,
+            lord_hp_lost: -5,
+            enemy_fell: 100,
+            progress: 10,
+            approach: 2,
+            exposed: -5,
+            lord_exposed: -5,
+            at_risk: -3000,
+            lord_at_risk: -5000,
+            turns: 0,
+            items: -50,
+        ),
+    ),
+    // Plays Classic like a veteran: nobody dead, few turns, few items, and
+    // plays better than Normal ("hardcore should play better than
+    // normal"): twice the candidates, twice the copies, never strays, and
+    // presses harder (enemies and progress are worth more).
+    "hardcore": (
+        mode: Classic,
+        settings: (
+            candidates: 24,
+            samples: 16,
+            horizon: Sides(1),
+            commands: 10,
+            temperature: 0,
+        ),
+        weights: (
+            won: 10000,
+            lost: -10000,
+            lord_fell: -10000,
+            unit_fell: -15000,
+            hp_lost: -5,
+            lord_hp_lost: -5,
+            enemy_fell: 150,
+            progress: 15,
+            approach: 3,
+            exposed: -5,
+            lord_exposed: -5,
+            at_risk: -3000,
+            lord_at_risk: -5000,
+            turns: -200,
+            items: -300,
+        ),
+    ),
+}

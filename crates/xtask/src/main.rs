@@ -531,9 +531,14 @@ fn playtest(args: &[String]) -> u8 {
         }
     };
     match playtest::run(&repo_root(), &options) {
-        Ok(report) => {
-            print!("{report}");
-            0
+        Ok(ran) => {
+            print!("{}", ran.text);
+            if ran.blocked {
+                eprintln!("playtest: blocked: Casual succeeds in too few tries");
+                1
+            } else {
+                0
+            }
         }
         Err(e) => {
             eprintln!("playtest: {e}");
@@ -858,8 +863,23 @@ mod tests {
             dispatch(args(&run).into_iter())
         };
         assert_eq!(run("quick"), 0);
-        assert!(history.join("quick-classic-baseline.jsonl").is_file());
+        assert!(history.join("quick-baseline-classic.jsonl").is_file());
         assert_eq!(run("no_such_battle"), 1);
+        // Casual can't win the Quick Battle in one turn: blocked.
+        let blocked = [
+            "playtest",
+            "quick",
+            "--bot",
+            "casual",
+            "--runs",
+            "1",
+            "--turn-cap",
+            "1",
+            "--history",
+            &history_arg,
+        ];
+        assert_eq!(dispatch(args(&blocked).into_iter()), 1);
+        assert!(history.join("quick-casual.jsonl").is_file());
         std::fs::remove_dir_all(&history).unwrap();
     }
 
