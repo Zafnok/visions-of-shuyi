@@ -199,7 +199,9 @@ The battle map is not drawn by the battle screen (ADR-0038). Each frame:
    its walk), the cursor
    (if shown), the selected unit's path, and the animation clock. Plain
    data: no colours, glyphs, cells or pixels.
-2. `ctx.game.map_skin.paint(ctx, &scene, MAP_VIEW, buf)` paints it: the
+2. `ctx.game.map_skin.paint(ctx, &scene, area, buf)` paints it into the
+   battle's map area (`layout::map_area`: `MAP_VIEW` on the PC, the
+   whole screen on the Playdate, ticket 1038): the
    kit skin it holds paints the ground, ranges, path, cursor and threat
    arrows, and the painter of this game's units it builds from `ctx` that
    frame paints the units (ADR-0094). The glyph skin

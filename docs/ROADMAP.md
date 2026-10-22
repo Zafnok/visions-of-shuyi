@@ -321,8 +321,9 @@ Candle joins outside battle.
   personas' scoring, the battle's `Determinize`, measures and targets)
   · engine#2127 the autobalance search (after engine#2126) → **0509**
   autobalance (the battle's knobs) → **0510** skirmishes to order.
-- **D. Playdate, Chapter 1's base:** **1038** → **1178** arrows at the
-  map's edges · **1038** → **1039** → **1041** →
+- **D. Playdate, Chapter 1's base:** **1178** arrows at the map's
+  edges · **1075** weapon and spell lines that fit (asks Nick first) ·
+  **1039** → **1041** →
   **1044** · **1042** → **1043** · **1046** · **1058** · **1060** →
   **1062** · **1051** the AI plans once per phase · **1057** → **1059**
   · **1056** · **1063**.

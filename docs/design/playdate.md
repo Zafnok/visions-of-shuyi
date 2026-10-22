@@ -19,6 +19,7 @@ numbers and the forecast in them are placeholders.
 | `q3r2-e-grey.png` | **Chosen:** your units solid black, enemies grey, acted units outlined; the range marks |
 | `q3-*.png`, `q3r2-*.png` | The other ways offered to tell sides apart without colour |
 | `1037-*.png` | **As built** (ticket 1037, `cargo shuyi frame-png --playdate --map`, shown at ×2): Harrowby Ford browsing, a unit's ranges, the danger zone, both, a path with its threat arrow, a unit that has acted |
+| `1038-*.png` | **As built** (ticket 1038, `cargo shuyi frame-png --playdate`, shown at ×2): Harrowby Ford's battle screen browsing, with the pop-ups moved down, the action menu, a skill list with its note, the map menu, the unit list, the objective page, the end-turn question, a phase banner |
 | `1037-hp-options.png` | The HP line options Nick was shown at sign-off (A today's, B a box, C the HP lost dithered, D the letters' colour); **chosen: A for enemies, C for your units** |
 
 ## Nick's words
@@ -85,6 +86,43 @@ Like Fire Emblem on the GBA.
 - Anything else the PC side panel shows (stats, weapons, the chapter, turn
   and rewinds) is on the Unit info screen and in the map menu
   (*Claude's starting rule*).
+- *Claude's starting rules from building the battle screen (1038, Nick
+  can veto; pictures `playdate/1038-*.png`):*
+  - **The corner pop-ups** sit flush in the corners, in the battle's
+    window look (white inside a double black frame). The unit's shows its
+    name and `HP 19/19` (no bar); the terrain's its name and the PC's
+    `DEF +0  AVO +0` line (and what it heals, on a tile that heals).
+  - They **move to the bottom corners while the cursor is on the
+    screen's top 5 rows** (*tunable*).
+  - They show only while you look over the map: **not while a menu, a
+    question, the objective page, the battle notes, a banner, a fight,
+    the unit info or the EXP page is up**, and not while no cursor is on
+    the map (the enemy's phase).
+  - **No help bar** (the map menu and the Playdate's printed buttons
+    stand in for it) and **no line of toggles**: the danger zone shows
+    on the map, and the map menu has Danger zone and Auto-end.
+  - **The message line** (what a skill, item or spell being aimed will
+    do; a combat's message; a toggle's toast) is a one-line window in
+    the middle of the screen's top edge, or its bottom edge while the
+    cursor is in the top half.
+  - **Menus open beside their tile, as on the PC**: right of the unit
+    (or the cursor), left of it where there is no room, the first item
+    level with it. A menu too tall for the screen scrolls with its
+    focus, a `▲` or `▼` in the frame where there is more. The weapon
+    and its uses (or the pack's size) are in the top of the frame; the
+    focused line's description is under a rule at the bottom, as on the
+    PC. A line too long for the screen is cut with `…` (the Equip list's
+    uses are: 1075 asks Nick what the Playdate's line keeps).
+  - **A question** is a window in the middle of the screen: its text, a
+    blank row, and its buttons named inside (`A yes / B no`).
+  - **The objective page and the battle notes** are a window across the
+    middle, the title in the top of its frame, the notes wrapped again
+    to the screen; kept off the rows of the units the notes are about,
+    as on the PC.
+  - **A banner** is a 24 × 6 window in the middle, its words black: one
+    bit can't colour it by side, so the words tell (`ENEMY PHASE`).
+  - **Heal and burn numbers** are black on white a row over the unit;
+    the sign tells them apart (`+10`, `-3`).
 
 #### The guide's box (0066)
 
