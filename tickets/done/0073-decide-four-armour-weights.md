@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-21
 ---
 
 # 0073 — Decide: four armour weights
@@ -88,9 +88,9 @@ robes, Fire Emblem having almost none):
 
 ## Acceptance criteria
 
-- [ ] `weapons-and-items.md` gives the four weights, their stats and the class table, with Nick's words.
-- [ ] `docs/design/README.md` row added.
-- [ ] A follow-up ticket for the data and code exists and is in 1064's `blocked_by`.
+- [x] `weapons-and-items.md` gives the four weights, their stats and the class table, with Nick's words.
+- [x] `docs/design/README.md` row added.
+- [x] A follow-up ticket for the data and code exists and is in 1064's `blocked_by`.
 
 ## Tests required
 
@@ -98,5 +98,37 @@ robes, Fire Emblem having almost none):
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Asked in three rounds (2026-10-21). Nick decided:
+
+- **Four weights by material:** Cloth, Leather, Chain, Plate.
+- **Each class has a max armour weight** and wears that weight and every
+  lighter one (Nick's idea, replacing the proposed per-class pairs).
+  Casters cloth; agile and martial lines leather; raiders, cavalry and the
+  Grappler chain; the armored lines, Vanguard, Warchief and Colossus
+  plate. `progression.md`'s class tables now have a *Max armour* column.
+- **The lord never wears plate.** Exile leather; Blade Heir / Sovereign
+  leather; Commander / Grand Marshal chain.
+- **Starter pieces:** Linen Robe (Res +4, wt 0, 300), Leather Vest (Def +2
+  Res +2, wt 1, 400), Chain Mail (Def +4 Res +1, wt 3, 800), Iron Plate
+  (Def +8 Res −3, wt 6, 1500). Nick set cloth's Res, leather's Def/Res and
+  plate's Def; he kept the rest as proposed.
+- **Iron Plate from Chapter 2** with the other three; a **Steel Plate**
+  (maybe Steel versions of the others) from Chapter 5, numbers later.
+
+Also updated: the attack-speed illustration (new weights: a Fighter with a
+Steel Axe in Chain Mail now strikes once there), the swap example, the
+reason text example (`can't wear plate armor`), the basic shop's rows and
+example, the Tailor's weights, `magic.md`'s caster attack-speed note,
+`progression.md`'s promotion armour example and Commander line, 0443's
+shop rows and 0320's `blocked_by`.
+
+*Claude's starting rules:*
+- A penalty can't take a stat below 0 (it follows from stats never being
+  negative): Iron Plate's Res −3 only bites a wearer who has Res to lose.
+- The old Warded Robe (Res +2, 700) is retired; the Linen Robe replaces it.
+- The tier 4–5 flying classes' max weights follow their old letters (L →
+  Leather, L M → Chain); their numbers aren't designed yet anyway.
+
+Follow-up tickets: **0321** (the four weights in `core`, `trpg-content`
+and the data; Maud and Rue in Linen Robes) and **0074** (decide the Steel
+armour), both in 1064's `blocked_by`; 0320 now waits on 0321.

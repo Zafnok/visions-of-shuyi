@@ -152,8 +152,9 @@ crit       = clamp(spell.crit + A.Dex / 2 - B.Dex / 4, 0, 100)
 - **Range** comes from the spell (`min_range`, `max_range`). The starter
   attack spells are range 1–2, so a caster can counter at either distance.
 - **Attack speed** (*Claude's starting rule*): spells weigh 0 and have no
-  rank, so `as_bonus = −max(0, armour.weight − A.Str / 5)`. Heavy armour
-  still slows a caster down.
+  rank, so `as_bonus = −max(0, armour.weight − A.Str / 5)`. Armour weight
+  would still slow a caster down, but the caster classes wear only cloth
+  (weight 0; 0073).
 - **Strikes:** extra strikes from Speed work the same as with weapons (up to
   4). They cost no extra uses.
 - **No broken state, no weapon-type trait, no Combat Arts** for spells

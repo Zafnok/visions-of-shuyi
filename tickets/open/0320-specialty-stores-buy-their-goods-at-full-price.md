@@ -6,7 +6,7 @@ milestone: M2 Core rules
 model: sonnet-5
 effort: medium
 status: todo
-blocked_by: ["0073"]
+blocked_by: ["0073", "0321"]
 nick_input: none
 completed:
 ---
@@ -28,7 +28,8 @@ Shops live in `crates/core/src/shop.rs` (ticket 0308): `ShopKind`
 `ShopScreen`.
 
 Blocked by 0073 because the Tailor trades cloth and leather armour, and
-0073 decides what those weights are called in the data.
+0073 decided those weights (Cloth, Leather, Chain, Plate); 0321 puts them
+in the data (`ArmourWeight::Cloth`, `ArmourWeight::Leather`).
 
 ## Nick input
 

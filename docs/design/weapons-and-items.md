@@ -113,6 +113,24 @@ Follow-ups:
 > penalty still), heavy = chain (high def, med res, and med weight
 > penalty), and ultraheavy or something = plate (nearly impenetrable def,
 > critically low res, very high weight penalty)"
+>
+> **Four armour weights, decided** (2026-10-21, ticket 0073). Who wears
+> what, first lead (PR #385): "it doesn't make sense a cleric would wear
+> leather armor rather than robes... martial/agile classes, like swordsman
+> brawler should be wearing leather most likely". On the proposed pieces
+> (cloth Res +3; leather Def +2 Res +1; chain Def +4 Res +1; plate Def +7
+> Res −3): "probably give leather +2/+2 and cloth +4 res, then there is
+> more distinction b/w leather, cloth, and chain. Plate can have more def
+> too to make up for res penalty" (then **plate Def +8**, of +8 / +9 /
+> +10). On the class table: "maybe each class just lists what is the max
+> weight armor class it can use and can use any that are that level or
+> lower?" On the lord: "I think there can be a branch for leather cap vs
+> chain cap but I don't want lord to ever have access to plate since
+> weight penalty will be unfun for a lord class" (then the Exile's own
+> cap: **leather**). On plate in the shop: "I think it's a little weird
+> that IRON plate gets unlocked with STEEL weaponry isn't it?" (then:
+> **Iron Plate from Chapter 2, a Steel Plate later**, maybe Steel versions
+> of the other armour too, numbers set later).
 
 Reference (researched for Nick, 2026-09-25): *Fire Emblem: Fortune's Weave*
 has no weapon triangle. Swords deal 1.2x damage on follow-up strikes, spears
@@ -216,10 +234,10 @@ What this does (illustration, all at Str 10, rank B, enemy AS 10):
 
 | Unit | Spd | Weapon (wt) | Armour (wt) | burden | AS | diff | strikes |
 | ---- | --- | ----------- | ----------- | ------ | -- | ---- | ------- |
-| Brawler with Speed Ring | 20 + 2 | Iron Gauntlets (1) | Leather Vest (0) | 0 | 24 | 14 | **3** |
-| Brawler | 20 | Iron Gauntlets (1) | Leather Vest (0) | 0 | 22 | 12 | 2 |
-| Fighter | 20 | Iron Axe (6) | Chain Mail (2) | 6 | 16 | 6 | 2 |
-| Fighter | 20 | Steel Axe (8) | Chain Mail (2) | 8 | 14 | 4 | 2 |
+| Brawler with Speed Ring | 20 + 2 | Iron Gauntlets (1) | Leather Vest (1) | 0 | 24 | 14 | **3** |
+| Brawler | 20 | Iron Gauntlets (1) | Leather Vest (1) | 0 | 22 | 12 | 2 |
+| Fighter | 20 | Iron Axe (6) | Chain Mail (3) | 7 | 15 | 5 | 2 |
+| Fighter | 20 | Steel Axe (8) | Chain Mail (3) | 9 | 13 | 3 | 1 |
 
 ## Weapon stats
 
@@ -342,13 +360,14 @@ unless marked, which Nick agreed to on PR #140, 2026-10-03):
   the other units hold in such a slot (`Steel Bow 25/25 from Test Scout`).
   Taking one swaps the two units' items in one step: the archer gets the
   scout's Steel Bow and she gets his Iron Bow. *Claude's starting rules:*
-  if the other unit can't use what comes back (a knight can't wear the
-  lord's Leather Vest), it goes to the stock instead; and the list only
+  if the other unit can't use what comes back (the knight takes the
+  mage's Linen Robe, and she can't wear his Chain Mail), it goes to the
+  stock instead; and the list only
   shows other units' items that this unit can use.
 - A unit can only be given **gear it can use**: a weapon of a kind its
   class uses, at a rank it has, and armour of a weight its class wears.
   Anything else is shown dimmed with the reason (`needs rank D`,
-  `can't use axes`, `can't wear heavy armour`) and can't be taken. (Ticket
+  `can't use axes`, `can't wear plate armor`) and can't be taken. (Ticket
   0408's rule.)
 - The unit goes on wielding the weapon it had in hand. If that weapon was
   put back, it wields its first usable weapon.
@@ -359,18 +378,64 @@ unless marked, which Nick agreed to on PR #140, 2026-10-03):
 
 ### Armour (*tunable*)
 
-**Under review:** Nick wants four armour weights by material (cloth,
-leather, chain, plate; his words above). Ticket 0073 decides them and
-which classes wear which; until then the table below stands.
+Decided 2026-10-21, ticket 0073 (Nick's words above).
 
-Classes may be limited to some armour weights (Light / Medium / Heavy) by 0005.
+**Four weights, by material**, lightest first (Nick):
 
-| Armour | Type | Bonus | Wt | Price |
-| ------ | ---- | ----- | -- | ----- |
-| Leather Vest | Light | Def +1 | 0 | 300 |
-| Chain Mail | Medium | Def +3 | 2 | 800 |
-| Iron Plate | Heavy | Def +5 | 5 | 1500 |
-| Warded Robe | Light | Res +2 | 0 | 700 |
+| Weight | What it's like (Nick) |
+| ------ | --------------------- |
+| **Cloth** (robes) | low Def, high Res, low weight |
+| **Leather** | a mix of Def and Res, still low weight |
+| **Chain** | high Def, some Res, medium weight |
+| **Plate** | nearly impenetrable Def, critically low Res, very high weight |
+
+- A piece of armour gives **Def and Res**, either of which can be a
+  **penalty** (plate's Res). Its **weight** counts in `burden` like a
+  weapon's (*Attack speed*).
+- A penalty can't take a stat below 0: stats are never negative
+  (`stats-and-combat.md`). Iron Plate (Res −3) on a unit with Res 2
+  leaves Res 0, so the penalty bites the plate wearers who have some Res
+  to lose (a Colossus, say), not a Guard who starts at 0.
+- **Each class has a max armour weight** (Nick): it wears that weight and
+  every lighter one. A Guard (Plate) can wear Chain Mail, a Leather Vest
+  or a robe; a Swordsman (Leather) can wear a robe but not Chain Mail.
+  Every class's max is in `progression.md`'s class tables. In short:
+  - **Cloth:** the casters, Mage and Cleric and their lines (Nick:
+    clerics wear robes, not leather).
+  - **Leather:** the agile and martial lines, Swordsman, Brawler, Archer,
+    the Flier, the enemy Brigand (Nick: "martial/agile classes, like
+    swordsman brawler should be wearing leather").
+  - **Chain:** Raider and Rider and their lines, except the armored ones;
+    the Grappler.
+  - **Plate:** the Armored lines (Guard, Bulwark, Iron Rider, Bastion,
+    Juggernaut) and the Vanguard, Warchief and Colossus.
+  - **The lord never wears plate** (Nick: its weight "will be unfun for a
+    lord class"). The Exile wears leather; the branch decides after:
+    Blade Heir and Sovereign leather, Commander and Grand Marshal chain.
+
+The starter piece of each weight:
+
+| Armour | Weight | Def | Res | Wt | Price |
+| ------ | ------ | --- | --- | -- | ----- |
+| Linen Robe | Cloth | +0 | +4 | 0 | 300 |
+| Leather Vest | Leather | +2 | +2 | 1 | 400 |
+| Chain Mail | Chain | +4 | +1 | 3 | 800 |
+| Iron Plate | Plate | +8 | −3 | 6 | 1500 |
+
+Nick set cloth's Res, leather's Def and Res and plate's Def; the rest
+(chain, plate's Res, the weights, the prices, the name Linen Robe) were
+proposed and he kept them. All *tunable*.
+
+- What it does in Chapter 1: a Guard (Def 9) in Iron Plate has Def 17; a
+  Brigand's Iron Axe hit of 7 + 8 = 15 only does the axe's minimum, 5,
+  and Rue's Fire (11) goes straight through his Res 0.
+- **Steel armour** comes later: a Steel Plate, maybe a Steel piece of the
+  other weights too, sold from Chapter 5 with the Steel weapons (Nick).
+  Its numbers are ticket 0074.
+- *Claude's starting rule:* the old **Warded Robe** (Res +2, price 700)
+  is retired: the Linen Robe does its job better for less.
+- Chapter 1's cast: Maud (Cleric) and Rue (Mage) wear **Linen Robes**
+  instead of Leather Vests; nobody else changes.
 
 ### Accessories (*tunable*)
 
@@ -461,15 +526,14 @@ Decided 2026-10-21, ticket 0044. Built in ticket 0443.
 - **It repairs** (Nick, option C), at the Blacksmith's price (*Durability*).
 - **It buys everything at half price** (Nick, PR #385). Specialty stores
   pay more (*Money and shops*).
-- **Its armour waits on 0073** (four armour weights): the rows below name
-  today's armours; when 0073 replaces them, the basic shop sells that
-  decision's cheapest piece of each weight from Chapter 2 and the next
-  pieces with Steel (*Claude's starting rule*).
+- **Its armour** (0073): the four starter pieces from Chapter 2, Iron
+  Plate included (Nick: Iron Plate shouldn't wait for the Steel weapons);
+  the Steel armour (0074) from Chapter 5.
 
 | From | Adds to the shop | Source |
 | ---- | ---------------- | ------ |
-| Chapter 2 (the first Preparations) | Potion; Iron Sword, Iron Spear, Iron Axe, Iron Bow, Iron Gauntlets; Leather Vest, Chain Mail, Warded Robe; repairs | Nick (Potion, Iron, repairs); the three armours are *Claude's starting rule* ("basic armour") |
-| Chapter 5 (Saltmere) | Steel Sword, Steel Spear, Steel Axe, Steel Bow, Steel Gauntlets; Iron Plate | Nick (Steel at Ch5); Iron Plate with Steel is *Claude's starting rule* |
+| Chapter 2 (the first Preparations) | Potion; Iron Sword, Iron Spear, Iron Axe, Iron Bow, Iron Gauntlets; Linen Robe, Leather Vest, Chain Mail, Iron Plate; repairs | Nick (Potion, Iron, repairs; the four armours, 0073) |
+| Chapter 5 (Saltmere) | Steel Sword, Steel Spear, Steel Axe, Steel Bow, Steel Gauntlets; the Steel armour (0074) | Nick (Steel at Ch5; Steel Plate, 0073) |
 | Chapter 8 (the Act 1 finale's Preparations) | Hi-Potion | Nick |
 | Act 2's final battle or Act 3's start | Elixir | Nick ("maybe"); the exact chapter is set when Act 2 and 3 are outlined |
 
@@ -484,8 +548,8 @@ Decided 2026-10-21, ticket 0044. Built in ticket 0443.
   by something other than a chapter.
 
 Example: before Chapter 5's story battle, the Preparations shop sells the
-Potion (300), all five Iron and all five Steel weapons, the Leather Vest,
-Chain Mail, Warded Robe and Iron Plate, and repairs a Steel Bow at 10/25
+Potion (300), all five Iron and all five Steel weapons, the Linen Robe,
+Leather Vest, Chain Mail and Iron Plate, the Steel armour (0074), and repairs a Steel Bow at 10/25
 for `ceil(720 / 2 × 15 / 25)` = 216 gold. It does not sell the Hi-Potion
 yet, nor any ring.
 
@@ -510,8 +574,8 @@ yet, nor any ring.
   Vendor) buys at half. Nick's examples, the two built first:
   - **Alchemist**: consumables only.
   - **Tailor**: cloth and leather armour only (Nick: leather goes here
-    "so we don't have TOO many speciality store"). Under 0073's four
-    weights that is Light and Medium.
+    "so we don't have TOO many speciality store"): the Cloth and Leather
+    weights (0073).
   Nick wants few of them. *Claude's starting rules:* a specialty store
   won't take anything outside its goods; they are in towns only (not shop
   tiles on a battle map, not Preparations); which towns have which is the

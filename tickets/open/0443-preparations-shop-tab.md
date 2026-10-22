@@ -85,11 +85,13 @@ it):
 2. Put the basic shop's stock in data (`assets/data/basic_shop.ron`): a
    list of `(item, unlock)` with `unlock: Chapter(n)`, as an enum so a
    later kind (a support rank, 0044) is one more variant. Rows from 0044:
-   Chapter 2: Potion, the five Iron weapons, Leather Vest, Chain Mail,
-   Warded Robe; Chapter 5: the five Steel weapons, Iron Plate; Chapter 8:
-   Hi-Potion. If 0073 (four armour weights) is done, use its armours as
-   `weapons-and-items.md` says (*The Preparations shop*); if not, use
-   today's and leave a line in 0073's follow-up ticket to update the rows.
+   Chapter 2: Potion, the five Iron weapons, the armours; Chapter 5: the
+   five Steel weapons; Chapter 8: Hi-Potion. The armours follow 0073
+   (`weapons-and-items.md`, *The Preparations shop*): if 0321 (the four
+   armour weights in the data) is done, the Linen Robe, Leather Vest,
+   Chain Mail and Iron Plate, all from Chapter 2; if not, today's Leather
+   Vest, Chain Mail, Warded Robe and Iron Plate from Chapter 2, and 0321
+   updates the rows. The Steel armour (0074) is not in this ticket.
    Loaded and validated by `trpg-content` with every error
    reported (ADR-0005): unknown item, seal or accessory listed, duplicate.
 3. `core`: a function that builds the basic `Shop` for a chapter (every row
