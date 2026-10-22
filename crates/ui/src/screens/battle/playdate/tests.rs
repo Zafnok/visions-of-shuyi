@@ -14,7 +14,9 @@ use crate::screen::Screen;
 use crate::screens::battle::banner::BannerKind;
 use crate::screens::battle::notes::{NOTE_WIDTH, wrap_notes};
 use crate::screens::battle::tests::{lord_menu, quick, step};
-use crate::screens::battle::view::{ObjectiveView, QuestionView, UsesView};
+use crate::screens::battle::view::{
+    BoxFighterView, FightBoxView, ObjectiveView, QuestionView, UsesView,
+};
 use crate::screens::battle::{BattleScreen, HealPopup, PopupKind};
 use crate::screens::playdate::tests::{blank, c as ink, cell, find, is_bar, pd_ctx, row, rows};
 use crate::widgets::menu::SuffixKind;
@@ -400,4 +402,130 @@ fn the_windows_are_black_frames_round_white_on_the_one_bit_screen() {
     let edge = (16..32).any(|y| (0..8).any(|x| !is_white(&frame, x, y)));
     assert!(inside && edge);
     insta::assert_snapshot!(braille(&frame));
+}
+
+#[test]
+fn the_unit_list_opens_in_the_middle_of_the_screen() {
+    let c = ctx();
+    let s = quick();
+    let items = vec![
+        item("Lord", None, true, true),
+        item("Knight", None, true, false),
+        item("Mage", None, true, false),
+    ];
+    let menu = BattleMenuView {
+        menu: MenuView::new(items),
+        place: MenuPlace::Centred,
+        header: None,
+    };
+    let size = menu_size(&c, &menu.menu, SCREEN);
+    assert_eq!(size, (10, 5));
+    let buf = painted_with(&s, |v| v.menu = Some(menu));
+    // (50 - 10) / 2 across, (15 - 5) / 2 down.
+    assert_eq!(cell(&buf, 20, 5).glyph, '╔');
+    assert_eq!(cell(&buf, 29, 9).glyph, '╝');
+    assert!(is_bar(&buf, 6, "Lord"));
+}
+
+#[test]
+fn a_menu_with_notes_scrolls_sooner_its_note_rows_kept() {
+    let c = ctx();
+    let items = (0..12)
+        .map(|i| item(&format!("Art {i:02}"), Some("does a thing"), true, i == 0))
+        .collect();
+    let m = BattleMenuView {
+        menu: MenuView::new(items),
+        place: MenuPlace::Centred,
+        header: None,
+    };
+    // 11 items, the rule and the note fill the 15 rows.
+    assert_eq!(menu_size(&c, &m.menu, SCREEN), (16, 15));
+    let mut buf = blank();
+    paint_menu(&c, &m, (0, 0), SCREEN, &mut buf);
+    assert_eq!(row(&buf, 11), "║ Art 10       ║");
+    assert_eq!(row(&buf, 12), "╟────────────▼─╢");
+    assert_eq!(row(&buf, 13), "║ does a thing ║");
+    assert_eq!(row(&buf, 14), "╚══════════════╝");
+}
+
+#[test]
+fn the_focus_bar_header_and_long_lines_stay_inside_the_frame() {
+    let c = ctx();
+    let long = "x".repeat(60);
+    let m = BattleMenuView {
+        menu: MenuView::new(vec![item(&long, None, true, true)]),
+        place: MenuPlace::Centred,
+        header: Some(MenuHeader {
+            name: "y".repeat(60),
+            uses: None,
+        }),
+    };
+    assert_eq!(menu_size(&c, &m.menu, SCREEN), (50, 3));
+    let mut buf = blank();
+    paint_menu(&c, &m, (0, 0), SCREEN, &mut buf);
+    // The header and the item cut with `…` inside the corners.
+    assert_eq!(cell(&buf, 49, 0).glyph, '╗');
+    assert_eq!(cell(&buf, 48, 0).glyph, '═');
+    assert_eq!(cell(&buf, 47, 0).glyph, '…');
+    assert_eq!(cell(&buf, 49, 1).glyph, '║');
+    assert_eq!(cell(&buf, 48, 1).glyph, '…');
+    // The bar from the cell after the frame to the cell before it.
+    let bar = ink(Ink::Black);
+    assert_eq!(cell(&buf, 1, 1).bg, bar);
+    assert_eq!(cell(&buf, 48, 1).bg, bar);
+}
+
+#[test]
+fn a_box_is_as_wide_as_its_title_needs_and_centred_across_the_screen() {
+    let s = quick();
+    let notes = NotesView {
+        title: "BATTLE NOTES".into(),
+        lines: vec!["• A.".into()],
+    };
+    let buf = painted_with(&s, |v| v.notes = Some(notes));
+    let top = (0..15)
+        .find(|&y| row(&buf, y).contains("BATTLE NOTES"))
+        .unwrap();
+    // The title and a frame cell either side of it with its spaces: 18.
+    assert_eq!(cell(&buf, 16, top).glyph, '╔');
+    assert_eq!(cell(&buf, 33, top).glyph, '╗');
+}
+
+#[test]
+fn a_window_shows_no_more_lines_than_fit_and_cuts_wide_ones() {
+    let c = ctx();
+    let mut lines: Vec<String> = (0..20).map(|i| format!("line {i}")).collect();
+    lines[0] = "z".repeat(60);
+    let mut buf = blank();
+    window_of(&c, &mut buf, Rect::new(0, 0, 20, 6), "", &lines);
+    // Four lines inside the frame, the last row its edge.
+    assert_eq!(row(&buf, 4), "║ line 3           ║");
+    assert_eq!(row(&buf, 5), "╚══════════════════╝");
+    assert_eq!(row(&buf, 6), "");
+    // The wide one cut with `…` inside the frame.
+    assert_eq!(row(&buf, 1), format!("║ {}… ║", "z".repeat(15)));
+}
+
+#[test]
+fn the_parts_without_a_playdate_look_yet_keep_the_pcs_paint() {
+    let s = quick();
+    let fighter = |name: &str| BoxFighterView {
+        name: name.into(),
+        faction: trpg_core::Faction::Player,
+        flashing: false,
+        hp: 10,
+        max: 10,
+        result: None,
+    };
+    let buf = painted_with(&s, |v| {
+        v.fight_box = Some(FightBoxView {
+            banner: None,
+            hp_name: "HP".into(),
+            sides: [fighter("Alda"), fighter("Brom")],
+        });
+    });
+    // The PC's fight box, where it sits on the PC's map view.
+    let at = glyph::fight_box::BOX;
+    assert_eq!(cell(&buf, at.x, at.y).glyph, '╔');
+    assert!(rows(&buf).iter().any(|r| r.contains("Alda")));
 }
