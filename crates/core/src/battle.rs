@@ -244,13 +244,44 @@
 //! - **Falling.** A unit at 0 HP falls ([`Event::UnitFell`]): it leaves the
 //!   map, can't act, can't be targeted and doesn't block tiles. It moves to
 //!   [`BattleState::fallen`]. Classic vs Casual only matters when the
-//!   campaign applies the result (0801).
+//!   campaign applies the result (0801). What a unit does at 0 HP is its
+//!   [`Defeat`] (`turn-structure.md`, *Act 1's battle rules*, 0069):
+//!   - one that **retreats instead of falling** ([`Defeat::Retreats`], a
+//!     boss who gets away) falls exactly so: it leaves the map (alive, as
+//!     the story has it) and is among the fallen, so it counts as defeated
+//!     for the objective, for EXP (the striker gets a kill's) and for the
+//!     results;
+//!   - one that **can't be killed** ([`Defeat::GoesDown`]) goes **down**
+//!     instead ([`Event::UnitDowned`]): it stays on its tile, done, and
+//!     moves to [`BattleState::down`]. It never acts again, nobody (either
+//!     side) can target it, attack, heal, push or talk to it, and its tile
+//!     is [blocked](BattleMap::blocked): no unit passes or stops there, no
+//!     reinforcement arrives there, no tile cast changes it. It counts as
+//!     defeated: for the objective ([`Objective::DefeatUnit`], a rout), EXP
+//!     (a kill's) and the results. Its passives and auras no longer count
+//!     (*Claude's starting rule*: it is out of the fight). Scenes still see
+//!     it on the map.
+//!
+//!   Its fall triggers ([`TriggerWhen::UnitFell`]) play before either event
+//!   (its defeated line); a downed unit is never recruited.
+//! - **Escaping** ([`Objective::Escape`], 0069): a player unit that ends its
+//!   move in the exit area may choose [`UnitAction::Escape`]
+//!   ([`BattleState::can_escape`]). It leaves the map
+//!   ([`Event::UnitEscaped`], instead of [`Event::UnitActed`]) and is safe
+//!   from then on, in [`BattleState::escaped`]: it can't act, be targeted
+//!   or block tiles and never falls. Escaping gives no EXP. Green and enemy
+//!   units never escape. An escaped unit counts as standing: it gets its
+//!   share of the EXP pool and the campaign keeps it as a unit that stood.
 //! - **Outcome.** Defeat, in both modes, when a player lord falls or no player
-//!   unit is left on the map. Victory per [`Objective`]. Both are checked
+//!   unit is left on the map and none escaped. Victory per [`Objective`]. Both are checked
 //!   after every command and when a turn ends; nothing else changes them
 //!   (arrivals can't create a victory or a defeat). Loss is checked first.
 //!   Once decided ([`Event::BattleEnded`]) every command fails with
 //!   [`CommandError::BattleOver`] and the outcome never changes.
+//! - **Escape** wins when no player unit is left on the map and at least
+//!   one escaped: every unit still standing is out (a lead who escaped
+//!   can't fall, so it can't lose the battle after that). It has no turn
+//!   limit (Nick).
 //! - **Survive `N`** wins, and a `turn_limit` of `N` loses, when turn `N`'s
 //!   last phase ends: the moment `turn` would become `N + 1`.
 //! - **Reinforcements** ([`Reinforcement`]) for turn `N` arrive at the start
@@ -342,8 +373,9 @@
 //! # Saving
 //!
 //! `BattleState` is serde-serialisable (RON via `content`/`app`, ADR-0019):
-//! the map (with its current terrain), burning tiles, units (with their
-//! learned skills, timed effects, role, EXP and class records), fallen units,
+//! the map (with its current terrain and blocked tiles), burning tiles, units (with their
+//! learned skills, timed effects, role, EXP and class records), fallen, down
+//! and escaped units,
 //! the EXP pool,
 //! pending reinforcements, objective, turn, triggers and which have fired,
 //! recruits, the game mode,
@@ -382,7 +414,7 @@ use crate::spell::{EffectDuration, SpellDef, SpellId, SpellKind, SpellTable, Ter
 use crate::stats::StatValue;
 use crate::support::{SupportBook, SupportTable};
 use crate::terrain::{TerrainId, TerrainTable};
-use crate::unit::{CharacterId, Faction, Level, Role, Unit, UnitId};
+use crate::unit::{CharacterId, Defeat, Faction, Level, Role, Unit, UnitId};
 use crate::weapon::{WeaponKind, WeaponRank};
 
 use self::triggers::FiredSet;
@@ -435,10 +467,11 @@ pub enum Outcome {
 }
 
 /// What the player must do to win. Every objective except [`Survive`]
-/// may have a `turn_limit`: the player loses if it isn't met when that
-/// turn's last phase ends.
+/// and [`Escape`] may have a `turn_limit`: the player loses if it isn't met
+/// when that turn's last phase ends.
 ///
 /// [`Survive`]: Objective::Survive
+/// [`Escape`]: Objective::Escape
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Objective {
     /// Defeat every enemy on the map.
@@ -467,6 +500,12 @@ pub enum Objective {
         /// The turn whose end wins.
         turns: Turn,
     },
+    /// Get every player unit still standing out through the exit area,
+    /// one by one ([`UnitAction::Escape`]). No turn limit (Nick).
+    Escape {
+        /// The exit area.
+        area: TileRect,
+    },
 }
 
 impl Objective {
@@ -476,7 +515,7 @@ impl Objective {
             Objective::Rout { turn_limit }
             | Objective::DefeatUnit { turn_limit, .. }
             | Objective::Seize { turn_limit, .. } => turn_limit,
-            Objective::Survive { .. } => None,
+            Objective::Survive { .. } | Objective::Escape { .. } => None,
         }
     }
 }
@@ -576,6 +615,9 @@ pub enum UnitAction {
     },
     /// Seize the objective tile (only on it, see [`Objective::Seize`]).
     Seize,
+    /// Leave the map through the exit area (only in it, see
+    /// [`Objective::Escape`]).
+    Escape,
     /// Buy, sell and repair at the shop on `dest`, in order (at least one).
     Shop {
         /// The transactions.
@@ -985,8 +1027,22 @@ pub enum Event {
         /// HP restored (after the max-HP cap).
         amount: StatValue,
     },
-    /// A unit reached 0 HP and left the map.
+    /// A unit reached 0 HP and left the map (it fell, or retreated:
+    /// [`Defeat`]).
     UnitFell {
+        /// The unit.
+        unit: UnitId,
+    },
+    /// A unit that can't be killed reached 0 HP and went down
+    /// ([`Defeat::GoesDown`]): it stays on its tile, out of the fight,
+    /// blocking it.
+    UnitDowned {
+        /// The unit.
+        unit: UnitId,
+    },
+    /// A player unit left the map through the exit area
+    /// ([`UnitAction::Escape`]): safe, done for the battle.
+    UnitEscaped {
         /// The unit.
         unit: UnitId,
     },
@@ -1129,6 +1185,10 @@ pub enum CommandError {
     UnknownUnit(UnitId),
     /// The unit has fallen.
     UnitFallen(UnitId),
+    /// The unit is down ([`Defeat::GoesDown`]): out of the fight.
+    UnitDown(UnitId),
+    /// The unit has escaped: off the map.
+    UnitEscaped(UnitId),
     /// The unit doesn't act in the current phase.
     NotItsPhase {
         /// The unit.
@@ -1186,6 +1246,9 @@ pub enum CommandError {
     /// Seizing isn't possible: not a seize map, not the seize tile, not a
     /// player unit, or not a lord when the map needs one.
     CannotSeize,
+    /// Escaping isn't possible: not an escape map, not in the exit area, or
+    /// not a player unit.
+    CannotEscape,
     /// Only player units can shop, open chests or use items.
     PlayerOnly(UnitId),
     /// There is no shop on this tile.
@@ -1318,6 +1381,8 @@ impl fmt::Display for CommandError {
             CommandError::BattleOver => f.write_str("the battle is over"),
             CommandError::UnknownUnit(id) => write!(f, "no unit with id {}", id.0),
             CommandError::UnitFallen(id) => write!(f, "unit {} has fallen", id.0),
+            CommandError::UnitDown(id) => write!(f, "unit {} is down", id.0),
+            CommandError::UnitEscaped(id) => write!(f, "unit {} has escaped", id.0),
             CommandError::NotItsPhase { unit, phase } => {
                 write!(f, "unit {} doesn't act in the {phase:?} phase", unit.0)
             }
@@ -1347,6 +1412,7 @@ impl fmt::Display for CommandError {
                 write!(f, "unit {} is out of range ({distance} tiles)", target.0)
             }
             CommandError::CannotSeize => f.write_str("can't seize here"),
+            CommandError::CannotEscape => f.write_str("can't escape here"),
             CommandError::PlayerOnly(id) => write!(f, "unit {} is not a player unit", id.0),
             CommandError::NoShop(p) => write!(f, "no shop at ({}, {})", p.x, p.y),
             CommandError::NoTransactions => f.write_str("nothing bought, sold or repaired"),
@@ -1461,6 +1527,13 @@ pub struct BattleState {
     phase: Phase,
     units: Vec<Unit>,
     fallen: Vec<Unit>,
+    /// Units that went down, still on their (blocked) tiles. Left out of
+    /// a save while empty.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    down: Vec<Unit>,
+    /// Player units that escaped. Left out of a save while empty.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    escaped: Vec<Unit>,
     pending: Vec<Reinforcement>,
     objective: Objective,
     rewind_charges: u8,
@@ -1545,6 +1618,7 @@ enum Step {
         target: UnitId,
     },
     Seize,
+    Escape,
     /// The shop visit's result, worked out on copies.
     Shop(Box<Till>),
     Open {
@@ -1759,6 +1833,8 @@ impl BattleState {
             phase: Phase::Player,
             units,
             fallen: Vec::new(),
+            down: Vec::new(),
+            escaped: Vec::new(),
             pending,
             objective: setup.objective,
             rewind_charges: setup.rewind_charges,
@@ -1882,9 +1958,22 @@ impl BattleState {
         self.units.iter().find(|u| u.id == id)
     }
 
-    /// Units that fell, in the order they fell (HP 0).
+    /// Units that fell or retreated ([`Defeat`]), in the order they fell
+    /// (HP 0).
     pub fn fallen(&self) -> &[Unit] {
         &self.fallen
+    }
+
+    /// Units that went down ([`Defeat::GoesDown`]), in the order they went:
+    /// on the map, on their tiles, out of the fight (HP 0).
+    pub fn down(&self) -> &[Unit] {
+        &self.down
+    }
+
+    /// Player units that escaped ([`UnitAction::Escape`]), in the order they
+    /// left.
+    pub fn escaped(&self) -> &[Unit] {
+        &self.escaped
     }
 
     /// Reinforcements that haven't arrived yet.
@@ -1937,6 +2026,14 @@ impl BattleState {
     pub fn can_seize(&self, id: UnitId, dest: Pos) -> bool {
         self.unit(id)
             .is_some_and(|u| self.check_seize(u, dest).is_ok())
+    }
+
+    /// Whether unit `id` may choose [`UnitAction::Escape`] after moving to
+    /// `dest` (the action menu offers it only then). Doesn't check that it
+    /// can reach `dest` or still act.
+    pub fn can_escape(&self, id: UnitId, dest: Pos) -> bool {
+        self.unit(id)
+            .is_some_and(|u| self.check_escape(u, dest).is_ok())
     }
 
     /// Applies `cmd`: validates it, changes the state and returns what
@@ -2126,6 +2223,10 @@ impl BattleState {
             UnitAction::Seize => {
                 self.check_seize(unit, dest)?;
                 Step::Seize
+            }
+            UnitAction::Escape => {
+                self.check_escape(unit, dest)?;
+                Step::Escape
             }
             UnitAction::Shop { ref txns } => self.plan_shop(unit, dest, txns)?,
             UnitAction::Open => self.plan_open(unit, dest)?,
@@ -2418,7 +2519,10 @@ impl BattleState {
             return Err(CommandError::TileOutOfRange { pos, distance });
         }
         // The caster stands on `dest` once it has moved, not on its old tile.
-        let occupied = pos == dest || self.units.iter().any(|u| u.pos == pos && u.id != unit.id);
+        // A downed unit's tile is held too.
+        let occupied = pos == dest
+            || self.map.blocked.contains(&pos)
+            || self.units.iter().any(|u| u.pos == pos && u.id != unit.id);
         if occupied {
             return Err(CommandError::TileOccupied(pos));
         }
@@ -2563,12 +2667,28 @@ impl BattleState {
         }
     }
 
+    /// Whether `unit` may escape from `dest`.
+    fn check_escape(&self, unit: &Unit, dest: Pos) -> Result<(), CommandError> {
+        match self.objective {
+            Objective::Escape { area }
+                if area.contains(dest) && unit.faction == Faction::Player =>
+            {
+                Ok(())
+            }
+            _ => Err(CommandError::CannotEscape),
+        }
+    }
+
     /// The living unit `id`, or why there is none.
     fn living(&self, id: UnitId) -> Result<&Unit, CommandError> {
         if let Some(unit) = self.unit(id) {
             Ok(unit)
         } else if self.fallen.iter().any(|u| u.id == id) {
             Err(CommandError::UnitFallen(id))
+        } else if self.down.iter().any(|u| u.id == id) {
+            Err(CommandError::UnitDown(id))
+        } else if self.escaped.iter().any(|u| u.id == id) {
+            Err(CommandError::UnitEscaped(id))
         } else {
             Err(CommandError::UnknownUnit(id))
         }
@@ -2629,6 +2749,14 @@ impl BattleState {
                     events.push(Event::Seized { unit: id, pos });
                 }
                 seized = true;
+            }
+            Step::Escape => {
+                if let Some(i) = self.units.iter().position(|u| u.id == id) {
+                    let mut unit = self.units.remove(i);
+                    unit.acted = true;
+                    self.escaped.push(unit);
+                    events.push(Event::UnitEscaped { unit: id });
+                }
             }
             Step::Shop(till) => {
                 let till = *till;
@@ -2984,12 +3112,21 @@ impl BattleState {
         tally
     }
 
-    /// Moves the units of `ids` at 0 HP to the fallen, in that order.
+    /// Moves the units of `ids` at 0 HP to the fallen, in that order, or
+    /// to the down if they can't be killed (their tiles blocked).
     fn remove_fallen(&mut self, ids: &[UnitId], events: &mut Vec<Event>) {
         for &id in ids {
             if let Some(i) = self.units.iter().position(|u| u.id == id && u.hp <= 0) {
-                self.fallen.push(self.units.remove(i));
-                events.push(Event::UnitFell { unit: id });
+                let mut unit = self.units.remove(i);
+                if unit.defeat == Defeat::GoesDown {
+                    unit.acted = true;
+                    self.map.blocked.insert(unit.pos);
+                    self.down.push(unit);
+                    events.push(Event::UnitDowned { unit: id });
+                } else {
+                    self.fallen.push(unit);
+                    events.push(Event::UnitFell { unit: id });
+                }
             }
         }
     }
@@ -3090,7 +3227,9 @@ impl BattleState {
         let mut waiting = Vec::new();
         for r in core::mem::take(&mut self.pending) {
             let due = r.turn <= self.turn && Phase::of(r.unit.faction) == self.phase;
-            if due && !self.units.iter().any(|u| u.pos == r.unit.pos) {
+            let free = !self.map.blocked.contains(&r.unit.pos)
+                && !self.units.iter().any(|u| u.pos == r.unit.pos);
+            if due && free {
                 let mut unit = r.unit;
                 unit.acted = true;
                 arrived.push(unit.id);
@@ -3111,12 +3250,14 @@ impl BattleState {
             .iter()
             .any(|u| u.faction == Faction::Player && u.is_lord);
         let side_left = |f| self.units.iter().any(|u| u.faction == f);
-        if lord_fell || !side_left(Faction::Player) {
+        let players_left = side_left(Faction::Player);
+        if lord_fell || (!players_left && self.escaped.is_empty()) {
             return Some(Outcome::Defeat);
         }
         let won = match self.objective {
             Objective::Rout { .. } => !side_left(Faction::Enemy),
-            Objective::DefeatUnit { unit, .. } => self.fallen.iter().any(|u| u.id == unit),
+            Objective::DefeatUnit { unit, .. } => self.is_defeated(unit),
+            Objective::Escape { .. } => !players_left,
             Objective::Seize { .. } | Objective::Survive { .. } => false,
         };
         won.then_some(Outcome::Victory)
@@ -3196,7 +3337,7 @@ impl BattleState {
         }
         let mut felled = false;
         for &victim in &award.pushed {
-            let Some(v) = self.fallen.iter().find(|u| u.id == victim) else {
+            let Some(v) = self.defeated(victim) else {
                 continue;
             };
             if !user.faction.is_hostile_to(v.faction) {
@@ -3211,25 +3352,40 @@ impl BattleState {
         self.award(id, exp, progression::ACTION_CP + kill_cp, events);
     }
 
-    /// The unit `id`, on the map or fallen.
+    /// The unit `id`: on the map, fallen, down or escaped.
     fn any_unit(&self, id: UnitId) -> Option<&Unit> {
-        self.unit(id)
-            .or_else(|| self.fallen.iter().find(|u| u.id == id))
+        self.unit(id).or_else(|| {
+            let mut gone = self.fallen.iter().chain(&self.down).chain(&self.escaped);
+            gone.find(|u| u.id == id)
+        })
     }
 
-    /// Shares the EXP pool out among the player units on the map below the
-    /// level cap: `pool / count` each (remainder lost), in unit order.
+    /// The unit `id` if it was defeated: fallen (or retreated) or down.
+    fn defeated(&self, id: UnitId) -> Option<&Unit> {
+        self.fallen.iter().chain(&self.down).find(|u| u.id == id)
+    }
+
+    /// Whether unit `id` was defeated: fallen (or retreated) or down.
+    pub fn is_defeated(&self, id: UnitId) -> bool {
+        self.defeated(id).is_some()
+    }
+
+    /// Shares the EXP pool out among the player units on the map or
+    /// escaped below the level cap: `pool / count` each (remainder lost),
+    /// in unit order, then escape order.
     fn share_exp_pool(&mut self, events: &mut Vec<Event>) {
         let pool = core::mem::take(&mut self.exp_pool);
         let cap = self.tables.classes.level_cap;
         let eligible = |u: &Unit| u.faction == Faction::Player && u.level < cap;
-        let count = self.units.iter().filter(|u| eligible(u)).count();
+        let standing = self.units.iter().chain(&self.escaped);
+        let count = standing.filter(|u| eligible(u)).count();
         // No one to share with: the pool is lost. A share of 0 gives nothing.
         let Some(share) = u32::try_from(count).ok().and_then(|n| pool.checked_div(n)) else {
             return;
         };
         let classes = &self.tables.classes;
-        for unit in self.units.iter_mut().filter(|u| eligible(u)) {
+        let standing = self.units.iter_mut().chain(&mut self.escaped);
+        for unit in standing.filter(|u| eligible(u)) {
             events.extend(progression::grant_exp(unit, share, classes, &mut self.rng));
         }
     }

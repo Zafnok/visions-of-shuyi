@@ -1,0 +1,28 @@
+# TEST FILE: the scenes of the test battles of Act 1's battle rules
+# (ticket 0319): the defeated lines of the boss who retreats
+# (battles/test_retreat.ron) and of the one who can't be killed
+# (battles/test_hold.ron), and the hold's closing scene
+# (chapters/test_hold.ron), in which the knight dies (`@dies`) if still in
+# the army; if the knight already died, the lead stands there alone.
+
+@scene test_rogue_retreats
+@right test_rogue angry
+test_rogue: Not here. Not today.
+@end
+
+@scene test_rogue_down
+@right test_rogue sad
+test_rogue: Down... but not done.
+@end
+
+@scene test_hold_won
+@left  lead neutral
+@if test_knight
+@right test_knight neutral
+test_knight: Go, {lead}. I'll hold the line.
+@dies test_knight
+@right clear
+@else
+> {lead} holds the line alone, and remembers who should be here.
+@endif
+@end

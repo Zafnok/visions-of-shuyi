@@ -732,3 +732,70 @@ fn a_battle_may_name_its_light() {
     assert_eq!(errors.len(), 1);
     assert!(errors[0].file.ends_with("battles/test.ron"), "{errors:?}");
 }
+
+/// Act 1's battle rules in a battle file (0319): an escape objective with
+/// its exit area, and enemies that retreat or can't be killed.
+#[test]
+fn an_escape_objective_and_defeat_settings_load() {
+    let c = content();
+    let src = OK
+        .replacen(
+            "DefeatUnit(unit: \"test_rogue\", turn_limit: Some(9))",
+            "Escape(area: (x: 13, y: 2, w: 1, h: 6))",
+            1,
+        )
+        .replacen("boss: true,", "boss: true, defeat: GoesDown,", 1)
+        .replacen("ai: Guard)", "ai: Guard, defeat: Retreats)", 1);
+    let def = load(&c, &src).unwrap_or_else(|e| panic!("{e:?}"));
+    let area = trpg_core::TileRect {
+        x: 13,
+        y: 2,
+        w: 1,
+        h: 6,
+    };
+    assert_eq!(def.objective, Objective::Escape { area });
+    assert_eq!(def.enemies[0].defeat, trpg_core::Defeat::GoesDown);
+    assert_eq!(
+        def.reinforcements[0].unit.defeat,
+        trpg_core::Defeat::Retreats
+    );
+    // Enemies fall by default.
+    let def = load(&c, OK).unwrap_or_else(|e| panic!("{e:?}"));
+    assert_eq!(def.enemies[0].defeat, trpg_core::Defeat::Falls);
+}
+
+#[test]
+fn an_escape_area_must_be_on_the_map() {
+    let c = content();
+    let objective = "DefeatUnit(unit: \"test_rogue\", turn_limit: Some(9))";
+    assert_eq!(
+        errors(&c, objective, "Escape(area: (x: 13, y: 2, w: 2, h: 6))"),
+        ["objective: the exit area (13, 2) 2×6 isn't on the 14×8 map"]
+    );
+    assert_eq!(
+        errors(&c, objective, "Escape(area: (x: 1, y: 1, w: 0, h: 1))"),
+        ["objective: the exit area (1, 1) 0×1 isn't on the 14×8 map"]
+    );
+}
+
+#[test]
+fn a_unit_that_cant_be_killed_is_never_recruited() {
+    let c = content();
+    let src = OK
+        .replacen("ai: Guard)", "ai: Guard, defeat: GoesDown)", 1)
+        .replacen(
+            "triggers: [",
+            "triggers: [(when: UnitFell(unit: \"test_rogue\", recruit: true), scene: \"test\", once: true), ",
+            1,
+        );
+    let errors: Vec<String> = load(&c, &src)
+        .err()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|e| e.message)
+        .collect();
+    assert_eq!(
+        errors,
+        ["trigger 0: \"test_rogue\" is recruited but can't be killed: it goes down instead"]
+    );
+}

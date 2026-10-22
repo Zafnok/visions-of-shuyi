@@ -921,6 +921,7 @@ pub(crate) fn unit(id: u32, faction: Faction, pos: Pos) -> Unit {
         learned_skills: BTreeSet::new(),
         effects: Vec::new(),
         skill_uses: crate::skill::SkillUses::default(),
+        defeat: crate::Defeat::Falls,
         talent: None,
     };
     carrying(u, &[weapon(1, 1, 3)])
@@ -3247,6 +3248,7 @@ fn scenes_placed(events: &[Event]) -> Result<Vec<usize>, TestCaseError> {
     Ok(out)
 }
 
+mod act1_rules;
 mod art;
 mod bots;
 mod progression;

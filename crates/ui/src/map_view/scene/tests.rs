@@ -14,6 +14,7 @@ fn brigand(id: u32, pos: Pos) -> UnitView {
         class: ClassId("brigand".into()),
         character: None,
         acted: false,
+        fight: crate::map_view::scene::Fight::In,
         hp: (20, 30),
         effects: UnitEffects::default(),
         fade: 0.0,
@@ -94,6 +95,7 @@ fn ranges_are_named_by_their_colours() {
         (range::MOVE, "move_range"),
         (range::ATTACK, "attack_range"),
         (range::HEAL, "heal_range"),
+        (range::EXIT, "exit_area"),
     ];
     for (kind, name) in names {
         assert_eq!(kind, RangeName(name));
@@ -102,7 +104,7 @@ fn ranges_are_named_by_their_colours() {
     assert_eq!(range::ALL.len(), names.len());
     // Their letters in the scene's text.
     let marks: String = range::ALL.iter().map(|k| k.mark()).collect();
-    assert_eq!(marks, "dmah");
+    assert_eq!(marks, "dmahe");
 }
 
 #[test]

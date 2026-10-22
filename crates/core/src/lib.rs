@@ -102,7 +102,7 @@ pub use support::{
 };
 pub use terrain::{MovementTypeId, TerrainId, TerrainRules, TerrainTable};
 pub use unit::{
-    CharacterDef, CharacterId, ClassRecord, Faction, Level, MAP_LABEL_LEN, Role, Unit, UnitError,
-    UnitId, default_map_label, is_valid_map_label,
+    CharacterDef, CharacterId, ClassRecord, Defeat, Faction, Level, MAP_LABEL_LEN, Role, Unit,
+    UnitError, UnitId, default_map_label, is_valid_map_label,
 };
 pub use weapon::{WeaponKind, WeaponRank};

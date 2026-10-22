@@ -1,0 +1,29 @@
+// TEST FILE: a boss who can't be killed (ticket 0319): hold for 4 turns
+// against the rogue and its raiders. At 0 HP the rogue goes down on its
+// tile (its defeated line plays): out of the fight, untargetable, and
+// blocking the tile; the hold goes on. Its chapter (chapters/test_hold.ron)
+// ends with a scene in which the knight dies, in every mode (`@dies`). The
+// bots play it (`cargo xtask playtest test_hold`).
+(
+    id: "test_hold",
+    map: "test_small",
+    player_slots: [
+        (character: "test_lord", pos: (3, 5)),
+        (character: "test_knight", pos: (4, 6)),
+        (character: "test_archer", pos: (2, 4)),
+    ],
+    enemies: [
+        (character: "test_rogue", pos: (7, 4), boss: true, defeat: GoesDown),
+        (template: "test_brigand", pos: (9, 2)),
+    ],
+    reinforcements: [
+        (turn: 2, unit: (template: "test_raider", pos: (13, 3))),
+    ],
+    objective: Survive(turns: 4),
+    triggers: [
+        (when: UnitFell(unit: "test_rogue"), scene: "test_rogue_down", once: true),
+    ],
+    difficulty: Normal,
+    music: Pool("skirmish"),
+    seed: 1,
+)

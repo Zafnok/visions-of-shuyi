@@ -158,6 +158,7 @@ pub(super) fn unit(id: u32, faction: Faction, x: i32, y: i32) -> Unit {
         learned_skills: BTreeSet::new(),
         effects: Vec::new(),
         skill_uses: trpg_core::SkillUses::default(),
+        defeat: trpg_core::Defeat::Falls,
         talent: None,
     }
     .with_loadout(&loadout, &classes(), &items())

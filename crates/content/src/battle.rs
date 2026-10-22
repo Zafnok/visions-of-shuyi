@@ -7,9 +7,9 @@ use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::Deserialize;
 use trpg_core::{
-    AiBehavior, BattleDef, BattleMap, BattleMusic, BattleNote, CharacterId, ClassTable, Difficulty,
-    Faction, ItemDef, ItemId, ItemTable, Level, Objective, PlayerSlot, Pos, Reinforcement, Role,
-    TerrainTable, Trigger, Turn, Unit, UnitId, default_map_label,
+    AiBehavior, BattleDef, BattleMap, BattleMusic, BattleNote, CharacterId, ClassTable, Defeat,
+    Difficulty, Faction, ItemDef, ItemId, ItemTable, Level, Objective, PlayerSlot, Pos,
+    Reinforcement, Role, TerrainTable, TileRect, Trigger, Turn, Unit, UnitId, default_map_label,
 };
 
 use crate::audio::AudioManifest;
@@ -21,7 +21,7 @@ use crate::lighting::Lighting;
 use crate::map::{MapDef, column_number, line_number};
 use crate::ron_loader::parse_ron;
 use crate::terrain::TerrainDisplayTable;
-use crate::trigger::check_triggers;
+use crate::trigger::{check_triggers, off_map};
 
 /// Directory of the battle files inside the asset bundle.
 pub const BATTLES_DIR: &str = "battles";
@@ -141,6 +141,10 @@ struct RawEnemy {
     loadout: Option<RawLoadout>,
     #[serde(default)]
     boss: bool,
+    /// What becomes of it at 0 HP: `Falls` (the default), `Retreats` or
+    /// `GoesDown`.
+    #[serde(default)]
+    defeat: Defeat,
     #[serde(default)]
     name: Option<String>,
 }
@@ -180,6 +184,9 @@ enum RawObjective {
     },
     Survive {
         turns: Turn,
+    },
+    Escape {
+        area: TileRect,
     },
 }
 
@@ -527,6 +534,7 @@ impl<'a, 'r> Checker<'a, 'r> {
             }
         };
         unit.ai = e.ai;
+        unit.defeat = e.defeat;
         if e.boss {
             unit.role = Role::Boss;
         }
@@ -652,6 +660,12 @@ impl<'a, 'r> Checker<'a, 'r> {
                     self.err("objective: survive 0 turns".to_owned());
                 }
                 Objective::Survive { turns }
+            }
+            RawObjective::Escape { area } => {
+                if let Some(message) = off_map(&area, map) {
+                    self.err(format!("objective: the exit {message}"));
+                }
+                Objective::Escape { area }
             }
         })
         .inspect(|o| {

@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: opus-5.5
 effort: high
 status: todo
-blocked_by: ["0748", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "1070", "0323", "0608"]
+blocked_by: ["0748", "0509", "0013", "0070", "0071", "1007", "1008", "0319", "0324", "1070", "0323", "0608"]
 nick_input: none
 completed:
 ---
@@ -18,7 +18,7 @@ completed:
 Act 1, Chapter 6, from `docs/story/outline.md`:
 
 - **Story battle:** "The Ashfields": crossing a burnt plain between two armies, with echoes (fire elementals) and battle notes ("Echoes of Vael: weak to frost, drink fire").
-- **Objective:** get everyone to the Brennish lines, one by one, by 0319's escape objective; no turn limit, the pressure comes from reinforcement waves (0069, `turn-structure.md`, *Escape*).
+- **Objective:** get everyone to the Brennish lines, one by one, by 0319's escape objective, its exit named on the objective line (0324, `exit_name`); no turn limit, the pressure comes from reinforcement waves (0069, `turn-structure.md`, *Escape*).
 - **Recruits:** Oriel Mast (`battlemage`, Sorcerer, tier 2), who deserts to the party.
 - **New in this chapter:** elemental enemies (echoes) and battle notes (`magic.md`).
 

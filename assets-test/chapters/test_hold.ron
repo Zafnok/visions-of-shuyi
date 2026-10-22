@@ -1,0 +1,10 @@
+// TEST FILE: the hold of ticket 0319 as a chapter, for its closing scene:
+// the knight holds the line and dies in every mode (`@dies`), or, if the
+// knight already died, the lead stands there alone.
+(
+    id: "test_hold",
+    title: "Test Hold",
+    battle: "test_hold",
+    victory_scenes: ["test_hold_won"],
+    next: None,
+)

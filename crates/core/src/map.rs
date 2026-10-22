@@ -1,9 +1,9 @@
 //! The battle map: a named grid of terrain, plus shops and chests on some
-//! tiles. Units live elsewhere (0302).
+//! tiles, and the tiles a downed unit blocks. Units live elsewhere (0302).
 
 use crate::prelude::*;
 
-use alloc::collections::BTreeMap;
+use alloc::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +30,12 @@ pub struct BattleMap {
     /// Shops and chests, by tile.
     #[serde(default)]
     pub features: BTreeMap<Pos, TileFeature>,
+    /// Tiles no unit may enter or stop on, as if impassable for every
+    /// movement type: where a downed unit lies
+    /// ([`Defeat::GoesDown`](crate::Defeat::GoesDown)). Battle state, set
+    /// by the battle; a map file has none. Left out of a save while empty.
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub blocked: BTreeSet<Pos>,
 }
 
 impl BattleMap {
@@ -39,6 +45,7 @@ impl BattleMap {
             name: name.into(),
             tiles,
             features: BTreeMap::new(),
+            blocked: BTreeSet::new(),
         }
     }
 

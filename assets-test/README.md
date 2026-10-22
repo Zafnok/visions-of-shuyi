@@ -14,6 +14,7 @@ that ships has none of them.**
 | `data/lessons.ron` | The test lesson (`test_cursor`): the cursor's four directions on the first turn of the test chapter and the Quick Battle (ticket 0456) |
 | `chapters/test.ron`, `battles/test.ron` | The test chapter: the tests of the game flow start a new game there (`NewGameDef::test_chapter`) |
 | `chapters/quick.ron`, `battles/quick.ron` | The debug Quick Battle (title screen, where the debug tools are on) |
+| `battles/test_escape.ron`, `battles/test_retreat.ron`, `battles/test_hold.ron`, `chapters/test_hold.ron` | One of Act 1's battle rules each (ticket 0319): an escape map, a boss who retreats, a boss who can't be killed in a hold whose closing scene (`dialogue/test_act1.dlg`) kills the knight with `@dies`. The bots play them (`cargo xtask playtest <id>`) |
 | `maps/test_small.map` | The map of both battles |
 | `cinematics/test.ron` | The test cinematic: a pan over the test battle's map, on which the lead walks up to the brigand and fells it, two text boxes of the test scene, three faces crossing, then the logo. The debug menu's "Play test cinematic" plays it |
 | `dialogue/test*.dlg` | The test scenes: the dialogue test, the test chapter's scenes, the battle triggers' and the supports' |

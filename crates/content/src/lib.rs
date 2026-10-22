@@ -77,6 +77,7 @@ pub use cinematic::{
 pub use credits::{CreditEntry, CreditGroup, Credits};
 pub use dialogue::{
     ChoiceOption, DialogueTable, LineId, MusicLine, PlaceLine, Present, Scene, Side, Stage, Step,
+    deaths,
 };
 pub use error::{ContentError, ContentErrors};
 pub use font::FontAtlasDef;

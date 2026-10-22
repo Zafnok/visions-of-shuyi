@@ -451,6 +451,7 @@
     "battle.menu.arts": "Arts",
     "battle.menu.magic": "Magic",
     "battle.menu.seize": "Seize",
+    "battle.menu.escape": "Escape",
     "battle.menu.talk": "Talk",
     "battle.menu.skill": "Skill",
     "battle.menu.item": "Item",
@@ -481,6 +482,7 @@
     "battle.objective.seize": "Seize the {place}",
     "battle.objective.seize_objective": "Seize the objective",
     "battle.objective.survive": "Survive {turns} turns",
+    "battle.objective.escape": "Get everyone to the exit ({out}/{total} out)",
     "battle.notes.title": "BATTLE NOTES",
     "battle.notes.heading": "Battle notes",
 
@@ -632,6 +634,7 @@
     "battle.rewind.a_spell": "a spell",
     "battle.rewind.a_skill": "a skill",
     "battle.rewind.seized": "{who} seized the objective",
+    "battle.rewind.escaped": "{who} escaped",
     "battle.rewind.shopped": "{who} visited a shop",
     "battle.rewind.opened": "{who} opened a chest",
     "battle.rewind.cast": "{who} cast {what}",

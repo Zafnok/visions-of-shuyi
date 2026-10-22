@@ -102,6 +102,7 @@ fn unit(id: u32, class: &str, faction: Faction, pos: Pos, mov: StatValue) -> Uni
         learned_skills: std::collections::BTreeSet::new(),
         effects: Vec::new(),
         skill_uses: crate::skill::SkillUses::default(),
+        defeat: crate::Defeat::Falls,
         talent: None,
     }
 }

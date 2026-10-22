@@ -1,22 +1,24 @@
 //! Dialogue scripts (`assets/dialogue/*.dlg`): scenes of portraits, speech
 //! and narration. The format is documented in `assets/dialogue/README.md`
 //! (ADR-0005) and is the engine's (`shuyi_assets::dialogue`, ticket 1105);
-//! this module adds the game's two directives ([`Stage`]: `@place` and
-//! `@opening`) and its rules ([`check_scene`]: the cast, portraits, the
+//! this module adds the game's three directives ([`Stage`]: `@place`,
+//! `@opening` and `@dies`) and its rules ([`check_scene`]: the cast, portraits, the
 //! lead and the music cues). Every line that shows text has a [`LineId`]
 //! (ADR-0045). Lines in an `@if` block play only while a character is there
 //! ([`Present`], ADR-0055); [`check_presence`] keeps those who may be gone
 //! inside one.
 use crate::prelude::*;
 
+mod deaths;
 mod openings;
 mod presence;
 mod rules;
 mod setting;
 
 use shuyi_assets::dialogue::{self as engine, Directive, Parsed};
-use trpg_core::Pos;
+use trpg_core::{CharacterId, Pos};
 
+pub use deaths::deaths;
 pub use presence::{Cast, check_presence};
 pub use rules::LeadTokens;
 pub use setting::{PlaceRefs, check_places};
@@ -97,6 +99,10 @@ pub enum Stage {
     /// `assets/openings/<id>.ron` plays on the place (its characters move
     /// at full brightness, then the place darkens): ticket 0734.
     Opening(String),
+    /// `@dies <character>`: the character leaves the army for good when
+    /// the scene plays, in every mode (Hollis, ticket 0319): see
+    /// [`deaths`].
+    Dies(CharacterId),
 }
 
 /// What a `@place` line asks for: the place behind the talk.
@@ -183,6 +189,19 @@ fn parse_place(args: &str) -> Parsed<Stage> {
     Parsed::step(Stage::Setting(place))
 }
 
+/// `@dies` with `args`: one character id.
+fn parse_dies(args: &str) -> Parsed<Stage> {
+    let args: Vec<&str> = args.split_whitespace().collect();
+    let [id] = args[..] else {
+        return Parsed::error("@dies needs one character id, e.g. \"@dies hollis\"");
+    };
+    let mut parsed = Parsed::step(Stage::Dies(CharacterId(id.into())));
+    if !is_id(id) {
+        parsed.errors.push(engine::bad_id(id));
+    }
+    parsed
+}
+
 /// `@opening` with `args`: one opening id.
 fn parse_opening(args: &str) -> Parsed<Stage> {
     let args: Vec<&str> = args.split_whitespace().collect();
@@ -203,6 +222,7 @@ impl Directive for Stage {
         match name {
             "place" => Some(parse_place(args)),
             "opening" => Some(parse_opening(args)),
+            "dies" => Some(parse_dies(args)),
             _ => None,
         }
     }
@@ -211,13 +231,14 @@ impl Directive for Stage {
         match self {
             Stage::Setting(place) => format!("place {}", place.args()),
             Stage::Opening(id) => format!("opening {id}"),
+            Stage::Dies(character) => format!("dies {}", character.0),
         }
     }
 
     fn kind(&self) -> Option<&'static str> {
         match self {
             Stage::Setting(_) => Some("place"),
-            Stage::Opening(_) => None,
+            Stage::Opening(_) | Stage::Dies(_) => None,
         }
     }
 }

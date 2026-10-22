@@ -84,6 +84,7 @@ pub const REQUIRED_COLORS: &[&str] = &[
     "attack_range",
     "heal_range",
     "danger_zone",
+    "exit_area",
     "effect",
     "cursor",
     "path",

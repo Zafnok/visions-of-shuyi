@@ -3,7 +3,9 @@
 //! every battle, and the debug Quick Battle on its own.
 use crate::prelude::*;
 
-use trpg_core::{BattleMap, CharacterId, Faction, Trigger, TriggerWhen, Unit, Who};
+use trpg_core::{
+    BattleMap, CharacterId, Defeat, Faction, TileRect, Trigger, TriggerWhen, Unit, Who,
+};
 
 use crate::dialogue::DialogueTable;
 use crate::error::ContentError;
@@ -12,8 +14,9 @@ use crate::error::ContentError;
 /// the errors), one error each: a scene that isn't in `dialogue`, a
 /// character that isn't one of `units` (the battle's units, those that
 /// arrive later included), an area that is empty or not all on `map`, a
-/// talk of a character to itself, a line against its own speaker and a
-/// recruit who is already a player unit.
+/// talk of a character to itself, a line against its own speaker, a
+/// recruit who is already a player unit and one who can't be killed (it
+/// goes down, and is never recruited).
 pub fn check_triggers(
     battle: &str,
     triggers: &[Trigger],
@@ -44,20 +47,20 @@ pub fn check_triggers(
                 c.0
             ));
         }
+        if let Some(c) = recruit(&t.when)
+            && units
+                .iter()
+                .any(|u| u.character.as_ref() == Some(c) && u.defeat == Defeat::GoesDown)
+        {
+            error(format!(
+                "\"{}\" is recruited but can't be killed: it goes down instead",
+                c.0
+            ));
+        }
         match &t.when {
             TriggerWhen::UnitEntersArea { area, .. } => {
-                let (w, h) = (map.tiles.width(), map.tiles.height());
-                let inside = area.w > 0
-                    && area.h > 0
-                    && area.x >= 0
-                    && area.y >= 0
-                    && area.x.saturating_add(area.w) <= i32::from(w)
-                    && area.y.saturating_add(area.h) <= i32::from(h);
-                if !inside {
-                    error(format!(
-                        "area ({}, {}) {}×{} isn't on the {w}×{h} map",
-                        area.x, area.y, area.w, area.h
-                    ));
+                if let Some(message) = off_map(area, map) {
+                    error(message);
                 }
             }
             TriggerWhen::Talk { a, b } if a == b => {
@@ -74,6 +77,24 @@ pub fn check_triggers(
         }
     }
     errors
+}
+
+/// Why `area` isn't a good area of `map`, if it isn't: it is empty or not
+/// all on the map.
+pub(crate) fn off_map(area: &TileRect, map: &BattleMap) -> Option<String> {
+    let (w, h) = (map.tiles.width(), map.tiles.height());
+    let inside = area.w > 0
+        && area.h > 0
+        && area.x >= 0
+        && area.y >= 0
+        && area.x.saturating_add(area.w) <= i32::from(w)
+        && area.y.saturating_add(area.h) <= i32::from(h);
+    (!inside).then(|| {
+        format!(
+            "area ({}, {}) {}×{} isn't on the {w}×{h} map",
+            area.x, area.y, area.w, area.h
+        )
+    })
 }
 
 /// The character a trigger recruits, if any.

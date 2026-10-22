@@ -45,7 +45,9 @@ pub const FLASH_BLEND: f32 = 0.75;
 /// Draws `unit` on the tile whose left cell is `(x, y)`: the label over the
 /// cells' existing (terrain) background, then the HP bar overlays. A unit
 /// a blow just landed on ([`UnitView::flash`]) has its tile's background
-/// lit toward the text colour, by [`FLASH_BLEND`] at full strength.
+/// lit toward the text colour, by [`FLASH_BLEND`] at full strength. A
+/// unit that is down ([`UnitView::is_down`], 0319) has its label grayed out:
+/// in the dim text colour instead of its side's.
 ///
 /// A unit part of the way through falling ([`UnitView::fade`], ticket 0404)
 /// fades: over the first half its label and HP bar fade into the tile's
@@ -76,7 +78,9 @@ pub fn draw_unit(buf: &mut GlyphBuffer, palette: &Palette, unit: &UnitView, x: i
         let Some(&cell) = buf.get(x + i, y) else {
             continue;
         };
-        let fg = if unit.acted {
+        let fg = if unit.is_down() {
+            palette.get(UiColor::TextDim)
+        } else if unit.acted {
             faction.lerp(cell.bg, ACTED_DIM)
         } else {
             faction

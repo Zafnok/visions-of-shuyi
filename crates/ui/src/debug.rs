@@ -381,8 +381,9 @@ mod tests {
         let glyphs = atlas_glyphs();
         assert!(p.iter().count() <= PALETTE_HEADROOM);
         assert!(panels_top_for(PALETTE_HEADROOM, &glyphs) <= i32::from(ConsoleSpec::PC.rows) - 4);
-        // At least two spare rows for today's palette.
-        assert!(panels_top(&p, &glyphs) <= i32::from(ConsoleSpec::PC.rows) - 6);
+        // A spare row for today's palette (56 colours since the exit area's,
+        // 0319: its swatches fill a twelfth row, as the headroom's do).
+        assert!(panels_top(&p, &glyphs) <= i32::from(ConsoleSpec::PC.rows) - 5);
     }
 
     #[test]

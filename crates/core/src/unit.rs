@@ -69,6 +69,38 @@ pub enum Role {
     Noncombatant,
 }
 
+/// What becomes of a unit whose HP reaches 0 (`turn-structure.md`, *Act 1's
+/// battle rules*). Set by chapter data; only enemies are anything but
+/// [`Falls`](Self::Falls) (content checks it).
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Serialize, Deserialize,
+)]
+pub enum Defeat {
+    /// It falls: it leaves the map ([`Event::UnitFell`](crate::Event::UnitFell)).
+    #[default]
+    Falls,
+    /// It retreats instead of falling (a boss who gets away): it leaves the
+    /// map alive, as a fall does in the battle ([`Event::UnitFell`](crate::Event::UnitFell)),
+    /// and counts as defeated.
+    Retreats,
+    /// It can't be killed: it goes down and stays on its tile, out of the
+    /// fight but blocking it ([`Event::UnitDowned`](crate::Event::UnitDowned)),
+    /// and counts as defeated.
+    GoesDown,
+}
+
+impl Defeat {
+    /// Whether this is [`Falls`](Self::Falls), the default a save leaves
+    /// out.
+    #[expect(
+        clippy::trivially_copy_pass_by_ref,
+        reason = "serde's skip_serializing_if passes a reference"
+    )]
+    fn is_falls(&self) -> bool {
+        *self == Defeat::Falls
+    }
+}
+
 /// Identifies a unit within a battle.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub struct UnitId(pub u32);
@@ -158,6 +190,13 @@ pub struct Unit {
     /// How the AI plays it (Enemy and Other phases). Set by chapter data.
     #[serde(default)]
     pub ai: AiBehavior,
+    /// What becomes of it at 0 HP. Set by chapter data. Left out of a save
+    /// at [`Defeat::Falls`] (every roster unit), and a save without it
+    /// loads as `Falls`, so older saves still load and read back the same
+    /// (ADR-0039: a deliberate `#[serde(default)]`, as for the campaign's
+    /// tutorial level).
+    #[serde(default, skip_serializing_if = "Defeat::is_falls")]
+    pub defeat: Defeat,
     /// Weapon rank per kind (kept for kinds the current class can't use).
     pub weapon_ranks: BTreeMap<WeaponKind, WeaponRank>,
     /// The two letters drawn for the unit on the map (ADR-0018).
@@ -335,6 +374,7 @@ impl Unit {
             is_lord: false,
             role: Role::Regular,
             ai: AiBehavior::Aggressive,
+            defeat: Defeat::Falls,
             weapon_ranks,
             map_label: default_map_label(&class.name),
             weapon_exp: BTreeMap::new(),
@@ -523,6 +563,7 @@ mod tests {
             learned_skills: BTreeSet::new(),
             effects: Vec::new(),
             skill_uses: SkillUses::default(),
+            defeat: crate::Defeat::Falls,
             talent: Some(StatKind::Spd),
         };
         assert_eq!(unit, Ok(expected));
@@ -648,6 +689,7 @@ mod tests {
             learned_skills: BTreeSet::new(),
             effects: Vec::new(),
             skill_uses: SkillUses::default(),
+            defeat: crate::Defeat::Falls,
             talent: None,
         };
         assert_eq!(unit, Ok(expected));

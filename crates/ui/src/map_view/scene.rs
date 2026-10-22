@@ -1,6 +1,7 @@
 //! What is on the visible battle map, as plain data (ADR-0038): the
 //! tactics kit's scene (`shuyi_ui::grid::scene`, ticket 1115) of this
-//! game's units ([`UnitView`]), with its ranges ([`range`]) and its
+//! game's units ([`UnitView`]), with its ranges ([`range`], the exit area
+//! of an escape map among them) and its
 //! terrains' names ([`TerrainLooks`]). No colours, glyphs, cells or pixels:
 //! a [`MapSkin`](super::MapSkin) turns a scene into those.
 
@@ -11,7 +12,7 @@ use shuyi_ui::grid::scene::MapUnit;
 use shuyi_ui::grid::skin::{TerrainGlyphs, Terrains};
 use trpg_content::terrain::TerrainDisplayTable;
 use trpg_core::skill::TimedMods;
-use trpg_core::{CharacterId, ClassId, Faction, Pos, StatValue, TerrainId, Unit, UnitId};
+use trpg_core::{CharacterId, ClassId, Defeat, Faction, Pos, StatValue, TerrainId, Unit, UnitId};
 
 pub use shuyi_ui::grid::scene::{
     CursorStyle, CursorView, RangeLayer, RangeName, ThreatView, TileView,
@@ -23,7 +24,7 @@ pub type MapScene = shuyi_ui::grid::MapScene<UnitView>;
 
 /// The ranges shown on the battle map: the kit's range names, each its
 /// colour's, so a skin tints it with that colour, and the scene's text
-/// marks it with its first letter (`d`, `m`, `a`, `h`).
+/// marks it with its first letter (`d`, `m`, `a`, `h`, `e`).
 pub mod range {
     use shuyi_ui::grid::scene::RangeName;
 
@@ -37,9 +38,11 @@ pub mod range {
     pub const ATTACK: RangeName = RangeName(UiColor::AttackRange.name());
     /// The targets of a heal.
     pub const HEAL: RangeName = RangeName(UiColor::HealRange.name());
+    /// The exit area of an escape map (0319): always shown.
+    pub const EXIT: RangeName = RangeName(UiColor::ExitArea.name());
 
     /// Every range.
-    pub const ALL: [RangeName; 4] = [DANGER, MOVE, ATTACK, HEAL];
+    pub const ALL: [RangeName; 5] = [DANGER, MOVE, ATTACK, HEAL, EXIT];
 }
 
 /// This game's terrains, as the kit's skins and the scene's text look them
@@ -70,6 +73,16 @@ pub struct UnitEffects {
     pub penalty: bool,
 }
 
+/// Whether a unit shown on the map is in the fight.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Fight {
+    /// In it, as every unit is until it falls.
+    #[default]
+    In,
+    /// Down (0319): a unit that can't be killed, beaten, on its tile.
+    Down,
+}
+
 /// A unit as shown on the map.
 #[derive(Debug, Clone, PartialEq)]
 pub struct UnitView {
@@ -87,6 +100,10 @@ pub struct UnitView {
     pub character: Option<CharacterId>,
     /// Whether it has acted this phase.
     pub acted: bool,
+    /// Whether it is in the fight or down (0319): a unit that can't be
+    /// killed, at 0 HP on its tile, out of the fight. Skins draw one down
+    /// grayed out.
+    pub fight: Fight,
     /// Current and max HP.
     pub hp: (StatValue, StatValue),
     /// The kinds of timed effect (0412) it is under.
@@ -115,6 +132,11 @@ pub struct UnitView {
 }
 
 impl UnitView {
+    /// Whether it is down ([`Fight::Down`]).
+    pub fn is_down(&self) -> bool {
+        self.fight == Fight::Down
+    }
+
     /// `unit` standing on its own tile.
     pub fn of(unit: &Unit) -> Self {
         Self {
@@ -125,6 +147,11 @@ impl UnitView {
             class: unit.class.clone(),
             character: unit.character.clone(),
             acted: unit.acted,
+            fight: if unit.hp <= 0 && unit.defeat == Defeat::GoesDown {
+                Fight::Down
+            } else {
+                Fight::In
+            },
             hp: (unit.hp, unit.stats.hp),
             effects: UnitEffects {
                 bonus: unit.effects.iter().any(|e| !hinders(&e.mods)),
@@ -198,7 +225,8 @@ pub fn hinders(mods: &TimedMods) -> bool {
 }
 
 /// A unit's line in [`MapScene::to_text`](shuyi_ui::grid::MapScene::to_text):
-/// `#4 Br enemy brigand (7,3) hp 20/30 acted bonus penalty fade=0.25`.
+/// `#4 Br enemy brigand (7,3) hp 20/30 acted bonus penalty fade=0.25`
+/// (`down` after `acted` for a unit that is down).
 /// A unit of a named character has it in brackets after its class,
 /// `bonus` or `penalty` (or both) if it is under a timed effect, and
 /// `highlight` if it is picked out. A unit on its walk also has the way it
@@ -221,6 +249,9 @@ fn unit_text(u: &UnitView) -> String {
     let _ = write!(text, " ({},{}) hp {}/{}", u.pos.x, u.pos.y, u.hp.0, u.hp.1);
     if u.acted {
         text.push_str(" acted");
+    }
+    if u.is_down() {
+        text.push_str(" down");
     }
     if u.effects.bonus {
         text.push_str(" bonus");

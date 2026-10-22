@@ -24,6 +24,7 @@ fn unit(id: UnitId, pos: Pos, hp: (StatValue, StatValue)) -> UnitView {
         class: ClassId("brigand".into()),
         character: None,
         acted: false,
+        fight: crate::map_view::scene::Fight::In,
         hp,
         effects: UnitEffects::default(),
         fade: 0.0,

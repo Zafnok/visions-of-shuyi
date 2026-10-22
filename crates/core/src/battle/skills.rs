@@ -262,13 +262,16 @@ impl BattleState {
         out
     }
 
-    /// Whether a unit of movement type `mt` can enter `pos`.
+    /// Whether a unit of movement type `mt` can enter `pos` (a blocked tile:
+    /// never).
     fn enterable(&self, pos: Pos, mt: MovementTypeId) -> bool {
-        self.map
-            .tiles
-            .get(pos)
-            .and_then(|&t| self.tables.terrain.move_cost(t, mt))
-            .is_some()
+        !self.map.blocked.contains(&pos)
+            && self
+                .map
+                .tiles
+                .get(pos)
+                .and_then(|&t| self.tables.terrain.move_cost(t, mt))
+                .is_some()
     }
 
     /// Where `unit` (on the map) can move after its attack with `tiles` of

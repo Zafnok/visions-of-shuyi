@@ -111,11 +111,12 @@ pub struct Tally {
     pub enemy_fell: i64,
     /// Progress towards the objective: in a rout, the enemies' HP taken; in
     /// a boss fight, the boss's; in a seize, how many tiles closer the
-    /// nearest unit that may seize got; nothing in a survive.
+    /// nearest unit that may seize got; in an escape (0319), how many units
+    /// got out; nothing in a survive.
     pub progress: i64,
     /// Tiles the standing player units came closer to their goal, all
-    /// added up: the nearest enemy in a rout, the boss, the tile to seize;
-    /// nothing in a survive. Without it a search that looks one reply
+    /// added up: the nearest enemy in a rout, the boss, the tile to seize,
+    /// the exit area; nothing in a survive. Without it a search that looks one reply
     /// ahead has no reason to walk towards enemies that hold their ground.
     pub approach: i64,
     /// Where the playout ends, the HP the non-lord player units stand to
@@ -216,6 +217,7 @@ fn progress(start: &BattleState, end: &BattleState) -> i64 {
         Objective::Seize { pos, by_lord, .. } => {
             seize_distance(start, pos, by_lord) - seize_distance(end, pos, by_lord)
         }
+        Objective::Escape { .. } => count(end.escaped().iter()) - count(start.escaped().iter()),
         Objective::Survive { .. } => 0,
     }
 }
@@ -238,7 +240,7 @@ fn approach(start: &BattleState, end: &BattleState) -> i64 {
 }
 
 /// How far, walking, each tile is from the objective's goals (an enemy in
-/// a rout, the boss, the tile to seize), worked out once per movement type:
+/// a rout, the boss, the tile to seize, the exit area's tiles), worked out once per movement type:
 /// the engine's flow field, as the enemy AI walks ([`next_command`]).
 struct Goals<'a> {
     state: &'a BattleState,
@@ -259,6 +261,10 @@ impl<'a> Goals<'a> {
                 state.unit(unit).map(|u| u.pos).into_iter().collect()
             }
             Objective::Seize { pos, .. } => vec![pos],
+            Objective::Escape { area } => {
+                let tiles = state.map().tiles.positions();
+                tiles.filter(|&p| area.contains(p)).collect()
+            }
             Objective::Survive { .. } => Vec::new(),
         };
         (!goals.is_empty()).then(|| Goals {

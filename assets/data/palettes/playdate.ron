@@ -37,6 +37,8 @@
     "attack_range": "diagonals",
     "heal_range": "diagonals",
     "danger_zone": "dashes",
+    // The exit area of an escape map (0319; *Claude's starting look*).
+    "exit_area": "grey",
 
     // A unit under a timed effect: not shown on the Playdate's map (1037;
     // the design doesn't say), so these are unused there.

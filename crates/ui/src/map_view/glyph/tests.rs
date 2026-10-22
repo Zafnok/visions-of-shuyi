@@ -73,6 +73,7 @@ fn brigand(pos: Pos) -> UnitView {
         class: ClassId("brigand".into()),
         character: None,
         acted: false,
+        fight: crate::map_view::scene::Fight::In,
         hp: (30, 30),
         effects: UnitEffects::default(),
         fade: 0.0,
@@ -402,6 +403,7 @@ prop_compose! {
         UnitView {
             label,
             acted: flags & 1 != 0,
+            fight: crate::map_view::scene::Fight::In,
             effects: UnitEffects {
                 bonus: flags & 2 != 0,
                 penalty: flags & 8 != 0,
