@@ -5,10 +5,10 @@ type: bug
 milestone: Post–Chapter 1
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-22
 ---
 
 # 1056 — Playdate: the debug build's `pdc` step crashes
@@ -70,13 +70,13 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `cargo xtask playdate` (debug) produces
+- [x] `cargo xtask playdate` (debug) produces
       `target/playdate/VisionsOfShuyi.pdx` with `pdex.bin` and `pdex.dll`
       on Nick's machine, or (step 4) fails with a message that names the
       cause and the `--release` way round it.
-- [ ] `cargo xtask playdate --release` still packs; CI's `playdate` job
+- [x] `cargo xtask playdate --release` still packs; CI's `playdate` job
       passes.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,5 +86,39 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+**Cause.** Not the size and not the debug info: `pdex.elf` packed alone
+crashed `pdc`, `pdex.dll` alone packed fine, and the ELF with its debug
+info stripped still crashed. The SDK's `link_map.ld` discards
+`.ARM.exidx` but not each function's own `.ARM.exidx.*` section, and
+`--emit-relocs` keeps a `.rel.ARM.exidx.*` beside each. Unoptimized, the
+game has 57,242 functions, so the ELF had 114,515 sections: past the
+65,280 an ELF header can count, so it uses the extended numbering
+(`e_shnum = 0`), and `pdc` 3.1.2 crashes reading that. The release build
+(LTO, one codegen unit) has 6,580 sections and is fine.
+
+**Fix.** The debug device build gets one more step after the link,
+`arm-none-eabi-objcopy --remove-section=.ARM.exidx* --remove-section=.rel.ARM.exidx*`
+on `pdex.elf` (the objcopy beside `arm-none-eabi-gcc`), with the reason in
+a comment in `crates/xtask/src/playdate.rs`. With `panic = "abort"` nothing
+unwinds, and the SDK's own script already throws the plain `.ARM.exidx`
+away. Debug info and line tables are untouched. The release build is
+unchanged (its plan has no objcopy step; a test says so). A second linker
+script beside the SDK's, to discard the sections at link time, was tried
+first: `ld` on Windows refuses it ("appears multiple times").
+
+Deviation from step 3: no profile change was needed. The DLL already
+links stripped (`-s`).
+
+**Manual run (Nick's machine, SDK 3.1.2), 2026-10-22:**
+- Before: `cargo xtask playdate` → `pdc failed (exit code: 0xc0000005)`;
+  `pdex.elf` 81.8 MB with 114,515 sections, `pdex.dll` 18.9 MB.
+- After: `cargo xtask playdate` → `VisionsOfShuyi.pdx` with `pdex.bin`,
+  `pdex.dll`, `pdxinfo`, `audio/`, `music/` (`pdex.elf` 61.3 MB, 30
+  sections).
+- `cargo xtask playdate --release` still packs (`pdex.elf` 47.8 MB, 6,580
+  sections, `pdex.dll` 7.0 MB).
+
+Not checked: running the debug `.pdx` in the Simulator (the README already
+says the debug build is for the Simulator only).
+
+No gameplay rules decided. No follow-up tickets.
