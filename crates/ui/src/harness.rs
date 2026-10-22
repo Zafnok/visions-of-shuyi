@@ -256,15 +256,13 @@ impl Harness {
     /// [`battle`](Self::battle) finds it. Assert on this (or on the
     /// battle's state), not on cells and colours, to check what happened.
     pub fn map_scene(&self) -> Option<MapScene> {
-        Some(self.battle()?.scene(self.ctx()))
+        map_scene(self)
     }
 
     /// [`map_scene`](Self::map_scene) for the tiles the map skin fits in
     /// `area` (cells) rather than in the battle's map area.
     pub fn map_scene_in(&self, area: Rect) -> Option<MapScene> {
-        let ctx = self.ctx();
-        let size = ctx.game.map_skin.view_tiles(area);
-        Some(self.battle()?.scene_of_size(ctx, size))
+        map_scene_in(self, area)
     }
 
     /// Paints battle maps with the skin called `name` from the next frame
@@ -284,9 +282,7 @@ impl Harness {
     /// [`map_scene`](Self::map_scene) as text ([`MapScene::to_text`]);
     /// empty with no battle.
     pub fn map_text(&self) -> String {
-        let terrains = TerrainLooks(&self.ctx().game.content.terrain.display);
-        self.map_scene()
-            .map_or_else(String::new, |scene| scene.to_text(&terrains))
+        map_text(self)
     }
 
     /// The tile under the battle map's cursor, if one is shown
@@ -330,6 +326,31 @@ impl Harness {
     pub fn into_storage(self) -> Box<dyn Storage> {
         self.0.into_storage()
     }
+
+    /// The engine's Harness it wraps, to hand to the engine's tools (the
+    /// MCP session's `Headless`, ticket 1181).
+    pub fn into_core(self) -> Core {
+        self.0
+    }
+}
+
+/// [`Harness::map_scene`] on the engine's Harness, for the tools that
+/// hold one (ticket 1181).
+pub fn map_scene(h: &Core) -> Option<MapScene> {
+    Some(h.screen::<BattleScreen>()?.scene(h.ctx()))
+}
+
+/// [`Harness::map_scene_in`] on the engine's Harness.
+pub fn map_scene_in(h: &Core, area: Rect) -> Option<MapScene> {
+    let ctx = h.ctx();
+    let size = ctx.game.map_skin.view_tiles(area);
+    Some(h.screen::<BattleScreen>()?.scene_of_size(ctx, size))
+}
+
+/// [`Harness::map_text`] on the engine's Harness.
+pub fn map_text(h: &Core) -> String {
+    let terrains = TerrainLooks(&h.ctx().game.content.terrain.display);
+    map_scene(h).map_or_else(String::new, |scene| scene.to_text(&terrains))
 }
 
 impl Default for Harness {

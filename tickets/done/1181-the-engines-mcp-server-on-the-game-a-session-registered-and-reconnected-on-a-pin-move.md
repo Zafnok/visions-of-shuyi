@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["1177", "engine#1133"]
 nick_input: none
-completed:
+completed: 2026-10-22
 ---
 
 # 1181 — The engine's MCP server on the game
@@ -130,16 +130,17 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `shuyi.ron` routes the game's commands through `xtask shuyi`;
+- [x] `shuyi.ron` routes the game's commands through `xtask shuyi`;
       `cargo shuyi frame-png` and `cargo shuyi run` still work.
-- [ ] `Trpg::session` gives the battle's map scene and the frame's
+- [x] `Trpg::session` gives the battle's map scene and the frame's
       picture; the test in step 4 passes.
-- [ ] `.mcp.json` registers `cargo shuyi mcp`, and a Claude Code
+- [x] `.mcp.json` registers `cargo shuyi mcp`, and a Claude Code
       session in the repository lists its tools and plays a battle with
-      them (noted in the PR).
-- [ ] `engine-change` step 6 says to reconnect the server after the pin
+      them (noted in the PR). Checked with an MCP client over stdio, not
+      Claude Code's `/mcp` (Completion notes).
+- [x] `engine-change` step 6 says to reconnect the server after the pin
       moves.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -150,5 +151,45 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- **Every command goes to the engine's tools:** `shuyi.ron`'s game program is
+  `(package: "xtask", args: ["shuyi"])`, so the engine runs `cargo run -p
+  xtask -- shuyi <command>` (the session's `mcp-host` among them). xtask's
+  own commands and its list of old names are unchanged.
+- **`Trpg::session`** is an engine `Headless` over the engine's Harness
+  (`trpg_ui::harness::Harness::into_core`), started as `frame` starts the
+  game (`frame` is now `harness` + `script.play` + `picture`, and the
+  session uses the same `harness` and `picture`). `harness.rs`'s
+  `map_scene`, `map_scene_in` and `map_text` became free functions over the
+  engine's Harness, which the wrapper's methods and the session both call.
+  The scene: on a battle, kind `grid map`, its text `map_text`; other
+  screens answer "no battle on screen (the top screen is `…`)". No events
+  of the game's own (out of scope).
+- **Deviation, the scene's `data`:** the whole `BattleState` doesn't
+  serialize to JSON (its map's `features` are keyed by `Pos`, and JSON keys
+  must be strings), so `data` is the state without its map, which the
+  scene's text already gives: `turn`, `phase`, `units`, `fallen`, `down`,
+  `escaped`, `outcome` (`battle_data`). Not `null`, as the ticket allowed.
+- **Test** (`game_tools/tests.rs`): the session's scene on the title is an
+  error naming it; after the Quick Battle keys (`Down f Left f`, which
+  `frame-png`'s tests use) it is a `grid map` whose text is the Harness's
+  `map_text`, with units in `data`; its 800×512 picture is the same as
+  `frame`'s.
+- **`.mcp.json`** written by `cargo shuyi mcp install --yes`. It also wrote
+  `.vscode/mcp.json` and `.gemini/settings.json`; the repository keeps
+  neither folder, so they weren't committed.
+- **By hand:** this session started before `.mcp.json` existed, so instead
+  of Claude Code's `/mcp` I drove `cargo shuyi mcp` over stdio as an MCP
+  client does: `initialize`; `tools/list` gave the 18 tools (`new`, `check`,
+  `lint`, `run`, `replay`, `bots`, `playtest`, `import`, `bake`, `doctor`,
+  `explain`, `start`, `step`, `scene`, `frame_png`, `events`, `reset`,
+  `stop`); `start` answered ok on `title`, with the game's six start
+  options; `step` with `Down f Left f` reached `battle` (through
+  `preparations` and `game_flow`, with the music events); `scene` gave the
+  grid map and turn 1, the player phase, the units; `frame_png` gave an
+  800×512 PNG; `stop` answered ok.
+- **Skills:** `engine-change` step 6 runs `cargo shuyi mcp --ready` and
+  reconnects the server after `engine-pin` (engine#2535 is in the pin, so
+  `--ready` exists); `work-ticket`'s *Verify* names the session tools.
+  `docs/engine/README.md` says the server is in `.mcp.json`.
+- Engine friction: estimate 70, measured 76 (1.1×), under 2×.
+- No gameplay rules decided; nothing for Nick to check.

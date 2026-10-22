@@ -1,20 +1,26 @@
 //! What Shuyi's tools (`shuyi-cli`, ticket 1117) need from this game:
 //! [`Trpg`], the game's `GameTools`. xtask is the game's tool program
-//! (`shuyi.ron`'s `game`): `cargo shuyi frame-png` and `cargo shuyi
-//! lang-status` run `cargo xtask frame-png` and `cargo xtask lang-status`,
-//! which run the engine's commands with these.
+//! (`shuyi.ron`'s `game`): every `cargo shuyi` command that runs the game
+//! (`frame-png`, `lang-status`, `run`, `scene`, the MCP server's session)
+//! runs as `cargo xtask shuyi <command>`, the engine's commands with these.
+//!
+//! The session (ticket 1181) is the game started as `frame-png` starts it,
+//! its scene the battle's map and its picture `frame-png`'s.
 //!
 //! `frame-png` starts the game in the test Harness with the game's own
 //! options: the layout picked before, the Playdate's screen (ADR-0074),
 //! the map alone, the prompt start, the tips and a light for every battle.
 
+use shuyi_cli::contract::session::{Headless, Scene, Session};
 use shuyi_cli::frame_png::{Image, Painter, Script, Shot, one_bit_picture};
 use shuyi_cli::{GameArg, GameLang, GameOption, GameTools};
 use trpg_content::font::ATLAS_1BIT_PATH;
-use trpg_ui::harness::Harness;
+use trpg_core::BattleState;
+use trpg_ui::harness::{self, Core, Harness};
 use trpg_ui::input::{Device, LEFT_HANDED, Layout, PadKind, RIGHT_HANDED};
 use trpg_ui::onebit::{self, FRAME_BYTES};
-use trpg_ui::screen::{Ctx, Keyboard, ShuyiCtx};
+use trpg_ui::screen::{Ctx, Keyboard, Shuyi, ShuyiCtx};
+use trpg_ui::screens::BattleScreen;
 use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Palette, Rect, UiColor};
 
 /// The game's `frame-png` options.
@@ -152,6 +158,10 @@ impl GameTools for Trpg {
         frame(&Start::of(options)?, script, scale)
     }
 
+    fn session(&self, options: &[GameArg]) -> Result<Box<dyn Session>, String> {
+        Ok(Box::new(session(Start::of(options)?)?))
+    }
+
     fn lang(&self) -> Result<GameLang, String> {
         let content = trpg_content::load_embedded().map_err(|e| e.to_string())?;
         Ok(GameLang {
@@ -168,6 +178,58 @@ impl GameTools for Trpg {
 /// Plays `script` in a Harness started as `start` says and paints the
 /// frame.
 fn frame(start: &Start, script: &Script, scale: Option<u32>) -> Result<Shot, String> {
+    let mut h = harness(start)?;
+    script.play(&mut h);
+    Ok(Shot {
+        image: picture(start, &h, scale)?,
+        shows: h.top_screen().to_owned(),
+        warning: cfg!(feature = "private-assets").then(|| BOUGHT_ART.to_owned()),
+    })
+}
+
+/// The session (`cargo shuyi run`, `scene`, the MCP server's; ticket
+/// 1181): the game started as `frame` starts it, its scene the battle's
+/// map and its picture `frame`'s.
+fn session(start: Start) -> Result<Headless<Shuyi>, String> {
+    let h = harness(&start)?.into_core();
+    Ok(Headless::new(h)
+        .with_scene(scene)
+        .with_picture(move |h, scale| picture(&start, h, scale)))
+}
+
+/// The battle on `h`'s screen: its map scene as text, its state as data
+/// ([`battle_data`]).
+fn scene(h: &Core) -> Result<Scene, String> {
+    let battle = h.screen::<BattleScreen>().ok_or_else(|| {
+        format!(
+            "no battle on screen (the top screen is `{}`)",
+            h.top_screen()
+        )
+    })?;
+    Ok(Scene {
+        screen: h.top_screen().to_owned(),
+        kind: "grid map".to_owned(),
+        text: harness::map_text(h),
+        data: battle_data(battle.state()),
+    })
+}
+
+/// `state` as JSON: all of it but its map, which is the scene's text (JSON
+/// can't key the map's features by tile).
+fn battle_data(state: &BattleState) -> serde_json::Value {
+    serde_json::json!({
+        "turn": state.turn(),
+        "phase": state.phase(),
+        "units": state.units(),
+        "fallen": state.fallen(),
+        "down": state.down(),
+        "escaped": state.escaped(),
+        "outcome": state.outcome(),
+    })
+}
+
+/// A Harness started as `start` says.
+fn harness(start: &Start) -> Result<Harness, String> {
     let playdate = start.playdate.then(playdate_palette).transpose()?;
     let setup = |ctx: &mut Ctx| {
         if let Some(palette) = playdate {
@@ -205,31 +267,30 @@ fn frame(start: &Start, script: &Script, scale: Option<u32>) -> Result<Shot, Str
             .battle_lights
             .extend(battles.into_iter().map(|id| (id, light.clone())));
     }
-    script.play(&mut h);
+    Ok(h)
+}
+
+/// `h`'s frame painted as `start` says.
+fn picture(start: &Start, h: &Core, scale: Option<u32>) -> Result<Image, String> {
     let ctx = h.game().ctx();
     let map;
     let buffer = if start.shows == Shows::MapAlone {
-        map = map_alone(&h)?;
+        map = map_alone(h)?;
         &map
     } else {
         h.game().buffer()
     };
-    let image = if start.playdate {
+    if start.playdate {
         let bits = trpg_content::bundle::bytes(ATLAS_1BIT_PATH).unwrap_or_default();
         let font = onebit::Font::new(&ctx.game.content.font, bits)?;
         let mut frame = Box::new([0; FRAME_BYTES]);
         // The pictures the Playdate's build makes (ticket 1040).
         let pictures = crate::playdate_images::Pictures::of_the_bundle()?;
         onebit::render(buffer, &font, &pictures, &mut frame);
-        one_bit_picture(&frame, scale.unwrap_or(1))
+        Ok(one_bit_picture(&frame, scale.unwrap_or(1)))
     } else {
-        painted(ctx, buffer, scale.unwrap_or(2))?
-    };
-    Ok(Shot {
-        image,
-        shows: h.top_screen().to_owned(),
-        warning: cfg!(feature = "private-assets").then(|| BOUGHT_ART.to_owned()),
-    })
+        painted(ctx, buffer, scale.unwrap_or(2))
+    }
 }
 
 /// `buffer` painted with the game's font and images, each console pixel
@@ -247,12 +308,11 @@ fn painted(ctx: &Ctx, buffer: &GlyphBuffer, scale: u32) -> Result<Image, String>
 
 /// The battle on `h`'s screen, its map alone over the whole console as the
 /// game's map skin paints it, the view centred on the cursor (`--map`).
-fn map_alone(h: &Harness) -> Result<GlyphBuffer, String> {
+fn map_alone(h: &Core) -> Result<GlyphBuffer, String> {
     let ctx = h.game().ctx();
     let console = ctx.console;
     let screen = Rect::new(0, 0, i32::from(console.cols), i32::from(console.rows));
-    let scene = h
-        .map_scene_in(screen)
+    let scene = harness::map_scene_in(h, screen)
         .ok_or_else(|| format!("--map: no battle on screen ({})", h.top_screen()))?;
     let blank = Cell::new(
         ' ',

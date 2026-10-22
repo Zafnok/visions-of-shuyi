@@ -136,6 +136,10 @@ Set `status: in-progress` in the ticket frontmatter.
 
 Run the `run-gates` skill. Everything must pass locally before you push.
 
+A change a player sees can be checked through the MCP server's session
+tools (`start`, `step`, `scene`, `frame_png`; `.mcp.json`) besides
+`cargo shuyi frame-png`.
+
 Measure the change against the estimate: `cargo xtask code-lines`, the
 **added** column of `total (game)` (ADR-0092). Ratio = measured ÷
 estimate:
