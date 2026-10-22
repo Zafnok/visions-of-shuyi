@@ -83,8 +83,8 @@ decided by the story bible (0701).
 Numbers marked *tunable* are starting values Claude chose; balance tickets
 may change them without asking. Rules marked *Claude's starting rule* fill a
 gap in Nick's answers, and Nick may veto them. Unmarked rules are Nick's. All
-numbers are FE-sized, like `stats-and-combat.md`, and get rescaled with the
-rest in ticket 0013.
+numbers are FE-sized, like `stats-and-combat.md`; ticket 0013 kept that
+scale.
 
 ## Spells, not tomes
 

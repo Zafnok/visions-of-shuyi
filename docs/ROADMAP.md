@@ -282,7 +282,8 @@ tickets in brackets):
 7. **0606**'s question, where to promote and reclass (asked inside 0606
    before it is built)
 8. **0013** the number scale, decided before Act 1 is balanced
-   (0848–0854, 1070–1072)
+   (0848–0854, 1070–1072; done 2026-10-22: FE-sized, built by 0323
+   and 0608)
 9. **0018** higher-rank arts and special weapons (1072)
 10. **1007**'s world-map glyph mockup (asked inside 1007 before it is
     built)
@@ -310,7 +311,9 @@ Candle joins outside battle.
   who can't die, a scripted death (after 0069) · **0511** bosses use their
   debuff and stance arts · **0513** green units carry their own
   consumables (0044) · **0321** the four armour weights in the data
-  (after 0073) → **0320** specialty stores.
+  (after 0073) → **0320** specialty stores · **0323** extra strikes need
+  a gap or a share of the enemy's speed, ceilings HP 200 / stats 100
+  (0013) · **0608** the level pace, fast early and slow late (0013).
 - **C. Bots**, engine first (0130): each step is an engine PR in
   `Zafnok/shuyi-engine`, then the game PR that moves the pin and adds
   the game's parts. engine#2125 the rollout bot (`Determinize`, flat
@@ -351,11 +354,11 @@ Candle joins outside battle.
 0736) → the scripts, one chapter at a time because the ledger makes
 them sequential: **0744** (Chapter 2, after 0737) → **0745** → **0746**
 → **0747** → **0748** → **0749** → **0750** (Chapter 8, also after
-0069). Each chapter's battle after its script, 0509, 0013, 0070 and
+0069). Each chapter's battle after its script, 0509, 0323, 0608, 0070 and
 0071: **0848** Chapter 2 (also 0313, 0409, 0443, 0069), **0849**
 Chapter 3 (also 0037, 0069), **0850**–**0854** Chapters 4–8 (also
 1007, 1008, 0319, 1070). The world map's content: **1070** nodes,
-towns and the random pool (after 1007, 1008, 0044, 0013) → **1071** the
+towns and the random pool (after 1007, 1008, 0044, 0323, 0608) → **1071** the
 eight fixed skirmishes, with Gil (after 0746–0749) and **1072** the five
 side quests (after 0018, 0069 and their chapters' scripts); **1073**
 supports and camp events (after 1003, 0743, 0750).
@@ -385,7 +388,7 @@ Design answers unblock most of the rules work. Suggested order:
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0812** chapter card · **0813** transitions
    · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
-6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
+6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale (done) → **0323** strike rule & ceilings, **0608** level pace · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles (done) · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)
