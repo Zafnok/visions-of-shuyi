@@ -38,6 +38,14 @@ read this table.
 | 2026-10-20 | 1173 | the game's loaders read through the engine's format registry: the registry built once with the game's formats, the data tables as kinds, maps, cinematics and dialogue read file by file | 150 | 208 | 1.4× | under 2× (138 removed); the signal is one workaround: `formats::load_in`, because `Formats::load_under` gives nothing when one file fails (hiding the checks of the others) and reads subfolders. 2: engine ergonomics, `Formats::load_each`, shipped with the workaround marked; also 3: in this PR, `Table<T>` and `DataTable`, since a `trpg_core` table can't be an `AssetKind` itself (orphan rule) | engine#2219, 1176 |
 | 2026-10-20 | 1171 | one copy of the campaign's mode, tutorial level and lessons, and the class change screen's debug unit moved to the debug tools | 15 | 49 | 3.3× | 4: accept: 42 of the 49 are the debug unit moved verbatim (a moved line counts as added; production lines fell by 7); next time a move goes in the estimate | — |
 | 2026-10-20 | 1176 | the map, cinematic and dialogue loaders on the engine's `Formats::load_each`; the game's `formats::load_in` goes | 3 | 9 | 3× | 4: accept, no engine glue (14 removed): the three call sites, which rustfmt splits over lines now that the call names the registry and the bundle, and one import. The workaround 1173 marked is gone | — |
+| 2026-10-22 | 0506 (sweep) | play a battle's bots many times on every core and report against the targets, with a history and summary lines (`crates/xtask/src/playtest.rs`) | 60 | 532 | 8.9× | 1: the engine's `shuyi playtest` takes a finished report from the game, so it can't spread tries over threads, time them, keep a history or print lines from measures; the game wrote its own command | engine#2532, engine#2533, 1180 |
+| 2026-10-22 | 0506 (sweep) | turn the targets file into a battle's checks by its tier (`crates/bots/src/playtest.rs` `Targets`) | 5 | 46 | 9.2× | 1: targets by tier (success rules, bands per tier, floors, medians) | engine#2129, 1180 |
+| 2026-10-22 | 0506 (sweep) | score a planned turn as named counts times a persona's weights, personas read from a file (`persona.rs` `Weights`, `Persona`, `Tally`, `Tally::score`) | 35 | 108 | 3.1× | 1: weighted features and personas as data (each new count is written in four places) | engine#2130, 1180 |
+| 2026-10-22 | 0506 (sweep) | the danger each player unit stands in, as the danger zone and forecasts show it, and how far each walks to the objective (`persona.rs` `threats`, `danger`, `Goals` and helpers) | 40 | 130 | 3.3× | 1: threat areas, the danger at a tile from a forecast hook and a walking distance to goals, in the tactics kit; 3: the caps, `at_risk` and the lord rules stay | engine#2131, 1180 |
+| 2026-10-22 | 0506 (sweep) | the commands a persona tries first (`persona.rs` `order`, `advance`, `hold`, `attack_key`, `once_per_action`) | 50 | 174 | 3.5× | 1: a candidate order (ranked groups with a kept last command in the core; strikes, advances and holds in the tactics kit); 3: the classifier stays | engine#2132, 1180 |
+| 2026-10-22 | 0506 (sweep) | run every battle's playtest in CI and fail only on a floor (`.github/workflows/playtest.yml`, YAML, not counted by `code-lines`) | 15 | 94 | 6.3× | 1: a reusable workflow | engine#2021, 1180 |
+| 2026-10-22 | 0506 (sweep) | what a try measures (`measures.rs`, `BattleMeasure`) | 110 | 117 | 1.1× | 4: accept, the game's events and modes (what a fall is, which items count); the turn cap's off-by-one is 3 lines | — |
+| 2026-10-22 | 0506 (sweep) | an entrant: the battle in its mode, the persona on the Player phase, the enemy AI elsewhere (`playtest.rs` `BattleEntrant`, `BattleStage`); the talk rule (`PersonaBot`) | 80 | 108 | 1.4× | under 2× | — |
 
 ## Sweeps
 
@@ -88,3 +96,35 @@ how many screens or loaders would shrink.
 
 Found on the way, not friction: the battle forecast's kill mark is drawn
 as one rectangle per pixel row, against ADR-0038 (ticket 0470).
+
+### 0506, 2026-10-22: the playtest area
+
+**Why**: not a trigger of the skill. Ticket 0506 (the persona bots)
+measured 1.8×, under 2×, but Nick (2026-10-22) asked that the generic
+parts of the game's playtesting move into the engine, so other games
+get playtest personas and a playtest command out of the box. So this
+sweep covers one area only: `crates/xtask/src/playtest.rs`,
+`crates/bots/src/{persona,playtest,measures}.rs` and
+`.github/workflows/playtest.yml`, measured at 0506's merge
+`b5982843` with the rules of `cargo xtask code-lines` (blank, comment and
+test lines left out), about 1,300 production lines in all. The
+estimates are what the game would keep with the engine pieces, by the
+same job in hello-grid (`examples/hello-grid/src/tools.rs`, about 75
+lines for its playtest, measures and entrants included) and
+0506's own split into the game's logic and the rest.
+
+**Findings, ranked** by ratio:
+
+| Rank | Finding | Outcome | Ratio | Tickets |
+| ---- | ------- | ------- | ----- | ------- |
+| 1 | Targets by tier: success rules, bands per tier, floors, medians, turned into a battle's checks | 1: engine | 9.2× | engine#2129 |
+| 2 | `shuyi playtest` plays a game's plan itself: stages, entrants and groups, threads, defaults, time per try | 1: engine | 8.9× | engine#2532 |
+| 3 | The playtest's history (`was …`) and summary lines from named measures | 1: engine | 8.9× | engine#2533 |
+| 4 | A reusable playtest workflow | 1: engine | 6.3× | engine#2021 |
+| 5 | A planner's candidate order: ranked groups (core), strikes, advances and holds (tactics kit) | 1: engine | 3.5× | engine#2132 |
+| 6 | Threat areas, the danger at a tile and walking distance to goals | 1: engine (tactics kit) | 3.3× | engine#2131 |
+| 7 | Weighted features and personas as data | 1: engine | 3.1× | engine#2130 |
+
+The game moves onto all seven in one ticket, 1180 (blocked by them).
+After it, the game's playtesting should be about 450 production lines
+(the counting, the hooks, the measures, the entrants and the plan).

@@ -46,6 +46,10 @@ What it may change depends on the battle kind (Nick, Q11):
 **The bots are never tuned to pass** (0506 context): only the battle
 changes. The engine's search has no way to reach the bots' settings.
 
+**Either order with 1180:** if 1180 is done, the autobalance
+search judges with the engine's `Targets` (engine#2129) and the game's
+playtest plan; if not, with `trpg_bots::Targets`, and 1180 moves it.
+
 ## Nick input
 
 None. Nick no longer checks gameplay tickets after merge (Nick,

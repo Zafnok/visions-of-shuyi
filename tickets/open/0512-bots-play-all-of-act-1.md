@@ -35,6 +35,10 @@ army (0509's `cargo xtask autobalance`). What none of them checks:
 - **The Playdate:** memory (1068's margin) and timing (the slowest enemy
   phase, frame times) over Act 1's biggest battles, on the device.
 
+**Either order with 1180:** if 1180 is done, the campaign run is
+a stage or an option of `cargo shuyi playtest`; if not, of `cargo
+xtask playtest`, and 1180 moves it.
+
 ## Nick input
 
 **Setup** (a measurement, not a check): Nick sideloads the measuring

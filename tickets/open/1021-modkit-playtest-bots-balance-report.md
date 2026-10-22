@@ -25,6 +25,10 @@ The bots are dev tooling and are never linked into the game (`CLAUDE.md`,
 ADR-0033). 1011's ADR puts them in `vos-modkit`, a separate tool shipped
 beside the game (1016).
 
+**Either order with 1180:** if 1180 is done, "the same report" is
+`cargo shuyi playtest`'s; if not, `cargo xtask playtest`'s, and 1180
+moves the modkit's report with it.
+
 ## Nick input
 
 None.
