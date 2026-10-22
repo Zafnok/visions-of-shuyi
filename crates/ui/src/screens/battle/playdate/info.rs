@@ -180,7 +180,8 @@ fn paint_loadout(pen: &mut Page<'_>, view: &InfoView) {
     pen.text((2, dy + 5), HALF_W - 2, &pairs(&view.ranks));
     if !view.affinities.is_empty() {
         pen.text((SECOND, dy + 4), HALF_W, &view.affinities_title);
-        pen.text((SECOND + 2, dy + 5), HALF_W - 2, &pairs(&view.affinities));
+        // To the frame: the page cuts it there.
+        pen.text((SECOND + 2, dy + 5), HALF_W, &pairs(&view.affinities));
     }
 }
 
