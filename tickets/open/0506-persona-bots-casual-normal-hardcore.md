@@ -5,8 +5,8 @@ type: feature
 milestone: M4 Enemy AI
 model: opus-5.5
 effort: high
-status: todo
-blocked_by: ["0033", "0505", "0803", "engine#2125", "engine#2126"]
+status: blocked
+blocked_by: ["0033", "0505", "0803", "engine#2125", "engine#2126", "engine#2128"]
 nick_input: none
 completed:
 ---
@@ -39,6 +39,44 @@ only the game's parts:
 | ------------------------------ | ---------------------- |
 | engine#2125: `Determinize`, `Evaluate`, `Order`, `Playout`, and the rollout bot (`Rollout`, `RolloutSettings`, `Horizon`). Flat Monte Carlo on determinized copies, with one set of seeds per decision, a base-2 softmax pick from the bot's own seed, and work units | `Determinize` for `BattleState` (`reseed_luck`, and reinforcements that haven't arrived removed); each persona's `Evaluate`; the move `Order`; the `Playout` (the baseline bot for the player, the enemy AI for the enemy); the talk-first rule |
 | engine#2126: the playtest runner (`Entrant`, `Measure`, `Tries`, `play_tries`, `judge`, `run`), checks as data (`Check::Rate` with a band and a floor, `Check::Median`), and the report with ✓ / ✗ too hard / ⚠ too easy | the battle's `Measure` (from 0505's `BattleMeasures`), each persona as an `Entrant` (its mode and its bot), `personas.ron`, `targets.ron` turned into the engine's checks by tier, and `cargo xtask playtest` as a thin wrapper that keeps its options, threads and history and adds the game's own report lines |
+
+**Waiting for the engine's turn planner (2026-10-21, engine#2128).** A
+first build of this ticket is on the branch `t0506-persona-bots`
+(pushed, no PR): the pin past engine#2125 and engine#2126, `Determinize`
+for `BattleState`, the personas on the engine's rollout bot, the runner
+on the engine's, the targets, the xtask, the workflow, the docs and
+ADR-0095, with its tests. On Chapter 1 the personas played worse than
+the mindless baseline (about 30% won). With the ticket's design
+(the enemy AI playing out every side): Casual 2/100 succeeded, Normal
+3/100, Hardcore 4/100, most tries at the turn cap. After the fixes on the
+branch: Casual 2/100, Normal 23/100 (39 won), Hardcore 31/100 (37 won,
+59 at the turn cap). Traced tries show why: deciding one command at a
+time, a persona refuses every first step of a coordinated move ("weaken
+it, then finish it"), and near the end it ends its turn without acting.
+Nick plays Chapter 1 with nobody dying, so this is the bots, not the map.
+Nick chose an engine turn planner (a bot that plans its side's whole
+turn, engine#2128) over game-side hand-written combos.
+
+What changes for this ticket when engine#2128 lands:
+
+- Move the pin past it, merge `main` into `t0506-persona-bots` and finish
+  there.
+- `PersonaBot` plans with the engine's `TurnPlan` instead of `Rollout`,
+  with the same order, scoring and talk rule; `personas.ron` gets
+  `PlanSettings` (a wider and deeper plan for Hardcore than for Normal,
+  the least for Casual).
+- **What a bot knows** (Nick, 2026-10-21, `docs/design/playtest-bots.md`):
+  the danger zone and the forecasts, never the enemy's mind. The copies
+  stop when the persona's turn ends; the enemy's turn is never played out
+  with the enemy AI. The branch's scoring already does this
+  (`exposed`, `at_risk`: the enemies that can reach a unit and their
+  forecasts; `BattleState::threat_forecast`).
+- The ticket's step 4 is superseded where the branch's ADR-0095 says
+  (the order adds the enemy AI's pick, heals and each unit's advance; the
+  playout is "end the persona's turn"; the scoring adds `approach` and
+  the danger terms; the horizon is the persona's own turn).
+- Then the full Chapter 1 report, and whatever it says goes in the
+  Completion notes for Nick.
 
 **Approach: search, not training.** Each persona is the same rollout
 bot with different settings, not a trained network (training is 0507).

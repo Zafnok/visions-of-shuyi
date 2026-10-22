@@ -111,6 +111,21 @@ with the bots, not the map.
 map for the first time: while planning, it can't see reinforcements that
 haven't arrived yet. An unfair ambush therefore shows up in the numbers.
 
+## What a bot knows about the enemy
+
+Like a player: the **danger zone** and the **forecasts**, not the enemy's
+mind. Nick (2026-10-21, ticket 0506): "they know the danger zone since the
+UI makes it apparent, but they shouldn't know exactly who gets attacked
+and if it will crit and what arts are used". So while planning, a bot may
+see which enemies can reach which tiles and the numbers a forecast shows,
+but it never plays the enemy's turn out with the enemy's real AI, and
+never sees the luck to come.
+
+Nick's own yardstick (2026-10-21): as an intermediate Fire Emblem player
+he clears Chapter 1 as it is with nobody dying, using the danger zone
+overlay and his rewinds. Bots never rewind, so they may land a little
+lower, but a bot that does far worse is a weak bot, not a hard map.
+
 ## What the report shows
 
 Per bot, per battle:
