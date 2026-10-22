@@ -101,12 +101,17 @@ fn chapter_key(id: &str) -> String {
 /// What every key of a terrain's name starts with.
 const TERRAIN_PREFIX: &str = "terrain.";
 
-/// What every key of a battle note starts with.
-const NOTE_PREFIX: &str = "battles.";
+/// What every key of a battle file's text (its notes, its exit) starts with.
+const BATTLE_PREFIX: &str = "battles.";
 
 /// The key of battle `id`'s note number `index` (from 0): `battles.<id>.note_1`.
 fn note_key(id: &str, index: usize) -> String {
-    format!("{NOTE_PREFIX}{id}.note_{}", index + 1)
+    format!("{BATTLE_PREFIX}{id}.note_{}", index + 1)
+}
+
+/// The key of battle `id`'s exit name: `battles.<id>.exit`.
+fn exit_key(id: &str) -> String {
+    format!("{BATTLE_PREFIX}{id}.exit")
 }
 
 /// Whether `key` is the field of a tip that ends its key with `field`.
@@ -202,6 +207,9 @@ pub fn from_tables(tables: &Tables<'_>) -> DataText {
         for (i, note) in battle.battle_notes.iter().enumerate() {
             data.insert(note_key(id, i), note.text.clone());
         }
+        if let Some(exit) = &battle.exit_name {
+            data.insert(exit_key(id), exit.clone());
+        }
     }
     let mut text = DataText::new(data, tables.names.clone());
     text.add_dialogue(tables.dialogue);
@@ -291,6 +299,12 @@ impl Lang {
     /// English among the battle files' notes; one that is in no file (a
     /// battle made by a test) stays as it is.
     pub fn battle_note<'a>(&'a self, code: &LangCode, note: &'a BattleNote) -> &'a str {
-        self.0.found(code, NOTE_PREFIX, &note.text)
+        self.0.found(code, BATTLE_PREFIX, &note.text)
+    }
+
+    /// The name of a battle's exit, `english`, in language `code`: found by
+    /// its English among the battle files' exits, as a note is.
+    pub fn exit_name<'a>(&'a self, code: &LangCode, english: &'a str) -> &'a str {
+        self.0.found(code, BATTLE_PREFIX, english)
     }
 }

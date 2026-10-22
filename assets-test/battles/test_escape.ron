@@ -19,6 +19,7 @@
         (turn: 3, unit: (template: "test_raider", pos: (1, 4))),
     ],
     objective: Escape(area: (x: 13, y: 2, w: 1, h: 6)),
+    exit_name: "the east road",
     difficulty: Normal,
     music: Pool("skirmish"),
     seed: 1,

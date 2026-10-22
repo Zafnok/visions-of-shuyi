@@ -243,6 +243,14 @@ impl<'a> Words<'a> {
         }
     }
 
+    /// The name of a battle's exit, `english` in its battle file.
+    pub fn exit_name(self, english: &'a str) -> &'a str {
+        match self.pack {
+            Some((lang, code)) => lang.exit_name(code, english),
+            None => english,
+        }
+    }
+
     /// `scene` as a lead of `gender` reads it: its lines, replies and
     /// captions in the language, with their ids and tokens kept.
     #[must_use]

@@ -417,6 +417,9 @@ pub struct BattleScreen {
     /// it ([`with_look`](Self::with_look)); a battle made any other way
     /// has the look of a map that names none.
     look: MapLook,
+    /// The battle file's name for its exit, named on an escape map's
+    /// objective line (0324).
+    exit_name: Option<String>,
     /// The language of the last frame: what a command applied between
     /// frames names things in (a combat's fighters, a level up's skills).
     /// English until the first frame.
@@ -534,6 +537,7 @@ impl BattleScreen {
             player_view: None,
             notes_t: 0.0,
             look: MapLook::default(),
+            exit_name: None,
             language: Language::default(),
         }
     }
@@ -542,6 +546,13 @@ impl BattleScreen {
     #[must_use]
     pub fn with_look(mut self, look: MapLook) -> Self {
         self.look = look;
+        self
+    }
+
+    /// This screen with the battle file's name for its exit, `name`.
+    #[must_use]
+    pub fn with_exit_name(mut self, name: Option<String>) -> Self {
+        self.exit_name = name;
         self
     }
 
@@ -2354,7 +2365,11 @@ impl BattleScreen {
                 });
                 Some(DialogView::Objective(ObjectiveView {
                     title: ctx.text("battle.objective.title").to_owned(),
-                    objective: map_menu::objective_text(&self.state, words),
+                    objective: map_menu::objective_text(
+                        &self.state,
+                        self.exit_name.as_deref(),
+                        words,
+                    ),
                     turn: map_menu::turn_text(&self.state, words),
                     notes: under,
                 }))

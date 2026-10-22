@@ -63,6 +63,7 @@ plays; later the world map's battles and skirmishes (1007, 1008) will too.
 | `solo_stock` | The stock when the battle is played on its own (the debug Quick Battle): item ids, one entry per item. Ignored in the story, where the stock is the campaign's. Default: empty. |
 | `clear_gold` | Gold for winning. Default 0. |
 | `objective` | `Rout()`, `DefeatUnit(unit: "garth")` (a character among the enemies or reinforcements), `Seize(pos: (x, y), by_lord: true)`, `Survive(turns: 8)`, `Escape(area: (x: 13, y: 2, w: 1, h: 6))` (every player unit still standing leaves through the exit area, one by one, with the `Escape` action; no turn limit: `turn-structure.md`, *Escape*). The first three take an optional `turn_limit: Some(n)`. |
+| `exit_name` | Optional, written bare (`exit_name: "the Brennish lines"`), only with `Escape`: the place the exit leads to, named on the objective line (`Get everyone to the Brennish lines (2/6 out)`), one line, translated by its English (`battles.<id>.exit`, `assets/lang/README.md`). Default: `Get everyone to the exit`. |
 | `triggers` | The battle's story moments (0705, ADR-0030): `(when: …, scene: "id", once: true)`, with `when` one of `TurnStart(turn, phase)`, `UnitEntersArea(who: Character("id") \| Faction(Player), area: (x, y, w, h))`, `CombatStart(unit, against: Some("id"))`, `HalfHp(unit)`, `UnitFell(unit, mode: Some(Classic), recruit: true)`, `Talk(a, b)`. A trigger's scene plays for the characters whose units are on the map when it fires: its `@if` lines (`assets/dialogue/README.md`, "Who is still there"). |
 | `battle_notes` | Strategy hints (0411, `magic.md` "Battle notes"): `(text: "…", units: [...])`. Shown in a `BATTLE NOTES` box when the battle starts and under the objective on the map menu's `Objective` page; the `units` (optional) blink on the map meanwhile. Each of `units` is an enemy's or reinforcement's `id`, or a character in the battle (every unit of it). A note changes no rule. Default: none, and no box. |
 | `difficulty` | The map's tier: `Easy`, `Normal`, `Hard`, `Finale` → 2 / 3 / 5 / 8 rewind charges (`death-and-difficulty.md`). |
@@ -88,6 +89,8 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
 - a `DefeatUnit` character that isn't an enemy here, a seize tile outside
   the map, an escape area that is empty or not all on the map,
   `Survive(turns: 0)`, a turn limit of 0;
+- an `exit_name` on a map whose objective isn't `Escape`, or one that is
+  empty or more than one line;
 - a default pack over the cap, with an unknown item or a non-consumable;
 - no `music`, or one that isn't a music cue (`Cue`) or a pool (`Pool`) of
   the audio manifest;
