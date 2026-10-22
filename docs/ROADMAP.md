@@ -297,14 +297,15 @@ Candle joins outside battle.
 
 **Phase 2: systems**, in lanes that run side by side:
 
-- **A. World map:** **0313** villages (after 0037) · **0409** the shop
+- **A. World map:** **0313** save the village (after 0037) · **0409** the shop
   screen (after 0028) → **0443** the Preparations shop tab (after
   0044) · **0606** promote and reclass · **1003** supports and camp
   screens (after 0027) → **1007** the world map (after 0409, 0025,
   0026; mockup first) → **1008** skirmishes → **1065** the act ends
-  (closing scene, "Act 1 ends", the army carried over).
-- **B. Battle rules:** **0319** escape, a fleeing boss, a boss who
-  can't die, a scripted death (after 0069) · **0511** bosses use their
+  (closing scene, "Act 1 ends", the army carried over) · **1074** a
+  discovered side quest shows when it closes (after 1007).
+- **B. Battle rules:** **0319** escape, a boss who retreats, a boss
+  who can't die, a scripted death (after 0069) · **0511** bosses use their
   debuff and stance arts · **0513** green units carry their own
   consumables (0044) · **0321** the four armour weights in the data
   (after 0073) → **0320** specialty stores.

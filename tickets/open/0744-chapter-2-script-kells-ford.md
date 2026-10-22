@@ -17,11 +17,11 @@ completed:
 
 Act 1, Chapter 2 (linear), from `docs/story/outline.md`:
 
-- **Story battle:** Kell's Ford: a river village split by a ford, burning houses to reach (villages), the garrison's watchtower across the water, a Hound lieutenant as boss.
+- **Story battle:** Kell's Ford: a river village split by a ford, houses to save before the raiders burn them (0069's *save the village*: a minimum to save, extra rewards past it), the garrison's watchtower across the water, a Hound lieutenant as boss.
 - **Turn:** The raiders are Hounds in Brennish colours (Aske: "Brennish cannot afford boots like this"); after the battle a crown herald names the lead an outlaw and declares the Ash Peace broken.
-- **Recruits:** Joss Pellam (`defector`, Swordsman), talk-recruited by the lead or Aske.
+- **Recruits:** Joss Pellam (`defector`, Swordsman), joins in the scene after the battle (0069: no recruiting by talking).
 - **Arcs advanced:** Aske (her hatred loses its target), Maud (healing strangers under fire), the lead and Dace.
-- **New in this chapter:** Preparations (0443's shop tab) for the first time, talk-to-recruit, villages to visit (0313).
+- **New in this chapter:** Preparations (0443's shop tab) for the first time, save the village (0313), a recruit who joins in a scene (0069).
 
 The story pipeline (ADR-0011, the `story-writing` skill) goes beat sheet
 → script, and `docs/story/ledger.md` records what each chapter changed,

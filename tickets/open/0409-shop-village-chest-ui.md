@@ -1,6 +1,6 @@
 ---
 id: "0409"
-title: Shop screen and Visit/Open actions in battle
+title: Shop screen and Evacuate/Open actions in battle
 type: feature
 milestone: M3 Battle UI
 model: sonnet-5
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 0409 — Shop screen, Visit, Open
+# 0409 — Shop screen, Evacuate, Open
 
 ## Context
 
@@ -20,8 +20,11 @@ FE on-map Armoury / Vendor / Blacksmith, villages and chests. The same shop
 screen is reused between chapters through 0308's `ShopSession`.
 
 **Villages are on hold** (`docs/design/terrain.md`, 2026-09-26: no village
-tile yet; ticket 0037 decides it, and 0313 then builds the rules). Build
-the village UI only if 0313 is done; this ticket doesn't wait for it.
+tile yet; ticket 0037 decides it, and 0313 then builds the rules). Since
+0069 (2026-10-22) a village is a set of houses to save (`Evacuate`), not a
+gift to `Visit` (`turn-structure.md`, *Save the village*). Build the house
+UI (`Evacuate` in the action menu, the objective line's saved / lost
+counts) only if 0313 is done; this ticket doesn't wait for it.
 
 ## Nick input
 
@@ -37,7 +40,7 @@ it):
 
 ## Scope
 
-**In:** `ShopScreen` (Buy / Sell / Repair tabs by shop kind), `Shop`, `Visit`
+**In:** `ShopScreen` (Buy / Sell / Repair tabs by shop kind), `Shop`, `Evacuate`
 and `Open` entries in the action menu, gold in the side panel and shop
 header, gift/loot message lines. The shop screen plays the `shop` music cue chosen in
 0028 (`docs/design/audio.md`), imported with `assets-src/audio/import.py` and
@@ -49,21 +52,21 @@ If 0028 recorded "no music here", skip this.
 
 ## Implementation steps
 
-1. Action menu: `Shop` on a shop tile, `Visit` on an unvisited village gate,
+1. Action menu: `Shop` on a shop tile, `Evacuate` on an unsaved house's door,
    `Open` on an unopened chest (player units only).
 2. `ShopScreen`: header `ARMOURY    Gold 1 250`; Buy list with price and a
    stat line; Sell list (half price; seals are never listed: no shop buys
    them, `ShopError::NotBought`, ticket 0603); a Blacksmith shows Repair with the cost
    and `12/20 → 20/20`. Unaffordable entries dimmed. Transactions collect into
    one `UnitAction::Shop`; leaving with none sends nothing (unit not done).
-3. `Visit` / `Open`: send the action; show `Got 300 gold.` / `Got Potion.`
-   (plus the scene hook if a village gift is a scene).
+3. `Evacuate` / `Open`: send the action; show `House saved.` /
+   `Got Potion.` (plus the house's line, if the map has one).
 4. The side panel shows party gold.
 
 ## Acceptance criteria
 
 - [ ] Harness: buy a Potion on a Vendor tile → gold drops by its price, pack grows, unit done; leaving without buying → unit not done.
-- [ ] Harness: repair a damaged weapon at a Blacksmith; visit a village; open a chest.
+- [ ] Harness: repair a damaged weapon at a Blacksmith; evacuate a house; open a chest.
 - [ ] Snapshots below.
 - [ ] All gates in the `run-gates` skill pass.
 

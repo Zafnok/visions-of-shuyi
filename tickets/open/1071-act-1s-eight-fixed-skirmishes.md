@@ -50,7 +50,7 @@ checklist.
   (`world-structure.md`; *Smugglers' Cove* "with loot"), and its scene
   triggers from the scripts.
 - **Gil's recruitment** on *Millhaven Road*: as Chapter 4's script
-  (0746) wrote it (talk-recruit or a join after the fight); his unit in
+  (0746) wrote it (he joins if defeated, 0069: win without beating him and he is missed); his unit in
   `characters.ron`, his art imported as 0070 recorded (private
   repository, `--pin`, credits).
 - The eight nodes in 1070's map point at these battles; the guarding
