@@ -19,12 +19,13 @@ UI for 0308's rules (`docs/design/weapons-and-items.md`, "Money and shops"):
 FE on-map Armoury / Vendor / Blacksmith, villages and chests. The same shop
 screen is reused between chapters through 0308's `ShopSession`.
 
-**Villages are on hold** (`docs/design/terrain.md`, 2026-09-26: no village
-tile yet; ticket 0037 decides it, and 0313 then builds the rules). Since
-0069 (2026-10-22) a village is a set of houses to save (`Evacuate`), not a
-gift to `Visit` (`turn-structure.md`, *Save the village*). Build the house
-UI (`Evacuate` in the action menu, the objective line's saved / lost
-counts) only if 0313 is done; this ticket doesn't wait for it.
+**Villages:** since 0069 (2026-10-22) a village is a set of houses to
+save (`Evacuate`), not a gift to `Visit` (`turn-structure.md`, *Save the
+village*). The house is a one-tile `house` terrain (0037, `terrain.md`,
+*Building tiles*), added and drawn on every map skin by 0322, so this
+ticket draws no house. Build the house UI (`Evacuate` in the action menu,
+the objective line's saved / lost counts) only if 0313 is done; this
+ticket doesn't wait for it.
 
 ## Nick input
 

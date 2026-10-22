@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-22
 ---
 
 # 0037 — Decide: more building tiles, capturing and healing tiles
@@ -102,12 +102,12 @@ next to `fort` (`╦╦`); a terrain glyph must never look like the cursor
 
 ## Acceptance criteria
 
-- [ ] `terrain.md` answers the open sub-question with Nick's words and
+- [x] `terrain.md` answers the open sub-question with Nick's words and
       concrete rules, or records that he deferred it again (and until
       when).
-- [ ] 0313 and 0409 match the answer.
-- [ ] Implementation tickets exist for everything he chose.
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] 0313 and 0409 match the answer.
+- [x] Implementation tickets exist for everything he chose.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -115,5 +115,38 @@ next to `fort` (`╦╦`); a terrain glyph must never look like the cursor
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Asked Nick in two rounds with the question pop-up (2026-10-22), with
+scratch mockups of each tile next to the fort in both looks (not
+committed: the picture look was cut from the bought files).
+
+**Decided** (`docs/design/terrain.md`, *Building tiles*, *Capturing*,
+*Healing tiles*):
+
+- **House, gate and throne** added beside the fort, with Fire Emblem
+  GBA's numbers (*tunable*): all cost 1 to enter; house 0 Def / +10
+  Avoid, gate +3 / +20, throne +3 / +30.
+- **Glyph look:** each is one picture across the tile's two cells, our
+  own glyphs (Nick: two of the same letter is "visually confusing").
+  Picked in round 2: lean-to shack, portcullis, crowned throne. The
+  drawings are in 0322.
+- **Picture look:** the bought houses are "too modern/nice" and there is
+  no throne, so 0322 uses stand-ins and 0471 looks for a tileset to buy.
+- **Capturing:** not in Act 1 (seize only). Maybe later for "a
+  challenging map", and then with no benefits, only a change of control.
+- **Healing:** forts, gates and thrones don't heal; no tile heals in
+  Act 1. Dedicated healing tiles may come later.
+
+**Docs updated:** `terrain.md`, `look-and-feel.md` (*Colour*),
+`turn-structure.md` (a house is one `house` tile; "door" means that
+tile), `weapons-and-items.md`, `docs/design/README.md`, `ROADMAP.md`.
+
+**Tickets:** new **0322** (the three tiles: terrain data, glyphs,
+stand-in pictures on every skin) and **0471** (find a tileset with poor
+houses, a throne, a better gate and other gaps; Nick buys). 0313 now
+waits for 0322, uses the `house` terrain instead of a map feature, and
+no longer needs Nick. 0409 no longer draws the house. 0849 waits for
+0322. 1064 waits for 0322 and 0471.
+
+**Claude's starting rules:** none new. The stand-in pictures (the small
+World Map house, the Fortress archway, a chair) are placeholders until
+0471.
