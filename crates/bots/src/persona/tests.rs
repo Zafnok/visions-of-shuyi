@@ -2,6 +2,7 @@ use shuyi_core::play;
 use trpg_core::{BattleSetup, CharacterId, Event, Trigger, TriggerWhen, Turn};
 
 use super::*;
+use crate::BaselineBot;
 use crate::testkit::{
     Scripted, attack, content, enemy, lord, player, rigged, setup, start, stationary, tile, weak,
 };
@@ -49,10 +50,16 @@ fn personas_file_lists_the_three_types() {
     assert_eq!(personas["casual"].mode, GameMode::Casual);
     assert_eq!(personas["normal"].mode, GameMode::Classic);
     assert_eq!(personas["hardcore"].mode, GameMode::Classic);
-    // Hardcore plays better than Normal: a bigger budget, no strays.
-    let (normal, hardcore) = (personas["normal"].settings, personas["hardcore"].settings);
-    assert!(hardcore.candidates * hardcore.samples > 2 * normal.candidates * normal.samples);
-    assert_eq!(hardcore.temperature, 0);
+    // Hardcore plays better than Normal, and Normal than Casual: a wider,
+    // deeper plan on more copies, and fewer strays.
+    let budget = |name: &str| {
+        let s = personas[name].settings;
+        (s.width * s.candidates * s.samples, s.depth, s.temperature)
+    };
+    let (casual, normal, hardcore) = (budget("casual"), budget("normal"), budget("hardcore"));
+    assert!(hardcore.0 > 2 * normal.0 && normal.0 > 2 * casual.0);
+    assert!(hardcore.1 > normal.1 && normal.1 > casual.1);
+    assert!(hardcore.2 == 0 && normal.2 < casual.2);
     assert!(personas_from_ron("{\"x\": (mode: Classic)}").is_err());
 }
 
@@ -70,6 +77,11 @@ fn score_weighs_every_count() {
         enemy_fell: 7,
         progress: 8,
         approach: 11,
+        exposed: 12,
+        lord_exposed: 13,
+        at_risk: 14,
+        lord_at_risk: 15,
+        counter: 16,
         turns: 9,
         items: 10,
     };
@@ -87,6 +99,11 @@ fn score_weighs_every_count() {
     assert_eq!(only(|w| w.enemy_fell = 1000), 7000);
     assert_eq!(only(|w| w.progress = 1000), 8000);
     assert_eq!(only(|w| w.approach = 1000), 11_000);
+    assert_eq!(only(|w| w.exposed = 1000), 12_000);
+    assert_eq!(only(|w| w.lord_exposed = 1000), 13_000);
+    assert_eq!(only(|w| w.at_risk = 1000), 14_000);
+    assert_eq!(only(|w| w.lord_at_risk = 1000), 15_000);
+    assert_eq!(only(|w| w.counter = 1000), 16_000);
     assert_eq!(only(|w| w.turns = 1000), 9000);
     assert_eq!(only(|w| w.items = -1000), -10_000);
     let all = Weights {
@@ -99,10 +116,15 @@ fn score_weighs_every_count() {
         enemy_fell: 1,
         progress: 1,
         approach: 1,
+        exposed: 1,
+        lord_exposed: 1,
+        at_risk: 1,
+        lord_at_risk: 1,
+        counter: 1,
         turns: 1,
         items: 1,
     };
-    assert_eq!(tally.score(&all), 66);
+    assert_eq!(tally.score(&all), 136);
     // Clamped, never wrapped.
     let huge = Tally {
         progress: i64::from(i32::MAX),
@@ -192,7 +214,19 @@ fn tally_counts_what_changed() {
     units[0].hp -= 2;
     let mut battle = Scripted::new(start(units));
     let begin = battle.state.clone();
-    assert_eq!(Tally::between(&begin, &begin), Tally::default());
+    // Nothing changed: only the danger the units stand in counts.
+    let danger = danger(&begin);
+    assert_eq!(
+        Tally::between(&begin, &begin),
+        Tally {
+            exposed: danger.exposed,
+            lord_exposed: danger.lord_exposed,
+            at_risk: danger.at_risk,
+            lord_at_risk: danger.lord_at_risk,
+            counter: danger.counter,
+            ..Tally::default()
+        }
+    );
     // Player 3 fells enemy 5 and the lord drinks a potion; then enemy 4
     // fells player 2.
     battle.act(3, 3, attack(5));
@@ -657,15 +691,60 @@ fn goals_are_measured_walking() {
 }
 
 #[test]
-fn a_personas_copies_end_its_own_phase_and_the_ai_replies() {
-    let s = start(vec![player(1, 4), rigged(enemy(2, 6))]);
-    let mut playout = PersonaPlayout(BaselineBot::new(content().ai));
-    assert_eq!(playout.choose(&s), Command::EndPhase);
-    let mut enemy_phase = s.clone();
-    enemy_phase.apply(&Command::EndPhase).unwrap();
-    let reply = playout.choose(&enemy_phase);
-    assert!(attacks(&reply, 2, 1), "{reply:?}");
-    assert_eq!(reply, BaselineBot::new(content().ai).choose(&enemy_phase));
+fn danger_counts_the_threats_a_player_can_see() {
+    // Player 2 (1 HP) stands where enemy 3 can reach it next phase; the
+    // lord, at x 0, is beyond enemy 3's reach, and enemy 4 next to it
+    // never moves and strikes only what stands next to it.
+    let threatened = |enemy_4: Unit| {
+        start(vec![
+            lord(player(1, 0)),
+            weak(player(2, 4)),
+            enemy(3, 8),
+            enemy_4,
+        ])
+    };
+    let s = threatened(stationary(enemy(4, 2)));
+    let forecast = s.threat_forecast(UnitId(3), UnitId(2)).unwrap();
+    let expected = (expected_damage(&forecast.attacker) / 100).min(1);
+    let back = forecast.defender.as_ref().map_or(0, expected_damage) / 100;
+    assert_eq!(
+        danger(&s),
+        Danger {
+            exposed: expected,
+            lord_exposed: 0,
+            at_risk: 1,
+            lord_at_risk: 0,
+            counter: back.min(20),
+        }
+    );
+    // Enemy 4 free to move reaches the lord too.
+    let s = threatened(enemy(4, 2));
+    let on_lord = s.threat_forecast(UnitId(4), UnitId(1)).unwrap().attacker;
+    let lord = danger(&s);
+    assert_eq!(lord.lord_exposed, expected_damage(&on_lord) / 100);
+    assert!(lord.counter > danger(&threatened(stationary(enemy(4, 2)))).counter);
+    assert_eq!(lord.lord_at_risk, i64::from(all_hit(&on_lord) >= 20));
+    // Nobody in reach: no danger.
+    let mut far = stationary(enemy(3, 0));
+    far.pos = Pos::new(13, 7);
+    assert_eq!(danger(&start(vec![player(1, 4), far])), Danger::default());
+}
+
+#[test]
+fn tally_counts_the_danger_where_the_copy_ends() {
+    let s = start(vec![weak(player(2, 4)), enemy(3, 8)]);
+    let tally = Tally::between(&start(vec![player(2, 0), enemy(3, 8)]), &s);
+    assert_eq!(tally.at_risk, danger(&s).at_risk);
+    assert_eq!(tally.exposed, danger(&s).exposed);
+    assert_eq!(tally.at_risk, 1);
+    assert_eq!(tally.counter, danger(&s).counter);
+}
+
+#[test]
+fn counter_is_at_most_the_enemys_hp() {
+    // A rigged player unit would fell a 1-HP enemy many times over.
+    let s = start(vec![rigged(player(2, 4)), weak(enemy(3, 6))]);
+    assert_eq!(danger(&s).counter, 1);
 }
 
 // ---- The bot ------------------------------------------------------------------

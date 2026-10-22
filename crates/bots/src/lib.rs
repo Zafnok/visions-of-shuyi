@@ -7,14 +7,14 @@
 //! battle and the data files, times the tries and writes the report. Bots
 //! know nothing about the look of the game (ADR-0038).
 //!
-//! The bot trait, the play loop, the rollout search and the playtest
-//! runner are the engine's (`shuyi_core::bots`, tickets 1116, engine#2125
-//! and engine#2126); this crate holds the game's parts:
+//! The bot trait, the play loop, the turn planner and the playtest runner
+//! are the engine's (`shuyi_core::bots`, tickets 1116, engine#2125,
+//! engine#2126 and engine#2128); this crate holds the game's parts:
 //!
 //! - [`PlayerBot`]: what plays the Player phase, any engine
 //!   `Bot<BattleState>`. [`BaselineBot`] is the enemy AI on the player's
 //!   side; [`PersonaBot`] is a persona (Casual, Normal, Hardcore) on the
-//!   engine's rollout bot, with its [`order`] of candidates and its
+//!   engine's turn planner, with its [`order`] of candidates and its
 //!   scoring ([`Tally`], [`Weights`]), from `personas.ron`.
 //! - [`BattleEntrant`]: one named player of a battle for the engine's
 //!   runner, and [`BattleMeasure`]: what happened in a try, as the
@@ -30,8 +30,7 @@ mod playtest;
 pub use bot::{BaselineBot, PlayerBot};
 pub use measures::BattleMeasures;
 pub use persona::{
-    Persona, PersonaBot, PersonaOrder, PersonaPlayout, Personas, Scoring, Tally, Weights, order,
-    personas_from_ron,
+    Persona, PersonaBot, PersonaOrder, Personas, Scoring, Tally, Weights, order, personas_from_ron,
 };
 pub use playtest::{BattleEntrant, BattleMeasure, BattleStage, Faster, Player, Targets};
 

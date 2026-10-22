@@ -1,27 +1,29 @@
 //! The persona bots (ticket 0506, `docs/design/playtest-bots.md`): Casual,
-//! Normal and Hardcore, each the engine's rollout bot ([`Rollout`]) with
-//! settings and a scoring of its own, read from `crates/bots/personas.ron`.
+//! Normal and Hardcore, each the engine's turn planner ([`TurnPlan`],
+//! engine#2128) with settings and a scoring of its own, read from
+//! `crates/bots/personas.ron`.
 //!
-//! Skill is the thinking budget and the mistakes ([`RolloutSettings`]: how
-//! many commands it weighs, on how many copies, how far it looks, how far
+//! Skill is the thinking budget and the mistakes ([`PlanSettings`]: how
+//! many commands it weighs at each step, how many partial turns it keeps,
+//! how many of its own commands a plan holds, on how many copies, how far
 //! its pick may stray from the best); the player type is what it scores
-//! ([`Weights`]). The search is the engine's; the game's parts are here:
-//! which commands are tried first ([`order`]), how a copy is played on
-//! ([`PersonaPlayout`]: the enemy AI replies), the scoring ([`Tally`])
-//! and the talk rule ([`PersonaBot`]).
+//! ([`Weights`]). The search is the engine's: it plans only the persona's
+//! own turn and never plays the enemy's out (Nick, 2026-10-21: a bot
+//! knows the danger zone and the forecasts, not the enemy's mind). The
+//! game's parts are here: which commands are tried first ([`order`]), the
+//! scoring ([`Tally`], with the danger the units stand in) and the talk
+//! rule ([`PersonaBot`]).
 
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
 use shuyi_core::grid::Grid;
 use shuyi_core::path::flow_field;
-use shuyi_core::{Bot, Evaluate, Order, Rollout, RolloutSettings};
+use shuyi_core::{Bot, Evaluate, Order, PlanSettings, TurnPlan};
 use trpg_core::{
     AiBehavior, AiWeights, BattleState, CastTarget, Command, Faction, GameMode, Objective, Outcome,
     Phase, Pos, SideForecast, Unit, UnitAction, UnitId, legal_commands, next_command, threat_area,
 };
-
-use crate::BaselineBot;
 
 /// Points for each thing a playout changed, added up into its score
 /// (higher is better): a cost is a negative weight. What is counted is
@@ -59,6 +61,9 @@ pub struct Weights {
     pub at_risk: i32,
     /// The same for the lords.
     pub lord_at_risk: i32,
+    /// Each enemy HP the player units are expected to take back when the
+    /// enemies that can reach them strike ([`Tally::counter`]).
+    pub counter: i32,
     /// Each turn that began.
     pub turns: i32,
     /// Each battle-pack item used.
@@ -72,7 +77,7 @@ pub struct Persona {
     /// The game mode it plays in.
     pub mode: GameMode,
     /// Its thinking budget and mistakes.
-    pub settings: RolloutSettings,
+    pub settings: PlanSettings,
     /// What it cares about.
     pub weights: Weights,
 }
@@ -127,6 +132,11 @@ pub struct Tally {
     pub at_risk: i64,
     /// The same for the lords.
     pub lord_at_risk: i64,
+    /// Where the playout ends, the HP the player units are expected to take
+    /// back from the enemies that can reach them, by the same forecasts
+    /// (the counter side), at most each enemy's HP: a sturdy unit in a
+    /// guard's reach is bait as well as a target.
+    pub counter: i64,
     /// Turns that began.
     pub turns: i64,
     /// Battle-pack items used.
@@ -161,6 +171,7 @@ impl Tally {
             lord_exposed: danger.lord_exposed,
             at_risk: danger.at_risk,
             lord_at_risk: danger.lord_at_risk,
+            counter: danger.counter,
             turns: i64::from(end.turn()) - i64::from(start.turn()),
             items: count(start.pack().items.iter()) - count(end.pack().items.iter()),
         }
@@ -182,6 +193,7 @@ impl Tally {
             (self.lord_exposed, weights.lord_exposed),
             (self.at_risk, weights.at_risk),
             (self.lord_at_risk, weights.lord_at_risk),
+            (self.counter, weights.counter),
             (self.turns, weights.turns),
             (self.items, weights.items),
         ];
@@ -281,6 +293,7 @@ struct Danger {
     lord_exposed: i64,
     at_risk: i64,
     lord_at_risk: i64,
+    counter: i64,
 }
 
 /// The danger the player's units stand in, in `state` ([`Tally::exposed`]).
@@ -330,6 +343,9 @@ fn danger(state: &BattleState) -> Danger {
             if let Some(forecast) = state.threat_forecast(*enemy, unit.id) {
                 expected += expected_damage(&forecast.attacker);
                 worst += all_hit(&forecast.attacker);
+                let back = forecast.defender.as_ref().map_or(0, expected_damage) / 100;
+                let enemy_hp = state.unit(*enemy).map_or(0, |e| i64::from(e.hp));
+                out.counter += back.min(enemy_hp);
             }
         }
         let hp = i64::from(unit.hp);
@@ -552,43 +568,26 @@ fn once_per_action(commands: impl Iterator<Item = Command>) -> Vec<Command> {
 /// follow the battle's own rolls (which start from the same seed).
 const SEED_SALT: u64 = 0x5EED_0506_B075_0000;
 
-/// How a persona's copies are played on after the candidate: on its own
-/// side the phase ends at once (it decides its other units itself, one at
-/// a time, so a copy shouldn't guess for them), and every other side is
-/// the enemy AI, which also answers a move offered after an attack.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct PersonaPlayout(pub BaselineBot);
-
-impl Bot<BattleState> for PersonaPlayout {
-    fn choose(&mut self, state: &BattleState) -> Command {
-        if state.phase() != Phase::Player || state.pending_move().is_some() {
-            return self.0.choose(state);
-        }
-        Command::EndPhase
-    }
-}
-
-/// A persona playing the Player phase: the engine's [`Rollout`] with the
-/// persona's order, its playout ([`PersonaPlayout`]) and its scoring.
+/// A persona playing the Player phase: the engine's [`TurnPlan`] with the
+/// persona's order and scoring.
 ///
 /// Talking costs nothing (the unit can still act), so before planning it
 /// issues each talk it can, once per battle (each pair of units once,
 /// whichever starts it).
 pub struct PersonaBot {
-    rollout: Rollout<PersonaOrder, PersonaPlayout, Scoring>,
+    plan: TurnPlan<PersonaOrder, Scoring>,
     talked: Vec<(UnitId, UnitId)>,
 }
 
 impl PersonaBot {
-    /// `persona` for the try of `seed`, its playouts and order using the
-    /// enemy AI's `ai` weights.
+    /// `persona` for the try of `seed`, its order taking the enemy AI's
+    /// own pick with `ai`'s weights.
     pub fn new(persona: &Persona, ai: AiWeights, seed: u64) -> Self {
         let cap = usize::try_from(persona.settings.candidates).unwrap_or(usize::MAX);
         let order = PersonaOrder { ai, cap };
         let scoring = Scoring(persona.weights);
-        let playout = PersonaPlayout(BaselineBot::new(ai));
         PersonaBot {
-            rollout: Rollout::new(order, playout, scoring, persona.settings, seed ^ SEED_SALT),
+            plan: TurnPlan::new(order, scoring, persona.settings, seed ^ SEED_SALT),
             talked: Vec::new(),
         }
     }
@@ -611,7 +610,7 @@ impl Bot<BattleState> for PersonaBot {
     fn choose(&mut self, state: &BattleState) -> Command {
         match self.talk(state) {
             Some(talk) => talk,
-            None => self.rollout.choose(state),
+            None => self.plan.choose(state),
         }
     }
 }

@@ -6,19 +6,20 @@
 // FIXED: never tuned to make a battle pass. Only the comparison with
 // Nick's own play (ticket 0508) may change them, and never per battle.
 //
-// A persona weighs one command at a time: each candidate is played on a
-// few copies of the battle with fresh luck, its turn ends there, and the
-// copy is scored. It never plays the enemy's turn out: like a player, it
-// knows the danger zone and the forecasts, not whom the enemy will choose
-// (Nick, 2026-10-21).
+// A persona plans its own turn (the engine's turn planner, engine#2128):
+// short sequences of its own commands ("weaken it, then finish it"), each
+// played on a few copies of the battle with fresh luck and scored where
+// the copy got to. It plays again for its next command. It never plays
+// the enemy's turn out: like a player, it knows the danger zone and the
+// forecasts, not whom the enemy will choose (Nick, 2026-10-21).
 //
 // settings (how it thinks; skill = thinking budget + mistakes):
-//   candidates   commands weighed per decision (attacks first, see
+//   width        partial turns kept at each step, to extend at the next
+//   candidates   commands tried from each partial turn (attacks first, see
 //                trpg_bots::order)
-//   samples      copies each is played on (fresh luck each)
-//   horizon      Sides(1): the copy stops when its own turn ends
-//   commands     the most commands a copy plays after the candidate
-//   temperature  how far its pick may stray, in points: a candidate this
+//   depth        the most of its own commands a plan holds
+//   samples      copies each partial turn is played on (fresh luck each)
+//   temperature  how far its pick may stray, in points: a command this
 //                many points below the best is half as likely; 0 = always
 //                the best
 //
@@ -38,19 +39,22 @@
 //                         forecast
 //   at_risk, lord_at_risk a unit that falls if every enemy that can reach
 //                         it strikes and hits
+//   counter               HP the units are expected to strike back at the
+//                         enemies that can reach them, by the forecast
 //   turns                 a turn that began
 //   items                 a pack item used
 {
     // Plays in Casual mode and only cares about winning and the lord
     // ("the # of deaths does not influence bot at all"): only the lord's
-    // danger counts. A small budget, and it strays: a casual player.
+    // danger counts. Plans two commands ahead, a narrow plan on few copies,
+    // and it strays: a casual player.
     "casual": (
         mode: Casual,
         settings: (
-            candidates: 8,
-            samples: 4,
-            horizon: Sides(1),
-            commands: 10,
+            width: 2,
+            candidates: 6,
+            depth: 2,
+            samples: 2,
             temperature: 100,
         ),
         weights: (
@@ -67,6 +71,7 @@
             lord_exposed: -20,
             at_risk: 0,
             lord_at_risk: -5000,
+            counter: 10,
             turns: 0,
             items: 0,
         ),
@@ -75,15 +80,15 @@
     // win is worth, and so does leaving one where it could fall. HP costs
     // half of what the enemy's HP is worth (a heal brings it back; an
     // enemy's HP is gone for good). Spends items when that helps (a heal of
-    // 10 HP is worth an item), doesn't hurry. A medium budget, strays a
-    // little.
+    // 10 HP is worth an item), doesn't hurry. Plans three commands ahead,
+    // strays a little.
     "normal": (
         mode: Classic,
         settings: (
-            candidates: 12,
-            samples: 8,
-            horizon: Sides(1),
-            commands: 10,
+            width: 4,
+            candidates: 10,
+            depth: 3,
+            samples: 4,
             temperature: 25,
         ),
         weights: (
@@ -100,21 +105,23 @@
             lord_exposed: -5,
             at_risk: -3000,
             lord_at_risk: -5000,
+            counter: 10,
             turns: 0,
             items: -50,
         ),
     ),
     // Plays Classic like a veteran: nobody dead, few turns, few items, and
     // plays better than Normal ("hardcore should play better than
-    // normal"): twice the candidates, twice the copies, never strays, and
-    // presses harder (enemies and progress are worth more).
+    // normal"): plans four commands ahead, keeps twice as many plans on
+    // more copies, never strays, and presses harder (enemies and progress
+    // are worth more).
     "hardcore": (
         mode: Classic,
         settings: (
-            candidates: 24,
-            samples: 16,
-            horizon: Sides(1),
-            commands: 10,
+            width: 8,
+            candidates: 12,
+            depth: 4,
+            samples: 6,
             temperature: 0,
         ),
         weights: (
@@ -131,6 +138,7 @@
             lord_exposed: -5,
             at_risk: -3000,
             lord_at_risk: -5000,
+            counter: 15,
             turns: -200,
             items: -300,
         ),
