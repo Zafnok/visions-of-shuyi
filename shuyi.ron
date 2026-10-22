@@ -5,11 +5,13 @@
 (
     command: "cargo shuyi",
 
-    // The game's tool program: `frame-png` and `lang-status` run the game,
-    // so `cargo shuyi` runs them in xtask, which has the game's tools
-    // (crates/xtask/src/game_tools.rs). For a picture of the bought art:
+    // The game's tool program: every command that runs the game
+    // (`frame-png`, `lang-status`, `run`, `scene`, the MCP server's
+    // session) runs in xtask as `cargo run -p xtask -- shuyi <command>`,
+    // the engine's tools with the game's (crates/xtask/src/game_tools.rs;
+    // ticket 1181). For a picture of the bought art:
     // `cargo run -p xtask --features private-assets -- frame-png …`.
-    game: (package: "xtask"),
+    game: (package: "xtask", args: ["shuyi"]),
 
     // Keys hard-coded in game code or text (ticket 0216, the
     // keyboard-input skill).

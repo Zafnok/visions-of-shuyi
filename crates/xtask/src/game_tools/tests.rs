@@ -504,3 +504,32 @@ fn the_one_bit_atlas_matches_the_png() {
     let a = to_usize(def.glyphs[&'A']) * rows;
     assert!(bits[a..a + rows].iter().any(|&row| row & 0xf0 != 0));
 }
+
+/// Ticket 1181: the session (`cargo shuyi run`, `scene`, the MCP server's)
+/// reaches the Quick Battle, reads its map scene as the Harness's
+/// `map_text` and paints `frame-png`'s picture.
+#[test]
+fn the_session_reads_the_battles_scene_and_paints_its_frame() {
+    let mut session = Trpg.session(&[]).unwrap();
+    let error = session.scene().unwrap_err();
+    assert!(error.contains("`title`"), "{error}");
+    let script = Script {
+        steps: vec![frame_png::Step::Keys("Down f Left f".into())],
+    };
+    session.play(&script);
+    let scene = session.scene().unwrap();
+    assert_eq!(
+        (scene.screen.as_str(), scene.kind.as_str()),
+        ("battle", "grid map")
+    );
+    let mut h = harness(&Start::of(&[]).unwrap()).unwrap();
+    script.play(&mut h);
+    assert!(!scene.text.is_empty());
+    assert_eq!(scene.text, h.map_text());
+    let units = scene.data["units"].as_array();
+    assert!(units.is_some_and(|u| !u.is_empty()), "{}", scene.data);
+    let picture = session.picture(Some(1)).unwrap();
+    let shot = frame(&Start::of(&[]).unwrap(), &script, Some(1)).unwrap();
+    assert_eq!((picture.width, picture.height), (800, 512));
+    assert_eq!(picture, shot.image);
+}

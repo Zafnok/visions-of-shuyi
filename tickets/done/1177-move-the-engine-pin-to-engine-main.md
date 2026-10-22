@@ -5,10 +5,10 @@ type: infra
 milestone: "Engine: carve"
 model: sonnet-5
 effort: low
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-22
 ---
 
 # 1177 — Move the engine pin to the engine's main
@@ -67,13 +67,13 @@ None.
 
 ## Acceptance criteria
 
-- [ ] `shuyi-engine.rev` is at or past the commits that closed engine
+- [x] `shuyi-engine.rev` is at or past the commits that closed engine
       2304, 2305 and 3006 (`gh api .../compare/<sha>...<pin>` says
       `ahead` or `identical` for each; the commands are in the PR).
-- [ ] `cargo xtask engine-pin --check` passes.
-- [ ] No behaviour changes: snapshots and play records unchanged, or
+- [x] `cargo xtask engine-pin --check` passes.
+- [x] No behaviour changes: snapshots and play records unchanged, or
       each change explained by an engine ticket.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -81,5 +81,4 @@ None.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Moved the pin to engine main `8d5055ca` with `cargo xtask engine-pin`. By the time this was worked, the pin (`384f7961`, moved by 1181 and earlier tickets) was already ahead of the commits that closed engine 2304, 2305 and 3006 (compare said `ahead` for each), and 0449 and 0740 were already done, so step 4 had nothing to do. No game-side fixes were needed: all gates pass, no snapshot or play record changed. Nothing for Nick; no starting rules; no follow-ups.

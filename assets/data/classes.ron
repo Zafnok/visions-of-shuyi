@@ -23,6 +23,11 @@
 (
     // Highest character level (placeholder; may become huge, ticket 0013).
     level_cap: 99,
+    // EXP pace (progression.md, Pace; ticket 0608): (from character level,
+    // percent of every unit EXP award). TUNABLE. A battle's awards give
+    // about 2 levels to Lv 40, 1 to Lv 70, then 1 every 2 battles: Lv 99
+    // after about 110 battles. Levels rise from 1; percents never rise.
+    exp_pace: [(1, 100), (40, 50), (70, 25)],
     // Highest class level; reaching it masters the class.
     class_level_cap: 10,
     // Absolute limits no stat may exceed (stats-and-combat.md). Classes have no

@@ -35,7 +35,11 @@ code now: the game depends on the engine's crates by a git revision.
     excludes it): `cargo test --workspace` inside it runs the engine's
     tests, and the engine's `run-gates` skill is its gates.
 - **`cargo shuyi`** is `cargo xtask shuyi`: the engine's tools
-  (`shuyi-cli`) with this game's `frame-png` and `lang-status`.
+  (`shuyi-cli`) with this game's `frame-png`, `lang-status` and session.
+- **The MCP server** (`cargo shuyi mcp`, ticket 1181) is registered in
+  `.mcp.json`: its tools are `cargo shuyi`'s operations and a session that
+  keeps the game running between calls (`start`, `step`, `scene`,
+  `frame_png`, `events`, `reset`, `stop`; the engine's `docs/contract.md`).
 - **The boundary** is the repository wall now: the engine can't name a
   game crate it can't see. `check-engine-boundary` (1102) retired with the
   move.

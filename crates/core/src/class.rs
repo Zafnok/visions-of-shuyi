@@ -164,6 +164,10 @@ pub struct ClassTable {
     pub class_level_cap: ClassLevel,
     /// Highest character level.
     pub level_cap: u32,
+    /// The EXP pace (`progression.md`, *Pace*): `(from_level, percent)`,
+    /// levels rising from 1. A unit gets `percent`% of every unit EXP award
+    /// from `from_level` up to the next entry ([`Self::exp_percent`]).
+    pub exp_pace: Vec<(u32, u32)>,
     /// Absolute limits no stat may exceed.
     pub hard_ceilings: Stats,
 }
@@ -177,6 +181,17 @@ impl ClassTable {
     /// Minimum stat gains per level up for classes of `tier`.
     pub fn min_gains(&self, tier: Tier) -> Option<u8> {
         tier_entry(&self.min_gains, tier)
+    }
+
+    /// The percent of every unit EXP award a unit of character `level`
+    /// gets: the last [`exp_pace`](Self::exp_pace) entry at or below
+    /// `level`; 100 when there is none.
+    pub fn exp_percent(&self, level: u32) -> u32 {
+        self.exp_pace
+            .iter()
+            .take_while(|&&(from, _)| from <= level)
+            .last()
+            .map_or(100, |&(_, percent)| percent)
     }
 
     /// Class points per class level for classes of `tier`.
