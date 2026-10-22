@@ -28,7 +28,7 @@ fn swordsman() -> ClassDef {
         base: Stats::from_growable([18, 5, 0, 7, 8, 3, 1], 5),
         growths: Growths([70, 40, 10, 55, 60, 25, 20]),
         weapons: vec![],
-        armour: vec![],
+        max_armour: None,
         tags: UnitTags::default(),
         promotes_to: vec![],
         active: Some(SkillId::new("keen_edge")),

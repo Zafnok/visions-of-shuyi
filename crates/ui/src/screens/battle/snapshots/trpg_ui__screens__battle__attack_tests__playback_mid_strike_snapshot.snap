@@ -30,7 +30,7 @@ expression: h.snapshot()
 │ Test Lord                                      ││ Brigand                                        │
 │ HP 19 ████████████████████ /19                 ││ HP 17 █████████████████░░░ /20                 │
 │                                                ││                                                │
-│ 8 dmg  Hit 96  Crit 3                          ││ 9 dmg  Hit 65  Crit 0                          │
+│ 8 dmg  Hit 96  Crit 3                          ││ 8 dmg  Hit 65  Crit 0                          │
 └────────────────────────────────────────────────┘└────────────────────────────────────────────────┘
                                                      w danger zone: OFF · Shift+Space auto-end: OFF 
  d skip · hold f fast                                                                      F2 debug 

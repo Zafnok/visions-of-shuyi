@@ -134,8 +134,8 @@ over  225,286 14x2  hp_high
 over  sprite 234,269 7x7  images/effect_marks.png 0,0 7x7 dimmed
 over  241,254 14x2  hp_high
 over  289,222 14x2  hp_high
-over  273,254 3x2  hp_low
-over  276,254 11x2  black
+over  273,254 8x2  hp_mid
+over  281,254 6x2  black
 over  sprite 282,237 7x7  images/effect_marks.png 7,0 7x7
 over  273,206 14x2  hp_high
 over  289,302 14x2  hp_high

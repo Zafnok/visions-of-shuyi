@@ -55,7 +55,7 @@ pub(crate) fn items() -> ItemTable {
             "vest",
             ItemDef::Armour(ArmourDef {
                 name: "Vest".into(),
-                weight_class: ArmourWeight::Light,
+                weight_class: ArmourWeight::Leather,
                 bonus: bonus(|s| s.def = 1),
                 weight: 0,
                 price: 300,
@@ -65,7 +65,7 @@ pub(crate) fn items() -> ItemTable {
             "mail",
             ItemDef::Armour(ArmourDef {
                 name: "Mail".into(),
-                weight_class: ArmourWeight::Medium,
+                weight_class: ArmourWeight::Chain,
                 bonus: bonus(|s| s.def = 3),
                 weight: 2,
                 price: 800,
@@ -112,7 +112,7 @@ pub(crate) fn class() -> ClassDef {
             start: WeaponRank::E,
             max: WeaponRank::C,
         }],
-        armour: vec![ArmourWeight::Light],
+        max_armour: Some(ArmourWeight::Leather),
         tags: UnitTags::default(),
         promotes_to: vec![],
         active: None,
@@ -405,10 +405,34 @@ fn effective_stats_add_gear_up_to_the_hard_ceiling() {
     assert_eq!(unit().effective_stats(&classes(), &items()), unit().stats);
 }
 
+/// `weapons-and-items.md`, *Armour*: Iron Plate (Res −3) on a unit with
+/// Res 2 leaves Res 0, never −1.
+#[test]
+fn an_armour_penalty_never_takes_a_stat_below_0() {
+    let mut t = items();
+    t.items.insert(
+        id("plate"),
+        ItemDef::Armour(ArmourDef {
+            name: "Plate".into(),
+            weight_class: ArmourWeight::Plate,
+            bonus: bonus(|s| (s.def, s.res) = (8, -3)),
+            weight: 6,
+            price: 1500,
+        }),
+    );
+    let mut u = unit();
+    u.stats.res = 2;
+    u.loadout.armour = Some(id("plate"));
+    let s = u.effective_stats(&classes(), &t);
+    assert_eq!((s.def, s.res), (u.stats.def + 8, 0));
+    u.stats.res = 5;
+    assert_eq!(u.effective_stats(&classes(), &t).res, 2);
+}
+
 #[test]
 fn armour_weight() {
     let mut c = class();
-    c.armour.push(ArmourWeight::Medium);
+    c.max_armour = Some(ArmourWeight::Chain);
     let t = items();
     let mail = unit()
         .with_loadout(&loadout(&[], Some("mail"), None), &classes_with(c), &t)
@@ -899,8 +923,8 @@ fn a_zero_slot_class_holds_no_weapons() {
 #[test]
 fn armour_the_new_class_cannot_wear_goes_to_the_stock() {
     let t = items();
-    let heavy_only = ClassDef {
-        armour: vec![ArmourWeight::Heavy],
+    let cloth_only = ClassDef {
+        max_armour: Some(ArmourWeight::Cloth),
         ..class()
     };
     let mut stock = Stock::default();
@@ -908,17 +932,17 @@ fn armour_the_new_class_cannot_wear_goes_to_the_stock() {
     // Its own class wears it: nothing moves.
     assert_eq!(u.fit_armour(&class(), &t, &mut stock), None);
     assert_eq!(u.loadout.armour, Some(id("vest")));
-    assert_eq!(u.fit_armour(&heavy_only, &t, &mut stock), Some(id("vest")));
+    assert_eq!(u.fit_armour(&cloth_only, &t, &mut stock), Some(id("vest")));
     assert_eq!(u.loadout.armour, None);
     assert_eq!(stock.count(&id("vest")), 1);
     // The accessory and the weapons stay.
     assert_eq!(u.loadout.accessory, Some(id("ring")));
     assert_eq!(u.loadout.weapon_count(), 1);
     // No armour: nothing to move.
-    assert_eq!(u.fit_armour(&heavy_only, &t, &mut stock), None);
+    assert_eq!(u.fit_armour(&cloth_only, &t, &mut stock), None);
     // Armour missing from the table is left alone.
     u.loadout.armour = Some(id("ghost"));
-    assert_eq!(u.fit_armour(&heavy_only, &t, &mut stock), None);
+    assert_eq!(u.fit_armour(&cloth_only, &t, &mut stock), None);
     assert_eq!(u.loadout.armour, Some(id("ghost")));
     assert_eq!(stock.items.len(), 1);
 }

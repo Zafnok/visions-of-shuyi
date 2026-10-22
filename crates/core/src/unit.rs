@@ -442,7 +442,7 @@ mod tests {
                     max: WeaponRank::C,
                 },
             ],
-            armour: vec![],
+            max_armour: None,
             tags: UnitTags::default(),
             promotes_to: vec![],
             active: None,

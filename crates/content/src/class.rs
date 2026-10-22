@@ -49,7 +49,8 @@ struct RawClass {
     #[serde(default)]
     tags: Vec<RawUnitTag>,
     weapons: Vec<(RawWeaponKind, RawWeaponRank, RawWeaponRank)>,
-    armour: Vec<RawArmourWeight>,
+    #[serde(default)]
+    max_armour: Option<RawArmourWeight>,
     weapon_slots: u8,
     base: [StatValue; 7],
     growths: [GrowthValue; 7],
@@ -198,7 +199,7 @@ impl Validator<'_> {
             base,
             growths: Growths(c.growths),
             weapons,
-            armour: c.armour.iter().map(|&a| a.into()).collect(),
+            max_armour: c.max_armour.map(Into::into),
             tags: UnitTags::from_tags(&c.tags.iter().map(|&t| t.into()).collect::<Vec<_>>()),
             promotes_to: c.promotes_to.iter().map(|p| ClassId(p.clone())).collect(),
             active: c.active.clone().map(SkillId),
@@ -415,7 +416,7 @@ mod tests {
     fn class(id: &str, tier: u8, promotes_to: &[&str], extra: &str) -> String {
         let targets: Vec<String> = promotes_to.iter().map(|t| format!("\"{t}\"")).collect();
         format!(
-            "        (\n            id: \"{id}\", name: \"N\", tier: {tier}, movement_type: \"foot\", mov: 5,\n            weapons: [(Sword, D, C)], armour: [Light], weapon_slots: 3,\n            base: (18, 5, 0, 7, 8, 3, 1),\n            growths: (70, 40, 10, 55, 60, 25, 20), promotes_to: [{}], {extra}\n        ),\n",
+            "        (\n            id: \"{id}\", name: \"N\", tier: {tier}, movement_type: \"foot\", mov: 5,\n            weapons: [(Sword, D, C)], max_armour: Some(Leather), weapon_slots: 3,\n            base: (18, 5, 0, 7, 8, 3, 1),\n            growths: (70, 40, 10, 55, 60, 25, 20), promotes_to: [{}], {extra}\n        ),\n",
             targets.join(", ")
         )
     }
@@ -461,8 +462,8 @@ mod tests {
                      enemy_only: false, lord_only: false";
         let mut classes = tree(extra);
         classes[0] = classes[0].replace(
-            "weapons: [(Sword, D, C)], armour: [Light]",
-            "weapons: [(Sword, E, C), (Spear, D, B)], armour: [Medium, Heavy]",
+            "weapons: [(Sword, D, C)], max_armour: Some(Leather)",
+            "weapons: [(Sword, E, C), (Spear, D, B)], max_armour: Some(Plate)",
         );
         classes[0] = classes[0].replace("movement_type: \"foot\"", "movement_type: \"armored\"");
         let t = load_src(&file(&classes));
@@ -497,7 +498,7 @@ mod tests {
                     max: WeaponRank::B,
                 },
             ],
-            armour: vec![ArmourWeight::Medium, ArmourWeight::Heavy],
+            max_armour: Some(ArmourWeight::Plate),
             tags: UnitTags::from_tags(&[UnitTag::Mounted, UnitTag::Armored]),
             promotes_to: vec![ClassId("b".into())],
             active: Some(SkillId("keen".into())),
@@ -861,6 +862,44 @@ mod tests {
         assert_eq!(t.level_cap, 99);
     }
 
+    /// Every class's max armour matches `progression.md`'s class tables
+    /// (column *Max armour*, ticket 0073).
+    #[test]
+    fn embedded_max_armour_matches_design_doc() {
+        use ArmourWeight::{Chain, Cloth, Leather, Plate};
+        let t = embedded();
+        let expected = [
+            (
+                Some(Cloth),
+                "mage cleric sorcerer mystic priest archmage arcanist oracle",
+            ),
+            (
+                Some(Leather),
+                "swordsman brawler archer exile brigand duelist shadowblade striker marksman \
+                 blade_heir blade_dancer nightblade tempest_fist deadeye flier sovereign",
+            ),
+            (
+                Some(Chain),
+                "raider rider grappler berserker outrider lancer commander ravager windrunner \
+                 high_lancer grand_marshal",
+            ),
+            (
+                Some(Plate),
+                "guard vanguard bulwark iron_rider colossus warchief bastion juggernaut",
+            ),
+            (None, "fire_elemental frost_elemental"),
+        ];
+        let mut named = 0;
+        for (max, ids) in expected {
+            for id in ids.split_whitespace() {
+                let class = t.get(&ClassId(id.into()));
+                assert_eq!(class.map(|c| c.max_armour), Some(max), "{id}");
+                named += 1;
+            }
+        }
+        assert_eq!(named, t.classes.len());
+    }
+
     /// Acceptance: two classes, one a shared promotion, match hand-written
     /// expectations from `progression.md` and `magic.md`.
     #[test]
@@ -880,7 +919,7 @@ mod tests {
                 sp(WeaponKind::Axe, WeaponRank::D, WeaponRank::B),
                 sp(WeaponKind::Sword, WeaponRank::D, WeaponRank::B),
             ],
-            armour: vec![ArmourWeight::Medium, ArmourWeight::Heavy],
+            max_armour: Some(ArmourWeight::Plate),
             tags: UnitTags::from_tags(&[UnitTag::Armored, UnitTag::Mounted]),
             promotes_to: vec![ClassId("juggernaut".into())],
             active: Some(SkillId("trample".into())),
@@ -901,7 +940,7 @@ mod tests {
             base: Stats::from_growable([30, 0, 8, 4, 5, 8, 4], 4),
             growths: Growths([80, 0, 50, 35, 30, 40, 40]),
             weapons: vec![],
-            armour: vec![],
+            max_armour: None,
             tags: UnitTags::default(),
             promotes_to: vec![],
             active: None,

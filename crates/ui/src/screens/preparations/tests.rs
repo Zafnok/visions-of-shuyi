@@ -1,6 +1,6 @@
 //! Tests of the Preparations screen on the debug Quick Battle
 //! (`assets-test/battles/quick.ron`): the test lord (swords), knight (spears,
-//! medium and heavy armour), archer and mage, the test scout left out of the
+//! armour up to plate), archer and mage, the test scout left out of the
 //! battle with a Steel Bow, a stock of three weapons, three armours, three
 //! accessories, six Potions and two Elixirs, and a pack cap of 6.
 
@@ -162,7 +162,7 @@ fn a_stock_weapon_goes_into_an_empty_slot() {
     update(&mut s, &mut c, &[CursorUp]);
     assert_eq!(
         s.speed_line(&c).as_deref(),
-        Some("AS 7 → 6 with Iron Sword")
+        Some("AS 7 → 5 with Iron Sword")
     );
     assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_select"]);
     assert_eq!(s.focus(), Focus::Slots);
@@ -171,11 +171,11 @@ fn a_stock_weapon_goes_into_an_empty_slot() {
         ["iron_sword", "steel_sword", "iron_sword"].map(|w| Some(w.to_owned()))
     );
     assert_eq!(s.setup().stock.weapons.len(), 2);
-    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 6 with Iron Sword"));
+    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 5 with Iron Sword"));
     // The slot now offers to put it back.
     update(&mut s, &mut c, &[Confirm]);
     assert_eq!(stock_texts(&s, &c)[0], PUT_BACK);
-    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 6 → 7 with no weapon"));
+    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 5 → 7 with no weapon"));
     update(&mut s, &mut c, &[Confirm]);
     assert_eq!(lord_weapons(&s)[2], None);
     assert_eq!(s.setup().stock.weapons.len(), 3);
@@ -216,9 +216,10 @@ fn reasons_read_as_the_player_sees_them() {
         assert_eq!(reason_text(&c, Unusable::Kind(kind)), text);
     }
     let weights = [
-        (ArmourWeight::Light, "can't wear light armor"),
-        (ArmourWeight::Medium, "can't wear medium armor"),
-        (ArmourWeight::Heavy, "can't wear heavy armor"),
+        (ArmourWeight::Cloth, "can't wear cloth armor"),
+        (ArmourWeight::Leather, "can't wear leather armor"),
+        (ArmourWeight::Chain, "can't wear chain armor"),
+        (ArmourWeight::Plate, "can't wear plate armor"),
     ];
     for (weight, text) in weights {
         assert_eq!(reason_text(&c, Unusable::Armour(weight)), text);
@@ -239,24 +240,27 @@ fn armour_and_accessories_come_from_the_stock_with_their_counts() {
         stock_texts(&s, &c),
         [
             PUT_BACK,
-            "Chain Mail      ×1  Def +3  Wt 2",
-            "Iron Plate      can't wear heavy armor",
-            "Warded Robe     ×1  Res +2  Wt 0",
-            // The knight's, to swap for; the others wear the same vest.
-            "Chain Mail      from Test Knight",
+            // The Exile wears leather at most.
+            "Chain Mail      can't wear chain armor",
+            "Iron Plate      can't wear plate armor",
+            "Linen Robe      ×1  Res +4  Wt 0",
+            // The mage's, to swap for; the knight wears chain, the archer
+            // the same vest.
+            "Linen Robe      from Test Mage",
         ]
     );
-    // With no weapon slot highlighted, the speed is the equipped weapon's.
-    update(&mut s, &mut c, &[CursorDown]);
+    // With no weapon slot highlighted, the speed is the equipped weapon's:
+    // the robe weighs nothing, the vest 1.
+    update(&mut s, &mut c, &[CursorDown, CursorDown, CursorDown]);
     assert_eq!(
         s.speed_line(&c).as_deref(),
-        Some("AS 6 → 4 with Iron Sword")
+        Some("AS 5 → 6 with Iron Sword")
     );
     update(&mut s, &mut c, &[Confirm]);
     let lord = &s.setup().units[0];
-    assert_eq!(lord.loadout.armour, Some(ItemId::new("chain_mail")));
+    assert_eq!(lord.loadout.armour, Some(ItemId::new("linen_robe")));
     assert_eq!(s.setup().stock.count(&ItemId::new("leather_vest")), 1);
-    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 4 with Iron Sword"));
+    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 6 with Iron Sword"));
     // The accessory slot: empty, so nothing to put back.
     update(&mut s, &mut c, &[CursorDown, Confirm]);
     assert_eq!(
@@ -270,7 +274,7 @@ fn armour_and_accessories_come_from_the_stock_with_their_counts() {
     update(&mut s, &mut c, &[CursorUp]);
     assert_eq!(
         s.speed_line(&c).as_deref(),
-        Some("AS 4 → 6 with Iron Sword")
+        Some("AS 6 → 8 with Iron Sword")
     );
     update(&mut s, &mut c, &[Confirm]);
     let lord = &s.setup().units[0];
@@ -471,7 +475,7 @@ fn a_benched_units_gear_is_traded_through_the_stock() {
     update(&mut s, &mut c, &[Confirm, CursorUp, Confirm]);
     assert_eq!(s.who(), Some(PrepUnit::Benched(0)));
     assert_eq!(s.unit().map(|u| u.name.as_str()), Some("Test Scout"));
-    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 2 with Steel Bow"));
+    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 1 with Steel Bow"));
     // Her Steel Bow goes back to the stock.
     update(&mut s, &mut c, &[Confirm]);
     assert_eq!(stock_texts(&s, &c)[0], PUT_BACK);
@@ -588,7 +592,7 @@ fn another_units_item_is_swapped_directly() {
     let scout = PrepUnit::Benched(0);
     assert_eq!(last, Some(Source::Unit(scout, GearSlot::Weapon(0))));
     update(&mut s, &mut c, &[CursorUp]);
-    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 3 → 1 with Steel Bow"));
+    assert_eq!(s.speed_line(&c).as_deref(), Some("AS 2 → 0 with Steel Bow"));
     assert_eq!(sounds(&mut s, &mut c, &[Confirm]), ["menu_select"]);
     let bow = |u: &Unit| u.loadout.weapon(0).map(|w| w.def.0.clone());
     assert_eq!(bow(&s.setup().units[2]).as_deref(), Some("steel_bow"));
@@ -600,8 +604,8 @@ fn another_units_item_is_swapped_directly() {
         stock_texts(&s, &c).last().map(String::as_str),
         Some("Iron Bow        20/20  from Test Scout")
     );
-    // The lord's armour: the knight's Chain Mail for his Leather Vest,
-    // which the knight can't wear, so it goes to the stock.
+    // The lord's armour: the mage's Linen Robe for his Leather Vest,
+    // which the mage (cloth at most) can't wear, so it goes to the stock.
     update(
         &mut s,
         &mut c,
@@ -614,9 +618,10 @@ fn another_units_item_is_swapped_directly() {
     );
     assert_eq!(
         s.setup().units[0].loadout.armour,
-        Some(ItemId::new("chain_mail"))
+        Some(ItemId::new("linen_robe"))
     );
-    assert_eq!(s.setup().units[1].loadout.armour, None);
+    let mage = s.setup().units.iter().find(|u| u.name == "Test Mage");
+    assert_eq!(mage.map(|u| &u.loadout.armour), Some(&None));
     assert_eq!(s.setup().stock.count(&ItemId::new("leather_vest")), 1);
 }
 
@@ -702,7 +707,7 @@ fn the_view_on_the_first_frame_is_the_loadouts_tab_with_the_cursor_on_the_tabs()
         ]
     );
     assert_eq!((gear.slots.cursor, gear.slots.state), (0, ListState::Idle));
-    assert_eq!(gear.speed.as_deref(), Some("AS 6 with Iron Sword"));
+    assert_eq!(gear.speed.as_deref(), Some("AS 5 with Iron Sword"));
     assert_eq!(gear.benched_note, None);
     assert_eq!(gear.stock.title, "Stock: weapons");
     assert_eq!((gear.stock.cursor, gear.stock.state), (0, ListState::Idle));
@@ -760,7 +765,7 @@ fn the_view_follows_the_cursor_through_the_loadout_lists() {
             &row("Iron Sword", "Mt 5 Hit 90 Wt 2 Rng1 20/20", true),
         ]
     );
-    assert_eq!(gear.speed.as_deref(), Some("AS 7 → 6 with Iron Sword"));
+    assert_eq!(gear.speed.as_deref(), Some("AS 7 → 5 with Iron Sword"));
 
     // A refused item's reason is the message.
     update(&mut s, &mut c, &[CursorDown, Confirm]);
@@ -809,7 +814,7 @@ fn the_view_of_a_benched_unit_says_it_is_not_in_this_battle() {
         gear.slots.rows[0],
         slot("Weapon", Some("Steel Bow"), "25/25")
     );
-    assert_eq!(gear.speed.as_deref(), Some("AS 2 with Steel Bow"));
+    assert_eq!(gear.speed.as_deref(), Some("AS 1 with Steel Bow"));
     assert_eq!(gear.benched_note.as_deref(), Some("Not in this battle"));
     // What another unit holds says whose it is.
     update(&mut s, &mut c, &[Confirm, Confirm, CursorUp]);
@@ -822,7 +827,7 @@ fn the_view_of_a_benched_unit_says_it_is_not_in_this_battle() {
     );
     assert_eq!(
         self::gear(&view).speed.as_deref(),
-        Some("AS 2 → 4 with Iron Bow")
+        Some("AS 1 → 3 with Iron Bow")
     );
 }
 

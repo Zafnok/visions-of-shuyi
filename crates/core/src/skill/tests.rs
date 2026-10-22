@@ -114,7 +114,7 @@ fn class(id: &str, active: Option<&str>) -> ClassDef {
         base: Stats::default(),
         growths: Growths::default(),
         weapons: vec![],
-        armour: vec![],
+        max_armour: None,
         tags: UnitTags::default(),
         promotes_to: vec![],
         active: active.map(sid),

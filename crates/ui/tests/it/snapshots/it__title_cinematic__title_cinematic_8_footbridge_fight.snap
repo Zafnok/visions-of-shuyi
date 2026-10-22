@@ -9,7 +9,7 @@ expression: h.snapshot()
                                                                                                     
                                                                                                     
                                                                                                     
-                            HIT -8                                                                  
+                            HIT -7                                                                  
                                                                                                     
                                                                                                     
                                                                                                     
@@ -30,7 +30,7 @@ expression: h.snapshot()
 │ Tamsin Rook                                    ││ Brigand                                        │
 │ HP 18 █████████████████░░░ /21                 ││ HP  9 █████████░░░░░░░░░░░ /20                 │
 │                                                ││                                                │
-│ 11 dmg  Hit 84  Crit 3                         ││ 8 dmg  Hit 69  Crit 0                          │
+│ 11 dmg  Hit 84  Crit 3                         ││ 7 dmg  Hit 69  Crit 0                          │
 └────────────────────────────────────────────────┘└────────────────────────────────────────────────┘
                                                                                                     
                                                                                            F2 debug 

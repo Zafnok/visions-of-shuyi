@@ -102,7 +102,7 @@ fn class(id: &str, kinds: &[WeaponKind]) -> ClassDef {
                 max: WeaponRank::S,
             })
             .collect(),
-        armour: vec![],
+        max_armour: None,
         tags: UnitTags::default(),
         promotes_to: vec![],
         active: None,

@@ -1,23 +1,23 @@
 ---
 source: crates/ui/src/screens/battle/art_tests.rs
-expression: buf.to_snapshot(&c.palette)
+expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
                                                                       ╔═════════ Forecast ═════════╗
                                                                       ║ Pinning Shot (20 → 17)     ║
                                                                       ║ Test Archer   Brigand      ║
                                                                       ║ Iron Bow      Iron Axe     ║
                                                                       ║ 20/20         20/20        ║
-                                                                      ║ HP 17 █████   HP 20 █▒▒▒▒  ║
+                                                                      ║ HP 17 █████   HP 20 ███▒▒  ║
                                                                       ║ Hit  91       Hit  --      ║
                                                                       ║ Crit 3        Crit --      ║
                                                                       ║                            ║
                                                                       ║ ────────────────────────── ║
                                                                       ║  8 dmg   →  1   no counter ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║  8 dmg   →  2              ║
-                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ ────────────────────────── ║
-                    ≈≈≈≈≈≈====··Lo··Br..♣♣♣♣....                      ║ 16 ×2     Total            ║
-                    ..≈≈≈≈..··..............╦╦..                      ║                            ║
-                    ....······....BrAr▓▓▓▓▓▓▓▓..                      ║ pins: Mov −3               ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║ ────────────────────────── ║
+                    ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║  8 ×1     Total            ║
+                    ≈≈≈≈≈≈====··Lo··Br..♣♣♣♣....                      ║                            ║
+                    ..≈≈≈≈..··..............╦╦..                      ║ pins: Mov −3               ║
+                    ....······....BrAr▓▓▓▓▓▓▓▓..                      ║                            ║
                     ..♣♣··....╦╦......▓▓░░╦╦▓▓..                      ║                            ║
                     ♣♣♣♣··MaKn........▓▓░░░░▓▓..                      ║                            ║
                     ♣♣♠♠··..........Fr▓▓▓▓▐▌▓▓..                      ║                            ║
@@ -40,20 +40,20 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdcccccccc
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeeeedddfffffffddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggggggddddddggggggggdddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhhdddggddddiiiiiddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhhdddggddddiiijjddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgdddggggggggggdb
-aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaajjkkkkssssqqttqquullmmmmllllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
-aaaaaaaaaaaaaaaaaaaallkkkkllqqllllllllllllllvvllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaallllqqqqqqllllwwxxyyyyyyyyllaaaaaaaaaaaaaaaaaaaaaabdzzzzzzzzzzzzdddddddddddddddb
-aaaaaaaaaaaaaaaaaaaallmmqqllllvvllllllyyAAvvyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammmmqqxxxxllllllllyyAAAAyyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaammnnqqllllllllllwwyyyyBByyllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaakkkkkkllllmmmmnnnnooooppppqqaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaakkkkllllmmmmrrssrrnnnnppppppaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
+aaaaaaaaaaaaaaaaaaaakkllllttttrruurrvvmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammllllmmrrmmmmmmmmmmmmmmwwmmaaaaaaaaaaaaaaaaaaaaaabdxxxxxxxxxxxxdddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammmmrrrrrrmmmmyyzzAAAAAAAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnrrmmmmwwmmmmmmAABBwwAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannnnrrzzzzmmmmmmmmAABBBBAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaannoorrmmmmmmmmmmyyAAAACCAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCa
-aCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDa
+aDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -76,27 +76,28 @@ e = fg:player bg:panel_bg
 f = fg:enemy bg:panel_bg
 g = fg:text_dim bg:panel_bg
 h = fg:hp_high bg:panel_bg
-i = fg:hp_low bg:panel_bg
-j = fg:water bg:sea
-k = fg:water bg:water_bg
-l = fg:grass bg:grass_bg
-m = fg:forest bg:forest_bg
-n = fg:thicket bg:thicket_bg
-o = fg:mountain bg:mountain_bg
-p = fg:peak bg:peak_bg
-q = fg:road bg:road_bg
-r = fg:enemy bg:road_bg
-s = fg:wood bg:water_bg
-t = fg:player bg:road_bg
-u = fg:enemy bg:#4c271c
-v = fg:fort bg:fort_bg
-w = fg:enemy bg:grass_bg
-x = fg:player bg:grass_bg
-y = fg:stone bg:stone_bg
-z = fg:effect bg:panel_bg
-A = fg:floor bg:floor_bg
-B = fg:wood bg:stone_bg
-C = fg:text_dim bg:black
+i = fg:hp_mid bg:panel_bg
+j = fg:hp_low bg:panel_bg
+k = fg:water bg:sea
+l = fg:water bg:water_bg
+m = fg:grass bg:grass_bg
+n = fg:forest bg:forest_bg
+o = fg:thicket bg:thicket_bg
+p = fg:mountain bg:mountain_bg
+q = fg:peak bg:peak_bg
+r = fg:road bg:road_bg
+s = fg:enemy bg:road_bg
+t = fg:wood bg:water_bg
+u = fg:player bg:road_bg
+v = fg:enemy bg:#4c271c
+w = fg:fort bg:fort_bg
+x = fg:effect bg:panel_bg
+y = fg:enemy bg:grass_bg
+z = fg:player bg:grass_bg
+A = fg:stone bg:stone_bg
+B = fg:floor bg:floor_bg
+C = fg:wood bg:stone_bg
+D = fg:text_dim bg:black
 --- overlays ---
 over  257,222 14x2  hp_high
 over  225,286 14x2  hp_high

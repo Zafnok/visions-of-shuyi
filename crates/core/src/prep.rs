@@ -139,7 +139,7 @@ fn unusable(unit: &Unit, class: &ClassDef, items: &ItemTable, item: &ItemId) -> 
     match items.get(item)? {
         ItemDef::Weapon(w) if class.weapon(w.kind).is_none() => Some(Unusable::Kind(w.kind)),
         ItemDef::Weapon(w) if unit.rank(w.kind) < w.rank => Some(Unusable::Rank(w.rank)),
-        ItemDef::Armour(a) if !class.armour.contains(&a.weight_class) => {
+        ItemDef::Armour(a) if !class.can_wear(a.weight_class) => {
             Some(Unusable::Armour(a.weight_class))
         }
         _ => None,

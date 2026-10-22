@@ -40,7 +40,7 @@ fn items() -> ItemTable {
             "vest",
             ItemDef::Armour(ArmourDef {
                 name: "Vest".into(),
-                weight_class: ArmourWeight::Light,
+                weight_class: ArmourWeight::Leather,
                 bonus: Stats::default(),
                 weight: 0,
                 price: 300,

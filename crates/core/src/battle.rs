@@ -1734,7 +1734,7 @@ impl Till {
                 }
             }
             Some(ItemDef::Armour(a)) => {
-                if loadout.armour.is_none() && class.armour.contains(&a.weight_class) {
+                if loadout.armour.is_none() && class.can_wear(a.weight_class) {
                     loadout.armour = Some(item.clone());
                     return Destination::Armour;
                 }

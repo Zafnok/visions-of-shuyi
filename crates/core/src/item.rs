@@ -25,7 +25,9 @@
 //! - **Gear-adjusted stats** ([`Unit::effective_stats`]): permanent stats plus
 //!   the armour and accessory bonuses. Gear may push a stat up but never above
 //!   the hard ceiling (a stat already above the ceiling
-//!   isn't lowered). Max HP stays the permanent `stats.hp` (no gear gives HP).
+//!   isn't lowered), and down (Iron Plate's Res −3) but never below 0.
+//! - **Armour weight** ([`ClassDef::can_wear`]): a class wears its max
+//!   armour weight and every lighter one (Cloth < Leather < Chain < Plate). Max HP stays the permanent `stats.hp` (no gear gives HP).
 //! - **Durability**: normal attacks cost none. [`WeaponInstance::spend_durability`]
 //!   (Combat Arts and active skills) lowers it, never below 0. At 0 the weapon is broken:
 //!   it still fights with the penalties in [`WeaponRules`].
@@ -121,7 +123,7 @@ pub struct WeaponDef {
 pub struct ArmourDef {
     /// Display name.
     pub name: String,
-    /// Light, Medium or Heavy (classes limit which they wear).
+    /// Cloth, Leather, Chain or Plate (a class wears up to its max).
     pub weight_class: ArmourWeight,
     /// Stat bonuses.
     pub bonus: Stats,
@@ -677,7 +679,7 @@ impl Unit {
             let base = self.stats.get(kind);
             let bonus: StatValue = bonuses.iter().flatten().map(|b| b.get(kind)).sum();
             let ceiling = base.max(classes.hard_ceilings.get(kind));
-            stats.set(kind, base.saturating_add(bonus).min(ceiling));
+            stats.set(kind, base.saturating_add(bonus).min(ceiling).max(0));
         }
         stats
     }
@@ -784,7 +786,7 @@ impl Unit {
         if let Some(id) = &self.loadout.armour {
             check_kind(items, id, |d| matches!(d, ItemDef::Armour(_)))?;
             if let Some(a) = items.armour(id)
-                && !class.armour.contains(&a.weight_class)
+                && !class.can_wear(a.weight_class)
             {
                 return Err(LoadoutError::ArmourNotAllowed(id.clone()));
             }
@@ -901,7 +903,7 @@ impl Unit {
         let worn = self.loadout.armour.as_ref()?;
         let wearable = items
             .armour(worn)
-            .is_none_or(|a| class.armour.contains(&a.weight_class));
+            .is_none_or(|a| class.can_wear(a.weight_class));
         if wearable {
             return None;
         }

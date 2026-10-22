@@ -1,21 +1,21 @@
 ---
 source: crates/ui/src/screens/battle/magic_tests.rs
-expression: buf.to_snapshot(&c.palette)
+expression: "render(&s, &c).to_snapshot(&c.palette)"
 ---
                                                                       ╔═════════ Forecast ═════════╗
                                                                       ║                            ║
                                                                       ║ Test Mage     Frost Element║
                                                                       ║ Frost         Frost        ║
                                                                       ║ 10/10         10/10        ║
-                                                                      ║ HP 16 ███▒▒   HP 30 █████  ║
+                                                                      ║ HP 16 ████▒   HP 30 █████  ║
                                                                       ║ Hit  95       Hit  93      ║
                                                                       ║ Crit 0        Crit 1       ║
                                                                       ║ heals 6                    ║
                                                                       ║ ────────────────────────── ║
                                                                       ║ +6 hp    →  1              ║
-                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║             2 ←  7 dmg     ║
+                    ≈≈≈≈≈≈≈≈≈≈....♣♣♣♣♠♠♠♠^^^^▲▲                      ║             2 ←  3 dmg     ║
                     ≈≈≈≈≈≈≈≈....··Ra··♣♣♣♣^^^^^^                      ║ ────────────────────────── ║
-                    ▒▒≈≈≈≈====······....♣♣♣♣....                      ║  6 ×1     Total  7 ×1      ║
+                    ▒▒≈≈≈≈====······....♣♣♣♣....                      ║  6 ×1     Total  3 ×1      ║
                     ..▒▒≈≈..··..............╦╦..                      ║                            ║
                     MaFrBr····....Br..▓▓▓▓▓▓▓▓..                      ║                            ║
                     Kn♣♣··Lo..╦╦......▓▓░░╦╦▓▓..                      ║                            ║
@@ -40,20 +40,20 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdeeeeeeeeedddddfffffffffffffb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggggdddddddddgggggddddddddb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhiidddggddddjjjjjddb
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggddddhhhhidddggddddhhhhhddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdgggdddddddddddgggddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdggggddddddddddggggdddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdcccccccddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddgddgddddddddddddddb
-aaaaaaaaaaaaaaaaaaaakkkkkkllllmmmmnnnnooooppppqqaaaaaaaaaaaaaaaaaaaaaabdddddddddddddgdgddddddddddddb
-aaaaaaaaaaaaaaaaaaaakkkkllllmmmmrrssrrnnnnppppppaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
-aaaaaaaaaaaaaaaaaaaattlllluuuurrrrrrmmmmnnnnmmmmaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
-aaaaaaaaaaaaaaaaaaaammttllmmrrmmmmmmmmmmmmmmvvmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaawwxxyyrrrrmmmmzzmmAAAAAAAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaawwnnrrwwmmvvmmmmmmAABBvvAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannnnrrmmwwmmmmmmmmAABBBBAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
-aaaaaaaaaaaaaaaaaaaannoorrmmmmmmmmmmmmAAAACCAAmmaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjjjjjkkkkllllmmmmnnnnooooppaaaaaaaaaaaaaaaaaaaaaabdddddddddddddgdgddddddddddddb
+aaaaaaaaaaaaaaaaaaaajjjjkkkkllllqqrrqqmmmmooooooaaaaaaaaaaaaaaaaaaaaaabdbbbbbbbbbbbbbbbbbbbbbbbbbbdb
+aaaaaaaaaaaaaaaaaaaasskkkkttttqqqqqqllllmmmmllllaaaaaaaaaaaaaaaaaaaaaabdddddddddddgggggddddddddddddb
+aaaaaaaaaaaaaaaaaaaallsskkllqqlllllllllllllluullaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaavvwwxxqqqqllllyyllzzzzzzzzllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaavvmmqqvvlluullllllzzAAuuzzllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammmmqqllvvllllllllzzAAAAzzllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
+aaaaaaaaaaaaaaaaaaaammnnqqllllllllllllzzzzBBzzllaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
@@ -65,8 +65,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddd
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabddddddddddddddddddddddddddddb
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDa
-aDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaDDDDDDDDa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCa
+aCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaCCCCCCCCa
 --- legend ---
 a = fg:text bg:black
 b = fg:panel_border bg:panel_bg
@@ -75,29 +75,28 @@ d = fg:text bg:panel_bg
 e = fg:player bg:panel_bg
 f = fg:enemy bg:panel_bg
 g = fg:text_dim bg:panel_bg
-h = fg:hp_mid bg:panel_bg
+h = fg:hp_high bg:panel_bg
 i = fg:hp_low bg:panel_bg
-j = fg:hp_high bg:panel_bg
-k = fg:water bg:sea
-l = fg:water bg:water_bg
-m = fg:grass bg:grass_bg
-n = fg:forest bg:forest_bg
-o = fg:thicket bg:thicket_bg
-p = fg:mountain bg:mountain_bg
-q = fg:peak bg:peak_bg
-r = fg:road bg:road_bg
-s = fg:enemy bg:road_bg
-t = fg:ice bg:ice_bg
-u = fg:wood bg:water_bg
-v = fg:fort bg:fort_bg
-w = fg:player bg:grass_bg
-x = fg:enemy bg:#4c271c
-y = fg:enemy bg:#50281d
-z = fg:enemy bg:grass_bg
-A = fg:stone bg:stone_bg
-B = fg:floor bg:floor_bg
-C = fg:wood bg:stone_bg
-D = fg:text_dim bg:black
+j = fg:water bg:sea
+k = fg:water bg:water_bg
+l = fg:grass bg:grass_bg
+m = fg:forest bg:forest_bg
+n = fg:thicket bg:thicket_bg
+o = fg:mountain bg:mountain_bg
+p = fg:peak bg:peak_bg
+q = fg:road bg:road_bg
+r = fg:enemy bg:road_bg
+s = fg:ice bg:ice_bg
+t = fg:wood bg:water_bg
+u = fg:fort bg:fort_bg
+v = fg:player bg:grass_bg
+w = fg:enemy bg:#4c271c
+x = fg:enemy bg:#50281d
+y = fg:enemy bg:grass_bg
+z = fg:stone bg:stone_bg
+A = fg:floor bg:floor_bg
+B = fg:wood bg:stone_bg
+C = fg:text_dim bg:black
 --- overlays ---
 over  209,270 14x2  hp_high
 over  161,270 14x2  hp_high

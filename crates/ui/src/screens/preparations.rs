@@ -157,9 +157,10 @@ const fn kind_key(kind: WeaponKind) -> &'static str {
 
 const fn weight_key(weight: ArmourWeight) -> &'static str {
     match weight {
-        ArmourWeight::Light => "prep.reason.armour.light",
-        ArmourWeight::Medium => "prep.reason.armour.medium",
-        ArmourWeight::Heavy => "prep.reason.armour.heavy",
+        ArmourWeight::Cloth => "prep.reason.armour.cloth",
+        ArmourWeight::Leather => "prep.reason.armour.leather",
+        ArmourWeight::Chain => "prep.reason.armour.chain",
+        ArmourWeight::Plate => "prep.reason.armour.plate",
     }
 }
 

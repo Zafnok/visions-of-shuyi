@@ -116,34 +116,35 @@ fn gear_and_consumables_match_the_design() {
         f(&mut s);
         s
     };
+    // The starter piece of each weight (weapons-and-items.md, Armour, 0073).
     let armour = [
         (
-            "leather_vest",
-            ArmourWeight::Light,
-            stats(|s| s.def = 1),
+            "linen_robe",
+            ArmourWeight::Cloth,
+            stats(|s| s.res = 4),
             0,
             300,
         ),
         (
+            "leather_vest",
+            ArmourWeight::Leather,
+            stats(|s| (s.def, s.res) = (2, 2)),
+            1,
+            400,
+        ),
+        (
             "chain_mail",
-            ArmourWeight::Medium,
-            stats(|s| s.def = 3),
-            2,
+            ArmourWeight::Chain,
+            stats(|s| (s.def, s.res) = (4, 1)),
+            3,
             800,
         ),
         (
             "iron_plate",
-            ArmourWeight::Heavy,
-            stats(|s| s.def = 5),
-            5,
+            ArmourWeight::Plate,
+            stats(|s| (s.def, s.res) = (8, -3)),
+            6,
             1500,
-        ),
-        (
-            "warded_robe",
-            ArmourWeight::Light,
-            stats(|s| s.res = 2),
-            0,
-            700,
         ),
     ];
     for (key, weight_class, bonus, weight, price) in armour {
@@ -182,9 +183,10 @@ fn gear_and_consumables_match_the_design() {
     }
     assert_eq!(t.items.len(), 10 + 4 + 3 + 2 + 3);
     assert_eq!(
-        t.get(&id("warded_robe")).map(ItemDef::name),
-        Some("Warded Robe")
+        t.get(&id("linen_robe")).map(ItemDef::name),
+        Some("Linen Robe")
     );
+    assert_eq!(t.get(&id("warded_robe")), None, "retired by 0073");
 }
 
 /// Traits, rank speed, thresholds, broken penalties and weapon EXP numbers
@@ -237,7 +239,7 @@ fn a_minimal_file_loads() {
         RULES,
         KINDS,
         &weapon("w", ", effective: [(Armored, 2)], damage_type: Magical"),
-        "armour: [(id: \"a\", name: \"A\", weight_class: Heavy, bonus: (hp: 1, str: 2, mag: 3, dex: 4, spd: 5, def: 6, res: 7, mov: 8), weight: 1, price: 2)],\n    \
+        "armour: [(id: \"a\", name: \"A\", weight_class: Plate, bonus: (hp: 1, str: 2, mag: 3, dex: 4, spd: 5, def: 6, res: 7, mov: 8), weight: 1, price: 2)],\n    \
          accessories: [(id: \"r\", name: \"R\", bonus: (), price: 3)],\n    \
          consumables: [(id: \"p\", name: \"P\", effect: Heal(1), price: 4)],",
     );
@@ -289,7 +291,7 @@ fn ids_are_unique_across_lists_and_not_empty() {
         RULES,
         KINDS,
         &weapon("x", ""),
-        "armour: [(id: \"x\", name: \"A\", weight_class: Light, bonus: (), weight: -1, price: 0)],\n    \
+        "armour: [(id: \"x\", name: \"A\", weight_class: Leather, bonus: (), weight: -1, price: 0)],\n    \
          accessories: [(id: \"\", name: \"R\", bonus: (), price: 3)],\n    \
          consumables: [(id: \"p\", name: \"P\", effect: Heal(0), price: 4)],",
     );
@@ -544,14 +546,15 @@ fn w2_spear_vs_cavalry_and_axe_minimum() {
         &["iron_axe"],
         None,
     );
-    let f = fight(&soldier(5), "Plain", &cavalier, "Plain", 1);
+    // Def 4 + 2 (Leather Vest) = 6, the design's soldier.
+    let f = fight(&soldier(4), "Plain", &cavalier, "Plain", 1);
     let effective = SideForecast {
         effective: true,
         ..side(14, 14, 76, 1, 1)
     };
     assert_eq!(f.attacker, effective);
     assert_eq!(f.defender, Some(side(10, 10, 75, 2, 1)));
-    // W2b: Def 20 (+1 vest). The axe still deals its minimum 5.
+    // W2b: Def 20 (+2 vest). The axe still deals its minimum 5.
     let f = fight(&soldier(20), "Plain", &cavalier, "Plain", 1);
     assert_eq!(f.defender.map(|d| d.damage), Some(5));
 }

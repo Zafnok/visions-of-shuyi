@@ -520,7 +520,7 @@ fn class(id: &str, active: Option<&str>, passives: &[&str]) -> ClassDef {
         base: trpg_core::Stats::default(),
         growths: trpg_core::Growths::default(),
         weapons: vec![],
-        armour: vec![],
+        max_armour: None,
         tags: UnitTags::default(),
         promotes_to: vec![],
         active: active.map(|s| SkillId(s.into())),
