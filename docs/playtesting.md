@@ -130,9 +130,14 @@ think a lot: on Chapter 1 a try takes one core about 45 s for Hardcore,
 The command exits with 1 when the battle is **blocked**: Casual succeeds in
 under 20% of tries, the battle is basically unwinnable. A band missed is
 only reported. CI plays every battle in `assets/battles` with `--bot all`
-when the battles, the rules or the bots change
-(`.github/workflows/playtest.yml`), and fails only on a blocked battle;
-the tables are in the job's summary.
+(`.github/workflows/playtest.yml`) only when a pull request or a push to
+`main` changes a **balance lever**: a battle, a map, a number table in
+`assets/data` (classes, items, spells, skills, arts, characters, AI,
+terrain, supports, the new game), the rules (`crates/core`), how content
+becomes a battle (`crates/content`), the bots, the engine pin, or the
+playtest itself. The list is `.github/playtest-levers.sh` (ticket 0514);
+"Run workflow" on the Actions page always plays. It fails only on a
+blocked battle; the tables are in the job's summary.
 
 ## Reading the report
 
