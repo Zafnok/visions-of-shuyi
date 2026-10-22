@@ -1,5 +1,5 @@
 ---
-id: "0855"
+id: "0856"
 title: Battle files mark a unit as non-combat
 type: feature
 milestone: M7 Chapter 1 & game flow
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 0855 — Battle files mark a unit as non-combat
+# 0856 — Battle files mark a unit as non-combat
 
 ## Context
 
