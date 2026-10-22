@@ -46,7 +46,7 @@ read this table.
 | 2026-10-22 | 0506 (sweep) | run every battle's playtest in CI and fail only on a floor (`.github/workflows/playtest.yml`, YAML, not counted by `code-lines`) | 15 | 94 | 6.3× | 1: a reusable workflow | engine#2021, 1180 |
 | 2026-10-22 | 0506 (sweep) | what a try measures (`measures.rs`, `BattleMeasure`) | 110 | 117 | 1.1× | 4: accept, the game's events and modes (what a fall is, which items count); the turn cap's off-by-one is 3 lines | — |
 | 2026-10-22 | 0506 (sweep) | an entrant: the battle in its mode, the persona on the Player phase, the enemy AI elsewhere (`playtest.rs` `BattleEntrant`, `BattleStage`); the talk rule (`PersonaBot`) | 80 | 108 | 1.4× | under 2× | — |
-| 2026-10-22 | 1039 | the Playdate's forecast, unit info, fight box, EXP and level-up pages and rewind screen: five paints of existing views, and the views' few new fields | 450 | 776 | 1.7× | 1: a crank step in the engine's frame-png script (the game added `--crank` and `--then-pad` to its own options), follow-up | engine#2540, 1181 |
+| 2026-10-22 | 1039 | the Playdate's forecast, unit info, fight box, EXP and level-up pages and rewind screen: five paints of existing views, and the views' few new fields | 450 | 776 | 1.7× | 1: a crank step in the engine's frame-png script (the game added `--crank` and `--then-pad` to its own options), follow-up | engine#2540, 1182 |
 
 ## Sweeps
 

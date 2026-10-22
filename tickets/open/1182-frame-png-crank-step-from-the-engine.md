@@ -1,5 +1,5 @@
 ---
-id: "1181"
+id: "1182"
 title: "The game's frame-png winds the crank with the engine's `--crank` step: delete the game's own `--crank` and `--then-pad`"
 type: infra
 milestone: Post–Chapter 1
@@ -11,7 +11,7 @@ nick_input: none
 completed:
 ---
 
-# 1181 — frame-png's crank step from the engine
+# 1182 — frame-png's crank step from the engine
 
 ## Context
 

@@ -164,7 +164,7 @@ engine's frame-png script having no crank step (outcome 1, engine
 feature; leak test passed). Shipped with the workaround marked
 `// engine-friction: engine#2540`; engine ticket 2540
 ([Zafnok/shuyi-engine#66](https://github.com/Zafnok/shuyi-engine/pull/66))
-and game ticket 1181 (deletes it, moves the pin). Row in
+and game ticket 1182 (deletes it, moves the pin). Row in
 `docs/engine/friction.md`.
 
 **Deviations.**
@@ -182,7 +182,7 @@ and game ticket 1181 (deletes it, moves the pin). Row in
   the PC), so the integration test checks the fight skipped to the EXP
   bar and the box has its look test.
 
-**Follow-ups:** engine#2540 (a crank step in frame-png's script) and **1181** (the game's frame-png uses it and drops its own `--crank` and `--then-pad`; blocked by engine#2540). Neither is on the Act 1 critical path.
+**Follow-ups:** engine#2540 (a crank step in frame-png's script) and **1182** (the game's frame-png uses it and drops its own `--crank` and `--then-pad`; blocked by engine#2540). Neither is on the Act 1 critical path.
 
 ***Claude's starting rules*** (in `docs/design/playdate.md`, *Layout*;
 for 1064's checklist, Nick can veto):
