@@ -196,6 +196,7 @@ fn classes() -> ClassTable {
         cp_per_class_level: vec![10, 17, 25],
         class_level_cap: 10,
         level_cap: 99,
+        exp_pace: Vec::new(),
         hard_ceilings: Stats::from_growable([80, 50, 50, 50, 50, 50, 50], 15),
     }
 }

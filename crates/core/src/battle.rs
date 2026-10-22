@@ -233,12 +233,15 @@
 //!     heal's if it healed (Sanctuary) and a kill's for each hostile unit
 //!     it felled (Shove), with the kill's extra CP if it felled one (Nick).
 //!
+//!   A player unit's award is scaled by the EXP pace at its level
+//!   ([`progression::paced_exp`]) before it is given.
+//!
 //!   **Ally**-faction units' EXP goes into the battle's
 //!   [EXP pool](BattleState::exp_pool) instead. On a **victory**, just before
 //!   [`Event::BattleEnded`], the pool is shared: each player unit on the map
 //!   below the level cap (fallen units and reinforcements still to come
-//!   don't count) gets `pool / their number` EXP, in unit order; the
-//!   remainder is lost. On a defeat the pool is lost. Enemies and neutrals
+//!   don't count) gets `pool / their number` EXP, scaled by the EXP pace
+//!   at its own level, in unit order; the remainder is lost. On a defeat the pool is lost. Enemies and neutrals
 //!   never gain.
 //!
 //!   **RNG order:** level ups roll on the battle's [`SimRng`] right where
@@ -3341,6 +3344,7 @@ impl BattleState {
         match unit.faction {
             Faction::Player => {
                 let classes = &self.tables.classes;
+                let exp = progression::paced_exp(classes, unit.level, exp);
                 events.extend(progression::grant_exp(unit, exp, classes, &mut self.rng));
                 let skills = &self.tables.skills;
                 events.extend(progression::grant_class_points(unit, cp, classes, skills));
@@ -3438,7 +3442,8 @@ impl BattleState {
         let classes = &self.tables.classes;
         let standing = self.units.iter_mut().chain(&mut self.escaped);
         for unit in standing.filter(|u| eligible(u)) {
-            events.extend(progression::grant_exp(unit, share, classes, &mut self.rng));
+            let exp = progression::paced_exp(classes, unit.level, share);
+            events.extend(progression::grant_exp(unit, exp, classes, &mut self.rng));
         }
     }
 }

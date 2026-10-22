@@ -30,6 +30,7 @@ pub const MAX_GROWTH: GrowthValue = 255;
 #[serde(deny_unknown_fields)]
 struct RawFile {
     level_cap: u32,
+    exp_pace: Vec<(u32, u32)>,
     class_level_cap: u8,
     hard_ceilings: [StatValue; 7],
     mov_ceiling: StatValue,
@@ -109,6 +110,7 @@ pub fn from_source(
     v.tier_table(&classes, "min_gains", &raw.min_gains);
     v.tier_table(&classes, "cp_per_class_level", &raw.cp_per_class_level);
     v.reachability(&classes);
+    v.exp_pace(&raw.exp_pace);
     if v.errors.is_empty() {
         Ok(ClassTable {
             classes,
@@ -116,6 +118,7 @@ pub fn from_source(
             cp_per_class_level: raw.cp_per_class_level,
             class_level_cap: raw.class_level_cap,
             level_cap: raw.level_cap,
+            exp_pace: raw.exp_pace,
             hard_ceilings,
         })
     } else {
@@ -370,6 +373,41 @@ impl Validator<'_> {
         }
     }
 
+    /// The EXP pace starts at level 1, its levels rise, and its percents
+    /// are 1–100 and never rise (a higher level never gets a bigger award).
+    fn exp_pace(&mut self, pace: &[(u32, u32)]) {
+        let line = line_of(self.source, "exp_pace:");
+        let mut messages = Vec::new();
+        if pace.first().is_none_or(|&(from, _)| from != 1) {
+            messages.push("exp_pace: the first entry must be at level 1".to_owned());
+        }
+        for w in pace.windows(2) {
+            let ((a, p), (b, q)) = (w[0], w[1]);
+            if b <= a {
+                messages.push(format!(
+                    "exp_pace: level {b} comes after level {a} (levels must rise)"
+                ));
+            }
+            if q > p {
+                messages.push(format!(
+                    "exp_pace: level {b}'s {q}% is above level {a}'s {p}% (must never rise)"
+                ));
+            }
+        }
+        for &(from, percent) in pace {
+            if !(1..=100).contains(&percent) {
+                messages.push(format!("exp_pace: level {from}'s {percent}% is not 1–100"));
+            }
+        }
+        for message in messages {
+            let e = ContentError::new(self.file, message);
+            self.errors.push(match line {
+                Some(l) => e.at(l, None),
+                None => e,
+            });
+        }
+    }
+
     /// Every class that isn't enemy-only must be reachable from a tier-1
     /// class by promotions.
     fn reachability(&mut self, classes: &BTreeMap<ClassId, ClassDef>) {
@@ -422,8 +460,13 @@ mod tests {
     }
 
     fn file_with(min_gains: &str, cp: &str, classes: &[String]) -> String {
+        file_with_pace(min_gains, cp, "[(1, 100), (40, 50), (70, 25)]", classes)
+    }
+
+    /// `exp_pace` comes last, so the other lines keep their numbers.
+    fn file_with_pace(min_gains: &str, cp: &str, pace: &str, classes: &[String]) -> String {
         format!(
-            "(\n    level_cap: 99,\n    class_level_cap: 10,\n    hard_ceilings: (80, 50, 50, 50, 50, 50, 50),\n    mov_ceiling: 15,\n    min_gains: {min_gains},\n    cp_per_class_level: {cp},\n    classes: [\n{}    ],\n)",
+            "(\n    level_cap: 99,\n    class_level_cap: 10,\n    hard_ceilings: (80, 50, 50, 50, 50, 50, 50),\n    mov_ceiling: 15,\n    min_gains: {min_gains},\n    cp_per_class_level: {cp},\n    classes: [\n{}    ],\n    exp_pace: {pace},\n)",
             classes.concat()
         )
     }
@@ -691,6 +734,57 @@ mod tests {
             ]
         );
         assert!(load_src(&file_with("[2, 2, 2]", "[10, 10, 10, 11]", &tree(""))).is_ok());
+    }
+
+    /// The errors for EXP pace `pace`, without their `file:line: `.
+    fn pace_errors(pace: &str) -> Vec<String> {
+        let src = file_with_pace("[2, 2, 3]", "[10, 17, 25]", pace, &tree(""));
+        let line = src
+            .lines()
+            .position(|l| l.contains("exp_pace:"))
+            .unwrap_or(0)
+            + 1;
+        let prefix = format!("c.ron:{line}: ");
+        let errs = errors(&src);
+        assert!(errs.iter().all(|e| e.starts_with(&prefix)), "{errs:?}");
+        errs.iter().map(|e| e.replacen(&prefix, "", 1)).collect()
+    }
+
+    #[test]
+    fn exp_pace_loads() {
+        let t = load_src(&file(&tree(""))).unwrap_or_default();
+        assert_eq!(t.exp_pace, [(1, 100), (40, 50), (70, 25)]);
+        assert_eq!(pace_errors("[(1, 100)]"), [] as [&str; 0]);
+    }
+
+    #[test]
+    fn exp_pace_starts_at_level_1() {
+        let first = ["exp_pace: the first entry must be at level 1"];
+        assert_eq!(pace_errors("[]"), first);
+        assert_eq!(pace_errors("[(2, 100)]"), first);
+    }
+
+    #[test]
+    fn exp_pace_levels_rise_and_percents_never_do() {
+        assert_eq!(
+            pace_errors("[(1, 100), (40, 50), (40, 25), (70, 30)]"),
+            [
+                "exp_pace: level 40 comes after level 40 (levels must rise)",
+                "exp_pace: level 70's 30% is above level 40's 25% (must never rise)",
+            ]
+        );
+        assert_eq!(pace_errors("[(1, 50), (10, 50)]"), [] as [&str; 0]);
+    }
+
+    #[test]
+    fn exp_pace_percents_are_1_to_100() {
+        assert_eq!(
+            pace_errors("[(1, 101), (5, 100), (9, 0)]"),
+            [
+                "exp_pace: level 1's 101% is not 1–100",
+                "exp_pace: level 9's 0% is not 1–100",
+            ]
+        );
     }
 
     #[test]

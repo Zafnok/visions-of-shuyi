@@ -7,6 +7,11 @@
 //!   EXP make a character level; EXP carries over. Only Player-faction units
 //!   gain EXP and class points; an Ally-faction unit's EXP goes into the
 //!   battle's EXP pool instead (see [`crate::battle`]).
+//! - **EXP pace** ([`paced_exp`], [`ClassTable::exp_pace`], data): every
+//!   unit EXP award in battle (and each share of the EXP pool) is scaled by
+//!   the receiving unit's character level before it is given, so high
+//!   levels come slower. The unused-charge bonus of [`crate::campaign`] is
+//!   a share of a level and isn't scaled.
 //! - **Level cap** ([`ClassTable::level_cap`], data): a unit at the cap gains
 //!   no EXP (shown as `--`) and has 0 EXP; an award that reaches the cap is
 //!   cut to what reaching it takes.
@@ -111,6 +116,18 @@ pub fn exp_for_combat(
     };
     let exp = exp.clamp(i64::from(MIN_COMBAT_EXP), i64::from(MAX_AWARD));
     u32::try_from(exp).unwrap_or(MAX_AWARD)
+}
+
+/// `amount` scaled by the EXP pace of a unit of character `level`
+/// ([`ClassTable::exp_percent`]): `max(1, amount × percent / 100)`, rounded
+/// down; 0 stays 0. Never more than `amount`.
+pub fn paced_exp(classes: &ClassTable, level: Level, amount: u32) -> u32 {
+    if amount == 0 {
+        return 0;
+    }
+    let percent = u64::from(classes.exp_percent(level).min(100));
+    let scaled = u64::from(amount) * percent / 100;
+    u32::try_from(scaled).unwrap_or(amount).max(1)
 }
 
 /// EXP for healing an ally with a spell.

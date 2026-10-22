@@ -220,9 +220,25 @@ kept that scale.
   higher lvs harder to hit (2 battles per lv)". So an active unit gains
   about **2 levels per battle at low levels**, slowing to about **1 level
   every 2 battles at high levels**, and about **1 per battle on average**
-  over the game. Where the slowdown starts and how steep it is are
-  *tunable* (ticket 0608). Until 0608 lands, the awards below are still
-  sized for 2 levels per battle at every level.
+  over the game. The awards below are sized for 2 levels per battle; every
+  unit EXP award is then scaled by the unit's character level **before**
+  the award (ticket 0608, *tunable*, `exp_pace` in `classes.ron`):
+
+  | Character level | Share of each award | A typical battle (200 EXP before scaling) |
+  | --------------- | ------------------- | ------------------------------------------ |
+  | 1–39 | 100% | about 2 levels |
+  | 40–69 | 50% | about 1 level |
+  | 70+ | 25% | about 1 level every 2 battles |
+
+  So Lv 99 takes about 110 battles (about 20 + 30 + 60), about 0.9 levels
+  per battle on average. Example: a Lv 45 unit hits an equal-level enemy:
+  20 EXP, halved to **10**. Scaled awards round down but are **never below
+  1 EXP**. Chapter 1 (levels 1–5) gets every award in full.
+  - The allied EXP pool is scaled **per receiving unit**: each share is
+    scaled at that unit's own level.
+  - Class points aren't scaled, and neither is the unused-rewind-charge
+    bonus (`death-and-difficulty.md`): Nick defined it as a share of one
+    level, so it stays 7% of a level at every level.
 - **100 EXP = 1 level.** EXP carries over past 100. A single award is at most
   100, so it gives at most one level.
 - **Only Player-faction units** gain EXP and class points (Nick, FE rule).
@@ -240,7 +256,9 @@ kept that scale.
 
 ### EXP formulas (*tunable*: FE GBA's shape, doubled for Nick's faster pace)
 
-`d = target.level - unit.level` (character levels, signed).
+`d = target.level - unit.level` (character levels, signed). Each award
+below is then scaled by the unit's level (*Pace* above): in full to Lv 39,
+half from Lv 40, a quarter from Lv 70.
 
 | Event | EXP |
 | ----- | --- |

@@ -68,6 +68,7 @@ fn table() -> ClassTable {
         cp_per_class_level: vec![10, 17, 25],
         class_level_cap: 10,
         level_cap: 99,
+        exp_pace: Vec::new(),
         hard_ceilings: Stats::from_growable([80, 50, 50, 50, 50, 50, 50], 15),
     }
 }
@@ -697,6 +698,90 @@ fn class_points_with_nothing_to_give() {
     assert_eq!(grant_class_points(&mut u, 3, &t, &skills()), []);
 }
 
+// ---- EXP pace (ticket 0608) -------------------------------------------------------
+
+/// [`table`] with `classes.ron`'s starting EXP pace.
+fn paced_table() -> ClassTable {
+    ClassTable {
+        exp_pace: vec![(1, 100), (40, 50), (70, 25)],
+        ..table()
+    }
+}
+
+#[test]
+fn the_pace_band_changes_at_each_boundary() {
+    let t = paced_table();
+    let percents: Vec<u32> = [1, 39, 40, 69, 70, 99].map(|l| t.exp_percent(l)).into();
+    assert_eq!(percents, [100, 100, 50, 50, 25, 25]);
+    assert_eq!(table().exp_percent(80), 100, "no pace: every award in full");
+}
+
+#[test]
+fn paced_awards_scale_round_down_and_never_fall_below_1() {
+    let t = paced_table();
+    assert_eq!(paced_exp(&t, 39, 100), 100);
+    assert_eq!(paced_exp(&t, 40, 100), 50);
+    assert_eq!(paced_exp(&t, 70, 100), 25);
+    assert_eq!(paced_exp(&t, 70, 50), 12, "12.5 rounds down");
+    assert_eq!(paced_exp(&t, 80, 2), 1, "never below 1");
+    assert_eq!(paced_exp(&t, 80, 0), 0, "nothing stays nothing");
+}
+
+#[test]
+fn chapter_1_levels_get_every_award_in_full() {
+    let t = paced_table();
+    for level in 1..=5 {
+        for amount in [2, 20, 24, 60, 100] {
+            assert_eq!(paced_exp(&t, level, amount), amount);
+        }
+    }
+}
+
+/// A typical battle for an active unit: four awards of 50 EXP (a mix of
+/// hits and kills), 200 EXP before the pace. Returns the levels gained
+/// over `battles` battles from `level`.
+fn levels_over(level: Level, battles: u32) -> u32 {
+    let t = paced_table();
+    let mut u = fresh();
+    u.level = level;
+    let mut rng = SimRng::new(7);
+    for _ in 0..battles {
+        for _ in 0..4 {
+            let exp = paced_exp(&t, u.level, 50);
+            grant_exp(&mut u, exp, &t, &mut rng);
+        }
+    }
+    u.level - level
+}
+
+#[test]
+fn levels_come_at_2_then_1_then_half_a_battle() {
+    // Ten battles from each level, all inside one band.
+    assert_eq!(levels_over(10, 10), 20, "about 2 per battle at Lv 10");
+    assert_eq!(levels_over(50, 10), 10, "about 1 per battle at Lv 50");
+    assert_eq!(
+        levels_over(80, 10),
+        4,
+        "about 0.5 per battle at Lv 80 (48 EXP)"
+    );
+}
+
+#[test]
+fn lv_99_takes_100_to_120_battles() {
+    let t = paced_table();
+    let mut u = fresh();
+    let mut rng = SimRng::new(7);
+    let mut battles = 0;
+    while u.level < t.level_cap && battles < 1000 {
+        for _ in 0..4 {
+            let exp = paced_exp(&t, u.level, 50);
+            grant_exp(&mut u, exp, &t, &mut rng);
+        }
+        battles += 1;
+    }
+    assert!((100..=120).contains(&battles), "{battles} battles");
+}
+
 // ---- Properties and statistics ---------------------------------------------------
 
 fn arb_class() -> impl Strategy<Value = ClassDef> {
@@ -705,6 +790,24 @@ fn arb_class() -> impl Strategy<Value = ClassDef> {
 }
 
 proptest! {
+    /// The same event never gives a higher-level unit a bigger paced award.
+    #[test]
+    fn a_higher_level_never_gets_a_bigger_paced_award(
+        low in 1..=99u32,
+        up in 0..=98u32,
+        target in 1..=99u32,
+        result in prop::sample::select(vec![NoDamage, Damaged, Killed]),
+        boss in any::<bool>(),
+    ) {
+        let t = paced_table();
+        let high = (low + up).min(99);
+        let award = |level| paced_exp(&t, level, exp_for_combat(level, target, result, boss));
+        prop_assert!(award(high) <= award(low));
+        for fixed in [exp_for_heal(), exp_for_tile_cast(), exp_for_active_skill()] {
+            prop_assert!(paced_exp(&t, high, fixed) <= paced_exp(&t, low, fixed));
+        }
+    }
+
     #[test]
     fn level_ups_respect_ceilings_growths_and_the_net(
         class in arb_class(),

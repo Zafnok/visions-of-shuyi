@@ -80,8 +80,8 @@ pub use movement::{
 pub use prep::{GearSlot, PrepError, PrepUnit, Preparations, StockItem, Unusable};
 pub use progression::{
     ChangeTables, ClassChangeError, CombatResult, StatGains, apply_gains, exp_for_combat,
-    grant_class_points, grant_exp, growth, has_mastered, level_up, promote, promotion_gains,
-    promotion_targets, reclass, reclass_targets,
+    grant_class_points, grant_exp, growth, has_mastered, level_up, paced_exp, promote,
+    promotion_gains, promotion_targets, reclass, reclass_targets,
 };
 pub use rng::{RandomSource, ScriptedRng, SimRng};
 pub use save::{SAVE_VERSION, SaveFile, SaveHeader, SavePoint};
