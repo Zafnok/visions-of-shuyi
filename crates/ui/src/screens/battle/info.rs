@@ -21,6 +21,7 @@ use super::skills::{
 use super::view::{
     GearView, InfoEffectView, InfoSkillView, InfoSpellView, InfoStatView, InfoView, InfoWeaponView,
 };
+use crate::input::Action;
 use crate::words::Words;
 
 /// The stat's short name, as the design docs write it.
@@ -187,7 +188,28 @@ pub fn view((state, words): (&BattleState, Words<'_>), unit: &Unit) -> InfoView 
         },
         spells_title: text("battle.info.spells"),
         spells: spells(state, words, unit),
+        page: 0,
     }
+}
+
+/// The info screen's page after `action` on page `page` of `pages`: Left
+/// and Right turn the pages, wrapping, on a skin that shows the screen a
+/// page at a time (the Playdate's, ticket 1039). `None` if `action`
+/// turns no page or there is only the one.
+pub fn turn_page(action: Action, page: u8, pages: u8) -> Option<u8> {
+    let forward = match action {
+        Action::CursorRight => true,
+        Action::CursorLeft => false,
+        _ => return None,
+    };
+    (pages > 1).then(|| {
+        let page = page.min(pages - 1);
+        if forward {
+            (page + 1) % pages
+        } else {
+            page.checked_sub(1).unwrap_or(pages - 1)
+        }
+    })
 }
 
 /// What gave a timed effect: a skill's or an art's id, as a name.

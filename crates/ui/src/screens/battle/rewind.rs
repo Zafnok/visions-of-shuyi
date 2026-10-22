@@ -16,17 +16,25 @@ use trpg_core::{
 };
 
 use super::camera::Camera;
-use super::glyph::rewind as glyph;
-use super::layout::MAP_VIEW;
+use super::layout::map_area;
 use super::view::{RewindScreenView, RewindView};
+use super::{glyph, playdate};
 use crate::audio::MenuSound;
 use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{MapScene, UnitView};
 use crate::screen::{Ctx, FrameInput, Screen, Shuyi, Transition};
+use crate::screens::Skins;
 use crate::tips::LessonView;
 use crate::widgets::ListCursor;
 use crate::words::Words;
+
+/// The rewind screen's skins (ADR-0083): the PC's list over the side
+/// panel, the Playdate's window over the map (ticket 1039).
+pub const SKINS: Skins<RewindScreenView> = Skins {
+    glyph: glyph::rewind::paint,
+    playdate: playdate::rewind::paint,
+};
 
 /// One past action.
 #[derive(Debug, Clone, PartialEq)]
@@ -179,20 +187,7 @@ impl RewindScreen {
     /// and the question while it is asked.
     pub fn list_view(&self, words: Words<'_>) -> RewindView {
         let spent = self.charges_left == 0;
-        let charges = if spent {
-            words.text("battle.rewind.no_charges").to_owned()
-        } else {
-            let key = if self.charges == 1 {
-                "battle.rewind.charges.one"
-            } else {
-                "battle.rewind.charges.many"
-            };
-            let counts = [
-                ("left", &self.charges_left as &dyn Display),
-                ("charges", &self.charges),
-            ];
-            words.text_with(key, &counts)
-        };
+        let charges = charges_text(words, self.charges_left, self.charges);
         let prompt = self.confirming.then(|| {
             let key = if self.charges_left == 1 {
                 "battle.rewind.use.one"
@@ -219,7 +214,7 @@ impl RewindScreen {
     /// highlighted action (as it is now with nothing listed), with no
     /// flashes, ranges, cursor or path.
     pub fn scene(&self, ctx: &Ctx) -> MapScene {
-        let size = ctx.game.map_skin.view_tiles(MAP_VIEW);
+        let size = ctx.game.map_skin.view_tiles(map_area(ctx));
         let shown = self.focused().map_or(&self.now, |e| &e.before);
         let frame = &self.frame;
         let camera = super::fit_camera(frame.camera, frame.view, frame.cursor, shown, size);
@@ -283,12 +278,26 @@ impl Screen<Shuyi> for RewindScreen {
     /// Paints the whole screen, its map too: the battle under it isn't
     /// drawn.
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        glyph::paint(ctx, &self.view(ctx), buf);
+        SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {
         Some(self)
     }
+}
+
+/// The charges line: `left` of `charges` charges left, or that none are.
+pub fn charges_text(words: Words<'_>, left: u8, charges: u8) -> String {
+    if left == 0 {
+        return words.text("battle.rewind.no_charges").to_owned();
+    }
+    let key = if charges == 1 {
+        "battle.rewind.charges.one"
+    } else {
+        "battle.rewind.charges.many"
+    };
+    let counts = [("left", &left as &dyn Display), ("charges", &charges)];
+    words.text_with(key, &counts)
 }
 
 /// A unit's name in `state`, or `?` (never shown: a command only names

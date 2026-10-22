@@ -18,7 +18,7 @@ use trpg_ui::screen::{Ctx, Keyboard, ShuyiCtx};
 use trpg_ui::{Cell, ConsoleSizes, ConsoleSpec, GlyphBuffer, Palette, Rect, UiColor};
 
 /// The game's `frame-png` options.
-const OPTIONS: [GameOption; 6] = [
+const OPTIONS: [GameOption; 8] = [
     GameOption {
         flag: "--layout",
         value: Some("right|left"),
@@ -55,6 +55,19 @@ const OPTIONS: [GameOption; 6] = [
         value: Some("NAME"),
         help: "fight every battle in this light of assets/data/lighting.ron,\n\
                whatever its map and its battle file say",
+    },
+    // engine-friction: engine#2540
+    GameOption {
+        flag: "--crank",
+        value: Some("DEGREES"),
+        help: "after the steps, wind the Playdate's crank that far in a frame\n\
+               (backwards is negative), as its front end reports it",
+    },
+    GameOption {
+        flag: "--then-pad",
+        value: Some("BUTTONS"),
+        help: "after the steps (and a --crank given before it), press and\n\
+               release each button in turn, as --pad",
     },
 ];
 
@@ -95,6 +108,21 @@ struct Start {
     /// Show the guide's one-time tips and checklist lessons, as `app`
     /// does.
     tips: bool,
+    /// What is done after the script's steps, in turn (`--crank`,
+    /// `--then-pad`). The engine's script has no crank step (ticket 1039
+    /// needed one for the rewind screen, which only the crank opens on
+    /// the Playdate).
+    // engine-friction: engine#2540
+    after: Vec<After>,
+}
+
+/// A step played after the script's.
+#[derive(Debug, Clone, PartialEq)]
+enum After {
+    /// The crank wound this many degrees in one frame.
+    Crank(f32),
+    /// Each button pressed and released in turn.
+    Pad(String),
 }
 
 impl Start {
@@ -107,6 +135,7 @@ impl Start {
             prompt: false,
             light: None,
             tips: false,
+            after: Vec::new(),
         };
         for option in options {
             let value = option.value.clone().unwrap_or_default();
@@ -123,6 +152,13 @@ impl Start {
                 "--prompt" => start.prompt = true,
                 "--tips" => start.tips = true,
                 "--light" => start.light = Some(value),
+                "--crank" => {
+                    let degrees = value
+                        .parse()
+                        .map_err(|_| format!("--crank: not a number of degrees: {value}"))?;
+                    start.after.push(After::Crank(degrees));
+                }
+                "--then-pad" => start.after.push(After::Pad(value)),
                 other => return Err(format!("unknown option: {other}")),
             }
         }
@@ -206,6 +242,13 @@ fn frame(start: &Start, script: &Script, scale: Option<u32>) -> Result<Shot, Str
             .extend(battles.into_iter().map(|id| (id, light.clone())));
     }
     script.play(&mut h);
+    // engine-friction: engine#2540
+    for step in &start.after {
+        match step {
+            After::Crank(degrees) => h.crank(*degrees),
+            After::Pad(buttons) => h.pad(buttons),
+        };
+    }
     let ctx = h.game().ctx();
     let map;
     let buffer = if start.shows == Shows::MapAlone {

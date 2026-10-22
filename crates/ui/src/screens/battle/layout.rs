@@ -25,6 +25,16 @@ pub fn map_area(ctx: &Ctx) -> Rect {
     }
 }
 
+/// How many pages the unit info screen has on `ctx`'s skin set: one on
+/// the PC, whose screen holds it all; on the Playdate, a page at a time,
+/// its skin's [`PAGES`](super::playdate::info::PAGES) (ticket 1039).
+pub fn info_pages(ctx: &Ctx) -> u8 {
+    match ctx.game.skin_set {
+        SkinSet::Glyph => 1,
+        SkinSet::Playdate => super::playdate::info::PAGES,
+    }
+}
+
 /// The side panel (single-line box), right of the map.
 pub const SIDE_PANEL: Rect = Rect::new(70, 0, 30, 30);
 

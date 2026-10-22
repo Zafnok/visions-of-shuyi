@@ -65,6 +65,7 @@ fn the_games_options_are_read() {
             prompt: true,
             light: Some("dusk".into()),
             tips: true,
+            after: Vec::new(),
         })
     );
     let plain = Start::of(&parse(&["a.png"]).unwrap().game).unwrap();
@@ -209,6 +210,41 @@ fn the_playdate_frame_is_400_by_240_in_black_and_white() {
     assert!(white > black && black > 0, "{white} white, {black} black");
     let options = parse(&["p.png", "--playdate", "--scale", "2"]).unwrap();
     assert!(run(&dir, &options).unwrap().contains("(800×480)"));
+    fs::remove_dir_all(&dir).unwrap();
+}
+
+/// Ticket 1039: `--crank` winds the Playdate's crank after the steps and
+/// `--then-pad` presses buttons after it, in turn: wound back on the
+/// Quick Battle's map, the rewind screen; A asks there.
+#[test]
+fn the_crank_and_buttons_after_the_steps_open_the_rewind_screen() {
+    let given = parse(&["r.png", "--crank", "-30", "--then-pad", "South"]).unwrap();
+    let after = Start::of(&given.game).unwrap().after;
+    assert_eq!(after, [After::Crank(-30.0), After::Pad("South".into())]);
+    let bad = parse(&["r.png", "--crank", "far"]).unwrap();
+    let error = Start::of(&bad.game).unwrap_err();
+    assert_eq!(error, "--crank: not a number of degrees: far");
+    let dir = temp_dir("crank");
+    let quick = [
+        "r.png",
+        "--playdate",
+        "--pad",
+        "DpadDown South",
+        "--wait",
+        "0.1",
+        "--pad",
+        "DpadLeft South",
+        "--wait",
+        "0.1",
+        "--pad",
+        "South",
+    ];
+    let shows = |extra: &[&str]| {
+        let options = parse(&[&quick[..], extra].concat()).unwrap();
+        run(&dir, &options).unwrap()
+    };
+    assert!(shows(&[]).starts_with("frame-png: battle → "));
+    assert!(shows(&["--crank", "-30"]).starts_with("frame-png: rewind → "));
     fs::remove_dir_all(&dir).unwrap();
 }
 

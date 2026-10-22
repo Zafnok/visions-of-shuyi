@@ -20,6 +20,7 @@ numbers and the forecast in them are placeholders.
 | `q3-*.png`, `q3r2-*.png` | The other ways offered to tell sides apart without colour |
 | `1037-*.png` | **As built** (ticket 1037, `cargo shuyi frame-png --playdate --map`, shown at ×2): Harrowby Ford browsing, a unit's ranges, the danger zone, both, a path with its threat arrow, a unit that has acted |
 | `1038-*.png` | **As built** (ticket 1038, `cargo shuyi frame-png --playdate`, shown at ×2): Harrowby Ford's battle screen browsing, with the pop-ups moved down, the action menu, a skill list with its note, the map menu, the unit list, the objective page, the end-turn question, a phase banner |
+| `1039-*.png` | **As built** (ticket 1039, `cargo shuyi frame-png --playdate`, shown at ×2): the forecast (Quick Battle) on the half away from its units, with the kill skull, the EXP bar, Unit info's three pages for Ellery and a brigand in Harrowby Ford, the map menu with the turn and charges, the rewind list and its question |
 | `1037-hp-options.png` | The HP line options Nick was shown at sign-off (A today's, B a box, C the HP lost dithered, D the letters' colour); **chosen: A for enemies, C for your units** |
 
 ## Nick's words
@@ -123,6 +124,48 @@ Like Fire Emblem on the GBA.
     bit can't colour it by side, so the words tell (`ENEMY PHASE`).
   - **Heal and burn numbers** are black on white a row over the unit;
     the sign tells them apart (`+10`, `-3`).
+- *Claude's starting rules from building the forecast, Unit info, the
+  fight box, the EXP and level-up pages and the rewind screen (1039, Nick
+  can veto; pictures `playdate/1039-*.png`):*
+  - **The forecast** is a window **half the screen wide** (25 cells)
+    down the half away from the two units, from the top, as tall as its
+    rows. With one unit in each half it goes on the attacker's half, so
+    the target stays in view. It has every line of the PC's: names, arms,
+    what is left of them, HP with a 4-cell bar (HP kept black, HP that
+    would be lost a checker, the rest white), Hit, Crit, the strikes
+    numbered down the middle, `!` on an effective one, the skull (black)
+    on the kill and the strikes after it in grey dots, the totals and the
+    art's notes. If they don't fit the screen, the rules between the
+    parts go first, then the last notes.
+  - **Unit info** is a window over the whole screen, the unit's name in
+    its frame, in **three pages** that **left and right turn** (wrapping;
+    `◀ 1/3 ▶` in the bottom of the frame): 1. class and level, HP with a
+    bar, EXP, Mov, the movement type and the class's tags, the stats (a
+    raised or lowered one as the bar) and the timed effects; 2. the
+    weapons, the armor and the accessory, the weapon ranks and the
+    affinities (each list on one line); 3. the skills, then the spells two
+    to a row. It opens on page 1; up and down show the next unit on the
+    same page. A list too long for its page stops at the frame, as the
+    PC's do. No portrait placeholder.
+  - **The map menu** has the turn in the top of its frame and the rewind
+    charges in its bottom (`3 of 3 charges left`), and is as wide as they
+    need. There is no chapter to show: the PC's battle screen shows none.
+  - **The fight box** (combat picture off or skipped) is a window across
+    the top of the screen, as on the PC, the art's name in its frame; the
+    striker's name is the bar while it flashes.
+  - **The EXP bar** and the class box are a window across the top, where
+    the fight box was. **The level-up page** is a window in the middle,
+    the face at 1× in its top-left corner (as the guide's box) with the
+    banner, the name and what changed beside it, the stats two to a row
+    under them, each gain the bar. Without a face the words take its
+    place.
+  - **The rewind list** is a window half the screen wide down the right
+    side, the full height, over the map showing the battle as it was: the
+    title in the frame, the charges, the past actions wrapped to the
+    window, the highlighted one the bar, `▲`/`▼` where there are more.
+    **"Use 1 of N charges?"** is a question in the middle of the screen
+    with its buttons named inside (`A rewind · B back`). No help line
+    otherwise.
 
 #### The guide's box (0066)
 

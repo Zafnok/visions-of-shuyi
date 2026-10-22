@@ -90,8 +90,8 @@ use self::progress::{PROGRESS_TIMINGS, Progress};
 use self::rewind::{MapFrame, RewindEffect, RewindScreen};
 use self::tips::TipState;
 use self::view::{
-    BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageKind, MessageView,
-    NotesView, ObjectiveView, PanelView, QuestionView,
+    BattleMenuView, BattleView, DialogView, InfoView, MapInfoView, MenuHeader, MenuPlace,
+    MessageKind, MessageView, NotesView, ObjectiveView, PanelView, QuestionView,
 };
 use self::walk::Gait;
 use super::dialogue::DialogueScreen;
@@ -387,6 +387,9 @@ pub struct BattleScreen {
     /// The EXP bar and level-up pages of the last command (0602), shown
     /// once its combat has played.
     progress: Option<Progress>,
+    /// The info screen's page, on a skin that shows it a page at a time
+    /// (the Playdate's, ticket 1039): 0 when it opens.
+    info_page: u8,
     /// Sounds of events that no playback or walk plays (0424), waiting
     /// for their moment.
     cues: CueQueue,
@@ -526,6 +529,7 @@ impl BattleScreen {
             popups: vec![],
             flashes: vec![],
             progress: None,
+            info_page: 0,
             cues: CueQueue::default(),
             walked: None,
             pace: (walk::WALK_TILES_PER_S, walk::HELD_WALK_TILES_PER_S),
@@ -1664,6 +1668,13 @@ impl BattleScreen {
         // One device per frame: a key and a button pressed in the same frame
         // are both routed by the device pressed last (ADR-0036).
         let action = self.mode.route(action, &ctx.keymap, ctx.device)?;
+        if let Mode::Info { .. } = self.mode
+            && let Some(page) = info::turn_page(action, self.info_page, layout::info_pages(ctx))
+        {
+            self.info_page = page;
+            ctx.audio.menu(MenuSound::Move);
+            return None;
+        }
         let before = self.mode.clone();
         let mode = core::mem::take(&mut self.mode);
         let shortcuts = map_menu::shortcuts(ctx.keyboard, &ctx.keymap);
@@ -1680,6 +1691,10 @@ impl BattleScreen {
             ctx.audio.menu(sound);
         }
         self.mode = mode;
+        if !matches!(before, Mode::Info { .. }) {
+            // The info screen opens on its first page.
+            self.info_page = 0;
+        }
         match effect {
             Effect::None => {}
             Effect::Apply(cmd) => {
@@ -2249,7 +2264,10 @@ impl BattleScreen {
             _ => None,
         };
         let info = match self.mode {
-            Mode::Info { unit } => self.state.unit(unit).map(|u| info::view(told, u)),
+            Mode::Info { unit } => self.state.unit(unit).map(|u| InfoView {
+                page: self.info_page,
+                ..info::view(told, u)
+            }),
             _ => None,
         };
         let forecast = self.forecast().and_then(|t| forecast::view(told, t));
@@ -2282,7 +2300,20 @@ impl BattleScreen {
             info,
             fight_box,
             progress,
+            map_info: self.map_info(words),
         }
+    }
+
+    /// The turn and the rewind charges left, while the map menu is open.
+    fn map_info(&self, words: Words<'_>) -> Option<MapInfoView> {
+        matches!(self.mode, Mode::MapMenu { .. }).then(|| MapInfoView {
+            turn: map_menu::turn_text(&self.state, words),
+            charges: rewind::charges_text(
+                words,
+                self.history.charges_left(),
+                self.state.rewind_charges(),
+            ),
+        })
     }
 
     /// The menu open, if any: the action menu or a list it opened, beside

@@ -10,9 +10,16 @@
 //! black letters, the focus a bar.
 //!
 //! The forecast, the unit info screen, the fight box, the EXP and level-up
-//! pages (1039), the combat picture (1041) and the guide's box (1058) are
-//! still the PC's paints until their tickets give them the Playdate's.
-//! Nothing here decides what the screen shows.
+//! pages and the rewind screen have a module each (ticket 1039). The
+//! combat picture (1041) and the guide's box (1058) are still the PC's
+//! paints until their tickets give them the Playdate's. Nothing here
+//! decides what the screen shows.
+
+pub mod fight_box;
+pub mod forecast;
+pub mod info;
+pub mod progress;
+pub mod rewind;
 
 use crate::prelude::*;
 
@@ -20,9 +27,10 @@ use super::glyph::{self, BANNER_H, BANNER_W, box_top_in, menu_origin_in};
 use super::layout::map_area;
 use super::notes::{unwrap_notes, wrap_notes};
 use super::stage;
+use super::units::{hp_fill, meter_cells};
 use super::view::{
-    BannerView, BattleMenuView, BattleView, DialogView, MenuHeader, MenuPlace, MessageView,
-    NotesView, PanelView,
+    BannerView, BattleMenuView, BattleView, DialogView, MapInfoView, MenuHeader, MenuPlace,
+    MessageView, NotesView, PanelView,
 };
 use crate::glyph_buffer::{Cell, GlyphBuffer, Rect};
 use crate::map_view::MapScene;
@@ -32,7 +40,7 @@ use crate::screens::playdate::{
 };
 use crate::tips as tip_box;
 use crate::widgets::{MenuItemView, MenuView};
-use trpg_core::Pos;
+use trpg_core::{Pos, StatValue};
 
 /// While the cursor is on one of the map's top this many rows, the corner
 /// pop-ups sit in the bottom corners (`docs/design/playdate.md`: they
@@ -57,7 +65,7 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     {
         paint_menu_beside(ctx, view, m, tile, buf);
     }
-    paint_pc_parts(ctx, view, buf);
+    paint_parts(ctx, view, area, buf);
     if let Some(m) = &view.menu
         && m.place == MenuPlace::Centred
     {
@@ -81,7 +89,7 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
         None => {}
     }
     if let Some(i) = &view.info {
-        glyph::info::paint(ctx, i, buf);
+        info::paint(ctx, i, area, buf);
     }
     if let Some(notes) = &view.notes {
         paint_box(ctx, view, &notes.title, &note_lines(notes, area), buf);
@@ -97,22 +105,42 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     }
 }
 
-/// Paints the parts the Playdate has no look for yet with the PC's paints:
-/// the fight box, the EXP and level-up pages and the forecast (1039), and
-/// the combat picture (1041).
-fn paint_pc_parts(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
+/// Paints the fight box, the EXP and level-up pages and the forecast over
+/// `area`, and the combat picture with the PC's paint until 1041.
+fn paint_parts(ctx: &Ctx, view: &BattleView, area: Rect, buf: &mut GlyphBuffer) {
     if let Some(b) = &view.fight_box {
-        glyph::fight_box::paint(ctx, b, buf);
+        fight_box::paint(ctx, b, area, buf);
     }
     if let Some(p) = &view.progress {
-        glyph::progress::paint(ctx, p, buf);
+        progress::paint(ctx, p, area, buf);
     }
     if let Some(f) = &view.forecast {
-        glyph::forecast::paint(ctx, f, buf);
+        forecast::paint(ctx, &view.scene, f, area, buf);
     }
     if let Some(stage) = &view.stage {
         stage::glyph::paint(ctx, stage, buf);
     }
+}
+
+/// An HP bar of `w` cells from `at`, black on the white inside: the HP
+/// `after` kept `█`, what would be lost (from `now`) `▒`, the rest blank.
+/// One bit can't tell `▒` from the PC's `░` for the rest, so it is white,
+/// as the enemies' HP line has the HP lost (1037).
+fn hp_bar(
+    ctx: &Ctx,
+    buf: &mut GlyphBuffer,
+    (x, y): (i32, i32),
+    w: i32,
+    (now, after, max): (StatValue, StatValue, StatValue),
+) {
+    let ink = inks(ctx);
+    let (kept, _) = hp_fill(after, max, w);
+    let (shown, _) = hp_fill(now.max(after), max, w);
+    let lost = Cell::new('▒', ink.text, ink.inside);
+    let empty = Cell::new(' ', ink.text, ink.inside);
+    meter_cells(buf, Rect::new(x, y, w, 1), shown, lost, empty);
+    let full = Cell::new('█', ink.text, ink.inside);
+    meter_cells(buf, Rect::new(x, y, shown, 1), kept, full, lost);
 }
 
 /// Whether the player is looking over the map: no menu, box or banner is
@@ -252,8 +280,22 @@ fn paint_menu_beside(
     let Some(cells) = tile_cells(ctx, &view.scene, area, tile) else {
         return;
     };
-    let at = menu_origin_in(area, cells, menu_size(ctx, &m.menu, area));
-    paint_menu(ctx, m, at, area, buf);
+    let info = view.map_info.as_ref();
+    let at = menu_origin_in(area, cells, framed_size(ctx, m, info, area));
+    paint_menu_framed(ctx, m, info, at, area, buf);
+}
+
+/// The size of the window of `m` in `area` ([`menu_size`]), wide enough
+/// for `info` in its frame too.
+fn framed_size(
+    ctx: &Ctx,
+    m: &BattleMenuView,
+    info: Option<&MapInfoView>,
+    area: Rect,
+) -> (i32, i32) {
+    let (w, h) = menu_size(ctx, &m.menu, area);
+    let framed = info.map_or(0, |i| cells(&i.turn).max(cells(&i.charges)) + 6);
+    (w.max(framed).min(area.w), h)
 }
 
 /// An item's line: its label in the player's language and what follows.
@@ -304,11 +346,28 @@ pub fn menu_size(ctx: &Ctx, menu: &MenuView, area: Rect) -> (i32, i32) {
 /// top of the frame, the focused item's note under a rule, and marks in
 /// the frame where more items are above or below.
 fn paint_menu(ctx: &Ctx, m: &BattleMenuView, at: (i32, i32), area: Rect, buf: &mut GlyphBuffer) {
+    paint_menu_framed(ctx, m, None, at, area, buf);
+}
+
+/// [`paint_menu`] with the battle's turn in the top of the frame and the
+/// rewind charges in its bottom (the map menu's `info`), for the turn and
+/// charges the PC has room to show elsewhere.
+fn paint_menu_framed(
+    ctx: &Ctx,
+    m: &BattleMenuView,
+    info: Option<&MapInfoView>,
+    at: (i32, i32),
+    area: Rect,
+    buf: &mut GlyphBuffer,
+) {
     let ink = inks(ctx);
     let menu = &m.menu;
-    let (w, h) = menu_size(ctx, menu, area);
+    let (w, h) = framed_size(ctx, m, info, area);
     let rect = Rect::new(at.0, at.1, w, h);
-    pd::window(ctx, buf, rect, "");
+    pd::window(ctx, buf, rect, info.map_or("", |i| i.turn.as_str()));
+    if let Some(i) = info {
+        pd::footer(ctx, buf, rect, &i.charges);
+    }
     if let Some(header) = &m.header {
         paint_header(ctx, header, rect, buf);
     }
