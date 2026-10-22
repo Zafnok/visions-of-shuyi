@@ -104,6 +104,7 @@ pub fn view((state, words): (&BattleState, Words<'_>), t: &Targeting) -> Option<
         no_counter,
         total_name: words.text("battle.forecast.total").to_owned(),
         notes: notes(words, p),
+        tiles: [t.sel.dest(), target.pos],
     })
 }
 

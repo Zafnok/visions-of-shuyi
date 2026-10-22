@@ -92,11 +92,17 @@ pub fn paint_list(ctx: &Ctx, view: &RewindView, buf: &mut GlyphBuffer) {
 
 /// `line` word-wrapped to the panel's text width, wrapped lines indented.
 fn wrap(line: &str) -> Vec<String> {
+    wrap_to(line, TEXT_W)
+}
+
+/// `line` word-wrapped to `width` cells, wrapped lines indented (the
+/// Playdate's window too, ticket 1039).
+pub fn wrap_to(line: &str, width: usize) -> Vec<String> {
     let mut lines = Vec::new();
     let mut current = String::new();
     for word in line.split(' ') {
         let len = current.chars().count();
-        if len > 0 && len + 1 + word.chars().count() > TEXT_W {
+        if len > 0 && len + 1 + word.chars().count() > width {
             lines.push(core::mem::replace(
                 &mut current,
                 format!("{WRAP_INDENT}{word}"),
@@ -114,7 +120,7 @@ fn wrap(line: &str) -> Vec<String> {
 
 /// The first block to show so that blocks `first..=focus` fit in `rows`.
 /// (`focus` itself if even it alone doesn't fit).
-fn first_shown(blocks: &[Vec<String>], focus: usize, rows: i32) -> usize {
+pub fn first_shown(blocks: &[Vec<String>], focus: usize, rows: i32) -> usize {
     let heights: Vec<usize> = blocks.iter().map(Vec::len).collect();
     let room = usize::try_from(rows).unwrap_or(0);
     let mut cursor = ListCursor::new(blocks.len()).at(focus);

@@ -23,7 +23,7 @@ use crate::widgets::menu::SuffixKind;
 use crate::{ConsoleSizes, ConsoleSpec};
 
 /// The test context on the Playdate: its console, palette and skins.
-fn ctx() -> Ctx {
+pub(super) fn ctx() -> Ctx {
     let mut ctx = pd_ctx();
     ctx.console = ConsoleSpec::PLAYDATE;
     ctx
@@ -151,9 +151,9 @@ fn the_map_menu_opens_beside_the_cursor_with_its_focus_a_bar_and_no_pop_ups() {
     let mut s = quick();
     step(&mut s, &mut c, &[Action::CursorRight, Action::Cancel]);
     let view = s.view(&c);
-    let menu = &view.menu.as_ref().unwrap().menu;
+    let menu = view.menu.as_ref().unwrap();
     let buf = painted(&c, &view);
-    let size = menu_size(&c, menu, SCREEN);
+    let size = framed_size(&c, menu, view.map_info.as_ref(), SCREEN);
     let (x, y) = menu_origin_in(SCREEN, cursor_cells(&s, &c), size);
     assert_eq!(cell(&buf, x, y).glyph, '╔');
     assert_eq!(cell(&buf, x + size.0 - 1, y + size.1 - 1).glyph, '╝');
@@ -509,7 +509,92 @@ fn a_window_shows_no_more_lines_than_fit_and_cuts_wide_ones() {
 }
 
 #[test]
-fn the_parts_without_a_playdate_look_yet_keep_the_pcs_paint() {
+fn the_map_menu_has_the_turn_in_its_frame_and_the_rewind_charges_under_it() {
+    let mut c = ctx();
+    let mut s = quick();
+    step(&mut s, &mut c, &[Action::CursorRight, Action::Cancel]);
+    let view = s.view(&c);
+    let info = view.map_info.clone().expect("the map menu's info");
+    let menu = view.menu.as_ref().unwrap();
+    let size = framed_size(&c, menu, Some(&info), SCREEN);
+    let (x, y) = menu_origin_in(SCREEN, cursor_cells(&s, &c), size);
+    let buf = painted(&c, &view);
+    assert_eq!(find(&buf, y, &info.turn), Some(x + 3));
+    let bottom = row(&buf, y + size.1 - 1);
+    assert!(bottom.contains(&format!(" {} ", info.charges)), "{bottom}");
+    // Wide enough for both, a frame cell and a space either side.
+    assert!(size.0 >= cells(&info.charges) + 6);
+}
+
+#[test]
+fn the_fight_box_is_a_window_across_the_top_its_striker_the_bar() {
+    let c = ctx();
+    let fighter = |name: &str| BoxFighterView {
+        name: name.into(),
+        faction: trpg_core::Faction::Player,
+        flashing: false,
+        hp: 10,
+        max: 20,
+        result: None,
+    };
+    let mut view = FightBoxView {
+        banner: Some("Guard Break".into()),
+        hp_name: "HP".into(),
+        sides: [fighter("Alda"), fighter("Brom")],
+    };
+    view.sides[0].flashing = true;
+    view.sides[1].result = Some("HIT -8".into());
+    let mut buf = blank();
+    fight_box::paint(&c, &view, SCREEN, &mut buf);
+    // 44 wide, centred across the top: from column 3.
+    assert_eq!(fight_box::box_rect(SCREEN, 5), Rect::new(3, 0, 44, 5));
+    assert_eq!(row(&buf, 0), format!("╔═ Guard Break {}╗", "═".repeat(28)));
+    assert_eq!(cell(&buf, 3, 0).glyph, '╔');
+    let [left, right] = fight_box::columns(fight_box::box_rect(SCREEN, 5));
+    assert_eq!((left, right), (5, 27));
+    assert!(is_bar(&buf, 1, "Alda"));
+    // The bar runs from a cell before the name to a cell after it.
+    assert_eq!(cell(&buf, left - 1, 1).bg, ink(Ink::Black));
+    assert_eq!(cell(&buf, left + 4, 1).bg, ink(Ink::Black));
+    assert_eq!(cell(&buf, left - 2, 1).bg, ink(Ink::White));
+    assert_eq!(cell(&buf, left + 5, 1).bg, ink(Ink::White));
+    assert_eq!(find(&buf, 1, "Brom"), Some(right));
+    assert!(!is_bar(&buf, 1, "Brom"));
+    // HP and a bar: 10 of 20 is half its 10 cells.
+    assert_eq!(find(&buf, 2, "HP 10 █████     "), Some(left));
+    assert_eq!(find(&buf, 3, "HIT -8"), Some(right));
+    assert_eq!(row(&buf, 4), format!("╚{}╝", "═".repeat(42)));
+}
+
+#[test]
+fn a_fighters_name_too_long_for_its_column_is_cut_inside_it() {
+    let c = ctx();
+    let fighter = |name: &str| BoxFighterView {
+        name: name.into(),
+        faction: trpg_core::Faction::Player,
+        flashing: false,
+        hp: 10,
+        max: 20,
+        result: Some("HIT -8 and a lot more words".into()),
+    };
+    let view = FightBoxView {
+        banner: None,
+        hp_name: "HP".into(),
+        sides: [fighter(&"L".repeat(30)), fighter(&"R".repeat(30))],
+    };
+    let mut buf = blank();
+    fight_box::paint(&c, &view, SCREEN, &mut buf);
+    let [left, right] = fight_box::columns(fight_box::box_rect(SCREEN, 5));
+    // 19 cells a column (half of 44, less 3), the last one the `…`.
+    assert_eq!(find(&buf, 1, &format!("{}…", "L".repeat(18))), Some(left));
+    assert_eq!(find(&buf, 1, &format!("{}…", "R".repeat(18))), Some(right));
+    assert_eq!(cell(&buf, left + 19, 1).glyph, ' ');
+    assert_eq!(find(&buf, 3, "HIT -8 and a lot m…"), Some(left));
+}
+
+#[test]
+fn the_battles_playdate_paint_draws_the_forecast_the_fight_box_and_the_exp_bar() {
+    use crate::screens::battle::view::{ExpView, ProgressView};
     let s = quick();
     let fighter = |name: &str| BoxFighterView {
         name: name.into(),
@@ -526,8 +611,14 @@ fn the_parts_without_a_playdate_look_yet_keep_the_pcs_paint() {
             sides: [fighter("Alda"), fighter("Brom")],
         });
     });
-    // The PC's fight box, where it sits on the PC's map view.
-    let at = glyph::fight_box::BOX;
-    assert_eq!(cell(&buf, at.x, at.y).glyph, '╔');
-    assert!(rows(&buf).iter().any(|r| r.contains("Alda")));
+    assert!(find(&buf, 1, "Alda").is_some(), "{:?}", rows(&buf));
+    let buf = painted_with(&s, |v| {
+        v.progress = Some(ProgressView::Exp(ExpView {
+            name: "Alda".into(),
+            exp_name: "EXP".into(),
+            exp: 40,
+            max: 100,
+        }));
+    });
+    assert!(find(&buf, 1, "EXP").is_some(), "{:?}", rows(&buf));
 }

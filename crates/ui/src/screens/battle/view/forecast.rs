@@ -4,7 +4,7 @@
 //! [`forecast::view`](super::super::forecast::view).
 
 use crate::prelude::*;
-use trpg_core::{Faction, Side, StatValue};
+use trpg_core::{Faction, Pos, Side, StatValue};
 
 /// The attack forecast, filling the side panel while a target is aimed.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -31,6 +31,10 @@ pub struct ForecastView {
     /// one per line; `no counter` is left out (the target's column says
     /// it).
     pub notes: Vec<String>,
+    /// Where the attacker will strike from and where the target stands,
+    /// for a skin that keeps the forecast clear of them (the Playdate's,
+    /// ticket 1039).
+    pub tiles: [Pos; 2],
 }
 
 /// The chosen art's or combat active's line.

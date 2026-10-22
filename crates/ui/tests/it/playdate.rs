@@ -775,3 +775,119 @@ fn the_system_menu_entries_work_where_they_can() {
     h.system_menu(SystemMenuEntry::Options);
     assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
 }
+
+/// The debug Quick Battle on the Playdate's skins, past its banner, the
+/// cursor on the lord.
+fn quick_battle_on_the_playdate() -> Harness {
+    let mut h = Harness::first_launch_and(playdate_skins);
+    h.use_pad(PadKind::Playdate);
+    // A ends the title's wait; Quick Battle, then Preparations: left wraps
+    // to `Fight!`; A closes the banner.
+    h.pad("South DpadDown South")
+        .wait(trpg_ui::harness::FRAME_DT);
+    assert_eq!(h.screens(), ["title", "game_flow", "preparations"]);
+    h.pad("DpadLeft South").wait(trpg_ui::harness::FRAME_DT);
+    assert_eq!(h.screens(), ["title", "game_flow", "battle"]);
+    h.pad("South");
+    h
+}
+
+/// Ticket 1039: the forecast, the unit info screen, the EXP bar and the
+/// rewind screen on the Playdate's skins, read from their views: the map menu has the turn and the charges; Unit info turns its
+/// pages with left and right; the forecast goes on the side away from the
+/// two units; the rewind screen's map is the Playdate's whole screen.
+#[test]
+fn the_playdates_forecast_info_exp_and_rewind_read_from_their_views() {
+    use trpg_ui::screens::battle::layout::map_area;
+    use trpg_ui::screens::battle::playdate::{forecast, info};
+    let mut h = quick_battle_on_the_playdate();
+    let lord = h.cursor_tile().unwrap_or_else(|| panic!("no cursor"));
+    // The map menu: the turn and the rewind charges, for its frame.
+    h.pad("East");
+    let shown = battle_view(&h)
+        .map_info
+        .unwrap_or_else(|| panic!("no info"));
+    assert_eq!(shown.turn, "Turn 1");
+    assert!(shown.charges.contains("charges left"), "{}", shown.charges);
+    h.pad("East");
+    assert!(battle_view(&h).map_info.is_none());
+    // Unit info on the lord: page 1; right and left turn the pages,
+    // wrapping.
+    choose(&mut h, MapEntry::UnitInfo);
+    let page = |h: &Harness| battle_view(h).info.map(|i| i.page);
+    assert_eq!(page(&h), Some(0));
+    h.pad("DpadRight");
+    assert_eq!(page(&h), Some(1));
+    h.pad("DpadRight DpadRight");
+    assert_eq!(page(&h), Some(0));
+    h.pad("DpadLeft");
+    assert_eq!(page(&h), Some(info::PAGES - 1));
+    // Down shows the next unit on the same page; B closes, and it opens
+    // again on its first page.
+    let first = battle_view(&h).info.map(|i| i.name);
+    h.pad("DpadDown");
+    assert_ne!(battle_view(&h).info.map(|i| i.name), first);
+    assert_eq!(page(&h), Some(info::PAGES - 1));
+    h.pad("East");
+    assert!(battle_view(&h).info.is_none());
+    h.pad("DpadUp");
+    assert_eq!(h.cursor_tile(), Some(lord));
+    choose(&mut h, MapEntry::UnitInfo);
+    assert_eq!(page(&h), Some(0));
+    h.pad("East");
+    // The lord beside the brigand, then Attack: the forecast, on the half
+    // of the screen away from the two (with one on either half, away
+    // from the brigand).
+    h.pad("South DpadRight DpadRight DpadRight DpadUp South")
+        .wait(0.5)
+        .pad("South");
+    let view = battle_view(&h);
+    let Some(f) = &view.forecast else {
+        panic!("no forecast: {:?}", battle(&h).mode());
+    };
+    let ctx = h.game().ctx();
+    let area = map_area(ctx);
+    let at = forecast::rect(ctx, &view.scene, f, area);
+    let [attacker, target] = f.tiles.map(|pos| {
+        let tile = ctx.game.map_skin.tile_cells(&view.scene, area, pos);
+        tile.unwrap_or_else(|| panic!("{pos:?} off screen"))
+    });
+    let under = |t: trpg_ui::Rect| t.x < at.x + at.w && at.x < t.x + t.w;
+    let left = |t: trpg_ui::Rect| t.x < area.w / 2;
+    eprintln!(
+        "DEBUG at {at:?} attacker {attacker:?} target {target:?} tiles {:?}",
+        f.tiles
+    );
+    assert!(!under(target), "the target under {at:?}");
+    let split = left(attacker) != left(target);
+    assert!(!under(attacker) || split, "the attacker under {at:?}");
+    // A: the fight (B skips it), then the lord's EXP bar.
+    h.pad("South").wait(0.5);
+    assert!(
+        matches!(battle(&h).mode(), Mode::Combat(_)),
+        "{:?}",
+        battle(&h).mode()
+    );
+    h.pad("East").wait(1.0);
+    let progress = battle_view(&h).progress;
+    assert!(
+        matches!(
+            progress,
+            Some(trpg_ui::screens::battle::view::ProgressView::Exp(_))
+        ),
+        "{progress:?}"
+    );
+    h.pad("South").wait(1.0);
+    // The crank wound back: the rewind screen, its map the whole screen,
+    // its newest entry the fight; A asks, B backs out, B closes.
+    h.crank(-30.0);
+    let rewind = view_of(&h, RewindScreen::view);
+    assert_eq!(rewind.scene.size, (24, 15));
+    assert!(!rewind.list.entries.is_empty() && rewind.list.prompt.is_none());
+    h.pad("South");
+    let rewind = view_of(&h, RewindScreen::view);
+    assert!(rewind.list.prompt.is_some());
+    assert_eq!(rewind.help, "A rewind · B back");
+    h.pad("East East");
+    assert!(h.screen::<RewindScreen>().is_none());
+}

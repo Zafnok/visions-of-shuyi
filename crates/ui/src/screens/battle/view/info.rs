@@ -71,6 +71,12 @@ pub struct InfoView {
     pub spells_title: String,
     /// The spells it has learned.
     pub spells: Vec<InfoSpellView>,
+    /// The page shown, on a skin that shows the screen a page at a time
+    /// (the Playdate's, ticket 1039; [`info::turn_page`]). Always 0 on
+    /// the PC.
+    ///
+    /// [`info::turn_page`]: super::super::info::turn_page
+    pub page: u8,
 }
 
 /// A stat on the info screen.

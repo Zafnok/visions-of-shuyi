@@ -87,6 +87,19 @@ pub struct BattleView {
     pub fight_box: Option<FightBoxView>,
     /// The EXP bar or level-up page on screen.
     pub progress: Option<ProgressView>,
+    /// The turn and the rewind charges, while the map menu is open: for a
+    /// skin with no side panel to show them beside the map (the
+    /// Playdate's, ticket 1039).
+    pub map_info: Option<MapInfoView>,
+}
+
+/// The battle's turn and rewind charges.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MapInfoView {
+    /// The turn, with the limit if there is one (`Turn 3/10`).
+    pub turn: String,
+    /// The rewind charges left (`2 of 3 charges left`), or that none are.
+    pub charges: String,
 }
 
 /// A menu and where it opens.
