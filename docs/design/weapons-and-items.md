@@ -582,11 +582,12 @@ yet, nor any ring.
   towns' data (1070). Selling there at full price means an item bought and
   sold back at the same store costs nothing, which is fine: it's a way to
   turn loot into gold at its full value, not to make gold.
-- **Villages** (*Claude's starting rule*, FE): a player unit on the village
-  gate uses `Visit`: a one-time gift (gold, an item or a scene), then the
-  village closes. Enemies destroying villages: not in Chapter 1.
-  **On hold:** there is no village tile yet; Nick deferred building tiles
-  other than `fort` (`terrain.md`, 2026-09-26).
+- **Villages:** no plain "Visit for a gift" villages (Nick, 0069,
+  2026-10-22: "None"; this replaces the earlier FE-style starting rule).
+  Villages appear in a battle only when the story is about them, as a
+  **save the village** race with a minimum number of houses and extra
+  rewards past it (`turn-structure.md`, *Save the village*). The house
+  tile itself waits for 0037 (`terrain.md`).
 - **Chests** (*Claude's starting rule*): a player unit on a chest uses `Open`;
   no key needed for now. Contents: gold or an item.
 - Chapter 1 has no shop, village or chest (0009, `chapter-1.md`).

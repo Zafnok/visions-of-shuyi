@@ -17,17 +17,17 @@ completed:
 
 Act 1, Chapter 2, from `docs/story/outline.md`:
 
-- **Story battle:** Kell's Ford: a river village split by a ford, burning houses to reach (villages), the garrison's watchtower across the water, a Hound lieutenant as boss.
-- **Objective:** defeat the boss (the outline: "the chapter ticket decides"; a Defeat-unit objective exists).
-- **Recruits:** Joss Pellam (`defector`, Swordsman), talk-recruited by the lead or Aske.
-- **New in this chapter:** Preparations (0443's shop tab) for the first time, talk-to-recruit, villages to visit (0313).
+- **Story battle:** Kell's Ford: a river village split by a ford, houses to save before the raiders burn them (0069's *save the village*: a minimum to save, extra rewards past it), the garrison's watchtower across the water, a Hound lieutenant as boss.
+- **Objective:** defeat the boss (the outline: "the chapter ticket decides"; a Defeat-unit objective exists) and save at least a minimum of the houses (`turn-structure.md`, *Save the village*; the minimum, the houses and the extra rewards are *Claude's starting values* for the bots to tune).
+- **Recruits:** Joss Pellam (`defector`, Swordsman), joins in the scene after the battle (0069: no recruiting by talking).
+- **New in this chapter:** Preparations (0443's shop tab) for the first time, save the village (0313), a recruit who joins in a scene (0069).
 
 0803 built Chapter 1 the same way (map, units, triggers, a winning
 replay, a difficulty run); this ticket does it for Chapter 2, from its
 beat sheet and script (0744). The balance comes from the bots: 0509's
 `cargo xtask autobalance` tunes the enemies until the persona bots land
 in their bands (`docs/design/playtest-bots.md`), and 0013 has settled
-the number scale first. It also needs villages (0313), the shop screen (0409), the Preparations shop (0443), and 0069's confirmation of what Chapter 2 introduces.
+the number scale first. It also needs the save-the-village rule (0313), the shop screen (0409), the Preparations shop (0443), and 0069's confirmation of what Chapter 2 introduces.
 
 The new faces and combat pictures are 0070's picks; the scene and battle
 music is 0071's.
@@ -103,7 +103,7 @@ before building.
 ## Tests required
 
 - Integration: the winning replay; New Game → Chapter 2 start; the
-  talk-recruit or scripted join of this chapter's recruit, if any.
+  scripted join (in a scene) or join-if-defeated of this chapter's recruit, if any (no recruiting by talking, 0069).
 - Content checks: the map, battle and chapter files load and validate.
 
 ## Completion notes

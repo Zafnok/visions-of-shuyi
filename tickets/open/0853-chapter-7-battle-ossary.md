@@ -107,7 +107,7 @@ before building.
 ## Tests required
 
 - Integration: the winning replay; New Game → Chapter 7 start; the
-  talk-recruit or scripted join of this chapter's recruit, if any.
+  scripted join (in a scene) or join-if-defeated of this chapter's recruit, if any (no recruiting by talking, 0069).
 - Content checks: the map, battle and chapter files load and validate.
 
 ## Completion notes

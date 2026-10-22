@@ -130,6 +130,35 @@ The exact glyphs and colours are a look-and-feel choice made in the UI ticket
 enemies, possibly a short scene) but smaller. Their tier is set in the
 chapter data, normally Easy or Normal.
 
+**Side quest rewards** (Nick, 0069, 2026-10-22). Each side quest gives one
+unique reward. Nick picked these kinds: "we can probably have additional
+rewards but these are good starters. I don't much like the stat booster
+concept though." So a reward is one of:
+
+- **A personal weapon**: a weapon only that character can use, with its own
+  art (0018's special weapons). Like Lyn's Mani Katti in FE Blazing Blade.
+- **A signature upgrade**: the character's personal spell or art grows, e.g.
+  Rue's Cinder Oath becoming Kept Promise (`magic.md`: "after some personal
+  arc"; her side quest can be that arc).
+- **Rare shop stock or gold**: a town shop starts selling something it
+  otherwise wouldn't, or a purse of gold.
+
+More kinds may be added later. **No stat boosters** (FE's Energy Ring and
+the like) as side-quest rewards. Ticket 1072 picks the reward of each Act 1
+side quest from this list.
+
+**Missable for good, with a reminder** (Nick: "missed for good, with some
+reminder / tracker if the side quest is discovered "deadline in XYZ time"").
+Example: Tamsin's side quest opens after the Toll Bridge. If Tamsin dies
+(Classic) before it is played, or Act 1 ends first (the map closes,
+*Continents and acts*), the quest and its reward are gone for that
+playthrough. The same holds for an optional recruit who is never beaten
+(`battle-scenes-and-recruitment.md`). Once a side quest has been
+**discovered** (unlocked and shown on the map), the game shows when it
+closes, e.g. `Closes when Act 1 ends`, so the player isn't caught out.
+Losing the side quest's battle itself is a normal game over (Retry or
+Rewind), not a lost quest.
+
 **Towns:** the shop inventory grows with the story. **The world map has no
 shop screen outside towns.** The Preparations shop before a story battle
 still follows `weapons-and-items.md` / 0408.

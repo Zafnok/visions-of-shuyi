@@ -52,6 +52,21 @@ Then, on Claude's starting rules (PR #92):
 not a line from each. 3: no recruiting by talking, for now; this replaces
 1A above. 4: the half-HP timing below stands.)
 
+Then, asked again for Act 1 (ticket 0069, 2026-10-22), about the outline
+still saying Joss is "talk-recruited":
+
+> I think we can have several methods, like side stories, scripted joins in
+> scenes, beating in battle and they join after the fight (this would be
+> best in a big battle with a single win condition like a boss and some
+> sub-boss that is optional to kill and will join), we can have some that
+> join on story beats and some that are totally optional... maybe some even
+> for achievements like you killed 5000 units you rewound 100 times etc
+> similar to how Dark Souls 2 tracks your deaths and rewards with steel prot
+> ring. But talk to join just feels odd to me, at least in-battle.
+
+and, for Act 1's two such recruits: "Joss: scene. Gil: beat him
+(Recommended)".
+
 ## Rules
 
 ### Recruitment
@@ -62,13 +77,27 @@ not a line from each. 3: no recruiting by talking, for now; this replaces
   battlefield and **joins the army after the battle is won** (0801 adds them
   to the roster when the battle's result is applied). Losing or restarting
   the battle undoes it, like anything else in that battle.
-- Ways to recruit:
-  1. **Defeat them** (Nick expects this to be the usual way): a map marks an
-     enemy as "joins you if defeated". When it falls it says its line,
-     leaves the map, and joins after the battle.
-  2. **Quests outside battle**: later, with the world map (see
-     `world-structure.md`); ticket 1009.
-- **No recruiting by talking** for now (Nick, PR #92).
+- Ways to recruit (Nick, 0069: "several methods"):
+  1. **Defeat them**: a map marks an enemy as "joins you if defeated". When
+     it falls it says its line, leaves the map, and joins after the battle.
+     Best as an **optional sub-boss** in a big battle whose win condition is
+     something else (a boss), so the player chooses to beat them. Example:
+     Gil Parrow, the prize-fighter in Chapter 4's *Millhaven Road* skirmish:
+     beat him and he joins after the fight. Win without beating him and he
+     is missed.
+  2. **In a scene, on a story beat**: the character joins in a story scene
+     before or after a battle, with no battle condition. Example: Joss
+     Pellam (Chapter 2) refuses to burn Kell's Ford and joins in the scene
+     after the battle.
+  3. **Side stories / quests outside battle**: later, with the world map
+     (`world-structure.md`); ticket 1009.
+  4. **Achievements** (Nick: "maybe"): a recruit earned for a long-run feat
+     ("you killed 5000 units, you rewound 100 times"), like Dark Souls 2's
+     rewards for its death count. Not in Act 1; see *Open sub-questions*.
+  Some recruits are on the story's path; some are **totally optional** and
+  can be missed for good (Nick).
+- **No recruiting by talking** (Nick, PR #92, and again in 0069: "talk to
+  join just feels odd to me, at least in-battle").
 
 ### Talking
 
@@ -114,3 +143,6 @@ not a line from each. 3: no recruiting by talking, for now; this replaces
 ## Open sub-questions
 
 - Quest recruitment (outside battle): ticket 1009, with the world map.
+- Recruits earned by achievements (Nick, 0069: "maybe"): which feats, and
+  which characters. Not needed for Act 1; ask when the later acts' cast is
+  written.
