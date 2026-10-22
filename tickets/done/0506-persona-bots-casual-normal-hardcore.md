@@ -383,6 +383,10 @@ xtask's `Try`, `Stats`, `Report`, `render` and per-try speed code;
   that loses a unit, as Nick's "units are tools" asks.
 - *Speed (step 7):* 100 tries of all three on Chapter 1 take under
   5 minutes on 24 threads, so `--runs` keeps 100 for `all`.
+- *Mutation testing* found the tile search in `threat_forecast` written
+  as four hand-made offsets; it now steps through the engine's `Dir::ALL`
+  (right, down, left, up), which shifted a few forecasts: the report
+  below is from that final code.
 
 **Claude's starting rules** (tunable, for the Act 1 playtest, 1064):
 
@@ -403,23 +407,23 @@ xtask's `Try`, `Stats`, `Report`, `render` and per-try speed code;
 ch01 · Normal tier · casual, normal, hardcore · turn cap 60
 100 tries (seeds 1–100)
 
-casual   · 44/100 succeed               band 30–55%   ✓
-normal   · 53/100 succeed               band 50–75%   ✓
-hardcore · 50/100 succeed               band 50–75%   ✓
-hardcore · turns median 8 (normal 9)    lower ✓
+casual   · 44/100 succeed                band 30–55%   ✓
+normal   · 59/100 succeed                band 50–75%   ✓
+hardcore · 51/100 succeed                band 50–75%   ✓
+hardcore · turns median 8 (normal 10)    lower ✓
 
 
-casual   · Casual  · won 44/100 · retreats per try  0: 1  1: 8  2: 19  3+: 72 · most: Tamsin Rook 94×
-                     items per try  median 3  max 3 · turns median 27 · 2.40 s per try
-normal   · Classic · won 92/100 · deaths per try  0: 53  1: 37  2: 9  3+: 1 · most: Hollis Marr 31×
-                     items per try  median 3  max 3 · turns median 10 · 10.27 s per try
-hardcore · Classic · won 85/100 · deaths per try  0: 74  1: 20  2: 5  3+: 1 · most: Hollis Marr 13×
-                     items per try  median 1  max 3 · turns median 8 · 45.55 s per try
+casual   · Casual  · won 44/100 · retreats per try  0: 1  1: 7  2: 11  3+: 81 · most: Tamsin Rook 93×
+                     items per try  median 3  max 3 · turns median 23 · 2.52 s per try
+normal   · Classic · won 90/100 · deaths per try  0: 59  1: 32  2: 7  3+: 2 · most: Hollis Marr 24×
+                     items per try  median 3  max 3 · turns median 10 · 9.30 s per try
+hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 · most: Hollis Marr 10×
+                     items per try  median 1  max 3 · turns median 8 · 45.46 s per try
 ```
 
-Normal and Hardcore win 92 and 85 of 100; their misses are deaths and
-items (Hardcore had nobody die in 68 wins, 50 of them with at most one
-potion). Casual runs out the turn limit in 21 tries, mostly with only its
+Normal and Hardcore win 90 and 83 of 100; their misses are deaths and
+items (Hardcore had nobody die in 68 wins, 51 of them with at most one
+potion). Casual runs out the turn limit in 22 tries, mostly with only its
 lord left. Nick's yardstick (2026-10-21): as an intermediate player he
 clears Chapter 1 with nobody dying, with rewinds; the bots never rewind.
 

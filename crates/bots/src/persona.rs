@@ -328,7 +328,8 @@ fn danger(state: &BattleState) -> Danger {
         }
         let hp = i64::from(unit.hp);
         let exposed = (expected / 100).min(hp);
-        let at_risk = i64::from(worst >= hp && worst > 0);
+        // A standing unit has at least 1 HP.
+        let at_risk = i64::from(worst >= hp);
         if unit.is_lord && alone {
         } else if unit.is_lord {
             out.lord_exposed += exposed;

@@ -368,7 +368,7 @@ use crate::art::{ArtId, ArtTable};
 use crate::campaign::GameTables;
 use crate::class::{ClassDef, ClassId, ClassLevel, ClassPoints, ClassTable};
 use crate::combat::{CombatHp, CombatOutcome, CombatantInput, Forecast, Side, forecast, resolve};
-use crate::geom::Pos;
+use crate::geom::{Dir, Pos};
 use crate::item::{
     BattlePack, ConsumableEffect, Equipped, ItemDef, ItemId, ItemTable, Stock, WEAPON_SLOTS,
 };
@@ -1993,7 +1993,7 @@ impl BattleState {
 
     /// The forecast of unit `attacker` striking unit `target` where it
     /// stands, with the weapon or spell `attacker` has equipped, from the
-    /// first tile in range (nearest first, then up, right, down, left):
+    /// first tile in range (nearest first, then in [`Dir::ALL`]'s order):
     /// the numbers a player reads off by checking an enemy that threatens
     /// a unit. `None` if either isn't on the map, nothing is equipped, or no
     /// tile in range gives a forecast. **For the playtest bots only**
@@ -2003,12 +2003,10 @@ impl BattleState {
         let (unit, target) = (self.unit(attacker)?, self.unit(target)?);
         let with = unit.loadout.equipped.clone()?;
         (1..=THREAT_FORECAST_REACH).find_map(|d| {
-            [(0, -d), (d, 0), (0, d), (-d, 0)]
-                .into_iter()
-                .find_map(|(dx, dy)| {
-                    let from = Pos::new(target.pos.x + dx, target.pos.y + dy);
-                    self.plain_forecast(unit, from, 0, target, &with)
-                })
+            Dir::ALL.into_iter().find_map(|dir| {
+                let from = (0..d).fold(target.pos, |at, _| at.step(dir));
+                self.plain_forecast(unit, from, 0, target, &with)
+            })
         })
     }
 
@@ -3279,7 +3277,7 @@ impl Sides for BattleState {
 }
 
 /// How far [`BattleState::threat_forecast`] looks for a tile in range.
-const THREAT_FORECAST_REACH: i32 = 5;
+const THREAT_FORECAST_REACH: u32 = 5;
 
 /// The copy a playtest bot plans on (ADR-0033, ticket 0506): the battle
 /// with fresh luck ([`BattleState::reseed_luck`]) and without the

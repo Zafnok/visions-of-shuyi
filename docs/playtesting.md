@@ -123,8 +123,8 @@ test files' `assets-test/battles/`) without `.ron`. Options:
 
 `cargo xtask playtest --help` prints the same list. Run it optimised:
 `cargo run --release -q -p xtask -- playtest ch01 --bot all`. The personas
-think a lot: on Chapter 1 a try takes one core about 46 s for Hardcore,
-10 s for Normal and 2.4 s for Casual, so 100 tries of all three take about
+think a lot: on Chapter 1 a try takes one core about 45 s for Hardcore,
+9 s for Normal and 2.5 s for Casual, so 100 tries of all three take about
 5 minutes on a 24-thread machine (and about 25 on CI's 4 cores).
 
 The command exits with 1 when the battle is **blocked**: Casual succeeds in
@@ -142,20 +142,20 @@ Chapter 1 on 2026-10-22 (ticket 0506):
 ch01 · Normal tier · casual, normal, hardcore · turn cap 60
 100 tries (seeds 1–100)
 
-casual   · 44/100 succeed               band 30–55%   ✓
-normal   · 53/100 succeed               band 50–75%   ✓
-hardcore · 50/100 succeed               band 50–75%   ✓
-hardcore · turns median 8 (normal 9)    lower ✓
+casual   · 44/100 succeed                band 30–55%   ✓
+normal   · 59/100 succeed                band 50–75%   ✓
+hardcore · 51/100 succeed                band 50–75%   ✓
+hardcore · turns median 8 (normal 10)    lower ✓
 
-try 2 · casual · Victory · turns 17 · deaths 0 · fell Hollis Marr 1 · fell Hollis Marr turn 11 · items 3 · lord fell 0 · retreats 1 · turns 17 · won 1
+try 3 · casual · Victory · turns 17 · deaths 0 · items 3 · lord fell 0 · retreats 0 · turns 17 · won 1
 …
 
-casual   · Casual  · won 44/100 · retreats per try  0: 1  1: 8  2: 19  3+: 72 · most: Tamsin Rook 94×
-                     items per try  median 3  max 3 · turns median 27 · 2.40 s per try
-normal   · Classic · won 92/100 · deaths per try  0: 53  1: 37  2: 9  3+: 1 · most: Hollis Marr 31×
-                     items per try  median 3  max 3 · turns median 10 · 10.27 s per try
-hardcore · Classic · won 85/100 · deaths per try  0: 74  1: 20  2: 5  3+: 1 · most: Hollis Marr 13×
-                     items per try  median 1  max 3 · turns median 8 · 45.55 s per try
+casual   · Casual  · won 44/100 · retreats per try  0: 1  1: 7  2: 11  3+: 81 · most: Tamsin Rook 93×
+                     items per try  median 3  max 3 · turns median 23 · 2.52 s per try
+normal   · Classic · won 90/100 · deaths per try  0: 59  1: 32  2: 7  3+: 2 · most: Hollis Marr 24×
+                     items per try  median 3  max 3 · turns median 10 · 9.30 s per try
+hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 · most: Hollis Marr 10×
+                     items per try  median 1  max 3 · turns median 8 · 45.46 s per try
 ```
 
 | Part | Meaning |

@@ -705,6 +705,171 @@ fn order_offers_each_ready_unit_its_advance() {
 }
 
 #[test]
+fn with_no_attack_the_enemy_ais_own_pick_comes_first() {
+    let mut far = stationary(enemy(9, 0));
+    far.pos = Pos::new(13, 4);
+    let s = start(vec![player(1, 0), far]);
+    let pick = next_command(&s, &content().ai).unwrap();
+    assert!(matches!(pick, Command::Act { .. }), "{pick:?}");
+    let ordered = order(&s, legal_commands(&s), &content().ai, usize::MAX);
+    assert_eq!(ordered[0], pick);
+    // Nothing is listed twice.
+    for (i, c) in ordered.iter().enumerate() {
+        assert!(!ordered[..i].contains(c), "{c:?} twice");
+    }
+}
+
+#[test]
+fn an_attack_comes_from_the_tile_that_takes_the_least_back() {
+    // Enemy 9 at (1, 4) can be struck from the plain at (0, 4), the road at
+    // (2, 4) or the forest at (1, 5); the forest makes its counter miss more.
+    let mut target = enemy(9, 0);
+    target.pos = Pos::new(1, 4);
+    let s = start(vec![player(1, 3), target]);
+    let ordered = order(&s, legal_commands(&s), &content().ai, usize::MAX);
+    let taken = |dest: Pos| {
+        let preview = s.preview_attack(UnitId(1), dest, &attack(9)).unwrap();
+        preview
+            .forecast
+            .defender
+            .as_ref()
+            .map_or(0, expected_damage)
+    };
+    assert!(taken(Pos::new(1, 5)) < taken(Pos::new(2, 4)));
+    assert!(
+        matches!(ordered[0], Command::Act { dest, .. } if dest == Pos::new(1, 5)),
+        "{:?}",
+        ordered[0]
+    );
+}
+
+#[test]
+fn order_offers_each_ready_unit_its_hold_out_of_reach() {
+    // Enemy 9 at x 8 can reach most of the row; units 1 and 2 stand safe
+    // at x 0 and 1.
+    let s = start(vec![player(1, 0), player(2, 1), enemy(9, 8)]);
+    let legal = legal_commands(&s);
+    let threats = threats(&s);
+    let safe = |at: Pos| !threats.iter().any(|(_, strikes)| strikes(at));
+    let mut goals = Goals::of(&s).unwrap();
+    let ordered = order(&s, legal.clone(), &content().ai, usize::MAX);
+    let pick = next_command(&s, &content().ai).unwrap();
+    for id in [1, 2] {
+        let mover = s.unit(UnitId(id)).unwrap().clone();
+        // Its nearest safe wait, the first in the legal order on a tie.
+        let mut best: Option<(i64, &Command)> = None;
+        for c in &legal {
+            if let Command::Act {
+                unit,
+                dest,
+                action: UnitAction::Wait,
+            } = c
+                && *unit == UnitId(id)
+                && safe(*dest)
+            {
+                let d = goals.distance(&mover, *dest).unwrap();
+                if best.is_none_or(|(b, _)| d < b) {
+                    best = Some((d, c));
+                }
+            }
+        }
+        let (_, hold) = best.unwrap();
+        assert!(ordered.contains(hold) || *hold == pick, "{hold:?}");
+        let Command::Act { dest, .. } = hold else {
+            unreachable!()
+        };
+        assert!(!threats.iter().any(|(_, strikes)| strikes(*dest)));
+    }
+    // Every waiting unit is listed once, and the danger zone is real here.
+    assert!(
+        legal.iter().any(
+            |c| matches!(c, Command::Act { dest, action: UnitAction::Wait, .. } if !safe(*dest))
+        )
+    );
+    for (i, c) in ordered.iter().enumerate() {
+        assert!(!ordered[..i].contains(c), "{c:?} twice");
+    }
+}
+
+#[test]
+fn hold_and_advance_keep_each_units_nearest_the_first_on_a_tie() {
+    let mut far = stationary(enemy(9, 0));
+    far.pos = Pos::new(13, 4);
+    let s = start(vec![player(1, 0), player(2, 1), far]);
+    let mut goals = Goals::of(&s).unwrap();
+    let wait = |unit, x| Command::Act {
+        unit: UnitId(unit),
+        dest: tile(x),
+        action: UnitAction::Wait,
+    };
+    let other = |unit, x| Command::Act {
+        unit: UnitId(unit),
+        dest: tile(x),
+        action: UnitAction::Seize,
+    };
+    let mut holds = Vec::new();
+    hold(&s, &mut goals, UnitId(1), tile(2), &wait(1, 2), &mut holds);
+    hold(&s, &mut goals, UnitId(2), tile(3), &wait(2, 3), &mut holds);
+    hold(&s, &mut goals, UnitId(1), tile(4), &wait(1, 4), &mut holds);
+    hold(&s, &mut goals, UnitId(1), tile(3), &wait(1, 3), &mut holds);
+    hold(&s, &mut goals, UnitId(1), tile(4), &other(1, 4), &mut holds);
+    hold(&s, &mut goals, UnitId(7), tile(5), &wait(7, 5), &mut holds);
+    let kept: Vec<&Command> = holds.iter().map(|h| &h.2).collect();
+    assert_eq!(kept, [&wait(1, 4), &wait(2, 3)]);
+    let mut advances = Vec::new();
+    advance(
+        &s,
+        &mut goals,
+        UnitId(1),
+        tile(4),
+        &wait(1, 4),
+        &mut advances,
+    );
+    advance(
+        &s,
+        &mut goals,
+        UnitId(1),
+        tile(4),
+        &other(1, 4),
+        &mut advances,
+    );
+    let kept: Vec<&Command> = advances.iter().map(|a| &a.2).collect();
+    assert_eq!(kept, [&wait(1, 4)]);
+    // A wait is no attack: its key has no target.
+    assert_eq!(attack_key(&wait(2, 3)), (UnitId(2), None));
+}
+
+#[test]
+fn a_heal_is_a_heal_spell_on_a_wounded_ally() {
+    let mut healer = trpg_core::Unit::generic(
+        UnitId(1),
+        &trpg_core::ClassId("cleric".into()),
+        &content().classes,
+        1,
+        trpg_core::Faction::Player,
+        tile(4),
+    )
+    .unwrap();
+    let heal = trpg_core::SpellId::new("heal");
+    healer.learned.insert(heal.clone());
+    healer.spells.uses_left.insert(heal.clone(), 3);
+    let mut hurt = player(2, 5);
+    hurt.hp -= 6;
+    let mut foe = enemy(3, 3);
+    foe.hp -= 6;
+    let s = start(vec![healer, hurt, foe]);
+    let cast = |target| UnitAction::Cast {
+        spell: heal.clone(),
+        target: CastTarget::Unit(UnitId(target)),
+        active: None,
+    };
+    assert_eq!(heal_need(&s, UnitId(1), tile(4), &cast(2)), Some(6));
+    // At an enemy, the spell heals nothing: no heal.
+    assert_eq!(heal_need(&s, UnitId(1), tile(4), &cast(3)), None);
+    assert_eq!(heal_need(&s, UnitId(1), tile(4), &UnitAction::Wait), None);
+}
+
+#[test]
 fn goals_are_measured_walking() {
     // Enemy 8 is two tiles from unit 1 as the crow flies, but behind the
     // walls of a room with no way in; enemy 9 is three tiles off in the

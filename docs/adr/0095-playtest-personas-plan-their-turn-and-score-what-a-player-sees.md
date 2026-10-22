@@ -94,16 +94,16 @@ on Chapter 1 (2026-10-21/22).
 ## Consequences
 
 - On Chapter 1 (100 tries each) all three land in their bands: Casual
-  44%, Normal 53%, Hardcore 50%, Hardcore faster than Normal. Normal and
-  Hardcore win 85–92% of tries; their misses are deaths and items.
+  44%, Normal 59%, Hardcore 51%, Hardcore faster than Normal. Normal and
+  Hardcore win 83–90% of tries; their misses are deaths and items.
 - **These settings were tuned on Chapter 1**, with Nick, because the first
   designs played below a mindless baseline. Every change answers a fault
   seen in a traced try (a stall, a missing kind of move, a rule Nick
   decided), not a band; still, Chapter 1 is the battle they were
   checked on, and 0508 (Nick's own play) is where they are checked
   against a person.
-- The personas are slow: about 46 s of one core for a Hardcore try of
-  Chapter 1, 10 s for Normal, 2.4 s for Casual. 100 tries of all three
+- The personas are slow: about 45 s of one core for a Hardcore try of
+  Chapter 1, 9 s for Normal, 2.5 s for Casual. 100 tries of all three
   take about 5 minutes on 24 threads.
 - A persona plans only its own turn and judges the enemy's by the danger
   zone and forecasts: it can't bait an enemy over two turns. Casual still
