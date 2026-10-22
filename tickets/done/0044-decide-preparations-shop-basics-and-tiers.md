@@ -119,3 +119,11 @@ one on themselves below half HP when they can't kill.
 Follow-ups: 0443 rewritten (chapter-based stock data, repairs, Potion 20
 and the Hi-Potion in `items.ron`); new ticket **0513** green units carry
 their own consumables (in 1064's `blocked_by` and the roadmap).
+
+Review on PR #385 (Nick, 2026-10-21): the basic shop buys at half price,
+and **specialty stores** (an Alchemist for consumables, a Tailor for cloth
+and leather armour) buy their own goods at full price; recorded in *Money
+and shops*, built by new ticket **0320**. Nick also proposed **four armour
+weights** by material (cloth, leather, chain, plate); that changes which
+classes wear what, so it is its own decision, new ticket **0073**, and the
+basic shop's armour rows follow it.

@@ -95,6 +95,24 @@ Follow-ups:
 > finale); Steel gear joins at **Chapter 5** (Saltmere); **green units
 > carry their own consumables, set per battle** (all three the
 > recommended option).
+>
+> **Specialty stores** (2026-10-21, on PR #385): "probably we can make it
+> so there are specialty stores and these will buy items at full price but
+> the basic shop yes it buys everything at half price. example speciality
+> store is like alchemist - sell/buy consumable only, tailor - sell/buy
+> light armor only (maybe also include leather here so we don't have TOO
+> many speciality store)"
+>
+> **Four armour weights?** (2026-10-21, on PR #385; to decide in ticket
+> 0073) "I figured cloth = light, leather = med, chain can be like upper
+> med armor in armor values and weight penalty, plate should be heavy I
+> guess" … "in most game systems cloth is distinct from leather in armor
+> values and weight, and chain and plate are both above leather as well.
+> Maybe we can have 4 armor weight classes? light = cloth (low def high
+> res low weight penalty), med = leather (mix def and res, low weight
+> penalty still), heavy = chain (high def, med res, and med weight
+> penalty), and ultraheavy or something = plate (nearly impenetrable def,
+> critically low res, very high weight penalty)"
 
 Reference (researched for Nick, 2026-09-25): *Fire Emblem: Fortune's Weave*
 has no weapon triangle. Swords deal 1.2x damage on follow-up strikes, spears
@@ -341,6 +359,10 @@ unless marked, which Nick agreed to on PR #140, 2026-10-03):
 
 ### Armour (*tunable*)
 
+**Under review:** Nick wants four armour weights by material (cloth,
+leather, chain, plate; his words above). Ticket 0073 decides them and
+which classes wear which; until then the table below stands.
+
 Classes may be limited to some armour weights (Light / Medium / Heavy) by 0005.
 
 | Armour | Type | Bonus | Wt | Price |
@@ -437,8 +459,12 @@ Decided 2026-10-21, ticket 0044. Built in ticket 0443.
 - **Lower tiers stay on sale** (Nick): the Potion is still sold after the
   Hi-Potion arrives, and Iron weapons after Steel.
 - **It repairs** (Nick, option C), at the Blacksmith's price (*Durability*).
-- **It buys** (sells for half), as every shop (*Money and shops*).
-  *Claude's starting rule.*
+- **It buys everything at half price** (Nick, PR #385). Specialty stores
+  pay more (*Money and shops*).
+- **Its armour waits on 0073** (four armour weights): the rows below name
+  today's armours; when 0073 replaces them, the basic shop sells that
+  decision's cheapest piece of each weight from Chapter 2 and the next
+  pieces with Steel (*Claude's starting rule*).
 
 | From | Adds to the shop | Source |
 | ---- | ---------------- | ------ |
@@ -466,7 +492,8 @@ yet, nor any ring.
 ## Money and shops (FE)
 
 - **Gold** is party-wide. Sources: map-clear reward (per chapter data),
-  chests, villages, selling items (half price).
+  chests, villages, selling items (half price; full price at a specialty
+  store).
 - **On-map shops** (FE): shop tiles on a map. A unit standing on one uses the
   `Shop` action. Kinds:
   - **Armoury**: weapons, armour, accessories.
@@ -477,6 +504,20 @@ yet, nor any ring.
   free loadout slot, else the stock.
 - **Between chapters**, the same shop screen is available. From the world
   map on, shops are in **town nodes** (0008, `world-structure.md`).
+- **Specialty stores** (Nick, PR #385): a town can have stores that trade
+  **only their own kind of goods**, buying and selling. They **buy those
+  goods at full price**; every other shop (the basic shop, Armoury,
+  Vendor) buys at half. Nick's examples, the two built first:
+  - **Alchemist**: consumables only.
+  - **Tailor**: cloth and leather armour only (Nick: leather goes here
+    "so we don't have TOO many speciality store"). Under 0073's four
+    weights that is Light and Medium.
+  Nick wants few of them. *Claude's starting rules:* a specialty store
+  won't take anything outside its goods; they are in towns only (not shop
+  tiles on a battle map, not Preparations); which towns have which is the
+  towns' data (1070). Selling there at full price means an item bought and
+  sold back at the same store costs nothing, which is fine: it's a way to
+  turn loot into gold at its full value, not to make gold.
 - **Villages** (*Claude's starting rule*, FE): a player unit on the village
   gate uses `Visit`: a one-time gift (gold, an item or a scene), then the
   village closes. Enemies destroying villages: not in Chapter 1.
