@@ -123,8 +123,8 @@ Done.
   could make this turn has any chance to kill** a foe; else it plays as
   before. With several items it uses the first in its list.
 - It never uses items on others (the battle allows it; the AI doesn't).
-- Battle files can't yet mark a green unit as a non-combat unit (`Role`, ticket 0855);
+- Battle files can't yet mark a green unit as a non-combat unit (`Role`, ticket 0856);
   the test villager is simply unarmed.
 
 Engine friction: estimate 150, measured 148 (1.0×), under 2×.
-Follow-up: 0855 (battle files mark a unit as non-combat).
+Follow-up: 0856 (battle files mark a unit as non-combat).
