@@ -439,9 +439,9 @@ rates: an axe class gains HP and Str often and Def or Spd rarely.
 - **Weapon slots:** if the new class has fewer slots (e.g. 0 for tier-3 magic
   classes), the extra weapons go to the party stock (`magic.md`).
 - **Armour:** if the new class can't wear the armour the unit has on (a
-  Raider in a leather vest promotes to Vanguard, which wears medium and
-  heavy only), it goes to the party stock too (*Claude's starting rule*,
-  the same as for the weapons).
+  Lancer in Chain Mail promotes to Flier, whose max armour is leather), it
+  goes to the party stock too (*Claude's starting rule*, the same as for
+  the weapons).
 - Event: `Promoted { unit, from, to, gains }`.
 
 ## Reclass
@@ -778,7 +778,7 @@ Flier [F] (Sp) ──────┬─► Sky Lancer [F] Sp Sw     ──► St
 - **Shape** (Nick, "2B"): the Exile branches into two **lord-only** tier-2
   classes, and each goes on to its own lord-only tier 3:
   - **Blade Heir** (fast; swords, plus gauntlets) → **Sovereign**.
-  - **Commander** (tough; swords and spears, can wear heavy armour) →
+  - **Commander** (tough; swords and spears, can wear chain armour; never plate, ticket 0073) →
     **Grand Marshal** (adds axes). Nick asked to keep the name "Warlord" for
     one of the shared lines, so this tier 3 is *Grand Marshal* instead
     (*Claude's placeholder*; Nick may rename it).
@@ -817,8 +817,9 @@ Flier [F] (Sp) ──────┬─► Sky Lancer [F] Sp Sw     ──► St
 ## Class table
 
 Columns: tier; Mov; movement type (`foot`, `mounted`, `armored`, `flying`);
-tags; weapon kinds with *start rank / max rank*; allowed armour weights
-(L/M/H); `weapon_slots`; class spells as `(class level, spell)`.
+tags; weapon kinds with *start rank / max rank*; the heaviest armour
+weight the class wears (it wears that weight and every lighter one;
+`weapons-and-items.md`, *Armour*, ticket 0073); `weapon_slots`; class spells as `(class level, spell)`.
 Everything is *tunable*.
 
 A unit's rank in a kind is raised to the class's start rank when it enters
@@ -827,18 +828,18 @@ that class.
 
 ### Tier 1
 
-| Class | Mov | Move type | Tags | Weapons | Armour | Slots | Spells | Promotes to |
+| Class | Mov | Move type | Tags | Weapons | Max armour | Slots | Spells | Promotes to |
 | ----- | --- | --------- | ---- | ------- | ------ | ----- | ------ | ----------- |
-| Swordsman | 5 | foot | — | Sw D/C | L | 3 | — | Duelist, Shadowblade |
-| Brawler | 5 | foot | — | Gt D/C | L | 3 | — | Striker, Grappler |
-| Raider | 5 | foot | — | Ax D/C | L M | 3 | — | Berserker, Vanguard |
-| Archer | 5 | foot | — | Bw D/C | L M | 3 | — | Marksman, Outrider |
-| Guard | 4 | armored | Armored | Sp D/C | M H | 3 | — | Bulwark, Iron Rider |
-| Rider | 7 | mounted | Mounted | Sw E/C, Sp D/C | L M | 3 | — | Iron Rider, Lancer |
-| Mage | 5 | foot | — | Sw E/D | L | 3 | (1, Fire), (5, Frost) | Sorcerer, Mystic |
-| Cleric | 5 | foot | — | Gt E/D | L | 3 | (1, Heal) | Mystic, Priest |
-| Exile *(lord)* | 5 | foot | — | Sw D/C | L M | 3 | — | Blade Heir, Commander |
-| Brigand *(enemy)* | 5 | foot | — | Ax D/C | L | 3 | — | — |
+| Swordsman | 5 | foot | — | Sw D/C | Leather | 3 | — | Duelist, Shadowblade |
+| Brawler | 5 | foot | — | Gt D/C | Leather | 3 | — | Striker, Grappler |
+| Raider | 5 | foot | — | Ax D/C | Chain | 3 | — | Berserker, Vanguard |
+| Archer | 5 | foot | — | Bw D/C | Leather | 3 | — | Marksman, Outrider |
+| Guard | 4 | armored | Armored | Sp D/C | Plate | 3 | — | Bulwark, Iron Rider |
+| Rider | 7 | mounted | Mounted | Sw E/C, Sp D/C | Chain | 3 | — | Iron Rider, Lancer |
+| Mage | 5 | foot | — | Sw E/D | Cloth | 3 | (1, Fire), (5, Frost) | Sorcerer, Mystic |
+| Cleric | 5 | foot | — | Gt E/D | Cloth | 3 | (1, Heal) | Mystic, Priest |
+| Exile *(lord)* | 5 | foot | — | Sw D/C | Leather | 3 | — | Blade Heir, Commander |
+| Brigand *(enemy)* | 5 | foot | — | Ax D/C | Leather | 3 | — | — |
 | Fire Elemental *(enemy)* | 4 | foot | — | — | — | 0 | (1, Fire) | — |
 | Frost Elemental *(enemy)* | 4 | foot | — | — | — | 0 | (1, Frost) | — |
 
@@ -848,46 +849,46 @@ affinities yet. Enemy-only classes can't be promoted into or reclassed into.
 
 ### Tier 2
 
-| Class | Mov | Move type | Tags | Weapons | Armour | Slots | Spells | Promotes to |
+| Class | Mov | Move type | Tags | Weapons | Max armour | Slots | Spells | Promotes to |
 | ----- | --- | --------- | ---- | ------- | ------ | ----- | ------ | ----------- |
-| Duelist | 6 | foot | — | Sw C/A | L | 3 | — | Blade Dancer |
-| Shadowblade | 6 | foot | — | Sw C/A, Gt D/B | L | 3 | — | Nightblade |
-| Striker | 6 | foot | — | Gt C/A | L | 3 | — | Tempest Fist |
-| Grappler | 5 | foot | — | Gt C/A, Ax D/B | L M | 3 | — | Colossus |
-| Berserker | 5 | foot | — | Ax C/A | L M | 3 | — | Ravager |
-| Vanguard | 5 | foot | — | Ax C/A, Bw D/B | M H | 3 | — | Warchief |
-| Marksman | 6 | foot | — | Bw C/A | L M | 3 | — | Deadeye |
-| Outrider | 7 | mounted | Mounted | Bw C/A, Sw D/B | L M | 3 | — | Windrunner |
-| Bulwark | 4 | armored | Armored | Sp C/A, Ax D/B | M H | 3 | — | Bastion |
-| Iron Rider | 6 | mounted | Armored, Mounted | Sp C/A, Ax D/B, Sw D/B | M H | 3 | — | Juggernaut |
-| Lancer | 8 | mounted | Mounted | Sp C/A, Sw C/B | L M | 3 | — | High Lancer, Flier |
-| Sorcerer | 5 | foot | — | Sw D/C | L | 3 | (1, Force) | Archmage |
-| Mystic | 5 | foot | — | Sw D/C, Gt D/C | L | 3 | (1, Fire), (1, Heal), (5, Mend) | Arcanist |
-| Priest | 5 | foot | — | Gt D/C | L | 3 | (1, Mend) | Oracle |
-| Blade Heir *(lord)* | 6 | foot | — | Sw C/A, Gt D/B | L | 3 | — | Sovereign |
-| Commander *(lord)* | 5 | foot | — | Sw C/A, Sp D/B | L M H | 3 | — | Grand Marshal |
+| Duelist | 6 | foot | — | Sw C/A | Leather | 3 | — | Blade Dancer |
+| Shadowblade | 6 | foot | — | Sw C/A, Gt D/B | Leather | 3 | — | Nightblade |
+| Striker | 6 | foot | — | Gt C/A | Leather | 3 | — | Tempest Fist |
+| Grappler | 5 | foot | — | Gt C/A, Ax D/B | Chain | 3 | — | Colossus |
+| Berserker | 5 | foot | — | Ax C/A | Chain | 3 | — | Ravager |
+| Vanguard | 5 | foot | — | Ax C/A, Bw D/B | Plate | 3 | — | Warchief |
+| Marksman | 6 | foot | — | Bw C/A | Leather | 3 | — | Deadeye |
+| Outrider | 7 | mounted | Mounted | Bw C/A, Sw D/B | Chain | 3 | — | Windrunner |
+| Bulwark | 4 | armored | Armored | Sp C/A, Ax D/B | Plate | 3 | — | Bastion |
+| Iron Rider | 6 | mounted | Armored, Mounted | Sp C/A, Ax D/B, Sw D/B | Plate | 3 | — | Juggernaut |
+| Lancer | 8 | mounted | Mounted | Sp C/A, Sw C/B | Chain | 3 | — | High Lancer, Flier |
+| Sorcerer | 5 | foot | — | Sw D/C | Cloth | 3 | (1, Force) | Archmage |
+| Mystic | 5 | foot | — | Sw D/C, Gt D/C | Cloth | 3 | (1, Fire), (1, Heal), (5, Mend) | Arcanist |
+| Priest | 5 | foot | — | Gt D/C | Cloth | 3 | (1, Mend) | Oracle |
+| Blade Heir *(lord)* | 6 | foot | — | Sw C/A, Gt D/B | Leather | 3 | — | Sovereign |
+| Commander *(lord)* | 5 | foot | — | Sw C/A, Sp D/B | Chain | 3 | — | Grand Marshal |
 
 ### Tier 3
 
-| Class | Mov | Move type | Tags | Weapons | Armour | Slots | Spells | Promotes to |
+| Class | Mov | Move type | Tags | Weapons | Max armour | Slots | Spells | Promotes to |
 | ----- | --- | --------- | ---- | ------- | ------ | ----- | ------ | ----------- |
-| Blade Dancer | 6 | foot | — | Sw A/S | L | 3 | — | — |
-| Nightblade | 6 | foot | — | Sw A/S, Gt B/A, Bw D/B | L | 3 | — | — |
-| Tempest Fist | 6 | foot | — | Gt A/S | L | 3 | — | — |
-| Colossus | 5 | foot | — | Gt A/S, Ax B/A | L M H | 3 | — | — |
-| Ravager | 5 | foot | — | Ax A/S, Sw C/B | L M | 3 | — | — |
-| Warchief | 5 | foot | — | Ax A/S, Bw B/A, Sp C/B | M H | 3 | — | — |
-| Deadeye | 6 | foot | — | Bw A/S | L M | 3 | — | — |
-| Windrunner | 8 | mounted | Mounted | Bw A/S, Sw B/A | L M | 3 | — | — |
-| Bastion | 4 | armored | Armored | Sp A/S, Ax B/A | M H | 3 | — | — |
-| Juggernaut | 6 | mounted | Armored, Mounted | Sp A/S, Ax B/A, Sw B/A | M H | 3 | — | — |
-| High Lancer | 8 | mounted | Mounted | Sp A/S, Sw B/A, Ax C/B | L M | 3 | — | — |
-| Flier | 7 | flying | Flying | Sp A/S | L | 3 | — | Sky Lancer, Sky Warden |
-| Archmage | 5 | foot | — | — | L | **0** | (1, Fire), (1, Frost), (1, Force) | — |
-| Arcanist | 5 | foot | — | — | L | **0** | (1, Fire), (1, Frost), (1, Heal), (1, Mend) | — |
-| Oracle | 5 | foot | — | — | L | **0** | (1, Heal), (1, Mend) | — |
-| Sovereign *(lord)* | 6 | foot | — | Sw A/S, Gt B/A | L | 3 | — | — |
-| Grand Marshal *(lord)* | 5 | foot | — | Sw A/S, Sp B/A, Ax C/B | L M H | 3 | — | — |
+| Blade Dancer | 6 | foot | — | Sw A/S | Leather | 3 | — | — |
+| Nightblade | 6 | foot | — | Sw A/S, Gt B/A, Bw D/B | Leather | 3 | — | — |
+| Tempest Fist | 6 | foot | — | Gt A/S | Leather | 3 | — | — |
+| Colossus | 5 | foot | — | Gt A/S, Ax B/A | Plate | 3 | — | — |
+| Ravager | 5 | foot | — | Ax A/S, Sw C/B | Chain | 3 | — | — |
+| Warchief | 5 | foot | — | Ax A/S, Bw B/A, Sp C/B | Plate | 3 | — | — |
+| Deadeye | 6 | foot | — | Bw A/S | Leather | 3 | — | — |
+| Windrunner | 8 | mounted | Mounted | Bw A/S, Sw B/A | Chain | 3 | — | — |
+| Bastion | 4 | armored | Armored | Sp A/S, Ax B/A | Plate | 3 | — | — |
+| Juggernaut | 6 | mounted | Armored, Mounted | Sp A/S, Ax B/A, Sw B/A | Plate | 3 | — | — |
+| High Lancer | 8 | mounted | Mounted | Sp A/S, Sw B/A, Ax C/B | Chain | 3 | — | — |
+| Flier | 7 | flying | Flying | Sp A/S | Leather | 3 | — | Sky Lancer, Sky Warden |
+| Archmage | 5 | foot | — | — | Cloth | **0** | (1, Fire), (1, Frost), (1, Force) | — |
+| Arcanist | 5 | foot | — | — | Cloth | **0** | (1, Fire), (1, Frost), (1, Heal), (1, Mend) | — |
+| Oracle | 5 | foot | — | — | Cloth | **0** | (1, Heal), (1, Mend) | — |
+| Sovereign *(lord)* | 6 | foot | — | Sw A/S, Gt B/A | Leather | 3 | — | — |
+| Grand Marshal *(lord)* | 5 | foot | — | Sw A/S, Sp B/A, Ax C/B | Chain | 3 | — | — |
 
 *(lord)* = `lord_only`: only the lord can be in this class (ticket 0016).
 
@@ -896,12 +897,12 @@ higher tiers are added when tiers above 3 are designed.
 
 ### Tiers 4 and 5 (flying line only; numbers not designed yet)
 
-| Class | Tier | Mov | Move type | Tags | Weapon kinds | Armour | Slots | Promotes to |
+| Class | Tier | Mov | Move type | Tags | Weapon kinds | Max armour | Slots | Promotes to |
 | ----- | ---- | --- | --------- | ---- | ------------ | ------ | ----- | ----------- |
-| Sky Lancer | 4 | 8 | flying | Flying | Sp, Sw | L | 3 | Storm Lancer |
-| Sky Warden | 4 | 7 | flying | Flying | Sp, Ax | L M | 3 | Sky Tyrant |
-| Storm Lancer | 5 | 8 | flying | Flying | Sp, Sw | L | 3 | — |
-| Sky Tyrant | 5 | 7 | flying | Flying | Sp, Ax | L M | 3 | — |
+| Sky Lancer | 4 | 8 | flying | Flying | Sp, Sw | Leather | 3 | Storm Lancer |
+| Sky Warden | 4 | 7 | flying | Flying | Sp, Ax | Chain | 3 | Sky Tyrant |
+| Storm Lancer | 5 | 8 | flying | Flying | Sp, Sw | Leather | 3 | — |
+| Sky Tyrant | 5 | 7 | flying | Flying | Sp, Ax | Chain | 3 | — |
 
 Weapon ranks, base stats and growths for these come with the tier-4+
 design. Until then they aren't in the game's class data, and the Flier's
