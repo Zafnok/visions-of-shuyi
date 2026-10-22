@@ -74,8 +74,7 @@ pace feels goes on the Act 1 playtest's checklist (1064).
 - [x] Awards never fall below 1 EXP; the 100-per-award limit still holds.
 - [x] Chapter 1 (levels 1–5) gives exactly the same EXP as before (its
       levels are all in the 100% band).
-- [x] All gates in the `run-gates` skill pass. (Except the xtask ticket-lint tests, red on
-      `main` itself from the duplicate 0855; see the notes.)
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -114,5 +113,5 @@ pace feels goes on the Act 1 playtest's checklist (1064).
 - **For the Act 1 playtest (1064):** whether the slowdown at Lv 40 and
   Lv 70 feels right (all three numbers are *tunable* data).
 - Friction: estimate 40, measured 56 (1.4×), under 2×.
-- Found while gating: `main`'s ticket-lint is red because PRs #401 and #402
-  both filed a ticket 0855; not fixed here (one ticket per PR).
+- Found while gating: PRs #401 and #402 both filed a ticket 0855, which
+  turned `main`'s ticket-lint red; PR #405 renumbered one to 0856.
