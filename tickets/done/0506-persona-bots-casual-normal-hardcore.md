@@ -5,10 +5,10 @@ type: feature
 milestone: M4 Enemy AI
 model: opus-5.5
 effort: high
-status: blocked
+status: done
 blocked_by: ["0033", "0505", "0803", "engine#2125", "engine#2126", "engine#2128"]
 nick_input: none
-completed:
+completed: 2026-10-22
 ---
 
 # 0506 — Persona bots: Casual, Normal, Hardcore
@@ -40,7 +40,7 @@ only the game's parts:
 | engine#2125: `Determinize`, `Evaluate`, `Order`, `Playout`, and the rollout bot (`Rollout`, `RolloutSettings`, `Horizon`). Flat Monte Carlo on determinized copies, with one set of seeds per decision, a base-2 softmax pick from the bot's own seed, and work units | `Determinize` for `BattleState` (`reseed_luck`, and reinforcements that haven't arrived removed); each persona's `Evaluate`; the move `Order`; the `Playout` (the baseline bot for the player, the enemy AI for the enemy); the talk-first rule |
 | engine#2126: the playtest runner (`Entrant`, `Measure`, `Tries`, `play_tries`, `judge`, `run`), checks as data (`Check::Rate` with a band and a floor, `Check::Median`), and the report with ✓ / ✗ too hard / ⚠ too easy | the battle's `Measure` (from 0505's `BattleMeasures`), each persona as an `Entrant` (its mode and its bot), `personas.ron`, `targets.ron` turned into the engine's checks by tier, and `cargo xtask playtest` as a thin wrapper that keeps its options, threads and history and adds the game's own report lines |
 
-**Waiting for the engine's turn planner (2026-10-21, engine#2128).** A
+**Waited for the engine's turn planner (2026-10-21, engine#2128; landed 2026-10-22).** A
 first build of this ticket is on the branch `t0506-persona-bots`
 (pushed, no PR): the pin past engine#2125 and engine#2126, `Determinize`
 for `BattleState`, the personas on the engine's rollout bot, the runner
@@ -264,44 +264,44 @@ the `engine-friction` skill.
 
 ## Acceptance criteria
 
-- [ ] `shuyi-engine.rev` is at or past the merges of engine#2125 and
+- [x] `shuyi-engine.rev` is at or past the merges of engine#2125 and
       engine#2126, and `cargo xtask engine-pin --check` passes.
-- [ ] `cargo xtask playtest ch01 --bot all` prints three tables with
+- [x] `cargo xtask playtest ch01 --bot all` prints three tables with
       the band check (✓ / ✗ / ⚠) per bot from
       `docs/design/playtest-bots.md` and the Hardcore-faster-than-Normal
       check. It exits non-zero only when Casual succeeds under 20%.
-- [ ] Unit test `success_rules_per_persona`: a won try with one death
+- [x] Unit test `success_rules_per_persona`: a won try with one death
       and 2 items is a success for Casual only. Nobody dead with 3 items
       is a success for Casual and Normal. Nobody dead with 1 item is a
       success for all three. (These are the conditions from
       `targets.ron`, judged by the engine.)
-- [ ] Unit test `band_check_flags_too_easy_and_too_hard`: for the
+- [x] Unit test `band_check_flags_too_easy_and_too_hard`: for the
       Normal tier, Casual at 59% → ✗, 70% → ✓, 90% → ⚠ (the checks
       built from `targets.ron`).
-- [ ] Same seed → identical report (except speed lines), for each
+- [x] Same seed → identical report (except speed lines), for each
       persona, and the same report with `--threads 1` and `--threads 4`.
-- [ ] Unit test `hardcore_never_attacks_into_a_forecast_it_scores_worse`:
+- [x] Unit test `hardcore_never_attacks_into_a_forecast_it_scores_worse`:
       given a scripted state where one attack is clearly better (kills
       with 100% hit) and another is clearly worse, Hardcore with
       temperature 0 picks the better one.
-- [ ] Unit test `planning_never_peeks_at_real_luck`: on a state whose
+- [x] Unit test `planning_never_peeks_at_real_luck`: on a state whose
       real next rolls make a 50% attack miss, the bot's choice is the
       same as on a copy of that state whose real rolls make it hit (the
       bot only sees determinized copies).
-- [ ] Unit test `planning_never_sees_pending_reinforcements`:
+- [x] Unit test `planning_never_sees_pending_reinforcements`:
       `determinize` removes every reinforcement that hasn't arrived and
       keeps the root's `legal_commands`.
-- [ ] Unit test `casual_accepts_retreats_normal_does_not`: on a state
+- [x] Unit test `casual_accepts_retreats_normal_does_not`: on a state
       where the only winning line loses a non-lord unit, Casual takes it
       and Normal prefers a slower line that keeps everyone.
-- [ ] Persona settings are recorded in `crates/bots/personas.ron` and
+- [x] Persona settings are recorded in `crates/bots/personas.ron` and
       `docs/playtesting.md`. The PR description states they weren't
       tuned to Chapter 1's results.
-- [ ] No search, band or report-table code in the game that the engine
+- [x] No search, band or report-table code in the game that the engine
       already provides (the PR lists what moved to the engine and what
       0505 code was deleted).
-- [ ] The Chapter 1 report is pasted into Completion notes for Nick.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] The Chapter 1 report is pasted into Completion notes for Nick.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -314,3 +314,118 @@ the `engine-friction` skill.
 
 ## Completion notes
 
+Done 2026-10-22, over two days and with Nick in the loop on every turn
+of the bots' design (see *Waited for the engine's turn planner* above
+for the first day).
+
+**What was built**
+
+- The pin moved to the engine's `main` past engine#2125, engine#2126 and
+  engine#2128 (`384f796`), with a one-line fix this ticket's debug tests
+  found in the turn planner (an eager `unwrap_or` that overflowed once a
+  deeper step had more candidates than the first; engine PR
+  Zafnok/shuyi-engine#55, no engine ticket).
+- `trpg-core`: `Determinize` for `BattleState` (`reseed_luck` and the new
+  `drop_pending_reinforcements`) and `BattleState::threat_forecast` (the
+  forecast of one unit striking another where it stands), all bot-only.
+- `trpg-bots`: the personas (`persona.rs`: `order`, `Tally`/`Weights`
+  with the danger terms, `PersonaBot` on the engine's `TurnPlan`, the talk
+  rule), the battle on the engine's runner (`playtest.rs`:
+  `BattleMeasure`, `BattleEntrant`, `BattleStage`, `Targets`),
+  `personas.ron`, `targets.ron`.
+- `cargo xtask playtest` on the engine's `play_tries` and `judge`, with
+  `--bot casual|normal|hardcore|all|baseline`, the engine's table, the
+  game's lines per bot, the history and the exit code (1 only when
+  blocked).
+- `.github/workflows/playtest.yml`: every battle in `assets/battles`,
+  `--bot all`, when `assets/`, `crates/core/`, `crates/bots/` or the pin
+  change; fails only on a blocked battle; tables in the job summary.
+- Docs: `docs/playtesting.md`, ADR-0095, `docs/engine/boundary.md`,
+  `docs/ROADMAP.md`; Nick's decisions in `docs/design/playtest-bots.md`.
+
+**Moved to the engine / deleted.** The search (engine#2125's rollout
+bot, then engine#2128's turn planner), the runner, the band and median
+verdicts and the report table are the engine's. Deleted from the game:
+0505's `play_battle` and `PlayError` (`crates/bots/src/driver.rs`) and
+xtask's `Try`, `Stats`, `Report`, `render` and per-try speed code;
+`tests/baseline.rs` now plays through the engine's `play_tries`.
+
+**Deviations from the ticket** (all recorded in ADR-0095):
+
+- *Search:* the ticket's flat Monte Carlo with enemy-AI playouts played
+  Chapter 1 below the mindless baseline (Casual 2, Normal 3, Hardcore 4
+  successes in 100). Nick chose an engine turn planner (engine#2128); the
+  personas plan their own turn and never play the enemy's out.
+- *What a bot knows* (Nick, 2026-10-21): the danger zone and forecasts,
+  not the enemy's mind; so the scoring adds `exposed`, `at_risk` and
+  `counter` from `threat_forecast`, and `approach` (walking).
+- *Order:* each unit's best attack per target first, the AI's pick,
+  heals, each unit's advance and its hold (out of every enemy's reach),
+  then the other attack flavours; not "attacks, then the legal order".
+- *Settings were tuned on Chapter 1, with Nick.* The ticket said not to;
+  Nick asked to keep tuning until the report looked right, since the
+  first designs were below a mindless baseline and he clears Chapter 1
+  with nobody dying. Each change answered a fault seen in a traced try or
+  a rule Nick decided, never a band directly; 0508 is the check against
+  his own play. From now on they are fixed.
+- *Casual* (Nick, 2026-10-22): a weaker player, its units are tools (a
+  fall costs a tenth of a win), and its bands are the Casual bot's:
+  Nick's first bands minus 30 points (Easy 45–70, Normal 30–55, Hard
+  25–50, Finale 20–45). So `band_check_flags_too_easy_and_too_hard`
+  checks Casual at 29% ✗, 30–55% ✓, 60% ⚠ instead of 59/70/90.
+- *Faster check:* both medians over the tries won with nobody dying (the
+  engine's check takes one set of tries; with Hardcore's whole rule Normal
+  had no tries to compare). *Claude's reading*, in the design doc.
+- *"Three tables":* the engine prints one table with a line per bot, then
+  the game adds two lines per bot.
+- `casual_accepts_retreats_normal_does_not` gives Casual a plan wide
+  enough to keep every first step: its own narrow plan drops a first step
+  that loses a unit, as Nick's "units are tools" asks.
+- *Speed (step 7):* 100 tries of all three on Chapter 1 take under
+  5 minutes on 24 threads, so `--runs` keeps 100 for `all`.
+- *Mutation testing* found the tile search in `threat_forecast` written
+  as four hand-made offsets; it now steps through the engine's `Dir::ALL`
+  (right, down, left, up), which shifted a few forecasts: the report
+  below is from that final code.
+
+**Claude's starting rules** (tunable, for the Act 1 playtest, 1064):
+
+- Casual's bands are Nick's first bands minus 30 points.
+- Casual: a fall costs a tenth of a win; a unit left where it could fall
+  a third of that.
+- A lord left alone doesn't count its own danger (waiting can't win).
+- Hardcore guards its HP twice as hard as Normal (it won't spend items).
+- The persona weights and plan budgets in `crates/bots/personas.ron`.
+
+**Engine friction:** estimate 600 production lines, measured 1060
+(1.8×), under 2×.
+
+**Chapter 1 report** (2026-10-22, the final code, 100 tries each; the
+300 try lines are left out):
+
+```
+ch01 · Normal tier · casual, normal, hardcore · turn cap 60
+100 tries (seeds 1–100)
+
+casual   · 44/100 succeed                band 30–55%   ✓
+normal   · 59/100 succeed                band 50–75%   ✓
+hardcore · 51/100 succeed                band 50–75%   ✓
+hardcore · turns median 8 (normal 10)    lower ✓
+
+
+casual   · Casual  · won 44/100 · retreats per try  0: 1  1: 7  2: 11  3+: 81 · most: Tamsin Rook 93×
+                     items per try  median 3  max 3 · turns median 23 · 2.52 s per try
+normal   · Classic · won 90/100 · deaths per try  0: 59  1: 32  2: 7  3+: 2 · most: Hollis Marr 24×
+                     items per try  median 3  max 3 · turns median 10 · 9.30 s per try
+hardcore · Classic · won 83/100 · deaths per try  0: 79  1: 17  2: 4  3+: 0 · most: Hollis Marr 10×
+                     items per try  median 1  max 3 · turns median 8 · 45.46 s per try
+```
+
+Normal and Hardcore win 90 and 83 of 100; their misses are deaths and
+items (Hardcore had nobody die in 68 wins, 51 of them with at most one
+potion). Casual runs out the turn limit in 22 tries, mostly with only its
+lord left. Nick's yardstick (2026-10-21): as an intermediate player he
+clears Chapter 1 with nobody dying, with rewinds; the bots never rewind.
+
+**For the Act 1 playtest (1064):** Nick reads this report and says
+whether it matches how Chapter 1 felt.

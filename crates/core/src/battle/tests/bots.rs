@@ -425,3 +425,75 @@ fn check_agrees_with_apply_and_changes_nothing() {
     assert_eq!(s.check(&far), Err(CommandError::CannotStop(p(7, 4))));
     assert_eq!(s, before);
 }
+
+/// No playtest bot knows about reinforcements (ticket 0506): the copy it
+/// plans on has none waiting, its own luck, and the same commands.
+#[test]
+fn planning_never_sees_pending_reinforcements() {
+    let mut s = start(BattleSetup {
+        reinforcements: vec![
+            Reinforcement {
+                turn: 2,
+                unit: unit(9, Faction::Enemy, p(5, 4)),
+            },
+            Reinforcement {
+                turn: 3,
+                unit: unit(8, Faction::Player, p(0, 4)),
+            },
+        ],
+        ..setup(cast())
+    });
+    let copy = s.determinize(Phase::Player, 7);
+    assert!(copy.reinforcements().is_empty());
+    assert_eq!(s.reinforcements().len(), 2);
+    assert_eq!(copy.rng, SimRng::new(7));
+    assert_eq!(legal_commands(&copy), legal_commands(&s));
+    // Nothing else differs.
+    assert_eq!(
+        BattleState {
+            rng: s.rng.clone(),
+            pending: s.pending.clone(),
+            ..copy.clone()
+        },
+        s
+    );
+    // On the copy, nobody ever arrives.
+    let mut copy = copy;
+    for _ in 0..6 {
+        copy.apply(&Command::EndPhase).unwrap();
+        s.apply(&Command::EndPhase).unwrap();
+    }
+    assert!(s.unit(UnitId(9)).is_some());
+    assert_eq!(copy.unit(UnitId(9)), None);
+    assert_eq!(copy.unit(UnitId(8)), None);
+}
+
+/// What a player reads off an enemy that threatens a unit (ticket 0506):
+/// the forecast with its equipped weapon, from a tile in its range.
+#[test]
+fn threat_forecast_is_the_attackers_forecast_from_in_range() {
+    let s = coin_flip();
+    // Unit 1 next to enemy 3: the same numbers as its real attack.
+    let real = s
+        .attack_forecast(s.unit(UnitId(1)).unwrap(), p(0, 0), &[p(0, 0)], &attack(3))
+        .unwrap()
+        .0;
+    assert_eq!(s.threat_forecast(UnitId(1), UnitId(3)), Some(real));
+    // Enemy 3 on unit 1: it strikes back the same way.
+    let back = s.threat_forecast(UnitId(3), UnitId(1)).unwrap();
+    assert_eq!(Some(back.attacker), real.defender);
+    // Far apart, the forecast is the same as next to each other.
+    let mut far = s.clone();
+    far.units
+        .iter_mut()
+        .find(|u| u.id == UnitId(3))
+        .unwrap()
+        .pos = p(5, 4);
+    assert_eq!(far.threat_forecast(UnitId(1), UnitId(3)), Some(real));
+    // Nothing equipped, or a unit that isn't there: none.
+    let mut bare = s.clone();
+    bare.units[0].loadout.equipped = None;
+    assert_eq!(bare.threat_forecast(UnitId(1), UnitId(3)), None);
+    assert_eq!(s.threat_forecast(UnitId(1), UnitId(99)), None);
+    assert_eq!(s.threat_forecast(UnitId(99), UnitId(3)), None);
+}

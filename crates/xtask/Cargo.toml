@@ -12,6 +12,9 @@ workspace = true
 
 [dependencies]
 trpg-bots = { path = "../bots" }
+# The engine's playtest runner, which `playtest` plays and judges the tries
+# with (ticket 0506).
+shuyi-core = { workspace = true, features = ["std"] }
 trpg-content = { path = "../content" }
 trpg-core = { path = "../core" }
 # The Harness, for the game's `frame-png` (`game_tools`, ticket 0232).

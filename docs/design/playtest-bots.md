@@ -89,19 +89,37 @@ later (Nick: "maybe C later").
 
 | Map tier | Casual | Normal | Hardcore |
 | -------- | ------ | ------ | -------- |
-| Easy (e.g. random skirmishes) | 75–100% | 65–90% | 65–90% |
-| **Normal** | **60**–85% | **50**–75% | **50**–75% |
-| Hard | 55–80% | 40–65% | 40–65% |
-| Finale | 50–75% | 35–60% | 35–60% |
+| Easy (e.g. random skirmishes) | 45–70% | 65–90% | 65–90% |
+| **Normal** | 30–55% | **50**–75% | **50**–75% |
+| Hard | 25–50% | 40–65% | 40–65% |
+| Finale | 20–45% | 35–60% | 35–60% |
 
-The lower edges on the Normal row are Nick's (60%, 5/10, and Hardcore
-raised from 3/10 to 50%). The upper edges (+25 points) are *Claude's starting
-values, tunable*.
+The lower edges on the Normal row for Normal and Hardcore are Nick's (5/10,
+and Hardcore raised from 3/10 to 50%). The upper edges (+25 points) are
+*Claude's starting values, tunable*.
+
+**Casual's band is the Casual bot's, not a casual player's** (Nick,
+2026-10-22, ticket 0506). Nick first set Casual's Normal row at 60–85%.
+Once the bots played, the Casual bot turned out a weaker player than
+Normal and Hardcore, as designed (it plans less and strays more), and
+Nick kept it weaker: "a weaker player would naturally have a lower band
+than a hardcore player who thinks more ... probably the band *should* be
+low here for a casual bot, not bc we wanna punish noobs but bc if we make
+the bot different it's not a casual player and thus have no persona for
+one... we just have to read 30% as acceptable or whatever band number you
+project we should aim for for a noob". The bot also never rewinds, where a
+casual player has the map's rewind charges. So every Casual band is the
+first one shifted down 30 points (*Claude's starting values, tunable*;
+Nick's earlier row was 60–85 / 75–100 / 55–80 / 50–75). The floor that
+blocks a change stays at 20%.
 
 **Hardcore is faster than Normal (no par numbers).** Nick doesn't want to set
 a turn target per map by hand. The report compares the two bots
-automatically: Hardcore's median turns (over its successful tries) must be
-**lower than Normal's**. This checks that the veteran really plays better; it
+automatically: Hardcore's median turns must be **lower than Normal's**,
+both over the tries each won with nobody dying (*Claude's reading*, ticket
+0506: the engine's check takes one set of tries for both, and "nobody
+died and won" is what both success rules share; with Hardcore's whole rule,
+≤1 item, Normal, which spends its items, had no tries to compare). This checks that the veteran really plays better; it
 is not a per-map par. If Hardcore is not faster, that's flagged as a problem
 with the bots, not the map.
 
@@ -110,6 +128,24 @@ with the bots, not the map.
 **No bot knows about them** (Q8 A). Every bot plays like someone seeing the
 map for the first time: while planning, it can't see reinforcements that
 haven't arrived yet. An unfair ambush therefore shows up in the numbers.
+
+## How Casual treats its units falling
+
+Decided 2026-10-22 (ticket 0506). With falls costing it nothing at all,
+the Casual bot spent its units recklessly, they retreated, and its lord
+alone couldn't finish Chapter 1. Nick chose, from three options, **"units
+are tools"**:
+
+- A fall doesn't upset Casual: no restart, and in Casual mode the unit
+  comes back after the battle. Its success is still only "it wins".
+- But it doesn't throw units away either, because it needs them to win:
+  a fall costs it a little, like losing a fighter, never as much as a
+  win. *Claude's starting values, tunable:* a fall costs a tenth of a
+  win, and leaving a unit where it could fall costs a third of that.
+
+This refines Nick's earlier "the # of deaths does not influence bot at
+all" (Q4): falls still don't count against Casual's success, and they
+matter to how it plays only as fighting strength.
 
 ## What a bot knows about the enemy
 
