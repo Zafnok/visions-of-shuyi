@@ -6,7 +6,7 @@ milestone: Post–Chapter 1
 model: fable-5.1
 effort: high
 status: todo
-blocked_by: ["1070", "0018", "0069", "0746", "0747", "0749", "0509", "0013"]
+blocked_by: ["1070", "0018", "0069", "0746", "0747", "0749", "0509", "0013", "0322", "0608"]
 nick_input: decision
 completed:
 ---

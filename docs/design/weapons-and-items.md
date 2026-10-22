@@ -152,8 +152,8 @@ gold**, with shops on maps as well as between chapters.
 Everything marked *tunable* is a starting value Claude chose; balance tickets
 may change it without asking. Items marked *Claude's starting rule* fill a gap
 Nick's answers didn't cover; Nick may veto them. Unmarked rules are Nick's.
-All numbers are FE-sized, like `stats-and-combat.md`, and will be rescaled
-with the rest in ticket 0013.
+All numbers are FE-sized, like `stats-and-combat.md`; ticket 0013 kept
+that scale.
 
 ## Weapon types and traits
 
@@ -502,8 +502,8 @@ Any unit can wear any accessory.
 
 There is **no third healing tier** between the Hi-Potion and the Elixir
 (Nick: a Mega Potion "doesn't need to exist since it's close to the HP
-limit anyway"). Names are placeholders. The heals rescale with the rest
-in ticket 0013.
+limit anyway"). Names are placeholders. Ticket 0013 kept the FE-sized
+scale but raised the HP ceiling to 200, so the heals' sizes may be retuned.
 
 **How rare the Elixir is** (Nick, 0044: "a curve for how rare it is"):
 only **a handful in Act 1** and **a few handfuls in Act 2**, from chests,
@@ -684,7 +684,7 @@ Distance 1.
 - **Materials and forging** at the blacksmith: later; towns, skirmishes or
   side quests on the world map (`world-structure.md`) are the likely sources.
 - **Enemies destroying villages, chest keys, thief classes:** later chapters.
-- **Number scale:** all numbers here rescale with ticket 0013.
+- **Number scale:** decided by ticket 0013: FE-sized, so no rescale.
 - **The Preparations shop's basics and tiers:** decided in 0044 (*The
   Preparations shop* above).
 - **Special shop unlocks** (Nick, 0044: support rank A "sometimes" gives

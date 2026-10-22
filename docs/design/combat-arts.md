@@ -147,7 +147,7 @@ So:
 Everything marked *tunable* is a starting value Claude chose; balance tickets
 may change it without asking. Items marked *Claude's starting rule* fill a gap
 Nick's answers didn't cover; Nick may veto them. Unmarked rules are Nick's.
-All numbers are FE-sized and rescale with ticket 0013.
+All numbers are FE-sized; ticket 0013 kept that scale.
 
 ## Learning arts
 
@@ -537,4 +537,4 @@ vs Brigand), with each sword art:
 - **Tier-3 actives** must be spell actives for 0-weapon classes: ticket 1001.
 - **Whether any tier 1–2 active should be reflavoured** to overlap arts less:
   judged in the Chapter 1 playtest (0804).
-- **Number scale:** all numbers rescale with ticket 0013.
+- **Number scale:** decided by ticket 0013: FE-sized, so no rescale.

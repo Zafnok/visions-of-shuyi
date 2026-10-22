@@ -188,9 +188,10 @@ So:
     passive replaces the lower one.
   - An active **stays behind** when the unit leaves the class, unless the
     unit mastered that class.
-- **Level pace:** faster than FE, about **2 character levels per battle**.
-  The level cap is **high and not decided yet**; it may be huge if the
-  number scale goes "Dragon Ball" (ticket 0013).
+- **Level pace** (Nick revised it in ticket 0013): about **1 character level
+  per battle on average**: about 2 per battle at low levels, slowing to
+  about 1 every 2 battles at high levels. The level cap is **99** through
+  Act 1 (0013), possibly raised to about 300 later.
 - **Tiers:** every line, martial and magic alike, has the same number of
   tiers. Chapter 1 needs tiers 1–3. Nick plans 6–10 tiers eventually, so every
   rule here must work for any number of tiers.
@@ -202,20 +203,26 @@ tickets may change without asking. Nick: numbers "are meaningless without
 playtesting", so he judges them in the Chapter 1 playtest (0804). Rules marked
 *Claude's starting rule* fill a gap in Nick's answers, and Nick may veto them.
 Unmarked rules are Nick's.
-All stat numbers are FE-sized, like `stats-and-combat.md`, and get rescaled
-with the rest in ticket 0013.
+All stat numbers are FE-sized, like `stats-and-combat.md`; ticket 0013
+kept that scale.
 
 ## Character level and unit EXP
 
 - Every unit has a **character level**, starting at 1, which **never resets**
   (Nick). It is the level shown as `Lv` and the one used in EXP maths.
-- **Level cap:** high and **not decided yet** (Nick). It may be very large
-  if the number scale goes "Dragon Ball" (0013). It is a data value; the
-  Chapter 1 build uses **99** as a placeholder (*tunable*). At the cap, EXP
+- **Level cap:** **99** through Act 1 (Nick, 0013: "placeholder lv cap can
+  be 99"). If Acts 2 and 3 add a lot to the game it may be raised, "lets say
+  300 or something"; 999 is too high. It is a data value. At the cap, EXP
   is shown as `--` and no more unit EXP is gained. Class points are still
   earned.
-- **Pace** (Nick): levels come **faster than FE**. The awards below are
-  sized for about **2 levels per battle** for an active unit (*tunable*).
+- **Pace** (Nick, 0013, revising "faster than FE"): "it should probably avg
+  1 level per battle, with early lvs easier to hit (maybe 2 per battle) and
+  higher lvs harder to hit (2 battles per lv)". So an active unit gains
+  about **2 levels per battle at low levels**, slowing to about **1 level
+  every 2 battles at high levels**, and about **1 per battle on average**
+  over the game. Where the slowdown starts and how steep it is are
+  *tunable* (ticket 0608). Until 0608 lands, the awards below are still
+  sized for 2 levels per battle at every level.
 - **100 EXP = 1 level.** EXP carries over past 100. A single award is at most
   100, so it gives at most one level.
 - **Only Player-faction units** gain EXP and class points (Nick, FE rule).
@@ -357,9 +364,9 @@ rates: an axe class gains HP and Str often and Def or Spd rarely.
 - A class change never lowers stats and never blocks growth.
 - Gear and skill bonuses may raise a stat, but never above the hard ceiling
   (`weapons-and-items.md`).
-- **The ceiling numbers** (and whether they stay fixed or rise with class
-  tier) are decided with the number scale in ticket 0013 (Nick: "3C"). Until
-  then the FE-sized placeholders in `stats-and-combat.md` apply.
+- **The ceiling numbers** (Nick, 0013: "Fixed all game"): HP 200 and every
+  other stat 100, the same for every class and tier all game
+  (`stats-and-combat.md`). They don't rise with class tier.
 
 #### Showing a maxed stat (Nick: "2A - but not in battle")
 
@@ -1008,7 +1015,8 @@ ranks, class records (usually just the starting class at class level 1), and
 - **Flavour names** for every class, skill and seal: closer to shipping
   (Nick). They must not copy Fire Emblem names. The name **Warlord** is kept
   for one of the shared (non-lord) lines (Nick, ticket 0016).
-- **Number scale:** all stats, hard ceilings and EXP numbers rescale with ticket 0013.
+- **Number scale:** decided by ticket 0013: FE-sized, so no rescale; the
+  ceilings are HP 200 / stats 100 and the level cap 99 (Act 1).
 - **How Combat Arts relate to actives:** decided in `combat-arts.md` (0014).
 - **Where the tier seals and Reclass Seals come from** (shops, chests, story):
   chapter and shop data (0009 and later). Until then no shop sells or buys
