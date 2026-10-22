@@ -32,7 +32,7 @@ folders: `tickets/open/` vs `tickets/done/`.
 | `07xx` | M6 Story & dialogue | Story bible, dialogue engine, two-portrait scenes, Chapter 1 art + script, lead reply choices | 0701–0708 |
 | `08xx` | M7 Chapter 1 | Full flow, saves, Chapter 1 content, **Nick's playtest**, options, colour themes, music, credits, end-of-battle music, results, title art, chapter card, transitions | 0801–0813 |
 | `09xx` | M8 Release | itch.io, Windows polish, Steam readiness | 0901–0903 |
-| `11xx` | The engine | Shuyi Engine, an open-source 2D engine carved out of this codebase; the game built on it ([`docs/engine/`](engine/README.md), [its repository](https://github.com/Zafnok/shuyi-engine)) | 1101–1118, 1131, 1151–1153, 1157, 1158–1174 (the rest moved to the engine's repository) |
+| `11xx` | The engine | Shuyi Engine, an open-source 2D engine carved out of this codebase; the game built on it ([`docs/engine/`](engine/README.md), [its repository](https://github.com/Zafnok/shuyi-engine)) | 1101–1118, 1131, 1151–1153, 1157, 1158–1187 (the rest moved to the engine's repository) |
 
 **Audio** (decided in 0020, [`docs/design/audio.md`](design/audio.md)) runs
 across the blocks: **0212** playback plumbing → **0213** our own sounds and
@@ -241,6 +241,17 @@ The order:
      game's `main` and tests on the engine's platform boundary, engine
      3003), done by whichever PR first moves the pin past 3003. 1170
      builds on it.
+   - **What the 0506 sweep filed** (2026-10-22): **1180** (the game's
+     playtesting on the engine's: engine#2129–2132, #2532, #2533,
+     #2021).
+   - **What the retro of the last 50 PRs filed** (2026-10-22): **1183**
+     (0509's autobalance on `shuyi autobalance`, engine#2541),
+     **1184** (the engine's one-bit look replaces the game's one-bit
+     skins of engine screens, engine#2371, after 1077), **1185** (the
+     first sweep's leftovers: frame time, yes/no prompts, cursors,
+     cuts), **1186** (one rule for a broken content file,
+     engine#2233), **1187** (friction estimates against a reference,
+     the signals in the PR). None is on the Act 1 critical path.
    - **Then the second friction sweep**, when the `11xx` block closes:
      **1174** (an area column in the friction log, `cargo xtask
      friction-check` in the gates, net lines for refactors) writes the
@@ -324,15 +335,21 @@ Candle joins outside battle.
   a time the personas stalled on Chapter 1) → **0506** Casual / Normal /
   Hardcore (the personas' order and scoring, the battle's `Determinize`,
   measures and targets; done 2026-10-22, all three in their bands on
-  Chapter 1)
+  Chapter 1) → **0516** the personas score an escape and a downed boss
+  right (before Chapter 6's escape map, 0852) · **0515** playtest CI on
+  `main` plays every balance change
   · engine#2127 the autobalance search (after engine#2126) → **0509**
   autobalance (the battle's knobs) → **0510** skirmishes to order.
+  engine#2541 (`shuyi autobalance`) → **1183** moves 0509's command
+  onto it (off the path; 0509 doesn't wait for it).
 - **D. Playdate, Chapter 1's base:** **1178** arrows at the map's
   edges · **1075** weapon and spell lines that fit (asks Nick first) ·
   **1039** → **1041** →
   **1044** · **1042** → **1043** · **1046** · **1058** · **1060** →
   **1062** · **1051** the AI plans once per phase · **1057** → **1059**
-  · **1056** · **1063**.
+  · **1056** (done) · **1076** the exit area and a downed enemy get
+  looks of their own · **1077** one-bit skins wrap their own notes and
+  scroll by the engine's rule (after 1039).
 - **E. Playdate, Act 1:** **1068** one chapter's assets at a time
   (ready; measure first) · **1066** world map, towns and shop (after
   1007, 1008, 0409, 1038) · **1067** camp, supports, promotion and the
@@ -352,7 +369,8 @@ Candle joins outside battle.
   **0446**, **0461**, **0462**, **0463**, **0465**, **0466**, **0468**,
   **0738**, **0739**, **0741**, **0842**, **0843**, **0844**, **0847**.
   Cheap Chapter 1 gaps, any time: **0450**, **0453**, **0454**,
-  **0470**, **0735**.
+  **0470**, **0472** (a downed unit's panel; the objective line fits),
+  **0735**.
 
 **Phase 3: content.** **0743** the new cast's character sheets (after
 0736) → the scripts, one chapter at a time because the ledger makes
@@ -378,8 +396,10 @@ backend: cleanup, the game's own front end already runs on the
 device); languages and voices (0042, 0043, 0045, 0236, 0237, 0239,
 0718–0726, 0825, 0826, 0907, 1048, 1049); mods (0054, 1011–1024);
 replayability decisions **0046**–**0052** and **0060** (after 1064) and
-**0053**; release work (0901, 0903, 0906, 0908, 1052–1054); and the
-rest of the `01xx` and `11xx` tooling tickets.
+**0053**; release work (0901, 0903, 0906, 0908, 1052–1054); **0857**
+(the battle's mode and its own data set in one place); and the rest of
+the `01xx` and `11xx` tooling tickets (among them **0131**, ticket
+numbers checked against open PRs, and 1183–1187).
 
 ## Nick's queue (answer these first; any order within a row)
 
