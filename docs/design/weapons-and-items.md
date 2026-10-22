@@ -71,6 +71,30 @@ Follow-ups:
 > **Trades only through the stock?** (2026-10-03, PR #140) "we can have
 > direct unit to unit swaps otherwise I think I agree w your starting
 > rules"
+>
+> **The Preparations shop: what unlocks a tier?** (2026-10-21, ticket 0044)
+> "chapter number for 90% of the upgrades, and potentially add special
+> unlocks from like support ranks or something (reach A rank get a unique
+> unlock -- sometimes)"
+>
+> **What does it sell?** (0044) Consumables plus basic gear (Iron, later
+> Steel weapons and basic armour) **and repairs** (option C).
+>
+> **Healing items per tier?** (0044) "A [Potion heals 20, Hi-Potion heals
+> 40, lower tiers stay on sale] but change unlock timing probably...
+> probably Potion until act 2 or before act 1 final boss and then Hi-Potion
+> unlocks. Mega Potion maybe doesn't need to exist since it's close to the
+> HP limit anyway and would be better served by Elixir when they're more
+> plentiful at that stage of the game. Probably Elixir won't be in the shop
+> for a very long time but maybe at the very end like act 3 beginning or
+> act 2 final boss then it can unlock in the basic shop up til then it
+> should be a curve for how rare it is, like only a handful in act 1, a few
+> handfuls in act 2..."
+>
+> Follow-ups (0044): the Hi-Potion unlocks **before Chapter 8** (the Act 1
+> finale); Steel gear joins at **Chapter 5** (Saltmere); **green units
+> carry their own consumables, set per battle** (all three the
+> recommended option).
 
 Reference (researched for Nick, 2026-09-25): *Fire Emblem: Fortune's Weave*
 has no weapon triangle. Swords deal 1.2x damage on follow-up strikes, spears
@@ -257,7 +281,8 @@ up to the Chapter 1 roster/enemies (0803).
 - At `durability_left == 0` the weapon is **broken**: it still attacks and
   counters, with **might halved** (rounded down) and **−20 hit** (*tunable*),
   and cannot use Combat Arts. Its type trait still applies.
-- **Repair** at a Blacksmith (on a map or between chapters; see Shops) restores
+- **Repair** at a Blacksmith (on a map or between chapters; see Shops) or
+  in the Preparations shop (Nick, 0044) restores
   `durability_left` to full. Cost (*tunable*): `ceil(price / 2 × missing / durability)`
   gold. Materials for repairing rare weapons are deferred until materials
   exist (later; see `world-structure.md`); Chapter 1 repairs cost gold only.
@@ -356,9 +381,8 @@ Any unit can wear any accessory.
   is nowhere to go back to until the world map); `Fight!` is the way on.
 - **The Preparations shop** (Nick, 0408): the screen also gets a **basic
   shop**. It sells no unique items, only the basics up to the tier the
-  player has unlocked (early on a Potion; later a stronger healing item,
-  and so on). Which items are basics and what unlocks a tier: ticket 0044;
-  built in ticket 0443.
+  player has unlocked. What it sells and when: *The Preparations shop*
+  below (0044); built in ticket 0443.
 - **Using an item** (*Claude's starting rule*, FE Vulnerary): `Item` in the
   action menu → pick a consumable from the pack → target the unit itself or an
   adjacent ally → the item is consumed and **the unit's action ends**.
@@ -372,13 +396,72 @@ Any unit can wear any accessory.
 - **Enemies carry no consumables** (Nick, 0501): they never use potions.
   Enemy healing comes only from dedicated healer units (heal spells,
   `magic.md`).
+- **Green units carry their own consumables** (Nick, 0044), never drawn
+  from the player's pack. The chapter data gives each green unit its items
+  (a militia captain with 2 Potions; most carry none). *Claude's starting
+  rules:* a green unit uses one the way a player unit does (itself or an
+  adjacent green or player unit; its action ends); its items can't be
+  traded or taken; whatever it hasn't used is gone when the battle ends.
+  Non-combat green units (villagers, `combat-arts.md`) can carry items
+  too, since healing yourself is not fighting. Built in ticket 0513.
 
-### Chapter 1 consumables (*tunable*)
+### Consumables (*tunable* unless marked)
 
 | Item | Effect | Price |
 | ---- | ------ | ----- |
-| Potion | Restore 10 HP (never above max) | 300 |
+| Potion | Restore **20** HP (never above max) (Nick, 0044) | 300 |
+| Hi-Potion | Restore **40** HP (never above max) (Nick, 0044) | 900 |
 | Elixir | Restore all HP | 3000 |
+
+There is **no third healing tier** between the Hi-Potion and the Elixir
+(Nick: a Mega Potion "doesn't need to exist since it's close to the HP
+limit anyway"). Names are placeholders. The heals rescale with the rest
+in ticket 0013.
+
+**How rare the Elixir is** (Nick, 0044: "a curve for how rare it is"):
+only **a handful in Act 1** and **a few handfuls in Act 2**, from chests,
+villages, side-quest rewards and the like, until it reaches the basic shop
+(below). *Claude's reading, Nick may veto:* town shops don't sell it in
+Act 1 either, or the handful would not be a handful.
+
+## The Preparations shop (basic shop)
+
+Decided 2026-10-21, ticket 0044. Built in ticket 0443.
+
+- **No unique items** (Nick, 0408): it sells only the basics below. Unique
+  or rare items come from town shops, chests and rewards.
+- **What unlocks more stock: the chapter** (Nick: "chapter number for 90%
+  of the upgrades"). Each basic item has the chapter from which the shop
+  sells it. Since the story is linear, every player has the same shop at
+  the same chapter; nobody falls behind.
+- **Lower tiers stay on sale** (Nick): the Potion is still sold after the
+  Hi-Potion arrives, and Iron weapons after Steel.
+- **It repairs** (Nick, option C), at the Blacksmith's price (*Durability*).
+- **It buys** (sells for half), as every shop (*Money and shops*).
+  *Claude's starting rule.*
+
+| From | Adds to the shop | Source |
+| ---- | ---------------- | ------ |
+| Chapter 2 (the first Preparations) | Potion; Iron Sword, Iron Spear, Iron Axe, Iron Bow, Iron Gauntlets; Leather Vest, Chain Mail, Warded Robe; repairs | Nick (Potion, Iron, repairs); the three armours are *Claude's starting rule* ("basic armour") |
+| Chapter 5 (Saltmere) | Steel Sword, Steel Spear, Steel Axe, Steel Bow, Steel Gauntlets; Iron Plate | Nick (Steel at Ch5); Iron Plate with Steel is *Claude's starting rule* |
+| Chapter 8 (the Act 1 finale's Preparations) | Hi-Potion | Nick |
+| Act 2's final battle or Act 3's start | Elixir | Nick ("maybe"); the exact chapter is set when Act 2 and 3 are outlined |
+
+- Accessories (rings, charms) are **never** basics: they stay in town
+  shops and rewards (*Claude's starting rule*, from "basic").
+- Weapons added by later tiers (Silver and so on, if they come to exist)
+  get a row here when they are designed.
+- **Special unlocks** (Nick, "sometimes"): now and then an event other
+  than the chapter adds an item, for example two units reaching **support
+  rank A**. Not built yet; each one is chosen with the supports' content
+  (open sub-question below), and the shop data must allow an item unlocked
+  by something other than a chapter.
+
+Example: before Chapter 5's story battle, the Preparations shop sells the
+Potion (300), all five Iron and all five Steel weapons, the Leather Vest,
+Chain Mail, Warded Robe and Iron Plate, and repairs a Steel Bow at 10/25
+for `ceil(720 / 2 × 15 / 25)` = 216 gold. It does not sell the Hi-Potion
+yet, nor any ring.
 
 ## Money and shops (FE)
 
@@ -496,10 +579,12 @@ Distance 1.
   side quests on the world map (`world-structure.md`) are the likely sources.
 - **Enemies destroying villages, chest keys, thief classes:** later chapters.
 - **Number scale:** all numbers here rescale with ticket 0013.
-- **The Preparations shop's basics and tiers** (Nick, 0408): ticket 0044.
-  Nick's examples there ("Potion (heal 20)", then "a consumable to heal
-  40") aren't the Potion's current 10 HP; the numbers are settled with
-  0044 and 0013.
-- **Green units with their own consumables** (Nick, 0408: "maybe"), not
-  drawn from the player's pack: decide when the first green units that
-  would carry one are designed.
+- **The Preparations shop's basics and tiers:** decided in 0044 (*The
+  Preparations shop* above).
+- **Special shop unlocks** (Nick, 0044: support rank A "sometimes" gives
+  "a unique unlock"): which supports unlock what, chosen with the
+  supports' content. The shop data allows it from the start (0443).
+- **When the Elixir reaches the basic shop:** Act 2's final battle or
+  Act 3's start, set when those acts are outlined.
+- **Which green units carry which consumables:** each chapter's data
+  (decided in 0044: they carry their own, set per battle).

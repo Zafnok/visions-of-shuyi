@@ -303,7 +303,8 @@ Candle joins outside battle.
   (closing scene, "Act 1 ends", the army carried over).
 - **B. Battle rules:** **0319** escape, a fleeing boss, a boss who
   can't die, a scripted death (after 0069) · **0511** bosses use their
-  debuff and stance arts.
+  debuff and stance arts · **0513** green units carry their own
+  consumables (0044).
 - **C. Bots**, engine first (0130): each step is an engine PR in
   `Zafnok/shuyi-engine`, then the game PR that moves the pin and adds
   the game's parts. engine#2125 the rollout bot (`Determinize`, flat
