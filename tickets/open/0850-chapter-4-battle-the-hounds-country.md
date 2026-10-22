@@ -18,7 +18,7 @@ completed:
 Act 1, Chapter 4, from `docs/story/outline.md`:
 
 - **Story battle:** "Veyne Hall": storming the lead's childhood home; Hollis and the lead know the old servants' passages; Dace is the boss and escapes at low HP.
-- **Objective:** as the outline's battle needs, with Dace fleeing by 0319's rule (0069 decides whether his flight ends the battle).
+- **Objective:** as the outline's battle needs, with Dace retreating at the killing blow by 0319's rule; his retreat counts as defeating him and wins the battle (0069, `turn-structure.md`, *A boss who retreats*).
 - **Recruits:** Gil Parrow (`prizefighter`, Brawler), recruited in the *Millhaven Road* skirmish (1071 builds the battle; this script writes his scenes).
 - **New in this chapter:** the world map, a town (Millhaven), fixed skirmishes (*Aldwater Toll Bridge*, guarding the path; *Millhaven Road*, optional), the first side quest (Tamsin's, 1072).
 
@@ -107,7 +107,7 @@ before building.
 ## Tests required
 
 - Integration: the winning replay; New Game → Chapter 4 start; the
-  talk-recruit or scripted join of this chapter's recruit, if any.
+  scripted join (in a scene) or join-if-defeated of this chapter's recruit, if any (no recruiting by talking, 0069).
 - Content checks: the map, battle and chapter files load and validate.
 
 ## Completion notes

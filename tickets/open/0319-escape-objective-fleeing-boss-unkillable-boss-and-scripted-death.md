@@ -40,36 +40,51 @@ one is left open, ask about it with `ask-nick` before writing code.
 
 ## Scope
 
-**In** (each as 0069 decided; the names below are placeholders):
-- An **escape objective** (`Objective::Escape { area, .. }` or as 0069
-  shapes it): which units must reach the area, what happens to a unit
-  that reaches it (leaves the map, safe) and to one that doesn't, any
-  turn limit; win and loss checks; the objective line in the battle UI
-  and the battle notes says it.
-- A **fleeing boss**: a unit setting that makes it leave the map under
-  0069's condition (an HP threshold, or the hit that would kill it), with
-  its line (a scene trigger, like a fall line), and how that counts for
-  the objective, EXP and the results screen.
-- **A unit that can't die**: a unit setting under 0069's rule (HP floor,
-  untargetable, or leaving at low HP); the forecast shows what 0069
-  decided.
-- **A scripted death**: a scene can remove a named player unit for good
-  (in every mode, as 0069 decided), and a chapter's scenes can branch on
-  whether that unit was still in the army (0715's lines by who is in the
-  army may already cover the branch: use them if so).
-- The AI respects them: an escaping side moves toward the area if the
-  enemy escapes (only if 0069 needs it), a boss that flees or can't die
-  still fights by the boss AI.
+**In** (as 0069 decided, `docs/design/turn-structure.md`, *Act 1's
+battle rules*, and `death-and-difficulty.md`; the names below are
+placeholders):
+- An **escape objective** (`Objective::Escape { area }`): a player unit
+  that ends its move in the exit area may choose `UnitAction::Escape`; it
+  leaves the map and is safe (can't act, be targeted, block or fall). The
+  battle is won when no player unit is left on the map and at least one
+  escaped; a unit that falls on the way falls as usual. **No turn limit**
+  (Nick); the lead may escape early; `Escape` gives no EXP; green units
+  needn't escape; escaped units count as standing in the results. The
+  "every player unit has fallen" loss doesn't fire while some escaped.
+  The objective line shows `Get everyone to <area> (2/6 out)`.
+- **A boss who retreats** (Chapter 4): a unit setting "retreats instead
+  of falling". At 0 HP its defeated line plays and it leaves the map
+  alive; it counts as defeated for the objective (DefeatUnit is won), EXP
+  (kill EXP to the striker) and the results. Normal forecast.
+- **A unit that can't be killed** (Chapter 8): a unit setting. At 0 HP
+  its defeated line plays and it is **down**: it stays on its tile, takes
+  no more actions, can't be targeted by anyone (attacks, spells, heals),
+  and **blocks its tile** (no unit passes or stops there). Kill EXP to the
+  striker; counts as defeated in the results; the battle goes on. Normal
+  forecast (his HP shows 0). The map scene marks it down so every map
+  skin can draw it grayed out (ADR-0038).
+- **A scripted death** (Hollis, Chapter 8): a scene can remove a named
+  player unit for good in **every mode** (loadout to the stock, as a
+  Classic death). The closing scene branches on whether he is still in
+  the army: if he fell in this battle in Classic, or died earlier, the
+  "lead tells Dace" version plays; in Casual a retreat in this battle
+  doesn't change it (0715's lines by who is in the army may already
+  cover the branch: use them if so). While he is in the army he is
+  forced into Chapter 8's deployment (*Claude's starting rule*).
+- The AI respects them: a boss that retreats still fights by the boss AI;
+  enemies never target a down unit; the enemy side never escapes.
 - The bots (0504's legal moves) and play records handle the new rules
   (an escaping unit's leaving is a recorded event).
-- Content validation: an escape area exists on the map; a fleeing or
-  unkillable unit is an enemy (or as 0069 says).
+- Content validation: an escape area exists on the map; a retreating or
+  unkillable unit is an enemy.
 - Test battles in `assets-test/` for each rule.
 
 **Out (do not do):**
 - The chapters' real battles (0850, 0852, 0854) and scripts (0746,
   0748, 0750).
 - Changing how Rout, Seize, Survive or DefeatUnit work.
+- Save the village (houses, `Evacuate`, raiders): ticket 0313.
+- Recruiting: "joins if defeated" already exists; Gil uses it as is.
 - New art or UI beyond the objective line, the forecast and the
   results.
 
@@ -91,18 +106,21 @@ one is left open, ask about it with `ask-nick` before writing code.
 
 - [ ] Each rule works as 0069 recorded it (unit and integration tests
       named after the rule).
-- [ ] The forecast against an unkillable boss shows 0069's choice
-      (snapshot).
+- [ ] The forecast against an unkillable boss is the normal one, his HP
+      reaching 0 (snapshot).
 - [ ] The bots finish each test battle; play records replay identically.
 - [ ] Chapter 1 plays exactly as before.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: escape win/loss, fleeing at the threshold, the HP floor, the
-  scripted removal in Classic and Casual.
-- Property: no sequence of legal commands kills an unkillable unit; an
-  escaped unit never acts again in that battle.
+- Unit: escape win (last one out, last one falls with others out) and the
+  lord rule after the lead escaped; retreat at the killing blow winning
+  DefeatUnit with kill EXP; a down unit that can't act, be targeted or be
+  walked through; the scripted removal in Classic and Casual, and the
+  scene branch.
+- Property: no sequence of legal commands kills an unkillable unit or
+  lets a down unit act; an escaped unit never acts again in that battle.
 - Snapshot / integration: the objective line, the forecast, a scripted
   test battle for each rule.
 

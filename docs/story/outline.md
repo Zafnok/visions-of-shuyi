@@ -42,15 +42,28 @@ clear goal (Dace, at Veyne Hall) before the map opens.
 ## New things each early chapter introduces
 
 Chapter 1 has no extras (Nick). Chapters 2 and 3 bring them in (Nick: "we can
-introduce more in chapters 2 and 3"). *Claude's proposal; each chapter ticket
-confirms with Nick.*
+introduce more in chapters 2 and 3"). Confirmed for all of Act 1 by ticket
+0069 (2026-10-22), with two changes from Claude's proposal. Nick: "I don't
+love talk to recruit much and we probably will skip on adding it to the
+full game and recruit in other methods. I also need to gauge more on how
+villages would work in-battle and if I actually want any mechanics for them
+in-battle other than holding them which probably overlaps too heavily with
+ch5. In which case villages seem weird to have in-battle imo", and then:
+"if it has a story beat attached, it should be a real race not an optional
+one... like save the village with a minimum number houses allowed to pass,
+and past that get extra rewards at the end...". So talk-to-recruit is gone
+and Chapter 2's villages are a story race. The rules are in
+`docs/design/turn-structure.md` (*Act 1's battle rules*),
+`battle-scenes-and-recruitment.md` and `death-and-difficulty.md`.
 
 | Chapter | Introduces |
 | ------- | ---------- |
-| 2 | Preparations (`chapter-1.md`), talk-to-recruit, villages to visit |
+| 2 | Preparations (`chapter-1.md`), **save the village** (a race to the houses, a minimum to save, extra rewards past it), a recruit who joins in a scene (Joss) |
 | 3 | A Seize objective, chests |
-| 4 | The world map, a town, fixed skirmishes, the first side quest |
-| 6 | Elemental enemies (echoes) and battle notes (`magic.md`) |
+| 4 | The world map, a town, fixed skirmishes, the first side quest, a boss who **retreats** at the killing blow (Dace), a recruit who joins when beaten (Gil) |
+| 5 | Holding for a number of turns (Survive) |
+| 6 | Elemental enemies (echoes), battle notes (`magic.md`), an **escape** objective |
+| 8 | A boss who **can't be killed** (Dace), a scripted death (Hollis) |
 
 ## Act 1: The Exile (the Old Kingdoms: Ardeval)
 
@@ -84,14 +97,16 @@ confirms with Nick.*
   After the battle a crown herald proclaims that Brennmark has broken the Ash
   Peace, and names the lead an outlaw "seen riding with the raiders". The war
   has started, and it's a lie.
-- **Map idea:** a river village split by a ford. Burning houses to reach
-  (villages), the garrison's watchtower across the water, and a Hound
+- **Map idea:** a river village split by a ford. Houses to save before the
+  raiders burn them, the garrison's watchtower across the water, and a Hound
   lieutenant as boss. Objective: defeat the boss (the chapter ticket
-  decides).
+  decides) and **save at least a minimum of the houses**, with extra rewards
+  for each one past it (0069, `turn-structure.md`, *Save the village*).
 - **Arcs advanced:** Aske (her hatred loses its target), Maud (healing
   strangers under fire), the lead and Dace (Dace's Hounds did this).
 - **Recruit:** **Joss Pellam** (Swordsman), a young Hound who won't kill
-  villagers. Talk-recruit with the lead or Aske.
+  villagers. He joins in the scene after the battle (0069: no recruiting by
+  talking).
 
 ### Chapter 3: Greywater (linear)
 
@@ -125,7 +140,8 @@ confirms with Nick.*
   learns Hollis kept the secret for four years. Dace escapes.
 - **Story battle: "Veyne Hall".** Storming the lead's own childhood home.
   Hollis and the lead know the old servants' passages. Dace is the boss and
-  escapes at low HP.
+  escapes: the blow that would kill him makes him retreat instead, which
+  wins the battle (0069, `turn-structure.md`, *A boss who retreats*).
 - **Fixed skirmishes:**
   - *Aldwater Toll Bridge*: **guards the path** to Veyne Hall.
   - *Millhaven Road*: optional. A Hound patrol, and a prize-fighter who's
@@ -138,7 +154,8 @@ confirms with Nick.*
 - **Arcs advanced:** the lead and Dace, Hollis (his secret is out), Tamsin.
 - **Recruit:** **Gil Parrow** (Brawler), the "Champion of Six Fairs", a
   Yakuza-style oddball with an absurd code of honour. Recruited in the
-  *Millhaven Road* skirmish.
+  *Millhaven Road* skirmish: beat him and he joins after the fight; win
+  without beating him and he is missed (0069).
 
 ### Chapter 5: Salt and Silver
 
@@ -193,8 +210,8 @@ confirms with Nick.*
     anyway. The war is on.
 - **Story battle: "The Ashfields".** Crossing a burnt plain between two armies,
   with echoes and battle notes ("Echoes of Vael: weak to frost, drink fire").
-  Objective: reach the Brennish lines (escape-style; the chapter ticket
-  decides).
+  Objective: get everyone to the Brennish lines, one by one, with no turn
+  limit (0069, `turn-structure.md`, *Escape*).
 - **Fixed skirmishes:**
   - *The Burnt Mill*: **guards the path** to the plain. The first echoes.
   - *Brennish Outriders*: optional.
@@ -247,7 +264,10 @@ confirms with Nick.*
   (Expedition 33 at the end of Act 1).
 - **Story battle: "Saltmere Docks".** Hold the dock for a number of turns while
   the ship loads, against Hounds from three streets. Dace is the boss and
-  can't be killed; he retreats.
+  can't be killed: at 0 HP he is down, grayed out on his tile until the
+  closing scene (0069, `turn-structure.md`, *A boss who can't be killed*).
+  Hollis fights the battle; the closing scene kills him in every mode
+  (`death-and-difficulty.md`).
 - **Fixed skirmishes:** none (it's the last push). **Town:** Saltmere (one last
   shop before leaving).
 - **Arcs advanced:** Hollis (ends), Dace (his turn begins), the lead (the

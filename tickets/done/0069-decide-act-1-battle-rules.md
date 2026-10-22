@@ -5,10 +5,10 @@ type: design-decision
 milestone: Design decisions
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: decision
-completed:
+completed: 2026-10-22
 ---
 
 # 0069 — Decide: Act 1's battle rules
@@ -138,9 +138,9 @@ player situations with an example (Nick didn't follow abstract ones).
 
 ## Acceptance criteria
 
-- [ ] All six questions answered by Nick; his words are in the design docs.
-- [ ] 0319's scope matches the answers.
-- [ ] `cargo xtask ticket-lint` passes.
+- [x] All six questions answered by Nick; his words are in the design docs.
+- [x] 0319's scope matches the answers.
+- [x] `cargo xtask ticket-lint` passes.
 
 ## Tests required
 
@@ -148,5 +148,48 @@ player situations with an example (Nick didn't follow abstract ones).
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Asked in five rounds with the question pop-up (2026-10-21/22). Recorded:
+
+- **Escape (Ch 6):** everyone out one by one (`Escape` leaves the map,
+  safe); won when every unit still standing is out; no turn limit,
+  pressure from reinforcement waves. `turn-structure.md`.
+- **Dace, Ch 4:** retreats at the killing blow; counts as defeated (the
+  battle is won, kill EXP); normal forecast.
+- **Dace, Ch 8** (Nick's own idea): at 0 HP he is down, grayed out, no
+  actions, untargetable by anyone, blocking his tile; the hold goes on;
+  normal forecast.
+- **Hollis:** fights the battle, dies in the closing scene in every mode;
+  if he falls in this battle in Classic (or died earlier), the "lead tells
+  Dace" version. `death-and-difficulty.md`.
+- **Side-quest rewards:** a personal weapon, a signature upgrade, rare shop
+  stock or gold; more kinds later; no stat boosters. Can be missed for good,
+  with a deadline reminder once discovered. `world-structure.md`.
+- **Chapter table:** confirmed with two changes Nick asked for:
+  **no talk-to-recruit** (Joss joins in a scene, Gil when beaten; Nick
+  listed other ways to recruit, now in `battle-scenes-and-recruitment.md`),
+  and **no plain villages**: Chapter 2's houses are a "save the village"
+  race (a minimum to save, extra rewards past it; saved by `Evacuate` or by
+  keeping raiders off). Nick didn't comment on the rest of the table; it
+  is recorded as kept.
+
+**Deviations:** two questions grew out of Nick's answers and were asked
+too (recruiting without talk, and how villages work). That changed ticket
+**0313** from "Villages and the Visit action" into the save-the-village
+rule, and the village parts of 0037, 0409, 1018 and
+`weapons-and-items.md`. 0319's scope now holds the exact rules; the
+chapter tickets 0744, 0848–0854 and 1071 say how their recruits join.
+
+**Follow-up ticket:** **1074**, a discovered side quest shows when it
+closes (Nick's "deadline" reminder); in 1064's `blocked_by` and the
+roadmap.
+
+**Claude's starting rules** (Nick may veto):
+- The lead may escape before the others; `Escape` gives no EXP; green
+  units needn't escape; escaped units count as standing.
+- A raider burns a house by ending its turn on its door or one of the
+  four tiles beside it; the battle is lost the moment the minimum can't
+  be met.
+- A downed Dace counts as defeated on the results screen.
+- While Hollis is in the army he is always deployed in Chapter 8.
+- Raiders walk to the nearest unsaved house and prefer burning to
+  attacking (in 0313, tuned by the bots).

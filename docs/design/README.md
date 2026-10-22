@@ -10,8 +10,11 @@ here.
 | ----- | ---- | ------ | ------ |
 | Stats & combat maths | [`stats-and-combat.md`](stats-and-combat.md) | 0001 | ✅ decided 2026-09-25 |
 | Turn structure | [`turn-structure.md`](turn-structure.md) | 0002 | ✅ decided 2026-09-25 |
+| Act 1's battle rules: escape, save the village, bosses who retreat or can't be killed, Hollis's death, side-quest rewards, recruiting, what each chapter introduces | [`turn-structure.md`](turn-structure.md) (*Act 1's battle rules*), `death-and-difficulty.md`, `world-structure.md` (*Side quest rewards*), `battle-scenes-and-recruitment.md`, `docs/story/outline.md` | 0069 | ✅ decided 2026-10-22 (everyone escapes one by one, no turn limit; Dace retreats at the killing blow (Ch 4) and is downed but stays (Ch 8); Hollis dies in the closing scene in every mode; rewards: personal weapon, signature upgrade, rare stock or gold, no stat boosters, can be missed (with a deadline reminder); no talk-recruit; villages only as a story race) |
 | Weapons, gear, items, shops | [`weapons-and-items.md`](weapons-and-items.md) | 0003, 0408 (Preparations) | ✅ decided 2026-09-25 (Preparations: bring only your own items, retry returns there, 2026-10-01) |
-| The Preparations shop: basic items and tiers | `weapons-and-items.md` | 0044 | ⏳ after playtest 0804 |
+| The Preparations shop: basic items and tiers | [`weapons-and-items.md`](weapons-and-items.md) | 0044 | ✅ decided 2026-10-21 (tiers by chapter, consumables + Iron/Steel gear + repairs, Potion 20 / Hi-Potion 40, rare Elixir; green units carry their own items) |
+| Four armour weights (cloth, leather, chain, plate) and who wears them | [`weapons-and-items.md`](weapons-and-items.md) | 0073 | ✅ decided 2026-10-21 (four weights by material; each class has a max weight and wears anything lighter; the lord never wears plate; four starter pieces from Chapter 2) |
+| The Steel armour sold from Chapter 5 | `weapons-and-items.md` | 0074 | ⏳ asked next (0073: Iron Plate from Ch 2, a Steel Plate later) |
 | Combat Arts (and active-skill costs) | [`combat-arts.md`](combat-arts.md) | 0014 | ✅ decided 2026-09-25 (non-attack actives cost uses per battle, 2026-10-01; arts in their own menu, 2026-10-12, ticket 0442) |
 | Combat Arts for ranks C–S, special weapons | `combat-arts.md` | 0018 | ⏳ after playtest 0804 |
 | Magic & healing | [`magic.md`](magic.md) | 0004 | ✅ decided 2026-09-25 (spells after a class change and terrain magic details revised 2026-09-27; casting on the battle screen added 2026-10-01) |

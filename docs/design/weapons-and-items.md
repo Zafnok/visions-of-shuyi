@@ -71,6 +71,66 @@ Follow-ups:
 > **Trades only through the stock?** (2026-10-03, PR #140) "we can have
 > direct unit to unit swaps otherwise I think I agree w your starting
 > rules"
+>
+> **The Preparations shop: what unlocks a tier?** (2026-10-21, ticket 0044)
+> "chapter number for 90% of the upgrades, and potentially add special
+> unlocks from like support ranks or something (reach A rank get a unique
+> unlock -- sometimes)"
+>
+> **What does it sell?** (0044) Consumables plus basic gear (Iron, later
+> Steel weapons and basic armour) **and repairs** (option C).
+>
+> **Healing items per tier?** (0044) "A [Potion heals 20, Hi-Potion heals
+> 40, lower tiers stay on sale] but change unlock timing probably...
+> probably Potion until act 2 or before act 1 final boss and then Hi-Potion
+> unlocks. Mega Potion maybe doesn't need to exist since it's close to the
+> HP limit anyway and would be better served by Elixir when they're more
+> plentiful at that stage of the game. Probably Elixir won't be in the shop
+> for a very long time but maybe at the very end like act 3 beginning or
+> act 2 final boss then it can unlock in the basic shop up til then it
+> should be a curve for how rare it is, like only a handful in act 1, a few
+> handfuls in act 2..."
+>
+> Follow-ups (0044): the Hi-Potion unlocks **before Chapter 8** (the Act 1
+> finale); Steel gear joins at **Chapter 5** (Saltmere); **green units
+> carry their own consumables, set per battle** (all three the
+> recommended option).
+>
+> **Specialty stores** (2026-10-21, on PR #385): "probably we can make it
+> so there are specialty stores and these will buy items at full price but
+> the basic shop yes it buys everything at half price. example speciality
+> store is like alchemist - sell/buy consumable only, tailor - sell/buy
+> light armor only (maybe also include leather here so we don't have TOO
+> many speciality store)"
+>
+> **Four armour weights?** (2026-10-21, on PR #385; to decide in ticket
+> 0073) "I figured cloth = light, leather = med, chain can be like upper
+> med armor in armor values and weight penalty, plate should be heavy I
+> guess" … "in most game systems cloth is distinct from leather in armor
+> values and weight, and chain and plate are both above leather as well.
+> Maybe we can have 4 armor weight classes? light = cloth (low def high
+> res low weight penalty), med = leather (mix def and res, low weight
+> penalty still), heavy = chain (high def, med res, and med weight
+> penalty), and ultraheavy or something = plate (nearly impenetrable def,
+> critically low res, very high weight penalty)"
+>
+> **Four armour weights, decided** (2026-10-21, ticket 0073). Who wears
+> what, first lead (PR #385): "it doesn't make sense a cleric would wear
+> leather armor rather than robes... martial/agile classes, like swordsman
+> brawler should be wearing leather most likely". On the proposed pieces
+> (cloth Res +3; leather Def +2 Res +1; chain Def +4 Res +1; plate Def +7
+> Res −3): "probably give leather +2/+2 and cloth +4 res, then there is
+> more distinction b/w leather, cloth, and chain. Plate can have more def
+> too to make up for res penalty" (then **plate Def +8**, of +8 / +9 /
+> +10). On the class table: "maybe each class just lists what is the max
+> weight armor class it can use and can use any that are that level or
+> lower?" On the lord: "I think there can be a branch for leather cap vs
+> chain cap but I don't want lord to ever have access to plate since
+> weight penalty will be unfun for a lord class" (then the Exile's own
+> cap: **leather**). On plate in the shop: "I think it's a little weird
+> that IRON plate gets unlocked with STEEL weaponry isn't it?" (then:
+> **Iron Plate from Chapter 2, a Steel Plate later**, maybe Steel versions
+> of the other armour too, numbers set later).
 
 Reference (researched for Nick, 2026-09-25): *Fire Emblem: Fortune's Weave*
 has no weapon triangle. Swords deal 1.2x damage on follow-up strikes, spears
@@ -174,10 +234,10 @@ What this does (illustration, all at Str 10, rank B, enemy AS 10):
 
 | Unit | Spd | Weapon (wt) | Armour (wt) | burden | AS | diff | strikes |
 | ---- | --- | ----------- | ----------- | ------ | -- | ---- | ------- |
-| Brawler with Speed Ring | 20 + 2 | Iron Gauntlets (1) | Leather Vest (0) | 0 | 24 | 14 | **3** |
-| Brawler | 20 | Iron Gauntlets (1) | Leather Vest (0) | 0 | 22 | 12 | 2 |
-| Fighter | 20 | Iron Axe (6) | Chain Mail (2) | 6 | 16 | 6 | 2 |
-| Fighter | 20 | Steel Axe (8) | Chain Mail (2) | 8 | 14 | 4 | 2 |
+| Brawler with Speed Ring | 20 + 2 | Iron Gauntlets (1) | Leather Vest (1) | 0 | 24 | 14 | **3** |
+| Brawler | 20 | Iron Gauntlets (1) | Leather Vest (1) | 0 | 22 | 12 | 2 |
+| Fighter | 20 | Iron Axe (6) | Chain Mail (3) | 7 | 15 | 5 | 2 |
+| Fighter | 20 | Steel Axe (8) | Chain Mail (3) | 9 | 13 | 3 | 1 |
 
 ## Weapon stats
 
@@ -257,7 +317,8 @@ up to the Chapter 1 roster/enemies (0803).
 - At `durability_left == 0` the weapon is **broken**: it still attacks and
   counters, with **might halved** (rounded down) and **−20 hit** (*tunable*),
   and cannot use Combat Arts. Its type trait still applies.
-- **Repair** at a Blacksmith (on a map or between chapters; see Shops) restores
+- **Repair** at a Blacksmith (on a map or between chapters; see Shops) or
+  in the Preparations shop (Nick, 0044) restores
   `durability_left` to full. Cost (*tunable*): `ceil(price / 2 × missing / durability)`
   gold. Materials for repairing rare weapons are deferred until materials
   exist (later; see `world-structure.md`); Chapter 1 repairs cost gold only.
@@ -299,13 +360,14 @@ unless marked, which Nick agreed to on PR #140, 2026-10-03):
   the other units hold in such a slot (`Steel Bow 25/25 from Test Scout`).
   Taking one swaps the two units' items in one step: the archer gets the
   scout's Steel Bow and she gets his Iron Bow. *Claude's starting rules:*
-  if the other unit can't use what comes back (a knight can't wear the
-  lord's Leather Vest), it goes to the stock instead; and the list only
+  if the other unit can't use what comes back (the knight takes the
+  mage's Linen Robe, and she can't wear his Chain Mail), it goes to the
+  stock instead; and the list only
   shows other units' items that this unit can use.
 - A unit can only be given **gear it can use**: a weapon of a kind its
   class uses, at a rank it has, and armour of a weight its class wears.
   Anything else is shown dimmed with the reason (`needs rank D`,
-  `can't use axes`, `can't wear heavy armour`) and can't be taken. (Ticket
+  `can't use axes`, `can't wear plate armor`) and can't be taken. (Ticket
   0408's rule.)
 - The unit goes on wielding the weapon it had in hand. If that weapon was
   put back, it wields its first usable weapon.
@@ -316,14 +378,64 @@ unless marked, which Nick agreed to on PR #140, 2026-10-03):
 
 ### Armour (*tunable*)
 
-Classes may be limited to some armour weights (Light / Medium / Heavy) by 0005.
+Decided 2026-10-21, ticket 0073 (Nick's words above).
 
-| Armour | Type | Bonus | Wt | Price |
-| ------ | ---- | ----- | -- | ----- |
-| Leather Vest | Light | Def +1 | 0 | 300 |
-| Chain Mail | Medium | Def +3 | 2 | 800 |
-| Iron Plate | Heavy | Def +5 | 5 | 1500 |
-| Warded Robe | Light | Res +2 | 0 | 700 |
+**Four weights, by material**, lightest first (Nick):
+
+| Weight | What it's like (Nick) |
+| ------ | --------------------- |
+| **Cloth** (robes) | low Def, high Res, low weight |
+| **Leather** | a mix of Def and Res, still low weight |
+| **Chain** | high Def, some Res, medium weight |
+| **Plate** | nearly impenetrable Def, critically low Res, very high weight |
+
+- A piece of armour gives **Def and Res**, either of which can be a
+  **penalty** (plate's Res). Its **weight** counts in `burden` like a
+  weapon's (*Attack speed*).
+- A penalty can't take a stat below 0: stats are never negative
+  (`stats-and-combat.md`). Iron Plate (Res −3) on a unit with Res 2
+  leaves Res 0, so the penalty bites the plate wearers who have some Res
+  to lose (a Colossus, say), not a Guard who starts at 0.
+- **Each class has a max armour weight** (Nick): it wears that weight and
+  every lighter one. A Guard (Plate) can wear Chain Mail, a Leather Vest
+  or a robe; a Swordsman (Leather) can wear a robe but not Chain Mail.
+  Every class's max is in `progression.md`'s class tables. In short:
+  - **Cloth:** the casters, Mage and Cleric and their lines (Nick:
+    clerics wear robes, not leather).
+  - **Leather:** the agile and martial lines, Swordsman, Brawler, Archer,
+    the Flier, the enemy Brigand (Nick: "martial/agile classes, like
+    swordsman brawler should be wearing leather").
+  - **Chain:** Raider and Rider and their lines, except the armored ones;
+    the Grappler.
+  - **Plate:** the Armored lines (Guard, Bulwark, Iron Rider, Bastion,
+    Juggernaut) and the Vanguard, Warchief and Colossus.
+  - **The lord never wears plate** (Nick: its weight "will be unfun for a
+    lord class"). The Exile wears leather; the branch decides after:
+    Blade Heir and Sovereign leather, Commander and Grand Marshal chain.
+
+The starter piece of each weight:
+
+| Armour | Weight | Def | Res | Wt | Price |
+| ------ | ------ | --- | --- | -- | ----- |
+| Linen Robe | Cloth | +0 | +4 | 0 | 300 |
+| Leather Vest | Leather | +2 | +2 | 1 | 400 |
+| Chain Mail | Chain | +4 | +1 | 3 | 800 |
+| Iron Plate | Plate | +8 | −3 | 6 | 1500 |
+
+Nick set cloth's Res, leather's Def and Res and plate's Def; the rest
+(chain, plate's Res, the weights, the prices, the name Linen Robe) were
+proposed and he kept them. All *tunable*.
+
+- What it does in Chapter 1: a Guard (Def 9) in Iron Plate has Def 17; a
+  Brigand's Iron Axe hit of 7 + 8 = 15 only does the axe's minimum, 5,
+  and Rue's Fire (11) goes straight through his Res 0.
+- **Steel armour** comes later: a Steel Plate, maybe a Steel piece of the
+  other weights too, sold from Chapter 5 with the Steel weapons (Nick).
+  Its numbers are ticket 0074.
+- *Claude's starting rule:* the old **Warded Robe** (Res +2, price 700)
+  is retired: the Linen Robe does its job better for less.
+- Chapter 1's cast: Maud (Cleric) and Rue (Mage) wear **Linen Robes**
+  instead of Leather Vests; nobody else changes.
 
 ### Accessories (*tunable*)
 
@@ -356,9 +468,8 @@ Any unit can wear any accessory.
   is nowhere to go back to until the world map); `Fight!` is the way on.
 - **The Preparations shop** (Nick, 0408): the screen also gets a **basic
   shop**. It sells no unique items, only the basics up to the tier the
-  player has unlocked (early on a Potion; later a stronger healing item,
-  and so on). Which items are basics and what unlocks a tier: ticket 0044;
-  built in ticket 0443.
+  player has unlocked. What it sells and when: *The Preparations shop*
+  below (0044); built in ticket 0443.
 - **Using an item** (*Claude's starting rule*, FE Vulnerary): `Item` in the
   action menu → pick a consumable from the pack → target the unit itself or an
   adjacent ally → the item is consumed and **the unit's action ends**.
@@ -372,18 +483,81 @@ Any unit can wear any accessory.
 - **Enemies carry no consumables** (Nick, 0501): they never use potions.
   Enemy healing comes only from dedicated healer units (heal spells,
   `magic.md`).
+- **Green units carry their own consumables** (Nick, 0044), never drawn
+  from the player's pack. The chapter data gives each green unit its items
+  (a militia captain with 2 Potions; most carry none). *Claude's starting
+  rules:* a green unit uses one the way a player unit does (itself or an
+  adjacent green or player unit; its action ends); its items can't be
+  traded or taken; whatever it hasn't used is gone when the battle ends.
+  Non-combat green units (villagers, `combat-arts.md`) can carry items
+  too, since healing yourself is not fighting. Built in ticket 0513.
 
-### Chapter 1 consumables (*tunable*)
+### Consumables (*tunable* unless marked)
 
 | Item | Effect | Price |
 | ---- | ------ | ----- |
-| Potion | Restore 10 HP (never above max) | 300 |
+| Potion | Restore **20** HP (never above max) (Nick, 0044) | 300 |
+| Hi-Potion | Restore **40** HP (never above max) (Nick, 0044) | 900 |
 | Elixir | Restore all HP | 3000 |
+
+There is **no third healing tier** between the Hi-Potion and the Elixir
+(Nick: a Mega Potion "doesn't need to exist since it's close to the HP
+limit anyway"). Names are placeholders. The heals rescale with the rest
+in ticket 0013.
+
+**How rare the Elixir is** (Nick, 0044: "a curve for how rare it is"):
+only **a handful in Act 1** and **a few handfuls in Act 2**, from chests,
+villages, side-quest rewards and the like, until it reaches the basic shop
+(below). *Claude's reading, Nick may veto:* town shops don't sell it in
+Act 1 either, or the handful would not be a handful.
+
+## The Preparations shop (basic shop)
+
+Decided 2026-10-21, ticket 0044. Built in ticket 0443.
+
+- **No unique items** (Nick, 0408): it sells only the basics below. Unique
+  or rare items come from town shops, chests and rewards.
+- **What unlocks more stock: the chapter** (Nick: "chapter number for 90%
+  of the upgrades"). Each basic item has the chapter from which the shop
+  sells it. Since the story is linear, every player has the same shop at
+  the same chapter; nobody falls behind.
+- **Lower tiers stay on sale** (Nick): the Potion is still sold after the
+  Hi-Potion arrives, and Iron weapons after Steel.
+- **It repairs** (Nick, option C), at the Blacksmith's price (*Durability*).
+- **It buys everything at half price** (Nick, PR #385). Specialty stores
+  pay more (*Money and shops*).
+- **Its armour** (0073): the four starter pieces from Chapter 2, Iron
+  Plate included (Nick: Iron Plate shouldn't wait for the Steel weapons);
+  the Steel armour (0074) from Chapter 5.
+
+| From | Adds to the shop | Source |
+| ---- | ---------------- | ------ |
+| Chapter 2 (the first Preparations) | Potion; Iron Sword, Iron Spear, Iron Axe, Iron Bow, Iron Gauntlets; Linen Robe, Leather Vest, Chain Mail, Iron Plate; repairs | Nick (Potion, Iron, repairs; the four armours, 0073) |
+| Chapter 5 (Saltmere) | Steel Sword, Steel Spear, Steel Axe, Steel Bow, Steel Gauntlets; the Steel armour (0074) | Nick (Steel at Ch5; Steel Plate, 0073) |
+| Chapter 8 (the Act 1 finale's Preparations) | Hi-Potion | Nick |
+| Act 2's final battle or Act 3's start | Elixir | Nick ("maybe"); the exact chapter is set when Act 2 and 3 are outlined |
+
+- Accessories (rings, charms) are **never** basics: they stay in town
+  shops and rewards (*Claude's starting rule*, from "basic").
+- Weapons added by later tiers (Silver and so on, if they come to exist)
+  get a row here when they are designed.
+- **Special unlocks** (Nick, "sometimes"): now and then an event other
+  than the chapter adds an item, for example two units reaching **support
+  rank A**. Not built yet; each one is chosen with the supports' content
+  (open sub-question below), and the shop data must allow an item unlocked
+  by something other than a chapter.
+
+Example: before Chapter 5's story battle, the Preparations shop sells the
+Potion (300), all five Iron and all five Steel weapons, the Linen Robe,
+Leather Vest, Chain Mail and Iron Plate, the Steel armour (0074), and repairs a Steel Bow at 10/25
+for `ceil(720 / 2 × 15 / 25)` = 216 gold. It does not sell the Hi-Potion
+yet, nor any ring.
 
 ## Money and shops (FE)
 
 - **Gold** is party-wide. Sources: map-clear reward (per chapter data),
-  chests, villages, selling items (half price).
+  chests, villages, selling items (half price; full price at a specialty
+  store).
 - **On-map shops** (FE): shop tiles on a map. A unit standing on one uses the
   `Shop` action. Kinds:
   - **Armoury**: weapons, armour, accessories.
@@ -394,11 +568,26 @@ Any unit can wear any accessory.
   free loadout slot, else the stock.
 - **Between chapters**, the same shop screen is available. From the world
   map on, shops are in **town nodes** (0008, `world-structure.md`).
-- **Villages** (*Claude's starting rule*, FE): a player unit on the village
-  gate uses `Visit`: a one-time gift (gold, an item or a scene), then the
-  village closes. Enemies destroying villages: not in Chapter 1.
-  **On hold:** there is no village tile yet; Nick deferred building tiles
-  other than `fort` (`terrain.md`, 2026-09-26).
+- **Specialty stores** (Nick, PR #385): a town can have stores that trade
+  **only their own kind of goods**, buying and selling. They **buy those
+  goods at full price**; every other shop (the basic shop, Armoury,
+  Vendor) buys at half. Nick's examples, the two built first:
+  - **Alchemist**: consumables only.
+  - **Tailor**: cloth and leather armour only (Nick: leather goes here
+    "so we don't have TOO many speciality store"): the Cloth and Leather
+    weights (0073).
+  Nick wants few of them. *Claude's starting rules:* a specialty store
+  won't take anything outside its goods; they are in towns only (not shop
+  tiles on a battle map, not Preparations); which towns have which is the
+  towns' data (1070). Selling there at full price means an item bought and
+  sold back at the same store costs nothing, which is fine: it's a way to
+  turn loot into gold at its full value, not to make gold.
+- **Villages:** no plain "Visit for a gift" villages (Nick, 0069,
+  2026-10-22: "None"; this replaces the earlier FE-style starting rule).
+  Villages appear in a battle only when the story is about them, as a
+  **save the village** race with a minimum number of houses and extra
+  rewards past it (`turn-structure.md`, *Save the village*). The house
+  tile itself waits for 0037 (`terrain.md`).
 - **Chests** (*Claude's starting rule*): a player unit on a chest uses `Open`;
   no key needed for now. Contents: gold or an item.
 - Chapter 1 has no shop, village or chest (0009, `chapter-1.md`).
@@ -496,10 +685,12 @@ Distance 1.
   side quests on the world map (`world-structure.md`) are the likely sources.
 - **Enemies destroying villages, chest keys, thief classes:** later chapters.
 - **Number scale:** all numbers here rescale with ticket 0013.
-- **The Preparations shop's basics and tiers** (Nick, 0408): ticket 0044.
-  Nick's examples there ("Potion (heal 20)", then "a consumable to heal
-  40") aren't the Potion's current 10 HP; the numbers are settled with
-  0044 and 0013.
-- **Green units with their own consumables** (Nick, 0408: "maybe"), not
-  drawn from the player's pack: decide when the first green units that
-  would carry one are designed.
+- **The Preparations shop's basics and tiers:** decided in 0044 (*The
+  Preparations shop* above).
+- **Special shop unlocks** (Nick, 0044: support rank A "sometimes" gives
+  "a unique unlock"): which supports unlock what, chosen with the
+  supports' content. The shop data allows it from the start (0443).
+- **When the Elixir reaches the basic shop:** Act 2's final battle or
+  Act 3's start, set when those acts are outlined.
+- **Which green units carry which consumables:** each chapter's data
+  (decided in 0044: they carry their own, set per battle).

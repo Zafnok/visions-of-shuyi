@@ -36,10 +36,11 @@ Nick's words then:
 What waits on the answer:
 
 - **0313** (core rules for villages) and the village part of **0409**.
-  The village rule itself is already written as a starting rule
-  (`docs/design/weapons-and-items.md`, *Money and shops*): a player unit on
-  the village gate uses `Visit` for a one-time gift, then the village
-  closes. Only the tile is missing.
+  The village rule itself is decided (0069, 2026-10-22,
+  `docs/design/turn-structure.md`, *Save the village*): villages appear
+  only when the story is about them, as houses to save before raiders burn
+  them, with a minimum to save; no plain "Visit for a gift" villages. Only
+  the house tile is missing.
 - Objectives: 0801's battle file has `Seize((x, y))`, and 0803 puts the
   Chapter 1 boss on a fort because there is no gate or throne.
 - The terrain data keeps a `heal_percent` field, 0 on every terrain.
@@ -63,8 +64,8 @@ next to `fort` (`╦╦`); a terrain glyph must never look like the cursor
 (`look-and-feel.md`). At most three questions per message:
 
 1. **Which building tiles are added now?** Village, gate, throne, each or
-   none, with what each does in Fire Emblem GBA (village: visit for a gift;
-   gate and throne: the boss stands there, seize to win, strong defence)
+   none, with what each does in Fire Emblem GBA (village: here a house to
+   save, the rule 0069 decided; gate and throne: the boss stands there, seize to win, strong defence)
    and its movement cost and Def/Avoid, in `terrain.md`'s tables.
 2. **Capturing:** the Advance Wars idea he found interesting (a unit stands
    on a building for a turn or two and it becomes yours), FE's seize only,
@@ -73,7 +74,8 @@ next to `fort` (`╦╦`); a terrain glyph must never look like the cursor
 3. **Healing tiles:** which tiles heal, how much, and whose units (FE GBA:
    forts, gates and thrones heal whoever stands there / Advance Wars: only
    buildings you own / none).
-4. **Enemies destroying villages** (FE): yes, no, later.
+4. ~~**Enemies destroying villages**~~: decided by 0069 (raiders burn
+   unsaved houses).
 
 ## Scope
 

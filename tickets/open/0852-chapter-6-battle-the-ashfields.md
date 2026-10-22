@@ -18,7 +18,7 @@ completed:
 Act 1, Chapter 6, from `docs/story/outline.md`:
 
 - **Story battle:** "The Ashfields": crossing a burnt plain between two armies, with echoes (fire elementals) and battle notes ("Echoes of Vael: weak to frost, drink fire").
-- **Objective:** reach the Brennish lines, by 0319's escape objective as 0069 decided.
+- **Objective:** get everyone to the Brennish lines, one by one, by 0319's escape objective; no turn limit, the pressure comes from reinforcement waves (0069, `turn-structure.md`, *Escape*).
 - **Recruits:** Oriel Mast (`battlemage`, Sorcerer, tier 2), who deserts to the party.
 - **New in this chapter:** elemental enemies (echoes) and battle notes (`magic.md`).
 
@@ -107,7 +107,7 @@ before building.
 ## Tests required
 
 - Integration: the winning replay; New Game → Chapter 6 start; the
-  talk-recruit or scripted join of this chapter's recruit, if any.
+  scripted join (in a scene) or join-if-defeated of this chapter's recruit, if any (no recruiting by talking, 0069).
 - Content checks: the map, battle and chapter files load and validate.
 
 ## Completion notes

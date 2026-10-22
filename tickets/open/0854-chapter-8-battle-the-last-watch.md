@@ -18,7 +18,7 @@ completed:
 Act 1, Chapter 8, from `docs/story/outline.md`:
 
 - **Story battle:** "Saltmere Docks": hold the dock for a number of turns while the ship loads, against Hounds from three streets; Dace is the boss and can't be killed; he retreats.
-- **Objective:** Survive for a number of turns, with Dace unkillable by 0319's rule; Hollis's death as 0069 decided.
+- **Objective:** Survive for a number of turns, with Dace unkillable by 0319's rule (at 0 HP he is down: grayed out, no actions, untargetable, blocking his tile); Hollis is deployed, fights, and dies in the closing scene in every mode (0069, `turn-structure.md` and `death-and-difficulty.md`).
 - **Recruits:** none.
 - **New in this chapter:** nothing new.
 
@@ -107,7 +107,7 @@ before building.
 ## Tests required
 
 - Integration: the winning replay; New Game → Chapter 8 start; the
-  talk-recruit or scripted join of this chapter's recruit, if any.
+  scripted join (in a scene) or join-if-defeated of this chapter's recruit, if any (no recruiting by talking, 0069).
 - Content checks: the map, battle and chapter files load and validate.
 
 ## Completion notes

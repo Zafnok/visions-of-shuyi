@@ -355,6 +355,131 @@ banner). Turn limits are **optional and per map**; most maps have none.
 - Loss conditions from `death-and-difficulty.md` (0006) are checked the same
   way (after every action and at every phase boundary).
 
+## Act 1's battle rules: escape, save the village, bosses who get away
+
+Decided: 2026-10-22
+Source: ticket 0069 (built by 0319; the village rule by 0313)
+
+Act 1 (`docs/story/outline.md`) needs four battle rules Chapter 1 never
+did. Nick's words (asked with the question pop-up, options from real games):
+
+> **Chapter 6, escape:** "Everyone out, one by one (Recommended)"
+>
+> **Escape turn limit:** "No limit, rising pressure (Recommended)"
+>
+> **Chapter 4, Dace flees:** "Retreats at the killing blow (Recommended)"
+>
+> **Chapter 8, Dace can't be killed:** "probably goes to "0" but then
+> becomes grayed out / takes no more actions / can't be targeted (by ally
+> or enemy)"
+>
+> **Does his body still block his tile?** "Blocks his tile (Recommended)"
+>
+> **Villages in battle:** "if it has a story beat attached, it should be a
+> real race not an optional one... like save the village with a minimum
+> number houses allowed to pass, and past that get extra rewards at the
+> end..."
+>
+> **How is a house saved?** "Both" (reach it first and evacuate it, or keep
+> raiders off it)
+>
+> **Villages with no story attached:** "None (Recommended)"
+
+### Escape (Chapter 6, the Ashfields)
+
+Example: the party crosses the Ashfields to the Brennish lines. Aske, the
+fastest, reaches the lines on turn 3, picks `Escape` and is gone, safe.
+Tamsin follows on turn 5. Maud is slow and the echoes are closing in, so the
+lead stays back to cover her. The battle is won on the turn the last unit
+still standing steps out.
+
+- The map marks an **exit area** (a set of tiles, e.g. the Brennish lines).
+  The objective reads like `Get everyone to the Brennish lines (2/6 out)`.
+- A player unit that **ends its move** in the exit area may choose
+  **`Escape`** as its action. It leaves the map and is **safe** from then
+  on: it can't act, can't be targeted, doesn't block tiles and never falls.
+- **Win:** when no player unit is left on the map and at least one escaped,
+  i.e. every unit still standing is out. A unit that falls on the way falls
+  as usual (`death-and-difficulty.md`: Classic dies, Casual retreats); it
+  doesn't have to escape. Nobody is "left behind".
+- **No turn limit** (Nick). The pressure comes from reinforcements (echoes
+  and Hounds arriving in waves, *the chapter ticket sets them*), so waiting
+  gets dangerous but never loses on its own.
+- *Claude's starting rules:* the lead may escape before the others (the
+  battle goes on until everyone is out); once escaped the lead can't fall,
+  so the lord rule can't lose the battle after that. `Escape` gives no EXP.
+  Green (allied) units don't have to escape. Escaped units count as standing
+  on the results screen.
+
+### Save the village (Chapter 2, Kell's Ford)
+
+Villages appear in a battle **only when the story is about them**, and then
+as a real race, never an optional extra (Nick). There are **no** plain
+"Visit for a gift" villages on ordinary maps (Nick: "None"); that rule in
+`weapons-and-items.md` is replaced.
+
+Example: Kell's Ford has five houses and raiders heading for them. The
+objective is `Defeat the lieutenant` and `Save at least 3 of 5 houses`.
+Aske runs to the nearest house and evacuates it (saved for
+good). The lead kills the raider next to the second one before his turn
+ends, so it still stands. A raider reaches the third and it burns (lost).
+At the end, four houses stand: three meet the minimum, the fourth adds an
+extra reward.
+
+- The map marks **houses** (each a tile with a door) and a **minimum** to
+  save. The objective line shows both, e.g. `Save at least 3 of 5 houses
+  (1 saved, 1 lost)`, next to the battle's main objective (Defeat the boss,
+  Rout, ...).
+- **Saving a house** (Nick: "Both"):
+  - **Reach it first:** a player unit on an unsaved house's door picks
+    **`Evacuate`** (its action). The house is saved for good (the villagers
+    get out; a line may play).
+  - **Keep raiders off it:** a house that is still standing when the battle
+    is won counts as saved too.
+- **Losing a house:** an enemy the map marks as a **raider** that ends its
+  turn on or next to an unsaved house's door sets it burning. It is lost for
+  good. (*Claude's starting rule:* "next to" means the four tiles beside the
+  door, as for attacks.)
+- **Loss:** the moment too many houses are lost for the minimum to be met,
+  the battle is lost (game over: Retry or Rewind, `death-and-difficulty.md`).
+- **Extra rewards:** each house standing at the end **past the minimum**
+  adds a reward when the battle is won (Nick: "past that get extra rewards
+  at the end"). The chapter ticket picks the rewards (items or gold).
+
+### A boss who retreats (Chapter 4, Veyne Hall)
+
+Example: the lead's sword brings Dace from 9 HP to 0. Instead of dying he
+says "Not here. Not in this house.", and leaves the map. `Defeat Dace` is
+complete, the battle is won, and the lead gets the EXP of a kill.
+
+- The map marks a unit **"retreats instead of falling"**. When its HP
+  reaches 0 its defeated line plays (`battle-scenes-and-recruitment.md`,
+  *Boss lines*) and it leaves the map, alive.
+- It counts as **defeated**: for the objective (`Defeat Dace` is won), for
+  EXP (the striker gets the EXP of a kill) and on the results screen.
+- The forecast is the normal one: it shows the hit that brings him to 0,
+  like any boss, as in FE Three Houses' bosses who retreat when beaten.
+
+### A boss who can't be killed (Chapter 8, Saltmere Docks)
+
+Example: the party holds the dock for the ship. Tamsin's lance brings Dace
+to 0. He goes down on one knee, grayed out, on his tile. From then on he
+takes no actions, nobody (ally or enemy) can target him, and nobody can
+walk through his tile. His Hounds keep coming until the hold is over. In the
+closing scene he is still there to order the archers to stop.
+
+- The map marks a unit **"can't be killed"**. When its HP reaches 0 its
+  defeated line plays and it is **down**: it stays on its tile, drawn grayed
+  out (the look is the map skins'), **takes no more actions** and **can't be
+  targeted** by anyone, attacks, spells or healing (Nick).
+- **It blocks its tile** (Nick): no unit can walk through it or stop on it.
+- The battle goes on (Chapter 8's objective is to hold for a number of
+  turns). The striker gets the EXP of a kill; a down unit counts as defeated
+  for the results (*Claude's starting rule*).
+- The forecast is the normal one: it shows his HP reaching 0 (Nick: "goes
+  to 0").
+- The scene after the battle can still use him (he gets up in the script).
+
 ## Open sub-questions (deferred)
 
 - Which skills grant post-action movement, and exactly how much: tickets

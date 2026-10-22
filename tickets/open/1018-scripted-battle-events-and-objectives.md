@@ -20,7 +20,7 @@ happen: objectives (Rout, Seize, Defeat boss, Survive N turns, within N
 turns; `turn-structure.md`), reinforcements on set turns, and dialogue
 triggers at moments (turn start, a unit ending its move in an area, a
 boss's lines; ADR-0030). Mod makers will want more: "the bridge collapses
-on turn 5", "win when both villages are visited", "reinforcements come
+on turn 5", "win when both bridges are held", "reinforcements come
 when the boss falls below half HP".
 
 1017 gives `core` a deterministic, read-only script runtime. This ticket
@@ -59,15 +59,15 @@ for scripts (1020 only names them).
 3. Run the scripts at their moments in `core`, turning outcomes into
    events. Order: objectives as today, then scripts in file order (write it
    in the ADR's table if it isn't there).
-4. Test mod battles: a bridge that turns to water on turn 3, and a "visit
-   both villages" objective.
+4. Test mod battles: a bridge that turns to water on turn 3, and a "hold both
+   bridges" objective (no plain villages since 0069).
 
 ## Acceptance criteria
 
 - [ ] The bridge test battle: on turn 3 the bridge tile becomes water and a
       unit on it is handled as the existing terrain rules say (test).
-- [ ] The two-villages objective wins exactly when the second village is
-      visited (test).
+- [ ] The two-bridges objective wins exactly when a player unit stands on
+      the second bridge at its turn end (test).
 - [ ] Rewinding past a scripted outcome undoes it; replaying the same
       commands repeats it (test).
 - [ ] Bad scripts or moments are content errors with file and line (test).

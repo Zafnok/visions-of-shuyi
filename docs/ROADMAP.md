@@ -258,15 +258,17 @@ Chapter 1 playtest gates onto 1064). Only Chapter 1 exists as content
 with `next`. Phases run in order, but Phase 1's questions and Phase 2's
 lanes overlap: a lane starts as soon as its own tickets are ready.
 Within a lane, → is order and · is "side by side". The only engine
-tickets Act 1 waits for are the playtest bots' (engine#2125–2127, Lane
-C; re-gated 2026-10-21 by 0130).
+tickets Act 1 waits for are the playtest bots' (engine#2125–2128, Lane
+C; re-gated 2026-10-21 by 0130; engine#2128 added by 0506).
 
 **Phase 1: Nick's design queue**, in this order (each unblocks the
 tickets in brackets):
 
 1. **0037** building tiles, capturing, healing tiles (0313, Chapter 3's
    map 0849)
-2. **0044** the Preparations shop's basics and tiers (0443, 1070)
+2. **0044** the Preparations shop's basics and tiers (0443, 1070) →
+   **0073** four armour weights (0321, 0320, Chapter 1's loadouts) →
+   **0074** the Steel armour sold from Chapter 5 (its data ticket)
 3. **0028** shop music (0409)
 4. **0069** Act 1's battle rules: the escape objective, Dace fleeing,
    a boss who can't die, Hollis's death and its Classic fallback, the
@@ -295,20 +297,25 @@ Candle joins outside battle.
 
 **Phase 2: systems**, in lanes that run side by side:
 
-- **A. World map:** **0313** villages (after 0037) · **0409** the shop
+- **A. World map:** **0313** save the village (after 0037) · **0409** the shop
   screen (after 0028) → **0443** the Preparations shop tab (after
   0044) · **0606** promote and reclass · **1003** supports and camp
   screens (after 0027) → **1007** the world map (after 0409, 0025,
   0026; mockup first) → **1008** skirmishes → **1065** the act ends
-  (closing scene, "Act 1 ends", the army carried over).
-- **B. Battle rules:** **0319** escape, a fleeing boss, a boss who
-  can't die, a scripted death (after 0069) · **0511** bosses use their
-  debuff and stance arts.
+  (closing scene, "Act 1 ends", the army carried over) · **1074** a
+  discovered side quest shows when it closes (after 1007).
+- **B. Battle rules:** **0319** escape, a boss who retreats, a boss
+  who can't die, a scripted death (after 0069) · **0511** bosses use their
+  debuff and stance arts · **0513** green units carry their own
+  consumables (0044) · **0321** the four armour weights in the data
+  (after 0073) → **0320** specialty stores.
 - **C. Bots**, engine first (0130): each step is an engine PR in
   `Zafnok/shuyi-engine`, then the game PR that moves the pin and adds
   the game's parts. engine#2125 the rollout bot (`Determinize`, flat
   Monte Carlo) · engine#2126 the playtest runner with pass bands (both
-  ready, side by side) → **0506** Casual / Normal / Hardcore (the
+  done) → engine#2128 the turn planner (whole-turn plans; one command at
+  a time the personas stalled on Chapter 1) → **0506** Casual / Normal /
+  Hardcore (its first build is on the branch `t0506-persona-bots`; the
   personas' scoring, the battle's `Determinize`, measures and targets)
   · engine#2127 the autobalance search (after engine#2126) → **0509**
   autobalance (the battle's knobs) → **0510** skirmishes to order.
@@ -376,7 +383,7 @@ Design answers unblock most of the rules work. Suggested order:
 5. Anytime, low priority: **0039** sprite units: walking, the effect mark, the glyph look as an option, face or bust · **0012** title (then **0811** title art) · **0041** the sound when a press skips the title cinematic · **0025**–**0028** world map / capital / camp / shop music · **0812** chapter card · **0813** transitions
    · **0059** Shuyi Engine: is the tactics kit open, and who may contribute (`docs/engine/feasibility.md`)
    · **0042** Japanese: font, picking a language, the machine-translation label · **0043** AI voices: the tool, what is voiced, each voice by ear · **0045** Chinese (after 0042): the characters for "Shuyi", the Chinese title, the font, who checks it
-6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces · **0071** Chapters 2–8's music
+6. Now, for Act 1 (*Act 1 critical path*, Phase 1, re-gated 2026-10-21): **0013** number scale · **0018** higher-rank Combat Arts & special weapons · **0037** more building tiles (village, gate, throne), capturing, healing tiles · **0044** the Preparations shop's basic items and tiers · **0069** Act 1's battle rules · **0070** the new cast's faces · **0071** Chapters 2–8's music · **0073** four armour weights (done) → **0074** the Steel armour
    · After the Act 1 playtest (1064): **0060** does the army ever walk around freely (towns, camp, dungeons)? (decides whether the engine's free movement is game work)
 7. After the Act 1 playtest (1064), replayability (`design/replayability.md`): **0046** stars, Replay and "Move on?" · **0047** Visions and heat for random skirmishes · **0049** Ironman · **0050** the run mode (after 0047) · **0051** the randomizer · then **0048** what stars and Visions pay (after 0046, 0047) · **0052** replays, the veteran's ghost, sharing (after 0046) · **0054** the mod policy: what mods may change, modded saves, Workshop, the licence
 8. ~~**0061** the Playdate version of Chapter 1~~ ✅ decided 2026-10-15 (`design/playdate.md`) · **0062** how the Playdate's one-bit pictures look (portraits, combat picture, launcher card) · **0066** the guide's tip and lesson box on the Playdate's screen · **0067** the bought tiles and unit sprites on the Playdate's map, in one-bit (instead of 0061's glyphs?)
@@ -512,7 +519,7 @@ early so every later PR is checked by them.
 - Automated playtesting bots (Nick, 2026-09-30): 0033 decide the player
   types and targets → 0504 legal moves and luck reseeding in `core` → 0505
   `cargo xtask playtest` runner (after 0801) → 0506 Casual/Normal/Hardcore
-  bots (after 0803, engine#2125 and engine#2126) → 0507 trained
+  bots (after 0803, engine#2125, engine#2126 and engine#2128) → 0507 trained
   AlphaZero-style bot (research) and 0508 recording Nick's play to
   calibrate the bots (after 0802) → 0509 autobalancing battles with the
   bots (after engine#2127) → 0510 generating skirmishes to order (after

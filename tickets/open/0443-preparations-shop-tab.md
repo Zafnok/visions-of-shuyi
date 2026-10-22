@@ -50,45 +50,78 @@ it):
 
 **In:**
 - A `Shop` tab on the Preparations screen, between `Pack` and `Fight!`.
-- The basic shop's inventory by tier, as data, following 0044.
+- The basic shop's stock as data, following 0044 (`weapons-and-items.md`,
+  *The Preparations shop*): each basic item with the chapter it is sold
+  from; lower tiers stay on sale.
+- The consumables 0044 decided, in `assets/data/items.ron`: the Potion
+  heals **20** (was 10), and a new **Hi-Potion** (`hi_potion`, heals 40,
+  price 900).
 - Gold shown on the screen; buying puts the item in the stock and takes the
   gold; selling as in `weapons-and-items.md` (half price).
+- **Repairs** (0044: the basic shop repairs), at the Blacksmith's price
+  (`shop::repair_cost`), for any weapon in the stock or in a unit's
+  loadout.
 - The debug Quick Battle gets some gold to try it with (a `solo_gold` field
-  next to `solo_stock` in the battle file).
+  next to `solo_stock` in the battle file), and a chapter number so it has
+  a shop (Chapter 5's, to show Iron and Steel).
 
 **Out (do not do):**
 - Unique items, town shops, the world map (1007).
-- Repairs, unless 0044 says the basic shop repairs.
+- The Elixir in the basic shop (Act 2 or 3; no chapter number exists yet)
+  and the support-rank special unlocks (not chosen yet): the data format
+  leaves room for them, nothing more.
+- Green units' own consumables (ticket 0513).
 - Changing the on-map shop rules.
 
 ## Implementation steps
 
-1. Read 0044's record in `weapons-and-items.md`. Put the basic shop's
-   inventory per tier in data (`assets/data/`), loaded and validated by
-   `trpg-content` with every error reported (ADR-0005), and the tier the
-   campaign has unlocked wherever 0044 says it comes from.
-2. `core`: a function that builds the basic `Shop` for a tier, and
-   `BattleSetup` methods in `prep.rs` to buy into / sell from the stock
-   with the setup's gold, reusing `shop.rs`'s price rules. Unit tests.
-3. `ui`: add `Tab::Shop`; draw it with 0409's shop lists (price, the
-   unaffordable ones dimmed, `Gold 1 250` in the heading). Confirm buys
-   one; a bought consumable is then on the `Pack` tab's stock list.
-4. `assets-test/battles/quick.ron`: `solo_gold`, read by
+1. Read 0044's record in `weapons-and-items.md` (*Consumables*, *The
+   Preparations shop*). In `assets/data/items.ron` set the Potion to
+   `Heal(20)` and add `(id: "hi_potion", name: "Hi-Potion", effect:
+   Heal(40), price: 900)`; fix the `trpg-content` tests that pin the
+   Potion's heal. Chapter 1's free pack now heals 20 a Potion: run
+   `cargo xtask playtest` / `autobalance` on Chapter 1 and note the change
+   in the Completion notes.
+2. Put the basic shop's stock in data (`assets/data/basic_shop.ron`): a
+   list of `(item, unlock)` with `unlock: Chapter(n)`, as an enum so a
+   later kind (a support rank, 0044) is one more variant. Rows from 0044:
+   Chapter 2: Potion, the five Iron weapons, the armours; Chapter 5: the
+   five Steel weapons; Chapter 8: Hi-Potion. The armours follow 0073
+   (`weapons-and-items.md`, *The Preparations shop*): if 0321 (the four
+   armour weights in the data) is done, the Linen Robe, Leather Vest,
+   Chain Mail and Iron Plate, all from Chapter 2; if not, today's Leather
+   Vest, Chain Mail, Warded Robe and Iron Plate from Chapter 2, and 0321
+   updates the rows. The Steel armour (0074) is not in this ticket.
+   Loaded and validated by `trpg-content` with every error
+   reported (ADR-0005): unknown item, seal or accessory listed, duplicate.
+3. `core`: a function that builds the basic `Shop` for a chapter (every row
+   whose unlock is reached), and `BattleSetup` methods in `prep.rs` to buy
+   into / sell from the stock and repair a weapon with the setup's gold,
+   reusing `shop.rs` (`buy`, `sell`, `repair`, `repair_cost`). The chapter
+   comes from the campaign (the chapter whose battle is being prepared).
+   Unit tests.
+4. `ui`: add `Tab::Shop`; draw it with 0409's shop lists (price, the
+   unaffordable ones dimmed, `Gold 1 250` in the heading), with Buy, Sell
+   and Repair as 0409's shop screen does them. Confirm buys one; a bought
+   consumable is then on the `Pack` tab's stock list.
+5. `assets-test/battles/quick.ron`: `solo_gold`, read by
    `trpg_content::battle_campaign`; document it in
    `assets/battles/README.md`.
-5. Follow the `keyboard-input` skill for the help line.
+6. Follow the `keyboard-input` skill for the help line.
 
 ## Acceptance criteria
 
 - [ ] Harness: on the Quick Battle's Preparations, buy a Potion (gold drops by its price, the stock gains one), pack it, Fight! → it is in the battle's pack and the campaign's gold after a win reflects the purchase.
 - [ ] An item the player can't afford is dimmed and can't be bought.
-- [ ] The shop offers only the basics of the unlocked tier (test with two tiers).
+- [ ] The shop offers only the basics unlocked by the chapter: a unit test for Chapter 2 (no Steel, no Hi-Potion), Chapter 5 (Steel, no Hi-Potion) and Chapter 8 (Hi-Potion, Potion still on sale).
+- [ ] Repairing a damaged weapon costs `repair_cost` and fills its durability.
+- [ ] `items.ron`: the Potion heals 20; the Hi-Potion exists (heals 40, 900).
 - [ ] Snapshot of the Shop tab.
 - [ ] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
-- Unit: buying and selling through the setup (gold, stock), tier inventory.
+- Unit: buying, selling and repairing through the setup (gold, stock), the stock per chapter, the data validation.
 - Snapshot / integration: the Shop tab; the Harness flow above.
 
 ## Completion notes
