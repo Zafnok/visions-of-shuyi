@@ -553,9 +553,11 @@ fn the_fight_box_is_a_window_across_the_top_its_striker_the_bar() {
     let [left, right] = fight_box::columns(fight_box::box_rect(SCREEN, 5));
     assert_eq!((left, right), (5, 27));
     assert!(is_bar(&buf, 1, "Alda"));
-    // The bar starts a cell before the name.
+    // The bar runs from a cell before the name to a cell after it.
     assert_eq!(cell(&buf, left - 1, 1).bg, ink(Ink::Black));
+    assert_eq!(cell(&buf, left + 4, 1).bg, ink(Ink::Black));
     assert_eq!(cell(&buf, left - 2, 1).bg, ink(Ink::White));
+    assert_eq!(cell(&buf, left + 5, 1).bg, ink(Ink::White));
     assert_eq!(find(&buf, 1, "Brom"), Some(right));
     assert!(!is_bar(&buf, 1, "Brom"));
     // HP and a bar: 10 of 20 is half its 10 cells.
@@ -588,4 +590,35 @@ fn a_fighters_name_too_long_for_its_column_is_cut_inside_it() {
     assert_eq!(find(&buf, 1, &format!("{}…", "R".repeat(18))), Some(right));
     assert_eq!(cell(&buf, left + 19, 1).glyph, ' ');
     assert_eq!(find(&buf, 3, "HIT -8 and a lot m…"), Some(left));
+}
+
+#[test]
+fn the_battles_playdate_paint_draws_the_forecast_the_fight_box_and_the_exp_bar() {
+    use crate::screens::battle::view::{ExpView, ProgressView};
+    let s = quick();
+    let fighter = |name: &str| BoxFighterView {
+        name: name.into(),
+        faction: trpg_core::Faction::Player,
+        flashing: false,
+        hp: 10,
+        max: 10,
+        result: None,
+    };
+    let buf = painted_with(&s, |v| {
+        v.fight_box = Some(FightBoxView {
+            banner: None,
+            hp_name: "HP".into(),
+            sides: [fighter("Alda"), fighter("Brom")],
+        });
+    });
+    assert!(find(&buf, 1, "Alda").is_some(), "{:?}", rows(&buf));
+    let buf = painted_with(&s, |v| {
+        v.progress = Some(ProgressView::Exp(ExpView {
+            name: "Alda".into(),
+            exp_name: "EXP".into(),
+            exp: 40,
+            max: 100,
+        }));
+    });
+    assert!(find(&buf, 1, "EXP").is_some(), "{:?}", rows(&buf));
 }

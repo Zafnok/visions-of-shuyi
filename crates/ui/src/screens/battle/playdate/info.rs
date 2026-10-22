@@ -54,14 +54,19 @@ struct Page<'a> {
 }
 
 impl Page<'_> {
-    /// `text` from `dx` cells along row `dy` of the window (counted from
-    /// its first row inside the frame), cut to `w` cells: nothing past
-    /// the window's last row.
-    fn text(&mut self, (dx, dy): (i32, i32), w: usize, text: &str) {
+    /// The screen row of row `dy` of the window (counted from its first
+    /// row inside the frame), if it is inside the frame.
+    fn row(&self, dy: i32) -> Option<i32> {
         let y = self.top + dy;
-        if y >= self.bottom {
+        (y < self.bottom).then_some(y)
+    }
+
+    /// `text` from `dx` cells along row `dy` of the window, cut to `w`
+    /// cells: nothing past the window's last row.
+    fn text(&mut self, (dx, dy): (i32, i32), w: usize, text: &str) {
+        let Some(y) = self.row(dy) else {
             return;
-        }
+        };
         let ink = inks(self.ctx);
         let w = w.min(self.width.saturating_sub(to_usize(dx)));
         self.buf
@@ -76,8 +81,7 @@ impl Page<'_> {
     /// `text` as the bar at `dx` along row `dy`: white letters on black,
     /// where the PC lights it.
     fn lit(&mut self, (dx, dy): (i32, i32), text: &str) {
-        let y = self.top + dy;
-        if y < self.bottom {
+        if let Some(y) = self.row(dy) {
             let (bg, fg) = inks(self.ctx).bar;
             self.buf.print(self.x + dx, y, text, fg, bg);
         }
@@ -112,8 +116,7 @@ fn paint_unit(pen: &mut Page<'_>, view: &InfoView) {
     pen.text((0, 0), pen.width, &view.class_level);
     let hp = format!("{} {}/{}", view.hp_name, view.hp, view.max);
     pen.text((0, 1), 10, &hp);
-    let y = pen.top + 1;
-    if y < pen.bottom {
+    if let Some(y) = pen.row(1) {
         let at = (pen.x + 11, y);
         hp_bar(
             pen.ctx,

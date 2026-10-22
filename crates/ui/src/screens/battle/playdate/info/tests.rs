@@ -201,6 +201,7 @@ fn an_enemy_has_its_own_name_in_the_frame_and_dashes_for_what_it_lacks() {
         shown[4],
         "║ Spells                                         ║"
     );
+    assert_eq!(shown[5], shown[2]);
 }
 
 #[test]
@@ -233,12 +234,13 @@ fn long_names_are_cut_where_their_column_or_their_numbers_start() {
             v.affinities = vec![(long("Fire"), "Weak".into())];
             v.skills[0].name = long("Inspire");
             v.skills[0].effect = long("ally");
-            v.spells = vec![InfoSpellView {
-                name: long("Fire"),
+            let spell = |name: &str| InfoSpellView {
+                name: long(name),
                 equipped: false,
                 left: 2,
                 uses: 3,
-            }];
+            };
+            v.spells = vec![spell("Fire"), spell("Ice")];
         })
     };
     let x = |n: usize| "x".repeat(n);
@@ -260,8 +262,6 @@ fn long_names_are_cut_where_their_column_or_their_numbers_start() {
     assert_eq!(rest[2], format!("║ A Inspire {}… 2/2 ║", x(31)));
     assert_eq!(rest[3], format!("║   ally {}… ║", x(38)));
     // A spell's name up to a cell before its uses, in its half.
-    assert_eq!(
-        rest[6],
-        format!("║   Fire {}… 2/3{}║", x(10), " ".repeat(25))
-    );
+    let spells = format!("║   Fire {}… 2/3    Ice {}… 2/3 ║", x(10), x(11));
+    assert_eq!(rest[6], spells);
 }
