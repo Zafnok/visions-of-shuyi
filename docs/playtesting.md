@@ -30,9 +30,9 @@ Bots:
 
 | Bot | Plays in | How it plays | A try is a success when… |
 | --- | -------- | ------------ | ------------------------ |
-| `casual` | Casual mode | Cares about winning and the lord only; other units falling costs it nothing. Thinks little and makes mistakes. | it wins |
-| `normal` | Classic | Wants nobody dead, spends items when that helps, doesn't hurry. Thinks more, makes few mistakes. | it wins, nobody dies, and it used at most 3 items |
-| `hardcore` | Classic | Nobody dead, few turns, few items. Thinks the most and never strays: it stands in for veterans. | it wins, nobody dies, and it used at most 1 item |
+| `casual` | Casual mode | Cares about winning and the lord. A unit falling doesn't upset it, but its units are tools it needs to win. Plans little and makes mistakes: a weaker player than Normal. | it wins |
+| `normal` | Classic | Wants nobody dead, spends items when that helps, doesn't hurry. Plans further, makes few mistakes. | it wins, nobody dies, and it used at most 3 items |
+| `hardcore` | Classic | Nobody dead, few turns, few items. Plans the furthest and never strays: it stands in for veterans. | it wins, nobody dies, and it used at most 1 item |
 | `baseline` | `--mode` | The enemy AI playing the player's side: charges, attacks the best target, never uses items. A yardstick, with no target. | — |
 
 The army a bot fields is the characters of the battle's player slots, as
@@ -41,54 +41,65 @@ they are in the character data (the same army the debug Quick Battle uses).
 ### How the personas think
 
 Casual, Normal and Hardcore are the same bot with different settings
-(`crates/bots/personas.ron`). Before each command it:
+(`crates/bots/personas.ron`): the engine's turn planner. Before each
+command it:
 
-1. **talks** first, if a unit can talk to someone it hasn't talked to yet
-   (talking costs nothing);
-2. lists a few **candidate** commands: every attack, the one doing the most
-   damage first; what the enemy AI would do in its place; healing a
-   wounded unit; moving each unit as far towards the enemy (the boss, the
-   tile to seize) as it can walk; and ending the turn last;
-3. plays each candidate out a few times on **copies** of the battle with
-   fresh luck and no hidden reinforcements: after the candidate, its own
-   turn ends (it decides its other units itself, one by one) and, if it
-   looks that far, the enemy replies as the enemy AI does;
-4. **scores** where each copy ended, by what the persona cares about, and
-   picks the candidate whose copies ended best (or, with a temperature,
-   sometimes one a little worse).
+1. **talks** first, if two units can talk that haven't yet (talking costs
+   nothing);
+2. **plans its turn**: short sequences of its own commands, each step from
+   a list of **candidates**: each unit's best attack on each target; what
+   the enemy AI would do in its place; healing a wounded unit; moving each
+   unit as far towards the enemy (the boss, the tile to seize) as it can
+   walk; moving each unit to the nearest tile out of every enemy's reach;
+   the other ways of attacking; and ending the turn last;
+3. plays each partial plan on a few **copies** of the battle with fresh
+   luck and no hidden reinforcements, and **scores** where each copy got
+   to, by what the persona cares about. It never plays the enemy's turn
+   out: like a player, it sees the danger zone and the forecasts (which
+   enemies can reach which unit, and how hard they would hit and be hit
+   back), not whom the enemy will choose (Nick, 2026-10-21);
+4. keeps the best few partial plans at each step, extends them, and plays
+   the first command of the best plan (or, with a temperature, sometimes
+   a little worse one); then it plans again for its next command.
 
 **Skill** is the thinking budget and the mistakes:
 
 | Setting | Casual | Normal | Hardcore | What |
 | ------- | -----: | -----: | -------: | ---- |
-| `candidates` | 8 | 12 | 16 | Commands weighed per decision. |
-| `samples` | 4 | 8 | 16 | Copies each is played out on. |
-| `horizon` | `Sides(1)` | `Sides(2)` | `Sides(2)` | How far a copy is played: the candidate alone, or through the enemy's reply. |
-| `commands` | 60 | 120 | 120 | The most commands a copy plays. |
-| `temperature` | 100 | 25 | 0 | How far a pick may stray, in points: a candidate this many points below the best is half as likely. 0 always picks the best. |
+| `width` | 2 | 4 | 8 | Partial plans kept at each step. |
+| `candidates` | 10 | 10 | 12 | Commands tried from each partial plan. |
+| `depth` | 2 | 3 | 4 | The most of its own commands a plan holds. |
+| `samples` | 2 | 4 | 6 | Copies each partial plan is played on. |
+| `temperature` | 100 | 25 | 0 | How far a pick may stray, in points: a command this many points below the best is half as likely. 0 always picks the best. |
 
-**Player type** is what it scores, in points per thing a copy changed:
+**Player type** is what it scores, in points per thing counted (a cost is
+negative):
 
 | Weight | Casual | Normal | Hardcore | Per |
 | ------ | -----: | -----: | -------: | --- |
 | `won` | 10000 | 10000 | 10000 | the battle won |
 | `lost` | −10000 | −10000 | −10000 | the battle lost |
 | `lord_fell` | −10000 | −10000 | −10000 | lord fallen |
-| `unit_fell` | 0 | −15000 | −15000 | other unit fallen (more than a win is worth) |
-| `hp_lost` | 0 | −5 | −5 | HP a standing unit lost (a heal counts back) |
-| `lord_hp_lost` | −20 | −5 | −5 | HP the lord lost |
+| `unit_fell` | −1000 | −15000 | −15000 | other unit fallen (for Normal and Hardcore more than a win is worth) |
+| `hp_lost` | 0 | −5 | −10 | HP a standing unit lost (a heal counts back) |
+| `lord_hp_lost` | −20 | −5 | −10 | HP the lord lost |
 | `enemy_fell` | 100 | 100 | 150 | enemy fallen |
 | `progress` | 10 | 10 | 15 | enemy HP taken in a rout (the boss's in a boss fight, a tile closer in a seize) |
 | `approach` | 2 | 2 | 3 | tile the units came closer to the nearest enemy (the boss, the tile to seize), walking |
-| `turns` | 0 | 0 | −200 | turn that began |
+| `exposed` | 0 | −5 | −10 | HP the enemies that can reach a unit are expected to take from it next phase, by the forecast |
+| `lord_exposed` | −20 | −5 | −10 | the same for the lord (not counted once the lord is alone: waiting can't win) |
+| `at_risk` | −300 | −3000 | −3000 | unit that falls if every enemy that can reach it strikes and hits |
+| `lord_at_risk` | −5000 | −5000 | −5000 | the same for the lord (not counted once it is alone) |
+| `counter` | 10 | 10 | 15 | HP the units are expected to strike back at the enemies that can reach them |
+| `turns` | 0 | 0 | −200 | turn that began (a plan ends with its turn, so this counts only in a longer search) |
 | `items` | 0 | −50 | −300 | item used |
 
-Why the scoring and the copies work this way, and how they were fixed
-after the first runs stalled, is [ADR-0095](adr/0095-playtest-personas-are-the-engines-rollout-bot-with-the-games-order-playouts-and-tally.md).
-The settings were chosen from the player types' descriptions and are
-**fixed**: they are never changed to make a battle pass. Only the
-comparison with Nick's own play (ticket 0508) may change them, and never
-for one battle.
+Why the bots work this way, and what was changed after the first runs
+of Chapter 1 and why, is
+[ADR-0095](adr/0095-playtest-personas-plan-their-turn-and-score-what-a-player-sees.md).
+From now on the settings are **fixed**: they are never changed to make a
+battle pass. Only the comparison with Nick's own play (ticket 0508) may
+change them, and never for one battle.
 
 ## Running it
 
@@ -112,9 +123,9 @@ test files' `assets-test/battles/`) without `.ron`. Options:
 
 `cargo xtask playtest --help` prints the same list. Run it optimised:
 `cargo run --release -q -p xtask -- playtest ch01 --bot all`. The personas
-think a lot: 100 tries of all three on Chapter 1 take about 15 minutes of
-one core per try in all (Hardcore about 90 s a try, Normal 45 s, Casual
-6 s), so about 10 minutes on a 24-thread machine.
+think a lot: on Chapter 1 a try takes one core about 46 s for Hardcore,
+10 s for Normal and 2.4 s for Casual, so 100 tries of all three take about
+5 minutes on a 24-thread machine (and about 25 on CI's 4 cores).
 
 The command exits with 1 when the battle is **blocked**: Casual succeeds in
 under 20% of tries, the battle is basically unwinnable. A band missed is
@@ -125,32 +136,33 @@ the tables are in the job's summary.
 
 ## Reading the report
 
+Chapter 1 on 2026-10-22 (ticket 0506):
+
 ```
 ch01 · Normal tier · casual, normal, hardcore · turn cap 60
 100 tries (seeds 1–100)
 
-casual   · 64/100 succeed                band 60–85%   ✓
-normal   · 47/100 succeed                band 50–75%   ✗ too hard
-hardcore · 52/100 succeed                band 50–75%   ✓
-hardcore · turns median 10 (normal 14)   lower ✓
+casual   · 44/100 succeed               band 30–55%   ✓
+normal   · 53/100 succeed               band 50–75%   ✓
+hardcore · 50/100 succeed               band 50–75%   ✓
+hardcore · turns median 8 (normal 9)    lower ✓
 
-try 1 · casual · Victory · turns 12 · deaths 0 · fell Maud 1 · fell Maud turn 6 · items 0 · lord fell 0 · retreats 1 · turns 12 · won 1
+try 2 · casual · Victory · turns 17 · deaths 0 · fell Hollis Marr 1 · fell Hollis Marr turn 11 · items 3 · lord fell 0 · retreats 1 · turns 17 · won 1
 …
 
-casual   · Casual  · won 64/100 · retreats per try  0: 30  1: 21  2: 25  3+: 24 · most: Maud 41×
-                     items per try  median 0  max 0 · turns median 12 · 6.44 s per try · was 58/100 succeed
-normal   · Classic · won 61/100 · deaths per try  0: 55  1: 30  2: 12  3+: 3 · most: Maud 22×
-                     items per try  median 2  max 3 · turns median 14 · 44.48 s per try
-hardcore · Classic · won 60/100 · deaths per try  0: 70  1: 25  2: 4  3+: 1 · most: Rue 9×
-                     items per try  median 1  max 2 · turns median 10 · 90.00 s per try
-previous  2026-10-21 14:05 UTC · commit d6bd82b
+casual   · Casual  · won 44/100 · retreats per try  0: 1  1: 8  2: 19  3+: 72 · most: Tamsin Rook 94×
+                     items per try  median 3  max 3 · turns median 27 · 2.40 s per try
+normal   · Classic · won 92/100 · deaths per try  0: 53  1: 37  2: 9  3+: 1 · most: Hollis Marr 31×
+                     items per try  median 3  max 3 · turns median 10 · 10.27 s per try
+hardcore · Classic · won 85/100 · deaths per try  0: 74  1: 20  2: 5  3+: 1 · most: Hollis Marr 13×
+                     items per try  median 1  max 3 · turns median 8 · 45.55 s per try
 ```
 
 | Part | Meaning |
 | ---- | ------- |
 | first line | Battle, its tier (its `difficulty`, which picks the bands), the bots, the turn cap. |
 | `N/100 succeed … band …` | How many tries met the bot's success rule, and the band its tier wants: **✓** in the band, **✗ too hard** under it, **⚠ too easy** over it. `blocked` after it: under the 20% floor. |
-| `turns median … lower` | Hardcore's median turns against Normal's (over the tries that meet Hardcore's success rule): **✓** when Hardcore is faster. A **✗** here says the bots are wrong, not the map. **–** when one has no such try. |
+| `turns median … lower` | Hardcore's median turns against Normal's, both over the tries won with nobody dying: **✓** when Hardcore is faster. A **✗** here says the bots are wrong, not the map. **–** when one has no such try. |
 | `try N · …` | One line per try: `N` is its seed, how it ended (`Victory`, `Defeat`, or `unfinished` at the turn cap), the turn it stopped on, then its measures: `deaths` (Classic) or `retreats` (Casual), each unit that fell (`fell Maud 1`) and on which turn (`fell Maud turn 6`), `items` used, whether the `lord fell`, `turns` played (the cap if it stopped there), `won`. |
 | bot lines | Per bot: its mode, the tries won, how many tries had 0, 1, 2, 3 or more units fall and the unit that fell most often, items used per try, the median turns, how long a try took (the only numbers that differ between two runs with the same arguments), and the previous run's success count as `was …`. |
 | `previous` | The run before this one, when there was one; its numbers are the `was …`. |
@@ -171,17 +183,20 @@ shows as "47/100 succeed … was 58/100 succeed". The folder is under
 ## For developers
 
 - **The engine's part** (`shuyi_core::bots`): the bot trait and the play
-  loop (ticket 1116); the rollout bot, `Determinize`, `Evaluate`, `Order`,
-  `Playout`, `Rollout` and `RolloutSettings` (engine#2125); the playtest
-  runner, `Entrant`, `Measure`, `Tries`, `play_tries`, `judge`, the checks
-  (`Check::Rate`, `Check::Median`) and the report's table (engine#2126).
+  loop (ticket 1116); `Determinize`, `Evaluate` and `Order` (engine#2125);
+  the turn planner, `TurnPlan` and `PlanSettings` (engine#2128); the
+  playtest runner, `Entrant`, `Measure`, `Tries`, `play_tries`, `judge`,
+  the checks (`Check::Rate`, `Check::Median`) and the report's table
+  (engine#2126).
 - **The game's part**:
   - `trpg-core`: `Determinize` for `BattleState` (fresh luck, pending
-    reinforcements dropped: `reseed_luck`, `drop_pending_reinforcements`,
-    both for the bots only).
+    reinforcements dropped: `reseed_luck`, `drop_pending_reinforcements`)
+    and `BattleState::threat_forecast` (the forecast a player reads off a
+    threatening enemy), all for the bots only.
   - `crates/bots` (`trpg-bots`): `BaselineBot`; the personas
     (`persona.rs`: the candidates' `order`, the scoring `Tally` and
-    `Weights`, `PersonaBot` with the talk rule); the battle on the runner
+    `Weights` with the danger the units stand in, `PersonaBot` with the
+    talk rule); the battle on the runner
     (`playtest.rs`: `BattleMeasure`, `BattleEntrant`, `Targets`). Pure, like
     `core`: no files, no clock. It is dev tooling: `trpg-ui` and
     `trpg-app` never depend on it, and it never depends on them (a test in

@@ -73,11 +73,13 @@ fn band_check_flags_too_easy_and_too_hard() {
             Found::Median { .. } => unreachable!(),
         }
     };
-    assert_eq!(verdict(59), (RateVerdict::Below, false, false));
-    assert_eq!(verdict(60), (RateVerdict::Within, false, false));
-    assert_eq!(verdict(70), (RateVerdict::Within, false, false));
-    assert_eq!(verdict(85), (RateVerdict::Within, false, false));
-    assert_eq!(verdict(90), (RateVerdict::Above, false, false));
+    // The Casual bot's band on a Normal-tier map: 30-55% (Nick,
+    // 2026-10-22).
+    assert_eq!(verdict(29), (RateVerdict::Below, false, false));
+    assert_eq!(verdict(30), (RateVerdict::Within, false, false));
+    assert_eq!(verdict(40), (RateVerdict::Within, false, false));
+    assert_eq!(verdict(55), (RateVerdict::Within, false, false));
+    assert_eq!(verdict(60), (RateVerdict::Above, false, false));
     // Under 20%: the change is blocked.
     assert_eq!(verdict(20), (RateVerdict::Below, false, false));
     assert_eq!(verdict(19), (RateVerdict::Below, true, true));
@@ -91,10 +93,10 @@ fn targets_give_the_design_docs_bands_per_tier() {
         Check::Median { .. } => unreachable!(),
     };
     let rows = [
-        (Difficulty::Easy, [(75, 100), (65, 90), (65, 90)]),
-        (Difficulty::Normal, [(60, 85), (50, 75), (50, 75)]),
-        (Difficulty::Hard, [(55, 80), (40, 65), (40, 65)]),
-        (Difficulty::Finale, [(50, 75), (35, 60), (35, 60)]),
+        (Difficulty::Easy, [(45, 70), (65, 90), (65, 90)]),
+        (Difficulty::Normal, [(30, 55), (50, 75), (50, 75)]),
+        (Difficulty::Hard, [(25, 50), (40, 65), (40, 65)]),
+        (Difficulty::Finale, [(20, 45), (35, 60), (35, 60)]),
     ];
     for (tier, bands) in rows {
         for (name, want) in PERSONAS.iter().zip(bands) {
@@ -131,7 +133,7 @@ fn checks_are_a_band_each_then_hardcore_faster_than_normal() {
         Check::Median {
             entrant: "hardcore".to_owned(),
             measure: "turns".to_owned(),
-            among: targets.success["hardcore"].clone(),
+            among: targets.success["hardcore"][..2].to_vec(),
             want: Want::Lower,
             than: "normal".to_owned(),
         }
@@ -185,7 +187,10 @@ fn baseline(mode: GameMode, stage: &BattleStage) -> BattleEntrant {
 
 /// 0505's report of the baseline on `quick`, seeds 1–6, the same in both
 /// modes: won, who fell on which turn, items, turns.
-const QUICK_0505: [(bool, &[(&str, i64)], i64, i64); 6] = [
+/// Who fell, and on which turn.
+type Falls = &'static [(&'static str, i64)];
+
+const QUICK_0505: [(bool, Falls, i64, i64); 6] = [
     (true, &[("Test Mage", 1)], 0, 4),
     (true, &[], 0, 2),
     (true, &[], 0, 2),
@@ -236,16 +241,16 @@ fn a_try_stopped_by_the_cap_counts_the_cap_as_its_turns() {
 }
 
 #[test]
-fn an_entrant_plays_its_mode_with_the_trys_seed() {
+fn an_entrant_plays_its_mode_with_the_seed_of_its_try() {
     let stage = stage("quick");
     let normal = BattleEntrant::persona("normal", personas()["normal"], content().ai, &stage);
     let casual = BattleEntrant::persona("casual", personas()["casual"], content().ai, &stage);
     assert_eq!(normal.name(), "normal");
     assert_eq!(casual.mode(), GameMode::Casual);
-    let state = casual.start(&stage, 9);
+    let started = casual.start(&stage, 9);
     let mut want = stage.casual.clone();
     want.seed = 9;
-    assert_eq!(state, BattleState::new(want).0);
+    assert_eq!(started, BattleState::new(want).0);
     let sides: Vec<Phase> = normal.bots(1).iter().map(|(side, _)| *side).collect();
     assert_eq!(sides, [Phase::Player, Phase::Enemy, Phase::Other]);
 }

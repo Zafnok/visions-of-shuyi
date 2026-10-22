@@ -271,13 +271,15 @@ analog sticks (today they are four digital directions).
 
 ## `bots`
 
-Done (1116, engine#2125, engine#2126, game 0506): the bot trait, the
-play loop, the rollout bot and the playtest runner are the kit's
-(`shuyi_core::bots`: `Bot<R>`, `play` and `play_observed`, `RandomBot`;
-`Determinize`, `Evaluate`, `Order`, `Playout`, `Rollout`; `Entrant`,
+Done (1116, engine#2125, engine#2126, engine#2128, game 0506): the bot
+trait, the play loop, the rollout bot, the turn planner and the playtest
+runner are the kit's (`shuyi_core::bots`: `Bot<R>`, `play` and
+`play_observed`, `RandomBot`; `Determinize`, `Evaluate`, `Order`,
+`Playout`, `Rollout`; `TurnPlan`, `PlanSettings`; `Entrant`,
 `Measure`, `Check`, `play_tries`, `judge`, `run` and the report's
 table), over `TurnRules` and `Sides`. The game keeps `Determinize` for
-`BattleState` (in `trpg-core`), and in `trpg-bots` its bots
+`BattleState` and `threat_forecast` (in `trpg-core`), and in
+`trpg-bots` its bots
 (`BaselineBot`, `PersonaBot`; `PlayerBot` is any `Bot<BattleState>`), the
 personas' order and scoring, the battle's `Measure` and `Entrant`s, and
 `targets.ron` turned into the engine's checks.

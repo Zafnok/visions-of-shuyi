@@ -158,8 +158,8 @@ fn scoring_per_persona() {
         ..won
     };
     let nothing = Tally::default();
-    // Casual: a win is a win, whoever fell.
-    assert_eq!(score("casual", won_one_fell), score("casual", won));
+    // Casual: a fall costs a little (units are tools), never a win.
+    assert!(score("casual", won_one_fell) < score("casual", won));
     assert!(score("casual", won_one_fell) > score("casual", nothing));
     // Normal and Hardcore: a fallen unit costs more than a win is worth.
     for name in ["normal", "hardcore"] {
@@ -438,25 +438,10 @@ fn order_puts_attacks_first_by_expected_damage() {
     let legal = legal_commands(&s);
     let ordered = order(&s, legal.clone(), &content().ai, usize::MAX);
     let is_attack = |c: &Command| attacks(c, 1, 2) || attacks(c, 1, 3);
-    let first_non_attack = ordered.iter().position(|c| !is_attack(c)).unwrap();
-    let attack_list = &ordered[..first_non_attack];
-    assert!(!ordered[first_non_attack..].iter().any(is_attack));
-    // One of each attack (target, weapon, art or active), from its best
-    // tile: every one the legal list has, from one tile or another.
     let action = |c: &Command| match c {
         Command::Act { action, .. } => action.clone(),
         _ => unreachable!(),
     };
-    assert_eq!(
-        attack_list.len(),
-        legal.iter().filter(|c| is_attack(c)).count() - dropped_attacks(&legal)
-    );
-    for (i, a) in attack_list.iter().enumerate() {
-        assert!(
-            !attack_list[..i].iter().any(|b| action(b) == action(a)),
-            "{a:?} twice"
-        );
-    }
     let rank = |c: &Command| match c {
         Command::Act { unit, dest, action } => {
             let forecast = s.preview_attack(*unit, *dest, action).unwrap().forecast;
@@ -465,11 +450,36 @@ fn order_puts_attacks_first_by_expected_damage() {
         }
         _ => unreachable!(),
     };
-    for pair in attack_list.windows(2) {
-        assert!(rank(&pair[0]) >= rank(&pair[1]), "{pair:?}");
+    // First, one attack on each target: the best way of striking it, from
+    // any tile, the better first.
+    let firsts = &ordered[..2];
+    assert!(
+        attacks(&firsts[0], 1, 2) != attacks(&firsts[1], 1, 2),
+        "{firsts:?}"
+    );
+    assert!(rank(&firsts[0]) >= rank(&firsts[1]));
+    for first in firsts {
+        let target = |c: &Command| attacks(c, 1, 2) == attacks(first, 1, 2);
+        let best = legal
+            .iter()
+            .filter(|c| is_attack(c) && target(c))
+            .map(rank)
+            .max();
+        assert_eq!(Some(rank(first)), best, "{first:?}");
     }
-    // Each from its best tile.
-    for a in attack_list {
+    assert!(!is_attack(&ordered[2]), "{:?}", ordered[2]);
+    // Every other way of striking comes later, once each, from its best
+    // tile: every one the legal list has.
+    let all: Vec<&Command> = ordered.iter().filter(|c| is_attack(c)).collect();
+    assert_eq!(
+        all.len(),
+        legal.iter().filter(|c| is_attack(c)).count() - dropped_attacks(&legal)
+    );
+    for (i, a) in all.iter().enumerate() {
+        assert!(
+            !all[..i].iter().any(|b| action(b) == action(a)),
+            "{a:?} twice"
+        );
         let best = legal
             .iter()
             .filter(|c| is_attack(c) && action(c) == action(a))
@@ -478,9 +488,38 @@ fn order_puts_attacks_first_by_expected_damage() {
             .unwrap();
         assert_eq!(rank(a), best, "{a:?}");
     }
-    // The baseline's own pick comes next if it isn't an attack already.
+    let later = &all[2..];
+    for pair in later.windows(2) {
+        assert!(rank(pair[0]) >= rank(pair[1]), "{pair:?}");
+    }
+    // The baseline's own pick comes right after the firsts, if it isn't
+    // one of them.
     let pick = next_command(&s, &content().ai).unwrap();
-    assert!(attack_list.contains(&pick) || ordered[first_non_attack] == pick);
+    assert!(firsts.contains(&pick) || ordered[2] == pick);
+}
+
+#[test]
+fn every_unit_that_can_strike_has_a_say_before_a_second_way_of_striking() {
+    // Two units can each strike the same enemy in several ways (arts and
+    // actives): each unit's best comes before anyone's second.
+    let s = start(vec![player(1, 4), player(2, 3), enemy(3, 6)]);
+    let ordered = order(&s, legal_commands(&s), &content().ai, usize::MAX);
+    let firsts: Vec<UnitId> = ordered[..2]
+        .iter()
+        .map(|c| match c {
+            Command::Act { unit, .. } => *unit,
+            _ => unreachable!(),
+        })
+        .collect();
+    assert!(
+        firsts.contains(&UnitId(1)) && firsts.contains(&UnitId(2)),
+        "{:?}",
+        &ordered[..2]
+    );
+    assert!(attacks(&ordered[0], 1, 3) || attacks(&ordered[0], 2, 3));
+    assert!(attacks(&ordered[1], 1, 3) || attacks(&ordered[1], 2, 3));
+    assert_eq!(attack_key(&ordered[0]).1, Some(UnitId(3)));
+    assert_eq!(attack_key(&Command::EndPhase), (UnitId(0), None));
 }
 
 #[test]
@@ -720,10 +759,15 @@ fn danger_counts_the_threats_a_player_can_see() {
     // Enemy 4 free to move reaches the lord too.
     let s = threatened(enemy(4, 2));
     let on_lord = s.threat_forecast(UnitId(4), UnitId(1)).unwrap().attacker;
-    let lord = danger(&s);
-    assert_eq!(lord.lord_exposed, expected_damage(&on_lord) / 100);
-    assert!(lord.counter > danger(&threatened(stationary(enemy(4, 2)))).counter);
-    assert_eq!(lord.lord_at_risk, i64::from(all_hit(&on_lord) >= 20));
+    let both = danger(&s);
+    assert_eq!(both.lord_exposed, expected_damage(&on_lord) / 100);
+    assert!(both.counter > danger(&threatened(stationary(enemy(4, 2)))).counter);
+    assert_eq!(both.lord_at_risk, i64::from(all_hit(&on_lord) >= 20));
+    // A lord left alone: its danger doesn't count.
+    let alone = start(vec![lord(player(1, 0)), enemy(4, 2)]);
+    assert_eq!(danger(&alone).lord_exposed, 0);
+    assert_eq!(danger(&alone).lord_at_risk, 0);
+    assert!(danger(&alone).counter > 0);
     // Nobody in reach: no danger.
     let mut far = stationary(enemy(3, 0));
     far.pos = Pos::new(13, 7);
@@ -849,8 +893,8 @@ fn sacrifice(mode: GameMode) -> BattleState {
     // Plain blows only: no art or active that spares a counter.
     let plain = |units| BattleSetup {
         mode,
-        arts: Default::default(),
-        skills: Default::default(),
+        arts: std::sync::Arc::default(),
+        skills: std::sync::Arc::default(),
         ..setup(units)
     };
     let probe = BattleState::new(plain(units(99))).0;
@@ -880,7 +924,14 @@ fn sacrifice(mode: GameMode) -> BattleState {
 
 #[test]
 fn casual_accepts_retreats_normal_does_not() {
-    let casual = play_out(sacrifice(GameMode::Casual), &mut bot("casual", 1), 1);
+    // What each type prefers when it sees the whole line: Casual's own
+    // weights on a plan wide enough to keep every first step (its own is
+    // too narrow to keep one that loses a unit: Nick's "units are tools").
+    let mut casual = persona("casual");
+    casual.settings.width = casual.settings.candidates;
+    casual.settings.temperature = 0;
+    let mut casual = PersonaBot::new(&casual, content().ai, 1);
+    let casual = play_out(sacrifice(GameMode::Casual), &mut casual, 1);
     assert_eq!(casual.outcome(), Some(Outcome::Victory));
     let fell: Vec<UnitId> = casual.fallen().iter().map(|u| u.id).collect();
     assert_eq!(fell, [UnitId(1), UnitId(3)]);

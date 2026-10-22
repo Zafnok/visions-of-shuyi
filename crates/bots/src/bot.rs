@@ -4,8 +4,8 @@ use shuyi_core::Bot;
 use trpg_core::{AiWeights, BattleState, Command, next_command};
 
 /// A player made of code: the engine's [`Bot`] over the battle.
-/// [`play_battle`](crate::play_battle) asks it for every command of the
-/// Player phase, the phase's end included.
+/// The engine's play loop asks it for every command of the Player phase,
+/// the phase's end included.
 ///
 /// A bot is built for one try, with a `seed: u64` for any randomness of its
 /// own and for the copies it plans on (the engine's `Determinize`, which

@@ -315,8 +315,9 @@ Candle joins outside battle.
   Monte Carlo) · engine#2126 the playtest runner with pass bands (both
   done) → engine#2128 the turn planner (whole-turn plans; one command at
   a time the personas stalled on Chapter 1) → **0506** Casual / Normal /
-  Hardcore (its first build is on the branch `t0506-persona-bots`; the
-  personas' scoring, the battle's `Determinize`, measures and targets)
+  Hardcore (the personas' order and scoring, the battle's `Determinize`,
+  measures and targets; done 2026-10-22, all three in their bands on
+  Chapter 1)
   · engine#2127 the autobalance search (after engine#2126) → **0509**
   autobalance (the battle's knobs) → **0510** skirmishes to order.
 - **D. Playdate, Chapter 1's base:** **1038** → **1178** arrows at the

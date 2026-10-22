@@ -70,16 +70,16 @@ impl BattleEntrant {
         ai: AiWeights,
         stage: &BattleStage,
     ) -> Self {
-        let (state, _) = BattleState::new(stage.setup(mode).clone());
-        let waiting = state.reinforcements().iter().map(|r| &r.unit);
-        let cast = state.units().iter().chain(waiting);
+        let (first, _) = BattleState::new(stage.setup(mode).clone());
+        let waiting = first.reinforcements().iter().map(|r| &r.unit);
+        let cast = first.units().iter().chain(waiting);
         BattleEntrant {
             name: name.into(),
             mode,
             player,
             ai,
             cast: cast.map(|u| (u.id, (u.name.clone(), u.is_lord))).collect(),
-            start: BattleMeasures::new(&state),
+            start: BattleMeasures::new(&first),
         }
     }
 

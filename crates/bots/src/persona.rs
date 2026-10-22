@@ -14,6 +14,7 @@
 //! scoring ([`Tally`], with the danger the units stand in) and the talk
 //! rule ([`PersonaBot`]).
 
+use std::cmp::Reverse;
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
@@ -125,7 +126,8 @@ pub struct Tally {
     /// counts. It is the same at the start for every candidate, so it is
     /// counted at the end only.
     pub exposed: i64,
-    /// The same for the lords.
+    /// The same for the lords, unless a lord is the last player unit
+    /// standing: then waiting can't win, and its danger isn't counted.
     pub lord_exposed: i64,
     /// Where the playout ends, the non-lord player units that would fall if
     /// every enemy that can reach them struck and hit.
@@ -240,7 +242,7 @@ fn approach(start: &BattleState, end: &BattleState) -> i64 {
 /// the engine's flow field, as the enemy AI walks ([`next_command`]).
 struct Goals<'a> {
     state: &'a BattleState,
-    goals: Vec<Pos>,
+    targets: Vec<Pos>,
     fields: BTreeMap<u8, Grid<Option<u32>>>,
 }
 
@@ -261,7 +263,7 @@ impl<'a> Goals<'a> {
         };
         (!goals.is_empty()).then(|| Goals {
             state,
-            goals,
+            targets: goals,
             fields: BTreeMap::new(),
         })
     }
@@ -270,7 +272,7 @@ impl<'a> Goals<'a> {
     /// onto a goal's tile is free); `None` if it can't get there.
     fn distance(&mut self, unit: &Unit, pos: Pos) -> Option<i64> {
         let movement = self.state.classes().get(&unit.class)?.movement_type;
-        let (state, goals) = (self.state, &self.goals);
+        let (state, goals) = (self.state, &self.targets);
         let field = self.fields.entry(movement.0).or_insert_with(|| {
             let tiles = &state.map().tiles;
             let cost = |tile: Pos| {
@@ -298,13 +300,60 @@ struct Danger {
 
 /// The danger the player's units stand in, in `state` ([`Tally::exposed`]).
 fn danger(state: &BattleState) -> Danger {
+    let threats = threats(state);
+    let mut out = Danger::default();
+    // A lord left alone has nobody to wait for: waiting can't win, so its
+    // danger doesn't hold it back.
+    let alone = !state
+        .units()
+        .iter()
+        .any(|u| u.faction == Faction::Player && !u.is_lord);
+    for unit in state
+        .units()
+        .iter()
+        .filter(|u| u.faction == Faction::Player)
+    {
+        let (mut expected, mut worst) = (0, 0);
+        for (enemy, strikes) in &threats {
+            if !strikes(unit.pos) {
+                continue;
+            }
+            if let Some(forecast) = state.threat_forecast(*enemy, unit.id) {
+                expected += expected_damage(&forecast.attacker);
+                worst += all_hit(&forecast.attacker);
+                let back = forecast.defender.as_ref().map_or(0, expected_damage) / 100;
+                let enemy_hp = state.unit(*enemy).map_or(0, |e| i64::from(e.hp));
+                out.counter += back.min(enemy_hp);
+            }
+        }
+        let hp = i64::from(unit.hp);
+        let exposed = (expected / 100).min(hp);
+        let at_risk = i64::from(worst >= hp && worst > 0);
+        if unit.is_lord && alone {
+        } else if unit.is_lord {
+            out.lord_exposed += exposed;
+            out.lord_at_risk += at_risk;
+        } else {
+            out.exposed += exposed;
+            out.at_risk += at_risk;
+        }
+    }
+    out
+}
+
+/// An enemy, and whether it can strike a tile in its next phase.
+type Threat<'a> = (UnitId, Box<dyn Fn(Pos) -> bool + 'a>);
+
+/// Each enemy of the player, and whether it can strike a tile in its next
+/// phase: the danger zone, one enemy at a time, as the player sees it (one
+/// that never moves only from its own tile).
+fn threats(state: &BattleState) -> Vec<Threat<'_>> {
     let ranges = |u: &Unit| u.attack_ranges(state.classes(), state.items(), state.spells());
     let enemies = state
         .units()
         .iter()
         .filter(|u| u.faction.is_hostile_to(Faction::Player));
-    // Each enemy and whether it can strike a tile in its next phase.
-    let threats: Vec<(UnitId, Box<dyn Fn(Pos) -> bool>)> = enemies
+    enemies
         .filter_map(|e| {
             let reach = ranges(e);
             let strikes: Box<dyn Fn(Pos) -> bool> = if e.ai == AiBehavior::Stationary {
@@ -328,38 +377,7 @@ fn danger(state: &BattleState) -> Danger {
             };
             Some((e.id, strikes))
         })
-        .collect();
-    let mut out = Danger::default();
-    for unit in state
-        .units()
-        .iter()
-        .filter(|u| u.faction == Faction::Player)
-    {
-        let (mut expected, mut worst) = (0, 0);
-        for (enemy, strikes) in &threats {
-            if !strikes(unit.pos) {
-                continue;
-            }
-            if let Some(forecast) = state.threat_forecast(*enemy, unit.id) {
-                expected += expected_damage(&forecast.attacker);
-                worst += all_hit(&forecast.attacker);
-                let back = forecast.defender.as_ref().map_or(0, expected_damage) / 100;
-                let enemy_hp = state.unit(*enemy).map_or(0, |e| i64::from(e.hp));
-                out.counter += back.min(enemy_hp);
-            }
-        }
-        let hp = i64::from(unit.hp);
-        let exposed = (expected / 100).min(hp);
-        let at_risk = i64::from(worst >= hp && worst > 0);
-        if unit.is_lord {
-            out.lord_exposed += exposed;
-            out.lord_at_risk += at_risk;
-        } else {
-            out.exposed += exposed;
-            out.at_risk += at_risk;
-        }
-    }
-    out
+        .collect()
 }
 
 /// The damage of `side`'s strikes if every one hits.
@@ -419,19 +437,25 @@ impl Order<BattleState> for PersonaOrder {
 
 /// `commands` (the legal commands of `state`) as a persona tries them:
 ///
-/// 1. the attacks, most expected damage dealt first (then least expected
-///    damage taken back), each unit's attack with the same weapon on the
-///    same target only once, from its best tile;
+/// 1. each unit's best attack on each target (the most expected damage
+///    dealt, then the least taken back, of every weapon, art and active
+///    and every tile), the best first, so that every unit that can strike
+///    has a say before any unit's second way of striking the same target;
 /// 2. the baseline's own pick ([`next_command`] with `ai`), so a persona
 ///    can always do what the enemy AI would, moves towards the enemy
 ///    included;
 /// 3. the heals (an item used on, or a heal cast at, a wounded unit), the
 ///    most wounded first, each once, from the healer's own tile if it can;
 /// 4. each ready unit's advance: waiting on the tile it can reach that is
-///    nearest the objective's goals, walking ([`Goals`]), if that is
+///    nearest the objective's goals, walking (the engine's flow field), if that is
 ///    nearer than where it stands;
-/// 5. the rest in the legal order;
-/// 6. ending the phase last, in place of the last of the first `cap` if
+/// 5. each ready unit's hold: waiting on the tile it can reach that no
+///    enemy can strike next phase (the danger zone), nearest the
+///    objective's goals, if it isn't its advance;
+/// 6. the other attacks: each other way of striking (weapon, art or
+///    active) once, from its best tile, the best first;
+/// 7. the rest in the legal order;
+/// 8. ending the phase last, in place of the last of the first `cap` if
 ///    there are that many, so the cap never cuts it.
 ///
 /// `Equip` is dropped (an attack equips its weapon) and so is `Talk` (the
@@ -455,6 +479,10 @@ pub fn order(
     let mut goals = Goals::of(state);
     // Each unit's best advance yet: the unit, its distance, the command.
     let mut advances: Vec<(UnitId, i64, Command)> = Vec::new();
+    // The same, among the tiles out of every enemy's reach.
+    let threats = threats(state);
+    let safe = |at: Pos| !threats.iter().any(|(_, strikes)| strikes(at));
+    let mut holds: Vec<(UnitId, i64, Command)> = Vec::new();
     for command in commands {
         match &command {
             Command::Equip { .. } | Command::Talk { .. } => {}
@@ -470,6 +498,9 @@ pub fn order(
                 } else {
                     if let (UnitAction::Wait, Some(goals)) = (action, goals.as_mut()) {
                         advance(state, goals, *unit, *dest, &command, &mut advances);
+                        if safe(*dest) {
+                            hold(state, goals, *unit, *dest, &command, &mut holds);
+                        }
                     }
                     rest.push(command);
                 }
@@ -477,9 +508,19 @@ pub fn order(
             Command::MoveAfter { .. } => rest.push(command),
         }
     }
-    attacks.sort_by(|a, b| b.0.cmp(&a.0));
-    heals.sort_by(|a, b| b.0.cmp(&a.0));
-    let mut out = once_per_action(attacks.into_iter().map(|(_, c)| c));
+    attacks.sort_by_key(|a| Reverse(a.0));
+    heals.sort_by_key(|h| Reverse(h.0));
+    let (mut out, others): (Vec<Command>, Vec<Command>) = {
+        let mut struck: Vec<(UnitId, Option<UnitId>)> = Vec::new();
+        once_per_action(attacks.into_iter().map(|(_, c)| c))
+            .into_iter()
+            .partition(|c| {
+                let key = attack_key(c);
+                let first = !struck.contains(&key);
+                struck.push(key);
+                first
+            })
+    };
     // Only the baseline's pick can be in two of the lists.
     let pick = pick.filter(|pick| !out.contains(pick));
     let not_pick = |c: &Command| pick.as_ref() != Some(c);
@@ -490,14 +531,63 @@ pub fn order(
             .filter(not_pick),
     );
     let advances: Vec<Command> = advances.into_iter().map(|(_, _, c)| c).collect();
-    let not_listed = |c: &Command| not_pick(c) && !advances.contains(c);
+    let holds: Vec<Command> = holds
+        .into_iter()
+        .map(|(_, _, c)| c)
+        .filter(|c| !advances.contains(c))
+        .collect();
+    let not_listed = |c: &Command| not_pick(c) && !advances.contains(c) && !holds.contains(c);
     out.extend(advances.iter().filter(|c| not_pick(c)).cloned());
+    out.extend(holds.iter().filter(|c| not_pick(c)).cloned());
+    out.extend(others.into_iter().filter(not_pick));
     out.extend(rest.into_iter().filter(not_listed));
     if end_phase {
         out.truncate(cap.max(1) - 1);
         out.push(Command::EndPhase);
     }
     out
+}
+
+/// Keeps `command` (unit `id` waiting on `dest`, a tile out of every
+/// enemy's reach) in `holds` if it is the unit's nearest yet to the goals.
+fn hold(
+    state: &BattleState,
+    goals: &mut Goals<'_>,
+    id: UnitId,
+    dest: Pos,
+    command: &Command,
+    holds: &mut Vec<(UnitId, i64, Command)>,
+) {
+    let Some(there) = state.unit(id).and_then(|unit| goals.distance(unit, dest)) else {
+        return;
+    };
+    match holds.iter_mut().find(|h| h.0 == id) {
+        Some(best) if there < best.1 => *best = (id, there, command.clone()),
+        Some(_) => {}
+        None => holds.push((id, there, command.clone())),
+    }
+}
+
+/// The unit acting and the unit it strikes, of an attack.
+fn attack_key(command: &Command) -> (UnitId, Option<UnitId>) {
+    match command {
+        Command::Act {
+            unit,
+            action: UnitAction::Attack { target, .. },
+            ..
+        }
+        | Command::Act {
+            unit,
+            action:
+                UnitAction::Cast {
+                    target: CastTarget::Unit(target),
+                    ..
+                },
+            ..
+        } => (*unit, Some(*target)),
+        Command::Act { unit, .. } => (*unit, None),
+        _ => (UnitId(0), None),
+    }
 }
 
 /// Keeps `command` (unit `id` waiting on `dest`) in `advances` if it is
@@ -519,9 +609,8 @@ fn advance(
     };
     match advances.iter_mut().find(|a| a.0 == id) {
         Some(best) if there < best.1 => *best = (id, there, command.clone()),
-        Some(_) => {}
         None if there < here => advances.push((id, there, command.clone())),
-        None => {}
+        _ => {}
     }
 }
 

@@ -316,7 +316,7 @@ pub fn play(
             None => Err(format!("no persona \"{name}\" in {PERSONAS_FILE}")),
         })
         .collect::<Result<Vec<_>, String>>()?;
-    let names: Vec<&str> = entrants.iter().map(|e| e.name()).collect();
+    let names: Vec<&str> = entrants.iter().map(BattleEntrant::name).collect();
     let checks = targets.checks(def.difficulty, &names);
 
     let (tries, took) = play_on_threads(&stage, &entrants, options)?;
@@ -342,20 +342,26 @@ pub fn play(
     })
 }
 
+/// One entrant's tries, by name.
+type NamedTries = (String, Vec<Tried>);
+
+/// A try done on a thread: its entrant's index, the try, and how long it
+/// took; or why it stopped.
+type Done = Result<(usize, Vec<Tried>, Duration), String>;
+
 /// Every entrant's tries, played try by try on the threads (each try is
 /// timed), with the time each entrant's tries took in all.
 fn play_on_threads(
     stage: &BattleStage,
     entrants: &[BattleEntrant],
     options: &Options,
-) -> Result<(Vec<(String, Vec<Tried>)>, Vec<Duration>), String> {
+) -> Result<(Vec<NamedTries>, Vec<Duration>), String> {
     let cores = std::thread::available_parallelism().map_or(1, std::num::NonZero::get);
     let threads = options.threads.unwrap_or(cores).max(1);
     let work: Vec<(usize, u64)> = (0..entrants.len())
         .flat_map(|e| (0..options.runs).map(move |i| (e, u64::from(i))))
         .collect();
     let work = &work;
-    type Done = Result<(usize, Vec<Tried>, Duration), String>;
     let done: Vec<Done> = std::thread::scope(|scope| {
         let workers: Vec<_> = (0..threads)
             .map(|worker| {
@@ -367,12 +373,9 @@ fn play_on_threads(
                             let entrant = &entrants[e];
                             let seed = options.seed.wrapping_add(i);
                             let started = Instant::now();
-                            let tried =
-                                play_tries(stage, entrant, seed..seed + 1, options.turn_cap)
-                                    .map_err(|err| {
-                                        format!("{}: try {seed}: {err}", entrant.name())
-                                    })?;
-                            Ok((e, tried, started.elapsed()))
+                            let one = play_tries(stage, entrant, seed..seed + 1, options.turn_cap)
+                                .map_err(|err| format!("{}: try {seed}: {err}", entrant.name()))?;
+                            Ok((e, one, started.elapsed()))
                         })
                         .collect::<Vec<Done>>()
                 })
@@ -384,14 +387,14 @@ fn play_on_threads(
         });
         joined.collect()
     });
-    let mut tries: Vec<(String, Vec<Tried>)> = entrants
+    let mut tries: Vec<NamedTries> = entrants
         .iter()
         .map(|e| (e.name().to_owned(), Vec::new()))
         .collect();
     let mut took = vec![Duration::ZERO; entrants.len()];
     for one in done {
-        let (e, mut tried, elapsed) = one?;
-        tries[e].1.append(&mut tried);
+        let (e, mut played, elapsed) = one?;
+        tries[e].1.append(&mut played);
         took[e] += elapsed;
     }
     Ok((tries, took))

@@ -44,15 +44,19 @@
 //   turns                 a turn that began
 //   items                 a pack item used
 {
-    // Plays in Casual mode and only cares about winning and the lord
-    // ("the # of deaths does not influence bot at all"): only the lord's
-    // danger counts. Plans two commands ahead, a narrow plan on few copies,
+    // Plays in Casual mode and cares about winning and the lord. A fall
+    // doesn't upset it ("the # of deaths does not influence bot at all"),
+    // but its units are tools it needs to win (Nick, 2026-10-22): a fall
+    // costs a tenth of a win, a unit left where it could fall a third of
+    // that; their HP doesn't count. It weighs as many commands at each
+    // step as Normal (a casual player still moves all their units), but
+    // plans only two ahead, keeps few plans on few copies, and strays. Plans two commands ahead, a narrow plan on few copies,
     // and it strays: a casual player.
     "casual": (
         mode: Casual,
         settings: (
             width: 2,
-            candidates: 6,
+            candidates: 10,
             depth: 2,
             samples: 2,
             temperature: 100,
@@ -61,7 +65,7 @@
             won: 10000,
             lost: -10000,
             lord_fell: -10000,
-            unit_fell: 0,
+            unit_fell: -1000,
             hp_lost: 0,
             lord_hp_lost: -20,
             enemy_fell: 100,
@@ -69,7 +73,7 @@
             approach: 2,
             exposed: 0,
             lord_exposed: -20,
-            at_risk: 0,
+            at_risk: -300,
             lord_at_risk: -5000,
             counter: 10,
             turns: 0,
@@ -114,7 +118,8 @@
     // plays better than Normal ("hardcore should play better than
     // normal"): plans four commands ahead, keeps twice as many plans on
     // more copies, never strays, and presses harder (enemies and progress
-    // are worth more).
+    // are worth more). It won't spend items, so it guards its HP twice as
+    // hard as Normal (Nick, 2026-10-22: fewer potions).
     "hardcore": (
         mode: Classic,
         settings: (
@@ -129,13 +134,13 @@
             lost: -10000,
             lord_fell: -10000,
             unit_fell: -15000,
-            hp_lost: -5,
-            lord_hp_lost: -5,
+            hp_lost: -10,
+            lord_hp_lost: -10,
             enemy_fell: 150,
             progress: 15,
             approach: 3,
-            exposed: -5,
-            lord_exposed: -5,
+            exposed: -10,
+            lord_exposed: -10,
             at_risk: -3000,
             lord_at_risk: -5000,
             counter: 15,

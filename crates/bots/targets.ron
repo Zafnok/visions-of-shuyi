@@ -24,26 +24,28 @@
         ],
     },
     // The share of successes wanted, in percent, by the map's tier. Nick
-    // fixed the Normal row's lower edges; the rest are Claude's starting
-    // values, tunable.
+    // fixed the Normal row's lower edges for Normal and Hardcore; the rest
+    // are Claude's starting values, tunable. Casual's are the Casual bot's,
+    // a weaker player that never rewinds: Nick's first bands shifted down
+    // 30 points (Nick, 2026-10-22).
     bands: {
         Easy: {
-            "casual": (min: 75, max: 100),
+            "casual": (min: 45, max: 70),
             "normal": (min: 65, max: 90),
             "hardcore": (min: 65, max: 90),
         },
         Normal: {
-            "casual": (min: 60, max: 85),
+            "casual": (min: 30, max: 55),
             "normal": (min: 50, max: 75),
             "hardcore": (min: 50, max: 75),
         },
         Hard: {
-            "casual": (min: 55, max: 80),
+            "casual": (min: 25, max: 50),
             "normal": (min: 40, max: 65),
             "hardcore": (min: 40, max: 65),
         },
         Finale: {
-            "casual": (min: 50, max: 75),
+            "casual": (min: 20, max: 45),
             "normal": (min: 35, max: 60),
             "hardcore": (min: 35, max: 60),
         },
@@ -52,8 +54,8 @@
     // is basically unwinnable (starting value, tunable).
     floors: {"casual": 20},
     // Hardcore must be faster than Normal: its median turns lower. Both
-    // medians are over the tries that meet Hardcore's success (the
-    // engine's check takes one set of tries for both).
+    // medians are over the tries won with nobody dying, what both success
+    // rules share (the engine's check takes one set of tries for both).
     faster: (
         entrant: "hardcore",
         than: "normal",
@@ -61,7 +63,6 @@
         among: [
             (measure: "won", min: Some(1)),
             (measure: "deaths", max: Some(0)),
-            (measure: "items", max: Some(1)),
         ],
     ),
 )

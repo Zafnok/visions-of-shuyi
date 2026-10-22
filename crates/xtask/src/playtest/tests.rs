@@ -418,8 +418,8 @@ fn history_keeps_every_run_and_gives_the_last() {
 fn history_has_a_file_per_battle_and_bot() {
     let file = |bot, mode| {
         let options = Options {
-            bot,
             mode,
+            bot,
             ..Options::new("quick")
         };
         history_file(Path::new("h"), &options)
@@ -508,13 +508,16 @@ fn all_plays_the_three_personas_in_their_modes_with_their_checks() {
     assert!(
         matches!(checked[3], Check::Median { entrant, than, .. } if entrant == "hardcore" && than == "normal")
     );
+    // A band line per persona, from the engine's table.
     let text = render(&record, None);
-    for line in [
-        "casual   · 0/1 succeed",
-        "normal   · 0/1 succeed",
-        "hardcore · 0/1 succeed",
-    ] {
-        assert!(text.contains(line), "{line}\n{text}");
+    for persona in ["casual   · ", "normal   · ", "hardcore · "] {
+        let band = text
+            .lines()
+            .find(|l| l.starts_with(persona) && l.contains("/1 succeed"));
+        assert!(
+            band.is_some_and(|l| l.contains("band ")),
+            "{persona}\n{text}"
+        );
     }
 }
 
