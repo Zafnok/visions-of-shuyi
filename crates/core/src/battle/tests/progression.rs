@@ -335,6 +335,45 @@ fn ally_exp_goes_to_the_pool_and_is_shared_on_a_win() {
     assert_eq!(level_exp(&s, 2), (99, 0));
 }
 
+/// [`leveled`] with `classes.ron`'s starting EXP pace (ticket 0608).
+fn paced(setup: BattleSetup) -> BattleSetup {
+    let mut classes = (*setup.classes).clone();
+    classes.exp_pace = vec![(1, 100), (40, 50), (70, 25)];
+    BattleSetup {
+        classes: Arc::new(classes),
+        ..setup
+    }
+}
+
+#[test]
+fn a_combat_award_is_paced_by_the_unit_level() {
+    let mut units = cast();
+    units[3].pos = p(3, 2);
+    units[1].level = 40;
+    units[3].level = 40;
+    let mut s = start(paced(leveled(units)));
+    let events = act(&mut s, 2, p(2, 2), attack(4));
+    // Equal levels, damage dealt: 20 EXP, half at Lv 40. CP aren't paced.
+    assert_eq!(progress(&events), [exp(2, 10), cp(2, "fighter", 2)]);
+}
+
+#[test]
+fn each_pool_share_is_paced_by_its_unit_level() {
+    let mut setup = pool_battle();
+    let player_5 = setup.units.iter_mut().find(|u| u.id == UnitId(5));
+    player_5.unwrap().level = 70;
+    let mut s = start(paced(setup));
+    s.exp_pool = 20;
+    end(&mut s);
+    act(&mut s, 4, p(7, 4), attack(7));
+    end(&mut s);
+    // 20 / 3 = 6 each; player 5 (Lv 70) gets a quarter, at least 1.
+    assert_eq!(
+        end(&mut s),
+        [exp(1, 6), exp(5, 1), exp(8, 6), ended(Outcome::Victory)]
+    );
+}
+
 #[test]
 fn a_big_pool_share_can_level_up_more_than_once() {
     let mut s = start(pool_battle());
