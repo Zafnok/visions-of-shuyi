@@ -5,10 +5,10 @@ type: feature
 milestone: M4 Enemy AI
 model: opus-5.5
 effort: medium
-status: todo
+status: done
 blocked_by: []
 nick_input: none
-completed:
+completed: 2026-10-22
 ---
 
 # 0513 — Green units carry their own consumables
@@ -71,11 +71,11 @@ None. Verified by tests and the bots. When a green unit uses an item is a
 
 ## Acceptance criteria
 
-- [ ] `trpg-content` rejects items on a player or enemy unit and a non-consumable item, in one report.
-- [ ] Core unit test: a green unit uses its Potion, heals by its amount (capped at max HP), the item leaves its list, the player's pack is unchanged, its action ends.
-- [ ] AI unit test: a wounded green unit with a Potion and no kill uses it; one with a kill attacks.
-- [ ] A save/replay round trip keeps a green unit's remaining items.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] `trpg-content` rejects items on a player or enemy unit and a non-consumable item, in one report.
+- [x] Core unit test: a green unit uses its Potion, heals by its amount (capped at max HP), the item leaves its list, the player's pack is unchanged, its action ends.
+- [x] AI unit test: a wounded green unit with a Potion and no kill uses it; one with a kill attacks.
+- [x] A save/replay round trip keeps a green unit's remaining items.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -86,5 +86,45 @@ None. Verified by tests and the bots. When a green unit uses an item is a
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+Done.
+
+- **Battle files** (`trpg-content`): an entry of `enemies` or
+  `reinforcements` takes `faction: Ally` (a green unit; `Enemy` is the
+  default) and `items: [...]`. Errors, all in one report: `items` on a
+  player slot or an enemy, an unknown item, a non-consumable; also a green
+  `boss`, a green unit with a `defeat`, and `faction: Player`/`Neutral`.
+  `DefeatUnit` now names only enemies (it accepted any non-player unit).
+- **Core**: `Unit::carried` (empty for everyone else, left out of saves
+  when empty so older saves load) and a new `UnitAction::UseOwnItem
+  { index, target }`, green units only. It shares the pack item's checks
+  and effect, emits the same `ItemUsed` and `Healed`, ends the action and
+  never touches the pack or stock. A new action rather than a source field
+  on `UseItem`: every `UseItem` already written (menus, bots, play records,
+  tests) stays as it is. The legal-action list and the rewind log know it.
+- **AI**: the starting rule below, written in `ai.rs`'s module docs.
+- **Test battle** `assets-test/battles/test_green.ron`: an unarmed
+  villager with two Potions next to a raider; the bots' rule-battle test
+  plays it and sees it drink (3 of 5 seeds).
+
+**Deviations.**
+- Battle files had no way to place a green unit at all, so this ticket
+  added `faction: Ally` on an `enemies` entry (the list was already "the
+  other units on the map").
+- `ItemUsed` has no new "whose item" field: only green units carry items
+  and only player units use the pack, so its `unit` already says whose it
+  was, and the log line stays the existing one.
+- The save/replay criterion is a save round trip of the battle state
+  (`a_green_units_items_survive_a_save`) plus the bots' replay of
+  `test_green` (same commands, same events, same end).
+
+**Claude's starting rules** (for the Act 1 playtest, 1064):
+- A green unit drinks one of its items, on itself, where it stands
+  (no move first), when it is **below half its max HP** and **no attack it
+  could make this turn has any chance to kill** a foe; else it plays as
+  before. With several items it uses the first in its list.
+- It never uses items on others (the battle allows it; the AI doesn't).
+- Battle files can't yet mark a green unit as a non-combat unit (`Role`);
+  the test villager is simply unarmed.
+
+Engine friction: estimate 150, measured 148 (1.0×), under 2×.
+Follow-ups: none.

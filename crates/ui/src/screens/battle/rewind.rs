@@ -347,11 +347,17 @@ pub fn describe(r: &Replayed, words: Words<'_>) -> String {
                 UnitAction::Attack { target, .. } => {
                     fought(did_to("battle.rewind.attacked", who, "", name(s, *target)))
                 }
-                UnitAction::UseItem { pack_index, target } => {
-                    let item = s
-                        .pack()
-                        .items
-                        .get(*pack_index)
+                UnitAction::UseItem {
+                    pack_index: index,
+                    target,
+                }
+                | UnitAction::UseOwnItem { index, target } => {
+                    let items = match action {
+                        UnitAction::UseItem { .. } => Some(&s.pack().items),
+                        _ => s.unit(*unit).map(|u| &u.carried),
+                    };
+                    let item = items
+                        .and_then(|items| items.get(*index))
                         .filter(|id| s.items().get(id).is_some())
                         .map_or(words.text("battle.rewind.an_item"), |id| {
                             words.item(id, s.items())

@@ -105,7 +105,8 @@ fn recorded(id: &str, seed: u64) -> Try {
 }
 
 /// Ticket 0319's test battles (an escape, a boss who retreats, a boss who
-/// can't be killed): the bots finish them, each rule happens in some try,
+/// can't be killed) and 0513's (a green unit with Potions of its own): the
+/// bots finish them, each rule happens in some try,
 /// and every try's commands replay to the same events and the same end.
 #[test]
 fn the_act_1_rule_battles_finish_and_replay_identically() {
@@ -116,11 +117,14 @@ fn the_act_1_rule_battles_finish_and_replay_identically() {
             record.iter().flat_map(|(_, e)| e).any(|e| match id {
                 "test_escape" => matches!(e, Event::UnitEscaped { .. }),
                 "test_hold" => matches!(e, Event::UnitDowned { .. }),
+                "test_green" => {
+                    matches!(e, Event::ItemUsed { unit, .. } if *unit == trpg_core::UnitId(4))
+                }
                 _ => matches!(e, Event::UnitFell { unit } if *unit == trpg_core::UnitId(5)),
             })
         })
     };
-    for id in ["test_escape", "test_retreat", "test_hold"] {
+    for id in ["test_escape", "test_retreat", "test_hold", "test_green"] {
         let tries: Vec<_> = (1..=5).map(|seed| recorded(id, seed)).collect();
         for (seed, (record, end)) in (1..).zip(&tries) {
             assert!(

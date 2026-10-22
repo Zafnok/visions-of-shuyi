@@ -33,6 +33,7 @@
 //!        order), plain then with each combat active, then at each tile
 //!        (row-major);
 //!      - `UseItem`: each battle-pack index, on each unit;
+//!      - `UseOwnItem`: each index of the unit's carried items, on each unit;
 //!      - `UseSkill`: each non-combat active the unit can use (id order),
 //!        with no target, then on each unit;
 //!      - `Seize`, `Escape`, then `Open`;
@@ -227,6 +228,12 @@ impl Options {
         for pack_index in 0..state.pack().items.len() {
             out.extend(state.units().iter().map(|t| UnitAction::UseItem {
                 pack_index,
+                target: t.id,
+            }));
+        }
+        for index in 0..unit.carried.len() {
+            out.extend(state.units().iter().map(|t| UnitAction::UseOwnItem {
+                index,
                 target: t.id,
             }));
         }

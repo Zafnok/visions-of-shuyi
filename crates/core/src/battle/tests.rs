@@ -923,6 +923,7 @@ pub(crate) fn unit(id: u32, faction: Faction, pos: Pos) -> Unit {
         skill_uses: crate::skill::SkillUses::default(),
         defeat: crate::Defeat::Falls,
         talent: None,
+        carried: Vec::new(),
     };
     carrying(u, &[weapon(1, 1, 3)])
 }
@@ -2533,6 +2534,144 @@ fn only_player_units_use_items() {
     );
 }
 
+fn use_own_item(index: usize, target: u32) -> UnitAction {
+    UnitAction::UseOwnItem {
+        index,
+        target: UnitId(target),
+    }
+}
+
+/// [`cast`] with green unit 5 at (6, 1), carrying a potion and an elixir.
+fn with_green() -> Vec<Unit> {
+    let mut units = cast();
+    let mut green = unit(5, Faction::Ally, p(6, 1));
+    green.carried = vec![item("potion"), item("elixir")];
+    units.push(green);
+    units
+}
+
+#[test]
+fn a_green_unit_uses_its_own_potion() {
+    let mut units = with_green();
+    units[4].hp = 3;
+    let mut s = start(setup(units));
+    let (pack, stock) = (s.pack().clone(), s.stock().clone());
+    end(&mut s);
+    end(&mut s);
+    assert_eq!(s.phase(), Phase::Other);
+    assert_eq!(
+        act(&mut s, 5, p(6, 1), use_own_item(0, 5)),
+        [
+            Event::ItemUsed {
+                unit: UnitId(5),
+                item: item("potion"),
+                target: UnitId(5),
+            },
+            Event::Healed {
+                target: UnitId(5),
+                amount: 4,
+            },
+            Event::UnitActed { unit: UnitId(5) },
+        ]
+    );
+    let green = s.unit(UnitId(5)).unwrap();
+    assert_eq!(green.hp, 7);
+    assert_eq!(green.carried, [item("elixir")]);
+    assert!(green.acted);
+    assert_eq!((s.pack(), s.stock()), (&pack, &stock));
+}
+
+#[test]
+fn a_green_units_item_heals_up_to_max_hp_and_adjacent_allies() {
+    let mut units = with_green();
+    units[4].hp = 9;
+    units[3].pos = p(7, 1);
+    units.push(unit(6, Faction::Ally, p(5, 1)));
+    units[5].hp = 1;
+    let mut s = start(setup(units));
+    end(&mut s);
+    end(&mut s);
+    // The potion heals 4, capped at its max HP 10.
+    let events = act(&mut s, 5, p(6, 1), use_own_item(0, 5));
+    assert_eq!(
+        events[1],
+        Event::Healed {
+            target: UnitId(5),
+            amount: 1,
+        }
+    );
+    // The other green unit is still its own: its elixir goes on unit 6.
+    for _ in 0..3 {
+        end(&mut s);
+    }
+    act(&mut s, 5, p(6, 1), use_own_item(0, 6));
+    assert_eq!(s.unit(UnitId(6)).unwrap().hp, 10);
+    assert!(s.unit(UnitId(5)).unwrap().carried.is_empty());
+}
+
+#[test]
+fn use_own_item_errors() {
+    let mut units = with_green();
+    units[0].carried = vec![item("potion")];
+    units[4].carried.push(item("axe"));
+    let mut s = start(setup(units));
+    // A player unit uses the pack, never carried items.
+    refused_act(
+        &mut s,
+        1,
+        p(0, 0),
+        use_own_item(0, 1),
+        CommandError::GreenOnly(UnitId(1)),
+    );
+    end(&mut s);
+    // An enemy carries none, and the AI never gives it any.
+    refused_act(
+        &mut s,
+        3,
+        p(7, 0),
+        use_own_item(0, 3),
+        CommandError::GreenOnly(UnitId(3)),
+    );
+    end(&mut s);
+    let refuse = |s: &mut BattleState, action, err| refused_act(s, 5, p(6, 1), action, err);
+    refuse(
+        &mut s,
+        use_own_item(3, 5),
+        CommandError::NoItem {
+            unit: UnitId(5),
+            index: 3,
+        },
+    );
+    refuse(
+        &mut s,
+        use_own_item(2, 5),
+        CommandError::NotConsumable(item("axe")),
+    );
+    // The enemy at (7, 2) isn't adjacent, nor a friend.
+    refuse(
+        &mut s,
+        use_own_item(0, 4),
+        CommandError::BadItemTarget(UnitId(4)),
+    );
+    // Nor is the pack a green unit's.
+    refuse(&mut s, use_item(0, 5), CommandError::PlayerOnly(UnitId(5)));
+}
+
+#[test]
+fn a_green_units_items_survive_a_save() {
+    let mut s = start(setup(with_green()));
+    end(&mut s);
+    end(&mut s);
+    act(&mut s, 5, p(6, 1), use_own_item(0, 5));
+    let text = ron::to_string(&s).unwrap();
+    let back: BattleState = ron::from_str(&text).unwrap();
+    assert_eq!(back.unit(UnitId(5)).unwrap().carried, [item("elixir")]);
+    assert_eq!(back.units(), s.units());
+    // Nobody else carries anything, and it isn't written for them.
+    let lord = ron::to_string(s.unit(UnitId(1)).unwrap()).unwrap();
+    assert!(!lord.contains("carried"), "{lord}");
+}
+
 #[test]
 fn the_state_exposes_items_and_pack() {
     let s = start(setup(cast()));
@@ -2922,7 +3061,9 @@ prop_compose! {
         let mut next = |faction: Faction, pos: Pos, stats: &mut dyn Iterator<Item = Unit>| {
             id += 1;
             let character = Some(CharacterId(format!("c{id}")));
-            Unit { id: UnitId(id), faction, pos, character, ..stats.next().unwrap() }
+            // Green units carry a potion of their own (0513).
+            let carried = if faction == Faction::Ally { vec![item("potion")] } else { vec![] };
+            Unit { id: UnitId(id), faction, pos, character, carried, ..stats.next().unwrap() }
         };
         let mut tiles = tiles.into_iter();
         for (n, faction) in [
@@ -3010,11 +3151,17 @@ proptest! {
                 .flat_map(|u| (0..WEAPON_SLOTS).map(move |slot| (u.id, slot)))
                 .map(|key| (key, durability(&s, key.0, key.1)))
                 .collect();
+            let (pack_before, stock_before) = (s.pack().clone(), s.stock().clone());
             let mut tiles = s.map().tiles.clone();
             let before: BTreeMap<UnitId, Pos> = s.units().iter().map(|u| (u.id, u.pos)).collect();
             let events = s.apply(cmd);
             prop_assert!(events.is_ok(), "{:?} refused: {:?}", cmd, events);
             let events = events.unwrap_or_default();
+            // A green unit's own item never touches the pack or the stock.
+            if let Command::Act { action: UnitAction::UseOwnItem { .. }, .. } = cmd {
+                prop_assert_eq!(s.pack(), &pack_before);
+                prop_assert_eq!(s.stock(), &stock_before);
+            }
             // Talking is free: the unit stays where it was, ready.
             if let Command::Talk { unit, .. } = cmd {
                 let u = s.unit(*unit).unwrap();

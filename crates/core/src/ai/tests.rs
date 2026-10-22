@@ -363,6 +363,7 @@ fn unit(id: u32, faction: Faction, pos: Pos) -> Unit {
         ai: AiBehavior::Aggressive,
         weapon_ranks: BTreeMap::new(),
         talent: None,
+        carried: Vec::new(),
         map_label: "Un".into(),
         weapon_exp: BTreeMap::new(),
         loadout: Loadout::default(),
@@ -704,7 +705,7 @@ fn scores_use_the_battles_own_forecast() {
         )
         .unwrap();
         let dests: Vec<Pos> = reach.stoppable().iter().collect();
-        let (score, _) = planner.best_attack(unit, &reach, &dests).unwrap();
+        let (score, _) = planner.best_attack(unit, &reach, &dests).0.unwrap();
         let hp = |u: &Unit| CombatHp {
             current: u.hp,
             max: u.stats.hp,
@@ -795,6 +796,97 @@ fn allies_fight_enemies_in_the_other_phase() {
     state.apply(&Command::EndPhase).unwrap();
     assert_eq!(state.phase(), Phase::Other);
     assert_eq!(next(&state), attack(1, p(0, 0), 2, 0));
+}
+
+/// The scene's battle in the Other phase, its units changed by `edit`; the
+/// enemies stand still.
+fn other_phase(rows: &[&str], edit: impl FnOnce(&mut Vec<Unit>)) -> BattleState {
+    let mut state = enemy_phase(rows, |units| {
+        for u in units.iter_mut().filter(|u| u.faction == Faction::Enemy) {
+            u.ai = AiBehavior::Stationary;
+        }
+        edit(units);
+    });
+    state.apply(&Command::EndPhase).unwrap();
+    assert_eq!(state.phase(), Phase::Other);
+    state
+}
+
+fn own_item(unit: u32, dest: Pos, index: usize) -> Command {
+    act(
+        unit,
+        dest,
+        UnitAction::UseOwnItem {
+            index,
+            target: UnitId(unit),
+        },
+    )
+}
+
+#[test]
+fn a_wounded_green_unit_with_no_kill_uses_its_potion() {
+    // The enemy (20 HP) takes 5 a strike: no kill, so it drinks, in place.
+    let state = other_phase(&["A.E......P"], |units| {
+        edit(units, 1, |u| {
+            u.hp = 9;
+            u.carried = vec![ItemId::new("sword"), ItemId::new("potion")];
+        });
+    });
+    // Its first item the battle accepts (a sword isn't a consumable).
+    assert_eq!(next(&state), own_item(1, p(0, 0), 1));
+}
+
+#[test]
+fn a_wounded_green_unit_with_a_kill_attacks() {
+    let state = other_phase(&["A.E......P"], |units| {
+        edit(units, 1, |u| {
+            u.hp = 9;
+            u.carried = vec![ItemId::new("potion")];
+        });
+        edit(units, 2, |u| u.hp = 5);
+    });
+    assert_eq!(next(&state), attack(1, p(1, 0), 2, 0));
+}
+
+#[test]
+fn green_units_drink_only_below_half_hp_and_never_for_others() {
+    let carrying_potion = |hp| {
+        move |units: &mut Vec<Unit>| {
+            edit(units, 2, |u| {
+                u.hp = hp;
+                u.carried = vec![ItemId::new("potion")];
+            });
+            // A badly wounded neighbour gets nothing.
+            edit(units, 1, |u| u.hp = 1);
+        }
+    };
+    // At exactly half its HP it fights as usual.
+    let state = other_phase(&["AA......E.P"], carrying_potion(10));
+    assert!(!matches!(
+        next(&state),
+        Command::Act {
+            action: UnitAction::UseOwnItem { .. },
+            ..
+        }
+    ));
+    let state = other_phase(&["AA......E.P"], carrying_potion(9));
+    assert_eq!(next(&state), own_item(2, p(1, 0), 0));
+}
+
+#[test]
+fn only_green_units_use_carried_items() {
+    // A wounded enemy and player unit, given items anyway, never drink.
+    let mut state = enemy_phase(&["P......E"], |units| {
+        for u in units.iter_mut() {
+            u.hp = 2;
+            u.carried = vec![ItemId::new("potion")];
+        }
+    });
+    assert_eq!(next(&state), wait(2, p(3, 0)));
+    // No green units: the Other phase is skipped.
+    state.apply(&Command::EndPhase).unwrap();
+    assert_eq!(state.phase(), Phase::Player);
+    assert_eq!(next(&state), wait(1, p(4, 0)));
 }
 
 // --- Behaviours ------------------------------------------------------------

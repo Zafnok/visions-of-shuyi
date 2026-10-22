@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::ai::AiBehavior;
 use crate::class::{ClassDef, ClassId, ClassLevel, ClassPoints, ClassTable};
 use crate::geom::Pos;
-use crate::item::{Loadout, LoadoutDef, LoadoutError};
+use crate::item::{ItemId, Loadout, LoadoutDef, LoadoutError};
 use crate::skill::{SkillId, SkillUses, TimedEffect};
 use crate::spell::{SpellId, SpellState};
 use crate::stats::{StatKind, StatValue, Stats};
@@ -224,6 +224,12 @@ pub struct Unit {
     /// generic units have none. See [`crate::progression`].
     #[serde(default)]
     pub talent: Option<StatKind>,
+    /// A green unit's own consumables (ticket 0513), set by chapter data and
+    /// used with [`UnitAction::UseOwnItem`](crate::UnitAction::UseOwnItem).
+    /// Every other unit's is empty. Left out of a save when empty, so older
+    /// saves still load (ADR-0039).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub carried: Vec<ItemId>,
 }
 
 /// Letters in a map label.
@@ -386,6 +392,7 @@ impl Unit {
             effects: Vec::new(),
             skill_uses: SkillUses::default(),
             talent: None,
+            carried: Vec::new(),
         }
     }
 }
@@ -565,6 +572,7 @@ mod tests {
             skill_uses: SkillUses::default(),
             defeat: crate::Defeat::Falls,
             talent: Some(StatKind::Spd),
+            carried: Vec::new(),
         };
         assert_eq!(unit, Ok(expected));
     }
@@ -691,6 +699,7 @@ mod tests {
             skill_uses: SkillUses::default(),
             defeat: crate::Defeat::Falls,
             talent: None,
+            carried: Vec::new(),
         };
         assert_eq!(unit, Ok(expected));
     }

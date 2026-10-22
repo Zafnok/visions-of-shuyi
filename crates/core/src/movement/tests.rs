@@ -104,6 +104,7 @@ fn unit(id: u32, class: &str, faction: Faction, pos: Pos, mov: StatValue) -> Uni
         skill_uses: crate::skill::SkillUses::default(),
         defeat: crate::Defeat::Falls,
         talent: None,
+        carried: Vec::new(),
     }
 }
 
