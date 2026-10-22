@@ -2,7 +2,7 @@ use trpg_core::Pos;
 
 use super::*;
 use crate::screen::tests::ctx;
-use crate::screens::battle::testing::skirmish;
+use crate::screens::battle::testing::{battle_packed, quick_units, skirmish};
 
 fn screen(lines: usize, focus: usize) -> RewindScreen {
     let before = skirmish(&ctx(), 20);
@@ -123,6 +123,42 @@ fn using_an_item_names_the_target_unless_it_is_the_user() {
     assert_eq!(
         describe(&used(2), Words::ENGLISH),
         "Turn 1 · Test Lord used an item on Test Knight"
+    );
+}
+
+#[test]
+fn an_item_is_named_from_the_pack_or_the_green_units_own() {
+    let c = ctx();
+    let (map, mut units) = quick_units(&c);
+    units[1].faction = trpg_core::Faction::Ally;
+    units[1].carried = vec![trpg_core::ItemId::new("elixir")];
+    let pack = trpg_core::BattlePack::bring(vec![trpg_core::ItemId::new("potion")], 6).unwrap();
+    let rout = trpg_core::Objective::Rout { turn_limit: None };
+    let before = battle_packed(&c, map, units, rout, 0, pack);
+    let used = |unit, action| Replayed {
+        before: before.clone(),
+        command: Command::Act {
+            unit: UnitId(unit),
+            dest: Pos::new(0, 0),
+            action,
+        },
+        events: vec![],
+    };
+    let from_pack = UnitAction::UseItem {
+        pack_index: 0,
+        target: UnitId(1),
+    };
+    assert_eq!(
+        describe(&used(1, from_pack), Words::ENGLISH),
+        "Turn 1 · Test Lord used Potion"
+    );
+    let own = UnitAction::UseOwnItem {
+        index: 0,
+        target: UnitId(2),
+    };
+    assert_eq!(
+        describe(&used(2, own), Words::ENGLISH),
+        "Turn 1 · Test Knight used Elixir"
     );
 }
 

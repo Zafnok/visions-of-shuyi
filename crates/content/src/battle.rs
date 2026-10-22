@@ -118,6 +118,9 @@ struct RawSlot {
     /// Numbered after the enemies instead of in slot order.
     #[serde(default)]
     after_enemies: bool,
+    /// Only green units carry items: listed here, it is an error.
+    #[serde(default)]
+    items: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -147,6 +150,16 @@ struct RawEnemy {
     defeat: Defeat,
     #[serde(default)]
     name: Option<String>,
+    /// `Enemy` (the default) or `Ally`, a green unit.
+    #[serde(default = "enemy_faction")]
+    faction: Faction,
+    /// A green unit's own consumables (0513), by item id.
+    #[serde(default)]
+    items: Vec<String>,
+}
+
+fn enemy_faction() -> Faction {
+    Faction::Enemy
 }
 
 /// Reads an optional field written without `Some(…)`.
@@ -452,6 +465,9 @@ impl<'a, 'r> Checker<'a, 'r> {
         let mut units = Vec::new();
         for (i, (slot, &unit_id)) in slots.iter().zip(ids).enumerate() {
             let what = format!("player slot {} (\"{}\")", i + 1, slot.character);
+            if !slot.items.is_empty() {
+                self.err(format!("{what}: only green units carry items"));
+            }
             let id = CharacterId(slot.character.clone());
             let Some(def) = refs.characters.characters.get(&id) else {
                 self.err(format!("{what}: no character \"{}\"", slot.character));
@@ -535,6 +551,8 @@ impl<'a, 'r> Checker<'a, 'r> {
         };
         unit.ai = e.ai;
         unit.defeat = e.defeat;
+        unit.faction = self.faction(what, e);
+        unit.carried = self.carried(what, e);
         if e.boss {
             unit.role = Role::Boss;
         }
@@ -623,7 +641,7 @@ impl<'a, 'r> Checker<'a, 'r> {
                 turn_limit,
             } => {
                 let target = everyone.iter().find(|u| {
-                    u.faction != Faction::Player
+                    u.faction == Faction::Enemy
                         && u.character.as_ref().is_some_and(|c| &c.0 == unit)
                 });
                 let Some(target) = target else {
@@ -777,6 +795,39 @@ impl<'a, 'r> Checker<'a, 'r> {
             }
         }
         items.iter().map(|i| ItemId::new(i)).collect()
+    }
+
+    /// Enemy entry `e`'s faction: `Enemy` or `Ally`, and an `Ally` is
+    /// neither a boss nor anything but `Falls` at 0 HP.
+    fn faction(&mut self, what: &str, e: &RawEnemy) -> Faction {
+        match e.faction {
+            Faction::Enemy => {}
+            Faction::Ally => {
+                if e.boss {
+                    self.err(format!("{what}: a green unit can't be a boss"));
+                }
+                if e.defeat != Defeat::Falls {
+                    self.err(format!("{what}: only enemies have a `defeat`"));
+                }
+            }
+            other => self.err(format!("{what}: faction {other:?}; use Enemy or Ally")),
+        }
+        e.faction
+    }
+
+    /// Enemy entry `e`'s carried items: known consumables, on a green unit.
+    fn carried(&mut self, what: &str, e: &RawEnemy) -> Vec<ItemId> {
+        if e.faction != Faction::Ally && !e.items.is_empty() {
+            self.err(format!("{what}: only green units carry items"));
+        }
+        for item in &e.items {
+            match self.refs.items.get(&ItemId::new(item)) {
+                Some(ItemDef::Consumable(_)) => {}
+                Some(_) => self.err(format!("{what}: item \"{item}\" isn't a consumable")),
+                None => self.err(format!("{what}: no item \"{item}\"")),
+            }
+        }
+        e.items.iter().map(|i| ItemId::new(i)).collect()
     }
 
     /// The solo bench's characters: known, and not in the battle.

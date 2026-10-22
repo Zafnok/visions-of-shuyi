@@ -89,6 +89,15 @@
 //!   from the shared [`BattlePack`]. The target is the unit itself or a non-hostile
 //!   unit adjacent to `dest`. The item is used up ([`Event::ItemUsed`]),
 //!   heals ([`Event::Healed`], never above max HP) and ends the action.
+//!   A **green unit** uses its own items instead ([`UnitAction::UseOwnItem`],
+//!   ticket 0513: [`Unit::carried`], never the pack), the same way and with
+//!   the same events. The battle's [`Event::ItemUsed`] doesn't say whose
+//!   item it was: only green units carry items and only player units use
+//!   the pack, so its `unit` says it. A new action rather than a source on
+//!   `UseItem`: every `UseItem` already written (the menus, the bots, the
+//!   play records) stays as it is. Carried items can't be traded or taken,
+//!   and nothing carries over after the battle (green units aren't in the
+//!   roster).
 //!   **Seals can't be used in battle** (Nick, ticket 0603): promotion and
 //!   reclass happen between battles ([`crate::progression`]); a seal found
 //!   in a chest goes to the stock.
@@ -610,6 +619,14 @@ pub enum UnitAction {
     UseItem {
         /// Index in the battle pack.
         pack_index: usize,
+        /// Who it is used on.
+        target: UnitId,
+    },
+    /// A green unit uses its own consumable on `target` (itself or an
+    /// adjacent ally), see [`Unit::carried`].
+    UseOwnItem {
+        /// Index in the unit's carried items.
+        index: usize,
         /// Who it is used on.
         target: UnitId,
     },
@@ -1251,6 +1268,8 @@ pub enum CommandError {
     CannotEscape,
     /// Only player units can shop, open chests or use items.
     PlayerOnly(UnitId),
+    /// Only green units use their own items.
+    GreenOnly(UnitId),
     /// There is no shop on this tile.
     NoShop(Pos),
     /// A shop action with no transactions.
@@ -1414,6 +1433,7 @@ impl fmt::Display for CommandError {
             CommandError::CannotSeize => f.write_str("can't seize here"),
             CommandError::CannotEscape => f.write_str("can't escape here"),
             CommandError::PlayerOnly(id) => write!(f, "unit {} is not a player unit", id.0),
+            CommandError::GreenOnly(id) => write!(f, "unit {} is not a green unit", id.0),
             CommandError::NoShop(p) => write!(f, "no shop at ({}, {})", p.x, p.y),
             CommandError::NoTransactions => f.write_str("nothing bought, sold or repaired"),
             CommandError::Shop { txn, error } => write!(f, "transaction {txn}: {error}"),
@@ -1589,6 +1609,15 @@ enum Planned {
     },
 }
 
+/// Where a used item comes from.
+#[derive(Debug, Clone, Copy)]
+enum ItemSource {
+    /// The battle pack (player units).
+    Pack,
+    /// The unit's own items (green units).
+    Carried,
+}
+
 /// A validated action, ready to carry out.
 enum Step {
     Wait,
@@ -1612,6 +1641,7 @@ enum Step {
         effect: TerrainEffect,
     },
     UseItem {
+        source: ItemSource,
         index: usize,
         item: ItemId,
         effect: ConsumableEffect,
@@ -2218,7 +2248,16 @@ impl BattleState {
                 self.plan_attack(unit, plan)?
             }
             UnitAction::UseItem { pack_index, target } => {
-                self.plan_item(unit, dest, pack_index, target)?
+                if unit.faction != Faction::Player {
+                    return Err(CommandError::PlayerOnly(unit.id));
+                }
+                self.plan_item(unit, dest, ItemSource::Pack, pack_index, target)?
+            }
+            UnitAction::UseOwnItem { index, target } => {
+                if unit.faction != Faction::Ally {
+                    return Err(CommandError::GreenOnly(unit.id));
+                }
+                self.plan_item(unit, dest, ItemSource::Carried, index, target)?
             }
             UnitAction::Seize => {
                 self.check_seize(unit, dest)?;
@@ -2542,13 +2581,15 @@ impl BattleState {
         &self,
         unit: &Unit,
         dest: Pos,
+        source: ItemSource,
         index: usize,
         target: UnitId,
     ) -> Result<Step, CommandError> {
-        if unit.faction != Faction::Player {
-            return Err(CommandError::PlayerOnly(unit.id));
-        }
-        let item = self.pack.items.get(index).ok_or(CommandError::NoItem {
+        let items = match source {
+            ItemSource::Pack => &self.pack.items,
+            ItemSource::Carried => &unit.carried,
+        };
+        let item = items.get(index).ok_or(CommandError::NoItem {
             unit: unit.id,
             index,
         })?;
@@ -2564,6 +2605,7 @@ impl BattleState {
             }
         }
         Ok(Step::UseItem {
+            source,
             index,
             item: item.clone(),
             effect,
@@ -2739,11 +2781,12 @@ impl BattleState {
                 self.award(id, exp, progression::ACTION_CP, events);
             }
             Step::UseItem {
+                source,
                 index,
                 item,
                 effect,
                 target,
-            } => self.use_item(id, index, item, effect, target, events),
+            } => self.use_item(id, (source, index), item, effect, target, events),
             Step::Seize => {
                 if let Some(pos) = dest {
                     events.push(Event::Seized { unit: id, pos });
@@ -2983,13 +3026,22 @@ impl BattleState {
     fn use_item(
         &mut self,
         id: UnitId,
-        index: usize,
+        (source, index): (ItemSource, usize),
         item: ItemId,
         effect: ConsumableEffect,
         target: UnitId,
         events: &mut Vec<Event>,
     ) {
-        self.pack.items.remove(index);
+        match source {
+            ItemSource::Pack => {
+                self.pack.items.remove(index);
+            }
+            ItemSource::Carried => {
+                if let Some(u) = self.unit_mut(id) {
+                    u.carried.remove(index);
+                }
+            }
+        }
         events.push(Event::ItemUsed {
             unit: id,
             item,

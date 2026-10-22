@@ -160,6 +160,7 @@ pub(super) fn unit(id: u32, faction: Faction, x: i32, y: i32) -> Unit {
         skill_uses: trpg_core::SkillUses::default(),
         defeat: trpg_core::Defeat::Falls,
         talent: None,
+        carried: Vec::new(),
     }
     .with_loadout(&loadout, &classes(), &items())
     .unwrap_or_else(|e| panic!("{e}"))

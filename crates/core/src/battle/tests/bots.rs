@@ -88,6 +88,9 @@ fn every_action(s: &BattleState, unit: &Unit) -> Vec<UnitAction> {
         for pack_index in 0..=s.pack().items.len() {
             out.push(UnitAction::UseItem { pack_index, target });
         }
+        for index in 0..=unit.carried.len() {
+            out.push(UnitAction::UseOwnItem { index, target });
+        }
     }
     for spell in &unit.learned {
         for pos in s.map().tiles.positions() {

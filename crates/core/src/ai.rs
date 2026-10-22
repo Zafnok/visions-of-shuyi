@@ -69,8 +69,14 @@
 //! this battle (`combat-arts.md`, *Non-attack actives: uses per battle*), so
 //! the unit then waits.
 //!
-//! It never uses consumables: enemies carry none, and only healers heal
-//! (Nick, `weapons-and-items.md`).
+//! **Consumables** (ticket 0513; *Claude's starting rule*, after Fire
+//! Emblem's allied units): before all of the above, a **green** unit
+//! carrying an item ([`Unit::carried`]) uses one on itself, where it stands,
+//! when it is below half its max HP (`hp × 2 < max`) and no attack it could
+//! make this turn might kill a foe (a kill chance above 0, below); its
+//! first carried item the battle accepts. Otherwise it plays as above. It
+//! never heals others with items. Enemies carry none (Nick, 0501), and
+//! player units use the pack, which the AI never does.
 //!
 //! ## Attack choice
 //!
@@ -423,13 +429,15 @@ impl<'a> Planner<'a> {
             };
             return Some(other(command));
         }
-        let attack = self
-            .best_attack(unit, &reach, &dests)
-            .map(|(score, command)| Decision {
-                unit: unit.id,
-                rank: Rank::Attack(score),
-                command,
-            });
+        let (attack, can_kill) = self.best_attack(unit, &reach, &dests);
+        if !can_kill && let Some(command) = self.own_item(unit) {
+            return Some(other(command));
+        }
+        let attack = attack.map(|(score, command)| Decision {
+            unit: unit.id,
+            rank: Rank::Attack(score),
+            command,
+        });
         Some(match unit.ai {
             AiBehavior::Healer => match self.heal(unit, &dests) {
                 Some(command) => other(command),
@@ -445,12 +453,21 @@ impl<'a> Planner<'a> {
         })
     }
 
-    /// The best attack `unit` can make from `dests`, with its score.
-    fn best_attack(&self, unit: &Unit, reach: &Reach, dests: &[Pos]) -> Option<(f64, Command)> {
+    /// The best attack `unit` can make from `dests`, with its score, and
+    /// whether any attack it could make might kill.
+    fn best_attack(
+        &self,
+        unit: &Unit,
+        reach: &Reach,
+        dests: &[Pos],
+    ) -> (Option<(f64, Command)>, bool) {
         let state = self.state;
         let arms = arms(state, unit, self.weights);
-        let longest = arms.iter().map(Arm::reach).max()?;
+        let Some(longest) = arms.iter().map(Arm::reach).max() else {
+            return (None, false);
+        };
         let mut best: Option<(f64, Command)> = None;
+        let mut can_kill = false;
         let mut targets: Vec<&Unit> = hostiles_of(state, unit).collect();
         targets.sort_by_key(|t| t.id);
         let own = CombatHp {
@@ -486,6 +503,7 @@ impl<'a> Planner<'a> {
                             state.plain_forecast(unit, dest, moved, target, &arm.with)
                     {
                         let odds = Odds::of(&forecast, own, theirs);
+                        can_kill |= odds.kill > 0.0;
                         let score = self.score(&odds, target.is_lord, terrain);
                         offer(score, arm.action(target.id, None));
                     }
@@ -497,6 +515,7 @@ impl<'a> Planner<'a> {
                             continue;
                         };
                         let odds = Odds::of(&forecast, own, theirs);
+                        can_kill |= odds.kill > 0.0;
                         let score = self.score(&odds, target.is_lord, terrain)
                             + self.pierce_score(own, pierce)
                             - extra.penalty;
@@ -505,7 +524,30 @@ impl<'a> Planner<'a> {
                 }
             }
         }
-        best
+        (best, can_kill)
+    }
+
+    /// The carried item a wounded green `unit` uses on itself, if any (see
+    /// the module docs).
+    fn own_item(&self, unit: &Unit) -> Option<Command> {
+        if unit.faction != Faction::Ally || unit.hp.saturating_mul(2) >= unit.stats.hp {
+            return None;
+        }
+        (0..unit.carried.len())
+            .map(|index| UnitAction::UseOwnItem {
+                index,
+                target: unit.id,
+            })
+            .find(|action| {
+                self.state
+                    .check_action(unit, unit.pos, &[unit.pos], action)
+                    .is_ok()
+            })
+            .map(|action| Command::Act {
+                unit: unit.id,
+                dest: unit.pos,
+                action,
+            })
     }
 
     /// What Line Pierce's strike `pierce` (the unit behind the target and

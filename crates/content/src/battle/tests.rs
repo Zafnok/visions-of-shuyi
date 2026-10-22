@@ -405,6 +405,80 @@ fn enemy_errors() {
     );
 }
 
+#[test]
+fn green_units_carry_their_own_consumables() {
+    let c = content();
+    let green = OK.replacen(
+        "boss: true,",
+        "faction: Ally, items: [\"potion\", \"elixir\"],",
+        1,
+    );
+    let def = load(&c, &green).unwrap_or_else(|e| panic!("{e:?}"));
+    let garth = &def.enemies[0];
+    assert_eq!(garth.faction, Faction::Ally);
+    assert_eq!(
+        garth.carried,
+        [ItemId::new("potion"), ItemId::new("elixir")]
+    );
+    // Everyone else carries nothing.
+    let others = def.reinforcements.iter().map(|r| &r.unit);
+    assert!(
+        others
+            .chain(&def.enemies[1..])
+            .all(|u| u.carried.is_empty())
+    );
+}
+
+#[test]
+fn green_unit_errors() {
+    let c = content();
+    // Items on a player and an enemy, and a weapon and an unknown item on
+    // a green unit: all in one report.
+    let source = OK
+        .replacen(
+            "(character: \"lead\", pos: (3, 5))",
+            "(character: \"lead\", pos: (3, 5), items: [\"potion\"])",
+            1,
+        )
+        .replacen("boss: true,", "boss: true, items: [\"potion\"],", 1)
+        .replacen(
+            "ai: Guard)",
+            "ai: Guard, faction: Ally, items: [\"steel_axe\", \"nope\"])",
+            1,
+        );
+    let messages: Vec<String> = load(&c, &source)
+        .err()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|e| e.message)
+        .collect();
+    assert_eq!(
+        messages,
+        [
+            "player slot 1 (\"lead\"): only green units carry items",
+            "enemy 1: only green units carry items",
+            "reinforcement 1: item \"steel_axe\" isn't a consumable",
+            "reinforcement 1: no item \"nope\"",
+            // A green unit isn't an enemy to defeat.
+            "objective: no enemy of character \"test_rogue\" to defeat",
+        ]
+    );
+    assert_eq!(
+        errors(&c, "boss: true,", "boss: true, faction: Ally,"),
+        ["enemy 1: a green unit can't be a boss"]
+    );
+    assert_eq!(
+        errors(&c, "boss: true,", "faction: Ally, defeat: Retreats,"),
+        ["enemy 1: only enemies have a `defeat`"]
+    );
+    for faction in ["Player", "Neutral"] {
+        assert_eq!(
+            errors(&c, "boss: true,", &format!("faction: {faction},")),
+            [format!("enemy 1: faction {faction}; use Enemy or Ally")]
+        );
+    }
+}
+
 /// The loadout error of a brigand given an unknown weapon.
 fn loadout_error(c: &Content) -> String {
     let mut template = c.characters.generics["test_brigand"].clone();
