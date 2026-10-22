@@ -553,10 +553,39 @@ fn the_fight_box_is_a_window_across_the_top_its_striker_the_bar() {
     let [left, right] = fight_box::columns(fight_box::box_rect(SCREEN, 5));
     assert_eq!((left, right), (5, 27));
     assert!(is_bar(&buf, 1, "Alda"));
+    // The bar starts a cell before the name.
+    assert_eq!(cell(&buf, left - 1, 1).bg, ink(Ink::Black));
+    assert_eq!(cell(&buf, left - 2, 1).bg, ink(Ink::White));
     assert_eq!(find(&buf, 1, "Brom"), Some(right));
     assert!(!is_bar(&buf, 1, "Brom"));
     // HP and a bar: 10 of 20 is half its 10 cells.
     assert_eq!(find(&buf, 2, "HP 10 █████     "), Some(left));
     assert_eq!(find(&buf, 3, "HIT -8"), Some(right));
     assert_eq!(row(&buf, 4), format!("╚{}╝", "═".repeat(42)));
+}
+
+#[test]
+fn a_fighters_name_too_long_for_its_column_is_cut_inside_it() {
+    let c = ctx();
+    let fighter = |name: &str| BoxFighterView {
+        name: name.into(),
+        faction: trpg_core::Faction::Player,
+        flashing: false,
+        hp: 10,
+        max: 20,
+        result: Some("HIT -8 and a lot more words".into()),
+    };
+    let view = FightBoxView {
+        banner: None,
+        hp_name: "HP".into(),
+        sides: [fighter(&"L".repeat(30)), fighter(&"R".repeat(30))],
+    };
+    let mut buf = blank();
+    fight_box::paint(&c, &view, SCREEN, &mut buf);
+    let [left, right] = fight_box::columns(fight_box::box_rect(SCREEN, 5));
+    // 19 cells a column (half of 44, less 3), the last one the `…`.
+    assert_eq!(find(&buf, 1, &format!("{}…", "L".repeat(18))), Some(left));
+    assert_eq!(find(&buf, 1, &format!("{}…", "R".repeat(18))), Some(right));
+    assert_eq!(cell(&buf, left + 19, 1).glyph, ' ');
+    assert_eq!(find(&buf, 3, "HIT -8 and a lot m…"), Some(left));
 }

@@ -90,7 +90,8 @@ pub fn rect(ctx: &Ctx, scene: &MapScene, view: &ForecastView, area: Rect) -> Rec
     let right = Rect::new(area.x + area.w - left.w, area.y, left.w, h);
     let tiles = view.tiles.map(|pos| tile_cells(ctx, scene, area, pos));
     let covered = |r: Rect| tiles.iter().flatten().filter(|t| overlap(r, **t)).count();
-    let target_left = tiles[1].is_some_and(|t| t.x + t.w / 2 < area.x + area.w / 2);
+    // A tile is never across the middle: the halves are the windows.
+    let target_left = tiles[1].is_some_and(|t| t.x < area.x + area.w / 2);
     let (on_left, on_right) = (covered(left), covered(right));
     if on_right < on_left || (on_right == on_left && target_left) {
         right

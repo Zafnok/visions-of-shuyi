@@ -219,3 +219,49 @@ fn left_and_right_turn_the_pages_wrapping_and_one_page_never_turns() {
     // A page past the end turns from the last.
     assert_eq!(turn_page(Action::CursorLeft, 7, 3), Some(1));
 }
+
+#[test]
+fn long_names_are_cut_where_their_column_or_their_numbers_start() {
+    let long = |what: &str| format!("{what} {}", "x".repeat(60));
+    let v = |page| {
+        view(1, page, |v| {
+            if let Some(Some(w)) = v.weapons.first_mut() {
+                w.name = long("Sword");
+            }
+            v.armour.item = Some((long("Vest"), long("Def")));
+            v.ranks = vec![(long("Sword"), "D".into())];
+            v.affinities = vec![(long("Fire"), "Weak".into())];
+            v.skills[0].name = long("Inspire");
+            v.skills[0].effect = long("ally");
+            v.spells = vec![InfoSpellView {
+                name: long("Fire"),
+                equipped: false,
+                left: 2,
+                uses: 3,
+            }];
+        })
+    };
+    let x = |n: usize| "x".repeat(n);
+    let arms = rows(&v(1));
+    // The name up to a cell before its uses (38 cells, the last `…`).
+    assert_eq!(arms[2], format!("║ E Sword {}… 20/20 ║", x(31)));
+    // Gear, ranks and affinities: 20 cells each, in their half.
+    assert_eq!(
+        arms[10],
+        format!("║   Vest {}…    --{}║", x(14), " ".repeat(19))
+    );
+    assert_eq!(arms[11], format!("║   Def {}…{}║", x(15), " ".repeat(25)));
+    assert_eq!(
+        arms[13],
+        format!("║   Sword {}…    Fire {}… ║", x(13), x(14))
+    );
+    let rest = rows(&v(2));
+    // A skill's name up to a cell before its cost; its effect to the frame.
+    assert_eq!(rest[2], format!("║ A Inspire {}… 2/2 ║", x(31)));
+    assert_eq!(rest[3], format!("║   ally {}… ║", x(38)));
+    // A spell's name up to a cell before its uses, in its half.
+    assert_eq!(
+        rest[6],
+        format!("║   Fire {}… 2/3{}║", x(10), " ".repeat(25))
+    );
+}

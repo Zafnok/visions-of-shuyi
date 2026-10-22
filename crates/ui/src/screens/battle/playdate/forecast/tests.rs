@@ -181,3 +181,64 @@ fn too_many_rows_for_the_screen_lose_the_rules_then_the_last_notes() {
     assert_eq!(find(&buf, 13, "note 2"), Some(at.x + 2));
     assert!(rows(&buf).iter().all(|r| !r.contains("note 3")));
 }
+
+#[test]
+fn two_rects_overlap_only_where_they_share_a_cell() {
+    let a = Rect::new(2, 2, 3, 3);
+    assert!(overlap(a, Rect::new(4, 4, 2, 2)));
+    assert!(overlap(a, a));
+    // Touching edges share no cell, on any side.
+    for b in [
+        Rect::new(5, 2, 2, 3),
+        Rect::new(0, 2, 2, 3),
+        Rect::new(2, 5, 3, 2),
+        Rect::new(2, 0, 3, 2),
+    ] {
+        assert!(!overlap(a, b) && !overlap(b, a), "{b:?}");
+    }
+}
+
+#[test]
+fn a_target_below_the_window_counts_as_clear_of_it() {
+    // The target on the left half but under the window's bottom row (the
+    // window is 14 rows), the attacker on the right: the left window
+    // covers neither, so it goes there, though the target is on the left.
+    let at = placed((20, 2), (3, 14));
+    assert_eq!((at.x, at.h), (0, 14));
+}
+
+#[test]
+fn the_affinity_line_and_a_counters_kill_skull_sit_in_the_targets_column() {
+    let v = view(20, |v| {
+        v.sides[1].affinity = Some("(resist)".into());
+        v.sides[0].affinity = Some("heals 9".into());
+        // The brigand's counter kills the lord.
+        v.strikes[1].kills = true;
+    });
+    let (buf, at) = painted(&v);
+    let (x, rx) = (at.x + 2, at.x + 2 + RIGHT);
+    // Under Crit, a row each side.
+    assert_eq!(find(&buf, 7, "heals 9"), Some(x));
+    assert_eq!(find(&buf, 7, "(resist)"), Some(rx));
+    // The strikes a row lower: the counter on row 10, its skull after
+    // its damage.
+    let skulls: Vec<(i32, i32)> = buf
+        .overlays()
+        .iter()
+        .map(|o| (o.rect.x / 8, o.rect.y / 16))
+        .collect();
+    assert!(!skulls.is_empty());
+    assert!(skulls.iter().all(|&s| s == (rx + 2 + 7, 10)), "{skulls:?}");
+}
+
+#[test]
+fn the_rules_stay_inside_the_window() {
+    // On the left: the cell right of the frame is the map's, not a rule.
+    let v = view(20, |v| {
+        v.tiles = [Pos::new(20, 2), Pos::new(21, 2)];
+    });
+    let (buf, at) = painted(&v);
+    assert_eq!(at.x, 0);
+    assert_eq!(cell(&buf, at.x + at.w - 1, 7).glyph, '╢');
+    assert_ne!(cell(&buf, at.x + at.w, 7).glyph, '─');
+}

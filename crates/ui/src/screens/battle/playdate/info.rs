@@ -197,7 +197,7 @@ fn paint_weapon(pen: &mut Page<'_>, view: &InfoView, w: &InfoWeaponView, dy: i32
     // check-text: not a data name (the view's own)
     pen.text((2, dy), to_usize(right - cells(&dur) - 3), &w.name);
     pen.right((right, dy), &dur);
-    pen.text((2, dy + 1), pen.width - 2, &w.numbers);
+    pen.text((2, dy + 1), pen.width, &w.numbers);
 }
 
 /// A piece of gear from row `dy`, `dx` cells along: its heading, name and
@@ -231,7 +231,7 @@ fn paint_skills_and_spells(pen: &mut Page<'_>, view: &InfoView) {
         // check-text: not a data name (the view's own)
         pen.text((2, dy), to_usize(room), &skill.name);
         pen.right((right, dy), cost);
-        pen.text((2, dy + 1), pen.width - 2, &skill.effect);
+        pen.text((2, dy + 1), pen.width, &skill.effect);
         dy += 2;
     }
     let dy = dy.max(2) + 1;

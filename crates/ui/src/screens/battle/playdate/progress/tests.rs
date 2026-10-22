@@ -159,3 +159,35 @@ fn the_class_box_lists_what_was_learned_under_the_class_line() {
         ]
     );
 }
+
+#[test]
+fn words_too_long_for_a_page_are_cut_inside_its_frame() {
+    let long = format!("Test Lord {}", "x".repeat(60));
+    // The level-up page: the name up to the frame's inside (36 cells).
+    let buf = painted(&ProgressView::Gains(GainsView {
+        face: None,
+        placeholder: "portrait".into(),
+        banner: "LEVEL UP!".into(),
+        name: long.clone(),
+        line: "Lv 1 → 2".into(),
+        stats: Vec::new(),
+    }));
+    let at = gains_rect(SCREEN);
+    assert_eq!(
+        row(&buf, at.y + 3),
+        format!("║ Test Lord {}… ║", "x".repeat(25))
+    );
+    // The class box: a learned line up to its inside (40 cells), the
+    // class line after the name's column.
+    let buf = painted(&ProgressView::Class(ClassProgressView {
+        name: "Test Lord".into(),
+        line: long.clone(),
+        mastered: None,
+        lines: vec![long],
+    }));
+    assert_eq!(
+        row(&buf, 1),
+        format!("║ Test Lord    Test Lord {}… ║", "x".repeat(16))
+    );
+    assert_eq!(row(&buf, 2), format!("║ Test Lord {}… ║", "x".repeat(29)));
+}

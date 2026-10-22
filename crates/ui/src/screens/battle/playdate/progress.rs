@@ -78,11 +78,10 @@ fn paint_class(ctx: &Ctx, page: &ClassProgressView, area: Rect, buf: &mut GlyphB
     buf.print(x, y, &cut(&page.name, NAME_W), ink.text, ink.inside);
     let line = cut(&page.line, room.saturating_sub(13));
     buf.print(x + NAME_COL, y, &line, ink.text, ink.inside);
+    // The box is as tall as its lines.
     for line in page.mastered.iter().chain(&page.lines) {
         y += 1;
-        if y < rect.y + rect.h - 1 {
-            buf.print(x, y, &cut(line, room), ink.text, ink.inside);
-        }
+        buf.print(x, y, &cut(line, room), ink.text, ink.inside);
     }
 }
 
