@@ -449,18 +449,18 @@ fn a_menu_with_notes_scrolls_sooner_its_note_rows_kept() {
 }
 
 #[test]
-fn the_focus_bar_header_and_long_lines_stay_inside_the_frame() {
+fn the_focus_bar_header_note_and_long_lines_stay_inside_the_frame() {
     let c = ctx();
     let long = "x".repeat(60);
     let m = BattleMenuView {
-        menu: MenuView::new(vec![item(&long, None, true, true)]),
+        menu: MenuView::new(vec![item(&long, Some(&"n".repeat(60)), true, true)]),
         place: MenuPlace::Centred,
         header: Some(MenuHeader {
             name: "y".repeat(60),
             uses: None,
         }),
     };
-    assert_eq!(menu_size(&c, &m.menu, SCREEN), (50, 3));
+    assert_eq!(menu_size(&c, &m.menu, SCREEN), (50, 5));
     let mut buf = blank();
     paint_menu(&c, &m, (0, 0), SCREEN, &mut buf);
     // The header and the item cut with `…` inside the corners.
@@ -469,6 +469,8 @@ fn the_focus_bar_header_and_long_lines_stay_inside_the_frame() {
     assert_eq!(cell(&buf, 47, 0).glyph, '…');
     assert_eq!(cell(&buf, 49, 1).glyph, '║');
     assert_eq!(cell(&buf, 48, 1).glyph, '…');
+    // The note too, under its rule.
+    assert_eq!(row(&buf, 3), format!("║ {}… ║", "n".repeat(45)));
     // The bar from the cell after the frame to the cell before it.
     let bar = ink(Ink::Black);
     assert_eq!(cell(&buf, 1, 1).bg, bar);
