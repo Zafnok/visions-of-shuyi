@@ -4,16 +4,16 @@ use shuyi_core::Bot;
 use trpg_core::{AiWeights, BattleState, Command, next_command};
 
 /// A player made of code: the engine's [`Bot`] over the battle.
-/// [`play_battle`](crate::play_battle) asks it for every command of the
-/// Player phase, the phase's end included.
+/// The engine's play loop asks it for every command of the Player phase,
+/// the phase's end included.
 ///
 /// A bot is built for one try, with a `seed: u64` for any randomness of its
-/// own and for reseeding the copies it plans on
-/// ([`BattleState::reseed_luck`], ADR-0033): it must never learn the real
-/// battle's luck. The same seed and the same states must give the same
+/// own and for the copies it plans on (the engine's `Determinize`, which
+/// reseeds their luck, ADR-0033): it must never learn the real battle's
+/// luck. The same seed and the same states must give the same
 /// commands. Its command must be one the battle accepts
-/// ([`trpg_core::legal_commands`]); a refused command ends the try with a
-/// [`PlayError`](crate::PlayError).
+/// ([`trpg_core::legal_commands`]); a refused command ends the try with
+/// the engine's `PlayError`.
 ///
 /// Every `Bot<BattleState>` is one; implement [`Bot`].
 pub trait PlayerBot: Bot<BattleState> {}
@@ -21,8 +21,9 @@ pub trait PlayerBot: Bot<BattleState> {}
 impl<T: Bot<BattleState> + ?Sized> PlayerBot for T {}
 
 /// The baseline: the enemy AI ([`next_command`]) playing the player's
-/// side, ending the phase when it has nothing left to do. [`play_battle`](crate::play_battle)
-/// also plays the AI's phases with one. It never uses
+/// side, ending the phase when it has nothing left to do. Every
+/// [`BattleEntrant`](crate::BattleEntrant) also plays the AI's phases with
+/// one, and the personas play their copies on with it. It never uses
 /// items and has no randomness of its own, so it takes no seed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BaselineBot {

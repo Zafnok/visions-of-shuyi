@@ -30,11 +30,18 @@ pub const BLINK_S: f32 = 0.4;
 /// The lines of `notes`: each starts with [`MARKER`] and wraps to
 /// [`NOTE_WIDTH`], its further lines indented under its text.
 pub fn note_lines(notes: &[BattleNote], words: Words<'_>) -> Vec<String> {
+    let texts = notes.iter().map(|note| words.battle_note(note));
+    wrap_notes(texts, NOTE_WIDTH)
+}
+
+/// The lines of the notes `texts`: each starts with [`MARKER`] and wraps
+/// to `width`, its further lines indented under its text.
+pub fn wrap_notes<'a>(texts: impl IntoIterator<Item = &'a str>, width: usize) -> Vec<String> {
     let indent = MARKER.chars().count();
-    notes
-        .iter()
-        .flat_map(|note| {
-            let lines = word_wrap(words.battle_note(note), NOTE_WIDTH - indent);
+    texts
+        .into_iter()
+        .flat_map(|text| {
+            let lines = word_wrap(text, width.saturating_sub(indent));
             lines.into_iter().enumerate().map(move |(i, line)| {
                 if i == 0 {
                     format!("{MARKER}{line}")
@@ -44,6 +51,23 @@ pub fn note_lines(notes: &[BattleNote], words: Words<'_>) -> Vec<String> {
             })
         })
         .collect()
+}
+
+/// The notes' texts again from their [`wrap_notes`] lines, a note a
+/// string: for a skin that wraps them at its own width (the Playdate's,
+/// ticket 1038).
+pub fn unwrap_notes(lines: &[String]) -> Vec<String> {
+    let mut texts: Vec<String> = Vec::new();
+    for line in lines {
+        match (line.strip_prefix(MARKER), texts.last_mut()) {
+            (None, Some(text)) => {
+                text.push(' ');
+                text.push_str(line.trim_start());
+            }
+            (start, _) => texts.push(start.unwrap_or(line).trim_start().to_owned()),
+        }
+    }
+    texts
 }
 
 /// Whether a note of `notes` is about `unit`.
@@ -94,6 +118,27 @@ mod tests {
         );
         let over = format!("{full} y");
         assert_eq!(note_lines(&[note(&over, &[])], Words::ENGLISH).len(), 2);
+    }
+
+    #[test]
+    fn notes_unwrap_to_their_texts_and_wrap_again_at_another_width() {
+        let texts = [
+            "Frost Elemental: weak to Fire, absorbs Ice.",
+            "Burn the forest to cut off the ambush before the riders reach the bridge.",
+        ];
+        let lines = wrap_notes(texts, NOTE_WIDTH);
+        assert_eq!(unwrap_notes(&lines), texts);
+        assert_eq!(
+            wrap_notes(texts.iter().copied(), 30),
+            [
+                "• Frost Elemental: weak to",
+                "  Fire, absorbs Ice.",
+                "• Burn the forest to cut off",
+                "  the ambush before the riders",
+                "  reach the bridge.",
+            ]
+        );
+        assert!(unwrap_notes(&[]).is_empty());
     }
 
     #[test]

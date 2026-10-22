@@ -1,0 +1,68 @@
+// What the playtest personas should achieve (ticket 0506), with the values
+// of docs/design/playtest-bots.md: dev tooling, not game content. Read by
+// `cargo xtask playtest`, which turns it into the engine's checks for the
+// battle's tier (its `difficulty`).
+//
+// Measures a condition can name (trpg_bots::BattleMeasure): won, lord fell,
+// deaths, retreats, items, turns, "fell <unit>", "fell <unit> turn".
+(
+    // A try is a success when...
+    success: {
+        // ...it wins.
+        "casual": [(measure: "won", min: Some(1))],
+        // ...it wins, nobody dies, and it used at most 3 items.
+        "normal": [
+            (measure: "won", min: Some(1)),
+            (measure: "deaths", max: Some(0)),
+            (measure: "items", max: Some(3)),
+        ],
+        // ...it wins, nobody dies, and it used at most 1 item.
+        "hardcore": [
+            (measure: "won", min: Some(1)),
+            (measure: "deaths", max: Some(0)),
+            (measure: "items", max: Some(1)),
+        ],
+    },
+    // The share of successes wanted, in percent, by the map's tier. Nick
+    // fixed the Normal row's lower edges for Normal and Hardcore; the rest
+    // are Claude's starting values, tunable. Casual's are the Casual bot's,
+    // a weaker player that never rewinds: Nick's first bands shifted down
+    // 30 points (Nick, 2026-10-22).
+    bands: {
+        Easy: {
+            "casual": (min: 45, max: 70),
+            "normal": (min: 65, max: 90),
+            "hardcore": (min: 65, max: 90),
+        },
+        Normal: {
+            "casual": (min: 30, max: 55),
+            "normal": (min: 50, max: 75),
+            "hardcore": (min: 50, max: 75),
+        },
+        Hard: {
+            "casual": (min: 25, max: 50),
+            "normal": (min: 40, max: 65),
+            "hardcore": (min: 40, max: 65),
+        },
+        Finale: {
+            "casual": (min: 20, max: 45),
+            "normal": (min: 35, max: 60),
+            "hardcore": (min: 35, max: 60),
+        },
+    },
+    // Casual succeeding in under 20% of tries blocks the change: the battle
+    // is basically unwinnable (starting value, tunable).
+    floors: {"casual": 20},
+    // Hardcore must be faster than Normal: its median turns lower. Both
+    // medians are over the tries won with nobody dying, what both success
+    // rules share (the engine's check takes one set of tries for both).
+    faster: (
+        entrant: "hardcore",
+        than: "normal",
+        measure: "turns",
+        among: [
+            (measure: "won", min: Some(1)),
+            (measure: "deaths", max: Some(0)),
+        ],
+    ),
+)

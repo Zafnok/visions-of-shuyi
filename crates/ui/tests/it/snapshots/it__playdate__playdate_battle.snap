@@ -1,0 +1,64 @@
+---
+source: crates/ui/tests/it/playdate.rs
+expression: h.snapshot()
+---
+╔══════════╗...♣♣♣♣♣♣♣♣.........╔════════════════╗
+║ Ellery   ║♣♣♣♣♣♣♣........·····║ Road           ║
+║ HP 19/19 ║♣♣♣............··...║ DEF +0  AVO +0 ║
+╚══════════╝r..........······...╚════════════════╝
+ ......··..............Ra....Ar♣♣Br......Br...... 
+ ≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈≈≈≈≈==≈≈≈≈≈≈≈≈≈≈......Gu..♣♣♣♣ 
+ ......··..............··........≈≈≈≈≈≈≈≈==≈≈≈≈≈≈ 
+ ......··..............··......♣♣♣♣......··...... 
+ ..♣♣♣♣··..............··Ar..♣♣♣♣♣♣♣♣....Ra...... 
+ ..♣♣♣♣····..........Br··......♣♣♣♣......··..^^^^ 
+ ........··HoTa··················Br········..^^^^ 
+ ....╦╦MaEl................................^^^^^^ 
+ ......AsRu....^^^^......................♣♣♣♣.... 
+ ..............^^^^^^....................♣♣♣♣♣♣.. 
+ ................^^......................♣♣♣♣.... 
+--- colours ---
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaabbaaaabbaabbaaaaaabbaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaabbaaaaaaaaaaaaaabbaaaaaaa
+aaaaaaaaaaaaaaaaaaaaabbaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaccccaaaaaaaaaaaaaaaaaabbaaaaaaaaaaaaaaa
+aaaaaaaccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaccccaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+--- legend ---
+a = fg:white bg:black
+b = fg:map_enemy_letters bg:effect
+c = fg:black bg:white
+--- overlays ---
+over  73,190 14x2  black
+over  89,174 14x2  black
+over  105,174 14x2  black
+over  57,206 14x2  black
+over  57,190 14x2  black
+over  73,206 14x2  black
+over  169,158 14x2  white
+over  265,174 14x2  white
+over  201,142 14x2  white
+over  329,142 14x2  white
+over  96,62 7x2  white
+over  185,78 14x2  white
+over  233,78 14x2  white
+over  265,78 14x2  white
+over  329,94 14x2  white
+over  329,78 14x2  white
+over  71,176 3x1  cursor
+over  71,177 1x2  cursor
+over  85,176 3x1  cursor
+over  87,177 1x2  cursor
+over  71,189 3x1  cursor
+over  71,187 1x2  cursor
+over  85,189 3x1  cursor
+over  87,187 1x2  cursor

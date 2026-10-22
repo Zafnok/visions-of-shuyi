@@ -20,7 +20,8 @@ pub(crate) fn content() -> &'static Content {
     &CONTENT
 }
 
-fn tile(x: i32) -> Pos {
+/// The plain row's tile `x`.
+pub(crate) fn tile(x: i32) -> Pos {
     Pos::new(x, 4)
 }
 
@@ -62,10 +63,15 @@ pub(crate) fn weak(mut unit: Unit) -> Unit {
 
 /// A rout of `units`, with a potion, an elixir and a potion in the pack.
 pub(crate) fn start(units: Vec<Unit>) -> BattleState {
+    BattleState::new(setup(units)).0
+}
+
+/// The setup of [`start`], to change before starting it.
+pub(crate) fn setup(units: Vec<Unit>) -> BattleSetup {
     let content = content();
     let tables = content.tables();
     let pack = ["potion", "elixir", "potion"];
-    let (state, _) = BattleState::new(BattleSetup {
+    BattleSetup {
         map: content.maps["test_small"].map.clone(),
         terrain: tables.terrain,
         classes: tables.classes,
@@ -89,8 +95,19 @@ pub(crate) fn start(units: Vec<Unit>) -> BattleState {
         triggers: vec![],
         battle_notes: vec![],
         mode: GameMode::Classic,
-    });
-    state
+    }
+}
+
+/// `unit`, a lord.
+pub(crate) fn lord(mut unit: Unit) -> Unit {
+    unit.is_lord = true;
+    unit
+}
+
+/// `unit`, which never moves and strikes only what stands next to it.
+pub(crate) fn stationary(mut unit: Unit) -> Unit {
+    unit.ai = trpg_core::AiBehavior::Stationary;
+    unit
 }
 
 /// Attack `target` with the first weapon.
@@ -143,5 +160,21 @@ impl Scripted {
         while self.state.phase() != Phase::Player {
             self.end_phase();
         }
+    }
+}
+
+/// Battle `id` of the game's (or the test files') battles, as the playtest
+/// fields it: the characters of its player slots, fresh.
+pub(crate) fn stage(id: &str) -> crate::BattleStage {
+    let content = content();
+    let def = &content.battles[id];
+    let setup = |mode| {
+        let lead = trpg_core::LeadProfile::new("Lead", trpg_core::LeadGender::Male);
+        let campaign = trpg_content::battle_campaign(content, def, mode, lead);
+        campaign.battle_setup(def, &content.tables())
+    };
+    crate::BattleStage {
+        classic: setup(GameMode::Classic),
+        casual: setup(GameMode::Casual),
     }
 }

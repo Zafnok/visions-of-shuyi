@@ -1,0 +1,109 @@
+name: Playtest
+
+# The playtest personas (ticket 0506, docs/playtesting.md) play every battle
+# in assets/battles 100 times each. The job fails only when a battle is
+# blocked: the Casual persona succeeds in under 20% of tries
+# (docs/design/playtest-bots.md, "What a miss does"). A band missed (✗ too
+# hard, ⚠ too easy) is only reported, in the job summary.
+#
+# It plays only when a balance lever changed (ticket 0514): the battles and
+# maps, the number tables in assets/data, the rules, how content becomes a
+# battle, the bots, the engine pin, or the playtest itself. The list is
+# .github/playtest-levers.sh. That holds for pull requests and for pushes
+# to main; "Run workflow" (workflow_dispatch) always plays. As ADR-0014
+# asks, the workflow always runs and reports, and the job is skipped by
+# `if:` (never by a workflow-level `paths` filter).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playtest-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  detect:
+    name: detect
+    runs-on: ubuntu-latest
+    outputs:
+      play: ${{ steps.classify.outputs.play }}
+    steps:
+      # Enough history for the diff: on pull_request HEAD is the PR merge
+      # commit and HEAD^1 the base tip; on push, the commits pushed.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Classify changed files
+        id: classify
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          case "$EVENT_NAME" in
+            pull_request) range="HEAD^1 HEAD" ;;
+            push)
+              # A new branch or a force-push whose old tip is gone: play.
+              if [ -z "${BEFORE//0/}" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+                echo "No earlier commit to compare with: play."
+                echo "play=true" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              range="$BEFORE HEAD" ;;
+            *)
+              echo "Event $EVENT_NAME: always play."
+              echo "play=true" >> "$GITHUB_OUTPUT"
+              exit 0 ;;
+          esac
+          # shellcheck disable=SC2086 # the range is two words on purpose
+          git diff --name-only --no-renames $range | bash .github/playtest-levers.sh | tee levers.txt
+          grep '^play=' levers.txt >> "$GITHUB_OUTPUT"
+
+  playtest:
+    name: playtest
+    needs: detect
+    if: needs.detect.outputs.play == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: rustup show
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Install macroquad system libraries
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libx11-dev libxi-dev libgl1-mesa-dev libudev-dev
+      - run: cargo build --release --locked -p xtask
+      - name: Play every battle
+        run: |
+          set -uo pipefail
+          blocked=0
+          for file in assets/battles/*.ron; do
+            battle=$(basename "$file" .ron)
+            echo "::group::$battle"
+            target/release/xtask playtest "$battle" --bot all | tee "report-$battle.txt"
+            status=${PIPESTATUS[0]}
+            echo "::endgroup::"
+            {
+              echo "### $battle"
+              echo '```'
+              # The table and the game's lines, without one line per try.
+              grep -v '^try ' "report-$battle.txt"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            if [ "$status" -ne 0 ]; then
+              echo "::error::$battle: blocked (or the playtest failed), exit $status"
+              blocked=1
+            fi
+          done
+          exit $blocked

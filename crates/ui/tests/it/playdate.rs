@@ -1,8 +1,8 @@
 //! The game as the Playdate's front end runs it (ticket 1033): its
 //! 50 × 15 console, no keyboard, and only the D-pad, A (`South`) and B
 //! (`East`) of a `PadKind::Playdate` pad. Screens keep their PC look until
-//! their Playdate skins land (1037 on), so this checks where the buttons
-//! lead, not how it looks; and that the one-bit renderer draws those
+//! their Playdate skins land (1037 on), so this mostly checks where the
+//! buttons lead, not how it looks; and that the one-bit renderer draws those
 //! frames as 1032's did, whole or only what changed (ticket 1055).
 
 use insta::assert_snapshot;
@@ -21,7 +21,9 @@ use trpg_ui::screen::Keyboard;
 use trpg_ui::screens::battle::BattleScreen;
 use trpg_ui::screens::battle::map_menu::MapEntry;
 use trpg_ui::screens::battle::mode::Mode;
+use trpg_ui::screens::battle::playdate::browsing;
 use trpg_ui::screens::battle::rewind::RewindScreen;
+use trpg_ui::screens::battle::view::{BattleView, DialogView, MenuPlace};
 use trpg_ui::screens::key_bindings::view::SlotView;
 use trpg_ui::screens::{
     FamiliarityScreen, KeyBindingsScreen, LeadSelectScreen, ModeSelectScreen, OptionsScreen,
@@ -458,6 +460,66 @@ fn to_turn_two(h: &mut Harness) {
         }
     }
     panic!("turn 2 never came");
+}
+
+/// The battle's view, as its skin paints it.
+fn battle_view(h: &Harness) -> BattleView {
+    view_of(h, BattleScreen::view)
+}
+
+/// Ticket 1038: Chapter 1's first battle on the Playdate's skins, read
+/// from the battle's view: the map fills the screen, the corner pop-ups
+/// tell of what is under the cursor and give way to the menus, which open
+/// beside their tile, and the turn ends through its question (its buttons
+/// named in it) and the enemy's banner.
+#[test]
+fn the_playdates_battle_screen_browses_opens_its_menus_and_ends_the_turn() {
+    let mut h = first_battle_and(playdate_skins);
+    let lead = h.cursor_tile().unwrap_or_else(|| panic!("no cursor"));
+    // The map over the whole screen, the lead and its tile in the pop-ups.
+    let view = battle_view(&h);
+    assert_eq!(view.scene.size, (24, 15));
+    let panel = view.panel.clone().unwrap_or_else(|| panic!("no pop-ups"));
+    assert_eq!(panel.unit.map(|u| u.faction), Some(Faction::Player));
+    assert!(panel.terrain.is_some() && browsing(&view));
+    assert_snapshot!("playdate_battle", h.snapshot());
+    // An empty tile: its terrain alone.
+    h.pad("DpadUp");
+    let panel = battle_view(&h)
+        .panel
+        .unwrap_or_else(|| panic!("no pop-ups"));
+    assert!(panel.unit.is_none() && panel.terrain.is_some());
+    // B opens the map menu beside the cursor, over the pop-ups; B closes it.
+    h.pad("East");
+    let view = battle_view(&h);
+    let place = view.menu.as_ref().map(|m| m.place);
+    assert_eq!(place, h.cursor_tile().map(MenuPlace::Beside));
+    assert!(!browsing(&view));
+    h.pad("East");
+    assert!(browsing(&battle_view(&h)));
+    // The lead moved a tile right: its action menu beside where it stands.
+    h.pad("DpadDown South DpadRight South").wait(1.0);
+    assert!(matches!(battle(&h).mode(), Mode::ActionMenu { .. }));
+    let place = battle_view(&h).menu.map(|m| m.place);
+    let moved = trpg_core::Pos::new(lead.x + 1, lead.y);
+    assert_eq!(place, Some(MenuPlace::Beside(moved)));
+    // Backed out to the map, A + B asks, naming the Playdate's buttons.
+    for _ in 0..3 {
+        if matches!(battle(&h).mode(), Mode::Idle { .. }) {
+            break;
+        }
+        h.pad("East");
+    }
+    assert!(matches!(battle(&h).mode(), Mode::Idle { .. }));
+    h.pad("South+East");
+    let Some(DialogView::Question(question)) = battle_view(&h).dialog else {
+        panic!("no question: {:?}", battle(&h).mode());
+    };
+    assert_eq!(question.answers, "A yes / B no");
+    // A: the enemy's phase, its banner over the map.
+    h.pad("South");
+    let banner = battle_view(&h).banner.map(|b| b.title);
+    assert_eq!(banner.as_deref(), Some("ENEMY PHASE"));
 }
 
 /// The rewind screen's past actions (their points), newest first, and the

@@ -22,7 +22,9 @@
 //!
 //! The map itself isn't drawn here (ADR-0038): the screen says what is on it
 //! ([`BattleScreen::scene`]) and the map skin paints that. Panels, menus,
-//! boxes and the help bar are this screen's own cells.
+//! boxes and the help bar are this screen's own cells, painted from its
+//! [`view`] by the skin of the skin set ([`SKINS`]): [`glyph`] on the PC,
+//! [`playdate`] on the Playdate.
 
 pub mod ai_phase;
 pub mod art_list;
@@ -46,6 +48,7 @@ pub mod notes;
 pub mod panel;
 pub mod path;
 pub mod playback;
+pub mod playdate;
 pub mod progress;
 pub mod rewind;
 pub mod skills;
@@ -79,7 +82,7 @@ use self::cursor::Cursor;
 use self::doable::Doable;
 use self::event_sounds::CueQueue;
 use self::guides::GuidesScreen;
-use self::layout::MAP_VIEW;
+use self::layout::{MAP_VIEW, map_area};
 use self::lessons::LessonState;
 use self::mode::{Effect, Line, MenuEntry, Mode, Selection, list_entry};
 use self::playback::{Playback, SceneCue, TIMINGS};
@@ -97,12 +100,21 @@ use crate::glyph_buffer::GlyphBuffer;
 use crate::input::Action;
 use crate::map_view::{CursorView, MapScene, MapSkin, Place, ThreatView, UnitView, range};
 use crate::screen::{Ctx, FrameInput, Screen, ScreenResult, Shuyi, Transition};
+use crate::screens::Skins;
 use crate::screens::game_over::{GameOverChoice, GameOverScreen};
 use crate::settings::{AnimSpeed, HELD_SPEED, MapZoom};
 use crate::tips::{LessonView, TipView};
 use crate::widgets::help::{SEPARATOR, key_name};
 use crate::words::{Language, Words};
 use shuyi_ui::grid::MapEdges;
+
+/// The battle screen's skins (ADR-0083): the PC's glyph look, the
+/// Playdate's map over the whole screen with its corner pop-ups (ticket
+/// 1038).
+pub const SKINS: Skins<BattleView> = Skins {
+    glyph: glyph::paint,
+    playdate: playdate::paint,
+};
 
 /// Battle id of the debug Quick Battle (`assets-test/battles/quick.ron`).
 pub const QUICK_BATTLE: &str = "quick";
@@ -1338,7 +1350,7 @@ impl BattleScreen {
         }
         self.auto_end = ctx.settings().game.auto_end_turn;
         self.show_fights = ctx.settings().game.combat_animations;
-        let view = ctx.game.map_skin.view_tiles(MAP_VIEW);
+        let view = ctx.game.map_skin.view_tiles(map_area(ctx));
         if view != self.view {
             self.refit(view);
         }
@@ -2016,7 +2028,7 @@ impl BattleScreen {
     /// cursor, a selected unit's path and, while the player browses, the
     /// sides the map goes on past.
     pub fn scene(&self, ctx: &Ctx) -> MapScene {
-        self.scene_of_size(ctx, ctx.game.map_skin.view_tiles(MAP_VIEW))
+        self.scene_of_size(ctx, ctx.game.map_skin.view_tiles(map_area(ctx)))
     }
 
     /// [`scene`](Self::scene) for a view of `size` tiles instead of the
@@ -2637,7 +2649,7 @@ impl Screen<Shuyi> for BattleScreen {
     }
 
     fn draw(&self, ctx: &Ctx, buf: &mut GlyphBuffer) {
-        glyph::paint(ctx, &self.view(ctx), buf);
+        SKINS.paint(ctx, &self.view(ctx), buf);
     }
 
     fn as_any(&self) -> Option<&dyn core::any::Any> {

@@ -394,13 +394,13 @@ use alloc::sync::Arc;
 use core::fmt;
 
 use serde::{Deserialize, Serialize};
-use shuyi_core::{Sides, TurnRules};
+use shuyi_core::{Determinize, Sides, TurnRules};
 
 use crate::art::{ArtId, ArtTable};
 use crate::campaign::GameTables;
 use crate::class::{ClassDef, ClassId, ClassLevel, ClassPoints, ClassTable};
 use crate::combat::{CombatHp, CombatOutcome, CombatantInput, Forecast, Side, forecast, resolve};
-use crate::geom::Pos;
+use crate::geom::{Dir, Pos};
 use crate::item::{
     BattlePack, ConsumableEffect, Equipped, ItemDef, ItemId, ItemTable, Stock, WEAPON_SLOTS,
 };
@@ -2079,6 +2079,34 @@ impl BattleState {
         self.rng = SimRng::new(seed);
     }
 
+    /// Removes every reinforcement that hasn't arrived yet. **For the
+    /// playtest bots' planning copies only** ([`Determinize`], ticket
+    /// 0506): no bot knows about reinforcements before they arrive
+    /// (`docs/design/playtest-bots.md`, *Surprise reinforcements*). The
+    /// game never calls this.
+    pub fn drop_pending_reinforcements(&mut self) {
+        self.pending.clear();
+    }
+
+    /// The forecast of unit `attacker` striking unit `target` where it
+    /// stands, with the weapon or spell `attacker` has equipped, from the
+    /// first tile in range (nearest first, then in [`Dir::ALL`]'s order):
+    /// the numbers a player reads off by checking an enemy that threatens
+    /// a unit. `None` if either isn't on the map, nothing is equipped, or no
+    /// tile in range gives a forecast. **For the playtest bots only**
+    /// (ticket 0506), which weigh the danger a unit stands in without
+    /// knowing whom the enemy will choose.
+    pub fn threat_forecast(&self, attacker: UnitId, target: UnitId) -> Option<Forecast> {
+        let (unit, target) = (self.unit(attacker)?, self.unit(target)?);
+        let with = unit.loadout.equipped.clone()?;
+        (1..=THREAT_FORECAST_REACH).find_map(|d| {
+            Dir::ALL.into_iter().find_map(|dir| {
+                let from = (0..d).fold(target.pos, |at, _| at.step(dir));
+                self.plain_forecast(unit, from, 0, target, &with)
+            })
+        })
+    }
+
     /// Validates `cmd` (see [`Self::apply`]): what to carry out.
     fn validate(&self, cmd: &Command) -> Result<Planned, CommandError> {
         if self.outcome.is_some() {
@@ -3401,6 +3429,26 @@ impl Sides for BattleState {
 
     fn turn(&self) -> u32 {
         BattleState::turn(self)
+    }
+}
+
+/// How far [`BattleState::threat_forecast`] looks for a tile in range.
+const THREAT_FORECAST_REACH: u32 = 5;
+
+/// The copy a playtest bot plans on (ADR-0033, ticket 0506): the battle
+/// with fresh luck ([`BattleState::reseed_luck`]) and without the
+/// reinforcements that haven't arrived
+/// ([`BattleState::drop_pending_reinforcements`]), since no bot knows
+/// about them. Nothing else is hidden: every unit on the map is in plain
+/// sight of both sides. Waiting units aren't on the map, so removing them
+/// leaves the legal commands as they were. For the bots only; the game
+/// never makes one.
+impl Determinize for BattleState {
+    fn determinize(&self, _side: Phase, seed: u64) -> Self {
+        let mut copy = self.clone();
+        copy.reseed_luck(seed);
+        copy.drop_pending_reinforcements();
+        copy
     }
 }
 

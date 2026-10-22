@@ -16,8 +16,13 @@ workspace = true
 # The play loop and the `Bot` trait (ticket 1116).
 shuyi-core = { workspace = true, features = ["std"] }
 trpg-core = { path = "../core" }
+# `personas.ron` and `targets.ron` (ticket 0506).
+ron = { workspace = true, features = ["std"] }
+serde.workspace = true
 
 [dev-dependencies]
 # The game's tables and battle files, for tests on real battles, and the
 # test files' (ADR-0057).
 trpg-content = { path = "../content", features = ["test-fixtures"] }
+# The random battles every persona must play without a refused command.
+proptest.workspace = true
