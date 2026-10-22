@@ -720,6 +720,34 @@ fn with_no_attack_the_enemy_ais_own_pick_comes_first() {
 }
 
 #[test]
+fn the_ais_pick_comes_first_even_when_it_is_no_advance() {
+    // Unit 1 thinks like a healer: the enemy AI would walk it towards its
+    // ally on the left, not towards the enemy far on the right.
+    let mut healer_minded = player(1, 3);
+    healer_minded.ai = trpg_core::AiBehavior::Healer;
+    let mut far = stationary(enemy(9, 0));
+    far.pos = Pos::new(13, 4);
+    let s = start(vec![healer_minded, player(2, 0), far]);
+    let pick = next_command(&s, &content().ai).unwrap();
+    let ordered = order(&s, legal_commands(&s), &content().ai, usize::MAX);
+    assert_eq!(ordered[0], pick);
+    let mut goals = Goals::of(&s).unwrap();
+    let Command::Act { unit, dest, .. } = &pick else {
+        unreachable!()
+    };
+    let mover = s.unit(*unit).unwrap();
+    assert!(
+        goals.distance(mover, *dest) >= goals.distance(mover, mover.pos),
+        "{pick:?}"
+    );
+    // Nothing is listed twice, though each unit's hold is its advance here
+    // (the enemy strikes only what stands next to it).
+    for (i, c) in ordered.iter().enumerate() {
+        assert!(!ordered[..i].contains(c), "{c:?} twice");
+    }
+}
+
+#[test]
 fn an_attack_comes_from_the_tile_that_takes_the_least_back() {
     // Enemy 9 at (1, 4) can be struck from the plain at (0, 4), the road at
     // (2, 4) or the forest at (1, 5); the forest makes its counter miss more.
@@ -754,31 +782,59 @@ fn order_offers_each_ready_unit_its_hold_out_of_reach() {
     let mut goals = Goals::of(&s).unwrap();
     let ordered = order(&s, legal.clone(), &content().ai, usize::MAX);
     let pick = next_command(&s, &content().ai).unwrap();
+    // Each unit's nearest wait and nearest safe wait (its advance and its
+    // hold), the first in the legal order on a tie.
+    let mut listed = vec![pick.clone()];
+    let mut holds = Vec::new();
     for id in [1, 2] {
         let mover = s.unit(UnitId(id)).unwrap().clone();
-        // Its nearest safe wait, the first in the legal order on a tie.
-        let mut best: Option<(i64, &Command)> = None;
-        for c in &legal {
-            if let Command::Act {
-                unit,
-                dest,
-                action: UnitAction::Wait,
-            } = c
-                && *unit == UnitId(id)
-                && safe(*dest)
-            {
-                let d = goals.distance(&mover, *dest).unwrap();
-                if best.is_none_or(|(b, _)| d < b) {
-                    best = Some((d, c));
+        let mut nearest = |only_safe: bool| {
+            let mut best: Option<(i64, &Command)> = None;
+            for c in &legal {
+                if let Command::Act {
+                    unit,
+                    dest,
+                    action: UnitAction::Wait,
+                } = c
+                    && *unit == UnitId(id)
+                    && (safe(*dest) || !only_safe)
+                {
+                    let d = goals.distance(&mover, *dest).unwrap();
+                    if best.is_none_or(|(b, _)| d < b) {
+                        best = Some((d, c));
+                    }
                 }
             }
-        }
-        let (_, hold) = best.unwrap();
-        assert!(ordered.contains(hold) || *hold == pick, "{hold:?}");
-        let Command::Act { dest, .. } = hold else {
+            best.unwrap().1.clone()
+        };
+        let (advance, hold) = (nearest(false), nearest(true));
+        assert_ne!(advance, hold, "the danger zone shapes the hold");
+        let Command::Act { dest, .. } = &hold else {
             unreachable!()
         };
-        assert!(!threats.iter().any(|(_, strikes)| strikes(*dest)));
+        assert!(safe(*dest));
+        listed.extend([advance, hold.clone()]);
+        holds.push(hold);
+    }
+    // The holds come with the advances, before any other wait of any unit.
+    let first_plain_wait = ordered
+        .iter()
+        .position(|c| {
+            matches!(
+                c,
+                Command::Act {
+                    action: UnitAction::Wait,
+                    ..
+                }
+            ) && !listed.contains(c)
+        })
+        .unwrap();
+    for hold in &holds {
+        let at = ordered.iter().position(|c| c == hold).unwrap();
+        assert!(
+            at < first_plain_wait,
+            "{hold:?} at {at}, a plain wait at {first_plain_wait}"
+        );
     }
     // Every waiting unit is listed once, and the danger zone is real here.
     assert!(
@@ -817,6 +873,16 @@ fn hold_and_advance_keep_each_units_nearest_the_first_on_a_tie() {
     let kept: Vec<&Command> = holds.iter().map(|h| &h.2).collect();
     assert_eq!(kept, [&wait(1, 4), &wait(2, 3)]);
     let mut advances = Vec::new();
+    // Staying put is no advance.
+    advance(
+        &s,
+        &mut goals,
+        UnitId(1),
+        tile(0),
+        &wait(1, 0),
+        &mut advances,
+    );
+    assert!(advances.is_empty());
     advance(
         &s,
         &mut goals,
