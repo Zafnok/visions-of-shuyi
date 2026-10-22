@@ -6,15 +6,19 @@ name: Playtest
 # (docs/design/playtest-bots.md, "What a miss does"). A band missed (✗ too
 # hard, ⚠ too easy) is only reported, in the job summary.
 #
-# It plays only when the battles or what decides them changed: the battle
-# data (assets/), the rules (crates/core/), the bots (crates/bots/) or the
-# engine's pin. As ADR-0014 asks, the workflow always runs and reports, and
-# the job is skipped by `if:` (never by a workflow-level `paths` filter).
+# It plays only when a balance lever changed (ticket 0514): the battles and
+# maps, the number tables in assets/data, the rules, how content becomes a
+# battle, the bots, the engine pin, or the playtest itself. The list is
+# .github/playtest-levers.sh. That holds for pull requests and for pushes
+# to main; "Run workflow" (workflow_dispatch) always plays. As ADR-0014
+# asks, the workflow always runs and reports, and the job is skipped by
+# `if:` (never by a workflow-level `paths` filter).
 
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -33,33 +37,37 @@ jobs:
     outputs:
       play: ${{ steps.classify.outputs.play }}
     steps:
-      # On pull_request, HEAD is the PR merge commit; HEAD^1 is the base tip.
+      # Enough history for the diff: on pull_request HEAD is the PR merge
+      # commit and HEAD^1 the base tip; on push, the commits pushed.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: github.event_name == 'pull_request'
         with:
           persist-credentials: false
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Classify changed files
         id: classify
         env:
           EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
         run: |
           set -euo pipefail
-          if [ "$EVENT_NAME" != "pull_request" ]; then
-            echo "Event $EVENT_NAME: always play."
-            echo "play=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          play=false
-          while IFS= read -r path; do
-            case "$path" in
-              *.md) ;;
-              assets/*|crates/core/*|crates/bots/*|shuyi-engine.rev|.github/workflows/playtest.yml)
-                echo "plays: $path"; play=true ;;
-            esac
-          done < <(git diff --name-only --no-renames HEAD^1 HEAD)
-          echo "play=$play"
-          echo "play=$play" >> "$GITHUB_OUTPUT"
+          case "$EVENT_NAME" in
+            pull_request) range="HEAD^1 HEAD" ;;
+            push)
+              # A new branch or a force-push whose old tip is gone: play.
+              if [ -z "${BEFORE//0/}" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+                echo "No earlier commit to compare with: play."
+                echo "play=true" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              range="$BEFORE HEAD" ;;
+            *)
+              echo "Event $EVENT_NAME: always play."
+              echo "play=true" >> "$GITHUB_OUTPUT"
+              exit 0 ;;
+          esac
+          # shellcheck disable=SC2086 # the range is two words on purpose
+          git diff --name-only --no-renames $range | bash .github/playtest-levers.sh | tee levers.txt
+          grep '^play=' levers.txt >> "$GITHUB_OUTPUT"
 
   playtest:
     name: playtest
