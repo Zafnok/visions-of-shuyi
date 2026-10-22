@@ -201,6 +201,10 @@ pub struct BattleDef {
     pub triggers: Vec<Trigger>,
     /// The battle's strategy hints (0411).
     pub battle_notes: Vec<BattleNote>,
+    /// The place an escape map's exit leads to, named on the objective
+    /// line (`the Brennish lines`; 0324). English: the screen translates
+    /// it. Only on an [`Objective::Escape`] battle.
+    pub exit_name: Option<String>,
     /// Sets the rewind charges.
     pub difficulty: Difficulty,
     /// What plays during the battle.

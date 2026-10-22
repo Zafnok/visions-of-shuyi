@@ -5,10 +5,10 @@ type: feature
 milestone: M2 Core rules
 model: sonnet-5
 effort: medium
-status: todo
+status: done
 blocked_by: ["0319"]
 nick_input: none
-completed:
+completed: 2026-10-22
 ---
 
 # 0324 — An escape map names its exit on the objective line
@@ -72,10 +72,10 @@ one text branch), like `light` in the battle file.
 
 ## Acceptance criteria
 
-- [ ] `test_escape`'s objective line reads `Get everyone to <its name>
+- [x] `test_escape`'s objective line reads `Get everyone to <its name>
       (0/3 out)`; a battle without a name keeps `Get everyone to the exit`.
-- [ ] A name on a non-escape map, or an empty one, is a content error.
-- [ ] All gates in the `run-gates` skill pass.
+- [x] A name on a non-escape map, or an empty one, is a content error.
+- [x] All gates in the `run-gates` skill pass.
 
 ## Tests required
 
@@ -85,5 +85,17 @@ one text branch), like `light` in the battle file.
 
 ## Completion notes
 
-*(Filled in by the session that completes the ticket: what was done, deviations,
-follow-up tickets created, notes for Nick.)*
+- Battle files take an optional `exit_name: "..."` (written bare), only
+  with `Escape`; the loader trims it and rejects an empty or multi-line
+  one, or one on another objective. It rides on `BattleDef::exit_name`
+  (plain text, not in `BattleSetup` or the state: the rules never read
+  it) and the game flow hands it to the battle screen
+  (`BattleScreen::with_exit_name`), beside its look and music.
+- `objective_text` takes the name: `Get everyone to {place} ({out}/{total}
+  out)` (`battle.objective.escape_to`), else the old `the exit` line.
+- Translated like a battle note, by its English: key
+  `battles.<id>.exit` (`assets/lang/README.md`); the test pack translates
+  `test_escape`'s.
+- `test_escape` names its exit `the east road` (test content only).
+- Friction: estimate 60, measured 65 (1.1×).
+- No gameplay rules decided; Chapter 6's name comes with 0852.

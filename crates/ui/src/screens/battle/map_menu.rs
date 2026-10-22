@@ -219,9 +219,10 @@ pub fn unit_list(state: &BattleState, words: Words<'_>) -> Menu<UnitId> {
     Menu::new(items)
 }
 
-/// What the objective asks, e.g. `Rout the enemy` or `Seize the Fort`.
-/// *Claude's starting wording* until maps carry their own text.
-pub fn objective_text(state: &BattleState, words: Words<'_>) -> String {
+/// What the objective asks, e.g. `Rout the enemy` or `Seize the Fort`;
+/// an escape names `exit`, the battle file's name for its exit, if it has
+/// one. *Claude's starting wording* until maps carry their own text.
+pub fn objective_text(state: &BattleState, exit: Option<&str>, words: Words<'_>) -> String {
     match state.objective() {
         Objective::Rout { .. } => words.text("battle.objective.rout").to_owned(),
         Objective::DefeatUnit { unit, .. } => {
@@ -254,10 +255,20 @@ pub fn objective_text(state: &BattleState, words: Words<'_>) -> String {
             let out = state.escaped().len();
             let on_map = state.units().iter();
             let total = out + on_map.filter(|u| u.faction == Faction::Player).count();
-            words.text_with(
-                "battle.objective.escape",
-                &[("out", &out), ("total", &total)],
-            )
+            match exit {
+                Some(place) => words.text_with(
+                    "battle.objective.escape_to",
+                    &[
+                        ("place", &words.exit_name(place)),
+                        ("out", &out),
+                        ("total", &total),
+                    ],
+                ),
+                None => words.text_with(
+                    "battle.objective.escape",
+                    &[("out", &out), ("total", &total)],
+                ),
+            }
         }
     }
 }
@@ -440,7 +451,7 @@ mod tests {
     fn objective_and_turn_texts() {
         let c = ctx();
         let q = quick_battle(&c.game.content).unwrap();
-        assert_eq!(objective_text(&q, Words::ENGLISH), "Rout the enemy");
+        assert_eq!(objective_text(&q, None, Words::ENGLISH), "Rout the enemy");
         assert_eq!(turn_text(&q, Words::ENGLISH), "Turn 1");
         let with = |o| battle_with(&c, q.map().clone(), q.units().to_vec(), o);
         let s = with(Objective::Rout {
@@ -451,12 +462,12 @@ mod tests {
             unit: UnitId(6),
             turn_limit: None,
         });
-        assert_eq!(objective_text(&s, Words::ENGLISH), "Defeat Raider");
+        assert_eq!(objective_text(&s, None, Words::ENGLISH), "Defeat Raider");
         let s = with(Objective::DefeatUnit {
             unit: UnitId(99),
             turn_limit: None,
         });
-        assert_eq!(objective_text(&s, Words::ENGLISH), "Defeat the boss");
+        assert_eq!(objective_text(&s, None, Words::ENGLISH), "Defeat the boss");
         // A boss that has fallen keeps its name.
         let mut s = battle_with(
             &c,
@@ -483,7 +494,7 @@ mod tests {
         })
         .unwrap();
         assert!(s.unit(UnitId(4)).is_none());
-        assert_eq!(objective_text(&s, Words::ENGLISH), "Defeat Brigand");
+        assert_eq!(objective_text(&s, None, Words::ENGLISH), "Defeat Brigand");
         let s = with(Objective::Seize {
             pos: Pos::new(5, 5),
             by_lord: true,
@@ -491,7 +502,7 @@ mod tests {
         });
         assert_eq!(
             (
-                objective_text(&s, Words::ENGLISH),
+                objective_text(&s, None, Words::ENGLISH),
                 turn_text(&s, Words::ENGLISH)
             ),
             ("Seize the Fort".into(), "Turn 1/3".into())
@@ -501,11 +512,14 @@ mod tests {
             by_lord: true,
             turn_limit: None,
         });
-        assert_eq!(objective_text(&s, Words::ENGLISH), "Seize the objective");
+        assert_eq!(
+            objective_text(&s, None, Words::ENGLISH),
+            "Seize the objective"
+        );
         let s = with(Objective::Survive { turns: 5 });
         assert_eq!(
             (
-                objective_text(&s, Words::ENGLISH),
+                objective_text(&s, None, Words::ENGLISH),
                 turn_text(&s, Words::ENGLISH)
             ),
             ("Survive 5 turns".into(), "Turn 1/5".into())

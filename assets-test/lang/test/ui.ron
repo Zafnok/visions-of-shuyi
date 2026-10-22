@@ -957,6 +957,11 @@
         source: "Get everyone to the exit ({out}/{total} out)",
         text: "GET EVERYONE TO THE EXIT ({out}/{total} OUT)",
     ),
+    (
+        key: "battle.objective.escape_to",
+        source: "Get everyone to {place} ({out}/{total} out)",
+        text: "GET EVERYONE TO {place} ({out}/{total} OUT)",
+    ),
     (key: "battle.notes.title", source: "BATTLE NOTES", text: "BATTLE NOTES"),
     (key: "battle.notes.heading", source: "Battle notes", text: "BATTLE NOTES"),
     (key: "battle.class_level", source: "{class}  Lv {level}", text: "{class}  LV {level}"),

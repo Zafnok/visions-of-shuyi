@@ -135,6 +135,7 @@ fn def() -> BattleDef {
             text: "Rook: joins if defeated.".into(),
             units: vec![UnitId(5)],
         }],
+        exit_name: None,
         difficulty: Difficulty::Normal,
         music: BattleMusic::Pool("skirmish".into()),
         seed: 3,
