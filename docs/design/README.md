@@ -40,7 +40,7 @@ here.
 | Threat arrows: which enemies can attack the tile you're moving to | [`turn-structure.md`](turn-structure.md) (*Threat arrows*), [`look-and-feel.md`](look-and-feel.md) (*Threat arrows*) | 0055 (built by 0448) | ✅ decided 2026-10-12 |
 | Arrows at the map's edges where the map goes on past the view | [`look-and-feel.md`](look-and-feel.md) (*Arrows at the map's edges*) | 0449 | ✅ decided 2026-10-21 (a big arrow fading slowly, only while browsing; cursor yellow in the glyph look) |
 | Tutorial: how familiar you are, the guide, checklist lessons, Guides | [`tutorial.md`](tutorial.md) (+ `chapter-1.md`, *Teaching*) | 0057 (built by 0455, 0456, 0457, 0458, 0731, 0835) | ✅ decided 2026-10-14 |
-| Terrain: movement costs & bonuses | [`terrain.md`](terrain.md) | 0301 | ✅ decided 2026-09-26 (capturing & healing tiles deferred) |
+| Terrain: movement costs & bonuses | [`terrain.md`](terrain.md) | 0301, 0037 | ✅ decided 2026-09-26 (house, gate and throne tiles, capturing, healing tiles: 2026-10-22, ticket 0037) |
 | Controls, key layouts & controller | [`controls.md`](controls.md) | 0015, 0030, 0032 | ✅ decided 2026-09-25 (rebinding keys 0030, 2026-09-29; controller 0032, 2026-09-30) |
 | The Options screen: speeds, volumes, asking first; where options are kept (player profiles) | [`options.md`](options.md) | 0805, 0058 (built by 0836, 0837, 0838, 0839) | ✅ decided 2026-10-04 (player profiles hold the options and saves, 2026-10-14) |
 | Battle scenes, talking & recruitment | [`battle-scenes-and-recruitment.md`](battle-scenes-and-recruitment.md) | 0705 | ✅ decided 2026-09-29 (quest recruitment later) |

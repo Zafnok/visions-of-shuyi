@@ -587,7 +587,7 @@ yet, nor any ring.
   Villages appear in a battle only when the story is about them, as a
   **save the village** race with a minimum number of houses and extra
   rewards past it (`turn-structure.md`, *Save the village*). The house
-  tile itself waits for 0037 (`terrain.md`).
+  tile is decided (0037, `terrain.md`, *Building tiles*).
 - **Chests** (*Claude's starting rule*): a player unit on a chest uses `Open`;
   no key needed for now. Contents: gold or an item.
 - Chapter 1 has no shop, village or chest (0009, `chapter-1.md`).

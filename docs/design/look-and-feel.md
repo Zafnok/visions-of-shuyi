@@ -208,6 +208,11 @@ D the side panel):
   ticket 0422). Nick: "not a fan of the fort glyph it looks too similar to a
   cursor" … "I like C for the fort". The old `[]` read as the cursor's
   brackets; terrain glyphs should never look like the cursor.
+- **House, gate and throne are each one picture across the tile's two
+  cells** (decided 2026-10-22, ticket 0037): our own glyphs (a lean-to
+  shack, a portcullis, a crowned throne), not two of the same letter,
+  which Nick found "visually confusing". Details in `terrain.md`,
+  *Building tiles*.
 - Move/attack/heal/danger overlays blend their colour over the terrain
   background at about **75%** *(tunable)*, so the ground stays visible
   underneath. Nick liked the move and attack range colours as shown.
