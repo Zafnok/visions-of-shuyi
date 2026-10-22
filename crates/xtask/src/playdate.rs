@@ -509,11 +509,9 @@ fn device_steps(paths: &Paths, options: Options, tools: &Tools) -> Result<Vec<St
     map.push(paths.obj.join("pdex.map"));
     map.push(",--cref,--gc-sections,--no-warn-mismatch,--emit-relocs");
     link.push(map);
-    link.extend(os_args([
-        "-o".into(),
-        paths.source.join("pdex.elf").into_os_string(),
-    ]));
-    Ok(vec![
+    let elf = paths.source.join("pdex.elf");
+    link.extend(os_args(["-o".into(), elf.clone().into_os_string()]));
+    let mut steps = vec![
         Step::Run {
             what: "cargo build (device)",
             program: PathBuf::from("cargo"),
@@ -535,11 +533,31 @@ fn device_steps(paths: &Paths, options: Options, tools: &Tools) -> Result<Vec<St
         },
         Step::Run {
             what: "link pdex.elf (device)",
-            program: arm_gcc,
+            program: arm_gcc.clone(),
             args: link,
             rustflags: None,
         },
-    ])
+    ];
+    if !release {
+        // The SDK's link map discards `.ARM.exidx` but not each function's
+        // `.ARM.exidx.*`: unoptimized, every one of some 57,000 functions
+        // keeps its own (and its relocations), past the ELF's 65,280
+        // sections, and `pdc` crashes on that (0xc0000005, ticket 1056).
+        // With `panic = "abort"` nothing unwinds, so they go. The release
+        // build, inlined and LTO'd, stays well under and is left as it is.
+        steps.push(Step::Run {
+            what: "drop unwind index sections (device)",
+            program: arm_gcc
+                .with_file_name(format!("arm-none-eabi-objcopy{}", env::consts::EXE_SUFFIX)),
+            args: os_args([
+                OsString::from("--remove-section=.ARM.exidx*"),
+                OsString::from("--remove-section=.rel.ARM.exidx*"),
+                elf.into_os_string(),
+            ]),
+            rustflags: None,
+        });
+    }
+    Ok(steps)
 }
 
 /// The steps that build `pdex.dll`, for the Simulator.
@@ -1134,6 +1152,41 @@ mod tests {
         assert_eq!(
             link[link.len() - 2..],
             ["-o", "/repo/target/playdate/Source/pdex.elf"]
+        );
+    }
+
+    #[test]
+    fn the_debug_device_build_drops_the_unwind_index_sections_for_pdc() {
+        let debug = Options {
+            release: false,
+            ..BOTH
+        };
+        let steps = plan(Path::new("/repo"), debug, &tools(), "0.2.0").unwrap();
+        let (what, program, args, _) = &runs(&steps)[4];
+        assert_eq!(*what, "drop unwind index sections (device)");
+        assert_eq!(
+            program.replace('\\', "/"),
+            format!("/bin/arm-none-eabi-objcopy{}", env::consts::EXE_SUFFIX)
+        );
+        assert_eq!(
+            args[..],
+            [
+                "--remove-section=.ARM.exidx*",
+                "--remove-section=.rel.ARM.exidx*",
+                "/repo/target/playdate/Source/pdex.elf",
+            ]
+        );
+        assert_eq!(runs(&steps)[5].0, "cargo build (Simulator)");
+    }
+
+    #[test]
+    fn the_release_device_build_keeps_its_elf_as_linked() {
+        let steps = plan(Path::new("/repo"), BOTH, &tools(), "0.2.0").unwrap();
+        assert!(
+            runs(&steps)
+                .iter()
+                .all(|(_, program, _, _)| !program.contains("objcopy")),
+            "{steps:?}"
         );
     }
 

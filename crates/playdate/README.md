@@ -211,7 +211,11 @@ builds `target/playdate/VisionsOfShuyi.pdx` for both the device and the
 Simulator. `--device` or `--simulator` builds one half (the Simulator half
 on Windows only). Without `--release` the Rust code is built unoptimized
 (`playdate-dev` profile): fine in the Simulator, too slow and too deep for
-the device's stack, so always use `--release` for the device.
+the device's stack, so always use `--release` for the device. The debug
+`pdex.elf` has its unwind index sections (`.ARM.exidx.*`) taken out after
+linking (`arm-none-eabi-objcopy`, beside `arm-none-eabi-gcc`): unoptimized,
+there is one per function, more sections than an ELF file can number
+plainly, and the SDK's `pdc` (3.1.2) crashes on it (ticket 1056).
 
 `--private-assets` builds with the bought art in `assets-private/game/`
 over the placeholders (fetch it with `cargo shuyi private-assets`;
