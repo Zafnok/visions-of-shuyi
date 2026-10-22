@@ -147,7 +147,7 @@ More kinds may be added later. **No stat boosters** (FE's Energy Ring and
 the like) as side-quest rewards. Ticket 1072 picks the reward of each Act 1
 side quest from this list.
 
-**Missable for good, with a reminder** (Nick: "missed for good, with some
+**Can be missed for good, with a reminder** (Nick: "missed for good, with some
 reminder / tracker if the side quest is discovered "deadline in XYZ time"").
 Example: Tamsin's side quest opens after the Toll Bridge. If Tamsin dies
 (Classic) before it is played, or Act 1 ends first (the map closes,

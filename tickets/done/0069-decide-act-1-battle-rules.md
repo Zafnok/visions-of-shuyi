@@ -162,7 +162,7 @@ Asked in five rounds with the question pop-up (2026-10-21/22). Recorded:
   if he falls in this battle in Classic (or died earlier), the "lead tells
   Dace" version. `death-and-difficulty.md`.
 - **Side-quest rewards:** a personal weapon, a signature upgrade, rare shop
-  stock or gold; more kinds later; no stat boosters. Missable for good,
+  stock or gold; more kinds later; no stat boosters. Can be missed for good,
   with a deadline reminder once discovered. `world-structure.md`.
 - **Chapter table:** confirmed with two changes Nick asked for:
   **no talk-to-recruit** (Joss joins in a scene, Gil when beaten; Nick
