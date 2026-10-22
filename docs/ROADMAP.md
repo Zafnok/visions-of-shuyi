@@ -308,7 +308,8 @@ Candle joins outside battle.
   (closing scene, "Act 1 ends", the army carried over) · **1074** a
   discovered side quest shows when it closes (after 1007).
 - **B. Battle rules:** **0319** escape, a boss who retreats, a boss
-  who can't die, a scripted death (after 0069) · **0511** bosses use their
+  who can't die, a scripted death (after 0069) → **0324** the escape
+  objective names its exit · **0511** bosses use their
   debuff and stance arts · **0513** green units carry their own
   consumables (0044) · **0321** the four armour weights in the data
   (after 0073) → **0320** specialty stores · **0323** extra strikes need

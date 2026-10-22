@@ -71,6 +71,7 @@ ui_colors! {
     AttackRange => "attack_range",
     HealRange => "heal_range",
     DangerZone => "danger_zone",
+    ExitArea => "exit_area",
     Effect => "effect",
     Cursor => "cursor",
     Path => "path",

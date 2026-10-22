@@ -17,6 +17,9 @@
 //!   unit. So [`Reach`] has two sets: *passable* tiles (reached within budget,
 //!   with their cheapest cost) and *stoppable* tiles (passable and empty,
 //!   plus the start tile, always).
+//! - **Blocked tiles.** A tile of the map's
+//!   [`blocked`](BattleMap::blocked) set (a downed unit lies there) can't
+//!   be entered by anyone, as if impassable.
 //! - **No Canto, split movement, zones of control or flying over units**
 //!   (`docs/design/turn-structure.md`: FE standard only). Movement skills are
 //!   separate, later rules.
@@ -98,7 +101,8 @@ pub enum PathError {
         /// Index of the tile stepped to.
         index: usize,
     },
-    /// A step enters a tile the mover can't enter (or leaves the map).
+    /// A step enters a tile the mover can't enter (or leaves the map, or
+    /// enters a blocked tile).
     Impassable {
         /// Index of the tile stepped to.
         index: usize,
@@ -235,16 +239,20 @@ pub fn reachable(
     let tiles = &map.tiles;
     let (width, height) = (tiles.width(), tiles.height());
     let mut occupied = TileSet::new(width, height);
-    let mut hostile = TileSet::new(width, height);
+    // Tiles no step may enter: hostile units' and blocked ones.
+    let mut closed = TileSet::new(width, height);
     for other in units.iter().filter(|u| u.id != mover) {
         occupied.insert(other.pos);
         if other.faction.is_hostile_to(unit.faction) {
-            hostile.insert(other.pos);
+            closed.insert(other.pos);
         }
+    }
+    for &pos in &map.blocked {
+        closed.insert(pos);
     }
 
     let walk = path::reachable(width, height, unit.pos, budget, |pos| {
-        if hostile.contains(pos) {
+        if closed.contains(pos) {
             return None;
         }
         let step = tiles
@@ -292,9 +300,9 @@ pub fn path_cost(
         if hostile_at(units, unit.faction, to) {
             return Err(PathError::Hostile { index });
         }
-        let step = map
-            .tiles
-            .get(to)
+        let step = Some(to)
+            .filter(|to| !map.blocked.contains(to))
+            .and_then(|to| map.tiles.get(to))
             .and_then(|&t| terrain.move_cost(t, movement_type))
             .ok_or(PathError::Impassable { index })?;
         total = total.saturating_add(u32::from(step));

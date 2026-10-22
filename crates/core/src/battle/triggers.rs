@@ -280,11 +280,13 @@ impl BattleState {
     }
 
     /// The units on the map before `events` (one command's) happened:
-    /// those on it now and those that fell, less those that arrived.
+    /// those on it now (standing or down) and those that fell or escaped,
+    /// less those that arrived.
     pub(super) fn on_map_before(&self, events: &[Event]) -> BTreeSet<UnitId> {
-        let mut on_map: BTreeSet<UnitId> = self.units.iter().map(|u| u.id).collect();
+        let here = self.units.iter().chain(&self.down);
+        let mut on_map: BTreeSet<UnitId> = here.map(|u| u.id).collect();
         for event in events {
-            if let Event::UnitFell { unit } = event {
+            if let Event::UnitFell { unit } | Event::UnitEscaped { unit } = event {
                 on_map.insert(*unit);
             }
         }
@@ -300,7 +302,8 @@ impl BattleState {
 
     /// Inserts the scenes the triggers fire into `events` (one command's,
     /// or the battle's start), each at its moment: before a combat
-    /// ([`Event::CombatResolved`]) or a fall ([`Event::UnitFell`]), after
+    /// ([`Event::CombatResolved`]) or a fall ([`Event::UnitFell`],
+    /// [`Event::UnitDowned`]), after
     /// a combat (half HP), a phase start ([`Event::PhaseStarted`]) or a
     /// move ([`Event::UnitMoved`]). A fall that recruits is followed by
     /// [`Event::UnitRecruited`]. A [`TriggerWhen::Talk`]'s scene is already
@@ -337,6 +340,16 @@ impl BattleState {
                         self.recruited.push(u);
                         out.push(Event::UnitRecruited { unit });
                     }
+                }
+                Event::UnitDowned { unit } => {
+                    // Its defeated line; it stays on the map, and is never
+                    // recruited.
+                    self.fall_scenes(*unit, &on_map, &mut out);
+                    out.push(event);
+                }
+                Event::UnitEscaped { unit } => {
+                    on_map.remove(unit);
+                    out.push(event);
                 }
                 Event::PhaseStarted { turn, phase } => {
                     let (turn, phase) = (*turn, *phase);

@@ -66,6 +66,7 @@ fn cast_unit(ctx: &Ctx, member: &CastMember, lead: &LeadProfile) -> UnitView {
         class: def.map_or_else(|| ClassId(String::new()), |d| d.class.clone()),
         character: Some(id.clone()),
         acted: false,
+        fight: crate::map_view::scene::Fight::In,
         hp: (1, 1),
         effects: UnitEffects::default(),
         fade: 0.0,

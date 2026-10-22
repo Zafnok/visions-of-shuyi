@@ -27,7 +27,8 @@
 //!   ([`crate::prep`]), and [`Campaign::set_members`] puts them back.
 //! - **After a victory** ([`Campaign::apply_result`]), in this order:
 //!   1. Every deployed player unit's roster entry becomes the battle's unit
-//!      (levels, EXP, loadout, weapon ranks, durability all carry over). A
+//!      (levels, EXP, loadout, weapon ranks, durability all carry over); one
+//!      that escaped ([`BattleState::escaped`]) counts as standing. A
 //!      fallen one in **Classic** leaves the roster and everything in its
 //!      loadout goes to the stock (weapons keep their durability); in
 //!      **Casual** it stays, with what it had earned before falling.
@@ -54,6 +55,11 @@
 //!
 //!   A defeat changes nothing ([`ApplyError::NotWon`]): the game is over,
 //!   and Retry starts the battle again from its setup.
+//! - **A scripted death** (`death-and-difficulty.md`, Hollis, 0069): a
+//!   scene can remove a named character for good, in **every** mode
+//!   ([`Campaign::dies_in_scene`], the dialogue's `@dies`): it leaves the
+//!   roster, its loadout goes to the stock and its supports end, as for a
+//!   Classic death. A lord (the lead) never does.
 //! - **Supports** (`docs/design/supports.md`, rules in [`crate::support`]):
 //!   between battles, [`Campaign::view_support`] views a pair's unlocked
 //!   conversation, which is what raises its rank. Both characters must be
@@ -448,7 +454,11 @@ impl Campaign {
         let mut stock = state.stock().clone();
         self.supports = state.supports().clone();
         let is_player = |u: &&Unit| u.faction == Faction::Player && u.character.is_some();
-        let standing = state.units().iter().filter(is_player);
+        let standing = state
+            .units()
+            .iter()
+            .chain(state.escaped())
+            .filter(is_player);
         let fallen = state.fallen().iter().filter(is_player);
         // Deployed units still in the roster, for the bonus, in slot order.
         let mut deployed: Vec<Unit> = Vec::new();
@@ -495,6 +505,21 @@ impl Campaign {
             rest(u);
         }
         Ok(rewards)
+    }
+
+    /// Removes `character` from the army for good, whatever the mode: a
+    /// scene's death (see the module docs). Its loadout goes to the stock
+    /// and its supports end. Returns whether it was in the army (nothing
+    /// changes if not, or if it is a lord: the lead).
+    pub fn dies_in_scene(&mut self, character: &CharacterId, table: &SupportTable) -> bool {
+        let Some(unit) = self.member(character).filter(|u| !u.is_lord).cloned() else {
+            return false;
+        };
+        let mut stock = core::mem::take(&mut self.stock);
+        self.lose(&unit, &mut stock);
+        self.stock = stock;
+        self.supports.end_for(character, table);
+        true
     }
 
     /// Views the unlocked support conversation of characters `a` and `b`,

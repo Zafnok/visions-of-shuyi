@@ -299,6 +299,7 @@ pub(crate) mod tests {
             class: ClassId("brigand".into()),
             character: None,
             acted: false,
+            fight: crate::map_view::scene::Fight::In,
             hp: (30, 30),
             effects: UnitEffects::default(),
             fade: 0.0,
@@ -861,6 +862,7 @@ pub(crate) mod tests {
             class: _,
             character: _,
             acted: _,
+            fight: _,
             hp: _,
             effects:
                 UnitEffects {
@@ -917,6 +919,10 @@ pub(crate) mod tests {
                 &unit(|u| u.character = Some(CharacterId("test_lord".into()))),
             ),
             feature("acted", &unit(|u| u.acted = true)),
+            feature(
+                "down",
+                &unit(|u| u.fight = crate::map_view::scene::Fight::Down),
+            ),
             feature("hp", &unit(|u| u.hp.0 = 10)),
             feature("bonus", &unit(|u| u.effects.bonus = true)),
             feature("penalty", &unit(|u| u.effects.penalty = true)),
@@ -971,7 +977,7 @@ pub(crate) mod tests {
         let own = with_walking_brigand(&c, &with_lord(&skin(&c)));
         for s in [own, with_lord(&sheets(&c))] {
             let features = features(&c);
-            assert_eq!(features.len(), 22 + 4 + 6);
+            assert_eq!(features.len(), 23 + 5 + 6);
             for f in features {
                 assert_ne!(f.without, f.with, "{}: no change", f.name);
                 let (without, with) = (painted(&c, &s, &f.without), painted(&c, &s, &f.with));

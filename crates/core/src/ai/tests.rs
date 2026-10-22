@@ -372,6 +372,7 @@ fn unit(id: u32, faction: Faction, pos: Pos) -> Unit {
         learned_skills: BTreeSet::new(),
         effects: Vec::new(),
         skill_uses: crate::skill::SkillUses::default(),
+        defeat: crate::Defeat::Falls,
     };
     carrying(u, &["sword"])
 }
@@ -1776,4 +1777,60 @@ fn enemy_phase_planning_time() {
     {
         println!("enemy phase: {commands} commands planned in {planning:?}");
     }
+}
+
+// ---- Escaping (0319) -------------------------------------------------------
+
+/// The scene's battle with an escape objective (the exit: column 8), at
+/// the start of the Player phase.
+fn escaping(rows: &[&str]) -> BattleState {
+    let (map, units) = scene(rows);
+    let area = crate::battle::TileRect {
+        x: 8,
+        y: 0,
+        w: 1,
+        h: 2,
+    };
+    let objective = Objective::Escape { area };
+    BattleState::new(BattleSetup {
+        objective,
+        ..setup(map, units)
+    })
+    .0
+}
+
+#[test]
+fn a_player_unit_runs_for_the_exit_without_attacking() {
+    // The enemy next to it is not attacked: the unit moves toward the exit.
+    let state = escaping(&[
+        "P........", //
+        "E........", //
+    ]);
+    assert_eq!(next(&state), wait(1, p(4, 0)));
+}
+
+#[test]
+fn a_player_unit_in_reach_of_the_exit_escapes() {
+    let state = escaping(&[
+        ".....P...", //
+        "E........", //
+    ]);
+    assert_eq!(next(&state), act(1, p(8, 0), UnitAction::Escape));
+}
+
+#[test]
+fn enemies_never_escape() {
+    let mut state = escaping(&[
+        "......P..", //
+        ".......E.", //
+    ]);
+    state.apply(&Command::EndPhase).unwrap();
+    // It attacks as usual, from a tile of the exit area or not.
+    assert!(matches!(
+        next(&state),
+        Command::Act {
+            action: UnitAction::Attack { .. },
+            ..
+        }
+    ));
 }

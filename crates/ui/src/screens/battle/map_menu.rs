@@ -249,6 +249,16 @@ pub fn objective_text(state: &BattleState, words: Words<'_>) -> String {
         Objective::Survive { turns } => {
             words.text_with("battle.objective.survive", &[("turns", &turns)])
         }
+        Objective::Escape { .. } => {
+            // Those out of those still standing: on the map or out.
+            let out = state.escaped().len();
+            let on_map = state.units().iter();
+            let total = out + on_map.filter(|u| u.faction == Faction::Player).count();
+            words.text_with(
+                "battle.objective.escape",
+                &[("out", &out), ("total", &total)],
+            )
+        }
     }
 }
 

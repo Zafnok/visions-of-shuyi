@@ -1,7 +1,8 @@
 //! How the Playdate's map skin draws a unit (`docs/design/playdate.md`,
 //! *Telling things apart without colour*): its two-letter label white in a
 //! black tile (yours), with a white edge on a grey tile (an enemy), or
-//! black in an outlined tile once it has acted; the HP line along the
+//! black in an outlined tile once it has acted (or is down, 0319: the
+//! one-bit screen's grayed out); the HP line along the
 //! bottom of the tile, as on the PC, its HP lost dithered on yours.
 
 use trpg_core::Faction;
@@ -33,7 +34,7 @@ pub struct Look {
 /// are their letters alone on the terrain until a chapter that has them
 /// decides (`docs/design/playdate.md`, *Open sub-questions*).
 pub fn look(unit: &UnitView, inks: &Inks) -> Look {
-    if unit.acted {
+    if unit.acted || unit.is_down() {
         let (tile, letters, outline) = inks.acted;
         return Look {
             tile: Some(tile),

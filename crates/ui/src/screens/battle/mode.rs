@@ -165,6 +165,8 @@ pub enum MenuEntry {
     Magic,
     /// Seize the objective tile, when legal there.
     Seize,
+    /// Leave the map through the exit area, when legal there (0319).
+    Escape,
     /// Talk to an adjacent unit, when a talk trigger allows it (0705).
     Talk,
     /// Use a non-combat active skill (0412): shown when the unit knows one.
@@ -186,6 +188,7 @@ impl MenuEntry {
             MenuEntry::Arts => "battle.menu.arts",
             MenuEntry::Magic => "battle.menu.magic",
             MenuEntry::Seize => "battle.menu.seize",
+            MenuEntry::Escape => "battle.menu.escape",
             MenuEntry::Talk => "battle.menu.talk",
             MenuEntry::Skill => "battle.menu.skill",
             MenuEntry::Item => "battle.menu.item",
@@ -201,7 +204,7 @@ impl MenuEntry {
     fn enabled(self, sel: &Selection, weapons: &[WeaponChoice], state: &BattleState) -> bool {
         match self {
             MenuEntry::Attack => !weapons.is_empty(),
-            MenuEntry::Seize | MenuEntry::Talk | MenuEntry::Wait => true,
+            MenuEntry::Seize | MenuEntry::Escape | MenuEntry::Talk | MenuEntry::Wait => true,
             list => ListKind::of(list, sel, state).is_some_and(|kind| kind.can_choose()),
         }
     }
@@ -308,9 +311,9 @@ pub fn list_entry(menu: &Menu<Line>) -> MenuEntry {
 /// The action menu for `sel`'s unit at its path's end: `Attack` (enabled if
 /// some weapon can attack someone there), `Arts` if it has a Combat Art or a
 /// combat active for a weapon it carries, `Magic` if the unit knows a spell
-/// (enabled if one has a target there), `Seize` if legal there, `Talk` if
-/// it has someone next to it to talk to, `Skill` if the unit knows a
-/// non-combat active, `Item` and `Equip` (enabled when
+/// (enabled if one has a target there), `Seize` and `Escape` if legal
+/// there, `Talk` if it has someone next to it to talk to, `Skill` if the
+/// unit knows a non-combat active, `Item` and `Equip` (enabled when
 /// they can do something), `Wait`.
 pub fn menu_entries(sel: &Selection, state: &BattleState) -> Vec<MenuEntry> {
     let mut entries = vec![MenuEntry::Attack];
@@ -322,6 +325,9 @@ pub fn menu_entries(sel: &Selection, state: &BattleState) -> Vec<MenuEntry> {
     }
     if state.can_seize(sel.unit, sel.dest()) {
         entries.push(MenuEntry::Seize);
+    }
+    if state.can_escape(sel.unit, sel.dest()) {
+        entries.push(MenuEntry::Escape);
     }
     if !state.talk_targets(sel.unit, sel.dest()).is_empty() {
         entries.push(MenuEntry::Talk);
@@ -776,8 +782,9 @@ pub(super) fn open_menu(sel: Selection, state: &BattleState) -> Mode {
         .collect();
     // It opens on the first of Attack, Arts, Magic and Seize that is enabled
     // (Magic only when a spell reaches an enemy: a forest to burn or an ally
-    // to heal doesn't make it the default), else Wait: Item and Equip are
-    // never the default.
+    // to heal doesn't make it the default), else Wait: Item, Equip and
+    // Escape (leaving the battle, *Claude's starting rule*) are never the
+    // default.
     let spells = spell_choices(state, sel.unit, sel.dest());
     let first = entries
         .iter()
@@ -1033,6 +1040,7 @@ fn step_action_menu(
             let action = match entry {
                 MenuEntry::Wait => UnitAction::Wait,
                 MenuEntry::Seize => UnitAction::Seize,
+                MenuEntry::Escape => UnitAction::Escape,
                 MenuEntry::Talk => return choose_talk(sel, state),
                 MenuEntry::Attack => return choose_attack(sel, &weapons, state),
                 list => return open_list(list, sel, (state, words)),

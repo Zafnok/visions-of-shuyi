@@ -32,6 +32,8 @@
     "attack_range": "#5c2a20",
     "heal_range": "#2e5a34",
     "danger_zone": "#3e1812",
+    // The exit area of an escape map (0319; *Claude's starting look*).
+    "exit_area": "#5a5020",
 
     // Background of a unit under a timed effect (a buff or a debuff).
     "effect": "#4a3468",

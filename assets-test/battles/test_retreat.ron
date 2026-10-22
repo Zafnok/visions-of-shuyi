@@ -1,0 +1,24 @@
+// TEST FILE: a boss who retreats instead of falling (ticket 0319): the
+// rogue on the fort at (12, 3) says its defeated line at 0 HP and leaves
+// the map alive; that counts as defeating it, so the battle is won. The
+// bots play it (`cargo xtask playtest test_retreat`).
+(
+    id: "test_retreat",
+    map: "test_small",
+    player_slots: [
+        (character: "test_lord", pos: (3, 5)),
+        (character: "test_knight", pos: (4, 6)),
+        (character: "test_archer", pos: (2, 4)),
+    ],
+    enemies: [
+        (template: "test_brigand", pos: (8, 2)),
+        (character: "test_rogue", pos: (12, 3), boss: true, defeat: Retreats),
+    ],
+    objective: DefeatUnit(unit: "test_rogue"),
+    triggers: [
+        (when: UnitFell(unit: "test_rogue"), scene: "test_rogue_retreats", once: true),
+    ],
+    difficulty: Normal,
+    music: Pool("skirmish"),
+    seed: 1,
+)

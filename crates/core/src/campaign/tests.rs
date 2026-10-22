@@ -694,3 +694,60 @@ fn only_a_full_tutorial_shows_tips() {
     assert_eq!(TutorialLevel::default(), TutorialLevel::Full);
     assert_eq!(campaign(GameMode::Classic).tutorial, TutorialLevel::Full);
 }
+
+/// Escaped units count as standing (0319): both deployed units escape
+/// from their own tiles (the exit: the left column) and get the bonus.
+#[test]
+fn escaped_units_count_as_standing() {
+    let mut game = campaign(GameMode::Classic);
+    let def = BattleDef {
+        objective: Objective::Escape {
+            area: crate::battle::TileRect {
+                x: 0,
+                y: 0,
+                w: 1,
+                h: 5,
+            },
+        },
+        ..def()
+    };
+    let (mut s, _) = BattleState::new(game.battle_setup(&def, &tables()));
+    act(&mut s, 1, p(0, 0), UnitAction::Escape);
+    act(&mut s, 2, p(0, 2), UnitAction::Escape);
+    assert_eq!(s.outcome(), Some(Outcome::Victory));
+    let rewards = game.apply_result(&def, &s, 1).unwrap();
+    let deployed: Vec<_> = rewards.deployed.iter().map(|u| u.name.as_str()).collect();
+    assert_eq!(deployed, ["lord", "ann"]);
+    assert!(rewards.lost.is_empty());
+    assert!(rewards.exp_gained(UnitId(1)) > 0);
+    assert!(rewards.exp_gained(UnitId(2)) > 0);
+}
+
+/// A scene's death (Hollis, 0319): gone for good in Classic and Casual
+/// alike, with its gear in the stock and its supports ended; never the
+/// lead.
+#[test]
+fn a_scene_death_removes_a_character_for_good_in_every_mode() {
+    for mode in [GameMode::Classic, GameMode::Casual] {
+        let mut game = bonded(mode);
+        let table = support_table();
+        assert!(game.dies_in_scene(&c("ann"), &table), "{mode:?}");
+        let names: Vec<_> = game.roster.iter().map(|u| u.name.as_str()).collect();
+        assert_eq!(names, ["lord", "ben"], "{mode:?}");
+        let sword = roster()[1].loadout.weapons[0].clone();
+        assert_eq!(game.stock.weapons, Vec::from_iter(sword), "{mode:?}");
+        for id in ["vest", "charm", "tonic"] {
+            assert_eq!(game.stock.count(&item(id)), 1, "{id}, {mode:?}");
+        }
+        assert!(
+            game.supports
+                .state(&pair("lord", "ann"), &table)
+                .unwrap()
+                .ended()
+        );
+        // Only once; never the lead.
+        assert!(!game.dies_in_scene(&c("ann"), &table));
+        assert!(!game.dies_in_scene(&c("lord"), &table));
+        assert!(game.member(&c("lord")).is_some());
+    }
+}

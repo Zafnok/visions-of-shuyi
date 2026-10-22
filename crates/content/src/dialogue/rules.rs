@@ -8,7 +8,9 @@ use shuyi_assets::dialogue::{DialogueLimits, SceneRules, Tokens};
 use trpg_core::CharacterId;
 use trpg_core::lead::{self, LEAD_ID, PORTRAIT_FEMALE, PORTRAIT_MALE};
 
-use super::{LIMITS, MAX_LEAD_LINE_LEN, ParsedScene, STANDARD_EXPRESSIONS, Stage, openings};
+use super::{
+    LIMITS, MAX_LEAD_LINE_LEN, ParsedScene, STANDARD_EXPRESSIONS, Stage, deaths, openings,
+};
 use crate::audio::AudioManifest;
 use crate::character::CharacterTable;
 use crate::error::ContentError;
@@ -150,7 +152,9 @@ impl SceneRules<Stage> for Rules<'_> {
     }
 
     fn scene_problems(&self, parsed: &ParsedScene) -> Vec<ContentError> {
-        openings::problems(parsed)
+        let mut errors = openings::problems(parsed);
+        errors.extend(deaths::problems(parsed, self.characters));
+        errors
     }
 }
 

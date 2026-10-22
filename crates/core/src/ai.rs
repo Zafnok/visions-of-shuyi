@@ -51,6 +51,16 @@
 //!    threat area this turn), else holds its tile (below).
 //!    [`Stationary`](AiBehavior::Stationary): the same, from its own tile.
 //!
+//! 4. **Escaping** (an [`Objective::Escape`] battle): a **player** unit
+//!    (the AI plays the player's side for the bots) runs for the exit,
+//!    whatever its behaviour: if it can stop in the exit area it escapes,
+//!    from the lowest `(y, x)` such tile; else it moves as an `Aggressive`
+//!    unit with no attack does, by the flow distance to the exit area, and
+//!    waits. It never attacks. Enemies never escape (the battle refuses
+//!    them) and green units don't need to, so they play as usual. Units
+//!    that went down are no one's targets: they aren't among the battle's
+//!    units.
+//!
 //! A unit **holding its tile** waits there. One that may use arts and
 //! actives (below) first uses a non-combat active (Brace, War Cry…) if a
 //! hostile unit could attack its tile this turn (the danger zone): the
@@ -107,7 +117,8 @@
 //! For each tile, the cheapest cost for the mover's movement type to walk
 //! from it to a tile next to one of its targets, ignoring units (the
 //! engine's [`flow_field`](shuyi_core::path::flow_field), from every target
-//! at once). A tile it can't walk from has none.
+//! at once). A tile it can't walk from has none. For a player unit on an
+//! escape map, the cost to walk into the exit area instead (0 inside it).
 
 use crate::prelude::*;
 
@@ -120,7 +131,9 @@ use serde::{Deserialize, Serialize};
 use shuyi_core::path;
 
 use crate::art::ArtId;
-use crate::battle::{BattleState, CastTarget, Command, PendingMove, Phase, UnitAction};
+use crate::battle::{
+    BattleState, CastTarget, Command, Objective, PendingMove, Phase, TileRect, UnitAction,
+};
 use crate::combat::{CombatHp, Forecast, Side, SideForecast, strike_order};
 use crate::geom::{Grid, Pos};
 use crate::item::{Equipped, WEAPON_SLOTS};
@@ -394,6 +407,22 @@ impl<'a> Planner<'a> {
             dest,
             action: UnitAction::Wait,
         };
+        if let Some(area) = escape_area(state, unit) {
+            let exit = dests
+                .iter()
+                .copied()
+                .filter(|&d| area.contains(d))
+                .min_by_key(|d| (d.y, d.x));
+            let command = match exit {
+                Some(dest) => Command::Act {
+                    unit: unit.id,
+                    dest,
+                    action: UnitAction::Escape,
+                },
+                None => wait_at(approach(&reach, &dests, &flow).unwrap_or(unit.pos)),
+            };
+            return Some(other(command));
+        }
         let attack = self
             .best_attack(unit, &reach, &dests)
             .map(|(score, command)| Decision {
@@ -754,11 +783,31 @@ fn approach(reach: &Reach, dests: &[Pos], flow: &Flow) -> Option<Pos> {
         .map(|(_, _, y, x)| Pos::new(x, y))
 }
 
+/// The exit area `unit` runs for: a player unit's on an escape map.
+fn escape_area(state: &BattleState, unit: &Unit) -> Option<TileRect> {
+    match state.objective() {
+        Objective::Escape { area } if unit.faction == Faction::Player => Some(area),
+        _ => None,
+    }
+}
+
 /// The flow distance of every tile to `faction`'s targets for
 /// `movement_type` (see the module docs).
 fn flow_field(state: &BattleState, faction: Faction, movement_type: MovementTypeId) -> Flow {
     let tiles = &state.map().tiles;
     let (width, height) = (tiles.width(), tiles.height());
+    let cost = |pos| {
+        let step = tiles
+            .get(pos)
+            .and_then(|&t| state.terrain().move_cost(t, movement_type))?;
+        Some(u32::from(step))
+    };
+    if let Objective::Escape { area } = state.objective()
+        && faction == Faction::Player
+    {
+        let exit = tiles.positions().filter(|&p| area.contains(p));
+        return path::flow_field(width, height, exit, cost);
+    }
     let mut targets = TileSet::new(width, height);
     for t in state
         .units()
@@ -773,10 +822,7 @@ fn flow_field(state: &BattleState, faction: Faction, movement_type: MovementType
         if targets.contains(pos) {
             return Some(0);
         }
-        let step = tiles
-            .get(pos)
-            .and_then(|&t| state.terrain().move_cost(t, movement_type))?;
-        Some(u32::from(step))
+        cost(pos)
     })
 }
 

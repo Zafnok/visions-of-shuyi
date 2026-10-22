@@ -1,0 +1,25 @@
+// TEST FILE: the escape objective (ticket 0319): get everyone out through
+// the exit on the map's east edge (column 13, rows 2 to 7), one by one.
+// A brigand stands on the road and raiders come in behind from turn 3, so
+// waiting gets dangerous. The bots play it (`cargo xtask playtest
+// test_escape`).
+(
+    id: "test_escape",
+    map: "test_small",
+    player_slots: [
+        (character: "test_lord", pos: (3, 5)),
+        (character: "test_knight", pos: (4, 6)),
+        (character: "test_archer", pos: (2, 4)),
+    ],
+    enemies: [
+        (template: "test_brigand", pos: (8, 2)),
+    ],
+    reinforcements: [
+        (turn: 3, unit: (template: "test_raider", pos: (0, 3))),
+        (turn: 3, unit: (template: "test_raider", pos: (1, 4))),
+    ],
+    objective: Escape(area: (x: 13, y: 2, w: 1, h: 6)),
+    difficulty: Normal,
+    music: Pool("skirmish"),
+    seed: 1,
+)

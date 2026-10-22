@@ -540,3 +540,56 @@ fn title_on_game_over_ends_the_flow() {
     assert!(stack.is_empty());
     assert_eq!(c.game.campaign_mode, None);
 }
+
+/// The first text of the hold's closing scene (`test_hold_won`, 0319)
+/// played by a new game in `mode` (`with_knight` or not in the army), and
+/// the campaign after it starts.
+fn hold_won(mode: GameMode, with_knight: bool) -> (Option<String>, Campaign) {
+    let mut c = ctx();
+    let lead = LeadProfile::new("Mara", LeadGender::Female);
+    let mut campaign = trpg_content::new_campaign(&c.game.content, mode, lead);
+    if !with_knight {
+        campaign.roster.truncate(1);
+    }
+    let mut flow = FlowScreen::new_game(&c);
+    flow.adopt(&mut c, campaign);
+    flow.scenes = std::iter::once("test_hold_won".to_owned()).collect();
+    flow.then = Then::NextChapter;
+    flow.next_scene(&mut c);
+    let next = flow.next.as_ref().and_then(|s| s.as_any());
+    let scene = next.and_then(|s| s.downcast_ref::<DialogueScreen>());
+    let text = scene.and_then(|s| s.player().current().text.map(String::from));
+    let campaign = flow.campaign().cloned();
+    (text, campaign.unwrap_or_else(|| panic!("no campaign")))
+}
+
+/// A scene's death (`@dies`, Hollis, 0319): with the knight in the army,
+/// the closing scene plays their version and they leave the army for good,
+/// in Classic and Casual alike, their weapons to the stock; without them
+/// (died earlier), the lead's version plays and nobody leaves.
+#[test]
+fn a_closing_scene_kills_the_knight_in_every_mode_or_plays_without_them() {
+    let knight = trpg_core::CharacterId("test_knight".into());
+    for mode in [GameMode::Classic, GameMode::Casual] {
+        let c = ctx();
+        let lead = LeadProfile::new("Mara", LeadGender::Female);
+        let before = trpg_content::new_campaign(&c.game.content, mode, lead);
+        let carried = before.roster[1].loadout.weapons.iter().flatten().count();
+        let (text, after) = hold_won(mode, true);
+        assert_eq!(
+            text.as_deref(),
+            Some("Go, Mara. I'll hold the line."),
+            "{mode:?}"
+        );
+        assert!(after.member(&knight).is_none(), "{mode:?}");
+        assert_eq!(after.roster.len(), before.roster.len() - 1);
+        let stocked = after.stock.weapons.len() - before.stock.weapons.len();
+        assert_eq!(stocked, carried, "{mode:?}");
+    }
+    let (text, after) = hold_won(GameMode::Classic, false);
+    assert_eq!(
+        text.as_deref(),
+        Some("Mara holds the line alone, and remembers who should be here.")
+    );
+    assert_eq!(after.roster.len(), 1);
+}

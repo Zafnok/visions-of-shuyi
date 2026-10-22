@@ -2,7 +2,8 @@
 //! map: bought tiles and unit sprites*; ADR-0049): each unit's picture with
 //! a 1-pixel outline in its side's colour (the player's a deeper blue:
 //! [`outline_color`]), standing on its HP bar; grey and
-//! darker once it has acted; an arrow in the top-right corner of its tile
+//! darker once it has acted, and grayed out outline and all once it is
+//! down (0319); an arrow in the top-right corner of its tile
 //! while it is under a timed effect. A unit whose picture is in a walking
 //! sheet turns the way it faces and shows its walking frame; every unit is
 //! drawn where its offset puts it, between two tiles of its walk (ticket
@@ -352,7 +353,9 @@ pub fn paint_pictures(
         let art = unit_dest(picture, grid.art_tile());
         let dest = zoomed(art);
         let faction = ctx.palette.get(outline_color(unit.faction));
-        let (color, paint) = if unit.acted {
+        let (color, paint) = if unit.is_down() {
+            (ctx.palette.get(UiColor::TextDim).dimmed(), Paint::Dimmed)
+        } else if unit.acted {
             (faction.dimmed(), Paint::Dimmed)
         } else {
             (faction, Paint::Image)

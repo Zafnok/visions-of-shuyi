@@ -54,7 +54,7 @@ plays; later the world map's battles and skirmishes (1007, 1008) will too.
 | `id` | The battle's id: must match the file name. |
 | `map` | A map id (`assets/maps/<id>.map`). |
 | `player_slots` | Where each roster member goes: `(character, pos)`. A slot whose character isn't in the army (e.g. dead in Classic) stays empty; roster members without a slot sit the battle out. The first slot's unit is unit 1, the next unit 2, … A slot with `after_enemies: true` is numbered after the enemies instead (and before the reinforcements): for adding a unit to a battle without renumbering the others. |
-| `enemies` | The other units on the map at the start (numbered after the slots). Each is a generic `template` (from `characters.ron`'s `generics`) **or** a named `character`, written bare (`template: "brigand"`). Optional: `level: Some(n)` (templates only; a character's level is its own), `ai` (`Aggressive` default, `Guard`, `Stationary`, `Healer`), `loadout: Some((weapons: [...], armour: Some(..), accessory: Some(..)))` instead of the template's or character's, `boss: true`, `name: Some("Garth")` (a display name; the map label becomes its first two letters), `id: "frost_1"` (written bare: a name for `battle_notes` to point at this unit). Enemies carry no consumables (`weapons-and-items.md`). |
+| `enemies` | The other units on the map at the start (numbered after the slots). Each is a generic `template` (from `characters.ron`'s `generics`) **or** a named `character`, written bare (`template: "brigand"`). Optional: `level: Some(n)` (templates only; a character's level is its own), `ai` (`Aggressive` default, `Guard`, `Stationary`, `Healer`), `loadout: Some((weapons: [...], armour: Some(..), accessory: Some(..)))` instead of the template's or character's, `boss: true`, `defeat` (what becomes of it at 0 HP, `turn-structure.md` *Act 1's battle rules*: `Falls`, the default; `Retreats`, a boss who gets away, leaving the map alive and counting as defeated; `GoesDown`, a unit that can't be killed: it stays on its tile out of the fight, untargetable and blocking the tile, and counts as defeated), `name: Some("Garth")` (a display name; the map label becomes its first two letters), `id: "frost_1"` (written bare: a name for `battle_notes` to point at this unit). Enemies carry no consumables (`weapons-and-items.md`). |
 | `reinforcements` | Units that arrive later: `(turn, unit: <an enemy entry>)`, numbered after the enemies. One on an occupied tile waits (`turn-structure.md`). |
 | `preparations` | Whether the Preparations screen comes first (0408): the player changes the loadouts of the deployed units and fills the pack **from their own stock**, so such a battle has no `default_pack`. Default `false`. |
 | `pack_cap` | How many consumables the pack may hold, written bare (`pack_cap: 3`). Default: `default_pack_cap` in `items.ron` (6). |
@@ -62,7 +62,7 @@ plays; later the world map's battles and skirmishes (1007, 1008) will too.
 | `solo_bench` | Characters in the army but not in the battle when it is played on its own (the Quick Battle): Preparations lists them so their gear can be traded. Ignored in the story. Default: empty. |
 | `solo_stock` | The stock when the battle is played on its own (the debug Quick Battle): item ids, one entry per item. Ignored in the story, where the stock is the campaign's. Default: empty. |
 | `clear_gold` | Gold for winning. Default 0. |
-| `objective` | `Rout()`, `DefeatUnit(unit: "garth")` (a character among the enemies or reinforcements), `Seize(pos: (x, y), by_lord: true)`, `Survive(turns: 8)`. The first three take an optional `turn_limit: Some(n)`. |
+| `objective` | `Rout()`, `DefeatUnit(unit: "garth")` (a character among the enemies or reinforcements), `Seize(pos: (x, y), by_lord: true)`, `Survive(turns: 8)`, `Escape(area: (x: 13, y: 2, w: 1, h: 6))` (every player unit still standing leaves through the exit area, one by one, with the `Escape` action; no turn limit: `turn-structure.md`, *Escape*). The first three take an optional `turn_limit: Some(n)`. |
 | `triggers` | The battle's story moments (0705, ADR-0030): `(when: …, scene: "id", once: true)`, with `when` one of `TurnStart(turn, phase)`, `UnitEntersArea(who: Character("id") \| Faction(Player), area: (x, y, w, h))`, `CombatStart(unit, against: Some("id"))`, `HalfHp(unit)`, `UnitFell(unit, mode: Some(Classic), recruit: true)`, `Talk(a, b)`. A trigger's scene plays for the characters whose units are on the map when it fires: its `@if` lines (`assets/dialogue/README.md`, "Who is still there"). |
 | `battle_notes` | Strategy hints (0411, `magic.md` "Battle notes"): `(text: "…", units: [...])`. Shown in a `BATTLE NOTES` box when the battle starts and under the objective on the map menu's `Objective` page; the `units` (optional) blink on the map meanwhile. Each of `units` is an enemy's or reinforcement's `id`, or a character in the battle (every unit of it). A note changes no rule. Default: none, and no box. |
 | `difficulty` | The map's tier: `Easy`, `Normal`, `Hard`, `Finale` → 2 / 3 / 5 / 8 rewind charges (`death-and-difficulty.md`). |
@@ -86,20 +86,23 @@ All reported at once, naming the entry (`player slot 2 ("bors")`,
 - a character placed twice;
 - a reinforcement on turn 0;
 - a `DefeatUnit` character that isn't an enemy here, a seize tile outside
-  the map, `Survive(turns: 0)`, a turn limit of 0;
+  the map, an escape area that is empty or not all on the map,
+  `Survive(turns: 0)`, a turn limit of 0;
 - a default pack over the cap, with an unknown item or a non-consumable;
 - no `music`, or one that isn't a music cue (`Cue`) or a pool (`Pool`) of
   the audio manifest;
 - two named units of one side with the same map label (ADR-0018; fix with a
   `map_label` in `characters.ron`); generic units may share one;
 - every trigger problem `trpg_content::check_triggers` finds (unknown
-  scene, a character not in the battle, an area off the map, …);
+  scene, a character not in the battle, an area off the map, a recruit
+  who can't be killed, …);
 - a unit `id` used twice, or that is also a character in the battle;
 - a battle note with no text, more than one line or over 120 characters;
   more than 5 notes; a note unit that is neither an `id` nor a character in
   the battle, or that is listed twice.
 
-`ch01.ron` is Chapter 1's battle. `test.ron` (the test chapter's battle)
-and `quick.ron` (the debug Quick Battle) are test files, never part of the
-story: they are in `assets-test/battles/`, which a build that ships doesn't
+`ch01.ron` is Chapter 1's battle. `test.ron` (the test chapter's battle),
+`quick.ron` (the debug Quick Battle) and `test_escape.ron`,
+`test_retreat.ron` and `test_hold.ron` (one of Act 1's battle rules each,
+0319) are test files, never part of the story: they are in `assets-test/battles/`, which a build that ships doesn't
 have (ADR-0057).

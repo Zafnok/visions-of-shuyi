@@ -11,7 +11,7 @@ use crate::ai::{AiWeights, next_command};
 /// until the battle ends or the choices run out. Before each pick, `each`
 /// sees the state and its legal commands. Every command applied must do
 /// something (have events), so a battle that stops changing fails at once.
-fn random_play(
+pub(super) fn random_play(
     setup: BattleSetup,
     choices: &[u16],
     mut each: impl FnMut(&BattleState, &[Command]) -> Result<(), TestCaseError>,
@@ -57,7 +57,12 @@ fn every_action(s: &BattleState, unit: &Unit) -> Vec<UnitAction> {
         .chain(arts.into_iter().map(Some))
         .collect();
     let targets: Vec<UnitId> = s.units().iter().map(|u| u.id).collect();
-    let mut out = vec![UnitAction::Wait, UnitAction::Seize, UnitAction::Open];
+    let mut out = vec![
+        UnitAction::Wait,
+        UnitAction::Seize,
+        UnitAction::Escape,
+        UnitAction::Open,
+    ];
     for &target in &targets {
         for slot in 0..=WEAPON_SLOTS {
             for active in &skills {

@@ -57,7 +57,7 @@ use crate::prelude::*;
 use alloc::collections::VecDeque;
 use core::any::Any;
 
-use trpg_content::{ChapterDef, MapLook, Present, Scene, battle_campaign, new_campaign};
+use trpg_content::{ChapterDef, MapLook, Present, Scene, battle_campaign, deaths, new_campaign};
 use trpg_core::{
     BattleDef, BattleMusic, BattleRewards, BattleState, Campaign, GameMode, LeadProfile,
     Preparations, SaveFile, SavePoint, TutorialLevel,
@@ -374,7 +374,10 @@ impl FlowScreen {
     /// Plays `scene` for the army as it is: the characters in the
     /// campaign's roster are there (ADR-0055), so a companion who died in
     /// Classic isn't, and one who retreated in Casual is. Returns `false`,
-    /// playing nothing, if the scene has nothing to say for them.
+    /// playing nothing, if the scene has nothing to say for them. Its
+    /// deaths (`@dies`, Hollis, 0319) happen as it starts, in every mode,
+    /// in the version for those there, played or not, so skipping the
+    /// scene can't skip them; the scenes after it are played without them.
     fn play(&mut self, scene: &Scene, ctx: &Ctx) -> bool {
         let lead = self
             .campaign
@@ -383,6 +386,12 @@ impl FlowScreen {
         let present = self.campaign.as_ref().map_or(Present::Everyone, |c| {
             Present::only(c.roster.iter().filter_map(|u| u.character.clone()))
         });
+        if let Some(campaign) = &mut self.campaign {
+            let supports = &ctx.game.content.supports;
+            for character in deaths(&scene.resolved(&present)) {
+                campaign.dies_in_scene(&character, supports);
+            }
+        }
         let mut screen = DialogueScreen::told(ctx, scene, lead, &present);
         // `@place battle` in a chapter's scenes is its battle's field.
         let battle = self.chapter.as_ref();

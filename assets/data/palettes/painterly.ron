@@ -31,6 +31,8 @@
     "attack_range": "#7a2c14",
     "heal_range": "#1e5a38",
     "danger_zone": "#40180e",
+    // The exit area of an escape map (0319; *Claude's starting look*).
+    "exit_area": "#5e5418",
 
     // Units under a timed effect: background, then the bonus and penalty arrows
     "effect": "#3c3468",

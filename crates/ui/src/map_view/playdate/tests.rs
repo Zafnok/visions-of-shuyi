@@ -109,6 +109,7 @@ pub(crate) fn unit(faction: Faction, pos: Pos) -> UnitView {
         class: ClassId("brigand".into()),
         character: None,
         acted: false,
+        fight: crate::map_view::scene::Fight::In,
         hp: (30, 30),
         effects: UnitEffects::default(),
         fade: 0.0,

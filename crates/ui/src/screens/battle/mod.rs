@@ -66,8 +66,8 @@ use trpg_content::{Content, DoneWhen, MapLook, Present, TipTrigger, battle_campa
 use trpg_core::lead::DEFAULT_NAME;
 use trpg_core::{
     BattleHistory, BattleState, CastTarget, Command, Equipped, Event, Faction, GameMode, ItemId,
-    LeadGender, LeadProfile, Outcome, Phase, Pos, StatValue, TerrainRules, TileSet, Unit, UnitId,
-    danger_zone, next_command, threats_at,
+    LeadGender, LeadProfile, Objective, Outcome, Phase, Pos, StatValue, TerrainRules, TileSet,
+    Unit, UnitId, danger_zone, next_command, threats_at,
 };
 
 use self::ai_phase::{AiAction, PACING};
@@ -1537,26 +1537,26 @@ impl BattleScreen {
     }
 
     /// The units as drawn, each with how far it has faded out: the
-    /// battle's units, except during a combat's playback, where its
+    /// battle's units (those down too), except during a combat's playback, where its
     /// fighters show the HP it has reached (the attacker not dimmed yet)
     /// and the units that fell stay until they have faded; and during an
     /// AI action, before its combat, the units as they were before it.
     pub fn shown_units(&self) -> Vec<(Unit, f32)> {
+        // Units that are down (0319) stay on their tiles.
+        let down = self.state.down().iter().cloned().map(|u| (u, 0.0));
         if let Mode::AiAction(a) = &self.mode {
-            return a.units().into_iter().map(|u| (u, 0.0)).collect();
+            let units = a.units().into_iter().map(|u| (u, 0.0));
+            return units.chain(down).collect();
         }
         let Mode::Combat(pb) = &self.mode else {
-            return self
-                .state
-                .units()
-                .iter()
-                .map(|u| (u.clone(), 0.0))
-                .collect();
+            let units = self.state.units().iter().map(|u| (u.clone(), 0.0));
+            return units.chain(down).collect();
         };
         let attacker = pb.bouts().first().map(|b| b.attacker.unit);
         self.state
             .units()
             .iter()
+            .chain(self.state.down())
             .chain(pb.falls())
             .map(|u| {
                 let mut u = u.clone();
@@ -2106,8 +2106,8 @@ impl BattleScreen {
         (!enemies.is_empty()).then_some(ThreatView { tile, enemies })
     }
 
-    /// Lays the danger zone on `scene`, if shown, then the mode's ranges
-    /// over it: a selected unit's move and attack ranges, a shown threat
+    /// Lays an escape map's exit area on `scene` (always), the danger zone
+    /// over it, if shown, then the mode's ranges over them: a selected unit's move and attack ranges, a shown threat
     /// area, where a unit may move after its attack, or the targets being
     /// chosen from. While a spell's target is picked (0410): the enemies it
     /// can hit as an attack range or the allies it can heal as a heal
@@ -2115,6 +2115,11 @@ impl BattleScreen {
     /// become (Nick: units and terrain must look different).
     fn add_ranges(&self, scene: &mut MapScene) {
         let all = |set: &TileSet| -> Vec<Pos> { set.iter().collect() };
+        // An escape map's exit, always, under everything else.
+        if let Objective::Escape { area } = self.state.objective() {
+            let tiles = self.state.map().tiles.positions();
+            scene.tint(tiles.filter(|&p| area.contains(p)), range::EXIT);
+        }
         if let Some(zone) = &self.danger {
             scene.tint(all(zone), range::DANGER);
         }
@@ -2170,7 +2175,7 @@ impl BattleScreen {
     fn add_units(&self, scene: &mut MapScene) {
         if !self.playing() {
             let blink = self.notes_shown() && notes::blink_on(self.notes_t);
-            for unit in self.state.units() {
+            for unit in self.state.units().iter().chain(self.state.down()) {
                 let noted = blink && notes::is_noted(self.state.battle_notes(), unit.id);
                 let view = UnitView::of(unit).at(self.drawn_pos(unit));
                 scene.push_unit(view.highlighted(noted));
@@ -3001,6 +3006,8 @@ pub(crate) mod testing {
     }
 }
 
+#[cfg(test)]
+mod act1_tests;
 #[cfg(test)]
 mod art_tests;
 #[cfg(test)]
