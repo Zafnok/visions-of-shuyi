@@ -849,6 +849,24 @@ fn a_wounded_green_unit_with_a_kill_attacks() {
 }
 
 #[test]
+fn a_kill_only_a_combat_active_could_make_counts() {
+    // Keen (+1 might) turns 5 damage into the 6 the enemy has left.
+    let wounded = |enemy_hp| {
+        other_phase(&["A.E......P"], move |units| {
+            edit(units, 1, |u| {
+                u.hp = 9;
+                u.carried = vec![ItemId::new("potion")];
+                knowing(u, &["keen"]);
+            });
+            edit(units, 2, |u| u.hp = enemy_hp);
+        })
+    };
+    assert_eq!(next(&wounded(6)), active_attack(1, p(1, 0), 2, "keen"));
+    // With no kill even with it, it drinks.
+    assert_eq!(next(&wounded(20)), own_item(1, p(0, 0), 0));
+}
+
+#[test]
 fn green_units_drink_only_below_half_hp_and_never_for_others() {
     let carrying_potion = |hp| {
         move |units: &mut Vec<Unit>| {

@@ -1689,6 +1689,10 @@ fn error_messages() {
             "unit 4 is out of range (3 tiles)",
         ),
         (CommandError::CannotSeize, "can't seize here"),
+        (
+            CommandError::GreenOnly(UnitId(4)),
+            "unit 4 is not a green unit",
+        ),
     ];
     for (err, text) in cases {
         assert_eq!(err.to_string(), text);
