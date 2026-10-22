@@ -321,7 +321,10 @@ for the first day).
 **What was built**
 
 - The pin moved to the engine's `main` past engine#2125, engine#2126 and
-  engine#2128 (`d57ecbb`).
+  engine#2128 (`384f796`), with a one-line fix this ticket's debug tests
+  found in the turn planner (an eager `unwrap_or` that overflowed once a
+  deeper step had more candidates than the first; engine PR
+  Zafnok/shuyi-engine#55, no engine ticket).
 - `trpg-core`: `Determinize` for `BattleState` (`reseed_luck` and the new
   `drop_pending_reinforcements`) and `BattleState::threat_forecast` (the
   forecast of one unit striking another where it stands), all bot-only.
