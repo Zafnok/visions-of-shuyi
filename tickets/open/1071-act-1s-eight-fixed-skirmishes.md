@@ -55,7 +55,7 @@ checklist.
   repository, `--pin`, credits).
 - The eight nodes in 1070's map point at these battles; the guarding
   ones block the path until won (1008).
-- `cargo xtask autobalance <id> --apply` and `cargo xtask playtest
+- `cargo shuyi autobalance --stage <id> --apply` and `cargo xtask playtest
   <id> --bot all` for each; the reports in the PR.
 
 **Out (do not do):**

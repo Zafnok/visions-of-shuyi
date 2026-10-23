@@ -25,7 +25,7 @@ Act 1, Chapter 2, from `docs/story/outline.md`:
 0803 built Chapter 1 the same way (map, units, triggers, a winning
 replay, a difficulty run); this ticket does it for Chapter 2, from its
 beat sheet and script (0744). The balance comes from the bots: 0509's
-`cargo xtask autobalance` tunes the enemies until the persona bots land
+`cargo shuyi autobalance` tunes the enemies until the persona bots land
 in their bands (`docs/design/playtest-bots.md`), and 0013 has settled
 the number scale first. It also needs the save-the-village rule (0313), the shop screen (0409), the Preparations shop (0443), and 0069's confirmation of what Chapter 2 introduces.
 
@@ -67,7 +67,7 @@ before building.
   `assets/dialogue/ch02.dlg`.
 - **Battle notes** for the battle, where the design calls for them
   (`magic.md`).
-- **Balance:** `cargo xtask autobalance ch02 --apply`, then
+- **Balance:** `cargo shuyi autobalance --stage ch02 --apply`, then
   `cargo xtask playtest ch02 --bot all`; the report in the PR.
 - A winning-replay test and the content checks, as 0803 had.
 

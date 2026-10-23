@@ -25,7 +25,7 @@ Act 1, Chapter 3, from `docs/story/outline.md`:
 0803 built Chapter 1 the same way (map, units, triggers, a winning
 replay, a difficulty run); this ticket does it for Chapter 3, from its
 beat sheet and script (0745). The balance comes from the bots: 0509's
-`cargo xtask autobalance` tunes the enemies until the persona bots land
+`cargo shuyi autobalance` tunes the enemies until the persona bots land
 in their bands (`docs/design/playtest-bots.md`), and 0013 has settled
 the number scale first. It also needs 0037's building tiles (decided: `gate` and `throne`, built by 0322, for the abbey's gate and the scriptorium's Seize point; no tile heals) and 0069's confirmation of what Chapter 3 introduces.
 
@@ -67,7 +67,7 @@ before building.
   `assets/dialogue/ch03.dlg`.
 - **Battle notes** for the battle, where the design calls for them
   (`magic.md`).
-- **Balance:** `cargo xtask autobalance ch03 --apply`, then
+- **Balance:** `cargo shuyi autobalance --stage ch03 --apply`, then
   `cargo xtask playtest ch03 --bot all`; the report in the PR.
 - A winning-replay test and the content checks, as 0803 had.
 
