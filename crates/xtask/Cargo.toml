@@ -21,7 +21,7 @@ trpg-core = { path = "../core" }
 trpg-ui = { path = "../ui", features = ["harness"] }
 # Decoding the sounds and music the Playdate build converts (ticket 1047).
 hound = "3.5"
-lewton = "0.9"
+lewton = "0.10"
 # Shuyi's tools (ticket 1117): the generic commands moved there, and xtask
 # runs them with this game's tools.
 shuyi-cli.workspace = true
