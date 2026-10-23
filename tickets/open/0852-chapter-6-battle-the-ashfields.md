@@ -25,7 +25,7 @@ Act 1, Chapter 6, from `docs/story/outline.md`:
 0803 built Chapter 1 the same way (map, units, triggers, a winning
 replay, a difficulty run); this ticket does it for Chapter 6, from its
 beat sheet and script (0748). The balance comes from the bots: 0509's
-`cargo xtask autobalance` tunes the enemies until the persona bots land
+`cargo shuyi autobalance` tunes the enemies until the persona bots land
 in their bands (`docs/design/playtest-bots.md`), and 0013 has settled
 the number scale first. It is the first escape map the personas play, so
 it waits for 0516, which makes their scoring prefer leaving by the exit
@@ -73,7 +73,7 @@ before building.
   `assets/dialogue/ch06.dlg`.
 - **Battle notes** for the battle, where the design calls for them
   (`magic.md`).
-- **Balance:** `cargo xtask autobalance ch06 --apply`, then
+- **Balance:** `cargo shuyi autobalance --stage ch06 --apply`, then
   `cargo xtask playtest ch06 --bot all`; the report in the PR.
 - A winning-replay test and the content checks, as 0803 had.
 

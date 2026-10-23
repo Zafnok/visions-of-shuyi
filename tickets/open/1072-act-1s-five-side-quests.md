@@ -60,7 +60,7 @@ in the Completion notes for 1064's checklist.
   speakers who need a face use the shared portraits (`soldier` and the
   like) unless 0070 picked one.
 - The ledger updated for each.
-- `cargo xtask autobalance` and `playtest --bot all` per battle.
+- `cargo shuyi autobalance` and `playtest --bot all` per battle.
 
 **Out (do not do):**
 - Supports and camp events (1073); fixed skirmishes (1071).

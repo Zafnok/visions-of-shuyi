@@ -22,7 +22,7 @@ campaign, with the army carried from battle to battle, on the PC and on
 the Playdate.
 
 Each chapter ticket already balanced its own battle against a fresh
-army (0509's `cargo xtask autobalance`). What none of them checks:
+army (0509's `cargo shuyi autobalance`). What none of them checks:
 
 - **The campaign as a whole:** a Casual, Normal and Hardcore bot
   (0506) playing Chapters 1–8 in a row, with the levels, losses and

@@ -245,7 +245,8 @@ The order:
      playtesting on the engine's: engine#2129–2132, #2532, #2533,
      #2021).
    - **What the retro of the last 50 PRs filed** (2026-10-22): **1183**
-     (0509's autobalance on `shuyi autobalance`, engine#2541),
+     (0509's autobalance on `shuyi autobalance`, engine#2541; done by
+     0509's PR, since **1188** pinned engine#2541),
      **1184** (the engine's one-bit look replaces the game's one-bit
      skins of engine screens, engine#2371, after 1077), **1185** (the
      first sweep's leftovers: frame time, yes/no prompts, cursors,
@@ -340,8 +341,9 @@ Candle joins outside battle.
   `main` plays every balance change
   · engine#2127 the autobalance search (after engine#2126) → **0509**
   autobalance (the battle's knobs) → **0510** skirmishes to order.
-  engine#2541 (`shuyi autobalance`) → **1183** moves 0509's command
-  onto it (off the path; 0509 doesn't wait for it).
+  engine#2541 (`shuyi autobalance`, pinned by **1188**): 0509
+  implements its plan hooks instead of a command of its own, and 0509's
+  PR moves **1183** to done.
 - **D. Playdate, Chapter 1's base:** **1178** arrows at the map's
   edges · **1075** weapon and spell lines that fit (asks Nick first) ·
   **1039** → **1041** →

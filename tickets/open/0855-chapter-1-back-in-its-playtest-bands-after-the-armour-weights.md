@@ -61,7 +61,7 @@ right) goes on the Act 1 playtest's checklist (1064).
   (`cargo test -p trpg-ui --test it ch01_winnable::record -- --ignored`,
   `crates/ui/tests/it/ch01_winnable.rs`), and review the snapshots that
   move.
-- If 0509 (autobalance) is done, use `cargo xtask autobalance ch01` to
+- If 0509 (autobalance) is done, use `cargo shuyi autobalance --stage ch01` to
   find the change; if not, tune by hand with `playtest`.
 
 **Out (do not do):**

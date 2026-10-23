@@ -25,7 +25,7 @@ Act 1, Chapter 4, from `docs/story/outline.md`:
 0803 built Chapter 1 the same way (map, units, triggers, a winning
 replay, a difficulty run); this ticket does it for Chapter 4, from its
 beat sheet and script (0746). The balance comes from the bots: 0509's
-`cargo xtask autobalance` tunes the enemies until the persona bots land
+`cargo shuyi autobalance` tunes the enemies until the persona bots land
 in their bands (`docs/design/playtest-bots.md`), and 0013 has settled
 the number scale first. As a world-map chapter it needs the world map (1007) and its skirmishes (1008), the new battle rules (0319), and the Act 1 world map's data (1070), whose story-battle node it fills in.
 
@@ -71,7 +71,7 @@ before building.
   `assets/dialogue/ch04.dlg`.
 - **Battle notes** for the battle, where the design calls for them
   (`magic.md`).
-- **Balance:** `cargo xtask autobalance ch04 --apply`, then
+- **Balance:** `cargo shuyi autobalance --stage ch04 --apply`, then
   `cargo xtask playtest ch04 --bot all`; the report in the PR.
 - A winning-replay test and the content checks, as 0803 had.
 
