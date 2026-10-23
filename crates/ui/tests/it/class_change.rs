@@ -63,7 +63,7 @@ fn promoting_with_a_seal_changes_the_class_and_raises_the_stats() {
         "Mag   0",
         "Dex   7 → 9   +2",
         "Spd   5 → 9   +4",
-        "Def  49 → 50  +1",
+        "Def  99 → 100 +1",
         "Res   0 → 2   +2",
     ] {
         assert!(shows(&h, line), "{line}\n{}", h.snapshot());

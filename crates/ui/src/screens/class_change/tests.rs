@@ -1,5 +1,5 @@
 //! Tests of the class-choice screen, on the debug menu's test knight: a
-//! Guard (mastered) with Def 49 of 50, a Rider record at class level 6 and
+//! Guard (mastered) with Def 99 of 100, a Rider record at class level 6 and
 //! one of every seal. They read the view and the state; where the skin
 //! puts things is tested in `glyph::tests`.
 
@@ -82,7 +82,7 @@ fn a_promotion_offers_the_branches_with_what_promote_would_do() {
     assert_eq!(s.stock().count(&item("tier_2_seal")), 1);
 }
 
-/// The knight: HP 28, Str 11, Mag 0, Dex 7, Spd 5, Def 49, Res 0. Bulwark
+/// The knight: HP 28, Str 11, Mag 0, Dex 7, Spd 5, Def 99, Res 0. Bulwark
 /// base `28 11 0 6 4 14 2` less Guard `20 7 0 4 2 9 0`; Iron Rider
 /// `27 10 0 6 6 11 2`.
 #[test]
@@ -140,8 +140,8 @@ fn the_columns_say_each_stat_before_and_after_and_mark_a_maxed_one() {
             ("Mag", 0, 0, false),
             ("Dex", 7, 9, false),
             ("Spd", 5, 7, false),
-            // Def +5 is cut at the hard ceiling (50).
-            ("Def", 49, 50, true),
+            // Def +5 is cut at the hard ceiling (100).
+            ("Def", 99, 100, true),
             ("Res", 0, 2, false),
         ]
     );
@@ -165,7 +165,7 @@ fn the_columns_say_each_stat_before_and_after_and_mark_a_maxed_one() {
             ("Mag", 0, 0, false),
             ("Dex", 7, 9, false),
             ("Spd", 5, 9, false),
-            ("Def", 49, 50, true),
+            ("Def", 99, 100, true),
             ("Res", 0, 2, false),
         ]
     );
@@ -273,7 +273,7 @@ fn choosing_asks_first_then_promotes_and_shows_the_bonus() {
         (page.from.as_str(), page.to.as_str()),
         ("Guard", "Iron Rider")
     );
-    assert_eq!(page.before, [28, 11, 0, 7, 5, 49, 0]);
+    assert_eq!(page.before, [28, 11, 0, 7, 5, 99, 0]);
     assert_eq!(page.gains.0, [7, 3, 0, 2, 4, 1, 2]);
     assert_eq!(page.character.as_deref(), Some("test_knight"));
     assert_eq!(s.help(&c), "f skip · hold f fast");
@@ -357,7 +357,7 @@ fn a_refused_class_says_why_and_cannot_be_chosen() {
     assert_eq!(refused.refused.as_deref(), Some("No Tier 2 Seal"));
     // Its stats stay as they are.
     assert_eq!(stats(refused)[0], ("HP", 28, 28, false));
-    assert_eq!(stats(refused)[5], ("Def", 49, 49, false));
+    assert_eq!(stats(refused)[5], ("Def", 99, 99, false));
     assert_eq!(
         view.seal,
         Some(SealView {
@@ -454,7 +454,7 @@ fn a_reclass_lists_every_class_the_seal_reaches_and_scrolls() {
         ("Mov   4 → 5", "foot")
     );
     assert_eq!(stats(archer)[0], ("HP", 28, 28, false));
-    assert_eq!(stats(archer)[5], ("Def", 49, 49, false));
+    assert_eq!(stats(archer)[5], ("Def", 99, 99, false));
     // Moving past the last column shown scrolls.
     for _ in 0..5 {
         step(&mut s, &mut c, &[CursorRight]);

@@ -846,7 +846,7 @@ fn weapons_and_items_attack_speed_illustration() {
     for (s, kind, armour, as_, strikes) in cases {
         let got = speed(s, Some(weapon(kind)), WeaponRank::B, armour);
         assert_eq!(got, as_, "{kind:?}");
-        assert_eq!(rules.strikes(got - 10), strikes, "{kind:?}");
+        assert_eq!(rules.strikes(got - 10, 10), strikes, "{kind:?}");
     }
     let steel_axe = WeaponStats {
         weight: 8,
@@ -861,23 +861,73 @@ fn weapons_and_items_attack_speed_illustration() {
 #[test]
 fn strike_count_thresholds() {
     let rules = rules();
+    // Against attack speed 16 the shares ask 4 / 12 / 24: the gaps decide.
     let got: Vec<u8> = [-30, 0, 3, 4, 13, 14, 23, 24, 100]
         .iter()
-        .map(|&d| rules.strikes(d))
+        .map(|&d| rules.strikes(d, 16))
         .collect();
     assert_eq!(got, [1, 1, 1, 2, 2, 3, 3, 4, 4]);
     assert_eq!(rules.max_strikes(), 4);
 }
 
 #[test]
+fn strike_count_gap_or_share_table() {
+    let rules = rules();
+    // (diff, slower AS, strikes): Examples 3 and 4 of `stats-and-combat.md`,
+    // each boundary, and a slower side with attack speed <= 0.
+    let cases = [
+        (14, 16, 3),
+        (13, 16, 2),
+        (24, 16, 4),
+        (35, 40, 3),
+        (9, 40, 1),
+        (10, 40, 2),
+        (29, 40, 2),
+        (30, 40, 3),
+        (59, 40, 3),
+        (60, 40, 4),
+        (4, 0, 2),
+        (14, -20, 3),
+        (24, -20, 4),
+        (3, -20, 1),
+    ];
+    for (diff, slower_as, strikes) in cases {
+        assert_eq!(
+            rules.strikes(diff, slower_as),
+            strikes,
+            "{diff} vs {slower_as}"
+        );
+    }
+}
+
+#[test]
 fn thresholds_are_data() {
     let rules = CombatRules {
-        strike_thresholds: vec![2],
+        strike_steps: vec![StrikeStep {
+            gap: 2,
+            share_percent: 50,
+        }],
         ..CombatRules::default()
     };
-    assert_eq!(rules.strikes(2), 2);
-    assert_eq!(rules.strikes(50), 2);
+    assert_eq!(rules.strikes(2, 0), 2);
+    assert_eq!(rules.strikes(50, 0), 2);
+    assert_eq!(rules.strikes(9, 20), 1);
+    assert_eq!(rules.strikes(10, 20), 2);
     assert_eq!(rules.max_strikes(), 2);
+}
+
+proptest! {
+    #[test]
+    fn strikes_grow_with_the_gap_and_shrink_with_the_slower_speed(
+        diff in -50i32..200,
+        slower in -50i32..200,
+    ) {
+        let rules = rules();
+        let n = rules.strikes(diff, slower);
+        prop_assert!((1..=rules.max_strikes()).contains(&n));
+        prop_assert!(rules.strikes(diff + 1, slower) >= n);
+        prop_assert!(rules.strikes(diff, slower + 1) <= n);
+    }
 }
 
 #[test]

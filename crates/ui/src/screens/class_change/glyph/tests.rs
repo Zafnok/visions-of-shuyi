@@ -40,7 +40,7 @@ fn stat(name: &str, before: i32, after: i32, at_max: bool) -> StatRowView {
     }
 }
 
-/// The knight: HP 28, Str 11, Mag 0, Dex 7, Spd 5, Def 49, Res 0. Bulwark
+/// The knight: HP 28, Str 11, Mag 0, Dex 7, Spd 5, Def 99, Res 0. Bulwark
 /// base `28 11 0 6 4 14 2` less Guard `20 7 0 4 2 9 0`; Iron Rider
 /// `27 10 0 6 6 11 2`.
 #[test]
@@ -74,8 +74,8 @@ fn the_columns_show_each_stat_before_and_after_and_mark_a_maxed_one() {
             "Mag   0",
             "Dex   7 → 9   +2",
             "Spd   5 → 7   +2",
-            // Def +5 is cut at the hard ceiling (50).
-            "Def  49 → 50  +1 MAX",
+            // Def +5 is cut at the hard ceiling (100).
+            "Def  99 → 100 +1 MAX",
             "Res   0 → 2   +2",
             "",
             "",
@@ -103,7 +103,7 @@ fn the_columns_show_each_stat_before_and_after_and_mark_a_maxed_one() {
             "Mag   0",
             "Dex   7 → 9   +2",
             "Spd   5 → 9   +4",
-            "Def  49 → 50  +1 MAX",
+            "Def  99 → 100 +1 MAX",
             "Res   0 → 2   +2",
             "",
             "",
@@ -205,7 +205,7 @@ fn the_question_is_a_box_in_the_middle_and_the_pages_replace_the_columns() {
     assert_eq!(text(&buf, 43, 9, 20), "Test Knight");
     assert_eq!(text(&buf, 43, 10, 20), "Guard → Iron Rider");
     assert_eq!(text(&buf, 43, 12, 20), "HP   28 → 35  +7");
-    assert_eq!(text(&buf, 43, 17, 20), "Def  49 → 50  +1");
+    assert_eq!(text(&buf, 43, 17, 20), "Def  99 → 100 +1");
     // Nothing else is on screen.
     assert_eq!(text(&buf, 0, 2, 100), "");
 }
@@ -238,7 +238,7 @@ fn a_refused_class_is_dimmed_with_the_reason() {
     assert_eq!(cell(&buf, 0, 23), "No Tier 2 Seal");
     // Its stats stay as they are, dimmed like the rest.
     assert_eq!(cell(&buf, 0, 15), "HP   28");
-    assert_eq!(cell(&buf, 0, 20), "Def  49");
+    assert_eq!(cell(&buf, 0, 20), "Def  99");
     let dim = c.palette.get(UiColor::TextDim);
     let at = |x: i32, row: i32| buf.get(COLUMNS_X + 2 + x, COLUMNS_Y + row).unwrap();
     assert_eq!((at(0, 1).fg, at(0, 13).fg), (dim, dim));
@@ -285,7 +285,7 @@ fn the_columns_scroll_with_marks_over_them() {
     assert_eq!(cell(&buf, 0, 2), "Tier 1   new");
     assert_eq!(cell(&buf, 0, 4), "Mov   4 → 5 foot");
     assert_eq!(cell(&buf, 0, 15), "HP   28");
-    assert_eq!(cell(&buf, 0, 20), "Def  49");
+    assert_eq!(cell(&buf, 0, 20), "Def  99");
     for _ in 0..5 {
         step(&mut s, &mut c, &[CursorRight]);
     }

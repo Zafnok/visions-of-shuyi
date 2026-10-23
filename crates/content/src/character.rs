@@ -1022,14 +1022,14 @@ mod tests {
     #[test]
     fn base_within_hard_ceilings() {
         let src = file(
-            &[character("a", "swordsman", "").replace("base: (18, 5, 0,", "base: (81, 51, -1,")],
+            &[character("a", "swordsman", "").replace("base: (18, 5, 0,", "base: (201, 101, -1,")],
             "",
         );
         assert_eq!(
             errors(&src),
             [
-                "ch.ron:4: character \"a\": base Hp 81 is over the hard ceiling 80",
-                "ch.ron:4: character \"a\": base Str 51 is over the hard ceiling 50",
+                "ch.ron:4: character \"a\": base Hp 201 is over the hard ceiling 200",
+                "ch.ron:4: character \"a\": base Str 101 is over the hard ceiling 100",
                 "ch.ron:4: character \"a\": base Mag -1 is negative",
             ]
         );
