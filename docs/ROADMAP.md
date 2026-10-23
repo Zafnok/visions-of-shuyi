@@ -363,7 +363,9 @@ Candle joins outside battle.
   engine tickets aren't here: Lane C waits for them. engine#3009
   (slicing a bot's thinking over frames) isn't the bots': they run on
   a PC. Its first user is the enemy AI on the Playdate (**1051**,
-  which doesn't wait for it).
+  which doesn't wait for it). The MCP server's fixes, engine#2545
+  (done), engine#2546 and engine#2542, and the skill pack, engine#1134,
+  → **1189** moves the pin past them.
 - **G. Chapter 1's round 4 fixes:** **0736** first, because its craft
   research governs every Act 1 script → **0737** the Chapter 1 script
   → **0742** · **1177** the engine pin (moved by 0740) · **0449** (done) · **0845** →
