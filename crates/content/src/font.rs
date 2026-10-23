@@ -44,6 +44,8 @@ pub const REQUIRED_GLYPHS: &str = concat!(
     "♣♠♥♦≈•ˇ▲▼◄►←↑→↓☺☻♪†",
     // The terrain of the places behind conversations (ticket 0733).
     "╱╲╤╫∩≡◊",
+    // The house, gate and throne tiles, our own glyphs (ticket 0322).
+    "☖☗⛨⛩♔♕",
 );
 
 /// Loads and validates the embedded glyph map against the embedded image.

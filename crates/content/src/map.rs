@@ -348,6 +348,13 @@ mod tests {
                 assert!(def.map.tiles.cells().contains(&t), "'{c}' unused");
             }
         }
+        // test_buildings has every building tile (ticket 0322).
+        let terrain = crate::TerrainDef::load(None).unwrap_or_default();
+        let buildings = maps.get("test_buildings").map(|def| def.map.tiles.cells());
+        for id in ["fort", "house", "gate", "throne"] {
+            let id = terrain.display.id_of(id);
+            assert!(buildings.is_some_and(|cells| id.is_some_and(|id| cells.contains(&id))));
+        }
     }
 
     const FEATURES: &str = "(

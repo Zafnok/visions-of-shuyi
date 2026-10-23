@@ -23,18 +23,18 @@ Why Terminus:
 
 | File | What |
 | ---- | ---- |
-| `atlas.png` | 551 glyphs, white on transparent, 32 cells of 8×16 per row (256×288 px) |
+| `atlas.png` | 557 glyphs, white on transparent, 32 cells of 8×16 per row (256×288 px) |
 | `atlas.ron` | `FontAtlasDef`: cell size, columns and `char → cell index` map |
 | `atlas_1bit.bin` | The same glyphs packed one bit a pixel for the Playdate (ADR-0074): each glyph in cell index order, 16 bytes (a byte a row, the highest bit the left pixel, a set bit the glyph), so the device never decodes a PNG |
 | `Terminus-LICENSE.txt` | The font's licence (OFL-1.1), shipped with the game |
 
 The three atlas files are **generated**; never edit them by hand. The sources are
 in `assets-src/fonts/` (outside `assets/`, so they aren't embedded in the
-game): `ter-u16n.bdf`, the font, and `pad-shapes.bdf`, our own extra glyphs
-(below). To regenerate:
+game): `ter-u16n.bdf`, the font, and `pad-shapes.bdf` and `tile-shapes.bdf`,
+our own extra glyphs (below). To regenerate:
 
 ```bash
-cargo shuyi font-atlas assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf assets/fonts
+cargo shuyi font-atlas assets-src/fonts/ter-u16n.bdf assets-src/fonts/pad-shapes.bdf assets-src/fonts/tile-shapes.bdf assets/fonts
 ```
 
 A test in `xtask` fails if the committed atlas differs from what the tool
@@ -42,7 +42,7 @@ produces, and another if `atlas_1bit.bin` doesn't have exactly the pixels of
 `atlas.png`. The glyph selection is `ATLAS_RANGES` in
 `crates/xtask/src/font_atlas.rs`.
 
-## Our own glyphs (`pad-shapes.bdf`)
+## Our own glyphs (`pad-shapes.bdf`, `tile-shapes.bdf`)
 
 Terminus has no `□`, `△` or `✕`, and its `○` is only 4 px wide, so the
 PlayStation face buttons' shapes are glyphs we drew ourselves (ticket 0220,
@@ -62,12 +62,25 @@ passed after the font), make sure its code point is in `ATLAS_RANGES`, and
 regenerate. The tool refuses an extra file that redefines a glyph the font
 already has, so Terminus's own glyphs are never changed.
 
+`tile-shapes.bdf` has the building tiles' pictures (ticket 0322; Nick
+picked the drawings in ticket 0037): each is one 16×16 drawing split over
+the tile's two cells, the left half then the right, at code points
+Terminus lacks inside the atlas's ranges (the engine's `ATLAS_RANGES` has
+no Private Use Area). Shown anywhere else, those code points draw half a
+building, so no text uses them.
+
+| Glyphs | Code points | Terrain |
+| ------ | ----------- | ------- |
+| `☖☗` | U+2616, U+2617 | `house`: a lean-to shack |
+| `⛨⛩` | U+26E8, U+26E9 | `gate`: a portcullis |
+| `♔♕` | U+2654, U+2655 | `throne`: a crowned throne |
+
 ## Licence notes (OFL-1.1)
 
 - Copyright (C) 2020 Dimitar Toshkov Zhekov, Reserved Font Name
   "Terminus Font". The licence text must travel with the game; it lives here
   and is embedded with the assets.
-- The atlas is a format conversion of the font with four glyphs of our own
+- The atlas is a format conversion of the font with ten glyphs of our own
   added (above), which makes it a Modified Version in the OFL's words. The
   OFL allows that provided the result stays under the OFL and doesn't use
   the Reserved Font Name. We never present it (or anything in the game)

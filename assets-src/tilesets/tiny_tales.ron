@@ -22,6 +22,8 @@
         "mountain": ("world-map/Set_A_Standard_Fields2", 89),
         "peak": ("world-map/Set_A_Standard_Fields2", 89),
         "fort": ("world-map/Set_A_Standard_Fields2", 89),
+        "house": ("world-map/Set_A_Standard_Fields2", 89),
+        "gate": ("world-map/Set_A_Standard_Fields2", 89),
         "burning": ("world-map/Set_A_Standard_Fields2", 89),
         "burnt": ("world-map/Set_A_Standard_Fields2", 89),
         "road": ("world-map/Set_A_Standard_Fields1", 41),
@@ -30,6 +32,7 @@
         "sea": ("world-map/Set_A_Standard_Coast", 218),
         "ice": ("world-map/Set_A_Standard_Fields1", 233),
         "floor": ("dungeons-1/Set_A_Fortress1", 161),
+        "throne": ("dungeons-1/Set_A_Fortress1", 161),
         "wall": ("dungeons-1/Set_E_Fortress1", 22),
         "door": ("dungeons-1/Set_E_Fortress1", 22),
         // Decoration (ticket 0733): the yard at Harrowby stands on grass
@@ -58,15 +61,17 @@
         // The shore: sand, then the wet band and the foam in the water's
         // tile. Drawn over the deep sea, so a beach has shallows.
         "coast": Corners(
-            of: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "burning",
-                 "burnt", "floor", "wall", "door", "roof", "house_wall", "house_door", "hedge",
-                 "well", "rack", "desk", "papers", "shelf", "banner", "rug"],
+            of: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "house",
+                 "gate", "throne", "burning", "burnt", "floor", "wall", "door", "roof",
+                 "house_wall", "house_door", "hedge", "well", "rack", "desk", "papers", "shelf",
+                 "banner", "rug"],
             sheet: "world-map/Set_A_Standard_Coast", terrain: "Coast1", full: false,
         ),
         // The grass's edge, over the shore's sand and against walls.
         "grass": Corners(
-            of: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "burning",
-                 "burnt", "roof", "house_wall", "house_door", "hedge", "well", "rack"],
+            of: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "house",
+                 "gate", "burning", "burnt", "roof", "house_wall", "house_door", "hedge", "well",
+                 "rack"],
             sheet: "world-map/Set_A_Standard_Fields2", terrain: "Grass2", full: false,
         ),
         "ice": Corners(
@@ -79,7 +84,7 @@
         ),
         // The floor's slabs end in a rim of the wall's bricks.
         "floor": Corners(
-            of: ["floor", "desk", "papers", "shelf", "rug"],
+            of: ["floor", "throne", "desk", "papers", "shelf", "rug"],
             sheet: "dungeons-1/Set_A_Fortress1", terrain: "Floor2", full: false,
         ),
         // Burnt ground under the bare trees.
@@ -121,17 +126,25 @@
         ),
         "fort": Tiles(of: ["fort"], tile: ("world-map/Set_C_Icons", 214)),
         "door": Tiles(of: ["door"], tile: ("dungeons-1/Set_A_Fortress1", 27)),
+        // Stand-ins (ticket 0322) until ticket 0471 finds better pictures:
+        // the World Map set's small house (the bundle's are "too
+        // modern/nice", Nick), the Fortress set's open archway
+        // ("serviceable") and, as the bundle has no throne, a chair.
+        "house": Tiles(of: ["house"], tile: ("world-map/Set_C_Icons", 0)),
+        "gate": Tiles(of: ["gate"], tile: ("dungeons-1/Set_A_Fortress1", 26)),
+        "throne": Tiles(of: ["throne"], tile: ("overworld/Set_C_Interiors", 205)),
         // Indoors the floor runs under the pools, and a pool has a stone
         // rim on the sides where it ends (up, right, down, left).
         "indoor_floor": Corners(
-            of: ["floor", "water", "sea", "bridge", "ice", "desk", "papers", "shelf", "rug"],
+            of: ["floor", "throne", "water", "sea", "bridge", "ice", "desk", "papers", "shelf",
+                 "rug"],
             sheet: "dungeons-1/Set_A_Fortress1", terrain: "Floor2", full: false,
         ),
         "pool": Tiles(
             of: ["water", "sea", "bridge"],
             tile: ("dungeons-1/Set_A_Fortress1", 65),
-            beside: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "burning",
-                     "burnt", "floor", "wall", "door"],
+            beside: ["plain", "road", "forest", "thicket", "mountain", "peak", "fort", "house",
+                     "gate", "throne", "burning", "burnt", "floor", "wall", "door"],
             sides: {
                 "#...": ("dungeons-1/Set_A_Fortress1", 49),
                 ".#..": ("dungeons-1/Set_A_Fortress1", 66),
@@ -226,9 +239,9 @@
         // Dungeons set's.
         "outdoor": (
             layers: ["deep", "coast", "grass", "ice", "road", "floor", "ash", "forest",
-                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "door",
-                     "roof", "house_wall", "lintel", "house_door", "hedge", "well", "rack",
-                     "desk", "papers", "shelf", "rug", "banner", "crest"],
+                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "house",
+                     "gate", "throne", "door", "roof", "house_wall", "lintel", "house_door",
+                     "hedge", "well", "rack", "desk", "papers", "shelf", "rug", "banner", "crest"],
         ),
         // A map indoors: the Dungeons set (Fortress). Water is a pool in
         // the floor; the terrains the set lacks keep their outdoor
@@ -240,9 +253,9 @@
                 "bridge": ("dungeons-1/Set_A_Fortress1", 65),
             },
             layers: ["indoor_floor", "pool", "grass", "ice", "road", "ash", "forest",
-                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "door",
-                     "roof", "house_wall", "lintel", "house_door", "hedge", "well", "rack",
-                     "desk", "papers", "shelf", "rug", "banner", "crest"],
+                     "thicket", "burnt", "burning", "mountain", "peak", "bridge", "fort", "house",
+                     "gate", "throne", "door", "roof", "house_wall", "lintel", "house_door",
+                     "hedge", "well", "rack", "desk", "papers", "shelf", "rug", "banner", "crest"],
         ),
     },
 )

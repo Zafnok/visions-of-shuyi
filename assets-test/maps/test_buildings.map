@@ -1,0 +1,21 @@
+(
+    // The building tiles side by side (ticket 0322): a fort, a house and
+    // a gate on grass, a throne on a hall's floor. Not a battle's map.
+    name: "Test Buildings",
+    legend: {
+        '.': "plain",
+        '_': "floor",
+        '#': "wall",
+        'F': "fort",
+        'H': "house",
+        'G': "gate",
+        'K': "throne",
+    },
+)
+---
+..........
+.F.H.H.G..
+.......#G#
+.....#_K_#
+.....#___#
+.....#####
