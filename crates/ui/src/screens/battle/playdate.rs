@@ -10,23 +10,24 @@
 //! black letters, the focus a bar.
 //!
 //! The forecast, the unit info screen, the fight box, the EXP and level-up
-//! pages and the rewind screen have a module each (ticket 1039). The
-//! combat picture (1041) and the guide's box (1058) are still the PC's
-//! paints until their tickets give them the Playdate's. Nothing here
-//! decides what the screen shows.
+//! pages and the rewind screen have a module each (ticket 1039), and so
+//! has the combat picture (1041), which covers the whole screen while a
+//! fight plays. The guide's box (1058) is still the PC's paint until its
+//! ticket gives it the Playdate's. Nothing here decides what the screen
+//! shows.
 
 pub mod fight_box;
 pub mod forecast;
 pub mod info;
 pub mod progress;
 pub mod rewind;
+pub mod stage;
 
 use crate::prelude::*;
 
 use super::glyph::{self, BANNER_H, BANNER_W, box_top_in, menu_origin_in};
 use super::layout::map_area;
 use super::notes::{unwrap_notes, wrap_notes};
-use super::stage;
 use super::units::{hp_fill, meter_cells};
 use super::view::{
     BannerView, BattleMenuView, BattleView, DialogView, MapInfoView, MenuHeader, MenuPlace,
@@ -47,31 +48,15 @@ use trpg_core::{Pos, StatValue};
 /// "move to the bottom ones when the cursor comes near"). *Tunable.*
 pub const TOP_ROWS: i32 = 5;
 
-/// Paints `view` on the Playdate's screen: the map over all of it, then
-/// the windows over the map.
+/// Paints `view` on the Playdate's screen: the map over all of it, or
+/// the combat picture while a fight plays, then the windows over them.
 pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     pd::clear(ctx, buf);
     let area = map_area(ctx);
-    ctx.game.map_skin.paint(ctx, &view.scene, area, buf);
-    paint_numbers(ctx, view, area, buf);
-    if let Some(panel) = view.panel.as_ref().filter(|_| browsing(view)) {
-        paint_corners(ctx, &view.scene, panel, area, buf);
-    }
-    if let Some(m) = &view.message {
-        paint_message(ctx, &view.scene, m, area, buf);
-    }
-    if let Some(m) = &view.menu
-        && let MenuPlace::Beside(tile) = m.place
-    {
-        paint_menu_beside(ctx, view, m, tile, buf);
-    }
-    paint_parts(ctx, view, area, buf);
-    if let Some(m) = &view.menu
-        && m.place == MenuPlace::Centred
-    {
-        let (w, h) = menu_size(ctx, &m.menu, area);
-        let at = (area.x + (area.w - w) / 2, area.y + (area.h - h) / 2);
-        paint_menu(ctx, m, at, area, buf);
+    match &view.stage {
+        // It covers the whole screen: the map isn't painted under it.
+        Some(fight) => stage::paint(ctx, fight, area, buf),
+        None => paint_map(ctx, view, area, buf),
     }
     match &view.dialog {
         Some(DialogView::Objective(o)) => {
@@ -105,8 +90,34 @@ pub fn paint(ctx: &Ctx, view: &BattleView, buf: &mut GlyphBuffer) {
     }
 }
 
+/// Paints the map over `area`, the numbers and pop-ups over it, and the
+/// menus, the fight box, the EXP and level-up pages and the forecast.
+fn paint_map(ctx: &Ctx, view: &BattleView, area: Rect, buf: &mut GlyphBuffer) {
+    ctx.game.map_skin.paint(ctx, &view.scene, area, buf);
+    paint_numbers(ctx, view, area, buf);
+    if let Some(panel) = view.panel.as_ref().filter(|_| browsing(view)) {
+        paint_corners(ctx, &view.scene, panel, area, buf);
+    }
+    if let Some(m) = &view.message {
+        paint_message(ctx, &view.scene, m, area, buf);
+    }
+    if let Some(m) = &view.menu
+        && let MenuPlace::Beside(tile) = m.place
+    {
+        paint_menu_beside(ctx, view, m, tile, buf);
+    }
+    paint_parts(ctx, view, area, buf);
+    if let Some(m) = &view.menu
+        && m.place == MenuPlace::Centred
+    {
+        let (w, h) = menu_size(ctx, &m.menu, area);
+        let at = (area.x + (area.w - w) / 2, area.y + (area.h - h) / 2);
+        paint_menu(ctx, m, at, area, buf);
+    }
+}
+
 /// Paints the fight box, the EXP and level-up pages and the forecast over
-/// `area`, and the combat picture with the PC's paint until 1041.
+/// `area`.
 fn paint_parts(ctx: &Ctx, view: &BattleView, area: Rect, buf: &mut GlyphBuffer) {
     if let Some(b) = &view.fight_box {
         fight_box::paint(ctx, b, area, buf);
@@ -116,9 +127,6 @@ fn paint_parts(ctx: &Ctx, view: &BattleView, area: Rect, buf: &mut GlyphBuffer) 
     }
     if let Some(f) = &view.forecast {
         forecast::paint(ctx, &view.scene, f, area, buf);
-    }
-    if let Some(stage) = &view.stage {
-        stage::glyph::paint(ctx, stage, buf);
     }
 }
 

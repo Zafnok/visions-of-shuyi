@@ -34,6 +34,16 @@ The normal build the same day: battle `Game::frame` 18.1 / 27.5 / 484.6
 ms at 29.2 frames a second; a dialogue scene 2.4 / 18.0 / 57.4 ms (1033:
 8.8 ms on average), so a scene's frames are worth timing too.
 
+**Measured again on 2026-10-23** (1041's device run, release build with
+the bought art, Chapter 1's first battle, the player's phase with a few
+fights): three minutes on the battle at 24.3, 14.5 and 17.7 frames a
+second, `Game::frame` 3.0 / 19.8 / 477.5, then **27.9 / 54.3 / 253.1**
+and 28.3 / 48.1 / 250.1 ms. Nick: "moving the cursor after selecting a
+unit, the unit moving after confirming, and in-battle fight scene is
+the choppiest. It drops a lot of frames and causes audio hitching."
+The fight's render is **1078**'s (engine#3056); the cursor over the move
+range and the walk are this ticket's.
+
 The enemy AI's per-command replanning is **1051**'s (a pause before each
 enemy acts). This ticket is the rest: the steady cost of a battle frame
 in the player's phase, and spikes that aren't the AI.

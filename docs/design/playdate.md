@@ -537,6 +537,27 @@ line styles are there for players who want the expressions.
   mockup) and how much the backdrop is lightened. *Claude's starting
   rule:* the backdrop follows the PC's rules (terrain, time of day),
   each picture converted the same way.
+- *Claude's starting rules (ticket 1041, Nick can veto):*
+  - The backdrop is lightened as in the mockup Nick chose: each
+    brightness `b` becomes `0.6 b + 0.47`, no stretch, so its darkest
+    is a middle grey. It shows the rows of the picture the mockup
+    showed. (1040's first conversion stretched it, which made the tree
+    line solid black.)
+  - Each plate is a box three rows tall across half the screen: the
+    name and HP in the top of its frame, the damage, hit and crit
+    inside. The mockup had both lines inside a thinner box; a box of
+    the screen's text rows that holds two lines is a third taller and
+    leaves less room for the fighters. The name is the bar while the
+    fighter is about to strike, as in the fight box.
+  - The result's box is one text row with a black edge a pixel wide,
+    on the row over the target's head (the top row, under an art's
+    name if one shows).
+  - A fighter that is hit shows as a **black** shape for a moment (the
+    PC's white one would vanish on the white ground), and a critical
+    **flips** the whole picture above the plates, as a flashing map
+    tile does.
+  - The fighters stand 176 pixels apart, centred, feet 4 pixels above
+    the plates; the motions are the PC's, pixel for pixel.
 
 #### The launcher card and icon (Q3)
 
