@@ -79,7 +79,14 @@ outline. New names are placeholders Nick may rename
 ## Acceptance criteria
 
 - [ ] A sheet for each of the five, with want, need, flaw, pressure,
-      arc, voice notes and three sample lines.
+      arc, voice notes and three sample lines. The voice notes are the
+      skill's voice card (0736: age and experience, temperature,
+      openness, what they do when scared, care signature, a fault the
+      others put up with, punctuation habit, words from their life, won't
+      say); anyone who can die also gets a small plan for after and an
+      object seen in their hands. Sample lines show different situations
+      (under fire, at camp, lying, grieving) and are never copied into a
+      script.
 - [ ] Short sheets and registry entries for each named boss.
 - [ ] `cargo xtask check-script` and the content gates pass (the names
       table).

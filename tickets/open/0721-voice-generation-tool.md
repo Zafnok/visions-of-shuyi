@@ -72,7 +72,10 @@ the tool from the game.
    a cast replaces the generated clips later (ADR-0046 rule 10).
 8. Never overwrite a `Recorded` clip; `generate` skips them and `status`
    lists them as stale for a human to re-record.
-9. `docs/voice.md`: how to run all three, where the files go, and the
+9. **Voice directions (0752), either order:** if 0752 is done, send each
+   line's delivery direction to the tool with its words (through the
+   `Synth` trait) and print it in `voice script`; if not, 0752 adds it.
+10. `docs/voice.md`: how to run all three, where the files go, and the
    commit-and-pin steps for the private repository (`cargo xtask
    private-assets --pin`).
 
